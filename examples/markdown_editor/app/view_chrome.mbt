@@ -298,15 +298,34 @@ fn MarkdownEditorApp::bottom_status_bar(
 ) -> @moui.View[MarkdownEditorMsg] {
   let _ = snapshot
   let _ = block_label
+  let show_files = self.file_sidebar_visible.get()
+  let toggle_label = if show_files { "☰" } else { "☰" }
+  let tree_button = button(
+    toggle_label,
+    on_click=ToggleFileSidebar,
+    variant=@views.ButtonVariant::Ghost,
+    theme~,
+    width=24.0,
+    height=20.0,
+  )
+  .font(theme.typography.caption)
+  .foreground(theme.palette.muted.multiply_alpha(0.7))
   frame(
-    text(
-      self.document_status_label(snapshot, block_label, selection) +
-      markdown_editor_active_format_suffix(source, selection),
-      width~,
-      height=18.0,
-    )
-    .font(theme.typography.caption)
-    .foreground(theme.palette.muted.multiply_alpha(0.7)),
+    row(
+      [
+        tree_button,
+        text(
+          self.document_status_label(snapshot, block_label, selection) +
+          markdown_editor_active_format_suffix(source, selection),
+          width=width - 28.0,
+          height=18.0,
+        )
+        .font(theme.typography.caption)
+        .foreground(theme.palette.muted.multiply_alpha(0.7)),
+      ],
+      spacing=theme.spacing_scale.xs,
+      align=@views.CrossAlign::Center,
+    ),
     width~,
     height=20.0,
   ).repaint_boundary()
