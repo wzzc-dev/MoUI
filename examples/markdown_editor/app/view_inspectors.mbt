@@ -36,7 +36,7 @@ fn files_inspector(
   }
   let working_directory = app.working_directory.get()
   let file_rows : Array[@moui.View[MarkdownEditorMsg]] = [
-    text("Files", width=content_width, height=24.0)
+    text("文件", width=content_width, height=24.0)
     .font(theme.typography.caption)
     .foreground(theme.palette.muted),
     text(
