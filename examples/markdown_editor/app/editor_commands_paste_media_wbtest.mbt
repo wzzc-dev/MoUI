@@ -313,3 +313,65 @@ test "markdown editor paste image target updates current image context" {
   ).unwrap()
   inspect(shortcut.text, content="Insert ![logo][old] here")
 }
+
+//|
+test "markdown editor insert text at cursor replaces selection" {
+  let app = MarkdownEditorApp::new()
+  app.edit_document("Hello World")
+  app.selection.set({ caret: 6, selection: Some(@core.TextRange::new(start=6, end=11)) })
+  app.insert_text_at_cursor("MoonBit")
+  inspect(app.document(), content="Hello MoonBit")
+  inspect(app.selection_caret(), content="13")
+}
+
+//|
+test "markdown editor insert text at cursor inserts at caret" {
+  let app = MarkdownEditorApp::new()
+  app.edit_document("Hello World")
+  app.selection.set({ caret: 6, selection: None })
+  app.insert_text_at_cursor(" MoonBit")
+  inspect(app.document(), content="Hello  MoonBitWorld")
+}
+
+//|
+test "markdown editor insert media from path inserts image markdown" {
+  let app = MarkdownEditorApp::new()
+  app.load_document_for_test("Start ", path="")
+  app.selection.set({ caret: 6, selection: None })
+  app.insert_media_from_path("/images/photo.png")
+  inspect(
+    app.document(),
+    content="Start ![photo](/images/photo.png)",
+  )
+}
+
+//|
+test "markdown editor image alt from filename strips extension" {
+  inspect(
+    markdown_editor_image_alt_from_filename("my-photo.png"),
+    content="my photo",
+  )
+  inspect(
+    markdown_editor_image_alt_from_filename("logo.svg"),
+    content="logo",
+  )
+  inspect(
+    markdown_editor_image_alt_from_filename("README.md"),
+    content="README",
+  )
+  inspect(
+    markdown_editor_image_alt_from_filename("README"),
+    content="README",
+  )
+  inspect(markdown_editor_image_alt_from_filename(""), content="")
+}
+
+//|
+test "markdown editor import image clipboard requires services" {
+  let app = MarkdownEditorApp::new()
+  ignore(app.update(ImportImageFromClipboard))
+  inspect(
+    app.transfer_status_label_for_test(),
+    content="Transfer unavailable: clipboard image import requires host services",
+  )
+}

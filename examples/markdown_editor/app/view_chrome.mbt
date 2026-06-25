@@ -161,11 +161,17 @@ fn MarkdownEditorApp::reactive_root(
   ignore(ctx.watch(self.recent_document_paths))
   ignore(ctx.watch(self.saved_document))
   ignore(ctx.watch(self.transfer_status))
+  ignore(ctx.watch(self.working_directory))
+  ignore(ctx.watch(self.expanded_tree_paths))
+  ignore(ctx.watch(self.directory_tree_items))
+  ignore(ctx.watch(self.file_tree_expanded))
+  ignore(ctx.watch(self.selected_image_offset))
+  ignore(ctx.watch(self.image_centered))
   ignore(ctx.watch_scroll(self.editor_scroll))
   // Make the editor viewport fill the window instead of a fixed 520px. Reserve
   // room for the chrome bar (34px) plus spacing so the page doesn't overflow.
   let window_height = ctx.viewport_size().height
-  let viewport_height = markdown_editor_max_double(320.0, window_height - 120.0)
+  let viewport_height = markdown_editor_max_double(320.0, window_height - 112.0)
   self.root(viewport_height~)
 }
 
@@ -237,11 +243,11 @@ fn markdown_editor_centered_workspace(
 }
 
 ///|
-/// The top chrome bar, restyled to Typora's title-bar aesthetic: the document
-/// title with an unsaved indicator dot on the left, and a single "⋯" menu
-/// button on the right that opens a popover with file/view/format commands.
-/// The busy status string (word count, block label, modes) moves to a slim
-/// bottom status bar so the title bar stays uncluttered.
+/// Quiet title bar in Typora style: document title with a subtle unsaved dot
+/// on the left, and a single "⋯" menu button on the right. No toolbar
+/// clutter — all formatting flows through the format bubble / format palette
+/// or keyboard shortcuts. The bottom status bar carries word count and mode
+/// indicators so the title bar stays clean and focused on the document name.
 fn MarkdownEditorApp::chrome(
   self : MarkdownEditorApp,
   theme : @moui.Theme,
@@ -254,18 +260,14 @@ fn MarkdownEditorApp::chrome(
     fallback="Untitled",
   )
   let dirty = self.is_dirty()
-  let unsaved_dot = text(
-      if dirty {
-        "● "
-      } else {
-        ""
-      },
-      width=20.0,
-      height=28.0,
-    )
-    .font(theme.typography.body)
-    .foreground(theme.palette.primary.multiply_alpha(0.85))
-  let title_text = text(title, height=28.0)
+  let unsaved_dot = if dirty {
+    text("·", width=10.0, height=20.0)
+      .font(theme.typography.body)
+      .foreground(theme.palette.primary)
+  } else {
+    empty()
+  }
+  let title_text = text(title, height=20.0)
     .font(theme.typography.body)
     .foreground(theme.palette.foreground)
   // The "⋯" menu button reuses the More popover (file/view/format commands).
@@ -277,14 +279,14 @@ fn MarkdownEditorApp::chrome(
       align=@views.CrossAlign::Center,
     ),
     width~,
-    height=36.0,
+    height=32.0,
   ).repaint_boundary()
 }
 
 ///|
-/// A slim bottom status bar carrying the document status string (title /
-/// saved state / block label / word count / modes), so the title bar can stay
-/// focused on the document name.
+/// Minimal bottom status bar: word/line count + active format + mode
+/// indicators. Slim enough to stay out of the way while still keeping the
+/// writer informed.
 fn MarkdownEditorApp::bottom_status_bar(
   self : MarkdownEditorApp,
   theme : @moui.Theme,
@@ -301,12 +303,12 @@ fn MarkdownEditorApp::bottom_status_bar(
       self.document_status_label(snapshot, block_label, selection) +
       markdown_editor_active_format_suffix(source, selection),
       width~,
-      height=20.0,
+      height=18.0,
     )
     .font(theme.typography.caption)
-    .foreground(theme.palette.muted),
+    .foreground(theme.palette.muted.multiply_alpha(0.7)),
     width~,
-    height=24.0,
+    height=20.0,
   ).repaint_boundary()
 }
 
@@ -665,6 +667,18 @@ fn markdown_editor_format_palette_items() -> Array[
       label: "Source Mode",
       group: "View",
       shortcut: "Meta+Shift+/",
+    },
+    {
+      action: "files",
+      label: "Files",
+      group: "View",
+      shortcut: "Meta+Alt+P",
+    },
+    {
+      action: "image-center",
+      label: "Center Image",
+      group: "Block",
+      shortcut: "",
     },
     {
       action: "html-export",

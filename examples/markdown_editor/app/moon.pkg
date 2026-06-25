@@ -5,10 +5,12 @@ import {
   "wzzc-dev/moui_richtext",
   "wzzc-dev/moui/views",
   "moonbitlang/core/json",
+  "moonbitlang/core/encoding/base64",
 }
 
 import {
   "wzzc-dev/moui/runtime",
+  "moonbitlang/core/debug",
 } for "wbtest"
 
 supported_targets = "+native+wasm-gc"

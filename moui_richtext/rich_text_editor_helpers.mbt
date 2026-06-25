@@ -412,27 +412,30 @@ test {
 test "markdown image source resolves relative targets against base_dir" {
   let image = markdown_inline("cat.png", Image, target=Some("cat.png"))
   // Without a base_dir, the target is returned verbatim.
-  @debug.debug_inspect(markdown_inline_image_source(image), content="Some(cat.png)")
+  @debug.debug_inspect(
+    markdown_inline_image_source(image),
+    content="Some(\"cat.png\")",
+  )
   // With a base_dir, a relative target is rooted at the document directory.
   @debug.debug_inspect(
     markdown_inline_image_source(image, base_dir=Some("/tmp/docs")),
-    content="Some(/tmp/docs/cat.png)",
+    content="Some(\"/tmp/docs/cat.png\")",
   )
   // Trailing separators are handled without doubling.
   @debug.debug_inspect(
     markdown_inline_image_source(image, base_dir=Some("/tmp/docs/")),
-    content="Some(/tmp/docs/cat.png)",
+    content="Some(\"/tmp/docs/cat.png\")",
   )
   // Absolute paths, data: and http: URIs are never re-rooted.
   let abs = markdown_inline("/abs/cat.png", Image, target=Some("/abs/cat.png"))
   @debug.debug_inspect(
     markdown_inline_image_source(abs, base_dir=Some("/tmp/docs")),
-    content="Some(/abs/cat.png)",
+    content="Some(\"/abs/cat.png\")",
   )
   let url = markdown_inline("u", Image, target=Some("https://e.com/c.png"))
   @debug.debug_inspect(
     markdown_inline_image_source(url, base_dir=Some("/tmp/docs")),
-    content="Some(https://e.com/c.png)",
+    content="Some(\"https://e.com/c.png\")",
   )
   let data = markdown_inline(
     "d",
@@ -441,7 +444,7 @@ test "markdown image source resolves relative targets against base_dir" {
   )
   @debug.debug_inspect(
     markdown_inline_image_source(data, base_dir=Some("/tmp/docs")),
-    content="Some(data:image/png;base64,AAAA)",
+    content="Some(\"data:image/png;base64,AAAA\")",
   )
 }
 
@@ -453,8 +456,15 @@ test "code highlight tokenizer classifies moonbit keywords and strings" {
   assert_true(kinds.contains(CodeKeyword))
   assert_true(kinds.contains(CodeString))
   assert_true(kinds.contains(CodeComment))
+  // Supported languages still classify tokens instead of falling back.
+  let python = code_highlight_tokenize("# config\ndef add(a, b):\n    return a + b\n", "python")
+  assert_true(python.any(span => span.text == "# config" && span.kind == CodeComment))
+  assert_true(python.any(span => span.text == "def" && span.kind == CodeKeyword))
+  assert_true(python.any(span => span.text == "return" && span.kind == CodeKeyword))
+  assert_true(python.any(span => span.text == "a" && span.kind == CodePlain))
+  assert_true(python.any(span => span.text == "+" && span.kind == CodeOperator))
   // Unsupported language falls back to a single plain span.
-  let plain = code_highlight_tokenize("let x = 1", "rust")
+  let plain = code_highlight_tokenize("let x = 1", "perl")
   assert_eq(plain.length(), 1)
   assert_true(plain[0].kind == CodePlain)
 }
@@ -521,8 +531,10 @@ fn is_undo_shortcut(event : @core.KeyboardEvent) -> Bool {
 ///|
 fn is_redo_shortcut(event : @core.KeyboardEvent) -> Bool {
   event.pressed &&
-  ((event.modifiers.shift && (event.key == "z" || event.key == "Z")) ||
-   (!event.modifiers.shift && (event.key == "y" || event.key == "Y"))) &&
+  (
+    (event.modifiers.shift && (event.key == "z" || event.key == "Z")) ||
+    (!event.modifiers.shift && (event.key == "y" || event.key == "Y"))
+  ) &&
   (event.modifiers.meta || event.modifiers.control)
 }
 

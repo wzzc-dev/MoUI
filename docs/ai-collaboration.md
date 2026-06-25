@@ -123,6 +123,53 @@ docs/testing.md. Also check AGENTS.md and skills/ when the guidance surface chan
 - If backend behavior changed, do events still flow through `HostEvent`?
 - If an example changed, is shared app logic still under `examples/*/app/`?
 
+## Decision & Session Logging
+
+MoUI maintains a three-layer record system for AI-agent-assisted development.
+
+### Layer 1: Memory Quick Notes (`memories/repo/`)
+
+Short bullet-point facts that agents load automatically each session.
+Use for: key patterns, common pitfalls, validated conventions.
+Keep entries under 20 lines per file.
+
+### Layer 2: Architecture Decision Records (`docs/decisions/`)
+
+Formal structured records for significant technical decisions.
+Create an ADR when:
+
+- Choosing between two or more architectural approaches.
+- Changing a public API contract or package boundary.
+- Introducing a new dependency or external protocol.
+- Changing renderer, backend, or runtime pipeline behavior.
+- Decisions that affect how agents should work in this repo.
+
+Use the template at `docs/decisions/TEMPLATE.md`.
+Number sequentially (`0001-`, `0002-`, ...) and update the index in
+`docs/decisions/README.md`.
+
+### Layer 3: AI Session Logs (`docs/ai-sessions/`)
+
+Summaries of significant multi-file or architecture-touching sessions.
+Log a session when:
+
+- Multi-file changes that touch architecture boundaries.
+- The session produced an ADR.
+- Significant debugging or discovery happened.
+- A new pattern or anti-pattern was established.
+
+Use the template at `docs/ai-sessions/TEMPLATE.md`.
+Name files `YYYY-MM-DD-short-description.md`.
+
+### Workflow Integration
+
+After a significant agent session:
+
+1. Update `memories/repo/` with any new quick-reference facts.
+2. If a formal decision was made, create an ADR in `docs/decisions/`.
+3. If the session was complex or educational, log it in `docs/ai-sessions/`.
+4. Reference the ADR/session log in the commit message or PR description.
+
 ## Anti-Patterns
 
 - Putting platform window or renderer logic in `core/`.

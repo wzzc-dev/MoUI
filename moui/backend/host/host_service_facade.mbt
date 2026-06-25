@@ -152,6 +152,36 @@ pub fn HostAppServices::open_url(
 }
 
 ///|
+pub fn HostAppServices::list_directory(
+  self : HostAppServices,
+  path : String,
+) -> HostServiceResponse {
+  self.dispatch(HostServiceRequest::ListDirectory(path))
+}
+
+///|
+pub fn HostAppServices::read_clipboard_image(
+  self : HostAppServices,
+) -> HostServiceResponse {
+  self.dispatch(
+    HostServiceRequest::Clipboard(HostClipboardRequest::ReadImage),
+  )
+}
+
+///|
+pub fn HostAppServices::write_clipboard_image(
+  self : HostAppServices,
+  mime_type : String,
+  bytes : Bytes,
+) -> HostServiceResponse {
+  self.dispatch(
+    HostServiceRequest::Clipboard(
+      HostClipboardRequest::WriteImage(mime_type, bytes),
+    ),
+  )
+}
+
+///|
 pub fn HostAppServices::request_system_theme(
   self : HostAppServices,
 ) -> HostServiceResponse {

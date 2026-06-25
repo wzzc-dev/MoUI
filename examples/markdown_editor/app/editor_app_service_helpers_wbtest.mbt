@@ -30,6 +30,7 @@ fn markdown_editor_file_dialog_services(
   seen_title~ : Ref[String],
   seen_default_name~ : Ref[String],
 ) -> @host.HostAppServices {
+  let selected = selected_path
   let bridge = @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(
       file_dialogs=true,
@@ -45,10 +46,10 @@ fn markdown_editor_file_dialog_services(
             None => ""
           }
           @host.HostServiceResponse::FileDialogSelection(
-            if selected_path == "" {
+            if selected == "" {
               []
             } else {
-              [selected_path]
+              [selected]
             },
           )
         }
@@ -58,6 +59,22 @@ fn markdown_editor_file_dialog_services(
         @host.HostServiceRequest::TextFile(
           @host.HostTextFileRequest::ReadText(path)
         ) => @host.HostServiceResponse::TextFileContent(path, "")
+        @host.HostServiceRequest::ListDirectory(_path) =>
+          @host.HostServiceResponse::DirectoryListing(
+            _path,
+            [
+              @host.HostDirectoryEntry::new(
+                name="README.md",
+                path=markdown_editor_join_path(_path, "README.md"),
+                is_directory=false,
+              ),
+              @host.HostDirectoryEntry::new(
+                name="notes",
+                path=markdown_editor_join_path(_path, "notes"),
+                is_directory=true,
+              ),
+            ],
+          )
         _ => @host.HostServiceResponse::Unavailable("unexpected request")
       }
     },
@@ -73,6 +90,7 @@ fn markdown_editor_document_services(
   seen_title~ : Ref[String],
   seen_default_name~ : Ref[String],
 ) -> @host.HostAppServices {
+  let selected = selected_path
   let bridge = @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(
       clipboard=true,
@@ -92,10 +110,10 @@ fn markdown_editor_document_services(
             None => ""
           }
           @host.HostServiceResponse::FileDialogSelection(
-            if selected_path == "" {
+            if selected == "" {
               []
             } else {
-              [selected_path]
+              [selected]
             },
           )
         }
@@ -105,6 +123,8 @@ fn markdown_editor_document_services(
         @host.HostServiceRequest::TextFile(
           @host.HostTextFileRequest::WriteText(path, _text)
         ) => @host.HostServiceResponse::TextFileWritten(path)
+        @host.HostServiceRequest::ListDirectory(_path) =>
+          @host.HostServiceResponse::DirectoryListing(_path, [])
         _ => @host.HostServiceResponse::Unavailable("unexpected request")
       }
     },

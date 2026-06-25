@@ -156,6 +156,33 @@ pub fn web_service_bridge(
                 "clipboard read is unavailable on Web; paste is delivered by browser text input events",
               )
           }
+        @host.HostServiceRequest::Clipboard(
+          @host.HostClipboardRequest::ReadImage
+        ) =>
+          match async_queue {
+            Some(queue) =>
+              queue.submit(
+                @host.HostServiceRequest::Clipboard(
+                  @host.HostClipboardRequest::ReadImage,
+                ),
+              )
+            None =>
+              @host.HostServiceResponse::Unavailable(
+                "clipboard image read is unavailable on Web",
+              )
+          }
+        @host.HostServiceRequest::Clipboard(
+          @host.HostClipboardRequest::WriteImage(_, _)
+        ) => {
+          let req = request
+          match async_queue {
+            Some(queue) => queue.submit(req)
+            None =>
+              @host.HostServiceResponse::Unavailable(
+                "clipboard image write is unavailable on Web",
+              )
+          }
+        }
         @host.HostServiceRequest::FileDialog(options) =>
           match async_queue {
             Some(queue) =>
@@ -321,6 +348,13 @@ fn web_clipboard_write_text(text : WebHostString) -> Bool = "window_web" "clipbo
 
 ///|
 fn web_async_clipboard_read_text(request_id : Int) -> Unit = "window_web" "clipboard_read_text_async"
+
+//|
+fn web_async_clipboard_read_image(request_id : Int) -> Unit = "window_web" "clipboard_read_image_async"
+
+//|
+#borrow(data)
+fn web_clipboard_write_image(data : WebHostString) -> Bool = "window_web" "clipboard_write_image"
 
 ///|
 fn web_async_text_file_read(request_id : Int, path : WebHostString) -> Unit = "window_web" "text_file_read_async"
