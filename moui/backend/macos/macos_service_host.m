@@ -194,6 +194,51 @@ int32_t moui_macos_clipboard_write_text(moonbit_bytes_t text) {
 }
 
 MOONBIT_FFI_EXPORT
+int32_t moui_macos_clipboard_has_image(void) {
+  NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+  NSArray *classes = @[[NSImage class]];
+  return [pasteboard canReadObjectForClasses:classes options:@{}] ? 1 : 0;
+}
+
+MOONBIT_FFI_EXPORT
+moonbit_bytes_t moui_macos_clipboard_read_image(void) {
+  NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+  // Try PNG first, then TIFF (convert to PNG)
+  NSData *imageData = [pasteboard dataForType:NSPasteboardTypePNG];
+  if (imageData == nil) {
+    imageData = [pasteboard dataForType:NSPasteboardTypeTIFF];
+    if (imageData != nil) {
+      NSBitmapImageRep *rep = [NSBitmapImageRep imageRepWithData:imageData];
+      if (rep != nil) {
+        imageData = [rep representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
+      }
+    }
+  }
+  if (imageData == nil) {
+    return moonbit_make_bytes(0, 0);
+  }
+  int32_t len = (int32_t)[imageData length];
+  moonbit_bytes_t bytes = moonbit_make_bytes(len, 0);
+  if (len > 0) {
+    memcpy(bytes, [imageData bytes], (size_t)len);
+  }
+  return bytes;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_macos_clipboard_write_image(moonbit_bytes_t data) {
+  int32_t len = (int32_t)Moonbit_array_length(data);
+  if (len <= 0) {
+    return 0;
+  }
+  NSData *imageData = [NSData dataWithBytes:(const void *)data length:(NSUInteger)len];
+  NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+  [pasteboard clearContents];
+  BOOL ok = [pasteboard setData:imageData forType:NSPasteboardTypePNG];
+  return ok ? 1 : 0;
+}
+
+MOONBIT_FFI_EXPORT
 int32_t moui_macos_open_url(moonbit_bytes_t url) {
   int32_t url_len = (int32_t)Moonbit_array_length(url);
   if (url_len <= 0) {

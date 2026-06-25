@@ -1,6 +1,10 @@
 ///|
 pub struct ScrollState {
   offset_slot : State[Point]
+  smooth_target : State[Point?]
+  smooth_start : State[Point?]
+  smooth_start_time_ms : State[Double?]
+  smooth_duration_ms : State[Double?]
 }
 
 ///|
@@ -17,7 +21,13 @@ pub struct NavigationState {
 pub fn ScrollState::new(
   offset? : Point = Point::new(x=0.0, y=0.0),
 ) -> ScrollState {
-  { offset_slot: State::new(offset) }
+  {
+    offset_slot: State::new(offset),
+    smooth_target: State::new(None),
+    smooth_start: State::new(None),
+    smooth_start_time_ms: State::new(None),
+    smooth_duration_ms: State::new(None),
+  }
 }
 
 ///|
@@ -33,6 +43,63 @@ pub fn ScrollState::set_offset(self : ScrollState, offset : Point) -> Unit {
 ///|
 pub fn ScrollState::binding(self : ScrollState) -> Binding[Point] {
   self.offset_slot.binding()
+}
+
+///|
+pub fn ScrollState::smooth_scroll_to(
+  self : ScrollState,
+  x~ : Double,
+  y~ : Double,
+  duration_ms? : Double = 220.0,
+) -> Unit {
+  let current = self.offset()
+  self.smooth_start.set(Some(current))
+  self.smooth_target.set(Some(Point::new(x~, y~)))
+  self.smooth_start_time_ms.set(Some(0.0))
+  self.smooth_duration_ms.set(Some(max_double(0.0, duration_ms)))
+}
+
+///|
+pub fn ScrollState::tick(self : ScrollState, time_ms : Double) -> Unit {
+  let target = self.smooth_target.get()
+  let start = self.smooth_start.get()
+  let start_time = self.smooth_start_time_ms.get()
+  let duration = self.smooth_duration_ms.get()
+  match (target, start, start_time, duration) {
+    (Some(target), Some(start), Some(start_time), Some(duration)) =>
+      if duration <= 0.0 {
+        self.set_offset(target)
+        self.smooth_target.set(None)
+        self.smooth_start.set(None)
+        self.smooth_start_time_ms.set(None)
+        self.smooth_duration_ms.set(None)
+      } else {
+        let progress = clamp_double(
+          (time_ms - start_time) / duration,
+          0.0,
+          1.0,
+        )
+        let eased = Easing::EaseOut.sample(progress)
+        let x = start.x + (target.x - start.x) * eased
+        let y = start.y + (target.y - start.y) * eased
+        self.set_offset(Point::new(x=x, y=y))
+        if progress >= 1.0 {
+          self.smooth_target.set(None)
+          self.smooth_start.set(None)
+          self.smooth_start_time_ms.set(None)
+          self.smooth_duration_ms.set(None)
+        } else {
+          self.smooth_start_time_ms.set(Some(time_ms))
+          self.smooth_start.set(Some(self.offset()))
+        }
+      }
+    _ => ()
+  }
+}
+
+///|
+pub fn ScrollState::is_smooth_scrolling(self : ScrollState) -> Bool {
+  self.smooth_target.get() is Some(_)
 }
 
 ///|

@@ -24,6 +24,11 @@ For task-specific workflows, use the repo-local skills:
   and app-level override strategies (per-control `style=`, theme component
   override, palette seed). Read this before any "change button color" task
   instead of re-deriving the pipeline from source.
+- `docs/decisions/` for formal Architecture Decision Records (ADRs) that
+  document significant technical choices. Read relevant ADRs before changing
+  architecture, APIs, or package boundaries.
+- `docs/ai-sessions/` for summaries of past AI-agent sessions with key
+  discoveries and patterns.
 
 ## Working Rules
 
@@ -124,6 +129,16 @@ node scripts/sync-website-docs.mjs --check
 When workflow guidance changes, update `docs/`, this `AGENTS.md`, and the
 relevant files under `skills/`. The guidance consistency guard checks these
 surfaces.
+
+### Decision & Session Records
+
+After significant agent sessions, maintain the three-layer record system:
+
+1. **`memories/repo/`** — Update with quick-reference facts (auto-loaded by agents).
+2. **`docs/decisions/`** — Create an ADR for formal decisions (use `TEMPLATE.md`).
+3. **`docs/ai-sessions/`** — Log complex sessions (use `TEMPLATE.md`).
+
+See `docs/ai-collaboration.md` § "Decision & Session Logging" for full workflow.
 
 ## Artifact Policy
 
