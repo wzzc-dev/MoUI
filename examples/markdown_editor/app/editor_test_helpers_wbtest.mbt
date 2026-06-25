@@ -199,6 +199,26 @@ fn MarkdownEditorApp::open_recent_for_test(
 }
 
 ///|
+fn MarkdownEditorApp::pick_working_directory_for_test(
+  self : MarkdownEditorApp,
+  services : @host.HostAppServices,
+) -> Unit {
+  self.perform_pick_working_directory(services)
+}
+
+///|
+fn MarkdownEditorApp::working_directory(self : MarkdownEditorApp) -> String {
+  self.working_directory.get()
+}
+
+///|
+fn MarkdownEditorApp::expanded_tree_paths(
+  self : MarkdownEditorApp,
+) -> Array[String] {
+  self.expanded_tree_paths.get()
+}
+
+///|
 fn MarkdownEditorApp::set_find_query(
   self : MarkdownEditorApp,
   query : String,

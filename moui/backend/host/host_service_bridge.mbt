@@ -2,6 +2,8 @@
 pub(all) enum HostClipboardRequest {
   ReadText
   WriteText(String)
+  ReadImage
+  WriteImage(String, Bytes)
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -32,6 +34,22 @@ pub(all) enum HostBinaryFileRequest {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct HostDirectoryEntry {
+  name : String
+  path : String
+  is_directory : Bool
+} derive(Eq, Debug, ToJson)
+
+///|
+pub fn HostDirectoryEntry::new(
+  name~ : String,
+  path~ : String,
+  is_directory? : Bool = false,
+) -> HostDirectoryEntry {
+  { name, path, is_directory }
+}
+
+///|
 pub(all) struct HostBinaryFileDiagnostic {
   path : String
   byte_length : Int
@@ -47,6 +65,7 @@ pub(all) enum HostServiceRequest {
   BinaryFile(HostBinaryFileRequest)
   OpenUrl(String)
   QuerySystemTheme
+  ListDirectory(String)
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -55,6 +74,7 @@ pub(all) enum HostServiceResponse {
   Pending(HostServiceRequestId)
   ClipboardText(String)
   ClipboardWritten
+  ClipboardImage(Bytes)
   MenuAction(@core.ActionCommand)
   MenuCommand(@core.CommandIntent)
   FileDialogSelection(Array[String])
@@ -64,6 +84,7 @@ pub(all) enum HostServiceResponse {
   BinaryFileWritten(String)
   UrlOpened
   SystemTheme(@core.ColorScheme)
+  DirectoryListing(String, Array[HostDirectoryEntry])
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -75,6 +96,7 @@ pub(all) enum HostServiceKind {
   BinaryFileService
   OpenUrlService
   SystemThemeService
+  DirectoryListingService
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -194,6 +216,7 @@ pub fn HostServiceBridge::can_handle(
     BinaryFile(_) => self.capabilities.file_access
     OpenUrl(_) => self.capabilities.open_url
     QuerySystemTheme => self.capabilities.system_theme
+    ListDirectory(_) => self.capabilities.file_access
   }
 }
 
@@ -209,6 +232,7 @@ pub fn HostServiceRequest::unavailable_message(
     BinaryFile(_) => "binary file service is unavailable"
     OpenUrl(_) => "open URL service is unavailable"
     QuerySystemTheme => "system theme service is unavailable"
+    ListDirectory(_) => "directory listing service is unavailable"
   }
 }
 
@@ -222,6 +246,7 @@ pub fn HostServiceRequest::kind(self : HostServiceRequest) -> HostServiceKind {
     BinaryFile(_) => BinaryFileService
     OpenUrl(_) => OpenUrlService
     QuerySystemTheme => SystemThemeService
+    ListDirectory(_) => DirectoryListingService
   }
 }
 

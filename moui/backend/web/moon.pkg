@@ -7,6 +7,7 @@ import {
   "wzzc-dev/window/core" @window_core,
   "wzzc-dev/window/dpi",
   "wzzc-dev/window/web" @window_web,
+  "moonbitlang/core/encoding/base64",
 }
 
 import {
@@ -26,6 +27,7 @@ options(
         "web_dispatch_event",
         "web_dispatch_route",
         "web_complete_async_clipboard_read",
+        "web_complete_async_clipboard_read_image",
         "web_complete_async_file_dialog",
         "web_complete_async_text_file_read",
       ],

@@ -56,6 +56,20 @@ pub struct MarkdownEditorApp {
   undo_stack : @moui.State[Array[MarkdownEditorHistoryEntry]]
   redo_stack : @moui.State[Array[MarkdownEditorHistoryEntry]]
   editor_scroll : @core.ScrollState
+  priv working_directory : @moui.State[String]
+  priv expanded_tree_paths : @moui.State[Array[String]]
+  priv directory_tree_items : @moui.State[Array[@views.TreeItem]]
+  priv file_tree_expanded : @moui.State[Bool]
+  priv selected_image_offset : @moui.State[Int?]
+  priv image_centered : @moui.State[Bool]
+}
+
+///|
+
+///|
+enum MarkdownEditorDirectoryTreeMsg {
+  SelectTreePath(String)
+  ToggleTreePath(String)
 }
 
 ///|
@@ -263,6 +277,16 @@ pub enum MarkdownEditorMsg {
   IndentLines
   OutdentLines
   ToggleTaskAt(Int)
+  PickWorkingDirectory
+  SelectTreePath(String)
+  ToggleTreePath(String)
+  ToggleFileTree
+  DirectoryListingReceived(String, Array[@views.TreeItem])
+  ImportImageFromClipboard
+  InsertMediaFromFileDrop(String)
+  SelectImage(Int)
+  DeselectImage
+  ToggleImageCenter
 }
 
 ///|
@@ -281,6 +305,9 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
     source_mode_enabled: @moui.State::new(false),
     outline_visible: @moui.State::new(false),
     file_sidebar_visible: @moui.State::new(false),
+    working_directory: @moui.State::new(""),
+    expanded_tree_paths: @moui.State::new([]),
+    directory_tree_items: @moui.State::new([]),
     document_info_visible: @moui.State::new(false),
     focus_mode_enabled: @moui.State::new(false),
     typewriter_mode_enabled: @moui.State::new(false),
@@ -306,6 +333,9 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
     undo_stack: @moui.State::new([]),
     redo_stack: @moui.State::new([]),
     editor_scroll: @core.ScrollState::new(),
+    file_tree_expanded: @moui.State::new(true),
+    selected_image_offset: @moui.State::new(None),
+    image_centered: @moui.State::new(false),
   }
 }
 
@@ -390,6 +420,8 @@ fn MarkdownEditorApp::update(
     Redo => ignore(self.redo())
     ToggleOutline => self.toggle_outline()
     ToggleFileSidebar => self.toggle_file_sidebar()
+    ToggleFileTree =>
+      self.file_tree_expanded.set(!self.file_tree_expanded.get())
     ToggleDocumentInfo => self.toggle_document_info()
     ToggleFind => self.toggle_find()
     ToggleFocusMode => self.toggle_focus_mode()
@@ -458,6 +490,29 @@ fn MarkdownEditorApp::update(
           " requires host text file services",
         ),
       )
+    PickWorkingDirectory => ()
+    SelectTreePath(_) => ()
+    ToggleTreePath(id) => {
+      let expanded = self.expanded_tree_paths.get()
+      let next : Array[String] = []
+      let mut removed = false
+      for path in expanded {
+        if path == id {
+          removed = true
+        } else {
+          next.push(path)
+        }
+      }
+      if !removed {
+        next.push(id)
+      }
+      self.expanded_tree_paths.set(next)
+    }
+    DirectoryListingReceived(path, items) => {
+      self.working_directory.set(path)
+      self.directory_tree_items.set(items)
+      self.transfer_status.set(TransferReady)
+    }
     JumpToOutline(source_start) => self.jump_to_outline(source_start)
     JumpToNextHeading => self.jump_to_next_heading()
     JumpToPreviousHeading => self.jump_to_previous_heading()
@@ -466,6 +521,34 @@ fn MarkdownEditorApp::update(
     IndentLines => self.shift_current_lines(indent=true)
     OutdentLines => self.shift_current_lines(indent=false)
     ToggleTaskAt(offset) => self.toggle_task_at(offset)
+    ImportImageFromClipboard =>
+      self.transfer_status.set(
+        TransferUnavailable(
+          "clipboard image import requires host services",
+        ),
+      )
+    InsertMediaFromFileDrop(path) => self.insert_media_from_path(path)
+    SelectImage(offset) => {
+      self.selected_image_offset.set(Some(offset))
+      self.image_centered.set(markdown_editor_image_is_centered_in_doc(
+        self.document.get(),
+      ))
+    }
+    DeselectImage => {
+      self.selected_image_offset.set(None)
+      self.image_centered.set(false)
+    }
+    ToggleImageCenter => {
+      let doc = self.document.get()
+      let centered = !self.image_centered.get()
+      let next = markdown_editor_toggle_image_center(
+        doc,
+        centered,
+      )
+      self.document.set(next)
+      self.image_centered.set(centered)
+      self.sync_target_inputs()
+    }
   }
   self
 }
@@ -489,15 +572,37 @@ fn MarkdownEditorApp::update_with_services(
         (self, self.request_file_open(services))
       }
     ImportFromClipboard => (self, self.request_clipboard_import(services))
+    ImportImageFromClipboard =>
+      (self, self.request_clipboard_image_import(services))
     ExportToClipboard => (self, self.request_clipboard_export(services))
     ExportHtmlToClipboard => (self, self.request_html_export(services))
     OpenTarget => (self, self.request_open_target(services))
-    OpenRecentDocument(path) =>
+    OpenRecentDocument(path) => {
+      // Auto-set working directory from file's parent when none is set
+      if self.working_directory.get() == "" {
+        let parent = markdown_editor_parent_directory(path)
+        if parent != "" {
+          ignore(self.load_tree_from_directory(parent, services))
+        }
+      }
       (self, self.request_text_file_read(path, services))
+    }
+    PickWorkingDirectory =>
+      (self, self.request_pick_working_directory(services))
+    SelectTreePath(path) => {
+      if self.working_directory.get() == "" {
+        let parent = markdown_editor_parent_directory(path)
+        if parent != "" {
+          ignore(self.load_tree_from_directory(parent, services))
+        }
+      }
+      (self, self.request_text_file_read(path, services))
+    }
     HostTransferCompleted(completion) => {
       self.apply_transfer_completion_with_services(completion, services)
       (self, @moui.Effect::none())
     }
+    DirectoryListingReceived(_, _) => (self, @moui.Effect::none())
     _ => (self.update(message), @moui.Effect::none())
   }
 }

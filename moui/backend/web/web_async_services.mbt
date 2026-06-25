@@ -1,6 +1,8 @@
 ///|
 enum WebAsyncHostServiceKind {
   ClipboardReadText
+  ClipboardReadImage
+  ClipboardWriteImage
   FileDialogOpenFile
   FileDialogSaveFile
   FileDialogPickDirectory
@@ -57,6 +59,8 @@ let web_text_file_reads : Ref[Array[WebTextFileReadEntry]] = Ref([])
 fn WebAsyncHostServiceKind::browser_code(self : WebAsyncHostServiceKind) -> Int {
   match self {
     ClipboardReadText => -1
+    ClipboardReadImage => -4
+    ClipboardWriteImage => -5
     FileDialogOpenFile => 0
     FileDialogSaveFile => 1
     FileDialogPickDirectory => 2
@@ -79,6 +83,28 @@ fn WebAsyncHostServiceRequest::from_pending(
         default_name: "",
         path: "",
         text: "",
+      })
+    @host.HostServiceRequest::Clipboard(@host.HostClipboardRequest::ReadImage) =>
+      Some({
+        id: pending.id,
+        kind: WebAsyncHostServiceKind::ClipboardReadImage,
+        title: "",
+        filters: [],
+        default_name: "",
+        path: "",
+        text: "",
+      })
+    @host.HostServiceRequest::Clipboard(
+      @host.HostClipboardRequest::WriteImage(_mime, bytes)
+    ) =>
+      Some({
+        id: pending.id,
+        kind: WebAsyncHostServiceKind::ClipboardWriteImage,
+        title: "",
+        filters: [],
+        default_name: "",
+        path: "",
+        text: @base64.encode(bytes[:]),
       })
     @host.HostServiceRequest::FileDialog(options) =>
       Some({
@@ -149,6 +175,14 @@ fn dispatch_web_async_host_service_request(
 ) -> Unit {
   match request.kind {
     ClipboardReadText => web_async_clipboard_read_text(request.id.value)
+    ClipboardReadImage => web_async_clipboard_read_image(request.id.value)
+    ClipboardWriteImage =>
+      ignore(
+        web_complete_async_clipboard_write_image(
+          request.id.value,
+          web_clipboard_write_image(web_host_string(request.text)),
+        ),
+      )
     FileDialogOpenFile | FileDialogSaveFile | FileDialogPickDirectory =>
       web_async_file_dialog_open(
         request.id.value,
@@ -196,6 +230,56 @@ fn web_complete_async_clipboard_read_text(
           id,
           web_async_failure_reason(text, "clipboard read is unavailable on Web"),
         )
+      }
+    }
+    None => false
+  }
+}
+
+//|
+fn web_complete_async_clipboard_read_image_text(
+  request_id : Int,
+  ok : Bool,
+  base64_png : String,
+) -> Bool {
+  match web_active_async_queue.val {
+    Some(queue) => {
+      let id = @host.HostServiceRequestId::new(request_id)
+      if ok && base64_png != "" {
+        queue.complete(
+          id,
+          @host.HostServiceResponse::ClipboardImage(
+            @base64.decode(base64_png, ignore_whitespace=false) catch {
+              _ => return queue.reject(id, "clipboard image decode failed")
+            },
+          ),
+        )
+      } else {
+        queue.reject(
+          id,
+          web_async_failure_reason(
+            base64_png,
+            "clipboard image read is unavailable on Web",
+          ),
+        )
+      }
+    }
+    None => false
+  }
+}
+
+//|
+fn web_complete_async_clipboard_write_image(
+  request_id : Int,
+  ok : Bool,
+) -> Bool {
+  match web_active_async_queue.val {
+    Some(queue) => {
+      let id = @host.HostServiceRequestId::new(request_id)
+      if ok {
+        queue.complete(id, @host.HostServiceResponse::ClipboardWritten)
+      } else {
+        queue.reject(id, "clipboard image write failed on Web")
       }
     }
     None => false
@@ -329,6 +413,21 @@ pub fn web_complete_async_clipboard_read(
 ) -> Unit {
   ignore(
     web_complete_async_clipboard_read_text(
+      request_id,
+      ok,
+      web_host_string_from_id(text_id),
+    ),
+  )
+}
+
+//|
+pub fn web_complete_async_clipboard_read_image(
+  request_id : Int,
+  ok : Bool,
+  text_id : Int,
+) -> Unit {
+  ignore(
+    web_complete_async_clipboard_read_image_text(
       request_id,
       ok,
       web_host_string_from_id(text_id),

@@ -31,38 +31,81 @@ fn files_inspector(
         theme,
       ),
       width=content_width,
-      height=markdown_editor_max_double(0.0, height - 124.0),
+      height=markdown_editor_max_double(0.0, height - 180.0),
     )
   }
+  let working_directory = app.working_directory.get()
+  let file_rows : Array[@moui.View[MarkdownEditorMsg]] = [
+    text("Files", width=content_width, height=24.0)
+    .font(theme.typography.caption)
+    .foreground(theme.palette.muted),
+    text(
+      markdown_editor_file_sidebar_current_label(
+        path=app.document_path.get(),
+        fallback=snapshot.active_heading,
+        dirty=app.is_dirty(),
+      ),
+      width=content_width,
+      height=30.0,
+    )
+    .font(theme.typography.caption)
+    .foreground(theme.palette.foreground),
+    editor_button(
+      if working_directory == "" {
+        "Pick folder"
+      } else {
+        "Change folder"
+      },
+      PickWorkingDirectory,
+      @views.ButtonVariant::Ghost,
+      theme,
+    ),
+  ]
+  if working_directory != "" {
+    let tree_expanded = app.file_tree_expanded.get()
+    let fold_label = if tree_expanded { "▾" } else { "▸" }
+    file_rows.push(
+      row(
+        [
+          text("Folder", width=content_width - 28.0, height=24.0)
+          .font(theme.typography.caption)
+          .foreground(theme.palette.muted),
+          button(
+            fold_label,
+            on_click=ToggleFileTree,
+            variant=@views.ButtonVariant::Ghost,
+            theme~,
+            width=24.0,
+            height=24.0,
+          ),
+        ],
+        spacing=theme.spacing_scale.xs,
+        align=@views.CrossAlign::Center,
+      ),
+    )
+    if tree_expanded {
+      file_rows.push(
+        @views.tree_view(
+          app.directory_tree_items.get(),
+          expanded=app.expanded_tree_paths.get(),
+          on_select=Some(id => SelectTreePath(id)),
+          on_toggle=Some(id => ToggleTreePath(id)),
+          theme~,
+          width=content_width,
+        ),
+      )
+    }
+  }
+  file_rows.push(
+    text("Recent", width=content_width, height=24.0)
+    .font(theme.typography.caption)
+    .foreground(theme.palette.muted),
+  )
+  file_rows.push(recent_content)
   container(
     padding_edges(
       column(
-        [
-          text("Files", width=content_width, height=24.0)
-          .font(theme.typography.caption)
-          .foreground(theme.palette.muted),
-          text(
-            markdown_editor_file_sidebar_current_label(
-              path=app.document_path.get(),
-              fallback=snapshot.active_heading,
-              dirty=app.is_dirty(),
-            ),
-            width=content_width,
-            height=30.0,
-          )
-          .font(theme.typography.caption)
-          .foreground(theme.palette.foreground),
-          editor_button(
-            "Open",
-            OpenDocument,
-            @views.ButtonVariant::Ghost,
-            theme,
-          ),
-          text("Recent", width=content_width, height=24.0)
-          .font(theme.typography.caption)
-          .foreground(theme.palette.muted),
-          recent_content,
-        ],
+        file_rows,
         spacing=theme.spacing_scale.xs,
         align=@views.CrossAlign::Start,
       ),
@@ -217,6 +260,8 @@ fn markdown_editor_reading_time_short_label(
     snapshot.reading_minutes.to_string() + " min"
   }
 }
+
+
 
 ///|
 fn file_sidebar_recent_rows(
