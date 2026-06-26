@@ -757,12 +757,7 @@ fn editor_source_layout(
     normal: {
       foreground: appearance.foreground,
       background: @core.Brush::solid(appearance.page_background),
-      border: Some(
-        @core.BorderStyle::new(
-          brush=@core.Brush::solid(appearance.page_border),
-          width=1.0,
-        ),
-      ),
+      border: None,
       radius: theme.radius_scale.md,
       shadow: None,
       bottom_border_only: false,
@@ -771,12 +766,7 @@ fn editor_source_layout(
     focused: {
       foreground: appearance.foreground,
       background: @core.Brush::solid(appearance.page_background),
-      border: Some(
-        @core.BorderStyle::new(
-          brush=@core.Brush::solid(appearance.page_border),
-          width=1.0,
-        ),
-      ),
+      border: None,
       radius: theme.radius_scale.md,
       shadow: None,
       bottom_border_only: false,
@@ -785,12 +775,7 @@ fn editor_source_layout(
     disabled: {
       foreground: appearance.foreground,
       background: @core.Brush::solid(appearance.page_background),
-      border: Some(
-        @core.BorderStyle::new(
-          brush=@core.Brush::solid(appearance.page_border),
-          width=1.0,
-        ),
-      ),
+      border: None,
       radius: theme.radius_scale.md,
       shadow: None,
       bottom_border_only: false,
@@ -923,16 +908,10 @@ fn editor_source_layout(
 fn editor_page(
   editor : @moui.View[MarkdownEditorMsg],
   theme : @moui.Theme,
-  appearance : MarkdownEditorAppearanceSpec,
+  _appearance : MarkdownEditorAppearanceSpec,
 ) -> @moui.View[MarkdownEditorMsg] {
   editor
   .shadow(markdown_editor_page_shadow())
-  .border(
-    @core.BorderStyle::new(
-      brush=@core.Brush::solid(appearance.page_border),
-      width=1.0,
-    ),
-  )
   .corner_radius(theme.radius_scale.sm)
   .repaint_boundary()
 }
