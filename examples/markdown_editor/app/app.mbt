@@ -38,6 +38,7 @@ pub struct MarkdownEditorApp {
   format_palette_visible : @moui.State[Bool]
   format_palette_query : @moui.State[String]
   more_menu_visible : @moui.State[Bool]
+  active_menu : @moui.State[String]
   toasts : @moui.State[@views.ToastQueue[MarkdownEditorMsg]]
   autosave_draft : @moui.State[String]
   dark_mode_enabled : @moui.State[Bool]
@@ -76,14 +77,6 @@ priv struct MarkdownEditorFormatPaletteItem {
   label : String
   group : String
   shortcut : String
-}
-
-///|
-/// A low-frequency command surfaced in the toolbar's "More" popover.
-priv struct MarkdownEditorMoreMenuItem {
-  label : String
-  shortcut : String
-  message : MarkdownEditorMsg
 }
 
 ///|
@@ -230,8 +223,9 @@ pub enum MarkdownEditorMsg {
   DismissAuxiliaryPanels
   ToggleSourcePreview
   ToggleSourceMode
-  ToggleMoreMenu
-  MoreMenuCommand(MarkdownEditorMsg)
+  ToggleMenuBarMenu(String)
+  CloseMenuBarMenu
+  CloseMenuBarMenuAndRun(MarkdownEditorMsg)
   ToggleDarkMode
   CycleFontFamily
   DismissToastTick
@@ -303,6 +297,7 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
     format_palette_visible: @moui.State::new(false),
     format_palette_query: @moui.State::new(""),
     more_menu_visible: @moui.State::new(false),
+    active_menu: @moui.State::new(""),
     toasts: @moui.State::new(@views.ToastQueue::new()),
     autosave_draft: @moui.State::new(""),
     dark_mode_enabled: @moui.State::new(false),
@@ -426,7 +421,6 @@ fn MarkdownEditorApp::update(
     DismissAuxiliaryPanels => self.dismiss_auxiliary_panels()
     ToggleSourcePreview => self.toggle_source_preview()
     ToggleSourceMode => self.toggle_source_mode()
-    ToggleMoreMenu => self.toggle_more_menu()
     ToggleDarkMode => self.dark_mode_enabled.set(!self.dark_mode_enabled.get())
     CycleFontFamily => {
       let next = match self.font_family.get() {
@@ -436,8 +430,16 @@ fn MarkdownEditorApp::update(
       }
       self.font_family.set(next)
     }
-    MoreMenuCommand(message) => {
-      self.more_menu_visible.set(false)
+    ToggleMenuBarMenu(menu_id) => {
+      if self.active_menu.get() == menu_id {
+        self.active_menu.set("")
+      } else {
+        self.active_menu.set(menu_id)
+      }
+    }
+    CloseMenuBarMenu => self.active_menu.set("")
+    CloseMenuBarMenuAndRun(message) => {
+      self.active_menu.set("")
       let _ = self.update(message)
     }
     DismissToastTick => self.expire_toasts()
