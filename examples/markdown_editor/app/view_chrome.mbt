@@ -22,13 +22,6 @@ fn MarkdownEditorApp::root(
   let block_label = self.block_label.get()
   let scroll_offset = self.editor_scroll.offset()
   let children : Array[@moui.View[MarkdownEditorMsg]] = []
-  if !zen {
-    children.push(
-      self.chrome(
-        theme, document, selection, snapshot, workspace_width,
-      ),
-    )
-  }
   if !zen && self.find_visible.get() {
     children.push(self.find_bar(theme, document, selection, workspace_width))
   }
@@ -74,29 +67,59 @@ fn MarkdownEditorApp::root(
     spacing=theme.spacing_scale.sm,
     align=@views.CrossAlign::Start,
   )
-  let centered = markdown_editor_centered_workspace(
-    appearance,
-    padding_edges(
-      workspace,
-      top=0.0,
-      right=theme.spacing_scale.xl,
-      bottom=theme.spacing_scale.xl,
-      left=theme.spacing_scale.md,
-    ),
+  let padded = padding_edges(
+    workspace,
+    top=0.0,
+    right=theme.spacing_scale.xl,
+    bottom=theme.spacing_scale.xl,
+    left=theme.spacing_scale.md,
   )
-  // Stack the toast layer and confirm dialog above the workspace so they
-  // float over the editor without displacing it.
-  @views.stack([
-    centered,
+  // The chrome (title bar) lives in the same column as the centered
+  // workspace.  Because it is OUTSIDE the workspace's padding edges, its
+  // right-side buttons reach the window edge (Typora style).  The
+  // centered layout only centers horizontally; the window-background fill
+  // is handled by a sibling `fill` view so `centered` does not need
+  // `constraints.max` and can live happily inside a column.
+  let outer_children : Array[@moui.View[MarkdownEditorMsg]] = []
+  if !zen {
+    outer_children.push(
+      self.chrome(theme, document, selection, snapshot),
+    )
+  }
+  outer_children.push(markdown_editor_centered_workspace(padded))
+  let outer = column(
+    outer_children,
+    spacing=0.0,
+    align=@views.CrossAlign::Stretch,
+  )
+  // Stack: background fill → outer column (chrome + workspace) → overlays.
+  let no_views : Array[@moui.View[MarkdownEditorMsg]] = []
+  let window_bg = @views.custom_children_layout(
+    children=no_views,
+    measure=ctx => ctx.constraints.constrain(ctx.constraints.max),
+    place=_ctx => {
+      let rects : Array[@core.Rect] = []
+      rects
+    },
+    paint=bounds => {
+      [@core.DrawCommand::FillRect(bounds, appearance.window_background)]
+    },
+    semantics_label="Window background",
+  )
+  let layers : Array[@moui.View[MarkdownEditorMsg]] = [window_bg, outer]
+  layers.push(
     @views.align(
       self.toast_layer(theme),
       alignment=@core.Alignment::new(x=0.5, y=0.0),
     ),
+  )
+  layers.push(
     @views.align(
       self.confirm_dialog(theme),
       alignment=@core.Alignment::center(),
     ),
-  ])
+  )
+  @views.stack(layers)
 }
 
 ///|
@@ -158,9 +181,9 @@ fn MarkdownEditorApp::reactive_root(
   ignore(ctx.watch(self.image_centered))
   ignore(ctx.watch_scroll(self.editor_scroll))
   // Make the editor viewport fill the window instead of a fixed 520px. Reserve
-  // room for the titlebar area (52px), bottom status bar (20px) and spacing.
+  // room for the titlebar area (28px), bottom status bar (20px) and spacing.
   let window_height = ctx.viewport_size().height
-  let viewport_height = markdown_editor_max_double(320.0, window_height - 132.0)
+  let viewport_height = markdown_editor_max_double(320.0, window_height - 108.0)
   self.root(viewport_height~)
 }
 
@@ -196,13 +219,19 @@ fn markdown_editor_workspace_width(
 }
 
 ///|
+/// Centered-workspace layout. Places its child horizontally centered inside
+/// the available frame. Does NOT paint the window background — that is done
+/// by a sibling fill view in the enclosing stack so this layout can live
+/// inside a column alongside the chrome without needing `constraints.max`.
 fn markdown_editor_centered_workspace(
-  appearance : MarkdownEditorAppearanceSpec,
   child : @moui.View[MarkdownEditorMsg],
 ) -> @moui.View[MarkdownEditorMsg] {
   @views.custom_children_layout(
     children=[child],
-    measure=ctx => ctx.constraints.max,
+    measure=ctx => {
+      let child_size = ctx.child_sizes[0]
+      ctx.constraints.constrain(child_size)
+    },
     place=ctx => {
       let child_size = ctx.child_sizes[0]
       let x = if ctx.frame.size.width > child_size.width {
@@ -224,25 +253,25 @@ fn markdown_editor_centered_workspace(
         ),
       ]
     },
-    paint=bounds => {
-      [@core.DrawCommand::FillRect(bounds, appearance.window_background)]
-    },
     semantics_label="Markdown editor workspace",
   )
 }
 
 ///|
-/// Typora-style title bar area: transparent titlebar region with centered
-/// document title and unsaved indicator. The native traffic lights sit at the
-/// top-left; we reserve ~78px of horizontal space for them. No in-window
-/// menubar — all menus go through the system menu bar.
+/// Typora-style title bar: sits inside the transparent 28px macOS titlebar
+/// region. Left: traffic-light space. Center: file name + chevron.
+/// Right: outline toggle, sidebar toggle.
+///
+/// Rendered as a stack overlay pinned to the top edge (alignment x=0, y=0).
+/// The width is unconstrained — it inherits the full window width from the
+/// stack frame — so right-side buttons reach the window edge like Typora.
+/// `frame(height=28.0)` fixes the vertical size.
 fn MarkdownEditorApp::chrome(
   self : MarkdownEditorApp,
   theme : @moui.Theme,
   _source : String,
   _selection : MarkdownEditorSelection,
   _snapshot : MarkdownEditorSnapshot,
-  width : Double,
 ) -> @moui.View[MarkdownEditorMsg] {
   let title = markdown_editor_document_title(
     path=self.document_path.get(),
@@ -250,31 +279,71 @@ fn MarkdownEditorApp::chrome(
   )
   let dirty = self.is_dirty()
   let unsaved_dot = if dirty {
-    text("·", width=10.0, height=20.0)
-      .font(theme.typography.body)
+    text("·", width=8.0, height=16.0)
+      .font(theme.typography.caption)
       .foreground(theme.palette.primary)
   } else {
     empty()
   }
 
-  let title_text = text(title, height=20.0)
-    .font(theme.typography.body)
-    .foreground(theme.palette.foreground)
+  // Center: clickable title + chevron (toggles document info)
+  let title_button = button(
+    title,
+    on_click=ToggleDocumentInfo,
+    variant=@views.ButtonVariant::Ghost,
+    theme~,
+    height=22.0,
+  )
+  .font(theme.typography.caption)
+  .foreground(theme.palette.muted)
 
-  // The titlebar row: traffic-light spacer — centered title — right spacer.
+  let outline_btn = button(
+    "",
+    on_click=ToggleOutline,
+    variant=if self.outline_visible.get() {
+      @views.ButtonVariant::Tonal
+    } else {
+      @views.ButtonVariant::Ghost
+    },
+    theme~,
+    icon=Some(@views.IconName::ListBullet),
+    width=26.0,
+    height=22.0,
+  )
+
+  let sidebar_btn = button(
+    "",
+    on_click=ToggleFileSidebar,
+    variant=if self.file_sidebar_visible.get() {
+      @views.ButtonVariant::Tonal
+    } else {
+      @views.ButtonVariant::Ghost
+    },
+    theme~,
+    icon=Some(@views.IconName::Sidebar),
+    width=26.0,
+    height=22.0,
+  )
+
+  let right_group = row(
+    [outline_btn, sidebar_btn],
+    spacing=2.0,
+    align=@views.CrossAlign::Center,
+  )
+
   frame(
     row(
       [
         spacer(min_length=78.0, weight=1.0),
-        title_text,
+        title_button,
         unsaved_dot,
-        spacer(min_length=78.0, weight=1.0),
+        spacer(min_length=0.0, weight=1.0),
+        right_group,
       ],
       spacing=theme.spacing_scale.xs,
       align=@views.CrossAlign::Center,
     ),
-    width~,
-    height=52.0,
+    height=28.0,
   ).repaint_boundary()
 }
 

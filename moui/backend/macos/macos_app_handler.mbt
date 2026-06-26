@@ -63,6 +63,14 @@ pub impl @window_macos.ApplicationHandler for MacosApp with fn can_create_surfac
           )
           window.request_redraw()
           self.drain_window_requests(event_loop)
+          // The primary window is ready and the app has finished launching,
+          // so the default macOS menu bar is already installed. Invoke the
+          // optional on_ready hook now so apps can install a custom system
+          // menu (installing earlier gets overwritten by the default menu).
+          match self.on_ready {
+            Some(callback) => callback()
+            None => ()
+          }
         }
         None => {
           self.rollback_window_record(window_id)

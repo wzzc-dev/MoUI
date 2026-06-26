@@ -22,6 +22,12 @@ pub struct MacosHostAppOptions {
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
   priv transparent_titlebar : Bool
   priv platform_attributes : @window_core.PlatformWindowAttributes
+  /// Optional callback invoked once after the primary window is created and
+  /// the app has finished launching. This runs after the default macOS menu
+  /// bar is installed, so it is the correct place to install a custom system
+  /// menu via `@window_macos.set_system_menus` (installing earlier gets
+  /// overwritten by the default menu during `did_finish_launching`).
+  priv on_ready : (() -> Unit)?
 }
 
 ///|
@@ -56,6 +62,7 @@ struct MacosApp {
   platform_view_plugins : Array[@host.PlatformViewPlugin]
   transparent_titlebar : Bool
   platform_attributes : @window_core.PlatformWindowAttributes
+  on_ready : (() -> Unit)?
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
   mut first_frame_smoke_auto_exit : Bool
@@ -86,8 +93,9 @@ pub fn MacosHostAppOptions::new(
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
   transparent_titlebar? : Bool = false,
   platform_attributes? : @window_core.PlatformWindowAttributes = @window_core.PlatformWindowAttributes::default(),
+  on_ready? : (() -> Unit)? = None,
 ) -> MacosHostAppOptions {
-  { scene_resolver, event_sources, platform_view_plugins, transparent_titlebar, platform_attributes }
+  { scene_resolver, event_sources, platform_view_plugins, transparent_titlebar, platform_attributes, on_ready }
 }
 
 ///|
