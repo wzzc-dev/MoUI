@@ -15,6 +15,8 @@ pub struct MacosSkiaAppOptions {
   priv font_resolution : @skia_renderer.SkiaFontResolution
   priv surface_route : @skia_renderer.SkiaSurfaceRoute
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
+  priv transparent_titlebar : Bool
+  priv platform_attributes : @window_core.PlatformWindowAttributes
 }
 
 ///|
@@ -29,12 +31,16 @@ pub fn MacosSkiaAppOptions::new(
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
   surface_route? : @skia_renderer.SkiaSurfaceRoute = @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute,
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
+  transparent_titlebar? : Bool = false,
+  platform_attributes? : @window_core.PlatformWindowAttributes = @window_core.PlatformWindowAttributes::default(),
 ) -> MacosSkiaAppOptions {
   {
     scene_resolver,
     font_resolution,
     surface_route,
     platform_view_plugins,
+    transparent_titlebar,
+    platform_attributes,
   }
 }
 
@@ -74,6 +80,8 @@ pub fn run_app_with_options(
     options=@macos_host.MacosHostAppOptions::new(
       scene_resolver=options.scene_resolver,
       platform_view_plugins=options.platform_view_plugins,
+      transparent_titlebar=options.transparent_titlebar,
+      platform_attributes=options.platform_attributes,
     ),
     window_requests~,
   )
@@ -98,6 +106,8 @@ pub fn run_smoke_app_with_options(
     options=@macos_host.MacosHostAppOptions::new(
       scene_resolver=options.scene_resolver,
       platform_view_plugins=options.platform_view_plugins,
+      transparent_titlebar=options.transparent_titlebar,
+      platform_attributes=options.platform_attributes,
     ),
     smoke_options=@macos_host.MacosHostSmokeOptions::new(
       first_frame_smoke_auto_exit=smoke_options.first_frame_smoke_auto_exit,
@@ -126,6 +136,8 @@ pub async fn run_app_with_options_async_pump(
     options=@macos_host.MacosHostAppOptions::new(
       scene_resolver=options.scene_resolver,
       platform_view_plugins=options.platform_view_plugins,
+      transparent_titlebar=options.transparent_titlebar,
+      platform_attributes=options.platform_attributes,
     ),
     window_requests~,
     frame_interval_ms~,
