@@ -5,6 +5,7 @@ import {
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/skia" @skia_renderer,
   "wzzc-dev/window/core" @window_core,
+  "wzzc-dev/window/dpi",
   "wzzc-dev/window/macos" @window_macos,
 }
 

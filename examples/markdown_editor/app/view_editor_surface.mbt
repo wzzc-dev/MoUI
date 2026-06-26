@@ -455,8 +455,8 @@ fn MarkdownEditorAppearance::spec(
           foreground: @core.Color::rgba(r=0.90, g=0.90, b=0.90),
           placeholder: @core.Color::white().multiply_alpha(0.32),
           page_background: @core.Color::rgba(r=0.13, g=0.14, b=0.16),
-          window_background: @core.Color::rgba(r=0.08, g=0.09, b=0.10),
-          page_border: @core.Color::white().multiply_alpha(0.10),
+          window_background: @core.Color::rgba(r=0.13, g=0.14, b=0.16),
+          page_border: @core.Color::rgba(r=0, g=0, b=0, a=0),
           font_family: @core.FontFamilyStack::sans_serif(),
         }
       } else {
@@ -468,8 +468,8 @@ fn MarkdownEditorAppearance::spec(
           foreground: @core.Color::rgba(r=0.12, g=0.12, b=0.12),
           placeholder: @core.Color::black().multiply_alpha(0.35),
           page_background: @core.Color::white(),
-          window_background: @core.Color::rgba(r=0.992, g=0.992, b=0.99),
-          page_border: @core.Color::black().multiply_alpha(0.10),
+          window_background: @core.Color::white(),
+          page_border: @core.Color::rgba(r=0, g=0, b=0, a=0),
           font_family: @core.FontFamilyStack::sans_serif(),
         }
       }
@@ -483,8 +483,8 @@ fn MarkdownEditorAppearance::spec(
           foreground: @core.Color::rgba(r=0.92, g=0.88, b=0.80),
           placeholder: @core.Color::rgba(r=0.80, g=0.72, b=0.60, a=0.40),
           page_background: @core.Color::rgba(r=0.16, g=0.14, b=0.11),
-          window_background: @core.Color::rgba(r=0.10, g=0.08, b=0.06),
-          page_border: @core.Color::rgba(r=0.60, g=0.48, b=0.30, a=0.22),
+          window_background: @core.Color::rgba(r=0.16, g=0.14, b=0.11),
+          page_border: @core.Color::rgba(r=0, g=0, b=0, a=0),
           font_family: @core.FontFamilyStack::sans_serif(),
         }
       } else {
@@ -496,8 +496,8 @@ fn MarkdownEditorAppearance::spec(
           foreground: @core.Color::rgba(r=0.18, g=0.14, b=0.10),
           placeholder: @core.Color::rgba(r=0.38, g=0.28, b=0.18, a=0.46),
           page_background: @core.Color::rgba(r=1.0, g=0.984, b=0.936),
-          window_background: @core.Color::rgba(r=0.968, g=0.944, b=0.890),
-          page_border: @core.Color::rgba(r=0.48, g=0.34, b=0.18, a=0.18),
+          window_background: @core.Color::rgba(r=1.0, g=0.984, b=0.936),
+          page_border: @core.Color::rgba(r=0, g=0, b=0, a=0),
           font_family: @core.FontFamilyStack::sans_serif(),
         }
       }
@@ -511,8 +511,8 @@ fn MarkdownEditorAppearance::spec(
           foreground: @core.Color::rgba(r=0.86, g=0.90, b=0.94),
           placeholder: @core.Color::rgba(r=0.60, g=0.70, b=0.80, a=0.40),
           page_background: @core.Color::rgba(r=0.11, g=0.13, b=0.16),
-          window_background: @core.Color::rgba(r=0.07, g=0.08, b=0.10),
-          page_border: @core.Color::rgba(r=0.40, g=0.52, b=0.66, a=0.22),
+          window_background: @core.Color::rgba(r=0.11, g=0.13, b=0.16),
+          page_border: @core.Color::rgba(r=0, g=0, b=0, a=0),
           font_family: @core.FontFamilyStack::sans_serif(),
         }
       } else {
@@ -524,8 +524,8 @@ fn MarkdownEditorAppearance::spec(
           foreground: @core.Color::rgba(r=0.10, g=0.12, b=0.15),
           placeholder: @core.Color::rgba(r=0.16, g=0.20, b=0.26, a=0.36),
           page_background: @core.Color::rgba(r=0.986, g=0.990, b=0.994),
-          window_background: @core.Color::rgba(r=0.936, g=0.946, b=0.958),
-          page_border: @core.Color::rgba(r=0.18, g=0.24, b=0.32, a=0.16),
+          window_background: @core.Color::rgba(r=0.986, g=0.990, b=0.994),
+          page_border: @core.Color::rgba(r=0, g=0, b=0, a=0),
           font_family: @core.FontFamilyStack::sans_serif(),
         }
       }

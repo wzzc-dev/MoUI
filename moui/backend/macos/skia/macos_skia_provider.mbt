@@ -18,6 +18,7 @@ pub struct MacosSkiaAppOptions {
   priv transparent_titlebar : Bool
   priv platform_attributes : @window_core.PlatformWindowAttributes
   priv on_ready : (() -> Unit)?
+  priv min_window_size : @dpi.LogicalSize?
 }
 
 ///|
@@ -35,6 +36,7 @@ pub fn MacosSkiaAppOptions::new(
   transparent_titlebar? : Bool = false,
   platform_attributes? : @window_core.PlatformWindowAttributes = @window_core.PlatformWindowAttributes::default(),
   on_ready? : (() -> Unit)? = None,
+  min_window_size? : @dpi.LogicalSize? = None,
 ) -> MacosSkiaAppOptions {
   {
     scene_resolver,
@@ -44,6 +46,7 @@ pub fn MacosSkiaAppOptions::new(
     transparent_titlebar,
     platform_attributes,
     on_ready,
+    min_window_size,
   }
 }
 
@@ -86,6 +89,7 @@ pub fn run_app_with_options(
       transparent_titlebar=options.transparent_titlebar,
       platform_attributes=options.platform_attributes,
       on_ready=options.on_ready,
+      min_window_size=options.min_window_size,
     ),
     window_requests~,
   )
@@ -113,6 +117,7 @@ pub fn run_smoke_app_with_options(
       transparent_titlebar=options.transparent_titlebar,
       platform_attributes=options.platform_attributes,
       on_ready=options.on_ready,
+      min_window_size=options.min_window_size,
     ),
     smoke_options=@macos_host.MacosHostSmokeOptions::new(
       first_frame_smoke_auto_exit=smoke_options.first_frame_smoke_auto_exit,
@@ -144,6 +149,7 @@ pub async fn run_app_with_options_async_pump(
       transparent_titlebar=options.transparent_titlebar,
       platform_attributes=options.platform_attributes,
       on_ready=options.on_ready,
+      min_window_size=options.min_window_size,
     ),
     window_requests~,
     frame_interval_ms~,

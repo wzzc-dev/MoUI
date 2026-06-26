@@ -31,6 +31,7 @@ fn main {
       surface_route~,
       transparent_titlebar=true,
       on_ready=Some(() => setup_system_menu(runtime)),
+      min_window_size=Some(@dpi.LogicalSize::LogicalSize(816.0, 480.0)),
     ),
   )
 }

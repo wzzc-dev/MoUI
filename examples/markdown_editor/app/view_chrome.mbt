@@ -55,13 +55,6 @@ fn MarkdownEditorApp::root(
       align=@views.CrossAlign::Start,
     ),
   )
-  if !zen {
-    children.push(
-      self.bottom_status_bar(
-        theme, snapshot, block_label, document, selection, workspace_width,
-      ),
-    )
-  }
   let workspace = column(
     children,
     spacing=theme.spacing_scale.sm,
@@ -86,7 +79,14 @@ fn MarkdownEditorApp::root(
       self.chrome(theme, document, selection, snapshot),
     )
   }
-  outer_children.push(markdown_editor_centered_workspace(padded))
+  outer_children.push(markdown_editor_centered_workspace(padded).expanded())
+  if !zen {
+    outer_children.push(
+      self.bottom_status_bar(
+        theme, snapshot, block_label, document, selection, workspace_width,
+      ),
+    )
+  }
   let outer = column(
     outer_children,
     spacing=0.0,
@@ -311,22 +311,9 @@ fn MarkdownEditorApp::chrome(
     height=22.0,
   )
 
-  let sidebar_btn = button(
-    "",
-    on_click=ToggleFileSidebar,
-    variant=if self.file_sidebar_visible.get() {
-      @views.ButtonVariant::Tonal
-    } else {
-      @views.ButtonVariant::Ghost
-    },
-    theme~,
-    icon=Some(@views.IconName::Sidebar),
-    width=26.0,
-    height=22.0,
-  )
 
   let right_group = row(
-    [outline_btn, sidebar_btn],
+    [outline_btn],
     spacing=2.0,
     align=@views.CrossAlign::Center,
   )
@@ -353,47 +340,49 @@ fn MarkdownEditorApp::bottom_status_bar(
   self : MarkdownEditorApp,
   theme : @moui.Theme,
   snapshot : MarkdownEditorSnapshot,
-  block_label : String,
-  source : String,
-  selection : MarkdownEditorSelection,
-  width : Double,
+  _block_label : String,
+  _source : String,
+  _selection : MarkdownEditorSelection,
+  _width : Double,
 ) -> @moui.View[MarkdownEditorMsg] {
-  let _ = block_label
-  let _ = source
-  let _ = selection
   let show_files = self.file_sidebar_visible.get()
   let tree_button = button(
-    if show_files { "◉" } else { "◎" },
+    "",
     on_click=ToggleFileSidebar,
-    variant=@views.ButtonVariant::Ghost,
+    variant=if show_files {
+      @views.ButtonVariant::Tonal
+    } else {
+      @views.ButtonVariant::Ghost
+    },
     theme~,
-    width=24.0,
+    icon=Some(@views.IconName::Sidebar),
+    width=26.0,
     height=20.0,
   )
-  .font(theme.typography.caption)
-  .foreground(theme.palette.muted.multiply_alpha(0.7))
 
   // Typora-style concise status: word count only
   let status = snapshot.word_count.to_string() + " 词 / " + snapshot.line_count.to_string() + " 行"
 
-  frame(
+  let status_frame = frame(
     row(
       [
-        tree_button,
-        text(
-          status,
-          width=width - 36.0,
-          height=18.0,
-        )
+        spacer(min_length=26.0, weight=0.0),
+        spacer(min_length=0.0, weight=1.0),
+        text(status, height=18.0)
         .font(theme.typography.caption)
         .foreground(theme.palette.muted.multiply_alpha(0.7)),
+        spacer(min_length=0.0, weight=1.0),
       ],
       spacing=theme.spacing_scale.xs,
       align=@views.CrossAlign::Center,
     ),
-    width~,
     height=20.0,
   ).repaint_boundary()
+  let tree_aligned = @views.align(
+    tree_button,
+    alignment=@core.Alignment::new(x=-1.0, y=0.0),
+  )
+  @views.overlay(status_frame, tree_aligned)
 }
 
 ///|
