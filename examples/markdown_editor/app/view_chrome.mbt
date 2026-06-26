@@ -180,10 +180,12 @@ fn MarkdownEditorApp::reactive_root(
   ignore(ctx.watch(self.selected_image_offset))
   ignore(ctx.watch(self.image_centered))
   ignore(ctx.watch_scroll(self.editor_scroll))
-  // Make the editor viewport fill the window instead of a fixed 520px. Reserve
-  // room for the titlebar area (28px), bottom status bar (20px) and spacing.
+  // Make the editor viewport fill the window instead of a fixed 520px.
+  // Chrome (28px) and status bar (20px) in the outer column, workspace bottom
+  // padding (24px), and inner column spacing (8px) = 80.  Add 4px safety for
+  // the centered custom layout's constraint rounding.
   let window_height = ctx.viewport_size().height
-  let viewport_height = markdown_editor_max_double(320.0, window_height - 108.0)
+  let viewport_height = markdown_editor_max_double(320.0, window_height - 84.0)
   self.root(viewport_height~)
 }
 
@@ -229,8 +231,9 @@ fn markdown_editor_centered_workspace(
   @views.custom_children_layout(
     children=[child],
     measure=ctx => {
-      let child_size = ctx.child_sizes[0]
-      ctx.constraints.constrain(child_size)
+      // Use the full available space so the flex-expanded height is respected.
+      // The child (padded workspace) measures itself within these constraints.
+      ctx.constraints.constrain(ctx.constraints.max)
     },
     place=ctx => {
       let child_size = ctx.child_sizes[0]
