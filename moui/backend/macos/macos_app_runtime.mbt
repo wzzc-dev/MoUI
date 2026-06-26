@@ -102,6 +102,7 @@ fn create_macos_app(
     platform_view_plugins: options.platform_view_plugins,
     transparent_titlebar: options.transparent_titlebar,
     platform_attributes: options.platform_attributes,
+    on_ready: options.on_ready,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
     first_frame_smoke_auto_exit: smoke_options.first_frame_smoke_auto_exit,
