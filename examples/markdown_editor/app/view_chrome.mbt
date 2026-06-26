@@ -371,7 +371,7 @@ fn MarkdownEditorApp::bottom_status_bar(
       [
         spacer(min_length=26.0, weight=0.0),
         spacer(min_length=0.0, weight=1.0),
-        text(status, height=18.0)
+        text(status, height=15.0)
         .font(theme.typography.caption)
         .foreground(theme.palette.muted.multiply_alpha(0.7)),
         spacer(min_length=0.0, weight=1.0),

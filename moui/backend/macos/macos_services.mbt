@@ -160,11 +160,37 @@ pub fn macos_service_bridge(
           menu_command_response(commands, menu(commands))
         @host.HostServiceRequest::QuerySystemTheme =>
           @host.HostServiceResponse::SystemTheme(system_theme)
-        @host.HostServiceRequest::ListDirectory(_) =>
-          @host.HostServiceResponse::Unavailable("directory listing not available on macOS backend")
+        @host.HostServiceRequest::ListDirectory(path) =>
+          dispatch_macos_list_directory(path)
       }
     },
   )
+}
+
+///|
+fn dispatch_macos_list_directory(
+  path : String,
+) -> @host.HostServiceResponse {
+  let names_opt : Array[String]? = Some(@fs.read_dir(path)) catch { _ => None }
+  let names = names_opt.unwrap_or([])
+  let entries : Array[@host.HostDirectoryEntry] = []
+  for name in names {
+    // Skip hidden files (starting with .)
+    if name.has_prefix(".") {
+      continue
+    }
+    let child_path = path + "/" + name
+    let is_dir_opt : Bool? = Some(@fs.is_dir(child_path)) catch { _ => None }
+    let is_dir = is_dir_opt.unwrap_or(false)
+    entries.push(
+      @host.HostDirectoryEntry::new(
+        name=name,
+        path=child_path,
+        is_directory=is_dir,
+      ),
+    )
+  }
+  @host.HostServiceResponse::DirectoryListing(path, entries)
 }
 
 ///|
