@@ -17,10 +17,14 @@ pub impl @window_macos.ApplicationHandler for MacosApp with fn can_create_surfac
   } else {
     self.platform_attributes
   }
-  let attributes = @window_core.WindowAttributes::default()
+  let base_attributes = @window_core.WindowAttributes::default()
     .with_title(self.title)
     .with_surface_size(runtime_size_to_window_surface_size(self.runtime.size()))
     .with_platform_attributes(platform)
+  let attributes = match self.min_window_size {
+    Some(min) => base_attributes.with_min_inner_size(@dpi.Size::Logical(min))
+    None => base_attributes
+  }
   let window : @window_macos.Window? = Some(
     event_loop.try_create_window(attributes),
   ) catch {
