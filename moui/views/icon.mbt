@@ -37,6 +37,8 @@ pub(all) enum IconName {
   Eye
   Focus
   Columns
+  /// Sidebar panel: a rectangle with a narrow left divider (Typora-style).
+  Sidebar
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -478,6 +480,17 @@ fn icon_path(name : IconName) -> Array[@core.PathVerb] {
         @core.PathVerb::MoveTo(@core.Point::new(x=12.0, y=5.0)),
         @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=19.0)),
       ]
+    // Sidebar: rectangle with a narrow left panel divider at ~1/3.
+    Sidebar =>
+      [
+        @core.PathVerb::MoveTo(@core.Point::new(x=4.0, y=5.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=20.0, y=5.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=20.0, y=19.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=4.0, y=19.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=4.0, y=5.0)),
+        @core.PathVerb::MoveTo(@core.Point::new(x=9.0, y=5.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=9.0, y=19.0)),
+      ]
   }
 }
 
@@ -622,5 +635,6 @@ fn icon_label(name : IconName) -> String {
     Eye => "Eye"
     Focus => "Focus"
     Columns => "Columns"
+    Sidebar => "Sidebar"
   }
 }

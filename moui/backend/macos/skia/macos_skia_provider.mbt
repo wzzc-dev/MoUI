@@ -17,6 +17,7 @@ pub struct MacosSkiaAppOptions {
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
   priv transparent_titlebar : Bool
   priv platform_attributes : @window_core.PlatformWindowAttributes
+  priv on_ready : (() -> Unit)?
 }
 
 ///|
@@ -33,6 +34,7 @@ pub fn MacosSkiaAppOptions::new(
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
   transparent_titlebar? : Bool = false,
   platform_attributes? : @window_core.PlatformWindowAttributes = @window_core.PlatformWindowAttributes::default(),
+  on_ready? : (() -> Unit)? = None,
 ) -> MacosSkiaAppOptions {
   {
     scene_resolver,
@@ -41,6 +43,7 @@ pub fn MacosSkiaAppOptions::new(
     platform_view_plugins,
     transparent_titlebar,
     platform_attributes,
+    on_ready,
   }
 }
 
@@ -82,6 +85,7 @@ pub fn run_app_with_options(
       platform_view_plugins=options.platform_view_plugins,
       transparent_titlebar=options.transparent_titlebar,
       platform_attributes=options.platform_attributes,
+      on_ready=options.on_ready,
     ),
     window_requests~,
   )
@@ -108,6 +112,7 @@ pub fn run_smoke_app_with_options(
       platform_view_plugins=options.platform_view_plugins,
       transparent_titlebar=options.transparent_titlebar,
       platform_attributes=options.platform_attributes,
+      on_ready=options.on_ready,
     ),
     smoke_options=@macos_host.MacosHostSmokeOptions::new(
       first_frame_smoke_auto_exit=smoke_options.first_frame_smoke_auto_exit,
@@ -138,6 +143,7 @@ pub async fn run_app_with_options_async_pump(
       platform_view_plugins=options.platform_view_plugins,
       transparent_titlebar=options.transparent_titlebar,
       platform_attributes=options.platform_attributes,
+      on_ready=options.on_ready,
     ),
     window_requests~,
     frame_interval_ms~,

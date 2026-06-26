@@ -13,21 +13,24 @@ fn main {
   let commands = app.action_commands(services~)
   runtime.set_action_commands(commands)
 
-  // Set up native macOS system menu bar.
-  setup_system_menu(runtime)
-
   let surface_route = if @env.get_env_var("MOUI_MACOS_SKIA_SURFACE_ROUTE") ==
     Some("metal-gpu") {
     @skia_renderer.SkiaSurfaceRoute::MetalGpuSurfaceRoute
   } else {
     @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute
   }
+
+  // Set up native macOS system menu bar. This must run after the app finishes
+  // launching (during `did_finish_launching` the default macOS menu bar is
+  // installed and would overwrite an earlier custom menu), so it is deferred
+  // to the `on_ready` hook which fires once the primary window is created.
   @macos_skia_backend.run_app_with_options(
     "MoUI Markdown Editor",
     runtime,
     options=@macos_skia_backend.MacosSkiaAppOptions::new(
       surface_route~,
       transparent_titlebar=true,
+      on_ready=Some(() => setup_system_menu(runtime)),
     ),
   )
 }
