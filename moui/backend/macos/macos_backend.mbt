@@ -28,6 +28,7 @@ pub struct MacosHostAppOptions {
   /// menu via `@window_macos.set_system_menus` (installing earlier gets
   /// overwritten by the default menu during `did_finish_launching`).
   priv on_ready : (() -> Unit)?
+  priv min_window_size : @dpi.LogicalSize?
 }
 
 ///|
@@ -63,6 +64,7 @@ struct MacosApp {
   transparent_titlebar : Bool
   platform_attributes : @window_core.PlatformWindowAttributes
   on_ready : (() -> Unit)?
+  min_window_size : @dpi.LogicalSize?
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
   mut first_frame_smoke_auto_exit : Bool
@@ -94,8 +96,9 @@ pub fn MacosHostAppOptions::new(
   transparent_titlebar? : Bool = false,
   platform_attributes? : @window_core.PlatformWindowAttributes = @window_core.PlatformWindowAttributes::default(),
   on_ready? : (() -> Unit)? = None,
+  min_window_size? : @dpi.LogicalSize? = None,
 ) -> MacosHostAppOptions {
-  { scene_resolver, event_sources, platform_view_plugins, transparent_titlebar, platform_attributes, on_ready }
+  { scene_resolver, event_sources, platform_view_plugins, transparent_titlebar, platform_attributes, on_ready, min_window_size }
 }
 
 ///|
