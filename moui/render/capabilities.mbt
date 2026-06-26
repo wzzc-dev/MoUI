@@ -254,27 +254,27 @@ fn sun_feature_note(feature : RendererFeature) -> String {
     Gradient =>
       "Sun raster maps MoUI linear and radial brushes to moui_sun PaintShader for rect and path drawing; runtime evidence exists through PaintShader linear and radial gradient mapping."
     Shadow =>
-      "Sun raster renders multi-layer semi-transparent shadow rects to approximate blurred shadow drawing."
+      "Sun raster renders shadows by filling the rounded-rect shadow shape using SDF on an offscreen pixmap, applying separable box blur, and compositing onto the main canvas, producing real soft-shadow falloff that respects corner radius, blur_radius, and spread."
     Text =>
       "Sun raster uses moui_sun/text FontFace and CoverageMask when fonts are registered, falling back to debug placeholder glyphs otherwise."
     Image =>
       "Sun raster decodes PNG and BMP data URI image sources through moui_sun Pixmap codecs, scaling them to the ImageRun frame with draw_scaled_pixmap."
     Clip =>
-      "Sun raster applies rectangular clips through moui_sun Canvas clip state; rounded clips are approximated by their bounding rectangles with diagnostics."
+      "Sun raster applies rectangular clips through moui_sun Canvas clip state; rounded clips render child commands into an offscreen canvas and composite back with per-pixel SDF-based rounded-rect masking and anti-aliased edge coverage."
     Transform =>
       "Sun raster maps MoUI affine transform scopes to moui_sun Canvas transform state."
     Opacity =>
       "Sun raster applies scoped opacity by multiplying Paint opacity for supported primitive commands."
     LayerCompositing =>
-      "Sun raster composites PushLayer/PopLayer scopes by rendering child commands into an offscreen canvas and drawing the result with scoped opacity."
+      "Sun raster composites PushLayer/PopLayer scopes by rendering child commands into an offscreen canvas and drawing the result with scoped opacity; BeginCachedLayer/EndCachedLayer/DrawCachedLayer scopes cache layer pixmaps with content-revision and scale-factor validation, FIFO eviction, and renderer-local pixel coverage for cache hit, miss, and dispose lifecycle."
     BlendMode =>
       "Sun raster maps all MoUI blend modes to moui_sun Paint blend modes and applies them when compositing PushLayer/PopLayer layer scopes; renderer-local pixel test covers Multiply."
     FilterEffect =>
-      "Sun raster applies PushFilter/PopFilter scopes using moui_sun PaintFilter per-pixel color transforms for saturate, brightness, contrast, and color matrix effects; blur maps to identity."
+      "Sun raster applies PushFilter/PopFilter scopes using moui_sun PaintFilter pixmap-level color transforms for saturate, brightness, contrast, and color matrix effects; blur uses three-pass separable box blur (Gaussian approximation) on the layer pixmap before compositing; filter compositing applies PaintFilter at the pixmap level and draws the result with a single draw_pixmap call."
     PathVector =>
       "Sun raster maps MoUI PathSpec verbs to moui_sun Path fill and stroke drawing."
     ShaderEffect =>
-      "Sun raster implements checker and vignette shader-effect builtins with canvas-level rendering; unknown builtins fall back to the spec fallback brush."
+      "Sun raster implements checker shader-effect builtin with canvas-level tile rendering; vignette builtin uses concentric fill_circle calls for circular falloff; unknown builtins fall back to the spec fallback brush."
     TextShaping =>
       "Sun raster text uses moui_sun/text FontFace, LayoutConfig, and rasterize_text_face for basic glyph layout with font-metric baseline/height; TextSystem provides font registration, requested-family-first fallback chain resolution across remaining registered faces, and face caching; renderer-local tests cover mixed Latin-plus-emoji measurement and paragraph metadata; ShapingBuffer is available for direction/script-aware shaping; full OpenType shaping, bidi, and line breaking remain follow-up work."
     EmojiText =>
