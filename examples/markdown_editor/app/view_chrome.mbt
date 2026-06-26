@@ -84,25 +84,13 @@ fn MarkdownEditorApp::root(
       left=theme.spacing_scale.md,
     ),
   )
-  // Stack the toast layer, More-menu popover, and confirm dialog above the
-  // workspace so they float over the editor without displacing it. The More
-  // menu is a top-level overlay so it paints above the editor page card.
+  // Stack the toast layer and confirm dialog above the workspace so they
+  // float over the editor without displacing it.
   @views.stack([
     centered,
     @views.align(
       self.toast_layer(theme),
       alignment=@core.Alignment::new(x=0.5, y=0.0),
-    ),
-    // The More menu sits at the top-right, offset down past the title bar
-    // (36px) plus a small gap so it drops from the ⋯ button. A padding-top
-    // on the content pushes it below the bar; align keeps it top-trailing.
-    @views.align(
-      padding_edges(
-        self.more_menu_overlay(theme),
-        top=44.0,
-        right=theme.spacing_scale.md,
-      ),
-      alignment=@core.Alignment::top_trailing(),
     ),
     @views.align(
       self.confirm_dialog(theme),
@@ -147,6 +135,7 @@ fn MarkdownEditorApp::reactive_root(
   ignore(ctx.watch(self.format_palette_visible))
   ignore(ctx.watch(self.format_palette_query))
   ignore(ctx.watch(self.more_menu_visible))
+  ignore(ctx.watch(self.active_menu))
   ignore(ctx.watch(self.toasts))
   ignore(ctx.watch(self.pending_confirm))
   ignore(ctx.watch(self.dark_mode_enabled))
@@ -169,9 +158,9 @@ fn MarkdownEditorApp::reactive_root(
   ignore(ctx.watch(self.image_centered))
   ignore(ctx.watch_scroll(self.editor_scroll))
   // Make the editor viewport fill the window instead of a fixed 520px. Reserve
-  // room for the chrome bar (34px) plus spacing so the page doesn't overflow.
+  // room for the titlebar area (52px), bottom status bar (20px) and spacing.
   let window_height = ctx.viewport_size().height
-  let viewport_height = markdown_editor_max_double(320.0, window_height - 112.0)
+  let viewport_height = markdown_editor_max_double(320.0, window_height - 132.0)
   self.root(viewport_height~)
 }
 
@@ -243,15 +232,16 @@ fn markdown_editor_centered_workspace(
 }
 
 ///|
-/// Typora-style title bar: file menu on the left, centered document title,
-/// word count on the right. No toolbar clutter — all formatting flows through
-/// the format bubble / format palette or keyboard shortcuts.
+/// Typora-style title bar area: transparent titlebar region with centered
+/// document title and unsaved indicator. The native traffic lights sit at the
+/// top-left; we reserve ~78px of horizontal space for them. No in-window
+/// menubar — all menus go through the system menu bar.
 fn MarkdownEditorApp::chrome(
   self : MarkdownEditorApp,
   theme : @moui.Theme,
-  source : String,
-  selection : MarkdownEditorSelection,
-  snapshot : MarkdownEditorSnapshot,
+  _source : String,
+  _selection : MarkdownEditorSelection,
+  _snapshot : MarkdownEditorSnapshot,
   width : Double,
 ) -> @moui.View[MarkdownEditorMsg] {
   let title = markdown_editor_document_title(
@@ -266,50 +256,25 @@ fn MarkdownEditorApp::chrome(
   } else {
     empty()
   }
-  // Left: file menu button like Typora
-  let file_menu = button(
-    "文件",
-    on_click=ToggleMoreMenu,
-    variant=@views.ButtonVariant::Ghost,
-    theme~,
-    width=40.0,
-    height=28.0,
-  )
-  .font(theme.typography.caption)
-  .foreground(theme.palette.muted)
 
   let title_text = text(title, height=20.0)
     .font(theme.typography.body)
     .foreground(theme.palette.foreground)
 
-  // Right: word count like Typora
-  let word_count_label = text(
-    snapshot.word_count.to_string() + " 词",
-    height=20.0,
-  )
-  .font(theme.typography.caption)
-  .foreground(theme.palette.muted)
-
-  // Right: menu button
-  let menu = self.markdown_editor_more_menu(theme, source, selection)
-
+  // The titlebar row: traffic-light spacer — centered title — right spacer.
   frame(
     row(
       [
-        spacer(min_length=70.0, weight=0.0),
-        file_menu,
-        spacer(min_length=0.0, weight=1.0),
+        spacer(min_length=78.0, weight=1.0),
         title_text,
         unsaved_dot,
-        spacer(min_length=0.0, weight=1.0),
-        word_count_label,
-        menu,
+        spacer(min_length=78.0, weight=1.0),
       ],
-      spacing=theme.spacing_scale.sm,
+      spacing=theme.spacing_scale.xs,
       align=@views.CrossAlign::Center,
     ),
     width~,
-    height=32.0,
+    height=52.0,
   ).repaint_boundary()
 }
 
