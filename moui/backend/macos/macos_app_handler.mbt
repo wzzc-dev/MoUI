@@ -3,9 +3,24 @@ pub impl @window_macos.ApplicationHandler for MacosApp with fn can_create_surfac
   self,
   event_loop,
 ) {
+  let platform = if self.transparent_titlebar {
+    // Use titlebar_hidden to set title_hidden + titlebar_transparent +
+    // fullsize_content_view atomically (line 3906 in window_delegate.mbt).
+    // Then re-assert titlebar_transparent=true so the later individual
+    // set_window_titlebar_transparent call (line 3914) doesn't revert it.
+    self.platform_attributes
+      .with_titlebar_hidden(true)
+      .with_titlebar_transparent(true)
+      .with_title_hidden(true)
+      .with_fullsize_content_view(true)
+      .with_movable_by_window_background(true)
+  } else {
+    self.platform_attributes
+  }
   let attributes = @window_core.WindowAttributes::default()
     .with_title(self.title)
     .with_surface_size(runtime_size_to_window_surface_size(self.runtime.size()))
+    .with_platform_attributes(platform)
   let window : @window_macos.Window? = Some(
     event_loop.try_create_window(attributes),
   ) catch {

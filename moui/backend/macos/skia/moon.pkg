@@ -4,6 +4,7 @@ import {
   "wzzc-dev/moui/backend/macos" @macos_host,
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/skia" @skia_renderer,
+  "wzzc-dev/window/core" @window_core,
   "wzzc-dev/window/macos" @window_macos,
 }
 

@@ -20,6 +20,8 @@ pub struct MacosHostAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
   priv event_sources : @host.HostPlatformEventSources?
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
+  priv transparent_titlebar : Bool
+  priv platform_attributes : @window_core.PlatformWindowAttributes
 }
 
 ///|
@@ -52,6 +54,8 @@ struct MacosApp {
   image_repaint_tracker : @host.HostImageResourceRepaintTracker
   event_sources : @host.HostPlatformEventSources?
   platform_view_plugins : Array[@host.PlatformViewPlugin]
+  transparent_titlebar : Bool
+  platform_attributes : @window_core.PlatformWindowAttributes
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
   mut first_frame_smoke_auto_exit : Bool
@@ -80,8 +84,10 @@ pub fn MacosHostAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   event_sources? : @host.HostPlatformEventSources? = None,
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
+  transparent_titlebar? : Bool = false,
+  platform_attributes? : @window_core.PlatformWindowAttributes = @window_core.PlatformWindowAttributes::default(),
 ) -> MacosHostAppOptions {
-  { scene_resolver, event_sources, platform_view_plugins }
+  { scene_resolver, event_sources, platform_view_plugins, transparent_titlebar, platform_attributes }
 }
 
 ///|
