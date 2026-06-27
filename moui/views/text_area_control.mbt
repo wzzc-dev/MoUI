@@ -100,7 +100,6 @@ fn[Msg] text_area_control(
         platform_views: [],
         repaint_boundary: false,
         animating: false,
-        child_viewport: None,
       }
     },
     event=ctx => {
@@ -395,7 +394,7 @@ fn[Msg] handle_text_area_keyboard(
     return view_caret_move_result(
       ctx,
       value.get(),
-      @core.TextCaretDirection::MoveLeft,
+      TextCaretDirection::MoveLeft,
       event.modifiers.shift,
     )
   }
@@ -403,7 +402,7 @@ fn[Msg] handle_text_area_keyboard(
     return view_caret_move_result(
       ctx,
       value.get(),
-      @core.TextCaretDirection::MoveRight,
+      TextCaretDirection::MoveRight,
       event.modifiers.shift,
     )
   }
@@ -411,7 +410,7 @@ fn[Msg] handle_text_area_keyboard(
     return view_caret_move_result(
       ctx,
       value.get(),
-      @core.TextCaretDirection::MoveStart,
+      TextCaretDirection::MoveStart,
       event.modifiers.shift,
     )
   }
@@ -419,7 +418,7 @@ fn[Msg] handle_text_area_keyboard(
     return view_caret_move_result(
       ctx,
       value.get(),
-      @core.TextCaretDirection::MoveEnd,
+      TextCaretDirection::MoveEnd,
       event.modifiers.shift,
     )
   }
