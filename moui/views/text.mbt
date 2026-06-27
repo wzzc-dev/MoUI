@@ -136,13 +136,14 @@ pub fn[Msg] text_area(
   width? : Double = 320.0,
   line_height? : Double = 28.0,
 ) -> @core.View[Msg] {
-  text_field(
-    value,
-    on_input~,
+  text_area_control(
+    value=@core.Binding::new(get=() => value, set=_ => ()),
+    on_input=Some(on_input),
     placeholder~,
-    variant~,
+    size=@core.Size::new(width=width, height=views_max_double(line_height, lines.to_double() * line_height)),
     theme?,
-    width~,
-    height=views_max_double(line_height, lines.to_double() * line_height),
+    variant~,
+    lines~,
+    line_height~,
   ).accessibility_label("Multiline text area")
 }
