@@ -1,5 +1,5 @@
 ///|
-pub fn markdown_editor_normalize_ordered_transform(
+fn markdown_editor_normalize_ordered_transform(
   edit : RichTextInputTransform,
 ) -> RichTextInputTransform {
   let normalized = markdown_editor_renumber_ordered_lists(edit.text)
@@ -33,7 +33,7 @@ pub fn markdown_editor_normalize_ordered_transform(
 }
 
 ///|
-pub fn markdown_editor_normalize_ordered_edit_result(
+fn markdown_editor_normalize_ordered_edit_result(
   edit : MarkdownEditorEditResult,
 ) -> MarkdownEditorEditResult {
   let normalized = markdown_editor_renumber_ordered_lists(edit.source)
@@ -80,7 +80,7 @@ pub(all) struct MarkdownEditorRenumberResult {
 } derive(Eq, Debug)
 
 ///|
-pub fn markdown_editor_renumber_ordered_lists(
+fn markdown_editor_renumber_ordered_lists(
   source : String,
 ) -> MarkdownEditorRenumberResult {
   let lines = markdown_editor_lines(source)
@@ -128,7 +128,7 @@ pub(all) struct MarkdownEditorOrderedRenumberContext {
 } derive(Eq, Debug)
 
 ///|
-pub fn markdown_editor_trim_ordered_renumber_contexts(
+fn markdown_editor_trim_ordered_renumber_contexts(
   contexts : Array[MarkdownEditorOrderedRenumberContext],
   indent : Int,
 ) -> Unit {
@@ -138,7 +138,7 @@ pub fn markdown_editor_trim_ordered_renumber_contexts(
 }
 
 ///|
-pub fn markdown_editor_next_ordered_number(
+fn markdown_editor_next_ordered_number(
   contexts : Array[MarkdownEditorOrderedRenumberContext],
   info : MarkdownEditorOrderedLineInfo,
 ) -> Int {
@@ -168,7 +168,7 @@ pub fn markdown_editor_next_ordered_number(
 }
 
 ///|
-pub fn markdown_editor_reset_ordered_renumber_contexts(
+fn markdown_editor_reset_ordered_renumber_contexts(
   contexts : Array[MarkdownEditorOrderedRenumberContext],
   line : String,
 ) -> Unit {
@@ -183,7 +183,7 @@ pub fn markdown_editor_reset_ordered_renumber_contexts(
 }
 
 ///|
-pub fn markdown_editor_ordered_renumber_blank_line(line : String) -> Bool {
+fn markdown_editor_ordered_renumber_blank_line(line : String) -> Bool {
   let chars = line.to_array()
   let indent = markdown_editor_ordered_line_context_indent(line)
   String::from_array(chars[indent:]).trim().to_owned() == ""
@@ -200,7 +200,7 @@ pub(all) struct MarkdownEditorOrderedLineInfo {
 } derive(Eq, Debug)
 
 ///|
-pub fn markdown_editor_ordered_line_info(
+fn markdown_editor_ordered_line_info(
   line : String,
 ) -> MarkdownEditorOrderedLineInfo? {
   let chars = line.to_array()
@@ -224,7 +224,7 @@ pub fn markdown_editor_ordered_line_info(
 }
 
 ///|
-pub fn markdown_editor_ordered_line_context_indent(line : String) -> Int {
+fn markdown_editor_ordered_line_context_indent(line : String) -> Int {
   let chars = line.to_array()
   let mut index = 0
   let mut scanning = true
@@ -245,7 +245,7 @@ pub fn markdown_editor_ordered_line_context_indent(line : String) -> Int {
 }
 
 ///|
-pub fn markdown_editor_ordered_digit_end_at(
+fn markdown_editor_ordered_digit_end_at(
   chars : Array[Char],
   start : Int,
 ) -> Int {
@@ -257,7 +257,7 @@ pub fn markdown_editor_ordered_digit_end_at(
 }
 
 ///|
-pub fn markdown_editor_map_offset_after_replacements(
+fn markdown_editor_map_offset_after_replacements(
   offset : Int,
   replacements : Array[MarkdownEditorOffsetReplacement],
 ) -> Int {
@@ -274,7 +274,7 @@ pub fn markdown_editor_map_offset_after_replacements(
 }
 
 ///|
-pub fn markdown_editor_parse_digits(
+fn markdown_editor_parse_digits(
   chars : Array[Char],
   start : Int,
   end : Int,

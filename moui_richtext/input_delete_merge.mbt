@@ -1,5 +1,5 @@
 ///|
-pub fn markdown_editor_line_start(chars : Array[Char], caret : Int) -> Int {
+fn markdown_editor_line_start(chars : Array[Char], caret : Int) -> Int {
   let mut start = markdown_editor_clamp_int(caret, 0, chars.length())
   while start > 0 && chars[start - 1] != '\n' {
     start = start - 1
@@ -8,7 +8,7 @@ pub fn markdown_editor_line_start(chars : Array[Char], caret : Int) -> Int {
 }
 
 ///|
-pub fn markdown_editor_line_indent(
+fn markdown_editor_line_indent(
   chars : Array[Char],
   line_start : Int,
   caret : Int,
@@ -24,7 +24,7 @@ pub fn markdown_editor_line_indent(
 }
 
 ///|
-pub fn markdown_editor_backspace_marker(
+fn markdown_editor_backspace_marker(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -70,7 +70,7 @@ pub fn markdown_editor_backspace_marker(
 }
 
 ///|
-pub fn markdown_editor_backspace_quoted_inner_marker(
+fn markdown_editor_backspace_quoted_inner_marker(
   chars : Array[Char],
   range : MarkdownSourceRange,
   line : String,
@@ -98,7 +98,7 @@ pub fn markdown_editor_backspace_quoted_inner_marker(
 }
 
 ///|
-pub fn markdown_editor_delete_marker(
+fn markdown_editor_delete_marker(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -136,7 +136,7 @@ pub fn markdown_editor_delete_marker(
 }
 
 ///|
-pub fn markdown_editor_delete_quoted_inner_marker(
+fn markdown_editor_delete_quoted_inner_marker(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -170,7 +170,7 @@ pub fn markdown_editor_delete_quoted_inner_marker(
 }
 
 ///|
-pub fn markdown_editor_backspace_merge_block(
+fn markdown_editor_backspace_merge_block(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -218,7 +218,7 @@ pub fn markdown_editor_backspace_merge_block(
 }
 
 ///|
-pub fn markdown_editor_delete_merge_block(
+fn markdown_editor_delete_merge_block(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -274,12 +274,12 @@ pub fn markdown_editor_delete_merge_block(
 }
 
 ///|
-pub fn markdown_editor_blank_source_line(line : String) -> Bool {
+fn markdown_editor_blank_source_line(line : String) -> Bool {
   line.trim().to_owned() == ""
 }
 
 ///|
-pub fn markdown_editor_preserved_merge_prefix(
+fn markdown_editor_preserved_merge_prefix(
   first_line : String,
   second_line : String,
 ) -> String {
@@ -307,7 +307,7 @@ pub(all) enum MarkdownEditorMergeBlockKind {
 } derive(Eq, Debug)
 
 ///|
-pub fn markdown_editor_merge_block_kind(
+fn markdown_editor_merge_block_kind(
   line : String,
 ) -> MarkdownEditorMergeBlockKind {
   let chars = line.to_array()
@@ -340,21 +340,21 @@ pub fn markdown_editor_merge_block_kind(
 }
 
 ///|
-pub fn markdown_editor_strip_merge_block_marker(line : String) -> String {
+fn markdown_editor_strip_merge_block_marker(line : String) -> String {
   let offset = markdown_editor_merge_block_marker_prefix_length(line)
   let chars = line.to_array()
   String::from_array(chars[offset:])
 }
 
 ///|
-pub fn markdown_editor_merge_block_marker_prefix(line : String) -> String {
+fn markdown_editor_merge_block_marker_prefix(line : String) -> String {
   let marker_length = markdown_editor_merge_block_marker_prefix_length(line)
   let chars = line.to_array()
   String::from_array(chars[:marker_length])
 }
 
 ///|
-pub fn markdown_editor_merge_block_marker_prefix_length(line : String) -> Int {
+fn markdown_editor_merge_block_marker_prefix_length(line : String) -> Int {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
   if chars.length() >= indent + 2 &&
@@ -368,7 +368,7 @@ pub fn markdown_editor_merge_block_marker_prefix_length(line : String) -> Int {
 }
 
 ///|
-pub fn markdown_editor_next_line_end(chars : Array[Char], start : Int) -> Int {
+fn markdown_editor_next_line_end(chars : Array[Char], start : Int) -> Int {
   let mut end = markdown_editor_clamp_int(start, 0, chars.length())
   while end < chars.length() && chars[end] != '\n' {
     end = end + 1
@@ -377,7 +377,7 @@ pub fn markdown_editor_next_line_end(chars : Array[Char], start : Int) -> Int {
 }
 
 ///|
-pub fn markdown_editor_previous_line_start(
+fn markdown_editor_previous_line_start(
   chars : Array[Char],
   previous_end : Int,
 ) -> Int {

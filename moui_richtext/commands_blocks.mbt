@@ -1,5 +1,5 @@
 ///|
-pub fn markdown_editor_transform_current_block(
+fn markdown_editor_transform_current_block(
   source : String,
   command : MarkdownEditorCommand,
   selection : MarkdownEditorSelection,
@@ -136,7 +136,7 @@ pub fn markdown_editor_transform_current_block(
 }
 
 ///|
-pub fn markdown_editor_setext_block_at_selection(
+fn markdown_editor_setext_block_at_selection(
   source : String,
   selection : MarkdownEditorSelection,
 ) -> MarkdownEditorBlock? {
@@ -158,7 +158,7 @@ pub fn markdown_editor_setext_block_at_selection(
 }
 
 ///|
-pub fn markdown_editor_transform_setext_block(
+fn markdown_editor_transform_setext_block(
   source : String,
   command : MarkdownEditorCommand,
   selection : MarkdownEditorSelection,
@@ -199,7 +199,7 @@ pub fn markdown_editor_transform_setext_block(
 }
 
 ///|
-pub fn markdown_editor_replace_selected_lines_with_table(
+fn markdown_editor_replace_selected_lines_with_table(
   source : String,
   selection : MarkdownEditorSelection,
 ) -> MarkdownEditorEditResult {
@@ -217,7 +217,7 @@ pub fn markdown_editor_replace_selected_lines_with_table(
 }
 
 ///|
-pub fn markdown_editor_replace_selected_lines_with_rule(
+fn markdown_editor_replace_selected_lines_with_rule(
   source : String,
   selection : MarkdownEditorSelection,
 ) -> MarkdownEditorEditResult {
@@ -234,7 +234,7 @@ pub fn markdown_editor_replace_selected_lines_with_rule(
 }
 
 ///|
-pub fn markdown_editor_line_has_same_block_marker(
+fn markdown_editor_line_has_same_block_marker(
   line : String,
   command : MarkdownEditorCommand,
 ) -> Bool {
@@ -261,7 +261,7 @@ pub fn markdown_editor_line_has_same_block_marker(
 }
 
 ///|
-pub fn markdown_editor_heading_marker_level(line : String) -> Int {
+fn markdown_editor_heading_marker_level(line : String) -> Int {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
   let mut index = indent
@@ -276,7 +276,7 @@ pub fn markdown_editor_heading_marker_level(line : String) -> Int {
 }
 
 ///|
-pub fn markdown_editor_caret_offset_in_stripped_line(
+fn markdown_editor_caret_offset_in_stripped_line(
   line : String,
   caret_offset : Int,
 ) -> Int {
@@ -286,7 +286,7 @@ pub fn markdown_editor_caret_offset_in_stripped_line(
 }
 
 ///|
-pub fn markdown_editor_transform_selected_lines(
+fn markdown_editor_transform_selected_lines(
   source : String,
   command : MarkdownEditorCommand,
   selection : MarkdownEditorSelection,
@@ -317,7 +317,7 @@ pub fn markdown_editor_transform_selected_lines(
 }
 
 ///|
-pub fn markdown_editor_transform_line_segment(
+fn markdown_editor_transform_line_segment(
   segment : String,
   command : MarkdownEditorCommand,
 ) -> String {
@@ -374,7 +374,7 @@ pub(all) struct MarkdownEditorLineBlockParts {
 }
 
 ///|
-pub fn markdown_editor_line_block_parts(
+fn markdown_editor_line_block_parts(
   line : String,
 ) -> MarkdownEditorLineBlockParts {
   let chars = line.to_array()
@@ -395,7 +395,7 @@ pub fn markdown_editor_line_block_parts(
 }
 
 ///|
-pub fn markdown_editor_caret_offset_in_line_block_parts(
+fn markdown_editor_caret_offset_in_line_block_parts(
   parts : MarkdownEditorLineBlockParts,
   caret_offset : Int,
 ) -> Int {
@@ -407,7 +407,7 @@ pub fn markdown_editor_caret_offset_in_line_block_parts(
 }
 
 ///|
-pub fn markdown_editor_paragraph_line_text(
+fn markdown_editor_paragraph_line_text(
   line : String,
   parts : MarkdownEditorLineBlockParts,
 ) -> String {
@@ -420,14 +420,14 @@ pub fn markdown_editor_paragraph_line_text(
 }
 
 ///|
-pub fn markdown_editor_line_block_parts_has_inner_marker(
+fn markdown_editor_line_block_parts_has_inner_marker(
   parts : MarkdownEditorLineBlockParts,
 ) -> Bool {
   parts.content_start > markdown_editor_text_length(parts.context_prefix)
 }
 
 ///|
-pub fn markdown_editor_block_command_blank_line(
+fn markdown_editor_block_command_blank_line(
   parts : MarkdownEditorLineBlockParts,
 ) -> String {
   if markdown_editor_block_command_context_has_quote(parts.context_prefix) {
@@ -438,7 +438,7 @@ pub fn markdown_editor_block_command_blank_line(
 }
 
 ///|
-pub fn markdown_editor_block_command_context_has_quote(prefix : String) -> Bool {
+fn markdown_editor_block_command_context_has_quote(prefix : String) -> Bool {
   let chars = prefix.to_array()
   for index in 0..<chars.length() {
     if chars[index] == '>' {
@@ -449,7 +449,7 @@ pub fn markdown_editor_block_command_context_has_quote(prefix : String) -> Bool 
 }
 
 ///|
-pub fn markdown_editor_line_has_same_block_marker_after_context(
+fn markdown_editor_line_has_same_block_marker_after_context(
   line : String,
   command : MarkdownEditorCommand,
   context_prefix : String,
@@ -463,9 +463,7 @@ pub fn markdown_editor_line_has_same_block_marker_after_context(
 }
 
 ///|
-pub fn markdown_editor_block_command_context_prefix_length(
-  line : String,
-) -> Int {
+fn markdown_editor_block_command_context_prefix_length(line : String) -> Int {
   let chars = line.to_array()
   let mut index = 0
   let mut scanning = true
@@ -486,7 +484,7 @@ pub fn markdown_editor_block_command_context_prefix_length(
 }
 
 ///|
-pub fn markdown_editor_marker_prefix_length_after_context(
+fn markdown_editor_marker_prefix_length_after_context(
   line : String,
   context_length : Int,
 ) -> Int {
@@ -502,7 +500,7 @@ pub fn markdown_editor_marker_prefix_length_after_context(
 }
 
 ///|
-pub fn markdown_editor_next_selected_ordered_number(
+fn markdown_editor_next_selected_ordered_number(
   contexts : Array[MarkdownEditorOrderedRenumberContext],
   context_prefix : String,
 ) -> Int {
@@ -540,7 +538,7 @@ pub(all) struct MarkdownEditorBlockGroup {
 }
 
 ///|
-pub fn markdown_editor_noop_result(
+fn markdown_editor_noop_result(
   source : String,
   selection : MarkdownEditorSelection?,
 ) -> MarkdownEditorEditResult {
@@ -553,7 +551,7 @@ pub fn markdown_editor_noop_result(
 }
 
 ///|
-pub fn markdown_editor_duplicate_current_block(
+fn markdown_editor_duplicate_current_block(
   source : String,
   selection : MarkdownEditorSelection,
 ) -> MarkdownEditorEditResult {
@@ -590,7 +588,7 @@ pub fn markdown_editor_duplicate_current_block(
 }
 
 ///|
-pub fn markdown_editor_move_current_block(
+fn markdown_editor_move_current_block(
   source : String,
   selection : MarkdownEditorSelection,
   up~ : Bool,
@@ -663,7 +661,7 @@ pub fn markdown_editor_move_current_block(
 }
 
 ///|
-pub fn markdown_editor_moved_group_result(
+fn markdown_editor_moved_group_result(
   source : String,
   selection : MarkdownEditorSelection,
   group : MarkdownEditorBlockGroup,
@@ -685,7 +683,7 @@ pub fn markdown_editor_moved_group_result(
 }
 
 ///|
-pub fn markdown_editor_active_edit_group(
+fn markdown_editor_active_edit_group(
   source : String,
   selection : MarkdownEditorSelection,
 ) -> MarkdownEditorBlockGroup? {
@@ -733,7 +731,7 @@ pub fn markdown_editor_active_edit_group(
 }
 
 ///|
-pub fn markdown_editor_active_edit_block_from_blocks(
+fn markdown_editor_active_edit_block_from_blocks(
   blocks : Array[MarkdownEditorBlock],
   source : String,
   selection : MarkdownEditorSelection,
@@ -757,7 +755,7 @@ pub fn markdown_editor_active_edit_block_from_blocks(
 }
 
 ///|
-pub fn markdown_editor_previous_edit_block(
+fn markdown_editor_previous_edit_block(
   blocks : Array[MarkdownEditorBlock],
   index : Int,
 ) -> MarkdownEditorBlock? {
@@ -773,7 +771,7 @@ pub fn markdown_editor_previous_edit_block(
 }
 
 ///|
-pub fn markdown_editor_next_edit_block(
+fn markdown_editor_next_edit_block(
   blocks : Array[MarkdownEditorBlock],
   index : Int,
 ) -> MarkdownEditorBlock? {
@@ -789,14 +787,14 @@ pub fn markdown_editor_next_edit_block(
 }
 
 ///|
-pub fn markdown_editor_empty_line_block_for_edit(
+fn markdown_editor_empty_line_block_for_edit(
   block : MarkdownEditorBlock,
 ) -> Bool {
   block.source_range.start == block.source_range.end && block.block.text == ""
 }
 
 ///|
-pub fn markdown_editor_map_offset_to_group(
+fn markdown_editor_map_offset_to_group(
   offset : Int,
   group : MarkdownEditorBlockGroup,
   group_start : Int,
@@ -810,7 +808,7 @@ pub fn markdown_editor_map_offset_to_group(
 }
 
 ///|
-pub fn markdown_editor_map_selection_to_group(
+fn markdown_editor_map_selection_to_group(
   selection : @core.TextRange?,
   group : MarkdownEditorBlockGroup,
   group_start : Int,
@@ -840,7 +838,7 @@ pub fn markdown_editor_map_selection_to_group(
 }
 
 ///|
-pub fn markdown_editor_block_prefix(command : MarkdownEditorCommand) -> String {
+fn markdown_editor_block_prefix(command : MarkdownEditorCommand) -> String {
   match command {
     Paragraph => ""
     Heading(level) => markdown_editor_heading_marker(level) + " "
@@ -853,14 +851,14 @@ pub fn markdown_editor_block_prefix(command : MarkdownEditorCommand) -> String {
 }
 
 ///|
-pub fn markdown_editor_strip_block_marker(line : String) -> String {
+fn markdown_editor_strip_block_marker(line : String) -> String {
   let offset = markdown_editor_marker_prefix_length(line)
   let chars = line.to_array()
   String::from_array(chars[offset:])
 }
 
 ///|
-pub fn markdown_editor_marker_prefix_length(line : String) -> Int {
+fn markdown_editor_marker_prefix_length(line : String) -> Int {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
   if chars.length() >= indent + 2 && chars[indent] == '#' {
@@ -899,7 +897,7 @@ pub fn markdown_editor_marker_prefix_length(line : String) -> Int {
 }
 
 ///|
-pub fn markdown_editor_ordered_marker_length(chars : Array[Char]) -> Int {
+fn markdown_editor_ordered_marker_length(chars : Array[Char]) -> Int {
   let indent = markdown_editor_leading_indent_length(chars)
   let mut index = indent
   while index < chars.length() && chars[index].is_ascii_digit() {
@@ -916,12 +914,12 @@ pub fn markdown_editor_ordered_marker_length(chars : Array[Char]) -> Int {
 }
 
 ///|
-pub fn markdown_editor_line_indent_prefix_length(line : String) -> Int {
+fn markdown_editor_line_indent_prefix_length(line : String) -> Int {
   markdown_editor_leading_indent_length(line.to_array())
 }
 
 ///|
-pub fn markdown_editor_leading_indent_length(chars : Array[Char]) -> Int {
+fn markdown_editor_leading_indent_length(chars : Array[Char]) -> Int {
   let mut index = 0
   while index < chars.length() && (chars[index] == ' ' || chars[index] == '\t') {
     index = index + 1
@@ -930,10 +928,7 @@ pub fn markdown_editor_leading_indent_length(chars : Array[Char]) -> Int {
 }
 
 ///|
-pub fn markdown_editor_string_ends_with(
-  source : String,
-  suffix : String,
-) -> Bool {
+fn markdown_editor_string_ends_with(source : String, suffix : String) -> Bool {
   let source_chars = source.to_array()
   let suffix_chars = suffix.to_array()
   if suffix_chars.length() > source_chars.length() {

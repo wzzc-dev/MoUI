@@ -1,5 +1,5 @@
 ///|
-pub fn markdown_editor_complete_rule_on_space(
+fn markdown_editor_complete_rule_on_space(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -16,7 +16,7 @@ pub fn markdown_editor_complete_rule_on_space(
 }
 
 ///|
-pub fn markdown_editor_complete_setext_heading_on_space(
+fn markdown_editor_complete_setext_heading_on_space(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -81,7 +81,7 @@ pub fn markdown_editor_insert_hard_break(
 }
 
 ///|
-pub fn markdown_editor_complete_rule_on_enter(
+fn markdown_editor_complete_rule_on_enter(
   chars : Array[Char],
   range : MarkdownSourceRange,
   line : String,
@@ -97,7 +97,7 @@ pub fn markdown_editor_complete_rule_on_enter(
 }
 
 ///|
-pub fn markdown_editor_complete_setext_heading_on_enter(
+fn markdown_editor_complete_setext_heading_on_enter(
   chars : Array[Char],
   range : MarkdownSourceRange,
   line : String,
@@ -123,7 +123,7 @@ pub fn markdown_editor_complete_setext_heading_on_enter(
 }
 
 ///|
-pub fn markdown_editor_is_typed_setext_underline_line(line : String) -> Bool {
+fn markdown_editor_is_typed_setext_underline_line(line : String) -> Bool {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
   if chars.length() < indent + 3 {
@@ -142,7 +142,7 @@ pub fn markdown_editor_is_typed_setext_underline_line(line : String) -> Bool {
 }
 
 ///|
-pub fn markdown_editor_is_typed_rule_line(line : String) -> Bool {
+fn markdown_editor_is_typed_rule_line(line : String) -> Bool {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
   if chars.length() != indent + 3 {
@@ -154,7 +154,7 @@ pub fn markdown_editor_is_typed_rule_line(line : String) -> Bool {
 }
 
 ///|
-pub fn markdown_editor_transform_result(
+fn markdown_editor_transform_result(
   text~ : String,
   caret~ : Int,
   selection? : @core.TextRange? = None,
@@ -165,7 +165,7 @@ pub fn markdown_editor_transform_result(
 }
 
 ///|
-pub fn markdown_editor_autocomplete_block_marker(
+fn markdown_editor_autocomplete_block_marker(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -194,7 +194,7 @@ pub fn markdown_editor_autocomplete_block_marker(
 }
 
 ///|
-pub fn markdown_editor_typed_block_marker(before : String) -> String {
+fn markdown_editor_typed_block_marker(before : String) -> String {
   let chars = before.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
   let prefix = String::from_array(chars[:indent])
@@ -219,7 +219,7 @@ pub fn markdown_editor_typed_block_marker(before : String) -> String {
 }
 
 ///|
-pub fn markdown_editor_typed_quoted_block_marker(token : String) -> String? {
+fn markdown_editor_typed_quoted_block_marker(token : String) -> String? {
   let quote = "> "
   if !markdown_editor_source_has_marker(token.to_array(), 0, quote) {
     return None
@@ -238,7 +238,7 @@ pub fn markdown_editor_typed_quoted_block_marker(token : String) -> String? {
 }
 
 ///|
-pub fn markdown_editor_typed_quote_marker(token : String) -> Int? {
+fn markdown_editor_typed_quote_marker(token : String) -> Int? {
   let chars = token.to_array()
   if chars.length() < 1 {
     return None
@@ -252,7 +252,7 @@ pub fn markdown_editor_typed_quote_marker(token : String) -> Int? {
 }
 
 ///|
-pub fn markdown_editor_quote_marker(depth : Int) -> String {
+fn markdown_editor_quote_marker(depth : Int) -> String {
   let parts : Array[String] = []
   for _ in 0..<depth {
     parts.push(">")
@@ -261,10 +261,7 @@ pub fn markdown_editor_quote_marker(depth : Int) -> String {
 }
 
 ///|
-pub fn markdown_editor_typed_task_marker(
-  token : String,
-  checked~ : Bool,
-) -> Bool {
+fn markdown_editor_typed_task_marker(token : String, checked~ : Bool) -> Bool {
   let checkbox = if checked { ["[x]", "[X]"] } else { ["[]", "[ ]"] }
   for item in checkbox {
     if token == item {
@@ -278,7 +275,7 @@ pub fn markdown_editor_typed_task_marker(
 }
 
 ///|
-pub fn markdown_editor_typed_heading_marker(token : String) -> Int? {
+fn markdown_editor_typed_heading_marker(token : String) -> Int? {
   let chars = token.to_array()
   if chars.length() < 1 || chars.length() > 6 {
     return None
@@ -292,7 +289,7 @@ pub fn markdown_editor_typed_heading_marker(token : String) -> Int? {
 }
 
 ///|
-pub fn markdown_editor_typed_ordered_marker(token : String) -> Int? {
+fn markdown_editor_typed_ordered_marker(token : String) -> Int? {
   let chars = token.to_array()
   if chars.length() < 2 ||
     (chars[chars.length() - 1] != '.' && chars[chars.length() - 1] != ')') {
@@ -325,7 +322,7 @@ pub fn markdown_editor_outdent_lines(
 }
 
 ///|
-pub fn markdown_editor_shift_lines(
+fn markdown_editor_shift_lines(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -374,7 +371,7 @@ pub fn markdown_editor_shift_lines(
 }
 
 ///|
-pub fn markdown_editor_indent_segment(segment : String) -> String {
+fn markdown_editor_indent_segment(segment : String) -> String {
   let lines = markdown_editor_lines(segment)
   let shifted : Array[String] = []
   for line in lines {
@@ -384,7 +381,7 @@ pub fn markdown_editor_indent_segment(segment : String) -> String {
 }
 
 ///|
-pub fn markdown_editor_outdent_segment(segment : String) -> String {
+fn markdown_editor_outdent_segment(segment : String) -> String {
   let lines = markdown_editor_lines(segment)
   let shifted : Array[String] = []
   for line in lines {
@@ -394,7 +391,7 @@ pub fn markdown_editor_outdent_segment(segment : String) -> String {
 }
 
 ///|
-pub fn markdown_editor_outdent_line(line : String) -> String {
+fn markdown_editor_outdent_line(line : String) -> String {
   let chars = line.to_array()
   if chars.length() >= 2 && chars[0] == ' ' && chars[1] == ' ' {
     String::from_array(chars[2:])
@@ -408,7 +405,7 @@ pub fn markdown_editor_outdent_line(line : String) -> String {
 }
 
 ///|
-pub fn markdown_editor_exit_empty_continuation(
+fn markdown_editor_exit_empty_continuation(
   chars : Array[Char],
   range : MarkdownSourceRange,
   line : String,
@@ -453,7 +450,7 @@ pub fn markdown_editor_exit_empty_continuation(
 }
 
 ///|
-pub fn markdown_editor_backspace_empty_continuation(
+fn markdown_editor_backspace_empty_continuation(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -475,7 +472,7 @@ pub fn markdown_editor_backspace_empty_continuation(
 }
 
 ///|
-pub fn markdown_editor_delete_empty_continuation(
+fn markdown_editor_delete_empty_continuation(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -497,7 +494,7 @@ pub fn markdown_editor_delete_empty_continuation(
 }
 
 ///|
-pub fn markdown_editor_exit_empty_heading(
+fn markdown_editor_exit_empty_heading(
   chars : Array[Char],
   range : MarkdownSourceRange,
   line : String,
@@ -521,7 +518,7 @@ pub fn markdown_editor_exit_empty_heading(
 }
 
 ///|
-pub fn markdown_editor_empty_heading_prefix(line : String) -> String? {
+fn markdown_editor_empty_heading_prefix(line : String) -> String? {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
   if chars.length() >= indent + 2 &&
@@ -555,7 +552,7 @@ pub fn markdown_editor_empty_heading_prefix(line : String) -> String? {
 }
 
 ///|
-pub fn markdown_editor_quoted_continuation_parent(line : String) -> String? {
+fn markdown_editor_quoted_continuation_parent(line : String) -> String? {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
   if chars.length() < indent + 3 ||
@@ -579,7 +576,7 @@ pub fn markdown_editor_quoted_continuation_parent(line : String) -> String? {
 }
 
 ///|
-pub fn markdown_editor_continuation_marker(line : String) -> String {
+fn markdown_editor_continuation_marker(line : String) -> String {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
   let indent_text = String::from_array(chars[:indent])
@@ -615,7 +612,7 @@ pub fn markdown_editor_continuation_marker(line : String) -> String {
 }
 
 ///|
-pub fn markdown_editor_ordered_continuation_marker(
+fn markdown_editor_ordered_continuation_marker(
   chars : Array[Char],
   indent : Int,
 ) -> String {

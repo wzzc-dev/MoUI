@@ -75,11 +75,12 @@ MoUI 的包边界优先保持少而清晰，不按每个功能名拆出一组顶
   `FormController`、`validate_form`、`required_field` 已由 `moui/views` 的 form
   支持层拥有。`core` 不再承载具体表单工作流。
 - **Rich text ownership 已迁出**：`RichTextDocument`、table/image/source range、
-  rich text geometry/paint/selection helper 已由 `moui/views` 拥有，并通过
-  `@views.RichTextDocument`、`@views.RichTextInputTransform`、
-  `@views.rich_text_document_height` 等 facade 给普通 app 使用。`core` 只保留
+  rich text geometry/paint/selection helper 由 `moui_richtext` addon 拥有，普通
+  app 通过 `@moui_richtext.RichTextDocument`、`@moui_richtext.RichTextInputTransform`、
+  `@moui_richtext.rich_text_document_height`、`@moui_richtext.markdown_editor`、
+  `@moui_richtext.controlled_markdown_session_editor` 等 facade 使用。`core` 只保留
   `TextRange`、grapheme boundary、`TextSystem`、paragraph layout contract、基础
-  text input state。
+  text input state。`moui/views` 只保留 `text`/`text_field`/`text_area` 纯文本控件。
 - **`ComponentContext` runtime 构造入口已收口**：`ComponentContext` 仍作为
   component-facing kernel 类型保留在 `core`，因为 `View::node` /
   `views.component` 的签名需要它且 `core` 不能反向依赖 `runtime`。runtime 使用

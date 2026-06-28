@@ -1,5 +1,5 @@
 ///|
-pub fn markdown_editor_complete_code_fence_on_enter(
+fn markdown_editor_complete_code_fence_on_enter(
   chars : Array[Char],
   range : MarkdownSourceRange,
   line : String,
@@ -26,7 +26,7 @@ pub fn markdown_editor_complete_code_fence_on_enter(
 }
 
 ///|
-pub fn markdown_editor_complete_quoted_code_fence_on_enter(
+fn markdown_editor_complete_quoted_code_fence_on_enter(
   chars : Array[Char],
   range : MarkdownSourceRange,
   line : String,
@@ -60,7 +60,7 @@ pub fn markdown_editor_complete_quoted_code_fence_on_enter(
 }
 
 ///|
-pub fn markdown_editor_exit_empty_code_block_on_enter(
+fn markdown_editor_exit_empty_code_block_on_enter(
   source : String,
   block : MarkdownEditorBlock,
   caret : Int,
@@ -136,7 +136,7 @@ pub fn markdown_editor_exit_empty_code_block_on_enter(
 }
 
 ///|
-pub fn markdown_editor_quoted_code_block_at_content_offset(
+fn markdown_editor_quoted_code_block_at_content_offset(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -165,7 +165,7 @@ pub fn markdown_editor_quoted_code_block_at_content_offset(
 }
 
 ///|
-pub fn markdown_editor_any_code_block_at_content_offset(
+fn markdown_editor_any_code_block_at_content_offset(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -177,7 +177,7 @@ pub fn markdown_editor_any_code_block_at_content_offset(
 }
 
 ///|
-pub fn markdown_editor_exit_empty_quoted_code_block_on_enter(
+fn markdown_editor_exit_empty_quoted_code_block_on_enter(
   source : String,
   block : MarkdownEditorQuotedCodeBlock,
   caret : Int,
@@ -257,7 +257,7 @@ pub fn markdown_editor_exit_empty_quoted_code_block_on_enter(
 }
 
 ///|
-pub fn markdown_editor_quoted_code_block_enter(
+fn markdown_editor_quoted_code_block_enter(
   source : String,
   block : MarkdownEditorQuotedCodeBlock,
   caret : Int,
@@ -284,7 +284,7 @@ pub fn markdown_editor_quoted_code_block_enter(
 }
 
 ///|
-pub fn markdown_editor_quoted_code_block_opening_content_prefix(
+fn markdown_editor_quoted_code_block_opening_content_prefix(
   source : String,
   block : MarkdownEditorQuotedCodeBlock,
 ) -> String {
@@ -303,7 +303,7 @@ pub fn markdown_editor_quoted_code_block_opening_content_prefix(
 }
 
 ///|
-pub fn markdown_editor_quoted_code_nested_text(line : String) -> String? {
+fn markdown_editor_quoted_code_nested_text(line : String) -> String? {
   let quote_prefix = markdown_editor_quote_context_prefix(line)
   if quote_prefix == "" {
     return None
@@ -318,7 +318,7 @@ pub fn markdown_editor_quoted_code_nested_text(line : String) -> String? {
 }
 
 ///|
-pub fn markdown_editor_quoted_code_content_prefix(line : String) -> String? {
+fn markdown_editor_quoted_code_content_prefix(line : String) -> String? {
   let quote_prefix = markdown_editor_quote_context_prefix(line)
   if quote_prefix == "" {
     return None
@@ -332,7 +332,7 @@ pub fn markdown_editor_quoted_code_content_prefix(line : String) -> String? {
 }
 
 ///|
-pub fn markdown_editor_opening_code_fence_marker(
+fn markdown_editor_opening_code_fence_marker(
   line : String,
 ) -> MarkdownCodeFenceInfo? {
   let chars = line.to_array()
@@ -362,7 +362,7 @@ pub fn markdown_editor_opening_code_fence_marker(
 }
 
 ///|
-pub fn markdown_editor_code_block(
+fn markdown_editor_code_block(
   text : String,
   code_language : String?,
 ) -> MarkdownBlock {
@@ -376,7 +376,7 @@ pub fn markdown_editor_code_block(
 }
 
 ///|
-pub fn markdown_editor_line_indent_prefix(line : String) -> String {
+fn markdown_editor_line_indent_prefix(line : String) -> String {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
   String::from_array(chars[:indent])

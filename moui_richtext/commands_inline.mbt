@@ -1,5 +1,5 @@
 ///|
-pub fn markdown_editor_wrap_range(
+fn markdown_editor_wrap_range(
   source : String,
   range : @core.TextRange,
   marker : String,
@@ -23,7 +23,7 @@ pub fn markdown_editor_wrap_range(
 }
 
 ///|
-pub fn markdown_editor_toggle_inline_range(
+fn markdown_editor_toggle_inline_range(
   source : String,
   range : @core.TextRange,
   marker : String,
@@ -37,7 +37,7 @@ pub fn markdown_editor_toggle_inline_range(
 }
 
 ///|
-pub fn markdown_editor_toggle_inline_at_caret(
+fn markdown_editor_toggle_inline_at_caret(
   source : String,
   caret : Int,
   command : MarkdownEditorCommand,
@@ -105,7 +105,7 @@ pub fn markdown_editor_range_has_inline_marker(
 }
 
 ///|
-pub fn markdown_editor_unwrap_range(
+fn markdown_editor_unwrap_range(
   source : String,
   range : @core.TextRange,
   marker : String,
@@ -135,9 +135,7 @@ pub fn markdown_editor_inline_marker(command : MarkdownEditorCommand) -> String 
 }
 
 ///|
-pub fn markdown_editor_command_snippet(
-  command : MarkdownEditorCommand,
-) -> String {
+fn markdown_editor_command_snippet(command : MarkdownEditorCommand) -> String {
   match command {
     Bold => "**bold text**"
     Italic => "*italic text*"
@@ -179,7 +177,7 @@ pub fn markdown_editor_command_snippet(
 }
 
 ///|
-pub fn markdown_editor_heading_marker(level : Int) -> String {
+fn markdown_editor_heading_marker(level : Int) -> String {
   let count = markdown_editor_clamp_int(level, 1, 6)
   let chars : Array[Char] = []
   for _ in 0..<count {
@@ -189,7 +187,7 @@ pub fn markdown_editor_heading_marker(level : Int) -> String {
 }
 
 ///|
-pub fn markdown_editor_heading_snippet_text(level : Int) -> String {
+fn markdown_editor_heading_snippet_text(level : Int) -> String {
   if level <= 1 {
     "Heading"
   } else if level == 2 {
@@ -256,7 +254,7 @@ pub fn markdown_editor_toggle_current_task(
 }
 
 ///|
-pub fn markdown_editor_toggle_task_block(
+fn markdown_editor_toggle_task_block(
   source : String,
   block : MarkdownEditorBlock,
   checked : Bool,

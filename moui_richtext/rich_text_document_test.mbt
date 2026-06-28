@@ -1,0 +1,192 @@
+///|
+test "RichTextDocument::plain splits text by newline into blocks" {
+  let document = RichTextDocument::plain("alpha\nbeta\ngamma")
+  inspect(document.blocks.length(), content="3")
+  inspect(document.blocks[0].runs[0].text, content="alpha")
+  inspect(document.blocks[1].runs[0].text, content="beta")
+  inspect(document.blocks[2].runs[0].text, content="gamma")
+}
+
+///|
+test "RichTextDocument::plain with empty string yields a single empty block" {
+  let document = RichTextDocument::plain("")
+  inspect(document.blocks.length(), content="1")
+  inspect(document.blocks[0].runs[0].text, content="")
+}
+
+///|
+test "RichTextDocument::plain without newlines yields a single block" {
+  let document = RichTextDocument::plain("only line")
+  inspect(document.blocks.length(), content="1")
+  inspect(document.blocks[0].runs[0].text, content="only line")
+}
+
+///|
+test "RichTextDocument::plain preserves trailing newline as empty block" {
+  let document = RichTextDocument::plain("line\n")
+  inspect(document.blocks.length(), content="2")
+  inspect(document.blocks[0].runs[0].text, content="line")
+  inspect(document.blocks[1].runs[0].text, content="")
+}
+
+///|
+test "RichTextDocument::new keeps the supplied blocks" {
+  let block = RichTextBlock::new(runs=[RichTextRun::new(text="hello")])
+  let document = RichTextDocument::new(blocks=[block])
+  inspect(document.blocks.length(), content="1")
+  inspect(document.blocks[0].runs[0].text, content="hello")
+}
+
+///|
+test "RichTextBlock::new defaults: empty prefix, no table, no rule" {
+  let block = RichTextBlock::new(runs=[RichTextRun::new(text="x")])
+  inspect(block.prefix, content="")
+  assert_true(block.table is None)
+  inspect(block.rule, content="false")
+  inspect(block.corner_radius, content="0")
+  assert_true(block.source_range is None)
+  assert_true(block.content_range is None)
+}
+
+///|
+test "RichTextRun::new defaults: no visual_text, no image, no decoration" {
+  let run = RichTextRun::new(text="text")
+  inspect(run.text, content="text")
+  assert_true(run.visual_text is None)
+  assert_true(run.image_source is None)
+  assert_true(run.decoration is None)
+  assert_true(run.source_range is None)
+}
+
+///|
+test "markdown_document parses heading into a single block" {
+  let document = markdown_document("# Title")
+  inspect(document.blocks.length(), content="1")
+  let run_text = document.blocks[0].runs[0].text
+  assert_true(run_text.contains("Title"))
+}
+
+///|
+test "markdown_document parses paragraph and preserves text" {
+  let document = markdown_document("Just a paragraph.")
+  inspect(document.blocks.length(), content="1")
+  let run_text = document.blocks[0].runs[0].text
+  assert_true(run_text.contains("Just"))
+}
+
+///|
+test "markdown_document parses unordered list items" {
+  let document = markdown_document("- one\n- two\n- three")
+  // Each list line becomes its own block; allow at least three list-ish blocks.
+  assert_true(document.blocks.length() >= 3)
+  let prefixes = document.blocks.map(block => block.prefix)
+  assert_true(prefixes.contains("• "))
+}
+
+///|
+test "markdown_document parses task list items with checkbox prefix" {
+  let document = markdown_document("- [ ] todo\n- [x] done")
+  let prefixes = document.blocks.map(block => block.prefix)
+  assert_true(prefixes.contains("☐ "))
+  assert_true(prefixes.contains("☑ "))
+}
+
+///|
+test "markdown_document parses ordered list items with numeric prefix" {
+  let document = markdown_document("1. first\n2. second")
+  let prefixes = document.blocks.map(block => block.prefix)
+  assert_true(prefixes.contains("1. "))
+  assert_true(prefixes.contains("2. "))
+}
+
+///|
+test "markdown_document parses blockquote with left border" {
+  let document = markdown_document("> quoted text")
+  inspect(document.blocks.length(), content="1")
+  assert_true(document.blocks[0].border_left is Some(_))
+  assert_true(document.blocks[0].background is Some(_))
+}
+
+///|
+test "markdown_document parses fenced code block with backticks" {
+  let document = markdown_document("```\ncode here\n```")
+  let code_blocks = document.blocks.filter(b => b.background is Some(_))
+  assert_true(code_blocks.length() >= 1)
+}
+
+///|
+test "markdown_document parses fenced code block with tildes" {
+  let document = markdown_document("~~~\ncode here\n~~~")
+  assert_true(document.blocks.length() >= 1)
+}
+
+///|
+test "markdown_document parses horizontal rule as a rule block" {
+  let document = markdown_document("---\n")
+  let rule_blocks = document.blocks.filter(b => b.rule)
+  assert_true(rule_blocks.length() >= 1)
+}
+
+///|
+test "markdown_document parses table with separator row" {
+  let document = markdown_document(
+    "| Header 1 | Header 2 |\n| --- | --- |\n| Cell 1 | Cell 2 |",
+  )
+  let table_blocks = document.blocks.filter(b => b.table is Some(_))
+  assert_true(table_blocks.length() >= 1)
+}
+
+///|
+test "markdown_document parses front matter as a block" {
+  let document = markdown_document("---\ntitle: Doc\ntags: []\n---\n\nBody")
+  assert_true(document.blocks.length() >= 1)
+}
+
+///|
+test "RichTextBlock content_range is subset of source_range when both present" {
+  let document = markdown_document("# Heading\n\nParagraph text")
+  for block in document.blocks {
+    match (block.source_range, block.content_range) {
+      (Some(src), Some(content)) => {
+        assert_true(content.start >= src.start)
+        assert_true(content.end <= src.end)
+      }
+      _ => ()
+    }
+  }
+}
+
+///|
+test "RichTextBlock source_range and content_range are populated for parsed blocks" {
+  let document = markdown_document("# Heading\n\nParagraph")
+  let has_source_range = document.blocks.any(b => b.source_range is Some(_))
+  let has_content_range = document.blocks.any(b => b.content_range is Some(_))
+  assert_true(has_source_range)
+  assert_true(has_content_range)
+}
+
+///|
+test "RichTextRun visual_text overrides display text when present" {
+  let run_with_visual = RichTextRun::new(text="[^1]: ", visual_text=Some("1"))
+  assert_true(run_with_visual.visual_text is Some(_))
+  inspect(run_with_visual.text, content="[^1]: ")
+  let plain_run = RichTextRun::new(text="plain")
+  assert_true(plain_run.visual_text is None)
+}
+
+///|
+test "RichTextDocument struct fields are accessible" {
+  let document = markdown_document("# Title\n\nBody")
+  let _blocks : Array[RichTextBlock] = document.blocks
+  assert_true(_blocks.length() >= 1)
+  for block in _blocks {
+    let _runs : Array[RichTextRun] = block.runs
+    let _prefix : String = block.prefix
+    let _rule : Bool = block.rule
+    let _corner_radius : Double = block.corner_radius
+    let _ = _runs
+    let _ = _prefix
+    let _ = _rule
+    let _ = _corner_radius
+  }
+}

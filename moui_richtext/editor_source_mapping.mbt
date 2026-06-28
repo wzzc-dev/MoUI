@@ -88,7 +88,7 @@ pub fn markdown_editor_format_for_writing_mode(
 }
 
 ///|
-pub fn markdown_editor_format_source_mode(
+fn markdown_editor_format_source_mode(
   source : String,
   base : @core.FontSpec,
 ) -> RichTextDocument {
@@ -116,7 +116,7 @@ pub fn markdown_editor_format_source_mode(
 }
 
 ///|
-pub fn markdown_editor_dim_inactive_blocks(
+fn markdown_editor_dim_inactive_blocks(
   document : RichTextDocument,
   selection : MarkdownEditorSelection,
 ) -> RichTextDocument {
@@ -132,7 +132,7 @@ pub fn markdown_editor_dim_inactive_blocks(
 }
 
 ///|
-pub fn markdown_editor_focus_block_active(
+fn markdown_editor_focus_block_active(
   block : RichTextBlock,
   selection : MarkdownEditorSelection,
 ) -> Bool {
@@ -143,9 +143,7 @@ pub fn markdown_editor_focus_block_active(
 }
 
 ///|
-pub fn markdown_editor_dim_rich_text_block(
-  block : RichTextBlock,
-) -> RichTextBlock {
+fn markdown_editor_dim_rich_text_block(block : RichTextBlock) -> RichTextBlock {
   let runs : Array[RichTextRun] = []
   for run in block.runs {
     runs.push(markdown_editor_dim_rich_text_run(run))
@@ -163,7 +161,7 @@ pub fn markdown_editor_dim_rich_text_block(
 }
 
 ///|
-pub fn markdown_editor_dim_rich_text_run(run : RichTextRun) -> RichTextRun {
+fn markdown_editor_dim_rich_text_run(run : RichTextRun) -> RichTextRun {
   {
     ..run,
     color: match run.color {
@@ -174,7 +172,7 @@ pub fn markdown_editor_dim_rich_text_run(run : RichTextRun) -> RichTextRun {
 }
 
 ///|
-pub fn markdown_editor_dim_border(
+fn markdown_editor_dim_border(
   border : @core.BorderStyle?,
 ) -> @core.BorderStyle? {
   match border {
@@ -184,12 +182,12 @@ pub fn markdown_editor_dim_border(
 }
 
 ///|
-pub fn markdown_editor_default_text_color() -> @core.Color {
+fn markdown_editor_default_text_color() -> @core.Color {
   @core.Color::rgba(r=0.12, g=0.12, b=0.12)
 }
 
 ///|
-pub fn markdown_editor_reveal_active_block_marker(
+fn markdown_editor_reveal_active_block_marker(
   source : String,
   selection : MarkdownEditorSelection,
   block : RichTextBlock,
@@ -232,7 +230,7 @@ pub fn markdown_editor_reveal_active_block_marker(
 }
 
 ///|
-pub fn markdown_editor_active_code_block(
+fn markdown_editor_active_code_block(
   source : String,
   selection : MarkdownEditorSelection,
   block : RichTextBlock,
@@ -252,7 +250,7 @@ pub fn markdown_editor_active_code_block(
 }
 
 ///|
-pub fn markdown_editor_reveal_active_code_block(
+fn markdown_editor_reveal_active_code_block(
   source : String,
   block : RichTextBlock,
 ) -> RichTextBlock {
@@ -281,7 +279,7 @@ pub fn markdown_editor_reveal_active_code_block(
 }
 
 ///|
-pub fn markdown_editor_first_run_font(block : RichTextBlock) -> @core.FontSpec? {
+fn markdown_editor_first_run_font(block : RichTextBlock) -> @core.FontSpec? {
   if block.runs.length() == 0 {
     None
   } else {
@@ -290,7 +288,7 @@ pub fn markdown_editor_first_run_font(block : RichTextBlock) -> @core.FontSpec? 
 }
 
 ///|
-pub fn markdown_editor_source_starts_with_code_fence(source : String) -> Bool {
+fn markdown_editor_source_starts_with_code_fence(source : String) -> Bool {
   let chars = source.trim().to_owned().to_array()
   if chars.length() < 3 {
     return false
@@ -300,7 +298,7 @@ pub fn markdown_editor_source_starts_with_code_fence(source : String) -> Bool {
 }
 
 ///|
-pub fn markdown_editor_reveal_active_inline_run(
+fn markdown_editor_reveal_active_inline_run(
   source : String,
   selection : MarkdownEditorSelection,
   run : RichTextRun,
@@ -330,7 +328,7 @@ pub fn markdown_editor_reveal_active_inline_run(
 }
 
 ///|
-pub fn markdown_editor_selection_touches_range(
+fn markdown_editor_selection_touches_range(
   selection : MarkdownEditorSelection,
   range : RichTextSourceRange,
 ) -> Bool {
@@ -344,7 +342,7 @@ pub fn markdown_editor_selection_touches_range(
 }
 
 ///|
-pub fn markdown_editor_inline_marker_source_range(
+fn markdown_editor_inline_marker_source_range(
   source : String,
   range : RichTextSourceRange,
 ) -> RichTextSourceRange? {
@@ -384,7 +382,7 @@ pub fn markdown_editor_inline_marker_source_range(
 }
 
 ///|
-pub fn markdown_editor_reference_source_range(
+fn markdown_editor_reference_source_range(
   source : String,
   range : RichTextSourceRange,
 ) -> RichTextSourceRange? {
@@ -402,7 +400,7 @@ pub fn markdown_editor_reference_source_range(
 }
 
 ///|
-pub fn markdown_editor_single_inline_marker_at(
+fn markdown_editor_single_inline_marker_at(
   chars : Array[Char],
   index : Int,
   marker : Char,
@@ -415,9 +413,7 @@ pub fn markdown_editor_single_inline_marker_at(
 }
 
 ///|
-pub fn parse_markdown_editor_blocks(
-  source : String,
-) -> Array[MarkdownEditorBlock] {
+fn parse_markdown_editor_blocks(source : String) -> Array[MarkdownEditorBlock] {
   let blocks : Array[MarkdownEditorBlock] = []
   if source == "" {
     return blocks
@@ -560,9 +556,7 @@ pub fn parse_markdown_editor_blocks(
 }
 
 ///|
-pub fn markdown_editor_blank_line_block(
-  line : MarkdownLine,
-) -> MarkdownEditorBlock {
+fn markdown_editor_blank_line_block(line : MarkdownLine) -> MarkdownEditorBlock {
   {
     block: {
       kind: MarkdownBlockKind::Paragraph,
@@ -583,7 +577,7 @@ pub(all) struct MarkdownEditorFrontMatterParseResult {
 } derive(Eq, Debug)
 
 ///|
-pub fn markdown_editor_front_matter_block_at(
+fn markdown_editor_front_matter_block_at(
   lines : Array[MarkdownLine],
 ) -> MarkdownEditorFrontMatterParseResult? {
   if lines.length() < 2 || lines[0].text.trim().to_owned() != "---" {
@@ -609,7 +603,7 @@ pub fn markdown_editor_front_matter_block_at(
 }
 
 ///|
-pub fn markdown_editor_block_with_references(
+fn markdown_editor_block_with_references(
   block : MarkdownBlock,
   definitions : Array[MarkdownReferenceDefinition],
 ) -> MarkdownBlock {
@@ -630,7 +624,7 @@ pub(all) struct MarkdownEditorTableParseResult {
 } derive(Eq, Debug)
 
 ///|
-pub fn markdown_editor_table_block_at(
+fn markdown_editor_table_block_at(
   lines : Array[MarkdownLine],
   index : Int,
 ) -> MarkdownEditorTableParseResult? {
@@ -668,7 +662,7 @@ pub fn markdown_editor_table_block_at(
 }
 
 ///|
-pub fn markdown_editor_table_separator_line(line : String) -> Bool {
+fn markdown_editor_table_separator_line(line : String) -> Bool {
   let trimmed = line.trim().to_owned()
   if !trimmed.contains("|") {
     return false
@@ -686,7 +680,7 @@ pub fn markdown_editor_table_separator_line(line : String) -> Bool {
 }
 
 ///|
-pub fn markdown_editor_table_separator_cell(cell : String) -> Bool {
+fn markdown_editor_table_separator_cell(cell : String) -> Bool {
   let chars = cell.to_array()
   let mut dash_count = 0
   for ch in chars {
@@ -700,13 +694,13 @@ pub fn markdown_editor_table_separator_cell(cell : String) -> Bool {
 }
 
 ///|
-pub fn markdown_editor_table_body_line(line : String) -> Bool {
+fn markdown_editor_table_body_line(line : String) -> Bool {
   let trimmed = line.trim().to_owned()
   trimmed != "" && trimmed.contains("|")
 }
 
 ///|
-pub fn markdown_editor_split_table_cells(line : String) -> Array[String] {
+fn markdown_editor_split_table_cells(line : String) -> Array[String] {
   let cells : Array[String] = []
   let chars = line.to_array()
   let mut start = 0
@@ -736,7 +730,7 @@ pub fn markdown_editor_split_table_cells(line : String) -> Array[String] {
 }
 
 ///|
-pub fn markdown_editor_setext_heading_level_at(
+fn markdown_editor_setext_heading_level_at(
   lines : Array[MarkdownLine],
   index : Int,
 ) -> Int? {
@@ -753,7 +747,7 @@ pub fn markdown_editor_setext_heading_level_at(
 }
 
 ///|
-pub fn markdown_editor_is_setext_paragraph_candidate(line : String) -> Bool {
+fn markdown_editor_is_setext_paragraph_candidate(line : String) -> Bool {
   match parse_markdown(line) {
     [{ kind: MarkdownBlockKind::Paragraph, .. }] => true
     _ => false
@@ -761,7 +755,7 @@ pub fn markdown_editor_is_setext_paragraph_candidate(line : String) -> Bool {
 }
 
 ///|
-pub fn markdown_editor_setext_underline_level(line : String) -> Int? {
+fn markdown_editor_setext_underline_level(line : String) -> Int? {
   let text = line.trim().to_owned()
   if text == "" {
     return None
@@ -780,10 +774,7 @@ pub fn markdown_editor_setext_underline_level(line : String) -> Int? {
 }
 
 ///|
-pub fn markdown_editor_closing_code_fence(
-  line : String,
-  fence : String,
-) -> Bool {
+fn markdown_editor_closing_code_fence(line : String, fence : String) -> Bool {
   let chars = line.to_array()
   let fence_chars = fence.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
@@ -810,7 +801,7 @@ pub fn markdown_editor_closing_code_fence(
 }
 
 ///|
-pub fn markdown_editor_blocks_to_rich_text(
+fn markdown_editor_blocks_to_rich_text(
   source : String,
   blocks : Array[MarkdownEditorBlock],
   base : @core.FontSpec,
@@ -826,7 +817,7 @@ pub fn markdown_editor_blocks_to_rich_text(
 }
 
 ///|
-pub fn markdown_editor_block_to_rich_text(
+fn markdown_editor_block_to_rich_text(
   source : String,
   editor_block : MarkdownEditorBlock,
   base : @core.FontSpec,
@@ -847,7 +838,7 @@ pub fn markdown_editor_block_to_rich_text(
 }
 
 ///|
-pub fn markdown_editor_table_with_source_ranges(
+fn markdown_editor_table_with_source_ranges(
   table : RichTextTable?,
   source : String,
   editor_block : MarkdownEditorBlock,
@@ -902,7 +893,7 @@ pub fn markdown_editor_table_with_source_ranges(
 }
 
 ///|
-pub fn markdown_editor_find_table_cell(
+fn markdown_editor_find_table_cell(
   cells : Array[MarkdownEditorTableCellRange],
   row : Int,
   column : Int,
@@ -916,7 +907,7 @@ pub fn markdown_editor_find_table_cell(
 }
 
 ///|
-pub fn markdown_editor_runs_with_source_ranges(
+fn markdown_editor_runs_with_source_ranges(
   runs : Array[RichTextRun],
   editor_block : MarkdownEditorBlock,
 ) -> Array[RichTextRun] {
@@ -960,7 +951,7 @@ pub fn markdown_editor_runs_with_source_ranges(
 }
 
 ///|
-pub fn markdown_editor_block_source_content(
+fn markdown_editor_block_source_content(
   editor_block : MarkdownEditorBlock,
 ) -> String {
   let source = editor_block.source_range
@@ -980,7 +971,7 @@ pub fn markdown_editor_block_source_content(
 }
 
 ///|
-pub fn markdown_editor_block_source_text(
+fn markdown_editor_block_source_text(
   editor_block : MarkdownEditorBlock,
 ) -> String {
   let prefix_padding = markdown_editor_block_source_prefix_padding(editor_block)
@@ -1025,7 +1016,7 @@ pub fn markdown_editor_block_source_text(
 }
 
 ///|
-pub fn markdown_editor_block_source_prefix_padding(
+fn markdown_editor_block_source_prefix_padding(
   editor_block : MarkdownEditorBlock,
 ) -> String {
   let marker_length = match editor_block.block.kind {
@@ -1053,7 +1044,7 @@ pub fn markdown_editor_block_source_prefix_padding(
 }
 
 ///|
-pub fn markdown_editor_inline_source(inlines : Array[MarkdownInline]) -> String {
+fn markdown_editor_inline_source(inlines : Array[MarkdownInline]) -> String {
   let text = ""
   let parts : Array[String] = []
   for inline in inlines {
@@ -1085,7 +1076,7 @@ pub fn markdown_editor_inline_source(inlines : Array[MarkdownInline]) -> String 
 }
 
 ///|
-pub fn markdown_editor_inline_target(inline : MarkdownInline) -> String {
+fn markdown_editor_inline_target(inline : MarkdownInline) -> String {
   match inline.target {
     Some(target) => target
     None => inline.text
@@ -1093,7 +1084,7 @@ pub fn markdown_editor_inline_target(inline : MarkdownInline) -> String {
 }
 
 ///|
-pub fn markdown_join_strings(parts : Array[String]) -> String {
+fn markdown_join_strings(parts : Array[String]) -> String {
   let chars : Array[Char] = []
   for part in parts {
     chars.append(part.to_array())
@@ -1102,7 +1093,7 @@ pub fn markdown_join_strings(parts : Array[String]) -> String {
 }
 
 ///|
-pub fn markdown_editor_heading_source(level : Int, text : String) -> String {
+fn markdown_editor_heading_source(level : Int, text : String) -> String {
   let marks : Array[Char] = []
   for _ in 0..<level {
     marks.push('#')
@@ -1111,7 +1102,7 @@ pub fn markdown_editor_heading_source(level : Int, text : String) -> String {
 }
 
 ///|
-pub fn markdown_editor_find_run_source_offset(
+fn markdown_editor_find_run_source_offset(
   content : String,
   run_text : String,
   start : Int,
@@ -1132,7 +1123,7 @@ pub fn markdown_editor_find_run_source_offset(
 }
 
 ///|
-pub fn markdown_editor_chars_match(
+fn markdown_editor_chars_match(
   content : Array[Char],
   start : Int,
   target : Array[Char],
@@ -1149,12 +1140,12 @@ pub fn markdown_editor_chars_match(
 }
 
 ///|
-pub fn markdown_core_range(range : MarkdownSourceRange) -> RichTextSourceRange {
+fn markdown_core_range(range : MarkdownSourceRange) -> RichTextSourceRange {
   { start: range.start, end: range.end }
 }
 
 ///|
-pub fn markdown_editor_block_kind_label(kind : MarkdownBlockKind) -> String {
+fn markdown_editor_block_kind_label(kind : MarkdownBlockKind) -> String {
   match kind {
     Heading(level) => "Heading " + level.to_string()
     UnorderedListItem => "Bullet list"
@@ -1172,7 +1163,7 @@ pub fn markdown_editor_block_kind_label(kind : MarkdownBlockKind) -> String {
 }
 
 ///|
-pub fn markdown_editor_content_range(
+fn markdown_editor_content_range(
   line : MarkdownLine,
   kind : MarkdownBlockKind,
 ) -> MarkdownSourceRange {
@@ -1194,7 +1185,7 @@ pub fn markdown_editor_content_range(
 }
 
 ///|
-pub fn markdown_editor_footnote_marker_prefix_length(line : String) -> Int {
+fn markdown_editor_footnote_marker_prefix_length(line : String) -> Int {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
   if chars.length() < indent + 5 ||

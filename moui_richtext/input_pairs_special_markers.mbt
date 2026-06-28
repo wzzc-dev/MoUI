@@ -1,5 +1,5 @@
 ///|
-pub fn markdown_editor_backspace_footnote_marker(
+fn markdown_editor_backspace_footnote_marker(
   chars : Array[Char],
   caret : Int,
 ) -> RichTextInputTransform? {
@@ -40,7 +40,7 @@ pub fn markdown_editor_backspace_footnote_marker(
 }
 
 ///|
-pub fn markdown_editor_delete_footnote_marker(
+fn markdown_editor_delete_footnote_marker(
   chars : Array[Char],
   caret : Int,
 ) -> RichTextInputTransform? {
@@ -83,7 +83,7 @@ pub fn markdown_editor_delete_footnote_marker(
 }
 
 ///|
-pub fn markdown_editor_footnote_close_after(
+fn markdown_editor_footnote_close_after(
   chars : Array[Char],
   content_start : Int,
 ) -> Int? {
@@ -103,7 +103,7 @@ pub fn markdown_editor_footnote_close_after(
 }
 
 ///|
-pub fn markdown_editor_footnote_open_before(
+fn markdown_editor_footnote_open_before(
   chars : Array[Char],
   close_start : Int,
 ) -> Int? {
@@ -131,7 +131,7 @@ pub fn markdown_editor_footnote_open_before(
 }
 
 ///|
-pub fn markdown_editor_backspace_autolink_marker(
+fn markdown_editor_backspace_autolink_marker(
   chars : Array[Char],
   caret : Int,
 ) -> RichTextInputTransform? {
@@ -172,7 +172,7 @@ pub fn markdown_editor_backspace_autolink_marker(
 }
 
 ///|
-pub fn markdown_editor_delete_autolink_marker(
+fn markdown_editor_delete_autolink_marker(
   chars : Array[Char],
   caret : Int,
 ) -> RichTextInputTransform? {
@@ -213,7 +213,7 @@ pub fn markdown_editor_delete_autolink_marker(
 }
 
 ///|
-pub fn markdown_editor_autolink_close_after(
+fn markdown_editor_autolink_close_after(
   chars : Array[Char],
   content_start : Int,
 ) -> Int? {
@@ -233,7 +233,7 @@ pub fn markdown_editor_autolink_close_after(
 }
 
 ///|
-pub fn markdown_editor_autolink_open_before(
+fn markdown_editor_autolink_open_before(
   chars : Array[Char],
   close_start : Int,
 ) -> Int? {

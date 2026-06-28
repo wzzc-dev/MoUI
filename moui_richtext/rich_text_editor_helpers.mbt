@@ -104,13 +104,13 @@ fn apply_text_input(
         },
         composition_cursor: match update.cursor() {
           Some(cursor) => {
-            let normalized = normalize_text_range_to_grapheme(
-              update.text(),
+            let normalized = @core.normalize_grapheme_range(
+              @core.TextGraphemeBoundaries::new(text=update.text()),
               cursor,
             )
             let length = text_length(update.text())
-            let start = clamp_int(normalized.start, 0, length)
-            let end = clamp_int(normalized.end, 0, length)
+            let start = @core.clamp_int(normalized.start, 0, length)
+            let end = @core.clamp_int(normalized.end, 0, length)
             Some(@core.TextRange::new(start~, end~))
           }
           None => None
@@ -137,12 +137,27 @@ fn apply_text_input(
       }
     }
     @core.TextInputEvent::DeleteRange(range) => {
-      let edit = replace_text_range(text, range, "")
+      let next_text = @core.replace_text_range(text, range, "")
+      let edit : TextEditResult = {
+        text: next_text,
+        caret: range.normalized().start,
+        selection: None,
+      }
       apply_text_edit(control, text, edit, record_history~)
     }
     @core.TextInputEvent::DeleteSurrounding(before, after) => {
-      let range = surrounding_delete_range(text, control.caret, before, after)
-      let edit = replace_text_range(text, range, "")
+      let range = @core.surrounding_delete_range(
+        text,
+        control.caret,
+        before,
+        after,
+      )
+      let next_text = @core.replace_text_range(text, range, "")
+      let edit : TextEditResult = {
+        text: next_text,
+        caret: range.start,
+        selection: None,
+      }
       apply_text_edit(control, text, edit, record_history~)
     }
   }
@@ -189,49 +204,6 @@ fn apply_text_edit(
 }
 
 ///|
-fn active_text_selection(selection : @core.TextRange?) -> @core.TextRange? {
-  match selection {
-    Some(selection) => {
-      let normalized = selection.normalized()
-      if normalized.is_collapsed() {
-        None
-      } else {
-        Some(normalized)
-      }
-    }
-    None => None
-  }
-}
-
-///|
-fn selected_text(text : String, selection : @core.TextRange?) -> String {
-  match active_text_selection(selection) {
-    Some(selection) => {
-      let chars = text.to_array()
-      let range = @core.normalize_grapheme_range(
-        @core.TextGraphemeBoundaries::new(text~),
-        selection,
-      )
-      let start = clamp_int(range.start, 0, chars.length())
-      let end = clamp_int(range.end, start, chars.length())
-      String::from_array(chars[start:end])
-    }
-    None => ""
-  }
-}
-
-///|
-fn normalize_text_range_to_grapheme(
-  text : String,
-  range : @core.TextRange,
-) -> @core.TextRange {
-  @core.normalize_grapheme_range(
-    @core.TextGraphemeBoundaries::new(text~),
-    range,
-  )
-}
-
-///|
 fn replace_current_selection(
   text : String,
   caret : Int,
@@ -242,76 +214,16 @@ fn replace_current_selection(
     Some(selection) => selection
     None => @core.TextRange::collapsed(caret)
   }
-  replace_text_range(text, range, replacement)
-}
-
-///|
-fn replace_text_range(
-  text : String,
-  range : @core.TextRange,
-  replacement : String,
-) -> TextEditResult {
-  let chars = text.to_array()
   let normalized = range.normalized()
-  let range = @core.normalize_grapheme_range(
-    @core.TextGraphemeBoundaries::new(text~),
-    normalized,
-  )
-  let start = clamp_int(range.start, 0, chars.length())
-  let end = clamp_int(range.end, start, chars.length())
-  let replacement_chars = replacement.to_array()
-  {
-    text: String::from_array(chars[:start] + replacement_chars + chars[end:]),
-    caret: start + replacement_chars.length(),
-    selection: None,
-  }
-}
-
-///|
-fn surrounding_delete_range(
-  text : String,
-  caret : Int,
-  before : Int,
-  after : Int,
-) -> @core.TextRange {
-  let length = text_length(text)
-  let before = max_int(0, before)
-  let after = max_int(0, after)
-  let range = @core.delete_grapheme_range(
-    @core.TextGraphemeBoundaries::new(text~),
-    caret,
-    before,
-    after,
-  )
-  @core.TextRange::new(
-    start=clamp_int(range.start, 0, length),
-    end=clamp_int(range.end, 0, length),
-  )
-}
-
-///|
-fn text_input_grapheme_selection(
-  boundaries : @core.TextGraphemeBoundaries,
-  selection : @core.TextRange?,
-) -> @core.TextRange? {
-  match selection {
-    Some(selection) => {
-      let start = boundaries.nearest_boundary(selection.start)
-      let end = boundaries.nearest_boundary(selection.end)
-      if start == end {
-        None
-      } else {
-        Some(@core.TextRange::new(start~, end~))
-      }
-    }
-    None => None
-  }
+  let next_text = @core.replace_text_range(text, range, replacement)
+  let caret = normalized.start + replacement.to_array().length()
+  { text: next_text, caret, selection: None }
 }
 
 ///|
 test {
   let boundaries = @core.TextGraphemeBoundaries::new(text="hello")
-  ignore(text_input_grapheme_selection(boundaries, None))
+  ignore(@core.text_input_grapheme_selection(boundaries, None))
 }
 
 ///|
@@ -384,39 +296,6 @@ test "code highlight tokenizer classifies moonbit keywords and strings" {
 }
 
 ///|
-fn composition_start_index(
-  text : String,
-  caret : Int,
-  selection : @core.TextRange?,
-) -> Int {
-  match active_text_selection(selection) {
-    Some(selection) =>
-      @core.normalize_grapheme_range(
-        @core.TextGraphemeBoundaries::new(text~),
-        selection,
-      ).start
-    None => @core.TextGraphemeBoundaries::new(text~).nearest_boundary(caret)
-  }
-}
-
-///|
-fn composition_cursor_offset(
-  control : @core.TextControlStateContext,
-  composition : String,
-) -> Int {
-  let length = text_length(composition)
-  match control.composition_cursor {
-    Some(cursor) => {
-      let normalized = cursor.normalized()
-      @core.TextGraphemeBoundaries::new(text=composition).nearest_boundary(
-        clamp_int(normalized.end, 0, length),
-      )
-    }
-    None => length
-  }
-}
-
-///|
 fn[Msg] text_input_messages(
   on_input : ((String) -> Msg)?,
   text : String,
@@ -437,31 +316,6 @@ fn[Msg] text_input_edit_messages(
     Some(handler) => [handler(text, control.caret, control.selection)]
     None => []
   }
-}
-
-///|
-fn is_select_all_shortcut(event : @core.KeyboardEvent) -> Bool {
-  event.pressed &&
-  (event.key == "a" || event.key == "A") &&
-  (event.modifiers.meta || event.modifiers.control)
-}
-
-///|
-fn is_undo_shortcut(event : @core.KeyboardEvent) -> Bool {
-  event.pressed &&
-  (event.key == "z" || event.key == "Z") &&
-  !event.modifiers.shift &&
-  (event.modifiers.meta || event.modifiers.control)
-}
-
-///|
-fn is_redo_shortcut(event : @core.KeyboardEvent) -> Bool {
-  event.pressed &&
-  (
-    (event.modifiers.shift && (event.key == "z" || event.key == "Z")) ||
-    (!event.modifiers.shift && (event.key == "y" || event.key == "Y"))
-  ) &&
-  (event.modifiers.meta || event.modifiers.control)
 }
 
 ///|
@@ -557,27 +411,7 @@ fn min_double(a : Double, b : Double) -> Double {
 }
 
 ///|
-fn max_int(a : Int, b : Int) -> Int {
-  if a >= b {
-    a
-  } else {
-    b
-  }
-}
-
-///|
 fn clamp_double(value : Double, min : Double, max : Double) -> Double {
-  if value < min {
-    min
-  } else if value > max {
-    max
-  } else {
-    value
-  }
-}
-
-///|
-fn clamp_int(value : Int, min : Int, max : Int) -> Int {
   if value < min {
     min
   } else if value > max {

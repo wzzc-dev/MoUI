@@ -1,5 +1,5 @@
 ///|
-pub fn markdown_editor_paste_footnote_definition(
+fn markdown_editor_paste_footnote_definition(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -78,7 +78,7 @@ pub fn markdown_editor_paste_footnote_definition(
 }
 
 ///|
-pub fn markdown_editor_pasted_footnote_definition(
+fn markdown_editor_pasted_footnote_definition(
   text : String,
 ) -> MarkdownEditorPastedFootnoteDefinition? {
   if text.contains("\n") {
@@ -100,7 +100,7 @@ pub fn markdown_editor_pasted_footnote_definition(
 }
 
 ///|
-pub fn markdown_editor_upsert_pasted_footnote_definition(
+fn markdown_editor_upsert_pasted_footnote_definition(
   source : String,
   label : String,
   text : String,
@@ -141,7 +141,7 @@ pub fn markdown_editor_upsert_pasted_footnote_definition(
 }
 
 ///|
-pub fn markdown_editor_paste_autolink(
+fn markdown_editor_paste_autolink(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -173,7 +173,7 @@ pub fn markdown_editor_paste_autolink(
 }
 
 ///|
-pub fn markdown_editor_complete_autolink_on_space(
+fn markdown_editor_complete_autolink_on_space(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -210,7 +210,7 @@ pub fn markdown_editor_complete_autolink_on_space(
 }
 
 ///|
-pub fn markdown_editor_complete_autolink_on_enter(
+fn markdown_editor_complete_autolink_on_enter(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -249,7 +249,7 @@ pub fn markdown_editor_complete_autolink_on_enter(
 }
 
 ///|
-pub fn markdown_editor_previous_token_start(
+fn markdown_editor_previous_token_start(
   chars : Array[Char],
   caret : Int,
 ) -> Int {
@@ -271,7 +271,7 @@ pub(all) struct MarkdownEditorAutolinkTarget {
 } derive(Eq, Debug)
 
 ///|
-pub fn markdown_editor_autolink_target_with_trailing_punctuation(
+fn markdown_editor_autolink_target_with_trailing_punctuation(
   token : String,
 ) -> MarkdownEditorAutolinkTarget {
   let chars = token.to_array()
@@ -316,17 +316,17 @@ pub fn markdown_editor_autolink_target_with_trailing_punctuation(
 }
 
 ///|
-pub fn markdown_editor_autolink_leading_wrapper(ch : Char) -> Bool {
+fn markdown_editor_autolink_leading_wrapper(ch : Char) -> Bool {
   ch == '(' || ch == '[' || ch == '{'
 }
 
 ///|
-pub fn markdown_editor_autolink_trailing_wrapper(ch : Char) -> Bool {
+fn markdown_editor_autolink_trailing_wrapper(ch : Char) -> Bool {
   ch == ')' || ch == ']' || ch == '}'
 }
 
 ///|
-pub fn markdown_editor_autolink_wrappers_balanced(
+fn markdown_editor_autolink_wrappers_balanced(
   chars : Array[Char],
   start : Int,
   end : Int,
@@ -346,19 +346,19 @@ pub fn markdown_editor_autolink_wrappers_balanced(
 }
 
 ///|
-pub fn markdown_editor_autolink_wrapper_pair(open : Char, close : Char) -> Bool {
+fn markdown_editor_autolink_wrapper_pair(open : Char, close : Char) -> Bool {
   (open == '(' && close == ')') ||
   (open == '[' && close == ']') ||
   (open == '{' && close == '}')
 }
 
 ///|
-pub fn markdown_editor_autolink_trailing_punctuation(ch : Char) -> Bool {
+fn markdown_editor_autolink_trailing_punctuation(ch : Char) -> Bool {
   ch == '.' || ch == ',' || ch == ';' || ch == ':' || ch == '!' || ch == '?'
 }
 
 ///|
-pub fn markdown_editor_paste_html_block(
+fn markdown_editor_paste_html_block(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -392,7 +392,7 @@ pub fn markdown_editor_paste_html_block(
 }
 
 ///|
-pub fn markdown_editor_pasted_html_block(input : String) -> String? {
+fn markdown_editor_pasted_html_block(input : String) -> String? {
   let text = input.trim().to_owned()
   if text == "" || !markdown_editor_pasted_html_block_head_supported(text) {
     return None
@@ -408,7 +408,7 @@ pub fn markdown_editor_pasted_html_block(input : String) -> String? {
 }
 
 ///|
-pub fn markdown_editor_pasted_html_block_head_supported(text : String) -> Bool {
+fn markdown_editor_pasted_html_block_head_supported(text : String) -> Bool {
   let chars = text.to_array()
   let mut start = 0
   while start < chars.length() && (chars[start] == ' ' || chars[start] == '\t') {
@@ -445,7 +445,7 @@ pub fn markdown_editor_pasted_html_block_head_supported(text : String) -> Bool {
 }
 
 ///|
-pub fn markdown_editor_html_block_tag_name_supported(name : String) -> Bool {
+fn markdown_editor_html_block_tag_name_supported(name : String) -> Bool {
   for
     candidate in [
       "address", "article", "aside", "base", "basefont", "blockquote", "body", "caption",
@@ -465,7 +465,7 @@ pub fn markdown_editor_html_block_tag_name_supported(name : String) -> Bool {
 }
 
 ///|
-pub fn markdown_editor_paste_reference_over_selection(
+fn markdown_editor_paste_reference_over_selection(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -567,7 +567,7 @@ pub(all) struct MarkdownEditorPasteReferenceCommand {
 }
 
 ///|
-pub fn markdown_editor_reference_command_for_paste_target(
+fn markdown_editor_reference_command_for_paste_target(
   text : String,
 ) -> MarkdownEditorPasteReferenceCommand? {
   match markdown_editor_pasted_reference_definition(text) {
@@ -633,7 +633,7 @@ pub(all) struct MarkdownEditorPastedReferenceDefinition {
 }
 
 ///|
-pub fn markdown_editor_pasted_reference_definition(
+fn markdown_editor_pasted_reference_definition(
   text : String,
 ) -> MarkdownEditorPastedReferenceDefinition? {
   if text.contains("\n") {
@@ -664,7 +664,7 @@ pub fn markdown_editor_pasted_reference_definition(
 }
 
 ///|
-pub fn markdown_editor_pasted_reference_target(
+fn markdown_editor_pasted_reference_target(
   text : String,
 ) -> MarkdownEditorPastedReferenceTarget? {
   if text.contains("\n") {
@@ -738,7 +738,7 @@ pub fn markdown_editor_pasted_reference_target(
 }
 
 ///|
-pub fn markdown_editor_markdown_reference_target_token(raw : String) -> String {
+fn markdown_editor_markdown_reference_target_token(raw : String) -> String {
   let text = raw.trim().to_owned()
   if text == "" || text.contains("\n") {
     return ""
@@ -766,7 +766,7 @@ pub fn markdown_editor_markdown_reference_target_token(raw : String) -> String {
 }
 
 ///|
-pub fn markdown_editor_markdown_reference_label_token(raw : String) -> String {
+fn markdown_editor_markdown_reference_label_token(raw : String) -> String {
   let text = raw.trim().to_owned()
   if text == "" || text.contains("\n") {
     ""
@@ -776,7 +776,7 @@ pub fn markdown_editor_markdown_reference_label_token(raw : String) -> String {
 }
 
 ///|
-pub fn markdown_editor_paste_reference_label_over_selection(
+fn markdown_editor_paste_reference_label_over_selection(
   source : String,
   range : @core.TextRange,
   paste : MarkdownEditorPasteReferenceCommand,
@@ -825,7 +825,7 @@ pub fn markdown_editor_paste_reference_label_over_selection(
 }
 
 ///|
-pub fn markdown_editor_reference_label_transform(
+fn markdown_editor_reference_label_transform(
   source : String,
   visible_range : @core.TextRange,
   replace_start : Int,
@@ -866,7 +866,7 @@ pub fn markdown_editor_reference_label_transform(
 }
 
 ///|
-pub fn markdown_editor_append_pasted_reference_definition(
+fn markdown_editor_append_pasted_reference_definition(
   text : String,
   original_source : String,
   label : String,
@@ -884,14 +884,14 @@ pub fn markdown_editor_append_pasted_reference_definition(
 }
 
 ///|
-pub fn markdown_editor_reference_bounds_full_end(
+fn markdown_editor_reference_bounds_full_end(
   bounds : MarkdownLinkBounds,
 ) -> Int {
   markdown_editor_max_int(bounds.close_start, bounds.target_end) + 1
 }
 
 ///|
-pub fn markdown_editor_find_unescaped_char(
+fn markdown_editor_find_unescaped_char(
   chars : Array[Char],
   start : Int,
   target : Char,
@@ -907,10 +907,7 @@ pub fn markdown_editor_find_unescaped_char(
 }
 
 ///|
-pub fn markdown_editor_char_is_escaped(
-  chars : Array[Char],
-  index : Int,
-) -> Bool {
+fn markdown_editor_char_is_escaped(chars : Array[Char], index : Int) -> Bool {
   let mut slash_count = 0
   let mut cursor = index - 1
   while cursor >= 0 && chars[cursor] == '\\' {
@@ -921,7 +918,7 @@ pub fn markdown_editor_char_is_escaped(
 }
 
 ///|
-pub fn markdown_editor_is_image_source(text : String) -> Bool {
+fn markdown_editor_is_image_source(text : String) -> Bool {
   if text.contains("\n") || text.contains(" ") || text == "" {
     return false
   }
@@ -930,7 +927,7 @@ pub fn markdown_editor_is_image_source(text : String) -> Bool {
 }
 
 ///|
-pub fn markdown_editor_has_image_extension(text : String) -> Bool {
+fn markdown_editor_has_image_extension(text : String) -> Bool {
   for ext in [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp", ".avif"] {
     if text.contains(ext) {
       return true
@@ -940,7 +937,7 @@ pub fn markdown_editor_has_image_extension(text : String) -> Bool {
 }
 
 ///|
-pub fn markdown_editor_is_plain_url(text : String) -> Bool {
+fn markdown_editor_is_plain_url(text : String) -> Bool {
   (text.has_prefix("https://") || text.has_prefix("http://")) &&
   !text.contains("\n") &&
   !text.contains(" ") &&
@@ -948,12 +945,12 @@ pub fn markdown_editor_is_plain_url(text : String) -> Bool {
 }
 
 ///|
-pub fn markdown_editor_is_autolink_target(text : String) -> Bool {
+fn markdown_editor_is_autolink_target(text : String) -> Bool {
   markdown_editor_is_plain_url(text) || markdown_editor_is_plain_email(text)
 }
 
 ///|
-pub fn markdown_editor_is_plain_email(text : String) -> Bool {
+fn markdown_editor_is_plain_email(text : String) -> Bool {
   if text == "" ||
     text.contains("\n") ||
     text.contains(" ") ||
@@ -982,7 +979,7 @@ pub fn markdown_editor_is_plain_email(text : String) -> Bool {
 }
 
 ///|
-pub fn markdown_editor_email_part_supported(
+fn markdown_editor_email_part_supported(
   text : String,
   local_part~ : Bool,
 ) -> Bool {
@@ -1007,17 +1004,14 @@ pub fn markdown_editor_email_part_supported(
 }
 
 ///|
-pub fn markdown_editor_email_char_supported(
-  ch : Char,
-  local_part~ : Bool,
-) -> Bool {
+fn markdown_editor_email_char_supported(ch : Char, local_part~ : Bool) -> Bool {
   markdown_editor_ascii_word_char(ch) ||
   ch == '-' ||
   (local_part && (ch == '+' || ch == '%'))
 }
 
 ///|
-pub fn markdown_editor_email_domain_has_dot(domain : String) -> Bool {
+fn markdown_editor_email_domain_has_dot(domain : String) -> Bool {
   let chars = domain.to_array()
   for index in 1..<(chars.length() - 1) {
     if chars[index] == '.' {

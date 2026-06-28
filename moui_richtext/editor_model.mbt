@@ -87,7 +87,7 @@ pub(all) struct MarkdownLine {
 } derive(Eq, Debug)
 
 ///|
-pub fn markdown_editor_line_count(source : String) -> Int {
+fn markdown_editor_line_count(source : String) -> Int {
   if source == "" {
     0
   } else {
@@ -102,7 +102,7 @@ pub fn markdown_editor_line_count(source : String) -> Int {
 }
 
 ///|
-pub fn markdown_editor_word_count(source : String) -> Int {
+fn markdown_editor_word_count(source : String) -> Int {
   let mut count = 0
   let mut in_word = false
   for ch in source {
@@ -122,7 +122,7 @@ pub fn markdown_editor_word_count(source : String) -> Int {
 }
 
 ///|
-pub fn markdown_editor_lines(source : String) -> Array[MarkdownLine] {
+fn markdown_editor_lines(source : String) -> Array[MarkdownLine] {
   let lines : Array[MarkdownLine] = []
   let current : Array[Char] = []
   let mut start = 0
@@ -160,7 +160,7 @@ pub fn markdown_editor_substring(
 }
 
 ///|
-pub fn markdown_editor_digit_count(number : Int) -> Int {
+fn markdown_editor_digit_count(number : Int) -> Int {
   let mut value = number
   let mut count = 1
   while value >= 10 {
@@ -171,7 +171,7 @@ pub fn markdown_editor_digit_count(number : Int) -> Int {
 }
 
 ///|
-pub fn markdown_editor_min_int(a : Int, b : Int) -> Int {
+fn markdown_editor_min_int(a : Int, b : Int) -> Int {
   if a < b {
     a
   } else {

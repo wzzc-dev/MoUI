@@ -228,136 +228,6 @@ pub fn[Msg] controlled_rich_text_document_editor(
 }
 
 ///|
-pub fn[Msg] controlled_markdown_session_editor(
-  session~ : MarkdownDocumentSession,
-  selection~ : MarkdownEditorSelection,
-  on_transaction~ : (MarkdownEditTransaction) -> Msg,
-  placeholder~ : String,
-  size~ : @core.Size,
-  font~ : @core.FontSpec,
-  foreground~ : @core.Color,
-  placeholder_color~ : @core.Color,
-  background~ : @core.Brush,
-  border? : @core.BorderStyle? = None,
-  focused_border? : @core.BorderStyle? = None,
-  cursor_color~ : @core.Color,
-  corner_radius? : Double = 0.0,
-  source_mode? : Bool = false,
-  focus_mode? : Bool = false,
-  base_dir? : String? = None,
-  on_selection_change? : ((Int, @core.TextRange?) -> Msg)? = None,
-  on_prefix_click? : ((Int) -> Msg)? = None,
-  on_command_click? : ((Int) -> Msg)? = None,
-  accepts_tab_input? : Bool = true,
-  visible_scroll_y? : Double = 0.0,
-  visible_viewport_height? : Double = 0.0,
-  visible_overscan? : Double = 320.0,
-  visible_scroll_state? : @core.ScrollState? = None,
-  key? : String? = None,
-) -> @core.View[Msg] {
-  @core.View::node(
-    identity=() => @core.ViewIdentity::new(kind="MarkdownSessionEditor", key~),
-    revision=() => {
-      "markdown-session-editor:\{session.revision}:\{session.blocks.length()}:\{selection.caret}:\{view_text_range_option_revision(selection.selection)}:\{placeholder}:\{view_size_revision(size)}:\{view_font_revision(font)}:\{view_color_revision(foreground)}:\{view_color_revision(placeholder_color)}:\{view_brush_revision(background)}:\{view_border_option_revision(border)}:\{view_border_option_revision(focused_border)}:\{view_color_revision(cursor_color)}:\{corner_radius}:\{source_mode}:\{focus_mode}:\{accepts_tab_input}"
-    },
-    layout=ctx => {
-      @core.ViewLayoutResult::new(size=ctx.constraints.constrain(size))
-    },
-    paint=ctx => {
-      markdown_session_editor_paint(
-        ctx,
-        session~,
-        selection~,
-        placeholder~,
-        font~,
-        foreground~,
-        placeholder_color~,
-        background~,
-        border~,
-        focused_border~,
-        cursor_color~,
-        corner_radius~,
-        source_mode~,
-        focus_mode~,
-        base_dir~,
-        visible_scroll_y~,
-        visible_viewport_height~,
-        visible_overscan~,
-        visible_scroll_state~,
-      )
-    },
-    event=ctx => {
-      markdown_session_editor_event(
-        ctx,
-        session~,
-        selection~,
-        on_transaction~,
-        font~,
-        source_mode~,
-        focus_mode~,
-        base_dir~,
-        on_selection_change~,
-        on_prefix_click~,
-        on_command_click~,
-        accepts_tab_input~,
-        visible_scroll_y~,
-        visible_viewport_height~,
-        visible_overscan~,
-        visible_scroll_state~,
-      )
-    },
-    text_input_state=ctx => {
-      Some(
-        markdown_session_input_state(
-          text=session.source,
-          frame=ctx.frame,
-          session~,
-          selection~,
-          font~,
-          control=ctx.text_control,
-          source_mode~,
-          focus_mode~,
-          base_dir~,
-          visible_scroll_y~,
-          visible_viewport_height~,
-          visible_overscan~,
-          visible_scroll_state~,
-          text_system=ctx.text_system,
-        ),
-      )
-    },
-    text_command=(ctx, intent, paste_text) => {
-      markdown_session_editor_command(
-        ctx,
-        session~,
-        selection~,
-        on_transaction~,
-        on_selection_change~,
-        font~,
-        source_mode~,
-        focus_mode~,
-        base_dir~,
-        intent,
-        paste_text~,
-      )
-    },
-    semantics=() => {
-      @core.ViewSemanticsInfo::new(
-        role=@core.SemanticsRole::TextField,
-        label=placeholder,
-        value="Markdown document",
-        actions=[
-          @core.SemanticsAction::Focus,
-          @core.SemanticsAction::SetText,
-          @core.SemanticsAction::Submit,
-        ],
-      )
-    },
-    focusable=() => true,
-  )
-}
-
-///|
 fn markdown_session_current_scroll_y(
   visible_scroll_y : Double,
   visible_scroll_state : @core.ScrollState?,
@@ -876,7 +746,7 @@ fn markdown_session_input_state(
     caret: selection.caret,
     selection: selection.selection,
   }
-  let caret = clamp_int(control.caret, 0, session.source_length)
+  let caret = @core.clamp_int(control.caret, 0, session.source_length)
   if frame.size.width <= 0.0 || frame.size.height <= 0.0 {
     return {
       focused: true,
@@ -899,7 +769,7 @@ fn markdown_session_input_state(
   let display_session = markdown_session_display_session(session, display_text)
   let visual_caret = match control.composition {
     Some(_) =>
-      clamp_int(
+      @core.clamp_int(
         rich_text_visual_caret(text, control, focused=true),
         0,
         text_length(display_text),
@@ -1131,7 +1001,7 @@ fn append_rich_text_document_layers(
     visible_viewport_height +
     visible_overscan * 2.0
   for index, block in document.blocks {
-    let line_height = rich_text_block_line_height(block, base_font)
+    let line_height = rich_text_block_line_height(block, base_font, text_system)
     let block_height = line_height + block.inset.top + block.inset.bottom
     let block_bottom = y + block_height
     if windowed && block_bottom < visible_top {
@@ -1276,7 +1146,7 @@ fn append_rich_text_block_runs(
 ) -> Unit {
   let block_font = rich_text_block_font(block, base_font)
   let block_color = rich_text_block_color(block, foreground)
-  let line_step = rich_text_block_line_step(block, base_font)
+  let line_step = rich_text_block_line_step(block, base_font, text_system)
   let mut x = frame.origin.x
   let mut line = 0
   if block.prefix != "" {
@@ -1525,7 +1395,7 @@ fn append_rich_text_editor_overlay(
       control~,
     )
   }
-  let caret = clamp_int(
+  let caret = @core.clamp_int(
     rich_text_visual_caret(text, control, focused=true),
     0,
     text_length(display_text),
@@ -1558,7 +1428,7 @@ fn append_rich_text_composition_underline(
   match control.composition {
     Some(composition) =>
       if composition != "" {
-        let start = composition_start_index(
+        let start = @core.composition_start_index(
           text,
           control.caret,
           control.selection,
@@ -1835,7 +1705,7 @@ fn[Msg] rich_text_keyboard_event(
       record_history=true,
     )
   }
-  if is_select_all_shortcut(event) {
+  if @core.is_select_all_shortcut(event) {
     let next_control = select_rich_text_control(ctx.text_control, value.get())
     return view_event_result(
       changed=true,
@@ -1849,7 +1719,7 @@ fn[Msg] rich_text_keyboard_event(
       ),
     )
   }
-  if is_undo_shortcut(event) {
+  if @core.is_undo_shortcut(event) {
     let result = restore_text_history(ctx.text_control, value.get(), undo=true)
     value.set(result.text)
     return view_event_result(
@@ -1866,7 +1736,7 @@ fn[Msg] rich_text_keyboard_event(
         ),
     )
   }
-  if is_redo_shortcut(event) {
+  if @core.is_redo_shortcut(event) {
     let result = restore_text_history(ctx.text_control, value.get(), undo=false)
     value.set(result.text)
     return view_event_result(
@@ -1884,7 +1754,7 @@ fn[Msg] rich_text_keyboard_event(
     )
   }
   if event.key == "Backspace" {
-    match active_text_selection(ctx.text_control.selection) {
+    match @core.active_text_selection(ctx.text_control.selection) {
       Some(selection) =>
         return rich_text_input_event(
           ctx,
@@ -1910,7 +1780,7 @@ fn[Msg] rich_text_keyboard_event(
     }
   }
   if event.key == "Delete" {
-    match active_text_selection(ctx.text_control.selection) {
+    match @core.active_text_selection(ctx.text_control.selection) {
       Some(selection) =>
         return rich_text_input_event(
           ctx,
@@ -2126,7 +1996,7 @@ fn[Msg] rich_text_editor_command(
         document,
         ctx.text_control.selection,
       )
-      match active_text_selection(ctx.text_control.selection) {
+      match @core.active_text_selection(ctx.text_control.selection) {
         Some(selection) => {
           let event_result = rich_text_input_event(
             ctx,
@@ -2257,7 +2127,7 @@ fn rich_text_input_state(
   let display_text = rich_text_with_composition(text, control, focused=true)
   let content = rich_text_editor_content_rect(frame)
   let caret = boundaries.nearest_boundary(control.caret)
-  let visual_caret = clamp_int(
+  let visual_caret = @core.clamp_int(
     rich_text_visual_caret(text, control, focused=true),
     0,
     text_length(display_text),
@@ -2358,14 +2228,14 @@ fn rich_text_visual_caret(
   control : @core.TextControlStateContext,
   focused~ : Bool,
 ) -> Int {
-  let caret = clamp_int(control.caret, 0, text_length(text))
+  let caret = @core.clamp_int(control.caret, 0, text_length(text))
   if !focused {
     caret
   } else {
     match control.composition {
       Some(composition) =>
-        composition_start_index(text, control.caret, control.selection) +
-        composition_cursor_offset(control, composition)
+        @core.composition_start_index(text, control.caret, control.selection) +
+        @core.composition_cursor_offset(control, composition)
       None => caret
     }
   }
@@ -2403,18 +2273,19 @@ pub fn rich_text_editor_content_rect(frame : @core.Rect) -> @core.Rect {
 ///|
 fn string_prefix(text : String, end : Int) -> String {
   let chars = text.to_array()
-  String::from_array(chars[:clamp_int(end, 0, chars.length())])
+  String::from_array(chars[:@core.clamp_int(end, 0, chars.length())])
 }
 
 ///|
 pub fn rich_text_document_height(
   document : RichTextDocument,
   base_font : @core.FontSpec,
+  text_system? : @core.TextSystem = @core.TextSystem::fallback(),
 ) -> Double {
   let mut height = 0.0
   for block in document.blocks {
     height = height +
-      rich_text_block_line_height(block, base_font) +
+      rich_text_block_line_height(block, base_font, text_system) +
       block.inset.top +
       block.inset.bottom
   }
@@ -2425,8 +2296,9 @@ pub fn rich_text_document_height(
 fn rich_text_block_line_height(
   block : RichTextBlock,
   base_font : @core.FontSpec,
+  text_system : @core.TextSystem,
 ) -> Double {
-  let text_height = rich_text_block_line_step(block, base_font)
+  let text_height = rich_text_block_line_step(block, base_font, text_system)
   let mut height = text_height *
     rich_text_block_visual_line_count(block).to_double()
   match block.table {
@@ -2450,9 +2322,15 @@ fn rich_text_block_line_height(
 fn rich_text_block_line_step(
   block : RichTextBlock,
   base_font : @core.FontSpec,
+  text_system : @core.TextSystem,
 ) -> Double {
   block.line_height.unwrap_or(
-    rich_text_block_font(block, base_font).size * 1.55,
+    text_system.measure_text(
+      @core.TextLayoutInput::new(
+        text="Mg",
+        font=rich_text_block_font(block, base_font),
+      ),
+    ).size.height,
   )
 }
 
@@ -2634,7 +2512,7 @@ fn[Msg] rich_text_line_edge_move_result(
 ///|
 fn multiline_line_start(text : String, caret : Int) -> Int {
   let chars = text.to_array()
-  let mut index = clamp_int(caret, 0, chars.length())
+  let mut index = @core.clamp_int(caret, 0, chars.length())
   while index > 0 && chars[index - 1] != '\n' {
     index = index - 1
   }
@@ -2644,7 +2522,7 @@ fn multiline_line_start(text : String, caret : Int) -> Int {
 ///|
 fn multiline_line_end(text : String, caret : Int) -> Int {
   let chars = text.to_array()
-  let mut index = clamp_int(caret, 0, chars.length())
+  let mut index = @core.clamp_int(caret, 0, chars.length())
   while index < chars.length() && chars[index] != '\n' {
     index = index + 1
   }
@@ -2711,12 +2589,12 @@ fn selected_rich_text(
   document : RichTextDocument,
   selection : @core.TextRange?,
 ) -> String {
-  match active_text_selection(selection) {
+  match @core.active_text_selection(selection) {
     Some(selection) =>
       if rich_text_document_has_source_ranges(document) {
         selected_rich_text_document_text(document, selection)
       } else {
-        selected_text(text, Some(selection))
+        @core.selected_text(text, Some(selection))
       }
     None => ""
   }
@@ -2747,8 +2625,8 @@ fn selected_rich_text_block_text(
       if selection.end <= source.start || selection.start >= source.end {
         None
       } else {
-        let start = clamp_int(selection.start, content.start, content.end)
-        let end = clamp_int(selection.end, content.start, content.end)
+        let start = @core.clamp_int(selection.start, content.start, content.end)
+        let end = @core.clamp_int(selection.end, content.start, content.end)
         let text = selected_rich_text_runs_text(block, start, end)
         if text == "" && start != end {
           None
@@ -2760,8 +2638,8 @@ fn selected_rich_text_block_text(
       if selection.end <= content.start || selection.start >= content.end {
         None
       } else {
-        let start = clamp_int(selection.start, content.start, content.end)
-        let end = clamp_int(selection.end, content.start, content.end)
+        let start = @core.clamp_int(selection.start, content.start, content.end)
+        let end = @core.clamp_int(selection.end, content.start, content.end)
         let text = selected_rich_text_runs_text(block, start, end)
         if text == "" && start != end {
           None
@@ -2830,7 +2708,7 @@ fn rich_text_run_copy_offset(
   if source_length <= 0 || copy_length <= 0 {
     0
   } else {
-    clamp_int(
+    @core.clamp_int(
       (source_offset.to_double() *
       copy_length.to_double() /
       source_length.to_double())
@@ -2867,8 +2745,8 @@ fn rich_text_run_slice(text : String, start : Int, end : Int) -> String {
     @core.TextGraphemeBoundaries::new(text~),
     @core.TextRange::new(start~, end~),
   )
-  let start = clamp_int(range.start, 0, chars.length())
-  let end = clamp_int(range.end, start, chars.length())
+  let start = @core.clamp_int(range.start, 0, chars.length())
+  let end = @core.clamp_int(range.end, start, chars.length())
   String::from_array(chars[start:end])
 }
 
@@ -2893,11 +2771,13 @@ fn append_rich_text_selection_commands(
   text_system : @core.TextSystem,
   selection : @core.TextRange?,
 ) -> Unit {
-  match active_text_selection(selection) {
+  match @core.active_text_selection(selection) {
     Some(selection) => {
       let mut y = content.origin.y
       for block in document.blocks {
-        let line_height = rich_text_block_line_height(block, base_font)
+        let line_height = rich_text_block_line_height(
+          block, base_font, text_system,
+        )
         let block_height = line_height + block.inset.top + block.inset.bottom
         let frame = @core.Rect::new(
           x=content.origin.x + block.inset.left,
@@ -2934,12 +2814,12 @@ fn rich_text_block_selection_visual_range(
       } else {
         let start = rich_text_block_source_offset_to_visual(
           block,
-          clamp_int(selection.start, source.start, source.end),
+          @core.clamp_int(selection.start, source.start, source.end),
           content,
         )
         let end = rich_text_block_source_offset_to_visual(
           block,
-          clamp_int(selection.end, source.start, source.end),
+          @core.clamp_int(selection.end, source.start, source.end),
           content,
         )
         if end > start {
@@ -2954,12 +2834,12 @@ fn rich_text_block_selection_visual_range(
       } else {
         let start = rich_text_block_source_offset_to_visual(
           block,
-          clamp_int(selection.start, content.start, content.end),
+          @core.clamp_int(selection.start, content.start, content.end),
           content,
         )
         let end = rich_text_block_source_offset_to_visual(
           block,
-          clamp_int(selection.end, content.start, content.end),
+          @core.clamp_int(selection.end, content.start, content.end),
           content,
         )
         if end > start {
@@ -3042,7 +2922,7 @@ fn rich_text_document_caret_rect(
     height=max_double(10.0, base_font.size * 1.55 - 8.0),
   )
   for block in document.blocks {
-    let line_height = rich_text_block_line_height(block, base_font)
+    let line_height = rich_text_block_line_height(block, base_font, text_system)
     let block_height = line_height + block.inset.top + block.inset.bottom
     let frame = @core.Rect::new(
       x=content.origin.x + block.inset.left,
@@ -3093,7 +2973,7 @@ fn rich_text_document_source_offset_at_point(
   let mut y = content.origin.y
   let mut last_offset : Int? = None
   for block in document.blocks {
-    let line_height = rich_text_block_line_height(block, base_font)
+    let line_height = rich_text_block_line_height(block, base_font, text_system)
     let block_height = line_height + block.inset.top + block.inset.bottom
     let frame = @core.Rect::new(
       x=content.origin.x + block.inset.left,
@@ -3175,7 +3055,7 @@ fn rich_text_document_prefix_source_offset_at_point(
   let mut y = content.origin.y
   let mut fallback : Int? = None
   for block in document.blocks {
-    let line_height = rich_text_block_line_height(block, base_font)
+    let line_height = rich_text_block_line_height(block, base_font, text_system)
     let block_height = line_height + block.inset.top + block.inset.bottom
     let frame = @core.Rect::new(
       x=content.origin.x + block.inset.left,
@@ -3273,8 +3153,8 @@ fn rich_text_block_visual_offset_at_point(
   text_system : @core.TextSystem,
 ) -> Int {
   let font = rich_text_block_font(block, base_font)
-  let line_step = rich_text_block_line_step(block, base_font)
-  let target_line = clamp_int(
+  let line_step = rich_text_block_line_step(block, base_font, text_system)
+  let target_line = @core.clamp_int(
     ((point.y - frame.origin.y) / line_step).floor().to_int(),
     0,
     rich_text_block_visual_line_count(block) - 1,
@@ -3403,7 +3283,7 @@ fn rich_text_block_source_offset_from_visual(
           ) {
           Some(offset) => offset
           None =>
-            clamp_int(
+            @core.clamp_int(
               content.start + visual_offset - prefix_length,
               content.start,
               content.end,
@@ -3432,7 +3312,7 @@ fn rich_text_block_run_source_offset_from_visual(
       match run.source_range {
         Some(range) =>
           return Some(
-            clamp_int(
+            @core.clamp_int(
               range.start +
               rich_text_run_source_offset_from_visual_offset(
                 remaining,
@@ -3477,7 +3357,7 @@ fn rich_text_block_source_offset_to_visual(
     match rich_text_block_run_visual_offset_from_source(block, source_offset) {
       Some(offset) => prefix_length + offset
       None =>
-        clamp_int(
+        @core.clamp_int(
           prefix_length + source_offset - content.start,
           0,
           rich_text_block_visual_length(block),
@@ -3523,8 +3403,8 @@ fn rich_text_block_caret_rect(
   text_system : @core.TextSystem,
 ) -> @core.Rect {
   let font = rich_text_block_font(block, base_font)
-  let line_step = rich_text_block_line_step(block, base_font)
-  let mut remaining = clamp_int(
+  let line_step = rich_text_block_line_step(block, base_font, text_system)
+  let mut remaining = @core.clamp_int(
     visual_offset,
     0,
     rich_text_block_visual_length(block),
@@ -3686,7 +3566,7 @@ fn rich_text_block_table_has_source_ranges(block : RichTextBlock) -> Bool {
 fn rich_text_table_column_count(table : RichTextTable) -> Int {
   let mut count = 0
   for row in table.rows {
-    count = max_int(count, row.length())
+    count = @core.max_int(count, row.length())
   }
   count
 }
@@ -3824,7 +3704,7 @@ fn rich_text_block_content_revision(
 ///|
 fn rich_text_source_range_key(range : RichTextSourceRange?) -> String {
   match range {
-    Some(range) => "len=\{max_int(0, range.end - range.start)}"
+    Some(range) => "len=\{@core.max_int(0, range.end - range.start)}"
     None => "none"
   }
 }
@@ -3970,13 +3850,13 @@ fn rich_text_block_table_source_offset_at_point(
       if row_count == 0 || column_count == 0 || table.row_height <= 0.0 {
         return None
       }
-      let row_index = clamp_int(
+      let row_index = @core.clamp_int(
         ((point.y - frame.origin.y) / table.row_height).floor().to_int(),
         0,
         row_count - 1,
       )
       let column_width = frame.size.width / column_count.to_double()
-      let column_index = clamp_int(
+      let column_index = @core.clamp_int(
         ((point.x - frame.origin.x) / column_width).floor().to_int(),
         0,
         column_count - 1,
@@ -3999,7 +3879,7 @@ fn rich_text_block_table_source_offset_at_point(
             column_width
           }
           Some(
-            clamp_int(
+            @core.clamp_int(
               range.start +
               (relative * (range.end - range.start).to_double())
               .round()

@@ -169,7 +169,7 @@ pub fn markdown_block_to_rich_text(
 }
 
 ///|
-pub fn markdown_code_block_runs(
+fn markdown_code_block_runs(
   block : MarkdownBlock,
   base : @core.FontSpec,
 ) -> Array[RichTextRun] {
@@ -210,7 +210,7 @@ pub fn markdown_code_block_runs(
 }
 
 ///|
-pub fn markdown_heading_size_scale(level : Int) -> Double {
+fn markdown_heading_size_scale(level : Int) -> Double {
   if level <= 1 {
     1.45
   } else if level == 2 {
@@ -227,7 +227,7 @@ pub fn markdown_heading_size_scale(level : Int) -> Double {
 }
 
 ///|
-pub fn markdown_heading_line_height_scale(level : Int) -> Double {
+fn markdown_heading_line_height_scale(level : Int) -> Double {
   if level <= 1 {
     2.0
   } else if level == 2 {
@@ -240,7 +240,7 @@ pub fn markdown_heading_line_height_scale(level : Int) -> Double {
 }
 
 ///|
-pub fn markdown_inlines_to_rich_text(
+fn markdown_inlines_to_rich_text(
   inlines : Array[MarkdownInline],
   base : @core.FontSpec,
   base_dir? : String? = None,
@@ -264,7 +264,7 @@ pub fn markdown_inlines_to_rich_text(
 }
 
 ///|
-pub fn markdown_inline_visual_text(inline : MarkdownInline) -> String {
+fn markdown_inline_visual_text(inline : MarkdownInline) -> String {
   match inline.kind {
     Image => markdown_inline_source_text(inline)
     FootnoteReference => inline.text
@@ -273,7 +273,7 @@ pub fn markdown_inline_visual_text(inline : MarkdownInline) -> String {
 }
 
 ///|
-pub fn markdown_inline_image_source(
+fn markdown_inline_image_source(
   inline : MarkdownInline,
   base_dir? : String? = None,
 ) -> String? {
@@ -336,7 +336,7 @@ fn markdown_join_path(dir : String, rel : String) -> String {
 }
 
 ///|
-pub fn markdown_inline_image_size(
+fn markdown_inline_image_size(
   inline : MarkdownInline,
   base : @core.FontSpec,
 ) -> @core.Size? {
@@ -348,7 +348,7 @@ pub fn markdown_inline_image_size(
 }
 
 ///|
-pub fn markdown_inline_source_text(inline : MarkdownInline) -> String {
+fn markdown_inline_source_text(inline : MarkdownInline) -> String {
   if inline.kind is HtmlInline {
     return markdown_html_inline_source(inline.text)
   }
@@ -363,7 +363,7 @@ pub fn markdown_inline_source_text(inline : MarkdownInline) -> String {
 }
 
 ///|
-pub fn markdown_inline_font(
+fn markdown_inline_font(
   kind : MarkdownInlineKind,
   font : @core.FontSpec,
 ) -> @core.FontSpec {
@@ -397,7 +397,7 @@ pub fn markdown_inline_font(
 ///|
 /// Inline run colors. Links/autolinks render in Typora's blue so they read as
 /// actionable; everything else inherits the block foreground (None).
-pub fn markdown_inline_color(kind : MarkdownInlineKind) -> @core.Color? {
+fn markdown_inline_color(kind : MarkdownInlineKind) -> @core.Color? {
   match kind {
     Link | Autolink => Some(@core.Color::rgba(r=0.13, g=0.45, b=0.94, a=1.0))
     _ => None
@@ -405,7 +405,7 @@ pub fn markdown_inline_color(kind : MarkdownInlineKind) -> @core.Color? {
 }
 
 ///|
-pub fn markdown_inline_background(kind : MarkdownInlineKind) -> @core.Brush? {
+fn markdown_inline_background(kind : MarkdownInlineKind) -> @core.Brush? {
   match kind {
     Code => Some(@core.Brush::solid(@core.Color::black().multiply_alpha(0.08)))
     Image =>
@@ -419,9 +419,7 @@ pub fn markdown_inline_background(kind : MarkdownInlineKind) -> @core.Brush? {
 }
 
 ///|
-pub fn markdown_inline_decoration(
-  kind : MarkdownInlineKind,
-) -> RichTextDecoration? {
+fn markdown_inline_decoration(kind : MarkdownInlineKind) -> RichTextDecoration? {
   match kind {
     Strikethrough => Some(RichTextDecoration::Strikethrough)
     Plain

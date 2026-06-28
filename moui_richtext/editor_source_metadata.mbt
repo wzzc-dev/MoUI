@@ -1,5 +1,5 @@
 ///|
-pub fn markdown_editor_active_heading(
+fn markdown_editor_active_heading(
   blocks : Array[MarkdownEditorBlock],
 ) -> String {
   for block in blocks {
@@ -18,7 +18,7 @@ pub(all) struct MarkdownEditorFrontMatterMetadata {
 }
 
 ///|
-pub fn markdown_editor_front_matter_metadata(
+fn markdown_editor_front_matter_metadata(
   blocks : Array[MarkdownEditorBlock],
 ) -> MarkdownEditorFrontMatterMetadata {
   if blocks.length() == 0 {
@@ -32,7 +32,7 @@ pub fn markdown_editor_front_matter_metadata(
 }
 
 ///|
-pub fn markdown_editor_parse_front_matter_metadata(
+fn markdown_editor_parse_front_matter_metadata(
   source : String,
 ) -> MarkdownEditorFrontMatterMetadata {
   let tags : Array[String] = []
@@ -85,7 +85,7 @@ pub fn markdown_editor_parse_front_matter_metadata(
 }
 
 ///|
-pub fn markdown_editor_front_matter_tags(source : String) -> Array[String] {
+fn markdown_editor_front_matter_tags(source : String) -> Array[String] {
   let text = source.trim().to_owned()
   if text == "" {
     []
@@ -105,7 +105,7 @@ pub fn markdown_editor_front_matter_tags(source : String) -> Array[String] {
 }
 
 ///|
-pub fn markdown_editor_split_front_matter_tag_list(
+fn markdown_editor_split_front_matter_tag_list(
   source : String,
 ) -> Array[String] {
   let tags : Array[String] = []
@@ -134,7 +134,7 @@ pub fn markdown_editor_split_front_matter_tag_list(
 }
 
 ///|
-pub fn markdown_editor_push_front_matter_tag(
+fn markdown_editor_push_front_matter_tag(
   tags : Array[String],
   source : String,
 ) -> Unit {
@@ -145,7 +145,7 @@ pub fn markdown_editor_push_front_matter_tag(
 }
 
 ///|
-pub fn markdown_editor_front_matter_scalar(source : String) -> String {
+fn markdown_editor_front_matter_scalar(source : String) -> String {
   let text = source.trim().to_owned()
   let chars = text.to_array()
   if chars.length() >= 2 &&
@@ -160,7 +160,7 @@ pub fn markdown_editor_front_matter_scalar(source : String) -> String {
 }
 
 ///|
-pub fn markdown_editor_reading_minutes(word_count : Int) -> Int {
+fn markdown_editor_reading_minutes(word_count : Int) -> Int {
   if word_count <= 0 {
     0
   } else {
@@ -169,7 +169,7 @@ pub fn markdown_editor_reading_minutes(word_count : Int) -> Int {
 }
 
 ///|
-pub fn markdown_editor_outline(
+fn markdown_editor_outline(
   blocks : Array[MarkdownEditorBlock],
 ) -> Array[MarkdownEditorOutlineItem] {
   let items : Array[MarkdownEditorOutlineItem] = []

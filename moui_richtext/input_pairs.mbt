@@ -1,5 +1,5 @@
 ///|
-pub fn markdown_editor_wrap_selection_input(
+fn markdown_editor_wrap_selection_input(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -33,7 +33,7 @@ pub fn markdown_editor_wrap_selection_input(
 }
 
 ///|
-pub fn markdown_editor_pair_inline_marker_input(
+fn markdown_editor_pair_inline_marker_input(
   source : String,
   marker : String,
   caret : Int,
@@ -55,7 +55,7 @@ pub fn markdown_editor_pair_inline_marker_input(
 }
 
 ///|
-pub fn markdown_editor_pair_delimiter_input(
+fn markdown_editor_pair_delimiter_input(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -116,7 +116,7 @@ pub fn markdown_editor_pair_delimiter_input(
 }
 
 ///|
-pub fn markdown_editor_skip_closing_delimiter(
+fn markdown_editor_skip_closing_delimiter(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -168,7 +168,7 @@ pub fn markdown_editor_skip_closing_delimiter(
 }
 
 ///|
-pub fn markdown_editor_apostrophe_in_word(
+fn markdown_editor_apostrophe_in_word(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -193,7 +193,7 @@ pub fn markdown_editor_ascii_word_char(ch : Char) -> Bool {
 }
 
 ///|
-pub fn markdown_editor_backspace_empty_delimiter_pair(
+fn markdown_editor_backspace_empty_delimiter_pair(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -219,7 +219,7 @@ pub fn markdown_editor_backspace_empty_delimiter_pair(
 }
 
 ///|
-pub fn markdown_editor_empty_delimiter_pair_at(
+fn markdown_editor_empty_delimiter_pair_at(
   chars : Array[Char],
   caret : Int,
 ) -> Bool {
@@ -240,7 +240,7 @@ pub fn markdown_editor_empty_delimiter_pair_at(
 }
 
 ///|
-pub fn markdown_editor_delete_empty_delimiter_pair(
+fn markdown_editor_delete_empty_delimiter_pair(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -266,7 +266,7 @@ pub fn markdown_editor_delete_empty_delimiter_pair(
 }
 
 ///|
-pub fn markdown_editor_backspace_empty_inline_marker_pair(
+fn markdown_editor_backspace_empty_inline_marker_pair(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -311,7 +311,7 @@ pub fn markdown_editor_backspace_empty_inline_marker_pair(
 }
 
 ///|
-pub fn markdown_editor_delete_empty_inline_marker_pair(
+fn markdown_editor_delete_empty_inline_marker_pair(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -349,7 +349,7 @@ pub fn markdown_editor_delete_empty_inline_marker_pair(
 }
 
 ///|
-pub fn markdown_editor_empty_inline_marker_pair_at(
+fn markdown_editor_empty_inline_marker_pair_at(
   chars : Array[Char],
   open_start : Int,
   marker : String,
@@ -361,7 +361,7 @@ pub fn markdown_editor_empty_inline_marker_pair_at(
 }
 
 ///|
-pub fn markdown_editor_remove_empty_inline_marker_pair(
+fn markdown_editor_remove_empty_inline_marker_pair(
   chars : Array[Char],
   open_start : Int,
   marker_length : Int,
@@ -374,7 +374,7 @@ pub fn markdown_editor_remove_empty_inline_marker_pair(
 }
 
 ///|
-pub fn markdown_editor_backspace_inline_marker(
+fn markdown_editor_backspace_inline_marker(
   source : String,
   caret : Int,
 ) -> RichTextInputTransform? {
@@ -447,7 +447,7 @@ pub fn markdown_editor_backspace_inline_marker(
 }
 
 ///|
-pub fn markdown_editor_delete_inline_marker(
+fn markdown_editor_delete_inline_marker(
   source : String,
   chars : Array[Char],
   caret : Int,
@@ -504,7 +504,7 @@ pub fn markdown_editor_delete_inline_marker(
 }
 
 ///|
-pub fn markdown_editor_source_has_marker(
+fn markdown_editor_source_has_marker(
   chars : Array[Char],
   start : Int,
   marker : String,
@@ -522,7 +522,7 @@ pub fn markdown_editor_source_has_marker(
 }
 
 ///|
-pub fn markdown_editor_find_inline_closing_marker(
+fn markdown_editor_find_inline_closing_marker(
   chars : Array[Char],
   start : Int,
   marker : String,
@@ -539,7 +539,7 @@ pub fn markdown_editor_find_inline_closing_marker(
 }
 
 ///|
-pub fn markdown_editor_find_inline_opening_marker(
+fn markdown_editor_find_inline_opening_marker(
   chars : Array[Char],
   close_start : Int,
   marker : String,
@@ -559,7 +559,7 @@ pub fn markdown_editor_find_inline_opening_marker(
 }
 
 ///|
-pub fn markdown_editor_remove_inline_marker_pair(
+fn markdown_editor_remove_inline_marker_pair(
   chars : Array[Char],
   open_start : Int,
   marker_length : Int,
@@ -572,7 +572,7 @@ pub fn markdown_editor_remove_inline_marker_pair(
 }
 
 ///|
-pub fn markdown_editor_inline_marker_pair_supported(
+fn markdown_editor_inline_marker_pair_supported(
   chars : Array[Char],
   open_start : Int,
   marker_length : Int,

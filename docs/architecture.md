@@ -295,7 +295,8 @@ dedicated integration callbacks.
 Custom-control entrypoints are app-facing in `moui/views`. App code,
 host tests, smoke checks, and example apps should use helpers such as
 `@views.text_field`, `@views.checkbox`, `@views.picker`, and
-`@views.rich_text_editor`. Concrete control implementations should live in
+`@moui_richtext.markdown_editor` (rich text lives in the `moui_richtext`
+addon, not `moui/views`). Concrete control implementations should live in
 `moui/views` and produce `@core.View::node(...)`.
 They should not add `@core.View::primitive_*_view` constructors or runtime
 lowering table entries.

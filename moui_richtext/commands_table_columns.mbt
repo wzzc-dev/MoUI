@@ -1,5 +1,5 @@
 ///|
-pub fn markdown_editor_insert_table_column(
+fn markdown_editor_insert_table_column(
   source : String,
   selection : MarkdownEditorSelection,
 ) -> MarkdownEditorEditResult {
@@ -32,7 +32,7 @@ pub fn markdown_editor_insert_table_column(
 }
 
 ///|
-pub fn markdown_editor_insert_table_column_after_cell(
+fn markdown_editor_insert_table_column_after_cell(
   source : String,
   block : MarkdownEditorBlock,
   current : MarkdownEditorTableCellRange,
@@ -77,7 +77,7 @@ pub fn markdown_editor_insert_table_column_after_cell(
 }
 
 ///|
-pub fn markdown_editor_insert_table_column_in_line(
+fn markdown_editor_insert_table_column_in_line(
   line : String,
   column : Int,
   inserted : String,
@@ -97,7 +97,7 @@ pub fn markdown_editor_insert_table_column_in_line(
 }
 
 ///|
-pub fn markdown_editor_table_column_content_start(
+fn markdown_editor_table_column_content_start(
   line : String,
   column : Int,
 ) -> Int {
@@ -114,7 +114,7 @@ pub fn markdown_editor_table_column_content_start(
 }
 
 ///|
-pub fn markdown_editor_delete_table_column(
+fn markdown_editor_delete_table_column(
   source : String,
   selection : MarkdownEditorSelection,
 ) -> MarkdownEditorEditResult {
@@ -148,7 +148,7 @@ pub fn markdown_editor_delete_table_column(
 }
 
 ///|
-pub fn markdown_editor_set_table_column_alignment(
+fn markdown_editor_set_table_column_alignment(
   source : String,
   selection : MarkdownEditorSelection,
   align : @core.TextAlign?,
@@ -183,7 +183,7 @@ pub fn markdown_editor_set_table_column_alignment(
 }
 
 ///|
-pub fn markdown_editor_rewrite_table_alignment(
+fn markdown_editor_rewrite_table_alignment(
   source : String,
   block : MarkdownEditorBlock,
   current : MarkdownEditorTableCellRange,
@@ -217,7 +217,7 @@ pub fn markdown_editor_rewrite_table_alignment(
 }
 
 ///|
-pub fn markdown_editor_rewrite_table_alignment_line(
+fn markdown_editor_rewrite_table_alignment_line(
   line : String,
   column : Int,
   align : @core.TextAlign?,
@@ -239,9 +239,7 @@ pub fn markdown_editor_rewrite_table_alignment_line(
 }
 
 ///|
-pub fn markdown_editor_table_alignment_marker(
-  align : @core.TextAlign?,
-) -> String {
+fn markdown_editor_table_alignment_marker(align : @core.TextAlign?) -> String {
   match align {
     Some(@core.TextAlign::TextStart) => ":---"
     Some(@core.TextAlign::TextCenter) => ":---:"
@@ -251,7 +249,7 @@ pub fn markdown_editor_table_alignment_marker(
 }
 
 ///|
-pub fn markdown_editor_delete_table_column_at_cell(
+fn markdown_editor_delete_table_column_at_cell(
   source : String,
   block : MarkdownEditorBlock,
   cells : Array[MarkdownEditorTableCellRange],
@@ -271,7 +269,7 @@ pub fn markdown_editor_delete_table_column_at_cell(
 }
 
 ///|
-pub fn markdown_editor_clear_table_column(
+fn markdown_editor_clear_table_column(
   source : String,
   block : MarkdownEditorBlock,
   current : MarkdownEditorTableCellRange,
@@ -286,7 +284,7 @@ pub fn markdown_editor_clear_table_column(
 }
 
 ///|
-pub fn markdown_editor_rewrite_table_column(
+fn markdown_editor_rewrite_table_column(
   source : String,
   block : MarkdownEditorBlock,
   column : Int,
@@ -344,7 +342,7 @@ pub fn markdown_editor_rewrite_table_column(
 }
 
 ///|
-pub fn markdown_editor_rewrite_table_column_in_line(
+fn markdown_editor_rewrite_table_column_in_line(
   line : String,
   column : Int,
   delete~ : Bool,

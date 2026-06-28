@@ -1,5 +1,5 @@
 ///|
-pub fn markdown_editor_set_code_language(
+fn markdown_editor_set_code_language(
   source : String,
   selection : MarkdownEditorSelection,
   language : String,
@@ -12,7 +12,7 @@ pub fn markdown_editor_set_code_language(
 }
 
 ///|
-pub fn markdown_editor_set_html_block_text(
+fn markdown_editor_set_html_block_text(
   source : String,
   selection : MarkdownEditorSelection,
   text : String,
@@ -25,7 +25,7 @@ pub fn markdown_editor_set_html_block_text(
 }
 
 ///|
-pub fn markdown_editor_replace_html_block_text(
+fn markdown_editor_replace_html_block_text(
   source : String,
   selection : MarkdownEditorSelection,
   block : MarkdownEditorBlock,
@@ -40,7 +40,7 @@ pub fn markdown_editor_replace_html_block_text(
 }
 
 ///|
-pub fn markdown_editor_replace_code_language(
+fn markdown_editor_replace_code_language(
   source : String,
   selection : MarkdownEditorSelection,
   block : MarkdownEditorBlock,
@@ -63,7 +63,7 @@ pub fn markdown_editor_replace_code_language(
 }
 
 ///|
-pub fn markdown_editor_code_fence_marker_end(
+fn markdown_editor_code_fence_marker_end(
   source : String,
   block : MarkdownEditorBlock,
 ) -> Int {
@@ -79,7 +79,7 @@ pub fn markdown_editor_code_fence_marker_end(
 }
 
 ///|
-pub fn markdown_editor_toggle_code_block(
+fn markdown_editor_toggle_code_block(
   source : String,
   selection : MarkdownEditorSelection,
 ) -> MarkdownEditorEditResult {
@@ -110,7 +110,7 @@ pub(all) struct MarkdownEditorQuotedCodeFence {
 } derive(Eq, Debug)
 
 ///|
-pub fn markdown_editor_containing_quoted_code_block(
+fn markdown_editor_containing_quoted_code_block(
   source : String,
   selection : MarkdownEditorSelection,
 ) -> MarkdownEditorQuotedCodeBlock? {
@@ -171,7 +171,7 @@ pub fn markdown_editor_containing_quoted_code_block(
 }
 
 ///|
-pub fn markdown_editor_line_index_at_offset(
+fn markdown_editor_line_index_at_offset(
   lines : Array[MarkdownLine],
   offset : Int,
 ) -> Int {
@@ -188,7 +188,7 @@ pub fn markdown_editor_line_index_at_offset(
 }
 
 ///|
-pub fn markdown_editor_quoted_code_fence_opening(
+fn markdown_editor_quoted_code_fence_opening(
   line : String,
 ) -> MarkdownEditorQuotedCodeFence? {
   let quote_prefix = markdown_editor_quote_context_prefix(line)
@@ -207,7 +207,7 @@ pub fn markdown_editor_quoted_code_fence_opening(
 }
 
 ///|
-pub fn markdown_editor_quoted_code_fence_closing(
+fn markdown_editor_quoted_code_fence_closing(
   line : String,
   opening : MarkdownEditorQuotedCodeFence,
 ) -> Bool {
@@ -224,7 +224,7 @@ pub fn markdown_editor_quoted_code_fence_closing(
 }
 
 ///|
-pub fn markdown_editor_unwrap_quoted_code_block(
+fn markdown_editor_unwrap_quoted_code_block(
   source : String,
   block : MarkdownEditorQuotedCodeBlock,
   selection : MarkdownEditorSelection,
@@ -269,7 +269,7 @@ pub fn markdown_editor_unwrap_quoted_code_block(
 }
 
 ///|
-pub fn markdown_editor_unwrapped_quoted_code_offset(
+fn markdown_editor_unwrapped_quoted_code_offset(
   offset : Int,
   block : MarkdownEditorQuotedCodeBlock,
   removed_before_content : Int,
@@ -289,7 +289,7 @@ pub fn markdown_editor_unwrapped_quoted_code_offset(
 }
 
 ///|
-pub fn markdown_editor_containing_code_block(
+fn markdown_editor_containing_code_block(
   source : String,
   selection : MarkdownEditorSelection,
 ) -> MarkdownEditorBlock? {
@@ -313,7 +313,7 @@ pub fn markdown_editor_containing_code_block(
 }
 
 ///|
-pub fn markdown_editor_unwrap_code_block(
+fn markdown_editor_unwrap_code_block(
   source : String,
   block : MarkdownEditorBlock,
   selection : MarkdownEditorSelection,
@@ -370,7 +370,7 @@ pub fn markdown_editor_unwrap_code_block(
 }
 
 ///|
-pub fn markdown_editor_unwrapped_code_offset(
+fn markdown_editor_unwrapped_code_offset(
   offset : Int,
   block : MarkdownEditorBlock,
   removed_before_content : Int,
@@ -390,7 +390,7 @@ pub fn markdown_editor_unwrapped_code_offset(
 }
 
 ///|
-pub fn markdown_editor_wrap_lines_in_code_block(
+fn markdown_editor_wrap_lines_in_code_block(
   source : String,
   selection : MarkdownEditorSelection,
 ) -> MarkdownEditorEditResult {
@@ -428,7 +428,7 @@ pub fn markdown_editor_wrap_lines_in_code_block(
 }
 
 ///|
-pub fn markdown_editor_code_block_quote_prefix(selected : String) -> String {
+fn markdown_editor_code_block_quote_prefix(selected : String) -> String {
   let lines = markdown_editor_lines(selected)
   if lines.length() == 0 {
     return ""
