@@ -32,6 +32,7 @@ fn files_inspector(
   height~ : Double,
 ) -> @moui.View[MarkdownEditorMsg] {
   let content_width = markdown_editor_file_sidebar_content_width()
+  let tree_scroll_height = markdown_editor_max_double(0.0, height - 260.0)
   let recent_paths = app.recent_document_paths.get()
   let recent_content = if recent_paths.length() == 0 {
     text("No recent files", width=content_width, height=28.0)
@@ -45,7 +46,7 @@ fn files_inspector(
         theme,
       ),
       width=content_width,
-      height=markdown_editor_max_double(0.0, height - 180.0),
+      height=markdown_editor_max_double(0.0, height - 180.0 - tree_scroll_height),
     )
   }
   let working_directory = app.working_directory.get()
@@ -99,13 +100,18 @@ fn files_inspector(
     )
     if tree_expanded {
       file_rows.push(
-        @views.tree_view(
-          app.directory_tree_items.get(),
-          expanded=app.expanded_tree_paths.get(),
-          on_select=Some(id => SelectTreePath(id)),
-          on_toggle=Some(id => ToggleTreePath(id)),
-          theme~,
+        scroll_view(
+          @views.tree_view(
+            app.directory_tree_items.get(),
+            expanded=app.expanded_tree_paths.get(),
+            on_select=Some(id => SelectTreePath(id)),
+            on_toggle=Some(id => ToggleTreePath(id)),
+            theme~,
+            width=content_width,
+          ),
           width=content_width,
+          height=tree_scroll_height,
+          state=Some(app.file_tree_scroll),
         ),
       )
     }

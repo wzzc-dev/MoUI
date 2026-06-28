@@ -63,6 +63,7 @@ pub struct MarkdownEditorApp {
   undo_stack : @moui.State[Array[MarkdownEditorHistoryEntry]]
   redo_stack : @moui.State[Array[MarkdownEditorHistoryEntry]]
   editor_scroll : @core.ScrollState
+  file_tree_scroll : @core.ScrollState
   priv working_directory : @moui.State[String]
   priv expanded_tree_paths : @moui.State[Array[String]]
   priv directory_tree_items : @moui.State[Array[@views.TreeItem]]
@@ -323,6 +324,7 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
     undo_stack: @moui.State::new([]),
     redo_stack: @moui.State::new([]),
     editor_scroll: @core.ScrollState::new(),
+    file_tree_scroll: @core.ScrollState::new(),
     file_tree_expanded: @moui.State::new(true),
     selected_image_offset: @moui.State::new(None),
     image_centered: @moui.State::new(false),
