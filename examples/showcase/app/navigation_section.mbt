@@ -31,27 +31,20 @@ fn ShowcaseModel::navigation_section(
           "Navigation Shell",
           subtitle="Current route: " + self.selected_section,
           actions=[
-            @views.ActionItem::new(
-              id="dialog",
-              label="Dialog",
-              message=ShowDialog,
-            ),
-            @views.ActionItem::new(id="sheet", label="Sheet", message=ShowSheet),
+            action_item(id="dialog", label="Dialog", message=ShowDialog),
+            action_item(id="sheet", label="Sheet", message=ShowSheet),
           ],
           theme~,
           width=520.0,
         ),
         breadcrumb(
           [
-            @views.BreadcrumbItem::new(
+            breadcrumb_item(
               id="catalog",
               label="Catalog",
               message=Some(SelectSection("overview")),
             ),
-            @views.BreadcrumbItem::new(
-              id="navigation",
-              label="Navigation Shell",
-            ),
+            breadcrumb_item(id="navigation", label="Navigation Shell"),
           ],
           theme~,
         ),
@@ -87,25 +80,25 @@ fn ShowcaseModel::navigation_section(
         section_nav(
           "Section Nav",
           [
-            @views.SectionNavItem::new(
+            section_nav_item(
               id="navigation",
               label="Navigation",
               summary="Shell routes",
               message=SelectSection("navigation"),
             ),
-            @views.SectionNavItem::new(
+            section_nav_item(
               id="forms",
               label="Forms",
               summary="Validation",
               message=SelectSection("forms"),
             ),
-            @views.SectionNavItem::new(
+            section_nav_item(
               id="data",
               label="Data",
               summary="Tables",
               message=SelectSection("data"),
             ),
-            @views.SectionNavItem::new(
+            section_nav_item(
               id="native-menu",
               label="Native menu",
               summary="Host gap",
@@ -308,9 +301,9 @@ fn ShowcaseModel::navigation_command_card(
 ) -> @moui.View[ShowcaseMsg] {
   ignore(metrics)
   let commands = [
-    @views.ActionItem::new(id="new", label="New", message=ShowDialog),
-    @views.ActionItem::new(id="open", label="Open", message=ShowSheet),
-    @views.ActionItem::new(
+    action_item(id="new", label="New", message=ShowDialog),
+    action_item(id="open", label="Open", message=ShowSheet),
+    action_item(
       id="archive",
       label="Archive",
       message=ToggleActive,
@@ -318,15 +311,15 @@ fn ShowcaseModel::navigation_command_card(
     ),
   ]
   let mode_items = [
-    @views.MenuItem::new(
+    menu_item(
       id="overview",
       label="Overview",
       message=SelectSection("overview"),
     ),
-    @views.MenuItem::new(id="data", label="Data", message=SelectSection("data")),
+    menu_item(id="data", label="Data", message=SelectSection("data")),
   ]
   let command_sections = [
-    @views.CommandMenuSection::new(title="File", commands=[
+    command_menu_section(title="File", commands=[
       @core.ActionCommand::new(intent=@core.CommandIntent::Submit, label="Save"),
       @core.ActionCommand::new(
         intent=@core.CommandIntent::Cancel,
@@ -453,17 +446,13 @@ fn ShowcaseModel::navigation_shell_card(
     shell_width - master_width - 8.0 - theme.spacing_scale.md * 2.0,
   )
   let items = [
-    @views.SidebarItem::new(
+    sidebar_item(
       id="overview",
       label="Overview",
       message=SelectSection("overview"),
     ),
-    @views.SidebarItem::new(
-      id="forms",
-      label="Forms",
-      message=SelectSection("forms"),
-    ),
-    @views.SidebarItem::new(
+    sidebar_item(id="forms", label="Forms", message=SelectSection("forms")),
+    sidebar_item(
       id="data",
       label="Data",
       message=SelectSection("examples"),

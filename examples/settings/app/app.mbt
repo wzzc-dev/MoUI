@@ -10,6 +10,7 @@ using @views {
   scroll_view,
   segmented_control,
   sidebar,
+  sidebar_item,
   split_view,
   status_bar,
   container,
@@ -243,17 +244,17 @@ fn SettingsModel::settings_sidebar(
   sidebar(
     "Settings",
     [
-      @views.SidebarItem::new(
+      sidebar_item(
         id="profile",
         label="Profile",
         message=SelectSettingsSection("profile"),
       ),
-      @views.SidebarItem::new(
+      sidebar_item(
         id="workspace",
         label="Workspace",
         message=SelectSettingsSection("workspace"),
       ),
-      @views.SidebarItem::new(
+      sidebar_item(
         id="preferences",
         label="Preferences",
         message=SelectSettingsSection("preferences"),

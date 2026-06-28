@@ -1,5 +1,6 @@
 ///|
 using @views {
+  action_item,
   badge,
   button,
   column,
@@ -495,16 +496,8 @@ fn DataTableModel::data_panel(
           selected_count=self.selected_rows.count(),
           total_count=self.filtered_records().length(),
           actions=[
-            @views.ActionItem::new(
-              id="archive",
-              label="Archive",
-              message=ArchiveSelection,
-            ),
-            @views.ActionItem::new(
-              id="export",
-              label="Export",
-              message=ExportSelection,
-            ),
+            action_item(id="archive", label="Archive", message=ArchiveSelection),
+            action_item(id="export", label="Export", message=ExportSelection),
           ],
           on_clear=Some(ClearSelection),
           theme~,

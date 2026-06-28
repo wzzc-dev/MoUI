@@ -3,6 +3,7 @@ using @views {
   button,
   column,
   command_menu,
+  command_menu_section,
   command_palette,
   context_menu_region,
   row,
@@ -495,13 +496,13 @@ pub fn command_palette_commands() -> Array[@views.ActionCommand] {
 ///|
 pub fn command_sections() -> Array[@views.CommandMenuSection] {
   [
-    @views.CommandMenuSection::new(
+    command_menu_section(
       title="File",
       commands=command_palette_commands().filter(command => {
         command.group == "File"
       }),
     ),
-    @views.CommandMenuSection::new(
+    command_menu_section(
       title="Edit",
       commands=command_palette_commands().filter(command => {
         command.group == "Edit"

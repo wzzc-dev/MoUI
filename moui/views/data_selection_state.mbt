@@ -49,6 +49,18 @@ pub fn[Msg] SelectableListItem::new(
 }
 
 ///|
+pub fn[Msg] selectable_list_item(
+  id~ : String,
+  title~ : String,
+  message~ : Msg,
+  subtitle? : String = "",
+  detail? : String = "",
+  enabled? : Bool = true,
+) -> SelectableListItem[Msg] {
+  SelectableListItem::new(id~, title~, message~, subtitle~, detail~, enabled~)
+}
+
+///|
 fn set_string_selected(
   selected : Array[String],
   id : String,

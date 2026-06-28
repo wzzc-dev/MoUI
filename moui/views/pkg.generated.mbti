@@ -9,6 +9,8 @@ import {
 // Values
 pub fn[Msg] accordion(Array[WizardStep[Msg]], expanded~ : Array[String], on_toggle~ : (String) -> Msg, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
+pub fn[Msg] action_item(id~ : String, label~ : String, message~ : Msg, enabled? : Bool) -> ActionItem[Msg]
+
 pub fn[Msg] alert(String, String, primary_action~ : StateViewAction[Msg], secondary_action? : StateViewAction[Msg]?, tone? : FeedbackTone, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] align(@core.View[Msg], alignment? : @core.Alignment) -> @core.View[Msg]
@@ -28,6 +30,8 @@ pub fn[Msg] banner(String, String, tone? : FeedbackTone, action? : StateViewActi
 pub fn[Msg] baseline_form_rows(Array[BaselineFormRow[Msg]], width? : Double, label_width? : Double, row_spacing? : Double, column_spacing? : Double) -> @core.View[Msg]
 
 pub fn[Msg] breadcrumb(Array[BreadcrumbItem[Msg]], theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
+
+pub fn[Msg] breadcrumb_item(id~ : String, label~ : String, message? : Msg?) -> BreadcrumbItem[Msg]
 
 pub fn[Msg] button(String, on_click? : Msg, variant? : ButtonVariant, theme? : @core.Theme, style? : ButtonStyle, icon? : IconName?, width? : Double, height? : Double) -> @core.View[Msg]
 
@@ -64,6 +68,8 @@ pub fn[Msg] combobox(String, on_input~ : (String) -> Msg, Array[MenuItem[Msg]], 
 pub fn[Msg] command_bar(Array[ActionItem[Msg]], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] command_menu(Array[CommandMenuSection], on_select~ : (@core.CommandIntent) -> Msg, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
+
+pub fn command_menu_section(title~ : String, commands~ : Array[@core.ActionCommand]) -> CommandMenuSection
 
 pub fn[Msg] command_palette(Array[@core.ActionCommand], query? : String, on_select~ : (@core.CommandIntent) -> Msg, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
 
@@ -179,6 +185,8 @@ pub fn[Msg] menu_bar(Array[MenuItem[Msg]], active? : String, theme? : @core.Them
 
 pub fn[Msg] menu_button(String, on_click? : Msg, variant? : ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
+pub fn[Msg] menu_item(id~ : String, label~ : String, message~ : Msg, enabled? : Bool) -> MenuItem[Msg]
+
 pub fn[Msg] navigation_destination(route~ : String, view~ : @core.View[Msg]) -> NavigationDestination[Msg]
 
 pub fn[Msg] navigation_stack(@core.NavigationState, Array[NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
@@ -247,11 +255,15 @@ pub fn[Msg] searchbar_binding(query~ : @core.Binding[String], placeholder? : Str
 
 pub fn[Msg] section_nav(String, Array[SectionNavItem[Msg]], selected~ : String, theme? : @core.Theme, width? : Double, item_width? : Double, item_height? : Double, orientation? : @core.Axis) -> @core.View[Msg]
 
+pub fn[Msg] section_nav_item(id~ : String, label~ : String, message~ : Msg, summary? : String, enabled? : Bool) -> SectionNavItem[Msg]
+
 pub fn[T, Msg] sectioned_list(Array[SectionListSection[T]], (T) -> String, (T) -> @core.View[Msg], state? : @core.ScrollState, header? : (SectionListSection[T]) -> @core.View[Msg], item_height? : Double, header_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int, empty? : @core.View[Msg]?) -> @core.View[Msg]
 
 pub fn[Msg] segmented_control(Array[ChoiceItem], selected~ : String, on_select~ : (String) -> Msg, size? : SegmentedControlSize, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] selectable_list(Array[SelectableListItem[Msg]], selected? : String, empty? : @core.View[Msg]?, theme? : @core.Theme, width? : Double, row_height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] selectable_list_item(id~ : String, title~ : String, message~ : Msg, subtitle? : String, detail? : String, enabled? : Bool) -> SelectableListItem[Msg]
 
 pub fn[Msg] selection_toolbar(selected_count~ : Int, total_count? : Int, actions? : Array[ActionItem[Msg]], on_clear? : Msg?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
@@ -262,6 +274,8 @@ pub fn[Msg] sheet_host(child~ : @core.View[Msg], sheet? : @core.View[Msg]?, pres
 pub fn[Msg] shortcut_button(String, on_click~ : Msg, shortcut~ : @core.KeyboardShortcut, variant? : ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double, shortcut_width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] sidebar(String, Array[SidebarItem[Msg]], selected~ : String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] sidebar_item(id~ : String, label~ : String, message~ : Msg, enabled? : Bool) -> SidebarItem[Msg]
 
 pub fn[Msg] slider(Double, min? : Double, max? : Double, width? : Double, height? : Double, theme? : @core.Theme, style? : SliderStyle, foreground? : @core.Color, background? : @core.Color, on_change? : ((Double) -> Msg)?) -> @core.View[Msg]
 
