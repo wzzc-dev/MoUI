@@ -115,3 +115,58 @@ fn markdown_editor_synthetic_scroll_document(blocks : Int) -> String {
   }
   parts.join("\n")
 }
+
+///|
+/// Collect the Y-center of every DrawText command in a draw frame. Used to
+/// verify that text is actually painted across the full viewport height after
+/// scrolling, not just in the top portion.
+fn markdown_editor_draw_text_y_centers(
+  commands : Array[@core.DrawCommand],
+) -> Array[Double] {
+  let ys : Array[Double] = []
+  for command in commands {
+    match command {
+      @core.DrawCommand::DrawText(run) =>
+        ys.push(run.frame.origin.y + run.frame.size.height / 2.0)
+      _ => ()
+    }
+  }
+  ys
+}
+
+///|
+/// Regression: scrolling a large document must not leave the bottom of the
+/// viewport blank. Before the fix, `append_rich_text_document_layers` culled
+/// blocks using the offset `window_content` rect instead of the real viewport,
+/// cutting off the bottom ~overscan (320px) of text after any scroll past the
+/// first screen.
+test "markdown editor scroll renders text across full viewport" {
+  let app = MarkdownEditorApp::new()
+  app.set_document(markdown_editor_synthetic_scroll_document(160))
+  let runtime = app.runtime(width=980.0, height=640.0)
+  ignore(runtime.draw_frame())
+  // Scroll well past the first screen.
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@moui.Point::new(
+          x=app.editor_content_x(980.0, inner_x=8.0),
+          y=220.0,
+        ),
+        phase=@core.PointerPhase::Move,
+        wheel_delta=@moui.Point::new(x=0.0, y=-600.0),
+      ),
+    ),
+  )
+  let frame = runtime.draw_frame()
+  assert_true(app.editor_scroll_y() > 0.0)
+  let ys = markdown_editor_draw_text_y_centers(frame.commands)
+  // There must be text rendered after scrolling.
+  assert_true(ys.length() > 0)
+  // The editor content occupies roughly y=40 (chrome+inset) to y=572 (above
+  // the status bar). After the fix, text should appear in the bottom half of
+  // the editor viewport. Before the fix, the bottom ~overscan was culled
+  // blank, leaving only the status bar text (y≈622) in this Y range.
+  let editor_bottom_half_count = ys.iter().filter(y => y > 300.0 && y < 600.0).count()
+  assert_true(editor_bottom_half_count > 0)
+}
