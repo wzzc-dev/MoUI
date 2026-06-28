@@ -280,7 +280,17 @@ pub fn append_markdown_ast_block(
         Some(source_text) => markdown_heading_visible_source_text(source_text)
         None => markdown_inline_text(children)
       }
-      if level >= 1 && level <= 6 {
+      // A heading source is only rendered as a heading block when it has `#`
+      // markers, a space/tab separator, AND actual content after the separator
+      // (e.g. `"# text"`). Bare markers (`"#"`, `"##"`) or markers with a
+      // separator but no content yet (`"# "`, `"## "`) are treated as plain
+      // text so the user can still see the `#` they typed and the cursor stays
+      // at normal size until real heading content is entered.
+      let is_real_heading = match source_text {
+        Some(source_text) => markdown_heading_source_is_renderable(source_text)
+        None => true
+      }
+      if level >= 1 && level <= 6 && is_real_heading {
         blocks.push({
           kind: MarkdownBlockKind::Heading(level),
           text,
@@ -289,11 +299,16 @@ pub fn append_markdown_ast_block(
           code_language: None,
         })
       } else {
-        let text = markdown_heading_source(level, text)
+        let para_text = match source_text {
+          Some(source_text) if !is_real_heading => source_text
+          _ => markdown_heading_source(level, text)
+        }
         blocks.push({
           kind: MarkdownBlockKind::Paragraph,
-          text,
-          inlines: parse_markdown_inlines_with_definitions(text, definitions),
+          text: para_text,
+          inlines: parse_markdown_inlines_with_definitions(
+            para_text, definitions,
+          ),
           table_alignments: [],
           code_language: None,
         })
