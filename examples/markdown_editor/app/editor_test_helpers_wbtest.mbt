@@ -528,30 +528,54 @@ fn MarkdownEditorApp::runtime_with_services(
 }
 
 ///|
-/// The horizontal origin of the editor's text content, accounting for the
-/// window width, the root padding (left md=12, right xl=24), and horizontal
-/// centering of the page card. Tests use this so their click coordinates land
-/// inside the centered editor. `inner_x` is the offset from the content's left
-/// edge (the editor content rect has a 14px horizontal inset).
+/// The horizontal origin of the editor's text content. The chrome has no
+/// left/right padding; the workspace fills the window width; the editor is
+/// centered between two equal-weight spacers in the row, with left/right
+/// inspectors (files on the left; info/outline/source on the right) pushing
+/// it toward the center of the remaining space. `inner_x` is the offset from
+/// the content's left edge (the editor content rect has a 14px horizontal
+/// inset).
 fn MarkdownEditorApp::editor_content_x(
   self : MarkdownEditorApp,
   window_width : Double,
   inner_x? : Double = 4.0,
 ) -> Double {
   let appearance = self.appearance_spec()
-  let show_sidebar = self.outline_visible.get() ||
-    self.file_sidebar_visible.get() ||
-    self.document_info_visible.get() ||
-    self.source_preview_visible.get()
+  let show_files = self.file_sidebar_visible.get()
+  let show_info = self.document_info_visible.get()
+  let show_outline = self.outline_visible.get()
+  let show_source = self.source_preview_visible.get()
+  let show_sidebar = show_files || show_info || show_outline || show_source
   let editor_width = if show_sidebar {
     appearance.side_editor_width
   } else {
     appearance.page_width
   }
-  let workspace_width = window_width - 12.0 - 24.0
-  let centered_editor_x = 12.0 +
-    markdown_editor_max_double(0.0, (workspace_width - editor_width) / 2.0)
-  centered_editor_x + 14.0 + inner_x
+  let left_width = if show_files {
+    markdown_editor_file_sidebar_width()
+  } else {
+    0.0
+  }
+  let right_width =
+    (if show_info {
+      markdown_editor_info_inspector_width()
+    } else {
+      0.0
+    }) +
+    (if show_outline {
+      markdown_editor_outline_inspector_width()
+    } else {
+      0.0
+    }) +
+    (if show_source {
+      markdown_editor_source_inspector_width()
+    } else {
+      0.0
+    })
+  let available = window_width - left_width - right_width
+  let editor_x = left_width +
+    markdown_editor_max_double(0.0, (available - editor_width) / 2.0)
+  editor_x + 14.0 + inner_x
 }
 
 ///|
