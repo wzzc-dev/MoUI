@@ -884,52 +884,50 @@ fn editor_source_layout(
       viewport_height,
     ),
   ]).shadow(page_shadow)
-  if !show_source && !show_outline && !show_files && !show_info {
-    editor_with_indicator
-  } else {
-    let side_children : Array[@moui.View[MarkdownEditorMsg]] = []
-    if show_files {
-      side_children.push(
-        files_inspector(app, session, theme, height=viewport_height),
-      )
-    }
-    side_children.push(editor_with_indicator)
-    if show_info {
-      side_children.push(
-        document_info_inspector(session, theme, height=viewport_height),
-      )
-    }
-    if show_outline {
-      side_children.push(
-        outline_inspector(
-          app,
-          session,
-          selection,
-          theme,
-          height=viewport_height,
-        ),
-      )
-    }
-    if show_source {
-      side_children.push(
-        source_inspector(session.source, theme, height=viewport_height),
-      )
-    }
-    let editor_and_sidebars = row(
-      side_children,
-      spacing=theme.spacing_scale.lg,
-      align=@views.CrossAlign::Start,
-    )
-    column(
-      if target_kind == PlainSelection || !show_source {
-        [editor_and_sidebars]
-      } else {
-        [editor_and_sidebars, target_bar]
-      },
-      spacing=theme.spacing_scale.md,
-      align=@views.CrossAlign::Start,
+  let side_children : Array[@moui.View[MarkdownEditorMsg]] = []
+  if show_files {
+    side_children.push(
+      files_inspector(app, session, theme, height=viewport_height),
     )
   }
+  side_children.push(spacer(min_length=0.0, weight=1.0))
+  side_children.push(editor_with_indicator)
+  side_children.push(spacer(min_length=0.0, weight=1.0))
+  if show_info {
+    side_children.push(
+      document_info_inspector(session, theme, height=viewport_height),
+    )
+  }
+  if show_outline {
+    side_children.push(
+      outline_inspector(
+        app,
+        session,
+        selection,
+        theme,
+        height=viewport_height,
+      ),
+    )
+  }
+  if show_source {
+    side_children.push(
+      source_inspector(session.source, theme, height=viewport_height),
+    )
+  }
+  let editor_and_sidebars = row(
+    side_children,
+    spacing=0.0,
+    align=@views.CrossAlign::Stretch,
+  )
+  column(
+    if target_kind == PlainSelection || !show_source {
+      [editor_and_sidebars]
+    } else {
+      [editor_and_sidebars, target_bar]
+    },
+    spacing=theme.spacing_scale.md,
+    align=@views.CrossAlign::Stretch,
+  )
 }
 
 ///|

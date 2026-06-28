@@ -139,7 +139,7 @@ fn files_inspector(
     variant=@views.ContainerVariant::Base,
     theme~,
     background=theme.palette.surface,
-    corner_radius=theme.radius_scale.sm,
+    corner_radius=0.0,
     padding=0.0,
   )
 }
@@ -453,7 +453,7 @@ fn outline_inspector(
     variant=@views.ContainerVariant::Base,
     theme~,
     background=theme.palette.surface,
-    corner_radius=theme.radius_scale.sm,
+    corner_radius=0.0,
     padding=0.0,
   )
 }
