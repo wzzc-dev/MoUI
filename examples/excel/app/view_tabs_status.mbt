@@ -1,7 +1,5 @@
-fn build_sheet_tabs(
-  model : ExcelModel,
-  theme : Theme,
-) -> @moui.View[ExcelMsg] {
+///|
+fn build_sheet_tabs(model : ExcelModel, theme : Theme) -> @moui.View[ExcelMsg] {
   let tabs : Array[@moui.View[ExcelMsg]] = []
   for i, name in model.sheet_names() {
     let active = i == model.workbook.active_sheet
@@ -65,10 +63,7 @@ fn build_sheet_tabs(
 }
 
 ///|
-fn build_status_bar(
-  model : ExcelModel,
-  theme : Theme,
-) -> @moui.View[ExcelMsg] {
+fn build_status_bar(model : ExcelModel, theme : Theme) -> @moui.View[ExcelMsg] {
   let sheet = model.active_sheet()
   let selected = if model.selected_ref().is_empty() {
     "No cell"

@@ -1,7 +1,7 @@
 import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/backend/host" @moui_host,
-  "wzzc-dev/moui_webview/host" @host,
+  "wzzc-dev/moui_webview/host",
   "wzzc-dev/window/linux" @window_linux,
 }
 
@@ -14,8 +14,6 @@ options(
       "cc-link-flags": "${build.MOUI_LINUX_WEBKITGTK_CC_LINK_FLAGS}",
     },
   },
-  "native-stub": [
-    "webview_host.c",
-  ],
+  "native-stub": [ "webview_host.c" ],
   targets: { },
 )

@@ -43,9 +43,9 @@ fn SunRasterRenderer::render_cached_command_range(
       @core.DrawCommand::BeginCachedLayer(spec) =>
         match sun_find_cached_layer_end(commands, index + 1, spec.key) {
           Some(layer_end) => {
-           self.render_or_draw_cached_layer(
-             spec,
-             commands,
+            self.render_or_draw_cached_layer(
+              spec,
+              commands,
               index + 1,
               layer_end,
             )
@@ -61,8 +61,7 @@ fn SunRasterRenderer::render_cached_command_range(
         }
       @core.DrawCommand::EndCachedLayer(_) => {
         self.record_unsupported_command(
-          "EndCachedLayer",
-          "EndCachedLayer encountered without matching BeginCachedLayer",
+          "EndCachedLayer", "EndCachedLayer encountered without matching BeginCachedLayer",
         )
         index = index + 1
       }
@@ -71,7 +70,9 @@ fn SunRasterRenderer::render_cached_command_range(
         index = index + 1
       }
       command => {
-        self.render_command(command, canvas_scopes, opacity_stack, blend_mode_stack)
+        self.render_command(
+          command, canvas_scopes, opacity_stack, blend_mode_stack,
+        )
         index = index + 1
       }
     }
@@ -111,13 +112,22 @@ fn SunRasterRenderer::update_cached_layer(
   child_start : Int,
   child_end : Int,
 ) -> Unit {
-  let physical_w = sun_cached_layer_dim(spec.frame.size.width, self.metrics.scale_factor)
-  let physical_h = sun_cached_layer_dim(spec.frame.size.height, self.metrics.scale_factor)
+  let physical_w = sun_cached_layer_dim(
+    spec.frame.size.width,
+    self.metrics.scale_factor,
+  )
+  let physical_h = sun_cached_layer_dim(
+    spec.frame.size.height,
+    self.metrics.scale_factor,
+  )
   guard physical_w > 0 && physical_h > 0 else { return }
   let layer_canvas = @sun_graphics.Canvas::new(physical_w, physical_h)
   layer_canvas.clear(@sun_graphics.Color::new(r=0, g=0, b=0, a=0))
   layer_canvas.scale(sx=self.metrics.scale_factor, sy=self.metrics.scale_factor)
-  layer_canvas.translate(tx=0.0 - spec.frame.origin.x, ty=0.0 - spec.frame.origin.y)
+  layer_canvas.translate(
+    tx=0.0 - spec.frame.origin.x,
+    ty=0.0 - spec.frame.origin.y,
+  )
   let saved_canvas = self.canvas
   let saved_canvas_stack = self.canvas_stack
   let saved_filter_stack = self.filter_stack
@@ -128,12 +138,7 @@ fn SunRasterRenderer::update_cached_layer(
   let child_opacity : Array[Double] = []
   let child_blend : Array[@sun_graphics.BlendMode] = []
   self.render_cached_command_range(
-    commands,
-    child_start,
-    child_end,
-    child_scopes,
-    child_opacity,
-    child_blend,
+    commands, child_start, child_end, child_scopes, child_opacity, child_blend,
   )
   if !child_scopes.is_empty() {
     for scope in child_scopes {
@@ -230,9 +235,7 @@ fn SunRasterRenderer::evict_cached_layers_if_needed(
 }
 
 ///|
-fn SunRasterRenderer::clear_cached_layers(
-  self : SunRasterRenderer,
-) -> Unit {
+fn SunRasterRenderer::clear_cached_layers(self : SunRasterRenderer) -> Unit {
   self.cached_layer_pixmaps = {}
   self.cached_layer_revisions = {}
   self.cached_layer_scales = {}

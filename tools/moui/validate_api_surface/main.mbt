@@ -81,12 +81,12 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
 fn root_facade_app_safe_aliases() -> Array[String] {
   [
     "View", "Program", "Effect", "Subscription", "Theme", "Point", "Size", "Rect",
-    "Insets", "Constraints", "Axis", "Alignment", "Color", "Brush", "BorderStyle", "ShadowStyle",
-    "FontSpec", "FontFamily", "FontFamilyStack", "TextRange", "TextAlign", "State",
-    "Binding", "DerivedState", "Environment", "ViewEnvironment", "ColorScheme", "LayoutDirection",
-    "AccessibilityContrast", "ContentSizeCategory", "ScrollState", "FocusState",
-    "NavigationState", "CommandIntent", "KeyboardShortcut", "KeyModifiers", "DateValue",
-    "ActionCommand", "ActionCommandMap", "CommandBinding",
+    "Insets", "Constraints", "Axis", "Alignment", "Color", "Brush", "BorderStyle",
+    "ShadowStyle", "FontSpec", "FontFamily", "FontFamilyStack", "TextRange", "TextAlign",
+    "State", "Binding", "DerivedState", "Environment", "ViewEnvironment", "ColorScheme",
+    "LayoutDirection", "AccessibilityContrast", "ContentSizeCategory", "ScrollState",
+    "FocusState", "NavigationState", "CommandIntent", "KeyboardShortcut", "KeyModifiers",
+    "DateValue", "ActionCommand", "ActionCommandMap", "CommandBinding",
   ]
 }
 
@@ -115,10 +115,9 @@ fn views_facade_host_alias_tokens() -> Array[String] {
 ///|
 fn views_facade_required_tokens() -> Array[String] {
   let tokens = [
-    "\"wzzc-dev/moui/core\"", "pub fn[Msg] button(",
-    "pub fn[Msg] column(", "pub(all) struct ButtonStyle", "pub(all) struct FormFieldState",
-    "pub(all) struct RouteLocation", "pub(all) struct RouteHistoryState", "type RouteFocusStore",
-    "type RouterState", "pub fn resolve_route(", "pub(all) enum DatePickerMode",
+    "\"wzzc-dev/moui/core\"", "pub fn[Msg] button(", "pub fn[Msg] column(", "pub(all) struct ButtonStyle",
+    "pub(all) struct FormFieldState", "pub(all) struct RouteLocation", "pub(all) struct RouteHistoryState",
+    "type RouteFocusStore", "type RouterState", "pub fn resolve_route(", "pub(all) enum DatePickerMode",
     "pub fn default_theme()", "pub fn light_theme()", "pub fn dark_theme()", "pub fn[Msg] text(",
     "pub fn[Msg] empty()", "pub fn[Msg] spacer(", "pub fn[Msg] picker(", "pub fn[Msg] picker_binding(",
     "pub fn picker_item(", "pub fn[Msg] datepicker(", "pub fn[Msg] datepicker_binding(",
@@ -339,9 +338,9 @@ fn view_return_rules() -> Array[ViewReturnRule] {
       name: "navigation_stack",
       signature_prefix: "pub fn[Msg] navigation_stack(",
       return_token: "-> @core.View[Msg]",
-	    },
-	  ]
-	}
+    },
+  ]
+}
 
 ///|
 fn legacy_core_family_budgets() -> Array[LegacyCoreFamilyBudget] {

@@ -12,8 +12,8 @@ fn main {
       width=1120.0,
       height=760.0,
     ),
-    options=@macos_skia_backend.MacosSkiaAppOptions::new(
-      platform_view_plugins=[plugin],
-    ),
+    options=@macos_skia_backend.MacosSkiaAppOptions::new(platform_view_plugins=[
+      plugin,
+    ]),
   )
 }

@@ -40,49 +40,129 @@ fn main {
 /// Action IDs for system menu items. Each ID maps to a command that is
 /// dispatched through the runtime when the menu item is clicked.
 const ACTION_NEW : Int = 1
+
+///|
 const ACTION_OPEN : Int = 2
+
+///|
 const ACTION_SAVE : Int = 3
+
+///|
 const ACTION_SAVE_AS : Int = 4
+
+///|
 const ACTION_UNDO : Int = 10
+
+///|
 const ACTION_REDO : Int = 11
+
+///|
 const ACTION_CUT : Int = 12
+
+///|
 const ACTION_COPY : Int = 13
+
+///|
 const ACTION_PASTE : Int = 14
+
+///|
 const ACTION_SELECT_ALL : Int = 15
+
+///|
 const ACTION_FIND : Int = 16
+
+///|
 const ACTION_BOLD : Int = 20
+
+///|
 const ACTION_ITALIC : Int = 21
+
+///|
 const ACTION_CODE : Int = 22
+
+///|
 const ACTION_STRIKE : Int = 23
+
+///|
 const ACTION_LINK : Int = 24
+
+///|
 const ACTION_H1 : Int = 30
+
+///|
 const ACTION_H2 : Int = 31
+
+///|
 const ACTION_H3 : Int = 32
+
+///|
 const ACTION_H4 : Int = 33
+
+///|
 const ACTION_H5 : Int = 34
+
+///|
 const ACTION_H6 : Int = 35
+
+///|
 const ACTION_PARAGRAPH : Int = 36
+
+///|
 const ACTION_BULLET_LIST : Int = 37
+
+///|
 const ACTION_ORDERED_LIST : Int = 38
+
+///|
 const ACTION_TASK_LIST : Int = 39
+
+///|
 const ACTION_QUOTE : Int = 40
+
+///|
 const ACTION_CODE_BLOCK : Int = 41
+
+///|
 const ACTION_TABLE : Int = 42
+
+///|
 const ACTION_HORIZONTAL_RULE : Int = 43
+
+///|
 const ACTION_SOURCE_MODE : Int = 50
+
+///|
 const ACTION_FOCUS_MODE : Int = 51
+
+///|
 const ACTION_TYPEWRITER_MODE : Int = 52
+
+///|
 const ACTION_ZEN_MODE : Int = 53
+
+///|
 const ACTION_TOGGLE_OUTLINE : Int = 54
+
+///|
 const ACTION_TOGGLE_FILES : Int = 55
+
+///|
 const ACTION_TOGGLE_DOC_INFO : Int = 56
+
+///|
 const ACTION_TOGGLE_SOURCE_PREVIEW : Int = 57
+
+///|
 const ACTION_TOGGLE_DARK_MODE : Int = 58
 
 ///|
 /// macOS modifier key masks.
 const MODIFIER_COMMAND : Int = 1_048_576
+
+///|
 const MODIFIER_COMMAND_SHIFT : Int = 1_048_576 + 131_072
+
+///|
 const MODIFIER_COMMAND_OPTION : Int = 1_048_576 + 524_288
 
 ///|
@@ -105,17 +185,33 @@ fn setup_system_menu(runtime : @runtime.AppRuntime) -> Unit {
   let cmd_shift = MODIFIER_COMMAND_SHIFT
   let cmd_option = MODIFIER_COMMAND_OPTION
 
-  fn mi(title : String, action_id : Int, key : String, mask : Int) -> @window_macos.SystemMenuItemDescriptor {
+  fn mi(
+    title : String,
+    action_id : Int,
+    key : String,
+    mask : Int,
+  ) -> @window_macos.SystemMenuItemDescriptor {
     @window_macos.SystemMenuItemDescriptor::new(
-      title~, action_id~, key_equivalent=key, key_modifier_mask=mask, separator=false,
+      title~,
+      action_id~,
+      key_equivalent=key,
+      key_modifier_mask=mask,
+      separator=false,
     )
   }
   fn sep() -> @window_macos.SystemMenuItemDescriptor {
     @window_macos.SystemMenuItemDescriptor::new(
-      title="", action_id=0, key_equivalent="", key_modifier_mask=-1, separator=true,
+      title="",
+      action_id=0,
+      key_equivalent="",
+      key_modifier_mask=-1,
+      separator=true,
     )
   }
-  fn menu(title : String, items : Array[@window_macos.SystemMenuItemDescriptor]) -> @window_macos.SystemMenuDescriptor {
+  fn menu(
+    title : String,
+    items : Array[@window_macos.SystemMenuItemDescriptor],
+  ) -> @window_macos.SystemMenuDescriptor {
     @window_macos.SystemMenuDescriptor::new(title~, items~)
   }
 

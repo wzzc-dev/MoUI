@@ -9,9 +9,9 @@ using @views {
   text,
   text_field,
 }
-using @webview_views {
-  web_view,
-}
+
+///|
+using @webview_views {web_view}
 
 ///|
 pub let default_url = "https://wzzc-dev.github.io/MoUI"
@@ -331,7 +331,9 @@ fn event_log(logs : Array[String], theme : @moui.Theme) -> @moui.View[Msg] {
 }
 
 ///|
-fn capability_text(capabilities : @webview_host.HostWebViewCapabilities) -> String {
+fn capability_text(
+  capabilities : @webview_host.HostWebViewCapabilities,
+) -> String {
   if capabilities.available {
     "available"
   } else {

@@ -237,6 +237,8 @@ fn web_complete_async_clipboard_read_text(
 }
 
 //|
+
+///|
 fn web_complete_async_clipboard_read_image_text(
   request_id : Int,
   ok : Bool,
@@ -258,8 +260,7 @@ fn web_complete_async_clipboard_read_image_text(
         queue.reject(
           id,
           web_async_failure_reason(
-            base64_png,
-            "clipboard image read is unavailable on Web",
+            base64_png, "clipboard image read is unavailable on Web",
           ),
         )
       }
@@ -269,6 +270,8 @@ fn web_complete_async_clipboard_read_image_text(
 }
 
 //|
+
+///|
 fn web_complete_async_clipboard_write_image(
   request_id : Int,
   ok : Bool,
@@ -421,6 +424,8 @@ pub fn web_complete_async_clipboard_read(
 }
 
 //|
+
+///|
 pub fn web_complete_async_clipboard_read_image(
   request_id : Int,
   ok : Bool,

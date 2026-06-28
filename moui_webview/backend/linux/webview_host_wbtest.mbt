@@ -8,9 +8,7 @@ test "linux webview fallback reports unavailable without WebKitGTK" {
   if linux_webview_native_available() == 0 {
     inspect(capabilities.available, content="false")
     inspect(capabilities.native_embedding, content="false")
-    assert_true(
-      capabilities.description.contains("libwebkit2gtk-4.1-dev"),
-    )
+    assert_true(capabilities.description.contains("libwebkit2gtk-4.1-dev"))
   } else {
     inspect(capabilities.available, content="true")
     inspect(capabilities.commands, content="true")

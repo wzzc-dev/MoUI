@@ -461,7 +461,9 @@ test "sun renderer vignette shader darkens center" {
       @core.ShaderEffectSpec::new(
         name="vignette",
         frame=@core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
-        fallback=@core.Brush::solid(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
+        fallback=@core.Brush::solid(
+          @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0),
+        ),
       ),
     ),
   ])
@@ -986,16 +988,20 @@ test "sun renderer DrawPath fills a rect path" {
   )
   renderer.render([
     @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawPath(@core.PathSpec::new(
-      verbs=[
-        @core.PathVerb::MoveTo(@core.Point::new(x=4.0, y=4.0)),
-        @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=4.0)),
-        @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=12.0)),
-        @core.PathVerb::LineTo(@core.Point::new(x=4.0, y=12.0)),
-        @core.PathVerb::Close,
-      ],
-      fill=Some(@core.Brush::solid(@core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0))),
-    )),
+    @core.DrawCommand::DrawPath(
+      @core.PathSpec::new(
+        verbs=[
+          @core.PathVerb::MoveTo(@core.Point::new(x=4.0, y=4.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=4.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=12.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=4.0, y=12.0)),
+          @core.PathVerb::Close,
+        ],
+        fill=Some(
+          @core.Brush::solid(@core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0)),
+        ),
+      ),
+    ),
   ])
   match presented.val {
     Some(frame) => {
@@ -1027,17 +1033,19 @@ test "sun renderer DrawPath strokes a rect path" {
   )
   renderer.render([
     @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawPath(@core.PathSpec::new(
-      verbs=[
-        @core.PathVerb::MoveTo(@core.Point::new(x=4.0, y=4.0)),
-        @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=4.0)),
-        @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=12.0)),
-        @core.PathVerb::LineTo(@core.Point::new(x=4.0, y=12.0)),
-        @core.PathVerb::Close,
-      ],
-      stroke=Some(@core.Brush::solid(@core.Color::blue())),
-      stroke_width=2.0,
-    )),
+    @core.DrawCommand::DrawPath(
+      @core.PathSpec::new(
+        verbs=[
+          @core.PathVerb::MoveTo(@core.Point::new(x=4.0, y=4.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=4.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=12.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=4.0, y=12.0)),
+          @core.PathVerb::Close,
+        ],
+        stroke=Some(@core.Brush::solid(@core.Color::blue())),
+        stroke_width=2.0,
+      ),
+    ),
   ])
   match presented.val {
     Some(frame) => {
@@ -1069,16 +1077,18 @@ test "sun renderer DrawShadow renders shadow behind rect" {
   )
   renderer.render([
     @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawShadow(@core.ShadowSpec::new(
-      rect=@core.RoundedRect::new(
-        rect=@core.Rect::new(x=8.0, y=8.0, width=16.0, height=16.0),
-        radius=2.0,
+    @core.DrawCommand::DrawShadow(
+      @core.ShadowSpec::new(
+        rect=@core.RoundedRect::new(
+          rect=@core.Rect::new(x=8.0, y=8.0, width=16.0, height=16.0),
+          radius=2.0,
+        ),
+        color=@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.5),
+        offset=@core.Point::new(x=0.0, y=2.0),
+        blur_radius=4.0,
+        spread=0.0,
       ),
-      color=@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.5),
-      offset=@core.Point::new(x=0.0, y=2.0),
-      blur_radius=4.0,
-      spread=0.0,
-    )),
+    ),
   ])
   match presented.val {
     Some(frame) => {
@@ -1185,11 +1195,13 @@ test "sun renderer checker shader alternates tiles" {
   )
   renderer.render([
     @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawShaderEffect(@core.ShaderEffectSpec::new(
-      name="checker",
-      frame=@core.Rect::new(x=0.0, y=0.0, width=8.0, height=8.0),
-      uniforms=[4.0],
-    )),
+    @core.DrawCommand::DrawShaderEffect(
+      @core.ShaderEffectSpec::new(
+        name="checker",
+        frame=@core.Rect::new(x=0.0, y=0.0, width=8.0, height=8.0),
+        uniforms=[4.0],
+      ),
+    ),
   ])
   match presented.val {
     Some(frame) => {
@@ -1472,9 +1484,12 @@ test "sun renderer color matrix filter inverts via matrix" {
   // Matrix: [-1,0,0,0,1, 0,-1,0,0,1, 0,0,-1,0,1, 0,0,0,1,0]
   renderer.render([
     @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushFilter(@core.FilterEffect::ColorMatrix(
-      [-1.0, 0.0, 0.0, 0.0, 255.0, 0.0, -1.0, 0.0, 0.0, 255.0, 0.0, 0.0, -1.0, 0.0, 255.0, 0.0, 0.0, 0.0, 1.0, 0.0],
-    )),
+    @core.DrawCommand::PushFilter(
+      @core.FilterEffect::ColorMatrix([
+        -1.0, 0.0, 0.0, 0.0, 255.0, 0.0, -1.0, 0.0, 0.0, 255.0, 0.0, 0.0, -1.0, 0.0,
+        255.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+      ]),
+    ),
     @core.DrawCommand::FillRect(
       @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
       @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
@@ -1518,15 +1533,17 @@ test "sun renderer gradient stroke on path" {
   )
   renderer.render([
     @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::DrawPath(@core.PathSpec::new(
-      verbs=[
-        @core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=0.5)),
-        @core.PathVerb::LineTo(@core.Point::new(x=8.0, y=0.5)),
-        @core.PathVerb::Close,
-      ],
-      stroke=Some(gradient),
-      stroke_width=1.0,
-    )),
+    @core.DrawCommand::DrawPath(
+      @core.PathSpec::new(
+        verbs=[
+          @core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=0.5)),
+          @core.PathVerb::LineTo(@core.Point::new(x=8.0, y=0.5)),
+          @core.PathVerb::Close,
+        ],
+        stroke=Some(gradient),
+        stroke_width=1.0,
+      ),
+    ),
   ])
   match presented.val {
     Some(frame) => {

@@ -163,9 +163,7 @@ pub fn HostAppServices::list_directory(
 pub fn HostAppServices::read_clipboard_image(
   self : HostAppServices,
 ) -> HostServiceResponse {
-  self.dispatch(
-    HostServiceRequest::Clipboard(HostClipboardRequest::ReadImage),
-  )
+  self.dispatch(HostServiceRequest::Clipboard(HostClipboardRequest::ReadImage))
 }
 
 ///|

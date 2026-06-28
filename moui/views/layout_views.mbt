@@ -52,23 +52,20 @@ fn[Msg] padding_layout(
       // (e.g. web_view reporting max constraints) cannot overflow this node's
       // own frame in the place pass.
       let available = ctx.constraints.deflate(insets)
-      @core.ViewLayoutResult::new(
-        size~,
-        child_frames=[
-          @core.Rect::new(
-            x=insets.left,
-            y=insets.top,
-            width=view_min_double(
-              view_max_double(0.0, available.max.width),
-              child_size.width,
-            ),
-            height=view_min_double(
-              view_max_double(0.0, available.max.height),
-              child_size.height,
-            ),
+      @core.ViewLayoutResult::new(size~, child_frames=[
+        @core.Rect::new(
+          x=insets.left,
+          y=insets.top,
+          width=view_min_double(
+            view_max_double(0.0, available.max.width),
+            child_size.width,
           ),
-        ],
-      )
+          height=view_min_double(
+            view_max_double(0.0, available.max.height),
+            child_size.height,
+          ),
+        ),
+      ])
     },
     semantics=() => {
       @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)

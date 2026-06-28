@@ -6,7 +6,6 @@
 /// and the greedy child's base was already the whole row width — so `slack` was
 /// 0, the sibling was pushed past the right edge, and the greedy child filled
 /// everything. These tests pin the Flutter `Expanded` semantics (flex-basis 0).
-
 fn greedy_box_option_label(value : Double?) -> String {
   match value {
     Some(v) => "fix-\{v}"

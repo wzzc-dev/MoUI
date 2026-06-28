@@ -193,9 +193,7 @@ fn[Msg] runtime_component_view(
       @core.ViewLayoutResult::new(
         size~,
         child_frames=if ctx.child_sizes.length() > 0 {
-          [
-            @core.Rect::new(x=0.0, y=0.0, width=size.width, height=size.height),
-          ]
+          [@core.Rect::new(x=0.0, y=0.0, width=size.width, height=size.height)]
         } else {
           []
         },

@@ -31,9 +31,7 @@ pub fn create_linux_webview_plugin(
           let web_event = @host.webview_decode_native_event(
             kind, url, detail, flag,
           )
-          let platform_event = @host.WebViewEvent::to_platform_event(
-            web_event,
-          )
+          let platform_event = @host.WebViewEvent::to_platform_event(web_event)
           callback(wl_surface, id_str, platform_event)
         },
       )
@@ -87,13 +85,16 @@ pub fn create_linux_webview_plugin(
     dispose_platform_views=fn(wl_surface) {
       linux_webview_platform_views_dispose(wl_surface)
     },
-    setup_platform_view_draw=Some(
-      fn(wl_surface, renderer, frame, content_offset_y) {
-        draw_linux_webview_pixels_to_renderer(
-          wl_surface, renderer, frame, content_offset_y,
-        )
-      },
-    ),
+    setup_platform_view_draw=Some(fn(
+      wl_surface,
+      renderer,
+      frame,
+      content_offset_y,
+    ) {
+      draw_linux_webview_pixels_to_renderer(
+        wl_surface, renderer, frame, content_offset_y,
+      )
+    }),
     poll_native=Some(fn() {
       // Pump the nested GTK loop and report whether work remains. The host
       // uses the returned deadline to keep spinning instead of `Wait`.

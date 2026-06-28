@@ -140,7 +140,10 @@ pub fn[Msg] text_area(
     value=@core.Binding::new(get=() => value, set=_ => ()),
     on_input=Some(on_input),
     placeholder~,
-    size=@core.Size::new(width=width, height=views_max_double(line_height, lines.to_double() * line_height)),
+    size=@core.Size::new(
+      width~,
+      height=views_max_double(line_height, lines.to_double() * line_height),
+    ),
     theme?,
     variant~,
     lines~,
