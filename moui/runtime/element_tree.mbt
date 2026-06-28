@@ -143,6 +143,13 @@ priv struct CachedLayerState {
 }
 
 ///|
+priv struct CachedLayerAdmissionState {
+  key : String
+  content_revision : Int
+  visible_streak : Int
+}
+
+///|
 priv struct RenderTree {
   root : RenderNode
 }

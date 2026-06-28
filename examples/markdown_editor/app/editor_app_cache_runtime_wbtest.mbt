@@ -29,12 +29,24 @@ fn markdown_editor_has_cached_chrome_layer(
 }
 
 ///|
+fn markdown_editor_cached_layer_command_count(
+  commands : Array[@core.DrawCommand],
+) -> Int {
+  markdown_editor_begin_cached_layer_count(commands) +
+  markdown_editor_draw_cached_layer_count(commands)
+}
+
+///|
 test "markdown editor chrome caches stable state and refreshes on dirty" {
   let app = MarkdownEditorApp::new()
   app.set_document("")
   let runtime = app.runtime(width=980.0, height=640.0)
   ignore(runtime.draw_frame())
-  // With no document state change, the chrome layer is reused from cache.
+  ignore(runtime.draw_frame())
+  // Stable chrome is admitted after runtime warmup, then reused from cache.
+  assert_true(
+    markdown_editor_begin_cached_layer_count(runtime.draw_frame().commands) > 0,
+  )
   assert_true(
     markdown_editor_draw_cached_layer_count(runtime.draw_frame().commands) > 0,
   )
@@ -50,6 +62,8 @@ test "markdown editor chrome caches stable state and refreshes on dirty" {
     ),
   )
   ignore(runtime.draw_frame())
+  ignore(runtime.draw_frame())
+  ignore(runtime.draw_frame())
   assert_true(
     markdown_editor_draw_cached_layer_count(runtime.draw_frame().commands) > 0,
   )
@@ -59,6 +73,8 @@ test "markdown editor chrome caches stable state and refreshes on dirty" {
   runtime.dispatch_event(
     @core.AppEvent::TextInput(@core.TextInputEvent::InsertText("Hi")),
   )
+  ignore(runtime.draw_frame())
+  ignore(runtime.draw_frame())
   let frame = runtime.draw_frame()
   assert_true(markdown_editor_begin_cached_layer_count(frame.commands) > 0)
   // Once the dirty-driven toolbar change is recorded, a subsequent stable
@@ -98,6 +114,38 @@ test "markdown editor scroll does not reparse session" {
     app.document_session_parse_count(),
     content=after_first_frame.to_string(),
   )
+}
+
+///|
+test "markdown editor long scroll keeps cached layer tracking bounded" {
+  let app = MarkdownEditorApp::new()
+  app.set_document(markdown_editor_synthetic_scroll_document(900))
+  let runtime = app.runtime(width=980.0, height=640.0)
+  ignore(runtime.draw_frame())
+  let mut last_cached_command_count = 0
+  for _ in 0..<240 {
+    runtime.dispatch_event(
+      @core.AppEvent::Pointer(
+        @core.PointerEvent::new(
+          position=@moui.Point::new(
+            x=app.editor_content_x(980.0, inner_x=8.0),
+            y=220.0,
+          ),
+          phase=@core.PointerPhase::Move,
+          wheel_delta=@moui.Point::new(x=0.0, y=-420.0),
+        ),
+      ),
+    )
+    let frame = runtime.draw_frame()
+    last_cached_command_count = markdown_editor_cached_layer_command_count(
+      frame.commands,
+    )
+  }
+  assert_true(app.editor_scroll_y() > 0.0)
+  let cached_layer_count = runtime.inspector_snapshot().runtime.dirty_state.cached_layer_count
+  if cached_layer_count > last_cached_command_count {
+    fail("expected long-scroll cached layer tracking to stay frame scoped")
+  }
 }
 
 ///|
@@ -167,6 +215,9 @@ test "markdown editor scroll renders text across full viewport" {
   // the status bar). After the fix, text should appear in the bottom half of
   // the editor viewport. Before the fix, the bottom ~overscan was culled
   // blank, leaving only the status bar text (y≈622) in this Y range.
-  let editor_bottom_half_count = ys.iter().filter(y => y > 300.0 && y < 600.0).count()
+  let editor_bottom_half_count = ys
+    .iter()
+    .filter(y => y > 300.0 && y < 600.0)
+    .count()
   assert_true(editor_bottom_half_count > 0)
 }
