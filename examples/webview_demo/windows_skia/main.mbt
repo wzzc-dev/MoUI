@@ -12,8 +12,8 @@ fn main {
       width=1120.0,
       height=760.0,
     ),
-    options=@windows_skia_backend.WindowsSkiaAppOptions::new(
-      platform_view_plugins=[plugin],
-    ),
+    options=@windows_skia_backend.WindowsSkiaAppOptions::new(platform_view_plugins=[
+      plugin,
+    ]),
   )
 }

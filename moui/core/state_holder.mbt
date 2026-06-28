@@ -74,15 +74,11 @@ pub fn ScrollState::tick(self : ScrollState, time_ms : Double) -> Unit {
         self.smooth_start_time_ms.set(None)
         self.smooth_duration_ms.set(None)
       } else {
-        let progress = clamp_double(
-          (time_ms - start_time) / duration,
-          0.0,
-          1.0,
-        )
+        let progress = clamp_double((time_ms - start_time) / duration, 0.0, 1.0)
         let eased = Easing::EaseOut.sample(progress)
         let x = start.x + (target.x - start.x) * eased
         let y = start.y + (target.y - start.y) * eased
-        self.set_offset(Point::new(x=x, y=y))
+        self.set_offset(Point::new(x~, y~))
         if progress >= 1.0 {
           self.smooth_target.set(None)
           self.smooth_start.set(None)

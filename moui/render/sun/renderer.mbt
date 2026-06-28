@@ -41,8 +41,8 @@ priv enum SunCanvasScopeKind {
   RoundedClip
   Transform
   Opacity
- Layer
- Filter
+  Layer
+  Filter
 } derive(Eq)
 
 ///|
@@ -419,7 +419,7 @@ fn SunRasterRenderer::render_command(
         Some(SunCanvasScopeKind::RoundedClip) => {
           let layer_pixmap = self.canvas.get_pixmap()
           match self.canvas_stack.pop() {
-            Some(parent_canvas) => {
+            Some(parent_canvas) =>
               match self.rounded_clip_stack.pop() {
                 Some(rounded) => {
                   self.canvas = parent_canvas
@@ -428,16 +428,13 @@ fn SunRasterRenderer::render_command(
                 None => {
                   self.canvas = parent_canvas
                   self.record_unsupported_command(
-                    "PopRoundedClip",
-                    "PopRoundedClip has no matching rounded clip stack entry",
+                    "PopRoundedClip", "PopRoundedClip has no matching rounded clip stack entry",
                   )
                 }
               }
-            }
             None =>
               self.record_unsupported_command(
-                "PopRoundedClip",
-                "PopRoundedClip has no matching canvas stack entry",
+                "PopRoundedClip", "PopRoundedClip has no matching canvas stack entry",
               )
           }
         }
@@ -1376,8 +1373,7 @@ fn SunRasterRenderer::draw_shader_effect(
 ///|
 fn sun_filter_effect(effect : @core.FilterEffect) -> @sun_graphics.PaintFilter {
   match effect {
-    @core.FilterEffect::Blur(_) =>
-      @sun_graphics.PaintFilter::identity()
+    @core.FilterEffect::Blur(_) => @sun_graphics.PaintFilter::identity()
     @core.FilterEffect::Saturate(factor) =>
       @sun_graphics.PaintFilter::saturate(factor)
     @core.FilterEffect::Brightness(factor) =>
@@ -1403,7 +1399,6 @@ fn sun_box_blur_pixmap(
   let pass2 = sun_single_box_blur(pass1, r)
   sun_single_box_blur(pass2, r)
 }
-
 
 ///|
 fn sun_single_box_blur(
@@ -1441,10 +1436,18 @@ fn sun_single_box_blur(
     for x in 1..<w {
       let leave = src.get_pixel((x - 1 - r).max(0), y)
       let enter = src.get_pixel((x + r).min(w - 1), y)
-      sum_r = sum_r + enter.r.to_int().to_double() - leave.r.to_int().to_double()
-      sum_g = sum_g + enter.g.to_int().to_double() - leave.g.to_int().to_double()
-      sum_b = sum_b + enter.b.to_int().to_double() - leave.b.to_int().to_double()
-      sum_a = sum_a + enter.a.to_int().to_double() - leave.a.to_int().to_double()
+      sum_r = sum_r +
+        enter.r.to_int().to_double() -
+        leave.r.to_int().to_double()
+      sum_g = sum_g +
+        enter.g.to_int().to_double() -
+        leave.g.to_int().to_double()
+      sum_b = sum_b +
+        enter.b.to_int().to_double() -
+        leave.b.to_int().to_double()
+      sum_a = sum_a +
+        enter.a.to_int().to_double() -
+        leave.a.to_int().to_double()
       temp.set_pixel(
         x,
         y,
@@ -1484,10 +1487,18 @@ fn sun_single_box_blur(
     for y in 1..<h {
       let leave = temp.get_pixel(x, (y - 1 - r).max(0))
       let enter = temp.get_pixel(x, (y + r).min(h - 1))
-      sum_r = sum_r + enter.r.to_int().to_double() - leave.r.to_int().to_double()
-      sum_g = sum_g + enter.g.to_int().to_double() - leave.g.to_int().to_double()
-      sum_b = sum_b + enter.b.to_int().to_double() - leave.b.to_int().to_double()
-      sum_a = sum_a + enter.a.to_int().to_double() - leave.a.to_int().to_double()
+      sum_r = sum_r +
+        enter.r.to_int().to_double() -
+        leave.r.to_int().to_double()
+      sum_g = sum_g +
+        enter.g.to_int().to_double() -
+        leave.g.to_int().to_double()
+      sum_b = sum_b +
+        enter.b.to_int().to_double() -
+        leave.b.to_int().to_double()
+      sum_a = sum_a +
+        enter.a.to_int().to_double() -
+        leave.a.to_int().to_double()
       dst.set_pixel(
         x,
         y,
@@ -1503,10 +1514,9 @@ fn sun_single_box_blur(
   dst
 }
 
-
 ///|
 fn sun_blur_channel(sum : Double, count : Int) -> Byte {
-  ((sum / count.to_double()) + 0.5).to_int().max(0).min(255).to_byte()
+  (sum / count.to_double() + 0.5).to_int().max(0).min(255).to_byte()
 }
 
 ///|

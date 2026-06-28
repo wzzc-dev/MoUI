@@ -13,8 +13,12 @@ test "code highlight tokenizes Python with keyword comment and plain spans" {
   let spans = @moui_richtext.code_highlight_tokenize(
     "# config.py\ndef add(a, b):\n    return a + b\n", "python",
   )
-  let comment_spans = spans.filter(span => highlight_kind_name(span.kind) == "CodeComment")
-  let keyword_spans = spans.filter(span => highlight_kind_name(span.kind) == "CodeKeyword")
+  let comment_spans = spans.filter(span => {
+    highlight_kind_name(span.kind) == "CodeComment"
+  })
+  let keyword_spans = spans.filter(span => {
+    highlight_kind_name(span.kind) == "CodeKeyword"
+  })
   assert_true(comment_spans.any(span => span.text == "# config.py"))
   assert_true(keyword_spans.any(span => span.text == "def"))
   assert_true(
@@ -23,13 +27,19 @@ test "code highlight tokenizes Python with keyword comment and plain spans" {
     }),
   )
   assert_true(
-    spans.any(span => span.text == "a" && highlight_kind_name(span.kind) == "CodePlain"),
+    spans.any(span => {
+      span.text == "a" && highlight_kind_name(span.kind) == "CodePlain"
+    }),
   )
   assert_true(
-    spans.any(span => span.text == "b" && highlight_kind_name(span.kind) == "CodePlain"),
+    spans.any(span => {
+      span.text == "b" && highlight_kind_name(span.kind) == "CodePlain"
+    }),
   )
   assert_true(
-    spans.any(span => span.text == "+" && highlight_kind_name(span.kind) == "CodeOperator"),
+    spans.any(span => {
+      span.text == "+" && highlight_kind_name(span.kind) == "CodeOperator"
+    }),
   )
 }
 
@@ -38,8 +48,9 @@ test "code highlight tokenizes TypeScript with keywords and numbers" {
   let spans = @moui_richtext.code_highlight_tokenize(
     "const n = 3.14;\nexport async function load() { return 1; }\n", "typescript",
   )
-  let keyword_spans = spans
-    .filter(span => highlight_kind_name(span.kind) == "CodeKeyword")
+  let keyword_spans = spans.filter(span => {
+    highlight_kind_name(span.kind) == "CodeKeyword"
+  })
   let keyword_texts = keyword_spans.map(span => span.text)
   assert_true(keyword_texts.contains("const"))
   assert_true(keyword_texts.contains("async"))
@@ -65,7 +76,9 @@ test "code highlight tokenizes YAML with line comments and plain keys" {
   let spans = @moui_richtext.code_highlight_tokenize(
     "# deployment\nservice:\n  image: nginx:1.25\n  replicas: 3\n", "yaml",
   )
-  let comment_spans = spans.filter(span => highlight_kind_name(span.kind) == "CodeComment")
+  let comment_spans = spans.filter(span => {
+    highlight_kind_name(span.kind) == "CodeComment"
+  })
   assert_true(comment_spans.any(span => span.text == "# deployment"))
   assert_true(
     spans.any(span => {
@@ -85,11 +98,13 @@ test "code highlight tokenizes Rust with keywords and plain type literals" {
   let spans = @moui_richtext.code_highlight_tokenize(
     "fn main() { let mut count = 10; }\n", "rust",
   )
-  let keyword_spans = spans
-    .filter(span => highlight_kind_name(span.kind) == "CodeKeyword")
+  let keyword_spans = spans.filter(span => {
+    highlight_kind_name(span.kind) == "CodeKeyword"
+  })
   let keyword_texts = keyword_spans.map(span => span.text)
-  let plain_spans = spans
-    .filter(span => highlight_kind_name(span.kind) == "CodePlain")
+  let plain_spans = spans.filter(span => {
+    highlight_kind_name(span.kind) == "CodePlain"
+  })
   let plain_texts = plain_spans.map(span => span.text)
   assert_true(keyword_texts.contains("fn"))
   assert_true(keyword_texts.contains("let"))
@@ -116,13 +131,15 @@ test "code highlight detects function call tokens" {
 }
 
 //|
+
+///|
 test "code highlight detects operator tokens" {
   let spans = @moui_richtext.code_highlight_tokenize(
     "let x = a + b * c;\nreturn x == 1;\n", "typescript",
   )
-  let operator_texts = spans.filter(span =>
-    highlight_kind_name(span.kind) == "CodeOperator"
-  ).map(span => span.text)
+  let operator_texts = spans
+    .filter(span => highlight_kind_name(span.kind) == "CodeOperator")
+    .map(span => span.text)
   assert_true(operator_texts.contains("="))
   assert_true(operator_texts.contains("+"))
   assert_true(operator_texts.contains("*"))
@@ -130,6 +147,8 @@ test "code highlight detects operator tokens" {
 }
 
 //|
+
+///|
 test "code highlight detects arrow function operator" {
   let spans = @moui_richtext.code_highlight_tokenize(
     "items.map(x => x + 1)\n", "typescript",
@@ -142,19 +161,22 @@ test "code highlight detects arrow function operator" {
 }
 
 //|
+
+///|
 test "code highlight detects PascalCase type tokens" {
   let spans = @moui_richtext.code_highlight_tokenize(
     "class UserService extends BaseRepository {\n}\n", "typescript",
   )
   assert_true(
     spans.any(span => {
-      span.text == "UserService" &&
-      highlight_kind_name(span.kind) == "CodeType"
+      span.text == "UserService" && highlight_kind_name(span.kind) == "CodeType"
     }),
   )
 }
 
 //|
+
+///|
 test "code highlight detects common type names" {
   let spans = @moui_richtext.code_highlight_tokenize(
     "let name: String = \"foo\"\nlet count: Int = 5\n", "swift",
@@ -172,6 +194,8 @@ test "code highlight detects common type names" {
 }
 
 //|
+
+///|
 test "code highlight detects annotation tokens" {
   let spans = @moui_richtext.code_highlight_tokenize(
     "#[derive(Eq)]\n@override\nfn run() {}\n", "rust",
@@ -191,6 +215,8 @@ test "code highlight detects annotation tokens" {
 }
 
 //|
+
+///|
 test "code highlight detects escape sequences in strings" {
   let spans = @moui_richtext.code_highlight_tokenize(
     "let msg = \"hello\\nworld\\ttab\"\n", "typescript",
@@ -214,6 +240,7 @@ test "code highlight detects escape sequences in strings" {
   )
 }
 
+///|
 test "code highlight falls back to a single plain span for unsupported snippets" {
   let spans = @moui_richtext.code_highlight_tokenize("let x = 1", "perl")
   assert_eq(spans.length(), 1)

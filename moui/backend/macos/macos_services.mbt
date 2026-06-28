@@ -9,12 +9,18 @@ extern "C" fn macos_clipboard_read_text_bytes() -> Bytes = "moui_macos_clipboard
 extern "C" fn macos_clipboard_write_text_bytes(text : Bytes) -> Int = "moui_macos_clipboard_write_text"
 
 //|
+
+///|
 extern "C" fn macos_clipboard_has_image() -> Int = "moui_macos_clipboard_has_image"
 
 //|
+
+///|
 extern "C" fn macos_clipboard_read_image_bytes() -> Bytes = "moui_macos_clipboard_read_image"
 
 //|
+
+///|
 #borrow(data)
 extern "C" fn macos_clipboard_write_image_bytes(data : Bytes) -> Int = "moui_macos_clipboard_write_image"
 
@@ -168,9 +174,7 @@ pub fn macos_service_bridge(
 }
 
 ///|
-fn dispatch_macos_list_directory(
-  path : String,
-) -> @host.HostServiceResponse {
+fn dispatch_macos_list_directory(path : String) -> @host.HostServiceResponse {
   let names_opt : Array[String]? = Some(@fs.read_dir(path)) catch { _ => None }
   let names = names_opt.unwrap_or([])
   let entries : Array[@host.HostDirectoryEntry] = []
@@ -183,11 +187,7 @@ fn dispatch_macos_list_directory(
     let is_dir_opt : Bool? = Some(@fs.is_dir(child_path)) catch { _ => None }
     let is_dir = is_dir_opt.unwrap_or(false)
     entries.push(
-      @host.HostDirectoryEntry::new(
-        name=name,
-        path=child_path,
-        is_directory=is_dir,
-      ),
+      @host.HostDirectoryEntry::new(name~, path=child_path, is_directory=is_dir),
     )
   }
   @host.HostServiceResponse::DirectoryListing(path, entries)
@@ -308,9 +308,7 @@ fn dispatch_macos_clipboard(
       if macos_clipboard_write_image_bytes(bytes) != 0 {
         @host.HostServiceResponse::ClipboardWritten
       } else {
-        @host.HostServiceResponse::Unavailable(
-          "clipboard image write failed",
-        )
+        @host.HostServiceResponse::Unavailable("clipboard image write failed")
       }
   }
 }

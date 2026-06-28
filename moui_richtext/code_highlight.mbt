@@ -116,25 +116,45 @@ pub fn code_highlight_supports_language(language : String) -> Bool {
 ///|
 /// Check if a multi-character or single-char operator starts at index `pos`.
 /// Returns Some(length) if found, None otherwise.
-fn code_highlight_try_operator(
-  chars : Array[Char],
-  n : Int,
-  pos : Int,
-) -> Int? {
+fn code_highlight_try_operator(chars : Array[Char], n : Int, pos : Int) -> Int? {
   if pos + 1 < n {
     let two = String::from_array(chars[pos:pos + 2])
-    if two == "==" || two == "!=" || two == "<=" || two == ">=" ||
-      two == "&&" || two == "||" || two == "++" || two == "--" ||
-      two == "->" || two == "=>" || two == "::" || two == ".." ||
-      two == "+=" || two == "-=" || two == "*=" || two == "/=" ||
+    if two == "==" ||
+      two == "!=" ||
+      two == "<=" ||
+      two == ">=" ||
+      two == "&&" ||
+      two == "||" ||
+      two == "++" ||
+      two == "--" ||
+      two == "->" ||
+      two == "=>" ||
+      two == "::" ||
+      two == ".." ||
+      two == "+=" ||
+      two == "-=" ||
+      two == "*=" ||
+      two == "/=" ||
       two == "%=" {
       return Some(2)
     }
   }
   let c = chars[pos]
-  if c == '+' || c == '-' || c == '*' || c == '/' || c == '%' ||
-    c == '=' || c == '!' || c == '<' || c == '>' || c == '&' ||
-    c == '|' || c == '^' || c == '~' || c == ':' || c == '.' ||
+  if c == '+' ||
+    c == '-' ||
+    c == '*' ||
+    c == '/' ||
+    c == '%' ||
+    c == '=' ||
+    c == '!' ||
+    c == '<' ||
+    c == '>' ||
+    c == '&' ||
+    c == '|' ||
+    c == '^' ||
+    c == '~' ||
+    c == ':' ||
+    c == '.' ||
     c == '?' {
     return Some(1)
   }
@@ -172,8 +192,12 @@ pub fn code_highlight_tokenize(
     if c == '@' {
       flush_plain()
       let mut j = i
-      while j < n && chars[j] != ' ' && chars[j] != '\t' &&
-        chars[j] != '\n' && chars[j] != '(' && chars[j] != ')' {
+      while j < n &&
+            chars[j] != ' ' &&
+            chars[j] != '\t' &&
+            chars[j] != '\n' &&
+            chars[j] != '(' &&
+            chars[j] != ')' {
         j = j + 1
       }
       spans.push({ text: String::from_array(chars[i:j]), kind: CodeAnnotation })
@@ -244,13 +268,22 @@ pub fn code_highlight_tokenize(
             })
           }
           // Push escape sequence as CodeEscape.
-          let esc_end = if j + 2 < n && chars[j + 1] == 'u' && chars[j + 2] == '{' {
+          let esc_end = if j + 2 < n &&
+            chars[j + 1] == 'u' &&
+            chars[j + 2] == '{' {
             // \u{...} multi-char escape
             let mut k = j + 3
-            while k < n && chars[k] != '}' && chars[k] != '"' && chars[k] != '\'' {
+            while k < n &&
+                  chars[k] != '}' &&
+                  chars[k] != '"' &&
+                  chars[k] != '\'' {
               k = k + 1
             }
-            if k < n && chars[k] == '}' { k + 1 } else { j + 2 }
+            if k < n && chars[k] == '}' {
+              k + 1
+            } else {
+              j + 2
+            }
           } else {
             j + 2
           }
@@ -385,6 +418,7 @@ fn code_highlight_merge_adjacent(
   merged
 }
 
+///|
 fn code_highlight_span_is_identifier(span : CodeHighlightSpan) -> Bool {
   if span.kind != CodePlain {
     return false
@@ -405,14 +439,35 @@ fn code_highlight_span_is_identifier(span : CodeHighlightSpan) -> Bool {
 /// Common type names recognized across languages. Matched when a PascalCase
 /// check is not sufficient (e.g. all-caps acronyms or single-word types).
 fn code_highlight_common_type(word : String) -> Bool {
-  word == "String" || word == "Int" || word == "Float" || word == "Double" ||
-  word == "Bool" || word == "Boolean" || word == "Char" || word == "Byte" ||
-  word == "Short" || word == "Long" || word == "Void" || word == "Unit" ||
-  word == "Object" || word == "Array" || word == "List" || word == "Map" ||
-  word == "Set" || word == "Vector" || word == "Option" || word == "Result" ||
-  word == "Future" || word == "Promise" || word == "Error" ||
-  word == "Nullable" || word == "Any" || word == "Never" ||
-  word == "number" || word == "string" || word == "boolean" ||
+  word == "String" ||
+  word == "Int" ||
+  word == "Float" ||
+  word == "Double" ||
+  word == "Bool" ||
+  word == "Boolean" ||
+  word == "Char" ||
+  word == "Byte" ||
+  word == "Short" ||
+  word == "Long" ||
+  word == "Void" ||
+  word == "Unit" ||
+  word == "Object" ||
+  word == "Array" ||
+  word == "List" ||
+  word == "Map" ||
+  word == "Set" ||
+  word == "Vector" ||
+  word == "Option" ||
+  word == "Result" ||
+  word == "Future" ||
+  word == "Promise" ||
+  word == "Error" ||
+  word == "Nullable" ||
+  word == "Any" ||
+  word == "Never" ||
+  word == "number" ||
+  word == "string" ||
+  word == "boolean" ||
   word == "undefined"
 }
 

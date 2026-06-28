@@ -12,8 +12,8 @@ fn main {
       width=1120.0,
       height=760.0,
     ),
-    options=@linux_skia_backend.LinuxSkiaAppOptions::new(
-      platform_view_plugins=[plugin],
-    ),
+    options=@linux_skia_backend.LinuxSkiaAppOptions::new(platform_view_plugins=[
+      plugin,
+    ]),
   )
 }

@@ -284,11 +284,17 @@ test "nested virtual node webview dispatches events through generic children" {
   runtime.dispatch_event(
     @core.AppEvent::PlatformView(
       "nested",
-      @webview_host.WebViewEvent::NavigationFinished("https://example.com/nested").to_platform_event(),
+      @webview_host.WebViewEvent::NavigationFinished(
+        "https://example.com/nested",
+      ).to_platform_event(),
     ),
   )
   if received !=
-    [@webview_host.WebViewEvent::NavigationFinished("https://example.com/nested")] {
+    [
+      @webview_host.WebViewEvent::NavigationFinished(
+        "https://example.com/nested",
+      ),
+    ] {
     fail("expected nested virtual node webview to dispatch event")
   }
 }

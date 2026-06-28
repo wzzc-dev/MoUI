@@ -155,7 +155,9 @@ pub impl @window_linux.ApplicationHandler for LinuxApp with fn about_to_wait(
   // deadline instead of stalling on `Wait`.
   match @host.platform_view_plugins_next_deadline(self.platform_view_plugins) {
     Some(deadline) =>
-      event_loop.set_control_flow(@window_core.ControlFlow::wait_until(deadline))
+      event_loop.set_control_flow(
+        @window_core.ControlFlow::wait_until(deadline),
+      )
     None => event_loop.set_control_flow(@window_core.ControlFlow::Wait)
   }
   self.drain_window_requests(event_loop)
@@ -369,7 +371,11 @@ fn LinuxApp::redraw_window(
 
       let handle = platform_slot.window.wl_surface()
       for plugin in self.platform_view_plugins {
-        (plugin.sync_platform_views)(handle, frame, platform_slot.decorations.titlebar_height)
+        (plugin.sync_platform_views)(
+          handle,
+          frame,
+          platform_slot.decorations.titlebar_height,
+        )
         (plugin.drain_commands)(handle)
       }
       runtime_slot.driver.apply_render_frame_result(result)

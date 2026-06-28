@@ -16,9 +16,6 @@ import {
 supported_targets = "native"
 
 options(
-  "native-stub": [
-    "win32_service_host.c",
-    "win32_timer_host.c",
-  ],
+  "native-stub": [ "win32_service_host.c", "win32_timer_host.c" ],
   targets: { },
 )

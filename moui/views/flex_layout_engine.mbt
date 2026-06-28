@@ -16,7 +16,10 @@ fn[Msg] flex_layout(
     children=() => children,
     layout=ctx => {
       let measured = flex_measured_size(
-        axis, spacing, ctx.child_sizes, ctx.child_flex_weights,
+        axis,
+        spacing,
+        ctx.child_sizes,
+        ctx.child_flex_weights,
       )
       let size = ctx.constraints.constrain(measured)
       @core.ViewLayoutResult::new(
