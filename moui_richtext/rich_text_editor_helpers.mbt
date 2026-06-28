@@ -6,26 +6,6 @@ priv struct TextEditResult {
 }
 
 ///|
-priv enum TextCaretDirection {
-  MoveLeft
-  MoveRight
-  MoveStart
-  MoveEnd
-}
-
-///|
-test {
-  ignore(TextCaretDirection::MoveStart)
-  ignore(TextCaretDirection::MoveEnd)
-}
-
-///|
-priv struct TextCaretMoveResult {
-  caret : Int
-  selection : @core.TextRange?
-}
-
-///|
 priv struct TextHistoryRestoreResult {
   text : String
   control : @core.TextControlStateContext
@@ -307,80 +287,6 @@ fn surrounding_delete_range(
     start=clamp_int(range.start, 0, length),
     end=clamp_int(range.end, 0, length),
   )
-}
-
-///|
-fn move_text_caret(
-  text : String,
-  caret : Int,
-  selection : @core.TextRange?,
-  direction : TextCaretDirection,
-  extend~ : Bool,
-) -> TextCaretMoveResult {
-  let boundaries = @core.TextGraphemeBoundaries::new(text~)
-  let length = boundaries.length()
-  let caret = boundaries.clamp_index(caret)
-  if extend {
-    let anchor = boundaries.nearest_boundary(
-      text_selection_anchor(caret, selection),
-    )
-    let next = move_text_caret_index(text, caret, direction)
-    {
-      caret: next,
-      selection: if next == anchor {
-        None
-      } else {
-        Some(@core.TextRange::new(start=anchor, end=next))
-      },
-    }
-  } else {
-    match active_text_selection(selection) {
-      Some(selection) => {
-        let selection = @core.normalize_grapheme_range(boundaries, selection)
-        match direction {
-          MoveLeft => { caret: selection.start, selection: None }
-          MoveRight => { caret: selection.end, selection: None }
-          MoveStart => { caret: 0, selection: None }
-          MoveEnd => { caret: length, selection: None }
-        }
-      }
-      None =>
-        {
-          caret: move_text_caret_index(text, caret, direction),
-          selection: None,
-        }
-    }
-  }
-}
-
-///|
-fn text_selection_anchor(caret : Int, selection : @core.TextRange?) -> Int {
-  match selection {
-    Some(selection) =>
-      if caret == selection.start {
-        selection.end
-      } else {
-        selection.start
-      }
-    None => caret
-  }
-}
-
-///|
-fn move_text_caret_index(
-  text : String,
-  caret : Int,
-  direction : TextCaretDirection,
-) -> Int {
-  let length = text_length(text)
-  let caret = clamp_int(caret, 0, length)
-  let boundaries = @core.TextGraphemeBoundaries::new(text~)
-  match direction {
-    MoveLeft => boundaries.previous_boundary(caret)
-    MoveRight => boundaries.next_boundary(caret)
-    MoveStart => 0
-    MoveEnd => length
-  }
 }
 
 ///|

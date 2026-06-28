@@ -1939,7 +1939,7 @@ fn[Msg] rich_text_keyboard_event(
     return rich_text_caret_move_result(
       ctx,
       value.get(),
-      MoveLeft,
+      @core.TextCaretDirection::MoveLeft,
       event.modifiers.shift,
       on_selection_change,
     )
@@ -1948,7 +1948,7 @@ fn[Msg] rich_text_keyboard_event(
     return rich_text_caret_move_result(
       ctx,
       value.get(),
-      MoveRight,
+      @core.TextCaretDirection::MoveRight,
       event.modifiers.shift,
       on_selection_change,
     )
@@ -2291,11 +2291,11 @@ fn rich_text_input_state(
 fn[Msg] rich_text_caret_move_result(
   ctx : @core.ViewEventContext,
   text : String,
-  direction : TextCaretDirection,
+  direction : @core.TextCaretDirection,
   extend : Bool,
   on_selection_change : ((Int, @core.TextRange?) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {
-  let caret_move = move_text_caret(
+  let caret_move = @core.move_text_caret(
     text,
     ctx.text_control.caret,
     ctx.text_control.selection,
