@@ -18,3 +18,4 @@ dist/
 .vscode/
 website/web_wasm/docs/*
 trace.json
+.codebuddy/settings.local.json

@@ -398,6 +398,10 @@ fn markdown_session_editor_paint(
       visible_scroll_state~,
     )
     let window_content = window.content_rect(content)
+    // Position blocks inside the offset `window_content`, but cull against
+    // the original `content` viewport. Without this, the non-windowed cull
+    // uses `window_content.origin.y + height` which is shifted up by
+    // `top_padding - scroll_y`, cutting off the bottom of the viewport.
     append_rich_text_document_layers(
       child_layers,
       window.document,
@@ -405,6 +409,7 @@ fn markdown_session_editor_paint(
       font,
       foreground,
       text_system=ctx.text_system,
+      clip_rect=Some(content),
     )
     if ctx.focused {
       append_rich_text_editor_overlay(
@@ -417,6 +422,7 @@ fn markdown_session_editor_paint(
         cursor_color~,
         control=ctx.text_control,
         text_system=ctx.text_system,
+        clip_rect=Some(content),
       )
     }
   }
@@ -990,10 +996,19 @@ fn append_rich_text_document_layers(
   visible_scroll_y? : Double = 0.0,
   visible_viewport_height? : Double = 0.0,
   visible_overscan? : Double = 320.0,
+  clip_rect? : @core.Rect? = None,
 ) -> Unit {
+  // `content` sets the block positioning origin; `clip` sets the culling
+  // bounds. They are the same for the regular (non-session) rich text editor
+  // path, but the Markdown session path positions blocks inside an offset
+  // `window_content` rect while culling must respect the original viewport.
+  let clip = match clip_rect {
+    Some(r) => r
+    None => content
+  }
   let mut y = content.origin.y
   let windowed = visible_viewport_height > 0.0
-  let visible_top = content.origin.y +
+  let visible_top = clip.origin.y +
     visible_scroll_y -
     12.0 -
     visible_overscan
@@ -1011,7 +1026,7 @@ fn append_rich_text_document_layers(
     if windowed && y > visible_bottom {
       return
     }
-    if !windowed && y > content.origin.y + content.size.height {
+    if !windowed && y > clip.origin.y + clip.size.height {
       return
     }
     let frame = @core.Rect::new(
@@ -1371,8 +1386,13 @@ fn append_rich_text_editor_overlay(
   cursor_color~ : @core.Color,
   control~ : @core.TextControlStateContext,
   text_system~ : @core.TextSystem,
+  clip_rect? : @core.Rect? = None,
 ) -> Unit {
-  commands.push(@core.DrawCommand::PushClip(content))
+  let clip = match clip_rect {
+    Some(r) => r
+    None => content
+  }
+  commands.push(@core.DrawCommand::PushClip(clip))
   if control.composition is None {
     append_rich_text_selection_commands(
       commands,
