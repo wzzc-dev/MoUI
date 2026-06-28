@@ -551,3 +551,38 @@ pub fn markdown_heading_visible_source_text(source : String) -> String {
   }
   String::from_array(chars[start:end])
 }
+
+///|
+/// Returns true if the heading source should be rendered as a heading block:
+/// it must have leading `#` markers, a space/tab separator, AND non-empty
+/// content after the separator (e.g., `"# text"`, `"## content"`).
+/// Returns false for bare markers with no separator (`"#"`, `"##"`) or markers
+/// with a separator but no content yet (`"# "`, `"## "`), which are treated as
+/// plain text so the user can still see the `#` they typed.
+fn markdown_heading_source_is_renderable(source : String) -> Bool {
+  let chars = source.to_array()
+  let mut index = 0
+  // Skip leading whitespace (indent) before the # markers.
+  while index < chars.length() && (chars[index] == ' ' || chars[index] == '\t') {
+    index = index + 1
+  }
+  let marker_start = index
+  while index < chars.length() && chars[index] == '#' {
+    index = index + 1
+  }
+  if index == marker_start {
+    return false
+  }
+  // After the # markers, require a space/tab separator.
+  if index >= chars.length() || (chars[index] != ' ' && chars[index] != '\t') {
+    return false
+  }
+  // Skip the separator and any trailing whitespace; there must be actual
+  // content after the marker for this to be a rendered heading. A bare "# "
+  // (marker + separator + no content) is treated as plain text so the user
+  // can still see the # they typed.
+  while index < chars.length() && (chars[index] == ' ' || chars[index] == '\t') {
+    index = index + 1
+  }
+  index < chars.length()
+}
