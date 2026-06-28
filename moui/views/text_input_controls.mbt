@@ -877,7 +877,7 @@ fn[Msg] handle_text_field_keyboard(
       messages=option_message(on_submit),
     )
   }
-  if is_select_all_shortcut(event) {
+  if @core.is_select_all_shortcut(event) {
     let next_control = select_text_control(ctx.text_control, value.get())
     return view_event_result(
       changed=true,
@@ -886,7 +886,7 @@ fn[Msg] handle_text_field_keyboard(
       dirty=@core.ViewDirtyHint::ViewPaintDirty,
     )
   }
-  if is_undo_shortcut(event) {
+  if @core.is_undo_shortcut(event) {
     let result = restore_text_history(ctx.text_control, value.get(), undo=true)
     value.set(result.text)
     return view_event_result(
@@ -897,7 +897,7 @@ fn[Msg] handle_text_field_keyboard(
       messages=text_input_messages(on_input, result.text),
     )
   }
-  if is_redo_shortcut(event) {
+  if @core.is_redo_shortcut(event) {
     let result = restore_text_history(ctx.text_control, value.get(), undo=false)
     value.set(result.text)
     return view_event_result(
@@ -1725,29 +1725,6 @@ fn[Msg] option_message(message : Msg?) -> Array[Msg] {
     Some(message) => [message]
     None => []
   }
-}
-
-///|
-fn is_select_all_shortcut(event : @core.KeyboardEvent) -> Bool {
-  event.pressed &&
-  (event.key == "a" || event.key == "A") &&
-  (event.modifiers.meta || event.modifiers.control)
-}
-
-///|
-fn is_undo_shortcut(event : @core.KeyboardEvent) -> Bool {
-  event.pressed &&
-  (event.key == "z" || event.key == "Z") &&
-  !event.modifiers.shift &&
-  (event.modifiers.meta || event.modifiers.control)
-}
-
-///|
-fn is_redo_shortcut(event : @core.KeyboardEvent) -> Bool {
-  event.pressed &&
-  (event.key == "z" || event.key == "Z") &&
-  event.modifiers.shift &&
-  (event.modifiers.meta || event.modifiers.control)
 }
 
 ///|

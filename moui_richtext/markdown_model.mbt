@@ -30,7 +30,7 @@ pub(all) struct MarkdownFrontMatterParseResult {
 } derive(Eq, Debug)
 
 ///|
-pub fn markdown_front_matter_block_at(
+fn markdown_front_matter_block_at(
   lines : Array[String],
 ) -> MarkdownFrontMatterParseResult? {
   if lines.length() < 2 || lines[0].trim().to_owned() != "---" {
@@ -145,10 +145,7 @@ pub fn parse_markdown(text : String) -> Array[MarkdownBlock] {
 }
 
 ///|
-pub fn markdown_setext_heading_level_at(
-  lines : Array[String],
-  index : Int,
-) -> Int? {
+fn markdown_setext_heading_level_at(lines : Array[String], index : Int) -> Int? {
   if index + 1 >= lines.length() {
     return None
   }
@@ -162,7 +159,7 @@ pub fn markdown_setext_heading_level_at(
 }
 
 ///|
-pub fn markdown_is_setext_paragraph_candidate(line : String) -> Bool {
+fn markdown_is_setext_paragraph_candidate(line : String) -> Bool {
   let parsed = @md.parse(line)
   match parsed.document.children {
     [Paragraph(_)] => true
@@ -171,7 +168,7 @@ pub fn markdown_is_setext_paragraph_candidate(line : String) -> Bool {
 }
 
 ///|
-pub fn markdown_setext_underline_level(line : String) -> Int? {
+fn markdown_setext_underline_level(line : String) -> Int? {
   let text = line.trim().to_owned()
   if text == "" {
     return None
@@ -196,7 +193,7 @@ pub(all) struct MarkdownCodeFenceInfo {
 } derive(Eq, Debug)
 
 ///|
-pub fn markdown_opening_code_fence(line : String) -> MarkdownCodeFenceInfo? {
+fn markdown_opening_code_fence(line : String) -> MarkdownCodeFenceInfo? {
   let chars = line.to_array()
   let indent = markdown_leading_indent_length(chars)
   if chars.length() < indent + 3 {
@@ -223,7 +220,7 @@ pub fn markdown_opening_code_fence(line : String) -> MarkdownCodeFenceInfo? {
 }
 
 ///|
-pub fn markdown_code_fence_info(chars : Array[Char], start : Int) -> String? {
+fn markdown_code_fence_info(chars : Array[Char], start : Int) -> String? {
   let info = String::from_array(chars[start:]).trim().to_owned()
   if info == "" {
     None
@@ -233,7 +230,7 @@ pub fn markdown_code_fence_info(chars : Array[Char], start : Int) -> String? {
 }
 
 ///|
-pub fn markdown_closing_code_fence(line : String, fence : String) -> Bool {
+fn markdown_closing_code_fence(line : String, fence : String) -> Bool {
   let chars = line.to_array()
   let fence_chars = fence.to_array()
   let indent = markdown_leading_indent_length(chars)
@@ -259,7 +256,7 @@ pub fn markdown_closing_code_fence(line : String, fence : String) -> Bool {
 }
 
 ///|
-pub fn markdown_leading_indent_length(chars : Array[Char]) -> Int {
+fn markdown_leading_indent_length(chars : Array[Char]) -> Int {
   let mut index = 0
   while index < chars.length() && (chars[index] == ' ' || chars[index] == '\t') {
     index = index + 1
@@ -268,7 +265,7 @@ pub fn markdown_leading_indent_length(chars : Array[Char]) -> Int {
 }
 
 ///|
-pub fn append_markdown_ast_block(
+fn append_markdown_ast_block(
   blocks : Array[MarkdownBlock],
   block : @md.Block,
   definitions : Array[MarkdownReferenceDefinition],
@@ -427,7 +424,7 @@ pub fn append_markdown_ast_block(
 }
 
 ///|
-pub fn markdown_trim_single_trailing_newline(text : String) -> String {
+fn markdown_trim_single_trailing_newline(text : String) -> String {
   let chars = text.to_array()
   if chars.length() > 0 && chars[chars.length() - 1] == '\n' {
     String::from_array(chars[:chars.length() - 1])
@@ -437,7 +434,7 @@ pub fn markdown_trim_single_trailing_newline(text : String) -> String {
 }
 
 ///|
-pub fn markdown_block(kind : MarkdownBlockKind, text : String) -> MarkdownBlock {
+fn markdown_block(kind : MarkdownBlockKind, text : String) -> MarkdownBlock {
   let inlines = match kind {
     CodeBlock | HorizontalRule | Table | FrontMatter => []
     _ => parse_markdown_inlines(text)
@@ -446,10 +443,7 @@ pub fn markdown_block(kind : MarkdownBlockKind, text : String) -> MarkdownBlock 
 }
 
 ///|
-pub fn markdown_code_block(
-  text : String,
-  code_language : String?,
-) -> MarkdownBlock {
+fn markdown_code_block(text : String, code_language : String?) -> MarkdownBlock {
   {
     kind: MarkdownBlockKind::CodeBlock,
     text,
@@ -460,7 +454,7 @@ pub fn markdown_code_block(
 }
 
 ///|
-pub fn markdown_normalize_code_info(info : String?) -> String? {
+fn markdown_normalize_code_info(info : String?) -> String? {
   match info {
     Some(value) => {
       let trimmed = value.trim().to_owned()

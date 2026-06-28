@@ -16,35 +16,6 @@ fn text_area_paragraph(
 }
 
 ///|
-fn text_area_min_int(a : Int, b : Int) -> Int {
-  if a <= b {
-    a
-  } else {
-    b
-  }
-}
-
-///|
-fn text_area_max_int(a : Int, b : Int) -> Int {
-  if a >= b {
-    a
-  } else {
-    b
-  }
-}
-
-///|
-fn text_area_clamp_int(value : Int, min : Int, max : Int) -> Int {
-  if value < min {
-    min
-  } else if value > max {
-    max
-  } else {
-    value
-  }
-}
-
-///|
 fn[Msg] text_area_control(
   value~ : @core.Binding[String],
   placeholder~ : String,
@@ -311,7 +282,7 @@ fn[Msg] handle_text_area_keyboard(
       record_history=true,
     )
   }
-  if is_select_all_shortcut(event) {
+  if @core.is_select_all_shortcut(event) {
     let next_control = select_text_control(ctx.text_control, value.get())
     return view_event_result(
       changed=true,
@@ -320,7 +291,7 @@ fn[Msg] handle_text_area_keyboard(
       dirty=@core.ViewDirtyHint::ViewPaintDirty,
     )
   }
-  if is_undo_shortcut(event) {
+  if @core.is_undo_shortcut(event) {
     let result = restore_text_history(ctx.text_control, value.get(), undo=true)
     value.set(result.text)
     return view_event_result(
@@ -331,7 +302,7 @@ fn[Msg] handle_text_area_keyboard(
       messages=text_input_messages(on_input, result.text),
     )
   }
-  if is_redo_shortcut(event) {
+  if @core.is_redo_shortcut(event) {
     let result = restore_text_history(ctx.text_control, value.get(), undo=false)
     value.set(result.text)
     return view_event_result(
@@ -494,8 +465,8 @@ fn[Msg] text_area_vertical_caret_move(
       Some(a) => a
       None => ctx.text_control.caret
     }
-    let start = text_area_min_int(anchor, hit.offset)
-    let end = text_area_max_int(anchor, hit.offset)
+    let start = @core.min_int(anchor, hit.offset)
+    let end = @core.max_int(anchor, hit.offset)
     {
       ..ctx.text_control,
       caret: hit.offset,
@@ -582,8 +553,8 @@ fn[Msg] handle_text_area_pointer(
     )
     let hit = paragraph.hit_test(local_point)
     if hit.offset != anchor || hit.offset != ctx.text_control.caret {
-      let start = text_area_min_int(anchor, hit.offset)
-      let end = text_area_max_int(anchor, hit.offset)
+      let start = @core.min_int(anchor, hit.offset)
+      let end = @core.max_int(anchor, hit.offset)
       let next_control = {
         ..ctx.text_control,
         caret: hit.offset,
@@ -626,10 +597,10 @@ fn text_input_state_for_multi_line(
     text_system, display_text, font, text_frame,
   )
   let caret = boundaries.nearest_boundary(control.caret)
-  let visual_caret = text_area_clamp_int(
+  let visual_caret = @core.clamp_int(
     text_field_visual_caret(text, control, focused=true),
     0,
-    text_area_max_int(0, paragraph.caret_rects.length() - 1),
+    @core.max_int(0, paragraph.caret_rects.length() - 1),
   )
   let caret_rect = paragraph.caret_rect_at(visual_caret)
   let adjusted_rect = @core.Rect::new(

@@ -9,7 +9,7 @@ pub(all) struct MarkdownEditorTableCellRange {
 } derive(Eq, Debug)
 
 ///|
-pub fn markdown_editor_move_table_cell(
+fn markdown_editor_move_table_cell(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -64,7 +64,7 @@ pub fn markdown_editor_move_table_cell(
 }
 
 ///|
-pub fn markdown_editor_exit_table_before_table_start(
+fn markdown_editor_exit_table_before_table_start(
   source : String,
   block : MarkdownEditorBlock,
 ) -> RichTextInputTransform {
@@ -95,7 +95,7 @@ pub fn markdown_editor_exit_table_before_table_start(
 }
 
 ///|
-pub fn markdown_editor_table_cells_for_block(
+fn markdown_editor_table_cells_for_block(
   source : String,
   block : MarkdownEditorBlock,
 ) -> Array[MarkdownEditorTableCellRange] {
@@ -118,7 +118,7 @@ pub fn markdown_editor_table_cells_for_block(
 }
 
 ///|
-pub fn markdown_editor_table_cells_for_line(
+fn markdown_editor_table_cells_for_line(
   line : MarkdownLine,
   row : Int,
 ) -> Array[MarkdownEditorTableCellRange] {
@@ -163,7 +163,7 @@ pub fn markdown_editor_table_cells_for_line(
 }
 
 ///|
-pub fn markdown_editor_table_pipe_is_separator(
+fn markdown_editor_table_pipe_is_separator(
   chars : Array[Char],
   index : Int,
 ) -> Bool {
@@ -180,7 +180,7 @@ pub fn markdown_editor_table_pipe_is_separator(
 }
 
 ///|
-pub fn markdown_editor_table_cell_content_range(
+fn markdown_editor_table_cell_content_range(
   chars : Array[Char],
   start : Int,
   end : Int,
@@ -199,7 +199,7 @@ pub fn markdown_editor_table_cell_content_range(
 }
 
 ///|
-pub fn markdown_editor_table_cell_index_at(
+fn markdown_editor_table_cell_index_at(
   cells : Array[MarkdownEditorTableCellRange],
   caret : Int,
 ) -> Int? {
@@ -213,7 +213,7 @@ pub fn markdown_editor_table_cell_index_at(
 }
 
 ///|
-pub fn markdown_editor_insert_table_row_on_enter(
+fn markdown_editor_insert_table_row_on_enter(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -260,7 +260,7 @@ pub fn markdown_editor_insert_table_row_on_enter(
 }
 
 ///|
-pub fn markdown_editor_exit_table_after_empty_last_row_on_enter(
+fn markdown_editor_exit_table_after_empty_last_row_on_enter(
   source : String,
   block : MarkdownEditorBlock,
   cells : Array[MarkdownEditorTableCellRange],
@@ -291,7 +291,7 @@ pub fn markdown_editor_exit_table_after_empty_last_row_on_enter(
 }
 
 ///|
-pub fn markdown_editor_table_last_data_row(
+fn markdown_editor_table_last_data_row(
   cells : Array[MarkdownEditorTableCellRange],
 ) -> Int {
   let mut row = 0
@@ -304,7 +304,7 @@ pub fn markdown_editor_table_last_data_row(
 }
 
 ///|
-pub fn markdown_editor_table_row_empty(
+fn markdown_editor_table_row_empty(
   source : String,
   cells : Array[MarkdownEditorTableCellRange],
   row : Int,
@@ -327,7 +327,7 @@ pub fn markdown_editor_table_row_empty(
 }
 
 ///|
-pub fn markdown_editor_exit_table_after_table_end(
+fn markdown_editor_exit_table_after_table_end(
   source : String,
   table_end : Int,
 ) -> RichTextInputTransform {
@@ -362,7 +362,7 @@ pub fn markdown_editor_exit_table_after_table_end(
 }
 
 ///|
-pub fn markdown_editor_backspace_empty_trailing_table_row(
+fn markdown_editor_backspace_empty_trailing_table_row(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -373,7 +373,7 @@ pub fn markdown_editor_backspace_empty_trailing_table_row(
 }
 
 ///|
-pub fn markdown_editor_delete_empty_trailing_table_row(
+fn markdown_editor_delete_empty_trailing_table_row(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -384,7 +384,7 @@ pub fn markdown_editor_delete_empty_trailing_table_row(
 }
 
 ///|
-pub fn markdown_editor_remove_empty_trailing_table_row_at_caret(
+fn markdown_editor_remove_empty_trailing_table_row_at_caret(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -421,7 +421,7 @@ pub fn markdown_editor_remove_empty_trailing_table_row_at_caret(
 }
 
 ///|
-pub fn markdown_editor_remove_empty_trailing_table_row_on_backspace(
+fn markdown_editor_remove_empty_trailing_table_row_on_backspace(
   source : String,
   cells : Array[MarkdownEditorTableCellRange],
   current : MarkdownEditorTableCellRange,
@@ -460,7 +460,7 @@ pub fn markdown_editor_remove_empty_trailing_table_row_on_backspace(
 }
 
 ///|
-pub fn markdown_editor_previous_table_row_column_caret(
+fn markdown_editor_previous_table_row_column_caret(
   cells : Array[MarkdownEditorTableCellRange],
   row : Int,
   column : Int,
@@ -480,7 +480,7 @@ pub fn markdown_editor_previous_table_row_column_caret(
 }
 
 ///|
-pub fn markdown_editor_table_column_count(
+fn markdown_editor_table_column_count(
   cells : Array[MarkdownEditorTableCellRange],
 ) -> Int {
   let mut count = 0
@@ -493,7 +493,7 @@ pub fn markdown_editor_table_column_count(
 }
 
 ///|
-pub fn markdown_editor_table_row_end(
+fn markdown_editor_table_row_end(
   source : String,
   cells : Array[MarkdownEditorTableCellRange],
   row : Int,

@@ -27,7 +27,7 @@ pub(all) struct MarkdownReferenceDefinition {
 } derive(Eq, Debug)
 
 ///|
-pub fn markdown_inline(
+fn markdown_inline(
   text : String,
   kind : MarkdownInlineKind,
   target? : String? = None,
@@ -49,7 +49,7 @@ pub fn parse_markdown_inlines_with_definitions(
 }
 
 ///|
-pub fn markdown_parse_inlines_preserving_plain_html(
+fn markdown_parse_inlines_preserving_plain_html(
   text : String,
   definitions : Array[MarkdownReferenceDefinition],
 ) -> Array[MarkdownInline] {
@@ -102,7 +102,7 @@ pub fn markdown_parse_inlines_preserving_plain_html(
 }
 
 ///|
-pub fn markdown_append_parsed_inline_segment(
+fn markdown_append_parsed_inline_segment(
   spans : Array[MarkdownInline],
   text : String,
   definitions : Array[MarkdownReferenceDefinition],
@@ -118,7 +118,7 @@ pub fn markdown_append_parsed_inline_segment(
 }
 
 ///|
-pub fn markdown_resolve_reference_inlines(
+fn markdown_resolve_reference_inlines(
   inlines : Array[MarkdownInline],
   definitions : Array[MarkdownReferenceDefinition],
 ) -> Array[MarkdownInline] {
@@ -141,7 +141,7 @@ pub fn markdown_resolve_reference_inlines(
 }
 
 ///|
-pub fn markdown_normalize_html_inlines(
+fn markdown_normalize_html_inlines(
   inlines : Array[MarkdownInline],
 ) -> Array[MarkdownInline] {
   let normalized : Array[MarkdownInline] = []
@@ -159,7 +159,7 @@ pub fn markdown_normalize_html_inlines(
 }
 
 ///|
-pub fn markdown_protected_inline_end(chars : Array[Char], start : Int) -> Int? {
+fn markdown_protected_inline_end(chars : Array[Char], start : Int) -> Int? {
   if chars[start] == '`' {
     let mut index = start + 1
     while index < chars.length() && chars[index] != '`' && chars[index] != '\n' {
@@ -182,7 +182,7 @@ pub fn markdown_protected_inline_end(chars : Array[Char], start : Int) -> Int? {
 }
 
 ///|
-pub fn markdown_bracketed_inline_end(chars : Array[Char], open : Int) -> Int? {
+fn markdown_bracketed_inline_end(chars : Array[Char], open : Int) -> Int? {
   let mut close = open + 1
   while close < chars.length() && chars[close] != ']' && chars[close] != '\n' {
     close = close + 1
@@ -218,7 +218,7 @@ pub fn markdown_bracketed_inline_end(chars : Array[Char], open : Int) -> Int? {
 }
 
 ///|
-pub fn markdown_html_inline_source(html : String) -> String {
+fn markdown_html_inline_source(html : String) -> String {
   if html.has_prefix("<") {
     html
   } else {
@@ -227,7 +227,7 @@ pub fn markdown_html_inline_source(html : String) -> String {
 }
 
 ///|
-pub fn markdown_html_inline_tag_end(chars : Array[Char], start : Int) -> Int? {
+fn markdown_html_inline_tag_end(chars : Array[Char], start : Int) -> Int? {
   if start + 2 >= chars.length() || chars[start] != '<' {
     return None
   }
@@ -263,17 +263,17 @@ pub fn markdown_html_inline_tag_end(chars : Array[Char], start : Int) -> Int? {
 }
 
 ///|
-pub fn markdown_html_tag_name_start_char(ch : Char) -> Bool {
+fn markdown_html_tag_name_start_char(ch : Char) -> Bool {
   (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
 }
 
 ///|
-pub fn markdown_html_tag_name_char(ch : Char) -> Bool {
+fn markdown_html_tag_name_char(ch : Char) -> Bool {
   markdown_html_tag_name_start_char(ch) || (ch >= '0' && ch <= '9') || ch == '-'
 }
 
 ///|
-pub fn markdown_inlines_from_ast(
+fn markdown_inlines_from_ast(
   ast : Array[@md.Inline],
   definitions : Array[MarkdownReferenceDefinition],
 ) -> Array[MarkdownInline] {
@@ -285,7 +285,7 @@ pub fn markdown_inlines_from_ast(
 }
 
 ///|
-pub fn append_markdown_inline_ast(
+fn append_markdown_inline_ast(
   spans : Array[MarkdownInline],
   inline : @md.Inline,
   definitions : Array[MarkdownReferenceDefinition],
@@ -347,7 +347,7 @@ pub fn append_markdown_inline_ast(
 }
 
 ///|
-pub fn markdown_reference_definitions(
+fn markdown_reference_definitions(
   source : String,
 ) -> Array[MarkdownReferenceDefinition] {
   let definitions : Array[MarkdownReferenceDefinition] = []
@@ -365,7 +365,7 @@ pub fn markdown_reference_definitions(
 }
 
 ///|
-pub fn markdown_scan_reference_definitions(
+fn markdown_scan_reference_definitions(
   source : String,
 ) -> Array[MarkdownReferenceDefinition] {
   let definitions : Array[MarkdownReferenceDefinition] = []
@@ -380,7 +380,7 @@ pub fn markdown_scan_reference_definitions(
 }
 
 ///|
-pub fn markdown_scan_reference_definition_line(
+fn markdown_scan_reference_definition_line(
   line : String,
 ) -> MarkdownReferenceDefinition? {
   let trimmed = line.trim().to_owned()
@@ -434,7 +434,7 @@ pub fn markdown_scan_reference_definition_line(
 }
 
 ///|
-pub fn markdown_trim_reference_title(title : String) -> String {
+fn markdown_trim_reference_title(title : String) -> String {
   let chars = title.to_array()
   if chars.length() >= 2 &&
     (
@@ -448,7 +448,7 @@ pub fn markdown_trim_reference_title(title : String) -> String {
 }
 
 ///|
-pub fn markdown_reference_target(
+fn markdown_reference_target(
   definitions : Array[MarkdownReferenceDefinition],
   label : String,
 ) -> String {
@@ -462,12 +462,12 @@ pub fn markdown_reference_target(
 }
 
 ///|
-pub fn markdown_reference_label_key(label : String) -> String {
+fn markdown_reference_label_key(label : String) -> String {
   label.trim().to_owned().to_lower()
 }
 
 ///|
-pub fn markdown_inline_text(ast : Array[@md.Inline]) -> String {
+fn markdown_inline_text(ast : Array[@md.Inline]) -> String {
   let parts : Array[String] = []
   for inline in ast {
     parts.push(markdown_inline_plain_text(inline))
@@ -476,7 +476,7 @@ pub fn markdown_inline_text(ast : Array[@md.Inline]) -> String {
 }
 
 ///|
-pub fn markdown_inline_plain_text(inline : @md.Inline) -> String {
+fn markdown_inline_plain_text(inline : @md.Inline) -> String {
   match inline {
     Text(content~, ..) => content
     SoftBreak(..) | HardBreak(..) => "\n"
@@ -495,7 +495,7 @@ pub fn markdown_inline_plain_text(inline : @md.Inline) -> String {
 }
 
 ///|
-pub fn markdown_blocks_text(blocks : Array[@md.Block]) -> String {
+fn markdown_blocks_text(blocks : Array[@md.Block]) -> String {
   let lines : Array[String] = []
   for block in blocks {
     match block {
@@ -519,12 +519,12 @@ pub fn markdown_blocks_text(blocks : Array[@md.Block]) -> String {
 }
 
 ///|
-pub fn markdown_list_item_text(item : @md.ListItem) -> String {
+fn markdown_list_item_text(item : @md.ListItem) -> String {
   markdown_blocks_text(item.children)
 }
 
 ///|
-pub fn markdown_heading_source(level : Int, text : String) -> String {
+fn markdown_heading_source(level : Int, text : String) -> String {
   let marks : Array[Char] = []
   for _ in 0..<level {
     marks.push('#')
@@ -533,7 +533,7 @@ pub fn markdown_heading_source(level : Int, text : String) -> String {
 }
 
 ///|
-pub fn markdown_heading_visible_source_text(source : String) -> String {
+fn markdown_heading_visible_source_text(source : String) -> String {
   let chars = source.trim().to_owned().to_array()
   let mut start = 0
   while start < chars.length() && chars[start] == '#' {

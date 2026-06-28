@@ -5,7 +5,7 @@ pub(all) struct MarkdownTableParseResult {
 } derive(Eq, Debug)
 
 ///|
-pub fn markdown_table_block_at(
+fn markdown_table_block_at(
   lines : Array[String],
   index : Int,
 ) -> MarkdownTableParseResult? {
@@ -29,7 +29,7 @@ pub fn markdown_table_block_at(
 }
 
 ///|
-pub fn markdown_table_separator_line(line : String) -> Bool {
+fn markdown_table_separator_line(line : String) -> Bool {
   let trimmed = line.trim().to_owned()
   if !trimmed.contains("|") {
     return false
@@ -47,7 +47,7 @@ pub fn markdown_table_separator_line(line : String) -> Bool {
 }
 
 ///|
-pub fn markdown_table_separator_cell(cell : String) -> Bool {
+fn markdown_table_separator_cell(cell : String) -> Bool {
   let chars = cell.to_array()
   let mut dash_count = 0
   for ch in chars {
@@ -61,7 +61,7 @@ pub fn markdown_table_separator_cell(cell : String) -> Bool {
 }
 
 ///|
-pub fn markdown_table_body_line(line : String) -> Bool {
+fn markdown_table_body_line(line : String) -> Bool {
   let trimmed = line.trim().to_owned()
   trimmed != "" && trimmed.contains("|")
 }
@@ -97,7 +97,7 @@ pub fn markdown_split_table_cells(line : String) -> Array[String] {
 }
 
 ///|
-pub fn markdown_table_block(
+fn markdown_table_block(
   text : String,
   table_alignments : Array[@core.TextAlign?],
 ) -> MarkdownBlock {
@@ -111,7 +111,7 @@ pub fn markdown_table_block(
 }
 
 ///|
-pub fn markdown_table_text(
+fn markdown_table_text(
   header : Array[@md.TableCell],
   rows : Array[Array[@md.TableCell]],
 ) -> String {
@@ -124,7 +124,7 @@ pub fn markdown_table_text(
 }
 
 ///|
-pub fn markdown_table_text_from_source_lines(lines : Array[String]) -> String {
+fn markdown_table_text_from_source_lines(lines : Array[String]) -> String {
   let rows : Array[String] = []
   for index in 0..<lines.length() {
     if index == 1 {
@@ -140,7 +140,7 @@ pub fn markdown_table_text_from_source_lines(lines : Array[String]) -> String {
 }
 
 ///|
-pub fn markdown_table_row_text(row : Array[@md.TableCell]) -> String {
+fn markdown_table_row_text(row : Array[@md.TableCell]) -> String {
   let cells : Array[String] = []
   for cell in row {
     cells.push(markdown_inline_text(cell.children).trim().to_owned())
@@ -149,7 +149,7 @@ pub fn markdown_table_row_text(row : Array[@md.TableCell]) -> String {
 }
 
 ///|
-pub fn markdown_table_preview(
+fn markdown_table_preview(
   block : MarkdownBlock,
   base : @core.FontSpec,
 ) -> RichTextTable? {
@@ -201,7 +201,7 @@ pub(all) struct MarkdownTableCellPreviewRange {
 }
 
 ///|
-pub fn markdown_table_cell_ranges_for_line(
+fn markdown_table_cell_ranges_for_line(
   line : String,
 ) -> Array[MarkdownTableCellPreviewRange] {
   let cells : Array[MarkdownTableCellPreviewRange] = []
@@ -238,7 +238,7 @@ pub fn markdown_table_cell_ranges_for_line(
 }
 
 ///|
-pub fn markdown_table_alignments_for_separator(
+fn markdown_table_alignments_for_separator(
   line : String,
 ) -> Array[@core.TextAlign?] {
   let aligns : Array[@core.TextAlign?] = []
@@ -249,7 +249,7 @@ pub fn markdown_table_alignments_for_separator(
 }
 
 ///|
-pub fn markdown_table_alignment_for_separator_cell(
+fn markdown_table_alignment_for_separator_cell(
   cell : String,
 ) -> @core.TextAlign? {
   let trimmed = cell.trim().to_owned()
@@ -269,7 +269,7 @@ pub fn markdown_table_alignment_for_separator_cell(
 }
 
 ///|
-pub fn markdown_table_alignment_at(
+fn markdown_table_alignment_at(
   aligns : Array[@core.TextAlign?],
   index : Int,
 ) -> @core.TextAlign? {
@@ -281,7 +281,7 @@ pub fn markdown_table_alignment_at(
 }
 
 ///|
-pub fn markdown_table_trimmed_range(
+fn markdown_table_trimmed_range(
   chars : Array[Char],
   start : Int,
   end : Int,

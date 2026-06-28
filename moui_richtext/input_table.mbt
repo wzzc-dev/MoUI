@@ -1,5 +1,5 @@
 ///|
-pub fn markdown_editor_table_cell_at_text_offset(
+fn markdown_editor_table_cell_at_text_offset(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -28,7 +28,7 @@ pub fn markdown_editor_table_cell_at_text_offset(
 }
 
 ///|
-pub fn markdown_editor_hard_break_continuation_prefix(line : String) -> String {
+fn markdown_editor_hard_break_continuation_prefix(line : String) -> String {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
   let indent_text = String::from_array(chars[:indent])
@@ -64,7 +64,7 @@ pub fn markdown_editor_hard_break_continuation_prefix(line : String) -> String {
 }
 
 ///|
-pub fn markdown_editor_spaces(count : Int) -> String {
+fn markdown_editor_spaces(count : Int) -> String {
   let chars : Array[Char] = []
   let mut index = 0
   while index < count {
@@ -75,7 +75,7 @@ pub fn markdown_editor_spaces(count : Int) -> String {
 }
 
 ///|
-pub fn markdown_editor_complete_table_header_on_enter(
+fn markdown_editor_complete_table_header_on_enter(
   chars : Array[Char],
   range : MarkdownSourceRange,
   line : String,
@@ -106,7 +106,7 @@ pub fn markdown_editor_complete_table_header_on_enter(
 }
 
 ///|
-pub fn markdown_editor_table_header_candidate(line : String) -> Bool {
+fn markdown_editor_table_header_candidate(line : String) -> Bool {
   let trimmed = line.trim().to_owned()
   if !trimmed.contains("|") || markdown_editor_table_separator_line(trimmed) {
     return false
@@ -128,9 +128,7 @@ pub fn markdown_editor_table_header_candidate(line : String) -> Bool {
 }
 
 ///|
-pub fn markdown_editor_table_separator_for_columns(
-  column_count : Int,
-) -> String {
+fn markdown_editor_table_separator_for_columns(column_count : Int) -> String {
   let cells : Array[String] = []
   for _ in 0..<column_count {
     cells.push("---")
@@ -139,7 +137,7 @@ pub fn markdown_editor_table_separator_for_columns(
 }
 
 ///|
-pub fn markdown_editor_table_cell_text_input(
+fn markdown_editor_table_cell_text_input(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -187,7 +185,7 @@ pub fn markdown_editor_table_cell_text_input(
 }
 
 ///|
-pub fn markdown_editor_table_cell_matrix_paste(
+fn markdown_editor_table_cell_matrix_paste(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -234,7 +232,7 @@ pub(all) struct MarkdownEditorTableMatrixPaste {
 }
 
 ///|
-pub fn markdown_editor_table_matrix_paste(
+fn markdown_editor_table_matrix_paste(
   input : String,
 ) -> MarkdownEditorTableMatrixPaste? {
   if input.contains("\t") {
@@ -254,7 +252,7 @@ pub fn markdown_editor_table_matrix_paste(
 }
 
 ///|
-pub fn markdown_editor_table_paste_grid(input : String) -> Array[Array[String]] {
+fn markdown_editor_table_paste_grid(input : String) -> Array[Array[String]] {
   let rows : Array[Array[String]] = []
   for line in markdown_editor_paste_lines(input) {
     let row : Array[String] = []
@@ -267,7 +265,7 @@ pub fn markdown_editor_table_paste_grid(input : String) -> Array[Array[String]] 
 }
 
 ///|
-pub fn markdown_editor_split_tsv_cells(line : String) -> Array[String] {
+fn markdown_editor_split_tsv_cells(line : String) -> Array[String] {
   let cells : Array[String] = []
   let chars = line.to_array()
   let current : Array[Char] = []
@@ -285,7 +283,7 @@ pub fn markdown_editor_split_tsv_cells(line : String) -> Array[String] {
 }
 
 ///|
-pub fn markdown_editor_table_paste_grid_column_count(
+fn markdown_editor_table_paste_grid_column_count(
   grid : Array[Array[String]],
 ) -> Int {
   let mut count = 0
@@ -298,7 +296,7 @@ pub fn markdown_editor_table_paste_grid_column_count(
 }
 
 ///|
-pub fn markdown_editor_paste_tsv_as_table(
+fn markdown_editor_paste_tsv_as_table(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -319,7 +317,7 @@ pub fn markdown_editor_paste_tsv_as_table(
 }
 
 ///|
-pub fn markdown_editor_paste_markdown_table_as_table(
+fn markdown_editor_paste_markdown_table_as_table(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -341,7 +339,7 @@ pub fn markdown_editor_paste_markdown_table_as_table(
 }
 
 ///|
-pub fn markdown_editor_paste_table_text_as_block(
+fn markdown_editor_paste_table_text_as_block(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -351,7 +349,7 @@ pub fn markdown_editor_paste_table_text_as_block(
 }
 
 ///|
-pub fn markdown_editor_paste_block_text_as_block(
+fn markdown_editor_paste_block_text_as_block(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -392,7 +390,7 @@ pub(all) struct MarkdownEditorPastedMarkdownTable {
 } derive(Eq, Debug)
 
 ///|
-pub fn markdown_editor_markdown_table_paste(
+fn markdown_editor_markdown_table_paste(
   input : String,
 ) -> MarkdownEditorPastedMarkdownTable? {
   if !input.contains("|") || input.contains("\t") {
@@ -430,7 +428,7 @@ pub fn markdown_editor_markdown_table_paste(
 }
 
 ///|
-pub fn markdown_editor_trim_blank_table_paste_lines(
+fn markdown_editor_trim_blank_table_paste_lines(
   lines : Array[String],
 ) -> Array[String] {
   let mut start = 0
@@ -449,9 +447,7 @@ pub fn markdown_editor_trim_blank_table_paste_lines(
 }
 
 ///|
-pub fn markdown_editor_markdown_table_paste_cells(
-  line : String,
-) -> Array[String] {
+fn markdown_editor_markdown_table_paste_cells(line : String) -> Array[String] {
   let cells : Array[String] = []
   for cell in markdown_editor_split_table_cells(line) {
     cells.push(cell.trim().to_owned())
@@ -460,7 +456,7 @@ pub fn markdown_editor_markdown_table_paste_cells(
 }
 
 ///|
-pub fn markdown_editor_table_text_from_paste_grid(
+fn markdown_editor_table_text_from_paste_grid(
   grid : Array[Array[String]],
 ) -> String {
   let column_count = markdown_editor_table_paste_grid_column_count(grid)
@@ -494,7 +490,7 @@ pub fn markdown_editor_table_text_from_paste_grid(
 }
 
 ///|
-pub fn markdown_editor_table_paste_padded_row(
+fn markdown_editor_table_paste_padded_row(
   row : Array[String],
   column_count : Int,
 ) -> Array[String] {
@@ -509,7 +505,7 @@ pub fn markdown_editor_table_paste_padded_row(
 }
 
 ///|
-pub fn markdown_editor_block_insert_prefix(
+fn markdown_editor_block_insert_prefix(
   chars : Array[Char],
   start : Int,
 ) -> String {
@@ -527,7 +523,7 @@ pub fn markdown_editor_block_insert_prefix(
 }
 
 ///|
-pub fn markdown_editor_block_insert_suffix(
+fn markdown_editor_block_insert_suffix(
   chars : Array[Char],
   end : Int,
 ) -> String {
@@ -545,7 +541,7 @@ pub fn markdown_editor_block_insert_suffix(
 }
 
 ///|
-pub fn markdown_editor_apply_table_paste_grid(
+fn markdown_editor_apply_table_paste_grid(
   source : String,
   block : MarkdownEditorBlock,
   current : MarkdownEditorTableCellRange,
@@ -607,7 +603,7 @@ pub fn markdown_editor_apply_table_paste_grid(
 }
 
 ///|
-pub fn markdown_editor_source_lines_for_range(
+fn markdown_editor_source_lines_for_range(
   source : String,
   range : MarkdownSourceRange,
 ) -> Array[String] {
@@ -621,7 +617,7 @@ pub fn markdown_editor_source_lines_for_range(
 }
 
 ///|
-pub fn markdown_editor_table_paste_row_line(
+fn markdown_editor_table_paste_row_line(
   table_lines : Array[String],
   row : Int,
   column_count : Int,
@@ -661,7 +657,7 @@ pub fn markdown_editor_table_paste_row_line(
 }
 
 ///|
-pub fn markdown_editor_table_paste_cells(
+fn markdown_editor_table_paste_cells(
   line : String,
   column_count : Int,
 ) -> Array[String] {
@@ -678,7 +674,7 @@ pub fn markdown_editor_table_paste_cells(
 }
 
 ///|
-pub fn markdown_editor_table_paste_cell_at(
+fn markdown_editor_table_paste_cell_at(
   cells : Array[String],
   column : Int,
 ) -> String {
@@ -690,7 +686,7 @@ pub fn markdown_editor_table_paste_cell_at(
 }
 
 ///|
-pub fn markdown_editor_insert_table_paste_cell(
+fn markdown_editor_insert_table_paste_cell(
   original : String,
   insert : String,
   source : String,
@@ -727,7 +723,7 @@ pub fn markdown_editor_insert_table_paste_cell(
 }
 
 ///|
-pub fn markdown_editor_table_paste_separator_line(
+fn markdown_editor_table_paste_separator_line(
   table_lines : Array[String],
   column_count : Int,
   current : MarkdownEditorTableCellRange,
@@ -752,7 +748,7 @@ pub fn markdown_editor_table_paste_separator_line(
 }
 
 ///|
-pub fn markdown_editor_table_paste_join_cells(cells : Array[String]) -> String {
+fn markdown_editor_table_paste_join_cells(cells : Array[String]) -> String {
   "| " + cells.join(" | ") + " |"
 }
 
@@ -763,7 +759,7 @@ pub(all) struct MarkdownEditorTablePasteTarget {
 }
 
 ///|
-pub fn markdown_editor_table_paste_last_target(
+fn markdown_editor_table_paste_last_target(
   current : MarkdownEditorTableCellRange,
   grid : Array[Array[String]],
 ) -> MarkdownEditorTablePasteTarget {
@@ -777,7 +773,7 @@ pub fn markdown_editor_table_paste_last_target(
 }
 
 ///|
-pub fn markdown_editor_table_paste_caret(
+fn markdown_editor_table_paste_caret(
   table_text : String,
   table_start : Int,
   row : Int,
@@ -806,7 +802,7 @@ pub fn markdown_editor_table_paste_caret(
 }
 
 ///|
-pub fn markdown_editor_table_cell_safe_input(input : String) -> String {
+fn markdown_editor_table_cell_safe_input(input : String) -> String {
   let chars = input.to_array()
   let out : Array[Char] = []
   let mut index = 0

@@ -20,10 +20,13 @@ contextual commands, and editing workflows.
   Skia renderer provider.
 - `examples/markdown_editor/linux_skia/`: Linux native entrypoint using the
   Skia renderer provider.
-- `views/markdown_editor.mbt`: public rich text editor wrappers used by the
-  example.
-- `core/rich_text_*.mbt` plus `core/text_editing*.mbt`: platform-neutral rich
-  text painting, geometry, selection, and editing model.
+- `moui_richtext/facade.mbt`: public rich text editor wrappers (`markdown_editor`,
+  `controlled_markdown_session_editor`) used by the example.
+- `moui_richtext/rich_text_document.mbt` plus `moui_richtext/rich_text_editor.mbt`:
+  rich text document model, painting, geometry, selection, and editing logic.
+- `moui/core/text_editing.mbt` plus `moui/core/text_layout.mbt`: platform-neutral
+  text editing primitives, `TextSystem`, and paragraph layout contract shared by
+  plain text controls and the rich text addon.
 
 Platform packages should stay thin. Shared editor behavior belongs in the app
 package or the framework package that owns the reusable capability.

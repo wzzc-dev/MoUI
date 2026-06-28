@@ -2,18 +2,11 @@
 package "wzzc-dev/moui_richtext"
 
 import {
-  "mizchi/markdown",
   "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
 }
 
 // Values
-pub fn append_markdown_ast_block(Array[MarkdownBlock], @markdown.Block, Array[MarkdownReferenceDefinition], source_text? : String?) -> Unit
-
-pub fn append_markdown_inline_ast(Array[MarkdownInline], @markdown.Inline, Array[MarkdownReferenceDefinition]) -> Unit
-
-pub fn code_highlight_color(CodeHighlightToken) -> @core.Color
-
 pub fn code_highlight_supports_language(String) -> Bool
 
 pub fn code_highlight_tokenize(String, String) -> Array[CodeHighlightSpan]
@@ -26,25 +19,7 @@ pub fn[Msg] controlled_rich_text_document_editor(value~ : String, document~ : Ri
 
 pub fn[Msg] controlled_rich_text_editor(value~ : String, on_input~ : (String) -> Msg, placeholder~ : String, size~ : @core.Size, format~ : (String) -> RichTextDocument, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, on_command_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool, visible_scroll_y? : Double, visible_viewport_height? : Double, visible_overscan? : Double, selection_caret? : Int, selection_range? : @core.TextRange?, kind? : String, key? : String?) -> @core.View[Msg]
 
-pub fn markdown_append_parsed_inline_segment(Array[MarkdownInline], String, Array[MarkdownReferenceDefinition]) -> Unit
-
-pub fn markdown_block(MarkdownBlockKind, String) -> MarkdownBlock
-
 pub fn markdown_block_to_rich_text(MarkdownBlock, @core.FontSpec, base_dir? : String?) -> RichTextBlock
-
-pub fn markdown_blocks_text(Array[@markdown.Block]) -> String
-
-pub fn markdown_bracketed_inline_end(Array[Char], Int) -> Int?
-
-pub fn markdown_closing_code_fence(String, String) -> Bool
-
-pub fn markdown_code_block(String, String?) -> MarkdownBlock
-
-pub fn markdown_code_block_runs(MarkdownBlock, @core.FontSpec) -> Array[RichTextRun]
-
-pub fn markdown_code_fence_info(Array[Char], Int) -> String?
-
-pub fn markdown_core_range(MarkdownSourceRange) -> RichTextSourceRange
 
 pub fn markdown_document(String, base? : @core.FontSpec) -> RichTextDocument
 
@@ -52,277 +27,13 @@ pub fn[Msg] markdown_editor(value~ : @core.Binding[String], placeholder~ : Strin
 
 pub fn markdown_editor_active_block_label(String, MarkdownEditorSelection) -> String
 
-pub fn markdown_editor_active_code_block(String, MarkdownEditorSelection, RichTextBlock) -> Bool
-
-pub fn markdown_editor_active_edit_block_from_blocks(Array[MarkdownEditorBlock], String, MarkdownEditorSelection) -> MarkdownEditorBlockPosition?
-
-pub fn markdown_editor_active_edit_group(String, MarkdownEditorSelection) -> MarkdownEditorBlockGroup?
-
-pub fn markdown_editor_active_heading(Array[MarkdownEditorBlock]) -> String
-
 pub fn markdown_editor_active_selection(@core.TextRange?) -> @core.TextRange?
-
-pub fn markdown_editor_any_code_block_at_content_offset(String, Int, @core.TextRange?) -> Bool
-
-pub fn markdown_editor_apostrophe_in_word(String, Int, @core.TextRange?) -> Bool
-
-pub fn markdown_editor_append_footnote_definition(String, String, String, MarkdownEditorSelection) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_append_pasted_reference_definition(String, String, String, String) -> String
-
-pub fn markdown_editor_append_snippet(String, MarkdownEditorCommand) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_append_table_row(String, MarkdownEditorBlock, Int) -> RichTextInputTransform
 
 pub fn markdown_editor_apply_command_at(String, MarkdownEditorCommand, MarkdownEditorSelection?) -> MarkdownEditorEditResult
 
-pub fn markdown_editor_apply_table_paste_grid(String, MarkdownEditorBlock, MarkdownEditorTableCellRange, Array[Array[String]], Array[@core.TextAlign?], Int) -> RichTextInputTransform
-
 pub fn markdown_editor_ascii_word_char(Char) -> Bool
 
-pub fn markdown_editor_autocomplete_block_marker(String, Int, @core.TextRange?) -> RichTextInputTransform?
-
-pub fn markdown_editor_autolink_close_after(Array[Char], Int) -> Int?
-
-pub fn markdown_editor_autolink_context_at_caret(String, Array[Char], Int) -> MarkdownReferenceContext?
-
-pub fn markdown_editor_autolink_leading_wrapper(Char) -> Bool
-
-pub fn markdown_editor_autolink_open_before(Array[Char], Int) -> Int?
-
-pub fn markdown_editor_autolink_target_with_trailing_punctuation(String) -> MarkdownEditorAutolinkTarget
-
-pub fn markdown_editor_autolink_trailing_punctuation(Char) -> Bool
-
-pub fn markdown_editor_autolink_trailing_wrapper(Char) -> Bool
-
-pub fn markdown_editor_autolink_wrapper_pair(Char, Char) -> Bool
-
-pub fn markdown_editor_autolink_wrappers_balanced(Array[Char], Int, Int, Int) -> Bool
-
-pub fn markdown_editor_backspace_autolink_marker(Array[Char], Int) -> RichTextInputTransform?
-
-pub fn markdown_editor_backspace_empty_continuation(String, Int, @core.TextRange?) -> RichTextInputTransform?
-
-pub fn markdown_editor_backspace_empty_delimiter_pair(String, Int, @core.TextRange?) -> RichTextInputTransform?
-
-pub fn markdown_editor_backspace_empty_inline_marker_pair(String, Int, @core.TextRange?) -> RichTextInputTransform?
-
-pub fn markdown_editor_backspace_empty_trailing_table_row(String, Int, @core.TextRange?) -> RichTextInputTransform?
-
-pub fn markdown_editor_backspace_footnote_marker(Array[Char], Int) -> RichTextInputTransform?
-
-pub fn markdown_editor_backspace_inline_marker(String, Int) -> RichTextInputTransform?
-
-pub fn markdown_editor_backspace_marker(String, Int, @core.TextRange?) -> RichTextInputTransform?
-
-pub fn markdown_editor_backspace_merge_block(String, Int, @core.TextRange?) -> RichTextInputTransform?
-
-pub fn markdown_editor_backspace_quoted_inner_marker(Array[Char], MarkdownSourceRange, String, Int) -> RichTextInputTransform?
-
-pub fn markdown_editor_backspace_reference_marker(String, Array[Char], Int) -> RichTextInputTransform?
-
-pub fn markdown_editor_blank_line_block(MarkdownLine) -> MarkdownEditorBlock
-
-pub fn markdown_editor_blank_paste_continuation_prefix(String) -> String
-
-pub fn markdown_editor_blank_source_line(String) -> Bool
-
-pub fn markdown_editor_block_command_blank_line(MarkdownEditorLineBlockParts) -> String
-
-pub fn markdown_editor_block_command_context_has_quote(String) -> Bool
-
-pub fn markdown_editor_block_command_context_prefix_length(String) -> Int
-
-pub fn markdown_editor_block_insert_prefix(Array[Char], Int) -> String
-
-pub fn markdown_editor_block_insert_suffix(Array[Char], Int) -> String
-
-pub fn markdown_editor_block_kind_label(MarkdownBlockKind) -> String
-
-pub fn markdown_editor_block_prefix(MarkdownEditorCommand) -> String
-
-pub fn markdown_editor_block_source_content(MarkdownEditorBlock) -> String
-
-pub fn markdown_editor_block_source_prefix_padding(MarkdownEditorBlock) -> String
-
-pub fn markdown_editor_block_source_text(MarkdownEditorBlock) -> String
-
-pub fn markdown_editor_block_to_rich_text(String, MarkdownEditorBlock, @core.FontSpec, base_dir? : String?) -> RichTextBlock
-
-pub fn markdown_editor_block_with_references(MarkdownBlock, Array[MarkdownReferenceDefinition]) -> MarkdownBlock
-
-pub fn markdown_editor_blocks_to_rich_text(String, Array[MarkdownEditorBlock], @core.FontSpec, base_dir? : String?) -> RichTextDocument
-
-pub fn markdown_editor_bracketed_reference_range_at_caret(Array[Char], Int, image~ : Bool) -> @core.TextRange?
-
-pub fn markdown_editor_caret_offset_in_line_block_parts(MarkdownEditorLineBlockParts, Int) -> Int
-
-pub fn markdown_editor_caret_offset_in_stripped_line(String, Int) -> Int
-
-pub fn markdown_editor_char_is_escaped(Array[Char], Int) -> Bool
-
-pub fn markdown_editor_chars_match(Array[Char], Int, Array[Char]) -> Bool
-
 pub fn markdown_editor_clamp_int(Int, Int, Int) -> Int
-
-pub fn markdown_editor_clear_table_column(String, MarkdownEditorBlock, MarkdownEditorTableCellRange) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_clear_table_row(String, Array[MarkdownEditorTableCellRange], MarkdownEditorTableCellRange) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_closing_code_fence(String, String) -> Bool
-
-pub fn markdown_editor_code_block(String, String?) -> MarkdownBlock
-
-pub fn markdown_editor_code_block_at_content_offset(String, Int, @core.TextRange?) -> MarkdownEditorBlock?
-
-pub fn markdown_editor_code_block_at_selection(String, MarkdownEditorSelection) -> MarkdownEditorBlock?
-
-pub fn markdown_editor_code_block_enter(String, Int) -> RichTextInputTransform
-
-pub fn markdown_editor_code_block_paste_insert(String, Int, String) -> String
-
-pub fn markdown_editor_code_block_quote_prefix(String) -> String
-
-pub fn markdown_editor_code_fence_marker_end(String, MarkdownEditorBlock) -> Int
-
-pub fn markdown_editor_command_snippet(MarkdownEditorCommand) -> String
-
-pub fn markdown_editor_complete_autolink_on_enter(String, Int, @core.TextRange?, String) -> RichTextInputTransform?
-
-pub fn markdown_editor_complete_autolink_on_space(String, Int, @core.TextRange?) -> RichTextInputTransform?
-
-pub fn markdown_editor_complete_code_fence_on_enter(Array[Char], MarkdownSourceRange, String, Int) -> RichTextInputTransform?
-
-pub fn markdown_editor_complete_quoted_code_fence_on_enter(Array[Char], MarkdownSourceRange, String, Int) -> RichTextInputTransform?
-
-pub fn markdown_editor_complete_rule_on_enter(Array[Char], MarkdownSourceRange, String, Int) -> RichTextInputTransform?
-
-pub fn markdown_editor_complete_rule_on_space(String, Int, @core.TextRange?) -> RichTextInputTransform?
-
-pub fn markdown_editor_complete_setext_heading_on_enter(Array[Char], MarkdownSourceRange, String, Int) -> RichTextInputTransform?
-
-pub fn markdown_editor_complete_setext_heading_on_space(String, Int, @core.TextRange?) -> RichTextInputTransform?
-
-pub fn markdown_editor_complete_table_header_on_enter(Array[Char], MarkdownSourceRange, String, Int) -> RichTextInputTransform?
-
-pub fn markdown_editor_containing_code_block(String, MarkdownEditorSelection) -> MarkdownEditorBlock?
-
-pub fn markdown_editor_containing_quoted_code_block(String, MarkdownEditorSelection) -> MarkdownEditorQuotedCodeBlock?
-
-pub fn markdown_editor_content_range(MarkdownLine, MarkdownBlockKind) -> MarkdownSourceRange
-
-pub fn markdown_editor_contextual_paste_insert(String, String) -> String
-
-pub fn markdown_editor_continuation_marker(String) -> String
-
-pub fn markdown_editor_current_line_range(String, MarkdownEditorSelection) -> MarkdownSourceRange
-
-pub fn markdown_editor_default_text_color() -> @core.Color
-
-pub fn markdown_editor_delete_autolink_marker(Array[Char], Int) -> RichTextInputTransform?
-
-pub fn markdown_editor_delete_empty_continuation(String, Int, @core.TextRange?) -> RichTextInputTransform?
-
-pub fn markdown_editor_delete_empty_delimiter_pair(String, Int, @core.TextRange?) -> RichTextInputTransform?
-
-pub fn markdown_editor_delete_empty_inline_marker_pair(String, Int, @core.TextRange?) -> RichTextInputTransform?
-
-pub fn markdown_editor_delete_empty_trailing_table_row(String, Int, @core.TextRange?) -> RichTextInputTransform?
-
-pub fn markdown_editor_delete_footnote_marker(Array[Char], Int) -> RichTextInputTransform?
-
-pub fn markdown_editor_delete_inline_marker(String, Array[Char], Int) -> RichTextInputTransform?
-
-pub fn markdown_editor_delete_marker(String, Int, @core.TextRange?) -> RichTextInputTransform?
-
-pub fn markdown_editor_delete_merge_block(String, Int, @core.TextRange?) -> RichTextInputTransform?
-
-pub fn markdown_editor_delete_quoted_inner_marker(String, Int, @core.TextRange?) -> RichTextInputTransform?
-
-pub fn markdown_editor_delete_reference_marker(String, Array[Char], Int) -> RichTextInputTransform?
-
-pub fn markdown_editor_delete_table_column(String, MarkdownEditorSelection) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_delete_table_column_at_cell(String, MarkdownEditorBlock, Array[MarkdownEditorTableCellRange], MarkdownEditorTableCellRange) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_delete_table_row(String, MarkdownEditorSelection) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_delete_table_row_at_cell(String, Array[MarkdownEditorTableCellRange], MarkdownEditorTableCellRange) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_digit_count(Int) -> Int
-
-pub fn markdown_editor_dim_border(@core.BorderStyle?) -> @core.BorderStyle?
-
-pub fn markdown_editor_dim_inactive_blocks(RichTextDocument, MarkdownEditorSelection) -> RichTextDocument
-
-pub fn markdown_editor_dim_rich_text_block(RichTextBlock) -> RichTextBlock
-
-pub fn markdown_editor_dim_rich_text_run(RichTextRun) -> RichTextRun
-
-pub fn markdown_editor_duplicate_current_block(String, MarkdownEditorSelection) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_email_char_supported(Char, local_part~ : Bool) -> Bool
-
-pub fn markdown_editor_email_domain_has_dot(String) -> Bool
-
-pub fn markdown_editor_email_part_supported(String, local_part~ : Bool) -> Bool
-
-pub fn markdown_editor_empty_delimiter_pair_at(Array[Char], Int) -> Bool
-
-pub fn markdown_editor_empty_heading_prefix(String) -> String?
-
-pub fn markdown_editor_empty_inline_marker_pair_at(Array[Char], Int, String) -> Bool
-
-pub fn markdown_editor_empty_line_block_for_edit(MarkdownEditorBlock) -> Bool
-
-pub fn markdown_editor_empty_table_row(Int) -> String
-
-pub fn markdown_editor_empty_table_row_column_caret(Int) -> Int
-
-pub fn markdown_editor_exit_empty_code_block_on_enter(String, MarkdownEditorBlock, Int) -> RichTextInputTransform?
-
-pub fn markdown_editor_exit_empty_continuation(Array[Char], MarkdownSourceRange, String) -> RichTextInputTransform?
-
-pub fn markdown_editor_exit_empty_heading(Array[Char], MarkdownSourceRange, String, Int) -> RichTextInputTransform?
-
-pub fn markdown_editor_exit_empty_quoted_code_block_on_enter(String, MarkdownEditorQuotedCodeBlock, Int) -> RichTextInputTransform?
-
-pub fn markdown_editor_exit_table_after_empty_last_row_on_enter(String, MarkdownEditorBlock, Array[MarkdownEditorTableCellRange], MarkdownEditorTableCellRange) -> RichTextInputTransform?
-
-pub fn markdown_editor_exit_table_after_table_end(String, Int) -> RichTextInputTransform
-
-pub fn markdown_editor_exit_table_before_table_start(String, MarkdownEditorBlock) -> RichTextInputTransform
-
-pub fn markdown_editor_find_inline_closing_marker(Array[Char], Int, String) -> Int?
-
-pub fn markdown_editor_find_inline_opening_marker(Array[Char], Int, String) -> Int?
-
-pub fn markdown_editor_find_run_source_offset(String, String, Int) -> Int
-
-pub fn markdown_editor_find_table_cell(Array[MarkdownEditorTableCellRange], Int, Int) -> MarkdownEditorTableCellRange?
-
-pub fn markdown_editor_find_unescaped_char(Array[Char], Int, Char) -> Int?
-
-pub fn markdown_editor_first_run_font(RichTextBlock) -> @core.FontSpec?
-
-pub fn markdown_editor_focus_block_active(RichTextBlock, MarkdownEditorSelection) -> Bool
-
-pub fn markdown_editor_footnote_close_after(Array[Char], Int) -> Int?
-
-pub fn markdown_editor_footnote_definition_label_at(String, Int) -> String?
-
-pub fn markdown_editor_footnote_definition_line_text_range(MarkdownLine) -> (String, MarkdownSourceRange)?
-
-pub fn markdown_editor_footnote_definition_text(String, String) -> String?
-
-pub fn markdown_editor_footnote_label_at_selection(String, MarkdownEditorSelection) -> String?
-
-pub fn markdown_editor_footnote_marker_prefix_length(String) -> Int
-
-pub fn markdown_editor_footnote_open_before(Array[Char], Int) -> Int?
-
-pub fn markdown_editor_footnote_reference_label_at(String, Int) -> String?
 
 pub fn markdown_editor_format(String, base? : @core.FontSpec, base_dir? : String?) -> RichTextDocument
 
@@ -330,353 +41,25 @@ pub fn markdown_editor_format_for_selection(String, MarkdownEditorSelection, bas
 
 pub fn markdown_editor_format_for_writing_mode(String, MarkdownEditorSelection, base? : @core.FontSpec, focus_mode~ : Bool, base_dir? : String?) -> RichTextDocument
 
-pub fn markdown_editor_format_source_mode(String, @core.FontSpec) -> RichTextDocument
-
-pub fn markdown_editor_front_matter_block_at(Array[MarkdownLine]) -> MarkdownEditorFrontMatterParseResult?
-
-pub fn markdown_editor_front_matter_metadata(Array[MarkdownEditorBlock]) -> MarkdownEditorFrontMatterMetadata
-
-pub fn markdown_editor_front_matter_scalar(String) -> String
-
-pub fn markdown_editor_front_matter_tags(String) -> Array[String]
-
-pub fn markdown_editor_hard_break_continuation_prefix(String) -> String
-
-pub fn markdown_editor_has_image_extension(String) -> Bool
-
-pub fn markdown_editor_heading_marker(Int) -> String
-
-pub fn markdown_editor_heading_marker_level(String) -> Int
-
-pub fn markdown_editor_heading_snippet_text(Int) -> String
-
-pub fn markdown_editor_heading_source(Int, String) -> String
-
-pub fn markdown_editor_html_block_at_selection(String, MarkdownEditorSelection) -> MarkdownEditorBlock?
-
-pub fn markdown_editor_html_block_tag_name_supported(String) -> Bool
-
 pub fn markdown_editor_image_context(String, MarkdownEditorSelection) -> MarkdownReferenceContext?
 
-pub fn markdown_editor_image_context_at_caret(String, Int) -> MarkdownReferenceContext?
-
 pub fn markdown_editor_indent_lines(String, Int, @core.TextRange?) -> RichTextInputTransform
-
-pub fn markdown_editor_indent_segment(String) -> String
 
 pub fn markdown_editor_inline_marker(MarkdownEditorCommand) -> String
 
 pub fn markdown_editor_inline_marker_pair_at_caret(String, Int, String) -> @core.TextRange?
 
-pub fn markdown_editor_inline_marker_pair_supported(Array[Char], Int, Int, Int, String) -> Bool
-
-pub fn markdown_editor_inline_marker_source_range(String, RichTextSourceRange) -> RichTextSourceRange?
-
-pub fn markdown_editor_inline_source(Array[MarkdownInline]) -> String
-
-pub fn markdown_editor_inline_target(MarkdownInline) -> String
-
-pub fn markdown_editor_insert_front_matter(String) -> MarkdownEditorEditResult
-
 pub fn markdown_editor_insert_hard_break(String, Int, @core.TextRange?) -> RichTextInputTransform?
-
-pub fn markdown_editor_insert_table_column(String, MarkdownEditorSelection) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_insert_table_column_after_cell(String, MarkdownEditorBlock, MarkdownEditorTableCellRange) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_insert_table_column_in_line(String, Int, String) -> String
-
-pub fn markdown_editor_insert_table_of_contents(String, MarkdownEditorSelection) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_insert_table_paste_cell(String, String, String, MarkdownEditorTableCellRange, Int) -> String
-
-pub fn markdown_editor_insert_table_row(String, MarkdownEditorSelection) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_insert_table_row_after_cell(String, Array[MarkdownEditorTableCellRange], MarkdownEditorTableCellRange) -> RichTextInputTransform
-
-pub fn markdown_editor_insert_table_row_on_enter(String, Int, @core.TextRange?) -> RichTextInputTransform?
-
-pub fn markdown_editor_is_autolink_target(String) -> Bool
-
-pub fn markdown_editor_is_image_source(String) -> Bool
-
-pub fn markdown_editor_is_multiline_input(String) -> Bool
-
-pub fn markdown_editor_is_plain_email(String) -> Bool
-
-pub fn markdown_editor_is_plain_url(String) -> Bool
-
-pub fn markdown_editor_is_setext_paragraph_candidate(String) -> Bool
-
-pub fn markdown_editor_is_typed_rule_line(String) -> Bool
-
-pub fn markdown_editor_is_typed_setext_underline_line(String) -> Bool
-
-pub fn markdown_editor_join_paste_lines(Array[String]) -> String
-
-pub fn markdown_editor_leading_indent_length(Array[Char]) -> Int
-
-pub fn markdown_editor_line_block_parts(String) -> MarkdownEditorLineBlockParts
-
-pub fn markdown_editor_line_block_parts_has_inner_marker(MarkdownEditorLineBlockParts) -> Bool
-
-pub fn markdown_editor_line_count(String) -> Int
-
-pub fn markdown_editor_line_has_same_block_marker(String, MarkdownEditorCommand) -> Bool
-
-pub fn markdown_editor_line_has_same_block_marker_after_context(String, MarkdownEditorCommand, String) -> Bool
-
-pub fn markdown_editor_line_indent(Array[Char], Int, Int) -> String
-
-pub fn markdown_editor_line_indent_prefix(String) -> String
-
-pub fn markdown_editor_line_indent_prefix_length(String) -> Int
-
-pub fn markdown_editor_line_index_at_offset(Array[MarkdownLine], Int) -> Int
-
-pub fn markdown_editor_line_range_around(Array[Char], Int, Int) -> MarkdownSourceRange
-
-pub fn markdown_editor_line_start(Array[Char], Int) -> Int
-
-pub fn markdown_editor_lines(String) -> Array[MarkdownLine]
 
 pub fn markdown_editor_link_context(String, MarkdownEditorSelection) -> MarkdownReferenceContext?
 
-pub fn markdown_editor_link_context_at_caret(String, Int) -> MarkdownReferenceContext?
-
-pub fn markdown_editor_map_offset_after_replacements(Int, Array[MarkdownEditorOffsetReplacement]) -> Int
-
-pub fn markdown_editor_map_offset_to_group(Int, MarkdownEditorBlockGroup, Int) -> Int
-
-pub fn markdown_editor_map_selection_to_group(@core.TextRange?, MarkdownEditorBlockGroup, Int) -> @core.TextRange?
-
-pub fn markdown_editor_markdown_reference_label_token(String) -> String
-
-pub fn markdown_editor_markdown_reference_target_token(String) -> String
-
-pub fn markdown_editor_markdown_table_paste(String) -> MarkdownEditorPastedMarkdownTable?
-
-pub fn markdown_editor_markdown_table_paste_cells(String) -> Array[String]
-
-pub fn markdown_editor_marker_prefix_length(String) -> Int
-
-pub fn markdown_editor_marker_prefix_length_after_context(String, Int) -> Int
-
 pub fn markdown_editor_max_int(Int, Int) -> Int
-
-pub fn markdown_editor_merge_block_kind(String) -> MarkdownEditorMergeBlockKind
-
-pub fn markdown_editor_merge_block_marker_prefix(String) -> String
-
-pub fn markdown_editor_merge_block_marker_prefix_length(String) -> Int
-
-pub fn markdown_editor_min_int(Int, Int) -> Int
-
-pub fn markdown_editor_move_current_block(String, MarkdownEditorSelection, up~ : Bool) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_move_table_cell(String, Int, @core.TextRange?, forward~ : Bool) -> RichTextInputTransform?
-
-pub fn markdown_editor_moved_group_result(String, MarkdownEditorSelection, MarkdownEditorBlockGroup, new_start~ : Int) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_next_edit_block(Array[MarkdownEditorBlock], Int) -> MarkdownEditorBlock?
-
-pub fn markdown_editor_next_line_end(Array[Char], Int) -> Int
-
-pub fn markdown_editor_next_ordered_number(Array[MarkdownEditorOrderedRenumberContext], MarkdownEditorOrderedLineInfo) -> Int
-
-pub fn markdown_editor_next_selected_ordered_number(Array[MarkdownEditorOrderedRenumberContext], String) -> Int
-
-pub fn markdown_editor_noop_result(String, MarkdownEditorSelection?) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_normalize_ordered_edit_result(MarkdownEditorEditResult) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_normalize_ordered_transform(RichTextInputTransform) -> RichTextInputTransform
-
-pub fn markdown_editor_opening_code_fence_marker(String) -> MarkdownCodeFenceInfo?
-
-pub fn markdown_editor_ordered_continuation_marker(Array[Char], Int) -> String
-
-pub fn markdown_editor_ordered_continuation_number(String) -> Int
-
-pub fn markdown_editor_ordered_digit_end(Array[Char]) -> Int
-
-pub fn markdown_editor_ordered_digit_end_at(Array[Char], Int) -> Int
-
-pub fn markdown_editor_ordered_line_context_indent(String) -> Int
-
-pub fn markdown_editor_ordered_line_info(String) -> MarkdownEditorOrderedLineInfo?
-
-pub fn markdown_editor_ordered_marker_length(Array[Char]) -> Int
-
-pub fn markdown_editor_ordered_paste_prefix(String, Int) -> String
-
-pub fn markdown_editor_ordered_renumber_blank_line(String) -> Bool
-
-pub fn markdown_editor_outdent_line(String) -> String
 
 pub fn markdown_editor_outdent_lines(String, Int, @core.TextRange?) -> RichTextInputTransform?
 
-pub fn markdown_editor_outdent_segment(String) -> String
-
-pub fn markdown_editor_outline(Array[MarkdownEditorBlock]) -> Array[MarkdownEditorOutlineItem]
-
-pub fn markdown_editor_pair_delimiter_input(String, Int, @core.TextRange?, String) -> RichTextInputTransform?
-
-pub fn markdown_editor_pair_inline_marker_input(String, String, Int) -> RichTextInputTransform?
-
-pub fn markdown_editor_paragraph_line_text(String, MarkdownEditorLineBlockParts) -> String
-
-pub fn markdown_editor_parse_digits(Array[Char], Int, Int) -> Int
-
-pub fn markdown_editor_parse_front_matter_metadata(String) -> MarkdownEditorFrontMatterMetadata
-
-pub fn markdown_editor_paste_autolink(String, Int, @core.TextRange?, String) -> RichTextInputTransform?
-
-pub fn markdown_editor_paste_block_text_as_block(String, Int, @core.TextRange?, String) -> RichTextInputTransform?
-
-pub fn markdown_editor_paste_footnote_definition(String, Int, @core.TextRange?, String) -> RichTextInputTransform?
-
-pub fn markdown_editor_paste_html_block(String, Int, @core.TextRange?, String) -> RichTextInputTransform?
-
-pub fn markdown_editor_paste_lines(String) -> Array[String]
-
-pub fn markdown_editor_paste_markdown_table_as_table(String, Int, @core.TextRange?, String) -> RichTextInputTransform?
-
-pub fn markdown_editor_paste_reference_label_over_selection(String, @core.TextRange, MarkdownEditorPasteReferenceCommand) -> RichTextInputTransform?
-
-pub fn markdown_editor_paste_reference_over_selection(String, Int, @core.TextRange?, String) -> RichTextInputTransform?
-
-pub fn markdown_editor_paste_table_text_as_block(String, Int, @core.TextRange?, String) -> RichTextInputTransform?
-
-pub fn markdown_editor_paste_tsv_as_table(String, Int, @core.TextRange?, String) -> RichTextInputTransform?
-
-pub fn markdown_editor_pasted_footnote_definition(String) -> MarkdownEditorPastedFootnoteDefinition?
-
-pub fn markdown_editor_pasted_html_block(String) -> String?
-
-pub fn markdown_editor_pasted_html_block_head_supported(String) -> Bool
-
-pub fn markdown_editor_pasted_reference_definition(String) -> MarkdownEditorPastedReferenceDefinition?
-
-pub fn markdown_editor_pasted_reference_target(String) -> MarkdownEditorPastedReferenceTarget?
-
-pub fn markdown_editor_prefix_paste_continuation_lines(String, String) -> Array[String]
-
-pub fn markdown_editor_preserved_merge_prefix(String, String) -> String
-
 pub fn markdown_editor_preview_text(String) -> String
 
-pub fn markdown_editor_previous_edit_block(Array[MarkdownEditorBlock], Int) -> MarkdownEditorBlock?
-
-pub fn markdown_editor_previous_line_start(Array[Char], Int) -> Int
-
-pub fn markdown_editor_previous_table_row_column_caret(Array[MarkdownEditorTableCellRange], Int, Int) -> Int
-
-pub fn markdown_editor_previous_token_start(Array[Char], Int) -> Int
-
-pub fn markdown_editor_push_front_matter_tag(Array[String], String) -> Unit
-
-pub fn markdown_editor_quote_context_prefix(String) -> String
-
-pub fn markdown_editor_quote_marker(Int) -> String
-
-pub fn markdown_editor_quoted_code_block_at_content_offset(String, Int, @core.TextRange?) -> MarkdownEditorQuotedCodeBlock?
-
-pub fn markdown_editor_quoted_code_block_enter(String, MarkdownEditorQuotedCodeBlock, Int) -> RichTextInputTransform
-
-pub fn markdown_editor_quoted_code_block_opening_content_prefix(String, MarkdownEditorQuotedCodeBlock) -> String
-
-pub fn markdown_editor_quoted_code_block_paste_insert(String, MarkdownEditorQuotedCodeBlock, Int, String) -> String
-
-pub fn markdown_editor_quoted_code_content_prefix(String) -> String?
-
-pub fn markdown_editor_quoted_code_fence_closing(String, MarkdownEditorQuotedCodeFence) -> Bool
-
-pub fn markdown_editor_quoted_code_fence_opening(String) -> MarkdownEditorQuotedCodeFence?
-
-pub fn markdown_editor_quoted_code_nested_text(String) -> String?
-
-pub fn markdown_editor_quoted_continuation_parent(String) -> String?
-
-pub fn markdown_editor_range_autolink_bounds(Array[Char], @core.TextRange) -> MarkdownLinkBounds?
-
 pub fn markdown_editor_range_has_inline_marker(String, @core.TextRange, String) -> Bool
-
-pub fn markdown_editor_range_image_bounds(String, @core.TextRange) -> MarkdownLinkBounds?
-
-pub fn markdown_editor_range_link_bounds(String, @core.TextRange) -> MarkdownLinkBounds?
-
-pub fn markdown_editor_reading_minutes(Int) -> Int
-
-pub fn markdown_editor_reference_bounds_full_end(MarkdownLinkBounds) -> Int
-
-pub fn markdown_editor_reference_bounds_full_end_before(String, Array[Char], Int) -> MarkdownLinkBounds?
-
-pub fn markdown_editor_reference_close_after(String, Array[Char], Int) -> MarkdownLinkBounds?
-
-pub fn markdown_editor_reference_command_for_paste_target(String) -> MarkdownEditorPasteReferenceCommand?
-
-pub fn markdown_editor_reference_definition_append_prefix(String) -> String
-
-pub fn markdown_editor_reference_definition_line_target_range(MarkdownLine) -> (String, MarkdownSourceRange)?
-
-pub fn markdown_editor_reference_definition_target_range(String, String) -> MarkdownSourceRange?
-
-pub fn markdown_editor_reference_label_transform(String, @core.TextRange, Int, Int, String, String, image~ : Bool) -> RichTextInputTransform
-
-pub fn markdown_editor_reference_link_bounds(String, @core.TextRange, Int, bang~ : Bool) -> MarkdownLinkBounds?
-
-pub fn markdown_editor_reference_marker_target_after(String, Array[Char], Int, Int) -> MarkdownEditorReferenceMarkerTarget?
-
-pub fn markdown_editor_reference_open_before(String, Array[Char], Int) -> MarkdownLinkBounds?
-
-pub fn markdown_editor_reference_source_range(String, RichTextSourceRange) -> RichTextSourceRange?
-
-pub fn markdown_editor_reference_target(String, MarkdownLinkBounds) -> String?
-
-pub fn markdown_editor_remove_empty_inline_marker_pair(Array[Char], Int, Int) -> RichTextInputTransform
-
-pub fn markdown_editor_remove_empty_trailing_table_row_at_caret(String, Int, @core.TextRange?) -> RichTextInputTransform?
-
-pub fn markdown_editor_remove_empty_trailing_table_row_on_backspace(String, Array[MarkdownEditorTableCellRange], MarkdownEditorTableCellRange) -> RichTextInputTransform?
-
-pub fn markdown_editor_remove_inline_marker_pair(Array[Char], Int, Int, Int) -> RichTextInputTransform
-
-pub fn markdown_editor_remove_reference_marker(Array[Char], Int, Int, Int, Int) -> RichTextInputTransform
-
-pub fn markdown_editor_renumber_ordered_lists(String) -> MarkdownEditorRenumberResult
-
-pub fn markdown_editor_replace_code_language(String, MarkdownEditorSelection, MarkdownEditorBlock, String) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_replace_footnote_definition_text(String, String, String) -> MarkdownEditorEditResult?
-
-pub fn markdown_editor_replace_html_block_text(String, MarkdownEditorSelection, MarkdownEditorBlock, String) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_replace_reference_target(String, @core.TextRange, MarkdownLinkBounds, String) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_replace_selected_lines_with_rule(String, MarkdownEditorSelection) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_replace_selected_lines_with_table(String, MarkdownEditorSelection) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_replace_with_block(String, @core.TextRange, String) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_reset_ordered_renumber_contexts(Array[MarkdownEditorOrderedRenumberContext], String) -> Unit
-
-pub fn markdown_editor_reveal_active_block_marker(String, MarkdownEditorSelection, RichTextBlock) -> RichTextBlock
-
-pub fn markdown_editor_reveal_active_code_block(String, RichTextBlock) -> RichTextBlock
-
-pub fn markdown_editor_reveal_active_inline_run(String, MarkdownEditorSelection, RichTextRun) -> RichTextRun
-
-pub fn markdown_editor_rewrite_table_alignment(String, MarkdownEditorBlock, MarkdownEditorTableCellRange, @core.TextAlign?) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_rewrite_table_alignment_line(String, Int, @core.TextAlign?) -> String
-
-pub fn markdown_editor_rewrite_table_column(String, MarkdownEditorBlock, Int, delete~ : Bool, clear~ : Bool) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_rewrite_table_column_in_line(String, Int, delete~ : Bool, clear~ : Bool, String) -> String
-
-pub fn markdown_editor_runs_with_source_ranges(Array[RichTextRun], MarkdownEditorBlock) -> Array[RichTextRun]
 
 pub fn markdown_editor_selected_footnote_text(String, MarkdownEditorSelection) -> String?
 
@@ -684,349 +67,27 @@ pub fn markdown_editor_selected_html_block_text(String, MarkdownEditorSelection)
 
 pub fn markdown_editor_selected_image_target(String, MarkdownEditorSelection) -> String?
 
-pub fn markdown_editor_selected_line_range(String, MarkdownEditorSelection) -> MarkdownSourceRange
-
 pub fn markdown_editor_selected_link_target(String, MarkdownEditorSelection) -> String?
-
-pub fn markdown_editor_selection_touches_range(MarkdownEditorSelection, RichTextSourceRange) -> Bool
-
-pub fn markdown_editor_set_code_language(String, MarkdownEditorSelection, String) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_set_footnote_text(String, MarkdownEditorSelection, String) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_set_html_block_text(String, MarkdownEditorSelection, String) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_set_reference_target(String, MarkdownEditorSelection, MarkdownEditorCommand, String) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_set_table_column_alignment(String, MarkdownEditorSelection, @core.TextAlign?) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_setext_block_at_selection(String, MarkdownEditorSelection) -> MarkdownEditorBlock?
-
-pub fn markdown_editor_setext_heading_level_at(Array[MarkdownLine], Int) -> Int?
-
-pub fn markdown_editor_setext_underline_level(String) -> Int?
-
-pub fn markdown_editor_shift_lines(String, Int, @core.TextRange?, indent~ : Bool) -> RichTextInputTransform?
-
-pub fn markdown_editor_shortcut_reference_link_bounds(String, @core.TextRange, Int) -> MarkdownLinkBounds?
-
-pub fn markdown_editor_single_inline_marker_at(Array[Char], Int, Char) -> Bool
-
-pub fn markdown_editor_skip_closing_delimiter(String, Int, @core.TextRange?, String) -> RichTextInputTransform?
-
-pub fn markdown_editor_source_has_marker(Array[Char], Int, String) -> Bool
-
-pub fn markdown_editor_source_lines_for_range(String, MarkdownSourceRange) -> Array[String]
-
-pub fn markdown_editor_source_starts_with_code_fence(String) -> Bool
-
-pub fn markdown_editor_spaces(Int) -> String
-
-pub fn markdown_editor_split_front_matter_tag_list(String) -> Array[String]
-
-pub fn markdown_editor_split_table_cells(String) -> Array[String]
-
-pub fn markdown_editor_split_tsv_cells(String) -> Array[String]
-
-pub fn markdown_editor_string_ends_with(String, String) -> Bool
-
-pub fn markdown_editor_strip_block_marker(String) -> String
-
-pub fn markdown_editor_strip_merge_block_marker(String) -> String
 
 pub fn markdown_editor_substring(String, Int, Int) -> String
 
-pub fn markdown_editor_table_alignment_marker(@core.TextAlign?) -> String
-
-pub fn markdown_editor_table_block_at(Array[MarkdownLine], Int) -> MarkdownEditorTableParseResult?
-
-pub fn markdown_editor_table_body_line(String) -> Bool
-
-pub fn markdown_editor_table_cell_at_text_offset(String, Int, @core.TextRange?) -> Bool
-
-pub fn markdown_editor_table_cell_content_range(Array[Char], Int, Int) -> MarkdownSourceRange
-
-pub fn markdown_editor_table_cell_index_at(Array[MarkdownEditorTableCellRange], Int) -> Int?
-
-pub fn markdown_editor_table_cell_matrix_paste(String, Int, @core.TextRange?, String) -> RichTextInputTransform?
-
-pub fn markdown_editor_table_cell_safe_input(String) -> String
-
-pub fn markdown_editor_table_cell_text_input(String, Int, @core.TextRange?, String) -> RichTextInputTransform?
-
-pub fn markdown_editor_table_cells_for_block(String, MarkdownEditorBlock) -> Array[MarkdownEditorTableCellRange]
-
-pub fn markdown_editor_table_cells_for_line(MarkdownLine, Int) -> Array[MarkdownEditorTableCellRange]
-
-pub fn markdown_editor_table_column_content_start(String, Int) -> Int
-
-pub fn markdown_editor_table_column_count(Array[MarkdownEditorTableCellRange]) -> Int
-
-pub fn markdown_editor_table_data_row_count(Array[MarkdownEditorTableCellRange]) -> Int
-
-pub fn markdown_editor_table_header_candidate(String) -> Bool
-
-pub fn markdown_editor_table_insert_row_end(String, Array[MarkdownEditorTableCellRange], MarkdownEditorTableCellRange) -> Int
-
-pub fn markdown_editor_table_last_data_row(Array[MarkdownEditorTableCellRange]) -> Int
-
-pub fn markdown_editor_table_matrix_paste(String) -> MarkdownEditorTableMatrixPaste?
-
-pub fn markdown_editor_table_of_contents_markdown(String) -> String
-
-pub fn markdown_editor_table_paste_caret(String, Int, Int, Int) -> Int
-
-pub fn markdown_editor_table_paste_cell_at(Array[String], Int) -> String
-
-pub fn markdown_editor_table_paste_cells(String, Int) -> Array[String]
-
-pub fn markdown_editor_table_paste_grid(String) -> Array[Array[String]]
-
-pub fn markdown_editor_table_paste_grid_column_count(Array[Array[String]]) -> Int
-
-pub fn markdown_editor_table_paste_join_cells(Array[String]) -> String
-
-pub fn markdown_editor_table_paste_last_target(MarkdownEditorTableCellRange, Array[Array[String]]) -> MarkdownEditorTablePasteTarget
-
-pub fn markdown_editor_table_paste_padded_row(Array[String], Int) -> Array[String]
-
-pub fn markdown_editor_table_paste_row_line(Array[String], Int, Int, MarkdownEditorTableCellRange, Array[Array[String]], Int, String) -> String
-
-pub fn markdown_editor_table_paste_separator_line(Array[String], Int, MarkdownEditorTableCellRange, Array[@core.TextAlign?]) -> String
-
-pub fn markdown_editor_table_pipe_is_separator(Array[Char], Int) -> Bool
-
-pub fn markdown_editor_table_row_empty(String, Array[MarkdownEditorTableCellRange], Int) -> Bool
-
-pub fn markdown_editor_table_row_end(String, Array[MarkdownEditorTableCellRange], Int) -> Int
-
-pub fn markdown_editor_table_row_line_end(Array[Char], Int) -> Int
-
-pub fn markdown_editor_table_row_start(Array[MarkdownEditorTableCellRange], Int) -> Int
-
-pub fn markdown_editor_table_separator_cell(String) -> Bool
-
-pub fn markdown_editor_table_separator_for_columns(Int) -> String
-
-pub fn markdown_editor_table_separator_line(String) -> Bool
-
-pub fn markdown_editor_table_text_from_paste_grid(Array[Array[String]]) -> String
-
-pub fn markdown_editor_table_with_source_ranges(RichTextTable?, String, MarkdownEditorBlock) -> RichTextTable?
-
 pub fn markdown_editor_text_length(String) -> Int
-
-pub fn markdown_editor_toc_escape_link_text(String) -> String
-
-pub fn markdown_editor_toc_indent(Int) -> String
-
-pub fn markdown_editor_toc_slug(String) -> String
-
-pub fn markdown_editor_toc_slug_char(Char) -> Bool
-
-pub fn markdown_editor_toggle_code_block(String, MarkdownEditorSelection) -> MarkdownEditorEditResult
 
 pub fn markdown_editor_toggle_current_task(String, MarkdownEditorSelection) -> MarkdownEditorEditResult?
 
-pub fn markdown_editor_toggle_image_range(String, @core.TextRange) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_toggle_inline_at_caret(String, Int, MarkdownEditorCommand) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_toggle_inline_range(String, @core.TextRange, String) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_toggle_link_range(String, @core.TextRange) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_toggle_reference_at_caret(String, MarkdownEditorSelection, MarkdownEditorCommand) -> MarkdownEditorEditResult
-
 pub fn markdown_editor_toggle_task_at(String, Int) -> MarkdownEditorEditResult?
-
-pub fn markdown_editor_toggle_task_block(String, MarkdownEditorBlock, Bool) -> MarkdownEditorEditResult?
-
-pub fn markdown_editor_transform_current_block(String, MarkdownEditorCommand, MarkdownEditorSelection) -> MarkdownEditorEditResult
 
 pub fn markdown_editor_transform_input(String, Int, @core.TextRange?, String) -> RichTextInputTransform?
 
-pub fn markdown_editor_transform_line_segment(String, MarkdownEditorCommand) -> String
-
-pub fn markdown_editor_transform_multiline_paste(String, Int, @core.TextRange?, String) -> RichTextInputTransform?
-
-pub fn markdown_editor_transform_result(text~ : String, caret~ : Int, selection? : @core.TextRange?) -> RichTextInputTransform
-
-pub fn markdown_editor_transform_selected_lines(String, MarkdownEditorCommand, MarkdownEditorSelection) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_transform_setext_block(String, MarkdownEditorCommand, MarkdownEditorSelection, MarkdownEditorBlock) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_trim_blank_table_paste_lines(Array[String]) -> Array[String]
-
-pub fn markdown_editor_trim_ordered_renumber_contexts(Array[MarkdownEditorOrderedRenumberContext], Int) -> Unit
-
-pub fn markdown_editor_trim_trailing_newline(String) -> String
-
-pub fn markdown_editor_typed_block_marker(String) -> String
-
-pub fn markdown_editor_typed_heading_marker(String) -> Int?
-
-pub fn markdown_editor_typed_ordered_marker(String) -> Int?
-
-pub fn markdown_editor_typed_quote_marker(String) -> Int?
-
-pub fn markdown_editor_typed_quoted_block_marker(String) -> String?
-
-pub fn markdown_editor_typed_task_marker(String, checked~ : Bool) -> Bool
-
-pub fn markdown_editor_unwrap_code_block(String, MarkdownEditorBlock, MarkdownEditorSelection) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_unwrap_image_range(String, @core.TextRange, MarkdownLinkBounds) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_unwrap_link_range(String, @core.TextRange, MarkdownLinkBounds) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_unwrap_quoted_code_block(String, MarkdownEditorQuotedCodeBlock, MarkdownEditorSelection) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_unwrap_range(String, @core.TextRange, String) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_unwrapped_code_offset(Int, MarkdownEditorBlock, Int, Int) -> Int
-
-pub fn markdown_editor_unwrapped_quoted_code_offset(Int, MarkdownEditorQuotedCodeBlock, Int, Int) -> Int
-
-pub fn markdown_editor_upsert_pasted_footnote_definition(String, String, String, Int) -> MarkdownEditorFootnoteDefinitionEdit
-
-pub fn markdown_editor_word_count(String) -> Int
-
-pub fn markdown_editor_wrap_image_range(String, @core.TextRange) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_wrap_image_range_with_target(String, @core.TextRange, String) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_wrap_lines_in_code_block(String, MarkdownEditorSelection) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_wrap_link_range(String, @core.TextRange) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_wrap_link_range_with_target(String, @core.TextRange, String) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_wrap_range(String, @core.TextRange, String) -> MarkdownEditorEditResult
-
-pub fn markdown_editor_wrap_selection_input(String, Int, @core.TextRange?, String) -> RichTextInputTransform?
-
-pub fn markdown_front_matter_block_at(Array[String]) -> MarkdownFrontMatterParseResult?
-
-pub fn markdown_heading_line_height_scale(Int) -> Double
-
-pub fn markdown_heading_size_scale(Int) -> Double
-
-pub fn markdown_heading_source(Int, String) -> String
-
-pub fn markdown_heading_visible_source_text(String) -> String
-
-pub fn markdown_html_inline_source(String) -> String
-
-pub fn markdown_html_inline_tag_end(Array[Char], Int) -> Int?
-
-pub fn markdown_html_tag_name_char(Char) -> Bool
-
-pub fn markdown_html_tag_name_start_char(Char) -> Bool
-
-pub fn markdown_inline(String, MarkdownInlineKind, target? : String?) -> MarkdownInline
-
-pub fn markdown_inline_background(MarkdownInlineKind) -> @core.Brush?
-
-pub fn markdown_inline_color(MarkdownInlineKind) -> @core.Color?
-
-pub fn markdown_inline_decoration(MarkdownInlineKind) -> RichTextDecoration?
-
-pub fn markdown_inline_font(MarkdownInlineKind, @core.FontSpec) -> @core.FontSpec
-
-pub fn markdown_inline_image_size(MarkdownInline, @core.FontSpec) -> @core.Size?
-
-pub fn markdown_inline_image_source(MarkdownInline, base_dir? : String?) -> String?
-
-pub fn markdown_inline_plain_text(@markdown.Inline) -> String
-
-pub fn markdown_inline_source_text(MarkdownInline) -> String
-
-pub fn markdown_inline_text(Array[@markdown.Inline]) -> String
-
-pub fn markdown_inline_visual_text(MarkdownInline) -> String
-
-pub fn markdown_inlines_from_ast(Array[@markdown.Inline], Array[MarkdownReferenceDefinition]) -> Array[MarkdownInline]
-
-pub fn markdown_inlines_to_rich_text(Array[MarkdownInline], @core.FontSpec, base_dir? : String?) -> Array[RichTextRun]
-
 pub fn markdown_input_transform(String, Int, @core.TextRange?, String) -> RichTextInputTransform?
 
-pub fn markdown_is_setext_paragraph_candidate(String) -> Bool
-
 pub fn markdown_join_lines(Array[String]) -> String
-
-pub fn markdown_join_strings(Array[String]) -> String
-
-pub fn markdown_leading_indent_length(Array[Char]) -> Int
-
-pub fn markdown_list_item_text(@markdown.ListItem) -> String
-
-pub fn markdown_normalize_code_info(String?) -> String?
-
-pub fn markdown_normalize_html_inlines(Array[MarkdownInline]) -> Array[MarkdownInline]
-
-pub fn markdown_opening_code_fence(String) -> MarkdownCodeFenceInfo?
-
-pub fn markdown_parse_inlines_preserving_plain_html(String, Array[MarkdownReferenceDefinition]) -> Array[MarkdownInline]
-
-pub fn markdown_protected_inline_end(Array[Char], Int) -> Int?
-
-pub fn markdown_reference_definitions(String) -> Array[MarkdownReferenceDefinition]
-
-pub fn markdown_reference_label_key(String) -> String
-
-pub fn markdown_reference_target(Array[MarkdownReferenceDefinition], String) -> String
-
-pub fn markdown_resolve_reference_inlines(Array[MarkdownInline], Array[MarkdownReferenceDefinition]) -> Array[MarkdownInline]
-
-pub fn markdown_scan_reference_definition_line(String) -> MarkdownReferenceDefinition?
-
-pub fn markdown_scan_reference_definitions(String) -> Array[MarkdownReferenceDefinition]
-
-pub fn markdown_setext_heading_level_at(Array[String], Int) -> Int?
-
-pub fn markdown_setext_underline_level(String) -> Int?
 
 pub fn markdown_split_lines(String) -> Array[String]
 
 pub fn markdown_split_table_cells(String) -> Array[String]
 
-pub fn markdown_table_alignment_at(Array[@core.TextAlign?], Int) -> @core.TextAlign?
-
-pub fn markdown_table_alignment_for_separator_cell(String) -> @core.TextAlign?
-
-pub fn markdown_table_alignments_for_separator(String) -> Array[@core.TextAlign?]
-
-pub fn markdown_table_block(String, Array[@core.TextAlign?]) -> MarkdownBlock
-
-pub fn markdown_table_block_at(Array[String], Int) -> MarkdownTableParseResult?
-
-pub fn markdown_table_body_line(String) -> Bool
-
-pub fn markdown_table_cell_ranges_for_line(String) -> Array[MarkdownTableCellPreviewRange]
-
-pub fn markdown_table_preview(MarkdownBlock, @core.FontSpec) -> RichTextTable?
-
-pub fn markdown_table_row_text(Array[@markdown.TableCell]) -> String
-
-pub fn markdown_table_separator_cell(String) -> Bool
-
-pub fn markdown_table_separator_line(String) -> Bool
-
-pub fn markdown_table_text(Array[@markdown.TableCell], Array[Array[@markdown.TableCell]]) -> String
-
-pub fn markdown_table_text_from_source_lines(Array[String]) -> String
-
-pub fn markdown_table_trimmed_range(Array[Char], Int, Int) -> RichTextSourceRange
-
-pub fn markdown_trim_reference_title(String) -> String
-
-pub fn markdown_trim_single_trailing_newline(String) -> String
-
 pub fn parse_markdown(String) -> Array[MarkdownBlock]
-
-pub fn parse_markdown_editor_blocks(String) -> Array[MarkdownEditorBlock]
 
 pub fn parse_markdown_inlines(String) -> Array[MarkdownInline]
 
@@ -1034,7 +95,7 @@ pub fn parse_markdown_inlines_with_definitions(String, Array[MarkdownReferenceDe
 
 pub fn rich_text_document_caret_rect_at_source(RichTextDocument, Int, @core.Rect, @core.FontSpec, text_system? : @core.TextSystem) -> @core.Rect?
 
-pub fn rich_text_document_height(RichTextDocument, @core.FontSpec) -> Double
+pub fn rich_text_document_height(RichTextDocument, @core.FontSpec, text_system? : @core.TextSystem) -> Double
 
 pub fn[Msg] rich_text_editor(value~ : @core.Binding[String], placeholder~ : String, size~ : @core.Size, format~ : (String) -> RichTextDocument, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_input? : ((String) -> Msg)?, on_input_edit? : ((String, Int, @core.TextRange?) -> Msg)?, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, on_command_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool, visible_scroll_y? : Double, visible_viewport_height? : Double, visible_overscan? : Double, selection_caret? : Int, selection_range? : @core.TextRange?, kind? : String, key? : String?) -> @core.View[Msg]
 
@@ -1144,7 +205,7 @@ pub(all) struct MarkdownDocumentLayoutCache {
   visible_end : Int
   blocks : Array[MarkdownDocumentLayoutBlock]
 } derive(Eq, ToJson, @debug.Debug)
-pub fn MarkdownDocumentLayoutCache::new(MarkdownDocumentSession, RichTextDocument, @core.FontSpec, width~ : Double, scroll_y~ : Double, viewport_height~ : Double, overscan? : Double) -> Self
+pub fn MarkdownDocumentLayoutCache::new(MarkdownDocumentSession, RichTextDocument, @core.FontSpec, width~ : Double, scroll_y~ : Double, viewport_height~ : Double, overscan? : Double, text_system? : @core.TextSystem) -> Self
 pub fn MarkdownDocumentLayoutCache::source_offset_y(Self, Int) -> Double?
 pub fn MarkdownDocumentLayoutCache::visible_block_count(Self) -> Int
 
@@ -1191,7 +252,7 @@ pub fn MarkdownDocumentSession::rich_text_window(Self, MarkdownEditorSelection, 
 pub fn MarkdownDocumentSession::snapshot(Self, base? : @core.FontSpec, base_dir? : String?) -> MarkdownEditorSnapshot
 pub fn MarkdownDocumentSession::source(Self) -> String
 pub fn MarkdownDocumentSession::source_offset_y(Self, Int, base? : @core.FontSpec, source_mode? : Bool) -> Double
-pub fn MarkdownDocumentSession::with_layout_cache(Self, RichTextDocument, @core.FontSpec, width~ : Double, scroll_y~ : Double, viewport_height~ : Double, overscan? : Double) -> Self
+pub fn MarkdownDocumentSession::with_layout_cache(Self, RichTextDocument, @core.FontSpec, width~ : Double, scroll_y~ : Double, viewport_height~ : Double, overscan? : Double, text_system? : @core.TextSystem) -> Self
 
 pub(all) enum MarkdownEditReason {
   LoadDocument
