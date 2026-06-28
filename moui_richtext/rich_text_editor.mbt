@@ -3577,7 +3577,10 @@ fn rich_text_block_cache_key(
   block : RichTextBlock,
   frame : @core.Rect,
 ) -> String {
-  "rich-text-block;range=\{rich_text_source_range_key(block.source_range)};index=\{index};w=\{frame.size.width};h=\{frame.size.height}"
+  // 滚动时 block 的 frame.origin.y 会随 scroll_y 变化，
+  // 必须把 origin.y 纳入 cache_key，否则 layer cache 会命中旧位置的 layer，
+  // 导致滚动后内容停留在旧位置，直到点击触发 selection 变化才重绘。
+  "rich-text-block;range=\{rich_text_source_range_key(block.source_range)};index=\{index};x=\{frame.origin.x};y=\{frame.origin.y};w=\{frame.size.width};h=\{frame.size.height}"
 }
 
 ///|
@@ -3623,7 +3626,7 @@ fn rich_text_block_content_revision(
   hash = rich_text_hash_mix_int(hash, if block.rule { 1 } else { 0 })
   hash = rich_text_hash_mix_string(
     hash,
-    "\{frame.size.width}x\{frame.size.height}",
+    "\{frame.origin.x},\{frame.origin.y},\{frame.size.width}x\{frame.size.height}",
   )
   for run in block.runs {
     hash = rich_text_hash_mix_string(hash, run.text)
