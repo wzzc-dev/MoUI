@@ -60,6 +60,41 @@ into line fragments for drawing, hit testing, caret geometry, and document
 height so renderer-backed text systems never need to interpret embedded
 newlines inside a single draw command.
 
+## Rich Text Input Hot Paths
+
+Focused text controls are queried by native and Web hosts outside ordinary text
+editing, including focus probing, IME candidate-anchor sync, surrounding-text
+updates, context menu state, and redraw-driven composition geometry. These
+queries must stay cheap for large documents.
+
+For Markdown editing, `moui_richtext` keeps the canonical source inside
+`MarkdownDocumentSession` and exposes a windowed editor path rather than a
+formatter callback. `controlled_markdown_session_editor` returns the full
+source to the host, but caret and selection geometry come from
+`MarkdownDocumentSession::rich_text_window` for the current `ScrollState`,
+viewport height, and overscan. Ordinary `focused_text_input()` calls should
+use cached source length plus the session selection and should not construct
+`TextGraphemeBoundaries` for the whole document.
+
+Use the full grapheme-boundary scanner when an operation actually changes or
+normalizes text: keyboard movement, selection normalization, delete-range
+calculation, paste/input transforms, composition cursor offsets, or raw/UTF-8
+offset conversion for IME handoff. Do not put whole-document grapheme scans,
+full Markdown parsing, full `RichTextDocument` construction, or document-height
+walks in paint, focus probing, scroll handling, or ordinary host IME polling.
+
+The expected Markdown Editor scroll/input pipeline is:
+
+```text
+ScrollState -> MarkdownDocumentSession height index -> visible block window
+  -> active TextSystem caret/hit-test geometry -> TextInputState / DrawCommand
+```
+
+Package tests can prove the structural contract, such as "scrolling does not
+reparse" and "scrolling marks paint dirty, not layout dirty". Claims about
+native IME anchoring, candidate-window placement, or visible scrolling
+smoothness still require the matching-host smoke evidence described below.
+
 ## Native WGPU
 
 `render/wgpu` owns the native provider protocol, provider response validation,
