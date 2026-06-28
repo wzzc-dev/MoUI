@@ -29,42 +29,29 @@ fn MarkdownEditorApp::root(
     children.push(self.format_palette(theme, workspace_width))
   }
   children.push(
-    row(
-      [
-        editor_source_layout(
-          self,
-          session,
-          editor_font,
-          appearance,
-          theme,
-          show_source,
-          show_outline,
-          show_files,
-          show_info,
-          target_bar,
-          selection,
-          target_kind,
-          scroll_offset,
-          (caret, selection) => SetSelection(caret, selection),
-          offset => ToggleTaskAt(offset),
-          viewport_height~,
-        ),
-      ],
-      spacing=theme.spacing_scale.lg,
-      align=@views.CrossAlign::Start,
+    editor_source_layout(
+      self,
+      session,
+      editor_font,
+      appearance,
+      theme,
+      show_source,
+      show_outline,
+      show_files,
+      show_info,
+      target_bar,
+      selection,
+      target_kind,
+      scroll_offset,
+      (caret, selection) => SetSelection(caret, selection),
+      offset => ToggleTaskAt(offset),
+      viewport_height~,
     ),
   )
   let workspace = column(
     children,
     spacing=theme.spacing_scale.sm,
-    align=@views.CrossAlign::Start,
-  )
-  let padded = padding_edges(
-    workspace,
-    top=0.0,
-    right=theme.spacing_scale.xl,
-    bottom=theme.spacing_scale.xl,
-    left=theme.spacing_scale.md,
+    align=@views.CrossAlign::Stretch,
   )
   // The chrome (title bar) lives in the same column as the centered
   // workspace.  Because it is OUTSIDE the workspace's padding edges, its
@@ -74,9 +61,13 @@ fn MarkdownEditorApp::root(
   // `constraints.max` and can live happily inside a column.
   let outer_children : Array[@moui.View[MarkdownEditorMsg]] = []
   if !zen {
-    outer_children.push(self.chrome(theme, document, selection))
+    outer_children.push(self.chrome(theme))
   }
-  outer_children.push(markdown_editor_centered_workspace(padded).expanded())
+  // Use a spacer for bottom padding instead of padding_edges, because
+  // padding_layout clamps child frame width to min(available, intrinsic),
+  // which would prevent the workspace from filling the window width.
+  outer_children.push(workspace.expanded())
+  outer_children.push(spacer(min_length=theme.spacing_scale.xl, weight=0.0))
   if !zen {
     outer_children.push(
       self.bottom_status_bar(
@@ -218,44 +209,6 @@ fn markdown_editor_workspace_width(
 }
 
 ///|
-/// Centered-workspace layout. Places its child horizontally centered inside
-/// the available frame. Does NOT paint the window background — that is done
-/// by a sibling fill view in the enclosing stack so this layout can live
-/// inside a column alongside the chrome without needing `constraints.max`.
-fn markdown_editor_centered_workspace(
-  child : @moui.View[MarkdownEditorMsg],
-) -> @moui.View[MarkdownEditorMsg] {
-  @views.custom_children_layout(
-    children=[child],
-    // Use the full available space so the flex-expanded height is respected.
-    // The child (padded workspace) measures itself within these constraints.
-    measure=ctx => ctx.constraints.constrain(ctx.constraints.max),
-    place=ctx => {
-      let child_size = ctx.child_sizes[0]
-      let x = if ctx.frame.size.width > child_size.width {
-        ctx.frame.origin.x +
-        markdown_editor_max_double(
-          0.0,
-          (ctx.frame.size.width - child_size.width) / 2.0,
-        )
-      } else {
-        ctx.frame.origin.x
-      }
-      let y = ctx.frame.origin.y
-      [
-        @core.Rect::new(
-          x~,
-          y~,
-          width=child_size.width,
-          height=child_size.height,
-        ),
-      ]
-    },
-    semantics_label="Markdown editor workspace",
-  )
-}
-
-///|
 /// Typora-style title bar: sits inside the transparent 28px macOS titlebar
 /// region. Left: traffic-light space. Center: file name + chevron.
 /// Right: outline toggle, sidebar toggle.
@@ -267,8 +220,6 @@ fn markdown_editor_centered_workspace(
 fn MarkdownEditorApp::chrome(
   self : MarkdownEditorApp,
   theme : @moui.Theme,
-  _source : String,
-  _selection : MarkdownEditorSelection,
 ) -> @moui.View[MarkdownEditorMsg] {
   let title = markdown_editor_document_title(
     path=self.document_path.get(),
