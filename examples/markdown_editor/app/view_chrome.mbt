@@ -290,7 +290,7 @@ fn MarkdownEditorApp::bottom_status_bar(
   block_label : String,
   _source : String,
   selection : MarkdownEditorSelection,
-  _width : Double,
+  width : Double,
 ) -> @moui.View[MarkdownEditorMsg] {
   let show_files = self.file_sidebar_visible.get()
   let tree_button = button(
@@ -323,12 +323,15 @@ fn MarkdownEditorApp::bottom_status_bar(
     markdown_editor_session_status_label(block_label, session, selection) +
     transfer_suffix
 
+  let status_width = markdown_editor_min_double(
+    markdown_editor_max_double(160.0, width - 26.0),
+    500.0,
+  )
   let status_frame = frame(
     row(
       [
-        spacer(min_length=26.0, weight=0.0),
         spacer(min_length=0.0, weight=1.0),
-        text(status, height=15.0)
+        text(status, width=status_width, height=15.0)
         .font(theme.typography.caption)
         .foreground(theme.palette.muted.multiply_alpha(0.7)),
         spacer(min_length=0.0, weight=1.0),

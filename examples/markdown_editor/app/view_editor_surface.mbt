@@ -712,7 +712,7 @@ fn markdown_editor_viewport_height() -> Double {
 ///|
 fn markdown_editor_page_shadow() -> @core.ShadowStyle {
   @core.ShadowStyle::new(
-    color=@core.Color::black().multiply_alpha(0.12),
+    color=@core.Color::white().multiply_alpha(0.12),
     offset=@moui.Point::new(x=0.0, y=2.0),
     blur_radius=18.0,
   )
@@ -866,16 +866,7 @@ fn editor_source_layout(
   } else {
     editor
   }
-  // Overlay a scroll indicator on the right edge so long documents give a
-  // visual cue of the scroll position. A soft drop shadow turns the editor
-  // into a floating page card over the window background (Typora's "paper on
-  // desk" look).
-  let page_shadow = @core.ShadowStyle::new(
-    color=@core.Color::black().multiply_alpha(0.12),
-    offset=@core.Point::new(x=0.0, y=2.0),
-    blur_radius=16.0,
-    spread=0.0,
-  )
+
   let editor_with_indicator = @views.stack([
     editor_view,
     markdown_editor_scroll_indicator(app.editor_scroll, viewport_height~, theme),
@@ -883,7 +874,7 @@ fn editor_source_layout(
       app, session, selection, editor_font, theme, normalized_offset, editor_width,
       viewport_height,
     ),
-  ]).shadow(page_shadow)
+  ])
   let side_children : Array[@moui.View[MarkdownEditorMsg]] = []
   if show_files {
     side_children.push(
