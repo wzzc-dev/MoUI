@@ -1,5 +1,3 @@
-
-
 ///|
 fn text_area_text_frame(frame : @core.Rect) -> @core.Rect {
   frame.inset(@core.Insets::symmetric(horizontal=10.0, vertical=8.0))
@@ -13,24 +11,37 @@ fn text_area_paragraph(
   text_frame : @core.Rect,
 ) -> @core.TextParagraphLayoutResult {
   text_system.layout_paragraph(
-    @core.TextLayoutInput::new(
-      text=text,
-      font=font,
-      max_width=text_frame.size.width,
-    ),
+    @core.TextLayoutInput::new(text~, font~, max_width=text_frame.size.width),
   )
 }
 
+///|
 fn text_area_min_int(a : Int, b : Int) -> Int {
-  if a <= b { a } else { b }
+  if a <= b {
+    a
+  } else {
+    b
+  }
 }
 
+///|
 fn text_area_max_int(a : Int, b : Int) -> Int {
-  if a >= b { a } else { b }
+  if a >= b {
+    a
+  } else {
+    b
+  }
 }
 
+///|
 fn text_area_clamp_int(value : Int, min : Int, max : Int) -> Int {
-  if value < min { min } else if value > max { max } else { value }
+  if value < min {
+    min
+  } else if value > max {
+    max
+  } else {
+    value
+  }
 }
 
 ///|
@@ -140,10 +151,7 @@ fn[Msg] text_area_control(
         role=@core.SemanticsRole::TextField,
         label=placeholder,
         value=value.get(),
-        actions=[
-          @core.SemanticsAction::Focus,
-          @core.SemanticsAction::SetText,
-        ],
+        actions=[@core.SemanticsAction::Focus, @core.SemanticsAction::SetText],
       )
     },
     focusable=() => true,
@@ -176,7 +184,9 @@ fn append_text_area_commands(
   append_border(commands, rounded, border)
   let display_text = text_with_composition(text, control, focused~)
   let text_frame = text_area_text_frame(frame)
-  let paragraph = text_area_paragraph(text_system, display_text, font, text_frame)
+  let paragraph = text_area_paragraph(
+    text_system, display_text, font, text_frame,
+  )
   commands.push(@core.DrawCommand::PushClip(text_frame))
   if display_text == "" {
     commands.push(
@@ -184,7 +194,7 @@ fn append_text_area_commands(
         @core.TextRun::new(
           text=placeholder,
           frame=text_frame,
-          font=font,
+          font~,
           color=placeholder_color,
           align=@core.TextAlign::TextStart,
         ),
@@ -195,7 +205,9 @@ fn append_text_area_commands(
       let line_range = line.text_range
       if line_range.start < line_range.end {
         let chars = display_text.to_array()
-        let line_text = String::from_array(chars[line_range.start:line_range.end])
+        let line_text = String::from_array(
+          chars[line_range.start:line_range.end],
+        )
         let line_frame = @core.Rect::new(
           x=text_frame.origin.x + line.origin.x,
           y=text_frame.origin.y + line.origin.y,
@@ -207,7 +219,7 @@ fn append_text_area_commands(
             @core.TextRun::new(
               text=line_text,
               frame=line_frame,
-              font=font,
+              font~,
               color=foreground,
               align=@core.TextAlign::TextStart,
             ),
@@ -487,7 +499,7 @@ fn[Msg] text_area_vertical_caret_move(
     {
       ..ctx.text_control,
       caret: hit.offset,
-      selection: Some(@core.TextRange::new(start=start, end=end)),
+      selection: Some(@core.TextRange::new(start~, end~)),
       text_selection_anchor: Some(anchor),
       composition: None,
       composition_cursor: None,
@@ -575,7 +587,7 @@ fn[Msg] handle_text_area_pointer(
       let next_control = {
         ..ctx.text_control,
         caret: hit.offset,
-        selection: Some(@core.TextRange::new(start=start, end=end)),
+        selection: Some(@core.TextRange::new(start~, end~)),
       }
       view_event_result(
         changed=true,
@@ -591,9 +603,7 @@ fn[Msg] handle_text_area_pointer(
     view_event_result(
       changed=true,
       captured=true,
-      text_control=Some(
-        { ..ctx.text_control, text_selection_anchor: None },
-      ),
+      text_control=Some({ ..ctx.text_control, text_selection_anchor: None }),
       dirty=@core.ViewDirtyHint::ViewPaintDirty,
     )
   } else {
@@ -612,7 +622,9 @@ fn text_input_state_for_multi_line(
   let boundaries = @core.TextGraphemeBoundaries::new(text~)
   let display_text = text_with_composition(text, control, focused=true)
   let text_frame = text_area_text_frame(frame)
-  let paragraph = text_area_paragraph(text_system, display_text, font, text_frame)
+  let paragraph = text_area_paragraph(
+    text_system, display_text, font, text_frame,
+  )
   let caret = boundaries.nearest_boundary(control.caret)
   let visual_caret = text_area_clamp_int(
     text_field_visual_caret(text, control, focused=true),

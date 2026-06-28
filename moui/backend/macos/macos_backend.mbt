@@ -98,7 +98,15 @@ pub fn MacosHostAppOptions::new(
   on_ready? : (() -> Unit)? = None,
   min_window_size? : @dpi.LogicalSize? = None,
 ) -> MacosHostAppOptions {
-  { scene_resolver, event_sources, platform_view_plugins, transparent_titlebar, platform_attributes, on_ready, min_window_size }
+  {
+    scene_resolver,
+    event_sources,
+    platform_view_plugins,
+    transparent_titlebar,
+    platform_attributes,
+    on_ready,
+    min_window_size,
+  }
 }
 
 ///|
@@ -117,6 +125,7 @@ pub fn MacosHostSmokeOptions::new(
 }
 
 ///|
+
 ///|
 /// Platform utility: get the native content view handle from a macOS window.
 /// Used by platform-view plugins' sync/dispose callbacks to pass the window

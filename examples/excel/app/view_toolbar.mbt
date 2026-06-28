@@ -1,9 +1,8 @@
-using @moui { type Theme}
 ///|
-fn build_toolbar(
-  model : ExcelModel,
-  theme : Theme,
-) -> @moui.View[ExcelMsg] {
+using @moui {type Theme}
+
+///|
+fn build_toolbar(model : ExcelModel, theme : Theme) -> @moui.View[ExcelMsg] {
   let format = model.selected_format()
   let align_id = align_id(format.align)
   @views.container(

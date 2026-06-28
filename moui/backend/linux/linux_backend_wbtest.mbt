@@ -185,4 +185,3 @@ test "linux at-spi binding publishes semantics dispatches actions and disposes" 
     _ => fail("expected disposed Linux AT-SPI binding to reject actions")
   }
 }
-

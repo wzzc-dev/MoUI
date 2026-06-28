@@ -473,6 +473,7 @@ fn present_rect_to_handle(
 }
 
 ///|
+
 ///|
 fn present_bytes_to_handle(
   handle : UInt64,
@@ -490,9 +491,7 @@ fn present_bytes_to_handle(
     return Err(@graphics.PresentError::InvalidDimensions(width, height))
   }
   guard row_bytes >= width * 4 else {
-    return Err(
-      @graphics.PresentError::InvalidRowBytes(row_bytes, width * 4),
-    )
+    return Err(@graphics.PresentError::InvalidRowBytes(row_bytes, width * 4))
   }
   notify_pre_present(pre_present_hook)
   display_bytes_rect(
