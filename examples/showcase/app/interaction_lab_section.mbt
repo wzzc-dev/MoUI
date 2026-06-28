@@ -315,13 +315,9 @@ fn ShowcaseModel::popover_dropdown_card(
   width : Double,
 ) -> @moui.View[ShowcaseMsg] {
   let items = [
-    @views.MenuItem::new(
-      id="native",
-      label="Native",
-      message=PickerSelected("native"),
-    ),
-    @views.MenuItem::new(id="web", label="Web", message=PickerSelected("web")),
-    @views.MenuItem::new(
+    menu_item(id="native", label="Native", message=PickerSelected("native")),
+    menu_item(id="web", label="Web", message=PickerSelected("web")),
+    menu_item(
       id="test",
       label="Test",
       message=PickerSelected("test"),

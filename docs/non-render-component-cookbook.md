@@ -72,6 +72,7 @@ table stays renderer-neutral and predictable.
 
 ```moonbit nocheck
 using @views {
+  action_item,
   column,
   column_visibility_panel,
   data_filter,
@@ -123,7 +124,7 @@ fn project_table(
       selection_toolbar(
         selected_count=selection.count(),
         total_count=rows.length(),
-        actions=[@views.ActionItem::new(id="export", label="Export", message=ExportRows)],
+        actions=[action_item(id="export", label="Export", message=ExportRows)],
         on_clear=Some(ClearSelection),
       ),
       table(
@@ -165,7 +166,7 @@ mapping in `RouteFocusStore`, key the target focusable view, and call
 `runtime.restore_route_focus(store, route)` after the route has rendered.
 
 ```moonbit nocheck
-using @views {master_detail, sidebar}
+using @views {master_detail, sidebar, sidebar_item}
 
 enum Msg { SelectSection(String) }
 
@@ -177,8 +178,8 @@ fn settings_shell(current : String, detail : @moui.View[Msg]) -> @moui.View[Msg]
     master=sidebar(
       "Settings",
       [
-        @views.SidebarItem::new(id="account", label="Account", message=SelectSection("account")),
-        @views.SidebarItem::new(id="appearance", label="Appearance", message=SelectSection("appearance")),
+        sidebar_item(id="account", label="Account", message=SelectSection("account")),
+        sidebar_item(id="appearance", label="Appearance", message=SelectSection("appearance")),
       ],
       selected=current,
     ),
