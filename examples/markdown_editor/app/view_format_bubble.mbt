@@ -87,7 +87,7 @@ fn format_bubble_button(
 /// when there is no non-empty selection.
 fn markdown_editor_format_bubble_overlay(
   app : MarkdownEditorApp,
-  snapshot : MarkdownEditorSnapshot,
+  session : MarkdownDocumentSession,
   selection : MarkdownEditorSelection,
   editor_font : @core.FontSpec,
   theme : @moui.Theme,
@@ -122,16 +122,15 @@ fn markdown_editor_format_bubble_overlay(
           Some(range) => range.normalized().start
           None => selection.caret
         }
-        let content = @moui_richtext.rich_text_editor_content_rect(editor_frame).offset(
-          dx=0.0,
-          dy=-scroll_offset.y,
-        )
         match
-          @moui_richtext.rich_text_document_caret_rect_at_source(
-            snapshot.rich_text,
+          markdown_editor_session_caret_rect(
+            session,
+            selection,
             caret,
-            content,
+            editor_frame,
             editor_font,
+            scroll_offset,
+            viewport_height~,
           ) {
           Some(rect) => {
             let x = markdown_editor_clamp_double(
