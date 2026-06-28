@@ -42,9 +42,18 @@ shape.
 
 ## Editing Model
 
-The editor stores canonical Markdown source, then parses it into a
-`MarkdownEditorSnapshot` with blocks, source/content ranges, rich text output,
-line counts, word counts, and document title metadata.
+The editor stores canonical Markdown source in a `MarkdownDocumentSession`.
+The session is the long-lived document engine for formatted mode, source mode,
+commands, find/replace, outline, metadata, and export helpers. It owns the
+current source string plus stable block ids, block revisions, source/content
+ranges, cached outline/metadata/status fields, a source-length cache, and a
+block-height index used by virtual scrolling.
+
+`MarkdownEditorSnapshot` remains available for tests, export helpers, and
+compatibility code that explicitly needs a full rich-text document. The primary
+app path must not parse the source into a full snapshot or build a full
+`RichTextDocument` from `root`, `layout`, `paint`, scroll handling, or ordinary
+selection updates.
 
 Core rich text blocks can carry source and content ranges. This lets the editor:
 
@@ -55,6 +64,39 @@ Core rich text blocks can carry source and content ranges. This lets the editor:
   markers;
 - request IME and caret geometry from the formatted visual position;
 - copy and cut formatted visual text without Markdown delimiters.
+
+## Session Rendering And Scrolling
+
+Large documents use a session-driven, variable-height virtual viewport:
+
+- `MarkdownDocumentSession::estimated_content_height` reads the cached block
+  height index instead of walking every parsed block.
+- `MarkdownDocumentSession::source_offset_y` uses the same index to map outline
+  jumps, find results, and typewriter-mode anchors from source offsets to
+  approximate scroll positions.
+- `MarkdownDocumentSession::rich_text_window` locates the visible block window
+  from the current `ScrollState`, viewport height, and overscan, then builds
+  rich text only for that block range.
+- `controlled_markdown_session_editor` is the main app path. It receives the
+  session, selection, viewport dimensions, and the live `ScrollState`; it
+  handles wheel events directly and marks only paint dirty for ordinary
+  scrolling.
+- The primary editor view is sized to the viewport height. It must not be
+  wrapped in a generic `scroll_view` with a child whose height is the whole
+  document, because that makes wheel events invalidate layout and defeats block
+  virtualization.
+
+This path keeps scrolling from reparsing Markdown, rebuilding the full rich
+text document, or relaying through `RichTextFormatter = (String) ->
+RichTextDocument`. The old formatter-based rich text editor remains a
+compatibility helper, but Markdown Editor should use session transactions as
+the source of truth.
+
+Focused text input state is also on the windowed path. Ordinary focus and host
+IME polling return the canonical source, session caret/selection, and a caret
+rectangle from the current visible rich-text window without constructing
+grapheme boundaries for the entire document. Full grapheme normalization still
+belongs to actual text edits, selection transforms, and composition handling.
 
 ## Current Behavior
 
@@ -373,9 +415,12 @@ without a writable handle still report Web text-file writes unavailable. Linux
 remains an explicit service gap. Clipboard transfer remains the fallback
 content path when a host cannot provide file content.
 
-On macOS, the editor page sizes itself from the formatted rich-text document and
-uses ScrollSpec wheel handling so longer documents scroll inside the clean
-writing viewport instead of clipping at a fixed editor height.
+Native and Web entrypoints share the same session viewport model: the editor
+page stays viewport-sized, wheel input updates the app-owned `ScrollState`, and
+paint builds only the visible block window plus overscan. Platform-specific
+runtime smoke is still required before claiming a real renderer/browser
+scrolling experience, but package tests assert that ordinary Markdown Editor
+scrolling no longer reparses the session or marks layout dirty.
 
 ## Platform Commands
 
