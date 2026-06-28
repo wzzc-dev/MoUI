@@ -362,7 +362,7 @@ fn markdown_editor_session_caret_rect(
     base_dir~,
     scroll_y=scroll_offset.y,
     viewport_height~,
-    overscan=viewport_height,
+    overscan=markdown_editor_visible_overscan(viewport_height),
   )
   let content = @moui_richtext.rich_text_editor_content_rect(editor_frame).offset(
     dx=0.0,
@@ -737,6 +737,11 @@ fn markdown_editor_max_double(a : Double, b : Double) -> Double {
 }
 
 ///|
+fn markdown_editor_visible_overscan(viewport_height : Double) -> Double {
+  markdown_editor_min_double(320.0, viewport_height * 0.5)
+}
+
+///|
 fn markdown_editor_clamp_double(
   value : Double,
   min : Double,
@@ -841,7 +846,7 @@ fn editor_source_layout(
     accepts_tab_input=true,
     visible_scroll_y=normalized_offset.y,
     visible_viewport_height=viewport_height,
-    visible_overscan=viewport_height,
+    visible_overscan=markdown_editor_visible_overscan(viewport_height),
     visible_scroll_state=Some(app.editor_scroll),
   ).key("markdown-editor")
   let editor = editor_page(editor_control, theme, appearance).on_file_drop((
