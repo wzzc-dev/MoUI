@@ -36,6 +36,8 @@ fn SunRasterRenderer::render_cached_command_range(
   canvas_scopes : Array[SunCanvasScopeKind],
   opacity_stack : Array[Double],
   blend_mode_stack : Array[@sun_graphics.BlendMode],
+  layer_spec_stack : Array[SunLayerScope],
+  rounded_clip_transform_stack : Array[@sun_graphics.Transform],
 ) -> Unit {
   let mut index = start
   while index < end {
@@ -48,6 +50,7 @@ fn SunRasterRenderer::render_cached_command_range(
               commands,
               index + 1,
               layer_end,
+              sun_current_opacity(opacity_stack),
             )
             index = layer_end + 1
           }
@@ -66,12 +69,16 @@ fn SunRasterRenderer::render_cached_command_range(
         index = index + 1
       }
       @core.DrawCommand::DrawCachedLayer(spec) => {
-        self.draw_cached_layer_from_cache(spec)
+        self.draw_cached_layer_from_cache(
+          spec,
+          sun_current_opacity(opacity_stack),
+        )
         index = index + 1
       }
       command => {
         self.render_command(
-          command, canvas_scopes, opacity_stack, blend_mode_stack,
+          command, canvas_scopes, opacity_stack, blend_mode_stack, layer_spec_stack,
+          rounded_clip_transform_stack,
         )
         index = index + 1
       }
@@ -86,8 +93,9 @@ fn SunRasterRenderer::render_or_draw_cached_layer(
   commands : Array[@core.DrawCommand],
   child_start : Int,
   child_end : Int,
+  opacity : Double,
 ) -> Unit {
-  let cache_key = spec.key
+  let cache_key = sun_cached_layer_cache_key(spec, self.metrics.scale_factor)
   if self.cached_layer_pixmaps.contains(cache_key) {
     let cached_rev = self.cached_layer_revisions.get(cache_key)
     let cached_scale = self.cached_layer_scales.get(cache_key)
@@ -96,12 +104,12 @@ fn SunRasterRenderer::render_or_draw_cached_layer(
       cached_scale is Some(scale) &&
       scale == self.metrics.scale_factor {
       let pixmap = self.cached_layer_pixmaps[cache_key]
-      self.draw_cached_layer_pixmap(pixmap, spec.frame)
+      self.draw_cached_layer_pixmap(pixmap, spec.frame, opacity)
       self.cached_layer_hit_count = self.cached_layer_hit_count + 1
       return
     }
   }
-  self.update_cached_layer(spec, commands, child_start, child_end)
+  self.update_cached_layer(spec, commands, child_start, child_end, opacity)
 }
 
 ///|
@@ -111,6 +119,7 @@ fn SunRasterRenderer::update_cached_layer(
   commands : Array[@core.DrawCommand],
   child_start : Int,
   child_end : Int,
+  opacity : Double,
 ) -> Unit {
   let physical_w = sun_cached_layer_dim(
     spec.frame.size.width,
@@ -137,8 +146,11 @@ fn SunRasterRenderer::update_cached_layer(
   let child_scopes : Array[SunCanvasScopeKind] = []
   let child_opacity : Array[Double] = []
   let child_blend : Array[@sun_graphics.BlendMode] = []
+  let child_layer_specs : Array[SunLayerScope] = []
+  let child_rounded_clip_transforms : Array[@sun_graphics.Transform] = []
   self.render_cached_command_range(
-    commands, child_start, child_end, child_scopes, child_opacity, child_blend,
+    commands, child_start, child_end, child_scopes, child_opacity, child_blend, child_layer_specs,
+    child_rounded_clip_transforms,
   )
   if !child_scopes.is_empty() {
     for scope in child_scopes {
@@ -154,17 +166,26 @@ fn SunRasterRenderer::update_cached_layer(
       }
     }
     self.filter_stack.clear()
+    child_rounded_clip_transforms.clear()
+    while !child_blend.is_empty() {
+      ignore(child_blend.pop())
+    }
+    while !child_layer_specs.is_empty() {
+      ignore(child_layer_specs.pop())
+    }
   }
   let pixmap = self.canvas.get_pixmap()
-  self.cached_layer_pixmaps[cache_key(spec.key)] = pixmap
-  self.cached_layer_revisions[cache_key(spec.key)] = spec.content_revision
-  self.cached_layer_scales[cache_key(spec.key)] = self.metrics.scale_factor
-  self.cached_layer_order.push(cache_key(spec.key))
+  let key = sun_cached_layer_cache_key(spec, self.metrics.scale_factor)
+  self.cached_layer_pixmaps[key] = pixmap
+  self.cached_layer_revisions[key] = spec.content_revision
+  self.cached_layer_scales[key] = self.metrics.scale_factor
+  self.remove_cached_layer_order_entries(key)
+  self.cached_layer_order.push(key)
   self.evict_cached_layers_if_needed()
   self.canvas = saved_canvas
   self.canvas_stack = saved_canvas_stack
   self.filter_stack = saved_filter_stack
-  self.draw_cached_layer_pixmap(pixmap, spec.frame)
+  self.draw_cached_layer_pixmap(pixmap, spec.frame, opacity)
   self.cached_layer_miss_count = self.cached_layer_miss_count + 1
 }
 
@@ -172,8 +193,9 @@ fn SunRasterRenderer::update_cached_layer(
 fn SunRasterRenderer::draw_cached_layer_from_cache(
   self : SunRasterRenderer,
   spec : @core.CachedLayerSpec,
+  opacity : Double,
 ) -> Unit {
-  let key = cache_key(spec.key)
+  let key = sun_cached_layer_cache_key(spec, self.metrics.scale_factor)
   if self.cached_layer_pixmaps.contains(key) {
     let cached_rev = self.cached_layer_revisions.get(key)
     let cached_scale = self.cached_layer_scales.get(key)
@@ -182,7 +204,7 @@ fn SunRasterRenderer::draw_cached_layer_from_cache(
       cached_scale is Some(scale) &&
       scale == self.metrics.scale_factor {
       let pixmap = self.cached_layer_pixmaps[key]
-      self.draw_cached_layer_pixmap(pixmap, spec.frame)
+      self.draw_cached_layer_pixmap(pixmap, spec.frame, opacity)
       self.cached_layer_hit_count = self.cached_layer_hit_count + 1
       return
     }
@@ -198,6 +220,7 @@ fn SunRasterRenderer::draw_cached_layer_pixmap(
   self : SunRasterRenderer,
   pixmap : @sun_graphics.Pixmap,
   frame : @core.Rect,
+  opacity : Double,
 ) -> Unit {
   let src_rect = @sun_graphics.PixelRect::new(
     x=0,
@@ -212,7 +235,7 @@ fn SunRasterRenderer::draw_cached_layer_pixmap(
     frame.origin.y,
     frame.size.width,
     frame.size.height,
-    @sun_graphics.Paint::new(),
+    @sun_graphics.Paint::new().set_opacity(opacity),
     @sun_graphics.ImageQuality::Balanced,
   )
 }
@@ -235,6 +258,21 @@ fn SunRasterRenderer::evict_cached_layers_if_needed(
 }
 
 ///|
+fn SunRasterRenderer::remove_cached_layer_order_entries(
+  self : SunRasterRenderer,
+  key : String,
+) -> Unit {
+  let mut index = 0
+  while index < self.cached_layer_order.length() {
+    if self.cached_layer_order[index] == key {
+      ignore(self.cached_layer_order.remove(index))
+    } else {
+      index = index + 1
+    }
+  }
+}
+
+///|
 fn SunRasterRenderer::clear_cached_layers(self : SunRasterRenderer) -> Unit {
   self.cached_layer_pixmaps = {}
   self.cached_layer_revisions = {}
@@ -245,8 +283,13 @@ fn SunRasterRenderer::clear_cached_layers(self : SunRasterRenderer) -> Unit {
 }
 
 ///|
-fn cache_key(key : String) -> String {
-  key
+fn sun_cached_layer_cache_key(
+  spec : @core.CachedLayerSpec,
+  scale : Double,
+) -> String {
+  let physical_w = sun_cached_layer_dim(spec.frame.size.width, scale)
+  let physical_h = sun_cached_layer_dim(spec.frame.size.height, scale)
+  "\{spec.key}|scale=\{scale}|pw=\{physical_w}|ph=\{physical_h}"
 }
 
 ///|

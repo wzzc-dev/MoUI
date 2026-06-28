@@ -110,6 +110,92 @@ test "sun renderer text system reports renderer paragraph metadata" {
 }
 
 ///|
+test "sun renderer text system wraps measured text to max width" {
+  let target = SunPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=24.0, height=32.0),
+    ),
+    target,
+  )
+  let text_system = renderer.text_system()
+  text_system.register_font_data(
+    @core.FontFamily::Name("SunLatinSpace"),
+    sun_test_ttf_for_codes([65, 0x20]),
+  )
+
+  let result = text_system.measure_text(
+    @core.TextLayoutInput::new(
+      text="A A",
+      font=@core.FontSpec::new(
+        families=@core.FontFamilyStack::new([
+          @core.FontFamily::Name("SunLatinSpace"),
+        ]),
+        size=10.0,
+      ),
+      max_width=12.0,
+    ),
+  )
+
+  inspect(result.size.width, content="12")
+  inspect(result.size.height, content="24")
+  inspect(result.baseline, content="10")
+  inspect(result.caret_positions.length(), content="4")
+  assert_true(result.caret_positions[1] > 0.0)
+  inspect(result.caret_positions[2], content="0")
+  assert_true(result.caret_positions[3] > 0.0)
+}
+
+///|
+test "sun renderer draws wrapped fallback text on later visual lines" {
+  let presented = Ref(None)
+  let target = SunPresentTarget::new(description="test", present=frame => {
+    presented.val = Some(frame)
+    true
+  })
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=12.0, height=30.0),
+    ),
+    target,
+  )
+  let text_system = renderer.text_system()
+  text_system.register_font_data(
+    @core.FontFamily::Name("SunLatinSpace"),
+    sun_test_ttf_for_codes([65, 0x20]),
+  )
+
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::DrawText(
+      @core.TextRun::new(
+        text="A A",
+        frame=@core.Rect::new(x=0.0, y=0.0, width=12.0, height=30.0),
+        font=@core.FontSpec::new(
+          families=@core.FontFamilyStack::new([
+            @core.FontFamily::Name("SunLatinSpace"),
+          ]),
+          size=10.0,
+        ),
+        color=@core.Color::black(),
+        align=@core.TextAlign::TextStart,
+      ),
+    ),
+  ])
+
+  match presented.val {
+    Some(frame) => {
+      assert_true(sun_test_dark_pixel_count(frame, row_start=0, row_end=14) > 0)
+      assert_true(
+        sun_test_dark_pixel_count(frame, row_start=14, row_end=30) > 0,
+      )
+      inspect(renderer.unsupported_command_count(), content="0")
+    }
+    None => fail("expected Sun frame")
+  }
+}
+
+///|
 priv struct SunTestGlyph {
   codepoint : Int
   advance : Int
@@ -485,4 +571,27 @@ fn sun_test_string_from_codepoints(codepoints : Array[Int]) -> String {
     out.write_char(codepoint.unsafe_to_char())
   }
   out.to_string()
+}
+
+///|
+fn sun_test_dark_pixel_count(
+  frame : SunPixelFrame,
+  row_start~ : Int,
+  row_end~ : Int,
+) -> Int {
+  let start = row_start.max(0).min(frame.height)
+  let end = row_end.max(start).min(frame.height)
+  let mut count = 0
+  for row in start..<end {
+    for column in 0..<frame.width {
+      let offset = (row * frame.width + column) * 4
+      let red = frame.pixels[offset].to_int()
+      let green = frame.pixels[offset + 1].to_int()
+      let blue = frame.pixels[offset + 2].to_int()
+      if red < 220 && green < 220 && blue < 220 {
+        count += 1
+      }
+    }
+  }
+  count
 }

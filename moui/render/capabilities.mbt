@@ -260,17 +260,17 @@ fn sun_feature_note(feature : RendererFeature) -> String {
     Image =>
       "Sun raster decodes PNG and BMP data URI image sources through moui_sun Pixmap codecs, scaling them to the ImageRun frame with draw_scaled_pixmap."
     Clip =>
-      "Sun raster applies rectangular clips through moui_sun Canvas clip state; rounded clips render child commands into an offscreen canvas and composite back with per-pixel SDF-based rounded-rect masking and anti-aliased edge coverage."
+      "Sun raster applies transformed rectangular clips through moui_sun Canvas clip state; rounded clips render child commands into an offscreen canvas that inherits parent transform/clip state and composite back with per-pixel inverse-transform SDF rounded-rect masking; renderer-local tests cover 2x rectangular and rounded clip pixels."
     Transform =>
       "Sun raster maps MoUI affine transform scopes to moui_sun Canvas transform state."
     Opacity =>
       "Sun raster applies scoped opacity by multiplying Paint opacity for supported primitive commands."
     LayerCompositing =>
-      "Sun raster composites PushLayer/PopLayer scopes by rendering child commands into an offscreen canvas and drawing the result with scoped opacity; BeginCachedLayer/EndCachedLayer/DrawCachedLayer scopes cache layer pixmaps with content-revision and scale-factor validation, FIFO eviction, and renderer-local pixel coverage for cache hit, miss, and dispose lifecycle."
+      "Sun raster composites PushLayer/PopLayer scopes by rendering child commands into an offscreen canvas that inherits parent transform/clip state and drawing the result with LayerSpec opacity, inverse-transform rectangular masks, inverse-transform rounded masks, and blend mode; renderer-local tests cover transform-scoped layers plus 2x layer and mask pixels. BeginCachedLayer/EndCachedLayer/DrawCachedLayer scopes cache layer pixmaps with content-revision, scale-factor, and physical-size validation, apply surrounding opacity when drawing cached pixels, allow same-size frame moves to reuse cache entries, use FIFO eviction, and have renderer-local pixel coverage for cache hit, miss, refresh, and dispose lifecycle."
     BlendMode =>
       "Sun raster maps all MoUI blend modes to moui_sun Paint blend modes and applies them when compositing PushLayer/PopLayer layer scopes; renderer-local pixel test covers Multiply."
     FilterEffect =>
-      "Sun raster applies PushFilter/PopFilter scopes using moui_sun PaintFilter pixmap-level color transforms for saturate, brightness, contrast, and color matrix effects; blur uses three-pass separable box blur (Gaussian approximation) on the layer pixmap before compositing; filter compositing applies PaintFilter at the pixmap level and draws the result with a single draw_pixmap call."
+      "Sun raster applies PushFilter/PopFilter scopes using offscreen canvases that inherit parent transform/clip state plus moui_sun PaintFilter pixmap-level color transforms for saturate, brightness, contrast, and color matrix effects; blur uses three-pass separable box blur (Gaussian approximation) on the layer pixmap before compositing; renderer-local tests cover transformed filter scopes."
     PathVector =>
       "Sun raster maps MoUI PathSpec verbs to moui_sun Path fill and stroke drawing."
     ShaderEffect =>
@@ -280,7 +280,7 @@ fn sun_feature_note(feature : RendererFeature) -> String {
     EmojiText =>
       "moui_sun/text FontFallbackPlan selects registered fallback faces for emoji spans after requested family faces, so mixed Latin-plus-emoji Sun text can measure and draw without missing fallback diagnostics when coverage is registered; Sun raster renders text through FontFace and CoverageMask; RGBA color emoji glyph rendering and grapheme shaping remain follow-up work."
     AsyncImage =>
-      "Sun raster decodes PNG and BMP data URI plus local-file image sources synchronously through moui_sun Pixmap codecs, records renderer-local ready/failed/disposed image lifecycle snapshots, forwards revisioned image-resource snapshots and callback/apply ports through native Sun providers, and keeps redraw-safe lifecycle revisions stable for cached repeat draws; post-present HostAsyncImageLoader scheduling remains follow-up work."
+      "Sun raster decodes PNG and BMP data URI plus local-file image sources through moui_sun Pixmap codecs, records renderer-local loading/ready/failed/disposed image lifecycle snapshots, exposes sun_image_load_completion for provider-owned decode completions, forwards revisioned image-resource snapshots plus callback/apply ports through native Sun providers, keeps cached repeat draws revision-stable, and macOS/Windows/Linux Sun providers opt into post-present HostAsyncImageLoader scheduling; matching-host async second-frame runtime observation remains follow-up work."
   }
 }
 
