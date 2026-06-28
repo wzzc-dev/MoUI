@@ -6,6 +6,7 @@ fn[Msg] erase_view_for_runtime(
   {
     identity: view.identity(),
     revision: view.revision(),
+    paint_revision: view.paint_revision(),
     children: () => {
       view.children().map(child => erase_view_for_runtime(child, emit))
     },

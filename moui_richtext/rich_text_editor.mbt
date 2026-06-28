@@ -3597,10 +3597,15 @@ fn rich_text_block_cache_key(
   block : RichTextBlock,
   frame : @core.Rect,
 ) -> String {
-  // 滚动时 block 的 frame.origin.y 会随 scroll_y 变化，
-  // 必须把 origin.y 纳入 cache_key，否则 layer cache 会命中旧位置的 layer，
-  // 导致滚动后内容停留在旧位置，直到点击触发 selection 变化才重绘。
-  "rich-text-block;range=\{rich_text_source_range_key(block.source_range)};index=\{index};x=\{frame.origin.x};y=\{frame.origin.y};w=\{frame.size.width};h=\{frame.size.height}"
+  // 注意：不要把 frame.origin 纳入 cache_key。
+  // 渲染器在栅格化 cached layer 时会做 translate(-origin.x, -origin.y) 抵消，
+  // pixmap 内容只依赖 block 自身 + frame.size，与 origin 无关。
+  // origin 仅在 draw_cached_layer_pixmap 贴图阶段用于定位。
+  // 滚动时让节点重建拿到新 origin 是通过 facade.mbt revision 加入 scroll_y 实现，
+  // 那条路径不依赖 layer cache 失效，layer 仍可命中并以新 frame 贴图。
+  // 把 origin 编码进 cache_key 反而会导致滚动时所有 block 缓存全 miss，触发
+  // 重栅格化与缓存驱逐抖动，造成滚动后明显卡顿。
+  "rich-text-block;range=\{rich_text_source_range_key(block.source_range)};index=\{index};w=\{frame.size.width};h=\{frame.size.height}"
 }
 
 ///|
@@ -3646,7 +3651,7 @@ fn rich_text_block_content_revision(
   hash = rich_text_hash_mix_int(hash, if block.rule { 1 } else { 0 })
   hash = rich_text_hash_mix_string(
     hash,
-    "\{frame.origin.x},\{frame.origin.y},\{frame.size.width}x\{frame.size.height}",
+    "\{frame.size.width}x\{frame.size.height}",
   )
   for run in block.runs {
     hash = rich_text_hash_mix_string(hash, run.text)

@@ -2,6 +2,11 @@
 priv struct ErasedViewNode {
   identity : @core.ViewIdentity
   revision : String
+  // paint_revision 变化只触发 ReconcilePaint（重算 paint + 清 render cache），
+  // 不触发 ReconcileLayout（不清 layout cache、不重算 layout）。
+  // 用于滚动等"只影响 paint 不影响 layout"的场景。
+  // 为空串时（默认）不参与 reconcile_dirty_kind 判断，保持现有 revision-only 语义。
+  paint_revision : String
   children : () -> Array[ErasedViewNode]
   build_child : ((@core.ComponentContext) -> ErasedViewNode)?
   child_constraints : (Constraints) -> Constraints

@@ -128,7 +128,10 @@ pub fn[Msg] controlled_markdown_session_editor(
   @core.View::node(
     identity=() => @core.ViewIdentity::new(kind="MarkdownSessionEditor", key~),
     revision=() => {
-      "markdown-session-editor:\{session.revision}:\{session.blocks.length()}:\{selection.caret}:\{view_text_range_option_revision(selection.selection)}:\{placeholder}:\{view_size_revision(size)}:\{view_font_revision(font)}:\{view_color_revision(foreground)}:\{view_color_revision(placeholder_color)}:\{view_brush_revision(background)}:\{view_border_option_revision(border)}:\{view_border_option_revision(focused_border)}:\{view_color_revision(cursor_color)}:\{corner_radius}:\{source_mode}:\{focus_mode}:\{accepts_tab_input}:\{markdown_session_current_scroll_y(visible_scroll_y, visible_scroll_state)}"
+      "markdown-session-editor:\{session.revision}:\{session.blocks.length()}:\{selection.caret}:\{view_text_range_option_revision(selection.selection)}:\{placeholder}:\{view_size_revision(size)}:\{view_font_revision(font)}:\{view_color_revision(foreground)}:\{view_color_revision(placeholder_color)}:\{view_brush_revision(background)}:\{view_border_option_revision(border)}:\{view_border_option_revision(focused_border)}:\{view_color_revision(cursor_color)}:\{corner_radius}:\{source_mode}:\{focus_mode}:\{accepts_tab_input}"
+    },
+    paint_revision=() => {
+      "markdown-session-editor-scroll:\{markdown_session_current_scroll_y(visible_scroll_y, visible_scroll_state)}"
     },
     layout=ctx => {
       @core.ViewLayoutResult::new(size=ctx.constraints.constrain(size))

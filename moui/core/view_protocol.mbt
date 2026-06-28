@@ -177,6 +177,10 @@ pub(all) struct TextControlStateContext {
 priv struct ViewNode[Msg] {
   identity_fn : () -> ViewIdentity
   revision_fn : () -> String
+  // paint_revision 变化只触发 paint dirty（重算 paint + 清 render cache），
+  // 不触发 layout dirty（不清 layout cache、不重算 layout）。
+  // 用于滚动等"只影响 paint 不影响 layout"的场景。
+  paint_revision_fn : () -> String
   children_fn : () -> Array[View[Msg]]
   build_child_fn : ((ComponentContext) -> View[Msg])?
   child_constraints_fn : (Constraints) -> Constraints
@@ -346,6 +350,7 @@ pub fn ViewSemanticsInfo::new(
 fn[Msg] ViewNode::new(
   identity~ : () -> ViewIdentity,
   revision? : () -> String = () => "",
+  paint_revision? : () -> String = () => "",
   children? : () -> Array[View[Msg]] = () => [],
   build_child? : ((ComponentContext) -> View[Msg])? = None,
   child_constraints? : (Constraints) -> Constraints = constraints => {
@@ -369,6 +374,7 @@ fn[Msg] ViewNode::new(
   {
     identity_fn: identity,
     revision_fn: revision,
+    paint_revision_fn: paint_revision,
     children_fn: children,
     build_child_fn: build_child,
     child_constraints_fn: child_constraints,
@@ -393,6 +399,11 @@ fn[Msg] ViewNode::identity(self : ViewNode[Msg]) -> ViewIdentity {
 ///|
 fn[Msg] ViewNode::revision(self : ViewNode[Msg]) -> String {
   (self.revision_fn)()
+}
+
+///|
+fn[Msg] ViewNode::paint_revision(self : ViewNode[Msg]) -> String {
+  (self.paint_revision_fn)()
 }
 
 ///|
@@ -506,6 +517,7 @@ fn[Msg, NextMsg] ViewNode::map(
   ViewNode::new(
     identity=() => self.identity(),
     revision=() => self.revision(),
+    paint_revision=() => self.paint_revision(),
     children=() => self.children().map(child => child.map(map)),
     build_child=match self.build_child() {
       Some(build) => Some(ctx => build(ctx).map(map))
@@ -553,6 +565,7 @@ pub struct View[Msg] {
 pub fn[Msg] View::node(
   identity~ : () -> ViewIdentity,
   revision? : () -> String = () => "",
+  paint_revision? : () -> String = () => "",
   children? : () -> Array[View[Msg]] = () => [],
   build_child? : ((ComponentContext) -> View[Msg])? = None,
   child_constraints? : (Constraints) -> Constraints = constraints => {
@@ -577,6 +590,7 @@ pub fn[Msg] View::node(
     node: ViewNode::new(
       identity~,
       revision~,
+      paint_revision~,
       children~,
       build_child~,
       child_constraints~,
@@ -602,6 +616,11 @@ pub fn[Msg] View::identity(self : View[Msg]) -> ViewIdentity {
 ///|
 pub fn[Msg] View::revision(self : View[Msg]) -> String {
   self.node.revision()
+}
+
+///|
+pub fn[Msg] View::paint_revision(self : View[Msg]) -> String {
+  self.node.paint_revision()
 }
 
 ///|
