@@ -439,6 +439,7 @@ pub fn MarkdownDocumentSession::with_layout_cache(
   scroll_y~ : Double,
   viewport_height~ : Double,
   overscan? : Double = 320.0,
+  text_system? : @core.TextSystem = @core.TextSystem::fallback(),
 ) -> MarkdownDocumentSession {
   {
     ..self,
@@ -447,6 +448,7 @@ pub fn MarkdownDocumentSession::with_layout_cache(
         self,
         document,
         base,
+        text_system~,
         width~,
         scroll_y~,
         viewport_height~,
@@ -465,6 +467,7 @@ pub fn MarkdownDocumentLayoutCache::new(
   scroll_y~ : Double,
   viewport_height~ : Double,
   overscan? : Double = 320.0,
+  text_system? : @core.TextSystem = @core.TextSystem::fallback(),
 ) -> MarkdownDocumentLayoutCache {
   let layout_blocks : Array[MarkdownDocumentLayoutBlock] = []
   let mut top = 0.0
@@ -473,7 +476,7 @@ pub fn MarkdownDocumentLayoutCache::new(
   let mut visible_start = -1
   let mut visible_end = -1
   for index, block in document.blocks {
-    let height = rich_text_block_total_height(block, base)
+    let height = rich_text_block_total_height(block, base, text_system)
     let bottom = top + height
     let session_block = if index < session.blocks.length() {
       session.blocks[index]
@@ -1191,8 +1194,9 @@ fn markdown_document_session_reveal_selection(
 fn rich_text_block_total_height(
   block : RichTextBlock,
   base_font : @core.FontSpec,
+  text_system : @core.TextSystem,
 ) -> Double {
-  rich_text_block_line_height(block, base_font) +
+  rich_text_block_line_height(block, base_font, text_system) +
   block.inset.top +
   block.inset.bottom
 }

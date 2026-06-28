@@ -293,7 +293,7 @@ fn min_double(a : Double, b : Double) -> Double {
 }
 
 ///|
-fn min_int(a : Int, b : Int) -> Int {
+pub fn min_int(a : Int, b : Int) -> Int {
   if a < b {
     a
   } else {
@@ -302,7 +302,7 @@ fn min_int(a : Int, b : Int) -> Int {
 }
 
 ///|
-fn max_int(a : Int, b : Int) -> Int {
+pub fn max_int(a : Int, b : Int) -> Int {
   if a > b {
     a
   } else {
@@ -311,7 +311,7 @@ fn max_int(a : Int, b : Int) -> Int {
 }
 
 ///|
-fn clamp_int(value : Int, min : Int, max : Int) -> Int {
+pub fn clamp_int(value : Int, min : Int, max : Int) -> Int {
   if value < min {
     min
   } else if value > max {

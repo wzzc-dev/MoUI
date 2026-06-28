@@ -33,7 +33,7 @@ pub struct CodeHighlightSpan {
 ///|
 /// Resolve a token kind to a display color. Colors are tuned to read well on
 /// both light and dark surfaces.
-pub fn code_highlight_color(kind : CodeHighlightToken) -> @core.Color {
+fn code_highlight_color(kind : CodeHighlightToken) -> @core.Color {
   match kind {
     // Plain text uses the run's inherited color (caller decides), so signal
     // that with a sentinel that callers translate to None.
