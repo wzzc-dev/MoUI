@@ -9,7 +9,7 @@ fn MarkdownEditorApp::load_document(
   source : String,
   path~ : String,
 ) -> Unit {
-  self.document.set(source)
+  self.replace_document_source(source, reason=LoadDocument)
   self.document_path.set(path)
   self.record_recent_document_path(path)
   self.saved_document.set(source)
@@ -303,9 +303,7 @@ fn MarkdownEditorApp::apply_directory_listing(
     @host.HostServiceResponse::Pending(_) => ()
     @host.HostServiceResponse::Unavailable(reason) =>
       self.transfer_status.set(
-        TransferUnavailable(
-          "directory listing unavailable: " + reason,
-        ),
+        TransferUnavailable("directory listing unavailable: " + reason),
       )
     _ =>
       self.transfer_status.set(
@@ -326,21 +324,13 @@ fn markdown_editor_tree_items_from_listing(
     if entry.is_directory {
       let child_path = markdown_editor_join_path(entry.path, entry.name)
       child_items.push(
-        @views.tree_item(
-          id=child_path,
-          label=entry.name,
-          children=[],
-        ),
+        @views.tree_item(id=child_path, label=entry.name, children=[]),
       )
     } else {
-      child_items.push(
-        @views.tree_item(id=entry.path, label=entry.name),
-      )
+      child_items.push(@views.tree_item(id=entry.path, label=entry.name))
     }
   }
-  [
-    @views.tree_item(id=path, label=label, children=child_items),
-  ]
+  [@views.tree_item(id=path, label~, children=child_items)]
 }
 
 ///|
@@ -509,10 +499,12 @@ fn markdown_editor_image_alt_from_filename(file_name : String) -> String {
   }
   let result : Array[Char] = []
   for ch in no_ext {
-    result.push(match ch {
-      '-' | '_' => ' '
-      _ => ch
-    })
+    result.push(
+      match ch {
+        '-' | '_' => ' '
+        _ => ch
+      },
+    )
   }
   String::from_array(result).trim().to_owned()
 }
@@ -542,7 +534,15 @@ fn MarkdownEditorApp::insert_text_at_cursor(
     None => (doc[:caret].to_owned(), doc[caret:].to_owned())
   }
   let new_caret = before.length() + text.length()
-  self.document.set(before + text + after)
+  self.apply_editor_transaction(
+    MarkdownEditTransaction::from_sources(
+      doc,
+      before + text + after,
+      caret=new_caret,
+      selection=None,
+      reason=MediaEdit,
+    ),
+  )
   self.selection.set({ caret: new_caret, selection: None })
   self.sync_target_inputs()
   self.maybe_center_typewriter_selection()
@@ -801,7 +801,9 @@ fn MarkdownEditorApp::apply_transfer_completion(
     }
     @host.HostServiceResponse::ClipboardImage(bytes) => {
       let base64_data = @base64.encode(bytes[:])
-      let image_md = "![pasted image](data:image/png;base64," + base64_data + ")"
+      let image_md = "![pasted image](data:image/png;base64," +
+        base64_data +
+        ")"
       self.insert_text_at_cursor(image_md)
       self.transfer_status.set(TransferImported)
       self.push_toast("Image pasted", tone=@views.FeedbackTone::Success)
@@ -840,7 +842,10 @@ fn MarkdownEditorApp::apply_transfer_completion(
     @host.HostServiceResponse::UrlOpened =>
       self.transfer_status.set(TransferTargetOpened)
     @host.HostServiceResponse::DirectoryListing(path, entries) =>
-      self.apply_directory_listing(path, @host.HostServiceResponse::DirectoryListing(path, entries))
+      self.apply_directory_listing(
+        path,
+        @host.HostServiceResponse::DirectoryListing(path, entries),
+      )
     @host.HostServiceResponse::Unavailable(reason) => {
       self.transfer_status.set(TransferUnavailable(reason))
       self.push_toast(
@@ -980,7 +985,7 @@ fn MarkdownEditorApp::apply_file_dialog_selection_with_services(
   }
 }
 
-
+///|
 #warnings("-unused_value")
 fn markdown_editor_transfer_status_label(
   status : MarkdownEditorTransferStatus,
@@ -1084,6 +1089,18 @@ fn markdown_editor_status_label(
 }
 
 ///|
+fn markdown_editor_session_status_label(
+  block_label : String,
+  session : MarkdownDocumentSession,
+  selection : MarkdownEditorSelection,
+) -> String {
+  let section = markdown_editor_session_active_section_suffix(
+    session, selection,
+  )
+  block_label + section + " / " + markdown_editor_session_reading_label(session)
+}
+
+///|
 fn markdown_editor_active_section_suffix(
   snapshot : MarkdownEditorSnapshot,
   selection : MarkdownEditorSelection,
@@ -1100,6 +1117,29 @@ fn markdown_editor_active_section_suffix(
         "Untitled"
       } else {
         snapshot.outline[index].title
+      },
+    )
+    " / Section: " + title
+  }
+}
+
+///|
+fn markdown_editor_session_active_section_suffix(
+  session : MarkdownDocumentSession,
+  selection : MarkdownEditorSelection,
+) -> String {
+  let index = markdown_editor_active_outline_index(
+    session.outline,
+    selection.caret,
+  )
+  if index < 0 {
+    ""
+  } else {
+    let title = markdown_editor_outline_title(
+      if session.outline[index].title == "" {
+        "Untitled"
+      } else {
+        session.outline[index].title
       },
     )
     " / Section: " + title

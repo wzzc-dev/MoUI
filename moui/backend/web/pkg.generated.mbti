@@ -42,6 +42,8 @@ pub fn web_capability_summary(services? : @host.HostServiceCapabilities, async_s
 
 pub fn web_complete_async_clipboard_read(Int, Bool, Int) -> Unit
 
+pub fn web_complete_async_clipboard_read_image(Int, Bool, Int) -> Unit
+
 pub fn web_complete_async_file_dialog(Int, Bool, Int) -> Unit
 
 pub fn web_complete_async_file_open_text(Int, Bool, Int, Int) -> Unit

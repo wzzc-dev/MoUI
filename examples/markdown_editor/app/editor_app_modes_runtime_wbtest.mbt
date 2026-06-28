@@ -255,12 +255,16 @@ test "markdown editor runtime quick format row applies command" {
 }
 
 //|
+
+///|
 test "markdown editor set document from input anchors scroll position" {
   let app = MarkdownEditorApp::new()
   app.edit_document("# Long\n\nParagraph text\n\nMore text\n\nEnd")
   app.editor_scroll.scroll_to(x=0.0, y=50.0)
   let before = app.editor_scroll_y()
-  app.set_document_from_input("# Long\n\nParagraph text updated\n\nMore text\n\nEnd")
+  app.set_document_from_input(
+    "# Long\n\nParagraph text updated\n\nMore text\n\nEnd",
+  )
   inspect(app.editor_scroll_y(), content=before.to_string())
 }
 
@@ -397,6 +401,8 @@ test "markdown editor runtime front matter shortcuts insert metadata" {
 }
 
 //|
+
+///|
 test "markdown editor image center wraps image in center tags" {
   let app = MarkdownEditorApp::new()
   app.set_document("Before\n\n![photo](img.png)\n\nAfter")
@@ -414,10 +420,11 @@ test "markdown editor image center wraps image in center tags" {
 }
 
 //|
+
+///|
 test "markdown editor image center detects centered state" {
   let wrapped = markdown_editor_toggle_image_center(
-    "Before\n\n![photo](img.png)\n\nAfter",
-    true,
+    "Before\n\n![photo](img.png)\n\nAfter", true,
   )
   assert_true(wrapped.contains("<center>"))
   assert_true(wrapped.contains("</center>"))
@@ -425,4 +432,3 @@ test "markdown editor image center detects centered state" {
   assert_false(unwrapped.contains("<center>"))
   assert_false(unwrapped.contains("</center>"))
 }
-

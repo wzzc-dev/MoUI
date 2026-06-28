@@ -18,7 +18,10 @@ test "markdown editor pick working directory stores chosen folder" {
   )
   app.pick_working_directory_for_test(services)
   inspect(app.working_directory(), content="/tmp/project")
-  inspect(@debug.to_string(app.expanded_tree_paths()), content="[\"/tmp/project\"]")
+  inspect(
+    @debug.to_string(app.expanded_tree_paths()),
+    content="[\"/tmp/project\"]",
+  )
   inspect(app.transfer_status_label_for_test(), content="")
 }
 
@@ -49,10 +52,9 @@ test "markdown editor tree path opens recent markdown file" {
     seen_default_name=Ref(""),
   )
   app.pick_working_directory_for_test(services)
-  ignore(app.update_with_services(
-    SelectTreePath("/tmp/project/README.md"),
-    services,
-  ))
+  ignore(
+    app.update_with_services(SelectTreePath("/tmp/project/README.md"), services),
+  )
   inspect(app.transfer_status_label_for_test(), content="Opening file")
 }
 
@@ -62,10 +64,14 @@ test "markdown editor file sidebar renders optional directory tree" {
   app.set_file_sidebar_visible(true)
   let commands = app.runtime(width=1120.0, height=640.0).draw_commands()
   assert_true(
-    commands.any(command => command is @core.DrawCommand::DrawText({ text: "Files", .. })),
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Files", .. })
+    }),
   )
   assert_false(
-    commands.any(command => command is @core.DrawCommand::DrawText({ text: "Journal.md", .. })),
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Journal.md", .. })
+    }),
   )
   app.load_document_for_test("# Note", path="/tmp/project/Note.md")
   // Inline mock that returns realistic directory entries for the tree test
@@ -90,18 +96,21 @@ test "markdown editor file sidebar renders optional directory tree" {
           @host.HostServiceResponse::FileDialogSelection(["/tmp/project"])
         @host.HostServiceRequest::ListDirectory(_) =>
           @host.HostServiceResponse::DirectoryListing("/tmp/project", entries)
-        _ =>
-          @host.HostServiceResponse::Unavailable("unexpected request")
+        _ => @host.HostServiceResponse::Unavailable("unexpected request")
       }
     },
   )
   app.pick_working_directory_for_test(@host.HostAppServices::new(bridge~))
   let expanded = app.runtime(width=1120.0, height=640.0).draw_commands()
   assert_true(
-    expanded.any(command => command is @core.DrawCommand::DrawText({ text: "Files", .. })),
+    expanded.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Files", .. })
+    }),
   )
   assert_true(
-    expanded.any(command => command is @core.DrawCommand::DrawText({ text: "README.md", .. })),
+    expanded.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "README.md", .. })
+    }),
   )
 }
 
@@ -119,12 +128,16 @@ test "markdown editor tree toggle preserves expansion order" {
 }
 
 //|
+
+///|
 test "markdown editor file tree starts expanded" {
   let app = MarkdownEditorApp::new()
   inspect(@debug.to_string(app.file_tree_expanded.get()), content="true")
 }
 
 //|
+
+///|
 test "markdown editor toggle file tree fold hides tree" {
   let app = MarkdownEditorApp::new()
   ignore(app.update(ToggleFileTree))

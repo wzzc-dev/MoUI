@@ -15,11 +15,17 @@ using @views {
 }
 
 ///|
-using @moui_richtext {controlled_rich_text_editor}
+using @moui_richtext {
+  type MarkdownDocumentSession,
+  type MarkdownEditReason,
+  type MarkdownEditTransaction,
+  controlled_markdown_session_editor,
+}
 
 ///|
 pub struct MarkdownEditorApp {
   document : @moui.State[String]
+  document_session : @moui.State[MarkdownDocumentSession]
   selection : @moui.State[MarkdownEditorSelection]
   link_target : @moui.State[String]
   image_target : @moui.State[String]
@@ -231,7 +237,7 @@ pub enum MarkdownEditorMsg {
   DismissToastTick
   AutosaveTick
   ResolvePendingConfirm(MarkdownEditorConfirmResolution)
-  UpdateDocument(String)
+  ApplyEditorTransaction(MarkdownEditTransaction)
   UpdateFindQuery(String)
   UpdateReplaceText(String)
   ToggleFindCaseSensitive
@@ -276,6 +282,7 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
   let document = sample_markdown()
   {
     document: @moui.State::new(document),
+    document_session: @moui.State::new(MarkdownDocumentSession::new(document)),
     selection: @moui.State::new({ caret: 0, selection: None }),
     link_target: @moui.State::new("https://moui.dev"),
     image_target: @moui.State::new("assets/image.png"),
@@ -430,13 +437,12 @@ fn MarkdownEditorApp::update(
       }
       self.font_family.set(next)
     }
-    ToggleMenuBarMenu(menu_id) => {
+    ToggleMenuBarMenu(menu_id) =>
       if self.active_menu.get() == menu_id {
         self.active_menu.set("")
       } else {
         self.active_menu.set(menu_id)
       }
-    }
     CloseMenuBarMenu => self.active_menu.set("")
     CloseMenuBarMenuAndRun(message) => {
       self.active_menu.set("")
@@ -446,7 +452,8 @@ fn MarkdownEditorApp::update(
     AutosaveTick => self.maybe_autosave()
     ResolvePendingConfirm(resolution) =>
       self.resolve_pending_confirm(resolution)
-    UpdateDocument(value) => self.set_document_from_input(value)
+    ApplyEditorTransaction(transaction) =>
+      self.apply_editor_transaction(transaction)
     UpdateFindQuery(value) => self.update_find_query(value)
     UpdateReplaceText(value) => self.replace_text.set(value)
     ToggleFindCaseSensitive => self.toggle_find_option(field="case_sensitive")
@@ -510,11 +517,8 @@ fn MarkdownEditorApp::update(
     ToggleImageCenter => {
       let doc = self.document.get()
       let centered = !self.image_centered.get()
-      let next = markdown_editor_toggle_image_center(
-        doc,
-        centered,
-      )
-      self.document.set(next)
+      let next = markdown_editor_toggle_image_center(doc, centered)
+      self.replace_document_source(next, reason=MediaEdit)
       self.image_centered.set(centered)
       self.sync_target_inputs()
     }

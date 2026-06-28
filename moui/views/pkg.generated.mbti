@@ -626,6 +626,7 @@ pub(all) enum IconName {
   Eye
   Focus
   Columns
+  Sidebar
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum MainAlign {

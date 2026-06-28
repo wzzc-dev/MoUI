@@ -1024,12 +1024,19 @@ pub fn SaveableStateStore::snapshot(Self) -> SaveableStateSnapshot
 
 pub struct ScrollState {
   offset_slot : State[Point]
+  smooth_target : State[Point?]
+  smooth_start : State[Point?]
+  smooth_start_time_ms : State[Double?]
+  smooth_duration_ms : State[Double?]
 }
 pub fn ScrollState::binding(Self) -> Binding[Point]
+pub fn ScrollState::is_smooth_scrolling(Self) -> Bool
 pub fn ScrollState::new(offset? : Point) -> Self
 pub fn ScrollState::offset(Self) -> Point
 pub fn ScrollState::scroll_to(Self, x~ : Double, y~ : Double) -> Unit
 pub fn ScrollState::set_offset(Self, Point) -> Unit
+pub fn ScrollState::smooth_scroll_to(Self, x~ : Double, y~ : Double, duration_ms? : Double) -> Unit
+pub fn ScrollState::tick(Self, Double) -> Unit
 
 pub(all) enum SemanticsAction {
   Activate

@@ -11,9 +11,23 @@ fn markdown_editor_reading_label(snapshot : MarkdownEditorSnapshot) -> String {
 }
 
 ///|
+fn markdown_editor_session_reading_label(
+  session : MarkdownDocumentSession,
+) -> String {
+  let minutes = if session.reading_minutes == 0 {
+    "less than 1 min"
+  } else if session.reading_minutes == 1 {
+    "1 min"
+  } else {
+    session.reading_minutes.to_string() + " min"
+  }
+  "\{session.word_count} words / \{session.line_count} lines / " + minutes
+}
+
+///|
 fn files_inspector(
   app : MarkdownEditorApp,
-  snapshot : MarkdownEditorSnapshot,
+  session : MarkdownDocumentSession,
   theme : @moui.Theme,
   height~ : Double,
 ) -> @moui.View[MarkdownEditorMsg] {
@@ -36,13 +50,13 @@ fn files_inspector(
   }
   let working_directory = app.working_directory.get()
   let file_rows : Array[@moui.View[MarkdownEditorMsg]] = [
-    text("文件", width=content_width, height=24.0)
+    text("Files", width=content_width, height=24.0)
     .font(theme.typography.caption)
     .foreground(theme.palette.muted),
     text(
       markdown_editor_file_sidebar_current_label(
         path=app.document_path.get(),
-        fallback=snapshot.active_heading,
+        fallback=session.active_heading,
         dirty=app.is_dirty(),
       ),
       width=content_width,
@@ -126,24 +140,24 @@ fn files_inspector(
 
 ///|
 fn document_info_inspector(
-  snapshot : MarkdownEditorSnapshot,
+  session : MarkdownDocumentSession,
   theme : @moui.Theme,
   height~ : Double,
 ) -> @moui.View[MarkdownEditorMsg] {
-  let info = markdown_editor_document_info(snapshot)
+  let info = markdown_editor_document_info_from_session(session)
   let content_width = markdown_editor_info_content_width()
   let rows = column(
     [
-      markdown_editor_info_row("Words", snapshot.word_count.to_string(), theme),
+      markdown_editor_info_row("Words", session.word_count.to_string(), theme),
       markdown_editor_info_row(
         "Characters",
         info.character_count.to_string(),
         theme,
       ),
-      markdown_editor_info_row("Lines", snapshot.line_count.to_string(), theme),
+      markdown_editor_info_row("Lines", session.line_count.to_string(), theme),
       markdown_editor_info_row(
         "Reading",
-        markdown_editor_reading_time_short_label(snapshot),
+        markdown_editor_session_reading_time_short_label(session),
         theme,
       ),
       markdown_editor_info_divider(theme),
@@ -249,6 +263,7 @@ fn markdown_editor_info_divider(
 }
 
 ///|
+#warnings("-unused_value")
 fn markdown_editor_reading_time_short_label(
   snapshot : MarkdownEditorSnapshot,
 ) -> String {
@@ -261,7 +276,18 @@ fn markdown_editor_reading_time_short_label(
   }
 }
 
-
+///|
+fn markdown_editor_session_reading_time_short_label(
+  session : MarkdownDocumentSession,
+) -> String {
+  if session.reading_minutes == 0 {
+    "<1 min"
+  } else if session.reading_minutes == 1 {
+    "1 min"
+  } else {
+    session.reading_minutes.to_string() + " min"
+  }
+}
 
 ///|
 fn file_sidebar_recent_rows(
@@ -367,17 +393,17 @@ fn source_inspector(
 ///|
 fn outline_inspector(
   app : MarkdownEditorApp,
-  snapshot : MarkdownEditorSnapshot,
+  session : MarkdownDocumentSession,
   selection : MarkdownEditorSelection,
   theme : @moui.Theme,
   height~ : Double,
 ) -> @moui.View[MarkdownEditorMsg] {
   let visible_outline = markdown_editor_folded_outline(
-    snapshot.outline,
+    session.outline,
     app.folded_headings.get(),
   )
   let active_index = markdown_editor_active_outline_index(
-    snapshot.outline,
+    session.outline,
     selection.caret,
   )
   let content = if visible_outline.length() == 0 {
@@ -390,7 +416,7 @@ fn outline_inspector(
     .foreground(theme.palette.muted)
   } else {
     scroll_view(
-      outline_rows(app, snapshot.outline, visible_outline, active_index, theme),
+      outline_rows(app, session.outline, visible_outline, active_index, theme),
       width=markdown_editor_outline_content_width(),
       height=markdown_editor_max_double(0.0, height - 52.0),
     )
