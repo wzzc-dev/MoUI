@@ -15,6 +15,7 @@ priv struct RuntimeState {
   mut cache_epoch : Int
   mut last_damage_region : DamageRegion
   known_layer_cache_keys : Array[CachedLayerState]
+  cached_layer_admissions : Array[CachedLayerAdmissionState]
   mut next_element_id : Int
   dirty_elements : Array[ElementId]
   dirty_build_elements : Array[ElementId]
@@ -84,6 +85,7 @@ fn RuntimeState::new_erased_view_node(
     cache_epoch: 0,
     last_damage_region: DamageRegion::full("initial frame"),
     known_layer_cache_keys: [],
+    cached_layer_admissions: [],
     next_element_id: initial.next_id,
     dirty_elements: [],
     dirty_build_elements: [],
@@ -188,6 +190,7 @@ fn RuntimeState::destroy(self : RuntimeState) -> Unit {
   self.cache_epoch = 0
   self.last_damage_region = DamageRegion::empty()
   self.known_layer_cache_keys.clear()
+  self.cached_layer_admissions.clear()
 }
 
 ///|
@@ -307,15 +310,20 @@ fn RuntimeState::build_draw_commands(self : RuntimeState) -> Array[DrawCommand] 
 fn RuntimeState::build_draw_frame(self : RuntimeState) -> DrawFrame {
   self.draw_command_build_count = self.draw_command_build_count + 1
   let commands : Array[DrawCommand] = [Clear(Color::white())]
+  let next_known_layers : Array[CachedLayerState] = []
+  let next_admissions : Array[CachedLayerAdmissionState] = []
   self.rebuild_if_possible()
   self.ensure_render_tree()
   self.render_tree.root.collect_frame_commands(
     commands,
     self.known_layer_cache_keys,
+    self.cached_layer_admissions,
+    next_known_layers,
+    next_admissions,
   )
   let platform_views : Array[PlatformViewPlacement] = []
   self.render_tree.root.collect_platform_views(platform_views)
-  self.record_cached_layer_updates(commands)
+  self.record_cached_layer_frame(next_known_layers, next_admissions)
   DrawFrame::new(
     commands~,
     platform_views~,

@@ -34,5 +34,6 @@ Keep it brief — aim for 1–2 pages max per session.
 ## Index
 
 <!-- Add new entries newest-first: -->
+- [2026-06-28: Markdown scroll cache and caret latency](2026-06-28-markdown-scroll-cache-caret.md)
 - [2026-06-28: Markdown session virtual scrolling](2026-06-28-markdown-session-virtual-scrolling.md)
 <!-- - [2026-06-25: Button variant refactor](2026-06-25-button-variant-refactor.md) -->

@@ -23,7 +23,6 @@ using @moui_richtext {
   markdown_editor_preview_text,
   markdown_editor_range_has_inline_marker,
   markdown_editor_selected_footnote_text,
-  markdown_editor_selected_html_block_text,
   markdown_editor_selected_image_target,
   markdown_editor_selected_link_target,
   markdown_editor_substring,

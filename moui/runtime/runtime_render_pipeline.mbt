@@ -141,53 +141,38 @@ fn RuntimeState::compute_damage_region(
 }
 
 ///|
-fn RuntimeState::record_cached_layer_updates(
+fn RuntimeState::record_cached_layer_frame(
   self : RuntimeState,
-  commands : Array[DrawCommand],
+  next_known_layers : Array[CachedLayerState],
+  next_admissions : Array[CachedLayerAdmissionState],
 ) -> Unit {
-  let mut updated = false
-  for command in commands {
-    match command {
-      BeginCachedLayer(spec) =>
-        if self.record_cached_layer_update(spec) {
-          updated = true
-        }
-      _ => ()
-    }
-  }
-  if updated {
+  let known_changed = !self.known_layer_cache_keys.same_cached_layers(
+    next_known_layers,
+  )
+  if known_changed {
     self.cache_epoch = self.cache_epoch + 1
   }
+  self.known_layer_cache_keys.clear()
+  self.known_layer_cache_keys.append(next_known_layers)
+  self.cached_layer_admissions.clear()
+  self.cached_layer_admissions.append(next_admissions)
 }
 
 ///|
-fn RuntimeState::record_cached_layer_update(
-  self : RuntimeState,
-  spec : CachedLayerSpec,
+fn Array::same_cached_layers(
+  self : Array[CachedLayerState],
+  other : Array[CachedLayerState],
 ) -> Bool {
-  let retained : Array[CachedLayerState] = []
-  let mut found = false
-  let mut changed = false
-  for existing in self.known_layer_cache_keys {
-    if existing.key == spec.key {
-      found = true
-      if existing.content_revision != spec.content_revision {
-        changed = true
-      }
-      retained.push({ key: spec.key, content_revision: spec.content_revision })
-    } else {
-      retained.push(existing)
+  if self.length() != other.length() {
+    return false
+  }
+  for index in 0..<self.length() {
+    if self[index].key != other[index].key ||
+      self[index].content_revision != other[index].content_revision {
+      return false
     }
   }
-  if !found {
-    retained.push({ key: spec.key, content_revision: spec.content_revision })
-    changed = true
-  }
-  if changed {
-    self.known_layer_cache_keys.clear()
-    self.known_layer_cache_keys.append(retained)
-  }
-  changed
+  true
 }
 
 ///|
@@ -201,11 +186,35 @@ fn RuntimeState::invalidate_cached_layer_key(
       retained.push(existing)
     }
   }
-  if retained.length() != self.known_layer_cache_keys.length() {
+  let known_changed = retained.length() != self.known_layer_cache_keys.length()
+  if known_changed {
     self.known_layer_cache_keys.clear()
     self.known_layer_cache_keys.append(retained)
     self.cache_epoch = self.cache_epoch + 1
+  }
+  let admission_changed = self.remove_cached_layer_admissions(key)
+  if known_changed || admission_changed {
     self.request_redraw()
+  }
+}
+
+///|
+fn RuntimeState::remove_cached_layer_admissions(
+  self : RuntimeState,
+  key : String,
+) -> Bool {
+  let retained : Array[CachedLayerAdmissionState] = []
+  for admission in self.cached_layer_admissions {
+    if admission.key != key {
+      retained.push(admission)
+    }
+  }
+  if retained.length() != self.cached_layer_admissions.length() {
+    self.cached_layer_admissions.clear()
+    self.cached_layer_admissions.append(retained)
+    true
+  } else {
+    false
   }
 }
 

@@ -4,7 +4,6 @@ priv struct SkiaCachedLayerImageEntry {
   key : String
   runtime_key : String
   image : @skia_native.Image
-  frame : @core.Rect
   physical_size : @moui_skia.ISize
   scale_factor : Double
   surface_route : SkiaSurfaceRoute
@@ -249,7 +248,6 @@ fn SkiaRasterRenderer::update_cached_layer(
                 key: self.skia_layer_cache_key(spec, physical_size),
                 runtime_key: spec.key,
                 image,
-                frame: spec.frame,
                 physical_size,
                 scale_factor: self.metrics.scale_factor,
                 surface_route: self.surface_route,
@@ -388,8 +386,9 @@ fn SkiaRasterRenderer::draw_cached_layer(
   let key = self.skia_layer_cache_key(spec, physical_size)
   match self.lookup_cached_layer(key) {
     Some(entry) => {
+      // Cached layer pixels are recorded in layer-local coordinates; origin is
+      // the draw destination, so moving a same-size layer remains a cache hit.
       if entry.runtime_key != spec.key ||
-        entry.frame != spec.frame ||
         entry.scale_factor != self.metrics.scale_factor ||
         entry.surface_route != self.surface_route ||
         entry.content_revision != spec.content_revision {
@@ -497,7 +496,68 @@ fn SkiaRasterRenderer::layer_cache_admission_record(
     last_revision: -1,
   }
   self.layer_cache_admissions.push(record)
+  self.prune_layer_cache_admission_records(identity_key)
   record
+}
+
+///|
+fn skia_layer_cache_admission_limit() -> Int {
+  512
+}
+
+///|
+fn SkiaRasterRenderer::prune_layer_cache_admission_records(
+  self : SkiaRasterRenderer,
+  protected_identity_key : String,
+) -> Unit {
+  while self.layer_cache_admissions.length() >
+        skia_layer_cache_admission_limit() {
+    match self.layer_cache_admission_eviction_index(protected_identity_key) {
+      Some(index) => ignore(self.layer_cache_admissions.remove(index))
+      None => return
+    }
+  }
+}
+
+///|
+fn SkiaRasterRenderer::layer_cache_admission_eviction_index(
+  self : SkiaRasterRenderer,
+  protected_identity_key : String,
+) -> Int? {
+  let mut candidate : Int? = None
+  let mut candidate_live = true
+  let mut candidate_tick = 0
+  for index in 0..<self.layer_cache_admissions.length() {
+    let record = self.layer_cache_admissions[index]
+    if record.identity_key == protected_identity_key {
+      continue
+    }
+    let live = self.layer_cache_has_identity(record.identity_key)
+    let tick = record.last_admitted_frame
+    match candidate {
+      None => {
+        candidate = Some(index)
+        candidate_live = live
+        candidate_tick = tick
+      }
+      Some(_) =>
+        if (candidate_live && !live) ||
+          (candidate_live == live && tick < candidate_tick) {
+          candidate = Some(index)
+          candidate_live = live
+          candidate_tick = tick
+        }
+    }
+  }
+  candidate
+}
+
+///|
+fn SkiaRasterRenderer::layer_cache_has_identity(
+  self : SkiaRasterRenderer,
+  identity_key : String,
+) -> Bool {
+  self.layer_cache.any(entry => entry.identity_key == identity_key)
 }
 
 ///|

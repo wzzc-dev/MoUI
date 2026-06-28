@@ -494,7 +494,7 @@ test "markdown editor paste footnote definition creates or updates footnotes" {
 ///|
 test "markdown editor html block command updates current block" {
   let source = "Intro\n<div>Old</div>\nTail"
-  guard markdown_editor_selected_html_block_text(source, {
+  guard @moui_richtext.markdown_editor_selected_html_block_text(source, {
       caret: 9,
       selection: None,
     })

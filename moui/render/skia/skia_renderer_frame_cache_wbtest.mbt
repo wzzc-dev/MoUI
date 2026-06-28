@@ -407,6 +407,68 @@ test "skia render_frame updates and reuses renderer-local cached layers" {
 }
 
 ///|
+test "skia render_frame reuses cached layer when only origin changes" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=16.0, height=16.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  let initial = @core.CachedLayerSpec::new(
+    key="moving-layer",
+    frame=@core.Rect::new(x=2.0, y=2.0, width=8.0, height=8.0),
+    content_revision=1,
+  )
+  let moved = @core.CachedLayerSpec::new(
+    key="moving-layer",
+    frame=@core.Rect::new(x=2.0, y=6.0, width=8.0, height=8.0),
+    content_revision=1,
+  )
+  let first = renderer.render_frame(
+    skia_test_draw_frame([
+      @core.DrawCommand::Clear(@core.Color::white()),
+      @core.DrawCommand::BeginCachedLayer(initial),
+      @core.DrawCommand::FillRect(
+        @core.Rect::new(x=4.0, y=4.0, width=4.0, height=4.0),
+        @core.Color::black(),
+      ),
+      @core.DrawCommand::EndCachedLayer(initial.key),
+    ]),
+  )
+  inspect(first.presented, content="true")
+  inspect(first.cache_update_count, content="1")
+  let second = renderer.render_frame(
+    skia_test_draw_frame([
+      @core.DrawCommand::Clear(@core.Color::white()),
+      @core.DrawCommand::DrawCachedLayer(moved),
+    ]),
+  )
+  inspect(second.presented, content="true")
+  inspect(second.cache_hit_count, content="1")
+  inspect(second.cache_miss_count, content="0")
+  inspect(second.cache_update_count, content="0")
+  guard renderer.last_frame() is Some(second_frame) else {
+    fail("expected moved cached-layer frame")
+  }
+  assert_true(
+    skia_test_region_has_dark_pixel(
+      second_frame,
+      @core.Rect::new(x=4.0, y=8.0, width=4.0, height=4.0),
+    ),
+  )
+  assert_false(
+    skia_test_region_has_dark_pixel(
+      second_frame,
+      @core.Rect::new(x=4.0, y=4.0, width=4.0, height=4.0),
+    ),
+  )
+}
+
+///|
 test "skia render_frame snapshots nested cached layers into parent cache" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
@@ -622,6 +684,30 @@ test "skia render_frame evicts cached layers by surface budget" {
   inspect(result.presented, content="true")
   inspect(result.cache_update_count, content="4")
   inspect(result.cache_evict_count, content="1")
+}
+
+///|
+test "skia cached layer admission records stay bounded" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=16.0, height=16.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  for index in 0..<(skia_layer_cache_admission_limit() + 48) {
+    let record = renderer.layer_cache_admission_record(
+      "admission-layer-\{index}",
+    )
+    record.last_admitted_frame = index + 1
+  }
+  inspect(
+    renderer.layer_cache_admissions.length(),
+    content=skia_layer_cache_admission_limit().to_string(),
+  )
 }
 
 ///|
