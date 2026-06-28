@@ -343,6 +343,10 @@ pub fn windows_service_bridge(
           menu_command_response(commands, menu(commands))
         @host.HostServiceRequest::QuerySystemTheme =>
           @host.HostServiceResponse::SystemTheme(system_theme)
+        @host.HostServiceRequest::ListDirectory(_) =>
+          @host.HostServiceResponse::Unavailable(
+            "directory listing service is unavailable",
+          )
       }
     },
   )
@@ -449,6 +453,14 @@ fn dispatch_windows_clipboard(
         @host.HostServiceResponse::Unavailable("clipboard write failed")
       }
     }
+    @host.HostClipboardRequest::ReadImage =>
+      @host.HostServiceResponse::Unavailable(
+        "clipboard image read is unavailable",
+      )
+    @host.HostClipboardRequest::WriteImage(_, _) =>
+      @host.HostServiceResponse::Unavailable(
+        "clipboard image write is unavailable",
+      )
   }
 }
 

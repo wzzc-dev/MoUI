@@ -7,6 +7,8 @@ import {
 }
 
 // Values
+pub fn active_text_selection(TextRange?) -> TextRange?
+
 pub fn animated_color(from~ : Color, to~ : Color, progress~ : Double, easing? : Easing, reduced_motion? : Bool) -> Color
 
 pub fn animated_point(from~ : Point, to~ : Point, progress~ : Double, easing? : Easing, reduced_motion? : Bool) -> Point
@@ -14,6 +16,12 @@ pub fn animated_point(from~ : Point, to~ : Point, progress~ : Double, easing? : 
 pub fn animated_value(from~ : Double, to~ : Double, progress~ : Double, easing? : Easing, reduced_motion? : Bool) -> Double
 
 pub fn cancel_component_effects(Array[ComponentEffect], reason? : ComponentEffectCancelReason) -> Unit
+
+pub fn clamp_int(Int, Int, Int) -> Int
+
+pub fn composition_cursor_offset(TextControlStateContext, String) -> Int
+
+pub fn composition_start_index(String, Int, TextRange?) -> Int
 
 pub fn default_text_commands() -> Array[ActionCommand]
 
@@ -25,15 +33,33 @@ pub fn focus_scope_command_intent(KeyboardEvent) -> CommandIntent?
 
 pub fn hit_test(LayoutResult, Point) -> Bool
 
+pub fn is_redo_shortcut(KeyboardEvent) -> Bool
+
+pub fn is_select_all_shortcut(KeyboardEvent) -> Bool
+
+pub fn is_undo_shortcut(KeyboardEvent) -> Bool
+
+pub fn max_int(Int, Int) -> Int
+
+pub fn min_int(Int, Int) -> Int
+
 pub fn move_text_caret(String, Int, TextRange?, TextCaretDirection, extend~ : Bool) -> TextCaretMoveResult
 
 pub fn normalize_grapheme_range(@unicode.TextGraphemeBoundaries, TextRange) -> TextRange
 
 pub fn optional_rect_union(Rect?, Rect?) -> Rect?
 
+pub fn replace_text_range(String, TextRange, String) -> String
+
 pub fn resolve_minimal_theme(ThemeSpec, ColorScheme) -> Theme
 
 pub fn resolve_theme(ThemeSpec, ColorScheme) -> Theme
+
+pub fn selected_text(String, TextRange?) -> String
+
+pub fn surrounding_delete_range(String, Int, Int, Int) -> TextRange
+
+pub fn text_input_grapheme_selection(@unicode.TextGraphemeBoundaries, TextRange?) -> TextRange?
 
 pub fn text_next_grapheme_caret_boundary(String, Int) -> Int
 

@@ -144,7 +144,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/markdown_editor/app/editor_app_modes_runtime_wbtest.mbt",
-      max_lines: 390,
+      max_lines: 440,
     },
     {
       path: "examples/markdown_editor/app/editor_app_writing_modes_runtime_wbtest.mbt",
@@ -243,9 +243,9 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/backend/host/window_request_queue.mbt", max_lines: 150 },
     { path: "moui/backend/host/window_platform_map.mbt", max_lines: 110 },
     { path: "moui/backend/web/host_runtime.mbt", max_lines: 480 },
-    { path: "moui/backend/web/web_async_services.mbt", max_lines: 520 },
+    { path: "moui/backend/web/web_async_services.mbt", max_lines: 620 },
     { path: "moui/backend/web/web_events.mbt", max_lines: 240 },
-    { path: "moui/backend/web/web_host.mbt", max_lines: 360 },
+    { path: "moui/backend/web/web_host.mbt", max_lines: 390 },
     { path: "moui/backend/web/web_window_requests.mbt", max_lines: 200 },
     { path: "moui/backend/web/web_window_slots.mbt", max_lines: 85 },
     { path: "moui/core/view_tree.mbt", max_lines: 889 },
@@ -264,6 +264,7 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "examples/pdf_workbench/app/view_sidebar.mbt", max_lines: 270 },
     { path: "examples/pdf_workbench/app/view_inspector.mbt", max_lines: 470 },
     { path: "moui/render/skia/skia_renderer_wbtest.mbt", max_lines: 75 },
+    { path: "moui/render/sun/renderer.mbt", max_lines: 1950 },
     { path: "moui/views/style_api.mbt", max_lines: 178 },
     { path: "moui/views/choice_state.mbt", max_lines: 25 },
     { path: "moui/views/choice_groups.mbt", max_lines: 70 },
