@@ -31,9 +31,7 @@ pub fn create_macos_webview_plugin(
           let web_event = @host.webview_decode_native_event(
             kind, url, detail, flag,
           )
-          let platform_event = @host.WebViewEvent::to_platform_event(
-            web_event,
-          )
+          let platform_event = @host.WebViewEvent::to_platform_event(web_event)
           callback(raw_handle, id_str, platform_event)
         },
       )

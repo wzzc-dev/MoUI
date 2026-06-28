@@ -55,7 +55,12 @@ pub struct PlatformViewPlugin {
   sync_platform_views : (UInt64, @core.DrawFrame, Double) -> Unit
   drain_commands : (UInt64) -> Unit
   dispose_platform_views : (UInt64) -> Unit
-  setup_platform_view_draw : ((UInt64, HostWindowRenderer, @core.DrawFrame, Double) -> Unit)?
+  setup_platform_view_draw : ((
+    UInt64,
+    HostWindowRenderer,
+    @core.DrawFrame,
+    Double,
+  ) -> Unit)?
   poll_native : (() -> Int64?)?
 }
 
@@ -67,7 +72,12 @@ pub fn PlatformViewPlugin::new(
   sync_platform_views~ : (UInt64, @core.DrawFrame, Double) -> Unit,
   drain_commands~ : (UInt64) -> Unit,
   dispose_platform_views~ : (UInt64) -> Unit,
-  setup_platform_view_draw? : ((UInt64, HostWindowRenderer, @core.DrawFrame, Double) -> Unit)? = None,
+  setup_platform_view_draw? : ((
+    UInt64,
+    HostWindowRenderer,
+    @core.DrawFrame,
+    Double,
+  ) -> Unit)? = None,
   poll_native? : (() -> Int64?)? = None,
 ) -> PlatformViewPlugin {
   {

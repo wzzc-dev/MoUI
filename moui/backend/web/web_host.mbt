@@ -350,9 +350,13 @@ fn web_clipboard_write_text(text : WebHostString) -> Bool = "window_web" "clipbo
 fn web_async_clipboard_read_text(request_id : Int) -> Unit = "window_web" "clipboard_read_text_async"
 
 //|
+
+///|
 fn web_async_clipboard_read_image(request_id : Int) -> Unit = "window_web" "clipboard_read_image_async"
 
 //|
+
+///|
 #borrow(data)
 fn web_clipboard_write_image(data : WebHostString) -> Bool = "window_web" "clipboard_write_image"
 
