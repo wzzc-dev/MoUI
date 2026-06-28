@@ -4,10 +4,10 @@ fn MarkdownEditorApp::root(
   viewport_height? : Double = 520.0,
 ) -> @moui.View[MarkdownEditorMsg] {
   let theme = self.chrome_theme()
-  let document = self.document.get()
+  let session = self.document_session.get()
+  let document = session.source
   let appearance = self.appearance_spec()
   let editor_font = markdown_editor_appearance_font(appearance)
-  let snapshot = MarkdownEditorSnapshot::parse_with_font(document, editor_font)
   let zen = self.zen_mode_enabled.get()
   let show_source = if zen { false } else { self.source_preview_visible.get() }
   let show_outline = if zen { false } else { self.outline_visible.get() }
@@ -33,8 +33,7 @@ fn MarkdownEditorApp::root(
       [
         editor_source_layout(
           self,
-          document,
-          snapshot,
+          session,
           editor_font,
           appearance,
           theme,
@@ -75,15 +74,13 @@ fn MarkdownEditorApp::root(
   // `constraints.max` and can live happily inside a column.
   let outer_children : Array[@moui.View[MarkdownEditorMsg]] = []
   if !zen {
-    outer_children.push(
-      self.chrome(theme, document, selection, snapshot),
-    )
+    outer_children.push(self.chrome(theme, document, selection))
   }
   outer_children.push(markdown_editor_centered_workspace(padded).expanded())
   if !zen {
     outer_children.push(
       self.bottom_status_bar(
-        theme, snapshot, block_label, document, selection, workspace_width,
+        theme, session, block_label, document, selection, workspace_width,
       ),
     )
   }
@@ -140,6 +137,7 @@ fn MarkdownEditorApp::reactive_root(
   ctx : @core.ComponentContext,
 ) -> @moui.View[MarkdownEditorMsg] {
   ignore(ctx.watch(self.document))
+  ignore(ctx.watch(self.document_session))
   ignore(ctx.watch(self.selection))
   ignore(ctx.watch(self.link_target))
   ignore(ctx.watch(self.image_target))
@@ -179,7 +177,6 @@ fn MarkdownEditorApp::reactive_root(
   ignore(ctx.watch(self.file_tree_expanded))
   ignore(ctx.watch(self.selected_image_offset))
   ignore(ctx.watch(self.image_centered))
-  ignore(ctx.watch_scroll(self.editor_scroll))
   // Make the editor viewport fill the window instead of a fixed 520px.
   // Chrome (28px) and status bar (20px) in the outer column, workspace bottom
   // padding (24px), and inner column spacing (8px) = 80.  Add 4px safety for
@@ -230,11 +227,9 @@ fn markdown_editor_centered_workspace(
 ) -> @moui.View[MarkdownEditorMsg] {
   @views.custom_children_layout(
     children=[child],
-    measure=ctx => {
-      // Use the full available space so the flex-expanded height is respected.
-      // The child (padded workspace) measures itself within these constraints.
-      ctx.constraints.constrain(ctx.constraints.max)
-    },
+    // Use the full available space so the flex-expanded height is respected.
+    // The child (padded workspace) measures itself within these constraints.
+    measure=ctx => ctx.constraints.constrain(ctx.constraints.max),
     place=ctx => {
       let child_size = ctx.child_sizes[0]
       let x = if ctx.frame.size.width > child_size.width {
@@ -274,7 +269,6 @@ fn MarkdownEditorApp::chrome(
   theme : @moui.Theme,
   _source : String,
   _selection : MarkdownEditorSelection,
-  _snapshot : MarkdownEditorSnapshot,
 ) -> @moui.View[MarkdownEditorMsg] {
   let title = markdown_editor_document_title(
     path=self.document_path.get(),
@@ -283,22 +277,22 @@ fn MarkdownEditorApp::chrome(
   let dirty = self.is_dirty()
   let unsaved_dot = if dirty {
     text("·", width=8.0, height=16.0)
-      .font(theme.typography.caption)
-      .foreground(theme.palette.primary)
+    .font(theme.typography.caption)
+    .foreground(theme.palette.primary)
   } else {
     empty()
   }
 
   // Center: clickable title + chevron (toggles document info)
   let title_button = button(
-    title,
-    on_click=ToggleDocumentInfo,
-    variant=@views.ButtonVariant::Ghost,
-    theme~,
-    height=22.0,
-  )
-  .font(theme.typography.caption)
-  .foreground(theme.palette.muted)
+      title,
+      on_click=ToggleDocumentInfo,
+      variant=@views.ButtonVariant::Ghost,
+      theme~,
+      height=22.0,
+    )
+    .font(theme.typography.caption)
+    .foreground(theme.palette.muted)
 
   let outline_btn = button(
     "",
@@ -313,7 +307,6 @@ fn MarkdownEditorApp::chrome(
     width=26.0,
     height=22.0,
   )
-
 
   let right_group = row(
     [outline_btn],
@@ -342,10 +335,10 @@ fn MarkdownEditorApp::chrome(
 fn MarkdownEditorApp::bottom_status_bar(
   self : MarkdownEditorApp,
   theme : @moui.Theme,
-  snapshot : MarkdownEditorSnapshot,
-  _block_label : String,
+  session : MarkdownDocumentSession,
+  block_label : String,
   _source : String,
-  _selection : MarkdownEditorSelection,
+  selection : MarkdownEditorSelection,
   _width : Double,
 ) -> @moui.View[MarkdownEditorMsg] {
   let show_files = self.file_sidebar_visible.get()
@@ -363,8 +356,21 @@ fn MarkdownEditorApp::bottom_status_bar(
     height=20.0,
   )
 
-  // Typora-style concise status: word count only
-  let status = snapshot.word_count.to_string() + " 词 / " + snapshot.line_count.to_string() + " 行"
+  let title = markdown_editor_document_title(
+    path=self.document_path.get(),
+    fallback=session.active_heading,
+  )
+  let save_state = if self.is_dirty() { "Unsaved" } else { "Saved" }
+  let transfer = markdown_editor_transfer_status_label(
+    self.transfer_status.get(),
+  )
+  let transfer_suffix = if transfer == "" { "" } else { " / " + transfer }
+  let status = title +
+    " / " +
+    save_state +
+    " / " +
+    markdown_editor_session_status_label(block_label, session, selection) +
+    transfer_suffix
 
   let status_frame = frame(
     row(
@@ -744,12 +750,7 @@ fn markdown_editor_format_palette_items() -> Array[
       group: "View",
       shortcut: "Meta+Shift+/",
     },
-    {
-      action: "files",
-      label: "Files",
-      group: "View",
-      shortcut: "Meta+Alt+P",
-    },
+    { action: "files", label: "Files", group: "View", shortcut: "Meta+Alt+P" },
     {
       action: "image-center",
       label: "Center Image",
@@ -847,8 +848,27 @@ fn markdown_join_strings_with_separator(
 }
 
 ///|
+#warnings("-unused_value")
 fn markdown_editor_document_info(
   snapshot : MarkdownEditorSnapshot,
+) -> MarkdownEditorDocumentInfo {
+  markdown_editor_document_info_from_parts(snapshot.source, snapshot.blocks)
+}
+
+///|
+fn markdown_editor_document_info_from_session(
+  session : MarkdownDocumentSession,
+) -> MarkdownEditorDocumentInfo {
+  markdown_editor_document_info_from_parts(
+    session.source,
+    session.editor_blocks,
+  )
+}
+
+///|
+fn markdown_editor_document_info_from_parts(
+  source : String,
+  blocks : Array[MarkdownEditorBlock],
 ) -> MarkdownEditorDocumentInfo {
   let mut heading_count = 0
   let mut paragraph_count = 0
@@ -862,7 +882,7 @@ fn markdown_editor_document_info(
   let mut image_count = 0
   let mut footnote_reference_count = 0
   let mut footnote_definition_count = 0
-  for editor_block in snapshot.blocks {
+  for editor_block in blocks {
     match editor_block.block.kind {
       Heading(_) => heading_count = heading_count + 1
       Paragraph =>
@@ -896,7 +916,7 @@ fn markdown_editor_document_info(
     }
   }
   {
-    character_count: markdown_editor_text_length(snapshot.source),
+    character_count: markdown_editor_text_length(source),
     heading_count,
     paragraph_count,
     list_item_count,

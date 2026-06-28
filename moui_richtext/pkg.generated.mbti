@@ -20,7 +20,11 @@ pub fn code_highlight_tokenize(String, String) -> Array[CodeHighlightSpan]
 
 pub fn[Msg] controlled_markdown_editor(value~ : String, on_input~ : (String) -> Msg, placeholder~ : String, size~ : @core.Size, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, accepts_tab_input? : Bool, key? : String?) -> @core.View[Msg]
 
-pub fn[Msg] controlled_rich_text_editor(value~ : String, on_input~ : (String) -> Msg, placeholder~ : String, size~ : @core.Size, format~ : (String) -> RichTextDocument, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, on_command_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool, kind? : String, key? : String?) -> @core.View[Msg]
+pub fn[Msg] controlled_markdown_session_editor(session~ : MarkdownDocumentSession, selection~ : MarkdownEditorSelection, on_transaction~ : (MarkdownEditTransaction) -> Msg, placeholder~ : String, size~ : @core.Size, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, source_mode? : Bool, focus_mode? : Bool, base_dir? : String?, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, on_command_click? : ((Int) -> Msg)?, accepts_tab_input? : Bool, visible_scroll_y? : Double, visible_viewport_height? : Double, visible_overscan? : Double, visible_scroll_state? : @core.ScrollState?, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] controlled_rich_text_document_editor(value~ : String, document~ : RichTextDocument, on_input~ : (String) -> Msg, placeholder~ : String, size~ : @core.Size, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, on_command_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool, visible_scroll_y? : Double, visible_viewport_height? : Double, visible_overscan? : Double, selection_caret? : Int, selection_range? : @core.TextRange?, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] controlled_rich_text_editor(value~ : String, on_input~ : (String) -> Msg, placeholder~ : String, size~ : @core.Size, format~ : (String) -> RichTextDocument, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, on_command_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool, visible_scroll_y? : Double, visible_viewport_height? : Double, visible_overscan? : Double, selection_caret? : Int, selection_range? : @core.TextRange?, kind? : String, key? : String?) -> @core.View[Msg]
 
 pub fn markdown_append_parsed_inline_segment(Array[MarkdownInline], String, Array[MarkdownReferenceDefinition]) -> Unit
 
@@ -1032,7 +1036,7 @@ pub fn rich_text_document_caret_rect_at_source(RichTextDocument, Int, @core.Rect
 
 pub fn rich_text_document_height(RichTextDocument, @core.FontSpec) -> Double
 
-pub fn[Msg] rich_text_editor(value~ : @core.Binding[String], placeholder~ : String, size~ : @core.Size, format~ : (String) -> RichTextDocument, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_input? : ((String) -> Msg)?, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, on_command_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool, kind? : String, key? : String?) -> @core.View[Msg]
+pub fn[Msg] rich_text_editor(value~ : @core.Binding[String], placeholder~ : String, size~ : @core.Size, format~ : (String) -> RichTextDocument, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_input? : ((String) -> Msg)?, on_input_edit? : ((String, Int, @core.TextRange?) -> Msg)?, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, on_command_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool, visible_scroll_y? : Double, visible_viewport_height? : Double, visible_overscan? : Double, selection_caret? : Int, selection_range? : @core.TextRange?, kind? : String, key? : String?) -> @core.View[Msg]
 
 pub fn rich_text_editor_content_rect(@core.Rect) -> @core.Rect
 
@@ -1050,6 +1054,11 @@ pub enum CodeHighlightToken {
   CodeString
   CodeComment
   CodeNumber
+  CodeFunction
+  CodeType
+  CodeOperator
+  CodeAnnotation
+  CodeEscape
 } derive(Eq, @debug.Debug)
 
 pub(all) struct MarkdownBlock {
@@ -1079,6 +1088,133 @@ pub(all) struct MarkdownCodeFenceInfo {
   marker : String
   info : String?
 } derive(Eq, @debug.Debug)
+
+pub(all) struct MarkdownDocumentBlock {
+  id : Int
+  revision : Int
+  source_range : MarkdownSourceRange
+  content_range : MarkdownSourceRange
+  kind : MarkdownBlockKind
+  text : String
+  fingerprint : String
+  inline_count : Int
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct MarkdownDocumentBlockHeightMetric {
+  block_id : Int
+  block_index : Int
+  revision : Int
+  source_range : MarkdownSourceRange
+  visual_top_units : Double
+  visual_height_units : Double
+  source_top_units : Double
+  source_height_units : Double
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct MarkdownDocumentDirtyRange {
+  start_block : Int
+  end_block : Int
+  source_start : Int
+  source_end : Int
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct MarkdownDocumentHeightIndex {
+  visual_content_units : Double
+  source_content_units : Double
+  blocks : Array[MarkdownDocumentBlockHeightMetric]
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct MarkdownDocumentLayoutBlock {
+  block_id : Int
+  block_index : Int
+  revision : Int
+  top : Double
+  height : Double
+  source_range : MarkdownSourceRange
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct MarkdownDocumentLayoutCache {
+  revision : Int
+  width : Double
+  scroll_y : Double
+  viewport_height : Double
+  overscan : Double
+  content_height : Double
+  visible_start : Int
+  visible_end : Int
+  blocks : Array[MarkdownDocumentLayoutBlock]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn MarkdownDocumentLayoutCache::new(MarkdownDocumentSession, RichTextDocument, @core.FontSpec, width~ : Double, scroll_y~ : Double, viewport_height~ : Double, overscan? : Double) -> Self
+pub fn MarkdownDocumentLayoutCache::source_offset_y(Self, Int) -> Double?
+pub fn MarkdownDocumentLayoutCache::visible_block_count(Self) -> Int
+
+pub(all) struct MarkdownDocumentRichTextWindow {
+  document : RichTextDocument
+  content_height : Double
+  top_padding : Double
+  scroll_y : Double
+  viewport_height : Double
+  overscan : Double
+  visible_start : Int
+  visible_end : Int
+  block_count : Int
+  rendered_block_count : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn MarkdownDocumentRichTextWindow::caret_rect_at_source(Self, Int, @core.Rect, @core.FontSpec, text_system? : @core.TextSystem) -> @core.Rect?
+pub fn MarkdownDocumentRichTextWindow::content_rect(Self, @core.Rect) -> @core.Rect
+
+pub(all) struct MarkdownDocumentSession {
+  source : String
+  source_length : Int
+  blocks : Array[MarkdownDocumentBlock]
+  editor_blocks : Array[MarkdownEditorBlock]
+  line_count : Int
+  word_count : Int
+  reading_minutes : Int
+  active_heading : String
+  metadata_title : String
+  metadata_tags : Array[String]
+  outline : Array[MarkdownEditorOutlineItem]
+  revision : Int
+  parse_count : Int
+  next_block_id : Int
+  dirty_range : MarkdownDocumentDirtyRange?
+  height_index : MarkdownDocumentHeightIndex
+  layout_cache : MarkdownDocumentLayoutCache?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn MarkdownDocumentSession::apply(Self, MarkdownEditTransaction) -> Self
+pub fn MarkdownDocumentSession::estimated_content_height(Self, base? : @core.FontSpec, source_mode? : Bool) -> Double
+pub fn MarkdownDocumentSession::new(String) -> Self
+pub fn MarkdownDocumentSession::replace_source(Self, String, reason? : MarkdownEditReason) -> Self
+pub fn MarkdownDocumentSession::rich_text(Self, MarkdownEditorSelection, base? : @core.FontSpec, source_mode? : Bool, focus_mode? : Bool, base_dir? : String?) -> RichTextDocument
+pub fn MarkdownDocumentSession::rich_text_window(Self, MarkdownEditorSelection, base? : @core.FontSpec, source_mode? : Bool, focus_mode? : Bool, base_dir? : String?, scroll_y? : Double, viewport_height? : Double, overscan? : Double) -> MarkdownDocumentRichTextWindow
+pub fn MarkdownDocumentSession::snapshot(Self, base? : @core.FontSpec, base_dir? : String?) -> MarkdownEditorSnapshot
+pub fn MarkdownDocumentSession::source(Self) -> String
+pub fn MarkdownDocumentSession::source_offset_y(Self, Int, base? : @core.FontSpec, source_mode? : Bool) -> Double
+pub fn MarkdownDocumentSession::with_layout_cache(Self, RichTextDocument, @core.FontSpec, width~ : Double, scroll_y~ : Double, viewport_height~ : Double, overscan? : Double) -> Self
+
+pub(all) enum MarkdownEditReason {
+  LoadDocument
+  TextInput
+  CommandEdit
+  ReplaceEdit
+  ToggleTaskEdit
+  MediaEdit
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct MarkdownEditTransaction {
+  previous_source : String
+  source : String
+  edit_range : MarkdownSourceRange
+  replacement : String
+  caret : Int
+  selection : @core.TextRange?
+  reason : MarkdownEditReason
+} derive(Eq, ToJson, @debug.Debug)
+pub fn MarkdownEditTransaction::from_edit_result(String, MarkdownEditorEditResult, reason? : MarkdownEditReason) -> Self
+pub fn MarkdownEditTransaction::from_input_transform(String, RichTextInputTransform, reason? : MarkdownEditReason) -> Self
+pub fn MarkdownEditTransaction::from_sources(String, String, caret? : Int, selection? : @core.TextRange?, reason? : MarkdownEditReason) -> Self
+pub fn MarkdownEditTransaction::replace_all(String, String, caret? : Int, selection? : @core.TextRange?, reason? : MarkdownEditReason) -> Self
 
 pub(all) struct MarkdownEditorAutolinkTarget {
   leading : String

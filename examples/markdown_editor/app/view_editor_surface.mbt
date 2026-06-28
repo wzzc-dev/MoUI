@@ -198,7 +198,7 @@ fn MarkdownEditorApp::target_bar(
 fn floating_target_palette(
   editor : @moui.View[MarkdownEditorMsg],
   target_bar : @moui.View[MarkdownEditorMsg],
-  snapshot : MarkdownEditorSnapshot,
+  session : MarkdownDocumentSession,
   selection : MarkdownEditorSelection,
   target_kind : MarkdownEditorTargetKind,
   editor_font : @core.FontSpec,
@@ -234,7 +234,7 @@ fn floating_target_palette(
       )
       let palette_width = markdown_editor_min_double(palette_size.width, width)
       let anchor = markdown_editor_palette_anchor(
-        snapshot,
+        session,
         selection,
         target_kind,
         editor_frame,
@@ -276,7 +276,7 @@ fn floating_target_palette(
 
 ///|
 fn markdown_editor_palette_anchor(
-  snapshot : MarkdownEditorSnapshot,
+  session : MarkdownDocumentSession,
   selection : MarkdownEditorSelection,
   target_kind : MarkdownEditorTargetKind,
   editor_frame : @core.Rect,
@@ -300,16 +300,15 @@ fn markdown_editor_palette_anchor(
     Some(range) => range.normalized().start
     None => selection.caret
   }
-  let content = @moui_richtext.rich_text_editor_content_rect(editor_frame).offset(
-    dx=0.0,
-    dy=-scroll_offset.y,
-  )
   match
-    @moui_richtext.rich_text_document_caret_rect_at_source(
-      snapshot.rich_text,
+    markdown_editor_session_caret_rect(
+      session,
+      selection,
       caret,
-      content,
+      editor_frame,
       editor_font,
+      scroll_offset,
+      viewport_height=editor_frame.size.height,
     ) {
     Some(rect) => {
       let x = rect.origin.x + rect.size.width / 2.0 - palette_width / 2.0
@@ -340,6 +339,41 @@ fn markdown_editor_palette_anchor(
           ),
       )
   }
+}
+
+///|
+fn markdown_editor_session_caret_rect(
+  session : MarkdownDocumentSession,
+  selection : MarkdownEditorSelection,
+  caret : Int,
+  editor_frame : @core.Rect,
+  editor_font : @core.FontSpec,
+  scroll_offset : @moui.Point,
+  viewport_height~ : Double,
+  source_mode? : Bool = false,
+  focus_mode? : Bool = false,
+  base_dir? : String? = None,
+) -> @core.Rect? {
+  let window = session.rich_text_window(
+    selection,
+    base=editor_font,
+    source_mode~,
+    focus_mode~,
+    base_dir~,
+    scroll_y=scroll_offset.y,
+    viewport_height~,
+    overscan=viewport_height,
+  )
+  let content = @moui_richtext.rich_text_editor_content_rect(editor_frame).offset(
+    dx=0.0,
+    dy=window.top_padding - scroll_offset.y,
+  )
+  @moui_richtext.rich_text_document_caret_rect_at_source(
+    window.document,
+    caret,
+    content,
+    editor_font,
+  )
 }
 
 ///|
@@ -720,8 +754,7 @@ fn markdown_editor_clamp_double(
 ///|
 fn editor_source_layout(
   app : MarkdownEditorApp,
-  source : String,
-  snapshot : MarkdownEditorSnapshot,
+  session : MarkdownDocumentSession,
   editor_font : @core.FontSpec,
   appearance : MarkdownEditorAppearanceSpec,
   theme : @moui.Theme,
@@ -740,10 +773,10 @@ fn editor_source_layout(
   let editor_width = markdown_editor_primary_editor_width(
     show_source, show_outline, show_files, show_info, appearance,
   )
+  let source_mode = app.source_mode_enabled.get()
   let content_height = markdown_editor_max_double(
     viewport_height,
-    @moui_richtext.rich_text_document_height(snapshot.rich_text, editor_font) +
-    96.0,
+    session.estimated_content_height(base=editor_font, source_mode~) + 96.0,
   )
   let max_scroll = markdown_editor_max_double(
     0.0,
@@ -785,25 +818,12 @@ fn editor_source_layout(
     cursor_color: theme.palette.primary,
     font: editor_font,
   }
-  let editor_format = source => {
-    if app.source_mode_enabled.get() {
-      markdown_editor_format_source_mode(source, editor_font)
-    } else {
-      markdown_editor_format_for_writing_mode(
-        source,
-        selection,
-        base=editor_font,
-        focus_mode=app.focus_mode_enabled.get(),
-        base_dir=markdown_editor_document_base_dir(app.document_path.get()),
-      )
-    }
-  }
-  let editor_control = controlled_rich_text_editor(
-    value=source,
-    on_input=value => UpdateDocument(value),
+  let editor_control = controlled_markdown_session_editor(
+    session~,
+    selection~,
+    on_transaction=transaction => ApplyEditorTransaction(transaction),
     placeholder="Start writing Markdown",
-    size=@moui.Size::new(width=editor_width, height=content_height),
-    format=editor_format,
+    size=@moui.Size::new(width=editor_width, height=viewport_height),
     font=editor_style.font,
     foreground=editor_style.normal.foreground,
     placeholder_color=editor_style.placeholder_color,
@@ -812,27 +832,30 @@ fn editor_source_layout(
     focused_border=editor_style.focused.border,
     cursor_color=editor_style.cursor_color,
     corner_radius=editor_style.normal.radius,
+    source_mode~,
+    focus_mode=app.focus_mode_enabled.get(),
+    base_dir=markdown_editor_document_base_dir(app.document_path.get()),
     on_selection_change=Some(on_selection_change),
     on_prefix_click=Some(on_prefix_click),
     on_command_click=Some(offset => CommandClickAt(offset)),
-    input_transform=Some(markdown_editor_transform_input),
     accepts_tab_input=true,
+    visible_scroll_y=normalized_offset.y,
+    visible_viewport_height=viewport_height,
+    visible_overscan=viewport_height,
+    visible_scroll_state=Some(app.editor_scroll),
   ).key("markdown-editor")
-  let editor = scroll_view(
-    editor_page(editor_control, theme, appearance),
-    offset=normalized_offset,
-    width=editor_width,
-    height=viewport_height,
-    state=Some(app.editor_scroll),
-  ).on_file_drop((paths, _position) =>
+  let editor = editor_page(editor_control, theme, appearance).on_file_drop((
+    paths,
+    _position,
+  ) => {
     match paths {
       [path, ..] if path != "" => InsertMediaFromFileDrop(path)
       _ => DismissAuxiliaryPanels
     }
-  )
+  })
   let editor_view = if !show_source && !app.source_mode_enabled.get() {
     floating_target_palette(
-      editor, target_bar, snapshot, selection, target_kind, editor_font, theme, normalized_offset,
+      editor, target_bar, session, selection, target_kind, editor_font, theme, normalized_offset,
       editor_width, viewport_height,
     )
   } else {
@@ -852,7 +875,7 @@ fn editor_source_layout(
     editor_view,
     markdown_editor_scroll_indicator(app.editor_scroll, viewport_height~, theme),
     markdown_editor_format_bubble_overlay(
-      app, snapshot, selection, editor_font, theme, normalized_offset, editor_width,
+      app, session, selection, editor_font, theme, normalized_offset, editor_width,
       viewport_height,
     ),
   ]).shadow(page_shadow)
@@ -862,20 +885,20 @@ fn editor_source_layout(
     let side_children : Array[@moui.View[MarkdownEditorMsg]] = []
     if show_files {
       side_children.push(
-        files_inspector(app, snapshot, theme, height=viewport_height),
+        files_inspector(app, session, theme, height=viewport_height),
       )
     }
     side_children.push(editor_with_indicator)
     if show_info {
       side_children.push(
-        document_info_inspector(snapshot, theme, height=viewport_height),
+        document_info_inspector(session, theme, height=viewport_height),
       )
     }
     if show_outline {
       side_children.push(
         outline_inspector(
           app,
-          snapshot,
+          session,
           selection,
           theme,
           height=viewport_height,
@@ -884,7 +907,7 @@ fn editor_source_layout(
     }
     if show_source {
       side_children.push(
-        source_inspector(snapshot.source, theme, height=viewport_height),
+        source_inspector(session.source, theme, height=viewport_height),
       )
     }
     let editor_and_sidebars = row(

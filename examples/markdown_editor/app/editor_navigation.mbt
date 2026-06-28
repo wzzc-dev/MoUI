@@ -203,10 +203,9 @@ fn MarkdownEditorApp::maybe_center_typewriter_selection(
 
 ///|
 fn MarkdownEditorApp::jump_to_next_heading(self : MarkdownEditorApp) -> Unit {
-  let snapshot = MarkdownEditorSnapshot::parse(self.document.get())
   match
     markdown_editor_next_outline_start(
-      snapshot.outline,
+      self.document_session.get().outline,
       self.selection.get().caret,
     ) {
     Some(source_start) => self.jump_to_outline(source_start)
@@ -218,10 +217,9 @@ fn MarkdownEditorApp::jump_to_next_heading(self : MarkdownEditorApp) -> Unit {
 fn MarkdownEditorApp::jump_to_previous_heading(
   self : MarkdownEditorApp,
 ) -> Unit {
-  let snapshot = MarkdownEditorSnapshot::parse(self.document.get())
   match
     markdown_editor_previous_outline_start(
-      snapshot.outline,
+      self.document_session.get().outline,
       self.selection.get().caret,
     ) {
     Some(source_start) => self.jump_to_outline(source_start)
@@ -289,10 +287,8 @@ fn MarkdownEditorApp::scroll_to_source_with_anchor(
 ) -> Unit {
   let appearance = self.appearance_spec()
   let editor_font = markdown_editor_appearance_font(appearance)
-  let snapshot = MarkdownEditorSnapshot::parse_with_font(
-    self.document.get(),
-    editor_font,
-  )
+  let session = self.document_session.get()
+  let source_mode = self.source_mode_enabled.get()
   let editor_width = markdown_editor_primary_editor_width(
     self.source_preview_visible.get(),
     self.outline_visible.get(),
@@ -303,38 +299,27 @@ fn MarkdownEditorApp::scroll_to_source_with_anchor(
   let viewport_height = markdown_editor_viewport_height()
   let content_height = markdown_editor_max_double(
     viewport_height,
-    @moui_richtext.rich_text_document_height(snapshot.rich_text, editor_font) +
-    96.0,
+    session.estimated_content_height(base=editor_font, source_mode~) + 96.0,
   )
   let max_scroll = markdown_editor_max_double(
     0.0,
     content_height - viewport_height,
   )
-  let editor_frame = @core.Rect::new(
+  let y = session.source_offset_y(source_start, base=editor_font, source_mode~)
+  let rect = @core.Rect::new(
     x=0.0,
-    y=0.0,
+    y~,
     width=editor_width,
-    height=content_height,
+    height=editor_font.size * 1.55,
   )
-  let content = @moui_richtext.rich_text_editor_content_rect(editor_frame)
-  match
-    @moui_richtext.rich_text_document_caret_rect_at_source(
-      snapshot.rich_text,
-      source_start,
-      content,
-      editor_font,
-    ) {
-    Some(rect) =>
-      self.editor_scroll.scroll_to(
-        x=0.0,
-        y=markdown_editor_clamp_double(
-          markdown_editor_scroll_anchor_y(rect, viewport_height, center~),
-          0.0,
-          max_scroll,
-        ),
-      )
-    None => self.editor_scroll.scroll_to(x=0.0, y=0.0)
-  }
+  self.editor_scroll.scroll_to(
+    x=0.0,
+    y=markdown_editor_clamp_double(
+      markdown_editor_scroll_anchor_y(rect, viewport_height, center~),
+      0.0,
+      max_scroll,
+    ),
+  )
 }
 
 ///|
@@ -460,7 +445,7 @@ fn MarkdownEditorApp::replace_current_find_match(
   }
   self.push_undo(before)
   self.redo_stack.set([])
-  self.document.set(next_source)
+  self.replace_document_source(next_source, reason=ReplaceEdit)
   let end = range.start + markdown_editor_text_length(replacement)
   let next_matches = markdown_editor_find_matches(
     next_source,
@@ -505,7 +490,7 @@ fn MarkdownEditorApp::replace_all_find_matches(
   let before = self.history_entry()
   self.push_undo(before)
   self.redo_stack.set([])
-  self.document.set(next_source)
+  self.replace_document_source(next_source, reason=ReplaceEdit)
   let start = matches[0].start
   let end = start + markdown_editor_text_length(replacement)
   self.selection.set({

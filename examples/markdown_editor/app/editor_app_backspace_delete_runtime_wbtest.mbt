@@ -278,7 +278,7 @@ test "markdown editor runtime delete preserves same-list merge" {
       @core.PointerEvent::new(
         position=@moui.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
-          y=84.0,
+          y=64.0,
         ),
         phase=@core.PointerPhase::Down,
       ),

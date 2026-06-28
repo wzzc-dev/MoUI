@@ -457,10 +457,18 @@ test "code highlight tokenizer classifies moonbit keywords and strings" {
   assert_true(kinds.contains(CodeString))
   assert_true(kinds.contains(CodeComment))
   // Supported languages still classify tokens instead of falling back.
-  let python = code_highlight_tokenize("# config\ndef add(a, b):\n    return a + b\n", "python")
-  assert_true(python.any(span => span.text == "# config" && span.kind == CodeComment))
-  assert_true(python.any(span => span.text == "def" && span.kind == CodeKeyword))
-  assert_true(python.any(span => span.text == "return" && span.kind == CodeKeyword))
+  let python = code_highlight_tokenize(
+    "# config\ndef add(a, b):\n    return a + b\n", "python",
+  )
+  assert_true(
+    python.any(span => span.text == "# config" && span.kind == CodeComment),
+  )
+  assert_true(
+    python.any(span => span.text == "def" && span.kind == CodeKeyword),
+  )
+  assert_true(
+    python.any(span => span.text == "return" && span.kind == CodeKeyword),
+  )
   assert_true(python.any(span => span.text == "a" && span.kind == CodePlain))
   assert_true(python.any(span => span.text == "+" && span.kind == CodeOperator))
   // Unsupported language falls back to a single plain span.
@@ -514,6 +522,18 @@ fn[Msg] text_input_messages(
 }
 
 ///|
+fn[Msg] text_input_edit_messages(
+  on_input_edit : ((String, Int, @core.TextRange?) -> Msg)?,
+  text : String,
+  control : @core.TextControlStateContext,
+) -> Array[Msg] {
+  match on_input_edit {
+    Some(handler) => [handler(text, control.caret, control.selection)]
+    None => []
+  }
+}
+
+///|
 fn is_select_all_shortcut(event : @core.KeyboardEvent) -> Bool {
   event.pressed &&
   (event.key == "a" || event.key == "A") &&
@@ -558,6 +578,14 @@ fn view_brush_revision(value : @core.Brush) -> String {
 fn view_border_option_revision(value : @core.BorderStyle?) -> String {
   match value {
     Some(value) => "\{view_brush_revision(value.brush)}:\{value.width}"
+    None => "none"
+  }
+}
+
+///|
+fn view_text_range_option_revision(value : @core.TextRange?) -> String {
+  match value {
+    Some(value) => "\{value.start}:\{value.end}"
     None => "none"
   }
 }

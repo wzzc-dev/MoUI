@@ -4,13 +4,15 @@ using @moui_richtext {
   type MarkdownInlineKind,
   markdown_block_to_rich_text,
   markdown_editor_format,
+  markdown_editor_format_for_writing_mode,
   markdown_editor_format_for_selection,
+  markdown_editor_transform_input,
   parse_markdown,
 }
 
 ///|
 fn MarkdownEditorApp::document(self : MarkdownEditorApp) -> String {
-  self.document.get()
+  self.document_session.get().source
 }
 
 ///|
@@ -36,6 +38,23 @@ fn MarkdownEditorApp::edit_document(
   text : String,
 ) -> Unit {
   self.set_document_from_input(text)
+}
+
+///|
+fn MarkdownEditorApp::set_document_from_input(
+  self : MarkdownEditorApp,
+  value : String,
+) -> Unit {
+  let selection = self.selection.get()
+  self.apply_editor_transaction(
+    MarkdownEditTransaction::from_sources(
+      self.document_session.get().source,
+      value,
+      caret=selection.caret,
+      selection=selection.selection,
+      reason=TextInput,
+    ),
+  )
 }
 
 ///|
@@ -329,9 +348,7 @@ fn MarkdownEditorApp::set_source_preview_visible(
 fn MarkdownEditorApp::document_info_for_test(
   self : MarkdownEditorApp,
 ) -> MarkdownEditorDocumentInfo {
-  markdown_editor_document_info(
-    MarkdownEditorSnapshot::parse(self.document.get()),
-  )
+  markdown_editor_document_info(self.document_session.get().snapshot())
 }
 
 ///|
@@ -447,7 +464,7 @@ fn MarkdownEditorApp::save_as_for_test(
 fn MarkdownEditorApp::document_status_label_for_test(
   self : MarkdownEditorApp,
 ) -> String {
-  let snapshot = MarkdownEditorSnapshot::parse(self.document.get())
+  let snapshot = self.document_session.get().snapshot()
   let block_label = self.block_label.get()
   let selection = self.selection.get()
   let title = markdown_editor_document_title(
@@ -455,7 +472,9 @@ fn MarkdownEditorApp::document_status_label_for_test(
     fallback=snapshot.active_heading,
   )
   let save_state = if self.is_dirty() { "Unsaved" } else { "Saved" }
-  let transfer = markdown_editor_transfer_status_label(self.transfer_status.get())
+  let transfer = markdown_editor_transfer_status_label(
+    self.transfer_status.get(),
+  )
   let transfer_suffix = if transfer == "" { "" } else { " / " + transfer }
   let mode_suffix = self.writing_mode_status_suffix()
   let look_suffix = self.appearance_status_suffix()
@@ -551,4 +570,11 @@ fn markdown_to_rich_text(text : String) -> @moui_richtext.RichTextDocument {
     blocks.push(markdown_block_to_rich_text(block, base))
   }
   @moui_richtext.RichTextDocument::new(blocks~)
+}
+
+///|
+fn MarkdownEditorApp::document_session_parse_count(
+  self : MarkdownEditorApp,
+) -> Int {
+  self.document_session.get().parse_count
 }

@@ -5,6 +5,41 @@ fn MarkdownEditorApp::clear_history(self : MarkdownEditorApp) -> Unit {
 }
 
 ///|
+fn MarkdownEditorApp::replace_document_source(
+  self : MarkdownEditorApp,
+  source : String,
+  reason? : MarkdownEditReason = ReplaceEdit,
+) -> Unit {
+  let previous = self.document_session.get()
+  let transaction = MarkdownEditTransaction::replace_all(
+    previous.source,
+    source,
+    reason~,
+  )
+  self.document_session.set(previous.apply(transaction))
+  self.document.set(source)
+}
+
+///|
+fn MarkdownEditorApp::apply_editor_transaction(
+  self : MarkdownEditorApp,
+  transaction : MarkdownEditTransaction,
+) -> Unit {
+  let anchor = self.editor_scroll.offset()
+  let session = self.document_session.get()
+  let next = session.apply(transaction)
+  self.document_session.set(next)
+  self.document.set(next.source)
+  self.selection.set({
+    caret: transaction.caret,
+    selection: transaction.selection,
+  })
+  self.editor_scroll.scroll_to(x=anchor.x, y=anchor.y)
+  self.sync_target_inputs()
+  self.maybe_center_typewriter_selection()
+}
+
+///|
 fn MarkdownEditorApp::apply_command_to_selection(
   self : MarkdownEditorApp,
   command : MarkdownEditorCommand,
@@ -22,6 +57,17 @@ fn MarkdownEditorApp::apply_command_to_selection(
   }
   self.push_undo(before)
   self.redo_stack.set([])
+  self.document_session.set(
+    self.document_session
+    .get()
+    .apply(
+      MarkdownEditTransaction::from_edit_result(
+        before.source,
+        result,
+        reason=CommandEdit,
+      ),
+    ),
+  )
   self.document.set(result.source)
   self.selection.set({ caret: result.caret, selection: result.selection })
   self.sync_target_inputs()
@@ -41,6 +87,13 @@ fn MarkdownEditorApp::apply_text_transform(
   }
   self.push_undo(before)
   self.redo_stack.set([])
+  self.document_session.set(
+    self.document_session
+    .get()
+    .apply(
+      MarkdownEditTransaction::from_input_transform(before.source, transform),
+    ),
+  )
   self.document.set(transform.text)
   self.selection.set({ caret: transform.caret, selection: transform.selection })
   self.sync_target_inputs()
@@ -105,21 +158,6 @@ fn MarkdownEditorApp::set_selection(
   selection : @core.TextRange?,
 ) -> Unit {
   self.selection.set({ caret, selection })
-  self.sync_target_inputs()
-  self.maybe_center_typewriter_selection()
-}
-
-///|
-/// Update the document from typed input while anchoring the scroll position so
-/// the viewport stays stable. This prevents line-wrapping or content-shift
-/// jitter during continuous typing.
-fn MarkdownEditorApp::set_document_from_input(
-  self : MarkdownEditorApp,
-  value : String,
-) -> Unit {
-  let anchor = self.editor_scroll.offset()
-  self.document.set(value)
-  self.editor_scroll.scroll_to(x=anchor.x, y=anchor.y)
   self.sync_target_inputs()
   self.maybe_center_typewriter_selection()
 }
@@ -276,7 +314,10 @@ fn MarkdownEditorApp::apply_named_editor_action(
 fn MarkdownEditorApp::history_entry(
   self : MarkdownEditorApp,
 ) -> MarkdownEditorHistoryEntry {
-  { source: self.document.get(), selection: self.selection.get() }
+  {
+    source: self.document_session.get().source,
+    selection: self.selection.get(),
+  }
 }
 
 ///|
@@ -317,7 +358,7 @@ fn MarkdownEditorApp::restore_history(
     self.redo_stack.set(stack)
     self.push_undo(self.history_entry())
   }
-  self.document.set(entry.source)
+  self.replace_document_source(entry.source, reason=ReplaceEdit)
   self.selection.set(entry.selection)
   self.sync_target_inputs()
   self.maybe_center_typewriter_selection()
@@ -333,6 +374,17 @@ fn MarkdownEditorApp::toggle_task_at(
     Some(result) => {
       self.push_undo(self.history_entry())
       self.redo_stack.set([])
+      self.document_session.set(
+        self.document_session
+        .get()
+        .apply(
+          MarkdownEditTransaction::from_edit_result(
+            self.document.get(),
+            result,
+            reason=ToggleTaskEdit,
+          ),
+        ),
+      )
       self.document.set(result.source)
       self.selection.set({ caret: result.caret, selection: result.selection })
       self.sync_target_inputs()
@@ -352,6 +404,17 @@ fn MarkdownEditorApp::toggle_current_task(self : MarkdownEditorApp) -> Unit {
     Some(result) => {
       self.push_undo(self.history_entry())
       self.redo_stack.set([])
+      self.document_session.set(
+        self.document_session
+        .get()
+        .apply(
+          MarkdownEditTransaction::from_edit_result(
+            self.document.get(),
+            result,
+            reason=ToggleTaskEdit,
+          ),
+        ),
+      )
       self.document.set(result.source)
       self.selection.set({ caret: result.caret, selection: result.selection })
       self.sync_target_inputs()
@@ -378,14 +441,18 @@ fn markdown_editor_toggle_image_center(source : String, wrap : Bool) -> String {
     }
   }
   match img_idx {
-    Some(idx) => {
+    Some(idx) =>
       if wrap {
         let result = StringBuilder::new()
         for j in 0..<idx {
-          if j > 0 { result.write_char('\n') }
+          if j > 0 {
+            result.write_char('\n')
+          }
           result.write_string(line_views[j])
         }
-        if idx > 0 { result.write_char('\n') }
+        if idx > 0 {
+          result.write_char('\n')
+        }
         result.write_string("<center>")
         result.write_char('\n')
         result.write_string(line_views[idx])
@@ -405,10 +472,14 @@ fn markdown_editor_toggle_image_center(source : String, wrap : Bool) -> String {
             String::from_array(next_chars).trim().to_owned() == "</center>" {
             let result = StringBuilder::new()
             for j in 0..<(idx - 1) {
-              if j > 0 { result.write_char('\n') }
+              if j > 0 {
+                result.write_char('\n')
+              }
               result.write_string(line_views[j])
             }
-            if idx - 1 > 0 { result.write_char('\n') }
+            if idx - 1 > 0 {
+              result.write_char('\n')
+            }
             result.write_string(line_views[idx])
             for j in (idx + 2)..<line_views.length() {
               result.write_char('\n')
@@ -419,7 +490,6 @@ fn markdown_editor_toggle_image_center(source : String, wrap : Bool) -> String {
         }
         source
       }
-    }
     None => source
   }
 }

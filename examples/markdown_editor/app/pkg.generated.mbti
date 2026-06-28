@@ -17,6 +17,7 @@ import {
 // Types and methods
 pub struct MarkdownEditorApp {
   document : @core.State[String]
+  document_session : @core.State[@moui_richtext.MarkdownDocumentSession]
   selection : @core.State[@moui_richtext.MarkdownEditorSelection]
   link_target : @core.State[String]
   image_target : @core.State[String]
@@ -35,6 +36,7 @@ pub struct MarkdownEditorApp {
   format_palette_visible : @core.State[Bool]
   format_palette_query : @core.State[String]
   more_menu_visible : @core.State[Bool]
+  active_menu : @core.State[String]
   toasts : @core.State[@views.ToastQueue[MarkdownEditorMsg]]
   autosave_draft : @core.State[String]
   dark_mode_enabled : @core.State[Bool]
@@ -70,8 +72,6 @@ pub enum MarkdownEditorConfirmResolution {
   ConfirmDiscard
   ConfirmCancel
 }
-
-type MarkdownEditorDirectoryTreeMsg
 
 pub struct MarkdownEditorFindOptions {
   case_sensitive : Bool
@@ -116,14 +116,15 @@ pub enum MarkdownEditorMsg {
   DismissAuxiliaryPanels
   ToggleSourcePreview
   ToggleSourceMode
-  ToggleMoreMenu
-  MoreMenuCommand(MarkdownEditorMsg)
+  ToggleMenuBarMenu(String)
+  CloseMenuBarMenu
+  CloseMenuBarMenuAndRun(MarkdownEditorMsg)
   ToggleDarkMode
   CycleFontFamily
   DismissToastTick
   AutosaveTick
   ResolvePendingConfirm(MarkdownEditorConfirmResolution)
-  UpdateDocument(String)
+  ApplyEditorTransaction(@moui_richtext.MarkdownEditTransaction)
   UpdateFindQuery(String)
   UpdateReplaceText(String)
   ToggleFindCaseSensitive
@@ -158,6 +159,9 @@ pub enum MarkdownEditorMsg {
   PickWorkingDirectory
   SelectTreePath(String)
   ToggleTreePath(String)
+  ToggleFileTree
+  InsertMediaFromFileDrop(String)
+  ToggleImageCenter
 }
 
 pub struct MarkdownEditorSettings {

@@ -13,18 +13,24 @@ pub fn[Msg] rich_text_editor(
   cursor_color~ : @core.Color,
   corner_radius? : Double = 0.0,
   on_input? : ((String) -> Msg)? = None,
+  on_input_edit? : ((String, Int, @core.TextRange?) -> Msg)? = None,
   on_selection_change? : ((Int, @core.TextRange?) -> Msg)? = None,
   on_prefix_click? : ((Int) -> Msg)? = None,
   on_command_click? : ((Int) -> Msg)? = None,
   input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)? = None,
   accepts_tab_input? : Bool = false,
+  visible_scroll_y? : Double = 0.0,
+  visible_viewport_height? : Double = 0.0,
+  visible_overscan? : Double = 320.0,
+  selection_caret? : Int = -1,
+  selection_range? : @core.TextRange? = None,
   kind? : String = "RichTextEditor",
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::node(
     identity=() => @core.ViewIdentity::new(kind~, key~),
     revision=() => {
-      "rich-text-editor:\{value.get()}:\{placeholder}:\{view_size_revision(size)}:\{view_font_revision(font)}:\{view_color_revision(foreground)}:\{view_color_revision(placeholder_color)}:\{view_brush_revision(background)}:\{view_border_option_revision(border)}:\{view_border_option_revision(focused_border)}:\{view_color_revision(cursor_color)}:\{corner_radius}:\{accepts_tab_input}"
+      "rich-text-editor:\{value.get()}:\{placeholder}:\{view_size_revision(size)}:\{view_font_revision(font)}:\{view_color_revision(foreground)}:\{view_color_revision(placeholder_color)}:\{view_brush_revision(background)}:\{view_border_option_revision(border)}:\{view_border_option_revision(focused_border)}:\{view_color_revision(cursor_color)}:\{corner_radius}:\{accepts_tab_input}:\{selection_caret}:\{view_text_range_option_revision(selection_range)}"
     },
     layout=ctx => {
       @core.ViewLayoutResult::new(size=ctx.constraints.constrain(size))
@@ -43,6 +49,9 @@ pub fn[Msg] rich_text_editor(
         focused_border~,
         cursor_color~,
         corner_radius~,
+        visible_scroll_y~,
+        visible_viewport_height~,
+        visible_overscan~,
       )
     },
     event=ctx => {
@@ -52,6 +61,7 @@ pub fn[Msg] rich_text_editor(
         format~,
         font~,
         on_input~,
+        on_input_edit~,
         on_selection_change~,
         on_prefix_click~,
         on_command_click~,
@@ -67,6 +77,8 @@ pub fn[Msg] rich_text_editor(
           format~,
           font~,
           control=ctx.text_control,
+          selection_caret~,
+          selection_range~,
           text_system=ctx.text_system,
         ),
       )
@@ -77,6 +89,7 @@ pub fn[Msg] rich_text_editor(
         value~,
         format~,
         on_input~,
+        on_input_edit~,
         on_selection_change~,
         input_transform~,
         intent,
@@ -119,6 +132,11 @@ pub fn[Msg] controlled_rich_text_editor(
   on_command_click? : ((Int) -> Msg)? = None,
   input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)? = None,
   accepts_tab_input? : Bool = false,
+  visible_scroll_y? : Double = 0.0,
+  visible_viewport_height? : Double = 0.0,
+  visible_overscan? : Double = 320.0,
+  selection_caret? : Int = -1,
+  selection_range? : @core.TextRange? = None,
   kind? : String = "RichTextEditor",
   key? : String? = None,
 ) -> @core.View[Msg] {
@@ -136,13 +154,846 @@ pub fn[Msg] controlled_rich_text_editor(
     cursor_color~,
     corner_radius~,
     on_input=Some(on_input),
+    on_input_edit=None,
     on_selection_change~,
     on_prefix_click~,
     on_command_click~,
     input_transform~,
     accepts_tab_input~,
+    visible_scroll_y~,
+    visible_viewport_height~,
+    visible_overscan~,
+    selection_caret~,
+    selection_range~,
     kind~,
     key~,
+  )
+}
+
+///|
+pub fn[Msg] controlled_rich_text_document_editor(
+  value~ : String,
+  document~ : RichTextDocument,
+  on_input~ : (String) -> Msg,
+  placeholder~ : String,
+  size~ : @core.Size,
+  font~ : @core.FontSpec,
+  foreground~ : @core.Color,
+  placeholder_color~ : @core.Color,
+  background~ : @core.Brush,
+  border? : @core.BorderStyle? = None,
+  focused_border? : @core.BorderStyle? = None,
+  cursor_color~ : @core.Color,
+  corner_radius? : Double = 0.0,
+  on_selection_change? : ((Int, @core.TextRange?) -> Msg)? = None,
+  on_prefix_click? : ((Int) -> Msg)? = None,
+  on_command_click? : ((Int) -> Msg)? = None,
+  input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)? = None,
+  accepts_tab_input? : Bool = false,
+  visible_scroll_y? : Double = 0.0,
+  visible_viewport_height? : Double = 0.0,
+  visible_overscan? : Double = 320.0,
+  selection_caret? : Int = -1,
+  selection_range? : @core.TextRange? = None,
+  kind? : String = "RichTextDocumentEditor",
+  key? : String? = None,
+) -> @core.View[Msg] {
+  controlled_rich_text_editor(
+    value~,
+    on_input~,
+    placeholder~,
+    size~,
+    format=_source => document,
+    font~,
+    foreground~,
+    placeholder_color~,
+    background~,
+    border~,
+    focused_border~,
+    cursor_color~,
+    corner_radius~,
+    on_selection_change~,
+    on_prefix_click~,
+    on_command_click~,
+    input_transform~,
+    accepts_tab_input~,
+    visible_scroll_y~,
+    visible_viewport_height~,
+    visible_overscan~,
+    selection_caret~,
+    selection_range~,
+    kind~,
+    key~,
+  )
+}
+
+///|
+pub fn[Msg] controlled_markdown_session_editor(
+  session~ : MarkdownDocumentSession,
+  selection~ : MarkdownEditorSelection,
+  on_transaction~ : (MarkdownEditTransaction) -> Msg,
+  placeholder~ : String,
+  size~ : @core.Size,
+  font~ : @core.FontSpec,
+  foreground~ : @core.Color,
+  placeholder_color~ : @core.Color,
+  background~ : @core.Brush,
+  border? : @core.BorderStyle? = None,
+  focused_border? : @core.BorderStyle? = None,
+  cursor_color~ : @core.Color,
+  corner_radius? : Double = 0.0,
+  source_mode? : Bool = false,
+  focus_mode? : Bool = false,
+  base_dir? : String? = None,
+  on_selection_change? : ((Int, @core.TextRange?) -> Msg)? = None,
+  on_prefix_click? : ((Int) -> Msg)? = None,
+  on_command_click? : ((Int) -> Msg)? = None,
+  accepts_tab_input? : Bool = true,
+  visible_scroll_y? : Double = 0.0,
+  visible_viewport_height? : Double = 0.0,
+  visible_overscan? : Double = 320.0,
+  visible_scroll_state? : @core.ScrollState? = None,
+  key? : String? = None,
+) -> @core.View[Msg] {
+  @core.View::node(
+    identity=() => @core.ViewIdentity::new(kind="MarkdownSessionEditor", key~),
+    revision=() => {
+      "markdown-session-editor:\{session.revision}:\{session.blocks.length()}:\{selection.caret}:\{view_text_range_option_revision(selection.selection)}:\{placeholder}:\{view_size_revision(size)}:\{view_font_revision(font)}:\{view_color_revision(foreground)}:\{view_color_revision(placeholder_color)}:\{view_brush_revision(background)}:\{view_border_option_revision(border)}:\{view_border_option_revision(focused_border)}:\{view_color_revision(cursor_color)}:\{corner_radius}:\{source_mode}:\{focus_mode}:\{accepts_tab_input}"
+    },
+    layout=ctx => {
+      @core.ViewLayoutResult::new(size=ctx.constraints.constrain(size))
+    },
+    paint=ctx => {
+      markdown_session_editor_paint(
+        ctx,
+        session~,
+        selection~,
+        placeholder~,
+        font~,
+        foreground~,
+        placeholder_color~,
+        background~,
+        border~,
+        focused_border~,
+        cursor_color~,
+        corner_radius~,
+        source_mode~,
+        focus_mode~,
+        base_dir~,
+        visible_scroll_y~,
+        visible_viewport_height~,
+        visible_overscan~,
+        visible_scroll_state~,
+      )
+    },
+    event=ctx => {
+      markdown_session_editor_event(
+        ctx,
+        session~,
+        selection~,
+        on_transaction~,
+        font~,
+        source_mode~,
+        focus_mode~,
+        base_dir~,
+        on_selection_change~,
+        on_prefix_click~,
+        on_command_click~,
+        accepts_tab_input~,
+        visible_scroll_y~,
+        visible_viewport_height~,
+        visible_overscan~,
+        visible_scroll_state~,
+      )
+    },
+    text_input_state=ctx => {
+      Some(
+        markdown_session_input_state(
+          text=session.source,
+          frame=ctx.frame,
+          session~,
+          selection~,
+          font~,
+          control=ctx.text_control,
+          source_mode~,
+          focus_mode~,
+          base_dir~,
+          visible_scroll_y~,
+          visible_viewport_height~,
+          visible_overscan~,
+          visible_scroll_state~,
+          text_system=ctx.text_system,
+        ),
+      )
+    },
+    text_command=(ctx, intent, paste_text) => {
+      markdown_session_editor_command(
+        ctx,
+        session~,
+        selection~,
+        on_transaction~,
+        on_selection_change~,
+        font~,
+        source_mode~,
+        focus_mode~,
+        base_dir~,
+        intent,
+        paste_text~,
+      )
+    },
+    semantics=() => {
+      @core.ViewSemanticsInfo::new(
+        role=@core.SemanticsRole::TextField,
+        label=placeholder,
+        value="Markdown document",
+        actions=[
+          @core.SemanticsAction::Focus,
+          @core.SemanticsAction::SetText,
+          @core.SemanticsAction::Submit,
+        ],
+      )
+    },
+    focusable=() => true,
+  )
+}
+
+///|
+fn markdown_session_current_scroll_y(
+  visible_scroll_y : Double,
+  visible_scroll_state : @core.ScrollState?,
+) -> Double {
+  match visible_scroll_state {
+    Some(state) => state.offset().y
+    None => visible_scroll_y
+  }
+}
+
+///|
+fn markdown_session_clamped_scroll_y(
+  session : MarkdownDocumentSession,
+  font : @core.FontSpec,
+  source_mode~ : Bool,
+  scroll_y : Double,
+  viewport_height : Double,
+) -> Double {
+  if viewport_height <= 0.0 {
+    return max_double(0.0, scroll_y)
+  }
+  let content_height = session.estimated_content_height(base=font, source_mode~) +
+    96.0
+  let max_scroll = max_double(0.0, content_height - viewport_height)
+  clamp_double(scroll_y, 0.0, max_scroll)
+}
+
+///|
+fn markdown_session_display_session(
+  session : MarkdownDocumentSession,
+  display_text : String,
+) -> MarkdownDocumentSession {
+  if display_text == session.source {
+    session
+  } else {
+    MarkdownDocumentSession::new(display_text)
+  }
+}
+
+///|
+fn markdown_session_visible_window(
+  session : MarkdownDocumentSession,
+  selection : MarkdownEditorSelection,
+  font : @core.FontSpec,
+  source_mode~ : Bool,
+  focus_mode~ : Bool,
+  base_dir~ : String?,
+  visible_scroll_y~ : Double,
+  visible_viewport_height~ : Double,
+  visible_overscan~ : Double,
+  visible_scroll_state~ : @core.ScrollState?,
+) -> MarkdownDocumentRichTextWindow {
+  let scroll_y = markdown_session_clamped_scroll_y(
+    session,
+    font,
+    source_mode~,
+    markdown_session_current_scroll_y(visible_scroll_y, visible_scroll_state),
+    visible_viewport_height,
+  )
+  session.rich_text_window(
+    selection,
+    base=font,
+    source_mode~,
+    focus_mode~,
+    base_dir~,
+    scroll_y~,
+    viewport_height=visible_viewport_height,
+    overscan=visible_overscan,
+  )
+}
+
+///|
+fn markdown_session_input_transform(
+  source : String,
+  caret : Int,
+  range : @core.TextRange?,
+  inserted : String,
+) -> RichTextInputTransform? {
+  markdown_editor_transform_input(source, caret, range, inserted)
+}
+
+///|
+fn[Msg] markdown_session_on_input_edit(
+  session : MarkdownDocumentSession,
+  on_transaction : (MarkdownEditTransaction) -> Msg,
+) -> (String, Int, @core.TextRange?) -> Msg {
+  (next_source, caret, next_selection) => {
+    on_transaction(
+      MarkdownEditTransaction::from_sources(
+        session.source,
+        next_source,
+        caret~,
+        selection=next_selection,
+        reason=TextInput,
+      ),
+    )
+  }
+}
+
+///|
+fn markdown_session_editor_paint(
+  ctx : @core.ViewPaintContext,
+  session~ : MarkdownDocumentSession,
+  selection~ : MarkdownEditorSelection,
+  placeholder~ : String,
+  font~ : @core.FontSpec,
+  foreground~ : @core.Color,
+  placeholder_color~ : @core.Color,
+  background~ : @core.Brush,
+  border~ : @core.BorderStyle?,
+  focused_border~ : @core.BorderStyle?,
+  cursor_color~ : @core.Color,
+  corner_radius~ : Double,
+  source_mode~ : Bool,
+  focus_mode~ : Bool,
+  base_dir~ : String?,
+  visible_scroll_y~ : Double,
+  visible_viewport_height~ : Double,
+  visible_overscan~ : Double,
+  visible_scroll_state~ : @core.ScrollState?,
+) -> @core.ViewPaintPlan {
+  let commands : Array[@core.DrawCommand] = []
+  let overlay_commands : Array[@core.DrawCommand] = []
+  let rounded = @core.RoundedRect::new(rect=ctx.frame, radius=corner_radius)
+  commands.push(@core.DrawCommand::FillRoundedRectBrush(rounded, background))
+  append_rich_text_border(
+    commands,
+    rounded,
+    if ctx.focused {
+      focused_border
+    } else {
+      border
+    },
+  )
+  let text = session.source
+  let display_text = rich_text_with_composition(
+    text,
+    ctx.text_control,
+    focused=ctx.focused,
+  )
+  let display_session = markdown_session_display_session(session, display_text)
+  let content = rich_text_editor_content_rect(ctx.frame)
+  commands.push(@core.DrawCommand::PushClip(content))
+  let child_layers : Array[@core.ViewPaintLayer] = []
+  if display_text == "" {
+    commands.push(
+      @core.DrawCommand::DrawText(
+        @core.TextRun::new(
+          text=placeholder,
+          frame=content,
+          font~,
+          color=placeholder_color,
+          align=@core.TextAlign::TextStart,
+        ),
+      ),
+    )
+  } else {
+    let window = markdown_session_visible_window(
+      display_session,
+      selection,
+      font,
+      source_mode~,
+      focus_mode~,
+      base_dir~,
+      visible_scroll_y~,
+      visible_viewport_height~,
+      visible_overscan~,
+      visible_scroll_state~,
+    )
+    let window_content = window.content_rect(content)
+    append_rich_text_document_layers(
+      child_layers,
+      window.document,
+      window_content,
+      font,
+      foreground,
+      text_system=ctx.text_system,
+    )
+    if ctx.focused {
+      append_rich_text_editor_overlay(
+        overlay_commands,
+        text~,
+        display_text~,
+        document=window.document,
+        content=window_content,
+        font~,
+        cursor_color~,
+        control=ctx.text_control,
+        text_system=ctx.text_system,
+      )
+    }
+  }
+  commands.push(@core.DrawCommand::PopClip)
+  {
+    commands,
+    child_layers,
+    post_commands: [],
+    overlay_commands,
+    platform_views: [],
+    repaint_boundary: false,
+    animating: false,
+  }
+}
+
+///|
+fn[Msg] markdown_session_editor_event(
+  ctx : @core.ViewEventContext,
+  session~ : MarkdownDocumentSession,
+  selection~ : MarkdownEditorSelection,
+  on_transaction~ : (MarkdownEditTransaction) -> Msg,
+  font~ : @core.FontSpec,
+  source_mode~ : Bool,
+  focus_mode~ : Bool,
+  base_dir~ : String?,
+  on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
+  on_prefix_click~ : ((Int) -> Msg)?,
+  on_command_click~ : ((Int) -> Msg)?,
+  accepts_tab_input~ : Bool,
+  visible_scroll_y~ : Double,
+  visible_viewport_height~ : Double,
+  visible_overscan~ : Double,
+  visible_scroll_state~ : @core.ScrollState?,
+) -> @core.ViewEventResult[Msg] {
+  let value = @core.Binding::new(get=() => session.source, set=_next => ())
+  let on_input_edit = markdown_session_on_input_edit(session, on_transaction)
+  match ctx.event {
+    @core.AppEvent::Pointer(event) =>
+      markdown_session_pointer_event(
+        ctx,
+        session~,
+        selection~,
+        font~,
+        source_mode~,
+        focus_mode~,
+        base_dir~,
+        on_selection_change~,
+        on_prefix_click~,
+        on_command_click~,
+        event~,
+        visible_scroll_y~,
+        visible_viewport_height~,
+        visible_overscan~,
+        visible_scroll_state~,
+      )
+    @core.AppEvent::Keyboard(event) =>
+      rich_text_keyboard_event(
+        ctx,
+        value~,
+        on_input=None,
+        on_input_edit=Some(on_input_edit),
+        on_selection_change~,
+        input_transform=Some(markdown_session_input_transform),
+        accepts_tab_input~,
+        event~,
+      )
+    @core.AppEvent::TextInput(event) =>
+      rich_text_input_event(
+        ctx,
+        value~,
+        on_input=None,
+        on_input_edit=Some(on_input_edit),
+        on_selection_change~,
+        input_transform=Some(markdown_session_input_transform),
+        event~,
+        record_history=true,
+      )
+    _ => @core.ViewEventResult::ignored()
+  }
+}
+
+///|
+fn[Msg] markdown_session_pointer_event(
+  ctx : @core.ViewEventContext,
+  session~ : MarkdownDocumentSession,
+  selection~ : MarkdownEditorSelection,
+  font~ : @core.FontSpec,
+  source_mode~ : Bool,
+  focus_mode~ : Bool,
+  base_dir~ : String?,
+  on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
+  on_prefix_click~ : ((Int) -> Msg)?,
+  on_command_click~ : ((Int) -> Msg)?,
+  event~ : @core.PointerEvent,
+  visible_scroll_y~ : Double,
+  visible_viewport_height~ : Double,
+  visible_overscan~ : Double,
+  visible_scroll_state~ : @core.ScrollState?,
+) -> @core.ViewEventResult[Msg] {
+  let inside = ctx.frame.contains(event.position)
+  if inside && (event.wheel_delta.x != 0.0 || event.wheel_delta.y != 0.0) {
+    return markdown_session_scroll_event(
+      session,
+      font,
+      source_mode~,
+      event~,
+      visible_viewport_height~,
+      visible_scroll_state~,
+    )
+  }
+  match event.phase {
+    @core.PointerPhase::Down =>
+      if inside {
+        let text = session.source
+        let window = markdown_session_visible_window(
+          session,
+          selection,
+          font,
+          source_mode~,
+          focus_mode~,
+          base_dir~,
+          visible_scroll_y~,
+          visible_viewport_height~,
+          visible_overscan~,
+          visible_scroll_state~,
+        )
+        let content = window.content_rect(
+          rich_text_editor_content_rect(ctx.frame),
+        )
+        let command_modifiers = event.modifiers.meta || event.modifiers.control
+        match (command_modifiers, on_command_click) {
+          (true, Some(handler)) => {
+            let offset = rich_text_document_source_offset_at_point(
+              window.document,
+              event.position,
+              content,
+              font,
+              ctx.text_system,
+            ).unwrap_or(text_length(text))
+            view_event_result(
+              changed=true,
+              focused=true,
+              captured=true,
+              text_control=Some(ctx.text_control),
+              dirty=@core.ViewDirtyHint::ViewPaintDirty,
+              messages=[handler(offset)],
+            )
+          }
+          _ => {
+            let prefix_messages = match on_prefix_click {
+              Some(handler) =>
+                match
+                  rich_text_document_prefix_source_offset_at_point(
+                    window.document,
+                    event.position,
+                    content,
+                    font,
+                    ctx.text_system,
+                  ) {
+                  Some(offset) => [handler(offset)]
+                  None => []
+                }
+              None => []
+            }
+            let caret = rich_text_document_source_offset_at_point(
+              window.document,
+              event.position,
+              content,
+              font,
+              ctx.text_system,
+            ).unwrap_or(text_length(text))
+            let next_control = {
+              ..ctx.text_control,
+              caret,
+              selection: None,
+              text_selection_anchor: Some(caret),
+              composition: None,
+              composition_cursor: None,
+            }
+            view_event_result(
+              changed=true,
+              focused=true,
+              captured=true,
+              text_control=Some(next_control),
+              dirty=@core.ViewDirtyHint::ViewPaintDirty,
+              messages=prefix_messages +
+                selection_messages(on_selection_change, caret, None),
+            )
+          }
+        }
+      } else {
+        @core.ViewEventResult::ignored()
+      }
+    @core.PointerPhase::Move =>
+      match ctx.text_control.text_selection_anchor {
+        Some(anchor) => {
+          let text = session.source
+          let window = markdown_session_visible_window(
+            session,
+            selection,
+            font,
+            source_mode~,
+            focus_mode~,
+            base_dir~,
+            visible_scroll_y~,
+            visible_viewport_height~,
+            visible_overscan~,
+            visible_scroll_state~,
+          )
+          let content = window.content_rect(
+            rich_text_editor_content_rect(ctx.frame),
+          )
+          let caret = rich_text_document_source_offset_at_point(
+            window.document,
+            event.position,
+            content,
+            font,
+            ctx.text_system,
+          ).unwrap_or(text_length(text))
+          let next_selection = if caret == anchor {
+            None
+          } else {
+            Some(@core.TextRange::new(start=anchor, end=caret))
+          }
+          let changed = ctx.text_control.caret != caret ||
+            ctx.text_control.selection != next_selection
+          if changed {
+            view_event_result(
+              changed=true,
+              focused=true,
+              captured=true,
+              text_control=Some({
+                ..ctx.text_control,
+                caret,
+                selection: next_selection,
+                composition: None,
+                composition_cursor: None,
+              }),
+              dirty=@core.ViewDirtyHint::ViewPaintDirty,
+              messages=selection_messages(
+                on_selection_change, caret, next_selection,
+              ),
+            )
+          } else {
+            view_event_result(
+              focused=true,
+              captured=true,
+              text_control=Some(ctx.text_control),
+            )
+          }
+        }
+        None => @core.ViewEventResult::ignored()
+      }
+    @core.PointerPhase::Up =>
+      if ctx.text_control.text_selection_anchor is Some(_) {
+        view_event_result(
+          changed=true,
+          focused=true,
+          captured=true,
+          text_control=Some({ ..ctx.text_control, text_selection_anchor: None }),
+          dirty=@core.ViewDirtyHint::ViewPaintDirty,
+        )
+      } else {
+        @core.ViewEventResult::ignored()
+      }
+    _ => @core.ViewEventResult::ignored()
+  }
+}
+
+///|
+fn[Msg] markdown_session_scroll_event(
+  session : MarkdownDocumentSession,
+  font : @core.FontSpec,
+  source_mode~ : Bool,
+  event~ : @core.PointerEvent,
+  visible_viewport_height~ : Double,
+  visible_scroll_state~ : @core.ScrollState?,
+) -> @core.ViewEventResult[Msg] {
+  match visible_scroll_state {
+    Some(state) => {
+      let viewport_height = if visible_viewport_height > 0.0 {
+        visible_viewport_height
+      } else {
+        0.0
+      }
+      let content_height = session.estimated_content_height(
+          base=font,
+          source_mode~,
+        ) +
+        96.0
+      let max_scroll = max_double(0.0, content_height - viewport_height)
+      let current = state.offset()
+      let next_y = min_double(
+        max_double(0.0, current.y - event.wheel_delta.y),
+        max_scroll,
+      )
+      state.scroll_to(x=0.0, y=next_y)
+      view_event_result(
+        changed=next_y != current.y,
+        captured=true,
+        dirty=@core.ViewDirtyHint::ViewPaintDirty,
+      )
+    }
+    None => @core.ViewEventResult::ignored()
+  }
+}
+
+///|
+fn markdown_session_input_state(
+  text~ : String,
+  frame~ : @core.Rect,
+  session~ : MarkdownDocumentSession,
+  selection~ : MarkdownEditorSelection,
+  font~ : @core.FontSpec,
+  control~ : @core.TextControlStateContext,
+  source_mode~ : Bool,
+  focus_mode~ : Bool,
+  base_dir~ : String?,
+  visible_scroll_y~ : Double,
+  visible_viewport_height~ : Double,
+  visible_overscan~ : Double,
+  visible_scroll_state~ : @core.ScrollState?,
+  text_system~ : @core.TextSystem,
+) -> @core.TextInputState {
+  let control = {
+    ..control,
+    caret: selection.caret,
+    selection: selection.selection,
+  }
+  let caret = clamp_int(control.caret, 0, session.source_length)
+  if frame.size.width <= 0.0 || frame.size.height <= 0.0 {
+    return {
+      focused: true,
+      element_id: None,
+      text,
+      caret,
+      selection: control.selection,
+      composition: control.composition,
+      composition_cursor: control.composition_cursor,
+      frame,
+      caret_rect: @core.Rect::new(
+        x=frame.origin.x,
+        y=frame.origin.y,
+        width=1.0,
+        height=font.size,
+      ),
+    }
+  }
+  let display_text = rich_text_with_composition(text, control, focused=true)
+  let display_session = markdown_session_display_session(session, display_text)
+  let visual_caret = match control.composition {
+    Some(_) =>
+      clamp_int(
+        rich_text_visual_caret(text, control, focused=true),
+        0,
+        text_length(display_text),
+      )
+    None => caret
+  }
+  let window = markdown_session_visible_window(
+    display_session,
+    { caret: visual_caret, selection: control.selection },
+    font,
+    source_mode~,
+    focus_mode~,
+    base_dir~,
+    visible_scroll_y~,
+    visible_viewport_height~,
+    visible_overscan~,
+    visible_scroll_state~,
+  )
+  let content = window.content_rect(rich_text_editor_content_rect(frame))
+  let caret_rect = rich_text_document_caret_rect_at_source(
+    window.document,
+    visual_caret,
+    content,
+    font,
+    text_system~,
+  ).unwrap_or(
+    plain_rich_text_caret_rect(
+      display_text,
+      visual_caret,
+      rich_text_editor_content_rect(frame),
+      font,
+      text_system,
+    ),
+  )
+  {
+    focused: true,
+    element_id: None,
+    text,
+    caret,
+    selection: control.selection,
+    composition: control.composition,
+    composition_cursor: control.composition_cursor,
+    frame,
+    caret_rect,
+  }
+}
+
+///|
+fn[Msg] markdown_session_editor_command(
+  ctx : @core.ViewEventContext,
+  session~ : MarkdownDocumentSession,
+  selection~ : MarkdownEditorSelection,
+  on_transaction~ : (MarkdownEditTransaction) -> Msg,
+  on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
+  font~ : @core.FontSpec,
+  source_mode~ : Bool,
+  focus_mode~ : Bool,
+  base_dir~ : String?,
+  intent : @core.CommandIntent,
+  paste_text~ : String?,
+) -> @core.ViewTextCommandResult[Msg] {
+  let value = @core.Binding::new(get=() => session.source, set=_next => ())
+  let on_input_edit = markdown_session_on_input_edit(session, on_transaction)
+  let format = display_source => {
+    if display_source == session.source {
+      session.rich_text(
+        selection,
+        base=font,
+        source_mode~,
+        focus_mode~,
+        base_dir~,
+      )
+    } else if source_mode {
+      markdown_editor_format_source_mode(display_source, font)
+    } else {
+      markdown_editor_format_for_writing_mode(
+        display_source,
+        selection,
+        base=font,
+        focus_mode~,
+        base_dir~,
+      )
+    }
+  }
+  rich_text_editor_command(
+    ctx,
+    value~,
+    format~,
+    on_input=None,
+    on_input_edit=Some(on_input_edit),
+    on_selection_change~,
+    input_transform=Some(markdown_session_input_transform),
+    intent,
+    paste_text~,
   )
 }
 
@@ -160,6 +1011,9 @@ fn rich_text_editor_paint(
   focused_border~ : @core.BorderStyle?,
   cursor_color~ : @core.Color,
   corner_radius~ : Double,
+  visible_scroll_y~ : Double,
+  visible_viewport_height~ : Double,
+  visible_overscan~ : Double,
 ) -> @core.ViewPaintPlan {
   let commands : Array[@core.DrawCommand] = []
   let overlay_commands : Array[@core.DrawCommand] = []
@@ -204,6 +1058,9 @@ fn rich_text_editor_paint(
       font,
       foreground,
       text_system=ctx.text_system,
+      visible_scroll_y~,
+      visible_viewport_height~,
+      visible_overscan~,
     )
     if ctx.focused {
       append_rich_text_editor_overlay(
@@ -260,12 +1117,31 @@ fn append_rich_text_document_layers(
   base_font : @core.FontSpec,
   foreground : @core.Color,
   text_system~ : @core.TextSystem,
+  visible_scroll_y? : Double = 0.0,
+  visible_viewport_height? : Double = 0.0,
+  visible_overscan? : Double = 320.0,
 ) -> Unit {
   let mut y = content.origin.y
+  let windowed = visible_viewport_height > 0.0
+  let visible_top = content.origin.y +
+    visible_scroll_y -
+    12.0 -
+    visible_overscan
+  let visible_bottom = visible_top +
+    visible_viewport_height +
+    visible_overscan * 2.0
   for index, block in document.blocks {
     let line_height = rich_text_block_line_height(block, base_font)
     let block_height = line_height + block.inset.top + block.inset.bottom
-    if y > content.origin.y + content.size.height {
+    let block_bottom = y + block_height
+    if windowed && block_bottom < visible_top {
+      y = block_bottom
+      continue
+    }
+    if windowed && y > visible_bottom {
+      return
+    }
+    if !windowed && y > content.origin.y + content.size.height {
       return
     }
     let frame = @core.Rect::new(
@@ -294,7 +1170,7 @@ fn append_rich_text_document_layers(
         commands~,
       ),
     )
-    y = y + block_height
+    y = block_bottom
   }
 }
 
@@ -735,6 +1611,7 @@ fn[Msg] rich_text_editor_event(
   format~ : RichTextFormatter,
   font~ : @core.FontSpec,
   on_input~ : ((String) -> Msg)?,
+  on_input_edit~ : ((String, Int, @core.TextRange?) -> Msg)?,
   on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
   on_prefix_click~ : ((Int) -> Msg)?,
   on_command_click~ : ((Int) -> Msg)?,
@@ -758,6 +1635,7 @@ fn[Msg] rich_text_editor_event(
         ctx,
         value~,
         on_input~,
+        on_input_edit~,
         on_selection_change~,
         input_transform~,
         accepts_tab_input~,
@@ -768,6 +1646,7 @@ fn[Msg] rich_text_editor_event(
         ctx,
         value~,
         on_input~,
+        on_input_edit~,
         on_selection_change~,
         input_transform~,
         event~,
@@ -922,6 +1801,7 @@ fn[Msg] rich_text_keyboard_event(
   ctx : @core.ViewEventContext,
   value~ : @core.Binding[String],
   on_input~ : ((String) -> Msg)?,
+  on_input_edit~ : ((String, Int, @core.TextRange?) -> Msg)?,
   on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
   input_transform~ : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?,
   accepts_tab_input~ : Bool,
@@ -936,6 +1816,7 @@ fn[Msg] rich_text_keyboard_event(
       ctx,
       value~,
       on_input~,
+      on_input_edit~,
       on_selection_change~,
       input_transform~,
       event=@core.TextInputEvent::InsertText(text),
@@ -947,6 +1828,7 @@ fn[Msg] rich_text_keyboard_event(
       ctx,
       value~,
       on_input~,
+      on_input_edit~,
       on_selection_change~,
       input_transform~,
       event=@core.TextInputEvent::InsertText("\n"),
@@ -976,6 +1858,7 @@ fn[Msg] rich_text_keyboard_event(
       text_control=Some(result.control),
       dirty=@core.ViewDirtyHint::ViewPaintDirty,
       messages=text_input_messages(on_input, result.text) +
+        text_input_edit_messages(on_input_edit, result.text, result.control) +
         selection_messages(
           on_selection_change,
           result.control.caret,
@@ -992,6 +1875,7 @@ fn[Msg] rich_text_keyboard_event(
       text_control=Some(result.control),
       dirty=@core.ViewDirtyHint::ViewPaintDirty,
       messages=text_input_messages(on_input, result.text) +
+        text_input_edit_messages(on_input_edit, result.text, result.control) +
         selection_messages(
           on_selection_change,
           result.control.caret,
@@ -1006,6 +1890,7 @@ fn[Msg] rich_text_keyboard_event(
           ctx,
           value~,
           on_input~,
+          on_input_edit~,
           on_selection_change~,
           input_transform~,
           event=@core.TextInputEvent::DeleteRange(selection),
@@ -1016,6 +1901,7 @@ fn[Msg] rich_text_keyboard_event(
           ctx,
           value~,
           on_input~,
+          on_input_edit~,
           on_selection_change~,
           input_transform~,
           event=@core.TextInputEvent::DeleteSurrounding(1, 0),
@@ -1030,6 +1916,7 @@ fn[Msg] rich_text_keyboard_event(
           ctx,
           value~,
           on_input~,
+          on_input_edit~,
           on_selection_change~,
           input_transform~,
           event=@core.TextInputEvent::DeleteRange(selection),
@@ -1040,6 +1927,7 @@ fn[Msg] rich_text_keyboard_event(
           ctx,
           value~,
           on_input~,
+          on_input_edit~,
           on_selection_change~,
           input_transform~,
           event=@core.TextInputEvent::DeleteSurrounding(0, 1),
@@ -1088,6 +1976,7 @@ fn[Msg] rich_text_keyboard_event(
           ctx,
           value~,
           on_input~,
+          on_input_edit~,
           on_selection_change~,
           input_transform~,
           event=@core.TextInputEvent::InsertText(text),
@@ -1105,6 +1994,7 @@ fn[Msg] rich_text_input_event(
   ctx : @core.ViewEventContext,
   value~ : @core.Binding[String],
   on_input~ : ((String) -> Msg)?,
+  on_input_edit~ : ((String, Int, @core.TextRange?) -> Msg)?,
   on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
   input_transform~ : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?,
   event~ : @core.TextInputEvent,
@@ -1195,6 +2085,7 @@ fn[Msg] rich_text_input_event(
     dirty=@core.ViewDirtyHint::ViewPaintDirty,
     messages=if result.changed {
       text_input_messages(on_input, result.text) +
+      text_input_edit_messages(on_input_edit, result.text, result.control) +
       selection_messages(
         on_selection_change,
         result.control.caret,
@@ -1212,6 +2103,7 @@ fn[Msg] rich_text_editor_command(
   value~ : @core.Binding[String],
   format~ : RichTextFormatter,
   on_input~ : ((String) -> Msg)?,
+  on_input_edit~ : ((String, Int, @core.TextRange?) -> Msg)?,
   on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
   input_transform~ : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?,
   intent : @core.CommandIntent,
@@ -1240,6 +2132,7 @@ fn[Msg] rich_text_editor_command(
             ctx,
             value~,
             on_input~,
+            on_input_edit~,
             on_selection_change~,
             input_transform~,
             event=@core.TextInputEvent::DeleteRange(selection),
@@ -1267,6 +2160,7 @@ fn[Msg] rich_text_editor_command(
             ctx,
             value~,
             on_input~,
+            on_input_edit~,
             on_selection_change~,
             input_transform~,
             event=@core.TextInputEvent::InsertText(value_to_paste),
@@ -1295,6 +2189,7 @@ fn[Msg] rich_text_editor_command(
         text_control=Some(result.control),
         messages=if result.changed {
           text_input_messages(on_input, result.text) +
+          text_input_edit_messages(on_input_edit, result.text, result.control) +
           selection_messages(
             on_selection_change,
             result.control.caret,
@@ -1315,6 +2210,7 @@ fn[Msg] rich_text_editor_command(
         text_control=Some(result.control),
         messages=if result.changed {
           text_input_messages(on_input, result.text) +
+          text_input_edit_messages(on_input_edit, result.text, result.control) +
           selection_messages(
             on_selection_change,
             result.control.caret,
@@ -1348,9 +2244,16 @@ fn rich_text_input_state(
   format~ : RichTextFormatter,
   font~ : @core.FontSpec,
   control~ : @core.TextControlStateContext,
+  selection_caret~ : Int,
+  selection_range~ : @core.TextRange?,
   text_system~ : @core.TextSystem,
 ) -> @core.TextInputState {
   let boundaries = @core.TextGraphemeBoundaries::new(text~)
+  let control = if selection_caret >= 0 {
+    { ..control, caret: selection_caret, selection: selection_range }
+  } else {
+    control
+  }
   let display_text = rich_text_with_composition(text, control, focused=true)
   let content = rich_text_editor_content_rect(frame)
   let caret = boundaries.nearest_boundary(control.caret)
@@ -2270,6 +3173,7 @@ fn rich_text_document_prefix_source_offset_at_point(
     return None
   }
   let mut y = content.origin.y
+  let mut fallback : Int? = None
   for block in document.blocks {
     let line_height = rich_text_block_line_height(block, base_font)
     let block_height = line_height + block.inset.top + block.inset.bottom
@@ -2282,6 +3186,15 @@ fn rich_text_document_prefix_source_offset_at_point(
       ),
       height=line_height,
     )
+    if fallback is None &&
+      rich_text_point_in_prefix_lane(
+        block, point, frame, base_font, text_system,
+      ) {
+      fallback = match block.content_range {
+        Some(range) => Some(range.start)
+        None => None
+      }
+    }
     if point.y < y + block_height {
       return rich_text_block_prefix_source_offset_at_point(
         block, point, frame, base_font, text_system,
@@ -2289,7 +3202,7 @@ fn rich_text_document_prefix_source_offset_at_point(
     }
     y = y + block_height
   }
-  None
+  fallback
 }
 
 ///|
@@ -2304,7 +3217,10 @@ fn rich_text_block_prefix_source_offset_at_point(
     return None
   }
   let font = rich_text_block_font(block, base_font)
-  let width = rich_text_width(block.prefix, font, text_system)
+  let width = max_double(
+    rich_text_width(block.prefix, font, text_system),
+    font.size * 1.8,
+  )
   if point.x >= frame.origin.x && point.x <= frame.origin.x + width {
     match block.content_range {
       Some(content) => Some(content.start)
@@ -2313,6 +3229,25 @@ fn rich_text_block_prefix_source_offset_at_point(
   } else {
     None
   }
+}
+
+///|
+fn rich_text_point_in_prefix_lane(
+  block : RichTextBlock,
+  point : @core.Point,
+  frame : @core.Rect,
+  base_font : @core.FontSpec,
+  text_system : @core.TextSystem,
+) -> Bool {
+  if block.prefix == "" {
+    return false
+  }
+  let font = rich_text_block_font(block, base_font)
+  let width = max_double(
+    rich_text_width(block.prefix, font, text_system),
+    font.size * 1.8,
+  )
+  point.x >= frame.origin.x && point.x <= frame.origin.x + width
 }
 
 ///|
