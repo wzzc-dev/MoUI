@@ -173,6 +173,10 @@ pub fn linux_service_bridge(
         binary_file(binary_file_request)
       @host.HostServiceRequest::ShowMenu(commands) =>
         linux_menu_command_response(commands, menu(commands))
+      @host.HostServiceRequest::ListDirectory(_) =>
+        @host.HostServiceResponse::Unavailable(
+          "directory listing service is unavailable",
+        )
     }
   })
 }
@@ -203,6 +207,14 @@ fn dispatch_linux_clipboard(
           "clipboard write failed or Wayland selection is unavailable",
         )
       }
+    @host.HostClipboardRequest::ReadImage =>
+      @host.HostServiceResponse::Unavailable(
+        "clipboard image read is unavailable",
+      )
+    @host.HostClipboardRequest::WriteImage(_, _) =>
+      @host.HostServiceResponse::Unavailable(
+        "clipboard image write is unavailable",
+      )
   }
 }
 

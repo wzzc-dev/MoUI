@@ -229,6 +229,14 @@ test "linux service bridge routes real service contracts through handlers" {
           clipboard_text.val = text
           @host.HostServiceResponse::ClipboardWritten
         }
+        @host.HostClipboardRequest::ReadImage =>
+          @host.HostServiceResponse::Unavailable(
+            "clipboard image read is unavailable",
+          )
+        @host.HostClipboardRequest::WriteImage(_, _) =>
+          @host.HostServiceResponse::Unavailable(
+            "clipboard image write is unavailable",
+          )
       }
     },
     open_url=url => {
