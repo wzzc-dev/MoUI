@@ -503,13 +503,16 @@ fn MarkdownEditorApp::replace_all_find_matches(
 
 ///|
 fn MarkdownEditorApp::sync_target_inputs(self : MarkdownEditorApp) -> Unit {
+  let session = self.document_session.get()
+  let source = session.source
   let selection = self.selection.get()
-  let block_label = markdown_editor_active_block_label(
-    self.document.get(),
-    selection,
-  )
+  let active_block = markdown_editor_session_active_block(session, selection)
+  let block_label = markdown_editor_session_active_block_label(active_block)
   self.block_label.set(block_label)
-  match markdown_editor_selected_link_target(self.document.get(), selection) {
+  match
+    markdown_editor_session_selected_link_target(
+      source, selection, active_block,
+    ) {
     Some(target) => {
       self.link_target.set(target)
       self.target_kind.set(LinkTarget)
@@ -517,24 +520,25 @@ fn MarkdownEditorApp::sync_target_inputs(self : MarkdownEditorApp) -> Unit {
     }
     None => ()
   }
-  match markdown_editor_selected_image_target(self.document.get(), selection) {
+  match
+    markdown_editor_session_selected_image_target(
+      source, selection, active_block,
+    ) {
     Some(target) => {
       self.image_target.set(target)
       self.target_kind.set(ImageTarget)
     }
     None =>
       match
-        markdown_editor_selected_footnote_text(self.document.get(), selection) {
+        markdown_editor_session_selected_footnote_text(
+          source, selection, active_block,
+        ) {
         Some(text) => {
           self.footnote_text.set(text)
           self.target_kind.set(FootnoteTarget)
         }
         None =>
-          match
-            markdown_editor_selected_html_block_text(
-              self.document.get(),
-              selection,
-            ) {
+          match markdown_editor_session_selected_html_block_text(active_block) {
             Some(text) => {
               self.html_block_text.set(text)
               self.target_kind.set(HtmlBlockTarget)

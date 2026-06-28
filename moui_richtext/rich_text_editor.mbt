@@ -794,22 +794,27 @@ fn markdown_session_input_state(
     visible_overscan~,
     visible_scroll_state~,
   )
-  let content = window.content_rect(rich_text_editor_content_rect(frame))
-  let caret_rect = rich_text_document_caret_rect_at_source(
-    window.document,
-    visual_caret,
-    content,
-    font,
-    text_system~,
-  ).unwrap_or(
-    plain_rich_text_caret_rect(
-      display_text,
+  let base_content = rich_text_editor_content_rect(frame)
+  let content = window.content_rect(base_content)
+  let caret_rect = match
+    rich_text_document_caret_rect_at_source(
+      window.document,
       visual_caret,
-      rich_text_editor_content_rect(frame),
+      content,
       font,
-      text_system,
-    ),
-  )
+      text_system~,
+    ) {
+    Some(rect) => rect
+    None =>
+      markdown_session_estimated_caret_rect(
+        display_session,
+        visual_caret,
+        base_content,
+        font,
+        source_mode~,
+        scroll_y=window.scroll_y,
+      )
+  }
   {
     focused: true,
     element_id: None,
@@ -821,6 +826,24 @@ fn markdown_session_input_state(
     frame,
     caret_rect,
   }
+}
+
+///|
+fn markdown_session_estimated_caret_rect(
+  session : MarkdownDocumentSession,
+  source_caret : Int,
+  content : @core.Rect,
+  font : @core.FontSpec,
+  source_mode~ : Bool,
+  scroll_y~ : Double,
+) -> @core.Rect {
+  let source_y = session.source_offset_y(source_caret, base=font, source_mode~)
+  @core.Rect::new(
+    x=content.origin.x,
+    y=content.origin.y + source_y - scroll_y + 4.0,
+    width=1.5,
+    height=max_double(10.0, font.size * 1.55 - 8.0),
+  )
 }
 
 ///|
@@ -1008,10 +1031,7 @@ fn append_rich_text_document_layers(
   }
   let mut y = content.origin.y
   let windowed = visible_viewport_height > 0.0
-  let visible_top = clip.origin.y +
-    visible_scroll_y -
-    12.0 -
-    visible_overscan
+  let visible_top = clip.origin.y + visible_scroll_y - 12.0 - visible_overscan
   let visible_bottom = visible_top +
     visible_viewport_height +
     visible_overscan * 2.0
@@ -1420,14 +1440,8 @@ fn append_rich_text_editor_overlay(
     0,
     text_length(display_text),
   )
-  let caret_rect = rich_text_document_caret_rect_at_source(
-    document,
-    caret,
-    content,
-    font,
-    text_system~,
-  ).unwrap_or(
-    plain_rich_text_caret_rect(display_text, caret, content, font, text_system),
+  let caret_rect = rich_text_document_caret_rect_or_plain(
+    document, caret, content, font, text_system, display_text,
   )
   commands.push(@core.DrawCommand::FillRect(caret_rect, cursor_color))
   commands.push(@core.DrawCommand::PopClip)
@@ -1454,27 +1468,11 @@ fn append_rich_text_composition_underline(
           control.selection,
         )
         let end = start + text_length(composition)
-        let start_rect = rich_text_document_caret_rect_at_source(
-          document,
-          start,
-          content,
-          font,
-          text_system~,
-        ).unwrap_or(
-          plain_rich_text_caret_rect(
-            display_text, start, content, font, text_system,
-          ),
+        let start_rect = rich_text_document_caret_rect_or_plain(
+          document, start, content, font, text_system, display_text,
         )
-        let end_rect = rich_text_document_caret_rect_at_source(
-          document,
-          end,
-          content,
-          font,
-          text_system~,
-        ).unwrap_or(
-          plain_rich_text_caret_rect(
-            display_text, end, content, font, text_system,
-          ),
+        let end_rect = rich_text_document_caret_rect_or_plain(
+          document, end, content, font, text_system, display_text,
         )
         if end_rect.origin.x > start_rect.origin.x {
           commands.push(
@@ -2153,16 +2151,8 @@ fn rich_text_input_state(
     text_length(display_text),
   )
   let document = format(display_text)
-  let caret_rect = rich_text_document_caret_rect_at_source(
-    document,
-    visual_caret,
-    content,
-    font,
-    text_system~,
-  ).unwrap_or(
-    plain_rich_text_caret_rect(
-      display_text, visual_caret, content, font, text_system,
-    ),
+  let caret_rect = rich_text_document_caret_rect_or_plain(
+    document, visual_caret, content, font, text_system, display_text,
   )
   {
     focused: true,
@@ -2258,6 +2248,31 @@ fn rich_text_visual_caret(
         @core.composition_cursor_offset(control, composition)
       None => caret
     }
+  }
+}
+
+///|
+fn rich_text_document_caret_rect_or_plain(
+  document : RichTextDocument,
+  source_caret : Int,
+  content : @core.Rect,
+  font : @core.FontSpec,
+  text_system : @core.TextSystem,
+  display_text : String,
+) -> @core.Rect {
+  match
+    rich_text_document_caret_rect_at_source(
+      document,
+      source_caret,
+      content,
+      font,
+      text_system~,
+    ) {
+    Some(rect) => rect
+    None =>
+      plain_rich_text_caret_rect(
+        display_text, source_caret, content, font, text_system,
+      )
   }
 }
 
@@ -2992,6 +3007,8 @@ fn rich_text_document_source_offset_at_point(
   }
   let mut y = content.origin.y
   let mut last_offset : Int? = None
+  let mut last_block : RichTextBlock? = None
+  let mut last_frame = @core.Rect::new(x=0.0, y=0.0, width=0.0, height=0.0)
   for block in document.blocks {
     let line_height = rich_text_block_line_height(block, base_font, text_system)
     let block_height = line_height + block.inset.top + block.inset.bottom
@@ -3004,20 +3021,44 @@ fn rich_text_document_source_offset_at_point(
       ),
       height=line_height,
     )
-    let offset = rich_text_block_source_offset_at_point(
-      block, point, frame, base_font, text_system,
-    )
-    last_offset = Some(offset)
     if point.y < y + block_height {
       match rich_text_block_table_source_offset_at_point(block, point, frame) {
         Some(offset) => return Some(offset)
         None => ()
       }
+      let offset = rich_text_block_source_offset_at_point(
+        block, point, frame, base_font, text_system,
+      )
       return Some(offset)
     }
+    last_block = Some(block)
+    last_frame = frame
+    last_offset = rich_text_block_end_source_offset(block)
     y = y + block_height
   }
-  last_offset
+  match last_block {
+    Some(block) =>
+      Some(
+        rich_text_block_source_offset_at_point(
+          block, point, last_frame, base_font, text_system,
+        ),
+      )
+    None => last_offset
+  }
+}
+
+///|
+fn rich_text_block_end_source_offset(block : RichTextBlock) -> Int? {
+  match block.source_range {
+    Some(range) => Some(range.end)
+    None =>
+      Some(
+        rich_text_block_source_offset_from_visual(
+          block,
+          rich_text_block_visual_length(block),
+        ),
+      )
+  }
 }
 
 ///|
