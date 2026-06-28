@@ -1,5 +1,5 @@
 ///|
-pub fn markdown_editor_transform_multiline_paste(
+fn markdown_editor_transform_multiline_paste(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -45,7 +45,7 @@ pub fn markdown_editor_transform_multiline_paste(
 }
 
 ///|
-pub fn markdown_editor_code_block_paste_insert(
+fn markdown_editor_code_block_paste_insert(
   source : String,
   caret : Int,
   input : String,
@@ -60,7 +60,7 @@ pub fn markdown_editor_code_block_paste_insert(
 }
 
 ///|
-pub fn markdown_editor_quoted_code_block_paste_insert(
+fn markdown_editor_quoted_code_block_paste_insert(
   source : String,
   block : MarkdownEditorQuotedCodeBlock,
   caret : Int,
@@ -84,7 +84,7 @@ pub fn markdown_editor_quoted_code_block_paste_insert(
 }
 
 ///|
-pub fn markdown_editor_contextual_paste_insert(
+fn markdown_editor_contextual_paste_insert(
   line : String,
   input : String,
 ) -> String {
@@ -122,7 +122,7 @@ pub fn markdown_editor_contextual_paste_insert(
 }
 
 ///|
-pub fn markdown_editor_quote_context_prefix(line : String) -> String {
+fn markdown_editor_quote_context_prefix(line : String) -> String {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
   if chars.length() >= indent + 2 &&
@@ -136,7 +136,7 @@ pub fn markdown_editor_quote_context_prefix(line : String) -> String {
 }
 
 ///|
-pub fn markdown_editor_blank_paste_continuation_prefix(line : String) -> String {
+fn markdown_editor_blank_paste_continuation_prefix(line : String) -> String {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
   if chars.length() >= indent + 2 &&
@@ -151,7 +151,7 @@ pub fn markdown_editor_blank_paste_continuation_prefix(line : String) -> String 
 }
 
 ///|
-pub fn markdown_editor_ordered_continuation_number(line : String) -> Int {
+fn markdown_editor_ordered_continuation_number(line : String) -> Int {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
   if chars.length() >= indent + 2 &&
@@ -174,10 +174,7 @@ pub fn markdown_editor_ordered_continuation_number(line : String) -> Int {
 }
 
 ///|
-pub fn markdown_editor_ordered_paste_prefix(
-  line : String,
-  number : Int,
-) -> String {
+fn markdown_editor_ordered_paste_prefix(line : String, number : Int) -> String {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
   if chars.length() >= indent + 2 &&
@@ -193,7 +190,7 @@ pub fn markdown_editor_ordered_paste_prefix(
 }
 
 ///|
-pub fn markdown_editor_ordered_digit_end(chars : Array[Char]) -> Int {
+fn markdown_editor_ordered_digit_end(chars : Array[Char]) -> Int {
   let mut index = markdown_editor_leading_indent_length(chars)
   while index < chars.length() && chars[index].is_ascii_digit() {
     index = index + 1
@@ -202,7 +199,7 @@ pub fn markdown_editor_ordered_digit_end(chars : Array[Char]) -> Int {
 }
 
 ///|
-pub fn markdown_editor_paste_lines(input : String) -> Array[String] {
+fn markdown_editor_paste_lines(input : String) -> Array[String] {
   let lines = markdown_editor_lines(
     markdown_editor_trim_trailing_newline(input),
   )
@@ -214,7 +211,7 @@ pub fn markdown_editor_paste_lines(input : String) -> Array[String] {
 }
 
 ///|
-pub fn markdown_editor_prefix_paste_continuation_lines(
+fn markdown_editor_prefix_paste_continuation_lines(
   input : String,
   prefix : String,
 ) -> Array[String] {
@@ -231,12 +228,12 @@ pub fn markdown_editor_prefix_paste_continuation_lines(
 }
 
 ///|
-pub fn markdown_editor_join_paste_lines(lines : Array[String]) -> String {
+fn markdown_editor_join_paste_lines(lines : Array[String]) -> String {
   markdown_join_lines(lines)
 }
 
 ///|
-pub fn markdown_editor_trim_trailing_newline(input : String) -> String {
+fn markdown_editor_trim_trailing_newline(input : String) -> String {
   let chars = input.to_array()
   if chars.length() > 0 && chars[chars.length() - 1] == '\n' {
     String::from_array(chars[:chars.length() - 1])

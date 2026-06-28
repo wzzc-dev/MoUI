@@ -1,5 +1,5 @@
 ///|
-pub fn markdown_editor_insert_table_row(
+fn markdown_editor_insert_table_row(
   source : String,
   selection : MarkdownEditorSelection,
 ) -> MarkdownEditorEditResult {
@@ -38,7 +38,7 @@ pub fn markdown_editor_insert_table_row(
 }
 
 ///|
-pub fn markdown_editor_insert_table_row_after_cell(
+fn markdown_editor_insert_table_row_after_cell(
   source : String,
   cells : Array[MarkdownEditorTableCellRange],
   current : MarkdownEditorTableCellRange,
@@ -66,7 +66,7 @@ pub fn markdown_editor_insert_table_row_after_cell(
 }
 
 ///|
-pub fn markdown_editor_table_insert_row_end(
+fn markdown_editor_table_insert_row_end(
   source : String,
   cells : Array[MarkdownEditorTableCellRange],
   current : MarkdownEditorTableCellRange,
@@ -83,10 +83,7 @@ pub fn markdown_editor_table_insert_row_end(
 }
 
 ///|
-pub fn markdown_editor_table_row_line_end(
-  chars : Array[Char],
-  start : Int,
-) -> Int {
+fn markdown_editor_table_row_line_end(chars : Array[Char], start : Int) -> Int {
   let mut end = markdown_editor_clamp_int(start, 0, chars.length())
   while end < chars.length() && chars[end] != '\n' {
     end = end + 1
@@ -95,12 +92,12 @@ pub fn markdown_editor_table_row_line_end(
 }
 
 ///|
-pub fn markdown_editor_empty_table_row_column_caret(column : Int) -> Int {
+fn markdown_editor_empty_table_row_column_caret(column : Int) -> Int {
   2 + column * 3
 }
 
 ///|
-pub fn markdown_editor_delete_table_row(
+fn markdown_editor_delete_table_row(
   source : String,
   selection : MarkdownEditorSelection,
 ) -> MarkdownEditorEditResult {
@@ -133,7 +130,7 @@ pub fn markdown_editor_delete_table_row(
 }
 
 ///|
-pub fn markdown_editor_delete_table_row_at_cell(
+fn markdown_editor_delete_table_row_at_cell(
   source : String,
   cells : Array[MarkdownEditorTableCellRange],
   current : MarkdownEditorTableCellRange,
@@ -164,7 +161,7 @@ pub fn markdown_editor_delete_table_row_at_cell(
 }
 
 ///|
-pub fn markdown_editor_clear_table_row(
+fn markdown_editor_clear_table_row(
   source : String,
   cells : Array[MarkdownEditorTableCellRange],
   current : MarkdownEditorTableCellRange,
@@ -181,7 +178,7 @@ pub fn markdown_editor_clear_table_row(
 }
 
 ///|
-pub fn markdown_editor_table_data_row_count(
+fn markdown_editor_table_data_row_count(
   cells : Array[MarkdownEditorTableCellRange],
 ) -> Int {
   let mut count = 0
@@ -194,7 +191,7 @@ pub fn markdown_editor_table_data_row_count(
 }
 
 ///|
-pub fn markdown_editor_table_row_start(
+fn markdown_editor_table_row_start(
   cells : Array[MarkdownEditorTableCellRange],
   row : Int,
 ) -> Int {
@@ -212,7 +209,7 @@ pub fn markdown_editor_table_row_start(
 }
 
 ///|
-pub fn markdown_editor_append_table_row(
+fn markdown_editor_append_table_row(
   source : String,
   block : MarkdownEditorBlock,
   first_row : Int,
@@ -230,7 +227,7 @@ pub fn markdown_editor_append_table_row(
 }
 
 ///|
-pub fn markdown_editor_empty_table_row(column_count : Int) -> String {
+fn markdown_editor_empty_table_row(column_count : Int) -> String {
   let cells : Array[String] = []
   for _ in 0..<column_count {
     cells.push("")

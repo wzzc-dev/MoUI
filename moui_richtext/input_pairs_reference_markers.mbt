@@ -1,5 +1,5 @@
 ///|
-pub fn markdown_editor_delete_reference_marker(
+fn markdown_editor_delete_reference_marker(
   source : String,
   chars : Array[Char],
   caret : Int,
@@ -52,7 +52,7 @@ pub fn markdown_editor_delete_reference_marker(
 }
 
 ///|
-pub fn markdown_editor_reference_open_before(
+fn markdown_editor_reference_open_before(
   source : String,
   chars : Array[Char],
   close_start : Int,
@@ -95,7 +95,7 @@ pub fn markdown_editor_reference_open_before(
 }
 
 ///|
-pub fn markdown_editor_backspace_reference_marker(
+fn markdown_editor_backspace_reference_marker(
   source : String,
   chars : Array[Char],
   caret : Int,
@@ -155,7 +155,7 @@ pub fn markdown_editor_backspace_reference_marker(
 }
 
 ///|
-pub fn markdown_editor_reference_bounds_full_end_before(
+fn markdown_editor_reference_bounds_full_end_before(
   source : String,
   chars : Array[Char],
   caret : Int,
@@ -205,7 +205,7 @@ pub fn markdown_editor_reference_bounds_full_end_before(
 }
 
 ///|
-pub fn markdown_editor_reference_close_after(
+fn markdown_editor_reference_close_after(
   source : String,
   chars : Array[Char],
   content_start : Int,
@@ -252,7 +252,7 @@ pub(all) struct MarkdownEditorReferenceMarkerTarget {
 }
 
 ///|
-pub fn markdown_editor_reference_marker_target_after(
+fn markdown_editor_reference_marker_target_after(
   source : String,
   chars : Array[Char],
   close_start : Int,
@@ -298,7 +298,7 @@ pub fn markdown_editor_reference_marker_target_after(
 }
 
 ///|
-pub fn markdown_editor_remove_reference_marker(
+fn markdown_editor_remove_reference_marker(
   chars : Array[Char],
   open_start : Int,
   content_start : Int,

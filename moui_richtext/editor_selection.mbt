@@ -61,7 +61,7 @@ pub fn markdown_editor_image_context(
 }
 
 ///|
-pub fn markdown_editor_link_context_at_caret(
+fn markdown_editor_link_context_at_caret(
   source : String,
   caret : Int,
 ) -> MarkdownReferenceContext? {
@@ -87,7 +87,7 @@ pub fn markdown_editor_link_context_at_caret(
 }
 
 ///|
-pub fn markdown_editor_image_context_at_caret(
+fn markdown_editor_image_context_at_caret(
   source : String,
   caret : Int,
 ) -> MarkdownReferenceContext? {
@@ -105,7 +105,7 @@ pub fn markdown_editor_image_context_at_caret(
 }
 
 ///|
-pub fn markdown_editor_autolink_context_at_caret(
+fn markdown_editor_autolink_context_at_caret(
   source : String,
   chars : Array[Char],
   caret : Int,
@@ -132,7 +132,7 @@ pub fn markdown_editor_autolink_context_at_caret(
 }
 
 ///|
-pub fn markdown_editor_bracketed_reference_range_at_caret(
+fn markdown_editor_bracketed_reference_range_at_caret(
   chars : Array[Char],
   caret : Int,
   image~ : Bool,
@@ -207,7 +207,7 @@ pub fn markdown_editor_active_block_label(
 }
 
 ///|
-pub fn markdown_editor_code_block_at_content_offset(
+fn markdown_editor_code_block_at_content_offset(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
@@ -231,7 +231,7 @@ pub fn markdown_editor_code_block_at_content_offset(
 }
 
 ///|
-pub fn markdown_editor_code_block_at_selection(
+fn markdown_editor_code_block_at_selection(
   source : String,
   selection : MarkdownEditorSelection,
 ) -> MarkdownEditorBlock? {
@@ -254,7 +254,7 @@ pub fn markdown_editor_code_block_at_selection(
 }
 
 ///|
-pub fn markdown_editor_html_block_at_selection(
+fn markdown_editor_html_block_at_selection(
   source : String,
   selection : MarkdownEditorSelection,
 ) -> MarkdownEditorBlock? {
@@ -277,7 +277,7 @@ pub fn markdown_editor_html_block_at_selection(
 }
 
 ///|
-pub fn markdown_editor_code_block_enter(
+fn markdown_editor_code_block_enter(
   source : String,
   caret : Int,
 ) -> RichTextInputTransform {
@@ -306,7 +306,7 @@ pub(all) struct MarkdownLinkBounds {
 } derive(Eq, Debug)
 
 ///|
-pub fn markdown_editor_range_link_bounds(
+fn markdown_editor_range_link_bounds(
   source : String,
   range : @core.TextRange,
 ) -> MarkdownLinkBounds? {
@@ -358,7 +358,7 @@ pub fn markdown_editor_range_link_bounds(
 }
 
 ///|
-pub fn markdown_editor_range_autolink_bounds(
+fn markdown_editor_range_autolink_bounds(
   chars : Array[Char],
   range : @core.TextRange,
 ) -> MarkdownLinkBounds? {
@@ -384,7 +384,7 @@ pub fn markdown_editor_range_autolink_bounds(
 }
 
 ///|
-pub fn markdown_editor_shortcut_reference_link_bounds(
+fn markdown_editor_shortcut_reference_link_bounds(
   source : String,
   range : @core.TextRange,
   open_start : Int,
@@ -419,7 +419,7 @@ pub fn markdown_editor_shortcut_reference_link_bounds(
 }
 
 ///|
-pub fn markdown_editor_range_image_bounds(
+fn markdown_editor_range_image_bounds(
   source : String,
   range : @core.TextRange,
 ) -> MarkdownLinkBounds? {
@@ -465,7 +465,7 @@ pub fn markdown_editor_range_image_bounds(
 }
 
 ///|
-pub fn markdown_editor_reference_link_bounds(
+fn markdown_editor_reference_link_bounds(
   source : String,
   range : @core.TextRange,
   open_start : Int,
@@ -513,7 +513,7 @@ pub fn markdown_editor_reference_link_bounds(
 }
 
 ///|
-pub fn markdown_editor_reference_definition_target_range(
+fn markdown_editor_reference_definition_target_range(
   source : String,
   label : String,
 ) -> MarkdownSourceRange? {
@@ -531,7 +531,7 @@ pub fn markdown_editor_reference_definition_target_range(
 }
 
 ///|
-pub fn markdown_editor_reference_definition_line_target_range(
+fn markdown_editor_reference_definition_line_target_range(
   line : MarkdownLine,
 ) -> (String, MarkdownSourceRange)? {
   let chars = line.text.to_array()
@@ -582,7 +582,7 @@ pub fn markdown_editor_reference_definition_line_target_range(
 }
 
 ///|
-pub fn markdown_editor_wrap_link_range(
+fn markdown_editor_wrap_link_range(
   source : String,
   range : @core.TextRange,
 ) -> MarkdownEditorEditResult {
@@ -592,7 +592,7 @@ pub fn markdown_editor_wrap_link_range(
 }
 
 ///|
-pub fn markdown_editor_wrap_link_range_with_target(
+fn markdown_editor_wrap_link_range_with_target(
   source : String,
   range : @core.TextRange,
   target : String,
@@ -616,7 +616,7 @@ pub fn markdown_editor_wrap_link_range_with_target(
 }
 
 ///|
-pub fn markdown_editor_wrap_image_range(
+fn markdown_editor_wrap_image_range(
   source : String,
   range : @core.TextRange,
 ) -> MarkdownEditorEditResult {
@@ -624,7 +624,7 @@ pub fn markdown_editor_wrap_image_range(
 }
 
 ///|
-pub fn markdown_editor_wrap_image_range_with_target(
+fn markdown_editor_wrap_image_range_with_target(
   source : String,
   range : @core.TextRange,
   target : String,
@@ -648,7 +648,7 @@ pub fn markdown_editor_wrap_image_range_with_target(
 }
 
 ///|
-pub fn markdown_editor_replace_reference_target(
+fn markdown_editor_replace_reference_target(
   source : String,
   range : @core.TextRange,
   bounds : MarkdownLinkBounds,
@@ -687,7 +687,7 @@ pub fn markdown_editor_replace_reference_target(
 }
 
 ///|
-pub fn markdown_editor_reference_definition_append_prefix(
+fn markdown_editor_reference_definition_append_prefix(
   source : String,
 ) -> String {
   if source == "" {
@@ -702,7 +702,7 @@ pub fn markdown_editor_reference_definition_append_prefix(
 }
 
 ///|
-pub fn markdown_editor_footnote_label_at_selection(
+fn markdown_editor_footnote_label_at_selection(
   source : String,
   selection : MarkdownEditorSelection,
 ) -> String? {
@@ -722,7 +722,7 @@ pub fn markdown_editor_footnote_label_at_selection(
 }
 
 ///|
-pub fn markdown_editor_footnote_reference_label_at(
+fn markdown_editor_footnote_reference_label_at(
   source : String,
   anchor : Int,
 ) -> String? {
@@ -751,7 +751,7 @@ pub fn markdown_editor_footnote_reference_label_at(
 }
 
 ///|
-pub fn markdown_editor_footnote_definition_label_at(
+fn markdown_editor_footnote_definition_label_at(
   source : String,
   anchor : Int,
 ) -> String? {
@@ -767,7 +767,7 @@ pub fn markdown_editor_footnote_definition_label_at(
 }
 
 ///|
-pub fn markdown_editor_footnote_definition_text(
+fn markdown_editor_footnote_definition_text(
   source : String,
   label : String,
 ) -> String? {
@@ -786,7 +786,7 @@ pub fn markdown_editor_footnote_definition_text(
 }
 
 ///|
-pub fn markdown_editor_footnote_definition_line_text_range(
+fn markdown_editor_footnote_definition_line_text_range(
   line : MarkdownLine,
 ) -> (String, MarkdownSourceRange)? {
   let chars = line.text.to_array()
@@ -819,7 +819,7 @@ pub fn markdown_editor_footnote_definition_line_text_range(
 }
 
 ///|
-pub fn markdown_editor_set_footnote_text(
+fn markdown_editor_set_footnote_text(
   source : String,
   selection : MarkdownEditorSelection,
   text : String,
@@ -839,7 +839,7 @@ pub fn markdown_editor_set_footnote_text(
 }
 
 ///|
-pub fn markdown_editor_replace_footnote_definition_text(
+fn markdown_editor_replace_footnote_definition_text(
   source : String,
   label : String,
   text : String,
@@ -866,7 +866,7 @@ pub fn markdown_editor_replace_footnote_definition_text(
 }
 
 ///|
-pub fn markdown_editor_append_footnote_definition(
+fn markdown_editor_append_footnote_definition(
   source : String,
   label : String,
   text : String,
@@ -886,7 +886,7 @@ pub fn markdown_editor_append_footnote_definition(
 }
 
 ///|
-pub fn markdown_editor_reference_target(
+fn markdown_editor_reference_target(
   source : String,
   bounds : MarkdownLinkBounds,
 ) -> String? {
@@ -909,7 +909,7 @@ pub fn markdown_editor_reference_target(
 }
 
 ///|
-pub fn markdown_editor_unwrap_link_range(
+fn markdown_editor_unwrap_link_range(
   source : String,
   range : @core.TextRange,
   bounds : MarkdownLinkBounds,
@@ -926,7 +926,7 @@ pub fn markdown_editor_unwrap_link_range(
 }
 
 ///|
-pub fn markdown_editor_unwrap_image_range(
+fn markdown_editor_unwrap_image_range(
   source : String,
   range : @core.TextRange,
   bounds : MarkdownLinkBounds,
@@ -943,7 +943,7 @@ pub fn markdown_editor_unwrap_image_range(
 }
 
 ///|
-pub fn markdown_editor_selected_line_range(
+fn markdown_editor_selected_line_range(
   source : String,
   selection : MarkdownEditorSelection,
 ) -> MarkdownSourceRange {
@@ -970,7 +970,7 @@ pub fn markdown_editor_selected_line_range(
 }
 
 ///|
-pub fn markdown_editor_line_range_around(
+fn markdown_editor_line_range_around(
   chars : Array[Char],
   start_anchor : Int,
   end_anchor : Int,
@@ -987,7 +987,7 @@ pub fn markdown_editor_line_range_around(
 }
 
 ///|
-pub fn markdown_editor_current_line_range(
+fn markdown_editor_current_line_range(
   source : String,
   selection : MarkdownEditorSelection,
 ) -> MarkdownSourceRange {

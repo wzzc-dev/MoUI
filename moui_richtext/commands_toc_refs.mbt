@@ -1,5 +1,5 @@
 ///|
-pub fn markdown_editor_append_snippet(
+fn markdown_editor_append_snippet(
   source : String,
   command : MarkdownEditorCommand,
 ) -> MarkdownEditorEditResult {
@@ -9,7 +9,7 @@ pub fn markdown_editor_append_snippet(
 }
 
 ///|
-pub fn markdown_editor_insert_table_of_contents(
+fn markdown_editor_insert_table_of_contents(
   source : String,
   selection : MarkdownEditorSelection,
 ) -> MarkdownEditorEditResult {
@@ -21,7 +21,7 @@ pub fn markdown_editor_insert_table_of_contents(
 }
 
 ///|
-pub fn markdown_editor_insert_front_matter(
+fn markdown_editor_insert_front_matter(
   source : String,
 ) -> MarkdownEditorEditResult {
   let blocks = parse_markdown_editor_blocks(source)
@@ -43,7 +43,7 @@ pub fn markdown_editor_insert_front_matter(
 }
 
 ///|
-pub fn markdown_editor_table_of_contents_markdown(source : String) -> String {
+fn markdown_editor_table_of_contents_markdown(source : String) -> String {
   let outline = MarkdownEditorSnapshot::parse(source).outline
   if outline.length() == 0 {
     return markdown_editor_command_snippet(InsertTableOfContents)
@@ -69,7 +69,7 @@ pub fn markdown_editor_table_of_contents_markdown(source : String) -> String {
 }
 
 ///|
-pub fn markdown_editor_replace_with_block(
+fn markdown_editor_replace_with_block(
   source : String,
   range : @core.TextRange,
   block : String,
@@ -87,7 +87,7 @@ pub fn markdown_editor_replace_with_block(
 }
 
 ///|
-pub fn markdown_editor_toc_indent(level : Int) -> String {
+fn markdown_editor_toc_indent(level : Int) -> String {
   let spaces : Array[Char] = []
   let count = markdown_editor_max_int(0, level - 1) * 2
   for _ in 0..<count {
@@ -97,7 +97,7 @@ pub fn markdown_editor_toc_indent(level : Int) -> String {
 }
 
 ///|
-pub fn markdown_editor_toc_escape_link_text(text : String) -> String {
+fn markdown_editor_toc_escape_link_text(text : String) -> String {
   let chars : Array[Char] = []
   for ch in text {
     if ch == '[' || ch == ']' || ch == '\\' {
@@ -109,7 +109,7 @@ pub fn markdown_editor_toc_escape_link_text(text : String) -> String {
 }
 
 ///|
-pub fn markdown_editor_toc_slug(text : String) -> String {
+fn markdown_editor_toc_slug(text : String) -> String {
   let chars : Array[Char] = []
   let mut previous_dash = false
   for ch in text.to_lower() {
@@ -134,12 +134,12 @@ pub fn markdown_editor_toc_slug(text : String) -> String {
 }
 
 ///|
-pub fn markdown_editor_toc_slug_char(ch : Char) -> Bool {
+fn markdown_editor_toc_slug_char(ch : Char) -> Bool {
   (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '_'
 }
 
 ///|
-pub fn markdown_editor_toggle_link_range(
+fn markdown_editor_toggle_link_range(
   source : String,
   range : @core.TextRange,
 ) -> MarkdownEditorEditResult {
@@ -152,7 +152,7 @@ pub fn markdown_editor_toggle_link_range(
 }
 
 ///|
-pub fn markdown_editor_toggle_image_range(
+fn markdown_editor_toggle_image_range(
   source : String,
   range : @core.TextRange,
 ) -> MarkdownEditorEditResult {
@@ -165,7 +165,7 @@ pub fn markdown_editor_toggle_image_range(
 }
 
 ///|
-pub fn markdown_editor_toggle_reference_at_caret(
+fn markdown_editor_toggle_reference_at_caret(
   source : String,
   selection : MarkdownEditorSelection,
   command : MarkdownEditorCommand,
@@ -190,7 +190,7 @@ pub fn markdown_editor_toggle_reference_at_caret(
 }
 
 ///|
-pub fn markdown_editor_set_reference_target(
+fn markdown_editor_set_reference_target(
   source : String,
   selection : MarkdownEditorSelection,
   command : MarkdownEditorCommand,
