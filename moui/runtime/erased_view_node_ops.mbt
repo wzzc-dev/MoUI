@@ -36,11 +36,16 @@ fn ErasedViewNode::reconcile_dirty_kind(
   self : ErasedViewNode,
   next : ErasedViewNode,
 ) -> ReconcileDirtyKind {
-  if self.revision != "" && self.revision == next.revision {
-    ReconcileClean
-  } else {
-    ReconcileLayout
+  let layout_clean = self.revision != "" && self.revision == next.revision
+  if !layout_clean {
+    return ReconcileLayout
   }
+  // revision 相同：检查 paint_revision 是否变化。
+  // paint_revision 为空串（未设置）时跳过，保持现有 revision-only 语义。
+  if self.paint_revision != "" && self.paint_revision != next.paint_revision {
+    return ReconcilePaint
+  }
+  ReconcileClean
 }
 
 ///|
@@ -48,6 +53,7 @@ fn empty_erased_view_node() -> ErasedViewNode {
   {
     identity: @core.ViewIdentity::new(kind="Empty"),
     revision: "empty",
+    paint_revision: "",
     children: () => [],
     build_child: None,
     child_constraints: constraints => constraints.loosen(),
