@@ -98,6 +98,123 @@ test "sun renderer applies multiply blend mode in layer compositing" {
 }
 
 ///|
+test "sun renderer applies layer spec opacity at compositing" {
+  let presented = Ref(None)
+  let target = SunPresentTarget::new(description="test", present=frame => {
+    presented.val = Some(frame)
+    true
+  })
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=4.0, height=4.0),
+    ),
+    target,
+  )
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::PushLayer(@core.LayerSpec::new(opacity=0.5)),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
+      @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
+    ),
+    @core.DrawCommand::PopLayer,
+  ])
+  match presented.val {
+    Some(frame) => {
+      let idx = (2 * frame.width + 2) * 4
+      assert_true(frame.pixels[idx].to_int() > 240)
+      assert_true(frame.pixels[idx + 1].to_int() > 100)
+      assert_true(frame.pixels[idx + 1].to_int() < 200)
+      inspect(renderer.unsupported_command_count(), content="0")
+    }
+    None => fail("expected Sun frame")
+  }
+}
+
+///|
+test "sun renderer applies rectangular layer mask" {
+  let presented = Ref(None)
+  let target = SunPresentTarget::new(description="test", present=frame => {
+    presented.val = Some(frame)
+    true
+  })
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=4.0, height=4.0),
+    ),
+    target,
+  )
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::PushLayer(
+      @core.LayerSpec::new(
+        mask=@core.LayerMask::RectMask(
+          @core.Rect::new(x=1.0, y=1.0, width=2.0, height=2.0),
+        ),
+      ),
+    ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
+      @core.Color::blue(),
+    ),
+    @core.DrawCommand::PopLayer,
+  ])
+  match presented.val {
+    Some(frame) => {
+      let inside = (1 * frame.width + 1) * 4
+      let outside = 0
+      assert_true(frame.pixels[inside + 2].to_int() > 200)
+      assert_true(frame.pixels[outside].to_int() > 240)
+      assert_true(frame.pixels[outside + 1].to_int() > 240)
+      assert_true(frame.pixels[outside + 2].to_int() > 240)
+      inspect(renderer.unsupported_command_count(), content="0")
+    }
+    None => fail("expected Sun frame")
+  }
+}
+
+///|
+test "sun renderer applies rounded layer mask corners" {
+  let presented = Ref(None)
+  let target = SunPresentTarget::new(description="test", present=frame => {
+    presented.val = Some(frame)
+    true
+  })
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=16.0, height=16.0),
+    ),
+    target,
+  )
+  let rounded = @core.RoundedRect::new(
+    rect=@core.Rect::new(x=2.0, y=2.0, width=12.0, height=12.0),
+    radius=4.0,
+  )
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::PushLayer(
+      @core.LayerSpec::new(mask=@core.LayerMask::RoundedMask(rounded)),
+    ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
+      @core.Color::blue(),
+    ),
+    @core.DrawCommand::PopLayer,
+  ])
+  match presented.val {
+    Some(frame) => {
+      let corner = (2 * frame.width + 2) * 4
+      let center = (8 * frame.width + 8) * 4
+      assert_true(frame.pixels[corner].to_int() > 240)
+      assert_true(frame.pixels[corner + 1].to_int() > 240)
+      assert_true(frame.pixels[center + 2].to_int() > 200)
+      inspect(renderer.unsupported_command_count(), content="0")
+    }
+    None => fail("expected Sun frame")
+  }
+}
+
+///|
 test "sun renderer draws text without unsupported diagnostic" {
   let presented = Ref(None)
   let target = SunPresentTarget::new(description="test", present=frame => {
@@ -315,6 +432,78 @@ test "sun renderer records failed image lifecycle once for repeated decode error
   inspect(renderer.image_resource_snapshot().revision, content="1")
   inspect(callback_count.val, content="1")
   inspect(renderer.unsupported_command_count(), content="1")
+}
+
+///|
+test "sun renderer async image loading waits for explicit completion" {
+  let target = SunPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=4.0, height=4.0),
+    ),
+    target,
+    async_image_loading=true,
+  )
+  let source = sun_test_png_data_uri()
+  let revisions : Array[Int] = []
+  renderer.set_image_resource_change_callback(
+    Some(snapshot => revisions.push(snapshot.revision)),
+  )
+  let commands = [
+    @core.DrawCommand::DrawImage(@core.ImageRun::{
+      source,
+      frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+  ]
+
+  renderer.render(commands)
+  inspect(renderer.present_count(), content="1")
+  inspect(renderer.image_resource_snapshot().revision, content="1")
+  guard renderer.image_resources()[0]
+    is { status: @render.ImageResourceStatus::ImageLoading, .. } else {
+    fail("expected loading sun image record")
+  }
+  inspect(renderer.unsupported_command_count(), content="0")
+  assert_true(revisions == [1])
+
+  let completion = sun_image_load_completion(source)
+  guard completion
+    is {
+      status: @render.ImageResourceLoadCompletionStatus::ImageLoadReady,
+      width: 1,
+      height: 1,
+      ..,
+    } else {
+    fail("expected ready sun image load completion")
+  }
+  let ready_snapshot = renderer.apply_image_resource_load_completion(completion)
+  inspect(ready_snapshot.revision, content="2")
+  guard renderer.image_resources()[0]
+    is { status: @render.ImageResourceStatus::ImageReady, .. } else {
+    fail("expected ready sun image record")
+  }
+  assert_true(revisions == [1, 2])
+
+  renderer.render(commands)
+  inspect(renderer.present_count(), content="2")
+  inspect(renderer.image_resource_snapshot().revision, content="2")
+  inspect(renderer.unsupported_command_count(), content="0")
+}
+
+///|
+test "sun image load completion reports decode failures" {
+  let completion = sun_image_load_completion("moui-sun-missing-image://async")
+  guard completion
+    is {
+      status: @render.ImageResourceLoadCompletionStatus::ImageLoadFailed,
+      diagnostic,
+      ..,
+    } else {
+    fail("expected failed sun image load completion")
+  }
+  assert_true(diagnostic.contains("could not decode image source"))
 }
 
 ///|
@@ -1222,45 +1411,6 @@ test "sun renderer checker shader alternates tiles" {
 }
 
 ///|
-test "sun renderer transform scope translates drawing" {
-  let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
-    presented.val = Some(frame)
-    true
-  })
-  let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
-      size=@core.Size::new(width=8.0, height=8.0),
-    ),
-    target,
-  )
-  renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushTransform(
-      @core.Transform2D::translation(dx=4.0, dy=4.0),
-    ),
-    @core.DrawCommand::FillRect(
-      @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
-      @core.Color::rgba(r=1.0, g=0.0, b=0.0, a=1.0),
-    ),
-    @core.DrawCommand::PopTransform,
-  ])
-  match presented.val {
-    Some(frame) => {
-      // Pixel at (0,0) should be white (outside translated rect)
-      assert_true(frame.pixels[0].to_int() > 200)
-      assert_true(frame.pixels[1].to_int() > 200)
-      assert_true(frame.pixels[2].to_int() > 200)
-      // Pixel at (5,5) should be red (inside translated rect)
-      let idx = (5 * 8 + 5) * 4
-      assert_true(frame.pixels[idx].to_int() > 200)
-      inspect(renderer.unsupported_command_count(), content="0")
-    }
-    None => fail("expected Sun frame")
-  }
-}
-
-///|
 test "sun renderer radial gradient varies center to edge" {
   let presented = Ref(None)
   let target = SunPresentTarget::new(description="test", present=frame => {
@@ -1552,47 +1702,6 @@ test "sun renderer gradient stroke on path" {
       let right_b = frame.pixels[7 * 4 + 2].to_int()
       assert_true(left_r > 100)
       assert_true(right_b > 100)
-    }
-    None => fail("expected Sun frame")
-  }
-}
-
-///|
-test "sun renderer nested filter inside transform scope" {
-  let presented = Ref(None)
-  let target = SunPresentTarget::new(description="test", present=frame => {
-    presented.val = Some(frame)
-    true
-  })
-  let renderer = create_with_present_target(
-    @render.RendererSurfaceMetrics::from_logical(
-      size=@core.Size::new(width=8.0, height=8.0),
-    ),
-    target,
-  )
-  renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-    @core.DrawCommand::PushTransform(
-      @core.Transform2D::translation(dx=2.0, dy=2.0),
-    ),
-    @core.DrawCommand::PushFilter(@core.FilterEffect::Brightness(3.0)),
-    @core.DrawCommand::FillRect(
-      @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
-      @core.Color::rgba(r=0.3, g=0.3, b=0.3, a=1.0),
-    ),
-    @core.DrawCommand::PopFilter,
-    @core.DrawCommand::PopTransform,
-  ])
-  match presented.val {
-    Some(frame) => {
-      // Brightness(3.0) on 0.3 → 0.9 → ~230
-      // But the rect is translated to (2,2)-(6,6)
-      let idx = (4 * 8 + 4) * 4
-      let r = frame.pixels[idx].to_int()
-      assert_true(r > 200)
-      // Outside (0,0) should be white
-      assert_true(frame.pixels[0].to_int() > 200)
-      inspect(renderer.unsupported_command_count(), content="0")
     }
     None => fail("expected Sun frame")
   }

@@ -57,6 +57,7 @@ pub(all) struct SunRasterRenderer {
   text_system : @sun_text.TextSystem
   resources : @sun_renderer.RendererResources
   image_lifecycle : @render.ImageResourceLifecycle
+  async_image_loading : Bool
   mut on_image_resource_change : ((@render.ImageResourceSnapshot) -> Unit)?
   mut canvas_stack : Array[@sun_graphics.Canvas]
   mut filter_stack : Array[@sun_graphics.PaintFilter]
@@ -113,6 +114,7 @@ pub fn sun_raster_native_descriptor() -> @render.RendererDescriptor {
 pub fn create_with_present_target(
   metrics : @render.RendererSurfaceMetrics,
   target : SunPresentTarget,
+  async_image_loading? : Bool = false,
 ) -> SunRasterRenderer raise SunRendererError {
   let width = sun_dim_to_int(metrics.physical_size.width)
   let height = sun_dim_to_int(metrics.physical_size.height)
@@ -132,6 +134,7 @@ pub fn create_with_present_target(
       1024, 1024, 64, 256, 256, 128,
     ),
     image_lifecycle: @render.ImageResourceLifecycle::new(),
+    async_image_loading,
     on_image_resource_change: None,
     canvas_stack: [],
     filter_stack: [],
@@ -170,6 +173,8 @@ pub fn SunRasterRenderer::render(
   let canvas_scopes : Array[SunCanvasScopeKind] = []
   let opacity_stack : Array[Double] = []
   let blend_mode_stack : Array[@sun_graphics.BlendMode] = []
+  let layer_spec_stack : Array[SunLayerScope] = []
+  let rounded_clip_transform_stack : Array[@sun_graphics.Transform] = []
   self.render_cached_command_range(
     commands,
     0,
@@ -177,6 +182,8 @@ pub fn SunRasterRenderer::render(
     canvas_scopes,
     opacity_stack,
     blend_mode_stack,
+    layer_spec_stack,
+    rounded_clip_transform_stack,
   )
   if !canvas_scopes.is_empty() {
     for scope in canvas_scopes {
@@ -192,8 +199,14 @@ pub fn SunRasterRenderer::render(
       }
     }
     self.filter_stack.clear()
+    self.blur_radius_stack.clear()
+    self.rounded_clip_stack.clear()
+    rounded_clip_transform_stack.clear()
     while !blend_mode_stack.is_empty() {
       ignore(blend_mode_stack.pop())
+    }
+    while !layer_spec_stack.is_empty() {
+      ignore(layer_spec_stack.pop())
     }
   }
   let frame = self.read_frame()
@@ -358,6 +371,8 @@ fn SunRasterRenderer::render_command(
   canvas_scopes : Array[SunCanvasScopeKind],
   opacity_stack : Array[Double],
   blend_mode_stack : Array[@sun_graphics.BlendMode],
+  layer_spec_stack : Array[SunLayerScope],
+  rounded_clip_transform_stack : Array[@sun_graphics.Transform],
 ) -> Unit {
   let opacity = sun_current_opacity(opacity_stack)
   match command {
@@ -397,7 +412,9 @@ fn SunRasterRenderer::render_command(
     @core.DrawCommand::PushClip(rect) => {
       self.canvas.save()
       canvas_scopes.push(SunCanvasScopeKind::Clip)
-      self.canvas.intersect_clip_rect(sun_rect(rect))
+      self.canvas.intersect_clip_rect(
+        sun_transformed_rect_bounds(self.canvas.get_transform(), rect),
+      )
     }
     @core.DrawCommand::PopClip =>
       self.pop_canvas_scope(
@@ -406,12 +423,9 @@ fn SunRasterRenderer::render_command(
         SunCanvasScopeKind::Clip,
       )
     @core.DrawCommand::PushRoundedClip(rounded) => {
-      self.canvas_stack.push(self.canvas)
       self.rounded_clip_stack.push(rounded)
-      let w = self.canvas.get_pixmap().get_width()
-      let h = self.canvas.get_pixmap().get_height()
-      self.canvas = @sun_graphics.Canvas::new(w, h)
-      self.canvas.clear(@sun_graphics.Color::new(r=0, g=0, b=0, a=0))
+      rounded_clip_transform_stack.push(self.canvas.get_transform())
+      self.push_transparent_offscreen_canvas()
       canvas_scopes.push(SunCanvasScopeKind::RoundedClip)
     }
     @core.DrawCommand::PopRoundedClip =>
@@ -423,10 +437,25 @@ fn SunRasterRenderer::render_command(
               match self.rounded_clip_stack.pop() {
                 Some(rounded) => {
                   self.canvas = parent_canvas
-                  self.composite_rounded_clip(layer_pixmap, rounded, opacity)
+                  let transform = match rounded_clip_transform_stack.pop() {
+                    Some(value) => value
+                    None => {
+                      self.record_unsupported_command(
+                        "PopRoundedClip", "PopRoundedClip has no matching rounded clip transform stack entry",
+                      )
+                      @sun_graphics.Transform::identity()
+                    }
+                  }
+                  self.composite_rounded_clip(
+                    layer_pixmap, rounded, transform, opacity,
+                  )
                 }
                 None => {
                   self.canvas = parent_canvas
+                  match rounded_clip_transform_stack.pop() {
+                    Some(_) => ()
+                    None => ()
+                  }
                   self.record_unsupported_command(
                     "PopRoundedClip", "PopRoundedClip has no matching rounded clip stack entry",
                   )
@@ -471,33 +500,37 @@ fn SunRasterRenderer::render_command(
         opacity_stack,
         SunCanvasScopeKind::Opacity,
       )
-    @core.DrawCommand::PushLayer(_spec) => {
-      self.canvas_stack.push(self.canvas)
-      blend_mode_stack.push(sun_blend_mode(_spec.blend_mode))
-      let w = self.canvas.get_pixmap().get_width()
-      let h = self.canvas.get_pixmap().get_height()
-      self.canvas = @sun_graphics.Canvas::new(w, h)
-      self.canvas.clear(@sun_graphics.Color::new(r=0, g=0, b=0, a=0))
+    @core.DrawCommand::PushLayer(spec) => {
+      blend_mode_stack.push(sun_blend_mode(spec.blend_mode))
+      layer_spec_stack.push({ spec, transform: self.canvas.get_transform() })
+      self.push_transparent_offscreen_canvas()
       canvas_scopes.push(SunCanvasScopeKind::Layer)
     }
     @core.DrawCommand::PopLayer =>
       match canvas_scopes.pop() {
         Some(SunCanvasScopeKind::Layer) => {
           let layer_pixmap = self.canvas.get_pixmap()
+          let layer_blend = match blend_mode_stack.pop() {
+            Some(m) => m
+            None => @sun_graphics.BlendMode::SourceOver
+          }
+          let layer_scope = match layer_spec_stack.pop() {
+            Some(scope) => scope
+            None => {
+              self.record_unsupported_command(
+                "PopLayer", "PopLayer has no matching layer spec stack entry",
+              )
+              {
+                spec: @core.LayerSpec::new(),
+                transform: @sun_graphics.Transform::identity(),
+              }
+            }
+          }
           match self.canvas_stack.pop() {
             Some(parent_canvas) => {
               self.canvas = parent_canvas
-              let layer_blend = match blend_mode_stack.pop() {
-                Some(m) => m
-                None => @sun_graphics.BlendMode::SourceOver
-              }
-              self.canvas.draw_pixmap(
-                layer_pixmap,
-                0,
-                0,
-                @sun_graphics.Paint::new()
-                .set_opacity(opacity)
-                .set_blend_mode(layer_blend),
+              self.composite_layer_pixmap(
+                layer_pixmap, layer_scope, opacity, layer_blend,
               )
             }
             None =>
@@ -519,17 +552,13 @@ fn SunRasterRenderer::render_command(
           )
       }
     @core.DrawCommand::PushFilter(effect) => {
-      self.canvas_stack.push(self.canvas)
       self.filter_stack.push(sun_filter_effect(effect))
       match effect {
         @core.FilterEffect::Blur(radius) =>
           self.blur_radius_stack.push(radius.max(0.0))
         _ => self.blur_radius_stack.push(0.0)
       }
-      let w = self.canvas.get_pixmap().get_width()
-      let h = self.canvas.get_pixmap().get_height()
-      self.canvas = @sun_graphics.Canvas::new(w, h)
-      self.canvas.clear(@sun_graphics.Color::new(r=0, g=0, b=0, a=0))
+      self.push_transparent_offscreen_canvas()
       canvas_scopes.push(SunCanvasScopeKind::Filter)
     }
     @core.DrawCommand::PopFilter => {
@@ -615,61 +644,6 @@ fn SunRasterRenderer::render_command(
       self.record_unsupported_command(
         "DrawCachedLayer", "cached layer draw not intercepted by render_cached_command_range",
       )
-  }
-}
-
-///|
-fn SunRasterRenderer::composite_rounded_clip(
-  self : SunRasterRenderer,
-  layer_pixmap : @sun_graphics.Pixmap,
-  rounded : @core.RoundedRect,
-  opacity : Double,
-) -> Unit {
-  let parent_pixmap = self.canvas.get_pixmap()
-  let w = layer_pixmap.get_width()
-  let h = layer_pixmap.get_height()
-  let rect = rounded.rect
-  let radius = rounded.radius.max(0.0)
-  let cx = rect.origin.x + rect.size.width * 0.5
-  let cy = rect.origin.y + rect.size.height * 0.5
-  let hx = rect.size.width * 0.5
-  let hy = rect.size.height * 0.5
-  let r = radius.min(hx).min(hy)
-  for py in 0..<h {
-    for px in 0..<w {
-      let src = layer_pixmap.get_pixel(px, py)
-      if src.a.to_int() > 0 {
-        let px_d = px.to_double() + 0.5
-        let py_d = py.to_double() + 0.5
-        let qx = (px_d - cx).abs() - (hx - r)
-        let qy = (py_d - cy).abs() - (hy - r)
-        let outside_dist = if qx > 0.0 && qy > 0.0 {
-          (qx * qx + qy * qy).sqrt()
-        } else if qx > 0.0 {
-          qx
-        } else if qy > 0.0 {
-          qy
-        } else {
-          0.0
-        }
-        let d = outside_dist - r
-        let coverage = (0.5 - d).max(0.0).min(1.0)
-        if coverage > 0.0 {
-          let masked_a = sun_clamp_unit(
-            src.a.to_int().to_double() / 255.0 * coverage * opacity,
-          )
-          if masked_a > 0.0 {
-            let masked = @sun_graphics.Color::new(
-              r=src.r,
-              g=src.g,
-              b=src.b,
-              a=sun_channel(masked_a),
-            )
-            parent_pixmap.blend_pixel(px, py, masked)
-          }
-        }
-      }
-    }
   }
 }
 
@@ -1117,16 +1091,6 @@ fn sun_brush_stroke_paint(
 }
 
 ///|
-fn sun_rect(rect : @core.Rect) -> @sun_graphics.Rect {
-  @sun_graphics.Rect::new(
-    x=rect.origin.x,
-    y=rect.origin.y,
-    width=rect.size.width,
-    height=rect.size.height,
-  )
-}
-
-///|
 fn sun_transform(transform : @core.Transform2D) -> @sun_graphics.Transform {
   @sun_graphics.Transform::affine(
     a=transform.a,
@@ -1173,41 +1137,33 @@ fn SunRasterRenderer::draw_text(
   guard run.frame.size.width > 0.0 && run.frame.size.height > 0.0 else {
     return
   }
-  let lines = sun_draw_text_lines(run.text)
-  guard !lines.is_empty() else { return }
   let config = sun_text_layout_config(run.font, run.frame.size.width)
   let faces = self.resolved_faces(run.font)
   guard !faces.is_empty() else {
     self.draw_text_placeholder(run, opacity)
     return
   }
+  let plan = sun_text_line_plan(faces, run.text, config)
+  guard !plan.lines.is_empty() else { return }
   let paint = sun_paint(run.color, opacity)
-  let mut max_width = 0.0
-  let line_widths : Array[Double] = []
-  for line in lines {
-    let width = sun_measure_fallback_line_width(faces, line, config)
-    line_widths.push(width)
-    max_width = max_width.max(width)
-  }
-  let line_height = config.line_height.max(run.font.size * 1.2).max(1.0)
-  let total_height = line_height * lines.length().to_double()
+  let line_height = plan.line_height
+  let total_height = line_height * plan.lines.length().to_double()
   let origin_y = run.frame.origin.y +
     (run.frame.size.height - total_height).max(0.0) * 0.5
   let renderer = @sun_renderer.Renderer::new(self.canvas)
   let mut line_index = 0
-  for line in lines {
+  for line in plan.lines {
     let baseline_y = origin_y +
       line_index.to_double() * line_height +
-      sun_text_baseline_for_faces(faces, config)
+      plan.baseline
     if baseline_y > run.frame.origin.y + run.frame.size.height + line_height {
       return
     }
-    let line_width = line_widths[line_index]
-    let x = sun_text_placeholder_start_x(run, line_width)
-    let key = sun_text_cache_key(run, line_index, line)
+    let x = sun_text_placeholder_start_x(run, line.width)
+    let key = sun_text_cache_key(run, line_index, line.text)
     let result = renderer.draw_text_fallback_line_cached_with_renderer_resources(
       faces,
-      line,
+      line.text,
       x,
       baseline_y,
       config,
@@ -1222,7 +1178,7 @@ fn SunRasterRenderer::draw_text(
       )
       self.draw_text_placeholder(
         @core.TextRun::new(
-          text=line,
+          text=line.text,
           frame=@core.Rect::new(
             x~,
             y=origin_y + line_index.to_double() * line_height,
@@ -1717,36 +1673,28 @@ fn SunRasterRenderer::measure_text_layout(
     input.font,
     input.max_width.unwrap_or(1000000000.0),
   )
-  let lines = sun_draw_text_lines(input.text)
+  let plan = sun_text_line_plan(faces, input.text, config)
   let carets : Array[Double] = []
   let chars = input.text.to_array()
   for _ in 0..<(chars.length() + 1) {
     carets.push(0.0)
   }
   let mut max_width = 0.0
-  let mut cursor_scalar = 0
   let mut baseline = 0.0
-  let line_height = config.line_height.max(input.font.size * 1.2).max(1.0)
-  for line_index in 0..<lines.length() {
-    let line = lines[line_index]
-    let measured = self.measure_single_line_text(faces, line, config)
+  for line_index in 0..<plan.lines.length() {
+    let line = plan.lines[line_index]
+    let measured = self.measure_single_line_text(faces, line.text, config)
     if line_index == 0 {
       baseline = measured.baseline
     }
     let line_carets = measured.caret_positions
-    let scalar_count = line.to_array().length()
-    for line_offset in 0..<(scalar_count + 1) {
-      let global = cursor_scalar + line_offset
+    for line_offset in 0..<(line.scalar_count + 1) {
+      let global = line.start_scalar + line_offset
       if global < carets.length() && line_offset < line_carets.length() {
         carets[global] = line_carets[line_offset]
       }
     }
-    cursor_scalar += scalar_count
-    if line_index + 1 < lines.length() && cursor_scalar < carets.length() {
-      carets[cursor_scalar] = 0.0
-      cursor_scalar += 1
-    }
-    max_width = max_width.max(measured.size.width)
+    max_width = max_width.max(line.width.max(measured.size.width))
   }
   let stabilized = @core.fallback_stabilize_grapheme_cluster_carets(
     input.text,
@@ -1755,7 +1703,7 @@ fn SunRasterRenderer::measure_text_layout(
   @core.TextLayoutResult::{
     size: @core.Size::new(
       width=max_width.min(input.max_width.unwrap_or(max_width)),
-      height=line_height * lines.length().to_double(),
+      height=plan.line_height * plan.lines.length().to_double(),
     ),
     baseline,
     caret_positions: stabilized,
@@ -1876,28 +1824,6 @@ fn sun_measure_missing_span_width(
   } else {
     config.font_size * 0.6 * scalar_count.to_double()
   }
-}
-
-///|
-fn sun_draw_text_lines(text : String) -> Array[String] {
-  let chars = text.to_array()
-  let lines : Array[String] = []
-  let mut start = 0
-  let mut index = 0
-  while index < chars.length() {
-    if chars[index] == '\n' {
-      let end = if index > start && chars[index - 1] == '\r' {
-        index - 1
-      } else {
-        index
-      }
-      lines.push(String::from_array(chars[start:end]))
-      start = index + 1
-    }
-    index += 1
-  }
-  lines.push(String::from_array(chars[start:chars.length()]))
-  lines
 }
 
 ///|
