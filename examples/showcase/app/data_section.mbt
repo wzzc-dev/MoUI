@@ -118,16 +118,8 @@ fn ShowcaseModel::data_table_card(
           selected_count=selection.count(),
           total_count=3,
           actions=[
-            @views.ActionItem::new(
-              id="archive",
-              label="Archive",
-              message=ToggleActive,
-            ),
-            @views.ActionItem::new(
-              id="export",
-              label="Export",
-              message=ToggleActive,
-            ),
+            action_item(id="archive", label="Archive", message=ToggleActive),
+            action_item(id="export", label="Export", message=ToggleActive),
           ],
           on_clear=Some(ClearFilter),
           theme~,
@@ -199,21 +191,21 @@ fn ShowcaseModel::data_selectable_list_card(
         ),
         selectable_list(
           [
-            @views.SelectableListItem::new(
+            selectable_list_item(
               id="atlas",
               title="Project Atlas",
               subtitle="Healthy pipeline",
               detail="Mira",
               message=ToggleActive,
             ),
-            @views.SelectableListItem::new(
+            selectable_list_item(
               id="billing",
               title="Billing Flow",
               subtitle="Review required",
               detail="Noah",
               message=ToggleActive,
             ),
-            @views.SelectableListItem::new(
+            selectable_list_item(
               id="archive",
               title="Archive Import",
               subtitle="Disabled source",

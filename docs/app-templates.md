@@ -136,6 +136,7 @@ Recommended imports:
 ```moonbit
 ///|
 using @views {
+  action_item,
   banner,
   button,
   column,
@@ -148,6 +149,7 @@ using @views {
   row,
   selection_toolbar,
   sidebar,
+  sidebar_item,
   split_view,
   stat_card,
   table,
@@ -212,8 +214,8 @@ pub fn DashboardModel::view(self : DashboardModel) -> @moui.View[DashboardMsg] {
     primary=sidebar(
       "Dashboard",
       [
-        @views.SidebarItem::new(id="overview", label="Overview", message=SelectRoute("overview")),
-        @views.SidebarItem::new(id="reports", label="Reports", message=SelectRoute("reports")),
+        sidebar_item(id="overview", label="Overview", message=SelectRoute("overview")),
+        sidebar_item(id="reports", label="Reports", message=SelectRoute("reports")),
       ],
       selected=self.route,
     ),
@@ -242,7 +244,7 @@ pub fn DashboardModel::view(self : DashboardModel) -> @moui.View[DashboardMsg] {
         selection_toolbar(
           selected_count=self.selected_count,
           total_count=self.rows.length(),
-          actions=[@views.ActionItem::new(id="export", label="Export", message=ExportRows)],
+          actions=[action_item(id="export", label="Export", message=ExportRows)],
           on_clear=Some(ClearSelection),
         ),
       ], spacing=12.0),
@@ -306,13 +308,16 @@ Recommended imports:
 ```moonbit
 ///|
 using @views {
+  action_item,
   button,
   column,
+  command_menu_section,
   command_bar,
   command_menu,
   command_palette,
   context_menu_region,
   markdown_editor,
+  menu_item,
   menu_bar,
   status_bar,
   text,
@@ -371,18 +376,18 @@ pub fn EditorModel::view(self : EditorModel) -> @moui.View[EditorMsg] {
     placeholder="Write Markdown...",
   )
   let menu = command_menu(
-    [@views.CommandMenuSection::new(title="File", commands=self.commands())],
+    [command_menu_section(title="File", commands=self.commands())],
     on_select=DispatchCommand,
   )
   context_menu_region(
     child=column([
       menu_bar([
-        @views.MenuItem::new(id="open", label="Open", message=BrowseForDocument),
-        @views.MenuItem::new(id="save", label="Save", message=DispatchCommand(@views.CommandIntent::Submit)),
+        menu_item(id="open", label="Open", message=BrowseForDocument),
+        menu_item(id="save", label="Save", message=DispatchCommand(@views.CommandIntent::Submit)),
       ]),
       command_bar([
-        @views.ActionItem::new(id="open", label="Open", message=BrowseForDocument),
-        @views.ActionItem::new(id="commands", label="Commands", message=TogglePalette),
+        action_item(id="open", label="Open", message=BrowseForDocument),
+        action_item(id="commands", label="Commands", message=TogglePalette),
       ]),
       editor,
       status_bar([if self.dirty { "Unsaved" } else { "Saved" }]),
