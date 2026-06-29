@@ -986,7 +986,6 @@ fn MarkdownEditorApp::apply_file_dialog_selection_with_services(
 }
 
 ///|
-#warnings("-unused_value")
 fn markdown_editor_transfer_status_label(
   status : MarkdownEditorTransferStatus,
 ) -> String {

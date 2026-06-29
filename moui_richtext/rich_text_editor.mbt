@@ -426,11 +426,14 @@ fn markdown_session_editor_paint(
       )
     }
   }
-  commands.push(@core.DrawCommand::PopClip)
+  // PopClip must go in post_commands (not commands) so that child_layers —
+  // which are rendered between commands and post_commands — stay inside the
+  // content clip. Without this, overscan blocks bleed past the editor frame
+  // and overlap the chrome/status bar during scrolling.
   {
     commands,
     child_layers,
-    post_commands: [],
+    post_commands: [@core.DrawCommand::PopClip],
     overlay_commands,
     platform_views: [],
     repaint_boundary: false,
@@ -1016,11 +1019,11 @@ fn rich_text_editor_paint(
       )
     }
   }
-  commands.push(@core.DrawCommand::PopClip)
+  // PopClip must go in post_commands so child_layers stay inside the clip.
   {
     commands,
     child_layers,
-    post_commands: [],
+    post_commands: [@core.DrawCommand::PopClip],
     overlay_commands,
     platform_views: [],
     repaint_boundary: false,

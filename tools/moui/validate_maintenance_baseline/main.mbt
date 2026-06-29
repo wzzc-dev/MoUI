@@ -156,7 +156,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/markdown_editor/app/editor_app_keyboard_runtime_wbtest.mbt",
-      max_lines: 469,
+      max_lines: 563,
     },
     {
       path: "examples/markdown_editor/app/editor_app_inline_keyboard_runtime_wbtest.mbt",

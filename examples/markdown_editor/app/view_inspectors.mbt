@@ -25,6 +25,26 @@ fn markdown_editor_session_reading_label(
 }
 
 ///|
+/// 计算当前展开状态下树中可见条目的数量。镜像 `moui/views/data_tree.mbt`
+/// 中 `append_tree_rows` 的可见性逻辑：顶层条目总是计数；仅当节点 id
+/// 出现在 `expanded` 中时才递归计数其子项。
+fn markdown_editor_count_visible_tree_items(
+  items : Array[@views.TreeItem],
+  expanded : Array[String],
+) -> Int {
+  let mut count = 0
+  for item in items {
+    count = count + 1
+    if expanded.any(id => id == item.id) {
+      count = count + markdown_editor_count_visible_tree_items(
+        item.children, expanded,
+      )
+    }
+  }
+  count
+}
+
+///|
 fn files_inspector(
   app : MarkdownEditorApp,
   session : MarkdownDocumentSession,
@@ -32,8 +52,29 @@ fn files_inspector(
   height~ : Double,
 ) -> @moui.View[MarkdownEditorMsg] {
   let content_width = markdown_editor_file_sidebar_content_width()
-  let tree_scroll_height = markdown_editor_max_double(0.0, height - 260.0)
   let recent_paths = app.recent_document_paths.get()
+  let working_directory = app.working_directory.get()
+  let tree_expanded = working_directory != "" && app.file_tree_expanded.get()
+  // Cap the tree scroll height at the actual tree content height so the
+  // scroll view doesn't leave an empty gap when the tree has few items.
+  let max_tree_scroll_height = markdown_editor_max_double(0.0, height - 260.0)
+  let tree_scroll_height = if tree_expanded {
+    let visible_count = markdown_editor_count_visible_tree_items(
+      app.directory_tree_items.get(),
+      app.expanded_tree_paths.get(),
+    )
+    let tree_row_height = 30.0
+    let spacing_total = if visible_count > 0 {
+      (visible_count - 1).to_double() * theme.spacing_scale.xs
+    } else {
+      0.0
+    }
+    let tree_content_height = visible_count.to_double() * tree_row_height +
+    spacing_total
+    markdown_editor_min_double(tree_content_height, max_tree_scroll_height)
+  } else {
+    0.0
+  }
   let recent_content = if recent_paths.length() == 0 {
     text("No recent files", width=content_width, height=28.0)
     .font(theme.typography.caption)
@@ -52,7 +93,6 @@ fn files_inspector(
       ),
     )
   }
-  let working_directory = app.working_directory.get()
   let file_rows : Array[@moui.View[MarkdownEditorMsg]] = [
     text("Files", width=content_width, height=24.0)
     .font(theme.typography.caption)
@@ -80,7 +120,6 @@ fn files_inspector(
     ),
   ]
   if working_directory != "" {
-    let tree_expanded = app.file_tree_expanded.get()
     let fold_label = if tree_expanded { "▾" } else { "▸" }
     file_rows.push(
       row(
