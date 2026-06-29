@@ -152,6 +152,11 @@ fn MarkdownEditorApp::find_query(self : MarkdownEditorApp) -> String {
 }
 
 ///|
+fn MarkdownEditorApp::find_match_count(self : MarkdownEditorApp) -> Int {
+  self.find_matches.get().length()
+}
+
+///|
 fn MarkdownEditorApp::replace_text(self : MarkdownEditorApp) -> String {
   self.replace_text.get()
 }
@@ -556,22 +561,13 @@ fn MarkdownEditorApp::editor_content_x(
   } else {
     0.0
   }
-  let right_width =
-    (if show_info {
+  let right_width = (if show_info {
       markdown_editor_info_inspector_width()
     } else {
       0.0
     }) +
-    (if show_outline {
-      markdown_editor_outline_inspector_width()
-    } else {
-      0.0
-    }) +
-    (if show_source {
-      markdown_editor_source_inspector_width()
-    } else {
-      0.0
-    })
+    (if show_outline { markdown_editor_outline_inspector_width() } else { 0.0 }) +
+    (if show_source { markdown_editor_source_inspector_width() } else { 0.0 })
   let available = window_width - left_width - right_width
   let editor_x = left_width +
     markdown_editor_max_double(0.0, (available - editor_width) / 2.0)

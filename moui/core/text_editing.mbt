@@ -122,21 +122,19 @@ fn move_text_caret_index(
 
 ///|
 fn text_length(text : String) -> Int {
-  text.to_array().length()
+  text.char_length()
 }
 
 ///|
 pub fn selected_text(text : String, selection : TextRange?) -> String {
   match active_text_selection(selection) {
     Some(selection) => {
-      let chars = text.to_array()
+      let length = text_length(text)
       let range = normalize_grapheme_range(
         TextGraphemeBoundaries::new(text~),
         selection,
       )
-      let start = clamp_int(range.start, 0, chars.length())
-      let end = clamp_int(range.end, start, chars.length())
-      String::from_array(chars[start:end])
+      text_substring_by_char_range(text, range.start, range.end, length~)
     }
     None => ""
   }
@@ -148,16 +146,55 @@ pub fn replace_text_range(
   range : TextRange,
   replacement : String,
 ) -> String {
-  let chars = text.to_array()
   let normalized = range.normalized()
   let range = normalize_grapheme_range(
     TextGraphemeBoundaries::new(text~),
     normalized,
   )
-  let start = clamp_int(range.start, 0, chars.length())
-  let end = clamp_int(range.end, start, chars.length())
-  let replacement_chars = replacement.to_array()
-  String::from_array(chars[:start] + replacement_chars + chars[end:])
+  let length = text_length(text)
+  text_substring_by_char_range(text, 0, range.start, length~) +
+  replacement +
+  text_substring_by_char_range(text, range.end, length, length~)
+}
+
+///|
+fn text_substring_by_char_range(
+  text : String,
+  start : Int,
+  end : Int,
+  length~ : Int,
+) -> String {
+  let start = clamp_int(start, 0, length)
+  let end = clamp_int(end, start, length)
+  let utf16_length = text.length()
+  let start_offset = if start == length {
+    utf16_length
+  } else {
+    text.offset_of_nth_char(start).unwrap_or(utf16_length)
+  }
+  let end_offset = if end == length {
+    utf16_length
+  } else {
+    text.offset_of_nth_char(end).unwrap_or(utf16_length)
+  }
+  text.sub(start=start_offset, end=end_offset).to_owned()
+}
+
+///|
+test "text editing range helpers preserve unicode scalar offsets" {
+  let source = "a🤣b"
+  inspect(
+    selected_text(source, Some(TextRange::new(start=1, end=2))),
+    content="🤣",
+  )
+  inspect(
+    replace_text_range(source, TextRange::new(start=1, end=2), "尾"),
+    content="a尾b",
+  )
+  inspect(
+    replace_text_range(source, TextRange::collapsed(3), "!"),
+    content="a🤣b!",
+  )
 }
 
 ///|

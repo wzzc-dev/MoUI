@@ -28,6 +28,35 @@ test "markdown editor find options toggle and affect matching" {
 }
 
 ///|
+test "markdown editor find matching preserves unicode ranges" {
+  let unicode = markdown_editor_find_matches("a🤣needle needle", "needle")
+  inspect(unicode.length(), content="2")
+  inspect(unicode[0].start, content="2")
+  inspect(unicode[0].end, content="8")
+  inspect(unicode[1].start, content="9")
+  inspect(unicode[1].end, content="15")
+
+  let overlapping = markdown_editor_find_matches("aaaa", "aa")
+  inspect(overlapping.length(), content="2")
+  inspect(overlapping[0].start, content="0")
+  inspect(overlapping[0].end, content="2")
+  inspect(overlapping[1].start, content="2")
+  inspect(overlapping[1].end, content="4")
+
+  let options = { ..MarkdownEditorFindOptions::default(), whole_word: true }
+  let whole = markdown_editor_find_matches(
+    "🤣cat catalog cat_ cat",
+    "cat",
+    options~,
+  )
+  inspect(whole.length(), content="2")
+  inspect(whole[0].start, content="1")
+  inspect(whole[0].end, content="4")
+  inspect(whole[1].start, content="18")
+  inspect(whole[1].end, content="21")
+}
+
+///|
 test "markdown editor settings round-trip through JSON" {
   let app = MarkdownEditorApp::new()
   let _ = app.update(ToggleDarkMode)
