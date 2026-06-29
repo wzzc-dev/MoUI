@@ -57,6 +57,14 @@ if ! "$RUN_SKIA_REAL_SMOKE"; then
   export MOUI_SKIA_DISABLE_PREBUILD_SKIA="${MOUI_SKIA_DISABLE_PREBUILD_SKIA:-1}"
 fi
 
+# Ensure the window submodule is initialized so the workspace resolves
+# wzzc-dev/window from the local checkout. Skip if already initialized to
+# avoid disrupting local in-progress edits inside the submodule.
+if [ ! -f "window/moon.mod" ]; then
+  printf '\n==> Initializing window submodule...\n'
+  git submodule update --init window
+fi
+
 run() {
   printf '\n==> %s\n' "$*"
   "$@"

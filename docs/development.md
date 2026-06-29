@@ -413,6 +413,17 @@ On Windows, use the repository update helper when refreshing local checkouts:
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\update_repositories.ps1
 ```
 
+On Windows, use the native PowerShell entry point for daily checks (no MSYS
+required). It initializes the `window` submodule on first run and runs the
+same bounded mainline package checks as `scripts/dev-check.sh`:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\dev_check.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\dev_check.ps1 -PlatformExamplesTest
+```
+
+Alternatively, run the shell version under Git Bash:
+
 ```sh
 sh scripts/dev-check.sh --platform-examples-test
 ```
