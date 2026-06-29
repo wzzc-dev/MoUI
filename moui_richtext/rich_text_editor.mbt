@@ -2969,9 +2969,27 @@ fn rich_text_document_caret_rect(
       height=line_height,
     )
     if rich_text_caret_before_block(source_caret, block) {
+      match block.table {
+        Some(table) =>
+          return Some(
+            rich_text_block_table_caret_rect(
+              block, table, source_caret, frame, base_font, text_system,
+            ),
+          )
+        None => ()
+      }
       return Some(
         rich_text_block_caret_rect(block, 0, frame, base_font, text_system),
       )
+    }
+    match block.table {
+      Some(table) =>
+        return Some(
+          rich_text_block_table_caret_rect(
+            block, table, source_caret, frame, base_font, text_system,
+          ),
+        )
+      None => ()
     }
     match rich_text_block_visual_offset(block, source_caret) {
       Some(visual_offset) =>
@@ -3022,7 +3040,9 @@ fn rich_text_document_source_offset_at_point(
       height=line_height,
     )
     if point.y < y + block_height {
-      match rich_text_block_table_source_offset_at_point(block, point, frame) {
+      match rich_text_block_table_source_offset_at_point(
+        block, point, frame, base_font, text_system,
+      ) {
         Some(offset) => return Some(offset)
         None => ()
       }
@@ -3911,6 +3931,8 @@ fn rich_text_block_table_source_offset_at_point(
   block : RichTextBlock,
   point : @core.Point,
   frame : @core.Rect,
+  base_font : @core.FontSpec,
+  text_system : @core.TextSystem,
 ) -> Int? {
   match block.table {
     Some(table) => {
@@ -3934,25 +3956,72 @@ fn rich_text_block_table_source_offset_at_point(
       if column_index >= row.length() {
         return None
       }
-      match row[column_index].source_range {
+      let cell = row[column_index]
+      match cell.source_range {
         Some(range) => {
-          let x = clamp_double(
-            point.x,
-            frame.origin.x + column_width * column_index.to_double(),
-            frame.origin.x + column_width * (column_index + 1).to_double(),
+          // 与渲染端 (append_rich_text_block_table) 保持一致的几何：
+          // cell 文本 frame = cell_frame.inset(cell_padding)，按 cell.align 决定 x 起点。
+          let cell_x = frame.origin.x + column_width * column_index.to_double()
+          let inner_x = cell_x + table.cell_padding.left
+          let inner_width = max_double(
+            0.0,
+            column_width - table.cell_padding.left - table.cell_padding.right,
           )
-          let relative = if column_width <= 0.0 {
-            0.0
+          // 空 cell 直接钳到 range.start，避免后续除零/无效测量。
+          if range.end <= range.start || cell.text == "" {
+            return Some(range.start)
+          }
+          let base_block_font = rich_text_block_font(block, base_font)
+          // 渲染端对 header cell 加重 weight=700，body 用 400。
+          let cell_font = if cell.header {
+            { ..base_block_font, weight: 700 }
           } else {
-            (x - (frame.origin.x + column_width * column_index.to_double())) /
-            column_width
+            { ..base_block_font, weight: 400 }
+          }
+          let text_width = rich_text_width(cell.text, cell_font, text_system)
+          if text_width <= 0.0 {
+            return Some(range.start)
+          }
+          let text_x = match cell.align.unwrap_or(@core.TextAlign::TextStart) {
+            TextStart => inner_x
+            TextCenter => inner_x + (inner_width - text_width) / 2.0
+            TextEnd => inner_x + inner_width - text_width
+          }
+          let text_x_end = text_x + text_width
+          // 点击落在文本左右两侧空白时，clamp 到 range 边界。
+          if point.x < text_x {
+            return Some(range.start)
+          }
+          if point.x > text_x_end {
+            return Some(range.end)
+          }
+          // 点击落在文本渲染范围内：按逐字符中点命中，再钳到图形素边界。
+          // 参考 rich_text_run_visual_offset_at_x 的 for index in 0..<chars.length() 分支。
+          let chars = cell.text.to_array()
+          let boundaries = @core.TextGraphemeBoundaries::new(text=cell.text)
+          let mut local_offset = chars.length()
+          for index in 0..<chars.length() {
+            let before = rich_text_width(
+              String::from_array(chars[0:index]),
+              cell_font,
+              text_system,
+            )
+            let after = rich_text_width(
+              String::from_array(chars[0:index + 1]),
+              cell_font,
+              text_system,
+            )
+            if point.x < text_x + (before + after) / 2.0 {
+              local_offset = boundaries.nearest_boundary(index)
+              break
+            }
+          }
+          if local_offset == chars.length() {
+            local_offset = boundaries.nearest_boundary(chars.length())
           }
           Some(
             @core.clamp_int(
-              range.start +
-              (relative * (range.end - range.start).to_double())
-              .round()
-              .to_int(),
+              range.start + local_offset,
               range.start,
               range.end,
             ),
@@ -3962,6 +4031,152 @@ fn rich_text_block_table_source_offset_at_point(
       }
     }
     None => None
+  }
+}
+
+///|
+fn rich_text_block_table_caret_rect(
+  block : RichTextBlock,
+  table : RichTextTable,
+  source_caret : Int,
+  frame : @core.Rect,
+  base_font : @core.FontSpec,
+  text_system : @core.TextSystem,
+) -> @core.Rect {
+  let column_count = rich_text_table_column_count(table)
+  let row_count = table.rows.length()
+  let column_width = if column_count > 0 {
+    frame.size.width / column_count.to_double()
+  } else {
+    0.0
+  }
+  // 默认 caret 矩形：表格起点。
+  let base_font_resolved = rich_text_block_font(block, base_font)
+  let line_step = rich_text_block_line_step(block, base_font, text_system)
+  let caret_rect = rich_text_cursor_rect_at(
+    frame.origin.x,
+    @core.Rect::new(
+      x=frame.origin.x,
+      y=frame.origin.y,
+      width=frame.size.width,
+      height=line_step,
+    ),
+    base_font_resolved,
+  )
+  if column_count == 0 || row_count == 0 {
+    return caret_rect
+  }
+  // 查找 source_caret 所在的 cell。
+  let mut found_row = -1
+  let mut found_col = -1
+  let mut found_cell : RichTextTableCell? = None
+  for row_index in 0..<row_count {
+    let row = table.rows[row_index]
+    for col_index in 0..<column_count {
+      if col_index >= row.length() {
+        continue
+      }
+      let cell = row[col_index]
+      match cell.source_range {
+        Some(range) =>
+          if source_caret >= range.start && source_caret <= range.end {
+            found_row = row_index
+            found_col = col_index
+            found_cell = Some(cell)
+            break
+          }
+        None => ()
+      }
+    }
+    if found_row >= 0 {
+      break
+    }
+  }
+  // 若 source_caret 超出所有 cell 范围：当 source_caret 在第一个 cell 之前
+  // （例如 position 0 位于表格 block 起点、但首个 cell 的 source_range 从
+  // "| " 之后才开始），定位到首个 cell；否则定位到末尾 cell。
+  if found_row < 0 {
+    let first_row = table.rows[0]
+    let first_col_index = @core.clamp_int(
+      first_row.length() - 1,
+      0,
+      column_count - 1,
+    )
+    let caret_before_first_cell = match first_row[first_col_index].source_range {
+      Some(range) => source_caret < range.start
+      None => false
+    }
+    if caret_before_first_cell {
+      found_row = 0
+      found_col = first_col_index
+      found_cell = Some(first_row[first_col_index])
+    } else {
+      let last_row_index = row_count - 1
+      let last_row = table.rows[last_row_index]
+      let last_col_index = @core.clamp_int(
+        last_row.length() - 1,
+        0,
+        column_count - 1,
+      )
+      if last_col_index >= 0 && last_col_index < last_row.length() {
+        found_row = last_row_index
+        found_col = last_col_index
+        found_cell = Some(last_row[last_col_index])
+      }
+    }
+  }
+  if found_row < 0 {
+    return caret_rect
+  }
+  let cell = match found_cell {
+    Some(c) => c
+    None => return caret_rect
+  }
+  // 与渲染端一致的 cell 几何。
+  let cell_x = frame.origin.x + column_width * found_col.to_double()
+  let row_y = frame.origin.y + table.row_height * found_row.to_double()
+  let text_frame = @core.Rect::new(
+    x=cell_x + table.cell_padding.left,
+    y=row_y + table.cell_padding.top,
+    width=max_double(
+      0.0,
+      column_width - table.cell_padding.left - table.cell_padding.right,
+    ),
+    height=table.row_height - table.cell_padding.top - table.cell_padding.bottom,
+  )
+  // cell 字体（header 加重，与渲染端一致）。
+  let cell_font = if cell.header {
+    { ..base_font_resolved, weight: 700 }
+  } else {
+    { ..base_font_resolved, weight: 400 }
+  }
+  // 空 cell 直接返回 cell 文本起点。
+  if cell.text == "" {
+    return rich_text_cursor_rect_at(text_frame.origin.x, text_frame, cell_font)
+  }
+  match cell.source_range {
+    Some(range) => {
+      // local_offset = source_caret 相对 cell.source_range.start 的偏移，钳到 [0, text.length]。
+      let local_offset = @core.clamp_int(source_caret - range.start, 0, cell.text.to_array().length())
+      // prefix 宽度。
+      let chars = cell.text.to_array()
+      let prefix = String::from_array(chars[0:@core.clamp_int(local_offset, 0, chars.length())])
+      let prefix_width = rich_text_width(prefix, cell_font, text_system)
+      // 按 align 计算 text_x（与点击映射对称）。
+      let text_width = rich_text_width(cell.text, cell_font, text_system)
+      let inner_width = text_frame.size.width
+      let text_x = match cell.align.unwrap_or(@core.TextAlign::TextStart) {
+        TextStart => text_frame.origin.x
+        TextCenter => text_frame.origin.x + (inner_width - text_width) / 2.0
+        TextEnd => text_frame.origin.x + inner_width - text_width
+      }
+      rich_text_cursor_rect_at(
+        text_x + prefix_width,
+        text_frame,
+        cell_font,
+      )
+    }
+    None => rich_text_cursor_rect_at(text_frame.origin.x, text_frame, cell_font)
   }
 }
 
