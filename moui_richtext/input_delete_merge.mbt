@@ -38,7 +38,7 @@ fn markdown_editor_backspace_marker(
   }
   let chars = source.to_array()
   let current : MarkdownEditorSelection = { caret, selection }
-  let range = markdown_editor_current_line_range(source, current)
+  let range = markdown_editor_current_line_range_from_chars(chars, current)
   let line = String::from_array(chars[range.start:range.end])
   match
     markdown_editor_backspace_quoted_inner_marker(chars, range, line, caret) {
@@ -109,7 +109,7 @@ fn markdown_editor_delete_marker(
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
   let current : MarkdownEditorSelection = { caret, selection }
-  let range = markdown_editor_current_line_range(source, current)
+  let range = markdown_editor_current_line_range_from_chars(chars, current)
   let line = String::from_array(chars[range.start:range.end])
   let marker_length = markdown_editor_marker_prefix_length(line)
   let indent_length = markdown_editor_line_indent_prefix_length(line)
@@ -146,7 +146,7 @@ fn markdown_editor_delete_quoted_inner_marker(
   }
   let chars = source.to_array()
   let current : MarkdownEditorSelection = { caret, selection }
-  let range = markdown_editor_current_line_range(source, current)
+  let range = markdown_editor_current_line_range_from_chars(chars, current)
   let line = String::from_array(chars[range.start:range.end])
   let context_length = markdown_editor_block_command_context_prefix_length(line)
   let context_prefix = markdown_editor_substring(line, 0, context_length)
@@ -184,7 +184,7 @@ fn markdown_editor_backspace_merge_block(
     return None
   }
   let current : MarkdownEditorSelection = { caret, selection }
-  let range = markdown_editor_current_line_range(source, current)
+  let range = markdown_editor_current_line_range_from_chars(chars, current)
   if caret != range.start {
     return None
   }
@@ -236,7 +236,7 @@ fn markdown_editor_delete_merge_block(
     return None
   }
   let current : MarkdownEditorSelection = { caret, selection }
-  let range = markdown_editor_current_line_range(source, current)
+  let range = markdown_editor_current_line_range_from_chars(chars, current)
   if caret != range.end {
     return None
   }

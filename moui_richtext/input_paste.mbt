@@ -39,16 +39,16 @@ fn markdown_editor_paste_footnote_definition(
   }
   match markdown_editor_active_selection(selection) {
     Some(range) => {
-      let chars = source.to_array()
+      let source_length = markdown_editor_text_length(source)
       let normalized = range.normalized()
-      let start = markdown_editor_clamp_int(normalized.start, 0, chars.length())
-      let end = markdown_editor_clamp_int(normalized.end, start, chars.length())
-      let selected = String::from_array(chars[start:end])
+      let start = markdown_editor_clamp_int(normalized.start, 0, source_length)
+      let end = markdown_editor_clamp_int(normalized.end, start, source_length)
+      let selected = markdown_editor_substring(source, start, end)
       let marker = "[^" + definition.label + "]"
-      let text = String::from_array(chars[:start]) +
+      let text = markdown_editor_substring(source, 0, start) +
         selected +
         marker +
-        String::from_array(chars[end:])
+        markdown_editor_substring(source, end, source_length)
       let next_selection = @core.TextRange::new(
         start~,
         end=start + markdown_editor_text_length(selected),
@@ -107,14 +107,14 @@ fn markdown_editor_upsert_pasted_footnote_definition(
   anchor : Int,
 ) -> MarkdownEditorFootnoteDefinitionEdit {
   let key = markdown_reference_label_key(label)
-  let chars = source.to_array()
+  let source_length = markdown_editor_text_length(source)
   for line in markdown_editor_lines(source) {
     match markdown_editor_footnote_definition_line_text_range(line) {
       Some((definition_label, range)) =>
         if markdown_reference_label_key(definition_label) == key {
-          let next_source = String::from_array(chars[:range.start]) +
+          let next_source = markdown_editor_substring(source, 0, range.start) +
             text +
-            String::from_array(chars[range.end:])
+            markdown_editor_substring(source, range.end, source_length)
           let delta = markdown_editor_text_length(text) -
             (range.end - range.start)
           return {
@@ -159,14 +159,14 @@ fn markdown_editor_paste_autolink(
   if target.target == "" {
     return None
   }
-  let chars = source.to_array()
-  let caret = markdown_editor_clamp_int(caret, 0, chars.length())
+  let source_length = markdown_editor_text_length(source)
+  let caret = markdown_editor_clamp_int(caret, 0, source_length)
   let insert = target.leading + "<" + target.target + ">" + target.trailing
   Some(
     markdown_editor_transform_result(
-      text=String::from_array(chars[:caret]) +
+      text=markdown_editor_substring(source, 0, caret) +
         insert +
-        String::from_array(chars[caret:]),
+        markdown_editor_substring(source, caret, source_length),
       caret=caret + markdown_editor_text_length(insert),
     ),
   )
@@ -375,12 +375,16 @@ fn markdown_editor_paste_html_block(
   if markdown_editor_active_selection(selection) is None {
     match markdown_editor_html_block_at_selection(source, editor_selection) {
       Some(block) => {
-        let chars = source.to_array()
+        let source_length = markdown_editor_text_length(source)
         return Some(
           markdown_editor_transform_result(
-            text=String::from_array(chars[:block.source_range.start]) +
+            text=markdown_editor_substring(source, 0, block.source_range.start) +
               html +
-              String::from_array(chars[block.source_range.end:]),
+              markdown_editor_substring(
+                source,
+                block.source_range.end,
+                source_length,
+              ),
             caret=block.source_range.start + markdown_editor_text_length(html),
           ),
         )
@@ -834,16 +838,16 @@ fn markdown_editor_reference_label_transform(
   definition_text : String,
   image~ : Bool,
 ) -> RichTextInputTransform {
-  let chars = source.to_array()
-  let start = markdown_editor_clamp_int(replace_start, 0, chars.length())
-  let end = markdown_editor_clamp_int(replace_end, start, chars.length())
+  let source_length = markdown_editor_text_length(source)
+  let start = markdown_editor_clamp_int(replace_start, 0, source_length)
+  let end = markdown_editor_clamp_int(replace_end, start, source_length)
   let visible_start = markdown_editor_clamp_int(visible_range.start, start, end)
   let visible_end = markdown_editor_clamp_int(
     visible_range.end,
     visible_start,
     end,
   )
-  let selected = String::from_array(chars[visible_start:visible_end])
+  let selected = markdown_editor_substring(source, visible_start, visible_end)
   let prefix = if image { "![" } else { "[" }
   let inserted = prefix + selected + "][" + label + "]"
   let next_selection = @core.TextRange::new(
@@ -852,9 +856,9 @@ fn markdown_editor_reference_label_transform(
       markdown_editor_text_length(prefix) +
       markdown_editor_text_length(selected),
   )
-  let base_text = String::from_array(chars[:start]) +
+  let base_text = markdown_editor_substring(source, 0, start) +
     inserted +
-    String::from_array(chars[end:])
+    markdown_editor_substring(source, end, source_length)
   let text = markdown_editor_append_pasted_reference_definition(
     base_text, source, label, definition_text,
   )

@@ -130,45 +130,86 @@ fn markdown_editor_paragraph_reference_probe(
   caret : Int,
   image~ : Bool,
 ) -> Bool {
-  let chars = text.to_array()
-  let caret = markdown_editor_clamp_int(caret, 0, chars.length())
-  if !image {
-    let mut open = caret
-    while open > 0 && chars[open - 1] != '<' && chars[open - 1] != '\n' {
-      open = open - 1
-    }
-    if open > 0 && chars[open - 1] == '<' {
-      let mut close = caret
-      while close < chars.length() &&
-            chars[close] != '>' &&
-            chars[close] != '\n' {
-        close = close + 1
+  let text_length = markdown_editor_text_length(text)
+  let caret = markdown_editor_clamp_int(caret, 0, text_length)
+  let utf16_length = text.length()
+  let caret_offset = if caret == text_length {
+    utf16_length
+  } else {
+    text.offset_of_nth_char(caret).unwrap_or(utf16_length)
+  }
+  let mut offset = 0
+  let mut index = 0
+  let mut previous : Char? = None
+  let mut angle_open_seen = false
+  let mut bracket_open_seen = false
+  let mut bracket_previous : Char? = None
+  while index < caret && offset < utf16_length {
+    match text.get_char(offset) {
+      Some(ch) => {
+        if ch == '\n' {
+          angle_open_seen = false
+          bracket_open_seen = false
+          bracket_previous = None
+        } else {
+          if ch == '<' {
+            angle_open_seen = true
+          }
+          if ch == '[' {
+            bracket_open_seen = true
+            bracket_previous = previous
+          }
+        }
+        previous = Some(ch)
+        offset = offset + ch.utf16_len()
+        index = index + 1
       }
-      if close < chars.length() && chars[close] == '>' {
-        return true
-      }
+      None => break
     }
   }
-  let mut open = caret
-  while open > 0 && chars[open - 1] != '[' && chars[open - 1] != '\n' {
-    open = open - 1
+  if !image &&
+    angle_open_seen &&
+    markdown_editor_paragraph_has_closing_reference(
+      text, caret_offset, utf16_length, '>',
+    ) {
+    return true
   }
-  if open <= 0 || chars[open - 1] != '[' {
+  if !bracket_open_seen {
     return false
   }
-  let open_start = open - 1
-  if image {
-    if open_start <= 0 || chars[open_start - 1] != '!' {
-      return false
+  match (image, bracket_previous) {
+    (true, Some('!')) => ()
+    (true, _) => return false
+    (false, Some('!')) => return false
+    (false, _) => ()
+  }
+  markdown_editor_paragraph_has_closing_reference(
+    text, caret_offset, utf16_length, ']',
+  )
+}
+
+///|
+fn markdown_editor_paragraph_has_closing_reference(
+  text : String,
+  start_offset : Int,
+  utf16_length : Int,
+  close : Char,
+) -> Bool {
+  let mut offset = start_offset
+  while offset < utf16_length {
+    match text.get_char(offset) {
+      Some(ch) =>
+        if ch == close {
+          return true
+        } else if ch == '\n' {
+          return false
+        } else {
+          offset = offset + ch.utf16_len()
+        }
+      None => return false
     }
-  } else if open_start > 0 && chars[open_start - 1] == '!' {
-    return false
   }
-  let mut close = open
-  while close < chars.length() && chars[close] != ']' && chars[close] != '\n' {
-    close = close + 1
-  }
-  close < chars.length() && chars[close] == ']' && caret <= close
+  false
 }
 
 ///|

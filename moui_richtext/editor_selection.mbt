@@ -328,6 +328,7 @@ fn markdown_editor_range_link_bounds(
   if chars[range.end + 1] == '[' {
     return markdown_editor_reference_link_bounds(
       source,
+      chars,
       range,
       open_start,
       bang=false,
@@ -335,7 +336,7 @@ fn markdown_editor_range_link_bounds(
   }
   if chars[range.end + 1] != '(' {
     return markdown_editor_shortcut_reference_link_bounds(
-      source, range, open_start,
+      source, chars, range, open_start,
     )
   }
   let mut index = range.end + 2
@@ -386,10 +387,10 @@ fn markdown_editor_range_autolink_bounds(
 ///|
 fn markdown_editor_shortcut_reference_link_bounds(
   source : String,
+  chars : Array[Char],
   range : @core.TextRange,
   open_start : Int,
 ) -> MarkdownLinkBounds? {
-  let chars = source.to_array()
   let label = String::from_array(chars[range.start:range.end])
   if label == "" {
     return None
@@ -437,6 +438,7 @@ fn markdown_editor_range_image_bounds(
   if chars[range.end + 1] == '[' {
     return markdown_editor_reference_link_bounds(
       source,
+      chars,
       range,
       bang_start,
       bang=true,
@@ -467,11 +469,11 @@ fn markdown_editor_range_image_bounds(
 ///|
 fn markdown_editor_reference_link_bounds(
   source : String,
+  chars : Array[Char],
   range : @core.TextRange,
   open_start : Int,
   bang~ : Bool,
 ) -> MarkdownLinkBounds? {
-  let chars = source.to_array()
   let label_start = range.end + 2
   let mut label_end = label_start
   while label_end < chars.length() &&
@@ -597,17 +599,17 @@ fn markdown_editor_wrap_link_range_with_target(
   range : @core.TextRange,
   target : String,
 ) -> MarkdownEditorEditResult {
-  let chars = source.to_array()
-  let start = markdown_editor_clamp_int(range.start, 0, chars.length())
-  let end = markdown_editor_clamp_int(range.end, start, chars.length())
-  let selected = String::from_array(chars[start:end])
-  let text = String::from_array(chars[:start]) +
+  let source_length = markdown_editor_text_length(source)
+  let start = markdown_editor_clamp_int(range.start, 0, source_length)
+  let end = markdown_editor_clamp_int(range.end, start, source_length)
+  let selected = markdown_editor_substring(source, start, end)
+  let text = markdown_editor_substring(source, 0, start) +
     "[" +
     selected +
     "](" +
     target +
     ")" +
-    String::from_array(chars[end:])
+    markdown_editor_substring(source, end, source_length)
   let next_selection = @core.TextRange::new(
     start=start + 1,
     end=start + 1 + end - start,
@@ -629,17 +631,17 @@ fn markdown_editor_wrap_image_range_with_target(
   range : @core.TextRange,
   target : String,
 ) -> MarkdownEditorEditResult {
-  let chars = source.to_array()
-  let start = markdown_editor_clamp_int(range.start, 0, chars.length())
-  let end = markdown_editor_clamp_int(range.end, start, chars.length())
-  let selected = String::from_array(chars[start:end])
-  let text = String::from_array(chars[:start]) +
+  let source_length = markdown_editor_text_length(source)
+  let start = markdown_editor_clamp_int(range.start, 0, source_length)
+  let end = markdown_editor_clamp_int(range.end, start, source_length)
+  let selected = markdown_editor_substring(source, start, end)
+  let text = markdown_editor_substring(source, 0, start) +
     "![" +
     selected +
     "](" +
     target +
     ")" +
-    String::from_array(chars[end:])
+    markdown_editor_substring(source, end, source_length)
   let next_selection = @core.TextRange::new(
     start=start + 2,
     end=start + 2 + end - start,
@@ -654,7 +656,6 @@ fn markdown_editor_replace_reference_target(
   bounds : MarkdownLinkBounds,
   target : String,
 ) -> MarkdownEditorEditResult {
-  let chars = source.to_array()
   if bounds.definition_target_start < 0 && bounds.reference_label != "" {
     let text = source +
       markdown_editor_reference_definition_append_prefix(source) +
@@ -679,9 +680,10 @@ fn markdown_editor_replace_reference_target(
   } else {
     bounds.target_end
   }
-  let text = String::from_array(chars[:target_start]) +
+  let source_length = markdown_editor_text_length(source)
+  let text = markdown_editor_substring(source, 0, target_start) +
     target +
-    String::from_array(chars[target_end:])
+    markdown_editor_substring(source, target_end, source_length)
   let next_selection = @core.TextRange::new(start=range.start, end=range.end)
   { source: text, caret: next_selection.end, selection: Some(next_selection) }
 }
@@ -890,7 +892,6 @@ fn markdown_editor_reference_target(
   source : String,
   bounds : MarkdownLinkBounds,
 ) -> String? {
-  let chars = source.to_array()
   let start = if bounds.definition_target_start >= 0 {
     bounds.definition_target_start
   } else {
@@ -901,10 +902,11 @@ fn markdown_editor_reference_target(
   } else {
     bounds.target_end
   }
-  if start > end || end > chars.length() {
+  let source_length = markdown_editor_text_length(source)
+  if start > end || end > source_length {
     None
   } else {
-    Some(String::from_array(chars[start:end]))
+    Some(markdown_editor_substring(source, start, end))
   }
 }
 
@@ -914,10 +916,10 @@ fn markdown_editor_unwrap_link_range(
   range : @core.TextRange,
   bounds : MarkdownLinkBounds,
 ) -> MarkdownEditorEditResult {
-  let chars = source.to_array()
-  let text = String::from_array(chars[:bounds.open_start]) +
-    String::from_array(chars[range.start:range.end]) +
-    String::from_array(chars[bounds.target_end + 1:])
+  let source_length = markdown_editor_text_length(source)
+  let text = markdown_editor_substring(source, 0, bounds.open_start) +
+    markdown_editor_substring(source, range.start, range.end) +
+    markdown_editor_substring(source, bounds.target_end + 1, source_length)
   let next_selection = @core.TextRange::new(
     start=bounds.open_start,
     end=bounds.open_start + range.end - range.start,
@@ -931,10 +933,10 @@ fn markdown_editor_unwrap_image_range(
   range : @core.TextRange,
   bounds : MarkdownLinkBounds,
 ) -> MarkdownEditorEditResult {
-  let chars = source.to_array()
-  let text = String::from_array(chars[:bounds.open_start]) +
-    String::from_array(chars[range.start:range.end]) +
-    String::from_array(chars[bounds.target_end + 1:])
+  let source_length = markdown_editor_text_length(source)
+  let text = markdown_editor_substring(source, 0, bounds.open_start) +
+    markdown_editor_substring(source, range.start, range.end) +
+    markdown_editor_substring(source, bounds.target_end + 1, source_length)
   let next_selection = @core.TextRange::new(
     start=bounds.open_start,
     end=bounds.open_start + range.end - range.start,
@@ -992,6 +994,14 @@ fn markdown_editor_current_line_range(
   selection : MarkdownEditorSelection,
 ) -> MarkdownSourceRange {
   let chars = source.to_array()
+  markdown_editor_current_line_range_from_chars(chars, selection)
+}
+
+///|
+fn markdown_editor_current_line_range_from_chars(
+  chars : Array[Char],
+  selection : MarkdownEditorSelection,
+) -> MarkdownSourceRange {
   let active = markdown_editor_active_selection(selection.selection)
   let caret = match active {
     Some(range) => range.start

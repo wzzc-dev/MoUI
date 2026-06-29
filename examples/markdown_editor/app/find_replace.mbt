@@ -4,7 +4,6 @@ fn markdown_editor_find_matches(
   query : String,
   options? : MarkdownEditorFindOptions = MarkdownEditorFindOptions::default(),
 ) -> Array[@core.TextRange] {
-  let source_chars = source.to_array()
   let matches : Array[@core.TextRange] = []
   if query == "" {
     return matches
@@ -17,45 +16,93 @@ fn markdown_editor_find_matches(
   } else {
     query.to_lower().to_array()
   }
-  if query_chars.length() == 0 || source_chars.length() < query_chars.length() {
+  let query_length = query_chars.length()
+  if query_length == 0 {
     return matches
   }
-  let last = source_chars.length() - query_chars.length()
+  let source_utf16_length = source.length()
+  let mut offset = 0
   let mut index = 0
-  while index <= last {
-    if markdown_editor_chars_match_at(
-        source_chars,
+  let mut previous_char : Char? = None
+  while offset < source_utf16_length {
+    match
+      markdown_editor_query_match_at_utf16(
+        source,
+        source_utf16_length,
+        offset,
         query_chars,
-        index,
         case_sensitive=options.case_sensitive,
-      ) &&
-      (
-        !options.whole_word ||
-        markdown_editor_is_whole_word(source_chars, index, query_chars.length())
       ) {
-      matches.push(
-        @core.TextRange::new(start=index, end=index + query_chars.length()),
-      )
-      index = index + query_chars.length()
-    } else {
-      index = index + 1
+      Some((end_offset, last_char)) => {
+        let next_char = if end_offset < source_utf16_length {
+          source.get_char(end_offset)
+        } else {
+          None
+        }
+        if !options.whole_word ||
+          markdown_editor_whole_word_boundary(previous_char, next_char) {
+          matches.push(
+            @core.TextRange::new(start=index, end=index + query_length),
+          )
+          offset = end_offset
+          index = index + query_length
+          previous_char = Some(last_char)
+          continue
+        }
+      }
+      None => ()
+    }
+    match source.get_char(offset) {
+      Some(ch) => {
+        offset = offset + ch.utf16_len()
+        index = index + 1
+        previous_char = Some(ch)
+      }
+      None => break
     }
   }
   matches
 }
 
 ///|
-/// True when the match at [start, start+length) is bounded by non-word
-/// characters (or the string edges), so it stands as a whole word.
-fn markdown_editor_is_whole_word(
-  source : Array[Char],
-  start : Int,
-  length : Int,
-) -> Bool {
-  let before_ok = start == 0 ||
-    !markdown_editor_ascii_word_char(source[start - 1])
-  let after_ok = start + length == source.length() ||
-    !markdown_editor_ascii_word_char(source[start + length])
+fn markdown_editor_query_match_at_utf16(
+  source : String,
+  source_utf16_length : Int,
+  offset : Int,
+  query : Array[Char],
+  case_sensitive~ : Bool,
+) -> (Int, Char)? {
+  let mut cursor = offset
+  let mut last_char = query[0]
+  for expected in query {
+    if cursor >= source_utf16_length {
+      return None
+    }
+    match source.get_char(cursor) {
+      Some(ch) => {
+        let actual = if case_sensitive { ch } else { ch.to_ascii_lowercase() }
+        if actual != expected {
+          return None
+        }
+        last_char = ch
+        cursor = cursor + ch.utf16_len()
+      }
+      None => return None
+    }
+  }
+  Some((cursor, last_char))
+}
+
+///|
+fn markdown_editor_whole_word_boundary(before : Char?, after : Char?) -> Bool {
+  let before_ok = match before {
+    Some(ch) => !markdown_editor_ascii_word_char(ch)
+    None => true
+  }
+  let after_ok = match after {
+    Some(ch) => !markdown_editor_ascii_word_char(ch)
+    None => true
+  }
   before_ok && after_ok
 }
 
@@ -75,10 +122,11 @@ fn markdown_editor_find_query_from_selection(
   if normalized.start == normalized.end {
     return None
   }
-  let chars = source.to_array()
-  let start = markdown_editor_clamp_int(normalized.start, 0, chars.length())
-  let end = markdown_editor_clamp_int(normalized.end, start, chars.length())
-  let selected = String::from_array(chars[start:end])
+  let selected = markdown_editor_substring(
+    source,
+    normalized.start,
+    normalized.end,
+  )
   if selected == "" || selected.contains("\n") {
     None
   } else {
@@ -100,58 +148,93 @@ fn markdown_editor_find_seed_from_caret_word(
     }
     None => ()
   }
-  let chars = source.to_array()
-  if chars.length() == 0 {
+  let source_length = markdown_editor_text_length(source)
+  if source_length == 0 {
     return None
   }
-  let caret = markdown_editor_clamp_int(selection.caret, 0, chars.length())
-  let anchor = if caret < chars.length() &&
-    markdown_editor_ascii_word_char(chars[caret]) {
-    caret
-  } else if caret > 0 && markdown_editor_ascii_word_char(chars[caret - 1]) {
-    caret - 1
+  let caret = markdown_editor_clamp_int(selection.caret, 0, source_length)
+  let (anchor, anchor_offset) = if caret < source_length {
+    let offset = markdown_editor_utf16_offset_for_char_index(
+      source, source_length, caret,
+    )
+    match source.get_char(offset) {
+      Some(ch) if markdown_editor_ascii_word_char(ch) => (caret, offset)
+      _ =>
+        if caret > 0 {
+          let previous_offset = markdown_editor_utf16_offset_for_char_index(
+            source,
+            source_length,
+            caret - 1,
+          )
+          match source.get_char(previous_offset) {
+            Some(ch) if markdown_editor_ascii_word_char(ch) =>
+              (caret - 1, previous_offset)
+            _ => return None
+          }
+        } else {
+          return None
+        }
+    }
+  } else if caret > 0 {
+    let previous_offset = markdown_editor_utf16_offset_for_char_index(
+      source,
+      source_length,
+      caret - 1,
+    )
+    match source.get_char(previous_offset) {
+      Some(ch) if markdown_editor_ascii_word_char(ch) =>
+        (caret - 1, previous_offset)
+      _ => return None
+    }
   } else {
     return None
   }
   let mut start = anchor
-  while start > 0 && markdown_editor_ascii_word_char(chars[start - 1]) {
-    start = start - 1
+  let mut start_offset = anchor_offset
+  while start > 0 && start_offset > 0 {
+    let previous_offset = start_offset - 1
+    match source.get_char(previous_offset) {
+      Some(ch) if markdown_editor_ascii_word_char(ch) => {
+        start = start - 1
+        start_offset = previous_offset
+      }
+      _ => break
+    }
   }
   let mut end = anchor + 1
-  while end < chars.length() && markdown_editor_ascii_word_char(chars[end]) {
-    end = end + 1
+  let mut end_offset = anchor_offset + 1
+  let source_utf16_length = source.length()
+  while end < source_length && end_offset < source_utf16_length {
+    match source.get_char(end_offset) {
+      Some(ch) if markdown_editor_ascii_word_char(ch) => {
+        end = end + 1
+        end_offset = end_offset + 1
+      }
+      _ => break
+    }
   }
   if start == end {
     None
   } else {
     Some({
-      query: String::from_array(chars[start:end]),
+      query: source.sub(start=start_offset, end=end_offset).to_owned(),
       range: @core.TextRange::new(start~, end~),
     })
   }
 }
 
 ///|
-fn markdown_editor_chars_match_at(
-  source : Array[Char],
-  query : Array[Char],
-  start : Int,
-  case_sensitive? : Bool = false,
-) -> Bool {
-  if case_sensitive {
-    for index in 0..<query.length() {
-      if source[start + index] != query[index] {
-        return false
-      }
-    }
+fn markdown_editor_utf16_offset_for_char_index(
+  source : String,
+  char_length : Int,
+  index : Int,
+) -> Int {
+  let index = markdown_editor_clamp_int(index, 0, char_length)
+  if index == char_length {
+    source.length()
   } else {
-    for index in 0..<query.length() {
-      if source[start + index].to_ascii_lowercase() != query[index] {
-        return false
-      }
-    }
+    source.offset_of_nth_char(index).unwrap_or(source.length())
   }
-  true
 }
 
 ///|
@@ -239,11 +322,41 @@ fn markdown_editor_replace_source_range(
   range : @core.TextRange,
   replacement : String,
 ) -> String {
-  let chars = source.to_array()
   let normalized = range.normalized()
-  String::from_array(chars[:normalized.start]) +
+  markdown_editor_substring(source, 0, normalized.start) +
   replacement +
-  String::from_array(chars[normalized.end:])
+  markdown_editor_substring(
+    source,
+    normalized.end,
+    markdown_editor_text_length(source),
+  )
+}
+
+///|
+fn MarkdownEditorApp::refresh_find_matches(
+  self : MarkdownEditorApp,
+) -> Array[@core.TextRange] {
+  let query = self.find_query.get()
+  let matches : Array[@core.TextRange] = if query == "" {
+    []
+  } else {
+    markdown_editor_find_matches(
+      self.document.get(),
+      query,
+      options=self.find_options.get(),
+    )
+  }
+  self.find_matches.set(matches)
+  matches
+}
+
+///|
+fn MarkdownEditorApp::refresh_find_matches_if_visible(
+  self : MarkdownEditorApp,
+) -> Unit {
+  if self.find_visible.get() {
+    ignore(self.refresh_find_matches())
+  }
 }
 
 ///|
@@ -285,18 +398,58 @@ fn markdown_editor_replace_all_matches(
   matches : Array[@core.TextRange],
   replacement : String,
 ) -> String {
-  let source_chars = source.to_array()
-  let replacement_chars = replacement.to_array()
-  let result : Array[Char] = []
-  let mut offset = 0
+  let builder = StringBuilder::new()
+  let source_length = markdown_editor_text_length(source)
+  let utf16_length = source.length()
+  let mut char_index = 0
+  let mut utf16_offset = 0
   for range in matches {
     let normalized = range.normalized()
-    result.append(source_chars[offset:normalized.start])
-    result.append(replacement_chars)
-    offset = normalized.end
+    let start = markdown_editor_clamp_int(
+      normalized.start,
+      char_index,
+      source_length,
+    )
+    let start_offset = markdown_editor_advance_source_offset(
+      source, utf16_length, char_index, utf16_offset, start,
+    )
+    builder.write_string(
+      source.sub(start=utf16_offset, end=start_offset).to_owned(),
+    )
+    builder.write_string(replacement)
+    let end = markdown_editor_clamp_int(normalized.end, start, source_length)
+    let end_offset = markdown_editor_advance_source_offset(
+      source, utf16_length, start, start_offset, end,
+    )
+    char_index = end
+    utf16_offset = end_offset
   }
-  result.append(source_chars[offset:])
-  String::from_array(result)
+  builder.write_string(
+    source.sub(start=utf16_offset, end=utf16_length).to_owned(),
+  )
+  builder.to_string()
+}
+
+///|
+fn markdown_editor_advance_source_offset(
+  source : String,
+  utf16_length : Int,
+  from_index : Int,
+  from_offset : Int,
+  target_index : Int,
+) -> Int {
+  let mut index = from_index
+  let mut offset = from_offset
+  while index < target_index && offset < utf16_length {
+    match source.get_char(offset) {
+      Some(ch) => {
+        offset = offset + ch.utf16_len()
+        index = index + 1
+      }
+      None => return utf16_length
+    }
+  }
+  offset
 }
 
 ///|

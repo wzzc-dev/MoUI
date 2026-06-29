@@ -16,6 +16,16 @@ test "markdown_input_transform pairs '[' into '[]' and places caret inside" {
 }
 
 ///|
+test "markdown_input_transform pairs delimiters at unicode scalar caret" {
+  let transform = markdown_input_transform("前🤣后", 2, None, "(")
+  guard transform is Some(result) else {
+    fail("expected unicode delimiter pair transform")
+  }
+  inspect(result.text, content="前🤣()后")
+  inspect(result.caret, content="3")
+}
+
+///|
 test "markdown_input_transform pairs '{' into '{}'" {
   let transform = markdown_input_transform("", 0, None, "{")
   guard transform is Some(t) else { fail("expected a transform for '{'") }
@@ -36,6 +46,27 @@ test "markdown_input_transform wraps selection with '(' ... ')'" {
   }
   inspect(range.start, content="1")
   inspect(range.end, content="5")
+}
+
+///|
+test "markdown_input_transform wraps unicode selection with delimiter pair" {
+  let selection = @core.TextRange::new(start=1, end=2)
+  let transform = markdown_input_transform(
+    "前🤣后",
+    2,
+    Some(selection),
+    "[",
+  )
+  guard transform is Some(result) else {
+    fail("expected unicode selection wrap transform")
+  }
+  inspect(result.text, content="前[🤣]后")
+  inspect(result.caret, content="3")
+  guard result.selection is Some(range) else {
+    fail("expected selection after unicode wrap")
+  }
+  inspect(range.start, content="2")
+  inspect(range.end, content="3")
 }
 
 ///|
@@ -62,6 +93,37 @@ test "markdown_input_transform wraps selection with '**' inline marker" {
   }
   inspect(range.start, content="2")
   inspect(range.end, content="6")
+}
+
+///|
+test "markdown_input_transform pairs inline marker at unicode scalar caret" {
+  let transform = markdown_input_transform("前🤣后", 2, None, "**")
+  guard transform is Some(result) else {
+    fail("expected unicode inline marker pair transform")
+  }
+  inspect(result.text, content="前🤣****后")
+  inspect(result.caret, content="4")
+}
+
+///|
+test "markdown_input_transform removes inline marker pair around unicode text" {
+  let backspace = markdown_input_transform(
+    "前 **🤣** 后",
+    7,
+    None,
+    "\u{0008}",
+  )
+  guard backspace is Some(backspace_result) else {
+    fail("expected unicode inline marker backspace transform")
+  }
+  inspect(backspace_result.text, content="前 🤣 后")
+  inspect(backspace_result.caret, content="2")
+  let delete = markdown_input_transform("前 **🤣** 后", 2, None, "\u{007f}")
+  guard delete is Some(delete_result) else {
+    fail("expected unicode inline marker delete transform")
+  }
+  inspect(delete_result.text, content="前 🤣 后")
+  inspect(delete_result.caret, content="2")
 }
 
 ///|

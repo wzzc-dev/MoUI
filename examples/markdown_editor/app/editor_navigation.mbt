@@ -73,6 +73,7 @@ fn MarkdownEditorApp::toggle_find_option(
     _ => options
   }
   self.find_options.set(next)
+  self.refresh_find_matches_if_visible()
 }
 
 ///|
@@ -127,17 +128,20 @@ fn MarkdownEditorApp::open_find(self : MarkdownEditorApp) -> Unit {
         None => ()
       }
   }
+  ignore(self.refresh_find_matches())
 }
 
 ///|
 fn MarkdownEditorApp::close_find(self : MarkdownEditorApp) -> Unit {
   self.find_visible.set(false)
+  self.find_matches.set([])
 }
 
 ///|
 fn MarkdownEditorApp::reset_find_session(self : MarkdownEditorApp) -> Unit {
   self.find_visible.set(false)
   self.find_query.set("")
+  self.find_matches.set([])
   self.replace_text.set("")
 }
 
@@ -338,11 +342,7 @@ fn markdown_editor_scroll_anchor_y(
 ///|
 fn MarkdownEditorApp::find_next(self : MarkdownEditorApp) -> Unit {
   self.find_visible.set(true)
-  let matches = markdown_editor_find_matches(
-    self.document.get(),
-    self.find_query.get(),
-    options=self.find_options.get(),
-  )
+  let matches = self.refresh_find_matches()
   if matches.length() == 0 {
     return
   }
@@ -353,11 +353,7 @@ fn MarkdownEditorApp::find_next(self : MarkdownEditorApp) -> Unit {
 ///|
 fn MarkdownEditorApp::find_previous(self : MarkdownEditorApp) -> Unit {
   self.find_visible.set(true)
-  let matches = markdown_editor_find_matches(
-    self.document.get(),
-    self.find_query.get(),
-    options=self.find_options.get(),
-  )
+  let matches = self.refresh_find_matches()
   if matches.length() == 0 {
     return
   }
@@ -374,6 +370,7 @@ fn MarkdownEditorApp::update_find_query(
   if !self.find_visible.get() {
     return
   }
+  let matches = self.refresh_find_matches()
   if query == "" {
     let selection = self.selection.get()
     if selection.selection is Some(_) {
@@ -382,11 +379,6 @@ fn MarkdownEditorApp::update_find_query(
     }
     return
   }
-  let matches = markdown_editor_find_matches(
-    self.document.get(),
-    query,
-    options=self.find_options.get(),
-  )
   if matches.length() == 0 {
     let selection = self.selection.get()
     if selection.selection is Some(_) {
@@ -419,13 +411,8 @@ fn MarkdownEditorApp::replace_current_find_match(
   self : MarkdownEditorApp,
 ) -> Unit {
   let source = self.document.get()
-  let query = self.find_query.get()
   let replacement = self.replace_text.get()
-  let matches = markdown_editor_find_matches(
-    source,
-    query,
-    options=self.find_options.get(),
-  )
+  let matches = self.refresh_find_matches()
   if matches.length() == 0 {
     return
   }
@@ -447,11 +434,7 @@ fn MarkdownEditorApp::replace_current_find_match(
   self.redo_stack.set([])
   self.replace_document_source(next_source, reason=ReplaceEdit)
   let end = range.start + markdown_editor_text_length(replacement)
-  let next_matches = markdown_editor_find_matches(
-    next_source,
-    query,
-    options=self.find_options.get(),
-  )
+  let next_matches = self.refresh_find_matches()
   match
     markdown_editor_next_match_after_replacement(next_matches, range.start, end) {
     Some(next_range) => self.select_find_match(next_range)
@@ -471,13 +454,8 @@ fn MarkdownEditorApp::replace_all_find_matches(
   self : MarkdownEditorApp,
 ) -> Unit {
   let source = self.document.get()
-  let query = self.find_query.get()
   let replacement = self.replace_text.get()
-  let matches = markdown_editor_find_matches(
-    source,
-    query,
-    options=self.find_options.get(),
-  )
+  let matches = self.refresh_find_matches()
   if matches.length() == 0 {
     return
   }

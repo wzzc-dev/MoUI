@@ -216,7 +216,7 @@ fn replace_current_selection(
   }
   let normalized = range.normalized()
   let next_text = @core.replace_text_range(text, range, replacement)
-  let caret = normalized.start + replacement.to_array().length()
+  let caret = normalized.start + text_length(replacement)
   { text: next_text, caret, selection: None }
 }
 
@@ -224,6 +224,18 @@ fn replace_current_selection(
 test {
   let boundaries = @core.TextGraphemeBoundaries::new(text="hello")
   ignore(@core.text_input_grapheme_selection(boundaries, None))
+}
+
+///|
+test "rich text replace current selection advances caret by unicode scalars" {
+  let edit = replace_current_selection(
+    "a🤣b",
+    1,
+    Some(@core.TextRange::new(start=1, end=2)),
+    "尾巴",
+  )
+  inspect(edit.text, content="a尾巴b")
+  inspect(edit.caret, content="3")
 }
 
 ///|
@@ -389,7 +401,7 @@ fn[Msg] view_event_result(
 
 ///|
 fn text_length(text : String) -> Int {
-  text.to_array().length()
+  text.char_length()
 }
 
 ///|
