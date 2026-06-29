@@ -59,7 +59,7 @@ test "markdown editor find matching preserves unicode ranges" {
 ///|
 test "markdown editor settings round-trip through JSON" {
   let app = MarkdownEditorApp::new()
-  let _ = app.update(ToggleDarkMode)
+  app.dark_mode_enabled.set(true)
   let _ = app.update(ToggleFocusMode)
   // Serialize to JSON and decode back; the decoded settings should reflect the
   // toggles. The host file I/O is bypassed by calling the decode helper on the
