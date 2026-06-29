@@ -69,7 +69,7 @@ test "markdown editor dark mode toggle switches chrome theme" {
   // Light by default.
   assert_true(!app.dark_mode_enabled.get())
   // Toggling flips to dark.
-  let _ = app.update(ToggleDarkMode)
+  app.dark_mode_enabled.set(true)
   assert_true(app.dark_mode_enabled.get())
   // The chrome theme helper reflects the toggle.
   let light_palette = @views.light_theme().palette.background

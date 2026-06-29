@@ -144,7 +144,6 @@ priv struct MarkdownEditorAppearanceSpec {
   placeholder : @core.Color
   page_background : @core.Color
   window_background : @core.Color
-  page_border : @core.Color
   font_family : @core.FontFamilyStack
 }
 
@@ -231,11 +230,6 @@ pub enum MarkdownEditorMsg {
   DismissAuxiliaryPanels
   ToggleSourcePreview
   ToggleSourceMode
-  ToggleMenuBarMenu(String)
-  CloseMenuBarMenu
-  CloseMenuBarMenuAndRun(MarkdownEditorMsg)
-  ToggleDarkMode
-  CycleFontFamily
   DismissToastTick
   AutosaveTick
   ResolvePendingConfirm(MarkdownEditorConfirmResolution)
@@ -432,26 +426,6 @@ fn MarkdownEditorApp::update(
     DismissAuxiliaryPanels => self.dismiss_auxiliary_panels()
     ToggleSourcePreview => self.toggle_source_preview()
     ToggleSourceMode => self.toggle_source_mode()
-    ToggleDarkMode => self.dark_mode_enabled.set(!self.dark_mode_enabled.get())
-    CycleFontFamily => {
-      let next = match self.font_family.get() {
-        SansFont => SerifFont
-        SerifFont => MonoFont
-        MonoFont => SansFont
-      }
-      self.font_family.set(next)
-    }
-    ToggleMenuBarMenu(menu_id) =>
-      if self.active_menu.get() == menu_id {
-        self.active_menu.set("")
-      } else {
-        self.active_menu.set(menu_id)
-      }
-    CloseMenuBarMenu => self.active_menu.set("")
-    CloseMenuBarMenuAndRun(message) => {
-      self.active_menu.set("")
-      let _ = self.update(message)
-    }
     DismissToastTick => self.expire_toasts()
     AutosaveTick => self.maybe_autosave()
     ResolvePendingConfirm(resolution) =>
