@@ -218,6 +218,31 @@ test "MarkdownEditTransaction::from_sources computes prefix/suffix diff" {
 }
 
 ///|
+test "MarkdownEditTransaction::from_sources preserves unicode scalar diff ranges" {
+  let insert_txn = MarkdownEditTransaction::from_sources("a🤣b", "a🤣XYb")
+  inspect(insert_txn.edit_range.start, content="2")
+  inspect(insert_txn.edit_range.end, content="2")
+  inspect(insert_txn.replacement, content="XY")
+
+  let replace_txn = MarkdownEditTransaction::from_sources("a🤣b", "a尾b")
+  inspect(replace_txn.edit_range.start, content="1")
+  inspect(replace_txn.edit_range.end, content="2")
+  inspect(replace_txn.replacement, content="尾")
+
+  let delete_txn = MarkdownEditTransaction::from_sources("a🤣b", "ab")
+  inspect(delete_txn.edit_range.start, content="1")
+  inspect(delete_txn.edit_range.end, content="2")
+  inspect(delete_txn.replacement, content="")
+
+  let leading_txn = MarkdownEditTransaction::from_sources(
+    "old 🤣 tail", "new 🤣 tail",
+  )
+  inspect(leading_txn.edit_range.start, content="0")
+  inspect(leading_txn.edit_range.end, content="3")
+  inspect(leading_txn.replacement, content="new")
+}
+
+///|
 test "MarkdownEditTransaction::from_sources default caret is at end of new source" {
   let txn = MarkdownEditTransaction::from_sources("abc", "abcdef")
   inspect(txn.caret, content="6")
@@ -337,4 +362,50 @@ test "markdown document session rich_text source_mode produces monospace runs" {
   guard document.blocks[0].runs[0].font is Some(_src_font) else {
     fail("expected a font on source-mode run")
   }
+}
+
+///|
+test "markdown editor substring preserves unicode scalar ranges" {
+  let source = "a🤣b\n尾"
+  inspect(markdown_editor_text_length(source), content="5")
+  inspect(markdown_editor_substring(source, 1, 2), content="🤣")
+  inspect(markdown_editor_substring(source, 2, 5), content="b\n尾")
+  inspect(markdown_editor_substring(source, -10, 1), content="a")
+  inspect(markdown_editor_substring(source, 4, 99), content="尾")
+}
+
+///|
+test "markdown document session source_mode window slices visible source" {
+  let parts : Array[String] = []
+  for index in 0..<120 {
+    parts.push("## Section " + index.to_string())
+    parts.push("")
+    parts.push("Emoji 🤣 paragraph " + index.to_string())
+    parts.push("")
+  }
+  let source = parts.join("\n")
+  let session = MarkdownDocumentSession::new(source)
+  let font = @core.FontSpec::new(size=16.0)
+  let source_height = session.estimated_content_height(
+    base=font,
+    source_mode=true,
+  )
+  let window = session.rich_text_window(
+    { caret: 0, selection: None },
+    base=font,
+    source_mode=true,
+    scroll_y=source_height * 0.65,
+    viewport_height=96.0,
+    overscan=0.0,
+  )
+  assert_true(window.visible_start > 0)
+  assert_true(window.rendered_block_count > 0)
+  assert_true(window.rendered_block_count < window.block_count)
+  let first_range = session.editor_blocks[window.visible_start].source_range
+  let expected = markdown_editor_substring(
+    source,
+    first_range.start,
+    first_range.end,
+  )
+  inspect(window.document.blocks[0].runs[0].text, content=expected)
 }

@@ -481,6 +481,23 @@ test "markdown editor paste footnote definition creates or updates footnotes" {
   inspect(wrapped_selection.start, content="5")
   inspect(wrapped_selection.end, content="9")
 
+  let unicode_wrapped = markdown_editor_transform_input(
+    "前缀 🤣 note here",
+    9,
+    Some(@core.TextRange::new(start=5, end=9)),
+    "[^u]: 脚注",
+  ).unwrap()
+  inspect(
+    unicode_wrapped.text,
+    content="前缀 🤣 note[^u] here\n\n[^u]: 脚注",
+  )
+  inspect(unicode_wrapped.caret, content="9")
+  guard unicode_wrapped.selection is Some(unicode_selection) else {
+    fail("expected selected unicode footnote source text")
+  }
+  inspect(unicode_selection.start, content="5")
+  inspect(unicode_selection.end, content="9")
+
   let updated = markdown_editor_transform_input(
     "Text[^a]\n\n[^a]: Old body",
     6,

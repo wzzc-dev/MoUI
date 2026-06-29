@@ -111,6 +111,69 @@ test "Strikethrough command wraps and unwraps symmetrically" {
 }
 
 ///|
+test "Link and image commands preserve unicode scalar selections" {
+  let link_selection : MarkdownEditorSelection = {
+    caret: 9,
+    selection: Some(@core.TextRange::new(start=5, end=9)),
+  }
+  let linked = markdown_editor_apply_command_at(
+    "前缀 🤣 MoUI tail",
+    Link,
+    Some(link_selection),
+  )
+  inspect(linked.source, content="前缀 🤣 [MoUI](https://example.com) tail")
+  guard linked.selection is Some(linked_selection) else {
+    fail("expected linked text selection")
+  }
+  inspect(linked_selection.start, content="6")
+  inspect(linked_selection.end, content="10")
+  let unlinked = markdown_editor_apply_command_at(
+    linked.source,
+    Link,
+    Some({ caret: 10, selection: Some(linked_selection) }),
+  )
+  inspect(unlinked.source, content="前缀 🤣 MoUI tail")
+  guard unlinked.selection is Some(unlinked_selection) else {
+    fail("expected unlinked text selection")
+  }
+  inspect(unlinked_selection.start, content="5")
+  inspect(unlinked_selection.end, content="9")
+
+  let image = markdown_editor_apply_command_at(
+    "前缀 🤣 logo tail",
+    Image,
+    Some(link_selection),
+  )
+  inspect(image.source, content="前缀 🤣 ![logo](image.png) tail")
+  guard image.selection is Some(image_selection) else {
+    fail("expected image alt selection")
+  }
+  inspect(image_selection.start, content="7")
+  inspect(image_selection.end, content="11")
+  let unwrapped_image = markdown_editor_apply_command_at(
+    image.source,
+    Image,
+    Some({ caret: 11, selection: Some(image_selection) }),
+  )
+  inspect(unwrapped_image.source, content="前缀 🤣 logo tail")
+}
+
+///|
+test "SetLinkTarget preserves unicode scalar target ranges" {
+  let updated = markdown_editor_apply_command_at(
+    "前缀 🤣 [MoUI](old.example) tail",
+    SetLinkTarget("https://moui.dev"),
+    Some({ caret: 10, selection: Some(@core.TextRange::new(start=6, end=10)) }),
+  )
+  inspect(updated.source, content="前缀 🤣 [MoUI](https://moui.dev) tail")
+  guard updated.selection is Some(selection) else {
+    fail("expected link text selection")
+  }
+  inspect(selection.start, content="6")
+  inspect(selection.end, content="10")
+}
+
+///|
 test "Heading(1) command transforms a paragraph line" {
   // source = "Body", caret at position 2 (middle of the line)
   let selection : MarkdownEditorSelection = { caret: 2, selection: None }

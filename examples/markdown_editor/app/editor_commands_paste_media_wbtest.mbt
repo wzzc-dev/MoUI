@@ -82,6 +82,19 @@ test "markdown editor paste markdown link reuses target for selected text" {
   inspect(full_reference_selection.start, content="7")
   inspect(full_reference_selection.end, content="11")
 
+  let unicode_reference = markdown_editor_transform_input(
+    "前缀 🤣 Docs today",
+    9,
+    Some(@core.TextRange::new(start=5, end=9)),
+    "[Other][site]",
+  ).unwrap()
+  inspect(unicode_reference.text, content="前缀 🤣 [Docs][site] today")
+  guard unicode_reference.selection is Some(unicode_reference_selection) else {
+    fail("expected unicode reference link text selection")
+  }
+  inspect(unicode_reference_selection.start, content="6")
+  inspect(unicode_reference_selection.end, content="10")
+
   let shortcut_reference = markdown_editor_transform_input(
     "Visit Docs today",
     10,

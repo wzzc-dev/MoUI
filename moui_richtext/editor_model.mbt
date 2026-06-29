@@ -144,7 +144,7 @@ fn markdown_editor_lines(source : String) -> Array[MarkdownLine] {
 
 ///|
 pub fn markdown_editor_text_length(source : String) -> Int {
-  source.to_array().length()
+  source.char_length()
 }
 
 ///|
@@ -153,10 +153,21 @@ pub fn markdown_editor_substring(
   start : Int,
   end : Int,
 ) -> String {
-  let chars = source.to_array()
-  let start = markdown_editor_clamp_int(start, 0, chars.length())
-  let end = markdown_editor_clamp_int(end, start, chars.length())
-  String::from_array(chars[start:end])
+  let char_length = source.char_length()
+  let start = markdown_editor_clamp_int(start, 0, char_length)
+  let end = markdown_editor_clamp_int(end, start, char_length)
+  let source_length = source.length()
+  let start_offset = if start == char_length {
+    source_length
+  } else {
+    source.offset_of_nth_char(start).unwrap_or(source_length)
+  }
+  let end_offset = if end == char_length {
+    source_length
+  } else {
+    source.offset_of_nth_char(end).unwrap_or(source_length)
+  }
+  source.sub(start=start_offset, end=end_offset).to_owned()
 }
 
 ///|

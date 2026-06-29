@@ -8,6 +8,14 @@ test "markdown editor paste and typed space complete autolinks" {
   ).unwrap()
   inspect(pasted.text, content="Visit <https://moui.dev>")
   inspect(pasted.caret, content="24")
+  let unicode_pasted = markdown_editor_transform_input(
+    "前缀 🤣 ",
+    5,
+    None,
+    "https://moui.dev",
+  ).unwrap()
+  inspect(unicode_pasted.text, content="前缀 🤣 <https://moui.dev>")
+  inspect(unicode_pasted.caret, content="23")
   let punctuated_paste = markdown_editor_transform_input(
     "Visit ",
     6,

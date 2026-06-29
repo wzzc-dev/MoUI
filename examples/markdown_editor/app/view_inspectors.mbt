@@ -46,7 +46,10 @@ fn files_inspector(
         theme,
       ),
       width=content_width,
-      height=markdown_editor_max_double(0.0, height - 180.0 - tree_scroll_height),
+      height=markdown_editor_max_double(
+        0.0,
+        height - 180.0 - tree_scroll_height,
+      ),
     )
   }
   let working_directory = app.working_directory.get()

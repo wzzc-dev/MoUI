@@ -78,7 +78,7 @@ pub fn markdown_editor_transform_input(
     let chars = source.to_array()
     let caret = markdown_editor_clamp_int(caret, 0, chars.length())
     let current : MarkdownEditorSelection = { caret, selection }
-    let range = markdown_editor_current_line_range(source, current)
+    let range = markdown_editor_current_line_range_from_chars(chars, current)
     let line = String::from_array(chars[range.start:range.end])
     match
       markdown_editor_complete_code_fence_on_enter(chars, range, line, caret) {
@@ -209,9 +209,9 @@ pub fn markdown_editor_transform_input(
   if input != "\n" || markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
-  let current : MarkdownEditorSelection = { caret, selection }
-  let range = markdown_editor_current_line_range(source, current)
   let chars = source.to_array()
+  let current : MarkdownEditorSelection = { caret, selection }
+  let range = markdown_editor_current_line_range_from_chars(chars, current)
   let line = String::from_array(chars[range.start:range.end])
   match
     markdown_editor_complete_table_header_on_enter(chars, range, line, caret) {
