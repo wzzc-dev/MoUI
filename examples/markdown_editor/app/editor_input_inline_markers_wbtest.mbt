@@ -3,6 +3,14 @@ test "markdown editor pairs inline markdown markers while typing" {
   let bold = markdown_editor_transform_input("Say ", 4, None, "**").unwrap()
   inspect(bold.text, content="Say ****")
   inspect(bold.caret, content="6")
+  let unicode_bold = markdown_editor_transform_input(
+    "前🤣后",
+    2,
+    None,
+    "**",
+  ).unwrap()
+  inspect(unicode_bold.text, content="前🤣****后")
+  inspect(unicode_bold.caret, content="4")
   let underscore_bold = markdown_editor_transform_input("Say ", 4, None, "__").unwrap()
   inspect(underscore_bold.text, content="Say ____")
   inspect(underscore_bold.caret, content="6")
@@ -53,6 +61,14 @@ test "markdown editor removes empty inline marker pairs at caret edges" {
   ).unwrap()
   inspect(backspace_middle.text, content="Say ")
   inspect(backspace_middle.caret, content="4")
+  let unicode_backspace_middle = markdown_editor_transform_input(
+    "前🤣****后",
+    4,
+    None,
+    "\u{0008}",
+  ).unwrap()
+  inspect(unicode_backspace_middle.text, content="前🤣后")
+  inspect(unicode_backspace_middle.caret, content="2")
   let backspace_after = markdown_editor_transform_input(
     "Say ****",
     8,
@@ -69,6 +85,14 @@ test "markdown editor removes empty inline marker pairs at caret edges" {
   ).unwrap()
   inspect(delete_before.text, content="Say ")
   inspect(delete_before.caret, content="4")
+  let unicode_delete_before = markdown_editor_transform_input(
+    "前🤣****后",
+    2,
+    None,
+    "\u{007f}",
+  ).unwrap()
+  inspect(unicode_delete_before.text, content="前🤣后")
+  inspect(unicode_delete_before.caret, content="2")
   let delete_middle = markdown_editor_transform_input(
     "Say ~~~~",
     6,
@@ -88,4 +112,24 @@ test "markdown editor removes empty inline marker pairs at caret edges" {
   let tick_delete = markdown_editor_transform_input("``", 0, None, "\u{007f}").unwrap()
   inspect(tick_delete.text, content="")
   inspect(tick_delete.caret, content="0")
+}
+
+///|
+test "markdown editor removes inline marker pairs around unicode content" {
+  let backspace = markdown_editor_transform_input(
+    "前 **🤣** 后",
+    7,
+    None,
+    "\u{0008}",
+  ).unwrap()
+  inspect(backspace.text, content="前 🤣 后")
+  inspect(backspace.caret, content="2")
+  let delete = markdown_editor_transform_input(
+    "前 **🤣** 后",
+    2,
+    None,
+    "\u{007f}",
+  ).unwrap()
+  inspect(delete.text, content="前 🤣 后")
+  inspect(delete.caret, content="2")
 }

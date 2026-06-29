@@ -23,7 +23,7 @@ fn MarkdownEditorApp::root(
   let scroll_offset = self.editor_scroll.offset()
   let children : Array[@moui.View[MarkdownEditorMsg]] = []
   if !zen && self.find_visible.get() {
-    children.push(self.find_bar(theme, document, selection, workspace_width))
+    children.push(self.find_bar(theme, selection, workspace_width))
   }
   if !zen && self.format_palette_visible.get() {
     children.push(self.format_palette(theme, workspace_width))
@@ -157,6 +157,7 @@ fn MarkdownEditorApp::reactive_root(
   ignore(ctx.watch(self.find_visible))
   ignore(ctx.watch(self.find_query))
   ignore(ctx.watch(self.find_options))
+  ignore(ctx.watch(self.find_matches))
   ignore(ctx.watch(self.replace_text))
   ignore(ctx.watch(self.document_path))
   ignore(ctx.watch(self.recent_document_paths))
@@ -352,16 +353,11 @@ fn MarkdownEditorApp::bottom_status_bar(
 fn MarkdownEditorApp::find_bar(
   self : MarkdownEditorApp,
   theme : @moui.Theme,
-  source : String,
   selection : MarkdownEditorSelection,
   width : Double,
 ) -> @moui.View[MarkdownEditorMsg] {
   let query = self.find_query.get()
-  let matches = markdown_editor_find_matches(
-    source,
-    query,
-    options=self.find_options.get(),
-  )
+  let matches = self.find_matches.get()
   frame(
     row(
       [

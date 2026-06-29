@@ -3,6 +3,14 @@ test "markdown editor pairs delimiters while typing" {
   let parens = markdown_editor_transform_input("Call ", 5, None, "(").unwrap()
   inspect(parens.text, content="Call ()")
   inspect(parens.caret, content="6")
+  let unicode_parens = markdown_editor_transform_input(
+    "前🤣后",
+    2,
+    None,
+    "(",
+  ).unwrap()
+  inspect(unicode_parens.text, content="前🤣()后")
+  inspect(unicode_parens.caret, content="3")
   let brackets = markdown_editor_transform_input(
     "Link text",
     9,
@@ -16,6 +24,19 @@ test "markdown editor pairs delimiters while typing" {
   }
   inspect(selection.start, content="6")
   inspect(selection.end, content="10")
+  let unicode_brackets = markdown_editor_transform_input(
+    "前🤣后",
+    2,
+    Some(@core.TextRange::new(start=1, end=2)),
+    "[",
+  ).unwrap()
+  inspect(unicode_brackets.text, content="前[🤣]后")
+  inspect(unicode_brackets.caret, content="3")
+  guard unicode_brackets.selection is Some(unicode_selection) else {
+    fail("expected unicode bracketed selection")
+  }
+  inspect(unicode_selection.start, content="2")
+  inspect(unicode_selection.end, content="3")
   let quote = markdown_editor_transform_input("say", 0, None, "\"").unwrap()
   inspect(quote.text, content="\"\"say")
   inspect(quote.caret, content="1")
@@ -74,6 +95,14 @@ test "markdown editor backspace removes empty paired delimiters" {
   let parens = markdown_editor_transform_input("Call ()", 6, None, "\u{0008}").unwrap()
   inspect(parens.text, content="Call ")
   inspect(parens.caret, content="5")
+  let unicode_parens = markdown_editor_transform_input(
+    "前🤣()后",
+    3,
+    None,
+    "\u{0008}",
+  ).unwrap()
+  inspect(unicode_parens.text, content="前🤣后")
+  inspect(unicode_parens.caret, content="2")
   let brackets = markdown_editor_transform_input(
     "Link [] tail",
     6,
@@ -99,6 +128,14 @@ test "markdown editor delete removes empty paired delimiters" {
   let parens = markdown_editor_transform_input("Call ()", 5, None, "\u{007f}").unwrap()
   inspect(parens.text, content="Call ")
   inspect(parens.caret, content="5")
+  let unicode_parens = markdown_editor_transform_input(
+    "前🤣()后",
+    2,
+    None,
+    "\u{007f}",
+  ).unwrap()
+  inspect(unicode_parens.text, content="前🤣后")
+  inspect(unicode_parens.caret, content="2")
   let brackets = markdown_editor_transform_input(
     "Link [] tail",
     5,

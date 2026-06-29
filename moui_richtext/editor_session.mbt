@@ -141,33 +141,114 @@ pub fn MarkdownEditTransaction::from_sources(
   selection? : @core.TextRange? = None,
   reason? : MarkdownEditReason = TextInput,
 ) -> MarkdownEditTransaction {
-  let previous_chars = previous_source.to_array()
-  let next_chars = source.to_array()
-  let mut prefix = 0
-  let min_length = markdown_editor_min_int(
-    previous_chars.length(),
-    next_chars.length(),
+  let previous_length = markdown_editor_text_length(previous_source)
+  let source_length = markdown_editor_text_length(source)
+  let (prefix, _, source_prefix_offset) = markdown_document_common_prefix(
+    previous_source, source, previous_length, source_length,
   )
-  while prefix < min_length && previous_chars[prefix] == next_chars[prefix] {
-    prefix = prefix + 1
-  }
-  let mut previous_suffix = previous_chars.length()
-  let mut next_suffix = next_chars.length()
-  while previous_suffix > prefix &&
-        next_suffix > prefix &&
-        previous_chars[previous_suffix - 1] == next_chars[next_suffix - 1] {
-    previous_suffix = previous_suffix - 1
-    next_suffix = next_suffix - 1
-  }
+  let suffix = markdown_document_common_suffix_length(
+    previous_source, source, previous_length, source_length, prefix,
+  )
+  let previous_suffix = previous_length - suffix
+  let next_suffix = source_length - suffix
   {
     previous_source,
     source,
     edit_range: { start: prefix, end: previous_suffix },
-    replacement: String::from_array(next_chars[prefix:next_suffix]),
+    replacement: markdown_document_source_substring_after_prefix(
+      source, source_length, prefix, next_suffix, source_prefix_offset,
+    ),
     caret,
     selection,
     reason,
   }
+}
+
+///|
+fn markdown_document_common_prefix(
+  previous_source : String,
+  source : String,
+  previous_length : Int,
+  source_length : Int,
+) -> (Int, Int, Int) {
+  let previous_utf16_length = previous_source.length()
+  let source_utf16_length = source.length()
+  let limit = markdown_editor_min_int(previous_length, source_length)
+  let mut index = 0
+  let mut previous_offset = 0
+  let mut source_offset = 0
+  while index < limit &&
+        previous_offset < previous_utf16_length &&
+        source_offset < source_utf16_length {
+    match
+      (
+        previous_source.get_char(previous_offset),
+        source.get_char(source_offset),
+      ) {
+      (Some(previous_char), Some(source_char)) =>
+        if previous_char == source_char {
+          previous_offset = previous_offset + previous_char.utf16_len()
+          source_offset = source_offset + source_char.utf16_len()
+          index = index + 1
+        } else {
+          return (index, previous_offset, source_offset)
+        }
+      _ => return (index, previous_offset, source_offset)
+    }
+  }
+  (index, previous_offset, source_offset)
+}
+
+///|
+fn markdown_document_common_suffix_length(
+  previous_source : String,
+  source : String,
+  previous_length : Int,
+  source_length : Int,
+  prefix : Int,
+) -> Int {
+  let limit = markdown_editor_min_int(
+    previous_length - prefix,
+    source_length - prefix,
+  )
+  let previous_iter = previous_source.rev_iter()
+  let source_iter = source.rev_iter()
+  let mut suffix = 0
+  while suffix < limit {
+    match (previous_iter.next(), source_iter.next()) {
+      (Some(previous_char), Some(source_char)) =>
+        if previous_char == source_char {
+          suffix = suffix + 1
+        } else {
+          return suffix
+        }
+      _ => return suffix
+    }
+  }
+  suffix
+}
+
+///|
+fn markdown_document_source_substring_after_prefix(
+  source : String,
+  source_length : Int,
+  start : Int,
+  end : Int,
+  start_offset : Int,
+) -> String {
+  let source_utf16_length = source.length()
+  let end_offset = if end == source_length {
+    source_utf16_length
+  } else {
+    source
+    .offset_of_nth_char(
+      end - start,
+      start_offset~,
+      end_offset=source_utf16_length,
+    )
+    .unwrap_or(source_utf16_length)
+  }
+  source.sub(start=start_offset, end=end_offset).to_owned()
 }
 
 ///|
@@ -287,7 +368,6 @@ pub fn MarkdownDocumentSession::rich_text_window(
   viewport_height? : Double = 0.0,
   overscan? : Double = 320.0,
 ) -> MarkdownDocumentRichTextWindow {
-  let source_chars = if source_mode { self.source.to_array() } else { [] }
   let range = markdown_document_window_range(
     self,
     base,
@@ -296,6 +376,23 @@ pub fn MarkdownDocumentSession::rich_text_window(
     viewport_height~,
     overscan~,
   )
+  let (source_chars, source_char_offset) = if source_mode &&
+    range.visible_start >= 0 &&
+    range.visible_end >= range.visible_start {
+    let source_start = self.editor_blocks[range.visible_start].source_range.start
+    let source_end = self.editor_blocks[range.visible_end].source_range.end
+    (
+      markdown_document_source_chars_in_range(
+        self.source,
+        self.source_length,
+        source_start,
+        source_end,
+      ),
+      source_start,
+    )
+  } else {
+    ([], 0)
+  }
   let rich_blocks : Array[RichTextBlock] = []
   if range.visible_start >= 0 && range.visible_end >= range.visible_start {
     for index in range.visible_start..<=range.visible_end {
@@ -303,7 +400,7 @@ pub fn MarkdownDocumentSession::rich_text_window(
       rich_blocks.push(
         if source_mode {
           markdown_document_source_mode_block_to_rich_text(
-            source_chars, editor_block, base,
+            source_chars, source_char_offset, editor_block, base,
           )
         } else {
           markdown_editor_block_to_rich_text(
@@ -863,20 +960,45 @@ fn markdown_document_source_range_line_count(
 }
 
 ///|
+fn markdown_document_source_chars_in_range(
+  source : String,
+  char_length : Int,
+  start : Int,
+  end : Int,
+) -> Array[Char] {
+  let start = markdown_editor_clamp_int(start, 0, char_length)
+  let end = markdown_editor_clamp_int(end, start, char_length)
+  let source_length = source.length()
+  let start_offset = if start == char_length {
+    source_length
+  } else {
+    source.offset_of_nth_char(start).unwrap_or(source_length)
+  }
+  let end_offset = if end == char_length {
+    source_length
+  } else {
+    source.offset_of_nth_char(end).unwrap_or(source_length)
+  }
+  source.sub(start=start_offset, end=end_offset).to_array()
+}
+
+///|
 fn markdown_document_source_mode_block_to_rich_text(
   source_chars : Array[Char],
+  source_char_offset : Int,
   editor_block : MarkdownEditorBlock,
   base : @core.FontSpec,
 ) -> RichTextBlock {
+  let source_length = source_chars.length()
   let start = markdown_editor_clamp_int(
-    editor_block.source_range.start,
+    editor_block.source_range.start - source_char_offset,
     0,
-    source_chars.length(),
+    source_length,
   )
   let end = markdown_editor_clamp_int(
-    editor_block.source_range.end,
+    editor_block.source_range.end - source_char_offset,
     start,
-    source_chars.length(),
+    source_length,
   )
   let text = String::from_array(source_chars[start:end])
   let range = markdown_core_range(editor_block.source_range)

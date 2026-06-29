@@ -18,6 +18,7 @@ fn MarkdownEditorApp::replace_document_source(
   )
   self.document_session.set(previous.apply(transaction))
   self.document.set(source)
+  self.refresh_find_matches_if_visible()
 }
 
 ///|
@@ -30,6 +31,7 @@ fn MarkdownEditorApp::apply_editor_transaction(
   let next = session.apply(transaction)
   self.document_session.set(next)
   self.document.set(next.source)
+  self.refresh_find_matches_if_visible()
   self.selection.set({
     caret: transaction.caret,
     selection: transaction.selection,
@@ -69,6 +71,7 @@ fn MarkdownEditorApp::apply_command_to_selection(
     ),
   )
   self.document.set(result.source)
+  self.refresh_find_matches_if_visible()
   self.selection.set({ caret: result.caret, selection: result.selection })
   self.sync_target_inputs()
   self.maybe_center_typewriter_selection()
@@ -95,6 +98,7 @@ fn MarkdownEditorApp::apply_text_transform(
     ),
   )
   self.document.set(transform.text)
+  self.refresh_find_matches_if_visible()
   self.selection.set({ caret: transform.caret, selection: transform.selection })
   self.sync_target_inputs()
   self.maybe_center_typewriter_selection()
@@ -386,6 +390,7 @@ fn MarkdownEditorApp::toggle_task_at(
         ),
       )
       self.document.set(result.source)
+      self.refresh_find_matches_if_visible()
       self.selection.set({ caret: result.caret, selection: result.selection })
       self.sync_target_inputs()
       self.maybe_center_typewriter_selection()
@@ -416,6 +421,7 @@ fn MarkdownEditorApp::toggle_current_task(self : MarkdownEditorApp) -> Unit {
         ),
       )
       self.document.set(result.source)
+      self.refresh_find_matches_if_visible()
       self.selection.set({ caret: result.caret, selection: result.selection })
       self.sync_target_inputs()
       self.maybe_center_typewriter_selection()

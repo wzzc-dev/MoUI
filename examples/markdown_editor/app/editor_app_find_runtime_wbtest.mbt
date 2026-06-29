@@ -91,6 +91,30 @@ test "markdown editor find opens with caret word as query" {
 }
 
 ///|
+test "markdown editor find caret word handles unicode neighbors" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("alpha 🤣beta tail")
+  app.set_selection(8, None)
+  app.apply_action("find")
+  inspect(app.find_query(), content="beta")
+  inspect(app.selection_caret(), content="11")
+  guard app.selection.get().selection is Some(range) else {
+    fail("expected unicode-neighbor word to become active match")
+  }
+  inspect(range.start, content="7")
+  inspect(range.end, content="11")
+
+  let gap_app = MarkdownEditorApp::new()
+  gap_app.set_document("alpha 🤣 beta")
+  gap_app.set_selection(7, None)
+  gap_app.apply_action("find")
+  inspect(gap_app.find_query(), content="")
+  guard gap_app.selection.get().selection is None else {
+    fail("expected emoji/space gap to keep selection collapsed")
+  }
+}
+
+///|
 test "markdown editor find next selects match and scrolls into view" {
   let app = MarkdownEditorApp::new()
   let lead = "# First\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\n"
@@ -249,6 +273,34 @@ test "markdown editor find bar reports ready no match and match count" {
 }
 
 ///|
+test "markdown editor find match cache refreshes outside view rebuild" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("needle one\nneedle two")
+  app.apply_action("find")
+
+  app.update_find_query_for_test("needle")
+  inspect(app.find_match_count(), content="2")
+  let matched = app.runtime(width=1120.0, height=640.0).draw_commands()
+  assert_true(
+    matched.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "1/2", .. })
+    }),
+  )
+
+  app.edit_document("needle one")
+  inspect(app.find_match_count(), content="1")
+  let refreshed = app.runtime(width=1120.0, height=640.0).draw_commands()
+  assert_true(
+    refreshed.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "1/1", .. })
+    }),
+  )
+
+  app.close_find()
+  inspect(app.find_match_count(), content="0")
+}
+
+///|
 test "markdown editor find previous wraps from caret" {
   let app = MarkdownEditorApp::new()
   app.set_document("needle first\nmiddle\nneedle last")
@@ -289,6 +341,22 @@ test "markdown editor replace current pushes undo and redo history" {
 }
 
 ///|
+test "markdown editor replace current preserves unicode around match" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("a🤣 needle 尾")
+  app.set_find_query("needle")
+  app.set_replace_text("pin")
+
+  app.replace_current_find_match_for_test()
+  inspect(app.document(), content="a🤣 pin 尾")
+  guard app.selection.get().selection is Some(range) else {
+    fail("expected selected replacement")
+  }
+  inspect(range.start, content="3")
+  inspect(range.end, content="6")
+}
+
+///|
 test "markdown editor replace current wraps to previous remaining match" {
   let app = MarkdownEditorApp::new()
   app.set_document("needle first\nmiddle\nneedle last")
@@ -324,6 +392,25 @@ test "markdown editor replace all updates non-overlapping source matches" {
 
   assert_true(app.undo())
   inspect(app.document(), content="aa aa aaa")
+}
+
+///|
+test "markdown editor replace all preserves unicode scalar ranges" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("x🤣 needle y needle 尾")
+  app.set_find_query("needle")
+  app.set_replace_text("针")
+
+  app.replace_all_find_matches_for_test()
+  inspect(app.document(), content="x🤣 针 y 针 尾")
+  guard app.selection.get().selection is Some(range) else {
+    fail("expected selected first unicode replacement")
+  }
+  inspect(range.start, content="3")
+  inspect(range.end, content="4")
+
+  assert_true(app.undo())
+  inspect(app.document(), content="x🤣 needle y needle 尾")
 }
 
 ///|

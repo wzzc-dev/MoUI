@@ -41,14 +41,14 @@ fn markdown_editor_pair_inline_marker_input(
   if marker == "" || marker == "*" || marker == "_" {
     return None
   }
-  let chars = source.to_array()
-  let caret = markdown_editor_clamp_int(caret, 0, chars.length())
+  let source_length = markdown_editor_text_length(source)
+  let caret = markdown_editor_clamp_int(caret, 0, source_length)
   Some(
     markdown_editor_transform_result(
-      text=String::from_array(chars[:caret]) +
+      text=markdown_editor_substring(source, 0, caret) +
         marker +
         marker +
-        String::from_array(chars[caret:]),
+        markdown_editor_substring(source, caret, source_length),
       caret=caret + markdown_editor_text_length(marker),
     ),
   )
@@ -78,36 +78,39 @@ fn markdown_editor_pair_delimiter_input(
     "`" => "`"
     _ => return None
   }
-  let chars = source.to_array()
+  let source_length = markdown_editor_text_length(source)
   match markdown_editor_active_selection(selection) {
     Some(range) => {
       let normalized = range.normalized()
-      let text = String::from_array(chars[:normalized.start]) +
+      let start = markdown_editor_clamp_int(normalized.start, 0, source_length)
+      let end = markdown_editor_clamp_int(normalized.end, start, source_length)
+      let input_length = markdown_editor_text_length(input)
+      let text = markdown_editor_substring(source, 0, start) +
         input +
-        String::from_array(chars[normalized.start:normalized.end]) +
+        markdown_editor_substring(source, start, end) +
         close +
-        String::from_array(chars[normalized.end:])
+        markdown_editor_substring(source, end, source_length)
       Some(
         markdown_editor_transform_result(
           text~,
-          caret=normalized.end + markdown_editor_text_length(input),
+          caret=end + input_length,
           selection=Some(
             @core.TextRange::new(
-              start=normalized.start + markdown_editor_text_length(input),
-              end=normalized.end + markdown_editor_text_length(input),
+              start=start + input_length,
+              end=end + input_length,
             ),
           ),
         ),
       )
     }
     None => {
-      let caret = markdown_editor_clamp_int(caret, 0, chars.length())
+      let caret = markdown_editor_clamp_int(caret, 0, source_length)
       let insert = input + close
       Some(
         markdown_editor_transform_result(
-          text=String::from_array(chars[:caret]) +
+          text=markdown_editor_substring(source, 0, caret) +
             insert +
-            String::from_array(chars[caret:]),
+            markdown_editor_substring(source, caret, source_length),
           caret=caret + markdown_editor_text_length(input),
         ),
       )
@@ -138,9 +141,10 @@ fn markdown_editor_skip_closing_delimiter(
     "`" => "`"
     _ => return None
   }
-  let chars = source.to_array()
-  let caret = markdown_editor_clamp_int(caret, 0, chars.length())
+  let source_length = markdown_editor_text_length(source)
+  let caret = markdown_editor_clamp_int(caret, 0, source_length)
   if close == "_" {
+    let chars = source.to_array()
     match markdown_editor_find_inline_opening_marker(chars, caret, close) {
       Some(open_start) =>
         if !markdown_editor_inline_marker_pair_supported(
@@ -154,8 +158,17 @@ fn markdown_editor_skip_closing_delimiter(
         }
       None => return None
     }
+    if markdown_editor_source_has_marker(chars, caret, close) {
+      return Some(
+        markdown_editor_transform_result(
+          text=source,
+          caret=caret + markdown_editor_text_length(close),
+        ),
+      )
+    }
+    return None
   }
-  if markdown_editor_source_has_marker(chars, caret, close) {
+  if markdown_editor_source_has_marker_text(source, source_length, caret, close) {
     Some(
       markdown_editor_transform_result(
         text=source,
@@ -176,12 +189,21 @@ fn markdown_editor_apostrophe_in_word(
   if markdown_editor_active_selection(selection) is Some(_) {
     return false
   }
-  let chars = source.to_array()
-  let caret = markdown_editor_clamp_int(caret, 0, chars.length())
-  caret > 0 &&
-  caret < chars.length() &&
-  markdown_editor_ascii_word_char(chars[caret - 1]) &&
-  markdown_editor_ascii_word_char(chars[caret])
+  let source_length = markdown_editor_text_length(source)
+  let caret = markdown_editor_clamp_int(caret, 0, source_length)
+  if caret <= 0 || caret >= source_length {
+    return false
+  }
+  match
+    (
+      markdown_editor_source_char_at(source, source_length, caret - 1),
+      markdown_editor_source_char_at(source, source_length, caret),
+    ) {
+    (Some(previous), Some(next)) =>
+      markdown_editor_ascii_word_char(previous) &&
+      markdown_editor_ascii_word_char(next)
+    _ => false
+  }
 }
 
 ///|
@@ -193,6 +215,34 @@ pub fn markdown_editor_ascii_word_char(ch : Char) -> Bool {
 }
 
 ///|
+fn markdown_editor_source_char_at(
+  source : String,
+  source_length : Int,
+  index : Int,
+) -> Char? {
+  if index < 0 || index >= source_length {
+    return None
+  }
+  match source.offset_of_nth_char(index) {
+    Some(offset) => source.get_char(offset)
+    None => None
+  }
+}
+
+///|
+fn markdown_editor_source_has_marker_text(
+  source : String,
+  source_length : Int,
+  start : Int,
+  marker : String,
+) -> Bool {
+  let marker_length = markdown_editor_text_length(marker)
+  start >= 0 &&
+  start + marker_length <= source_length &&
+  markdown_editor_substring(source, start, start + marker_length) == marker
+}
+
+///|
 fn markdown_editor_backspace_empty_delimiter_pair(
   source : String,
   caret : Int,
@@ -201,40 +251,45 @@ fn markdown_editor_backspace_empty_delimiter_pair(
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
-  let chars = source.to_array()
-  let caret = markdown_editor_clamp_int(caret, 0, chars.length())
-  if caret <= 0 || caret >= chars.length() {
+  let source_length = markdown_editor_text_length(source)
+  let caret = markdown_editor_clamp_int(caret, 0, source_length)
+  if caret <= 0 || caret >= source_length {
     return None
   }
-  if !markdown_editor_empty_delimiter_pair_at(chars, caret) {
+  if !markdown_editor_empty_delimiter_pair_at_source(
+      source, source_length, caret,
+    ) {
     return None
   }
   Some(
     markdown_editor_transform_result(
-      text=String::from_array(chars[:caret - 1]) +
-        String::from_array(chars[caret + 1:]),
+      text=markdown_editor_substring(source, 0, caret - 1) +
+        markdown_editor_substring(source, caret + 1, source_length),
       caret=caret - 1,
     ),
   )
 }
 
 ///|
-fn markdown_editor_empty_delimiter_pair_at(
-  chars : Array[Char],
+fn markdown_editor_empty_delimiter_pair_at_source(
+  source : String,
+  source_length : Int,
   caret : Int,
 ) -> Bool {
-  if caret <= 0 || caret >= chars.length() {
+  if caret <= 0 || caret >= source_length {
     return false
   }
-  let open = chars[caret - 1].to_int()
-  let close = chars[caret].to_int()
-  match open {
-    40 => close == 41 // ()
-    91 => close == 93 // []
-    123 => close == 125 // {}
-    34 => close == 34 // ""
-    39 => close == 39 // ''
-    96 => close == 96 // ``
+  match
+    (
+      markdown_editor_source_char_at(source, source_length, caret - 1),
+      markdown_editor_source_char_at(source, source_length, caret),
+    ) {
+    (Some('('), Some(')')) => true
+    (Some('['), Some(']')) => true
+    (Some('{'), Some('}')) => true
+    (Some('"'), Some('"')) => true
+    (Some('\''), Some('\'')) => true
+    (Some('`'), Some('`')) => true
     _ => false
   }
 }
@@ -248,18 +303,22 @@ fn markdown_editor_delete_empty_delimiter_pair(
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
-  let chars = source.to_array()
-  let caret = markdown_editor_clamp_int(caret, 0, chars.length())
-  if caret + 1 >= chars.length() {
+  let source_length = markdown_editor_text_length(source)
+  let caret = markdown_editor_clamp_int(caret, 0, source_length)
+  if caret + 1 >= source_length {
     return None
   }
-  if !markdown_editor_empty_delimiter_pair_at(chars, caret + 1) {
+  if !markdown_editor_empty_delimiter_pair_at_source(
+      source,
+      source_length,
+      caret + 1,
+    ) {
     return None
   }
   Some(
     markdown_editor_transform_result(
-      text=String::from_array(chars[:caret]) +
-        String::from_array(chars[caret + 2:]),
+      text=markdown_editor_substring(source, 0, caret) +
+        markdown_editor_substring(source, caret + 2, source_length),
       caret~,
     ),
   )
@@ -274,33 +333,37 @@ fn markdown_editor_backspace_empty_inline_marker_pair(
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
-  let chars = source.to_array()
-  let caret = markdown_editor_clamp_int(caret, 0, chars.length())
+  let source_length = markdown_editor_text_length(source)
+  let caret = markdown_editor_clamp_int(caret, 0, source_length)
   for marker in ["**", "__", "~~", "`"] {
     let marker_length = markdown_editor_text_length(marker)
     if caret >= marker_length &&
-      markdown_editor_empty_inline_marker_pair_at(
-        chars,
+      markdown_editor_empty_inline_marker_pair_at_source(
+        source,
+        source_length,
         caret - marker_length,
         marker,
       ) {
       return Some(
         markdown_editor_remove_empty_inline_marker_pair(
-          chars,
+          source,
+          source_length,
           caret - marker_length,
           marker_length,
         ),
       )
     }
     if caret >= marker_length * 2 &&
-      markdown_editor_empty_inline_marker_pair_at(
-        chars,
+      markdown_editor_empty_inline_marker_pair_at_source(
+        source,
+        source_length,
         caret - marker_length * 2,
         marker,
       ) {
       return Some(
         markdown_editor_remove_empty_inline_marker_pair(
-          chars,
+          source,
+          source_length,
           caret - marker_length * 2,
           marker_length,
         ),
@@ -319,26 +382,30 @@ fn markdown_editor_delete_empty_inline_marker_pair(
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
-  let chars = source.to_array()
-  let caret = markdown_editor_clamp_int(caret, 0, chars.length())
+  let source_length = markdown_editor_text_length(source)
+  let caret = markdown_editor_clamp_int(caret, 0, source_length)
   for marker in ["**", "__", "~~", "`"] {
     let marker_length = markdown_editor_text_length(marker)
-    if markdown_editor_empty_inline_marker_pair_at(chars, caret, marker) {
+    if markdown_editor_empty_inline_marker_pair_at_source(
+        source, source_length, caret, marker,
+      ) {
       return Some(
         markdown_editor_remove_empty_inline_marker_pair(
-          chars, caret, marker_length,
+          source, source_length, caret, marker_length,
         ),
       )
     }
     if caret >= marker_length &&
-      markdown_editor_empty_inline_marker_pair_at(
-        chars,
+      markdown_editor_empty_inline_marker_pair_at_source(
+        source,
+        source_length,
         caret - marker_length,
         marker,
       ) {
       return Some(
         markdown_editor_remove_empty_inline_marker_pair(
-          chars,
+          source,
+          source_length,
           caret - marker_length,
           marker_length,
         ),
@@ -349,26 +416,40 @@ fn markdown_editor_delete_empty_inline_marker_pair(
 }
 
 ///|
-fn markdown_editor_empty_inline_marker_pair_at(
-  chars : Array[Char],
+fn markdown_editor_empty_inline_marker_pair_at_source(
+  source : String,
+  source_length : Int,
   open_start : Int,
   marker : String,
 ) -> Bool {
   let marker_length = markdown_editor_text_length(marker)
   open_start >= 0 &&
-  markdown_editor_source_has_marker(chars, open_start, marker) &&
-  markdown_editor_source_has_marker(chars, open_start + marker_length, marker)
+  open_start + marker_length * 2 <= source_length &&
+  markdown_editor_source_has_marker_text(
+    source, source_length, open_start, marker,
+  ) &&
+  markdown_editor_source_has_marker_text(
+    source,
+    source_length,
+    open_start + marker_length,
+    marker,
+  )
 }
 
 ///|
 fn markdown_editor_remove_empty_inline_marker_pair(
-  chars : Array[Char],
+  source : String,
+  source_length : Int,
   open_start : Int,
   marker_length : Int,
 ) -> RichTextInputTransform {
   markdown_editor_transform_result(
-    text=String::from_array(chars[:open_start]) +
-      String::from_array(chars[open_start + marker_length * 2:]),
+    text=markdown_editor_substring(source, 0, open_start) +
+      markdown_editor_substring(
+        source,
+        open_start + marker_length * 2,
+        source_length,
+      ),
     caret=open_start,
   )
 }
@@ -379,6 +460,7 @@ fn markdown_editor_backspace_inline_marker(
   caret : Int,
 ) -> RichTextInputTransform? {
   let chars = source.to_array()
+  let source_length = markdown_editor_text_length(source)
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
   match markdown_editor_backspace_footnote_marker(chars, caret) {
     Some(transform) => return Some(transform)
@@ -412,7 +494,8 @@ fn markdown_editor_backspace_inline_marker(
             ) {
             return Some(
               markdown_editor_remove_inline_marker_pair(
-                chars,
+                source,
+                source_length,
                 open_start,
                 marker_length,
                 caret - marker_length,
@@ -432,7 +515,8 @@ fn markdown_editor_backspace_inline_marker(
             ) {
             return Some(
               markdown_editor_remove_inline_marker_pair(
-                chars,
+                source,
+                source_length,
                 caret - marker_length,
                 marker_length,
                 close_start,
@@ -452,6 +536,7 @@ fn markdown_editor_delete_inline_marker(
   chars : Array[Char],
   caret : Int,
 ) -> RichTextInputTransform? {
+  let source_length = markdown_editor_text_length(source)
   match markdown_editor_delete_footnote_marker(chars, caret) {
     Some(transform) => return Some(transform)
     None => ()
@@ -479,7 +564,7 @@ fn markdown_editor_delete_inline_marker(
             ) {
             return Some(
               markdown_editor_remove_inline_marker_pair(
-                chars, caret, marker_length, close_start,
+                source, source_length, caret, marker_length, close_start,
               ),
             )
           }
@@ -492,7 +577,7 @@ fn markdown_editor_delete_inline_marker(
             ) {
             return Some(
               markdown_editor_remove_inline_marker_pair(
-                chars, open_start, marker_length, caret,
+                source, source_length, open_start, marker_length, caret,
               ),
             )
           }
@@ -560,14 +645,19 @@ fn markdown_editor_find_inline_opening_marker(
 
 ///|
 fn markdown_editor_remove_inline_marker_pair(
-  chars : Array[Char],
+  source : String,
+  source_length : Int,
   open_start : Int,
   marker_length : Int,
   close_start : Int,
 ) -> RichTextInputTransform {
-  let text = String::from_array(chars[:open_start]) +
-    String::from_array(chars[open_start + marker_length:close_start]) +
-    String::from_array(chars[close_start + marker_length:])
+  let text = markdown_editor_substring(source, 0, open_start) +
+    markdown_editor_substring(source, open_start + marker_length, close_start) +
+    markdown_editor_substring(
+      source,
+      close_start + marker_length,
+      source_length,
+    )
   markdown_editor_transform_result(text~, caret=open_start)
 }
 

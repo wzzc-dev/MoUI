@@ -55,6 +55,7 @@ pub struct MarkdownEditorApp {
   find_visible : @moui.State[Bool]
   find_query : @moui.State[String]
   find_options : @moui.State[MarkdownEditorFindOptions]
+  priv find_matches : @moui.State[Array[@core.TextRange]]
   replace_text : @moui.State[String]
   document_path : @moui.State[String]
   recent_document_paths : @moui.State[Array[String]]
@@ -316,6 +317,7 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
     find_visible: @moui.State::new(false),
     find_query: @moui.State::new(""),
     find_options: @moui.State::new(MarkdownEditorFindOptions::default()),
+    find_matches: @moui.State::new([]),
     replace_text: @moui.State::new(""),
     document_path: @moui.State::new(""),
     recent_document_paths: @moui.State::new([]),
