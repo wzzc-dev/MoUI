@@ -84,6 +84,18 @@ fn markdown_editor_complete_table_header_on_enter(
   if caret != range.end || !markdown_editor_table_header_candidate(line) {
     return None
   }
+  // 如果 header 行之后已经紧跟 separator 行（即表格已成型），则不再
+  // 重复插入 separator，交给 markdown_editor_insert_table_row_on_enter 处理。
+  if range.end < chars.length() && chars[range.end] == '\n' {
+    let mut next_end = range.end + 1
+    while next_end < chars.length() && chars[next_end] != '\n' {
+      next_end = next_end + 1
+    }
+    let next_line = String::from_array(chars[range.end + 1 : next_end])
+    if markdown_editor_table_separator_line(next_line) {
+      return None
+    }
+  }
   let column_count = markdown_editor_split_table_cells(line).length()
   if column_count <= 1 {
     return None

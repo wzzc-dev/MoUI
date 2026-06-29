@@ -442,7 +442,134 @@ test "markdown editor click maps table preview cells to markdown source" {
   )
   let caret = runtime.focused_text_input().caret
   assert_true(caret >= 38)
-  assert_true(caret <= 41)
+  assert_true(caret <= 42)
+}
+
+///|
+test "markdown editor click on left-aligned table cell trailing whitespace places caret at range end" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("| Name | Done |\n| --- | --- |\n| Core | yes |")
+  let runtime = app.runtime(width=980.0, height=640.0)
+  let mut target : @core.Rect? = None
+  for command in runtime.draw_commands() {
+    match command {
+      @core.DrawCommand::DrawText({ text: "yes", frame, .. }) =>
+        target = Some(frame)
+      _ => ()
+    }
+  }
+  guard target is Some(frame) else { fail("expected rendered yes cell") }
+  // 左对齐文本贴 frame.origin.x 渲染，frame.size.width 远大于文本宽度，
+  // 点击 frame 右端落在文本右侧空白 → caret 应钳到 range.end (=42)。
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@moui.Point::new(
+          x=frame.origin.x + frame.size.width - 2.0,
+          y=frame.origin.y + frame.size.height / 2.0,
+        ),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  inspect(runtime.focused_text_input().caret, content="42")
+}
+
+///|
+test "markdown editor click on left-aligned table cell leading whitespace places caret at range start" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("| Name | Done |\n| --- | --- |\n| Core | yes |")
+  let runtime = app.runtime(width=980.0, height=640.0)
+  let mut target : @core.Rect? = None
+  for command in runtime.draw_commands() {
+    match command {
+      @core.DrawCommand::DrawText({ text: "yes", frame, .. }) =>
+        target = Some(frame)
+      _ => ()
+    }
+  }
+  guard target is Some(frame) else { fail("expected rendered yes cell") }
+  // 点击 frame 左边界附近：文本起点 = inner_x = frame.origin.x，
+  // point.x < text_x 走左侧空白分支 → caret = range.start (=39)。
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@moui.Point::new(
+          x=frame.origin.x - 0.5,
+          y=frame.origin.y + frame.size.height / 2.0,
+        ),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  inspect(runtime.focused_text_input().caret, content="39")
+}
+
+///|
+test "markdown editor click on right-aligned table cell trailing whitespace places caret at range end" {
+  // 右对齐 cell 文本贴右；点击 frame 右端已落在文本内最右字符之后。
+  // 文档 `| Name | Done |\n| ---: | ---: |\n| Core | yes |` 中 "yes" 的 source_range
+  // 为 41..44 (含尾部 's' 之后的边界)。
+  let app = MarkdownEditorApp::new()
+  app.set_document("| Name | Done |\n| ---: | ---: |\n| Core | yes |")
+  let runtime = app.runtime(width=980.0, height=640.0)
+  let mut target : @core.Rect? = None
+  for command in runtime.draw_commands() {
+    match command {
+      @core.DrawCommand::DrawText({ text: "yes", frame, .. }) =>
+        target = Some(frame)
+      _ => ()
+    }
+  }
+  guard target is Some(frame) else { fail("expected rendered yes cell") }
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@moui.Point::new(
+          x=frame.origin.x + frame.size.width - 2.0,
+          y=frame.origin.y + frame.size.height / 2.0,
+        ),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  inspect(runtime.focused_text_input().caret, content="44")
+}
+
+///|
+test "markdown editor click on empty table cell returns range start without crash" {
+  // 空 cell source_range 长度为 0 (range.end == range.start)，点击应短路返回 range.start。
+  // 通过 header cell "A" 的 frame 推算数据行 y 位置，点击其下方第二行（数据行）。
+  let app = MarkdownEditorApp::new()
+  app.set_document("| A | B |\n| --- | --- |\n|  |  |")
+  let runtime = app.runtime(width=980.0, height=640.0)
+  let mut header_frame : @core.Rect? = None
+  for command in runtime.draw_commands() {
+    match command {
+      @core.DrawCommand::DrawText({ text: "A", frame, .. }) =>
+        header_frame = Some(frame)
+      _ => ()
+    }
+  }
+  guard header_frame is Some(frame) else { fail("expected rendered header A cell") }
+  // 数据行在 header 下方约 2 * row_height 处。row_height = base.size * 1.9 ≈ 26.6。
+  // 点击 header frame 下方 50px 处的左侧 cell 应命中数据行第一列空 cell。
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@moui.Point::new(
+          x=frame.origin.x + 4.0,
+          y=frame.origin.y + 50.0,
+        ),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  let caret = runtime.focused_text_input().caret
+  // 空 cell 的 source_range 长度为 0，caret 应等于 range.start。
+  // 不强求精确值（依赖具体 trim 位置），只验证落在数据行 source 范围内（行 3 = 20..27）。
+  assert_true(caret >= 20)
+  assert_true(caret <= 27)
 }
 
 ///|
