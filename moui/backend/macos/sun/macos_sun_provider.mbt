@@ -96,9 +96,19 @@ pub async fn run_app_with_options_async_pump(
 pub fn renderer_provider(
   options? : MacosSunAppOptions = MacosSunAppOptions::new(),
 ) -> @macos_host.MacosRendererProvider {
-  ignore(options)
-  @macos_host.MacosRendererProvider::new(create_renderer=(window, metrics) => {
-    create_renderer(window, metrics, options)
+  @macos_host.MacosRendererProvider::new(
+    create_renderer=(window, metrics) => {
+      create_renderer(window, metrics, options)
+    },
+    image_loader=Some(sun_native_image_loader()),
+  )
+}
+
+///|
+fn sun_native_image_loader() -> @host.HostAsyncImageLoader {
+  @host.HostAsyncImageLoader::new(start_load=(_window_id, source, complete) => {
+    complete(@sun_renderer.sun_image_load_completion(source))
+    None
   })
 }
 
@@ -125,7 +135,7 @@ pub fn macos_sun_provider_preflight_summary(
 
 ///|
 fn sun_host_renderer_bridge_preflight() -> String {
-  "renderer_bridge=HostWindowRenderer; renderer_text_system=SunRasterRenderer.text_system; renderer_image_resources=SunRasterRenderer.image_resources; renderer_async_image_loading=sync; renderer_image_resource_apply=SunRasterRenderer.apply_image_resource_load_completion; renderer_image_resource_change=SunRasterRenderer.set_image_resource_change_callback; renderer_present_count=SunRasterRenderer.present_count; renderer_dispose=SunRasterRenderer.dispose"
+  "renderer_bridge=HostWindowRenderer; renderer_text_system=SunRasterRenderer.text_system; renderer_image_resources=SunRasterRenderer.image_resources; renderer_image_loader=sun_image_load_completion; renderer_async_image_loading=post-present; renderer_image_resource_apply=SunRasterRenderer.apply_image_resource_load_completion; renderer_image_resource_change=SunRasterRenderer.set_image_resource_change_callback; renderer_present_count=SunRasterRenderer.present_count; renderer_dispose=SunRasterRenderer.dispose"
 }
 
 ///|
@@ -145,6 +155,7 @@ fn create_renderer(
           @sun_renderer.create_with_present_target(
             renderer_metrics_from_host(metrics),
             macos_sun_present_target(raw_content_view_handle, metrics),
+            async_image_loading=true,
           ),
         ),
       ) catch {

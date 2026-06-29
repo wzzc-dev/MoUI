@@ -8,79 +8,165 @@ fn SunRasterRenderer::draw_image(
     return
   }
   let previous_revision = self.image_lifecycle.revision()
-  let cache = self.resources.get_image_cache()
-  let had_cached_pixmap = cache.contains(image.source)
-  let decode = self.decode_image_source_with_cache(image.source)
-  match decode {
-    Ok(pixmap) => {
-      if !had_cached_pixmap ||
-        sun_image_record_needs_ready_update(
-          self.image_lifecycle.lookup(image.source),
-          pixmap.get_width(),
-          pixmap.get_height(),
-        ) {
-        ignore(
-          self.image_lifecycle.mark_ready(
-            image.source,
-            width=pixmap.get_width(),
-            height=pixmap.get_height(),
-          ),
-        )
-      }
-      let placement = sun_image_placement(
-        image.frame,
-        @core.Size::new(
-          width=pixmap.get_width().to_double(),
-          height=pixmap.get_height().to_double(),
-        ),
-        image.fit,
-      )
-      let paint = @sun_graphics.Paint::new().set_opacity(
-        image.opacity * opacity,
-      )
-      let dst_x = sun_dim_to_int(placement.frame.origin.x)
-      let dst_y = sun_dim_to_int(placement.frame.origin.y)
-      let dst_w = sun_dim_to_int(placement.frame.size.width)
-      let dst_h = sun_dim_to_int(placement.frame.size.height)
-      if dst_w <= 0 || dst_h <= 0 {
-        self.notify_image_resource_change_if_needed(previous_revision)
-        return
-      }
-      match placement.src_rect {
-        Some(src_rect) =>
-          self.canvas.draw_quality_pixmap_rect(
-            pixmap,
-            src_rect,
-            dst_x,
-            dst_y,
-            dst_w,
-            dst_h,
-            paint,
-            @sun_graphics.ImageQuality::Balanced,
-          )
-        None =>
-          self.canvas.draw_quality_pixmap(
-            pixmap,
-            dst_x,
-            dst_y,
-            dst_w,
-            dst_h,
-            paint,
-            @sun_graphics.ImageQuality::Balanced,
-          )
-      }
-    }
-    Err(diagnostic) => {
-      if sun_image_record_needs_failed_update(
-          self.image_lifecycle.lookup(image.source),
-          diagnostic,
-        ) {
-        ignore(self.image_lifecycle.mark_failed(image.source, diagnostic~))
-      }
-      self.record_unsupported_command("DrawImage", diagnostic)
-    }
+  match self.sun_image_for_source(image.source) {
+    Some(pixmap) => self.draw_image_pixmap(image, pixmap, opacity)
+    None => self.draw_image_placeholder(image, opacity)
   }
   self.notify_image_resource_change_if_needed(previous_revision)
+}
+
+///|
+fn SunRasterRenderer::sun_image_for_source(
+  self : SunRasterRenderer,
+  source : String,
+) -> @sun_graphics.Pixmap? {
+  match self.resources.get_image_cache().get(source) {
+    Some(pixmap) => Some(pixmap)
+    None =>
+      if self.async_image_loading {
+        self.sun_async_image_for_source(source)
+      } else {
+        self.sun_sync_image_for_source(source)
+      }
+  }
+}
+
+///|
+fn SunRasterRenderer::sun_sync_image_for_source(
+  self : SunRasterRenderer,
+  source : String,
+) -> @sun_graphics.Pixmap? {
+  match self.decode_image_source_with_cache(source) {
+    Ok(pixmap) => {
+      self.mark_sun_image_ready_if_needed(source, pixmap)
+      Some(pixmap)
+    }
+    Err(diagnostic) => {
+      self.mark_sun_image_failed_if_needed(source, diagnostic)
+      self.record_unsupported_command("DrawImage", diagnostic)
+      None
+    }
+  }
+}
+
+///|
+fn SunRasterRenderer::sun_async_image_for_source(
+  self : SunRasterRenderer,
+  source : String,
+) -> @sun_graphics.Pixmap? {
+  match self.image_lifecycle.lookup(source) {
+    Some({ status: @render.ImageResourceStatus::ImageLoading, .. }) => None
+    Some({ status: @render.ImageResourceStatus::ImageReady, .. }) =>
+      match self.decode_image_source_with_cache(source) {
+        Ok(pixmap) => Some(pixmap)
+        Err(diagnostic) => {
+          self.mark_sun_image_failed_if_needed(source, diagnostic)
+          self.record_unsupported_command("DrawImage", diagnostic)
+          None
+        }
+      }
+    Some({ status: @render.ImageResourceStatus::ImageFailed, .. }) => None
+    _ => {
+      ignore(self.image_lifecycle.mark_loading(source))
+      None
+    }
+  }
+}
+
+///|
+fn SunRasterRenderer::mark_sun_image_ready_if_needed(
+  self : SunRasterRenderer,
+  source : String,
+  pixmap : @sun_graphics.Pixmap,
+) -> Unit {
+  if sun_image_record_needs_ready_update(
+      self.image_lifecycle.lookup(source),
+      pixmap.get_width(),
+      pixmap.get_height(),
+    ) {
+    ignore(
+      self.image_lifecycle.mark_ready(
+        source,
+        width=pixmap.get_width(),
+        height=pixmap.get_height(),
+      ),
+    )
+  }
+}
+
+///|
+fn SunRasterRenderer::mark_sun_image_failed_if_needed(
+  self : SunRasterRenderer,
+  source : String,
+  diagnostic : String,
+) -> Unit {
+  if sun_image_record_needs_failed_update(
+      self.image_lifecycle.lookup(source),
+      diagnostic,
+    ) {
+    ignore(self.image_lifecycle.mark_failed(source, diagnostic~))
+  }
+}
+
+///|
+fn SunRasterRenderer::draw_image_pixmap(
+  self : SunRasterRenderer,
+  image : @core.ImageRun,
+  pixmap : @sun_graphics.Pixmap,
+  opacity : Double,
+) -> Unit {
+  let placement = sun_image_placement(
+    image.frame,
+    @core.Size::new(
+      width=pixmap.get_width().to_double(),
+      height=pixmap.get_height().to_double(),
+    ),
+    image.fit,
+  )
+  let paint = @sun_graphics.Paint::new().set_opacity(image.opacity * opacity)
+  let dst_x = sun_dim_to_int(placement.frame.origin.x)
+  let dst_y = sun_dim_to_int(placement.frame.origin.y)
+  let dst_w = sun_dim_to_int(placement.frame.size.width)
+  let dst_h = sun_dim_to_int(placement.frame.size.height)
+  guard dst_w > 0 && dst_h > 0 else { return }
+  match placement.src_rect {
+    Some(src_rect) =>
+      self.canvas.draw_quality_pixmap_rect(
+        pixmap,
+        src_rect,
+        dst_x,
+        dst_y,
+        dst_w,
+        dst_h,
+        paint,
+        @sun_graphics.ImageQuality::Balanced,
+      )
+    None =>
+      self.canvas.draw_quality_pixmap(
+        pixmap,
+        dst_x,
+        dst_y,
+        dst_w,
+        dst_h,
+        paint,
+        @sun_graphics.ImageQuality::Balanced,
+      )
+  }
+}
+
+///|
+fn SunRasterRenderer::draw_image_placeholder(
+  self : SunRasterRenderer,
+  image : @core.ImageRun,
+  opacity : Double,
+) -> Unit {
+  self.canvas.fill_rect(
+    image.frame.origin.x,
+    image.frame.origin.y,
+    image.frame.size.width,
+    image.frame.size.height,
+    sun_brush_paint(sun_image_placeholder_brush(image), opacity),
+  )
 }
 
 ///|
@@ -88,30 +174,49 @@ fn SunRasterRenderer::decode_image_source_with_cache(
   self : SunRasterRenderer,
   source : String,
 ) -> Result[@sun_graphics.Pixmap, String] {
-  match self.resources.get_image_cache().get(source) {
+  sun_decode_image_source_with_cache(self.resources.get_image_cache(), source)
+}
+
+///|
+fn sun_decode_image_source_with_cache(
+  cache : @sun_graphics.PixmapCache,
+  source : String,
+) -> Result[@sun_graphics.Pixmap, String] {
+  match cache.get(source) {
     Some(pixmap) => Ok(pixmap)
     None =>
       match sun_image_source_bytes(source) {
         Some({ format: SunImageFormat::Png, data }) =>
-          match
-            self.resources
-            .get_image_cache()
-            .get_or_decode_png_result(source, data) {
+          match cache.get_or_decode_png_result(source, data) {
             Ok(result) => Ok(result.get_pixmap())
             Err(_) =>
               Err("Sun renderer could not decode PNG image source: \{source}")
           }
         Some({ format: SunImageFormat::Bmp, data }) =>
-          match
-            self.resources
-            .get_image_cache()
-            .get_or_decode_bmp_result(source, data) {
+          match cache.get_or_decode_bmp_result(source, data) {
             Ok(result) => Ok(result.get_pixmap())
             Err(_) =>
               Err("Sun renderer could not decode BMP image source: \{source}")
           }
         None => Err("Sun renderer could not decode image source: \{source}")
       }
+  }
+}
+
+///|
+pub fn sun_image_load_completion(
+  source : String,
+) -> @render.ImageResourceLoadCompletion {
+  let cache = @sun_graphics.PixmapCache::with_capacity(1)
+  match sun_decode_image_source_with_cache(cache, source) {
+    Ok(pixmap) =>
+      @render.ImageResourceLoadCompletion::ready(
+        source,
+        width=pixmap.get_width(),
+        height=pixmap.get_height(),
+      )
+    Err(diagnostic) =>
+      @render.ImageResourceLoadCompletion::failed(source, diagnostic~)
   }
 }
 
@@ -185,6 +290,19 @@ fn sun_image_format_for_source(
   } else {
     None
   }
+}
+
+///|
+fn sun_image_placeholder_brush(run : @core.ImageRun) -> @core.Brush {
+  @core.Brush::linear_gradient(
+    start=run.frame.origin,
+    end=@core.Point::new(
+      x=run.frame.origin.x + run.frame.size.width,
+      y=run.frame.origin.y + run.frame.size.height,
+    ),
+    start_color=@core.Color::rgba(r=0.72, g=0.78, b=0.86, a=run.opacity),
+    end_color=@core.Color::rgba(r=0.42, g=0.50, b=0.62, a=run.opacity),
+  )
 }
 
 ///|
