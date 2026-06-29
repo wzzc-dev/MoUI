@@ -10,6 +10,14 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Rewrite SSH GitHub URLs to HTTPS for anonymous submodule access
+      shell: bash
+      run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+    - name: Initialize and update git submodules
+      shell: bash
+      run: git submodule update --init --recursive
+
     - name: Set up MoonBit on Unix
       if: runner.os != 'Windows'
       shell: bash

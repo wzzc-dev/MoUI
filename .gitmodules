@@ -2,3 +2,7 @@
 	path = .agents/skills/moonbit-skills
 	url = git@github.com:moonbitlang/skills.git
 	branch = master
+[submodule "window"]
+	path = window
+	url = git@github.com:wzzc-dev/window.git
+	branch = moui-support

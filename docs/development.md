@@ -147,9 +147,15 @@ workflow.
 
 When updating this repository, update all Git checkouts that participate in the
 workspace, not just the root checkout. That includes the main MoUI repository
-and Git submodules such as `.agents/skills/moonbit-skills`. Then run
-`moon update` so registry dependencies such as `wzzc-dev/window@0.5.1-0.1.4`
-are refreshed. `moui_skia` updates with the main MoUI checkout.
+and Git submodules such as `.agents/skills/moonbit-skills` and `window`. Then
+run `moon update` so registry dependencies are refreshed. `moui_skia` updates
+with the main MoUI checkout.
+
+The `window` submodule is a `moon.work` workspace member, so MoonBit resolves
+`wzzc-dev/window` from the local `./window` checkout instead of the mooncake
+registry. Keep the submodule on its `moui-support` branch and commit window
+changes in the submodule first, then bump the submodule pointer in the MoUI
+repository.
 
 On Windows, use the repository update helper:
 
@@ -158,7 +164,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\update_repositories.p
 ```
 
 The `moui_skia` workspace member is updated by the root repository pull; the
-window dependency is refreshed by `moon update`.
+window dependency resolves from the `window` submodule checkout.
 
 ## Validation
 
