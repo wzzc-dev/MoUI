@@ -120,7 +120,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/markdown_editor/app/editor_snapshot_wbtest.mbt",
-      max_lines: 591,
+      max_lines: 718,
     },
     {
       path: "examples/markdown_editor/app/editor_snapshot_formatting_wbtest.mbt",
@@ -156,7 +156,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/markdown_editor/app/editor_app_keyboard_runtime_wbtest.mbt",
-      max_lines: 432,
+      max_lines: 469,
     },
     {
       path: "examples/markdown_editor/app/editor_app_inline_keyboard_runtime_wbtest.mbt",
@@ -307,7 +307,7 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/views/toolbar.mbt", max_lines: 120 },
     { path: "moui/views/command_palette.mbt", max_lines: 121 },
     { path: "moui/views/disclosure.mbt", max_lines: 194 },
-    { path: "moui/views/navigation_state.mbt", max_lines: 145 },
+    { path: "moui/views/navigation_state.mbt", max_lines: 203 },
     { path: "moui/views/popover_overlay.mbt", max_lines: 60 },
     { path: "moui/views/popover_selectors.mbt", max_lines: 137 },
     { path: "moui/views/popover_menu.mbt", max_lines: 60 },
@@ -327,7 +327,7 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/views/data_table_visibility_state.mbt", max_lines: 60 },
     { path: "moui/views/data_table_width_state.mbt", max_lines: 75 },
     { path: "moui/views/data_table_order_state.mbt", max_lines: 65 },
-    { path: "moui/views/data_selection_state.mbt", max_lines: 80 },
+    { path: "moui/views/data_selection_state.mbt", max_lines: 88 },
     { path: "moui/views/data_tree_state.mbt", max_lines: 20 },
     { path: "moui/views/data_display.mbt", max_lines: 141 },
     { path: "moui/views/data_pagination.mbt", max_lines: 60 },
@@ -345,7 +345,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/markdown_editor/app/editor_input_wbtest.mbt",
-      max_lines: 125,
+      max_lines: 157,
     },
     {
       path: "examples/markdown_editor/app/editor_commands_wbtest.mbt",

@@ -478,10 +478,50 @@ fn[Msg] markdown_session_editor_event(
         visible_overscan~,
         visible_scroll_state~,
       )
-    @core.AppEvent::Keyboard(event) =>
+    @core.AppEvent::Keyboard(event) => {
+      // ArrowUp/ArrowDown 需要用 visible_window 的 document 来正确计算
+      // 视觉位置（考虑 scroll offset），所以在这里预处理，而不是走
+      // rich_text_keyboard_event 的通用 format(text) 路径。
+      if event.pressed && (event.key == "ArrowUp" || event.key == "ArrowDown") {
+        let text = session.source
+        let window = markdown_session_visible_window(
+          session,
+          selection,
+          font,
+          source_mode~,
+          focus_mode~,
+          base_dir~,
+          visible_scroll_y~,
+          visible_viewport_height~,
+          visible_overscan~,
+          visible_scroll_state~,
+        )
+        let content = window.content_rect(
+          rich_text_editor_content_rect(ctx.frame),
+        )
+        return rich_text_vertical_caret_move_result(
+          ctx,
+          text,
+          window.document,
+          content,
+          font,
+          up=event.key == "ArrowUp",
+          extend=event.modifiers.shift,
+          on_selection_change,
+        )
+      }
       rich_text_keyboard_event(
         ctx,
         value~,
+        format=_source =>
+          session.rich_text(
+            selection,
+            base=font,
+            source_mode~,
+            focus_mode~,
+            base_dir~,
+          ),
+        font~,
         on_input=None,
         on_input_edit=Some(on_input_edit),
         on_selection_change~,
@@ -489,6 +529,7 @@ fn[Msg] markdown_session_editor_event(
         accepts_tab_input~,
         event~,
       )
+    }
     @core.AppEvent::TextInput(event) =>
       rich_text_input_event(
         ctx,
@@ -1522,6 +1563,8 @@ fn[Msg] rich_text_editor_event(
       rich_text_keyboard_event(
         ctx,
         value~,
+        format~,
+        font~,
         on_input~,
         on_input_edit~,
         on_selection_change~,
@@ -1688,6 +1731,8 @@ fn[Msg] rich_text_pointer_event(
 fn[Msg] rich_text_keyboard_event(
   ctx : @core.ViewEventContext,
   value~ : @core.Binding[String],
+  format~ : RichTextFormatter,
+  font~ : @core.FontSpec,
   on_input~ : ((String) -> Msg)?,
   on_input_edit~ : ((String, Int, @core.TextRange?) -> Msg)?,
   on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
@@ -1822,6 +1867,36 @@ fn[Msg] rich_text_keyboard_event(
           record_history=true,
         )
     }
+  }
+  if event.key == "ArrowUp" {
+    let text = value.get()
+    let document = format(text)
+    let content = rich_text_editor_content_rect(ctx.frame)
+    return rich_text_vertical_caret_move_result(
+      ctx,
+      text,
+      document,
+      content,
+      font,
+      up=true,
+      extend=event.modifiers.shift,
+      on_selection_change,
+    )
+  }
+  if event.key == "ArrowDown" {
+    let text = value.get()
+    let document = format(text)
+    let content = rich_text_editor_content_rect(ctx.frame)
+    return rich_text_vertical_caret_move_result(
+      ctx,
+      text,
+      document,
+      content,
+      font,
+      up=false,
+      extend=event.modifiers.shift,
+      on_selection_change,
+    )
   }
   if event.key == "ArrowLeft" {
     return rich_text_caret_move_result(
@@ -2525,6 +2600,248 @@ fn[Msg] rich_text_line_edge_move_result(
   }
   let changed = next_control.caret != ctx.text_control.caret ||
     ctx.text_control.selection is Some(_) ||
+    ctx.text_control.composition is Some(_) ||
+    ctx.text_control.composition_cursor is Some(_)
+  view_event_result(
+    changed~,
+    captured=true,
+    text_control=Some(next_control),
+    dirty=@core.ViewDirtyHint::ViewPaintDirty,
+    messages=if changed {
+      selection_messages(
+        on_selection_change,
+        next_control.caret,
+        next_control.selection,
+      )
+    } else {
+      []
+    },
+  )
+}
+
+///|
+fn rich_text_vertical_target_offset(
+  document : RichTextDocument,
+  source_caret : Int,
+  caret_rect : @core.Rect,
+  content : @core.Rect,
+  base_font : @core.FontSpec,
+  text_system : @core.TextSystem,
+  up~ : Bool,
+) -> Int {
+  if document.blocks.is_empty() {
+    let line_height = if caret_rect.size.height > 0.0 {
+      caret_rect.size.height
+    } else {
+      max_double(10.0, base_font.size * 1.55 - 8.0)
+    }
+    let target_y = if up {
+      caret_rect.origin.y - line_height * 0.5
+    } else {
+      caret_rect.origin.y + caret_rect.size.height + line_height * 0.5
+    }
+    let target_point = @core.Point::new(x=caret_rect.origin.x, y=target_y)
+    return rich_text_document_source_offset_at_point(
+      document, target_point, content, base_font, text_system,
+    ).unwrap_or(source_caret)
+  }
+  let mut block_index = -1
+  let mut visual_line = 0
+  let mut y = content.origin.y
+  for index, block in document.blocks {
+    let line_height = rich_text_block_line_height(block, base_font, text_system)
+    let block_height = line_height + block.inset.top + block.inset.bottom
+    if rich_text_caret_before_block(source_caret, block) {
+      block_index = index
+      visual_line = 0
+      break
+    }
+    match block.table {
+      Some(_) => {
+        block_index = index
+        visual_line = 0
+        break
+      }
+      None => ()
+    }
+    match rich_text_block_visual_offset(block, source_caret) {
+      Some(vo) => {
+        block_index = index
+        visual_line = rich_text_visual_offset_to_line(block, vo)
+        break
+      }
+      None => ()
+    }
+    y = y + block_height
+  }
+  if block_index < 0 {
+    block_index = document.blocks.length() - 1
+    let last_block = document.blocks[block_index]
+    visual_line = rich_text_block_visual_line_count(last_block) - 1
+    let last_line_height = rich_text_block_line_height(last_block, base_font, text_system)
+    let last_block_height = last_line_height + last_block.inset.top + last_block.inset.bottom
+    y = y - last_block_height
+  }
+  let block = document.blocks[block_index]
+  let step = rich_text_block_line_step(block, base_font, text_system)
+  let line_height = rich_text_block_line_height(block, base_font, text_system)
+  let block_top = y
+  let frame_top = y + block.inset.top
+  let line_center_y = if visual_line >= 0 && visual_line < rich_text_block_visual_line_count(block) {
+    frame_top + (visual_line.to_double() + 0.5) * step
+  } else {
+    caret_rect.origin.y + caret_rect.size.height * 0.5
+  }
+  let target_y = if up {
+    if visual_line == 0 {
+      block_top - 1.0
+    } else {
+      line_center_y - step
+    }
+  } else {
+    let line_count = rich_text_block_visual_line_count(block)
+    if visual_line >= line_count - 1 {
+      block_top + line_height + block.inset.top + block.inset.bottom + 1.0
+    } else {
+      line_center_y + step
+    }
+  }
+  let target_point = @core.Point::new(x=caret_rect.origin.x + caret_rect.size.width * 0.5, y=target_y)
+  match rich_text_document_source_offset_at_point(
+    document, target_point, content, base_font, text_system,
+  ) {
+    Some(offset) =>
+      if offset != source_caret {
+        offset
+      } else {
+        rich_text_vertical_block_boundary_offset(document, block_index, source_caret, up~)
+      }
+    None => rich_text_vertical_block_boundary_offset(document, block_index, source_caret, up~)
+  }
+}
+
+///|
+fn rich_text_vertical_block_boundary_offset(
+  document : RichTextDocument,
+  block_index : Int,
+  source_caret : Int,
+  up~ : Bool,
+) -> Int {
+  if up {
+    if block_index <= 0 {
+      return 0
+    }
+    let prev_block = document.blocks[block_index - 1]
+    match rich_text_block_end_source_offset(prev_block) {
+      Some(end) => end
+      None => source_caret
+    }
+  } else {
+    if block_index >= document.blocks.length() - 1 {
+      return source_caret
+    }
+    let next_block = document.blocks[block_index + 1]
+    match next_block.content_range {
+      Some(range) => range.start
+      None =>
+        match next_block.source_range {
+          Some(range) => range.start
+          None => source_caret
+        }
+    }
+  }
+}
+
+///|
+fn rich_text_visual_offset_to_line(
+  block : RichTextBlock,
+  visual_offset : Int,
+) -> Int {
+  let prefix_len = text_length(block.prefix)
+  let mut consumed = prefix_len
+  let mut line = 0
+  if visual_offset <= prefix_len {
+    return 0
+  }
+  for run in block.runs {
+    let segments = rich_text_split_lines(rich_text_run_visual_text(run))
+    for index, segment in segments {
+      let seg_len = text_length(segment)
+      if consumed + seg_len >= visual_offset {
+        return line
+      }
+      consumed = consumed + seg_len
+      if index + 1 < segments.length() {
+        if consumed == visual_offset {
+          return line
+        }
+        consumed = consumed + 1
+        line = line + 1
+      }
+    }
+  }
+  line
+}
+
+///|
+fn[Msg] rich_text_vertical_caret_move_result(
+  ctx : @core.ViewEventContext,
+  text : String,
+  document : RichTextDocument,
+  content : @core.Rect,
+  font : @core.FontSpec,
+  up~ : Bool,
+  extend~ : Bool,
+  on_selection_change : ((Int, @core.TextRange?) -> Msg)?,
+) -> @core.ViewEventResult[Msg] {
+  let display_text = rich_text_with_composition(text, ctx.text_control, focused=true)
+  let visual_caret = @core.clamp_int(
+    rich_text_visual_caret(text, ctx.text_control, focused=true),
+    0,
+    text_length(display_text),
+  )
+  let caret_rect = rich_text_document_caret_rect_or_plain(
+    document, visual_caret, content, font, ctx.text_system, display_text,
+  )
+  let target_offset = rich_text_vertical_target_offset(
+    document,
+    visual_caret,
+    caret_rect,
+    content,
+    font,
+    ctx.text_system,
+    up~,
+  )
+  if target_offset == ctx.text_control.caret && !extend {
+    return @core.ViewEventResult::ignored()
+  }
+  let next_control = if extend {
+    let anchor = match ctx.text_control.text_selection_anchor {
+      Some(a) => a
+      None => ctx.text_control.caret
+    }
+    let start = @core.min_int(anchor, target_offset)
+    let end = @core.max_int(anchor, target_offset)
+    {
+      ..ctx.text_control,
+      caret: target_offset,
+      selection: Some(@core.TextRange::new(start~, end~)),
+      text_selection_anchor: Some(anchor),
+      composition: None,
+      composition_cursor: None,
+    }
+  } else {
+    {
+      ..ctx.text_control,
+      caret: target_offset,
+      selection: None,
+      text_selection_anchor: None,
+      composition: None,
+      composition_cursor: None,
+    }
+  }
+  let changed = next_control.caret != ctx.text_control.caret ||
+    next_control.selection != ctx.text_control.selection ||
     ctx.text_control.composition is Some(_) ||
     ctx.text_control.composition_cursor is Some(_)
   view_event_result(
