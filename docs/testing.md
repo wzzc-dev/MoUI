@@ -128,6 +128,22 @@ sh scripts/conformance-check.sh --text-diagnostic
 `artifacts/` paths for screenshot or benchmark handoff. They are not checked-in
 capability declarations.
 
+## Feature Proof Matrix
+
+Every MoUI feature maps to a CI job that proves it. See
+[feature-proof-matrix.md](feature-proof-matrix.md) for the full mapping and
+[feature-status-dashboard.md](feature-status-dashboard.md) for the current
+proof status. The `feature-proof-summary.yml` workflow generates a proof
+report after every `ci.yml` run.
+
+Proof levels:
+
+- **L1** (every PR, `ci.yml`): API/algorithm/protocol correctness via package
+  tests.
+- **L2** (every PR, `moui-skia-real-skia-pr-smoke.yml`): real Skia runtime
+  behavior on macOS/Linux/Windows matching hosts.
+- **L3** (`feature-proof-summary.yml`): all required L1 and L2 passed.
+
 ## Smoke
 
 Use smoke runs when behavior depends on a real renderer, browser, or platform

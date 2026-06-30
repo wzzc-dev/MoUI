@@ -55,6 +55,10 @@ to app code or view/runtime trees. Current descriptors are:
 - `SunRasterNative`: family `Sun`, presentation `CpuPixelFrame`, target
   `Native`.
 
+For feature proof coverage (which CI job proves each feature), see
+[feature-proof-matrix.md](feature-proof-matrix.md) and
+[feature-status-dashboard.md](feature-status-dashboard.md).
+
 `RendererDescriptor` describes static renderer capability identity. Native host
 runtime assembly is handled by platform renderer providers instead:
 `backend/<platform>/skia` selects the `SkiaRasterNative` native mainline and

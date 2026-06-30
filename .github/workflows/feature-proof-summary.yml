@@ -1,0 +1,125 @@
+name: MoUI Feature Proof Summary
+
+on:
+  workflow_run:
+    workflows: ["MoUI CI"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      ci_run_id:
+        description: Specific ci.yml run_id to summarize. Defaults to latest.
+        required: false
+        default: ""
+
+jobs:
+  summarize:
+    name: Feature proof summary
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion != 'cancelled' || github.event_name == 'workflow_dispatch' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Collect CI workflow statuses
+        id: collect
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Determine which ci.yml run to summarize
+            let runId;
+            if (context.eventName === 'workflow_dispatch' && '${{ inputs.ci_run_id }}' !== '') {
+              runId = parseInt('${{ inputs.ci_run_id }}');
+            } else if (context.payload.workflow_run) {
+              runId = context.payload.workflow_run.id;
+            } else {
+              const runs = await github.rest.actions.listWorkflowRuns({
+                owner,
+                repo,
+                workflow_id: 'ci.yml',
+                per_page: 1,
+              });
+              if (runs.data.workflow_runs.length === 0) {
+                core.setFailed('No ci.yml runs found');
+                return;
+              }
+              runId = runs.data.workflow_runs[0].id;
+            }
+
+            // Collect ci.yml job statuses
+            const ciJobs = await github.rest.actions.listJobsForWorkflowRun({
+              owner,
+              repo,
+              run_id: runId,
+            });
+            const status = {};
+            for (const job of ciJobs.data.jobs) {
+              status[job.name] = job.conclusion;
+            }
+
+            // Collect moui-skia-real-skia-pr-smoke.yml job statuses (runs on every PR)
+            try {
+              const skiaRuns = await github.rest.actions.listWorkflowRuns({
+                owner,
+                repo,
+                workflow_id: 'moui-skia-real-skia-pr-smoke.yml',
+                per_page: 1,
+              });
+              if (skiaRuns.data.workflow_runs.length > 0) {
+                const skiaRun = skiaRuns.data.workflow_runs[0];
+                const skiaJobs = await github.rest.actions.listJobsForWorkflowRun({
+                  owner,
+                  repo,
+                  run_id: skiaRun.id,
+                });
+                for (const job of skiaJobs.data.jobs) {
+                  status[job.name] = job.conclusion;
+                }
+              }
+            } catch (e) {
+              // Skia smoke workflow may not have runs yet
+            }
+
+            const run = await github.rest.actions.getWorkflowRun({
+              owner,
+              repo,
+              run_id: runId,
+            });
+
+            core.setOutput('status', JSON.stringify(status));
+            core.setOutput('run_id', String(runId));
+            core.setOutput('html_url', run.data.html_url);
+
+      - name: Generate feature proof report
+        env:
+          JOB_STATUS: ${{ steps.collect.outputs.status }}
+          RUN_URL: ${{ steps.collect.outputs.html_url }}
+        run: |
+          mkdir -p artifacts/feature-proof
+          node scripts/generate-feature-proof-report.mjs \
+            --status "$JOB_STATUS" \
+            --run-url "$RUN_URL" \
+            --output artifacts/feature-proof/proof-report.json
+
+      - name: Verify feature proof coverage
+        run: |
+          node scripts/verify-feature-proof-coverage.mjs \
+            --report artifacts/feature-proof/proof-report.json
+
+      - name: Upload feature proof summary
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: feature-proof-summary
+          path: artifacts/feature-proof/
+          if-no-files-found: warn
+
+      - name: Write summary
+        if: ${{ always() }}
+        run: |
+          echo "## Feature Proof Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          cat artifacts/feature-proof/proof-report.md >> $GITHUB_STEP_SUMMARY
