@@ -1322,13 +1322,6 @@
       "marker": "native smoke paragraph hit test",
       "when_marker": "native smoke paragraph availability",
       "when_value": "1"
-    },
-    {
-      "id": "pipeline.color-filter-cache-resources",
-      "area": "Pipeline",
-      "marker": "native smoke render color filter cache resources",
-      "when_marker": "native smoke color filters available",
-      "when_value": "1"
     }
   ],
   "native_smoke_expected_values": [
