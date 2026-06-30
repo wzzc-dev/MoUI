@@ -44,6 +44,14 @@ For task-specific workflows, use the repo-local skills:
   behavior in the platform backend packages.
 - Keep native Skia mainline work on the Skia route. Treat native WGPU as
   diagnostic unless the request explicitly changes that policy.
+- `wzzc-dev/window` resolves from mooncakes.io by default. `moon.work` must
+  not list `./window`; `scripts/validate-window-dependency.mjs` enforces this
+  in `dev-check.sh` and CI. To edit window source locally, run
+  `sh scripts/window-dev-mode.sh on` (adds `./window` to `moon.work`), then
+  `sh scripts/window-dev-mode.sh off` before committing. After publishing a
+  new window version, update the pinned version in all four consumers
+  (`moui/`, `moui_skia/`, `moui_webview/`, `examples/markdown_editor/`)
+  and run `moon update`. See `docs/development.md` for the full workflow.
 - Use `moon ide doc`, `moon ide outline`, `moon ide peek-def`, and
   `moon ide find-references` for MoonBit API discovery before inventing names.
 - `docs/button-styling-guide.md` documents the button style resolution pipeline

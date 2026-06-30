@@ -6,7 +6,6 @@ members = [
   "./moui_devtools",
   "./moui_agent",
   "./moui_agent_mcp",
-  "./window",
   "./examples/agent_counter",
   "./tools",
   "./moui_skia",

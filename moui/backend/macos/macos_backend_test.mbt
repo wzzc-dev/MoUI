@@ -86,6 +86,10 @@ test "macos service bridge exposes clipboard, open url, and system theme" {
           clipboard.val = text
           @host.HostServiceResponse::ClipboardWritten
         }
+        @host.HostClipboardRequest::ReadImage =>
+          @host.HostServiceResponse::ClipboardImage(b"")
+        @host.HostClipboardRequest::WriteImage(_, _) =>
+          @host.HostServiceResponse::ClipboardWritten
       }
     },
     open_url=url => {

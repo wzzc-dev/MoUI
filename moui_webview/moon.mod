@@ -8,7 +8,7 @@ repository = "https://github.com/wzzc-dev/moui"
 
 import {
   "wzzc-dev/moui@0.1.4",
-  "wzzc-dev/window@0.5.1-0.1.5",
+  "wzzc-dev/window@0.5.1-0.1.6",
 }
 
 options(

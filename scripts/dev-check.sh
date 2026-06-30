@@ -57,9 +57,11 @@ if ! "$RUN_SKIA_REAL_SMOKE"; then
   export MOUI_SKIA_DISABLE_PREBUILD_SKIA="${MOUI_SKIA_DISABLE_PREBUILD_SKIA:-1}"
 fi
 
-# Ensure the window submodule is initialized so the workspace resolves
-# wzzc-dev/window from the local checkout. Skip if already initialized to
-# avoid disrupting local in-progress edits inside the submodule.
+# Ensure the window submodule is initialized. wzzc-dev/window resolves from
+# mooncakes.io by default (moon.work does not list ./window); the submodule
+# checkout exists only so developers can switch to local-source dev mode via
+# scripts/window-dev-mode.sh. Skip if already initialized to avoid disrupting
+# local in-progress edits inside the submodule.
 if [ ! -f "window/moon.mod" ]; then
   printf '\n==> Initializing window submodule...\n'
   git submodule update --init window
@@ -81,6 +83,8 @@ run_built_executable() {
 
 run node --check scripts/validate-api-surface.mjs
 run node scripts/validate-api-surface.mjs
+run node --check scripts/validate-window-dependency.mjs
+run node scripts/validate-window-dependency.mjs
 run node --check scripts/validate-maintenance-baseline.mjs
 run node scripts/validate-maintenance-baseline.mjs
 run node scripts/validate-renderer-provider-manifests.mjs
