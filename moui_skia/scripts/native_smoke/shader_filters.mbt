@@ -181,27 +181,24 @@ fn run_shader_filter_smoke(
   let has_native_color_filters = native_color_filter.is_some()
   if has_native_color_filters {
     let color_filter = native_color_filter.unwrap()
-    guard @native.ImageFilter::blur(1.0, 1.0) is Some(image_filter) else {
-      fail_smoke("failed to create native image filter")
-      None
+    match (@native.ImageFilter::blur(1.0, 1.0), @native.MaskFilter::blur(1.0)) {
+      (Some(image_filter), Some(mask_filter)) => {
+        let save_count_before_filter_layer = canvas.save_count()
+        let filtered_layer_count = canvas.save_layer(
+          bounds=Some(@skia.Rect::from_xywh(0, 0, 16, 16)),
+          color_filter=Some(color_filter),
+          image_filter=Some(image_filter),
+          mask_filter=Some(mask_filter),
+        )
+        if filtered_layer_count <= 0 {
+          fail_smoke("native filtered save_layer did not return a valid save count")
+        }
+        canvas.restore_to_count(save_count_before_filter_layer)
+        println("native smoke filter layer count")
+        println(filtered_layer_count)
+      }
+      _ => fail_smoke("failed to create native image/mask filter")
     }
-    guard @native.MaskFilter::blur(1.0) is Some(mask_filter) else {
-      fail_smoke("failed to create native mask filter")
-      None
-    }
-    let save_count_before_filter_layer = canvas.save_count()
-    let filtered_layer_count = canvas.save_layer(
-      bounds=Some(@skia.Rect::from_xywh(0, 0, 16, 16)),
-      color_filter=Some(color_filter),
-      image_filter=Some(image_filter),
-      mask_filter=Some(mask_filter),
-    )
-    if filtered_layer_count <= 0 {
-      fail_smoke("native filtered save_layer did not return a valid save count")
-    }
-    canvas.restore_to_count(save_count_before_filter_layer)
-    println("native smoke filter layer count")
-    println(filtered_layer_count)
   } else {
     println("native color filters not available (Skia release header structure)")
   }
