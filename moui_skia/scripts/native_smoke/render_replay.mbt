@@ -305,37 +305,19 @@ fn run_render_replay_smoke(
     replay_native_resources.font_cache.length() != 1 ||
     replay_font_cache_stats.misses != 1 ||
     replay_font_cache_stats.hits != 0 ||
-	    replay_native_resources.typeface_cache.length() != 1 ||
-	    replay_typeface_cache_stats.misses != 1 ||
-	    replay_typeface_cache_stats.hits != 0 ||
-	    // Filter caches may be empty when the Skia release binary's header
-	    // structure doesn't include ColorFilter.h at compile time. Accept
-	    // either 1 entry (filters available) or 0 entries (not available).
-	    (replay_native_resources.color_filter_cache.length() != 1 &&
-	     replay_native_resources.color_filter_cache.length() != 0) ||
-	    (replay_native_resources.color_filter_cache.length() == 1 &&
-	     (replay_color_filter_cache_stats.misses != 1 ||
-	      replay_color_filter_cache_stats.hits != 0)) ||
-	    (replay_native_resources.color_filter_cache.length() == 0 &&
-	     (replay_color_filter_cache_stats.misses != 0 ||
-	      replay_color_filter_cache_stats.hits != 0)) ||
-	    (replay_native_resources.image_filter_cache.length() != 1 &&
-	     replay_native_resources.image_filter_cache.length() != 0) ||
-	    (replay_native_resources.image_filter_cache.length() == 1 &&
-	     (replay_image_filter_cache_stats.misses != 1 ||
-	      replay_image_filter_cache_stats.hits != 0)) ||
-	    (replay_native_resources.image_filter_cache.length() == 0 &&
-	     (replay_image_filter_cache_stats.misses != 0 ||
-	      replay_image_filter_cache_stats.hits != 0)) ||
-	    (replay_native_resources.mask_filter_cache.length() != 1 &&
-	     replay_native_resources.mask_filter_cache.length() != 0) ||
-	    (replay_native_resources.mask_filter_cache.length() == 1 &&
-	     (replay_mask_filter_cache_stats.misses != 1 ||
-	      replay_mask_filter_cache_stats.hits != 0)) ||
-	    (replay_native_resources.mask_filter_cache.length() == 0 &&
-	     (replay_mask_filter_cache_stats.misses != 0 ||
-	      replay_mask_filter_cache_stats.hits != 0)) ||
-	    !replay_stats.is_complete() {
+    replay_native_resources.typeface_cache.length() != 1 ||
+    replay_typeface_cache_stats.misses != 1 ||
+    replay_typeface_cache_stats.hits != 0 ||
+    replay_native_resources.color_filter_cache.length() != 1 ||
+    replay_color_filter_cache_stats.misses != 1 ||
+    replay_color_filter_cache_stats.hits != 0 ||
+    replay_native_resources.image_filter_cache.length() != 1 ||
+    replay_image_filter_cache_stats.misses != 1 ||
+    replay_image_filter_cache_stats.hits != 0 ||
+    replay_native_resources.mask_filter_cache.length() != 1 ||
+    replay_mask_filter_cache_stats.misses != 1 ||
+    replay_mask_filter_cache_stats.hits != 0 ||
+    !replay_stats.is_complete() {
     fail_smoke("native canvas replay stats did not match command list")
   }
   guard replay_surface.read_pixels(bounds=@skia.IRect::from_xywh(1, 1, 1, 1))
