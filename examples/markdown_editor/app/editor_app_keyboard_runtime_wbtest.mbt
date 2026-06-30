@@ -437,7 +437,8 @@ test "markdown editor runtime arrow up down moves caret across lines" {
   app.set_document("- Alpha\n- Beta\n- Gamma")
   let runtime = app.runtime(width=980.0, height=640.0)
   // 点击 "Beta" 行设置 focus 和 caret
-  guard markdown_editor_text_frame(runtime.draw_commands(), "Beta") is Some(frame) else {
+  guard markdown_editor_text_frame(runtime.draw_commands(), "Beta")
+    is Some(frame) else {
     fail("expected rendered Beta text")
   }
   runtime.dispatch_event(
@@ -470,13 +471,13 @@ test "markdown editor runtime arrow up down moves caret across lines" {
 
 ///|
 test "markdown editor arrow keys navigate across empty line heading and code block" {
-  let sample =
-    "# Editor notes\n\nThis **WYSIWYG** surface keeps `Markdown` as the saved value.\n\n## Today\n- Type into the formatted page\n- Use shortcuts or contextual controls\n- Open source only when needed\n\n> Unsupported syntax stays editable as plain text.\n\n```\nlet saved = markdown\n```\n\n---"
+  let sample = "# Editor notes\n\nThis **WYSIWYG** surface keeps `Markdown` as the saved value.\n\n## Today\n- Type into the formatted page\n- Use shortcuts or contextual controls\n- Open source only when needed\n\n> Unsupported syntax stays editable as plain text.\n\n```\nlet saved = markdown\n```\n\n---"
   let app = MarkdownEditorApp::new()
   app.set_document(sample)
   let runtime = app.runtime(width=980.0, height=640.0)
   // 场景2: 点击 "Today" 标题文本，ArrowUp 应该能移到上方
-  guard markdown_editor_text_frame(runtime.draw_commands(), "Today") is Some(today_frame) else {
+  guard markdown_editor_text_frame(runtime.draw_commands(), "Today")
+    is Some(today_frame) else {
     fail("expected rendered Today text")
   }
   runtime.dispatch_event(
@@ -504,7 +505,8 @@ test "markdown editor arrow keys navigate across empty line heading and code blo
   let app2 = MarkdownEditorApp::new()
   app2.set_document(sample)
   let runtime2 = app2.runtime(width=980.0, height=640.0)
-  guard markdown_editor_text_frame(runtime2.draw_commands(), "Editor notes") is Some(h1_frame) else {
+  guard markdown_editor_text_frame(runtime2.draw_commands(), "Editor notes")
+    is Some(h1_frame) else {
     fail("expected rendered Editor notes text")
   }
   runtime2.dispatch_event(
@@ -539,7 +541,11 @@ test "markdown editor arrow keys navigate across empty line heading and code blo
   let app3 = MarkdownEditorApp::new()
   app3.set_document(sample)
   let runtime3 = app3.runtime(width=980.0, height=640.0)
-  guard markdown_editor_text_frame(runtime3.draw_commands(), "let saved = markdown") is Some(code_frame) else {
+  guard markdown_editor_text_frame(
+      runtime3.draw_commands(),
+      "let saved = markdown",
+    )
+    is Some(code_frame) else {
     fail("expected rendered code block text")
   }
   runtime3.dispatch_event(

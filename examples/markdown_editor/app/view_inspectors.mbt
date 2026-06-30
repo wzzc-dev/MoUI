@@ -36,9 +36,8 @@ fn markdown_editor_count_visible_tree_items(
   for item in items {
     count = count + 1
     if expanded.any(id => id == item.id) {
-      count = count + markdown_editor_count_visible_tree_items(
-        item.children, expanded,
-      )
+      count = count +
+        markdown_editor_count_visible_tree_items(item.children, expanded)
     }
   }
   count
@@ -70,7 +69,7 @@ fn files_inspector(
       0.0
     }
     let tree_content_height = visible_count.to_double() * tree_row_height +
-    spacing_total
+      spacing_total
     markdown_editor_min_double(tree_content_height, max_tree_scroll_height)
   } else {
     0.0

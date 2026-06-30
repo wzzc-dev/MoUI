@@ -463,11 +463,21 @@ test "markdown editor runtime receives async save as completion" {
   inspect(app.document_path(), content="/tmp/async-save.md")
   assert_false(app.dirty())
   inspect(app.transfer_status_label_for_test(), content="Saved async-save.md")
+  // Chrome renders the document title (filename) and save state as separate
+  // text elements after the status bar redesign (e337e41d).
   assert_true(
     commands.any(command => {
       match command {
         @core.DrawCommand::DrawText({ text, .. }) =>
-          text.contains("async-save.md / Saved")
+          text.contains("async-save.md")
+        _ => false
+      }
+    }),
+  )
+  assert_true(
+    commands.any(command => {
+      match command {
+        @core.DrawCommand::DrawText({ text, .. }) => text.contains("Saved")
         _ => false
       }
     }),
