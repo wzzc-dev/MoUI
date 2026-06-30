@@ -221,7 +221,7 @@ case "$resolved_link_mode" in
     ;;
 esac
 
-cc_flags="-DMOUI_SKIA_HAS_SKIA -DMOUI_SKIA_HAS_CORE_COLOR_FILTER -std=c++17 -I$include_path"
+cc_flags="-DMOUI_SKIA_HAS_SKIA -std=c++17 -I$include_path"
 if [[ $enable_skparagraph -eq 1 ]]; then
   cc_flags="$cc_flags -DMOUI_SKIA_HAS_SKPARAGRAPH -DMOUI_SKIA_HAS_SKSHAPER"
 fi
