@@ -9,7 +9,7 @@ import {
   "Milky2018/moon_taffy@0.5.2",
   "Milky2018/moon_zeno@0.1.3",
   "Milky2018/wgpu_mbt@0.14.3",
-  "wzzc-dev/window@0.5.1-0.1.5",
+  "wzzc-dev/window@0.5.1-0.1.6",
   "mizchi/image@0.4.2",
   "mizchi/pixelmatch@0.6.1",
   "mizchi/svg@0.2.1",
