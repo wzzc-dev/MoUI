@@ -11,7 +11,7 @@ implementation status.
 | Level | Definition | CI trigger | Host requirement |
 |-------|-----------|------------|-----------------|
 | **L1** | API correctness, algorithm correctness, protocol correctness | Every PR (`ci.yml`) | None (fallback-safe build) |
-| **L2** | Runtime behavior on real renderer/platform | Every PR (`moui-skia-real-skia-pr-smoke.yml`) | Matching-host real Skia |
+| **L2** | Runtime behavior on real renderer/platform | Every PR and push-to-main (`moui-skia-real-skia-pr-smoke.yml`) | Matching-host real Skia |
 | **L3** | Cross-platform consistency | `feature-proof-summary.yml` after `ci.yml` completes | All L2 platforms passed |
 
 Framework rendering code (`moui/render/skia/`, `moui/views/`) depends on real
@@ -35,7 +35,7 @@ rendering behavior, so L2 real-Skia smoke runs on every PR.
 | macOS packaging | `macos-packaging` | macOS-14 | Showcase app bundle packages successfully |
 | Benchmark scaffold | `benchmark-scaffold` | macOS-14 | Benchmark targets build successfully |
 
-## L2 Features (moui-skia-real-skia-pr-smoke.yml, every PR)
+## L2 Features (moui-skia-real-skia-pr-smoke.yml, every PR and push-to-main)
 
 All L2 features use release-provider real-Skia with static linking. Each
 platform job runs `verify-native-smoke-log` and `verify-acceptance-log` to
@@ -63,7 +63,8 @@ assert pixel markers and acceptance markers.
 
 ## L3 Cross-Platform Consistency
 
-`feature-proof-summary.yml` runs after `ci.yml` completes (via
+`feature-proof-summary.yml` runs after `ci.yml` or
+`moui-skia-real-skia-pr-smoke.yml` completes (via
 `workflow_run`). It collects all job statuses from `ci.yml` and
 `moui-skia-real-skia-pr-smoke.yml`, generates a proof report, and verifies
 coverage:
@@ -99,9 +100,9 @@ coverage:
 |----------|------------------|-------------|
 | `ci.yml` | push/PR to main | none (always) |
 | `moui-skia-fallback.yml` | push/PR to main | `moui_skia/**` (moui_skia package self-test) |
-| `moui-skia-real-skia-pr-smoke.yml` | PR to main | none (every PR, validates framework rendering) |
+| `moui-skia-real-skia-pr-smoke.yml` | push/PR to main | none (validates framework rendering on push and every PR) |
 | `moui-runtime-smoke-gates.yml` | schedule nightly + manual | none |
 | `moui-skia-macos-real-skia-smoke.yml` | manual | none |
 | `moui-skia-linux-real-skia-smoke.yml` | weekly + manual | none |
 | `moui-skia-windows-real-skia-smoke.yml` | manual | none |
-| `feature-proof-summary.yml` | `workflow_run` on `ci.yml` completed | none |
+| `feature-proof-summary.yml` | `workflow_run` on `ci.yml` or `moui-skia-real-skia-pr-smoke.yml` completed | none |
