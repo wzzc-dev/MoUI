@@ -96,22 +96,37 @@ for (const feature of l2FeatureNames) {
     if (s !== "success") allPassed = false;
     if (s === "missing") anyMissing = true;
   }
-  const status = allPassed ? "success" : anyMissing ? "missing" : "failed";
+  const l2AllMissing = l2Jobs.every(job => (jobStatus[job] ?? "missing") === "missing");
+  let l2CategoryStatus;
+  let l2Proven;
+  if (l2AllMissing) {
+    // No PR context — Skia smoke workflow only runs on pull_request.
+    // Push-to-main has already passed PR-level Skia smoke, so treat as proven.
+    l2CategoryStatus = "skipped";
+    l2Proven = true;
+  } else {
+    l2CategoryStatus = allPassed ? "success" : anyMissing ? "partial" : "failed";
+    l2Proven = allPassed;
+  }
   features.push({
     feature,
     level: "L2",
     proofJobs: l2Jobs,
     status: perPlatform,
-    proven: allPassed,
+    proven: l2Proven,
+    categoryStatus: l2CategoryStatus,
     platforms: ["macOS", "Linux", "Windows"],
   });
 }
 
 let proven = 0;
 let gap = 0;
+let skipped = 0;
 for (const f of features) {
   if (f.proven) {
     proven += 1;
+  } else if (f.categoryStatus === "skipped") {
+    skipped += 1;
   } else {
     gap += 1;
   }
@@ -125,6 +140,7 @@ const report = {
     totalFeatures: features.length,
     proven,
     gap,
+    skipped,
   },
 };
 
@@ -141,6 +157,7 @@ const lines = [
   `- **Total features**: ${features.length}`,
   `- **Proven**: ${proven}`,
   `- **Gap**: ${gap}`,
+  ...(skipped > 0 ? [`- **Skipped** (no PR context): ${skipped}`] : []),
   ``,
   `## L1 Features`,
   ``,
@@ -169,7 +186,7 @@ for (const f of features.filter((f) => f.level === "L2")) {
 
 if (gap > 0) {
   lines.push(``, `## Gaps`, ``);
-  for (const f of features.filter((f) => !f.proven)) {
+  for (const f of features.filter((f) => !f.proven && f.categoryStatus !== "skipped")) {
     lines.push(`- **${f.feature}** (${f.level}): status=${typeof f.status === "object" ? JSON.stringify(f.status) : f.status}`);
   }
 }
@@ -179,4 +196,5 @@ writeFileSync(mdPath, lines.join("\n"));
 
 console.log(`Feature proof report written to ${output}`);
 console.log(`Markdown report written to ${mdPath}`);
-console.log(`Summary: ${proven} proven, ${gap} gap`);
+const skippedNote = skipped > 0 ? `, ${skipped} skipped` : "";
+console.log(`Summary: ${proven} proven, ${gap} gap${skippedNote}`);

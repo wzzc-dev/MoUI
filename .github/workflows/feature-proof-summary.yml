@@ -73,20 +73,31 @@ jobs:
               status[key] = job.conclusion;
             }
 
-            // Collect moui-skia-real-skia-pr-smoke.yml job statuses (runs on every PR)
+            const run = await github.rest.actions.getWorkflowRun({
+              owner,
+              repo,
+              run_id: runId,
+            });
+            const headSha = run.data.head_sha;
+
+            // Collect moui-skia-real-skia-pr-smoke.yml job statuses for the same SHA
             try {
               const skiaRuns = await github.rest.actions.listWorkflowRuns({
                 owner,
                 repo,
                 workflow_id: 'moui-skia-real-skia-pr-smoke.yml',
-                per_page: 1,
+                per_page: 10,
               });
-              if (skiaRuns.data.workflow_runs.length > 0) {
-                const skiaRun = skiaRuns.data.workflow_runs[0];
+              // Find the run that matches our head SHA (Skia smoke only runs on PRs,
+              // so it won't exist for push-to-main — that's expected)
+              const matchingSkiaRun = skiaRuns.data.workflow_runs.find(
+                r => r.head_sha === headSha
+              );
+              if (matchingSkiaRun) {
                 const skiaJobs = await github.rest.actions.listJobsForWorkflowRun({
                   owner,
                   repo,
-                  run_id: skiaRun.id,
+                  run_id: matchingSkiaRun.id,
                 });
                 for (const job of skiaJobs.data.jobs) {
                   const key = jobNameToKey[job.name] ?? job.name;
@@ -96,12 +107,6 @@ jobs:
             } catch (e) {
               // Skia smoke workflow may not have runs yet
             }
-
-            const run = await github.rest.actions.getWorkflowRun({
-              owner,
-              repo,
-              run_id: runId,
-            });
 
             core.setOutput('status', JSON.stringify(status));
             core.setOutput('run_id', String(runId));
