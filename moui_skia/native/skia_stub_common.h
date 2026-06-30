@@ -102,12 +102,6 @@ class GrDirectContext;
 #elif __has_include("include/core/SkColorFilter.h")
 #include "include/core/SkColorFilter.h"
 #define MOUI_SKIA_HAS_CORE_COLOR_FILTER 1
-#elif defined(MOUI_SKIA_HAS_SKIA)
-// Direct fallback include. Other core Skia headers (SkCanvas.h, SkColor.h)
-// are found via the same include root, so SkColorFilter.h should be at
-// include/core/SkColorFilter.h.
-#include "include/core/SkColorFilter.h"
-#define MOUI_SKIA_HAS_CORE_COLOR_FILTER 1
 #endif
 #if __has_include("include/effects/SkImageFilters.h")
 #include "include/effects/SkImageFilters.h"
