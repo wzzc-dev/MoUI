@@ -81,26 +81,6 @@ fn oversized_file_threshold() -> Int {
 ///|
 fn file_budgets() -> Array[FileBudget] {
   [
-    {
-      path: "examples/mo_workbench/app/mo_workbench_app_wbtest.mbt",
-      max_lines: 633,
-    },
-    {
-      path: "examples/mo_workbench/app/mo_workbench_pi_ingest_wbtest.mbt",
-      max_lines: 420,
-    },
-    {
-      path: "examples/mo_workbench/app/mo_workbench_pi_session_binding_wbtest.mbt",
-      max_lines: 285,
-    },
-    {
-      path: "examples/mo_workbench/app/mo_workbench_pi_rpc_catalog_wbtest.mbt",
-      max_lines: 455,
-    },
-    {
-      path: "examples/mo_workbench/app/mo_workbench_pi_streaming_wbtest.mbt",
-      max_lines: 405,
-    },
     { path: "examples/showcase/app/showcase_app_test.mbt", max_lines: 386 },
     {
       path: "examples/showcase/app/showcase_examples_app_test.mbt",
