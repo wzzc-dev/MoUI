@@ -9,7 +9,7 @@ on:
 jobs:
   macos-real-skia:
     name: macOS real-Skia smoke
-    runs-on: macos-15
+    runs-on: macos-latest
     timeout-minutes: 30
     defaults:
       run:
