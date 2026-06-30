@@ -170,11 +170,31 @@ fn MarkdownEditorApp::reactive_root(
   ignore(ctx.watch(self.selected_image_offset))
   ignore(ctx.watch(self.image_centered))
   // Make the editor viewport fill the window instead of a fixed 520px.
-  // Chrome (28px) and status bar (20px) in the outer column, workspace bottom
-  // padding (24px), and inner column spacing (8px) = 80.  Add 4px safety for
-  // the centered custom layout's constraint rounding.
+  // The outer column stacks: chrome (28) + workspace (flex) + spacer (24) +
+  // status bar (20).  The workspace column stacks auxiliary bars (find_bar
+  // 42px, format_palette 240px) above the editor, with sm (8px) spacing
+  // between each pair.  Subtract all fixed heights so the editor never
+  // overflows into the status bar when auxiliary bars are toggled on.
   let window_height = ctx.viewport_size().height
-  let viewport_height = markdown_editor_max_double(320.0, window_height - 84.0)
+  let theme = self.chrome_theme()
+  let zen = self.zen_mode_enabled.get()
+  let mut fixed_height = theme.spacing_scale.xl // bottom spacer (always present)
+  if !zen {
+    fixed_height = fixed_height + 28.0 + 20.0 // chrome + status bar
+    let mut aux_count = 0
+    if self.find_visible.get() {
+      fixed_height = fixed_height + 42.0 // find_bar
+      aux_count = aux_count + 1
+    }
+    if self.format_palette_visible.get() {
+      fixed_height = fixed_height + 240.0 // format_palette
+      aux_count = aux_count + 1
+    }
+    fixed_height = fixed_height + theme.spacing_scale.sm * aux_count.to_double()
+  }
+  let viewport_height = markdown_editor_max_double(
+    320.0, window_height - fixed_height,
+  )
   self.root(viewport_height~)
 }
 
@@ -308,26 +328,19 @@ fn MarkdownEditorApp::bottom_status_bar(
     height=20.0,
   )
 
-  let title = markdown_editor_document_title(
-    path=self.document_path.get(),
-    fallback=session.active_heading,
-  )
   let save_state = if self.is_dirty() { "Unsaved" } else { "Saved" }
   let transfer = markdown_editor_transfer_status_label(
     self.transfer_status.get(),
   )
   let transfer_suffix = if transfer == "" { "" } else { " / " + transfer }
-  let status = title +
-    " / " +
-    save_state +
+  let status = save_state +
     " / " +
     markdown_editor_session_status_label(block_label, session, selection) +
     transfer_suffix
 
-  let status_width = markdown_editor_min_double(
-    markdown_editor_max_double(160.0, width - 26.0),
-    500.0,
-  )
+  // 状态文字宽度自适应：最小 160px，最大撑满窗口宽度（减去 tree_button 26px），
+  // 不再限制 500px 上限，长状态也能完整显示。
+  let status_width = markdown_editor_max_double(160.0, width - 26.0)
   let status_frame = frame(
     row(
       [
