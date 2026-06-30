@@ -43,6 +43,10 @@ for (const feature of report.features) {
       });
     }
   } else if (feature.level === "L2") {
+    // Skip L2 features when there's no PR context (Skia smoke only runs on PRs)
+    if (feature.categoryStatus === "skipped") {
+      continue;
+    }
     if (!feature.proven) {
       const failedPlatforms = [];
       for (const [job, status] of Object.entries(feature.status)) {
@@ -74,4 +78,5 @@ if (gaps.length > 0) {
 }
 
 console.log("Feature proof coverage verification PASSED.");
-console.log(`  Proven: ${report.summary.proven}, Gap: ${report.summary.gap}`);
+const skippedMsg = report.summary.skipped > 0 ? `, Skipped: ${report.summary.skipped}` : "";
+console.log(`  Proven: ${report.summary.proven}, Gap: ${report.summary.gap}${skippedMsg}`);
