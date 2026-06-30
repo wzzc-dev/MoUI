@@ -75,6 +75,23 @@ find_chrome() {
       return 0
     fi
   done
+
+  # macOS: Chrome is installed in /Applications, not on PATH
+  case "$(uname -s)" in
+    Darwin)
+      for app_path in \
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+        "/Applications/Chromium.app/Contents/MacOS/Chromium" \
+        "$HOME/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+        "$HOME/Applications/Chromium.app/Contents/MacOS/Chromium"; do
+        if [ -x "$app_path" ]; then
+          printf '%s\n' "$app_path"
+          return 0
+        fi
+      done
+      ;;
+  esac
+
   printf 'No Chrome or Chromium binary found for Web runtime presentation smoke.\n' >&2
   return 1
 }
