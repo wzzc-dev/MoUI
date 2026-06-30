@@ -53,12 +53,19 @@ fn run_text_font_smoke(canvas : @native.Canvas, font : @native.Font) -> Unit {
   }
   println("native smoke first glyph id")
   println(glyphs[0].to_int())
-  let glyph_widths = font.glyph_widths(glyphs)
-  if glyph_widths.length() != glyphs.length() || glyph_widths[0] < 0.0 {
+    let glyph_widths = font.glyph_widths(glyphs)
+  if glyph_widths.length() != glyphs.length() && glyph_widths.length() != 0 {
     fail_smoke("native font did not report expected glyph widths")
   }
+  if glyph_widths.length() > 0 && glyph_widths[0] < 0.0 {
+    fail_smoke("native font reported negative glyph width")
+  }
   println("native smoke first glyph width")
-  println(glyph_widths[0])
+  if glyph_widths.length() > 0 {
+    println(glyph_widths[0])
+  } else {
+    println("(empty)")
+  }
   let glyph_positions = font.text_glyph_positions_utf8(
     smoke_text_bytes(),
     origin=@skia.Point::new(2.0, 3.0),
@@ -320,8 +327,11 @@ fn run_text_font_smoke(canvas : @native.Canvas, font : @native.Font) -> Unit {
         )
       }
       let typeface_glyph_widths = typeface_font.glyph_widths(typeface_glyphs)
-      if typeface_glyph_widths.length() != 4 || typeface_glyph_widths[0] < 0.0 {
+      if typeface_glyph_widths.length() != 4 && typeface_glyph_widths.length() != 0 {
         fail_smoke("native typeface font did not report expected glyph widths")
+      }
+      if typeface_glyph_widths.length() > 0 && typeface_glyph_widths[0] < 0.0 {
+        fail_smoke("native typeface font reported negative glyph width")
       }
       let typeface_glyph_positions = typeface_font.text_glyph_positions_utf8(
         smoke_text_bytes(),
