@@ -1,5 +1,6 @@
 // Message row rendering for the chat transcript.
 
+///|
 /// Render a single chat message as a view.
 fn message_row(
   msg : ChatMessage,
@@ -17,6 +18,7 @@ fn message_row(
   }
 }
 
+///|
 fn user_message_row(
   text_ : String,
   theme : @core.Theme,
@@ -28,7 +30,12 @@ fn user_message_row(
       [
         @views.spacer(),
         @views.container(
-          @views.text(text_, role=@views.TextRole::Body, theme~, width=bubble_width - 24.0),
+          @views.text(
+            text_,
+            role=@views.TextRole::Body,
+            theme~,
+            width=bubble_width - 24.0,
+          ),
           width=bubble_width,
           background=user_message_background(theme),
           corner_radius=12.0,
@@ -37,11 +44,12 @@ fn user_message_row(
       ],
       align=@views.CrossAlign::Start,
     ),
-    width=width,
+    width~,
     padding=4.0,
   )
 }
 
+///|
 fn assistant_message_row(
   content : String,
   reasoning : String?,
@@ -56,9 +64,12 @@ fn assistant_message_row(
       if !r.is_empty() {
         rows.push(
           @views.container(
-            @views
-              .text(r, role=@views.TextRole::Caption, theme~, width=bubble_width - 24.0)
-              .foreground(theme.palette.muted),
+            @views.text(
+              r,
+              role=@views.TextRole::Caption,
+              theme~,
+              width=bubble_width - 24.0,
+            ).foreground(theme.palette.muted),
             width=bubble_width,
             padding=8.0,
           ),
@@ -66,7 +77,14 @@ fn assistant_message_row(
       }
     None => ()
   }
-  rows.push(@views.text(content, role=@views.TextRole::Body, theme~, width=bubble_width - 24.0))
+  rows.push(
+    @views.text(
+      content,
+      role=@views.TextRole::Body,
+      theme~,
+      width=bubble_width - 24.0,
+    ),
+  )
   @views.container(
     @views.row(
       [
@@ -81,11 +99,12 @@ fn assistant_message_row(
       ],
       align=@views.CrossAlign::Start,
     ),
-    width=width,
+    width~,
     padding=4.0,
   )
 }
 
+///|
 fn tool_result_row(
   tool_name : String,
   content : String,
@@ -111,7 +130,14 @@ fn tool_result_row(
     Some(b) => b
     None => content
   }
-  rows.push(@views.text(shown, role=@views.TextRole::Mono, theme~, width=card_width - 24.0))
+  rows.push(
+    @views.text(
+      shown,
+      role=@views.TextRole::Mono,
+      theme~,
+      width=card_width - 24.0,
+    ),
+  )
   @views.container(
     @views.row(
       [
@@ -126,11 +152,12 @@ fn tool_result_row(
       ],
       align=@views.CrossAlign::Start,
     ),
-    width=width,
+    width~,
     padding=4.0,
   )
 }
 
+///|
 fn runtime_notice_row(
   text_ : String,
   theme : @core.Theme,
@@ -140,18 +167,22 @@ fn runtime_notice_row(
     @views.row(
       [
         @views.spacer(),
-        @views
-          .text(text_, role=@views.TextRole::Caption, theme~, width=width - 16.0)
-          .foreground(theme.palette.muted),
+        @views.text(
+          text_,
+          role=@views.TextRole::Caption,
+          theme~,
+          width=width - 16.0,
+        ).foreground(theme.palette.muted),
         @views.spacer(),
       ],
       align=@views.CrossAlign::Center,
     ),
-    width=width,
+    width~,
     padding=4.0,
   )
 }
 
+///|
 fn terminal_row(
   status : TurnStatus,
   message : String,
@@ -168,15 +199,18 @@ fn terminal_row(
     @views.row(
       [
         @views.badge(label, tone~, theme~, width=64.0),
-        @views
-          .text(message, role=@views.TextRole::Caption, theme~, width=width - 96.0)
-          .foreground(theme.palette.muted),
+        @views.text(
+          message,
+          role=@views.TextRole::Caption,
+          theme~,
+          width=width - 96.0,
+        ).foreground(theme.palette.muted),
         @views.spacer(),
       ],
       spacing=8.0,
       align=@views.CrossAlign::Center,
     ),
-    width=width,
+    width~,
     padding=4.0,
   )
 }

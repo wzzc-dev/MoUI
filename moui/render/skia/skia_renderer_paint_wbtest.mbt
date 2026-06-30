@@ -1,7 +1,8 @@
 ///|
 test "skia renderer paints blend and saturation filter pixels" {
   guard skia_available() else { return () }
-  let saturation_available = @skia_native.ColorFilter::saturation(0.0) is Some(_)
+  let saturation_available = @skia_native.ColorFilter::saturation(0.0)
+    is Some(_)
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
     @render.RendererSurfaceMetrics::from_logical(
@@ -71,9 +72,7 @@ test "skia renderer paints blend and saturation filter pixels" {
       skia_test_region_has_matching_pixel(
         frame,
         @core.Rect::new(x=20.0, y=4.0, width=8.0, height=8.0),
-        (r, g, b, a) => {
-          a > 0 && r > 150 && g < 100 && b < 100
-        },
+        (r, g, b, a) => a > 0 && r > 150 && g < 100 && b < 100,
       ),
     )
   }

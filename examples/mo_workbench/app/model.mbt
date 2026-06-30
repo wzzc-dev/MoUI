@@ -1,5 +1,6 @@
 // Slimmed-down Model / Msg / ChatMessage for the Codex-style workbench.
 
+///|
 /// A single rendered chat message (UI projection of `AgentEvent`).
 pub(all) enum ChatMessage {
   User(String)
@@ -9,6 +10,7 @@ pub(all) enum ChatMessage {
   Terminal(TurnStatus, String)
 }
 
+///|
 /// Appearance mode for the workbench chrome.
 pub(all) enum AppearanceMode {
   System
@@ -16,6 +18,7 @@ pub(all) enum AppearanceMode {
   Dark
 } derive(Eq, Debug)
 
+///|
 /// The workbench model. Deliberately small (~10 fields) compared to the old
 /// 30+ field WorkbenchModel.
 pub struct WorkbenchModel {
@@ -33,6 +36,7 @@ pub struct WorkbenchModel {
   backend : AgentBackendRuntime
 }
 
+///|
 fn WorkbenchModel::new(backend~ : AgentBackendRuntime) -> WorkbenchModel {
   {
     sessions: [],
@@ -50,6 +54,7 @@ fn WorkbenchModel::new(backend~ : AgentBackendRuntime) -> WorkbenchModel {
   }
 }
 
+///|
 /// Workbench messages. ~12 variants (down from 40+).
 pub(all) enum WorkbenchMsg {
   PromptChanged(String)
@@ -65,12 +70,14 @@ pub(all) enum WorkbenchMsg {
   ToggleAppearance
 }
 
+///|
 /// Public facade so the entrypoint can construct the program without touching
 /// the private model internals.
 pub struct MoWorkbenchApp {
   priv backend : AgentBackendRuntime
 }
 
+///|
 fn MoWorkbenchApp::new(backend~ : AgentBackendRuntime) -> MoWorkbenchApp {
   { backend, }
 }

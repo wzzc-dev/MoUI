@@ -1,5 +1,6 @@
 // Update loop: pure Model/Msg transitions + backend effect dispatch.
 
+///|
 /// Project an `AgentEvent` into the UI `ChatMessage` list and streaming state.
 /// Returns `(new_messages_appended, is_terminal, error_msg)`.
 fn project_agent_event(
@@ -10,8 +11,13 @@ fn project_agent_event(
     AssistantMessageAdded(content, reasoning) =>
       ([ChatMessage::Assistant(content, reasoning)], false, None)
     ToolResultAdded(tool_name, content, is_error, brief) =>
-      ([ChatMessage::ToolResult(tool_name, content, is_error, brief)], false, None)
-    RuntimeNoticeAdded(text) => ([ChatMessage::RuntimeNotice(text)], false, None)
+      (
+        [ChatMessage::ToolResult(tool_name, content, is_error, brief)],
+        false,
+        None,
+      )
+    RuntimeNoticeAdded(text) =>
+      ([ChatMessage::RuntimeNotice(text)], false, None)
     TurnTerminal(status, message) => {
       let err = match status {
         Failed => Some(message)
@@ -38,6 +44,7 @@ fn project_agent_event(
   }
 }
 
+///|
 /// The main update function.
 fn WorkbenchModel::update(
   self : WorkbenchModel,
@@ -49,18 +56,26 @@ fn WorkbenchModel::update(
     ClearError => ({ ..self, error: None }, @moui.Effect::none())
     ToggleAppearance => {
       let next = match self.appearance {
-      System => Light
-      Light => Dark
-      Dark => System
+        System => Light
+        Light => Dark
+        Dark => System
       }
       ({ ..self, appearance: next }, @moui.Effect::none())
     }
     ModelChanged(model) => {
-      let model = ({ ..self, current_model: model }, self.backend.effect([SetModel(model)], event => ReceiveAgentEvent(event)))
+      let model = (
+        { ..self, current_model: model },
+        self.backend.effect([SetModel(model)], event => ReceiveAgentEvent(event)),
+      )
       model
     }
     ThinkingChanged(thinking) => {
-      let model = ({ ..self, current_thinking: thinking }, self.backend.effect([SetThinking(thinking)], event => ReceiveAgentEvent(event)))
+      let model = (
+        { ..self, current_thinking: thinking },
+        self.backend.effect([SetThinking(thinking)], event => {
+          ReceiveAgentEvent(event)
+        }),
+      )
       model
     }
     SubmitPrompt => {
@@ -78,7 +93,12 @@ fn WorkbenchModel::update(
           is_streaming: true,
           error: None,
         }
-        (model, self.backend.effect([SendTask(task)], event => ReceiveAgentEvent(event)))
+        (
+          model,
+          self.backend.effect([SendTask(task)], event => {
+            ReceiveAgentEvent(event)
+          }),
+        )
       }
     }
     SubmitSteer => {
@@ -87,7 +107,10 @@ fn WorkbenchModel::update(
         (self, @moui.Effect::none())
       } else {
         let model = { ..self, steer_text: "" }
-        (model, self.backend.effect([Steer(text)], event => ReceiveAgentEvent(event)))
+        (
+          model,
+          self.backend.effect([Steer(text)], event => ReceiveAgentEvent(event)),
+        )
       }
     }
     NewSession => {
@@ -99,7 +122,12 @@ fn WorkbenchModel::update(
         error: None,
         prompt: "",
       }
-      (model, self.backend.effect([NewSession(name_prefix)], event => ReceiveAgentEvent(event)))
+      (
+        model,
+        self.backend.effect([NewSession(name_prefix)], event => {
+          ReceiveAgentEvent(event)
+        }),
+      )
     }
     SelectSession(id) => {
       let model = {
@@ -109,12 +137,18 @@ fn WorkbenchModel::update(
         error: None,
         active_session_id: Some(id),
       }
-      (model, self.backend.effect([SwitchSession(id)], event => ReceiveAgentEvent(event)))
+      (
+        model,
+        self.backend.effect([SwitchSession(id)], event => {
+          ReceiveAgentEvent(event)
+        }),
+      )
     }
-    ReceiveAgentEvent(event) => {
+    ReceiveAgentEvent(event) =>
       match event {
-        SessionListed(sessions) => ({ ..self, sessions }, @moui.Effect::none())
-        ActiveSessionChanged(id) => ({ ..self, active_session_id: Some(id) }, @moui.Effect::none())
+        SessionListed(sessions) => ({ ..self, sessions, }, @moui.Effect::none())
+        ActiveSessionChanged(id) =>
+          ({ ..self, active_session_id: Some(id) }, @moui.Effect::none())
         SessionRebuilt(items) => {
           // Replace the whole message list.
           let rebuilt : Array[ChatMessage] = []
@@ -144,6 +178,5 @@ fn WorkbenchModel::update(
           (model, @moui.Effect::none())
         }
       }
-    }
   }
 }

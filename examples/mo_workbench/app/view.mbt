@@ -1,5 +1,6 @@
 // Codex-style minimal layout: sidebar + main surface (top bar + message list + composer).
 
+///|
 /// The top-level view. Uses the environment for viewport size and theme.
 fn workbench_view(
   model : WorkbenchModel,
@@ -29,6 +30,7 @@ fn workbench_view(
 // Sidebar
 // ---------------------------------------------------------------------------
 
+///|
 fn sidebar_view(
   model : WorkbenchModel,
   theme : @core.Theme,
@@ -39,7 +41,12 @@ fn sidebar_view(
   // Brand
   rows.push(
     @views.padding_xy(
-      @views.text("Mo Workbench", role=@views.TextRole::Title, theme~, width=width - 32.0),
+      @views.text(
+        "Mo Workbench",
+        role=@views.TextRole::Title,
+        theme~,
+        width=width - 32.0,
+      ),
       horizontal=16.0,
       vertical=16.0,
     ),
@@ -60,9 +67,12 @@ fn sidebar_view(
   // Session list label
   rows.push(
     @views.padding_xy(
-      @views
-        .text("History", role=@views.TextRole::Overline, theme~, width=width - 32.0)
-        .foreground(theme.palette.muted),
+      @views.text(
+        "History",
+        role=@views.TextRole::Overline,
+        theme~,
+        width=width - 32.0,
+      ).foreground(theme.palette.muted),
       horizontal=16.0,
       vertical=12.0,
     ),
@@ -71,9 +81,12 @@ fn sidebar_view(
   if model.sessions.is_empty() {
     rows.push(
       @views.padding_xy(
-        @views
-          .text("No sessions yet", role=@views.TextRole::Caption, theme~, width=width - 32.0)
-          .foreground(theme.palette.muted),
+        @views.text(
+          "No sessions yet",
+          role=@views.TextRole::Caption,
+          theme~,
+          width=width - 32.0,
+        ).foreground(theme.palette.muted),
         horizontal=16.0,
         vertical=4.0,
       ),
@@ -108,16 +121,15 @@ fn sidebar_view(
       vertical=12.0,
     ),
   )
-  @views
-    .container(
-      @views.column(rows, spacing=0.0, align=@views.CrossAlign::Stretch),
-      width=width,
-      height=height,
-      background=sidebar_background(theme),
-    )
-    .border(hairline_border(theme))
+  @views.container(
+    @views.column(rows, spacing=0.0, align=@views.CrossAlign::Stretch),
+    width~,
+    height~,
+    background=sidebar_background(theme),
+  ).border(hairline_border(theme))
 }
 
+///|
 fn session_row(
   id : String,
   label : String,
@@ -131,11 +143,12 @@ fn session_row(
     prefix + label,
     on_click=WorkbenchMsg::SelectSession(id),
     variant=@views.ButtonVariant::Ghost,
-    width=width,
+    width~,
     height=36.0,
   )
 }
 
+///|
 fn appearance_label(appearance : AppearanceMode) -> String {
   match appearance {
     System => "Appearance: System"
@@ -148,6 +161,7 @@ fn appearance_label(appearance : AppearanceMode) -> String {
 // Main surface: top bar + message list + composer
 // ---------------------------------------------------------------------------
 
+///|
 fn main_surface(
   model : WorkbenchModel,
   theme : @core.Theme,
@@ -160,9 +174,9 @@ fn main_surface(
   @views.column(
     [
       top_bar(model, theme, width, top_bar_height),
-      @views.divider(theme=theme),
+      @views.divider(theme~),
       message_list(model, theme, width, list_height),
-      @views.divider(theme=theme),
+      @views.divider(theme~),
       composer(model, theme, width, composer_height),
     ],
     spacing=0.0,
@@ -170,6 +184,7 @@ fn main_surface(
   )
 }
 
+///|
 fn top_bar(
   model : WorkbenchModel,
   theme : @core.Theme,
@@ -198,25 +213,41 @@ fn top_bar(
     @views.row(
       [
         @views.padding_xy(
-          @views.badge(model_label, tone=@views.BadgeTone::Accent, theme~, width=80.0),
+          @views.badge(
+            model_label,
+            tone=@views.BadgeTone::Accent,
+            theme~,
+            width=80.0,
+          ),
           horizontal=0.0,
           vertical=0.0,
         ),
-        @views.badge(thinking_label, tone=@views.BadgeTone::Neutral, theme~, width=96.0),
+        @views.badge(
+          thinking_label,
+          tone=@views.BadgeTone::Neutral,
+          theme~,
+          width=96.0,
+        ),
         @views.spacer(),
-        @views.text(session_label, role=@views.TextRole::Label, theme~, width=160.0),
-        @views.presence_dot(status, theme=theme),
+        @views.text(
+          session_label,
+          role=@views.TextRole::Label,
+          theme~,
+          width=160.0,
+        ),
+        @views.presence_dot(status, theme~),
       ],
       spacing=12.0,
       align=@views.CrossAlign::Center,
     ),
-    width=width,
-    height=height,
+    width~,
+    height~,
     background=panel_background(theme),
     padding=12.0,
   )
 }
 
+///|
 fn message_list(
   model : WorkbenchModel,
   theme : @core.Theme,
@@ -229,23 +260,24 @@ fn message_list(
       @views.column(
         [
           @views.spacer(),
-          @views
-            .text("Start a new conversation", role=@views.TextRole::Subtitle, theme~, width=inner_width)
-            .foreground(theme.palette.muted),
-          @views
-            .text(
-              "Give the agent a task in the box below.",
-              role=@views.TextRole::Caption,
-              theme~,
-              width=inner_width,
-            )
-            .foreground(theme.palette.muted),
+          @views.text(
+            "Start a new conversation",
+            role=@views.TextRole::Subtitle,
+            theme~,
+            width=inner_width,
+          ).foreground(theme.palette.muted),
+          @views.text(
+            "Give the agent a task in the box below.",
+            role=@views.TextRole::Caption,
+            theme~,
+            width=inner_width,
+          ).foreground(theme.palette.muted),
           @views.spacer(),
         ],
         align=@views.CrossAlign::Center,
       ),
-      width=width,
-      height=height,
+      width~,
+      height~,
       padding=16.0,
     )
   } else {
@@ -257,16 +289,17 @@ fn message_list(
       @views.scroll_view(
         @views.list(rows, spacing=4.0),
         state=Some(model.scroll_state),
-        width=width,
-        height=height,
+        width~,
+        height~,
       ),
-      width=width,
-      height=height,
+      width~,
+      height~,
       padding=16.0,
     )
   }
 }
 
+///|
 fn composer(
   model : WorkbenchModel,
   theme : @core.Theme,
@@ -279,9 +312,12 @@ fn composer(
   match model.error {
     Some(err) =>
       rows.push(
-        @views
-          .text(err, role=@views.TextRole::Caption, theme~, width=input_width)
-          .foreground(theme.palette.danger),
+        @views.text(
+          err,
+          role=@views.TextRole::Caption,
+          theme~,
+          width=input_width,
+        ).foreground(theme.palette.danger),
       )
     None => ()
   }
@@ -337,8 +373,8 @@ fn composer(
   }
   @views.container(
     @views.column(rows, spacing=6.0, align=@views.CrossAlign::Stretch),
-    width=width,
-    height=height,
+    width~,
+    height~,
     background=panel_background(theme),
     padding=16.0,
   )
@@ -348,6 +384,7 @@ fn composer(
 // Helpers
 // ---------------------------------------------------------------------------
 
+///|
 fn truncate_text(text : String, max : Int) -> String {
   let chars = text.to_array()
   if chars.length() <= max {
