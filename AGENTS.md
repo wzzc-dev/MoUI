@@ -81,7 +81,7 @@ Feature proof coverage is tracked in
 [docs/feature-status-dashboard.md](docs/feature-status-dashboard.md). The
 `feature-proof-summary.yml` CI workflow generates a proof report after every
 `ci.yml` run; the `moui-skia-real-skia-pr-smoke.yml` workflow provides L2
-runtime proof on every PR (framework rendering depends on real Skia linking).
+runtime proof on every PR and push-to-main (framework rendering depends on real Skia linking).
 
 Use focused tests while editing. Before handoff, prefer the daily validation
 script:
