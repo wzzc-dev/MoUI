@@ -53,6 +53,18 @@ jobs:
                 r => r.head_sha === headSha
               );
               if (matchingCiRun) {
+                // If triggered by a non-ci.yml workflow (e.g. Skia smoke) and
+                // ci.yml hasn't completed yet, skip this run to avoid a race
+                // condition where ci.yml jobs have null conclusion and would
+                // be treated as "missing", failing the verification.
+                if (context.payload.workflow_run.name !== 'MoUI CI' &&
+                    matchingCiRun.status !== 'completed') {
+                  core.info('ci.yml run ' + matchingCiRun.id + ' is still ' +
+                            matchingCiRun.status + ' — skipping summary to ' +
+                            'avoid race condition. The summary will run again ' +
+                            'when ci.yml completes.');
+                  process.exit(0);
+                }
                 runId = matchingCiRun.id;
                 ciRun = matchingCiRun;
               } else {
@@ -100,6 +112,10 @@ jobs:
             // Only accept completed runs to avoid the race condition where ci.yml
             // finishes before Skia smoke is done (in-progress jobs have null
             // conclusion, which would mark L2 features as failed instead of skipped).
+            // Only successful runs are collected so that failed Skia smoke runs
+            // are treated as "skipped" (no proof) rather than "failed", keeping
+            // the verification focused on L1 gaps. Skia smoke failures are
+            // tracked by the Skia smoke workflow itself.
             try {
               const skiaRuns = await github.rest.actions.listWorkflowRuns({
                 owner, repo,

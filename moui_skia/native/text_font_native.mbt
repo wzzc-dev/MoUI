@@ -38,7 +38,6 @@ extern "C" fn native_font_count_text_utf8(
 ) -> Int = "moonbit_skia_font_count_text_utf8"
 
 ///|
-///|
 #borrow(font, text)
 extern "C" fn native_font_text_to_glyphs_utf8_value(
   font : FontHandle,
@@ -392,12 +391,8 @@ pub fn Font::text_to_glyphs_utf8(self : Font, text : Bytes) -> Array[GlyphId] {
     let count = native_font_count_text_utf8(self.handle, text)
     let glyphs : Array[GlyphId] = Array::new(capacity=count)
     for i in 0..<count {
-      let value = native_font_text_to_glyphs_utf8_value(
-        self.handle, text, i,
-      )
-      glyphs.push(
-        GlyphId::new(value.clamp(min=0, max=65535).to_uint16()),
-      )
+      let value = native_font_text_to_glyphs_utf8_value(self.handle, text, i)
+      glyphs.push(GlyphId::new(value.clamp(min=0, max=65535).to_uint16()))
     }
     glyphs
   }
@@ -410,11 +405,17 @@ pub fn Font::glyph_width(self : Font, glyph : GlyphId) -> Float {
 
 ///|
 pub fn Font::glyph_widths(self : Font, glyphs : Array[GlyphId]) -> Array[Float] {
-  if glyphs.is_empty() {
-    []
-  } else {
-    native_font_glyph_widths(self.handle, glyphs)
+  // Build the result in MoonBit rather than calling the C batch function
+  // native_font_glyph_widths. The C function returns MoonbitSkiaFloatArray*
+  // (a regular object with a buffer pointer), whose memory layout is
+  // incompatible with MoonBit's Array[Float] (a val array with inline data
+  // and length stored in the object header meta). Calling it directly causes
+  // garbage lengths and data to be read, failing the native smoke test.
+  let widths : Array[Float] = Array::new(capacity=glyphs.length())
+  for glyph in glyphs {
+    widths.push(self.glyph_width(glyph))
   }
+  widths
 }
 
 ///|
@@ -453,14 +454,15 @@ pub fn Font::text_glyph_x_positions_utf8(
   text : Bytes,
   origin? : Float = 0.0,
 ) -> Array[Float] {
+  // Build the result in MoonBit rather than calling the C batch function
+  // native_font_text_glyph_x_positions_utf8. The C function returns
+  // MoonbitSkiaFloatArray* whose memory layout is incompatible with
+  // MoonBit's Array[Float] (val array with inline data).
   if text.is_empty() {
     []
   } else {
-    native_font_text_glyph_x_positions_utf8(
-      self.handle,
-      text,
-      native_font_position_scalar(origin),
-    )
+    let glyphs = self.text_to_glyphs_utf8(text)
+    self.glyph_x_positions(glyphs, origin~)
   }
 }
 
@@ -470,11 +472,15 @@ pub fn Font::text_glyph_positions_utf8(
   text : Bytes,
   origin? : @skia.Point = @skia.Point::new(0.0, 0.0),
 ) -> Array[@skia.Point] {
+  // Build the result in MoonBit rather than calling the C batch function
+  // native_font_text_glyph_positions_utf8. The C function returns
+  // MoonbitSkiaPointArray* whose memory layout is incompatible with
+  // MoonBit's Array[@skia.Point].
   if text.is_empty() {
     []
   } else {
-    let origin = native_font_position_origin(origin)
-    native_font_text_glyph_positions_utf8(self.handle, text, origin.x, origin.y)
+    let glyphs = self.text_to_glyphs_utf8(text)
+    self.glyph_positions(glyphs, origin~)
   }
 }
 
@@ -494,11 +500,15 @@ pub fn Font::glyph_bounds_many(
   self : Font,
   glyphs : Array[GlyphId],
 ) -> Array[@skia.Rect] {
-  if glyphs.is_empty() {
-    []
-  } else {
-    native_font_glyph_bounds_many(self.handle, glyphs)
+  // Build the result in MoonBit rather than calling the C batch function
+  // native_font_glyph_bounds_many. The C function returns
+  // MoonbitSkiaRectArray* whose memory layout is incompatible with
+  // MoonBit's Array[@skia.Rect].
+  let bounds : Array[@skia.Rect] = Array::new(capacity=glyphs.length())
+  for glyph in glyphs {
+    bounds.push(self.glyph_bounds(glyph))
   }
+  bounds
 }
 
 ///|

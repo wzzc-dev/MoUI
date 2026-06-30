@@ -13,18 +13,38 @@ moonbit_skia_color_filter_is_null(MoonbitSkiaColorFilter* wrapper) {
 }
 
 extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaColorFilter*
-moonbit_skia_color_filter_matrix(MoonbitSkiaFloatArray* values) {
-  if (values == nullptr || values->buffer == nullptr || values->length != 20) {
+moonbit_skia_color_filter_matrix(void* values_obj) {
+  if (values_obj == nullptr) {
     return moonbit_skia_make_color_filter_wrapper(nullptr);
   }
-  for (int32_t i = 0; i < values->length; ++i) {
-    if (!std::isfinite(values->buffer[i])) {
+  // MoonBit may pass either a val array (Array[Float], inline data) or a
+  // regular object (MoonbitSkiaFloatArray, {length, buffer*}). Detect the
+  // kind and read accordingly.
+  const float* values_data = nullptr;
+  int32_t values_length;
+  if (Moonbit_object_kind(values_obj) == moonbit_BLOCK_KIND_VAL_ARRAY) {
+    values_length = Moonbit_array_length(values_obj);
+    values_data = static_cast<const float*>(values_obj);
+  } else {
+    MoonbitSkiaFloatArray* values =
+      static_cast<MoonbitSkiaFloatArray*>(values_obj);
+    values_length = values->length;
+    if (values->buffer == nullptr) {
+      return moonbit_skia_make_color_filter_wrapper(nullptr);
+    }
+    values_data = values->buffer;
+  }
+  if (values_length != 20) {
+    return moonbit_skia_make_color_filter_wrapper(nullptr);
+  }
+  for (int32_t i = 0; i < values_length; ++i) {
+    if (!std::isfinite(values_data[static_cast<size_t>(i)])) {
       return moonbit_skia_make_color_filter_wrapper(nullptr);
     }
   }
 #if defined(MOUI_SKIA_HAS_SKIA) && \
   (defined(MOUI_SKIA_HAS_LEGACY_COLOR_FILTER) || defined(MOUI_SKIA_HAS_CORE_COLOR_FILTER))
-  sk_sp<SkColorFilter> filter = SkColorFilters::Matrix(values->buffer);
+  sk_sp<SkColorFilter> filter = SkColorFilters::Matrix(values_data);
   if (!filter) {
     return moonbit_skia_make_color_filter_wrapper(nullptr);
   }
