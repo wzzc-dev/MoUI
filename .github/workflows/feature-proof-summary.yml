@@ -56,8 +56,21 @@ jobs:
               run_id: runId,
             });
             const status = {};
+            // Map display names to short keys used by generate-feature-proof-report.mjs
+            const jobNameToKey = {
+              "Core conformance": "conformance",
+              "Public API surface": "api-surface",
+              "Linux platform contracts": "linux-platform",
+              "macOS packaging smoke": "macos-packaging",
+              "Benchmark scaffold": "benchmark-scaffold",
+              "Windows MSVC native smoke": "windows-native",
+              "macOS real-Skia smoke": "macos-real-skia",
+              "Linux real-Skia smoke": "linux-real-skia",
+              "Windows real-Skia smoke": "windows-real-skia",
+            };
             for (const job of ciJobs.data.jobs) {
-              status[job.name] = job.conclusion;
+              const key = jobNameToKey[job.name] ?? job.name;
+              status[key] = job.conclusion;
             }
 
             // Collect moui-skia-real-skia-pr-smoke.yml job statuses (runs on every PR)
@@ -76,7 +89,8 @@ jobs:
                   run_id: skiaRun.id,
                 });
                 for (const job of skiaJobs.data.jobs) {
-                  status[job.name] = job.conclusion;
+                  const key = jobNameToKey[job.name] ?? job.name;
+                  status[key] = job.conclusion;
                 }
               }
             } catch (e) {
