@@ -1,16 +1,13 @@
 ///|
 fn main {
-  let app = @app.MoWorkbenchApp::new()
-  let transport_owner = @native_transport.PiNativeTransportOwner::new(
-    @native_transport.PiNativeTransportConfig::pi(),
-    session_id="moui-skia",
-  )
+  // Stub backend: echoes a canned assistant reply so the UI is fully
+  // interactive without an LLM. Replace with the openseek backend once the
+  // upstream mooncakes resolution bug is fixed.
+  let backend = @app.AgentBackendRuntime::stub()
   let runtime = @runtime.new_program_with_dimensions(
-    program=app.program_with_agent_connectors(transport_owner.runtime(), [
-      @app.AgentConnectorRuntime::fixture(backend_id="acp-demo"),
-    ]),
-    width=1220.0,
-    height=780.0,
+    program=@app.program_with_backend(backend~),
+    width=980.0,
+    height=680.0,
   )
   let surface_route = if @env.get_env_var("MOUI_MACOS_SKIA_SURFACE_ROUTE") ==
     Some("metal-gpu") {
@@ -18,15 +15,9 @@ fn main {
   } else {
     @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute
   }
-  @async.run_async_main(() => {
-    @async.with_task_group(group => {
-      group.spawn_bg(allow_failure=true, () => transport_owner.run())
-      @macos_skia_backend.run_app_with_options_async_pump(
-        "Mo Workbench",
-        runtime,
-        options=@macos_skia_backend.MacosSkiaAppOptions::new(surface_route~),
-      )
-      transport_owner.shutdown()
-    })
-  })
+  @macos_skia_backend.run_app_with_options(
+    "Mo Workbench",
+    runtime,
+    options=@macos_skia_backend.MacosSkiaAppOptions::new(surface_route~),
+  )
 }
