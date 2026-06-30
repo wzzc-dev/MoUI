@@ -38,11 +38,13 @@ extern "C" fn native_font_count_text_utf8(
 ) -> Int = "moonbit_skia_font_count_text_utf8"
 
 ///|
+///|
 #borrow(font, text)
-extern "C" fn native_font_text_to_glyphs_utf8(
+extern "C" fn native_font_text_to_glyphs_utf8_value(
   font : FontHandle,
   text : Bytes,
-) -> Array[GlyphId] = "moonbit_skia_font_text_to_glyphs_utf8"
+  index : Int,
+) -> Int = "moonbit_skia_font_text_to_glyphs_utf8_value"
 
 ///|
 #borrow(font)
@@ -387,7 +389,17 @@ pub fn Font::text_to_glyphs_utf8(self : Font, text : Bytes) -> Array[GlyphId] {
   if text.is_empty() {
     []
   } else {
-    native_font_text_to_glyphs_utf8(self.handle, text)
+    let count = native_font_count_text_utf8(self.handle, text)
+    let glyphs : Array[GlyphId] = Array::new(capacity=count)
+    for i in 0..<count {
+      let value = native_font_text_to_glyphs_utf8_value(
+        self.handle, text, i,
+      )
+      glyphs.push(
+        GlyphId::new(value.clamp(min=0, max=65535).to_uint16()),
+      )
+    }
+    glyphs
   }
 }
 
