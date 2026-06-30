@@ -1,7 +1,6 @@
 ///|
 test "skia renderer paints blend and saturation filter pixels" {
   guard skia_available() else { return () }
-  let saturation_available = @skia_native.ColorFilter::saturation(0.0) is Some(_)
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
     @render.RendererSurfaceMetrics::from_logical(
@@ -34,14 +33,7 @@ test "skia renderer paints blend and saturation filter pixels" {
   ]) catch {
     err => fail("expected Skia blend/filter render: \{err.message()}")
   }
-  // When saturation filter is unavailable (Skia release header structure),
-  // the filter command is recorded as unsupported but rendering continues.
-  let unsupported = renderer.unsupported_command_count()
-  if saturation_available {
-    assert_true(unsupported == 0)
-  } else {
-    assert_true(unsupported == 1)
-  }
+  inspect(renderer.unsupported_command_count(), content="0")
   inspect(renderer.present_count(), content="1")
   guard renderer.last_frame() is Some(frame) else {
     fail("expected rendered frame")
@@ -53,30 +45,15 @@ test "skia renderer paints blend and saturation filter pixels" {
       (r, g, b, a) => a > 0 && r < 80 && g < 80 && b < 80,
     ),
   )
-  // When saturation filter is unavailable, the saturated region renders
-  // as plain red instead of grayscale. Accept either the saturated result
-  // (filtered) or the unfiltered red result.
-  if saturation_available {
-    assert_true(
-      skia_test_region_has_matching_pixel(
-        frame,
-        @core.Rect::new(x=20.0, y=4.0, width=8.0, height=8.0),
-        (r, g, b, a) => {
-          a > 0 && r > 25 && r < 120 && g > 25 && g < 120 && b > 25 && b < 120
-        },
-      ),
-    )
-  } else {
-    assert_true(
-      skia_test_region_has_matching_pixel(
-        frame,
-        @core.Rect::new(x=20.0, y=4.0, width=8.0, height=8.0),
-        (r, g, b, a) => {
-          a > 0 && r > 150 && g < 100 && b < 100
-        },
-      ),
-    )
-  }
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=20.0, y=4.0, width=8.0, height=8.0),
+      (r, g, b, a) => {
+        a > 0 && r > 25 && r < 120 && g > 25 && g < 120 && b > 25 && b < 120
+      },
+    ),
+  )
 }
 
 ///|
