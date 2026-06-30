@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
 
 jobs:
-	  macos-real-skia:
-	    name: macOS real-Skia smoke
-	    runs-on: macos-13
+  macos-real-skia:
+    name: macOS real-Skia smoke
+    runs-on: macos-13
     timeout-minutes: 30
     defaults:
       run:
