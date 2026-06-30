@@ -328,6 +328,7 @@ fn run_render_replay_smoke(
       !replay_stats.is_complete() {
       fail_smoke("native canvas replay stats did not match command list")
     }
+  }
   guard replay_surface.read_pixels(bounds=@skia.IRect::from_xywh(1, 1, 1, 1))
     is Some(replay_pixmap) else {
     fail_smoke("failed to read replay smoke pixels")
