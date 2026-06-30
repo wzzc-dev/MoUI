@@ -814,6 +814,11 @@
       "marker": "native smoke invalid shader filter replay filter resources"
     },
     {
+      "id": "filter.color-filters-available",
+      "area": "Filter",
+      "marker": "native smoke color filters available"
+    },
+    {
       "id": "filter.layer",
       "area": "Filter",
       "marker": "native smoke filter layer count"
@@ -1317,6 +1322,13 @@
       "marker": "native smoke paragraph hit test",
       "when_marker": "native smoke paragraph availability",
       "when_value": "1"
+    },
+    {
+      "id": "pipeline.color-filter-cache-resources",
+      "area": "Pipeline",
+      "marker": "native smoke render color filter cache resources",
+      "when_marker": "native smoke color filters available",
+      "when_value": "1"
     }
   ],
   "native_smoke_expected_values": [
@@ -1634,11 +1646,6 @@
       "id": "pipeline.typeface-cache-hits",
       "marker": "native smoke render typeface cache hits",
       "value": "0"
-    },
-    {
-      "id": "pipeline.color-filter-cache-resources",
-      "marker": "native smoke render color filter cache resources",
-      "value": "1"
     },
     {
       "id": "pipeline.color-filter-cache-misses",
