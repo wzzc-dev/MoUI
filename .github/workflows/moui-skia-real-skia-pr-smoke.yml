@@ -1,0 +1,237 @@
+name: MoUI Skia Real-Skia PR Smoke
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  macos-real-skia:
+    name: macOS real-Skia smoke
+    runs-on: macos-14
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: moui_skia
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up MoonBit
+        uses: ./.github/actions/setup-moonbit
+
+      - name: Update MoonBit registry
+        shell: bash
+        run: ../scripts/ci-moon-update.sh
+
+      - name: Cache release Skia
+        uses: actions/cache@v4
+        with:
+          path: moui_skia/.skia-cache/release
+          key: release-skia-macos-static-${{ runner.arch }}-${{ hashFiles('moui_skia/skia-provider-lock.json') }}
+          restore-keys: |
+            release-skia-macos-static-${{ runner.arch }}-
+            release-skia-macos-static-
+            release-skia-macos-
+
+      - name: Run macOS real-Skia smoke (release provider)
+        shell: bash
+        run: |
+          mkdir -p logs
+          bash scripts/macos-accept-real-skia-smoke.sh \
+            --log-dir logs \
+            --skia-provider release \
+            --link-mode static
+
+      - name: Verify native smoke success marker
+        if: ${{ always() }}
+        shell: bash
+        run: bash scripts/verify-native-smoke-log.sh logs/macos-native-smoke-output.log
+
+      - name: Verify acceptance summary
+        if: ${{ always() }}
+        shell: bash
+        run: bash scripts/verify-acceptance-log.sh logs/macos-real-skia-acceptance.log
+
+      - name: Upload smoke log
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-real-skia-pr-smoke
+          path: |
+            moui_skia/logs/macos-real-skia-smoke.log
+            moui_skia/logs/macos-native-smoke-output.log
+            moui_skia/logs/macos-real-skia-acceptance.log
+          if-no-files-found: warn
+
+      - name: Verify package files restored
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          if [[ -f native/moon.pkg.smoke.bak ]]; then
+            echo "native/moon.pkg smoke backup is still present" >&2
+            exit 1
+          fi
+          if [[ -f scripts/native_smoke/moon.pkg.smoke.bak ]]; then
+            echo "scripts/native_smoke/moon.pkg smoke backup is still present" >&2
+            exit 1
+          fi
+          git diff --exit-code -- native/moon.pkg scripts/native_smoke/moon.pkg
+
+  linux-real-skia:
+    name: Linux real-Skia smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: moui_skia
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install Linux smoke dependencies
+        shell: bash
+        run: bash scripts/install-linux-smoke-deps.sh
+
+      - name: Set up MoonBit
+        uses: ./.github/actions/setup-moonbit
+
+      - name: Update MoonBit registry
+        shell: bash
+        run: ../scripts/ci-moon-update.sh
+
+      - name: Cache release Skia
+        uses: actions/cache@v4
+        with:
+          path: moui_skia/.skia-cache/release
+          key: release-skia-linux-static-${{ runner.arch }}-${{ hashFiles('moui_skia/skia-provider-lock.json') }}
+          restore-keys: |
+            release-skia-linux-static-${{ runner.arch }}-
+            release-skia-linux-static-
+            release-skia-linux-
+
+      - name: Run Linux real-Skia smoke (release provider)
+        shell: bash
+        run: |
+          mkdir -p logs
+          bash scripts/linux-accept-real-skia-smoke.sh \
+            --log-dir logs \
+            --skia-provider release \
+            --link-mode static
+
+      - name: Verify native smoke success marker
+        if: ${{ always() }}
+        shell: bash
+        run: bash scripts/verify-native-smoke-log.sh logs/linux-native-smoke-output.log
+
+      - name: Verify acceptance summary
+        if: ${{ always() }}
+        shell: bash
+        run: bash scripts/verify-acceptance-log.sh logs/linux-real-skia-acceptance.log
+
+      - name: Upload smoke log
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-real-skia-pr-smoke
+          path: |
+            moui_skia/logs/linux-real-skia-smoke.log
+            moui_skia/logs/linux-native-smoke-output.log
+            moui_skia/logs/linux-real-skia-acceptance.log
+          if-no-files-found: warn
+
+      - name: Verify package files restored
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          if [[ -f native/moon.pkg.smoke.bak ]]; then
+            echo "native/moon.pkg smoke backup is still present" >&2
+            exit 1
+          fi
+          if [[ -f scripts/native_smoke/moon.pkg.smoke.bak ]]; then
+            echo "scripts/native_smoke/moon.pkg smoke backup is still present" >&2
+            exit 1
+          fi
+          git diff --exit-code -- native/moon.pkg scripts/native_smoke/moon.pkg
+
+  windows-real-skia:
+    name: Windows real-Skia smoke
+    runs-on: windows-2022
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: moui_skia
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up MoonBit
+        uses: ./.github/actions/setup-moonbit
+
+      - name: Update MoonBit registry
+        shell: bash
+        run: ../scripts/ci-moon-update.sh
+
+      - name: Run Windows MSVC real-Skia smoke (release provider)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path logs | Out-Null
+          $envLines = .\scripts\fetch-release-skia.ps1 `
+            -Platform windows `
+            -Arch auto `
+            -Config Release `
+            -LinkMode static `
+            -PrintEnv
+          $envMap = @{}
+          foreach ($line in $envLines) {
+            if ($line -match '^([^=]+)=(.*)$') {
+              $envMap[$Matches[1]] = $Matches[2]
+            }
+          }
+          $args = @{
+            LogDir = "logs"
+            SkiaRoot = $envMap["MOUI_SKIA_SKIA_ROOT"]
+            SkiaInclude = $envMap["MOUI_SKIA_SKIA_INCLUDE"]
+            SkiaLibDir = $envMap["MOUI_SKIA_SKIA_LIB_DIR"]
+            SkiaProvider = "release"
+            SkiaLinkMode = $envMap["MOUI_SKIA_LINK_MODE"]
+            SkiaCommit = $envMap["MOUI_SKIA_SKIA_COMMIT"]
+            SkiaPackage = $envMap["MOUI_SKIA_SKIA_PACKAGE"]
+            SkiaPackageSha256 = $envMap["MOUI_SKIA_SKIA_PACKAGE_SHA256"]
+          }
+          .\scripts\windows-msvc-accept-real-skia-smoke.ps1 @args
+
+      - name: Verify native smoke success marker
+        if: ${{ always() }}
+        shell: pwsh
+        run: .\scripts\verify-native-smoke-log.ps1 -LogPath logs\windows-native-smoke-output.log
+
+      - name: Verify acceptance summary
+        if: ${{ always() }}
+        shell: pwsh
+        run: .\scripts\verify-acceptance-log.ps1 -LogPath logs\windows-real-skia-acceptance.log
+
+      - name: Upload smoke log
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-real-skia-pr-smoke
+          path: |
+            moui_skia/logs/windows-real-skia-smoke.log
+            moui_skia/logs/windows-native-smoke-output.log
+            moui_skia/logs/windows-real-skia-acceptance.log
+          if-no-files-found: warn
+
+      - name: Verify package files restored
+        if: ${{ always() }}
+        shell: pwsh
+        run: |
+          if (Test-Path -LiteralPath native/moon.pkg.smoke.bak) {
+            throw "native/moon.pkg smoke backup is still present"
+          }
+          if (Test-Path -LiteralPath scripts/native_smoke/moon.pkg.smoke.bak) {
+            throw "scripts/native_smoke/moon.pkg smoke backup is still present"
+          }
+          git diff --exit-code -- native/moon.pkg scripts/native_smoke/moon.pkg
