@@ -179,6 +179,8 @@ fn run_shader_filter_smoke(
   // tests still execute.
   let native_color_filter = @native.ColorFilter::saturation(0.8)
   let has_native_color_filters = native_color_filter is Some(_)
+  println("native smoke color filters available")
+  println(if has_native_color_filters { 1 } else { 0 })
   if has_native_color_filters {
     let color_filter = native_color_filter.unwrap()
     match (@native.ImageFilter::blur(1.0, 1.0), @native.MaskFilter::blur(1.0)) {

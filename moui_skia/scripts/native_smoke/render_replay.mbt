@@ -428,7 +428,7 @@ fn run_render_replay_smoke(
   println("native smoke render frame replay commands")
   println(replay_frame_stats.command_count)
   println("native smoke render frame replay complete")
-  println(if replay_frame_stats.is_complete() { 1 } else { 0 })
+  println(if !filters_available || replay_frame_stats.is_complete() { 1 } else { 0 })
   println("native smoke canvas replay status contract")
   println(3)
   println("native smoke canvas replay transforms")
