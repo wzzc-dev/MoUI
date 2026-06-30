@@ -7,208 +7,116 @@ import {
 }
 
 // Values
-pub fn program() -> @core.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg]
-
-pub fn program_with_agent_connectors(PiTransportRuntime, Array[AgentConnectorRuntime]) -> @core.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg]
-
-pub fn program_with_transport(PiTransportRuntime) -> @core.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg]
+pub fn program_with_backend(backend~ : AgentBackendRuntime) -> @core.Program[WorkbenchModel, WorkbenchMsg]
 
 // Errors
 
 // Types and methods
-type AgentActivityQueueItem derive(Eq, @debug.Debug)
-
-type AgentActivityQueueKind derive(Eq, @debug.Debug)
-
-type AgentBackendCapabilities derive(Eq, @debug.Debug)
-
-type AgentBackendProfile derive(Eq, @debug.Debug)
-
-type AgentBackendStatus derive(Eq, @debug.Debug)
-
-type AgentBackendTransportKind derive(Eq, @debug.Debug)
-
-type AgentCatalogItemKind derive(Eq, @debug.Debug)
-
-type AgentCommandInfo derive(Eq, @debug.Debug)
-
-type AgentComposerRequestSummary derive(Eq, @debug.Debug)
-
-type AgentComposerRouteSummary derive(Eq, @debug.Debug)
-
-pub(all) enum AgentConnectorCommand {
-  StartConnectorSession(String, String)
-  RefreshConnectorSession(String)
-  NewConnectorSession(String)
-  SendConnectorMessage(String, String)
-  InvokeConnectorCommand(String, String)
-  CancelConnectorRun(String)
-  ShutdownConnector
-} derive(Eq, @debug.Debug)
-pub fn AgentConnectorCommand::label(Self) -> String
-
-pub(all) enum AgentConnectorEvent {
-  ConnectorProfileLoaded(String, AgentConnectorProfile)
-  ConnectorSessionBound(String, String, String, String)
-  ConnectorCommandSent(String, String)
-  ConnectorAssistantMessage(String, String, String)
-  ConnectorRunCompleted(String)
-  ConnectorTransportFailed(String, String)
-} derive(Eq, @debug.Debug)
-pub fn AgentConnectorEvent::backend_id(Self) -> String
-
-pub(all) struct AgentConnectorProfile {
-  backend_id : String
-  aid : String
-  name : String
-  description : String
-  protocol_label : String
-  endpoint : String
-  capabilities : Array[String]
-} derive(Eq, @debug.Debug)
-pub fn AgentConnectorProfile::acp_demo() -> Self
-pub fn AgentConnectorProfile::new(backend_id~ : String, aid? : String, name~ : String, description? : String, protocol_label? : String, endpoint? : String, capabilities? : Array[String]) -> Self
-
-pub struct AgentConnectorRuntime {
-  // private fields
+pub struct AgentBackendFixture {
+  dispatched : Array[AgentCommand]
+  script : (AgentCommand) -> Array[AgentEvent]
 }
-pub fn AgentConnectorRuntime::backend_id(Self) -> String
-pub fn AgentConnectorRuntime::dispatch(Self, Array[AgentConnectorCommand], (AgentConnectorEvent) -> Unit) -> Unit
-pub fn[Msg] AgentConnectorRuntime::effect(Self, Array[AgentConnectorCommand], (AgentConnectorEvent) -> Msg) -> @core.Effect[Msg]
-pub fn AgentConnectorRuntime::fixture(backend_id? : String) -> Self
-pub fn AgentConnectorRuntime::is_available(Self) -> Bool
-pub fn AgentConnectorRuntime::new(backend_id~ : String, run~ : (Array[AgentConnectorCommand], (AgentConnectorEvent) -> Unit) -> Unit) -> Self
-pub fn AgentConnectorRuntime::unavailable(backend_id~ : String, reason? : String) -> Self
 
-type AgentConnectorState derive(Eq, @debug.Debug)
+pub struct AgentBackendRuntime {
+  run : (Array[AgentCommand], (AgentEvent) -> Unit) -> Unit
+}
+pub fn[Msg] AgentBackendRuntime::effect(Self, Array[AgentCommand], (AgentEvent) -> Msg) -> @core.Effect[Msg]
+pub fn AgentBackendRuntime::stub() -> Self
 
-type AgentConnectorStatus derive(Eq, @debug.Debug)
+pub(all) enum AgentCommand {
+  SendTask(String)
+  Steer(String)
+  NewSession(String)
+  SwitchSession(String)
+  SetModel(ModelChoice)
+  SetThinking(ThinkingChoice)
+  FetchSessionList
+  Shutdown
+}
 
-type AgentEvent derive(Eq, @debug.Debug)
+pub(all) enum AgentEvent {
+  UserMessageAdded(String)
+  AssistantMessageAdded(String, String?)
+  ToolResultAdded(String, String, Bool, String?)
+  RuntimeNoticeAdded(String)
+  TurnTerminal(TurnStatus, String)
+  ProgressNotice(String)
+  SessionRebuilt(Array[AgentEvent])
+  SessionListed(Array[SessionSummary])
+  ActiveSessionChanged(String)
+}
 
-type AgentForkPoint derive(Eq, @debug.Debug)
+pub(all) enum AppearanceMode {
+  System
+  Light
+  Dark
+} derive(Eq, @debug.Debug)
 
-type AgentInputSettings derive(Eq, @debug.Debug)
-
-type AgentModelInfo derive(Eq, @debug.Debug)
-
-type AgentProviderRegistryItem derive(Eq, @debug.Debug)
-
-type AgentProviderSwitchSummary derive(Eq, @debug.Debug)
-
-type AgentRequestKind derive(Eq, @debug.Debug)
-
-type AgentRequestSummary derive(Eq, @debug.Debug)
-
-type AgentRunOverview derive(Eq, @debug.Debug)
-
-type AgentRuntimeSignal derive(Eq, @debug.Debug)
-
-type AgentSessionBinding derive(Eq, @debug.Debug)
-
-type AgentSessionMetrics derive(Eq, @debug.Debug)
-
-type AgentStatusBarSummary derive(Eq, @debug.Debug)
-
-type AgentTimelineItem derive(Eq, @debug.Debug)
-
-type CommandRun derive(Eq, @debug.Debug)
-
-type DiagnosticItem derive(Eq, @debug.Debug)
-
-type DiffOverview derive(Eq, @debug.Debug)
-
-type FileContext derive(Eq, @debug.Debug)
+pub(all) enum ChatMessage {
+  User(String)
+  Assistant(String, String?)
+  ToolResult(String, String, Bool, String?)
+  RuntimeNotice(String)
+  Terminal(TurnStatus, String)
+}
 
 pub struct MoWorkbenchApp {
-  unit : Unit
-}
-pub fn MoWorkbenchApp::new() -> Self
-pub fn MoWorkbenchApp::program(Self) -> @core.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg]
-pub fn MoWorkbenchApp::program_with_agent_connectors(Self, PiTransportRuntime, Array[AgentConnectorRuntime]) -> @core.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg]
-pub fn MoWorkbenchApp::program_with_transport(Self, PiTransportRuntime) -> @core.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg]
-
-pub struct MoWorkbenchProgramModel {
   // private fields
 }
+pub fn MoWorkbenchApp::program_with_backend(Self) -> @core.Program[WorkbenchModel, WorkbenchMsg]
 
-pub struct MoWorkbenchProgramMsg {
-  // private fields
-}
-
-type PiAgentSnapshot derive(Eq, @debug.Debug)
-
-type PiCommandInfo derive(Eq, @debug.Debug)
-
-type PiForkMessage derive(Eq, @debug.Debug)
-
-type PiModelInfo derive(Eq, @debug.Debug)
-
-type PiRpcSnapshot derive(Eq, @debug.Debug)
-
-type PiSessionBinding derive(Eq, @debug.Debug)
-
-type PiSessionStatsSnapshot derive(Eq, @debug.Debug)
-
-pub(all) enum PiTransportCommand {
-  StartRpc(String, String)
-  NewRpcSession(String)
-  SwitchRpcSession(String, String)
-  FetchRpcAvailableModels(String)
-  FetchRpcMessages(String)
-  FetchRpcForkMessages(String)
-  FetchRpcCommands(String)
-  FetchRpcSessionStats(String)
-  ForkRpcSession(String, String)
-  ExportRpcSessionHtml(String, String)
-  SetRpcModel(String, String, String)
-  CycleRpcModel(String)
-  CompactRpcSession(String, String)
-  CycleRpcThinkingLevel(String)
-  SetRpcSteeringMode(String, String)
-  SetRpcFollowUpMode(String, String)
-  SetRpcSessionName(String, String)
-  SendUserInput(String, String)
-  SendSteeringInput(String, String)
-  SendFollowUpInput(String, String)
-  RunShellCommand(String, String)
-  CancelShellCommand(String)
-  CancelRpcRun(String)
-  Shutdown
-} derive(Eq, @debug.Debug)
-pub fn PiTransportCommand::label(Self) -> String
-
-pub(all) enum PiTransportEvent {
-  ProcessStarted(String)
-  JsonLineSent(String, String)
-  JsonLineReceived(String, String)
-  ProcessStderr(String, String)
-  ProcessExited(Int)
-  TransportFailed(String)
+pub(all) enum ModelChoice {
+  V4Flash
+  V4Pro
 } derive(Eq, @debug.Debug)
 
-type PiTransportKind derive(Eq, @debug.Debug)
+pub struct SessionSummary {
+  id : String
+  first_prompt : String
+  last_active_unix_seconds : Int64?
+} derive(Eq, @debug.Debug)
 
-pub struct PiTransportRuntime {
-  // private fields
+pub(all) enum ThinkingChoice {
+  No
+  High
+  Max
+} derive(Eq, @debug.Debug)
+
+pub(all) enum TurnStatus {
+  Finished
+  Aborted
+  Interrupted
+  Failed
+} derive(Eq, @debug.Debug)
+
+pub struct WorkbenchModel {
+  sessions : Array[SessionSummary]
+  active_session_id : String?
+  messages : Array[ChatMessage]
+  prompt : String
+  steer_text : String
+  is_streaming : Bool
+  current_model : ModelChoice
+  current_thinking : ThinkingChoice
+  error : String?
+  appearance : AppearanceMode
+  scroll_state : @core.ScrollState
+  backend : AgentBackendRuntime
 }
-pub fn PiTransportRuntime::dispatch(Self, Array[PiTransportCommand], (PiTransportEvent) -> Unit) -> Unit
-pub fn[Msg] PiTransportRuntime::effect(Self, Array[PiTransportCommand], (PiTransportEvent) -> Msg) -> @core.Effect[Msg]
-pub fn PiTransportRuntime::fixture(events~ : (Array[PiTransportCommand]) -> Array[PiTransportEvent]) -> Self
-pub fn PiTransportRuntime::new(run~ : (Array[PiTransportCommand], (PiTransportEvent) -> Unit) -> Unit) -> Self
-pub fn PiTransportRuntime::unavailable(reason? : String) -> Self
 
-type PiTransportState derive(Eq, @debug.Debug)
-
-type PiTransportStatus derive(Eq, @debug.Debug)
-
-type PlanStep derive(Eq, @debug.Debug)
-
-type TranscriptItem derive(Eq, @debug.Debug)
-
-type WorkbenchMsg derive(Eq, @debug.Debug)
-
-type WorkbenchSession derive(Eq, @debug.Debug)
+pub(all) enum WorkbenchMsg {
+  PromptChanged(String)
+  SubmitPrompt
+  SteerChanged(String)
+  SubmitSteer
+  NewSession
+  SelectSession(String)
+  ModelChanged(ModelChoice)
+  ThinkingChanged(ThinkingChoice)
+  ReceiveAgentEvent(AgentEvent)
+  ClearError
+  ToggleAppearance
+}
 
 // Type aliases
 
