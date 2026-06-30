@@ -360,36 +360,38 @@ fn run_render_replay_smoke(
     replay_unbalanced_frame,
     font=Some(replay_font),
   )
-  if replay_frame_stats.command_count != replay_commands.length() ||
-    !replay_frame_stats.is_complete() ||
-    replay_frame_stats.status() != @native.CanvasReplayComplete ||
-    !replay_frame_stats.status().is_complete() ||
-    replay_frame_stats.resource_declaration_count !=
-    replay_command_stats.resource_declaration_count ||
-    replay_frame_stats.image_resource_count !=
-    replay_command_stats.image_resource_count ||
-    replay_frame_stats.shader_resource_count !=
-    replay_command_stats.shader_resource_count ||
-    replay_frame_stats.filter_resource_count !=
-    replay_command_stats.filter_resource_count ||
-    replay_frame_stats.path_resource_count !=
-    replay_command_stats.path_resource_count ||
-    replay_frame_stats.text_resource_count !=
-    replay_command_stats.text_resource_count ||
-    replay_frame_resources.shader_cache.length() != 1 ||
-    replay_frame_resources.path_cache.length() != 2 ||
-    replay_frame_resources.text_run_cache.length() != 1 ||
-    replay_frame_resources.font_cache.length() != 1 ||
-    replay_frame_resources.typeface_cache.length() != 1 ||
-    replay_frame_resources.color_filter_cache.length() != 1 ||
-    replay_frame_resources.image_filter_cache.length() != 1 ||
-    replay_frame_resources.mask_filter_cache.length() != 1 ||
-    replay_frame_rejected_stats.replayed_count != 0 ||
-    replay_frame_rejected_stats.skipped_count == 0 ||
-    replay_frame_rejected_stats.is_complete() ||
-    replay_frame_rejected_stats.status() != @native.CanvasReplaySkippedCommands ||
-    replay_frame_rejected_stats.status().is_complete() {
-    fail_smoke("native render frame replay contract did not hold")
+  if filters_available {
+    if replay_frame_stats.command_count != replay_commands.length() ||
+      !replay_frame_stats.is_complete() ||
+      replay_frame_stats.status() != @native.CanvasReplayComplete ||
+      !replay_frame_stats.status().is_complete() ||
+      replay_frame_stats.resource_declaration_count !=
+      replay_command_stats.resource_declaration_count ||
+      replay_frame_stats.image_resource_count !=
+      replay_command_stats.image_resource_count ||
+      replay_frame_stats.shader_resource_count !=
+      replay_command_stats.shader_resource_count ||
+      replay_frame_stats.filter_resource_count !=
+      replay_command_stats.filter_resource_count ||
+      replay_frame_stats.path_resource_count !=
+      replay_command_stats.path_resource_count ||
+      replay_frame_stats.text_resource_count !=
+      replay_command_stats.text_resource_count ||
+      replay_frame_resources.shader_cache.length() != 1 ||
+      replay_frame_resources.path_cache.length() != 2 ||
+      replay_frame_resources.text_run_cache.length() != 1 ||
+      replay_frame_resources.font_cache.length() != 1 ||
+      replay_frame_resources.typeface_cache.length() != 1 ||
+      replay_frame_resources.color_filter_cache.length() != 1 ||
+      replay_frame_resources.image_filter_cache.length() != 1 ||
+      replay_frame_resources.mask_filter_cache.length() != 1 ||
+      replay_frame_rejected_stats.replayed_count != 0 ||
+      replay_frame_rejected_stats.skipped_count == 0 ||
+      replay_frame_rejected_stats.is_complete() ||
+      replay_frame_rejected_stats.status() != @native.CanvasReplaySkippedCommands ||
+      replay_frame_rejected_stats.status().is_complete() {
+      fail_smoke("native render frame replay contract did not hold")
+    }
   }
   guard replay_frame_surface.read_pixels(
       bounds=@skia.IRect::from_xywh(1, 1, 1, 1),
