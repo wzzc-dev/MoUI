@@ -1,6 +1,8 @@
-name: MoUI Skia Real-Skia PR Smoke
+name: MoUI Skia Real-Skia Smoke
 
 on:
+  push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 

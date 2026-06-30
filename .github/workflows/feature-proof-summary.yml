@@ -2,7 +2,7 @@ name: MoUI Feature Proof Summary
 
 on:
   workflow_run:
-    workflows: ["MoUI CI"]
+    workflows: ["MoUI CI", "MoUI Skia Real-Skia Smoke"]
     types: [completed]
   workflow_dispatch:
     inputs:
@@ -29,16 +29,39 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
 
-            // Determine which ci.yml run to summarize
+            // Determine head SHA from the triggering workflow_run, or from
+            // workflow_dispatch inputs, or fall back to the latest ci.yml run.
+            let headSha;
             let runId;
+            let ciRun;
+
             if (context.eventName === 'workflow_dispatch' && '${{ inputs.ci_run_id }}' !== '') {
               runId = parseInt('${{ inputs.ci_run_id }}');
+              ciRun = await github.rest.actions.getWorkflowRun({
+                owner, repo, run_id: runId,
+              });
+              headSha = ciRun.data.head_sha;
             } else if (context.payload.workflow_run) {
-              runId = context.payload.workflow_run.id;
+              headSha = context.payload.workflow_run.head_sha;
+              // Find the ci.yml run for this SHA
+              const ciRuns = await github.rest.actions.listWorkflowRuns({
+                owner, repo,
+                workflow_id: 'ci.yml',
+                per_page: 10,
+              });
+              const matchingCiRun = ciRuns.data.workflow_runs.find(
+                r => r.head_sha === headSha
+              );
+              if (matchingCiRun) {
+                runId = matchingCiRun.id;
+                ciRun = matchingCiRun;
+              } else {
+                core.setFailed('No ci.yml run found for SHA ' + headSha);
+                return;
+              }
             } else {
               const runs = await github.rest.actions.listWorkflowRuns({
-                owner,
-                repo,
+                owner, repo,
                 workflow_id: 'ci.yml',
                 per_page: 1,
               });
@@ -47,13 +70,13 @@ jobs:
                 return;
               }
               runId = runs.data.workflow_runs[0].id;
+              ciRun = runs.data.workflow_runs[0];
+              headSha = ciRun.head_sha;
             }
 
             // Collect ci.yml job statuses
             const ciJobs = await github.rest.actions.listJobsForWorkflowRun({
-              owner,
-              repo,
-              run_id: runId,
+              owner, repo, run_id: runId,
             });
             const status = {};
             // Map display names to short keys used by generate-feature-proof-report.mjs
@@ -73,30 +96,22 @@ jobs:
               status[key] = job.conclusion;
             }
 
-            const run = await github.rest.actions.getWorkflowRun({
-              owner,
-              repo,
-              run_id: runId,
-            });
-            const headSha = run.data.head_sha;
-
-            // Collect moui-skia-real-skia-pr-smoke.yml job statuses for the same SHA
+            // Collect completed Skia smoke job statuses for the same SHA.
+            // Only accept completed runs to avoid the race condition where ci.yml
+            // finishes before Skia smoke is done (in-progress jobs have null
+            // conclusion, which would mark L2 features as failed instead of skipped).
             try {
               const skiaRuns = await github.rest.actions.listWorkflowRuns({
-                owner,
-                repo,
+                owner, repo,
                 workflow_id: 'moui-skia-real-skia-pr-smoke.yml',
                 per_page: 10,
               });
-              // Find the run that matches our head SHA (Skia smoke only runs on PRs,
-              // so it won't exist for push-to-main — that's expected)
               const matchingSkiaRun = skiaRuns.data.workflow_runs.find(
-                r => r.head_sha === headSha
+                r => r.head_sha === headSha && r.conclusion === "success"
               );
               if (matchingSkiaRun) {
                 const skiaJobs = await github.rest.actions.listJobsForWorkflowRun({
-                  owner,
-                  repo,
+                  owner, repo,
                   run_id: matchingSkiaRun.id,
                 });
                 for (const job of skiaJobs.data.jobs) {
@@ -110,7 +125,7 @@ jobs:
 
             core.setOutput('status', JSON.stringify(status));
             core.setOutput('run_id', String(runId));
-            core.setOutput('html_url', run.data.html_url);
+            core.setOutput('html_url', ciRun.html_url);
 
       - name: Generate feature proof report
         env:

@@ -140,7 +140,7 @@ Proof levels:
 
 - **L1** (every PR, `ci.yml`): API/algorithm/protocol correctness via package
   tests.
-- **L2** (every PR, `moui-skia-real-skia-pr-smoke.yml`): real Skia runtime
+- **L2** (every PR and push-to-main, `moui-skia-real-skia-pr-smoke.yml`): real Skia runtime
   behavior on macOS/Linux/Windows matching hosts.
 - **L3** (`feature-proof-summary.yml`): all required L1 and L2 passed.
 

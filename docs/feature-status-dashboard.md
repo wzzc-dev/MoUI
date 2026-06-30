@@ -16,7 +16,7 @@ workflow run.
 | Level | CI workflow | Trigger | What it proves |
 |-------|------------|---------|---------------|
 | L1 | `ci.yml` | Every PR | API/algorithm/protocol correctness (no real renderer) |
-| L2 | `moui-skia-real-skia-pr-smoke.yml` | Every PR | Real Skia runtime behavior on matching host |
+| L2 | `moui-skia-real-skia-pr-smoke.yml` | Every PR and push-to-main | Real Skia runtime behavior on matching host |
 | L3 | `feature-proof-summary.yml` | After `ci.yml` completes | All required L1 and L2 passed |
 
 ## Renderer Feature Proof Status
