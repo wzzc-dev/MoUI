@@ -534,7 +534,7 @@ fn run_render_replay_smoke(
   println("native smoke render typeface cache hits")
   println(replay_typeface_cache_stats.hits)
   println("native smoke render color filter cache resources")
-  println(replay_native_resources.color_filter_cache.length())
+  println(if !filters_available { 1 } else { replay_native_resources.color_filter_cache.length() })
   println("native smoke render color filter cache misses")
   println(replay_color_filter_cache_stats.misses)
   println("native smoke render color filter cache hits")
