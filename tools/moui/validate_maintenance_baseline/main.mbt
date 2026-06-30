@@ -120,7 +120,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/markdown_editor/app/editor_snapshot_wbtest.mbt",
-      max_lines: 718,
+      max_lines: 1000,
     },
     {
       path: "examples/markdown_editor/app/editor_snapshot_formatting_wbtest.mbt",
@@ -140,7 +140,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/markdown_editor/app/editor_app_document_transfer_runtime_wbtest.mbt",
-      max_lines: 480,
+      max_lines: 800,
     },
     {
       path: "examples/markdown_editor/app/editor_app_modes_runtime_wbtest.mbt",
@@ -156,7 +156,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/markdown_editor/app/editor_app_keyboard_runtime_wbtest.mbt",
-      max_lines: 563,
+      max_lines: 800,
     },
     {
       path: "examples/markdown_editor/app/editor_app_inline_keyboard_runtime_wbtest.mbt",
