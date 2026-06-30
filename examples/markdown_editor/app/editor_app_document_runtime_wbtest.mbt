@@ -347,11 +347,20 @@ test "markdown editor chrome renders document workflow state" {
   app.load_document_for_test("# Plan", path="/tmp/plan.md")
   app.edit_document("# Plan\n\nNext")
   let commands = app.runtime(width=980.0, height=640.0).draw_commands()
+  // Chrome renders the document title (filename) and save state as separate
+  // text elements after the status bar redesign (e337e41d).
   assert_true(
     commands.any(command => {
       match command {
-        @core.DrawCommand::DrawText({ text, .. }) =>
-          text.contains("plan.md / Unsaved")
+        @core.DrawCommand::DrawText({ text, .. }) => text.contains("plan.md")
+        _ => false
+      }
+    }),
+  )
+  assert_true(
+    commands.any(command => {
+      match command {
+        @core.DrawCommand::DrawText({ text, .. }) => text.contains("Unsaved")
         _ => false
       }
     }),

@@ -193,7 +193,8 @@ fn MarkdownEditorApp::reactive_root(
     fixed_height = fixed_height + theme.spacing_scale.sm * aux_count.to_double()
   }
   let viewport_height = markdown_editor_max_double(
-    320.0, window_height - fixed_height,
+    320.0,
+    window_height - fixed_height,
   )
   self.root(viewport_height~)
 }

@@ -52,6 +52,7 @@ pub struct MarkdownEditorApp {
   undo_stack : @core.State[Array[MarkdownEditorHistoryEntry]]
   redo_stack : @core.State[Array[MarkdownEditorHistoryEntry]]
   editor_scroll : @core.ScrollState
+  file_tree_scroll : @core.ScrollState
   // private fields
 }
 pub fn MarkdownEditorApp::action_commands(Self, services? : @host.HostAppServices) -> @core.ActionCommandMap
@@ -116,11 +117,6 @@ pub enum MarkdownEditorMsg {
   DismissAuxiliaryPanels
   ToggleSourcePreview
   ToggleSourceMode
-  ToggleMenuBarMenu(String)
-  CloseMenuBarMenu
-  CloseMenuBarMenuAndRun(MarkdownEditorMsg)
-  ToggleDarkMode
-  CycleFontFamily
   DismissToastTick
   AutosaveTick
   ResolvePendingConfirm(MarkdownEditorConfirmResolution)
