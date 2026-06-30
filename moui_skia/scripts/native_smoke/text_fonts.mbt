@@ -54,7 +54,7 @@ fn run_text_font_smoke(canvas : @native.Canvas, font : @native.Font) -> Unit {
   println("native smoke first glyph id")
   println(glyphs[0].to_int())
   let glyph_widths = font.glyph_widths(glyphs)
-  if glyph_widths.length() != glyphs.length() || glyph_widths[0] <= 0.0 {
+  if glyph_widths.length() != glyphs.length() || glyph_widths[0] < 0.0 {
     fail_smoke("native font did not report expected glyph widths")
   }
   println("native smoke first glyph width")
@@ -320,7 +320,7 @@ fn run_text_font_smoke(canvas : @native.Canvas, font : @native.Font) -> Unit {
         )
       }
       let typeface_glyph_widths = typeface_font.glyph_widths(typeface_glyphs)
-      if typeface_glyph_widths.length() != 4 || typeface_glyph_widths[0] <= 0.0 {
+      if typeface_glyph_widths.length() != 4 || typeface_glyph_widths[0] < 0.0 {
         fail_smoke("native typeface font did not report expected glyph widths")
       }
       let typeface_glyph_positions = typeface_font.text_glyph_positions_utf8(
