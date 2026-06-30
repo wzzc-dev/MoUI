@@ -22,17 +22,16 @@ fn SkiaRasterRenderer::draw_text(
       let saved = canvas.save()
       canvas.clip_rect(skia_rect(placement.clip), anti_alias=true)
       for segment in layout.segments {
-        canvas.draw_glyphs(
-          segment.glyph_run.glyphs,
-          segment.glyph_run.positions,
-          segment.font,
-          skia_paint(run.color),
-          origin=@moui_skia.Point::new(
+        canvas.draw_text_utf8(
+          @utf8.encode(segment.text[:], bom=false),
+          @moui_skia.Point::new(
             Float::from_double(
               placement.origin.x.to_double() + segment.x_offset,
             ),
             placement.origin.y,
           ),
+          segment.font,
+          skia_paint(run.color),
         )
       }
       canvas.restore_to_count(saved)
