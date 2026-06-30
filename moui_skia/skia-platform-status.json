@@ -1641,6 +1641,11 @@
       "value": "0"
     },
     {
+      "id": "pipeline.color-filter-cache-resources",
+      "marker": "native smoke render color filter cache resources",
+      "value": "1"
+    },
+    {
       "id": "pipeline.color-filter-cache-misses",
       "marker": "native smoke render color filter cache misses",
       "value": "1"
