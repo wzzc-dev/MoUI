@@ -144,9 +144,11 @@ Renderer feature status is tracked in code and documentation:
 - `render/capabilities.mbt`
 - `render/capabilities_test.mbt`
 - `docs/renderer-capability-report.md`
+- `docs/feature-proof-matrix.md` (feature-to-CI proof mapping)
+- `docs/feature-status-dashboard.md` (proof coverage dashboard)
 
 When image, clip, opacity, transform, or other draw command support changes,
-update all three files together.
+update all five files together.
 
 Current priorities:
 
