@@ -72,7 +72,7 @@ the local workspace members in `moon.work`:
 
 ```moonbit
 import {
-  "wzzc-dev/window@0.5.1-0.1.4",
+  "wzzc-dev/window@0.5.1-0.1.6",
   "wzzc-dev/moui_skia@0.1.4",
 }
 ```
@@ -151,11 +151,26 @@ and Git submodules such as `.agents/skills/moonbit-skills` and `window`. Then
 run `moon update` so registry dependencies are refreshed. `moui_skia` updates
 with the main MoUI checkout.
 
-The `window` submodule is a `moon.work` workspace member, so MoonBit resolves
-`wzzc-dev/window` from the local `./window` checkout instead of the mooncake
-registry. Keep the submodule on its `moui-support` branch and commit window
-changes in the submodule first, then bump the submodule pointer in the MoUI
-repository.
+The `window` submodule is **not** a `moon.work` workspace member by default.
+MoonBit resolves `wzzc-dev/window` from mooncakes.io (the published version
+pinned in each consumer's `moon.mod`). The `window/` submodule checkout exists
+only so developers can switch to local-source dev mode when they need to edit
+window source and validate changes inside MoUI before publishing.
+
+To edit window source locally:
+
+```sh
+sh scripts/window-dev-mode.sh on      # add ./window to moon.work (local override)
+# edit window/ source; moon test/run picks up changes immediately
+sh scripts/window-dev-mode.sh off     # remove ./window; resolve from mooncakes.io
+```
+
+`scripts/validate-window-dependency.mjs` (run by `dev-check.sh` and CI) fails
+if `moon.work` lists `./window` on the main branch, so the default state stays
+on the published dependency. After publishing a new window version, update the
+pinned version in `moui/moon.mod`, `moui_skia/moon.mod`, `moui_webview/moon.mod`,
+and `examples/markdown_editor/moon.mod`, then run `moon update` to refresh the
+registry cache.
 
 On Windows, use the repository update helper:
 
@@ -164,7 +179,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\update_repositories.p
 ```
 
 The `moui_skia` workspace member is updated by the root repository pull; the
-window dependency resolves from the `window` submodule checkout.
+window dependency resolves from mooncakes.io (or from the `window` submodule
+checkout when dev mode is on).
 
 ## Validation
 
