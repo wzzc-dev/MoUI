@@ -551,7 +551,9 @@ test "markdown editor click on empty table cell returns range start without cras
       _ => ()
     }
   }
-  guard header_frame is Some(frame) else { fail("expected rendered header A cell") }
+  guard header_frame is Some(frame) else {
+    fail("expected rendered header A cell")
+  }
   // 数据行在 header 下方约 2 * row_height 处。row_height = base.size * 1.9 ≈ 26.6。
   // 点击 header frame 下方 50px 处的左侧 cell 应命中数据行第一列空 cell。
   runtime.dispatch_event(

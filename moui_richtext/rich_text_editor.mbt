@@ -516,14 +516,15 @@ fn[Msg] markdown_session_editor_event(
       rich_text_keyboard_event(
         ctx,
         value~,
-        format=_source =>
+        format=_source => {
           session.rich_text(
             selection,
             base=font,
             source_mode~,
             focus_mode~,
             base_dir~,
-          ),
+          )
+        },
         font~,
         on_input=None,
         on_input_edit=Some(on_input_edit),
@@ -2681,8 +2682,12 @@ fn rich_text_vertical_target_offset(
     block_index = document.blocks.length() - 1
     let last_block = document.blocks[block_index]
     visual_line = rich_text_block_visual_line_count(last_block) - 1
-    let last_line_height = rich_text_block_line_height(last_block, base_font, text_system)
-    let last_block_height = last_line_height + last_block.inset.top + last_block.inset.bottom
+    let last_line_height = rich_text_block_line_height(
+      last_block, base_font, text_system,
+    )
+    let last_block_height = last_line_height +
+      last_block.inset.top +
+      last_block.inset.bottom
     y = y - last_block_height
   }
   let block = document.blocks[block_index]
@@ -2690,7 +2695,8 @@ fn rich_text_vertical_target_offset(
   let line_height = rich_text_block_line_height(block, base_font, text_system)
   let block_top = y
   let frame_top = y + block.inset.top
-  let line_center_y = if visual_line >= 0 && visual_line < rich_text_block_visual_line_count(block) {
+  let line_center_y = if visual_line >= 0 &&
+    visual_line < rich_text_block_visual_line_count(block) {
     frame_top + (visual_line.to_double() + 0.5) * step
   } else {
     caret_rect.origin.y + caret_rect.size.height * 0.5
@@ -2709,17 +2715,32 @@ fn rich_text_vertical_target_offset(
       line_center_y + step
     }
   }
-  let target_point = @core.Point::new(x=caret_rect.origin.x + caret_rect.size.width * 0.5, y=target_y)
-  match rich_text_document_source_offset_at_point(
-    document, target_point, content, base_font, text_system,
-  ) {
+  let target_point = @core.Point::new(
+    x=caret_rect.origin.x + caret_rect.size.width * 0.5,
+    y=target_y,
+  )
+  match
+    rich_text_document_source_offset_at_point(
+      document, target_point, content, base_font, text_system,
+    ) {
     Some(offset) =>
       if offset != source_caret {
         offset
       } else {
-        rich_text_vertical_block_boundary_offset(document, block_index, source_caret, up~)
+        rich_text_vertical_block_boundary_offset(
+          document,
+          block_index,
+          source_caret,
+          up~,
+        )
       }
-    None => rich_text_vertical_block_boundary_offset(document, block_index, source_caret, up~)
+    None =>
+      rich_text_vertical_block_boundary_offset(
+        document,
+        block_index,
+        source_caret,
+        up~,
+      )
   }
 }
 
@@ -2797,14 +2818,23 @@ fn[Msg] rich_text_vertical_caret_move_result(
   extend~ : Bool,
   on_selection_change : ((Int, @core.TextRange?) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {
-  let display_text = rich_text_with_composition(text, ctx.text_control, focused=true)
+  let display_text = rich_text_with_composition(
+    text,
+    ctx.text_control,
+    focused=true,
+  )
   let visual_caret = @core.clamp_int(
     rich_text_visual_caret(text, ctx.text_control, focused=true),
     0,
     text_length(display_text),
   )
   let caret_rect = rich_text_document_caret_rect_or_plain(
-    document, visual_caret, content, font, ctx.text_system, display_text,
+    document,
+    visual_caret,
+    content,
+    font,
+    ctx.text_system,
+    display_text,
   )
   let target_offset = rich_text_vertical_target_offset(
     document,
@@ -3360,9 +3390,10 @@ fn rich_text_document_source_offset_at_point(
       height=line_height,
     )
     if point.y < y + block_height {
-      match rich_text_block_table_source_offset_at_point(
-        block, point, frame, base_font, text_system,
-      ) {
+      match
+        rich_text_block_table_source_offset_at_point(
+          block, point, frame, base_font, text_system,
+        ) {
         Some(offset) => return Some(offset)
         None => ()
       }
@@ -4340,11 +4371,7 @@ fn rich_text_block_table_source_offset_at_point(
             local_offset = boundaries.nearest_boundary(chars.length())
           }
           Some(
-            @core.clamp_int(
-              range.start + local_offset,
-              range.start,
-              range.end,
-            ),
+            @core.clamp_int(range.start + local_offset, range.start, range.end),
           )
         }
         None => None
@@ -4422,7 +4449,8 @@ fn rich_text_block_table_caret_rect(
       0,
       column_count - 1,
     )
-    let caret_before_first_cell = match first_row[first_col_index].source_range {
+    let caret_before_first_cell = match
+      first_row[first_col_index].source_range {
       Some(range) => source_caret < range.start
       None => false
     }
@@ -4477,10 +4505,16 @@ fn rich_text_block_table_caret_rect(
   match cell.source_range {
     Some(range) => {
       // local_offset = source_caret 相对 cell.source_range.start 的偏移，钳到 [0, text.length]。
-      let local_offset = @core.clamp_int(source_caret - range.start, 0, cell.text.to_array().length())
+      let local_offset = @core.clamp_int(
+        source_caret - range.start,
+        0,
+        cell.text.to_array().length(),
+      )
       // prefix 宽度。
       let chars = cell.text.to_array()
-      let prefix = String::from_array(chars[0:@core.clamp_int(local_offset, 0, chars.length())])
+      let prefix = String::from_array(
+        chars[0:@core.clamp_int(local_offset, 0, chars.length())],
+      )
       let prefix_width = rich_text_width(prefix, cell_font, text_system)
       // 按 align 计算 text_x（与点击映射对称）。
       let text_width = rich_text_width(cell.text, cell_font, text_system)
@@ -4490,11 +4524,7 @@ fn rich_text_block_table_caret_rect(
         TextCenter => text_frame.origin.x + (inner_width - text_width) / 2.0
         TextEnd => text_frame.origin.x + inner_width - text_width
       }
-      rich_text_cursor_rect_at(
-        text_x + prefix_width,
-        text_frame,
-        cell_font,
-      )
+      rich_text_cursor_rect_at(text_x + prefix_width, text_frame, cell_font)
     }
     None => rich_text_cursor_rect_at(text_frame.origin.x, text_frame, cell_font)
   }

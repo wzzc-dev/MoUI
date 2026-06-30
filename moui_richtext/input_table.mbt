@@ -91,7 +91,7 @@ fn markdown_editor_complete_table_header_on_enter(
     while next_end < chars.length() && chars[next_end] != '\n' {
       next_end = next_end + 1
     }
-    let next_line = String::from_array(chars[range.end + 1 : next_end])
+    let next_line = String::from_array(chars[range.end + 1:next_end])
     if markdown_editor_table_separator_line(next_line) {
       return None
     }
