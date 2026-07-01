@@ -74,6 +74,22 @@ For task-specific workflows, use the repo-local skills:
   Prefer app-level overrides (Strategy A/B in the doc) over framework edits;
   if a framework edit is unavoidable, update the doc in the same change.
 
+## Pre-push Check
+
+Before pushing any commit, run the same CI validation checks locally to avoid
+CI failures:
+
+```sh
+node scripts/validate-maintenance-baseline.mjs
+node scripts/validate-api-surface.mjs
+```
+
+A common CI failure is `node scripts/validate-maintenance-baseline.mjs`
+complaining about unexpected test files (e.g.
+`moui/backend/host/host_async_image_loader_test.mbt`). When this happens,
+either register the new test in the maintenance baseline or revert the change
+before pushing. Run `sh scripts/dev-check.sh` for the full pre-push suite.
+
 ## Validation
 
 Feature proof coverage is tracked in
