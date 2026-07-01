@@ -256,6 +256,10 @@ test "macos skia deferred native source completes through decode helper" {
 }
 
 ///|
+///|
+extern "C" fn usleep(microseconds : Int) -> Int = "usleep"
+
+///|
 test "macos skia async image background_io confirmed" {
   guard @skia_renderer.skia_available() else { return () }
   let path = "/tmp/moui-bg-io-test-macos.png"
@@ -273,6 +277,7 @@ test "macos skia async image background_io confirmed" {
       result = r
       break
     }
+    let _ = usleep(1000)
   }
   guard result.length() >= 24 else {
     fail("expected result with 24-byte header, got \{result.length()} bytes")
