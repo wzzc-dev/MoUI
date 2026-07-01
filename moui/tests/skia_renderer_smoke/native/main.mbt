@@ -249,6 +249,28 @@ fn assert_region_has_purpleish_pixel(
 }
 
 ///|
+/// Checks the magenta rect that is expected to be darkened by a Brightness
+/// filter. When ColorFilter is unavailable (release Skia binaries may omit
+/// SkColorFilter.h), the filter is a no-op and the rect stays at full
+/// magenta (255, 0, 255), so we widen the predicate accordingly.
+fn assert_region_has_brightness_filtered_magenta_pixel(
+  frame : @skia_renderer.SkiaPixelFrame,
+  rect : @core.Rect,
+) -> Unit {
+  let predicate = if color_filters_available() {
+    (r, g, b, a) => a > 0 && r > 70 && r < 210 && b > 70 && b < 230 && g < 150
+  } else {
+    (r, g, b, a) => a > 0 && r > 200 && b > 200 && g < 100
+  }
+  if region_has_pixel_matching(frame, rect, predicate) {
+    return ()
+  }
+  fail_smoke(
+    "MoUI Skia smoke region did not contain a brightness-filtered magenta pixel",
+  )
+}
+
+///|
 fn assert_region_has_no_dark_pixel(
   frame : @skia_renderer.SkiaPixelFrame,
   rect : @core.Rect,
@@ -966,7 +988,7 @@ fn run_renderer_diagnostic_pixel_smoke() -> Unit {
         frame,
         @core.Rect::new(x=52.0, y=28.0, width=4.0, height=8.0),
       )
-      assert_region_has_purpleish_pixel(
+      assert_region_has_brightness_filtered_magenta_pixel(
         frame,
         @core.Rect::new(x=76.0, y=12.0, width=16.0, height=16.0),
       )
