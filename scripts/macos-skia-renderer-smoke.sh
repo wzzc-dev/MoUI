@@ -1201,6 +1201,11 @@ if ! grep -Fq "MoUI Skia async image second-frame smoke passed" "$smoke_log"; th
   exit 1
 fi
 echo "Verified MoUI Skia async image second-frame marker."
+if ! grep -Fq "MoUI Skia async image deferred-completion smoke passed" "$smoke_log"; then
+  echo "MoUI Skia renderer smoke did not report async image deferred-completion marker" >&2
+  exit 1
+fi
+echo "Verified MoUI Skia async image deferred-completion marker."
 if [[ $run_gpu_smoke -eq 1 ]]; then
   if ! grep -Fq "MoUI Skia GPU Metal renderer smoke passed route=metal-gpu surface_gpu=true present_count=1 pixel-markers" "$smoke_log"; then
     echo "MoUI Skia renderer smoke did not report the Metal GPU route" >&2
@@ -1253,8 +1258,11 @@ if [[ $run_text_emoji_smoke -eq 1 ]]; then
   text_emoji_required_markers=(
     "MoUI renderer smoke colorEmojiPixels passed high-saturation-pixels glyph-or-raster font-metadata glyph-metadata fallback-request emoji-hint stable-glyph-key"
     "MoUI renderer smoke zwjGrapheme passed single-grapheme-cluster no-interior-caret"
+    "MoUI renderer smoke colorEmojiVariants passed keycap regional-indicator skin-tone-modifier glyph-metadata fallback-request"
     "MoUI renderer smoke paragraphWrapping passed engine=skparagraph native_paragraph_ready=true line-metrics later-line-pixels"
     "MoUI renderer smoke bidiLayout passed engine=skparagraph bidi_visual_order_ready=true visual-order"
+    "MoUI renderer smoke bidiLayoutArabic passed engine=skparagraph bidi_visual_order_ready=true visual-order arabic"
+    "MoUI renderer smoke bidiLayoutMixed passed engine=skparagraph bidi_visual_order_ready=true visual-order mixed-direction"
     "MoUI renderer smoke selectionRects passed engine=skparagraph selection-rects line-range rect-geometry hit-test"
     "MoUI renderer smoke graphemeEditing passed grapheme-boundaries edit-actions"
     "MoUI renderer smoke imeCandidateAnchor passed candidate-anchor surrounding-text grapheme-boundary utf8-offsets"

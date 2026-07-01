@@ -57,9 +57,9 @@ assert pixel markers and acceptance markers.
 | FilterEffect | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | Real blur/saturation/color-matrix pixels |
 | PathVector | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | Real path fill/stroke pixels |
 | ShaderEffect | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | Real procedural shader pixels |
-| TextShaping | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | Real SkShaper/SkParagraph shaping |
-| EmojiText | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | Real emoji cluster rendering |
-| AsyncImage | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | Real second-frame repaint after completion |
+| TextShaping | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | Real SkShaper/SkParagraph shaping, bidi Arabic/mixed-direction visual-order |
+| EmojiText | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | Real emoji cluster rendering, keycap/regional-indicator/skin-tone-modifier fallback |
+| AsyncImage | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | Real second-frame repaint after completion, deferred-completion via HostNativeAsyncImageSource |
 
 ## L3 Cross-Platform Consistency
 
@@ -76,9 +76,9 @@ coverage:
 
 | CI job | Artifact name | Content |
 |--------|--------------|---------|
-| `macos-real-skia` | `macos-real-skia-pr-smoke` | `moui_skia/logs/` |
-| `linux-real-skia` | `linux-real-skia-pr-smoke` | `moui_skia/logs/` |
-| `windows-real-skia` | `windows-real-skia-pr-smoke` | `moui_skia/logs/` |
+| `macos-real-skia` | `macos-real-skia-pr-smoke` | `moui_skia/logs/macos-*.log` (native/renderer/text-emoji/acceptance) |
+| `linux-real-skia` | `linux-real-skia-pr-smoke` | `moui_skia/logs/linux-*.log` (native/renderer/text-emoji/acceptance) |
+| `windows-real-skia` | `windows-real-skia-pr-smoke` | `moui_skia/logs/windows-*.log` (native/renderer/text-emoji/acceptance) |
 | `summarize` | `feature-proof-summary` | `artifacts/feature-proof/proof-report.json` + `.md` |
 
 ## Adding CI Proof For A New Feature

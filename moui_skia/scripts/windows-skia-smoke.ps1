@@ -7,6 +7,10 @@ param(
   [string] $ExtraCcFlags = $env:MOUI_SKIA_EXTRA_CC_FLAGS,
   [string] $ExtraLinkFlags = $env:MOUI_SKIA_EXTRA_LINK_FLAGS,
   [string] $SmokeLog = "",
+  [string] $RendererLog = "",
+  [string] $TextEmojiLog = "",
+  [switch] $RunRendererSmoke,
+  [switch] $RunTextEmojiSmoke,
   [switch] $DryRunConfig
 )
 
@@ -22,6 +26,10 @@ $nativePkg = Join-Path $repoRoot "native/moon.pkg"
 $backupPkg = "$nativePkg.smoke.bak"
 $smokePkg = Join-Path $repoRoot "scripts/native_smoke/moon.pkg"
 $smokeBackupPkg = "$smokePkg.smoke.bak"
+$rendererPkg = Join-Path $repoRoot "moui/tests/skia_renderer_smoke/native/moon.pkg"
+$rendererPkgBackup = "$rendererPkg.smoke.bak"
+$textEmojiPkg = Join-Path $repoRoot "moui/tests/skia_text_emoji_smoke/native/moon.pkg"
+$textEmojiPkgBackup = "$textEmojiPkg.smoke.bak"
 
 if ([string]::IsNullOrWhiteSpace($SkiaInclude) -or [string]::IsNullOrWhiteSpace($SkiaLibDir)) {
   throw "SkiaInclude and SkiaLibDir are required; pass -SkiaInclude/-SkiaLibDir or set MOUI_SKIA_SKIA_INCLUDE/MOUI_SKIA_SKIA_LIB_DIR"
@@ -54,6 +62,22 @@ if ($SmokeLog.Trim().Length -gt 0) {
     $resolvedSmokeLog = $SmokeLog
   } else {
     $resolvedSmokeLog = Join-Path $repoRoot $SmokeLog
+  }
+}
+$resolvedRendererLog = ""
+if ($RendererLog.Trim().Length -gt 0) {
+  if ([System.IO.Path]::IsPathRooted($RendererLog)) {
+    $resolvedRendererLog = $RendererLog
+  } else {
+    $resolvedRendererLog = Join-Path $repoRoot $RendererLog
+  }
+}
+$resolvedTextEmojiLog = ""
+if ($TextEmojiLog.Trim().Length -gt 0) {
+  if ([System.IO.Path]::IsPathRooted($TextEmojiLog)) {
+    $resolvedTextEmojiLog = $TextEmojiLog
+  } else {
+    $resolvedTextEmojiLog = Join-Path $repoRoot $TextEmojiLog
   }
 }
 
@@ -190,6 +214,177 @@ options(
         throw "native smoke executable did not print the expected success marker"
       }
       Write-Host "Verified native smoke success marker."
+
+      if ($RunRendererSmoke) {
+        $originalRendererPkg = Get-Content -LiteralPath $rendererPkg -Raw
+        Set-Content -LiteralPath $rendererPkgBackup -Value $originalRendererPkg -NoNewline
+        Write-Host "Backed up moui/tests/skia_renderer_smoke/native/moon.pkg to $rendererPkgBackup."
+        @"
+import {
+  "moonbitlang/core/encoding/base64",
+  "moonbitlang/core/env",
+  "moonbitlang/x/fs",
+  "wzzc-dev/moui_skia/native" @skia_native,
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/skia" @skia_renderer,
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "cc-link-flags": "$linkFlags",
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)
+"@ | Set-Content -LiteralPath $rendererPkg -NoNewline
+        Write-Host "Wrote temporary moui/tests/skia_renderer_smoke/native/moon.pkg with Windows Skia link flags."
+
+        $oldErrorActionPreference2 = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
+        try {
+          $env:MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM = "1"
+          $env:MOUI_SKIA_DISABLE_PREBUILD_SKIA = "1"
+          moon build moui/tests/skia_renderer_smoke/native --target native 2>&1 | ForEach-Object { Write-Host $_ }
+          $rendererBuildStatus = $LASTEXITCODE
+        } finally {
+          $ErrorActionPreference = $oldErrorActionPreference2
+        }
+        if ($rendererBuildStatus -ne 0) {
+          throw "moon build moui/tests/skia_renderer_smoke/native failed with exit code $rendererBuildStatus"
+        }
+        $rendererExe = Join-Path $repoRoot "_build/native/debug/build/wzzc-dev/moui/tests/skia_renderer_smoke/native/native.exe"
+        if (!(Test-Path -LiteralPath $rendererExe)) {
+          throw "MoUI Skia renderer smoke executable was not produced at $rendererExe"
+        }
+        if ($resolvedRendererLog.Length -eq 0) {
+          $resolvedRendererLog = Join-Path ([System.IO.Path]::GetTempPath()) "moui-skia-renderer-smoke-$PID.log"
+        } else {
+          $rendererLogDir = Split-Path -Parent $resolvedRendererLog
+          if ($rendererLogDir.Length -gt 0) {
+            New-Item -ItemType Directory -Force -Path $rendererLogDir | Out-Null
+          }
+        }
+        Set-Content -LiteralPath $resolvedRendererLog -Value "" -NoNewline
+        Write-Host "Running MoUI Skia renderer smoke executable: $rendererExe"
+        & $rendererExe 2>&1 | Tee-Object -FilePath $resolvedRendererLog
+        $rendererStatus = $LASTEXITCODE
+        if ($rendererStatus -ne 0) {
+          throw "MoUI Skia renderer smoke executable failed with exit code $rendererStatus"
+        }
+        if (!(Select-String -LiteralPath $resolvedRendererLog -SimpleMatch "MoUI Skia renderer smoke passed" -Quiet)) {
+          throw "MoUI Skia renderer smoke did not print the expected success marker"
+        }
+        Write-Host "Verified MoUI Skia renderer smoke success marker."
+        if (!(Select-String -LiteralPath $resolvedRendererLog -SimpleMatch "MoUI Skia async image second-frame smoke passed" -Quiet)) {
+          throw "MoUI Skia renderer smoke did not report async image second-frame repaint"
+        }
+        Write-Host "Verified MoUI Skia async image second-frame marker."
+        if (!(Select-String -LiteralPath $resolvedRendererLog -SimpleMatch "MoUI Skia async image deferred-completion smoke passed" -Quiet)) {
+          throw "MoUI Skia renderer smoke did not report async image deferred-completion marker"
+        }
+        Write-Host "Verified MoUI Skia async image deferred-completion marker."
+
+        Set-Content -LiteralPath $rendererPkg -Value $originalRendererPkg -NoNewline
+        Remove-Item -LiteralPath $rendererPkgBackup -ErrorAction SilentlyContinue
+        Write-Host "Restored moui/tests/skia_renderer_smoke/native/moon.pkg after renderer smoke."
+      }
+
+      if ($RunTextEmojiSmoke) {
+        $originalTextEmojiPkg = Get-Content -LiteralPath $textEmojiPkg -Raw
+        Set-Content -LiteralPath $textEmojiPkgBackup -Value $originalTextEmojiPkg -NoNewline
+        Write-Host "Backed up moui/tests/skia_text_emoji_smoke/native/moon.pkg to $textEmojiPkgBackup."
+        @"
+import {
+  "wzzc-dev/moui_skia/native" @skia_native,
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/skia" @skia_renderer,
+  "wzzc-dev/moui/views",
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "cc-link-flags": "$linkFlags",
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)
+"@ | Set-Content -LiteralPath $textEmojiPkg -NoNewline
+        Write-Host "Wrote temporary moui/tests/skia_text_emoji_smoke/native/moon.pkg with Windows Skia link flags."
+
+        $oldErrorActionPreference3 = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
+        try {
+          $env:MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM = "1"
+          $env:MOUI_SKIA_DISABLE_PREBUILD_SKIA = "1"
+          moon build moui/tests/skia_text_emoji_smoke/native --target native 2>&1 | ForEach-Object { Write-Host $_ }
+          $textEmojiBuildStatus = $LASTEXITCODE
+        } finally {
+          $ErrorActionPreference = $oldErrorActionPreference3
+        }
+        if ($textEmojiBuildStatus -ne 0) {
+          throw "moon build moui/tests/skia_text_emoji_smoke/native failed with exit code $textEmojiBuildStatus"
+        }
+        $textEmojiExe = Join-Path $repoRoot "_build/native/debug/build/wzzc-dev/moui/tests/skia_text_emoji_smoke/native/native.exe"
+        if (!(Test-Path -LiteralPath $textEmojiExe)) {
+          throw "MoUI Skia text/emoji smoke executable was not produced at $textEmojiExe"
+        }
+        if ($resolvedTextEmojiLog.Length -eq 0) {
+          $resolvedTextEmojiLog = Join-Path ([System.IO.Path]::GetTempPath()) "moui-skia-text-emoji-smoke-$PID.log"
+        } else {
+          $textEmojiLogDir = Split-Path -Parent $resolvedTextEmojiLog
+          if ($textEmojiLogDir.Length -gt 0) {
+            New-Item -ItemType Directory -Force -Path $textEmojiLogDir | Out-Null
+          }
+        }
+        Set-Content -LiteralPath $resolvedTextEmojiLog -Value "" -NoNewline
+        Write-Host "Running MoUI Skia text/emoji smoke executable: $textEmojiExe"
+        & $textEmojiExe 2>&1 | Tee-Object -FilePath $resolvedTextEmojiLog
+        $textEmojiStatus = $LASTEXITCODE
+        if ($textEmojiStatus -ne 0) {
+          throw "MoUI Skia text/emoji smoke executable failed with exit code $textEmojiStatus"
+        }
+        if (!(Select-String -LiteralPath $resolvedTextEmojiLog -SimpleMatch "MoUI Skia text/emoji smoke passed" -Quiet)) {
+          throw "MoUI Skia text/emoji smoke did not print the expected success marker"
+        }
+        Write-Host "Verified MoUI Skia text/emoji smoke success marker."
+
+        $textEmojiRequiredMarkers = @(
+          "MoUI renderer smoke colorEmojiPixels passed high-saturation-pixels glyph-or-raster font-metadata glyph-metadata fallback-request emoji-hint stable-glyph-key",
+          "MoUI renderer smoke zwjGrapheme passed single-grapheme-cluster no-interior-caret",
+          "MoUI renderer smoke colorEmojiVariants passed keycap regional-indicator skin-tone-modifier glyph-metadata fallback-request",
+          "MoUI renderer smoke paragraphWrapping passed engine=skparagraph native_paragraph_ready=true line-metrics later-line-pixels",
+          "MoUI renderer smoke bidiLayout passed engine=skparagraph bidi_visual_order_ready=true visual-order",
+          "MoUI renderer smoke bidiLayoutArabic passed engine=skparagraph bidi_visual_order_ready=true visual-order arabic",
+          "MoUI renderer smoke bidiLayoutMixed passed engine=skparagraph bidi_visual_order_ready=true visual-order mixed-direction",
+          "MoUI renderer smoke selectionRects passed engine=skparagraph selection-rects line-range rect-geometry hit-test",
+          "MoUI renderer smoke graphemeEditing passed grapheme-boundaries edit-actions",
+          "MoUI renderer smoke imeCandidateAnchor passed candidate-anchor surrounding-text grapheme-boundary utf8-offsets",
+          "MoUI renderer smoke imeCompositionVisual passed composition-range composition-cursor preedit-pixels"
+        )
+        foreach ($marker in $textEmojiRequiredMarkers) {
+          if (!(Select-String -LiteralPath $resolvedTextEmojiLog -SimpleMatch $marker -Quiet)) {
+            throw "MoUI Skia text/emoji smoke did not print renderer capability marker: $marker"
+          }
+        }
+        Write-Host "Verified MoUI Skia text/emoji renderer capability markers."
+
+        Set-Content -LiteralPath $textEmojiPkg -Value $originalTextEmojiPkg -NoNewline
+        Remove-Item -LiteralPath $textEmojiPkgBackup -ErrorAction SilentlyContinue
+        Write-Host "Restored moui/tests/skia_text_emoji_smoke/native/moon.pkg after text/emoji smoke."
+      }
     } finally {
       Pop-Location
     }

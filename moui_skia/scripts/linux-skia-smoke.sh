@@ -33,6 +33,15 @@ Options:
   --extra-link-flags STR Extra linker flags appended to cc-link-flags.
   --smoke-log PATH       Write the native smoke executable output to PATH.
                          Relative paths are resolved from the repository root.
+  --run-renderer-smoke   Also build and run moui/tests/skia_renderer_smoke/native
+                         after native smoke. Requires --skia-include/--skia-lib-dir.
+  --run-text-emoji-smoke Also build and run moui/tests/skia_text_emoji_smoke/native
+                         after native smoke. Requires --enable-skparagraph or
+                         --require-skparagraph for SkParagraph bidi/emoji markers.
+  --renderer-log PATH    Write the renderer smoke executable output to PATH.
+                         Relative paths are resolved from the repository root.
+  --text-emoji-log PATH  Write the text/emoji smoke executable output to PATH.
+                         Relative paths are resolved from the repository root.
   --dry-run-config       Print resolved paths and flags, then exit without
                          rewriting package files or building the smoke binary.
   -h, --help             Show this help.
@@ -96,6 +105,10 @@ enable_asan="${MOUI_SKIA_ENABLE_ASAN:-0}"
 extra_cc_flags="${MOUI_SKIA_EXTRA_CC_FLAGS:-}"
 extra_link_flags="${MOUI_SKIA_EXTRA_LINK_FLAGS:-}"
 requested_smoke_log=""
+requested_renderer_log=""
+requested_text_emoji_log=""
+run_renderer_smoke=0
+run_text_emoji_smoke=0
 dry_run_config=0
 
 while [[ $# -gt 0 ]]; do
@@ -176,6 +189,22 @@ while [[ $# -gt 0 ]]; do
       requested_smoke_log="${2:-}"
       shift 2
       ;;
+    --run-renderer-smoke)
+      run_renderer_smoke=1
+      shift
+      ;;
+    --run-text-emoji-smoke)
+      run_text_emoji_smoke=1
+      shift
+      ;;
+    --renderer-log)
+      requested_renderer_log="${2:-}"
+      shift 2
+      ;;
+    --text-emoji-log)
+      requested_text_emoji_log="${2:-}"
+      shift 2
+      ;;
     --dry-run-config)
       dry_run_config=1
       shift
@@ -213,14 +242,34 @@ native_pkg="$repo_root/native/moon.pkg"
 backup_pkg="$native_pkg.smoke.bak"
 smoke_pkg="$repo_root/scripts/native_smoke/moon.pkg"
 smoke_backup_pkg="$smoke_pkg.smoke.bak"
+renderer_pkg="$repo_root/moui/tests/skia_renderer_smoke/native/moon.pkg"
+renderer_pkg_backup="$renderer_pkg.smoke.bak"
+text_emoji_pkg="$repo_root/moui/tests/skia_text_emoji_smoke/native/moon.pkg"
+text_emoji_pkg_backup="$text_emoji_pkg.smoke.bak"
 smoke_log=""
 smoke_log_is_temporary=0
+renderer_log=""
+renderer_log_is_temporary=0
+text_emoji_log=""
+text_emoji_log_is_temporary=0
 include_path="$(cd "$skia_include" && pwd)"
 lib_path="$(cd "$skia_lib_dir" && pwd)"
 if [[ -n "$requested_smoke_log" ]]; then
   case "$requested_smoke_log" in
     /*) smoke_log="$requested_smoke_log" ;;
     *) smoke_log="$repo_root/$requested_smoke_log" ;;
+  esac
+fi
+if [[ -n "$requested_renderer_log" ]]; then
+  case "$requested_renderer_log" in
+    /*) renderer_log="$requested_renderer_log" ;;
+    *) renderer_log="$repo_root/$requested_renderer_log" ;;
+  esac
+fi
+if [[ -n "$requested_text_emoji_log" ]]; then
+  case "$requested_text_emoji_log" in
+    /*) text_emoji_log="$requested_text_emoji_log" ;;
+    *) text_emoji_log="$repo_root/$requested_text_emoji_log" ;;
   esac
 fi
 
@@ -422,6 +471,12 @@ restore_native_pkg() {
   if [[ $smoke_log_is_temporary -eq 1 && -n "${smoke_log:-}" && -f "$smoke_log" ]]; then
     rm -f "$smoke_log"
   fi
+  if [[ $renderer_log_is_temporary -eq 1 && -n "${renderer_log:-}" && -f "$renderer_log" ]]; then
+    rm -f "$renderer_log"
+  fi
+  if [[ $text_emoji_log_is_temporary -eq 1 && -n "${text_emoji_log:-}" && -f "$text_emoji_log" ]]; then
+    rm -f "$text_emoji_log"
+  fi
   if [[ -f "$backup_pkg" ]]; then
     cp "$backup_pkg" "$native_pkg"
     rm -f "$backup_pkg"
@@ -435,6 +490,16 @@ restore_native_pkg() {
     echo "Restored scripts/native_smoke/moon.pkg after Linux Skia smoke."
   else
     echo "No scripts/native_smoke/moon.pkg smoke backup found; nothing to restore."
+  fi
+  if [[ -f "$renderer_pkg_backup" ]]; then
+    cp "$renderer_pkg_backup" "$renderer_pkg"
+    rm -f "$renderer_pkg_backup"
+    echo "Restored moui/tests/skia_renderer_smoke/native/moon.pkg after Linux Skia smoke."
+  fi
+  if [[ -f "$text_emoji_pkg_backup" ]]; then
+    cp "$text_emoji_pkg_backup" "$text_emoji_pkg"
+    rm -f "$text_emoji_pkg_backup"
+    echo "Restored moui/tests/skia_text_emoji_smoke/native/moon.pkg after Linux Skia smoke."
   fi
 }
 trap restore_native_pkg EXIT
@@ -512,4 +577,174 @@ if [[ $require_skparagraph -eq 1 ]]; then
     exit 1
   fi
   echo "Verified native SkParagraph smoke marker."
+fi
+
+if [[ $run_renderer_smoke -eq 1 ]]; then
+  cp "$renderer_pkg" "$renderer_pkg_backup"
+  echo "Backed up moui/tests/skia_renderer_smoke/native/moon.pkg to $renderer_pkg_backup."
+  cat > "$renderer_pkg" <<EOF
+import {
+  "moonbitlang/core/encoding/base64",
+  "moonbitlang/core/env",
+  "moonbitlang/x/fs",
+  "wzzc-dev/moui_skia/native" @skia_native,
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/skia" @skia_renderer,
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "cc-link-flags": "$link_flags",
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)
+EOF
+  echo "Wrote temporary moui/tests/skia_renderer_smoke/native/moon.pkg with Linux Skia link flags."
+
+  cd "$repo_root"
+  MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
+    MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
+    moon build moui/tests/skia_renderer_smoke/native --target native
+  renderer_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui/tests/skia_renderer_smoke/native/native.exe"
+  if [[ ! -x "$renderer_exe" ]]; then
+    echo "MoUI Skia renderer smoke executable was not produced at $renderer_exe" >&2
+    exit 1
+  fi
+
+  echo "Running MoUI Skia renderer smoke executable: $renderer_exe"
+  if [[ -z "$renderer_log" ]]; then
+    renderer_log="$(mktemp "${TMPDIR:-/tmp}/moui-skia-renderer-smoke.XXXXXX.log")"
+    renderer_log_is_temporary=1
+  else
+    mkdir -p "$(dirname "$renderer_log")"
+    : > "$renderer_log"
+  fi
+
+  set +e
+  set -o pipefail
+  "$renderer_exe" 2>&1 | tee "$renderer_log"
+  renderer_status=${PIPESTATUS[0]}
+  set +o pipefail
+  set -e
+  if [[ $renderer_status -ne 0 ]]; then
+    exit "$renderer_status"
+  fi
+  if ! grep -Fq "MoUI Skia renderer smoke passed" "$renderer_log"; then
+    echo "MoUI Skia renderer smoke did not print the expected success marker" >&2
+    exit 1
+  fi
+  echo "Verified MoUI Skia renderer smoke success marker."
+  if ! grep -Fq "MoUI Skia async image second-frame smoke passed" "$renderer_log"; then
+    echo "MoUI Skia renderer smoke did not report async image second-frame repaint" >&2
+    exit 1
+  fi
+  echo "Verified MoUI Skia async image second-frame marker."
+  if ! grep -Fq "MoUI Skia async image deferred-completion smoke passed" "$renderer_log"; then
+    echo "MoUI Skia renderer smoke did not report async image deferred-completion marker" >&2
+    exit 1
+  fi
+  echo "Verified MoUI Skia async image deferred-completion marker."
+
+  cp "$renderer_pkg_backup" "$renderer_pkg"
+  rm -f "$renderer_pkg_backup"
+  echo "Restored moui/tests/skia_renderer_smoke/native/moon.pkg after renderer smoke."
+fi
+
+if [[ $run_text_emoji_smoke -eq 1 ]]; then
+  if [[ $enable_skparagraph -eq 0 && $require_skparagraph -eq 0 ]]; then
+    echo "--run-text-emoji-smoke requires --enable-skparagraph or --require-skparagraph for SkParagraph bidi/emoji markers" >&2
+    exit 2
+  fi
+  cp "$text_emoji_pkg" "$text_emoji_pkg_backup"
+  echo "Backed up moui/tests/skia_text_emoji_smoke/native/moon.pkg to $text_emoji_pkg_backup."
+  cat > "$text_emoji_pkg" <<EOF
+import {
+  "wzzc-dev/moui_skia/native" @skia_native,
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/skia" @skia_renderer,
+  "wzzc-dev/moui/views",
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "cc-link-flags": "$link_flags",
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)
+EOF
+  echo "Wrote temporary moui/tests/skia_text_emoji_smoke/native/moon.pkg with Linux Skia link flags."
+
+  cd "$repo_root"
+  MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
+    MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
+    moon build moui/tests/skia_text_emoji_smoke/native --target native
+  text_emoji_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui/tests/skia_text_emoji_smoke/native/native.exe"
+  if [[ ! -x "$text_emoji_exe" ]]; then
+    echo "MoUI Skia text/emoji smoke executable was not produced at $text_emoji_exe" >&2
+    exit 1
+  fi
+
+  echo "Running MoUI Skia text/emoji smoke executable: $text_emoji_exe"
+  if [[ -z "$text_emoji_log" ]]; then
+    text_emoji_log="$(mktemp "${TMPDIR:-/tmp}/moui-skia-text-emoji-smoke.XXXXXX.log")"
+    text_emoji_log_is_temporary=1
+  else
+    mkdir -p "$(dirname "$text_emoji_log")"
+    : > "$text_emoji_log"
+  fi
+
+  set +e
+  set -o pipefail
+  "$text_emoji_exe" 2>&1 | tee "$text_emoji_log"
+  text_emoji_status=${PIPESTATUS[0]}
+  set +o pipefail
+  set -e
+  if [[ $text_emoji_status -ne 0 ]]; then
+    exit "$text_emoji_status"
+  fi
+  if ! grep -Fq "MoUI Skia text/emoji smoke passed" "$text_emoji_log"; then
+    echo "MoUI Skia text/emoji smoke did not print the expected success marker" >&2
+    exit 1
+  fi
+  echo "Verified MoUI Skia text/emoji smoke success marker."
+
+  text_emoji_required_markers=(
+    "MoUI renderer smoke colorEmojiPixels passed high-saturation-pixels glyph-or-raster font-metadata glyph-metadata fallback-request emoji-hint stable-glyph-key"
+    "MoUI renderer smoke zwjGrapheme passed single-grapheme-cluster no-interior-caret"
+    "MoUI renderer smoke colorEmojiVariants passed keycap regional-indicator skin-tone-modifier glyph-metadata fallback-request"
+    "MoUI renderer smoke paragraphWrapping passed engine=skparagraph native_paragraph_ready=true line-metrics later-line-pixels"
+    "MoUI renderer smoke bidiLayout passed engine=skparagraph bidi_visual_order_ready=true visual-order"
+    "MoUI renderer smoke bidiLayoutArabic passed engine=skparagraph bidi_visual_order_ready=true visual-order arabic"
+    "MoUI renderer smoke bidiLayoutMixed passed engine=skparagraph bidi_visual_order_ready=true visual-order mixed-direction"
+    "MoUI renderer smoke selectionRects passed engine=skparagraph selection-rects line-range rect-geometry hit-test"
+    "MoUI renderer smoke graphemeEditing passed grapheme-boundaries edit-actions"
+    "MoUI renderer smoke imeCandidateAnchor passed candidate-anchor surrounding-text grapheme-boundary utf8-offsets"
+    "MoUI renderer smoke imeCompositionVisual passed composition-range composition-cursor preedit-pixels"
+  )
+  for marker in "${text_emoji_required_markers[@]}"; do
+    if ! grep -Fq "$marker" "$text_emoji_log"; then
+      echo "MoUI Skia text/emoji smoke did not print renderer capability marker: $marker" >&2
+      exit 1
+    fi
+  done
+  echo "Verified MoUI Skia text/emoji renderer capability markers."
+
+  cp "$text_emoji_pkg_backup" "$text_emoji_pkg"
+  rm -f "$text_emoji_pkg_backup"
+  echo "Restored moui/tests/skia_text_emoji_smoke/native/moon.pkg after text/emoji smoke."
 fi

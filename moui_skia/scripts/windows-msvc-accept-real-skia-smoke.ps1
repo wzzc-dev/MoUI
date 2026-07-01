@@ -18,6 +18,10 @@ param(
   [string] $SkiaPackageSha256 = $env:MOUI_SKIA_SKIA_PACKAGE_SHA256,
   [string] $ExtraCcFlags = $env:MOUI_SKIA_EXTRA_CC_FLAGS,
   [string] $ExtraLinkFlags = $env:MOUI_SKIA_EXTRA_LINK_FLAGS,
+  [switch] $EnableSkParagraph,
+  [switch] $RequireSkParagraph,
+  [switch] $RunRendererSmoke,
+  [switch] $RunTextEmojiSmoke,
   [switch] $DryRunConfig,
   [switch] $ForceExtract
 )
@@ -43,6 +47,8 @@ if ([System.IO.Path]::IsPathRooted($LogDir)) {
 $preflightLog = Join-Path $resolvedLogDir "windows-real-skia-smoke-preflight.log"
 $wrapperLog = Join-Path $resolvedLogDir "windows-real-skia-smoke.log"
 $nativeLog = Join-Path $resolvedLogDir "windows-native-smoke-output.log"
+$rendererLog = Join-Path $resolvedLogDir "windows-renderer-smoke-output.log"
+$textEmojiLog = Join-Path $resolvedLogDir "windows-text-emoji-smoke-output.log"
 $acceptanceLog = Join-Path $resolvedLogDir "windows-real-skia-acceptance.log"
 $nativePkg = Join-Path $repoRoot "native/moon.pkg"
 $smokePkg = Join-Path $repoRoot "scripts/native_smoke/moon.pkg"
@@ -98,6 +104,8 @@ Write-Host "Windows MSVC real Skia acceptance logs:"
 Write-Host "  preflight_log=$preflightLog"
 Write-Host "  wrapper_log=$wrapperLog"
 Write-Host "  native_log=$nativeLog"
+Write-Host "  renderer_log=$rendererLog"
+Write-Host "  text_emoji_log=$textEmojiLog"
 Write-Host "  acceptance_log=$acceptanceLog"
 
 & (Join-Path $repoRoot "scripts/windows-msvc-skia-smoke.ps1") `
@@ -119,6 +127,12 @@ Write-Host "  acceptance_log=$acceptanceLog"
   -SkiaPackageSha256 $SkiaPackageSha256 `
   -ExtraCcFlags $ExtraCcFlags `
   -ExtraLinkFlags $ExtraLinkFlags `
+  -EnableSkParagraph:$EnableSkParagraph `
+  -RequireSkParagraph:$RequireSkParagraph `
+  -RunRendererSmoke:$RunRendererSmoke `
+  -RunTextEmojiSmoke:$RunTextEmojiSmoke `
+  -RendererLog $rendererLog `
+  -TextEmojiLog $textEmojiLog `
   -SmokeLog $nativeLog `
   -ForceExtract:$ForceExtract `
   -DryRunConfig 2>&1 | Tee-Object -FilePath $preflightLog
@@ -145,6 +159,12 @@ try {
     -SkiaPackageSha256 $SkiaPackageSha256 `
     -ExtraCcFlags $ExtraCcFlags `
     -ExtraLinkFlags $ExtraLinkFlags `
+    -EnableSkParagraph:$EnableSkParagraph `
+    -RequireSkParagraph:$RequireSkParagraph `
+    -RunRendererSmoke:$RunRendererSmoke `
+    -RunTextEmojiSmoke:$RunTextEmojiSmoke `
+    -RendererLog $rendererLog `
+    -TextEmojiLog $textEmojiLog `
     -SmokeLog $nativeLog `
     -ForceExtract:$ForceExtract 2>&1 | Tee-Object -FilePath $wrapperLog
   if ($LASTEXITCODE -ne $null -and $LASTEXITCODE -ne 0) {
@@ -296,6 +316,8 @@ if ($skiaPackageSha256.Trim().Length -eq 0) {
   "  preflight_log=$preflightLog"
   "  wrapper_log=$wrapperLog"
   "  native_log=$nativeLog"
+  "  renderer_log=$rendererLog"
+  "  text_emoji_log=$textEmojiLog"
   "  acceptance_log=$acceptanceLog"
 ) | Tee-Object -FilePath $acceptanceLog
 Convert-LogToUtf8NoBom -Path $acceptanceLog

@@ -47,6 +47,15 @@ Options:
                         Relative paths are resolved from the repository root.
   --smoke-log PATH      Write the native smoke executable output to PATH.
                         Relative paths are resolved from the repository root.
+  --run-renderer-smoke  Also build and run moui/tests/skia_renderer_smoke/native
+                        after native smoke. Forwarded to linux-skia-smoke.sh.
+  --run-text-emoji-smoke Also build and run moui/tests/skia_text_emoji_smoke/native
+                        after native smoke. Forwarded to linux-skia-smoke.sh.
+                        Requires --enable-skparagraph or --require-skparagraph.
+  --renderer-log PATH   Write the renderer smoke executable output to PATH.
+                        Relative paths are resolved from the repository root.
+  --text-emoji-log PATH Write the text/emoji smoke executable output to PATH.
+                        Relative paths are resolved from the repository root.
   --no-sync-deps        Skip python3 tools/git-sync-deps.
   --no-fetch            Reuse an existing Skia checkout instead of cloning/fetching.
   --dry-run-config      Print the selected mode and effective smoke arguments,
@@ -122,6 +131,10 @@ enable_skparagraph="${MOUI_SKIA_ENABLE_SKPARAGRAPH:-0}"
 require_skparagraph="${MOUI_SKIA_REQUIRE_SKPARAGRAPH:-0}"
 build_log=""
 smoke_log=""
+run_renderer_smoke=0
+run_text_emoji_smoke=0
+requested_renderer_log=""
+requested_text_emoji_log=""
 sync_deps=1
 fetch_repo=1
 dry_run_config=0
@@ -205,6 +218,22 @@ while [[ $# -gt 0 ]]; do
       ;;
     --smoke-log)
       smoke_log="${2:-}"
+      shift 2
+      ;;
+    --run-renderer-smoke)
+      run_renderer_smoke=1
+      shift
+      ;;
+    --run-text-emoji-smoke)
+      run_text_emoji_smoke=1
+      shift
+      ;;
+    --renderer-log)
+      requested_renderer_log="${2:-}"
+      shift 2
+      ;;
+    --text-emoji-log)
+      requested_text_emoji_log="${2:-}"
       shift 2
       ;;
     --no-sync-deps)
@@ -485,6 +514,18 @@ if [[ $require_skparagraph -eq 1 ]]; then
 fi
 if [[ -n "$smoke_log" ]]; then
   smoke_args+=(--smoke-log "$smoke_log")
+fi
+if [[ $run_renderer_smoke -eq 1 ]]; then
+  smoke_args+=(--run-renderer-smoke)
+fi
+if [[ $run_text_emoji_smoke -eq 1 ]]; then
+  smoke_args+=(--run-text-emoji-smoke)
+fi
+if [[ -n "$requested_renderer_log" ]]; then
+  smoke_args+=(--renderer-log "$requested_renderer_log")
+fi
+if [[ -n "$requested_text_emoji_log" ]]; then
+  smoke_args+=(--text-emoji-log "$requested_text_emoji_log")
 fi
 
 if [[ $dry_run_config -eq 1 ]]; then
