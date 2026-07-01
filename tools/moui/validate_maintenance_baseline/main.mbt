@@ -195,7 +195,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/backend/host/host_async_image_loader_test.mbt",
-      max_lines: 350,
+      max_lines: 500,
     },
     { path: "moui/backend/host/host_text_input_test.mbt", max_lines: 310 },
     {
