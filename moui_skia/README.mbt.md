@@ -102,11 +102,10 @@ The `native` subpackage contains the first opt-in native boundary:
 
 - `@native.skia_available()` reports whether the stub was compiled with real
   Skia headers and libraries;
-- `@native.skia_shaper_available()` reports whether the optional SkShaper
+- `@native.skia_shaper_available()` reports whether the SkShaper
   boundary was compiled and linked;
-- `@native.skia_paragraph_available()` reports whether the optional
-  SkParagraph boundary was compiled and linked; enable it with
-  `MOUI_SKIA_ENABLE_SKPARAGRAPH=1`, and use
+- `@native.skia_paragraph_available()` reports whether the
+  SkParagraph boundary was compiled and linked; use
   `MOUI_SKIA_REQUIRE_SKPARAGRAPH=1` for smoke/proof runs that should fail when
   SkParagraph, SkShaper, SkUnicode, HarfBuzz, or ICU support is missing;
 - `@native.Surface::raster_n32_premul(size)` is the first raster surface entry;

@@ -91,10 +91,7 @@ $resolvedRoot = $resolvedPaths.Root
 $resolvedIncludeRoot = $resolvedPaths.IncludeRoot
 $resolvedLibDir = $resolvedPaths.LibDir
 $skiaLib = Resolve-SkiaMsvcLibrary -LibDir $resolvedLibDir -LinkMode $SkiaLinkMode
-$skparagraphEnabled = $EnableSkParagraph.IsPresent -or
-  $RequireSkParagraph.IsPresent -or
-  (Test-TruthyEnv -Value $env:MOUI_SKIA_ENABLE_SKPARAGRAPH) -or
-  (Test-TruthyEnv -Value $env:MOUI_SKIA_REQUIRE_SKPARAGRAPH)
+$skparagraphEnabled = $true
 $skparagraphRequired = $RequireSkParagraph.IsPresent -or
   (Test-TruthyEnv -Value $env:MOUI_SKIA_REQUIRE_SKPARAGRAPH)
 $paragraphHeaders = @(

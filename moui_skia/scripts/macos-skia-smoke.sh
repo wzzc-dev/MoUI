@@ -23,9 +23,9 @@ Options:
   --enable-skshaper      Enable the optional SkShaper FFI boundary. Requires
                          libskshaper and its dependent module libraries in
                          --skia-lib-dir.
-  --enable-skparagraph   Enable the optional SkParagraph FFI boundary. Requires
-                         libskparagraph, libskshaper, and SkUnicode libraries
-                         to be linkable from --skia-lib-dir.
+  --enable-skparagraph   Build SkParagraph (default: on). Requires
+                          libskparagraph, libskshaper, and SkUnicode libraries
+                          to be linkable from --skia-lib-dir.
   --require-skparagraph  Enable SkParagraph and fail immediately when required
                          headers/libraries are missing or the runtime marker is
                          absent from the smoke log.
@@ -105,7 +105,7 @@ skia_package_sha256="${MOUI_SKIA_SKIA_PACKAGE_SHA256:-}"
 extra_cc_flags="${MOUI_SKIA_EXTRA_CC_FLAGS:-}"
 extra_link_flags="${MOUI_SKIA_EXTRA_LINK_FLAGS:-}"
 enable_skshaper=0
-enable_skparagraph="${MOUI_SKIA_ENABLE_SKPARAGRAPH:-0}"
+enable_skparagraph="${MOUI_SKIA_ENABLE_SKPARAGRAPH:-1}"
 require_skparagraph="${MOUI_SKIA_REQUIRE_SKPARAGRAPH:-0}"
 enable_asan="${MOUI_SKIA_ENABLE_ASAN:-0}"
 requested_smoke_log=""

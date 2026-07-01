@@ -17,9 +17,9 @@ Options:
   --link-mode MODE       static|dynamic|auto. Default: static.
                          auto prefers libskia.dylib for direct local runs and
                          falls back to libskia.a when no dylib is present.
-  --enable-skparagraph   Enable the optional SkParagraph FFI boundary. Requires
-                         libskparagraph, libskshaper, and SkUnicode libraries
-                         to be linkable from --skia-lib-dir.
+  --enable-skparagraph   Build SkParagraph (default: on). Requires
+                          libskparagraph, libskshaper, and SkUnicode libraries
+                          to be linkable from --skia-lib-dir.
   --require-skparagraph  Enable SkParagraph and fail immediately when required
                          headers or libraries are missing.
   --extra-cc-flags STR   Extra C/C++ flags appended to stub-cc-flags.
@@ -64,7 +64,7 @@ skia_include="${MOUI_SKIA_SKIA_INCLUDE:-}"
 skia_lib_dir="${MOUI_SKIA_SKIA_LIB_DIR:-}"
 skia_lib="${MOUI_SKIA_SKIA_LIB:-skia}"
 link_mode="${MOUI_SKIA_LINK_MODE:-static}"
-enable_skparagraph="${MOUI_SKIA_ENABLE_SKPARAGRAPH:-0}"
+enable_skparagraph="${MOUI_SKIA_ENABLE_SKPARAGRAPH:-1}"
 require_skparagraph="${MOUI_SKIA_REQUIRE_SKPARAGRAPH:-0}"
 extra_cc_flags="${MOUI_SKIA_EXTRA_CC_FLAGS:-}"
 extra_link_flags="${MOUI_SKIA_EXTRA_LINK_FLAGS:-}"
