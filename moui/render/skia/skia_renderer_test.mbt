@@ -284,6 +284,9 @@ test "skia emoji font fallback diagnostic records glyph metadata and confirms co
       assert_true(diagnostic.glyph_height > 0)
       assert_true(diagnostic.resolved_missing_glyph_count >= 0)
       assert_true(diagnostic.fallback_character == 0x1F469)
+      assert_true(diagnostic.resolved_font_name.length() > 0)
+      assert_true(diagnostic.resolved_font_name != "no-fontmgr")
+      assert_true(diagnostic.resolved_font_name != "no-match")
     }
     None => assert_true(!skia_available())
   }
