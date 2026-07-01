@@ -40,10 +40,11 @@ if ($normalizedSkiaLinkMode -notin @("static", "dynamic", "auto")) {
   throw "unsupported SkiaLinkMode: $SkiaLinkMode"
 }
 
-$repoRoot = Split-Path -Parent $PSScriptRoot
-$nativePkg = Join-Path $repoRoot "native/moon.pkg"
+$mouiSkiaRoot = Split-Path -Parent $PSScriptRoot
+$repoRoot = Split-Path -Parent $mouiSkiaRoot
+$nativePkg = Join-Path $mouiSkiaRoot "native/moon.pkg"
 $backupPkg = "$nativePkg.smoke.bak"
-$smokePkg = Join-Path $repoRoot "scripts/native_smoke/moon.pkg"
+$smokePkg = Join-Path $mouiSkiaRoot "scripts/native_smoke/moon.pkg"
 $smokeBackupPkg = "$smokePkg.smoke.bak"
 $rendererPkg = Join-Path $repoRoot "moui/tests/skia_renderer_smoke/native/moon.pkg"
 $rendererPkgBackup = "$rendererPkg.smoke.bak"
@@ -125,7 +126,7 @@ if (!(Test-Path -LiteralPath $VcVarsAll -PathType Leaf)) {
 }
 
 $resolvedPaths = Resolve-MouiSkiaMsvcPaths `
-  -RepoRoot $repoRoot `
+  -RepoRoot $mouiSkiaRoot `
   -SkiaRoot $SkiaRoot `
   -SkiaInclude $SkiaInclude `
   -SkiaZip $SkiaZip `
@@ -369,7 +370,7 @@ try {
   Set-Content -LiteralPath $smokeBackupPkg -Value $originalSmokePkg -NoNewline
   Write-Host "Backed up scripts/native_smoke/moon.pkg to $smokeBackupPkg."
 
-  & (Join-Path $repoRoot "scripts/configure-windows-msvc-native-pkg.ps1") `
+  & (Join-Path $mouiSkiaRoot "scripts/configure-windows-msvc-native-pkg.ps1") `
     -SkiaRoot $resolvedRoot `
     -SkiaInclude $resolvedIncludeRoot `
     -SkiaLibDir $resolvedLibDir `
@@ -400,7 +401,7 @@ options(
 "@ | Set-Content -LiteralPath $smokePkg -NoNewline
   Write-Host "Wrote temporary scripts/native_smoke/moon.pkg with Windows MSVC executable link flags."
 
-  Push-Location (Join-Path $repoRoot "scripts/native_smoke")
+  Push-Location (Join-Path $mouiSkiaRoot "scripts/native_smoke")
   try {
     if ($resolvedSmokeLog.Length -eq 0) {
       $resolvedSmokeLog = Join-Path ([System.IO.Path]::GetTempPath()) "moui-skia-native-msvc-smoke-$PID.log"
