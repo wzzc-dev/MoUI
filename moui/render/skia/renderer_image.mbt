@@ -194,24 +194,31 @@ pub fn skia_image_load_completion(
   source : String,
 ) -> @render.ImageResourceLoadCompletion {
   match skia_image_source_bytes(source) {
-    Some(bytes) =>
-      match @skia_native.Image::from_encoded_bytes(bytes) {
-        Some(image) =>
-          @render.ImageResourceLoadCompletion::ready(
-            source,
-            width=image.width(),
-            height=image.height(),
-          )
-        None =>
-          @render.ImageResourceLoadCompletion::failed(
-            source,
-            diagnostic="Skia image decode failed",
-          )
-      }
+    Some(bytes) => skia_image_load_completion_from_bytes(source, bytes)
     None =>
       @render.ImageResourceLoadCompletion::failed(
         source,
         diagnostic="Skia image source bytes are unavailable",
+      )
+  }
+}
+
+///|
+pub fn skia_image_load_completion_from_bytes(
+  source : String,
+  bytes : Bytes,
+) -> @render.ImageResourceLoadCompletion {
+  match @skia_native.Image::from_encoded_bytes(bytes) {
+    Some(image) =>
+      @render.ImageResourceLoadCompletion::ready(
+        source,
+        width=image.width(),
+        height=image.height(),
+      )
+    None =>
+      @render.ImageResourceLoadCompletion::failed(
+        source,
+        diagnostic="Skia image decode failed",
       )
   }
 }
