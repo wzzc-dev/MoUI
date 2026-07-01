@@ -31,6 +31,7 @@ pub(all) struct SkiaEmojiFontFallbackDiagnostic {
   text_system_id : String
   font_family : String
   font_source : String
+  resolved_font_name : String
   fallback_language_tags : Array[String]
   fallback_script_tag : String
   fallback_language_tag_count : Int
@@ -193,6 +194,7 @@ pub fn skia_emoji_font_fallback_diagnostic(
         text_system_id: text_system.id(),
         font_family: "emoji",
         font_source,
+        resolved_font_name: skia_emoji_resolved_font_name(),
         fallback_language_tags,
         fallback_script_tag,
         fallback_language_tag_count: fallback_language_tags.length(),
@@ -261,6 +263,24 @@ fn skia_emoji_glyph_format_label() -> String {
     "rgba"
   } else {
     "alpha"
+  }
+}
+
+///|
+fn skia_emoji_resolved_font_name() -> String {
+  match @skia_native.FontMgr::default() {
+    None => "no-fontmgr"
+    Some(mgr) => {
+      match mgr.match_family_style_character(b"", [], 0x1F469) {
+        None => "no-match"
+        Some(typeface) => {
+          match typeface.family_name() {
+            None => "unnamed"
+            Some(name) => name.to_string()
+          }
+        }
+      }
+    }
   }
 }
 
