@@ -59,7 +59,7 @@ assert pixel markers and acceptance markers.
 | ShaderEffect | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | Real procedural shader pixels |
 | TextShaping | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | Real SkShaper/SkParagraph shaping, bidi Arabic/mixed-direction visual-order |
 | EmojiText | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | Real emoji cluster rendering, keycap/regional-indicator/skin-tone-modifier fallback |
-| AsyncImage | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | Real second-frame repaint after completion, deferred-completion via HostNativeAsyncImageSource, off-main-thread file I/O via platform C stubs (GCD/pthread/CreateThread) |
+| AsyncImage | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | Real second-frame repaint after completion, deferred-completion via HostNativeAsyncImageSource, off-main-thread file I/O via platform C stubs (GCD/pthread/CreateThread) with `background_io` flag verification in provider tests |
 
 ## L3 Cross-Platform Consistency
 
