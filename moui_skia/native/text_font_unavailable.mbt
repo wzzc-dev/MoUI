@@ -405,3 +405,9 @@ pub fn Typeface::family_name(self : Typeface) -> Bytes? {
   ignore(self)
   None
 }
+
+///|
+pub fn Typeface::has_color_glyphs(self : Typeface) -> Bool {
+  ignore(self)
+  false
+}

@@ -90,14 +90,21 @@ fn SkiaTextMaturityPreflight::summary(
   } else {
     "Unicode 17 grapheme boundary contract pending"
   }
+  let color_emoji_label = if self.deterministic_color_emoji_ready {
+    "color emoji confirmed"
+  } else {
+    "color emoji pending"
+  }
   let mixed_run_label = if self.mixed_run_font_fallback_ready {
     "mixed-run fallback ready; missing-glyph recovery ready; " +
     grapheme_label +
-    "; bidi and paragraph line breaking ready; color emoji pending"
+    "; bidi and paragraph line breaking ready; " +
+    color_emoji_label
   } else {
     "mixed-run fallback pending; missing-glyph recovery pending; " +
     grapheme_label +
-    "; bidi and paragraph line breaking ready; color emoji pending"
+    "; bidi and paragraph line breaking ready; " +
+    color_emoji_label
   }
   "text maturity audit partial: ready=" +
   self.ready_count.to_string() +
@@ -206,7 +213,7 @@ fn skia_text_maturity_preflight() -> SkiaTextMaturityPreflight {
   let unicode_17_grapheme_boundary_ready = skia_unicode_17_grapheme_boundary_contract_available()
   let bidi_reordering_ready = true
   let paragraph_line_breaking_ready = true
-  let deterministic_color_emoji_ready = false
+  let deterministic_color_emoji_ready = skia_emoji_typeface_has_color_glyphs()
   let ready_count = skia_ready_count([
     descriptor.ready(),
     !fallback_request.is_empty() && fallback_request.has_character(),

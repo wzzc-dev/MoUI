@@ -454,6 +454,7 @@ pub fn Typeface::from_font_mgr_family(FontMgr, Bytes, weight? : Int, width? : In
 pub fn Typeface::from_font_mgr_request(FontMgr, @moui_skia.FontFallbackRequest) -> Self?
 pub fn Typeface::from_name(Bytes, weight? : Int, width? : Int, slant? : Int) -> Self?
 pub fn Typeface::from_name_style(Bytes, @moui_skia.FontStyleRequest) -> Self?
+pub fn Typeface::has_color_glyphs(Self) -> Bool
 pub fn Typeface::is_available(Self) -> Bool
 pub fn Typeface::is_bold(Self) -> Bool
 pub fn Typeface::is_fixed_pitch(Self) -> Bool
