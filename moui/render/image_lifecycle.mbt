@@ -34,6 +34,7 @@ pub(all) struct ImageResourceLoadCompletion {
   width : Int
   height : Int
   diagnostic : String
+  background_io : Bool
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -123,6 +124,7 @@ pub fn ImageResourceLoadCompletion::ready(
   source : String,
   width~ : Int,
   height~ : Int,
+  background_io? : Bool = false,
 ) -> ImageResourceLoadCompletion {
   {
     source,
@@ -130,6 +132,7 @@ pub fn ImageResourceLoadCompletion::ready(
     width,
     height,
     diagnostic: "",
+    background_io,
   }
 }
 
@@ -137,6 +140,7 @@ pub fn ImageResourceLoadCompletion::ready(
 pub fn ImageResourceLoadCompletion::failed(
   source : String,
   diagnostic~ : String,
+  background_io? : Bool = false,
 ) -> ImageResourceLoadCompletion {
   {
     source,
@@ -144,6 +148,7 @@ pub fn ImageResourceLoadCompletion::failed(
     width: 0,
     height: 0,
     diagnostic,
+    background_io,
   }
 }
 

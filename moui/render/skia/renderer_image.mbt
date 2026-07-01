@@ -207,6 +207,7 @@ pub fn skia_image_load_completion(
 pub fn skia_image_load_completion_from_bytes(
   source : String,
   bytes : Bytes,
+  background_io~ : Bool = false,
 ) -> @render.ImageResourceLoadCompletion {
   match @skia_native.Image::from_encoded_bytes(bytes) {
     Some(image) =>
@@ -214,11 +215,13 @@ pub fn skia_image_load_completion_from_bytes(
         source,
         width=image.width(),
         height=image.height(),
+        background_io~,
       )
     None =>
       @render.ImageResourceLoadCompletion::failed(
         source,
         diagnostic="Skia image decode failed",
+        background_io~,
       )
   }
 }

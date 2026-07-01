@@ -18,6 +18,7 @@ typedef struct moui_async_image_result {
   uint8_t *bytes;
   int32_t bytes_len;
   int32_t status;
+  int32_t background_io;
   struct moui_async_image_result *next;
 } moui_async_image_result_t;
 
@@ -48,6 +49,7 @@ static void moui_async_image_read_file(moui_async_image_request_t *req) {
   result->bytes = NULL;
   result->bytes_len = 0;
   result->status = 1;
+  result->background_io = 1;
   result->next = NULL;
 
   FILE *f = fopen(req->source, "rb");
@@ -132,13 +134,14 @@ moonbit_bytes_t moui_macos_async_image_take_result(void) {
   }
   pthread_mutex_unlock(&g_mutex);
 
-  int32_t header = 20;
+  int32_t header = 24;
   int32_t total = header + result->source_len + result->bytes_len;
   moonbit_bytes_t out = moonbit_make_bytes(total, 0);
   memcpy(out + 0, &result->window_id, 8);
   memcpy(out + 8, &result->status, 4);
   memcpy(out + 12, &result->source_len, 4);
   memcpy(out + 16, &result->bytes_len, 4);
+  memcpy(out + 20, &result->background_io, 4);
   if (result->source_len > 0) {
     memcpy(out + header, result->source, (size_t)result->source_len);
   }
