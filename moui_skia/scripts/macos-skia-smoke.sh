@@ -245,10 +245,11 @@ if [[ -z "$skia_include" || -z "$skia_lib_dir" ]]; then
   exit 2
 fi
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-native_pkg="$repo_root/native/moon.pkg"
+moui_skia_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+repo_root="$(cd "$moui_skia_root/.." && pwd)"
+native_pkg="$moui_skia_root/native/moon.pkg"
 backup_pkg="$native_pkg.smoke.bak"
-smoke_pkg="$repo_root/scripts/native_smoke/moon.pkg"
+smoke_pkg="$moui_skia_root/scripts/native_smoke/moon.pkg"
 smoke_backup_pkg="$smoke_pkg.smoke.bak"
 renderer_pkg="$repo_root/moui/tests/skia_renderer_smoke/native/moon.pkg"
 renderer_pkg_backup="$renderer_pkg.smoke.bak"
@@ -546,7 +547,7 @@ fi
 if [[ $require_skparagraph -eq 1 ]]; then
   configure_args+=(--require-skparagraph)
 fi
-bash "$repo_root/scripts/configure-macos-native-pkg.sh" "${configure_args[@]}" >/dev/null
+bash "$moui_skia_root/scripts/configure-macos-native-pkg.sh" "${configure_args[@]}" >/dev/null
 echo "Wrote temporary native/moon.pkg with macOS Skia link flags."
 
 cat > "$smoke_pkg" <<EOF
@@ -567,7 +568,7 @@ options(
 EOF
 echo "Wrote temporary scripts/native_smoke/moon.pkg with macOS Skia executable link flags."
 
-cd "$repo_root/scripts/native_smoke"
+cd "$moui_skia_root/scripts/native_smoke"
 moon build --target native
 smoke_exe="$PWD/_build/native/debug/build/moui_skia_native_smoke"
 if [[ ! -x "$smoke_exe" && -x "$smoke_exe.exe" ]]; then
