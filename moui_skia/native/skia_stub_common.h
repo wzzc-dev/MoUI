@@ -576,5 +576,8 @@ MoonbitSkiaCanvas* moonbit_skia_make_canvas_wrapper(
   void* surface_owner
 #endif
 );
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_SKPARAGRAPH_HEADERS)
+sk_sp<SkUnicode> moonbit_skia_shared_icu_unicode(void);
+#endif
 
 #endif
