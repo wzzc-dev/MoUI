@@ -63,6 +63,7 @@ jobs:
                             matchingCiRun.status + ' — skipping summary to ' +
                             'avoid race condition. The summary will run again ' +
                             'when ci.yml completes.');
+                  core.setOutput('skipped', 'true');
                   process.exit(0);
                 }
                 runId = matchingCiRun.id;
@@ -144,6 +145,7 @@ jobs:
             core.setOutput('html_url', ciRun.html_url);
 
       - name: Generate feature proof report
+        if: ${{ steps.collect.outputs.skipped != 'true' }}
         env:
           JOB_STATUS: ${{ steps.collect.outputs.status }}
           RUN_URL: ${{ steps.collect.outputs.html_url }}
@@ -155,6 +157,7 @@ jobs:
             --output artifacts/feature-proof/proof-report.json
 
       - name: Verify feature proof coverage
+        if: ${{ steps.collect.outputs.skipped != 'true' }}
         run: |
           node scripts/verify-feature-proof-coverage.mjs \
             --report artifacts/feature-proof/proof-report.json
@@ -168,8 +171,15 @@ jobs:
           if-no-files-found: warn
 
       - name: Write summary
-        if: ${{ always() }}
+        if: ${{ always() && steps.collect.outputs.skipped != 'true' }}
         run: |
           echo "## Feature Proof Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           cat artifacts/feature-proof/proof-report.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Write skipped summary
+        if: ${{ always() && steps.collect.outputs.skipped == 'true' }}
+        run: |
+          echo "## Feature Proof Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Skipped — ci.yml still in progress. Will run again when ci.yml completes." >> $GITHUB_STEP_SUMMARY
