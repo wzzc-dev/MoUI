@@ -233,7 +233,11 @@ test "windows skia options default to system font resolution" {
 ///|
 test "windows skia async image background_io confirmed" {
   guard @skia_renderer.skia_available() else { return () }
-  let path = "moui-bg-io-test-windows.png"
+  let cwd = @env.current_dir().unwrap_or(".")
+  let path = StringBuilder::new()
+  path.write_string(cwd)
+  path.write_string("/moui-bg-io-test-windows.png")
+  let path = path.to_string()
   @fs.write_bytes_to_file(path, @utf8.encode("test", bom=false)) catch {
     _ => fail("expected temp file write")
   }
