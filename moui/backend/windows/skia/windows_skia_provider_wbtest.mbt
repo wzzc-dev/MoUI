@@ -249,7 +249,7 @@ test "windows skia async image background_io confirmed" {
   }
   defer { @fs.remove_file(path) catch { _ => () } }
   let source_bytes = @utf8.encode(path, bom=false)
-  moui_windows_async_image_spawn(42, source_bytes, source_bytes.length())
+  moui_windows_async_image_spawn_sync(42, source_bytes, source_bytes.length())
   let max_attempts = 200
   let mut result = Bytes::make(0, 0)
   for attempt = 0; attempt < max_attempts; attempt = attempt + 1 {
