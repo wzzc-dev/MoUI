@@ -178,8 +178,7 @@ and native raster output. `skia_text_system()` also inherits the core paragraph
 layout contract. In fallback-safe builds it can still produce wrapped line
 metrics, paragraph caret rectangles, selection rectangles, and hit-test results
 from the existing Skia measurement path while keeping `native_paragraph_ready`
-and `bidi_visual_order_ready` false. When `moui_skia/native` is compiled with
-`MOUI_SKIA_ENABLE_SKPARAGRAPH=1` and `skia_paragraph_available()` is true, the
+and `bidi_visual_order_ready` false. When `skia_paragraph_available()` is true, the
 Skia text system routes paragraph layout through the native `Paragraph`
 wrapper, consumes SkParagraph line metrics, selection boxes, and hit-test
 offsets through the binding, and sets readiness metadata only when line

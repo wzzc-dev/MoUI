@@ -31,7 +31,8 @@ Options:
   --jetbrains-cache-dir PATH
                         Compatibility alias for --release-cache-dir.
   --extra-gn-args STR   Extra GN args appended to the smoke-test Skia build.
-  --enable-skparagraph  Enable SkParagraph in source builds and native smoke
+  --enable-skparagraph  Build SkParagraph in source builds and native smoke
+                        (default: on).
                         configuration.
   --require-skparagraph Enable SkParagraph and fail when required headers,
                         libraries, or runtime smoke markers are missing.
@@ -127,7 +128,7 @@ if [[ -n "${MOUI_SKIA_EXTRA_LINK_FLAGS:-}" ]]; then
   extra_link_flags_explicit=1
 fi
 enable_asan="${MOUI_SKIA_ENABLE_ASAN:-0}"
-enable_skparagraph="${MOUI_SKIA_ENABLE_SKPARAGRAPH:-0}"
+enable_skparagraph="${MOUI_SKIA_ENABLE_SKPARAGRAPH:-1}"
 require_skparagraph="${MOUI_SKIA_REQUIRE_SKPARAGRAPH:-0}"
 build_log=""
 smoke_log=""

@@ -152,10 +152,7 @@ $skiaLib = if ($resolvedSkiaLinkMode -eq "dynamic") {
 } else {
   Resolve-StaticSkiaLib -LibDir $resolvedLibDir
 }
-$skparagraphEnabled = $EnableSkParagraph.IsPresent -or
-  $RequireSkParagraph.IsPresent -or
-  (Test-TruthyEnv -Value $env:MOUI_SKIA_ENABLE_SKPARAGRAPH) -or
-  (Test-TruthyEnv -Value $env:MOUI_SKIA_REQUIRE_SKPARAGRAPH)
+$skparagraphEnabled = $true
 $skparagraphRequired = $RequireSkParagraph.IsPresent -or
   (Test-TruthyEnv -Value $env:MOUI_SKIA_REQUIRE_SKPARAGRAPH)
 $paragraphHeaders = @(
