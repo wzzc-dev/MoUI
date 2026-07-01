@@ -83,9 +83,9 @@ test "macos skia provider preflight records package observation boundary" {
     ),
   )
   assert_true(
-    preflight.contains("renderer_image_loader=skia_image_load_completion"),
+    preflight.contains("renderer_image_loader=skia_async_image_loader"),
   )
-  assert_true(preflight.contains("renderer_async_image_loading=post-present"))
+  assert_true(preflight.contains("renderer_async_image_loading=off-main-io"))
   assert_true(
     preflight.contains(
       "renderer_image_resource_apply=SkiaRasterRenderer.apply_image_resource_load_completion",
@@ -148,8 +148,8 @@ fn skia_test_png_data_uri() -> String {
 }
 
 ///|
-test "macos skia native image loader completes loading resources" {
-  let loader = skia_native_image_loader()
+test "macos skia async image loader completes loading resources" {
+  let loader = skia_async_image_loader()
   let window_id = @host.HostWindowId::new(1)
   let lifecycle = @render.ImageResourceLifecycle::new()
   let source = skia_test_png_data_uri()

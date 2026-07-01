@@ -345,3 +345,93 @@ test "host native async image source drops completions after loader cancellation
   inspect(loader_diagnostics.in_flight_count, content="0")
   inspect(completion_source.diagnostics().publish_count, content="0")
 }
+
+///|
+test "host async image loader new_with_drain invokes drain during schedule" {
+  let tracker = HostImageResourceRepaintTracker::new()
+  let window_id = HostWindowId::new(20)
+  let lifecycle = @render.ImageResourceLifecycle::new()
+  ignore(lifecycle.mark_loading("drain-test.png"))
+  let renderer = HostWindowRenderer::new(
+    resize=_ => (),
+    render=_ => (),
+    text_system=() => @core.TextSystem::fallback(),
+    image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
+    apply_image_resource_load_completion=Some(completion => {
+      lifecycle.apply_load_completion(completion)
+    }),
+  )
+  ignore(tracker.record_presented(window_id, renderer))
+  let completion_source = HostImageResourceCompletionSource::new(
+    tracker~,
+    window_open=id => id == window_id,
+    request_redraw=_id => (),
+  )
+  let drain_calls = Ref(0)
+  let loader = HostAsyncImageLoader::new_with_drain(
+    start_load=(_id, _source, _complete) => None,
+    drain=() => drain_calls.val = drain_calls.val + 1,
+  )
+  ignore(
+    loader.schedule_loading_resources(window_id, renderer, completion_source),
+  )
+  inspect(drain_calls.val, content="1")
+}
+
+///|
+test "host native async image source loader_with_drain spawns and drains" {
+  let tracker = HostImageResourceRepaintTracker::new()
+  let window_id = HostWindowId::new(21)
+  let lifecycle = @render.ImageResourceLifecycle::new()
+  ignore(lifecycle.mark_loading("spawn-drain.png"))
+  let renderer = HostWindowRenderer::new(
+    resize=_ => (),
+    render=_ => (),
+    text_system=() => @core.TextSystem::fallback(),
+    image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
+    apply_image_resource_load_completion=Some(completion => {
+      lifecycle.apply_load_completion(completion)
+    }),
+  )
+  ignore(tracker.record_presented(window_id, renderer))
+  let completion_source = HostImageResourceCompletionSource::new(
+    tracker~,
+    window_open=id => id == window_id,
+    request_redraw=_id => (),
+  )
+  let spawned : Array[String] = []
+  let drain_count = Ref(0)
+  let native_source = HostNativeAsyncImageSource::new()
+  let loader = native_source.loader_with_drain(
+    spawn=(_id, source) => spawned.push(source),
+    drain=() => drain_count.val = drain_count.val + 1,
+  )
+  let scheduled = loader.schedule_loading_resources(
+    window_id, renderer, completion_source,
+  )
+  inspect(scheduled.scheduled_count, content="1")
+  inspect(spawned.length(), content="1")
+  inspect(spawned[0], content="spawn-drain.png")
+  inspect(drain_count.val, content="1")
+  inspect(native_source.pending_requests().length(), content="1")
+  let delivered = native_source.complete(
+    window_id,
+    @render.ImageResourceLoadCompletion::ready(
+      "spawn-drain.png",
+      width=50,
+      height=25,
+    ),
+  )
+  assert_true(
+    delivered.status ==
+    HostNativeAsyncImageCompletionStatus::NativeAsyncImageCompletionDelivered,
+  )
+  match lifecycle.lookup("spawn-drain.png") {
+    Some(record) => {
+      assert_true(record.status == @render.ImageResourceStatus::ImageReady)
+      inspect(record.width, content="50")
+      inspect(record.height, content="25")
+    }
+    None => fail("expected completed spawn-drain image record")
+  }
+}

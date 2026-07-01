@@ -151,6 +151,40 @@ test "skia image load completion reports decoded dimensions or fallback failure"
 }
 
 ///|
+test "skia image load completion from bytes decodes provided image bytes" {
+  let source = skia_test_png_data_uri()
+  match skia_image_data_uri_bytes(source) {
+    Some(bytes) => {
+      let completion = skia_image_load_completion_from_bytes(source, bytes)
+      if skia_available() {
+        assert_true(
+          completion.status ==
+          @render.ImageResourceLoadCompletionStatus::ImageLoadReady,
+        )
+        inspect(completion.source, content=source)
+        inspect(completion.width, content="1")
+        inspect(completion.height, content="1")
+      } else {
+        assert_true(
+          completion.status ==
+          @render.ImageResourceLoadCompletionStatus::ImageLoadFailed,
+        )
+        inspect(completion.diagnostic, content="Skia image decode failed")
+      }
+    }
+    None => fail("expected embedded test PNG bytes for from_bytes test")
+  }
+  let invalid_bytes : Bytes = b"not-an-image"
+  let failed = skia_image_load_completion_from_bytes(
+    "invalid://bytes", invalid_bytes,
+  )
+  assert_true(
+    failed.status == @render.ImageResourceLoadCompletionStatus::ImageLoadFailed,
+  )
+  inspect(failed.diagnostic, content="Skia image decode failed")
+}
+
+///|
 test "skia renderer dispose clears cached image resources and records disposal" {
   guard skia_available() else { return () }
   let source = skia_test_png_data_uri()

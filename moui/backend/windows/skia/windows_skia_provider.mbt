@@ -105,16 +105,81 @@ pub fn renderer_provider(
     create_renderer=(window, metrics) => {
       create_renderer(window, metrics, options)
     },
-    image_loader=Some(skia_native_image_loader()),
+    image_loader=Some(skia_async_image_loader()),
   )
 }
 
 ///|
-fn skia_native_image_loader() -> @host.HostAsyncImageLoader {
-  @host.HostAsyncImageLoader::new(start_load=(_window_id, source, complete) => {
-    complete(@skia_renderer.skia_image_load_completion(source))
-    None
-  })
+#borrow(source_bytes)
+extern "C" fn moui_windows_async_image_spawn(
+  window_id : Int64,
+  source_bytes : Bytes,
+  source_len : Int,
+) -> Unit = "moui_windows_async_image_spawn"
+
+///|
+extern "C" fn moui_windows_async_image_take_result() -> Bytes = "moui_windows_async_image_take_result"
+
+///|
+fn async_image_read_i32_le(data : Bytes, offset : Int) -> Int {
+  data[offset].to_int() +
+  data[offset + 1].to_int() * 256 +
+  data[offset + 2].to_int() * 65536 +
+  data[offset + 3].to_int() * 16777216
+}
+
+///|
+fn skia_async_image_loader() -> @host.HostAsyncImageLoader {
+  let native_source = @host.HostNativeAsyncImageSource::new()
+  @host.HostNativeAsyncImageSource::loader_with_drain(
+    native_source,
+    spawn=(window_id, source) => {
+      if source.has_prefix("data:") {
+        let completion = @skia_renderer.skia_image_load_completion(source)
+        ignore(native_source.complete(window_id, completion))
+      } else {
+        let source_bytes = @utf8.encode(source[:], bom=false)
+        moui_windows_async_image_spawn(
+          window_id.value.to_int64(),
+          source_bytes,
+          source_bytes.length(),
+        )
+      }
+    },
+    drain=() => {
+      while true {
+        let result = moui_windows_async_image_take_result()
+        if result.length() == 0 {
+          break
+        }
+        let window_id = @host.HostWindowId::new(
+          async_image_read_i32_le(result, 0),
+        )
+        let status = async_image_read_i32_le(result, 8)
+        let source_len = async_image_read_i32_le(result, 12)
+        let bytes_len = async_image_read_i32_le(result, 16)
+        let header = 20
+        let source = @utf8.decode_lossy(
+          result[header:header + source_len],
+          ignore_bom=false,
+        )
+        let completion = if status == 0 && bytes_len > 0 {
+          let image_bytes = result[header + source_len:header +
+          source_len +
+          bytes_len].to_owned()
+          @skia_renderer.skia_image_load_completion_from_bytes(
+            source, image_bytes,
+          )
+        } else {
+          @render.ImageResourceLoadCompletion::failed(
+            source,
+            diagnostic="Async image I/O failed",
+          )
+        }
+        ignore(native_source.complete(window_id, completion))
+      }
+    },
+  )
 }
 
 ///|
@@ -137,7 +202,7 @@ pub fn windows_skia_provider_preflight_summary(
 
 ///|
 fn skia_host_renderer_bridge_preflight() -> String {
-  "renderer_bridge=HostWindowRenderer; renderer_text_system=SkiaRasterRenderer.text_system; renderer_image_resources=SkiaRasterRenderer.image_resources; renderer_image_loader=skia_image_load_completion; renderer_async_image_loading=post-present; renderer_image_resource_apply=SkiaRasterRenderer.apply_image_resource_load_completion; renderer_image_resource_change=SkiaRasterRenderer.set_image_resource_change_callback; renderer_present_count=SkiaRasterRenderer.present_count; renderer_dispose=SkiaRasterRenderer.dispose"
+  "renderer_bridge=HostWindowRenderer; renderer_text_system=SkiaRasterRenderer.text_system; renderer_image_resources=SkiaRasterRenderer.image_resources; renderer_image_loader=skia_async_image_loader; renderer_async_image_loading=off-main-io; renderer_image_resource_apply=SkiaRasterRenderer.apply_image_resource_load_completion; renderer_image_resource_change=SkiaRasterRenderer.set_image_resource_change_callback; renderer_present_count=SkiaRasterRenderer.present_count; renderer_dispose=SkiaRasterRenderer.dispose"
 }
 
 ///|
