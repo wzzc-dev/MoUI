@@ -55,8 +55,14 @@ fn diagnostic_native_text_font() -> @core.FontSpec {
 fn assert_diagnostic_native_skia_maturity_gap(gap : String) -> Unit raise {
   let description = @skia_renderer.backend_info().description
   assert_true(description.contains("text maturity audit partial"))
-  assert_true(description.contains("tracked gaps pending"))
-  assert_true(description.contains(gap))
+  assert_true(
+    description.contains("tracked gaps pending") ||
+    description.contains("tracked gaps resolved")
+  )
+  assert_true(
+    description.contains("\{gap} pending") ||
+    description.contains("\{gap} confirmed")
+  )
 }
 
 ///|

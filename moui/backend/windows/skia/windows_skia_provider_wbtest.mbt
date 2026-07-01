@@ -1,25 +1,4 @@
 ///|
-test "windows skia options default to system font resolution" {
-  let options = WindowsSkiaAppOptions::new()
-  assert_true(
-    options.font_resolution == @skia_renderer.SkiaFontResolution::SystemFontMgr,
-  )
-  assert_false(WindowsSkiaSmokeOptions::new().first_frame_smoke_auto_exit)
-  let request = @host.HostWindowOpenRequest::new(
-    title="Inspector",
-    scene=@host.HostWindowScene::new(scene_id="inspector"),
-    metrics=@host.HostSurfaceMetrics::from_logical(
-      size=@core.Size::new(width=320.0, height=240.0),
-    ),
-  )
-  match options.scene_resolver.resolve(request) {
-    @host.HostWindowSceneResolution::SceneRejected(message) =>
-      inspect(message, content="window scene resolver is unavailable")
-    _ => fail("expected default Windows Skia scene resolver rejection")
-  }
-}
-
-///|
 test "windows skia availability follows render skia backend info" {
   assert_true(
     @skia_renderer.backend_info().can_render == @skia_renderer.skia_available(),
@@ -231,9 +210,34 @@ test "windows skia deferred native source completes through decode helper" {
 }
 
 ///|
+test "windows skia options default to system font resolution" {
+  let options = WindowsSkiaAppOptions::new()
+  assert_true(
+    options.font_resolution == @skia_renderer.SkiaFontResolution::SystemFontMgr,
+  )
+  assert_false(WindowsSkiaSmokeOptions::new().first_frame_smoke_auto_exit)
+  let request = @host.HostWindowOpenRequest::new(
+    title="Inspector",
+    scene=@host.HostWindowScene::new(scene_id="inspector"),
+    metrics=@host.HostSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=320.0, height=240.0),
+    ),
+  )
+  match options.scene_resolver.resolve(request) {
+    @host.HostWindowSceneResolution::SceneRejected(message) =>
+      inspect(message, content="window scene resolver is unavailable")
+    _ => fail("expected default Windows Skia scene resolver rejection")
+  }
+}
+
+///|
 test "windows skia async image background_io confirmed" {
   guard @skia_renderer.skia_available() else { return () }
-  let path = "/tmp/moui-bg-io-test-windows.png"
+  let dir = @fs.tmpdir(prefix="moui-bg-io")
+  let path = StringBuilder::new()
+  path.write_string(dir)
+  path.write_string("/windows.png")
+  let path = path.to_string()
   @fs.write_bytes_to_file(path, @utf8.encode("test", bom=false)) catch {
     _ => fail("expected temp file write")
   }
