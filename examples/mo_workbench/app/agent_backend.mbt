@@ -8,12 +8,14 @@
 //   UI side  -> Effect::run callback (sync) -> runtime dispatch (try_put to queue)
 //   backend  -> async worker -> emit(event) -> dispatch(map(event)) into UI queue
 
+///|
 /// Model provider choice. Mirrors openseek's `Model` but stays portable.
 pub(all) enum ModelChoice {
   V4Flash
   V4Pro
 } derive(Eq, Debug)
 
+///|
 /// Thinking mode choice. Mirrors openseek's `ThinkingMode`.
 pub(all) enum ThinkingChoice {
   No
@@ -21,6 +23,7 @@ pub(all) enum ThinkingChoice {
   Max
 } derive(Eq, Debug)
 
+///|
 /// Terminal status of an agent turn. Mirrors openseek's `TurnTerminal`.
 pub(all) enum TurnStatus {
   Finished
@@ -29,6 +32,7 @@ pub(all) enum TurnStatus {
   Failed
 } derive(Eq, Debug)
 
+///|
 /// Neutral agent events projected from the backend into the UI.
 /// The backend (openseek) maps its `SessionItem` / runtime events into these.
 pub(all) enum AgentEvent {
@@ -54,6 +58,7 @@ pub(all) enum AgentEvent {
   ActiveSessionChanged(String)
 }
 
+///|
 /// A lightweight session summary for the sidebar list.
 pub struct SessionSummary {
   id : String
@@ -61,14 +66,16 @@ pub struct SessionSummary {
   last_active_unix_seconds : Int64?
 } derive(Eq, Debug)
 
+///|
 fn SessionSummary::new(
   id~ : String,
   first_prompt~ : String,
-  last_active_unix_seconds~ : Int64? = None,
+  last_active_unix_seconds? : Int64? = None,
 ) -> SessionSummary {
   { id, first_prompt, last_active_unix_seconds }
 }
 
+///|
 /// Commands dispatched from the UI to the backend.
 pub(all) enum AgentCommand {
   /// Send a user task to the active session and run a turn.
@@ -89,18 +96,21 @@ pub(all) enum AgentCommand {
   Shutdown
 }
 
+///|
 /// A backend runtime is a closure that accepts a batch of commands and an emit
 /// callback for events. Concrete backends (openseek owner) construct this.
 pub struct AgentBackendRuntime {
   run : (Array[AgentCommand], (AgentEvent) -> Unit) -> Unit
 }
 
+///|
 fn AgentBackendRuntime::new(
   run~ : (Array[AgentCommand], (AgentEvent) -> Unit) -> Unit,
 ) -> AgentBackendRuntime {
   { run, }
 }
 
+///|
 /// A stub backend that echoes canned replies, so the UI is fully interactive
 /// without an LLM. Replace with the openseek backend once the upstream
 /// mooncakes resolution bug is fixed.
@@ -110,20 +120,22 @@ pub fn AgentBackendRuntime::stub() -> AgentBackendRuntime {
       match cmd {
         SendTask(task) => {
           emit(ProgressNotice("Thinking..."))
-          emit(AssistantMessageAdded(
-            "(stub reply) You said: " + task +
+          emit(
+            AssistantMessageAdded(
+              "(stub reply) You said: " +
+              task +
               ". This is an offline placeholder; real model output arrives once openseek is wired in.",
-            None,
-          ))
+              None,
+            ),
+          )
           emit(TurnTerminal(TurnStatus::Finished, "Done"))
         }
-        Steer(text) => emit(RuntimeNoticeAdded("Steer recorded (stub): " + text))
+        Steer(text) =>
+          emit(RuntimeNoticeAdded("Steer recorded (stub): " + text))
         NewSession(prefix) => {
           let id = prefix + "-" + stub_timestamp()
           emit(ActiveSessionChanged(id))
-          emit(SessionListed([
-            SessionSummary::new(id~, first_prompt=""),
-          ]))
+          emit(SessionListed([SessionSummary::new(id~, first_prompt="")]))
         }
         SwitchSession(id) => {
           emit(ActiveSessionChanged(id))
@@ -138,10 +150,12 @@ pub fn AgentBackendRuntime::stub() -> AgentBackendRuntime {
   })
 }
 
+///|
 fn stub_timestamp() -> String {
   "stub"
 }
 
+///|
 /// Dispatch a batch of commands through the backend, mapping emitted events
 /// into `Msg` via `map`. Returns a no-op effect when the batch is empty.
 pub fn[Msg] AgentBackendRuntime::effect(
@@ -165,6 +179,7 @@ pub fn[Msg] AgentBackendRuntime::effect(
 // Fixture backend (for portable tests; no real LLM calls)
 // ---------------------------------------------------------------------------
 
+///|
 /// A fixture backend that records dispatched commands and replays a scripted
 /// event sequence. Used by wbtest to drive the update loop without a network.
 pub struct AgentBackendFixture {
@@ -172,13 +187,17 @@ pub struct AgentBackendFixture {
   script : (AgentCommand) -> Array[AgentEvent]
 }
 
+///|
 fn AgentBackendFixture::new(
   script~ : (AgentCommand) -> Array[AgentEvent],
 ) -> AgentBackendFixture {
   { dispatched: [], script }
 }
 
-fn AgentBackendFixture::dispatched_commands(self : AgentBackendFixture) -> Array[AgentCommand] {
+///|
+fn AgentBackendFixture::dispatched_commands(
+  self : AgentBackendFixture,
+) -> Array[AgentCommand] {
   let out : Array[AgentCommand] = []
   for cmd in self.dispatched {
     out.push(cmd)
@@ -186,7 +205,10 @@ fn AgentBackendFixture::dispatched_commands(self : AgentBackendFixture) -> Array
   out
 }
 
-fn AgentBackendFixture::runtime(self : AgentBackendFixture) -> AgentBackendRuntime {
+///|
+fn AgentBackendFixture::runtime(
+  self : AgentBackendFixture,
+) -> AgentBackendRuntime {
   AgentBackendRuntime::new(run=(commands, emit) => {
     for cmd in commands {
       self.dispatched.push(cmd)

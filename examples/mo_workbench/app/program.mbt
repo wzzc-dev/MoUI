@@ -1,5 +1,6 @@
 // Program assembly: wires Model/Msg/update/view into a MoUI Program.
 
+///|
 /// Build the workbench program with the given backend runtime.
 /// The entrypoint (macos_skia) injects the concrete openseek backend here.
 pub fn MoWorkbenchApp::program_with_backend(
@@ -17,6 +18,7 @@ pub fn MoWorkbenchApp::program_with_backend(
   )
 }
 
+///|
 /// Convenience constructor + program in one call (used by the entrypoint).
 pub fn program_with_backend(
   backend~ : AgentBackendRuntime,
