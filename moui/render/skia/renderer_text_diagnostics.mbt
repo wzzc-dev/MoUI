@@ -223,7 +223,7 @@ pub fn skia_emoji_font_fallback_diagnostic(
         fallback_request.has_character() &&
         fallback_request_language_count == fallback_language_tags.length(),
         missing_glyph_recovery_ready: skia_sample_missing_glyph_recovery_ready(),
-        deterministic_color_emoji_ready: false,
+        deterministic_color_emoji_ready: skia_emoji_typeface_has_color_glyphs(),
       })
     }
     None => None
@@ -239,8 +239,29 @@ fn skia_emoji_font_source_label(resolution : SkiaFontResolution) -> String {
 }
 
 ///|
+fn skia_emoji_typeface_has_color_glyphs() -> Bool {
+  match @skia_native.FontMgr::default() {
+    None => false
+    Some(mgr) => {
+      match mgr.match_family_style_character(
+        b"",
+        [],
+        0x1F469,
+      ) {
+        None => false
+        Some(typeface) => typeface.has_color_glyphs()
+      }
+    }
+  }
+}
+
+///|
 fn skia_emoji_glyph_format_label() -> String {
-  "rgba"
+  if skia_emoji_typeface_has_color_glyphs() {
+    "rgba"
+  } else {
+    "alpha"
+  }
 }
 
 ///|

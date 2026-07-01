@@ -67,9 +67,10 @@ pub(all) struct ImageResourceLoadCompletion {
   width : Int
   height : Int
   diagnostic : String
+  background_io : Bool
 } derive(Eq, ToJson, @debug.Debug)
-pub fn ImageResourceLoadCompletion::failed(String, diagnostic~ : String) -> Self
-pub fn ImageResourceLoadCompletion::ready(String, width~ : Int, height~ : Int) -> Self
+pub fn ImageResourceLoadCompletion::failed(String, diagnostic~ : String, background_io? : Bool) -> Self
+pub fn ImageResourceLoadCompletion::ready(String, width~ : Int, height~ : Int, background_io? : Bool) -> Self
 
 pub(all) enum ImageResourceLoadCompletionStatus {
   ImageLoadReady
