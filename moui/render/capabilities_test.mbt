@@ -657,12 +657,12 @@ test "renderer capability report tracks draw command support" {
   assert_true(skia_image_note.contains("local-file retry"))
   assert_true(skia_image_note.contains("image-resource callback snapshots"))
   assert_true(skia_image_note.contains("HostWindowRenderer callback bridge"))
-  assert_true(skia_image_note.contains("post-present async image loading"))
+  assert_true(skia_image_note.contains("off-main-thread async image loading"))
   assert_true(skia_image_note.contains("async image second-frame smoke"))
   assert_true(skia_image_note.contains("baseline-guarded callbacks"))
   assert_true(skia_image_note.contains("dispose-record"))
   assert_true(
-    skia_image_note.contains("off-main provider/platform async loader"),
+    skia_image_note.contains("off-main-thread file I/O is implemented"),
   )
   let web_image_note = async_image.note_for_backend(
     @render.RendererBackendKind::WebGpuWasm,

@@ -78,9 +78,10 @@ proof status:
 
 ### AsyncImage
 
-- **Implementation status**: partial (off-main async image runtime observation)
+- **Implementation status**: partial (real-device smoke verification of
+  off-main-thread completion delivery pending)
 - **L1 proof**: `conformance` job passes (HostAsyncImageLoader dedup, late
-  callback gating, completion routing)
+  callback gating, completion routing, drain_fn spawn/drain cycle)
 - **L2 proof**: `macos-real-skia` / `linux-real-skia` / `windows-real-skia`
   pass on every PR (second-frame repaint marker after local/data URI
   completions, deferred-completion marker after `HostNativeAsyncImageSource`
@@ -88,8 +89,10 @@ proof status:
 - **Proof gap**: None. The `moui-skia-real-skia-pr-smoke.yml` workflow
   automatically obtains second-frame and deferred-completion markers on all
   three platforms on every PR.
-- **Functional gap**: Off-main provider/platform async loader implementation
-  remains follow-up work; this is an implementation gap, not a proof gap.
+- **Functional gap**: Off-main-thread file I/O is implemented via platform C
+  stubs (GCD on macOS, pthread on Linux, CreateThread on Windows); data URI
+  sources decode synchronously on the main thread. Real-device smoke
+  verification of off-main-thread completion delivery remains follow-up work.
 
 ## Evidence Traceability
 

@@ -134,6 +134,7 @@ pub struct HostAsyncImageLoader {
     String,
     (@render.ImageResourceLoadCompletion) -> Unit,
   ) -> (() -> Unit)?
+  priv drain_fn : () -> Unit
   priv mut in_flight : Array[HostAsyncImageLoadInFlight]
   priv mut scheduled_count : Int
   priv mut completed_count : Int
@@ -178,6 +179,27 @@ pub fn HostAsyncImageLoader::new(
 ) -> HostAsyncImageLoader {
   {
     start_load_fn: start_load,
+    drain_fn: fn() { () },
+    in_flight: [],
+    scheduled_count: 0,
+    completed_count: 0,
+    cancelled_count: 0,
+    already_in_flight_count: 0,
+  }
+}
+
+///|
+pub fn HostAsyncImageLoader::new_with_drain(
+  start_load~ : (
+    HostWindowId,
+    String,
+    (@render.ImageResourceLoadCompletion) -> Unit,
+  ) -> (() -> Unit)?,
+  drain~ : () -> Unit,
+) -> HostAsyncImageLoader {
+  {
+    start_load_fn: start_load,
+    drain_fn: drain,
     in_flight: [],
     scheduled_count: 0,
     completed_count: 0,
@@ -205,6 +227,22 @@ pub fn HostNativeAsyncImageSource::loader(
     self.register(window_id, source, complete)
     Some(() => ignore(self.cancel(window_id, source)))
   })
+}
+
+///|
+pub fn HostNativeAsyncImageSource::loader_with_drain(
+  self : HostNativeAsyncImageSource,
+  spawn~ : (HostWindowId, String) -> Unit,
+  drain~ : () -> Unit,
+) -> HostAsyncImageLoader {
+  HostAsyncImageLoader::new_with_drain(
+    start_load=(window_id, source, complete) => {
+      self.register(window_id, source, complete)
+      spawn(window_id, source)
+      Some(() => ignore(self.cancel(window_id, source)))
+    },
+    drain~,
+  )
 }
 
 ///|
@@ -317,6 +355,7 @@ pub fn HostAsyncImageLoader::schedule_loading_resources(
       _ => ()
     }
   }
+  (self.drain_fn)()
   HostAsyncImageLoadScheduleResult::{
     window_id,
     snapshot_revision: snapshot.revision,
