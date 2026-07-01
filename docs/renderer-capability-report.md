@@ -344,7 +344,7 @@ plus the Unicode 17 grapheme boundary contract separately from the remaining
 bidi, paragraph, and color emoji gaps. `TextSystem::layout_paragraph()`
 now gives Skia diagnostics wrapped line metrics, caret rectangles, selection
 rectangles, and hit-test geometry. When the binding is built with
-`MOUI_SKIA_ENABLE_SKPARAGRAPH=1`, `skia_paragraph_available()` lets the Skia
+SkParagraph enabled, `skia_paragraph_available()` lets the Skia
 text system use the native `Paragraph` wrapper for SkParagraph line metrics,
 selection boxes, hit testing, and mixed-direction visual-order metadata. The
 fallback path keeps native paragraph and bidi readiness flags false; the

@@ -10,8 +10,8 @@ Options:
                         Default: .skia-cache/linux.
   --skia-rev REV        Skia git revision, branch, or tag to checkout.
                         Default: first non-comment line of skia-revision.txt.
-  --enable-skparagraph  Enable SkParagraph, SkShaper, and SkUnicode in the
-                        source-built smoke library.
+  --enable-skparagraph  Build SkParagraph, SkShaper, and SkUnicode in the
+                        source-built smoke library (default: on).
   --extra-gn-args STR   Extra GN args appended to the smoke-test defaults.
   --no-sync-deps        Skip python3 tools/git-sync-deps.
   --no-fetch            Reuse an existing Skia checkout instead of cloning/fetching.
@@ -48,7 +48,7 @@ skia_rev_explicit=0
 if [[ -n "${MOUI_SKIA_SKIA_REV:-}" ]]; then
   skia_rev_explicit=1
 fi
-enable_skparagraph="${MOUI_SKIA_ENABLE_SKPARAGRAPH:-0}"
+enable_skparagraph="${MOUI_SKIA_ENABLE_SKPARAGRAPH:-1}"
 extra_gn_args="${MOUI_SKIA_EXTRA_GN_ARGS:-}"
 sync_deps=1
 fetch_repo=1
