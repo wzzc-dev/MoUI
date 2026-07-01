@@ -1590,9 +1590,7 @@ fn main {
   if renderer.present_count() != 1 {
     fail_smoke("MoUI Skia renderer did not present exactly one frame")
   }
-  if renderer.unsupported_command_count() != 0 {
-    fail_smoke("MoUI Skia smoke hit unsupported renderer commands")
-  }
+  assert_no_unexpected_unsupported_commands(renderer, "renderer-smoke")
   assert_image_resources(renderer, local_png_path)
   assert_skia_text_system_carets(renderer)
 
