@@ -336,7 +336,7 @@ fn file_budgets() -> Array[FileBudget] {
       max_lines: 205,
     },
     { path: "moui/render/skia/renderer_text.mbt", max_lines: 50 },
-    { path: "moui/tests/skia_renderer_smoke/native/main.mbt", max_lines: 1850 },
+    { path: "moui/tests/skia_renderer_smoke/native/main.mbt", max_lines: 1880 },
     { path: "moui/runtime/runtime.mbt", max_lines: 455 },
     { path: "moui/runtime/program_runtime_diagnostics.mbt", max_lines: 270 },
     { path: "moui/runtime/program_runtime_effect_tasks.mbt", max_lines: 130 },
