@@ -165,6 +165,50 @@ fn emoji_diagnostic_text() -> String {
 }
 
 ///|
+fn emoji_keycap_text() -> String {
+  // Keycap: # + VS16 + COMBINING ENCLOSING KEYCAP
+  "\u{0023}\u{FE0F}\u{20E3}"
+}
+
+///|
+fn emoji_regional_indicator_text() -> String {
+  // Regional indicator pair: US flag
+  "\u{1F1FA}\u{1F1F8}"
+}
+
+///|
+fn emoji_skin_tone_modifier_text() -> String {
+  // Thumbs up + light skin tone modifier
+  "\u{1F44D}\u{1F3FB}"
+}
+
+///|
+fn emoji_variant_diagnostics_ready(text : String, label : String) -> Bool {
+  match
+    @skia_renderer.skia_emoji_font_fallback_diagnostic(
+      text,
+      font=emoji_diagnostic_font(),
+    ) {
+    Some(fallback) => {
+      println(
+        "MoUI Skia text/emoji smoke emoji variant \{label} glyph_count=\{fallback.glyph_count} cluster_count=\{fallback.cluster_count} glyph_format=\{fallback.glyph_format} fallback_request_ready=\{fallback.fallback_request_ready} emoji_hint=\{fallback.emoji_hint}",
+      )
+      fallback.fallback_request_ready &&
+      fallback.emoji_hint &&
+      fallback.glyph_count >= 1 &&
+      fallback.cluster_count >= 1 &&
+      fallback.glyph_format == "rgba"
+    }
+    None => {
+      println(
+        "MoUI Skia text/emoji smoke emoji variant \{label} fallback diagnostic returned None",
+      )
+      false
+    }
+  }
+}
+
+///|
 fn emoji_diagnostic_font() -> @core.FontSpec {
   @core.FontSpec::new(
     families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
@@ -680,6 +724,52 @@ fn bidi_visual_order_observed_available(
 }
 
 ///|
+fn bidi_arabic_observed_available(
+  frame : @skia_renderer.SkiaPixelFrame,
+  text_system : @core.TextSystem,
+) -> Bool {
+  // Arabic 样本：Latin + Arabic Ba/Alef + digits，触发 bidi 重排。
+  let sample = "abc \u{0628}\u{0627} 123"
+  let layout = text_system.layout_paragraph(
+    @core.TextLayoutInput::new(
+      text=sample,
+      font=@core.FontSpec::new(size=20.0, weight=500),
+      max_width=220.0,
+    ),
+  )
+  println(
+    "MoUI Skia text/emoji smoke bidi arabic logical=\{layout.visual_order.logical_text} visual=\{layout.visual_order.visual_text} segments=\{layout.visual_order.segment_count} glyphs=\{layout.visual_order.glyph_count} bidi_visual_order_ready=\{layout.metadata.bidi_visual_order_ready}",
+  )
+  layout.metadata.native_paragraph_ready &&
+  layout.metadata.bidi_visual_order_ready &&
+  layout.visual_order.visual_order_differs &&
+  layout.visual_order.segment_count >= 3 &&
+  layout.visual_order.glyph_count >= 5
+}
+
+///|
+fn bidi_mixed_direction_observed_available(
+  frame : @skia_renderer.SkiaPixelFrame,
+  text_system : @core.TextSystem,
+) -> Bool {
+  // 混合方向嵌套样本：Hebrew Aleph + Latin + Hebrew Bet，验证嵌套方向处理。
+  let sample = "\u{05D0}abc\u{05D1}"
+  let layout = text_system.layout_paragraph(
+    @core.TextLayoutInput::new(
+      text=sample,
+      font=@core.FontSpec::new(size=20.0, weight=500),
+      max_width=220.0,
+    ),
+  )
+  println(
+    "MoUI Skia text/emoji smoke bidi mixed logical=\{layout.visual_order.logical_text} visual=\{layout.visual_order.visual_text} segments=\{layout.visual_order.segment_count} glyphs=\{layout.visual_order.glyph_count} bidi_visual_order_ready=\{layout.metadata.bidi_visual_order_ready}",
+  )
+  layout.metadata.native_paragraph_ready &&
+  layout.metadata.bidi_visual_order_ready &&
+  layout.visual_order.visual_order_differs
+}
+
+///|
 fn main {
   if !@skia_renderer.skia_available() {
     fail_smoke(
@@ -787,6 +877,30 @@ fn main {
         )
       }
 
+      // Emoji 变体验证：keycap、regional indicator、skin tone modifier。
+      // 这些样本不通过像素验证（各平台 emoji 字体格式不同），只验证 fallback diagnostic 元数据。
+      let keycap_ready = emoji_variant_diagnostics_ready(
+        emoji_keycap_text(),
+        "keycap",
+      )
+      let regional_indicator_ready = emoji_variant_diagnostics_ready(
+        emoji_regional_indicator_text(),
+        "regional-indicator",
+      )
+      let skin_tone_ready = emoji_variant_diagnostics_ready(
+        emoji_skin_tone_modifier_text(),
+        "skin-tone-modifier",
+      )
+      if keycap_ready && regional_indicator_ready && skin_tone_ready {
+        println(
+          "MoUI renderer smoke colorEmojiVariants passed keycap regional-indicator skin-tone-modifier glyph-metadata fallback-request",
+        )
+      } else {
+        failures.push(
+          "colorEmojiVariants missing emoji variant fallback diagnostic metadata",
+        )
+      }
+
       let paragraph_rows = rect_dark_rows(
         frame,
         @core.Rect::new(x=8.0, y=94.0, width=96.0, height=94.0),
@@ -814,6 +928,26 @@ fn main {
       } else {
         failures.push(
           "bidiLayout missing Skia visual-order glyph/paragraph observation",
+        )
+      }
+
+      if bidi_arabic_observed_available(frame, renderer.text_system()) {
+        println(
+          "MoUI renderer smoke bidiLayoutArabic passed engine=skparagraph bidi_visual_order_ready=true visual-order arabic",
+        )
+      } else {
+        failures.push(
+          "bidiLayoutArabic missing Skia Arabic bidi visual-order observation",
+        )
+      }
+
+      if bidi_mixed_direction_observed_available(frame, renderer.text_system()) {
+        println(
+          "MoUI renderer smoke bidiLayoutMixed passed engine=skparagraph bidi_visual_order_ready=true visual-order mixed-direction",
+        )
+      } else {
+        failures.push(
+          "bidiLayoutMixed missing Skia mixed-direction bidi visual-order observation",
         )
       }
 

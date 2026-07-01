@@ -33,6 +33,14 @@ while [[ $# -gt 0 ]]; do
       echo "scripts/linux-accept-real-skia-smoke.sh owns --smoke-log; use --log-dir instead" >&2
       exit 2
       ;;
+    --renderer-log)
+      echo "scripts/linux-accept-real-skia-smoke.sh owns --renderer-log; use --log-dir instead" >&2
+      exit 2
+      ;;
+    --text-emoji-log)
+      echo "scripts/linux-accept-real-skia-smoke.sh owns --text-emoji-log; use --log-dir instead" >&2
+      exit 2
+      ;;
     --dry-run-config)
       echo "acceptance requires a real smoke run; use scripts/linux-real-skia-smoke.sh --dry-run-config for preflight" >&2
       exit 2
@@ -58,6 +66,8 @@ wrapper_log="$resolved_log_dir/linux-real-skia-smoke.log"
 preflight_log="$resolved_log_dir/linux-real-skia-smoke-preflight.log"
 build_log="$resolved_log_dir/linux-skia-build.log"
 native_log="$resolved_log_dir/linux-native-smoke-output.log"
+renderer_log="$resolved_log_dir/linux-renderer-smoke-output.log"
+text_emoji_log="$resolved_log_dir/linux-text-emoji-smoke-output.log"
 acceptance_log="$resolved_log_dir/linux-real-skia-acceptance.log"
 native_pkg="$repo_root/native/moon.pkg"
 backup_pkg="$native_pkg.smoke.bak"
@@ -85,11 +95,15 @@ echo "  preflight_log=$preflight_log"
 echo "  wrapper_log=$wrapper_log"
 echo "  build_log=$build_log"
 echo "  native_log=$native_log"
+echo "  renderer_log=$renderer_log"
+echo "  text_emoji_log=$text_emoji_log"
 echo "  acceptance_log=$acceptance_log"
 
 bash "$repo_root/scripts/linux-real-skia-smoke.sh" \
   --build-log "$build_log" \
   --smoke-log "$native_log" \
+  --renderer-log "$renderer_log" \
+  --text-emoji-log "$text_emoji_log" \
   --dry-run-config \
   "${smoke_args[@]}" 2>&1 | tee "$preflight_log"
 
@@ -98,6 +112,8 @@ set -o pipefail
 bash "$repo_root/scripts/linux-real-skia-smoke.sh" \
   --build-log "$build_log" \
   --smoke-log "$native_log" \
+  --renderer-log "$renderer_log" \
+  --text-emoji-log "$text_emoji_log" \
   "${smoke_args[@]}" 2>&1 | tee "$wrapper_log"
 smoke_status=${PIPESTATUS[0]}
 set +o pipefail
@@ -174,6 +190,8 @@ Linux real Skia acceptance result:
   wrapper_log=$wrapper_log
   build_log=$build_log
   native_log=$native_log
+  renderer_log=$renderer_log
+  text_emoji_log=$text_emoji_log
   acceptance_log=$acceptance_log
 EOF
 
