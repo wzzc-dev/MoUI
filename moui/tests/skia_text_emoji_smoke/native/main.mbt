@@ -186,7 +186,7 @@ fn emoji_skin_tone_modifier_text() -> String {
 fn emoji_variant_diagnostics_ready(text : String, label : String) -> Bool {
   match
     @skia_renderer.skia_emoji_font_fallback_diagnostic(
-      text,
+      text~,
       font=emoji_diagnostic_font(),
     ) {
     Some(fallback) => {
