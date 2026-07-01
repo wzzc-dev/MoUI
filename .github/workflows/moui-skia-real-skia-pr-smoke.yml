@@ -43,7 +43,10 @@ jobs:
           bash scripts/macos-accept-real-skia-smoke.sh \
             --log-dir logs \
             --skia-provider release \
-            --link-mode static
+            --link-mode static \
+            --run-renderer-smoke \
+            --run-text-emoji-smoke \
+            --require-skparagraph
 
       - name: Verify native smoke success marker
         if: ${{ always() }}
@@ -64,6 +67,8 @@ jobs:
             moui_skia/logs/macos-real-skia-smoke.log
             moui_skia/logs/macos-native-smoke-output.log
             moui_skia/logs/macos-real-skia-acceptance.log
+            moui_skia/logs/macos-renderer-smoke-output.log
+            moui_skia/logs/macos-text-emoji-smoke-output.log
           if-no-files-found: warn
 
       - name: Verify package files restored
@@ -120,7 +125,10 @@ jobs:
           bash scripts/linux-accept-real-skia-smoke.sh \
             --log-dir logs \
             --skia-provider release \
-            --link-mode static
+            --link-mode static \
+            --run-renderer-smoke \
+            --run-text-emoji-smoke \
+            --require-skparagraph
 
       - name: Verify native smoke success marker
         if: ${{ always() }}
@@ -141,6 +149,8 @@ jobs:
             moui_skia/logs/linux-real-skia-smoke.log
             moui_skia/logs/linux-native-smoke-output.log
             moui_skia/logs/linux-real-skia-acceptance.log
+            moui_skia/logs/linux-renderer-smoke-output.log
+            moui_skia/logs/linux-text-emoji-smoke-output.log
           if-no-files-found: warn
 
       - name: Verify package files restored
@@ -202,6 +212,9 @@ jobs:
             SkiaCommit = $envMap["MOUI_SKIA_SKIA_COMMIT"]
             SkiaPackage = $envMap["MOUI_SKIA_SKIA_PACKAGE"]
             SkiaPackageSha256 = $envMap["MOUI_SKIA_SKIA_PACKAGE_SHA256"]
+            RequireSkParagraph = $true
+            RunRendererSmoke = $true
+            RunTextEmojiSmoke = $true
           }
           .\scripts\windows-msvc-accept-real-skia-smoke.ps1 @args
 
@@ -224,6 +237,8 @@ jobs:
             moui_skia/logs/windows-real-skia-smoke.log
             moui_skia/logs/windows-native-smoke-output.log
             moui_skia/logs/windows-real-skia-acceptance.log
+            moui_skia/logs/windows-renderer-smoke-output.log
+            moui_skia/logs/windows-text-emoji-smoke-output.log
           if-no-files-found: warn
 
       - name: Verify package files restored

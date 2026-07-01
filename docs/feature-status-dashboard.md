@@ -56,7 +56,8 @@ proof status:
 - **L1 proof**: `conformance` job passes (grapheme break, caret stabilization,
   UAX#29 fixture)
 - **L2 proof**: `macos-real-skia` / `linux-real-skia` / `windows-real-skia`
-  pass on every PR (SkShaper/SkParagraph smoke markers)
+  pass on every PR (SkShaper/SkParagraph smoke markers, bidi Arabic and
+  mixed-direction visual-order markers via `--run-text-emoji-smoke`)
 - **Proof gap**: None. Runtime evidence is obtained automatically on every PR.
 - **Functional gap**: Bidi/paragraph layout determinism remains follow-up work;
   this is an implementation gap, not a proof gap.
@@ -67,7 +68,9 @@ proof status:
 - **L1 proof**: `conformance` job passes (emoji cluster detection, caret
   stabilization)
 - **L2 proof**: `macos-real-skia` / `linux-real-skia` / `windows-real-skia`
-  pass on every PR (emoji glyph/raster observation markers)
+  pass on every PR (emoji glyph/raster observation markers, keycap/
+  regional-indicator/skin-tone-modifier fallback diagnostic markers via
+  `--run-text-emoji-smoke`)
 - **Proof gap**: None. Runtime evidence is obtained automatically.
 - **Functional gap**: Deterministic color emoji and cross-platform font fallback
   conformance remain follow-up work; this is an implementation gap, not a proof
@@ -79,11 +82,12 @@ proof status:
 - **L1 proof**: `conformance` job passes (HostAsyncImageLoader dedup, late
   callback gating, completion routing)
 - **L2 proof**: `macos-real-skia` / `linux-real-skia` / `windows-real-skia`
-  pass on every PR (second-frame repaint marker after
-  local/data URI completions)
+  pass on every PR (second-frame repaint marker after local/data URI
+  completions, deferred-completion marker after `HostNativeAsyncImageSource`
+  completion via `--run-renderer-smoke`)
 - **Proof gap**: None. The `moui-skia-real-skia-pr-smoke.yml` workflow
-  automatically obtains second-frame markers on all three platforms on every
-  PR.
+  automatically obtains second-frame and deferred-completion markers on all
+  three platforms on every PR.
 - **Functional gap**: Off-main provider/platform async loader implementation
   remains follow-up work; this is an implementation gap, not a proof gap.
 

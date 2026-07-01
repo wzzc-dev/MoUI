@@ -1261,6 +1261,230 @@ fn run_async_image_second_frame_smoke() -> Unit {
 }
 
 ///|
+fn run_async_image_deferred_completion_smoke() -> Unit {
+  // 使用 HostNativeAsyncImageSource 模拟 deferred completion（非同步完成）。
+  // 这是迈向 off-main provider 的中间验证步骤：loader 不在 start_load 回调中
+  // 同步调用 complete，而是将请求注册到 native_source，后续手动触发 completion。
+  let local_png_path = smoke_temp_path(
+    "moui-skia-renderer-smoke-async-image-deferred.png",
+  )
+  remove_local_smoke_file(local_png_path)
+  write_local_smoke_png(local_png_path)
+  let captured : Ref[@skia_renderer.SkiaPixelFrame?] = Ref(None)
+  let target = @skia_renderer.SkiaPresentTarget::new(
+    description="MoUI Skia async image deferred-completion smoke presenter",
+    present=frame => {
+      captured.val = Some(frame)
+      true
+    },
+  )
+  let renderer_result = try
+    @skia_renderer.create_with_present_target(
+      @render.RendererSurfaceMetrics::from_logical(
+        size=@core.Size::new(width=24.0, height=10.0),
+        scale_factor=1.0,
+      ),
+      target,
+      async_image_loading=true,
+    )
+  catch {
+    err => Err(err.message())
+  } noraise {
+    renderer => Ok(renderer)
+  }
+  guard renderer_result is Ok(renderer) else {
+    remove_local_smoke_file(local_png_path)
+    fail_smoke(
+      "failed to create MoUI Skia async image deferred-completion smoke renderer",
+    )
+  }
+
+  let commands = async_image_smoke_commands(local_png_path)
+  renderer.render(commands) catch {
+    err => {
+      remove_local_smoke_file(local_png_path)
+      fail_smoke(
+        "failed to render MoUI Skia async image deferred-completion first frame: \{err.message()}",
+      )
+    }
+  }
+  if renderer.present_count() != 1 {
+    remove_local_smoke_file(local_png_path)
+    fail_smoke(
+      "Skia async image deferred-completion smoke did not present the loading frame",
+    )
+  }
+  assert_image_status(
+    renderer,
+    one_pixel_red_png_data_uri(),
+    @render.ImageResourceStatus::ImageLoading,
+  )
+  assert_image_status(
+    renderer,
+    local_png_path,
+    @render.ImageResourceStatus::ImageLoading,
+  )
+
+  let host_renderer = @host.HostWindowRenderer::new(
+    resize=metrics => {
+      renderer.resize(
+        @render.RendererSurfaceMetrics::new(
+          logical_size=metrics.logical_size,
+          physical_size=metrics.physical_size,
+          scale_factor=metrics.scale_factor,
+        ),
+      ) catch {
+        err =>
+          fail_smoke(
+            "failed to resize Skia async image deferred-completion smoke renderer: \{err.message()}",
+          )
+      }
+    },
+    render=draw_commands => {
+      renderer.render(draw_commands) catch {
+        err =>
+          fail_smoke(
+            "failed to render Skia async image deferred-completion smoke host frame: \{err.message()}",
+          )
+      }
+    },
+    text_system=() => renderer.text_system(),
+    image_resources=() => renderer.image_resources(),
+    image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
+    apply_image_resource_load_completion=Some(completion => {
+      renderer.apply_image_resource_load_completion(completion)
+    }),
+    set_image_resource_change_callback=callback => {
+      renderer.set_image_resource_change_callback(callback)
+    },
+    present_count=() => renderer.present_count(),
+    dispose=() => renderer.dispose(),
+  )
+  let window_id = @host.HostWindowId::new(100)
+  let tracker = @host.HostImageResourceRepaintTracker::new()
+  let baseline = tracker.record_presented(window_id, host_renderer)
+  if baseline.current_status_counts.loading_count != 2 {
+    remove_local_smoke_file(local_png_path)
+    fail_smoke(
+      "Skia async image deferred-completion smoke did not baseline two loading images",
+    )
+  }
+  let redraws : Array[@host.HostWindowId] = []
+  let completion_source = @host.HostImageResourceCompletionSource::new(
+    tracker~,
+    window_open=id => id == window_id,
+    request_redraw=id => redraws.push(id),
+  )
+  // 使用 HostNativeAsyncImageSource 创建 deferred loader。
+  // start_load 回调只注册请求，不调用 complete —— 模拟异步加载尚未完成。
+  let native_source = @host.HostNativeAsyncImageSource::new()
+  let loader = native_source.loader()
+  let scheduled = loader.schedule_loading_resources(
+    window_id, host_renderer, completion_source,
+  )
+  if scheduled.loading_count != 2 || scheduled.scheduled_count != 2 {
+    remove_local_smoke_file(local_png_path)
+    fail_smoke(
+      "Skia async image deferred-completion smoke did not schedule both loading images",
+    )
+  }
+  // 验证两个请求被注册到 native_source 而非同步完成。
+  let pending = native_source.pending_requests()
+  if pending.length() != 2 {
+    remove_local_smoke_file(local_png_path)
+    fail_smoke(
+      "Skia async image deferred-completion smoke did not register two pending requests",
+    )
+  }
+  if loader.diagnostics().completed_count != 0 {
+    remove_local_smoke_file(local_png_path)
+    fail_smoke(
+      "Skia async image deferred-completion smoke completed loads prematurely",
+    )
+  }
+  // 手动触发两个 completion（模拟后台解码完成）。
+  let completion1 = native_source.complete(
+    window_id,
+    @skia_renderer.skia_image_load_completion(one_pixel_red_png_data_uri()),
+  )
+  if completion1.status !=
+    @host.HostNativeAsyncImageCompletionStatus::NativeAsyncImageCompletionDelivered {
+    remove_local_smoke_file(local_png_path)
+    fail_smoke(
+      "Skia async image deferred-completion smoke first completion was not delivered",
+    )
+  }
+  let completion2 = native_source.complete(
+    window_id,
+    @skia_renderer.skia_image_load_completion(local_png_path),
+  )
+  if completion2.status !=
+    @host.HostNativeAsyncImageCompletionStatus::NativeAsyncImageCompletionDelivered {
+    remove_local_smoke_file(local_png_path)
+    fail_smoke(
+      "Skia async image deferred-completion smoke second completion was not delivered",
+    )
+  }
+  if redraws.length() < 1 {
+    remove_local_smoke_file(local_png_path)
+    fail_smoke(
+      "Skia async image deferred-completion smoke did not request a repaint after completion",
+    )
+  }
+  if loader.diagnostics().completed_count != 2 {
+    remove_local_smoke_file(local_png_path)
+    fail_smoke(
+      "Skia async image deferred-completion smoke did not complete both image loads",
+    )
+  }
+  if completion_source.diagnostics().redraw_requested_count < 1 {
+    remove_local_smoke_file(local_png_path)
+    fail_smoke(
+      "Skia async image deferred-completion smoke did not route through repaint tracker",
+    )
+  }
+  assert_image_status(
+    renderer,
+    one_pixel_red_png_data_uri(),
+    @render.ImageResourceStatus::ImageReady,
+  )
+  assert_image_status(
+    renderer,
+    local_png_path,
+    @render.ImageResourceStatus::ImageReady,
+  )
+
+  renderer.render(commands) catch {
+    err => {
+      remove_local_smoke_file(local_png_path)
+      fail_smoke(
+        "failed to render MoUI Skia async image deferred-completion second frame: \{err.message()}",
+      )
+    }
+  }
+  remove_local_smoke_file(local_png_path)
+  if renderer.present_count() != 2 {
+    fail_smoke(
+      "Skia async image deferred-completion smoke did not present the second frame",
+    )
+  }
+  match captured.val {
+    Some(frame) => {
+      assert_pixel(frame, 4, 4, 255, 0, 0, 255)
+      assert_pixel(frame, 14, 4, 255, 0, 0, 255)
+    }
+    None =>
+      fail_smoke(
+        "Skia async image deferred-completion smoke presenter did not receive a frame",
+      )
+  }
+  println("MoUI Skia async image deferred-completion smoke passed")
+  println(
+    "MoUI renderer smoke asyncImageDeferredCompletion passed deferred-completion pending-requests repaint-request second-frame-pixels",
+  )
+}
+
+///|
 fn main {
   if !@skia_renderer.skia_available() {
     fail_smoke(
@@ -1466,6 +1690,7 @@ fn main {
         @core.Rect::new(x=146.0, y=124.0, width=44.0, height=22.0),
       )
       run_async_image_second_frame_smoke()
+      run_async_image_deferred_completion_smoke()
       println("MoUI Skia renderer smoke passed")
     }
     None => fail_smoke("MoUI Skia smoke presenter did not receive a frame")
