@@ -149,6 +149,7 @@ test "skia text descriptor preflight keeps empty text cacheable" {
 
 ///|
 test "skia text maturity preflight separates covered baseline from gaps" {
+  guard skia_available() else { return () }
   let preflight = skia_text_maturity_preflight()
   assert_true(preflight.descriptor_ready)
   assert_true(preflight.fallback_request_ready)
