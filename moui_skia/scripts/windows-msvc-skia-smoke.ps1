@@ -413,6 +413,7 @@ options(
     }
     $cmdFile = Join-Path ([System.IO.Path]::GetTempPath()) "moui-skia-msvc-smoke-$PID.cmd"
     $logPath = $resolvedSmokeLog -replace '"', '""'
+    $errPath = ($resolvedSmokeLog + ".err") -replace '"', '""'
     $vcPath = $VcVarsAll -replace '"', '""'
     $cmdContent = @"
 @echo off
@@ -434,9 +435,13 @@ if not exist "%SMOKE_EXE%" (
   exit /b 1
 )
 echo running native smoke executable: %SMOKE_EXE%
-"%SMOKE_EXE%" > "$logPath" 2>&1
+"%SMOKE_EXE%" > "$logPath" 2>"$errPath"
 set SMOKE_STATUS=%errorlevel%
 type "$logPath"
+if exist "$errPath" (
+  echo --- native smoke stderr ---
+  type "$errPath"
+)
 exit /b %SMOKE_STATUS%
 "@
     Set-Content -LiteralPath $cmdFile -Value $cmdContent -NoNewline -Encoding ASCII
@@ -512,6 +517,7 @@ options(
         $env:MOUI_SKIA_DISABLE_PREBUILD_SKIA = "1"
         $rendererCmdFile = Join-Path ([System.IO.Path]::GetTempPath()) "moui-skia-msvc-renderer-smoke-$PID.cmd"
         $rendererLogPath = $resolvedRendererLog -replace '"', '""'
+        $rendererErrPath = ($resolvedRendererLog + ".err") -replace '"', '""'
         $vcPath = $VcVarsAll -replace '"', '""'
         $rendererCmdContent = @"
 @echo off
@@ -530,9 +536,13 @@ if not exist "%RENDERER_EXE%" (
   exit /b 1
 )
 echo running renderer smoke executable: %RENDERER_EXE%
-"%RENDERER_EXE%" > "$rendererLogPath" 2>&1
+"%RENDERER_EXE%" > "$rendererLogPath" 2>"$rendererErrPath"
 set RENDERER_STATUS=%errorlevel%
 type "$rendererLogPath"
+if exist "$rendererErrPath" (
+  echo --- renderer smoke stderr ---
+  type "$rendererErrPath"
+)
 exit /b %RENDERER_STATUS%
 "@
         Set-Content -LiteralPath $rendererCmdFile -Value $rendererCmdContent -NoNewline -Encoding ASCII
@@ -622,6 +632,7 @@ options(
         $env:MOUI_SKIA_DISABLE_PREBUILD_SKIA = "1"
         $textEmojiCmdFile = Join-Path ([System.IO.Path]::GetTempPath()) "moui-skia-msvc-text-emoji-smoke-$PID.cmd"
         $textEmojiLogPath = $resolvedTextEmojiLog -replace '"', '""'
+        $textEmojiErrPath = ($resolvedTextEmojiLog + ".err") -replace '"', '""'
         $vcPath = $VcVarsAll -replace '"', '""'
         $textEmojiCmdContent = @"
 @echo off
@@ -640,9 +651,13 @@ if not exist "%TEXT_EMOJI_EXE%" (
   exit /b 1
 )
 echo running text/emoji smoke executable: %TEXT_EMOJI_EXE%
-"%TEXT_EMOJI_EXE%" > "$textEmojiLogPath" 2>&1
+"%TEXT_EMOJI_EXE%" > "$textEmojiLogPath" 2>"$textEmojiErrPath"
 set TEXT_EMOJI_STATUS=%errorlevel%
 type "$textEmojiLogPath"
+if exist "$textEmojiErrPath" (
+  echo --- text/emoji smoke stderr ---
+  type "$textEmojiErrPath"
+)
 exit /b %TEXT_EMOJI_STATUS%
 "@
         Set-Content -LiteralPath $textEmojiCmdFile -Value $textEmojiCmdContent -NoNewline -Encoding ASCII

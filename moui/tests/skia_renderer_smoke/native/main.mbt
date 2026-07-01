@@ -822,6 +822,36 @@ fn renderer_smoke_commands(local_png_path : String) -> Array[@core.DrawCommand] 
 }
 
 ///|
+fn color_filters_available() -> Bool {
+  @skia_native.ColorFilter::saturation(1.0) is Some(_)
+}
+
+///|
+fn assert_no_unexpected_unsupported_commands(
+  renderer : @skia_renderer.SkiaRasterRenderer,
+  context : String,
+) -> Unit {
+  let diagnostics = renderer.unsupported_command_diagnostics()
+  let unexpected : Array[@skia_renderer.SkiaUnsupportedCommandDiagnostic] = []
+  for diagnostic in diagnostics {
+    let tolerate = !color_filters_available() &&
+      diagnostic.command == "PushFilter"
+    if !tolerate {
+      unexpected.push(diagnostic)
+    }
+  }
+  if unexpected.length() > 0 {
+    println(
+      "MoUI Skia renderer smoke unsupported command diagnostics (\{context}):",
+    )
+    for diagnostic in diagnostics {
+      println("  - \{diagnostic.command}: \{diagnostic.reason}")
+    }
+    fail_smoke("MoUI Skia renderer smoke hit unsupported commands (\{context})")
+  }
+}
+
+///|
 fn renderer_diagnostic_pixel_commands() -> Array[@core.DrawCommand] {
   [
     @core.DrawCommand::Clear(@core.Color::white()),
@@ -921,9 +951,7 @@ fn run_renderer_diagnostic_pixel_smoke() -> Unit {
         "failed to render MoUI Skia renderer smoke pixels: \{err.message()}",
       )
   }
-  if renderer.unsupported_command_count() != 0 {
-    fail_smoke("MoUI Skia renderer smoke hit unsupported commands")
-  }
+  assert_no_unexpected_unsupported_commands(renderer, "diagnostic-pixel")
   match captured.val {
     Some(frame) => {
       assert_region_has_redish_pixel(
@@ -1011,9 +1039,7 @@ fn run_gpu_metal_renderer_smoke() -> Unit {
       if renderer.present_count() != 1 {
         fail_smoke("MoUI Skia GPU Metal smoke did not present one frame")
       }
-      if renderer.unsupported_command_count() != 0 {
-        fail_smoke("MoUI Skia GPU Metal smoke hit unsupported commands")
-      }
+      assert_no_unexpected_unsupported_commands(renderer, "gpu-metal")
       match captured.val {
         Some(frame) => {
           assert_region_has_redish_pixel(
