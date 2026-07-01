@@ -1421,3 +1421,19 @@ moonbit_skia_typeface_family_name(MoonbitSkiaTypeface* wrapper) {
   return moonbit_make_bytes(0, 0);
 #endif
 }
+
+extern "C" MOONBIT_FFI_EXPORT int32_t
+moonbit_skia_typeface_has_color_glyphs(MoonbitSkiaTypeface* wrapper) {
+  if (wrapper == nullptr || wrapper->typeface == nullptr) {
+    return 0;
+  }
+#if defined(MOUI_SKIA_HAS_SKIA)
+  return (wrapper->typeface->getTableSize(SkSetFourByteTag('C','O','L','R')) > 0 ||
+          wrapper->typeface->getTableSize(SkSetFourByteTag('s','b','i','x')) > 0 ||
+          wrapper->typeface->getTableSize(SkSetFourByteTag('C','B','D','T')) > 0 ||
+          wrapper->typeface->getTableSize(SkSetFourByteTag('S','V','G',' ')) > 0)
+         ? 1 : 0;
+#else
+  return 0;
+#endif
+}

@@ -286,6 +286,12 @@ extern "C" fn native_typeface_is_fixed_pitch(typeface : TypefaceHandle) -> Bool 
 extern "C" fn native_typeface_family_name(typeface : TypefaceHandle) -> Bytes = "moonbit_skia_typeface_family_name"
 
 ///|
+#borrow(typeface)
+extern "C" fn native_typeface_has_color_glyphs(
+  typeface : TypefaceHandle,
+) -> Bool = "moonbit_skia_typeface_has_color_glyphs"
+
+///|
 fn Font::from_handle(handle : FontHandle) -> Font? {
   if native_font_is_null(handle) {
     None
@@ -1049,4 +1055,9 @@ pub fn Typeface::family_name(self : Typeface) -> Bytes? {
   } else {
     Some(family_name)
   }
+}
+
+///|
+pub fn Typeface::has_color_glyphs(self : Typeface) -> Bool {
+  native_typeface_has_color_glyphs(self.handle)
 }

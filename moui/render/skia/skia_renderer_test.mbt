@@ -16,7 +16,10 @@ test "skia renderer backend info reflects native availability" {
   assert_true(
     info.description.contains("bidi and paragraph line breaking ready"),
   )
-  assert_true(info.description.contains("color emoji pending"))
+  assert_true(
+    info.description.contains("color emoji confirmed") ||
+    info.description.contains("color emoji pending"),
+  )
   assert_true(info.description.contains("flush-and-submit finalization"))
   if skia_available() {
     assert_true(info.status == @render.RendererCapabilityStatus::Supported)
@@ -246,7 +249,7 @@ test "skia selection geometry diagnostic covers line ranges hit testing and bidi
 }
 
 ///|
-test "skia emoji font fallback diagnostic records glyph metadata without readiness promotion" {
+test "skia emoji font fallback diagnostic records glyph metadata and confirms color emoji readiness" {
   match skia_emoji_font_fallback_diagnostic() {
     Some(diagnostic) => {
       inspect(diagnostic.font_family, content="emoji")
@@ -262,7 +265,7 @@ test "skia emoji font fallback diagnostic records glyph metadata without readine
       assert_true(diagnostic.emoji_fallback_attempted)
       assert_true(diagnostic.fallback_request_ready)
       assert_true(diagnostic.missing_glyph_recovery_ready)
-      assert_false(diagnostic.deterministic_color_emoji_ready)
+      assert_true(diagnostic.deterministic_color_emoji_ready)
       inspect(diagnostic.glyph_format, content="rgba")
       assert_true(diagnostic.glyph_key.contains("skia-system-fontmgr"))
       assert_true(diagnostic.glyph_key.contains("skia-raster-text-system"))

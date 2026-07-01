@@ -64,17 +64,20 @@ proof status:
 
 ### EmojiText
 
-- **Implementation status**: partial (cross-platform color emoji consistency)
+- **Implementation status**: deterministic color emoji proven by
+  `Typeface::has_color_glyphs` (font table tag query: COLR/sbix/CBDT/SVG);
+  preflight readiness and emoji font fallback diagnostic now report
+  runtime-determined `deterministic_color_emoji_ready` and `glyph_format`
+  (rgba/alpha). Cross-platform font fallback consistency remains follow-up work.
 - **L1 proof**: `conformance` job passes (emoji cluster detection, caret
-  stabilization)
+  stabilization, glyph format runtime check)
 - **L2 proof**: `macos-real-skia` / `linux-real-skia` / `windows-real-skia`
   pass on every PR (emoji glyph/raster observation markers, keycap/
   regional-indicator/skin-tone-modifier fallback diagnostic markers via
   `--run-text-emoji-smoke`)
 - **Proof gap**: None. Runtime evidence is obtained automatically.
-- **Functional gap**: Deterministic color emoji and cross-platform font fallback
-  conformance remain follow-up work; this is an implementation gap, not a proof
-  gap.
+- **Functional gap**: Cross-platform font fallback conformance remains
+  follow-up work; this is an implementation gap, not a proof gap.
 
 ### AsyncImage
 
