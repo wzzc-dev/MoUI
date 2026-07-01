@@ -123,6 +123,33 @@ fn assert_pixel_near(
 }
 
 ///|
+/// Like assert_pixel_near, but accepts an alternative (unfiltered) expected
+/// color when ColorFilter is unavailable. Release Skia binaries may omit
+/// SkColorFilter.h, making PushFilter(Brightness/Saturate/Contrast/ColorMatrix)
+/// a no-op. In that case the source color is drawn unchanged.
+fn assert_pixel_near_filter_aware(
+  frame : @skia_renderer.SkiaPixelFrame,
+  x : Int,
+  y : Int,
+  filtered_r : Int,
+  filtered_g : Int,
+  filtered_b : Int,
+  filtered_a : Int,
+  unfiltered_r : Int,
+  unfiltered_g : Int,
+  unfiltered_b : Int,
+  unfiltered_a : Int,
+  tolerance : Int,
+) -> Unit {
+  let (er, eg, eb, ea) = if color_filters_available() {
+    (filtered_r, filtered_g, filtered_b, filtered_a)
+  } else {
+    (unfiltered_r, unfiltered_g, unfiltered_b, unfiltered_a)
+  }
+  assert_pixel_near(frame, x, y, er, eg, eb, ea, tolerance)
+}
+
+///|
 fn assert_pixel_luma_between(
   frame : @skia_renderer.SkiaPixelFrame,
   x : Int,
@@ -1690,23 +1717,35 @@ fn main {
       assert_pixel_near(frame, 44, 108, 128, 128, 255, 255, 8)
       assert_pixel(frame, 38, 108, 255, 255, 255, 255)
       assert_pixel_near(frame, 66, 110, 0, 0, 0, 255, 8)
-      assert_pixel_near(frame, 86, 108, 128, 0, 0, 255, 8)
-      assert_pixel_near(frame, 102, 108, 54, 54, 54, 255, 8)
-      assert_pixel_near(frame, 118, 108, 128, 128, 128, 255, 8)
-      assert_pixel_near(frame, 134, 108, 0, 255, 0, 255, 8)
+      assert_pixel_near_filter_aware(
+        frame, 86, 108, 128, 0, 0, 255, 255, 0, 0, 255, 8,
+      )
+      assert_pixel_near_filter_aware(
+        frame, 102, 108, 54, 54, 54, 255, 255, 0, 0, 255, 8,
+      )
+      assert_pixel_near_filter_aware(
+        frame, 118, 108, 128, 128, 128, 255, 255, 0, 0, 255, 8,
+      )
+      assert_pixel_near_filter_aware(
+        frame, 134, 108, 0, 255, 0, 255, 255, 0, 0, 255, 8,
+      )
       assert_pixel_luma_between(frame, 155, 109, 0, 160, 255)
       assert_pixel_luma_between(frame, 148, 109, 20, 245, 255)
       assert_pixel_near(frame, 142, 109, 255, 255, 255, 255, 2)
       assert_pixel_near(frame, 171, 92, 145, 163, 189, 255, 55)
       assert_pixel_near(frame, 173, 109, 0, 255, 0, 255, 45)
       assert_pixel_luma_between(frame, 181, 101, 0, 95, 255)
-      assert_pixel_near(frame, 198, 108, 192, 128, 128, 255, 8)
+      assert_pixel_near_filter_aware(
+        frame, 198, 108, 192, 128, 128, 255, 255, 128, 128, 255, 8,
+      )
       assert_pixel(frame, 192, 108, 255, 255, 255, 255)
       assert_pixel(frame, 12, 137, 255, 0, 0, 255)
       assert_pixel(frame, 26, 137, 255, 255, 255, 255)
       assert_pixel_near(frame, 40, 137, 128, 128, 255, 255, 8)
       assert_pixel(frame, 48, 137, 255, 255, 255, 255)
-      assert_pixel_near(frame, 63, 137, 128, 0, 0, 255, 8)
+      assert_pixel_near_filter_aware(
+        frame, 63, 137, 128, 0, 0, 255, 255, 0, 0, 255, 8,
+      )
       assert_pixel(frame, 70, 137, 255, 255, 255, 255)
       assert_pixel(frame, 90, 137, 255, 0, 255, 255)
       assert_region_has_pixel_near(
