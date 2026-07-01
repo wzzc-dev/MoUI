@@ -135,6 +135,7 @@ pub fn HostAsyncImageLoader::cancel_all(Self) -> Int
 pub fn HostAsyncImageLoader::cancel_window(Self, HostWindowId) -> Int
 pub fn HostAsyncImageLoader::diagnostics(Self) -> HostAsyncImageLoaderDiagnostics
 pub fn HostAsyncImageLoader::new(start_load~ : (HostWindowId, String, (@render.ImageResourceLoadCompletion) -> Unit) -> (() -> Unit)?) -> Self
+pub fn HostAsyncImageLoader::new_with_drain(start_load~ : (HostWindowId, String, (@render.ImageResourceLoadCompletion) -> Unit) -> (() -> Unit)?, drain~ : () -> Unit) -> Self
 pub fn HostAsyncImageLoader::schedule_loading_resources(Self, HostWindowId, HostWindowRenderer, HostImageResourceCompletionSource) -> HostAsyncImageLoadScheduleResult
 
 pub(all) struct HostAsyncImageLoaderDiagnostics {
@@ -380,6 +381,7 @@ pub struct HostNativeAsyncImageSource {
 pub fn HostNativeAsyncImageSource::complete(Self, HostWindowId, @render.ImageResourceLoadCompletion) -> HostNativeAsyncImageCompletionResult
 pub fn HostNativeAsyncImageSource::diagnostics(Self) -> HostNativeAsyncImageSourceDiagnostics
 pub fn HostNativeAsyncImageSource::loader(Self) -> HostAsyncImageLoader
+pub fn HostNativeAsyncImageSource::loader_with_drain(Self, spawn~ : (HostWindowId, String) -> Unit, drain~ : () -> Unit) -> HostAsyncImageLoader
 pub fn HostNativeAsyncImageSource::new() -> Self
 pub fn HostNativeAsyncImageSource::pending_requests(Self) -> Array[HostNativeAsyncImageLoadRequest]
 
