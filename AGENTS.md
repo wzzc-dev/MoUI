@@ -33,6 +33,18 @@ For task-specific workflows, use the repo-local skills:
 ## Working Rules
 
 - Keep shared app logic in `examples/<name>/app`; keep platform entrypoints thin.
+
+### CI Safety Rules
+
+- **Verify API existence in the exact imported package** before using any MoonBit API. Use `moon ide doc <pkg>.<fn>` to check, or grep the package's `.mbt` files. An API may exist in one package (e.g. `moonbitlang/async/fs::tmpdir`) but not in another (e.g. `moonbitlang/x/fs`).
+- **Update moon.pkg imports** whenever you introduce a new `@pkg` prefix in a `.mbt` file. Run `moon check <package>` locally to catch missing imports before pushing.
+- **Study all target platforms** before writing a cross-platform fix. A pattern that works on macOS/Linux (e.g. `/tmp/` path, `pthread` timing) may behave fundamentally differently on Windows (no `/tmp/`, `CreateThread` always succeeds, `Sleep(0)` needed to yield).
+- **Prefer existing helpers** over inventing new path/API conventions. This repo has platform-tested helpers like `skia_test_temp_dir()` in `moui/render/skia/skia_renderer_test_helpers_wbtest.mbt`.
+- **Run local validation before push**:
+  - `moon check <package>` for compile errors and missing imports
+  - `moon test <package> --target native` for the affected test package (if native-supporting)
+  - `sh scripts/dev-check.sh` when changing core/view/render/backend packages
+- **Synchronize async test patterns**: When a test spawns background threads and polls for results, ensure the polling loop yields the thread (e.g. `Sleep(0)` on Windows) so the background thread can execute before the poll budget is exhausted.
 - Ordinary app packages should default to `wzzc-dev/moui` and
   `wzzc-dev/moui/views`.
 - Put new controls, control styles, form/navigation/data helpers, and default
