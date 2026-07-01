@@ -1,4 +1,5 @@
 import {
+  "moonbitlang/core/encoding/utf8",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/macos" @macos_host,
@@ -21,6 +22,6 @@ options(
       "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework CoreGraphics -framework CoreFoundation -lz",
     },
   },
-  "native-stub": [ "macos_skia_presenter.m" ],
+  "native-stub": [ "macos_skia_presenter.m", "macos_async_image.m" ],
   targets: { },
 )
