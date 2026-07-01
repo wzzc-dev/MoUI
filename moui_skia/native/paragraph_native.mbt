@@ -113,19 +113,64 @@ extern "C" fn native_paragraph_line_height(
 
 ///|
 #borrow(paragraph)
-extern "C" fn native_paragraph_text_boxes_utf8(
+extern "C" fn native_paragraph_text_boxes_utf8_count(
   paragraph : ParagraphHandle,
   start : Int,
   end : Int,
-) -> Array[@skia.Rect] = "moonbit_skia_paragraph_text_boxes_utf8"
+) -> Int = "moonbit_skia_paragraph_text_boxes_utf8_count"
 
 ///|
 #borrow(paragraph)
-extern "C" fn native_paragraph_text_box_directions_utf8(
+extern "C" fn native_paragraph_text_boxes_utf8_at_left(
   paragraph : ParagraphHandle,
   start : Int,
   end : Int,
-) -> Array[Int] = "moonbit_skia_paragraph_text_box_directions_utf8"
+  index : Int,
+) -> Float = "moonbit_skia_paragraph_text_boxes_utf8_at_left"
+
+///|
+#borrow(paragraph)
+extern "C" fn native_paragraph_text_boxes_utf8_at_top(
+  paragraph : ParagraphHandle,
+  start : Int,
+  end : Int,
+  index : Int,
+) -> Float = "moonbit_skia_paragraph_text_boxes_utf8_at_top"
+
+///|
+#borrow(paragraph)
+extern "C" fn native_paragraph_text_boxes_utf8_at_right(
+  paragraph : ParagraphHandle,
+  start : Int,
+  end : Int,
+  index : Int,
+) -> Float = "moonbit_skia_paragraph_text_boxes_utf8_at_right"
+
+///|
+#borrow(paragraph)
+extern "C" fn native_paragraph_text_boxes_utf8_at_bottom(
+  paragraph : ParagraphHandle,
+  start : Int,
+  end : Int,
+  index : Int,
+) -> Float = "moonbit_skia_paragraph_text_boxes_utf8_at_bottom"
+
+///|
+#borrow(paragraph)
+extern "C" fn native_paragraph_text_box_directions_utf8_count(
+  paragraph : ParagraphHandle,
+  start : Int,
+  end : Int,
+) -> Int = "moonbit_skia_paragraph_text_box_directions_utf8_count"
+
+///|
+#borrow(paragraph)
+extern "C" fn native_paragraph_text_box_directions_utf8_at(
+  paragraph : ParagraphHandle,
+  start : Int,
+  end : Int,
+  index : Int,
+) -> Int = "moonbit_skia_paragraph_text_box_directions_utf8_at"
 
 ///|
 #borrow(paragraph)
@@ -234,10 +279,27 @@ pub fn Paragraph::text_boxes_utf8(
   start : Int,
   end : Int,
 ) -> Array[@skia.Rect] {
+  // Build the result in MoonBit rather than returning the C batch array.
+  // The C MoonbitSkiaRectArray* memory layout is incompatible with
+  // MoonBit's Array[@skia.Rect].
   if end <= start {
     []
   } else {
-    native_paragraph_text_boxes_utf8(self.handle, start.max(0), end.max(start))
+    let s = start.max(0)
+    let e = end.max(start)
+    let count = native_paragraph_text_boxes_utf8_count(self.handle, s, e)
+    let boxes : Array[@skia.Rect] = Array::new(capacity=count)
+    for index in 0..<count {
+      boxes.push(
+        @skia.Rect::new(
+          native_paragraph_text_boxes_utf8_at_left(self.handle, s, e, index),
+          native_paragraph_text_boxes_utf8_at_top(self.handle, s, e, index),
+          native_paragraph_text_boxes_utf8_at_right(self.handle, s, e, index),
+          native_paragraph_text_boxes_utf8_at_bottom(self.handle, s, e, index),
+        ),
+      )
+    }
+    boxes
   }
 }
 
@@ -247,14 +309,25 @@ pub fn Paragraph::text_box_directions_utf8(
   start : Int,
   end : Int,
 ) -> Array[Int] {
+  // Build the result in MoonBit; the C MoonbitSkiaInt32Array* layout is
+  // incompatible with MoonBit's Array[Int].
   if end <= start {
     []
   } else {
-    native_paragraph_text_box_directions_utf8(
+    let s = start.max(0)
+    let e = end.max(start)
+    let count = native_paragraph_text_box_directions_utf8_count(
       self.handle,
-      start.max(0),
-      end.max(start),
+      s,
+      e,
     )
+    let directions : Array[Int] = Array::new(capacity=count)
+    for index in 0..<count {
+      directions.push(
+        native_paragraph_text_box_directions_utf8_at(self.handle, s, e, index),
+      )
+    }
+    directions
   }
 }
 

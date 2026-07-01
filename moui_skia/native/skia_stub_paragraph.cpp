@@ -354,94 +354,202 @@ moonbit_skia_paragraph_line_height(MoonbitSkiaParagraph* wrapper, int32_t index)
 #endif
 }
 
-extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaRectArray*
-moonbit_skia_paragraph_text_boxes_utf8(
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_SKPARAGRAPH_HEADERS)
+static std::vector<TextBox> moonbit_skia_paragraph_text_boxes_utf8_collect(
   MoonbitSkiaParagraph* wrapper,
   int32_t start,
   int32_t end
 ) {
-  if (start < 0 || end <= start) {
-    return moonbit_skia_make_rect_array(
-      0,
-      reinterpret_cast<MoonbitSkiaRect**>(moonbit_empty_ref_array)
-    );
-  }
-#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_SKPARAGRAPH_HEADERS)
   if (wrapper == nullptr || wrapper->paragraph == nullptr) {
-    return moonbit_skia_make_rect_array(
-      0,
-      reinterpret_cast<MoonbitSkiaRect**>(moonbit_empty_ref_array)
-    );
+    return {};
   }
-  std::vector<TextBox> boxes = wrapper->paragraph->getRectsForRange(
+  if (start < 0 || end <= start) {
+    return {};
+  }
+  return wrapper->paragraph->getRectsForRange(
     static_cast<unsigned>(start),
     static_cast<unsigned>(end),
     RectHeightStyle::kMax,
     RectWidthStyle::kTight
   );
-  if (boxes.empty() || boxes.size() > static_cast<size_t>(INT32_MAX)) {
-    return moonbit_skia_make_rect_array(
-      0,
-      reinterpret_cast<MoonbitSkiaRect**>(moonbit_empty_ref_array)
-    );
-  }
-  MoonbitSkiaRect** buffer = moonbit_skia_make_rect_array_storage(
-    static_cast<int32_t>(boxes.size())
+}
+#endif
+
+extern "C" MOONBIT_FFI_EXPORT int32_t
+moonbit_skia_paragraph_text_boxes_utf8_count(
+  MoonbitSkiaParagraph* wrapper,
+  int32_t start,
+  int32_t end
+) {
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_SKPARAGRAPH_HEADERS)
+  std::vector<TextBox> boxes = moonbit_skia_paragraph_text_boxes_utf8_collect(
+    wrapper,
+    start,
+    end
   );
-  for (size_t i = 0; i < boxes.size(); ++i) {
-    const SkRect& rect = boxes[i].rect;
-    buffer[i] = moonbit_skia_make_rect(
-      rect.left(),
-      rect.top(),
-      rect.right(),
-      rect.bottom()
-    );
+  if (boxes.size() > static_cast<size_t>(INT32_MAX)) {
+    return 0;
   }
-  return moonbit_skia_make_rect_array(static_cast<int32_t>(boxes.size()), buffer);
+  return static_cast<int32_t>(boxes.size());
 #else
   (void)wrapper;
-  return moonbit_skia_make_rect_array(
-    0,
-    reinterpret_cast<MoonbitSkiaRect**>(moonbit_empty_ref_array)
-  );
+  (void)start;
+  (void)end;
+  return 0;
 #endif
 }
 
-extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaInt32Array*
-moonbit_skia_paragraph_text_box_directions_utf8(
+extern "C" MOONBIT_FFI_EXPORT float
+moonbit_skia_paragraph_text_boxes_utf8_at_left(
+  MoonbitSkiaParagraph* wrapper,
+  int32_t start,
+  int32_t end,
+  int32_t index
+) {
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_SKPARAGRAPH_HEADERS)
+  std::vector<TextBox> boxes = moonbit_skia_paragraph_text_boxes_utf8_collect(
+    wrapper,
+    start,
+    end
+  );
+  if (index < 0 || static_cast<size_t>(index) >= boxes.size()) {
+    return 0.0f;
+  }
+  return boxes[static_cast<size_t>(index)].rect.left();
+#else
+  (void)wrapper;
+  (void)start;
+  (void)end;
+  (void)index;
+  return 0.0f;
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT float
+moonbit_skia_paragraph_text_boxes_utf8_at_top(
+  MoonbitSkiaParagraph* wrapper,
+  int32_t start,
+  int32_t end,
+  int32_t index
+) {
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_SKPARAGRAPH_HEADERS)
+  std::vector<TextBox> boxes = moonbit_skia_paragraph_text_boxes_utf8_collect(
+    wrapper,
+    start,
+    end
+  );
+  if (index < 0 || static_cast<size_t>(index) >= boxes.size()) {
+    return 0.0f;
+  }
+  return boxes[static_cast<size_t>(index)].rect.top();
+#else
+  (void)wrapper;
+  (void)start;
+  (void)end;
+  (void)index;
+  return 0.0f;
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT float
+moonbit_skia_paragraph_text_boxes_utf8_at_right(
+  MoonbitSkiaParagraph* wrapper,
+  int32_t start,
+  int32_t end,
+  int32_t index
+) {
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_SKPARAGRAPH_HEADERS)
+  std::vector<TextBox> boxes = moonbit_skia_paragraph_text_boxes_utf8_collect(
+    wrapper,
+    start,
+    end
+  );
+  if (index < 0 || static_cast<size_t>(index) >= boxes.size()) {
+    return 0.0f;
+  }
+  return boxes[static_cast<size_t>(index)].rect.right();
+#else
+  (void)wrapper;
+  (void)start;
+  (void)end;
+  (void)index;
+  return 0.0f;
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT float
+moonbit_skia_paragraph_text_boxes_utf8_at_bottom(
+  MoonbitSkiaParagraph* wrapper,
+  int32_t start,
+  int32_t end,
+  int32_t index
+) {
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_SKPARAGRAPH_HEADERS)
+  std::vector<TextBox> boxes = moonbit_skia_paragraph_text_boxes_utf8_collect(
+    wrapper,
+    start,
+    end
+  );
+  if (index < 0 || static_cast<size_t>(index) >= boxes.size()) {
+    return 0.0f;
+  }
+  return boxes[static_cast<size_t>(index)].rect.bottom();
+#else
+  (void)wrapper;
+  (void)start;
+  (void)end;
+  (void)index;
+  return 0.0f;
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT int32_t
+moonbit_skia_paragraph_text_box_directions_utf8_count(
   MoonbitSkiaParagraph* wrapper,
   int32_t start,
   int32_t end
 ) {
-  if (start < 0 || end <= start) {
-    return moonbit_skia_make_int32_array(0, moonbit_empty_int32_array);
-  }
 #if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_SKPARAGRAPH_HEADERS)
-  if (wrapper == nullptr || wrapper->paragraph == nullptr) {
-    return moonbit_skia_make_int32_array(0, moonbit_empty_int32_array);
-  }
-  std::vector<TextBox> boxes = wrapper->paragraph->getRectsForRange(
-    static_cast<unsigned>(start),
-    static_cast<unsigned>(end),
-    RectHeightStyle::kMax,
-    RectWidthStyle::kTight
+  std::vector<TextBox> boxes = moonbit_skia_paragraph_text_boxes_utf8_collect(
+    wrapper,
+    start,
+    end
   );
-  if (boxes.empty() || boxes.size() > static_cast<size_t>(INT32_MAX)) {
-    return moonbit_skia_make_int32_array(0, moonbit_empty_int32_array);
+  if (boxes.size() > static_cast<size_t>(INT32_MAX)) {
+    return 0;
   }
-  int32_t* buffer = moonbit_make_int32_array_raw(
-    static_cast<int32_t>(boxes.size())
-  );
-  for (size_t i = 0; i < boxes.size(); ++i) {
-    buffer[i] = boxes[i].direction == TextDirection::kRtl ? 0 : 1;
-  }
-  return moonbit_skia_make_int32_array(
-    static_cast<int32_t>(boxes.size()),
-    buffer
-  );
+  return static_cast<int32_t>(boxes.size());
 #else
   (void)wrapper;
-  return moonbit_skia_make_int32_array(0, moonbit_empty_int32_array);
+  (void)start;
+  (void)end;
+  return 0;
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT int32_t
+moonbit_skia_paragraph_text_box_directions_utf8_at(
+  MoonbitSkiaParagraph* wrapper,
+  int32_t start,
+  int32_t end,
+  int32_t index
+) {
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_SKPARAGRAPH_HEADERS)
+  std::vector<TextBox> boxes = moonbit_skia_paragraph_text_boxes_utf8_collect(
+    wrapper,
+    start,
+    end
+  );
+  if (index < 0 || static_cast<size_t>(index) >= boxes.size()) {
+    return 1;
+  }
+  return boxes[static_cast<size_t>(index)].direction == TextDirection::kRtl ? 0 : 1;
+#else
+  (void)wrapper;
+  (void)start;
+  (void)end;
+  (void)index;
+  return 1;
 #endif
 }
 
