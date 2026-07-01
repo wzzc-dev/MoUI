@@ -116,6 +116,11 @@ for (const feature of l2FeatureNames) {
     // Push-to-main has already passed PR-level Skia smoke, so treat as proven.
     l2CategoryStatus = "skipped";
     l2Proven = true;
+    // Show "skipped" instead of "missing" in per-platform display so the
+    // report is clear that this is intentional, not a missing proof.
+    for (const job of l2Jobs) {
+      perPlatform[job] = "skipped";
+    }
   } else if (macosSkipped && allPassed) {
     // macOS ARM64 segfault — consistent CI infrastructure issue across all
     // macOS ARM64 runner images (14/15/26). Linux and Windows passed.
