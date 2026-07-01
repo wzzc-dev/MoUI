@@ -78,10 +78,11 @@ proof status:
 
 ### AsyncImage
 
-- **Implementation status**: partial (real-device smoke verification of
-  off-main-thread completion delivery pending)
+- **Implementation status**: partial (off-main-thread file I/O proven by
+  `background_io` flag in provider tests)
 - **L1 proof**: `conformance` job passes (HostAsyncImageLoader dedup, late
-  callback gating, completion routing, drain_fn spawn/drain cycle)
+  callback gating, completion routing, drain_fn spawn/drain cycle,
+  `background_io` flag asserted in provider tests)
 - **L2 proof**: `macos-real-skia` / `linux-real-skia` / `windows-real-skia`
   pass on every PR (second-frame repaint marker after local/data URI
   completions, deferred-completion marker after `HostNativeAsyncImageSource`
@@ -90,9 +91,11 @@ proof status:
   automatically obtains second-frame and deferred-completion markers on all
   three platforms on every PR.
 - **Functional gap**: Off-main-thread file I/O is implemented via platform C
-  stubs (GCD on macOS, pthread on Linux, CreateThread on Windows); data URI
-  sources decode synchronously on the main thread. Real-device smoke
-  verification of off-main-thread completion delivery remains follow-up work.
+  stubs (GCD on macOS, pthread on Linux, CreateThread on Windows). Each
+  `ImageResourceLoadCompletion` now carries a `background_io` bool verified by
+  provider tests on all three platforms. Data URI sources decode synchronously
+  on the main thread; Skia decode remains on the main thread. Off-main-thread
+  decode and real-device runtime smoke remain follow-up work.
 
 ## Evidence Traceability
 
