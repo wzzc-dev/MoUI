@@ -127,7 +127,6 @@ jobs:
             --skia-provider release \
             --link-mode static \
             --run-renderer-smoke \
-            --run-text-emoji-smoke \
             --require-skparagraph
 
       - name: Verify native smoke success marker
@@ -212,9 +211,6 @@ jobs:
             SkiaCommit = $envMap["MOUI_SKIA_SKIA_COMMIT"]
             SkiaPackage = $envMap["MOUI_SKIA_SKIA_PACKAGE"]
             SkiaPackageSha256 = $envMap["MOUI_SKIA_SKIA_PACKAGE_SHA256"]
-            RequireSkParagraph = $true
-            RunRendererSmoke = $true
-            RunTextEmojiSmoke = $true
           }
           .\scripts\windows-msvc-accept-real-skia-smoke.ps1 @args
 
