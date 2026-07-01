@@ -101,7 +101,7 @@ moonbit_skia_paragraph_layout_utf8(
   paragraph_style.setEllipsis(SkString());
   paragraph_style.setTextStyle(text_style);
 
-  sk_sp<SkUnicode> unicode = SkUnicodes::ICU::Make();
+  sk_sp<SkUnicode> unicode = moonbit_skia_shared_icu_unicode();
   if (unicode == nullptr) {
     return moonbit_skia_make_paragraph_wrapper(nullptr);
   }

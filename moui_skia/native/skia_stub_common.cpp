@@ -1494,9 +1494,16 @@ extern "C" MOONBIT_FFI_EXPORT int32_t moonbit_skia_shaper_available(void) {
 #endif
 }
 
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_SKPARAGRAPH_HEADERS)
+sk_sp<SkUnicode> moonbit_skia_shared_icu_unicode() {
+  static sk_sp<SkUnicode> instance = SkUnicodes::ICU::Make();
+  return instance;
+}
+#endif
+
 extern "C" MOONBIT_FFI_EXPORT int32_t moonbit_skia_paragraph_available(void) {
 #if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_SKPARAGRAPH_HEADERS)
-  return SkUnicodes::ICU::Make() != nullptr ? 1 : 0;
+  return moonbit_skia_shared_icu_unicode() != nullptr ? 1 : 0;
 #else
   return 0;
 #endif
