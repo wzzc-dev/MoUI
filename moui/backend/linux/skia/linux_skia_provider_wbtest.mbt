@@ -327,3 +327,29 @@ test "linux skia deferred native source completes through decode helper" {
   inspect(loader.diagnostics().completed_count, content="1")
   inspect(native_source.diagnostics().pending_count, content="0")
 }
+
+///|
+test "linux skia async image background_io confirmed" {
+  guard @skia_renderer.skia_available() else { return () }
+  let path = "/tmp/moui-bg-io-test-linux.png"
+  @fs.write_bytes_to_file(path, @utf8.encode("test", bom=false)) catch {
+    _ => fail("expected temp file write")
+  }
+  defer { @fs.remove_file(path) catch { _ => () } }
+  let source_bytes = @utf8.encode(path, bom=false)
+  moui_linux_async_image_spawn(42, source_bytes, source_bytes.length())
+  let max_attempts = 200
+  let mut result = Bytes::make(0, 0)
+  for attempt = 0; attempt < max_attempts; attempt = attempt + 1 {
+    let r = moui_linux_async_image_take_result()
+    if r.length() > 0 {
+      result = r
+      break
+    }
+  }
+  guard result.length() >= 24 else {
+    fail("expected result with 24-byte header, got \{result.length()} bytes")
+  }
+  let background_io_raw = async_image_read_i32_le(result, 20)
+  assert_true(background_io_raw == 1)
+}
