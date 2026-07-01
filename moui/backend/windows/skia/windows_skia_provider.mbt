@@ -118,6 +118,14 @@ extern "C" fn moui_windows_async_image_spawn(
 ) -> Unit = "moui_windows_async_image_spawn"
 
 ///|
+#borrow(source_bytes)
+extern "C" fn moui_windows_async_image_spawn_sync(
+  window_id : Int64,
+  source_bytes : Bytes,
+  source_len : Int,
+) -> Unit = "moui_windows_async_image_spawn_sync"
+
+///|
 extern "C" fn moui_windows_async_image_take_result() -> Bytes = "moui_windows_async_image_take_result"
 
 ///|
