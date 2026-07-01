@@ -1,0 +1,160 @@
+name: MoUI Linux Platform Evidence Dispatch
+
+on:
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+    inputs:
+      run_showcase_smoke:
+        description: Run the Linux Skia Showcase first-frame smoke.
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  linux-platform-evidence:
+    name: Linux platform runtime evidence
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install Wayland and Weston dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            weston \
+            libwayland-dev libwayland-bin wayland-protocols \
+            libfontconfig1-dev libfreetype-dev libharfbuzz-dev \
+            fonts-noto-color-emoji fonts-noto-cjk \
+            pkg-config unzip \
+            ninja-build \
+            libegl1 libegl-mesa0 libgles2
+
+      - name: Install Linux Skia smoke dependencies
+        shell: bash
+        run: bash moui_skia/scripts/install-linux-smoke-deps.sh
+
+      - name: Set up MoonBit
+        uses: ./.github/actions/setup-moonbit
+
+      - name: Update MoonBit registry
+        shell: bash
+        run: sh scripts/ci-moon-update.sh
+
+      - name: Cache release Skia
+        uses: actions/cache@v4
+        with:
+          path: moui_skia/.skia-cache/release
+          key: release-skia-linux-static-${{ runner.arch }}-${{ hashFiles('moui_skia/skia-provider-lock.json') }}
+          restore-keys: |
+            release-skia-linux-static-${{ runner.arch }}-
+            release-skia-linux-static-
+            release-skia-linux-
+
+      - name: Start headless Weston compositor
+        shell: bash
+        run: |
+          mkdir -p artifacts/platform-evidence/linux
+
+          if [[ -z "${XDG_RUNTIME_DIR:-}" ]]; then
+            export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+            if [[ ! -d "$XDG_RUNTIME_DIR" ]]; then
+              mkdir -p "$XDG_RUNTIME_DIR"
+              chmod 700 "$XDG_RUNTIME_DIR"
+            fi
+          fi
+
+          weston --backend=headless-backend.so \
+            --socket=moui-linux-evidence \
+            --idle-time=0 \
+            > artifacts/platform-evidence/linux/weston-headless.log 2>&1 &
+          weston_pid=$!
+          echo "weston_pid=$weston_pid" >> "$GITHUB_ENV"
+
+          for i in $(seq 1 30); do
+            socket_path="$XDG_RUNTIME_DIR/moui-linux-evidence"
+            if [[ -S "$socket_path" ]]; then
+              echo "Weston ready after ${i}s on $socket_path"
+              break
+            fi
+            sleep 1
+          done
+
+          if [[ ! -S "${XDG_RUNTIME_DIR}/moui-linux-evidence" ]]; then
+            echo "Weston socket did not appear after 30s; dumping log:"
+            cat artifacts/platform-evidence/linux/weston-headless.log
+            exit 1
+          fi
+
+          echo "WAYLAND_DISPLAY=moui-linux-evidence" >> "$GITHUB_ENV"
+          echo "XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR" >> "$GITHUB_ENV"
+
+      - name: Run Linux platform evidence (showcase only)
+        shell: bash
+        env:
+          WAYLAND_DISPLAY: moui-linux-evidence
+          MOUI_SKIA_SKIA_PROVIDER: release
+          MOUI_SKIA_LINK_MODE: static
+        run: |
+          bash scripts/linux-platform-evidence.sh \
+            --log-dir artifacts/platform-evidence/linux
+
+      - name: Kill Weston
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          if [[ -n "${weston_pid:-}" ]]; then
+            kill "$weston_pid" 2>/dev/null || true
+            wait "$weston_pid" 2>/dev/null || true
+          fi
+
+      - name: Verify evidence marker
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          summary="passed"
+          showcase_log="artifacts/platform-evidence/linux/showcase-linux-skia-first-frame.log"
+
+          if [[ -f "$showcase_log" ]]; then
+            if grep -Fq "Linux renderer presented first frame; exiting by request; title=MoUI Showcase" "$showcase_log"; then
+              echo "Showcase first-frame marker: passed"
+            else
+              echo "Showcase first-frame marker: FAILED"
+              summary="failed"
+            fi
+          else
+            echo "Showcase log not found: $showcase_log"
+            summary="failed"
+          fi
+
+          echo "summary=$summary" >> "$GITHUB_ENV"
+          echo "Linux platform evidence summary: $summary"
+
+      - name: Upload Linux platform evidence artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: moui-linux-platform-evidence
+          path: |
+            artifacts/platform-evidence/linux/
+          if-no-files-found: warn
+
+      - name: Write workflow summary
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          {
+            echo "## Linux Platform Evidence Dispatch"
+            echo ""
+            echo "- Artifact: moui-linux-platform-evidence"
+            echo "- Showcase first-frame: $(grep -q '^summary=passed' <<<"${summary:-failed}" && echo 'passed' || echo 'failed')"
+            echo ""
+            echo "### Logs"
+            echo "- Preflight: artifacts/platform-evidence/linux/linux-platform-evidence-preflight.log"
+            echo "- Showcase: artifacts/platform-evidence/linux/showcase-linux-skia-first-frame.log"
+            echo "- Summary: artifacts/platform-evidence/linux/linux-platform-evidence-summary.log"
+            echo "- Weston: artifacts/platform-evidence/linux/weston-headless.log"
+          } >> "$GITHUB_STEP_SUMMARY"
