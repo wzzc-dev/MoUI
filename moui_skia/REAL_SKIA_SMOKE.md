@@ -70,8 +70,7 @@ for a real smoke run, not a substitute for the required native-smoke,
 acceptance-log, and artifact verifiers. Windows MSVC remains artifact
 verification only until its sanitizer mode is proven separately.
 
-Text proof runs can enable optional SkParagraph support with
-`--enable-skparagraph` or `MOUI_SKIA_ENABLE_SKPARAGRAPH=1`. Use
+Text proof runs build SkParagraph by default. Use
 `--require-skparagraph` or `MOUI_SKIA_REQUIRE_SKPARAGRAPH=1` when missing
 SkParagraph headers or required SkParagraph, SkShaper, SkUnicode, HarfBuzz, and
 ICU libraries should fail the run before any proof marker is emitted.

@@ -40,9 +40,9 @@ Options:
   --enable-skshaper      Enable the optional moui_skia SkShaper boundary.
                          Requires libskshaper and its dependent module
                          libraries in --skia-lib-dir.
-  --enable-skparagraph   Enable the optional moui_skia SkParagraph boundary.
-                         Requires libskparagraph, libskshaper, and SkUnicode
-                         libraries in --skia-lib-dir.
+  --enable-skparagraph   Build SkParagraph (default: on).
+                          Requires libskparagraph, libskshaper, and SkUnicode
+                          libraries in --skia-lib-dir.
   --require-skparagraph  Enable SkParagraph and fail when required headers or
                          libraries are missing.
   --extra-cc-flags STR   Extra C/C++ flags appended to moui_skia stub flags.
@@ -152,7 +152,7 @@ extra_gn_args="${MOUI_SKIA_EXTRA_GN_ARGS:-}"
 extra_cc_flags="${MOUI_SKIA_EXTRA_CC_FLAGS:-}"
 extra_link_flags="${MOUI_SKIA_EXTRA_LINK_FLAGS:-}"
 enable_skshaper=0
-enable_skparagraph="${MOUI_SKIA_ENABLE_SKPARAGRAPH:-0}"
+enable_skparagraph="${MOUI_SKIA_ENABLE_SKPARAGRAPH:-1}"
 require_skparagraph="${MOUI_SKIA_REQUIRE_SKPARAGRAPH:-0}"
 extra_cc_flags_explicit=0
 extra_link_flags_explicit=0
@@ -346,7 +346,7 @@ if [[ $require_skparagraph -eq 1 ]]; then
   enable_skparagraph=1
 fi
 if [[ $run_text_emoji_smoke -eq 1 && $enable_skparagraph -eq 0 ]]; then
-  echo "--run-text-emoji-smoke requires --enable-skparagraph or --require-skparagraph." >&2
+  echo "--run-text-emoji-smoke requires SkParagraph. Set MOUI_SKIA_ENABLE_SKPARAGRAPH=1 or use --require-skparagraph." >&2
   exit 2
 fi
 

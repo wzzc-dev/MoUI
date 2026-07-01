@@ -272,7 +272,11 @@ function skiaMetalGpuEnabled(config) {
 }
 
 function skiaParagraphEnabled(config) {
-  return truthy(configEnvValue(config, "MOUI_SKIA_ENABLE_SKPARAGRAPH"));
+  const value = configEnvValue(config, "MOUI_SKIA_ENABLE_SKPARAGRAPH");
+  if (value !== null && String(value).trim() !== "") {
+    return !falsy(value);
+  }
+  return true;
 }
 
 function skiaParagraphRequired(config) {

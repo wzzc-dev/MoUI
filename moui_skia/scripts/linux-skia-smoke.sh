@@ -20,9 +20,9 @@ Options:
   --skia-package NAME    Skia binary package name to record in logs.
   --skia-package-sha256 SHA256
                          Skia binary package SHA256 to record in logs.
-  --enable-skparagraph   Enable the optional SkParagraph FFI boundary. Requires
-                         libskparagraph, libskshaper, and SkUnicode libraries
-                         to be linkable from --skia-lib-dir.
+  --enable-skparagraph   Build SkParagraph (default: on). Requires
+                          libskparagraph, libskshaper, and SkUnicode libraries
+                          to be linkable from --skia-lib-dir.
   --require-skparagraph  Enable SkParagraph and fail immediately when required
                          headers/libraries are missing or the runtime marker is
                          absent from the smoke log.
@@ -99,7 +99,7 @@ jetbrains_tag="${MOUI_SKIA_JETBRAINS_TAG:-}"
 skia_commit="${MOUI_SKIA_SKIA_COMMIT:-}"
 skia_package="${MOUI_SKIA_SKIA_PACKAGE:-}"
 skia_package_sha256="${MOUI_SKIA_SKIA_PACKAGE_SHA256:-}"
-enable_skparagraph="${MOUI_SKIA_ENABLE_SKPARAGRAPH:-0}"
+enable_skparagraph="${MOUI_SKIA_ENABLE_SKPARAGRAPH:-1}"
 require_skparagraph="${MOUI_SKIA_REQUIRE_SKPARAGRAPH:-0}"
 enable_asan="${MOUI_SKIA_ENABLE_ASAN:-0}"
 extra_cc_flags="${MOUI_SKIA_EXTRA_CC_FLAGS:-}"

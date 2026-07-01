@@ -393,9 +393,8 @@ compile flags and `-fsanitize=address` to executable link flags. Linux defaults
 `ASAN_OPTIONS`. Windows MSVC smoke remains artifact verification only until an
 ASan mode is proven separately for that toolchain.
 
-For text proof runs, pass `--enable-skparagraph` or set
-`MOUI_SKIA_ENABLE_SKPARAGRAPH=1` to compile the optional SkParagraph boundary.
-Pass `--require-skparagraph` or set `MOUI_SKIA_REQUIRE_SKPARAGRAPH=1` when the
+For text proof runs, SkParagraph is built by default. Pass
+`--require-skparagraph` or set `MOUI_SKIA_REQUIRE_SKPARAGRAPH=1` when the
 run should fail before smoke execution if the selected Skia build lacks the
 SkParagraph headers or the required SkParagraph, SkShaper, SkUnicode, HarfBuzz,
 and ICU libraries.
