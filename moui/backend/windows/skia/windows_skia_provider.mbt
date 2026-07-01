@@ -158,7 +158,9 @@ fn skia_async_image_loader() -> @host.HostAsyncImageLoader {
         let status = async_image_read_i32_le(result, 8)
         let source_len = async_image_read_i32_le(result, 12)
         let bytes_len = async_image_read_i32_le(result, 16)
-        let header = 20
+        let background_io_raw = async_image_read_i32_le(result, 20)
+        let background_io = background_io_raw != 0
+        let header = 24
         let source = @utf8.decode_lossy(
           result[header:header + source_len],
           ignore_bom=false,
@@ -168,12 +170,13 @@ fn skia_async_image_loader() -> @host.HostAsyncImageLoader {
           source_len +
           bytes_len].to_owned()
           @skia_renderer.skia_image_load_completion_from_bytes(
-            source, image_bytes,
+            source, image_bytes, background_io~,
           )
         } else {
           @render.ImageResourceLoadCompletion::failed(
             source,
             diagnostic="Async image I/O failed",
+            background_io~,
           )
         }
         ignore(native_source.complete(window_id, completion))

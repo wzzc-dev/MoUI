@@ -17,6 +17,7 @@ typedef struct moui_async_image_result {
   uint8_t *bytes; // malloc'd, NULL if failed
   int32_t bytes_len;
   int32_t status; // 0=ok, non-zero=error
+  int32_t background_io;
   struct moui_async_image_result *next;
 } moui_async_image_result_t;
 
@@ -24,6 +25,7 @@ typedef struct moui_async_image_request {
   int64_t window_id;
   char *source; // malloc'd, null-terminated
   int32_t source_len;
+  int32_t is_background;
 } moui_async_image_request_t;
 
 static moui_async_image_result_t *g_results_head = NULL;
@@ -48,6 +50,7 @@ static void *moui_async_image_read_file(void *arg) {
   result->bytes = NULL;
   result->bytes_len = 0;
   result->status = 1;
+  result->background_io = req->is_background;
   result->next = NULL;
 
   FILE *f = fopen(req->source, "rb");
@@ -113,9 +116,11 @@ void moui_linux_async_image_spawn(int64_t window_id,
   memcpy(req->source, source_bytes, (size_t)source_len);
   req->source[source_len] = '\0';
   req->source_len = source_len;
+  req->is_background = 1;
 
   pthread_t tid;
   if (pthread_create(&tid, NULL, moui_async_image_read_file, req) != 0) {
+    req->is_background = 0;
     // Fallback: run synchronously on the calling thread.
     moui_async_image_read_file(req);
   } else {
@@ -139,13 +144,14 @@ moonbit_bytes_t moui_linux_async_image_take_result(void) {
   }
   pthread_mutex_unlock(&g_mutex);
 
-  int32_t header = 20; // 8 + 4 + 4 + 4
+  int32_t header = 24; // 8 + 4 + 4 + 4 + 4
   int32_t total = header + result->source_len + result->bytes_len;
   moonbit_bytes_t out = moonbit_make_bytes(total, 0);
   memcpy(out + 0, &result->window_id, 8);
   memcpy(out + 8, &result->status, 4);
   memcpy(out + 12, &result->source_len, 4);
   memcpy(out + 16, &result->bytes_len, 4);
+  memcpy(out + 20, &result->background_io, 4);
   if (result->source_len > 0) {
     memcpy(out + header, result->source, (size_t)result->source_len);
   }
