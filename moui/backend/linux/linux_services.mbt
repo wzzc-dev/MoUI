@@ -19,6 +19,17 @@ extern "C" fn linux_file_dialog_bytes(
 extern "C" fn linux_show_menu_bytes(commands : Bytes) -> Int = "moui_linux_show_menu"
 
 ///|
+/// Clipboard image support (ReadImage / WriteImage).
+/// Implementation in linux_service_host.c uses wl-clipboard (wl-paste/wl-copy)
+/// with GTK fallback for broader compatibility.
+#borrow(mime, data)
+extern "C" fn linux_clipboard_write_image_bytes(mime : Bytes, data : Bytes) -> Int =
+  "moui_linux_clipboard_write_image"
+
+extern "C" fn linux_clipboard_read_image_bytes() -> Bytes =
+  "moui_linux_clipboard_read_image"
+
+///|
 pub fn capability_matrix() -> LinuxBackendCapabilities {
   {
     window: true,
@@ -208,13 +219,26 @@ fn dispatch_linux_clipboard(
         )
       }
     @host.HostClipboardRequest::ReadImage =>
-      @host.HostServiceResponse::Unavailable(
-        "clipboard image read is unavailable",
-      )
-    @host.HostClipboardRequest::WriteImage(_, _) =>
-      @host.HostServiceResponse::Unavailable(
-        "clipboard image write is unavailable",
-      )
+      match linux_clipboard_read_image_bytes() {
+        bytes if bytes.length() > 0 =>
+          // The C implementation is expected to return a payload that can be
+          // interpreted as a simple image (e.g., raw PNG bytes).
+          // For a more robust solution, a structured format (mime + data) could be used.
+          @host.HostServiceResponse::ClipboardImage(bytes)
+        _ =>
+          @host.HostServiceResponse::Unavailable(
+            "clipboard image read failed or no image data available",
+          )
+      }
+    @host.HostClipboardRequest::WriteImage(mime, data) =>
+      let mime_bytes = encode_host_string(mime)
+      if linux_clipboard_write_image_bytes(mime_bytes, data) != 0 {
+        @host.HostServiceResponse::ClipboardWritten
+      } else {
+        @host.HostServiceResponse::Unavailable(
+          "clipboard image write failed or Wayland selection is unavailable",
+        )
+      }
   }
 }
 
