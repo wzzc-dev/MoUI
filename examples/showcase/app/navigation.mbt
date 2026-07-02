@@ -131,6 +131,29 @@ fn showcase_sections() -> Array[ShowcaseSection] {
 }
 
 ///|
+fn showcase_grouped_sections() -> Array[(String, Array[ShowcaseSection])] {
+  let start : Array[ShowcaseSection] = []
+  let views : Array[ShowcaseSection] = []
+  let patterns : Array[ShowcaseSection] = []
+  let runtime : Array[ShowcaseSection] = []
+  for section in showcase_sections() {
+    match section.group {
+      "Start" => start.push(section)
+      "Views" => views.push(section)
+      "Patterns" => patterns.push(section)
+      "Runtime" => runtime.push(section)
+      _ => ()
+    }
+  }
+  let result : Array[(String, Array[ShowcaseSection])] = []
+  if start.length() > 0 { result.push(("Start", start)) }
+  if views.length() > 0 { result.push(("Views", views)) }
+  if patterns.length() > 0 { result.push(("Patterns", patterns)) }
+  if runtime.length() > 0 { result.push(("Runtime", runtime)) }
+  result
+}
+
+///|
 fn ShowcaseModel::sidebar(
   self : ShowcaseModel,
   theme : @moui.Theme,
@@ -139,7 +162,7 @@ fn ShowcaseModel::sidebar(
   let inner_width = metrics.sidebar_width - theme.spacing_scale.lg * 2.0
   let sidebar_body_height = max_showcase_double(
     64.0,
-    metrics.panel_height - theme.spacing_scale.lg * 2.0,
+    metrics.panel_height - theme.spacing_scale.md * 2.0,
   )
   let title = text("View Catalog", width=inner_width, height=30.0)
     .font(theme.typography.control)
@@ -154,11 +177,37 @@ fn ShowcaseModel::sidebar(
   let scrollbar_gutter = 24.0
   let list_width = max_showcase_double(120.0, inner_width - scrollbar_gutter)
   let list_rows : Array[@moui.View[ShowcaseMsg]] = []
+  let mut content_height = 0.0
+  let mut header_count = 0
+  let mut button_count = 0
+  let mut spacer_count = 0
   let query = self.filter
-  for section in showcase_sections() {
-    if string_contains(section.title, query) ||
+  let grouped = showcase_grouped_sections()
+  let mut rendered_groups = 0
+  for pair in grouped {
+    let group_name = pair.0
+    let sections = pair.1
+    let matching_sections = sections.filter(section =>
+      string_contains(section.title, query) ||
       string_contains(section.summary, query) ||
-      string_contains(section.group, query) {
+      string_contains(section.group, query)
+    )
+    if matching_sections.length() == 0 {
+      continue
+    }
+    if rendered_groups > 0 {
+      list_rows.push(
+        spacer(weight=0.0).frame(width=inner_width, height=theme.spacing_scale.md)
+      )
+      spacer_count = spacer_count + 1
+    }
+    list_rows.push(
+      text(group_name, width=inner_width, height=22.0)
+      .font(theme.typography.caption)
+      .foreground(theme.palette.muted),
+    )
+    header_count = header_count + 1
+    for section in matching_sections {
       list_rows.push(
         self.sidebar_item(
           theme,
@@ -167,18 +216,18 @@ fn ShowcaseModel::sidebar(
           list_width,
         ),
       )
+      button_count = button_count + 1
     }
+    rendered_groups = rendered_groups + 1
+  }
+  content_height = header_count.to_double() * 22.0 + button_count.to_double() * 34.0 + spacer_count.to_double() * theme.spacing_scale.md + theme.spacing_scale.md + 8.0
+  if list_rows.length() > 0 {
+    content_height = content_height + (list_rows.length() - 1).to_double() * theme.spacing_scale.sm
   }
   let list_viewport_height = max_showcase_double(
     64.0,
     sidebar_body_height - 30.0 - 38.0 - theme.spacing_scale.sm * 2.0,
   )
-  let content_height = if list_rows.length() > 0 {
-    list_rows.length().to_double() * 34.0 +
-    (list_rows.length() - 1).to_double() * theme.spacing_scale.sm
-  } else {
-    0.0
-  }
   let max_scroll = max_showcase_double(
     0.0,
     content_height - list_viewport_height,
@@ -196,8 +245,15 @@ fn ShowcaseModel::sidebar(
           [
             scroll_view(
               column(
-                list_rows,
-                spacing=theme.spacing_scale.sm,
+                [
+                  column(
+                    list_rows,
+                    spacing=theme.spacing_scale.sm,
+                    align=@views.CrossAlign::Start,
+                  ),
+                  spacer(weight=0.0).frame(width=inner_width, height=theme.spacing_scale.md),
+                  spacer(weight=0.0).frame(width=inner_width, height=8.0),
+                ],
                 align=@views.CrossAlign::Start,
               ).repaint_boundary(),
               offset=normalized_offset,
@@ -408,7 +464,7 @@ fn ShowcaseModel::header(
     width=metrics.action_width,
     height=46.0,
   )
-  if metrics.shell_width < 560.0 {
+  let header_content = if metrics.shell_width < 560.0 {
     column(
       [title, actions],
       spacing=theme.spacing_scale.sm,
@@ -421,6 +477,19 @@ fn ShowcaseModel::header(
       align=@views.CrossAlign::Center,
     )
   }
+  let header_bg = match theme.scheme {
+    @core.ColorScheme::Light => theme.palette.surface_variant.multiply_alpha(0.28)
+    @core.ColorScheme::Dark => @core.Color::white().multiply_alpha(0.03)
+  }
+  container(
+    header_content,
+    width=metrics.shell_width,
+    height=72.0,
+    variant=@views.ContainerVariant::Base,
+    theme~,
+    padding=theme.spacing_scale.md,
+    background=header_bg,
+  )
 }
 
 ///|

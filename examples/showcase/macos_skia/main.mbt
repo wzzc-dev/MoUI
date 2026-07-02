@@ -11,8 +11,8 @@ fn main {
     program=app.program_with_host_summary(
       @macos_backend.macos_capability_summary(),
     ),
-    width=960.0,
-    height=560.0,
+    width=1100.0,
+    height=680.0,
   )
   @macos_skia_backend.run_app_with_options(
     "MoUI Showcase",
