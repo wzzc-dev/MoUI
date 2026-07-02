@@ -37,6 +37,7 @@ pub fn[Msg] flow(
       )
     },
     semantics_label="Flow layout",
+    paint=(_ctx, _frame) => (),
   )
 }
 
