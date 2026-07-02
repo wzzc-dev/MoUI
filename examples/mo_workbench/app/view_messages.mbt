@@ -1,13 +1,18 @@
 // Message row rendering for the chat transcript.
+//
+// All rows are pure display (no callbacks), so changing the `Msg` type
+// parameter from `WorkbenchMsg` to `CodeMsg` is the only adjustment needed
+// for the workspace-scoped routing.
 
 ///|
 /// Render a single chat message as a view.
+/// User and assistant messages render with a small avatar circle.
 fn message_row(
   msg : ChatMessage,
   theme : @core.Theme,
   width : Double,
-) -> @moui.View[WorkbenchMsg] {
-  match msg {
+) -> @moui.View[CodeMsg] {
+  let inner = match msg {
     User(text) => user_message_row(text, theme, width)
     Assistant(content, reasoning) =>
       assistant_message_row(content, reasoning, theme, width)
@@ -16,6 +21,7 @@ fn message_row(
     RuntimeNotice(text) => runtime_notice_row(text, theme, width)
     Terminal(status, message) => terminal_row(status, message, theme, width)
   }
+  @views.padding_edges(inner, top=6.0, bottom=6.0)
 }
 
 ///|
@@ -23,29 +29,44 @@ fn user_message_row(
   text_ : String,
   theme : @core.Theme,
   width : Double,
-) -> @moui.View[WorkbenchMsg] {
-  let bubble_width = width * 0.75
+) -> @moui.View[CodeMsg] {
+  let bubble_width = width * 0.72
+  let avatar_size = 28.0
   @views.container(
     @views.row(
       [
         @views.spacer(),
         @views.container(
-          @views.text(
-            text_,
-            role=@views.TextRole::Body,
-            theme~,
-            width=bubble_width - 24.0,
+          @views.column(
+            [
+              @views.text(
+                text_,
+                role=@views.TextRole::Body,
+                theme~,
+                width=bubble_width - 24.0,
+              ),
+            ],
+            spacing=4.0,
+            align=@views.CrossAlign::Start,
           ),
           width=bubble_width,
           background=user_message_background(theme),
           corner_radius=12.0,
-          padding=12.0,
+          padding=14.0,
+        ),
+        @views.container(
+          @views.empty(),
+      width=avatar_size,
+      height=avatar_size,
+      background=user_avatar_color(theme),
+      corner_radius=avatar_size / 2.0,
+          padding=0.0,
         ),
       ],
+      spacing=8.0,
       align=@views.CrossAlign::Start,
     ),
     width~,
-    padding=4.0,
   )
 }
 
@@ -55,9 +76,10 @@ fn assistant_message_row(
   reasoning : String?,
   theme : @core.Theme,
   width : Double,
-) -> @moui.View[WorkbenchMsg] {
-  let bubble_width = width * 0.85
-  let rows : Array[@moui.View[WorkbenchMsg]] = []
+) -> @moui.View[CodeMsg] {
+  let bubble_width = width * 0.82
+  let avatar_size = 28.0
+  let rows : Array[@moui.View[CodeMsg]] = []
   // Optional reasoning shown as a collapsed muted block above the content.
   match reasoning {
     Some(r) =>
@@ -89,18 +111,30 @@ fn assistant_message_row(
     @views.row(
       [
         @views.container(
+          @views.icon(
+            @views.IconName::CodeInline,
+            size=14.0,
+            color=assistant_avatar_color(theme),
+          ),
+          width=avatar_size,
+          height=avatar_size,
+          background=assistant_avatar_color(theme).with_alpha(0.15),
+          corner_radius=avatar_size / 2.0,
+          padding=0.0,
+        ),
+        @views.container(
           @views.column(rows, spacing=4.0, align=@views.CrossAlign::Start),
           width=bubble_width,
           background=assistant_message_background(theme),
           corner_radius=12.0,
-          padding=12.0,
+          padding=14.0,
         ),
         @views.spacer(),
       ],
+      spacing=10.0,
       align=@views.CrossAlign::Start,
     ),
     width~,
-    padding=4.0,
   )
 }
 
@@ -112,14 +146,19 @@ fn tool_result_row(
   brief : String?,
   theme : @core.Theme,
   width : Double,
-) -> @moui.View[WorkbenchMsg] {
+) -> @moui.View[CodeMsg] {
   let card_width = width * 0.9
   let tone = if is_error {
     @views.BadgeTone::Danger
   } else {
     @views.BadgeTone::Neutral
   }
-  let rows : Array[@moui.View[WorkbenchMsg]] = [
+  let background = if is_error {
+    workbench_diff_removed_soft(theme)
+  } else {
+    workbench_diff_added_soft(theme)
+  }
+  let rows : Array[@moui.View[CodeMsg]] = [
     @views.row(
       [@views.badge(tool_name, tone~, theme~, width=96.0), @views.spacer()],
       align=@views.CrossAlign::Center,
@@ -144,7 +183,7 @@ fn tool_result_row(
         @views.container(
           @views.column(rows, spacing=6.0, align=@views.CrossAlign::Start),
           width=card_width,
-          background=tool_message_background(theme),
+          background~,
           corner_radius=8.0,
           padding=12.0,
         ),
@@ -162,7 +201,7 @@ fn runtime_notice_row(
   text_ : String,
   theme : @core.Theme,
   width : Double,
-) -> @moui.View[WorkbenchMsg] {
+) -> @moui.View[CodeMsg] {
   @views.container(
     @views.row(
       [
@@ -188,7 +227,7 @@ fn terminal_row(
   message : String,
   theme : @core.Theme,
   width : Double,
-) -> @moui.View[WorkbenchMsg] {
+) -> @moui.View[CodeMsg] {
   let (label, tone) = match status {
     Finished => ("Done", @views.BadgeTone::Success)
     Aborted => ("Aborted", @views.BadgeTone::Warning)

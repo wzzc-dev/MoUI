@@ -1,5 +1,7 @@
 import {
   "moonbitlang/core/env",
+  "moonbitlang/core/json",
+  "moonbitlang/async",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
   "wzzc-dev/moui/render/skia" @skia_renderer,

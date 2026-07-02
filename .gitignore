@@ -20,3 +20,4 @@ dist/
 website/web_wasm/docs/*
 trace.json
 .codebuddy/settings.local.json
+.workbuddy/
