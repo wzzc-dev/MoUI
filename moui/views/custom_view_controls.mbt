@@ -31,7 +31,7 @@ fn[Msg] custom_children_layout_control(
   children~ : Array[@core.View[Msg]],
   measure~ : (@core.CustomLayoutContext) -> @core.Size,
   place~ : (@core.CustomPlacementContext) -> Array[@core.Rect],
-  paint? : (@core.Rect) -> Array[@core.DrawCommand] = _frame => [],
+  paint~ : (PaintContext, @core.Rect) -> Unit,
   semantics_role? : @core.SemanticsRole = @core.SemanticsRole::Group,
   semantics_label? : String = "",
   kind? : String = "CustomLayout",
@@ -94,7 +94,11 @@ fn[Msg] custom_children_layout_control(
         }),
       )
     },
-    paint=ctx => @core.ViewPaintPlan::commands(paint(ctx.frame)),
+    paint=ctx => {
+      let pctx = PaintContext::new()
+      paint(pctx, ctx.frame)
+      @core.ViewPaintPlan::commands(PaintContext::finish(pctx))
+    },
     semantics=() => {
       @core.ViewSemanticsInfo::new(
         role=semantics_role,

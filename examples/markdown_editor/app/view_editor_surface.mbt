@@ -1,4 +1,11 @@
 ///|
+using @views {
+  type PaintContext,
+  fill_rect,
+  draw_text,
+}
+
+///|
 fn MarkdownEditorApp::target_bar(
   self : MarkdownEditorApp,
   theme : @moui.Theme,
@@ -271,6 +278,7 @@ fn floating_target_palette(
       ]
     },
     semantics_label="Markdown editor floating target palette",
+    paint=(_ctx, _frame) => (),
   )
 }
 
@@ -651,47 +659,46 @@ fn markdown_editor_scroll_indicator(
     } else {
       offset_y / 40.0 * 0.5
     }
-    @views.custom_layout(
+    custom_layout(
       measure=constraints => {
         constraints.constrain(
           @core.Size::new(width=0.0, height=viewport_height),
         )
       },
-      paint=bounds => {
+      paint=(ctx, frame) => {
         // A 3px-wide track pinned to the right edge of the laid-out frame.
-        let track_x = bounds.origin.x + bounds.size.width - 3.0
+        let track_x = frame.origin.x + frame.size.width - 3.0
         let track = @core.Rect::new(
           x=track_x,
-          y=bounds.origin.y,
+          y=frame.origin.y,
           width=3.0,
-          height=bounds.size.height,
+          height=frame.size.height,
         )
         let thumb_height = markdown_editor_max_double(
           40.0,
-          bounds.size.height * 0.18,
+          frame.size.height * 0.18,
         )
         // Position the thumb proportionally to the offset within the visible
         // region (approximate, since content size is unknown).
         let max_thumb_travel = markdown_editor_max_double(
           1.0,
-          bounds.size.height - thumb_height,
+          frame.size.height - thumb_height,
         )
         let thumb_y = track.origin.y +
           markdown_editor_min_double(max_thumb_travel, offset_y / 4.0)
         let track_color = theme.palette.muted.multiply_alpha(0.18)
         let thumb_color = theme.palette.muted.multiply_alpha(indicator_alpha)
-        [
-          @core.DrawCommand::FillRect(track, track_color),
-          @core.DrawCommand::FillRect(
-            @core.Rect::new(
-              x=track.origin.x,
-              y=thumb_y,
-              width=track.size.width,
-              height=thumb_height,
-            ),
-            thumb_color,
+        fill_rect(ctx, track, track_color)
+        fill_rect(
+          ctx,
+          @core.Rect::new(
+            x=track.origin.x,
+            y=thumb_y,
+            width=track.size.width,
+            height=thumb_height,
           ),
-        ]
+          thumb_color,
+        )
       },
       semantics_label="Editor scroll indicator",
     )
@@ -946,20 +953,19 @@ fn source_preview_line(
   font : @core.FontSpec,
   color : @core.Color,
 ) -> @moui.View[MarkdownEditorMsg] {
-  @views.custom_layout(
+  custom_layout(
     measure=_ => @moui.Size::new(width=260.0, height=18.0),
-    paint=bounds => {
-      [
-        @core.DrawCommand::DrawText(
-          @core.TextRun::new(
-            text=line,
-            frame=bounds,
-            font~,
-            color~,
-            align=@core.TextAlign::TextStart,
-          ),
+    paint=(ctx, frame) => {
+      draw_text(
+        ctx,
+        @core.TextRun::new(
+          text=line,
+          frame=frame,
+          font~,
+          color~,
+          align=@core.TextAlign::TextStart,
         ),
-      ]
+      )
     },
     semantics_label=line,
   )

@@ -51,13 +51,17 @@ pub fn[Msg] intrinsic_height(child : @core.View[Msg]) -> @core.View[Msg] {
 ///|
 pub fn[Msg] custom_layout(
   measure~ : (@core.Constraints) -> @core.Size,
-  paint~ : (@core.Rect) -> Array[@core.DrawCommand],
+  paint~ : (PaintContext, @core.Rect) -> Unit,
   semantics_role? : @core.SemanticsRole = @core.SemanticsRole::Group,
   semantics_label? : String = "",
 ) -> @core.View[Msg] {
   custom_control(
     measure=ctx => @core.ViewLayoutResult::new(size=measure(ctx.constraints)),
-    paint=ctx => @core.ViewPaintPlan::commands(paint(ctx.frame)),
+    paint=ctx => {
+      let pctx = PaintContext::new()
+      paint(pctx, ctx.frame)
+      @core.ViewPaintPlan::commands(PaintContext::finish(pctx))
+    },
     semantics=() => {
       @core.ViewSemanticsInfo::new(
         role=semantics_role,
@@ -73,7 +77,7 @@ pub fn[Msg] custom_children_layout(
   children~ : Array[@core.View[Msg]],
   measure~ : (@core.CustomLayoutContext) -> @core.Size,
   place~ : (@core.CustomPlacementContext) -> Array[@core.Rect],
-  paint? : (@core.Rect) -> Array[@core.DrawCommand] = _frame => [],
+  paint~ : (PaintContext, @core.Rect) -> Unit,
   semantics_role? : @core.SemanticsRole = @core.SemanticsRole::Group,
   semantics_label? : String = "",
 ) -> @core.View[Msg] {

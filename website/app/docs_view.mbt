@@ -354,18 +354,17 @@ fn docs_start_text(
 ) -> @moui.View[Msg] {
   custom_layout(
     measure=_constraints => @moui.Size::new(width~, height~),
-    paint=frame => {
-      [
-        @core.DrawCommand::DrawText(
-          @core.TextRun::new(
-            text=value,
-            frame~,
-            font~,
-            color~,
-            align=@core.TextAlign::TextStart,
-          ),
+    paint=(ctx, frame) => {
+      draw_text(
+        ctx,
+        @core.TextRun::new(
+          text=value,
+          frame=frame,
+          font~,
+          color~,
+          align=@core.TextAlign::TextStart,
         ),
-      ]
+      )
     },
     semantics_label=value,
   )
@@ -449,18 +448,17 @@ fn docs_table_panel(
 fn docs_rule(theme : @moui.Theme, width : Double) -> @moui.View[Msg] {
   custom_layout(
     measure=_constraints => @moui.Size::new(width~, height=22.0),
-    paint=frame => {
-      [
-        @core.DrawCommand::FillRect(
-          @core.Rect::new(
-            x=frame.origin.x,
-            y=frame.origin.y + frame.size.height / 2.0,
-            width=frame.size.width,
-            height=1.0,
-          ),
-          theme.palette.outline.multiply_alpha(0.35),
+    paint=(ctx, frame) => {
+      fill_rect(
+        ctx,
+        @core.Rect::new(
+          x=frame.origin.x,
+          y=frame.origin.y + frame.size.height / 2.0,
+          width=frame.size.width,
+          height=1.0,
         ),
-      ]
+        theme.palette.outline.multiply_alpha(0.35),
+      )
     },
     semantics_label="Document rule",
   )

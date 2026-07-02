@@ -89,8 +89,8 @@ fn MarkdownEditorApp::root(
       let rects : Array[@core.Rect] = []
       rects
     },
-    paint=bounds => {
-      [@core.DrawCommand::FillRect(bounds, appearance.window_background)]
+    paint=(ctx, bounds) => {
+      fill_rect(ctx, bounds, appearance.window_background)
     },
     semantics_label="Window background",
   )

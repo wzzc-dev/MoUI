@@ -39,6 +39,8 @@ pub fn[Msg] button_group(Array[ActionItem[Msg]], selected? : String, theme? : @c
 
 pub fn[Msg] callout(String, String, tone? : FeedbackTone, theme? : @core.Theme, style? : FeedbackStyle, width? : Double) -> @core.View[Msg]
 
+pub fn[Msg] canvas(measure~ : (@core.Constraints) -> @core.Size, draw~ : (PaintContext, @core.Rect) -> Unit, semantics_label? : String) -> @core.View[Msg]
+
 pub fn[Msg] card(@core.View[Msg], width? : Double, height? : Double, padding? : Double, theme? : @core.Theme) -> @core.View[Msg]
 
 pub fn[Msg] center(@core.View[Msg], width? : Double, height? : Double, background? : @core.Color, theme? : @core.Theme) -> @core.View[Msg]
@@ -54,6 +56,8 @@ pub fn[Msg] chip(String, selected? : Bool, on_click? : Msg?, variant? : ChipVari
 pub fn[Msg] choice_chip(String, selected~ : Bool, on_select~ : Msg, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn choice_item(String, String) -> ChoiceItem
+
+pub fn clear(PaintContext, @core.Color) -> Unit
 
 pub fn[Msg] clearable_text_field(String, on_input~ : (String) -> Msg, on_clear~ : Msg, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
@@ -79,9 +83,9 @@ pub fn[Msg] container(@core.View[Msg], width? : Double, height? : Double, backgr
 
 pub fn[Msg] context_menu_region(child~ : @core.View[Msg], menu~ : @core.View[Msg], visible~ : Bool, theme? : @core.Theme) -> @core.View[Msg]
 
-pub fn[Msg] custom_children_layout(children~ : Array[@core.View[Msg]], measure~ : (@core.CustomLayoutContext) -> @core.Size, place~ : (@core.CustomPlacementContext) -> Array[@core.Rect], paint? : (@core.Rect) -> Array[@core.DrawCommand], semantics_role? : @core.SemanticsRole, semantics_label? : String) -> @core.View[Msg]
+pub fn[Msg] custom_children_layout(children~ : Array[@core.View[Msg]], measure~ : (@core.CustomLayoutContext) -> @core.Size, place~ : (@core.CustomPlacementContext) -> Array[@core.Rect], paint~ : (PaintContext, @core.Rect) -> Unit, semantics_role? : @core.SemanticsRole, semantics_label? : String) -> @core.View[Msg]
 
-pub fn[Msg] custom_layout(measure~ : (@core.Constraints) -> @core.Size, paint~ : (@core.Rect) -> Array[@core.DrawCommand], semantics_role? : @core.SemanticsRole, semantics_label? : String) -> @core.View[Msg]
+pub fn[Msg] custom_layout(measure~ : (@core.Constraints) -> @core.Size, paint~ : (PaintContext, @core.Rect) -> Unit, semantics_role? : @core.SemanticsRole, semantics_label? : String) -> @core.View[Msg]
 
 pub fn dark_theme() -> @core.Theme
 
@@ -109,6 +113,16 @@ pub fn[Msg] disclosure(String, content~ : @core.View[Msg], expanded~ : Bool, on_
 
 pub fn[Msg] divider(axis? : @core.Axis, theme? : @core.Theme, thickness? : Double, color? : @core.Color, inset? : Double) -> @core.View[Msg]
 
+pub fn draw_image(PaintContext, @core.ImageRun) -> Unit
+
+pub fn draw_path(PaintContext, @core.PathSpec) -> Unit
+
+pub fn draw_shader_effect(PaintContext, @core.ShaderEffectSpec) -> Unit
+
+pub fn draw_shadow(PaintContext, @core.ShadowSpec) -> Unit
+
+pub fn draw_text(PaintContext, @core.TextRun) -> Unit
+
 pub fn[Msg] drop_zone(title? : String, message? : String, on_drop~ : (Array[String]) -> Msg, theme? : @core.Theme, width? : Double, height? : Double, enabled? : Bool) -> @core.View[Msg]
 
 pub fn[Msg] dropdown(String, Array[MenuItem[Msg]], state~ : DropdownState, on_toggle~ : Msg, placeholder? : String, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
@@ -124,6 +138,10 @@ pub fn[Msg] error_state(String, String, action? : StateViewAction[Msg]?, theme? 
 pub fn[Msg] expanded(@core.View[Msg], weight? : Double) -> @core.View[Msg]
 
 pub fn[Msg] file_import_panel(selection~ : FileSelection, on_drop~ : (Array[String]) -> Msg, on_browse? : Msg?, availability? : FileImportAvailability, title? : String, drop_title? : String, empty_message? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn fill_rect(PaintContext, @core.Rect, @core.Color) -> Unit
+
+pub fn fill_rounded_rect(PaintContext, @core.RoundedRect, @core.Brush) -> Unit
 
 pub fn[Msg] filter_chip(String, selected~ : Bool, on_change~ : (Bool) -> Msg, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
@@ -215,6 +233,18 @@ pub fn[Msg] picker_binding(Array[PickerItem], selected~ : @core.Binding[String],
 
 pub fn picker_item(String, String) -> PickerItem
 
+pub fn pop_clip(PaintContext) -> Unit
+
+pub fn pop_filter(PaintContext) -> Unit
+
+pub fn pop_layer(PaintContext) -> Unit
+
+pub fn pop_opacity(PaintContext) -> Unit
+
+pub fn pop_rounded_clip(PaintContext) -> Unit
+
+pub fn pop_transform(PaintContext) -> Unit
+
 pub fn[Msg] popover(anchor~ : @core.View[Msg], content~ : @core.View[Msg], expanded~ : Bool, placement? : PopoverPlacement, theme? : @core.Theme, width? : Double, height? : Double, trap_focus? : Bool) -> @core.View[Msg]
 
 pub fn[Msg] presence_dot(PresenceStatus, size? : Double, theme? : @core.Theme, on_surface? : @core.Color) -> @core.View[Msg]
@@ -222,6 +252,18 @@ pub fn[Msg] presence_dot(PresenceStatus, size? : Double, theme? : @core.Theme, o
 pub fn[Msg] progress(Double, width? : Double, height? : Double, theme? : @core.Theme, style? : ProgressStyle, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
 
 pub fn[Msg] progress_status(String, value~ : Double, message? : String, status? : String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : FeedbackStyle, badge_style? : BadgeStyle, progress_style? : ProgressStyle, width? : Double) -> @core.View[Msg]
+
+pub fn push_clip(PaintContext, @core.Rect) -> Unit
+
+pub fn push_filter(PaintContext, @core.FilterEffect) -> Unit
+
+pub fn push_layer(PaintContext, @core.LayerSpec) -> Unit
+
+pub fn push_opacity(PaintContext, Double) -> Unit
+
+pub fn push_rounded_clip(PaintContext, @core.RoundedRect) -> Unit
+
+pub fn push_transform(PaintContext, @core.Transform2D) -> Unit
 
 pub fn[Msg] radio(String, Bool, on_change~ : (Bool) -> Msg, theme? : @core.Theme, foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
 
@@ -296,6 +338,10 @@ pub fn[Msg] status_badge(String, tone? : BadgeTone, detail? : String, theme? : @
 pub fn[Msg] status_bar(Array[String], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] stepper(on_decrement~ : Msg, on_increment~ : Msg, label? : String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn stroke_rect(PaintContext, @core.Rect, @core.Color, Double) -> Unit
+
+pub fn stroke_rounded_rect(PaintContext, @core.RoundedRect, @core.Brush, Double) -> Unit
 
 pub fn[Msg] tab_item(route~ : String, label~ : String, view~ : @core.View[Msg]) -> TabItem[Msg]
 
@@ -679,6 +725,10 @@ pub fn PaginationState::page_count(Self) -> Int
 pub fn PaginationState::page_size(Self) -> Int
 pub fn PaginationState::previous(Self) -> Self
 pub fn PaginationState::start_index(Self) -> Int
+
+pub(all) struct PaintContext {
+  commands : Array[@core.DrawCommand]
+}
 
 pub struct PickerItem {
   id : String

@@ -105,14 +105,13 @@ fn ShowcaseModel::layout_section(
         ctx.constraints.constrain(@moui.Size::new(width=220.0, height=34.0))
       },
       place=ctx => [ctx.frame],
-      paint=frame => {
-        [
-          @core.DrawCommand::StrokeRoundedRect(
-            @core.RoundedRect::new(rect=frame, radius=theme.radius_scale.sm),
-            theme.palette.primary,
-            1.0,
-          ),
-        ]
+      paint=(ctx, frame) => {
+        stroke_rounded_rect(
+          ctx,
+          @core.RoundedRect::new(rect=frame, radius=theme.radius_scale.sm),
+          @core.Brush::solid(theme.palette.primary),
+          1.0,
+        )
       },
       semantics_label="Custom children layout",
     ),

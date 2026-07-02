@@ -1,4 +1,29 @@
 ///|
+using @views {
+  type PaintContext,
+  custom_layout,
+  fill_rect,
+  fill_rounded_rect,
+  stroke_rect,
+  stroke_rounded_rect,
+  draw_text,
+  draw_image,
+  draw_shadow,
+  draw_path,
+  draw_shader_effect,
+  push_clip,
+  pop_clip,
+  push_transform,
+  pop_transform,
+  push_opacity,
+  pop_opacity,
+  push_layer,
+  pop_layer,
+  push_filter,
+  pop_filter,
+}
+
+///|
 fn pdf_workbench_sidebar(
   model : PdfWorkbenchModel,
   metrics : PdfWorkbenchLayoutMetrics,
@@ -130,9 +155,9 @@ fn pdf_workbench_page_thumbnail(
   thumbnail_raster~ : PdfWorkbenchRasterPage?,
   theme : @moui.Theme,
 ) -> @moui.View[PdfWorkbenchMsg] {
-  @views.custom_layout(
+  custom_layout(
     measure=_ => @moui.Size::new(width=54.0, height=68.0),
-    paint=frame => {
+    paint=(ctx, frame) => {
       let page_width = 40.0
       let page_height = 56.0
       let x = frame.origin.x + (frame.size.width - page_width) / 2.0
@@ -143,44 +168,37 @@ fn pdf_workbench_page_thumbnail(
         width=page_width,
         height=page_height,
       )
-      let commands : Array[@core.DrawCommand] = []
       if selected {
-        commands.push(
-          @core.DrawCommand::FillRect(
-            frame,
-            theme.palette.primary.multiply_alpha(0.10),
-          ),
+        fill_rect(
+          ctx,
+          frame,
+          theme.palette.primary.multiply_alpha(0.10),
         )
       }
-      commands.push(
-        @core.DrawCommand::FillRect(page_rect, @core.Color::white()),
-      )
+      fill_rect(ctx, page_rect, @core.Color::white())
       match thumbnail_raster {
         Some(raster) =>
-          commands.push(
-            @core.DrawCommand::DrawImage(@core.ImageRun::{
-              source: raster.image_source,
-              frame: page_rect,
-              opacity: 1.0,
-              fit: @core.ImageFit::Contain,
-            }),
-          )
+          draw_image(ctx, @core.ImageRun::{
+            source: raster.image_source,
+            frame: page_rect,
+            opacity: 1.0,
+            fit: @core.ImageFit::Contain,
+          })
         None => ()
       }
-      commands.push(
-        @core.DrawCommand::StrokeRect(
-          page_rect,
-          if selected {
-            theme.palette.primary
-          } else {
-            theme.palette.outline
-          },
-          if selected {
-            2.0
-          } else {
-            1.0
-          },
-        ),
+      stroke_rect(
+        ctx,
+        page_rect,
+        if selected {
+          theme.palette.primary
+        } else {
+          theme.palette.outline
+        },
+        if selected {
+          2.0
+        } else {
+          1.0
+        },
       )
       let line_color = if selected {
         theme.palette.primary.multiply_alpha(0.42)
@@ -195,51 +213,44 @@ fn pdf_workbench_page_thumbnail(
             width=page_width - 10.0,
             height=13.0,
           )
-          commands.push(
-            @core.DrawCommand::FillRect(
-              label_rect,
-              theme.palette.surface.multiply_alpha(0.82),
-            ),
+          fill_rect(
+            ctx,
+            label_rect,
+            theme.palette.surface.multiply_alpha(0.82),
           )
         }
         None =>
           for index in 0..<4 {
             let line_y = y + 14.0 + index.to_double() * 7.0
             let line_width = if index == 3 { 18.0 } else { 26.0 }
-            commands.push(
-              @core.DrawCommand::FillRect(
-                @core.Rect::new(
-                  x=x + 7.0,
-                  y=line_y,
-                  width=line_width,
-                  height=2.0,
-                ),
-                line_color,
+            fill_rect(
+              ctx,
+              @core.Rect::new(
+                x=x + 7.0,
+                y=line_y,
+                width=line_width,
+                height=2.0,
               ),
+              line_color,
             )
           }
       }
-      commands.push(
-        @core.DrawCommand::DrawText(
-          @core.TextRun::new(
-            text=summary.page_number.to_string(),
-            frame=@core.Rect::new(
-              x=x + 7.0,
-              y=y + page_height - 16.0,
-              width=page_width - 14.0,
-              height=12.0,
-            ),
-            font=@core.FontSpec::new(size=10.0),
-            color=if selected {
-              theme.palette.primary
-            } else {
-              theme.palette.muted
-            },
-            align=@core.TextAlign::TextCenter,
-          ),
+      draw_text(ctx, @core.TextRun::new(
+        text=summary.page_number.to_string(),
+        frame=@core.Rect::new(
+          x=x + 7.0,
+          y=y + page_height - 16.0,
+          width=page_width - 14.0,
+          height=12.0,
         ),
-      )
-      commands
+        font=@core.FontSpec::new(size=10.0),
+        color=if selected {
+          theme.palette.primary
+        } else {
+          theme.palette.muted
+        },
+        align=@core.TextAlign::TextCenter,
+      ))
     },
     semantics_label="Page thumbnail " + summary.page_number.to_string(),
   )

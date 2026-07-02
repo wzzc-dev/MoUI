@@ -8,9 +8,9 @@ fn pdf_workbench_preview_canvas(
   metrics : PdfWorkbenchLayoutMetrics,
   theme : @moui.Theme,
 ) -> @moui.View[PdfWorkbenchMsg] {
-  @views.custom_layout(
+  custom_layout(
     measure=_ => pdf_workbench_preview_content_size(raster_page, zoom, metrics),
-    paint=frame => {
+    paint=(ctx, frame) => {
       let page_size = pdf_workbench_preview_page_size(
         raster_page, zoom, metrics,
       )
@@ -34,117 +34,87 @@ fn pdf_workbench_preview_canvas(
           " | \{document.original_bytes.length()} byte(s) | page \{document.selected_page}/\{document.page_count}"
         None => "Use Open to choose a .pdf file"
       }
-      let commands : Array[@core.DrawCommand] = []
-      commands.push(
-        @core.DrawCommand::FillRect(frame, theme.palette.surface_variant),
-      )
-      commands.push(
-        @core.DrawCommand::FillRect(page_rect, @core.Color::white()),
-      )
+      fill_rect(ctx, frame, theme.palette.surface_variant)
+      fill_rect(ctx, page_rect, @core.Color::white())
       match raster_page {
         Some(raster) =>
-          commands.push(
-            @core.DrawCommand::DrawImage(@core.ImageRun::{
-              source: raster.image_source,
-              frame: page_rect,
-              opacity: 1.0,
-              fit: @core.ImageFit::Contain,
-            }),
-          )
+          draw_image(ctx, @core.ImageRun::{
+            source: raster.image_source,
+            frame: page_rect,
+            opacity: 1.0,
+            fit: @core.ImageFit::Contain,
+          })
         None => {
-          commands.push(
-            @core.DrawCommand::DrawText(
-              @core.TextRun::new(
-                text=loaded_title,
-                frame=@core.Rect::new(
-                  x=x + 24.0,
-                  y=y + 28.0,
-                  width=page_width - 48.0,
-                  height=28.0,
-                ),
-                font=@core.FontSpec::new(size=18.0),
-                color=theme.palette.foreground,
-                align=@core.TextAlign::TextStart,
-              ),
-            ),
-          )
-          commands.push(
-            @core.DrawCommand::DrawText(
-              @core.TextRun::new(
-                text=file_line,
-                frame=@core.Rect::new(
-                  x=x + 24.0,
-                  y=y + 62.0,
-                  width=page_width - 48.0,
-                  height=24.0,
-                ),
-                font=@core.FontSpec::new(size=12.0),
-                color=theme.palette.muted,
-                align=@core.TextAlign::TextStart,
-              ),
-            ),
-          )
-          commands.push(
-            @core.DrawCommand::DrawText(
-              @core.TextRun::new(
-                text=page.text_preview,
-                frame=@core.Rect::new(
-                  x=x + 24.0,
-                  y=y + 104.0,
-                  width=page_width - 48.0,
-                  height=160.0,
-                ),
-                font=@core.FontSpec::new(size=14.0),
-                color=theme.palette.foreground,
-                align=@core.TextAlign::TextStart,
-              ),
-            ),
-          )
-          commands.push(
-            @core.DrawCommand::DrawText(
-              @core.TextRun::new(
-                text=page.content_diagnostic,
-                frame=@core.Rect::new(
-                  x=x + 24.0,
-                  y=y + page_height - 92.0,
-                  width=page_width - 48.0,
-                  height=32.0,
-                ),
-                font=@core.FontSpec::new(size=12.0),
-                color=theme.palette.muted,
-                align=@core.TextAlign::TextStart,
-              ),
-            ),
-          )
-        }
-      }
-      commands.push(
-        @core.DrawCommand::StrokeRect(page_rect, theme.palette.outline, 1.0),
-      )
-      match document {
-        Some(document) =>
-          pdf_workbench_push_page_edit_overlays(
-            commands, document, page_rect, theme,
-          )
-        None => ()
-      }
-      commands.push(
-        @core.DrawCommand::DrawText(
-          @core.TextRun::new(
-            text=pdf_workbench_raster_status_label(raster_status),
+          draw_text(ctx, @core.TextRun::new(
+            text=loaded_title,
             frame=@core.Rect::new(
-              x=frame.origin.x + 16.0,
-              y=frame.origin.y + 4.0,
-              width=frame.size.width - 32.0,
-              height=20.0,
+              x=x + 24.0,
+              y=y + 28.0,
+              width=page_width - 48.0,
+              height=28.0,
+            ),
+            font=@core.FontSpec::new(size=18.0),
+            color=theme.palette.foreground,
+            align=@core.TextAlign::TextStart,
+          ))
+          draw_text(ctx, @core.TextRun::new(
+            text=file_line,
+            frame=@core.Rect::new(
+              x=x + 24.0,
+              y=y + 62.0,
+              width=page_width - 48.0,
+              height=24.0,
             ),
             font=@core.FontSpec::new(size=12.0),
             color=theme.palette.muted,
             align=@core.TextAlign::TextStart,
-          ),
+          ))
+          draw_text(ctx, @core.TextRun::new(
+            text=page.text_preview,
+            frame=@core.Rect::new(
+              x=x + 24.0,
+              y=y + 104.0,
+              width=page_width - 48.0,
+              height=160.0,
+            ),
+            font=@core.FontSpec::new(size=14.0),
+            color=theme.palette.foreground,
+            align=@core.TextAlign::TextStart,
+          ))
+          draw_text(ctx, @core.TextRun::new(
+            text=page.content_diagnostic,
+            frame=@core.Rect::new(
+              x=x + 24.0,
+              y=y + page_height - 92.0,
+              width=page_width - 48.0,
+              height=32.0,
+            ),
+            font=@core.FontSpec::new(size=12.0),
+            color=theme.palette.muted,
+            align=@core.TextAlign::TextStart,
+          ))
+        }
+      }
+      stroke_rect(ctx, page_rect, theme.palette.outline, 1.0)
+      match document {
+        Some(document) =>
+          pdf_workbench_push_page_edit_overlays(
+            ctx, document, page_rect, theme,
+          )
+        None => ()
+      }
+      draw_text(ctx, @core.TextRun::new(
+        text=pdf_workbench_raster_status_label(raster_status),
+        frame=@core.Rect::new(
+          x=frame.origin.x + 16.0,
+          y=frame.origin.y + 4.0,
+          width=frame.size.width - 32.0,
+          height=20.0,
         ),
-      )
-      commands
+        font=@core.FontSpec::new(size=12.0),
+        color=theme.palette.muted,
+        align=@core.TextAlign::TextStart,
+      ))
     },
     semantics_label=page.text_preview,
   )
@@ -205,7 +175,7 @@ fn pdf_workbench_preview_content_size(
 
 ///|
 fn pdf_workbench_push_page_edit_overlays(
-  commands : Array[@core.DrawCommand],
+  ctx : PaintContext,
   document : PdfWorkbenchDocument,
   page_rect : @core.Rect,
   theme : @moui.Theme,
@@ -224,30 +194,24 @@ fn pdf_workbench_push_page_edit_overlays(
             width=stamp_width,
             height=stamp_height,
           )
-          commands.push(
-            @core.DrawCommand::FillRect(
-              stamp_rect,
-              theme.palette.primary.multiply_alpha(0.12),
-            ),
+          fill_rect(
+            ctx,
+            stamp_rect,
+            theme.palette.primary.multiply_alpha(0.12),
           )
-          commands.push(
-            @core.DrawCommand::StrokeRect(
-              stamp_rect,
-              theme.palette.primary.multiply_alpha(0.72),
-              1.0,
-            ),
+          stroke_rect(
+            ctx,
+            stamp_rect,
+            theme.palette.primary.multiply_alpha(0.72),
+            1.0,
           )
-          commands.push(
-            @core.DrawCommand::DrawText(
-              @core.TextRun::new(
-                text=value,
-                frame=stamp_rect,
-                font=@core.FontSpec::new(size=12.0),
-                color=theme.palette.primary,
-                align=@core.TextAlign::TextCenter,
-              ),
-            ),
-          )
+          draw_text(ctx, @core.TextRun::new(
+            text=value,
+            frame=stamp_rect,
+            font=@core.FontSpec::new(size=12.0),
+            color=theme.palette.primary,
+            align=@core.TextAlign::TextCenter,
+          ))
           stamp_index = stamp_index + 1
         }
       AddTextAnnotation(page, value) =>
@@ -260,35 +224,29 @@ fn pdf_workbench_push_page_edit_overlays(
             width=note_width,
             height=note_height,
           )
-          commands.push(
-            @core.DrawCommand::FillRect(
-              note_rect,
-              theme.palette.primary.multiply_alpha(0.10),
-            ),
+          fill_rect(
+            ctx,
+            note_rect,
+            theme.palette.primary.multiply_alpha(0.10),
           )
-          commands.push(
-            @core.DrawCommand::StrokeRect(
-              note_rect,
-              theme.palette.primary.multiply_alpha(0.58),
-              1.0,
-            ),
+          stroke_rect(
+            ctx,
+            note_rect,
+            theme.palette.primary.multiply_alpha(0.58),
+            1.0,
           )
-          commands.push(
-            @core.DrawCommand::DrawText(
-              @core.TextRun::new(
-                text=value,
-                frame=@core.Rect::new(
-                  x=note_rect.origin.x + 8.0,
-                  y=note_rect.origin.y + 7.0,
-                  width=note_rect.size.width - 16.0,
-                  height=note_rect.size.height - 14.0,
-                ),
-                font=@core.FontSpec::new(size=11.0),
-                color=theme.palette.primary,
-                align=@core.TextAlign::TextStart,
-              ),
+          draw_text(ctx, @core.TextRun::new(
+            text=value,
+            frame=@core.Rect::new(
+              x=note_rect.origin.x + 8.0,
+              y=note_rect.origin.y + 7.0,
+              width=note_rect.size.width - 16.0,
+              height=note_rect.size.height - 14.0,
             ),
-          )
+            font=@core.FontSpec::new(size=11.0),
+            color=theme.palette.primary,
+            align=@core.TextAlign::TextStart,
+          ))
           note_index = note_index + 1
         }
       _ => ()

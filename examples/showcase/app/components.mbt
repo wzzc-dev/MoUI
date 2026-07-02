@@ -201,13 +201,12 @@ fn layout_tile_marker(theme : @moui.Theme) -> @moui.View[ShowcaseMsg] {
     measure=constraints => {
       constraints.constrain(@moui.Size::new(width=4.0, height=22.0))
     },
-    paint=frame => {
-      [
-        @core.DrawCommand::FillRoundedRect(
-          @core.RoundedRect::new(rect=frame, radius=2.0),
-          theme.palette.primary.multiply_alpha(0.72),
-        ),
-      ]
+    paint=(ctx, frame) => {
+      fill_rounded_rect(
+        ctx,
+        @core.RoundedRect::new(rect=frame, radius=2.0),
+        @core.Brush::solid(theme.palette.primary.multiply_alpha(0.72)),
+      )
     },
     semantics_label="",
   )
@@ -663,7 +662,7 @@ fn ShowcaseModel::vector_path_card(
     measure=constraints => {
       constraints.constrain(@moui.Size::new(width=292.0, height=74.0))
     },
-    paint=frame => {
+    paint=(ctx, frame) => {
       let inset = 12.0
       let left = frame.origin.x + inset
       let top = frame.origin.y + inset
@@ -678,45 +677,46 @@ fn ShowcaseModel::vector_path_card(
       let stroke = @core.Brush::solid(
         theme.palette.foreground.multiply_alpha(0.72),
       )
-      [
-        @core.DrawCommand::FillRoundedRectBrush(
-          @core.RoundedRect::new(rect=frame, radius=theme.radius_scale.md),
-          @core.Brush::solid(theme.palette.surface_variant.multiply_alpha(0.42)),
+      fill_rounded_rect(
+        ctx,
+        @core.RoundedRect::new(rect=frame, radius=theme.radius_scale.md),
+        @core.Brush::solid(theme.palette.surface_variant.multiply_alpha(0.42)),
+      )
+      draw_path(
+        ctx,
+        @core.PathSpec::new(
+          verbs=[
+            @core.PathVerb::MoveTo(@moui.Point::new(x=left, y=bottom)),
+            @core.PathVerb::CubicTo(
+              @moui.Point::new(x=left + 24.0, y=top - 4.0),
+              @moui.Point::new(x=left + 58.0, y=top + 4.0),
+              @moui.Point::new(x=left + 82.0, y=bottom),
+            ),
+            @core.PathVerb::LineTo(@moui.Point::new(x=left + 42.0, y=mid_y)),
+            @core.PathVerb::Close,
+          ],
+          fill=Some(fill),
         ),
-        @core.DrawCommand::DrawPath(
-          @core.PathSpec::new(
-            verbs=[
-              @core.PathVerb::MoveTo(@moui.Point::new(x=left, y=bottom)),
-              @core.PathVerb::CubicTo(
-                @moui.Point::new(x=left + 24.0, y=top - 4.0),
-                @moui.Point::new(x=left + 58.0, y=top + 4.0),
-                @moui.Point::new(x=left + 82.0, y=bottom),
-              ),
-              @core.PathVerb::LineTo(@moui.Point::new(x=left + 42.0, y=mid_y)),
-              @core.PathVerb::Close,
-            ],
-            fill=Some(fill),
-          ),
+      )
+      draw_path(
+        ctx,
+        @core.PathSpec::new(
+          verbs=[
+            @core.PathVerb::MoveTo(@moui.Point::new(x=left + 116.0, y=bottom)),
+            @core.PathVerb::QuadTo(
+              @moui.Point::new(x=left + 148.0, y=top),
+              @moui.Point::new(x=left + 180.0, y=bottom),
+            ),
+            @core.PathVerb::CubicTo(
+              @moui.Point::new(x=left + 196.0, y=mid_y),
+              @moui.Point::new(x=left + 216.0, y=mid_y),
+              @moui.Point::new(x=left + 236.0, y=top + 8.0),
+            ),
+          ],
+          stroke=Some(stroke),
+          stroke_width=3.0,
         ),
-        @core.DrawCommand::DrawPath(
-          @core.PathSpec::new(
-            verbs=[
-              @core.PathVerb::MoveTo(@moui.Point::new(x=left + 116.0, y=bottom)),
-              @core.PathVerb::QuadTo(
-                @moui.Point::new(x=left + 148.0, y=top),
-                @moui.Point::new(x=left + 180.0, y=bottom),
-              ),
-              @core.PathVerb::CubicTo(
-                @moui.Point::new(x=left + 196.0, y=mid_y),
-                @moui.Point::new(x=left + 216.0, y=mid_y),
-                @moui.Point::new(x=left + 236.0, y=top + 8.0),
-              ),
-            ],
-            stroke=Some(stroke),
-            stroke_width=3.0,
-          ),
-        ),
-      ]
+      )
     },
     semantics_label="Vector path renderer demo",
   )
@@ -733,23 +733,23 @@ fn ShowcaseModel::sparkline(
     measure=constraints => {
       constraints.constrain(@moui.Size::new(width=300.0, height=34.0))
     },
-    paint=frame => {
+    paint=(ctx, frame) => {
       let fill = @core.Rect::new(
         x=frame.origin.x,
         y=frame.origin.y + 10.0,
         width=frame.size.width * clamp_double(value, 0.0, 1.0),
         height=14.0,
       )
-      [
-        @core.DrawCommand::FillRoundedRectBrush(
-          @core.RoundedRect::new(rect=frame, radius=theme.radius_scale.sm),
-          @core.Brush::solid(theme.palette.surface_variant),
-        ),
-        @core.DrawCommand::FillRoundedRectBrush(
-          @core.RoundedRect::new(rect=fill, radius=7.0),
-          @core.Brush::solid(theme.palette.primary),
-        ),
-      ]
+      fill_rounded_rect(
+        ctx,
+        @core.RoundedRect::new(rect=frame, radius=theme.radius_scale.sm),
+        @core.Brush::solid(theme.palette.surface_variant),
+      )
+      fill_rounded_rect(
+        ctx,
+        @core.RoundedRect::new(rect=fill, radius=7.0),
+        @core.Brush::solid(theme.palette.primary),
+      )
     },
     semantics_label="Custom layout sparkline",
   )

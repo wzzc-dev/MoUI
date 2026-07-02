@@ -270,7 +270,7 @@ fn layout_tile_marker_count(commands : Array[@core.DrawCommand]) -> Int {
   let mut count = 0
   for command in commands {
     match command {
-      @core.DrawCommand::FillRoundedRect({ rect, radius }, _) =>
+      @core.DrawCommand::FillRoundedRectBrush({ rect, radius }, _) =>
         if rect.size.width == 4.0 && rect.size.height == 22.0 && radius == 2.0 {
           count = count + 1
         }

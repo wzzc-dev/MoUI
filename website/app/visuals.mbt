@@ -301,38 +301,35 @@ fn code_snippet_line(
     measure=constraints => {
       constraints.constrain(@moui.Size::new(width~, height~))
     },
-    paint=frame => {
-      let commands : Array[@core.DrawCommand] = [
-        @core.DrawCommand::DrawText(
-          @core.TextRun::new(
-            text=line_no,
-            frame=@core.Rect::new(
-              x=frame.origin.x,
-              y=frame.origin.y,
-              width=gutter_width,
-              height~,
-            ),
-            font~,
-            color=code_snippet_gutter(theme),
-            align=@core.TextAlign::TextStart,
-          ),
-        ),
-      ]
-      commands.append(
-        syntax_highlight_draw_commands(
-          theme,
-          value,
-          @core.Rect::new(
-            x=frame.origin.x + gutter_width + 8.0,
+    paint=(ctx, frame) => {
+      draw_text(
+        ctx,
+        @core.TextRun::new(
+          text=line_no,
+          frame=@core.Rect::new(
+            x=frame.origin.x,
             y=frame.origin.y,
-            width=width - gutter_width - 8.0,
-            height~,
+            width=gutter_width,
+            height=frame.size.height,
           ),
-          font,
-          font_size,
+          font~,
+          color=code_snippet_gutter(theme),
+          align=@core.TextAlign::TextStart,
         ),
       )
-      commands
+      syntax_highlight_draw_commands(
+        ctx,
+        theme,
+        value,
+        @core.Rect::new(
+          x=frame.origin.x + gutter_width + 8.0,
+          y=frame.origin.y,
+          width=width - gutter_width - 8.0,
+          height=frame.size.height,
+        ),
+        font,
+        font_size,
+      )
     },
     semantics_label=value,
   )
@@ -358,43 +355,41 @@ priv struct SyntaxSegment {
 
 ///|
 fn syntax_highlight_draw_commands(
+  ctx : PaintContext,
   theme : @moui.Theme,
   value : String,
   frame : @core.Rect,
   font : @core.FontSpec,
   font_size : Double,
-) -> Array[@core.DrawCommand] {
+) -> Unit {
   let segments = moonbit_syntax_segments(value)
-  let commands : Array[@core.DrawCommand] = []
   let char_width = font_size * 0.61
   let mut column = 0
   for segment in segments {
     let length = segment.value.to_array().length()
     if length > 0 {
       let x = frame.origin.x + column.to_double() * char_width
-      commands.push(
-        @core.DrawCommand::DrawText(
-          @core.TextRun::new(
-            text=segment.value,
-            frame=@core.Rect::new(
-              x~,
-              y=frame.origin.y,
-              width=max_website_double(
-                0.0,
-                frame.size.width - (x - frame.origin.x),
-              ),
-              height=frame.size.height,
+      draw_text(
+        ctx,
+        @core.TextRun::new(
+          text=segment.value,
+          frame=@core.Rect::new(
+            x~,
+            y=frame.origin.y,
+            width=max_website_double(
+              0.0,
+              frame.size.width - (x - frame.origin.x),
             ),
-            font~,
-            color=syntax_tone_color(theme, segment.tone),
-            align=@core.TextAlign::TextStart,
+            height=frame.size.height,
           ),
+          font~,
+          color=syntax_tone_color(theme, segment.tone),
+          align=@core.TextAlign::TextStart,
         ),
       )
       column = column + length
     }
   }
-  commands
 }
 
 ///|

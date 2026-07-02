@@ -35,6 +35,7 @@ pub fn[Msg] baseline_form_rows(
       )
     },
     semantics_label="Baseline form rows",
+    paint=(_ctx, _frame) => (),
   )
 }
 

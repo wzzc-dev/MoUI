@@ -152,6 +152,7 @@ pub struct WorkbenchModel {
   settings : SettingsWorkspace
   appearance : AppearanceMode
   backend : AgentBackendRuntime
+  animation_progress : Double
 }
 
 pub(all) enum WorkbenchMsg {
@@ -160,6 +161,7 @@ pub(all) enum WorkbenchMsg {
   SettingsMsg(SettingsMsg)
   WriteMsg(WriteMsg)
   ToggleAppearance
+  AnimationTick
 }
 
 pub(all) enum Workspace {
