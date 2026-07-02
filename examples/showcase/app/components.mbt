@@ -28,6 +28,10 @@ fn section_panel(
         state=scroll_state,
       )
   }
+  let header_bg = match theme.scheme {
+    @core.ColorScheme::Light => theme.palette.surface_variant.multiply_alpha(0.32)
+    @core.ColorScheme::Dark => @core.Color::white().multiply_alpha(0.04)
+  }
   container(
     column(
       [
@@ -53,9 +57,10 @@ fn section_panel(
     ),
     width=metrics.panel_width,
     height=metrics.panel_height,
-    variant=@views.ContainerVariant::Base,
+    variant=@views.ContainerVariant::Raised,
     theme~,
     padding=theme.spacing_scale.md,
+    background=header_bg,
   )
   .border(showcase_panel_border(theme))
   .repaint_boundary()
