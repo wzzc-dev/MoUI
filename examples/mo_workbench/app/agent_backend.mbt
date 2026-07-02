@@ -1,11 +1,13 @@
 // Backend-agnostic abstraction for the Mo Workbench agent.
 //
 // The app package stays portable (native + wasm-gc) and does not depend on any
-// native-only LLM SDK. The concrete openseek backend lives in the macos_skia
-// entrypoint and injects an `AgentBackendRuntime` here.
+// native-only LLM SDK. A concrete backend (currently `stub()`; a future
+// Kun-compatible HTTP/SSE transport, mirroring DeepSeek-GUI's
+// `LocalHttpRuntimeAdapter`, may live in a `native_transport` subpackage and
+// inject an `AgentBackendRuntime` here) is supplied by the platform entrypoint.
 //
-// Communication mirrors the proven PiNativeTransportOwner pattern:
-//   UI side  -> Effect::run callback (sync) -> runtime dispatch (try_put to queue)
+// Communication flow:
+//   UI side  -> Effect::run callback (sync) -> runtime.run(commands, emit)
 //   backend  -> async worker -> emit(event) -> dispatch(map(event)) into UI queue
 
 ///|

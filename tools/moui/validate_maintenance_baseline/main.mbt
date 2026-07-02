@@ -389,7 +389,14 @@ fn pub_all_budgets() -> Array[CountBudget] {
       kind: "pub(all)",
       label: "examples/mo_workbench/app",
       path: "examples/mo_workbench/app",
-      max_count: 10,
+      // Multi-workspace shell (Code/Write/Settings implemented + 3 reserved)
+      // exposes Workspace/AppearanceMode/ApprovalPolicy/SandboxMode/
+      // ChatMessage/WorkbenchMsg/CodeMsg/SettingsMsg/WriteMsg +
+      // AgentBackendRuntime/AgentBackendFixture/AgentCommand/AgentEvent/
+      // ModelChoice/ThinkingChoice/TurnStatus/SessionSummary. Budget leaves
+      // headroom for the reserved workspaces (ConnectPhone/ScheduledTasks/
+      // Plugins) to gain their own pub(all) types when implemented.
+      max_count: 20,
     },
     {
       kind: "pub(all)",

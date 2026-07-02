@@ -52,12 +52,44 @@ pub(all) enum AppearanceMode {
   Dark
 } derive(Eq, @debug.Debug)
 
+pub(all) enum ApprovalPolicy {
+  NeverAsk
+  AskOnWrite
+  AskOnCommand
+} derive(Eq, @debug.Debug)
+
 pub(all) enum ChatMessage {
   User(String)
   Assistant(String, String?)
   ToolResult(String, String, Bool, String?)
   RuntimeNotice(String)
   Terminal(TurnStatus, String)
+}
+
+pub(all) enum CodeMsg {
+  PromptChanged(String)
+  SubmitPrompt
+  SteerChanged(String)
+  SubmitSteer
+  NewSession
+  SelectSession(String)
+  ModelChanged(ModelChoice)
+  ThinkingChanged(ThinkingChoice)
+  ClearError
+  ReceiveAgentEvent(AgentEvent)
+}
+
+pub struct CodeWorkspace {
+  sessions : Array[SessionSummary]
+  active_session_id : String?
+  messages : Array[ChatMessage]
+  prompt : String
+  steer_text : String
+  is_streaming : Bool
+  current_model : ModelChoice
+  current_thinking : ThinkingChoice
+  error : String?
+  scroll_state : @core.ScrollState
 }
 
 pub struct MoWorkbenchApp {
@@ -70,11 +102,35 @@ pub(all) enum ModelChoice {
   V4Pro
 } derive(Eq, @debug.Debug)
 
+pub(all) enum SandboxMode {
+  ReadOnly
+  WorkspaceWritable
+  FullAccess
+} derive(Eq, @debug.Debug)
+
 pub struct SessionSummary {
   id : String
   first_prompt : String
   last_active_unix_seconds : Int64?
 } derive(Eq, @debug.Debug)
+
+pub(all) enum SettingsMsg {
+  ApiKeyChanged(String)
+  BaseUrlChanged(String)
+  ApprovalChanged(ApprovalPolicy)
+  SandboxChanged(SandboxMode)
+  WorkingDirChanged(String)
+  FontSizeChanged(Int)
+}
+
+pub struct SettingsWorkspace {
+  api_key : String
+  base_url : String
+  approval_policy : ApprovalPolicy
+  sandbox_mode : SandboxMode
+  working_dir : String
+  font_size : Int
+}
 
 pub(all) enum ThinkingChoice {
   No
@@ -90,32 +146,37 @@ pub(all) enum TurnStatus {
 } derive(Eq, @debug.Debug)
 
 pub struct WorkbenchModel {
-  sessions : Array[SessionSummary]
-  active_session_id : String?
-  messages : Array[ChatMessage]
-  prompt : String
-  steer_text : String
-  is_streaming : Bool
-  current_model : ModelChoice
-  current_thinking : ThinkingChoice
-  error : String?
+  active_workspace : Workspace
+  code : CodeWorkspace
+  write : WriteWorkspace
+  settings : SettingsWorkspace
   appearance : AppearanceMode
-  scroll_state : @core.ScrollState
   backend : AgentBackendRuntime
 }
 
 pub(all) enum WorkbenchMsg {
-  PromptChanged(String)
-  SubmitPrompt
-  SteerChanged(String)
-  SubmitSteer
-  NewSession
-  SelectSession(String)
-  ModelChanged(ModelChoice)
-  ThinkingChanged(ThinkingChoice)
-  ReceiveAgentEvent(AgentEvent)
-  ClearError
+  SwitchWorkspace(Workspace)
+  CodeMsg(CodeMsg)
+  SettingsMsg(SettingsMsg)
+  WriteMsg(WriteMsg)
   ToggleAppearance
+}
+
+pub(all) enum Workspace {
+  Code
+  Write
+  Settings
+  ConnectPhone
+  ScheduledTasks
+  Plugins
+} derive(Eq, @debug.Debug)
+
+pub(all) enum WriteMsg {
+  Reserved
+}
+
+pub struct WriteWorkspace {
+  reserved : Unit
 }
 
 // Type aliases
