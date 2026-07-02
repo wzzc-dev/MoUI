@@ -313,7 +313,7 @@ test "showcase sidebar catalog scrolls to lower sections" {
 ///|
 test "showcase native ime evidence points focus sidebar search" {
   let runtime = @app.ShowcaseModel::new().runtime(width=960.0, height=560.0)
-  click_point(runtime, @moui.Point::new(x=120.0, y=148.0))
+  click_text(runtime, "Filter sections")
   runtime.dispatch_event(
     @core.AppEvent::TextInput(@core.TextInputEvent::InsertText("moui")),
   )
