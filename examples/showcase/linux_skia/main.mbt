@@ -5,8 +5,8 @@ fn main {
     program=app.program_with_host_summary(
       @linux_backend.linux_capability_summary(),
     ),
-    width=960.0,
-    height=560.0,
+    width=1100.0,
+    height=680.0,
   )
   let exit_after_first_present = @env.get_env_var(
       "MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT",

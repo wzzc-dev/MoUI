@@ -5,8 +5,8 @@ fn main {
     program=app.program_with_host_summary(
       @windows_backend.windows_capability_summary(),
     ),
-    width=960.0,
-    height=560.0,
+    width=1100.0,
+    height=680.0,
   )
   let exit_after_first_present = @env.get_env_var(
       "MOUI_WINDOWS_SUN_EXIT_AFTER_FIRST_PRESENT",

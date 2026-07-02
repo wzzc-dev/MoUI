@@ -5,8 +5,8 @@ fn main {
     program=app.program_with_host_summary(
       @windows_backend.windows_capability_summary(),
     ),
-    width=960.0,
-    height=560.0,
+    width=1100.0,
+    height=680.0,
   )
   @windows_wgpu_backend.run_app_with_options(
     "MoUI Showcase",
