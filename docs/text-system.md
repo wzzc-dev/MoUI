@@ -321,90 +321,50 @@ Remote font loading is intentionally outside the current backend contract.
 
 ## Current Gaps
 
-- Full typography conformance, native emoji font fallback, ZWJ/color emoji
-  conformance, future Unicode grapheme data refreshes, and provider shaping
-  parity remain follow-up work. Native
-  Skia paragraph layout and bidi visual-order promotion now have an opt-in
-  SkParagraph implementation path, but the release claim remains pending until
-  macOS, Windows, and Linux real-Skia smoke logs include SkParagraph line
-  metrics, later-line pixels, selection rectangles, line
-  ranges, hit tests, and mixed-direction visual-order observation. Core now
-  exposes `TextGraphemeBoundaries` as the single UAX-style
-  cluster-boundary contract used by fallback caret stabilization, left/right
-  caret movement, selection/range normalization, surrounding delete ranges,
-  composition cursor offsets, rich text hit testing, raw UTF-8 offset
-  conversion, and `nearest_boundary_utf8_offset` conversion for later IME
-  handoff. This keeps deterministic text-field, selection, and IME-anchor
-  geometry on one path. The repo now has an offline
-  `GraphemeBreakTest.txt`-style fixture and generator guard
-  (`scripts/generate-grapheme-break-fixtures.mjs --check`) for curated samples
-  plus a vendored Unicode 17.0 default grapheme break fixture generated from
-  `moui/core/testdata/GraphemeBreakTest-17.0.0.txt`; `moon test moui/core
-  --target native` runs the curated fixture, full boundary fixture, and a full
-  editing fixture that checks `is_boundary`, floor/ceil/nearest boundary
-  snapping, collapsed and expanded range normalization, surrounding delete
-  ranges, raw boundary-to-UTF-8 offset conversion, and every-index
-  `nearest_boundary_utf8_offset` snapping across every Unicode 17 sample. A
-  separate full layout fixture checks fallback paragraph caret
-  rectangles, collapsed selection rectangles, and hit-test offsets snap to the
-  same Unicode 17 boundaries. `moui/render/skia` also generates a Skia
-  white-box fixture from the same file so `moon test moui/render/skia --target native`
-  verifies `skia_grapheme_cluster_texts` against the Unicode 17 default break
-  samples and checks every-index `nearest_boundary_utf8_offset` snapping against
-  the Skia-produced cluster boundaries.
-  The full Unicode fixtures use distinct generated helper/test names and are
-  checked with
-  `node scripts/generate-grapheme-break-fixtures.mjs --input moui/core/testdata/GraphemeBreakTest-17.0.0.txt --output moui/core/text_grapheme_break_unicode_17_wbtest.mbt --helper-name assert_unicode_17_grapheme_break_fixture --test-name "unicode 17 grapheme break fixture samples" --check`.
-  For the core editing fixture, use
-  `node scripts/generate-grapheme-break-fixtures.mjs --input moui/core/testdata/GraphemeBreakTest-17.0.0.txt --output moui/core/text_grapheme_editing_unicode_17_wbtest.mbt --helper-name assert_unicode_17_grapheme_editing_fixture --test-name "unicode 17 grapheme editing fixture samples" --actual-kind core-editing --check`.
-  For the core layout fixture, use
-  `node scripts/generate-grapheme-break-fixtures.mjs --input moui/core/testdata/GraphemeBreakTest-17.0.0.txt --output moui/core/text_grapheme_layout_unicode_17_wbtest.mbt --helper-name assert_unicode_17_grapheme_layout_fixture --test-name "unicode 17 grapheme layout fixture samples" --actual-kind core-layout --check`.
-  For Skia, use
-  `node scripts/generate-grapheme-break-fixtures.mjs --input moui/core/testdata/GraphemeBreakTest-17.0.0.txt --output moui/render/skia/skia_grapheme_break_unicode_17_wbtest.mbt --helper-name assert_skia_unicode_17_grapheme_break_fixture --test-name "skia unicode 17 grapheme break fixture samples" --actual-kind skia-clusters --check`.
-  The
-  scanner now drives core grapheme break classes from generated Unicode 17.0
-  property predicates for CR/LF/control, Prepend, Extend, SpacingMark,
-  Regional_Indicator, ZWJ, Extended_Pictographic, and Indic_Conjunct_Break
-  Linker/Consonant/Extend. Regenerate those predicates with
-  `node scripts/generate-grapheme-property-data.mjs --grapheme-property <Unicode-17.0.0-GraphemeBreakProperty.txt> --emoji-data <Unicode-17.0.0-emoji-data.txt> --derived-core-properties <Unicode-17.0.0-DerivedCoreProperties.txt> --check`
-  after downloading the pinned Unicode files from
-  `https://www.unicode.org/Public/17.0.0/ucd/auxiliary/GraphemeBreakProperty.txt`
-  `https://www.unicode.org/Public/17.0.0/ucd/emoji/emoji-data.txt`, and
-  `https://www.unicode.org/Public/17.0.0/ucd/DerivedCoreProperties.txt`.
-  It treats ZWNJ as an Extend code point for GB9, applies the Unicode 17
-  Indic_Conjunct_Break linker rule instead of the earlier hand-written virama
-  shortcut, and keeps deletion and IME offsets aligned with the full default
-  grapheme break fixture.
-  Native IME runtime readiness is platform-scoped: macOS has recorded
-  matching-host Markdown Editor/AppKit artifacts for candidate anchors,
-  surrounding text, composition visuals, commit/delete behavior, cursor
-  updates, scroll anchors, scale/DPR anchors, resize anchors, and Markdown
-  Editor IME dogfood, so the macOS platform observation entry can set those
-  observations to `yes`. Windows and Linux still need equivalent
-  matching-host Showcase or Markdown Editor artifacts before their native IME
-  runtime paths can be called ready.
-  Native WGPU can preserve RGBA color glyph payloads
-  through the provider protocol and glyph atlas path, with Cosmic platform
-  emoji fallback candidate loading, Cosmic color swash preservation,
-  provider-safe emoji layout mapping, and a CoreText AppleColorEmoji RGBA path
-  covered by focused tests. Stable and diagnostic tests assert caret counts,
-  monotonicity, clamping, editor selection behavior, IME anchor geometry, core
-  fallback cluster stabilization and movement, CRLF/control segmentation,
-  emoji ZWJ restrictions, regional-indicator pairing, Indic conjuncts, and
-  provider fallback safety across mixed bidi, CJK, single-codepoint emoji,
-  variation-selector emoji, and ZWJ emoji samples; Cosmic run-layout tests
-  additionally assert glyph output
-  plus caret coverage through the safe-mapped layout path. Skia renderer tests
-  cover the same representative emoji caret coverage, shaped-run and fallback caret
-  stabilization for combining-mark, Indic matra/virama, Arabic mark, Thai mark,
-  Lao mark, Sinhala mark, Khmer vowel/coeng, Myanmar mark, Hangul Jamo L/V/T
-  clusters, emoji-modifier, variation-selector, regional-indicator pairs, emoji
-  tag-sequence flags, Unicode prepend marks, and ZWJ cluster interiors, the system-FontMgr-only
-  emoji font retry boundary, and fallback-safe descriptor resource plans for
-  text measurement and shaping. Native diagnostic conformance also injects the
-  Skia text system into a text field runtime to validate composition caret
-  geometry and selection highlight drawing. They do not claim full Unicode
-  shaping parity.
+**Proof Status vs Functional Gaps**
+
+Text shaping and emoji text are declared `partial` in `renderer-capability-report.md`. The distinction between proof gaps and functional gaps is:
+
+- **Proof gaps**: None. L1 proof is provided by `conformance` job (grapheme break, caret stabilization, UAX#29 fixture, emoji cluster detection). L2 proof is provided by `macos-real-skia` / `linux-real-skia` / `windows-real-skia` on every PR via `--run-text-emoji-smoke` (SkShaper/SkParagraph smoke markers, bidi Arabic and mixed-direction visual-order markers, keycap/regional-indicator/skin-tone-modifier fallback diagnostic markers). See `feature-status-dashboard.md` for the full proof matrix.
+- **Functional gaps** (implementation follow-up work):
+  - Bidi reordering and paragraph line breaking determinism remain follow-up work.
+  - Cross-platform font fallback conformance (exact typeface/glyph-id parity) remains follow-up work.
+  - Full ZWJ/color emoji conformance and grapheme shaping parity remain follow-up work.
+  - Future Unicode grapheme data refreshes require regenerating property predicates and fixtures.
+
+**Native SkParagraph / Bidi Readiness**
+
+Native Skia paragraph layout and bidi visual-order promotion now have an opt-in SkParagraph implementation path (enabled via `MOUI_SKIA_ENABLE_SKPARAGRAPH=1` and `skia_paragraph_available()`). However, the release claim remains pending until macOS, Windows, and Linux real-Skia smoke logs include SkParagraph line metrics, later-line pixels, selection rectangles, line ranges, hit tests, and mixed-direction visual-order observation.
+
+The text maturity preflight now marks bidi reordering and paragraph line breaking ready for the core grapheme boundary contract; native paragraph runtime readiness remains a release gate until matching-host smoke logs provide the required SkParagraph markers.
+
+**Core Grapheme Boundary Contract**
+
+Core now exposes `TextGraphemeBoundaries` as the single UAX-style cluster-boundary contract used by fallback caret stabilization, left/right caret movement, selection/range normalization, surrounding delete ranges, composition cursor offsets, rich text hit testing, raw UTF-8 offset conversion, and `nearest_boundary_utf8_offset` conversion for later IME handoff. This keeps deterministic text-field, selection, and IME-anchor geometry on one path.
+
+The repo now has an offline `GraphemeBreakTest.txt`-style fixture and generator guard (`scripts/generate-grapheme-break-fixtures.mjs --check`) for curated samples plus a vendored Unicode 17.0 default grapheme break fixture generated from `moui/core/testdata/GraphemeBreakTest-17.0.0.txt`. `moon test moui/core --target native` runs the curated fixture, full boundary fixture, and a full editing fixture that checks `is_boundary`, floor/ceil/nearest boundary snapping, collapsed and expanded range normalization, surrounding delete ranges, raw boundary-to-UTF-8 offset conversion, and every-index `nearest_boundary_utf8_offset` snapping across every Unicode 17 sample. A separate full layout fixture checks fallback paragraph caret rectangles, collapsed selection rectangles, and hit-test offsets snap to the same Unicode 17 boundaries. `moui/render/skia` also generates a Skia white-box fixture from the same file so `moon test moui/render/skia --target native` verifies `skia_grapheme_cluster_texts` against the Unicode 17 default break samples and checks every-index `nearest_boundary_utf8_offset` snapping against the Skia-produced cluster boundaries.
+
+The full Unicode fixtures use distinct generated helper/test names and are checked with the commands documented in the original fixture generation section (see the file history for the exact generator invocations).
+
+The scanner now drives core grapheme break classes from generated Unicode 17.0 property predicates for CR/LF/control, Prepend, Extend, SpacingMark, Regional_Indicator, ZWJ, Extended_Pictographic, and Indic_Conjunct_Break Linker/Consonant/Extend. Regenerate those predicates with `node scripts/generate-grapheme-property-data.mjs --grapheme-property <Unicode-17.0.0-GraphemeBreakProperty.txt> --emoji-data <Unicode-17.0.0-emoji-data.txt> --derived-core-properties <Unicode-17.0.0-DerivedCoreProperties.txt> --check` after downloading the pinned Unicode files from the official Unicode 17.0.0 UCD URLs. It treats ZWNJ as an Extend code point for GB9, applies the Unicode 17 Indic_Conjunct_Break linker rule instead of the earlier hand-written virama shortcut, and keeps deletion and IME offsets aligned with the full default grapheme break fixture.
+
+**Native IME Runtime Readiness**
+
+Native IME runtime readiness is platform-scoped: macOS has recorded matching-host Markdown Editor/AppKit artifacts for candidate anchors, surrounding text, composition visuals, commit/delete behavior, cursor updates, scroll anchors, scale/DPR anchors, resize anchors, and Markdown Editor IME dogfood, so the macOS platform observation entry can set those observations to `yes`. Windows and Linux still need equivalent matching-host Showcase or Markdown Editor artifacts before their native IME runtime paths can be called ready.
+
+**Native WGPU Provider Status**
+
+Native WGPU can preserve RGBA color glyph payloads through the provider protocol and glyph atlas path, with Cosmic platform emoji fallback candidate loading, Cosmic color swash preservation, provider-safe emoji layout mapping, and a CoreText AppleColorEmoji RGBA path covered by focused tests. Stable and diagnostic tests assert caret counts, monotonicity, clamping, editor selection behavior, IME anchor geometry, core fallback cluster stabilization and movement, CRLF/control segmentation, emoji ZWJ restrictions, regional-indicator pairing, Indic conjuncts, and provider fallback safety across mixed bidi, CJK, single-codepoint emoji, variation-selector emoji, and ZWJ emoji samples; Cosmic run-layout tests additionally assert glyph output plus caret coverage through the safe-mapped layout path. Skia renderer tests cover the same representative emoji caret coverage, shaped-run and fallback caret stabilization for combining-mark, Indic matra/virama, Arabic mark, Thai mark, Lao mark, Sinhala mark, Khmer vowel/coeng, Myanmar mark, Hangul Jamo L/V/T clusters, emoji-modifier, variation-selector, regional-indicator pairs, emoji tag-sequence flags, Unicode prepend marks, and ZWJ cluster interiors, the system-FontMgr-only emoji font retry boundary, and fallback-safe descriptor resource plans for text measurement and shaping. Native diagnostic conformance also injects the Skia text system into a text field runtime to validate composition caret geometry and selection highlight drawing. They do not claim full Unicode shaping parity.
+
+**Platform Text Provider Status**
+
+Linux native Skia is the Preview Ready text/render route and continues to use the Skia text system described above. The Linux native WGPU fontconfig/HarfBuzz/FreeType provider remains diagnostic and partial, with only the explicit FreeType color-emoji path handled natively while composed Cosmic fallback handles general text. Windows DirectWrite remains a scaffold on the native WGPU diagnostic route.
+
+Web can surface browser emoji and font fallback behavior, while stable Web adapter tests keep the host-backed `TextSystem` contract deterministic.
+
+**Documentation Sync Requirement**
+
+Text changes that affect renderer feature status must update `render/capabilities.mbt`, `render/capabilities_test.mbt`, and `docs/renderer-capability-report.md`.
 - Focused text inputs expose MoUI's default copy, cut, paste, undo, redo, and
   select-all commands through host context menus, so keyboard shortcuts and
   native menu selections share the same selection, clipboard, and Unicode paste
