@@ -67,6 +67,8 @@ fn run_app_with_renderer_provider_internal(
     image_repaint_tracker: @host.HostImageResourceRepaintTracker::new(),
     event_sources: options.event_sources,
     platform_view_plugins: options.platform_view_plugins,
+    transparent_titlebar: options.transparent_titlebar,
+    platform_attributes: options.platform_attributes,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
     first_frame_smoke_auto_exit: smoke_options.first_frame_smoke_auto_exit,
