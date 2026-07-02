@@ -300,13 +300,13 @@ fn sidebar_scrollbar(
   let width = 8.0
   @views.custom_layout(
     measure=_constraints => @moui.Size::new(width~, height=viewport_height),
-    paint=frame => {
+    paint=(ctx, frame) => {
       let max_scroll = max_showcase_double(
         0.0,
         content_height - viewport_height,
       )
       if max_scroll <= 0.0 {
-        return []
+        return
       }
       let track_width = 4.0
       let track = @core.Rect::new(
@@ -330,16 +330,16 @@ fn sidebar_scrollbar(
         width=track_width,
         height=thumb_height,
       )
-      [
-        @core.DrawCommand::FillRoundedRectBrush(
-          @core.RoundedRect::new(rect=track, radius=2.0),
-          @core.Brush::solid(theme.palette.outline.multiply_alpha(0.22)),
-        ),
-        @core.DrawCommand::FillRoundedRectBrush(
-          @core.RoundedRect::new(rect=thumb, radius=2.0),
-          @core.Brush::solid(theme.palette.primary.multiply_alpha(0.72)),
-        ),
-      ]
+      fill_rounded_rect(
+        ctx,
+        @core.RoundedRect::new(rect=track, radius=2.0),
+        @core.Brush::solid(theme.palette.outline.multiply_alpha(0.22)),
+      )
+      fill_rounded_rect(
+        ctx,
+        @core.RoundedRect::new(rect=thumb, radius=2.0),
+        @core.Brush::solid(theme.palette.primary.multiply_alpha(0.72)),
+      )
     },
     semantics_label="Catalog scrollbar",
   )

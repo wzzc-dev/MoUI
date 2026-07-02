@@ -580,10 +580,10 @@ fn website_scrollbar(
   let width = 14.0
   custom_layout(
     measure=_constraints => @moui.Size::new(width~, height=viewport_height),
-    paint=frame => {
+    paint=(ctx, frame) => {
       let max_scroll = max_website_double(0.0, content_height - viewport_height)
       if max_scroll <= 0.0 {
-        return []
+        return
       }
       let track_width = 5.0
       let track = @core.Rect::new(
@@ -607,16 +607,16 @@ fn website_scrollbar(
         width=track_width,
         height=thumb_height,
       )
-      [
-        @core.DrawCommand::FillRoundedRectBrush(
-          @core.RoundedRect::new(rect=track, radius=2.5),
-          @core.Brush::solid(theme.palette.outline.multiply_alpha(0.26)),
-        ),
-        @core.DrawCommand::FillRoundedRectBrush(
-          @core.RoundedRect::new(rect=thumb, radius=2.5),
-          @core.Brush::solid(theme.palette.primary.multiply_alpha(0.72)),
-        ),
-      ]
+      fill_rounded_rect(
+        ctx,
+        @core.RoundedRect::new(rect=track, radius=2.5),
+        @core.Brush::solid(theme.palette.outline.multiply_alpha(0.26)),
+      )
+      fill_rounded_rect(
+        ctx,
+        @core.RoundedRect::new(rect=thumb, radius=2.5),
+        @core.Brush::solid(theme.palette.primary.multiply_alpha(0.72)),
+      )
     },
     semantics_label="Website main scrollbar",
   )
@@ -782,58 +782,54 @@ fn showcase_thumb(
     measure=constraints => {
       constraints.constrain(@moui.Size::new(width~, height=118.0))
     },
-    paint=frame => {
-      let commands : Array[@core.DrawCommand] = [
-        @core.DrawCommand::FillRoundedRectBrush(
-          @core.RoundedRect::new(rect=frame, radius=12.0),
-          @core.Brush::solid(accent.multiply_alpha(0.08)),
-        ),
-      ]
+    paint=(ctx, frame) => {
+      fill_rounded_rect(
+        ctx,
+        @core.RoundedRect::new(rect=frame, radius=12.0),
+        @core.Brush::solid(accent.multiply_alpha(0.08)),
+      )
       let stripe = 12.0
       let count = ((frame.size.width + frame.size.height) / stripe)
         .ceil()
         .to_int()
       for index in 0..<count {
         let start_x = frame.origin.x + index.to_double() * stripe
-        commands.push(
-          @core.DrawCommand::DrawPath(
-            @core.PathSpec::new(
-              verbs=[
-                @core.PathVerb::MoveTo(
-                  @moui.Point::new(
-                    x=start_x,
-                    y=frame.origin.y + frame.size.height,
-                  ),
+        draw_path(
+          ctx,
+          @core.PathSpec::new(
+            verbs=[
+              @core.PathVerb::MoveTo(
+                @moui.Point::new(
+                  x=start_x,
+                  y=frame.origin.y + frame.size.height,
                 ),
-                @core.PathVerb::LineTo(
-                  @moui.Point::new(
-                    x=start_x - frame.size.height,
-                    y=frame.origin.y,
-                  ),
+              ),
+              @core.PathVerb::LineTo(
+                @moui.Point::new(
+                  x=start_x - frame.size.height,
+                  y=frame.origin.y,
                 ),
-              ],
-              stroke=Some(@core.Brush::solid(accent.multiply_alpha(0.18))),
-              stroke_width=1.0,
-            ),
+              ),
+            ],
+            stroke=Some(@core.Brush::solid(accent.multiply_alpha(0.18))),
+            stroke_width=1.0,
           ),
         )
       }
-      commands.push(
-        @core.DrawCommand::DrawText(
-          @core.TextRun::new(
-            text=label,
-            frame=@core.Rect::new(
-              x=frame.origin.x,
-              y=frame.origin.y + 41.0,
-              width=frame.size.width,
-              height=36.0,
-            ),
-            font~,
-            color=foreground,
+      draw_text(
+        ctx,
+        @core.TextRun::new(
+          text=label,
+          frame=@core.Rect::new(
+            x=frame.origin.x,
+            y=frame.origin.y + 41.0,
+            width=frame.size.width,
+            height=36.0,
           ),
+          font~,
+          color=foreground,
         ),
       )
-      commands
     },
     semantics_label="Showcase thumbnail",
   )

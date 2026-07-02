@@ -47,7 +47,7 @@ pub fn[Msg] divider(
           )
       }
     },
-    paint=frame => {
+    paint=(ctx, frame) => {
       let rect = if inset > 0.0 {
         match axis {
           @core.Axis::Horizontal =>
@@ -68,7 +68,7 @@ pub fn[Msg] divider(
       } else {
         frame
       }
-      [@core.DrawCommand::FillRect(rect, line_color)]
+      fill_rect(ctx, rect, line_color)
     },
     semantics_role=@core.SemanticsRole::Group,
     semantics_label="Divider",

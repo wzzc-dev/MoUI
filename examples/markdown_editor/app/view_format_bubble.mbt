@@ -166,6 +166,7 @@ fn markdown_editor_format_bubble_overlay(
             ]
         }
       },
+      paint=(_ctx, _frame) => (),
     )
   }
 }

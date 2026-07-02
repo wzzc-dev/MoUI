@@ -252,7 +252,7 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "views facade",
       path: "moui/views/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/views\"",
-      max_lines: 1020,
+      max_lines: 1080,
       max_pub_lines: 370,
       max_pub_all_lines: 45,
       required_tokens: views_facade_required_tokens(),

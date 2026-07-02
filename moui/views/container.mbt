@@ -103,6 +103,7 @@ pub fn[Msg] center(
       ]
     },
     semantics_label="Centered content",
+    paint=(_ctx, _frame) => (),
   )
   match background {
     Some(color) =>

@@ -41,7 +41,7 @@ pub fn[Msg] presence_dot(
     measure=constraints => {
       constraints.constrain(@core.Size::new(width=total, height=total))
     },
-    paint=frame => {
+    paint=(ctx, frame) => {
       let dot_rect = @core.Rect::new(
         x=frame.origin.x + (frame.size.width - size) / 2.0,
         y=frame.origin.y + (frame.size.height - size) / 2.0,
@@ -59,11 +59,9 @@ pub fn[Msg] presence_dot(
         rect=border_rect,
         radius=(size + border_width * 2.0) / 2.0,
       )
-      let commands : Array[@core.DrawCommand] = []
       // Border ring first so the dot sits on top.
-      commands.push(@core.DrawCommand::FillRoundedRect(border, border_color))
-      commands.push(@core.DrawCommand::FillRoundedRect(dot, status_color))
-      commands
+      fill_rounded_rect(ctx, border, @core.Brush::solid(border_color))
+      fill_rounded_rect(ctx, dot, @core.Brush::solid(status_color))
     },
   ).semantics_role(@core.SemanticsRole::Group)
 }
