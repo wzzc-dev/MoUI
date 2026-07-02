@@ -67,9 +67,19 @@ pub impl @window_linux.ApplicationHandler for LinuxApp with fn can_create_surfac
   self,
   event_loop,
 ) {
-  let attributes = @window_core.WindowAttributes::default()
+  let base_attributes = @window_core.WindowAttributes::default()
     .with_title(self.title)
     .with_surface_size(runtime_size_to_window_surface_size(self.runtime.size()))
+  let attributes = if self.transparent_titlebar {
+    base_attributes.with_platform_attributes(
+      self.platform_attributes
+        .with_titlebar_transparent(true)
+        // Note: Linux/Wayland titlebar transparency depends on the compositor and
+        // client-side decoration support. The window package handles the mapping.
+    )
+  } else {
+    base_attributes
+  }
   let linux_attributes = @window_linux.WindowAttributesLinux::default().with_app_id(
     "dev.wzzc.moui.showcase",
   )
