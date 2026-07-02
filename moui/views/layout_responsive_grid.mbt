@@ -30,6 +30,7 @@ pub fn[Msg] responsive_grid(
       )
     },
     semantics_label="Responsive grid",
+    paint=(_ctx, _frame) => (),
   )
 }
 
