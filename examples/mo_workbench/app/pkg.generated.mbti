@@ -7,7 +7,11 @@ import {
 }
 
 // Values
+pub fn agent_backend_runtime(run~ : (Array[AgentCommand], (AgentEvent) -> Unit) -> Unit) -> AgentBackendRuntime
+
 pub fn program_with_backend(backend~ : AgentBackendRuntime) -> @core.Program[WorkbenchModel, WorkbenchMsg]
+
+pub fn session_summary(id~ : String, first_prompt~ : String, last_active_unix_seconds? : Int64?) -> SessionSummary
 
 // Errors
 
@@ -132,11 +136,11 @@ pub struct SettingsWorkspace {
   font_size : Int
 }
 
-type Task derive(Eq, @debug.Debug)
-
 type TaskGroup derive(Eq, @debug.Debug)
 
 type TaskStatus derive(Eq, @debug.Debug)
+
+type TaskTreeNode derive(Eq, @debug.Debug)
 
 pub(all) enum ThinkingChoice {
   No
@@ -159,8 +163,9 @@ pub(all) enum TurnStatus {
 
 pub struct WorkbenchModel {
   active_tab : TopTab
-  tasks : Array[Task]
+  task_tree : Array[TaskTreeNode]
   settings_open : Bool
+  sidebar_visible : Bool
   code : CodeWorkspace
   settings : SettingsWorkspace
   appearance : AppearanceMode
@@ -172,11 +177,12 @@ pub(all) enum WorkbenchMsg {
   SwitchTab(TopTab)
   NewTask
   SelectTask(String)
+  ToggleFolder(String)
+  ToggleSidebar
   ToggleSettings
   CodeMsg(CodeMsg)
   SettingsMsg(SettingsMsg)
   ToggleAppearance
-  AnimationTick
 }
 
 // Type aliases
