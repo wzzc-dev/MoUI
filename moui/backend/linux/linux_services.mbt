@@ -230,15 +230,16 @@ fn dispatch_linux_clipboard(
             "clipboard image read failed or no image data available",
           )
       }
-    @host.HostClipboardRequest::WriteImage(mime, data) =>
-      let mime_bytes = encode_host_string(mime)
-      if linux_clipboard_write_image_bytes(mime_bytes, data) != 0 {
+    @host.HostClipboardRequest::WriteImage(mime_type, image_bytes) => {
+      let mime_encoded = encode_host_string(mime_type)
+      if linux_clipboard_write_image_bytes(mime_encoded, image_bytes) != 0 {
         @host.HostServiceResponse::ClipboardWritten
       } else {
         @host.HostServiceResponse::Unavailable(
           "clipboard image write failed or Wayland selection is unavailable",
         )
       }
+    }
   }
 }
 
