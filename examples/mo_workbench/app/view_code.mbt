@@ -56,28 +56,28 @@ fn code_welcome_view(
           theme~,
           width=inner_width,
         ).foreground(workbench_accent(theme)),
-        @views.spacer(min_length=24.0),
+        @views.spacer(min_length=24.0, weight=0.0),
         // Input card – centered
         @views.container(
           code_input_card(model, theme, inner_width),
           width=width,
           padding=0.0,
         ),
-        @views.spacer(min_length=10.0),
+        @views.spacer(min_length=10.0, weight=0.0),
         // Context bar – tight under the input card
         @views.container(
           code_context_bar(theme, inner_width),
           width=width,
           padding=0.0,
         ),
-        @views.spacer(min_length=72.0),
+        @views.spacer(min_length=72.0, weight=0.0),
         @views.spacer(weight=1.0),
         @views.container(
           quick_action_chips(theme, inner_width),
           width=width,
           padding=0.0,
         ),
-        @views.spacer(min_length=96.0),
+        @views.spacer(min_length=96.0, weight=0.0),
       ],
       spacing=0.0,
       align=@views.CrossAlign::Center,
