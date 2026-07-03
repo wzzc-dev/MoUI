@@ -379,13 +379,12 @@ Inside component builds, display state should be read through `ComponentContext`
 ```
 
 Use TEA-first controlled constructors for ordinary app state, for example
-`@views.text_field(model.draft, on_input=DraftChanged)`. Use
-`ctx.binding(state)` and the `*_binding` view variants when a component or
-advanced control needs two-way access during the build, for example
-`@views.text_field_binding(ctx.binding(self.draft))`. Event handlers and model
-methods can still use `state.get()`, `state.set()`, and `state.update()`. The
-runtime cancels and replaces build subscriptions on rebuild, so repeated builds
-do not accumulate listeners.
+`@views.text_field(model.draft, on_input=DraftChanged)`. Component-local state
+should still be projected into explicit values and typed messages before it
+crosses the `views` public API boundary; event handlers and model methods can
+use `state.get()`, `state.set()`, and `state.update()` inside the component.
+The runtime cancels and replaces build subscriptions on rebuild, so repeated
+builds do not accumulate listeners.
 
 Component-scoped side effects should be registered with `ctx.run_effect`. The
 returned cleanup callback is invoked when the effect key is no longer registered

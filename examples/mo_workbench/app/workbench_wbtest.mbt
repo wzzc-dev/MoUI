@@ -534,28 +534,3 @@ test "model and thinking segmented ids map to stable enum values" {
     content="true",
   )
 }
-
-///|
-test "workbench theme token helpers use DeepSeek GUI reference colors" {
-  let light = @views.light_theme()
-  let dark = @views.dark_theme()
-  inspect(
-    workbench_app_background(light) ==
-    @core.Color::rgba(r=0.960784, g=0.968627, b=0.980392, a=1.0),
-    content="true",
-  )
-  inspect(
-    workbench_sidebar_background(light) ==
-    @core.Color::rgba(r=0.956862, g=0.968627, b=0.984313, a=1.0),
-    content="true",
-  )
-  inspect(
-    workbench_canvas_background(dark) ==
-    @core.Color::rgba(r=0.094117, g=0.094117, b=0.094117, a=1.0),
-    content="true",
-  )
-  inspect(
-    workbench_accent(dark) == @core.Color::rgba(r=0.2, g=0.611765, b=1.0, a=1.0),
-    content="true",
-  )
-}

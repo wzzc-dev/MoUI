@@ -98,12 +98,3 @@ pub fn[Msg] tab_view(
   column([row(buttons, spacing~), content], spacing~)
 }
 
-///|
-pub fn[Msg] tab_view_binding(
-  selection : @core.Binding[String],
-  tabs : Array[TabItem[Msg]],
-  spacing? : Double = 8.0,
-  on_select~ : (String) -> Msg,
-) -> @core.View[Msg] {
-  tab_view(selection.get(), tabs, spacing~, on_select~)
-}

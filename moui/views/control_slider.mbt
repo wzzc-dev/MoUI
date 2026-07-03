@@ -141,27 +141,3 @@ pub fn[Msg] slider(
   }
 }
 
-///|
-pub fn[Msg] slider_binding(
-  value : @core.Binding[Double],
-  min? : Double = 0.0,
-  max? : Double = 1.0,
-  width? : Double = 180.0,
-  height? : Double = 28.0,
-  theme? : @core.Theme,
-  style? : SliderStyle,
-  foreground? : @core.Color,
-  background? : @core.Color,
-) -> @core.View[Msg] {
-  slider(
-    value.get(),
-    min~,
-    max~,
-    width~,
-    height~,
-    theme?,
-    style?,
-    foreground?,
-    background?,
-  )
-}

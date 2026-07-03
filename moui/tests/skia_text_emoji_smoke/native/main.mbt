@@ -310,8 +310,13 @@ fn smoke_text_field_view(value : @core.Binding[String]) -> @core.View[Unit] {
     cursor_color: @core.Color::blue(),
     font: @core.FontSpec::new(size=18.0, weight=500),
   }
-  @views.text_field_binding(
-    value,
+  let mirror = @core.State::new(value.get())
+  @views.text_field(
+    mirror.get(),
+    on_input=next => {
+      mirror.set(next)
+      value.set(next)
+    },
     placeholder="Input",
     style=field_style,
     width=168.0,

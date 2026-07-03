@@ -30,34 +30,6 @@ pub fn[Msg] checkbox(
   )
 }
 
-///|
-pub fn[Msg] checkbox_binding(
-  label : String,
-  checked~ : @core.Binding[Bool],
-  theme? : @core.Theme,
-  font? : @core.FontSpec,
-  foreground? : @core.Color,
-  check_color? : @core.Color,
-  box_size? : Double,
-  box_shape? : @core.ChoiceControlShape,
-  check_style? : @core.CheckMarkStyle,
-  height? : Double = 32.0,
-) -> @core.View[Msg] {
-  checkbox_control(
-    label~,
-    checked~,
-    theme?,
-    font?,
-    foreground?,
-    check_color?,
-    box_size?,
-    box_shape?,
-    check_style?,
-    height~,
-  )
-}
-
-///|
 fn resolve_choice_font(
   font : @core.FontSpec?,
   theme : @core.Theme,

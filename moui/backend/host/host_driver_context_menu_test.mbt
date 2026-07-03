@@ -131,7 +131,7 @@ test "host driver shows marked document context menu commands without text focus
 test "host driver shows document actions in focused text context menu without selection" {
   let text = @core.State::new("")
   let runtime = host_test_runtime(
-    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
+    root=host_test_text_field(text, width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
   runtime.set_action_commands(

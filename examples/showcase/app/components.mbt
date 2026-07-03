@@ -630,7 +630,7 @@ fn ShowcaseModel::theme_helpers(
       text("Theme helpers", width=220.0, height=28.0)
       .font(theme.typography.control)
       .foreground(theme.palette.foreground),
-      toggle_switch(
+      toggle(
         "Environment enabled",
         self.feature_enabled,
         on_change=value => FeatureEnabledChanged(value),

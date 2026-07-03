@@ -16,7 +16,7 @@ using @views {
   container,
   text,
   text_field,
-  toggle_switch,
+  toggle,
 }
 
 ///|
@@ -365,7 +365,7 @@ fn SettingsModel::workspace_form(
           ),
           form_field(
             label="Notifications",
-            child=toggle_switch(
+            child=toggle(
               if self.notifications {
                 "Enabled"
               } else {
@@ -420,7 +420,7 @@ fn SettingsModel::preferences_form(
           ),
           form_field(
             label="Telemetry",
-            child=toggle_switch(
+            child=toggle(
               if self.telemetry {
                 "Enabled"
               } else {

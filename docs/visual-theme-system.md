@@ -56,8 +56,8 @@ adapters that produce the same `@core.Theme`:
 - `ChoiceControlTheme` carries `box_shape` (`Square`/`Circle`) and `check_style`
   (`Checkmark`/`Dot`) so checkboxes render as rounded squares with a "✓" glyph
   while radios render as circle rings with a filled inner dot (Fluent 2 style).
-  `checkbox`/`checkbox_binding` accept optional `box_shape?`/`check_style?`
-  overrides; `radio`/`radio_binding` pass `Circle`/`Dot`. `SliderTheme` carries
+  `checkbox` accepts optional `box_shape?`/`check_style?` overrides; `radio`
+  passes `Circle`/`Dot`. `SliderTheme` carries
   `thumb_shape` (`Rounded`/`Circle`); Fluent 2 sliders use a circular thumb.
 - `DesignSemanticPalette` carries a neutral ramp
   (`background_2`/`background_3`/`background_4`, `foreground_2`,

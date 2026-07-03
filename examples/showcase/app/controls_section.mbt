@@ -67,8 +67,8 @@ fn ShowcaseModel::controls_section(
                         on_change=value => FeatureEnabledChanged(value),
                         check_color=theme.palette.primary,
                       ),
-                      toggle_switch(
-                        "Toggle switch",
+                      toggle(
+                        "Secondary toggle",
                         self.secondary_enabled,
                         on_change=value => SecondaryEnabledChanged(value),
                         check_color=theme.palette.primary,

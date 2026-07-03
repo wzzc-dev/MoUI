@@ -106,7 +106,6 @@ using @views {
   text_field,
   tooltip,
   toggle,
-  toggle_switch,
   toolbar,
   toast,
   toast_stack,

@@ -148,7 +148,7 @@ test "host driver coalesces dirty redraw while previous redraw is pending" {
   let scheduled = Ref(0)
   let text = @core.State::new("")
   let runtime = host_test_runtime(
-    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
+    root=host_test_text_field(text, width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => {

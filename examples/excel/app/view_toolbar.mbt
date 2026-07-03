@@ -120,7 +120,7 @@ fn build_toolbar(model : ExcelModel, theme : Theme) -> @moui.View[ExcelMsg] {
             color_swatch("fef3c7", ExcelMsg::SetCellBgColor("fef3c7"), theme),
             color_swatch("fde2e2", ExcelMsg::SetCellBgColor("fde2e2"), theme),
             @views.divider(theme~),
-            @views.toggle_switch(
+            @views.toggle(
               "Heat",
               model.heat_map,
               on_change=fn(_) { ExcelMsg::ToggleHeatMap },

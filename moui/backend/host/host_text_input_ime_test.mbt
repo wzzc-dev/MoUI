@@ -3,7 +3,7 @@ test "text input session enables updates and disables ime requests" {
   let text = @core.State::new("ab")
   let runtime = host_test_runtime(
     root=@views.column(
-      [host_test_text_field(text.binding(), width=120.0, height=40.0)],
+      [host_test_text_field(text, width=120.0, height=40.0)],
       spacing=4.0,
       justify=@views.MainAlign::Start,
       align=@views.CrossAlign::Start,
