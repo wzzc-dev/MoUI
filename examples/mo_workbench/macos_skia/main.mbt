@@ -15,7 +15,7 @@ async fn main {
 
   let runtime = @runtime.new_program_with_dimensions(
     program=@app.program_with_backend(backend~),
-    width=980.0,
+    width=1300.0,
     height=680.0,
   )
   let surface_route = if @env.get_env_var("MOUI_MACOS_SKIA_SURFACE_ROUTE") ==
@@ -30,7 +30,7 @@ async fn main {
     @macos_skia_backend.run_app_with_options_async_pump(
       "Mo Workbench",
       runtime,
-      options=@macos_skia_backend.MacosSkiaAppOptions::new(surface_route~),
+      options=@macos_skia_backend.MacosSkiaAppOptions::new(surface_route~, transparent_titlebar=true),
     )
   } catch {
     err => println("App exited with error: \{err}")

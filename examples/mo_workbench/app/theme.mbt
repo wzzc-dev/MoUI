@@ -1,6 +1,6 @@
 //  design tokens ported from base-shell.css.
-// Light: whale-blue accents on cool-white canvas.
-// Dark: deep-sea navy with light-blue highlights.
+// Light: violet accents on cool-white canvas.
+// Dark: deep-sea navy with light-violet highlights.
 
 ///|
 /// Resolve the active color scheme from the appearance mode.
@@ -26,8 +26,8 @@ fn workbench_theme(
     Dark => @views.dark_theme()
   }
   let accent = match scheme {
-    Light => @core.Color::rgba(r=59.0/255.0, g=130.0/255.0, b=216.0/255.0, a=1.0)
-    Dark => @core.Color::rgba(r=111.0/255.0, g=176.0/255.0, b=232.0/255.0, a=1.0)
+    Light => @core.Color::rgba(r=100.0/255.0, g=100.0/255.0, b=100.0/255.0, a=1.0)
+    Dark => @core.Color::rgba(r=180.0/255.0, g=180.0/255.0, b=180.0/255.0, a=1.0)
   }
   let palette = { ..base.palette, primary: accent }
   { ..base, palette, }
@@ -74,15 +74,6 @@ fn workbench_card_background(theme : @core.Theme) -> @core.Color {
 }
 
 ///|
-/// Slightly elevated surface. : rgba(255,255,255,0.98) / #1b2338.
-fn workbench_elevated_background(theme : @core.Theme) -> @core.Color {
-  match theme.scheme {
-    Light => @core.Color::rgba(r=1.0, g=1.0, b=1.0, a=0.98)
-    Dark => @core.Color::rgba(r=27.0/255.0, g=35.0/255.0, b=56.0/255.0, a=1.0)
-  }
-}
-
-///|
 /// Subtle row tint.  : #eaf0f9 / #1b2338.
 fn workbench_subtle_background(theme : @core.Theme) -> @core.Color {
   match theme.scheme {
@@ -92,20 +83,36 @@ fn workbench_subtle_background(theme : @core.Theme) -> @core.Color {
 }
 
 ///|
-/// Sidebar row hover. : rgba(108,162,221,0.10) / rgba(151,192,235,0.09).
-fn workbench_sidebar_hover(theme : @core.Theme) -> @core.Color {
-  match theme.scheme {
-    Light => @core.Color::rgba(r=108.0/255.0, g=162.0/255.0, b=221.0/255.0, a=0.10)
-    Dark => @core.Color::rgba(r=151.0/255.0, g=192.0/255.0, b=235.0/255.0, a=0.09)
+/// Dark gray fill for selected sidebar tab segment (Work / Code / Design).
+fn workbench_tab_selected_button_style(theme : @core.Theme) -> @views.ButtonStyle {
+  let bg = match theme.scheme {
+    Light =>
+      @core.Color::rgba(r=120.0/255.0, g=120.0/255.0, b=120.0/255.0, a=1.0)
+    Dark =>
+      @core.Color::rgba(r=72.0/255.0, g=78.0/255.0, b=92.0/255.0, a=1.0)
   }
+  let fg = match theme.scheme {
+    Light => @core.Color::rgba(r=1.0, g=1.0, b=1.0, a=1.0)
+    Dark => workbench_text(theme)
+  }
+  let state : @core.ControlStateStyle = {
+    foreground: fg,
+    background: @core.Brush::solid(bg),
+    border: None,
+    radius: 6.0,
+    shadow: None,
+    bottom_border_only: false,
+    inner_focus_border: None,
+  }
+  { normal: state, hovered: state, pressed: state, disabled: state }
 }
 
 ///|
-/// Sidebar row active. : rgba(216,232,249,0.85) / rgba(151,192,235,0.13).
+/// Sidebar row active. : rgba(200,200,200,0.50) / rgba(100,100,100,0.18).
 fn workbench_sidebar_active(theme : @core.Theme) -> @core.Color {
   match theme.scheme {
-    Light => @core.Color::rgba(r=216.0/255.0, g=232.0/255.0, b=249.0/255.0, a=0.85)
-    Dark => @core.Color::rgba(r=151.0/255.0, g=192.0/255.0, b=235.0/255.0, a=0.13)
+    Light => @core.Color::rgba(r=200.0/255.0, g=200.0/255.0, b=200.0/255.0, a=0.50)
+    Dark => @core.Color::rgba(r=100.0/255.0, g=100.0/255.0, b=100.0/255.0, a=0.18)
   }
 }
 
@@ -145,20 +152,20 @@ fn workbench_text_faint(theme : @core.Theme) -> @core.Color {
 // ---------------------------------------------------------------------------
 
 ///|
-///  accent. Light: #3b82d8, dark: #6fb0e8.
+///  accent. Light: #646464, dark: #b4b4b4 (neutral gray instead of purple).
 fn workbench_accent(theme : @core.Theme) -> @core.Color {
   match theme.scheme {
-    Light => @core.Color::rgba(r=59.0/255.0, g=130.0/255.0, b=216.0/255.0, a=1.0)
-    Dark => @core.Color::rgba(r=111.0/255.0, g=176.0/255.0, b=232.0/255.0, a=1.0)
+    Light => @core.Color::rgba(r=100.0/255.0, g=100.0/255.0, b=100.0/255.0, a=1.0)
+    Dark => @core.Color::rgba(r=180.0/255.0, g=180.0/255.0, b=180.0/255.0, a=1.0)
   }
 }
 
 ///|
-/// Soft accent tint. : rgba(59,130,216,0.15) / rgba(111,176,232,0.18).
+/// Soft accent tint. : rgba(100,100,100,0.12) / rgba(180,180,180,0.12).
 fn workbench_accent_soft(theme : @core.Theme) -> @core.Color {
   match theme.scheme {
-    Light => @core.Color::rgba(r=59.0/255.0, g=130.0/255.0, b=216.0/255.0, a=0.15)
-    Dark => @core.Color::rgba(r=111.0/255.0, g=176.0/255.0, b=232.0/255.0, a=0.18)
+    Light => @core.Color::rgba(r=100.0/255.0, g=100.0/255.0, b=100.0/255.0, a=0.12)
+    Dark => @core.Color::rgba(r=180.0/255.0, g=180.0/255.0, b=180.0/255.0, a=0.12)
   }
 }
 
@@ -185,15 +192,6 @@ fn workbench_danger(theme : @core.Theme) -> @core.Color {
 }
 
 ///|
-/// Warning. : #d97706 / #fbbf24.
-fn workbench_warning(theme : @core.Theme) -> @core.Color {
-  match theme.scheme {
-    Light => @core.Color::rgba(r=217.0/255.0, g=119.0/255.0, b=6.0/255.0, a=1.0)
-    Dark => @core.Color::rgba(r=251.0/255.0, g=191.0/255.0, b=36.0/255.0, a=1.0)
-  }
-}
-
-///|
 /// Diff added tint. : rgba(18,138,74,0.10) / rgba(64,201,119,0.16).
 fn workbench_diff_added_soft(theme : @core.Theme) -> @core.Color {
   match theme.scheme {
@@ -211,14 +209,6 @@ fn workbench_diff_removed_soft(theme : @core.Theme) -> @core.Color {
   }
 }
 
-///|
-/// Purple skill tint. : rgba(122,104,232,0.13) / rgba(168,155,245,0.16).
-fn workbench_skill_soft(theme : @core.Theme) -> @core.Color {
-  match theme.scheme {
-    Light => @core.Color::rgba(r=122.0/255.0, g=104.0/255.0, b=232.0/255.0, a=0.13)
-    Dark => @core.Color::rgba(r=168.0/255.0, g=155.0/255.0, b=245.0/255.0, a=0.16)
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Message colors
@@ -273,27 +263,6 @@ fn hairline_border(theme : @core.Theme) -> @core.BorderStyle {
       @core.BorderStyle::new(
         brush=@core.Brush::solid(
           @core.Color::rgba(r=151.0/255.0, g=192.0/255.0, b=235.0/255.0, a=0.13),
-        ),
-        width=1.0,
-      )
-  }
-}
-
-///|
-/// Divider line using 's sidebar-divider token.
-fn sidebar_divider(theme : @core.Theme) -> @core.BorderStyle {
-  match theme.scheme {
-    Light =>
-      @core.BorderStyle::new(
-        brush=@core.Brush::solid(
-          @core.Color::rgba(r=108.0/255.0, g=162.0/255.0, b=221.0/255.0, a=0.22),
-        ),
-        width=1.0,
-      )
-    Dark =>
-      @core.BorderStyle::new(
-        brush=@core.Brush::solid(
-          @core.Color::rgba(r=151.0/255.0, g=192.0/255.0, b=235.0/255.0, a=0.12),
         ),
         width=1.0,
       )

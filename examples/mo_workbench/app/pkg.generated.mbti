@@ -132,10 +132,22 @@ pub struct SettingsWorkspace {
   font_size : Int
 }
 
+type Task derive(Eq, @debug.Debug)
+
+type TaskGroup derive(Eq, @debug.Debug)
+
+type TaskStatus derive(Eq, @debug.Debug)
+
 pub(all) enum ThinkingChoice {
   No
   High
   Max
+} derive(Eq, @debug.Debug)
+
+pub(all) enum TopTab {
+  Work
+  Code
+  Design
 } derive(Eq, @debug.Debug)
 
 pub(all) enum TurnStatus {
@@ -146,9 +158,10 @@ pub(all) enum TurnStatus {
 } derive(Eq, @debug.Debug)
 
 pub struct WorkbenchModel {
-  active_workspace : Workspace
+  active_tab : TopTab
+  tasks : Array[Task]
+  settings_open : Bool
   code : CodeWorkspace
-  write : WriteWorkspace
   settings : SettingsWorkspace
   appearance : AppearanceMode
   backend : AgentBackendRuntime
@@ -156,29 +169,14 @@ pub struct WorkbenchModel {
 }
 
 pub(all) enum WorkbenchMsg {
-  SwitchWorkspace(Workspace)
+  SwitchTab(TopTab)
+  NewTask
+  SelectTask(String)
+  ToggleSettings
   CodeMsg(CodeMsg)
   SettingsMsg(SettingsMsg)
-  WriteMsg(WriteMsg)
   ToggleAppearance
   AnimationTick
-}
-
-pub(all) enum Workspace {
-  Code
-  Write
-  Settings
-  ConnectPhone
-  ScheduledTasks
-  Plugins
-} derive(Eq, @debug.Debug)
-
-pub(all) enum WriteMsg {
-  Reserved
-}
-
-pub struct WriteWorkspace {
-  reserved : Unit
 }
 
 // Type aliases

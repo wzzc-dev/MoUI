@@ -1,25 +1,28 @@
-// Shell Model + per-workspace sub-models for the multi-workspace workbench.
+// Shell Model + per-tab sub-models for the TRAE-style task workbench.
 //
-// Architecture (mirrors DeepSeek-GUI's workbench/entry model):
-//   WorkbenchModel (shell) holds `active_workspace` + one sub-model per
-//   workspace. Msg routing is done via `CodeMsg(...)` / `SettingsMsg(...)`
-//   wrapper variants; the shell delegates to the matching sub-update and
-//   lifts the sub-effect via `Effect::map`.
+// Architecture:
+//   WorkbenchModel (shell) holds `active_tab` (Work/Code/Design) + the code
+//   sub-model (chat surface) + settings sub-model + a UI projection of
+//   sessions as `task_tree`. Msg routing is done via `CodeMsg(...)` /
+//   `SettingsMsg(...)` wrapper variants; the shell delegates to the matching
+//   sub-update and lifts the sub-effect via `Effect::map`.
+//
+//   `TaskTreeNode` / `TaskStatus` / `TaskGroup` are package-private UI
+//   projections of the backend `SessionSummary` list; the single source of
+//   truth remains `code.sessions`, kept in sync by `sync_task_tree` in
+//   update.mbt.
 //
 // `WorkbenchModel` / `WorkbenchMsg` names are kept stable so the public
 // `Program[WorkbenchModel, WorkbenchMsg]` type params and the entrypoint
 // facade stay unchanged.
 
 ///|
-/// The active workspace surface. Code/Settings are interactive; the other
-/// product routes render static shells until their backend workflows land.
-pub(all) enum Workspace {
+/// The active top-level tab. Work/Design render placeholder surfaces; Code is
+/// the interactive coding-agent chat surface.
+pub(all) enum TopTab {
+  Work
   Code
-  Write
-  Settings
-  ConnectPhone
-  ScheduledTasks
-  Plugins
+  Design
 } derive(Eq, Debug)
 
 ///|
@@ -56,6 +59,36 @@ pub(all) enum SandboxMode {
   FullAccess
 } derive(Eq, Debug)
 
+// ---------------------------------------------------------------------------
+// Task tree projection (UI-only; derived from `code.sessions` by `sync_task_tree`)
+// ---------------------------------------------------------------------------
+
+///|
+/// Lifecycle status of a task, derived from the session's streaming state and
+/// the last terminal turn status.
+enum TaskStatus {
+  Pending
+  Running
+  Completed
+  Failed
+} derive(Eq, Debug)
+
+///|
+/// Time-based grouping for the task list.
+enum TaskGroup {
+  Today
+  Yesterday
+  Earlier
+} derive(Eq, Debug)
+
+///|
+/// A node in the sidebar task tree. Can be a folder (group header) or a leaf
+/// (session-backed task). Folder nodes can be expanded/collapsed.
+enum TaskTreeNode {
+  Folder(String, String, TaskGroup, Array[TaskTreeNode], Bool)
+  Task(String, String, TaskGroup, TaskStatus, Int)
+} derive(Eq, Debug)
+
 ///|
 /// Code workspace sub-model: the coding-agent chat surface.
 /// Migrated from the previous flat `WorkbenchModel` chat fields.
@@ -81,7 +114,7 @@ fn CodeWorkspace::new() -> CodeWorkspace {
     prompt: "",
     steer_text: "",
     is_streaming: false,
-    current_model: ModelChoice::V4Pro,
+    current_model: ModelChoice::V4Flash,
     current_thinking: ThinkingChoice::Max,
     error: None,
     scroll_state: @core.ScrollState::new(),
@@ -114,38 +147,31 @@ fn SettingsWorkspace::new() -> SettingsWorkspace {
 }
 
 ///|
-/// Write workspace sub-model: placeholder for the future Markdown writing
-/// surface (file tree, editor state, completion). Currently holds no state.
-pub struct WriteWorkspace {
-  // Reserved for future write-mode state (file tree / editor / completion).
-  reserved : Unit
-}
-
-///|
-fn WriteWorkspace::new() -> WriteWorkspace {
-  { reserved: () }
-}
-
-///|
-/// The workbench shell model. Holds the active workspace + per-workspace
-/// sub-models + shared chrome state + the injected backend runtime.
+/// The workbench shell model. Holds the active tab + the code/settings
+/// sub-models + a UI projection of sessions as `task_tree` + shared chrome
+/// state + the injected backend runtime. The settings overlay open/close state
+/// is tracked by `settings_open`.
 pub struct WorkbenchModel {
-  active_workspace : Workspace
+  active_tab : TopTab
+  task_tree : Array[TaskTreeNode]
+  settings_open : Bool
+  sidebar_visible : Bool
   code : CodeWorkspace
-  write : WriteWorkspace
   settings : SettingsWorkspace
   appearance : AppearanceMode
   backend : AgentBackendRuntime
-  /// Animation progress (0.0–1.0) for workspace switch transitions.
+  /// Animation progress (0.0–1.0) for tab switch transitions.
   animation_progress : Double
 }
 
 ///|
 fn WorkbenchModel::new(backend~ : AgentBackendRuntime) -> WorkbenchModel {
   {
-    active_workspace: Workspace::Code,
+    active_tab: TopTab::Code,
+    task_tree: [],
+    settings_open: false,
+    sidebar_visible: true,
     code: CodeWorkspace::new(),
-    write: WriteWorkspace::new(),
     settings: SettingsWorkspace::new(),
     appearance: AppearanceMode::System,
     backend,
@@ -154,18 +180,21 @@ fn WorkbenchModel::new(backend~ : AgentBackendRuntime) -> WorkbenchModel {
 }
 
 ///|
-/// Shell messages. Workspace-scoped variants wrap the sub-workspace msgs;
-/// the shell routes them and lifts sub-effects via `Effect::map`. Agent events
-/// are owned by the Code workspace (`CodeMsg::ReceiveAgentEvent`) so the code
+/// Shell messages. Tab-scoped + task-scoped variants drive the shell; the
+/// `CodeMsg(...)` / `SettingsMsg(...)` wrappers delegate to the matching
+/// sub-update and lift the sub-effect via `Effect::map`. Agent events are
+/// owned by the Code workspace (`CodeMsg::ReceiveAgentEvent`) so the code
 /// surface fully encapsulates its backend dispatch + event projection.
 pub(all) enum WorkbenchMsg {
-  SwitchWorkspace(Workspace)
+  SwitchTab(TopTab)
+  NewTask
+  SelectTask(String)
+  ToggleFolder(String)
+  ToggleSidebar
+  ToggleSettings
   CodeMsg(CodeMsg)
   SettingsMsg(SettingsMsg)
-  WriteMsg(WriteMsg)
   ToggleAppearance
-  /// Advance workspace switch animation by one frame.
-  AnimationTick
 }
 
 ///|
@@ -194,12 +223,6 @@ pub(all) enum SettingsMsg {
   SandboxChanged(SandboxMode)
   WorkingDirChanged(String)
   FontSizeChanged(Int)
-}
-
-///|
-/// Write workspace messages. Reserved for future write-mode interactions.
-pub(all) enum WriteMsg {
-  Reserved
 }
 
 ///|
