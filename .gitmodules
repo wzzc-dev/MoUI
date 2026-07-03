@@ -6,3 +6,7 @@
 	path = window
 	url = git@github.com:wzzc-dev/window.git
 	branch = moui-support
+[submodule "openseek"]
+	path = openseek
+	url = https://github.com/moonbitlang/openseek.git
+	branch = main
