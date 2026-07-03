@@ -119,8 +119,8 @@ fn views_facade_required_tokens() -> Array[String] {
     "pub(all) struct FormFieldState", "pub(all) struct RouteLocation", "pub(all) struct RouteHistoryState",
     "type RouteFocusStore", "type RouterState", "pub fn resolve_route(", "pub(all) enum DatePickerMode",
     "pub fn default_theme()", "pub fn light_theme()", "pub fn dark_theme()", "pub fn[Msg] text(",
-    "pub fn[Msg] empty()", "pub fn[Msg] spacer(", "pub fn[Msg] picker(", "pub fn[Msg] picker_binding(",
-    "pub fn picker_item(", "pub fn[Msg] datepicker(", "pub fn[Msg] datepicker_binding(",
+    "pub fn[Msg] empty()", "pub fn[Msg] spacer(", "pub fn[Msg] picker(",
+    "pub fn picker_item(", "pub fn[Msg] datepicker(",
     "pub fn[Msg] custom_layout(", "pub fn[Msg] custom_children_layout(", "pub fn[Msg] component(",
   ]
   for type_name in views_facade_core_alias_tokens() {

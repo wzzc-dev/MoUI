@@ -416,45 +416,6 @@ test "virtual node picker dispatches overlay selection without core primitive" {
 }
 
 ///|
-test "virtual node picker binding selection mutates binding" {
-  let selected_state = @core.State::new("one")
-  let root : @core.View[Unit] = @views.frame(
-    @views.picker_binding(
-      [@views.picker_item("one", "One"), @views.picker_item("two", "Two")],
-      selected=selected_state.binding(),
-      placeholder="Pick",
-      max_height=160.0,
-    ),
-    width=200.0,
-    height=40.0,
-  )
-  let runtime = AppRuntime::new_view(
-    root~,
-    size=@core.Size::new(width=200.0, height=40.0),
-  )
-  ignore(runtime.draw_frame())
-  runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(
-        position=@core.Point::new(x=12.0, y=12.0),
-        phase=@core.PointerPhase::Up,
-      ),
-    ),
-  )
-  runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(
-        position=@core.Point::new(x=12.0, y=84.0),
-        phase=@core.PointerPhase::Up,
-      ),
-    ),
-  )
-  if selected_state.get() != "two" {
-    fail("expected picker binding to update")
-  }
-}
-
-///|
 test "virtual node datepicker dispatches overlay selection without core primitive" {
   let received : Array[@core.DateValue] = []
   let runtime = AppRuntime::new_view(
@@ -507,56 +468,6 @@ test "virtual node datepicker dispatches overlay selection without core primitiv
         fail("expected datepicker virtual node identity in inspector")
       }
     None => fail("expected datepicker inspector node")
-  }
-}
-
-///|
-test "virtual node datepicker binding selection mutates binding after month navigation" {
-  let selected_state = @core.State::new(
-    @core.DateValue::new(year=2024, month=1, day=15),
-  )
-  let root : @core.View[Unit] = @views.frame(
-    @views.datepicker_binding(
-      selected=selected_state.binding(),
-      mode=@views.DatePickerMode::Date,
-      placeholder="Select date",
-    ),
-    width=200.0,
-    height=40.0,
-  )
-  let runtime = AppRuntime::new_view(
-    root~,
-    size=@core.Size::new(width=200.0, height=40.0),
-  )
-  ignore(runtime.draw_frame())
-  runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(
-        position=@core.Point::new(x=12.0, y=12.0),
-        phase=@core.PointerPhase::Up,
-      ),
-    ),
-  )
-  ignore(runtime.draw_frame())
-  runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(
-        position=@core.Point::new(x=256.0, y=69.0),
-        phase=@core.PointerPhase::Up,
-      ),
-    ),
-  )
-  ignore(runtime.draw_frame())
-  runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(
-        position=@core.Point::new(x=140.0, y=220.0),
-        phase=@core.PointerPhase::Up,
-      ),
-    ),
-  )
-  if selected_state.get() != @core.DateValue::new(year=2024, month=2, day=14) {
-    fail("expected datepicker binding to preserve navigated month")
   }
 }
 
