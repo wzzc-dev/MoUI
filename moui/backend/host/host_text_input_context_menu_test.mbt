@@ -4,7 +4,7 @@ test "host driver includes focused text commands in context menu" {
   let clipboard = Ref("")
   let saw_copy_command = Ref(false)
   let runtime = host_test_runtime(
-    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
+    root=host_test_text_field(text, width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
@@ -63,7 +63,7 @@ test "host driver disables copy and cut context menu commands without selection"
   let copy_enabled = Ref(true)
   let cut_enabled = Ref(true)
   let runtime = host_test_runtime(
-    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
+    root=host_test_text_field(text, width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
@@ -106,7 +106,7 @@ test "host driver enables copy and cut context menu commands with selection" {
   let copy_enabled = Ref(false)
   let cut_enabled = Ref(false)
   let runtime = host_test_runtime(
-    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
+    root=host_test_text_field(text, width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
@@ -164,7 +164,7 @@ test "host driver context menu pastes unicode into focused text input" {
   let clipboard = Ref("你🙂")
   let saw_paste_command = Ref(false)
   let runtime = host_test_runtime(
-    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
+    root=host_test_text_field(text, width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())

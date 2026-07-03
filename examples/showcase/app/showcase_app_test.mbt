@@ -131,7 +131,7 @@ test "showcase covers text media controls and layout sections" {
     .update(@app.ShowcaseMsg::TabSelected("form"))
     .runtime(width=760.0, height=420.0)
     .draw_commands()
-  assert_true(has_text(form_commands, "Toggle switch"))
+  assert_true(has_text(form_commands, "Secondary toggle"))
   assert_true(has_text(form_commands, "Filter chip"))
   assert_true(has_text(form_commands, "Choice chip"))
   assert_true(has_text(form_commands, "Tag"))

@@ -3,7 +3,7 @@ test "host driver maps focused text input through core text input event" {
   let text = @core.State::new("")
   let runtime = host_test_runtime(
     root=host_test_text_field(
-      text.binding(),
+      text,
       width=240.0,
       height=40.0,
       outlined=true,
@@ -37,7 +37,7 @@ test "host driver routes text clipboard commands through service bridge" {
   let text = @core.State::new("")
   let clipboard = Ref("")
   let runtime = host_test_runtime(
-    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
+    root=host_test_text_field(text, width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
@@ -99,7 +99,7 @@ test "host driver routes clipboard keyboard shortcuts through service bridge" {
   let text = @core.State::new("")
   let clipboard = Ref("")
   let runtime = host_test_runtime(
-    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
+    root=host_test_text_field(text, width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
@@ -178,7 +178,7 @@ test "host driver keyboard paste replaces selection with extended emoji" {
   let text = @core.State::new("")
   let clipboard = Ref("☕️👩‍💻")
   let runtime = host_test_runtime(
-    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
+    root=host_test_text_field(text, width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())

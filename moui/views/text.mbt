@@ -103,29 +103,6 @@ pub fn[Msg] text_field(
   )
 }
 
-///|
-pub fn[Msg] text_field_binding(
-  value : @core.Binding[String],
-  on_submit? : Msg? = None,
-  placeholder? : String = "",
-  variant? : TextFieldVariant = TextFieldVariant::Filled,
-  theme? : @core.Theme,
-  style? : TextFieldStyle,
-  width? : Double = 240.0,
-  height? : Double = 40.0,
-) -> @core.View[Msg] {
-  text_field_control(
-    value~,
-    placeholder~,
-    size=@core.Size::new(width~, height~),
-    theme?,
-    variant~,
-    style?,
-    on_submit~,
-  )
-}
-
-///|
 pub fn[Msg] text_area(
   value : String,
   on_input~ : (String) -> Msg,
