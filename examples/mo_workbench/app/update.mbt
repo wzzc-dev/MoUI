@@ -1,9 +1,13 @@
-// Update loop: shell routing + per-workspace sub-updates + backend dispatch.
+// Update loop: shell routing + per-tab sub-updates + backend dispatch + task
+// tree projection sync.
 //
-// The shell (`WorkbenchModel::update`) routes `CodeMsg` / `SettingsMsg` /
-// `WriteMsg` to the matching sub-update and lifts the sub-effect back to
-// `Effect[WorkbenchMsg]` via `Effect::map`. `SwitchWorkspace` and
-// `ToggleAppearance` are handled at the shell level.
+// The shell (`WorkbenchModel::update`) routes `CodeMsg` / `SettingsMsg` to the
+// matching sub-update and lifts the sub-effect back to `Effect[WorkbenchMsg]`
+// via `Effect::map`. `SwitchTab`, `NewTask`, `SelectTask`, `ToggleFolder`,
+// `ToggleSettings` and `ToggleAppearance` are handled at the shell level.
+// After any `CodeMsg` that may change sessions/streaming state,
+// `sync_task_tree` rebuilds the UI task tree projection from `code.sessions`
+// so the sidebar never holds stale state.
 
 ///|
 /// Project an `AgentEvent` into the UI `ChatMessage` list and streaming state.
@@ -223,32 +227,185 @@ fn SettingsWorkspace::update(
 }
 
 // ---------------------------------------------------------------------------
-// Shell update (routing)
+// Task projection sync
 // ---------------------------------------------------------------------------
 
 ///|
-/// Advance animation progress by one frame increment (~10 frames total).
-fn advance_animation(progress : Double) -> Double {
-  let next = progress + 0.12
-  if next >= 1.0 { 1.0 } else { next }
+/// Rebuild the `task_tree` UI projection from `code.sessions`. Called after
+/// any `CodeMsg` (and after `NewTask` / `SelectTask`) so the sidebar task tree
+/// always reflects the current session list, active id, and streaming state.
+/// The single source of truth remains `code.sessions`; `task_tree` is a
+/// derived view that never needs independent mutation.
+///
+/// Sessions are grouped under folder nodes (one per top-level task group).
+/// Folder expanded state is preserved from the previous `task_tree` when
+/// available; new folders default to expanded.
+fn sync_task_tree(model : WorkbenchModel) -> WorkbenchModel {
+  let active_id = model.code.active_session_id
+  let streaming = model.code.is_streaming
+  let messages = model.code.messages
+  // Build task leaves grouped by their group.
+  let today_tasks : Array[TaskTreeNode] = []
+  let yesterday_tasks : Array[TaskTreeNode] = []
+  let earlier_tasks : Array[TaskTreeNode] = []
+  for s in model.code.sessions {
+    let title = if s.first_prompt == "" {
+      "New task"
+    } else {
+      s.first_prompt
+    }
+    let group = derive_group(s.last_active_unix_seconds)
+    let node = TaskTreeNode::Task(
+      s.id,
+      title,
+      group,
+      derive_task_status(s.id, active_id, streaming, messages),
+      0,
+    )
+    match group {
+      Today => today_tasks.push(node)
+      Yesterday => yesterday_tasks.push(node)
+      Earlier => earlier_tasks.push(node)
+    }
+  }
+  // Build folder nodes preserving expanded state from previous tree.
+  let tree : Array[TaskTreeNode] = []
+  if !today_tasks.is_empty() {
+    let expanded = folder_was_expanded(model.task_tree, "folder_today")
+    tree.push(
+      TaskTreeNode::Folder("folder_today", "Today", TaskGroup::Today, today_tasks, expanded)
+    )
+  }
+  if !yesterday_tasks.is_empty() {
+    let expanded = folder_was_expanded(model.task_tree, "folder_yesterday")
+    tree.push(
+      TaskTreeNode::Folder("folder_yesterday", "Yesterday", TaskGroup::Yesterday, yesterday_tasks, expanded)
+    )
+  }
+  if !earlier_tasks.is_empty() {
+    let expanded = folder_was_expanded(model.task_tree, "folder_earlier")
+    tree.push(
+      TaskTreeNode::Folder("folder_earlier", "Earlier", TaskGroup::Earlier, earlier_tasks, expanded)
+    )
+  }
+  { ..model, task_tree: tree }
 }
 
 ///|
-/// The shell update. Routes workspace-scoped messages to the matching
-/// sub-update and lifts sub-effects back to `Effect[WorkbenchMsg]`.
+/// Check whether a folder id was expanded in the previous tree.
+fn folder_was_expanded(prev_tree : Array[TaskTreeNode], folder_id : String) -> Bool {
+  for node in prev_tree {
+    match node {
+      Folder(id, _, _, _, expanded) =>
+        if id == folder_id {
+          return expanded
+        }
+      _ => ()
+    }
+  }
+  true // new folders default to expanded
+}
+
+///|
+/// Toggle the expanded state of a folder in the task tree.
+fn toggle_folder_expanded(
+  tree : Array[TaskTreeNode],
+  folder_id : String,
+) -> Array[TaskTreeNode] {
+  let result : Array[TaskTreeNode] = []
+  for node in tree {
+    result.push(match node {
+      Folder(id, title, group, children, expanded) =>
+        if id == folder_id {
+          Folder(id, title, group, children, !expanded)
+        } else {
+          node
+        }
+      _ => node
+    })
+  }
+  result
+}
+
+///|
+/// Derive the time-based group for a task. The portable app package has no
+/// wall-clock source, so all tasks currently group under `Today`. Refine once
+/// a time injection (e.g. via ViewEnvironment or a backend-provided "now"
+/// value) is wired in.
+fn derive_group(_last_active : Int64?) -> TaskGroup {
+  TaskGroup::Today
+}
+
+///|
+/// Derive the lifecycle status of a task from the active session id, the
+/// streaming flag, and the active session's message tail. Non-active sessions
+/// are assumed completed (prior turns finished), since only the active
+/// session's messages are held in memory.
+fn derive_task_status(
+  id : String,
+  active_id : String?,
+  streaming : Bool,
+  messages : Array[ChatMessage],
+) -> TaskStatus {
+  let is_active = match active_id {
+    Some(aid) => aid == id
+    None => false
+  }
+  if is_active && streaming {
+    TaskStatus::Running
+  } else if is_active && messages.is_empty() {
+    TaskStatus::Pending
+  } else if is_active {
+    // Inspect the active session's message tail for a terminal status.
+    let tail = messages[messages.length() - 1]
+    match tail {
+      Terminal(TurnStatus::Failed, _) => TaskStatus::Failed
+      _ => TaskStatus::Completed
+    }
+  } else {
+    // Non-active sessions: assume completed (prior turns finished).
+    TaskStatus::Completed
+  }
+}
+
+///|
+/// The shell update. Routes tab-scoped / task-scoped messages at the shell
+/// level and delegates `CodeMsg` / `SettingsMsg` to the matching sub-update,
+/// lifting sub-effects back to `Effect[WorkbenchMsg]`. After any `CodeMsg`
+/// (which may change sessions / streaming state) the task tree projection is
+/// re-synced via `sync_task_tree`.
 fn WorkbenchModel::update(
   self : WorkbenchModel,
   msg : WorkbenchMsg,
 ) -> (WorkbenchModel, @moui.Effect[WorkbenchMsg]) {
   match msg {
-    SwitchWorkspace(ws) =>
-      // Start animation: set progress to 0 so the view renders the "from"
-      // state of the transition. The subscription drives frames until 1.0.
-      ({ ..self, active_workspace: ws, animation_progress: 0.0 }, @moui.Effect::none())
-    AnimationTick => {
-      let next = advance_animation(self.animation_progress)
-      ({ ..self, animation_progress: next }, @moui.Effect::none())
+    SwitchTab(tab) =>
+      (
+        { ..self, active_tab: tab, },
+        @moui.Effect::none(),
+      )
+    ToggleSidebar =>
+      ({ ..self, sidebar_visible: !self.sidebar_visible }, @moui.Effect::none())
+    NewTask => {
+      // Delegate to the code workspace's NewSession, switch to the Code tab
+      // so the new task's chat surface is visible, and re-sync task tree.
+      let (code, eff) = self.code.update(CodeMsg::NewSession, self.backend)
+      let model = { ..self, code, active_tab: TopTab::Code }
+      (sync_task_tree(model), eff.map(m => WorkbenchMsg::CodeMsg(m)))
     }
+    SelectTask(id) => {
+      // Delegate to the code workspace's SelectSession, switch to Code, sync.
+      let (code, eff) = self.code.update(
+        CodeMsg::SelectSession(id),
+        self.backend,
+      )
+      let model = { ..self, code, active_tab: TopTab::Code }
+      (sync_task_tree(model), eff.map(m => WorkbenchMsg::CodeMsg(m)))
+    }
+    ToggleFolder(folder_id) =>
+      ({ ..self, task_tree: toggle_folder_expanded(self.task_tree, folder_id), }, @moui.Effect::none())
+    ToggleSettings =>
+      ({ ..self, settings_open: !self.settings_open }, @moui.Effect::none())
     ToggleAppearance => {
       let next = match self.appearance {
         System => Light
@@ -259,13 +416,13 @@ fn WorkbenchModel::update(
     }
     CodeMsg(m) => {
       let (code, eff) = self.code.update(m, self.backend)
-      // Lift `Effect[CodeMsg]` to `Effect[WorkbenchMsg]` via `Effect::map`.
-      ({ ..self, code, }, eff.map(m => WorkbenchMsg::CodeMsg(m)))
+      // Re-sync the task tree projection then lift `Effect[CodeMsg]` to
+      // `Effect[WorkbenchMsg]` via `Effect::map`.
+      (sync_task_tree({ ..self, code }), eff.map(m => WorkbenchMsg::CodeMsg(m)))
     }
     SettingsMsg(m) => {
       let (settings, eff) = self.settings.update(m)
       ({ ..self, settings, }, eff.map(m => WorkbenchMsg::SettingsMsg(m)))
     }
-    WriteMsg(_) => (self, @moui.Effect::none())
   }
 }

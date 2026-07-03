@@ -1,24 +1,11 @@
 // Program assembly: wires Model/Msg/update/view into a MoUI Program.
 
 ///|
-/// Drive workspace switch animation frames while progress < 1.0.
-/// The runtime calls `start` each animation frame for kind="animation"
-/// subscriptions, giving us ~60fps ticks until the transition completes.
+/// No active subscriptions; tab switching is immediate without animation.
 fn workbench_subscriptions(
-  model : WorkbenchModel,
+  _model : WorkbenchModel,
 ) -> @moui.Subscription[WorkbenchMsg] {
-  if model.animation_progress < 1.0 {
-    @moui.Subscription::animation_tick(
-      key="workspace-switch-anim",
-      start=dispatch => {
-        dispatch(WorkbenchMsg::AnimationTick)
-        None
-      },
-      label="Workspace switch transition",
-    )
-  } else {
-    @moui.Subscription::none()
-  }
+  @moui.Subscription::none()
 }
 
 ///|

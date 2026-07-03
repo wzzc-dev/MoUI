@@ -1,11 +1,14 @@
-// DeepSeek-GUI-style shell: left workspace rail, topbar, center work surface,
-// optional right inspector, and a low-noise status bar.
+// Mo Workbench shell: left sidebar (segmented tab bar + new-task entry + task
+// tree list + user area), center work surface routed by the active top tab,
+// and a settings overlay rendered on top when `settings_open` is true.
+//
+// Layout: HorizontalSplit(sidebar=~300px) | Center(column: topbar + main +
+// statusbar). Sidebar tabs use a Segmented Control; task list is a tree with
+// expandable folder groups.
 
 ///|
 priv struct WorkbenchLayout {
   sidebar_width : Double
-  inspector_width : Double
-  inspector_visible : Bool
   topbar_height : Double
   statusbar_height : Double
   center_width : Double
@@ -23,18 +26,12 @@ fn workbench_layout(viewport : @core.Size) -> WorkbenchLayout {
   } else {
     280.0
   }
-  let inspector_visible = viewport.width >= 1180.0
-  let inspector_width = if inspector_visible { 340.0 } else { 0.0 }
-  let center_width = (viewport.width - sidebar_width - inspector_width).max(
-    320.0,
-  )
-  let center_height = (viewport.height - topbar_height - statusbar_height).max(
-    320.0,
+  let center_width = (viewport.width - sidebar_width).max(320.0)
+  let center_height = (viewport.height - topbar_height - statusbar_height - 16.0).max(
+    262.0,
   )
   {
     sidebar_width,
-    inspector_width,
-    inspector_visible,
     topbar_height,
     statusbar_height,
     center_width,
@@ -50,22 +47,125 @@ fn workbench_view(
   let theme = workbench_theme(model.appearance, env)
   let viewport = env.viewport_size()
   let layout = workbench_layout(viewport)
-  let panes : Array[@moui.View[WorkbenchMsg]] = [
-    sidebar_view(model, theme, layout.sidebar_width, viewport.height),
-    center_shell(model, theme, layout),
-  ]
-  if layout.inspector_visible {
-    panes.push(
-      inspector_shell(model, theme, layout.inspector_width, viewport.height),
-    )
+  let main_height = viewport.height
+  // Left column: traffic-light area (no toggle — it lives as a floating
+  // overlay so it is never lost).
+  let left_width = if model.sidebar_visible {
+    layout.sidebar_width
+  } else {
+    0.0
   }
-  @views.container(
-    @views.row(panes, spacing=0.0, align=@views.CrossAlign::Stretch),
+  let left_column = @views.container(
+    @views.column(
+      [
+        @views.container(
+          @views.spacer(min_length=78.0, weight=0.0),
+          width=left_width,
+          height=40.0,
+          background=workbench_sidebar_background(theme),
+          padding=0.0,
+        ),
+        sidebar_view(model, theme, left_width, main_height - 40.0),
+      ],
+      spacing=0.0,
+      align=@views.CrossAlign::Stretch,
+    ),
+    width=left_width,
+    height=main_height,
+    background=workbench_sidebar_background(theme),
+    padding=0.0,
+  )
+  // Right column: canvas + statusbar pinned to bottom, bar centered horizontally.
+  let right_width = viewport.width - left_width
+  let right_inner_width = (right_width - 16.0).max(280.0)
+  let right_body_height = (main_height - layout.statusbar_height - 16.0).max(200.0)
+  let right_column = @views.container(
+    @views.column(
+      [
+        @views.container(
+          @views.container(
+            center_shell(model, theme, layout, right_inner_width),
+            width=right_inner_width,
+            background=workbench_canvas_background(theme),
+            padding=0.0,
+          ),
+          width=right_width,
+          height=right_body_height,
+          background=workbench_app_background(theme),
+          padding=8.0,
+        ),
+        @views.center(
+          statusbar_view(
+            model,
+            theme,
+            right_width,
+            layout.statusbar_height,
+          ),
+          width=right_width,
+          height=layout.statusbar_height,
+        ),
+      ],
+      spacing=0.0,
+      align=@views.CrossAlign::Stretch,
+    ),
+    width=right_width,
+    height=main_height,
+    background=workbench_app_background(theme),
+    padding=0.0,
+  )
+  let shell = @views.container(
+    @views.row(
+      if model.sidebar_visible {
+        [left_column, right_column]
+      } else {
+        [right_column]
+      },
+      spacing=0.0,
+      align=@views.CrossAlign::Stretch,
+    ),
     width=viewport.width,
     height=viewport.height,
     background=workbench_app_background(theme),
     padding=0.0,
   )
+  // Floating sidebar-toggle overlay — always visible at (78, 6).
+  let toggle_icon_name = if model.sidebar_visible {
+    @views.IconName::Sidebar
+  } else {
+    @views.IconName::Columns
+  }
+  let toggle_background = if model.sidebar_visible {
+    workbench_subtle_background(theme)
+  } else {
+    @core.Color::rgba(r=1.0, g=1.0, b=1.0, a=1.0)
+  }
+  let toggle_overlay = @views.padding_edges(
+    @views.container(
+      @views.icon(
+        toggle_icon_name,
+        size=14.0,
+        color=workbench_text_muted(theme),
+      ),
+      width=28.0,
+      height=28.0,
+      background=toggle_background,
+      corner_radius=6.0,
+      padding=4.0,
+    ).on_tap(WorkbenchMsg::ToggleSidebar),
+    top=6.0,
+    left=78.0,
+    bottom=0.0,
+    right=0.0,
+  )
+  let base = @views.overlay(shell, toggle_overlay)
+  if model.settings_open {
+    @views.overlay(
+      base,
+      settings_overlay_view(model, theme, viewport.width, viewport.height),
+    )
+  } else {
+    base
+  }
 }
 
 ///|
@@ -73,24 +173,18 @@ fn center_shell(
   model : WorkbenchModel,
   theme : @core.Theme,
   layout : WorkbenchLayout,
+  center_width : Double,
 ) -> @moui.View[WorkbenchMsg] {
   @views.container(
     @views.column(
       [
-        topbar_view(model, theme, layout.center_width, layout.topbar_height),
-        main_surface(model, theme, layout.center_width, layout.center_height),
-        statusbar_view(
-          model,
-          theme,
-          layout.center_width,
-          layout.statusbar_height,
-        ),
+        topbar_view(model, theme, center_width, layout.topbar_height),
+        main_surface(model, theme, center_width, layout.center_height),
       ],
       spacing=0.0,
       align=@views.CrossAlign::Stretch,
     ),
-    width=layout.center_width,
-    height=layout.topbar_height + layout.center_height + layout.statusbar_height,
+    width=center_width,
     background=workbench_canvas_background(theme),
     padding=0.0,
   )
@@ -103,24 +197,10 @@ fn topbar_view(
   width : Double,
   height : Double,
 ) -> @moui.View[WorkbenchMsg] {
-  let title_width = (width - 420.0).max(160.0)
-  let session_title = match model.active_workspace {
+  let title_width = (width - 56.0).max(160.0)
+  let title = match model.active_tab {
     Code => code_session_title(model.code)
-    _ => workspace_label(model.active_workspace)
-  }
-  let controls : Array[@moui.View[WorkbenchMsg]] = []
-  if model.active_workspace == Workspace::Code {
-    controls.push(code_model_control(model.code, theme))
-    controls.push(code_thinking_control(model.code, theme))
-  } else {
-    controls.push(
-      @views.badge(
-        workspace_label(model.active_workspace),
-        tone=@views.BadgeTone::Neutral,
-        theme~,
-        width=132.0,
-      ),
-    )
+    _ => tab_label(model.active_tab)
   }
   @views.padding_edges(
     @views.container(
@@ -129,14 +209,14 @@ fn topbar_view(
           @views.column(
             [
               @views.text(
-                session_title,
+                title,
                 role=@views.TextRole::Label,
                 theme~,
                 width=title_width,
                 height=20.0,
               ),
               @views.text(
-                workspace_subtitle(model),
+                tab_subtitle(model),
                 role=@views.TextRole::Caption,
                 theme~,
                 width=title_width,
@@ -147,7 +227,6 @@ fn topbar_view(
             align=@views.CrossAlign::Start,
           ),
           @views.spacer(),
-          @views.row(controls, spacing=12.0, align=@views.CrossAlign::Center),
         ],
         spacing=16.0,
         align=@views.CrossAlign::Center,
@@ -156,7 +235,7 @@ fn topbar_view(
       height~,
       background=workbench_card_background(theme),
       padding=0.0,
-    ).border(hairline_border(theme)),
+    ),
     top=0.0,
     left=28.0,
     bottom=0.0,
@@ -164,50 +243,6 @@ fn topbar_view(
   )
 }
 
-///|
-fn code_model_control(
-  code : CodeWorkspace,
-  theme : @core.Theme,
-) -> @moui.View[WorkbenchMsg] {
-  @views.segmented_control(
-    [
-      @views.choice_item("v4-pro", "V4 Pro"),
-      @views.choice_item("v4-flash", "Flash"),
-    ],
-    selected=model_choice_id(code.current_model),
-    on_select=id => {
-      WorkbenchMsg::CodeMsg(CodeMsg::ModelChanged(model_choice_from_id(id)))
-    },
-    size=@views.SegmentedControlSize::Compact,
-    theme~,
-    width=148.0,
-  )
-}
-
-///|
-fn code_thinking_control(
-  code : CodeWorkspace,
-  theme : @core.Theme,
-) -> @moui.View[WorkbenchMsg] {
-  @views.segmented_control(
-    [
-      @views.choice_item("no", "No"),
-      @views.choice_item("high", "High"),
-      @views.choice_item("max", "Max"),
-    ],
-    selected=thinking_choice_id(code.current_thinking),
-    on_select=id => {
-      WorkbenchMsg::CodeMsg(
-        CodeMsg::ThinkingChanged(thinking_choice_from_id(id)),
-      )
-    },
-    size=@views.SegmentedControlSize::Compact,
-    theme~,
-    width=172.0,
-  )
-}
-
-///|
 ///|
 fn statusbar_view(
   model : WorkbenchModel,
@@ -224,19 +259,49 @@ fn statusbar_view(
     Some(id) => "Session: " + truncate_text(id, 18)
     None => "Session: draft"
   }
-  @views.status_bar(
-    [
-      "Mo Workbench",
-      workspace_label(model.active_workspace),
-      runtime_status,
-      model_choice_label(model.code.current_model),
-      thinking_choice_label(model.code.current_thinking),
-      session_status,
-    ],
-    theme~,
-    width~,
+  let labels = [
+    "Mo Workbench",
+    tab_label(model.active_tab),
+    runtime_status,
+    model_choice_label(model.code.current_model),
+    thinking_choice_label(model.code.current_thinking),
+    session_status,
+  ]
+  let segments : Array[@moui.View[WorkbenchMsg]] = []
+  for label in labels {
+    segments.push(
+      @views.text(
+        label,
+        role=@views.TextRole::Caption,
+        theme~,
+        width=label.length().to_double() * 7.5 + 8.0,
+        height=22.0,
+      ).foreground(workbench_text_muted(theme)),
+    )
+  }
+  let bar_inner_width = workbench_statusbar_inner_width(labels)
+  @views.container(
+    @views.row(
+      segments,
+      spacing=12.0,
+      align=@views.CrossAlign::Center,
+      justify=@views.MainAlign::Center,
+    ),
+    width=bar_inner_width,
     height~,
+    background=theme.palette.surface_variant.multiply_alpha(0.52),
+    corner_radius=theme.radius_scale.sm,
+    padding=4.0,
   )
+}
+
+///|
+fn workbench_statusbar_inner_width(labels : Array[String]) -> Double {
+  let mut total = 24.0
+  for label in labels {
+    total = total + label.length().to_double() * 7.5 + 12.0
+  }
+  total.min(920.0).max(280.0)
 }
 
 // ---------------------------------------------------------------------------
@@ -251,9 +316,9 @@ fn sidebar_view(
   height : Double,
 ) -> @moui.View[WorkbenchMsg] {
   let rows : Array[@moui.View[WorkbenchMsg]] = [
-    workspace_switcher_section(model, theme, width),
-    @views.divider(theme~),
-    sidebar_workspace_body(model, theme, width, (height - 240.0).max(180.0)),
+    tab_segmented_control(model, theme, width),
+    new_task_section(model, theme, width),
+    task_tree_view(model, theme, width, (height - 220.0).max(160.0)),
     @views.spacer(),
     sidebar_footer(model, theme, width),
   ]
@@ -263,136 +328,176 @@ fn sidebar_view(
     height~,
     background=workbench_sidebar_background(theme),
     padding=0.0,
-  ).border(hairline_border(theme))
+  )
 }
 
 ///|
-fn workspace_switcher_section(
+fn workbench_tab_segment_button(
+  label : String,
+  item_id : String,
+  active : Bool,
+  theme : @core.Theme,
+  width : Double,
+) -> @moui.View[WorkbenchMsg] {
+  let tab = match item_id {
+    "work" => TopTab::Work
+    "design" => TopTab::Design
+    _ => TopTab::Code
+  }
+  if active {
+    @views.button(
+      label,
+      on_click=WorkbenchMsg::SwitchTab(tab),
+      variant=@views.ButtonVariant::Ghost,
+      theme~,
+      style=workbench_tab_selected_button_style(theme),
+      width~,
+      height=32.0,
+    )
+  } else {
+    @views.button(
+      label,
+      on_click=WorkbenchMsg::SwitchTab(tab),
+      variant=@views.ButtonVariant::Ghost,
+      theme~,
+      width~,
+      height=32.0,
+    )
+  }
+}
+
+///|
+/// Segmented control tab bar: Work / Code / Design. Tapping switches the active
+/// tab. The selected tab renders with highlighted background and accent text.
+fn tab_segmented_control(
   model : WorkbenchModel,
   theme : @core.Theme,
   width : Double,
 ) -> @moui.View[WorkbenchMsg] {
-  let rows : Array[@moui.View[WorkbenchMsg]] = []
-  for
-    ws in [
-      Workspace::Code,
-      Workspace::Write,
-      Workspace::ConnectPhone,
-      Workspace::ScheduledTasks,
-      Workspace::Plugins,
-    ] {
-    rows.push(
-      workspace_switch_button(
-        ws,
-        model.active_workspace,
+  let items : Array[@views.ChoiceItem] = [
+    @views.choice_item("work", "Work"),
+    @views.choice_item("code", "Code"),
+    @views.choice_item("design", "Design"),
+  ]
+  let selected_id = match model.active_tab {
+    Work => "work"
+    Code => "code"
+    Design => "design"
+  }
+  let bar_width = width - 24.0
+  let item_width = bar_width / 3.0
+  let segments : Array[@moui.View[WorkbenchMsg]] = []
+  for item in items {
+    let active = item.id == selected_id
+    segments.push(
+      workbench_tab_segment_button(
+        item.label,
+        item.id,
+        active,
         theme,
-        width,
-        model.animation_progress,
+        item_width,
       ),
     )
   }
   @views.padding_xy(
-    @views.column(rows, spacing=4.0, align=@views.CrossAlign::Stretch),
+    @views.container(
+      @views.row(segments, spacing=0.0, align=@views.CrossAlign::Center),
+      width=bar_width,
+      height=32.0,
+      background=workbench_subtle_background(theme),
+      corner_radius=8.0,
+      padding=2.0,
+    ),
     horizontal=12.0,
     vertical=12.0,
   )
 }
 
 ///|
-fn workspace_switch_button(
-  ws : Workspace,
-  active : Workspace,
+/// The "New Task" entry button + secondary static chips (skills / automations).
+fn new_task_section(
+  _model : WorkbenchModel,
   theme : @core.Theme,
   width : Double,
-  anim_progress : Double,
 ) -> @moui.View[WorkbenchMsg] {
-  let is_active = ws == active
-  // Forward-only interpolation: the newly-active item's indicator fades in;
-  // previously-active items snap to inactive immediately (no flash across
-  // every button). A symmetric fade-out would require tracking the previous
-  // active workspace on the model.
-  let row_bg = if is_active {
-    @core.animated_color(
-      from=@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0),
-      to=workbench_sidebar_active(theme),
-      progress=anim_progress,
-    )
-  } else {
-    @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)
-  }
-  let text_color = if is_active {
-    workbench_accent(theme)
-  } else {
-    workbench_text_muted(theme)
-  }
-  let icon_color_final = if is_active { workbench_accent(theme) } else { workbench_text_muted(theme) }
-  @views.container(
-    @views.row(
+  @views.padding_xy(
+    @views.column(
       [
-        @views.container(
-          @views.icon(workspace_icon(ws), size=16.0, color=icon_color_final),
-          width=28.0,
-          height=28.0,
-          padding=0.0,
-        ),
-        @views.text(
-          workspace_label(ws),
-          role=@views.TextRole::Label,
+        @views.button(
+          "新建任务",
+          on_click=WorkbenchMsg::NewTask,
+          variant=@views.ButtonVariant::Tonal,
           theme~,
-          width=width - 64.0,
-        ).foreground(text_color),
+          icon=Some(@views.IconName::Plus),
+          width=width - 32.0,
+          height=36.0,
+        ),
+        @views.row(
+          [
+            @views.chip("技能", theme~, width=64.0, height=26.0),
+            @views.chip("自动化", theme~, width=76.0, height=26.0),
+            @views.spacer(),
+          ],
+          spacing=8.0,
+          align=@views.CrossAlign::Center,
+        ),
       ],
-      spacing=8.0,
-      align=@views.CrossAlign::Center,
+      spacing=10.0,
+      align=@views.CrossAlign::Stretch,
     ),
-    width~,
-    background=row_bg,
-    corner_radius=6.0,
-    padding=6.0,
-  ).on_tap(WorkbenchMsg::SwitchWorkspace(ws))
+    horizontal=16.0,
+    vertical=10.0,
+  )
 }
 
 ///|
-fn sidebar_workspace_body(
+/// The task tree: sessions projected as a tree with expandable folder groups.
+/// Folder nodes toggle expand/collapse; task leaf nodes select the session.
+fn task_tree_view(
   model : WorkbenchModel,
   theme : @core.Theme,
   width : Double,
   height : Double,
 ) -> @moui.View[WorkbenchMsg] {
-  let body = match model.active_workspace {
-    Code => code_sidebar_section(model.code, theme, width)
-    Write =>
-      static_sidebar_list(
-        "Writing Spaces",
-        ["Drafts", "Articles", "Release notes", "Research"],
-        theme,
-        width,
-      )
-    ConnectPhone =>
-      static_sidebar_list(
-        "Channels",
-        ["Feishu / Lark", "WeChat relay", "Local webhook", "Manual test"],
-        theme,
-        width,
-      )
-    ScheduledTasks =>
-      static_sidebar_list(
-        "Task Queues",
-        ["Today", "Daily", "Interval", "Manual"],
-        theme,
-        width,
-      )
-    Plugins =>
-      static_sidebar_list(
-        "Extensions",
-        ["Skills", "MCP servers", "Web tools", "Memory"],
-        theme,
-        width,
-      )
-    Settings => settings_sidebar_section(model.settings, theme, width)
+  let body : Array[@moui.View[WorkbenchMsg]] = []
+  if model.task_tree.is_empty() {
+    body.push(sidebar_caption("暂无任务,点击上方新建", theme, width - 32.0))
+  } else {
+    body.push(
+      @views.row(
+        [
+          @views.text(
+            "任务列表",
+            role=@views.TextRole::Label,
+            theme~,
+            width=width - 80.0,
+          ),
+          @views.container(
+            @views.icon(@views.IconName::ListOrdered, size=14.0, color=workbench_text_muted(theme)),
+            width=24.0,
+            height=24.0,
+            padding=0.0,
+          ),
+          @views.chip("Filter", theme~, width=50.0, height=22.0),
+        ],
+        spacing=4.0,
+        align=@views.CrossAlign::Center,
+      ),
+    )
+    for node in model.task_tree {
+      body.push(task_tree_node_view(node, model, theme, width - 48.0))
+    }
   }
   @views.container(
-    @views.scroll_view(body, width~, height~),
+    @views.scroll_view(
+      @views.padding_xy(
+        @views.column(body, spacing=4.0, align=@views.CrossAlign::Stretch),
+        horizontal=16.0,
+        vertical=12.0,
+      ),
+      width~,
+      height~,
+    ),
     width~,
     height~,
     background=workbench_sidebar_background(theme),
@@ -401,131 +506,134 @@ fn sidebar_workspace_body(
 }
 
 ///|
-fn code_sidebar_section(
-  code : CodeWorkspace,
+/// Render a single task tree node (folder or leaf).
+fn task_tree_node_view(
+  node : TaskTreeNode,
+  model : WorkbenchModel,
   theme : @core.Theme,
   width : Double,
 ) -> @moui.View[WorkbenchMsg] {
-  let rows : Array[@moui.View[WorkbenchMsg]] = [
-    @views.button(
-      "New Chat",
-      on_click=WorkbenchMsg::CodeMsg(CodeMsg::NewSession),
-      variant=@views.ButtonVariant::Primary,
-      theme~,
-      icon=Some(@views.IconName::Plus),
-      width=width - 32.0,
-      height=36.0,
-    ),
-    sidebar_overline("Workspace", theme, width - 32.0),
-    sidebar_info_row("Root", "~/projects/MoUI", theme, width - 32.0),
-    sidebar_info_row("Policy", "Workspace write", theme, width - 32.0),
-    sidebar_overline("History", theme, width - 32.0),
-  ]
-  if code.sessions.is_empty() {
-    rows.push(sidebar_caption("No sessions yet", theme, width - 32.0))
-  } else {
-    for s in code.sessions {
-      let is_active = code.active_session_id == Some(s.id)
-      let label = if s.first_prompt.is_empty() { s.id } else { s.first_prompt }
-      rows.push(
-        session_row(
-          s.id,
-          truncate_text(label, 24),
-          is_active,
-          theme,
-          width - 32.0,
-        ),
-      )
+  match node {
+    Folder(id, title, _, children, expanded) => {
+      let icon = if expanded {
+        @views.IconName::ChevronDown
+      } else {
+        @views.IconName::ChevronRight
+      }
+      let rows : Array[@moui.View[WorkbenchMsg]] = [
+        @views.container(
+          @views.row(
+            [
+              @views.container(
+                @views.icon(icon, size=12.0, color=theme.palette.muted),
+                width=20.0,
+                height=20.0,
+                padding=0.0,
+              ),
+              @views.text(
+                title,
+                role=@views.TextRole::Label,
+                theme~,
+                width=width - 28.0,
+              ),
+            ],
+            spacing=4.0,
+            align=@views.CrossAlign::Center,
+          ),
+          width~,
+          corner_radius=4.0,
+          padding=6.0,
+        ).on_tap(WorkbenchMsg::ToggleFolder(id)),
+      ]
+      if expanded {
+        for child in children {
+          rows.push(indented_task_view(child, model, theme, width - 20.0))
+        }
+      }
+      @views.column(rows, spacing=2.0, align=@views.CrossAlign::Stretch)
     }
+    Task(id, title, _, status, _) => task_row(id, title, status, model, theme, width)
   }
-  @views.padding_xy(
-    @views.column(rows, spacing=12.0, align=@views.CrossAlign::Stretch),
-    horizontal=20.0,
-    vertical=20.0,
-  )
 }
 
 ///|
-fn static_sidebar_list(
-  title : String,
-  items : Array[String],
+/// An indented wrapper for child tasks inside a folder.
+fn indented_task_view(
+  node : TaskTreeNode,
+  model : WorkbenchModel,
   theme : @core.Theme,
   width : Double,
 ) -> @moui.View[WorkbenchMsg] {
-  let rows : Array[@moui.View[WorkbenchMsg]] = [
-    sidebar_overline(title, theme, width - 32.0),
-  ]
-  for item in items {
-    rows.push(sidebar_info_row(item, "Ready", theme, width - 32.0))
-  }
-  @views.padding_xy(
-    @views.column(rows, spacing=12.0, align=@views.CrossAlign::Stretch),
-    horizontal=20.0,
-    vertical=16.0,
+  @views.padding_edges(
+    task_tree_node_view(node, model, theme, width),
+    left=20.0,
+    top=0.0,
+    right=0.0,
+    bottom=0.0,
   )
 }
 
 ///|
-fn settings_sidebar_section(
-  settings : SettingsWorkspace,
-  theme : @core.Theme,
-  width : Double,
-) -> @moui.View[WorkbenchMsg] {
-  @views.padding_xy(
-    @views.column(
-      [
-        sidebar_overline("Settings", theme, width - 32.0),
-        sidebar_info_row(
-          "Base URL",
-          truncate_text(settings.base_url, 24),
-          theme,
-          width - 32.0,
-        ),
-        sidebar_info_row(
-          "Approval",
-          approval_policy_label(settings.approval_policy),
-          theme,
-          width - 32.0,
-        ),
-        sidebar_info_row(
-          "Sandbox",
-          sandbox_mode_label(settings.sandbox_mode),
-          theme,
-          width - 32.0,
-        ),
-      ],
-      spacing=12.0,
-      align=@views.CrossAlign::Stretch,
-    ),
-    horizontal=20.0,
-    vertical=16.0,
-  )
-}
-
-///|
-fn session_row(
+/// A single task row: a colored status dot + the task title. Tapping selects
+/// the task (and its underlying session).
+fn task_row(
   id : String,
-  label : String,
-  is_active : Bool,
+  title : String,
+  status : TaskStatus,
+  model : WorkbenchModel,
   theme : @core.Theme,
   width : Double,
 ) -> @moui.View[WorkbenchMsg] {
-  @views.button(
-    label,
-    on_click=WorkbenchMsg::CodeMsg(CodeMsg::SelectSession(id)),
-    variant=if is_active {
-      @views.ButtonVariant::SubtleBrand
-    } else {
-      @views.ButtonVariant::Ghost
-    },
-    theme~,
-    icon=Some(@views.IconName::Clipboard),
+  let is_active = match model.code.active_session_id {
+    Some(aid) => aid == id
+    None => false
+  }
+  let status_color = match status {
+    Pending => workbench_text_faint(theme)
+    Running => workbench_accent(theme)
+    Completed => workbench_success(theme)
+    Failed => workbench_danger(theme)
+  }
+  let title_color = if is_active {
+    workbench_accent(theme)
+  } else {
+    workbench_text(theme)
+  }
+  let row_bg = if is_active {
+    workbench_sidebar_active(theme)
+  } else {
+    @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)
+  }
+  @views.container(
+    @views.row(
+      [
+        @views.container(
+          @views.spacer(min_length=0.0),
+          width=8.0,
+          height=8.0,
+          background=status_color,
+          corner_radius=4.0,
+          padding=0.0,
+        ),
+        @views.text(
+          truncate_text(title, 22),
+          role=@views.TextRole::Label,
+          theme~,
+          width=width - 28.0,
+        ).foreground(title_color),
+      ],
+      spacing=10.0,
+      align=@views.CrossAlign::Center,
+    ),
     width~,
-    height=38.0,
-  )
+    background=row_bg,
+    corner_radius=6.0,
+    padding=8.0,
+  ).on_tap(WorkbenchMsg::SelectTask(id))
 }
 
 ///|
+/// Sidebar footer: settings gear + appearance toggle row only (no avatar/name).
 fn sidebar_footer(
   model : WorkbenchModel,
   theme : @core.Theme,
@@ -534,48 +642,42 @@ fn sidebar_footer(
   @views.padding_xy(
     @views.column(
       [
-        workspace_switch_button(
-          Workspace::Settings,
-          model.active_workspace,
-          theme,
-          width,
-          model.animation_progress,
-        ),
-        @views.padding_edges(
-          @views.container(
-            @views.row(
-              [
-                @views.text(
-                  appearance_label(model.appearance),
-                  role=@views.TextRole::Caption,
-                  theme~,
-                  width=width - 72.0,
-                ),
-                @views.spacer(),
-                @views.text(
-                  theme_label(theme),
-                  role=@views.TextRole::Caption,
-                  theme~,
-                  width=32.0,
-                ),
-              ],
-              align=@views.CrossAlign::Center,
+        @views.divider(theme~),
+        @views.row(
+          [
+            @views.container(
+              @views.icon(
+                @views.IconName::Settings,
+                size=18.0,
+                color=workbench_text_muted(theme),
+              ),
+              width=28.0,
+              height=28.0,
+              padding=0.0,
+            ).on_tap(WorkbenchMsg::ToggleSettings),
+            @views.text(
+              appearance_label(model.appearance),
+              role=@views.TextRole::Caption,
+              theme~,
+              width=width - 72.0,
             ),
-            width~,
-            corner_radius=8.0,
-            padding=0.0,
-          ).on_tap(WorkbenchMsg::ToggleAppearance),
-          top=6.0,
-          left=10.0,
-          bottom=6.0,
-          right=10.0,
+            @views.text(
+              theme_label(theme),
+              role=@views.TextRole::Caption,
+              theme~,
+              width=32.0,
+            ),
+            @views.spacer(),
+          ],
+          spacing=8.0,
+          align=@views.CrossAlign::Center,
         ),
       ],
-      spacing=6.0,
+      spacing=8.0,
       align=@views.CrossAlign::Stretch,
     ),
-    horizontal=20.0,
-    vertical=16.0,
+    horizontal=16.0,
+    vertical=12.0,
   )
 }
 
@@ -588,7 +690,80 @@ fn theme_label(theme : @core.Theme) -> String {
 }
 
 // ---------------------------------------------------------------------------
-// Main surface and inspector
+// Settings overlay
+// ---------------------------------------------------------------------------
+
+///|
+/// The settings overlay: a semi-transparent backdrop with a centered card
+/// containing the settings form. Rendered on top of the whole window via
+/// `@views.overlay` when `model.settings_open` is true.
+fn settings_overlay_view(
+  model : WorkbenchModel,
+  theme : @core.Theme,
+  width : Double,
+  height : Double,
+) -> @moui.View[WorkbenchMsg] {
+  let card_width = (width * 0.62).min(640.0).max(360.0)
+  let card_height = (height * 0.82).min(560.0).max(360.0)
+  @views.container(
+    @views.column(
+      [
+        @views.spacer(weight=1.0),
+        @views.container(
+          @views.column(
+            [
+              @views.row(
+                [
+                  @views.text(
+                    "Settings",
+                    role=@views.TextRole::Title,
+                    theme~,
+                  ),
+@views.spacer(min_length=78.0, weight=0.0),
+                  @views.container(
+                    @views.icon(
+                      @views.IconName::Close,
+                      size=18.0,
+                      color=workbench_text_muted(theme),
+                    ),
+                    width=32.0,
+                    height=32.0,
+                    padding=0.0,
+                  ).on_tap(WorkbenchMsg::ToggleSettings),
+                ],
+                align=@views.CrossAlign::Center,
+              ),
+              @views.divider(theme~),
+              settings_workspace_view(
+                model.settings,
+                theme,
+                card_width - 48.0,
+                card_height - 120.0,
+              ).map(m => WorkbenchMsg::SettingsMsg(m)),
+            ],
+            spacing=14.0,
+            align=@views.CrossAlign::Stretch,
+          ),
+          width=card_width,
+          height=card_height,
+          background=workbench_card_background(theme),
+          corner_radius=14.0,
+          padding=24.0,
+        ).border(hairline_border(theme)),
+        @views.spacer(weight=1.0),
+      ],
+      spacing=0.0,
+      align=@views.CrossAlign::Center,
+    ),
+    width~,
+    height~,
+    background=@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.45),
+    padding=0.0,
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Main surface
 // ---------------------------------------------------------------------------
 
 ///|
@@ -598,301 +773,14 @@ fn main_surface(
   width : Double,
   height : Double,
 ) -> @moui.View[WorkbenchMsg] {
-  let content = match model.active_workspace {
+  match model.active_tab {
     Code =>
       code_workspace_view(model.code, theme, width, height).map(m => {
         WorkbenchMsg::CodeMsg(m)
       })
-    Settings =>
-      settings_workspace_view(model.settings, theme, width, height).map(m => {
-        WorkbenchMsg::SettingsMsg(m)
-      })
-    Write => write_workspace_view(theme, width, height)
-    ConnectPhone => connect_phone_workspace_view(theme, width, height)
-    ScheduledTasks => scheduled_tasks_workspace_view(theme, width, height)
-    Plugins => plugins_workspace_view(theme, width, height)
+    Work => work_tab_placeholder_view(theme, width, height)
+    Design => design_tab_placeholder_view(theme, width, height)
   }
-  // Fade-in entrance when switching workspaces.
-  content.transition(
-    spec=@core.TransitionSpec::fade(
-      from_opacity=0.0,
-      to_opacity=1.0,
-      duration_ms=180.0,
-    ),
-    progress=model.animation_progress,
-  )
-}
-
-///|
-fn inspector_shell(
-  model : WorkbenchModel,
-  theme : @core.Theme,
-  width : Double,
-  height : Double,
-) -> @moui.View[WorkbenchMsg] {    @views.container(
-    @views.scroll_view(inspector_content(model, theme, width), width~, height~),
-    width~,
-    height~,
-    background=workbench_sidebar_background(theme),
-    padding=20.0,
-  ).border(hairline_border(theme))
-}
-
-///|
-fn inspector_content(
-  model : WorkbenchModel,
-  theme : @core.Theme,
-  width : Double,
-) -> @moui.View[WorkbenchMsg] {
-  match model.active_workspace {
-    Code => code_inspector(model.code, theme, width - 28.0)
-    Write => write_inspector(theme, width - 28.0)
-    ConnectPhone => connect_phone_inspector(theme, width - 28.0)
-    ScheduledTasks => schedule_inspector(theme, width - 28.0)
-    Plugins => plugins_inspector(theme, width - 28.0)
-    Settings => settings_inspector(model.settings, theme, width - 28.0)
-  }
-}
-
-///|
-fn code_inspector(
-  code : CodeWorkspace,
-  theme : @core.Theme,
-  width : Double,
-) -> @moui.View[WorkbenchMsg] {
-  @views.column(
-    [
-      inspector_card(
-        "Plan",
-        [
-          "1. Inspect current app shell", "2. Refactor UI surfaces", "3. Run focused checks",
-        ],
-        @views.BadgeTone::Accent,
-        theme,
-        width,
-      ),
-      inspector_card(
-        "Todo",
-        [
-          "Keep backend boundary stable", "Preserve session state", "Avoid framework API churn",
-        ],
-        @views.BadgeTone::Neutral,
-        theme,
-        width,
-      ),
-      inspector_card(
-        "Changes",
-        [
-          "No file edits yet in this turn", "Diff inspector reserved for backend events",
-        ],
-        @views.BadgeTone::Warning,
-        theme,
-        width,
-      ),
-      inspector_card(
-        "Context",
-        [
-          model_choice_label(code.current_model),
-          thinking_choice_label(code.current_thinking),
-          if code.is_streaming {
-            "Turn is streaming"
-          } else {
-            "Ready for a task"
-          },
-        ],
-        @views.BadgeTone::Success,
-        theme,
-        width,
-      ),
-    ],
-    spacing=18.0,
-    align=@views.CrossAlign::Stretch,
-  )
-}
-
-///|
-fn write_inspector(
-  theme : @core.Theme,
-  width : Double,
-) -> @moui.View[WorkbenchMsg] {
-  @views.column(
-    [
-      inspector_card(
-        "Assistant",
-        ["Summarize selection", "Rewrite tone", "Continue draft"],
-        @views.BadgeTone::Accent,
-        theme,
-        width,
-      ),
-      inspector_card(
-        "Outline",
-        ["Overview", "Architecture", "Validation"],
-        @views.BadgeTone::Neutral,
-        theme,
-        width,
-      ),
-      inspector_card(
-        "Export",
-        ["HTML", "PDF", "DOCX"],
-        @views.BadgeTone::Success,
-        theme,
-        width,
-      ),
-    ],
-    spacing=16.0,
-    align=@views.CrossAlign::Stretch,
-  )
-}
-
-///|
-fn connect_phone_inspector(
-  theme : @core.Theme,
-  width : Double,
-) -> @moui.View[WorkbenchMsg] {
-  @views.column(
-    [
-      inspector_card(
-        "Channels",
-        ["Feishu / Lark ready", "WeChat relay offline", "Webhook local only"],
-        @views.BadgeTone::Neutral,
-        theme,
-        width,
-      ),
-      inspector_card(
-        "Manual Task",
-        ["Send a test prompt", "Inspect reply payload"],
-        @views.BadgeTone::Accent,
-        theme,
-        width,
-      ),
-    ],
-    spacing=12.0,
-    align=@views.CrossAlign::Stretch,
-  )
-}
-
-///|
-fn schedule_inspector(
-  theme : @core.Theme,
-  width : Double,
-) -> @moui.View[WorkbenchMsg] {
-  @views.column(
-    [
-      inspector_card(
-        "Next Runs",
-        ["Daily standup: 09:00", "Dependency audit: Friday"],
-        @views.BadgeTone::Success,
-        theme,
-        width,
-      ),
-      inspector_card(
-        "Defaults",
-        ["Model: V4 Pro", "Sandbox: workspace"],
-        @views.BadgeTone::Neutral,
-        theme,
-        width,
-      ),
-    ],
-    spacing=16.0,
-    align=@views.CrossAlign::Stretch,
-  )
-}
-
-///|
-fn plugins_inspector(
-  theme : @core.Theme,
-  width : Double,
-) -> @moui.View[WorkbenchMsg] {
-  @views.column(
-    [
-      inspector_card(
-        "Capabilities",
-        ["Skills enabled", "MCP catalog reserved", "Web tools reserved"],
-        @views.BadgeTone::Accent,
-        theme,
-        width,
-      ),
-      inspector_card(
-        "Diagnostics",
-        ["No runtime provider connected"],
-        @views.BadgeTone::Warning,
-        theme,
-        width,
-      ),
-    ],
-    spacing=12.0,
-    align=@views.CrossAlign::Stretch,
-  )
-}
-
-///|
-fn settings_inspector(
-  settings : SettingsWorkspace,
-  theme : @core.Theme,
-  width : Double,
-) -> @moui.View[WorkbenchMsg] {
-  inspector_card(
-    "Current Settings",
-    [
-      "Approval: " + approval_policy_label(settings.approval_policy),
-      "Sandbox: " + sandbox_mode_label(settings.sandbox_mode),
-      "Font: " + settings.font_size.to_string() + " pt",
-    ],
-    @views.BadgeTone::Neutral,
-    theme,
-    width,
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Small view helpers
-// ---------------------------------------------------------------------------
-
-///|
-fn[Msg] inspector_card(
-  title : String,
-  lines : Array[String],
-  tone : @views.BadgeTone,
-  theme : @core.Theme,
-  width : Double,
-) -> @moui.View[Msg] {
-  let rows : Array[@moui.View[Msg]] = [
-    @views.row(
-      [
-        @views.badge(title, tone~, theme~, width=(width - 24.0).min(132.0)),
-        @views.spacer(),
-      ],
-      align=@views.CrossAlign::Center,
-    ),
-  ]
-  for line in lines {
-    rows.push(
-      @views.text(
-        line,
-        role=@views.TextRole::Caption,
-        theme~,
-        width=width - 24.0,
-      ).foreground(theme.palette.muted),
-    )
-  }
-  @views.container(
-    @views.column(rows, spacing=8.0, align=@views.CrossAlign::Start),
-    width~,
-    background=workbench_card_background(theme),
-    corner_radius=10.0,
-    padding=16.0,
-  )
-}
-
-///|
-fn[Msg] sidebar_overline(
-  text_ : String,
-  theme : @core.Theme,
-  width : Double,
-) -> @moui.View[Msg] {
-  @views.text(text_, role=@views.TextRole::Overline, theme~, width~).foreground(
-    theme.palette.muted,
-  )
 }
 
 ///|
@@ -906,81 +794,30 @@ fn[Msg] sidebar_caption(
   )
 }
 
-///|
-fn[Msg] sidebar_info_row(
-  label : String,
-  value : String,
-  theme : @core.Theme,
-  width : Double,
-) -> @moui.View[Msg] {
-  @views.container(
-    @views.column(
-      [
-        @views.text(
-          label,
-          role=@views.TextRole::Label,
-          theme~,
-          width=width - 20.0,
-        ),
-        @views.text(
-          value,
-          role=@views.TextRole::Caption,
-          theme~,
-          width=width - 20.0,
-        ).foreground(theme.palette.muted),
-      ],
-      spacing=4.0,
-      align=@views.CrossAlign::Start,
-    ),
-    width~,
-    background=workbench_subtle_background(theme),
-    corner_radius=8.0,
-    padding=12.0,
-  )
-}
-
 // ---------------------------------------------------------------------------
 // Pure helpers
 // ---------------------------------------------------------------------------
 
 ///|
-fn workspace_label(ws : Workspace) -> String {
-  match ws {
+fn tab_label(tab : TopTab) -> String {
+  match tab {
+    Work => "Work"
     Code => "Code"
-    Write => "Write"
-    Settings => "Settings"
-    ConnectPhone => "Connect Phone"
-    ScheduledTasks => "Scheduled Tasks"
-    Plugins => "Plugins"
+    Design => "Design"
   }
 }
 
 ///|
-fn workspace_icon(ws : Workspace) -> @views.IconName {
-  match ws {
-    Code => @views.IconName::CodeInline
-    Write => @views.IconName::FileNew
-    Settings => @views.IconName::Settings
-    ConnectPhone => @views.IconName::Link
-    ScheduledTasks => @views.IconName::ListTask
-    Plugins => @views.IconName::Columns
-  }
-}
-
-///|
-fn workspace_subtitle(model : WorkbenchModel) -> String {
-  match model.active_workspace {
+fn tab_subtitle(model : WorkbenchModel) -> String {
+  match model.active_tab {
     Code =>
       if model.code.is_streaming {
-        "Agent is working in the current repository."
+        "Agent 正在工作…"
       } else {
-        "Ask the agent to inspect, edit, test, or review."
+        "向 Mo 描述你的任务"
       }
-    Write => "Draft, review, and export Markdown documents."
-    Settings => "Configure runtime, permissions, and workbench preferences."
-    ConnectPhone => "Connect IM channels and manual phone-side tasks."
-    ScheduledTasks => "Prepare repeatable prompts for later execution."
-    Plugins => "Manage skills, MCP servers, and tool capabilities."
+    Work => "任务看板"
+    Design => "设计预览"
   }
 }
 
@@ -988,7 +825,7 @@ fn workspace_subtitle(model : WorkbenchModel) -> String {
 fn code_session_title(code : CodeWorkspace) -> String {
   match code.active_session_id {
     Some(id) => truncate_text(id, 34)
-    None => "New coding session"
+    None => "新建任务"
   }
 }
 
@@ -1002,47 +839,12 @@ fn appearance_label(appearance : AppearanceMode) -> String {
 }
 
 ///|
-fn model_choice_id(model : ModelChoice) -> String {
-  match model {
-    V4Flash => "v4-flash"
-    V4Pro => "v4-pro"
-  }
-}
-
-///|
-fn model_choice_from_id(id : String) -> ModelChoice {
-  match id {
-    "v4-flash" => ModelChoice::V4Flash
-    _ => ModelChoice::V4Pro
-  }
-}
-
-///|
 fn model_choice_label(model : ModelChoice) -> String {
   match model {
     V4Flash => "V4 Flash"
     V4Pro => "V4 Pro"
   }
 }
-
-///|
-fn thinking_choice_id(thinking : ThinkingChoice) -> String {
-  match thinking {
-    No => "no"
-    High => "high"
-    Max => "max"
-  }
-}
-
-///|
-fn thinking_choice_from_id(id : String) -> ThinkingChoice {
-  match id {
-    "no" => ThinkingChoice::No
-    "high" => ThinkingChoice::High
-    _ => ThinkingChoice::Max
-  }
-}
-
 ///|
 fn thinking_choice_label(thinking : ThinkingChoice) -> String {
   match thinking {
@@ -1071,15 +873,6 @@ fn approval_policy_from_id(id : String) -> ApprovalPolicy {
 }
 
 ///|
-fn approval_policy_label(policy : ApprovalPolicy) -> String {
-  match policy {
-    NeverAsk => "Never ask"
-    AskOnWrite => "Ask on write"
-    AskOnCommand => "Ask on command"
-  }
-}
-
-///|
 fn sandbox_mode_id(mode : SandboxMode) -> String {
   match mode {
     ReadOnly => "read-only"
@@ -1094,15 +887,6 @@ fn sandbox_mode_from_id(id : String) -> SandboxMode {
     "read-only" => SandboxMode::ReadOnly
     "full" => SandboxMode::FullAccess
     _ => SandboxMode::WorkspaceWritable
-  }
-}
-
-///|
-fn sandbox_mode_label(mode : SandboxMode) -> String {
-  match mode {
-    ReadOnly => "Read only"
-    WorkspaceWritable => "Workspace writable"
-    FullAccess => "Full access"
   }
 }
 

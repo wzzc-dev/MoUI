@@ -257,11 +257,11 @@ test "steer submit only works while streaming" {
 ///|
 test "model changed updates current model" {
   let model = test_model(script=_cmd => [])
-  inspect(model.code.current_model == ModelChoice::V4Pro, content="true")
-  let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(CodeMsg::ModelChanged(ModelChoice::V4Flash)),
-  )
   inspect(model.code.current_model == ModelChoice::V4Flash, content="true")
+  let (model, _effect) = model.update(
+    WorkbenchMsg::CodeMsg(CodeMsg::ModelChanged(ModelChoice::V4Pro)),
+  )
+  inspect(model.code.current_model == ModelChoice::V4Pro, content="true")
 }
 
 ///|
@@ -311,77 +311,6 @@ test "fixture backend records dispatched commands" {
   inspect(cmds.length(), content="1")
   guard cmds[0] is SendTask(task) else { fail("expected SendTask command") }
   inspect(task, content="do something")
-}
-
-// ---------------------------------------------------------------------------
-// Shell routing (new)
-// ---------------------------------------------------------------------------
-
-///|
-test "shell starts on the Code workspace" {
-  let model = test_model(script=_cmd => [])
-  inspect(model.active_workspace == Workspace::Code, content="true")
-}
-
-///|
-test "switch workspace updates active workspace" {
-  let model = test_model(script=_cmd => [])
-  let (model, _effect) = model.update(
-    WorkbenchMsg::SwitchWorkspace(Workspace::Settings),
-  )
-  inspect(model.active_workspace == Workspace::Settings, content="true")
-  let (model, _effect) = model.update(
-    WorkbenchMsg::SwitchWorkspace(Workspace::Write),
-  )
-  inspect(model.active_workspace == Workspace::Write, content="true")
-  // Reserved workspaces are switchable (they render a placeholder surface).
-  let (model, _effect) = model.update(
-    WorkbenchMsg::SwitchWorkspace(Workspace::ConnectPhone),
-  )
-  inspect(model.active_workspace == Workspace::ConnectPhone, content="true")
-}
-
-///|
-test "switching workspace does not disturb code workspace state" {
-  let model = test_model(script=_cmd => [])
-  let model = {
-    ..model,
-    code: {
-      ..model.code,
-      messages: [ChatMessage::User("keep me")],
-      prompt: "draft",
-    },
-  }
-  let (model, _effect) = model.update(
-    WorkbenchMsg::SwitchWorkspace(Workspace::Settings),
-  )
-  // Code workspace state is preserved across workspace switches.
-  inspect(model.code.messages.length(), content="1")
-  inspect(model.code.prompt, content="draft")
-}
-
-///|
-test "code msg routes to code workspace" {
-  let model = test_model(script=cmd => {
-    match cmd {
-      SendTask(task) => [TurnTerminal(TurnStatus::Finished, "done: " + task)]
-      _ => []
-    }
-  })
-  let model = { ..model, code: { ..model.code, prompt: "route me" } }
-  let (model, _effect) = model.update(
-    WorkbenchMsg::CodeMsg(CodeMsg::SubmitPrompt),
-  )
-  inspect(model.code.is_streaming, content="true")
-  inspect(model.code.messages.length(), content="1")
-  // Now switch to Settings and back; code state persists.
-  let (model, _effect) = model.update(
-    WorkbenchMsg::SwitchWorkspace(Workspace::Settings),
-  )
-  let (model, _effect) = model.update(
-    WorkbenchMsg::SwitchWorkspace(Workspace::Code),
-  )
-  inspect(model.code.messages.length(), content="1")
 }
 
 // ---------------------------------------------------------------------------
@@ -466,45 +395,6 @@ test "settings working dir change updates settings workspace" {
   inspect(model.settings.working_dir, content="~/projects/x")
 }
 
-// ---------------------------------------------------------------------------
-// UI helper coverage
-// ---------------------------------------------------------------------------
-
-///|
-test "workbench layout uses reference desktop widths and hides inspector when narrow" {
-  let desktop = workbench_layout(@core.Size::new(width=1440.0, height=900.0))
-  inspect(desktop.sidebar_width == 280.0, content="true")
-  inspect(desktop.inspector_width == 340.0, content="true")
-  inspect(desktop.inspector_visible, content="true")
-  inspect(desktop.center_width == 820.0, content="true")
-  let tablet = workbench_layout(@core.Size::new(width=1024.0, height=768.0))
-  inspect(tablet.sidebar_width == 248.0, content="true")
-  inspect(tablet.inspector_visible, content="false")
-  inspect(tablet.center_width == 776.0, content="true")
-  let narrow = workbench_layout(@core.Size::new(width=700.0, height=680.0))
-  inspect(narrow.sidebar_width == 200.0, content="true")
-  inspect(narrow.inspector_visible, content="false")
-}
-
-///|
-test "workspace labels and icons match shell navigation" {
-  inspect(workspace_label(Workspace::Code), content="Code")
-  inspect(workspace_label(Workspace::ConnectPhone), content="Connect Phone")
-  inspect(workspace_label(Workspace::ScheduledTasks), content="Scheduled Tasks")
-  inspect(
-    workspace_icon(Workspace::Code) == @views.IconName::CodeInline,
-    content="true",
-  )
-  inspect(
-    workspace_icon(Workspace::Write) == @views.IconName::FileNew,
-    content="true",
-  )
-  inspect(
-    workspace_icon(Workspace::Plugins) == @views.IconName::Columns,
-    content="true",
-  )
-}
-
 ///|
 test "settings segmented ids map to stable enum values" {
   inspect(approval_policy_id(ApprovalPolicy::NeverAsk), content="never")
@@ -522,15 +412,26 @@ test "settings segmented ids map to stable enum values" {
 }
 
 ///|
-test "model and thinking segmented ids map to stable enum values" {
-  inspect(model_choice_id(ModelChoice::V4Pro), content="v4-pro")
+test "workbench theme token helpers use neutral gray reference colors" {
+  let light = @views.light_theme()
   inspect(
-    model_choice_from_id("v4-flash") == ModelChoice::V4Flash,
+    workbench_app_background(light) ==
+    @core.Color::rgba(r=243.0/255.0, g=245.0/255.0, b=252.0/255.0, a=1.0),
     content="true",
   )
-  inspect(thinking_choice_id(ThinkingChoice::Max), content="max")
   inspect(
-    thinking_choice_from_id("high") == ThinkingChoice::High,
+    workbench_sidebar_background(light) ==
+    @core.Color::rgba(r=238.0/255.0, g=242.0/255.0, b=250.0/255.0, a=1.0),
+    content="true",
+  )
+  inspect(
+    workbench_accent(light) ==
+    @core.Color::rgba(r=100.0/255.0, g=100.0/255.0, b=100.0/255.0, a=1.0),
+    content="true",
+  )
+  inspect(
+    workbench_sidebar_active(light) ==
+    @core.Color::rgba(r=200.0/255.0, g=200.0/255.0, b=200.0/255.0, a=0.50),
     content="true",
   )
 }
