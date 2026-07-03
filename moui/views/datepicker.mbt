@@ -30,28 +30,6 @@ pub fn[Msg] datepicker(
   )
 }
 
-///|
-pub fn[Msg] datepicker_binding(
-  selected~ : @core.Binding[@core.DateValue],
-  mode? : DatePickerMode = DatePickerMode::Date,
-  placeholder? : String = "Select date",
-  theme? : @core.Theme,
-  style? : PickerStyle,
-  min_date? : @core.DateValue? = None,
-  max_date? : @core.DateValue? = None,
-) -> @core.View[Msg] {
-  date_picker_control(
-    selected~,
-    mode=mode.to_view_mode(),
-    placeholder~,
-    theme?,
-    style?,
-    min_date~,
-    max_date~,
-  )
-}
-
-///|
 fn DatePickerMode::to_view_mode(self : DatePickerMode) -> DatePickerDisplayMode {
   match self {
     Date => DatePickerDisplayMode::Date

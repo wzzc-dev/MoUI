@@ -35,21 +35,3 @@ pub fn[Msg] picker(
   )
 }
 
-///|
-pub fn[Msg] picker_binding(
-  items : Array[PickerItem],
-  selected~ : @core.Binding[String],
-  placeholder? : String = "Select...",
-  theme? : @core.Theme,
-  style? : PickerStyle,
-  max_height? : Double = 200.0,
-) -> @core.View[Msg] {
-  picker_control(
-    items=picker_options(items),
-    selected~,
-    placeholder~,
-    theme?,
-    style?,
-    max_height~,
-  )
-}

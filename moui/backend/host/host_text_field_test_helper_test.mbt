@@ -1,6 +1,6 @@
 ///|
 fn host_test_text_field(
-  value : @core.Binding[String],
+  value : @core.State[String],
   width? : Double = 240.0,
   height? : Double = 40.0,
   outlined? : Bool = false,
@@ -43,11 +43,14 @@ fn host_test_text_field(
     cursor_color: @core.Color::blue(),
     font: @core.FontSpec::new(size=16.0, weight=400),
   }
-  @views.text_field_binding(
-    value,
-    placeholder="Type",
-    style=field_style,
-    width~,
-    height~,
-  )
+  @views.component(ctx => {
+    @views.text_field(
+      ctx.watch(value),
+      on_input=next => value.set(next),
+      placeholder="Type",
+      style=field_style,
+      width~,
+      height~,
+    )
+  })
 }
