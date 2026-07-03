@@ -161,11 +161,11 @@ fn skia_entries() -> Array[SkiaEntry] {
       host_backend_import: "",
       host_summary_call: "",
       options_type: "MacosSkiaAppOptions",
-      run_function: "run_app_with_options",
+      run_function: "run_app_with_options_async_pump",
       surface_route_env: "MOUI_MACOS_SKIA_SURFACE_ROUTE",
       app_title: "\"Mo Workbench\"",
       expected_link_token: "-framework AppKit",
-      allow_async_pump: false,
+      allow_async_pump: true,
     },
   ]
 }
