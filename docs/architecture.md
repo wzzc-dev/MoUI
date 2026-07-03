@@ -246,7 +246,7 @@ examples/pdf_workbench/app/  shared PDF reader/light editor app
 examples/pdf_workbench/{macos_skia,windows_skia,linux_skia}/ platform PDF Workbench Skia entrypoints
 examples/pdf_workbench/{pdflite_adapter,pdflite_service_protocol,pdflite_service_native_transport,pdflite_service_cli,pdfium_adapter}/ app-private PDF parse/writeback/raster adapter and service subpackages
 examples/mo_workbench/app/   shared multi-backend agent desktop dogfood app
-examples/mo_workbench/native_transport/ app-private Pi RPC native process transport subpackage
+examples/mo_workbench/openseek_native_transport/ app-private OpenSeek in-process agent backend (native)
 examples/mo_workbench/macos_skia/ macOS Mo Workbench native Skia entrypoint
 examples/{settings,data_table,file_importer,command_palette}/app/ shared app-pattern packages without platform entrypoints
 ```

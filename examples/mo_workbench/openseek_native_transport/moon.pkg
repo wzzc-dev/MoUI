@@ -1,0 +1,17 @@
+import {
+  "moonbitlang/core/env",
+  "moonbitlang/async",
+  "bobzhang/openseek/agent",
+  "bobzhang/openseek/agent_runtime",
+  "bobzhang/openseek/agent_session",
+  "bobzhang/openseek/agent_session/store" @store,
+  "bobzhang/openseek/deepseek",
+  "bobzhang/openseek/prompt",
+  "examples/mo_workbench/app",
+}
+
+supported_targets = "native"
+
+options(
+  targets: { },
+)

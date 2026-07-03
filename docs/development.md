@@ -147,7 +147,8 @@ workflow.
 
 When updating this repository, update all Git checkouts that participate in the
 workspace, not just the root checkout. That includes the main MoUI repository
-and Git submodules such as `.agents/skills/moonbit-skills` and `window`. Then
+and Git submodules such as `.agents/skills/moonbit-skills`, `window`, and
+`openseek`. Then
 run `moon update` so registry dependencies are refreshed. `moui_skia` updates
 with the main MoUI checkout.
 
@@ -181,6 +182,24 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\update_repositories.p
 The `moui_skia` workspace member is updated by the root repository pull; the
 window dependency resolves from mooncakes.io (or from the `window` submodule
 checkout when dev mode is on).
+
+Mo Workbench's OpenSeek backend resolves `bobzhang/openseek` from the `openseek/`
+submodule when `./openseek` is listed in `moon.work` (default in this repo for
+dogfooding). Initialize the checkout once:
+
+```sh
+git submodule update --init openseek
+```
+
+Toggle the workspace member with `sh scripts/openseek-dev-mode.sh on|off|status`.
+Pin `bobzhang/openseek@…` in `examples/mo_workbench/moon.mod` when bumping the
+submodule commit. Run Mo Workbench native:
+
+```sh
+export OPENAI_API_KEY=...   # or DEEPSEEK=...
+export OPENAI_BASE_URL=...  # optional OpenAI-compatible API URL
+moon run examples/mo_workbench/macos_skia --target native
+```
 
 ## Validation
 
