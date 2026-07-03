@@ -78,6 +78,15 @@ fn SessionSummary::new(
 }
 
 ///|
+pub fn session_summary(
+  id~ : String,
+  first_prompt~ : String,
+  last_active_unix_seconds? : Int64? = None,
+) -> SessionSummary {
+  SessionSummary::new(id~, first_prompt~, last_active_unix_seconds~)
+}
+
+///|
 /// Commands dispatched from the UI to the backend.
 pub(all) enum AgentCommand {
   /// Send a user task to the active session and run a turn.
@@ -113,9 +122,17 @@ fn AgentBackendRuntime::new(
 }
 
 ///|
+/// Construct a backend runtime from a command handler (used by native entrypoints).
+pub fn agent_backend_runtime(
+  run~ : (Array[AgentCommand], (AgentEvent) -> Unit) -> Unit,
+) -> AgentBackendRuntime {
+  AgentBackendRuntime::new(run~)
+}
+
+///|
 /// A stub backend that echoes canned replies, so the UI is fully interactive
-/// without an LLM. Replace with the openseek backend once the upstream
-/// mooncakes resolution bug is fixed.
+/// without an LLM. Native macOS Skia injects `openseek_native_transport` when
+/// an API key is set.
 pub fn AgentBackendRuntime::stub() -> AgentBackendRuntime {
   AgentBackendRuntime::new(run=(commands, emit) => {
     for cmd in commands {
@@ -126,7 +143,7 @@ pub fn AgentBackendRuntime::stub() -> AgentBackendRuntime {
             AssistantMessageAdded(
               "(stub reply) You said: " +
               task +
-              ". This is an offline placeholder; real model output arrives once openseek is wired in.",
+              ". This is an offline placeholder; set OPENAI_API_KEY or DEEPSEEK for OpenSeek.",
               None,
             ),
           )

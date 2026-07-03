@@ -18,13 +18,16 @@ behavior that is not wired yet.
   narrow: `program_with_backend`, `AgentBackendRuntime`, `AgentBackendFixture`,
   `AgentCommand`, `AgentEvent`, `ModelChoice`, `ThinkingChoice`, `TurnStatus`,
   `SessionSummary`, `WorkbenchModel`, `WorkbenchMsg`, and `MoWorkbenchApp`.
-- `examples/mo_workbench/macos_skia` is a thin entrypoint that selects
-  `backend/macos/skia`, injects a backend runtime, and runs the shared app
-  program with the macOS Skia pump. Currently it injects
-  `AgentBackendRuntime::stub()` — a canned-reply stub that makes the UI fully
-  interactive without an LLM. Once the upstream `bobzhang/openseek@0.2.1`
-  mooncakes resolution bug is fixed, this entrypoint will inject the real
-  openseek agent loop (`run_turn_in_scope` + `agent_session/store`).
+- `examples/mo_workbench/openseek_native_transport` is a native-only package
+  that bridges `AgentCommand` / `AgentEvent` to the in-process OpenSeek agent
+  (`run_turn_in_scope`, `SessionStore`, tool registry). It depends on the
+  `openseek` git submodule (`https://github.com/moonbitlang/openseek`).
+- `examples/mo_workbench/macos_skia` injects
+  `openseek_native_transport::openseek_backend_from_env()` when
+  `OPENAI_API_KEY` or `DEEPSEEK` is set (`OPENAI_BASE_URL` overrides the
+  DeepSeek client URL); otherwise `AgentBackendRuntime::stub()`. Enable the
+  submodule in the workspace with `sh scripts/openseek-dev-mode.sh on` (adds
+  `./openseek` to `moon.work`).
 
 ## Workspace Architecture
 
@@ -129,26 +132,22 @@ The current UI intentionally does not implement Write persistence/completion,
 phone pairing, task execution, plugin installation, Pi/ACP/Local backend
 switching, diff application, or command catalogs.
 
-## Planned openseek Integration
+## OpenSeek integration (current)
 
-Once `bobzhang/openseek@0.2.1` resolves from mooncakes, the macos_skia
-entrypoint will replace the stub with an `OpenSeekBackendOwner` that:
+The macos_skia entrypoint uses `openseek_native_transport`, which:
 
-- owns an `@aqueue.Queue[AgentCommand]` bridging the UI effect boundary to an
-  async worker, following the repo's native transport owner pattern;
-- lazily initializes one `AgentRuntime` + `AgentTaskScope` + `Tools` registry
-  (built once with `@agent.build_tools`);
-- maps `SendTask` to `@agent.run_turn_in_scope(...)` with an `append_item`
-  callback that projects each `SessionItem` into an `AgentEvent` and emits it
-  back to the UI;
-- maps `Steer` to `@agent.steer(runtime, text)`;
-- maps `NewSession` / `SwitchSession` / `FetchSessionList` to
-  `@store.SessionStore` operations;
-- runs in a `@async.with_task_group` `spawn_bg` alongside the Skia pump.
+- enqueues commands from MoUI `Effect::run` and runs them on a dedicated
+  `openseek_worker_loop` task alongside the Skia async pump (`@async.all`);
+- persists session events through `@store.SessionStore` under
+  `MO_WORKBENCH_SESSION_ROOT` (default `<workspace>/.openseek`);
+- maps `SessionItem` / `TurnTerminal` into `AgentEvent` for the Code workspace;
+- supports `NewSession`, `SwitchSession`, and `FetchSessionList` against the
+  store.
 
-The app package needs no changes for this — only the entrypoint's backend
-injection changes (and only `CodeWorkspace::update` consumes the runtime on
-the app side).
+Follow-up work: a long-lived `AgentRuntime` + background worker (serve-mode
+shape) so mid-turn `Steer` shares the same runtime as the active turn, and
+optional `spawn_bg` integration with the Skia async pump instead of per-turn
+blocking.
 
 ## Reserved Full-Alignment Plan
 
