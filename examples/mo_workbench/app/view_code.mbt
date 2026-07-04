@@ -1,9 +1,7 @@
-// Code workspace center column: TRAE-style welcome area (empty state) plus
 // the streaming message timeline + composer (chat mode).
 
 ///|
 /// The code workspace view. When there are no messages and no streaming turn,
-/// render the full TRAE welcome area (brand title + input card + context bar +
 // quick cards). Otherwise render the streaming timeline + composer.
 fn code_workspace_view(
   model : CodeWorkspace,
@@ -34,7 +32,6 @@ fn code_workspace_view(
 }
 
 ///|
-/// The TRAE-style welcome area shown when the task has no messages yet.
 /// Brand title + input card (with model dropdown + toolbar + round purple Send)
 /// + context bar with icons + bottom quick-action chips. The whole block
 /// scrolls so it fits narrow windows.
@@ -56,11 +53,7 @@ fn code_welcome_view(
       @views.spacer(min_length=30.0, weight=0.0),
       code_input_card(model, theme, inner_width),
       @views.spacer(min_length=10.0, weight=0.0),
-      @views.container(
-        code_context_bar(theme, inner_width),
-        width=inner_width,
-        padding=0.0,
-      ),
+      code_context_bar(theme, inner_width),
       @views.spacer(min_length=50.0, weight=0.0),
       @views.container(
         quick_action_chips(theme, inner_width),
@@ -69,7 +62,7 @@ fn code_welcome_view(
       ),
     ],
     spacing=0.0,
-    align=@views.CrossAlign::Center,
+    align=@views.CrossAlign::Stretch,
   )
   let welcome_area_height = (height - 96.0).max(0.0)
   @views.container(
@@ -103,11 +96,11 @@ fn code_input_card(
           model.prompt,
           on_input=value => CodeMsg::PromptChanged(value),
           placeholder="帮你编写代码、调试 Bug、优化性能等开发工作…",
-          lines=3,
+          lines=4,
           variant=@views.TextFieldVariant::Filled,
           theme~,
           width~,
-          line_height=35.0,
+          line_height=28.0,
         ),
         @views.spacer(min_length=12.0),
         // Toolbar: left tools + spacer + right controls.
@@ -156,7 +149,6 @@ fn code_input_card(
 
 ///|
 /// Model selector as a dropdown-style chip showing the current model + an arrow,
-/// mirroring the TRAE "GLM-5.2 ▼" look.
 fn code_model_dropdown(
   code : CodeWorkspace,
   theme : @moui.Theme,
@@ -200,7 +192,7 @@ fn code_model_dropdown(
 /// indicator.
 fn code_context_bar(
   theme : @moui.Theme,
-  _width : Double,
+  width : Double,
 ) -> @moui.View[CodeMsg] {
   @views.row(
     [
@@ -264,7 +256,6 @@ fn code_context_bar(
         corner_radius=6.0,
         padding=6.0,
       ),
-      @views.spacer(),
       // "main" with git branch icon.
       @views.container(
         @views.row(
@@ -290,10 +281,11 @@ fn code_context_bar(
         corner_radius=6.0,
         padding=6.0,
       ),
+      @views.spacer(),
     ],
     spacing=8.0,
-    align=@views.CrossAlign::Center,
-  )
+    align=@views.CrossAlign::Start,
+  ).frame(width~)
 }
 
 ///|

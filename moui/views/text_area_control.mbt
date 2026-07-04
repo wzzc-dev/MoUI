@@ -64,6 +64,11 @@ fn text_area_wrap_line_ranges(
         fits = false
         break
       }
+      if chars[end] == '\n' {
+        end = end + 1
+        fits = false
+        break
+      }
       if text_area_soft_break_after(chars[end]) {
         last_break = end + 1
       }
@@ -71,6 +76,8 @@ fn text_area_wrap_line_ranges(
     }
     let line_end = if fits {
       length
+    } else if end > start && chars[end - 1] == '\n' {
+      end
     } else if last_break > start {
       last_break
     } else if end > start + 1 {
@@ -88,36 +95,125 @@ fn text_area_wrap_line_ranges(
 }
 
 ///|
-fn text_area_placeholder_layout_text(
+fn text_area_glyph_row_height(
   text_system : @core.TextSystem,
-  placeholder : String,
+  line_text : String,
   font : @core.FontSpec,
-  max_width : Double,
-  max_lines : Int,
-) -> String {
-  let ranges = text_area_wrap_line_ranges(
-    text_system,
-    placeholder,
-    font,
-    max_width,
-    max_lines,
-  )
-  let chars = placeholder.to_array()
-  let parts : Array[String] = []
-  for line_range in ranges {
-    if line_range.start < line_range.end {
-      parts.push(String::from_array(chars[line_range.start:line_range.end]))
+) -> Double {
+  text_system
+    .measure_text(@core.TextLayoutInput::new(text=line_text, font~))
+    .size
+    .height
+    .max(font.size * 1.15)
+}
+
+///|
+fn text_area_line_slot_y(
+  text_frame : @core.Rect,
+  line_index : Int,
+  line_height : Double,
+  glyph_height : Double,
+) -> Double {
+  let slot_top = text_frame.origin.y + line_index.to_double() * line_height
+  slot_top + (line_height - glyph_height).max(0.0) / 2.0
+}
+
+///|
+fn text_area_line_index_for_offset(
+  wrap_ranges : Array[@core.TextRange],
+  offset : Int,
+) -> Int {
+  for line_index, line_range in wrap_ranges {
+    if offset >= line_range.start && offset <= line_range.end {
+      return line_index
     }
   }
-  if parts.is_empty() {
-    ""
+  if wrap_ranges.is_empty() {
+    0
   } else {
-    let mut out = parts[0]
-    for index in 1..<parts.length() {
-      out = out + "\n" + parts[index]
-    }
-    out
+    wrap_ranges.length() - 1
   }
+}
+
+///|
+fn text_area_display_caret_rect(
+  text_system : @core.TextSystem,
+  display_text : String,
+  text_frame : @core.Rect,
+  font : @core.FontSpec,
+  visual_offset : Int,
+  line_height : Double,
+  visible_lines : Int,
+) -> @core.Rect {
+  let boundaries = @core.TextGraphemeBoundaries::new(text=display_text)
+  let max_len = display_text.to_array().length()
+  let offset = boundaries.nearest_boundary(
+    visual_offset.clamp(min=0, max=max_len),
+  )
+  let wrap_ranges = text_area_wrap_line_ranges(
+    text_system,
+    display_text,
+    font,
+    text_frame.size.width,
+    visible_lines,
+  )
+  let line_index = text_area_line_index_for_offset(wrap_ranges, offset)
+  let line_start = if line_index < wrap_ranges.length() {
+    wrap_ranges[line_index].start
+  } else {
+    0
+  }
+  let chars = display_text.to_array()
+  let prefix = String::from_array(chars[line_start:offset])
+  let measured = text_system.measure_text(
+    @core.TextLayoutInput::new(
+      text=prefix,
+      font~,
+      max_width=text_frame.size.width,
+    ),
+  )
+  let glyph_h = text_area_glyph_row_height(text_system, " ", font)
+  let y = text_area_line_slot_y(text_frame, line_index, line_height, glyph_h)
+  @core.Rect::new(
+    x=text_frame.origin.x + measured.size.width,
+    y~,
+    width=1.5,
+    height=glyph_h,
+  )
+}
+
+///|
+fn text_area_draw_line_text(
+  commands : Array[@core.DrawCommand],
+  text_system : @core.TextSystem,
+  line_text : String,
+  font : @core.FontSpec,
+  color : @core.Color,
+  text_frame : @core.Rect,
+  line_index : Int,
+  line_height : Double,
+  line_left : Double,
+  line_width : Double,
+) -> Unit {
+  let glyph_h = text_area_glyph_row_height(text_system, line_text, font)
+  let y = text_area_line_slot_y(text_frame, line_index, line_height, glyph_h)
+  let line_frame = @core.Rect::new(
+    x=line_left,
+    y~,
+    width=line_width,
+    height=glyph_h,
+  )
+  commands.push(
+    @core.DrawCommand::DrawText(
+      @core.TextRun::new(
+        text=line_text,
+        frame=line_frame,
+        font~,
+        color~,
+        align=@core.TextAlign::TextStart,
+      ),
+    ),
+  )
 }
 
 ///|
@@ -218,6 +314,8 @@ fn[Msg] text_area_control(
           font=resolved_style.font,
           control=ctx.text_control,
           text_system=ctx.text_system,
+          line_height~,
+          visible_lines=lines,
         ),
       )
     },
@@ -270,55 +368,69 @@ fn append_text_area_commands(
   } else {
     foreground
   }
-  let layout_text = if is_placeholder {
-    text_area_placeholder_layout_text(
+  let paragraph = text_area_paragraph(
+    text_system,
+    if is_placeholder { "" } else { display_text },
+    font,
+    text_frame,
+  )
+  commands.push(@core.DrawCommand::PushClip(text_frame))
+  if is_placeholder {
+    let wrap_ranges = text_area_wrap_line_ranges(
       text_system,
       placeholder,
       font,
       text_frame.size.width,
       visible_lines,
     )
-  } else {
-    display_text
-  }
-  let paragraph = text_area_paragraph(
-    text_system, layout_text, font, text_frame,
-  )
-  commands.push(@core.DrawCommand::PushClip(text_frame))
-  let max_lines = if is_placeholder {
-    visible_lines
-  } else {
-    paragraph.lines.length()
-  }
-  for line_index, line in paragraph.lines {
-    if line_index >= max_lines {
-      break
-    }
-    let line_range = line.text_range
-    if line_range.start < line_range.end {
-      let chars = layout_text.to_array()
+    let chars = placeholder.to_array()
+    for line_index, line_range in wrap_ranges {
+      if line_range.start >= line_range.end {
+        continue
+      }
       let line_text = String::from_array(
         chars[line_range.start:line_range.end],
       )
-      let line_left = text_frame.origin.x + line.origin.x
-      let line_frame = @core.Rect::new(
-        x=line_left,
-        y=text_frame.origin.y + line.origin.y,
-        width=(text_frame.origin.x + text_frame.size.width - line_left).max(
-          line.size.width,
-        ),
-        height=line.size.height,
+      text_area_draw_line_text(
+        commands,
+        text_system,
+        line_text,
+        font,
+        placeholder_color,
+        text_frame,
+        line_index,
+        line_height,
+        text_frame.origin.x,
+        text_frame.size.width,
       )
-      commands.push(
-        @core.DrawCommand::DrawText(
-          @core.TextRun::new(
-            text=line_text,
-            frame=line_frame,
-            font~,
-            color=paint_color,
-            align=@core.TextAlign::TextStart,
-          ),
-        ),
+    }
+  } else {
+    let wrap_ranges = text_area_wrap_line_ranges(
+      text_system,
+      display_text,
+      font,
+      text_frame.size.width,
+      visible_lines,
+    )
+    let chars = display_text.to_array()
+    for line_index, line_range in wrap_ranges {
+      if line_range.start >= line_range.end {
+        continue
+      }
+      let line_text = String::from_array(
+        chars[line_range.start:line_range.end],
+      )
+      text_area_draw_line_text(
+        commands,
+        text_system,
+        line_text,
+        font,
+        paint_color,
+        text_frame,
+        line_index,
+        line_height,
+        text_frame.origin.x,
+        text_frame.size.width,
       )
     }
   }
@@ -344,15 +456,77 @@ fn append_text_area_commands(
         }
         None => ()
       }
+    } else if display_text != "" {
+      match control.composition {
+        Some(composition) =>
+          if composition != "" {
+            let comp_start = composition_start_index(
+              text,
+              control.caret,
+              control.selection,
+            )
+            let boundaries = @core.TextGraphemeBoundaries::new(
+              text=display_text,
+            )
+            let start_off = boundaries.nearest_boundary(comp_start)
+            let end_off = boundaries.nearest_boundary(
+              comp_start + text_length(composition),
+            )
+            let r0 = text_area_display_caret_rect(
+              text_system,
+              display_text,
+              text_frame,
+              font,
+              start_off,
+              line_height,
+              visible_lines,
+            )
+            let r1 = text_area_display_caret_rect(
+              text_system,
+              display_text,
+              text_frame,
+              font,
+              end_off,
+              line_height,
+              visible_lines,
+            )
+            if r1.origin.x > r0.origin.x {
+              overlay_commands.push(
+                @core.DrawCommand::FillRect(
+                  @core.Rect::new(
+                    x=r0.origin.x,
+                    y=r0.origin.y + r0.size.height - 2.0,
+                    width=r1.origin.x - r0.origin.x,
+                    height=1.5,
+                  ),
+                  cursor_color.with_alpha(0.72),
+                ),
+              )
+            }
+          }
+        None => ()
+      }
     }
     let visual_caret = text_field_visual_caret(text, control, focused=true)
-    let caret_rect = paragraph.caret_rect_at(visual_caret)
-    let cursor = @core.Rect::new(
-      x=text_frame.origin.x + caret_rect.origin.x,
-      y=text_frame.origin.y + caret_rect.origin.y,
-      width=1.5,
-      height=max_double(16.0, caret_rect.size.height),
-    )
+    let cursor = if display_text == "" {
+      let glyph_h = text_area_glyph_row_height(text_system, " ", font)
+      @core.Rect::new(
+        x=text_frame.origin.x,
+        y=text_area_line_slot_y(text_frame, 0, line_height, glyph_h),
+        width=1.5,
+        height=glyph_h,
+      )
+    } else {
+      text_area_display_caret_rect(
+        text_system,
+        display_text,
+        text_frame,
+        font,
+        visual_caret,
+        line_height,
+        visible_lines,
+      )
+    }
     overlay_commands.push(@core.DrawCommand::FillRect(cursor, cursor_color))
     overlay_commands.push(@core.DrawCommand::PopClip)
   }
@@ -712,26 +886,33 @@ fn text_input_state_for_multi_line(
   font~ : @core.FontSpec,
   control~ : @core.TextControlStateContext,
   text_system~ : @core.TextSystem,
+  line_height~ : Double,
+  visible_lines~ : Int,
 ) -> @core.TextInputState {
   let boundaries = @core.TextGraphemeBoundaries::new(text~)
   let display_text = text_with_composition(text, control, focused=true)
   let text_frame = text_area_text_frame(frame)
-  let paragraph = text_area_paragraph(
-    text_system, display_text, font, text_frame,
-  )
   let caret = boundaries.nearest_boundary(control.caret)
-  let visual_caret = @core.clamp_int(
-    text_field_visual_caret(text, control, focused=true),
-    0,
-    @core.max_int(0, paragraph.caret_rects.length() - 1),
-  )
-  let caret_rect = paragraph.caret_rect_at(visual_caret)
-  let adjusted_rect = @core.Rect::new(
-    x=text_frame.origin.x + caret_rect.origin.x,
-    y=text_frame.origin.y + caret_rect.origin.y,
-    width=max_double(1.5, caret_rect.size.width),
-    height=max_double(16.0, caret_rect.size.height),
-  )
+  let visual_caret = text_field_visual_caret(text, control, focused=true)
+  let adjusted_rect = if display_text == "" {
+    let glyph_h = text_area_glyph_row_height(text_system, " ", font)
+    @core.Rect::new(
+      x=text_frame.origin.x,
+      y=text_area_line_slot_y(text_frame, 0, line_height, glyph_h),
+      width=1.5,
+      height=glyph_h,
+    )
+  } else {
+    text_area_display_caret_rect(
+      text_system,
+      display_text,
+      text_frame,
+      font,
+      visual_caret,
+      line_height,
+      visible_lines,
+    )
+  }
   {
     focused: true,
     element_id: None,
