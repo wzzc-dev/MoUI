@@ -20,6 +20,9 @@ pub struct AgentBackendFixture {
   dispatched : Array[AgentCommand]
   script : (AgentCommand) -> Array[AgentEvent]
 }
+pub fn AgentBackendFixture::dispatched_commands(Self) -> Array[AgentCommand]
+pub fn AgentBackendFixture::new(script~ : (AgentCommand) -> Array[AgentEvent]) -> Self
+pub fn AgentBackendFixture::runtime(Self) -> AgentBackendRuntime
 
 pub struct AgentBackendRuntime {
   run : (Array[AgentCommand], (AgentEvent) -> Unit) -> Unit
