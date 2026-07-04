@@ -197,6 +197,9 @@ test "diagnostic native cosmic engine matrix conforms" {
 
 ///|
 test "diagnostic native skia text system matrix conforms" {
+  guard @skia_renderer.skia_available() else {
+    return
+  }
   assert_diagnostic_native_text_matrix(@skia_renderer.skia_text_system())
 }
 

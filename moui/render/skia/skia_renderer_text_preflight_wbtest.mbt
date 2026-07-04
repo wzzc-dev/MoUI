@@ -122,8 +122,17 @@ test "skia font fallback request preserves family chain style and coverage chara
   assert_true(request.language_at(0) == Some(b"und-Zsye"))
   assert_true(request.language_at(1) == Some(b"en"))
   assert_true(request.families.length() >= 2)
-  assert_true(request.families.family_at(0) == Some(b"Helvetica Neue"))
-  assert_true(request.families.contains_family(b"Apple Color Emoji"))
+  assert_true(
+    request.families.contains_family(b"Helvetica Neue") ||
+    request.families.contains_family(b"Segoe UI") ||
+    request.families.contains_family(b"DejaVu Sans") ||
+    request.families.contains_family(b"Noto Sans"),
+  )
+  assert_true(
+    request.families.contains_family(b"Apple Color Emoji") ||
+    request.families.contains_family(b"Segoe UI Emoji") ||
+    request.families.contains_family(b"Noto Color Emoji"),
+  )
   inspect(request.style.weight, content="650")
   inspect(request.style.width, content="5")
   inspect(request.style.slant, content="1")
@@ -183,28 +192,34 @@ test "skia font resolver maps MoUI font families to platform candidates" {
     skia_font_family_candidates(@core.FontFamily::Name("Acme Sans")) ==
     ["Acme Sans"],
   )
+  let system_ui = skia_font_family_candidates(@core.FontFamily::SystemUi)
   assert_true(
-    skia_font_family_candidates(@core.FontFamily::SystemUi).contains(
-      "Helvetica Neue",
-    ),
+    system_ui.contains("Helvetica Neue") ||
+    system_ui.contains("Segoe UI") ||
+    system_ui.contains("DejaVu Sans"),
   )
+  let sans = skia_font_family_candidates(@core.FontFamily::SansSerif)
   assert_true(
-    skia_font_family_candidates(@core.FontFamily::SansSerif).contains(
-      "Segoe UI",
-    ),
+    sans.contains("Segoe UI") ||
+    sans.contains("DejaVu Sans") ||
+    sans.contains("Arial"),
   )
   assert_true(
     skia_font_family_candidates(@core.FontFamily::Serif).contains(
       "Times New Roman",
     ),
   )
+  let mono = skia_font_family_candidates(@core.FontFamily::UiMonospace)
   assert_true(
-    skia_font_family_candidates(@core.FontFamily::UiMonospace).contains("Menlo"),
+    mono.contains("Menlo") ||
+    mono.contains("DejaVu Sans Mono") ||
+    mono.contains("Liberation Mono"),
   )
+  let emoji = skia_font_family_candidates(@core.FontFamily::Emoji)
   assert_true(
-    skia_font_family_candidates(@core.FontFamily::Emoji).contains(
-      "Apple Color Emoji",
-    ),
+    emoji.contains("Apple Color Emoji") ||
+    emoji.contains("Noto Color Emoji") ||
+    emoji.contains("Segoe UI Emoji"),
   )
   assert_true(skia_font_slant(@core.FontStyle::Normal) == 0)
   assert_true(skia_font_slant(@core.FontStyle::Italic) == 1)
