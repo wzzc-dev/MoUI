@@ -207,14 +207,14 @@ pub struct AgentBackendFixture {
 }
 
 ///|
-fn AgentBackendFixture::new(
+pub fn AgentBackendFixture::new(
   script~ : (AgentCommand) -> Array[AgentEvent],
 ) -> AgentBackendFixture {
   { dispatched: [], script }
 }
 
 ///|
-fn AgentBackendFixture::dispatched_commands(
+pub fn AgentBackendFixture::dispatched_commands(
   self : AgentBackendFixture,
 ) -> Array[AgentCommand] {
   let out : Array[AgentCommand] = []
@@ -225,7 +225,7 @@ fn AgentBackendFixture::dispatched_commands(
 }
 
 ///|
-fn AgentBackendFixture::runtime(
+pub fn AgentBackendFixture::runtime(
   self : AgentBackendFixture,
 ) -> AgentBackendRuntime {
   AgentBackendRuntime::new(run=(commands, emit) => {
