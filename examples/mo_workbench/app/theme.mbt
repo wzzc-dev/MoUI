@@ -244,6 +244,33 @@ fn assistant_avatar_color(theme : @moui.Theme) -> @graphics.Color {
   }
 }
 
+///|
+/// Purple circular send control (square frame + radius = diameter / 2).
+fn[Msg] workbench_send_button(
+  theme : @moui.Theme,
+  diameter? : Double = 36.0,
+  on_tap~ : Msg,
+) -> @moui.View[Msg] {
+  let radius = diameter / 2.0
+  @views.container(
+    @views.center(
+      @views.icon(
+        @views.IconName::ArrowRight,
+        size=18.0,
+        color=@graphics.Color::rgba(r=1.0, g=1.0, b=1.0, a=1.0),
+      ),
+      width=diameter,
+      height=diameter,
+      theme~,
+    ),
+    width=diameter,
+    height=diameter,
+    background=workbench_accent(theme),
+    corner_radius=radius,
+    padding=0.0,
+  ).on_tap(on_tap)
+}
+
 // ---------------------------------------------------------------------------
 // Border helpers
 // ---------------------------------------------------------------------------
