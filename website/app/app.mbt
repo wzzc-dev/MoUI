@@ -20,6 +20,7 @@ pub enum Msg {
   OpenHome
   OpenHomeAt(Double)
   OpenDocs
+  OpenShowcases
   SelectDoc(String)
   RetryDoc
   HostDocsCompleted(@host.HostCompletedServiceResponse)
@@ -79,6 +80,16 @@ fn Model::update(self : Model, message : Msg) -> Model {
         body_scroll_y: max_website_double(0.0, offset_y),
       }
     OpenDocs => { ..self, page: WebsiteDocs }
+    OpenShowcases => {
+      let model = {
+        ..self,
+        page: WebsiteDocs,
+        selected_doc_slug: "showcases",
+        docs_scroll_y: 0.0,
+        doc_state: DocNotLoaded,
+      }
+      model
+    }
     SelectDoc(slug) => {
       let entry = website_doc_entry_by_slug(slug)
       {
@@ -112,6 +123,16 @@ fn Model::update_with_services(
       )
     OpenDocs => {
       let model = { ..self, page: WebsiteDocs }
+      model.request_selected_doc(services)
+    }
+    OpenShowcases => {
+      let model = {
+        ..self,
+        page: WebsiteDocs,
+        selected_doc_slug: "showcases",
+        docs_scroll_y: 0.0,
+        doc_state: DocNotLoaded,
+      }
       model.request_selected_doc(services)
     }
     SelectDoc(slug) => {

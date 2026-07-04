@@ -1,0 +1,22 @@
+import {
+  "wzzc-dev/moui/backend/web",
+  "wzzc-dev/moui/runtime",
+  "examples/moui_example/app" @moui_example_app,
+}
+
+supported_targets = "wasm-gc"
+
+options(
+  "is-main": true,
+  link: {
+    "wasm-gc": {
+      "exports": [
+        "web_dispatch_event",
+        "web_dispatch_route",
+        "web_complete_async_clipboard_read",
+        "web_complete_async_file_dialog",
+      ],
+    },
+  },
+  targets: { "main.mbt": [ "wasm-gc" ] },
+)
