@@ -63,9 +63,14 @@ fi
 # scripts/window-dev-mode.sh. Skip if already initialized to avoid disrupting
 # local in-progress edits inside the submodule.
 if [ ! -f "window/moon.mod" ]; then
-  printf '\n==> Initializing window submodule...\n'
-  git submodule update --init window
-fi
+	  printf '\n==> Initializing window submodule...\n'
+	  git submodule update --init window
+	fi
+
+	if [ ! -f "openseek/moon.mod" ]; then
+	  printf '\n==> Initializing openseek submodule...\n'
+	  git submodule update --init openseek
+	fi
 
 run() {
   printf '\n==> %s\n' "$*"
@@ -85,6 +90,8 @@ run node --check scripts/validate-api-surface.mjs
 run node scripts/validate-api-surface.mjs
 run node --check scripts/validate-window-dependency.mjs
 run node scripts/validate-window-dependency.mjs
+run node --check scripts/validate-openseek-workbench.mjs
+run node scripts/validate-openseek-workbench.mjs
 run node --check scripts/validate-maintenance-baseline.mjs
 run node scripts/validate-maintenance-baseline.mjs
 run node scripts/validate-renderer-provider-manifests.mjs
