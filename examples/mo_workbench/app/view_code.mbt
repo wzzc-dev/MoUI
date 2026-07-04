@@ -140,8 +140,8 @@ fn code_input_card(
               height=32.0,
               padding=0.0,
             ),
-            // Purple circular send button.
-            @views.container(
+            // Purple circular send button (centered arrow).
+            @views.center(
               @views.icon(
                 @views.IconName::ArrowRight,
                 size=18.0,
@@ -150,9 +150,8 @@ fn code_input_card(
               width=36.0,
               height=36.0,
               background=workbench_accent(theme),
-              corner_radius=18.0,
-              padding=0.0,
-            ).on_tap(CodeMsg::SubmitPrompt),
+              theme~,
+            ).corner_radius(18.0).on_tap(CodeMsg::SubmitPrompt),
           ],
           spacing=8.0,
           align=@views.CrossAlign::Center,
@@ -184,6 +183,7 @@ fn code_model_dropdown(
           role=@views.TextRole::Caption,
           theme~,
           width=72.0,
+          height=20.0,
         ).foreground(workbench_accent(theme)),
         @views.icon(
           @views.IconName::ChevronDown,
@@ -195,10 +195,10 @@ fn code_model_dropdown(
       align=@views.CrossAlign::Center,
     ),
     width=100.0,
-    height=28.0,
+    height=32.0,
     background=workbench_accent_soft(theme),
     corner_radius=6.0,
-    padding=8.0,
+    padding=6.0,
   ).on_tap(CodeMsg::ModelChanged(
     match code.current_model {
       V4Pro => ModelChoice::V4Flash
@@ -373,17 +373,17 @@ fn quick_chip(
           role=@views.TextRole::Caption,
           theme~,
           width=text_width,
-          height=18.0,
+          height=20.0,
         ).foreground(workbench_accent(theme)),
       ],
       spacing=6.0,
       align=@views.CrossAlign::Center,
     ),
     width~,
-    height=36.0,
+    height=40.0,
     background=workbench_accent_soft(theme),
     corner_radius=18.0,
-    padding=12.0,
+    padding=8.0,
   )
   .border(hairline_border(theme))
   .on_tap(CodeMsg::PromptChanged(prompt))
@@ -463,20 +463,23 @@ fn code_composer(
           lines=2,
           variant=@views.TextFieldVariant::Filled,
           theme~,
-          width=inner_width - 96.0,
+          width=inner_width - 64.0,
           line_height=28.0,
         ),
-        @views.button(
-          "Send",
-          on_click=CodeMsg::SubmitPrompt,
-          variant=@views.ButtonVariant::Primary,
-          theme~,
-          icon=Some(@views.IconName::ArrowRight),
-          width=80.0,
+        // Round purple, center-aligned send button.
+        @views.center(
+          @views.icon(
+            @views.IconName::ArrowRight,
+            size=18.0,
+            color=@graphics.Color::rgba(r=1.0, g=1.0, b=1.0, a=1.0),
+          ),
+          width=56.0,
           height=56.0,
-        ),
+          background=workbench_accent(theme),
+          theme~,
+        ).corner_radius(28.0).on_tap(CodeMsg::SubmitPrompt),
       ],
-      spacing=10.0,
+      spacing=8.0,
       align=@views.CrossAlign::Center,
     ),
   )
