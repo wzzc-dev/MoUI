@@ -45,42 +45,39 @@ fn code_welcome_view(
   height : Double,
 ) -> @moui.View[CodeMsg] {
   let inner_width = (width - 96.0).max(320.0)
+  let welcome_block = @views.column(
+    [
+      @views.text(
+        "Code with Mo",
+        role=@views.TextRole::Headline,
+        theme~,
+        width=inner_width,
+      ).foreground(workbench_accent(theme)),
+      @views.spacer(min_length=30.0, weight=0.0),
+      code_input_card(model, theme, inner_width),
+      @views.spacer(min_length=10.0, weight=0.0),
+      @views.container(
+        code_context_bar(theme, inner_width),
+        width=inner_width,
+        padding=0.0,
+      ),
+      @views.spacer(min_length=50.0, weight=0.0),
+      @views.container(
+        quick_action_chips(theme, inner_width),
+        width=inner_width,
+        padding=0.0,
+      ),
+    ],
+    spacing=0.0,
+    align=@views.CrossAlign::Center,
+  )
+  let welcome_area_height = (height - 96.0).max(0.0)
   @views.container(
-    @views.column(
-      [
-        @views.spacer(weight=1.0),
-        // Brand title: Code with Mo
-        @views.text(
-          "Code with Mo",
-          role=@views.TextRole::Headline,
-          theme~,
-          width=inner_width,
-        ).foreground(workbench_accent(theme)),
-        @views.spacer(min_length=24.0, weight=0.0),
-        // Input card – centered
-        @views.container(
-          code_input_card(model, theme, inner_width),
-          width=width,
-          padding=0.0,
-        ),
-        @views.spacer(min_length=10.0, weight=0.0),
-        // Context bar – tight under the input card
-        @views.container(
-          code_context_bar(theme, inner_width),
-          width=width,
-          padding=0.0,
-        ),
-        @views.spacer(min_length=72.0, weight=0.0),
-        @views.spacer(weight=1.0),
-        @views.container(
-          quick_action_chips(theme, inner_width),
-          width=width,
-          padding=0.0,
-        ),
-        @views.spacer(min_length=96.0, weight=0.0),
-      ],
-      spacing=0.0,
-      align=@views.CrossAlign::Center,
+    @views.center(
+      welcome_block,
+      width~,
+      height=welcome_area_height,
+      theme~,
     ),
     width~,
     height~,
@@ -109,8 +106,8 @@ fn code_input_card(
           lines=3,
           variant=@views.TextFieldVariant::Filled,
           theme~,
-          width=width - 40.0,
-          line_height=28.0,
+          width~,
+          line_height=35.0,
         ),
         @views.spacer(min_length=12.0),
         // Toolbar: left tools + spacer + right controls.
@@ -140,18 +137,7 @@ fn code_input_card(
               height=32.0,
               padding=0.0,
             ),
-            // Purple circular send button (centered arrow).
-            @views.center(
-              @views.icon(
-                @views.IconName::ArrowRight,
-                size=18.0,
-                color=@graphics.Color::rgba(r=1.0, g=1.0, b=1.0, a=1.0),
-              ),
-              width=36.0,
-              height=36.0,
-              background=workbench_accent(theme),
-              theme~,
-            ).corner_radius(18.0).on_tap(CodeMsg::SubmitPrompt),
+            workbench_send_button(theme, on_tap=CodeMsg::SubmitPrompt),
           ],
           spacing=8.0,
           align=@views.CrossAlign::Center,
@@ -163,8 +149,9 @@ fn code_input_card(
     width~,
     background=workbench_card_background(theme),
     corner_radius=14.0,
-    padding=20.0,
-  ).border(hairline_border(theme))
+    border=Some(hairline_border(theme)),
+    padding=0.0,
+  )
 }
 
 ///|
@@ -383,10 +370,9 @@ fn quick_chip(
     height=40.0,
     background=workbench_accent_soft(theme),
     corner_radius=18.0,
+    border=Some(hairline_border(theme)),
     padding=8.0,
-  )
-  .border(hairline_border(theme))
-  .on_tap(CodeMsg::PromptChanged(prompt))
+  ).on_tap(CodeMsg::PromptChanged(prompt))
 }
 
 ///|
@@ -466,18 +452,11 @@ fn code_composer(
           width=inner_width - 64.0,
           line_height=28.0,
         ),
-        // Round purple, center-aligned send button.
-        @views.center(
-          @views.icon(
-            @views.IconName::ArrowRight,
-            size=18.0,
-            color=@graphics.Color::rgba(r=1.0, g=1.0, b=1.0, a=1.0),
-          ),
-          width=56.0,
-          height=56.0,
-          background=workbench_accent(theme),
-          theme~,
-        ).corner_radius(28.0).on_tap(CodeMsg::SubmitPrompt),
+        workbench_send_button(
+          theme,
+          diameter=40.0,
+          on_tap=CodeMsg::SubmitPrompt,
+        ),
       ],
       spacing=8.0,
       align=@views.CrossAlign::Center,
@@ -518,8 +497,9 @@ fn code_composer(
       width=inner_width,
       background=workbench_card_background(theme),
       corner_radius=12.0,
+      border=Some(hairline_border(theme)),
       padding=20.0,
-    ).border(hairline_border(theme)),
+    ),
     width~,
     height~,
     background=workbench_canvas_background(theme),
