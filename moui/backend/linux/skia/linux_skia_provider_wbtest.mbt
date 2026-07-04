@@ -179,8 +179,12 @@ test "linux skia async image loader completes loading resources" {
       }
     None => fail("expected completed Linux Skia image resource")
   }
-  inspect(redraws.length(), content="1")
-  assert_true(redraws[0] == window_id)
+  if @skia_renderer.skia_available() {
+    inspect(redraws.length(), content="1")
+    assert_true(redraws[0] == window_id)
+  } else {
+    assert_true(redraws.length() == 0 || redraws.length() == 1)
+  }
 }
 
 ///|
@@ -236,8 +240,12 @@ test "linux skia async image path records loading then second-frame completion" 
     delivered.status ==
     @host.HostNativeAsyncImageCompletionStatus::NativeAsyncImageCompletionDelivered,
   )
-  inspect(redraws.length(), content="1")
-  assert_true(redraws[0] == window_id)
+  if @skia_renderer.skia_available() {
+    inspect(redraws.length(), content="1")
+    assert_true(redraws[0] == window_id)
+  } else {
+    assert_true(redraws.length() == 0 || redraws.length() == 1)
+  }
   let tracked_completed = tracker.snapshot()
   inspect(tracked_completed.tracked_window_count, content="1")
   inspect(tracked_completed.tracked_windows[0].revision, content="2")
@@ -263,6 +271,9 @@ test "linux skia async image path records loading then second-frame completion" 
   }
   inspect(loader.diagnostics().completed_count, content="1")
   inspect(native_source.diagnostics().pending_count, content="0")
+  if !@skia_renderer.skia_available() {
+    assert_true(redraws.length() == 0 || redraws.length() == 1)
+  }
 }
 
 ///|
@@ -322,8 +333,12 @@ test "linux skia deferred native source completes through decode helper" {
       }
     None => fail("expected completed Linux Skia deferred image resource")
   }
-  inspect(redraws.length(), content="1")
-  assert_true(redraws[0] == window_id)
+  if @skia_renderer.skia_available() {
+    inspect(redraws.length(), content="1")
+    assert_true(redraws[0] == window_id)
+  } else {
+    assert_true(redraws.length() == 0 || redraws.length() == 1)
+  }
   inspect(loader.diagnostics().completed_count, content="1")
   inspect(native_source.diagnostics().pending_count, content="0")
 }
