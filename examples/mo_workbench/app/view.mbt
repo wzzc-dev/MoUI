@@ -11,7 +11,6 @@ priv struct WorkbenchLayout {
   sidebar_width : Double
   topbar_height : Double
   statusbar_height : Double
-  center_width : Double
   center_height : Double
 }
 
@@ -26,7 +25,6 @@ fn workbench_layout(viewport : @geometry.Size) -> WorkbenchLayout {
   } else {
     280.0
   }
-  let center_width = (viewport.width - sidebar_width).max(320.0)
   let center_height = (viewport.height - topbar_height - statusbar_height - 16.0).max(
     262.0,
   )
@@ -34,7 +32,6 @@ fn workbench_layout(viewport : @geometry.Size) -> WorkbenchLayout {
     sidebar_width,
     topbar_height,
     statusbar_height,
-    center_width,
     center_height,
   }
 }
@@ -247,7 +244,7 @@ fn topbar_view(
 fn statusbar_view(
   model : WorkbenchModel,
   theme : @moui.Theme,
-  width : Double,
+  _width : Double,
   height : Double,
 ) -> @moui.View[WorkbenchMsg] {
   let runtime_status = if model.code.is_streaming {
