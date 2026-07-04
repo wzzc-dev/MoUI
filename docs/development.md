@@ -36,12 +36,13 @@ code.
 - `./examples/excel`
 - `./examples/file_importer`
 - `./examples/command_palette`
-- `./examples/mo_workbench`
-- `./examples/webview_demo`
-- `./benchmarks/app_cached_layer`
-- `./website`
-
-When adding or removing a workspace member, update this list,
+	- `./examples/mo_workbench`
+	- `./openseek`
+	- `./examples/webview_demo`
+	- `./benchmarks/app_cached_layer`
+	- `./website`
+	
+	When adding or removing a workspace member, update this list,
 `docs/examples.md` for example packages, and any guidance rules in
 `tools/moui/validate_guidance_consistency`.
 
@@ -97,6 +98,7 @@ members = [
   "./examples/webview_demo",
   "./examples/command_palette",
   "./examples/mo_workbench",
+  "./openseek",
   "./benchmarks/app_cached_layer",
   "./website",
 ]
@@ -183,17 +185,19 @@ The `moui_skia` workspace member is updated by the root repository pull; the
 window dependency resolves from mooncakes.io (or from the `window` submodule
 checkout when dev mode is on).
 
-Mo Workbench's OpenSeek backend resolves `bobzhang/openseek` from the `openseek/`
-submodule when `./openseek` is listed in `moon.work` (default in this repo for
-dogfooding). Initialize the checkout once:
+Mo Workbench resolves `bobzhang/openseek` from the `openseek/` git submodule
+while `./openseek` is listed in `moon.work` (required until the package is
+published on mooncakes.io). CI initializes submodules in
+`.github/actions/setup-moonbit`. Initialize locally once:
 
 ```sh
 git submodule update --init openseek
 ```
 
-Toggle the workspace member with `sh scripts/openseek-dev-mode.sh on|off|status`.
-Pin `bobzhang/openseek@…` in `examples/mo_workbench/moon.mod` when bumping the
-submodule commit. Run Mo Workbench native:
+`scripts/validate-openseek-workbench.mjs` (in `dev-check.sh`) requires
+`moon.work` to list `./openseek` and the submodule checkout to exist. Pin
+`bobzhang/openseek@…` in `examples/mo_workbench/moon.mod` when the registry
+version becomes available. Run Mo Workbench native:
 
 ```sh
 export OPENAI_API_KEY=...   # or DEEPSEEK=...
