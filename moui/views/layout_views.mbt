@@ -145,12 +145,15 @@ fn[Msg] container_box(
       }
       let measured = ctx.constraints.constrain(measured)
       let frames = if ctx.child_sizes.length() > 0 {
+        let child_size = ctx.child_sizes[0]
+        let x = views_max_double(0.0, (measured.width - child_size.width) / 2.0)
+        let y = views_max_double(0.0, (measured.height - child_size.height) / 2.0)
         [
           @core.Rect::new(
-            x=0.0,
-            y=0.0,
-            width=measured.width,
-            height=measured.height,
+            x~,
+            y~,
+            width=child_size.width,
+            height=child_size.height,
           ),
         ]
       } else {

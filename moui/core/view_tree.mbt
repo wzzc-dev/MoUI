@@ -323,7 +323,10 @@ fn[Msg] modifier_paint(
 ) -> ViewPaintPlan {
   match modifier {
     BackgroundModifier(brush) => {
-      let radius = 0.0
+      let radius = match ctx.style.corner_radius {
+        Some(value) => value
+        None => 0.0
+      }
       ViewPaintPlan::commands([
         DrawCommand::FillRoundedRectBrush(
           RoundedRect::new(rect=ctx.frame, radius~),
@@ -355,9 +358,13 @@ fn[Msg] modifier_paint(
       ])
     BorderModifier(style) =>
       if style.width > 0.0 {
+        let radius = match ctx.style.corner_radius {
+          Some(value) => value
+          None => 0.0
+        }
         ViewPaintPlan::commands([
           DrawCommand::StrokeRoundedRectBrush(
-            RoundedRect::new(rect=ctx.frame, radius=0.0),
+            RoundedRect::new(rect=ctx.frame, radius~),
             style.brush,
             style.width,
           ),
