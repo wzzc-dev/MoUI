@@ -53,7 +53,11 @@ jobs:
           sh scripts/ci-moon-update.sh
 
       - name: Generate public API interfaces
-        run: moon info
+        run: |
+          # Regenerate only MoUI-tracked packages; skip openseek submodule (not in git).
+          while IFS= read -r path; do
+            moon info -p "$path"
+          done < <(git ls-files '**/pkg.generated.mbti' | sed 's|/pkg.generated.mbti$||')
 
       - name: Check generated interface drift
         run: git diff --exit-code -- '**/pkg.generated.mbti'
