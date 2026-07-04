@@ -3,24 +3,9 @@ using @views {
   type PaintContext,
   custom_layout,
   fill_rect,
-  fill_rounded_rect,
   stroke_rect,
-  stroke_rounded_rect,
   draw_text,
   draw_image,
-  draw_shadow,
-  draw_path,
-  draw_shader_effect,
-  push_clip,
-  pop_clip,
-  push_transform,
-  pop_transform,
-  push_opacity,
-  pop_opacity,
-  push_layer,
-  pop_layer,
-  push_filter,
-  pop_filter,
 }
 
 ///|
@@ -156,13 +141,13 @@ fn pdf_workbench_page_thumbnail(
   theme : @moui.Theme,
 ) -> @moui.View[PdfWorkbenchMsg] {
   custom_layout(
-    measure=_ => @moui.Size::new(width=54.0, height=68.0),
+    measure=_ => @geometry.Size::new(width=54.0, height=68.0),
     paint=(ctx, frame) => {
       let page_width = 40.0
       let page_height = 56.0
       let x = frame.origin.x + (frame.size.width - page_width) / 2.0
       let y = frame.origin.y + (frame.size.height - page_height) / 2.0
-      let page_rect = @core.Rect::new(
+      let page_rect = @geometry.Rect::new(
         x~,
         y~,
         width=page_width,
@@ -175,14 +160,14 @@ fn pdf_workbench_page_thumbnail(
           theme.palette.primary.multiply_alpha(0.10),
         )
       }
-      fill_rect(ctx, page_rect, @core.Color::white())
+      fill_rect(ctx, page_rect, @graphics.Color::white())
       match thumbnail_raster {
         Some(raster) =>
-          draw_image(ctx, @core.ImageRun::{
+          draw_image(ctx, @views.ImageRun::{
             source: raster.image_source,
             frame: page_rect,
             opacity: 1.0,
-            fit: @core.ImageFit::Contain,
+            fit: @views.ImageFit::Contain,
           })
         None => ()
       }
@@ -207,7 +192,7 @@ fn pdf_workbench_page_thumbnail(
       }
       match thumbnail_raster {
         Some(_) => {
-          let label_rect = @core.Rect::new(
+          let label_rect = @geometry.Rect::new(
             x=x + 5.0,
             y=y + page_height - 17.0,
             width=page_width - 10.0,
@@ -225,7 +210,7 @@ fn pdf_workbench_page_thumbnail(
             let line_width = if index == 3 { 18.0 } else { 26.0 }
             fill_rect(
               ctx,
-              @core.Rect::new(
+              @geometry.Rect::new(
                 x=x + 7.0,
                 y=line_y,
                 width=line_width,
@@ -235,21 +220,21 @@ fn pdf_workbench_page_thumbnail(
             )
           }
       }
-      draw_text(ctx, @core.TextRun::new(
+      draw_text(ctx, @text.TextRun::new(
         text=summary.page_number.to_string(),
-        frame=@core.Rect::new(
+        frame=@geometry.Rect::new(
           x=x + 7.0,
           y=y + page_height - 16.0,
           width=page_width - 14.0,
           height=12.0,
         ),
-        font=@core.FontSpec::new(size=10.0),
+        font=@text.FontSpec::new(size=10.0),
         color=if selected {
           theme.palette.primary
         } else {
           theme.palette.muted
         },
-        align=@core.TextAlign::TextCenter,
+        align=@text.TextAlign::TextCenter,
       ))
     },
     semantics_label="Page thumbnail " + summary.page_number.to_string(),

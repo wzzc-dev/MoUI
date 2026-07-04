@@ -133,7 +133,7 @@ test "markdown editor source mode keeps text input canonical" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),
@@ -239,7 +239,7 @@ test "markdown editor runtime quick format row applies command" {
     is Some(frame) else {
     fail("expected quick format heading row")
   }
-  let point = @moui.Point::new(x=frame.origin.x + 4.0, y=frame.origin.y + 4.0)
+  let point = @geometry.Point::new(x=frame.origin.x + 4.0, y=frame.origin.y + 4.0)
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(position=point, phase=@core.PointerPhase::Down),

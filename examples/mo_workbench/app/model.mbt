@@ -102,7 +102,7 @@ pub struct CodeWorkspace {
   current_model : ModelChoice
   current_thinking : ThinkingChoice
   error : String?
-  scroll_state : @core.ScrollState
+  scroll_state : @state.ScrollState
 }
 
 ///|
@@ -117,7 +117,7 @@ fn CodeWorkspace::new() -> CodeWorkspace {
     current_model: ModelChoice::V4Flash,
     current_thinking: ThinkingChoice::Max,
     error: None,
-    scroll_state: @core.ScrollState::new(),
+    scroll_state: @state.ScrollState::new(),
   }
 }
 

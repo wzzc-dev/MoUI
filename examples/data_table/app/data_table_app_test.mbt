@@ -77,7 +77,7 @@ test "data table state transitions and tree toggle" {
 ///|
 test "data table runtime draws ready shell" {
   let commands = @runtime.new_program_with_dimensions(
-    program=@app.program(),
+    program=program(),
     width=1020.0,
     height=740.0,
   ).draw_commands()

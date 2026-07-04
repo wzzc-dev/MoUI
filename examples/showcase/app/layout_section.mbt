@@ -91,7 +91,7 @@ fn ShowcaseModel::layout_section(
         corner_radius=theme.radius_scale.sm,
         padding=4.0,
       ),
-      alignment=@core.Alignment::top_trailing(),
+      alignment=@geometry.Alignment::top_trailing(),
     ),
   )
   let custom_children_demo = padding(
@@ -102,14 +102,14 @@ fn ShowcaseModel::layout_section(
         ),
       ],
       measure=ctx => {
-        ctx.constraints.constrain(@moui.Size::new(width=220.0, height=34.0))
+        ctx.constraints.constrain(@geometry.Size::new(width=220.0, height=34.0))
       },
       place=ctx => [ctx.frame],
       paint=(ctx, frame) => {
         stroke_rounded_rect(
           ctx,
-          @core.RoundedRect::new(rect=frame, radius=theme.radius_scale.sm),
-          @core.Brush::solid(theme.palette.primary),
+          @views.RoundedRect::new(rect=frame, radius=theme.radius_scale.sm),
+          @graphics.Brush::solid(theme.palette.primary),
           1.0,
         )
       },

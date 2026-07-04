@@ -237,15 +237,15 @@ fn ShowcaseModel::navigation_transition_card(
   self : ShowcaseModel,
   theme : @moui.Theme,
 ) -> @moui.View[ShowcaseMsg] {
-  let transition = @core.TransitionSpec::new(
-    from=@core.TransitionStyle::identity()
+  let transition = @views.TransitionSpec::new(
+    from=@views.TransitionStyle::identity()
       .with_opacity(0.72)
       .with_offset(dx=-18.0, dy=0.0),
-    to=@core.TransitionStyle::identity()
+    to=@views.TransitionStyle::identity()
       .with_opacity(1.0)
       .with_offset(dx=0.0, dy=0.0),
     duration_ms=180.0,
-    easing=@core.Easing::EaseOut,
+    easing=@views.Easing::EaseOut,
   )
   let progress = clamp_double(self.slider_value, 0.0, 1.0)
   container(
@@ -320,9 +320,9 @@ fn ShowcaseModel::navigation_command_card(
   ]
   let command_sections = [
     command_menu_section(title="File", commands=[
-      @core.ActionCommand::new(intent=@core.CommandIntent::Submit, label="Save"),
-      @core.ActionCommand::new(
-        intent=@core.CommandIntent::Cancel,
+      @views.ActionCommand::new(intent=@views.CommandIntent::Submit, label="Save"),
+      @views.ActionCommand::new(
+        intent=@views.CommandIntent::Cancel,
         label="Archive",
         enabled=false,
       ),
@@ -384,32 +384,32 @@ fn ShowcaseModel::navigation_palette_card(
   ignore(self)
   ignore(metrics)
   let commands = [
-    @core.ActionCommand::new(
-      intent=@core.CommandIntent::Submit,
+    @views.ActionCommand::new(
+      intent=@views.CommandIntent::Submit,
       label="Save Showcase",
       shortcut=Some(
-        @core.KeyboardShortcut::new(
+        @views.KeyboardShortcut::new(
           key="s",
-          modifiers=@core.KeyModifiers::new(meta=true),
+          modifiers=@views.KeyModifiers::new(meta=true),
         ),
       ),
       group="File",
       description="Persist local showcase state.",
     ),
-    @core.ActionCommand::new(
-      intent=@core.CommandIntent::OpenContextMenu,
+    @views.ActionCommand::new(
+      intent=@views.CommandIntent::OpenContextMenu,
       label="Open Context Menu",
       shortcut=Some(
-        @core.KeyboardShortcut::new(
+        @views.KeyboardShortcut::new(
           key="k",
-          modifiers=@core.KeyModifiers::new(meta=true),
+          modifiers=@views.KeyModifiers::new(meta=true),
         ),
       ),
       group="View",
       description="Show command choices near the current region.",
     ),
-    @core.ActionCommand::new(
-      intent=@core.CommandIntent::Cancel,
+    @views.ActionCommand::new(
+      intent=@views.CommandIntent::Cancel,
       label="Close Overlay",
       enabled=false,
       group="Window",

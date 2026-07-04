@@ -237,8 +237,8 @@ fn color_swatch(
     padding=0.0,
   )
   .border(
-    @moui.BorderStyle::new(
-      brush=@moui.Brush::solid(theme.palette.outline),
+    @graphics.BorderStyle::new(
+      brush=@graphics.Brush::solid(theme.palette.outline),
       width=1.0,
     ),
   )

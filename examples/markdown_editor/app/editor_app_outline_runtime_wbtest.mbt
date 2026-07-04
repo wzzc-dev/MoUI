@@ -165,7 +165,7 @@ test "markdown editor runtime outline click jumps to heading" {
     is Some(frame) else {
     fail("expected outline heading row")
   }
-  let point = @moui.Point::new(x=frame.origin.x + 4.0, y=frame.origin.y + 4.0)
+  let point = @geometry.Point::new(x=frame.origin.x + 4.0, y=frame.origin.y + 4.0)
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(position=point, phase=@core.PointerPhase::Down),

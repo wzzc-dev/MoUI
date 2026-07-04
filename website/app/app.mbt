@@ -27,7 +27,7 @@ pub enum Msg {
 
 ///|
 priv struct Metrics {
-  viewport : @moui.Size
+  viewport : @geometry.Size
   compact : Bool
   content_width : Double
   body_width : Double
@@ -154,7 +154,7 @@ fn Model::view(self : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
     [
       scroll_view(
         body_content,
-        offset=@moui.Point::new(x=0.0, y=body_scroll_y),
+        offset=@geometry.Point::new(x=0.0, y=body_scroll_y),
         width=metrics.body_scroll_width,
         height=metrics.body_height,
         on_scroll=Some(delta => {
@@ -383,7 +383,7 @@ fn moui_repository_url() -> String {
 }
 
 ///|
-fn website_metrics(viewport : @moui.Size) -> Metrics {
+fn website_metrics(viewport : @geometry.Size) -> Metrics {
   let compact = viewport.width < 820.0
   let scrollbar_width = 14.0
   let body_scroll_width = max_website_double(
@@ -449,39 +449,39 @@ fn website_body_content_height(compact : Bool) -> Double {
 ///|
 fn website_theme(dark : Bool) -> @moui.Theme {
   let scheme = if dark {
-    @moui.ColorScheme::Dark
+    @state.ColorScheme::Dark
   } else {
-    @moui.ColorScheme::Light
+    @state.ColorScheme::Light
   }
-  let palette : @core.ColorPalette = if dark {
-    @core.ColorPalette::from_seed(
-      primary=@core.Color::rgba(r=0.18, g=0.83, b=0.75),
-      @moui.ColorScheme::Dark,
-      foreground=@core.Color::rgba(r=0.91, g=0.92, b=0.96),
-      background=@core.Color::rgba(r=0.06, g=0.06, b=0.08),
-      surface=@core.Color::rgba(r=0.09, g=0.09, b=0.12),
-      surface_variant=@core.Color::rgba(r=0.15, g=0.16, b=0.22),
-      outline=@core.Color::rgba(r=0.15, g=0.16, b=0.23),
-      muted=@core.Color::rgba(r=0.55, g=0.58, b=0.66),
+  let palette : @views.ColorPalette = if dark {
+    @views.ColorPalette::from_seed(
+      primary=@graphics.Color::rgba(r=0.18, g=0.83, b=0.75),
+      @state.ColorScheme::Dark,
+      foreground=@graphics.Color::rgba(r=0.91, g=0.92, b=0.96),
+      background=@graphics.Color::rgba(r=0.06, g=0.06, b=0.08),
+      surface=@graphics.Color::rgba(r=0.09, g=0.09, b=0.12),
+      surface_variant=@graphics.Color::rgba(r=0.15, g=0.16, b=0.22),
+      outline=@graphics.Color::rgba(r=0.15, g=0.16, b=0.23),
+      muted=@graphics.Color::rgba(r=0.55, g=0.58, b=0.66),
     )
   } else {
-    @core.ColorPalette::from_seed(
-      primary=@core.Color::rgba(r=0.0, g=0.44, b=0.40),
-      @moui.ColorScheme::Light,
-      foreground=@core.Color::rgba(r=0.07, g=0.09, b=0.14),
-      background=@core.Color::rgba(r=0.98, g=0.98, b=0.98),
-      surface=@core.Color::white(),
-      surface_variant=@core.Color::rgba(r=0.95, g=0.96, b=0.97),
-      outline=@core.Color::rgba(r=0.90, g=0.91, b=0.93),
-      muted=@core.Color::rgba(r=0.42, g=0.45, b=0.50),
+    @views.ColorPalette::from_seed(
+      primary=@graphics.Color::rgba(r=0.0, g=0.44, b=0.40),
+      @state.ColorScheme::Light,
+      foreground=@graphics.Color::rgba(r=0.07, g=0.09, b=0.14),
+      background=@graphics.Color::rgba(r=0.98, g=0.98, b=0.98),
+      surface=@graphics.Color::white(),
+      surface_variant=@graphics.Color::rgba(r=0.95, g=0.96, b=0.97),
+      outline=@graphics.Color::rgba(r=0.90, g=0.91, b=0.93),
+      muted=@graphics.Color::rgba(r=0.42, g=0.45, b=0.50),
     )
   }
-  let typography : @core.TypographyScale = {
-    ..@core.TypographyScale::default(),
-    body: @core.FontSpec::new(size=16.0, weight=500),
-    title: @core.FontSpec::new(size=28.0, weight=800),
-    caption: @core.FontSpec::new(size=13.0, weight=500),
-    control: @core.FontSpec::new(size=15.0, weight=700),
+  let typography : @views.TypographyScale = {
+    ..@views.TypographyScale::default(),
+    body: @text.FontSpec::new(size=16.0, weight=500),
+    title: @text.FontSpec::new(size=28.0, weight=800),
+    caption: @text.FontSpec::new(size=13.0, weight=500),
+    control: @text.FontSpec::new(size=15.0, weight=700),
   }
   @views.theme(scheme~, palette~, typography~)
 }

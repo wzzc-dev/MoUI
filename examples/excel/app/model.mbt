@@ -4,7 +4,7 @@ using @moui {type Effect}
 ///|
 pub(all) struct ExcelApp {
   services : @host.HostAppServices
-  model : @moui.State[ExcelModel]
+  model : @state.State[ExcelModel]
 }
 
 ///|
@@ -113,7 +113,7 @@ pub let cell_gap : Double = 1.0
 
 ///|
 pub fn ExcelApp::new(services : @host.HostAppServices) -> ExcelApp {
-  { services, model: @moui.State::new(ExcelModel::new()) }
+  { services, model: @state.State::new(ExcelModel::new()) }
 }
 
 ///|

@@ -96,7 +96,7 @@ fn hero_demo_header(
     row(
       [
         text(label, width=label_width, height=height - 14.0)
-        .font(@core.FontSpec::new(size=13.0, weight=800))
+        .font(@text.FontSpec::new(size=13.0, weight=800))
         .foreground(theme.palette.foreground),
         spacer(min_length=0.0, weight=1.0),
         text(trailing, width=64.0, height=height - 14.0)
@@ -223,7 +223,7 @@ fn hero_counter_demo(
         spacer(min_length=0.0, weight=1.0),
         text("Live Counter", width=inner_width, height=32.0)
         .font(
-          @core.FontSpec::new(size=if narrow { 17.0 } else { 22.0 }, weight=820),
+          @text.FontSpec::new(size=if narrow { 17.0 } else { 22.0 }, weight=820),
         )
         .foreground(theme.palette.foreground),
         text("Model -> update -> view", width=inner_width, height=24.0)
@@ -241,7 +241,7 @@ fn hero_counter_demo(
         .foreground(theme.palette.muted),
         container(
           text("\{count}", width=inner_width - 28.0, height=value_height - 16.0)
-          .font(@core.FontSpec::new(size=value_font_size, weight=860))
+          .font(@text.FontSpec::new(size=value_font_size, weight=860))
           .foreground(theme.palette.primary),
           width=inner_width,
           height=value_height,
@@ -299,14 +299,14 @@ fn code_snippet_line(
   let font = code_snippet_font(font_size)
   custom_layout(
     measure=constraints => {
-      constraints.constrain(@moui.Size::new(width~, height~))
+      constraints.constrain(@geometry.Size::new(width~, height~))
     },
     paint=(ctx, frame) => {
       draw_text(
         ctx,
-        @core.TextRun::new(
+        @text.TextRun::new(
           text=line_no,
-          frame=@core.Rect::new(
+          frame=@geometry.Rect::new(
             x=frame.origin.x,
             y=frame.origin.y,
             width=gutter_width,
@@ -314,14 +314,14 @@ fn code_snippet_line(
           ),
           font~,
           color=code_snippet_gutter(theme),
-          align=@core.TextAlign::TextStart,
+          align=@text.TextAlign::TextStart,
         ),
       )
       syntax_highlight_draw_commands(
         ctx,
         theme,
         value,
-        @core.Rect::new(
+        @geometry.Rect::new(
           x=frame.origin.x + gutter_width + 8.0,
           y=frame.origin.y,
           width=width - gutter_width - 8.0,
@@ -358,8 +358,8 @@ fn syntax_highlight_draw_commands(
   ctx : PaintContext,
   theme : @moui.Theme,
   value : String,
-  frame : @core.Rect,
-  font : @core.FontSpec,
+  frame : @geometry.Rect,
+  font : @text.FontSpec,
   font_size : Double,
 ) -> Unit {
   let segments = moonbit_syntax_segments(value)
@@ -371,9 +371,9 @@ fn syntax_highlight_draw_commands(
       let x = frame.origin.x + column.to_double() * char_width
       draw_text(
         ctx,
-        @core.TextRun::new(
+        @text.TextRun::new(
           text=segment.value,
-          frame=@core.Rect::new(
+          frame=@geometry.Rect::new(
             x~,
             y=frame.origin.y,
             width=max_website_double(
@@ -384,7 +384,7 @@ fn syntax_highlight_draw_commands(
           ),
           font~,
           color=syntax_tone_color(theme, segment.tone),
-          align=@core.TextAlign::TextStart,
+          align=@text.TextAlign::TextStart,
         ),
       )
       column = column + length
@@ -517,32 +517,32 @@ fn moonbit_type_like(token : String) -> Bool {
 }
 
 ///|
-fn code_snippet_font(size : Double) -> @core.FontSpec {
-  @core.FontSpec::new(
+fn code_snippet_font(size : Double) -> @text.FontSpec {
+  @text.FontSpec::new(
     size~,
     weight=520,
-    families=@core.FontFamilyStack::monospace(),
+    families=@text.FontFamilyStack::monospace(),
   )
 }
 
 ///|
-fn code_snippet_foreground(theme : @moui.Theme) -> @core.Color {
+fn code_snippet_foreground(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.86, g=0.93, b=0.90)
-    @moui.ColorScheme::Light => @core.Color::rgba(r=0.08, g=0.10, b=0.13)
+    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.86, g=0.93, b=0.90)
+    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.08, g=0.10, b=0.13)
   }
 }
 
 ///|
-fn code_snippet_gutter(theme : @moui.Theme) -> @core.Color {
+fn code_snippet_gutter(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.46, g=0.58, b=0.57)
-    @moui.ColorScheme::Light => @core.Color::rgba(r=0.42, g=0.48, b=0.52)
+    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.46, g=0.58, b=0.57)
+    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.42, g=0.48, b=0.52)
   }
 }
 
 ///|
-fn syntax_tone_color(theme : @moui.Theme, tone : SyntaxTone) -> @core.Color {
+fn syntax_tone_color(theme : @moui.Theme, tone : SyntaxTone) -> @graphics.Color {
   match tone {
     SyntaxPlain => code_snippet_foreground(theme)
     SyntaxKeyword => code_syntax_keyword(theme)
@@ -556,70 +556,70 @@ fn syntax_tone_color(theme : @moui.Theme, tone : SyntaxTone) -> @core.Color {
 }
 
 ///|
-fn code_syntax_keyword(theme : @moui.Theme) -> @core.Color {
+fn code_syntax_keyword(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.56, g=0.75, b=1.0)
-    @moui.ColorScheme::Light => @core.Color::rgba(r=0.07, g=0.29, b=0.84)
+    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.56, g=0.75, b=1.0)
+    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.07, g=0.29, b=0.84)
   }
 }
 
 ///|
-fn code_syntax_type(theme : @moui.Theme) -> @core.Color {
+fn code_syntax_type(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.90, g=0.66, b=1.0)
-    @moui.ColorScheme::Light => @core.Color::rgba(r=0.56, g=0.20, b=0.76)
+    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.90, g=0.66, b=1.0)
+    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.56, g=0.20, b=0.76)
   }
 }
 
 ///|
-fn code_syntax_function(theme : @moui.Theme) -> @core.Color {
+fn code_syntax_function(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.36, g=0.87, b=0.68)
-    @moui.ColorScheme::Light => @core.Color::rgba(r=0.03, g=0.45, b=0.28)
+    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.36, g=0.87, b=0.68)
+    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.03, g=0.45, b=0.28)
   }
 }
 
 ///|
-fn code_syntax_string(theme : @moui.Theme) -> @core.Color {
+fn code_syntax_string(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @moui.ColorScheme::Dark => @core.Color::rgba(r=1.0, g=0.70, b=0.44)
-    @moui.ColorScheme::Light => @core.Color::rgba(r=0.72, g=0.30, b=0.02)
+    @state.ColorScheme::Dark => @graphics.Color::rgba(r=1.0, g=0.70, b=0.44)
+    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.72, g=0.30, b=0.02)
   }
 }
 
 ///|
-fn code_syntax_number(theme : @moui.Theme) -> @core.Color {
+fn code_syntax_number(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.73, g=0.83, b=1.0)
-    @moui.ColorScheme::Light => @core.Color::rgba(r=0.18, g=0.39, b=0.78)
+    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.73, g=0.83, b=1.0)
+    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.18, g=0.39, b=0.78)
   }
 }
 
 ///|
-fn code_syntax_operator(theme : @moui.Theme) -> @core.Color {
+fn code_syntax_operator(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.70, g=0.76, b=0.78)
-    @moui.ColorScheme::Light => @core.Color::rgba(r=0.38, g=0.44, b=0.48)
+    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.70, g=0.76, b=0.78)
+    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.38, g=0.44, b=0.48)
   }
 }
 
 ///|
-fn code_syntax_module(theme : @moui.Theme) -> @core.Color {
+fn code_syntax_module(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.53, g=0.87, b=0.92)
-    @moui.ColorScheme::Light => @core.Color::rgba(r=0.00, g=0.45, b=0.56)
+    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.53, g=0.87, b=0.92)
+    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.00, g=0.45, b=0.56)
   }
 }
 
 ///|
-fn hero_demo_header_background(theme : @moui.Theme) -> @core.Color {
+fn hero_demo_header_background(theme : @moui.Theme) -> @graphics.Color {
   code_panel_background(theme)
 }
 
 ///|
-fn hero_counter_background(theme : @moui.Theme) -> @core.Color {
+fn hero_counter_background(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.10, g=0.11, b=0.13)
-    @moui.ColorScheme::Light => @core.Color::rgba(r=0.98, g=0.99, b=0.98)
+    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.10, g=0.11, b=0.13)
+    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.98, g=0.99, b=0.98)
   }
 }

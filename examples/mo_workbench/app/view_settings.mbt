@@ -3,7 +3,7 @@
 ///|
 fn settings_workspace_view(
   model : SettingsWorkspace,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   height : Double,
 ) -> @moui.View[SettingsMsg] {
@@ -32,7 +32,7 @@ fn settings_workspace_view(
 
 ///|
 fn settings_header(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[SettingsMsg] {
   @views.column(
@@ -53,7 +53,7 @@ fn settings_header(
 ///|
 fn runtime_settings_card(
   model : SettingsWorkspace,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[SettingsMsg] {
   settings_card(
@@ -92,7 +92,7 @@ fn runtime_settings_card(
 ///|
 fn permission_settings_card(
   model : SettingsWorkspace,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[SettingsMsg] {
   settings_card(
@@ -111,7 +111,7 @@ fn permission_settings_card(
 ///|
 fn appearance_settings_card(
   model : SettingsWorkspace,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[SettingsMsg] {
   settings_card(
@@ -135,7 +135,7 @@ fn appearance_settings_card(
 fn settings_card(
   title : String,
   children : Array[@moui.View[SettingsMsg]],
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[SettingsMsg] {
   let rows : Array[@moui.View[SettingsMsg]] = [
@@ -161,7 +161,7 @@ fn settings_card(
 ///|
 fn field_label(
   text_ : String,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[SettingsMsg] {
   @views.text(text_, role=@views.TextRole::Label, theme~, width~).foreground(
@@ -172,7 +172,7 @@ fn field_label(
 ///|
 fn api_key_field(
   api_key : String,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[SettingsMsg] {
   let masked = if api_key.is_empty() {
@@ -205,7 +205,7 @@ fn api_key_field(
 ///|
 fn approval_segmented_control(
   policy : ApprovalPolicy,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[SettingsMsg] {
   @views.segmented_control(
@@ -225,7 +225,7 @@ fn approval_segmented_control(
 ///|
 fn sandbox_segmented_control(
   mode : SandboxMode,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[SettingsMsg] {
   @views.segmented_control(
@@ -245,7 +245,7 @@ fn sandbox_segmented_control(
 ///|
 fn font_size_stepper(
   font_size : Int,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[SettingsMsg] {
   @views.row(
