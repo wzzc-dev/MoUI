@@ -22,6 +22,7 @@ members = [
   "./examples/file_importer",
   "./examples/command_palette",
   "./examples/mo_workbench",
+  "./examples/moui_example",
   "./openseek",
   "./examples/webview_demo",
   "./examples/excel",

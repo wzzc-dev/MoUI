@@ -1,0 +1,10 @@
+import {
+  "wzzc-dev/moui/views",
+  "wzzc-dev/moui",
+}
+
+supported_targets = "+native+wasm-gc"
+
+options(
+  targets: { },
+)

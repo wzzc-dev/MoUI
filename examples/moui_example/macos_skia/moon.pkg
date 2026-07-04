@@ -1,0 +1,17 @@
+import {
+  "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
+  "wzzc-dev/moui/runtime",
+  "examples/moui_example/app" @moui_example_app,
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework WebKit -lz",
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)
