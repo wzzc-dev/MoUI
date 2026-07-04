@@ -410,7 +410,16 @@ fn fallback_paragraph_should_wrap(
 
 ///|
 fn fallback_paragraph_cluster_is_soft_break(cluster : String) -> Bool {
-  cluster == " " || cluster == "\t" || cluster == "-"
+  cluster == " " ||
+  cluster == "\t" ||
+  cluster == "-" ||
+  cluster == "、" ||
+  cluster == "，" ||
+  cluster == "。" ||
+  cluster == "；" ||
+  cluster == "：" ||
+  cluster == "）" ||
+  cluster == ")"
 }
 
 ///|
@@ -469,13 +478,28 @@ fn fallback_paragraph_visual_order(
 }
 
 ///|
+fn fallback_text_char_advance(ch : Char, font_size : Double) -> Double {
+  if ch == ' ' || ch == '\t' {
+    font_size * 0.35
+  } else if (ch >= '0' && ch <= '9') ||
+    (ch >= 'A' && ch <= 'Z') ||
+    (ch >= 'a' && ch <= 'z') {
+    font_size * 0.55
+  } else {
+    font_size * 0.95
+  }
+}
+
+///|
 fn fallback_text_layout_result(input : TextLayoutInput) -> TextLayoutResult {
-  let width = input.font.size * input.text.to_array().length().to_double() * 0.5
+  let mut width = 0.0
   let carets : Array[Double] = []
   carets.push(0.0)
   let mut cursor = 0.0
-  for _ in input.text {
-    cursor = cursor + input.font.size * 0.5
+  for ch in input.text {
+    let advance = fallback_text_char_advance(ch, input.font.size)
+    cursor = cursor + advance
+    width = width + advance
     carets.push(cursor)
   }
   let carets = fallback_stabilize_grapheme_cluster_carets(input.text, carets)
