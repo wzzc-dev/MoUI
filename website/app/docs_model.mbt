@@ -149,6 +149,12 @@ fn website_docs_entries() -> Array[WebsiteDocEntry] {
       summary: "Agent desktop dogfood app architecture.",
     },
     {
+      slug: "showcases",
+      title: "Showcases",
+      path: "docs/showcases.md",
+      summary: "Featured MoUI applications and source links.",
+    },
+    {
       slug: "release-readiness",
       title: "Release Readiness",
       path: "docs/release-readiness.md",

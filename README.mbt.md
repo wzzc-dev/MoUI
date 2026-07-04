@@ -46,6 +46,7 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 ## Screenshots
 
 <div align="center">
+  <img src="resource/screenshots/mo_workbench.png" width="400px"/>
   <img src="resource/screenshots/markdown_editor.png" width="400px"/>
   <img src="resource/screenshots/showcase.png" width="400px"/>
 </div>

@@ -48,6 +48,7 @@ shape outside `examples/` so MoUI can render its own bilingual homepage.
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback, `program_with_services`, and `HostAppServices::show_context_menu` native menu preview |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
 | Mo Workbench | Native-Skia-first desktop agent dogfood app | `examples/mo_workbench/app/` | DeepSeek-GUI-inspired multi-workspace shell with Code chat, starter cards, topbar model/thinking controls, responsive left rail, optional right inspector, low-noise status bar, grouped Settings form, static Write/Connect Phone/Scheduled Tasks/Plugins surfaces, injected stub backend, macOS Skia native entrypoint |
+| MoUI Quick Example | Minimal MoUI counter for quick start exploration | `examples/moui_example/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages, minimal macOS Skia and Web wasm-gc entrypoints |
 
 Focused Website checks:
 
@@ -458,6 +459,66 @@ moon build examples/mo_workbench/macos_skia --target native
 ```
 
 See [Mo Workbench](mo-workbench.md) for the app architecture, current slice, connector boundary, and transport follow-up notes.
+
+## MoUI Quick Example
+
+MoUI Quick Example (`examples/moui_example`) is a minimal counter app for quick start exploration. It keeps the same `Model / Msg / update / view` pattern as the main Counter example but with a minimal footprint for developers who want to understand the MoUI basics in one file.
+
+The app logic lives in `examples/moui_example/app/` and the code closely mirrors the main Counter example:
+
+```moonbit
+using @views {button, card, center, column, row, text}
+
+pub struct Model {
+  count : Int
+}
+
+pub(all) enum Msg {
+  Increment
+  Decrement
+  Reset
+}
+
+pub fn Model::new() -> Model {
+  { count: 0 }
+}
+
+pub fn update(model : Model, msg : Msg) -> Model {
+  match msg {
+    Increment => { count: model.count + 1 }
+    Decrement => { count: model.count - 1 }
+    Reset => { count: 0 }
+  }
+}
+
+pub fn view(model : Model) -> @moui.View[Msg] {
+  center(
+    card(
+      column([
+        text("MoUI Quick Example").title(),
+        text("Count: \{model.count}").title(),
+        row([
+          button("-", on_click=Decrement),
+          button("Reset", on_click=Reset),
+          button("+", on_click=Increment),
+        ]),
+      ]),
+    ),
+  )
+}
+
+pub fn program() -> @moui.Program[Model, Msg] {
+  @moui.Program::simple(init=Model::new(), update~, view~)
+}
+```
+
+Focused MoUI Quick Example checks:
+
+```sh
+moon test examples/moui_example/app --target native
+moon build examples/moui_example/web_wasm --target wasm-gc
+moon check examples/moui_example/macos_skia --target native
+```
 
 ## Web Wasm-GC
 
