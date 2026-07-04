@@ -18,6 +18,7 @@ priv struct WorkbenchLayout {
 fn workbench_layout(viewport : @geometry.Size) -> WorkbenchLayout {
   let topbar_height = 50.0
   let statusbar_height = 26.0
+  let app_margin = 8.0
   let sidebar_width = if viewport.width < 760.0 {
     200.0
   } else if viewport.width < 1120.0 {
@@ -25,15 +26,11 @@ fn workbench_layout(viewport : @geometry.Size) -> WorkbenchLayout {
   } else {
     280.0
   }
-  let center_height = (viewport.height - topbar_height - statusbar_height - 16.0).max(
-    262.0,
-  )
-  {
-    sidebar_width,
-    topbar_height,
-    statusbar_height,
-    center_height,
-  }
+  let center_height = (viewport.height -
+  topbar_height -
+  statusbar_height -
+  app_margin * 2.0).max(262.0)
+  { sidebar_width, topbar_height, statusbar_height, center_height }
 }
 
 ///|
@@ -72,38 +69,24 @@ fn workbench_view(
     background=workbench_sidebar_background(theme),
     padding=0.0,
   )
-  // Right column: canvas + statusbar pinned to bottom, bar centered horizontally.
+  // Right column: symmetric app-bg margin, canvas + statusbar.
   let right_width = viewport.width - left_width
-  let right_inner_width = (right_width - 16.0).max(280.0)
-  let right_body_height = (main_height - layout.statusbar_height - 16.0).max(200.0)
+  let app_margin = 8.0
+  let right_inner_width = (right_width - app_margin * 2.0).max(280.0)
+  let canvas_height = (main_height - app_margin * 2.0).max(200.0)
   let right_column = @views.container(
-    @views.column(
-      [
-        @views.container(
-          @views.container(
-            center_shell(model, theme, layout, right_inner_width),
-            width=right_inner_width,
-            background=workbench_canvas_background(theme),
-            padding=0.0,
-          ),
-          width=right_width,
-          height=right_body_height,
-          background=workbench_app_background(theme),
-          padding=8.0,
-        ),
-        @views.center(
-          statusbar_view(
-            model,
-            theme,
-            right_width,
-            layout.statusbar_height,
-          ),
-          width=right_width,
-          height=layout.statusbar_height,
-        ),
-      ],
-      spacing=0.0,
-      align=@views.CrossAlign::Stretch,
+    @views.padding_edges(
+      @views.container(
+        center_shell(model, theme, layout, right_inner_width),
+        width=right_inner_width,
+        height=canvas_height,
+        background=workbench_canvas_background(theme),
+        padding=0.0,
+      ),
+      top=app_margin,
+      left=app_margin,
+      right=app_margin,
+      bottom=app_margin,
     ),
     width=right_width,
     height=main_height,
@@ -172,16 +155,31 @@ fn center_shell(
   layout : WorkbenchLayout,
   center_width : Double,
 ) -> @moui.View[WorkbenchMsg] {
+  let shell_height = layout.topbar_height +
+    layout.center_height +
+    layout.statusbar_height
   @views.container(
     @views.column(
       [
         topbar_view(model, theme, center_width, layout.topbar_height),
         main_surface(model, theme, center_width, layout.center_height),
+        @views.center(
+          statusbar_view(
+            model,
+            theme,
+            center_width,
+            layout.statusbar_height,
+          ),
+          width=center_width,
+          height=layout.statusbar_height,
+          theme~,
+        ),
       ],
       spacing=0.0,
       align=@views.CrossAlign::Stretch,
     ),
     width=center_width,
+    height=shell_height,
     background=workbench_canvas_background(theme),
     padding=0.0,
   )
@@ -194,49 +192,42 @@ fn topbar_view(
   width : Double,
   height : Double,
 ) -> @moui.View[WorkbenchMsg] {
-  let title_width = (width - 56.0).max(160.0)
   let title = match model.active_tab {
     Code => code_session_title(model.code)
     _ => tab_label(model.active_tab)
   }
-  @views.padding_edges(
-    @views.container(
-      @views.row(
+  let horizontal_pad = 24.0
+  let inner_width = (width - horizontal_pad * 2.0).max(160.0)
+  @views.container(
+    @views.center(
+      @views.column(
         [
-          @views.column(
-            [
-              @views.text(
-                title,
-                role=@views.TextRole::Label,
-                theme~,
-                width=title_width,
-                height=20.0,
-              ),
-              @views.text(
-                tab_subtitle(model),
-                role=@views.TextRole::Caption,
-                theme~,
-                width=title_width,
-                height=16.0,
-              ).foreground(theme.palette.muted),
-            ],
-            spacing=0.0,
-            align=@views.CrossAlign::Start,
+          @views.text(
+            title,
+            role=@views.TextRole::Label,
+            theme~,
+            width=inner_width,
+            height=20.0,
           ),
-          @views.spacer(),
+          @views.text(
+            tab_subtitle(model),
+            role=@views.TextRole::Caption,
+            theme~,
+            width=inner_width,
+            height=16.0,
+          ).foreground(theme.palette.muted),
         ],
-        spacing=16.0,
+        spacing=0.0,
         align=@views.CrossAlign::Center,
       ),
       width~,
       height~,
-      background=workbench_card_background(theme),
-      padding=0.0,
+      theme~,
     ),
-    top=0.0,
-    left=28.0,
-    bottom=0.0,
-    right=24.0,
+    width~,
+    height~,
+    background=workbench_card_background(theme),
+    padding=0.0,
   )
 }
 
@@ -458,7 +449,9 @@ fn task_tree_view(
 ) -> @moui.View[WorkbenchMsg] {
   let body : Array[@moui.View[WorkbenchMsg]] = []
   if model.task_tree.is_empty() {
-    body.push(sidebar_caption("暂无任务,点击上方新建", theme, width - 32.0))
+    body.push(
+      sidebar_caption("暂无任务,点击上方新建", theme, width - 32.0),
+    )
   } else {
     body.push(
       @views.row(
@@ -470,7 +463,11 @@ fn task_tree_view(
             width=width - 80.0,
           ),
           @views.container(
-            @views.icon(@views.IconName::ListOrdered, size=14.0, color=workbench_text_muted(theme)),
+            @views.icon(
+              @views.IconName::ListOrdered,
+              size=14.0,
+              color=workbench_text_muted(theme),
+            ),
             width=24.0,
             height=24.0,
             padding=0.0,
@@ -549,7 +546,8 @@ fn task_tree_node_view(
       }
       @views.column(rows, spacing=2.0, align=@views.CrossAlign::Stretch)
     }
-    Task(id, title, _, status, _) => task_row(id, title, status, model, theme, width)
+    Task(id, title, _, status, _) =>
+      task_row(id, title, status, model, theme, width)
   }
 }
 
@@ -711,12 +709,8 @@ fn settings_overlay_view(
             [
               @views.row(
                 [
-                  @views.text(
-                    "Settings",
-                    role=@views.TextRole::Title,
-                    theme~,
-                  ),
-@views.spacer(min_length=78.0, weight=0.0),
+                  @views.text("Settings", role=@views.TextRole::Title, theme~),
+                  @views.spacer(min_length=78.0, weight=0.0),
                   @views.container(
                     @views.icon(
                       @views.IconName::Close,
@@ -842,6 +836,7 @@ fn model_choice_label(model : ModelChoice) -> String {
     V4Pro => "V4 Pro"
   }
 }
+
 ///|
 fn thinking_choice_label(thinking : ThinkingChoice) -> String {
   match thinking {
