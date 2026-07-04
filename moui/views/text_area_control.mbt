@@ -16,6 +16,111 @@ fn text_area_paragraph(
 }
 
 ///|
+fn text_area_soft_break_after(ch : Char) -> Bool {
+  ch == ' ' ||
+  ch == '\t' ||
+  ch == '、' ||
+  ch == '，' ||
+  ch == '。' ||
+  ch == '；' ||
+  ch == '：' ||
+  ch == '）' ||
+  ch == ')'
+}
+
+///|
+fn text_area_measure_width(
+  text_system : @core.TextSystem,
+  text : String,
+  font : @core.FontSpec,
+) -> Double {
+  text_system.measure_text(@core.TextLayoutInput::new(text~, font~)).size.width
+}
+
+///|
+/// Wrap using the active TextSystem measure (Skia real widths when available).
+fn text_area_wrap_line_ranges(
+  text_system : @core.TextSystem,
+  text : String,
+  font : @core.FontSpec,
+  max_width : Double,
+  max_lines : Int,
+) -> Array[@core.TextRange] {
+  let chars = text.to_array()
+  let length = chars.length()
+  if length == 0 || max_width <= 0.0 || max_lines <= 0 {
+    return []
+  }
+  let ranges : Array[@core.TextRange] = []
+  let mut start = 0
+  while start < length && ranges.length() < max_lines {
+    let mut end = start
+    let mut last_break = start
+    let mut fits = true
+    while end < length {
+      let candidate = String::from_array(chars[start:end + 1])
+      let width = text_area_measure_width(text_system, candidate, font)
+      if width > max_width && end > start {
+        fits = false
+        break
+      }
+      if text_area_soft_break_after(chars[end]) {
+        last_break = end + 1
+      }
+      end = end + 1
+    }
+    let line_end = if fits {
+      length
+    } else if last_break > start {
+      last_break
+    } else if end > start + 1 {
+      end - 1
+    } else {
+      end
+    }
+    if line_end <= start {
+      break
+    }
+    ranges.push(@core.TextRange::new(start~, end=line_end))
+    start = line_end
+  }
+  ranges
+}
+
+///|
+fn text_area_placeholder_layout_text(
+  text_system : @core.TextSystem,
+  placeholder : String,
+  font : @core.FontSpec,
+  max_width : Double,
+  max_lines : Int,
+) -> String {
+  let ranges = text_area_wrap_line_ranges(
+    text_system,
+    placeholder,
+    font,
+    max_width,
+    max_lines,
+  )
+  let chars = placeholder.to_array()
+  let parts : Array[String] = []
+  for line_range in ranges {
+    if line_range.start < line_range.end {
+      parts.push(String::from_array(chars[line_range.start:line_range.end]))
+    }
+  }
+  if parts.is_empty() {
+    ""
+  } else {
+    let mut out = parts[0]
+    for index in 1..<parts.length() {
+      out = out + "\n" + parts[index]
+    }
+    out
+  }
+}
+
+///|
 fn[Msg] text_area_control(
   value~ : @core.Binding[String],
   placeholder~ : String,
@@ -73,6 +178,8 @@ fn[Msg] text_area_control(
         control=ctx.text_control,
         text_system=ctx.text_system,
         theme=resolved_theme,
+        visible_lines=lines,
+        line_height~,
       )
       {
         commands,
@@ -148,6 +255,8 @@ fn append_text_area_commands(
   control~ : @core.TextControlStateContext,
   text_system~ : @core.TextSystem,
   theme~ : @core.Theme,
+  visible_lines~ : Int,
+  line_height~ : Double,
 ) -> Unit {
   let border = if focused { focused_border } else { border }
   let rounded = @core.RoundedRect::new(rect=frame, radius=corner_radius)
@@ -155,48 +264,62 @@ fn append_text_area_commands(
   append_border(commands, rounded, border)
   let display_text = text_with_composition(text, control, focused~)
   let text_frame = text_area_text_frame(frame)
-  let paragraph = text_area_paragraph(
-    text_system, display_text, font, text_frame,
-  )
-  commands.push(@core.DrawCommand::PushClip(text_frame))
-  if display_text == "" {
-    commands.push(
-      @core.DrawCommand::DrawText(
-        @core.TextRun::new(
-          text=placeholder,
-          frame=text_frame,
-          font~,
-          color=placeholder_color,
-          align=@core.TextAlign::TextStart,
-        ),
-      ),
+  let is_placeholder = display_text == ""
+  let paint_color = if is_placeholder {
+    placeholder_color
+  } else {
+    foreground
+  }
+  let layout_text = if is_placeholder {
+    text_area_placeholder_layout_text(
+      text_system,
+      placeholder,
+      font,
+      text_frame.size.width,
+      visible_lines,
     )
   } else {
-    for line in paragraph.lines {
-      let line_range = line.text_range
-      if line_range.start < line_range.end {
-        let chars = display_text.to_array()
-        let line_text = String::from_array(
-          chars[line_range.start:line_range.end],
-        )
-        let line_frame = @core.Rect::new(
-          x=text_frame.origin.x + line.origin.x,
-          y=text_frame.origin.y + line.origin.y,
-          width=line.size.width,
-          height=line.size.height,
-        )
-        commands.push(
-          @core.DrawCommand::DrawText(
-            @core.TextRun::new(
-              text=line_text,
-              frame=line_frame,
-              font~,
-              color=foreground,
-              align=@core.TextAlign::TextStart,
-            ),
+    display_text
+  }
+  let paragraph = text_area_paragraph(
+    text_system, layout_text, font, text_frame,
+  )
+  commands.push(@core.DrawCommand::PushClip(text_frame))
+  let max_lines = if is_placeholder {
+    visible_lines
+  } else {
+    paragraph.lines.length()
+  }
+  for line_index, line in paragraph.lines {
+    if line_index >= max_lines {
+      break
+    }
+    let line_range = line.text_range
+    if line_range.start < line_range.end {
+      let chars = layout_text.to_array()
+      let line_text = String::from_array(
+        chars[line_range.start:line_range.end],
+      )
+      let line_left = text_frame.origin.x + line.origin.x
+      let line_frame = @core.Rect::new(
+        x=line_left,
+        y=text_frame.origin.y + line.origin.y,
+        width=(text_frame.origin.x + text_frame.size.width - line_left).max(
+          line.size.width,
+        ),
+        height=line.size.height,
+      )
+      commands.push(
+        @core.DrawCommand::DrawText(
+          @core.TextRun::new(
+            text=line_text,
+            frame=line_frame,
+            font~,
+            color=paint_color,
+            align=@core.TextAlign::TextStart,
           ),
-        )
-      }
+        ),
+      )
     }
   }
   commands.push(@core.DrawCommand::PopClip)

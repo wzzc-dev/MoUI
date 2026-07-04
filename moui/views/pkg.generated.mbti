@@ -77,7 +77,7 @@ pub fn[Msg] command_palette(Array[@core.ActionCommand], query? : String, on_sele
 
 pub fn[Msg] component((@core.ComponentContext) -> @core.View[Msg]) -> @core.View[Msg]
 
-pub fn[Msg] container(@core.View[Msg], width? : Double, height? : Double, background? : @core.Color, corner_radius? : Double, variant? : ContainerVariant, theme? : @core.Theme, padding? : Double) -> @core.View[Msg]
+pub fn[Msg] container(@core.View[Msg], width? : Double, height? : Double, background? : @core.Color, corner_radius? : Double, border? : @core.BorderStyle?, variant? : ContainerVariant, theme? : @core.Theme, padding? : Double) -> @core.View[Msg]
 
 pub fn[Msg] context_menu_region(child~ : @core.View[Msg], menu~ : @core.View[Msg], visible~ : Bool, theme? : @core.Theme) -> @core.View[Msg]
 

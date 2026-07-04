@@ -5,6 +5,7 @@ pub fn[Msg] container(
   height? : Double,
   background? : @core.Color,
   corner_radius? : Double = 0.0,
+  border? : @core.BorderStyle? = None,
   variant? : ContainerVariant = ContainerVariant::Base,
   theme? : @core.Theme,
   padding? : Double,
@@ -19,11 +20,19 @@ pub fn[Msg] container(
     Some(color) => (Some(@core.Brush::solid(color)), corner_radius)
     None => (Some(style.brush), style.radius)
   }
+  let resolved_border = match border {
+    Some(value) => Some(value)
+    None => style.border
+  }
+  let framed_size = match (width, height) {
+    (Some(w), Some(h)) => Some(@core.Size::new(width=w, height=h))
+    _ => None
+  }
   let container = container_box(
     child=Some(padding_layout(child~, insets=child_padding)),
-    size=None,
+    size=framed_size,
     background~,
-    border=style.border,
+    border=resolved_border,
     corner_radius~,
     shadow=style.shadow,
   )
