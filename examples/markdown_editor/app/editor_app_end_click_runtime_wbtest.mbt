@@ -25,12 +25,12 @@ test "markdown editor bottom click keeps focused text input windowed" {
     runtime.dispatch_event(
       @core.AppEvent::Pointer(
         @core.PointerEvent::new(
-          position=@moui.Point::new(
+          position=@geometry.Point::new(
             x=app.editor_content_x(980.0, inner_x=8.0),
             y=220.0,
           ),
           phase=@core.PointerPhase::Move,
-          wheel_delta=@moui.Point::new(x=0.0, y=-420.0),
+          wheel_delta=@geometry.Point::new(x=0.0, y=-420.0),
         ),
       ),
     )
@@ -40,7 +40,7 @@ test "markdown editor bottom click keeps focused text input windowed" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=8.0),
           y=552.0,
         ),

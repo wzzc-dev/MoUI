@@ -18,7 +18,7 @@ fn pdf_workbench_preview_canvas(
       let page_height = page_size.height
       let x = frame.origin.x + (frame.size.width - page_width) / 2.0
       let y = frame.origin.y + 36.0
-      let page_rect = @core.Rect::new(
+      let page_rect = @geometry.Rect::new(
         x~,
         y~,
         width=page_width,
@@ -35,63 +35,63 @@ fn pdf_workbench_preview_canvas(
         None => "Use Open to choose a .pdf file"
       }
       fill_rect(ctx, frame, theme.palette.surface_variant)
-      fill_rect(ctx, page_rect, @core.Color::white())
+      fill_rect(ctx, page_rect, @graphics.Color::white())
       match raster_page {
         Some(raster) =>
-          draw_image(ctx, @core.ImageRun::{
+          draw_image(ctx, @views.ImageRun::{
             source: raster.image_source,
             frame: page_rect,
             opacity: 1.0,
-            fit: @core.ImageFit::Contain,
+            fit: @views.ImageFit::Contain,
           })
         None => {
-          draw_text(ctx, @core.TextRun::new(
+          draw_text(ctx, @text.TextRun::new(
             text=loaded_title,
-            frame=@core.Rect::new(
+            frame=@geometry.Rect::new(
               x=x + 24.0,
               y=y + 28.0,
               width=page_width - 48.0,
               height=28.0,
             ),
-            font=@core.FontSpec::new(size=18.0),
+            font=@text.FontSpec::new(size=18.0),
             color=theme.palette.foreground,
-            align=@core.TextAlign::TextStart,
+            align=@text.TextAlign::TextStart,
           ))
-          draw_text(ctx, @core.TextRun::new(
+          draw_text(ctx, @text.TextRun::new(
             text=file_line,
-            frame=@core.Rect::new(
+            frame=@geometry.Rect::new(
               x=x + 24.0,
               y=y + 62.0,
               width=page_width - 48.0,
               height=24.0,
             ),
-            font=@core.FontSpec::new(size=12.0),
+            font=@text.FontSpec::new(size=12.0),
             color=theme.palette.muted,
-            align=@core.TextAlign::TextStart,
+            align=@text.TextAlign::TextStart,
           ))
-          draw_text(ctx, @core.TextRun::new(
+          draw_text(ctx, @text.TextRun::new(
             text=page.text_preview,
-            frame=@core.Rect::new(
+            frame=@geometry.Rect::new(
               x=x + 24.0,
               y=y + 104.0,
               width=page_width - 48.0,
               height=160.0,
             ),
-            font=@core.FontSpec::new(size=14.0),
+            font=@text.FontSpec::new(size=14.0),
             color=theme.palette.foreground,
-            align=@core.TextAlign::TextStart,
+            align=@text.TextAlign::TextStart,
           ))
-          draw_text(ctx, @core.TextRun::new(
+          draw_text(ctx, @text.TextRun::new(
             text=page.content_diagnostic,
-            frame=@core.Rect::new(
+            frame=@geometry.Rect::new(
               x=x + 24.0,
               y=y + page_height - 92.0,
               width=page_width - 48.0,
               height=32.0,
             ),
-            font=@core.FontSpec::new(size=12.0),
+            font=@text.FontSpec::new(size=12.0),
             color=theme.palette.muted,
-            align=@core.TextAlign::TextStart,
+            align=@text.TextAlign::TextStart,
           ))
         }
       }
@@ -103,17 +103,17 @@ fn pdf_workbench_preview_canvas(
           )
         None => ()
       }
-      draw_text(ctx, @core.TextRun::new(
+      draw_text(ctx, @text.TextRun::new(
         text=pdf_workbench_raster_status_label(raster_status),
-        frame=@core.Rect::new(
+        frame=@geometry.Rect::new(
           x=frame.origin.x + 16.0,
           y=frame.origin.y + 4.0,
           width=frame.size.width - 32.0,
           height=20.0,
         ),
-        font=@core.FontSpec::new(size=12.0),
+        font=@text.FontSpec::new(size=12.0),
         color=theme.palette.muted,
-        align=@core.TextAlign::TextStart,
+        align=@text.TextAlign::TextStart,
       ))
     },
     semantics_label=page.text_preview,
@@ -151,13 +151,13 @@ fn pdf_workbench_preview_page_size(
   raster_page : PdfWorkbenchRasterPage?,
   zoom : Double,
   metrics : PdfWorkbenchLayoutMetrics,
-) -> @moui.Size {
+) -> @geometry.Size {
   let aspect = pdf_workbench_preview_aspect(raster_page)
   let available_width = (metrics.preview_width - 32.0).max(120.0)
   let page_width = (available_width * pdf_workbench_preview_display_zoom(zoom)).max(
     120.0,
   )
-  @moui.Size::new(width=page_width, height=(page_width / aspect).max(120.0))
+  @geometry.Size::new(width=page_width, height=(page_width / aspect).max(120.0))
 }
 
 ///|
@@ -165,9 +165,9 @@ fn pdf_workbench_preview_content_size(
   raster_page : PdfWorkbenchRasterPage?,
   zoom : Double,
   metrics : PdfWorkbenchLayoutMetrics,
-) -> @moui.Size {
+) -> @geometry.Size {
   let page_size = pdf_workbench_preview_page_size(raster_page, zoom, metrics)
-  @moui.Size::new(
+  @geometry.Size::new(
     width=(page_size.width + 32.0).max(metrics.preview_width),
     height=(page_size.height + 72.0).max(metrics.preview_height),
   )
@@ -177,7 +177,7 @@ fn pdf_workbench_preview_content_size(
 fn pdf_workbench_push_page_edit_overlays(
   ctx : PaintContext,
   document : PdfWorkbenchDocument,
-  page_rect : @core.Rect,
+  page_rect : @geometry.Rect,
   theme : @moui.Theme,
 ) -> Unit {
   let mut stamp_index = 0
@@ -188,7 +188,7 @@ fn pdf_workbench_push_page_edit_overlays(
         if page == document.selected_page {
           let stamp_width = 104.0
           let stamp_height = 28.0
-          let stamp_rect = @core.Rect::new(
+          let stamp_rect = @geometry.Rect::new(
             x=page_rect.origin.x + page_rect.size.width - stamp_width - 18.0,
             y=page_rect.origin.y + 18.0 + stamp_index.to_double() * 34.0,
             width=stamp_width,
@@ -205,12 +205,12 @@ fn pdf_workbench_push_page_edit_overlays(
             theme.palette.primary.multiply_alpha(0.72),
             1.0,
           )
-          draw_text(ctx, @core.TextRun::new(
+          draw_text(ctx, @text.TextRun::new(
             text=value,
             frame=stamp_rect,
-            font=@core.FontSpec::new(size=12.0),
+            font=@text.FontSpec::new(size=12.0),
             color=theme.palette.primary,
-            align=@core.TextAlign::TextCenter,
+            align=@text.TextAlign::TextCenter,
           ))
           stamp_index = stamp_index + 1
         }
@@ -218,7 +218,7 @@ fn pdf_workbench_push_page_edit_overlays(
         if page == document.selected_page {
           let note_width = 168.0
           let note_height = 46.0
-          let note_rect = @core.Rect::new(
+          let note_rect = @geometry.Rect::new(
             x=page_rect.origin.x + 18.0,
             y=page_rect.origin.y + 18.0 + note_index.to_double() * 52.0,
             width=note_width,
@@ -235,17 +235,17 @@ fn pdf_workbench_push_page_edit_overlays(
             theme.palette.primary.multiply_alpha(0.58),
             1.0,
           )
-          draw_text(ctx, @core.TextRun::new(
+          draw_text(ctx, @text.TextRun::new(
             text=value,
-            frame=@core.Rect::new(
+            frame=@geometry.Rect::new(
               x=note_rect.origin.x + 8.0,
               y=note_rect.origin.y + 7.0,
               width=note_rect.size.width - 16.0,
               height=note_rect.size.height - 14.0,
             ),
-            font=@core.FontSpec::new(size=11.0),
+            font=@text.FontSpec::new(size=11.0),
             color=theme.palette.primary,
-            align=@core.TextAlign::TextStart,
+            align=@text.TextAlign::TextStart,
           ))
           note_index = note_index + 1
         }

@@ -30,7 +30,7 @@ fn ExcelApp::view(self : ExcelApp) -> @moui.View[ExcelMsg] {
       base,
       @views.align(
         build_more_menu_overlay(theme),
-        alignment=@moui.Alignment::new(x=1.0, y=0.0),
+        alignment=@geometry.Alignment::new(x=1.0, y=0.0),
       ),
     )
   } else {

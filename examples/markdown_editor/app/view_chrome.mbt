@@ -86,7 +86,7 @@ fn MarkdownEditorApp::root(
     children=no_views,
     measure=ctx => ctx.constraints.constrain(ctx.constraints.max),
     place=_ctx => {
-      let rects : Array[@core.Rect] = []
+      let rects : Array[@geometry.Rect] = []
       rects
     },
     paint=(ctx, bounds) => {
@@ -98,13 +98,13 @@ fn MarkdownEditorApp::root(
   layers.push(
     @views.align(
       self.toast_layer(theme),
-      alignment=@core.Alignment::new(x=0.5, y=0.0),
+      alignment=@geometry.Alignment::new(x=0.5, y=0.0),
     ),
   )
   layers.push(
     @views.align(
       self.confirm_dialog(theme),
-      alignment=@core.Alignment::center(),
+      alignment=@geometry.Alignment::center(),
     ),
   )
   @views.stack(layers)
@@ -125,7 +125,7 @@ fn MarkdownEditorApp::chrome_theme(self : MarkdownEditorApp) -> @moui.Theme {
 ///|
 fn MarkdownEditorApp::reactive_root(
   self : MarkdownEditorApp,
-  ctx : @core.ComponentContext,
+  ctx : @views.ComponentContext,
 ) -> @moui.View[MarkdownEditorMsg] {
   ignore(ctx.watch(self.document))
   ignore(ctx.watch(self.document_session))
@@ -358,7 +358,7 @@ fn MarkdownEditorApp::bottom_status_bar(
   ).repaint_boundary()
   let tree_aligned = @views.align(
     tree_button,
-    alignment=@core.Alignment::new(x=-1.0, y=0.0),
+    alignment=@geometry.Alignment::new(x=-1.0, y=0.0),
   )
   @views.overlay(status_frame, tree_aligned)
 }

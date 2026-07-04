@@ -6,7 +6,7 @@ test "markdown editor copy exports visual text without hidden markdown markers" 
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),
@@ -38,7 +38,7 @@ test "markdown editor cut exports visual text and deletes source selection" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),
@@ -80,7 +80,7 @@ test "markdown editor paste command continues list context" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),
@@ -108,7 +108,7 @@ test "markdown editor runtime unicode paste participates in undo redo" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),
@@ -144,7 +144,7 @@ test "markdown editor paste command links selected text with url" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),
@@ -191,7 +191,7 @@ test "markdown editor paste command links selected text with email" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),
@@ -238,7 +238,7 @@ test "markdown editor paste command inserts image from selected alt text" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),
@@ -285,7 +285,7 @@ test "markdown editor runtime paste and typing complete autolinks" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),

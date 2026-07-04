@@ -1,119 +1,26 @@
 ///|
-pub type View[Msg] = @core.View[Msg]
+/// Root facade: high-frequency app-loop kernel types from `moui/core`.
+/// Geometry/graphics/text/state sugar stay in `moui/{geometry,graphics,text,state}`.
+/// Apps import `wzzc-dev/moui` and use `@moui.View` etc. so `@app` remains the
+/// shared example package alias. See `docs/moui-app-package-boundary.md`.
 
 ///|
-pub type Program[Model, Msg] = @core.Program[Model, Msg]
+pub using @core {type View}
 
 ///|
-pub type Effect[Msg] = @core.Effect[Msg]
+pub using @core {type Program}
 
 ///|
-pub type Subscription[Msg] = @core.Subscription[Msg]
+pub using @core {type Effect}
 
 ///|
-pub type Theme = @core.Theme
+pub using @core {type Subscription}
 
 ///|
-pub type Point = @core.Point
+pub using @core {type Theme}
 
 ///|
-pub type Size = @core.Size
+pub using @core {type Environment}
 
 ///|
-pub type Rect = @core.Rect
-
-///|
-pub type Insets = @core.Insets
-
-///|
-pub type Constraints = @core.Constraints
-
-///|
-pub type Axis = @core.Axis
-
-///|
-pub type Color = @core.Color
-
-///|
-pub type Brush = @core.Brush
-
-///|
-pub type BorderStyle = @core.BorderStyle
-
-///|
-pub type ShadowStyle = @core.ShadowStyle
-
-///|
-pub type FontSpec = @core.FontSpec
-
-///|
-pub type FontFamily = @core.FontFamily
-
-///|
-pub type FontFamilyStack = @core.FontFamilyStack
-
-///|
-pub type TextRange = @core.TextRange
-
-///|
-pub type TextAlign = @core.TextAlign
-
-///|
-pub type State[T] = @core.State[T]
-
-///|
-pub type Binding[T] = @core.Binding[T]
-
-///|
-pub type DerivedState[T] = @core.DerivedState[T]
-
-///|
-pub type Environment = @core.Environment
-
-///|
-pub type ViewEnvironment = @core.ViewEnvironment
-
-///|
-pub type ColorScheme = @core.ColorScheme
-
-///|
-pub type LayoutDirection = @core.LayoutDirection
-
-///|
-pub type AccessibilityContrast = @core.AccessibilityContrast
-
-///|
-pub type ContentSizeCategory = @core.ContentSizeCategory
-
-///|
-pub type ScrollState = @core.ScrollState
-
-///|
-pub type FocusState = @core.FocusState
-
-///|
-pub type NavigationState = @core.NavigationState
-
-///|
-pub type CommandIntent = @core.CommandIntent
-
-///|
-pub type KeyboardShortcut = @core.KeyboardShortcut
-
-///|
-pub type KeyModifiers = @core.KeyModifiers
-
-///|
-pub type DateValue = @core.DateValue
-
-///|
-pub type Alignment = @core.Alignment
-
-///|
-pub type ActionCommand = @core.ActionCommand
-
-///|
-pub type ActionCommandMap = @core.ActionCommandMap
-
-///|
-pub type CommandBinding = @core.CommandBinding
+pub using @core {type ViewEnvironment}

@@ -72,9 +72,9 @@ pub struct PdfWorkbenchModel {
   raster_status : PdfWorkbenchRasterStatus
   raster_page : PdfWorkbenchRasterPage?
   raster_cache : Array[PdfWorkbenchRasterPage]
-  sidebar_scroll : @core.ScrollState
-  inspector_scroll : @core.ScrollState
-  preview_scroll_offset : @moui.Point
+  sidebar_scroll : @state.ScrollState
+  inspector_scroll : @state.ScrollState
+  preview_scroll_offset : @geometry.Point
   reader_fullscreen : Bool
   query : String
   metadata_title_draft : String
@@ -115,7 +115,7 @@ pub enum PdfWorkbenchMsg {
   AddBookmarkForCurrentPage
   AnnotationTextChanged(String)
   AddAnnotationForCurrentPage
-  PreviewScrolled(@moui.Point)
+  PreviewScrolled(@geometry.Point)
   ToggleReaderFullscreen
   ZoomIn
   ZoomOut
@@ -141,9 +141,9 @@ pub fn PdfWorkbenchModel::new() -> PdfWorkbenchModel {
     raster_status: PdfWorkbenchRasterStatus::RasterIdle,
     raster_page: None,
     raster_cache: [],
-    sidebar_scroll: @core.ScrollState::new(),
-    inspector_scroll: @core.ScrollState::new(),
-    preview_scroll_offset: @moui.Point::new(x=0.0, y=0.0),
+    sidebar_scroll: @state.ScrollState::new(),
+    inspector_scroll: @state.ScrollState::new(),
+    preview_scroll_offset: @geometry.Point::new(x=0.0, y=0.0),
     reader_fullscreen: false,
     query: "",
     metadata_title_draft: "",

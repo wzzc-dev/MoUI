@@ -3,8 +3,8 @@ fn markdown_editor_find_matches(
   source : String,
   query : String,
   options? : MarkdownEditorFindOptions = MarkdownEditorFindOptions::default(),
-) -> Array[@core.TextRange] {
-  let matches : Array[@core.TextRange] = []
+) -> Array[@text.TextRange] {
+  let matches : Array[@text.TextRange] = []
   if query == "" {
     return matches
   }
@@ -42,7 +42,7 @@ fn markdown_editor_find_matches(
         if !options.whole_word ||
           markdown_editor_whole_word_boundary(previous_char, next_char) {
           matches.push(
-            @core.TextRange::new(start=index, end=index + query_length),
+            @text.TextRange::new(start=index, end=index + query_length),
           )
           offset = end_offset
           index = index + query_length
@@ -109,7 +109,7 @@ fn markdown_editor_whole_word_boundary(before : Char?, after : Char?) -> Bool {
 ///|
 priv struct MarkdownEditorFindSeed {
   query : String
-  range : @core.TextRange
+  range : @text.TextRange
 }
 
 ///|
@@ -218,7 +218,7 @@ fn markdown_editor_find_seed_from_caret_word(
   } else {
     Some({
       query: source.sub(start=start_offset, end=end_offset).to_owned(),
-      range: @core.TextRange::new(start~, end~),
+      range: @text.TextRange::new(start~, end~),
     })
   }
 }
@@ -239,7 +239,7 @@ fn markdown_editor_utf16_offset_for_char_index(
 
 ///|
 fn markdown_editor_find_next_index(
-  matches : Array[@core.TextRange],
+  matches : Array[@text.TextRange],
   selection : MarkdownEditorSelection,
 ) -> Int {
   if matches.length() == 0 {
@@ -259,7 +259,7 @@ fn markdown_editor_find_next_index(
 
 ///|
 fn markdown_editor_find_previous_index(
-  matches : Array[@core.TextRange],
+  matches : Array[@text.TextRange],
   selection : MarkdownEditorSelection,
 ) -> Int {
   if matches.length() == 0 {
@@ -281,7 +281,7 @@ fn markdown_editor_find_previous_index(
 
 ///|
 fn markdown_editor_find_active_index(
-  matches : Array[@core.TextRange],
+  matches : Array[@text.TextRange],
   selection : MarkdownEditorSelection,
 ) -> Int {
   guard selection.selection is Some(range) else { return -1 }
@@ -296,7 +296,7 @@ fn markdown_editor_find_active_index(
 
 ///|
 fn markdown_editor_find_live_update_index(
-  matches : Array[@core.TextRange],
+  matches : Array[@text.TextRange],
   selection : MarkdownEditorSelection,
 ) -> Int {
   if matches.length() == 0 {
@@ -319,7 +319,7 @@ fn markdown_editor_find_live_update_index(
 ///|
 fn markdown_editor_replace_source_range(
   source : String,
-  range : @core.TextRange,
+  range : @text.TextRange,
   replacement : String,
 ) -> String {
   let normalized = range.normalized()
@@ -335,9 +335,9 @@ fn markdown_editor_replace_source_range(
 ///|
 fn MarkdownEditorApp::refresh_find_matches(
   self : MarkdownEditorApp,
-) -> Array[@core.TextRange] {
+) -> Array[@text.TextRange] {
   let query = self.find_query.get()
-  let matches : Array[@core.TextRange] = if query == "" {
+  let matches : Array[@text.TextRange] = if query == "" {
     []
   } else {
     markdown_editor_find_matches(
@@ -363,20 +363,20 @@ fn MarkdownEditorApp::refresh_find_matches_if_visible(
 fn markdown_editor_replacement_selection(
   start : Int,
   end : Int,
-) -> @core.TextRange? {
+) -> @text.TextRange? {
   if start == end {
     None
   } else {
-    Some(@core.TextRange::new(start~, end~))
+    Some(@text.TextRange::new(start~, end~))
   }
 }
 
 ///|
 fn markdown_editor_next_match_after_replacement(
-  matches : Array[@core.TextRange],
+  matches : Array[@text.TextRange],
   replaced_start : Int,
   replacement_end : Int,
-) -> @core.TextRange? {
+) -> @text.TextRange? {
   for range in matches {
     let normalized = range.normalized()
     if normalized.start >= replacement_end {
@@ -395,7 +395,7 @@ fn markdown_editor_next_match_after_replacement(
 ///|
 fn markdown_editor_replace_all_matches(
   source : String,
-  matches : Array[@core.TextRange],
+  matches : Array[@text.TextRange],
   replacement : String,
 ) -> String {
   let builder = StringBuilder::new()
@@ -455,7 +455,7 @@ fn markdown_editor_advance_source_offset(
 ///|
 fn markdown_editor_find_status_label(
   query : String,
-  matches : Array[@core.TextRange],
+  matches : Array[@text.TextRange],
   selection : MarkdownEditorSelection,
 ) -> String {
   if query == "" {

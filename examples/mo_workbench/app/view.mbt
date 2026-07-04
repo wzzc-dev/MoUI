@@ -16,7 +16,7 @@ priv struct WorkbenchLayout {
 }
 
 ///|
-fn workbench_layout(viewport : @core.Size) -> WorkbenchLayout {
+fn workbench_layout(viewport : @geometry.Size) -> WorkbenchLayout {
   let topbar_height = 50.0
   let statusbar_height = 26.0
   let sidebar_width = if viewport.width < 760.0 {
@@ -42,7 +42,7 @@ fn workbench_layout(viewport : @core.Size) -> WorkbenchLayout {
 ///|
 fn workbench_view(
   model : WorkbenchModel,
-  env : @core.ViewEnvironment,
+  env : @moui.ViewEnvironment,
 ) -> @moui.View[WorkbenchMsg] {
   let theme = workbench_theme(model.appearance, env)
   let viewport = env.viewport_size()
@@ -137,7 +137,7 @@ fn workbench_view(
   let toggle_background = if model.sidebar_visible {
     workbench_subtle_background(theme)
   } else {
-    @core.Color::rgba(r=1.0, g=1.0, b=1.0, a=1.0)
+    @graphics.Color::rgba(r=1.0, g=1.0, b=1.0, a=1.0)
   }
   let toggle_overlay = @views.padding_edges(
     @views.container(
@@ -171,7 +171,7 @@ fn workbench_view(
 ///|
 fn center_shell(
   model : WorkbenchModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   layout : WorkbenchLayout,
   center_width : Double,
 ) -> @moui.View[WorkbenchMsg] {
@@ -193,7 +193,7 @@ fn center_shell(
 ///|
 fn topbar_view(
   model : WorkbenchModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   height : Double,
 ) -> @moui.View[WorkbenchMsg] {
@@ -246,7 +246,7 @@ fn topbar_view(
 ///|
 fn statusbar_view(
   model : WorkbenchModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   height : Double,
 ) -> @moui.View[WorkbenchMsg] {
@@ -311,7 +311,7 @@ fn workbench_statusbar_inner_width(labels : Array[String]) -> Double {
 ///|
 fn sidebar_view(
   model : WorkbenchModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   height : Double,
 ) -> @moui.View[WorkbenchMsg] {
@@ -336,7 +336,7 @@ fn workbench_tab_segment_button(
   label : String,
   item_id : String,
   active : Bool,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[WorkbenchMsg] {
   let tab = match item_id {
@@ -371,7 +371,7 @@ fn workbench_tab_segment_button(
 /// tab. The selected tab renders with highlighted background and accent text.
 fn tab_segmented_control(
   model : WorkbenchModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[WorkbenchMsg] {
   let items : Array[@views.ChoiceItem] = [
@@ -417,7 +417,7 @@ fn tab_segmented_control(
 /// The "New Task" entry button + secondary static chips (skills / automations).
 fn new_task_section(
   _model : WorkbenchModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[WorkbenchMsg] {
   @views.padding_xy(
@@ -455,7 +455,7 @@ fn new_task_section(
 /// Folder nodes toggle expand/collapse; task leaf nodes select the session.
 fn task_tree_view(
   model : WorkbenchModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   height : Double,
 ) -> @moui.View[WorkbenchMsg] {
@@ -510,7 +510,7 @@ fn task_tree_view(
 fn task_tree_node_view(
   node : TaskTreeNode,
   model : WorkbenchModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[WorkbenchMsg] {
   match node {
@@ -561,7 +561,7 @@ fn task_tree_node_view(
 fn indented_task_view(
   node : TaskTreeNode,
   model : WorkbenchModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[WorkbenchMsg] {
   @views.padding_edges(
@@ -581,7 +581,7 @@ fn task_row(
   title : String,
   status : TaskStatus,
   model : WorkbenchModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[WorkbenchMsg] {
   let is_active = match model.code.active_session_id {
@@ -602,7 +602,7 @@ fn task_row(
   let row_bg = if is_active {
     workbench_sidebar_active(theme)
   } else {
-    @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)
+    @graphics.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)
   }
   @views.container(
     @views.row(
@@ -636,7 +636,7 @@ fn task_row(
 /// Sidebar footer: settings gear + appearance toggle row only (no avatar/name).
 fn sidebar_footer(
   model : WorkbenchModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[WorkbenchMsg] {
   @views.padding_xy(
@@ -682,7 +682,7 @@ fn sidebar_footer(
 }
 
 ///|
-fn theme_label(theme : @core.Theme) -> String {
+fn theme_label(theme : @moui.Theme) -> String {
   match theme.scheme {
     Light => "☀"
     Dark => "☾"
@@ -699,7 +699,7 @@ fn theme_label(theme : @core.Theme) -> String {
 /// `@views.overlay` when `model.settings_open` is true.
 fn settings_overlay_view(
   model : WorkbenchModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   height : Double,
 ) -> @moui.View[WorkbenchMsg] {
@@ -757,7 +757,7 @@ fn settings_overlay_view(
     ),
     width~,
     height~,
-    background=@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.45),
+    background=@graphics.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.45),
     padding=0.0,
   )
 }
@@ -769,7 +769,7 @@ fn settings_overlay_view(
 ///|
 fn main_surface(
   model : WorkbenchModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   height : Double,
 ) -> @moui.View[WorkbenchMsg] {
@@ -786,7 +786,7 @@ fn main_surface(
 ///|
 fn[Msg] sidebar_caption(
   text_ : String,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[Msg] {
   @views.text(text_, role=@views.TextRole::Caption, theme~, width~).foreground(

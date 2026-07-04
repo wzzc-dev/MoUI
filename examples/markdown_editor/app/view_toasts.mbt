@@ -1,6 +1,6 @@
 ///|
 /// A monotonic counter for toast ids, so concurrent toasts never collide.
-let markdown_editor_toast_counter : @moui.State[Int] = @moui.State::new(0)
+let markdown_editor_toast_counter : @state.State[Int] = @state.State::new(0)
 
 ///|
 /// Push a transient toast with the given tone. The toast self-dismisses after

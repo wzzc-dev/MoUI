@@ -1,6 +1,6 @@
 import {
-  "wzzc-dev/moui",
   "wzzc-dev/moui/views",
+  "wzzc-dev/moui",
 }
 
 import {
