@@ -59,11 +59,11 @@ fn markdown_editor_command_from_action(
   } else if action == "table-column-delete" {
     Some(DeleteTableColumn)
   } else if action == "table-align-left" {
-    Some(SetTableColumnAlignment(Some(@core.TextAlign::TextStart)))
+    Some(SetTableColumnAlignment(Some(@text.TextAlign::TextStart)))
   } else if action == "table-align-center" {
-    Some(SetTableColumnAlignment(Some(@core.TextAlign::TextCenter)))
+    Some(SetTableColumnAlignment(Some(@text.TextAlign::TextCenter)))
   } else if action == "table-align-right" {
-    Some(SetTableColumnAlignment(Some(@core.TextAlign::TextEnd)))
+    Some(SetTableColumnAlignment(Some(@text.TextAlign::TextEnd)))
   } else if action == "table-align-auto" {
     Some(SetTableColumnAlignment(None))
   } else if action == "codeblock" {
@@ -143,7 +143,7 @@ fn markdown_editor_inline_command_active(
 ///|
 fn markdown_editor_inline_active_marker_supported(
   source : String,
-  range : @core.TextRange,
+  range : @text.TextRange,
   marker : String,
 ) -> Bool {
   if marker != "*" {
@@ -158,91 +158,91 @@ fn markdown_editor_inline_active_marker_supported(
 }
 
 ///|
-fn markdown_editor_shortcut(key : String) -> @core.KeyboardShortcut {
-  @core.KeyboardShortcut::new(
+fn markdown_editor_shortcut(key : String) -> @views.KeyboardShortcut {
+  @views.KeyboardShortcut::new(
     key~,
-    modifiers=@core.KeyModifiers::new(meta=true),
+    modifiers=@views.KeyModifiers::new(meta=true),
   )
 }
 
 ///|
-fn markdown_editor_plain_shortcut(key : String) -> @core.KeyboardShortcut {
-  @core.KeyboardShortcut::new(key~)
+fn markdown_editor_plain_shortcut(key : String) -> @views.KeyboardShortcut {
+  @views.KeyboardShortcut::new(key~)
 }
 
 ///|
-fn markdown_editor_plain_shift_shortcut(key : String) -> @core.KeyboardShortcut {
-  @core.KeyboardShortcut::new(
+fn markdown_editor_plain_shift_shortcut(key : String) -> @views.KeyboardShortcut {
+  @views.KeyboardShortcut::new(
     key~,
-    modifiers=@core.KeyModifiers::new(shift=true),
+    modifiers=@views.KeyModifiers::new(shift=true),
   )
 }
 
 ///|
-fn markdown_editor_shift_shortcut(key : String) -> @core.KeyboardShortcut {
-  @core.KeyboardShortcut::new(
+fn markdown_editor_shift_shortcut(key : String) -> @views.KeyboardShortcut {
+  @views.KeyboardShortcut::new(
     key~,
-    modifiers=@core.KeyModifiers::new(meta=true, shift=true),
+    modifiers=@views.KeyModifiers::new(meta=true, shift=true),
   )
 }
 
 ///|
-fn markdown_editor_control_shortcut(key : String) -> @core.KeyboardShortcut {
-  @core.KeyboardShortcut::new(
+fn markdown_editor_control_shortcut(key : String) -> @views.KeyboardShortcut {
+  @views.KeyboardShortcut::new(
     key~,
-    modifiers=@core.KeyModifiers::new(control=true),
+    modifiers=@views.KeyModifiers::new(control=true),
   )
 }
 
 ///|
 fn markdown_editor_control_shift_shortcut(
   key : String,
-) -> @core.KeyboardShortcut {
-  @core.KeyboardShortcut::new(
+) -> @views.KeyboardShortcut {
+  @views.KeyboardShortcut::new(
     key~,
-    modifiers=@core.KeyModifiers::new(control=true, shift=true),
+    modifiers=@views.KeyModifiers::new(control=true, shift=true),
   )
 }
 
 ///|
-fn markdown_editor_alt_shortcut(key : String) -> @core.KeyboardShortcut {
-  @core.KeyboardShortcut::new(key~, modifiers=@core.KeyModifiers::new(alt=true))
+fn markdown_editor_alt_shortcut(key : String) -> @views.KeyboardShortcut {
+  @views.KeyboardShortcut::new(key~, modifiers=@views.KeyModifiers::new(alt=true))
 }
 
 ///|
-fn markdown_editor_alt_shift_shortcut(key : String) -> @core.KeyboardShortcut {
-  @core.KeyboardShortcut::new(
+fn markdown_editor_alt_shift_shortcut(key : String) -> @views.KeyboardShortcut {
+  @views.KeyboardShortcut::new(
     key~,
-    modifiers=@core.KeyModifiers::new(alt=true, shift=true),
+    modifiers=@views.KeyModifiers::new(alt=true, shift=true),
   )
 }
 
 ///|
-fn markdown_editor_meta_alt_shortcut(key : String) -> @core.KeyboardShortcut {
-  @core.KeyboardShortcut::new(
+fn markdown_editor_meta_alt_shortcut(key : String) -> @views.KeyboardShortcut {
+  @views.KeyboardShortcut::new(
     key~,
-    modifiers=@core.KeyModifiers::new(meta=true, alt=true),
+    modifiers=@views.KeyModifiers::new(meta=true, alt=true),
   )
 }
 
 ///|
-fn markdown_editor_control_alt_shortcut(key : String) -> @core.KeyboardShortcut {
-  @core.KeyboardShortcut::new(
+fn markdown_editor_control_alt_shortcut(key : String) -> @views.KeyboardShortcut {
+  @views.KeyboardShortcut::new(
     key~,
-    modifiers=@core.KeyModifiers::new(control=true, alt=true),
+    modifiers=@views.KeyModifiers::new(control=true, alt=true),
   )
 }
 
 ///|
 fn markdown_editor_command_binding(
   label : String,
-  shortcut : @core.KeyboardShortcut,
+  shortcut : @views.KeyboardShortcut,
   action : () -> Unit,
   context_menu? : Bool = true,
-) -> @core.CommandBinding {
-  @core.CommandBinding::new(
-    command=@core.ActionCommand::new(
-      intent=@core.CommandIntent::Activate,
+) -> @views.CommandBinding {
+  @views.CommandBinding::new(
+    command=@views.ActionCommand::new(
+      intent=@views.CommandIntent::Activate,
       label~,
       shortcut=Some(shortcut),
       context_menu~,
@@ -255,8 +255,8 @@ fn markdown_editor_command_binding(
 pub fn MarkdownEditorApp::action_commands(
   self : MarkdownEditorApp,
   services? : @host.HostAppServices = @host.HostAppServices::unavailable(),
-) -> @core.ActionCommandMap {
-  @core.ActionCommandMap::new(bindings=[
+) -> @views.ActionCommandMap {
+  @views.ActionCommandMap::new(bindings=[
     markdown_editor_command_binding(
       "New Document",
       markdown_editor_shortcut("n"),
@@ -825,7 +825,7 @@ pub fn MarkdownEditorApp::action_commands(
         ignore(
           self.update(
             ApplyCommand(
-              SetTableColumnAlignment(Some(@core.TextAlign::TextStart)),
+              SetTableColumnAlignment(Some(@text.TextAlign::TextStart)),
             ),
           ),
         )
@@ -838,7 +838,7 @@ pub fn MarkdownEditorApp::action_commands(
         ignore(
           self.update(
             ApplyCommand(
-              SetTableColumnAlignment(Some(@core.TextAlign::TextStart)),
+              SetTableColumnAlignment(Some(@text.TextAlign::TextStart)),
             ),
           ),
         )
@@ -851,7 +851,7 @@ pub fn MarkdownEditorApp::action_commands(
         ignore(
           self.update(
             ApplyCommand(
-              SetTableColumnAlignment(Some(@core.TextAlign::TextCenter)),
+              SetTableColumnAlignment(Some(@text.TextAlign::TextCenter)),
             ),
           ),
         )
@@ -864,7 +864,7 @@ pub fn MarkdownEditorApp::action_commands(
         ignore(
           self.update(
             ApplyCommand(
-              SetTableColumnAlignment(Some(@core.TextAlign::TextCenter)),
+              SetTableColumnAlignment(Some(@text.TextAlign::TextCenter)),
             ),
           ),
         )
@@ -877,7 +877,7 @@ pub fn MarkdownEditorApp::action_commands(
         ignore(
           self.update(
             ApplyCommand(
-              SetTableColumnAlignment(Some(@core.TextAlign::TextEnd)),
+              SetTableColumnAlignment(Some(@text.TextAlign::TextEnd)),
             ),
           ),
         )
@@ -890,7 +890,7 @@ pub fn MarkdownEditorApp::action_commands(
         ignore(
           self.update(
             ApplyCommand(
-              SetTableColumnAlignment(Some(@core.TextAlign::TextEnd)),
+              SetTableColumnAlignment(Some(@text.TextAlign::TextEnd)),
             ),
           ),
         )

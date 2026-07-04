@@ -232,7 +232,7 @@ fn ShowcaseModel::sidebar(
     0.0,
     content_height - list_viewport_height,
   )
-  let normalized_offset = @moui.Point::new(
+  let normalized_offset = @geometry.Point::new(
     x=0.0,
     y=clamp_double(self.sidebar_scroll_offset.y, 0.0, max_scroll),
   )
@@ -299,7 +299,7 @@ fn sidebar_scrollbar(
 ) -> @moui.View[ShowcaseMsg] {
   let width = 8.0
   @views.custom_layout(
-    measure=_constraints => @moui.Size::new(width~, height=viewport_height),
+    measure=_constraints => @geometry.Size::new(width~, height=viewport_height),
     paint=(ctx, frame) => {
       let max_scroll = max_showcase_double(
         0.0,
@@ -309,7 +309,7 @@ fn sidebar_scrollbar(
         return
       }
       let track_width = 4.0
-      let track = @core.Rect::new(
+      let track = @geometry.Rect::new(
         x=frame.origin.x + (frame.size.width - track_width) / 2.0,
         y=frame.origin.y,
         width=track_width,
@@ -324,7 +324,7 @@ fn sidebar_scrollbar(
         (frame.size.height - thumb_height) *
         clamp_double(offset_y, 0.0, max_scroll) /
         max_scroll
-      let thumb = @core.Rect::new(
+      let thumb = @geometry.Rect::new(
         x=track.origin.x,
         y=thumb_y,
         width=track_width,
@@ -332,13 +332,13 @@ fn sidebar_scrollbar(
       )
       fill_rounded_rect(
         ctx,
-        @core.RoundedRect::new(rect=track, radius=2.0),
-        @core.Brush::solid(theme.palette.outline.multiply_alpha(0.22)),
+        @views.RoundedRect::new(rect=track, radius=2.0),
+        @graphics.Brush::solid(theme.palette.outline.multiply_alpha(0.22)),
       )
       fill_rounded_rect(
         ctx,
-        @core.RoundedRect::new(rect=thumb, radius=2.0),
-        @core.Brush::solid(theme.palette.primary.multiply_alpha(0.72)),
+        @views.RoundedRect::new(rect=thumb, radius=2.0),
+        @graphics.Brush::solid(theme.palette.primary.multiply_alpha(0.72)),
       )
     },
     semantics_label="Catalog scrollbar",
@@ -433,7 +433,7 @@ fn ShowcaseModel::header(
           height=38.0,
         ),
         button(
-          if self.scheme == @moui.ColorScheme::Dark {
+          if self.scheme == @state.ColorScheme::Dark {
             "Light"
           } else {
             "Dark"
@@ -452,9 +452,9 @@ fn ShowcaseModel::header(
           width=dialog_width,
           height=38.0,
         ).keyboard_shortcut(
-          @core.KeyboardShortcut::new(
+          @views.KeyboardShortcut::new(
             key="k",
-            modifiers=@core.KeyModifiers::new(meta=true),
+            modifiers=@views.KeyModifiers::new(meta=true),
           ),
         ),
       ],
@@ -478,8 +478,8 @@ fn ShowcaseModel::header(
     )
   }
   let header_bg = match theme.scheme {
-    @core.ColorScheme::Light => theme.palette.surface_variant.multiply_alpha(0.28)
-    @core.ColorScheme::Dark => @core.Color::white().multiply_alpha(0.03)
+    @state.ColorScheme::Light => theme.palette.surface_variant.multiply_alpha(0.28)
+    @state.ColorScheme::Dark => @graphics.Color::white().multiply_alpha(0.03)
   }
   container(
     header_content,
@@ -493,9 +493,9 @@ fn ShowcaseModel::header(
 }
 
 ///|
-fn showcase_scheme_label(scheme : @moui.ColorScheme) -> String {
+fn showcase_scheme_label(scheme : @state.ColorScheme) -> String {
   match scheme {
-    @moui.ColorScheme::Light => "Light"
-    @moui.ColorScheme::Dark => "Dark"
+    @state.ColorScheme::Light => "Light"
+    @state.ColorScheme::Dark => "Dark"
   }
 }

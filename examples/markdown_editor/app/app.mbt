@@ -4,7 +4,6 @@ using @views {
   column,
   container,
   custom_layout,
-  custom_children_layout,
   empty,
   frame,
   padding_edges,
@@ -26,53 +25,53 @@ using @moui_richtext {
 
 ///|
 pub struct MarkdownEditorApp {
-  document : @moui.State[String]
-  document_session : @moui.State[MarkdownDocumentSession]
-  selection : @moui.State[MarkdownEditorSelection]
-  link_target : @moui.State[String]
-  image_target : @moui.State[String]
-  footnote_text : @moui.State[String]
-  html_block_text : @moui.State[String]
-  target_kind : @moui.State[MarkdownEditorTargetKind]
-  block_label : @moui.State[String]
-  source_preview_visible : @moui.State[Bool]
-  source_mode_enabled : @moui.State[Bool]
-  outline_visible : @moui.State[Bool]
-  file_sidebar_visible : @moui.State[Bool]
-  document_info_visible : @moui.State[Bool]
-  focus_mode_enabled : @moui.State[Bool]
-  typewriter_mode_enabled : @moui.State[Bool]
-  zen_mode_enabled : @moui.State[Bool]
-  format_palette_visible : @moui.State[Bool]
-  format_palette_query : @moui.State[String]
-  more_menu_visible : @moui.State[Bool]
-  active_menu : @moui.State[String]
-  toasts : @moui.State[@views.ToastQueue[MarkdownEditorMsg]]
-  autosave_draft : @moui.State[String]
-  dark_mode_enabled : @moui.State[Bool]
-  font_family : @moui.State[MarkdownEditorFontFamily]
-  folded_headings : @moui.State[Array[Int]]
-  priv pending_confirm : @moui.State[MarkdownEditorConfirmRequest?]
-  priv writing_appearance : @moui.State[MarkdownEditorAppearance]
-  find_visible : @moui.State[Bool]
-  find_query : @moui.State[String]
-  find_options : @moui.State[MarkdownEditorFindOptions]
-  priv find_matches : @moui.State[Array[@core.TextRange]]
-  replace_text : @moui.State[String]
-  document_path : @moui.State[String]
-  recent_document_paths : @moui.State[Array[String]]
-  saved_document : @moui.State[String]
-  priv transfer_status : @moui.State[MarkdownEditorTransferStatus]
-  undo_stack : @moui.State[Array[MarkdownEditorHistoryEntry]]
-  redo_stack : @moui.State[Array[MarkdownEditorHistoryEntry]]
-  editor_scroll : @core.ScrollState
-  file_tree_scroll : @core.ScrollState
-  priv working_directory : @moui.State[String]
-  priv expanded_tree_paths : @moui.State[Array[String]]
-  priv directory_tree_items : @moui.State[Array[@views.TreeItem]]
-  priv file_tree_expanded : @moui.State[Bool]
-  priv selected_image_offset : @moui.State[Int?]
-  priv image_centered : @moui.State[Bool]
+  document : @state.State[String]
+  document_session : @state.State[MarkdownDocumentSession]
+  selection : @state.State[MarkdownEditorSelection]
+  link_target : @state.State[String]
+  image_target : @state.State[String]
+  footnote_text : @state.State[String]
+  html_block_text : @state.State[String]
+  target_kind : @state.State[MarkdownEditorTargetKind]
+  block_label : @state.State[String]
+  source_preview_visible : @state.State[Bool]
+  source_mode_enabled : @state.State[Bool]
+  outline_visible : @state.State[Bool]
+  file_sidebar_visible : @state.State[Bool]
+  document_info_visible : @state.State[Bool]
+  focus_mode_enabled : @state.State[Bool]
+  typewriter_mode_enabled : @state.State[Bool]
+  zen_mode_enabled : @state.State[Bool]
+  format_palette_visible : @state.State[Bool]
+  format_palette_query : @state.State[String]
+  more_menu_visible : @state.State[Bool]
+  active_menu : @state.State[String]
+  toasts : @state.State[@views.ToastQueue[MarkdownEditorMsg]]
+  autosave_draft : @state.State[String]
+  dark_mode_enabled : @state.State[Bool]
+  font_family : @state.State[MarkdownEditorFontFamily]
+  folded_headings : @state.State[Array[Int]]
+  priv pending_confirm : @state.State[MarkdownEditorConfirmRequest?]
+  priv writing_appearance : @state.State[MarkdownEditorAppearance]
+  find_visible : @state.State[Bool]
+  find_query : @state.State[String]
+  find_options : @state.State[MarkdownEditorFindOptions]
+  priv find_matches : @state.State[Array[@text.TextRange]]
+  replace_text : @state.State[String]
+  document_path : @state.State[String]
+  recent_document_paths : @state.State[Array[String]]
+  saved_document : @state.State[String]
+  priv transfer_status : @state.State[MarkdownEditorTransferStatus]
+  undo_stack : @state.State[Array[MarkdownEditorHistoryEntry]]
+  redo_stack : @state.State[Array[MarkdownEditorHistoryEntry]]
+  editor_scroll : @state.ScrollState
+  file_tree_scroll : @state.ScrollState
+  priv working_directory : @state.State[String]
+  priv expanded_tree_paths : @state.State[Array[String]]
+  priv directory_tree_items : @state.State[Array[@views.TreeItem]]
+  priv file_tree_expanded : @state.State[Bool]
+  priv selected_image_offset : @state.State[Int?]
+  priv image_centered : @state.State[Bool]
 }
 
 ///|
@@ -142,11 +141,11 @@ priv struct MarkdownEditorAppearanceSpec {
   editor_font_size : Double
   page_width : Double
   side_editor_width : Double
-  foreground : @core.Color
-  placeholder : @core.Color
-  page_background : @core.Color
-  window_background : @core.Color
-  font_family : @core.FontFamilyStack
+  foreground : @graphics.Color
+  placeholder : @graphics.Color
+  page_background : @graphics.Color
+  window_background : @graphics.Color
+  font_family : @text.FontFamilyStack
 }
 
 ///|
@@ -257,7 +256,7 @@ pub enum MarkdownEditorMsg {
   ApplyCommand(MarkdownEditorCommand)
   ToggleHeadingFold(Int)
   CommandClickAt(Int)
-  SetSelection(Int, @core.TextRange?)
+  SetSelection(Int, @text.TextRange?)
   OpenRecentDocument(String)
   JumpToOutline(Int)
   JumpToNextHeading
@@ -279,53 +278,53 @@ pub enum MarkdownEditorMsg {
 pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
   let document = sample_markdown()
   {
-    document: @moui.State::new(document),
-    document_session: @moui.State::new(MarkdownDocumentSession::new(document)),
-    selection: @moui.State::new({ caret: 0, selection: None }),
-    link_target: @moui.State::new("https://moui.dev"),
-    image_target: @moui.State::new("assets/image.png"),
-    footnote_text: @moui.State::new("Footnote text"),
-    html_block_text: @moui.State::new("<div>HTML</div>"),
-    target_kind: @moui.State::new(PlainSelection),
-    block_label: @moui.State::new("Paragraph"),
-    source_preview_visible: @moui.State::new(false),
-    source_mode_enabled: @moui.State::new(false),
-    outline_visible: @moui.State::new(false),
-    file_sidebar_visible: @moui.State::new(false),
-    working_directory: @moui.State::new(""),
-    expanded_tree_paths: @moui.State::new([]),
-    directory_tree_items: @moui.State::new([]),
-    document_info_visible: @moui.State::new(false),
-    focus_mode_enabled: @moui.State::new(false),
-    typewriter_mode_enabled: @moui.State::new(false),
-    zen_mode_enabled: @moui.State::new(false),
-    format_palette_visible: @moui.State::new(false),
-    format_palette_query: @moui.State::new(""),
-    more_menu_visible: @moui.State::new(false),
-    active_menu: @moui.State::new(""),
-    toasts: @moui.State::new(@views.ToastQueue::new()),
-    autosave_draft: @moui.State::new(""),
-    dark_mode_enabled: @moui.State::new(false),
-    font_family: @moui.State::new(SansFont),
-    folded_headings: @moui.State::new([]),
-    pending_confirm: @moui.State::new(None),
-    writing_appearance: @moui.State::new(PaperAppearance),
-    find_visible: @moui.State::new(false),
-    find_query: @moui.State::new(""),
-    find_options: @moui.State::new(MarkdownEditorFindOptions::default()),
-    find_matches: @moui.State::new([]),
-    replace_text: @moui.State::new(""),
-    document_path: @moui.State::new(""),
-    recent_document_paths: @moui.State::new([]),
-    saved_document: @moui.State::new(document),
-    transfer_status: @moui.State::new(TransferReady),
-    undo_stack: @moui.State::new([]),
-    redo_stack: @moui.State::new([]),
-    editor_scroll: @core.ScrollState::new(),
-    file_tree_scroll: @core.ScrollState::new(),
-    file_tree_expanded: @moui.State::new(true),
-    selected_image_offset: @moui.State::new(None),
-    image_centered: @moui.State::new(false),
+    document: @state.State::new(document),
+    document_session: @state.State::new(MarkdownDocumentSession::new(document)),
+    selection: @state.State::new({ caret: 0, selection: None }),
+    link_target: @state.State::new("https://moui.dev"),
+    image_target: @state.State::new("assets/image.png"),
+    footnote_text: @state.State::new("Footnote text"),
+    html_block_text: @state.State::new("<div>HTML</div>"),
+    target_kind: @state.State::new(PlainSelection),
+    block_label: @state.State::new("Paragraph"),
+    source_preview_visible: @state.State::new(false),
+    source_mode_enabled: @state.State::new(false),
+    outline_visible: @state.State::new(false),
+    file_sidebar_visible: @state.State::new(false),
+    working_directory: @state.State::new(""),
+    expanded_tree_paths: @state.State::new([]),
+    directory_tree_items: @state.State::new([]),
+    document_info_visible: @state.State::new(false),
+    focus_mode_enabled: @state.State::new(false),
+    typewriter_mode_enabled: @state.State::new(false),
+    zen_mode_enabled: @state.State::new(false),
+    format_palette_visible: @state.State::new(false),
+    format_palette_query: @state.State::new(""),
+    more_menu_visible: @state.State::new(false),
+    active_menu: @state.State::new(""),
+    toasts: @state.State::new(@views.ToastQueue::new()),
+    autosave_draft: @state.State::new(""),
+    dark_mode_enabled: @state.State::new(false),
+    font_family: @state.State::new(SansFont),
+    folded_headings: @state.State::new([]),
+    pending_confirm: @state.State::new(None),
+    writing_appearance: @state.State::new(PaperAppearance),
+    find_visible: @state.State::new(false),
+    find_query: @state.State::new(""),
+    find_options: @state.State::new(MarkdownEditorFindOptions::default()),
+    find_matches: @state.State::new([]),
+    replace_text: @state.State::new(""),
+    document_path: @state.State::new(""),
+    recent_document_paths: @state.State::new([]),
+    saved_document: @state.State::new(document),
+    transfer_status: @state.State::new(TransferReady),
+    undo_stack: @state.State::new([]),
+    redo_stack: @state.State::new([]),
+    editor_scroll: @state.ScrollState::new(),
+    file_tree_scroll: @state.ScrollState::new(),
+    file_tree_expanded: @state.State::new(true),
+    selected_image_offset: @state.State::new(None),
+    image_centered: @state.State::new(false),
   }
 }
 

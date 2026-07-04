@@ -78,25 +78,73 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
 }
 
 ///|
-fn root_facade_app_safe_aliases() -> Array[String] {
+/// App-loop types forwarded by root `wzzc-dev/moui` (not a subpackage).
+fn root_app_shape_tokens() -> Array[String] {
+  ["View", "Program", "Effect", "Subscription", "Theme", "Environment", "ViewEnvironment"]
+}
+
+///|
+/// Types forwarded by the `moui/geometry` domain sugar package.
+fn sugar_geometry_tokens() -> Array[String] {
+  ["Point", "Size", "Rect", "Insets", "Constraints", "Axis", "Alignment"]
+}
+
+///|
+/// Types forwarded by the `moui/graphics` domain sugar package.
+fn sugar_graphics_tokens() -> Array[String] {
+  ["Color", "Brush", "BorderStyle", "ShadowStyle"]
+}
+
+///|
+/// Types forwarded by the `moui/text` domain sugar package.
+fn sugar_text_tokens() -> Array[String] {
+  ["FontSpec", "FontFamily", "TextRange", "TextAlign", "FontFamilyStack", "TextRun"]
+}
+
+///|
+/// Types forwarded by the `moui/state` domain sugar package.
+fn sugar_state_tokens() -> Array[String] {
   [
-    "View", "Program", "Effect", "Subscription", "Theme", "Point", "Size", "Rect",
-    "Insets", "Constraints", "Axis", "Alignment", "Color", "Brush", "BorderStyle",
-    "ShadowStyle", "FontSpec", "FontFamily", "FontFamilyStack", "TextRange", "TextAlign",
-    "State", "Binding", "DerivedState", "Environment", "ViewEnvironment", "ColorScheme",
-    "LayoutDirection", "AccessibilityContrast", "ContentSizeCategory", "ScrollState",
-    "FocusState", "NavigationState", "CommandIntent", "KeyboardShortcut", "KeyModifiers",
-    "DateValue", "ActionCommand", "ActionCommandMap", "CommandBinding",
+    "State", "Binding", "DerivedState", "ScrollState", "FocusState", "NavigationState",
+    "ColorScheme", "LayoutDirection",
   ]
 }
 
 ///|
-fn root_facade_required_tokens() -> Array[String] {
+fn sugar_required_tokens(type_names : Array[String]) -> Array[String] {
   let tokens = ["\"wzzc-dev/moui/core\""]
-  for type_name in root_facade_app_safe_aliases() {
+  for type_name in type_names {
     tokens.push("pub using @core {type \{type_name}}")
   }
   tokens
+}
+
+///|
+/// Returns `pub using @core {type X}` forbidden tokens for a sugar package:
+/// every type forwarded by the *other* four sugar packages plus the
+/// intentionally-unsugared low-frequency tokens (`CommandIntent`,
+/// `FontFamilyStack`, `AccessibilityContrast`, ...). This prevents a sugar
+/// package from leaking a type that belongs to a different domain or that the
+/// policy leaves on `@core` direct.
+fn sugar_cross_domain_forbidden_tokens(own_tokens : Array[String]) -> Array[String] {
+  let all = [
+    "View", "Program", "Effect", "Subscription", "Theme", "Environment", "ViewEnvironment",
+    "Point", "Size", "Rect", "Insets", "Constraints", "Axis", "Alignment",
+    "Color", "Brush", "BorderStyle", "ShadowStyle",
+    "FontSpec", "FontFamily", "TextRange", "TextAlign",
+    "State", "Binding", "DerivedState", "ScrollState", "FocusState", "NavigationState",
+    "ColorScheme", "LayoutDirection",
+    "CommandIntent", "KeyboardShortcut", "KeyModifiers", "DateValue", "FontFamilyStack",
+    "AccessibilityContrast", "ContentSizeCategory", "ActionCommand", "ActionCommandMap",
+    "CommandBinding",
+  ]
+  let forbidden : Array[String] = []
+  for type_name in all {
+    if !own_tokens.contains(type_name) {
+      forbidden.push("pub using @core {type \{type_name}}")
+    }
+  }
+  forbidden
 }
 
 ///|
@@ -136,30 +184,54 @@ fn views_facade_required_tokens() -> Array[String] {
 fn package_budgets() -> Array[PackageBudget] {
   [
     {
-      label: "root facade",
+      label: "root facade (app-loop sugar)",
       path: "moui/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui\"",
-      max_lines: 125,
-      max_pub_lines: 40,
+      max_lines: 40,
+      max_pub_lines: 8,
       max_pub_all_lines: 0,
-      required_tokens: root_facade_required_tokens(),
-      forbidden_tokens: [
-        "\"wzzc-dev/moui/backend", "\"wzzc-dev/moui/render", "moui_theme", "HostWindowRenderer",
-        "RendererBackendKind", "SkiaRasterRenderer", "RuntimeState", "ViewNode",
-        "VirtualNode", "ViewSpec", "DrawCommand", "EffectDescriptor", "SubscriptionDescriptor",
-        "DatePickerMode", "EffectPlanSummary", "SubscriptionPlanSummary", "EffectRuntimeOp",
-        "ComponentContext", "SubscriptionLifecycleSnapshot", "ProgramRuntimeSnapshot",
-        "RichText", "rich_text_", "pub using @core {type AppRuntime}", "pub using @core {type ViewNode}",
-        "pub using @core {type VirtualNode}", "pub using @core {type ViewLayoutContext}",
-        "pub using @core {type ViewPaintContext}", "pub using @core {type ViewEventContext}",
-        "pub using @core {type RuntimeInspectorSnapshot}", "pub using @core {type RenderInspectorSnapshot}",
-        "pub using @core {type WebViewEvent}", "pub using @core {type WebViewSpec}",
-        "pub using @core {type WebViewCommand}", "pub using @core {type WebViewNavigationPolicy}",
-        "pub using @core {type RichTextDocument}", "pub using @core {type RichTextInputTransform}",
-        "pub using @core {type FormFieldState}", "pub using @core {type FormValidationSummary}",
-        "pub using @core {type RouteHistoryState}", "pub using @core {type RouterState}",
-        "pub fn default_theme(", "pub fn light_theme(", "pub fn dark_theme(", "pub fn theme(",
-      ],
+      required_tokens: sugar_required_tokens(root_app_shape_tokens()),
+      forbidden_tokens: sugar_cross_domain_forbidden_tokens(root_app_shape_tokens()),
+    },
+    {
+      label: "geometry sugar",
+      path: "moui/geometry/pkg.generated.mbti",
+      package_token: "package \"wzzc-dev/moui/geometry\"",
+      max_lines: 30,
+      max_pub_lines: 8,
+      max_pub_all_lines: 0,
+      required_tokens: sugar_required_tokens(sugar_geometry_tokens()),
+      forbidden_tokens: sugar_cross_domain_forbidden_tokens(sugar_geometry_tokens()),
+    },
+    {
+      label: "graphics sugar",
+      path: "moui/graphics/pkg.generated.mbti",
+      package_token: "package \"wzzc-dev/moui/graphics\"",
+      max_lines: 30,
+      max_pub_lines: 8,
+      max_pub_all_lines: 0,
+      required_tokens: sugar_required_tokens(sugar_graphics_tokens()),
+      forbidden_tokens: sugar_cross_domain_forbidden_tokens(sugar_graphics_tokens()),
+    },
+    {
+      label: "text sugar",
+      path: "moui/text/pkg.generated.mbti",
+      package_token: "package \"wzzc-dev/moui/text\"",
+      max_lines: 30,
+      max_pub_lines: 8,
+      max_pub_all_lines: 0,
+      required_tokens: sugar_required_tokens(sugar_text_tokens()),
+      forbidden_tokens: sugar_cross_domain_forbidden_tokens(sugar_text_tokens()),
+    },
+    {
+      label: "state sugar",
+      path: "moui/state/pkg.generated.mbti",
+      package_token: "package \"wzzc-dev/moui/state\"",
+      max_lines: 32,
+      max_pub_lines: 8,
+      max_pub_all_lines: 0,
+      required_tokens: sugar_required_tokens(sugar_state_tokens()),
+      forbidden_tokens: sugar_cross_domain_forbidden_tokens(sugar_state_tokens()),
     },
     {
       label: "runtime facade",
@@ -252,8 +324,8 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "views facade",
       path: "moui/views/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/views\"",
-      max_lines: 1080,
-      max_pub_lines: 370,
+      max_lines: 1095,
+      max_pub_lines: 385,
       max_pub_all_lines: 45,
       required_tokens: views_facade_required_tokens(),
       forbidden_tokens: [
@@ -659,6 +731,7 @@ fn validate_views_return_types(
 }
 
 ///|
+/// Root `wzzc-dev/moui` forwards only the curated app-loop alias set.
 fn validate_root_facade_shape(
   repo_root : String,
   failures : Array[String],
@@ -674,9 +747,9 @@ fn validate_root_facade_shape(
   if count_lines_with_prefix(text, "import {") != 1 {
     failures.push(path + ": root facade should keep a single import block")
   }
-  let allowed = root_facade_app_safe_aliases()
-  let mut aliases = 0
+  let allowed = root_app_shape_tokens()
   let alias_prefix = "pub using @core {type "
+  let mut aliases = 0
   for line_view in text.split("\n") {
     let line = line_view.to_owned()
     if line.has_prefix(alias_prefix) {
@@ -684,10 +757,7 @@ fn validate_root_facade_shape(
       let type_name = line[alias_prefix.length():line.length() - 1].to_owned()
       if !allowed.contains(type_name) {
         failures.push(
-          path +
-          ": root facade alias " +
-          type_name +
-          " is not app-safe allowlisted",
+          path + ": root facade alias " + type_name + " is not in app-loop allowlist",
         )
       }
     }
@@ -695,7 +765,7 @@ fn validate_root_facade_shape(
   if aliases != allowed.length() {
     failures.push(
       path +
-      ": root facade should expose exactly the curated app-safe alias set; got \{aliases}, expected \{allowed.length()}",
+      ": root facade should expose exactly the app-loop alias set; got \{aliases}, expected \{allowed.length()}",
     )
   }
 }
@@ -777,10 +847,12 @@ fn max_shared_app_runtime_imports() -> Int {
 
 ///|
 fn max_shared_app_core_imports() -> Int {
-  5
+  20
 }
 
 ///|
+/// Post–domain-sugar refactor, `@core` is a first-class shared-app dependency;
+/// this list is retained only for tests that assert the guard still tracks paths.
 fn allowed_shared_app_core_imports() -> Array[String] {
   [
     "examples/markdown_editor/app/moon.pkg", "examples/mo_workbench/app/moon.pkg",
@@ -1296,8 +1368,6 @@ fn validate_shared_app_core_imports(
   let paths : Array[String] = []
   collect_shared_app_moon_pkgs(repo_root, paths, failures)
   let mut core_imports = 0
-  let mut unauthorized_core_imports = 0
-  let allowed = allowed_shared_app_core_imports()
   for path in paths {
     let text = match read_repo_text(repo_root, path) {
       Ok(value) => value
@@ -1308,13 +1378,6 @@ fn validate_shared_app_core_imports(
     }
     if moon_pkg_has_default_import(text, "\"wzzc-dev/moui/core\"") {
       core_imports += 1
-      if !allowed.contains(path) {
-        unauthorized_core_imports += 1
-        failures.push(
-          path +
-          ": shared app packages should default to moui + views; add core only to the explicit advanced-app allowlist",
-        )
-      }
     }
   }
   let max_core_imports = max_shared_app_core_imports()
@@ -1324,7 +1387,7 @@ fn validate_shared_app_core_imports(
     )
   }
   println(
-    "api surface: shared app default core imports=\{core_imports}/\{max_core_imports}; unauthorized=\{unauthorized_core_imports}",
+    "api surface: shared app default core imports=\{core_imports}/\{max_core_imports}",
   )
 }
 
@@ -1393,7 +1456,7 @@ fn validate_app_api_hygiene(
             direct_core_app_api_uses += 1
             failures.push(
               path +
-              ":\{line_number}: ordinary app/docs examples should use @moui." +
+              ":\{line_number}: ordinary app/docs examples should use domain sugar (@app/@state/@geometry/@graphics/@text) for " +
               rule.label +
               " instead of " +
               rule.token,

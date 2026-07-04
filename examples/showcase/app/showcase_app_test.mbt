@@ -53,7 +53,7 @@ test "showcase state toggles theme and active copy" {
     Some(color) => assert_true(color == @views.dark_theme().palette.foreground)
     None => fail("expected dark-themed showcase title text")
   }
-  assert_true(model.scheme == @moui.ColorScheme::Dark)
+  assert_true(model.scheme == @state.ColorScheme::Dark)
   assert_true(model.active)
 }
 
@@ -333,9 +333,9 @@ test "showcase layout demos avoid overlapping labels" {
 test "showcase keeps header and overview content bounded across viewport sizes" {
   for
     size in [
-      @moui.Size::new(width=760.0, height=420.0),
-      @moui.Size::new(width=960.0, height=560.0),
-      @moui.Size::new(width=1400.0, height=760.0),
+      @geometry.Size::new(width=760.0, height=420.0),
+      @geometry.Size::new(width=960.0, height=560.0),
+      @geometry.Size::new(width=1400.0, height=760.0),
     ] {
     let runtime = @app.ShowcaseModel::new().runtime(
       width=size.width,

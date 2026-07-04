@@ -31,7 +31,7 @@ fn has_image_fit(
 fn text_within(
   commands : Array[@core.DrawCommand],
   text : String,
-  size : @moui.Size,
+  size : @geometry.Size,
 ) -> Bool {
   for command in commands {
     match command {
@@ -138,7 +138,7 @@ fn click_last_text(runtime : @runtime.AppRuntime, text : String) -> Unit raise {
 
 ///|
 fn click_frame(runtime : @runtime.AppRuntime, frame : @core.Rect) -> Unit {
-  let position = @moui.Point::new(
+  let position = @geometry.Point::new(
     x=frame.origin.x + frame.size.width / 2.0,
     y=frame.origin.y + frame.size.height / 2.0,
   )
@@ -150,7 +150,7 @@ fn host_click_frame(
   driver : @host.HostRuntimeDriver,
   frame : @core.Rect,
 ) -> Unit {
-  let position = @moui.Point::new(
+  let position = @geometry.Point::new(
     x=frame.origin.x + frame.size.width / 2.0,
     y=frame.origin.y + frame.size.height / 2.0,
   )
@@ -164,7 +164,7 @@ fn host_click_frame(
 }
 
 ///|
-fn click_point(runtime : @runtime.AppRuntime, position : @moui.Point) -> Unit {
+fn click_point(runtime : @runtime.AppRuntime, position : @geometry.Point) -> Unit {
   for phase in [@core.PointerPhase::Down, @core.PointerPhase::Up] {
     runtime.dispatch_event(
       @core.AppEvent::Pointer(@core.PointerEvent::new(position~, phase~)),

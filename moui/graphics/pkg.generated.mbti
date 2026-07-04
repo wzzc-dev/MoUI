@@ -1,0 +1,24 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/graphics"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @core {type BorderStyle}
+
+pub using @core {type Brush}
+
+pub using @core {type Color}
+
+pub using @core {type ShadowStyle}
+
+// Traits
+

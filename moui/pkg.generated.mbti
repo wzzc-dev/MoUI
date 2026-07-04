@@ -12,79 +12,13 @@ import {
 // Types and methods
 
 // Type aliases
-pub using @core {type AccessibilityContrast}
-
-pub using @core {type ActionCommand}
-
-pub using @core {type ActionCommandMap}
-
-pub using @core {type Alignment}
-
-pub using @core {type Axis}
-
-pub using @core {type Binding}
-
-pub using @core {type BorderStyle}
-
-pub using @core {type Brush}
-
-pub using @core {type Color}
-
-pub using @core {type ColorScheme}
-
-pub using @core {type CommandBinding}
-
-pub using @core {type CommandIntent}
-
-pub using @core {type Constraints}
-
-pub using @core {type ContentSizeCategory}
-
-pub using @core {type DateValue}
-
-pub using @core {type DerivedState}
-
 pub using @core {type Effect}
 
 pub using @core {type Environment}
 
-pub using @core {type FocusState}
-
-pub using @core {type FontFamily}
-
-pub using @core {type FontFamilyStack}
-
-pub using @core {type FontSpec}
-
-pub using @core {type Insets}
-
-pub using @core {type KeyModifiers}
-
-pub using @core {type KeyboardShortcut}
-
-pub using @core {type LayoutDirection}
-
-pub using @core {type NavigationState}
-
-pub using @core {type Point}
-
 pub using @core {type Program}
 
-pub using @core {type Rect}
-
-pub using @core {type ScrollState}
-
-pub using @core {type ShadowStyle}
-
-pub using @core {type Size}
-
-pub using @core {type State}
-
 pub using @core {type Subscription}
-
-pub using @core {type TextAlign}
-
-pub using @core {type TextRange}
 
 pub using @core {type Theme}
 

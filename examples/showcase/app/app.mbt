@@ -5,7 +5,7 @@ pub struct ShowcaseApp {
 
 ///|
 pub(all) struct ShowcaseModel {
-  scheme : @moui.ColorScheme
+  scheme : @state.ColorScheme
   active : Bool
   dialog_visible : Bool
   sheet_visible : Bool
@@ -21,13 +21,13 @@ pub(all) struct ShowcaseModel {
   data_filter_review : Bool
   slider_value : Double
   picker_value : String
-  date_value : @moui.DateValue
-  detail_scroll_offset : @moui.Point
-  sidebar_scroll_offset : @moui.Point
-  detail_scroll : @core.ScrollState
-  sidebar_scroll : @core.ScrollState
-  list_scroll : @core.ScrollState
-  grid_scroll : @core.ScrollState
+  date_value : @views.DateValue
+  detail_scroll_offset : @geometry.Point
+  sidebar_scroll_offset : @geometry.Point
+  detail_scroll : @state.ScrollState
+  sidebar_scroll : @state.ScrollState
+  list_scroll : @state.ScrollState
+  grid_scroll : @state.ScrollState
   counter_count : Int
   todo_items : Array[ShowcaseTodoItem]
   todo_next_id : Int
@@ -67,7 +67,7 @@ pub(all) enum ShowcaseMsg {
   DraftChanged(String)
   SliderChanged(Double)
   PickerSelected(String)
-  DateSelected(@moui.DateValue)
+  DateSelected(@views.DateValue)
   FeatureEnabledChanged(Bool)
   SecondaryEnabledChanged(Bool)
   CounterIncrement
@@ -106,7 +106,7 @@ priv struct ShowcaseSection {
 
 ///|
 priv struct ShowcaseMetrics {
-  viewport : @moui.Size
+  viewport : @geometry.Size
   shell_width : Double
   sidebar_width : Double
   detail_width : Double
@@ -126,7 +126,7 @@ pub fn ShowcaseApp::new() -> ShowcaseApp {
 ///|
 pub fn ShowcaseModel::new() -> ShowcaseModel {
   {
-    scheme: @moui.ColorScheme::Light,
+    scheme: @state.ColorScheme::Light,
     active: false,
     dialog_visible: false,
     sheet_visible: false,
@@ -146,13 +146,13 @@ pub fn ShowcaseModel::new() -> ShowcaseModel {
     data_filter_review: false,
     slider_value: 0.64,
     picker_value: "native",
-    date_value: @moui.DateValue::new(year=2026, month=5, day=21),
-    detail_scroll_offset: @moui.Point::new(x=0.0, y=0.0),
-    sidebar_scroll_offset: @moui.Point::new(x=0.0, y=0.0),
-    detail_scroll: @core.ScrollState::new(),
-    sidebar_scroll: @core.ScrollState::new(),
-    list_scroll: @core.ScrollState::new(),
-    grid_scroll: @core.ScrollState::new(),
+    date_value: @views.DateValue::new(year=2026, month=5, day=21),
+    detail_scroll_offset: @geometry.Point::new(x=0.0, y=0.0),
+    sidebar_scroll_offset: @geometry.Point::new(x=0.0, y=0.0),
+    detail_scroll: @state.ScrollState::new(),
+    sidebar_scroll: @state.ScrollState::new(),
+    list_scroll: @state.ScrollState::new(),
+    grid_scroll: @state.ScrollState::new(),
     counter_count: 0,
     todo_items: [
       ShowcaseTodoItem::new(id=0, text="Reuse Todo state"),
@@ -424,7 +424,7 @@ fn ShowcaseModel::with_detail_scroll_to(
   self : ShowcaseModel,
   y : Double,
 ) -> ShowcaseModel {
-  let offset = @moui.Point::new(x=0.0, y=max_showcase_double(0.0, y))
+  let offset = @geometry.Point::new(x=0.0, y=max_showcase_double(0.0, y))
   self.detail_scroll.set_offset(offset)
   { ..self, detail_scroll_offset: offset }
 }
@@ -434,7 +434,7 @@ fn ShowcaseModel::with_sidebar_scroll_to(
   self : ShowcaseModel,
   y : Double,
 ) -> ShowcaseModel {
-  let offset = @moui.Point::new(x=0.0, y~)
+  let offset = @geometry.Point::new(x=0.0, y~)
   self.sidebar_scroll.set_offset(offset)
   { ..self, sidebar_scroll_offset: offset }
 }
@@ -455,8 +455,8 @@ pub fn ShowcaseModel::view(
   env : @moui.ViewEnvironment,
 ) -> @moui.View[ShowcaseMsg] {
   let theme = match self.scheme {
-    @moui.ColorScheme::Light => @views.light_theme()
-    @moui.ColorScheme::Dark => @views.dark_theme()
+    @state.ColorScheme::Light => @views.light_theme()
+    @state.ColorScheme::Dark => @views.dark_theme()
   }
   let metrics = showcase_metrics(env.viewport_size(), theme)
   let offset = if self.active { 18.0 } else { 0.0 }
@@ -479,7 +479,7 @@ pub fn ShowcaseModel::view(
     child=shell,
     sheet=Some(self.sheet(theme)),
     presented=self.sheet_visible,
-    presentation_mode=@core.SheetPresentationMode::BottomSheet,
+    presentation_mode=@views.SheetPresentationMode::BottomSheet,
     on_dismiss=Some(HideSheet),
   )
   @views.dialog_host(
@@ -490,10 +490,10 @@ pub fn ShowcaseModel::view(
 }
 
 ///|
-fn toggle_color_scheme(scheme : @moui.ColorScheme) -> @moui.ColorScheme {
+fn toggle_color_scheme(scheme : @state.ColorScheme) -> @state.ColorScheme {
   match scheme {
-    @moui.ColorScheme::Light => @moui.ColorScheme::Dark
-    @moui.ColorScheme::Dark => @moui.ColorScheme::Light
+    @state.ColorScheme::Light => @state.ColorScheme::Dark
+    @state.ColorScheme::Dark => @state.ColorScheme::Light
   }
 }
 

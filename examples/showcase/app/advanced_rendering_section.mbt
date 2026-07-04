@@ -66,62 +66,62 @@ fn advanced_rendering_canvas(
 ) -> @moui.View[ShowcaseMsg] {
   @views.canvas(
     measure=constraints => {
-      constraints.constrain(@moui.Size::new(width~, height~))
+      constraints.constrain(@geometry.Size::new(width~, height~))
     },
     draw=(ctx, frame) => {
-      let bg = @core.RoundedRect::new(rect=frame, radius=theme.radius_scale.md)
+      let bg = @views.RoundedRect::new(rect=frame, radius=theme.radius_scale.md)
       let inset = 14.0
       let left = frame.origin.x + inset
       let top = frame.origin.y + inset
-      let rect_a = @core.Rect::new(x=left, y=top, width=88.0, height=58.0)
-      let rect_b = @core.Rect::new(
+      let rect_a = @geometry.Rect::new(x=left, y=top, width=88.0, height=58.0)
+      let rect_b = @geometry.Rect::new(
         x=left + 42.0,
         y=top + 24.0,
         width=96.0,
         height=58.0,
       )
-      let layer_mask = @core.LayerMask::RoundedMask(bg)
+      let layer_mask = @views.LayerMask::RoundedMask(bg)
       push_clip(ctx, frame)
       fill_rounded_rect(
         ctx,
         bg,
-        @core.Brush::solid(theme.palette.surface_variant.multiply_alpha(0.36)),
+        @graphics.Brush::solid(theme.palette.surface_variant.multiply_alpha(0.36)),
       )
       match mode {
         "blend" => {
           fill_rounded_rect(
             ctx,
-            @core.RoundedRect::new(rect=rect_a, radius=12.0),
-            @core.Brush::solid(theme.palette.primary.multiply_alpha(0.82)),
+            @views.RoundedRect::new(rect=rect_a, radius=12.0),
+            @graphics.Brush::solid(theme.palette.primary.multiply_alpha(0.82)),
           )
           push_layer(
             ctx,
-            @core.LayerSpec::new(
+            @views.LayerSpec::new(
               opacity=0.86,
-              blend_mode=@core.BlendMode::Multiply,
+              blend_mode=@views.BlendMode::Multiply,
               mask=layer_mask,
               offscreen=true,
             ),
           )
           fill_rounded_rect(
             ctx,
-            @core.RoundedRect::new(rect=rect_b, radius=18.0),
-            @core.Brush::solid(theme.palette.primary.multiply_alpha(0.84)),
+            @views.RoundedRect::new(rect=rect_b, radius=18.0),
+            @graphics.Brush::solid(theme.palette.primary.multiply_alpha(0.84)),
           )
           pop_layer(ctx)
           push_layer(
             ctx,
-            @core.LayerSpec::new(
+            @views.LayerSpec::new(
               opacity=0.72,
-              blend_mode=@core.BlendMode::Screen,
+              blend_mode=@views.BlendMode::Screen,
               mask=layer_mask,
               offscreen=true,
             ),
           )
           fill_rounded_rect(
             ctx,
-            @core.RoundedRect::new(
-              rect=@core.Rect::new(
+            @views.RoundedRect::new(
+              rect=@geometry.Rect::new(
                 x=left + 96.0,
                 y=top + 8.0,
                 width=58.0,
@@ -129,22 +129,22 @@ fn advanced_rendering_canvas(
               ),
               radius=29.0,
             ),
-            @core.Brush::solid(theme.palette.surface.multiply_alpha(0.7)),
+            @graphics.Brush::solid(theme.palette.surface.multiply_alpha(0.7)),
           )
           pop_layer(ctx)
           push_layer(
             ctx,
-            @core.LayerSpec::new(
+            @views.LayerSpec::new(
               opacity=0.68,
-              blend_mode=@core.BlendMode::Overlay,
+              blend_mode=@views.BlendMode::Overlay,
               mask=layer_mask,
               offscreen=true,
             ),
           )
           fill_rounded_rect(
             ctx,
-            @core.RoundedRect::new(
-              rect=@core.Rect::new(
+            @views.RoundedRect::new(
+              rect=@geometry.Rect::new(
                 x=left + 18.0,
                 y=top + 58.0,
                 width=116.0,
@@ -152,33 +152,33 @@ fn advanced_rendering_canvas(
               ),
               radius=13.0,
             ),
-            @core.Brush::solid(theme.palette.foreground.multiply_alpha(0.36)),
+            @graphics.Brush::solid(theme.palette.foreground.multiply_alpha(0.36)),
           )
           pop_layer(ctx)
         }
         "filter" => {
-          push_filter(ctx, @core.FilterEffect::blur(4.0))
+          push_filter(ctx, @views.FilterEffect::blur(4.0))
           fill_rounded_rect(
             ctx,
-            @core.RoundedRect::new(rect=rect_a, radius=16.0),
-            @core.Brush::solid(theme.palette.primary.multiply_alpha(0.66)),
+            @views.RoundedRect::new(rect=rect_a, radius=16.0),
+            @graphics.Brush::solid(theme.palette.primary.multiply_alpha(0.66)),
           )
           fill_rounded_rect(
             ctx,
-            @core.RoundedRect::new(rect=rect_b, radius=16.0),
-            @core.Brush::solid(theme.palette.foreground.multiply_alpha(0.22)),
+            @views.RoundedRect::new(rect=rect_b, radius=16.0),
+            @graphics.Brush::solid(theme.palette.foreground.multiply_alpha(0.22)),
           )
           pop_filter(ctx)
         }
         "shader" => {
           fill_rounded_rect(
             ctx,
-            @core.RoundedRect::new(
-              rect=frame.inset(@core.Insets::all(14.0)),
+            @views.RoundedRect::new(
+              rect=frame.inset(@geometry.Insets::all(14.0)),
               radius=theme.radius_scale.lg,
             ),
-            @core.Brush::radial_gradient(
-              center=@moui.Point::new(
+            @graphics.Brush::radial_gradient(
+              center=@geometry.Point::new(
                 x=frame.origin.x + width * 0.62,
                 y=frame.origin.y + height * 0.48,
               ),
@@ -189,28 +189,28 @@ fn advanced_rendering_canvas(
           )
           draw_shader_effect(
             ctx,
-            @core.ShaderEffectSpec::new(
+            @views.ShaderEffectSpec::new(
               name="checker",
-              frame=frame.inset(@core.Insets::all(10.0)),
+              frame=frame.inset(@geometry.Insets::all(10.0)),
               uniforms=[8.0, 0.6],
-              fallback=@core.Brush::solid(theme.palette.surface_variant),
+              fallback=@graphics.Brush::solid(theme.palette.surface_variant),
             ),
           )
           draw_shader_effect(
             ctx,
-            @core.ShaderEffectSpec::new(
+            @views.ShaderEffectSpec::new(
               name="vignette",
-              frame=frame.inset(@core.Insets::all(24.0)),
+              frame=frame.inset(@geometry.Insets::all(24.0)),
               uniforms=[0.35],
-              fallback=@core.Brush::solid(
+              fallback=@graphics.Brush::solid(
                 theme.palette.primary.multiply_alpha(0.5),
               ),
             ),
           )
         }
         "transform-pixel" => {
-          let clip = frame.inset(@core.Insets::all(10.0))
-          let mask_rect = @core.Rect::new(
+          let clip = frame.inset(@geometry.Insets::all(10.0))
+          let mask_rect = @geometry.Rect::new(
             x=clip.origin.x + 4.0,
             y=clip.origin.y + 4.0,
             width=clip.size.width - 8.0,
@@ -219,83 +219,83 @@ fn advanced_rendering_canvas(
           push_clip(ctx, clip)
           push_layer(
             ctx,
-            @core.LayerSpec::new(
+            @views.LayerSpec::new(
               opacity=0.96,
-              blend_mode=@core.BlendMode::SourceOver,
-              mask=@core.LayerMask::RoundedMask(
-                @core.RoundedRect::new(rect=mask_rect, radius=18.0),
+              blend_mode=@views.BlendMode::SourceOver,
+              mask=@views.LayerMask::RoundedMask(
+                @views.RoundedRect::new(rect=mask_rect, radius=18.0),
               ),
               offscreen=true,
             ),
           )
-          push_filter(ctx, @core.FilterEffect::Saturate(1.08))
+          push_filter(ctx, @views.FilterEffect::Saturate(1.08))
           fill_rounded_rect(
             ctx,
-            @core.RoundedRect::new(rect=mask_rect, radius=18.0),
-            @core.Brush::solid(@core.Color::rgba(r=0.03, g=0.08, b=0.12)),
+            @views.RoundedRect::new(rect=mask_rect, radius=18.0),
+            @graphics.Brush::solid(@graphics.Color::rgba(r=0.03, g=0.08, b=0.12)),
           )
           push_transform(
             ctx,
-            @core.Transform2D::translation(
+            @views.Transform2D::translation(
               dx=mask_rect.origin.x + 16.0,
               dy=mask_rect.origin.y + 10.0,
             ),
           )
           push_transform(
             ctx,
-            @core.Transform2D::scale(sx=1.08, sy=0.92),
+            @views.Transform2D::scale(sx=1.08, sy=0.92),
           )
           draw_path(
             ctx,
-            @core.PathSpec::new(
+            @views.PathSpec::new(
               verbs=[
-                @core.PathVerb::MoveTo(@moui.Point::new(x=0.0, y=60.0)),
-                @core.PathVerb::LineTo(@moui.Point::new(x=34.0, y=4.0)),
-                @core.PathVerb::LineTo(@moui.Point::new(x=78.0, y=54.0)),
-                @core.PathVerb::LineTo(@moui.Point::new(x=42.0, y=44.0)),
-                @core.PathVerb::Close,
+                @views.PathVerb::MoveTo(@geometry.Point::new(x=0.0, y=60.0)),
+                @views.PathVerb::LineTo(@geometry.Point::new(x=34.0, y=4.0)),
+                @views.PathVerb::LineTo(@geometry.Point::new(x=78.0, y=54.0)),
+                @views.PathVerb::LineTo(@geometry.Point::new(x=42.0, y=44.0)),
+                @views.PathVerb::Close,
               ],
               fill=Some(
-                @core.Brush::solid(@core.Color::rgba(r=1.0, g=0.04, b=0.46)),
+                @graphics.Brush::solid(@graphics.Color::rgba(r=1.0, g=0.04, b=0.46)),
               ),
               stroke=Some(
-                @core.Brush::solid(@core.Color::rgba(r=1.0, g=0.78, b=0.08)),
+                @graphics.Brush::solid(@graphics.Color::rgba(r=1.0, g=0.78, b=0.08)),
               ),
               stroke_width=3.0,
             ),
           )
           fill_rounded_rect(
             ctx,
-            @core.RoundedRect::new(
-              rect=@core.Rect::new(x=8.0, y=18.0, width=46.0, height=24.0),
+            @views.RoundedRect::new(
+              rect=@geometry.Rect::new(x=8.0, y=18.0, width=46.0, height=24.0),
               radius=8.0,
             ),
-            @core.Brush::solid(@core.Color::rgba(r=1.0, g=0.04, b=0.46)),
+            @graphics.Brush::solid(@graphics.Color::rgba(r=1.0, g=0.04, b=0.46)),
           )
           fill_rounded_rect(
             ctx,
-            @core.RoundedRect::new(
-              rect=@core.Rect::new(x=72.0, y=10.0, width=54.0, height=32.0),
+            @views.RoundedRect::new(
+              rect=@geometry.Rect::new(x=72.0, y=10.0, width=54.0, height=32.0),
               radius=10.0,
             ),
-            @core.Brush::solid(@core.Color::rgba(r=0.0, g=0.82, b=0.92)),
+            @graphics.Brush::solid(@graphics.Color::rgba(r=0.0, g=0.82, b=0.92)),
           )
           draw_image(
             ctx,
-            @core.ImageRun::{
+            @views.ImageRun::{
               source: showcase_image_source(),
-              frame: @core.Rect::new(x=118.0, y=18.0, width=52.0, height=30.0),
+              frame: @geometry.Rect::new(x=118.0, y=18.0, width=52.0, height=30.0),
               opacity: 0.95,
-              fit: @core.ImageFit::Cover,
+              fit: @views.ImageFit::Cover,
             },
           )
           draw_text(
             ctx,
-            @core.TextRun::new(
+            @text.TextRun::new(
               text="PX",
-              frame=@core.Rect::new(x=76.0, y=52.0, width=74.0, height=24.0),
+              frame=@geometry.Rect::new(x=76.0, y=52.0, width=74.0, height=24.0),
               font=theme.typography.caption,
-              color=@core.Color::rgba(r=1.0, g=1.0, b=1.0),
+              color=@graphics.Color::rgba(r=1.0, g=1.0, b=1.0),
             ),
           )
           pop_transform(ctx)
@@ -305,89 +305,89 @@ fn advanced_rendering_canvas(
           pop_clip(ctx)
         }
         "renderer-smoke" => {
-          let smoke_font = @core.FontSpec::new(
-            families=@core.FontFamilyStack::new([
-              @core.FontFamily::Emoji,
-              @core.FontFamily::SystemUi,
+          let smoke_font = @text.FontSpec::new(
+            families=@text.FontFamilyStack::new([
+              @text.FontFamily::Emoji,
+              @text.FontFamily::SystemUi,
             ]),
             size=28.0,
             weight=500,
           )
-          let body_font = @core.FontSpec::new(
-            families=@core.FontFamilyStack::system_ui(),
+          let body_font = @text.FontSpec::new(
+            families=@text.FontFamilyStack::system_ui(),
             size=14.0,
             weight=600,
           )
           fill_rounded_rect(
             ctx,
-            @core.RoundedRect::new(
-              rect=@core.Rect::new(x=left, y=top, width=78.0, height=78.0),
+            @views.RoundedRect::new(
+              rect=@geometry.Rect::new(x=left, y=top, width=78.0, height=78.0),
               radius=18.0,
             ),
-            @core.Brush::radial_gradient(
-              center=@moui.Point::new(x=left + 24.0, y=top + 24.0),
+            @graphics.Brush::radial_gradient(
+              center=@geometry.Point::new(x=left + 24.0, y=top + 24.0),
               radius=64.0,
-              center_color=@core.Color::rgba(r=1.0, g=0.04, b=0.18),
-              edge_color=@core.Color::rgba(r=0.02, g=0.2, b=1.0),
+              center_color=@graphics.Color::rgba(r=1.0, g=0.04, b=0.18),
+              edge_color=@graphics.Color::rgba(r=0.02, g=0.2, b=1.0),
             ),
           )
           draw_image(
             ctx,
-            @core.ImageRun::{
+            @views.ImageRun::{
               source: showcase_image_source(),
-              frame: @core.Rect::new(
+              frame: @geometry.Rect::new(
                 x=left + 92.0,
                 y=top + 4.0,
                 width=52.0,
                 height=32.0,
               ),
               opacity: 1.0,
-              fit: @core.ImageFit::Cover,
+              fit: @views.ImageFit::Cover,
             },
           )
           draw_text(
             ctx,
-            @core.TextRun::new(
+            @text.TextRun::new(
               text="👩‍💻",
-              frame=@core.Rect::new(
+              frame=@geometry.Rect::new(
                 x=left + 154.0,
                 y=top + 2.0,
                 width=56.0,
                 height=36.0,
               ),
               font=smoke_font,
-              color=@core.Color::black(),
+              color=@graphics.Color::black(),
             ),
           )
           draw_text(
             ctx,
-            @core.TextRun::new(
+            @text.TextRun::new(
               text="ABC אבג 123",
-              frame=@core.Rect::new(
+              frame=@geometry.Rect::new(
                 x=left + 92.0,
                 y=top + 42.0,
                 width=126.0,
                 height=20.0,
               ),
               font=body_font,
-              color=@core.Color::black(),
-              align=@core.TextAlign::TextStart,
+              color=@graphics.Color::black(),
+              align=@text.TextAlign::TextStart,
             ),
           )
           for index in 0..<3 {
             draw_text(
               ctx,
-              @core.TextRun::new(
+              @text.TextRun::new(
                 text="Smoke wrap line " + (index + 1).to_string(),
-                frame=@core.Rect::new(
+                frame=@geometry.Rect::new(
                   x=left + 92.0,
                   y=top + 64.0 + index.to_double() * 16.0,
                   width=126.0,
                   height=16.0,
                 ),
                 font=body_font,
-                color=@core.Color::black(),
-                align=@core.TextAlign::TextStart,
+                color=@graphics.Color::black(),
+                align=@text.TextAlign::TextStart,
               ),
             )
           }
@@ -396,30 +396,30 @@ fn advanced_rendering_canvas(
           push_opacity(ctx, 0.82)
           push_transform(
             ctx,
-            @core.Transform2D::translation(dx=18.0, dy=4.0),
+            @views.Transform2D::translation(dx=18.0, dy=4.0),
           )
           draw_path(
             ctx,
-            @core.PathSpec::new(
+            @views.PathSpec::new(
               verbs=[
-                @core.PathVerb::MoveTo(
-                  @moui.Point::new(x=left + 8.0, y=top + 74.0),
+                @views.PathVerb::MoveTo(
+                  @geometry.Point::new(x=left + 8.0, y=top + 74.0),
                 ),
-                @core.PathVerb::CubicTo(
-                  @moui.Point::new(x=left + 42.0, y=top - 6.0),
-                  @moui.Point::new(x=left + 104.0, y=top + 14.0),
-                  @moui.Point::new(x=left + 136.0, y=top + 76.0),
+                @views.PathVerb::CubicTo(
+                  @geometry.Point::new(x=left + 42.0, y=top - 6.0),
+                  @geometry.Point::new(x=left + 104.0, y=top + 14.0),
+                  @geometry.Point::new(x=left + 136.0, y=top + 76.0),
                 ),
-                @core.PathVerb::LineTo(
-                  @moui.Point::new(x=left + 70.0, y=top + 48.0),
+                @views.PathVerb::LineTo(
+                  @geometry.Point::new(x=left + 70.0, y=top + 48.0),
                 ),
-                @core.PathVerb::Close,
+                @views.PathVerb::Close,
               ],
               fill=Some(
-                @core.Brush::solid(theme.palette.primary.multiply_alpha(0.72)),
+                @graphics.Brush::solid(theme.palette.primary.multiply_alpha(0.72)),
               ),
               stroke=Some(
-                @core.Brush::solid(
+                @graphics.Brush::solid(
                   theme.palette.foreground.multiply_alpha(0.48),
                 ),
               ),

@@ -274,7 +274,7 @@ test "markdown editor runtime enter outdents nested empty list marker" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=112.0,
         ),
@@ -300,7 +300,7 @@ test "markdown editor runtime tab indents focused line" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),
@@ -403,7 +403,7 @@ test "markdown editor runtime undo restores input transform caret" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),
@@ -444,7 +444,7 @@ test "markdown editor runtime arrow up down moves caret across lines" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=frame.origin.x + frame.size.width / 2.0,
           y=frame.origin.y + frame.size.height / 2.0,
         ),
@@ -483,7 +483,7 @@ test "markdown editor arrow keys navigate across empty line heading and code blo
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=today_frame.origin.x + 2.0,
           y=today_frame.origin.y + today_frame.size.height / 2.0,
         ),
@@ -512,7 +512,7 @@ test "markdown editor arrow keys navigate across empty line heading and code blo
   runtime2.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=h1_frame.origin.x + 2.0,
           y=h1_frame.origin.y + h1_frame.size.height / 2.0,
         ),
@@ -551,7 +551,7 @@ test "markdown editor arrow keys navigate across empty line heading and code blo
   runtime3.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=code_frame.origin.x + 2.0,
           y=code_frame.origin.y + code_frame.size.height / 2.0,
         ),

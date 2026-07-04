@@ -45,8 +45,10 @@ For task-specific workflows, use the repo-local skills:
   - `moon test <package> --target native` for the affected test package (if native-supporting)
   - `sh scripts/dev-check.sh` when changing core/view/render/backend packages
 - **Synchronize async test patterns**: When a test spawns background threads and polls for results, ensure the polling loop yields the thread (e.g. `Sleep(0)` on Windows) so the background thread can execute before the poll budget is exhausted.
-- Ordinary app packages should default to `wzzc-dev/moui` and
-  `wzzc-dev/moui/views`.
+- Ordinary app packages should default to `wzzc-dev/moui` (app-loop `@moui.*`),
+  `wzzc-dev/moui/<geometry|graphics|text|state>` as needed, and `wzzc-dev/moui/views`;
+  use domain sugar and `@views` re-exports; reserve `@core` for tests (`for "test"`)
+  or advanced kernel (see `docs/moui-app-package-boundary.md`, ADR `docs/decisions/0003-domain-sugar-and-root-facade.md`).
 - Put new controls, control styles, form/navigation/data helpers, and default
   app-facing themes in `moui/views`.
 - Put neutral cross-runtime protocols and value types in `moui/core`.
@@ -128,10 +130,9 @@ API surface guards, smoke catalog validation, core/view/render/backend package
 tests, `moui_tester`, `moui_devtools`, Showcase and Markdown Editor app tests,
 and Web wasm-gc builds.
 
-- Root facade type forwards are enforced by `tools/moui/validate_api_surface/main.mbt`.
-  If a future change exposes additional app-safe root facade aliases through
-  `moui/pkg.generated.mbti`, update `root_facade_app_safe_aliases()` in that file
-  to keep the CI guard in sync.
+- Root app-loop aliases and domain sugar forwards are enforced by
+  `tools/moui/validate_api_surface/main.mbt`. Update `root_app_shape_tokens()` or
+  `sugar_<domain>_tokens()` and matching budgets when changing facade surfaces.
 
 Use these additional checks when relevant:
 

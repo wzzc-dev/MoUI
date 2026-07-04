@@ -6,7 +6,7 @@ test "markdown editor runtime backspace removes hidden heading marker" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),
@@ -30,7 +30,7 @@ test "markdown editor runtime delete removes hidden block marker" {
   heading_runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=heading_app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),
@@ -54,7 +54,7 @@ test "markdown editor runtime delete removes hidden block marker" {
   task_runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=task_app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),
@@ -81,7 +81,7 @@ test "markdown editor runtime backspace and delete exit empty continuation marke
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),
@@ -120,7 +120,7 @@ test "markdown editor runtime backspace removes hidden inline marker" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),
@@ -151,7 +151,7 @@ test "markdown editor runtime backspace removes hidden link marker" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),
@@ -183,7 +183,7 @@ test "markdown editor runtime delete removes hidden link marker" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),
@@ -215,7 +215,7 @@ test "markdown editor runtime backspace merges visual blocks" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),
@@ -246,7 +246,7 @@ test "markdown editor runtime delete merges visual blocks" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),
@@ -276,7 +276,7 @@ test "markdown editor runtime delete preserves same-list merge" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=64.0,
         ),

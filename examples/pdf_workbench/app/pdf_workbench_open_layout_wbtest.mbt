@@ -138,7 +138,7 @@ test "pdf workbench raster preview expands with wider runtime resize" {
     fail("expected raster image before resize")
   }
   runtime.dispatch_event(
-    @core.AppEvent::Resize(@moui.Size::new(width=1600.0, height=720.0)),
+    @core.AppEvent::Resize(@geometry.Size::new(width=1600.0, height=720.0)),
   )
   guard pdf_workbench_image_frame(runtime.draw_commands()) is Some(after) else {
     fail("expected raster image after resize")
