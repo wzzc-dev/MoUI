@@ -29,7 +29,7 @@ if (!existsSync(openseekMod)) {
 const work = readFileSync(moonWork, "utf8");
 if (!/^\s*"\.\/openseek",\s*$/m.test(work)) {
   errors.push(
-    'moon.work must list "./openseek" for Mo Workbench OpenSeek builds.\n' +
+    'moon.work must list "./openseek" until bobzhang/openseek is published on mooncakes.io.\n' +
       "  Run: sh scripts/openseek-dev-mode.sh on",
   );
 }
