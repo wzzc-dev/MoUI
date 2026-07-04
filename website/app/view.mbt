@@ -17,6 +17,7 @@ fn Model::top_bar(
     )
     items.push(nav_button(theme, "Tour", false, OpenHomeAt(700.0)))
     items.push(nav_button(theme, "Examples", false, OpenHomeAt(1840.0)))
+    items.push(nav_button(theme, "Showcases", false, OpenShowcases))
     items.push(nav_button(theme, "Docs", self.page is WebsiteDocs, OpenDocs))
     items.push(nav_button(theme, "GitHub", false, OpenRepository))
   } else {
