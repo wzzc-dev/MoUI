@@ -1,8 +1,10 @@
 # MoUI 应用包边界规范
 
 本文档规定 MoUI 应用开发时可以依赖哪些包、`wzzc-dev/moui/core`
-作为基础协议层 / 抽象 UI kernel 的边界、root facade 应该暴露哪些类型，
-以及 `wzzc-dev/moui/views` 如何同时承接普通 view constructor 和低层控件实现。
+作为基础协议层 / 抽象 UI kernel 的边界、根 facade `wzzc-dev/moui`（app-loop 糖）
+与 4 个领域糖包（`moui/geometry`、`moui/graphics`、`moui/text`、`moui/state`）
+如何按领域转发高频 kernel 类型，以及 `wzzc-dev/moui/views` 如何同时承接
+普通 view constructor 和低层控件实现。
 
 ## Core 定位
 
@@ -36,6 +38,13 @@ MoUI 的包边界优先保持少而清晰，不按每个功能名拆出一组顶
 除非现有层无法自然承接，否则不要新增 `moui/style`、`moui/forms`、
 `moui/rich_text`、`moui/routing`、`moui/platform`、`moui/diagnostics`
 这类细碎包。
+
+**根 `wzzc-dev/moui`** 只转发 app-loop 高频类型（`View`、`Program`、`Effect` 等），
+写作 `@moui.*`，避免与 `examples/*/app` 包默认别名 `@app` 冲突。
+
+**领域糖包**（见下方“领域糖包暴露规则”）:`moui/geometry`、`moui/graphics`、
+`moui/text`、`moui/state`。它们只 `pub using @core {type X}` 转发，不互 import。
+新增领域糖包须说明转发集合及为何根 facade 与其它糖包无法承接。
 
 当前目标落点是：
 
@@ -85,7 +94,7 @@ MoUI 的包边界优先保持少而清晰，不按每个功能名拆出一组顶
   component-facing kernel 类型保留在 `core`，因为 `View::node` /
   `views.component` 的签名需要它且 `core` 不能反向依赖 `runtime`。runtime 使用
   `ComponentContext::from_runtime(ComponentRuntimeContextInput)` 构造执行上下文；
-  普通 component API 不暴露散落的 runtime storage 参数，root facade 也不暴露该
+  普通 component API 不暴露散落的 runtime storage 参数，糖包也不转发该
   构造入口。
 - **Date picker 控件语义已迁出**：`DateValue` 是中立数据模型，继续属于
   `core`；`DatePickerMode` 是具体控件语义，属于 `moui/views`。低层 display
@@ -98,7 +107,7 @@ MoUI 的包边界优先保持少而清晰，不按每个功能名拆出一组顶
   等是很有价值的诊断 API，但不是 UI kernel 的基础协议。`EffectPlanSummary`、
   `SubscriptionPlanSummary` 和 runtime snapshots 由 `moui/runtime` 拥有；`core`
   不再导出 diagnostics summary 或 runtime op 列表，也不能作为新增 diagnostics
-  API 的 owning package。它们应避免进入 root facade，devtools/overlay 应基于
+  API 的 owning package。糖包不转发它们，devtools/overlay 应基于
   `@runtime.*` diagnostics 类型构建视图。
 - **Routing/history ownership 已迁出**：`RouteLocation`、`RouteDescriptor`、
   `RouterSnapshot`、`RouteHistoryState`、`RouteFocusStore`、`RouterState` 和
@@ -129,32 +138,54 @@ capability 展示依赖 `@render`；普通 app 不应把这两个示例用途当
 ## 普通共享 App 包
 
 普通共享 app 包指 `examples/*/app` 这类平台无关的业务逻辑包，以及同形态的
-`website/app` 和把共享 app 放在示例根目录的 `examples/agent_counter`。它们应该默认只依赖：
+`website/app` 和把共享 app 放在示例根目录的 `examples/agent_counter`。它们应该默认依赖:
 
-- `wzzc-dev/moui`
-- `wzzc-dev/moui/views`
+- `wzzc-dev/moui` —— app-loop 糖（`@moui.View`、`@moui.Program`、`@moui.Effect`、
+  `Subscription`、`Theme`、`Environment`、`ViewEnvironment`）。与共享 app 包别名
+  `@app`（业务模块）分离。
 
-`wzzc-dev/moui` 是应用 facade。它应该 re-export app-safe 的平台中立常用类型，让普通 app 不必频繁直接 import `wzzc-dev/moui/core`。
+- `wzzc-dev/moui/<领域>` —— 其余高频糖,按需 import:
 
-`wzzc-dev/moui/views` 是 app-facing UI 构造器入口。应用层组合按钮、文本、布局、表单、列表、弹窗、WebView wrapper、主题 helper 等，应该优先使用这里的函数。
+  - `wzzc-dev/moui/geometry`:`Point`、`Size`、`Rect`、`Insets`、`Constraints`、`Axis`、`Alignment`。
+  - `wzzc-dev/moui/graphics`:`Color`、`Brush`、`BorderStyle`、`ShadowStyle`。
+  - `wzzc-dev/moui/text`:`FontSpec`、`FontFamily`、`TextRange`、`TextAlign`、
+    `FontFamilyStack`、`TextRun`（后两者为示例/绘制辅助高频项）。
+  - `wzzc-dev/moui/state`:`State`、`Binding`、`DerivedState`、`ScrollState`、`FocusState`、`NavigationState`、`ColorScheme`、`LayoutDirection`。
 
-普通 app 可以按需直接依赖：
+  糖包不互 import,只 `pub using @core {type X}` 转发;糖前缀与 `@core.X` 为同一类型,
+  app 在单文件内应统一一种前缀,避免同文件同类型双前缀(参见 showcase 早期的
+  `@moui.View` + `@core.Point` 并存问题)。跨示例包引用业务 API 仍用 `@app.ShowcaseModel` 等。
 
-- `wzzc-dev/moui/core`：仅当 root facade 尚未覆盖，或确实需要高级平台中立协议类型时使用。
-- `wzzc-dev/moui/backend/host`：仅当 app 需要 host service / 平台服务协议时使用，例如文件对话框、异步图片、剪贴板、WebView command queue 或 host service 交互。普通 app 处理 WebView 事件时优先使用 `@views.WebViewEvent`。
+- `wzzc-dev/moui/views` —— app-facing UI 构造器入口。应用层组合按钮、文本、布局、表单、列表、弹窗、WebView wrapper、主题 helper 等，应该优先使用这里的函数。
+  另通过 `pub using @core` 转发命令/菜单类型（`ActionCommand`、`CommandIntent`、
+  `KeyboardShortcut` 等）以及部分 kernel 绘制/主题辅助类型（见 `kernel_types.mbt`、
+  `theme.mbt`），共享 app 源码宜用 `@views.*` 而非 `@core.*`。
 
-普通 app 不应该直接依赖：
+- `wzzc-dev/moui/core` —— **类型真源**。共享 app **运行时**宜优先 `@moui` / 领域糖 /
+  `@views`，使 `moon.pkg` 默认 **不** import `core`（`validate_api_surface` 对 shared
+  app 有 core import budget）。低频 kernel、自定义 `View::node`、或 **测试** 模拟
+  `AppEvent` / `DrawCommand` 时，在 `for "test"` / `for "wbtest"` 中 import
+  `wzzc-dev/moui/core`（及按需 `runtime`），测试目标不计入默认运行时边界。
+
+`wzzc-dev/moui` 根包**只**转发 app-loop 糖;geometry/graphics/text/state 仍走对应子包。
+其余 kernel 类型直连 `@core`。
+
+普通 app 可以按需直接依赖:
+
+- `wzzc-dev/moui/backend/host`:仅当 app 需要 host service / 平台服务协议时使用,例如文件对话框、异步图片、剪贴板、WebView command queue 或 host service 交互。普通 app 处理 WebView 事件时优先使用 `@views.WebViewEvent`。
+
+普通 app 不应该直接依赖:
 
 - `wzzc-dev/moui/runtime`
 - `wzzc-dev/moui/render/*`
 - `wzzc-dev/moui/backend/{web,macos,windows,linux}`
 - `wzzc-dev/moui/backend/{macos,windows,linux}/skia`
 - `wzzc-dev/moui/backend/{macos,windows,linux}/wgpu`
-- `moui_theme/*`，除非该 app 本身是设计系统 addon 或 preview app。
+- `moui_theme/*`,除非该 app 本身是设计系统 addon 或 preview app。
 
-已知例外见上方“目标边界声明”：`showcase/app` 暂时依赖 `@render` 用于 capability 报告，
+已知例外见上方“目标边界声明”:`showcase/app` 暂时依赖 `@render` 用于 capability 报告,
 并依赖 `@runtime` 用于 diagnostics snapshot 示例。前者应在 capability 报告收敛为
-app-facing API 后移除；后者仅限 diagnostics 示例，不代表普通 app 默认可依赖 runtime。
+app-facing API 后移除;后者仅限 diagnostics 示例,不代表普通 app 默认可依赖 runtime。
 
 ## App 私有子包
 
@@ -168,61 +199,112 @@ app-facing API 后移除；后者仅限 diagnostics 示例，不代表普通 app
 - 它们只服务于宿主 app，不应被其他 app 或框架层依赖。
 - 它们可以依赖 `@core`、`@backend/host`、`@views` 以及 app 自身的共享 app 包，
   视具体职责而定，但不应该被普通共享 app 包反向依赖。
-- 它们不进入 root facade，也不向 `@core` / `@views` 注入 app 特定类型。
+- 它们不进入领域糖包，也不向 `@core` / `@views` 注入 app 特定类型。
 - 评审时把它们视作 app 的实现细节，而不是框架 API 表面的一部分。
 
 如果某个 app 私有子包的抽象逐渐被多个 app 复用，应考虑上提到
 `moui/views`、`moui/core` 或独立的 addon 包，而不是继续作为某个 app 的私有子包存在。
 
-## Root Facade 暴露规则
+## 领域糖包暴露规则
 
-`wzzc-dev/moui/core` 的平台中立基础类型可以、也应该由
-`wzzc-dev/moui` 做 curated re-export，方便普通 app 少 import `core`。
-root facade 暴露的是 app-safe 的 kernel 类型别名，不是把整个 `core` 公共面完整转发。
+`wzzc-dev/moui/core` 的平台中立基础类型,由根 `wzzc-dev/moui`（app-loop）与 4 个领域糖包做 curated re-export,
+让普通 app 减少 `@core` 前缀的样板。糖包遵循以下原则:
 
-允许进入 root facade 的类型必须同时满足：
+- **糖=主、`@core` 真源**。糖包的存在是为高频类型省前缀;它**不追求完整覆盖** `core`
+  公开面。`@core.X` 与 `@<domain>.X` 是同一类型,两条路径都受推荐。
+- **每个类型只属一个糖包**。跨越 layout 与 state 等集合边界的归属判断以语义为准
+  (例如 `ColorScheme` 用于 theme 解析属 `state`,不归 `graphics`),不按 app 出现频次
+  把同一类型塞进多个糖包。
+- **互不 import,纯转发**。糖包只 import `wzzc-dev/moui/core`,不互相依赖,不
+  re-export 其他糖包或 `views`/`runtime`/`backend`/`render`/`host` 的类型。
+- **只转 app-safe neutral 类型**。不转发 runtime tree、renderer、backend、inspector、
+  debug payload、private view implementation details、控件 mode/style/default theme、
+  form helper、WebView command/event、routing/history controller、rich text document。
 
-- 平台中立，不绑定 Web、macOS、Windows、Linux、Skia、WGPU 或 host service 实现。
-- app-safe，普通应用作者可以理解并稳定使用。
-- 不暴露 runtime tree、renderer、backend、inspector、debug payload 或 private view implementation details。
-- 是普通 app 高频需要的类型。
+### 糖包清单
 
-推荐由 `wzzc-dev/moui` 暴露的类型包括：
+**`wzzc-dev/moui`（根 facade，`moui/moui.mbt`）** — `@moui.*`
+```
+View  Program  Effect  Subscription  Theme  Environment  ViewEnvironment
+```
 
-- app shape：`View`、`Program`、`Effect`、`Subscription`、`Theme`
-- 几何与布局：`Point`、`Size`、`Rect`、`Insets`、`Constraints`、`Axis`、`Alignment`
-- 绘制基础值：`Color`、`Brush`、`BorderStyle`、`ShadowStyle`
-- 文本基础值：`FontSpec`、`FontFamily`、`TextRange`、`TextAlign`
-- 状态：`State`、`Binding`、`DerivedState`
-- 环境：`Environment`、`ViewEnvironment`、`ColorScheme`、`LayoutDirection`
-- app 状态 holder：`ScrollState`、`FocusState`、`NavigationState`
-- 交互：`ActionCommand`、`ActionCommandMap`、`CommandBinding`、`CommandIntent`、`KeyboardShortcut`、`KeyModifiers`
-- 常用数据模型：`DateValue`
+**`moui/geometry`** (import `@core`)
+```
+Point  Size  Rect  Insets  Constraints  Axis  Alignment
+```
 
-不应该进入 root facade 的类型包括：
+**`moui/graphics`** (import `@core`)
+```
+Color  Brush  BorderStyle  ShadowStyle
+```
 
-- `ViewLayoutContext`、`ViewPaintContext`、`ViewEventContext`
-- `ViewPaintPlan`、`ViewPaintLayer`、`ViewEventResult`
-- `DrawCommand`、`DrawFrame`、`DamageRegion`
-- `ComponentContext::from_runtime` 这类 runtime-only 构造入口
-- runtime snapshot、inspector snapshot、diagnostic payload
-- renderer resource、renderer capability、platform-view placement
-- backend host/runtime driver 相关类型
-- 具体控件 mode/style/default theme、表单 workflow helper、WebView command/event、
-  routing/history controller、rich text document/editor transform 等非 kernel 能力
+**`moui/text`** (import `@core`)
+```
+FontSpec  FontFamily  TextRange  TextAlign  FontFamilyStack  TextRun
+```
 
-扩展 root facade 时必须同步更新 `pkg.generated.mbti` 和 API surface guard，
-并用 review 确认新增 alias 是 app-safe neutral type。
+**`moui/state`** (import `@core`)
+```
+State  Binding  DerivedState  ScrollState  FocusState  NavigationState
+ColorScheme  LayoutDirection
+```
+
+### `@views` 转发（共享 app 优先 `@views`，非 `@core`）
+
+命令与菜单：`ActionCommand`、`ActionCommandMap`、`CommandBinding`、`CommandIntent`、
+`KeyModifiers`、`KeyboardShortcut`（`menu_commands.mbt`）。
+
+绘制/控件辅助（示例 custom paint）：`ComponentContext`、`ImageFit`、`ImageRun`、
+`TextRun`、`RoundedRect`、`PathSpec`、`TransitionSpec` 等（`kernel_types.mbt`）。
+
+主题辅助：`ColorPalette`、`TypographyScale`（`theme.mbt`）；`Color` / `ColorScheme`
+亦可在 `@views` 使用。
+
+### 不设糖 / 仅测试或框架直连 `@core`
+
+以下仍属 kernel，**不设领域糖**；共享 app 主代码应避免 `@core` 前缀，测试在
+`for "test"` / `for "wbtest"` 中 import `core` 后使用：
+
+`DateValue`、`AccessibilityContrast`、`ContentSizeCategory`；
+`AppEvent`、`KeyboardEvent`、`PointerEvent`、`DrawCommand`、`CompositionUpdate` 等
+事件与绘制协议（runtime 测试、能力展示）。
+
+历史计划曾将 `CommandIntent` 等列为“仅 `@core`”；现以 **`@views` re-export** 为准。
+
+### 别名语法规范
+
+糖包暴露 kernel 类型**统一使用新式 `pub using @core {type X}`**:
+
+```moonbit
+pub using @core {type View}
+```
+
+**禁用旧式 `pub type X = @core.X`**。MoonBit 工具链两套语法在 `moon info` 重新生成
+`pkg.generated.mbti` 时会归一到 `pub using @core {type X}`,所以新式语法由 review 与
+API surface guard 的 `required_tokens` 共同维护;旧式手写别名不属于本规范的合法形态。
 
 Diagnostics 类型的 owning package 是 `wzzc-dev/moui/runtime`。`core` 不再导出
 `EffectPlanSummary`、`SubscriptionPlanSummary`、`EffectRuntimeOp`、
 `InspectorSnapshot`、`ProgramRuntimeSnapshot` 或 `RenderInspectorSnapshot` 这类
-diagnostics/runtime 类型。
+diagnostics/runtime 类型,糖包也不转发。
 
 WebView 类型的 owning package 是 `wzzc-dev/moui/backend/host`。`core` 不再导出
 `WebViewSpec`、`WebViewCommand`、`WebViewEvent` 或
-`WebViewNavigationPolicy`，也不提供 `PlatformViewPlacement::web_view` 这类
-WebView 专有 helper。
+`WebViewNavigationPolicy`,也不提供 `PlatformViewPlacement::web_view` 这类
+WebView 专有 helper;糖包也不转发。
+
+### 扩展糖包
+
+扩展领域糖包(新增类型到现有糖包,或新增一个领域糖包)必须同步:
+
+- 更新 `pkg.generated.mbti`(运行 `moon info <pkg>`)。
+- 更新 `tools/moui/validate_api_surface/main.mbt` 中对应糖包的
+  `sugar_<domain>_tokens()` 与 budget。
+- 用 review 确认新增类型是平台中立、app-safe、高频的 kernel 类型,
+  且不与现有糖包或“不设糖”清单重叠。
+
+`@core` 公开面扩展不需要糖包同步;糖包负责的只是“高频省前缀”集合,新加的 kernel
+类型默认走 `@core` 直连,直到被显式纳入糖包清单。
 
 ## `moui/views` 低层 custom view 规则
 
@@ -255,8 +337,8 @@ WebView wrapper，应用层应使用 `wzzc-dev/moui/views` 的 app-facing constr
 
 换句话说，Iced 的控件层同时是内置控件和自定义控件入口；
 MoUI 当前把两类入口统一在 `moui/views`：普通 app 使用高层 constructor，
-控件作者复用同包内私有 control/layout helper。这不改变普通 app 默认只依赖
-`moui` 和 `moui/views` 的规则；低层 public 入口只有 `@core.View::node(...)`。
+控件作者复用同包内私有 control/layout helper。这不改变普通 app 默认依赖
+`moui/<领域>`(按需)与 `moui/views` 的规则；低层 public 入口只有 `@core.View::node(...)`。
 
 ## 平台入口包
 
@@ -290,13 +372,13 @@ WGPU 相关 backend/render 包只作为实验或诊断入口使用，不是普�
 - `moui/render/*`：renderer facade 和具体 renderer 实现。
 - `moui_richtext`：富文本/Markdown 文档、编辑、命令、输入、粘贴、表格与源码映射逻辑
   addon，供 rich editing app（如 `examples/markdown_editor`、`examples/mo_workbench`、
-  `examples/showcase`）按需直接依赖；不进入 `core`、`views` 或 root facade 默认依赖。
+  `examples/showcase`）按需直接依赖；不进入 `core`、`views` 或领域糖包默认依赖。
 - `moui_agent` / `moui_agent_mcp`：agent 协议、schema、host runtime 与 MCP router
   support addon，供 agent-controllable app（如 `examples/agent_counter`）按需直接依赖；
-  不进入 `core`、`views` 或 root facade 默认依赖。
-- `moui_theme/*`：设计系统 addon，不进入 `core`、`views` 或 root facade 的默认依赖。
+  不进入 `core`、`views` 或领域糖包默认依赖。
+- `moui_theme/*`：设计系统 addon，不进入 `core`、`views` 或领域糖包默认依赖。
 
-普通 app 默认只依赖 `moui` 与 `moui/views`；直接依赖 `moui_richtext`、
+普通 app 默认依赖 `moui/<领域>`(按需)与 `moui/views`；直接依赖 `moui_richtext`、
 `moui_agent*`、`moui_theme/*` 等 addon 仅在 app 明确需要该能力时才允许。直接依赖
 `moui/core`、`moui/backend/host` 的普通 app 由 API surface guard 的 advanced-app
 白名单约束（当前覆盖 `examples/markdown_editor/app`、`examples/mo_workbench/app`、
@@ -308,11 +390,11 @@ WGPU 相关 backend/render 包只作为实验或诊断入口使用，不是普�
 新增依赖或公开 API 前，先回答这些问题：
 
 - 这个 package 是普通共享 app、平台入口、测试，还是框架/控件实现？
-- 普通共享 app 是否只依赖 `wzzc-dev/moui` 和 `wzzc-dev/moui/views`？
-- 如果普通 app 直接 import `wzzc-dev/moui/core`，是否只是为了 root facade 尚未覆盖的 app-safe neutral type？
+- 普通共享 app 是否依赖 `wzzc-dev/moui/<领域>`(按需)与 `wzzc-dev/moui/views`，且未再 import 空的 `wzzc-dev/moui` 根包？
+- 如果普通 app 直接 import `wzzc-dev/moui/core`，是否确实需要糖包未覆盖的 kernel 类型（一等用法）？
 - 如果普通 app import `wzzc-dev/moui/backend/host`，是否确实需要 host service 协议？
 - 普通 app 是否错误依赖了 `runtime`、`render/*` 或平台 backend？
-- 新增 root alias 是否是平台中立、app-safe、高频使用的类型？
+- 新增糖包 alias 是否是平台中立、app-safe、高频使用的类型，且已更新 API surface guard？
 - 新增低层 custom view helper 是否同时提供了 `moui/views` app-facing constructor？
 - 新增控件是否避免向 `core` 添加具体控件 enum variant、primitive constructor 或 runtime lowering 分支？
 - 新增 `core` API 是否真的是跨 runtime 的基础协议 / 抽象 UI kernel 能力？

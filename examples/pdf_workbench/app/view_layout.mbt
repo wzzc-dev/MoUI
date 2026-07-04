@@ -12,7 +12,7 @@ fn PdfWorkbenchModel::view_with_environment(
 ///|
 fn PdfWorkbenchModel::view_for_viewport(
   self : PdfWorkbenchModel,
-  viewport : @moui.Size,
+  viewport : @geometry.Size,
 ) -> @moui.View[PdfWorkbenchMsg] {
   let theme = @views.light_theme()
   let metrics = pdf_workbench_layout_metrics(
@@ -67,7 +67,7 @@ fn PdfWorkbenchModel::view_for_viewport(
 
 ///|
 priv struct PdfWorkbenchLayoutMetrics {
-  viewport : @moui.Size
+  viewport : @geometry.Size
   inner_width : Double
   body_height : Double
   sidebar_visible : Bool
@@ -84,7 +84,7 @@ priv struct PdfWorkbenchLayoutMetrics {
 
 ///|
 fn pdf_workbench_layout_metrics(
-  viewport : @moui.Size,
+  viewport : @geometry.Size,
   theme : @moui.Theme,
   reader_fullscreen? : Bool = false,
 ) -> PdfWorkbenchLayoutMetrics {
@@ -134,7 +134,7 @@ fn pdf_workbench_layout_metrics(
   let panel_padding = theme.spacing_scale.md
   let compact_panel_padding = theme.spacing_scale.sm
   {
-    viewport: @moui.Size::new(width=safe_width, height=safe_height),
+    viewport: @geometry.Size::new(width=safe_width, height=safe_height),
     inner_width,
     body_height,
     sidebar_visible,

@@ -5,9 +5,9 @@ fn section_panel(
   summary : String,
   body : @moui.View[ShowcaseMsg],
   metrics~ : ShowcaseMetrics,
-  scroll_offset? : @moui.Point = @moui.Point::new(x=0.0, y=0.0),
-  scroll_state? : @core.ScrollState? = None,
-  on_scroll? : ((@moui.Point) -> ShowcaseMsg)? = None,
+  scroll_offset? : @geometry.Point = @geometry.Point::new(x=0.0, y=0.0),
+  scroll_state? : @state.ScrollState? = None,
+  on_scroll? : ((@geometry.Point) -> ShowcaseMsg)? = None,
 ) -> @moui.View[ShowcaseMsg] {
   let scroll_body = match on_scroll {
     Some(handler) =>
@@ -29,8 +29,8 @@ fn section_panel(
       )
   }
   let header_bg = match theme.scheme {
-    @core.ColorScheme::Light => theme.palette.surface_variant.multiply_alpha(0.32)
-    @core.ColorScheme::Dark => @core.Color::white().multiply_alpha(0.04)
+    @state.ColorScheme::Light => theme.palette.surface_variant.multiply_alpha(0.32)
+    @state.ColorScheme::Dark => @graphics.Color::white().multiply_alpha(0.04)
   }
   container(
     column(
@@ -75,7 +75,7 @@ fn ShowcaseModel::section_panel(
   body : @moui.View[ShowcaseMsg],
   metrics~ : ShowcaseMetrics,
 ) -> @moui.View[ShowcaseMsg] {
-  let offset = @moui.Point::new(
+  let offset = @geometry.Point::new(
     x=0.0,
     y=max_showcase_double(0.0, self.detail_scroll.offset().y),
   )
@@ -91,12 +91,12 @@ fn ShowcaseModel::section_panel(
 }
 
 ///|
-fn showcase_panel_border(theme : @moui.Theme) -> @core.BorderStyle {
+fn showcase_panel_border(theme : @moui.Theme) -> @graphics.BorderStyle {
   // Slightly softer than the legacy 0.82 outline so the panel reads as a calm
   // container rather than a hard-edged box, letting the new accent and surface
   // tones carry the hierarchy.
-  @core.BorderStyle::new(
-    brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.6)),
+  @graphics.BorderStyle::new(
+    brush=@graphics.Brush::solid(theme.palette.outline.multiply_alpha(0.6)),
     width=1.0,
   )
 }
@@ -104,12 +104,12 @@ fn showcase_panel_border(theme : @moui.Theme) -> @core.BorderStyle {
 ///|
 /// Soft hairline border for elevated cards. Fainter than the panel border so
 /// the shadow, not the stroke, carries the elevation cue.
-fn showcase_card_border(theme : @moui.Theme) -> @core.BorderStyle {
+fn showcase_card_border(theme : @moui.Theme) -> @graphics.BorderStyle {
   let color = match theme.scheme {
-    @core.ColorScheme::Light => theme.palette.outline.multiply_alpha(0.55)
-    @core.ColorScheme::Dark => @core.Color::white().multiply_alpha(0.06)
+    @state.ColorScheme::Light => theme.palette.outline.multiply_alpha(0.55)
+    @state.ColorScheme::Dark => @graphics.Color::white().multiply_alpha(0.06)
   }
-  @core.BorderStyle::new(brush=@core.Brush::solid(color), width=1.0)
+  @graphics.BorderStyle::new(brush=@graphics.Brush::solid(color), width=1.0)
 }
 
 ///|
@@ -199,13 +199,13 @@ fn ShowcaseModel::layout_tile_sized(
 fn layout_tile_marker(theme : @moui.Theme) -> @moui.View[ShowcaseMsg] {
   @views.custom_layout(
     measure=constraints => {
-      constraints.constrain(@moui.Size::new(width=4.0, height=22.0))
+      constraints.constrain(@geometry.Size::new(width=4.0, height=22.0))
     },
     paint=(ctx, frame) => {
       fill_rounded_rect(
         ctx,
-        @core.RoundedRect::new(rect=frame, radius=2.0),
-        @core.Brush::solid(theme.palette.primary.multiply_alpha(0.72)),
+        @views.RoundedRect::new(rect=frame, radius=2.0),
+        @graphics.Brush::solid(theme.palette.primary.multiply_alpha(0.72)),
       )
     },
     semantics_label="",
@@ -226,18 +226,18 @@ fn ShowcaseModel::visual_card(
   let media_width = max_showcase_double(120.0, card_width - 36.0)
   let media_height = if metrics.compact { 96.0 } else { 136.0 }
   let card_height = if metrics.compact { 250.0 } else { 300.0 }
-  let transition = @core.TransitionSpec::new(
-    from=@core.TransitionStyle::identity()
+  let transition = @views.TransitionSpec::new(
+    from=@views.TransitionStyle::identity()
       .with_opacity(0.66)
       .with_offset(dx=offset, dy=0.0),
-    to=@core.TransitionStyle::identity()
+    to=@views.TransitionStyle::identity()
       .with_opacity(opacity)
       .with_offset(dx=offset, dy=0.0),
-    easing=@core.Easing::Linear,
+    easing=@views.Easing::Linear,
   )
-  let gradient = @core.Brush::linear_gradient(
-    start=@moui.Point::new(x=0.0, y=0.0),
-    end=@moui.Point::new(x=260.0, y=160.0),
+  let gradient = @graphics.Brush::linear_gradient(
+    start=@geometry.Point::new(x=0.0, y=0.0),
+    end=@geometry.Point::new(x=260.0, y=160.0),
     // Soft accent-tinted wash behind the hero image: a low-primary tint over
     // the surface so the image stays the focal point and the tint reads as
     // brand color rather than a heavy block.
@@ -254,7 +254,7 @@ fn ShowcaseModel::visual_card(
           height=media_height,
           opacity~,
           corner_radius=theme.radius_scale.lg,
-          fit=@core.ImageFit::Cover,
+          fit=@views.ImageFit::Cover,
         )
         .background_brush(gradient)
         .corner_radius(theme.radius_scale.lg)
@@ -517,10 +517,10 @@ fn ShowcaseModel::visual_correctness_card(
   opacity : Double,
 ) -> @moui.View[ShowcaseMsg] {
   ignore(self)
-  let image_motion = @core.TransitionSpec::slide(
-    from_offset=@moui.Point::new(x=0.0, y=0.0),
-    to_offset=@moui.Point::new(x=if active { 10.0 } else { 0.0 }, y=0.0),
-    easing=@core.Easing::Linear,
+  let image_motion = @views.TransitionSpec::slide(
+    from_offset=@geometry.Point::new(x=0.0, y=0.0),
+    to_offset=@geometry.Point::new(x=if active { 10.0 } else { 0.0 }, y=0.0),
+    easing=@views.Easing::Linear,
   )
   showcase_soft_card(
     theme,
@@ -532,7 +532,7 @@ fn ShowcaseModel::visual_correctness_card(
           height=50.0,
           opacity=1.0,
           corner_radius=theme.radius_scale.sm,
-          fit=@core.ImageFit::Contain,
+          fit=@views.ImageFit::Contain,
         ).clip(),
         image(
           showcase_image_source(),
@@ -540,7 +540,7 @@ fn ShowcaseModel::visual_correctness_card(
           height=50.0,
           opacity~,
           corner_radius=theme.radius_scale.sm,
-          fit=@core.ImageFit::Cover,
+          fit=@views.ImageFit::Cover,
         ).clip(),
         image(
           showcase_image_source(),
@@ -548,7 +548,7 @@ fn ShowcaseModel::visual_correctness_card(
           height=50.0,
           opacity=0.92,
           corner_radius=theme.radius_scale.sm,
-          fit=@core.ImageFit::FitWidth,
+          fit=@views.ImageFit::FitWidth,
         ).clip(),
         image(
           showcase_image_source(),
@@ -556,7 +556,7 @@ fn ShowcaseModel::visual_correctness_card(
           height=50.0,
           opacity=0.86,
           corner_radius=theme.radius_scale.sm,
-          fit=@core.ImageFit::FitHeight,
+          fit=@views.ImageFit::FitHeight,
         ).clip(),
         image(
           showcase_image_source(),
@@ -564,7 +564,7 @@ fn ShowcaseModel::visual_correctness_card(
           height=50.0,
           opacity=0.78,
           corner_radius=theme.radius_scale.md,
-          fit=@core.ImageFit::ScaleDown,
+          fit=@views.ImageFit::ScaleDown,
         )
         .clip()
         .scale(sx=0.92, sy=0.92)
@@ -660,7 +660,7 @@ fn ShowcaseModel::vector_path_card(
   ignore(self)
   @views.custom_layout(
     measure=constraints => {
-      constraints.constrain(@moui.Size::new(width=292.0, height=74.0))
+      constraints.constrain(@geometry.Size::new(width=292.0, height=74.0))
     },
     paint=(ctx, frame) => {
       let inset = 12.0
@@ -668,49 +668,49 @@ fn ShowcaseModel::vector_path_card(
       let top = frame.origin.y + inset
       let bottom = frame.origin.y + frame.size.height - inset
       let mid_y = frame.origin.y + frame.size.height * 0.5
-      let fill = @core.Brush::linear_gradient(
-        start=@moui.Point::new(x=left, y=top),
-        end=@moui.Point::new(x=left + 72.0, y=bottom),
+      let fill = @graphics.Brush::linear_gradient(
+        start=@geometry.Point::new(x=left, y=top),
+        end=@geometry.Point::new(x=left + 72.0, y=bottom),
         start_color=theme.palette.primary.multiply_alpha(0.88),
         end_color=theme.palette.primary.multiply_alpha(0.82),
       )
-      let stroke = @core.Brush::solid(
+      let stroke = @graphics.Brush::solid(
         theme.palette.foreground.multiply_alpha(0.72),
       )
       fill_rounded_rect(
         ctx,
-        @core.RoundedRect::new(rect=frame, radius=theme.radius_scale.md),
-        @core.Brush::solid(theme.palette.surface_variant.multiply_alpha(0.42)),
+        @views.RoundedRect::new(rect=frame, radius=theme.radius_scale.md),
+        @graphics.Brush::solid(theme.palette.surface_variant.multiply_alpha(0.42)),
       )
       draw_path(
         ctx,
-        @core.PathSpec::new(
+        @views.PathSpec::new(
           verbs=[
-            @core.PathVerb::MoveTo(@moui.Point::new(x=left, y=bottom)),
-            @core.PathVerb::CubicTo(
-              @moui.Point::new(x=left + 24.0, y=top - 4.0),
-              @moui.Point::new(x=left + 58.0, y=top + 4.0),
-              @moui.Point::new(x=left + 82.0, y=bottom),
+            @views.PathVerb::MoveTo(@geometry.Point::new(x=left, y=bottom)),
+            @views.PathVerb::CubicTo(
+              @geometry.Point::new(x=left + 24.0, y=top - 4.0),
+              @geometry.Point::new(x=left + 58.0, y=top + 4.0),
+              @geometry.Point::new(x=left + 82.0, y=bottom),
             ),
-            @core.PathVerb::LineTo(@moui.Point::new(x=left + 42.0, y=mid_y)),
-            @core.PathVerb::Close,
+            @views.PathVerb::LineTo(@geometry.Point::new(x=left + 42.0, y=mid_y)),
+            @views.PathVerb::Close,
           ],
           fill=Some(fill),
         ),
       )
       draw_path(
         ctx,
-        @core.PathSpec::new(
+        @views.PathSpec::new(
           verbs=[
-            @core.PathVerb::MoveTo(@moui.Point::new(x=left + 116.0, y=bottom)),
-            @core.PathVerb::QuadTo(
-              @moui.Point::new(x=left + 148.0, y=top),
-              @moui.Point::new(x=left + 180.0, y=bottom),
+            @views.PathVerb::MoveTo(@geometry.Point::new(x=left + 116.0, y=bottom)),
+            @views.PathVerb::QuadTo(
+              @geometry.Point::new(x=left + 148.0, y=top),
+              @geometry.Point::new(x=left + 180.0, y=bottom),
             ),
-            @core.PathVerb::CubicTo(
-              @moui.Point::new(x=left + 196.0, y=mid_y),
-              @moui.Point::new(x=left + 216.0, y=mid_y),
-              @moui.Point::new(x=left + 236.0, y=top + 8.0),
+            @views.PathVerb::CubicTo(
+              @geometry.Point::new(x=left + 196.0, y=mid_y),
+              @geometry.Point::new(x=left + 216.0, y=mid_y),
+              @geometry.Point::new(x=left + 236.0, y=top + 8.0),
             ),
           ],
           stroke=Some(stroke),
@@ -731,10 +731,10 @@ fn ShowcaseModel::sparkline(
   ignore(self)
   @views.custom_layout(
     measure=constraints => {
-      constraints.constrain(@moui.Size::new(width=300.0, height=34.0))
+      constraints.constrain(@geometry.Size::new(width=300.0, height=34.0))
     },
     paint=(ctx, frame) => {
-      let fill = @core.Rect::new(
+      let fill = @geometry.Rect::new(
         x=frame.origin.x,
         y=frame.origin.y + 10.0,
         width=frame.size.width * clamp_double(value, 0.0, 1.0),
@@ -742,13 +742,13 @@ fn ShowcaseModel::sparkline(
       )
       fill_rounded_rect(
         ctx,
-        @core.RoundedRect::new(rect=frame, radius=theme.radius_scale.sm),
-        @core.Brush::solid(theme.palette.surface_variant),
+        @views.RoundedRect::new(rect=frame, radius=theme.radius_scale.sm),
+        @graphics.Brush::solid(theme.palette.surface_variant),
       )
       fill_rounded_rect(
         ctx,
-        @core.RoundedRect::new(rect=fill, radius=7.0),
-        @core.Brush::solid(theme.palette.primary),
+        @views.RoundedRect::new(rect=fill, radius=7.0),
+        @graphics.Brush::solid(theme.palette.primary),
       )
     },
     semantics_label="Custom layout sparkline",
@@ -830,7 +830,7 @@ fn ShowcaseModel::sheet(
       spacing=theme.spacing_scale.md,
       align=@views.CrossAlign::Start,
     ),
-    presentation_mode=@core.SheetPresentationMode::BottomSheet,
+    presentation_mode=@views.SheetPresentationMode::BottomSheet,
     background=theme.palette.surface,
     corner_radius=theme.radius_scale.lg,
     shadow=Some(theme.shadow_scale.lg),
@@ -888,7 +888,7 @@ fn capability_status_view(
 fn capability_status_color(
   status : @render.RendererFeatureStatus,
   theme : @moui.Theme,
-) -> @core.Color {
+) -> @graphics.Color {
   if status.needs_follow_up() {
     theme.palette.primary
   } else {

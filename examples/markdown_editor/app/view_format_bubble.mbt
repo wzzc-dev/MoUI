@@ -89,9 +89,9 @@ fn markdown_editor_format_bubble_overlay(
   app : MarkdownEditorApp,
   session : MarkdownDocumentSession,
   selection : MarkdownEditorSelection,
-  editor_font : @core.FontSpec,
+  editor_font : @text.FontSpec,
   theme : @moui.Theme,
-  scroll_offset : @moui.Point,
+  scroll_offset : @geometry.Point,
   editor_width : Double,
   viewport_height : Double,
 ) -> @moui.View[MarkdownEditorMsg] {
@@ -107,12 +107,12 @@ fn markdown_editor_format_bubble_overlay(
       children=[bubble],
       measure=ctx => {
         ctx.constraints.constrain(
-          @moui.Size::new(width=editor_width, height=viewport_height),
+          @geometry.Size::new(width=editor_width, height=viewport_height),
         )
       },
       place=ctx => {
         let bubble_size = ctx.child_sizes[0]
-        let editor_frame = @core.Rect::new(
+        let editor_frame = @geometry.Rect::new(
           x=ctx.frame.origin.x,
           y=ctx.frame.origin.y,
           width=editor_width,
@@ -147,7 +147,7 @@ fn markdown_editor_format_bubble_overlay(
               rect.origin.y + rect.size.height + theme.spacing_scale.sm
             }
             [
-              @core.Rect::new(
+              @geometry.Rect::new(
                 x~,
                 y~,
                 width=bubble_size.width,
@@ -157,7 +157,7 @@ fn markdown_editor_format_bubble_overlay(
           }
           None =>
             [
-              @core.Rect::new(
+              @geometry.Rect::new(
                 x=ctx.frame.origin.x,
                 y=ctx.frame.origin.y,
                 width=0.0,

@@ -1,12 +1,18 @@
 import {
+
   "moonbitlang/core/encoding/utf8",
-  "wzzc-dev/moui",
   "wzzc-dev/moui/backend/host",
-  "wzzc-dev/moui/core",
   "wzzc-dev/moui/views",
+  "wzzc-dev/moui",
+  "wzzc-dev/moui/geometry",
+  "wzzc-dev/moui/state",
+  "wzzc-dev/moui/text",
+  "wzzc-dev/moui/graphics",
+
 }
 
 import {
+  "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
 } for "wbtest"
 

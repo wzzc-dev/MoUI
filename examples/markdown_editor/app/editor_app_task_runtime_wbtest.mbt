@@ -6,7 +6,7 @@ test "markdown editor runtime prefix click toggles task checkbox" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),
@@ -18,7 +18,7 @@ test "markdown editor runtime prefix click toggles task checkbox" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),

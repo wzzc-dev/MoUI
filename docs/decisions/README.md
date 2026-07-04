@@ -29,6 +29,7 @@ Copy `TEMPLATE.md` and fill in all sections. Keep it concise.
 
 | # | Title | Date | Status |
 |---|-------|------|--------|
+| 0003 | [Domain sugar and root app-loop facade](0003-domain-sugar-and-root-facade.md) | 2026-07-04 | Accepted |
 | 0002 | [MouiRichtext optimization](0002-moui-richtext-optimization.md) | 2026-06-29 | Accepted |
 | 0001 | [Markdown session virtual scrolling](0001-markdown-session-virtual-scrolling.md) | 2026-06-28 | Accepted |
 <!-- Add new entries here: -->

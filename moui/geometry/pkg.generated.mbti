@@ -1,0 +1,30 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/geometry"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @core {type Alignment}
+
+pub using @core {type Axis}
+
+pub using @core {type Constraints}
+
+pub using @core {type Insets}
+
+pub using @core {type Point}
+
+pub using @core {type Rect}
+
+pub using @core {type Size}
+
+// Traits
+

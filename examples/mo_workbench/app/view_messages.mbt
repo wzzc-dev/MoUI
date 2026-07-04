@@ -9,7 +9,7 @@
 /// User and assistant messages render with a small avatar circle.
 fn message_row(
   msg : ChatMessage,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[CodeMsg] {
   let inner = match msg {
@@ -27,7 +27,7 @@ fn message_row(
 ///|
 fn user_message_row(
   text_ : String,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[CodeMsg] {
   let bubble_width = width * 0.72
@@ -74,7 +74,7 @@ fn user_message_row(
 fn assistant_message_row(
   content : String,
   reasoning : String?,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[CodeMsg] {
   let bubble_width = width * 0.82
@@ -144,7 +144,7 @@ fn tool_result_row(
   content : String,
   is_error : Bool,
   brief : String?,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[CodeMsg] {
   let card_width = width * 0.9
@@ -199,7 +199,7 @@ fn tool_result_row(
 ///|
 fn runtime_notice_row(
   text_ : String,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[CodeMsg] {
   @views.container(
@@ -225,7 +225,7 @@ fn runtime_notice_row(
 fn terminal_row(
   status : TurnStatus,
   message : String,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[CodeMsg] {
   let (label, tone) = match status {

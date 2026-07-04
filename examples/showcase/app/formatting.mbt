@@ -56,10 +56,10 @@ fn max_showcase_int(a : Int, b : Int) -> Int {
 
 ///|
 fn showcase_metrics(
-  viewport : @moui.Size,
+  viewport : @geometry.Size,
   theme : @moui.Theme,
 ) -> ShowcaseMetrics {
-  let viewport = @moui.Size::new(
+  let viewport = @geometry.Size::new(
     width=max_showcase_double(1.0, viewport.width),
     height=max_showcase_double(1.0, viewport.height),
   )

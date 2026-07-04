@@ -159,7 +159,7 @@ fn MarkdownEditorApp::redo(self : MarkdownEditorApp) -> Bool {
 fn MarkdownEditorApp::set_selection(
   self : MarkdownEditorApp,
   caret : Int,
-  selection : @core.TextRange?,
+  selection : @text.TextRange?,
 ) -> Unit {
   self.selection.set({ caret, selection })
   self.sync_target_inputs()

@@ -1,8 +1,14 @@
 import {
-  "wzzc-dev/moui",
-  "wzzc-dev/moui/core",
   "wzzc-dev/moui/views",
+  "wzzc-dev/moui",
+  "wzzc-dev/moui/geometry",
+  "wzzc-dev/moui/graphics",
+  "wzzc-dev/moui/state",
 }
+
+import {
+  "wzzc-dev/moui/core",
+} for "wbtest"
 
 supported_targets = "+native+wasm-gc"
 

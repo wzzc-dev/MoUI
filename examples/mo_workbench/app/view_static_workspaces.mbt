@@ -7,7 +7,7 @@
 fn tab_placeholder_surface(
   title : String,
   subtitle : String,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   height : Double,
 ) -> @moui.View[WorkbenchMsg] {
@@ -31,7 +31,7 @@ fn tab_placeholder_surface(
 /// Work tab placeholder: a task board will live here once the board layout +
 /// backend are ready.
 fn work_tab_placeholder_view(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   height : Double,
 ) -> @moui.View[WorkbenchMsg] {
@@ -48,7 +48,7 @@ fn work_tab_placeholder_view(
 /// Design tab placeholder: a component / preview gallery will live here once
 /// the design surface is ready.
 fn design_tab_placeholder_view(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   height : Double,
 ) -> @moui.View[WorkbenchMsg] {
@@ -67,7 +67,7 @@ fn design_tab_placeholder_view(
 fn workspace_headline(
   title : String,
   subtitle : String,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[WorkbenchMsg] {
   @views.column(

@@ -53,8 +53,8 @@ fn run_pdf_workbench_effect(
   update : PdfWorkbenchUpdate,
   services : @host.HostAppServices,
 ) -> PdfWorkbenchUpdate {
-  let model = @moui.State::new(update.model)
-  let effect = @moui.State::new(@moui.Effect::none())
+  let model = @state.State::new(update.model)
+  let effect = @state.State::new(@moui.Effect::none())
   match update.effect {
     @moui.Effect::Run(_descriptor, run) =>
       run(message => {
@@ -74,8 +74,8 @@ fn run_pdf_workbench_effect_chain(
   raster_services? : PdfWorkbenchRasterServices = PdfWorkbenchRasterServices::unavailable(),
   document_services? : PdfWorkbenchDocumentServices = PdfWorkbenchDocumentServices::lightweight(),
 ) -> PdfWorkbenchUpdate {
-  let model = @moui.State::new(update.model)
-  let effect = @moui.State::new(update.effect)
+  let model = @state.State::new(update.model)
+  let effect = @state.State::new(update.effect)
   let mut turns = 0
   while turns < 8 && !(effect.get() is @moui.Effect::NoEffect) {
     let current = effect.get()
@@ -91,8 +91,8 @@ fn run_pdf_workbench_effect_chain(
 ///|
 fn run_pdf_workbench_effect_value(
   current : @moui.Effect[PdfWorkbenchMsg],
-  model : @moui.State[PdfWorkbenchModel],
-  effect : @moui.State[@moui.Effect[PdfWorkbenchMsg]],
+  model : @state.State[PdfWorkbenchModel],
+  effect : @state.State[@moui.Effect[PdfWorkbenchMsg]],
   services : @host.HostAppServices,
   raster_services : PdfWorkbenchRasterServices,
   document_services : PdfWorkbenchDocumentServices,
@@ -233,7 +233,7 @@ fn pdf_workbench_click_text(
   guard pdf_workbench_text_frame(runtime.draw_commands(), label) is Some(frame) else {
     fail("expected text frame for " + label)
   }
-  let point = @moui.Point::new(
+  let point = @geometry.Point::new(
     x=frame.origin.x + frame.size.width / 2.0,
     y=frame.origin.y + frame.size.height / 2.0,
   )
@@ -255,7 +255,7 @@ fn pdf_workbench_scroll_at(
   frame : @core.Rect,
   dy~ : Double,
 ) -> Unit {
-  let point = @moui.Point::new(
+  let point = @geometry.Point::new(
     x=frame.origin.x + frame.size.width / 2.0,
     y=frame.origin.y + frame.size.height / 2.0,
   )
@@ -264,7 +264,7 @@ fn pdf_workbench_scroll_at(
       @core.PointerEvent::new(
         position=point,
         phase=@core.PointerPhase::Move,
-        wheel_delta=@moui.Point::new(x=0.0, y=dy),
+        wheel_delta=@geometry.Point::new(x=0.0, y=dy),
       ),
     ),
   )

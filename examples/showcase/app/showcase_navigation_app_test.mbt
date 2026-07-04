@@ -6,7 +6,7 @@ test "showcase navigation dialog and sheet state are wired" {
   let dialog_commands = dialog_model
     .runtime(width=760.0, height=420.0)
     .draw_commands()
-  let size = @moui.Size::new(width=760.0, height=420.0)
+  let size = @geometry.Size::new(width=760.0, height=420.0)
   assert_true(has_text(dialog_commands, "Showcase dialog"))
   assert_true(has_text(dialog_commands, "Custom content shell"))
   assert_true(
@@ -123,7 +123,7 @@ test "showcase open sheet button presents bottom sheet" {
   assert_true(has_text(runtime.draw_commands(), "Showcase sheet"))
   click_point(
     runtime,
-    @moui.Point::new(x=sheet_center_x, y=sheet_frame.origin.y - 24.0),
+    @geometry.Point::new(x=sheet_center_x, y=sheet_frame.origin.y - 24.0),
   )
   assert_false(has_text(runtime.draw_commands(), "Showcase sheet"))
   click_text(runtime, "Open sheet")
@@ -263,14 +263,14 @@ test "showcase route host subscription applies browser popstate route" {
 ///|
 test "showcase sidebar catalog scrolls to lower sections" {
   let runtime = @app.ShowcaseModel::new().runtime(width=760.0, height=420.0)
-  let size = @moui.Size::new(width=760.0, height=420.0)
+  let size = @geometry.Size::new(width=760.0, height=420.0)
   assert_false(text_within(runtime.draw_commands(), "Interaction Lab", size))
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(x=80.0, y=330.0),
+        position=@geometry.Point::new(x=80.0, y=330.0),
         phase=@core.PointerPhase::Move,
-        wheel_delta=@moui.Point::new(x=0.0, y=-260.0),
+        wheel_delta=@geometry.Point::new(x=0.0, y=-260.0),
       ),
     ),
   )
@@ -287,7 +287,7 @@ test "showcase sidebar catalog scrolls to lower sections" {
   }
   assert_true(scrollbar_frame.origin.x > target.origin.x + target.size.width)
   assert_true(scrollbar_frame.origin.x < 236.0)
-  let click_point = @moui.Point::new(
+  let click_point = @geometry.Point::new(
     x=target.origin.x + target.size.width / 2.0,
     y=target.origin.y + target.size.height / 2.0,
   )
@@ -353,7 +353,7 @@ test "showcase native ime evidence points focus sidebar search" {
 
 ///|
 test "showcase detail panel scrolls long section content" {
-  let size = @moui.Size::new(width=760.0, height=420.0)
+  let size = @geometry.Size::new(width=760.0, height=420.0)
   let model = @app.ShowcaseModel::new().update(
     @app.ShowcaseMsg::SelectSection("layout"),
   )
@@ -364,9 +364,9 @@ test "showcase detail panel scrolls long section content" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(x=520.0, y=330.0),
+        position=@geometry.Point::new(x=520.0, y=330.0),
         phase=@core.PointerPhase::Move,
-        wheel_delta=@moui.Point::new(x=0.0, y=-680.0),
+        wheel_delta=@geometry.Point::new(x=0.0, y=-680.0),
       ),
     ),
   )
@@ -388,7 +388,7 @@ test "showcase detail panel scrolls long section content" {
 ///|
 fn sidebar_visible_lower_label(
   commands : Array[@core.DrawCommand],
-  size : @moui.Size,
+  size : @geometry.Size,
 ) -> String {
   for label in ["Runtime/Renderer", "Diagnostics", "Feedback"] {
     if text_within(commands, label, size) {

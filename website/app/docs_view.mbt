@@ -55,7 +55,7 @@ fn docs_header(theme : @moui.Theme, width : Double) -> @moui.View[Msg] {
         "MoUI Markdown Docs",
         width~,
         height=38.0,
-        font=@core.FontSpec::new(size=30.0, weight=820),
+        font=@text.FontSpec::new(size=30.0, weight=820),
         color=theme.palette.foreground,
       ),
       docs_start_text(
@@ -106,7 +106,7 @@ fn Model::docs_sidebar(
           "Docs",
           width=width - 28.0,
           height=26.0,
-          font=@core.FontSpec::new(size=17.0, weight=780),
+          font=@text.FontSpec::new(size=17.0, weight=780),
           color=theme.palette.foreground,
         ),
         docs_start_text(
@@ -204,7 +204,7 @@ fn docs_document_header(
         title,
         width~,
         height=38.0,
-        font=@core.FontSpec::new(size=27.0, weight=820),
+        font=@text.FontSpec::new(size=27.0, weight=820),
         color=theme.palette.foreground,
       ),
       docs_start_text(
@@ -237,7 +237,7 @@ fn docs_status_panel(
           title,
           width=width - 40.0,
           height=34.0,
-          font=@core.FontSpec::new(size=22.0, weight=780),
+          font=@text.FontSpec::new(size=22.0, weight=780),
           color=theme.palette.foreground,
         ),
         docs_wrapped_text(theme, detail, width - 40.0, 13.0, 21.0, muted=true),
@@ -326,7 +326,7 @@ fn docs_wrapped_text(
 ) -> @moui.View[Msg] {
   let lines = website_doc_wrap_lines(value, width, font_size)
   let rows : Array[@moui.View[Msg]] = []
-  let font = @core.FontSpec::new(
+  let font = @text.FontSpec::new(
     size=font_size,
     weight=if font_size >= 20.0 { 760 } else { 460 },
   )
@@ -349,20 +349,20 @@ fn docs_start_text(
   value : String,
   width~ : Double,
   height~ : Double,
-  font~ : @core.FontSpec,
-  color~ : @core.Color,
+  font~ : @text.FontSpec,
+  color~ : @graphics.Color,
 ) -> @moui.View[Msg] {
   custom_layout(
-    measure=_constraints => @moui.Size::new(width~, height~),
+    measure=_constraints => @geometry.Size::new(width~, height~),
     paint=(ctx, frame) => {
       draw_text(
         ctx,
-        @core.TextRun::new(
+        @text.TextRun::new(
           text=value,
           frame=frame,
           font~,
           color~,
-          align=@core.TextAlign::TextStart,
+          align=@text.TextAlign::TextStart,
         ),
       )
     },
@@ -385,7 +385,7 @@ fn docs_code_panel(
         language,
         width=code_width,
         height=18.0,
-        font=@core.FontSpec::new(size=11.0, weight=760),
+        font=@text.FontSpec::new(size=11.0, weight=760),
         color=theme.palette.muted,
       ),
     )
@@ -447,11 +447,11 @@ fn docs_table_panel(
 ///|
 fn docs_rule(theme : @moui.Theme, width : Double) -> @moui.View[Msg] {
   custom_layout(
-    measure=_constraints => @moui.Size::new(width~, height=22.0),
+    measure=_constraints => @geometry.Size::new(width~, height=22.0),
     paint=(ctx, frame) => {
       fill_rect(
         ctx,
-        @core.Rect::new(
+        @geometry.Rect::new(
           x=frame.origin.x,
           y=frame.origin.y + frame.size.height / 2.0,
           width=frame.size.width,
@@ -653,9 +653,9 @@ fn website_doc_heading_font_size(level : Int) -> Double {
 }
 
 ///|
-fn website_doc_mono_font(size : Double) -> @core.FontSpec {
-  @core.FontSpec::new(
-    families=@core.FontFamilyStack::monospace(),
+fn website_doc_mono_font(size : Double) -> @text.FontSpec {
+  @text.FontSpec::new(
+    families=@text.FontFamilyStack::monospace(),
     size~,
     weight=520,
   )

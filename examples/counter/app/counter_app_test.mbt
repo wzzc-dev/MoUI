@@ -13,7 +13,7 @@ test "counter update changes model" {
 ///|
 test "counter runtime increments from button click" {
   let runtime = @runtime.new_program_with_dimensions(
-    program=@app.program(),
+    program=program(),
     width=520.0,
     height=360.0,
   )
@@ -27,7 +27,7 @@ fn click_text(runtime : @runtime.AppRuntime, text : String) -> Unit raise {
   guard text_frame(runtime.draw_commands(), text) is Some(frame) else {
     fail("expected text frame")
   }
-  let point = @moui.Point::new(
+  let point = @geometry.Point::new(
     x=frame.origin.x + frame.size.width / 2.0,
     y=frame.origin.y + frame.size.height / 2.0,
   )

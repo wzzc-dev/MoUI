@@ -72,7 +72,7 @@ fn header_cell(
         width=width - 4.0,
         height=height - 4.0,
       ),
-      alignment=@moui.Alignment::center(),
+      alignment=@geometry.Alignment::center(),
     ),
     width~,
     height~,
@@ -98,8 +98,8 @@ fn build_cell(
   }
   let editing = selected && model.editing
   let bg = cell_background(model, cell, row, col, heat_range, theme)
-  let border = @moui.BorderStyle::new(
-    brush=@moui.Brush::solid(
+  let border = @graphics.BorderStyle::new(
+    brush=@graphics.Brush::solid(
       if selected {
         theme.palette.primary
       } else {
@@ -177,7 +177,7 @@ fn cell_background(
   col : Int,
   heat_range : (Double, Double)?,
   theme : @moui.Theme,
-) -> @moui.Color {
+) -> @graphics.Color {
   if cell.format.bg_color.length() >= 6 {
     parse_hex_color(cell.format.bg_color).unwrap_or(theme.palette.surface)
   } else {
@@ -230,19 +230,19 @@ fn heat_color(
   value : Double,
   min_value : Double,
   max_value : Double,
-) -> @moui.Color {
+) -> @graphics.Color {
   if max_value <= min_value {
-    return @moui.Color::rgba(r=0.89, g=0.95, b=1.0, a=1.0)
+    return @graphics.Color::rgba(r=0.89, g=0.95, b=1.0, a=1.0)
   }
   let t = (value - min_value) / (max_value - min_value)
   let red = 0.89 + (0.99 - 0.89) * t
   let green = 0.96 + (0.89 - 0.96) * t
   let blue = 1.0 + (0.82 - 1.0) * t
-  @moui.Color::rgba(r=red, g=green, b=blue, a=1.0)
+  @graphics.Color::rgba(r=red, g=green, b=blue, a=1.0)
 }
 
 ///|
-fn parse_hex_color(hex : String) -> @moui.Color? {
+fn parse_hex_color(hex : String) -> @graphics.Color? {
   let start = if hex.length() >= 1 && hex[0] == '#' { 1 } else { 0 }
   if hex.length() < start + 6 {
     return None
@@ -251,7 +251,7 @@ fn parse_hex_color(hex : String) -> @moui.Color? {
     (hex_pair(hex, start), hex_pair(hex, start + 2), hex_pair(hex, start + 4)) {
     (Some(red), Some(green), Some(blue)) =>
       Some(
-        @moui.Color::rgba(
+        @graphics.Color::rgba(
           r=red.to_double() / 255.0,
           g=green.to_double() / 255.0,
           b=blue.to_double() / 255.0,

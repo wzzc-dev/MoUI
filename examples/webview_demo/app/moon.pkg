@@ -1,8 +1,8 @@
 import {
-  "wzzc-dev/moui",
   "wzzc-dev/moui/views",
   "wzzc-dev/moui_webview/host" @webview_host,
   "wzzc-dev/moui_webview/views" @webview_views,
+  "wzzc-dev/moui",
 }
 
 import {

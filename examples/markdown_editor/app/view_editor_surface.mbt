@@ -1,6 +1,5 @@
 ///|
 using @views {
-  type PaintContext,
   fill_rect,
   draw_text,
 }
@@ -161,7 +160,7 @@ fn MarkdownEditorApp::target_bar(
             "Left",
             ApplyCommand(
               MarkdownEditorCommand::SetTableColumnAlignment(
-                Some(@core.TextAlign::TextStart),
+                Some(@text.TextAlign::TextStart),
               ),
             ),
             @views.ButtonVariant::Tonal,
@@ -171,7 +170,7 @@ fn MarkdownEditorApp::target_bar(
             "Center",
             ApplyCommand(
               MarkdownEditorCommand::SetTableColumnAlignment(
-                Some(@core.TextAlign::TextCenter),
+                Some(@text.TextAlign::TextCenter),
               ),
             ),
             @views.ButtonVariant::Tonal,
@@ -181,7 +180,7 @@ fn MarkdownEditorApp::target_bar(
             "Right",
             ApplyCommand(
               MarkdownEditorCommand::SetTableColumnAlignment(
-                Some(@core.TextAlign::TextEnd),
+                Some(@text.TextAlign::TextEnd),
               ),
             ),
             @views.ButtonVariant::Tonal,
@@ -208,9 +207,9 @@ fn floating_target_palette(
   session : MarkdownDocumentSession,
   selection : MarkdownEditorSelection,
   target_kind : MarkdownEditorTargetKind,
-  editor_font : @core.FontSpec,
+  editor_font : @text.FontSpec,
   theme : @moui.Theme,
-  scroll_offset : @moui.Point,
+  scroll_offset : @geometry.Point,
   width : Double,
   height : Double,
 ) -> @moui.View[MarkdownEditorMsg] {
@@ -226,14 +225,14 @@ fn floating_target_palette(
   }
   @views.custom_children_layout(
     children=[editor, palette],
-    measure=_ => @moui.Size::new(width~, height~),
+    measure=_ => @geometry.Size::new(width~, height~),
     place=ctx => {
       let palette_size = if ctx.child_sizes.length() > 1 {
         ctx.child_sizes[1]
       } else {
-        @moui.Size::new(width=0.0, height=0.0)
+        @geometry.Size::new(width=0.0, height=0.0)
       }
-      let editor_frame = @core.Rect::new(
+      let editor_frame = @geometry.Rect::new(
         x=ctx.frame.origin.x,
         y=ctx.frame.origin.y,
         width=ctx.frame.size.width,
@@ -269,7 +268,7 @@ fn floating_target_palette(
         )
       [
         editor_frame,
-        @core.Rect::new(
+        @geometry.Rect::new(
           x=palette_x,
           y=palette_y,
           width=palette_width,
@@ -287,15 +286,15 @@ fn markdown_editor_palette_anchor(
   session : MarkdownDocumentSession,
   selection : MarkdownEditorSelection,
   target_kind : MarkdownEditorTargetKind,
-  editor_frame : @core.Rect,
-  editor_font : @core.FontSpec,
+  editor_frame : @geometry.Rect,
+  editor_font : @text.FontSpec,
   palette_width : Double,
   palette_height : Double,
-  scroll_offset : @moui.Point,
+  scroll_offset : @geometry.Point,
   theme : @moui.Theme,
-) -> @moui.Point {
+) -> @geometry.Point {
   if target_kind == PlainSelection {
-    return @moui.Point::new(
+    return @geometry.Point::new(
       x=editor_frame.origin.x + (editor_frame.size.width - palette_width) / 2.0,
       y=editor_frame.origin.y +
         markdown_editor_max_double(
@@ -334,10 +333,10 @@ fn markdown_editor_palette_anchor(
       } else {
         rect.origin.y + rect.size.height + theme.spacing_scale.sm
       }
-      @moui.Point::new(x~, y~)
+      @geometry.Point::new(x~, y~)
     }
     None =>
-      @moui.Point::new(
+      @geometry.Point::new(
         x=editor_frame.origin.x +
           (editor_frame.size.width - palette_width) / 2.0,
         y=editor_frame.origin.y +
@@ -354,14 +353,14 @@ fn markdown_editor_session_caret_rect(
   session : MarkdownDocumentSession,
   selection : MarkdownEditorSelection,
   caret : Int,
-  editor_frame : @core.Rect,
-  editor_font : @core.FontSpec,
-  scroll_offset : @moui.Point,
+  editor_frame : @geometry.Rect,
+  editor_font : @text.FontSpec,
+  scroll_offset : @geometry.Point,
   viewport_height~ : Double,
   source_mode? : Bool = false,
   focus_mode? : Bool = false,
   base_dir? : String? = None,
-) -> @core.Rect? {
+) -> @geometry.Rect? {
   let window = session.rich_text_window(
     selection,
     base=editor_font,
@@ -457,11 +456,11 @@ fn MarkdownEditorApp::appearance_spec(
 /// Map the user's font-family choice to a FontFamilyStack.
 fn markdown_editor_font_family_stack(
   family : MarkdownEditorFontFamily,
-) -> @core.FontFamilyStack {
+) -> @text.FontFamilyStack {
   match family {
-    SansFont => @core.FontFamilyStack::sans_serif()
-    SerifFont => @core.FontFamilyStack::serif()
-    MonoFont => @core.FontFamilyStack::monospace()
+    SansFont => @text.FontFamilyStack::sans_serif()
+    SerifFont => @text.FontFamilyStack::serif()
+    MonoFont => @text.FontFamilyStack::monospace()
   }
 }
 
@@ -494,11 +493,11 @@ fn MarkdownEditorAppearance::spec(
           editor_font_size: 17.0,
           page_width: markdown_editor_page_width(),
           side_editor_width: markdown_editor_source_editor_width(),
-          foreground: @core.Color::rgba(r=0.90, g=0.90, b=0.90),
-          placeholder: @core.Color::white().multiply_alpha(0.32),
-          page_background: @core.Color::rgba(r=0.13, g=0.14, b=0.16),
-          window_background: @core.Color::rgba(r=0.13, g=0.14, b=0.16),
-          font_family: @core.FontFamilyStack::sans_serif(),
+          foreground: @graphics.Color::rgba(r=0.90, g=0.90, b=0.90),
+          placeholder: @graphics.Color::white().multiply_alpha(0.32),
+          page_background: @graphics.Color::rgba(r=0.13, g=0.14, b=0.16),
+          window_background: @graphics.Color::rgba(r=0.13, g=0.14, b=0.16),
+          font_family: @text.FontFamilyStack::sans_serif(),
         }
       } else {
         {
@@ -506,11 +505,11 @@ fn MarkdownEditorAppearance::spec(
           editor_font_size: 17.0,
           page_width: markdown_editor_page_width(),
           side_editor_width: markdown_editor_source_editor_width(),
-          foreground: @core.Color::rgba(r=0.12, g=0.12, b=0.12),
-          placeholder: @core.Color::black().multiply_alpha(0.35),
-          page_background: @core.Color::white(),
-          window_background: @core.Color::white(),
-          font_family: @core.FontFamilyStack::sans_serif(),
+          foreground: @graphics.Color::rgba(r=0.12, g=0.12, b=0.12),
+          placeholder: @graphics.Color::black().multiply_alpha(0.35),
+          page_background: @graphics.Color::white(),
+          window_background: @graphics.Color::white(),
+          font_family: @text.FontFamilyStack::sans_serif(),
         }
       }
     WarmAppearance =>
@@ -520,11 +519,11 @@ fn MarkdownEditorAppearance::spec(
           editor_font_size: 18.0,
           page_width: 724.0,
           side_editor_width: 604.0,
-          foreground: @core.Color::rgba(r=0.92, g=0.88, b=0.80),
-          placeholder: @core.Color::rgba(r=0.80, g=0.72, b=0.60, a=0.40),
-          page_background: @core.Color::rgba(r=0.16, g=0.14, b=0.11),
-          window_background: @core.Color::rgba(r=0.16, g=0.14, b=0.11),
-          font_family: @core.FontFamilyStack::sans_serif(),
+          foreground: @graphics.Color::rgba(r=0.92, g=0.88, b=0.80),
+          placeholder: @graphics.Color::rgba(r=0.80, g=0.72, b=0.60, a=0.40),
+          page_background: @graphics.Color::rgba(r=0.16, g=0.14, b=0.11),
+          window_background: @graphics.Color::rgba(r=0.16, g=0.14, b=0.11),
+          font_family: @text.FontFamilyStack::sans_serif(),
         }
       } else {
         {
@@ -532,11 +531,11 @@ fn MarkdownEditorAppearance::spec(
           editor_font_size: 18.0,
           page_width: 724.0,
           side_editor_width: 604.0,
-          foreground: @core.Color::rgba(r=0.18, g=0.14, b=0.10),
-          placeholder: @core.Color::rgba(r=0.38, g=0.28, b=0.18, a=0.46),
-          page_background: @core.Color::rgba(r=1.0, g=0.984, b=0.936),
-          window_background: @core.Color::rgba(r=1.0, g=0.984, b=0.936),
-          font_family: @core.FontFamilyStack::sans_serif(),
+          foreground: @graphics.Color::rgba(r=0.18, g=0.14, b=0.10),
+          placeholder: @graphics.Color::rgba(r=0.38, g=0.28, b=0.18, a=0.46),
+          page_background: @graphics.Color::rgba(r=1.0, g=0.984, b=0.936),
+          window_background: @graphics.Color::rgba(r=1.0, g=0.984, b=0.936),
+          font_family: @text.FontFamilyStack::sans_serif(),
         }
       }
     WideAppearance =>
@@ -546,11 +545,11 @@ fn MarkdownEditorAppearance::spec(
           editor_font_size: 16.5,
           page_width: 920.0,
           side_editor_width: 720.0,
-          foreground: @core.Color::rgba(r=0.86, g=0.90, b=0.94),
-          placeholder: @core.Color::rgba(r=0.60, g=0.70, b=0.80, a=0.40),
-          page_background: @core.Color::rgba(r=0.11, g=0.13, b=0.16),
-          window_background: @core.Color::rgba(r=0.11, g=0.13, b=0.16),
-          font_family: @core.FontFamilyStack::sans_serif(),
+          foreground: @graphics.Color::rgba(r=0.86, g=0.90, b=0.94),
+          placeholder: @graphics.Color::rgba(r=0.60, g=0.70, b=0.80, a=0.40),
+          page_background: @graphics.Color::rgba(r=0.11, g=0.13, b=0.16),
+          window_background: @graphics.Color::rgba(r=0.11, g=0.13, b=0.16),
+          font_family: @text.FontFamilyStack::sans_serif(),
         }
       } else {
         {
@@ -558,11 +557,11 @@ fn MarkdownEditorAppearance::spec(
           editor_font_size: 16.5,
           page_width: 920.0,
           side_editor_width: 720.0,
-          foreground: @core.Color::rgba(r=0.10, g=0.12, b=0.15),
-          placeholder: @core.Color::rgba(r=0.16, g=0.20, b=0.26, a=0.36),
-          page_background: @core.Color::rgba(r=0.986, g=0.990, b=0.994),
-          window_background: @core.Color::rgba(r=0.986, g=0.990, b=0.994),
-          font_family: @core.FontFamilyStack::sans_serif(),
+          foreground: @graphics.Color::rgba(r=0.10, g=0.12, b=0.15),
+          placeholder: @graphics.Color::rgba(r=0.16, g=0.20, b=0.26, a=0.36),
+          page_background: @graphics.Color::rgba(r=0.986, g=0.990, b=0.994),
+          window_background: @graphics.Color::rgba(r=0.986, g=0.990, b=0.994),
+          font_family: @text.FontFamilyStack::sans_serif(),
         }
       }
   }
@@ -571,8 +570,8 @@ fn MarkdownEditorAppearance::spec(
 ///|
 fn markdown_editor_appearance_font(
   appearance : MarkdownEditorAppearanceSpec,
-) -> @core.FontSpec {
-  @core.FontSpec::new(
+) -> @text.FontSpec {
+  @text.FontSpec::new(
     size=appearance.editor_font_size,
     families=appearance.font_family,
   )
@@ -645,7 +644,7 @@ fn markdown_editor_source_inspector_width() -> Double {
 /// is scrolled — rather than a proportional thumb. It fades out at the top so
 /// the page edge stays clean when unscrolled.
 fn markdown_editor_scroll_indicator(
-  scroll : @core.ScrollState,
+  scroll : @state.ScrollState,
   viewport_height~ : Double,
   theme : @moui.Theme,
 ) -> @moui.View[MarkdownEditorMsg] {
@@ -662,13 +661,13 @@ fn markdown_editor_scroll_indicator(
     custom_layout(
       measure=constraints => {
         constraints.constrain(
-          @core.Size::new(width=0.0, height=viewport_height),
+          @geometry.Size::new(width=0.0, height=viewport_height),
         )
       },
       paint=(ctx, frame) => {
         // A 3px-wide track pinned to the right edge of the laid-out frame.
         let track_x = frame.origin.x + frame.size.width - 3.0
-        let track = @core.Rect::new(
+        let track = @geometry.Rect::new(
           x=track_x,
           y=frame.origin.y,
           width=3.0,
@@ -691,7 +690,7 @@ fn markdown_editor_scroll_indicator(
         fill_rect(ctx, track, track_color)
         fill_rect(
           ctx,
-          @core.Rect::new(
+          @geometry.Rect::new(
             x=track.origin.x,
             y=thumb_y,
             width=track.size.width,
@@ -711,10 +710,10 @@ fn markdown_editor_viewport_height() -> Double {
 }
 
 ///|
-fn markdown_editor_page_shadow() -> @core.ShadowStyle {
-  @core.ShadowStyle::new(
-    color=@core.Color::white().multiply_alpha(0.12),
-    offset=@moui.Point::new(x=0.0, y=2.0),
+fn markdown_editor_page_shadow() -> @graphics.ShadowStyle {
+  @graphics.ShadowStyle::new(
+    color=@graphics.Color::white().multiply_alpha(0.12),
+    offset=@geometry.Point::new(x=0.0, y=2.0),
     blur_radius=18.0,
   )
 }
@@ -761,7 +760,7 @@ fn markdown_editor_clamp_double(
 fn editor_source_layout(
   app : MarkdownEditorApp,
   session : MarkdownDocumentSession,
-  editor_font : @core.FontSpec,
+  editor_font : @text.FontSpec,
   appearance : MarkdownEditorAppearanceSpec,
   theme : @moui.Theme,
   show_source : Bool,
@@ -771,8 +770,8 @@ fn editor_source_layout(
   target_bar : @moui.View[MarkdownEditorMsg],
   selection : MarkdownEditorSelection,
   target_kind : MarkdownEditorTargetKind,
-  scroll_offset : @moui.Point,
-  on_selection_change : (Int, @core.TextRange?) -> MarkdownEditorMsg,
+  scroll_offset : @geometry.Point,
+  on_selection_change : (Int, @text.TextRange?) -> MarkdownEditorMsg,
   on_prefix_click : (Int) -> MarkdownEditorMsg,
   viewport_height? : Double = 520.0,
 ) -> @moui.View[MarkdownEditorMsg] {
@@ -788,14 +787,14 @@ fn editor_source_layout(
     0.0,
     content_height - viewport_height,
   )
-  let normalized_offset = @moui.Point::new(
+  let normalized_offset = @geometry.Point::new(
     x=0.0,
     y=markdown_editor_clamp_double(scroll_offset.y, 0.0, max_scroll),
   )
   let editor_style : @views.TextFieldStyle = {
     normal: {
       foreground: appearance.foreground,
-      background: @core.Brush::solid(appearance.page_background),
+      background: @graphics.Brush::solid(appearance.page_background),
       border: None,
       radius: theme.radius_scale.md,
       shadow: None,
@@ -804,7 +803,7 @@ fn editor_source_layout(
     },
     focused: {
       foreground: appearance.foreground,
-      background: @core.Brush::solid(appearance.page_background),
+      background: @graphics.Brush::solid(appearance.page_background),
       border: None,
       radius: theme.radius_scale.md,
       shadow: None,
@@ -813,7 +812,7 @@ fn editor_source_layout(
     },
     disabled: {
       foreground: appearance.foreground,
-      background: @core.Brush::solid(appearance.page_background),
+      background: @graphics.Brush::solid(appearance.page_background),
       border: None,
       radius: theme.radius_scale.md,
       shadow: None,
@@ -829,7 +828,7 @@ fn editor_source_layout(
     selection~,
     on_transaction=transaction => ApplyEditorTransaction(transaction),
     placeholder="Start writing Markdown",
-    size=@moui.Size::new(width=editor_width, height=viewport_height),
+    size=@geometry.Size::new(width=editor_width, height=viewport_height),
     font=editor_style.font,
     foreground=editor_style.normal.foreground,
     placeholder_color=editor_style.placeholder_color,
@@ -933,10 +932,10 @@ fn source_preview_lines(
   text : String,
   theme : @moui.Theme,
 ) -> @moui.View[MarkdownEditorMsg] {
-  let font = @core.FontSpec::new(
-    families=@core.FontFamilyStack::named("SFMono-Regular")
-      .with_fallback(@core.FontFamily::UiMonospace)
-      .with_fallback(@core.FontFamily::Monospace),
+  let font = @text.FontSpec::new(
+    families=@text.FontFamilyStack::named("SFMono-Regular")
+      .with_fallback(@text.FontFamily::UiMonospace)
+      .with_fallback(@text.FontFamily::Monospace),
     size=12.0,
     weight=400,
   )
@@ -950,20 +949,20 @@ fn source_preview_lines(
 ///|
 fn source_preview_line(
   line : String,
-  font : @core.FontSpec,
-  color : @core.Color,
+  font : @text.FontSpec,
+  color : @graphics.Color,
 ) -> @moui.View[MarkdownEditorMsg] {
   custom_layout(
-    measure=_ => @moui.Size::new(width=260.0, height=18.0),
+    measure=_ => @geometry.Size::new(width=260.0, height=18.0),
     paint=(ctx, frame) => {
       draw_text(
         ctx,
-        @core.TextRun::new(
+        @text.TextRun::new(
           text=line,
           frame=frame,
           font~,
           color~,
-          align=@core.TextAlign::TextStart,
+          align=@text.TextAlign::TextStart,
         ),
       )
     },

@@ -227,16 +227,16 @@ fn markdown_editor_html_table(block : MarkdownBlock) -> String {
 
 ///|
 fn markdown_editor_html_table_align_attribute(
-  alignments : Array[@core.TextAlign?],
+  alignments : Array[@text.TextAlign?],
   index : Int,
 ) -> String {
   if index >= alignments.length() {
     return ""
   }
   match alignments[index] {
-    Some(@core.TextAlign::TextStart) => " style=\"text-align:left\""
-    Some(@core.TextAlign::TextCenter) => " style=\"text-align:center\""
-    Some(@core.TextAlign::TextEnd) => " style=\"text-align:right\""
+    Some(@text.TextAlign::TextStart) => " style=\"text-align:left\""
+    Some(@text.TextAlign::TextCenter) => " style=\"text-align:center\""
+    Some(@text.TextAlign::TextEnd) => " style=\"text-align:right\""
     None => ""
   }
 }

@@ -5,6 +5,12 @@ pub using @core {type Color}
 pub using @core {type ColorScheme}
 
 ///|
+pub using @core {type ColorPalette}
+
+///|
+pub using @core {type TypographyScale}
+
+///|
 /// Minimal light theme. Resolved from a `ThemeSpec` so the full palette
 /// (on*/container matrix), scales, and default `ComponentThemes` are derived
 /// consistently with the resolver path used by host `ThemeChanged` events.

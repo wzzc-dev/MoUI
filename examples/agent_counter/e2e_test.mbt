@@ -108,7 +108,7 @@ test "e2e: dispatch_event reaches runtime via host (pointer input)" {
   let result = host.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(x=10.0, y=10.0),
+        position=@geometry.Point::new(x=10.0, y=10.0),
         phase=@core.PointerPhase::Down,
       ),
     ),

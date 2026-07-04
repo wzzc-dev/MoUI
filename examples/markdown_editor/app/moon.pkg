@@ -1,14 +1,18 @@
 import {
   "wzzc-dev/moui/backend/host",
-  "wzzc-dev/moui/core",
-  "wzzc-dev/moui",
   "wzzc-dev/moui_richtext",
   "wzzc-dev/moui/views",
   "moonbitlang/core/json",
   "moonbitlang/core/encoding/base64",
+  "wzzc-dev/moui",
+  "wzzc-dev/moui/geometry",
+  "wzzc-dev/moui/state",
+  "wzzc-dev/moui/text",
+  "wzzc-dev/moui/graphics",
 }
 
 import {
+    "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
   "moonbitlang/core/debug",
 } for "wbtest"

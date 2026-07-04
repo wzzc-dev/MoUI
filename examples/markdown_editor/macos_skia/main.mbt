@@ -170,13 +170,13 @@ const MODIFIER_COMMAND_OPTION : Int = 1_048_576 + 524_288
 fn setup_system_menu(runtime : @runtime.AppRuntime) -> Unit {
   @window_macos.set_system_menu_action_handler(fn(action_id : Int) {
     let intent = match action_id {
-      ACTION_UNDO => @moui.CommandIntent::Undo
-      ACTION_REDO => @moui.CommandIntent::Redo
-      ACTION_CUT => @moui.CommandIntent::Cut
-      ACTION_COPY => @moui.CommandIntent::Copy
-      ACTION_PASTE => @moui.CommandIntent::Paste
-      ACTION_SELECT_ALL => @moui.CommandIntent::SelectAll
-      _ => @moui.CommandIntent::Activate
+      ACTION_UNDO => @core.CommandIntent::Undo
+      ACTION_REDO => @core.CommandIntent::Redo
+      ACTION_CUT => @core.CommandIntent::Cut
+      ACTION_COPY => @core.CommandIntent::Copy
+      ACTION_PASTE => @core.CommandIntent::Paste
+      ACTION_SELECT_ALL => @core.CommandIntent::SelectAll
+      _ => @core.CommandIntent::Activate
     }
     ignore(runtime.dispatch_command(intent))
   })

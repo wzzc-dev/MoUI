@@ -135,15 +135,15 @@ fn ShowcaseModel::focus_shortcut_card(
   width : Double,
 ) -> @moui.View[ShowcaseMsg] {
   ignore(self)
-  let focus_scope = @core.FocusScope::new(
+  let focus_scope = @views.FocusScope::new(
     current=Some("name"),
     default_action="save",
     dismiss_action="cancel",
     items=[
-      @core.FocusScopeItem::new(id="name"),
-      @core.FocusScopeItem::new(id="archived", enabled=false),
-      @core.FocusScopeItem::new(id="email"),
-      @core.FocusScopeItem::new(id="save", focusable=false),
+      @views.FocusScopeItem::new(id="name"),
+      @views.FocusScopeItem::new(id="archived", enabled=false),
+      @views.FocusScopeItem::new(id="email"),
+      @views.FocusScopeItem::new(id="save", focusable=false),
     ],
   )
   let validation_summary = @views.FormValidationSummary::from_errors([
@@ -159,9 +159,9 @@ fn ShowcaseModel::focus_shortcut_card(
         shortcut_button(
           "Focusable action",
           on_click=ToggleActive,
-          shortcut=@core.KeyboardShortcut::new(
+          shortcut=@views.KeyboardShortcut::new(
             key="k",
-            modifiers=@core.KeyModifiers::new(meta=true),
+            modifiers=@views.KeyModifiers::new(meta=true),
           ),
           variant=@views.ButtonVariant::Outline,
           theme~,
@@ -279,7 +279,7 @@ fn ShowcaseModel::focus_shortcut_card(
         text(
           "Enter target: " +
           focus_scope
-          .command_target(@core.CommandIntent::Submit)
+          .command_target(@views.CommandIntent::Submit)
           .unwrap_or("none"),
           width=width - 32.0,
           height=22.0,
@@ -289,7 +289,7 @@ fn ShowcaseModel::focus_shortcut_card(
         text(
           "Escape target: " +
           focus_scope
-          .command_target(@core.CommandIntent::Cancel)
+          .command_target(@views.CommandIntent::Cancel)
           .unwrap_or("none"),
           width=width - 32.0,
           height=22.0,
@@ -304,7 +304,7 @@ fn ShowcaseModel::focus_shortcut_card(
     height=412.0,
     padding=theme.spacing_scale.md,
   )
-  .semantics_role(@core.SemanticsRole::Group)
+  .semantics_role(@views.SemanticsRole::Group)
   .accessibility_label("Focus scope keyboard rules")
 }
 
@@ -546,7 +546,7 @@ fn image_lifecycle_tile(
         height=44.0,
         opacity=if label == "Loading" { 0.36 } else { 1.0 },
         corner_radius=theme.radius_scale.sm,
-        fit=@core.ImageFit::Cover,
+        fit=@views.ImageFit::Cover,
       )
       .background(theme.palette.surface_variant.multiply_alpha(0.5))
       .clip(),

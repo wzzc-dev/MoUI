@@ -320,7 +320,7 @@ fn PdfWorkbenchModel::apply_pdf_bytes(
         raster_page: None,
         raster_cache: [],
         raster_status: RasterIdle,
-        preview_scroll_offset: @moui.Point::new(x=0.0, y=0.0),
+        preview_scroll_offset: @geometry.Point::new(x=0.0, y=0.0),
         query: "",
         status: Ready,
         last_event: "Loaded " +

@@ -1,0 +1,9 @@
+import {
+  "wzzc-dev/moui/core",
+}
+
+supported_targets = "+native+wasm-gc"
+
+options(
+  targets: { },
+)

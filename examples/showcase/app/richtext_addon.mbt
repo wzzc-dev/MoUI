@@ -8,8 +8,8 @@ fn showcase_text_field_style(
     Outline => @views.TextFieldStyle::outline(theme~)
     Plain => {
       let base = @views.TextFieldStyle::filled(theme~)
-      let clear = @core.Brush::solid(
-        @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0),
+      let clear = @graphics.Brush::solid(
+        @graphics.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0),
       )
       let normal = {
         ..base.normal,
@@ -40,7 +40,7 @@ fn[Msg] showcase_rich_text_editor(
     value~,
     on_input~,
     placeholder~,
-    size=@moui.Size::new(width~, height~),
+    size=@geometry.Size::new(width~, height~),
     format~,
     font=style.font,
     foreground=normal.foreground,
@@ -70,7 +70,7 @@ fn[Msg] showcase_markdown_editor(
     value~,
     on_input~,
     placeholder~,
-    size=@moui.Size::new(width~, height~),
+    size=@geometry.Size::new(width~, height~),
     font=style.font,
     foreground=normal.foreground,
     placeholder_color=style.placeholder_color,

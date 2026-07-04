@@ -7,7 +7,7 @@
 // quick cards). Otherwise render the streaming timeline + composer.
 fn code_workspace_view(
   model : CodeWorkspace,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   height : Double,
 ) -> @moui.View[CodeMsg] {
@@ -40,7 +40,7 @@ fn code_workspace_view(
 /// scrolls so it fits narrow windows.
 fn code_welcome_view(
   model : CodeWorkspace,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   height : Double,
 ) -> @moui.View[CodeMsg] {
@@ -95,7 +95,7 @@ fn code_welcome_view(
 /// mic / send) buttons. Uses a shadow-like border for emphasis.
 fn code_input_card(
   model : CodeWorkspace,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[CodeMsg] {
   @views.container(
@@ -145,7 +145,7 @@ fn code_input_card(
               @views.icon(
                 @views.IconName::ArrowRight,
                 size=18.0,
-                color=@core.Color::rgba(r=1.0, g=1.0, b=1.0, a=1.0),
+                color=@graphics.Color::rgba(r=1.0, g=1.0, b=1.0, a=1.0),
               ),
               width=36.0,
               height=36.0,
@@ -173,7 +173,7 @@ fn code_input_card(
 /// mirroring the TRAE "GLM-5.2 ▼" look.
 fn code_model_dropdown(
   code : CodeWorkspace,
-  theme : @core.Theme,
+  theme : @moui.Theme,
 ) -> @moui.View[CodeMsg] {
   let label = model_choice_label(code.current_model)
   @views.container(
@@ -212,7 +212,7 @@ fn code_model_dropdown(
 /// (local / MoUI / main). Styled with icons + dropdown arrows + a git branch
 /// indicator.
 fn code_context_bar(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   _width : Double,
 ) -> @moui.View[CodeMsg] {
   @views.row(
@@ -314,7 +314,7 @@ fn code_context_bar(
 /// 应用开发 / 项目理解 / 游戏创意 / 工具脚本. Tapping fills the prompt with
 /// a preset.
 fn quick_action_chips(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[CodeMsg] {
   let chip_width = (width - 24.0) / 4.0
@@ -360,7 +360,7 @@ fn quick_chip(
   label : String,
   icon : @views.IconName,
   prompt : String,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[CodeMsg] {
   let text_width = (width - 38.0).max(40.0)
@@ -394,7 +394,7 @@ fn quick_chip(
 /// `message_row` inside a scroll view bound to the workspace scroll state.
 fn code_message_list(
   model : CodeWorkspace,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   height : Double,
 ) -> @moui.View[CodeMsg] {
@@ -423,7 +423,7 @@ fn code_message_list(
 /// model is always adjustable.
 fn code_composer(
   model : CodeWorkspace,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   height : Double,
 ) -> @moui.View[CodeMsg] {

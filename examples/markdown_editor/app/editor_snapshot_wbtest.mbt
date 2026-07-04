@@ -432,7 +432,7 @@ test "markdown editor click maps table preview cells to markdown source" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=frame.origin.x + frame.size.width / 2.0,
           y=frame.origin.y + frame.size.height / 2.0,
         ),
@@ -464,7 +464,7 @@ test "markdown editor click on left-aligned table cell trailing whitespace place
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=frame.origin.x + frame.size.width - 2.0,
           y=frame.origin.y + frame.size.height / 2.0,
         ),
@@ -494,7 +494,7 @@ test "markdown editor click on left-aligned table cell leading whitespace places
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=frame.origin.x - 0.5,
           y=frame.origin.y + frame.size.height / 2.0,
         ),
@@ -525,7 +525,7 @@ test "markdown editor click on right-aligned table cell trailing whitespace plac
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=frame.origin.x + frame.size.width - 2.0,
           y=frame.origin.y + frame.size.height / 2.0,
         ),
@@ -559,7 +559,7 @@ test "markdown editor click on empty table cell returns range start without cras
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=frame.origin.x + 4.0,
           y=frame.origin.y + 50.0,
         ),
@@ -582,7 +582,7 @@ test "markdown editor click places caret after hidden heading marker" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),
@@ -605,7 +605,7 @@ test "markdown editor click maps inline formatted text to source offset" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=100.0),
           y=84.0,
         ),
@@ -624,7 +624,7 @@ test "markdown editor selection highlight uses formatted heading range" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),
@@ -654,7 +654,7 @@ test "markdown editor drag selection tracks markdown source range" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=2.0),
           y=84.0,
         ),
@@ -665,7 +665,7 @@ test "markdown editor drag selection tracks markdown source range" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(
+        position=@geometry.Point::new(
           x=app.editor_content_x(980.0, inner_x=434.0),
           y=84.0,
         ),

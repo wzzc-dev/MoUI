@@ -310,7 +310,7 @@ fn MarkdownEditorApp::scroll_to_source_with_anchor(
     content_height - viewport_height,
   )
   let y = session.source_offset_y(source_start, base=editor_font, source_mode~)
-  let rect = @core.Rect::new(
+  let rect = @geometry.Rect::new(
     x=0.0,
     y~,
     width=editor_width,
@@ -328,7 +328,7 @@ fn MarkdownEditorApp::scroll_to_source_with_anchor(
 
 ///|
 fn markdown_editor_scroll_anchor_y(
-  rect : @core.Rect,
+  rect : @geometry.Rect,
   viewport_height : Double,
   center~ : Bool,
 ) -> Double {
@@ -399,7 +399,7 @@ fn MarkdownEditorApp::update_find_query(
 ///|
 fn MarkdownEditorApp::select_find_match(
   self : MarkdownEditorApp,
-  range : @core.TextRange,
+  range : @text.TextRange,
 ) -> Unit {
   self.selection.set({ caret: range.end, selection: Some(range) })
   self.sync_target_inputs()

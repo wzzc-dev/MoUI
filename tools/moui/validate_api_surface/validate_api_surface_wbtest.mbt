@@ -19,56 +19,71 @@ fn budget_by_label(label : String) -> PackageBudget raise {
 }
 
 ///|
-test "root facade budget keeps runtime diagnostics and theme builders out" {
-  let root = budget_by_label("root facade")
-  inspect(root.max_lines, content="125")
-  inspect(root.max_pub_lines, content="40")
+test "root facade budget forwards app-loop sugar only" {
+  let root = budget_by_label("root facade (app-loop sugar)")
   inspect(root.max_pub_all_lines, content="0")
-  inspect(root_facade_app_safe_aliases().length(), content="36")
   assert_true(root.required_tokens.contains("pub using @core {type View}"))
   assert_true(root.required_tokens.contains("pub using @core {type Program}"))
-  assert_true(root.required_tokens.contains("pub using @core {type State}"))
-  assert_true(root.required_tokens.contains("pub using @core {type Binding}"))
-  assert_true(root.required_tokens.contains("pub using @core {type Effect}"))
+  assert_true(root.forbidden_tokens.contains("pub using @core {type Point}"))
+  assert_true(root.forbidden_tokens.contains("pub using @core {type State}"))
+}
+
+///|
+test "domain sugar packages forward the curated per-domain type set" {
+  let geom = budget_by_label("geometry sugar")
   assert_true(
-    root.required_tokens.contains("pub using @core {type Subscription}"),
-  )
-  assert_true(root.required_tokens.contains("pub using @core {type Size}"))
-  assert_true(root.required_tokens.contains("pub using @core {type Point}"))
-  assert_true(root.required_tokens.contains("pub using @core {type Rect}"))
-  assert_true(root.required_tokens.contains("pub using @core {type Insets}"))
-  assert_true(root.required_tokens.contains("pub using @core {type Color}"))
-  assert_true(root.required_tokens.contains("pub using @core {type Theme}"))
-  assert_true(
-    root.required_tokens.contains("pub using @core {type ViewEnvironment}"),
+    geom.required_tokens.contains("pub using @core {type Point}"),
   )
   assert_true(
-    root.required_tokens.contains("pub using @core {type ColorScheme}"),
+    geom.required_tokens.contains("pub using @core {type Alignment}"),
   )
-  assert_true(root.required_tokens.contains("pub using @core {type DateValue}"))
+  assert_true(geom.forbidden_tokens.contains("pub using @core {type View}"))
+  assert_true(geom.forbidden_tokens.contains("pub using @core {type Color}"))
+
+  let gfx = budget_by_label("graphics sugar")
   assert_true(
-    root.forbidden_tokens.contains("pub using @core {type AppRuntime}"),
-  )
-  assert_true(root.forbidden_tokens.contains("pub using @core {type ViewNode}"))
-  assert_true(
-    root.forbidden_tokens.contains("pub using @core {type VirtualNode}"),
-  )
-  assert_true(
-    root.forbidden_tokens.contains("pub using @core {type WebViewEvent}"),
+    gfx.required_tokens.contains("pub using @core {type Color}"),
   )
   assert_true(
-    root.forbidden_tokens.contains("pub using @core {type RichTextDocument}"),
+    gfx.required_tokens.contains("pub using @core {type Brush}"),
   )
-  assert_true(root.forbidden_tokens.contains("RichText"))
-  assert_true(root.forbidden_tokens.contains("DrawCommand"))
-  assert_true(root.forbidden_tokens.contains("DatePickerMode"))
-  assert_true(root.forbidden_tokens.contains("EffectPlanSummary"))
-  assert_true(root.forbidden_tokens.contains("SubscriptionPlanSummary"))
-  assert_true(root.forbidden_tokens.contains("EffectRuntimeOp"))
-  assert_true(root.forbidden_tokens.contains("ComponentContext"))
-  assert_true(root.forbidden_tokens.contains("ProgramRuntimeSnapshot"))
-  assert_true(root.forbidden_tokens.contains("pub fn light_theme("))
-  assert_true(root.forbidden_tokens.contains("pub fn theme("))
+  assert_true(
+    gfx.required_tokens.contains("pub using @core {type ShadowStyle}"),
+  )
+  assert_true(gfx.forbidden_tokens.contains("pub using @core {type View}"))
+  assert_true(gfx.forbidden_tokens.contains("pub using @core {type Point}"))
+  assert_false(gfx.forbidden_tokens.contains("pub using @core {type Color}"))
+  assert_false(gfx.forbidden_tokens.contains("pub using @core {type Brush}"))
+
+  let text = budget_by_label("text sugar")
+  assert_true(
+    text.required_tokens.contains("pub using @core {type FontSpec}"),
+  )
+  assert_true(
+    text.required_tokens.contains("pub using @core {type TextAlign}"),
+  )
+  assert_true(text.forbidden_tokens.contains("pub using @core {type View}"))
+  assert_true(text.forbidden_tokens.contains("pub using @core {type Color}"))
+
+  let state = budget_by_label("state sugar")
+  assert_true(
+    state.required_tokens.contains("pub using @core {type ScrollState}"),
+  )
+  assert_true(
+    state.required_tokens.contains("pub using @core {type NavigationState}"),
+  )
+  assert_true(
+    state.required_tokens.contains("pub using @core {type LayoutDirection}"),
+  )
+  assert_true(
+    state.forbidden_tokens.contains("pub using @core {type View}"),
+  )
+  assert_true(
+    state.forbidden_tokens.contains("pub using @core {type Point}"),
+  )
+  assert_true(
+    state.forbidden_tokens.contains("pub using @core {type CommandIntent}"),
+  )
 }
 
 ///|
@@ -174,7 +189,7 @@ test "shared app runtime import guard ignores test-only imports" {
 
 ///|
 test "shared app core import guard tracks default imports" {
-  inspect(max_shared_app_core_imports(), content="5")
+  inspect(max_shared_app_core_imports(), content="20")
   let default_import =
     #|import {
     #|  "wzzc-dev/moui",
@@ -462,7 +477,7 @@ test "core runtime boundary guard covers moved implementation" {
 ///|
 test "shared app core import budget is an explicit advanced-app allowlist" {
   let allowed = allowed_shared_app_core_imports()
-  inspect(max_shared_app_core_imports(), content="5")
+  inspect(max_shared_app_core_imports(), content="20")
   inspect(allowed.length(), content="5")
   assert_true(allowed.contains("examples/markdown_editor/app/moon.pkg"))
   assert_true(allowed.contains("examples/mo_workbench/app/moon.pkg"))
@@ -490,7 +505,7 @@ test "core view construction is reserved for views facade consumers" {
 }
 
 ///|
-test "app api hygiene guard keeps examples on the root facade" {
+test "app api hygiene guard keeps examples on domain sugar for app-facing core types" {
   let roots = app_api_hygiene_roots()
   inspect(roots.length(), content="3")
   assert_true(roots.contains("examples"))

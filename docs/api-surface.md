@@ -8,13 +8,15 @@ contracts for platform and renderer integration.
 
 ## Surface Tiers
 
-- App-facing API: `moui` and `moui/views`. The root facade re-exports only a
-  curated set of common app/theme type aliases from `moui/core`; theme builder
-  helpers live in `moui/views`.
-  Runtime handles such as `AppRuntime` stay in `moui/runtime`; `State`,
-  `Binding`, geometry, and common theme types are available through the root
-  facade, while detailed theme palette and scale records stay in their owning
-  packages.
+- App-facing API: `moui` (app-loop sugar only), domain sugar packages
+  (`moui/geometry`, `moui/graphics`, `moui/text`, `moui/state`), and
+  `moui/views`. Theme builders and extra kernel re-exports for apps (commands,
+  draw helpers, `ColorPalette`) live in `moui/views`.
+  Runtime handles such as `AppRuntime` stay in `moui/runtime`; reactive and
+  geometry types are available through domain sugar and `@moui` where listed in
+  `docs/moui-app-package-boundary.md`.
+  Shared apps should minimize default `moui/core` imports; the API surface guard
+  tracks shared-app core import budget (see `validate_api_surface`).
   Diagnostics, draw commands, renderer details, and lower-level geometry/style
   records stay in `moui/core` or their owning packages.
   `moui/views` exposes constructor helpers that return opaque `@moui.View[Msg]`

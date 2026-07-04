@@ -12,14 +12,14 @@ test "design systems app renders source mapped preview evidence" {
 
 ///|
 test "design systems app switches official presets and custom override" {
-  let model = @app.DesignSystemsModel::new()
+  let model = DesignSystemsModel::new()
     .update(@app.DesignSystemsMsg::SelectPreset("carbon"))
     .update(@app.DesignSystemsMsg::SelectScheme("dark"))
     .update(@app.DesignSystemsMsg::SelectVariant("system"))
     .update(@app.DesignSystemsMsg::SelectDensity("compact"))
     .update(@app.DesignSystemsMsg::ToggleCustom)
   assert_true(model.preset == @app.DesignSystemChoice::Carbon)
-  assert_true(model.scheme == @moui.ColorScheme::Dark)
+  assert_true(model.scheme == @state.ColorScheme::Dark)
   assert_true(model.variant == @common.DesignSchemeVariant::SchemeSystem)
   assert_true(model.density == @common.DesignDensity::Compact)
   assert_true(model.custom_enabled)

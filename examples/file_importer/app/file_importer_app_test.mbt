@@ -61,7 +61,7 @@ test "file importer handles mocked pending completion" {
   inspect(summary.descriptors[0].key(), content="host:file-import")
   inspect(summary.descriptors[0].kind(), content="host-service")
   inspect(summary.descriptors[0].label(), content="Import files")
-  let model = @moui.State::new(update.model)
+  let model = @state.State::new(update.model)
   match update.effect {
     @moui.Effect::Run(_descriptor, run) =>
       run(message => model.set(model.get().update(message)))
@@ -249,7 +249,7 @@ test "file importer child effect maps pending completion into parent" {
 
 ///|
 test "file importer runtime draws panel labels" {
-  let commands = test_runtime(@app.program(), width=860.0, height=620.0).draw_commands()
+  let commands = test_runtime(program(), width=860.0, height=620.0).draw_commands()
   assert_true(has_text(commands, "File Importer"))
   assert_true(has_text(commands, "Import Files"))
   assert_true(has_text(commands, "Drop files here"))
@@ -356,7 +356,7 @@ fn ParentImporterModel::runtime_with_services(
       view=model => model.view(),
       subscriptions=model => model.subscriptions(services),
     ),
-    size=@moui.Size::new(width~, height~),
+    size=@geometry.Size::new(width~, height~),
   )
 }
 
@@ -371,7 +371,7 @@ fn test_runtime(
 
 ///|
 fn run_file_importer_effect(update : FileImporterUpdate) -> FileImporterModel {
-  let model = @moui.State::new(update.model)
+  let model = @state.State::new(update.model)
   let dispatch = message => model.set(model.get().update(message))
   match update.effect {
     @moui.Effect::NoEffect => ()
@@ -395,7 +395,7 @@ fn click_text(runtime : @runtime.AppRuntime, text : String) -> Unit raise {
   guard text_frame(runtime.draw_commands(), text) is Some(frame) else {
     fail("expected text frame for " + text)
   }
-  let point = @moui.Point::new(
+  let point = @geometry.Point::new(
     x=frame.origin.x + frame.size.width / 2.0,
     y=frame.origin.y + frame.size.height / 2.0,
   )

@@ -47,7 +47,7 @@ fn Model::top_bar(
       width=48.0,
       height=34.0,
     )
-    .font(@core.FontSpec::new(size=18.0, weight=760))
+    .font(@text.FontSpec::new(size=18.0, weight=760))
     .accessibility_label(action_accessibility_label),
   )
   let top_bar_content = row(
@@ -87,7 +87,7 @@ fn brand_mark(theme : @moui.Theme) -> @moui.View[Msg] {
   row(
     [
       text("MoUI", width=72.0, height=26.0)
-      .font(@core.FontSpec::new(size=19.0, weight=820))
+      .font(@text.FontSpec::new(size=19.0, weight=820))
       .foreground(theme.palette.foreground),
       text("MoonBit UI", width=88.0, height=20.0)
       .font(theme.typography.caption)
@@ -500,7 +500,7 @@ fn section_shell(
   child : @moui.View[Msg],
   top~ : Double,
   bottom~ : Double,
-  background~ : @core.Color?,
+  background~ : @graphics.Color?,
 ) -> @moui.View[Msg] {
   let centered = frame(
     row(
@@ -536,7 +536,7 @@ fn painted_section_shell(
   child : @moui.View[Msg],
   top~ : Double,
   bottom~ : Double,
-  background~ : @core.Color?,
+  background~ : @graphics.Color?,
   dotted~ : Bool,
   wash~ : Bool,
 ) -> @moui.View[Msg] {
@@ -556,10 +556,10 @@ fn section_header(
   column(
     [
       text(title, width~, height=46.0)
-      .font(@core.FontSpec::new(size=32.0, weight=820))
+      .font(@text.FontSpec::new(size=32.0, weight=820))
       .foreground(theme.palette.foreground),
       text(summary_zh, width~, height=30.0)
-      .font(@core.FontSpec::new(size=15.0, weight=520))
+      .font(@text.FontSpec::new(size=15.0, weight=520))
       .foreground(theme.palette.muted),
       text(summary, width~, height=30.0)
       .font(theme.typography.caption)
@@ -579,14 +579,14 @@ fn website_scrollbar(
 ) -> @moui.View[Msg] {
   let width = 14.0
   custom_layout(
-    measure=_constraints => @moui.Size::new(width~, height=viewport_height),
+    measure=_constraints => @geometry.Size::new(width~, height=viewport_height),
     paint=(ctx, frame) => {
       let max_scroll = max_website_double(0.0, content_height - viewport_height)
       if max_scroll <= 0.0 {
         return
       }
       let track_width = 5.0
-      let track = @core.Rect::new(
+      let track = @geometry.Rect::new(
         x=frame.origin.x + (frame.size.width - track_width) / 2.0,
         y=frame.origin.y + 8.0,
         width=track_width,
@@ -601,7 +601,7 @@ fn website_scrollbar(
         (track.size.height - thumb_height) *
         clamp_website_double(offset_y, 0.0, max_scroll) /
         max_scroll
-      let thumb = @core.Rect::new(
+      let thumb = @geometry.Rect::new(
         x=track.origin.x,
         y=thumb_y,
         width=track_width,
@@ -609,13 +609,13 @@ fn website_scrollbar(
       )
       fill_rounded_rect(
         ctx,
-        @core.RoundedRect::new(rect=track, radius=2.5),
-        @core.Brush::solid(theme.palette.outline.multiply_alpha(0.26)),
+        @views.RoundedRect::new(rect=track, radius=2.5),
+        @graphics.Brush::solid(theme.palette.outline.multiply_alpha(0.26)),
       )
       fill_rounded_rect(
         ctx,
-        @core.RoundedRect::new(rect=thumb, radius=2.5),
-        @core.Brush::solid(theme.palette.primary.multiply_alpha(0.72)),
+        @views.RoundedRect::new(rect=thumb, radius=2.5),
+        @graphics.Brush::solid(theme.palette.primary.multiply_alpha(0.72)),
       )
     },
     semantics_label="Website main scrollbar",
@@ -629,7 +629,7 @@ fn metric_card(
   value : String,
   caption~ : String,
   width~ : Double,
-  accent~ : @core.Color,
+  accent~ : @graphics.Color,
 ) -> @moui.View[Msg] {
   container(
     column(
@@ -638,7 +638,7 @@ fn metric_card(
         .font(theme.typography.caption)
         .foreground(theme.palette.muted),
         text(value, width=width - 28.0, height=42.0)
-        .font(@core.FontSpec::new(size=26.0, weight=820))
+        .font(@text.FontSpec::new(size=26.0, weight=820))
         .foreground(accent),
         text(caption, width=width - 28.0, height=24.0)
         .font(theme.typography.caption)
@@ -664,7 +664,7 @@ fn feature_card(
   zh_summary : String,
   summary : String,
   width : Double,
-  accent : @core.Color,
+  accent : @graphics.Color,
 ) -> @moui.View[Msg] {
   let content_width = width - 40.0
   container(
@@ -674,7 +674,7 @@ fn feature_card(
           [
             container(
               text(index, width=28.0, height=28.0)
-              .font(@core.FontSpec::new(size=16.0, weight=820))
+              .font(@text.FontSpec::new(size=16.0, weight=820))
               .foreground(accent),
               width=36.0,
               height=36.0,
@@ -718,7 +718,7 @@ fn platform_card(
   status : String,
   value : Double,
   width : Double,
-  accent : @core.Color,
+  accent : @graphics.Color,
 ) -> @moui.View[Msg] {
   ignore(value)
   container(
@@ -773,20 +773,20 @@ fn showcase_thumb(
   theme : @moui.Theme,
   label : String,
   width : Double,
-  accent : @core.Color,
+  accent : @graphics.Color,
 ) -> @moui.View[Msg] {
   ignore(theme)
   let foreground = accent
-  let font = @core.FontSpec::new(size=24.0, weight=820)
+  let font = @text.FontSpec::new(size=24.0, weight=820)
   custom_layout(
     measure=constraints => {
-      constraints.constrain(@moui.Size::new(width~, height=118.0))
+      constraints.constrain(@geometry.Size::new(width~, height=118.0))
     },
     paint=(ctx, frame) => {
       fill_rounded_rect(
         ctx,
-        @core.RoundedRect::new(rect=frame, radius=12.0),
-        @core.Brush::solid(accent.multiply_alpha(0.08)),
+        @views.RoundedRect::new(rect=frame, radius=12.0),
+        @graphics.Brush::solid(accent.multiply_alpha(0.08)),
       )
       let stripe = 12.0
       let count = ((frame.size.width + frame.size.height) / stripe)
@@ -796,31 +796,31 @@ fn showcase_thumb(
         let start_x = frame.origin.x + index.to_double() * stripe
         draw_path(
           ctx,
-          @core.PathSpec::new(
+          @views.PathSpec::new(
             verbs=[
-              @core.PathVerb::MoveTo(
-                @moui.Point::new(
+              @views.PathVerb::MoveTo(
+                @geometry.Point::new(
                   x=start_x,
                   y=frame.origin.y + frame.size.height,
                 ),
               ),
-              @core.PathVerb::LineTo(
-                @moui.Point::new(
+              @views.PathVerb::LineTo(
+                @geometry.Point::new(
                   x=start_x - frame.size.height,
                   y=frame.origin.y,
                 ),
               ),
             ],
-            stroke=Some(@core.Brush::solid(accent.multiply_alpha(0.18))),
+            stroke=Some(@graphics.Brush::solid(accent.multiply_alpha(0.18))),
             stroke_width=1.0,
           ),
         )
       }
       draw_text(
         ctx,
-        @core.TextRun::new(
+        @text.TextRun::new(
           text=label,
-          frame=@core.Rect::new(
+          frame=@geometry.Rect::new(
             x=frame.origin.x,
             y=frame.origin.y + 41.0,
             width=frame.size.width,
@@ -841,7 +841,7 @@ fn quick_start_copy(theme : @moui.Theme, width : Double) -> @moui.View[Msg] {
     [
       badge("Build it", tone=@views.BadgeTone::Success, theme~, width=78.0),
       text("Quick Start / 快速开始", width~, height=36.0)
-      .font(@core.FontSpec::new(size=26.0, weight=780))
+      .font(@text.FontSpec::new(size=26.0, weight=780))
       .foreground(theme.palette.foreground),
       text(
         "先修复本地依赖，再构建这个由 MoUI 自己渲染的官网首页。",
@@ -888,7 +888,7 @@ fn quick_start_placeholder(
           width=118.0,
         ),
         text("正在开发中", width=width - 36.0, height=38.0)
-        .font(@core.FontSpec::new(size=22.0, weight=780))
+        .font(@text.FontSpec::new(size=22.0, weight=780))
         .foreground(theme.palette.foreground),
       ],
       spacing=10.0,
@@ -904,81 +904,81 @@ fn quick_start_placeholder(
 }
 
 ///|
-fn hero_title_font(metrics : Metrics) -> @core.FontSpec {
-  @core.FontSpec::new(
+fn hero_title_font(metrics : Metrics) -> @text.FontSpec {
+  @text.FontSpec::new(
     size=if metrics.compact { 42.0 } else { 52.0 },
     weight=850,
   )
 }
 
 ///|
-fn hero_statement_font(metrics : Metrics) -> @core.FontSpec {
-  @core.FontSpec::new(
+fn hero_statement_font(metrics : Metrics) -> @text.FontSpec {
+  @text.FontSpec::new(
     size=if metrics.compact { 26.0 } else { 40.0 },
     weight=800,
   )
 }
 
 ///|
-fn website_blue(theme : @moui.Theme) -> @core.Color {
+fn website_blue(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.40, g=0.58, b=1.0)
-    @moui.ColorScheme::Light => @core.Color::rgba(r=0.10, g=0.34, b=0.92)
+    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.40, g=0.58, b=1.0)
+    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.10, g=0.34, b=0.92)
   }
 }
 
 ///|
-fn website_green(theme : @moui.Theme) -> @core.Color {
+fn website_green(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.24, g=0.78, b=0.58)
-    @moui.ColorScheme::Light => @core.Color::rgba(r=0.05, g=0.52, b=0.34)
+    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.24, g=0.78, b=0.58)
+    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.05, g=0.52, b=0.34)
   }
 }
 
 ///|
-fn website_amber(theme : @moui.Theme) -> @core.Color {
+fn website_amber(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.98, g=0.69, b=0.25)
-    @moui.ColorScheme::Light => @core.Color::rgba(r=0.78, g=0.39, b=0.05)
+    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.98, g=0.69, b=0.25)
+    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.78, g=0.39, b=0.05)
   }
 }
 
 ///|
-fn hero_background(theme : @moui.Theme) -> @core.Color {
+fn hero_background(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.08, g=0.09, b=0.10)
-    @moui.ColorScheme::Light => @core.Color::rgba(r=0.98, g=0.99, b=0.98)
+    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.08, g=0.09, b=0.10)
+    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.98, g=0.99, b=0.98)
   }
 }
 
 ///|
-fn showcase_section_background(theme : @moui.Theme) -> @core.Color {
+fn showcase_section_background(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.09, g=0.10, b=0.12)
-    @moui.ColorScheme::Light => @core.Color::rgba(r=0.94, g=0.97, b=0.95)
+    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.09, g=0.10, b=0.12)
+    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.94, g=0.97, b=0.95)
   }
 }
 
 ///|
-fn soft_panel_background(theme : @moui.Theme) -> @core.Color {
+fn soft_panel_background(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.11, g=0.13, b=0.15)
-    @moui.ColorScheme::Light => @core.Color::rgba(r=0.99, g=1.0, b=0.99)
+    @state.ColorScheme::Dark => @graphics.Color::rgba(r=0.11, g=0.13, b=0.15)
+    @state.ColorScheme::Light => @graphics.Color::rgba(r=0.99, g=1.0, b=0.99)
   }
 }
 
 ///|
-fn code_panel_background(theme : @moui.Theme) -> @core.Color {
+fn code_panel_background(theme : @moui.Theme) -> @graphics.Color {
   match theme.scheme {
-    @moui.ColorScheme::Dark => @core.Color::black()
-    @moui.ColorScheme::Light => @core.Color::white()
+    @state.ColorScheme::Dark => @graphics.Color::black()
+    @state.ColorScheme::Light => @graphics.Color::white()
   }
 }
 
 ///|
-fn website_border(theme : @moui.Theme) -> @core.BorderStyle {
-  @core.BorderStyle::new(
-    brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.62)),
+fn website_border(theme : @moui.Theme) -> @graphics.BorderStyle {
+  @graphics.BorderStyle::new(
+    brush=@graphics.Brush::solid(theme.palette.outline.multiply_alpha(0.62)),
     width=1.0,
   )
 }
@@ -986,11 +986,11 @@ fn website_border(theme : @moui.Theme) -> @core.BorderStyle {
 ///|
 fn accent_border(
   theme : @moui.Theme,
-  accent : @core.Color,
-) -> @core.BorderStyle {
+  accent : @graphics.Color,
+) -> @graphics.BorderStyle {
   ignore(theme)
-  @core.BorderStyle::new(
-    brush=@core.Brush::solid(accent.multiply_alpha(0.58)),
+  @graphics.BorderStyle::new(
+    brush=@graphics.Brush::solid(accent.multiply_alpha(0.58)),
     width=1.0,
   )
 }
