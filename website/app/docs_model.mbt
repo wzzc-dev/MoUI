@@ -2,6 +2,7 @@
 pub enum WebsitePage {
   WebsiteHome
   WebsiteDocs
+  WebsiteShowcases
 }
 
 ///|

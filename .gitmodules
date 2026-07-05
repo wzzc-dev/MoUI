@@ -10,3 +10,7 @@
 	path = openseek
 	url = https://github.com/moonbitlang/openseek.git
 	branch = main
+[submodule "examples/moui_example"]
+	path = examples/moui_example
+	url = git@github.com:moui-mbt/moui_example.git
+	branch = main

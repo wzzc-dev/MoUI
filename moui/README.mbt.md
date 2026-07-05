@@ -1,12 +1,12 @@
 # MoUI
 
-MoUI is a multi-platform MoonBit GUI framework prototype for building
-declarative UI apps with shared platform-neutral app logic. Native host cores
-own windows, events, services, and lifecycle, then receive concrete renderers
-through platform renderer provider packages. The recommended mainline is native
-Skia raster plus the single Web `wasm-gc + window/web + browser WebGPU host
-imports` path; native WGPU remains available as an experimental diagnostic
-route while the MoonBit WGPU ecosystem matures.
+MoUI is a multi-platform MoonBit GUI framework for building declarative UI
+apps with shared platform-neutral app logic. Native host cores own windows,
+events, services, and lifecycle, then receive concrete renderers through
+platform renderer provider packages. The current mainline is native Skia
+raster plus the Web `wasm-gc + window/web + browser WebGPU host imports` path;
+native WGPU remains available as an experimental diagnostic route while the
+MoonBit WGPU ecosystem matures.
 
 The runtime pipeline is explicit:
 
@@ -17,9 +17,9 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
 Current P0/P1 foundations include component state subscriptions, keyed
 component-scoped effects with cleanup, scoped saveable string/bool/int state, an
 advanced custom child layout delegate, environment accessibility signals,
-gesture/action command primitives, a typed host-service bridge, Linux backend
-readiness tracking, and app-framework helpers for routing, forms, and devtool
-snapshots.
+gesture/action command primitives, a typed host-service bridge, native Skia and
+experimental Sun raster providers, Linux backend readiness tracking, and
+app-framework helpers for routing, forms, and devtool snapshots.
 
 Detailed notes live in:
 
@@ -29,92 +29,119 @@ Detailed notes live in:
 - [Text system](docs/text-system.md)
 - [Renderer capability report](docs/renderer-capability-report.md)
 - [View catalog](docs/view-catalog.md)
+- [Views API guide](docs/views-api-guide.md)
 - [Non-render component cookbook](docs/non-render-component-cookbook.md)
 - [App templates](docs/app-templates.md)
 - [API surface](docs/api-surface.md)
 - [Maintenance mainline](docs/maintenance.md)
 - [Examples](docs/examples.md)
 - [Markdown Editor](docs/markdown-editor.md)
+- [Mo Workbench](docs/mo-workbench.md)
+- [Showcases](docs/showcases.md)
 - [Testing](docs/testing.md)
 - [AI collaboration](docs/ai-collaboration.md)
 - [2026 roadmap](docs/roadmap-2026.md)
 - [Release readiness](docs/release-readiness.md)
 
-The example suite is intentionally small: Showcase is the visual catalog and now
-contains the Counter and Todo interaction patterns, Design Systems is the
-separate `moui_theme` addon diagnostic preview/parity sampler, the WYSIWYG
-Markdown editor remains a practical editing demo, and PDF Workbench exercises document
-reading/light editing on the native Skia route with a lightweight UI shell, a
-separate `pdflite` adapter package for real PDF model/writeback checks, and a
-native-only PDFium adapter for real page bitmap rasterization. The root
-`website/` workspace is the MoUI-built bilingual homepage and Web demo surface.
+The example suite is intentionally small but covers the breadth of the
+runtime. Showcase is the visual component catalog; Markdown Editor is the
+large WYSIWYG editing demo; Mo Workbench is the native-Skia-first desktop
+agent dogfood app; Excel Viewer renders `bobzhang/mbtexcel` workbooks with
+the MoUI data table surface; PDF Workbench exercises document reading/light
+editing on the native Skia route with a lightweight UI shell, a separate
+`pdflite` adapter package for real PDF model/writeback checks, and a
+native-only PDFium adapter for real page bitmap rasterization; Design Systems
+is the separate `moui_theme` addon diagnostic preview/parity sampler. The
+root `website/` workspace member is the MoUI-built homepage and Web demo
+surface, written in MoUI itself.
 
 ## Screenshots
 
 <div align="center">
+  <img src="https://raw.githubusercontent.com/wzzc-dev/MoUI/refs/heads/main/resource/screenshots/mo_workbench.png" width="400px"/>
   <img src="https://raw.githubusercontent.com/wzzc-dev/MoUI/refs/heads/main/resource/screenshots/markdown_editor.png" width="400px"/>
   <img src="https://raw.githubusercontent.com/wzzc-dev/MoUI/refs/heads/main/resource/screenshots/showcase.png" width="400px"/>
+  <img src="https://raw.githubusercontent.com/wzzc-dev/MoUI/refs/heads/main/resource/screenshots/excel.png" width="400px"/>
 </div>
 
 ## Project Shape
 
 - `core/` owns the platform-neutral runtime, state, layout, input, semantics,
   draw command model, typed events, `Program`, `Effect`, and `Subscription`.
-- The root `moui` facade exposes common core types plus neutral
-  default/light/dark/custom theme builders directly; there is no separate
-  `style` package.
-- `views/` exposes public view constructors returning opaque `@core.View[Msg]`.
+- The root `moui` facade re-exports the high-frequency app-loop kernel types
+  (`View`, `Program`, `Effect`, `Subscription`, `Theme`, `Environment`,
+  `ViewEnvironment`) from `core`; geometry/graphics/text/state sugar stays in
+  the sibling `moui/{geometry,graphics,text,state}` packages. There is no
+  separate `style` package.
+- `views/` exposes public view constructors returning opaque `@core.View[Msg]`,
+  including layout, controls, data tables, navigation, and
+  `custom_layout`/`custom_children_layout` escapes for advanced app usage.
+- `runtime/` exposes app/host `AppRuntime` construction entrypoints and owns
+  runtime state, tree/layout/paint, event dispatch, program message drain,
+  effect task, subscription lifecycle, and diagnostics.
 - `moui_theme/` is an optional repo-local addon workspace member for shared
-  source-mapped design-system models, package-local Material/Carbon/Primer/Fluent
-  entrypoints, and custom theme builders; core MoUI apps do not need it.
+  source-mapped design-system models, package-local Material/Carbon/Primer/
+  Fluent entrypoints, and custom theme builders; core MoUI apps do not need
+  it.
+- `moui_skia/` (published as `wzzc-dev/moui_skia@0.1.5`) is the native Skia
+  raster binding workspace; `moui_sun/` (published as
+  `wzzc-dev/moui_sun@0.1.1`) is an experimental native raster alternative.
+  They are depended on by app platform entrypoints, not by `moui` core.
 - `backend/host/` defines shared host contracts; platform backends normalize
   window and input events into `HostEvent`.
-- `backend/<platform>/skia` selects the native Skia raster mainline provider;
-  `backend/<platform>/wgpu` keeps the native WGPU experimental provider
-  available for diagnostics. Host-core packages do not import concrete renderer
-  implementations.
+  - `backend/<platform>/skia` selects the native Skia raster mainline provider
+    (the recommended route).
+  - `backend/<platform>/wgpu` keeps native WGPU available as an experimental
+    diagnostic provider.
+  - Host-core packages do not import concrete renderer implementations.
 - `render/` provides the renderer facade, with native Skia raster, WebGPU
-  adapter, and experimental native wgpu implementations under `render/skia/`,
+  adapter, and experimental native WGPU implementations under `render/skia/`,
   `render/webgpu_adapter/`, and `render/wgpu/`.
 - `examples/*/app/` contains shared app logic, while platform subpackages are
-  thin entrypoints. `examples/showcase` stays independent of `moui_theme`;
+  thin entrypoints. Featured examples: `examples/showcase` (visual catalog,
+  Skia mainline + WGPU/Sun diagnostics), `examples/markdown_editor` (WYSIWYG),
+  `examples/mo_workbench` (macOS-Skia agent desktop), `examples/excel`
+  (`mbtexcel` workbook renderer), `examples/pdf_workbench` (native PDF
+  read/edit). `examples/showcase` stays independent of `moui_theme`;
   `examples/design_systems` is the dedicated addon diagnostic example that
   exercises the official-system entrypoint packages on Web wasm-gc plus macOS,
   Windows, and Linux Skia entrypoints.
 - `website/` is a root workspace member for the MoUI homepage, with shared app
-  logic in `website/app/` and a Web wasm-gc entrypoint in `website/web_wasm/`.
+  logic in `website/app/` and a Web wasm-gc entrypoint in
+  `website/web_wasm/`. The homepage is rendered by MoUI itself and contains a
+  screenshot-driven Showcases page sizing native MoonBit views.
 
 ## Quick Start
 
-Refresh registry packages, verify the repo-local `moui_skia` workspace, then
-run the bounded development check:
+Refresh registry packages, verify the window dependency pin, then run the
+bounded development check:
 
 ```sh
 moon update
-sh scripts/check-local-deps.sh
+node scripts/validate-window-dependency.mjs
 sh scripts/dev-check.sh
 ```
 
-The default daily baseline covers the core framework, Web wasm-gc, native Skia
-mainline contracts, Showcase, and Markdown Editor. Design Systems is addon
-diagnostic coverage; run `sh scripts/dev-check.sh --theme-diagnostics` when
-changing `moui_theme` or `examples/design_systems`.
+The default daily baseline covers the core framework, Web wasm-gc, native
+Skia mainline contracts, Showcase, and Markdown Editor. Design Systems is
+addon diagnostic coverage; run `sh scripts/dev-check.sh --theme-diagnostics`
+when changing `moui_theme` or `examples/design_systems`.
 
 MoUI resolves `wzzc-dev/window` from the MoonBit registry as
-`wzzc-dev/window@0.5.1-0.1.4`; `moon.work` does not include a local window
-checkout. The dependency check verifies that package version, the absence of a
-repo-local window workspace member, and the `moui_skia` binding workspace's
-platform status and native capability contracts via
+`wzzc-dev/window@0.5.1-0.1.6`; `moon.work` does not include a local window
+checkout. `scripts/validate-window-dependency.mjs` enforces that pin and the
+absence of a repo-local window workspace member. To edit window source
+locally, run `sh scripts/window-dev-mode.sh on` (adds `./window` to
+`moon.work`), then run `sh scripts/window-dev-mode.sh off` before committing.
+The `moui_skia` binding workspace's platform status and native capability
+contracts are validated by
 `moui_skia/scripts/verify-platform-status.sh` and
-`moui_skia/scripts/verify-native-capability-contract.sh`. The MoonBit package
-ecosystem is still maturing, so unexplained build or smoke failures may come
-from registry cache state or dependency package regressions; include
-`moon update` and package-version inspection in the first pass of debugging.
-Those
-Skia guards prove the provider lock, fallback parity, FFI ownership/borrow
-metadata, native smoke marker coverage, and binding-level evidence wiring are
-present; renderer pixels and platform runtime behavior still come from the
-opt-in Skia smoke or matching-host example runs.
+`moui_skia/scripts/verify-native-capability-contract.sh`, both wired into
+`dev-check.sh`. Those Skia guards prove the provider lock, fallback parity,
+FFI ownership/borrow metadata, native smoke marker coverage, and
+binding-level evidence wiring are present; renderer pixels and platform
+runtime behavior still come from the opt-in Skia smoke or matching-host
+example runs.
 
 For current-host backend/provider evidence, run:
 
@@ -126,45 +153,58 @@ sh scripts/conformance-check.sh --platform-services
 `--platform-services` also writes and validates
 `artifacts/conformance/platform-runtime-evidence.json`, the schema v2
 matching-host evidence contract for Web, macOS, Windows, and Linux runtime
-claims. Entries start as pending until a matching host records passed or failed
-observations before a preview handoff. The checked-in manifest currently marks
-macOS `status=passed` from local matching-host AppKit/Skia artifacts with every
-runtime and native IME observation set to `yes` plus
-`skiaEvidence.status=passed`; a non-skipped manual GitHub Actions dispatch also
-recorded the macOS platform runtime evidence with `github-actions` provenance
-and uploaded the matching artifact bundle. Windows and Linux remain pending
-until their matching hosts record equivalent platform-runtime artifacts. Native
-passed entries include the `wzzc-dev/window@0.5.1-0.1.4` package smoke
-monitor/cursor probe as `monitorCursor=yes`; Web browser-session evidence may
-leave that field pending because CDP does not prove native
-monitor/current-monitor or cursor behavior. A
-passed entry must carry provenance from either a non-skipped successful GitHub
-Actions job/run, including run URL, workflow, job, runner, and uploaded
-artifacts, or a local matching-host artifact bundle. For Web, the fold derives
-this from the browser-session presentation manifest and the environment that
-performed the fold. Skipped CI jobs, build-only/package-only jobs, and
-provider/preflight checks cannot be used as passed runtime evidence. See
-`docs/release-readiness.md` for the recorded GitHub Actions macOS-only evidence
-run, the latest all-green `MoUI CI` run, and their head-SHA boundaries.
+claims. Entries start as pending until a matching host records passed or
+failed observations before a preview handoff. The checked-in manifest
+currently marks macOS `status=passed` from local matching-host AppKit/Skia
+artifacts with every runtime and native IME observation set to `yes` plus
+`skiaEvidence.status=passed`; a non-skipped manual GitHub Actions dispatch
+also recorded the macOS platform runtime evidence with `github-actions`
+provenance and uploaded the matching artifact bundle. Windows and Linux
+remain pending until their matching hosts record equivalent
+platform-runtime artifacts. Native passed entries include the
+`wzzc-dev/window@0.5.1-0.1.6` package smoke monitor/cursor probe as
+`monitorCursor=yes`; Web browser-session evidence may leave that field
+pending because CDP does not prove native monitor/current-monitor or cursor
+behavior. A passed entry must carry provenance from either a non-skipped
+successful GitHub Actions job/run, including run URL, workflow, job,
+runner, and uploaded artifacts, or a local matching-host artifact bundle.
+For Web, the fold derives this from the browser-session presentation
+manifest and the environment that performed the fold. Skipped CI jobs,
+build-only/package-only jobs, and provider/preflight checks cannot be used
+as passed runtime evidence. See `docs/release-readiness.md` for the
+recorded GitHub Actions macOS-only evidence run, the latest all-green
+`MoUI CI` run, and their head-SHA boundaries.
 
 For release-oriented screenshot and benchmark handoffs, use
 `sh scripts/conformance-check.sh --golden` and
 `sh scripts/conformance-check.sh --bench`; these write validated capture
-manifests under `artifacts/conformance/`. The benchmark handoff also validates
-the static Web runtime delivery chain for Showcase and Markdown Editor with
-`node scripts/validate-web-runtime-handoff.mjs`, while browser WebGPU/canvas
-presentation evidence is collected separately with
+manifests under `artifacts/conformance/`. The benchmark handoff also
+validates the static Web runtime delivery chain for Showcase and Markdown
+Editor with `node scripts/validate-web-runtime-handoff.mjs`, while browser
+WebGPU/canvas presentation evidence is collected separately with
 `node scripts/record-web-runtime-presentation.mjs` and validated with
 `node scripts/validate-web-runtime-presentation-manifest.mjs`. A passed
-`artifacts/conformance/web-runtime-presentation.json` proves the named browser
-session reached WebGPU startup, wasm app startup, sized canvas, resize/input
-event-bridge delivery, Markdown Editor text input, clean target close, clean
-console, and nonblank screenshot thresholds. Fold the browser artifact into
+`artifacts/conformance/web-runtime-presentation.json` proves the named
+browser session reached WebGPU startup, wasm app startup, sized canvas,
+resize/input event-bridge delivery, Markdown Editor text input, clean
+target close, clean console, and nonblank screenshot thresholds. Fold the
+browser artifact into
 `artifacts/conformance/platform-runtime-evidence.json` with
 `node scripts/record-platform-evidence-manifest.mjs artifacts/conformance/platform-runtime-evidence.json web --web-presentation-manifest artifacts/conformance/web-runtime-presentation.json`
-so Web platform claims cite one validated evidence manifest and browser-session
-artifact provenance. A failed browser manifest records failed Web platform
-evidence; a missing browser manifest keeps the Web platform entry pending.
+so Web platform claims cite one validated evidence manifest and
+browser-session artifact provenance. A failed browser manifest records
+failed Web platform evidence; a missing browser manifest keeps the Web
+platform entry pending.
+
+For a minimal starting template, clone the standalone `moui_example`
+counter repo (it is not a workspace member here and is not built by
+`dev-check.sh`):
+
+```sh
+git clone git@github.com:moui-mbt/moui_example.git
+cd moui_example
+moon update
+```
 
 ## Web Wasm-GC
 
@@ -210,32 +250,39 @@ http://127.0.0.1:8080/examples/markdown_editor/web_wasm/index.html
 ## macOS Native
 
 Native macOS examples use the platform window backend; the recommended
-mainline entrypoints select the native Skia raster provider. Cold builds can be
-noticeably slower than package tests or Web wasm-gc example builds, so they are
-kept out of the default development check.
+mainline entrypoints select the native Skia raster provider. Cold builds can
+be noticeably slower than package tests or Web wasm-gc example builds, so
+they are kept out of the default development check.
 
 For macOS `moon run` linker errors, see
 [Platform notes](docs/platform-notes.md#macos-native).
 
-Build the visual showcase on the Skia mainline:
+Build and run the visual showcase on the Skia mainline:
 
 ```sh
-moon build examples/showcase/macos_skia --target native
+moon run examples/showcase/macos_skia --target native
 ```
 
-The `examples/showcase/macos_wgpu` and `examples/showcase/macos_wgpu_cosmic` entrypoints
-remain available as native WGPU diagnostics:
+The `examples/showcase/macos_wgpu`, `examples/showcase/macos_wgpu_cosmic`,
+and `examples/showcase/macos_sun` entrypoints remain available as native
+diagnostics:
 
 ```sh
 moon build examples/showcase/macos_wgpu --target native
 moon build examples/showcase/macos_wgpu_cosmic --target native
+moon build examples/showcase/macos_sun --target native
 ```
 
 Build and run the WYSIWYG Markdown editor on the Skia mainline:
 
 ```sh
-moon build examples/markdown_editor/macos_skia --target native
-./_build/native/debug/build/examples/markdown_editor/macos_skia/macos_skia.exe
+moon run examples/markdown_editor/macos_skia --target native
+```
+
+Build and run Excel Viewer on the Skia mainline:
+
+```sh
+moon run examples/excel/macos_skia --target native
 ```
 
 Build and run PDF Workbench on the Skia mainline:
@@ -253,6 +300,15 @@ The WGPU Markdown editor entrypoint is still available for diagnostics:
 ```sh
 moon build examples/markdown_editor/macos_wgpu --target native
 ./_build/native/debug/build/examples/markdown_editor/macos_wgpu/macos_wgpu.exe
+```
+
+Mo Workbench currently ships the macOS Skia entrypoint only. Enable the
+`openseek` submodule before building it:
+
+```sh
+git submodule update --init openseek
+sh scripts/openseek-dev-mode.sh on
+moon run examples/mo_workbench/macos_skia --target native
 ```
 
 Wrap a native example as a local `.app` bundle:
@@ -273,8 +329,8 @@ manifest under `Contents/Resources`.
 Windows native examples use the MSVC toolchain and vcpkg `zlib:x64-windows`.
 The recommended mainline entrypoints select native Skia raster. Native WGPU
 entrypoints still use `wgpu_mbt` dynamic mode with the official MSVC
-`wgpu_native.dll` release, but they are experimental diagnostics rather than the
-default validation route.
+`wgpu_native.dll` release, but they are experimental diagnostics rather than
+the default validation route.
 
 Setup, build, and package the default Showcase:
 
@@ -290,7 +346,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app_m
   -Version 0.1.0
 ```
 
-The Showcase also has Windows WGPU/Cosmic diagnostic entrypoints:
+The Showcase also has Windows WGPU/Cosmic and Sun diagnostic entrypoints:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
@@ -317,42 +373,47 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps
   -BuildOnly
 ```
 
-To run a Windows entrypoint directly, import the MSVC environment in the same
-PowerShell process. The helper routes `.c` native stubs through C11 atomics and
-keeps Skia `.cpp` stubs on their own C++ standard flags:
+To run a Windows entrypoint directly, import the MSVC environment in the
+same PowerShell process. The helper routes `.c` native stubs through C11
+atomics and keeps Skia `.cpp` stubs on their own C++ standard flags:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }"
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }"
 ```
 
-The MSVC package is written under `dist\windows-msvc\MoUIShowcase` and includes
-`run.cmd` and the vcpkg zlib runtime DLL. WGPU diagnostic packages additionally
-include `wgpu_native.dll`, WGPU release metadata, and a `run.cmd` wrapper that
-sets `MBT_WGPU_NATIVE_ROOT` to the bundled WGPU release.
-When Visual Studio's bundled vcpkg refuses direct classic installs, run the
-setup helper from the repository root; it creates an ignored manifest workspace
-under `.tools\vcpkg-msvc` and installs `zlib:x64-windows` there.
+The MSVC package is written under `dist\windows-msvc\MoUIShowcase` and
+includes `run.cmd` and the vcpkg zlib runtime DLL. WGPU diagnostic packages
+additionally include `wgpu_native.dll`, WGPU release metadata, and a
+`run.cmd` wrapper that sets `MBT_WGPU_NATIVE_ROOT` to the bundled WGPU
+release. When Visual Studio's bundled vcpkg refuses direct classic installs,
+run the setup helper from the repository root; it creates an ignored
+manifest workspace under `.tools\vcpkg-msvc` and installs
+`zlib:x64-windows` there.
+
+Excel Viewer does not currently ship a Windows entrypoint; it runs on
+macOS Skia and Linux Skia only.
 
 ## Linux Native
 
-Linux native examples use the `wzzc-dev/window@0.5.1-0.1.4` Wayland backend.
-The recommended mainline entrypoints select native Skia raster and present CPU
-pixel frames through Wayland `wl_shm`. Run them on a Linux host with a Wayland
-compositor and configured real Skia link flags:
+Linux native examples use the `wzzc-dev/window@0.5.1-0.1.6` Wayland backend.
+The recommended mainline entrypoints select native Skia raster and present
+CPU pixel frames through Wayland `wl_shm`. Run them on a Linux host with a
+Wayland compositor and configured real Skia link flags:
 
 ```sh
 moon run examples/showcase/linux_skia --target native
 moon run examples/markdown_editor/linux_skia --target native
+moon run examples/excel/linux_skia --target native
 ```
 
-The `examples/showcase/linux_wgpu` and `examples/showcase/linux_wgpu_cosmic` entrypoints
-remain available as native WGPU diagnostics when a Vulkan/WGPU stack is
-configured.
+The `examples/showcase/linux_wgpu`, `examples/showcase/linux_wgpu_cosmic`,
+and `examples/showcase/linux_sun` entrypoints remain available as native
+WGPU / Sun diagnostics when a Vulkan/WGPU stack is configured.
 
 For headless validation, use a compositor such as Weston headless and set
 `WAYLAND_DISPLAY` to its socket before running the examples. The WGPU Linux
-text path composes the fontconfig/FreeType provider with Moon Cosmic fallback;
-that provider currently has a narrow native color-emoji path for explicit emoji
-family runs, while general text still falls back to Cosmic. `linux_wgpu_cosmic`
-selects Moon Cosmic directly.
+text path composes the fontconfig/FreeType provider with Moon Cosmic
+fallback; that provider currently has a narrow native color-emoji path for
+explicit emoji family runs, while general text still falls back to Cosmic.
+`linux_wgpu_cosmic` selects Moon Cosmic directly.
