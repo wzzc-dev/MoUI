@@ -110,11 +110,12 @@ fn move_text_caret_index(
   caret : Int,
   direction : TextCaretDirection,
 ) -> Int {
-  let length = text_length(text)
-  let caret = clamp_int(caret, 0, length)
+  let boundaries = TextGraphemeBoundaries::new(text~)
+  let length = boundaries.length()
+  let caret = boundaries.clamp_index(caret)
   match direction {
-    MoveLeft => TextGraphemeBoundaries::new(text~).previous_boundary(caret)
-    MoveRight => TextGraphemeBoundaries::new(text~).next_boundary(caret)
+    MoveLeft => boundaries.previous_boundary(caret)
+    MoveRight => boundaries.next_boundary(caret)
     MoveStart => 0
     MoveEnd => length
   }
