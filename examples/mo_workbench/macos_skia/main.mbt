@@ -64,8 +64,14 @@ async fn main {
         runtime,
         options=app_options,
       ) catch {
+      @macos_skia_backend.run_app_with_options_async_pump(
+        "Mo Workbench",
+        runtime,
+        options=app_options,
+      ) catch {
         err => println("App exited with error: \{err}")
       }
     }
   }
 }
+
