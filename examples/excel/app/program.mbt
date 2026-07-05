@@ -27,9 +27,9 @@ pub fn program() -> @moui.Program[ExcelApp, ExcelMsg] {
 pub fn action_commands(
   app : ExcelApp,
   services? : @host.HostAppServices = @host.HostAppServices::unavailable(),
-) -> @core.ActionCommandMap {
+) -> @views.ActionCommandMap {
   ignore(services)
-  @core.ActionCommandMap::new(bindings=[
+  @views.ActionCommandMap::new(bindings=[
     nav_binding("Left", "ArrowLeft", fn() {
       ignore(ExcelApp::update(app, ExcelMsg::CellNavigate(0, -1)))
     }),
@@ -101,12 +101,12 @@ fn nav_binding(
   label : String,
   key : String,
   handle : () -> Unit,
-) -> @core.CommandBinding {
-  @core.CommandBinding::new(
-    command=@core.ActionCommand::new(
-      intent=@core.CommandIntent::Activate,
+) -> @views.CommandBinding {
+  @views.CommandBinding::new(
+    command=@views.ActionCommand::new(
+      intent=@views.CommandIntent::Activate,
       label~,
-      shortcut=Some(@core.KeyboardShortcut::new(key~)),
+      shortcut=Some(@views.KeyboardShortcut::new(key~)),
       context_menu=false,
     ),
     handle~,
@@ -119,17 +119,17 @@ fn action_binding(
   key : String,
   handle : () -> Unit,
   meta? : Bool = false,
-) -> @core.CommandBinding {
+) -> @views.CommandBinding {
   let modifiers = if meta {
-    @core.KeyModifiers::new(meta=true)
+    @views.KeyModifiers::new(meta=true)
   } else {
-    @core.KeyModifiers::none()
+    @views.KeyModifiers::none()
   }
-  @core.CommandBinding::new(
-    command=@core.ActionCommand::new(
-      intent=@core.CommandIntent::Activate,
+  @views.CommandBinding::new(
+    command=@views.ActionCommand::new(
+      intent=@views.CommandIntent::Activate,
       label~,
-      shortcut=Some(@core.KeyboardShortcut::new(key~, modifiers~)),
+      shortcut=Some(@views.KeyboardShortcut::new(key~, modifiers~)),
       context_menu=false,
     ),
     handle~,
