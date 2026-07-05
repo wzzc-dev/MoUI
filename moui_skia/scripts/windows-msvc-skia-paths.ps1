@@ -113,6 +113,39 @@ function Find-MouiSkiaMsvcLibDir {
   return $null
 }
 
+function Get-MsvcLinkLibraries {
+  param(
+    [Parameter(Mandatory = $true)][string] $LibDir,
+    [Parameter(Mandatory = $true)][ValidateSet("static", "dynamic")][string] $LinkMode
+  )
+
+  # The Skia Windows release bundle ships both static libraries (skia.lib,
+  # sksg.lib, skparagraph.lib, ...) and, in the shared/dynamic build, DLL
+  # import libraries (skia.dll.lib, skparagraph.dll.lib, ...). Linking both
+  # the static archive and the DLL import library for the same symbols
+  # triggers LNK2005 / LNK1169 (multiply defined symbols), so we must keep
+  # only the libraries that match the requested link mode.
+  $allLibs = Get-ChildItem -LiteralPath $LibDir -Filter "*.lib" |
+    Sort-Object Name |
+    ForEach-Object { $_.FullName -replace "\\", "/" }
+
+  if ($LinkMode -eq "dynamic") {
+    # Prefer *.dll.lib import libraries; fall back to *.lib only when no
+    # matching *.dll.lib exists for the same base name.
+    $importLibs = $allLibs | Where-Object { $_ -match '\.dll\.lib$' }
+    $importBaseNames = $importLibs |
+      ForEach-Object { [System.IO.Path]::GetFileName($_) -replace '\.dll\.lib$', '' }
+    $staticLibs = $allLibs | Where-Object {
+      $_ -notmatch '\.dll\.lib$' -and
+      ([System.IO.Path]::GetFileName($_) -replace '\.lib$', '') -notin $importBaseNames
+    }
+    return ($importLibs + $staticLibs)
+  }
+
+  # static: exclude DLL import libraries entirely.
+  return ($allLibs | Where-Object { $_ -notmatch '\.dll\.lib$' })
+}
+
 function Resolve-MouiSkiaMsvcPaths {
   param(
     [Parameter(Mandatory = $true)][string] $RepoRoot,
