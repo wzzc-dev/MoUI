@@ -25,7 +25,6 @@ members = [
   "./examples/moui_example",
   "./openseek",
   "./examples/webview_demo",
-  "./examples/excel",
   "./benchmarks/app_cached_layer",
   "./website",
 ]

@@ -1,6 +1,6 @@
 name = "wzzc-dev/moui"
 
-version = "0.1.4"
+version = "0.1.5"
 
 import {
   "Milky2018/moon_accesskit@0.3.0",
@@ -16,9 +16,8 @@ import {
   "moonbitlang/async@0.19.4",
   "moonbitlang/quickcheck@0.14.0",
   "moonbitlang/x@0.4.45",
-  "wzzc-dev/moui_skia@0.1.4",
-  "wzzc-dev/moui_webview@0.1.0",
-  "wzzc-dev/moui_sun@0.1.0",
+  "wzzc-dev/moui_skia@0.1.5",
+  "wzzc-dev/moui_sun@0.1.1",
 }
 
 readme = "README.mbt.md"
