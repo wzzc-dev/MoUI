@@ -97,4 +97,3 @@ pub fn[Msg] tab_view(
   }
   column([row(buttons, spacing~), content], spacing~)
 }
-

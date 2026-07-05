@@ -89,9 +89,7 @@ fn MarkdownEditorApp::root(
       let rects : Array[@geometry.Rect] = []
       rects
     },
-    paint=(ctx, bounds) => {
-      fill_rect(ctx, bounds, appearance.window_background)
-    },
+    paint=(ctx, bounds) => fill_rect(ctx, bounds, appearance.window_background),
     semantics_label="Window background",
   )
   let layers : Array[@moui.View[MarkdownEditorMsg]] = [window_bg, outer]

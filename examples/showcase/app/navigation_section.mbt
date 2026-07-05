@@ -320,7 +320,10 @@ fn ShowcaseModel::navigation_command_card(
   ]
   let command_sections = [
     command_menu_section(title="File", commands=[
-      @views.ActionCommand::new(intent=@views.CommandIntent::Submit, label="Save"),
+      @views.ActionCommand::new(
+        intent=@views.CommandIntent::Submit,
+        label="Save",
+      ),
       @views.ActionCommand::new(
         intent=@views.CommandIntent::Cancel,
         label="Archive",

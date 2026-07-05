@@ -154,11 +154,7 @@ fn pdf_workbench_page_thumbnail(
         height=page_height,
       )
       if selected {
-        fill_rect(
-          ctx,
-          frame,
-          theme.palette.primary.multiply_alpha(0.10),
-        )
+        fill_rect(ctx, frame, theme.palette.primary.multiply_alpha(0.10))
       }
       fill_rect(ctx, page_rect, @graphics.Color::white())
       match thumbnail_raster {
@@ -198,11 +194,7 @@ fn pdf_workbench_page_thumbnail(
             width=page_width - 10.0,
             height=13.0,
           )
-          fill_rect(
-            ctx,
-            label_rect,
-            theme.palette.surface.multiply_alpha(0.82),
-          )
+          fill_rect(ctx, label_rect, theme.palette.surface.multiply_alpha(0.82))
         }
         None =>
           for index in 0..<4 {
@@ -220,22 +212,25 @@ fn pdf_workbench_page_thumbnail(
             )
           }
       }
-      draw_text(ctx, @text.TextRun::new(
-        text=summary.page_number.to_string(),
-        frame=@geometry.Rect::new(
-          x=x + 7.0,
-          y=y + page_height - 16.0,
-          width=page_width - 14.0,
-          height=12.0,
+      draw_text(
+        ctx,
+        @text.TextRun::new(
+          text=summary.page_number.to_string(),
+          frame=@geometry.Rect::new(
+            x=x + 7.0,
+            y=y + page_height - 16.0,
+            width=page_width - 14.0,
+            height=12.0,
+          ),
+          font=@text.FontSpec::new(size=10.0),
+          color=if selected {
+            theme.palette.primary
+          } else {
+            theme.palette.muted
+          },
+          align=@text.TextAlign::TextCenter,
         ),
-        font=@text.FontSpec::new(size=10.0),
-        color=if selected {
-          theme.palette.primary
-        } else {
-          theme.palette.muted
-        },
-        align=@text.TextAlign::TextCenter,
-      ))
+      )
     },
     semantics_label="Page thumbnail " + summary.page_number.to_string(),
   )

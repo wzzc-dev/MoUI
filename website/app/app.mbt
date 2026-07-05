@@ -82,11 +82,7 @@ fn Model::update(self : Model, message : Msg) -> Model {
       }
     OpenDocs => { ..self, page: WebsiteDocs }
     OpenShowcases => {
-      let model = {
-        ..self,
-        page: WebsiteShowcases,
-        body_scroll_y: 0.0,
-      }
+      let model = { ..self, page: WebsiteShowcases, body_scroll_y: 0.0 }
       model
     }
     OpenShowcaseSource(_) => self
@@ -126,21 +122,18 @@ fn Model::update_with_services(
       model.request_selected_doc(services)
     }
     OpenShowcases => {
-      let model = {
-        ..self,
-        page: WebsiteShowcases,
-        body_scroll_y: 0.0,
-      }
+      let model = { ..self, page: WebsiteShowcases, body_scroll_y: 0.0 }
       (model, @moui.Effect::none())
     }
-    OpenShowcaseSource(url) => (
-      self,
-      @moui.Effect::host_service(
-        key="host:open-showcase-source:" + url,
-        label="Open showcase source",
-        run=_dispatch => ignore(services.open_url(url)),
-      ),
-    )
+    OpenShowcaseSource(url) =>
+      (
+        self,
+        @moui.Effect::host_service(
+          key="host:open-showcase-source:" + url,
+          label="Open showcase source",
+          run=_dispatch => ignore(services.open_url(url)),
+        ),
+      )
     SelectDoc(slug) => {
       let entry = website_doc_entry_by_slug(slug)
       let model = {
@@ -389,7 +382,7 @@ fn Model::website_current_content_height(
   self : Model,
   metrics : Metrics,
 ) -> Double {
-match self.page {
+  match self.page {
     WebsiteHome => metrics.body_content_height
     WebsiteDocs => self.website_docs_content_height(metrics)
     WebsiteShowcases => self.showcases_content_height(metrics)

@@ -143,7 +143,7 @@ pub fn AgentBackendRuntime::stub() -> AgentBackendRuntime {
             AssistantMessageAdded(
               "(stub reply) You said: " +
               task +
-              ". This is an offline placeholder; set OPENAI_API_KEY or DEEPSEEK for OpenSeek.",
+              ". This is an offline placeholder; set openai_api_key in settings.json for OpenSeek.",
               None,
             ),
           )

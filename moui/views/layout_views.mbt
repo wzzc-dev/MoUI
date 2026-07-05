@@ -147,7 +147,10 @@ fn[Msg] container_box(
       let frames = if ctx.child_sizes.length() > 0 {
         let child_size = ctx.child_sizes[0]
         let x = views_max_double(0.0, (measured.width - child_size.width) / 2.0)
-        let y = views_max_double(0.0, (measured.height - child_size.height) / 2.0)
+        let y = views_max_double(
+          0.0,
+          (measured.height - child_size.height) / 2.0,
+        )
         [
           @core.Rect::new(
             x~,

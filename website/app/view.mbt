@@ -18,10 +18,20 @@ fn Model::top_bar(
     items.push(nav_button(theme, "Tour", false, OpenHomeAt(700.0)))
     items.push(
       nav_button(
-        theme, "Quick Start", false, OpenHomeAt(quick_start_nav_offset()),
+        theme,
+        "Quick Start",
+        false,
+        OpenHomeAt(quick_start_nav_offset()),
       ),
     )
-    items.push(nav_button(theme, "Showcases", self.page is WebsiteShowcases, OpenShowcases))
+    items.push(
+      nav_button(
+        theme,
+        "Showcases",
+        self.page is WebsiteShowcases,
+        OpenShowcases,
+      ),
+    )
     items.push(nav_button(theme, "Docs", self.page is WebsiteDocs, OpenDocs))
     items.push(nav_button(theme, "GitHub", false, OpenRepository))
   } else {
@@ -267,7 +277,7 @@ fn Model::showcases_content_height(self : Model, metrics : Metrics) -> Double {
   header_height +
   24.0 +
   grid_rows * card_height +
-  max_website_double(0.0, (grid_rows - 1.0)) * 20.0 +
+  max_website_double(0.0, grid_rows - 1.0) * 20.0 +
   metrics.section_bottom
 }
 
@@ -1099,7 +1109,7 @@ fn wrapped_caption(
   let rows : Array[@moui.View[Msg]] = []
   for line in lines {
     rows.push(
-      text(line, width=width, height=line_height)
+      text(line, width~, height=line_height)
       .font(font)
       .foreground(theme.palette.muted),
     )

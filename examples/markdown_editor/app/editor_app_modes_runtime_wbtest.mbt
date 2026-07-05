@@ -239,7 +239,10 @@ test "markdown editor runtime quick format row applies command" {
     is Some(frame) else {
     fail("expected quick format heading row")
   }
-  let point = @geometry.Point::new(x=frame.origin.x + 4.0, y=frame.origin.y + 4.0)
+  let point = @geometry.Point::new(
+    x=frame.origin.x + 4.0,
+    y=frame.origin.y + 4.0,
+  )
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(position=point, phase=@core.PointerPhase::Down),

@@ -350,7 +350,7 @@ test "linux skia async image background_io confirmed" {
   @fs.write_bytes_to_file(path, @utf8.encode("test", bom=false)) catch {
     _ => fail("expected temp file write")
   }
-  defer { @fs.remove_file(path) catch { _ => () } }
+  defer (@fs.remove_file(path) catch { _ => () })
   let source_bytes = @utf8.encode(path, bom=false)
   moui_linux_async_image_spawn(42, source_bytes, source_bytes.length())
   let max_attempts = 200

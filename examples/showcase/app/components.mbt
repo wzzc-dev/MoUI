@@ -29,7 +29,8 @@ fn section_panel(
       )
   }
   let header_bg = match theme.scheme {
-    @state.ColorScheme::Light => theme.palette.surface_variant.multiply_alpha(0.32)
+    @state.ColorScheme::Light =>
+      theme.palette.surface_variant.multiply_alpha(0.32)
     @state.ColorScheme::Dark => @graphics.Color::white().multiply_alpha(0.04)
   }
   container(
@@ -680,7 +681,9 @@ fn ShowcaseModel::vector_path_card(
       fill_rounded_rect(
         ctx,
         @views.RoundedRect::new(rect=frame, radius=theme.radius_scale.md),
-        @graphics.Brush::solid(theme.palette.surface_variant.multiply_alpha(0.42)),
+        @graphics.Brush::solid(
+          theme.palette.surface_variant.multiply_alpha(0.42),
+        ),
       )
       draw_path(
         ctx,
@@ -692,7 +695,9 @@ fn ShowcaseModel::vector_path_card(
               @geometry.Point::new(x=left + 58.0, y=top + 4.0),
               @geometry.Point::new(x=left + 82.0, y=bottom),
             ),
-            @views.PathVerb::LineTo(@geometry.Point::new(x=left + 42.0, y=mid_y)),
+            @views.PathVerb::LineTo(
+              @geometry.Point::new(x=left + 42.0, y=mid_y),
+            ),
             @views.PathVerb::Close,
           ],
           fill=Some(fill),
@@ -702,7 +707,9 @@ fn ShowcaseModel::vector_path_card(
         ctx,
         @views.PathSpec::new(
           verbs=[
-            @views.PathVerb::MoveTo(@geometry.Point::new(x=left + 116.0, y=bottom)),
+            @views.PathVerb::MoveTo(
+              @geometry.Point::new(x=left + 116.0, y=bottom),
+            ),
             @views.PathVerb::QuadTo(
               @geometry.Point::new(x=left + 148.0, y=top),
               @geometry.Point::new(x=left + 180.0, y=bottom),

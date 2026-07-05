@@ -23,7 +23,11 @@ fn openseek_env_trimmed(name : String) -> String? {
   match @env.get_env_var(name) {
     Some(value) => {
       let trimmed = value.trim().to_owned()
-      if trimmed.is_empty() { None } else { Some(trimmed) }
+      if trimmed.is_empty() {
+        None
+      } else {
+        Some(trimmed)
+      }
     }
     None => None
   }
@@ -88,7 +92,8 @@ fn openseek_thinking_from_choice(
   match choice {
     @app.ThinkingChoice::No => @deepseek.ThinkingMode::No
     @app.ThinkingChoice::High => @deepseek.ThinkingMode::High
-    @app.ThinkingChoice::Max => @deepseek.ThinkingMode::Max
+    // OpenAI-compatible gateways (e.g. Sensenova) reject `reasoning_effort=max`.
+    @app.ThinkingChoice::Max => @deepseek.ThinkingMode::High
   }
 }
 
@@ -99,7 +104,7 @@ fn openseek_default_model() -> @deepseek.Model {
 
 ///|
 fn openseek_default_thinking() -> @deepseek.ThinkingMode {
-  @deepseek.ThinkingMode::Max
+  @deepseek.ThinkingMode::No
 }
 
 ///|
@@ -234,10 +239,7 @@ pub fn openseek_backend_bundle(
   config : OpenSeekBackendConfig,
 ) -> OpenSeekBackendBundle {
   let owner = OpenSeekBackendOwner::new(config)
-  {
-    runtime: openseek_backend_runtime(owner),
-    owner,
-  }
+  { runtime: openseek_backend_runtime(owner), owner }
 }
 
 ///|
@@ -245,7 +247,7 @@ fn openseek_backend_runtime(
   owner : OpenSeekBackendOwner,
 ) -> @app.AgentBackendRuntime {
   @app.agent_backend_runtime(run=(commands, emit) => {
-    try openseek_enqueue_commands(owner, commands, emit) catch {
+    openseek_enqueue_commands(owner, commands, emit) catch {
       _ => ()
     }
   })
