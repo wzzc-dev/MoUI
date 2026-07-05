@@ -246,9 +246,7 @@ if (![string]::IsNullOrWhiteSpace($ExtraCcFlags)) {
   $ccFlags = "$ccFlags $ExtraCcFlags"
 }
 
-$packageLibs = Get-ChildItem -LiteralPath $resolvedLibDir -Filter "*.lib" |
-  Sort-Object Name |
-  ForEach-Object { $_.FullName -replace "\\", "/" }
+$packageLibs = Get-MsvcLinkLibraries -LibDir $resolvedLibDir -LinkMode $resolvedSkiaLinkMode
 $skiaLibFlag = $skiaLib -replace "\\", "/"
 $orderedPackageLibs = @($skiaLibFlag) + ($packageLibs | Where-Object { $_ -ne $skiaLibFlag })
 $systemLibs = @(
