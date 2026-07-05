@@ -33,7 +33,7 @@ workspace top-level `moon.work` listing and `scripts/openseek-dev-mode.sh`) so
 ```toml
 import {
   "moonbitlang/async@0.19.4",
-  "wzzc-dev/moui@0.1.4",
+  "wzzc-dev/moui@0.1.5-1",
   "bobzhang/openseek@0.2.0",
 }
 ```

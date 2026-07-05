@@ -1,6 +1,6 @@
 name = "wzzc-dev/moui"
 
-version = "0.1.5"
+version = "0.1.5-1"
 
 import {
   "Milky2018/moon_accesskit@0.3.0",
