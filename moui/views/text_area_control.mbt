@@ -100,11 +100,9 @@ fn text_area_glyph_row_height(
   line_text : String,
   font : @core.FontSpec,
 ) -> Double {
-  text_system
-    .measure_text(@core.TextLayoutInput::new(text=line_text, font~))
-    .size
-    .height
-    .max(font.size * 1.15)
+  text_system.measure_text(@core.TextLayoutInput::new(text=line_text, font~)).size.height.max(
+    font.size * 1.15,
+  )
 }
 
 ///|
@@ -363,14 +361,14 @@ fn append_text_area_commands(
   let display_text = text_with_composition(text, control, focused~)
   let text_frame = text_area_text_frame(frame)
   let is_placeholder = display_text == ""
-  let paint_color = if is_placeholder {
-    placeholder_color
-  } else {
-    foreground
-  }
+  let paint_color = if is_placeholder { placeholder_color } else { foreground }
   let paragraph = text_area_paragraph(
     text_system,
-    if is_placeholder { "" } else { display_text },
+    if is_placeholder {
+      ""
+    } else {
+      display_text
+    },
     font,
     text_frame,
   )
@@ -388,9 +386,7 @@ fn append_text_area_commands(
       if line_range.start >= line_range.end {
         continue
       }
-      let line_text = String::from_array(
-        chars[line_range.start:line_range.end],
-      )
+      let line_text = String::from_array(chars[line_range.start:line_range.end])
       text_area_draw_line_text(
         commands,
         text_system,
@@ -417,9 +413,7 @@ fn append_text_area_commands(
       if line_range.start >= line_range.end {
         continue
       }
-      let line_text = String::from_array(
-        chars[line_range.start:line_range.end],
-      )
+      let line_text = String::from_array(chars[line_range.start:line_range.end])
       text_area_draw_line_text(
         commands,
         text_system,
@@ -473,21 +467,11 @@ fn append_text_area_commands(
               comp_start + text_length(composition),
             )
             let r0 = text_area_display_caret_rect(
-              text_system,
-              display_text,
-              text_frame,
-              font,
-              start_off,
-              line_height,
+              text_system, display_text, text_frame, font, start_off, line_height,
               visible_lines,
             )
             let r1 = text_area_display_caret_rect(
-              text_system,
-              display_text,
-              text_frame,
-              font,
-              end_off,
-              line_height,
+              text_system, display_text, text_frame, font, end_off, line_height,
               visible_lines,
             )
             if r1.origin.x > r0.origin.x {
@@ -518,13 +502,7 @@ fn append_text_area_commands(
       )
     } else {
       text_area_display_caret_rect(
-        text_system,
-        display_text,
-        text_frame,
-        font,
-        visual_caret,
-        line_height,
-        visible_lines,
+        text_system, display_text, text_frame, font, visual_caret, line_height, visible_lines,
       )
     }
     overlay_commands.push(@core.DrawCommand::FillRect(cursor, cursor_color))
@@ -904,13 +882,7 @@ fn text_input_state_for_multi_line(
     )
   } else {
     text_area_display_caret_rect(
-      text_system,
-      display_text,
-      text_frame,
-      font,
-      visual_caret,
-      line_height,
-      visible_lines,
+      text_system, display_text, text_frame, font, visual_caret, line_height, visible_lines,
     )
   }
   {

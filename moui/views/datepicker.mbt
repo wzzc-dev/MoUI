@@ -30,6 +30,7 @@ pub fn[Msg] datepicker(
   )
 }
 
+///|
 fn DatePickerMode::to_view_mode(self : DatePickerMode) -> DatePickerDisplayMode {
   match self {
     Date => DatePickerDisplayMode::Date

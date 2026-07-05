@@ -3,7 +3,7 @@ import {
 }
 
 import {
-  "wzzc-dev/moui/views"
+  "wzzc-dev/moui/views",
 } for "test"
 
 supported_targets = "+native+wasm-gc"

@@ -164,12 +164,7 @@ fn center_shell(
         topbar_view(model, theme, center_width, layout.topbar_height),
         main_surface(model, theme, center_width, layout.center_height),
         @views.center(
-          statusbar_view(
-            model,
-            theme,
-            center_width,
-            layout.statusbar_height,
-          ),
+          statusbar_view(model, theme, center_width, layout.statusbar_height),
           width=center_width,
           height=layout.statusbar_height,
           theme~,
@@ -698,8 +693,8 @@ fn settings_overlay_view(
   width : Double,
   height : Double,
 ) -> @moui.View[WorkbenchMsg] {
-  let card_width = (width * 0.62).min(640.0).max(360.0)
-  let card_height = (height * 0.82).min(560.0).max(360.0)
+  let card_width = (width * 0.78).min(920.0).max(560.0)
+  let card_height = (height * 0.88).min(640.0).max(420.0)
   @views.container(
     @views.column(
       [
@@ -727,9 +722,10 @@ fn settings_overlay_view(
               @views.divider(theme~),
               settings_workspace_view(
                 model.settings,
+                model.appearance,
                 theme,
                 card_width - 48.0,
-                card_height - 120.0,
+                card_height - 88.0,
               ).map(m => WorkbenchMsg::SettingsMsg(m)),
             ],
             spacing=14.0,

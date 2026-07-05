@@ -80,7 +80,9 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
 ///|
 /// App-loop types forwarded by root `wzzc-dev/moui` (not a subpackage).
 fn root_app_shape_tokens() -> Array[String] {
-  ["View", "Program", "Effect", "Subscription", "Theme", "Environment", "ViewEnvironment"]
+  [
+    "View", "Program", "Effect", "Subscription", "Theme", "Environment", "ViewEnvironment",
+  ]
 }
 
 ///|
@@ -98,7 +100,9 @@ fn sugar_graphics_tokens() -> Array[String] {
 ///|
 /// Types forwarded by the `moui/text` domain sugar package.
 fn sugar_text_tokens() -> Array[String] {
-  ["FontSpec", "FontFamily", "TextRange", "TextAlign", "FontFamilyStack", "TextRun"]
+  [
+    "FontSpec", "FontFamily", "TextRange", "TextAlign", "FontFamilyStack", "TextRun",
+  ]
 }
 
 ///|
@@ -126,17 +130,17 @@ fn sugar_required_tokens(type_names : Array[String]) -> Array[String] {
 /// `FontFamilyStack`, `AccessibilityContrast`, ...). This prevents a sugar
 /// package from leaking a type that belongs to a different domain or that the
 /// policy leaves on `@core` direct.
-fn sugar_cross_domain_forbidden_tokens(own_tokens : Array[String]) -> Array[String] {
+fn sugar_cross_domain_forbidden_tokens(
+  own_tokens : Array[String],
+) -> Array[String] {
   let all = [
     "View", "Program", "Effect", "Subscription", "Theme", "Environment", "ViewEnvironment",
-    "Point", "Size", "Rect", "Insets", "Constraints", "Axis", "Alignment",
-    "Color", "Brush", "BorderStyle", "ShadowStyle",
-    "FontSpec", "FontFamily", "TextRange", "TextAlign",
-    "State", "Binding", "DerivedState", "ScrollState", "FocusState", "NavigationState",
-    "ColorScheme", "LayoutDirection",
-    "CommandIntent", "KeyboardShortcut", "KeyModifiers", "DateValue", "FontFamilyStack",
-    "AccessibilityContrast", "ContentSizeCategory", "ActionCommand", "ActionCommandMap",
-    "CommandBinding",
+    "Point", "Size", "Rect", "Insets", "Constraints", "Axis", "Alignment", "Color",
+    "Brush", "BorderStyle", "ShadowStyle", "FontSpec", "FontFamily", "TextRange",
+    "TextAlign", "State", "Binding", "DerivedState", "ScrollState", "FocusState",
+    "NavigationState", "ColorScheme", "LayoutDirection", "CommandIntent", "KeyboardShortcut",
+    "KeyModifiers", "DateValue", "FontFamilyStack", "AccessibilityContrast", "ContentSizeCategory",
+    "ActionCommand", "ActionCommandMap", "CommandBinding",
   ]
   let forbidden : Array[String] = []
   for type_name in all {
@@ -167,9 +171,9 @@ fn views_facade_required_tokens() -> Array[String] {
     "pub(all) struct FormFieldState", "pub(all) struct RouteLocation", "pub(all) struct RouteHistoryState",
     "type RouteFocusStore", "type RouterState", "pub fn resolve_route(", "pub(all) enum DatePickerMode",
     "pub fn default_theme()", "pub fn light_theme()", "pub fn dark_theme()", "pub fn[Msg] text(",
-    "pub fn[Msg] empty()", "pub fn[Msg] spacer(", "pub fn[Msg] picker(",
-    "pub fn picker_item(", "pub fn[Msg] datepicker(",
-    "pub fn[Msg] custom_layout(", "pub fn[Msg] custom_children_layout(", "pub fn[Msg] component(",
+    "pub fn[Msg] empty()", "pub fn[Msg] spacer(", "pub fn[Msg] picker(", "pub fn picker_item(",
+    "pub fn[Msg] datepicker(", "pub fn[Msg] custom_layout(", "pub fn[Msg] custom_children_layout(",
+    "pub fn[Msg] component(",
   ]
   for type_name in views_facade_core_alias_tokens() {
     tokens.push("pub using @core {type \{type_name}}")
@@ -191,7 +195,9 @@ fn package_budgets() -> Array[PackageBudget] {
       max_pub_lines: 8,
       max_pub_all_lines: 0,
       required_tokens: sugar_required_tokens(root_app_shape_tokens()),
-      forbidden_tokens: sugar_cross_domain_forbidden_tokens(root_app_shape_tokens()),
+      forbidden_tokens: sugar_cross_domain_forbidden_tokens(
+        root_app_shape_tokens(),
+      ),
     },
     {
       label: "geometry sugar",
@@ -201,7 +207,9 @@ fn package_budgets() -> Array[PackageBudget] {
       max_pub_lines: 8,
       max_pub_all_lines: 0,
       required_tokens: sugar_required_tokens(sugar_geometry_tokens()),
-      forbidden_tokens: sugar_cross_domain_forbidden_tokens(sugar_geometry_tokens()),
+      forbidden_tokens: sugar_cross_domain_forbidden_tokens(
+        sugar_geometry_tokens(),
+      ),
     },
     {
       label: "graphics sugar",
@@ -211,7 +219,9 @@ fn package_budgets() -> Array[PackageBudget] {
       max_pub_lines: 8,
       max_pub_all_lines: 0,
       required_tokens: sugar_required_tokens(sugar_graphics_tokens()),
-      forbidden_tokens: sugar_cross_domain_forbidden_tokens(sugar_graphics_tokens()),
+      forbidden_tokens: sugar_cross_domain_forbidden_tokens(
+        sugar_graphics_tokens(),
+      ),
     },
     {
       label: "text sugar",
@@ -231,7 +241,9 @@ fn package_budgets() -> Array[PackageBudget] {
       max_pub_lines: 8,
       max_pub_all_lines: 0,
       required_tokens: sugar_required_tokens(sugar_state_tokens()),
-      forbidden_tokens: sugar_cross_domain_forbidden_tokens(sugar_state_tokens()),
+      forbidden_tokens: sugar_cross_domain_forbidden_tokens(
+        sugar_state_tokens(),
+      ),
     },
     {
       label: "runtime facade",
@@ -757,7 +769,10 @@ fn validate_root_facade_shape(
       let type_name = line[alias_prefix.length():line.length() - 1].to_owned()
       if !allowed.contains(type_name) {
         failures.push(
-          path + ": root facade alias " + type_name + " is not in app-loop allowlist",
+          path +
+          ": root facade alias " +
+          type_name +
+          " is not in app-loop allowlist",
         )
       }
     }

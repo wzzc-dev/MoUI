@@ -267,7 +267,7 @@ test "model changed updates current model" {
 ///|
 test "thinking changed updates current thinking" {
   let model = test_model(script=_cmd => [])
-  inspect(model.code.current_thinking == ThinkingChoice::Max, content="true")
+  inspect(model.code.current_thinking == ThinkingChoice::No, content="true")
   let (model, _effect) = model.update(
     WorkbenchMsg::CodeMsg(CodeMsg::ThinkingChanged(ThinkingChoice::No)),
   )
@@ -416,22 +416,22 @@ test "workbench theme token helpers use neutral gray reference colors" {
   let light = @views.light_theme()
   inspect(
     workbench_app_background(light) ==
-    @core.Color::rgba(r=243.0/255.0, g=245.0/255.0, b=252.0/255.0, a=1.0),
+    @core.Color::rgba(r=243.0 / 255.0, g=245.0 / 255.0, b=252.0 / 255.0, a=1.0),
     content="true",
   )
   inspect(
     workbench_sidebar_background(light) ==
-    @core.Color::rgba(r=238.0/255.0, g=242.0/255.0, b=250.0/255.0, a=1.0),
+    @core.Color::rgba(r=238.0 / 255.0, g=242.0 / 255.0, b=250.0 / 255.0, a=1.0),
     content="true",
   )
   inspect(
     workbench_accent(light) ==
-    @core.Color::rgba(r=100.0/255.0, g=100.0/255.0, b=100.0/255.0, a=1.0),
+    @core.Color::rgba(r=100.0 / 255.0, g=100.0 / 255.0, b=100.0 / 255.0, a=1.0),
     content="true",
   )
   inspect(
     workbench_sidebar_active(light) ==
-    @core.Color::rgba(r=200.0/255.0, g=200.0/255.0, b=200.0/255.0, a=0.50),
+    @core.Color::rgba(r=200.0 / 255.0, g=200.0 / 255.0, b=200.0 / 255.0, a=0.50),
     content="true",
   )
 }

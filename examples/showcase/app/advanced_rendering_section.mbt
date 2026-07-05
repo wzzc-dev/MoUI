@@ -85,7 +85,9 @@ fn advanced_rendering_canvas(
       fill_rounded_rect(
         ctx,
         bg,
-        @graphics.Brush::solid(theme.palette.surface_variant.multiply_alpha(0.36)),
+        @graphics.Brush::solid(
+          theme.palette.surface_variant.multiply_alpha(0.36),
+        ),
       )
       match mode {
         "blend" => {
@@ -152,7 +154,9 @@ fn advanced_rendering_canvas(
               ),
               radius=13.0,
             ),
-            @graphics.Brush::solid(theme.palette.foreground.multiply_alpha(0.36)),
+            @graphics.Brush::solid(
+              theme.palette.foreground.multiply_alpha(0.36),
+            ),
           )
           pop_layer(ctx)
         }
@@ -166,7 +170,9 @@ fn advanced_rendering_canvas(
           fill_rounded_rect(
             ctx,
             @views.RoundedRect::new(rect=rect_b, radius=16.0),
-            @graphics.Brush::solid(theme.palette.foreground.multiply_alpha(0.22)),
+            @graphics.Brush::solid(
+              theme.palette.foreground.multiply_alpha(0.22),
+            ),
           )
           pop_filter(ctx)
         }
@@ -232,7 +238,9 @@ fn advanced_rendering_canvas(
           fill_rounded_rect(
             ctx,
             @views.RoundedRect::new(rect=mask_rect, radius=18.0),
-            @graphics.Brush::solid(@graphics.Color::rgba(r=0.03, g=0.08, b=0.12)),
+            @graphics.Brush::solid(
+              @graphics.Color::rgba(r=0.03, g=0.08, b=0.12),
+            ),
           )
           push_transform(
             ctx,
@@ -241,10 +249,7 @@ fn advanced_rendering_canvas(
               dy=mask_rect.origin.y + 10.0,
             ),
           )
-          push_transform(
-            ctx,
-            @views.Transform2D::scale(sx=1.08, sy=0.92),
-          )
+          push_transform(ctx, @views.Transform2D::scale(sx=1.08, sy=0.92))
           draw_path(
             ctx,
             @views.PathSpec::new(
@@ -256,10 +261,14 @@ fn advanced_rendering_canvas(
                 @views.PathVerb::Close,
               ],
               fill=Some(
-                @graphics.Brush::solid(@graphics.Color::rgba(r=1.0, g=0.04, b=0.46)),
+                @graphics.Brush::solid(
+                  @graphics.Color::rgba(r=1.0, g=0.04, b=0.46),
+                ),
               ),
               stroke=Some(
-                @graphics.Brush::solid(@graphics.Color::rgba(r=1.0, g=0.78, b=0.08)),
+                @graphics.Brush::solid(
+                  @graphics.Color::rgba(r=1.0, g=0.78, b=0.08),
+                ),
               ),
               stroke_width=3.0,
             ),
@@ -280,15 +289,12 @@ fn advanced_rendering_canvas(
             ),
             @graphics.Brush::solid(@graphics.Color::rgba(r=0.0, g=0.82, b=0.92)),
           )
-          draw_image(
-            ctx,
-            @views.ImageRun::{
-              source: showcase_image_source(),
-              frame: @geometry.Rect::new(x=118.0, y=18.0, width=52.0, height=30.0),
-              opacity: 0.95,
-              fit: @views.ImageFit::Cover,
-            },
-          )
+          draw_image(ctx, @views.ImageRun::{
+            source: showcase_image_source(),
+            frame: @geometry.Rect::new(x=118.0, y=18.0, width=52.0, height=30.0),
+            opacity: 0.95,
+            fit: @views.ImageFit::Cover,
+          })
           draw_text(
             ctx,
             @text.TextRun::new(
@@ -331,20 +337,17 @@ fn advanced_rendering_canvas(
               edge_color=@graphics.Color::rgba(r=0.02, g=0.2, b=1.0),
             ),
           )
-          draw_image(
-            ctx,
-            @views.ImageRun::{
-              source: showcase_image_source(),
-              frame: @geometry.Rect::new(
-                x=left + 92.0,
-                y=top + 4.0,
-                width=52.0,
-                height=32.0,
-              ),
-              opacity: 1.0,
-              fit: @views.ImageFit::Cover,
-            },
-          )
+          draw_image(ctx, @views.ImageRun::{
+            source: showcase_image_source(),
+            frame: @geometry.Rect::new(
+              x=left + 92.0,
+              y=top + 4.0,
+              width=52.0,
+              height=32.0,
+            ),
+            opacity: 1.0,
+            fit: @views.ImageFit::Cover,
+          })
           draw_text(
             ctx,
             @text.TextRun::new(
@@ -394,10 +397,7 @@ fn advanced_rendering_canvas(
         }
         _ => {
           push_opacity(ctx, 0.82)
-          push_transform(
-            ctx,
-            @views.Transform2D::translation(dx=18.0, dy=4.0),
-          )
+          push_transform(ctx, @views.Transform2D::translation(dx=18.0, dy=4.0))
           draw_path(
             ctx,
             @views.PathSpec::new(
@@ -416,7 +416,9 @@ fn advanced_rendering_canvas(
                 @views.PathVerb::Close,
               ],
               fill=Some(
-                @graphics.Brush::solid(theme.palette.primary.multiply_alpha(0.72)),
+                @graphics.Brush::solid(
+                  theme.palette.primary.multiply_alpha(0.72),
+                ),
               ),
               stroke=Some(
                 @graphics.Brush::solid(

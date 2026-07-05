@@ -140,4 +140,3 @@ pub fn[Msg] slider(
     None => base
   }
 }
-

@@ -21,4 +21,3 @@ pub fn[Msg] searchbar(
     on_clear~,
   )
 }
-

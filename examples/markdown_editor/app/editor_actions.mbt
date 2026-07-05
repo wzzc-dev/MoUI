@@ -171,7 +171,9 @@ fn markdown_editor_plain_shortcut(key : String) -> @views.KeyboardShortcut {
 }
 
 ///|
-fn markdown_editor_plain_shift_shortcut(key : String) -> @views.KeyboardShortcut {
+fn markdown_editor_plain_shift_shortcut(
+  key : String,
+) -> @views.KeyboardShortcut {
   @views.KeyboardShortcut::new(
     key~,
     modifiers=@views.KeyModifiers::new(shift=true),
@@ -206,7 +208,10 @@ fn markdown_editor_control_shift_shortcut(
 
 ///|
 fn markdown_editor_alt_shortcut(key : String) -> @views.KeyboardShortcut {
-  @views.KeyboardShortcut::new(key~, modifiers=@views.KeyModifiers::new(alt=true))
+  @views.KeyboardShortcut::new(
+    key~,
+    modifiers=@views.KeyModifiers::new(alt=true),
+  )
 }
 
 ///|
@@ -226,7 +231,9 @@ fn markdown_editor_meta_alt_shortcut(key : String) -> @views.KeyboardShortcut {
 }
 
 ///|
-fn markdown_editor_control_alt_shortcut(key : String) -> @views.KeyboardShortcut {
+fn markdown_editor_control_alt_shortcut(
+  key : String,
+) -> @views.KeyboardShortcut {
   @views.KeyboardShortcut::new(
     key~,
     modifiers=@views.KeyModifiers::new(control=true, alt=true),

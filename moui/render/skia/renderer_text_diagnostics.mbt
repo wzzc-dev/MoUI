@@ -244,16 +244,11 @@ fn skia_emoji_font_source_label(resolution : SkiaFontResolution) -> String {
 fn skia_emoji_typeface_has_color_glyphs() -> Bool {
   match @skia_native.FontMgr::default() {
     None => false
-    Some(mgr) => {
-      match mgr.match_family_style_character(
-        b"",
-        [],
-        0x1F469,
-      ) {
+    Some(mgr) =>
+      match mgr.match_family_style_character(b"", [], 0x1F469) {
         None => false
         Some(typeface) => typeface.has_color_glyphs()
       }
-    }
   }
 }
 
@@ -270,17 +265,15 @@ fn skia_emoji_glyph_format_label() -> String {
 fn skia_emoji_resolved_font_name() -> String {
   match @skia_native.FontMgr::default() {
     None => "no-fontmgr"
-    Some(mgr) => {
+    Some(mgr) =>
       match mgr.match_family_style_character(b"", [], 0x1F469) {
         None => "no-match"
-        Some(typeface) => {
+        Some(typeface) =>
           match typeface.family_name() {
             None => "unnamed"
             Some(name) => name.to_string()
           }
-        }
       }
-    }
   }
 }
 

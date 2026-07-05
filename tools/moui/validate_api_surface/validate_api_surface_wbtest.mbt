@@ -31,22 +31,14 @@ test "root facade budget forwards app-loop sugar only" {
 ///|
 test "domain sugar packages forward the curated per-domain type set" {
   let geom = budget_by_label("geometry sugar")
-  assert_true(
-    geom.required_tokens.contains("pub using @core {type Point}"),
-  )
-  assert_true(
-    geom.required_tokens.contains("pub using @core {type Alignment}"),
-  )
+  assert_true(geom.required_tokens.contains("pub using @core {type Point}"))
+  assert_true(geom.required_tokens.contains("pub using @core {type Alignment}"))
   assert_true(geom.forbidden_tokens.contains("pub using @core {type View}"))
   assert_true(geom.forbidden_tokens.contains("pub using @core {type Color}"))
 
   let gfx = budget_by_label("graphics sugar")
-  assert_true(
-    gfx.required_tokens.contains("pub using @core {type Color}"),
-  )
-  assert_true(
-    gfx.required_tokens.contains("pub using @core {type Brush}"),
-  )
+  assert_true(gfx.required_tokens.contains("pub using @core {type Color}"))
+  assert_true(gfx.required_tokens.contains("pub using @core {type Brush}"))
   assert_true(
     gfx.required_tokens.contains("pub using @core {type ShadowStyle}"),
   )
@@ -56,12 +48,8 @@ test "domain sugar packages forward the curated per-domain type set" {
   assert_false(gfx.forbidden_tokens.contains("pub using @core {type Brush}"))
 
   let text = budget_by_label("text sugar")
-  assert_true(
-    text.required_tokens.contains("pub using @core {type FontSpec}"),
-  )
-  assert_true(
-    text.required_tokens.contains("pub using @core {type TextAlign}"),
-  )
+  assert_true(text.required_tokens.contains("pub using @core {type FontSpec}"))
+  assert_true(text.required_tokens.contains("pub using @core {type TextAlign}"))
   assert_true(text.forbidden_tokens.contains("pub using @core {type View}"))
   assert_true(text.forbidden_tokens.contains("pub using @core {type Color}"))
 
@@ -75,12 +63,8 @@ test "domain sugar packages forward the curated per-domain type set" {
   assert_true(
     state.required_tokens.contains("pub using @core {type LayoutDirection}"),
   )
-  assert_true(
-    state.forbidden_tokens.contains("pub using @core {type View}"),
-  )
-  assert_true(
-    state.forbidden_tokens.contains("pub using @core {type Point}"),
-  )
+  assert_true(state.forbidden_tokens.contains("pub using @core {type View}"))
+  assert_true(state.forbidden_tokens.contains("pub using @core {type Point}"))
   assert_true(
     state.forbidden_tokens.contains("pub using @core {type CommandIntent}"),
   )

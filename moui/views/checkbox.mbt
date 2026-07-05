@@ -30,6 +30,7 @@ pub fn[Msg] checkbox(
   )
 }
 
+///|
 fn resolve_choice_font(
   font : @core.FontSpec?,
   theme : @core.Theme,

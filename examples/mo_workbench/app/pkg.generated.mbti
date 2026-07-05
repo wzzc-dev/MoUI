@@ -3,13 +3,16 @@ package "examples/mo_workbench/app"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/core",
 }
 
 // Values
 pub fn agent_backend_runtime(run~ : (Array[AgentCommand], (AgentEvent) -> Unit) -> Unit) -> AgentBackendRuntime
 
-pub fn program_with_backend(backend~ : AgentBackendRuntime) -> @core.Program[WorkbenchModel, WorkbenchMsg]
+pub fn mo_workbench_decode_settings_file(String) -> MoWorkbenchSettingsFile?
+
+pub fn program_with_backend(backend~ : AgentBackendRuntime, settings_load? : (() -> MoWorkbenchSettingsFile?)?, settings_persist? : ((MoWorkbenchSettingsFile) -> Unit)?) -> @core.Program[WorkbenchModel, WorkbenchMsg]
 
 pub fn session_summary(id~ : String, first_prompt~ : String, last_active_unix_seconds? : Int64?) -> SessionSummary
 
@@ -104,6 +107,18 @@ pub struct MoWorkbenchApp {
 }
 pub fn MoWorkbenchApp::program_with_backend(Self) -> @core.Program[WorkbenchModel, WorkbenchMsg]
 
+pub struct MoWorkbenchSettingsFile {
+  openai_api_key : String
+  openai_base_url : String
+  deepseek_api_key : String
+  mo_workbench_workspace : String
+  mo_workbench_session_root : String
+  approval_policy : String
+  sandbox_mode : String
+  font_size : Int
+  appearance : String
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
 pub(all) enum ModelChoice {
   V4Flash
   V4Pro
@@ -122,13 +137,24 @@ pub struct SessionSummary {
 } derive(Eq, @debug.Debug)
 
 pub(all) enum SettingsMsg {
+  SelectSection(SettingsSection)
   ApiKeyChanged(String)
   BaseUrlChanged(String)
   ApprovalChanged(ApprovalPolicy)
   SandboxChanged(SandboxMode)
   WorkingDirChanged(String)
+  SessionRootChanged(String)
   FontSizeChanged(Int)
+  AppearanceChanged(AppearanceMode)
+  SaveToDisk
+  DismissSaveNotice
 }
+
+pub(all) enum SettingsSection {
+  Api
+  Agent
+  Editor
+} derive(Eq, @debug.Debug)
 
 pub struct SettingsWorkspace {
   api_key : String
@@ -136,7 +162,11 @@ pub struct SettingsWorkspace {
   approval_policy : ApprovalPolicy
   sandbox_mode : SandboxMode
   working_dir : String
+  session_root : String
   font_size : Int
+  active_section : SettingsSection
+  save_notice : String?
+  env_source : String
 }
 
 type TaskGroup derive(Eq, @debug.Debug)
@@ -173,6 +203,8 @@ pub struct WorkbenchModel {
   settings : SettingsWorkspace
   appearance : AppearanceMode
   backend : AgentBackendRuntime
+  settings_load : (() -> MoWorkbenchSettingsFile?)?
+  settings_persist : ((MoWorkbenchSettingsFile) -> Unit)?
   animation_progress : Double
 }
 
@@ -189,6 +221,9 @@ pub(all) enum WorkbenchMsg {
 }
 
 // Type aliases
+pub type SettingsLoadFn = () -> MoWorkbenchSettingsFile?
+
+pub type SettingsPersistFn = (MoWorkbenchSettingsFile) -> Unit
 
 // Traits
 

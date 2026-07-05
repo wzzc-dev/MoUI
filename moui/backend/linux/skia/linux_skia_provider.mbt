@@ -159,7 +159,9 @@ fn skia_async_image_loader() -> @host.HostAsyncImageLoader {
           source_len +
           bytes_len].to_owned()
           @skia_renderer.skia_image_load_completion_from_bytes(
-            source, image_bytes, background_io~,
+            source,
+            image_bytes,
+            background_io~,
           )
         } else {
           @render.ImageResourceLoadCompletion::failed(

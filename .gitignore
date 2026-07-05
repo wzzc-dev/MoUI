@@ -24,3 +24,4 @@ trace.json
 .openseek/sessions/mo-workbench-1/openseek_session-mo-workbench-1.jsonl
 .openseek/sessions/mo-workbench-1/session.lock
 .kilo/*
+.mo_workbench/settings.json

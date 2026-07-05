@@ -203,26 +203,38 @@ fn CodeWorkspace::update(
 // ---------------------------------------------------------------------------
 
 ///|
-/// The settings workspace sub-update. Pure UI form transitions; no backend
-/// dispatch (persistence is reserved for the future backend integration).
+/// The settings workspace sub-update (form fields and section navigation).
 fn SettingsWorkspace::update(
   self : SettingsWorkspace,
   msg : SettingsMsg,
 ) -> (SettingsWorkspace, @moui.Effect[SettingsMsg]) {
   match msg {
-    ApiKeyChanged(value) => ({ ..self, api_key: value }, @moui.Effect::none())
-    BaseUrlChanged(value) => ({ ..self, base_url: value }, @moui.Effect::none())
+    SelectSection(section) =>
+      (
+        { ..self, active_section: section, save_notice: None },
+        @moui.Effect::none(),
+      )
+    ApiKeyChanged(value) =>
+      ({ ..self, api_key: value, save_notice: None }, @moui.Effect::none())
+    BaseUrlChanged(value) =>
+      ({ ..self, base_url: value, save_notice: None }, @moui.Effect::none())
     ApprovalChanged(policy) =>
-      ({ ..self, approval_policy: policy }, @moui.Effect::none())
+      (
+        { ..self, approval_policy: policy, save_notice: None },
+        @moui.Effect::none(),
+      )
     SandboxChanged(mode) =>
-      ({ ..self, sandbox_mode: mode }, @moui.Effect::none())
+      ({ ..self, sandbox_mode: mode, save_notice: None }, @moui.Effect::none())
     WorkingDirChanged(value) =>
-      ({ ..self, working_dir: value }, @moui.Effect::none())
+      ({ ..self, working_dir: value, save_notice: None }, @moui.Effect::none())
+    SessionRootChanged(value) =>
+      ({ ..self, session_root: value, save_notice: None }, @moui.Effect::none())
     FontSizeChanged(size) => {
-      // Clamp font size to a sane range.
       let clamped = if size < 10 { 10 } else if size > 24 { 24 } else { size }
-      ({ ..self, font_size: clamped }, @moui.Effect::none())
+      ({ ..self, font_size: clamped, save_notice: None }, @moui.Effect::none())
     }
+    AppearanceChanged(_) | SaveToDisk => (self, @moui.Effect::none())
+    DismissSaveNotice => ({ ..self, save_notice: None }, @moui.Effect::none())
   }
 }
 
@@ -249,11 +261,7 @@ fn sync_task_tree(model : WorkbenchModel) -> WorkbenchModel {
   let yesterday_tasks : Array[TaskTreeNode] = []
   let earlier_tasks : Array[TaskTreeNode] = []
   for s in model.code.sessions {
-    let title = if s.first_prompt == "" {
-      "New task"
-    } else {
-      s.first_prompt
-    }
+    let title = if s.first_prompt == "" { "New task" } else { s.first_prompt }
     let group = derive_group(s.last_active_unix_seconds)
     let node = TaskTreeNode::Task(
       s.id,
@@ -273,19 +281,37 @@ fn sync_task_tree(model : WorkbenchModel) -> WorkbenchModel {
   if !today_tasks.is_empty() {
     let expanded = folder_was_expanded(model.task_tree, "folder_today")
     tree.push(
-      TaskTreeNode::Folder("folder_today", "Today", TaskGroup::Today, today_tasks, expanded)
+      TaskTreeNode::Folder(
+        "folder_today",
+        "Today",
+        TaskGroup::Today,
+        today_tasks,
+        expanded,
+      ),
     )
   }
   if !yesterday_tasks.is_empty() {
     let expanded = folder_was_expanded(model.task_tree, "folder_yesterday")
     tree.push(
-      TaskTreeNode::Folder("folder_yesterday", "Yesterday", TaskGroup::Yesterday, yesterday_tasks, expanded)
+      TaskTreeNode::Folder(
+        "folder_yesterday",
+        "Yesterday",
+        TaskGroup::Yesterday,
+        yesterday_tasks,
+        expanded,
+      ),
     )
   }
   if !earlier_tasks.is_empty() {
     let expanded = folder_was_expanded(model.task_tree, "folder_earlier")
     tree.push(
-      TaskTreeNode::Folder("folder_earlier", "Earlier", TaskGroup::Earlier, earlier_tasks, expanded)
+      TaskTreeNode::Folder(
+        "folder_earlier",
+        "Earlier",
+        TaskGroup::Earlier,
+        earlier_tasks,
+        expanded,
+      ),
     )
   }
   { ..model, task_tree: tree }
@@ -293,13 +319,13 @@ fn sync_task_tree(model : WorkbenchModel) -> WorkbenchModel {
 
 ///|
 /// Check whether a folder id was expanded in the previous tree.
-fn folder_was_expanded(prev_tree : Array[TaskTreeNode], folder_id : String) -> Bool {
+fn folder_was_expanded(
+  prev_tree : Array[TaskTreeNode],
+  folder_id : String,
+) -> Bool {
   for node in prev_tree {
     match node {
-      Folder(id, _, _, _, expanded) =>
-        if id == folder_id {
-          return expanded
-        }
+      Folder(id, _, _, _, expanded) => if id == folder_id { return expanded }
       _ => ()
     }
   }
@@ -314,15 +340,17 @@ fn toggle_folder_expanded(
 ) -> Array[TaskTreeNode] {
   let result : Array[TaskTreeNode] = []
   for node in tree {
-    result.push(match node {
-      Folder(id, title, group, children, expanded) =>
-        if id == folder_id {
-          Folder(id, title, group, children, !expanded)
-        } else {
-          node
-        }
-      _ => node
-    })
+    result.push(
+      match node {
+        Folder(id, title, group, children, expanded) =>
+          if id == folder_id {
+            Folder(id, title, group, children, !expanded)
+          } else {
+            node
+          }
+        _ => node
+      },
+    )
   }
   result
 }
@@ -379,11 +407,7 @@ fn WorkbenchModel::update(
   msg : WorkbenchMsg,
 ) -> (WorkbenchModel, @moui.Effect[WorkbenchMsg]) {
   match msg {
-    SwitchTab(tab) =>
-      (
-        { ..self, active_tab: tab, },
-        @moui.Effect::none(),
-      )
+    SwitchTab(tab) => ({ ..self, active_tab: tab }, @moui.Effect::none())
     ToggleSidebar =>
       ({ ..self, sidebar_visible: !self.sidebar_visible }, @moui.Effect::none())
     NewTask => {
@@ -403,7 +427,10 @@ fn WorkbenchModel::update(
       (sync_task_tree(model), eff.map(m => WorkbenchMsg::CodeMsg(m)))
     }
     ToggleFolder(folder_id) =>
-      ({ ..self, task_tree: toggle_folder_expanded(self.task_tree, folder_id), }, @moui.Effect::none())
+      (
+        { ..self, task_tree: toggle_folder_expanded(self.task_tree, folder_id) },
+        @moui.Effect::none(),
+      )
     ToggleSettings =>
       ({ ..self, settings_open: !self.settings_open }, @moui.Effect::none())
     ToggleAppearance => {
@@ -418,11 +445,52 @@ fn WorkbenchModel::update(
       let (code, eff) = self.code.update(m, self.backend)
       // Re-sync the task tree projection then lift `Effect[CodeMsg]` to
       // `Effect[WorkbenchMsg]` via `Effect::map`.
-      (sync_task_tree({ ..self, code }), eff.map(m => WorkbenchMsg::CodeMsg(m)))
+      (
+        sync_task_tree({ ..self, code, }),
+        eff.map(m => WorkbenchMsg::CodeMsg(m)),
+      )
     }
-    SettingsMsg(m) => {
-      let (settings, eff) = self.settings.update(m)
-      ({ ..self, settings, }, eff.map(m => WorkbenchMsg::SettingsMsg(m)))
-    }
+    SettingsMsg(m) =>
+      match m {
+        AppearanceChanged(mode) => {
+          let (settings, eff) = self.settings.update(m)
+          (
+            { ..self, settings, appearance: mode },
+            eff.map(msg => WorkbenchMsg::SettingsMsg(msg)),
+          )
+        }
+        SaveToDisk =>
+          match self.settings_persist {
+            Some(persist) => {
+              let file = mo_workbench_settings_file_from_workspace(
+                self.settings,
+                self.appearance,
+              )
+              persist(file)
+              let settings = {
+                ..self.settings,
+                save_notice: Some("Saved to .mo_workbench/settings.json"),
+                env_source: ".mo_workbench/settings.json",
+              }
+              ({ ..self, settings, }, @moui.Effect::none())
+            }
+            None => {
+              let settings = {
+                ..self.settings,
+                save_notice: Some(
+                  "Saving is available in the native macOS app only.",
+                ),
+              }
+              ({ ..self, settings, }, @moui.Effect::none())
+            }
+          }
+        _ => {
+          let (settings, eff) = self.settings.update(m)
+          (
+            { ..self, settings, },
+            eff.map(msg => WorkbenchMsg::SettingsMsg(msg)),
+          )
+        }
+      }
   }
 }

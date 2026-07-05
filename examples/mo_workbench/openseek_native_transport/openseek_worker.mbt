@@ -2,10 +2,7 @@
 
 ///|
 enum OpenSeekWork {
-  RunCommands(
-    Array[@app.AgentCommand],
-    (@app.AgentEvent) -> Unit,
-  )
+  RunCommands(Array[@app.AgentCommand], (@app.AgentEvent) -> Unit)
 }
 
 ///|
@@ -19,11 +16,7 @@ pub struct OpenSeekBackendOwner {
 pub fn OpenSeekBackendOwner::new(
   config : OpenSeekBackendConfig,
 ) -> OpenSeekBackendOwner {
-  {
-    config,
-    engine: Ref(None),
-    queue: @async.Queue(kind=Unbounded),
-  }
+  { config, engine: Ref(None), queue: @async.Queue(kind=Unbounded) }
 }
 
 ///|
@@ -84,12 +77,9 @@ async fn openseek_worker_fetch_sessions(
   let store = @store.SessionStore(config.session_root)
   let listings = store.listings() catch {
     err => {
+      mo_workbench_log_caught("session list", err)
       emit(@app.AgentEvent::SessionListed([]))
-      emit(
-        @app.AgentEvent::RuntimeNoticeAdded(
-          "session list failed: \{err}",
-        ),
-      )
+      emit(@app.AgentEvent::RuntimeNoticeAdded("session list failed: \{err}"))
       return
     }
   }
@@ -129,13 +119,15 @@ async fn openseek_worker_new_session(
     )
     emit(@app.AgentEvent::SessionRebuilt([]))
   } catch {
-    err =>
+    err => {
+      mo_workbench_log_caught("create session", err)
       emit(
         @app.AgentEvent::TurnTerminal(
           @app.TurnStatus::Failed,
           "create session failed: \{err}",
         ),
       )
+    }
   }
 }
 
@@ -158,18 +150,18 @@ async fn openseek_worker_switch_session(
     })
     emit(@app.AgentEvent::ActiveSessionChanged(id))
     emit(
-      @app.AgentEvent::SessionRebuilt(
-        openseek_session_to_agent_events(session),
-      ),
+      @app.AgentEvent::SessionRebuilt(openseek_session_to_agent_events(session)),
     )
   } catch {
-    err =>
+    err => {
+      mo_workbench_log_caught("load session", err)
       emit(
         @app.AgentEvent::TurnTerminal(
           @app.TurnStatus::Failed,
           "load session failed: \{err}",
         ),
       )
+    }
   }
 }
 
@@ -187,7 +179,9 @@ async fn openseek_worker_steer(
         ),
       )
     None =>
-      emit(@app.AgentEvent::RuntimeNoticeAdded("Steer ignored: no active session"))
+      emit(
+        @app.AgentEvent::RuntimeNoticeAdded("Steer ignored: no active session"),
+      )
   }
 }
 
@@ -201,10 +195,13 @@ async fn openseek_worker_send_task(
   let config = owner.config
   let state = openseek_ensure_engine(config, owner.engine)
   @async.with_task_group(group => {
-    let runtime = @agent_runtime.AgentRuntime(workspace_root=config.workspace_root)
+    let runtime = @agent_runtime.AgentRuntime(
+      workspace_root=config.workspace_root,
+    )
     let scope = @agent_runtime.AgentTaskScope(group)
-    let tools = try @agent.build_tools(runtime, scope) catch {
+    let tools = @agent.build_tools(runtime, scope) catch {
       err => {
+        mo_workbench_log_caught("agent setup", err)
         emit(
           @app.AgentEvent::TurnTerminal(
             @app.TurnStatus::Failed,
@@ -227,7 +224,7 @@ async fn openseek_worker_send_task(
         session_ref.val,
         task,
         append_item=async fn(current, item) {
-          let next = try store.append(current, item) catch {
+          let next = store.append(current, item) catch {
             _ => current.append(item)
           }
           session_ref.val = next
@@ -244,23 +241,27 @@ async fn openseek_worker_send_task(
       )
     }
     state.turn_task = Some(turn)
-    try turn.wait() catch {
-      err =>
+    turn.wait() catch {
+      err => {
+        mo_workbench_log_caught("chat/API request (turn)", err)
         emit(
           @app.AgentEvent::TurnTerminal(
             @app.TurnStatus::Failed,
             "turn failed: \{err}",
           ),
         )
+      }
     }
     state.turn_task = None
   }) catch {
-    err =>
+    err => {
+      mo_workbench_log_caught("OpenSeek turn", err)
       emit(
         @app.AgentEvent::TurnTerminal(
           @app.TurnStatus::Failed,
           "OpenSeek turn error: \{err}",
         ),
       )
+    }
   }
 }

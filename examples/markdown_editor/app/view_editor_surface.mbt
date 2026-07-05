@@ -1,8 +1,5 @@
 ///|
-using @views {
-  fill_rect,
-  draw_text,
-}
+using @views {fill_rect, draw_text}
 
 ///|
 fn MarkdownEditorApp::target_bar(
@@ -959,7 +956,7 @@ fn source_preview_line(
         ctx,
         @text.TextRun::new(
           text=line,
-          frame=frame,
+          frame~,
           font~,
           color~,
           align=@text.TextAlign::TextStart,

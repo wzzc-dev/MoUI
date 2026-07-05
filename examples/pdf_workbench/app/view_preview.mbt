@@ -45,76 +45,89 @@ fn pdf_workbench_preview_canvas(
             fit: @views.ImageFit::Contain,
           })
         None => {
-          draw_text(ctx, @text.TextRun::new(
-            text=loaded_title,
-            frame=@geometry.Rect::new(
-              x=x + 24.0,
-              y=y + 28.0,
-              width=page_width - 48.0,
-              height=28.0,
+          draw_text(
+            ctx,
+            @text.TextRun::new(
+              text=loaded_title,
+              frame=@geometry.Rect::new(
+                x=x + 24.0,
+                y=y + 28.0,
+                width=page_width - 48.0,
+                height=28.0,
+              ),
+              font=@text.FontSpec::new(size=18.0),
+              color=theme.palette.foreground,
+              align=@text.TextAlign::TextStart,
             ),
-            font=@text.FontSpec::new(size=18.0),
-            color=theme.palette.foreground,
-            align=@text.TextAlign::TextStart,
-          ))
-          draw_text(ctx, @text.TextRun::new(
-            text=file_line,
-            frame=@geometry.Rect::new(
-              x=x + 24.0,
-              y=y + 62.0,
-              width=page_width - 48.0,
-              height=24.0,
+          )
+          draw_text(
+            ctx,
+            @text.TextRun::new(
+              text=file_line,
+              frame=@geometry.Rect::new(
+                x=x + 24.0,
+                y=y + 62.0,
+                width=page_width - 48.0,
+                height=24.0,
+              ),
+              font=@text.FontSpec::new(size=12.0),
+              color=theme.palette.muted,
+              align=@text.TextAlign::TextStart,
             ),
-            font=@text.FontSpec::new(size=12.0),
-            color=theme.palette.muted,
-            align=@text.TextAlign::TextStart,
-          ))
-          draw_text(ctx, @text.TextRun::new(
-            text=page.text_preview,
-            frame=@geometry.Rect::new(
-              x=x + 24.0,
-              y=y + 104.0,
-              width=page_width - 48.0,
-              height=160.0,
+          )
+          draw_text(
+            ctx,
+            @text.TextRun::new(
+              text=page.text_preview,
+              frame=@geometry.Rect::new(
+                x=x + 24.0,
+                y=y + 104.0,
+                width=page_width - 48.0,
+                height=160.0,
+              ),
+              font=@text.FontSpec::new(size=14.0),
+              color=theme.palette.foreground,
+              align=@text.TextAlign::TextStart,
             ),
-            font=@text.FontSpec::new(size=14.0),
-            color=theme.palette.foreground,
-            align=@text.TextAlign::TextStart,
-          ))
-          draw_text(ctx, @text.TextRun::new(
-            text=page.content_diagnostic,
-            frame=@geometry.Rect::new(
-              x=x + 24.0,
-              y=y + page_height - 92.0,
-              width=page_width - 48.0,
-              height=32.0,
+          )
+          draw_text(
+            ctx,
+            @text.TextRun::new(
+              text=page.content_diagnostic,
+              frame=@geometry.Rect::new(
+                x=x + 24.0,
+                y=y + page_height - 92.0,
+                width=page_width - 48.0,
+                height=32.0,
+              ),
+              font=@text.FontSpec::new(size=12.0),
+              color=theme.palette.muted,
+              align=@text.TextAlign::TextStart,
             ),
-            font=@text.FontSpec::new(size=12.0),
-            color=theme.palette.muted,
-            align=@text.TextAlign::TextStart,
-          ))
+          )
         }
       }
       stroke_rect(ctx, page_rect, theme.palette.outline, 1.0)
       match document {
         Some(document) =>
-          pdf_workbench_push_page_edit_overlays(
-            ctx, document, page_rect, theme,
-          )
+          pdf_workbench_push_page_edit_overlays(ctx, document, page_rect, theme)
         None => ()
       }
-      draw_text(ctx, @text.TextRun::new(
-        text=pdf_workbench_raster_status_label(raster_status),
-        frame=@geometry.Rect::new(
-          x=frame.origin.x + 16.0,
-          y=frame.origin.y + 4.0,
-          width=frame.size.width - 32.0,
-          height=20.0,
+      draw_text(
+        ctx,
+        @text.TextRun::new(
+          text=pdf_workbench_raster_status_label(raster_status),
+          frame=@geometry.Rect::new(
+            x=frame.origin.x + 16.0,
+            y=frame.origin.y + 4.0,
+            width=frame.size.width - 32.0,
+            height=20.0,
+          ),
+          font=@text.FontSpec::new(size=12.0),
+          color=theme.palette.muted,
+          align=@text.TextAlign::TextStart,
         ),
-        font=@text.FontSpec::new(size=12.0),
-        color=theme.palette.muted,
-        align=@text.TextAlign::TextStart,
-      ))
+      )
     },
     semantics_label=page.text_preview,
   )
@@ -194,24 +207,23 @@ fn pdf_workbench_push_page_edit_overlays(
             width=stamp_width,
             height=stamp_height,
           )
-          fill_rect(
-            ctx,
-            stamp_rect,
-            theme.palette.primary.multiply_alpha(0.12),
-          )
+          fill_rect(ctx, stamp_rect, theme.palette.primary.multiply_alpha(0.12))
           stroke_rect(
             ctx,
             stamp_rect,
             theme.palette.primary.multiply_alpha(0.72),
             1.0,
           )
-          draw_text(ctx, @text.TextRun::new(
-            text=value,
-            frame=stamp_rect,
-            font=@text.FontSpec::new(size=12.0),
-            color=theme.palette.primary,
-            align=@text.TextAlign::TextCenter,
-          ))
+          draw_text(
+            ctx,
+            @text.TextRun::new(
+              text=value,
+              frame=stamp_rect,
+              font=@text.FontSpec::new(size=12.0),
+              color=theme.palette.primary,
+              align=@text.TextAlign::TextCenter,
+            ),
+          )
           stamp_index = stamp_index + 1
         }
       AddTextAnnotation(page, value) =>
@@ -224,29 +236,28 @@ fn pdf_workbench_push_page_edit_overlays(
             width=note_width,
             height=note_height,
           )
-          fill_rect(
-            ctx,
-            note_rect,
-            theme.palette.primary.multiply_alpha(0.10),
-          )
+          fill_rect(ctx, note_rect, theme.palette.primary.multiply_alpha(0.10))
           stroke_rect(
             ctx,
             note_rect,
             theme.palette.primary.multiply_alpha(0.58),
             1.0,
           )
-          draw_text(ctx, @text.TextRun::new(
-            text=value,
-            frame=@geometry.Rect::new(
-              x=note_rect.origin.x + 8.0,
-              y=note_rect.origin.y + 7.0,
-              width=note_rect.size.width - 16.0,
-              height=note_rect.size.height - 14.0,
+          draw_text(
+            ctx,
+            @text.TextRun::new(
+              text=value,
+              frame=@geometry.Rect::new(
+                x=note_rect.origin.x + 8.0,
+                y=note_rect.origin.y + 7.0,
+                width=note_rect.size.width - 16.0,
+                height=note_rect.size.height - 14.0,
+              ),
+              font=@text.FontSpec::new(size=11.0),
+              color=theme.palette.primary,
+              align=@text.TextAlign::TextStart,
             ),
-            font=@text.FontSpec::new(size=11.0),
-            color=theme.palette.primary,
-            align=@text.TextAlign::TextStart,
-          ))
+          )
           note_index = note_index + 1
         }
       _ => ()

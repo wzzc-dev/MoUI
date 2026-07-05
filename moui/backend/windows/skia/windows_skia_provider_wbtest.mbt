@@ -235,10 +235,11 @@ test "windows skia async image background_io confirmed" {
   guard @skia_renderer.skia_available() else { return () }
   let base = match @env.get_env_var("TEMP") {
     Some(v) => v
-    None => match @env.get_env_var("TMP") {
-      Some(v) => v
-      None => "."
-    }
+    None =>
+      match @env.get_env_var("TMP") {
+        Some(v) => v
+        None => "."
+      }
   }
   let path = StringBuilder::new()
   path.write_string(base)
@@ -247,7 +248,7 @@ test "windows skia async image background_io confirmed" {
   @fs.write_bytes_to_file(path, @utf8.encode("test", bom=false)) catch {
     _ => fail("expected temp file write")
   }
-  defer { @fs.remove_file(path) catch { _ => () } }
+  defer (@fs.remove_file(path) catch { _ => () })
   let source_bytes = @utf8.encode(path, bom=false)
   moui_windows_async_image_spawn_sync(42, source_bytes, source_bytes.length())
   let max_attempts = 200

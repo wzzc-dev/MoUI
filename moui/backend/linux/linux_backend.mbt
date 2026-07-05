@@ -114,7 +114,13 @@ pub fn LinuxHostAppOptions::new(
   transparent_titlebar? : Bool = false,
   platform_attributes? : @window_core.PlatformWindowAttributes = @window_core.PlatformWindowAttributes::default(),
 ) -> LinuxHostAppOptions {
-  { scene_resolver, event_sources, platform_view_plugins, transparent_titlebar, platform_attributes }
+  {
+    scene_resolver,
+    event_sources,
+    platform_view_plugins,
+    transparent_titlebar,
+    platform_attributes,
+  }
 }
 
 ///|

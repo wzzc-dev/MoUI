@@ -103,6 +103,7 @@ pub fn[Msg] text_field(
   )
 }
 
+///|
 pub fn[Msg] text_area(
   value : String,
   on_input~ : (String) -> Msg,

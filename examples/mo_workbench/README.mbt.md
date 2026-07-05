@@ -51,6 +51,10 @@ git submodule update --init openseek
 sh scripts/openseek-dev-mode.sh on
 ```
 
+On first launch the app creates `.mo_workbench/settings.json` under the process
+working directory (gitignored). Edit `openai_api_key` / `openai_base_url` there,
+or copy from `settings.json.example` as a reference.
+
 Then run the macOS Skia entrypoint:
 
 ```sh
