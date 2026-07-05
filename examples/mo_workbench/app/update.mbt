@@ -262,6 +262,7 @@ fn sync_task_tree(model : WorkbenchModel) -> WorkbenchModel {
   let earlier_tasks : Array[TaskTreeNode] = []
   for s in model.code.sessions {
     let title = if s.first_prompt == "" { "New task" } else { s.first_prompt }
+    let title = if s.first_prompt == "" { "New task" } else { s.first_prompt }
     let group = derive_group(s.last_active_unix_seconds)
     let node = TaskTreeNode::Task(
       s.id,
@@ -288,11 +289,25 @@ fn sync_task_tree(model : WorkbenchModel) -> WorkbenchModel {
         today_tasks,
         expanded,
       ),
+      TaskTreeNode::Folder(
+        "folder_today",
+        "Today",
+        TaskGroup::Today,
+        today_tasks,
+        expanded,
+      ),
     )
   }
   if !yesterday_tasks.is_empty() {
     let expanded = folder_was_expanded(model.task_tree, "folder_yesterday")
     tree.push(
+      TaskTreeNode::Folder(
+        "folder_yesterday",
+        "Yesterday",
+        TaskGroup::Yesterday,
+        yesterday_tasks,
+        expanded,
+      ),
       TaskTreeNode::Folder(
         "folder_yesterday",
         "Yesterday",
@@ -312,6 +327,13 @@ fn sync_task_tree(model : WorkbenchModel) -> WorkbenchModel {
         earlier_tasks,
         expanded,
       ),
+      TaskTreeNode::Folder(
+        "folder_earlier",
+        "Earlier",
+        TaskGroup::Earlier,
+        earlier_tasks,
+        expanded,
+      ),
     )
   }
   { ..model, task_tree: tree }
@@ -323,8 +345,13 @@ fn folder_was_expanded(
   prev_tree : Array[TaskTreeNode],
   folder_id : String,
 ) -> Bool {
+fn folder_was_expanded(
+  prev_tree : Array[TaskTreeNode],
+  folder_id : String,
+) -> Bool {
   for node in prev_tree {
     match node {
+      Folder(id, _, _, _, expanded) => if id == folder_id { return expanded }
       Folder(id, _, _, _, expanded) => if id == folder_id { return expanded }
       _ => ()
     }
@@ -340,6 +367,17 @@ fn toggle_folder_expanded(
 ) -> Array[TaskTreeNode] {
   let result : Array[TaskTreeNode] = []
   for node in tree {
+    result.push(
+      match node {
+        Folder(id, title, group, children, expanded) =>
+          if id == folder_id {
+            Folder(id, title, group, children, !expanded)
+          } else {
+            node
+          }
+        _ => node
+      },
+    )
     result.push(
       match node {
         Folder(id, title, group, children, expanded) =>
@@ -408,6 +446,7 @@ fn WorkbenchModel::update(
 ) -> (WorkbenchModel, @moui.Effect[WorkbenchMsg]) {
   match msg {
     SwitchTab(tab) => ({ ..self, active_tab: tab }, @moui.Effect::none())
+    SwitchTab(tab) => ({ ..self, active_tab: tab }, @moui.Effect::none())
     ToggleSidebar =>
       ({ ..self, sidebar_visible: !self.sidebar_visible }, @moui.Effect::none())
     NewTask => {
@@ -431,6 +470,10 @@ fn WorkbenchModel::update(
         { ..self, task_tree: toggle_folder_expanded(self.task_tree, folder_id) },
         @moui.Effect::none(),
       )
+      (
+        { ..self, task_tree: toggle_folder_expanded(self.task_tree, folder_id) },
+        @moui.Effect::none(),
+      )
     ToggleSettings =>
       ({ ..self, settings_open: !self.settings_open }, @moui.Effect::none())
     ToggleAppearance => {
@@ -445,6 +488,10 @@ fn WorkbenchModel::update(
       let (code, eff) = self.code.update(m, self.backend)
       // Re-sync the task tree projection then lift `Effect[CodeMsg]` to
       // `Effect[WorkbenchMsg]` via `Effect::map`.
+      (
+        sync_task_tree({ ..self, code, }),
+        eff.map(m => WorkbenchMsg::CodeMsg(m)),
+      )
       (
         sync_task_tree({ ..self, code, }),
         eff.map(m => WorkbenchMsg::CodeMsg(m)),
