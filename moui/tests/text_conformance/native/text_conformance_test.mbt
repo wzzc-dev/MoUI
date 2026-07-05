@@ -121,7 +121,7 @@ fn assert_diagnostic_native_text_matrix(
 
 ///|
 fn diagnostic_native_text_field_view(
-  value : @core.Binding[String],
+  value : @core.State[String],
 ) -> @core.View[Unit] {
   let field_style : @views.TextFieldStyle = {
     normal: {
@@ -155,18 +155,16 @@ fn diagnostic_native_text_field_view(
     cursor_color: @core.Color::blue(),
     font: @core.FontSpec::new(size=18.0, weight=500),
   }
-  let mirror = @core.State::new(value.get())
-  @views.text_field(
-    mirror.get(),
-    on_input=next => {
-      mirror.set(next)
-      value.set(next)
-    },
-    placeholder="Input",
-    style=field_style,
-    width=180.0,
-    height=40.0,
-  )
+  @views.component(ctx => {
+    @views.text_field(
+      ctx.watch(value),
+      on_input=next => value.set(next),
+      placeholder="Input",
+      style=field_style,
+      width=180.0,
+      height=40.0,
+    )
+  })
 }
 
 ///|
@@ -325,7 +323,7 @@ test "diagnostic native skia text system drives runtime text field geometry" {
   }
   let value = @core.State::new("")
   let runtime = @runtime.AppRuntime::new_view(
-    root=diagnostic_native_text_field_view(value.binding()),
+    root=diagnostic_native_text_field_view(value),
     size=@core.Size::new(width=220.0, height=80.0),
   )
   let skia_system = @skia_renderer.skia_text_system()
