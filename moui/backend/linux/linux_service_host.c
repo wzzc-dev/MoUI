@@ -724,6 +724,51 @@ int32_t moui_linux_show_menu(moonbit_bytes_t commands_bytes) {
   return selected;
 }
 
+///|
+/// Clipboard image support.
+/// Uses wl-clipboard (wl-paste/wl-copy) to read/write PNG images.
+MOONBIT_FFI_EXPORT
+moonbit_bytes_t moui_linux_clipboard_read_image() {
+  const char *cmd = "wl-paste --type image/png 2>/dev/null || true";
+  FILE *pipe = popen(cmd, "r");
+  if (!pipe) {
+    return moonbit_make_bytes(0, 0);
+  }
+  char buffer[8192];
+  size_t len = fread(buffer, 1, sizeof(buffer), pipe);
+  pclose(pipe);
+  if (len == 0) {
+    return moonbit_make_bytes(0, 0);
+  }
+  moonbit_bytes_t result = moonbit_make_bytes((int32_t)len, 0);
+  memcpy(result, buffer, len);
+  return result;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_linux_clipboard_write_image(moonbit_bytes_t mime,
+                                         moonbit_bytes_t data) {
+  // MIME type is currently ignored in this simple impl
+  if (!data) {
+    return 0;
+  }
+  int32_t data_len = (int32_t)Moonbit_array_length(data);
+  if (data_len <= 0) {
+    return 0;
+  }
+  // Primary: Try wl-copy with image/png
+  FILE *pipe = popen("wl-copy --type image/png 2>/dev/null", "w");
+  if (!pipe) {
+    return 0;
+  }
+  size_t written = fwrite(data, 1, (size_t)data_len, pipe);
+  int status = pclose(pipe);
+  if (written != (size_t)data_len || status != 0) {
+    return 0;
+  }
+  return 1;
+}
+
 #else
 
 #include <stdint.h>
