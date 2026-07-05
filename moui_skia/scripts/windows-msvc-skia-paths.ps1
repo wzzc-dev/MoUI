@@ -132,18 +132,18 @@ function Get-MsvcLinkLibraries {
   if ($LinkMode -eq "dynamic") {
     # Prefer *.dll.lib import libraries; fall back to *.lib only when no
     # matching *.dll.lib exists for the same base name.
-    $importLibs = $allLibs | Where-Object { $_ -match '\.dll\.lib$' }
+    $importLibs = @($allLibs | Where-Object { $_ -match '\.dll\.lib$' })
     $importBaseNames = $importLibs |
       ForEach-Object { [System.IO.Path]::GetFileName($_) -replace '\.dll\.lib$', '' }
-    $staticLibs = $allLibs | Where-Object {
+    $staticLibs = @($allLibs | Where-Object {
       $_ -notmatch '\.dll\.lib$' -and
       ([System.IO.Path]::GetFileName($_) -replace '\.lib$', '') -notin $importBaseNames
-    }
-    return ($importLibs + $staticLibs)
+    })
+    return @($importLibs) + @($staticLibs)
   }
 
   # static: exclude DLL import libraries entirely.
-  return ($allLibs | Where-Object { $_ -notmatch '\.dll\.lib$' })
+  return @($allLibs | Where-Object { $_ -notmatch '\.dll\.lib$' })
 }
 
 function Resolve-MouiSkiaMsvcPaths {
