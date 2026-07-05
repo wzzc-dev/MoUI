@@ -223,6 +223,7 @@ fn[Msg] text_area_control(
   variant? : TextFieldVariant = TextFieldVariant::Outline,
   style? : TextFieldStyle,
   on_input? : ((String) -> Msg)? = None,
+  on_submit? : Msg? = None,
   lines? : Int = 4,
   line_height? : Double = 28.0,
   key? : String? = None,
@@ -295,6 +296,7 @@ fn[Msg] text_area_control(
         ctx,
         value~,
         on_input~,
+        on_submit~,
         font=resolved_style.font,
         line_height~,
       )
@@ -515,6 +517,7 @@ fn[Msg] handle_text_area_event(
   ctx : @core.ViewEventContext,
   value~ : @core.Binding[String],
   on_input~ : ((String) -> Msg)?,
+  on_submit~ : Msg?,
   font~ : @core.FontSpec,
   line_height~ : Double,
 ) -> @core.ViewEventResult[Msg] {
@@ -526,6 +529,7 @@ fn[Msg] handle_text_area_event(
         ctx,
         value~,
         on_input~,
+        on_submit~,
         font~,
         line_height~,
         event,
@@ -541,6 +545,7 @@ fn[Msg] handle_text_area_keyboard(
   ctx : @core.ViewEventContext,
   value~ : @core.Binding[String],
   on_input~ : ((String) -> Msg)?,
+  on_submit~ : Msg?,
   font~ : @core.FontSpec,
   line_height~ : Double,
   event : @core.KeyboardEvent,
@@ -549,6 +554,15 @@ fn[Msg] handle_text_area_keyboard(
     return @core.ViewEventResult::ignored()
   }
   if event.key == "Enter" {
+    if on_submit is Some(_) && !event.modifiers.shift {
+      return view_event_result(
+        changed=true,
+        activated=on_submit is Some(_),
+        captured=true,
+        dirty=@core.ViewDirtyHint::ViewPaintDirty,
+        messages=option_message(on_submit),
+      )
+    }
     return view_text_input_result(
       ctx,
       value~,
