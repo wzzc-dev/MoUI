@@ -11,10 +11,21 @@ async fn main {
     transparent_titlebar=true,
   )
 
+  let settings_load = @openseek_transport.mo_workbench_load_settings_file
+  let settings_persist = @openseek_transport.mo_workbench_persist_settings_file
+  match settings_load() {
+    Some(file) =>
+      @openseek_transport.mo_workbench_apply_settings_file_to_process_env(file)
+    None => ()
+  }
   match @openseek_transport.openseek_backend_bundle_from_env() {
     Some(bundle) => {
       let runtime = @runtime.new_program_with_dimensions(
-        program=@app.program_with_backend(backend=bundle.runtime),
+        program=@app.program_with_backend(
+          backend=bundle.runtime,
+          settings_load=Some(settings_load),
+          settings_persist=Some(settings_persist),
+        ),
         width=1300.0,
         height=680.0,
       )
@@ -37,20 +48,22 @@ async fn main {
     None => {
       println(
         "No API key — using stub backend. " +
-        "Set OPENAI_API_KEY or DEEPSEEK (and optionally OPENAI_BASE_URL for API URL).",
+        "Edit .mo_workbench/settings.json (created on first run) and set openai_api_key.",
       )
       let runtime = @runtime.new_program_with_dimensions(
-        program=@app.program_with_backend(backend=@app.AgentBackendRuntime::stub()),
+        program=@app.program_with_backend(
+          backend=@app.AgentBackendRuntime::stub(),
+          settings_load=Some(settings_load),
+          settings_persist=Some(settings_persist),
+        ),
         width=1300.0,
         height=680.0,
       )
-      try {
-        @macos_skia_backend.run_app_with_options_async_pump(
-          "Mo Workbench",
-          runtime,
-          options=app_options,
-        )
-      } catch {
+      @macos_skia_backend.run_app_with_options_async_pump(
+        "Mo Workbench",
+        runtime,
+        options=app_options,
+      ) catch {
         err => println("App exited with error: \{err}")
       }
     }

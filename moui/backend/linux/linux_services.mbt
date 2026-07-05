@@ -23,11 +23,13 @@ extern "C" fn linux_show_menu_bytes(commands : Bytes) -> Int = "moui_linux_show_
 /// Implementation in linux_service_host.c uses wl-clipboard (wl-paste/wl-copy)
 /// with GTK fallback for broader compatibility.
 #borrow(mime, data)
-extern "C" fn linux_clipboard_write_image_bytes(mime : Bytes, data : Bytes) -> Int =
-  "moui_linux_clipboard_write_image"
+extern "C" fn linux_clipboard_write_image_bytes(
+  mime : Bytes,
+  data : Bytes,
+) -> Int = "moui_linux_clipboard_write_image"
 
-extern "C" fn linux_clipboard_read_image_bytes() -> Bytes =
-  "moui_linux_clipboard_read_image"
+///|
+extern "C" fn linux_clipboard_read_image_bytes() -> Bytes = "moui_linux_clipboard_read_image"
 
 ///|
 pub fn capability_matrix() -> LinuxBackendCapabilities {

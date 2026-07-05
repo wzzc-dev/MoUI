@@ -57,11 +57,11 @@ fn assert_diagnostic_native_skia_maturity_gap(gap : String) -> Unit raise {
   assert_true(description.contains("text maturity audit partial"))
   assert_true(
     description.contains("tracked gaps pending") ||
-    description.contains("tracked gaps resolved")
+    description.contains("tracked gaps resolved"),
   )
   assert_true(
     description.contains("\{gap} pending") ||
-    description.contains("\{gap} confirmed")
+    description.contains("\{gap} confirmed"),
   )
 }
 
@@ -195,17 +195,13 @@ test "diagnostic native cosmic engine matrix conforms" {
 
 ///|
 test "diagnostic native skia text system matrix conforms" {
-  guard @skia_renderer.skia_available() else {
-    return
-  }
+  guard @skia_renderer.skia_available() else { return }
   assert_diagnostic_native_text_matrix(@skia_renderer.skia_text_system())
 }
 
 ///|
 test "diagnostic native skia bidi sample keeps logical carets and marks reordering ready" {
-  guard @skia_renderer.skia_available() else {
-    return
-  }
+  guard @skia_renderer.skia_available() else { return }
   let system = @skia_renderer.skia_text_system()
   let sample = "abc אבג def"
   assert_diagnostic_native_text_layout(system, sample)
@@ -228,9 +224,7 @@ test "diagnostic native skia bidi sample keeps logical carets and marks reorderi
 
 ///|
 test "diagnostic native skia paragraph layout exposes line metrics and gates readiness" {
-  guard @skia_renderer.skia_available() else {
-    return
-  }
+  guard @skia_renderer.skia_available() else { return }
   let system = @skia_renderer.skia_text_system()
   let sample = "alpha beta gamma delta epsilon"
   let font = diagnostic_native_text_font()
@@ -301,9 +295,7 @@ test "diagnostic native skia paragraph layout exposes line metrics and gates rea
 
 ///|
 test "diagnostic native skia zwj and color emoji samples keep caret coverage without readiness claim" {
-  guard @skia_renderer.skia_available() else {
-    return
-  }
+  guard @skia_renderer.skia_available() else { return }
   let system = @skia_renderer.skia_text_system()
   assert_diagnostic_native_text_layout(system, "A👩‍💻B")
   assert_diagnostic_native_cluster_carets(system, "A👩‍💻B", 1, 4)
@@ -318,9 +310,7 @@ test "diagnostic native skia zwj and color emoji samples keep caret coverage wit
 
 ///|
 test "diagnostic native skia text system drives runtime text field geometry" {
-  guard @skia_renderer.skia_available() else {
-    return
-  }
+  guard @skia_renderer.skia_available() else { return }
   let value = @core.State::new("")
   let runtime = @runtime.AppRuntime::new_view(
     root=diagnostic_native_text_field_view(value),

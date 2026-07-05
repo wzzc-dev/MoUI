@@ -359,7 +359,7 @@ fn docs_start_text(
         ctx,
         @text.TextRun::new(
           text=value,
-          frame=frame,
+          frame~,
           font~,
           color~,
           align=@text.TextAlign::TextStart,

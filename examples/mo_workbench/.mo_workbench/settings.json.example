@@ -1,0 +1,11 @@
+{
+  "openai_api_key": "your-api-key-here",
+  "openai_base_url": "https://api.deepseek.com/v1",
+  "deepseek_api_key": "",
+  "mo_workbench_workspace": ".",
+  "mo_workbench_session_root": "./.openseek",
+  "approval_policy": "write",
+  "sandbox_mode": "workspace",
+  "font_size": 14,
+  "appearance": "system"
+}

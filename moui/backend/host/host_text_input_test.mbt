@@ -2,12 +2,7 @@
 test "host driver maps focused text input through core text input event" {
   let text = @core.State::new("")
   let runtime = host_test_runtime(
-    root=host_test_text_field(
-      text,
-      width=240.0,
-      height=40.0,
-      outlined=true,
-    ),
+    root=host_test_text_field(text, width=240.0, height=40.0, outlined=true),
     size=@core.Size::new(width=240.0, height=60.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())

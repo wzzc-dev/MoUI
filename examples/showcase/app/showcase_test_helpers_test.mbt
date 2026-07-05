@@ -164,7 +164,10 @@ fn host_click_frame(
 }
 
 ///|
-fn click_point(runtime : @runtime.AppRuntime, position : @geometry.Point) -> Unit {
+fn click_point(
+  runtime : @runtime.AppRuntime,
+  position : @geometry.Point,
+) -> Unit {
   for phase in [@core.PointerPhase::Down, @core.PointerPhase::Up] {
     runtime.dispatch_event(
       @core.AppEvent::Pointer(@core.PointerEvent::new(position~, phase~)),
