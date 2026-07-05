@@ -327,6 +327,23 @@ function skiaParagraphLinkLibraryNames(platform = process.platform) {
   return [...new Set([...skiaParagraphRequiredLibraryNames(platform), "harfbuzz", "icu"])];
 }
 
+function skiaParagraphLibrariesPresent(libPath) {
+  const names = ["skparagraph", "skshaper", "skunicode_icu", "skunicode_core"];
+  return names.every((name) => {
+    if (process.platform === "win32") {
+      return (
+        fs.existsSync(path.join(libPath, `${name}.lib`)) ||
+        fs.existsSync(path.join(libPath, `${name}.dll.lib`))
+      );
+    }
+    return (
+      fs.existsSync(path.join(libPath, `lib${name}.a`)) ||
+      fs.existsSync(path.join(libPath, `lib${name}.so`)) ||
+      fs.existsSync(path.join(libPath, `lib${name}.dylib`))
+    );
+  });
+}
+
 function requireSkiaParagraphArtifacts(config, includePath, libPath) {
   if (!skiaParagraphRequired(config)) {
     return;
@@ -465,7 +482,15 @@ function platformFlags(config, values) {
   let extraCcFlags = values.MOUI_SKIA_EXTRA_CC_FLAGS || "";
   const extraLinkFlags = values.MOUI_SKIA_EXTRA_LINK_FLAGS || "";
   const linkMode = (values.MOUI_SKIA_LINK_MODE || skiaLinkMode(config)).trim().toLowerCase();
-  const paragraphEnabled = skiaParagraphEnabled(config) || skiaParagraphRequired(config);
+  let paragraphEnabled = skiaParagraphEnabled(config) || skiaParagraphRequired(config);
+  if (paragraphEnabled && !skiaParagraphLibrariesPresent(libPath)) {
+    if (skiaParagraphRequired(config)) {
+      throw new Error(
+        `MOUI_SKIA_REQUIRE_SKPARAGRAPH requested, but one or more SkParagraph libraries were not found in ${libPath}`,
+      );
+    }
+    paragraphEnabled = false;
+  }
 
   requireSkiaParagraphArtifacts(config, includePath, libPath);
 

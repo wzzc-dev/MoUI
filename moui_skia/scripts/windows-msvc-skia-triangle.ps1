@@ -173,6 +173,7 @@ if errorlevel 1 exit /b %errorlevel%
 set CC=cl
 set CXX=cl
 set PATH=$resolvedLibDir;%PATH%
+set MOUI_SKIA_DISABLE_PREBUILD_SKIA=1
 cd /d "$repoRoot"
 moon build .\cmd\triangle_window --target native
 if errorlevel 1 exit /b %errorlevel%

@@ -126,12 +126,46 @@ if ($skparagraphRequired) {
     foreach ($candidate in $candidates) {
       if (Test-Path -LiteralPath $candidate -PathType Leaf) {
         $found = $true
+        break
       }
     }
     if (!$found) {
       throw "MOUI_SKIA_REQUIRE_SKPARAGRAPH requested, but $paragraphLib.lib or $paragraphLib.dll.lib was not found in $resolvedLibDir"
     }
   }
+}
+
+$paragraphHeadersStatus = "available"
+foreach ($paragraphHeader in $paragraphHeaders) {
+  if (!(Test-Path -LiteralPath $paragraphHeader -PathType Leaf)) {
+    $paragraphHeadersStatus = "missing"
+    break
+  }
+}
+$paragraphLibrariesStatus = "available"
+foreach ($paragraphLib in $paragraphLibs) {
+  $candidates = @(
+    (Join-Path $resolvedLibDir "$paragraphLib.lib"),
+    (Join-Path $resolvedLibDir "$paragraphLib.dll.lib")
+  )
+  $found = $false
+  foreach ($candidate in $candidates) {
+    if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+      $found = $true
+      break
+    }
+  }
+  if (!$found) {
+    $paragraphLibrariesStatus = "missing"
+    break
+  }
+}
+if ($paragraphHeadersStatus -ne "available" -or $paragraphLibrariesStatus -ne "available") {
+  if ($skparagraphRequired) {
+    throw "MOUI_SKIA_REQUIRE_SKPARAGRAPH requested, but SkParagraph headers or libraries are unavailable"
+  }
+  Write-Warning "SkParagraph headers or libraries are unavailable; disabling SkParagraph support"
+  $skparagraphEnabled = $false
 }
 
 if (Test-Path -LiteralPath $nativeBackup) {
@@ -221,6 +255,7 @@ if errorlevel 1 exit /b %errorlevel%
 set CC=cl
 set CXX=cl
 set PATH=$resolvedLibDir;%PATH%
+set MOUI_SKIA_DISABLE_PREBUILD_SKIA=1
 cd /d "$repoRoot"
 moon build .\cmd\text_window --target native
 if errorlevel 1 exit /b %errorlevel%

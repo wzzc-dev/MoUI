@@ -182,10 +182,12 @@ if ($skparagraphEnabled) {
     foreach ($candidate in $candidates) {
       if (Test-Path -LiteralPath $candidate -PathType Leaf) {
         $found = $true
+        break
       }
     }
     if (!$found) {
       $paragraphLibrariesStatus = "missing"
+      break
     }
   }
   if ($skparagraphRequired -and $paragraphHeadersStatus -ne "available") {
@@ -193,6 +195,10 @@ if ($skparagraphEnabled) {
   }
   if ($skparagraphRequired -and $paragraphLibrariesStatus -ne "available") {
     throw "MOUI_SKIA_REQUIRE_SKPARAGRAPH requested, but one or more SkParagraph libraries are missing in $resolvedLibDir"
+  }
+  if ($paragraphHeadersStatus -ne "available" -or $paragraphLibrariesStatus -ne "available") {
+    Write-Warning "SkParagraph headers or libraries are unavailable; disabling SkParagraph support"
+    $skparagraphEnabled = $false
   }
 }
 
@@ -418,6 +424,7 @@ if errorlevel 1 exit /b %errorlevel%
 set CC=cl
 set CXX=cl
 set PATH=$resolvedLibDir;%PATH%
+set MOUI_SKIA_DISABLE_PREBUILD_SKIA=1
 echo cl version:
 cl 2>&1
 set SMOKE_EXE=%CD%\_build\native\debug\build\moui_skia_native_smoke.exe
@@ -522,6 +529,7 @@ if errorlevel 1 exit /b %errorlevel%
 set CC=cl
 set CXX=cl
 set PATH=$resolvedLibDir;%PATH%
+set MOUI_SKIA_DISABLE_PREBUILD_SKIA=1
 echo building renderer smoke...
 moon build moui/tests/skia_renderer_smoke/native --target native
 if errorlevel 1 exit /b %errorlevel%
@@ -637,6 +645,7 @@ if errorlevel 1 exit /b %errorlevel%
 set CC=cl
 set CXX=cl
 set PATH=$resolvedLibDir;%PATH%
+set MOUI_SKIA_DISABLE_PREBUILD_SKIA=1
 echo building text/emoji smoke...
 moon build moui/tests/skia_text_emoji_smoke/native --target native
 if errorlevel 1 exit /b %errorlevel%
