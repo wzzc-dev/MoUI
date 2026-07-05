@@ -72,10 +72,9 @@ pub impl @window_linux.ApplicationHandler for LinuxApp with fn can_create_surfac
     .with_surface_size(runtime_size_to_window_surface_size(self.runtime.size()))
   let attributes = if self.transparent_titlebar {
     base_attributes.with_platform_attributes(
-      self.platform_attributes
-        .with_titlebar_transparent(true)
-        // Note: Linux/Wayland titlebar transparency depends on the compositor and
-        // client-side decoration support. The window package handles the mapping.
+      self.platform_attributes.with_titlebar_transparent(true),
+      // Note: Linux/Wayland titlebar transparency depends on the compositor and
+      // client-side decoration support. The window package handles the mapping.
     )
   } else {
     base_attributes

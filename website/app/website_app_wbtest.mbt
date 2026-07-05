@@ -26,7 +26,9 @@ test "website initial render includes bilingual homepage sections" {
   assert_true(has_text(commands, "Mo Workbench"))
   assert_true(has_text(commands, "Quick Start / 快速开始"))
   assert_true(has_text(commands, "快速开始方式"))
-  assert_true(has_text(commands, "git clone git@github.com:moui-mbt/moui_example.git"))
+  assert_true(
+    has_text(commands, "git clone git@github.com:moui-mbt/moui_example.git"),
+  )
   assert_false(has_text(commands, "Release Readiness / 发布准备"))
   assert_false(
     has_text(commands, "$ moon build website/web_wasm --target wasm-gc"),

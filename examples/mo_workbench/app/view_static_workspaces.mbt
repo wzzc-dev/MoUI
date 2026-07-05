@@ -13,9 +13,7 @@ fn tab_placeholder_surface(
 ) -> @moui.View[WorkbenchMsg] {
   @views.container(
     @views.column(
-      [
-        workspace_headline(title, subtitle, theme, (width - 96.0).max(280.0)),
-      ],
+      [workspace_headline(title, subtitle, theme, (width - 96.0).max(280.0))],
       spacing=0.0,
       align=@views.CrossAlign::Center,
       justify=@views.MainAlign::Center,
@@ -36,11 +34,8 @@ fn work_tab_placeholder_view(
   height : Double,
 ) -> @moui.View[WorkbenchMsg] {
   tab_placeholder_surface(
-    "Work",
-    "任务看板即将推出 · 此处将展示任务进度与编排视图",
-    theme,
-    width,
-    height,
+    "Work", "任务看板即将推出 · 此处将展示任务进度与编排视图",
+    theme, width, height,
   )
 }
 
@@ -53,11 +48,8 @@ fn design_tab_placeholder_view(
   height : Double,
 ) -> @moui.View[WorkbenchMsg] {
   tab_placeholder_surface(
-    "Design",
-    "设计预览即将推出 · 此处将展示组件预览与设计稿",
-    theme,
-    width,
-    height,
+    "Design", "设计预览即将推出 · 此处将展示组件预览与设计稿",
+    theme, width, height,
   )
 }
 

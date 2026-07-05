@@ -115,34 +115,48 @@ fn CodeWorkspace::new() -> CodeWorkspace {
     steer_text: "",
     is_streaming: false,
     current_model: ModelChoice::V4Flash,
-    current_thinking: ThinkingChoice::Max,
+    current_thinking: ThinkingChoice::No,
     error: None,
     scroll_state: @state.ScrollState::new(),
   }
 }
 
 ///|
-/// Settings workspace sub-model: agent runtime + chrome settings form state.
-/// UI-only in this prototype; persistence is reserved for the future backend
-/// integration.
+/// Settings workspace sub-model: agent runtime + workbench preferences.
+/// Values load from `settings.json` (template: `settings.json.example`).
 pub struct SettingsWorkspace {
   api_key : String
   base_url : String
   approval_policy : ApprovalPolicy
   sandbox_mode : SandboxMode
   working_dir : String
+  session_root : String
   font_size : Int
+  active_section : SettingsSection
+  save_notice : String?
+  env_source : String
 }
+
+///|
+pub(all) enum SettingsSection {
+  Api
+  Agent
+  Editor
+} derive(Eq, Debug)
 
 ///|
 fn SettingsWorkspace::new() -> SettingsWorkspace {
   {
     api_key: "",
-    base_url: "https://api.deepseek.com",
+    base_url: "https://api.deepseek.com/v1",
     approval_policy: ApprovalPolicy::AskOnWrite,
     sandbox_mode: SandboxMode::WorkspaceWritable,
-    working_dir: "",
+    working_dir: ".",
+    session_root: "./.openseek",
     font_size: 14,
+    active_section: SettingsSection::Api,
+    save_notice: None,
+    env_source: ".mo_workbench/settings.json.example",
   }
 }
 
@@ -160,21 +174,43 @@ pub struct WorkbenchModel {
   settings : SettingsWorkspace
   appearance : AppearanceMode
   backend : AgentBackendRuntime
+  settings_load : SettingsLoadFn?
+  settings_persist : SettingsPersistFn?
   /// Animation progress (0.0–1.0) for tab switch transitions.
   animation_progress : Double
 }
 
 ///|
-fn WorkbenchModel::new(backend~ : AgentBackendRuntime) -> WorkbenchModel {
+fn WorkbenchModel::new(
+  backend~ : AgentBackendRuntime,
+  settings_load? : SettingsLoadFn? = None,
+  settings_persist? : SettingsPersistFn? = None,
+) -> WorkbenchModel {
+  let mut settings = SettingsWorkspace::new()
+  let mut appearance = AppearanceMode::System
+  match settings_load {
+    Some(load) =>
+      match load() {
+        Some(file) => {
+          settings = SettingsWorkspace::merge_settings_file(settings, file)
+          appearance = AppearanceMode::merge_settings_file(appearance, file)
+          settings = { ..settings, env_source: ".mo_workbench/settings.json" }
+        }
+        None => ()
+      }
+    None => ()
+  }
   {
     active_tab: TopTab::Code,
     task_tree: [],
     settings_open: false,
     sidebar_visible: true,
     code: CodeWorkspace::new(),
-    settings: SettingsWorkspace::new(),
-    appearance: AppearanceMode::System,
+    settings,
+    appearance,
     backend,
+    settings_load,
+    settings_persist,
     animation_progress: 1.0,
   }
 }
@@ -217,12 +253,17 @@ pub(all) enum CodeMsg {
 ///|
 /// Settings workspace messages (form interactions).
 pub(all) enum SettingsMsg {
+  SelectSection(SettingsSection)
   ApiKeyChanged(String)
   BaseUrlChanged(String)
   ApprovalChanged(ApprovalPolicy)
   SandboxChanged(SandboxMode)
   WorkingDirChanged(String)
+  SessionRootChanged(String)
   FontSizeChanged(Int)
+  AppearanceChanged(AppearanceMode)
+  SaveToDisk
+  DismissSaveNotice
 }
 
 ///|
@@ -230,9 +271,15 @@ pub(all) enum SettingsMsg {
 /// the private model internals.
 pub struct MoWorkbenchApp {
   priv backend : AgentBackendRuntime
+  priv settings_load : SettingsLoadFn?
+  priv settings_persist : SettingsPersistFn?
 }
 
 ///|
-fn MoWorkbenchApp::new(backend~ : AgentBackendRuntime) -> MoWorkbenchApp {
-  { backend, }
+fn MoWorkbenchApp::new(
+  backend~ : AgentBackendRuntime,
+  settings_load? : SettingsLoadFn? = None,
+  settings_persist? : SettingsPersistFn? = None,
+) -> MoWorkbenchApp {
+  { backend, settings_load, settings_persist }
 }

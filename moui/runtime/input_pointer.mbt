@@ -58,7 +58,7 @@ fn ElementNode::dispatch_view_event(
     child_frames: render.children.map(child => child.frame),
     event,
     focused,
-    state: { ..data.state, focused },
+    state: { ..data.state, focused, },
     text_control: self.control.text_context(),
     text_system,
     environment,

@@ -66,12 +66,7 @@ fn code_welcome_view(
   )
   let welcome_area_height = (height - 96.0).max(0.0)
   @views.container(
-    @views.center(
-      welcome_block,
-      width~,
-      height=welcome_area_height,
-      theme~,
-    ),
+    @views.center(welcome_block, width~, height=welcome_area_height, theme~),
     width~,
     height~,
     background=workbench_canvas_background(theme),
@@ -178,22 +173,21 @@ fn code_model_dropdown(
     background=workbench_accent_soft(theme),
     corner_radius=6.0,
     padding=6.0,
-  ).on_tap(CodeMsg::ModelChanged(
-    match code.current_model {
-      V4Pro => ModelChoice::V4Flash
-      V4Flash => ModelChoice::V4Pro
-    },
-  ))
+  ).on_tap(
+    CodeMsg::ModelChanged(
+      match code.current_model {
+        V4Pro => ModelChoice::V4Flash
+        V4Flash => ModelChoice::V4Pro
+      },
+    ),
+  )
 }
 
 ///|
 /// Context bar: chips with icons showing the active context roots
 /// (local / MoUI / main). Styled with icons + dropdown arrows + a git branch
 /// indicator.
-fn code_context_bar(
-  theme : @moui.Theme,
-  width : Double,
-) -> @moui.View[CodeMsg] {
+fn code_context_bar(theme : @moui.Theme, width : Double) -> @moui.View[CodeMsg] {
   @views.row(
     [
       // "本地" with computer icon.
@@ -422,10 +416,7 @@ fn code_composer(
   // Tool row: model selector (dropdown style) + spacer.
   rows.push(
     @views.row(
-      [
-        code_model_dropdown(model, theme),
-        @views.spacer(),
-      ],
+      [code_model_dropdown(model, theme), @views.spacer()],
       spacing=8.0,
       align=@views.CrossAlign::Center,
     ),

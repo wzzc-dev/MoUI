@@ -34,4 +34,3 @@ pub fn[Msg] picker(
     on_select=Some(on_select),
   )
 }
-

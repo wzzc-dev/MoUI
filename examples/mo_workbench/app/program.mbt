@@ -16,7 +16,11 @@ pub fn MoWorkbenchApp::program_with_backend(
 ) -> @moui.Program[WorkbenchModel, WorkbenchMsg] {
   @moui.Program::new_with_environment(
     init=() => {
-      let model = WorkbenchModel::new(backend=self.backend)
+      let model = WorkbenchModel::new(
+        backend=self.backend,
+        settings_load=self.settings_load,
+        settings_persist=self.settings_persist,
+      )
       // Start with an empty model; the UI renders the empty state first.
       // Session list / new session are triggered lazily once the UI is up.
       (model, @moui.Effect::none())
@@ -31,6 +35,12 @@ pub fn MoWorkbenchApp::program_with_backend(
 /// Convenience constructor + program in one call (used by the entrypoint).
 pub fn program_with_backend(
   backend~ : AgentBackendRuntime,
+  settings_load? : SettingsLoadFn? = None,
+  settings_persist? : SettingsPersistFn? = None,
 ) -> @moui.Program[WorkbenchModel, WorkbenchMsg] {
-  MoWorkbenchApp::new(backend~).program_with_backend()
+  MoWorkbenchApp::new(
+    backend~,
+    settings_load=settings_load,
+    settings_persist=settings_persist,
+  ).program_with_backend()
 }

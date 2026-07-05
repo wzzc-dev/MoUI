@@ -23,7 +23,11 @@ pub fn clear(ctx : PaintContext, color : @core.Color) -> Unit {
 }
 
 ///|
-pub fn fill_rect(ctx : PaintContext, rect : @core.Rect, color : @core.Color) -> Unit {
+pub fn fill_rect(
+  ctx : PaintContext,
+  rect : @core.Rect,
+  color : @core.Color,
+) -> Unit {
   ctx.commands.push(@core.DrawCommand::FillRect(rect, color))
 }
 
@@ -53,7 +57,9 @@ pub fn stroke_rounded_rect(
   brush : @core.Brush,
   width : Double,
 ) -> Unit {
-  ctx.commands.push(@core.DrawCommand::StrokeRoundedRectBrush(rect, brush, width))
+  ctx.commands.push(
+    @core.DrawCommand::StrokeRoundedRectBrush(rect, brush, width),
+  )
 }
 
 ///|
@@ -109,7 +115,10 @@ pub fn pop_rounded_clip(ctx : PaintContext) -> Unit {
 // === Transform ===
 
 ///|
-pub fn push_transform(ctx : PaintContext, transform : @core.Transform2D) -> Unit {
+pub fn push_transform(
+  ctx : PaintContext,
+  transform : @core.Transform2D,
+) -> Unit {
   ctx.commands.push(@core.DrawCommand::PushTransform(transform))
 }
 
