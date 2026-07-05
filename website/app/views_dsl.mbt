@@ -7,6 +7,7 @@ using @views {
   flow,
   frame,
   grid,
+  image,
   padding_edges,
   responsive_grid,
   row,

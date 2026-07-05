@@ -53,6 +53,20 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 
 ## Quick Start
 
+The fastest way to try MoUI is the standalone `moui_example` counter app, a
+small repo that pins a published MoUI crate and renders the same Model /
+Msg / update / view loop on both macOS Skia and Web wasm-gc.
+
+```sh
+git clone git@github.com:moui-mbt/moui_example.git
+cd moui_example
+moon update
+```
+
+`moui_example` is an independent sub-repo on `wzzc-dev/moui@0.1.5`; it is not
+listed in this repository's `moon.work` and is not built by `dev-check.sh`. It
+is the recommended starting template for new apps.
+
 The default daily baseline covers the core framework, maintenance baseline
 ratchets, Web wasm-gc, native Skia mainline contracts, Showcase, and Markdown
 Editor. Design Systems is addon diagnostic coverage; run
@@ -80,11 +94,11 @@ instead of committing generated artifacts.
 
 ## Running Examples
 
-The three featured examples — `markdown_editor`, `mo_workbench`, and
-`showcase` — share app logic in `examples/<name>/app` and expose thin platform
+The featured examples — `markdown_editor`, `mo_workbench`, `showcase`, and
+`excel` — share app logic in `examples/<name>/app` and expose thin platform
 entrypoints under `web_wasm`, `macos_skia`, `windows_skia`, and `linux_skia`.
 Run the matching entrypoint for your host; `mo_workbench` currently ships a
-macOS Skia entrypoint only.
+macOS Skia entrypoint only; `excel` ships `macos_skia` and `linux_skia`.
 
 > **Windows prerequisite:** before building or running any `windows_skia`
 > entrypoint, initialize the MSVC toolchain in a PowerShell session:
@@ -148,12 +162,27 @@ moon run examples/showcase/windows_skia --target native
 moon run examples/showcase/linux_skia --target native
 ```
 
-Focused app-package tests for all three examples:
+### Excel Viewer
+
+MoonBit Excel (`bobzhang/mbtexcel`) file renderer using MoUI data table
+components. Shared app logic is in `examples/excel/app`; `macos_skia` and
+`linux_skia` entrypoints are wired today.
+
+```sh
+# macOS Skia
+moon run examples/excel/macos_skia --target native
+
+# Linux Skia
+moon run examples/excel/linux_skia --target native
+```
+
+Focused app-package tests for the featured examples:
 
 ```sh
 moon test examples/markdown_editor/app --target native
 moon test examples/mo_workbench/app --target native
 moon test examples/showcase/app --target native
+moon test examples/excel/app --target native
 ```
 
 See [Examples](docs/examples.md), [Markdown Editor](docs/markdown-editor.md),

@@ -25,9 +25,16 @@ rendering, and platform smoke paths through a single shared app package.
 
 GitHub source: https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase
 
+## Excel Viewer
+
+Excel Viewer renders MoonBit Excel files with MoUI data table components.
+
+GitHub source: https://github.com/wzzc-dev/MoUI/tree/main/examples/excel
+
 ## MoUI Quick Example
 
 A minimal counter app that demonstrates the core MoUI patterns in the smallest
-possible surface: Model, Msg, update, view, and Program::simple.
+possible surface: Model, Msg, update, view, and Program::simple. This is a
+standalone repository at `moui-mbt/moui_example`.
 
-GitHub source: https://github.com/wzzc-dev/MoUI/tree/main/examples/moui_example
+GitHub source: https://github.com/moui-mbt/moui_example

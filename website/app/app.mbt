@@ -21,6 +21,7 @@ pub enum Msg {
   OpenHomeAt(Double)
   OpenDocs
   OpenShowcases
+  OpenShowcaseSource(String)
   SelectDoc(String)
   RetryDoc
   HostDocsCompleted(@host.HostCompletedServiceResponse)
@@ -83,13 +84,12 @@ fn Model::update(self : Model, message : Msg) -> Model {
     OpenShowcases => {
       let model = {
         ..self,
-        page: WebsiteDocs,
-        selected_doc_slug: "showcases",
-        docs_scroll_y: 0.0,
-        doc_state: DocNotLoaded,
+        page: WebsiteShowcases,
+        body_scroll_y: 0.0,
       }
       model
     }
+    OpenShowcaseSource(_) => self
     SelectDoc(slug) => {
       let entry = website_doc_entry_by_slug(slug)
       {
@@ -128,13 +128,19 @@ fn Model::update_with_services(
     OpenShowcases => {
       let model = {
         ..self,
-        page: WebsiteDocs,
-        selected_doc_slug: "showcases",
-        docs_scroll_y: 0.0,
-        doc_state: DocNotLoaded,
+        page: WebsiteShowcases,
+        body_scroll_y: 0.0,
       }
-      model.request_selected_doc(services)
+      (model, @moui.Effect::none())
     }
+    OpenShowcaseSource(url) => (
+      self,
+      @moui.Effect::host_service(
+        key="host:open-showcase-source:" + url,
+        label="Open showcase source",
+        run=_dispatch => ignore(services.open_url(url)),
+      ),
+    )
     SelectDoc(slug) => {
       let entry = website_doc_entry_by_slug(slug)
       let model = {
@@ -164,12 +170,14 @@ fn Model::view(self : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
   let scroll_y = match self.page {
     WebsiteHome => self.body_scroll_y
     WebsiteDocs => self.docs_scroll_y
+    WebsiteShowcases => self.body_scroll_y
   }
   let max_scroll = max_website_double(0.0, content_height - metrics.body_height)
   let body_scroll_y = clamp_website_double(scroll_y, 0.0, max_scroll)
   let body_content = match self.page {
     WebsiteHome => self.home_content(theme, metrics)
     WebsiteDocs => self.docs_content(theme, metrics)
+    WebsiteShowcases => self.showcases_content(theme, metrics)
   }
   let body = row(
     [
@@ -187,6 +195,7 @@ fn Model::view(self : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
           match self.page {
             WebsiteHome => ScrollBodyTo(next)
             WebsiteDocs => ScrollDocsTo(next)
+            WebsiteShowcases => ScrollBodyTo(next)
           }
         }),
       ),
@@ -380,9 +389,10 @@ fn Model::website_current_content_height(
   self : Model,
   metrics : Metrics,
 ) -> Double {
-  match self.page {
+match self.page {
     WebsiteHome => metrics.body_content_height
     WebsiteDocs => self.website_docs_content_height(metrics)
+    WebsiteShowcases => self.showcases_content_height(metrics)
   }
 }
 
@@ -461,9 +471,9 @@ fn website_metrics(viewport : @geometry.Size) -> Metrics {
 ///|
 fn website_body_content_height(compact : Bool) -> Double {
   if compact {
-    3500.0
+    3600.0
   } else {
-    2850.0
+    2960.0
   }
 }
 
