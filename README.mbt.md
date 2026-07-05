@@ -78,6 +78,88 @@ release notes should cite the relevant CI run, uploaded artifact, or smoke log
 instead of committing generated artifacts.
 `artifacts/` is ignored; keep those files as local or CI evidence.
 
+## Running Examples
+
+The three featured examples — `markdown_editor`, `mo_workbench`, and
+`showcase` — share app logic in `examples/<name>/app` and expose thin platform
+entrypoints under `web_wasm`, `macos_skia`, `windows_skia`, and `linux_skia`.
+Run the matching entrypoint for your host; `mo_workbench` currently ships a
+macOS Skia entrypoint only.
+
+> **Windows prerequisite:** before building or running any `windows_skia`
+> entrypoint, initialize the MSVC toolchain in a PowerShell session:
+>
+> ```powershell
+> .\scripts\windows\msvc_env.ps1
+> ```
+>
+> This sets up the MSVC environment required by the native Skia link step.
+> Run it once per shell before `moon run ... --target native` on Windows.
+
+### Markdown Editor
+
+Typora-style WYSIWYG Markdown editor. Source lives in
+`examples/markdown_editor/app`; platform entrypoints are thin.
+
+```sh
+# Web (wasm-gc)
+moon build examples/markdown_editor/web_wasm --target wasm-gc
+
+# macOS Skia
+moon run examples/markdown_editor/macos_skia --target native
+
+# Windows Skia (run msvc_env.ps1 first in PowerShell)
+.\scripts\windows\msvc_env.ps1
+moon run examples/markdown_editor/windows_skia --target native
+
+# Linux Skia
+moon run examples/markdown_editor/linux_skia --target native
+```
+
+### Mo Workbench
+
+Native-Skia-first desktop agent dogfood app. Only `macos_skia` is wired today;
+Linux/Windows/Web entrypoints are reserved. Enable the `openseek` submodule
+first (`git submodule update --init openseek`) and run
+`sh scripts/openseek-dev-mode.sh on` so `moon.work` lists `./openseek`.
+
+```sh
+# macOS Skia (requires openseek submodule)
+moon run examples/mo_workbench/macos_skia --target native
+```
+
+### Showcase
+
+Full MoUI view catalog and reusable example index. Shared app logic is in
+`examples/showcase/app`.
+
+```sh
+# Web (wasm-gc)
+moon build examples/showcase/web_wasm --target wasm-gc
+
+# macOS Skia
+moon run examples/showcase/macos_skia --target native
+
+# Windows Skia (run msvc_env.ps1 first in PowerShell)
+.\scripts\windows\msvc_env.ps1
+moon run examples/showcase/windows_skia --target native
+
+# Linux Skia
+moon run examples/showcase/linux_skia --target native
+```
+
+Focused app-package tests for all three examples:
+
+```sh
+moon test examples/markdown_editor/app --target native
+moon test examples/mo_workbench/app --target native
+moon test examples/showcase/app --target native
+```
+
+See [Examples](docs/examples.md), [Markdown Editor](docs/markdown-editor.md),
+[Mo Workbench](docs/mo-workbench.md), and [Showcases](docs/showcases.md) for
+package shapes and platform coverage.
+
 ## Documentation
 
 The source docs live under `docs/`. The website preview copies those Markdown
