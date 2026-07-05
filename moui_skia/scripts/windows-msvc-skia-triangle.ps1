@@ -79,6 +79,15 @@ $resolvedPaths = Resolve-MouiSkiaMsvcPaths `
 $resolvedRoot = $resolvedPaths.Root
 $resolvedLibDir = $resolvedPaths.LibDir
 $skiaLib = Resolve-SkiaMsvcLibrary -LibDir $resolvedLibDir -LinkMode $SkiaLinkMode
+$resolvedSkiaLinkMode = $SkiaLinkMode.Trim().ToLowerInvariant()
+if ($resolvedSkiaLinkMode -eq "auto") {
+  if ((Test-Path -LiteralPath (Join-Path $resolvedLibDir "skia.dll") -PathType Leaf) -and
+      (Test-Path -LiteralPath (Join-Path $resolvedLibDir "skia.dll.lib") -PathType Leaf)) {
+    $resolvedSkiaLinkMode = "dynamic"
+  } else {
+    $resolvedSkiaLinkMode = "static"
+  }
+}
 
 if (Test-Path -LiteralPath $nativeBackup) {
   throw "native/moon.pkg triangle backup already exists: $nativeBackup. Resolve the stale backup before running."
@@ -87,9 +96,7 @@ if (Test-Path -LiteralPath $triangleBackup) {
   throw "examples/triangle_window/moon.pkg triangle backup already exists: $triangleBackup. Resolve the stale backup before running."
 }
 
-$packageLibs = Get-ChildItem -LiteralPath $resolvedLibDir -Filter "*.lib" |
-  Sort-Object Name |
-  ForEach-Object { $_.FullName -replace "\\", "/" }
+$packageLibs = Get-MsvcLinkLibraries -LibDir $resolvedLibDir -LinkMode $resolvedSkiaLinkMode
 $skiaLibFlag = $skiaLib -replace "\\", "/"
 $orderedPackageLibs = @($skiaLibFlag) + ($packageLibs | Where-Object { $_ -ne $skiaLibFlag })
 $systemLibs = @(
