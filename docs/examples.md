@@ -48,7 +48,7 @@ shape outside `examples/` so MoUI can render its own bilingual homepage.
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback, `program_with_services`, and `HostAppServices::show_context_menu` native menu preview |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
 | Mo Workbench | Native-Skia-first desktop agent dogfood app | `examples/mo_workbench/app/` | DeepSeek-GUI-inspired multi-workspace shell with Code chat, starter cards, topbar model/thinking controls, responsive left rail, optional right inspector, low-noise status bar, grouped Settings form, static Write/Connect Phone/Scheduled Tasks/Plugins surfaces, injected stub backend, macOS Skia native entrypoint |
-| MoUI Quick Example | Minimal MoUI counter for quick start exploration | `examples/moui_example/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages, minimal macOS Skia and Web wasm-gc entrypoints |
+| MoUI Quick Example | Minimal MoUI counter for quick start exploration | `examples/moui_example/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages; macOS / Windows / Linux Skia and Web wasm-gc entrypoints (`readme.mbt.md`) |
 
 Focused Website checks:
 
@@ -512,12 +512,29 @@ pub fn program() -> @moui.Program[Model, Msg] {
 }
 ```
 
+Run instructions and platform notes: `examples/moui_example/readme.mbt.md`.
+
 Focused MoUI Quick Example checks:
 
 ```sh
 moon test examples/moui_example/app --target native
 moon build examples/moui_example/web_wasm --target wasm-gc
 moon check examples/moui_example/macos_skia --target native
+moon check examples/moui_example/windows_skia --target native
+moon check examples/moui_example/linux_skia --target native
+```
+
+Windows Skia run (after MSVC setup, same PowerShell session):
+
+```powershell
+. .\scripts\windows\msvc_env.ps1
+moon run examples/moui_example/windows_skia --target native
+```
+
+Linux Skia run:
+
+```sh
+moon run examples/moui_example/linux_skia --target native
 ```
 
 ## Web Wasm-GC

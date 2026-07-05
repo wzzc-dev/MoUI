@@ -373,13 +373,38 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps
   -BuildOnly
 ```
 
-To run a Windows entrypoint directly, import the MSVC environment in the
-same PowerShell process. The helper routes `.c` native stubs through C11
-atomics and keeps Skia `.cpp` stubs on their own C++ standard flags:
+To run a Windows entrypoint directly, import the MSVC environment in the same
+PowerShell process. The helper imports `vcvarsall.bat`, sets `CC` and `CXX` to
+`cl.exe`, and applies shared `CL`/`LINK` flags for MoonBit native stubs. Skia
+C++ stubs still use their own `/std:c++20` flags from the `moui_skia` prebuild.
+
+This package ships `scripts/windows/msvc_env.ps1` so it is available after
+`moon publish` / `moon add wzzc-dev/moui`. The script walks up from the current
+directory to find your project root (`moon.mod` or `moon.work`) for
+`.tools\vcpkg-msvc` and WGPU bundles, or set `MOUI_MSVC_WORKSPACE_ROOT`
+explicitly.
+
+MoUI repository checkout (wrapper forwards to the copy under `moui/`):
 
 ```powershell
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }"
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }"
+```
+
+Consumer project with only the published `wzzc-dev/moui` dependency (run from
+your app root; adjust the path to the resolved package directory on disk):
+
+```powershell
+. (Join-Path (Resolve-Path ".\.mooncakes\wzzc-dev\moui").Path "scripts\windows\msvc_env.ps1")
+moon run your_app/windows_skia --target native
+```
+
+Consumer project with only the published `wzzc-dev/moui` dependency (run from
+your app root; adjust the path to the resolved package directory on disk):
+
+```powershell
+. (Join-Path (Resolve-Path ".\.mooncakes\wzzc-dev\moui").Path "scripts\windows\msvc_env.ps1")
+moon run your_app/windows_skia --target native
 ```
 
 The MSVC package is written under `dist\windows-msvc\MoUIShowcase` and

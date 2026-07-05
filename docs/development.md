@@ -521,8 +521,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app_m
   -BuildNumber 1
 ```
 
-The helper imports `vcvarsall.bat`, sets `CC` and `CXX` to the repository's
-MSVC wrapper, enables C11 atomics only for `.c` native stubs, and uses vcpkg
+The helper imports `vcvarsall.bat`, sets `CC` and `CXX` to `cl.exe`, applies
+shared MSVC `CL`/`LINK` flags for native stubs, and uses vcpkg
 `zlib:x64-windows`. When the package imports WGPU, it also sets
 `MBT_WGPU_LINK_MODE=dynamic` and extracts the official
 `wgpu-windows-x86_64-msvc-release.zip` release when no `-WgpuNativeRoot` is
@@ -595,7 +595,6 @@ moon build examples/pdf_workbench/macos_skia --target native
 moon build examples/pdf_workbench/windows_skia --target native
 moon build examples/pdf_workbench/linux_skia --target native
 moon build examples/showcase/macos_sun --target native
-moon build examples/showcase/windows_skia --target native
 moon build examples/showcase/windows_sun --target native
 moon build examples/markdown_editor/windows_skia --target native
 moon build examples/showcase/linux_skia --target native

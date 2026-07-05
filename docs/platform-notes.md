@@ -394,15 +394,13 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app_m
 ```
 
 The MSVC helper imports `vcvarsall.bat` through `vswhere`, sets `CC` and `CXX`
-to `scripts\windows\msvc_cl.cmd`, enables MSVC C11 mode and atomics only for
-`.c` native stubs, and detects whether the selected package imports the WGPU
+to `cl.exe` on `PATH`, and applies shared `CL`/`LINK` flags for MoonBit native
+stubs. It detects whether the selected package imports the WGPU
 provider. Skia packages do not download or package `wgpu_native.dll`; WGPU
 diagnostic packages set `MBT_WGPU_LINK_MODE=dynamic` and point
 `MBT_WGPU_NATIVE_ROOT` at the extracted MSVC WGPU release. `moui_skia` emits
-`/std:c++20` stub flags for its Windows Skia C++ bindings, which remain
-separate from the C11-only path. WGPU-only diagnostic packages may temporarily
-enable global `/std:c11` for the `wgpu_mbt` C stubs because that native-stub
-path can invoke `cl.exe` directly. Packaged MSVC apps use the vcpkg
+`/std:c++20` stub flags for its Windows Skia C++ bindings via the package
+prebuild. Packaged MSVC apps use the vcpkg
 `zlib:x64-windows` runtime for native image decoding. When the
 Visual Studio-bundled vcpkg rejects direct classic installs, run
 `setup_msvc_deps.ps1 -InstallZlib` so the dependency is installed with an
