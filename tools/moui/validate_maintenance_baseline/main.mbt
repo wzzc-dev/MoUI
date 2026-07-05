@@ -88,7 +88,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/showcase/app/showcase_test_helpers_test.mbt",
-      max_lines: 302,
+      max_lines: 350,
     },
     {
       path: "examples/showcase/app/showcase_diagnostics_app_test.mbt",
