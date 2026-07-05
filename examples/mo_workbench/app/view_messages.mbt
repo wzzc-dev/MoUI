@@ -39,11 +39,11 @@ fn user_message_row(
         @views.container(
           @views.column(
             [
-              @views.text(
+              chat_message_body(
                 text_,
-                role=@views.TextRole::Body,
-                theme~,
-                width=bubble_width - 24.0,
+                @views.TextRole::Body,
+                theme,
+                bubble_width - 24.0,
               ),
             ],
             spacing=4.0,
@@ -53,7 +53,7 @@ fn user_message_row(
           background=user_message_background(theme),
           corner_radius=12.0,
           padding=14.0,
-        ),
+        ).border(hairline_border(theme)),
         @views.container(
           @views.empty(),
           width=avatar_size,
@@ -100,11 +100,11 @@ fn assistant_message_row(
     None => ()
   }
   rows.push(
-    @views.text(
+    chat_message_body(
       content,
-      role=@views.TextRole::Body,
-      theme~,
-      width=bubble_width - 24.0,
+      @views.TextRole::Body,
+      theme,
+      bubble_width - 24.0,
     ),
   )
   @views.container(
@@ -125,10 +125,10 @@ fn assistant_message_row(
         @views.container(
           @views.column(rows, spacing=4.0, align=@views.CrossAlign::Start),
           width=bubble_width,
-          background=assistant_message_background(theme),
+          background=workbench_subtle_background(theme),
           corner_radius=12.0,
           padding=14.0,
-        ),
+        ).border(hairline_border(theme)),
         @views.spacer(),
       ],
       spacing=10.0,
