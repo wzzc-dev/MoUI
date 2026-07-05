@@ -17,6 +17,21 @@ fn test_model(script~ : (AgentCommand) -> Array[AgentEvent]) -> WorkbenchModel {
 // ---------------------------------------------------------------------------
 
 ///|
+test "backend user echo does not duplicate optimistic user message" {
+  let model = test_model(script=_cmd => [])
+  let model = { ..model, code: { ..model.code, prompt: "hello" } }
+  let (model, _effect) = model.update(
+    WorkbenchMsg::CodeMsg(CodeMsg::SubmitPrompt),
+  )
+  let (model, _effect) = model.update(
+    WorkbenchMsg::CodeMsg(
+      CodeMsg::ReceiveAgentEvent(UserMessageAdded("hello")),
+    ),
+  )
+  inspect(model.code.messages.length(), content="1")
+}
+
+///|
 test "submit prompt appends user message and starts streaming" {
   let model = test_model(script=cmd => {
     match cmd {

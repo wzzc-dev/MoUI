@@ -113,10 +113,12 @@ pub fn[Msg] text_area(
   theme? : @core.Theme,
   width? : Double = 320.0,
   line_height? : Double = 28.0,
+  on_submit? : Msg? = None,
 ) -> @core.View[Msg] {
   text_area_control(
     value=@core.Binding::new(get=() => value, set=_ => ()),
     on_input=Some(on_input),
+    on_submit~,
     placeholder~,
     size=@core.Size::new(
       width~,

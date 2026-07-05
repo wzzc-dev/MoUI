@@ -12,23 +12,43 @@ fn code_workspace_view(
   if model.messages.is_empty() && !model.is_streaming {
     code_welcome_view(model, theme, width, height)
   } else {
-    let composer_height = if model.is_streaming { 194.0 } else { 148.0 }
-    let list_height = (height - composer_height).max(220.0)
-    @views.container(
-      @views.column(
-        [
-          code_message_list(model, theme, width, list_height),
-          code_composer(model, theme, width, composer_height),
-        ],
-        spacing=0.0,
-        align=@views.CrossAlign::Stretch,
-      ),
-      width~,
-      height~,
-      background=workbench_canvas_background(theme),
-      padding=0.0,
-    )
+    code_chat_pane_view(model, theme, width, height)
   }
+}
+
+///|
+/// Chat pane: messages fill the area above a bottom-pinned composer.
+fn code_chat_pane_view(
+  model : CodeWorkspace,
+  theme : @moui.Theme,
+  width : Double,
+  height : Double,
+) -> @moui.View[CodeMsg] {
+  let list = code_message_list(model, theme, width)
+  let composer = code_composer(model, theme, width)
+  @views.container(
+    @views.custom_children_layout(
+      children=[list, composer],
+      measure=ctx => {
+        ctx.constraints.constrain(@geometry.Size::new(width~, height~))
+      },
+      place=ctx => {
+        let composer_h = ctx.child_sizes[1].height
+        let list_h = (ctx.frame.size.height - composer_h).max(0.0)
+        let w = ctx.frame.size.width
+        [
+          @geometry.Rect::new(x=0.0, y=0.0, width=w, height=list_h),
+          @geometry.Rect::new(x=0.0, y=list_h, width=w, height=composer_h),
+        ]
+      },
+      paint=(_ctx, _frame) => (),
+      semantics_label="Code chat pane",
+    ),
+    width~,
+    height~,
+    background=workbench_canvas_background(theme),
+    padding=0.0,
+  )
 }
 
 ///|
@@ -90,6 +110,7 @@ fn code_input_card(
         @views.text_area(
           model.prompt,
           on_input=value => CodeMsg::PromptChanged(value),
+          on_submit=Some(CodeMsg::SubmitPrompt),
           placeholder="帮你编写代码、调试 Bug、优化性能等开发工作…",
           lines=4,
           variant=@views.TextFieldVariant::Filled,
@@ -368,22 +389,27 @@ fn code_message_list(
   model : CodeWorkspace,
   theme : @moui.Theme,
   width : Double,
-  height : Double,
 ) -> @moui.View[CodeMsg] {
-  let inner_width = (width - 48.0).max(320.0)
+  let inner_width = (width - 56.0).max(320.0)
   let rows : Array[@moui.View[CodeMsg]] = []
   for msg in model.messages {
     rows.push(message_row(msg, theme, inner_width))
   }
   @views.container(
     @views.scroll_view(
-      @views.list(rows, spacing=12.0),
+      @views.column(
+        [
+          @views.list(rows, spacing=12.0),
+          @views.spacer(min_length=0.0, weight=1.0),
+        ],
+        spacing=0.0,
+        align=@views.CrossAlign::Stretch,
+        justify=@views.MainAlign::Start,
+      ),
       state=Some(model.scroll_state),
-      width~,
-      height~,
+      width=inner_width,
     ),
     width~,
-    height~,
     background=workbench_canvas_background(theme),
     padding=28.0,
   )
@@ -397,7 +423,6 @@ fn code_composer(
   model : CodeWorkspace,
   theme : @moui.Theme,
   width : Double,
-  height : Double,
 ) -> @moui.View[CodeMsg] {
   let inner_width = (width - 48.0).max(320.0)
   let rows : Array[@moui.View[CodeMsg]] = []
@@ -425,15 +450,15 @@ fn code_composer(
   rows.push(
     @views.row(
       [
-        @views.text_area(
+        @views.text_field(
           model.prompt,
           on_input=value => CodeMsg::PromptChanged(value),
+          on_submit=Some(CodeMsg::SubmitPrompt),
           placeholder="继续描述你的任务…",
-          lines=2,
           variant=@views.TextFieldVariant::Filled,
           theme~,
           width=inner_width - 64.0,
-          line_height=28.0,
+          height=44.0,
         ),
         workbench_send_button(
           theme,
@@ -484,7 +509,6 @@ fn code_composer(
       padding=20.0,
     ),
     width~,
-    height~,
     background=workbench_canvas_background(theme),
     padding=28.0,
   )
