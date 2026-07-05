@@ -16,8 +16,12 @@ fn Model::top_bar(
       nav_button(theme, "Home", self.page is WebsiteHome, OpenHomeAt(0.0)),
     )
     items.push(nav_button(theme, "Tour", false, OpenHomeAt(700.0)))
-    items.push(nav_button(theme, "Examples", false, OpenHomeAt(1840.0)))
-    items.push(nav_button(theme, "Showcases", false, OpenShowcases))
+    items.push(
+      nav_button(
+        theme, "Quick Start", false, OpenHomeAt(quick_start_nav_offset()),
+      ),
+    )
+    items.push(nav_button(theme, "Showcases", self.page is WebsiteShowcases, OpenShowcases))
     items.push(nav_button(theme, "Docs", self.page is WebsiteDocs, OpenDocs))
     items.push(nav_button(theme, "GitHub", false, OpenRepository))
   } else {
@@ -100,6 +104,174 @@ fn brand_mark(theme : @moui.Theme) -> @moui.View[Msg] {
 }
 
 ///|
+fn Model::showcases_content(
+  self : Model,
+  theme : @moui.Theme,
+  metrics : Metrics,
+) -> @moui.View[Msg] {
+  ignore(self)
+  let card_width = if metrics.compact {
+    metrics.content_width
+  } else {
+    clamp_website_double((metrics.content_width - 32.0) / 2.0, 360.0, 540.0)
+  }
+  let thumb_height = card_width * 0.56
+  let cards = website_showcase_entries().map(entry => {
+    showcase_card(theme, entry, card_width, thumb_height)
+  })
+  section_shell(
+    theme,
+    metrics,
+    column(
+      [
+        section_header(
+          theme,
+          "Showcases",
+          "MoUI 示例截图展示",
+          "Click any screenshot to open its source on GitHub.",
+          metrics.content_width,
+        ),
+        responsive_grid(
+          cards,
+          width=metrics.content_width,
+          min_column_width=card_width,
+          row_spacing=20.0,
+          column_spacing=16.0,
+        ),
+      ],
+      spacing=24.0,
+      align=@views.CrossAlign::Start,
+    ),
+    top=metrics.section_top,
+    bottom=metrics.section_bottom,
+    background=Some(showcase_section_background(theme)),
+  )
+}
+
+///|
+fn showcase_card(
+  theme : @moui.Theme,
+  entry : WebsiteShowcaseEntry,
+  width : Double,
+  thumb_height : Double,
+) -> @moui.View[Msg] {
+  let source_url = entry.source_url
+  let slug = entry.slug
+  let title = entry.title
+  let subtitle = entry.subtitle
+  container(
+    column(
+      [
+        container(
+          image(
+            showcase_thumbnail_data_uri(slug),
+            width=width - 2.0,
+            height=thumb_height,
+            fit=@views.ImageFit::Cover,
+          ),
+          width~,
+          height=thumb_height,
+          corner_radius=8.0,
+          theme~,
+          padding=0.0,
+        ),
+        column(
+          [
+            text(title, width=width - 32.0, height=28.0)
+            .font(theme.typography.control)
+            .foreground(theme.palette.foreground),
+            text(subtitle, width=width - 32.0, height=22.0)
+            .font(theme.typography.caption)
+            .foreground(theme.palette.muted),
+          ],
+          spacing=4.0,
+          align=@views.CrossAlign::Start,
+        ),
+        button(
+          "Open Source",
+          on_click=OpenShowcaseSource(source_url),
+          variant=@views.ButtonVariant::Outline,
+          theme~,
+          width=width - 32.0,
+          height=36.0,
+        ),
+      ],
+      spacing=10.0,
+      align=@views.CrossAlign::Start,
+    ),
+    width~,
+    height=thumb_height + 110.0,
+    background=theme.palette.background,
+    corner_radius=12.0,
+    theme~,
+    padding=1.0,
+  ).border(website_border(theme))
+}
+
+///|
+priv struct WebsiteShowcaseEntry {
+  slug : String
+  title : String
+  subtitle : String
+  source_url : String
+}
+
+///|
+fn website_showcase_entries() -> Array[WebsiteShowcaseEntry] {
+  [
+    {
+      slug: "excel",
+      title: "Excel Viewer",
+      subtitle: "MoonBit Excel file renderer",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/excel",
+    },
+    {
+      slug: "markdown_editor",
+      title: "Markdown Editor",
+      subtitle: "WYSIWYG Markdown editing",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/markdown_editor",
+    },
+    {
+      slug: "mo_workbench",
+      title: "Mo Workbench",
+      subtitle: "Desktop agent workspace",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/mo_workbench",
+    },
+    {
+      slug: "showcase",
+      title: "Showcase",
+      subtitle: "Visual component catalog",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase",
+    },
+  ]
+}
+
+///|
+fn Model::showcases_content_height(self : Model, metrics : Metrics) -> Double {
+  ignore(self)
+  let card_width = if metrics.compact {
+    metrics.content_width
+  } else {
+    clamp_website_double((metrics.content_width - 32.0) / 2.0, 360.0, 540.0)
+  }
+  let thumb_height = card_width * 0.56
+  let card_height = thumb_height + 110.0
+  let entries = website_showcase_entries()
+  let grid_rows = if metrics.compact {
+    entries.length().to_double()
+  } else {
+    ((entries.length() + 1) / 2).to_double()
+  }
+  let header_height = 46.0 + 30.0 + 30.0 + 4.0 + 4.0
+  metrics.section_top +
+  header_height +
+  24.0 +
+  grid_rows * card_height +
+  max_website_double(0.0, (grid_rows - 1.0)) * 20.0 +
+  metrics.section_bottom
+}
+
+///|
 fn nav_button(
   theme : @moui.Theme,
   label : String,
@@ -115,7 +287,13 @@ fn nav_button(
       @views.ButtonVariant::Ghost
     },
     theme~,
-    width=if label == "Examples" { 92.0 } else { 76.0 },
+    width=if label == "Quick Start" {
+      102.0
+    } else if label == "Showcases" {
+      92.0
+    } else {
+      76.0
+    },
     height=34.0,
   ).foreground(if active { theme.palette.primary } else { theme.palette.muted })
 }
@@ -845,13 +1023,6 @@ fn quick_start_copy(theme : @moui.Theme, width : Double) -> @moui.View[Msg] {
       .font(@text.FontSpec::new(size=26.0, weight=780))
       .foreground(theme.palette.foreground),
       text(
-        "先修复本地依赖，再构建这个由 MoUI 自己渲染的官网首页。",
-        width~,
-        height=52.0,
-      )
-      .font(theme.typography.body)
-      .foreground(theme.palette.foreground),
-      text(
         "The Web entrypoint stays thin: shared homepage logic lives in website/app, and wasm-gc hosts the canvas.",
         width~,
         height=58.0,
@@ -888,20 +1059,52 @@ fn quick_start_placeholder(
           theme~,
           width=118.0,
         ),
-        text("正在开发中", width=width - 36.0, height=38.0)
-        .font(@text.FontSpec::new(size=22.0, weight=780))
+        text(
+          "git clone git@github.com:moui-mbt/moui_example.git",
+          width=width - 36.0,
+          height=38.0,
+        )
+        .font(@text.FontSpec::new(size=18.0, weight=720))
         .foreground(theme.palette.foreground),
+        wrapped_caption(
+          theme,
+          width - 36.0,
+          "Clones the standalone `moui_example` counter repo (recommended starting template, pins `wzzc-dev/moui@0.1.5`).",
+          12.0,
+          20.0,
+        ),
       ],
       spacing=10.0,
       align=@views.CrossAlign::Center,
     ),
     width~,
-    height=118.0,
+    height=180.0,
     background=soft_panel_background(theme),
     corner_radius=theme.radius_scale.lg,
     theme~,
     padding=18.0,
   ).border(website_border(theme))
+}
+
+///|
+fn wrapped_caption(
+  theme : @moui.Theme,
+  width : Double,
+  value : String,
+  font_size : Double,
+  line_height : Double,
+) -> @moui.View[Msg] {
+  let font = @text.FontSpec::new(size=font_size, weight=460)
+  let lines = website_doc_wrap_lines(value, width, font_size)
+  let rows : Array[@moui.View[Msg]] = []
+  for line in lines {
+    rows.push(
+      text(line, width=width, height=line_height)
+      .font(font)
+      .foreground(theme.palette.muted),
+    )
+  }
+  column(rows, spacing=0.0, align=@views.CrossAlign::Start)
 }
 
 ///|
@@ -982,6 +1185,11 @@ fn website_border(theme : @moui.Theme) -> @graphics.BorderStyle {
     brush=@graphics.Brush::solid(theme.palette.outline.multiply_alpha(0.62)),
     width=1.0,
   )
+}
+
+///|
+fn quick_start_nav_offset() -> Double {
+  2400.0
 }
 
 ///|
