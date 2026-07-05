@@ -33,7 +33,7 @@ not the mainline.
 
 ```toml
 import {
-  "wzzc-dev/moui@0.1.4",
+  "wzzc-dev/moui@0.1.5-1",
   "wzzc-dev/moui_richtext@0.1.0",
 }
 ```

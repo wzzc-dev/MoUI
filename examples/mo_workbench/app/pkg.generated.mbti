@@ -12,6 +12,8 @@ pub fn agent_backend_runtime(run~ : (Array[AgentCommand], (AgentEvent) -> Unit) 
 
 pub fn mo_workbench_decode_settings_file(String) -> MoWorkbenchSettingsFile?
 
+pub fn mo_workbench_default_settings_file() -> MoWorkbenchSettingsFile
+
 pub fn program_with_backend(backend~ : AgentBackendRuntime, settings_load? : (() -> MoWorkbenchSettingsFile?)?, settings_persist? : ((MoWorkbenchSettingsFile) -> Unit)?) -> @core.Program[WorkbenchModel, WorkbenchMsg]
 
 pub fn session_summary(id~ : String, first_prompt~ : String, last_active_unix_seconds? : Int64?) -> SessionSummary
