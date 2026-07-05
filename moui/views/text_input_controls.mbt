@@ -837,9 +837,10 @@ fn[Msg] handle_text_field_pointer(
   }
   if event.phase == @core.PointerPhase::Down &&
     ctx.frame.contains(event.position) {
+    let caret_at_end = @core.TextGraphemeBoundaries::new(text~).length()
     let next_control = {
       ..ctx.text_control,
-      caret: text_length(text),
+      caret: caret_at_end,
       selection: None,
       text_selection_anchor: None,
       composition: None,
@@ -1565,20 +1566,13 @@ fn replace_text_range(
   range : @core.TextRange,
   replacement : String,
 ) -> TextEditResult {
-  let chars = text.to_array()
   let normalized = range.normalized()
-  let range = @core.normalize_grapheme_range(
-    @core.TextGraphemeBoundaries::new(text~),
-    normalized,
-  )
-  let start = clamp_int(range.start, 0, chars.length())
-  let end = clamp_int(range.end, start, chars.length())
-  let replacement_chars = replacement.to_array()
-  {
-    text: String::from_array(chars[:start] + replacement_chars + chars[end:]),
-    caret: start + replacement_chars.length(),
-    selection: None,
-  }
+  let range = normalize_text_range_to_grapheme(text, normalized)
+  let next_text = @core.replace_text_range(text, range, replacement)
+  let caret = range.start +
+    @core.TextGraphemeBoundaries::new(text=replacement).length()
+  let boundaries = @core.TextGraphemeBoundaries::new(text=next_text)
+  { text: next_text, caret: boundaries.clamp_index(caret), selection: None }
 }
 
 ///|
@@ -1666,12 +1660,12 @@ fn move_text_caret_index(
   caret : Int,
   direction : TextCaretDirection,
 ) -> Int {
-  let length = text_length(text)
-  let caret = clamp_int(caret, 0, length)
+  let boundaries = @core.TextGraphemeBoundaries::new(text~)
+  let length = boundaries.length()
+  let caret = boundaries.clamp_index(caret)
   match direction {
-    MoveLeft =>
-      @core.TextGraphemeBoundaries::new(text~).previous_boundary(caret)
-    MoveRight => @core.TextGraphemeBoundaries::new(text~).next_boundary(caret)
+    MoveLeft => boundaries.previous_boundary(caret)
+    MoveRight => boundaries.next_boundary(caret)
     MoveStart => 0
     MoveEnd => length
   }

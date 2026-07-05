@@ -15,6 +15,7 @@ fn ElementNode::dispatch_text_input(
       text_system,
       environment~,
       style~,
+      focused=true,
     )
   } else {
     let child_environment = (self.erased_view_node.child_environment)(

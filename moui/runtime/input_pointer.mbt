@@ -51,13 +51,14 @@ fn ElementNode::dispatch_view_event(
   environment? : Environment = Environment::neutral(),
   style? : ViewStyle = ViewStyle::empty(),
   now_ms? : Double = 0.0,
+  focused? : Bool = false,
 ) -> ElementEventResult {
   let result = (data.event)({
     frame: render.frame,
     child_frames: render.children.map(child => child.frame),
     event,
-    focused: false,
-    state: { ..data.state, focused: false },
+    focused,
+    state: { ..data.state, focused },
     text_control: self.control.text_context(),
     text_system,
     environment,
