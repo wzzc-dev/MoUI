@@ -230,6 +230,31 @@ function Get-WgpuNativeRoot {
   return ""
 }
 
+function Add-MsvcClFlag {
+  param([string]$Flag)
+
+  if ([string]::IsNullOrWhiteSpace($Flag)) {
+    return
+  }
+  if ([string]::IsNullOrWhiteSpace($env:CL)) {
+    $env:CL = $Flag
+    return
+  }
+  if ($env:CL -notmatch [regex]::Escape($Flag)) {
+    $env:CL = "$Flag $($env:CL)"
+  }
+}
+
+function Enable-MsvcC11Atomics {
+  Add-MsvcClFlag "/experimental:c11atomics"
+  Add-MsvcClFlag "/wd4005"
+  Add-MsvcClFlag "/DMOONBIT_FFI_EXPORT="
+}
+
+function Enable-MsvcGlobalC11ModeForCOnlyStubs {
+  Add-MsvcClFlag "/std:c11"
+}
+
 function Set-MoonBitMsvcEnvironment {
   param(
     [string]$ClPath,
