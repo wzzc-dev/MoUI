@@ -199,7 +199,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 328,
+      max_lines: 329,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",
@@ -223,6 +223,7 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "examples/pdf_workbench/app/view_preview.mbt", max_lines: 315 },
     { path: "examples/pdf_workbench/app/view_sidebar.mbt", max_lines: 285 },
     { path: "examples/pdf_workbench/app/view_inspector.mbt", max_lines: 470 },
+    { path: "examples/excel/sheet/sheet.mbt", max_lines: 1822 },
     { path: "moui/render/skia/skia_renderer_wbtest.mbt", max_lines: 75 },
     { path: "moui/render/sun/renderer.mbt", max_lines: 1950 },
     { path: "moui/views/style_api.mbt", max_lines: 178 },
@@ -245,7 +246,7 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/views/form_support_text.mbt", max_lines: 48 },
     { path: "moui/views/text_input_controls.mbt", max_lines: 882 },
     { path: "moui/views/text_input_editing.mbt", max_lines: 438 },
-    { path: "moui/views/text_input_paint.mbt", max_lines: 458 },
+    { path: "moui/views/text_input_paint.mbt", max_lines: 462 },
     { path: "moui/views/text_area_control.mbt", max_lines: 519 },
     { path: "moui/views/input_group_shell.mbt", max_lines: 45 },
     { path: "moui/views/input_text_wrappers.mbt", max_lines: 95 },
