@@ -1,6 +1,7 @@
 ///|
 pub struct LinuxSunAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
+  priv platform_view_plugins : Array[@host.PlatformViewPlugin]
 }
 
 ///|
@@ -11,8 +12,9 @@ pub struct LinuxSunSmokeOptions {
 ///|
 pub fn LinuxSunAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
+  platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
 ) -> LinuxSunAppOptions {
-  { scene_resolver, }
+  { scene_resolver, platform_view_plugins }
 }
 
 ///|
@@ -45,6 +47,7 @@ pub fn run_app_with_options(
     provider=renderer_provider(options~),
     options=@linux_host.LinuxHostAppOptions::new(
       scene_resolver=options.scene_resolver,
+      platform_view_plugins=options.platform_view_plugins,
     ),
     window_requests~,
   )
@@ -64,6 +67,7 @@ pub fn run_smoke_app_with_options(
     provider=renderer_provider(options~),
     options=@linux_host.LinuxHostAppOptions::new(
       scene_resolver=options.scene_resolver,
+      platform_view_plugins=options.platform_view_plugins,
     ),
     smoke_options=@linux_host.LinuxHostSmokeOptions::new(
       first_frame_smoke_auto_exit=smoke_options.first_frame_smoke_auto_exit,
@@ -85,11 +89,81 @@ pub fn renderer_provider(
 }
 
 ///|
+#borrow(source_bytes)
+extern "C" fn moui_linux_sun_async_image_spawn(
+  window_id : Int64,
+  source_bytes : Bytes,
+  source_len : Int,
+) -> Unit = "moui_linux_sun_async_image_spawn"
+
+///|
+extern "C" fn moui_linux_sun_async_image_take_result() -> Bytes = "moui_linux_sun_async_image_take_result"
+
+///|
+fn async_image_read_i32_le(data : Bytes, offset : Int) -> Int {
+  data[offset].to_int() +
+  data[offset + 1].to_int() * 256 +
+  data[offset + 2].to_int() * 65536 +
+  data[offset + 3].to_int() * 16777216
+}
+
+///|
 fn sun_native_image_loader() -> @host.HostAsyncImageLoader {
-  @host.HostAsyncImageLoader::new(start_load=(_window_id, source, complete) => {
-    complete(@sun_renderer.sun_image_load_completion(source))
-    None
-  })
+  let native_source = @host.HostNativeAsyncImageSource::new()
+  @host.HostNativeAsyncImageSource::loader_with_drain(
+    native_source,
+    spawn=(window_id, source) => {
+      if source.has_prefix("data:") {
+        let completion = @sun_renderer.sun_image_load_completion(source)
+        ignore(native_source.complete(window_id, completion))
+      } else {
+        let source_bytes = @utf8.encode(source[:], bom=false)
+        moui_linux_sun_async_image_spawn(
+          window_id.value.to_int64(),
+          source_bytes,
+          source_bytes.length(),
+        )
+      }
+    },
+    drain=() => {
+      while true {
+        let result = moui_linux_sun_async_image_take_result()
+        if result.length() == 0 {
+          break
+        }
+        let window_id = @host.HostWindowId::new(
+          async_image_read_i32_le(result, 0),
+        )
+        let status = async_image_read_i32_le(result, 8)
+        let source_len = async_image_read_i32_le(result, 12)
+        let bytes_len = async_image_read_i32_le(result, 16)
+        let background_io_raw = async_image_read_i32_le(result, 20)
+        let background_io = background_io_raw != 0
+        let header = 24
+        let source = @utf8.decode_lossy(
+          result[header:header + source_len],
+          ignore_bom=false,
+        )
+        let completion = if status == 0 && bytes_len > 0 {
+          let image_bytes = result[header + source_len:header +
+          source_len +
+          bytes_len].to_owned()
+          @sun_renderer.sun_image_load_completion_from_bytes(
+            source,
+            image_bytes,
+            background_io~,
+          )
+        } else {
+          @render.ImageResourceLoadCompletion::failed(
+            source,
+            diagnostic="Async image I/O failed",
+            background_io~,
+          )
+        }
+        ignore(native_source.complete(window_id, completion))
+      }
+    },
+  )
 }
 
 ///|
@@ -115,7 +189,7 @@ pub fn linux_sun_provider_preflight_summary(
 
 ///|
 fn sun_host_renderer_bridge_preflight() -> String {
-  "renderer_bridge=HostWindowRenderer; renderer_text_system=SunRasterRenderer.text_system; renderer_image_resources=SunRasterRenderer.image_resources; renderer_image_loader=sun_image_load_completion; renderer_async_image_loading=post-present; renderer_image_resource_apply=SunRasterRenderer.apply_image_resource_load_completion; renderer_image_resource_change=SunRasterRenderer.set_image_resource_change_callback; renderer_present_count=SunRasterRenderer.present_count; renderer_dispose=SunRasterRenderer.dispose; linux_presenter=window_linux.present_rgba_pixels"
+  "renderer_bridge=HostWindowRenderer; renderer_text_system=SunRasterRenderer.text_system; renderer_image_resources=SunRasterRenderer.image_resources; renderer_image_loader=sun_image_load_completion; renderer_image_completion_source=HostNativeAsyncImageSource; renderer_async_image_loading=off-main-io; renderer_image_resource_apply=SunRasterRenderer.apply_image_resource_load_completion; renderer_image_resource_change=SunRasterRenderer.set_image_resource_change_callback; renderer_present_count=SunRasterRenderer.present_count; renderer_dispose=SunRasterRenderer.dispose; linux_presenter=window_linux.present_rgba_pixels"
 }
 
 ///|

@@ -272,3 +272,199 @@ test "sun renderer nested filter inside transform scope" {
     None => fail("expected Sun frame")
   }
 }
+
+///|
+test "sun unmatched scope pops are ignored and counted" {
+  let target = SunPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=8.0, height=8.0),
+    ),
+    target,
+  )
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::PopClip,
+    @core.DrawCommand::PopRoundedClip,
+    @core.DrawCommand::PopTransform,
+    @core.DrawCommand::PopOpacity,
+    @core.DrawCommand::PopLayer,
+    @core.DrawCommand::PopFilter,
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
+      @core.Color::black(),
+    ),
+  ])
+  inspect(renderer.unsupported_command_count(), content="6")
+  let diagnostics = renderer.unsupported_command_diagnostics()
+  inspect(diagnostics.length(), content="6")
+  inspect(diagnostics[0].command, content="PopClip")
+  assert_true(diagnostics[0].reason.contains("no matching push"))
+  inspect(diagnostics[5].command, content="PopFilter")
+  inspect(renderer.present_count(), content="1")
+  guard renderer.last_frame() is Some(frame) else { fail("expected Sun frame") }
+  inspect(frame.width, content="8")
+  inspect(frame.height, content="8")
+}
+
+///|
+test "sun mismatched scope pop preserves active clip" {
+  let target = SunPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=12.0, height=8.0),
+    ),
+    target,
+  )
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::PushClip(
+      @core.Rect::new(x=0.0, y=0.0, width=4.0, height=8.0),
+    ),
+    @core.DrawCommand::PopTransform,
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=12.0, height=8.0),
+      @core.Color::black(),
+    ),
+    @core.DrawCommand::PopClip,
+  ])
+  inspect(renderer.unsupported_command_count(), content="1")
+  let diagnostics = renderer.unsupported_command_diagnostics()
+  inspect(diagnostics.length(), content="1")
+  inspect(diagnostics[0].command, content="PopTransform")
+  assert_true(diagnostics[0].reason.contains("active clip scope"))
+  guard renderer.last_frame() is Some(frame) else { fail("expected Sun frame") }
+  assert_true(
+    sun_test_frame_has_dark_pixel(
+      frame,
+      @core.Rect::new(x=0.0, y=0.0, width=4.0, height=8.0),
+    ),
+  )
+  assert_false(
+    sun_test_frame_has_dark_pixel(
+      frame,
+      @core.Rect::new(x=6.0, y=0.0, width=4.0, height=8.0),
+    ),
+  )
+}
+
+///|
+test "sun unclosed scopes are counted and restored at frame boundary" {
+  let target = SunPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=12.0, height=8.0),
+    ),
+    target,
+  )
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::PushClip(
+      @core.Rect::new(x=0.0, y=0.0, width=4.0, height=8.0),
+    ),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=12.0, height=8.0),
+      @core.Color::black(),
+    ),
+  ])
+  inspect(renderer.unsupported_command_count(), content="1")
+  let diagnostics = renderer.unsupported_command_diagnostics()
+  inspect(diagnostics.length(), content="1")
+  inspect(diagnostics[0].command, content="PushClip")
+  assert_true(diagnostics[0].reason.contains("open clip scope"))
+  guard renderer.last_frame() is Some(clipped_frame) else {
+    fail("expected clipped Sun frame")
+  }
+  assert_true(
+    sun_test_frame_has_dark_pixel(
+      clipped_frame,
+      @core.Rect::new(x=0.0, y=0.0, width=4.0, height=8.0),
+    ),
+  )
+  assert_false(
+    sun_test_frame_has_dark_pixel(
+      clipped_frame,
+      @core.Rect::new(x=6.0, y=0.0, width=4.0, height=8.0),
+    ),
+  )
+
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=12.0, height=8.0),
+      @core.Color::black(),
+    ),
+  ])
+  inspect(renderer.unsupported_command_count(), content="0")
+  inspect(renderer.unsupported_command_diagnostics().length(), content="0")
+  inspect(renderer.present_count(), content="2")
+  guard renderer.last_frame() is Some(restored_frame) else {
+    fail("expected restored Sun frame")
+  }
+  assert_true(
+    sun_test_frame_has_dark_pixel(
+      restored_frame,
+      @core.Rect::new(x=6.0, y=0.0, width=4.0, height=8.0),
+    ),
+  )
+}
+
+///|
+test "sun unsupported command diagnostics reset per frame" {
+  let target = SunPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=8.0, height=8.0),
+    ),
+    target,
+  )
+  renderer.render([
+    @core.DrawCommand::DrawShaderEffect(
+      @core.ShaderEffectSpec::new(
+        name="missing-shader",
+        frame=@core.Rect::new(x=0.0, y=0.0, width=8.0, height=8.0),
+        fallback=@core.Brush::solid(@core.Color::blue()),
+      ),
+    ),
+  ])
+  inspect(renderer.unsupported_command_count(), content="1")
+  let diagnostics = renderer.unsupported_command_diagnostics()
+  inspect(diagnostics.length(), content="1")
+  inspect(diagnostics[0].command, content="DrawShaderEffect")
+  assert_true(diagnostics[0].reason.contains("missing-shader"))
+  assert_true(diagnostics[0].reason.contains("fallback brush"))
+  inspect(renderer.present_count(), content="1")
+
+  renderer.render([@core.DrawCommand::Clear(@core.Color::white())])
+  inspect(renderer.unsupported_command_count(), content="0")
+  inspect(renderer.unsupported_command_diagnostics().length(), content="0")
+  inspect(renderer.present_count(), content="2")
+}
+
+///|
+fn sun_test_frame_has_dark_pixel(
+  frame : SunPixelFrame,
+  rect : @core.Rect,
+) -> Bool {
+  let start_x = rect.origin.x.floor().max(0.0).to_int()
+  let start_y = rect.origin.y.floor().max(0.0).to_int()
+  let end_x = (rect.origin.x + rect.size.width)
+    .ceil()
+    .min(frame.width.to_double())
+    .to_int()
+  let end_y = (rect.origin.y + rect.size.height)
+    .ceil()
+    .min(frame.height.to_double())
+    .to_int()
+  for y in start_y..<end_y {
+    for x in start_x..<end_x {
+      let offset = (y * frame.width + x) * 4
+      if frame.pixels[offset].to_int() < 64 &&
+        frame.pixels[offset + 1].to_int() < 64 &&
+        frame.pixels[offset + 2].to_int() < 64 {
+        return true
+      }
+    }
+  }
+  false
+}

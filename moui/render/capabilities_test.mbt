@@ -59,6 +59,32 @@ test "renderer capability report tracks draw command support" {
     .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
     .contains("failed-image placeholders"),
   )
+  assert_true(
+    image
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("PNG/BMP"),
+  )
+  assert_true(
+    image
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("JPEG data URI and local-file"),
+  )
+  assert_true(
+    image
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("fit-width/fit-height placement"),
+  )
+  guard @render.renderer_feature_capability(
+      @render.RendererFeature::LayerCompositing,
+    )
+    is Some(layer_compositing) else {
+    fail("expected layer compositing capability")
+  }
+  assert_true(
+    layer_compositing
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("clear cached layers on resize and dispose"),
+  )
   guard @render.renderer_feature_capability(@render.RendererFeature::Rect)
     is Some(rect) else {
     fail("expected rect capability")
@@ -171,6 +197,11 @@ test "renderer capability report tracks draw command support" {
     text
     .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
     .contains("real native renderer smoke"),
+  )
+  assert_true(
+    text
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("TextRun frame"),
   )
   guard @render.renderer_feature_capability(@render.RendererFeature::Transform)
     is Some(transform) else {
@@ -439,6 +470,15 @@ test "renderer capability report tracks draw command support" {
     .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
     .contains("renderer-local pixel tests"),
   )
+  assert_true(
+    shader.status_for_backend(@render.RendererBackendKind::SunRasterNative) ==
+    @render.RendererFeatureStatus::Supported,
+  )
+  assert_true(
+    shader
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("unsupported-command diagnostic"),
+  )
   guard @render.renderer_feature_capability(@render.RendererFeature::PathVector)
     is Some(path) else {
     fail("expected path capability")
@@ -682,6 +722,11 @@ test "renderer capability report tracks draw command support" {
   assert_true(
     async_image
     .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("PNG/JPEG/BMP"),
+  )
+  assert_true(
+    async_image
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
     .contains("data URI"),
   )
   assert_true(
@@ -702,6 +747,11 @@ test "renderer capability report tracks draw command support" {
   assert_true(
     async_image
     .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("clears cached image pixmaps on dispose"),
+  )
+  assert_true(
+    async_image
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
     .contains("callback/apply ports"),
   )
   assert_true(
@@ -712,7 +762,27 @@ test "renderer capability report tracks draw command support" {
   assert_true(
     async_image
     .note_for_backend(@render.RendererBackendKind::SunRasterNative)
-    .contains("HostAsyncImageLoader"),
+    .contains("retries async local-file failures"),
+  )
+  assert_true(
+    async_image
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("HostNativeAsyncImageSource"),
+  )
+  assert_true(
+    async_image
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("off-main file I/O"),
+  )
+  assert_true(
+    async_image
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("deferred native-source completion"),
+  )
+  assert_true(
+    async_image
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("second presented frame"),
   )
 }
 
