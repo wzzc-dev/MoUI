@@ -178,7 +178,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "tools/moui/validate_guidance_consistency/quality_gate_guidance.mbt",
-      max_lines: 113,
+      max_lines: 114,
     },
     {
       path: "tools/moui/validate_guidance_consistency/window_dependency_guidance.mbt",

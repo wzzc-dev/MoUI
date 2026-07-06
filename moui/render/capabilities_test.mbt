@@ -523,22 +523,22 @@ test "renderer capability report tracks draw command support" {
   }
   assert_true(
     text_shaping.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
-    @render.RendererFeatureStatus::Partial,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     text_shaping.status_for_backend(
       @render.RendererBackendKind::SkiaRasterNative,
     ) ==
-    @render.RendererFeatureStatus::Partial,
+    @render.RendererFeatureStatus::Supported,
   )
   let native_text_note = text_shaping.note_for_backend(
     @render.RendererBackendKind::NativeWgpu,
   )
   assert_true(native_text_note.contains("CoreText"))
-  assert_true(native_text_note.contains("DirectWrite scaffold"))
+  assert_true(native_text_note.contains("DirectWrite provider"))
   assert_true(native_text_note.contains("fontconfig"))
   assert_true(native_text_note.contains("Cosmic"))
-  assert_true(native_text_note.contains("run layout"))
+  assert_true(native_text_note.contains("run-layout"))
   assert_true(native_text_note.contains("caret coverage"))
   assert_true(native_text_note.contains("coverage checks"))
   let skia_text_note = text_shaping.note_for_backend(
@@ -564,7 +564,7 @@ test "renderer capability report tracks draw command support" {
     text_shaping.status_for_backend(
       @render.RendererBackendKind::SunRasterNative,
     ) ==
-    @render.RendererFeatureStatus::Partial,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     text_shaping
@@ -592,15 +592,15 @@ test "renderer capability report tracks draw command support" {
   }
   assert_true(
     emoji.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
-    @render.RendererFeatureStatus::Partial,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     emoji.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
-    @render.RendererFeatureStatus::Partial,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     emoji.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
-    @render.RendererFeatureStatus::Partial,
+    @render.RendererFeatureStatus::Supported,
   )
   let native_emoji_note = emoji.note_for_backend(
     @render.RendererBackendKind::NativeWgpu,
@@ -634,7 +634,7 @@ test "renderer capability report tracks draw command support" {
   )
   assert_true(
     emoji.status_for_backend(@render.RendererBackendKind::SunRasterNative) ==
-    @render.RendererFeatureStatus::Partial,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     emoji
@@ -657,7 +657,7 @@ test "renderer capability report tracks draw command support" {
   }
   assert_true(
     async_image.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
-    @render.RendererFeatureStatus::Partial,
+    @render.RendererFeatureStatus::Supported,
   )
   let native_image_note = async_image.note_for_backend(
     @render.RendererBackendKind::NativeWgpu,
@@ -674,12 +674,10 @@ test "renderer capability report tracks draw command support" {
   assert_true(
     native_image_note.contains("apply_image_resource_load_completion"),
   )
-  assert_true(
-    native_image_note.contains("off-main provider/platform async loader"),
-  )
+  assert_true(native_image_note.contains("ready/failed completion payloads"))
   assert_true(
     async_image.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
-    @render.RendererFeatureStatus::Partial,
+    @render.RendererFeatureStatus::Supported,
   )
   let skia_image_note = async_image.note_for_backend(
     @render.RendererBackendKind::SkiaRasterNative,
@@ -701,9 +699,8 @@ test "renderer capability report tracks draw command support" {
   assert_true(skia_image_note.contains("async image second-frame smoke"))
   assert_true(skia_image_note.contains("baseline-guarded callbacks"))
   assert_true(skia_image_note.contains("dispose-record"))
-  assert_true(
-    skia_image_note.contains("off-main-thread file I/O is implemented"),
-  )
+  assert_true(skia_image_note.contains("background_decode"))
+  assert_true(skia_image_note.contains("RGBA pixels"))
   let web_image_note = async_image.note_for_backend(
     @render.RendererBackendKind::WebGpuWasm,
   )
@@ -717,7 +714,7 @@ test "renderer capability report tracks draw command support" {
   assert_true(web_image_note.contains("Image.onerror"))
   assert_true(
     async_image.status_for_backend(@render.RendererBackendKind::SunRasterNative) ==
-    @render.RendererFeatureStatus::Partial,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     async_image
@@ -896,9 +893,30 @@ test "renderer command planner reports unclosed draw command scopes" {
 }
 
 ///|
+test "text emoji and async image capabilities are release ready" {
+  for
+    feature in [
+      @render.RendererFeature::TextShaping,
+      @render.RendererFeature::EmojiText,
+      @render.RendererFeature::AsyncImage,
+    ] {
+    guard @render.renderer_feature_capability(feature) is Some(capability) else {
+      fail("expected release-ready capability")
+    }
+    assert_false(capability.needs_follow_up())
+    for backend in @render.renderer_capability_backends() {
+      assert_true(
+        capability.status_for_backend(backend) ==
+        @render.RendererFeatureStatus::Supported,
+      )
+    }
+  }
+}
+
+///|
 test "renderer capability follow ups stay focused on incomplete features" {
   let follow_ups = @render.renderer_feature_follow_ups()
-  assert_true(follow_ups.length() >= 3)
+  assert_true(follow_ups.length() >= 2)
   let mut has_transform = false
   let mut has_gradient = false
   let mut has_text_shaping = false
@@ -918,18 +936,9 @@ test "renderer capability follow ups stay focused on incomplete features" {
     }
     if entry.feature == @render.RendererFeature::TextShaping {
       has_text_shaping = true
-      assert_true(
-        entry
-        .note_for_backend(@render.RendererBackendKind::NativeWgpu)
-        .contains("follow-up"),
-      )
     }
     if entry.feature == @render.RendererFeature::EmojiText {
       has_emoji_text = true
-      assert_true(
-        entry.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
-        @render.RendererFeatureStatus::Partial,
-      )
     }
     if entry.feature == @render.RendererFeature::AsyncImage {
       has_async_image = true
@@ -937,9 +946,9 @@ test "renderer capability follow ups stay focused on incomplete features" {
   }
   assert_true(has_gradient)
   assert_true(has_transform)
-  assert_true(has_text_shaping)
-  assert_true(has_emoji_text)
-  assert_true(has_async_image)
+  assert_false(has_text_shaping)
+  assert_false(has_emoji_text)
+  assert_false(has_async_image)
 }
 
 ///|

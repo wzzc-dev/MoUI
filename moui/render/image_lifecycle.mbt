@@ -35,6 +35,9 @@ pub(all) struct ImageResourceLoadCompletion {
   height : Int
   diagnostic : String
   background_io : Bool
+  decoded_pixels : Bytes
+  decoded_row_bytes : Int
+  background_decode : Bool
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -133,6 +136,32 @@ pub fn ImageResourceLoadCompletion::ready(
     height,
     diagnostic: "",
     background_io,
+    decoded_pixels: Bytes::make(0, 0),
+    decoded_row_bytes: 0,
+    background_decode: false,
+  }
+}
+
+///|
+pub fn ImageResourceLoadCompletion::ready_decoded_rgba(
+  source : String,
+  width~ : Int,
+  height~ : Int,
+  row_bytes~ : Int,
+  pixels : Bytes,
+  background_io? : Bool = false,
+  background_decode? : Bool = false,
+) -> ImageResourceLoadCompletion {
+  {
+    source,
+    status: ImageResourceLoadCompletionStatus::ImageLoadReady,
+    width,
+    height,
+    diagnostic: "",
+    background_io,
+    decoded_pixels: pixels,
+    decoded_row_bytes: row_bytes,
+    background_decode,
   }
 }
 
@@ -149,7 +178,21 @@ pub fn ImageResourceLoadCompletion::failed(
     height: 0,
     diagnostic,
     background_io,
+    decoded_pixels: Bytes::make(0, 0),
+    decoded_row_bytes: 0,
+    background_decode: false,
   }
+}
+
+///|
+pub fn ImageResourceLoadCompletion::has_decoded_rgba_payload(
+  self : ImageResourceLoadCompletion,
+) -> Bool {
+  self.status == ImageResourceLoadCompletionStatus::ImageLoadReady &&
+  self.width > 0 &&
+  self.height > 0 &&
+  self.decoded_row_bytes >= self.width * 4 &&
+  self.decoded_pixels.length() >= self.decoded_row_bytes * self.height
 }
 
 ///|
