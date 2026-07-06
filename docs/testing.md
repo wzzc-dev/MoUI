@@ -25,7 +25,13 @@ The daily gate includes these command tokens and should stay synchronized with
 
 ```sh
 node --check scripts/validate-api-surface.mjs
+node --check scripts/validate-guidance-consistency.mjs
+node scripts/validate-guidance-consistency.mjs
 node scripts/validate-api-surface.mjs
+node --check scripts/validate-window-dependency.mjs
+node scripts/validate-window-dependency.mjs
+node --check scripts/validate-openseek-workbench.mjs
+node scripts/validate-openseek-workbench.mjs
 node --check scripts/validate-maintenance-baseline.mjs
 node scripts/validate-maintenance-baseline.mjs
 node scripts/validate-renderer-provider-manifests.mjs
@@ -45,12 +51,14 @@ node --check scripts/smoke-gate.mjs
 node --check scripts/test-smoke-gate.mjs
 node scripts/test-smoke-gate.mjs
 node scripts/smoke-gate.mjs --tier nightly --dry-run --json
+sh -n scripts/ci-moon-update.sh
 sh -n scripts/ci-web-runtime-presentation.sh
 moon check
 moon test moui/core --target native
 moon test moui/views --target native
 moon test moui/render --target native
 moon test moui/render/skia --target native
+moon test moui/render/sun --target native
 moon test moui/backend/host --target native
 moon test moui_tester --target native
 moon test moui_devtools --target native
@@ -108,8 +116,31 @@ diagnostic route. Use `moon fmt` before handoff. Run `moon info` and review
 `pkg.generated.mbti` diffs after public API changes.
 
 When splitting oversized implementation or test files, reducing source-level
-`pub(all)`, or shrinking the root facade, run the maintenance baseline guard
-and ratchet the relevant budget downward in the same change.
+`pub(all)`, shrinking the root facade, or changing MoonBit-backed validator
+wrapper scripts, run the maintenance baseline guard and ratchet the relevant
+budget downward in the same change. MoonBit-backed JS validators should stay
+thin compatibility shims over `scripts/lib/moonbit-tool-runner.mjs`; avoid
+reintroducing local process runners, direct filesystem parsing, or hard-coded
+native `_build` executable paths there.
+
+## Script Tooling Policy
+
+Script changes follow the same clarity-first rule as framework code. Prefer a
+MoonBit `tools/...` package when the work is repository validation, source or
+manifest scanning, deterministic generation, or smoke catalog planning that can
+be covered by `moon check` and `moon test`. Keep existing `node scripts/*.mjs`
+commands as stable wrappers when CI or users already depend on them.
+
+Keep Node for browser/CDP, Web smoke, HTTP/GitHub artifacts, npm ecosystem
+work, and the `scripts/smoke-gate.mjs` execution layer. Keep sh/PowerShell thin
+for environment setup and platform dispatch; Windows MSVC, vcpkg, and zlib
+setup remains PowerShell-owned. Use `.mbtx` for short standalone scripts only,
+then graduate maintained CI behavior to `tools/...`.
+
+`rule`/`dev_build` is not a task runner. Use it only when a package build needs
+a deterministic pre-build input/output generation step. Do not use it to install
+MSVC, vcpkg, zlib, Chrome, CI runners, or other machine dependencies, and do not
+use it for smoke execution, networking, or global environment mutation.
 
 ## Conformance Slices
 

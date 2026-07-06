@@ -131,7 +131,7 @@ owning-package boundaries clear.
   native WKWebView platform-view sync, and CAMetalLayer WGPU surface creation.
 - `backend/windows/`: Win32/window host, resolver-backed multi-window slots,
   optional WebView2 platform-view sync, and HWND WGPU surface creation.
-- `backend/linux/`: Wayland host over `wzzc-dev/window@0.5.1-0.1.4`, Linux
+- `backend/linux/`: Wayland host over `wzzc-dev/window@0.5.1-0.1.6`, Linux
   host-service bridge, text-input/IME request sync, drag/drop conversion, a
   native Skia mainline presenter path plus native WGPU diagnostic surface path,
   optional WebKitGTK platform-view sync, shared host event conversion, and
@@ -219,7 +219,7 @@ sh scripts/dev-check.sh
 ```
 
 The daily check runs `sh scripts/check-local-deps.sh`, which verifies
-`wzzc-dev/window@0.5.1-0.1.4`, confirms `moon.work` does not include a local
+`wzzc-dev/window@0.5.1-0.1.6`, confirms `moon.work` does not include a local
 window checkout, verifies the repo-local `moui_skia` workspace, and checks the
 window package's MoUI-oriented smoke/evidence files when the package is present
 in the MoonBit registry cache, including `scripts/record_moui_evidence.sh`.
@@ -313,7 +313,7 @@ Linux, and WebGPU wasm proof
 artifacts to validate as passed before mainline capability promotion; native
 WGPU diagnostic artifacts are uploaded separately but do not block the summary.
 The platform evidence manifest is schema v2 and records the
-`wzzc-dev/window@0.5.1-0.1.4` package monitor/cursor probe as
+`wzzc-dev/window@0.5.1-0.1.6` package monitor/cursor probe as
 `monitorCursor`; native passed entries must set it to
 `yes`, while Web browser-session evidence may leave it pending. Native passed
 entries must also set `imeCandidateAnchor`, `imeSurroundingText`,
@@ -367,7 +367,7 @@ first-frame line, respectively.
 Use `record-macos-platform-runtime-evidence.mjs` only for macOS platform
 promotion after macOS `skiaEvidence` is passed and every native IME observation
 has already been recorded by `record-native-ime-evidence.mjs`. The macOS helper
-validates the `wzzc-dev/window@0.5.1-0.1.4` package runtime smoke transcript
+validates the `wzzc-dev/window@0.5.1-0.1.6` package runtime smoke transcript
 through `--window-smoke-log` for window/open/resize/redraw/input/monitor/cursor/shutdown
 source observations, and validates a Showcase or Markdown Editor `macos_skia`
 first-frame source log through `--app-runtime-log` before delegating to the
@@ -420,8 +420,34 @@ node scripts/validate-maintenance-baseline.mjs
 ```
 
 when changing file organization, public facade size, `pub(all)` exposure, test
-file sizes, or package boundaries. If a refactor reduces a budget, ratchet the
-baseline down in the same change. If a budget grows, explain why in review.
+file sizes, package boundaries, or MoonBit-backed JS validator wrappers. Keep
+those wrappers as thin compatibility shims over
+`scripts/lib/moonbit-tool-runner.mjs`; do not reintroduce local process
+runners, direct filesystem parsing, or hard-coded native `_build` executable
+paths there. If a refactor reduces a budget, ratchet the baseline down in the
+same change. If a budget grows, explain why in review.
+
+## Script Tooling Policy
+
+Keep scripts simple, clear, and maintainable first. Prefer MoonBit `tools/...`
+packages when repository rules, static validation, structure scans,
+deterministic generators, or smoke catalog planning can stay clearer and gain
+`moon check`/`moon test` coverage. Keep established `node scripts/*.mjs`
+commands as stable compatibility wrappers over
+`scripts/lib/moonbit-tool-runner.mjs`.
+
+Keep Node for browser/CDP, Web smoke, HTTP/GitHub artifacts, npm ecosystem
+tools, and runner logic that is clearer in JavaScript. Keep sh/PowerShell thin
+for environment variables, platform setup, and OS command dispatch. Windows
+MSVC, vcpkg, and zlib setup remains PowerShell-owned; MoonBit may validate
+related manifests or docs but must not install machine tools.
+
+Use `.mbtx` only for short standalone developer scripts; promote maintained CI
+behavior to a `tools/...` package. Use `rule`/`dev_build` only for deterministic
+package pre-build input/output generation. Do not use `rule`/`dev_build` to
+install MSVC, vcpkg, zlib, Chrome, CI runners, or other machine dependencies,
+and do not use it for smoke execution, networking, or global/user environment
+mutation.
 
 ## Renderer And Backend Work
 

@@ -1,16 +1,10 @@
 #!/usr/bin/env node
 
-import { spawnSync } from "node:child_process";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
+import { repoRoot, runCommand, runMoonbitTool } from "./lib/moonbit-tool-runner.mjs";
 
-const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const invocationRoot = process.cwd();
 const toolPackage = "tools/moui/validate_web_runtime_handoff";
-const toolExe = join(
-  repoRoot,
-  "_build/native/debug/build/wzzc-dev/moui_tools/moui/validate_web_runtime_handoff/validate_web_runtime_handoff.exe",
-);
 
 const usage = () => {
   console.error(
@@ -64,38 +58,6 @@ const targets = [
       "_build/wasm-gc/debug/build/examples/markdown_editor/web_wasm/web_wasm.wasm",
   },
 ];
-
-const run = (command, args, options = {}) => {
-  const result = spawnSync(command, args, {
-    cwd: options.cwd ?? repoRoot,
-    encoding: "utf8",
-  });
-  const failed = result.status !== 0 || result.error;
-  const redirectStdout =
-    options.failureStdoutToStderr && failed && result.stdout;
-  const suppressStdout =
-    options.suppressSuccessStdout && !failed && result.stdout;
-  if (result.stdout && !redirectStdout && !suppressStdout) {
-    process.stdout.write(result.stdout);
-  }
-  if (redirectStdout) {
-    process.stderr.write(result.stdout);
-  }
-  if (result.stderr) {
-    process.stderr.write(result.stderr);
-  }
-  if (result.error) {
-    console.error(result.error.message);
-    if (options.exitOnFailure !== false) {
-      process.exit(1);
-    }
-    return { status: 1 };
-  }
-  if (result.status !== 0 && options.exitOnFailure !== false) {
-    process.exit(result.status ?? 1);
-  }
-  return result;
-};
 
 const normalizeBaseUrl = url => url.replace(/\/+$/, "");
 
@@ -153,8 +115,6 @@ const collectHttpChecks = async () => {
 
 const { httpChecks, httpFailures } = await collectHttpChecks();
 
-run("moon", ["build", toolPackage, "--target", "native"]);
-
 const toolArgs = ["--root", rootDir];
 if (baseUrl) {
   toolArgs.push("--base-url", baseUrl);
@@ -172,7 +132,7 @@ for (const check of httpChecks) {
   );
 }
 
-const toolResult = run(toolExe, toolArgs, {
+const toolResult = runMoonbitTool(toolPackage, toolArgs, {
   cwd: invocationRoot,
   exitOnFailure: false,
   failureStdoutToStderr: true,
@@ -191,7 +151,7 @@ if (exitStatus !== 0) {
 }
 
 if (manifestPath) {
-  run(
+  runCommand(
     process.execPath,
     [join(repoRoot, "scripts/validate-web-runtime-handoff-manifest.mjs"), manifestPath],
     { cwd: invocationRoot },
