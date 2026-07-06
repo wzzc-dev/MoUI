@@ -3,7 +3,7 @@ fn openseek_test_config() -> OpenSeekBackendConfig {
   {
     api_key: "test-key",
     api_url: None,
-    model: @deepseek.Model::V4Flash,
+    model: openseek_default_model(),
     thinking: @deepseek.ThinkingMode::No,
     workspace_root: ".",
     session_root: ".openseek-test",
