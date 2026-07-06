@@ -205,11 +205,18 @@ The editor supports formatted editing for common block and inline structures:
   the top of documents that do not have one, or select the existing metadata
   content when the block is already present.
 - An optional `Files` sidebar is available from the chrome or with
-  `Cmd+Alt+P` / `Ctrl+Alt+P`. This first Typora-style file panel shows the
-  current document, saved/unsaved state, an Open action, and the session's
-  recently opened or saved Markdown paths. Clicking a recent entry reopens it
-  through the same shared host text-file service used by the normal Open flow.
-  It is intentionally not a full directory tree yet.
+  `Cmd+Alt+P` / `Ctrl+Alt+P`. The Typora-style file panel shows the current
+  document, saved/unsaved state, an Open action, the session's recently opened
+  or saved Markdown paths, and an optional picked working folder. Directory
+  entries in the working folder render as expandable tree rows, sorted with
+  folders first and names in case-insensitive ascending order, lazily listing
+  subdirectories when the user opens them. Clicking a Markdown file in the tree
+  reopens it through the same shared host text-file service used by the normal
+  Open flow. A local `Filter files` field narrows the loaded tree and recent
+  list by file or folder name, while `Refresh folder` reloads the picked folder
+  when the file system changes outside the editor. It is still not a full
+  project explorer: create, rename, delete, full-content search, and
+  file-system watching are intentionally out of scope.
 - An optional `Info` document panel is available from the chrome, `Quick
   Format`, or with `Cmd+Alt+D` / `Ctrl+Alt+D`. It keeps Typora-style document
   insight close to the writing surface by showing words, characters, lines,

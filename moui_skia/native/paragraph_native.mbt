@@ -189,6 +189,15 @@ extern "C" fn native_paragraph_hit_test_utf8_downstream(
 ) -> Bool = "moonbit_skia_paragraph_hit_test_utf8_downstream"
 
 ///|
+#borrow(canvas, paragraph)
+extern "C" fn native_canvas_draw_paragraph(
+  canvas : CanvasHandle,
+  paragraph : ParagraphHandle,
+  x : Float,
+  y : Float,
+) -> Bool = "moonbit_skia_canvas_draw_paragraph"
+
+///|
 pub fn Paragraph::layout_utf8(
   text : Bytes,
   family_name? : Bytes = b"",
@@ -345,6 +354,24 @@ pub fn Paragraph::hit_test_utf8(
       offset: native_paragraph_hit_test_utf8_offset(self.handle, x, y).max(0),
       downstream: native_paragraph_hit_test_utf8_downstream(self.handle, x, y),
     }
+  }
+}
+
+///|
+pub fn Canvas::draw_paragraph(
+  self : Canvas,
+  paragraph : Paragraph,
+  origin? : @skia.Point = @skia.Point::zero(),
+) -> Bool {
+  if !origin.is_finite() || !paragraph.is_available() {
+    false
+  } else {
+    native_canvas_draw_paragraph(
+      self.handle,
+      paragraph.handle,
+      origin.x,
+      origin.y,
+    )
   }
 }
 

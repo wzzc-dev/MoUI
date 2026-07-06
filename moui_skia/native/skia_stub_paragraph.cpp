@@ -77,6 +77,7 @@ moonbit_skia_paragraph_layout_utf8(
 
   TextStyle text_style;
   text_style.setFontSize(size);
+  text_style.setColor(SK_ColorBLACK);
   text_style.setFontStyle(SkFontStyle(
     std::max(1, std::min(1000, weight)),
     std::max(1, std::min(9, width)),
@@ -590,5 +591,32 @@ moonbit_skia_paragraph_hit_test_utf8_downstream(
   (void)x;
   (void)y;
   return 1;
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT int32_t
+moonbit_skia_canvas_draw_paragraph(
+  MoonbitSkiaCanvas* canvas_wrapper,
+  MoonbitSkiaParagraph* paragraph_wrapper,
+  float x,
+  float y
+) {
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_SKPARAGRAPH_HEADERS)
+  if (
+    canvas_wrapper == nullptr ||
+    canvas_wrapper->canvas == nullptr ||
+    paragraph_wrapper == nullptr ||
+    paragraph_wrapper->paragraph == nullptr
+  ) {
+    return 0;
+  }
+  paragraph_wrapper->paragraph->paint(canvas_wrapper->canvas, x, y);
+  return 1;
+#else
+  (void)canvas_wrapper;
+  (void)paragraph_wrapper;
+  (void)x;
+  (void)y;
+  return 0;
 #endif
 }

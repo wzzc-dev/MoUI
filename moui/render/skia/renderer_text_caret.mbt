@@ -195,6 +195,25 @@ fn skia_layout_width_from_carets(carets : Array[Double]) -> Double {
 }
 
 ///|
+fn skia_complete_monotonic_carets(
+  text : String,
+  carets : Array[Double],
+  width : Double,
+) -> Array[Double] {
+  let mut previous = 0.0
+  for index in 0..<carets.length() {
+    if carets[index] < 0.0 || carets[index] < previous {
+      carets[index] = previous
+    } else {
+      carets[index] = carets[index].min(width)
+      previous = carets[index]
+    }
+  }
+  carets[carets.length() - 1] = width.max(carets[carets.length() - 1])
+  skia_stabilize_grapheme_cluster_carets(text, carets)
+}
+
+///|
 fn skia_shaped_caret_positions(
   text : String,
   run : SkiaGlyphRun,
@@ -228,16 +247,7 @@ fn skia_shaped_caret_positions(
       None => ()
     }
   }
-  let mut previous = 0.0
-  for index in 0..<carets.length() {
-    if carets[index] < 0.0 || carets[index] < previous {
-      carets[index] = previous
-    } else {
-      previous = carets[index]
-    }
-  }
-  carets[carets.length() - 1] = run.width.max(carets[carets.length() - 1])
-  Some(skia_stabilize_grapheme_cluster_carets(text, carets))
+  Some(skia_complete_monotonic_carets(text, carets, run.width))
 }
 
 ///|

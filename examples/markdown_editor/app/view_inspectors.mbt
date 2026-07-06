@@ -44,6 +44,88 @@ fn markdown_editor_count_visible_tree_items(
 }
 
 ///|
+fn markdown_editor_filter_file_paths(
+  paths : Array[String],
+  query : String,
+) -> Array[String] {
+  let needle = query.trim().to_owned().to_lower()
+  if needle == "" {
+    return paths
+  }
+  paths.filter(path => markdown_editor_file_sidebar_filter_matches(path, needle))
+}
+
+///|
+fn markdown_editor_filter_tree_items(
+  items : Array[@views.TreeItem],
+  query : String,
+) -> Array[@views.TreeItem] {
+  let needle = query.trim().to_owned().to_lower()
+  if needle == "" {
+    return items
+  }
+  markdown_editor_filter_tree_items_with_needle(items, needle)
+}
+
+///|
+fn markdown_editor_filter_tree_items_with_needle(
+  items : Array[@views.TreeItem],
+  needle : String,
+) -> Array[@views.TreeItem] {
+  let filtered : Array[@views.TreeItem] = []
+  for item in items {
+    let self_matches = markdown_editor_file_sidebar_filter_matches(
+      item.label + " " + item.id,
+      needle,
+    )
+    let filtered_children = markdown_editor_filter_tree_items_with_needle(
+      item.children,
+      needle,
+    )
+    if self_matches {
+      filtered.push(item)
+    } else if filtered_children.length() > 0 {
+      filtered.push(
+        @views.tree_item(
+          id=item.id,
+          label=item.label,
+          children=filtered_children,
+        ),
+      )
+    }
+  }
+  filtered
+}
+
+///|
+fn markdown_editor_file_sidebar_filter_matches(
+  value : String,
+  needle : String,
+) -> Bool {
+  value.to_lower().contains(needle)
+}
+
+///|
+fn markdown_editor_tree_item_ids(
+  items : Array[@views.TreeItem],
+) -> Array[String] {
+  let ids : Array[String] = []
+  markdown_editor_append_tree_item_ids(ids, items)
+  ids
+}
+
+///|
+fn markdown_editor_append_tree_item_ids(
+  ids : Array[String],
+  items : Array[@views.TreeItem],
+) -> Unit {
+  for item in items {
+    ids.push(item.id)
+    markdown_editor_append_tree_item_ids(ids, item.children)
+  }
+}
+
+///|
 fn files_inspector(
   app : MarkdownEditorApp,
   session : MarkdownDocumentSession,
@@ -52,15 +134,27 @@ fn files_inspector(
 ) -> @moui.View[MarkdownEditorMsg] {
   let content_width = markdown_editor_file_sidebar_content_width()
   let recent_paths = app.recent_document_paths.get()
+  let file_filter_query = app.file_filter_query.get()
+  let filtered_recent_paths = markdown_editor_filter_file_paths(
+    recent_paths, file_filter_query,
+  )
   let working_directory = app.working_directory.get()
   let tree_expanded = working_directory != "" && app.file_tree_expanded.get()
+  let tree_items = markdown_editor_filter_tree_items(
+    app.directory_tree_items.get(),
+    file_filter_query,
+  )
+  let tree_expanded_paths = if file_filter_query.trim().to_owned() == "" {
+    app.expanded_tree_paths.get()
+  } else {
+    markdown_editor_tree_item_ids(tree_items)
+  }
   // Cap the tree scroll height at the actual tree content height so the
   // scroll view doesn't leave an empty gap when the tree has few items.
-  let max_tree_scroll_height = markdown_editor_max_double(0.0, height - 260.0)
+  let max_tree_scroll_height = markdown_editor_max_double(0.0, height - 300.0)
   let tree_scroll_height = if tree_expanded {
     let visible_count = markdown_editor_count_visible_tree_items(
-      app.directory_tree_items.get(),
-      app.expanded_tree_paths.get(),
+      tree_items, tree_expanded_paths,
     )
     let tree_row_height = 30.0
     let spacing_total = if visible_count > 0 {
@@ -78,17 +172,21 @@ fn files_inspector(
     text("No recent files", width=content_width, height=28.0)
     .font(theme.typography.caption)
     .foreground(theme.palette.muted)
+  } else if filtered_recent_paths.length() == 0 {
+    text("No matching recent files", width=content_width, height=28.0)
+    .font(theme.typography.caption)
+    .foreground(theme.palette.muted)
   } else {
     scroll_view(
       file_sidebar_recent_rows(
-        recent_paths,
+        filtered_recent_paths,
         current_path=app.document_path.get(),
         theme,
       ),
       width=content_width,
       height=markdown_editor_max_double(
         0.0,
-        height - 180.0 - tree_scroll_height,
+        height - 220.0 - tree_scroll_height,
       ),
     )
   }
@@ -117,6 +215,15 @@ fn files_inspector(
       @views.ButtonVariant::Ghost,
       theme,
     ),
+    clearable_text_field(
+      file_filter_query,
+      on_input=value => UpdateFileFilterQuery(value),
+      on_clear=UpdateFileFilterQuery(""),
+      placeholder="Filter files",
+      theme~,
+      width=content_width,
+      height=32.0,
+    ),
   ]
   if working_directory != "" {
     let fold_label = if tree_expanded { "▾" } else { "▸" }
@@ -143,8 +250,8 @@ fn files_inspector(
       file_rows.push(
         scroll_view(
           @views.tree_view(
-            app.directory_tree_items.get(),
-            expanded=app.expanded_tree_paths.get(),
+            tree_items,
+            expanded=tree_expanded_paths,
             on_select=Some(id => SelectTreePath(id)),
             on_toggle=Some(id => ToggleTreePath(id)),
             theme~,
@@ -155,7 +262,22 @@ fn files_inspector(
           state=Some(app.file_tree_scroll),
         ),
       )
+      if tree_items.length() == 0 {
+        file_rows.push(
+          text("No matching files", width=content_width, height=28.0)
+          .font(theme.typography.caption)
+          .foreground(theme.palette.muted),
+        )
+      }
     }
+    file_rows.push(
+      editor_button(
+        "Refresh folder",
+        RefreshFileTree,
+        @views.ButtonVariant::Ghost,
+        theme,
+      ),
+    )
   }
   file_rows.push(
     text("Recent", width=content_width, height=24.0)
@@ -163,7 +285,7 @@ fn files_inspector(
     .foreground(theme.palette.muted),
   )
   file_rows.push(recent_content)
-  container(
+  let pinned_content = frame(
     padding_edges(
       column(
         file_rows,
@@ -175,6 +297,11 @@ fn files_inspector(
       bottom=theme.spacing_scale.md,
       left=theme.spacing_scale.sm,
     ),
+    width=markdown_editor_file_sidebar_width(),
+    height~,
+  )
+  container(
+    pinned_content,
     width=markdown_editor_file_sidebar_width(),
     height~,
     variant=@views.ContainerVariant::Base,

@@ -266,6 +266,13 @@ extern "C" fn native_typeface_from_name(
 ) -> TypefaceHandle = "moonbit_skia_typeface_from_name"
 
 ///|
+#borrow(path)
+extern "C" fn native_typeface_from_file(
+  path : Bytes,
+  index : Int,
+) -> TypefaceHandle = "moonbit_skia_typeface_from_file"
+
+///|
 #borrow(typeface)
 extern "C" fn native_typeface_is_null(typeface : TypefaceHandle) -> Bool = "moonbit_skia_typeface_is_null"
 
@@ -789,6 +796,15 @@ pub fn Typeface::from_name_style(
     width=style.width,
     slant=style.slant,
   )
+}
+
+///|
+pub fn Typeface::from_file(path : Bytes, index? : Int = 0) -> Typeface? {
+  if path.is_empty() || index < 0 {
+    None
+  } else {
+    Typeface::from_handle(native_typeface_from_file(path, index))
+  }
 }
 
 ///|

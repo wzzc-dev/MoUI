@@ -93,7 +93,11 @@ test "skia text system exposes measured caret positions" {
         font=@core.FontSpec::new(size=18.0, weight=400),
       )
       let fallback = @core.TextSystem::fallback().measure_text(input)
-      let glyph_run = skia_glyph_run(font, input.text)
+      let glyph_run = skia_glyph_run_with_shaper(
+        font,
+        input.text,
+        use_shaper=true,
+      )
       let layout = skia_text_layout_result(font, input, fallback, glyph_run~)
       inspect(layout.caret_positions.length(), content="5")
       inspect(layout.caret_positions[0], content="0")
@@ -359,7 +363,7 @@ test "skia resolved mixed text layout accumulates segment carets" {
 test "skia text drawing builds best available glyph runs" {
   match skia_test_font(@core.FontSpec::new(size=18.0, weight=400)) {
     Some(font) => {
-      let run = skia_glyph_run(font, "Slim")
+      let run = skia_glyph_run_with_shaper(font, "Slim", use_shaper=true)
       if skia_test_font_has_visible_text(font, "Slim") {
         inspect(run.glyphs.length(), content="4")
         inspect(run.positions.length(), content="4")
@@ -377,6 +381,144 @@ test "skia text drawing builds best available glyph runs" {
       }
     }
     None => assert_true(!skia_available())
+  }
+}
+
+///|
+test "skia draw payload keeps shaped width and carets together" {
+  guard skia_available() else { return () }
+  let text = "TaTaTaTaTaTaTaTa"
+  let font_spec = @core.FontSpec::new(size=18.0, weight=400)
+  match
+    skia_draw_text_payload_for_resolution(
+      font_spec,
+      text,
+      SkiaFontResolution::SystemFontMgr,
+    ) {
+    Some((draw_font, glyph_run)) => {
+      if @skia_native.skia_shaper_available() {
+        assert_true(glyph_run.clusters.length() == glyph_run.glyphs.length())
+      } else {
+        assert_true(glyph_run.clusters.is_empty())
+      }
+      assert_true(glyph_run.width > 0.0)
+      let input = @core.TextLayoutInput::new(text~, font=font_spec)
+      let fallback = @core.TextSystem::fallback().measure_text(input)
+      let layout = skia_text_layout_result(
+        draw_font,
+        input,
+        fallback,
+        glyph_run~,
+      )
+      inspect(layout.size.width, content="\{glyph_run.width}")
+      inspect(
+        layout.caret_positions[layout.caret_positions.length() - 1],
+        content="\{glyph_run.width}",
+      )
+      let measured = skia_text_system().measure_text(input)
+      inspect(measured.size.width, content="\{glyph_run.width}")
+      inspect(
+        measured.caret_positions[measured.caret_positions.length() - 1],
+        content="\{glyph_run.width}",
+      )
+    }
+    None => fail("expected Skia draw text payload")
+  }
+}
+
+///|
+test "skia text segment draws shaped glyph pixels and falls back visibly" {
+  guard skia_test_native_text_available() else { return () }
+  let text = "TaTaTaTaTaTaTaTa"
+  let font_spec = @core.FontSpec::new(size=24.0, weight=400)
+  match
+    skia_draw_text_payload_for_resolution(
+      font_spec,
+      text,
+      SkiaFontResolution::SystemFontMgr,
+    ) {
+    None => fail("expected Skia draw text payload")
+    Some((font, glyph_run)) => {
+      let paint = skia_paint(@core.Color::black())
+      match
+        @skia_native.Surface::raster_n32_premul(@moui_skia.ISize::new(240, 48)) {
+        None => ()
+        Some(surface) =>
+          match surface.canvas() {
+            None => ()
+            Some(canvas) => {
+              canvas.clear(@moui_skia.Color::white())
+              let used_glyph_run = skia_draw_text_segment(
+                canvas,
+                { text, font, glyph_run, x_offset: 0.0 },
+                @moui_skia.Point::new(4, 32),
+                paint,
+              )
+              assert_true(used_glyph_run)
+              match surface.read_pixels() {
+                None => ()
+                Some(pixmap) => {
+                  let frame = SkiaPixelFrame::{
+                    width: pixmap.width(),
+                    height: pixmap.height(),
+                    row_bytes: pixmap.row_bytes(),
+                    scale_factor: 1.0,
+                    pixels: pixmap.pixels,
+                  }
+                  assert_true(
+                    skia_test_region_has_dark_pixel(
+                      frame,
+                      @core.Rect::new(x=0.0, y=0.0, width=240.0, height=48.0),
+                    ),
+                  )
+                }
+              }
+            }
+          }
+      }
+      let invalid_run = SkiaGlyphRun::{
+        glyphs: [],
+        positions: [],
+        clusters: [],
+        width: glyph_run.width,
+      }
+      match
+        @skia_native.Surface::raster_n32_premul(@moui_skia.ISize::new(240, 48)) {
+        None => ()
+        Some(surface) =>
+          match surface.canvas() {
+            None => ()
+            Some(canvas) => {
+              canvas.clear(@moui_skia.Color::white())
+              let used_glyph_run = skia_draw_text_segment(
+                canvas,
+                { text, font, glyph_run: invalid_run, x_offset: 0.0 },
+                @moui_skia.Point::new(4, 32),
+                paint,
+              )
+              assert_false(used_glyph_run)
+              match surface.read_pixels() {
+                None => ()
+                Some(pixmap) => {
+                  let frame = SkiaPixelFrame::{
+                    width: pixmap.width(),
+                    height: pixmap.height(),
+                    row_bytes: pixmap.row_bytes(),
+                    scale_factor: 1.0,
+                    pixels: pixmap.pixels,
+                  }
+                  assert_true(
+                    skia_test_region_has_dark_pixel(
+                      frame,
+                      @core.Rect::new(x=0.0, y=0.0, width=240.0, height=48.0),
+                    ),
+                  )
+                }
+              }
+            }
+          }
+      }
+    }
   }
 }
 
@@ -472,7 +614,7 @@ test "skia text metrics derive baseline and height from font metrics" {
 }
 
 ///|
-test "skia text layout consumes the draw payload glyph run" {
+test "skia text layout consumes draw payload width" {
   match skia_test_font(@core.FontSpec::new(size=18.0, weight=400)) {
     Some(font) => {
       let input = @core.TextLayoutInput::new(
@@ -494,8 +636,35 @@ test "skia text layout consumes the draw payload glyph run" {
       inspect(layout.size.width, content="123")
       inspect(layout.caret_positions.length(), content="3")
       inspect(layout.caret_positions[0], content="0")
-      inspect(layout.caret_positions[1], content="77")
       inspect(layout.caret_positions[2], content="123")
+    }
+    None => assert_true(!skia_available())
+  }
+}
+
+///|
+test "skia To caret uses kerned glyph origin for visual cursor guard" {
+  match skia_test_font(@core.FontSpec::new(size=24.0, weight=400)) {
+    Some(font) => {
+      guard @skia_native.skia_shaper_available() else { return () }
+      let input = @core.TextLayoutInput::new(
+        text="To",
+        font=@core.FontSpec::new(size=24.0, weight=400),
+      )
+      guard skia_font_can_measure_text(font, input.text) else { return () }
+      let fallback = @core.TextSystem::fallback().measure_text(input)
+      let glyph_run = skia_glyph_run_with_shaper(
+        font,
+        input.text,
+        use_shaper=true,
+      )
+      guard glyph_run.glyphs.length() == 2 && glyph_run.positions.length() == 2 else {
+        return ()
+      }
+      let kerned_o_origin = glyph_run.positions[1].x.to_double()
+      let layout = skia_text_layout_result(font, input, fallback, glyph_run~)
+      assert_true((layout.caret_positions[1] - kerned_o_origin).abs() < 0.001)
+      assert_true(layout.caret_positions[2] == glyph_run.width)
     }
     None => assert_true(!skia_available())
   }
@@ -511,7 +680,11 @@ test "skia text system clamps measured carets to max width" {
         max_width=12.0,
       )
       let fallback = @core.TextSystem::fallback().measure_text(input)
-      let glyph_run = skia_glyph_run(font, input.text)
+      let glyph_run = skia_glyph_run_with_shaper(
+        font,
+        input.text,
+        use_shaper=true,
+      )
       let layout = skia_text_layout_result(font, input, fallback, glyph_run~)
       inspect(layout.caret_positions.length(), content="5")
       inspect(layout.size.width, content="12")

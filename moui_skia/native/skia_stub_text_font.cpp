@@ -1372,6 +1372,31 @@ moonbit_skia_typeface_from_name(
 #endif
 }
 
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaTypeface*
+moonbit_skia_typeface_from_file(moonbit_bytes_t path, int32_t index) {
+  if (path == nullptr || Moonbit_array_length(path) <= 0 || index < 0) {
+    return moonbit_skia_make_typeface_wrapper(nullptr);
+  }
+#if defined(MOUI_SKIA_HAS_SKIA)
+  sk_sp<SkFontMgr> font_mgr = moonbit_skia_default_font_mgr();
+  if (!font_mgr) {
+    return moonbit_skia_make_typeface_wrapper(nullptr);
+  }
+  std::string path_text = moonbit_skia_bytes_to_string(path);
+  sk_sp<SkTypeface> typeface = font_mgr->makeFromFile(
+    path_text.c_str(),
+    index
+  );
+  if (!typeface) {
+    return moonbit_skia_make_typeface_wrapper(nullptr);
+  }
+  return moonbit_skia_make_typeface_wrapper(typeface.release());
+#else
+  (void)index;
+  return moonbit_skia_make_typeface_wrapper(nullptr);
+#endif
+}
+
 extern "C" MOONBIT_FFI_EXPORT int32_t
 moonbit_skia_typeface_is_bold(MoonbitSkiaTypeface* wrapper) {
   if (wrapper == nullptr || wrapper->typeface == nullptr) {

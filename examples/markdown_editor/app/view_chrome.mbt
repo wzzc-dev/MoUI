@@ -1,6 +1,7 @@
 ///|
 fn MarkdownEditorApp::root(
   self : MarkdownEditorApp,
+  viewport_width? : Double = 1120.0,
   viewport_height? : Double = 520.0,
 ) -> @moui.View[MarkdownEditorMsg] {
   let theme = self.chrome_theme()
@@ -14,7 +15,12 @@ fn MarkdownEditorApp::root(
   let show_files = if zen { false } else { self.file_sidebar_visible.get() }
   let show_info = if zen { false } else { self.document_info_visible.get() }
   let workspace_width = markdown_editor_workspace_width(
-    show_source, show_outline, show_files, show_info, appearance,
+    show_source,
+    show_outline,
+    show_files,
+    show_info,
+    appearance,
+    viewport_width~,
   )
   let target_bar = self.target_bar(theme)
   let selection = self.selection.get()
@@ -45,6 +51,7 @@ fn MarkdownEditorApp::root(
       scroll_offset,
       (caret, selection) => SetSelection(caret, selection),
       offset => ToggleTaskAt(offset),
+      viewport_width~,
       viewport_height~,
     ),
   )
@@ -161,6 +168,7 @@ fn MarkdownEditorApp::reactive_root(
   ignore(ctx.watch(self.recent_document_paths))
   ignore(ctx.watch(self.saved_document))
   ignore(ctx.watch(self.transfer_status))
+  ignore(ctx.watch(self.file_filter_query))
   ignore(ctx.watch(self.working_directory))
   ignore(ctx.watch(self.expanded_tree_paths))
   ignore(ctx.watch(self.directory_tree_items))
@@ -194,7 +202,7 @@ fn MarkdownEditorApp::reactive_root(
     320.0,
     window_height - fixed_height,
   )
-  self.root(viewport_height~)
+  self.root(viewport_width=ctx.viewport_size().width, viewport_height~)
 }
 
 ///|
@@ -204,28 +212,20 @@ fn markdown_editor_workspace_width(
   show_files : Bool,
   show_info : Bool,
   appearance : MarkdownEditorAppearanceSpec,
+  viewport_width~ : Double,
 ) -> Double {
-  let mut width = markdown_editor_primary_editor_width(
-    show_source, show_outline, show_files, show_info, appearance,
+  let editor_width = markdown_editor_primary_editor_width_for_viewport(
+    show_source,
+    show_outline,
+    show_files,
+    show_info,
+    appearance,
+    viewport_width~,
   )
-  let mut gaps = 0
-  if show_files {
-    width = width + markdown_editor_file_sidebar_width()
-    gaps = gaps + 1
-  }
-  if show_info {
-    width = width + markdown_editor_info_inspector_width()
-    gaps = gaps + 1
-  }
-  if show_outline {
-    width = width + markdown_editor_outline_inspector_width()
-    gaps = gaps + 1
-  }
-  if show_source {
-    width = width + markdown_editor_source_inspector_width()
-    gaps = gaps + 1
-  }
-  width + @views.light_theme().spacing_scale.lg * gaps.to_double()
+  let sidebars_width = markdown_editor_sidebar_total_width(
+    show_source, show_outline, show_files, show_info,
+  )
+  markdown_editor_min_double(viewport_width, editor_width + sidebars_width)
 }
 
 ///|

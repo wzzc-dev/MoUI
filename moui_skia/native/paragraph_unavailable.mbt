@@ -85,3 +85,15 @@ pub fn Paragraph::hit_test_utf8(
   ignore(y)
   { offset: 0, downstream: true }
 }
+
+///|
+pub fn Canvas::draw_paragraph(
+  self : Canvas,
+  paragraph : Paragraph,
+  origin? : @skia.Point = @skia.Point::zero(),
+) -> Bool {
+  ignore(self)
+  ignore(paragraph)
+  ignore(origin)
+  false
+}

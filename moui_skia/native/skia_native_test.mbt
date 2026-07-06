@@ -20,6 +20,44 @@ fn native_test_assert_pixel(
 }
 
 ///|
+fn native_test_pixmap_has_dark_pixel(pixmap : @skia.Pixmap) -> Bool {
+  let bytes_per_pixel = pixmap.bytes_per_pixel()
+  if bytes_per_pixel < 4 {
+    return false
+  }
+  for y in 0..<pixmap.height() {
+    for x in 0..<pixmap.width() {
+      let offset = y * pixmap.row_bytes() + x * bytes_per_pixel
+      if offset + 3 < pixmap.pixels.length() {
+        let red = pixmap.pixels[offset].to_int()
+        let green = pixmap.pixels[offset + 1].to_int()
+        let blue = pixmap.pixels[offset + 2].to_int()
+        let alpha = pixmap.pixels[offset + 3].to_int()
+        if alpha > 0 && red < 210 && green < 210 && blue < 210 {
+          return true
+        }
+      }
+    }
+  }
+  false
+}
+
+///|
+fn native_test_surface_has_dark_pixel(
+  surface : @native.Surface,
+  bounds? : @skia.IRect? = None,
+) -> Bool {
+  let read_bounds = match bounds {
+    Some(bounds) => bounds
+    None => @skia.IRect::from_xywh(0, 0, surface.width(), surface.height())
+  }
+  match surface.read_pixels(bounds=read_bounds) {
+    None => false
+    Some(pixmap) => native_test_pixmap_has_dark_pixel(pixmap)
+  }
+}
+
+///|
 fn native_test_assert_replay_resource_counts(
   stats : @native.CanvasReplayStats,
   command_stats : @skia.RenderCommandStats,
@@ -420,8 +458,138 @@ test "canvas skips invalid shaped glyph runs" {
           assert_eq(stats.clear_count, 1)
           assert_eq(stats.text_count, 1)
           assert_eq(stats.text_resource_count, 1)
+          assert_false(native_test_surface_has_dark_pixel(surface))
         }
       }
+  }
+}
+
+///|
+test "canvas draws direct and shaped glyph pixels" {
+  guard @native.skia_available() else { return () }
+  let paint = @skia.Paint::new(color=@skia.Color::black())
+  match @native.Font::default(size=24.0) {
+    None => ()
+    Some(font) => {
+      match @native.Surface::raster_n32_premul(@skia.ISize::new(96, 40)) {
+        None => ()
+        Some(surface) =>
+          match surface.canvas() {
+            None => ()
+            Some(canvas) => {
+              canvas.clear(@skia.Color::white())
+              canvas.draw_text_utf8(
+                b"TaTa",
+                @skia.Point::new(4, 28),
+                font,
+                paint,
+              )
+              assert_true(native_test_surface_has_dark_pixel(surface))
+            }
+          }
+      }
+      let glyphs = font.text_to_glyphs_utf8(b"TaTa")
+      let positions = font.glyph_positions(glyphs)
+      assert_true(!glyphs.is_empty())
+      assert_true(glyphs.any(glyph => glyph.to_int() != 0))
+      assert_eq(glyphs.length(), positions.length())
+      assert_true(positions.all(position => position.is_finite()))
+      match @native.Surface::raster_n32_premul(@skia.ISize::new(96, 40)) {
+        None => ()
+        Some(surface) =>
+          match surface.canvas() {
+            None => ()
+            Some(canvas) => {
+              canvas.clear(@skia.Color::white())
+              assert_true(
+                canvas.draw_glyphs_checked(
+                  glyphs,
+                  positions,
+                  font,
+                  paint,
+                  origin=@skia.Point::new(4, 28),
+                ),
+              )
+              assert_true(native_test_surface_has_dark_pixel(surface))
+              assert_false(canvas.draw_glyphs_checked(glyphs, [], font, paint))
+            }
+          }
+      }
+      match font.shape_text_utf8(b"TaTa") {
+        None => assert_false(@native.skia_shaper_available())
+        Some(run) => {
+          assert_true(@native.skia_shaper_available())
+          match @native.Surface::raster_n32_premul(@skia.ISize::new(96, 40)) {
+            None => ()
+            Some(surface) =>
+              match surface.canvas() {
+                None => ()
+                Some(canvas) => {
+                  canvas.clear(@skia.Color::white())
+                  assert_true(
+                    canvas.draw_glyphs_checked(
+                      run.glyphs(),
+                      run.positions(),
+                      font,
+                      paint,
+                      origin=@skia.Point::new(4, 28),
+                    ),
+                  )
+                  assert_true(native_test_surface_has_dark_pixel(surface))
+                }
+              }
+          }
+        }
+      }
+    }
+  }
+}
+
+///|
+test "canvas replays shaped glyph runs as pixels" {
+  guard @native.skia_available() else { return () }
+  match @native.Font::default(size=24.0) {
+    None => ()
+    Some(font) => {
+      let text = b"TaTa"
+      let shaping = @skia.TextShapingDescriptor::new(
+        run=@skia.TextRunDescriptor::new(
+          range=@skia.TextRange::new(0, text.length()),
+        ),
+        font_key=@skia.RendererResourceKey::font(b"native-test-default"),
+      )
+      match font.shape_text_run_utf8(text, shaping) {
+        None => assert_false(@native.skia_shaper_available())
+        Some(glyph_run) => {
+          assert_true(glyph_run.is_valid())
+          let replay_size = @skia.ISize::new(96, 40)
+          let replay_target = @skia.SurfaceTargetDescriptor::raster_n32_premul(
+            replay_size,
+          )
+          let commands = @skia.RenderCommandList::for_target(replay_target)
+            .clear(@skia.Color::white())
+            .draw_shaped_glyph_run_utf8(
+              text,
+              glyph_run,
+              @skia.Point::new(4, 28),
+              paint=@skia.Paint::new(color=@skia.Color::black()),
+            )
+          match @native.Surface::raster_n32_premul(replay_size) {
+            None => ()
+            Some(surface) =>
+              match surface.canvas() {
+                None => ()
+                Some(canvas) => {
+                  let stats = canvas.replay(commands)
+                  assert_true(stats.is_complete())
+                  assert_eq(stats.skipped_count, 0)
+                  assert_true(native_test_surface_has_dark_pixel(surface))
+                }
+              }
+          }
+        }
+      }
+    }
   }
 }
 
@@ -1387,6 +1555,23 @@ test "font api typechecks" {
       assert_true(directions.length() == boxes.length())
       let hit = paragraph.hit_test_utf8(8.0, metrics[0].baseline)
       assert_true(hit.offset >= 0)
+      match @native.Surface::raster_n32_premul(@skia.ISize::new(120, 60)) {
+        None => ()
+        Some(surface) =>
+          match surface.canvas() {
+            None => ()
+            Some(canvas) => {
+              canvas.clear(@skia.Color::white())
+              assert_true(
+                canvas.draw_paragraph(
+                  paragraph,
+                  origin=@skia.Point::new(4.0, 4.0),
+                ),
+              )
+              assert_true(native_test_surface_has_dark_pixel(surface))
+            }
+          }
+      }
     }
   }
   match @native.Typeface::default() {

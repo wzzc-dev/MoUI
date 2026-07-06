@@ -1231,16 +1231,19 @@ fn append_rich_text_block_runs(
   let mut line = 0
   if block.prefix != "" {
     let width = rich_text_width(block.prefix, block_font, text_system)
+    let prefix_frame = rich_text_text_paint_frame(
+      x~,
+      y=frame.origin.y,
+      width~,
+      height=frame.size.height,
+      line_right=frame.origin.x + frame.size.width,
+      font=block_font,
+    )
     commands.push(
       @core.DrawCommand::DrawText(
         @core.TextRun::new(
           text=block.prefix,
-          frame=@core.Rect::new(
-            x~,
-            y=frame.origin.y,
-            width~,
-            height=frame.size.height,
-          ),
+          frame=prefix_frame,
           font=block_font,
           color=block_color,
           align=@core.TextAlign::TextStart,
@@ -1256,14 +1259,14 @@ fn append_rich_text_block_runs(
     for index, segment in segments {
       let width = rich_text_run_segment_width(run, segment, font, text_system)
       let line_y = frame.origin.y + line.to_double() * line_step
-      let run_frame = @core.Rect::new(
+      let run_frame = rich_text_run_segment_paint_frame(
+        run,
         x~,
         y=line_y,
-        width=max_double(
-          0.0,
-          min_double(width, frame.origin.x + frame.size.width - x),
-        ),
+        width~,
         height=rich_text_run_segment_height(run, line_step),
+        line_right=frame.origin.x + frame.size.width,
+        font~,
       )
       if segment != "" || run.image_source is Some(_) {
         append_rich_text_run_segment(
@@ -1278,6 +1281,54 @@ fn append_rich_text_block_runs(
       }
     }
   }
+}
+
+///|
+fn rich_text_run_segment_paint_frame(
+  run : RichTextRun,
+  x~ : Double,
+  y~ : Double,
+  width~ : Double,
+  height~ : Double,
+  line_right~ : Double,
+  font~ : @core.FontSpec,
+) -> @core.Rect {
+  match run.image_source {
+    Some(_) =>
+      @core.Rect::new(
+        x~,
+        y~,
+        width=max_double(0.0, min_double(width, line_right - x)),
+        height~,
+      )
+    None =>
+      rich_text_text_paint_frame(x~, y~, width~, height~, line_right~, font~)
+  }
+}
+
+///|
+fn rich_text_text_paint_frame(
+  x~ : Double,
+  y~ : Double,
+  width~ : Double,
+  height~ : Double,
+  line_right~ : Double,
+  font~ : @core.FontSpec,
+) -> @core.Rect {
+  @core.Rect::new(
+    x~,
+    y~,
+    width=max_double(
+      0.0,
+      min_double(width + rich_text_text_clip_bleed(font), line_right - x),
+    ),
+    height~,
+  )
+}
+
+///|
+fn rich_text_text_clip_bleed(font : @core.FontSpec) -> Double {
+  max_double(2.0, font.size * 0.18)
 }
 
 ///|

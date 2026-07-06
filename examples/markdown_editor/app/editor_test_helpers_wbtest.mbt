@@ -550,24 +550,22 @@ fn MarkdownEditorApp::editor_content_x(
   let show_info = self.document_info_visible.get()
   let show_outline = self.outline_visible.get()
   let show_source = self.source_preview_visible.get()
-  let show_sidebar = show_files || show_info || show_outline || show_source
-  let editor_width = if show_sidebar {
-    appearance.side_editor_width
-  } else {
-    appearance.page_width
-  }
+  let editor_width = markdown_editor_primary_editor_width_for_viewport(
+    show_source,
+    show_outline,
+    show_files,
+    show_info,
+    appearance,
+    viewport_width=window_width,
+  )
   let left_width = if show_files {
     markdown_editor_file_sidebar_width()
   } else {
     0.0
   }
-  let right_width = (if show_info {
-      markdown_editor_info_inspector_width()
-    } else {
-      0.0
-    }) +
-    (if show_outline { markdown_editor_outline_inspector_width() } else { 0.0 }) +
-    (if show_source { markdown_editor_source_inspector_width() } else { 0.0 })
+  let right_width = markdown_editor_sidebar_total_width(
+    show_source, show_outline, false, show_info,
+  )
   let available = window_width - left_width - right_width
   let editor_x = left_width +
     markdown_editor_max_double(0.0, (available - editor_width) / 2.0)

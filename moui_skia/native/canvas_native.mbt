@@ -585,11 +585,12 @@ extern "C" fn native_canvas_draw_text_utf8(
 ) -> Unit = "moonbit_skia_canvas_draw_text_utf8"
 
 ///|
-#borrow(canvas, glyphs, positions, font)
+#borrow(canvas, glyph_bytes, position_bytes, font)
 extern "C" fn native_canvas_draw_glyphs(
   canvas : CanvasHandle,
-  glyphs : Array[GlyphId],
-  positions : Array[@skia.Point],
+  glyph_bytes : Bytes,
+  position_bytes : Bytes,
+  glyph_count : Int,
   origin_x : Float,
   origin_y : Float,
   font : FontHandle,
@@ -602,7 +603,7 @@ extern "C" fn native_canvas_draw_glyphs(
   stroke_cap : Int,
   stroke_join : Int,
   blend_mode : Int,
-) -> Unit = "moonbit_skia_canvas_draw_glyphs"
+) -> Bool = "moonbit_skia_canvas_draw_glyphs"
 
 ///|
 pub fn Canvas::is_available(self : Canvas) -> Bool {
@@ -1491,6 +1492,79 @@ pub fn Canvas::draw_text_utf8(
 }
 
 ///|
+fn native_canvas_glyph_id_bytes(glyphs : Array[GlyphId]) -> Bytes {
+  let bytes : Array[Byte] = Array::new(capacity=glyphs.length() * 2)
+  for glyph in glyphs {
+    let value = glyph.to_uint16()
+    bytes.push(value.shr(8).to_byte())
+    bytes.push(value.to_byte())
+  }
+  Bytes::from_array(bytes)
+}
+
+///|
+fn native_canvas_glyph_position_bytes(positions : Array[@skia.Point]) -> Bytes {
+  let bytes : Array[Byte] = Array::new(capacity=positions.length() * 8)
+  for position in positions {
+    for byte in position.x.to_be_bytes() {
+      bytes.push(byte)
+    }
+    for byte in position.y.to_be_bytes() {
+      bytes.push(byte)
+    }
+  }
+  Bytes::from_array(bytes)
+}
+
+///|
+fn native_canvas_glyphs_have_visible_payload(glyphs : Array[GlyphId]) -> Bool {
+  for glyph in glyphs {
+    if glyph.to_int() != 0 {
+      return true
+    }
+  }
+  false
+}
+
+///|
+pub fn Canvas::draw_glyphs_checked(
+  self : Canvas,
+  glyphs : Array[GlyphId],
+  positions : Array[@skia.Point],
+  font : Font,
+  paint : @skia.Paint,
+  origin? : @skia.Point = @skia.Point::zero(),
+) -> Bool {
+  if glyphs.is_empty() ||
+    glyphs.length() != positions.length() ||
+    !native_canvas_glyphs_have_visible_payload(glyphs) ||
+    !origin.is_finite() ||
+    !native_canvas_points_are_finite(positions) {
+    return false
+  }
+  let glyph_bytes = native_canvas_glyph_id_bytes(glyphs)
+  let position_bytes = native_canvas_glyph_position_bytes(positions)
+  native_canvas_draw_glyphs(
+    self.handle,
+    glyph_bytes,
+    position_bytes,
+    glyphs.length(),
+    origin.x,
+    origin.y,
+    font.handle,
+    paint.color_argb(),
+    paint.anti_alias,
+    paint.dither,
+    paint.style_ordinal(),
+    native_canvas_paint_stroke_width(paint),
+    native_canvas_paint_stroke_miter(paint),
+    paint.stroke_cap_ordinal(),
+    paint.stroke_join_ordinal(),
+    paint.blend_mode_ordinal(),
+  )
+}
+
+///|
 pub fn Canvas::draw_glyphs(
   self : Canvas,
   glyphs : Array[GlyphId],
@@ -1499,28 +1573,7 @@ pub fn Canvas::draw_glyphs(
   paint : @skia.Paint,
   origin? : @skia.Point = @skia.Point::zero(),
 ) -> Unit {
-  if !glyphs.is_empty() &&
-    glyphs.length() == positions.length() &&
-    origin.is_finite() &&
-    native_canvas_points_are_finite(positions) {
-    native_canvas_draw_glyphs(
-      self.handle,
-      glyphs,
-      positions,
-      origin.x,
-      origin.y,
-      font.handle,
-      paint.color_argb(),
-      paint.anti_alias,
-      paint.dither,
-      paint.style_ordinal(),
-      native_canvas_paint_stroke_width(paint),
-      native_canvas_paint_stroke_miter(paint),
-      paint.stroke_cap_ordinal(),
-      paint.stroke_join_ordinal(),
-      paint.blend_mode_ordinal(),
-    )
-  }
+  ignore(self.draw_glyphs_checked(glyphs, positions, font, paint, origin~))
 }
 
 ///|
@@ -1700,12 +1753,17 @@ fn Canvas::replay_text_run_utf8(
             true
           }
           ShapedTextRun(glyph_run) =>
-            self.replay_shaped_glyph_run_utf8(
-              glyph_run,
-              origin,
-              paint,
-              Some(font),
-            )
+            if self.replay_shaped_glyph_run_utf8(
+                glyph_run,
+                origin,
+                paint,
+                Some(font),
+              ) {
+              true
+            } else {
+              self.draw_text_utf8(run_text, origin, font, paint)
+              true
+            }
         }
     }
   }
@@ -1729,14 +1787,13 @@ fn Canvas::replay_shaped_glyph_run_utf8(
       if !glyph_run.is_valid() {
         false
       } else {
-        self.draw_glyphs(
+        self.draw_glyphs_checked(
           shaped_glyph_run_native_glyph_ids(glyph_run),
           glyph_run.positions,
           font,
           paint,
           origin~,
         )
-        true
       }
   }
 }

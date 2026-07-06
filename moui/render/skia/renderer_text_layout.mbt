@@ -40,6 +40,18 @@ fn skia_text_placement(
 }
 
 ///|
+fn skia_text_placement_for_layout(
+  run : @core.TextRun,
+  layout : SkiaResolvedTextLayout,
+) -> SkiaTextPlacement {
+  if layout.segments.length() == 1 {
+    skia_text_placement(run, layout.segments[0].glyph_run, layout.metrics)
+  } else {
+    skia_text_placement_for_width(run, layout.width, layout.metrics)
+  }
+}
+
+///|
 fn skia_text_placement_for_width(
   run : @core.TextRun,
   text_width : Double,
@@ -57,6 +69,17 @@ fn skia_text_placement_for_width(
     origin: @moui_skia.Point::new(Float::from_double(x), Float::from_double(y)),
     clip: run.frame,
   }
+}
+
+///|
+fn skia_text_segment_origin(
+  placement : SkiaTextPlacement,
+  x_offset : Double,
+) -> @moui_skia.Point {
+  @moui_skia.Point::new(
+    Float::from_double(placement.origin.x.to_double() + x_offset),
+    placement.origin.y,
+  )
 }
 
 ///|

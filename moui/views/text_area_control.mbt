@@ -175,7 +175,7 @@ fn text_area_display_caret_rect(
   @core.Rect::new(
     x=text_frame.origin.x + measured.size.width,
     y~,
-    width=1.5,
+    width=text_editing_cursor_width(),
     height=glyph_h,
   )
 }
@@ -499,7 +499,7 @@ fn append_text_area_commands(
       @core.Rect::new(
         x=text_frame.origin.x,
         y=text_area_line_slot_y(text_frame, 0, line_height, glyph_h),
-        width=1.5,
+        width=text_editing_cursor_width(),
         height=glyph_h,
       )
     } else {
@@ -507,7 +507,16 @@ fn append_text_area_commands(
         text_system, display_text, text_frame, font, visual_caret, line_height, visible_lines,
       )
     }
-    overlay_commands.push(@core.DrawCommand::FillRect(cursor, cursor_color))
+    overlay_commands.push(
+      @core.DrawCommand::FillRect(
+        text_editing_visual_cursor_rect(
+          cursor,
+          visual_caret,
+          display_text.to_array().length(),
+        ),
+        cursor_color,
+      ),
+    )
     overlay_commands.push(@core.DrawCommand::PopClip)
   }
 }
@@ -891,7 +900,7 @@ fn text_input_state_for_multi_line(
     @core.Rect::new(
       x=text_frame.origin.x,
       y=text_area_line_slot_y(text_frame, 0, line_height, glyph_h),
-      width=1.5,
+      width=text_editing_cursor_width(),
       height=glyph_h,
     )
   } else {

@@ -263,6 +263,13 @@ pub fn Typeface::from_name_style(
 }
 
 ///|
+pub fn Typeface::from_file(path : Bytes, index? : Int = 0) -> Typeface? {
+  ignore(path)
+  ignore(index)
+  None
+}
+
+///|
 pub fn FontMgr::default() -> FontMgr? {
   None
 }
