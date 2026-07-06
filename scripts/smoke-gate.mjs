@@ -1,14 +1,9 @@
 #!/usr/bin/env node
 
 import { spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { repoRoot, runMoonbitTool } from "./lib/moonbit-tool-runner.mjs";
 
-const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const platformPlaceholder = "<macos|web|windows|linux>";
-const genericPlatformPlaceholder = "<platform>";
-const validPlatforms = new Set(["macos", "web", "windows", "linux"]);
+const smokeCatalogTool = "tools/moui/validate_smoke_catalog";
 
 const usage = () => {
   console.log(`Usage: node scripts/smoke-gate.mjs [options]
@@ -93,99 +88,41 @@ const fail = (message, code = 2) => {
   process.exit(code);
 };
 
-const resolveRepoPath = path => resolve(repoRoot, path);
-
-const loadCatalog = manifest => {
-  const manifestPath = resolveRepoPath(manifest);
-  return JSON.parse(readFileSync(manifestPath, "utf8"));
-};
-
-const validateCatalog = manifest => {
-  const result = spawnSync(
-    process.execPath,
-    ["scripts/smoke-check.mjs", "--manifest", manifest, "--check"],
-    { cwd: repoRoot, encoding: "utf8" },
-  );
-  if (result.status !== 0) {
-    if (result.stdout) process.stdout.write(result.stdout);
-    if (result.stderr) process.stderr.write(result.stderr);
-    process.exit(result.status ?? 1);
-  }
-};
-
-const selectSuites = (catalog, options) => {
-  if (options.tier !== null && !catalog.tiers.includes(options.tier)) {
-    fail(`unknown tier: ${options.tier}`);
-  }
-  const requestedSuites = new Set(options.suites);
-  const suites = catalog.suites.filter(suite => {
-    if (options.tier !== null && suite.tier !== options.tier) return false;
-    if (requestedSuites.size > 0 && !requestedSuites.has(suite.id)) return false;
-    return true;
-  });
-  for (const suiteId of requestedSuites) {
-    if (!catalog.suites.some(suite => suite.id === suiteId)) {
-      fail(`unknown suite: ${suiteId}`);
-    }
-  }
-  if (suites.length === 0) {
-    fail("no smoke suites selected");
-  }
-  return suites;
-};
-
-const substituteArg = (arg, options) => {
-  if (arg.includes(platformPlaceholder) || arg.includes(genericPlatformPlaceholder)) {
-    if (options.platform === null) {
-      if (options.mode === "dry-run") return arg;
-      fail(`--platform is required for placeholder argument: ${arg}`);
-    }
-    if (!validPlatforms.has(options.platform)) {
-      fail(`unknown platform: ${options.platform}`);
-    }
-    return arg
-      .replaceAll(platformPlaceholder, options.platform)
-      .replaceAll(genericPlatformPlaceholder, options.platform);
-  }
-  return arg;
-};
-
-const substituteArgv = (argv, options) => argv.map(arg => substituteArg(arg, options));
-
 const shellQuote = arg => /^[A-Za-z0-9_./:=@+-]+$/.test(arg) ? arg : JSON.stringify(arg);
 
 const commandToString = argv => argv.map(shellQuote).join(" ");
 
-const suitePlan = (suite, options) => ({
-  id: suite.id,
-  tier: suite.tier,
-  kind: suite.kind,
-  host: suite.host,
-  commands: suite.commands.map(command => ({
-    mode: command.mode,
-    argv: substituteArgv(command.argv, options),
-  })),
-  result: suite.result,
-  artifacts: (suite.artifacts ?? []).map(artifact => substituteArg(artifact, options)),
-});
+const planArgs = (options, forceJson = false) => {
+  const args = [
+    "--repo-root",
+    repoRoot,
+    "--manifest",
+    options.manifest,
+    "--gate-plan",
+    options.mode === "run" ? "--run" : "--dry-run",
+  ];
+  if (forceJson || options.json) args.push("--json");
+  if (options.tier !== null) args.push("--tier", options.tier);
+  for (const suite of options.suites) args.push("--suite", suite);
+  if (options.platform !== null) args.push("--platform", options.platform);
+  return args;
+};
 
-const printPlan = (suites, options) => {
-  const plan = {
-    mode: options.mode,
-    tier: options.tier,
-    suiteCount: suites.length,
-    suites: suites.map(suite => suitePlan(suite, options)),
-  };
-  if (options.json) {
-    console.log(JSON.stringify(plan, null, 2));
-    return;
+const runPlanner = (options, { forceJson = false, capture = false } = {}) => {
+  const result = runMoonbitTool(smokeCatalogTool, planArgs(options, forceJson), {
+    encoding: "utf8",
+    exitOnFailure: false,
+    suppressSuccessStdout: capture,
+  });
+  if (result.status !== 0 || result.error) {
+    process.exit(result.status ?? 1);
   }
-  for (const suite of plan.suites) {
-    console.log(`${suite.tier}: ${suite.id} [${suite.kind}] host=${suite.host}`);
-    for (const command of suite.commands) {
-      console.log(`  ${command.mode}: ${commandToString(command.argv)}`);
-    }
-  }
+  return result.stdout ?? "";
+};
+
+const loadRunPlan = options => {
+  const output = runPlanner(options, { forceJson: true, capture: true });
+  return JSON.parse(output);
 };
 
 const runCommand = (label, argv) => {
@@ -212,10 +149,10 @@ const runSuite = (suite, options) => {
     if (command.mode === "manual" && !options.allowManual) {
       fail(`${suite.id} contains manual commands; pass --allow-manual to run them`);
     }
-    runCommand(`${suite.id}`, substituteArgv(command.argv, options));
+    runCommand(`${suite.id}`, command.argv);
   }
   if (suite.result?.type === "manifest") {
-    runCommand(`${suite.id} result validator`, substituteArgv(suite.result.validator, options));
+    runCommand(`${suite.id} result validator`, suite.result.validator);
   }
 };
 
@@ -232,14 +169,12 @@ const main = () => {
     usage();
     return;
   }
-  validateCatalog(options.manifest);
-  const catalog = loadCatalog(options.manifest);
-  const suites = selectSuites(catalog, options);
   if (options.mode === "dry-run") {
-    printPlan(suites, options);
+    runPlanner(options);
     return;
   }
-  for (const suite of suites) {
+  const plan = loadRunPlan(options);
+  for (const suite of plan.suites) {
     runSuite(suite, options);
   }
 };

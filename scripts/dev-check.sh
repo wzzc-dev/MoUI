@@ -87,6 +87,8 @@ run_built_executable() {
 }
 
 run node --check scripts/validate-api-surface.mjs
+run node --check scripts/validate-guidance-consistency.mjs
+run node scripts/validate-guidance-consistency.mjs
 run node scripts/validate-api-surface.mjs
 run node --check scripts/validate-window-dependency.mjs
 run node scripts/validate-window-dependency.mjs

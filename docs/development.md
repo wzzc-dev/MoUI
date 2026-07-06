@@ -18,13 +18,15 @@ code.
 - `./moui`
 - `./moui_richtext`
 - `./moui_tester`
+- `./moui_webview`
 - `./moui_devtools`
 - `./moui_agent`
 - `./moui_agent_mcp`
+- `./examples/agent_counter`
 - `./tools`
 - `./moui_skia`
 - `./moui_theme`
-- `./examples/agent_counter`
+- `./moui_sun`
 - `./examples/counter`
 - `./examples/button_freeze_probe`
 - `./examples/showcase`
@@ -33,16 +35,15 @@ code.
 - `./examples/pdf_workbench`
 - `./examples/settings`
 - `./examples/data_table`
-- `./examples/excel`
 - `./examples/file_importer`
 - `./examples/command_palette`
-	- `./examples/mo_workbench`
-	- `./openseek`
-	- `./examples/webview_demo`
-	- `./benchmarks/app_cached_layer`
-	- `./website`
-	
-	When adding or removing a workspace member, update this list,
+- `./examples/mo_workbench`
+- `./openseek`
+- `./examples/webview_demo`
+- `./benchmarks/app_cached_layer`
+- `./website`
+
+When adding or removing a workspace member, update this list,
 `docs/examples.md` for example packages, and any guidance rules in
 `tools/moui/validate_guidance_consistency`.
 
@@ -81,6 +82,13 @@ import {
 ```toml
 members = [
   "./moui",
+  "./moui_richtext",
+  "./moui_tester",
+  "./moui_webview",
+  "./moui_devtools",
+  "./moui_agent",
+  "./moui_agent_mcp",
+  "./examples/agent_counter",
   "./tools",
   "./moui_skia",
   "./moui_theme",
@@ -90,15 +98,14 @@ members = [
   "./examples/showcase",
   "./examples/design_systems",
   "./examples/markdown_editor",
+  "./examples/pdf_workbench",
   "./examples/settings",
   "./examples/data_table",
-  "./examples/excel",
   "./examples/file_importer",
-  "./examples/pdf_workbench",
-  "./examples/webview_demo",
   "./examples/command_palette",
   "./examples/mo_workbench",
   "./openseek",
+  "./examples/webview_demo",
   "./benchmarks/app_cached_layer",
   "./website",
 ]
@@ -108,7 +115,7 @@ The MoonBit package ecosystem is still not as mature as older language
 ecosystems. A failing build can come from registry cache state, package
 publication mistakes, or dependency regressions as well as from MoUI code. When
 dependency-related failures appear, first run `moon update`, inspect the
-resolved package versions, and check whether `wzzc-dev/window@0.5.1-0.1.4` or
+resolved package versions, and check whether `wzzc-dev/window@0.5.1-0.1.6` or
 another package changed behavior.
 
 The `window` package still carries MoUI smoke helpers and evidence docs. Use
@@ -227,6 +234,33 @@ and native smoke marker coverage before the MoUI daily baseline can pass.
 Design Systems is addon diagnostic coverage; run
 `sh scripts/dev-check.sh --theme-diagnostics` when changing `moui_theme` or the
 Design Systems example.
+
+## Script Tooling Policy
+
+Keep scripts simple, clear, and maintainable first. When two approaches are
+similarly clear, prefer MoonBit for repository rules, static validation,
+structure scans, deterministic generators, and any logic that benefits from
+`moon check`/`moon test` coverage.
+
+Use `tools/...` MoonBit packages for long-lived CI tools. Keep the checked-in
+Node entrypoints as compatibility wrappers over
+`scripts/lib/moonbit-tool-runner.mjs` when users or CI already call
+`node scripts/*.mjs`. Use `.mbtx` only for short standalone developer scripts;
+promote it to a `tools/...` package once it becomes a maintained gate.
+
+Keep Node for browser/CDP, Web smoke capture, HTTP/GitHub artifact work, npm
+ecosystem tools, and command execution that is clearer in JavaScript. Keep
+sh/PowerShell as thin orchestration for environment variables, shell syntax,
+platform setup, and OS-specific command dispatch. Windows MSVC, vcpkg, and zlib
+setup stay in PowerShell helpers such as `scripts/windows/setup_msvc_deps.ps1`
+and `scripts/windows/msvc_env.ps1`; MoonBit may validate manifests or guidance
+around those flows, but it should not install machine tools.
+
+Use `rule`/`dev_build` only for deterministic package build inputs: a declared
+input creates a declared output before package build. Do not use
+`rule`/`dev_build` to install MSVC, vcpkg, zlib, Chrome, CI runners, or other
+machine environment dependencies; do not use it to run smoke tests, access the
+network, or mutate global/user state.
 
 Run the real Skia native smoke only after configuring local Skia link flags:
 
