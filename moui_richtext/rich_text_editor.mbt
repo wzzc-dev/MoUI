@@ -907,10 +907,15 @@ fn[Msg] markdown_session_editor_command(
 ) -> @core.ViewTextCommandResult[Msg] {
   let value = @core.Binding::new(get=() => session.source, set=_next => ())
   let on_input_edit = markdown_session_on_input_edit(session, on_transaction)
+  let format_selection = match intent {
+    @core.CommandIntent::Copy | @core.CommandIntent::Cut =>
+      ({ caret: -1, selection: None } : MarkdownEditorSelection)
+    _ => selection
+  }
   let format = display_source => {
     if display_source == session.source {
       session.rich_text(
-        selection,
+        format_selection,
         base=font,
         source_mode~,
         focus_mode~,
@@ -921,7 +926,7 @@ fn[Msg] markdown_session_editor_command(
     } else {
       markdown_editor_format_for_writing_mode(
         display_source,
-        selection,
+        format_selection,
         base=font,
         focus_mode~,
         base_dir~,

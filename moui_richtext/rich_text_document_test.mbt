@@ -67,11 +67,50 @@ test "markdown_document parses heading into a single block" {
 }
 
 ///|
+test "parse_markdown strips optional closing atx heading markers" {
+  let blocks = parse_markdown("## Title ##")
+  inspect(blocks.length(), content="1")
+  guard blocks[0] is { kind: Heading(2), text: "Title", .. } else {
+    fail("expected heading text without closing marker")
+  }
+}
+
+///|
+test "parse_markdown keeps literal trailing hashes without atx closing separator" {
+  let blocks = parse_markdown("## Title###")
+  inspect(blocks.length(), content="1")
+  guard blocks[0] is { kind: Heading(2), text: "Title###", .. } else {
+    fail("expected literal trailing hashes to stay in heading text")
+  }
+}
+
+///|
 test "markdown_document parses paragraph and preserves text" {
   let document = markdown_document("Just a paragraph.")
   inspect(document.blocks.length(), content="1")
   let run_text = document.blocks[0].runs[0].text
   assert_true(run_text.contains("Just"))
+}
+
+///|
+test "parse_markdown keeps soft-wrapped paragraph lines in one block" {
+  let blocks = parse_markdown("first line\nsecond line")
+  inspect(blocks.length(), content="1")
+  guard blocks[0] is { kind: Paragraph, text: "first line\nsecond line", .. } else {
+    fail("expected one soft-wrapped paragraph")
+  }
+}
+
+///|
+test "parse_markdown keeps multiline setext heading in one block" {
+  let blocks = parse_markdown("Alpha\nBeta\n---\nTail")
+  inspect(blocks.length(), content="2")
+  guard blocks[0] is { kind: Heading(2), text: "Alpha\nBeta", .. } else {
+    fail("expected multiline setext heading")
+  }
+  guard blocks[1] is { kind: Paragraph, text: "Tail", .. } else {
+    fail("expected paragraph after setext heading")
+  }
 }
 
 ///|
@@ -81,6 +120,15 @@ test "markdown_document parses unordered list items" {
   assert_true(document.blocks.length() >= 3)
   let prefixes = document.blocks.map(block => block.prefix)
   assert_true(prefixes.contains("• "))
+}
+
+///|
+test "parse_markdown recognizes plus unordered list markers" {
+  let blocks = parse_markdown("+ plus")
+  inspect(blocks.length(), content="1")
+  guard blocks[0] is { kind: UnorderedListItem, text: "plus", .. } else {
+    fail("expected plus marker to parse as unordered list item")
+  }
 }
 
 ///|
@@ -97,6 +145,15 @@ test "markdown_document parses ordered list items with numeric prefix" {
   let prefixes = document.blocks.map(block => block.prefix)
   assert_true(prefixes.contains("1. "))
   assert_true(prefixes.contains("2. "))
+}
+
+///|
+test "parse_markdown recognizes paren ordered list markers" {
+  let blocks = parse_markdown("3) third")
+  inspect(blocks.length(), content="1")
+  guard blocks[0] is { kind: OrderedListItem(3), text: "third", .. } else {
+    fail("expected paren ordered marker to parse as ordered list item")
+  }
 }
 
 ///|
@@ -121,6 +178,56 @@ test "markdown_document parses fenced code block with tildes" {
 }
 
 ///|
+test "parse_markdown parses tilde fenced code block with language" {
+  let blocks = parse_markdown("~~~mermaid\ngraph TD\n~~~")
+  inspect(blocks.length(), content="1")
+  guard blocks[0]
+    is { kind: CodeBlock, text: "graph TD", code_language: Some("mermaid"), .. } else {
+    fail("expected tilde fenced code block")
+  }
+}
+
+///|
+test "parse_markdown groups adjacent indented code lines" {
+  let blocks = parse_markdown("    one\n    two")
+  inspect(blocks.length(), content="1")
+  guard blocks[0]
+    is { kind: CodeBlock, text: "one\ntwo", code_language: None, .. } else {
+    fail("expected one indented code block")
+  }
+}
+
+///|
+test "parse_markdown keeps blank lines inside indented code blocks" {
+  let blocks = parse_markdown("    one\n\n    two")
+  inspect(blocks.length(), content="1")
+  guard blocks[0]
+    is { kind: CodeBlock, text: "one\n\ntwo", code_language: None, .. } else {
+    fail("expected blank-separated indented code chunks to stay together")
+  }
+}
+
+///|
+test "parse_markdown treats four-space indented fences as code text" {
+  let blocks = parse_markdown("    ```\n    code\n    ```")
+  inspect(blocks.length(), content="1")
+  guard blocks[0]
+    is { kind: CodeBlock, text: "```\ncode\n```", code_language: None, .. } else {
+    fail("expected indented fence markers to stay in code text")
+  }
+}
+
+///|
+test "parse_markdown treats tab-indented fences as code text" {
+  let blocks = parse_markdown("\t```\n\tcode\n\t```")
+  inspect(blocks.length(), content="1")
+  guard blocks[0]
+    is { kind: CodeBlock, text: "```\ncode\n```", code_language: None, .. } else {
+    fail("expected tab-indented fence markers to stay in code text")
+  }
+}
+
+///|
 test "markdown_document parses horizontal rule as a rule block" {
   let document = markdown_document("---\n")
   let rule_blocks = document.blocks.filter(b => b.rule)
@@ -134,6 +241,44 @@ test "markdown_document parses table with separator row" {
   )
   let table_blocks = document.blocks.filter(b => b.table is Some(_))
   assert_true(table_blocks.length() >= 1)
+}
+
+///|
+test "parse_markdown keeps multiline html blocks together" {
+  let blocks = parse_markdown("<section>\nLine **raw**\n</section>\n\nTail")
+  inspect(blocks.length(), content="2")
+  guard blocks[0]
+    is { kind: HtmlBlock, text: "<section>\nLine **raw**\n</section>", .. } else {
+    fail("expected multiline html block")
+  }
+  guard blocks[1] is { kind: Paragraph, text: "Tail", .. } else {
+    fail("expected paragraph after html block")
+  }
+}
+
+///|
+test "parse_markdown keeps processing instruction html blocks together" {
+  let blocks = parse_markdown("<?moui\nraw\n?>\n\nTail")
+  inspect(blocks.length(), content="2")
+  guard blocks[0] is { kind: HtmlBlock, text: "<?moui\nraw\n?>", .. } else {
+    fail("expected processing instruction html block")
+  }
+  guard blocks[1] is { kind: Paragraph, text: "Tail", .. } else {
+    fail("expected paragraph after processing instruction")
+  }
+}
+
+///|
+test "parse_markdown keeps cdata html blocks together" {
+  let blocks = parse_markdown("<![CDATA[\nraw <tag>\n]]>\n\nTail")
+  inspect(blocks.length(), content="2")
+  guard blocks[0]
+    is { kind: HtmlBlock, text: "<![CDATA[\nraw <tag>\n]]>", .. } else {
+    fail("expected cdata html block")
+  }
+  guard blocks[1] is { kind: Paragraph, text: "Tail", .. } else {
+    fail("expected paragraph after cdata")
+  }
 }
 
 ///|
@@ -163,6 +308,24 @@ test "RichTextBlock source_range and content_range are populated for parsed bloc
   let has_content_range = document.blocks.any(b => b.content_range is Some(_))
   assert_true(has_source_range)
   assert_true(has_content_range)
+}
+
+///|
+test "markdown_document maps decoded entity runs to full source range" {
+  let document = markdown_document("AT&amp;T &lt; 5")
+  guard document.blocks[0].runs[0]
+    is { text: "AT&T < 5", source_range: Some({ start: 0, end: 15 }), .. } else {
+    fail("expected decoded entity run to cover raw source")
+  }
+}
+
+///|
+test "markdown_document maps numeric entity runs to full source range" {
+  let document = markdown_document("A&#38;B &#x3c; C")
+  guard document.blocks[0].runs[0]
+    is { text: "A&B < C", source_range: Some({ start: 0, end: 16 }), .. } else {
+    fail("expected numeric entity run to cover raw source")
+  }
 }
 
 ///|

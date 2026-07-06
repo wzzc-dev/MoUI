@@ -36,6 +36,137 @@ fn markdown_inline(
 }
 
 ///|
+struct MarkdownHtmlEntityDecodeResult {
+  ch : Char
+  end : Int
+} derive(Eq, Debug)
+
+///|
+fn markdown_decode_html_entities(text : String) -> String {
+  let chars = text.to_array()
+  let decoded : Array[Char] = []
+  let mut index = 0
+  while index < chars.length() {
+    match markdown_html_entity_decode_at(chars, index) {
+      Some(entity) => {
+        decoded.push(entity.ch)
+        index = entity.end
+      }
+      None => {
+        decoded.push(chars[index])
+        index = index + 1
+      }
+    }
+  }
+  String::from_array(decoded)
+}
+
+///|
+fn markdown_html_entity_decode_at(
+  chars : Array[Char],
+  start : Int,
+) -> MarkdownHtmlEntityDecodeResult? {
+  if start < 0 || start >= chars.length() || chars[start] != '&' {
+    return None
+  }
+  let mut end = start + 1
+  while end < chars.length() && chars[end] != ';' && end - start <= 8 {
+    end = end + 1
+  }
+  if end >= chars.length() || chars[end] != ';' {
+    return None
+  }
+  match
+    markdown_html_entity_char(
+      String::from_array(chars[start + 1:end]).to_lower(),
+    ) {
+    Some(ch) => Some({ ch, end: end + 1 })
+    None => None
+  }
+}
+
+///|
+fn markdown_html_entity_char(name : String) -> Char? {
+  match markdown_named_html_entity_char(name) {
+    Some(ch) => Some(ch)
+    None => markdown_numeric_html_entity_char(name)
+  }
+}
+
+///|
+fn markdown_named_html_entity_char(name : String) -> Char? {
+  match name {
+    "amp" => Some('&')
+    "lt" => Some('<')
+    "gt" => Some('>')
+    "quot" => Some('"')
+    "apos" => Some('\'')
+    "nbsp" => Some(' ')
+    _ => None
+  }
+}
+
+///|
+fn markdown_numeric_html_entity_char(name : String) -> Char? {
+  let chars = name.to_array()
+  if chars.length() < 2 || chars[0] != '#' {
+    return None
+  }
+  let (start, radix) = if chars.length() >= 3 &&
+    (chars[1] == 'x' || chars[1] == 'X') {
+    (2, 16)
+  } else {
+    (1, 10)
+  }
+  match markdown_parse_html_entity_number(chars, start, radix) {
+    Some(value) => value.to_char()
+    None => None
+  }
+}
+
+///|
+fn markdown_parse_html_entity_number(
+  chars : Array[Char],
+  start : Int,
+  radix : Int,
+) -> Int? {
+  if start >= chars.length() {
+    return None
+  }
+  let mut value = 0
+  for index in start..<chars.length() {
+    match markdown_html_entity_digit_value(chars[index], radix) {
+      Some(digit) => {
+        value = value * radix + digit
+        if value > 1114111 {
+          return None
+        }
+      }
+      None => return None
+    }
+  }
+  Some(value)
+}
+
+///|
+fn markdown_html_entity_digit_value(ch : Char, radix : Int) -> Int? {
+  let value = if ch >= '0' && ch <= '9' {
+    ch.to_int() - '0'.to_int()
+  } else if ch >= 'a' && ch <= 'f' {
+    ch.to_int() - 'a'.to_int() + 10
+  } else if ch >= 'A' && ch <= 'F' {
+    ch.to_int() - 'A'.to_int() + 10
+  } else {
+    return None
+  }
+  if value < radix {
+    Some(value)
+  } else {
+    None
+  }
+}
+
+///|
 pub fn parse_markdown_inlines(text : String) -> Array[MarkdownInline] {
   parse_markdown_inlines_with_definitions(text, [])
 }
@@ -293,7 +424,9 @@ fn append_markdown_inline_ast(
   match inline {
     Text(content~, ..) =>
       if content != "" {
-        spans.push(markdown_inline(content, Plain))
+        spans.push(
+          markdown_inline(markdown_decode_html_entities(content), Plain),
+        )
       }
     SoftBreak(..) | HardBreak(..) => spans.push(markdown_inline("\n", Plain))
     Emphasis(children~, ..) =>
@@ -330,11 +463,17 @@ fn append_markdown_inline_ast(
     Autolink(url~, ..) =>
       spans.push(markdown_inline(url, Autolink, target=Some(url)))
     Image(alt~, url~, ..) =>
-      spans.push(markdown_inline(alt, Image, target=Some(url)))
+      spans.push(
+        markdown_inline(
+          markdown_decode_html_entities(alt),
+          Image,
+          target=Some(url),
+        ),
+      )
     RefImage(alt~, label~, ..) =>
       spans.push(
         markdown_inline(
-          alt,
+          markdown_decode_html_entities(alt),
           Image,
           target=Some(markdown_reference_target(definitions, label)),
         ),
@@ -463,7 +602,21 @@ fn markdown_reference_target(
 
 ///|
 fn markdown_reference_label_key(label : String) -> String {
-  label.trim().to_owned().to_lower()
+  let normalized : Array[Char] = []
+  let chars = label.trim().to_owned().to_array()
+  let mut in_space = false
+  for ch in chars {
+    if ch == ' ' || ch == '\t' || ch == '\n' {
+      if normalized.length() > 0 && !in_space {
+        normalized.push(' ')
+      }
+      in_space = true
+    } else {
+      normalized.push(ch)
+      in_space = false
+    }
+  }
+  String::from_array(normalized).to_lower()
 }
 
 ///|
@@ -478,7 +631,7 @@ fn markdown_inline_text(ast : Array[@md.Inline]) -> String {
 ///|
 fn markdown_inline_plain_text(inline : @md.Inline) -> String {
   match inline {
-    Text(content~, ..) => content
+    Text(content~, ..) => markdown_decode_html_entities(content)
     SoftBreak(..) | HardBreak(..) => "\n"
     Emphasis(children~, ..)
     | Strong(children~, ..)
@@ -488,7 +641,7 @@ fn markdown_inline_plain_text(inline : @md.Inline) -> String {
     Code(content~, ..) => content
     WikiLink(label~, target~, ..) => if label == "" { target } else { label }
     Autolink(url~, ..) => url
-    Image(alt~, ..) | RefImage(alt~, ..) => alt
+    Image(alt~, ..) | RefImage(alt~, ..) => markdown_decode_html_entities(alt)
     HtmlInline(html~, ..) => markdown_html_inline_source(html)
     FootnoteReference(label~, ..) => label
   }
@@ -534,22 +687,54 @@ fn markdown_heading_source(level : Int, text : String) -> String {
 
 ///|
 fn markdown_heading_visible_source_text(source : String) -> String {
-  let chars = source.trim().to_owned().to_array()
-  let mut start = 0
-  while start < chars.length() && chars[start] == '#' {
-    start = start + 1
-  }
-  if start < chars.length() && chars[start] == ' ' {
-    start = start + 1
-  }
-  let mut end = chars.length()
-  while end > start && chars[end - 1] == '#' {
-    end = end - 1
-  }
-  while end > start && chars[end - 1] == ' ' {
-    end = end - 1
-  }
+  let chars = source.to_array()
+  let start = markdown_heading_source_content_start_offset(source)
+  let end = markdown_heading_source_content_end_offset(source, start)
   String::from_array(chars[start:end])
+}
+
+///|
+fn markdown_heading_source_content_start_offset(source : String) -> Int {
+  let chars = source.to_array()
+  let mut index = 0
+  while index < chars.length() && (chars[index] == ' ' || chars[index] == '\t') {
+    index = index + 1
+  }
+  while index < chars.length() && chars[index] == '#' {
+    index = index + 1
+  }
+  while index < chars.length() && (chars[index] == ' ' || chars[index] == '\t') {
+    index = index + 1
+  }
+  index
+}
+
+///|
+fn markdown_heading_source_content_end_offset(
+  source : String,
+  content_start : Int,
+) -> Int {
+  let chars = source.to_array()
+  let mut end = chars.length()
+  while end > content_start && (chars[end - 1] == ' ' || chars[end - 1] == '\t') {
+    end = end - 1
+  }
+  let mut hash_start = end
+  while hash_start > content_start && chars[hash_start - 1] == '#' {
+    hash_start = hash_start - 1
+  }
+  if hash_start < end &&
+    hash_start > content_start &&
+    (chars[hash_start - 1] == ' ' || chars[hash_start - 1] == '\t') {
+    let mut content_end = hash_start - 1
+    while content_end > content_start &&
+          (chars[content_end - 1] == ' ' || chars[content_end - 1] == '\t') {
+      content_end = content_end - 1
+    }
+    content_end
+  } else {
+    end
+  }
 }
 
 ///|

@@ -98,37 +98,55 @@ pub fn parse_markdown(text : String) -> Array[MarkdownBlock] {
         }
         None =>
           if line.trim().to_owned() != "" {
-            match markdown_table_block_at(lines, index) {
-              Some(table) => {
-                blocks.push(table.block)
-                index = table.end_index
+            match markdown_html_block_at(lines, index) {
+              Some(html) => {
+                blocks.push(html.block)
+                index = html.end_index
               }
               None =>
-                match markdown_setext_heading_level_at(lines, index) {
-                  Some(level) => {
-                    let text = line.trim().to_owned()
-                    blocks.push({
-                      kind: MarkdownBlockKind::Heading(level),
-                      text,
-                      inlines: parse_markdown_inlines_with_definitions(
-                        text, definitions,
-                      ),
-                      table_alignments: [],
-                      code_language: None,
-                    })
-                    index = index + 1
+                match markdown_table_block_at(lines, index) {
+                  Some(table) => {
+                    blocks.push(table.block)
+                    index = table.end_index
                   }
-                  None => {
-                    let parsed = @md.parse(line)
-                    for block in parsed.document.children {
-                      append_markdown_ast_block(
-                        blocks,
-                        block,
-                        definitions,
-                        source_text=Some(line),
-                      )
+                  None =>
+                    match
+                      markdown_setext_heading_block_at(
+                        lines, index, definitions,
+                      ) {
+                      Some(heading) => {
+                        blocks.push(heading.block)
+                        index = heading.end_index
+                      }
+                      None =>
+                        match markdown_indented_code_block_at(lines, index) {
+                          Some(code) => {
+                            blocks.push(code.block)
+                            index = code.end_index
+                          }
+                          None =>
+                            match
+                              markdown_soft_wrapped_paragraph_block_at(
+                                lines, index, definitions,
+                              ) {
+                              Some(paragraph) => {
+                                blocks.push(paragraph.block)
+                                index = paragraph.end_index
+                              }
+                              None => {
+                                let parsed = @md.parse(line)
+                                for block in parsed.document.children {
+                                  append_markdown_ast_block(
+                                    blocks,
+                                    block,
+                                    definitions,
+                                    source_text=Some(line),
+                                  )
+                                }
+                              }
+                            }
+                        }
                     }
-                  }
                 }
             }
           }
@@ -142,6 +160,339 @@ pub fn parse_markdown(text : String) -> Array[MarkdownBlock] {
     )
   }
   blocks
+}
+
+///|
+struct MarkdownHtmlBlockParseResult {
+  block : MarkdownBlock
+  end_index : Int
+} derive(Eq, Debug)
+
+///|
+fn markdown_html_block_at(
+  lines : Array[String],
+  index : Int,
+) -> MarkdownHtmlBlockParseResult? {
+  if index < 0 || index >= lines.length() {
+    return None
+  }
+  if markdown_html_block_comment_start(lines[index]) {
+    return markdown_html_comment_block_at(lines, index)
+  }
+  if markdown_html_block_processing_instruction_start(lines[index]) {
+    return markdown_html_processing_instruction_block_at(lines, index)
+  }
+  if markdown_html_block_cdata_start(lines[index]) {
+    return markdown_html_cdata_block_at(lines, index)
+  }
+  match markdown_html_block_start_tag(lines[index]) {
+    Some(tag) => Some(markdown_html_tag_block_at(lines, index, tag))
+    None => None
+  }
+}
+
+///|
+fn markdown_html_comment_block_at(
+  lines : Array[String],
+  index : Int,
+) -> MarkdownHtmlBlockParseResult? {
+  let html_lines : Array[String] = []
+  let mut next = index
+  while next < lines.length() {
+    html_lines.push(lines[next])
+    if markdown_html_block_comment_end(lines[next]) {
+      return Some(markdown_html_block_result(html_lines, next))
+    }
+    next = next + 1
+  }
+  Some(markdown_html_block_result(html_lines, next - 1))
+}
+
+///|
+fn markdown_html_processing_instruction_block_at(
+  lines : Array[String],
+  index : Int,
+) -> MarkdownHtmlBlockParseResult? {
+  let html_lines : Array[String] = []
+  let mut next = index
+  while next < lines.length() {
+    html_lines.push(lines[next])
+    if markdown_html_block_processing_instruction_end(lines[next]) {
+      return Some(markdown_html_block_result(html_lines, next))
+    }
+    next = next + 1
+  }
+  Some(markdown_html_block_result(html_lines, next - 1))
+}
+
+///|
+fn markdown_html_cdata_block_at(
+  lines : Array[String],
+  index : Int,
+) -> MarkdownHtmlBlockParseResult? {
+  let html_lines : Array[String] = []
+  let mut next = index
+  while next < lines.length() {
+    html_lines.push(lines[next])
+    if markdown_html_block_cdata_end(lines[next]) {
+      return Some(markdown_html_block_result(html_lines, next))
+    }
+    next = next + 1
+  }
+  Some(markdown_html_block_result(html_lines, next - 1))
+}
+
+///|
+fn markdown_html_tag_block_at(
+  lines : Array[String],
+  index : Int,
+  tag : String,
+) -> MarkdownHtmlBlockParseResult {
+  let html_lines : Array[String] = []
+  let mut next = index
+  while next < lines.length() {
+    if next > index && markdown_blank_line(lines[next]) {
+      break
+    }
+    html_lines.push(lines[next])
+    if markdown_html_block_line_closes_tag(lines[next], tag) ||
+      markdown_html_block_line_self_closes(lines[next]) {
+      return markdown_html_block_result(html_lines, next)
+    }
+    next = next + 1
+  }
+  markdown_html_block_result(html_lines, next - 1)
+}
+
+///|
+fn markdown_html_block_result(
+  html_lines : Array[String],
+  end_index : Int,
+) -> MarkdownHtmlBlockParseResult {
+  {
+    block: markdown_block(HtmlBlock, markdown_join_lines(html_lines)),
+    end_index,
+  }
+}
+
+///|
+fn markdown_html_block_comment_start(line : String) -> Bool {
+  markdown_html_block_trimmed_start(line).has_prefix("<!--")
+}
+
+///|
+fn markdown_html_block_comment_end(line : String) -> Bool {
+  line.contains("-->")
+}
+
+///|
+fn markdown_html_block_processing_instruction_start(line : String) -> Bool {
+  markdown_html_block_trimmed_start(line).has_prefix("<?")
+}
+
+///|
+fn markdown_html_block_processing_instruction_end(line : String) -> Bool {
+  line.contains("?>")
+}
+
+///|
+fn markdown_html_block_cdata_start(line : String) -> Bool {
+  markdown_html_block_trimmed_start(line).has_prefix("<![CDATA[")
+}
+
+///|
+fn markdown_html_block_cdata_end(line : String) -> Bool {
+  line.contains("]]>")
+}
+
+///|
+fn markdown_html_block_start_tag(line : String) -> String? {
+  let chars = line.to_array()
+  let indent = markdown_html_block_indent(chars)
+  if indent < 0 || indent >= chars.length() || chars[indent] != '<' {
+    return None
+  }
+  let name_start = indent + 1
+  if name_start >= chars.length() ||
+    chars[name_start] == '/' ||
+    !markdown_html_tag_name_start_char(chars[name_start]) {
+    return None
+  }
+  let mut name_end = name_start + 1
+  while name_end < chars.length() &&
+        markdown_html_tag_name_char(chars[name_end]) {
+    name_end = name_end + 1
+  }
+  let tag = String::from_array(chars[name_start:name_end]).to_lower()
+  if markdown_html_block_tag_name_allowed(tag) {
+    Some(tag)
+  } else {
+    None
+  }
+}
+
+///|
+fn markdown_html_block_indent(chars : Array[Char]) -> Int {
+  let mut index = 0
+  while index < chars.length() && chars[index] == ' ' {
+    index = index + 1
+  }
+  if index > 3 || (index < chars.length() && chars[index] == '\t') {
+    -1
+  } else {
+    index
+  }
+}
+
+///|
+fn markdown_html_block_trimmed_start(line : String) -> String {
+  let chars = line.to_array()
+  let indent = markdown_html_block_indent(chars)
+  if indent < 0 {
+    ""
+  } else {
+    String::from_array(chars[indent:])
+  }
+}
+
+///|
+fn markdown_html_block_tag_name_allowed(tag : String) -> Bool {
+  match tag {
+    "address"
+    | "article"
+    | "aside"
+    | "base"
+    | "basefont"
+    | "blockquote"
+    | "body"
+    | "caption"
+    | "center"
+    | "col"
+    | "colgroup"
+    | "dd"
+    | "details"
+    | "dialog"
+    | "dir"
+    | "div"
+    | "dl"
+    | "dt"
+    | "fieldset"
+    | "figcaption"
+    | "figure"
+    | "footer"
+    | "form"
+    | "frame"
+    | "frameset"
+    | "h1"
+    | "h2"
+    | "h3"
+    | "h4"
+    | "h5"
+    | "h6"
+    | "head"
+    | "header"
+    | "hr"
+    | "html"
+    | "iframe"
+    | "legend"
+    | "li"
+    | "link"
+    | "main"
+    | "menu"
+    | "menuitem"
+    | "nav"
+    | "noframes"
+    | "ol"
+    | "optgroup"
+    | "option"
+    | "p"
+    | "param"
+    | "search"
+    | "section"
+    | "summary"
+    | "table"
+    | "tbody"
+    | "td"
+    | "tfoot"
+    | "th"
+    | "thead"
+    | "title"
+    | "tr"
+    | "track"
+    | "ul" => true
+    _ => false
+  }
+}
+
+///|
+fn markdown_html_block_line_closes_tag(line : String, tag : String) -> Bool {
+  line.to_lower().contains("</" + tag + ">")
+}
+
+///|
+fn markdown_html_block_line_self_closes(line : String) -> Bool {
+  markdown_html_block_trimmed_start(line).trim().to_owned().has_suffix("/>")
+}
+
+///|
+struct MarkdownSetextHeadingParseResult {
+  block : MarkdownBlock
+  end_index : Int
+} derive(Eq, Debug)
+
+///|
+fn markdown_setext_heading_block_at(
+  lines : Array[String],
+  index : Int,
+  definitions : Array[MarkdownReferenceDefinition],
+) -> MarkdownSetextHeadingParseResult? {
+  let heading_lines : Array[String] = []
+  let mut next = index
+  while next < lines.length() {
+    if heading_lines.length() > 0 {
+      match markdown_setext_underline_level(lines[next]) {
+        Some(level) => {
+          let text = markdown_join_lines(heading_lines)
+          return Some({
+            block: {
+              kind: MarkdownBlockKind::Heading(level),
+              text,
+              inlines: parse_markdown_inlines_with_definitions(
+                text, definitions,
+              ),
+              table_alignments: [],
+              code_language: None,
+            },
+            end_index: next,
+          })
+        }
+        None => ()
+      }
+    }
+    if markdown_setext_heading_content_line(lines, next) {
+      heading_lines.push(lines[next].trim().to_owned())
+      next = next + 1
+    } else {
+      return None
+    }
+  }
+  None
+}
+
+///|
+fn markdown_setext_heading_content_line(
+  lines : Array[String],
+  index : Int,
+) -> Bool {
+  if index < 0 || index >= lines.length() {
+    return false
+  }
+  let line = lines[index]
+  if line.trim().to_owned() == "" ||
+    markdown_opening_code_fence(line) is Some(_) {
+    return false
+  }
+  markdown_is_setext_paragraph_candidate(line)
 }
 
 ///|
@@ -187,6 +538,178 @@ fn markdown_setext_underline_level(line : String) -> Int? {
 }
 
 ///|
+struct MarkdownIndentedCodeParseResult {
+  block : MarkdownBlock
+  end_index : Int
+} derive(Eq, Debug)
+
+///|
+fn markdown_indented_code_block_at(
+  lines : Array[String],
+  index : Int,
+) -> MarkdownIndentedCodeParseResult? {
+  if !markdown_indented_code_line(lines, index) {
+    return None
+  }
+  let code_lines : Array[String] = []
+  let mut next = index
+  while next < lines.length() {
+    if markdown_indented_code_line(lines, next) {
+      code_lines.push(markdown_indented_code_line_content(lines[next]))
+      next = next + 1
+    } else if markdown_blank_line(lines[next]) {
+      match markdown_next_indented_code_line_index(lines, next + 1) {
+        Some(code_index) =>
+          while next < code_index {
+            code_lines.push("")
+            next = next + 1
+          }
+        None => break
+      }
+    } else {
+      break
+    }
+  }
+  Some({
+    block: markdown_code_block(markdown_join_lines(code_lines), None),
+    end_index: next - 1,
+  })
+}
+
+///|
+fn markdown_next_indented_code_line_index(
+  lines : Array[String],
+  start : Int,
+) -> Int? {
+  let mut index = start
+  while index < lines.length() && markdown_blank_line(lines[index]) {
+    index = index + 1
+  }
+  if index < lines.length() && markdown_indented_code_line(lines, index) {
+    Some(index)
+  } else {
+    None
+  }
+}
+
+///|
+fn markdown_blank_line(line : String) -> Bool {
+  line.trim().to_owned() == ""
+}
+
+///|
+fn markdown_indented_code_line(lines : Array[String], index : Int) -> Bool {
+  if index < 0 || index >= lines.length() {
+    return false
+  }
+  markdown_indented_code_content_offset(lines[index]) > 0
+}
+
+///|
+fn markdown_indented_code_line_content(line : String) -> String {
+  let chars = line.to_array()
+  let offset = markdown_indented_code_content_offset(line)
+  String::from_array(chars[markdown_min_int(offset, chars.length()):])
+}
+
+///|
+fn markdown_indented_code_content_offset(line : String) -> Int {
+  let chars = line.to_array()
+  let mut index = 0
+  let mut column = 0
+  while index < chars.length() && column < 4 {
+    if chars[index] == ' ' {
+      column = column + 1
+      index = index + 1
+    } else if chars[index] == '\t' {
+      column = markdown_next_tab_stop(column)
+      index = index + 1
+    } else {
+      break
+    }
+  }
+  if column >= 4 {
+    index
+  } else {
+    0
+  }
+}
+
+///|
+fn markdown_next_tab_stop(column : Int) -> Int {
+  (column / 4 + 1) * 4
+}
+
+///|
+fn markdown_min_int(a : Int, b : Int) -> Int {
+  if a < b {
+    a
+  } else {
+    b
+  }
+}
+
+///|
+struct MarkdownParagraphParseResult {
+  block : MarkdownBlock
+  end_index : Int
+} derive(Eq, Debug)
+
+///|
+fn markdown_soft_wrapped_paragraph_block_at(
+  lines : Array[String],
+  index : Int,
+  definitions : Array[MarkdownReferenceDefinition],
+) -> MarkdownParagraphParseResult? {
+  if !markdown_soft_wrapped_paragraph_line(lines, index) {
+    return None
+  }
+  let paragraph_lines : Array[String] = [lines[index]]
+  let mut next = index + 1
+  while next < lines.length() &&
+        markdown_setext_heading_level_at(lines, next) is None &&
+        markdown_soft_wrapped_paragraph_line(lines, next) {
+    paragraph_lines.push(lines[next])
+    next = next + 1
+  }
+  if paragraph_lines.length() < 2 {
+    return None
+  }
+  let text = markdown_join_lines(paragraph_lines)
+  Some({
+    block: {
+      kind: MarkdownBlockKind::Paragraph,
+      text,
+      inlines: parse_markdown_inlines_with_definitions(text, definitions),
+      table_alignments: [],
+      code_language: None,
+    },
+    end_index: next - 1,
+  })
+}
+
+///|
+fn markdown_soft_wrapped_paragraph_line(
+  lines : Array[String],
+  index : Int,
+) -> Bool {
+  if index < 0 || index >= lines.length() {
+    return false
+  }
+  let line = lines[index]
+  if line.trim().to_owned() == "" ||
+    markdown_opening_code_fence(line) is Some(_) ||
+    markdown_table_block_at(lines, index) is Some(_) ||
+    markdown_setext_heading_level_at(lines, index) is Some(_) {
+    return false
+  }
+  match @md.parse(line).document.children {
+    [Paragraph(_)] => true
+    _ => false
+  }
+}
+
+///|
 pub(all) struct MarkdownCodeFenceInfo {
   marker : String
   info : String?
@@ -196,20 +719,22 @@ pub(all) struct MarkdownCodeFenceInfo {
 fn markdown_opening_code_fence(line : String) -> MarkdownCodeFenceInfo? {
   let chars = line.to_array()
   let indent = markdown_leading_indent_length(chars)
-  if chars.length() < indent + 3 {
+  if !markdown_code_fence_indent_allowed(chars, indent) ||
+    chars.length() < indent + 3 {
     return None
   }
-  if chars[indent] != '`' ||
-    chars[indent + 1] != '`' ||
-    chars[indent + 2] != '`' {
+  let fence_char = chars[indent]
+  if (fence_char != '`' && fence_char != '~') ||
+    chars[indent + 1] != fence_char ||
+    chars[indent + 2] != fence_char {
     return None
   }
   let mut fence_end = indent + 3
-  while fence_end < chars.length() && chars[fence_end] == '`' {
+  while fence_end < chars.length() && chars[fence_end] == fence_char {
     fence_end = fence_end + 1
   }
   for index in fence_end..<chars.length() {
-    if chars[index] == '`' {
+    if fence_char == '`' && chars[index] == fence_char {
       return None
     }
   }
@@ -234,7 +759,9 @@ fn markdown_closing_code_fence(line : String, fence : String) -> Bool {
   let chars = line.to_array()
   let fence_chars = fence.to_array()
   let indent = markdown_leading_indent_length(chars)
-  if fence_chars.length() < 3 || chars.length() < indent + fence_chars.length() {
+  if !markdown_code_fence_indent_allowed(chars, indent) ||
+    fence_chars.length() < 3 ||
+    chars.length() < indent + fence_chars.length() {
     return false
   }
   for index in 0..<fence_chars.length() {
@@ -243,7 +770,8 @@ fn markdown_closing_code_fence(line : String, fence : String) -> Bool {
     }
   }
   let mut index = indent + fence_chars.length()
-  while index < chars.length() && chars[index] == '`' {
+  let fence_char = fence_chars[0]
+  while index < chars.length() && chars[index] == fence_char {
     index = index + 1
   }
   while index < chars.length() {
@@ -251,6 +779,22 @@ fn markdown_closing_code_fence(line : String, fence : String) -> Bool {
       return false
     }
     index = index + 1
+  }
+  true
+}
+
+///|
+fn markdown_code_fence_indent_allowed(
+  chars : Array[Char],
+  indent : Int,
+) -> Bool {
+  if indent > 3 {
+    return false
+  }
+  for index in 0..<indent {
+    if chars[index] == '\t' {
+      return false
+    }
   }
   true
 }
@@ -347,46 +891,30 @@ fn append_markdown_ast_block(
         code_language: None,
       })
     }
-    BulletList(marker~, items~, ..) =>
-      if marker is Plus {
-        for item in items {
-          let text = markdown_list_item_text(item)
-          let plus_text = "+ " + text
-          blocks.push({
-            kind: MarkdownBlockKind::Paragraph,
-            text: plus_text,
-            inlines: parse_markdown_inlines_with_definitions(
-              plus_text, definitions,
-            ),
-            table_alignments: [],
-            code_language: None,
-          })
-        }
-      } else {
-        for item in items {
-          let text = markdown_list_item_text(item)
-          match item.checked {
-            Some(checked) =>
-              blocks.push({
-                kind: MarkdownBlockKind::TaskListItem(checked),
-                text,
-                inlines: parse_markdown_inlines_with_definitions(
-                  text, definitions,
-                ),
-                table_alignments: [],
-                code_language: None,
-              })
-            None =>
-              blocks.push({
-                kind: MarkdownBlockKind::UnorderedListItem,
-                text,
-                inlines: parse_markdown_inlines_with_definitions(
-                  text, definitions,
-                ),
-                table_alignments: [],
-                code_language: None,
-              })
-          }
+    BulletList(items~, ..) =>
+      for item in items {
+        let text = markdown_list_item_text(item)
+        match item.checked {
+          Some(checked) =>
+            blocks.push({
+              kind: MarkdownBlockKind::TaskListItem(checked),
+              text,
+              inlines: parse_markdown_inlines_with_definitions(
+                text, definitions,
+              ),
+              table_alignments: [],
+              code_language: None,
+            })
+          None =>
+            blocks.push({
+              kind: MarkdownBlockKind::UnorderedListItem,
+              text,
+              inlines: parse_markdown_inlines_with_definitions(
+                text, definitions,
+              ),
+              table_alignments: [],
+              code_language: None,
+            })
         }
       }
     OrderedList(start~, items~, ..) => {

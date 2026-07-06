@@ -494,49 +494,64 @@ fn parse_markdown_editor_blocks(source : String) -> Array[MarkdownEditorBlock] {
           code_content_start = line.end + 1
         }
         None =>
-          match markdown_editor_table_block_at(lines, index) {
-            Some(table) => {
-              blocks.push(table.block)
-              index = table.end_index
+          match markdown_editor_html_block_at(lines, index) {
+            Some(html) => {
+              blocks.push(html.block)
+              index = html.end_index
             }
             None =>
-              match markdown_editor_setext_heading_level_at(lines, index) {
-                Some(level) => {
-                  let text = line.text.trim().to_owned()
-                  blocks.push({
-                    block: {
-                      kind: MarkdownBlockKind::Heading(level),
-                      text,
-                      inlines: parse_markdown_inlines_with_definitions(
-                        text, definitions,
-                      ),
-                      table_alignments: [],
-                      code_language: None,
-                    },
-                    source_range: {
-                      start: line.start,
-                      end: lines[index + 1].end,
-                    },
-                    content_range: { start: line.start, end: line.end },
-                  })
-                  index = index + 1
+              match markdown_editor_table_block_at(lines, index) {
+                Some(table) => {
+                  blocks.push(table.block)
+                  index = table.end_index
                 }
-                None => {
-                  let parsed = parse_markdown(line.text)
-                  for block in parsed {
-                    let block = markdown_editor_block_with_references(
-                      block, definitions,
-                    )
-                    blocks.push({
-                      block,
-                      source_range: { start: line.start, end: line.end },
-                      content_range: markdown_editor_content_range(
-                        line,
-                        block.kind,
-                      ),
-                    })
+                None =>
+                  match
+                    markdown_editor_setext_heading_block_at(
+                      lines, index, definitions,
+                    ) {
+                    Some(heading) => {
+                      blocks.push(heading.block)
+                      index = heading.end_index
+                    }
+                    None =>
+                      match
+                        markdown_editor_indented_code_block_at(lines, index) {
+                        Some(code) => {
+                          blocks.push(code.block)
+                          index = code.end_index
+                        }
+                        None =>
+                          match
+                            markdown_editor_soft_wrapped_paragraph_block_at(
+                              lines, index, definitions,
+                            ) {
+                            Some(paragraph) => {
+                              blocks.push(paragraph.block)
+                              index = paragraph.end_index
+                            }
+                            None => {
+                              let parsed = parse_markdown(line.text)
+                              for block in parsed {
+                                let block = markdown_editor_block_with_references(
+                                  block, definitions,
+                                )
+                                blocks.push({
+                                  block,
+                                  source_range: {
+                                    start: line.start,
+                                    end: line.end,
+                                  },
+                                  content_range: markdown_editor_content_range(
+                                    line,
+                                    block.kind,
+                                  ),
+                                })
+                              }
+                            }
+                          }
+                      }
                   }
-                }
               }
           }
       }
@@ -603,6 +618,204 @@ fn markdown_editor_front_matter_block_at(
 }
 
 ///|
+struct MarkdownEditorHtmlBlockParseResult {
+  block : MarkdownEditorBlock
+  end_index : Int
+} derive(Eq, Debug)
+
+///|
+fn markdown_editor_html_block_at(
+  lines : Array[MarkdownLine],
+  index : Int,
+) -> MarkdownEditorHtmlBlockParseResult? {
+  if index < 0 || index >= lines.length() {
+    return None
+  }
+  if markdown_html_block_comment_start(lines[index].text) {
+    return markdown_editor_html_comment_block_at(lines, index)
+  }
+  if markdown_html_block_processing_instruction_start(lines[index].text) {
+    return markdown_editor_html_processing_instruction_block_at(lines, index)
+  }
+  if markdown_html_block_cdata_start(lines[index].text) {
+    return markdown_editor_html_cdata_block_at(lines, index)
+  }
+  match markdown_html_block_start_tag(lines[index].text) {
+    Some(tag) => Some(markdown_editor_html_tag_block_at(lines, index, tag))
+    None => None
+  }
+}
+
+///|
+fn markdown_editor_html_comment_block_at(
+  lines : Array[MarkdownLine],
+  index : Int,
+) -> MarkdownEditorHtmlBlockParseResult? {
+  let html_lines : Array[String] = []
+  let mut next = index
+  while next < lines.length() {
+    html_lines.push(lines[next].text)
+    if markdown_html_block_comment_end(lines[next].text) {
+      return Some(
+        markdown_editor_html_block_result(lines, html_lines, index, next),
+      )
+    }
+    next = next + 1
+  }
+  Some(markdown_editor_html_block_result(lines, html_lines, index, next - 1))
+}
+
+///|
+fn markdown_editor_html_processing_instruction_block_at(
+  lines : Array[MarkdownLine],
+  index : Int,
+) -> MarkdownEditorHtmlBlockParseResult? {
+  let html_lines : Array[String] = []
+  let mut next = index
+  while next < lines.length() {
+    html_lines.push(lines[next].text)
+    if markdown_html_block_processing_instruction_end(lines[next].text) {
+      return Some(
+        markdown_editor_html_block_result(lines, html_lines, index, next),
+      )
+    }
+    next = next + 1
+  }
+  Some(markdown_editor_html_block_result(lines, html_lines, index, next - 1))
+}
+
+///|
+fn markdown_editor_html_cdata_block_at(
+  lines : Array[MarkdownLine],
+  index : Int,
+) -> MarkdownEditorHtmlBlockParseResult? {
+  let html_lines : Array[String] = []
+  let mut next = index
+  while next < lines.length() {
+    html_lines.push(lines[next].text)
+    if markdown_html_block_cdata_end(lines[next].text) {
+      return Some(
+        markdown_editor_html_block_result(lines, html_lines, index, next),
+      )
+    }
+    next = next + 1
+  }
+  Some(markdown_editor_html_block_result(lines, html_lines, index, next - 1))
+}
+
+///|
+fn markdown_editor_html_tag_block_at(
+  lines : Array[MarkdownLine],
+  index : Int,
+  tag : String,
+) -> MarkdownEditorHtmlBlockParseResult {
+  let html_lines : Array[String] = []
+  let mut next = index
+  while next < lines.length() {
+    if next > index && markdown_editor_blank_line(lines[next]) {
+      break
+    }
+    html_lines.push(lines[next].text)
+    if markdown_html_block_line_closes_tag(lines[next].text, tag) ||
+      markdown_html_block_line_self_closes(lines[next].text) {
+      return markdown_editor_html_block_result(lines, html_lines, index, next)
+    }
+    next = next + 1
+  }
+  markdown_editor_html_block_result(lines, html_lines, index, next - 1)
+}
+
+///|
+fn markdown_editor_html_block_result(
+  lines : Array[MarkdownLine],
+  html_lines : Array[String],
+  start_index : Int,
+  end_index : Int,
+) -> MarkdownEditorHtmlBlockParseResult {
+  let first = lines[start_index]
+  let last = lines[end_index]
+  {
+    block: {
+      block: markdown_block(HtmlBlock, markdown_join_lines(html_lines)),
+      source_range: { start: first.start, end: last.end },
+      content_range: { start: first.start, end: last.end },
+    },
+    end_index,
+  }
+}
+
+///|
+struct MarkdownEditorSetextHeadingParseResult {
+  block : MarkdownEditorBlock
+  end_index : Int
+} derive(Eq, Debug)
+
+///|
+fn markdown_editor_setext_heading_block_at(
+  lines : Array[MarkdownLine],
+  index : Int,
+  definitions : Array[MarkdownReferenceDefinition],
+) -> MarkdownEditorSetextHeadingParseResult? {
+  let heading_lines : Array[MarkdownLine] = []
+  let text_lines : Array[String] = []
+  let mut next = index
+  while next < lines.length() {
+    if heading_lines.length() > 0 {
+      match markdown_editor_setext_underline_level(lines[next].text) {
+        Some(level) => {
+          for heading_line in heading_lines {
+            text_lines.push(heading_line.text.trim().to_owned())
+          }
+          let text = markdown_join_lines(text_lines)
+          let first = heading_lines[0]
+          let last_content = heading_lines[heading_lines.length() - 1]
+          return Some({
+            block: {
+              block: {
+                kind: MarkdownBlockKind::Heading(level),
+                text,
+                inlines: parse_markdown_inlines_with_definitions(
+                  text, definitions,
+                ),
+                table_alignments: [],
+                code_language: None,
+              },
+              source_range: { start: first.start, end: lines[next].end },
+              content_range: { start: first.start, end: last_content.end },
+            },
+            end_index: next,
+          })
+        }
+        None => ()
+      }
+    }
+    if markdown_editor_setext_heading_content_line(lines, next) {
+      heading_lines.push(lines[next])
+      next = next + 1
+    } else {
+      return None
+    }
+  }
+  None
+}
+
+///|
+fn markdown_editor_setext_heading_content_line(
+  lines : Array[MarkdownLine],
+  index : Int,
+) -> Bool {
+  if index < 0 || index >= lines.length() {
+    return false
+  }
+  let line = lines[index]
+  if line.text.trim().to_owned() == "" ||
+    markdown_editor_opening_code_fence_marker(line.text) is Some(_) {
+    return false
+  }
+  markdown_editor_is_setext_paragraph_candidate(line.text)
+}
+
+///|
 fn markdown_editor_block_with_references(
   block : MarkdownBlock,
   definitions : Array[MarkdownReferenceDefinition],
@@ -614,6 +827,162 @@ fn markdown_editor_block_with_references(
         ..block,
         inlines: markdown_resolve_reference_inlines(block.inlines, definitions),
       }
+  }
+}
+
+///|
+struct MarkdownEditorIndentedCodeParseResult {
+  block : MarkdownEditorBlock
+  end_index : Int
+} derive(Eq, Debug)
+
+///|
+fn markdown_editor_indented_code_block_at(
+  lines : Array[MarkdownLine],
+  index : Int,
+) -> MarkdownEditorIndentedCodeParseResult? {
+  if !markdown_editor_indented_code_line(lines, index) {
+    return None
+  }
+  let code_lines : Array[String] = []
+  let mut next = index
+  while next < lines.length() {
+    if markdown_editor_indented_code_line(lines, next) {
+      code_lines.push(markdown_indented_code_line_content(lines[next].text))
+      next = next + 1
+    } else if markdown_editor_blank_line(lines[next]) {
+      match markdown_editor_next_indented_code_line_index(lines, next + 1) {
+        Some(code_index) =>
+          while next < code_index {
+            code_lines.push("")
+            next = next + 1
+          }
+        None => break
+      }
+    } else {
+      break
+    }
+  }
+  let first = lines[index]
+  let last = lines[next - 1]
+  let content_start = first.start +
+    markdown_indented_code_content_offset(first.text)
+  Some({
+    block: {
+      block: markdown_editor_code_block(markdown_join_lines(code_lines), None),
+      source_range: { start: first.start, end: last.end },
+      content_range: {
+        start: markdown_editor_min_int(content_start, last.end),
+        end: last.end,
+      },
+    },
+    end_index: next - 1,
+  })
+}
+
+///|
+fn markdown_editor_next_indented_code_line_index(
+  lines : Array[MarkdownLine],
+  start : Int,
+) -> Int? {
+  let mut index = start
+  while index < lines.length() && markdown_editor_blank_line(lines[index]) {
+    index = index + 1
+  }
+  if index < lines.length() && markdown_editor_indented_code_line(lines, index) {
+    Some(index)
+  } else {
+    None
+  }
+}
+
+///|
+fn markdown_editor_blank_line(line : MarkdownLine) -> Bool {
+  line.text.trim().to_owned() == ""
+}
+
+///|
+fn markdown_editor_indented_code_line(
+  lines : Array[MarkdownLine],
+  index : Int,
+) -> Bool {
+  if index < 0 || index >= lines.length() {
+    return false
+  }
+  markdown_indented_code_content_offset(lines[index].text) > 0
+}
+
+///|
+struct MarkdownEditorParagraphParseResult {
+  block : MarkdownEditorBlock
+  end_index : Int
+} derive(Eq, Debug)
+
+///|
+fn markdown_editor_soft_wrapped_paragraph_block_at(
+  lines : Array[MarkdownLine],
+  index : Int,
+  definitions : Array[MarkdownReferenceDefinition],
+) -> MarkdownEditorParagraphParseResult? {
+  if !markdown_editor_soft_wrapped_paragraph_line(lines, index) {
+    return None
+  }
+  let paragraph_lines : Array[MarkdownLine] = [lines[index]]
+  let mut next = index + 1
+  while next < lines.length() &&
+        markdown_editor_setext_heading_level_at(lines, next) is None &&
+        markdown_editor_soft_wrapped_paragraph_line(lines, next) {
+    paragraph_lines.push(lines[next])
+    next = next + 1
+  }
+  if paragraph_lines.length() < 2 {
+    return None
+  }
+  let text_lines : Array[String] = []
+  for line in paragraph_lines {
+    text_lines.push(line.text)
+  }
+  let text = markdown_join_lines(text_lines)
+  Some({
+    block: {
+      block: {
+        kind: MarkdownBlockKind::Paragraph,
+        text,
+        inlines: parse_markdown_inlines_with_definitions(text, definitions),
+        table_alignments: [],
+        code_language: None,
+      },
+      source_range: {
+        start: paragraph_lines[0].start,
+        end: paragraph_lines[paragraph_lines.length() - 1].end,
+      },
+      content_range: {
+        start: paragraph_lines[0].start,
+        end: paragraph_lines[paragraph_lines.length() - 1].end,
+      },
+    },
+    end_index: next - 1,
+  })
+}
+
+///|
+fn markdown_editor_soft_wrapped_paragraph_line(
+  lines : Array[MarkdownLine],
+  index : Int,
+) -> Bool {
+  if index < 0 || index >= lines.length() {
+    return false
+  }
+  let line = lines[index]
+  if line.text.trim().to_owned() == "" ||
+    markdown_editor_opening_code_fence_marker(line.text) is Some(_) ||
+    markdown_editor_table_block_at(lines, index) is Some(_) ||
+    markdown_editor_setext_heading_level_at(lines, index) is Some(_) {
+    return false
+  }
+  match parse_markdown(line.text) {
+    [{ kind: MarkdownBlockKind::Paragraph, .. }] => true
+    _ => false
   }
 }
 
@@ -778,7 +1147,9 @@ fn markdown_editor_closing_code_fence(line : String, fence : String) -> Bool {
   let chars = line.to_array()
   let fence_chars = fence.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
-  if fence_chars.length() < 3 || chars.length() < indent + fence_chars.length() {
+  if !markdown_editor_code_fence_indent_allowed(chars, indent) ||
+    fence_chars.length() < 3 ||
+    chars.length() < indent + fence_chars.length() {
     return false
   }
   for index in 0..<fence_chars.length() {
@@ -826,7 +1197,11 @@ fn markdown_editor_block_to_rich_text(
   let block = markdown_block_to_rich_text(editor_block.block, base, base_dir~)
   {
     ..block,
-    runs: markdown_editor_runs_with_source_ranges(block.runs, editor_block),
+    runs: markdown_editor_runs_with_source_ranges(
+      block.runs,
+      source,
+      editor_block,
+    ),
     table: markdown_editor_table_with_source_ranges(
       block.table,
       source,
@@ -909,12 +1284,13 @@ fn markdown_editor_find_table_cell(
 ///|
 fn markdown_editor_runs_with_source_ranges(
   runs : Array[RichTextRun],
+  source : String,
   editor_block : MarkdownEditorBlock,
 ) -> Array[RichTextRun] {
   let mapped : Array[RichTextRun] = []
   let mut search = 0
   let mut index = 0
-  let content = markdown_editor_block_source_content(editor_block)
+  let content = markdown_editor_run_source_content(source, editor_block)
   for run in runs {
     if editor_block.block.kind is CodeBlock &&
       editor_block.block.code_language is Some(_) &&
@@ -929,25 +1305,46 @@ fn markdown_editor_runs_with_source_ranges(
         }),
       })
     } else {
-      let length = markdown_editor_text_length(run.text)
-      let start = markdown_editor_find_run_source_offset(
+      let range = markdown_editor_find_run_source_range(
         content,
         run.text,
         search,
       )
-      let end = start + length
       mapped.push({
         ..run,
         source_range: Some({
-          start: editor_block.content_range.start + start,
-          end: editor_block.content_range.start + end,
+          start: editor_block.content_range.start + range.start,
+          end: editor_block.content_range.start + range.end,
         }),
       })
-      search = end
+      search = range.end
     }
     index = index + 1
   }
   mapped
+}
+
+///|
+fn markdown_editor_run_source_content(
+  source : String,
+  editor_block : MarkdownEditorBlock,
+) -> String {
+  match editor_block.block.kind {
+    Heading(_)
+    | UnorderedListItem
+    | TaskListItem(_)
+    | OrderedListItem(_)
+    | Blockquote
+    | Paragraph
+    | FootnoteDefinition(_) =>
+      markdown_editor_substring(
+        source,
+        editor_block.content_range.start,
+        editor_block.content_range.end,
+      )
+    CodeBlock | HorizontalRule | Table | HtmlBlock | FrontMatter =>
+      markdown_editor_block_source_content(editor_block)
+  }
 }
 
 ///|
@@ -1102,41 +1499,68 @@ fn markdown_editor_heading_source(level : Int, text : String) -> String {
 }
 
 ///|
-fn markdown_editor_find_run_source_offset(
+struct MarkdownEditorRunSourceRange {
+  start : Int
+  end : Int
+} derive(Eq, Debug)
+
+///|
+fn markdown_editor_find_run_source_range(
   content : String,
   run_text : String,
   start : Int,
-) -> Int {
+) -> MarkdownEditorRunSourceRange {
   let content_chars = content.to_array()
   let run_chars = run_text.to_array()
   if run_chars.length() == 0 {
-    return markdown_editor_clamp_int(start, 0, content_chars.length())
+    let offset = markdown_editor_clamp_int(start, 0, content_chars.length())
+    return { start: offset, end: offset }
   }
   let mut index = markdown_editor_clamp_int(start, 0, content_chars.length())
-  while index + run_chars.length() <= content_chars.length() {
-    if markdown_editor_chars_match(content_chars, index, run_chars) {
-      return index
+  while index < content_chars.length() {
+    match
+      markdown_editor_match_run_source_end(content_chars, index, run_chars) {
+      Some(end) => return { start: index, end }
+      None => index = index + 1
     }
-    index = index + 1
   }
-  markdown_editor_clamp_int(start, 0, content_chars.length())
+  let offset = markdown_editor_clamp_int(start, 0, content_chars.length())
+  { start: offset, end: offset + run_chars.length() }
 }
 
 ///|
-fn markdown_editor_chars_match(
+fn markdown_editor_match_run_source_end(
   content : Array[Char],
   start : Int,
   target : Array[Char],
-) -> Bool {
-  if start + target.length() > content.length() {
-    return false
-  }
-  for index in 0..<target.length() {
-    if content[start + index] != target[index] {
-      return false
+) -> Int? {
+  let mut source_index = start
+  let mut target_index = 0
+  while target_index < target.length() {
+    if source_index >= content.length() {
+      return None
+    }
+    match markdown_html_entity_decode_at(content, source_index) {
+      Some(entity) if entity.ch == target[target_index] => {
+        source_index = entity.end
+        target_index = target_index + 1
+        continue
+      }
+      _ => ()
+    }
+    if content[source_index] == target[target_index] {
+      source_index = source_index + 1
+      target_index = target_index + 1
+    } else if content[source_index] == '\\' &&
+      source_index + 1 < content.length() &&
+      content[source_index + 1] == target[target_index] {
+      source_index = source_index + 2
+      target_index = target_index + 1
+    } else {
+      return None
     }
   }
-  true
+  Some(source_index)
 }
 
 ///|
@@ -1178,10 +1602,17 @@ fn markdown_editor_content_range(
     Paragraph | CodeBlock | HorizontalRule | Table | HtmlBlock | FrontMatter =>
       0
   }
-  {
-    start: markdown_editor_min_int(line.start + offset, line.end),
-    end: line.end,
+  let start = markdown_editor_min_int(line.start + offset, line.end)
+  let end = match kind {
+    Heading(_) =>
+      markdown_editor_min_int(
+        line.start +
+        markdown_heading_source_content_end_offset(line.text, offset),
+        line.end,
+      )
+    _ => line.end
   }
+  { start, end: markdown_editor_max_int(start, end) }
 }
 
 ///|

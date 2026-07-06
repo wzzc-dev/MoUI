@@ -337,7 +337,8 @@ fn markdown_editor_opening_code_fence_marker(
 ) -> MarkdownCodeFenceInfo? {
   let chars = line.to_array()
   let indent = markdown_editor_leading_indent_length(chars)
-  if chars.length() < indent + 3 {
+  if !markdown_editor_code_fence_indent_allowed(chars, indent) ||
+    chars.length() < indent + 3 {
     return None
   }
   let fence_char = chars[indent]
@@ -359,6 +360,22 @@ fn markdown_editor_opening_code_fence_marker(
     marker: String::from_array(chars[indent:fence_end]),
     info: markdown_code_fence_info(chars, fence_end),
   })
+}
+
+///|
+fn markdown_editor_code_fence_indent_allowed(
+  chars : Array[Char],
+  indent : Int,
+) -> Bool {
+  if indent > 3 {
+    return false
+  }
+  for index in 0..<indent {
+    if chars[index] == '\t' {
+      return false
+    }
+  }
+  true
 }
 
 ///|

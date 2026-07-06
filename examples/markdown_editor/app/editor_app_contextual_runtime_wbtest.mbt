@@ -127,34 +127,34 @@ test "markdown editor app undo and redo structured formatting commands" {
 ///|
 test "markdown editor app undo and redo block duplicate command" {
   let app = MarkdownEditorApp::new()
-  app.set_document("Alpha\nBeta")
+  app.set_document("Alpha\n\nBeta")
   app.set_selection(8, None)
   app.apply_action("duplicate-block")
-  inspect(app.document(), content="Alpha\nBeta\nBeta")
-  inspect(app.selection_caret(), content="13")
+  inspect(app.document(), content="Alpha\n\nBeta\n\nBeta")
+  inspect(app.selection_caret(), content="14")
   assert_true(app.undo())
-  inspect(app.document(), content="Alpha\nBeta")
+  inspect(app.document(), content="Alpha\n\nBeta")
   assert_true(app.redo())
-  inspect(app.document(), content="Alpha\nBeta\nBeta")
+  inspect(app.document(), content="Alpha\n\nBeta\n\nBeta")
 }
 
 ///|
 test "markdown editor app undo and redo selected block range move command" {
   let app = MarkdownEditorApp::new()
-  app.set_document("Alpha\nBeta\nGamma")
-  app.set_selection(8, Some(@core.TextRange::new(start=1, end=10)))
+  app.set_document("Alpha\n\nBeta\n\nGamma")
+  app.set_selection(8, Some(@core.TextRange::new(start=1, end=11)))
   app.apply_action("move-block-down")
-  inspect(app.document(), content="Gamma\nAlpha\nBeta")
-  inspect(app.selection_caret(), content="14")
+  inspect(app.document(), content="Gamma\n\nAlpha\n\nBeta")
+  inspect(app.selection_caret(), content="15")
   guard app.selection.get().selection is Some(moved_selection) else {
     fail("expected moved block range selection")
   }
-  inspect(moved_selection.start, content="7")
-  inspect(moved_selection.end, content="16")
+  inspect(moved_selection.start, content="8")
+  inspect(moved_selection.end, content="18")
   assert_true(app.undo())
-  inspect(app.document(), content="Alpha\nBeta\nGamma")
+  inspect(app.document(), content="Alpha\n\nBeta\n\nGamma")
   assert_true(app.redo())
-  inspect(app.document(), content="Gamma\nAlpha\nBeta")
+  inspect(app.document(), content="Gamma\n\nAlpha\n\nBeta")
 }
 
 ///|

@@ -1,7 +1,7 @@
 ///|
 test "markdown editor runtime block editing shortcuts update document" {
   let app = MarkdownEditorApp::new()
-  app.set_document("Alpha\nBeta\nGamma")
+  app.set_document("Alpha\n\nBeta\n\nGamma")
   let runtime = app.runtime(width=980.0, height=640.0)
   app.set_selection(8, None)
   runtime.dispatch_event(
@@ -12,8 +12,8 @@ test "markdown editor runtime block editing shortcuts update document" {
       ),
     ),
   )
-  inspect(app.document(), content="Alpha\nBeta\nBeta\nGamma")
-  app.set_document("Alpha\nBeta\nGamma")
+  inspect(app.document(), content="Alpha\n\nBeta\n\nBeta\n\nGamma")
+  app.set_document("Alpha\n\nBeta\n\nGamma")
   app.set_selection(8, None)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
@@ -23,7 +23,7 @@ test "markdown editor runtime block editing shortcuts update document" {
       ),
     ),
   )
-  inspect(app.document(), content="Beta\nAlpha\nGamma")
+  inspect(app.document(), content="Beta\n\nAlpha\n\nGamma")
   app.set_selection(2, None)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
@@ -33,7 +33,7 @@ test "markdown editor runtime block editing shortcuts update document" {
       ),
     ),
   )
-  inspect(app.document(), content="Alpha\nBeta\nGamma")
+  inspect(app.document(), content="Alpha\n\nBeta\n\nGamma")
 }
 
 ///|

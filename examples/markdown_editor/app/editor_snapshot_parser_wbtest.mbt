@@ -57,8 +57,8 @@ test "markdown parser recognizes tables as table blocks" {
 
 ///|
 test "markdown parser preserves malformed inline syntax as plain text" {
-  let blocks = parse_markdown("Text with **open and `dangling\n+ plus list")
-  inspect(blocks.length(), content="2")
+  let blocks = parse_markdown("Text with **open and `dangling")
+  inspect(blocks.length(), content="1")
   guard blocks[0].kind is Paragraph else {
     fail("expected malformed inline paragraph")
   }
@@ -67,9 +67,6 @@ test "markdown parser preserves malformed inline syntax as plain text" {
     fail("expected plain malformed inline text")
   }
   inspect(text, content="Text with **open and `dangling")
-  guard blocks[1].kind is Paragraph else {
-    fail("expected plus list to stay paragraph")
-  }
 }
 
 ///|
@@ -84,15 +81,19 @@ test "markdown parser handles blank lines and unterminated code blocks" {
 
 ///|
 test "markdown parser recognizes star bullets and ordered list numbers" {
-  let blocks = parse_markdown("* star\n42. answer")
-  inspect(blocks.length(), content="2")
+  let blocks = parse_markdown("* star\n+ plus\n42. answer")
+  inspect(blocks.length(), content="3")
   guard blocks[0].kind is UnorderedListItem else {
     fail("expected star bullet")
   }
-  guard blocks[1].kind is OrderedListItem(42) else {
+  guard blocks[1].kind is UnorderedListItem else {
+    fail("expected plus bullet")
+  }
+  inspect(blocks[1].text, content="plus")
+  guard blocks[2].kind is OrderedListItem(42) else {
     fail("expected ordered list number")
   }
-  inspect(blocks[1].text, content="answer")
+  inspect(blocks[2].text, content="answer")
 }
 
 ///|
@@ -173,11 +174,39 @@ test "markdown parser preserves footnote metadata" {
 }
 
 ///|
+test "markdown parser normalizes reference label whitespace" {
+  let blocks = parse_markdown(
+    "[MoUI][My   Site]\n\n[my site]: https://moui.dev",
+  )
+  guard blocks[0].inlines[0]
+    is {
+      kind: MarkdownInlineKind::Link,
+      text: "MoUI",
+      target: Some("https://moui.dev"),
+    } else {
+    fail("expected collapsed whitespace reference label to resolve")
+  }
+}
+
+///|
 test "markdown parser preserves html block metadata" {
   let blocks = parse_markdown("<div>Block</div>")
   inspect(blocks.length(), content="1")
   guard blocks[0] is { kind: HtmlBlock, text: "<div>Block</div>", .. } else {
     fail("expected html block")
+  }
+}
+
+///|
+test "markdown parser keeps multiline html blocks together" {
+  let blocks = parse_markdown("<section>\nLine **raw**\n</section>\n\nTail")
+  inspect(blocks.length(), content="2")
+  guard blocks[0]
+    is { kind: HtmlBlock, text: "<section>\nLine **raw**\n</section>", .. } else {
+    fail("expected multiline html block")
+  }
+  guard blocks[1] is { kind: Paragraph, text: "Tail", .. } else {
+    fail("expected paragraph after html block")
   }
 }
 
