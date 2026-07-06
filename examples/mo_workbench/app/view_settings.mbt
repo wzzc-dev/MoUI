@@ -11,13 +11,18 @@ fn settings_workspace_view(
   let nav_width = 168.0
   let gap = 20.0
   let panel_width = (width - nav_width - gap).max(280.0)
-  @views.row(
-    [
-      settings_section_nav(model.active_section, theme, nav_width, height),
-      settings_section_panel(model, appearance, theme, panel_width, height),
-    ],
-    spacing=gap,
-    align=@views.CrossAlign::Stretch,
+  @views.container(
+    @views.row(
+      [
+        settings_section_nav(model.active_section, theme, nav_width, height),
+        settings_section_panel(model, appearance, theme, panel_width, height),
+      ],
+      spacing=gap,
+      align=@views.CrossAlign::Stretch,
+    ),
+    width~,
+    height~,
+    padding=0.0,
   )
 }
 
@@ -28,6 +33,8 @@ fn settings_section_nav(
   width : Double,
   height : Double,
 ) -> @moui.View[SettingsMsg] {
+  let panel_padding = 14.0
+  let content_width = (width - panel_padding * 2.0).max(96.0)
   @views.container(
     @views.column(
       [
@@ -35,22 +42,28 @@ fn settings_section_nav(
           "Preferences",
           role=@views.TextRole::Subtitle,
           theme~,
-          width~,
+          width=content_width,
         ),
         settings_nav_item(
-          "API & keys",
+          "Providers",
           SettingsSection::Api,
           active,
           theme,
-          width,
+          content_width,
         ),
-        settings_nav_item("Agent", SettingsSection::Agent, active, theme, width),
+        settings_nav_item(
+          "Agent",
+          SettingsSection::Agent,
+          active,
+          theme,
+          content_width,
+        ),
         settings_nav_item(
           "Editor",
           SettingsSection::Editor,
           active,
           theme,
-          width,
+          content_width,
         ),
       ],
       spacing=6.0,
@@ -60,7 +73,7 @@ fn settings_section_nav(
     height~,
     background=workbench_subtle_background(theme),
     corner_radius=10.0,
-    padding=14.0,
+    padding=panel_padding,
   ).border(hairline_border(theme))
 }
 
@@ -96,31 +109,36 @@ fn settings_section_panel(
   width : Double,
   height : Double,
 ) -> @moui.View[SettingsMsg] {
+  let panel_padding = 20.0
+  let content_width = (width - panel_padding * 2.0).max(220.0)
+  let content_height = (height - panel_padding * 2.0).max(120.0)
   let body = match model.active_section {
-    SettingsSection::Api => settings_api_panel(model, theme, width)
-    SettingsSection::Agent => settings_agent_panel(model, theme, width)
+    SettingsSection::Api =>
+      settings_providers_panel(model, theme, content_width)
+    SettingsSection::Agent => settings_agent_panel(model, theme, content_width)
     SettingsSection::Editor =>
-      settings_editor_panel(model, appearance, theme, width)
+      settings_editor_panel(model, appearance, theme, content_width)
   }
   @views.container(
     @views.scroll_view(
       @views.column(
         [
-          settings_panel_header(model, theme, width),
+          settings_panel_header(model, theme, content_width),
           body,
-          settings_save_row(model, theme, width),
+          settings_save_row(model, theme, content_width),
         ],
         spacing=18.0,
         align=@views.CrossAlign::Stretch,
       ),
-      width~,
-      height=height - 8.0,
+      width=content_width,
+      height=content_height,
+      state=Some(model.scroll_state),
     ),
     width~,
     height~,
     background=workbench_card_background(theme),
     corner_radius=10.0,
-    padding=20.0,
+    padding=panel_padding,
   ).border(hairline_border(theme))
 }
 
@@ -141,7 +159,7 @@ fn settings_panel_header(
       @views.text(
         "Loaded from " +
         model.env_source +
-        ". First run creates .mo_workbench/settings.json; edit openai_api_key there.",
+        ". 可配置多个 OpenAI 兼容供应商，每个供应商可自动检测或手动添加模型。",
         role=@views.TextRole::Caption,
         theme~,
         width~,
@@ -155,58 +173,254 @@ fn settings_panel_header(
 ///|
 fn settings_section_title(section : SettingsSection) -> String {
   match section {
-    SettingsSection::Api => "API & keys"
+    SettingsSection::Api => "Providers"
     SettingsSection::Agent => "Agent"
     SettingsSection::Editor => "Editor"
   }
 }
 
 ///|
-fn settings_api_panel(
+/// Providers panel: a list of configured LLM providers (OpenAI-compatible),
+/// each editable (name / base URL / API key), with `v1/models` auto-detection
+/// and manual model add. The active provider drives the chat surface.
+fn settings_providers_panel(
   model : SettingsWorkspace,
   theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[SettingsMsg] {
   let field_w = width - 8.0
-  @views.column(
-    [
-      settings_field_row(
-        "OpenAI API key",
-        "openai_api_key in .mo_workbench/settings.json",
-        @views.text_field(
-          model.api_key,
-          on_input=value => SettingsMsg::ApiKeyChanged(value),
-          on_submit=None,
-          placeholder="sk-...",
-          variant=@views.TextFieldVariant::Filled,
-          theme~,
-          width=field_w,
-          height=40.0,
+  let rows : Array[@moui.View[SettingsMsg]] = []
+  rows.push(provider_selector_row(model, theme, field_w))
+  match model.active_provider() {
+    Some(p) => rows.push(provider_edit_form(p, model, theme, field_w))
+    None => ()
+  }
+  if model.detect_busy {
+    rows.push(
+      @views.text(
+        "正在通过 v1/models 检测模型…",
+        role=@views.TextRole::Caption,
+        theme~,
+        width=field_w,
+      ).foreground(theme.palette.muted),
+    )
+  }
+  match model.detect_error {
+    Some(err) =>
+      rows.push(
+        @views.text(err, role=@views.TextRole::Caption, theme~, width=field_w).foreground(
+          theme.palette.danger,
         ),
-        theme,
-        field_w,
-      ),
-      settings_field_row(
-        "Base URL",
-        "OpenAI-compatible endpoint (e.g. https://token.sensenova.cn/v1)",
-        @views.text_field(
-          model.base_url,
-          on_input=value => SettingsMsg::BaseUrlChanged(value),
-          on_submit=None,
-          placeholder="https://api.deepseek.com/v1",
-          variant=@views.TextFieldVariant::Filled,
-          theme~,
-          width=field_w,
-          height=40.0,
-        ),
-        theme,
-        field_w,
-      ),
-      settings_secret_status(model.api_key, theme, field_w),
-    ],
-    spacing=16.0,
-    align=@views.CrossAlign::Stretch,
+      )
+    None => ()
+  }
+  @views.column(rows, spacing=16.0, align=@views.CrossAlign::Stretch)
+}
+
+///|
+/// A vertical provider list plus an "add" button. The active provider is
+/// highlighted; tapping a provider row makes it active.
+fn provider_selector_row(
+  model : SettingsWorkspace,
+  theme : @moui.Theme,
+  width : Double,
+) -> @moui.View[SettingsMsg] {
+  let children : Array[@moui.View[SettingsMsg]] = []
+  for p in model.providers {
+    let selected = model.active_provider_id == Some(p.id)
+    children.push(provider_selector_item(p, selected, theme, width))
+  }
+  children.push(
+    @views.button(
+      "+ 添加提供商",
+      on_click=SettingsMsg::AddProvider,
+      variant=@views.ButtonVariant::Ghost,
+      theme~,
+      width~,
+      height=36.0,
+    ),
   )
+  @views.column(children, spacing=6.0, align=@views.CrossAlign::Stretch)
+}
+
+///|
+fn provider_selector_item(
+  provider : ProviderConfig,
+  selected : Bool,
+  theme : @moui.Theme,
+  width : Double,
+) -> @moui.View[SettingsMsg] {
+  @views.container(
+    @views.text(
+      provider.name,
+      role=@views.TextRole::Caption,
+      theme~,
+      width=(width - 16.0).max(48.0),
+      height=20.0,
+    ).foreground(
+      if selected {
+        workbench_accent(theme)
+      } else {
+        workbench_text(theme)
+      },
+    ),
+    width~,
+    height=36.0,
+    background=if selected {
+      workbench_selector_chip_background(theme)
+    } else {
+      workbench_subtle_background(theme)
+    },
+    corner_radius=8.0,
+    border=if selected { Some(hairline_border(theme)) } else { None },
+    padding=8.0,
+  ).on_tap(SettingsMsg::SelectProvider(provider.id))
+}
+
+///|
+/// The edit form for the active provider: name / base URL / API key fields,
+/// a `v1/models` auto-detect button, the model list, a manual-add row, and a
+/// remove button (hidden when only one provider remains).
+fn provider_edit_form(
+  p : ProviderConfig,
+  model : SettingsWorkspace,
+  theme : @moui.Theme,
+  width : Double,
+) -> @moui.View[SettingsMsg] {
+  let field_w = width - 8.0
+  let rows : Array[@moui.View[SettingsMsg]] = []
+  rows.push(
+    settings_field_row(
+      "名称",
+      "供应商显示名",
+      @views.text_field(
+        p.name,
+        on_input=value => SettingsMsg::UpdateProviderField(p.id, Name, value),
+        on_submit=None,
+        placeholder="DeepSeek",
+        variant=@views.TextFieldVariant::Filled,
+        theme~,
+        width=field_w,
+        height=40.0,
+      ),
+      theme,
+      field_w,
+    ),
+  )
+  rows.push(
+    settings_field_row(
+      "Base URL",
+      "OpenAI 兼容端点，例如 https://api.deepseek.com/v1",
+      @views.text_field(
+        p.base_url,
+        on_input=value => SettingsMsg::UpdateProviderField(p.id, BaseUrl, value),
+        on_submit=None,
+        placeholder="https://api.deepseek.com/v1",
+        variant=@views.TextFieldVariant::Filled,
+        theme~,
+        width=field_w,
+        height=40.0,
+      ),
+      theme,
+      field_w,
+    ),
+  )
+  rows.push(
+    settings_field_row(
+      "API Key",
+      "仅保存在本地 settings.json",
+      @views.text_field(
+        p.api_key,
+        on_input=value => SettingsMsg::UpdateProviderField(p.id, ApiKey, value),
+        on_submit=None,
+        placeholder="sk-...",
+        variant=@views.TextFieldVariant::Filled,
+        theme~,
+        width=field_w,
+        height=40.0,
+      ),
+      theme,
+      field_w,
+    ),
+  )
+  let detect_btn = @views.button(
+    if model.detect_busy {
+      "检测中…"
+    } else {
+      "自动检测模型 (v1/models)"
+    },
+    on_click=SettingsMsg::DetectModels(p.id),
+    variant=@views.ButtonVariant::Primary,
+    theme~,
+    width=field_w,
+    height=40.0,
+  ).disabled(disabled=model.detect_busy)
+  rows.push(detect_btn)
+  rows.push(
+    @views.text(
+      "模型 (" + p.models.length().to_string() + ")",
+      role=@views.TextRole::Label,
+      theme~,
+      width=field_w,
+    ).foreground(workbench_text(theme)),
+  )
+  for m in p.models {
+    rows.push(
+      @views.container(
+        @views.text(
+          m,
+          role=@views.TextRole::Label,
+          theme~,
+          width=field_w - 16.0,
+          height=22.0,
+        ),
+        width=field_w,
+        height=38.0,
+        background=workbench_subtle_background(theme),
+        corner_radius=6.0,
+        padding=8.0,
+      ),
+    )
+  }
+  rows.push(
+    @views.row(
+      [
+        @views.text_field(
+          model.new_model_id,
+          on_input=value => SettingsMsg::NewModelInputChanged(value),
+          on_submit=Some(SettingsMsg::AddManualModel(p.id, model.new_model_id)),
+          placeholder="手动添加模型 id",
+          variant=@views.TextFieldVariant::Filled,
+          theme~,
+          width=field_w - 92.0,
+          height=40.0,
+        ),
+        @views.button(
+          "添加",
+          on_click=SettingsMsg::AddManualModel(p.id, model.new_model_id),
+          variant=@views.ButtonVariant::Ghost,
+          theme~,
+          width=80.0,
+          height=40.0,
+        ),
+      ],
+      spacing=12.0,
+      align=@views.CrossAlign::Center,
+    ),
+  )
+  if model.providers.length() > 1 {
+    rows.push(
+      @views.button(
+        "移除该供应商",
+        on_click=SettingsMsg::RemoveProvider(p.id),
+        variant=@views.ButtonVariant::Ghost,
+        theme~,
+        width=field_w,
+        height=40.0,
+      ),
+    )
+  }
+  @views.column(rows, spacing=12.0, align=@views.CrossAlign::Stretch)
 }
 
 ///|
@@ -318,24 +532,6 @@ fn settings_field_row(
     ],
     spacing=6.0,
     align=@views.CrossAlign::Stretch,
-  )
-}
-
-///|
-fn settings_secret_status(
-  api_key : String,
-  theme : @moui.Theme,
-  width : Double,
-) -> @moui.View[SettingsMsg] {
-  let text = if api_key.is_empty() {
-    "No API key in settings — agent runs in stub mode until you save a key."
-  } else {
-    "Key configured (" +
-    api_key.length().to_string() +
-    " characters). Restart may be required for OpenSeek to pick up changes."
-  }
-  @views.text(text, role=@views.TextRole::Caption, theme~, width~).foreground(
-    theme.palette.muted,
   )
 }
 

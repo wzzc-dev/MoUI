@@ -319,6 +319,27 @@ fn workbench_accent_soft(theme : @moui.Theme) -> @graphics.Color {
   }
 }
 
+///|
+/// Light gray selector fill for compact model/thinking chips.
+fn workbench_selector_chip_background(theme : @moui.Theme) -> @graphics.Color {
+  match theme.scheme {
+    Light =>
+      @graphics.Color::rgba(
+        r=246.0 / 255.0,
+        g=247.0 / 255.0,
+        b=249.0 / 255.0,
+        a=1.0,
+      )
+    Dark =>
+      @graphics.Color::rgba(
+        r=238.0 / 255.0,
+        g=240.0 / 255.0,
+        b=244.0 / 255.0,
+        a=0.16,
+      )
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Semantic colors
 // ---------------------------------------------------------------------------
@@ -433,12 +454,6 @@ fn user_message_background(theme : @moui.Theme) -> @graphics.Color {
 }
 
 ///|
-/// Assistant message bubble — card surface.
-fn assistant_message_background(theme : @moui.Theme) -> @graphics.Color {
-  workbench_card_background(theme)
-}
-
-///|
 /// User avatar circle fill — accent blue.
 fn user_avatar_color(theme : @moui.Theme) -> @graphics.Color {
   workbench_accent(theme)
@@ -457,7 +472,7 @@ fn assistant_avatar_color(theme : @moui.Theme) -> @graphics.Color {
 /// Purple circular send control (square frame + radius = diameter / 2).
 fn[Msg] workbench_send_button(
   theme : @moui.Theme,
-  diameter? : Double = 36.0,
+  diameter? : Double = 32.0,
   on_tap~ : Msg,
 ) -> @moui.View[Msg] {
   let radius = diameter / 2.0
@@ -465,7 +480,7 @@ fn[Msg] workbench_send_button(
     @views.center(
       @views.icon(
         @views.IconName::ArrowRight,
-        size=18.0,
+        size=16.0,
         color=@graphics.Color::rgba(r=1.0, g=1.0, b=1.0, a=1.0),
       ),
       width=diameter,
@@ -476,7 +491,7 @@ fn[Msg] workbench_send_button(
     height=diameter,
     background=workbench_accent(theme),
     corner_radius=radius,
-    padding=0.0,
+    padding=1.0,
   ).on_tap(on_tap)
 }
 

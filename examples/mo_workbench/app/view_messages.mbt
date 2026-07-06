@@ -53,7 +53,7 @@ fn user_message_row(
           background=user_message_background(theme),
           corner_radius=12.0,
           padding=14.0,
-        ).border(hairline_border(theme)),
+        ),
         @views.container(
           @views.empty(),
           width=avatar_size,

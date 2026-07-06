@@ -3,6 +3,7 @@ import {
   "moonbitlang/core/json",
   "moonbitlang/x/fs",
   "moonbitlang/async",
+  "moonbitlang/async/http",
   "bobzhang/openseek/agent",
   "bobzhang/openseek/agent_runtime",
   "bobzhang/openseek/agent_session",

@@ -9,22 +9,32 @@ fn workbench_subscriptions(
 }
 
 ///|
+fn MoWorkbenchApp::initial_state(
+  self : MoWorkbenchApp,
+) -> (WorkbenchModel, @moui.Effect[WorkbenchMsg]) {
+  let model = WorkbenchModel::new(
+    backend=self.backend,
+    settings_load=self.settings_load,
+    settings_persist=self.settings_persist,
+    model_detect=self.model_detect,
+    host_services=self.host_services,
+  )
+  (
+    model,
+    self.backend.effect([FetchSessionList], event => {
+      WorkbenchMsg::CodeMsg(CodeMsg::ReceiveAgentEvent(event))
+    }),
+  )
+}
+
+///|
 /// Build the workbench program with the given backend runtime.
 /// The entrypoint (macos_skia) injects the concrete openseek backend here.
 pub fn MoWorkbenchApp::program_with_backend(
   self : MoWorkbenchApp,
 ) -> @moui.Program[WorkbenchModel, WorkbenchMsg] {
   @moui.Program::new_with_environment(
-    init=() => {
-      let model = WorkbenchModel::new(
-        backend=self.backend,
-        settings_load=self.settings_load,
-        settings_persist=self.settings_persist,
-      )
-      // Start with an empty model; the UI renders the empty state first.
-      // Session list / new session are triggered lazily once the UI is up.
-      (model, @moui.Effect::none())
-    },
+    init=() => self.initial_state(),
     update=(model, msg) => model.update(msg),
     view=(model, env) => workbench_view(model, env),
     subscriptions=workbench_subscriptions,
@@ -37,10 +47,14 @@ pub fn program_with_backend(
   backend~ : AgentBackendRuntime,
   settings_load? : SettingsLoadFn? = None,
   settings_persist? : SettingsPersistFn? = None,
+  model_detect? : ModelDetectFn? = None,
+  host_services? : @host.HostAppServices = @host.HostAppServices::unavailable(),
 ) -> @moui.Program[WorkbenchModel, WorkbenchMsg] {
   MoWorkbenchApp::new(
     backend~,
-    settings_load=settings_load,
-    settings_persist=settings_persist,
+    settings_load~,
+    settings_persist~,
+    model_detect~,
+    host_services~,
   ).program_with_backend()
 }

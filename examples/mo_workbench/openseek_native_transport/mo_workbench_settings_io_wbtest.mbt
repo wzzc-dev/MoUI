@@ -12,9 +12,9 @@ test "ensure settings creates default json when missing" {
 ///|
 test "settings json roundtrip through public decode" {
   let json_text =
-    #|{"openai_api_key":"k","openai_base_url":"https://x/v1","deepseek_api_key":"","mo_workbench_workspace":".","mo_workbench_session_root":"./.openseek","approval_policy":"write","sandbox_mode":"workspace","font_size":14,"appearance":"system"}
+    #|{"providers":[{"id":"deepseek","name":"DeepSeek","base_url":"https://api.deepseek.com/v1","api_key":"k","models":["deepseek-v4-flash","deepseek-v4-pro"]}],"active_provider_id":"deepseek","current_model":"deepseek-v4-flash","mo_workbench_workspace":".","mo_workbench_session_root":"./.openseek","approval_policy":"write","sandbox_mode":"workspace","font_size":14,"appearance":"system"}
   guard @app.mo_workbench_decode_settings_file(json_text) is Some(file) else {
     fail("decode failed")
   }
-  inspect(file.openai_api_key, content="k")
+  inspect(file.providers[0].api_key, content="k")
 }
