@@ -43,7 +43,7 @@ pub fn mo_workbench_ensure_settings_file() -> Unit {
   mo_workbench_ensure_parent_dir(path)
   let file = @app.mo_workbench_default_settings_file()
   let text = file.to_json().stringify(indent=2)
-  try @fs.write_string_to_file(path, text) catch {
+  @fs.write_string_to_file(path, text) catch {
     _ => ()
   }
 }
@@ -90,7 +90,7 @@ pub fn mo_workbench_persist_settings_file(
   let path = mo_workbench_settings_write_path()
   mo_workbench_ensure_parent_dir(path)
   let text = file.to_json().stringify(indent=2)
-  try @fs.write_string_to_file(path, text) catch {
+  @fs.write_string_to_file(path, text) catch {
     _ => ()
   }
 }
@@ -99,7 +99,7 @@ pub fn mo_workbench_persist_settings_file(
 fn mo_workbench_ensure_parent_dir(_path : String) -> Unit {
   let dir = mo_workbench_settings_dir()
   if !@fs.path_exists(dir) {
-    try @fs.create_dir(dir) catch {
+    @fs.create_dir(dir) catch {
       _ => ()
     }
   }
@@ -110,23 +110,39 @@ fn mo_workbench_read_settings_text(path : String) -> String? {
   if !@fs.path_exists(path) {
     return None
   }
-  Some(try @fs.read_file_to_string(path) catch {
-    _ => return None
-  })
+  Some(@fs.read_file_to_string(path) catch { _ => return None })
 }
 
 ///|
 pub fn mo_workbench_apply_settings_file_to_process_env(
   file : @app.MoWorkbenchSettingsFile,
 ) -> Unit {
-  if !file.openai_api_key.is_empty() {
-    @env.set_env_var("OPENAI_API_KEY", file.openai_api_key)
+  let provider = match file.active_provider_id {
+    Some(id) => {
+      let matching = file.providers.filter(fn(p) { p.id == id })
+      if matching.is_empty() {
+        None
+      } else {
+        Some(matching[0])
+      }
+    }
+    None =>
+      if file.providers.is_empty() {
+        None
+      } else {
+        Some(file.providers[0])
+      }
   }
-  if !file.deepseek_api_key.is_empty() {
-    @env.set_env_var("DEEPSEEK", file.deepseek_api_key)
-  }
-  if !file.openai_base_url.is_empty() {
-    @env.set_env_var("OPENAI_BASE_URL", file.openai_base_url)
+  match provider {
+    Some(p) => {
+      if !p.api_key.is_empty() {
+        @env.set_env_var("OPENAI_API_KEY", p.api_key)
+      }
+      if !p.base_url.is_empty() {
+        @env.set_env_var("OPENAI_BASE_URL", p.base_url)
+      }
+    }
+    None => ()
   }
   if !file.mo_workbench_workspace.is_empty() {
     @env.set_env_var("MO_WORKBENCH_WORKSPACE", file.mo_workbench_workspace)
