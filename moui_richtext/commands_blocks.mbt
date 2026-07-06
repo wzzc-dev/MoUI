@@ -166,17 +166,7 @@ fn markdown_editor_transform_setext_block(
 ) -> MarkdownEditorEditResult {
   let chars = source.to_array()
   let text = block.block.text
-  let replacement = match command {
-    Paragraph => text
-    Heading(level) => markdown_editor_heading_marker(level) + " " + text
-    BulletList => "- " + text
-    TaskList => "- [ ] " + text
-    OrderedList => "1. " + text
-    Quote => "> " + text
-    HorizontalRule => "---"
-    Table => markdown_editor_command_snippet(Table)
-    _ => text
-  }
+  let replacement = markdown_editor_setext_block_replacement(text, command)
   let next_source = String::from_array(chars[:block.source_range.start]) +
     replacement +
     String::from_array(chars[block.source_range.end:])
@@ -196,6 +186,37 @@ fn markdown_editor_transform_setext_block(
     offset
   }
   { source: next_source, caret, selection: None }
+}
+
+///|
+fn markdown_editor_setext_block_replacement(
+  text : String,
+  command : MarkdownEditorCommand,
+) -> String {
+  match command {
+    Paragraph => text
+    Heading(level) =>
+      markdown_editor_heading_marker(level) +
+      " " +
+      markdown_editor_setext_atx_heading_text(text)
+    BulletList | TaskList | OrderedList | Quote =>
+      markdown_editor_transform_line_segment(text, command)
+    HorizontalRule => "---"
+    Table => markdown_editor_command_snippet(Table)
+    _ => text
+  }
+}
+
+///|
+fn markdown_editor_setext_atx_heading_text(text : String) -> String {
+  let parts : Array[String] = []
+  for line in markdown_split_lines(text) {
+    let trimmed = line.trim().to_owned()
+    if trimmed != "" {
+      parts.push(trimmed)
+    }
+  }
+  parts.join(" ")
 }
 
 ///|
@@ -557,6 +578,7 @@ fn markdown_editor_duplicate_current_block(
 ) -> MarkdownEditorEditResult {
   match markdown_editor_active_edit_group(source, selection) {
     Some(group) => {
+      let blocks = parse_markdown_editor_blocks(source)
       let chars = source.to_array()
       let block_text = String::from_array(
         chars[group.source_start:group.source_end],
@@ -564,9 +586,11 @@ fn markdown_editor_duplicate_current_block(
       if block_text == "" {
         return markdown_editor_noop_result(source, Some(selection))
       }
-      let duplicate_start = group.source_end + 1
+      let separator = markdown_editor_duplicate_group_separator(blocks, group)
+      let duplicate_start = group.source_end +
+        markdown_editor_text_length(separator)
       let next_source = String::from_array(chars[:group.source_end]) +
-        "\n" +
+        separator +
         block_text +
         String::from_array(chars[group.source_end:])
       {
@@ -584,6 +608,36 @@ fn markdown_editor_duplicate_current_block(
       }
     }
     None => markdown_editor_noop_result(source, Some(selection))
+  }
+}
+
+///|
+fn markdown_editor_duplicate_group_separator(
+  blocks : Array[MarkdownEditorBlock],
+  group : MarkdownEditorBlockGroup,
+) -> String {
+  if group.start_index < 0 ||
+    group.end_index >= blocks.length() ||
+    group.start_index > group.end_index {
+    return "\n"
+  }
+  let first = blocks[group.start_index]
+  let last = blocks[group.end_index]
+  if markdown_editor_duplicate_kind_needs_blank_separator(first.block.kind) ||
+    markdown_editor_duplicate_kind_needs_blank_separator(last.block.kind) {
+    "\n\n"
+  } else {
+    "\n"
+  }
+}
+
+///|
+fn markdown_editor_duplicate_kind_needs_blank_separator(
+  kind : MarkdownBlockKind,
+) -> Bool {
+  match kind {
+    Paragraph | Table => true
+    _ => false
   }
 }
 
@@ -905,7 +959,7 @@ fn markdown_editor_ordered_marker_length(chars : Array[Char]) -> Int {
   }
   if index > indent &&
     index + 1 < chars.length() &&
-    chars[index] == '.' &&
+    (chars[index] == '.' || chars[index] == ')') &&
     chars[index + 1] == ' ' {
     index + 2
   } else {
