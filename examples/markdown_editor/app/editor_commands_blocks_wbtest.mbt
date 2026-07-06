@@ -134,14 +134,14 @@ test "markdown editor block command transforms setext heading blocks" {
     Heading(3),
     Some({ caret: 8, selection: None }),
   )
-  inspect(heading.source, content="Intro\n### Title\nTail")
+  inspect(heading.source, content="### Intro Title\nTail")
   inspect(heading.caret, content="12")
   let quote = markdown_editor_apply_command_at(
     "Intro\nTitle\n=====\nTail",
     Quote,
     Some({ caret: 8, selection: None }),
   )
-  inspect(quote.source, content="Intro\n> Title\nTail")
+  inspect(quote.source, content="> Intro\n> Title\nTail")
 }
 
 ///|
