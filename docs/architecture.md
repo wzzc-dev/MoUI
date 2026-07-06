@@ -33,7 +33,7 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 | `moui/render/wgpu/` | Experimental native WGPU renderer and native text providers. |
 | `moui_richtext/` | Markdown/rich-text document, editor, command, input, paste, table, and source-mapping logic used by rich editing apps. |
 | `moui_skia/` | Editable Skia binding and native/fallback capability contract workspace. |
-| `moui_theme/` | Optional design-system addon workspace for Material, Carbon, Primer, Fluent, and common source-mapped token diagnostics. |
+| `moui_theme/` | Optional design-system addon workspace for Material, Carbon, Primer, Fluent, common source-mapped token diagnostics, and first-party visual theme addons such as Sickle. |
 | `moui_tester/` | Harnesses, fixtures, and first-frame/native smoke helpers. |
 | `moui_devtools/` | Devtools and overlay/debug helpers. |
 | `moui_agent/`, `moui_agent_mcp/` | Agent protocol, schema, host runtime, and MCP router support packages. |
@@ -168,10 +168,10 @@ manual smoke gates described in `docs/testing.md` and `docs/release-readiness.md
 - `moui_theme` is a repo-local addon workspace member. It may import
   `wzzc-dev/moui/core`, but `moui/core`, `moui/views`, and the root
   `wzzc-dev/moui` package do not depend on `moui_theme`. Concrete Material,
-  Carbon, Primer, and Fluent names stay in this addon through the
+  Carbon, Primer, Fluent, and first-party addon theme names stay in this addon through the
   `moui_theme/material`, `moui_theme/carbon`, `moui_theme/primer`, and
-  `moui_theme/fluent` package entrypoints; `core` remains a neutral token
-  runtime.
+  `moui_theme/fluent` package entrypoints plus focused packages such as
+  `moui_theme/sickle`; `core` remains a neutral token runtime.
 - Spec-first views in `views`, including `text`, `button`, `text_field`, `container`, row/column layout, and spacer primitives.
 - Unified host boundaries in `backend/host`, with shared window-event mapping and platform hosts normalizing events into `HostEvent`.
 - Native mainline rendering through provider packages over `render/skia`, with experimental native WGPU diagnostics retained under `render/wgpu`.
@@ -187,6 +187,7 @@ moui/views/                   public view constructors and concrete custom view 
 moui_theme/common/            addon construction surface: DesignPreset, DesignSystemTokens, per-system token structs + core_* projections, and the construction-surface DesignPreset methods
 moui_theme/audit/             addon diagnostics: manifests, golden mappings, official-token/source-lock coverage, source-import records, runtime alignment, taxonomy/role/resolver/matrix reports (top-level pub fn, not DesignPreset methods)
 moui_theme/{material,carbon,primer,fluent}/ package-local official-system entrypoints: light/dark/high-contrast/system Theme helpers, tokens, and theme_for_variant over common
+moui_theme/sickle/            first-party hybrid skeuomorphic/flat Theme addon with light/dark and style-mode helpers
 moui/backend/host/            shared HostEvent, HostWindowEventSource, HostTimerSource, HostRouteSource, metrics, HostWindowRenderer, native async image completion source, input, redraw driver, window/core + dpi event conversion
 moui/backend/windows/         Windows native host core
 moui/backend/windows/skia/    Windows Skia renderer provider mainline

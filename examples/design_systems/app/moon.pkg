@@ -6,6 +6,7 @@ import {
   "wzzc-dev/moui_theme/fluent",
   "wzzc-dev/moui_theme/material",
   "wzzc-dev/moui_theme/primer",
+  "wzzc-dev/moui_theme/sickle",
   "wzzc-dev/moui",
 }
 
