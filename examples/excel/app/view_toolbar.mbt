@@ -120,6 +120,10 @@ fn build_toolbar(model : ExcelModel, theme : Theme) -> @moui.View[ExcelMsg] {
             color_swatch("fef3c7", ExcelMsg::SetCellBgColor("fef3c7"), theme),
             color_swatch("fde2e2", ExcelMsg::SetCellBgColor("fde2e2"), theme),
             @views.divider(theme~),
+            group_label("Sort", theme),
+            tool_button("A→Z", ExcelMsg::SortAscending, theme, width=56.0),
+            tool_button("Z→A", ExcelMsg::SortDescending, theme, width=56.0),
+            @views.divider(theme~),
             @views.toggle(
               "Heat",
               model.heat_map,

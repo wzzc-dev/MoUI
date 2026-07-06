@@ -3,6 +3,9 @@ pub fn update(model : ExcelModel, msg : ExcelMsg) -> ExcelModel {
   match msg {
     SheetSelected(index) => model.switch_sheet(index)
     CellSelected(row, col) => model.select_cell(row, col)
+    RowSelected(row) => model.select_row(row)
+    ColumnSelected(col) => model.select_column(col)
+    SelectAllCells => model.select_all_cells()
     CellEditStarted => model.start_editing()
     CellRefChanged(value) => { ..model, cell_ref_input: value }
     CellValueChanged(value) => model.set_formula_bar_value(value)
@@ -13,16 +16,59 @@ pub fn update(model : ExcelModel, msg : ExcelMsg) -> ExcelModel {
         autocomplete_suggestions: [],
         autocomplete_index: 0,
       }
+    CellEditCommittedAndNavigate(drow, dcol) =>
+      {
+        ..model.commit_edit_and_navigate(drow, dcol),
+        autocomplete_suggestions: [],
+        autocomplete_index: 0,
+      }
     CellEditCancelled => model.cancel_edit()
     NewWorkbook => ExcelModel::new()
     LoadDemo => ExcelModel::with_demo_data()
     CellNavigate(drow, dcol) => model.navigate(drow, dcol)
+    CellNavigateTo(row, col) => model.select_cell(row, col)
+    CellNavigateDataEdge(drow, dcol) => model.navigate_to_data_edge(drow, dcol)
+    SelectionNavigate(drow, dcol) => model.extend_selection(drow, dcol)
+    SelectionNavigateTo(row, col) => model.extend_selection_to(row, col)
+    SelectionNavigateDataEdge(drow, dcol) =>
+      model.extend_selection_to_data_edge(drow, dcol)
     CopyCells =>
       { ..model, workbook: model.workbook.copy_selected(), status: "Copied" }
     CutCells =>
       { ..model, workbook: model.workbook.cut_selected(), status: "Cut" }
-    PasteCells =>
-      { ..model, workbook: model.workbook.paste_selected(), status: "Pasted" }
+    PasteCells => {
+      let workbook = model.workbook.paste_selected()
+      {
+        ..model,
+        workbook,
+        cell_ref_input: workbook.selected_ref(),
+        status: "Pasted",
+      }
+    }
+    FillDown =>
+      {
+        ..model,
+        workbook: model.workbook.fill_down_selected(),
+        status: "Fill down",
+      }
+    FillRight =>
+      {
+        ..model,
+        workbook: model.workbook.fill_right_selected(),
+        status: "Fill right",
+      }
+    SortAscending =>
+      {
+        ..model,
+        workbook: model.workbook.sort_selected_by_first_column(ascending=true),
+        status: "Sorted A to Z",
+      }
+    SortDescending =>
+      {
+        ..model,
+        workbook: model.workbook.sort_selected_by_first_column(ascending=false),
+        status: "Sorted Z to A",
+      }
     DeleteSelectedCells =>
       { ..model, workbook: model.workbook.clear_selected(), status: "Deleted" }
     Undo => { ..model, workbook: model.workbook.undo(), status: "Undo" }
@@ -75,6 +121,13 @@ pub fn ExcelApp::update(
     FileOpenRequested => self.handle_file_open()
     FileSaveRequested => self.handle_file_save()
     HostCompleted(completion) => self.handle_host_completion(completion)
+    CopyCells => self.copy_cells_to_clipboard()
+    CutCells => self.cut_cells_to_clipboard()
+    PasteCells => self.paste_cells_from_clipboard()
+    ContextMenuAction(ContextMenuAction::Copy) => self.copy_cells_to_clipboard()
+    ContextMenuAction(ContextMenuAction::Cut) => self.cut_cells_to_clipboard()
+    ContextMenuAction(ContextMenuAction::Paste) =>
+      self.paste_cells_from_clipboard()
     _ => {
       let new_model = update(self.model.get(), msg)
       self.model.set(new_model)
@@ -199,27 +252,176 @@ pub fn ExcelApp::write_file(
 }
 
 ///|
+fn ExcelApp::copy_cells_to_clipboard(
+  self : ExcelApp,
+) -> (ExcelApp, Effect[ExcelMsg]) {
+  let current = self.model.get()
+  let workbook = current.workbook.copy_selected()
+  self.write_cells_to_clipboard(workbook, status="Copied")
+}
+
+///|
+fn ExcelApp::cut_cells_to_clipboard(
+  self : ExcelApp,
+) -> (ExcelApp, Effect[ExcelMsg]) {
+  let current = self.model.get()
+  let workbook = current.workbook.cut_selected()
+  self.write_cells_to_clipboard(workbook, status="Cut")
+}
+
+///|
+fn ExcelApp::write_cells_to_clipboard(
+  self : ExcelApp,
+  workbook : @sheet.Workbook,
+  status~ : String,
+) -> (ExcelApp, Effect[ExcelMsg]) {
+  let current = self.model.get()
+  if !workbook.has_clipboard() {
+    self.model.set({
+      ..current,
+      workbook,
+      context_menu_visible: false,
+      last_clipboard_from_app: false,
+      status: "Nothing to copy",
+    })
+    return (self, Effect::none())
+  }
+  let text = workbook.clipboard_tsv()
+  self.model.set({
+    ..current,
+    workbook,
+    context_menu_visible: false,
+    last_clipboard_text: text,
+    last_clipboard_from_app: true,
+    status,
+  })
+  match self.services.write_clipboard_text(text) {
+    @host.HostServiceResponse::ClipboardWritten => (self, Effect::none())
+    @host.HostServiceResponse::Pending(id) =>
+      self.set_pending(id, status + "; syncing clipboard...", path="")
+    @host.HostServiceResponse::Unavailable(reason) =>
+      self.set_status(status + " locally; " + reason)
+    _ => (self, Effect::none())
+  }
+}
+
+///|
+fn ExcelApp::paste_cells_from_clipboard(
+  self : ExcelApp,
+) -> (ExcelApp, Effect[ExcelMsg]) {
+  match self.services.read_clipboard_text() {
+    @host.HostServiceResponse::ClipboardText(text) =>
+      self.apply_clipboard_text(text)
+    @host.HostServiceResponse::Pending(id) =>
+      self.set_pending(id, "Reading clipboard...", path="")
+    @host.HostServiceResponse::Unavailable(reason) =>
+      self.paste_cells_locally(reason)
+    _ => self.paste_cells_locally("clipboard text unavailable")
+  }
+}
+
+///|
+fn ExcelApp::apply_clipboard_text(
+  self : ExcelApp,
+  text : String,
+) -> (ExcelApp, Effect[ExcelMsg]) {
+  let current = self.model.get()
+  let use_internal_clipboard = current.last_clipboard_from_app &&
+    text == current.last_clipboard_text &&
+    current.workbook.has_clipboard()
+  let workbook = if use_internal_clipboard {
+    current.workbook.paste_selected()
+  } else {
+    current.workbook.paste_tsv(text)
+  }
+  self.model.set({
+    ..current,
+    workbook,
+    cell_ref_input: workbook.selected_ref(),
+    context_menu_visible: false,
+    file_status: ExcelFileStatus::Idle,
+    pending_file_path: "",
+    last_clipboard_text: text,
+    last_clipboard_from_app: use_internal_clipboard,
+    status: "Pasted",
+  })
+  (self, Effect::none())
+}
+
+///|
+fn ExcelApp::paste_cells_locally(
+  self : ExcelApp,
+  reason : String,
+) -> (ExcelApp, Effect[ExcelMsg]) {
+  let current = self.model.get()
+  let status = if reason.is_empty() {
+    "Pasted"
+  } else {
+    "Pasted locally; " + reason
+  }
+  let workbook = current.workbook.paste_selected()
+  self.model.set({
+    ..current,
+    workbook,
+    cell_ref_input: workbook.selected_ref(),
+    context_menu_visible: false,
+    file_status: ExcelFileStatus::Idle,
+    pending_file_path: "",
+    status,
+  })
+  (self, Effect::none())
+}
+
+///|
 pub fn ExcelApp::handle_host_completion(
   self : ExcelApp,
   completion : @host.HostCompletedServiceResponse,
 ) -> (ExcelApp, Effect[ExcelMsg]) {
   let current = self.model.get()
   match current.file_status {
-    ExcelFileStatus::Pending(_) =>
-      match completion.response {
-        @host.HostServiceResponse::FileDialogSelection(paths) =>
-          if paths.length() > 0 {
-            self.read_file(paths[0])
-          } else {
-            self.set_status("Cancelled")
-          }
-        @host.HostServiceResponse::BinaryFileContent(_, bytes) =>
-          self.load_workbook_bytes(current.pending_file_path, bytes)
-        @host.HostServiceResponse::BinaryFileWritten(_) =>
-          self.set_status("File saved")
-        @host.HostServiceResponse::Unavailable(reason) =>
-          self.set_status("Error: " + reason)
-        _ => (self, Effect::none())
+    ExcelFileStatus::Pending(id) =>
+      if completion.id != id {
+        (self, Effect::none())
+      } else {
+        match (completion.request, completion.response) {
+          (
+            @host.HostServiceRequest::Clipboard(
+              @host.HostClipboardRequest::ReadText
+            ),
+            @host.HostServiceResponse::ClipboardText(text),
+          ) => self.apply_clipboard_text(text)
+          (
+            @host.HostServiceRequest::Clipboard(
+              @host.HostClipboardRequest::ReadText
+            ),
+            @host.HostServiceResponse::Unavailable(reason),
+          ) => self.paste_cells_locally(reason)
+          (
+            @host.HostServiceRequest::Clipboard(
+              @host.HostClipboardRequest::WriteText(_)
+            ),
+            @host.HostServiceResponse::ClipboardWritten,
+          ) => self.set_status("Clipboard updated")
+          (
+            @host.HostServiceRequest::Clipboard(
+              @host.HostClipboardRequest::WriteText(_)
+            ),
+            @host.HostServiceResponse::Unavailable(reason),
+          ) => self.set_status("Clipboard sync failed: " + reason)
+          (_, @host.HostServiceResponse::FileDialogSelection(paths)) =>
+            if paths.length() > 0 {
+              self.read_file(paths[0])
+            } else {
+              self.set_status("Cancelled")
+            }
+          (_, @host.HostServiceResponse::BinaryFileContent(_, bytes)) =>
+            self.load_workbook_bytes(current.pending_file_path, bytes)
+          (_, @host.HostServiceResponse::BinaryFileWritten(_)) =>
+            self.set_status("File saved")
+          (_, @host.HostServiceResponse::Unavailable(reason)) =>
+            self.set_status("Error: " + reason)
+          _ => (self, Effect::none())
+        }
       }
     _ => (self, Effect::none())
   }
@@ -260,7 +462,7 @@ pub fn ExcelApp::subscriptions(self : ExcelApp) -> @moui.Subscription[ExcelMsg] 
       self.services.completion_subscription(
         id,
         map=completion => ExcelMsg::HostCompleted(completion),
-        label="Excel file operation completion",
+        label="Excel host operation completion",
       )
     ExcelFileStatus::Idle => @moui.Subscription::none()
   }
