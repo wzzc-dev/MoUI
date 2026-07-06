@@ -193,31 +193,33 @@ fn topbar_view(
   }
   let horizontal_pad = 24.0
   let inner_width = (width - horizontal_pad * 2.0).max(160.0)
-  @views.container(
-    @views.center(
-      @views.column(
-        [
-          @views.text(
-            title,
-            role=@views.TextRole::Label,
-            theme~,
-            width=inner_width,
-            height=20.0,
-          ),
-          @views.text(
-            tab_subtitle(model),
-            role=@views.TextRole::Caption,
-            theme~,
-            width=inner_width,
-            height=16.0,
-          ).foreground(theme.palette.muted),
-        ],
-        spacing=0.0,
-        align=@views.CrossAlign::Center,
+  let title_block = @views.column(
+    [
+      @views.text(
+        title,
+        role=@views.TextRole::Label,
+        theme~,
+        width=inner_width,
+        height=20.0,
       ),
-      width~,
-      height~,
-      theme~,
+      @views.text(
+        tab_subtitle(model),
+        role=@views.TextRole::Caption,
+        theme~,
+        width=inner_width,
+        height=16.0,
+      ).foreground(theme.palette.muted),
+    ],
+    spacing=0.0,
+    align=@views.CrossAlign::Center,
+  )
+  @views.container(
+    @views.padding_edges(
+      @views.center(title_block, width=inner_width, height~, theme~),
+      left=horizontal_pad,
+      right=horizontal_pad,
+      top=0.0,
+      bottom=0.0,
     ),
     width~,
     height~,
@@ -230,26 +232,10 @@ fn topbar_view(
 fn statusbar_view(
   model : WorkbenchModel,
   theme : @moui.Theme,
-  _width : Double,
+  width : Double,
   height : Double,
 ) -> @moui.View[WorkbenchMsg] {
-  let runtime_status = if model.code.is_streaming {
-    "Runtime: streaming"
-  } else {
-    "Runtime: ready"
-  }
-  let session_status = match model.code.active_session_id {
-    Some(id) => "Session: " + truncate_text(id, 18)
-    None => "Session: draft"
-  }
-  let labels = [
-    "Mo Workbench",
-    tab_label(model.active_tab),
-    runtime_status,
-    model_choice_label(model.code.current_model),
-    thinking_choice_label(model.code.current_thinking),
-    session_status,
-  ]
+  let labels = statusbar_labels(model, width)
   let segments : Array[@moui.View[WorkbenchMsg]] = []
   for label in labels {
     segments.push(
@@ -257,16 +243,18 @@ fn statusbar_view(
         label,
         role=@views.TextRole::Caption,
         theme~,
-        width=label.length().to_double() * 7.5 + 8.0,
+        width=statusbar_label_width(label),
         height=22.0,
       ).foreground(workbench_text_muted(theme)),
     )
   }
-  let bar_inner_width = workbench_statusbar_inner_width(labels)
+  let bar_inner_width = workbench_statusbar_inner_width(labels).min(
+    (width - 24.0).max(280.0),
+  )
   @views.container(
     @views.row(
       segments,
-      spacing=12.0,
+      spacing=8.0,
       align=@views.CrossAlign::Center,
       justify=@views.MainAlign::Center,
     ),
@@ -279,10 +267,33 @@ fn statusbar_view(
 }
 
 ///|
+fn statusbar_labels(model : WorkbenchModel, width : Double) -> Array[String] {
+  let runtime_status = if model.code.is_streaming {
+    "Runtime: " + truncate_text(code_activity_text(model.code), 28)
+  } else {
+    "Runtime: ready"
+  }
+  let session_status = match model.code.active_session_id {
+    Some(id) => "Session: " + truncate_text(id, 18)
+    None => "Session: draft"
+  }
+  if width >= 420.0 {
+    [runtime_status, session_status]
+  } else {
+    [runtime_status]
+  }
+}
+
+///|
+fn statusbar_label_width(label : String) -> Double {
+  label.length().to_double() * 6.5 + 10.0
+}
+
+///|
 fn workbench_statusbar_inner_width(labels : Array[String]) -> Double {
-  let mut total = 24.0
+  let mut total = 20.0
   for label in labels {
-    total = total + label.length().to_double() * 7.5 + 12.0
+    total = total + statusbar_label_width(label) + 8.0
   }
   total.min(920.0).max(280.0)
 }
@@ -443,38 +454,51 @@ fn task_tree_view(
   height : Double,
 ) -> @moui.View[WorkbenchMsg] {
   let body : Array[@moui.View[WorkbenchMsg]] = []
-  if model.task_tree.is_empty() {
+  if model.code.sessions.is_empty() {
     body.push(
       sidebar_caption("暂无任务,点击上方新建", theme, width - 32.0),
     )
   } else {
+    let header_width = width - 32.0
+    let filter_width = 54.0
+    let sort_width = 22.0
+    let title_width = (header_width - filter_width - sort_width - 8.0).max(64.0)
     body.push(
-      @views.row(
-        [
-          @views.text(
-            "任务列表",
-            role=@views.TextRole::Label,
-            theme~,
-            width=width - 80.0,
-          ),
-          @views.container(
-            @views.icon(
-              @views.IconName::ListOrdered,
-              size=14.0,
-              color=workbench_text_muted(theme),
+      @views.container(
+        @views.row(
+          [
+            @views.text(
+              "任务列表",
+              role=@views.TextRole::Label,
+              theme~,
+              width=title_width,
             ),
-            width=24.0,
-            height=24.0,
-            padding=0.0,
-          ),
-          @views.chip("Filter", theme~, width=50.0, height=22.0),
-        ],
-        spacing=4.0,
-        align=@views.CrossAlign::Center,
+            @views.container(
+              @views.icon(
+                @views.IconName::ListOrdered,
+                size=13.0,
+                color=workbench_text_muted(theme),
+              ),
+              width=sort_width,
+              height=22.0,
+              padding=0.0,
+            ),
+            task_filter_chip(model.task_filter, theme, filter_width),
+          ],
+          spacing=4.0,
+          align=@views.CrossAlign::Center,
+        ),
+        width=header_width,
+        padding=0.0,
       ),
     )
-    for node in model.task_tree {
-      body.push(task_tree_node_view(node, model, theme, width - 48.0))
+    body.push(task_search_field(model, theme, width - 32.0))
+    if model.task_tree.is_empty() {
+      body.push(sidebar_caption("没有匹配任务", theme, width - 32.0))
+    } else {
+      for node in model.task_tree {
+        body.push(task_tree_node_view(node, model, theme, width - 48.0))
+      }
     }
   }
   @views.container(
@@ -492,6 +516,47 @@ fn task_tree_view(
     background=workbench_sidebar_background(theme),
     padding=0.0,
   )
+}
+
+///|
+fn task_search_field(
+  model : WorkbenchModel,
+  theme : @moui.Theme,
+  width : Double,
+) -> @moui.View[WorkbenchMsg] {
+  @views.text_field(
+    model.task_search_query,
+    on_input=query => WorkbenchMsg::TaskSearchChanged(query),
+    placeholder="搜索任务或 session",
+    variant=@views.TextFieldVariant::Filled,
+    theme~,
+    width~,
+    height=30.0,
+  )
+}
+
+///|
+fn task_filter_chip(
+  filter : TaskFilter,
+  theme : @moui.Theme,
+  width : Double,
+) -> @moui.View[WorkbenchMsg] {
+  let label = task_filter_label(filter)
+  @views.container(
+    @views.text(
+      label,
+      role=@views.TextRole::Caption,
+      theme~,
+      width=width - 6.0,
+      height=16.0,
+    ).foreground(workbench_accent(theme)),
+    width~,
+    height=22.0,
+    background=workbench_accent_soft(theme),
+    corner_radius=11.0,
+    border=Some(hairline_border(theme)),
+    padding=3.0,
+  ).on_tap(WorkbenchMsg::CycleTaskFilter)
 }
 
 ///|
@@ -694,7 +759,16 @@ fn settings_overlay_view(
   height : Double,
 ) -> @moui.View[WorkbenchMsg] {
   let card_width = (width * 0.78).min(920.0).max(560.0)
-  let card_height = (height * 0.88).min(640.0).max(420.0)
+  let available_card_height = (height - 32.0).max(280.0)
+  let card_height = (height * 0.88)
+    .min(640.0)
+    .max(420.0)
+    .min(available_card_height)
+  let card_padding = 24.0
+  let card_inner_width = card_width - card_padding * 2.0
+  let settings_body_height = (card_height - card_padding * 2.0 - 64.0).max(
+    140.0,
+  )
   @views.container(
     @views.column(
       [
@@ -702,40 +776,51 @@ fn settings_overlay_view(
         @views.container(
           @views.column(
             [
-              @views.row(
-                [
-                  @views.text("Settings", role=@views.TextRole::Title, theme~),
-                  @views.spacer(min_length=78.0, weight=0.0),
-                  @views.container(
-                    @views.icon(
-                      @views.IconName::Close,
-                      size=18.0,
-                      color=workbench_text_muted(theme),
+              @views.container(
+                @views.row(
+                  [
+                    @views.text(
+                      "Settings",
+                      role=@views.TextRole::Title,
+                      theme~,
+                      width=card_inner_width - 48.0,
                     ),
-                    width=32.0,
-                    height=32.0,
-                    padding=0.0,
-                  ).on_tap(WorkbenchMsg::ToggleSettings),
-                ],
-                align=@views.CrossAlign::Center,
+                    @views.spacer(),
+                    @views.container(
+                      @views.icon(
+                        @views.IconName::Close,
+                        size=18.0,
+                        color=workbench_text_muted(theme),
+                      ),
+                      width=32.0,
+                      height=32.0,
+                      padding=0.0,
+                    ).on_tap(WorkbenchMsg::ToggleSettings),
+                  ],
+                  spacing=12.0,
+                  align=@views.CrossAlign::Center,
+                ),
+                width=card_inner_width,
+                height=36.0,
+                padding=0.0,
               ),
               @views.divider(theme~),
               settings_workspace_view(
                 model.settings,
                 model.appearance,
                 theme,
-                card_width - 48.0,
-                card_height - 88.0,
+                card_inner_width,
+                settings_body_height,
               ).map(m => WorkbenchMsg::SettingsMsg(m)),
             ],
-            spacing=14.0,
+            spacing=12.0,
             align=@views.CrossAlign::Stretch,
           ),
           width=card_width,
           height=card_height,
           background=workbench_card_background(theme),
           corner_radius=14.0,
-          padding=24.0,
+          padding=card_padding,
         ).border(hairline_border(theme)),
         @views.spacer(weight=1.0),
       ],
@@ -762,11 +847,12 @@ fn main_surface(
 ) -> @moui.View[WorkbenchMsg] {
   match model.active_tab {
     Code =>
-      code_workspace_view(model.code, theme, width, height).map(m => {
-        WorkbenchMsg::CodeMsg(m)
-      })
-    Work => work_tab_placeholder_view(theme, width, height)
-    Design => design_tab_placeholder_view(theme, width, height)
+      code_workspace_view(model.code, model.settings, theme, width, height).map(m => {
+          WorkbenchMsg::CodeMsg(m)
+        },
+      )
+    Work => work_tab_view(model, theme, width, height)
+    Design => design_tab_view(model, theme, width, height)
   }
 }
 
@@ -826,19 +912,21 @@ fn appearance_label(appearance : AppearanceMode) -> String {
 }
 
 ///|
-fn model_choice_label(model : ModelChoice) -> String {
-  match model {
-    V4Flash => "V4 Flash"
-    V4Pro => "V4 Pro"
+fn next_thinking_choice(thinking : ThinkingChoice) -> ThinkingChoice {
+  match thinking {
+    Normal => ThinkingChoice::High
+    High => ThinkingChoice::Max
+    Max => ThinkingChoice::Normal
   }
 }
 
 ///|
-fn thinking_choice_label(thinking : ThinkingChoice) -> String {
-  match thinking {
-    No => "Thinking: Off"
-    High => "Thinking: High"
-    Max => "Thinking: Max"
+fn task_filter_label(filter : TaskFilter) -> String {
+  match filter {
+    AllTasks => "All"
+    ActiveTask => "Active"
+    RunningTasks => "Running"
+    FailedTasks => "Failed"
   }
 }
 

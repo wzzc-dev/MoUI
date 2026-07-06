@@ -77,6 +77,11 @@ to `Effect[WorkbenchMsg]` via `Effect::map`. Sub-views are lifted to
 its backend dispatch + event projection end-to-end (the shell does not need
 to know about agent events).
 
+On startup, the shared app dispatches `FetchSessionList`. When the returned
+session list is non-empty and no session is active yet, Code automatically
+selects the first session and dispatches `SwitchSession` so the workbench
+resumes an existing conversation instead of staying on a blank empty state.
+
 ## Backend Boundary
 
 The app package stays LLM-agnostic through the `AgentBackendRuntime` closure:
@@ -110,17 +115,16 @@ The shell view follows the DeepSeek-GUI macro grammar:
   channels, Scheduled Tasks shows queues, Plugins shows capability groups, and
   Settings summarizes current preferences.
 - **Topbar**: 52px strip inside the center column. It shows active workspace
-  identity and subtitle. Code adds compact segmented controls for model and
-  thinking level.
+  identity and subtitle.
 - **Center work surface**: Code renders the message timeline, starter cards,
-  evidence-colored message rows, and bottom composer. Settings renders grouped
-  cards. Write, Connect Phone, Scheduled Tasks, and Plugins render static
-  product-shaped surfaces.
+  evidence-colored message rows, and bottom composer. The Code prompt row keeps
+  compact model and thinking-level pickers directly beside Send. Settings
+  renders grouped cards. Write, Connect Phone, Scheduled Tasks, and Plugins
+  render static product-shaped surfaces.
 - **Right inspector**: 360px on viewports at least 1180px wide; hidden on
   narrower layouts. Code shows Plan / Todo / Changes / Context cards. Other
   workspaces show matching static inspector cards.
-- **Status bar**: 28px strip with active workspace, runtime readiness, selected
-  model, thinking level, and session identity.
+- **Status bar**: 28px strip with runtime readiness and session identity.
 
 Message rows in the Code workspace are rendered by role: user (right-aligned
 bubble), assistant (left-aligned bubble with optional reasoning), tool result
