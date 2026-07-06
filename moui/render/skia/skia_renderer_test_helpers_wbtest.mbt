@@ -53,7 +53,9 @@ fn skia_test_font_has_visible_text(
   text : String,
 ) -> Bool {
   skia_measure_text_width(font, text) > 0.0 &&
-  skia_glyph_run_has_visible_glyphs(skia_glyph_run(font, text))
+  skia_glyph_run_has_visible_glyphs(
+    skia_glyph_run_with_shaper(font, text, use_shaper=true),
+  )
 }
 
 ///|

@@ -115,6 +115,294 @@ test "markdown editor file sidebar renders optional directory tree" {
 }
 
 ///|
+test "markdown editor file sidebar pins empty folder prompt to top" {
+  let app = MarkdownEditorApp::new()
+  app.set_file_sidebar_visible(true)
+  let commands = app.runtime(width=1120.0, height=640.0).draw_commands()
+  guard markdown_editor_text_frame(commands, "Files") is Some(files_frame) else {
+    fail("expected files sidebar title")
+  }
+  assert_true(files_frame.origin.y < 80.0)
+}
+
+///|
+test "markdown editor files and outline sidebars fit narrow window" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("# Title\n\n## Section")
+  app.set_file_sidebar_visible(true)
+  app.set_outline_visible(true)
+  let window_width = 980.0
+  let commands = app.runtime(width=window_width, height=640.0).draw_commands()
+  guard markdown_editor_text_frame(commands, "Outline") is Some(outline_frame) else {
+    fail("expected outline sidebar title")
+  }
+  guard markdown_editor_text_frame(commands, "H1 Title") is Some(heading_frame) else {
+    fail("expected outline heading")
+  }
+  assert_true(outline_frame.origin.x + outline_frame.size.width <= window_width)
+  assert_true(heading_frame.origin.x + heading_frame.size.width <= window_width)
+}
+
+///|
+test "markdown editor file tree lazily expands subdirectories" {
+  let app = MarkdownEditorApp::new()
+  app.set_file_sidebar_visible(true)
+  let read_path = Ref("")
+  let listed_paths : Array[String] = []
+  let bridge = @host.HostServiceBridge::new(
+    capabilities=@host.HostServiceCapabilities::new(
+      file_access=true,
+      file_dialogs=true,
+    ),
+    handle=request => {
+      match request {
+        @host.HostServiceRequest::FileDialog(_) =>
+          @host.HostServiceResponse::FileDialogSelection(["/tmp/project"])
+        @host.HostServiceRequest::ListDirectory(path) => {
+          listed_paths.push(path)
+          if path == "/tmp/project" {
+            @host.HostServiceResponse::DirectoryListing(path, [
+              @host.HostDirectoryEntry::new(
+                name="notes",
+                path="/tmp/project/notes",
+                is_directory=true,
+              ),
+            ])
+          } else if path == "/tmp/project/notes" {
+            @host.HostServiceResponse::DirectoryListing(path, [
+              @host.HostDirectoryEntry::new(
+                name="daily.md",
+                path="/tmp/project/notes/daily.md",
+              ),
+            ])
+          } else {
+            @host.HostServiceResponse::DirectoryListing(path, [])
+          }
+        }
+        @host.HostServiceRequest::TextFile(
+          @host.HostTextFileRequest::ReadText(path)
+        ) => {
+          read_path.val = path
+          @host.HostServiceResponse::TextFileContent(path, "# Daily")
+        }
+        _ => @host.HostServiceResponse::Unavailable("unexpected request")
+      }
+    },
+  )
+  let services = @host.HostAppServices::new(bridge~)
+  app.pick_working_directory_for_test(services)
+  inspect(listed_paths.length(), content="1")
+  inspect(listed_paths[0], content="/tmp/project")
+
+  ignore(
+    app.update_with_services(SelectTreePath("/tmp/project/notes"), services),
+  )
+  inspect(listed_paths.length(), content="2")
+  inspect(listed_paths[1], content="/tmp/project/notes")
+  inspect(read_path.val, content="")
+  inspect(app.transfer_status_label_for_test(), content="")
+  let commands = app.runtime(width=1120.0, height=640.0).draw_commands()
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "daily.md", .. })
+    }),
+  )
+
+  ignore(
+    app.update_with_services(
+      SelectTreePath("/tmp/project/notes/daily.md"),
+      services,
+    ),
+  )
+  inspect(read_path.val, content="")
+  inspect(app.transfer_status_label_for_test(), content="Opening file")
+}
+
+///|
+test "markdown editor file tree sorts folders before files by name" {
+  let sorted = markdown_editor_sorted_directory_entries([
+    @host.HostDirectoryEntry::new(name="zeta.md", path="/tmp/project/zeta.md"),
+    @host.HostDirectoryEntry::new(
+      name="drafts",
+      path="/tmp/project/drafts",
+      is_directory=true,
+    ),
+    @host.HostDirectoryEntry::new(name="Alpha.md", path="/tmp/project/Alpha.md"),
+    @host.HostDirectoryEntry::new(
+      name="Archive",
+      path="/tmp/project/Archive",
+      is_directory=true,
+    ),
+  ])
+  inspect(sorted.length(), content="4")
+  inspect(sorted[0].name, content="Archive")
+  inspect(sorted[1].name, content="drafts")
+  inspect(sorted[2].name, content="Alpha.md")
+  inspect(sorted[3].name, content="zeta.md")
+}
+
+///|
+test "markdown editor file tree refresh reloads picked folder" {
+  let app = MarkdownEditorApp::new()
+  app.set_file_sidebar_visible(true)
+  let version = Ref(0)
+  let listed_paths : Array[String] = []
+  let bridge = @host.HostServiceBridge::new(
+    capabilities=@host.HostServiceCapabilities::new(
+      file_access=true,
+      file_dialogs=true,
+    ),
+    handle=request => {
+      match request {
+        @host.HostServiceRequest::FileDialog(_) =>
+          @host.HostServiceResponse::FileDialogSelection(["/tmp/project"])
+        @host.HostServiceRequest::ListDirectory(path) => {
+          listed_paths.push(path)
+          if version.val == 0 {
+            @host.HostServiceResponse::DirectoryListing(path, [
+              @host.HostDirectoryEntry::new(
+                name="old.md",
+                path="/tmp/project/old.md",
+              ),
+            ])
+          } else {
+            @host.HostServiceResponse::DirectoryListing(path, [
+              @host.HostDirectoryEntry::new(
+                name="new.md",
+                path="/tmp/project/new.md",
+              ),
+            ])
+          }
+        }
+        _ => @host.HostServiceResponse::Unavailable("unexpected request")
+      }
+    },
+  )
+  let services = @host.HostAppServices::new(bridge~)
+  app.pick_working_directory_for_test(services)
+  let initial = app.runtime(width=1120.0, height=640.0).draw_commands()
+  assert_true(
+    initial.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "old.md", .. })
+    }),
+  )
+  assert_true(
+    initial.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Refresh folder", .. })
+    }),
+  )
+
+  version.val = 1
+  ignore(app.update_with_services(RefreshFileTree, services))
+  inspect(listed_paths.length(), content="2")
+  inspect(listed_paths[1], content="/tmp/project")
+  let refreshed = app.runtime(width=1120.0, height=640.0).draw_commands()
+  assert_true(
+    refreshed.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "new.md", .. })
+    }),
+  )
+  assert_false(
+    refreshed.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "old.md", .. })
+    }),
+  )
+}
+
+///|
+test "markdown editor file sidebar filters tree and recent files" {
+  let app = MarkdownEditorApp::new()
+  app.set_file_sidebar_visible(true)
+  app.load_document_for_test("# Daily", path="/tmp/project/notes/daily.md")
+  app.load_document_for_test("# Ideas", path="/tmp/project/ideas.md")
+  let bridge = @host.HostServiceBridge::new(
+    capabilities=@host.HostServiceCapabilities::new(
+      file_access=true,
+      file_dialogs=true,
+    ),
+    handle=request => {
+      match request {
+        @host.HostServiceRequest::FileDialog(_) =>
+          @host.HostServiceResponse::FileDialogSelection(["/tmp/project"])
+        @host.HostServiceRequest::ListDirectory(path) =>
+          if path == "/tmp/project" {
+            @host.HostServiceResponse::DirectoryListing(path, [
+              @host.HostDirectoryEntry::new(
+                name="README.md",
+                path="/tmp/project/README.md",
+              ),
+              @host.HostDirectoryEntry::new(
+                name="notes",
+                path="/tmp/project/notes",
+                is_directory=true,
+              ),
+            ])
+          } else {
+            @host.HostServiceResponse::DirectoryListing(path, [
+              @host.HostDirectoryEntry::new(
+                name="daily.md",
+                path="/tmp/project/notes/daily.md",
+              ),
+            ])
+          }
+        _ => @host.HostServiceResponse::Unavailable("unexpected request")
+      }
+    },
+  )
+  let services = @host.HostAppServices::new(bridge~)
+  app.pick_working_directory_for_test(services)
+  ignore(
+    app.update_with_services(SelectTreePath("/tmp/project/notes"), services),
+  )
+
+  ignore(app.update(UpdateFileFilterQuery("daily")))
+  let filtered = app.runtime(width=1120.0, height=640.0).draw_commands()
+  assert_true(
+    filtered.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "daily.md", .. })
+    }),
+  )
+  assert_false(
+    filtered.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "README.md", .. })
+    }),
+  )
+  let filtered_recent = markdown_editor_filter_file_paths(
+    app.recent_document_paths(),
+    "daily",
+  )
+  inspect(filtered_recent.length(), content="1")
+  inspect(filtered_recent[0], content="/tmp/project/notes/daily.md")
+
+  ignore(app.update(UpdateFileFilterQuery("missing")))
+  let missing = app.runtime(width=1120.0, height=640.0).draw_commands()
+  assert_true(
+    missing.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "No matching files", .. })
+    }),
+  )
+  assert_true(
+    missing.any(command => {
+      command
+      is @core.DrawCommand::DrawText({ text: "No matching recent files", .. })
+    }),
+  )
+
+  ignore(app.update(UpdateFileFilterQuery("")))
+  let cleared = app.runtime(width=1120.0, height=640.0).draw_commands()
+  assert_true(
+    cleared.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "README.md", .. })
+    }),
+  )
+  assert_true(
+    cleared.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "ideas.md", .. })
+    }),
+  )
+}
+
+///|
 test "markdown editor tree toggle preserves expansion order" {
   let app = MarkdownEditorApp::new()
   ignore(app.update(ToggleTreePath("b")))

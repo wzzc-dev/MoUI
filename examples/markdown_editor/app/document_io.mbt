@@ -290,13 +290,28 @@ fn MarkdownEditorApp::apply_directory_listing(
 ) -> Unit {
   match response {
     @host.HostServiceResponse::DirectoryListing(_path, entries) => {
-      self.directory_tree_items.set(
-        markdown_editor_tree_items_from_listing(path, entries),
+      let next_children = markdown_editor_tree_children_from_listing(
+        path, entries,
       )
-      // Auto-expand root to show children
+      if self.working_directory.get() == path ||
+        self.directory_tree_items.get().length() == 0 {
+        self.directory_tree_items.set([
+          markdown_editor_root_tree_item(path, next_children),
+        ])
+      } else {
+        self.directory_tree_items.set(
+          markdown_editor_replace_tree_item_children(
+            self.directory_tree_items.get(),
+            path,
+            next_children,
+          ),
+        )
+      }
       let current = self.expanded_tree_paths.get()
-      if current.length() == 0 {
-        self.expanded_tree_paths.set([path])
+      if !markdown_editor_string_array_contains(current, path) {
+        let next = current.copy()
+        next.push(path)
+        self.expanded_tree_paths.set(next)
       }
       self.transfer_status.set(TransferReady)
     }
@@ -313,33 +328,228 @@ fn MarkdownEditorApp::apply_directory_listing(
 }
 
 ///|
-fn markdown_editor_tree_items_from_listing(
+fn markdown_editor_root_tree_item(
+  path : String,
+  children : Array[@views.TreeItem],
+) -> @views.TreeItem {
+  let root_name = markdown_editor_file_name(path)
+  let label = if root_name == "" { path } else { root_name }
+  @views.tree_item(id=path, label~, children~)
+}
+
+///|
+fn markdown_editor_tree_children_from_listing(
   path : String,
   entries : Array[@host.HostDirectoryEntry],
 ) -> Array[@views.TreeItem] {
-  let root_name = markdown_editor_file_name(path)
-  let label = if root_name == "" { path } else { root_name }
   let child_items : Array[@views.TreeItem] = []
-  for entry in entries {
+  for entry in markdown_editor_sorted_directory_entries(entries) {
     if entry.is_directory {
-      let child_path = markdown_editor_join_path(entry.path, entry.name)
       child_items.push(
-        @views.tree_item(id=child_path, label=entry.name, children=[]),
+        markdown_editor_directory_tree_item(path=entry.path, label=entry.name),
       )
     } else {
       child_items.push(@views.tree_item(id=entry.path, label=entry.name))
     }
   }
-  [@views.tree_item(id=path, label~, children=child_items)]
+  if child_items.length() == 0 {
+    child_items.push(
+      @views.tree_item(
+        id=markdown_editor_tree_empty_placeholder_id(path),
+        label="Empty folder",
+      ),
+    )
+  }
+  child_items
 }
 
 ///|
-fn markdown_editor_join_path(dir : String, file : String) -> String {
-  if dir.has_suffix("/") || dir.has_suffix("\\") {
-    dir + file
-  } else {
-    dir + "/" + file
+fn markdown_editor_sorted_directory_entries(
+  entries : Array[@host.HostDirectoryEntry],
+) -> Array[@host.HostDirectoryEntry] {
+  let sorted : Array[@host.HostDirectoryEntry] = []
+  for entry in entries {
+    let mut inserted = false
+    for index in 0..<sorted.length() {
+      if markdown_editor_directory_entry_before(entry, sorted[index]) {
+        sorted.insert(index, entry)
+        inserted = true
+        break
+      }
+    }
+    if !inserted {
+      sorted.push(entry)
+    }
   }
+  sorted
+}
+
+///|
+fn markdown_editor_directory_entry_before(
+  left : @host.HostDirectoryEntry,
+  right : @host.HostDirectoryEntry,
+) -> Bool {
+  if left.is_directory != right.is_directory {
+    left.is_directory
+  } else {
+    markdown_editor_case_insensitive_less(left.name, right.name)
+  }
+}
+
+///|
+fn markdown_editor_case_insensitive_less(left : String, right : String) -> Bool {
+  let left_key = left.to_lower()
+  let right_key = right.to_lower()
+  if left_key == right_key {
+    markdown_editor_ascii_lex_less(left, right)
+  } else {
+    markdown_editor_ascii_lex_less(left_key, right_key)
+  }
+}
+
+///|
+fn markdown_editor_ascii_lex_less(left : String, right : String) -> Bool {
+  let left_chars = left.to_array()
+  let right_chars = right.to_array()
+  let count = if left_chars.length() < right_chars.length() {
+    left_chars.length()
+  } else {
+    right_chars.length()
+  }
+  for index in 0..<count {
+    let left_char = left_chars[index]
+    let right_char = right_chars[index]
+    if left_char != right_char {
+      return left_char < right_char
+    }
+  }
+  left_chars.length() < right_chars.length()
+}
+
+///|
+fn markdown_editor_directory_tree_item(
+  path~ : String,
+  label~ : String,
+) -> @views.TreeItem {
+  @views.tree_item(id=path, label~, children=[
+    @views.tree_item(
+      id=markdown_editor_tree_loading_placeholder_id(path),
+      label="Loading...",
+    ),
+  ])
+}
+
+///|
+fn markdown_editor_tree_loading_placeholder_id(path : String) -> String {
+  path + "#moui-loading"
+}
+
+///|
+fn markdown_editor_tree_empty_placeholder_id(path : String) -> String {
+  path + "#moui-empty"
+}
+
+///|
+fn markdown_editor_tree_path_is_placeholder(path : String) -> Bool {
+  path.has_suffix("#moui-loading") || path.has_suffix("#moui-empty")
+}
+
+///|
+fn markdown_editor_string_array_contains(
+  items : Array[String],
+  value : String,
+) -> Bool {
+  items.any(item => item == value)
+}
+
+///|
+fn MarkdownEditorApp::toggle_tree_path(
+  self : MarkdownEditorApp,
+  id : String,
+) -> Bool {
+  let expanded = self.expanded_tree_paths.get()
+  let next : Array[String] = []
+  let mut removed = false
+  for path in expanded {
+    if path == id {
+      removed = true
+    } else {
+      next.push(path)
+    }
+  }
+  if !removed {
+    next.push(id)
+  }
+  self.expanded_tree_paths.set(next)
+  !removed
+}
+
+///|
+fn MarkdownEditorApp::tree_path_is_directory(
+  self : MarkdownEditorApp,
+  path : String,
+) -> Bool {
+  match markdown_editor_find_tree_item(self.directory_tree_items.get(), path) {
+    Some(item) => item.children.length() > 0
+    None => false
+  }
+}
+
+///|
+fn MarkdownEditorApp::tree_path_needs_load(
+  self : MarkdownEditorApp,
+  path : String,
+) -> Bool {
+  match markdown_editor_find_tree_item(self.directory_tree_items.get(), path) {
+    Some(item) =>
+      item.children.length() == 1 &&
+      item.children[0].id == markdown_editor_tree_loading_placeholder_id(path)
+    None => false
+  }
+}
+
+///|
+fn markdown_editor_find_tree_item(
+  items : Array[@views.TreeItem],
+  path : String,
+) -> @views.TreeItem? {
+  for item in items {
+    if item.id == path {
+      return Some(item)
+    }
+    match markdown_editor_find_tree_item(item.children, path) {
+      Some(found) => return Some(found)
+      None => ()
+    }
+  }
+  None
+}
+
+///|
+fn markdown_editor_replace_tree_item_children(
+  items : Array[@views.TreeItem],
+  path : String,
+  children : Array[@views.TreeItem],
+) -> Array[@views.TreeItem] {
+  let next : Array[@views.TreeItem] = []
+  for item in items {
+    if item.id == path {
+      next.push(@views.tree_item(id=item.id, label=item.label, children~))
+    } else {
+      next.push(
+        @views.tree_item(
+          id=item.id,
+          label=item.label,
+          children=markdown_editor_replace_tree_item_children(
+            item.children,
+            path,
+            children,
+          ),
+        ),
+      )
+    }
+  }
+  next
 }
 
 ///|

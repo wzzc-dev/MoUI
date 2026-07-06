@@ -153,6 +153,8 @@ pub enum MarkdownEditorMsg {
   OutdentLines
   ToggleTaskAt(Int)
   PickWorkingDirectory
+  RefreshFileTree
+  UpdateFileFilterQuery(String)
   SelectTreePath(String)
   ToggleTreePath(String)
   ToggleFileTree

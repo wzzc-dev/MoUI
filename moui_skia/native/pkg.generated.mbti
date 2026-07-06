@@ -47,12 +47,14 @@ pub fn Canvas::draw_circle(Self, @moui_skia.Point, Float, @moui_skia.Paint) -> U
 pub fn Canvas::draw_color(Self, @moui_skia.Color, blend_mode? : @moui_skia.BlendMode) -> Unit
 pub fn Canvas::draw_drrect(Self, @moui_skia.RRect, @moui_skia.RRect, @moui_skia.Paint) -> Unit
 pub fn Canvas::draw_glyphs(Self, Array[GlyphId], Array[@moui_skia.Point], Font, @moui_skia.Paint, origin? : @moui_skia.Point) -> Unit
+pub fn Canvas::draw_glyphs_checked(Self, Array[GlyphId], Array[@moui_skia.Point], Font, @moui_skia.Paint, origin? : @moui_skia.Point) -> Bool
 pub fn Canvas::draw_image(Self, Image, @moui_skia.Point) -> Unit
 pub fn Canvas::draw_image_rect(Self, Image, @moui_skia.Rect, @moui_skia.Rect, @moui_skia.Paint, sampling? : @moui_skia.SamplingOptions) -> Unit
 pub fn Canvas::draw_line(Self, @moui_skia.Point, @moui_skia.Point, @moui_skia.Paint) -> Unit
 pub fn Canvas::draw_oval(Self, @moui_skia.Rect, @moui_skia.Paint) -> Unit
 pub fn Canvas::draw_paint(Self, @moui_skia.Paint) -> Unit
 pub fn Canvas::draw_paint_shader(Self, Shader, @moui_skia.Paint) -> Unit
+pub fn Canvas::draw_paragraph(Self, Paragraph, origin? : @moui_skia.Point) -> Bool
 pub fn Canvas::draw_path(Self, Path, @moui_skia.Paint) -> Unit
 pub fn Canvas::draw_path_shader(Self, Path, Shader, @moui_skia.Paint) -> Unit
 pub fn Canvas::draw_path_value(Self, @moui_skia.Path, @moui_skia.Paint) -> Unit
@@ -450,6 +452,7 @@ pub(all) struct Typeface {
 }
 pub fn Typeface::default() -> Self?
 pub fn Typeface::family_name(Self) -> Bytes?
+pub fn Typeface::from_file(Bytes, index? : Int) -> Self?
 pub fn Typeface::from_font_mgr_family(FontMgr, Bytes, weight? : Int, width? : Int, slant? : Int) -> Self?
 pub fn Typeface::from_font_mgr_request(FontMgr, @moui_skia.FontFallbackRequest) -> Self?
 pub fn Typeface::from_name(Bytes, weight? : Int, width? : Int, slant? : Int) -> Self?
