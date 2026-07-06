@@ -300,8 +300,8 @@ fn provider_switcher_row(
 }
 
 ///|
-/// A single selectable model row. Highlights when it is the current selection
-/// and dispatches `ModelChanged` on tap (which closes the picker).
+/// A single model row. OpenSeek-supported models are selectable; custom ids
+/// stay visible but muted until the native backend can parse them.
 fn model_option_row(
   provider_id : String,
   model_id : String,
@@ -309,12 +309,21 @@ fn model_option_row(
   theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[CodeMsg] {
+  let supported = mo_workbench_model_supported_by_openseek(model_id)
   let trailing : @moui.View[CodeMsg] = if selected {
     @views.icon(
       @views.IconName::Check,
       size=16.0,
       color=workbench_accent(theme),
     )
+  } else if !supported {
+    @views.text(
+      "待支持",
+      role=@views.TextRole::Caption,
+      theme~,
+      width=44.0,
+      height=16.0,
+    ).foreground(theme.palette.muted)
   } else {
     @views.container(
       @views.text("", role=@views.TextRole::Caption, theme~, width=16.0),
@@ -322,16 +331,19 @@ fn model_option_row(
       height=16.0,
     )
   }
-  @views.container(
+  let label_width = if supported { width - 36.0 } else { width - 64.0 }
+  let row = @views.container(
     @views.row(
       [
         @views.text(
           model_id,
           role=@views.TextRole::Label,
           theme~,
-          width=width - 36.0,
+          width=label_width.max(80.0),
           height=22.0,
-        ).foreground(workbench_text(theme)),
+        ).foreground(
+          if supported { workbench_text(theme) } else { theme.palette.muted },
+        ),
         trailing,
       ],
       spacing=6.0,
@@ -341,12 +353,19 @@ fn model_option_row(
     height=40.0,
     background=if selected {
       workbench_selector_chip_background(theme)
+    } else if !supported {
+      workbench_subtle_background(theme)
     } else {
       @graphics.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)
     },
     corner_radius=8.0,
     padding=8.0,
-  ).on_tap(CodeMsg::ModelChanged(provider_id, model_id))
+  )
+  if supported {
+    row.on_tap(CodeMsg::ModelChanged(provider_id, model_id))
+  } else {
+    row
+  }
 }
 
 ///|

@@ -365,6 +365,7 @@ fn provider_edit_form(
     ).foreground(workbench_text(theme)),
   )
   for m in p.models {
+    let supported = mo_workbench_model_supported_by_openseek(m)
     rows.push(
       @views.container(
         @views.text(
@@ -373,10 +374,16 @@ fn provider_edit_form(
           theme~,
           width=field_w - 16.0,
           height=22.0,
+        ).foreground(
+          if supported { workbench_text(theme) } else { theme.palette.muted },
         ),
         width=field_w,
         height=38.0,
-        background=workbench_subtle_background(theme),
+        background=if supported {
+          workbench_subtle_background(theme)
+        } else {
+          @graphics.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.03)
+        },
         corner_radius=6.0,
         padding=8.0,
       ),

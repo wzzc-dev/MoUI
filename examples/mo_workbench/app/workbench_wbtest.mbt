@@ -738,6 +738,41 @@ test "model changed updates current model" {
 }
 
 ///|
+test "unsupported custom model change is ignored" {
+  let model = test_model(script=_cmd => [])
+  let (model, _effect) = model.update(
+    WorkbenchMsg::CodeMsg(CodeMsg::ModelChanged("openai", "gpt-4o")),
+  )
+  inspect(model.code.current_model, content="deepseek-v4-flash")
+  guard model.code.current_provider_id is Some(provider_id) else {
+    fail("expected current provider")
+  }
+  inspect(provider_id, content="deepseek")
+}
+
+///|
+test "provider with only unsupported models stays inspectable but not selected" {
+  let model = test_model(script=_cmd => [])
+  let model = {
+    ..model,
+    code: { ..model.code, model_picker_open: true },
+  }
+  let (model, _effect) = model.update(
+    WorkbenchMsg::CodeMsg(CodeMsg::SelectProvider("openai")),
+  )
+  guard model.settings.active_provider_id is Some(active_provider_id) else {
+    fail("expected active provider")
+  }
+  inspect(active_provider_id, content="openai")
+  inspect(model.code.current_model, content="deepseek-v4-flash")
+  guard model.code.current_provider_id is Some(current_provider_id) else {
+    fail("expected current provider")
+  }
+  inspect(current_provider_id, content="deepseek")
+  assert_true(model.code.model_picker_open)
+}
+
+///|
 test "thinking changed updates current thinking" {
   let model = test_model(script=_cmd => [])
   inspect(model.code.current_thinking == ThinkingChoice::Normal, content="true")
