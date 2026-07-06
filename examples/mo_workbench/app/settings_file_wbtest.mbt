@@ -1,4 +1,12 @@
 ///|
+fn inspect_active_provider_id(actual : String?, expected : String) -> Unit raise {
+  guard actual is Some(provider_id) else {
+    fail("expected active provider id " + expected)
+  }
+  inspect(provider_id, content=expected)
+}
+
+///|
 test "default settings file matches template defaults" {
   let file = mo_workbench_default_settings_file()
   inspect(file.providers.length(), content="2")
@@ -6,7 +14,7 @@ test "default settings file matches template defaults" {
   inspect(file.providers[0].models.length(), content="2")
   inspect(file.providers[1].id, content="openai")
   inspect(file.providers[1].base_url, content="https://api.openai.com/v1")
-  inspect(file.active_provider_id, content="Some(deepseek)")
+  inspect_active_provider_id(file.active_provider_id, "deepseek")
   inspect(file.font_size, content="14")
   inspect(file.appearance, content="system")
 }
@@ -63,7 +71,7 @@ test "decode legacy single-provider settings json migrates" {
   inspect(file.providers[0].id, content="deepseek")
   inspect(file.providers[0].api_key, content="sk-legacy")
   inspect(file.providers[0].base_url, content="https://token.sensenova.cn/v1")
-  inspect(file.active_provider_id, content="Some(deepseek)")
+  inspect_active_provider_id(file.active_provider_id, "deepseek")
 }
 
 ///|
@@ -94,7 +102,7 @@ test "merge settings file into workspace" {
     merged.find_provider("deepseek").unwrap().base_url,
     content="https://api.example.com/v1",
   )
-  inspect(merged.active_provider_id, content="Some(deepseek)")
+  inspect_active_provider_id(merged.active_provider_id, "deepseek")
   inspect(merged.working_dir, content="/tmp/ws")
   inspect(merged.session_root, content="/tmp/sessions")
   inspect(merged.font_size, content="12")
