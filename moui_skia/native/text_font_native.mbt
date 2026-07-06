@@ -50,30 +50,6 @@ extern "C" fn native_font_text_to_glyphs_utf8_value(
 extern "C" fn native_font_glyph_width(font : FontHandle, glyph : Int) -> Float = "moonbit_skia_font_glyph_width"
 
 ///|
-#borrow(font, glyphs)
-extern "C" fn native_font_glyph_widths(
-  font : FontHandle,
-  glyphs : Array[GlyphId],
-) -> Array[Float] = "moonbit_skia_font_glyph_widths"
-
-///|
-#borrow(font, text)
-extern "C" fn native_font_text_glyph_positions_utf8(
-  font : FontHandle,
-  text : Bytes,
-  origin_x : Float,
-  origin_y : Float,
-) -> Array[@skia.Point] = "moonbit_skia_font_text_glyph_positions_utf8"
-
-///|
-#borrow(font, text)
-extern "C" fn native_font_text_glyph_x_positions_utf8(
-  font : FontHandle,
-  text : Bytes,
-  origin : Float,
-) -> Array[Float] = "moonbit_skia_font_text_glyph_x_positions_utf8"
-
-///|
 #borrow(font)
 extern "C" fn native_font_glyph_bounds_left(
   font : FontHandle,
@@ -100,13 +76,6 @@ extern "C" fn native_font_glyph_bounds_bottom(
   font : FontHandle,
   glyph : Int,
 ) -> Float = "moonbit_skia_font_glyph_bounds_bottom"
-
-///|
-#borrow(font, glyphs)
-extern "C" fn native_font_glyph_bounds_many(
-  font : FontHandle,
-  glyphs : Array[GlyphId],
-) -> Array[@skia.Rect] = "moonbit_skia_font_glyph_bounds_many"
 
 ///|
 #borrow(font, text)
