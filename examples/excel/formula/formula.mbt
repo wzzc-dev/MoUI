@@ -44,6 +44,9 @@ pub fn evaluate(
     return @cell.parse_raw_value(trimmed)
   }
   let expr = trimmed[1:].to_owned()
+  if expr.contains("#REF!") {
+    return @cell.CellValue::Error("#REF!")
+  }
   let result = eval_expr(expr, ref_str => lookup(ref_str).to_display())
   match result {
     Ok(value) =>
@@ -106,7 +109,7 @@ fn tokenize(s : String) -> Array[Token] {
       let text = chars_to_string(chars[start:i])
       let n = @string.parse_double(text) catch { _ => 0.0 }
       tokens.push(Num(n))
-    } else if is_alpha(c) || c == '_' {
+    } else if is_alpha(c) || c == '_' || c == '$' {
       let start = i
       i = i + 1
       while i < chars.length() &&
@@ -379,8 +382,16 @@ fn parse_func_call(
   state.advance()
   let result = match name {
     "IF" => parse_if(state, lookup)
-    "SUM" | "AVG" | "AVERAGE" | "MIN" | "MAX" | "COUNT" =>
-      parse_aggregate_func(state, name, lookup)
+    "AND" | "OR" => parse_logic_func(state, name, lookup)
+    "NOT" => parse_not_func(state, lookup)
+    "SUM"
+    | "AVG"
+    | "AVERAGE"
+    | "MIN"
+    | "MAX"
+    | "COUNT"
+    | "PRODUCT"
+    | "MEDIAN" => parse_aggregate_func(state, name, lookup)
     "ROUND" | "ABS" | "SQRT" | "POW" => parse_math_func(state, name, lookup)
     "LEN" => parse_string_func(state, name, lookup)
     _ => fail("unknown function")
@@ -412,6 +423,37 @@ fn parse_if(
     then_value
   } else {
     else_value
+  }
+}
+
+///|
+fn parse_logic_func(
+  state : ParseState,
+  name : String,
+  lookup : (String) -> String,
+) -> Double raise Error {
+  let values : Array[Double] = []
+  values.push(parse_comparison(state, lookup))
+  while state.peek() is Some(Comma) {
+    state.advance()
+    values.push(parse_comparison(state, lookup))
+  }
+  match name {
+    "AND" => if values.all(value => value != 0.0) { 1.0 } else { 0.0 }
+    "OR" => if values.any(value => value != 0.0) { 1.0 } else { 0.0 }
+    _ => fail("unknown logic")
+  }
+}
+
+///|
+fn parse_not_func(
+  state : ParseState,
+  lookup : (String) -> String,
+) -> Double raise Error {
+  if parse_comparison(state, lookup) == 0.0 {
+    1.0
+  } else {
+    0.0
   }
 }
 
@@ -583,7 +625,30 @@ fn apply_aggregate_func(
       m
     }
     "COUNT" => values.length().to_double()
+    "PRODUCT" => values.fold(init=1.0, fn(acc, v) { acc * v })
+    "MEDIAN" => median_value(values)
     _ => fail("unknown aggregate")
+  }
+}
+
+///|
+fn median_value(values : Array[Double]) -> Double {
+  let sorted = values.copy()
+  for i in 0..<sorted.length() {
+    let start = i + 1
+    for j in start..<sorted.length() {
+      if sorted[j] < sorted[i] {
+        let value = sorted[i]
+        sorted[i] = sorted[j]
+        sorted[j] = value
+      }
+    }
+  }
+  let mid = sorted.length() / 2
+  if sorted.length() % 2 == 1 {
+    sorted[mid]
+  } else {
+    (sorted[mid - 1] + sorted[mid]) / 2.0
   }
 }
 
