@@ -111,8 +111,19 @@ async fn openseek_worker_handle_command(
     @app.AgentCommand::SwitchSession(id) =>
       openseek_worker_switch_session(owner, id, emit)
     @app.AgentCommand::SetModel(model_id, api_key, base_url) => {
+      let model = match openseek_model_from_string(model_id) {
+        Some(model) => model
+        None => {
+          emit(
+            @app.AgentEvent::RuntimeNoticeAdded(
+              "Model not supported by OpenSeek yet: " + model_id,
+            ),
+          )
+          return
+        }
+      }
       let state = openseek_ensure_engine(owner.config, owner.engine)
-      state.model = openseek_model_from_string(model_id)
+      state.model = model
       // Swap the live provider connection so the next turn hits the chosen
       // endpoint with the chosen key.
       let api_url = if base_url.is_empty() {
@@ -120,7 +131,7 @@ async fn openseek_worker_handle_command(
       } else {
         Some(openseek_chat_completions_url(base_url))
       }
-      owner.config = { ..owner.config, api_key, api_url }
+      owner.config = { ..owner.config, api_key, api_url, model }
     }
     @app.AgentCommand::SetThinking(choice) => {
       let state = openseek_ensure_engine(owner.config, owner.engine)
@@ -228,7 +239,7 @@ async fn openseek_worker_steer(
     Some(state) =>
       match openseek_active_turn_task(state) {
         Some(_) => {
-          @agent.steer(state.runtime, text)
+          state.runtime.queue_steer(@agent_runtime.Prompt(text))
           emit(@app.AgentEvent::RuntimeNoticeAdded("Steer queued: " + text))
           @async.sleep(0)
         }
@@ -288,12 +299,12 @@ fn openseek_worker_send_task(
   let turn = group.spawn() <| async fn() {
     try {
       let _ = @agent.run_turn_in_scope(
-        runtime,
-        scope,
-        config.api_key,
-        model,
-        session_ref.val,
-        task,
+        runtime~,
+        scope~,
+        api_key=config.api_key,
+        model~,
+        session=session_ref.val,
+        task~,
         append_item=async fn(current, item) {
           let next = store.append(current, item) catch {
             _ => current.append(item)

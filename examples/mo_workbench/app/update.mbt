@@ -142,15 +142,19 @@ fn CodeWorkspace::update(
       // The shell intercepts `ModelChanged` to also dispatch the backend
       // `SetModel` with the provider's live connection; this arm keeps the
       // code model in sync if reached directly.
-      (
-        {
-          ..self,
-          current_model: model_id,
-          current_provider_id: Some(provider_id),
-          model_picker_open: false,
-        },
-        @moui.Effect::none(),
-      )
+      if mo_workbench_model_supported_by_openseek(model_id) {
+        (
+          {
+            ..self,
+            current_model: model_id,
+            current_provider_id: Some(provider_id),
+            model_picker_open: false,
+          },
+          @moui.Effect::none(),
+        )
+      } else {
+        (self, @moui.Effect::none())
+      }
     ToggleModelPicker =>
       (
         { ..self, model_picker_open: !self.model_picker_open },
@@ -694,9 +698,10 @@ fn WorkbenchModel::update(
     CodeMsg(m) =>
       match m {
         SelectProvider(provider_id) => {
-          // Switch the active provider from the chat picker. Keep the model in
-          // sync (fall back to the provider's first model when the current one
-          // is not offered) and re-point the backend connection live.
+          // Switch the active provider from the chat picker. If it exposes a
+          // model OpenSeek can parse, select that model and re-point the
+          // backend; otherwise keep the active backend model and leave the
+          // picker open so the disabled rows remain visible.
           let settings = self.settings.update(
               SettingsMsg::SelectProvider(provider_id),
             ).0
@@ -705,39 +710,58 @@ fn WorkbenchModel::update(
             Some(p) => (p.api_key, p.base_url)
             None => ("", "")
           }
-          let code = match provider {
+          match provider {
             Some(p) => {
-              let model_id = if p.models.contains(self.code.current_model) {
-                self.code.current_model
-              } else if p.models.is_empty() {
-                self.code.current_model
+              let current_is_supported = p.models.contains(
+                self.code.current_model,
+              ) &&
+                mo_workbench_model_supported_by_openseek(
+                  self.code.current_model,
+                )
+              let selected_model = if current_is_supported {
+                Some(self.code.current_model)
               } else {
-                p.models[0]
+                mo_workbench_first_openseek_supported_model(p.models)
               }
-              {
-                ..self.code,
-                current_provider_id: Some(provider_id),
-                current_model: model_id,
-                model_picker_open: false,
+              match selected_model {
+                Some(model_id) => {
+                  let code = {
+                    ..self.code,
+                    current_provider_id: Some(provider_id),
+                    current_model: model_id,
+                    model_picker_open: false,
+                  }
+                  let eff = self.backend.effect(
+                    [SetModel(model_id, api_key, base_url)],
+                    event => CodeMsg::ReceiveAgentEvent(event),
+                  )
+                  (
+                    sync_task_tree({ ..self, settings, code }),
+                    eff.map(m => WorkbenchMsg::CodeMsg(m)),
+                  )
+                }
+                None =>
+                  (
+                    sync_task_tree({
+                      ..self,
+                      settings,
+                      code: { ..self.code, model_picker_open: true },
+                    }),
+                    @moui.Effect::none(),
+                  )
               }
             }
             None =>
-              {
-                ..self.code,
-                current_provider_id: Some(provider_id),
-                model_picker_open: false,
-              }
+              (
+                sync_task_tree({ ..self, settings }),
+                @moui.Effect::none(),
+              )
           }
-          let eff = self.backend.effect(
-            [SetModel(code.current_model, api_key, base_url)],
-            event => CodeMsg::ReceiveAgentEvent(event),
-          )
-          (
-            sync_task_tree({ ..self, settings, code }),
-            eff.map(m => WorkbenchMsg::CodeMsg(m)),
-          )
         }
         ModelChanged(provider_id, model_id) => {
+          if !mo_workbench_model_supported_by_openseek(model_id) {
+            return (self, @moui.Effect::none())
+          }
           // Resolve the provider's live connection and switch both the model
           // and the backend endpoint in one backend command.
           let provider = self.settings.find_provider(provider_id)
