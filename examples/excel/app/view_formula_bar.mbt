@@ -29,7 +29,7 @@ fn build_formula_bar(
             @views.text_field(
               model.edit_value,
               on_input=fn(v) { ExcelMsg::CellValueChanged(v) },
-              on_submit=Some(ExcelMsg::CellEditCommitted),
+              on_submit=Some(ExcelMsg::CellEditCommittedAndNavigate(1, 0)),
               variant=@views.TextFieldVariant::Filled,
               theme~,
               width=760.0,

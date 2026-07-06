@@ -29,11 +29,15 @@ fn build_header_row(
   theme : @moui.Theme,
 ) -> @moui.View[ExcelMsg] {
   let cells : Array[@moui.View[ExcelMsg]] = [
-    header_cell("", row_header_width, col_header_height, theme),
+    header_cell("", row_header_width, col_header_height, theme).on_tap(
+      ExcelMsg::SelectAllCells,
+    ),
   ]
   for col in 0..<sheet.col_count {
     cells.push(
-      header_cell(@cell.column_label(col), cell_width, col_header_height, theme),
+      header_cell(@cell.column_label(col), cell_width, col_header_height, theme).on_tap(
+        ExcelMsg::ColumnSelected(col),
+      ),
     )
   }
   @views.row(cells, spacing=cell_gap, align=@views.CrossAlign::Center)
@@ -48,7 +52,9 @@ fn build_data_row(
 ) -> @moui.View[ExcelMsg] {
   let sheet = model.active_sheet()
   let cells : Array[@moui.View[ExcelMsg]] = [
-    header_cell((row + 1).to_string(), row_header_width, cell_height, theme),
+    header_cell((row + 1).to_string(), row_header_width, cell_height, theme).on_tap(
+      ExcelMsg::RowSelected(row),
+    ),
   ]
   for col in 0..<sheet.col_count {
     cells.push(build_cell(model, row, col, heat_range, theme))
@@ -92,10 +98,7 @@ fn build_cell(
 ) -> @moui.View[ExcelMsg] {
   let sheet = model.active_sheet()
   let cell = sheet.get_cell(row, col)
-  let selected = match model.workbook.selection {
-    Some(sel) => sel.row == row && sel.col == col
-    None => false
-  }
+  let selected = model.workbook.cell_is_selected(row, col)
   let editing = selected && model.editing
   let bg = cell_background(model, cell, row, col, heat_range, theme)
   let border = @graphics.BorderStyle::new(
@@ -112,12 +115,12 @@ fn build_cell(
     @views.text_field(
       model.edit_value,
       on_input=fn(v) { ExcelMsg::CellRawChanged(row, col, v) },
-      on_submit=Some(ExcelMsg::CellEditCommitted),
+      on_submit=Some(ExcelMsg::CellEditCommittedAndNavigate(1, 0)),
       variant=@views.TextFieldVariant::Plain,
       theme~,
       width=cell_width - 8.0,
       height=cell_height - 8.0,
-    ).key("excel-cell-editor-" + @cell.make_key(row, col))
+    ).key("excel-cell-input-" + @cell.make_key(row, col))
   } else {
     cell_display_content(model, cell, row, col, theme)
   }
@@ -142,14 +145,13 @@ fn cell_display_content(
   col : Int,
   theme : @moui.Theme,
 ) -> @moui.View[ExcelMsg] {
-  let selected = match model.workbook.selection {
-    Some(sel) => sel.row == row && sel.col == col
-    None => false
-  }
+  let selected = model.workbook.cell_is_selected(row, col)
   if selected {
     @views.text_field(
       cell.raw,
-      on_input=fn(v) { ExcelMsg::CellRawChanged(row, col, v) },
+      on_input=fn(v) {
+        ExcelMsg::CellRawChanged(row, col, direct_cell_input(cell.raw, v))
+      },
       on_submit=Some(ExcelMsg::CellEditCommitted),
       variant=@views.TextFieldVariant::Plain,
       theme~,
@@ -157,9 +159,12 @@ fn cell_display_content(
       height=cell_height - 8.0,
     ).key("excel-cell-input-" + @cell.make_key(row, col))
   } else {
+    let display_value = cell.display()
     @views.text_field(
-      cell.display(),
-      on_input=fn(v) { ExcelMsg::CellRawChanged(row, col, v) },
+      display_value,
+      on_input=fn(v) {
+        ExcelMsg::CellRawChanged(row, col, direct_cell_input(display_value, v))
+      },
       on_submit=Some(ExcelMsg::CellEditCommitted),
       variant=@views.TextFieldVariant::Plain,
       theme~,
@@ -167,6 +172,31 @@ fn cell_display_content(
       height=cell_height - 8.0,
     ).key("excel-cell-input-" + @cell.make_key(row, col))
   }
+}
+
+///|
+fn direct_cell_input(previous : String, next : String) -> String {
+  if previous == "" {
+    next
+  } else if next.length() >= previous.length() &&
+    starts_with_text(next, previous) {
+    next[previous.length():].to_owned()
+  } else if next.length() >= previous.length() && ends_with_text(next, previous) {
+    next[:next.length() - previous.length()].to_owned()
+  } else {
+    next
+  }
+}
+
+///|
+fn starts_with_text(value : String, prefix : String) -> Bool {
+  value.length() >= prefix.length() && value[:prefix.length()] == prefix
+}
+
+///|
+fn ends_with_text(value : String, suffix : String) -> Bool {
+  value.length() >= suffix.length() &&
+  value[value.length() - suffix.length():] == suffix
 }
 
 ///|
@@ -181,10 +211,7 @@ fn cell_background(
   if cell.format.bg_color.length() >= 6 {
     parse_hex_color(cell.format.bg_color).unwrap_or(theme.palette.surface)
   } else {
-    let selected = match model.workbook.selection {
-      Some(sel) => sel.row == row && sel.col == col
-      None => false
-    }
+    let selected = model.workbook.cell_is_selected(row, col)
     if selected {
       theme.palette.primary_container
     } else if model.heat_map {

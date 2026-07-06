@@ -212,8 +212,14 @@ pub fn parse_ref(ref_str : String) -> CellAddress? {
   let col_chars : Array[Char] = []
   let row_chars : Array[Char] = []
   let mut i = 0
+  if i < chars.length() && chars[i] == '$' {
+    i = i + 1
+  }
   while i < chars.length() && is_ascii_letter(chars[i]) {
     col_chars.push(chars[i])
+    i = i + 1
+  }
+  if i < chars.length() && chars[i] == '$' {
     i = i + 1
   }
   while i < chars.length() && is_ascii_digit(chars[i]) {
