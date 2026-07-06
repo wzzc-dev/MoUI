@@ -12,8 +12,11 @@ fn skia_measure_text_width(font : @skia_native.Font, text : String) -> Double {
 }
 
 ///|
-fn skia_glyph_run(font : @skia_native.Font, text : String) -> SkiaGlyphRun {
-  skia_glyph_run_with_shaper(font, text, use_shaper=true)
+fn skia_draw_text_glyph_run(
+  font : @skia_native.Font,
+  text : String,
+) -> SkiaGlyphRun {
+  skia_glyph_run_with_shaper(font, text, use_shaper=false)
 }
 
 ///|
@@ -23,9 +26,9 @@ fn skia_glyph_run_for_resolution(
   resolution : SkiaFontResolution,
 ) -> SkiaGlyphRun {
   match resolution {
-    SkiaFontResolution::SystemFontMgr => skia_glyph_run(font, text)
-    SkiaFontResolution::EmptyTypeface =>
-      skia_glyph_run_with_shaper(font, text, use_shaper=false)
+    SkiaFontResolution::SystemFontMgr =>
+      skia_glyph_run_with_shaper(font, text, use_shaper=true)
+    SkiaFontResolution::EmptyTypeface => skia_draw_text_glyph_run(font, text)
   }
 }
 
@@ -114,7 +117,7 @@ fn skia_fallback_draw_payload(
 ) -> (@skia_native.Font, SkiaGlyphRun)? {
   match skia_emoji_fallback_draw_font(font, text, resolution) {
     Some(emoji_font) =>
-      match skia_complete_fallback_payload(emoji_font, text) {
+      match skia_complete_fallback_payload(emoji_font, text, resolution) {
         Some(payload) => return Some(payload)
         None => ()
       }
@@ -122,7 +125,9 @@ fn skia_fallback_draw_payload(
   }
   match skia_default_fallback_draw_font(font) {
     Some(fallback_font) =>
-      skia_recovering_fallback_payload(fallback_font, text, primary_run)
+      skia_recovering_fallback_payload(
+        fallback_font, text, resolution, primary_run,
+      )
     None => None
   }
 }
@@ -131,8 +136,9 @@ fn skia_fallback_draw_payload(
 fn skia_complete_fallback_payload(
   font : @skia_native.Font,
   text : String,
+  resolution : SkiaFontResolution,
 ) -> (@skia_native.Font, SkiaGlyphRun)? {
-  let fallback_run = skia_glyph_run(font, text)
+  let fallback_run = skia_glyph_run_for_resolution(font, text, resolution)
   if skia_glyph_run_can_draw_text(fallback_run) {
     Some((font, fallback_run))
   } else {
@@ -144,9 +150,10 @@ fn skia_complete_fallback_payload(
 fn skia_recovering_fallback_payload(
   font : @skia_native.Font,
   text : String,
+  resolution : SkiaFontResolution,
   primary_run : SkiaGlyphRun,
 ) -> (@skia_native.Font, SkiaGlyphRun)? {
-  let fallback_run = skia_glyph_run(font, text)
+  let fallback_run = skia_glyph_run_for_resolution(font, text, resolution)
   if skia_glyph_run_can_draw_text(fallback_run) ||
     skia_glyph_run_improves_missing_glyphs(primary_run, fallback_run) {
     Some((font, fallback_run))
@@ -341,6 +348,10 @@ fn skia_typeface_for_text(
   font : @core.FontSpec,
   text : String,
 ) -> @skia_native.Typeface? {
+  match skia_typeface_from_font_files(font) {
+    Some(typeface) => return Some(typeface)
+    None => ()
+  }
   match @skia_native.FontMgr::default() {
     Some(font_mgr) => skia_typeface_from_font_mgr_for_text(font_mgr, font, text)
     None => None

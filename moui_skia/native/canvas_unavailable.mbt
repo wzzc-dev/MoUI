@@ -422,6 +422,24 @@ pub fn Canvas::draw_text_utf8(
 }
 
 ///|
+pub fn Canvas::draw_glyphs_checked(
+  self : Canvas,
+  glyphs : Array[GlyphId],
+  positions : Array[@skia.Point],
+  font : Font,
+  paint : @skia.Paint,
+  origin? : @skia.Point = @skia.Point::zero(),
+) -> Bool {
+  ignore(self)
+  ignore(glyphs)
+  ignore(positions)
+  ignore(origin)
+  ignore(font)
+  ignore(paint)
+  false
+}
+
+///|
 pub fn Canvas::draw_glyphs(
   self : Canvas,
   glyphs : Array[GlyphId],

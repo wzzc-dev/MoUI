@@ -150,9 +150,12 @@ Lao mark, Sinhala mark, Khmer vowel/coeng, Myanmar mark, Hangul Jamo L/V/T
 clusters, keycap,
 emoji-modifier, variation-selector,
 regional-indicator pairs, emoji tag-sequence flags, Unicode prepend marks, and
-ZWJ cluster interior stabilization. Rendering uses the
-same optional SkShaper shaped glyph runs when linked, and otherwise falls back
-to positioned glyph runs. The mixed-run fallback segmenter follows the same
+ZWJ cluster interior stabilization. For the system `FontMgr` route, single-line
+`TextRun` rendering now consumes the same shaped glyph payload that measurement,
+layout width, and caret mapping use. Native drawing first replays that payload
+through the checked `moui_skia/native` glyph-run draw contract; if SkShaper or
+the glyph payload is unavailable, it falls back to `draw_text_utf8` so text
+remains visible. The mixed-run fallback segmenter follows the same
 Indic virama/linker boundary, including virama plus Extend marks before an
 Indic consonant, so per-run font fallback does not split that edit cluster.
 Skia segmentation and fallback caret stabilization now route through core
@@ -187,7 +190,10 @@ mixed-direction visual-order metadata are all valid. The default
 selection-box policy is the SkParagraph equivalent of
 `RectHeightStyle::kMax` plus `RectWidthStyle::kTight`. Invalid or unavailable
 SkParagraph geometry falls back to the existing core paragraph result without
-promoting those readiness flags. The macOS, Windows, and Linux Skia providers default
+promoting those readiness flags. The native binding also exposes optional
+SkParagraph paint for paragraph-route smoke coverage; MoUI's single-line
+`TextRun` main path still uses the shaped glyph/TextBlob-equivalent glyph-run
+route rather than SkParagraph paint. The macOS, Windows, and Linux Skia providers default
 to the system `FontMgr` path, so normal native Skia entrypoints exercise
 platform font lookup, emoji retry, and optional SkShaper when linked. The
 renderer package also exposes `skia_text_system()` directly so the Skia

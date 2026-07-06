@@ -1,6 +1,7 @@
 ///|
 using @views {
   button,
+  clearable_text_field,
   column,
   container,
   custom_layout,
@@ -66,6 +67,7 @@ pub struct MarkdownEditorApp {
   redo_stack : @state.State[Array[MarkdownEditorHistoryEntry]]
   editor_scroll : @state.ScrollState
   file_tree_scroll : @state.ScrollState
+  priv file_filter_query : @state.State[String]
   priv working_directory : @state.State[String]
   priv expanded_tree_paths : @state.State[Array[String]]
   priv directory_tree_items : @state.State[Array[@views.TreeItem]]
@@ -267,6 +269,8 @@ pub enum MarkdownEditorMsg {
   OutdentLines
   ToggleTaskAt(Int)
   PickWorkingDirectory
+  RefreshFileTree
+  UpdateFileFilterQuery(String)
   SelectTreePath(String)
   ToggleTreePath(String)
   ToggleFileTree
@@ -322,6 +326,7 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
     redo_stack: @state.State::new([]),
     editor_scroll: @state.ScrollState::new(),
     file_tree_scroll: @state.ScrollState::new(),
+    file_filter_query: @state.State::new(""),
     file_tree_expanded: @state.State::new(true),
     selected_image_offset: @state.State::new(None),
     image_centered: @state.State::new(false),
@@ -467,23 +472,15 @@ fn MarkdownEditorApp::update(
         ),
       )
     PickWorkingDirectory => ()
+    RefreshFileTree =>
+      if self.working_directory.get() == "" {
+        self.transfer_status.set(
+          TransferUnavailable("refresh requires a picked working folder"),
+        )
+      }
+    UpdateFileFilterQuery(value) => self.file_filter_query.set(value)
     SelectTreePath(_) => ()
-    ToggleTreePath(id) => {
-      let expanded = self.expanded_tree_paths.get()
-      let next : Array[String] = []
-      let mut removed = false
-      for path in expanded {
-        if path == id {
-          removed = true
-        } else {
-          next.push(path)
-        }
-      }
-      if !removed {
-        next.push(id)
-      }
-      self.expanded_tree_paths.set(next)
-    }
+    ToggleTreePath(id) => ignore(self.toggle_tree_path(id))
     JumpToOutline(source_start) => self.jump_to_outline(source_start)
     JumpToNextHeading => self.jump_to_next_heading()
     JumpToPreviousHeading => self.jump_to_previous_heading()
@@ -539,7 +536,35 @@ fn MarkdownEditorApp::update_with_services(
     }
     PickWorkingDirectory =>
       (self, self.request_pick_working_directory(services))
+    RefreshFileTree => {
+      let path = self.working_directory.get()
+      if path == "" {
+        self.transfer_status.set(
+          TransferUnavailable("refresh requires a picked working folder"),
+        )
+      } else {
+        self.apply_directory_listing(path, services.list_directory(path))
+      }
+      (self, @moui.Effect::none())
+    }
+    ToggleTreePath(id) => {
+      let expanded = self.toggle_tree_path(id)
+      if expanded && self.tree_path_needs_load(id) {
+        self.apply_directory_listing(id, services.list_directory(id))
+      }
+      (self, @moui.Effect::none())
+    }
     SelectTreePath(path) => {
+      if markdown_editor_tree_path_is_placeholder(path) {
+        return (self, @moui.Effect::none())
+      }
+      if self.tree_path_is_directory(path) {
+        let expanded = self.toggle_tree_path(path)
+        if expanded && self.tree_path_needs_load(path) {
+          self.apply_directory_listing(path, services.list_directory(path))
+        }
+        return (self, @moui.Effect::none())
+      }
       if self.working_directory.get() == "" {
         let parent = markdown_editor_parent_directory(path)
         if parent != "" {
