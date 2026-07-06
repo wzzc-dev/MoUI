@@ -121,6 +121,7 @@ fn build_more_menu_overlay(theme : Theme) -> @moui.View[ExcelMsg] {
           ContextMenuAction::InsertRowBelow,
           theme,
         ),
+        context_menu_item("Delete Row", ContextMenuAction::DeleteRow, theme),
         context_menu_item(
           "Insert Column Left",
           ContextMenuAction::InsertColumnLeft,
@@ -129,6 +130,22 @@ fn build_more_menu_overlay(theme : Theme) -> @moui.View[ExcelMsg] {
         context_menu_item(
           "Insert Column Right",
           ContextMenuAction::InsertColumnRight,
+          theme,
+        ),
+        context_menu_item(
+          "Delete Column",
+          ContextMenuAction::DeleteColumn,
+          theme,
+        ),
+        @views.divider(theme~),
+        context_menu_item(
+          "Sort A to Z",
+          ContextMenuAction::SortAscending,
+          theme,
+        ),
+        context_menu_item(
+          "Sort Z to A",
+          ContextMenuAction::SortDescending,
           theme,
         ),
         @views.divider(theme~),
