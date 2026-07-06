@@ -1,0 +1,37 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_theme/sickle"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn dark_theme(mode? : SickleStyleMode) -> @core.Theme
+
+pub fn flat_theme(scheme? : @core.ColorScheme) -> @core.Theme
+
+pub fn hybrid_theme(scheme? : @core.ColorScheme) -> @core.Theme
+
+pub fn light_theme(mode? : SickleStyleMode) -> @core.Theme
+
+pub fn palette(scheme? : @core.ColorScheme) -> @core.ColorPalette
+
+pub fn skeuo_theme(scheme? : @core.ColorScheme) -> @core.Theme
+
+pub fn theme(scheme? : @core.ColorScheme, mode? : SickleStyleMode) -> @core.Theme
+
+// Errors
+
+// Types and methods
+pub(all) enum SickleStyleMode {
+  Skeuo
+  Flat
+  Hybrid
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SickleStyleMode::label(Self) -> String
+
+// Type aliases
+
+// Traits
+

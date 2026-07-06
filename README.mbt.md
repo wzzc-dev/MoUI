@@ -38,7 +38,8 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
   adapter, and experimental native WGPU implementations under `render/skia/`,
   `render/webgpu_adapter/`, and `render/wgpu/`.
 - `moui_theme/` is an optional addon workspace member for source-mapped
-  Material, Carbon, Primer, and Fluent theme previews.
+  Material, Carbon, Primer, and Fluent theme previews plus the first-party
+  Smartisan-inspired Sickle hybrid skeuomorphic/flat theme.
 - `examples/*/app/` contains shared app logic, while platform subpackages are
   thin entrypoints.
 - `website/` is the MoUI homepage and Web demo surface.

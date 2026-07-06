@@ -47,6 +47,21 @@ test "design systems app renders fluent structural component variants" {
 }
 
 ///|
+test "design systems app renders sickle first party theme addon" {
+  let model = @app.DesignSystemsModel::new().update(
+    @app.DesignSystemsMsg::SelectPreset("sickle"),
+  )
+  assert_true(model.preset == @app.DesignSystemChoice::Sickle)
+  let commands = test_runtime(model.program()).draw_commands()
+  assert_true(has_text(commands, "Sickle"))
+  assert_true(has_text(commands, "first-party theme"))
+  assert_true(has_text(commands, "not source-mapped"))
+  assert_true(has_text(commands, "hybrid flat+skeuo"))
+  assert_true(has_text(commands, "Primary"))
+  assert_true(has_text(commands, "Subtle brand"))
+}
+
+///|
 fn test_runtime(
   program : @moui.Program[@app.DesignSystemsModel, @app.DesignSystemsMsg],
 ) -> @runtime.AppRuntime {

@@ -14,4 +14,4 @@ license = "Apache-2.0"
 
 keywords = [ "moui", "theme", "design-system" ]
 
-description = "Source-mapped design system theme adapters for MoUI"
+description = "Source-mapped design system adapters and first-party visual themes for MoUI"

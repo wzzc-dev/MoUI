@@ -25,6 +25,7 @@ pub(all) enum DesignSystemChoice {
   Carbon
   Primer
   Fluent
+  Sickle
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -110,7 +111,11 @@ pub fn DesignSystemsModel::tokens(
 
 ///|
 pub fn DesignSystemsModel::theme(self : DesignSystemsModel) -> @moui.Theme {
-  let base = self.tokens().to_theme()
+  let base = match self.preset {
+    Sickle =>
+      @sickle.theme(scheme=self.scheme, mode=@sickle.SickleStyleMode::Hybrid)
+    _ => self.tokens().to_theme()
+  }
   if self.custom_enabled {
     let palette = {
       ..base.palette,
@@ -128,39 +133,67 @@ pub fn DesignSystemsModel::theme(self : DesignSystemsModel) -> @moui.Theme {
 pub fn DesignSystemsModel::view(
   self : DesignSystemsModel,
 ) -> @moui.View[DesignSystemsMsg] {
-  let tokens = self.tokens()
   let theme = self.theme()
-  let report = design_report_for(
-    self.preset,
-    scheme=tokens.scheme,
-    system_scheme=self.scheme,
-    density=self.density,
-  )
-  let content = column(
-    [
-      self.hero(theme, report),
-      self.switcher_panel(theme),
-      row(
-        [
-          self.palette_panel(theme, tokens, report),
-          self.typography_panel(theme, tokens, report),
-        ],
-        spacing=theme.spacing_scale.md,
-        align=@views.CrossAlign::Start,
-      ),
-      row(
-        [
-          self.spacing_density_panel(theme, tokens),
-          self.component_matrix_panel(theme, tokens),
-        ],
-        spacing=theme.spacing_scale.md,
-        align=@views.CrossAlign::Start,
-      ),
-      self.customization_panel(theme),
-    ],
-    spacing=theme.spacing_scale.md,
-    align=@views.CrossAlign::Stretch,
-  )
+  let content = if self.preset == DesignSystemChoice::Sickle {
+    column(
+      [
+        self.sickle_hero(theme),
+        self.switcher_panel(theme),
+        row(
+          [
+            self.sickle_palette_panel(theme),
+            self.sickle_typography_panel(theme),
+          ],
+          spacing=theme.spacing_scale.md,
+          align=@views.CrossAlign::Start,
+        ),
+        row(
+          [
+            self.sickle_spacing_panel(theme),
+            self.sickle_component_matrix_panel(theme),
+          ],
+          spacing=theme.spacing_scale.md,
+          align=@views.CrossAlign::Start,
+        ),
+        self.customization_panel(theme),
+      ],
+      spacing=theme.spacing_scale.md,
+      align=@views.CrossAlign::Stretch,
+    )
+  } else {
+    let tokens = self.tokens()
+    let report = design_report_for(
+      self.preset,
+      scheme=tokens.scheme,
+      system_scheme=self.scheme,
+      density=self.density,
+    )
+    column(
+      [
+        self.hero(theme, report),
+        self.switcher_panel(theme),
+        row(
+          [
+            self.palette_panel(theme, tokens, report),
+            self.typography_panel(theme, tokens, report),
+          ],
+          spacing=theme.spacing_scale.md,
+          align=@views.CrossAlign::Start,
+        ),
+        row(
+          [
+            self.spacing_density_panel(theme, tokens),
+            self.component_matrix_panel(theme, tokens),
+          ],
+          spacing=theme.spacing_scale.md,
+          align=@views.CrossAlign::Start,
+        ),
+        self.customization_panel(theme),
+      ],
+      spacing=theme.spacing_scale.md,
+      align=@views.CrossAlign::Stretch,
+    )
+  }
   container(
     scroll_view(content, width=920.0, height=620.0),
     width=960.0,
@@ -248,6 +281,73 @@ fn DesignSystemsModel::hero(
 }
 
 ///|
+fn DesignSystemsModel::sickle_hero(
+  self : DesignSystemsModel,
+  theme : @moui.Theme,
+) -> @moui.View[DesignSystemsMsg] {
+  ignore(self)
+  container(
+    row(
+      [
+        column(
+          [
+            text(
+              "Design Systems",
+              role=@views.TextRole::Title,
+              theme~,
+              width=360.0,
+              height=36.0,
+            ),
+            text(
+              "First-party Smartisan-inspired theme addon preview.",
+              role=@views.TextRole::Caption,
+              theme~,
+              width=520.0,
+              height=26.0,
+            ).foreground(theme.palette.muted),
+            text(
+              "Sickle",
+              role=@views.TextRole::Body,
+              theme~,
+              width=520.0,
+              height=28.0,
+            ),
+          ],
+          spacing=theme.spacing_scale.xs,
+          align=@views.CrossAlign::Start,
+        ),
+        column(
+          [
+            status_badge(
+              "theme addon",
+              tone=@views.BadgeTone::Accent,
+              detail="Hybrid mode blends tactile depth with flat semantic controls.",
+              theme~,
+              width=138.0,
+            ),
+            status_badge(
+              "first-party",
+              tone=@views.BadgeTone::Success,
+              theme~,
+              width=138.0,
+            ),
+          ],
+          spacing=theme.spacing_scale.xs,
+          align=@views.CrossAlign::Start,
+        ),
+      ],
+      spacing=theme.spacing_scale.lg,
+      align=@views.CrossAlign::Center,
+    ),
+    width=920.0,
+    height=132.0,
+    variant=@views.ContainerVariant::Raised,
+    theme~,
+    padding=theme.spacing_scale.lg,
+  )
+}
+
+///|
 fn DesignSystemsModel::switcher_panel(
   self : DesignSystemsModel,
   theme : @moui.Theme,
@@ -262,11 +362,12 @@ fn DesignSystemsModel::switcher_panel(
           choice_item("carbon", "Carbon"),
           choice_item("primer", "Primer"),
           choice_item("fluent", "Fluent"),
+          choice_item("sickle", "Sickle"),
         ],
         selected=design_preset_id(self.preset),
         on_select=id => SelectPreset(id),
         theme~,
-        width=620.0,
+        width=760.0,
       ),
       row(
         [
@@ -560,6 +661,211 @@ fn DesignSystemsModel::component_matrix_panel(
 }
 
 ///|
+fn DesignSystemsModel::sickle_palette_panel(
+  self : DesignSystemsModel,
+  theme : @moui.Theme,
+) -> @moui.View[DesignSystemsMsg] {
+  ignore(self)
+  design_panel(
+    theme,
+    "Semantic palette roles",
+    [
+      row(
+        [
+          design_swatch(theme, "foreground", theme.palette.foreground),
+          design_swatch(theme, "primary", theme.palette.primary),
+          design_swatch(theme, "success", theme.palette.success),
+          design_swatch(theme, "warning", theme.palette.warning),
+          design_swatch(theme, "danger", theme.palette.danger),
+          design_swatch(theme, "info", theme.palette.info),
+        ],
+        spacing=theme.spacing_scale.xs,
+        align=@views.CrossAlign::Center,
+      ),
+      design_metric_row(theme, "Role rows", "6"),
+      design_metric_row(theme, "Role gaps", "0"),
+      design_metric_row(theme, "Source imports", "first-party"),
+    ],
+    width=448.0,
+    height=210.0,
+  )
+}
+
+///|
+fn DesignSystemsModel::sickle_typography_panel(
+  self : DesignSystemsModel,
+  theme : @moui.Theme,
+) -> @moui.View[DesignSystemsMsg] {
+  ignore(self)
+  design_panel(
+    theme,
+    "Typography specimen",
+    [
+      text(
+        "Title role",
+        role=@views.TextRole::Title,
+        theme~,
+        width=390.0,
+        height=34.0,
+      ),
+      text(
+        "Body role: precision typography with compact control rhythm.",
+        theme~,
+        width=390.0,
+        height=30.0,
+      ),
+      text(
+        "Caption role / control role",
+        role=@views.TextRole::Caption,
+        theme~,
+        width=390.0,
+        height=24.0,
+      ),
+      design_metric_row(
+        theme,
+        "Body size",
+        theme.typography.body.size.to_string(),
+      ),
+      design_metric_row(theme, "Typography gaps", "0"),
+    ],
+    width=448.0,
+    height=210.0,
+  )
+}
+
+///|
+fn DesignSystemsModel::sickle_spacing_panel(
+  self : DesignSystemsModel,
+  theme : @moui.Theme,
+) -> @moui.View[DesignSystemsMsg] {
+  ignore(self)
+  design_panel(
+    theme,
+    "Spacing and density",
+    [
+      row(
+        [
+          spacing_tile(theme, "xs", theme.spacing_scale.xs),
+          spacing_tile(theme, "sm", theme.spacing_scale.sm),
+          spacing_tile(theme, "md", theme.spacing_scale.md),
+          spacing_tile(theme, "lg", theme.spacing_scale.lg),
+          spacing_tile(theme, "xl", theme.spacing_scale.xl),
+        ],
+        spacing=theme.spacing_scale.xs,
+        align=@views.CrossAlign::Center,
+      ),
+      design_metric_row(
+        theme,
+        "Style mode",
+        @sickle.SickleStyleMode::Hybrid.label(),
+      ),
+      design_metric_row(theme, "Density", "theme-defined"),
+      design_metric_row(theme, "Density gaps", "n/a"),
+    ],
+    width=448.0,
+    height=234.0,
+  )
+}
+
+///|
+fn DesignSystemsModel::sickle_component_matrix_panel(
+  self : DesignSystemsModel,
+  theme : @moui.Theme,
+) -> @moui.View[DesignSystemsMsg] {
+  design_panel(
+    theme,
+    "Component token matrix",
+    [
+      picker(
+        [
+          picker_item("button", "Button"),
+          picker_item("field", "Field"),
+          picker_item("toolbar", "Toolbar"),
+          picker_item("row", "Data row"),
+        ],
+        selected=self.selected_component,
+        on_select=id => SelectComponent(id),
+        theme~,
+        max_height=160.0,
+      ).frame(width=240.0, height=40.0),
+      row(
+        [
+          button(
+            "Primary",
+            on_click=ToggleCustom,
+            variant=@views.ButtonVariant::Primary,
+            theme~,
+            width=96.0,
+            height=36.0,
+          ),
+          button(
+            "Tonal",
+            on_click=ToggleCustom,
+            variant=@views.ButtonVariant::Tonal,
+            theme~,
+            width=88.0,
+            height=36.0,
+          ),
+          button(
+            "Outline",
+            on_click=ToggleCustom,
+            variant=@views.ButtonVariant::Outline,
+            theme~,
+            width=96.0,
+            height=36.0,
+          ),
+          button(
+            "Ghost",
+            on_click=ToggleCustom,
+            variant=@views.ButtonVariant::Ghost,
+            theme~,
+            width=80.0,
+            height=36.0,
+          ),
+        ],
+        spacing=theme.spacing_scale.xs,
+        align=@views.CrossAlign::Center,
+      ),
+      row(
+        [
+          button(
+            "Subtle",
+            on_click=ToggleCustom,
+            variant=@views.ButtonVariant::Subtle,
+            theme~,
+            width=88.0,
+            height=36.0,
+          ),
+          button(
+            "Subtle brand",
+            on_click=ToggleCustom,
+            variant=@views.ButtonVariant::SubtleBrand,
+            theme~,
+            width=128.0,
+            height=36.0,
+          ),
+          text_field(
+            self.draft,
+            on_input=value => DraftChanged(value),
+            placeholder="Layered field",
+            theme~,
+            width=200.0,
+            height=36.0,
+          ),
+        ],
+        spacing=theme.spacing_scale.xs,
+        align=@views.CrossAlign::Center,
+      ),
+      design_metric_row(theme, "Button", "hybrid flat+skeuo"),
+      design_metric_row(theme, "TextField", "layered control states"),
+      design_metric_row(theme, "Surface", "raised tactile layers"),
+    ],
+    width=620.0,
+    height=296.0,
+  )
+}
+
+///|
 fn DesignSystemsModel::customization_panel(
   self : DesignSystemsModel,
   theme : @moui.Theme,
@@ -569,66 +875,110 @@ fn DesignSystemsModel::customization_panel(
   } else {
     "Custom override off"
   }
-  design_panel(
-    theme,
-    "Custom inheritance and coverage",
-    [
-      row(
-        [
-          button(
-            custom_label,
-            on_click=ToggleCustom,
-            variant=if self.custom_enabled {
-              @views.ButtonVariant::Primary
-            } else {
-              @views.ButtonVariant::Outline
-            },
-            theme~,
-            width=180.0,
-            height=38.0,
-          ),
-          status_badge(
-            "source-mapped preview",
-            tone=@views.BadgeTone::Warning,
-            theme~,
-            width=152.0,
-          ),
-          status_badge(
-            "not official complete",
-            tone=@views.BadgeTone::Neutral,
-            theme~,
-            width=152.0,
-          ),
-        ],
-        spacing=theme.spacing_scale.sm,
-        align=@views.CrossAlign::Center,
-      ),
-      design_metric_row(
-        theme,
-        "Custom APIs",
-        design_customization_report_count(self.preset).to_string(),
-      ),
-      design_metric_row(
-        theme,
-        "Custom gaps",
-        design_customization_capability_gap_count(self.preset).to_string(),
-      ),
-      design_metric_row(
-        theme,
-        "Report rows",
-        design_report_for(
-          self.preset,
-          scheme=self.tokens().scheme,
-          system_scheme=self.scheme,
-          density=self.density,
-        )
-        .evidence_row_count()
-        .to_string(),
-      ),
-    ],
-    width=920.0,
-    height=164.0,
-  )
+  if self.preset == DesignSystemChoice::Sickle {
+    design_panel(
+      theme,
+      "Custom inheritance and coverage",
+      [
+        row(
+          [
+            button(
+              custom_label,
+              on_click=ToggleCustom,
+              variant=if self.custom_enabled {
+                @views.ButtonVariant::Primary
+              } else {
+                @views.ButtonVariant::Outline
+              },
+              theme~,
+              width=180.0,
+              height=38.0,
+            ),
+            status_badge(
+              "first-party theme",
+              tone=@views.BadgeTone::Accent,
+              theme~,
+              width=152.0,
+            ),
+            status_badge(
+              "not source-mapped",
+              tone=@views.BadgeTone::Neutral,
+              theme~,
+              width=152.0,
+            ),
+          ],
+          spacing=theme.spacing_scale.sm,
+          align=@views.CrossAlign::Center,
+        ),
+        design_metric_row(theme, "Custom APIs", "theme/palette/mode"),
+        design_metric_row(theme, "Custom gaps", "0"),
+        design_metric_row(theme, "Report rows", "n/a"),
+      ],
+      width=920.0,
+      height=164.0,
+    )
+  } else {
+    design_panel(
+      theme,
+      "Custom inheritance and coverage",
+      [
+        row(
+          [
+            button(
+              custom_label,
+              on_click=ToggleCustom,
+              variant=if self.custom_enabled {
+                @views.ButtonVariant::Primary
+              } else {
+                @views.ButtonVariant::Outline
+              },
+              theme~,
+              width=180.0,
+              height=38.0,
+            ),
+            status_badge(
+              "source-mapped preview",
+              tone=@views.BadgeTone::Warning,
+              theme~,
+              width=152.0,
+            ),
+            status_badge(
+              "not official complete",
+              tone=@views.BadgeTone::Neutral,
+              theme~,
+              width=152.0,
+            ),
+          ],
+          spacing=theme.spacing_scale.sm,
+          align=@views.CrossAlign::Center,
+        ),
+        design_metric_row(
+          theme,
+          "Custom APIs",
+          design_customization_report_count(self.preset).to_string(),
+        ),
+        design_metric_row(
+          theme,
+          "Custom gaps",
+          design_customization_capability_gap_count(self.preset).to_string(),
+        ),
+        design_metric_row(
+          theme,
+          "Report rows",
+          design_report_for(
+            self.preset,
+            scheme=self.tokens().scheme,
+            system_scheme=self.scheme,
+            density=self.density,
+          )
+          .evidence_row_count()
+          .to_string(),
+        ),
+      ],
+      width=920.0,
+      height=164.0,
+    )
+  }
 }
 
 ///|
@@ -774,6 +1124,7 @@ fn design_preset_id(preset : DesignSystemChoice) -> String {
     Carbon => "carbon"
     Primer => "primer"
     Fluent => "fluent"
+    Sickle => "sickle"
   }
 }
 
@@ -783,7 +1134,30 @@ fn design_preset_from_id(id : String) -> DesignSystemChoice {
     "carbon" => DesignSystemChoice::Carbon
     "primer" => DesignSystemChoice::Primer
     "fluent" => DesignSystemChoice::Fluent
+    "sickle" => DesignSystemChoice::Sickle
     _ => DesignSystemChoice::Material
+  }
+}
+
+///|
+fn source_mapped_preset(preset : DesignSystemChoice) -> @common.DesignPreset? {
+  match preset {
+    Material => Some(@material.preset())
+    Carbon => Some(@carbon.preset())
+    Primer => Some(@primer.preset())
+    Fluent => Some(@fluent.preset())
+    Sickle => None
+  }
+}
+
+///|
+fn required_source_mapped_preset(
+  preset : DesignSystemChoice,
+) -> @common.DesignPreset {
+  match source_mapped_preset(preset) {
+    Some(value) => value
+    None =>
+      abort("Sickle is a first-party theme addon, not a source-mapped preset")
   }
 }
 
@@ -794,12 +1168,11 @@ fn design_tokens_for(
   system_scheme~ : @views.ColorScheme,
   density~ : @common.DesignDensity,
 ) -> @common.DesignSystemTokens {
-  match preset {
-    Material => @material.tokens_for_variant(variant~, system_scheme~, density~)
-    Carbon => @carbon.tokens_for_variant(variant~, system_scheme~, density~)
-    Primer => @primer.tokens_for_variant(variant~, system_scheme~, density~)
-    Fluent => @fluent.tokens_for_variant(variant~, system_scheme~, density~)
-  }
+  required_source_mapped_preset(preset).tokens_for_variant(
+    variant~,
+    system_scheme~,
+    density~,
+  )
 }
 
 ///|
@@ -809,90 +1182,43 @@ fn design_report_for(
   system_scheme~ : @views.ColorScheme,
   density~ : @common.DesignDensity,
 ) -> @audit.DesignSystemReport {
-  match preset {
-    Material =>
-      @audit.design_system_report(
-        @material.preset(),
-        scheme~,
-        system_scheme~,
-        density~,
-      )
-    Carbon =>
-      @audit.design_system_report(
-        @carbon.preset(),
-        scheme~,
-        system_scheme~,
-        density~,
-      )
-    Primer =>
-      @audit.design_system_report(
-        @primer.preset(),
-        scheme~,
-        system_scheme~,
-        density~,
-      )
-    Fluent =>
-      @audit.design_system_report(
-        @fluent.preset(),
-        scheme~,
-        system_scheme~,
-        density~,
-      )
-  }
+  @audit.design_system_report(
+    required_source_mapped_preset(preset),
+    scheme~,
+    system_scheme~,
+    density~,
+  )
 }
 
 ///|
 fn design_source_imported_token_count(preset : DesignSystemChoice) -> Int {
-  match preset {
-    Material => @audit.source_imported_token_count(@material.preset())
-    Carbon => @audit.source_imported_token_count(@carbon.preset())
-    Primer => @audit.source_imported_token_count(@primer.preset())
-    Fluent => @audit.source_imported_token_count(@fluent.preset())
-  }
+  @audit.source_imported_token_count(required_source_mapped_preset(preset))
 }
 
 ///|
 fn design_density_resolver_gap_count(preset : DesignSystemChoice) -> Int {
-  match preset {
-    Material => @audit.density_resolver_gap_count(@material.preset())
-    Carbon => @audit.density_resolver_gap_count(@carbon.preset())
-    Primer => @audit.density_resolver_gap_count(@primer.preset())
-    Fluent => @audit.density_resolver_gap_count(@fluent.preset())
-  }
+  @audit.density_resolver_gap_count(required_source_mapped_preset(preset))
 }
 
 ///|
 fn design_component_token_matrix(
   preset : DesignSystemChoice,
 ) -> Array[@audit.DesignComponentTokenMatrixRecord] {
-  match preset {
-    Material => @audit.component_token_matrix(@material.preset())
-    Carbon => @audit.component_token_matrix(@carbon.preset())
-    Primer => @audit.component_token_matrix(@primer.preset())
-    Fluent => @audit.component_token_matrix(@fluent.preset())
-  }
+  @audit.component_token_matrix(required_source_mapped_preset(preset))
 }
 
 ///|
 fn design_customization_report_count(preset : DesignSystemChoice) -> Int {
-  match preset {
-    Material => @audit.customization_report_count(@material.preset())
-    Carbon => @audit.customization_report_count(@carbon.preset())
-    Primer => @audit.customization_report_count(@primer.preset())
-    Fluent => @audit.customization_report_count(@fluent.preset())
-  }
+  @audit.customization_report_count(required_source_mapped_preset(preset))
 }
 
 ///|
 fn design_customization_capability_gap_count(
   preset : DesignSystemChoice,
 ) -> Int {
-  match preset {
-    Material => @audit.customization_capability_gap_count(@material.preset())
-    Carbon => @audit.customization_capability_gap_count(@carbon.preset())
-    Primer => @audit.customization_capability_gap_count(@primer.preset())
-    Fluent => @audit.customization_capability_gap_count(@fluent.preset())
-  }
+  @audit.customization_capability_gap_count(
+    required_source_mapped_preset(preset),
+  )
 }
 
 ///|
