@@ -101,13 +101,41 @@ CI failures:
 ```sh
 node scripts/validate-maintenance-baseline.mjs
 node scripts/validate-api-surface.mjs
+node scripts/validate-guidance-consistency.mjs
 ```
 
 A common CI failure is `node scripts/validate-maintenance-baseline.mjs`
 complaining about unexpected test files (e.g.
 `moui/backend/host/host_async_image_loader_test.mbt`). When this happens,
 either register the new test in the maintenance baseline or revert the change
-before pushing. Run `sh scripts/dev-check.sh` for the full pre-push suite.
+before pushing. The same guard also keeps MoonBit-backed JS validator wrappers
+thin over `scripts/lib/moonbit-tool-runner.mjs`; do not reintroduce local
+process runners, direct filesystem parsing, or hard-coded native `_build`
+executable paths in those wrappers. Run `sh scripts/dev-check.sh` for the full
+pre-push suite.
+
+## Script Tooling Policy
+
+Keep scripts simple, clear, and maintainable first. When MoonBit is equally
+clear or close, prefer MoonBit `tools/...` packages for repository rules, static
+validation, structure scans, deterministic generators, and smoke catalog
+planning. Keep existing `node scripts/*.mjs` entrypoints as compatibility
+wrappers over `scripts/lib/moonbit-tool-runner.mjs` when CI or users already
+call them.
+
+Use Node for browser/CDP, Web smoke, HTTP/GitHub artifacts, npm ecosystem
+tools, and command execution that is clearer in JavaScript. Use sh/PowerShell
+as thin orchestration for environment variables, platform setup, and OS command
+dispatch. Windows MSVC, vcpkg, and zlib setup remains PowerShell-owned;
+MoonBit may validate the related manifests or docs but must not install
+machine tools.
+
+Use `.mbtx` only for short standalone developer scripts; promote maintained CI
+behavior to a `tools/...` package. Use `rule`/`dev_build` only for deterministic
+package pre-build input/output generation. Do not use `rule`/`dev_build` to
+install MSVC, vcpkg, zlib, Chrome, CI runners, or other machine dependencies,
+and do not use it for smoke execution, networking, or global/user environment
+mutation.
 
 ## Validation
 
@@ -139,6 +167,7 @@ Use these additional checks when relevant:
 ```sh
 node scripts/validate-api-surface.mjs
 node scripts/validate-maintenance-baseline.mjs
+node scripts/validate-guidance-consistency.mjs
 moon info
 node scripts/smoke-check.mjs --check
 node scripts/smoke-gate.mjs --tier release --dry-run --json

@@ -18,6 +18,12 @@ Current tools:
 - `validate_renderer_provider_manifests/` keeps native platform backend,
   Skia-provider, and WGPU-provider package manifests from depending on the
   wrong renderer or binding packages.
+- `validate_openseek_workbench/` checks the Mo Workbench OpenSeek local
+  workspace requirements, including the `./openseek` moon.work member and
+  native transport package.
+- `validate_window_dependency/` checks that `wzzc-dev/window` resolves from
+  mooncakes.io by default and that all known consumers pin the same published
+  version.
 - `validate_skia_entrypoints/` statically checks native Skia example
   entrypoint packages and `main.mbt` files for the expected renderer,
   platform-backend, first-frame, and font-resolution wiring.

@@ -1,30 +1,8 @@
 #!/usr/bin/env node
 
-import { spawnSync } from "node:child_process";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { runMoonbitTool } from "./lib/moonbit-tool-runner.mjs";
 
-const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const validationRoot = process.cwd();
-const toolPackage = "tools/moui/validate_renderer_provider_manifests";
-const toolExe = join(
-  repoRoot,
-  "_build/native/debug/build/wzzc-dev/moui_tools/moui/validate_renderer_provider_manifests/validate_renderer_provider_manifests.exe",
-);
-
-const run = (command, args) => {
-  const result = spawnSync(command, args, {
-    cwd: repoRoot,
-    stdio: "inherit",
-  });
-  if (result.error) {
-    console.error(result.error.message);
-    process.exit(1);
-  }
-  if (result.status !== 0) {
-    process.exit(result.status ?? 1);
-  }
-};
-
-run("moon", [ "build", toolPackage, "--target", "native" ]);
-run(toolExe, [ "--repo-root", validationRoot ]);
+runMoonbitTool("tools/moui/validate_renderer_provider_manifests", [
+  "--repo-root",
+  process.cwd(),
+]);
