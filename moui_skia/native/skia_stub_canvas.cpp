@@ -272,10 +272,29 @@ extern "C" MOONBIT_FFI_EXPORT void moonbit_skia_canvas_draw_text_utf8(
 #endif
 }
 
-extern "C" MOONBIT_FFI_EXPORT void moonbit_skia_canvas_draw_glyphs(
+static uint16_t moonbit_skia_read_u16_be(const uint8_t* bytes) {
+  return static_cast<uint16_t>(
+    (static_cast<uint16_t>(bytes[0]) << 8) |
+    static_cast<uint16_t>(bytes[1])
+  );
+}
+
+static float moonbit_skia_read_f32_be(const uint8_t* bytes) {
+  uint32_t bits =
+    (static_cast<uint32_t>(bytes[0]) << 24) |
+    (static_cast<uint32_t>(bytes[1]) << 16) |
+    (static_cast<uint32_t>(bytes[2]) << 8) |
+    static_cast<uint32_t>(bytes[3]);
+  float value = 0.0f;
+  memcpy(&value, &bits, sizeof(float));
+  return value;
+}
+
+extern "C" MOONBIT_FFI_EXPORT int32_t moonbit_skia_canvas_draw_glyphs(
   MoonbitSkiaCanvas* wrapper,
-  void* glyphs_obj,
-  void* positions_obj,
+  moonbit_bytes_t glyph_bytes,
+  moonbit_bytes_t position_bytes,
+  int32_t glyph_count,
   float origin_x,
   float origin_y,
   MoonbitSkiaFont* font,
@@ -292,72 +311,45 @@ extern "C" MOONBIT_FFI_EXPORT void moonbit_skia_canvas_draw_glyphs(
   if (
     wrapper == nullptr ||
     wrapper->canvas == nullptr ||
-    glyphs_obj == nullptr ||
-    positions_obj == nullptr ||
+    glyph_bytes == nullptr ||
+    position_bytes == nullptr ||
     font == nullptr ||
     font->font == nullptr
   ) {
-    return;
+    return 0;
   }
-  // MoonBit may pass either a val array (Array[GlyphId] / Array[@skia.Point],
-  // where data is inline and length is in the object header meta) or a regular
-  // object (MoonbitSkiaGlyphIdArray / MoonbitSkiaPointArray, with {length, buffer*}
-  // fields). The two layouts are incompatible, so detect the kind and read
-  // accordingly.
-  enum moonbit_block_kind glyphs_kind = Moonbit_object_kind(glyphs_obj);
-  enum moonbit_block_kind positions_kind = Moonbit_object_kind(positions_obj);
-  int32_t glyph_count;
-  int32_t position_count;
-  const uint16_t* glyphs_data = nullptr;
-  // positions_data is set when positions is a val array (inline MoonbitSkiaPoint
-  // data); positions_ref is set when it is a regular object (array of pointers).
-  const MoonbitSkiaPoint* positions_data = nullptr;
-  MoonbitSkiaPoint** positions_ref = nullptr;
-  if (glyphs_kind == moonbit_BLOCK_KIND_VAL_ARRAY) {
-    glyph_count = Moonbit_array_length(glyphs_obj);
-    glyphs_data = static_cast<const uint16_t*>(glyphs_obj);
-  } else {
-    MoonbitSkiaGlyphIdArray* glyphs =
-      static_cast<MoonbitSkiaGlyphIdArray*>(glyphs_obj);
-    glyph_count = glyphs->length;
-    if (glyphs->buffer == nullptr) {
-      return;
-    }
-    glyphs_data = glyphs->buffer;
-  }
-  if (positions_kind == moonbit_BLOCK_KIND_VAL_ARRAY) {
-    position_count = Moonbit_array_length(positions_obj);
-    positions_data = static_cast<const MoonbitSkiaPoint*>(positions_obj);
-  } else {
-    MoonbitSkiaPointArray* positions =
-      static_cast<MoonbitSkiaPointArray*>(positions_obj);
-    position_count = positions->length;
-    if (positions->buffer == nullptr) {
-      return;
-    }
-    positions_ref = positions->buffer;
-  }
-  if (glyph_count <= 0 || glyph_count != position_count) {
-    return;
+  int32_t glyph_byte_count = Moonbit_array_length(glyph_bytes);
+  int32_t position_byte_count = Moonbit_array_length(position_bytes);
+  if (
+    glyph_count <= 0 ||
+    glyph_byte_count != glyph_count * 2 ||
+    position_byte_count != glyph_count * 8
+  ) {
+    return 0;
   }
 #if defined(MOUI_SKIA_HAS_SKIA)
+  const uint8_t* glyph_data = static_cast<const uint8_t*>(
+    static_cast<const void*>(glyph_bytes)
+  );
+  const uint8_t* position_data = static_cast<const uint8_t*>(
+    static_cast<const void*>(position_bytes)
+  );
   std::vector<SkGlyphID> sk_glyphs(static_cast<size_t>(glyph_count));
-  std::vector<SkPoint> sk_positions(static_cast<size_t>(position_count));
+  std::vector<SkPoint> sk_positions(static_cast<size_t>(glyph_count));
+  bool has_visible_glyph = false;
   for (int32_t i = 0; i < glyph_count; ++i) {
-    sk_glyphs[static_cast<size_t>(i)] =
-      static_cast<SkGlyphID>(glyphs_data[static_cast<size_t>(i)]);
-    if (positions_data != nullptr) {
-      sk_positions[static_cast<size_t>(i)] = SkPoint::Make(
-        positions_data[static_cast<size_t>(i)].x,
-        positions_data[static_cast<size_t>(i)].y
-      );
-    } else {
-      MoonbitSkiaPoint* point = positions_ref[static_cast<size_t>(i)];
-      if (point == nullptr) {
-        return;
-      }
-      sk_positions[static_cast<size_t>(i)] = SkPoint::Make(point->x, point->y);
-    }
+    size_t index = static_cast<size_t>(i);
+    sk_glyphs[index] = static_cast<SkGlyphID>(
+      moonbit_skia_read_u16_be(glyph_data + index * 2)
+    );
+    has_visible_glyph = has_visible_glyph || sk_glyphs[index] != 0;
+    sk_positions[index] = SkPoint::Make(
+      moonbit_skia_read_f32_be(position_data + index * 8),
+      moonbit_skia_read_f32_be(position_data + index * 8 + 4)
+    );
+  }
+  if (!has_visible_glyph) {
+    return 0;
   }
   SkPaint paint = moonbit_skia_make_paint(
     color_argb,
@@ -377,6 +369,7 @@ extern "C" MOONBIT_FFI_EXPORT void moonbit_skia_canvas_draw_glyphs(
     *font->font,
     paint
   );
+  return 1;
 #else
   (void)origin_x;
   (void)origin_y;
@@ -389,6 +382,7 @@ extern "C" MOONBIT_FFI_EXPORT void moonbit_skia_canvas_draw_glyphs(
   (void)stroke_cap;
   (void)stroke_join;
   (void)blend_mode;
+  return 0;
 #endif
 }
 

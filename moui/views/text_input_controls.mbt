@@ -586,11 +586,15 @@ fn append_text_field_editing_overlay(
     max_int(0, layout.caret_positions.length() - 1),
   )
   let cursor_x = text_frame.origin.x + layout.caret_positions[caret]
-  let cursor = @core.Rect::new(
-    x=cursor_x,
-    y=text_frame.origin.y + 6.0,
-    width=1.5,
-    height=max_double(8.0, text_frame.size.height - 12.0),
+  let cursor = text_editing_visual_cursor_rect(
+    @core.Rect::new(
+      x=cursor_x,
+      y=text_frame.origin.y + 6.0,
+      width=text_editing_cursor_width(),
+      height=max_double(8.0, text_frame.size.height - 12.0),
+    ),
+    caret,
+    display_text.to_array().length(),
   )
   commands.push(@core.DrawCommand::FillRect(cursor, cursor_color))
   commands.push(@core.DrawCommand::PopClip)
@@ -1391,12 +1395,7 @@ fn text_input_state_for_single_line(
     max_int(0, layout.caret_positions.length() - 1),
   )
   let cursor_x = text_frame.origin.x + layout.caret_positions[visual_caret]
-  let caret_rect = @core.Rect::new(
-    x=cursor_x,
-    y=text_frame.origin.y + 6.0,
-    width=1.5,
-    height=max_double(8.0, text_frame.size.height - 12.0),
-  )
+  let caret_rect = text_editing_exact_cursor_rect(text_frame, cursor_x)
   {
     focused: true,
     element_id: None,

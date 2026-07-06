@@ -63,12 +63,12 @@ fn markdown_editor_file_dialog_services(
           @host.HostServiceResponse::DirectoryListing(_path, [
             @host.HostDirectoryEntry::new(
               name="README.md",
-              path=markdown_editor_join_path(_path, "README.md"),
+              path=_path + "/README.md",
               is_directory=false,
             ),
             @host.HostDirectoryEntry::new(
               name="notes",
-              path=markdown_editor_join_path(_path, "notes"),
+              path=_path + "/notes",
               is_directory=true,
             ),
           ])

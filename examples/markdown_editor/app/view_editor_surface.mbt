@@ -455,10 +455,24 @@ fn markdown_editor_font_family_stack(
   family : MarkdownEditorFontFamily,
 ) -> @text.FontFamilyStack {
   match family {
-    SansFont => @text.FontFamilyStack::sans_serif()
+    SansFont => markdown_editor_typora_github_font_family_stack()
     SerifFont => @text.FontFamilyStack::serif()
     MonoFont => @text.FontFamilyStack::monospace()
   }
+}
+
+///|
+/// Typora's default Github theme uses Open Sans first, then platform sans
+/// fallbacks. Native Skia will use the first installed family in this stack.
+fn markdown_editor_typora_github_font_family_stack() -> @text.FontFamilyStack {
+  @text.FontFamilyStack::named("Open Sans")
+  .with_fallback(@text.FontFamily::Name("Clear Sans"))
+  .with_fallback(@text.FontFamily::Name("Helvetica Neue"))
+  .with_fallback(@text.FontFamily::Name("Helvetica"))
+  .with_fallback(@text.FontFamily::Name("Arial"))
+  .with_fallback(@text.FontFamily::Name("Segoe UI Emoji"))
+  .with_fallback(@text.FontFamily::Name("SF Pro"))
+  .with_fallback(@text.FontFamily::SansSerif)
 }
 
 ///|
@@ -592,6 +606,51 @@ fn markdown_editor_primary_editor_width(
   } else {
     appearance.page_width
   }
+}
+
+///|
+fn markdown_editor_sidebar_total_width(
+  show_source : Bool,
+  show_outline : Bool,
+  show_files : Bool,
+  show_info : Bool,
+) -> Double {
+  let mut width = 0.0
+  if show_files {
+    width = width + markdown_editor_file_sidebar_width()
+  }
+  if show_info {
+    width = width + markdown_editor_info_inspector_width()
+  }
+  if show_outline {
+    width = width + markdown_editor_outline_inspector_width()
+  }
+  if show_source {
+    width = width + markdown_editor_source_inspector_width()
+  }
+  width
+}
+
+///|
+fn markdown_editor_primary_editor_width_for_viewport(
+  show_source : Bool,
+  show_outline : Bool,
+  show_files : Bool,
+  show_info : Bool,
+  appearance : MarkdownEditorAppearanceSpec,
+  viewport_width~ : Double,
+) -> Double {
+  let preferred = markdown_editor_primary_editor_width(
+    show_source, show_outline, show_files, show_info, appearance,
+  )
+  let sidebars_width = markdown_editor_sidebar_total_width(
+    show_source, show_outline, show_files, show_info,
+  )
+  let available = markdown_editor_max_double(
+    0.0,
+    viewport_width - sidebars_width,
+  )
+  markdown_editor_min_double(preferred, available)
 }
 
 ///|
@@ -770,10 +829,16 @@ fn editor_source_layout(
   scroll_offset : @geometry.Point,
   on_selection_change : (Int, @text.TextRange?) -> MarkdownEditorMsg,
   on_prefix_click : (Int) -> MarkdownEditorMsg,
+  viewport_width? : Double = 1120.0,
   viewport_height? : Double = 520.0,
 ) -> @moui.View[MarkdownEditorMsg] {
-  let editor_width = markdown_editor_primary_editor_width(
-    show_source, show_outline, show_files, show_info, appearance,
+  let editor_width = markdown_editor_primary_editor_width_for_viewport(
+    show_source,
+    show_outline,
+    show_files,
+    show_info,
+    appearance,
+    viewport_width~,
   )
   let source_mode = app.source_mode_enabled.get()
   let content_height = markdown_editor_max_double(
