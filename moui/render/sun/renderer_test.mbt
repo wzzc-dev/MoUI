@@ -507,6 +507,35 @@ test "sun image load completion reports decode failures" {
 }
 
 ///|
+test "sun image load completion from bytes decodes provided image bytes" {
+  let source = sun_test_png_data_uri()
+  let data = try! @base64.decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==",
+    ignore_whitespace=true,
+  )
+  let completion = sun_image_load_completion_from_bytes(
+    source,
+    data,
+    background_io=true,
+  )
+  assert_true(
+    completion.status ==
+    @render.ImageResourceLoadCompletionStatus::ImageLoadReady,
+  )
+  inspect(completion.source, content=source)
+  inspect(completion.width, content="1")
+  inspect(completion.height, content="1")
+  inspect(completion.background_io, content="true")
+  let failed = sun_image_load_completion_from_bytes(
+    "invalid.png", b"not-an-image",
+  )
+  assert_true(
+    failed.status == @render.ImageResourceLoadCompletionStatus::ImageLoadFailed,
+  )
+  assert_true(failed.diagnostic.contains("could not decode PNG image bytes"))
+}
+
+///|
 test "sun renderer rounded clip + blur integration" {
   let presented = Ref(None)
   let target = SunPresentTarget::new(description="test", present=frame => {

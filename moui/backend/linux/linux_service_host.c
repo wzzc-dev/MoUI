@@ -772,6 +772,7 @@ int32_t moui_linux_clipboard_write_image(moonbit_bytes_t mime,
 #else
 
 #include <stdint.h>
+#include <stdio.h>
 #include <moonbit.h>
 
 MOONBIT_FFI_EXPORT

@@ -192,3 +192,36 @@ test "sun renderer repeated same-key refresh keeps latest cache entry" {
   inspect(renderer.cached_layer_hit_count(), content="1")
   inspect(renderer.unsupported_command_count(), content="0")
 }
+
+///|
+test "sun renderer resize clears cached layers" {
+  let metrics = @render.RendererSurfaceMetrics::from_logical(
+    size=@core.Size::new(width=8.0, height=8.0),
+  )
+  let target = SunPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(metrics, target)
+  let spec = @core.CachedLayerSpec::new(
+    key="resize-layer",
+    frame=@core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
+    content_revision=1,
+  )
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::BeginCachedLayer(spec),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
+      @core.Color::black(),
+    ),
+    @core.DrawCommand::EndCachedLayer(spec.key),
+  ])
+  inspect(renderer.cached_layer_miss_count(), content="1")
+  renderer.resize(metrics)
+  inspect(renderer.cached_layer_miss_count(), content="0")
+  inspect(renderer.cached_layer_hit_count(), content="0")
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::DrawCachedLayer(spec),
+  ])
+  inspect(renderer.cached_layer_hit_count(), content="0")
+  inspect(renderer.unsupported_command_count(), content="1")
+}

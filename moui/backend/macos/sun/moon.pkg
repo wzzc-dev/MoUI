@@ -1,4 +1,5 @@
 import {
+  "moonbitlang/core/encoding/utf8",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/host",
@@ -6,10 +7,13 @@ import {
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/sun" @sun_renderer,
   "wzzc-dev/moui_sun/softbuffer" @sun_softbuffer,
+  "wzzc-dev/window/core" @window_core,
+  "wzzc-dev/window/dpi",
   "wzzc-dev/window/macos" @window_macos,
 }
 
 import {
+  "moonbitlang/x/fs",
   "wzzc-dev/moui/core",
 } for "wbtest"
 
@@ -21,5 +25,6 @@ options(
       "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework WebKit -framework CoreGraphics -framework CoreFoundation -lobjc -lz",
     },
   },
+  "native-stub": [ "macos_sun_async_image.m" ],
   targets: { },
 )

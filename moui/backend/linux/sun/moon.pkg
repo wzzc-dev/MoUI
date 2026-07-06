@@ -1,4 +1,5 @@
 import {
+  "moonbitlang/core/encoding/utf8",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/linux" @linux_host,
@@ -8,11 +9,14 @@ import {
 }
 
 import {
+  "moonbitlang/x/fs",
   "wzzc-dev/moui/core",
 } for "wbtest"
 
 supported_targets = "native"
 
 options(
+  link: { "native": { "cc-link-flags": "-lpthread" } },
+  "native-stub": [ "linux_sun_async_image.c" ],
   targets: { },
 )

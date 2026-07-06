@@ -1,4 +1,5 @@
 import {
+  "moonbitlang/core/encoding/utf8",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/windows" @windows_host,
@@ -9,11 +10,14 @@ import {
 }
 
 import {
+  "moonbitlang/core/env",
+  "moonbitlang/x/fs",
   "wzzc-dev/moui/core",
 } for "wbtest"
 
 supported_targets = "native"
 
 options(
+  "native-stub": [ "windows_sun_async_image.c" ],
   targets: { },
 )

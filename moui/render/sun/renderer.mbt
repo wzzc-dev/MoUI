@@ -158,6 +158,7 @@ pub fn SunRasterRenderer::resize(
 ) -> Unit raise SunRendererError {
   self.metrics = metrics
   self.canvas = new_canvas_for_metrics(metrics)
+  self.clear_cached_layers()
 }
 
 ///|
@@ -280,6 +281,7 @@ pub fn SunRasterRenderer::dispose(self : SunRasterRenderer) -> Unit {
     ignore(self.image_lifecycle.dispose(record.source))
   }
   self.notify_image_resource_change_if_needed(previous_revision)
+  self.resources.get_image_cache().clear()
   self.clear_cached_layers()
   self.rounded_clip_stack = []
   self.blur_radius_stack = []
@@ -563,10 +565,8 @@ fn SunRasterRenderer::render_command(
     }
     @core.DrawCommand::PopFilter => {
       let filter = self.filter_stack.pop()
-      let blur_radius = match self.blur_radius_stack.pop() {
-        Some(r) => r
-        None => 0.0
-      }
+      let blur_radius_entry = self.blur_radius_stack.pop()
+      let blur_radius = blur_radius_entry.unwrap_or(0.0)
       match canvas_scopes.pop() {
         Some(SunCanvasScopeKind::Filter) => {
           let layer_pixmap = self.canvas.get_pixmap()
@@ -611,7 +611,10 @@ fn SunRasterRenderer::render_command(
             Some(f) => self.filter_stack.push(f)
             None => ()
           }
-          self.blur_radius_stack.push(blur_radius)
+          match blur_radius_entry {
+            Some(radius) => self.blur_radius_stack.push(radius)
+            None => ()
+          }
           self.record_unsupported_command(
             "PopFilter",
             "pop did not match active \{sun_scope_name(other)} scope",
@@ -622,7 +625,10 @@ fn SunRasterRenderer::render_command(
             Some(f) => self.filter_stack.push(f)
             None => ()
           }
-          self.blur_radius_stack.push(blur_radius)
+          match blur_radius_entry {
+            Some(radius) => self.blur_radius_stack.push(radius)
+            None => ()
+          }
           self.record_unsupported_command(
             "PopFilter", "pop has no matching push scope",
           )
@@ -1137,6 +1143,68 @@ fn SunRasterRenderer::draw_text(
   guard run.frame.size.width > 0.0 && run.frame.size.height > 0.0 else {
     return
   }
+  let device_run = sun_transformed_text_run(self.canvas.get_transform(), run)
+  self.canvas.save()
+  self.canvas.intersect_clip_rect(
+    @sun_graphics.Rect::new(
+      x=device_run.frame.origin.x,
+      y=device_run.frame.origin.y,
+      width=device_run.frame.size.width,
+      height=device_run.frame.size.height,
+    ),
+  )
+  self.draw_text_clipped(device_run, opacity)
+  ignore(self.canvas.restore())
+}
+
+///|
+fn sun_transformed_text_run(
+  transform : @sun_graphics.Transform,
+  run : @core.TextRun,
+) -> @core.TextRun {
+  let frame = sun_core_rect_from_sun_rect(
+    sun_transformed_rect_bounds(transform, run.frame),
+  )
+  let font_scale = sun_text_transform_font_scale(transform)
+  @core.TextRun::new(
+    text=run.text,
+    frame~,
+    font=@core.FontSpec::new(
+      families=run.font.families,
+      size=run.font.size * font_scale,
+      weight=run.font.weight,
+      style=run.font.style,
+    ),
+    color=run.color,
+    align=run.align,
+  )
+}
+
+///|
+fn sun_core_rect_from_sun_rect(rect : @sun_graphics.Rect) -> @core.Rect {
+  @core.Rect::new(x=rect.x, y=rect.y, width=rect.width, height=rect.height)
+}
+
+///|
+fn sun_text_transform_font_scale(transform : @sun_graphics.Transform) -> Double {
+  let (origin_x, origin_y) = transform.apply(0.0, 0.0)
+  let (vertical_x, vertical_y) = transform.apply(0.0, 1.0)
+  let dx = vertical_x - origin_x
+  let dy = vertical_y - origin_y
+  let scale = (dx * dx + dy * dy).sqrt()
+  if scale > 0.0 {
+    scale
+  } else {
+    1.0
+  }
+}
+
+///|
+fn SunRasterRenderer::draw_text_clipped(
+  self : SunRasterRenderer,
+  run : @core.TextRun,
+  opacity : Double,
+) -> Unit {
   let config = sun_text_layout_config(run.font, run.frame.size.width)
   let faces = self.resolved_faces(run.font)
   guard !faces.is_empty() else {
@@ -1321,6 +1389,10 @@ fn SunRasterRenderer::draw_shader_effect(
         frame.size.width,
         frame.size.height,
         fallback_paint,
+      )
+      self.record_unsupported_command(
+        "DrawShaderEffect",
+        "unknown shader effect '\{spec.name}' used fallback brush",
       )
     }
   }
