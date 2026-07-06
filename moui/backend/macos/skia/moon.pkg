@@ -11,6 +11,7 @@ import {
 }
 
 import {
+  "moonbitlang/core/encoding/base64",
   "moonbitlang/x/fs",
   "wzzc-dev/moui/core",
 } for "wbtest"
@@ -20,9 +21,10 @@ supported_targets = "native"
 options(
   link: {
     "native": {
+      "stub-cc-flags": "${build.MOUI_SKIA_STUB_CC_FLAGS}",
       "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework CoreGraphics -framework CoreFoundation -lz",
     },
   },
-  "native-stub": [ "macos_skia_presenter.m", "macos_async_image.m" ],
+  "native-stub": [ "macos_skia_presenter.mm", "macos_async_image.mm" ],
   targets: { },
 )

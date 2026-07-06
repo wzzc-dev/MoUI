@@ -37,6 +37,8 @@ node scripts/validate-maintenance-baseline.mjs
 node scripts/validate-renderer-provider-manifests.mjs
 node scripts/validate-skia-entrypoints.mjs
 node scripts/test-validate-skia-entrypoints.mjs
+node --check scripts/test-moui-prebuild.mjs
+node scripts/test-moui-prebuild.mjs
 node scripts/test-validate-conformance-capture-manifest.mjs
 node --check scripts/generate-grapheme-break-fixtures.mjs
 node scripts/generate-grapheme-break-fixtures.mjs --check

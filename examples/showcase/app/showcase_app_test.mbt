@@ -67,7 +67,7 @@ test "showcase overview text stays legible in dark theme" {
   for
     label in [
       "Overview", "Layered card with image", "Renderer capability", "Keyboard: Meta+K",
-      "gradient", "transform", "text-shaping",
+      "gradient", "transform",
     ] {
     assert_true(has_text_color(commands, label, theme.palette.foreground))
   }

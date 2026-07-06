@@ -231,7 +231,17 @@ test "windows skia options default to system font resolution" {
 }
 
 ///|
-test "windows skia async image background_io confirmed" {
+fn skia_provider_test_png_bytes() -> Bytes {
+  @base64.decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==",
+    ignore_whitespace=true,
+  ) catch {
+    _ => Bytes::make(0, 0)
+  }
+}
+
+///|
+test "windows skia async image background decode confirmed" {
   guard @skia_renderer.skia_available() else { return () }
   let base = match @env.get_env_var("TEMP") {
     Some(v) => v
@@ -243,14 +253,14 @@ test "windows skia async image background_io confirmed" {
   }
   let path = StringBuilder::new()
   path.write_string(base)
-  path.write_string("\\moui-bg-io-test-windows.png")
+  path.write_string("\\moui-bg-decode-test-windows.png")
   let path = path.to_string()
-  @fs.write_bytes_to_file(path, @utf8.encode("test", bom=false)) catch {
+  @fs.write_bytes_to_file(path, skia_provider_test_png_bytes()) catch {
     _ => fail("expected temp file write")
   }
   defer (@fs.remove_file(path) catch { _ => () })
   let source_bytes = @utf8.encode(path, bom=false)
-  moui_windows_async_image_spawn_sync(42, source_bytes, source_bytes.length())
+  moui_windows_async_image_spawn(42, source_bytes, source_bytes.length())
   let max_attempts = 200
   let mut result = Bytes::make(0, 0)
   for attempt = 0; attempt < max_attempts; attempt = attempt + 1 {
@@ -259,10 +269,26 @@ test "windows skia async image background_io confirmed" {
       result = r
       break
     }
+    windows_skia_test_sleep(0)
   }
-  guard result.length() >= 24 else {
-    fail("expected result with 24-byte header, got \{result.length()} bytes")
+  guard result.length() >= 40 else {
+    fail("expected result with 40-byte header, got \{result.length()} bytes")
   }
+  let status = async_image_read_i32_le(result, 8)
+  let bytes_len = async_image_read_i32_le(result, 16)
   let background_io_raw = async_image_read_i32_le(result, 20)
+  let decoded_width = async_image_read_i32_le(result, 24)
+  let decoded_height = async_image_read_i32_le(result, 28)
+  let decoded_row_bytes = async_image_read_i32_le(result, 32)
+  let background_decode_raw = async_image_read_i32_le(result, 36)
+  inspect(status, content="0")
   assert_true(background_io_raw == 1)
+  inspect(decoded_width, content="1")
+  inspect(decoded_height, content="1")
+  inspect(decoded_row_bytes, content="4")
+  assert_true(background_decode_raw == 1)
+  inspect(bytes_len, content="4")
 }
+
+///|
+extern "C" fn windows_skia_test_sleep(milliseconds : Int) -> Unit = "Sleep"
