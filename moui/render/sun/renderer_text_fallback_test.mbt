@@ -79,6 +79,123 @@ test "sun renderer draws mixed emoji text without missing fallback diagnostic" {
 }
 
 ///|
+test "sun renderer text drawing clips glyphs to the TextRun frame" {
+  let presented = Ref(None)
+  let target = SunPresentTarget::new(description="test", present=frame => {
+    presented.val = Some(frame)
+    true
+  })
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=48.0, height=16.0),
+    ),
+    target,
+  )
+  let text_system = renderer.text_system()
+  text_system.register_font_data(
+    @core.FontFamily::Name("SunLatinOnly"),
+    sun_test_ttf_for_codes([65]),
+  )
+
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::DrawText(
+      @core.TextRun::new(
+        text="AAAAAA",
+        frame=@core.Rect::new(x=0.0, y=0.0, width=4.0, height=16.0),
+        font=@core.FontSpec::new(
+          families=@core.FontFamilyStack::new([
+            @core.FontFamily::Name("SunLatinOnly"),
+          ]),
+          size=10.0,
+        ),
+        color=@core.Color::black(),
+        align=@core.TextAlign::TextStart,
+      ),
+    ),
+  ])
+
+  match presented.val {
+    Some(frame) => {
+      assert_false(
+        sun_text_test_region_has_dark_pixel(
+          frame,
+          @core.Rect::new(x=8.0, y=0.0, width=32.0, height=16.0),
+        ),
+      )
+      inspect(renderer.unsupported_command_count(), content="0")
+    }
+    None => fail("expected Sun frame")
+  }
+}
+
+///|
+test "sun renderer text drawing scales nonzero 2x frame without hiding glyphs" {
+  let presented = Ref(None)
+  let target = SunPresentTarget::new(description="test", present=frame => {
+    presented.val = Some(frame)
+    true
+  })
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=64.0, height=32.0),
+      scale_factor=2.0,
+    ),
+    target,
+  )
+  let text_system = renderer.text_system()
+  text_system.register_font_data(
+    @core.FontFamily::Name("SunLatinOnly"),
+    sun_test_ttf_for_codes([65]),
+  )
+
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::DrawText(
+      @core.TextRun::new(
+        text="A",
+        frame=@core.Rect::new(x=20.0, y=8.0, width=24.0, height=16.0),
+        font=@core.FontSpec::new(
+          families=@core.FontFamilyStack::new([
+            @core.FontFamily::Name("SunLatinOnly"),
+          ]),
+          size=10.0,
+        ),
+        color=@core.Color::black(),
+        align=@core.TextAlign::TextStart,
+      ),
+    ),
+  ])
+
+  match presented.val {
+    Some(frame) => {
+      inspect(frame.width, content="128")
+      inspect(frame.height, content="64")
+      assert_true(
+        sun_text_test_region_has_dark_pixel(
+          frame,
+          @core.Rect::new(x=40.0, y=32.0, width=24.0, height=16.0),
+        ),
+      )
+      assert_false(
+        sun_text_test_region_has_dark_pixel(
+          frame,
+          @core.Rect::new(x=20.0, y=10.0, width=20.0, height=10.0),
+        ),
+      )
+      assert_false(
+        sun_text_test_region_has_dark_pixel(
+          frame,
+          @core.Rect::new(x=88.0, y=16.0, width=32.0, height=32.0),
+        ),
+      )
+      inspect(renderer.unsupported_command_count(), content="0")
+    }
+    None => fail("expected Sun frame")
+  }
+}
+
+///|
 test "sun renderer text system reports renderer paragraph metadata" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
@@ -594,4 +711,33 @@ fn sun_test_dark_pixel_count(
     }
   }
   count
+}
+
+///|
+fn sun_text_test_region_has_dark_pixel(
+  frame : SunPixelFrame,
+  rect : @core.Rect,
+) -> Bool {
+  let start_x = rect.origin.x.floor().max(0.0).to_int()
+  let start_y = rect.origin.y.floor().max(0.0).to_int()
+  let end_x = (rect.origin.x + rect.size.width)
+    .ceil()
+    .min(frame.width.to_double())
+    .to_int()
+  let end_y = (rect.origin.y + rect.size.height)
+    .ceil()
+    .min(frame.height.to_double())
+    .to_int()
+  for row in start_y..<end_y {
+    for column in start_x..<end_x {
+      let offset = (row * frame.width + column) * 4
+      let red = frame.pixels[offset].to_int()
+      let green = frame.pixels[offset + 1].to_int()
+      let blue = frame.pixels[offset + 2].to_int()
+      if red < 220 && green < 220 && blue < 220 {
+        return true
+      }
+    }
+  }
+  false
 }
