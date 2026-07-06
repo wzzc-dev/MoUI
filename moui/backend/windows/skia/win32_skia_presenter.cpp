@@ -1,5 +1,5 @@
 #ifndef _WIN32
-#error "win32_skia_presenter.c is only for Windows"
+#error "win32_skia_presenter.cpp is only for Windows"
 #endif
 
 #define WIN32_LEAN_AND_MEAN

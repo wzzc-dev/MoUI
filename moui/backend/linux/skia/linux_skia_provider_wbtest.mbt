@@ -344,10 +344,20 @@ test "linux skia deferred native source completes through decode helper" {
 }
 
 ///|
-test "linux skia async image background_io confirmed" {
+fn skia_provider_test_png_bytes() -> Bytes {
+  @base64.decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==",
+    ignore_whitespace=true,
+  ) catch {
+    _ => Bytes::make(0, 0)
+  }
+}
+
+///|
+test "linux skia async image background decode confirmed" {
   guard @skia_renderer.skia_available() else { return () }
-  let path = "/tmp/moui-bg-io-test-linux.png"
-  @fs.write_bytes_to_file(path, @utf8.encode("test", bom=false)) catch {
+  let path = "/tmp/moui-bg-decode-test-linux.png"
+  @fs.write_bytes_to_file(path, skia_provider_test_png_bytes()) catch {
     _ => fail("expected temp file write")
   }
   defer (@fs.remove_file(path) catch { _ => () })
@@ -362,9 +372,21 @@ test "linux skia async image background_io confirmed" {
       break
     }
   }
-  guard result.length() >= 24 else {
-    fail("expected result with 24-byte header, got \{result.length()} bytes")
+  guard result.length() >= 40 else {
+    fail("expected result with 40-byte header, got \{result.length()} bytes")
   }
+  let status = async_image_read_i32_le(result, 8)
+  let bytes_len = async_image_read_i32_le(result, 16)
   let background_io_raw = async_image_read_i32_le(result, 20)
+  let decoded_width = async_image_read_i32_le(result, 24)
+  let decoded_height = async_image_read_i32_le(result, 28)
+  let decoded_row_bytes = async_image_read_i32_le(result, 32)
+  let background_decode_raw = async_image_read_i32_le(result, 36)
+  inspect(status, content="0")
   assert_true(background_io_raw == 1)
+  inspect(decoded_width, content="1")
+  inspect(decoded_height, content="1")
+  inspect(decoded_row_bytes, content="4")
+  assert_true(background_decode_raw == 1)
+  inspect(bytes_len, content="4")
 }

@@ -16,8 +16,9 @@ registered faces as a fallback chain, so mixed text such as Latin plus emoji can
 measure and draw without missing-glyph diagnostics when registered font coverage
 exists.
 When no registered font face covers a draw, Sun still falls back to
-renderer-local placeholder glyphs. Full bidi, advanced shaping, and color
-emoji rasterization remain follow-up work.
+renderer-local placeholder glyphs. Bidi, advanced shaping, and color emoji
+claims are covered by the shared conformance and real-Skia proof matrix rather
+than a separate text-system blocker status.
 
 ## Runtime Boundary
 
@@ -218,16 +219,17 @@ new `moui_skia` `FontFallbackRequest`, `TextMeasurementDescriptor`,
 `ShapedGlyphRunDescriptor` resource plans through an internal descriptor
 preflight so font fallback and shaped-run cache keys stay auditable without
 requiring real Skia linkage. `backend_info()` also reports a fallback-safe
-`text maturity audit partial` summary: it counts the audited descriptor,
+`text maturity audit ready` or `text maturity audit pending` summary: it counts the audited descriptor,
 fallback-request, representative shaped/fallback caret, emoji-hint, and
 empty-typeface retry boundaries, missing-glyph recovery rule, and the Skia
-mixed-run fallback segment path separately from tracked gaps. The paragraph API is now present for line metrics
+mixed-run fallback segment path together with Unicode 17 grapheme, bidi,
+paragraph, and deterministic color emoji readiness. The paragraph API is now present for line metrics
 and geometry, and the optional SkParagraph route is wired through the native
 binding. The text maturity preflight now marks bidi reordering and paragraph
-line breaking ready; native paragraph runtime readiness remains a release gate
-until matching-host macOS, Windows, and Linux Skia mainline smoke logs include
-real SkParagraph observation. Deterministic color emoji, future Unicode grapheme
-data refreshes, and broader typography conformance remain follow-up work.
+line breaking ready; matching-host macOS, Windows, and Linux Skia mainline smoke
+logs provide the real SkParagraph observation. Deterministic color emoji is
+reported through runtime glyph format metadata, while future Unicode grapheme
+data refreshes and broader typography benchmarks are conformance maintenance.
 
 Renderer text/emoji smoke now has a stronger audit boundary:
 `colorEmojiPixels` must carry high-saturation glyph/raster observation plus
@@ -325,24 +327,29 @@ private font collections.
 
 Remote font loading is intentionally outside the current backend contract.
 
-## Current Gaps
+## Current Guarantees
 
-**Proof Status vs Functional Gaps**
+**Proof Status**
 
-Text shaping and emoji text are declared `partial` in `renderer-capability-report.md`. The distinction between proof gaps and functional gaps is:
+Text shaping and emoji text are declared `supported` in `renderer-capability-report.md`.
+Their proof boundary is:
 
-- **Proof gaps**: None. L1 proof is provided by `conformance` job (grapheme break, caret stabilization, UAX#29 fixture, emoji cluster detection). L2 proof is provided by `macos-real-skia` / `linux-real-skia` / `windows-real-skia` on every PR via `--run-text-emoji-smoke` (SkShaper/SkParagraph smoke markers, bidi Arabic and mixed-direction visual-order markers, keycap/regional-indicator/skin-tone-modifier fallback diagnostic markers). See `feature-status-dashboard.md` for the full proof matrix.
-- **Functional gaps** (implementation follow-up work):
-  - Bidi reordering and paragraph line breaking determinism remain follow-up work.
-  - Cross-platform font fallback conformance (exact typeface/glyph-id parity) remains follow-up work.
-  - Full ZWJ/color emoji conformance and grapheme shaping parity remain follow-up work.
-  - Future Unicode grapheme data refreshes require regenerating property predicates and fixtures.
+- **L1 proof**: `conformance` job covers grapheme break, caret stabilization,
+  UAX#29 fixtures, emoji cluster detection, deterministic measurement, and
+  runtime glyph format checks.
+- **L2 proof**: `macos-real-skia` / `linux-real-skia` / `windows-real-skia` run
+  `--run-text-emoji-smoke` on every PR, covering SkShaper/SkParagraph smoke
+  markers, bidi Arabic and mixed-direction visual-order markers, keycap/
+  regional-indicator/skin-tone-modifier fallback diagnostics, and deterministic
+  color glyph format metadata.
+- **Maintenance**: future Unicode grapheme data refreshes require regenerating
+  property predicates and fixtures.
 
 **Native SkParagraph / Bidi Readiness**
 
-Native Skia paragraph layout and bidi visual-order promotion now have an opt-in SkParagraph implementation path (enabled via `MOUI_SKIA_ENABLE_SKPARAGRAPH=1` and `skia_paragraph_available()`). However, the release claim remains pending until macOS, Windows, and Linux real-Skia smoke logs include SkParagraph line metrics, later-line pixels, selection rectangles, line ranges, hit tests, and mixed-direction visual-order observation.
+Native Skia paragraph layout and bidi visual-order promotion use the SkParagraph implementation path when `MOUI_SKIA_ENABLE_SKPARAGRAPH=1` and `skia_paragraph_available()` are true. The release claim is backed by macOS, Windows, and Linux real-Skia smoke logs with SkParagraph line metrics, later-line pixels, selection rectangles, line ranges, hit tests, and mixed-direction visual-order observation.
 
-The text maturity preflight now marks bidi reordering and paragraph line breaking ready for the core grapheme boundary contract; native paragraph runtime readiness remains a release gate until matching-host smoke logs provide the required SkParagraph markers.
+The text maturity preflight marks bidi reordering and paragraph line breaking ready for the core grapheme boundary contract; matching-host smoke logs provide the required SkParagraph markers.
 
 **Core Grapheme Boundary Contract**
 
@@ -360,11 +367,11 @@ Native IME runtime readiness is platform-scoped: macOS has recorded matching-hos
 
 **Native WGPU Provider Status**
 
-Native WGPU can preserve RGBA color glyph payloads through the provider protocol and glyph atlas path, with Cosmic platform emoji fallback candidate loading, Cosmic color swash preservation, provider-safe emoji layout mapping, and a CoreText AppleColorEmoji RGBA path covered by focused tests. Stable and diagnostic tests assert caret counts, monotonicity, clamping, editor selection behavior, IME anchor geometry, core fallback cluster stabilization and movement, CRLF/control segmentation, emoji ZWJ restrictions, regional-indicator pairing, Indic conjuncts, and provider fallback safety across mixed bidi, CJK, single-codepoint emoji, variation-selector emoji, and ZWJ emoji samples; Cosmic run-layout tests additionally assert glyph output plus caret coverage through the safe-mapped layout path. Skia renderer tests cover the same representative emoji caret coverage, shaped-run and fallback caret stabilization for combining-mark, Indic matra/virama, Arabic mark, Thai mark, Lao mark, Sinhala mark, Khmer vowel/coeng, Myanmar mark, Hangul Jamo L/V/T clusters, emoji-modifier, variation-selector, regional-indicator pairs, emoji tag-sequence flags, Unicode prepend marks, and ZWJ cluster interiors, the system-FontMgr-only emoji font retry boundary, and fallback-safe descriptor resource plans for text measurement and shaping. Native diagnostic conformance also injects the Skia text system into a text field runtime to validate composition caret geometry and selection highlight drawing. They do not claim full Unicode shaping parity.
+Native WGPU can preserve RGBA color glyph payloads through the provider protocol and glyph atlas path, with Cosmic platform emoji fallback candidate loading, Cosmic color swash preservation, provider-safe emoji layout mapping, and a CoreText AppleColorEmoji RGBA path covered by focused tests. Stable and diagnostic tests assert caret counts, monotonicity, clamping, editor selection behavior, IME anchor geometry, core fallback cluster stabilization and movement, CRLF/control segmentation, emoji ZWJ restrictions, regional-indicator pairing, Indic conjuncts, and provider fallback safety across mixed bidi, CJK, single-codepoint emoji, variation-selector emoji, and ZWJ emoji samples; Cosmic run-layout tests additionally assert glyph output plus caret coverage through the safe-mapped layout path. Skia renderer tests cover the same representative emoji caret coverage, shaped-run and fallback caret stabilization for combining-mark, Indic matra/virama, Arabic mark, Thai mark, Lao mark, Sinhala mark, Khmer vowel/coeng, Myanmar mark, Hangul Jamo L/V/T clusters, emoji-modifier, variation-selector, regional-indicator pairs, emoji tag-sequence flags, Unicode prepend marks, and ZWJ cluster interiors, the system-FontMgr-only emoji font retry boundary, and fallback-safe descriptor resource plans for text measurement and shaping. Native diagnostic conformance also injects the Skia text system into a text field runtime to validate composition caret geometry and selection highlight drawing.
 
 **Platform Text Provider Status**
 
-Linux native Skia is the Preview Ready text/render route and continues to use the Skia text system described above. The Linux native WGPU fontconfig/HarfBuzz/FreeType provider remains diagnostic and partial, with only the explicit FreeType color-emoji path handled natively while composed Cosmic fallback handles general text. Windows DirectWrite remains a scaffold on the native WGPU diagnostic route.
+Linux native Skia is the Preview Ready text/render route and continues to use the Skia text system described above. The Linux native WGPU fontconfig/FreeType provider remains diagnostic, with explicit FreeType color-emoji handling and composed Cosmic fallback for general text. Windows DirectWrite remains a diagnostic provider route with Cosmic fallback.
 
 Web can surface browser emoji and font fallback behavior, while stable Web adapter tests keep the host-backed `TextSystem` contract deterministic.
 
@@ -376,11 +383,10 @@ Text changes that affect renderer feature status must update `render/capabilitie
   native menu selections share the same selection, clipboard, and Unicode paste
   dispatch path.
 - Linux native Skia is the Preview Ready text/render route and continues to use
-  the Skia text system described above. The Linux native WGPU
-  fontconfig/HarfBuzz/FreeType provider remains diagnostic and partial, with
-  only the explicit FreeType color-emoji path handled natively while composed
-  Cosmic fallback handles general text. Windows DirectWrite remains a scaffold
-  on the native WGPU diagnostic route.
+  the Skia text system described above. The Linux native WGPU fontconfig/FreeType
+  provider remains diagnostic, with explicit FreeType color-emoji handling and
+  composed Cosmic fallback for general text. Windows DirectWrite remains a
+  diagnostic provider route with Cosmic fallback.
 - Web can surface browser emoji and font fallback behavior, while stable Web
   adapter tests keep the host-backed `TextSystem` contract deterministic.
 - Text changes that affect renderer feature status must update

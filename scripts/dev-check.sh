@@ -99,6 +99,8 @@ run node scripts/validate-maintenance-baseline.mjs
 run node scripts/validate-renderer-provider-manifests.mjs
 run node scripts/validate-skia-entrypoints.mjs
 run node scripts/test-validate-skia-entrypoints.mjs
+run node --check scripts/test-moui-prebuild.mjs
+run node scripts/test-moui-prebuild.mjs
 run node scripts/test-validate-conformance-capture-manifest.mjs
 run node --check scripts/generate-grapheme-break-fixtures.mjs
 run node scripts/generate-grapheme-break-fixtures.mjs --check

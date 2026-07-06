@@ -9,6 +9,7 @@ import {
 }
 
 import {
+  "moonbitlang/core/encoding/base64",
   "moonbitlang/x/fs",
   "moonbitlang/core/env",
   "wzzc-dev/moui/core",
@@ -17,6 +18,7 @@ import {
 supported_targets = "native"
 
 options(
-  "native-stub": [ "win32_skia_presenter.c", "windows_async_image.c" ],
+  link: { "native": { "stub-cc-flags": "${build.MOUI_SKIA_STUB_CC_FLAGS}" } },
+  "native-stub": [ "win32_skia_presenter.cpp", "windows_async_image.cpp" ],
   targets: { },
 )
