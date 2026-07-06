@@ -50,8 +50,10 @@ to `Effect[WorkbenchMsg]` via `Effect::map`. Sub-views are lifted to
   request completions, or call export services.
 - **Settings** (`SettingsWorkspace`): agent runtime + chrome settings form
   (API key / base URL / approval policy / sandbox mode / working directory /
-  font size). UI-only in this prototype; persistence is reserved for the
-  future backend integration.
+  font size). Provider/model persistence is wired for the native prototype.
+  Auto-detected or manually added custom model ids stay visible, but model
+  rows outside OpenSeek's supported set render muted and are not selectable
+  until the native backend exposes arbitrary model ids.
 - **ConnectPhone / ScheduledTasks / Plugins** (reserved): product-shaped static
   shells for future IM/webhook automation, scheduled prompts, and Skills/MCP
   management. They route through `SwitchWorkspace(...)` but have no sub-model
@@ -145,6 +147,10 @@ The macos_skia entrypoint uses `openseek_native_transport`, which:
 - persists session events through `@store.SessionStore` under
   `MO_WORKBENCH_SESSION_ROOT` (default `<workspace>/.openseek`);
 - maps `SessionItem` / `TurnTerminal` into `AgentEvent` for the Code workspace;
+- enables only the model ids currently parsed by OpenSeek
+  (`deepseek-v4-flash`, `deepseek-v4-pro`, `kimi-k2.7-code`,
+  `kimi-k2.7-code-highspeed`) while showing other provider-discovered ids as
+  disabled options;
 - supports `NewSession`, `SwitchSession`, and `FetchSessionList` against the
   store.
 

@@ -115,6 +115,31 @@ fn default_providers() -> Array[ProviderConfig] {
 }
 
 ///|
+/// Current native backend limit: OpenSeek 0.2.x only exposes these typed model
+/// ids. Other provider-discovered/custom ids stay visible but disabled.
+pub fn mo_workbench_model_supported_by_openseek(model_id : String) -> Bool {
+  match model_id {
+    "deepseek-v4-flash"
+    | "deepseek-v4-pro"
+    | "kimi-k2.7-code"
+    | "kimi-k2.7-code-highspeed" => true
+    _ => false
+  }
+}
+
+///|
+pub fn mo_workbench_first_openseek_supported_model(
+  models : Array[String],
+) -> String? {
+  for model_id in models {
+    if mo_workbench_model_supported_by_openseek(model_id) {
+      return Some(model_id)
+    }
+  }
+  None
+}
+
+///|
 fn next_provider_id(providers : Array[ProviderConfig]) -> String {
   let mut index = providers.length() + 1
   while provider_id_exists(providers, "provider-" + index.to_string()) {
@@ -436,7 +461,8 @@ fn WorkbenchModel::new(
           settings = SettingsWorkspace::merge_settings_file(settings, file)
           appearance = AppearanceMode::merge_settings_file(appearance, file)
           settings = { ..settings, env_source: ".mo_workbench/settings.json" }
-          if !file.current_model.is_empty() {
+          if !file.current_model.is_empty() &&
+            mo_workbench_model_supported_by_openseek(file.current_model) {
             applied_model = file.current_model
           }
           applied_provider = file.active_provider_id

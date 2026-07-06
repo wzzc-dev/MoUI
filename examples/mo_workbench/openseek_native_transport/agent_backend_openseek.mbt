@@ -79,11 +79,13 @@ fn openseek_resolve_session_root(workspace : String) -> String {
 }
 
 ///|
-/// Map a Mo Workbench model id (any OpenAI-compatible id) to a `@deepseek.Model`.
-/// Known DeepSeek/Kimi ids map to their typed variants; anything else becomes
-/// `Custom(id)` so it flows to the API verbatim.
-fn openseek_model_from_string(model_id : String) -> @deepseek.Model {
-  @deepseek.Model::parse_or_custom(model_id)
+/// Map a Mo Workbench model id to an OpenSeek typed model.
+///
+/// OpenSeek 0.2.x rejects arbitrary OpenAI-compatible ids, so custom ids stay
+/// disabled in the app picker and are ignored here if a stale message arrives.
+fn openseek_model_from_string(model_id : String) -> @deepseek.Model? {
+  let model = @deepseek.Model::parse(model_id) catch { _ => return None }
+  Some(model)
 }
 
 ///|
@@ -100,7 +102,7 @@ fn openseek_thinking_from_choice(
 
 ///|
 fn openseek_default_model() -> @deepseek.Model {
-  @deepseek.Model::V4Flash
+  @deepseek.Deepseek(@deepseek.V4Flash)
 }
 
 ///|
@@ -183,12 +185,15 @@ fn openseek_config_from_settings(
       } else {
         openseek_resolve_api_url().unwrap_or("https://api.deepseek.com/v1")
       }
-      let mid = if !file.current_model.is_empty() {
+      let mid = if !file.current_model.is_empty() &&
+        p.models.contains(file.current_model) &&
+        @app.mo_workbench_model_supported_by_openseek(file.current_model) {
         file.current_model
-      } else if p.models.is_empty() {
-        "deepseek-v4-flash"
       } else {
-        p.models[0]
+        match @app.mo_workbench_first_openseek_supported_model(p.models) {
+          Some(model_id) => model_id
+          None => return None
+        }
       }
       (key, url, mid)
     }
@@ -206,11 +211,15 @@ fn openseek_config_from_settings(
   if api_key.is_empty() {
     return None
   }
+  let model = match openseek_model_from_string(model_id) {
+    Some(model) => model
+    None => return None
+  }
   let workspace = openseek_resolve_workspace_root()
   Some({
     api_key,
     api_url: Some(openseek_chat_completions_url(base_url)),
-    model: openseek_model_from_string(model_id),
+    model,
     thinking: openseek_default_thinking(),
     workspace_root: workspace,
     session_root: openseek_resolve_session_root(workspace),
