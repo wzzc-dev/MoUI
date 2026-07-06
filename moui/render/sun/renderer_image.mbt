@@ -65,7 +65,13 @@ fn SunRasterRenderer::sun_async_image_for_source(
           None
         }
       }
-    Some({ status: @render.ImageResourceStatus::ImageFailed, .. }) => None
+    Some({ status: @render.ImageResourceStatus::ImageFailed, .. }) =>
+      if sun_image_failed_record_can_retry(source) {
+        ignore(self.image_lifecycle.mark_loading(source))
+        None
+      } else {
+        None
+      }
     _ => {
       ignore(self.image_lifecycle.mark_loading(source))
       None
@@ -198,8 +204,78 @@ fn sun_decode_image_source_with_cache(
             Err(_) =>
               Err("Sun renderer could not decode BMP image source: \{source}")
           }
+        Some({ format: SunImageFormat::Jpeg, data }) =>
+          sun_decode_jpeg_image_with_cache(
+            cache,
+            source,
+            data,
+            failure_kind="source",
+          )
         None => Err("Sun renderer could not decode image source: \{source}")
       }
+  }
+}
+
+///|
+fn sun_decode_image_bytes_with_cache(
+  cache : @sun_graphics.PixmapCache,
+  source : String,
+  data : Bytes,
+) -> Result[@sun_graphics.Pixmap, String] {
+  match sun_image_format_for_source(source, sun_image_media_type(source)) {
+    Some(SunImageFormat::Png) =>
+      match cache.get_or_decode_png_result(source, data) {
+        Ok(result) => Ok(result.get_pixmap())
+        Err(_) =>
+          Err("Sun renderer could not decode PNG image bytes: \{source}")
+      }
+    Some(SunImageFormat::Bmp) =>
+      match cache.get_or_decode_bmp_result(source, data) {
+        Ok(result) => Ok(result.get_pixmap())
+        Err(_) =>
+          Err("Sun renderer could not decode BMP image bytes: \{source}")
+      }
+    Some(SunImageFormat::Jpeg) =>
+      sun_decode_jpeg_image_with_cache(
+        cache,
+        source,
+        data,
+        failure_kind="bytes",
+      )
+    None => Err("Sun renderer could not infer image format: \{source}")
+  }
+}
+
+///|
+fn sun_decode_jpeg_image_with_cache(
+  cache : @sun_graphics.PixmapCache,
+  source : String,
+  data : Bytes,
+  failure_kind~ : String,
+) -> Result[@sun_graphics.Pixmap, String] {
+  match cache.get(source) {
+    Some(pixmap) => Ok(pixmap)
+    None => {
+      let decoded = @image.decode_jpeg(data) catch {
+        _ =>
+          return Err(
+            "Sun renderer could not decode JPEG image \{failure_kind}: \{source}",
+          )
+      }
+      match
+        cache.get_or_decode_rgba_result(
+          source,
+          decoded.width,
+          decoded.height,
+          decoded.data,
+        ) {
+        Ok(result) => Ok(result.get_pixmap())
+        Err(_) =>
+          Err(
+            "Sun renderer could not decode JPEG image \{failure_kind}: \{source}",
+          )
+      }
+    }
   }
 }
 
@@ -221,9 +297,34 @@ pub fn sun_image_load_completion(
 }
 
 ///|
+pub fn sun_image_load_completion_from_bytes(
+  source : String,
+  data : Bytes,
+  background_io? : Bool = false,
+) -> @render.ImageResourceLoadCompletion {
+  let cache = @sun_graphics.PixmapCache::with_capacity(1)
+  match sun_decode_image_bytes_with_cache(cache, source, data) {
+    Ok(pixmap) =>
+      @render.ImageResourceLoadCompletion::ready(
+        source,
+        width=pixmap.get_width(),
+        height=pixmap.get_height(),
+        background_io~,
+      )
+    Err(diagnostic) =>
+      @render.ImageResourceLoadCompletion::failed(
+        source,
+        diagnostic~,
+        background_io~,
+      )
+  }
+}
+
+///|
 priv enum SunImageFormat {
   Png
   Bmp
+  Jpeg
 }
 
 ///|
@@ -258,6 +359,11 @@ fn sun_image_source_bytes(source : String) -> SunImageSourceBytes? {
 }
 
 ///|
+fn sun_image_failed_record_can_retry(source : String) -> Bool {
+  !source.has_prefix("data:") && @fs.path_exists(source)
+}
+
+///|
 fn sun_parse_data_uri(uri : String) -> SunImageSourceBytes? {
   let semicolon_pos = uri.find(";")
   let comma_pos = uri.find(",")
@@ -265,7 +371,7 @@ fn sun_parse_data_uri(uri : String) -> SunImageSourceBytes? {
   guard comma_pos is Some(comma_idx) else { return None }
   guard comma_idx > semi_idx else { return None }
   let chars = uri.to_array()
-  let meta = String::from_array(chars[5:semi_idx])
+  let meta = sun_image_media_type(uri)
   let encoding = String::from_array(chars[semi_idx + 1:comma_idx])
   guard encoding == "base64" else { return None }
   let data_part = String::from_array(chars[comma_idx + 1:])
@@ -279,6 +385,15 @@ fn sun_parse_data_uri(uri : String) -> SunImageSourceBytes? {
 }
 
 ///|
+fn sun_image_media_type(source : String) -> String {
+  guard source.has_prefix("data:") else { return "" }
+  let semicolon_pos = source.find(";")
+  guard semicolon_pos is Some(semi_idx) else { return "" }
+  let chars = source.to_array()
+  String::from_array(chars[5:semi_idx])
+}
+
+///|
 fn sun_image_format_for_source(
   source : String,
   media_type : String,
@@ -287,6 +402,11 @@ fn sun_image_format_for_source(
     Some(SunImageFormat::Png)
   } else if media_type.contains("bmp") || source.has_suffix(".bmp") {
     Some(SunImageFormat::Bmp)
+  } else if media_type.contains("jpeg") ||
+    media_type.contains("jpg") ||
+    source.has_suffix(".jpg") ||
+    source.has_suffix(".jpeg") {
+    Some(SunImageFormat::Jpeg)
   } else {
     None
   }
@@ -336,30 +456,10 @@ fn sun_image_placement(
       } else {
         sun_contain_image_placement(frame, image_size)
       }
-    @core.ImageFit::FitWidth => {
-      let height = frame.size.width / image_ratio
-      {
-        frame: @core.Rect::new(
-          x=frame.origin.x,
-          y=frame.origin.y + (frame.size.height - height) / 2.0,
-          width=frame.size.width,
-          height~,
-        ),
-        src_rect: None,
-      }
-    }
-    @core.ImageFit::FitHeight => {
-      let width = frame.size.height * image_ratio
-      {
-        frame: @core.Rect::new(
-          x=frame.origin.x + (frame.size.width - width) / 2.0,
-          y=frame.origin.y,
-          width~,
-          height=frame.size.height,
-        ),
-        src_rect: None,
-      }
-    }
+    @core.ImageFit::FitWidth =>
+      sun_fit_width_image_placement(frame, image_size, image_ratio)
+    @core.ImageFit::FitHeight =>
+      sun_fit_height_image_placement(frame, image_size, image_ratio)
     @core.ImageFit::Contain => sun_contain_image_placement(frame, image_size)
     @core.ImageFit::Cover =>
       if image_ratio > frame_ratio {
@@ -397,6 +497,80 @@ fn sun_image_placement(
           ),
         }
       }
+  }
+}
+
+///|
+fn sun_fit_width_image_placement(
+  frame : @core.Rect,
+  image_size : @core.Size,
+  image_ratio : Double,
+) -> SunImagePlacement {
+  let scaled_height = frame.size.width / image_ratio
+  if scaled_height <= frame.size.height {
+    {
+      frame: @core.Rect::new(
+        x=frame.origin.x,
+        y=frame.origin.y + (frame.size.height - scaled_height) / 2.0,
+        width=frame.size.width,
+        height=scaled_height,
+      ),
+      src_rect: None,
+    }
+  } else {
+    let visible = frame.size.height / scaled_height
+    let crop_height = (image_size.height * visible).round().to_int()
+    let top = ((image_size.height - crop_height.to_double()) * 0.5)
+      .round()
+      .to_int()
+    {
+      frame,
+      src_rect: Some(
+        @sun_graphics.PixelRect::new(
+          x=0,
+          y=top,
+          width=image_size.width.round().to_int(),
+          height=crop_height,
+        ),
+      ),
+    }
+  }
+}
+
+///|
+fn sun_fit_height_image_placement(
+  frame : @core.Rect,
+  image_size : @core.Size,
+  image_ratio : Double,
+) -> SunImagePlacement {
+  let scaled_width = frame.size.height * image_ratio
+  if scaled_width <= frame.size.width {
+    {
+      frame: @core.Rect::new(
+        x=frame.origin.x + (frame.size.width - scaled_width) / 2.0,
+        y=frame.origin.y,
+        width=scaled_width,
+        height=frame.size.height,
+      ),
+      src_rect: None,
+    }
+  } else {
+    let visible = frame.size.width / scaled_width
+    let crop_width = (image_size.width * visible).round().to_int()
+    let left = ((image_size.width - crop_width.to_double()) * 0.5)
+      .round()
+      .to_int()
+    {
+      frame,
+      src_rect: Some(
+        @sun_graphics.PixelRect::new(
+          x=left,
+          y=0,
+          width=crop_width,
+          height=image_size.height.round().to_int(),
+        ),
+      ),
+    }
   }
 }
 
