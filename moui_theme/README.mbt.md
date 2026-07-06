@@ -13,6 +13,12 @@ coverage reports, customization helpers, and component token metadata.
 package-local official-system entrypoints over that common model, including
 light, dark, high-contrast, and system theme helpers.
 
+`wzzc-dev/moui_theme/sickle` exposes a first-party Sickle theme inspired by
+Smartisan-style visual precision: layered skeuomorphic surfaces, inset control
+edges, and flat semantic action/status colors. It offers light, dark,
+skeuomorphic, flat, and hybrid theme helpers without claiming official
+source-mapped design-system parity.
+
 These adapters are not official-complete compatibility claims. They remain
 source-mapped previews until source import coverage, source locks, official
 anchors, parity reports, runtime token alignment, component token matrices, and

@@ -22,6 +22,7 @@ pub(all) enum DesignSystemChoice {
   Carbon
   Primer
   Fluent
+  Sickle
 } derive(Eq, ToJson, @debug.Debug)
 
 pub struct DesignSystemsApp {
