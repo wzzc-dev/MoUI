@@ -11,16 +11,9 @@
 //   backend  -> async worker -> emit(event) -> dispatch(map(event)) into UI queue
 
 ///|
-/// Model provider choice. Mirrors openseek's `Model` but stays portable.
-pub(all) enum ModelChoice {
-  V4Flash
-  V4Pro
-} derive(Eq, Debug)
-
-///|
 /// Thinking mode choice. Mirrors openseek's `ThinkingMode`.
 pub(all) enum ThinkingChoice {
-  No
+  Normal
   High
   Max
 } derive(Eq, Debug)
@@ -97,8 +90,9 @@ pub(all) enum AgentCommand {
   NewSession(String)
   /// Switch to an existing session by id.
   SwitchSession(String)
-  /// Change the active model.
-  SetModel(ModelChoice)
+  /// Change the active model. Carries `(model_id, api_key, base_url)` so the
+  /// backend can switch both the model and the live provider connection.
+  SetModel(String, String, String)
   /// Change the thinking mode.
   SetThinking(ThinkingChoice)
   /// Request the session list from the store.
@@ -160,7 +154,7 @@ pub fn AgentBackendRuntime::stub() -> AgentBackendRuntime {
           emit(ActiveSessionChanged(id))
           emit(SessionRebuilt([]))
         }
-        SetModel(_) => ()
+        SetModel(_, _, _) => ()
         SetThinking(_) => ()
         FetchSessionList => emit(SessionListed([]))
         Shutdown => ()

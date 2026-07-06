@@ -1,16 +1,52 @@
 ///|
 test "default settings file matches template defaults" {
   let file = mo_workbench_default_settings_file()
-  inspect(file.openai_base_url, content="https://api.deepseek.com/v1")
+  inspect(file.providers.length(), content="2")
+  inspect(file.providers[0].base_url, content="https://api.deepseek.com/v1")
+  inspect(file.providers[0].models.length(), content="2")
+  inspect(file.providers[1].id, content="openai")
+  inspect(file.providers[1].base_url, content="https://api.openai.com/v1")
+  inspect(file.active_provider_id, content="Some(deepseek)")
   inspect(file.font_size, content="14")
   inspect(file.appearance, content="system")
 }
 
 ///|
-test "decode settings json example shape" {
+test "decode modern multi-provider settings json" {
   let text =
     #|{
-    #|  "openai_api_key": "sk-test",
+    #|  "providers": [
+    #|    {
+    #|      "id": "deepseek",
+    #|      "name": "DeepSeek",
+    #|      "base_url": "https://api.deepseek.com/v1",
+    #|      "api_key": "sk-test",
+    #|      "models": ["deepseek-v4-flash", "deepseek-v4-pro"]
+    #|    }
+    #|  ],
+    #|  "active_provider_id": "deepseek",
+    #|  "current_model": "deepseek-v4-flash",
+    #|  "mo_workbench_workspace": ".",
+    #|  "mo_workbench_session_root": "./.openseek",
+    #|  "approval_policy": "write",
+    #|  "sandbox_mode": "workspace",
+    #|  "font_size": 16,
+    #|  "appearance": "dark"
+    #|}
+  guard mo_workbench_decode_settings_file(text) is Some(file) else {
+    fail("expected settings file")
+  }
+  inspect(file.providers[0].api_key, content="sk-test")
+  inspect(file.providers[0].base_url, content="https://api.deepseek.com/v1")
+  inspect(file.appearance, content="dark")
+  inspect(file.font_size, content="16")
+}
+
+///|
+test "decode legacy single-provider settings json migrates" {
+  let text =
+    #|{
+    #|  "openai_api_key": "sk-legacy",
     #|  "openai_base_url": "https://token.sensenova.cn/v1",
     #|  "deepseek_api_key": "",
     #|  "mo_workbench_workspace": ".",
@@ -23,18 +59,28 @@ test "decode settings json example shape" {
   guard mo_workbench_decode_settings_file(text) is Some(file) else {
     fail("expected settings file")
   }
-  inspect(file.openai_api_key, content="sk-test")
-  inspect(file.openai_base_url, content="https://token.sensenova.cn/v1")
-  inspect(file.font_size, content="16")
+  inspect(file.providers.length(), content="1")
+  inspect(file.providers[0].id, content="deepseek")
+  inspect(file.providers[0].api_key, content="sk-legacy")
+  inspect(file.providers[0].base_url, content="https://token.sensenova.cn/v1")
+  inspect(file.active_provider_id, content="Some(deepseek)")
 }
 
 ///|
 test "merge settings file into workspace" {
   let base = SettingsWorkspace::new()
   let file = {
-    openai_api_key: "sk-abc",
-    openai_base_url: "https://api.example.com/v1",
-    deepseek_api_key: "",
+    providers: [
+      {
+        id: "deepseek",
+        name: "DeepSeek",
+        base_url: "https://api.example.com/v1",
+        api_key: "sk-abc",
+        models: ["deepseek-v4-flash"],
+      },
+    ],
+    active_provider_id: Some("deepseek"),
+    current_model: "deepseek-v4-flash",
     mo_workbench_workspace: "/tmp/ws",
     mo_workbench_session_root: "/tmp/sessions",
     approval_policy: "never",
@@ -43,8 +89,12 @@ test "merge settings file into workspace" {
     appearance: "light",
   }
   let merged = SettingsWorkspace::merge_settings_file(base, file)
-  inspect(merged.api_key, content="sk-abc")
-  inspect(merged.base_url, content="https://api.example.com/v1")
+  inspect(merged.find_provider("deepseek").unwrap().api_key, content="sk-abc")
+  inspect(
+    merged.find_provider("deepseek").unwrap().base_url,
+    content="https://api.example.com/v1",
+  )
+  inspect(merged.active_provider_id, content="Some(deepseek)")
   inspect(merged.working_dir, content="/tmp/ws")
   inspect(merged.session_root, content="/tmp/sessions")
   inspect(merged.font_size, content="12")

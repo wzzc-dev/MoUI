@@ -15,6 +15,7 @@ struct OpenSeekEngineState {
   mut session : @agent_session.Session
   mut model : @deepseek.Model
   mut thinking : @deepseek.ThinkingMode
+  runtime : @agent_runtime.AgentRuntime
   mut turn_task : @async.Task[Unit]?
 }
 
@@ -78,11 +79,11 @@ fn openseek_resolve_session_root(workspace : String) -> String {
 }
 
 ///|
-fn openseek_model_from_choice(choice : @app.ModelChoice) -> @deepseek.Model {
-  match choice {
-    @app.ModelChoice::V4Flash => @deepseek.Model::V4Flash
-    @app.ModelChoice::V4Pro => @deepseek.Model::V4Pro
-  }
+/// Map a Mo Workbench model id (any OpenAI-compatible id) to a `@deepseek.Model`.
+/// Known DeepSeek/Kimi ids map to their typed variants; anything else becomes
+/// `Custom(id)` so it flows to the API verbatim.
+fn openseek_model_from_string(model_id : String) -> @deepseek.Model {
+  @deepseek.Model::parse_or_custom(model_id)
 }
 
 ///|
@@ -90,7 +91,7 @@ fn openseek_thinking_from_choice(
   choice : @app.ThinkingChoice,
 ) -> @deepseek.ThinkingMode {
   match choice {
-    @app.ThinkingChoice::No => @deepseek.ThinkingMode::No
+    @app.ThinkingChoice::Normal => @deepseek.ThinkingMode::No
     @app.ThinkingChoice::High => @deepseek.ThinkingMode::High
     // OpenAI-compatible gateways (e.g. Sensenova) reject `reasoning_effort=max`.
     @app.ThinkingChoice::Max => @deepseek.ThinkingMode::High
@@ -105,6 +106,126 @@ fn openseek_default_model() -> @deepseek.Model {
 ///|
 fn openseek_default_thinking() -> @deepseek.ThinkingMode {
   @deepseek.ThinkingMode::No
+}
+
+///|
+/// OpenAI-compatible `v1/models` listing shape.
+struct ModelsResponse {
+  data : Array[ModelEntry]
+} derive(FromJson)
+
+///|
+struct ModelEntry {
+  id : String
+} derive(FromJson)
+
+///|
+/// Build the chat-completions `v1/models` URL from a provider base URL.
+fn openseek_models_url(base_url : String) -> String {
+  let trimmed = base_url.trim().to_owned()
+  if trimmed.is_empty() {
+    trimmed
+  } else if trimmed.has_suffix("/") {
+    trimmed + "models"
+  } else {
+    trimmed + "/models"
+  }
+}
+
+///|
+/// Parse a `v1/models` JSON body into model id strings. Tolerates providers
+/// that wrap the list under `data` (OpenAI/DeepSeek style) and returns an
+/// empty list when the body is not the expected shape.
+fn openseek_parse_models(text : String) -> Array[String] {
+  let out : Array[String] = []
+  let parsed = @json.parse(text) catch { _ => return out }
+  let resp : ModelsResponse = @json.from_json(parsed) catch { _ => return out }
+  for e in resp.data {
+    if !e.id.is_empty() {
+      out.push(e.id)
+    }
+  }
+  out
+}
+
+///|
+/// Build a backend config from a persisted settings file, preferring the
+/// active provider's connection and selected model. Falls back to environment
+/// variables when the provider has no key.
+fn openseek_config_from_settings(
+  file : @app.MoWorkbenchSettingsFile,
+) -> OpenSeekBackendConfig? {
+  let provider = match file.active_provider_id {
+    Some(id) => {
+      let matching = file.providers.filter(fn(p) { p.id == id })
+      if matching.is_empty() {
+        None
+      } else {
+        Some(matching[0])
+      }
+    }
+    None =>
+      if file.providers.is_empty() {
+        None
+      } else {
+        Some(file.providers[0])
+      }
+  }
+  let (api_key, base_url, model_id) = match provider {
+    Some(p) => {
+      let key = if !p.api_key.is_empty() {
+        p.api_key
+      } else {
+        openseek_resolve_api_key().unwrap_or("")
+      }
+      let url = if !p.base_url.is_empty() {
+        p.base_url
+      } else {
+        openseek_resolve_api_url().unwrap_or("https://api.deepseek.com/v1")
+      }
+      let mid = if !file.current_model.is_empty() {
+        file.current_model
+      } else if p.models.is_empty() {
+        "deepseek-v4-flash"
+      } else {
+        p.models[0]
+      }
+      (key, url, mid)
+    }
+    None =>
+      match openseek_resolve_api_key() {
+        Some(k) =>
+          (
+            k,
+            openseek_resolve_api_url().unwrap_or("https://api.deepseek.com/v1"),
+            "deepseek-v4-flash",
+          )
+        None => return None
+      }
+  }
+  if api_key.is_empty() {
+    return None
+  }
+  let workspace = openseek_resolve_workspace_root()
+  Some({
+    api_key,
+    api_url: Some(openseek_chat_completions_url(base_url)),
+    model: openseek_model_from_string(model_id),
+    thinking: openseek_default_thinking(),
+    workspace_root: workspace,
+    session_root: openseek_resolve_session_root(workspace),
+  })
+}
+
+///|
+/// Build a backend bundle from a persisted settings file (active provider).
+pub fn openseek_backend_bundle_from_settings(
+  file : @app.MoWorkbenchSettingsFile,
+) -> OpenSeekBackendBundle? {
+  match openseek_config_from_settings(file) {
+    Some(config) => Some(openseek_backend_bundle(config))
+    None => None
+  }
 }
 
 ///|
@@ -266,14 +387,23 @@ fn openseek_ensure_engine(
         id,
         system_prompt=openseek_system_prompt(config.model),
       )
-      let state = {
-        session,
-        model: config.model,
-        thinking: config.thinking,
-        turn_task: None,
-      }
+      let state = openseek_engine_state(config, session)
       engine.val = Some(state)
       state
     }
+  }
+}
+
+///|
+fn openseek_engine_state(
+  config : OpenSeekBackendConfig,
+  session : @agent_session.Session,
+) -> OpenSeekEngineState {
+  {
+    session,
+    model: config.model,
+    thinking: config.thinking,
+    runtime: @agent_runtime.AgentRuntime(workspace_root=config.workspace_root),
+    turn_task: None,
   }
 }
