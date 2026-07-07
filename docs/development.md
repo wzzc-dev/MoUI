@@ -225,20 +225,10 @@ For routine local development, prefer the bounded daily check:
 sh scripts/dev-check.sh
 ```
 
-It runs stable package-level tests, native renderer contract tests, native Skia
-fallback-safe checks, guidance consistency checks, and Showcase/Markdown Editor
-Web wasm-gc example builds without invoking all-repository native or wasm-gc
-test targets.
-Fallback-safe Skia checks prove API shape and unavailable diagnostics; they do
-not mean a real Skia renderer is ready. The local dependency check also runs
-`moui_skia/scripts/verify-platform-status.sh` and
-`moui_skia/scripts/verify-native-capability-contract.sh`, which
-validate the binding workspace's `skia-platform-status.json`, provider lock,
-native capability manifest, fallback parity, ownership, FFI borrow annotations,
-and native smoke marker coverage before the MoUI daily baseline can pass.
-Design Systems is addon diagnostic coverage; run
-`sh scripts/dev-check.sh --theme-diagnostics` when changing `moui_theme` or the
-Design Systems example.
+The detailed daily gate membership, focused package checks, maintenance
+ratchets, and addon diagnostic variants live in [testing.md](testing.md). Use
+[release-readiness.md](release-readiness.md) for release gate evidence,
+provenance, and smoke catalog policy.
 
 ## Script Tooling Policy
 
@@ -419,61 +409,19 @@ Run the daily validation script for routine handoff:
 sh scripts/dev-check.sh
 ```
 
-It includes dependency guards, guidance consistency, maintenance baseline
-ratchets, API surface checks, smoke catalog validation, `moon check`, core
-package tests, native Skia package tests, Web wasm-gc package tests, tester and
-devtools checks, Showcase/Markdown Editor app tests, and Web builds.
-
-Design Systems is addon diagnostic coverage; run:
-
-```sh
-sh scripts/dev-check.sh --theme-diagnostics
-```
-
-when changing `moui_theme` or `examples/design_systems`.
-
-Native WGPU remains diagnostic:
-
-```sh
-sh scripts/dev-check.sh --wgpu-experimental
-```
-
-Current-host backend tests can be included without native example builds:
-
-```sh
-sh scripts/dev-check.sh --platform-examples-test
-sh scripts/conformance-check.sh --platform-services
-```
+Keep this section as an entrypoint only. The full daily command inventory,
+focused checks, addon diagnostics, WGPU diagnostic route, and current-host
+backend variants are maintained in [testing.md](testing.md).
 
 ## Real Renderer And Platform Smoke
 
-Run real Skia native smoke only when local Skia link flags or the helper script
-are configured:
-
-```sh
-sh scripts/dev-check.sh --skia-real-smoke
-scripts/macos-skia-renderer-smoke.sh
-scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke
-scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke
-```
-
-For Web runtime presentation smoke:
-
-```sh
-sh scripts/ci-web-runtime-presentation.sh
-```
-
-For the window package smoke, use the resolved registry package without adding a
-local checkout:
-
-```sh
-WINDOW_MOUI_MACOS_SMOKE_LOG_PATH=artifacts/platform-observation/macos/window-macos-runtime-smoke.log \
-  scripts/run-window-package-smoke.sh macos --run
-```
-
-Smoke commands write logs and manifests under `artifacts/`. Do not commit
-artifacts; cite the CI run, uploaded artifact, or local smoke log in release
-notes.
+Real browser, renderer, and platform smoke runs are opt-in because they require
+matching hosts, configured renderer dependencies, or browser/runtime evidence.
+Use [testing.md](testing.md#smoke) for the smoke command catalog and
+[release-readiness.md](release-readiness.md) for release evidence and
+provenance policy. Smoke commands write logs and manifests under `artifacts/`;
+do not commit artifacts, and cite the CI run, uploaded artifact, or local smoke
+log in release notes.
 
 ## CI And Toolchain
 

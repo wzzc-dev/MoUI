@@ -21,13 +21,13 @@ fn pub_all_budgets() -> Array[CountBudget] {
       kind: "pub(all)",
       label: "moui/backend/host",
       path: "moui/backend/host",
-      max_count: 170,
+      max_count: 169,
     },
     {
       kind: "pub(all)",
       label: "moui/render",
       path: "moui/render",
-      max_count: 118,
+      max_count: 116,
     },
     {
       kind: "pub(all)",
