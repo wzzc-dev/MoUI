@@ -272,8 +272,7 @@ test "parse_markdown keeps processing instruction html blocks together" {
 test "parse_markdown keeps cdata html blocks together" {
   let blocks = parse_markdown("<![CDATA[\nraw <tag>\n]]>\n\nTail")
   inspect(blocks.length(), content="2")
-  guard blocks[0]
-    is { kind: HtmlBlock, text: "<![CDATA[\nraw <tag>\n]]>", .. } else {
+  guard blocks[0] is { kind: HtmlBlock, text: "<![CDATA[\nraw <tag>\n]]>", .. } else {
     fail("expected cdata html block")
   }
   guard blocks[1] is { kind: Paragraph, text: "Tail", .. } else {

@@ -1,5 +1,8 @@
 ///|
-fn inspect_active_provider_id(actual : String?, expected : String) -> Unit raise {
+fn inspect_active_provider_id(
+  actual : String?,
+  expected : String,
+) -> Unit raise {
   guard actual is Some(provider_id) else {
     fail("expected active provider id " + expected)
   }

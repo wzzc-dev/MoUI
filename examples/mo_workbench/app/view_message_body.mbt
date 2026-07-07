@@ -10,12 +10,9 @@ fn chat_message_body(
   let display = if text_.trim().is_empty() { "(empty)" } else { text_ }
   let lines = chat_message_display_lines(display, width)
   if lines.is_empty() {
-    return @views.text(
-      "(empty)",
-      role=@views.TextRole::Caption,
-      theme~,
-      width~,
-    ).foreground(theme.palette.muted)
+    return @views.text("(empty)", role=@views.TextRole::Caption, theme~, width~).foreground(
+      theme.palette.muted,
+    )
   }
   let rows : Array[@moui.View[CodeMsg]] = []
   for line in lines {
@@ -62,7 +59,13 @@ fn chat_message_display_lines(text_ : String, width : Double) -> Array[String] {
 ///|
 fn chat_message_chars_per_line(width : Double) -> Int {
   let chars = (width / 8.0).to_int()
-  if chars < 24 { 24 } else if chars > 120 { 120 } else { chars }
+  if chars < 24 {
+    24
+  } else if chars > 120 {
+    120
+  } else {
+    chars
+  }
 }
 
 ///|
