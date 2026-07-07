@@ -56,7 +56,7 @@ done
 
 skia_repo="$REPO_ROOT/moui_skia"
 case "$log_dir" in
-  /*) resolved_log_dir="$log_dir" ;;
+  /*|?:/*) resolved_log_dir="$log_dir" ;;
   *) resolved_log_dir="$REPO_ROOT/$log_dir" ;;
 esac
 
@@ -64,6 +64,8 @@ showcase_log="$resolved_log_dir/showcase-windows-skia-first-frame.log"
 markdown_log="$resolved_log_dir/markdown-editor-windows-skia-first-frame.log"
 preflight_log="$resolved_log_dir/windows-platform-evidence-preflight.log"
 summary_log="$resolved_log_dir/windows-platform-evidence-summary.log"
+
+mkdir -p "$resolved_log_dir"
 
 echo "Windows platform evidence run:
   log_dir=$resolved_log_dir
