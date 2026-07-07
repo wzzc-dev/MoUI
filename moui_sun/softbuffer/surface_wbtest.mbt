@@ -1,4 +1,9 @@
 ///|
+test "macOS presenter uses passthrough image view for pointer delivery" {
+  assert_true(macos_presenter_passthrough_ready())
+}
+
+///|
 test "copy_tightly_packed_rows drops per-row padding" {
   let pixels : FixedArray[Byte] = FixedArray::make(16, 0)
   pixels[0] = 11

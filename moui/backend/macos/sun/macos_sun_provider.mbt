@@ -231,13 +231,18 @@ pub fn macos_sun_provider_preflight_summary(
   } else {
     "disabled"
   }
+  let presenter_hit_test = if @sun_softbuffer.macos_presenter_passthrough_ready() {
+    "passthrough"
+  } else {
+    "blocking"
+  }
   let host_preflight = @macos_host.macos_capability_summary().preflight_fields()
-  "macOS Sun provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; presenter=\{macos_sun_presenter_description()}; first_frame_smoke=\{first_frame}; \{sun_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=matching-host pending; unavailable=\"\{macos_sun_unavailable_message()}\""
+  "macOS Sun provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; renderer_preflight=\"\{info.description}\"; presenter=\{macos_sun_presenter_description()}; presenter_hit_test=\{presenter_hit_test}; first_frame_smoke=\{first_frame}; first_frame_env=MOUI_MACOS_SUN_EXIT_AFTER_FIRST_PRESENT; \{sun_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=matching-host pending; runtime_smokes=showcase-macos-sun; unavailable=\"\{macos_sun_unavailable_message()}\""
 }
 
 ///|
 fn sun_host_renderer_bridge_preflight() -> String {
-  "renderer_bridge=HostWindowRenderer; renderer_text_system=SunRasterRenderer.text_system; renderer_image_resources=SunRasterRenderer.image_resources; renderer_image_loader=sun_image_load_completion; renderer_image_completion_source=HostNativeAsyncImageSource; renderer_async_image_loading=off-main-io; renderer_image_resource_apply=SunRasterRenderer.apply_image_resource_load_completion; renderer_image_resource_change=SunRasterRenderer.set_image_resource_change_callback; renderer_present_count=SunRasterRenderer.present_count; renderer_dispose=SunRasterRenderer.dispose"
+  "renderer_bridge=HostWindowRenderer; renderer_frame=SunRasterRenderer.render_frame; renderer_platform_view_pixels=SunRasterRenderer.draw_platform_view_pixels; renderer_text_system=SunRasterRenderer.text_system; renderer_image_resources=SunRasterRenderer.image_resources; renderer_image_loader=sun_image_load_completion; renderer_image_completion_source=HostNativeAsyncImageSource; renderer_async_image_loading=off-main-io; renderer_image_resource_apply=SunRasterRenderer.apply_image_resource_load_completion; renderer_image_resource_change=SunRasterRenderer.set_image_resource_change_callback; renderer_present_count=SunRasterRenderer.present_count; renderer_dispose=SunRasterRenderer.dispose"
 }
 
 ///|
@@ -341,6 +346,7 @@ fn host_renderer_from_sun(
         err => println("error rendering macOS Sun frame: \{err.message()}")
       }
     },
+    render_frame=Some(frame => renderer.render_frame(frame)),
     text_system=() => renderer.text_system(),
     image_resources=() => renderer.image_resources(),
     image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
@@ -352,6 +358,23 @@ fn host_renderer_from_sun(
     },
     present_count=() => renderer.present_count(),
     dispose=() => renderer.dispose(),
+    draw_platform_view_pixels=fn(
+      pixels,
+      src_width,
+      src_height,
+      src_stride,
+      dst_x,
+      dst_y,
+      dst_width,
+      dst_height,
+    ) {
+      renderer.draw_platform_view_pixels(
+        pixels, src_width, src_height, src_stride, dst_x, dst_y, dst_width, dst_height,
+      )
+    },
+    set_platform_view_draw_fn=draw_fn => {
+      renderer.set_platform_view_draw_fn(draw_fn)
+    },
   )
 }
 

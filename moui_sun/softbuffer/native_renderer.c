@@ -107,6 +107,10 @@ void renderer_present_surface_rect(
     renderer_darwin_api.cg_image_release(cg_image);
 }
 
+int32_t renderer_macos_presenter_passthrough_ready(void) {
+    return 0;
+}
+
 #elif defined(__APPLE__)
 // ============================================================================
 // macOS Implementation
@@ -274,6 +278,9 @@ static bool renderer_load_darwin_api(void) {
         renderer_darwin_api.objc_get_class != NULL &&
         renderer_darwin_api.sel_register_name != NULL &&
         renderer_darwin_api.objc_msg_send != NULL &&
+        renderer_darwin_api.objc_allocate_class_pair != NULL &&
+        renderer_darwin_api.class_add_method != NULL &&
+        renderer_darwin_api.objc_register_class_pair != NULL &&
         renderer_darwin_api.cg_color_space_create_device_rgb != NULL &&
         renderer_darwin_api.cg_data_provider_create_with_data != NULL &&
         renderer_darwin_api.cg_image_create != NULL &&
@@ -364,10 +371,42 @@ static renderer_objc_class renderer_passthrough_image_view_class(void) {
         (void*)renderer_passthrough_hit_test,
         "@16@0:8{CGPoint=dd}16"
     );
-    (void)added;
+    if (!added) {
+        return NULL;
+    }
     renderer_darwin_api.objc_register_class_pair(new_class);
     cached = new_class;
     return cached;
+}
+
+static bool renderer_passthrough_hit_test_returns_nil(void) {
+    renderer_objc_class image_view_class = renderer_passthrough_image_view_class();
+    if (image_view_class == NULL) {
+        return false;
+    }
+    renderer_objc_id alloc_view = ((renderer_objc_id (*)(renderer_objc_id, renderer_objc_sel))
+        renderer_darwin_api.objc_msg_send)(image_view_class, renderer_sel("alloc"));
+    if (alloc_view == NULL) {
+        return false;
+    }
+    renderer_cgrect_t frame = {0.0, 0.0, 1.0, 1.0};
+    renderer_objc_id image_view = ((renderer_objc_id (*)(renderer_objc_id, renderer_objc_sel, renderer_cgrect_t))
+        renderer_darwin_api.objc_msg_send)(alloc_view, renderer_sel("initWithFrame:"), frame);
+    if (image_view == NULL) {
+        return false;
+    }
+    renderer_cgpoint_t point = {0.5, 0.5};
+    renderer_objc_id hit = ((renderer_objc_id (*)(renderer_objc_id, renderer_objc_sel, renderer_cgpoint_t))
+        renderer_darwin_api.objc_msg_send)(image_view, renderer_sel("hitTest:"), point);
+    renderer_msg_void(image_view, "release");
+    return hit == NULL;
+}
+
+int32_t renderer_macos_presenter_passthrough_ready(void) {
+    if (!renderer_load_darwin_api()) {
+        return 0;
+    }
+    return renderer_passthrough_hit_test_returns_nil() ? 1 : 0;
 }
 
 // Get view bounds (NSRect/CGRect) via ObjC runtime.
@@ -589,7 +628,7 @@ static renderer_objc_id renderer_find_or_create_image_view(renderer_objc_id view
     // pointer events fall through to the content view (matching Skia).
     renderer_objc_class image_view_class = renderer_passthrough_image_view_class();
     if (image_view_class == NULL) {
-        image_view_class = ns_image_view_class;
+        return NULL;
     }
 
     // Create new passthrough image view
@@ -767,6 +806,10 @@ void renderer_present_surface_rect(
     (void)y;
     (void)width;
     (void)height;
+}
+
+int32_t renderer_macos_presenter_passthrough_ready(void) {
+    return 0;
 }
 
 #endif

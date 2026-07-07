@@ -201,3 +201,241 @@ fn sun_is_unspaced_layout_break_class(class : @sun_text.LineBreakClass) -> Bool 
     _ => false
   }
 }
+
+///|
+fn SunRasterRenderer::paragraph_layout_result(
+  self : SunRasterRenderer,
+  input : @core.TextLayoutInput,
+) -> @core.TextParagraphLayoutResult {
+  let faces = self.resolved_faces(input.font)
+  if faces.is_empty() {
+    return @core.TextSystem::new(id="sun-raster-text-system", measure=measure_input => {
+      self.measure_text_layout(measure_input)
+    }).layout_paragraph(input)
+  }
+  let config = sun_text_layout_config(
+    input.font,
+    input.max_width.unwrap_or(1000000000.0),
+  )
+  let plan = sun_text_line_plan(faces, input.text, config)
+  let text_length = input.text.to_array().length()
+  let caret_rects : Array[@core.Rect] = []
+  for _ in 0..<(text_length + 1) {
+    caret_rects.push(
+      @core.Rect::new(x=0.0, y=0.0, width=1.0, height=plan.line_height),
+    )
+  }
+  let lines : Array[@core.TextParagraphLineMetrics] = []
+  let mut y = 0.0
+  let mut width = 0.0
+  let mut first_baseline = 0.0
+  for line_index in 0..<plan.lines.length() {
+    let line = plan.lines[line_index]
+    let measured = self.measure_single_line_text(faces, line.text, config)
+    let baseline = y + plan.baseline
+    if line_index == 0 {
+      first_baseline = baseline
+    }
+    let line_width = line.width.max(measured.size.width)
+    lines.push({
+      line_index,
+      text_range: @core.TextRange::new(
+        start=line.start_scalar,
+        end=line.start_scalar + line.scalar_count,
+      ),
+      origin: @core.Point::new(x=0.0, y~),
+      size: @core.Size::new(width=line_width, height=plan.line_height),
+      baseline,
+    })
+    let line_carets = measured.caret_positions
+    for line_offset in 0..<(line.scalar_count + 1) {
+      let global = line.start_scalar + line_offset
+      if global < caret_rects.length() && line_offset < line_carets.length() {
+        caret_rects[global] = @core.Rect::new(
+          x=line_carets[line_offset],
+          y~,
+          width=1.0,
+          height=plan.line_height,
+        )
+      }
+    }
+    width = width.max(line_width)
+    y = y + plan.line_height
+  }
+  let visual_order = sun_text_visual_order_metadata(input.text)
+  @core.TextParagraphLayoutResult::{
+    text: input.text,
+    size: @core.Size::new(
+      width=width.min(input.max_width.unwrap_or(width)),
+      height=y,
+    ),
+    baseline: first_baseline,
+    lines,
+    caret_rects: sun_stabilize_grapheme_cluster_caret_rects(
+      input.text,
+      caret_rects,
+    ),
+    visual_order,
+    metadata: {
+      text_system_id: "sun-raster-text-system",
+      paragraph_layout_available: true,
+      line_metrics_available: !lines.is_empty(),
+      selection_rects_available: true,
+      hit_test_available: true,
+      native_paragraph_ready: false,
+      bidi_visual_order_ready: visual_order.bidi_visual_order_ready,
+    },
+  }
+}
+
+///|
+fn sun_text_visual_order_metadata(
+  text : String,
+) -> @core.TextParagraphVisualOrderMetadata {
+  let logical_clusters = sun_text_grapheme_clusters(text)
+  let visual_clusters = sun_text_bidi_visual_clusters(logical_clusters)
+  {
+    logical_text: sun_text_join_clusters(logical_clusters),
+    visual_text: sun_text_join_clusters(visual_clusters),
+    logical_cluster_count: logical_clusters.length(),
+    visual_cluster_count: visual_clusters.length(),
+    segment_count: sun_text_segment_count(visual_clusters),
+    glyph_count: text.to_array().length(),
+    visual_order_differs: !sun_text_cluster_arrays_equal(
+      logical_clusters, visual_clusters,
+    ),
+    bidi_visual_order_ready: true,
+  }
+}
+
+///|
+fn sun_text_grapheme_clusters(text : String) -> Array[String] {
+  let chars = text.to_array()
+  let boundaries = @core.TextGraphemeBoundaries::new(text~).boundaries()
+  let clusters : Array[String] = []
+  if boundaries.length() < 2 {
+    return clusters
+  }
+  for boundary_index in 0..<(boundaries.length() - 1) {
+    let start = boundaries[boundary_index]
+    let end = boundaries[boundary_index + 1]
+    if end > start {
+      clusters.push(String::from_array(chars[start:end]))
+    }
+  }
+  clusters
+}
+
+///|
+fn sun_text_bidi_visual_clusters(clusters : Array[String]) -> Array[String] {
+  let visual : Array[String] = []
+  let mut index = 0
+  while index < clusters.length() {
+    let rtl = sun_text_cluster_is_rtl(clusters[index])
+    let start = index
+    index = index + 1
+    while index < clusters.length() &&
+          sun_text_cluster_is_rtl(clusters[index]) == rtl {
+      index = index + 1
+    }
+    if rtl {
+      let mut cursor = index
+      while cursor > start {
+        cursor = cursor - 1
+        visual.push(clusters[cursor])
+      }
+    } else {
+      for cursor in start..<index {
+        visual.push(clusters[cursor])
+      }
+    }
+  }
+  visual
+}
+
+///|
+fn sun_text_cluster_is_rtl(cluster : String) -> Bool {
+  let representative = sun_representative_fallback_codepoint(cluster)
+  sun_codepoint_is_hebrew_script(representative) ||
+  sun_codepoint_is_arabic_script(representative)
+}
+
+///|
+fn sun_text_segment_count(clusters : Array[String]) -> Int {
+  if clusters.is_empty() {
+    return 0
+  }
+  let mut count = 0
+  let mut current_class = -1
+  for cluster in clusters {
+    let cluster_class = sun_text_segment_class(cluster)
+    if count == 0 || cluster_class != current_class {
+      count = count + 1
+      current_class = cluster_class
+    }
+  }
+  count
+}
+
+///|
+fn sun_text_segment_class(cluster : String) -> Int {
+  let representative = sun_representative_fallback_codepoint(cluster)
+  if sun_codepoint_is_emoji_hint(representative) {
+    1
+  } else if sun_codepoint_is_cjk_ideograph(representative) ||
+    sun_codepoint_is_kana(representative) {
+    2
+  } else if sun_codepoint_is_hangul_cluster_codepoint(representative) {
+    3
+  } else if sun_codepoint_is_hebrew_script(representative) ||
+    sun_codepoint_is_arabic_script(representative) {
+    4
+  } else if representative < 0x0300 {
+    0
+  } else {
+    5
+  }
+}
+
+///|
+fn sun_text_join_clusters(clusters : Array[String]) -> String {
+  let chars : Array[Char] = []
+  for cluster in clusters {
+    for ch in cluster {
+      chars.push(ch)
+    }
+  }
+  String::from_array(chars)
+}
+
+///|
+fn sun_text_cluster_arrays_equal(
+  left : Array[String],
+  right : Array[String],
+) -> Bool {
+  if left.length() != right.length() {
+    return false
+  }
+  for index in 0..<left.length() {
+    if left[index] != right[index] {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn sun_stabilize_grapheme_cluster_caret_rects(
+  text : String,
+  caret_rects : Array[@core.Rect],
+) -> Array[@core.Rect] {
+  let boundaries = @core.TextGraphemeBoundaries::new(text~)
+  let stabilized = caret_rects.copy()
+  for index in 0..<stabilized.length() {
+    let nearest = boundaries.nearest_boundary(index)
+    if nearest >= 0 && nearest < caret_rects.length() {
+      stabilized[index] = caret_rects[nearest]
+    }
+  }
+  stabilized
+}

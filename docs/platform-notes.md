@@ -94,6 +94,13 @@ constructors and platform event conversion.
   navigation emits `WebViewEvent::NavigationRequested`, and the app commits by
   updating the view `url` or sending `WebViewCommand::LoadUrl` through the host
   command queue.
+- Sun provider preflights explicitly report renderer-side platform-view pixel
+  wiring. macOS, Windows, and Linux Sun report
+  `renderer_platform_view_pixels=SunRasterRenderer.draw_platform_view_pixels`
+  when their `HostWindowRenderer` wrappers forward offscreen platform-view
+  pixels into the Sun frame. This is renderer-composition wiring; matching-host
+  runtime smoke is still required before making a broader platform runtime
+  readiness claim.
 - Typed host services are routed through `HostServiceBridge`, with explicit
   capability flags for clipboard, menus, file dialogs, text-file access, URL
   opening, and system theme. Unsupported services should return `Unavailable` responses instead of

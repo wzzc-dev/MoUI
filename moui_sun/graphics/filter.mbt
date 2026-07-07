@@ -392,12 +392,13 @@ fn sepia_rgb_byte(
 
 ///|
 fn normalize_color_matrix(values : Array[Double]) -> Array[Double] {
-  guard values.length() == 20 else { return identity_color_matrix() }
-  let copied = []
-  for value in values {
-    copied.push(if value == value { value } else { 0.0 })
+  let matrix = identity_color_matrix()
+  let count = values.length().min(20)
+  for index in 0..<count {
+    let value = values[index]
+    matrix[index] = if value == value { value } else { 0.0 }
   }
-  copied
+  matrix
 }
 
 ///|

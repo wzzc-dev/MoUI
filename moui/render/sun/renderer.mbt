@@ -67,8 +67,12 @@ pub(all) struct SunRasterRenderer {
   mut cached_layer_order : Array[String]
   mut cached_layer_hit_count : Int
   mut cached_layer_miss_count : Int
+  mut cached_layer_update_count : Int
+  mut cached_layer_evict_count : Int
+  cached_layer_admissions : Array[SunCachedLayerAdmissionRecord]
   mut blur_radius_stack : Array[Double]
   mut rounded_clip_stack : Array[@core.RoundedRect]
+  mut platform_view_draw_fn : (() -> Unit)?
 }
 
 ///|
@@ -81,13 +85,18 @@ pub fn SunPresentTarget::new(
 
 ///|
 pub fn backend_info() -> @render.RendererBackendInfo {
+  let preflight = sun_cpu_raster_preflight(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=1.0, height=1.0),
+    ),
+  )
   @render.RendererBackendInfo::new(
     backend=@render.RendererBackendKind::SunRasterNative,
     status=@render.RendererCapabilityStatus::Supported,
     can_render=true,
     can_resize=true,
     owns_surface=true,
-    description="Native Sun CPU raster renderer over moui_sun graphics/text primitives with structured unsupported-command diagnostics.",
+    description=sun_backend_info_description(preflight.summary()),
   )
 }
 
@@ -144,8 +153,12 @@ pub fn create_with_present_target(
     cached_layer_order: [],
     cached_layer_hit_count: 0,
     cached_layer_miss_count: 0,
+    cached_layer_update_count: 0,
+    cached_layer_evict_count: 0,
+    cached_layer_admissions: [],
     blur_radius_stack: [],
     rounded_clip_stack: [],
+    platform_view_draw_fn: None,
   }
   renderer.register_default_platform_fonts()
   renderer
@@ -176,15 +189,18 @@ pub fn SunRasterRenderer::render(
   let blend_mode_stack : Array[@sun_graphics.BlendMode] = []
   let layer_spec_stack : Array[SunLayerScope] = []
   let rounded_clip_transform_stack : Array[@sun_graphics.Transform] = []
-  self.render_cached_command_range(
-    commands,
-    0,
-    commands.length(),
-    canvas_scopes,
-    opacity_stack,
-    blend_mode_stack,
-    layer_spec_stack,
-    rounded_clip_transform_stack,
+  ignore(
+    self.render_cached_command_range(
+      commands,
+      0,
+      commands.length(),
+      canvas_scopes,
+      opacity_stack,
+      blend_mode_stack,
+      layer_spec_stack,
+      rounded_clip_transform_stack,
+      SunCachedLayerFrameStats::new(),
+    ),
   )
   if !canvas_scopes.is_empty() {
     for scope in canvas_scopes {
@@ -294,6 +310,16 @@ pub fn SunRasterRenderer::register_font_bytes(
   data : Bytes,
 ) -> Unit {
   ignore(self.text_system.register_font_bytes(key, data))
+}
+
+///|
+pub fn SunRasterRenderer::register_font_file(
+  self : SunRasterRenderer,
+  key : String,
+  path : String,
+  font_index? : Int = 0,
+) -> Unit {
+  ignore(self.text_system.register_font_file(key, path, font_index~))
 }
 
 ///|
@@ -709,11 +735,6 @@ fn SunRasterRenderer::draw_path(
         sun_brush_stroke_paint(brush, path.stroke_width, opacity),
       )
     None => ()
-  }
-  if path.fill is None && path.stroke is None {
-    self.record_unsupported_command(
-      "DrawPath", "path command has neither fill nor stroke brush",
-    )
   }
 }
 
@@ -1338,49 +1359,19 @@ fn SunRasterRenderer::draw_shader_effect(
 ) -> Unit {
   let frame = spec.frame
   match spec.name {
-    "checker" => {
-      let size = if spec.uniforms.length() > 0 {
-        spec.uniforms[0].max(2.0)
-      } else {
-        16.0
-      }
-      let c1 = @sun_graphics.Color::new(r=200, g=200, b=200, a=255)
-      let c2 = @sun_graphics.Color::new(r=255, g=255, b=255, a=255)
-      let paint = @sun_graphics.Paint::new().set_opacity(opacity)
-      let mut y = frame.origin.y
-      let mut row = 0
-      while y < frame.origin.y + frame.size.height {
-        let mut x = frame.origin.x
-        let mut col = 0
-        while x < frame.origin.x + frame.size.width {
-          ignore(paint.set_color(if (row + col) % 2 == 0 { c1 } else { c2 }))
-          self.canvas.fill_rect(x, y, size, size, paint)
-          x = x + size
-          col = col + 1
-        }
-        y = y + size
-        row = row + 1
-      }
-    }
-    "vignette" => {
-      let center_x = frame.origin.x + frame.size.width * 0.5
-      let center_y = frame.origin.y + frame.size.height * 0.5
-      let radius = frame.size.width.min(frame.size.height) * 0.5
-      let steps = 20
-      for i in 0..<steps {
-        let t = i.to_double() / steps.to_double()
-        let r = radius * (1.0 - t * 0.5)
-        let alpha = sun_clamp_unit(t * opacity * 0.3)
-        let color = @sun_graphics.Color::new(
-          r=0,
-          g=0,
-          b=0,
-          a=sun_channel(alpha),
-        )
-        let paint = @sun_graphics.Paint::new().set_color(color)
-        self.canvas.fill_circle(center_x, center_y, r, paint)
-      }
-    }
+    "solid" => self.fill_shader_effect_frame(frame, spec.fallback, opacity)
+    "checker" =>
+      self.draw_checker_effect(frame, spec.fallback, spec.uniforms, opacity)
+    "linear-gradient-debug" =>
+      self.canvas.fill_rect(
+        frame.origin.x,
+        frame.origin.y,
+        frame.size.width,
+        frame.size.height,
+        sun_linear_gradient_debug_paint(frame, spec.fallback, opacity),
+      )
+    "vignette" =>
+      self.draw_vignette_effect(frame, spec.fallback, spec.uniforms, opacity)
     _ => {
       let fallback_paint = sun_brush_paint(spec.fallback, opacity)
       self.canvas.fill_rect(
@@ -1832,16 +1823,6 @@ fn SunRasterRenderer::measure_single_line_text(
     baseline: sun_text_baseline_for_faces(faces, config),
     caret_positions: carets,
   }
-}
-
-///|
-fn SunRasterRenderer::paragraph_layout_result(
-  self : SunRasterRenderer,
-  input : @core.TextLayoutInput,
-) -> @core.TextParagraphLayoutResult {
-  @core.TextSystem::new(id="sun-raster-text-system", measure=measure_input => {
-    self.measure_text_layout(measure_input)
-  }).layout_paragraph(input)
 }
 
 ///|

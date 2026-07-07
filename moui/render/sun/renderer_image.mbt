@@ -7,12 +7,10 @@ fn SunRasterRenderer::draw_image(
   guard image.frame.size.width > 0.0 && image.frame.size.height > 0.0 else {
     return
   }
-  let previous_revision = self.image_lifecycle.revision()
   match self.sun_image_for_source(image.source) {
     Some(pixmap) => self.draw_image_pixmap(image, pixmap, opacity)
     None => self.draw_image_placeholder(image, opacity)
   }
-  self.notify_image_resource_change_if_needed(previous_revision)
 }
 
 ///|
@@ -36,6 +34,17 @@ fn SunRasterRenderer::sun_sync_image_for_source(
   self : SunRasterRenderer,
   source : String,
 ) -> @sun_graphics.Pixmap? {
+  match self.image_lifecycle.lookup(source) {
+    Some({ status: @render.ImageResourceStatus::ImageFailed, .. }) =>
+      if !sun_image_failed_record_can_retry(source) {
+        return None
+      }
+    _ => ()
+  }
+  match sun_image_source_bytes(source) {
+    Some(_) => self.mark_sun_image_loading_if_needed(source)
+    None => ()
+  }
   match self.decode_image_source_with_cache(source) {
     Ok(pixmap) => {
       self.mark_sun_image_ready_if_needed(source, pixmap)
@@ -67,14 +76,29 @@ fn SunRasterRenderer::sun_async_image_for_source(
       }
     Some({ status: @render.ImageResourceStatus::ImageFailed, .. }) =>
       if sun_image_failed_record_can_retry(source) {
-        ignore(self.image_lifecycle.mark_loading(source))
+        self.mark_sun_image_loading_if_needed(source)
         None
       } else {
         None
       }
     _ => {
-      ignore(self.image_lifecycle.mark_loading(source))
+      self.mark_sun_image_loading_if_needed(source)
       None
+    }
+  }
+}
+
+///|
+fn SunRasterRenderer::mark_sun_image_loading_if_needed(
+  self : SunRasterRenderer,
+  source : String,
+) -> Unit {
+  match self.image_lifecycle.lookup(source) {
+    Some({ status: @render.ImageResourceStatus::ImageLoading, .. }) => ()
+    _ => {
+      let previous_revision = self.image_lifecycle.revision()
+      ignore(self.image_lifecycle.mark_loading(source))
+      self.notify_image_resource_change_if_needed(previous_revision)
     }
   }
 }
@@ -90,6 +114,7 @@ fn SunRasterRenderer::mark_sun_image_ready_if_needed(
       pixmap.get_width(),
       pixmap.get_height(),
     ) {
+    let previous_revision = self.image_lifecycle.revision()
     ignore(
       self.image_lifecycle.mark_ready(
         source,
@@ -97,6 +122,7 @@ fn SunRasterRenderer::mark_sun_image_ready_if_needed(
         height=pixmap.get_height(),
       ),
     )
+    self.notify_image_resource_change_if_needed(previous_revision)
   }
 }
 
@@ -110,7 +136,9 @@ fn SunRasterRenderer::mark_sun_image_failed_if_needed(
       self.image_lifecycle.lookup(source),
       diagnostic,
     ) {
+    let previous_revision = self.image_lifecycle.revision()
     ignore(self.image_lifecycle.mark_failed(source, diagnostic~))
+    self.notify_image_resource_change_if_needed(previous_revision)
   }
 }
 
@@ -192,24 +220,14 @@ fn sun_decode_image_source_with_cache(
     Some(pixmap) => Ok(pixmap)
     None =>
       match sun_image_source_bytes(source) {
-        Some({ format: SunImageFormat::Png, data }) =>
-          match cache.get_or_decode_png_result(source, data) {
-            Ok(result) => Ok(result.get_pixmap())
-            Err(_) =>
-              Err("Sun renderer could not decode PNG image source: \{source}")
-          }
-        Some({ format: SunImageFormat::Bmp, data }) =>
-          match cache.get_or_decode_bmp_result(source, data) {
-            Ok(result) => Ok(result.get_pixmap())
-            Err(_) =>
-              Err("Sun renderer could not decode BMP image source: \{source}")
-          }
-        Some({ format: SunImageFormat::Jpeg, data }) =>
-          sun_decode_jpeg_image_with_cache(
+        Some({ format, data }) =>
+          sun_decode_image_data_with_fallback(
             cache,
             source,
             data,
-            failure_kind="source",
+            Some(format),
+            "source",
+            "Sun renderer could not decode image source: \{source}",
           )
         None => Err("Sun renderer could not decode image source: \{source}")
       }
@@ -222,27 +240,86 @@ fn sun_decode_image_bytes_with_cache(
   source : String,
   data : Bytes,
 ) -> Result[@sun_graphics.Pixmap, String] {
-  match sun_image_format_for_source(source, sun_image_media_type(source)) {
-    Some(SunImageFormat::Png) =>
+  sun_decode_image_data_with_fallback(
+    cache,
+    source,
+    data,
+    sun_image_format_for_source(source, sun_image_media_type(source)),
+    "bytes",
+    "Sun renderer could not infer image format: \{source}",
+  )
+}
+
+///|
+fn sun_decode_image_data_with_fallback(
+  cache : @sun_graphics.PixmapCache,
+  source : String,
+  data : Bytes,
+  source_format : SunImageFormat?,
+  failure_kind : String,
+  infer_diagnostic : String,
+) -> Result[@sun_graphics.Pixmap, String] {
+  let byte_format = sun_image_format_for_bytes(data)
+  let format = match source_format {
+    Some(format) => Some(format)
+    None => byte_format
+  }
+  match format {
+    Some(format) =>
+      match
+        sun_decode_image_data_as_format(
+          cache, source, data, format, failure_kind,
+        ) {
+        Ok(pixmap) => Ok(pixmap)
+        Err(diagnostic) =>
+          match byte_format {
+            Some(fallback_format) =>
+              if !sun_image_format_is_same(fallback_format, format) {
+                sun_decode_image_data_as_format(
+                  cache, source, data, fallback_format, failure_kind,
+                )
+              } else {
+                Err(diagnostic)
+              }
+            None => Err(diagnostic)
+          }
+      }
+    None => Err(infer_diagnostic)
+  }
+}
+
+///|
+fn sun_decode_image_data_as_format(
+  cache : @sun_graphics.PixmapCache,
+  source : String,
+  data : Bytes,
+  format : SunImageFormat,
+  failure_kind : String,
+) -> Result[@sun_graphics.Pixmap, String] {
+  match format {
+    SunImageFormat::Png =>
       match cache.get_or_decode_png_result(source, data) {
         Ok(result) => Ok(result.get_pixmap())
         Err(_) =>
-          Err("Sun renderer could not decode PNG image bytes: \{source}")
+          Err(
+            "Sun renderer could not decode PNG image \{failure_kind}: \{source}",
+          )
       }
-    Some(SunImageFormat::Bmp) =>
+    SunImageFormat::Bmp =>
       match cache.get_or_decode_bmp_result(source, data) {
         Ok(result) => Ok(result.get_pixmap())
         Err(_) =>
-          Err("Sun renderer could not decode BMP image bytes: \{source}")
+          Err(
+            "Sun renderer could not decode BMP image \{failure_kind}: \{source}",
+          )
       }
-    Some(SunImageFormat::Jpeg) =>
+    SunImageFormat::Jpeg =>
       sun_decode_jpeg_image_with_cache(
         cache,
         source,
         data,
         failure_kind="bytes",
       )
-    None => Err("Sun renderer could not infer image format: \{source}")
   }
 }
 
@@ -347,7 +424,7 @@ fn sun_image_source_bytes(source : String) -> SunImageSourceBytes? {
     let data = Some(@fs.read_file_to_bytes(source)) catch { _ => None }
     match data {
       Some(bytes) =>
-        match sun_image_format_for_source(source, "") {
+        match sun_image_format_for_source_or_bytes(source, "", bytes) {
           Some(format) => Some({ format, data: bytes })
           None => None
         }
@@ -375,10 +452,14 @@ fn sun_parse_data_uri(uri : String) -> SunImageSourceBytes? {
   let encoding = String::from_array(chars[semi_idx + 1:comma_idx])
   guard encoding == "base64" else { return None }
   let data_part = String::from_array(chars[comma_idx + 1:])
-  match sun_image_format_for_source("", meta) {
-    Some(format) =>
-      Some({ format, data: @base64.decode(data_part, ignore_whitespace=true) }) catch {
-        _ => None
+  let decoded : Bytes? = Some(@base64.decode(data_part, ignore_whitespace=true)) catch {
+    _ => None
+  }
+  match decoded {
+    Some(data) =>
+      match sun_image_format_for_source_or_bytes("", meta, data) {
+        Some(format) => Some({ format, data })
+        None => None
       }
     None => None
   }
@@ -398,14 +479,75 @@ fn sun_image_format_for_source(
   source : String,
   media_type : String,
 ) -> SunImageFormat? {
-  if media_type.contains("png") || source.has_suffix(".png") {
+  let normalized_media_type = media_type.to_lower()
+  let normalized_source = source.to_lower()
+  if normalized_media_type.contains("png") ||
+    normalized_source.has_suffix(".png") {
     Some(SunImageFormat::Png)
-  } else if media_type.contains("bmp") || source.has_suffix(".bmp") {
+  } else if normalized_media_type.contains("bmp") ||
+    normalized_source.has_suffix(".bmp") {
     Some(SunImageFormat::Bmp)
-  } else if media_type.contains("jpeg") ||
-    media_type.contains("jpg") ||
-    source.has_suffix(".jpg") ||
-    source.has_suffix(".jpeg") {
+  } else if normalized_media_type.contains("jpeg") ||
+    normalized_media_type.contains("jpg") ||
+    normalized_source.has_suffix(".jpg") ||
+    normalized_source.has_suffix(".jpeg") {
+    Some(SunImageFormat::Jpeg)
+  } else {
+    None
+  }
+}
+
+///|
+fn sun_image_format_for_source_or_bytes(
+  source : String,
+  media_type : String,
+  data : Bytes,
+) -> SunImageFormat? {
+  match sun_image_format_for_source(source, media_type) {
+    Some(format) => Some(format)
+    None => sun_image_format_for_bytes(data)
+  }
+}
+
+///|
+fn sun_image_format_is_same(
+  left : SunImageFormat,
+  right : SunImageFormat,
+) -> Bool {
+  match left {
+    SunImageFormat::Png =>
+      match right {
+        SunImageFormat::Png => true
+        _ => false
+      }
+    SunImageFormat::Bmp =>
+      match right {
+        SunImageFormat::Bmp => true
+        _ => false
+      }
+    SunImageFormat::Jpeg =>
+      match right {
+        SunImageFormat::Jpeg => true
+        _ => false
+      }
+  }
+}
+
+///|
+fn sun_image_format_for_bytes(data : Bytes) -> SunImageFormat? {
+  if data.length() >= 8 &&
+    data[0] == 137 &&
+    data[1] == 80 &&
+    data[2] == 78 &&
+    data[3] == 71 &&
+    data[4] == 13 &&
+    data[5] == 10 &&
+    data[6] == 26 &&
+    data[7] == 10 {
+    Some(SunImageFormat::Png)
+  } else if data.length() >= 2 && data[0] == 66 && data[1] == 77 {
+    Some(SunImageFormat::Bmp)
+  } else if data.length() >= 2 && data[0] == 255 && data[1] == 216 {
     Some(SunImageFormat::Jpeg)
   } else {
     None
