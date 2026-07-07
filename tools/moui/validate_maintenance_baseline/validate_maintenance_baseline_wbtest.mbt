@@ -106,10 +106,6 @@ test "MoonBit tool wrapper budgets track validator compatibility shims" {
     content="true",
   )
   inspect(
-    paths.contains("scripts/validate-openseek-workbench.mjs"),
-    content="true",
-  )
-  inspect(
     paths.contains("scripts/validate-web-runtime-handoff.mjs"),
     content="true",
   )

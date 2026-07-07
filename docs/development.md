@@ -105,7 +105,6 @@ members = [
   "./examples/file_importer",
   "./examples/command_palette",
   "./examples/mo_workbench",
-  "./openseek",
   "./examples/code_editor",
   "./examples/webview_demo",
   "./benchmarks/app_cached_layer",
@@ -158,8 +157,7 @@ workflow.
 
 When updating this repository, update all Git checkouts that participate in the
 workspace, not just the root checkout. That includes the main MoUI repository
-and Git submodules such as `.agents/skills/moonbit-skills`, `window`, and
-`openseek`. Then
+and Git submodules such as `.agents/skills/moonbit-skills` and `window`. Then
 run `moon update` so registry dependencies are refreshed. `moui_skia` updates
 with the main MoUI checkout.
 
@@ -206,19 +204,13 @@ The `moui_skia` workspace member is updated by the root repository pull; the
 window dependency resolves from mooncakes.io (or from the `window` submodule
 checkout when dev mode is on).
 
-Mo Workbench resolves `bobzhang/openseek` from the `openseek/` git submodule
-while `./openseek` is listed in `moon.work` (required until the package is
-published on mooncakes.io). CI initializes submodules in
-`.github/actions/setup-moonbit`. Initialize locally once:
-
-```sh
-git submodule update --init --recursive openseek
-```
-
-`scripts/validate-openseek-workbench.mjs` (in `dev-check.sh`) requires
-`moon.work` to list `./openseek` and the submodule checkout to exist. Pin
-`bobzhang/openseek@…` in `examples/mo_workbench/moon.mod` when the registry
-version becomes available. Run Mo Workbench native:
+Mo Workbench depends on `bobzhang/openseek`, which now resolves from
+mooncakes.io (pinned in `examples/mo_workbench/moon.mod`, e.g.
+`bobzhang/openseek@0.2.2`). No git submodule or `./openseek` workspace member is
+required. Run `moon update` to refresh the resolved registry version when a new
+openseek release ships. If you need a local `bobzhang/openseek` checkout during
+development, use mooncakes' own local override mechanism rather than adding
+`./openseek` to `moon.work`. Run Mo Workbench native:
 
 ```sh
 export OPENAI_API_KEY=...   # or DEEPSEEK=...

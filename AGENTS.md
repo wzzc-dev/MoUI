@@ -66,13 +66,11 @@ For task-specific workflows, use the repo-local skills:
   new window version, update the pinned version in all four consumers
   (`moui/`, `moui_skia/`, `moui_webview/`, `examples/markdown_editor/`)
   and run `moon update`. See `docs/development.md` for the full workflow.
-- Mo Workbench needs the `openseek` submodule (`git clone --recurse-submodules`
-  for new checkouts, or `git submodule update --init --recursive openseek` for
-  existing ones). `moon.work` must list `./openseek` (registry
-  `bobzhang/openseek@0.2.0` is not on mooncakes.io yet).
-  `scripts/validate-openseek-workbench.mjs` runs in `dev-check.sh` and CI. Use
-  `sh scripts/openseek-dev-mode.sh on|off` only when toggling local override
-  experiments; main branch keeps `./openseek` in `moon.work`.
+- Mo Workbench depends on `bobzhang/openseek`, which now resolves from
+  mooncakes.io (pinned in `examples/mo_workbench/moon.mod`, e.g.
+  `bobzhang/openseek@0.2.2`). No git submodule or `./openseek` workspace member
+  is required; `moon.work` must not list `./openseek`. Run `moon update` to
+  refresh the resolved registry version when a new openseek release ships.
 - Use `moon ide doc`, `moon ide outline`, `moon ide peek-def`, and
   `moon ide find-references` for MoonBit API discovery before inventing names.
 - `docs/button-styling-guide.md` documents the button style resolution pipeline

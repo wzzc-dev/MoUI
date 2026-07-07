@@ -4,7 +4,6 @@ fn daily_quality_gate_tokens() -> Array[String] {
     "node --check scripts/validate-api-surface.mjs", "node --check scripts/validate-guidance-consistency.mjs",
     "node scripts/validate-guidance-consistency.mjs", "node scripts/validate-api-surface.mjs",
     "node --check scripts/validate-window-dependency.mjs", "node scripts/validate-window-dependency.mjs",
-    "node --check scripts/validate-openseek-workbench.mjs", "node scripts/validate-openseek-workbench.mjs",
     "node --check scripts/validate-maintenance-baseline.mjs", "node scripts/validate-maintenance-baseline.mjs",
     "node scripts/validate-renderer-provider-manifests.mjs", "node scripts/validate-skia-entrypoints.mjs",
     "node scripts/test-validate-skia-entrypoints.mjs", "node --check scripts/test-moui-prebuild.mjs",

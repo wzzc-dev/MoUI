@@ -21,10 +21,6 @@ fn guidance_include_rules() -> Array[TextRule] {
       token: "node scripts/validate-window-dependency.mjs",
     },
     {
-      path: "docs/testing.md",
-      token: "node scripts/validate-openseek-workbench.mjs",
-    },
-    {
       path: "skills/moui-framework-development-skill/SKILL.md",
       token: "node scripts/validate-guidance-consistency.mjs",
     },
