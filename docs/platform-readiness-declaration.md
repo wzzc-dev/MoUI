@@ -147,24 +147,26 @@ moon run examples/showcase/windows_skia --target native
 | L2: Linux 异步图像 | ✅ 通过 | Linux renderer-proof 含 asyncImageSecondFrame=passed (run 27217209784) | 2026-06-17 |
 | L2: Linux 径向渐变/变换像素 | ✅ 通过 | Linux renderer-proof 含 radialGradient=passed, transformPixels=passed | run 27217209784 |
 | L2: 文本布局/IME 相关 | ⚠️ **待完善** | colorEmojiPixels/zwjGrapheme/bidiLayout/paragraphWrapping/selectionRects/graphemeEditing/imeCandidateAnchor/imeCompositionVisual = failed | — |
-| L3: Linux 平台运行时证据 | ⏳ **待补** | 需要 Wayland 匹配宿主上通过以下流程产生: | — |
-| L3: Linux 首帧呈现 | ⏳ **待补** | `MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/showcase/linux_skia --target native` | — |
+| L3: Linux 平台运行时证据 | ✅ **通过** | `MoUI Linux Platform Evidence Dispatch` → GitHub Actions Run [28865240929](https://github.com/wzzc-dev/MoUI/actions/runs/28865240929) | 2026-07-07 |
+| L3: Linux 首帧呈现 | ✅ **通过** | 同一工作流，`moui_tester/linux_skia_first_frame_smoke` 首帧日志含 `Linux renderer presented first frame; exiting by request; title=MoUI Text Input Smoke` 标记，制品 `moui-linux-platform-evidence` | run 28865240929 |
 
-#### Linux L3 证据补全方案
+#### Linux L3 证据详情
 
-CI 工作流 `moui-linux-platform-evidence.yml` 已配置完成, 每周一 UTC 05:17 自动调度:
+CI 工作流 `moui-linux-platform-evidence.yml` 每周一 UTC 05:17 自动调度:
 
 ```
 workflow: MoUI Linux Platform Evidence Dispatch
 environment: ubuntu-24.04 + Weston headless + Wayland
 证据制品: moui-linux-platform-evidence
   ├── linux-platform-evidence-preflight.log
-  ├── showcase-linux-skia-first-frame.log
+  ├── linux-skia-first-frame.log
   ├── linux-platform-evidence-summary.log
   └── weston-headless.log
 ```
 
-首次成功运行的 URL 和 SHA 将记录在下表。
+首次成功运行: GitHub Actions Run [28865240929](https://github.com/wzzc-dev/MoUI/actions/runs/28865240929), commit `a469b10`.
+
+证据脚本使用 `moui_tester/linux_skia_first_frame_smoke` 专用测试程序（类似 macOS 的 `moui_tester/macos_skia_first_frame_smoke`），硬编码 `first_frame_smoke_auto_exit=true`，呈现第一帧后自动退出并打印标记。
 
 #### Linux 证据参考
 
@@ -219,7 +221,7 @@ environment: ubuntu-24.04 + Weston headless + Wayland
 |--------|---------|----------------|----------|-----|
 | MoUI CI | [28509416649](https://github.com/wzzc-dev/MoUI/actions/runs/28509416649) | Windows MSVC native smoke, Linux platform contracts, Public API surface, Core conformance, macOS packaging smoke, Benchmark scaffold | moui-showcase-windows-msvc-portable, moui-showcase-macos-app ... | `2538874b` |
 | MoUI CI macOS Platform Evidence Dispatch | [27217345886](https://github.com/wzzc-dev/MoUI/actions/runs/27217345886) | macOS platform runtime evidence → status=passed; Native Skia renderer proof (macos) → status=passed | moui-macos-platform-runtime-evidence, moui-renderer-proof-skia-native-macos | `5bb2d810` |
-| MoUI Linux Platform Evidence Dispatch | ⏳ 等待首次成功运行 | Linux platform runtime evidence | moui-linux-platform-evidence | — |
+| MoUI Linux Platform Evidence Dispatch | [28865240929](https://github.com/wzzc-dev/MoUI/actions/runs/28865240929) | Linux platform runtime evidence → success | moui-linux-platform-evidence | `a469b10` |
 | Deploy Website | [27064953468](https://github.com/wzzc-dev/MoUI/actions/runs/27064953468) | Build website, Deploy website | github-pages | `04562724` |
 
 ## 六、缺失证据与补全计划
@@ -237,7 +239,7 @@ environment: ubuntu-24.04 + Weston headless + Wayland
 
 | 缺失项 | 补全动作 | 前置条件 | 预估工期 |
 |--------|---------|----------|---------|
-| Showcase Linux 首帧日志 | `moui-linux-platform-evidence.yml` 定时调度 UTC 每周一 05:17 自动产出 | 无（已配置完整） | 等待下一次调度 |
+| Showcase Linux 首帧日志 | `moui-linux-platform-evidence.yml` 定时调度 UTC 每周一 05:17 自动产出 | Run [28865240929](https://github.com/wzzc-dev/MoUI/actions/runs/28865240929) — 首帧标记首次通过 | ✅ 已完成 |
 | Linux IME 运行时观测 | `window/scripts/capture_moui_runtime_evidence.sh` linux 流程 | Wayland 主机 + 真实 Skia | 1 次本地或 CI 运行 |
 | Linux 全证据清单更新 | 将结果写入 `platform-runtime-evidence.json` linux 条目 | 以上两项完成 | 1 次 PR |
 
@@ -274,7 +276,7 @@ moon run moui/tests/skia_text_emoji_smoke/native --target native
 MOUI_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/showcase/macos_skia --target native
 
 # L3 — Linux 平台运行时证据（Wayland 主机）
-MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/showcase/linux_skia --target native
+moon run moui_tester/linux_skia_first_frame_smoke --target native
 
 # L3 — Windows 平台运行时证据（MSVC 主机）（需要安装、配置 MSVC 工具链）
 set MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1
