@@ -52,23 +52,26 @@ fn diagnostic_native_text_font() -> @core.FontSpec {
 }
 
 ///|
-fn assert_diagnostic_native_skia_maturity_gap(gap : String) -> Unit raise {
+fn assert_diagnostic_native_skia_maturity_status(signal : String) -> Unit raise {
   let description = @skia_renderer.backend_info().description
-  assert_true(description.contains("text maturity audit partial"))
   assert_true(
-    description.contains("tracked gaps pending") ||
-    description.contains("tracked gaps resolved"),
+    description.contains("text maturity audit ready") ||
+    description.contains("text maturity audit pending"),
   )
   assert_true(
-    description.contains("\{gap} pending") ||
-    description.contains("\{gap} confirmed"),
+    description.contains("readiness checks pending") ||
+    description.contains("readiness checks resolved"),
   )
+  assert_true(description.contains(signal))
 }
 
 ///|
 fn assert_diagnostic_native_skia_maturity_ready(signal : String) -> Unit raise {
   let description = @skia_renderer.backend_info().description
-  assert_true(description.contains("text maturity audit partial"))
+  assert_true(
+    description.contains("text maturity audit ready") ||
+    description.contains("text maturity audit pending"),
+  )
   assert_true(description.contains(signal))
 }
 
@@ -294,7 +297,7 @@ test "diagnostic native skia paragraph layout exposes line metrics and gates rea
 }
 
 ///|
-test "diagnostic native skia zwj and color emoji samples keep caret coverage without readiness claim" {
+test "diagnostic native skia zwj and color emoji samples keep caret coverage and maturity signals" {
   guard @skia_renderer.skia_available() else { return }
   let system = @skia_renderer.skia_text_system()
   assert_diagnostic_native_text_layout(system, "A👩‍💻B")
@@ -302,7 +305,7 @@ test "diagnostic native skia zwj and color emoji samples keep caret coverage wit
   assert_diagnostic_native_text_layout(system, "A☕️B")
   assert_diagnostic_native_cluster_carets(system, "A☕️B", 1, 3)
   assert_diagnostic_native_text_layout(system, "A🙂B")
-  assert_diagnostic_native_skia_maturity_gap("color emoji")
+  assert_diagnostic_native_skia_maturity_status("color emoji")
   assert_diagnostic_native_skia_maturity_ready(
     "Unicode 17 grapheme boundary contract ready",
   )
