@@ -284,6 +284,41 @@ test "PaintFilter::color_matrix exposes normalized matrix metadata" {
 }
 
 ///|
+test "PaintFilter::color_matrix normalizes short and long payloads" {
+  let short = PaintFilter::color_matrix([0.25, 0.5])
+  match short.get_stage_color_matrix(0) {
+    Some(matrix) => {
+      assert_eq(matrix.length(), 20)
+      assert_eq(matrix[0], 0.25)
+      assert_eq(matrix[1], 0.5)
+      assert_eq(matrix[6], 1.0)
+      assert_eq(matrix[12], 1.0)
+      assert_eq(matrix[18], 1.0)
+      assert_eq(matrix[19], 0.0)
+    }
+    None => abort("expected short color matrix metadata")
+  }
+  assert_eq(
+    short.apply(Color::new(r=40, g=80, b=20, a=200)),
+    Color::new(r=50, g=80, b=20, a=200),
+  )
+
+  let long = PaintFilter::color_matrix([
+    0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0,
+    15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0,
+  ])
+  match long.get_stage_color_matrix(0) {
+    Some(matrix) => {
+      assert_eq(matrix.length(), 20)
+      assert_eq(matrix[0], 0.0)
+      assert_eq(matrix[18], 18.0)
+      assert_eq(matrix[19], 19.0)
+    }
+    None => abort("expected long color matrix metadata")
+  }
+}
+
+///|
 test "PaintFilter chains apply filters in order" {
   let color = Color::new(r=10, g=20, b=30, a=64)
   let chain = PaintFilter::invert().then(PaintFilter::brightness(0.5))

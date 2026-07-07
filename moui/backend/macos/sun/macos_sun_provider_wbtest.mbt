@@ -53,6 +53,18 @@ test "macOS Sun preflight describes experimental host bridge" {
   assert_true(preflight.contains("macOS Sun provider preflight"))
   assert_true(preflight.contains("renderer=experimental-ready"))
   assert_true(preflight.contains("macOS softbuffer Sun pixel presenter"))
+  assert_true(preflight.contains("presenter_hit_test=passthrough"))
+  assert_true(
+    preflight.contains("renderer_frame=SunRasterRenderer.render_frame"),
+  )
+  assert_true(
+    preflight.contains(
+      "renderer_platform_view_pixels=SunRasterRenderer.draw_platform_view_pixels",
+    ),
+  )
+  assert_true(preflight.contains("renderer_preflight="))
+  assert_true(preflight.contains("Sun CPU raster surface preflight ready"))
+  assert_true(preflight.contains("resource cache preflight ready"))
   assert_true(
     preflight.contains("renderer_text_system=SunRasterRenderer.text_system"),
   )
@@ -81,6 +93,60 @@ test "macOS Sun preflight describes experimental host bridge" {
     ),
   )
   assert_true(preflight.contains("first_frame_smoke=enabled"))
+  assert_true(
+    preflight.contains(
+      "first_frame_env=MOUI_MACOS_SUN_EXIT_AFTER_FIRST_PRESENT",
+    ),
+  )
+  assert_true(preflight.contains("runtime_smokes=showcase-macos-sun"))
+}
+
+///|
+test "macOS Sun host renderer forwards platform view pixels" {
+  let presented = Ref(None)
+  let renderer = @sun_renderer.create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=4.0, height=4.0),
+    ),
+    @sun_renderer.SunPresentTarget::new(
+      description="macos-sun-platform-view-test",
+      present=frame => {
+        presented.val = Some(frame)
+        true
+      },
+    ),
+  )
+  let host_renderer = host_renderer_from_sun(renderer)
+  host_renderer.set_platform_view_draw_fn(
+    Some(() => {
+      host_renderer.draw_platform_view_pixels(
+        Bytes::from_array([255, 0, 0, 255]),
+        1,
+        1,
+        4,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+      )
+    }),
+  )
+  let result = host_renderer.render_frame(
+    @core.DrawFrame::new(
+      commands=[@core.DrawCommand::Clear(@core.Color::white())],
+      damage=@core.DamageRegion::full("macOS Sun platform view pixels"),
+    ),
+  )
+  inspect(result.presented, content="true")
+  match presented.val {
+    Some(frame) => {
+      let red = (1 * frame.width + 1) * 4
+      assert_true(frame.pixels[red].to_int() > 200)
+      assert_true(frame.pixels[red + 1].to_int() < 80)
+      assert_true(frame.pixels[red + 2].to_int() < 80)
+    }
+    None => fail("expected macOS Sun frame with platform-view pixels")
+  }
 }
 
 ///|
