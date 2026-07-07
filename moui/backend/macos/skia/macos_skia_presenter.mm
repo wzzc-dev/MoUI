@@ -34,7 +34,7 @@ static int64_t moui_macos_skia_expected_pixel_bytes(int32_t width, int32_t heigh
   return packed_row_bytes * height;
 }
 
-MOONBIT_FFI_EXPORT
+extern "C" MOONBIT_FFI_EXPORT
 int32_t moui_macos_present_skia_pixels_to_view(uint64_t raw_content_view_handle,
                                                int32_t width, int32_t height,
                                                int32_t row_bytes,
