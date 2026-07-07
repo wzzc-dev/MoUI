@@ -10,14 +10,17 @@ fn chat_message_body(
   let display = if text_.trim().is_empty() { "(empty)" } else { text_ }
   let lines = chat_message_display_lines(display, width)
   if lines.is_empty() {
-    return @views.text("(empty)", role=@views.TextRole::Caption, theme~, width~).foreground(
-      theme.palette.muted,
-    )
+    return chat_message_text(
+      "(empty)",
+      role=@views.TextRole::Caption,
+      theme~,
+      width~,
+    ).foreground(theme.palette.muted)
   }
   let rows : Array[@moui.View[CodeMsg]] = []
   for line in lines {
     rows.push(
-      @views.text(
+      chat_message_text(
         line,
         role~,
         theme~,
@@ -27,6 +30,107 @@ fn chat_message_body(
     )
   }
   @views.column(rows, spacing=4.0, align=@views.CrossAlign::Start)
+}
+
+///|
+fn chat_message_text(
+  text : String,
+  role? : @views.TextRole = @views.TextRole::Body,
+  theme~ : @moui.Theme,
+  width? : Double = 160.0,
+  height? : Double = 32.0,
+) -> @moui.View[CodeMsg] {
+  let size = @geometry.Size::new(width~, height~)
+  @core.View::node(
+    identity=() => @core.ViewIdentity::new(kind="ChatMessageText"),
+    revision=() => {
+      "chat-message-text:\{text}:\{size.width}:\{size.height}:\{chat_message_text_role_revision(role)}:\{theme.revision_fingerprint()}"
+    },
+    layout=ctx => {
+      @core.ViewLayoutResult::new(size=ctx.constraints.constrain(size))
+    },
+    paint=ctx => {
+      let font = chat_message_text_role_font(role, theme)
+      let base_color = chat_message_text_role_color(role, theme)
+      let color = if ctx.environment.enabled {
+        ctx.style.foreground.unwrap_or(base_color)
+      } else {
+        ctx.style.foreground.unwrap_or(base_color).multiply_alpha(0.7)
+      }
+      @core.ViewPaintPlan::commands([
+        @core.DrawCommand::DrawText(
+          @core.TextRun::new(
+            text~,
+            frame=ctx.frame,
+            font~,
+            color~,
+            align=@core.TextAlign::TextStart,
+          ),
+        ),
+      ])
+    },
+    semantics=() => {
+      @core.ViewSemanticsInfo::new(
+        role=@core.SemanticsRole::Text,
+        label=text,
+        value=text,
+      )
+    },
+  )
+}
+
+///|
+fn chat_message_text_role_font(
+  role : @views.TextRole,
+  theme : @moui.Theme,
+) -> @core.FontSpec {
+  match role {
+    @views.TextRole::Body => theme.typography.body
+    @views.TextRole::Title => theme.typography.title
+    @views.TextRole::Caption => theme.typography.caption
+    @views.TextRole::Control => theme.typography.control
+    @views.TextRole::Mono =>
+      { ..theme.typography.body, families: @core.FontFamilyStack::monospace() }
+    @views.TextRole::Display => theme.typography.display
+    @views.TextRole::Headline => theme.typography.headline
+    @views.TextRole::Subtitle => theme.typography.subtitle
+    @views.TextRole::Label => theme.typography.label
+    @views.TextRole::Overline => theme.typography.overline
+  }
+}
+
+///|
+fn chat_message_text_role_color(
+  role : @views.TextRole,
+  theme : @moui.Theme,
+) -> @graphics.Color {
+  match role {
+    @views.TextRole::Caption | @views.TextRole::Overline => theme.palette.muted
+    @views.TextRole::Body
+    | @views.TextRole::Title
+    | @views.TextRole::Control
+    | @views.TextRole::Mono
+    | @views.TextRole::Display
+    | @views.TextRole::Headline
+    | @views.TextRole::Subtitle
+    | @views.TextRole::Label => theme.palette.foreground
+  }
+}
+
+///|
+fn chat_message_text_role_revision(role : @views.TextRole) -> String {
+  match role {
+    @views.TextRole::Body => "body"
+    @views.TextRole::Title => "title"
+    @views.TextRole::Caption => "caption"
+    @views.TextRole::Control => "control"
+    @views.TextRole::Mono => "mono"
+    @views.TextRole::Display => "display"
+    @views.TextRole::Headline => "headline"
+    @views.TextRole::Subtitle => "subtitle"
+    @views.TextRole::Label => "label"
+    @views.TextRole::Overline => "overline"
+  }
 }
 
 ///|
