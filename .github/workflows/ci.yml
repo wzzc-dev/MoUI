@@ -66,7 +66,7 @@ jobs:
 
       - name: Ⓒ moon info — public interface generation (all packages)
         run: |
-          # Regenerate only MoUI-tracked packages; skip openseek submodule (not in git).
+          # Regenerate only MoUI-tracked packages; mooncakes deps (e.g. bobzhang/openseek) are not in git.
           while IFS= read -r path; do
             moon info -p "$path"
           done < <(git ls-files '**/pkg.generated.mbti' | sed 's|/pkg.generated.mbti$||')
