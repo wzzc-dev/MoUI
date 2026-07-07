@@ -7,6 +7,15 @@ test "sun renderer backend info is ready cpu raster" {
   assert_true(info.can_resize)
   assert_true(info.owns_surface)
   assert_true(info.description.contains("moui_sun"))
+  assert_true(
+    info.description.contains("Sun CPU raster surface preflight ready"),
+  )
+  assert_true(info.description.contains("resource cache preflight ready"))
+  assert_true(info.description.contains("Sun text maturity audit partial"))
+  assert_true(
+    info.description.contains("Unicode 17 grapheme boundary contract ready"),
+  )
+  assert_true(info.description.contains("platform pixel presenters"))
 }
 
 ///|
@@ -20,6 +29,29 @@ test "sun renderer descriptor exposes sun cpu pixel backend" {
     descriptor.presentation == @render.RendererPresentationModel::CpuPixelFrame,
   )
   inspect(descriptor.capabilities.length(), content="17")
+}
+
+///|
+test "sun renderer surface diagnostic summary tracks cpu pixel target" {
+  let target = SunPresentTarget::new(description="diagnostic-target", present=_frame => {
+    true
+  })
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=5.0, height=3.0),
+      scale_factor=2.0,
+    ),
+    target,
+  )
+  let summary = renderer.surface_diagnostic_summary()
+  assert_true(summary.contains("surface_route=cpu-raster"))
+  assert_true(summary.contains("surface_gpu=false"))
+  assert_true(summary.contains("dimensions=10x6"))
+  assert_true(summary.contains("row_bytes=40"))
+  assert_true(summary.contains("byte_size=240"))
+  assert_true(summary.contains("scale_factor=2"))
+  assert_true(summary.contains("present_target=diagnostic-target"))
+  assert_true(summary.contains("cached_layers=0"))
 }
 
 ///|
@@ -353,10 +385,16 @@ test "sun renderer records ready image lifecycle once for cached image draws" {
   let source = sun_test_png_data_uri()
   let callback_count = Ref(0)
   let revisions : Array[Int] = []
+  let record_counts : Array[Int] = []
+  let statuses : Array[@render.ImageResourceStatus] = []
   renderer.set_image_resource_change_callback(
     Some(snapshot => {
       callback_count.val = callback_count.val + 1
       revisions.push(snapshot.revision)
+      record_counts.push(snapshot.records.length())
+      if snapshot.records.length() > 0 {
+        statuses.push(snapshot.records[0].status)
+      }
     }),
   )
   let commands = [
@@ -370,7 +408,7 @@ test "sun renderer records ready image lifecycle once for cached image draws" {
 
   renderer.render(commands)
   let first_snapshot = renderer.image_resource_snapshot()
-  inspect(first_snapshot.revision, content="1")
+  inspect(first_snapshot.revision, content="2")
   guard renderer.image_resources().length() == 1 else {
     fail("expected one sun image resource record")
   }
@@ -383,13 +421,21 @@ test "sun renderer records ready image lifecycle once for cached image draws" {
     } else {
     fail("expected ready sun image record")
   }
-  inspect(callback_count.val, content="1")
-  assert_true(revisions == [1])
+  inspect(callback_count.val, content="2")
+  assert_true(revisions == [1, 2])
+  assert_true(record_counts == [1, 1])
+  assert_true(
+    statuses ==
+    [
+      @render.ImageResourceStatus::ImageLoading,
+      @render.ImageResourceStatus::ImageReady,
+    ],
+  )
 
   renderer.render(commands)
   let second_snapshot = renderer.image_resource_snapshot()
-  inspect(second_snapshot.revision, content="1")
-  inspect(callback_count.val, content="1")
+  inspect(second_snapshot.revision, content="2")
+  inspect(callback_count.val, content="2")
 }
 
 ///|
@@ -431,7 +477,7 @@ test "sun renderer records failed image lifecycle once for repeated decode error
   renderer.render(commands)
   inspect(renderer.image_resource_snapshot().revision, content="1")
   inspect(callback_count.val, content="1")
-  inspect(renderer.unsupported_command_count(), content="1")
+  inspect(renderer.unsupported_command_count(), content="0")
 }
 
 ///|
@@ -661,7 +707,7 @@ test "sun renderer triple-pass blur produces smooth falloff" {
 }
 
 ///|
-test "sun renderer vignette shader darkens center" {
+test "sun renderer vignette shader paints radial fallback" {
   let presented = Ref(None)
   let target = SunPresentTarget::new(description="test", present=frame => {
     presented.val = Some(frame)
@@ -679,24 +725,19 @@ test "sun renderer vignette shader darkens center" {
       @core.ShaderEffectSpec::new(
         name="vignette",
         frame=@core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
-        fallback=@core.Brush::solid(
-          @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0),
-        ),
+        fallback=@core.Brush::solid(@core.Color::white()),
       ),
     ),
   ])
   match presented.val {
     Some(frame) => {
-      // Vignette draws concentric dark circles at the center
-      // Center pixel should be darkened
+      // Vignette follows Skia's radial fallback-color shader:
+      // center uses the fallback color and corners clamp to black.
       let center_r = frame.pixels[(8 * 16 + 8) * 4].to_int()
-      assert_true(center_r < 255)
-      assert_true(center_r < 200)
-      // Corner pixel is outside the vignette circles, should stay white
+      assert_true(center_r > 200)
       let corner_r = frame.pixels[(0 * 16 + 0) * 4].to_int()
-      assert_true(corner_r == 255)
-      // Center should be darker than corner
-      assert_true(center_r < corner_r)
+      assert_true(corner_r < 80)
+      assert_true(center_r > corner_r)
       inspect(renderer.unsupported_command_count(), content="0")
     }
     None => fail("expected Sun frame")
@@ -908,7 +949,7 @@ test "sun renderer rounded clip with zero radius acts as rect clip" {
 }
 
 ///|
-test "sun renderer records disposed image resources and notifies once" {
+test "sun renderer records disposed image resources after ready lifecycle" {
   let target = SunPresentTarget::new(description="test", present=_ => true)
   let renderer = create_with_present_target(
     @render.RendererSurfaceMetrics::from_logical(
@@ -936,15 +977,16 @@ test "sun renderer records disposed image resources and notifies once" {
     }),
   ])
   renderer.dispose()
-  inspect(renderer.image_resource_snapshot().revision, content="2")
+  inspect(renderer.image_resource_snapshot().revision, content="3")
   assert_true(
     statuses ==
     [
+      @render.ImageResourceStatus::ImageLoading,
       @render.ImageResourceStatus::ImageReady,
       @render.ImageResourceStatus::ImageDisposed,
     ],
   )
-  assert_true(revisions == [1, 2])
+  assert_true(revisions == [1, 2, 3])
   guard renderer.image_resources()[0]
     is { status: @render.ImageResourceStatus::ImageDisposed, .. } else {
     fail("expected disposed sun image record")
@@ -1417,7 +1459,13 @@ test "sun renderer checker shader alternates tiles" {
       @core.ShaderEffectSpec::new(
         name="checker",
         frame=@core.Rect::new(x=0.0, y=0.0, width=8.0, height=8.0),
-        uniforms=[4.0],
+        uniforms=[2.0],
+        fallback=@core.Brush::linear_gradient(
+          start=@core.Point::new(x=0.0, y=0.0),
+          end=@core.Point::new(x=8.0, y=0.0),
+          start_color=@core.Color::rgba(r=0.784, g=0.784, b=0.784, a=1.0),
+          end_color=@core.Color::white(),
+        ),
       ),
     ),
   ])

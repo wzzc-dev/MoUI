@@ -34,6 +34,17 @@ test "Linux Sun preflight describes direct Wayland pixel presenter" {
   assert_true(preflight.contains("renderer=experimental-ready"))
   assert_true(preflight.contains("Linux Wayland wl_shm Sun pixel presenter"))
   assert_true(
+    preflight.contains("renderer_frame=SunRasterRenderer.render_frame"),
+  )
+  assert_true(preflight.contains("renderer_preflight="))
+  assert_true(preflight.contains("Sun CPU raster surface preflight ready"))
+  assert_true(preflight.contains("resource cache preflight ready"))
+  assert_true(
+    preflight.contains(
+      "renderer_platform_view_pixels=SunRasterRenderer.draw_platform_view_pixels",
+    ),
+  )
+  assert_true(
     preflight.contains("renderer_text_system=SunRasterRenderer.text_system"),
   )
   assert_true(
@@ -64,6 +75,12 @@ test "Linux Sun preflight describes direct Wayland pixel presenter" {
     preflight.contains("linux_presenter=window_linux.present_rgba_pixels"),
   )
   assert_true(preflight.contains("first_frame_smoke=enabled"))
+  assert_true(
+    preflight.contains(
+      "first_frame_env=MOUI_LINUX_SUN_EXIT_AFTER_FIRST_PRESENT",
+    ),
+  )
+  assert_true(preflight.contains("runtime_smokes=showcase-linux-sun"))
 }
 
 ///|

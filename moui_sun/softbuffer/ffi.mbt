@@ -1,4 +1,12 @@
 ///|
+extern "c" fn renderer_macos_presenter_passthrough_ready() -> Int = "renderer_macos_presenter_passthrough_ready"
+
+///|
+pub fn macos_presenter_passthrough_ready() -> Bool {
+  renderer_macos_presenter_passthrough_ready() != 0
+}
+
+///|
 /// Present a tightly packed RGBA rectangle with the full surface dimensions.
 ///
 /// Native backends that keep a backing store, such as macOS layer contents,
