@@ -10,11 +10,35 @@ remains an explicit diagnostic route for comparing provider behavior.
 The Sun CPU raster backend now exposes a renderer-backed `TextSystem` over
 `moui_sun/text`, including font registration, fallback-face resolution,
 single-line measurement adapted to core grapheme-stable caret arrays, and
-basic paragraph geometry through the shared core fallback paragraph contract.
+paragraph geometry driven by the same Sun fallback line plan while preserving
+the shared core paragraph result contract.
 Sun resolves requested font families first, then appends the remaining
 registered faces as a fallback chain, so mixed text such as Latin plus emoji can
 measure and draw without missing-glyph diagnostics when registered font coverage
 exists.
+`SunRasterRenderer::text_maturity_diagnostic()` exposes a structured diagnostic
+summary for the renderer-owned font state: registered font count, paragraph
+line metrics, selection rectangles, hit testing, lightweight bidi visual-order
+metadata, and explicit pending flags for native paragraph and color emoji
+readiness.
+`SunRasterRenderer::text_selection_geometry_diagnostic()` mirrors the same
+paragraph contract for grapheme-normalized selection-rectangle and hit-test
+audits and exposes visual-order observation fields from the Sun paragraph
+metadata.
+`SunRasterRenderer::text_visual_order_diagnostic()` mirrors Skia's dedicated
+visual-order diagnostic shape for Sun by reporting logical/visual text,
+cluster counts, segment count, glyph count, width, and bidi readiness from the
+Sun paragraph metadata.
+`SunRasterRenderer::emoji_font_fallback_diagnostic()` audits the registered-font
+fallback chain for emoji-hint text: it reports requested family, registered font
+and resolved-face counts, fallback spans, covered/missing scalar counts,
+missing-glyph recovery readiness, grapheme cluster count, representative
+fallback character, source/shaper labels, measured glyph extents, resolved
+missing-glyph count, fallback language/script tags for emoji and non-ASCII
+representative text, fallback-request readiness, resolved fallback face index
+plus stable chain label, a stable coverage-mask glyph key, and
+`glyph_format=coverage-mask`, while
+keeping deterministic color emoji explicitly pending.
 When no registered font face covers a draw, Sun still falls back to
 renderer-local placeholder glyphs. Bidi, advanced shaping, and color emoji
 claims are covered by the shared conformance and real-Skia proof matrix rather
