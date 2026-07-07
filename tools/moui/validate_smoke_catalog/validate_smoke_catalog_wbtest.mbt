@@ -7,13 +7,13 @@ fn smoke_fixture() -> String {
     #|  "tiers": ["daily", "nightly", "release"],
     #|  "suites": [
     #|    {
-    #|      "id": "daily.dev-check",
+    #|      "id": "daily.check",
     #|      "tier": "daily",
     #|      "kind": "package-baseline",
     #|      "host": "any",
     #|      "purpose": "test daily",
     #|      "defaultDevCheck": true,
-    #|      "commands": [{ "argv": ["sh", "scripts/dev-check.sh"], "mode": "run" }],
+    #|      "commands": [{ "argv": ["sh", "scripts/check.sh", "--profile", "daily"], "mode": "run" }],
     #|      "result": { "type": "exit-code" },
     #|      "ci": { "workflow": ".github/workflows/ci.yml", "gate": "pull_request" },
     #|      "docs": ["docs/testing.md"],
@@ -66,7 +66,7 @@ fn smoke_fixture() -> String {
 ///|
 fn test_repo_root() -> String {
   let cwd = @env.current_dir().unwrap_or(".")
-  if @tools.file_exists(@tools.join_path(cwd, "scripts/dev-check.sh")) {
+  if @tools.file_exists(@tools.join_path(cwd, "scripts/check.sh")) {
     cwd
   } else {
     @tools.resolve_path(cwd, "..")
@@ -89,7 +89,7 @@ test "validates catalog and filters normalized JSON plans" {
   inspect(text.contains("\"tier\": \"nightly\""), content="true")
   inspect(text.contains("\"suiteCount\": 1"), content="true")
   inspect(text.contains("web.runtime-presentation"), content="true")
-  inspect(text.contains("daily.dev-check"), content="false")
+  inspect(text.contains("daily.check"), content="false")
 }
 
 ///|

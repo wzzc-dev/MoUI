@@ -29,9 +29,9 @@ fn required_ci_gate_ids() -> Array[String] {
 ///|
 fn required_ci_gate_evidence_files() -> Array[String] {
   [
-    ".github/workflows/moui-skia-fallback.yml", ".github/workflows/moui-skia-linux-real-skia-smoke.yml",
-    ".github/workflows/moui-skia-macos-real-skia-smoke.yml", ".github/workflows/moui-skia-windows-real-skia-smoke.yml",
-    ".github/workflows/moui-skia-real-skia-acceptance.yml", "scripts/check-fallback.ps1",
+    ".github/workflows/moui-skia-provider-fallback-ci.yml", ".github/workflows/moui-skia-provider-linux-real-skia-nightly.yml",
+    ".github/workflows/moui-skia-provider-macos-real-skia-manual.yml", ".github/workflows/moui-skia-provider-windows-real-skia-manual.yml",
+    ".github/workflows/moui-skia-provider-real-skia-acceptance.yml", "scripts/check-fallback.ps1",
   ]
 }
 

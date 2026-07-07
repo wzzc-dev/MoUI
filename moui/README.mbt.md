@@ -119,12 +119,12 @@ bounded development check:
 ```sh
 moon update
 node scripts/validate-window-dependency.mjs
-sh scripts/dev-check.sh
+sh scripts/check.sh --profile daily
 ```
 
 The default daily baseline covers the core framework, Web wasm-gc, native
 Skia mainline contracts, Showcase, and Markdown Editor. Design Systems is
-addon diagnostic coverage; run `sh scripts/dev-check.sh --theme-diagnostics`
+addon diagnostic coverage; run `sh scripts/check.sh --profile theme`
 when changing `moui_theme` or `examples/design_systems`.
 
 MoUI resolves `wzzc-dev/window` from the MoonBit registry as
@@ -137,7 +137,7 @@ The `moui_skia` binding workspace's platform status and native capability
 contracts are validated by
 `moui_skia/scripts/verify-platform-status.sh` and
 `moui_skia/scripts/verify-native-capability-contract.sh`, both wired into
-`dev-check.sh`. Those Skia guards prove the provider lock, fallback parity,
+`check.sh --profile daily`. Those Skia guards prove the provider lock, fallback parity,
 FFI ownership/borrow metadata, native smoke marker coverage, and
 binding-level evidence wiring are present; renderer pixels and platform
 runtime behavior still come from the opt-in Skia smoke or matching-host
@@ -146,11 +146,10 @@ example runs.
 For current-host backend/provider evidence, run:
 
 ```sh
-sh scripts/dev-check.sh --platform-examples-test
-sh scripts/conformance-check.sh --platform-services
+sh scripts/check.sh --profile platform
 ```
 
-`--platform-services` also writes and validates
+The `platform` profile also runs platform-service checks against
 `artifacts/conformance/platform-runtime-evidence.json`, the schema v2
 matching-host evidence contract for Web, macOS, Windows, and Linux runtime
 claims. Entries start as pending until a matching host records passed or
@@ -176,8 +175,8 @@ recorded GitHub Actions macOS-only evidence run, the latest all-green
 `MoUI CI` run, and their head-SHA boundaries.
 
 For release-oriented screenshot and benchmark handoffs, use
-`sh scripts/conformance-check.sh --golden` and
-`sh scripts/conformance-check.sh --bench`; these write validated capture
+`node scripts/conformance-capture-scaffold.mjs --mode golden` and
+`node scripts/conformance-capture-scaffold.mjs --mode benchmark`; these write validated capture
 manifests under `artifacts/conformance/`. The benchmark handoff also
 validates the static Web runtime delivery chain for Showcase and Markdown
 Editor with `node scripts/validate-web-runtime-handoff.mjs`, while browser
@@ -198,7 +197,7 @@ platform entry pending.
 
 For a minimal starting template, clone the standalone `moui_example`
 counter repo (it is not a workspace member here and is not built by
-`dev-check.sh`):
+`check.sh --profile daily`):
 
 ```sh
 git clone git@github.com:moui-mbt/moui_example.git

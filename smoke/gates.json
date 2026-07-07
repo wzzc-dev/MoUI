@@ -4,7 +4,7 @@
   "tiers": ["daily", "nightly", "release"],
   "suites": [
     {
-      "id": "daily.dev-check",
+      "id": "daily.check",
       "tier": "daily",
       "kind": "package-baseline",
       "host": "any",
@@ -12,7 +12,7 @@
       "defaultDevCheck": true,
       "commands": [
         {
-          "argv": ["sh", "scripts/dev-check.sh"],
+          "argv": ["sh", "scripts/check.sh", "--profile", "daily"],
           "mode": "run"
         }
       ],
@@ -50,7 +50,7 @@
         ]
       },
       "ci": {
-        "workflow": ".github/workflows/moui-runtime-smoke-gates.yml",
+        "workflow": ".github/workflows/moui-runtime-gates.yml",
         "gate": "nightly"
       },
       "docs": ["docs/testing.md", "docs/release-readiness.md"],
@@ -65,7 +65,7 @@
       "tier": "release",
       "kind": "native-real-renderer-smoke",
       "host": "macos-14",
-      "purpose": "Prove real-Skia renderer pixels plus tester-owned Showcase and Markdown Editor first-frame presentation on the matching host.",
+      "purpose": "Prove real Skia renderer pixels plus tester-owned Showcase and Markdown Editor first-frame presentation on the matching host.",
       "defaultDevCheck": false,
       "commands": [
         {
@@ -94,7 +94,7 @@
         ]
       },
       "ci": {
-        "workflow": ".github/workflows/moui-runtime-smoke-gates.yml",
+        "workflow": ".github/workflows/moui-runtime-gates.yml",
         "gate": "release-manual"
       },
       "docs": ["docs/testing.md", "docs/release-readiness.md"],
@@ -121,7 +121,7 @@
         "type": "exit-code"
       },
       "ci": {
-        "workflow": ".github/workflows/moui-runtime-smoke-gates.yml",
+        "workflow": ".github/workflows/moui-runtime-gates.yml",
         "gate": "release-manual"
       },
       "docs": ["docs/testing.md", "docs/release-readiness.md"],

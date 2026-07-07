@@ -40,8 +40,8 @@ Fixes #
 
 ## Verification
 
-- [ ] `sh scripts/dev-check.sh` passes locally.
-- [ ] If `moui_theme` or `examples/design_systems` changed, `sh scripts/dev-check.sh --theme-diagnostics` passes.
+- [ ] `sh scripts/check.sh --profile daily` passes locally.
+- [ ] If `moui_theme` or `examples/design_systems` changed, `sh scripts/check.sh --profile theme` passes.
 - [ ] If public API changed: `pkg.generated.mbti` regenerated and `node scripts/validate-api-surface.mjs` passes.
 - [ ] If the maintenance baseline numbers moved: the ratchet budget is updated or the change stays within `max`.
 - [ ] If workflow / package layout / examples / text-rendering boundaries changed: `docs/`, `AGENTS.md`, and the relevant `skills/` file are updated.

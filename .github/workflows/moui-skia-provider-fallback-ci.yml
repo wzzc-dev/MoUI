@@ -1,4 +1,4 @@
-name: MoUI Skia Fallback
+name: MoUI Skia Provider Fallback CI
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ on:
       - "moui/moon.mod"
       - ".moonbit-toolchain"
       - ".github/actions/setup-moonbit/action.yml"
-      - ".github/workflows/moui-skia-fallback.yml"
+      - ".github/workflows/moui-skia-provider-fallback-ci.yml"
   pull_request:
     paths:
       - "moui_skia/**"
@@ -18,7 +18,7 @@ on:
       - "moui/moon.mod"
       - ".moonbit-toolchain"
       - ".github/actions/setup-moonbit/action.yml"
-      - ".github/workflows/moui-skia-fallback.yml"
+      - ".github/workflows/moui-skia-provider-fallback-ci.yml"
 
 jobs:
   fallback:

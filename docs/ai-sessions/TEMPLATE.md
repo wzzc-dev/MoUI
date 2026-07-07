@@ -32,7 +32,7 @@ What commands were run? What was the result?
 ```sh
 # e.g.
 moon test moui/views --target native
-sh scripts/dev-check.sh
+sh scripts/check.sh --profile daily
 ```
 
 ## Follow-Up
