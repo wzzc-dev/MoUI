@@ -342,7 +342,11 @@ fn model_option_row(
           width=label_width.max(80.0),
           height=22.0,
         ).foreground(
-          if supported { workbench_text(theme) } else { theme.palette.muted },
+          if supported {
+            workbench_text(theme)
+          } else {
+            theme.palette.muted
+          },
         ),
         trailing,
       ],
