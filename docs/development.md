@@ -39,6 +39,7 @@ code.
 - `./examples/command_palette`
 - `./examples/mo_workbench`
 - `./openseek`
+- `./examples/code_editor`
 - `./examples/webview_demo`
 - `./benchmarks/app_cached_layer`
 - `./website`
@@ -105,6 +106,7 @@ members = [
   "./examples/command_palette",
   "./examples/mo_workbench",
   "./openseek",
+  "./examples/code_editor",
   "./examples/webview_demo",
   "./benchmarks/app_cached_layer",
   "./website",
