@@ -8,7 +8,7 @@
 	branch = moui-support
 [submodule "openseek"]
 	path = openseek
-	url = https://github.com/moonbitlang/openseek.git
+	url = git@github.com:moonbitlang/openseek.git
 	branch = main
 [submodule "examples/moui_example"]
 	path = examples/moui_example

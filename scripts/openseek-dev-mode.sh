@@ -37,9 +37,9 @@ current_mode() {
 
 ensure_submodule() {
   if [ ! -f "$ROOT_DIR/openseek/moon.mod" ]; then
-    printf '==> openseek submodule missing. Running: git submodule update --init openseek\n' >&2
+    printf '==> openseek submodule missing. Running: git submodule update --init --recursive openseek\n' >&2
     cd "$ROOT_DIR"
-    git submodule update --init openseek
+    git submodule update --init --recursive openseek
   fi
 }
 

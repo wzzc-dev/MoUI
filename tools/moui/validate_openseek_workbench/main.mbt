@@ -66,7 +66,7 @@ fn validate_openseek_workbench_inputs(
   }
   if !openseek_mod_exists {
     errors.push(
-      "openseek submodule not initialized (run: git submodule update --init openseek)",
+      "openseek submodule not initialized (run: git submodule update --init --recursive openseek)",
     )
   }
   match moon_work {
