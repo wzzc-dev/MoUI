@@ -68,6 +68,20 @@ moon update
 listed in this repository's `moon.work` and is not built by `dev-check.sh`. It
 is the recommended starting template for new apps.
 
+When cloning this repository for framework or example development, include
+submodules so Mo Workbench can resolve OpenSeek:
+
+```sh
+git clone --recurse-submodules git@github.com:wzzc-dev/MoUI.git
+cd MoUI
+```
+
+If you already cloned without submodules, initialize them once:
+
+```sh
+git submodule update --init --recursive
+```
+
 The default daily baseline covers the core framework, maintenance baseline
 ratchets, Web wasm-gc, native Skia mainline contracts, Showcase, and Markdown
 Editor. Design Systems is addon diagnostic coverage; run
@@ -135,7 +149,7 @@ moon run examples/markdown_editor/linux_skia --target native
 
 Native-Skia-first desktop agent dogfood app. Only `macos_skia` is wired today;
 Linux/Windows/Web entrypoints are reserved. Enable the `openseek` submodule
-first (`git submodule update --init openseek`) and run
+first (`git submodule update --init --recursive openseek`) and run
 `sh scripts/openseek-dev-mode.sh on` so `moon.work` lists `./openseek`.
 
 ```sh

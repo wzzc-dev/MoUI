@@ -21,12 +21,13 @@ behavior that is not wired yet.
 - `examples/mo_workbench/openseek_native_transport` is a native-only package
   that bridges `AgentCommand` / `AgentEvent` to the in-process OpenSeek agent
   (`run_turn_in_scope`, `SessionStore`, tool registry). It depends on the
-  `openseek` git submodule (`https://github.com/moonbitlang/openseek`).
+  `openseek` git submodule (`git@github.com:moonbitlang/openseek.git`).
 - `examples/mo_workbench/macos_skia` injects
   `openseek_native_transport::openseek_backend_from_env()` when
   `OPENAI_API_KEY` or `DEEPSEEK` is set (`OPENAI_BASE_URL` overrides the
   DeepSeek client URL); otherwise `AgentBackendRuntime::stub()`. Enable the
-  submodule in the workspace with `sh scripts/openseek-dev-mode.sh on` (adds
+  submodule with `git submodule update --init --recursive openseek`, then add
+  it to the workspace with `sh scripts/openseek-dev-mode.sh on` (adds
   `./openseek` to `moon.work`).
 
 ## Workspace Architecture

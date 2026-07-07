@@ -163,6 +163,18 @@ and Git submodules such as `.agents/skills/moonbit-skills`, `window`, and
 run `moon update` so registry dependencies are refreshed. `moui_skia` updates
 with the main MoUI checkout.
 
+For a fresh clone, fetch submodules in the initial checkout:
+
+```sh
+git clone --recurse-submodules git@github.com:wzzc-dev/MoUI.git
+```
+
+If the repository was cloned without submodules, initialize them once:
+
+```sh
+git submodule update --init --recursive
+```
+
 The `window` submodule is **not** a `moon.work` workspace member by default.
 MoonBit resolves `wzzc-dev/window` from mooncakes.io (the published version
 pinned in each consumer's `moon.mod`). The `window/` submodule checkout exists
@@ -200,7 +212,7 @@ published on mooncakes.io). CI initializes submodules in
 `.github/actions/setup-moonbit`. Initialize locally once:
 
 ```sh
-git submodule update --init openseek
+git submodule update --init --recursive openseek
 ```
 
 `scripts/validate-openseek-workbench.mjs` (in `dev-check.sh`) requires
