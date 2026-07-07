@@ -86,7 +86,8 @@ jobs:
           MOUI_SKIA_SKIA_INCLUDE: ${{ steps.skia.outputs.skia_include }}
           MOUI_SKIA_SKIA_LIB_DIR: ${{ steps.skia.outputs.skia_lib_dir }}
         run: |
-          $logDir = "..\artifacts\platform-evidence\windows"
+          $scriptPath = "$env:GITHUB_WORKSPACE/scripts/windows-platform-evidence.sh"
+          $logDir = "$env:GITHUB_WORKSPACE/artifacts/platform-evidence/windows"
           $args = @(
             "--log-dir", $logDir,
             "--skia-provider", "${{ inputs.skia_provider }}",
@@ -110,14 +111,14 @@ jobs:
           $vsPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
           $vcvars = Join-Path $vsPath "VC\Auxiliary\Build\vcvarsall.bat"
           $argString = ($args | ForEach-Object { '"{0}"' -f $_ }) -join " "
-          cmd /c "call `"$vcvars`" x64 && bash ..\scripts\windows-platform-evidence.sh $argString"
+          cmd /c "call `"$vcvars`" x64 && bash `"$scriptPath`" $argString"
 
       - name: Verify evidence markers
         if: ${{ always() }}
         shell: pwsh
         run: |
           $summary = "passed"
-          $showcaseLog = "..\artifacts\platform-evidence\windows\showcase-windows-skia-first-frame.log"
+          $showcaseLog = "$env:GITHUB_WORKSPACE/artifacts/platform-evidence/windows/showcase-windows-skia-first-frame.log"
           if (Test-Path -LiteralPath $showcaseLog) {
             $content = Get-Content -LiteralPath $showcaseLog -Raw
             if ($content -match "Windows renderer presented first frame; exiting by request; title=MoUI Showcase") {
@@ -139,7 +140,7 @@ jobs:
         with:
           name: moui-windows-platform-evidence
           path: |
-            artifacts/platform-evidence/windows/
+            ${{ github.workspace }}/artifacts/platform-evidence/windows/
           if-no-files-found: warn
 
       - name: Write workflow summary
@@ -147,7 +148,7 @@ jobs:
         shell: pwsh
         run: |
           $showcasePassed = "failed"
-          $showcaseLog = "..\artifacts\platform-evidence\windows\showcase-windows-skia-first-frame.log"
+          $showcaseLog = "$env:GITHUB_WORKSPACE/artifacts/platform-evidence/windows/showcase-windows-skia-first-frame.log"
           if (Test-Path -LiteralPath $showcaseLog) {
             $content = Get-Content -LiteralPath $showcaseLog -Raw
             if ($content -match "Windows renderer presented first frame; exiting by request; title=MoUI Showcase") {
