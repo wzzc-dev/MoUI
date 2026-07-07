@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       run_showcase_smoke:
-        description: Run the Linux Skia Showcase first-frame smoke.
+        description: Run the Linux Skia Showcase runtime evidence.
         required: false
         default: true
         type: boolean
@@ -92,7 +92,7 @@ jobs:
           echo "WAYLAND_DISPLAY=moui-linux-evidence" >> "$GITHUB_ENV"
           echo "XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR" >> "$GITHUB_ENV"
 
-      - name: Run Linux platform evidence (showcase only)
+      - name: Run Linux platform evidence
         shell: bash
         env:
           WAYLAND_DISPLAY: moui-linux-evidence
@@ -116,17 +116,17 @@ jobs:
         shell: bash
         run: |
           summary="passed"
-          showcase_log="artifacts/platform-evidence/linux/showcase-linux-skia-first-frame.log"
+          first_frame_log="artifacts/platform-evidence/linux/linux-skia-first-frame.log"
 
-          if [[ -f "$showcase_log" ]]; then
-            if grep -Fq "Linux renderer presented first frame; exiting by request; title=MoUI Showcase" "$showcase_log"; then
-              echo "Showcase first-frame marker: passed"
+          if [[ -f "$first_frame_log" ]]; then
+            if grep -Fq "Linux renderer presented first frame; exiting by request; title=MoUI Text Input Smoke" "$first_frame_log"; then
+              echo "First-frame marker: passed"
             else
-              echo "Showcase first-frame marker: FAILED"
+              echo "First-frame marker: FAILED (marker not found in log)"
               summary="failed"
             fi
           else
-            echo "Showcase log not found: $showcase_log"
+            echo "First-frame log not found: $first_frame_log"
             summary="failed"
           fi
 
@@ -150,11 +150,11 @@ jobs:
             echo "## Linux Platform Evidence Dispatch"
             echo ""
             echo "- Artifact: moui-linux-platform-evidence"
-            echo "- Showcase first-frame: $(grep -q '^summary=passed' <<<"${summary:-failed}" && echo 'passed' || echo 'failed')"
+            echo "- First-frame evidence: $(grep -q '^summary=passed' <<<"${summary:-failed}" && echo 'passed' || echo 'failed')"
             echo ""
             echo "### Logs"
             echo "- Preflight: artifacts/platform-evidence/linux/linux-platform-evidence-preflight.log"
-            echo "- Showcase: artifacts/platform-evidence/linux/showcase-linux-skia-first-frame.log"
+            echo "- First-frame: artifacts/platform-evidence/linux/linux-skia-first-frame.log"
             echo "- Summary: artifacts/platform-evidence/linux/linux-platform-evidence-summary.log"
             echo "- Weston: artifacts/platform-evidence/linux/weston-headless.log"
           } >> "$GITHUB_STEP_SUMMARY"

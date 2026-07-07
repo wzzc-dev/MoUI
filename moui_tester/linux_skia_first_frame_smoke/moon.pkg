@@ -1,0 +1,17 @@
+import {
+  "wzzc-dev/moui/backend/linux/skia" @linux_skia_backend,
+  "wzzc-dev/moui/render/skia" @skia_renderer,
+  "wzzc-dev/moui_tester/fixtures/text_input_app" @fixture,
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "cc-link-flags": "-lz",
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)
