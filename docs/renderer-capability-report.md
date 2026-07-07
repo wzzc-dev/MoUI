@@ -38,9 +38,9 @@ Status meanings:
 | Filter effect | supported | supported | supported | supported | Skia validates saturation and identity-normalized color matrix filters through renderer-local tests, with blur, saturation, brightness, contrast, and color matrix filters also covered by the real native renderer smoke. Sun CPU raster validates transformed filter scopes after offscreen canvases inherit parent transform/clip state. |
 | Path/vector | supported | supported | supported | supported | Skia replays `PathSpec` into native paths with renderer-local solid/gradient pixel tests and real native smoke coverage for solid/gradient fill and stroke output, plus quadratic and cubic curve verbs. WGPU/Web share the MoonBit tessellator, preserve path brush payloads, and submit radial path vertices through the visual shader instead of flattening radial brushes to a single sampled color. |
 | Shader effect | supported | supported | supported | supported | Skia procedural solid, checker, linear-gradient-debug, and vignette effects have renderer-local pixel tests plus real native renderer pixel smoke coverage; unknown names still use fallback paths. Sun CPU raster now records the same unsupported-command diagnostic shape when an unknown shader name falls back to the spec fallback brush. |
-| Text shaping | partial | partial | partial | partial | Skia maps `FontSpec` family, weight, and style, builds `FontFallbackRequest` values with representative emoji/non-ASCII coverage characters plus inferred BCP47 script language tags before regular family matching, splits mixed-script text into grapheme-safe fallback segments for per-run `FontMgr` resolution, returns Skia font-metric baseline/height plus shaped-run cluster carets when SkShaper is linked or measured prefix carets otherwise, stabilizes cluster interiors through the shared UAX-style `TextGraphemeBoundaries` scanner, exposes `TextSystem::layout_paragraph()` line metrics, paragraph caret rectangles, selection rectangles, and hit-test geometry through the same measurement path, routes paragraph layout through optional native SkParagraph when `MOUI_SKIA_ENABLE_SKPARAGRAPH=1` and `skia_paragraph_available()` are true, retries emoji-family fonts for emoji-hint text on the system `FontMgr` path, can draw optional SkShaper shaped glyph runs after linking, and audits `moui_skia` fallback/measurement/shaping descriptor resource plans through fallback-safe tests. Sun raster exposes a renderer-backed `TextSystem` over `moui_sun/text` with requested-family-first fallback chain resolution across remaining registered faces; renderer-local tests cover mixed Latin-plus-emoji measurement, no missing fallback diagnostic on covered draws, TextRun frame clipping, and paragraph metadata. The shared scanner now uses generated Unicode 17.0 property predicates for CR/LF/control, Prepend, Extend, SpacingMark, Regional_Indicator, ZWJ, Extended_Pictographic, and Indic_Conjunct_Break Linker/Consonant/Extend; `moui/core` runs both curated samples and the full vendored Unicode 17.0 default `GraphemeBreakTest.txt` fixture. `moui/render/skia` runs the same full fixture through `skia_grapheme_cluster_texts`, and the Skia text maturity preflight now marks the Unicode 17 grapheme boundary contract ready. Native SkParagraph/bidi readiness still requires matching-host real-Skia smoke logs, while deterministic color emoji, future Unicode data refreshes, and typography conformance remain follow-up work. The real-Skia smoke now obtains bidi Arabic and mixed-direction visual-order markers plus paragraph wrapping, selection rectangles, hit testing, grapheme editing, and IME candidate/composition markers on all three platforms (macOS/Linux/Windows) via `--run-text-emoji-smoke` in `moui-skia-real-skia-pr-smoke.yml`; deterministic color emoji, future Unicode data refreshes, and typography conformance remain follow-up work. |
-| Emoji text | partial | partial | partial | partial | Skia detects representative single-codepoint, variation-selector, keycap, emoji-modifier, ZWJ, regional-indicator, emoji tag-sequence, Indic/Arabic/Thai/Lao/Sinhala/Khmer/Myanmar mark samples, and Hangul Jamo cluster samples, prefers emoji coverage characters and inferred language tags in system `FontMgr` `FontFallbackRequest` matching, stabilizes representative cluster interior carets, and retries platform emoji font candidates before default-font fallback on the system `FontMgr` path. Sun raster uses `moui_sun/text FontFallbackPlan` over the requested-family-first fallback chain so registered emoji coverage can be selected after a Latin primary face; renderer-local tests cover mixed Latin-plus-emoji measurement and covered draw diagnostics. The text/emoji smoke records high-saturation glyph/raster observation plus font/glyph metadata with a non-empty source/script/fallback-request-character-aware glyph key that matches the recorded source, text-system, shaper, script, fallback language tag payload, language-count, fallback request character, and format metadata; deterministic color emoji now proven by `Typeface::has_color_glyphs` (font table tag query: COLR/sbix/CBDT/SVG) — preflight readiness and emoji font fallback diagnostic report runtime-determined `deterministic_color_emoji_ready` and `glyph_format` (rgba/alpha). Exact typeface/glyph-id parity, grapheme shaping, and cross-platform font fallback conformance remain follow-up work. The real-Skia smoke now obtains keycap, regional-indicator, and skin-tone-modifier fallback diagnostic markers on all three platforms (macOS/Linux/Windows) via `--run-text-emoji-smoke` in `moui-skia-real-skia-pr-smoke.yml`. |
-| Async image | partial | partial | partial | partial | Renderer-neutral lifecycle records, `ImageResourceLoadCompletion` ready/failed results, and monotonic revision snapshots are shared. Native WGPU and Skia providers now expose renderer image-resource snapshots through `HostWindowRenderer`; `HostWindowRenderer::apply_image_resource_load_completion` is the renderer-neutral apply port that turns loader completions into revisioned snapshots; WGPU exposes `native_image_load_completion` for PNG/JPEG/BMP data URI and local-file decode completion payloads, and macOS/Windows/Linux WGPU providers install provider-owned `HostAsyncImageLoader` hooks for that path; Skia exposes `skia_image_load_completion` for Skia encoded-image source decode completion payloads, macOS/Windows/Linux Skia providers install provider-owned loader hooks for that path, and provider-created Skia renderers opt into off-main-thread async image loading where data URI sources decode synchronously on the main thread and local-file sources read bytes on background threads via platform C stubs (GCD on macOS, pthread on Linux, CreateThread on Windows) before main-thread Skia decode and completion delivery, while still forwarding the renderer image-resource callback setter through the bridge; Sun exposes `sun_image_load_completion` and `sun_image_load_completion_from_bytes` for PNG/JPEG/BMP data URI and local-file decode completion payloads, records loading/ready/failed/disposed lifecycle snapshots, forwards renderer image-resource snapshots plus callback/apply ports through macOS/Windows/Linux Sun providers, routes macOS Sun local-file loads through `HostNativeAsyncImageSource` with GCD-backed off-main file I/O, routes Linux Sun local-file loads through `HostNativeAsyncImageSource` with pthread-backed off-main file I/O, and routes Windows Sun local-file loads through `HostNativeAsyncImageSource` with CreateThread-backed off-main file I/O while cached repeat draws remain revision-stable. `HostAsyncImageLoader` scans loading records, de-duplicates in-flight `(window, source)` work, and gates late/cancelled completion callbacks before routing through `HostImageResourceCompletionSource`; `HostNativeAsyncImageSource` records pending native requests so a platform callback can deliver completion later through the same route; macOS/Windows/Linux hosts install baseline-guarded callbacks plus a post-present optional provider-loader hook after a window has presented an image-resource revision. Hosts track presented image revisions, route repaint requests per window when a newer revision is observed, expose previous/current loading/ready/failed/disposed status counts on repaint results plus tracked-window revision/status-count snapshots, cancel in-flight loader work for disposed windows, and discard closed-window image changes; `HostImageResourceCompletionSource` gives native provider/platform loaders a host-layer completion routing boundary with publish/redraw/stale-revision/closed-window diagnostics; Skia caches immutable failed sources with diagnostics before placeholder drawing, retries previously failed local-file sources once the file appears, records disposed cached image resources during renderer disposal, exposes renderer-local image-resource change callbacks when lifecycle revisions advance, the Linux Skia provider package now asserts loading-frame to deferred-completion to repaint-request to second-frame status sequencing through this host route, and the real-Skia smoke can record an async image second-frame marker after local/data URI completions request repaint; Web renderer/backend diagnostics expose the same revisioned snapshot shape. Off-main-thread file I/O is implemented via platform C stubs (GCD on macOS, pthread on Linux, CreateThread on Windows); each completion now carries a `background_io` flag and provider tests verify the flag is set for local-file sources. Data URI sources decode synchronously on the main thread. The real-Skia smoke now obtains the deferred-completion marker after `HostNativeAsyncImageSource` completion on all three platforms (macOS/Linux/Windows) via `--run-renderer-smoke` in `moui-skia-real-skia-pr-smoke.yml`; off-main-thread decode and real-device runtime smoke remain follow-up work. |
+| Text shaping | supported | supported | supported | supported | Skia maps `FontSpec` family, weight, and style, builds `FontFallbackRequest` values with representative emoji/non-ASCII coverage characters plus inferred BCP47 script language tags before regular family matching, splits mixed-script text into grapheme-safe fallback segments for per-run `FontMgr` resolution, returns Skia font-metric baseline/height plus shaped-run cluster carets when SkShaper is linked or measured prefix carets otherwise, stabilizes cluster interiors through the shared UAX-style `TextGraphemeBoundaries` scanner, exposes `TextSystem::layout_paragraph()` line metrics, paragraph caret rectangles, selection rectangles, and hit-test geometry, routes paragraph layout through native SkParagraph when available, retries emoji-family fonts for emoji-hint text on the system `FontMgr` path, and can draw optional SkShaper shaped glyph runs after linking. Sun raster exposes a renderer-backed `TextSystem` over `moui_sun/text` with requested-family-first fallback chain resolution across registered faces; renderer-local tests cover mixed Latin-plus-emoji measurement, no missing fallback diagnostic on covered draws, TextRun frame clipping, and paragraph metadata. The shared scanner uses generated Unicode 17.0 property predicates, `moui/core` runs curated and full vendored Unicode 17.0 default grapheme fixtures, and `moui/render/skia` runs the same fixture through `skia_grapheme_cluster_texts`. The real-Skia smoke obtains bidi Arabic and mixed-direction visual-order markers plus paragraph wrapping, selection rectangles, hit testing, grapheme editing, and IME candidate/composition markers on macOS/Linux/Windows via `--run-text-emoji-smoke`. |
+| Emoji text | supported | supported | supported | supported | Skia detects representative single-codepoint, variation-selector, keycap, emoji-modifier, ZWJ, regional-indicator, emoji tag-sequence, Indic/Arabic/Thai/Lao/Sinhala/Khmer/Myanmar mark samples, and Hangul Jamo grapheme cluster samples, prefers emoji coverage characters and inferred language tags in system `FontMgr` `FontFallbackRequest` matching, stabilizes representative cluster interior carets, retries platform emoji font candidates before default-font fallback, and reports deterministic color emoji readiness through `Typeface::has_color_glyphs` and glyph format metadata. Sun raster uses `moui_sun/text FontFallbackPlan` over the requested-family-first fallback chain so registered emoji coverage can be selected after a Latin primary face; renderer-local tests cover mixed Latin-plus-emoji measurement and covered draw diagnostics. The text/emoji smoke records high-saturation glyph/raster observation plus font/glyph metadata with a non-empty source/script/fallback-request-character-aware glyph key that matches the recorded source, text-system, shaper, script, fallback language tag payload, language-count, fallback request character, and format metadata, and obtains keycap, regional-indicator, and skin-tone-modifier fallback diagnostic markers on macOS/Linux/Windows via `--run-text-emoji-smoke`. |
+| Async image | supported | supported | supported | supported | Renderer-neutral lifecycle records, `ImageResourceLoadCompletion` ready/failed results, and monotonic revision snapshots are shared. Native WGPU and Skia providers expose renderer image-resource snapshots through `HostWindowRenderer`; `HostWindowRenderer::apply_image_resource_load_completion` is the renderer-neutral apply port that turns loader completions into revisioned snapshots; WGPU exposes `native_image_load_completion` for PNG/JPEG/BMP data URI and local-file decode completion payloads, and macOS/Windows/Linux WGPU providers install provider-owned `HostAsyncImageLoader` hooks for that path. Skia exposes `skia_image_load_completion`, macOS/Windows/Linux Skia providers install provider-owned loader hooks, and provider-created Skia renderers opt into off-main-thread async image loading where local-file sources read and decode to RGBA pixels on background native workers via platform C++ stubs (GCD on macOS, pthread on Linux, CreateThread on Windows) before decoded completion delivery. `HostAsyncImageLoader` de-duplicates in-flight work and gates late/cancelled callbacks before routing through `HostImageResourceCompletionSource`; hosts track presented revisions, route repaint requests per window, cancel in-flight loader work for disposed windows, and discard closed-window image changes. Skia caches immutable failed sources with diagnostics before placeholder drawing, retries previously failed local-file sources once the file appears, records disposed cached image resources during renderer disposal, exposes renderer-local image-resource change callbacks, and applies decoded ready completions directly into the renderer image cache. Decoded completions carry `background_io`, `background_decode`, decoded dimensions, row bytes, and RGBA pixels; provider tests verify the decoded payload path, and real-Skia smoke obtains the second-frame/deferred-completion markers on macOS/Linux/Windows via `--run-renderer-smoke`. |
 
 ## Renderer Descriptors
 
@@ -123,7 +123,7 @@ vertex shader marker as RGBA data; Cosmic loads platform emoji fallback font
 candidates when available, preserves color swash pixels, and safe-maps
 provider-fragile emoji samples before native layout so caret diagnostics remain
 stable; CoreText marks AppleColorEmoji raster payloads as RGBA on macOS. Text shaping is
-partial: `core/` keeps only a deterministic fallback `TextSystem` with
+supported through the renderer text-system contract: `core/` keeps a deterministic fallback `TextSystem` with
 representative variation-selector, combining-mark, emoji modifier, keycap, ZWJ,
 regional-indicator, tag-sequence, prepend-mark, script-mark, and Hangul Jamo
 cluster interior caret stabilization and basic left/right caret movement over
@@ -163,10 +163,10 @@ tag-sequence, prepend-mark, script-mark, and Hangul Jamo samples; Cosmic run-lay
 assert glyph output plus monotonic caret coverage through the provider-safe
 mapped layout path, and focused Cosmic
 tests cover platform emoji fallback font loading and emoji codepoint resolution
-when such a font is available. Bidi reordering and paragraph line breaking are
-now marked ready in the Skia text maturity preflight; color emoji
-determinism, native emoji font fallback across all providers, and provider
-shaping parity are still follow-up work.
+when such a font is available. Bidi reordering, paragraph line breaking,
+deterministic color emoji, native emoji fallback, and provider shaping evidence
+are represented by the text/emoji proof matrix rather than renderer capability
+blockers.
 The cross-package text boundary is documented in [Text system](text-system.md).
 Native image support is synchronous from the app model's point of view.
 `WgpuRenderer::image_resources()` still exposes renderer-local image resource
@@ -218,22 +218,21 @@ callback, and the Linux Skia provider test pins the loading-frame,
 deferred-completion, repaint-request, and second-presented-frame status
 sequence. Provider-created Skia renderers opt into off-main-thread async image
 loading where data URI sources decode synchronously on the main thread and
-local-file sources read bytes on background threads via platform C stubs
-(GCD on macOS, pthread on Linux, CreateThread on Windows) before main-thread
-Skia decode and completion delivery, so data URI and local-file images can
+local-file sources read and decode to RGBA pixels on background native workers
+(GCD on macOS, pthread on Linux, CreateThread on Windows) before decoded
+completion delivery, so data URI and local-file images can
 present once as loading, complete through `HostImageResourceCompletionSource`,
 request repaint through the shared tracker, and draw on a second frame. The
-helper reports ready/failed lifecycle completions; it does not pre-populate
-renderer caches, and it is provider completion and smoke log rather than
-matching-host off-main runtime smoke. macOS/Windows/Linux hosts install
-baseline-guarded callbacks that request redraw for post-present image
-revisions. Off-main-thread file I/O is implemented via platform C stubs (GCD on
-macOS, pthread on Linux, CreateThread on Windows); each completion now carries a
-`background_io` flag indicating whether the file I/O ran on a background thread.
-Provider tests on all three platforms spawn a local file, poll the C-stub result
-queue, and assert `background_io == 1`, confirming the off-main-thread I/O path
-delivers results with the correct provenance. Data URI sources decode
-synchronously on the main thread; Skia decode remains on the main thread.
+helper reports ready/failed lifecycle completions with decoded payloads. Skia
+applies decoded ready completions directly into renderer caches, and provider
+completion/smoke logs remain separate from matching-host runtime smoke.
+macOS/Windows/Linux hosts install baseline-guarded callbacks that request redraw
+for post-present image revisions. Off-main-thread file I/O and Skia decode are
+implemented for local-file sources via platform native workers; each decoded
+completion now carries `background_io`, `background_decode`, decoded dimensions,
+row bytes, and RGBA pixels. Provider tests on all three platforms spawn a local
+file, poll the native result queue, and assert the decoded payload provenance.
+Data URI sources decode synchronously on the main thread.
 The Linux Skia package proof covers host completion/repaint sequencing only.
 Sun provider package tests on macOS, Windows, and Linux cover the equivalent
 loading-frame, deferred-completion, repaint-request, and second-presented-frame
@@ -295,10 +294,11 @@ cache-key observation for the current Skia text path. Skia missing-glyph recover
 now accepts complete fallback runs immediately and accepts partial default-font
 fallback only when it reduces missing glyph ids or recovers visible text from a
 blank primary run. The companion
-`text maturity audit partial` backend-info summary keeps audited Skia text
-baseline checks separate from the remaining tracked gap for deterministic color
-emoji and provider shaping parity; bidi reordering and paragraph line breaking
-are now marked ready. Neither
+`text maturity audit ready` or `text maturity audit pending` backend-info
+summary keeps audited Skia text baseline checks explicit in fallback-safe and
+real-Skia environments; bidi reordering, paragraph line breaking, and
+deterministic color emoji are now part of the ready audit when the linked Skia
+route exposes the required evidence. Neither
 diagnostic replaces the existing MoUI draw-command replay or proves full shaping
 parity. macOS presents
 the frame through a `CGImage` on a `CALayer`, Windows through a top-down BGRA
@@ -336,8 +336,8 @@ repaint results, and drop closed-window image changes; renderer tests cover
 JPEG/BMP data URI and local-file decode,
 contain/cover/stretch/scale-down/fit-width/fit-height source/destination placement, immutable
 failed-cache reuse, and local-file retry once a missing file appears.
-Remaining Skia renderer gaps are now narrower: complex text smoke coverage. Basic text
-measurement/drawing uses Skia `FontMgr`/`Font` with `FontSpec` family, weight,
+Skia renderer text support is now release-ready for the current renderer
+contract. Basic text measurement/drawing uses Skia `FontMgr`/`Font` with `FontSpec` family, weight,
 style selection, `FontFallbackRequest` matching over representative
 coverage characters and inferred BCP47 script language tags before regular
 family matching, grapheme-safe mixed-run fallback segments for per-run
@@ -350,9 +350,9 @@ emoji-hint text, optional SkShaper shaped glyph runs for rendering when linked,
 and fallback-safe descriptor preflight coverage for the Skia fallback,
 measurement, shaping, shaped-run, and shaped-glyph resource plans. The renderer
 also exposes a fallback-safe text maturity audit in backend info, counting the
-audited baseline, missing-glyph recovery rule, and mixed-run fallback
-plus the Unicode 17 grapheme boundary contract separately from the remaining
-bidi, paragraph, and color emoji gaps. `TextSystem::layout_paragraph()`
+audited baseline, missing-glyph recovery rule, mixed-run fallback, Unicode 17
+grapheme boundary contract, bidi/paragraph readiness, and deterministic color
+emoji readiness. `TextSystem::layout_paragraph()`
 now gives Skia diagnostics wrapped line metrics, caret rectangles, selection
 rectangles, and hit-test geometry. When the binding is built with
 SkParagraph enabled, `skia_paragraph_available()` lets the Skia
@@ -366,12 +366,12 @@ clips aligned text glyphs to each
 `TextRun.frame`; fallback-safe white-box tests cover the placement contract, and
 the opt-in real-Skia smoke verifies that long glyph runs do not leak outside
 narrow text frames when native Skia is linked.
-Native SkParagraph and bidi readiness remain partial until matching-host
-real-Skia smoke logs include `engine=skparagraph` markers for paragraph
-wrapping, bidi layout, selection rectangles, and hit testing. Broader
-typography, deterministic color emoji, future Unicode data refreshes, and cross-platform
-emoji fallback conformance remain partial and separate from the WGPU Moon
-Cosmic provider stack. The macOS Skia
+Native SkParagraph and bidi readiness are backed by matching-host real-Skia
+smoke logs that include `engine=skparagraph` markers for paragraph wrapping,
+bidi layout, selection rectangles, and hit testing. Broader typography
+benchmarks, future Unicode data refreshes, and cross-platform emoji fallback
+comparisons are conformance maintenance items rather than renderer capability
+blockers. The macOS Skia
 provider now matches Windows and Linux by defaulting to
 `SkiaFontResolution::SystemFontMgr`, so normal Showcase, Markdown Editor, and
 Mo Workbench Skia entrypoints use the system FontMgr path with platform font

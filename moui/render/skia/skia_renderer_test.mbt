@@ -8,7 +8,8 @@ test "skia renderer backend info reflects native availability" {
   assert_true(info.description.contains("Metal GPU opt-in preflight"))
   assert_true(info.description.contains("window-present=pending"))
   assert_true(info.description.contains("text fallback/shaping descriptor"))
-  assert_true(info.description.contains("text maturity audit partial"))
+  assert_true(info.description.contains("text maturity audit"))
+  assert_false(info.description.contains("text maturity audit partial"))
   assert_true(
     info.description.contains("mixed-run fallback ready") ||
     info.description.contains("mixed-run fallback pending"),

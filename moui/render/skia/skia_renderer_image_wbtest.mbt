@@ -164,6 +164,10 @@ test "skia image load completion from bytes decodes provided image bytes" {
         inspect(completion.source, content=source)
         inspect(completion.width, content="1")
         inspect(completion.height, content="1")
+        assert_true(completion.has_decoded_rgba_payload())
+        inspect(completion.decoded_row_bytes, content="4")
+        inspect(completion.decoded_pixels.length(), content="4")
+        inspect(completion.background_decode, content="false")
       } else {
         assert_true(
           completion.status ==
@@ -352,7 +356,7 @@ test "skia renderer applies image load completions and notifies revision callbac
 }
 
 ///|
-test "skia renderer async image loading waits for explicit completion before caching" {
+test "skia renderer async image loading waits for explicit decoded completion before caching" {
   guard skia_available() else { return () }
   let source = skia_test_png_data_uri()
   let target = SkiaPresentTarget::new(description="test", present=_ => true)
@@ -392,10 +396,69 @@ test "skia renderer async image loading waits for explicit completion before cac
     fail("expected ready image lifecycle record")
   }
   assert_true(ready.status == @render.ImageResourceStatus::ImageReady)
-  assert_true(renderer.image_cache.get(source) is None)
+  assert_true(renderer.image_cache.get(source) is Some(_))
 
   renderer.render(commands) catch {
     err => fail("expected Skia async second-frame render: \{err.message()}")
+  }
+  inspect(renderer.present_count(), content="2")
+  assert_true(renderer.image_cache.get(source) is Some(_))
+}
+
+///|
+test "skia renderer caches decoded async image completion without source decode" {
+  guard skia_available() else { return () }
+  let source = "moui-skia-decoded-async://cache-ready"
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=4.0, height=4.0),
+    ),
+    target,
+    async_image_loading=true,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  let commands = [
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::DrawImage(@core.ImageRun::{
+      source,
+      frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+  ]
+  renderer.render(commands) catch {
+    err => fail("expected Skia async placeholder render: \{err.message()}")
+  }
+  assert_true(renderer.image_cache.get(source) is None)
+  guard renderer.image_lifecycle.lookup(source) is Some(loading) else {
+    fail("expected loading image lifecycle record")
+  }
+  assert_true(loading.status == @render.ImageResourceStatus::ImageLoading)
+
+  let pixels = Bytes::from_array([b'\xff', b'\x00', b'\x00', b'\xff'])
+  let completed = renderer.apply_image_resource_load_completion(
+    @render.ImageResourceLoadCompletion::ready_decoded_rgba(
+      source,
+      width=1,
+      height=1,
+      row_bytes=4,
+      pixels,
+      background_io=true,
+      background_decode=true,
+    ),
+  )
+  inspect(completed.revision, content="2")
+  guard renderer.image_lifecycle.lookup(source) is Some(ready) else {
+    fail("expected ready image lifecycle record")
+  }
+  assert_true(ready.status == @render.ImageResourceStatus::ImageReady)
+  assert_true(renderer.image_cache.get(source) is Some(_))
+
+  renderer.render(commands) catch {
+    err =>
+      fail("expected Skia decoded async second-frame render: \{err.message()}")
   }
   inspect(renderer.present_count(), content="2")
   assert_true(renderer.image_cache.get(source) is Some(_))

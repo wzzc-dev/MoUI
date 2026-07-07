@@ -68,9 +68,14 @@ pub(all) struct ImageResourceLoadCompletion {
   height : Int
   diagnostic : String
   background_io : Bool
+  decoded_pixels : Bytes
+  decoded_row_bytes : Int
+  background_decode : Bool
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ImageResourceLoadCompletion::failed(String, diagnostic~ : String, background_io? : Bool) -> Self
+pub fn ImageResourceLoadCompletion::has_decoded_rgba_payload(Self) -> Bool
 pub fn ImageResourceLoadCompletion::ready(String, width~ : Int, height~ : Int, background_io? : Bool) -> Self
+pub fn ImageResourceLoadCompletion::ready_decoded_rgba(String, width~ : Int, height~ : Int, row_bytes~ : Int, Bytes, background_io? : Bool, background_decode? : Bool) -> Self
 
 pub(all) enum ImageResourceLoadCompletionStatus {
   ImageLoadReady

@@ -81,9 +81,9 @@ fn SkiaTextMaturityPreflight::summary(
     "baseline pending"
   }
   let gap_label = if remaining_gaps_pending {
-    "remaining tracked gaps pending"
+    "readiness checks pending"
   } else {
-    "tracked gaps resolved"
+    "readiness checks resolved"
   }
   let grapheme_label = if self.unicode_17_grapheme_boundary_ready {
     "Unicode 17 grapheme boundary contract ready"
@@ -106,7 +106,15 @@ fn SkiaTextMaturityPreflight::summary(
     "; bidi and paragraph line breaking ready; " +
     color_emoji_label
   }
-  "text maturity audit partial: ready=" +
+  let audit_label = if self.gap_count == 0 &&
+    baseline_ready &&
+    self.mixed_run_font_fallback_ready {
+    "text maturity audit ready"
+  } else {
+    "text maturity audit pending"
+  }
+  audit_label +
+  ": ready=" +
   self.ready_count.to_string() +
   " gaps=" +
   self.gap_count.to_string() +

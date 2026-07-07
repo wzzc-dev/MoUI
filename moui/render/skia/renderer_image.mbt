@@ -208,15 +208,28 @@ pub fn skia_image_load_completion_from_bytes(
   source : String,
   bytes : Bytes,
   background_io? : Bool = false,
+  background_decode? : Bool = false,
 ) -> @render.ImageResourceLoadCompletion {
-  match @skia_native.Image::from_encoded_bytes(bytes) {
-    Some(image) =>
-      @render.ImageResourceLoadCompletion::ready(
-        source,
-        width=image.width(),
-        height=image.height(),
-        background_io~,
-      )
+  match @skia_native.Codec::from_bytes(bytes) {
+    Some(codec) =>
+      match codec.decode_n32_premul() {
+        Some(bitmap) =>
+          @render.ImageResourceLoadCompletion::ready_decoded_rgba(
+            source,
+            width=bitmap.width(),
+            height=bitmap.height(),
+            row_bytes=bitmap.row_bytes(),
+            bitmap.to_bytes(),
+            background_io~,
+            background_decode~,
+          )
+        None =>
+          @render.ImageResourceLoadCompletion::failed(
+            source,
+            diagnostic="Skia image decode failed",
+            background_io~,
+          )
+      }
     None =>
       @render.ImageResourceLoadCompletion::failed(
         source,
@@ -440,17 +453,52 @@ pub fn SkiaRasterRenderer::apply_image_resource_load_completion(
   completion : @render.ImageResourceLoadCompletion,
 ) -> @render.ImageResourceSnapshot {
   let previous_revision = self.image_lifecycle.revision()
-  let snapshot = self.image_lifecycle.apply_load_completion(completion)
+  let decoded_image = skia_image_from_decoded_completion(completion)
+  let completion_to_apply = if completion.has_decoded_rgba_payload() &&
+    decoded_image is None {
+    @render.ImageResourceLoadCompletion::failed(
+      completion.source,
+      diagnostic="Skia decoded image payload invalid",
+      background_io=completion.background_io,
+    )
+  } else {
+    completion
+  }
+  let snapshot = self.image_lifecycle.apply_load_completion(completion_to_apply)
   if snapshot.revision > previous_revision {
-    match completion.status {
-      @render.ImageResourceLoadCompletionStatus::ImageLoadReady =>
+    match completion_to_apply.status {
+      @render.ImageResourceLoadCompletionStatus::ImageLoadReady => {
         self.failed_images.remove(completion.source)
+        match decoded_image {
+          Some(image) => self.image_cache[completion.source] = image
+          None => ()
+        }
+      }
       @render.ImageResourceLoadCompletionStatus::ImageLoadFailed =>
-        self.failed_images[completion.source] = completion.diagnostic
+        self.failed_images[completion.source] = completion_to_apply.diagnostic
     }
     self.notify_image_resource_change_if_needed(previous_revision)
   }
   snapshot
+}
+
+///|
+fn skia_image_from_decoded_completion(
+  completion : @render.ImageResourceLoadCompletion,
+) -> @skia_native.Image? {
+  if !completion.has_decoded_rgba_payload() {
+    return None
+  }
+  match
+    @skia_native.Bitmap::from_pixels(
+      completion.decoded_pixels,
+      completion.width,
+      completion.height,
+      completion.decoded_row_bytes,
+    ) {
+    Some(bitmap) => @skia_native.Image::from_bitmap(bitmap)
+    None => None
+  }
 }
 
 ///|

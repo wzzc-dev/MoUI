@@ -125,23 +125,25 @@ completion callbacks before they can apply to a renderer. `HostNativeAsyncImageS
 is the host-owned deferred request source for platform loaders that need to
 record pending `(window, source)` work and deliver a completion later from an
 independent native callback. It proves the host boundary can receive late
-completion callbacks after scheduling returns, but matching-host off-main runtime
-artifacts are still required before the feature is ready. The native macOS,
+completion callbacks after scheduling returns, and platform runtime artifacts
+record host-level observation separately from renderer capability status. The native macOS,
 Windows, and Linux host cores call the optional provider-owned loader hook after
 the presented image-resource revision has been baselined, then cancel in-flight
 window loads during disposal. Native WGPU provider packages now supply a
 provider-owned loader that turns renderer-owned PNG/JPEG/BMP source decode
-results into `ImageResourceLoadCompletion` payloads; matching-host off-main
-async runtime smoke is still required before treating the route as fully
-ready. Native Skia provider packages now install the same provider-owned loader
-boundary around `skia_image_load_completion`, and provider-created Skia
-renderers opt into post-present async image loading so the first presented
-snapshot can contain loading records before the host routes ready/failed
-completions into a repaint. The helper converts Skia encoded-image decode
-results into ready/failed completion payloads without pre-populating renderer
-caches. This is provider completion and smoke log, not matching-host
-off-main runtime smoke. The host source and scheduler do not decode images,
-mutate renderer caches, or live in `core`;
+results into `ImageResourceLoadCompletion` payloads. Native Skia provider
+packages now install the same provider-owned loader
+boundary around decoded image completions, and provider-created Skia renderers
+opt into post-present async image loading so the first presented snapshot can
+contain loading records before the host routes ready/failed completions into a
+repaint. Local-file provider workers read and decode Skia images off the main
+thread, then deliver decoded RGBA pixels, dimensions, row bytes,
+`background_io`, and `background_decode` through `ImageResourceLoadCompletion`.
+Skia applies decoded ready completions directly into the renderer image cache,
+while data URI sources complete through the renderer decode path. This is
+provider completion and smoke-log evidence at the renderer/host boundary. The
+host source and scheduler do not decode images, mutate renderer caches, or live
+in `core`;
 renderer/provider packages still own concrete loading and lifecycle records.
 
 `RendererDescriptor` and `RendererSelection` remain renderer facade reporting tools:

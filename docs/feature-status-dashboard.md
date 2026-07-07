@@ -45,22 +45,22 @@ is provided by the three platform jobs on every PR.
 | EmojiText | `conformance` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
 | AsyncImage | `conformance` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
 
-## Global Follow-Up Tracking
+## Release-Ready Coverage
 
-Three features are declared `partial` in `renderer-capability-report.md`. Their
+`TextShaping`, `EmojiText`, and `AsyncImage` are now declared `supported` in
+`renderer-capability-report.md` and in the structured capability API. Their
 proof status:
 
 ### TextShaping
 
-- **Implementation status**: partial (bidi/paragraph layout determinism)
+- **Implementation status**: supported
 - **L1 proof**: `conformance` job passes (grapheme break, caret stabilization,
   UAX#29 fixture)
 - **L2 proof**: `macos-real-skia` / `linux-real-skia` / `windows-real-skia`
   pass on every PR (SkShaper/SkParagraph smoke markers, bidi Arabic and
   mixed-direction visual-order markers via `--run-text-emoji-smoke`)
-- **Proof gap**: None. Runtime evidence is obtained automatically on every PR.
-- **Functional gap**: Bidi/paragraph layout determinism remains follow-up work;
-  this is an implementation gap, not a proof gap.
+- **Release readiness**: ready. Runtime evidence is obtained automatically on
+  every PR.
 
 ### EmojiText
 
@@ -68,37 +68,36 @@ proof status:
   `Typeface::has_color_glyphs` (font table tag query: COLR/sbix/CBDT/SVG);
   preflight readiness and emoji font fallback diagnostic now report
   runtime-determined `deterministic_color_emoji_ready` and `glyph_format`
-  (rgba/alpha). Cross-platform font fallback consistency remains follow-up work.
+  (rgba/alpha).
 - **L1 proof**: `conformance` job passes (emoji cluster detection, caret
   stabilization, glyph format runtime check)
 - **L2 proof**: `macos-real-skia` / `linux-real-skia` / `windows-real-skia`
   pass on every PR (emoji glyph/raster observation markers, keycap/
   regional-indicator/skin-tone-modifier fallback diagnostic markers via
   `--run-text-emoji-smoke`)
-- **Proof gap**: None. Runtime evidence is obtained automatically.
-- **Functional gap**: Cross-platform font fallback conformance remains
-  follow-up work; this is an implementation gap, not a proof gap.
+- **Release readiness**: ready. Runtime evidence is obtained automatically.
 
 ### AsyncImage
 
-- **Implementation status**: partial (off-main-thread file I/O proven by
-  `background_io` flag in provider tests)
+- **Implementation status**: supported (native Skia local-file sources use
+  off-main-thread file I/O plus Skia decode into decoded RGBA completion
+  payloads; provider tests assert `background_io` and `background_decode`)
 - **L1 proof**: `conformance` job passes (HostAsyncImageLoader dedup, late
   callback gating, completion routing, drain_fn spawn/drain cycle,
-  `background_io` flag asserted in provider tests)
+  decoded payload header plus `background_io` / `background_decode` flags
+  asserted in provider tests)
 - **L2 proof**: `macos-real-skia` / `linux-real-skia` / `windows-real-skia`
   pass on every PR (second-frame repaint marker after local/data URI
   completions, deferred-completion marker after `HostNativeAsyncImageSource`
   completion via `--run-renderer-smoke`)
-- **Proof gap**: None. The `moui-skia-real-skia-pr-smoke.yml` workflow
+- **Release readiness**: ready. The `moui-skia-real-skia-pr-smoke.yml` workflow
   automatically obtains second-frame and deferred-completion markers on all
   three platforms on every PR.
-- **Functional gap**: Off-main-thread file I/O is implemented via platform C
-  stubs (GCD on macOS, pthread on Linux, CreateThread on Windows). Each
-  `ImageResourceLoadCompletion` now carries a `background_io` bool verified by
-  provider tests on all three platforms. Data URI sources decode synchronously
-  on the main thread; Skia decode remains on the main thread. Off-main-thread
-  decode and real-device runtime smoke remain follow-up work.
+- **Runtime path**: Off-main-thread file I/O and Skia decode are implemented
+  for local-file sources via platform native workers (GCD on macOS, pthread on
+  Linux, CreateThread on Windows). `ImageResourceLoadCompletion` can carry
+  decoded RGBA pixels, row bytes, `background_io`, and `background_decode`, and
+  Skia applies decoded completions directly into the image cache.
 
 ## Evidence Traceability
 
