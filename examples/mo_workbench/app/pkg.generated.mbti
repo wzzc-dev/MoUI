@@ -1,0 +1,292 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/mo_workbench/app"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn agent_backend_runtime(run~ : (Array[AgentCommand], (AgentEvent) -> Unit) -> Unit) -> AgentBackendRuntime
+
+pub fn default_deepseek_provider() -> ProviderConfig
+
+pub fn mo_workbench_decode_settings_file(String) -> MoWorkbenchSettingsFile?
+
+pub fn mo_workbench_default_settings_file() -> MoWorkbenchSettingsFile
+
+pub fn mo_workbench_first_openseek_supported_model(Array[String]) -> String?
+
+pub fn mo_workbench_model_supported_by_openseek(String) -> Bool
+
+pub fn program_with_backend(backend~ : AgentBackendRuntime, settings_load? : (() -> MoWorkbenchSettingsFile?)?, settings_persist? : ((MoWorkbenchSettingsFile) -> Unit)?, model_detect? : ((String, String, (Array[String]?) -> Unit) -> Unit)?, host_services? : @host.HostAppServices) -> @core.Program[WorkbenchModel, WorkbenchMsg]
+
+pub fn session_summary(id~ : String, first_prompt~ : String, last_active_unix_seconds? : Int64?) -> SessionSummary
+
+// Errors
+
+// Types and methods
+pub struct AgentBackendFixture {
+  dispatched : Array[AgentCommand]
+  script : (AgentCommand) -> Array[AgentEvent]
+}
+pub fn AgentBackendFixture::dispatched_commands(Self) -> Array[AgentCommand]
+pub fn AgentBackendFixture::new(script~ : (AgentCommand) -> Array[AgentEvent]) -> Self
+pub fn AgentBackendFixture::runtime(Self) -> AgentBackendRuntime
+
+pub struct AgentBackendRuntime {
+  run : (Array[AgentCommand], (AgentEvent) -> Unit) -> Unit
+}
+pub fn[Msg] AgentBackendRuntime::effect(Self, Array[AgentCommand], (AgentEvent) -> Msg) -> @core.Effect[Msg]
+pub fn AgentBackendRuntime::stub() -> Self
+
+pub(all) enum AgentCommand {
+  SendTask(String)
+  Steer(String)
+  NewSession(String)
+  SwitchSession(String)
+  SetModel(String, String, String)
+  SetThinking(ThinkingChoice)
+  FetchSessionList
+  Shutdown
+}
+
+pub(all) enum AgentEvent {
+  UserMessageAdded(String)
+  AssistantMessageAdded(String, String?)
+  ToolResultAdded(String, String, Bool, String?)
+  RuntimeNoticeAdded(String)
+  TurnTerminal(TurnStatus, String)
+  ProgressNotice(String)
+  SessionRebuilt(Array[AgentEvent])
+  SessionListed(Array[SessionSummary])
+  ActiveSessionChanged(String)
+}
+
+pub(all) enum AppearanceMode {
+  System
+  Light
+  Dark
+} derive(Eq, @debug.Debug)
+
+pub(all) enum ApprovalPolicy {
+  NeverAsk
+  AskOnWrite
+  AskOnCommand
+} derive(Eq, @debug.Debug)
+
+pub(all) enum ChatMessage {
+  User(String)
+  Assistant(String, String?)
+  ToolResult(String, String, Bool, String?)
+  RuntimeNotice(String)
+  Terminal(TurnStatus, String)
+}
+
+pub(all) enum CodeMsg {
+  PromptChanged(String)
+  SubmitPrompt
+  SteerChanged(String)
+  SubmitSteer
+  NewSession
+  SelectSession(String)
+  ModelChanged(String, String)
+  SelectProvider(String)
+  ToggleModelPicker
+  PickWorkspaceFolder
+  WorkspaceFolderSelected(String?)
+  WorkspaceFolderPickFailed(String)
+  ThinkingChanged(ThinkingChoice)
+  ClearError
+  ReceiveAgentEvent(AgentEvent)
+}
+
+pub struct CodeWorkspace {
+  sessions : Array[SessionSummary]
+  active_session_id : String?
+  messages : Array[ChatMessage]
+  prompt : String
+  steer_text : String
+  is_streaming : Bool
+  progress_notice : String?
+  current_model : String
+  current_provider_id : String?
+  model_picker_open : Bool
+  current_thinking : ThinkingChoice
+  error : String?
+  scroll_state : @core.ScrollState
+}
+
+pub struct MoProviderFile {
+  id : String
+  name : String
+  base_url : String
+  api_key : String
+  models : Array[String]
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub struct MoWorkbenchApp {
+  // private fields
+}
+pub fn MoWorkbenchApp::program_with_backend(Self) -> @core.Program[WorkbenchModel, WorkbenchMsg]
+
+pub struct MoWorkbenchSettingsFile {
+  providers : Array[MoProviderFile]
+  active_provider_id : String?
+  current_model : String
+  mo_workbench_workspace : String
+  mo_workbench_session_root : String
+  approval_policy : String
+  sandbox_mode : String
+  font_size : Int
+  appearance : String
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+type MoWorkbenchSettingsFileLegacy derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub struct ProviderConfig {
+  id : String
+  name : String
+  base_url : String
+  api_key : String
+  models : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn ProviderConfig::new(id~ : String, name~ : String, base_url~ : String, api_key~ : String, models? : Array[String]) -> Self
+
+pub(all) enum ProviderField {
+  Name
+  BaseUrl
+  ApiKey
+} derive(Eq, @debug.Debug)
+
+pub(all) enum SandboxMode {
+  ReadOnly
+  WorkspaceWritable
+  FullAccess
+} derive(Eq, @debug.Debug)
+
+pub struct SessionSummary {
+  id : String
+  first_prompt : String
+  last_active_unix_seconds : Int64?
+} derive(Eq, @debug.Debug)
+
+pub(all) enum SettingsMsg {
+  SelectSection(SettingsSection)
+  ApprovalChanged(ApprovalPolicy)
+  SandboxChanged(SandboxMode)
+  WorkingDirChanged(String)
+  SessionRootChanged(String)
+  FontSizeChanged(Int)
+  AppearanceChanged(AppearanceMode)
+  SaveToDisk
+  DismissSaveNotice
+  SelectProvider(String)
+  AddProvider
+  UpdateProviderField(String, ProviderField, String)
+  RemoveProvider(String)
+  DetectModels(String)
+  ModelsDetected(String, Array[String]?)
+  AddManualModel(String, String)
+  NewModelInputChanged(String)
+}
+
+pub(all) enum SettingsSection {
+  Api
+  Agent
+  Editor
+} derive(Eq, @debug.Debug)
+
+pub struct SettingsWorkspace {
+  providers : Array[ProviderConfig]
+  active_provider_id : String?
+  approval_policy : ApprovalPolicy
+  sandbox_mode : SandboxMode
+  working_dir : String
+  session_root : String
+  font_size : Int
+  active_section : SettingsSection
+  save_notice : String?
+  env_source : String
+  detect_busy : Bool
+  detect_error : String?
+  new_model_id : String
+  // private fields
+}
+pub fn SettingsWorkspace::active_provider(Self) -> ProviderConfig?
+pub fn SettingsWorkspace::find_provider(Self, String) -> ProviderConfig?
+pub fn SettingsWorkspace::provider_index(Self, String) -> Int?
+
+type TaskFilter derive(Eq, @debug.Debug)
+
+type TaskGroup derive(Eq, @debug.Debug)
+
+type TaskStatus derive(Eq, @debug.Debug)
+
+type TaskTreeNode derive(Eq, @debug.Debug)
+
+pub(all) enum ThinkingChoice {
+  Normal
+  High
+  Max
+} derive(Eq, @debug.Debug)
+
+pub(all) enum TopTab {
+  Work
+  Code
+  Design
+} derive(Eq, @debug.Debug)
+
+pub(all) enum TurnStatus {
+  Finished
+  Aborted
+  Interrupted
+  Failed
+} derive(Eq, @debug.Debug)
+
+pub struct WorkbenchModel {
+  active_tab : TopTab
+  task_tree : Array[TaskTreeNode]
+  task_filter : TaskFilter
+  task_search_query : String
+  settings_open : Bool
+  sidebar_visible : Bool
+  code : CodeWorkspace
+  settings : SettingsWorkspace
+  appearance : AppearanceMode
+  backend : AgentBackendRuntime
+  settings_load : (() -> MoWorkbenchSettingsFile?)?
+  settings_persist : ((MoWorkbenchSettingsFile) -> Unit)?
+  model_detect : ((String, String, (Array[String]?) -> Unit) -> Unit)?
+  host_services : @host.HostAppServices
+  animation_progress : Double
+}
+
+pub(all) enum WorkbenchMsg {
+  SwitchTab(TopTab)
+  NewTask
+  SelectTask(String)
+  ToggleFolder(String)
+  CycleTaskFilter
+  ShowAllTasks
+  ShowRunningTasks
+  ShowFailedTasks
+  TaskSearchChanged(String)
+  ToggleSidebar
+  ToggleSettings
+  CodeMsg(CodeMsg)
+  SettingsMsg(SettingsMsg)
+  ToggleAppearance
+}
+
+// Type aliases
+pub type ModelDetectFn = (String, String, (Array[String]?) -> Unit) -> Unit
+
+pub type SettingsLoadFn = () -> MoWorkbenchSettingsFile?
+
+pub type SettingsPersistFn = (MoWorkbenchSettingsFile) -> Unit
+
+// Traits
+
