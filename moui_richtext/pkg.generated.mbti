@@ -355,6 +355,10 @@ pub(all) struct MarkdownEditorFrontMatterParseResult {
   next_index : Int
 } derive(Eq, @debug.Debug)
 
+type MarkdownEditorHtmlBlockParseResult derive(Eq, @debug.Debug)
+
+type MarkdownEditorIndentedCodeParseResult derive(Eq, @debug.Debug)
+
 pub(all) struct MarkdownEditorLineBlockParts {
   context_prefix : String
   content_start : Int
@@ -395,6 +399,8 @@ pub(all) struct MarkdownEditorOutlineItem {
   title : String
   source_start : Int
 } derive(Eq, ToJson, @debug.Debug)
+
+type MarkdownEditorParagraphParseResult derive(Eq, @debug.Debug)
 
 pub(all) struct MarkdownEditorPasteReferenceCommand {
   command : MarkdownEditorCommand
@@ -447,10 +453,14 @@ pub(all) struct MarkdownEditorRenumberResult {
   replacements : Array[MarkdownEditorOffsetReplacement]
 } derive(Eq, @debug.Debug)
 
+type MarkdownEditorRunSourceRange derive(Eq, @debug.Debug)
+
 pub(all) struct MarkdownEditorSelection {
   caret : Int
   selection : @core.TextRange?
 } derive(Eq, ToJson, @debug.Debug)
+
+type MarkdownEditorSetextHeadingParseResult derive(Eq, @debug.Debug)
 
 pub(all) struct MarkdownEditorSnapshot {
   source : String
@@ -496,6 +506,12 @@ pub(all) struct MarkdownFrontMatterParseResult {
   next_index : Int
 } derive(Eq, @debug.Debug)
 
+type MarkdownHtmlBlockParseResult derive(Eq, @debug.Debug)
+
+type MarkdownHtmlEntityDecodeResult derive(Eq, @debug.Debug)
+
+type MarkdownIndentedCodeParseResult derive(Eq, @debug.Debug)
+
 pub(all) struct MarkdownInline {
   text : String
   kind : MarkdownInlineKind
@@ -531,6 +547,8 @@ pub(all) struct MarkdownLinkBounds {
   reference_label : String
 } derive(Eq, @debug.Debug)
 
+type MarkdownParagraphParseResult derive(Eq, @debug.Debug)
+
 pub(all) struct MarkdownReferenceContext {
   range : @core.TextRange
   bounds : MarkdownLinkBounds
@@ -541,6 +559,8 @@ pub(all) struct MarkdownReferenceDefinition {
   url : String
   title : String
 } derive(Eq, @debug.Debug)
+
+type MarkdownSetextHeadingParseResult derive(Eq, @debug.Debug)
 
 pub(all) struct MarkdownSourceRange {
   start : Int
