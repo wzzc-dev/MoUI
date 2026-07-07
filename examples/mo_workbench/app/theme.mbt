@@ -454,9 +454,24 @@ fn user_message_background(theme : @moui.Theme) -> @graphics.Color {
 }
 
 ///|
-/// User avatar circle fill — accent blue.
+/// User avatar circle fill.
 fn user_avatar_color(theme : @moui.Theme) -> @graphics.Color {
-  workbench_accent(theme)
+  match theme.scheme {
+    Light =>
+      @graphics.Color::rgba(
+        r=70.0 / 255.0,
+        g=129.0 / 255.0,
+        b=255.0 / 255.0,
+        a=1.0,
+      )
+    Dark =>
+      @graphics.Color::rgba(
+        r=96.0 / 255.0,
+        g=165.0 / 255.0,
+        b=250.0 / 255.0,
+        a=1.0,
+      )
+  }
 }
 
 ///|
