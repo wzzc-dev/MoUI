@@ -135,12 +135,7 @@ fn code_input_card(
           padding=0.0,
         ),
         @views.spacer(),
-        code_model_picker(
-          model,
-          theme,
-          code_model_picker_width(model, max_width=(width - 150.0).max(120.0)),
-        ),
-        code_thinking_picker(model, theme, 58.0),
+        code_agent_controls(model, settings, theme, (width - 110.0).max(140.0)),
         workbench_send_button(theme, on_tap=CodeMsg::SubmitPrompt),
       ],
       spacing=6.0,
@@ -177,6 +172,141 @@ fn code_model_picker(
 ) -> @moui.View[CodeMsg] {
   code_compact_select_chip(code.current_model, theme, width).on_tap(
     CodeMsg::ToggleModelPicker,
+  )
+}
+
+///|
+fn code_agent_controls(
+  code : CodeWorkspace,
+  settings : SettingsWorkspace,
+  theme : @moui.Theme,
+  width : Double,
+) -> @moui.View[CodeMsg] {
+  match settings.agent_backend {
+    AgentBackendKind::OpenSeek =>
+      @views.row(
+        [
+          code_model_picker(
+            code,
+            theme,
+            code_model_picker_width(code, max_width=(width - 66.0).max(96.0)),
+          ),
+          code_thinking_picker(code, theme, 58.0),
+        ],
+        spacing=6.0,
+        align=@views.CrossAlign::Center,
+      )
+    AgentBackendKind::Acp => acp_agent_controls(code, theme, width)
+  }
+}
+
+///|
+fn acp_agent_controls(
+  code : CodeWorkspace,
+  theme : @moui.Theme,
+  width : Double,
+) -> @moui.View[CodeMsg] {
+  let rows : Array[@moui.View[CodeMsg]] = []
+  match code.session_modes {
+    Some(modes) =>
+      if !modes.available_modes.is_empty() {
+        rows.push(acp_mode_picker(modes, theme, width))
+      }
+    None => rows.push(code_compact_select_chip("ACP", theme, width.min(96.0)))
+  }
+  if !code.session_config_options.is_empty() {
+    rows.push(acp_config_controls(code.session_config_options, theme, width))
+  }
+  @views.row(rows, spacing=6.0, align=@views.CrossAlign::Center)
+}
+
+///|
+fn acp_mode_picker(
+  modes : AgentSessionModeState,
+  theme : @moui.Theme,
+  width : Double,
+) -> @moui.View[CodeMsg] {
+  let items : Array[@views.ChoiceItem] = []
+  for mode in modes.available_modes {
+    items.push(@views.choice_item(mode.id, mode.name))
+  }
+  @views.segmented_control(
+    items,
+    selected=modes.current_mode_id,
+    on_select=id => CodeMsg::SetSessionMode(id),
+    size=@views.SegmentedControlSize::Compact,
+    theme~,
+    width=width.min(260.0),
+  )
+}
+
+///|
+fn acp_config_controls(
+  options : Array[AgentSessionConfigOption],
+  theme : @moui.Theme,
+  width : Double,
+) -> @moui.View[CodeMsg] {
+  let shown_width = width.min(220.0)
+  let controls : Array[@moui.View[CodeMsg]] = []
+  for option in options {
+    if controls.length() >= 1 {
+      break
+    }
+    controls.push(acp_config_control(option, theme, shown_width))
+  }
+  @views.row(controls, spacing=6.0, align=@views.CrossAlign::Center)
+}
+
+///|
+fn acp_config_control(
+  option : AgentSessionConfigOption,
+  theme : @moui.Theme,
+  width : Double,
+) -> @moui.View[CodeMsg] {
+  match option.current_value {
+    Boolean(value) =>
+      code_compact_select_chip(
+        option.name + ": " + (if value { "on" } else { "off" }),
+        theme,
+        width,
+      ).on_tap(
+        CodeMsg::SetSessionConfigOption(
+          option.id,
+          AgentConfigValue::Boolean(!value),
+        ),
+      )
+    ValueId(_) =>
+      if option.values.is_empty() {
+        code_compact_select_chip(option.name, theme, width)
+      } else {
+        acp_config_value_picker(option, theme, width)
+      }
+  }
+}
+
+///|
+fn acp_config_value_picker(
+  option : AgentSessionConfigOption,
+  theme : @moui.Theme,
+  width : Double,
+) -> @moui.View[CodeMsg] {
+  let items : Array[@views.ChoiceItem] = []
+  for value in option.values {
+    items.push(@views.choice_item(value.id, value.name))
+  }
+  let selected = match option.current_value {
+    ValueId(id) => id
+    Boolean(_) => ""
+  }
+  @views.segmented_control(
+    items,
+    selected~,
+    on_select=id => {
+      CodeMsg::SetSessionConfigOption(option.id, AgentConfigValue::ValueId(id))
+    },
+    size=@views.SegmentedControlSize::Compact,
+    theme~,
+    width~,
   )
 }
 
@@ -670,12 +800,8 @@ fn code_composer(
   width : Double,
 ) -> @moui.View[CodeMsg] {
   let inner_width = (width - 56.0).max(320.0)
-  let thinking_width = 58.0
   let send_diameter = 32.0
-  let model_width = code_model_picker_width(
-    model,
-    max_width=(inner_width - thinking_width - send_diameter - 42.0).max(120.0),
-  )
+  let controls_width = (inner_width - send_diameter - 64.0).max(120.0)
   let rows : Array[@moui.View[CodeMsg]] = []
   match model.error {
     Some(err) =>
@@ -709,9 +835,24 @@ fn code_composer(
   rows.push(
     @views.row(
       [
-        code_model_picker(model, theme, model_width),
-        code_thinking_picker(model, theme, thinking_width),
+        code_agent_controls(model, settings, theme, controls_width),
         @views.spacer(),
+        if model.is_streaming {
+          @views.button(
+            "Cancel",
+            on_click=CodeMsg::CancelTurn,
+            variant=@views.ButtonVariant::Ghost,
+            theme~,
+            width=72.0,
+            height=32.0,
+          )
+        } else {
+          @views.container(
+            @views.text("", role=@views.TextRole::Caption, theme~, width=0.0),
+            width=0.0,
+            height=0.0,
+          )
+        },
         workbench_send_button(
           theme,
           diameter=send_diameter,

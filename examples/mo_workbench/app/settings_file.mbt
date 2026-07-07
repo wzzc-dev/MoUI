@@ -18,8 +18,12 @@ pub struct MoWorkbenchSettingsFile {
   providers : Array[MoProviderFile]
   active_provider_id : String?
   current_model : String
+  agent_backend : String?
   mo_workbench_workspace : String
   mo_workbench_session_root : String
+  acp_command : String?
+  acp_args : String?
+  acp_process_cwd : String?
   approval_policy : String
   sandbox_mode : String
   font_size : Int
@@ -61,8 +65,12 @@ pub fn mo_workbench_default_settings_file() -> MoWorkbenchSettingsFile {
     ],
     active_provider_id: Some("deepseek"),
     current_model: "deepseek-v4-flash",
+    agent_backend: Some("openseek"),
     mo_workbench_workspace: ".",
     mo_workbench_session_root: "./.openseek",
+    acp_command: Some(""),
+    acp_args: Some(""),
+    acp_process_cwd: Some(""),
     approval_policy: "write",
     sandbox_mode: "workspace",
     font_size: 14,
@@ -96,8 +104,12 @@ fn mo_workbench_settings_file_from_workspace(
     providers,
     active_provider_id: settings.active_provider_id,
     current_model,
+    agent_backend: Some(agent_backend_kind_id(settings.agent_backend)),
     mo_workbench_workspace: settings.working_dir,
     mo_workbench_session_root: settings.session_root,
+    acp_command: Some(settings.acp_command),
+    acp_args: Some(settings.acp_args),
+    acp_process_cwd: Some(settings.acp_process_cwd),
     approval_policy: approval_policy_id(settings.approval_policy),
     sandbox_mode: sandbox_mode_id(settings.sandbox_mode),
     font_size: settings.font_size,
@@ -153,8 +165,12 @@ fn migrate_legacy_settings(
     ],
     active_provider_id: Some("deepseek"),
     current_model: "deepseek-v4-flash",
+    agent_backend: Some("openseek"),
     mo_workbench_workspace: legacy.mo_workbench_workspace,
     mo_workbench_session_root: legacy.mo_workbench_session_root,
+    acp_command: Some(""),
+    acp_args: Some(""),
+    acp_process_cwd: Some(""),
     approval_policy: legacy.approval_policy,
     sandbox_mode: legacy.sandbox_mode,
     font_size: legacy.font_size,
@@ -206,6 +222,22 @@ fn SettingsWorkspace::merge_settings_file(
   } else {
     file.mo_workbench_session_root
   }
+  let agent_backend = match file.agent_backend {
+    Some(id) => agent_backend_kind_from_id(id)
+    None => self.agent_backend
+  }
+  let acp_command = match file.acp_command {
+    Some(value) => value
+    None => self.acp_command
+  }
+  let acp_args = match file.acp_args {
+    Some(value) => value
+    None => self.acp_args
+  }
+  let acp_process_cwd = match file.acp_process_cwd {
+    Some(value) => value
+    None => self.acp_process_cwd
+  }
   let approval_policy = if file.approval_policy.is_empty() {
     self.approval_policy
   } else {
@@ -227,8 +259,12 @@ fn SettingsWorkspace::merge_settings_file(
     ..self,
     providers,
     active_provider_id,
+    agent_backend,
     working_dir,
     session_root,
+    acp_command,
+    acp_args,
+    acp_process_cwd,
     approval_policy,
     sandbox_mode,
     font_size,

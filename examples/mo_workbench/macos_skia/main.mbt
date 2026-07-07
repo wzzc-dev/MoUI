@@ -22,6 +22,10 @@ async fn main {
       @openseek_transport.mo_workbench_apply_settings_file_to_process_env(file)
     None => ()
   }
+  let acp_bundle = match settings_file {
+    Some(file) => @acp_transport.acp_backend_bundle_from_settings(file)
+    None => None
+  }
   // Prefer the settings file's active provider; fall back to env vars.
   let bundle = match settings_file {
     Some(file) =>
@@ -53,14 +57,14 @@ async fn main {
       None => on_result(None)
     }
   }
-  match bundle {
+  match acp_bundle {
     Some(b) => {
       let runtime = @runtime.new_program_with_dimensions(
         program=@app.program_with_backend(
           backend=b.runtime,
           settings_load=Some(settings_load),
           settings_persist=Some(settings_persist),
-          model_detect=Some(model_detect),
+          model_detect=None,
           host_services~,
         ),
         width=1300.0,
@@ -74,7 +78,7 @@ async fn main {
         )
       }
       let worker_task : async () -> Unit = async fn() {
-        @openseek_transport.openseek_worker_loop(b.owner)
+        @acp_transport.acp_worker_loop(b.owner)
       }
       try {
         let _ = @async.all([window_task, worker_task])
@@ -82,29 +86,60 @@ async fn main {
         err => println("App exited with error: \{err}")
       }
     }
-    None => {
-      println(
-        "No API key — using stub backend. " +
-        "Edit .mo_workbench/settings.json (created on first run) and add a provider with an API key.",
-      )
-      let runtime = @runtime.new_program_with_dimensions(
-        program=@app.program_with_backend(
-          backend=@app.AgentBackendRuntime::stub(),
-          settings_load=Some(settings_load),
-          settings_persist=Some(settings_persist),
-          model_detect=Some(model_detect),
-          host_services~,
-        ),
-        width=1300.0,
-        height=680.0,
-      )
-      @macos_skia_backend.run_app_with_options_async_pump(
-        "Mo Workbench",
-        runtime,
-        options=app_options,
-      ) catch {
-        err => println("App exited with error: \{err}")
+    None =>
+      match bundle {
+        Some(b) => {
+          let runtime = @runtime.new_program_with_dimensions(
+            program=@app.program_with_backend(
+              backend=b.runtime,
+              settings_load=Some(settings_load),
+              settings_persist=Some(settings_persist),
+              model_detect=Some(model_detect),
+              host_services~,
+            ),
+            width=1300.0,
+            height=680.0,
+          )
+          let window_task : async () -> Unit = async fn() {
+            @macos_skia_backend.run_app_with_options_async_pump(
+              "Mo Workbench",
+              runtime,
+              options=app_options,
+            )
+          }
+          let worker_task : async () -> Unit = async fn() {
+            @openseek_transport.openseek_worker_loop(b.owner)
+          }
+          try {
+            let _ = @async.all([window_task, worker_task])
+          } catch {
+            err => println("App exited with error: \{err}")
+          }
+        }
+        None => {
+          println(
+            "No API key — using stub backend. " +
+            "Edit .mo_workbench/settings.json (created on first run) and add a provider with an API key.",
+          )
+          let runtime = @runtime.new_program_with_dimensions(
+            program=@app.program_with_backend(
+              backend=@app.AgentBackendRuntime::stub(),
+              settings_load=Some(settings_load),
+              settings_persist=Some(settings_persist),
+              model_detect=Some(model_detect),
+              host_services~,
+            ),
+            width=1300.0,
+            height=680.0,
+          )
+          @macos_skia_backend.run_app_with_options_async_pump(
+            "Mo Workbench",
+            runtime,
+            options=app_options,
+          ) catch {
+            err => println("App exited with error: \{err}")
+          }
+        }
       }
-    }
   }
 }

@@ -11,9 +11,9 @@ workspace. It is a TRAE-style task workbench shell with three top tabs
 surface, and a settings form from one shared
 `Program[WorkbenchModel, WorkbenchMsg]`.
 
-This example depends on `bobzhang/openseek`, which resolves from mooncakes.io
-(pinned in `examples/mo_workbench/moon.mod`). No external git submodule or
-workspace member override is required.
+The ACP transport launches any configured ACP
+stdio agent subprocess from
+`.mo_workbench/settings.json`.
 
 ## Package Shape
 
@@ -25,7 +25,9 @@ workspace member override is required.
   `AgentBackendRuntime` and runs `program_with_backend` against the macOS
   native Skia host.
 - `openseek_native_transport/` — native transport bridge glue used by the
-  macOS entrypoint.
+  macOS entrypoint for the OpenSeek backend.
+- `acp_native_transport/` — native generic ACP stdio transport used by the
+  macOS entrypoint when `agent_backend` is set to `"acp"`.
 
 ## Dependencies
 
@@ -50,8 +52,9 @@ moon run examples/mo_workbench/macos_skia --target native
 ```
 
 On first launch the app creates `.mo_workbench/settings.json` under the process
-working directory (gitignored). Edit `openai_api_key` / `openai_base_url` there,
-or copy from `settings.json.example` as a reference.
+working directory (gitignored). Edit provider fields for OpenSeek, or set
+`agent_backend` to `"acp"` plus `acp_command` / `acp_args` for an ACP stdio
+agent. `settings.json.example` documents the current fields.
 
 Then run the macOS Skia entrypoint:
 
@@ -65,6 +68,7 @@ Linux/Windows/Web entrypoints are reserved and not wired today.
 
 ```sh
 moon test examples/mo_workbench/app --target native
+moon test examples/mo_workbench/acp_native_transport --target native
 ```
 
 ## Platform Coverage

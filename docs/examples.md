@@ -50,7 +50,7 @@ shape outside `examples/` so MoUI can render its own bilingual homepage.
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback, `program_with_services`, and `HostAppServices::show_context_menu` native menu preview |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
 | Code Editor | Native code editor shell and language-provider prototype | `examples/code_editor/app/` | Native `moui_richtext` editor shell with activity rail, file tab, line-number gutter, status bar, tokenizer-backed highlighting, bracket matching, auto indentation, multi-cursor edits, hidden find/replace overlay, runtime action-command shortcuts, completion overlay, diagnostics, hover, go-to-definition, main-editor Diff mode, and custom language/provider registration through app-owned callbacks |
-| Mo Workbench | Native-Skia-first desktop agent dogfood app | `examples/mo_workbench/app/` | DeepSeek-GUI-inspired multi-workspace shell with Code chat, starter cards, topbar model/thinking controls, responsive left rail, optional right inspector, low-noise status bar, grouped Settings form, static Write/Connect Phone/Scheduled Tasks/Plugins surfaces, injected stub backend, macOS Skia native entrypoint |
+| Mo Workbench | Native-Skia-first desktop agent dogfood app | `examples/mo_workbench/app/` | DeepSeek-GUI-inspired multi-workspace shell with Code chat, starter cards, backend-aware OpenSeek/ACP controls, responsive left rail, optional right inspector, low-noise status bar, grouped Settings form, static Write/Connect Phone/Scheduled Tasks/Plugins surfaces, injected stub backend, OpenSeek native transport, generic ACP stdio native transport, macOS Skia native entrypoint |
 | MoUI Quick Example | Minimal MoUI counter for quick start exploration | `examples/moui_example/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages; macOS / Windows / Linux Skia and Web wasm-gc entrypoints (`readme.mbt.md`) |
 
 Focused Website checks:
@@ -466,7 +466,7 @@ fallback context menu for hosts without native menu support.
 
 ## Mo Workbench
 
-Mo Workbench is the native-Skia-first desktop agent dogfood app. The current shared app package is a platform-neutral multi-workspace shell inspired by DeepSeek-GUI: a left workspace rail, center work surface, topbar controls, optional right inspector, and low-noise status bar. Code is the only interactive agent workspace today; it uses an injected `AgentBackendRuntime` stub by default, so tests and the macOS Skia entrypoint run without a network or native LLM SDK.
+Mo Workbench is the native-Skia-first desktop agent dogfood app. The current shared app package is a platform-neutral multi-workspace shell inspired by DeepSeek-GUI: a left workspace rail, center work surface, topbar controls, optional right inspector, and low-noise status bar. Code is the only interactive agent workspace today; it uses an injected `AgentBackendRuntime` stub by default, while the macOS Skia entrypoint can select either the OpenSeek backend or a generic ACP stdio subprocess backend from settings.
 
 The current workspaces are:
 
@@ -475,14 +475,15 @@ The current workspaces are:
 - **Connect Phone**: static channel/timeline setup shell for future IM and webhook automation.
 - **Scheduled Tasks**: static task cards and defaults panel for future scheduled prompts.
 - **Plugins**: static capability summary for future Skills/MCP/Web tool management.
-- **Settings**: UI-only runtime and permission preferences for API key, base URL, working directory, approval policy, sandbox mode, and font size.
+- **Settings**: runtime and permission preferences for backend selection, OpenAI-compatible provider settings, ACP command/args/cwd, working directory, approval policy, sandbox mode, and font size.
 
-The app intentionally does not claim Pi/ACP/Local runtime switching, RPC session binding, command catalogs, diff application, plugin installation, Write persistence, phone pairing, or scheduled execution in this slice. Those remain future backend/transport integrations behind the existing `AgentBackendRuntime` boundary.
+The ACP backend implements stdio JSON-RPC as an ACP client/control side. It supports baseline session creation, prompt turns, cancellation, session updates, mode/config updates, and permission requests. It intentionally advertises no client filesystem or terminal capability in this slice.
 
 Focused checks for the current slice:
 
 ```sh
 moon test examples/mo_workbench/app --target native
+moon test examples/mo_workbench/acp_native_transport --target native
 moon test examples/mo_workbench/app --target wasm-gc
 moon build examples/mo_workbench/macos_skia --target native
 ```

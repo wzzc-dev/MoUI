@@ -19,6 +19,7 @@ fn message_row(
     ToolResult(tool_name, content, is_error, brief) =>
       tool_result_row(tool_name, content, is_error, brief, theme, width)
     RuntimeNotice(text) => runtime_notice_row(text, theme, width)
+    PermissionRequest(request) => permission_request_row(request, theme, width)
     Terminal(status, message) => terminal_row(status, message, theme, width)
   }
   @views.padding_edges(inner, top=6.0, bottom=6.0)
@@ -238,6 +239,107 @@ fn runtime_notice_row(
     width~,
     padding=4.0,
   )
+}
+
+///|
+fn permission_request_row(
+  request : AgentPermissionRequest,
+  theme : @moui.Theme,
+  width : Double,
+) -> @moui.View[CodeMsg] {
+  let card_width = width * 0.9
+  let rows : Array[@moui.View[CodeMsg]] = []
+  rows.push(
+    @views.row(
+      [
+        @views.badge(
+          "Permission",
+          tone=@views.BadgeTone::Warning,
+          theme~,
+          width=96.0,
+        ),
+        @views.text(
+          if request.title.is_empty() {
+            request.tool_call_id
+          } else {
+            request.title
+          },
+          role=@views.TextRole::Label,
+          theme~,
+          width=card_width - 128.0,
+        ),
+      ],
+      spacing=8.0,
+      align=@views.CrossAlign::Center,
+    ),
+  )
+  if !request.kind.is_empty() {
+    rows.push(
+      @views.text(
+        request.kind,
+        role=@views.TextRole::Caption,
+        theme~,
+        width=card_width - 24.0,
+      ).foreground(theme.palette.muted),
+    )
+  }
+  let button_width = ((card_width - 24.0) / 3.0).max(96.0)
+  let buttons : Array[@moui.View[CodeMsg]] = []
+  for option in request.options {
+    buttons.push(
+      @views.button(
+        option.name,
+        on_click=CodeMsg::RespondPermission(
+          request.request_id,
+          PermissionOutcome::Selected(option.id),
+        ),
+        variant=permission_button_variant(option.kind),
+        theme~,
+        width=button_width,
+        height=34.0,
+      ),
+    )
+  }
+  buttons.push(
+    @views.button(
+      "Cancel",
+      on_click=CodeMsg::RespondPermission(
+        request.request_id,
+        PermissionOutcome::Cancelled,
+      ),
+      variant=@views.ButtonVariant::Ghost,
+      theme~,
+      width=button_width,
+      height=34.0,
+    ),
+  )
+  rows.push(@views.row(buttons, spacing=8.0, align=@views.CrossAlign::Center))
+  @views.container(
+    @views.row(
+      [
+        @views.container(
+          @views.column(rows, spacing=8.0, align=@views.CrossAlign::Stretch),
+          width=card_width,
+          background=workbench_diff_removed_soft(theme),
+          corner_radius=8.0,
+          padding=12.0,
+        ).border(hairline_border(theme)),
+        @views.spacer(),
+      ],
+      align=@views.CrossAlign::Start,
+    ),
+    width~,
+    padding=4.0,
+  )
+}
+
+///|
+fn permission_button_variant(kind : String) -> @views.ButtonVariant {
+  match kind {
+    "allow_always" | "allow_once" => @views.ButtonVariant::Primary
+    "reject_once" | "reject_always" => @views.ButtonVariant::Ghost
+    _ => @views.ButtonVariant::Ghost
+  }
 }
 
 ///|

@@ -159,7 +159,7 @@ fn settings_panel_header(
       @views.text(
         "Loaded from " +
         model.env_source +
-        ". 可配置多个 OpenAI 兼容供应商，每个供应商可自动检测或手动添加模型。",
+        ". 可选择 OpenSeek 或 ACP agent transport backend。",
         role=@views.TextRole::Caption,
         theme~,
         width~,
@@ -444,6 +444,13 @@ fn settings_agent_panel(
   @views.column(
     [
       settings_field_row(
+        "Backend",
+        "OpenSeek in-process backend or generic ACP stdio agent",
+        backend_segmented_control(model.agent_backend, theme, field_w),
+        theme,
+        field_w,
+      ),
+      settings_field_row(
         "Workspace",
         "mo_workbench_workspace — agent working directory",
         @views.text_field(
@@ -467,6 +474,54 @@ fn settings_agent_panel(
           on_input=value => SettingsMsg::SessionRootChanged(value),
           on_submit=None,
           placeholder="./.openseek",
+          variant=@views.TextFieldVariant::Filled,
+          theme~,
+          width=field_w,
+          height=40.0,
+        ),
+        theme,
+        field_w,
+      ),
+      settings_field_row(
+        "ACP command",
+        "Executable for an ACP stdio agent process",
+        @views.text_field(
+          model.acp_command,
+          on_input=value => SettingsMsg::AcpCommandChanged(value),
+          on_submit=None,
+          placeholder="acp-agent",
+          variant=@views.TextFieldVariant::Filled,
+          theme~,
+          width=field_w,
+          height=40.0,
+        ),
+        theme,
+        field_w,
+      ),
+      settings_field_row(
+        "ACP args",
+        "Whitespace args or JSON array, inherited process env",
+        @views.text_field(
+          model.acp_args,
+          on_input=value => SettingsMsg::AcpArgsChanged(value),
+          on_submit=None,
+          placeholder="[\"--stdio\"]",
+          variant=@views.TextFieldVariant::Filled,
+          theme~,
+          width=field_w,
+          height=40.0,
+        ),
+        theme,
+        field_w,
+      ),
+      settings_field_row(
+        "ACP process cwd",
+        "Optional process cwd; session cwd still uses Workspace",
+        @views.text_field(
+          model.acp_process_cwd,
+          on_input=value => SettingsMsg::AcpProcessCwdChanged(value),
+          on_submit=None,
+          placeholder="",
           variant=@views.TextFieldVariant::Filled,
           theme~,
           width=field_w,
@@ -576,6 +631,25 @@ fn settings_save_row(
     ),
   )
   @views.row(children, spacing=12.0, align=@views.CrossAlign::Center)
+}
+
+///|
+fn backend_segmented_control(
+  backend : AgentBackendKind,
+  theme : @moui.Theme,
+  width : Double,
+) -> @moui.View[SettingsMsg] {
+  @views.segmented_control(
+    [
+      @views.choice_item("openseek", "OpenSeek"),
+      @views.choice_item("acp", "ACP"),
+    ],
+    selected=agent_backend_kind_id(backend),
+    on_select=id => SettingsMsg::BackendChanged(agent_backend_kind_from_id(id)),
+    size=@views.SegmentedControlSize::Compact,
+    theme~,
+    width~,
+  )
 }
 
 ///|

@@ -7,6 +7,7 @@ import {
   "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
   "wzzc-dev/moui/render/skia" @skia_renderer,
   "examples/mo_workbench/app",
+  "examples/mo_workbench/acp_native_transport" @acp_transport,
   "examples/mo_workbench/openseek_native_transport" @openseek_transport,
 }
 

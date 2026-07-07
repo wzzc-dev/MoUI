@@ -187,6 +187,120 @@ test "receive assistant event appends message and clears streaming on terminal" 
 }
 
 ///|
+test "assistant chunks with same message id merge into one message" {
+  let model = test_model(script=_cmd => [])
+  let (model, _effect) = model.update(
+    WorkbenchMsg::CodeMsg(
+      CodeMsg::ReceiveAgentEvent(AssistantMessageChunk(Some("m1"), "hello")),
+    ),
+  )
+  let (model, _effect) = model.update(
+    WorkbenchMsg::CodeMsg(
+      CodeMsg::ReceiveAgentEvent(AssistantMessageChunk(Some("m1"), " world")),
+    ),
+  )
+  inspect(model.code.messages.length(), content="1")
+  guard model.code.messages[0] is Assistant(content, _) else {
+    fail("expected assistant message")
+  }
+  inspect(content, content="hello world")
+}
+
+///|
+test "thought chunks merge into assistant reasoning" {
+  let model = test_model(script=_cmd => [])
+  let (model, _effect) = model.update(
+    WorkbenchMsg::CodeMsg(
+      CodeMsg::ReceiveAgentEvent(AssistantMessageChunk(Some("m1"), "answer")),
+    ),
+  )
+  let (model, _effect) = model.update(
+    WorkbenchMsg::CodeMsg(
+      CodeMsg::ReceiveAgentEvent(ThoughtMessageChunk(Some("t1"), "reason")),
+    ),
+  )
+  inspect(model.code.messages.length(), content="1")
+  guard model.code.messages[0] is Assistant(content, reasoning) else {
+    fail("expected assistant message")
+  }
+  inspect(content, content="answer")
+  guard reasoning is Some(text) else { fail("expected reasoning") }
+  inspect(text, content="reason")
+}
+
+///|
+test "permission response dispatches backend command" {
+  let fixture = AgentBackendFixture::new(script=_cmd => [])
+  let model = WorkbenchModel::new(backend=fixture.runtime())
+  let request = agent_permission_request(
+    request_id="perm-1",
+    session_id="s1",
+    tool_call_id="tool-1",
+    title="Run tool",
+    options=[agent_permission_option(id="allow", name="Allow")],
+  )
+  let model = {
+    ..model,
+    code: { ..model.code, messages: [ChatMessage::PermissionRequest(request)] },
+  }
+  let (model, effect) = model.update(
+    WorkbenchMsg::CodeMsg(
+      CodeMsg::RespondPermission("perm-1", PermissionOutcome::Selected("allow")),
+    ),
+  )
+  ignore(drain_workbench_effect(effect))
+  guard model.code.messages[0] is RuntimeNotice(text) else {
+    fail("expected permission notice")
+  }
+  inspect(text, content="Permission response: allow")
+  let commands = fixture.dispatched_commands()
+  inspect(commands.length(), content="1")
+  guard commands[0] is RespondPermission(id, outcome) else {
+    fail("expected respond permission command")
+  }
+  inspect(id, content="perm-1")
+  inspect(outcome == PermissionOutcome::Selected("allow"), content="true")
+}
+
+///|
+test "cancel turn dispatches cancel command and clears streaming" {
+  let fixture = AgentBackendFixture::new(script=_cmd => [])
+  let model = WorkbenchModel::new(backend=fixture.runtime())
+  let model = { ..model, code: { ..model.code, is_streaming: true } }
+  let (model, effect) = model.update(WorkbenchMsg::CodeMsg(CodeMsg::CancelTurn))
+  assert_false(model.code.is_streaming)
+  ignore(drain_workbench_effect(effect))
+  let commands = fixture.dispatched_commands()
+  inspect(commands.length(), content="1")
+  guard commands[0] is CancelTurn else { fail("expected cancel command") }
+}
+
+///|
+test "current mode update preserves advertised ACP modes" {
+  let model = test_model(script=_cmd => [])
+  let modes = agent_session_mode_state(current_mode_id="ask", available_modes=[
+    agent_session_mode(id="ask", name="Ask"),
+    agent_session_mode(id="code", name="Code"),
+  ])
+  let (model, _effect) = model.update(
+    WorkbenchMsg::CodeMsg(
+      CodeMsg::ReceiveAgentEvent(SessionModeStateChanged(modes)),
+    ),
+  )
+  let update = agent_session_mode_state(current_mode_id="code", available_modes=[])
+  let (model, _effect) = model.update(
+    WorkbenchMsg::CodeMsg(
+      CodeMsg::ReceiveAgentEvent(SessionModeStateChanged(update)),
+    ),
+  )
+  guard model.code.session_modes is Some(next_modes) else {
+    fail("expected session modes")
+  }
+  inspect(next_modes.current_mode_id, content="code")
+  inspect(next_modes.available_modes.length(), content="2")
+}
+
+///|
 test "failed terminal sets error" {
   let model = test_model(script=_cmd => [])
   let model = { ..model, code: { ..model.code, is_streaming: true } }
