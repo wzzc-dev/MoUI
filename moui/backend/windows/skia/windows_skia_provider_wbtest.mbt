@@ -241,6 +241,14 @@ fn skia_provider_test_png_bytes() -> Bytes {
 }
 
 ///|
+#borrow(source_bytes)
+extern "C" fn moui_windows_async_image_spawn_sync(
+  window_id : Int64,
+  source_bytes : Bytes,
+  source_len : Int,
+) -> Unit = "moui_windows_async_image_spawn_sync"
+
+///|
 test "windows skia async image background decode confirmed" {
   guard @skia_renderer.skia_available() else { return () }
   let base = match @env.get_env_var("TEMP") {
@@ -260,17 +268,8 @@ test "windows skia async image background decode confirmed" {
   }
   defer (@fs.remove_file(path) catch { _ => () })
   let source_bytes = @utf8.encode(path, bom=false)
-  moui_windows_async_image_spawn(42, source_bytes, source_bytes.length())
-  let max_attempts = 200
-  let mut result = Bytes::make(0, 0)
-  for attempt = 0; attempt < max_attempts; attempt = attempt + 1 {
-    let r = moui_windows_async_image_take_result()
-    if r.length() > 0 {
-      result = r
-      break
-    }
-    windows_skia_test_sleep(0)
-  }
+  moui_windows_async_image_spawn_sync(42, source_bytes, source_bytes.length())
+  let result = moui_windows_async_image_take_result()
   guard result.length() >= 40 else {
     fail("expected result with 40-byte header, got \{result.length()} bytes")
   }
@@ -289,6 +288,3 @@ test "windows skia async image background decode confirmed" {
   assert_true(background_decode_raw == 1)
   inspect(bytes_len, content="4")
 }
-
-///|
-extern "C" fn windows_skia_test_sleep(milliseconds : Int) -> Unit = "Sleep"

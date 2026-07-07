@@ -212,6 +212,31 @@ void moui_windows_async_image_spawn(int64_t window_id,
 }
 
 extern "C" MOONBIT_FFI_EXPORT
+void moui_windows_async_image_spawn_sync(int64_t window_id,
+                                         moonbit_bytes_t source_bytes,
+                                         int32_t source_len) {
+  if (source_bytes == NULL || source_len <= 0) {
+    return;
+  }
+  moui_async_image_request_t *req =
+      (moui_async_image_request_t *)calloc(1, sizeof(moui_async_image_request_t));
+  if (req == NULL) {
+    return;
+  }
+  req->window_id = window_id;
+  req->source = (char *)malloc((size_t)source_len + 1);
+  if (req->source == NULL) {
+    free(req);
+    return;
+  }
+  memcpy(req->source, source_bytes, (size_t)source_len);
+  req->source[source_len] = '\0';
+  req->source_len = source_len;
+  req->is_background = 1;
+  moui_async_image_read_file(req);
+}
+
+extern "C" MOONBIT_FFI_EXPORT
 moonbit_bytes_t moui_windows_async_image_take_result(void) {
   moui_ensure_mutex();
   EnterCriticalSection(&g_mutex);
