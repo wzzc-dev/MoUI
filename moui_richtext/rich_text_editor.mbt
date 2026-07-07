@@ -526,7 +526,7 @@ fn[Msg] markdown_session_editor_event(
           content,
           font,
           up=event.key == "ArrowUp",
-          extend=event.modifiers.shift,
+          extend_selection=event.modifiers.shift,
           on_selection_change,
         )
       }
@@ -2059,7 +2059,7 @@ fn[Msg] rich_text_keyboard_event(
       content,
       font,
       up=true,
-      extend=event.modifiers.shift,
+      extend_selection=event.modifiers.shift,
       on_selection_change,
     )
   }
@@ -2074,7 +2074,7 @@ fn[Msg] rich_text_keyboard_event(
       content,
       font,
       up=false,
-      extend=event.modifiers.shift,
+      extend_selection=event.modifiers.shift,
       on_selection_change,
     )
   }
@@ -2440,7 +2440,7 @@ fn[Msg] rich_text_caret_move_result(
   ctx : @core.ViewEventContext,
   text : String,
   direction : @core.TextCaretDirection,
-  extend : Bool,
+  extend_selection : Bool,
   on_selection_change : ((Int, @core.TextRange?) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {
   let caret_move = @core.move_text_caret(
@@ -2448,7 +2448,7 @@ fn[Msg] rich_text_caret_move_result(
     ctx.text_control.caret,
     ctx.text_control.selection,
     direction,
-    extend~,
+    extend_selection~,
   )
   let next_control = {
     ..ctx.text_control,
@@ -2800,7 +2800,7 @@ fn[Msg] rich_text_vertical_caret_move_result(
   content : @core.Rect,
   font : @core.FontSpec,
   up~ : Bool,
-  extend~ : Bool,
+  extend_selection~ : Bool,
   on_selection_change : ((Int, @core.TextRange?) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {
   let display_text = rich_text_with_composition(
@@ -2830,10 +2830,10 @@ fn[Msg] rich_text_vertical_caret_move_result(
     ctx.text_system,
     up~,
   )
-  if target_offset == ctx.text_control.caret && !extend {
+  if target_offset == ctx.text_control.caret && !extend_selection {
     return @core.ViewEventResult::ignored()
   }
-  let next_control = if extend {
+  let next_control = if extend_selection {
     let anchor = match ctx.text_control.text_selection_anchor {
       Some(a) => a
       None => ctx.text_control.caret
