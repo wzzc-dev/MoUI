@@ -22,6 +22,7 @@ pub fn[Msg] rich_text_editor(
   visible_scroll_y? : Double = 0.0,
   visible_viewport_height? : Double = 0.0,
   visible_overscan? : Double = 320.0,
+  visible_scroll_state? : @core.ScrollState? = None,
   selection_caret? : Int = -1,
   selection_range? : @core.TextRange? = None,
   kind? : String = "RichTextEditor",
@@ -31,6 +32,9 @@ pub fn[Msg] rich_text_editor(
     identity=() => @core.ViewIdentity::new(kind~, key~),
     revision=() => {
       "rich-text-editor:\{value.get()}:\{placeholder}:\{view_size_revision(size)}:\{view_font_revision(font)}:\{view_color_revision(foreground)}:\{view_color_revision(placeholder_color)}:\{view_brush_revision(background)}:\{view_border_option_revision(border)}:\{view_border_option_revision(focused_border)}:\{view_color_revision(cursor_color)}:\{corner_radius}:\{accepts_tab_input}:\{selection_caret}:\{view_text_range_option_revision(selection_range)}"
+    },
+    paint_revision=() => {
+      "rich-text-editor-scroll:\{markdown_session_current_scroll_y(visible_scroll_y, visible_scroll_state)}"
     },
     layout=ctx => {
       @core.ViewLayoutResult::new(size=ctx.constraints.constrain(size))
@@ -52,6 +56,7 @@ pub fn[Msg] rich_text_editor(
         visible_scroll_y~,
         visible_viewport_height~,
         visible_overscan~,
+        visible_scroll_state~,
       )
     },
     event=ctx => {
@@ -67,6 +72,10 @@ pub fn[Msg] rich_text_editor(
         on_command_click~,
         input_transform~,
         accepts_tab_input~,
+        visible_scroll_y~,
+        visible_viewport_height~,
+        visible_overscan~,
+        visible_scroll_state~,
       )
     },
     text_input_state=ctx => {
@@ -79,6 +88,10 @@ pub fn[Msg] rich_text_editor(
           control=ctx.text_control,
           selection_caret~,
           selection_range~,
+          visible_scroll_y~,
+          visible_viewport_height~,
+          visible_overscan~,
+          visible_scroll_state~,
           text_system=ctx.text_system,
         ),
       )
@@ -135,6 +148,7 @@ pub fn[Msg] controlled_rich_text_editor(
   visible_scroll_y? : Double = 0.0,
   visible_viewport_height? : Double = 0.0,
   visible_overscan? : Double = 320.0,
+  visible_scroll_state? : @core.ScrollState? = None,
   selection_caret? : Int = -1,
   selection_range? : @core.TextRange? = None,
   kind? : String = "RichTextEditor",
@@ -163,6 +177,7 @@ pub fn[Msg] controlled_rich_text_editor(
     visible_scroll_y~,
     visible_viewport_height~,
     visible_overscan~,
+    visible_scroll_state~,
     selection_caret~,
     selection_range~,
     kind~,
@@ -193,6 +208,7 @@ pub fn[Msg] controlled_rich_text_document_editor(
   visible_scroll_y? : Double = 0.0,
   visible_viewport_height? : Double = 0.0,
   visible_overscan? : Double = 320.0,
+  visible_scroll_state? : @core.ScrollState? = None,
   selection_caret? : Int = -1,
   selection_range? : @core.TextRange? = None,
   kind? : String = "RichTextDocumentEditor",
@@ -220,6 +236,7 @@ pub fn[Msg] controlled_rich_text_document_editor(
     visible_scroll_y~,
     visible_viewport_height~,
     visible_overscan~,
+    visible_scroll_state~,
     selection_caret~,
     selection_range~,
     kind~,
@@ -963,6 +980,7 @@ fn rich_text_editor_paint(
   visible_scroll_y~ : Double,
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
+  visible_scroll_state~ : @core.ScrollState?,
 ) -> @core.ViewPaintPlan {
   let commands : Array[@core.DrawCommand] = []
   let overlay_commands : Array[@core.DrawCommand] = []
@@ -984,6 +1002,14 @@ fn rich_text_editor_paint(
     focused=ctx.focused,
   )
   let content = rich_text_editor_content_rect(ctx.frame)
+  let scroll_y = markdown_session_current_scroll_y(
+    visible_scroll_y, visible_scroll_state,
+  )
+  let document_content = rich_text_scrolled_content_rect(
+    content,
+    scroll_y~,
+    visible_viewport_height~,
+  )
   commands.push(@core.DrawCommand::PushClip(content))
   let child_layers : Array[@core.ViewPaintLayer] = []
   if display_text == "" {
@@ -1003,13 +1029,14 @@ fn rich_text_editor_paint(
     append_rich_text_document_layers(
       child_layers,
       document,
-      content,
+      document_content,
       font,
       foreground,
       text_system=ctx.text_system,
-      visible_scroll_y~,
+      visible_scroll_y=scroll_y,
       visible_viewport_height~,
       visible_overscan~,
+      clip_rect=Some(content),
     )
     if ctx.focused {
       append_rich_text_editor_overlay(
@@ -1017,7 +1044,7 @@ fn rich_text_editor_paint(
         text~,
         display_text~,
         document~,
-        content~,
+        content=document_content,
         font~,
         cursor_color~,
         control=ctx.text_control,
@@ -1055,6 +1082,19 @@ fn append_rich_text_border(
         )
       }
     None => ()
+  }
+}
+
+///|
+fn rich_text_scrolled_content_rect(
+  content : @core.Rect,
+  scroll_y~ : Double,
+  visible_viewport_height~ : Double,
+) -> @core.Rect {
+  if visible_viewport_height > 0.0 {
+    content.offset(dx=0.0, dy=-scroll_y)
+  } else {
+    content
   }
 }
 
@@ -1606,6 +1646,10 @@ fn[Msg] rich_text_editor_event(
   on_command_click~ : ((Int) -> Msg)?,
   input_transform~ : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?,
   accepts_tab_input~ : Bool,
+  visible_scroll_y~ : Double,
+  visible_viewport_height~ : Double,
+  visible_overscan~ : Double,
+  visible_scroll_state~ : @core.ScrollState?,
 ) -> @core.ViewEventResult[Msg] {
   match ctx.event {
     @core.AppEvent::Pointer(event) =>
@@ -1618,6 +1662,10 @@ fn[Msg] rich_text_editor_event(
         on_prefix_click~,
         on_command_click~,
         event~,
+        visible_scroll_y~,
+        visible_viewport_height~,
+        visible_overscan~,
+        visible_scroll_state~,
       )
     @core.AppEvent::Keyboard(event) =>
       rich_text_keyboard_event(
@@ -1657,14 +1705,38 @@ fn[Msg] rich_text_pointer_event(
   on_prefix_click~ : ((Int) -> Msg)?,
   on_command_click~ : ((Int) -> Msg)?,
   event~ : @core.PointerEvent,
+  visible_scroll_y~ : Double,
+  visible_viewport_height~ : Double,
+  visible_overscan~ : Double,
+  visible_scroll_state~ : @core.ScrollState?,
 ) -> @core.ViewEventResult[Msg] {
+  ignore(visible_overscan)
   let inside = ctx.frame.contains(event.position)
+  if inside && (event.wheel_delta.x != 0.0 || event.wheel_delta.y != 0.0) {
+    return rich_text_scroll_event(
+      value,
+      format,
+      font,
+      ctx.text_system,
+      event~,
+      visible_viewport_height~,
+      visible_scroll_state~,
+    )
+  }
   match event.phase {
     @core.PointerPhase::Down =>
       if inside {
         let text = value.get()
         let document = format(text)
-        let content = rich_text_editor_content_rect(ctx.frame)
+        let base_content = rich_text_editor_content_rect(ctx.frame)
+        let scroll_y = markdown_session_current_scroll_y(
+          visible_scroll_y, visible_scroll_state,
+        )
+        let content = rich_text_scrolled_content_rect(
+          base_content,
+          scroll_y~,
+          visible_viewport_height~,
+        )
         // A Cmd/Ctrl-held click opens links/images instead of moving the caret:
         // dispatch the command-click hook with the source offset and swallow the
         // caret placement so the selection is not disturbed.
@@ -1737,7 +1809,15 @@ fn[Msg] rich_text_pointer_event(
         Some(anchor) => {
           let text = value.get()
           let document = format(text)
-          let content = rich_text_editor_content_rect(ctx.frame)
+          let base_content = rich_text_editor_content_rect(ctx.frame)
+          let scroll_y = markdown_session_current_scroll_y(
+            visible_scroll_y, visible_scroll_state,
+          )
+          let content = rich_text_scrolled_content_rect(
+            base_content,
+            scroll_y~,
+            visible_viewport_height~,
+          )
           let caret = rich_text_document_source_offset_at_point(
             document,
             event.position,
@@ -1784,6 +1864,46 @@ fn[Msg] rich_text_pointer_event(
         dirty=@core.ViewDirtyHint::ViewPaintDirty,
       )
     }
+  }
+}
+
+///|
+fn[Msg] rich_text_scroll_event(
+  value : @core.Binding[String],
+  format : RichTextFormatter,
+  font : @core.FontSpec,
+  text_system : @core.TextSystem,
+  event~ : @core.PointerEvent,
+  visible_viewport_height~ : Double,
+  visible_scroll_state~ : @core.ScrollState?,
+) -> @core.ViewEventResult[Msg] {
+  match visible_scroll_state {
+    Some(state) => {
+      let viewport_height = if visible_viewport_height > 0.0 {
+        visible_viewport_height
+      } else {
+        0.0
+      }
+      let content_height = rich_text_document_height(
+          format(value.get()),
+          font,
+          text_system~,
+        ) +
+        48.0
+      let max_scroll = max_double(0.0, content_height - viewport_height)
+      let current = state.offset()
+      let next_y = min_double(
+        max_double(0.0, current.y - event.wheel_delta.y),
+        max_scroll,
+      )
+      state.scroll_to(x=0.0, y=next_y)
+      view_event_result(
+        changed=next_y != current.y,
+        captured=true,
+        dirty=@core.ViewDirtyHint::ViewPaintDirty,
+      )
+    }
+    None => @core.ViewEventResult::ignored()
   }
 }
 
@@ -2269,8 +2389,13 @@ fn rich_text_input_state(
   control~ : @core.TextControlStateContext,
   selection_caret~ : Int,
   selection_range~ : @core.TextRange?,
+  visible_scroll_y~ : Double,
+  visible_viewport_height~ : Double,
+  visible_overscan~ : Double,
+  visible_scroll_state~ : @core.ScrollState?,
   text_system~ : @core.TextSystem,
 ) -> @core.TextInputState {
+  ignore(visible_overscan)
   let boundaries = @core.TextGraphemeBoundaries::new(text~)
   let control = if selection_caret >= 0 {
     { ..control, caret: selection_caret, selection: selection_range }
@@ -2278,7 +2403,15 @@ fn rich_text_input_state(
     control
   }
   let display_text = rich_text_with_composition(text, control, focused=true)
-  let content = rich_text_editor_content_rect(frame)
+  let base_content = rich_text_editor_content_rect(frame)
+  let scroll_y = markdown_session_current_scroll_y(
+    visible_scroll_y, visible_scroll_state,
+  )
+  let content = rich_text_scrolled_content_rect(
+    base_content,
+    scroll_y~,
+    visible_viewport_height~,
+  )
   let caret = boundaries.nearest_boundary(control.caret)
   let visual_caret = @core.clamp_int(
     rich_text_visual_caret(text, control, focused=true),

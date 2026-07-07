@@ -1,0 +1,233 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/code_editor/app"
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui_richtext",
+}
+
+// Values
+pub fn auto_indent_for_position(String, Int) -> String
+
+pub fn code_bracket_match(String, Int) -> BracketMatch?
+
+pub fn code_diff(String, String) -> CodeDiff
+
+pub fn code_editor_action_command_map() -> @core.ActionCommandMap
+
+pub fn code_editor_action_commands() -> Array[@core.ActionCommand]
+
+pub fn code_editor_caret_position(String, Int) -> CodeEditorCaretPosition
+
+pub fn code_editor_diagnostic_lines(String, Array[CodeDiagnostic]) -> Array[Int]
+
+pub fn code_editor_document(String, String, CodeLanguageRegistry, @core.FontSpec) -> @moui_richtext.RichTextDocument
+
+pub fn code_editor_features() -> Array[CodeEditorFeature]
+
+pub fn code_editor_source_lines(String) -> Array[CodeEditorSourceLine]
+
+pub fn code_find_matches(String, String) -> Array[@core.TextRange]
+
+pub fn code_insert_text(String, Array[CodeCursor], String) -> (String, Array[CodeCursor])
+
+pub fn code_replace_all(String, String, String) -> String
+
+pub fn program() -> @core.Program[CodeEditorModel, CodeEditorMsg]
+
+pub fn update(CodeEditorModel, CodeEditorMsg) -> CodeEditorModel
+
+pub fn view(CodeEditorModel) -> @core.View[CodeEditorMsg]
+
+// Errors
+
+// Types and methods
+pub(all) struct BracketMatch {
+  open : Int
+  close : Int
+}
+
+pub(all) struct CodeCompletionItem {
+  label : String
+  insert_text : String
+  detail : String
+}
+pub fn CodeCompletionItem::new(label~ : String, insert_text~ : String, detail? : String) -> Self
+
+pub(all) struct CodeCursor {
+  position : Int
+  selection : @core.TextRange?
+}
+pub fn CodeCursor::new(position~ : Int, selection? : @core.TextRange?) -> Self
+
+pub(all) struct CodeDefinition {
+  symbol : String
+  file : String
+  line : Int
+  column : Int
+}
+pub fn CodeDefinition::new(symbol~ : String, file~ : String, line~ : Int, column~ : Int) -> Self
+
+pub(all) struct CodeDiagnostic {
+  range : @core.TextRange
+  severity : CodeDiagnosticSeverity
+  message : String
+}
+
+pub(all) enum CodeDiagnosticSeverity {
+  Info
+  Warning
+  Error
+}
+pub fn CodeDiagnosticSeverity::label(Self) -> String
+
+pub(all) struct CodeDiff {
+  original : String
+  modified : String
+  lines : Array[CodeDiffLine]
+}
+
+pub(all) struct CodeDiffLine {
+  kind : CodeDiffLineKind
+  old_line : Int?
+  new_line : Int?
+  text : String
+}
+
+pub(all) enum CodeDiffLineKind {
+  Context
+  Added
+  Removed
+}
+pub fn CodeDiffLineKind::label(Self) -> String
+
+pub(all) struct CodeEditorCaretPosition {
+  line : Int
+  column : Int
+  offset : Int
+}
+
+pub(all) struct CodeEditorFeature {
+  label : String
+  detail : String
+}
+
+pub(all) enum CodeEditorMode {
+  SourceEditor
+  DiffEditor
+  ProviderLab
+} derive(Eq)
+pub fn CodeEditorMode::label(Self) -> String
+
+pub(all) struct CodeEditorModel {
+  source : String
+  original_source : String
+  language_id : String
+  mode : CodeEditorMode
+  active_panel : CodeEditorSidePanel?
+  editor_scroll : @core.ScrollState
+  diff_scroll : @core.ScrollState
+  find_visible : Bool
+  completion_visible : Bool
+  cursors : Array[CodeCursor]
+  selection : @core.TextRange?
+  find : CodeFindState
+  registry : CodeLanguageRegistry
+  completions : Array[CodeCompletionItem]
+  diagnostics : Array[CodeDiagnostic]
+  hover : CodeHover?
+  definition : CodeDefinition?
+  bracket_match : BracketMatch?
+  status : String
+}
+pub fn CodeEditorModel::new() -> Self
+pub fn CodeEditorModel::with_cursor(Self, Int) -> Self
+pub fn CodeEditorModel::with_cursors(Self, Array[CodeCursor]) -> Self
+pub fn CodeEditorModel::with_find(Self, String) -> Self
+pub fn CodeEditorModel::with_replace(Self, String) -> Self
+pub fn CodeEditorModel::with_source(Self, String) -> Self
+
+pub(all) enum CodeEditorMsg {
+  SourceChanged(String)
+  InsertText(String)
+  SelectionChanged(Int, @core.TextRange?)
+  SetFindQuery(String)
+  SetReplaceText(String)
+  FindNext
+  ReplaceAll
+  RunDiagnostics
+  TriggerCompletion
+  ShowHover
+  GoToDefinition
+  ShowSource
+  ShowDiff
+  ShowProviders
+  ToggleCapabilities
+  ToggleIntelliSense
+  ToggleDiffEditor
+  ToggleFind
+  CloseFind
+  ApplyCompletion(Int)
+  OpenPanel(CodeEditorSidePanel?)
+  SetMode(CodeEditorMode)
+  ChangeLanguage(String)
+  RegisterSampleLanguage
+  DemoMultiCursor
+}
+
+pub(all) enum CodeEditorSidePanel {
+  CapabilitiesPanel
+  IntelliSensePanel
+}
+
+pub(all) struct CodeEditorSourceLine {
+  number : Int
+  start : Int
+  end : Int
+  text : String
+}
+
+pub(all) struct CodeEditorToken {
+  text : String
+  kind : String
+}
+
+pub(all) struct CodeFindState {
+  query : String
+  replacement : String
+  matches : Array[@core.TextRange]
+  active_index : Int
+}
+pub fn CodeFindState::new() -> Self
+
+pub(all) struct CodeHover {
+  symbol : String
+  detail : String
+}
+pub fn CodeHover::new(symbol~ : String, detail~ : String) -> Self
+
+pub struct CodeLanguageProvider {
+  id : String
+  label : String
+  tokenizer : (String) -> Array[CodeEditorToken]
+  completion_provider : (String, Int) -> Array[CodeCompletionItem]
+  hover_provider : (String, Int) -> CodeHover?
+  definition_provider : (String, Int) -> CodeDefinition?
+  diagnostic_provider : (String) -> Array[CodeDiagnostic]
+}
+pub fn CodeLanguageProvider::new(id~ : String, label~ : String, tokenizer~ : (String) -> Array[CodeEditorToken], completion_provider~ : (String, Int) -> Array[CodeCompletionItem], hover_provider~ : (String, Int) -> CodeHover?, definition_provider~ : (String, Int) -> CodeDefinition?, diagnostic_provider? : (String) -> Array[CodeDiagnostic]) -> Self
+
+pub struct CodeLanguageRegistry {
+  providers : Array[CodeLanguageProvider]
+}
+pub fn CodeLanguageRegistry::completions(Self, String, String, Int) -> Array[CodeCompletionItem]
+pub fn CodeLanguageRegistry::definition(Self, String, String, Int) -> CodeDefinition?
+pub fn CodeLanguageRegistry::diagnostics(Self, String, String) -> Array[CodeDiagnostic]
+pub fn CodeLanguageRegistry::hover(Self, String, String, Int) -> CodeHover?
+pub fn CodeLanguageRegistry::new() -> Self
+pub fn CodeLanguageRegistry::register_language(Self, CodeLanguageProvider) -> Self
+pub fn CodeLanguageRegistry::tokenize(Self, String, String) -> Array[CodeEditorToken]
+
+// Type aliases
+
+// Traits

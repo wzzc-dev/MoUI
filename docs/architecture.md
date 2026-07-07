@@ -241,6 +241,8 @@ examples/markdown_editor/windows_skia/ Windows Markdown editor selecting native 
 examples/markdown_editor/windows_wgpu/ Windows native WGPU diagnostic Markdown editor
 examples/markdown_editor/windows_wgpu_cosmic/ Windows Markdown Editor selecting Moon Cosmic text
 examples/markdown_editor/linux_skia/ Linux Markdown editor selecting native Skia raster
+examples/code_editor/app/ shared native code editor and language-provider demo app
+examples/code_editor/{macos_skia,windows_skia,linux_skia}/ platform Code Editor Skia entrypoints
 examples/webview_demo/app/ shared native WebView demo app
 examples/webview_demo/{macos_skia,windows_skia,linux_skia,web_wasm}/ platform WebView demo entrypoints
 examples/pdf_workbench/app/  shared PDF reader/light editor app
