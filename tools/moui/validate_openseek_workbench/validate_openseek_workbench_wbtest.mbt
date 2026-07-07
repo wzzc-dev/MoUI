@@ -32,7 +32,7 @@ test "reports all missing OpenSeek prerequisites" {
   )
   inspect(
     errors[1],
-    content="openseek submodule not initialized (run: git submodule update --init openseek)",
+    content="openseek submodule not initialized (run: git submodule update --init --recursive openseek)",
   )
   inspect(
     errors[2],
