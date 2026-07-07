@@ -199,7 +199,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 329,
+      max_lines: 331,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",
@@ -225,7 +225,9 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "examples/pdf_workbench/app/view_inspector.mbt", max_lines: 470 },
     { path: "examples/excel/sheet/sheet.mbt", max_lines: 1822 },
     { path: "moui/render/skia/skia_renderer_wbtest.mbt", max_lines: 75 },
-    { path: "moui/render/sun/renderer.mbt", max_lines: 1950 },
+    { path: "moui/render/sun/renderer.mbt", max_lines: 393 },
+    { path: "moui/render/sun/renderer_commands.mbt", max_lines: 853 },
+    { path: "moui/render/sun/renderer_text_draw.mbt", max_lines: 664 },
     { path: "moui/views/style_api.mbt", max_lines: 178 },
     { path: "moui/views/choice_state.mbt", max_lines: 25 },
     { path: "moui/views/choice_groups.mbt", max_lines: 70 },
