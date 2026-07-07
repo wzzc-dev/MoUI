@@ -69,7 +69,7 @@ if [ ! -f "window/moon.mod" ]; then
 
 	if [ ! -f "openseek/moon.mod" ]; then
 	  printf '\n==> Initializing openseek submodule...\n'
-	  git submodule update --init openseek
+	  git submodule update --init --recursive openseek
 	fi
 
 run() {
