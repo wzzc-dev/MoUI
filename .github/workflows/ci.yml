@@ -27,7 +27,19 @@ jobs:
         run: |
           moon version --all
           sh scripts/ci-moon-update.sh
-          
+
+      - name: moon fmt — code formatting check
+        run: moon fmt --check
+
+      - name: moon check
+        run: moon check
+
+      - name: moon info + moon test — dev & validation suite
+        run: moon info
+
+      - name: moon test
+        run: moon test
+
       - name: Run daily development and guidance checks
         run: sh scripts/dev-check.sh
 
@@ -52,7 +64,7 @@ jobs:
           moon version --all
           sh scripts/ci-moon-update.sh
 
-      - name: Generate public API interfaces
+      - name: Ⓒ moon info — public interface generation (all packages)
         run: |
           # Regenerate only MoUI-tracked packages; skip openseek submodule (not in git).
           while IFS= read -r path; do

@@ -43,7 +43,7 @@ pub fn max_int(Int, Int) -> Int
 
 pub fn min_int(Int, Int) -> Int
 
-pub fn move_text_caret(String, Int, TextRange?, TextCaretDirection, extend~ : Bool) -> TextCaretMoveResult
+pub fn move_text_caret(String, Int, TextRange?, TextCaretDirection, extend_selection~ : Bool) -> TextCaretMoveResult
 
 pub fn normalize_grapheme_range(@unicode.TextGraphemeBoundaries, TextRange) -> TextRange
 

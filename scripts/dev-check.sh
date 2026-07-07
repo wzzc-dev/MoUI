@@ -118,6 +118,8 @@ run node scripts/smoke-gate.mjs --tier nightly --dry-run --json
 run sh -n scripts/ci-moon-update.sh
 run sh -n scripts/ci-web-runtime-presentation.sh
 
+run moon fmt --check
+
 run moon check
 
 run moon test moui/core --target native
