@@ -582,14 +582,14 @@ fn[Msg] view_caret_move_result(
   ctx : @core.ViewEventContext,
   text : String,
   direction : TextCaretDirection,
-  extend : Bool,
+  extend_selection : Bool,
 ) -> @core.ViewEventResult[Msg] {
   let caret_move = move_text_caret(
     text,
     ctx.text_control.caret,
     ctx.text_control.selection,
     direction,
-    extend~,
+    extend_selection~,
   )
   let next_control = {
     ..ctx.text_control,

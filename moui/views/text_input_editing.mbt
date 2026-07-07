@@ -256,12 +256,12 @@ fn move_text_caret(
   caret : Int,
   selection : @core.TextRange?,
   direction : TextCaretDirection,
-  extend~ : Bool,
+  extend_selection~ : Bool,
 ) -> TextCaretMoveResult {
   let boundaries = @core.TextGraphemeBoundaries::new(text~)
   let length = boundaries.length()
   let caret = boundaries.clamp_index(caret)
-  if extend {
+  if extend_selection {
     let anchor = boundaries.nearest_boundary(
       text_selection_anchor(caret, selection),
     )
