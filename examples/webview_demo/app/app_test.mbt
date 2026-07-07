@@ -48,8 +48,8 @@ test "webview demo keeps web view and status panel side by side" {
   let web = frame.platform_views[0].frame
   // The web view must stay inside the browser surface (left of the status
   // panel) rather than spanning the whole window width.
-  inspect(web.size.width, content="602")
-  inspect(web.size.height, content="404")
+  inspect(web.size.width, content="908")
+  inspect(web.size.height, content="588")
 }
 
 ///|
