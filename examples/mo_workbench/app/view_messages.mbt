@@ -54,19 +54,38 @@ fn user_message_row(
           corner_radius=12.0,
           padding=14.0,
         ),
-        @views.container(
-          @views.empty(),
-          width=avatar_size,
-          height=avatar_size,
-          background=user_avatar_color(theme),
-          corner_radius=avatar_size / 2.0,
-          padding=0.0,
-        ),
+        user_avatar(theme, avatar_size),
       ],
       spacing=8.0,
       align=@views.CrossAlign::Start,
     ),
     width~,
+  )
+}
+
+///|
+fn user_avatar(
+  theme : @moui.Theme,
+  avatar_size : Double,
+) -> @moui.View[CodeMsg] {
+  @views.container(
+    @views.center(
+      @views.text(
+        "U",
+        role=@views.TextRole::Label,
+        theme~,
+        width=avatar_size,
+        height=avatar_size,
+      ).foreground(@graphics.Color::rgba(r=1.0, g=1.0, b=1.0, a=1.0)),
+      width=avatar_size,
+      height=avatar_size,
+      theme~,
+    ),
+    width=avatar_size,
+    height=avatar_size,
+    background=user_avatar_color(theme),
+    corner_radius=avatar_size / 2.0,
+    padding=0.0,
   )
 }
 
