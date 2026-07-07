@@ -19,7 +19,7 @@ enum {
   MOUI_WINDOWS_SKIA_PRESENT_ALLOC_FAILED = 6,
 };
 
-MOONBIT_FFI_EXPORT
+extern "C" MOONBIT_FFI_EXPORT
 int32_t moui_windows_present_skia_pixels_to_hwnd(uint64_t raw_hwnd,
                                                  int32_t width, int32_t height,
                                                  int32_t row_bytes,

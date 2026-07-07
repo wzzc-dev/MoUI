@@ -2,13 +2,24 @@
 // The worker uses C/C++ allocations only and never touches MoonBit GC objects.
 // The main-thread drain copies the decoded pixel buffer into moonbit_bytes_t.
 
-#include <moonbit.h>
-#include <pthread.h>
-#include <stdint.h>
+// Include libc string APIs before moonbit.h. moonbit.h guards its own memcpy
+// redeclaration with `#ifndef memcpy`, which is only effective when <string.h>
+// has already been included (and, on glibc, defined memcpy as a macro). Without
+// this ordering, newer glibc's noexcept `memcpy` redeclaration in <string.h>
+// conflicts with moonbit.h's declaration and the Linux native build fails to
+// compile (moui/backend/linux/skia).
 #include <string.h>
+#ifndef memcpy
+// On toolchains/optimization levels that do not define memcpy as a macro,
+// force one so moonbit.h skips its conflicting redeclaration.
+#define memcpy __builtin_memcpy
+#endif
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
+#include <pthread.h>
+#include <moonbit.h>
 
 #if defined(MOUI_SKIA_HAS_SKIA)
 #include "include/codec/SkCodec.h"
