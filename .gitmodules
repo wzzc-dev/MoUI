@@ -10,3 +10,7 @@
 	path = examples/moui_example
 	url = git@github.com:moui-mbt/moui_example.git
 	branch = main
+[submodule ".agents/skills/osc2026-guide"]
+	path = .agents/skills/osc2026-guide
+	url = https://gitlink.org.cn/MilkyNatas/osc2026-guide.git
+	branch = main
