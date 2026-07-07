@@ -34,6 +34,7 @@ Keep it brief — aim for 1–2 pages max per session.
 ## Index
 
 <!-- Add new entries newest-first: -->
+- [2026-07-07: Native Code Editor Example](2026-07-07-code-editor-example.md)
 - [2026-06-29: CI feature proof system](2026-06-29-ci-feature-proof-system.md)
 - [2026-06-29: Richtext blackbox tests (Workflow 4)](2026-06-29-moui-richtext-blackbox-tests.md)
 - [2026-06-29: Fix Markdown Editor file tree scroll](2026-06-29-markdown-editor-file-tree-scroll.md)
