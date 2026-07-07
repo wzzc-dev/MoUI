@@ -137,6 +137,19 @@ test "markdown editor formatter reveals active quote and ordered markers" {
     } else {
     fail("expected active ordered marker to reveal")
   }
+  let paren_ordered = markdown_editor_format_for_selection("3) third", {
+    caret: 4,
+    selection: None,
+  })
+  guard paren_ordered.blocks[0]
+    is {
+      prefix: "3) ",
+      runs: [{ text: "third", source_range: Some({ start: 3, end: 8 }), .. }],
+      content_range: Some({ start: 3, end: 8 }),
+      ..,
+    } else {
+    fail("expected active paren ordered marker to reveal")
+  }
 }
 
 ///|
