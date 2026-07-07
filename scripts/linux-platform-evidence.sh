@@ -7,10 +7,10 @@ Usage: scripts/linux-platform-evidence.sh [options]
 
 Collects Linux platform runtime evidence by:
 1. Configuring the repository for real Skia linking (release provider)
-2. Starting a headless Weston Wayland compositor
-3. Building and running the Showcase linux_skia entrypoint with first-frame
-   auto-exit marker
-4. Collecting evidence logs under artifacts/platform-evidence/linux/
+2. Building the Showcase and first-frame smoke test with release Skia
+3. Starting a headless Weston Wayland compositor
+4. Running the first-frame smoke test (auto-exits after first present)
+5. Collecting evidence logs under artifacts/platform-evidence/linux/
 
 Options:
   --log-dir PATH          Output directory for evidence logs.
@@ -57,7 +57,7 @@ case "$log_dir" in
   *) resolved_log_dir="$REPO_ROOT/$log_dir" ;;
 esac
 
-showcase_log="$resolved_log_dir/showcase-linux-skia-first-frame.log"
+first_frame_log="$resolved_log_dir/linux-skia-first-frame.log"
 preflight_log="$resolved_log_dir/linux-platform-evidence-preflight.log"
 summary_log="$resolved_log_dir/linux-platform-evidence-summary.log"
 weston_log="$resolved_log_dir/weston-headless.log"
@@ -143,9 +143,9 @@ echo "  Skia link flags: $linux_link_flags
   Stub CC flags: $linux_stub_cc_flags" | tee -a "$preflight_log"
 
 #
-# Step 3: Configure showcase linux_skia moon.pkg
+# Step 3: Configure package moon.pkg files for example targets
 #
-echo "=== Step 3: Configure showcase linux_skia moon.pkg ===" | tee -a "$preflight_log"
+echo "=== Step 3: Configure example package moon.pkg files ===" | tee -a "$preflight_log"
 
 showcase_pkg="$REPO_ROOT/examples/showcase/linux_skia/moon.pkg"
 showcase_backup="$showcase_pkg.moui-evidence.bak"
@@ -153,7 +153,6 @@ cp "$showcase_pkg" "$showcase_backup"
 
 cat > "$showcase_pkg" <<PKGEOF
 import {
-  "moonbitlang/core/env",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/linux" @linux_backend,
   "wzzc-dev/moui/backend/linux/skia" @linux_skia_backend,
@@ -175,27 +174,64 @@ options(
 PKGEOF
 echo "  Wrote $showcase_pkg" | tee -a "$preflight_log"
 
-restore_example_pkgs() {
+# Also configure the first-frame smoke test moon.pkg
+first_frame_pkg="$REPO_ROOT/moui_tester/linux_skia_first_frame_smoke/moon.pkg"
+first_frame_backup="$first_frame_pkg.moui-evidence.bak"
+cp "$first_frame_pkg" "$first_frame_backup"
+
+cat > "$first_frame_pkg" <<PKGEOF
+import {
+  "wzzc-dev/moui/backend/linux/skia" @linux_skia_backend,
+  "wzzc-dev/moui/render/skia" @skia_renderer,
+  "wzzc-dev/moui_tester/fixtures/text_input_app" @fixture,
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "stub-cc-flags": "$linux_stub_cc_flags",
+      "cc-link-flags": "$linux_link_flags",
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)
+PKGEOF
+echo "  Wrote $first_frame_pkg" | tee -a "$preflight_log"
+
+restore_packages() {
   if [[ -f "$showcase_backup" ]]; then
     cp "$showcase_backup" "$showcase_pkg"
     rm -f "$showcase_backup"
     echo "Restored $showcase_pkg"
   fi
+  if [[ -f "$first_frame_backup" ]]; then
+    cp "$first_frame_backup" "$first_frame_pkg"
+    rm -f "$first_frame_backup"
+    echo "Restored $first_frame_pkg"
+  fi
   cd "$REPO_ROOT"
   git checkout -- moui_skia/native/moon.pkg 2>/dev/null || true
 }
-trap restore_example_pkgs EXIT
+trap restore_packages EXIT
 
 #
-# Step 4: Build showcase
+# Step 4: Build showcase and first-frame smoke test
 #
-echo "=== Step 4: Build showcase linux_skia ===" | tee -a "$preflight_log"
+echo "=== Step 4: Build targets ===" | tee -a "$preflight_log"
 
 cd "$REPO_ROOT"
 MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
   MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
   moon build examples/showcase/linux_skia --target native 2>&1 | tee -a "$preflight_log"
 echo "  Built examples/showcase/linux_skia" | tee -a "$preflight_log"
+
+MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
+  MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
+  moon build moui_tester/linux_skia_first_frame_smoke --target native 2>&1 | tee -a "$preflight_log"
+echo "  Built moui_tester/linux_skia_first_frame_smoke" | tee -a "$preflight_log"
 
 #
 # Step 5: Start Weston headless
@@ -232,37 +268,26 @@ cleanup_weston() {
     wait "$weston_pid" 2>/dev/null || true
   fi
 }
-trap 'cleanup_weston; restore_example_pkgs' EXIT
+trap 'cleanup_weston; restore_packages' EXIT
 
 #
-# Step 6: Run Showcase with first-frame auto-exit
+# Step 6: Run first-frame smoke test (auto-exits after first present)
 #
-echo "=== Step 6: Run Showcase first-frame smoke ===" | tee -a "$preflight_log"
+echo "=== Step 6: Run first-frame smoke test ===" | tee -a "$preflight_log"
 cd "$REPO_ROOT"
 MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
   MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
-  MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \
-  moon run examples/showcase/linux_skia --target native 2>&1 | tee "$showcase_log" &
-showcase_pid=$!
+  moon run moui_tester/linux_skia_first_frame_smoke --target native > "$first_frame_log" 2>&1
+first_frame_status=$?
 
-(
-  sleep 30
-  if kill -0 "$showcase_pid" 2>/dev/null; then
-    echo "Showcase first-frame smoke timed out after 30s" >> "$showcase_log"
-    kill "$showcase_pid" 2>/dev/null
-  fi
-) &
-watchdog_pid=$!
-wait "$showcase_pid"
-showcase_status=$?
-kill "$watchdog_pid" 2>/dev/null || true
-wait "$watchdog_pid" 2>/dev/null || true
+echo "  First-frame smoke exit status: $first_frame_status" | tee -a "$preflight_log"
 
-echo "  Showcase exit status: $showcase_status" | tee -a "$preflight_log"
-if grep -Fq "Linux renderer presented first frame; exiting by request; title=MoUI Showcase" "$showcase_log"; then
-  echo "  Verified Showcase first-frame marker." | tee -a "$preflight_log"
+# The first-frame test hardcodes first_frame_smoke_auto_exit=true, so it should
+# present one frame and then exit cleanly with status 0.
+if grep -Fq "Linux renderer presented first frame; exiting by request; title=MoUI Text Input Smoke" "$first_frame_log"; then
+  echo "  Verified first-frame smoke marker." | tee -a "$preflight_log"
 else
-  echo "  WARNING: Showcase first-frame marker not found." | tee -a "$preflight_log"
+  echo "  WARNING: First-frame smoke marker not found." | tee -a "$preflight_log"
 fi
 
 #
@@ -272,16 +297,16 @@ echo "=== Step 7: Generate evidence summary ===" | tee -a "$preflight_log"
 {
   echo "Linux platform evidence summary:"
   echo "  skia_commit=$skia_commit"
-  echo "  showcase_first_frame_status=$(grep -Fq "Linux renderer presented first frame; exiting by request; title=MoUI Showcase" "$showcase_log" 2>/dev/null && echo "passed" || echo "failed")"
+  echo "  first_frame_exit_status=$first_frame_status"
   echo "  preflight_log=$preflight_log"
-  echo "  showcase_log=$showcase_log"
+  echo "  first_frame_log=$first_frame_log"
   echo "  weston_log=$weston_log"
   echo "  summary_log=$summary_log"
 } | tee "$summary_log"
 
 echo ""
 echo "Linux platform evidence collected. Logs:"
-echo "  Showcase:      $showcase_log"
+echo "  First-frame:   $first_frame_log"
 echo "  Weston:        $weston_log"
 echo "  Summary:       $summary_log"
 echo "  Preflight:     $preflight_log"
