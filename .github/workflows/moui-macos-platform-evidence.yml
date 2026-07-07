@@ -74,9 +74,10 @@ jobs:
           MOUI_SKIA_SKIA_PROVIDER: ${{ inputs.skia_provider }}
           MOUI_SKIA_LINK_MODE: ${{ inputs.link_mode }}
         run: |
-          mkdir -p ../artifacts/platform-evidence/macos
+          log_dir="$GITHUB_WORKSPACE/artifacts/platform-evidence/macos"
+          mkdir -p "$log_dir"
           args=(
-            --log-dir ../artifacts/platform-evidence/macos
+            --log-dir "$log_dir"
             --skia-provider "${{ inputs.skia_provider }}"
             --link-mode "${{ inputs.link_mode }}"
           )
@@ -95,14 +96,14 @@ jobs:
           else
             args+=(--no-ime-smoke)
           fi
-          bash ../scripts/macos-platform-evidence.sh "${args[@]}"
+          bash "$GITHUB_WORKSPACE/scripts/macos-platform-evidence.sh" "${args[@]}"
 
       - name: Verify evidence markers
         if: ${{ always() }}
         shell: bash
         run: |
           summary="passed"
-          showcase_log="../artifacts/platform-evidence/macos/showcase-macos-skia-first-frame.log"
+          showcase_log="$GITHUB_WORKSPACE/artifacts/platform-evidence/macos/showcase-macos-skia-first-frame.log"
           if [[ -f "$showcase_log" ]]; then
             if grep -Fq "macOS renderer presented first frame; exiting by request; title=MoUI Showcase" "$showcase_log"; then
               echo "Showcase first-frame marker: passed"
@@ -123,7 +124,7 @@ jobs:
         with:
           name: moui-macos-platform-evidence
           path: |
-            artifacts/platform-evidence/macos/
+            ${{ github.workspace }}/artifacts/platform-evidence/macos/
           if-no-files-found: warn
 
       - name: Write workflow summary

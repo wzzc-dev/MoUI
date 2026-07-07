@@ -60,7 +60,7 @@ done
 
 skia_repo="$REPO_ROOT/moui_skia"
 case "$log_dir" in
-  /*) resolved_log_dir="$log_dir" ;;
+  /*|?:/*) resolved_log_dir="$log_dir" ;;
   *) resolved_log_dir="$REPO_ROOT/$log_dir" ;;
 esac
 
@@ -69,6 +69,8 @@ markdown_log="$resolved_log_dir/markdown-editor-macos-skia-first-frame.log"
 ime_log="$resolved_log_dir/ime-showcase-runtime.log"
 preflight_log="$resolved_log_dir/macos-platform-evidence-preflight.log"
 summary_log="$resolved_log_dir/macos-platform-evidence-summary.log"
+
+mkdir -p "$resolved_log_dir"
 
 echo "macOS platform evidence run:
   log_dir=$resolved_log_dir
