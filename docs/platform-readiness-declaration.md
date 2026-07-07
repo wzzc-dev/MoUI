@@ -5,6 +5,54 @@
 
 ---
 
+## 仓库与使用方式
+
+### 克隆仓库
+
+```bash
+# 方式一：GitLink（国内推荐，速度快）
+git clone git@code.gitlink.org.cn:wzzc/MoUI.git
+cd MoUI
+git submodule update --init --recursive
+
+# 方式二：GitHub
+git clone git@github.com:wzzc-dev/MoUI.git
+cd MoUI
+git submodule update --init --recursive
+```
+
+### 环境要求
+
+- MoonBit 工具链（版本见 `.moonbit-toolchain`）
+- 本地开发：macOS 14+（推荐）、Linux（Wayland）、Windows（MSVC 2022）
+- 首次运行需安装依赖：
+
+```bash
+moon update
+```
+
+### 日常验证
+
+```bash
+# 快速检查
+moon fmt --check
+moon check --target all
+
+# 完整开发验证套件
+sh scripts/dev-check.sh
+
+# 公共接口漂移检测
+moon info
+git diff --exit-code -- '**/pkg.generated.mbti'
+
+# 运行示例（macOS）
+moon run examples/mo_workbench/macos_skia --target native
+moon run examples/markdown_editor/macos_skia --target native
+moon run examples/showcase/macos_skia --target native
+```
+
+---
+
 ## 一、申报主体
 
 | 项目 | 值 |
