@@ -255,7 +255,7 @@ fn[Msg] handle_text_area_keyboard(
       font~,
       line_height~,
       up=true,
-      extend=event.modifiers.shift,
+      extend_selection=event.modifiers.shift,
     )
   }
   if event.key == "ArrowDown" {
@@ -265,7 +265,7 @@ fn[Msg] handle_text_area_keyboard(
       font~,
       line_height~,
       up=false,
-      extend=event.modifiers.shift,
+      extend_selection=event.modifiers.shift,
     )
   }
   if event.key == "ArrowLeft" {
@@ -324,7 +324,7 @@ fn[Msg] text_area_vertical_caret_move(
   font~ : @core.FontSpec,
   line_height~ : Double,
   up~ : Bool,
-  extend~ : Bool,
+  extend_selection~ : Bool,
 ) -> @core.ViewEventResult[Msg] {
   let text_frame = text_area_text_frame(ctx.frame)
   let display_text = text_with_composition(text, ctx.text_control, focused=true)
@@ -352,10 +352,10 @@ fn[Msg] text_area_vertical_caret_move(
     )
   }
   let hit = paragraph.hit_test(target_point)
-  if hit.offset == ctx.text_control.caret && !extend {
+  if hit.offset == ctx.text_control.caret && !extend_selection {
     return @core.ViewEventResult::ignored()
   }
-  let next_control = if extend {
+  let next_control = if extend_selection {
     let anchor = match ctx.text_control.text_selection_anchor {
       Some(a) => a
       None => ctx.text_control.caret
