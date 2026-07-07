@@ -9,7 +9,21 @@ import {
 }
 
 // Values
+pub fn agent_backend_kind_from_id(String) -> AgentBackendKind
+
+pub fn agent_backend_kind_id(AgentBackendKind) -> String
+
 pub fn agent_backend_runtime(run~ : (Array[AgentCommand], (AgentEvent) -> Unit) -> Unit) -> AgentBackendRuntime
+
+pub fn agent_permission_option(id~ : String, name~ : String, kind? : String) -> AgentPermissionOption
+
+pub fn agent_permission_request(request_id~ : String, session_id~ : String, tool_call_id? : String, title? : String, kind? : String, options? : Array[AgentPermissionOption]) -> AgentPermissionRequest
+
+pub fn agent_session_config_option(id~ : String, name~ : String, description? : String?, current_value~ : AgentConfigValue, values? : Array[AgentPermissionOption]) -> AgentSessionConfigOption
+
+pub fn agent_session_mode(id~ : String, name~ : String, description? : String?) -> AgentSessionMode
+
+pub fn agent_session_mode_state(current_mode_id~ : String, available_modes~ : Array[AgentSessionMode]) -> AgentSessionModeState
 
 pub fn default_deepseek_provider() -> ProviderConfig
 
@@ -36,6 +50,11 @@ pub fn AgentBackendFixture::dispatched_commands(Self) -> Array[AgentCommand]
 pub fn AgentBackendFixture::new(script~ : (AgentCommand) -> Array[AgentEvent]) -> Self
 pub fn AgentBackendFixture::runtime(Self) -> AgentBackendRuntime
 
+pub(all) enum AgentBackendKind {
+  OpenSeek
+  Acp
+} derive(Eq, @debug.Debug)
+
 pub struct AgentBackendRuntime {
   run : (Array[AgentCommand], (AgentEvent) -> Unit) -> Unit
 }
@@ -49,9 +68,18 @@ pub(all) enum AgentCommand {
   SwitchSession(String)
   SetModel(String, String, String)
   SetThinking(ThinkingChoice)
+  CancelTurn
+  SetSessionMode(String)
+  SetSessionConfigOption(String, AgentConfigValue)
+  RespondPermission(String, PermissionOutcome)
   FetchSessionList
   Shutdown
 }
+
+pub(all) enum AgentConfigValue {
+  Boolean(Bool)
+  ValueId(String)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum AgentEvent {
   UserMessageAdded(String)
@@ -60,10 +88,51 @@ pub(all) enum AgentEvent {
   RuntimeNoticeAdded(String)
   TurnTerminal(TurnStatus, String)
   ProgressNotice(String)
+  UserMessageChunk(String?, String)
+  AssistantMessageChunk(String?, String)
+  ThoughtMessageChunk(String?, String)
+  SessionModeStateChanged(AgentSessionModeState)
+  SessionConfigOptionsChanged(Array[AgentSessionConfigOption])
+  PermissionRequested(AgentPermissionRequest)
+  SessionInfoUpdated(String, String?, String?)
   SessionRebuilt(Array[AgentEvent])
   SessionListed(Array[SessionSummary])
   ActiveSessionChanged(String)
 }
+
+pub struct AgentPermissionOption {
+  id : String
+  name : String
+  kind : String
+} derive(Eq, @debug.Debug)
+
+pub struct AgentPermissionRequest {
+  request_id : String
+  session_id : String
+  tool_call_id : String
+  title : String
+  kind : String
+  options : Array[AgentPermissionOption]
+} derive(Eq, @debug.Debug)
+
+pub struct AgentSessionConfigOption {
+  id : String
+  name : String
+  description : String?
+  current_value : AgentConfigValue
+  values : Array[AgentPermissionOption]
+} derive(Eq, @debug.Debug)
+
+pub struct AgentSessionMode {
+  id : String
+  name : String
+  description : String?
+} derive(Eq, @debug.Debug)
+
+pub struct AgentSessionModeState {
+  current_mode_id : String
+  available_modes : Array[AgentSessionMode]
+} derive(Eq, @debug.Debug)
 
 pub(all) enum AppearanceMode {
   System
@@ -82,6 +151,7 @@ pub(all) enum ChatMessage {
   Assistant(String, String?)
   ToolResult(String, String, Bool, String?)
   RuntimeNotice(String)
+  PermissionRequest(AgentPermissionRequest)
   Terminal(TurnStatus, String)
 }
 
@@ -99,6 +169,10 @@ pub(all) enum CodeMsg {
   WorkspaceFolderSelected(String?)
   WorkspaceFolderPickFailed(String)
   ThinkingChanged(ThinkingChoice)
+  CancelTurn
+  SetSessionMode(String)
+  SetSessionConfigOption(String, AgentConfigValue)
+  RespondPermission(String, PermissionOutcome)
   ClearError
   ReceiveAgentEvent(AgentEvent)
 }
@@ -115,6 +189,12 @@ pub struct CodeWorkspace {
   current_provider_id : String?
   model_picker_open : Bool
   current_thinking : ThinkingChoice
+  agent_info : String?
+  session_modes : AgentSessionModeState?
+  session_config_options : Array[AgentSessionConfigOption]
+  last_user_message_id : String?
+  last_assistant_message_id : String?
+  last_thought_message_id : String?
   error : String?
   scroll_state : @core.ScrollState
 }
@@ -136,8 +216,12 @@ pub struct MoWorkbenchSettingsFile {
   providers : Array[MoProviderFile]
   active_provider_id : String?
   current_model : String
+  agent_backend : String?
   mo_workbench_workspace : String
   mo_workbench_session_root : String
+  acp_command : String?
+  acp_args : String?
+  acp_process_cwd : String?
   approval_policy : String
   sandbox_mode : String
   font_size : Int
@@ -145,6 +229,11 @@ pub struct MoWorkbenchSettingsFile {
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 type MoWorkbenchSettingsFileLegacy derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub(all) enum PermissionOutcome {
+  Selected(String)
+  Cancelled
+} derive(Eq, @debug.Debug)
 
 pub struct ProviderConfig {
   id : String
@@ -175,10 +264,14 @@ pub struct SessionSummary {
 
 pub(all) enum SettingsMsg {
   SelectSection(SettingsSection)
+  BackendChanged(AgentBackendKind)
   ApprovalChanged(ApprovalPolicy)
   SandboxChanged(SandboxMode)
   WorkingDirChanged(String)
   SessionRootChanged(String)
+  AcpCommandChanged(String)
+  AcpArgsChanged(String)
+  AcpProcessCwdChanged(String)
   FontSizeChanged(Int)
   AppearanceChanged(AppearanceMode)
   SaveToDisk
@@ -200,12 +293,16 @@ pub(all) enum SettingsSection {
 } derive(Eq, @debug.Debug)
 
 pub struct SettingsWorkspace {
+  agent_backend : AgentBackendKind
   providers : Array[ProviderConfig]
   active_provider_id : String?
   approval_policy : ApprovalPolicy
   sandbox_mode : SandboxMode
   working_dir : String
   session_root : String
+  acp_command : String
+  acp_args : String
+  acp_process_cwd : String
   font_size : Int
   active_section : SettingsSection
   save_notice : String?

@@ -20,15 +20,16 @@ behavior that is not wired yet.
   `SessionSummary`, `WorkbenchModel`, `WorkbenchMsg`, and `MoWorkbenchApp`.
 - `examples/mo_workbench/openseek_native_transport` is a native-only package
   that bridges `AgentCommand` / `AgentEvent` to the in-process OpenSeek agent
-  (`run_turn_in_scope`, `SessionStore`, tool registry). It depends on
-  `bobzhang/openseek` from mooncakes.io (pinned in
-  `examples/mo_workbench/moon.mod`).
+- `examples/mo_workbench/acp_native_transport` is a native-only generic ACP
+  stdio transport. It launches an ACP-compatible agent subprocess, speaks
+  JSON-RPC newline messages over stdin/stdout, maps `session/update` and
+  `session/request_permission` into `AgentEvent`, and keeps client filesystem
+  and terminal capabilities disabled for v1.
 - `examples/mo_workbench/macos_skia` injects
-  `openseek_native_transport::openseek_backend_from_env()` when
-  `OPENAI_API_KEY` or `DEEPSEEK` is set (`OPENAI_BASE_URL` overrides the
-  DeepSeek client URL); otherwise `AgentBackendRuntime::stub()`. No git
-  submodule or workspace member override is needed; just run `moon update`
-  after pinning a new openseek version.
+  `acp_native_transport` when `settings.json` selects `"agent_backend": "acp"`
+  and `acp_command` is non-empty. Otherwise it uses
+  `openseek_native_transport` when an API key is configured, falling back to
+  `AgentBackendRuntime::stub()`.
 
 ## Workspace Architecture
 
@@ -43,18 +44,18 @@ to `Effect[WorkbenchMsg]` via `Effect::map`. Sub-views are lifted to
 ### Workspaces
 
 - **Code** (`CodeWorkspace`): the conversation-first coding-agent chat surface
-  (sessions, messages, prompt, steering, model/thinking controls, streaming
-  state). Owns `AgentBackendRuntime` dispatch + `AgentEvent` projection. This
-  is where the Codex-style chat surface lives.
+  (sessions, messages, prompt, steering/cancel, OpenSeek model/thinking
+  controls, ACP mode/config controls, streaming state). Owns
+  `AgentBackendRuntime` dispatch + `AgentEvent` projection. This is where the
+  Codex-style chat surface lives.
 - **Write** (`WriteWorkspace`): static Markdown writing shell with document and
   assistant panels. It currently holds no state and does not save files,
   request completions, or call export services.
 - **Settings** (`SettingsWorkspace`): agent runtime + chrome settings form
-  (API key / base URL / approval policy / sandbox mode / working directory /
-  font size). Provider/model persistence is wired for the native prototype.
-  Auto-detected or manually added custom model ids stay visible, but model
-  rows outside OpenSeek's supported set render muted and are not selectable
-  until the native backend exposes arbitrary model ids.
+  (backend selection / provider settings / ACP command and args / approval
+  policy / sandbox mode / working directory / font size). Provider/model
+  persistence is wired for the native OpenSeek prototype. ACP command settings
+  are consumed by the macOS Skia entrypoint.
 - **ConnectPhone / ScheduledTasks / Plugins** (reserved): product-shaped static
   shells for future IM/webhook automation, scheduled prompts, and Skills/MCP
   management. They route through `SwitchWorkspace(...)` but have no sub-model
@@ -95,10 +96,14 @@ backend  -> async worker -> emit(event) -> dispatch(map(event)) into UI queue
 ```
 
 - `AgentCommand`: `SendTask`, `Steer`, `NewSession`, `SwitchSession`,
-  `SetModel`, `SetThinking`, `FetchSessionList`, `Shutdown`.
+  `SetModel`, `SetThinking`, `CancelTurn`, `SetSessionMode`,
+  `SetSessionConfigOption`, `RespondPermission`, `FetchSessionList`,
+  `Shutdown`.
 - `AgentEvent`: `UserMessageAdded`, `AssistantMessageAdded`,
   `ToolResultAdded`, `RuntimeNoticeAdded`, `TurnTerminal`, `ProgressNotice`,
-  `SessionRebuilt`, `SessionListed`, `ActiveSessionChanged`.
+  streamed message/thought chunks, ACP mode/config updates, permission
+  requests, session info updates, `SessionRebuilt`, `SessionListed`,
+  `ActiveSessionChanged`.
 
 The `AgentBackendFixture` is a scripted backend for portable tests: it records
 dispatched commands and replays a caller-supplied event sequence per command.
@@ -136,8 +141,9 @@ terminal (status badge + message). Repeated cards use 8px radii; chips and
 badges remain pill-like through the view library.
 
 The current UI intentionally does not implement Write persistence/completion,
-phone pairing, task execution, plugin installation, Pi/ACP/Local backend
-switching, diff application, or command catalogs.
+phone pairing, task execution, plugin installation, local diff application, or
+command catalogs. ACP v1 support is transport-level and deliberately does not
+advertise client filesystem or terminal capability.
 
 ## OpenSeek integration (current)
 
@@ -159,6 +165,34 @@ Follow-up work: a long-lived `AgentRuntime` + background worker (serve-mode
 shape) so mid-turn `Steer` shares the same runtime as the active turn, and
 optional `spawn_bg` integration with the Skia async pump instead of per-turn
 blocking.
+
+## ACP integration (current)
+
+The macos_skia entrypoint can select `acp_native_transport` from
+`.mo_workbench/settings.json`:
+
+```json
+{
+  "agent_backend": "acp",
+  "acp_command": "acp-agent",
+  "acp_args": "[\"--stdio\"]",
+  "acp_process_cwd": ""
+}
+```
+
+The ACP backend:
+
+- launches the configured command as a subprocess and uses ACP stdio JSON-RPC
+  newline messages;
+- sends `initialize` with conservative client capabilities
+  (`fs.readTextFile=false`, `fs.writeTextFile=false`, `terminal=false`);
+- maps `session/new`, `session/prompt`, `session/cancel`, optional
+  `session/list`, `session/load`, `session/resume`, `session/set_mode`, and
+  `session/set_config_option` through the neutral backend boundary;
+- handles agent `session/update` notifications for message chunks, thought
+  chunks, tool calls, plan/usage notices, mode/config updates, and session info;
+- handles agent `session/request_permission` requests by rendering a permission
+  card and replying with the selected option or `cancelled`.
 
 ## Reserved Full-Alignment Plan
 

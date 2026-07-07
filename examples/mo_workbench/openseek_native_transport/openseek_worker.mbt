@@ -137,6 +137,38 @@ async fn openseek_worker_handle_command(
       let state = openseek_ensure_engine(owner.config, owner.engine)
       state.thinking = openseek_thinking_from_choice(choice)
     }
+    @app.AgentCommand::CancelTurn => {
+      let state = openseek_ensure_engine(owner.config, owner.engine)
+      match state.turn_task {
+        Some(task) => {
+          task.cancel()
+          state.turn_task = None
+          emit(
+            @app.AgentEvent::TurnTerminal(@app.TurnStatus::Aborted, "Cancelled"),
+          )
+        }
+        None =>
+          emit(
+            @app.AgentEvent::RuntimeNoticeAdded(
+              "Cancel ignored: no OpenSeek turn is running",
+            ),
+          )
+      }
+    }
+    @app.AgentCommand::SetSessionMode(mode_id) =>
+      emit(
+        @app.AgentEvent::RuntimeNoticeAdded(
+          "ACP session mode is not supported by OpenSeek backend: " + mode_id,
+        ),
+      )
+    @app.AgentCommand::SetSessionConfigOption(config_id, _) =>
+      emit(
+        @app.AgentEvent::RuntimeNoticeAdded(
+          "ACP session config is not supported by OpenSeek backend: " +
+          config_id,
+        ),
+      )
+    @app.AgentCommand::RespondPermission(_, _) => ()
     @app.AgentCommand::FetchSessionList =>
       openseek_worker_fetch_sessions(owner.config, emit)
     @app.AgentCommand::Shutdown => ()

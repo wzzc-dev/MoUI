@@ -46,6 +46,8 @@ fn project_agent_event(
       )
     RuntimeNoticeAdded(text) =>
       ([ChatMessage::RuntimeNotice(text)], false, None)
+    PermissionRequested(request) =>
+      ([ChatMessage::PermissionRequest(request)], false, None)
     TurnTerminal(status, message) => {
       let err = match status {
         Failed => Some(message)
@@ -55,6 +57,12 @@ fn project_agent_event(
       ([ChatMessage::Terminal(status, message)], true, err)
     }
     ProgressNotice(_) => ([], false, None) // handled directly in apply_agent_event
+    UserMessageChunk(_, _) => ([], false, None)
+    AssistantMessageChunk(_, _) => ([], false, None)
+    ThoughtMessageChunk(_, _) => ([], false, None)
+    SessionModeStateChanged(_) => ([], false, None)
+    SessionConfigOptionsChanged(_) => ([], false, None)
+    SessionInfoUpdated(_, _, _) => ([], false, None)
     SessionRebuilt(items) => {
       // Replace the whole message list. Items are full events to project.
       let rebuilt : Array[ChatMessage] = []
@@ -72,6 +80,97 @@ fn project_agent_event(
   }
 }
 
+///|
+fn append_text_chunk(existing : String, chunk : String) -> String {
+  if existing.is_empty() {
+    chunk
+  } else {
+    existing + chunk
+  }
+}
+
+///|
+fn message_id_matches(previous : String?, next : String?) -> Bool {
+  match (previous, next) {
+    (Some(a), Some(b)) => a == b
+    _ => false
+  }
+}
+
+///|
+fn append_user_chunk(
+  messages : Array[ChatMessage],
+  previous_id : String?,
+  next_id : String?,
+  chunk : String,
+) -> Array[ChatMessage] {
+  let out = Array::copy(messages)
+  if !out.is_empty() && message_id_matches(previous_id, next_id) {
+    let index = out.length() - 1
+    match out[index] {
+      User(text) =>
+        out[index] = ChatMessage::User(append_text_chunk(text, chunk))
+      _ => out.push(ChatMessage::User(chunk))
+    }
+  } else {
+    out.push(ChatMessage::User(chunk))
+  }
+  out
+}
+
+///|
+fn append_assistant_chunk(
+  messages : Array[ChatMessage],
+  previous_id : String?,
+  next_id : String?,
+  chunk : String,
+) -> Array[ChatMessage] {
+  let out = Array::copy(messages)
+  if !out.is_empty() && message_id_matches(previous_id, next_id) {
+    let index = out.length() - 1
+    match out[index] {
+      Assistant(content, reasoning) =>
+        out[index] = ChatMessage::Assistant(
+          append_text_chunk(content, chunk),
+          reasoning,
+        )
+      _ => out.push(ChatMessage::Assistant(chunk, None))
+    }
+  } else {
+    out.push(ChatMessage::Assistant(chunk, None))
+  }
+  out
+}
+
+///|
+fn append_thought_chunk(
+  messages : Array[ChatMessage],
+  previous_id : String?,
+  next_id : String?,
+  chunk : String,
+) -> Array[ChatMessage] {
+  let out = Array::copy(messages)
+  if out.is_empty() {
+    out.push(ChatMessage::Assistant("", Some(chunk)))
+    return out
+  }
+  let index = out.length() - 1
+  match out[index] {
+    Assistant(content, reasoning) =>
+      if message_id_matches(previous_id, next_id) || previous_id == None {
+        let next_reasoning = match reasoning {
+          Some(text) => Some(append_text_chunk(text, chunk))
+          None => Some(chunk)
+        }
+        out[index] = ChatMessage::Assistant(content, next_reasoning)
+      } else {
+        out.push(ChatMessage::Assistant("", Some(chunk)))
+      }
+    _ => out.push(ChatMessage::Assistant("", Some(chunk)))
+  }
+  out
+}
+
 // ---------------------------------------------------------------------------
 // Code workspace sub-update
 // ---------------------------------------------------------------------------
@@ -86,6 +185,70 @@ fn CodeWorkspace::apply_agent_event(
   match event {
     SessionListed(sessions) => { ..self, sessions, }
     ActiveSessionChanged(id) => { ..self, active_session_id: Some(id) }
+    UserMessageChunk(message_id, content) => {
+      let messages = append_user_chunk(
+        self.messages,
+        self.last_user_message_id,
+        message_id,
+        content,
+      )
+      { ..self, messages, last_user_message_id: message_id }
+    }
+    AssistantMessageChunk(message_id, content) => {
+      let messages = append_assistant_chunk(
+        self.messages,
+        self.last_assistant_message_id,
+        message_id,
+        content,
+      )
+      { ..self, messages, last_assistant_message_id: message_id }
+    }
+    ThoughtMessageChunk(message_id, content) => {
+      let messages = append_thought_chunk(
+        self.messages,
+        self.last_thought_message_id,
+        message_id,
+        content,
+      )
+      { ..self, messages, last_thought_message_id: message_id }
+    }
+    SessionModeStateChanged(modes) => {
+      let merged_modes = match self.session_modes {
+        Some(existing) =>
+          if modes.available_modes.is_empty() {
+            { ..existing, current_mode_id: modes.current_mode_id }
+          } else {
+            modes
+          }
+        None => modes
+      }
+      { ..self, session_modes: Some(merged_modes) }
+    }
+    SessionConfigOptionsChanged(options) =>
+      { ..self, session_config_options: options }
+    SessionInfoUpdated(session_id, title, updated_at) => {
+      let sessions : Array[SessionSummary] = []
+      for s in self.sessions {
+        if s.id == session_id {
+          let first_prompt = match title {
+            Some(t) => t
+            None => s.first_prompt
+          }
+          sessions.push({
+            ..s,
+            first_prompt,
+            last_active_unix_seconds: s.last_active_unix_seconds,
+          })
+        } else {
+          sessions.push(s)
+        }
+      }
+      let notice = match updated_at {
+        Some(text) => "Session updated: " + text
+        None => "Session updated"
+      }
+      { ..self, sessions, progress_notice: Some(notice) }
+    }
     SessionRebuilt(items) => {
       // Replace the whole message list.
       let rebuilt : Array[ChatMessage] = []
@@ -95,7 +258,14 @@ fn CodeWorkspace::apply_agent_event(
           rebuilt.push(m)
         }
       }
-      { ..self, messages: rebuilt, progress_notice: None }
+      {
+        ..self,
+        messages: rebuilt,
+        progress_notice: None,
+        last_user_message_id: None,
+        last_assistant_message_id: None,
+        last_thought_message_id: None,
+      }
     }
     ProgressNotice(text) => { ..self, progress_notice: Some(text) }
     _ => {
@@ -171,6 +341,55 @@ fn CodeWorkspace::update(
       (
         { ..self, current_thinking: thinking },
         backend.effect([SetThinking(thinking)], event => {
+          CodeMsg::ReceiveAgentEvent(event)
+        }),
+      )
+    CancelTurn =>
+      if self.is_streaming {
+        (
+          {
+            ..self,
+            is_streaming: false,
+            progress_notice: Some("Cancelling agent turn..."),
+          },
+          backend.effect([CancelTurn], event => {
+            CodeMsg::ReceiveAgentEvent(event)
+          }),
+        )
+      } else {
+        (self, @moui.Effect::none())
+      }
+    SetSessionMode(mode_id) =>
+      (
+        {
+          ..self,
+          session_modes: update_session_mode_state(self.session_modes, mode_id),
+        },
+        backend.effect([SetSessionMode(mode_id)], event => {
+          CodeMsg::ReceiveAgentEvent(event)
+        }),
+      )
+    SetSessionConfigOption(config_id, value) =>
+      (
+        {
+          ..self,
+          session_config_options: update_session_config_option(
+            self.session_config_options,
+            config_id,
+            value,
+          ),
+        },
+        backend.effect([SetSessionConfigOption(config_id, value)], event => {
+          CodeMsg::ReceiveAgentEvent(event)
+        }),
+      )
+    RespondPermission(request_id, outcome) =>
+      (
+        {
+          ..self,
+          messages: mark_permission_response(self.messages, request_id, outcome),
+        },
+        backend.effect([RespondPermission(request_id, outcome)], event => {
           CodeMsg::ReceiveAgentEvent(event)
         }),
       )
@@ -274,6 +493,64 @@ fn CodeWorkspace::update(
   }
 }
 
+///|
+fn update_session_mode_state(
+  state : AgentSessionModeState?,
+  mode_id : String,
+) -> AgentSessionModeState? {
+  match state {
+    Some(s) => Some({ ..s, current_mode_id: mode_id })
+    None => None
+  }
+}
+
+///|
+fn update_session_config_option(
+  options : Array[AgentSessionConfigOption],
+  config_id : String,
+  value : AgentConfigValue,
+) -> Array[AgentSessionConfigOption] {
+  let out : Array[AgentSessionConfigOption] = []
+  for option in options {
+    if option.id == config_id {
+      out.push({ ..option, current_value: value })
+    } else {
+      out.push(option)
+    }
+  }
+  out
+}
+
+///|
+fn permission_outcome_label(outcome : PermissionOutcome) -> String {
+  match outcome {
+    Selected(option_id) => "Permission response: " + option_id
+    Cancelled => "Permission cancelled"
+  }
+}
+
+///|
+fn mark_permission_response(
+  messages : Array[ChatMessage],
+  request_id : String,
+  outcome : PermissionOutcome,
+) -> Array[ChatMessage] {
+  let out : Array[ChatMessage] = []
+  let label = permission_outcome_label(outcome)
+  for msg in messages {
+    match msg {
+      PermissionRequest(req) =>
+        if req.request_id == request_id {
+          out.push(ChatMessage::RuntimeNotice(label))
+        } else {
+          out.push(msg)
+        }
+      _ => out.push(msg)
+    }
+  }
+  out
+}
+
 // ---------------------------------------------------------------------------
 // Settings workspace sub-update
 // ---------------------------------------------------------------------------
@@ -292,6 +569,8 @@ fn SettingsWorkspace::update(
         @moui.Effect::none(),
       )
     }
+    BackendChanged(kind) =>
+      ({ ..self, agent_backend: kind, save_notice: None }, @moui.Effect::none())
     ApprovalChanged(policy) =>
       (
         { ..self, approval_policy: policy, save_notice: None },
@@ -303,6 +582,15 @@ fn SettingsWorkspace::update(
       ({ ..self, working_dir: value, save_notice: None }, @moui.Effect::none())
     SessionRootChanged(value) =>
       ({ ..self, session_root: value, save_notice: None }, @moui.Effect::none())
+    AcpCommandChanged(value) =>
+      ({ ..self, acp_command: value, save_notice: None }, @moui.Effect::none())
+    AcpArgsChanged(value) =>
+      ({ ..self, acp_args: value, save_notice: None }, @moui.Effect::none())
+    AcpProcessCwdChanged(value) =>
+      (
+        { ..self, acp_process_cwd: value, save_notice: None },
+        @moui.Effect::none(),
+      )
     FontSizeChanged(size) => {
       let clamped = if size < 10 { 10 } else if size > 24 { 24 } else { size }
       ({ ..self, font_size: clamped, save_notice: None }, @moui.Effect::none())

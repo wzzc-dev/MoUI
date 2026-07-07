@@ -32,6 +32,7 @@ pub(all) enum ChatMessage {
   Assistant(String, String?)
   ToolResult(String, String, Bool, String?)
   RuntimeNotice(String)
+  PermissionRequest(AgentPermissionRequest)
   Terminal(TurnStatus, String)
 }
 
@@ -334,6 +335,12 @@ pub struct CodeWorkspace {
   current_provider_id : String?
   model_picker_open : Bool
   current_thinking : ThinkingChoice
+  agent_info : String?
+  session_modes : AgentSessionModeState?
+  session_config_options : Array[AgentSessionConfigOption]
+  last_user_message_id : String?
+  last_assistant_message_id : String?
+  last_thought_message_id : String?
   error : String?
   scroll_state : @state.ScrollState
 }
@@ -352,6 +359,12 @@ fn CodeWorkspace::new() -> CodeWorkspace {
     current_provider_id: Some("deepseek"),
     model_picker_open: false,
     current_thinking: ThinkingChoice::Normal,
+    agent_info: None,
+    session_modes: None,
+    session_config_options: [],
+    last_user_message_id: None,
+    last_assistant_message_id: None,
+    last_thought_message_id: None,
     error: None,
     scroll_state: @state.ScrollState::new(),
   }
@@ -366,12 +379,16 @@ fn CodeWorkspace::new() -> CodeWorkspace {
 /// and auto-detect models from. The chat surface uses `active_provider_id`
 /// plus `code.current_model`.
 pub struct SettingsWorkspace {
+  agent_backend : AgentBackendKind
   providers : Array[ProviderConfig]
   active_provider_id : String?
   approval_policy : ApprovalPolicy
   sandbox_mode : SandboxMode
   working_dir : String
   session_root : String
+  acp_command : String
+  acp_args : String
+  acp_process_cwd : String
   font_size : Int
   active_section : SettingsSection
   priv scroll_state : @state.ScrollState
@@ -397,12 +414,16 @@ pub(all) enum SettingsSection {
 fn SettingsWorkspace::new() -> SettingsWorkspace {
   let providers = default_providers()
   {
+    agent_backend: AgentBackendKind::OpenSeek,
     providers,
     active_provider_id: Some("deepseek"),
     approval_policy: ApprovalPolicy::AskOnWrite,
     sandbox_mode: SandboxMode::WorkspaceWritable,
     working_dir: ".",
     session_root: "./.openseek",
+    acp_command: "",
+    acp_args: "",
+    acp_process_cwd: "",
     font_size: 14,
     active_section: SettingsSection::Api,
     scroll_state: @state.ScrollState::new(),
@@ -543,6 +564,10 @@ pub(all) enum CodeMsg {
   /// Folder picker failed because host services are unavailable or errored.
   WorkspaceFolderPickFailed(String)
   ThinkingChanged(ThinkingChoice)
+  CancelTurn
+  SetSessionMode(String)
+  SetSessionConfigOption(String, AgentConfigValue)
+  RespondPermission(String, PermissionOutcome)
   ClearError
   ReceiveAgentEvent(AgentEvent)
 }
@@ -551,10 +576,14 @@ pub(all) enum CodeMsg {
 /// Settings workspace messages (form interactions).
 pub(all) enum SettingsMsg {
   SelectSection(SettingsSection)
+  BackendChanged(AgentBackendKind)
   ApprovalChanged(ApprovalPolicy)
   SandboxChanged(SandboxMode)
   WorkingDirChanged(String)
   SessionRootChanged(String)
+  AcpCommandChanged(String)
+  AcpArgsChanged(String)
+  AcpProcessCwdChanged(String)
   FontSizeChanged(Int)
   AppearanceChanged(AppearanceMode)
   SaveToDisk
