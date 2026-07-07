@@ -36,13 +36,13 @@ try {
 
 // L1 features: each maps to a ci.yml job that must be "success"
 const l1Features = [
-  { feature: "Core API (View/Element/Layout/Animation)", job: "conformance" },
-  { feature: "Runtime lifecycle", job: "conformance" },
-  { feature: "Views controls", job: "conformance" },
-  { feature: "Host services protocol", job: "conformance" },
-  { feature: "Web wasm-gc build", job: "conformance" },
-  { feature: "Renderer capability report consistency", job: "conformance" },
-  { feature: "Text conformance", job: "conformance" },
+  { feature: "Core API (View/Element/Layout/Animation)", job: "pr-profile" },
+  { feature: "Runtime lifecycle", job: "pr-profile" },
+  { feature: "Views controls", job: "pr-profile" },
+  { feature: "Host services protocol", job: "pr-profile" },
+  { feature: "Web wasm-gc build", job: "pr-profile" },
+  { feature: "Renderer capability report consistency", job: "pr-profile" },
+  { feature: "Text conformance", job: "pr-profile" },
   { feature: "API surface stability", job: "api-surface" },
   { feature: "Linux backend contracts", job: "linux-platform" },
   { feature: "Windows backend contracts", job: "windows-native" },
@@ -50,7 +50,7 @@ const l1Features = [
   { feature: "Benchmark scaffold", job: "benchmark-scaffold" },
 ];
 
-// L2 features: each maps to 3 platform jobs in moui-skia-real-skia-pr-smoke.yml
+// L2 features: each maps to 3 platform jobs in moui-renderer-real-skia-ci.yml
 const l2FeatureNames = [
   "Rect",
   "RoundedRect",

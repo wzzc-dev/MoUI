@@ -13,6 +13,8 @@ Current tools:
 - `validate_api_surface/` audits generated `pkg.generated.mbti` files for
   package-size budgets, root facade boundaries, and app-facing view constructor
   return types.
+- `validate_check_profiles/` validates `checks/profiles.json`, the source
+  catalog for `scripts/check.mjs` PR, daily, platform, theme, and full gates.
 - `validate_package_manifest/` validates schema version 1 packaging manifests
   emitted by macOS app-bundle and Windows portable-folder packaging helpers.
 - `validate_renderer_provider_manifests/` keeps native platform backend,

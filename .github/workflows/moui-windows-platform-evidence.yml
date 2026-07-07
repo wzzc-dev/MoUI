@@ -1,4 +1,4 @@
-name: MoUI Windows Platform Evidence Dispatch
+name: MoUI Windows Platform Evidence
 
 on:
   schedule:
@@ -156,7 +156,7 @@ jobs:
             }
           }
           {
-            "## Windows Platform Evidence Dispatch"
+            "## Windows Platform Evidence"
             ""
             "Artifact: moui-windows-platform-evidence"
             "Showcase first-frame: $showcasePassed"

@@ -5,7 +5,7 @@ growing without turning every diagnostic route into daily release pressure.
 
 ## Status Classes
 
-- `mainline`: covered by the default `sh scripts/dev-check.sh` path. Mainline
+- `mainline`: covered by the default `sh scripts/check.sh --profile daily` path. Mainline
   work must stay green before ordinary handoff.
 - `diagnostic`: runnable, testable, and allowed to record observation, but not a
   default daily gate. Run the matching opt-in flag or focused command when the
@@ -36,7 +36,7 @@ The maintenance baseline ratchets are implemented as the MoonBit tool at
 `tools/moui/validate_maintenance_baseline`. They scan MoUI-owned MoonBit source
 under `moui/`, `examples/`, and `website/`, excluding generated
 `pkg.generated.mbti` files, vendored `.mooncakes/` trees, build output, and
-generated Unicode fixture tests. The default `sh scripts/dev-check.sh` path
+generated Unicode fixture tests. The default `sh scripts/check.sh --profile daily` path
 runs the guard through `node scripts/validate-maintenance-baseline.mjs`; run
 that wrapper directly when splitting files, shrinking `pub(all)`, or reducing
 root facade forwards, then ratchet the relevant budget downward in the same
@@ -60,15 +60,15 @@ root facade forwards, lower the corresponding budget in the same commit.
 ## Diagnostic Routes
 
 Native WGPU is a renderer diagnostic route. It stays available through
-`sh scripts/dev-check.sh --wgpu-experimental` and focused renderer/provider
+`sh scripts/check.sh --profile full` and focused renderer/provider
 commands, but it is not the native mainline.
 
 Design Systems is addon diagnostic coverage. `moui_theme` and
 `examples/design_systems` remain important source-mapped preview/parity
 surfaces, but they are not part of the core MoUI framework baseline. Run
-`sh scripts/dev-check.sh --theme-diagnostics` when changing `moui_theme` or
+`sh scripts/check.sh --profile theme` when changing `moui_theme` or
 the Design Systems example.
 
 Slow native example builds and matching-host platform runtime collection remain
-opt-in through `--platform-examples-build`, real-Skia smoke helpers, and direct
+opt-in through `--profile full`, real Skia smoke helpers, and direct
 runtime logs.

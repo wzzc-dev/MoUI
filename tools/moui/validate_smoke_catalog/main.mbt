@@ -484,7 +484,7 @@ fn validate_catalog_fields(
   }
   let ids : Map[String, Bool] = {}
   let tier_counts : Map[String, Int] = {}
-  let default_dev_check_count = Ref(0)
+  let default_daily_check_count = Ref(0)
   for suite_json in suites {
     let suite = match json_object(suite_json) {
       Some(fields) => fields
@@ -516,12 +516,12 @@ fn validate_catalog_fields(
     match json_bool(suite.get("defaultDevCheck")) {
       Some(value) =>
         if value {
-          default_dev_check_count.val += 1
+          default_daily_check_count.val += 1
           if tier != "daily" {
             push(
               failures,
               suite_id +
-              " cannot run in default dev-check outside the daily tier",
+              " cannot run in default daily check outside the daily tier",
             )
           }
         }
@@ -544,9 +544,9 @@ fn validate_catalog_fields(
       push(failures, "missing suite for tier: " + tier)
     }
   }
-  if default_dev_check_count.val == 0 {
+  if default_daily_check_count.val == 0 {
     push(
-      failures, "at least one daily suite must describe the default dev-check",
+      failures, "at least one daily suite must describe the default daily check",
     )
   }
   failures

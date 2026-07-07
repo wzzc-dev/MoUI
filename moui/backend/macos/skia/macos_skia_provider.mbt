@@ -59,6 +59,27 @@ pub fn MacosSkiaSmokeOptions::new(
 }
 
 ///|
+fn MacosSkiaSmokeOptions::from_environment() -> MacosSkiaSmokeOptions {
+  MacosSkiaSmokeOptions::new(
+    first_frame_smoke_auto_exit=env_flag(
+        "MOUI_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT",
+      ) ||
+      env_flag("MOUI_MARKDOWN_EDITOR_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT"),
+    native_ime_runtime_smoke=env_flag("MOUI_MACOS_NATIVE_IME_EVIDENCE"),
+  )
+}
+
+///|
+fn MacosSkiaSmokeOptions::enabled(self : MacosSkiaSmokeOptions) -> Bool {
+  self.first_frame_smoke_auto_exit || self.native_ime_runtime_smoke
+}
+
+///|
+fn env_flag(name : String) -> Bool {
+  @env.get_env_var(name) == Some("1")
+}
+
+///|
 pub fn run_app(title : String, runtime : @runtime.AppRuntime) -> Unit {
   run_app_with_options(
     title,
@@ -75,6 +96,17 @@ pub fn run_app_with_options(
   options~ : MacosSkiaAppOptions,
   window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
 ) -> Unit {
+  let smoke_options = MacosSkiaSmokeOptions::from_environment()
+  if smoke_options.enabled() {
+    run_smoke_app_with_options(
+      title,
+      runtime,
+      options~,
+      smoke_options~,
+      window_requests~,
+    )
+    return
+  }
   if !macos_skia_provider_ready() {
     println(macos_skia_unavailable_message())
     return

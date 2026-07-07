@@ -1,8 +1,6 @@
-name: MoUI Skia Linux Real Skia Smoke
+name: MoUI Skia Provider macOS Real Skia Manual
 
 on:
-  schedule:
-    - cron: "23 3 * * 1"
   workflow_dispatch:
     inputs:
       skia_rev:
@@ -28,11 +26,11 @@ on:
           - dynamic
           - auto
       skia_include:
-        description: Existing Skia checkout/include root; skips source build when paired with skia_lib_dir
+        description: Existing Skia checkout/include root; falls back to MOUI_SKIA_SKIA_INCLUDE on the runner
         required: false
         default: ""
       skia_lib_dir:
-        description: Existing directory containing libskia.a or libskia.so
+        description: Existing directory containing libskia.a or libskia.dylib; falls back to MOUI_SKIA_SKIA_LIB_DIR on the runner
         required: false
         default: ""
       skia_lib:
@@ -63,15 +61,13 @@ on:
         default: false
 
 jobs:
-  smoke:
-    runs-on: ubuntu-latest
+  provider-macos-real-skia:
+    name: macOS provider real Skia
+    runs-on: macos-latest
     defaults:
       run:
         working-directory: moui_skia
     timeout-minutes: 90
-    concurrency:
-      group: linux-real-skia-smoke-${{ github.ref }}
-      cancel-in-progress: false
 
     steps:
       - name: Checkout code
@@ -91,10 +87,8 @@ jobs:
           EXTRA_LINK_FLAGS: ${{ inputs.extra_link_flags }}
           ENABLE_ASAN: ${{ inputs.enable_asan }}
         run: |
-          args=(--dry-run-config)
-          if [[ -n "$SKIA_PROVIDER" ]]; then
-            args+=(--skia-provider "$SKIA_PROVIDER")
-          fi
+          mkdir -p logs
+          args=(--dry-run-config --skia-provider "$SKIA_PROVIDER")
           if [[ -n "$LINK_MODE" ]]; then
             args+=(--link-mode "$LINK_MODE")
           fi
@@ -120,9 +114,8 @@ jobs:
           if [[ "$ENABLE_ASAN" == "true" ]]; then
             args+=(--enable-asan)
           fi
-          mkdir -p logs
           set -o pipefail
-          bash scripts/linux-real-skia-smoke.sh "${args[@]}" 2>&1 | tee logs/linux-real-skia-smoke-preflight.log
+          bash scripts/macos-real-skia-smoke.sh "${args[@]}" 2>&1 | tee logs/macos-real-skia-smoke-preflight.log
 
       - name: Set up MoonBit
         if: ${{ !inputs.dry_run_config }}
@@ -136,42 +129,37 @@ jobs:
       - name: Install build dependencies
         if: ${{ !inputs.dry_run_config }}
         shell: bash
-        run: bash scripts/install-linux-smoke-deps.sh
-
-      - name: Verify build dependencies
-        if: ${{ !inputs.dry_run_config }}
-        shell: bash
-        run: bash scripts/install-linux-smoke-deps.sh --check
+        run: brew install ninja
 
       - name: Cache Skia checkout and build
         if: ${{ !inputs.dry_run_config && inputs.skia_provider == 'source' && inputs.skia_include == '' && inputs.skia_lib_dir == '' }}
         uses: actions/cache@v4
         with:
-          path: moui_skia/.skia-cache/linux
-          key: skia-linux-${{ inputs.skia_rev || hashFiles('moui_skia/skia-revision.txt') }}-${{ hashFiles('moui_skia/scripts/linux-build-skia.sh', 'moui_skia/scripts/linux-skia-smoke.sh', 'moui_skia/scripts/linux-real-skia-smoke.sh', 'moui_skia/scripts/linux-accept-real-skia-smoke.sh') }}
+          path: moui_skia/.skia-cache/macos
+          key: skia-macos-${{ inputs.skia_rev || hashFiles('moui_skia/skia-revision.txt') }}-${{ hashFiles('moui_skia/scripts/macos-build-skia.sh', 'moui_skia/scripts/macos-real-skia-smoke.sh', 'moui_skia/scripts/macos-skia-smoke.sh') }}
           restore-keys: |
-            skia-linux-${{ inputs.skia_rev || hashFiles('moui_skia/skia-revision.txt') }}-
-            skia-linux-
+            skia-macos-${{ inputs.skia_rev || hashFiles('moui_skia/skia-revision.txt') }}-
+            skia-macos-
 
       - name: Cache release Skia
         if: ${{ !inputs.dry_run_config && inputs.skia_provider == 'release' && inputs.skia_include == '' && inputs.skia_lib_dir == '' }}
         uses: actions/cache@v4
         with:
           path: moui_skia/.skia-cache/release
-          key: release-skia-linux-${{ inputs.link_mode }}-${{ runner.arch }}-${{ hashFiles('moui_skia/skia-provider-lock.json') }}
+          key: release-skia-macos-${{ inputs.link_mode }}-${{ runner.arch }}-${{ hashFiles('moui_skia/skia-provider-lock.json') }}
           restore-keys: |
-            release-skia-linux-${{ inputs.link_mode }}-${{ runner.arch }}-
-            release-skia-linux-${{ inputs.link_mode }}-
-            release-skia-linux-
+            release-skia-macos-${{ inputs.link_mode }}-${{ runner.arch }}-
+            release-skia-macos-${{ inputs.link_mode }}-
+            release-skia-macos-
 
-      - name: Build/link Skia and run native smoke test
+      - name: Run native smoke test
         shell: bash
         env:
-          SKIA_REV: ${{ inputs.skia_rev }}
-          SKIA_PROVIDER: ${{ inputs.skia_provider }}
-          LINK_MODE: ${{ inputs.link_mode }}
           SKIA_INCLUDE: ${{ inputs.skia_include }}
           SKIA_LIB_DIR: ${{ inputs.skia_lib_dir }}
+          SKIA_PROVIDER: ${{ inputs.skia_provider }}
+          LINK_MODE: ${{ inputs.link_mode }}
+          SKIA_REV: ${{ inputs.skia_rev }}
           SKIA_LIB: ${{ inputs.skia_lib }}
           EXTRA_GN_ARGS: ${{ inputs.extra_gn_args }}
           EXTRA_CC_FLAGS: ${{ inputs.extra_cc_flags }}
@@ -179,22 +167,22 @@ jobs:
           ENABLE_ASAN: ${{ inputs.enable_asan }}
           DRY_RUN_CONFIG: ${{ inputs.dry_run_config }}
         run: |
-          args=()
-          if [[ -n "$SKIA_PROVIDER" ]]; then
-            args+=(--skia-provider "$SKIA_PROVIDER")
+          mkdir -p logs
+          if [[ "$DRY_RUN_CONFIG" == "true" ]]; then
+            echo "dry_run_config=true; real macOS smoke was not run" | tee logs/macos-real-skia-smoke.log
+            exit 0
           fi
+          args=(--skia-provider "$SKIA_PROVIDER")
           if [[ -n "$LINK_MODE" ]]; then
             args+=(--link-mode "$LINK_MODE")
-          fi
-          if [[ -n "$SKIA_REV" ]]; then
-            args+=(--skia-rev "$SKIA_REV")
           fi
           if [[ -n "$SKIA_INCLUDE" || -n "$SKIA_LIB_DIR" ]]; then
             args+=(--skia-include "$SKIA_INCLUDE")
             args+=(--skia-lib-dir "$SKIA_LIB_DIR")
           fi
-          if [[ -n "$SKIA_LIB" ]]; then
-            args+=(--skia-lib "$SKIA_LIB")
+          args+=(--skia-lib "$SKIA_LIB")
+          if [[ -n "$SKIA_REV" ]]; then
+            args+=(--skia-rev "$SKIA_REV")
           fi
           if [[ -n "$EXTRA_GN_ARGS" ]]; then
             args+=(--extra-gn-args "$EXTRA_GN_ARGS")
@@ -208,96 +196,39 @@ jobs:
           if [[ "$ENABLE_ASAN" == "true" ]]; then
             args+=(--enable-asan)
           fi
-          mkdir -p logs
-          if [[ "$DRY_RUN_CONFIG" == "true" ]]; then
-            args+=(--dry-run-config)
-            set -o pipefail
-            bash scripts/linux-real-skia-smoke.sh "${args[@]}" 2>&1 | tee logs/linux-real-skia-smoke.log
-          else
-            bash scripts/linux-accept-real-skia-smoke.sh --log-dir logs "${args[@]}"
-          fi
+          bash scripts/macos-accept-real-skia-smoke.sh --log-dir logs "${args[@]}"
 
       - name: Verify native smoke success marker
         if: ${{ always() && !inputs.dry_run_config }}
         shell: bash
-        run: |
-          if ! bash scripts/verify-native-smoke-log.sh logs/linux-native-smoke-output.log; then
-            echo "native_smoke_marker_status=failed" >> "$GITHUB_ENV"
-            exit 1
-          fi
+        run: bash scripts/verify-native-smoke-log.sh logs/macos-native-smoke-output.log
 
       - name: Verify acceptance summary
         if: ${{ always() && !inputs.dry_run_config }}
         shell: bash
-        env:
-          SKIA_INCLUDE: ${{ inputs.skia_include }}
-          SKIA_LIB_DIR: ${{ inputs.skia_lib_dir }}
-          SKIA_PROVIDER: ${{ inputs.skia_provider }}
-        run: |
-          args=(logs/linux-real-skia-acceptance.log)
-          if [[ "$SKIA_PROVIDER" == "source" && -z "$SKIA_INCLUDE" && -z "$SKIA_LIB_DIR" ]]; then
-            args+=(--require-commit)
-          fi
-          bash scripts/verify-acceptance-log.sh "${args[@]}"
+        run: bash scripts/verify-acceptance-log.sh logs/macos-real-skia-acceptance.log
 
       - name: Verify real Skia artifact bundle
         if: ${{ always() && !inputs.dry_run_config }}
         shell: bash
-        env:
-          SKIA_INCLUDE: ${{ inputs.skia_include }}
-          SKIA_LIB_DIR: ${{ inputs.skia_lib_dir }}
-          SKIA_PROVIDER: ${{ inputs.skia_provider }}
-        run: |
-          args=(--platform linux --log-dir logs)
-          if [[ "$SKIA_PROVIDER" == "source" && -z "$SKIA_INCLUDE" && -z "$SKIA_LIB_DIR" ]]; then
-            args+=(--require-commit)
-          fi
-          bash scripts/verify-real-skia-artifact.sh "${args[@]}"
+        run: bash scripts/verify-real-skia-artifact.sh --platform macos --log-dir logs
 
       - name: Verify pinned Skia revision match
         if: ${{ always() && !inputs.dry_run_config && inputs.skia_provider == 'source' }}
         shell: bash
-        run: bash scripts/verify-skia-revision-pin.sh logs/linux-real-skia-acceptance.log --skip-if-unpinned
-
-      - name: Generate source-built acceptance state patch
-        if: ${{ always() && !inputs.dry_run_config && inputs.skia_provider == 'source' && inputs.skia_include == '' && inputs.skia_lib_dir == '' }}
-        shell: bash
-        run: |
-          rm -f logs/linux-acceptance-state.patch
-          before_revision="$(cat skia-revision.txt)"
-          before_status="$(mktemp)"
-          cp skia-platform-status.json "$before_status"
-
-          bash scripts/linux-accept-artifact-and-pin.sh \
-            --log-dir logs \
-            --accept-platform-status \
-            --artifact-label linux-real-skia-smoke-log
-
-          git diff -- skia-revision.txt skia-platform-status.json > logs/linux-acceptance-state.patch
-          sed -i 's/\r$//' logs/linux-acceptance-state.patch
-          printf '%s\n' "$before_revision" > skia-revision.txt
-          cp "$before_status" skia-platform-status.json
-          rm -f "$before_status"
-
-          if [[ ! -s logs/linux-acceptance-state.patch ]]; then
-            echo "Linux acceptance state patch was empty" >&2
-            exit 1
-          fi
-          pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/verify-acceptance-state-patch.ps1 \
-            -PatchFile logs/linux-acceptance-state.patch
+        run: bash scripts/verify-skia-revision-pin.sh logs/macos-real-skia-acceptance.log --skip-if-unpinned
 
       - name: Upload smoke log
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: linux-real-skia-smoke-log
+          name: macos-real-skia-smoke-log
           path: |
-            moui_skia/logs/linux-real-skia-smoke-preflight.log
-            moui_skia/logs/linux-skia-build.log
-            moui_skia/logs/linux-real-skia-smoke.log
-            moui_skia/logs/linux-native-smoke-output.log
-            moui_skia/logs/linux-real-skia-acceptance.log
-            moui_skia/logs/linux-acceptance-state.patch
+            moui_skia/logs/macos-real-skia-smoke-preflight.log
+            moui_skia/logs/macos-skia-build.log
+            moui_skia/logs/macos-real-skia-smoke.log
+            moui_skia/logs/macos-native-smoke-output.log
+            moui_skia/logs/macos-real-skia-acceptance.log
           if-no-files-found: warn
 
       - name: Verify package files restored
@@ -314,7 +245,7 @@ jobs:
             restore_status="failed"
           fi
           if ! git diff --exit-code -- native/moon.pkg scripts/native_smoke/moon.pkg; then
-            echo "package files differ after Linux Skia smoke" >&2
+            echo "package files differ after macOS Skia smoke" >&2
             restore_status="failed"
           fi
           echo "restore_status=$restore_status" >> "$GITHUB_ENV"
@@ -338,22 +269,27 @@ jobs:
           ENABLE_ASAN: ${{ inputs.enable_asan }}
           DRY_RUN_CONFIG: ${{ inputs.dry_run_config }}
         run: |
-          if [[ -n "$SKIA_INCLUDE" || -n "$SKIA_LIB_DIR" ]]; then
-            smoke_mode="existing Skia build"
-          elif [[ "$SKIA_PROVIDER" == "release" ]]; then
-            smoke_mode="GitHub release Skia binary"
-          else
-            smoke_mode="source-built Skia"
+          resolved_commit="not run"
+          if [[ -n "${macos_skia_commit:-}" ]]; then
+            resolved_commit="$macos_skia_commit"
+          elif [[ -f logs/macos-real-skia-smoke.log ]]; then
+            resolved_commit="$(grep -E '^[[:space:]]*skia_commit=' logs/macos-real-skia-smoke.log | tail -n 1 | sed 's/^[[:space:]]*skia_commit=//' || true)"
           fi
           {
-            echo "## Linux Real Skia Smoke"
+            echo "## macOS Provider Real Skia"
             echo ""
-            echo "- Mode: $smoke_mode"
+            echo "- Dry run only: ${DRY_RUN_CONFIG:-false}"
+            if [[ -n "$SKIA_INCLUDE" || -n "$SKIA_LIB_DIR" ]]; then
+              echo "- Mode: existing Skia build"
+            elif [[ "$SKIA_PROVIDER" == "release" ]]; then
+              echo "- Mode: GitHub release Skia binary"
+            else
+              echo "- Mode: source-built Skia"
+            fi
             echo "- Skia provider: ${SKIA_PROVIDER:-release}"
             echo "- Skia link mode: ${LINK_MODE:-static}"
-            echo "- Dry run only: ${DRY_RUN_CONFIG:-false}"
             echo "- Skia revision: ${SKIA_REV:-<skia-revision.txt>}"
-            echo "- Resolved Skia commit: ${linux_skia_commit:-not run}"
+            echo "- Resolved Skia commit: ${resolved_commit:-not run}"
             echo "- Skia include: ${SKIA_INCLUDE:-<source build>}"
             echo "- Skia lib dir: ${SKIA_LIB_DIR:-<source build>}"
             echo "- Skia library: ${SKIA_LIB:-skia}"
@@ -361,13 +297,12 @@ jobs:
             echo "- Extra C/C++ flags: ${EXTRA_CC_FLAGS:-<none>}"
             echo "- Extra link flags: ${EXTRA_LINK_FLAGS:-<none>}"
             echo "- AddressSanitizer: ${ENABLE_ASAN:-false}"
-            echo "- Artifact: linux-real-skia-smoke-log"
-            echo "- Preflight log: logs/linux-real-skia-smoke-preflight.log"
-            echo "- Skia build log: logs/linux-skia-build.log"
-            echo "- Smoke log: logs/linux-real-skia-smoke.log"
-            echo "- Native smoke executable log: logs/linux-native-smoke-output.log"
-            echo "- Acceptance log: logs/linux-real-skia-acceptance.log"
-            echo "- Acceptance state patch: logs/linux-acceptance-state.patch"
+            echo "- Artifact: macos-real-skia-smoke-log"
+            echo "- Preflight log: logs/macos-real-skia-smoke-preflight.log"
+            echo "- Build log: logs/macos-skia-build.log"
+            echo "- Smoke log: logs/macos-real-skia-smoke.log"
+            echo "- Native smoke executable log: logs/macos-native-smoke-output.log"
+            echo "- Acceptance log: logs/macos-real-skia-acceptance.log"
             echo "- Native smoke success marker: ${native_smoke_marker_status:-not run}"
             echo "- native/moon.pkg restore check: ${restore_status:-not run}"
           } >> "$GITHUB_STEP_SUMMARY"

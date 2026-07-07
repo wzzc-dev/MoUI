@@ -52,6 +52,7 @@ fn validate_guidance_consistency(repo_root : String) -> Array[String] {
   push_agent_quality_gate_checks(repo_root, failures)
   push_theme_diagnostic_checks(repo_root, failures)
   push_window_dependency_guidance_checks(repo_root, failures)
+  push_forbidden_guidance_token_checks(repo_root, failures)
   for rule in guidance_include_rules() {
     push_include_check(repo_root, rule.path, rule.token, failures)
   }

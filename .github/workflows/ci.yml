@@ -13,8 +13,8 @@ on:
         default: false
         type: boolean
 jobs:
-  conformance:
-    name: Core conformance
+  moonbit-workspace-baseline:
+    name: MoonBit workspace baseline
     runs-on: macos-14
     steps:
       - name: Checkout
@@ -28,26 +28,30 @@ jobs:
           moon version --all
           sh scripts/ci-moon-update.sh
 
-      - name: moon fmt — code formatting check
-        run: moon fmt --check
+      - name: Run MoonBit workspace baseline
+        run: |
+          moon check
+          moon test
+          moon info
+          git diff --exit-code
 
-      - name: moon check
-        run: moon check
+  pr-profile:
+    name: PR profile gate
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
 
-      - name: moon info + moon test — dev & validation suite
-        run: moon info
+      - name: Set up MoonBit
+        uses: ./.github/actions/setup-moonbit
 
-      - name: moon test
-        run: moon test
+      - name: Install dependencies
+        run: |
+          moon version --all
+          sh scripts/ci-moon-update.sh
 
-      - name: Run daily development and guidance checks
-        run: sh scripts/dev-check.sh
-
-      - name: Run text conformance checks
-        run: sh scripts/conformance-check.sh --text --text-diagnostic
-
-      - name: Build showcase preview target
-        run: sh scripts/conformance-check.sh --golden
+      - name: Run PR check profile
+        run: sh scripts/check.sh --profile pr
 
   api-surface:
     name: Public API surface
@@ -96,12 +100,14 @@ jobs:
           moon version --all
           sh scripts/ci-moon-update.sh
 
-      - name: Run Linux backend tests
-        run: sh scripts/dev-check.sh --platform-examples-test
+      - name: Run Linux platform profile
+        run: sh scripts/check.sh --profile platform
 
       - name: Build Linux native examples
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_slow_native_examples }}
-        run: sh scripts/dev-check.sh --platform-examples-build
+        run: |
+          moon build examples/showcase/linux_skia --target native
+          moon build examples/markdown_editor/linux_skia --target native
 
   macos-packaging:
     name: macOS packaging smoke
@@ -156,7 +162,7 @@ jobs:
           sh scripts/ci-moon-update.sh
 
       - name: Build benchmark targets
-        run: sh scripts/conformance-check.sh --bench
+        run: node scripts/conformance-capture-scaffold.mjs --mode benchmark
 
   windows-native:
     name: Windows MSVC native smoke
@@ -177,6 +183,10 @@ jobs:
         run: |
           moon version --all
           sh scripts/ci-moon-update.sh
+
+      - name: Verify Windows check wrapper plan
+        shell: pwsh
+        run: powershell -ExecutionPolicy Bypass -File .\scripts\windows\check.ps1 -Profile Pr -DryRun -Json -SkipSubmoduleInit
 
       - name: Run Windows backend tests
         shell: pwsh
