@@ -1,0 +1,170 @@
+name: MoUI Windows Platform Evidence Dispatch
+
+on:
+  schedule:
+    - cron: "37 6 * * 2"
+  workflow_dispatch:
+    inputs:
+      run_showcase_smoke:
+        description: Run the Windows Skia Showcase first-frame smoke.
+        required: false
+        default: true
+        type: boolean
+      run_markdown_smoke:
+        description: Run the Windows Skia Markdown Editor first-frame smoke.
+        required: false
+        default: true
+        type: boolean
+      skia_provider:
+        description: Skia provider to use for MSVC smoke; release downloads the locked wzzc-dev/skia release
+        type: choice
+        required: false
+        default: release
+        options:
+          - release
+          - existing
+      link_mode:
+        description: Skia release link mode
+        type: choice
+        required: false
+        default: static
+        options:
+          - static
+          - dynamic
+          - auto
+
+jobs:
+  windows-platform-evidence:
+    name: Windows platform runtime evidence
+    runs-on: windows-2022
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: moui_skia
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up MoonBit
+        uses: ./.github/actions/setup-moonbit
+
+      - name: Update MoonBit registry
+        shell: bash
+        run: ../scripts/ci-moon-update.sh
+
+      - name: Resolve release Skia environment
+        id: skia
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path logs | Out-Null
+          $envLines = .\scripts\fetch-release-skia.ps1 `
+            -Platform windows `
+            -Arch auto `
+            -Config Release `
+            -LinkMode "${{ inputs.link_mode }}" `
+            -PrintEnv
+          $envMap = @{}
+          foreach ($line in $envLines) {
+            if ($line -match '^([^=]+)=(.*)$') {
+              $envMap[$Matches[1]] = $Matches[2]
+            }
+          }
+          $envMap | Out-String | Write-Host
+          "skia_root=$($envMap['MOUI_SKIA_SKIA_ROOT'])" >> $env:GITHUB_OUTPUT
+          "skia_include=$($envMap['MOUI_SKIA_SKIA_INCLUDE'])" >> $env:GITHUB_OUTPUT
+          "skia_lib_dir=$($envMap['MOUI_SKIA_SKIA_LIB_DIR'])" >> $env:GITHUB_OUTPUT
+          "skia_lib=$($envMap['MOUI_SKIA_SKIA_LIB'])" >> $env:GITHUB_OUTPUT
+          "skia_commit=$($envMap['MOUI_SKIA_SKIA_COMMIT'])" >> $env:GITHUB_OUTPUT
+
+      - name: Run Windows platform evidence (showcase + optional markdown)
+        shell: pwsh
+        env:
+          MOUI_SKIA_SKIA_PROVIDER: ${{ inputs.skia_provider }}
+          MOUI_SKIA_LINK_MODE: ${{ inputs.link_mode }}
+          MOUI_SKIA_SKIA_ROOT: ${{ steps.skia.outputs.skia_root }}
+          MOUI_SKIA_SKIA_INCLUDE: ${{ steps.skia.outputs.skia_include }}
+          MOUI_SKIA_SKIA_LIB_DIR: ${{ steps.skia.outputs.skia_lib_dir }}
+        run: |
+          $logDir = "..\artifacts\platform-evidence\windows"
+          $args = @(
+            "--log-dir", $logDir,
+            "--skia-provider", "${{ inputs.skia_provider }}",
+            "--link-mode", "${{ inputs.link_mode }}"
+          )
+          if ("${{ inputs.run_showcase_smoke }}" -eq "true") {
+            $args += "--run-showcase-smoke"
+          } else {
+            $args += "--no-showcase-smoke"
+          }
+          if ("${{ inputs.run_markdown_smoke }}" -eq "true") {
+            $args += "--run-markdown-smoke"
+          } else {
+            $args += "--no-markdown-smoke"
+          }
+
+          # Initialize the MSVC environment so `moon build` can find cl/link,
+          # then run the evidence script in the same command context so the
+          # developer environment variables are inherited by the bash child.
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $vcvars = Join-Path $vsPath "VC\Auxiliary\Build\vcvarsall.bat"
+          $argString = ($args | ForEach-Object { '"{0}"' -f $_ }) -join " "
+          cmd /c "call `"$vcvars`" x64 && bash ..\scripts\windows-platform-evidence.sh $argString"
+
+      - name: Verify evidence markers
+        if: ${{ always() }}
+        shell: pwsh
+        run: |
+          $summary = "passed"
+          $showcaseLog = "..\artifacts\platform-evidence\windows\showcase-windows-skia-first-frame.log"
+          if (Test-Path -LiteralPath $showcaseLog) {
+            $content = Get-Content -LiteralPath $showcaseLog -Raw
+            if ($content -match "Windows renderer presented first frame; exiting by request; title=MoUI Showcase") {
+              Write-Host "Showcase first-frame marker: passed"
+            } else {
+              Write-Host "Showcase first-frame marker: FAILED"
+              $summary = "failed"
+            }
+          } else {
+            Write-Host "Showcase log not found: $showcaseLog"
+            $summary = "failed"
+          }
+          "summary=$summary" >> $env:GITHUB_ENV
+          Write-Host "Windows platform evidence summary: $summary"
+
+      - name: Upload Windows platform evidence artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: moui-windows-platform-evidence
+          path: |
+            artifacts/platform-evidence/windows/
+          if-no-files-found: warn
+
+      - name: Write workflow summary
+        if: ${{ always() }}
+        shell: pwsh
+        run: |
+          $showcasePassed = "failed"
+          $showcaseLog = "..\artifacts\platform-evidence\windows\showcase-windows-skia-first-frame.log"
+          if (Test-Path -LiteralPath $showcaseLog) {
+            $content = Get-Content -LiteralPath $showcaseLog -Raw
+            if ($content -match "Windows renderer presented first frame; exiting by request; title=MoUI Showcase") {
+              $showcasePassed = "passed"
+            }
+          }
+          {
+            "## Windows Platform Evidence Dispatch"
+            ""
+            "Artifact: moui-windows-platform-evidence"
+            "Showcase first-frame: $showcasePassed"
+            "Skia provider: ${{ inputs.skia_provider }}"
+            "Skia link mode: ${{ inputs.link_mode }}"
+            ""
+            "### Logs"
+            "Preflight: artifacts/platform-evidence/windows/windows-platform-evidence-preflight.log"
+            "Showcase: artifacts/platform-evidence/windows/showcase-windows-skia-first-frame.log"
+            "Markdown Editor: artifacts/platform-evidence/windows/markdown-editor-windows-skia-first-frame.log"
+            "Summary: artifacts/platform-evidence/windows/windows-platform-evidence-summary.log"
+          } >> $env:GITHUB_STEP_SUMMARY

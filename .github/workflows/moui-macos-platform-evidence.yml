@@ -1,0 +1,147 @@
+name: MoUI macOS Platform Evidence Dispatch
+
+on:
+  schedule:
+    - cron: "23 6 * * 2"
+  workflow_dispatch:
+    inputs:
+      run_showcase_smoke:
+        description: Run the macOS Skia Showcase first-frame smoke.
+        required: false
+        default: true
+        type: boolean
+      run_markdown_smoke:
+        description: Run the macOS Skia Markdown Editor first-frame smoke.
+        required: false
+        default: true
+        type: boolean
+      run_ime_smoke:
+        description: Run the macOS Showcase native IME runtime smoke.
+        required: false
+        default: true
+        type: boolean
+      skia_provider:
+        description: Skia provider to use for macOS smoke; release downloads the locked wzzc-dev/skia release
+        type: choice
+        required: false
+        default: release
+        options:
+          - release
+          - existing
+      link_mode:
+        description: Skia release link mode
+        type: choice
+        required: false
+        default: static
+        options:
+          - static
+          - dynamic
+          - auto
+
+jobs:
+  macos-platform-evidence:
+    name: macOS platform runtime evidence
+    runs-on: macos-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: moui_skia
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up MoonBit
+        uses: ./.github/actions/setup-moonbit
+
+      - name: Update MoonBit registry
+        shell: bash
+        run: ../scripts/ci-moon-update.sh
+
+      - name: Cache release Skia
+        uses: actions/cache@v4
+        with:
+          path: moui_skia/.skia-cache/release
+          key: release-skia-macos-static-${{ runner.arch }}-${{ hashFiles('moui_skia/skia-provider-lock.json') }}
+          restore-keys: |
+            release-skia-macos-static-${{ runner.arch }}-
+            release-skia-macos-static-
+            release-skia-macos-
+
+      - name: Run macOS platform evidence (showcase + optional markdown + ime)
+        shell: bash
+        env:
+          MOUI_SKIA_SKIA_PROVIDER: ${{ inputs.skia_provider }}
+          MOUI_SKIA_LINK_MODE: ${{ inputs.link_mode }}
+        run: |
+          mkdir -p ../artifacts/platform-evidence/macos
+          args=(
+            --log-dir ../artifacts/platform-evidence/macos
+            --skia-provider "${{ inputs.skia_provider }}"
+            --link-mode "${{ inputs.link_mode }}"
+          )
+          if [[ "${{ inputs.run_showcase_smoke }}" == "true" ]]; then
+            args+=(--run-showcase-smoke)
+          else
+            args+=(--no-showcase-smoke)
+          fi
+          if [[ "${{ inputs.run_markdown_smoke }}" == "true" ]]; then
+            args+=(--run-markdown-smoke)
+          else
+            args+=(--no-markdown-smoke)
+          fi
+          if [[ "${{ inputs.run_ime_smoke }}" == "true" ]]; then
+            args+=(--run-ime-smoke)
+          else
+            args+=(--no-ime-smoke)
+          fi
+          bash ../scripts/macos-platform-evidence.sh "${args[@]}"
+
+      - name: Verify evidence markers
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          summary="passed"
+          showcase_log="../artifacts/platform-evidence/macos/showcase-macos-skia-first-frame.log"
+          if [[ -f "$showcase_log" ]]; then
+            if grep -Fq "macOS renderer presented first frame; exiting by request; title=MoUI Showcase" "$showcase_log"; then
+              echo "Showcase first-frame marker: passed"
+            else
+              echo "Showcase first-frame marker: FAILED"
+              summary="failed"
+            fi
+          else
+            echo "Showcase log not found: $showcase_log"
+            summary="failed"
+          fi
+          echo "summary=$summary" >> "$GITHUB_ENV"
+          echo "macOS platform evidence summary: $summary"
+
+      - name: Upload macOS platform evidence artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: moui-macos-platform-evidence
+          path: |
+            artifacts/platform-evidence/macos/
+          if-no-files-found: warn
+
+      - name: Write workflow summary
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          {
+            echo "## macOS Platform Evidence Dispatch"
+            echo ""
+            echo "- Artifact: moui-macos-platform-evidence"
+            echo "- Showcase first-frame: $([[ "${summary:-failed}" == "passed" ]] && echo 'passed' || echo 'failed')"
+            echo "- Skia provider: ${{ inputs.skia_provider }}"
+            echo "- Skia link mode: ${{ inputs.link_mode }}"
+            echo ""
+            echo "### Logs"
+            echo "- Preflight: artifacts/platform-evidence/macos/macos-platform-evidence-preflight.log"
+            echo "- Showcase: artifacts/platform-evidence/macos/showcase-macos-skia-first-frame.log"
+            echo "- Markdown Editor: artifacts/platform-evidence/macos/markdown-editor-macos-skia-first-frame.log"
+            echo "- IME runtime: artifacts/platform-evidence/macos/ime-showcase-runtime.log"
+            echo "- Summary: artifacts/platform-evidence/macos/macos-platform-evidence-summary.log"
+          } >> "$GITHUB_STEP_SUMMARY"
