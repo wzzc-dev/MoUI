@@ -753,10 +753,7 @@ test "unsupported custom model change is ignored" {
 ///|
 test "provider with only unsupported models stays inspectable but not selected" {
   let model = test_model(script=_cmd => [])
-  let model = {
-    ..model,
-    code: { ..model.code, model_picker_open: true },
-  }
+  let model = { ..model, code: { ..model.code, model_picker_open: true } }
   let (model, _effect) = model.update(
     WorkbenchMsg::CodeMsg(CodeMsg::SelectProvider("openai")),
   )

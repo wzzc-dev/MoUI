@@ -375,7 +375,11 @@ fn provider_edit_form(
           width=field_w - 16.0,
           height=22.0,
         ).foreground(
-          if supported { workbench_text(theme) } else { theme.palette.muted },
+          if supported {
+            workbench_text(theme)
+          } else {
+            theme.palette.muted
+          },
         ),
         width=field_w,
         height=38.0,

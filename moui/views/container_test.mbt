@@ -8,6 +8,7 @@
 // Note: `Size`/`Rect` derive `Eq` but not `Show`, so they are compared with
 // `assert_true(actual == expected)` rather than `assert_eq`.
 
+///|
 /// A leaf view that reports a fixed intrinsic size and paints nothing.
 fn center_test_rect(width~ : Double, height~ : Double) -> @core.View[Unit] {
   @core.View::node(
@@ -21,6 +22,7 @@ fn center_test_rect(width~ : Double, height~ : Double) -> @core.View[Unit] {
   )
 }
 
+///|
 /// Build a layout context for the single-child `center` view. `child_size`
 /// is the size `center` should read for its only child.
 fn center_layout_context(
@@ -37,6 +39,7 @@ fn center_layout_context(
   }
 }
 
+///|
 /// Neutral view state for paint contexts.
 fn center_test_state() -> @core.ViewStateContext {
   {
@@ -51,6 +54,7 @@ fn center_test_state() -> @core.ViewStateContext {
   }
 }
 
+///|
 /// Empty text control state for paint contexts.
 fn center_test_text_control() -> @core.TextControlStateContext {
   {
@@ -64,6 +68,7 @@ fn center_test_text_control() -> @core.TextControlStateContext {
   }
 }
 
+///|
 /// Build a paint context centered on `frame`.
 fn center_paint_context(frame~ : @core.Rect) -> @core.ViewPaintContext {
   {
@@ -79,6 +84,7 @@ fn center_paint_context(frame~ : @core.Rect) -> @core.ViewPaintContext {
   }
 }
 
+///|
 test "center measures to bounded constraints when no explicit size is given" {
   let child = center_test_rect(width=100.0, height=50.0)
   let view = center(child)
@@ -96,10 +102,11 @@ test "center measures to bounded constraints when no explicit size is given" {
   // The 100x50 child is centered inside the 300x200 frame.
   assert_true(
     result.child_frames[0] ==
-      @core.Rect::new(x=100.0, y=75.0, width=100.0, height=50.0),
+    @core.Rect::new(x=100.0, y=75.0, width=100.0, height=50.0),
   )
 }
 
+///|
 test "center honors explicit width and height" {
   let child = center_test_rect(width=100.0, height=50.0)
   let view = center(child, width=400.0, height=300.0)
@@ -115,10 +122,11 @@ test "center honors explicit width and height" {
   // The 100x50 child is centered inside the 400x300 frame.
   assert_true(
     result.child_frames[0] ==
-      @core.Rect::new(x=150.0, y=125.0, width=100.0, height=50.0),
+    @core.Rect::new(x=150.0, y=125.0, width=100.0, height=50.0),
   )
 }
 
+///|
 test "center falls back to child size under unbounded constraints" {
   let child = center_test_rect(width=100.0, height=50.0)
   let view = center(child)
@@ -132,10 +140,11 @@ test "center falls back to child size under unbounded constraints" {
   // Centered in a frame exactly its own size => origin (0, 0).
   assert_true(
     result.child_frames[0] ==
-      @core.Rect::new(x=0.0, y=0.0, width=100.0, height=50.0),
+    @core.Rect::new(x=0.0, y=0.0, width=100.0, height=50.0),
   )
 }
 
+///|
 test "center clamps child origin to zero when child exceeds the frame" {
   let child = center_test_rect(width=100.0, height=50.0)
   let view = center(child)
@@ -151,10 +160,11 @@ test "center clamps child origin to zero when child exceeds the frame" {
   // The child overflows the frame, so its origin is clamped to (0, 0).
   assert_true(
     result.child_frames[0] ==
-      @core.Rect::new(x=0.0, y=0.0, width=100.0, height=50.0),
+    @core.Rect::new(x=0.0, y=0.0, width=100.0, height=50.0),
   )
 }
 
+///|
 test "center with background wraps the content in a container" {
   let child = center_test_rect(width=100.0, height=50.0)
   let view = center(child, background=@core.Color::blue())
@@ -179,6 +189,7 @@ test "center with background wraps the content in a container" {
   assert_true(result.size == @core.Size::new(width=300.0, height=200.0))
 }
 
+///|
 test "center applies explicit width and height together with a background" {
   let child = center_test_rect(width=100.0, height=50.0)
   let view = center(
@@ -200,12 +211,14 @@ test "center applies explicit width and height together with a background" {
   assert_true(result.size == @core.Size::new(width=400.0, height=300.0))
 }
 
+///|
 test "center reports a centered-content semantics label" {
   let child = center_test_rect(width=100.0, height=50.0)
   let view = center(child)
   assert_eq(view.semantics().label, "Centered content")
 }
 
+///|
 test "center paints no commands for its custom layout" {
   let child = center_test_rect(width=100.0, height=50.0)
   let view = center(child)
@@ -217,6 +230,7 @@ test "center paints no commands for its custom layout" {
   assert_eq(plan.commands.length(), 0)
 }
 
+///|
 test "center accepts an explicit theme override without changing layout" {
   let child = center_test_rect(width=100.0, height=50.0)
   let view = center(child, theme=@core.Theme::neutral())
@@ -230,6 +244,6 @@ test "center accepts an explicit theme override without changing layout" {
   assert_true(result.size == @core.Size::new(width=300.0, height=200.0))
   assert_true(
     result.child_frames[0] ==
-      @core.Rect::new(x=100.0, y=75.0, width=100.0, height=50.0),
+    @core.Rect::new(x=100.0, y=75.0, width=100.0, height=50.0),
   )
 }

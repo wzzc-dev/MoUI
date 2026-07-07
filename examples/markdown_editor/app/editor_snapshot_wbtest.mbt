@@ -294,7 +294,9 @@ test "markdown editor snapshot maps processing instruction html blocks" {
 
 ///|
 test "markdown editor snapshot maps cdata html blocks" {
-  let snapshot = MarkdownEditorSnapshot::parse("<![CDATA[\nraw <tag>\n]]>\n\nTail")
+  let snapshot = MarkdownEditorSnapshot::parse(
+    "<![CDATA[\nraw <tag>\n]]>\n\nTail",
+  )
   inspect(snapshot.blocks.length(), content="3")
   guard snapshot.blocks[0]
     is {

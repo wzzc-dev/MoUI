@@ -713,8 +713,8 @@ fn WorkbenchModel::update(
           match provider {
             Some(p) => {
               let current_is_supported = p.models.contains(
-                self.code.current_model,
-              ) &&
+                  self.code.current_model,
+                ) &&
                 mo_workbench_model_supported_by_openseek(
                   self.code.current_model,
                 )
@@ -752,10 +752,7 @@ fn WorkbenchModel::update(
               }
             }
             None =>
-              (
-                sync_task_tree({ ..self, settings }),
-                @moui.Effect::none(),
-              )
+              (sync_task_tree({ ..self, settings, }), @moui.Effect::none())
           }
         }
         ModelChanged(provider_id, model_id) => {
