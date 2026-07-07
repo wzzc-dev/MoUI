@@ -842,7 +842,7 @@ pub(all) enum HostWindowSceneResolution {
   SceneRejected(String)
 }
 
-pub(all) struct HostWindowSceneResolver {
+pub struct HostWindowSceneResolver {
   resolve : (HostWindowOpenRequest) -> HostWindowSceneResolution
 }
 pub fn HostWindowSceneResolver::new(resolve~ : (HostWindowOpenRequest) -> HostWindowSceneResolution) -> Self

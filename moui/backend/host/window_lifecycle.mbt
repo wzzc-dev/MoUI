@@ -63,7 +63,7 @@ pub(all) enum HostWindowOpenResolution {
 }
 
 ///|
-pub(all) struct HostWindowSceneResolver {
+pub struct HostWindowSceneResolver {
   resolve : (HostWindowOpenRequest) -> HostWindowSceneResolution
 }
 
