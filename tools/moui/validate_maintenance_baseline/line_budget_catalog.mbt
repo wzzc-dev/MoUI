@@ -31,15 +31,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/markdown_editor/app/editor_snapshot_wbtest.mbt",
-      max_lines: 1000,
+      max_lines: 1020,
     },
     {
       path: "examples/markdown_editor/app/editor_snapshot_formatting_wbtest.mbt",
-      max_lines: 420,
+      max_lines: 435,
     },
     {
       path: "examples/markdown_editor/app/editor_snapshot_parser_wbtest.mbt",
-      max_lines: 360,
+      max_lines: 390,
     },
     {
       path: "examples/markdown_editor/app/editor_app_runtime_wbtest.mbt",

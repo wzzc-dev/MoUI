@@ -11,10 +11,9 @@ workspace. It is a TRAE-style task workbench shell with three top tabs
 surface, and a settings form from one shared
 `Program[WorkbenchModel, WorkbenchMsg]`.
 
-This example is the only one that requires an external submodule. The
-`openseek` agent transport is vendored locally under `./openseek` (see the
-workspace top-level `moon.work` listing and `scripts/openseek-dev-mode.sh`) so
-`mo_workbench/app` imports `bobzhang/openseek@0.2.0` through the workspace path.
+This example depends on `bobzhang/openseek`, which resolves from mooncakes.io
+(pinned in `examples/mo_workbench/moon.mod`). No external git submodule or
+workspace member override is required.
 
 ## Package Shape
 
@@ -34,21 +33,20 @@ workspace top-level `moon.work` listing and `scripts/openseek-dev-mode.sh`) so
 import {
   "moonbitlang/async@0.19.4",
   "wzzc-dev/moui@0.1.5-1",
-  "bobzhang/openseek@0.2.0",
+  "bobzhang/openseek@0.2.2",
 }
 ```
 
-`openseek` is not yet published to mooncakes.io; the workspace top-level
-`moon.work` must list `./openseek` (the registry path is reserved). CI and
-`scripts/dev-check.sh` enforce this via `scripts/validate-openseek-workbench.mjs`.
+`bobzhang/openseek` is published on mooncakes.io; no workspace member override
+or special CI validation is needed. Run `moon update` to refresh the registry
+version.
 
 ## Running
 
-First enable the local `openseek` override and initialize the submodule:
+Simply run the macOS entrypoint — no submodule or dev-mode setup needed:
 
 ```sh
-git submodule update --init openseek
-sh scripts/openseek-dev-mode.sh on
+moon run examples/mo_workbench/macos_skia --target native
 ```
 
 On first launch the app creates `.mo_workbench/settings.json` under the process
