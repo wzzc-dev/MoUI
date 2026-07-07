@@ -102,7 +102,7 @@ fn openseek_thinking_from_choice(
 
 ///|
 fn openseek_default_model() -> @deepseek.Model {
-  @deepseek.Deepseek(@deepseek.V4Flash)
+  @deepseek.Model::V4Flash
 }
 
 ///|
@@ -259,64 +259,69 @@ fn openseek_session_to_agent_events(
 ) -> Array[@app.AgentEvent] {
   let out : Array[@app.AgentEvent] = []
   for event in session.events() {
-    match openseek_item_to_agent_event(event.item()) {
-      Some(agent_event) => out.push(agent_event)
-      None => ()
+    for agent_event in openseek_item_to_agent_events(event.item()) {
+      out.push(agent_event)
     }
   }
   out
 }
 
 ///|
-fn openseek_item_to_agent_event(
+fn openseek_item_to_agent_events(
   item : @agent_session.SessionItem,
-) -> @app.AgentEvent? {
+) -> Array[@app.AgentEvent] {
   match item {
     @agent_session.SessionItem::User(message) =>
-      Some(@app.AgentEvent::UserMessageAdded(message.content()))
+      [@app.AgentEvent::UserMessageAdded(message.content())]
     @agent_session.SessionItem::Assistant(message) => {
       let content = message.content()
       if content.trim().is_empty() {
-        None
+        []
       } else {
-        Some(
+        [
           @app.AgentEvent::AssistantMessageAdded(
             content,
             message.reasoning_content(),
           ),
-        )
+        ]
       }
     }
     @agent_session.SessionItem::Tool(result) =>
-      Some(
+      [
         @app.AgentEvent::ToolResultAdded(
           result.tool_name(),
           result.content(),
           result.is_error(),
           result.brief(),
         ),
-      )
+      ]
     @agent_session.SessionItem::Runtime(notice) =>
-      Some(@app.AgentEvent::RuntimeNoticeAdded(notice.content()))
-    @agent_session.SessionItem::Summary(_) => None
+      [@app.AgentEvent::RuntimeNoticeAdded(notice.content())]
+    @agent_session.SessionItem::Summary(_) => []
     @agent_session.SessionItem::Terminal(terminal) =>
-      Some(openseek_terminal_to_agent_event(terminal))
+      openseek_terminal_to_agent_events(terminal)
   }
 }
 
 ///|
-fn openseek_terminal_to_agent_event(
+fn openseek_terminal_to_agent_events(
   terminal : @agent_session.TurnTerminal,
-) -> @app.AgentEvent {
+) -> Array[@app.AgentEvent] {
   match terminal {
-    @agent_session.TurnTerminal::Finished(message) =>
-      @app.AgentEvent::TurnTerminal(@app.TurnStatus::Finished, message)
+    @agent_session.TurnTerminal::Finished(message) => {
+      let out : Array[@app.AgentEvent] = []
+      if !message.trim().is_empty() {
+        out.push(@app.AgentEvent::AssistantMessageAdded(message, None))
+      }
+      out.push(@app.AgentEvent::TurnTerminal(@app.TurnStatus::Finished, ""))
+      out
+    }
     @agent_session.TurnTerminal::Aborted(message) =>
-      @app.AgentEvent::TurnTerminal(@app.TurnStatus::Aborted, message)
+      [@app.AgentEvent::TurnTerminal(@app.TurnStatus::Aborted, message)]
     @agent_session.TurnTerminal::Interrupted(message) =>
-      @app.AgentEvent::TurnTerminal(@app.TurnStatus::Interrupted, message)
+      [@app.AgentEvent::TurnTerminal(@app.TurnStatus::Interrupted, message)]
     @agent_session.TurnTerminal::Failed(message) =>
-      @app.AgentEvent::TurnTerminal(@app.TurnStatus::Failed, message)
+      [@app.AgentEvent::TurnTerminal(@app.TurnStatus::Failed, message)]
   }
 }
 

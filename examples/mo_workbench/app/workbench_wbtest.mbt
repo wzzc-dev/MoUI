@@ -44,6 +44,51 @@ fn drain_workbench_effect(
   messages
 }
 
+///|
+fn workbench_view_test_state() -> @core.ViewStateContext {
+  {
+    focused: false,
+    hovered: false,
+    pressed: false,
+    selected: false,
+    checked: false,
+    expanded: false,
+    disabled: false,
+    scratch: "",
+  }
+}
+
+///|
+fn workbench_view_test_text_control() -> @core.TextControlStateContext {
+  {
+    caret: 0,
+    selection: None,
+    text_selection_anchor: None,
+    composition: None,
+    composition_cursor: None,
+    undo_stack: [],
+    redo_stack: [],
+  }
+}
+
+///|
+fn workbench_view_test_paint_context(
+  frame~ : @core.Rect,
+  theme~ : @moui.Theme,
+) -> @core.ViewPaintContext {
+  {
+    frame,
+    child_frames: [],
+    focused: false,
+    state: workbench_view_test_state(),
+    text_control: workbench_view_test_text_control(),
+    text_system: @core.TextSystem::fallback(),
+    environment: @core.Environment::neutral().with_theme(theme),
+    style: @core.ViewStyle::empty(),
+    now_ms: 0.0,
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Code workspace (migrated from the previous flat-model tests)
 // ---------------------------------------------------------------------------
@@ -59,6 +104,29 @@ test "backend user echo does not duplicate optimistic user message" {
     WorkbenchMsg::CodeMsg(CodeMsg::ReceiveAgentEvent(UserMessageAdded("hello"))),
   )
   inspect(model.code.messages.length(), content="1")
+}
+
+///|
+test "chat message text paints reply body left aligned" {
+  let theme = @views.light_theme()
+  let view = chat_message_text(
+    "assistant reply",
+    role=@views.TextRole::Body,
+    theme~,
+    width=240.0,
+    height=24.0,
+  )
+  let plan = view.paint(
+    workbench_view_test_paint_context(
+      frame=@core.Rect::new(x=0.0, y=0.0, width=240.0, height=24.0),
+      theme~,
+    ),
+  )
+  guard plan.commands[0] is @core.DrawCommand::DrawText({ text, align, .. }) else {
+    fail("expected text draw command")
+  }
+  inspect(text, content="assistant reply")
+  inspect(align == @core.TextAlign::TextStart, content="true")
 }
 
 ///|

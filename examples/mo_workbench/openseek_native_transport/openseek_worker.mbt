@@ -311,9 +311,8 @@ fn openseek_worker_send_task(
           }
           session_ref.val = next
           state.session = next
-          match openseek_item_to_agent_event(item) {
-            Some(event) => emit(event)
-            None => ()
+          for event in openseek_item_to_agent_events(item) {
+            emit(event)
           }
           next
         },
