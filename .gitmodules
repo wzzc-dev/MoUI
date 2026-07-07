@@ -1,16 +1,16 @@
 [submodule ".agents/skills/moonbit-skills"]
 	path = .agents/skills/moonbit-skills
-	url = git@github.com:moonbitlang/skills.git
+	url = https://github.com/moonbitlang/skills.git
 	branch = master
 [submodule "window"]
 	path = window
-	url = git@github.com:wzzc-dev/window.git
+	url = https://github.com/wzzc-dev/window.git
 	branch = moui-support
 [submodule "examples/moui_example"]
 	path = examples/moui_example
-	url = git@github.com:moui-mbt/moui_example.git
+	url = https://github.com/moui-mbt/moui_example.git
 	branch = main
 [submodule ".agents/skills/osc2026-guide"]
 	path = .agents/skills/osc2026-guide
-	url = git@gitlink.org.cn:MilkyNatas/osc2026-guide.git
+	url = https://gitlink.org.cn/MilkyNatas/osc2026-guide.git
 	branch = main
