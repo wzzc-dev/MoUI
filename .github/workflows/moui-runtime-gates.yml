@@ -1,4 +1,4 @@
-name: MoUI Runtime Smoke Gates
+name: MoUI Runtime Gates
 
 on:
   schedule:
@@ -19,7 +19,7 @@ on:
         default: true
         type: boolean
       run_macos_real_skia:
-        description: Run the macOS real-Skia release smoke.
+        description: Run the macOS real Skia release smoke.
         required: false
         default: false
         type: boolean
@@ -74,7 +74,7 @@ jobs:
           if-no-files-found: warn
 
   macos-real-skia:
-    name: macOS real-Skia release smoke
+    name: macOS real Skia release smoke
     runs-on: macos-14
     needs: catalog
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_macos_real_skia }}
@@ -90,14 +90,14 @@ jobs:
           moon version --all
           sh scripts/ci-moon-update.sh
 
-      - name: Run macOS real-Skia release smoke
+      - name: Run macOS real Skia release smoke
         run: node scripts/smoke-gate.mjs --suite macos.skia-real-showcase-markdown --run
 
-      - name: Upload macOS real-Skia smoke artifacts
+      - name: Upload macOS real Skia release artifacts
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: macos-real-skia-release-smoke
+          name: macos-real-skia-release
           path: |
             artifacts/platform-observation/macos/
             artifacts/example-smoke/macos/

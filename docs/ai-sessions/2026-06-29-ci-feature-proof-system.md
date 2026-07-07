@@ -49,7 +49,7 @@ Created a three-layer feature proof system. L1 (package tests) runs on every PR 
 moon check
 node scripts/validate-api-surface.mjs
 node scripts/validate-maintenance-baseline.mjs
-sh scripts/dev-check.sh
+sh scripts/check.sh --profile daily
 node scripts/smoke-gate.mjs --tier release --dry-run --json
 node scripts/sync-website-docs.mjs --check
 ```

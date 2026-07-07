@@ -14,7 +14,7 @@ fn usage() -> String {
   let text =
     #|Usage: tools/moui_skia/verify_acceptance_state_patch [options]
     #|
-    #|Validates the pure acceptance-state patch contract for Linux real-Skia
+    #|Validates the pure acceptance-state patch contract for Linux real Skia
     #|acceptance handoff artifacts. The host script still owns git apply and
     #|platform-status replay.
     #|

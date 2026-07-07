@@ -388,7 +388,7 @@ Recommended checks:
 
 ```sh
 moon test moui/views --target native
-sh scripts/conformance-check.sh --layout
+moon test moui/core --target native
 ```
 
 ## Keeping The Layers Honest

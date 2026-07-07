@@ -3,14 +3,114 @@
 ///|
 fn guidance_include_rules() -> Array[TextRule] {
   [
-    { path: "AGENTS.md", token: "sh scripts/dev-check.sh" },
+    { path: "AGENTS.md", token: "sh scripts/check.sh --profile daily" },
     { path: "AGENTS.md", token: "node scripts/validate-api-surface.mjs" },
+    { path: ".github/workflows/ci.yml", token: "name: PR profile gate" },
+    {
+      path: ".github/workflows/ci.yml",
+      token: "run: sh scripts/check.sh --profile pr",
+    },
+    {
+      path: ".github/workflows/ci.yml",
+      token: "run: sh scripts/check.sh --profile platform",
+    },
+    {
+      path: ".github/workflows/ci.yml",
+      token: ".\\scripts\\windows\\check.ps1 -Profile Pr -DryRun -Json -SkipSubmoduleInit",
+    },
+    {
+      path: ".github/workflows/feature-proof-summary.yml",
+      token: "MoUI Renderer Real Skia CI",
+    },
+    {
+      path: ".github/workflows/feature-proof-summary.yml",
+      token: "moui-renderer-real-skia-ci.yml",
+    },
+    {
+      path: ".github/workflows/moui-macos-platform-evidence.yml",
+      token: "name: MoUI macOS Platform Evidence",
+    },
+    {
+      path: ".github/workflows/moui-linux-platform-evidence.yml",
+      token: "name: MoUI Linux Platform Evidence",
+    },
+    {
+      path: ".github/workflows/moui-windows-platform-evidence.yml",
+      token: "name: MoUI Windows Platform Evidence",
+    },
+    {
+      path: ".github/workflows/moui-renderer-real-skia-ci.yml",
+      token: "name: MoUI Renderer Real Skia CI",
+    },
+    {
+      path: ".github/workflows/moui-macos-app-real-skia-manual.yml",
+      token: "name: MoUI macOS App Real Skia Manual",
+    },
+    {
+      path: ".github/workflows/moui-runtime-gates.yml",
+      token: "name: MoUI Runtime Gates",
+    },
+    {
+      path: ".github/workflows/moui-skia-provider-fallback-ci.yml",
+      token: "name: MoUI Skia Provider Fallback CI",
+    },
+    {
+      path: ".github/workflows/moui-skia-provider-real-skia-acceptance.yml",
+      token: "name: MoUI Skia Provider Real Skia Acceptance",
+    },
+    {
+      path: ".github/workflows/moui-skia-provider-linux-real-skia-nightly.yml",
+      token: "name: MoUI Skia Provider Linux Real Skia Nightly",
+    },
+    {
+      path: ".github/workflows/moui-skia-provider-macos-real-skia-manual.yml",
+      token: "name: MoUI Skia Provider macOS Real Skia Manual",
+    },
+    {
+      path: ".github/workflows/moui-skia-provider-windows-real-skia-manual.yml",
+      token: "name: MoUI Skia Provider Windows Real Skia Manual",
+    },
     { path: "docs/development.md", token: "./moui_webview" },
     { path: "docs/development.md", token: "./moui_sun" },
     { path: "docs/development.md", token: "./examples/mo_workbench" },
     {
+      path: "docs/development.md",
+      token: "-Profile Pr -DryRun -Json -SkipSubmoduleInit",
+    },
+    {
+      path: "docs/development.md",
+      token: ".github/workflows/moui-renderer-real-skia-ci.yml",
+    },
+    {
+      path: "docs/development.md",
+      token: "moui-macos-app-real-skia-manual.yml",
+    },
+    {
       path: "docs/testing.md",
       token: "node scripts/validate-guidance-consistency.mjs",
+    },
+    { path: "docs/testing.md", token: "moui-renderer-real-skia-ci.yml" },
+    {
+      path: "docs/feature-proof-matrix.md",
+      token: "moui-renderer-real-skia-ci.yml",
+    },
+    {
+      path: "docs/feature-proof-matrix.md",
+      token: "moui-macos-app-real-skia-manual.yml",
+    },
+    {
+      path: "docs/feature-status-dashboard.md",
+      token: "moui-renderer-real-skia-ci.yml",
+    },
+    {
+      path: "scripts/test-smoke-check.mjs",
+      token: ".github/workflows/moui-macos-app-real-skia-manual.yml",
+    },
+    { path: "docs/testing.md", token: "node scripts/test-check-runner.mjs" },
+    { path: "docs/testing.md", token: "shared platform service checks" },
+    {
+      path: "docs/release-readiness.md",
+      token: "shared platform service checks",
     },
     {
       path: "docs/testing.md",
@@ -24,6 +124,20 @@ fn guidance_include_rules() -> Array[TextRule] {
       path: "skills/moui-framework-development-skill/SKILL.md",
       token: "node scripts/validate-guidance-consistency.mjs",
     },
+    {
+      path: "skills/moui-framework-development-skill/SKILL.md",
+      token: "shared platform service checks",
+    },
+    {
+      path: "skills/moui-framework-development-skill/SKILL.md",
+      token: "moui-renderer-real-skia-ci.yml",
+    },
+    {
+      path: "skills/moui-app-development/SKILL.md",
+      token: "shared platform service checks",
+    },
+    { path: "AGENTS.md", token: "Windows check wrapper plan" },
+    { path: "AGENTS.md", token: "shared platform service checks" },
     { path: "AGENTS.md", token: "Script Tooling Policy" },
     { path: "docs/development.md", token: "Script Tooling Policy" },
     { path: "docs/testing.md", token: "Script Tooling Policy" },
@@ -62,8 +176,13 @@ fn guidance_window_dependency_paths() -> Array[String] {
 fn guidance_file_exists_rules() -> Array[String] {
   [
     "AGENTS.md", "docs/architecture.md", "docs/development.md", "docs/testing.md",
-    "scripts/dev-check.sh", "scripts/validate-guidance-consistency.mjs", "skills/moui-app-development/SKILL.md",
-    "skills/moui-framework-development-skill/SKILL.md", "tools/moui/validate_guidance_consistency/moon.pkg",
+    "scripts/check.mjs", "scripts/check.sh", "scripts/windows/check.ps1", "scripts/validate-guidance-consistency.mjs",
+    ".github/workflows/moui-renderer-real-skia-ci.yml", ".github/workflows/moui-macos-app-real-skia-manual.yml",
+    ".github/workflows/moui-runtime-gates.yml", ".github/workflows/moui-skia-provider-fallback-ci.yml",
+    ".github/workflows/moui-skia-provider-linux-real-skia-nightly.yml", ".github/workflows/moui-skia-provider-macos-real-skia-manual.yml",
+    ".github/workflows/moui-skia-provider-windows-real-skia-manual.yml", ".github/workflows/moui-skia-provider-real-skia-acceptance.yml",
+    "checks/profiles.json", "skills/moui-app-development/SKILL.md", "skills/moui-framework-development-skill/SKILL.md",
+    "tools/moui/validate_guidance_consistency/moon.pkg",
   ]
 }
 

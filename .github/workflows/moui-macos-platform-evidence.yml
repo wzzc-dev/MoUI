@@ -1,4 +1,4 @@
-name: MoUI macOS Platform Evidence Dispatch
+name: MoUI macOS Platform Evidence
 
 on:
   schedule:
@@ -132,7 +132,7 @@ jobs:
         shell: bash
         run: |
           {
-            echo "## macOS Platform Evidence Dispatch"
+            echo "## macOS Platform Evidence"
             echo ""
             echo "- Artifact: moui-macos-platform-evidence"
             echo "- Showcase first-frame: $([[ "${summary:-failed}" == "passed" ]] && echo 'passed' || echo 'failed')"

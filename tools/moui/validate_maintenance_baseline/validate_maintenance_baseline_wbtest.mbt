@@ -33,6 +33,12 @@ test "tracked budgets include current maintenance hotspots" {
     paths.contains("tools/moui/validate_guidance_consistency/main.mbt"),
     content="true",
   )
+  inspect(
+    paths.contains(
+      "tools/moui/validate_guidance_consistency/forbidden_guidance.mbt",
+    ),
+    content="true",
+  )
 }
 
 ///|

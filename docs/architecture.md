@@ -123,7 +123,7 @@ model/update/view logic should remain in the shared app package.
 Architecture-sensitive changes should usually run:
 
 ```sh
-sh scripts/dev-check.sh
+sh scripts/check.sh --profile daily
 moon info
 node scripts/validate-api-surface.mjs
 ```
@@ -210,9 +210,9 @@ moui/render/wgpu/directwrite/ Windows DirectWrite provider scaffold
 moui/render/wgpu/fontconfig/  Linux fontconfig/HarfBuzz/FreeType provider scaffold
 moui/tests/tooling/           quickcheck and pixelmatch integration tests
 moui/tests/text_conformance/  opt-in native/Web text diagnostic matrix
-moui/tests/skia_renderer_smoke/native/ opt-in real-Skia renderer pixel smoke
-moui/tests/skia_cached_layer_benchmark/ opt-in real-Skia cached-layer benchmark harness
-moui/tests/skia_text_emoji_smoke/ opt-in real-Skia text/emoji renderer smoke
+moui/tests/skia_renderer_smoke/native/ opt-in real Skia renderer pixel smoke
+moui/tests/skia_cached_layer_benchmark/ opt-in real Skia cached-layer benchmark harness
+moui/tests/skia_text_emoji_smoke/ opt-in real Skia text/emoji renderer smoke
 moui/tests/wgpu_renderer_smoke/ opt-in native WGPU renderer smoke
 examples/counter/app/         smallest shared app shape
 examples/counter/{macos_skia,web_wasm,macos_wgpu,windows_wgpu,linux_wgpu}/ platform counter entrypoints
