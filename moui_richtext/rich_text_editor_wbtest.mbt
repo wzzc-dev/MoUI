@@ -23,3 +23,61 @@ test "rich text run frame leaves right ink bleed" {
   assert_true(frame.size.width > text_width)
   assert_true(frame.size.width <= 400.0)
 }
+
+///|
+test "rich text editor wheel event updates shared scroll state" {
+  let state = @core.ScrollState::new()
+  let source = rich_text_scroll_test_source()
+  let font = @core.FontSpec::new(size=14.0)
+  let runtime = @runtime.AppRuntime::new_view(
+    root=controlled_rich_text_editor(
+      value=source,
+      on_input=_ => (),
+      placeholder="",
+      size=@core.Size::new(width=320.0, height=80.0),
+      format=rich_text_scroll_test_document,
+      font~,
+      foreground=@core.Color::black(),
+      placeholder_color=@core.Color::black(),
+      background=@core.Brush::solid(@core.Color::white()),
+      cursor_color=@core.Color::black(),
+      visible_viewport_height=80.0,
+      visible_scroll_state=Some(state),
+    ),
+    size=@core.Size::new(width=320.0, height=80.0),
+  )
+  ignore(runtime.layout())
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=12.0, y=12.0),
+        phase=@core.PointerPhase::Move,
+        wheel_delta=@core.Point::new(x=0.0, y=-48.0),
+      ),
+    ),
+  )
+  assert_true(state.offset().y > 0.0)
+}
+
+///|
+fn rich_text_scroll_test_source() -> String {
+  let lines : Array[String] = []
+  for index in 0..<24 {
+    lines.push("line " + index.to_string())
+  }
+  lines.join("\n")
+}
+
+///|
+fn rich_text_scroll_test_document(source : String) -> RichTextDocument {
+  let blocks : Array[RichTextBlock] = []
+  for line in source.split("\n") {
+    blocks.push(
+      RichTextBlock::new(
+        runs=[RichTextRun::new(text=line.to_owned())],
+        line_height=Some(20.0),
+      ),
+    )
+  }
+  RichTextDocument::new(blocks~)
+}

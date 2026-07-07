@@ -49,6 +49,7 @@ shape outside `examples/` so MoUI can render its own bilingual homepage.
 | PDF Workbench | PDF reading and light editing prototype | `examples/pdf_workbench/app/` | Clean native PDF reader/editor shell, host binary file service open/save flow, PDFium page bitmap preview, fit-width responsive reading canvas, scrollable page/inspector panels, reader fullscreen toggle, page navigation/direct page jump/search/metadata summaries, undoable/discardable preview rotate/crop/stamp/title/bookmark/note edit state, separate `pdflite_adapter` package for real parsing/writeback checks, JSONL pdflite helper protocol plus native process transport, native-only `pdfium_adapter` package for page rasterization, macOS/Windows/Linux Skia native entrypoints |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback, `program_with_services`, and `HostAppServices::show_context_menu` native menu preview |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
+| Code Editor | Native code editor shell and language-provider prototype | `examples/code_editor/app/` | Native `moui_richtext` editor shell with activity rail, file tab, line-number gutter, status bar, tokenizer-backed highlighting, bracket matching, auto indentation, multi-cursor edits, hidden find/replace overlay, runtime action-command shortcuts, completion overlay, diagnostics, hover, go-to-definition, main-editor Diff mode, and custom language/provider registration through app-owned callbacks |
 | Mo Workbench | Native-Skia-first desktop agent dogfood app | `examples/mo_workbench/app/` | DeepSeek-GUI-inspired multi-workspace shell with Code chat, starter cards, topbar model/thinking controls, responsive left rail, optional right inspector, low-noise status bar, grouped Settings form, static Write/Connect Phone/Scheduled Tasks/Plugins surfaces, injected stub backend, macOS Skia native entrypoint |
 | MoUI Quick Example | Minimal MoUI counter for quick start exploration | `examples/moui_example/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages; macOS / Windows / Linux Skia and Web wasm-gc entrypoints (`readme.mbt.md`) |
 
@@ -138,6 +139,32 @@ Focused Button Freeze Probe checks:
 ```sh
 moon test examples/button_freeze_probe/app --target native
 moon build examples/button_freeze_probe/macos_skia --target native
+```
+
+## Code Editor
+
+Code Editor is a native-only editor shell. It does not embed Monaco or a
+WebView; the editable surface is `moui_richtext.controlled_rich_text_editor`
+with app-owned editor chrome, code formatting, and language-service state. The
+shared app owns the source buffer, cursors, hidden find/replace overlay,
+completion overlay, diagnostics, hover result, definition target,
+bracket-match state, and a main-editor Diff mode for review and patch
+inspection.
+
+Language support is registered through `CodeLanguageRegistry` and
+`CodeLanguageProvider` callbacks. Providers supply tokenizer, completion,
+diagnostics, hover, and definition callbacks, so the example demonstrates
+custom language registration without moving app-specific language-service APIs
+into the MoUI framework. Native entrypoints register the editor's
+`ActionCommandMap` with the runtime for shortcut metadata.
+
+Focused Code Editor checks:
+
+```sh
+moon test examples/code_editor/app --target native
+moon check examples/code_editor/macos_skia --target native
+moon check examples/code_editor/windows_skia --target native
+moon check examples/code_editor/linux_skia --target native
 ```
 
 ## WebView Demo
