@@ -43,7 +43,7 @@ For task-specific workflows, use the repo-local skills:
 - **Run local validation before push**:
   - `moon check <package>` for compile errors and missing imports
   - `moon test <package> --target native` for the affected test package (if native-supporting)
-  - `sh scripts/dev-check.sh` when changing core/view/render/backend packages
+  - `sh scripts/check.sh --profile daily` when changing core/view/render/backend packages
 - **Synchronize async test patterns**: When a test spawns background threads and polls for results, ensure the polling loop yields the thread (e.g. `Sleep(0)` on Windows) so the background thread can execute before the poll budget is exhausted.
 - Ordinary app packages should default to `wzzc-dev/moui` (app-loop `@moui.*`),
   `wzzc-dev/moui/<geometry|graphics|text|state>` as needed, and `wzzc-dev/moui/views`;
@@ -60,7 +60,7 @@ For task-specific workflows, use the repo-local skills:
   diagnostic unless the request explicitly changes that policy.
 - `wzzc-dev/window` resolves from mooncakes.io by default. `moon.work` must
   not list `./window`; `scripts/validate-window-dependency.mjs` enforces this
-  in `dev-check.sh` and CI. To edit window source locally, run
+  in `check.sh --profile daily` and CI. To edit window source locally, run
   `sh scripts/window-dev-mode.sh on` (adds `./window` to `moon.work`), then
   `sh scripts/window-dev-mode.sh off` before committing. After publishing a
   new window version, update the pinned version in all four consumers
@@ -111,7 +111,7 @@ either register the new test in the maintenance baseline or revert the change
 before pushing. The same guard also keeps MoonBit-backed JS validator wrappers
 thin over `scripts/lib/moonbit-tool-runner.mjs`; do not reintroduce local
 process runners, direct filesystem parsing, or hard-coded native `_build`
-executable paths in those wrappers. Run `sh scripts/dev-check.sh` for the full
+executable paths in those wrappers. Run `sh scripts/check.sh --profile daily` for the full
 pre-push suite.
 
 ## Script Tooling Policy
@@ -143,20 +143,28 @@ Feature proof coverage is tracked in
 [docs/feature-proof-matrix.md](docs/feature-proof-matrix.md) and
 [docs/feature-status-dashboard.md](docs/feature-status-dashboard.md). The
 `feature-proof-summary.yml` CI workflow generates a proof report after every
-`ci.yml` run; the `moui-skia-real-skia-pr-smoke.yml` workflow provides L2
+`ci.yml` run; the `moui-renderer-real-skia-ci.yml` workflow provides L2
 runtime proof on every PR and push-to-main (framework rendering depends on real Skia linking).
 
 Use focused tests while editing. Before handoff, prefer the daily validation
 script:
 
 ```sh
-sh scripts/dev-check.sh
+sh scripts/check.sh --profile daily
 ```
 
 The daily validation script includes `moon check`, maintenance baseline guards,
-API surface guards, smoke catalog validation, core/view/render/backend package
-tests, `moui_tester`, `moui_devtools`, Showcase and Markdown Editor app tests,
-and Web wasm-gc builds.
+API surface guards, check runner self-tests, smoke catalog validation,
+core/view/render/backend package tests, `moui_tester`, `moui_devtools`,
+Showcase and Markdown Editor app tests, and Web wasm-gc builds.
+
+`ci.yml` uses `sh scripts/check.sh --profile pr` and
+`sh scripts/check.sh --profile platform` for POSIX profile gates. The Windows
+MSVC job keeps MSVC setup/build/package steps explicit and verifies only the
+Windows check wrapper plan with
+`powershell -ExecutionPolicy Bypass -File .\scripts\windows\check.ps1 -Profile Pr -DryRun -Json -SkipSubmoduleInit`.
+The `platform` profile starts with shared platform service checks; host-specific
+backend/provider tests are declared in `checks/profiles.json`.
 
 - Root app-loop aliases and domain sugar forwards are enforced by
   `tools/moui/validate_api_surface/main.mbt`. Update `root_app_shape_tokens()` or
@@ -171,11 +179,12 @@ node scripts/validate-guidance-consistency.mjs
 moon info
 node scripts/smoke-check.mjs --check
 node scripts/smoke-gate.mjs --tier release --dry-run --json
-sh scripts/dev-check.sh --theme-diagnostics
+sh scripts/check.sh --profile theme
 ```
 
-Design Systems is addon diagnostic coverage. Run `--theme-diagnostics` when
-changing `moui_theme` or `examples/design_systems`.
+Design Systems is addon diagnostic coverage. Run
+`sh scripts/check.sh --profile theme` when changing `moui_theme` or
+`examples/design_systems`.
 
 ## Manual Smoke
 
@@ -190,7 +199,7 @@ scripts/run-window-package-smoke.sh <macos|web|windows|linux> --run
 ```
 
 `smoke/gates.json` is the smoke gate catalog. `scripts/smoke-gate.mjs` previews
-or runs catalog suites, and `.github/workflows/moui-runtime-smoke-gates.yml`
+or runs catalog suites, and `.github/workflows/moui-runtime-gates.yml`
 owns scheduled/manual runtime smoke in CI. Cite the relevant CI run, uploaded
 artifact, or manual smoke log in release notes.
 

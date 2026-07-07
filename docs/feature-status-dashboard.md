@@ -16,34 +16,34 @@ workflow run.
 | Level | CI workflow | Trigger | What it proves |
 |-------|------------|---------|---------------|
 | L1 | `ci.yml` | Every PR | API/algorithm/protocol correctness (no real renderer) |
-| L2 | `moui-skia-real-skia-pr-smoke.yml` | Every PR and push-to-main | Real Skia runtime behavior on matching host |
+| L2 | `moui-renderer-real-skia-ci.yml` | Every PR and push-to-main | Real Skia runtime behavior on matching host |
 | L3 | `feature-proof-summary.yml` | After `ci.yml` completes | All required L1 and L2 passed |
 
 ## Renderer Feature Proof Status
 
 All 17 renderer features from `RendererFeature` enum share the same CI job
-mapping. L1 proof is always provided by `conformance` (package tests). L2 proof
+mapping. L1 proof is always provided by `pr-profile` (package tests). L2 proof
 is provided by the three platform jobs on every PR.
 
 | Feature | L1 (ci.yml) | L2 macOS | L2 Linux | L2 Windows | L3 |
 |---------|-------------|----------|----------|------------|-----|
-| Rect | `conformance` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
-| RoundedRect | `conformance` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
-| Gradient | `conformance` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
-| Shadow | `conformance` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
-| Text | `conformance` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
-| Image | `conformance` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
-| Clip | `conformance` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
-| Transform | `conformance` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
-| Opacity | `conformance` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
-| LayerCompositing | `conformance` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
-| BlendMode | `conformance` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
-| FilterEffect | `conformance` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
-| PathVector | `conformance` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
-| ShaderEffect | `conformance` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
-| TextShaping | `conformance` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
-| EmojiText | `conformance` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
-| AsyncImage | `conformance` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
+| Rect | `pr-profile` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
+| RoundedRect | `pr-profile` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
+| Gradient | `pr-profile` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
+| Shadow | `pr-profile` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
+| Text | `pr-profile` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
+| Image | `pr-profile` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
+| Clip | `pr-profile` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
+| Transform | `pr-profile` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
+| Opacity | `pr-profile` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
+| LayerCompositing | `pr-profile` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
+| BlendMode | `pr-profile` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
+| FilterEffect | `pr-profile` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
+| PathVector | `pr-profile` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
+| ShaderEffect | `pr-profile` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
+| TextShaping | `pr-profile` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
+| EmojiText | `pr-profile` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
+| AsyncImage | `pr-profile` | `macos-real-skia` | `linux-real-skia` | `windows-real-skia` | summary |
 
 ## Release-Ready Coverage
 
@@ -54,7 +54,7 @@ proof status:
 ### TextShaping
 
 - **Implementation status**: supported
-- **L1 proof**: `conformance` job passes (grapheme break, caret stabilization,
+- **L1 proof**: `pr-profile` job passes (grapheme break, caret stabilization,
   UAX#29 fixture)
 - **L2 proof**: `macos-real-skia` / `linux-real-skia` / `windows-real-skia`
   pass on every PR (SkShaper/SkParagraph smoke markers, bidi Arabic and
@@ -69,7 +69,7 @@ proof status:
   preflight readiness and emoji font fallback diagnostic now report
   runtime-determined `deterministic_color_emoji_ready` and `glyph_format`
   (rgba/alpha).
-- **L1 proof**: `conformance` job passes (emoji cluster detection, caret
+- **L1 proof**: `pr-profile` job passes (emoji cluster detection, caret
   stabilization, glyph format runtime check)
 - **L2 proof**: `macos-real-skia` / `linux-real-skia` / `windows-real-skia`
   pass on every PR (emoji glyph/raster observation markers, keycap/
@@ -82,7 +82,7 @@ proof status:
 - **Implementation status**: supported (native Skia local-file sources use
   off-main-thread file I/O plus Skia decode into decoded RGBA completion
   payloads; provider tests assert `background_io` and `background_decode`)
-- **L1 proof**: `conformance` job passes (HostAsyncImageLoader dedup, late
+- **L1 proof**: `pr-profile` job passes (HostAsyncImageLoader dedup, late
   callback gating, completion routing, drain_fn spawn/drain cycle,
   decoded payload header plus `background_io` / `background_decode` flags
   asserted in provider tests)
@@ -90,7 +90,7 @@ proof status:
   pass on every PR (second-frame repaint marker after local/data URI
   completions, deferred-completion marker after `HostNativeAsyncImageSource`
   completion via `--run-renderer-smoke`)
-- **Release readiness**: ready. The `moui-skia-real-skia-pr-smoke.yml` workflow
+- **Release readiness**: ready. The `moui-renderer-real-skia-ci.yml` workflow
   automatically obtains second-frame and deferred-completion markers on all
   three platforms on every PR.
 - **Runtime path**: Off-main-thread file I/O and Skia decode are implemented
@@ -103,9 +103,9 @@ proof status:
 
 | CI workflow | Artifact name | Content |
 |------------|--------------|---------|
-| `moui-skia-real-skia-pr-smoke.yml` → `macos-real-skia` | `macos-real-skia-pr-smoke` | `moui_skia/logs/macos-*.log` |
-| `moui-skia-real-skia-pr-smoke.yml` → `linux-real-skia` | `linux-real-skia-pr-smoke` | `moui_skia/logs/linux-*.log` |
-| `moui-skia-real-skia-pr-smoke.yml` → `windows-real-skia` | `windows-real-skia-pr-smoke` | `moui_skia/logs/windows-*.log` |
+| `moui-renderer-real-skia-ci.yml` → `macos-real-skia` | `macos-renderer-real-skia-ci` | `moui_skia/logs/macos-*.log` |
+| `moui-renderer-real-skia-ci.yml` → `linux-real-skia` | `linux-renderer-real-skia-ci` | `moui_skia/logs/linux-*.log` |
+| `moui-renderer-real-skia-ci.yml` → `windows-real-skia` | `windows-renderer-real-skia-ci` | `moui_skia/logs/windows-*.log` |
 | `feature-proof-summary.yml` → `summarize` | `feature-proof-summary` | `artifacts/feature-proof/proof-report.json` + `.md` |
 
 ## Update Rule

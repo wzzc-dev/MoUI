@@ -162,10 +162,10 @@ owning-package boundaries clear.
   a narrow native color-emoji path and Cosmic fallback for general text.
 - `render/wgpu/text_protocol/`: shared native text provider payload protocol.
 - `render/webgpu_adapter/`: wasm-gc bridge to browser WebGPU host imports.
-- `moui/tests/skia_renderer_smoke/native`: opt-in real-Skia renderer smoke that
+- `moui/tests/skia_renderer_smoke/native`: opt-in real Skia renderer smoke that
   verifies MoUI draw commands against captured Skia presenter pixels and checks
   async image second-frame repaint through the host completion route.
-- `moui/tests/skia_text_emoji_smoke/native`: opt-in real-Skia text/emoji proof
+- `moui/tests/skia_text_emoji_smoke/native`: opt-in real Skia text/emoji proof
   smoke that records renderer-proof markers only after captured Skia pixels and
   font/glyph metadata plus text-system evidence prove color emoji, ZWJ
   grapheme, paragraph wrapping, and bidi observations. Native paragraph
@@ -215,7 +215,7 @@ owning-package boundaries clear.
 Daily check:
 
 ```sh
-sh scripts/dev-check.sh
+sh scripts/check.sh --profile daily
 ```
 
 The daily check runs `sh scripts/check-local-deps.sh`, which verifies
@@ -242,19 +242,28 @@ and verifier scripts, then runs
 `moui_skia/scripts/verify-platform-status.sh` and
 `moui_skia/scripts/verify-native-capability-contract.sh`. Treat
 that as binding-level Skia provider/status and native capability evidence; MoUI
-renderer pixels and platform runtime behavior still need the opt-in real-Skia
+renderer pixels and platform runtime behavior still need the opt-in real Skia
 smoke or matching-host example runs.
-The runnable `moui_skia` GitHub Actions workflows live in the repository root
-as `.github/workflows/moui-skia-*.yml`, and Copilot setup lives at root
-`.github/workflows/copilot-setup-steps.yml`. Keep workflow files there while
-`moui_skia` is a workspace member; nested workflow files are not discovered by
-GitHub Actions in the monorepo.
-Daily `dev-check` also runs the MoonBit-backed maintenance baseline guard, API
-surface guard, checked conformance artifact guard, dedicated checked-artifact
-validators for platform runtime evidence, Web runtime handoff/presentation,
-conformance capture, and renderer proof manifests, plus app/Web checks for
-Showcase and Markdown Editor.
-Use `sh scripts/dev-check.sh --theme-diagnostics` for `moui_theme` and Design
+The runnable `moui_skia` binding/provider GitHub Actions workflows live in the
+repository root as `.github/workflows/moui-skia-*.yml`, and Copilot setup lives
+at root `.github/workflows/copilot-setup-steps.yml`. Keep workflow files there
+while `moui_skia` is a workspace member; nested workflow files are not
+discovered by GitHub Actions in the monorepo. The
+`.github/workflows/moui-renderer-real-skia-ci.yml` workflow is
+MoUI-owned integration proof, not a package-owned `moui_skia` workflow.
+The daily check profile also runs the MoonBit-backed maintenance baseline
+guard, API surface guard, checked conformance artifact guard, dedicated
+checked-artifact validators for platform runtime evidence, Web runtime
+handoff/presentation, conformance capture, renderer proof manifests, and check
+runner self-tests, plus app/Web checks for Showcase and Markdown Editor.
+`ci.yml` uses `sh scripts/check.sh --profile pr` for the PR profile gate and
+`sh scripts/check.sh --profile platform` for Linux platform contracts. The
+Windows MSVC job keeps setup/build/package steps explicit and only verifies the
+PowerShell wrapper dry-run plan with
+`powershell -ExecutionPolicy Bypass -File .\scripts\windows\check.ps1 -Profile Pr -DryRun -Json -SkipSubmoduleInit`.
+The `platform` profile starts with shared platform service checks, while
+host-specific backend/provider tests live in `checks/profiles.json`.
+Use `sh scripts/check.sh --profile theme` for `moui_theme` and Design
 Systems addon diagnostic coverage. Keep `docs/testing.md` and repo-local skills
 synchronized when adding or removing daily quality gates.
 For Web runtime evidence, use `record-web-runtime-presentation.mjs` to collect
@@ -480,7 +489,7 @@ node scripts/smoke-gate.mjs --tier release --dry-run --json
 ```
 
 before changing or running catalog-backed smoke. The CI owner for runtime smoke
-is `.github/workflows/moui-runtime-smoke-gates.yml`.
+is `.github/workflows/moui-runtime-gates.yml`.
 
 ## Docs And Skills
 
@@ -500,8 +509,9 @@ node scripts/sync-website-docs.mjs
 node scripts/sync-website-docs.mjs --check
 ```
 
-Design Systems is addon diagnostic coverage. Run `sh scripts/dev-check.sh
---theme-diagnostics` when changing `moui_theme` or `examples/design_systems`.
+Design Systems is addon diagnostic coverage. Run
+`sh scripts/check.sh --profile theme` when changing `moui_theme` or
+`examples/design_systems`.
 
 Do not commit `artifacts/`. Cite CI run IDs, uploaded artifacts, or manual smoke
 logs in release notes instead.

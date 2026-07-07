@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "description": "MoUI repository check profiles. This catalog is source metadata for scripts/check.mjs, not generated evidence.",
+  "profiles": {
+    "pr": {
+      "description": "Fast pull-request gate: static guards, core package checks, and Web wasm-gc builds.",
+      "steps": [
+        { "name": "script lint (pr)", "argv": ["node", "scripts/lint-scripts.mjs", "--profile", "pr"] },
+        { "name": "check profile catalog", "argv": ["node", "scripts/validate-check-profiles.mjs"] },
+        { "name": "guidance consistency", "argv": ["node", "scripts/validate-guidance-consistency.mjs"] },
+        { "name": "public API surface", "argv": ["node", "scripts/validate-api-surface.mjs"] },
+        { "name": "window dependency", "argv": ["node", "scripts/validate-window-dependency.mjs"] },
+        { "name": "maintenance baseline", "argv": ["node", "scripts/validate-maintenance-baseline.mjs"] },
+        { "name": "renderer provider manifests", "argv": ["node", "scripts/validate-renderer-provider-manifests.mjs"] },
+        { "name": "Skia entrypoints", "argv": ["node", "scripts/validate-skia-entrypoints.mjs"] },
+        { "name": "smoke catalog", "argv": ["node", "scripts/smoke-check.mjs", "--check"] },
+        { "name": "smoke nightly dry-run", "argv": ["node", "scripts/smoke-gate.mjs", "--tier", "nightly", "--dry-run", "--json"] },
+        { "name": "MoonBit format", "argv": ["moon", "fmt", "--check"] },
+        { "name": "MoonBit workspace check", "argv": ["moon", "check"] },
+        { "name": "core tests", "argv": ["moon", "test", "moui/core", "--target", "native"] },
+        { "name": "views tests", "argv": ["moon", "test", "moui/views", "--target", "native"] },
+        { "name": "render facade tests", "argv": ["moon", "test", "moui/render", "--target", "native"] },
+        { "name": "host backend tests", "argv": ["moon", "test", "moui/backend/host", "--target", "native"] },
+        { "name": "webgpu adapter tests", "argv": ["moon", "test", "moui/render/webgpu_adapter", "--target", "wasm-gc"] },
+        { "name": "web backend tests", "argv": ["moon", "test", "moui/backend/web", "--target", "wasm-gc"] },
+        { "name": "Showcase app tests", "argv": ["moon", "test", "examples/showcase/app", "--target", "native"] },
+        { "name": "Markdown Editor app tests", "argv": ["moon", "test", "examples/markdown_editor/app", "--target", "native"] },
+        { "name": "Showcase Web build", "argv": ["moon", "build", "examples/showcase/web_wasm", "--target", "wasm-gc"] },
+        { "name": "Markdown Editor Web build", "argv": ["moon", "build", "examples/markdown_editor/web_wasm", "--target", "wasm-gc"] }
+      ]
+    },
+    "daily": {
+      "description": "Default maintainer gate: PR checks plus validator self-tests and broader package coverage.",
+      "includes": ["pr"],
+      "steps": [
+        { "name": "Skia entrypoint validator tests", "argv": ["node", "scripts/test-validate-skia-entrypoints.mjs"] },
+        { "name": "prebuild validator syntax", "argv": ["node", "--check", "scripts/test-moui-prebuild.mjs"] },
+        { "name": "prebuild validator tests", "argv": ["node", "scripts/test-moui-prebuild.mjs"] },
+        { "name": "capture manifest validator tests", "argv": ["node", "scripts/test-validate-conformance-capture-manifest.mjs"] },
+        { "name": "grapheme fixture syntax", "argv": ["node", "--check", "scripts/generate-grapheme-break-fixtures.mjs"] },
+        { "name": "grapheme fixture check", "argv": ["node", "scripts/generate-grapheme-break-fixtures.mjs", "--check"] },
+        { "name": "Web runtime handoff manifest tests", "argv": ["node", "scripts/test-validate-web-runtime-handoff-manifest.mjs"] },
+        { "name": "Web runtime presentation recorder tests", "argv": ["node", "scripts/test-record-web-runtime-presentation.mjs"] },
+        { "name": "Web runtime presentation manifest tests", "argv": ["node", "scripts/test-validate-web-runtime-presentation-manifest.mjs"] },
+        { "name": "check runner tests", "argv": ["node", "scripts/test-check-runner.mjs"] },
+        { "name": "smoke catalog tests", "argv": ["node", "scripts/test-smoke-check.mjs"] },
+        { "name": "smoke gate tests", "argv": ["node", "scripts/test-smoke-gate.mjs"] },
+        { "name": "Skia renderer tests", "argv": ["moon", "test", "moui/render/skia", "--target", "native"] },
+        { "name": "Sun renderer tests", "argv": ["moon", "test", "moui/render/sun", "--target", "native"] },
+        { "name": "moui_tester tests", "argv": ["moon", "test", "moui_tester", "--target", "native"] },
+        { "name": "moui_devtools tests", "argv": ["moon", "test", "moui_devtools", "--target", "native"] },
+        { "name": "moui_skia tests", "argv": ["moon", "test", "moui_skia", "--target", "native"] },
+        { "name": "Web runtime handoff tests", "argv": ["node", "scripts/test-validate-web-runtime-handoff.mjs"] },
+        { "name": "Web runtime handoff validation", "argv": ["node", "scripts/validate-web-runtime-handoff.mjs"] }
+      ]
+    },
+    "platform": {
+      "description": "Current-host platform contracts and platform-service checks.",
+      "steps": [
+        { "name": "shared platform service checks", "argv": ["node", "scripts/platform-services-check.mjs"] },
+        { "name": "macOS backend tests", "host": "darwin", "argv": ["moon", "test", "moui/backend/macos", "--target", "native"] },
+        { "name": "macOS Skia provider tests", "host": "darwin", "argv": ["moon", "test", "moui/backend/macos/skia", "--target", "native"] },
+        { "name": "Linux backend tests", "host": "linux", "argv": ["moon", "test", "moui/backend/linux", "--target", "native"] },
+        { "name": "Linux Skia provider tests", "host": "linux", "argv": ["moon", "test", "moui/backend/linux/skia", "--target", "native"] },
+        { "name": "Windows backend tests", "host": "windows", "argv": ["moon", "test", "moui/backend/windows", "--target", "native"] },
+        { "name": "Windows Skia provider tests", "host": "windows", "argv": ["moon", "test", "moui/backend/windows/skia", "--target", "native"] }
+      ]
+    },
+    "theme": {
+      "description": "Design Systems addon diagnostics.",
+      "steps": [
+        { "name": "moui_theme common native", "argv": ["moon", "test", "moui_theme/common", "--target", "native"] },
+        { "name": "moui_theme common wasm-gc", "argv": ["moon", "test", "moui_theme/common", "--target", "wasm-gc"] },
+        { "name": "moui_theme material", "argv": ["moon", "test", "moui_theme/material", "--target", "native"] },
+        { "name": "moui_theme carbon", "argv": ["moon", "test", "moui_theme/carbon", "--target", "native"] },
+        { "name": "moui_theme primer", "argv": ["moon", "test", "moui_theme/primer", "--target", "native"] },
+        { "name": "moui_theme fluent", "argv": ["moon", "test", "moui_theme/fluent", "--target", "native"] },
+        { "name": "Design Systems app tests", "argv": ["moon", "test", "examples/design_systems/app", "--target", "native"] },
+        { "name": "Design Systems Web build", "argv": ["moon", "build", "examples/design_systems/web_wasm", "--target", "wasm-gc"] }
+      ]
+    },
+    "full": {
+      "description": "Full local validation excluding real renderer/browser smoke: daily, platform, theme, text diagnostics, capture scaffolds, and current-host native example builds.",
+      "includes": ["daily", "platform", "theme"],
+      "steps": [
+        { "name": "script lint (full)", "argv": ["node", "scripts/lint-scripts.mjs", "--profile", "full"] },
+        { "name": "stable text conformance", "argv": ["moon", "test", "moui/tests/text_conformance/native", "--target", "native"] },
+        { "name": "Web text conformance", "argv": ["moon", "test", "moui/tests/text_conformance/web", "--target", "wasm-gc"] },
+        { "name": "golden capture scaffold", "argv": ["node", "scripts/conformance-capture-scaffold.mjs", "--mode", "golden"] },
+        { "name": "benchmark capture scaffold", "argv": ["node", "scripts/conformance-capture-scaffold.mjs", "--mode", "benchmark"] },
+        { "name": "macOS Showcase native build", "host": "darwin", "argv": ["moon", "build", "examples/showcase/macos_skia", "--target", "native"] },
+        { "name": "macOS Markdown Editor native build", "host": "darwin", "argv": ["moon", "build", "examples/markdown_editor/macos_skia", "--target", "native"] },
+        { "name": "Linux Showcase native build", "host": "linux", "argv": ["moon", "build", "examples/showcase/linux_skia", "--target", "native"] },
+        { "name": "Linux Markdown Editor native build", "host": "linux", "argv": ["moon", "build", "examples/markdown_editor/linux_skia", "--target", "native"] },
+        { "name": "Windows Showcase native build", "host": "windows", "argv": ["moon", "build", "examples/showcase/windows_skia", "--target", "native"] },
+        { "name": "Windows Markdown Editor native build", "host": "windows", "argv": ["moon", "build", "examples/markdown_editor/windows_skia", "--target", "native"] }
+      ]
+    }
+  }
+}

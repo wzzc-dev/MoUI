@@ -139,12 +139,14 @@ moon build examples/markdown_editor/web_wasm --target wasm-gc
 Before handoff, prefer:
 
 ```sh
-sh scripts/dev-check.sh
+sh scripts/check.sh --profile daily
 ```
 
-Run `sh scripts/dev-check.sh --theme-diagnostics` for `moui_theme` or
-`examples/design_systems`. Run platform smoke only when the change claims real
-platform/browser/renderer behavior.
+Run `sh scripts/check.sh --profile theme` for `moui_theme` or
+`examples/design_systems`. Use `sh scripts/check.sh --profile platform` for
+current-host backend/provider coverage; the shared platform service checks stay
+separate from host-specific steps. Run platform smoke only when
+the change claims real platform/browser/renderer behavior.
 
 ## Docs
 

@@ -38,6 +38,26 @@ pub fn WindowsSkiaSmokeOptions::new(
 }
 
 ///|
+fn WindowsSkiaSmokeOptions::from_environment() -> WindowsSkiaSmokeOptions {
+  WindowsSkiaSmokeOptions::new(
+    first_frame_smoke_auto_exit=env_flag(
+        "MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT",
+      ) ||
+      env_flag("MOUI_MARKDOWN_EDITOR_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT"),
+  )
+}
+
+///|
+fn WindowsSkiaSmokeOptions::enabled(self : WindowsSkiaSmokeOptions) -> Bool {
+  self.first_frame_smoke_auto_exit
+}
+
+///|
+fn env_flag(name : String) -> Bool {
+  @env.get_env_var(name) == Some("1")
+}
+
+///|
 pub fn run_app(title : String, runtime : @runtime.AppRuntime) -> Unit {
   run_app_with_options(
     title,
@@ -54,6 +74,17 @@ pub fn run_app_with_options(
   options~ : WindowsSkiaAppOptions,
   window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
 ) -> Unit {
+  let smoke_options = WindowsSkiaSmokeOptions::from_environment()
+  if smoke_options.enabled() {
+    run_smoke_app_with_options(
+      title,
+      runtime,
+      options~,
+      smoke_options~,
+      window_requests~,
+    )
+    return
+  }
   if !windows_skia_provider_ready() {
     println(windows_skia_unavailable_message())
     return

@@ -1,4 +1,4 @@
-name: MoUI Skia Windows Real Skia Smoke
+name: MoUI Skia Provider Windows Real Skia Manual
 
 on:
   workflow_dispatch:
@@ -71,7 +71,8 @@ on:
         default: false
 
 jobs:
-  smoke:
+  provider-windows-real-skia:
+    name: Windows provider real Skia
     runs-on: windows-latest
     defaults:
       run:
@@ -289,7 +290,7 @@ jobs:
           $markerStatus = if ($env:native_smoke_marker_status) { $env:native_smoke_marker_status } else { "not run" }
           $restoreStatus = if ($env:restore_status) { $env:restore_status } else { "not run" }
           @(
-            "## Windows Real Skia Smoke"
+            "## Windows Provider Real Skia"
             ""
             "- Dry run only: ${{ inputs.dry_run_config }}"
             "- Toolchain: ${{ inputs.toolchain }}"

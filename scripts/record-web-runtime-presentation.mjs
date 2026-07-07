@@ -1,9 +1,16 @@
 #!/usr/bin/env node
 
-import { spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { inflateSync } from "node:zlib";
+import {
+  CdpSession,
+  closePageTarget,
+  createPageTarget,
+  evaluate,
+  fetchJson,
+} from "./lib/web-runtime-cdp.mjs";
+import { writeJsonManifest, validateWebRuntimeManifest } from "./lib/web-runtime-manifest.mjs";
+import { decodePng8 } from "./lib/png-rgba.mjs";
 
 const usage = () => {
   console.error(
@@ -140,9 +147,7 @@ const emptyRendererSmokeMarkers = required => ({
 });
 
 const writeManifest = manifest => {
-  mkdirSync(dirname(manifestPath), { recursive: true });
-  writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-  console.log(`web runtime presentation manifest: ${manifestPath}`);
+  writeJsonManifest(manifestPath, manifest, "web runtime presentation manifest");
 };
 
 const missingObservationKeys = observations =>
@@ -212,14 +217,7 @@ const printFailureSummary = manifest => {
 };
 
 const validateManifest = () => {
-  const validationArgs = ["scripts/validate-web-runtime-presentation-manifest.mjs", manifestPath];
-  if (requirePassed) validationArgs.push("--require-passed");
-  const validation = spawnSync(process.execPath, validationArgs, { encoding: "utf8" });
-  if (validation.stdout) process.stdout.write(validation.stdout);
-  if (validation.stderr) process.stderr.write(validation.stderr);
-  if (validation.status !== 0) {
-    process.exit(validation.status ?? 1);
-  }
+  validateWebRuntimeManifest({ manifestPath, requirePassed });
 };
 
 const writePreflightFailureManifest = error => {
@@ -294,219 +292,6 @@ const writePreflightFailureManifest = error => {
   validateManifest();
   console.error(`web runtime presentation preflight failed: ${message}`);
   process.exit(1);
-};
-
-const fetchJson = async url => {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`${url} returned ${response.status} ${response.statusText}`);
-  }
-  return await response.json();
-};
-
-class CdpSession {
-  constructor(webSocketUrl) {
-    this.webSocketUrl = webSocketUrl;
-    this.nextId = 1;
-    this.pending = new Map();
-    this.events = [];
-  }
-
-  async connect() {
-    this.socket = new WebSocket(this.webSocketUrl);
-    this.socket.addEventListener("message", event => this.onMessage(event));
-    await new Promise((resolve, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error(`Timed out connecting to ${this.webSocketUrl}`)),
-        timeoutMs,
-      );
-      this.socket.addEventListener("open", () => {
-        clearTimeout(timer);
-        resolve();
-      }, { once: true });
-      this.socket.addEventListener("error", error => {
-        clearTimeout(timer);
-        reject(new Error(`WebSocket connection failed: ${error.message || error.type}`));
-      }, { once: true });
-    });
-  }
-
-  onMessage(event) {
-    const message = JSON.parse(event.data);
-    if (message.id && this.pending.has(message.id)) {
-      const { resolve, reject } = this.pending.get(message.id);
-      this.pending.delete(message.id);
-      if (message.error) {
-        reject(new Error(message.error.message || JSON.stringify(message.error)));
-      } else {
-        resolve(message.result ?? {});
-      }
-      return;
-    }
-    if (message.method) {
-      this.events.push(message);
-    }
-  }
-
-  send(method, params = {}) {
-    const id = this.nextId;
-    this.nextId += 1;
-    const payload = JSON.stringify({ id, method, params });
-    return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
-        this.pending.delete(id);
-        reject(new Error(`Timed out waiting for CDP method ${method}`));
-      }, timeoutMs);
-      this.pending.set(id, {
-        resolve: result => {
-          clearTimeout(timer);
-          resolve(result);
-        },
-        reject: error => {
-          clearTimeout(timer);
-          reject(error);
-        },
-      });
-      this.socket.send(payload);
-    });
-  }
-
-  close() {
-    this.socket?.close();
-  }
-}
-
-const createPageTarget = async () => {
-  const response = await fetch(`${normalizeBaseUrl(cdpUrl)}/json/new?about:blank`, {
-    method: "PUT",
-  });
-  if (!response.ok) {
-    throw new Error(`CDP target creation failed: ${response.status} ${response.statusText}`);
-  }
-  return await response.json();
-};
-
-const closePageTarget = async id => {
-  try {
-    const response = await fetch(`${normalizeBaseUrl(cdpUrl)}/json/close/${encodeURIComponent(id)}`);
-    if (!response.ok) return false;
-    const deadline = Date.now() + Math.min(timeoutMs, 2000);
-    while (Date.now() < deadline) {
-      await sleep(100);
-      const targets = await fetchJson(`${normalizeBaseUrl(cdpUrl)}/json/list`);
-      if (!targets.some(target => target?.id === id)) {
-        return true;
-      }
-    }
-    return false;
-  } catch (_) {
-    return false;
-  }
-};
-
-const evaluate = async (session, expression) => {
-  const result = await session.send("Runtime.evaluate", {
-    expression,
-    returnByValue: true,
-    awaitPromise: true,
-  });
-  if (result.exceptionDetails) {
-    throw new Error(
-      result.exceptionDetails.text || result.exceptionDetails.exception?.description || "evaluation failed",
-    );
-  }
-  return result.result?.value;
-};
-
-const paeth = (a, b, c) => {
-  const p = a + b - c;
-  const pa = Math.abs(p - a);
-  const pb = Math.abs(p - b);
-  const pc = Math.abs(p - c);
-  if (pa <= pb && pa <= pc) return a;
-  if (pb <= pc) return b;
-  return c;
-};
-
-const decodePng8 = buffer => {
-  if (buffer.toString("ascii", 1, 4) !== "PNG") {
-    throw new Error("screenshot is not a PNG");
-  }
-
-  let offset = 8;
-  let width = 0;
-  let height = 0;
-  let bitDepth = 0;
-  let colorType = 0;
-  const idat = [];
-
-  while (offset < buffer.length) {
-    const length = buffer.readUInt32BE(offset);
-    const type = buffer.toString("ascii", offset + 4, offset + 8);
-    const dataStart = offset + 8;
-    const dataEnd = dataStart + length;
-    const data = buffer.subarray(dataStart, dataEnd);
-    if (type === "IHDR") {
-      width = data.readUInt32BE(0);
-      height = data.readUInt32BE(4);
-      bitDepth = data[8];
-      colorType = data[9];
-    } else if (type === "IDAT") {
-      idat.push(data);
-    } else if (type === "IEND") {
-      break;
-    }
-    offset = dataEnd + 4;
-  }
-
-  if (bitDepth !== 8 || ![2, 6].includes(colorType)) {
-    throw new Error(`unsupported PNG screenshot format bitDepth=${bitDepth} colorType=${colorType}`);
-  }
-
-  const channels = colorType === 6 ? 4 : 3;
-  const stride = width * channels;
-  const raw = inflateSync(Buffer.concat(idat));
-  const pixels = Buffer.alloc(width * height * 4);
-  let rawOffset = 0;
-  const previous = Buffer.alloc(stride);
-  const current = Buffer.alloc(stride);
-
-  for (let y = 0; y < height; y += 1) {
-    const filter = raw[rawOffset];
-    rawOffset += 1;
-    raw.copy(current, 0, rawOffset, rawOffset + stride);
-    rawOffset += stride;
-
-    for (let x = 0; x < stride; x += 1) {
-      const left = x >= channels ? current[x - channels] : 0;
-      const up = previous[x];
-      const upLeft = x >= channels ? previous[x - channels] : 0;
-      if (filter === 1) {
-        current[x] = (current[x] + left) & 0xff;
-      } else if (filter === 2) {
-        current[x] = (current[x] + up) & 0xff;
-      } else if (filter === 3) {
-        current[x] = (current[x] + Math.floor((left + up) / 2)) & 0xff;
-      } else if (filter === 4) {
-        current[x] = (current[x] + paeth(left, up, upLeft)) & 0xff;
-      } else if (filter !== 0) {
-        throw new Error(`unsupported PNG filter ${filter}`);
-      }
-    }
-
-    for (let x = 0; x < width; x += 1) {
-      const src = x * channels;
-      const dst = (y * width + x) * 4;
-      pixels[dst] = current[src];
-      pixels[dst + 1] = current[src + 1];
-      pixels[dst + 2] = current[src + 2];
-      pixels[dst + 3] = channels === 4 ? current[src + 3] : 255;
-    }
-
-    current.copy(previous);
-  }
-
-  return { width, height, data: pixels };
 };
 
 const summarizeTransformPixels = png => {
@@ -1188,8 +973,8 @@ const consoleErrorsFor = events => {
 };
 
 const probeTarget = async target => {
-  const pageTarget = await createPageTarget();
-  const session = new CdpSession(pageTarget.webSocketDebuggerUrl);
+  const pageTarget = await createPageTarget(normalizeBaseUrl(cdpUrl));
+  const session = new CdpSession(pageTarget.webSocketDebuggerUrl, timeoutMs);
   const url = `${targetUrl(target)}&observation=${Date.now()}`;
   const artifact = join(
     "artifacts/conformance/web-runtime-presentation",
@@ -1291,7 +1076,12 @@ const probeTarget = async target => {
       notes.push("screenshot did not meet nonblank content threshold");
     }
 
-    const targetClosed = await closePageTarget(pageTarget.id);
+    const targetClosed = await closePageTarget({
+      cdpUrl: normalizeBaseUrl(cdpUrl),
+      id: pageTarget.id,
+      timeoutMs,
+      sleep,
+    });
     const observations = {
       pageLoaded: "yes",
       webGpuAvailable: state.navigatorGpu ? "yes" : "no",
@@ -1427,7 +1217,12 @@ const probeTarget = async target => {
     };
   } finally {
     session.close();
-    await closePageTarget(pageTarget.id);
+    await closePageTarget({
+      cdpUrl: normalizeBaseUrl(cdpUrl),
+      id: pageTarget.id,
+      timeoutMs,
+      sleep,
+    });
   }
 };
 

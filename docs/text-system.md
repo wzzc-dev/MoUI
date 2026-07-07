@@ -41,7 +41,7 @@ plus stable chain label, a stable coverage-mask glyph key, and
 keeping deterministic color emoji explicitly pending.
 When no registered font face covers a draw, Sun still falls back to
 renderer-local placeholder glyphs. Bidi, advanced shaping, and color emoji
-claims are covered by the shared conformance and real-Skia proof matrix rather
+claims are covered by the shared conformance and real Skia proof matrix rather
 than a separate text-system blocker status.
 
 ## Runtime Boundary
@@ -233,7 +233,7 @@ Skia measurement path drives focused text-input composition caret geometry and
 selection highlight drawing. Fallback-safe diagnostics do not claim
 native-platform IME runtime behavior or native SkParagraph runtime parity; the
 text maturity preflight now marks bidi reordering and paragraph line breaking
-ready, while only matching-host real-Skia SkParagraph smoke logs may claim
+ready, while only matching-host real Skia SkParagraph smoke logs may claim
 native paragraph runtime observation. macOS tester-owned first-frame smoke entrypoints still explicitly
 select `SkiaFontResolution::EmptyTypeface`; that keeps CLI smoke runs on the
 safer default-font retry path without changing the normal app default. The fallback-safe Skia
@@ -358,7 +358,7 @@ Remote font loading is intentionally outside the current backend contract.
 Text shaping and emoji text are declared `supported` in `renderer-capability-report.md`.
 Their proof boundary is:
 
-- **L1 proof**: `conformance` job covers grapheme break, caret stabilization,
+- **L1 proof**: `pr-profile` job covers grapheme break, caret stabilization,
   UAX#29 fixtures, emoji cluster detection, deterministic measurement, and
   runtime glyph format checks.
 - **L2 proof**: `macos-real-skia` / `linux-real-skia` / `windows-real-skia` run
@@ -371,7 +371,7 @@ Their proof boundary is:
 
 **Native SkParagraph / Bidi Readiness**
 
-Native Skia paragraph layout and bidi visual-order promotion use the SkParagraph implementation path when `MOUI_SKIA_ENABLE_SKPARAGRAPH=1` and `skia_paragraph_available()` are true. The release claim is backed by macOS, Windows, and Linux real-Skia smoke logs with SkParagraph line metrics, later-line pixels, selection rectangles, line ranges, hit tests, and mixed-direction visual-order observation.
+Native Skia paragraph layout and bidi visual-order promotion use the SkParagraph implementation path when `MOUI_SKIA_ENABLE_SKPARAGRAPH=1` and `skia_paragraph_available()` are true. The release claim is backed by macOS, Windows, and Linux real Skia smoke logs with SkParagraph line metrics, later-line pixels, selection rectangles, line ranges, hit tests, and mixed-direction visual-order observation.
 
 The text maturity preflight marks bidi reordering and paragraph line breaking ready for the core grapheme boundary contract; matching-host smoke logs provide the required SkParagraph markers.
 
@@ -434,8 +434,7 @@ Text conformance is split into two layers:
 Focused checks for text-system work:
 
 ```sh
-sh scripts/conformance-check.sh --text
-sh scripts/conformance-check.sh --text-diagnostic
+sh scripts/check.sh --profile full
 moon test moui/tests/text_conformance/native --target native
 moon test moui/core --target native
 moon test moui/render/wgpu --target native

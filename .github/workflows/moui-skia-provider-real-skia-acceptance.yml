@@ -1,4 +1,4 @@
-name: MoUI Skia Real Skia Acceptance
+name: MoUI Skia Provider Real Skia Acceptance
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ on:
       - "moui/moon.mod"
       - ".moonbit-toolchain"
       - ".github/actions/setup-moonbit/action.yml"
-      - ".github/workflows/moui-skia-real-skia-acceptance.yml"
+      - ".github/workflows/moui-skia-provider-real-skia-acceptance.yml"
   schedule:
     - cron: "41 4 * * 2"
 

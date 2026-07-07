@@ -1,4 +1,4 @@
-name: MoUI Real Skia Smoke
+name: MoUI macOS App Real Skia Manual
 
 on:
   workflow_dispatch:
@@ -15,8 +15,8 @@ on:
         type: boolean
 
 jobs:
-  macos-real-skia-smoke:
-    name: macOS real Skia smoke
+  macos-app-real-skia:
+    name: macOS app real Skia
     runs-on: macos-14
     steps:
       - name: Checkout
@@ -30,7 +30,7 @@ jobs:
           moon version --all
           sh scripts/ci-moon-update.sh
 
-      - name: Run macOS real Skia smoke
+      - name: Run macOS app real Skia validation
         run: |
           mkdir -p artifacts/platform-observation/macos artifacts/example-smoke/macos
           args=(
@@ -50,11 +50,11 @@ jobs:
           fi
           sh scripts/macos-skia-renderer-smoke.sh "${args[@]}"
 
-      - name: Upload macOS real Skia smoke log
+      - name: Upload macOS app real Skia artifacts
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: moui-macos-real-skia-smoke
+          name: moui-macos-app-real-skia-manual
           path: |
             artifacts/platform-observation/macos/
             artifacts/example-smoke/macos/

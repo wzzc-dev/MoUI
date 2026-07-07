@@ -1,4 +1,4 @@
-name: MoUI Linux Platform Evidence Dispatch
+name: MoUI Linux Platform Evidence
 
 on:
   schedule:
@@ -147,7 +147,7 @@ jobs:
         shell: bash
         run: |
           {
-            echo "## Linux Platform Evidence Dispatch"
+            echo "## Linux Platform Evidence"
             echo ""
             echo "- Artifact: moui-linux-platform-evidence"
             echo "- First-frame evidence: $(grep -q '^summary=passed' <<<"${summary:-failed}" && echo 'passed' || echo 'failed')"

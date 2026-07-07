@@ -10,7 +10,7 @@ real platform, browser, or renderer must be observed. Do not commit generated
 Run the daily validation script for routine app or framework work:
 
 ```sh
-sh scripts/dev-check.sh
+sh scripts/check.sh --profile daily
 ```
 
 The script runs local dependency guards, guidance consistency, maintenance
@@ -20,17 +20,16 @@ package tests, Web wasm-gc package tests, native Skia mainline package tests,
 `moui_tester` harness tests, `moui_devtools` snapshot/debug tests, Showcase and
 Markdown Editor app tests, and Web builds.
 
-The daily gate includes these command tokens and should stay synchronized with
-`scripts/dev-check.sh`:
+The daily gate is sourced from `checks/profiles.json` and can be inspected with
+`node scripts/check.mjs --profile daily --list`. Representative command tokens
+that should stay synchronized with the catalog include:
 
 ```sh
-node --check scripts/validate-api-surface.mjs
-node --check scripts/validate-guidance-consistency.mjs
+node scripts/lint-scripts.mjs --profile pr
+node scripts/validate-check-profiles.mjs
 node scripts/validate-guidance-consistency.mjs
 node scripts/validate-api-surface.mjs
-node --check scripts/validate-window-dependency.mjs
 node scripts/validate-window-dependency.mjs
-node --check scripts/validate-maintenance-baseline.mjs
 node scripts/validate-maintenance-baseline.mjs
 node scripts/validate-renderer-provider-manifests.mjs
 node scripts/validate-skia-entrypoints.mjs
@@ -43,16 +42,11 @@ node scripts/generate-grapheme-break-fixtures.mjs --check
 node scripts/test-validate-web-runtime-handoff-manifest.mjs
 node scripts/test-record-web-runtime-presentation.mjs
 node scripts/test-validate-web-runtime-presentation-manifest.mjs
-node --check scripts/smoke-check.mjs
-node --check scripts/test-smoke-check.mjs
+node scripts/test-check-runner.mjs
 node scripts/test-smoke-check.mjs
 node scripts/smoke-check.mjs --check
-node --check scripts/smoke-gate.mjs
-node --check scripts/test-smoke-gate.mjs
 node scripts/test-smoke-gate.mjs
 node scripts/smoke-gate.mjs --tier nightly --dry-run --json
-sh -n scripts/ci-moon-update.sh
-sh -n scripts/ci-web-runtime-presentation.sh
 moon check
 moon test moui/core --target native
 moon test moui/views --target native
@@ -74,10 +68,10 @@ node scripts/validate-web-runtime-handoff.mjs
 ```
 
 Design Systems is addon diagnostic coverage. Use
-`sh scripts/dev-check.sh --theme-diagnostics` when changing `moui_theme` or
+`sh scripts/check.sh --profile theme` when changing `moui_theme` or
 `examples/design_systems`.
 
-Native WGPU is diagnostic. Use `sh scripts/dev-check.sh --wgpu-experimental`
+Native WGPU is diagnostic. Use `sh scripts/check.sh --profile full`
 only when changing that route.
 
 ## Focused
@@ -142,22 +136,43 @@ a deterministic pre-build input/output generation step. Do not use it to install
 MSVC, vcpkg, zlib, Chrome, CI runners, or other machine dependencies, and do not
 use it for smoke execution, networking, or global environment mutation.
 
-## Conformance Slices
+## Check Profiles
 
-`scripts/conformance-check.sh` remains a focused package-test dispatcher:
+`scripts/check.mjs` is the checked profile runner:
 
 ```sh
-sh scripts/conformance-check.sh --input
-sh scripts/conformance-check.sh --layout
-sh scripts/conformance-check.sh --render
-sh scripts/conformance-check.sh --platform-services
-sh scripts/conformance-check.sh --text
-sh scripts/conformance-check.sh --text-diagnostic
+node scripts/check.mjs --profile pr --list
+sh scripts/check.sh --profile daily
+sh scripts/check.sh --profile platform
+sh scripts/check.sh --profile theme
+sh scripts/check.sh --profile full
 ```
 
-`--golden` and `--bench` write local scaffold manifests under ignored
-`artifacts/` paths for screenshot or benchmark handoff. They are not checked-in
-capability declarations.
+CI profile jobs use the shell wrapper to express gate intent:
+`ci.yml` runs `sh scripts/check.sh --profile pr` for the PR profile gate and
+`sh scripts/check.sh --profile platform` for Linux platform contracts. The
+Windows MSVC job keeps its MSVC/build/package steps explicit and only verifies
+the PowerShell wrapper can parse the PR profile with:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\check.ps1 -Profile Pr -DryRun -Json -SkipSubmoduleInit
+```
+
+Use focused `moon test ...` package commands while editing. The `platform`
+profile starts with shared platform service checks for host/Web contracts and
+opportunistic Linux protocol/cache sanity, then `checks/profiles.json` owns the
+host-specific backend/provider package steps. `theme` covers Design Systems
+addon diagnostics, and `full` adds text diagnostics, capture scaffolds, theme
+checks, platform checks, and current-host native example builds.
+
+Capture scaffolds write local manifests under ignored `artifacts/` paths for
+screenshot or benchmark handoff. They are not checked-in capability
+declarations:
+
+```sh
+node scripts/conformance-capture-scaffold.mjs --mode golden
+node scripts/conformance-capture-scaffold.mjs --mode benchmark
+```
 
 ## Feature Proof Matrix
 
@@ -171,7 +186,7 @@ Proof levels:
 
 - **L1** (every PR, `ci.yml`): API/algorithm/protocol correctness via package
   tests.
-- **L2** (every PR and push-to-main, `moui-skia-real-skia-pr-smoke.yml`): real Skia runtime
+- **L2** (every PR and push-to-main, `moui-renderer-real-skia-ci.yml`): real Skia runtime
   behavior on macOS/Linux/Windows matching hosts.
 - **L3** (`feature-proof-summary.yml`): all required L1 and L2 passed.
 
@@ -181,7 +196,6 @@ Use smoke runs when behavior depends on a real renderer, browser, or platform
 host:
 
 ```sh
-sh scripts/dev-check.sh --skia-real-smoke
 scripts/macos-skia-renderer-smoke.sh
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke
@@ -205,12 +219,12 @@ node scripts/smoke-gate.mjs --tier nightly --dry-run --json
 node scripts/smoke-gate.mjs --suite web.runtime-presentation --run
 ```
 
-The catalog check is part of the default `dev-check`; real browser/platform
+The catalog check is part of the daily profile; real browser/platform
 smoke remains opt-in. `scripts/smoke-gate.mjs` is the unified runner for suites
 selected from the catalog; it defaults to dry-run and requires `--allow-manual`
 before running commands marked manual. The scheduled/manual
-`.github/workflows/moui-runtime-smoke-gates.yml` workflow is the CI entrypoint
-for the Web runtime presentation nightly smoke and the manual macOS real-Skia
+`.github/workflows/moui-runtime-gates.yml` workflow is the CI entrypoint
+for the Web runtime presentation nightly smoke and the manual macOS real Skia
 release smoke.
 
 The Web script builds Showcase, serves the repository, records a Chrome/CDP

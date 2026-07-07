@@ -169,12 +169,16 @@ fn file_budgets() -> Array[FileBudget] {
       max_lines: 98,
     },
     {
+      path: "tools/moui/validate_guidance_consistency/forbidden_guidance.mbt",
+      max_lines: 161,
+    },
+    {
       path: "tools/moui/validate_guidance_consistency/guidance_common.mbt",
       max_lines: 116,
     },
     {
       path: "tools/moui/validate_guidance_consistency/main.mbt",
-      max_lines: 106,
+      max_lines: 107,
     },
     {
       path: "tools/moui/validate_guidance_consistency/quality_gate_guidance.mbt",
@@ -199,7 +203,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 331,
+      max_lines: 335,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",

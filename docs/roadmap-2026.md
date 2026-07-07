@@ -175,11 +175,11 @@ Validation:
 moon test moui/render --target native
 moon test moui/render/skia --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
-sh scripts/conformance-check.sh --render
+sh scripts/check.sh --profile full
 moon build examples/showcase/web_wasm --target wasm-gc
 ```
 
-Run `sh scripts/conformance-check.sh --render --wgpu-experimental` or
+Run `sh scripts/check.sh --profile full` or
 `moon test moui/render/wgpu --target native` only when touching the native WGPU
 diagnostic renderer.
 
@@ -252,7 +252,7 @@ Validation:
 ```sh
 moon test moui/backend/host --target native
 moon test moui/backend/web --target wasm-gc
-sh scripts/dev-check.sh --platform-examples-test
+sh scripts/check.sh --profile platform
 ```
 
 ## Workstream 6: Documentation And AI Collaboration
@@ -300,7 +300,7 @@ status, or text architecture changes.
 Daily development check:
 
 ```sh
-sh scripts/dev-check.sh
+sh scripts/check.sh --profile daily
 ```
 
 Public API review:
@@ -312,8 +312,8 @@ moon info
 Platform validation when needed:
 
 ```sh
-sh scripts/dev-check.sh --platform-examples-test
-sh scripts/dev-check.sh --platform-examples-build
+sh scripts/check.sh --profile platform
+sh scripts/check.sh --profile full
 ```
 
 Before a release, the project should have:
@@ -338,12 +338,12 @@ Use this snapshot as the final handoff checklist for the current project shape:
   with platform packages as thin entrypoints; Counter and Todo live inside
   Showcase as built-in interaction patterns.
 - Showcase surfaces renderer capability status for visual review.
-- Daily validation is centralized in `sh scripts/dev-check.sh` and includes
+- Daily validation is centralized in `sh scripts/check.sh --profile daily` and includes
   core, views, render facade, native Skia, backend host/Web, example app tests,
   and Web wasm-gc example builds. Native WGPU diagnostics run only with
   `--wgpu-experimental`.
-- Platform validation remains opt-in through `--platform-examples-test` and
-  `--platform-examples-build` because native executable builds depend on the
+- Platform validation remains opt-in through `--profile platform` and
+  `--profile full` because native executable builds depend on the
   current host setup.
 - Linux remains a minimal backend with tracked platform gaps until the remaining
   native services and text-provider work land.

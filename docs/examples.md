@@ -609,11 +609,11 @@ available at runtime. Normal macOS Skia runs use the renderer's system
 `macos_wgpu` and `macos_wgpu_cosmic` packages remain available as native WGPU
 and text-provider diagnostics.
 
-After configuring real Skia link flags, run the opt-in real-Skia check to verify
+After configuring real Skia link flags, run the opt-in real Skia check to verify
 both the binding smoke and MoUI renderer presenter pixels:
 
 ```sh
-sh scripts/dev-check.sh --skia-real-smoke
+scripts/macos-skia-renderer-smoke.sh
 ```
 
 On macOS, the helper below resolves the pinned JetBrains Skia binary provider,

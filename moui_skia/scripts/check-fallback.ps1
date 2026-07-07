@@ -351,8 +351,8 @@ try {
   & (Join-Path $repoRoot "scripts/verify-example-link-config.ps1")
   & (Join-Path $repoRoot "scripts/verify-native-smoke-capabilities.ps1")
   & (Join-Path $repoRoot "scripts/verify-native-capability-contract.ps1")
-  Assert-WorkflowUsesHashtableSplatting -Path (Resolve-WorkflowPath ".github/workflows/moui-skia-windows-real-skia-smoke.yml")
-  Assert-WorkflowUsesHashtableSplatting -Path (Resolve-WorkflowPath ".github/workflows/moui-skia-real-skia-acceptance.yml")
+  Assert-WorkflowUsesHashtableSplatting -Path (Resolve-WorkflowPath ".github/workflows/moui-skia-provider-windows-real-skia-manual.yml")
+  Assert-WorkflowUsesHashtableSplatting -Path (Resolve-WorkflowPath ".github/workflows/moui-skia-provider-real-skia-acceptance.yml")
   Assert-WindowsMsvcSmokePassesResolvedLinkMode
 
   Push-Location (Join-Path $repoRoot "scripts/native_smoke")

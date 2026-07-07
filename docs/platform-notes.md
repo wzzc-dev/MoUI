@@ -66,7 +66,7 @@ diagnostic instead of opening a platform window that later fails to attach a
 renderer.
 
 Current-platform provider tests are included by
-`sh scripts/dev-check.sh --platform-examples-test`. Run provider packages
+`sh scripts/check.sh --profile platform`. Run provider packages
 directly only when you are already on the matching host and toolchain.
 
 The boundary is:
@@ -304,7 +304,7 @@ Windows and Linux Skia providers; tester-owned first-frame smoke entrypoints
 explicitly select `EmptyTypeface`. This path is intentionally separate from the experimental
 `backend/macos/wgpu`; Skia is a provider package, not a host-core
 `NativeRenderer` variant.
-For local real-Skia configuration, direct `moon run`/`moon build` commands use
+For local real Skia configuration, direct `moon run`/`moon build` commands use
 the `moui_skia` prebuild hook and `MOUI_SKIA_LINK_MODE=dynamic|static|auto` to
 choose the Skia library mode. Helper smoke runs can pass
 `--link-mode dynamic|static|auto` to override the environment for that
@@ -319,7 +319,7 @@ clipboard/menu/file-dialog/open URL/system-theme/async-service readiness,
 native context-menu and host-modal file-dialog readiness, native accessibility
 status, and the runtime observation boundary. Treat that summary as
 provider/package observation
-only; MoUI macOS Skia runtime smoke still comes from the real-Skia renderer
+only; MoUI macOS Skia runtime smoke still comes from the real Skia renderer
 pixel smoke plus tester-owned first-frame/IME markers. Markdown Editor build
 coverage remains optional example coverage and is not a platform runtime
 observation gate.
@@ -331,7 +331,7 @@ revision is baselined, and removes tracked image revisions plus in-flight image
 loads when a host window is disposed. The macOS Skia provider creates
 renderers with post-present async image loading so local/data URI image sources
 can be baselined as loading, completed through `skia_image_load_completion`,
-and repainted on a second frame; the real-Skia smoke records that as a
+and repainted on a second frame; the real Skia smoke records that as a
 matching-host artifact only when the async second-frame marker is present.
 
 Packages that use `backend/macos` directly must link the AppKit service bridge
@@ -736,15 +736,14 @@ Use focused platform validation instead of broad all-repository native checks:
 ```sh
 moon test moui/backend/host --target native
 moon test moui/backend/web --target wasm-gc
-sh scripts/conformance-check.sh --platform-services
-sh scripts/dev-check.sh --platform-examples-test
+sh scripts/check.sh --profile platform
 ```
 
 Before release-style validation on a configured host, include platform example
 builds:
 
 ```sh
-sh scripts/dev-check.sh --platform-examples-build
+sh scripts/check.sh --profile full
 ```
 
 When changing event conversion, also run the affected backend package tests. When

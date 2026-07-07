@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/macos-skia-smoke-common.sh
+. "$script_dir/lib/macos-skia-smoke-common.sh"
+
 usage() {
   cat <<'EOF'
 Usage: scripts/macos-skia-renderer-smoke.sh [options]
@@ -70,7 +74,7 @@ Options:
                          marker.
   --run-text-emoji-smoke After the renderer smoke, build and run
                          moui/tests/skia_text_emoji_smoke/native with the same
-                         real-Skia link flags and verify the text/emoji smoke
+                         real Skia link flags and verify the text/emoji smoke
                          success marker.
   --run-markdown-smoke   Build markdown_editor/macos_skia, then run the
                          moui_tester first-frame smoke and verify the marker.
@@ -106,26 +110,6 @@ Environment defaults:
   MOUI_SKIA_EXTRA_LINK_FLAGS are used when the matching command-line option is
   omitted. Explicit command-line options still override environment defaults.
 EOF
-}
-
-normalize_bool() {
-  local name="$1"
-  local value="$2"
-  case "$value" in
-    1|true|TRUE|yes|YES|on|ON) printf '1\n' ;;
-    ""|0|false|FALSE|no|NO|off|OFF) printf '0\n' ;;
-    *)
-      echo "unsupported boolean value for $name: $value" >&2
-      exit 2
-      ;;
-  esac
-}
-
-reject_legacy_link_mode_env() {
-  if [[ -n "${MOUI_SKIA_SKIA_LINK_MODE+x}" || -n "${MOUI_SKIA_MACOS_LINK_MODE+x}" ]]; then
-    echo "MOUI_SKIA_SKIA_LINK_MODE and MOUI_SKIA_MACOS_LINK_MODE are no longer supported; use MOUI_SKIA_LINK_MODE=dynamic|static|auto." >&2
-    exit 2
-  fi
 }
 
 reject_legacy_link_mode_env
@@ -350,7 +334,7 @@ if [[ $run_text_emoji_smoke -eq 1 && $enable_skparagraph -eq 0 ]]; then
   exit 2
 fi
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+repo_root="$(cd "$script_dir/.." && pwd)"
 skia_repo="$repo_root/moui_skia"
 native_pkg="$skia_repo/native/moon.pkg"
 native_pkg_backup="$native_pkg.moui-smoke.bak"
@@ -375,41 +359,6 @@ text_emoji_log_is_temporary=0
 showcase_log_is_temporary=0
 markdown_log_is_temporary=0
 ime_log_is_temporary=0
-
-resolve_path() {
-  local path="$1"
-  case "$path" in
-    /*) printf '%s\n' "$path" ;;
-    *) printf '%s\n' "$repo_root/$path" ;;
-  esac
-}
-
-resolve_existing_dir() {
-  local label="$1"
-  local path="$2"
-  if [[ ! -d "$path" ]]; then
-    echo "$label does not exist or is not a directory: $path" >&2
-    exit 1
-  fi
-  cd "$path" && pwd
-}
-
-relative_to_repo() {
-  local path="$1"
-  case "$path" in
-    "$repo_root"/*) printf '%s\n' "${path#"$repo_root"/}" ;;
-    *)
-      echo "path is outside repository root: $path" >&2
-      exit 2
-      ;;
-  esac
-}
-
-get_assignment_value() {
-  local input="$1"
-  local key="$2"
-  printf '%s\n' "$input" | sed -n "s/^${key}=//p" | tail -n 1
-}
 
 check_package_backups() {
   for backup in "$native_pkg_backup" "$renderer_pkg_backup" "$text_emoji_pkg_backup" "$showcase_pkg_backup" "$markdown_pkg_backup" "$workbench_pkg_backup"; do
@@ -808,7 +757,7 @@ if [[ -n "$extra_cc_flags" ]]; then
   cc_flags="$cc_flags $extra_cc_flags"
 fi
 
-skia_link_flags="$skia_library_link_flag -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices"
+skia_link_flags="$skia_library_link_flag -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices -framework UniformTypeIdentifiers"
 if [[ -n "$ganesh_link_flags" ]]; then
   skia_link_flags="$ganesh_link_flags $skia_link_flags"
 fi
@@ -827,7 +776,7 @@ fi
 if [[ -n "$extra_link_flags" ]]; then
   skia_link_flags="$skia_link_flags $extra_link_flags"
 fi
-showcase_link_flags="-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework WebKit -lz $skia_link_flags"
+showcase_link_flags="-framework AppKit -framework QuartzCore -framework WebKit -lz $skia_link_flags"
 
 echo "MoUI macOS Skia renderer smoke environment:"
 echo "  moon=$(moon version 2>/dev/null | head -n 1 || true)"
@@ -1191,33 +1140,28 @@ set -e
 if [[ $renderer_status -ne 0 ]]; then
   exit "$renderer_status"
 fi
-if ! grep -Fq "MoUI Skia renderer smoke passed" "$smoke_log"; then
-  echo "MoUI Skia renderer smoke did not print the expected success marker" >&2
-  exit 1
-fi
+require_log_marker "$smoke_log" \
+  "MoUI Skia renderer smoke passed" \
+  "MoUI Skia renderer smoke did not print the expected success marker"
 echo "Verified MoUI Skia renderer smoke success marker."
-if ! grep -Fq "MoUI Skia async image second-frame smoke passed" "$smoke_log"; then
-  echo "MoUI Skia renderer smoke did not report async image second-frame repaint" >&2
-  exit 1
-fi
+require_log_marker "$smoke_log" \
+  "MoUI Skia async image second-frame smoke passed" \
+  "MoUI Skia renderer smoke did not report async image second-frame repaint"
 echo "Verified MoUI Skia async image second-frame marker."
-if ! grep -Fq "MoUI Skia async image deferred-completion smoke passed" "$smoke_log"; then
-  echo "MoUI Skia renderer smoke did not report async image deferred-completion marker" >&2
-  exit 1
-fi
+require_log_marker "$smoke_log" \
+  "MoUI Skia async image deferred-completion smoke passed" \
+  "MoUI Skia renderer smoke did not report async image deferred-completion marker"
 echo "Verified MoUI Skia async image deferred-completion marker."
 if [[ $run_gpu_smoke -eq 1 ]]; then
-  if ! grep -Fq "MoUI Skia GPU Metal renderer smoke passed route=metal-gpu surface_gpu=true present_count=1 pixel-markers" "$smoke_log"; then
-    echo "MoUI Skia renderer smoke did not report the Metal GPU route" >&2
-    exit 1
-  fi
+  require_log_marker "$smoke_log" \
+    "MoUI Skia GPU Metal renderer smoke passed route=metal-gpu surface_gpu=true present_count=1 pixel-markers" \
+    "MoUI Skia renderer smoke did not report the Metal GPU route"
   echo "Verified MoUI Skia GPU Metal route marker."
 fi
 if [[ $enable_skshaper -eq 1 ]]; then
-  if ! grep -Fq "MoUI Skia renderer smoke shaper available" "$smoke_log"; then
-    echo "MoUI Skia renderer smoke did not report the enabled SkShaper path" >&2
-    exit 1
-  fi
+  require_log_marker "$smoke_log" \
+    "MoUI Skia renderer smoke shaper available" \
+    "MoUI Skia renderer smoke did not report the enabled SkShaper path"
   echo "Verified MoUI Skia renderer SkShaper marker."
 fi
 
@@ -1249,10 +1193,9 @@ if [[ $run_text_emoji_smoke -eq 1 ]]; then
   if [[ $text_emoji_status -ne 0 ]]; then
     exit "$text_emoji_status"
   fi
-  if ! grep -Fq "MoUI Skia text/emoji smoke passed" "$text_emoji_log"; then
-    echo "MoUI Skia text/emoji smoke did not print the expected success marker" >&2
-    exit 1
-  fi
+  require_log_marker "$text_emoji_log" \
+    "MoUI Skia text/emoji smoke passed" \
+    "MoUI Skia text/emoji smoke did not print the expected success marker"
   echo "Verified MoUI Skia text/emoji smoke success marker."
 
   text_emoji_required_markers=(
@@ -1269,10 +1212,9 @@ if [[ $run_text_emoji_smoke -eq 1 ]]; then
     "MoUI renderer smoke imeCompositionVisual passed composition-range composition-cursor preedit-pixels"
   )
   for marker in "${text_emoji_required_markers[@]}"; do
-    if ! grep -Fq "$marker" "$text_emoji_log"; then
-      echo "MoUI Skia text/emoji smoke did not print renderer capability marker: $marker" >&2
-      exit 1
-    fi
+    require_log_marker "$text_emoji_log" \
+      "$marker" \
+      "MoUI Skia text/emoji smoke did not print renderer capability marker: $marker"
   done
 
   color_emoji_metadata_line="$(grep -F "MoUI renderer smoke colorEmojiPixels metadata " "$text_emoji_log" | tail -n 1 || true)"
@@ -1376,15 +1318,13 @@ if [[ $skip_showcase_build -eq 0 ]]; then
     if [[ $showcase_status -ne 0 ]]; then
       exit "$showcase_status"
     fi
-    if ! grep -Fq "macOS renderer presented first frame; exiting by request; title=MoUI Text Input Smoke" "$showcase_log"; then
-      echo "moui_tester first-frame smoke did not print the expected first-frame marker with title=MoUI Text Input Smoke" >&2
-      exit 1
-    fi
+    require_log_marker "$showcase_log" \
+      "macOS renderer presented first frame; exiting by request; title=MoUI Text Input Smoke" \
+      "moui_tester first-frame smoke did not print the expected first-frame marker with title=MoUI Text Input Smoke"
     if [[ $run_gpu_smoke -eq 1 ]]; then
-      if ! grep -Fq "macOS Skia renderer route diagnostics: surface_route=metal-gpu; surface_gpu=true" "$showcase_log"; then
-        echo "moui_tester first-frame smoke did not report the Metal GPU route" >&2
-        exit 1
-      fi
+      require_log_marker "$showcase_log" \
+        "macOS Skia renderer route diagnostics: surface_route=metal-gpu; surface_gpu=true" \
+        "moui_tester first-frame smoke did not report the Metal GPU route"
       echo "Verified moui_tester first-frame GPU route marker."
     fi
     echo "Verified moui_tester first-frame smoke marker."
@@ -1445,15 +1385,13 @@ if [[ $run_markdown_smoke -eq 1 ]]; then
   if [[ $markdown_status -ne 0 ]]; then
     exit "$markdown_status"
   fi
-  if ! grep -Fq "macOS renderer presented first frame; exiting by request; title=MoUI Text Input Smoke" "$markdown_log"; then
-    echo "moui_tester first-frame smoke did not print the expected first-frame marker with title=MoUI Text Input Smoke" >&2
-    exit 1
-  fi
+  require_log_marker "$markdown_log" \
+    "macOS renderer presented first frame; exiting by request; title=MoUI Text Input Smoke" \
+    "moui_tester first-frame smoke did not print the expected first-frame marker with title=MoUI Text Input Smoke"
   if [[ $run_gpu_smoke -eq 1 ]]; then
-    if ! grep -Fq "macOS Skia renderer route diagnostics: surface_route=metal-gpu; surface_gpu=true" "$markdown_log"; then
-      echo "moui_tester first-frame smoke did not report the Metal GPU route" >&2
-      exit 1
-    fi
+    require_log_marker "$markdown_log" \
+      "macOS Skia renderer route diagnostics: surface_route=metal-gpu; surface_gpu=true" \
+      "moui_tester first-frame smoke did not report the Metal GPU route"
     echo "Verified moui_tester first-frame GPU route marker."
   fi
   echo "Verified moui_tester first-frame smoke marker."
@@ -1512,20 +1450,17 @@ if [[ $run_ime_smoke -eq 1 ]]; then
     "$ime_prefix MoUI native IME scroll anchor passed" \
     "$ime_prefix MoUI native IME scale DPR anchor passed" \
     "$ime_prefix MoUI native IME resize anchor passed"; do
-    if ! grep -Fq "$marker" "$ime_log"; then
-      echo "moui_tester IME smoke did not print expected marker: $marker" >&2
-      exit 1
-    fi
+    require_log_marker "$ime_log" \
+      "$marker" \
+      "moui_tester IME smoke did not print expected marker: $marker"
   done
-  if grep -Fq "MoUI native IME runtime failed" "$ime_log"; then
-    echo "moui_tester IME smoke printed a failure marker" >&2
-    exit 1
-  fi
+  reject_log_marker "$ime_log" \
+    "MoUI native IME runtime failed" \
+    "moui_tester IME smoke printed a failure marker"
   if [[ $run_gpu_smoke -eq 1 ]]; then
-    if ! grep -Fq "macOS Skia renderer route diagnostics: surface_route=metal-gpu; surface_gpu=true" "$ime_log"; then
-      echo "moui_tester IME smoke did not report the Metal GPU route" >&2
-      exit 1
-    fi
+    require_log_marker "$ime_log" \
+      "macOS Skia renderer route diagnostics: surface_route=metal-gpu; surface_gpu=true" \
+      "moui_tester IME smoke did not report the Metal GPU route"
     echo "Verified moui_tester IME GPU route marker."
   fi
   echo "Verified moui_tester native IME smoke markers."

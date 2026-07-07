@@ -1,4 +1,4 @@
-name: MoUI Skia Real-Skia Smoke
+name: MoUI Renderer Real Skia CI
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   macos-real-skia:
-    name: macOS real-Skia smoke
+    name: macOS renderer real Skia
     runs-on: macos-latest
     timeout-minutes: 30
     defaults:
@@ -36,7 +36,7 @@ jobs:
             release-skia-macos-static-
             release-skia-macos-
 
-      - name: Run macOS real-Skia smoke (release provider)
+      - name: Run macOS renderer real Skia
         shell: bash
         run: |
           mkdir -p logs
@@ -58,11 +58,11 @@ jobs:
         shell: bash
         run: bash scripts/verify-acceptance-log.sh logs/macos-real-skia-acceptance.log
 
-      - name: Upload smoke log
+      - name: Upload macOS renderer real Skia logs
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: macos-real-skia-pr-smoke
+          name: macos-renderer-real-skia-ci
           path: |
             moui_skia/logs/macos-real-skia-smoke.log
             moui_skia/logs/macos-native-smoke-output.log
@@ -86,7 +86,7 @@ jobs:
           git diff --exit-code -- native/moon.pkg scripts/native_smoke/moon.pkg
 
   linux-real-skia:
-    name: Linux real-Skia smoke
+    name: Linux renderer real Skia
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     defaults:
@@ -118,7 +118,7 @@ jobs:
             release-skia-linux-static-
             release-skia-linux-
 
-      - name: Run Linux real-Skia smoke (release provider)
+      - name: Run Linux renderer real Skia
         shell: bash
         run: |
           mkdir -p logs
@@ -139,11 +139,11 @@ jobs:
         shell: bash
         run: bash scripts/verify-acceptance-log.sh logs/linux-real-skia-acceptance.log
 
-      - name: Upload smoke log
+      - name: Upload Linux renderer real Skia logs
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: linux-real-skia-pr-smoke
+          name: linux-renderer-real-skia-ci
           path: |
             moui_skia/logs/linux-real-skia-smoke.log
             moui_skia/logs/linux-native-smoke-output.log
@@ -167,7 +167,7 @@ jobs:
           git diff --exit-code -- native/moon.pkg scripts/native_smoke/moon.pkg
 
   windows-real-skia:
-    name: Windows real-Skia smoke
+    name: Windows renderer real Skia
     runs-on: windows-2022
     timeout-minutes: 30
     defaults:
@@ -185,7 +185,7 @@ jobs:
         shell: bash
         run: ../scripts/ci-moon-update.sh
 
-      - name: Run Windows MSVC real-Skia smoke (release provider)
+      - name: Run Windows renderer real Skia
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path logs | Out-Null
@@ -224,11 +224,11 @@ jobs:
         shell: pwsh
         run: .\scripts\verify-acceptance-log.ps1 -LogPath logs\windows-real-skia-acceptance.log
 
-      - name: Upload smoke log
+      - name: Upload Windows renderer real Skia logs
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: windows-real-skia-pr-smoke
+          name: windows-renderer-real-skia-ci
           path: |
             moui_skia/logs/windows-real-skia-smoke.log
             moui_skia/logs/windows-native-smoke-output.log

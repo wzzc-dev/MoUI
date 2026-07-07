@@ -11,33 +11,33 @@ implementation status.
 | Level | Definition | CI trigger | Host requirement |
 |-------|-----------|------------|-----------------|
 | **L1** | API correctness, algorithm correctness, protocol correctness | Every PR (`ci.yml`) | None (fallback-safe build) |
-| **L2** | Runtime behavior on real renderer/platform | Every PR and push-to-main (`moui-skia-real-skia-pr-smoke.yml`) | Matching-host real Skia |
+| **L2** | Runtime behavior on real renderer/platform | Every PR and push-to-main (`moui-renderer-real-skia-ci.yml`) | Matching-host real Skia |
 | **L3** | Cross-platform consistency | `feature-proof-summary.yml` after `ci.yml` completes | All L2 platforms passed |
 
 Framework rendering code (`moui/render/skia/`, `moui/views/`) depends on real
 Skia linking provided by `moui_skia`. Any framework change can affect real
-rendering behavior, so L2 real-Skia smoke runs on every PR.
+rendering behavior, so L2 real Skia smoke runs on every PR.
 
 ## L1 Features (ci.yml, every PR)
 
 | Feature | Proof job | Platform | What passing proves |
 |---------|-----------|----------|-------------------|
-| Core API (View/Element/Layout/Animation) | `conformance` | macOS-14 | dev-check.sh: core package tests pass |
-| Runtime lifecycle | `conformance` | macOS-14 | dev-check.sh: runtime effects/subscriptions/diagnostics |
-| Views controls (Text/Button/TextField/Container/Row/Column/Flex/Stack/Scroll/List/Grid/Navigation) | `conformance` | macOS-14 | dev-check.sh: views package tests pass |
-| Host services protocol (clipboard/menus/dialogs URL) | `conformance` | macOS-14 | dev-check.sh: backend/host package tests pass |
-| Web wasm-gc build | `conformance` | macOS-14 | dev-check.sh: Web wasm-gc build succeeds |
-| Renderer capability report consistency | `conformance` | macOS-14 | dev-check.sh: capabilities_test.mbt passes |
-| Text conformance (grapheme/cluster/caret) | `conformance` | macOS-14 | conformance-check.sh --text passes |
+| Core API (View/Element/Layout/Animation) | `pr-profile` | macOS-14 | check.sh --profile pr: core package tests pass |
+| Runtime lifecycle | `pr-profile` | macOS-14 | check.sh --profile pr: runtime effects/subscriptions/diagnostics |
+| Views controls (Text/Button/TextField/Container/Row/Column/Flex/Stack/Scroll/List/Grid/Navigation) | `pr-profile` | macOS-14 | check.sh --profile pr: views package tests pass |
+| Host services protocol (clipboard/menus/dialogs URL) | `pr-profile` | macOS-14 | check.sh --profile pr: backend/host package tests pass |
+| Web wasm-gc build | `pr-profile` | macOS-14 | check.sh --profile pr: Web wasm-gc build succeeds |
+| Renderer capability report consistency | `pr-profile` | macOS-14 | check.sh --profile pr: capabilities_test.mbt passes |
+| Text conformance (grapheme/cluster/caret) | `pr-profile` | macOS-14 | `sh scripts/check.sh --profile full` includes text diagnostics |
 | API surface stability | `api-surface` | macOS-14 | moon info drift check passes |
-| Linux backend contracts | `linux-platform` | ubuntu-24.04 | dev-check.sh --platform-examples-test passes |
+| Linux backend contracts | `linux-platform` | ubuntu-24.04 | `sh scripts/check.sh --profile platform` passes |
 | Windows backend contracts | `windows-native` | windows-2022 | Windows backend MSVC tests pass |
 | macOS packaging | `macos-packaging` | macOS-14 | Showcase app bundle packages successfully |
 | Benchmark scaffold | `benchmark-scaffold` | macOS-14 | Benchmark targets build successfully |
 
-## L2 Features (moui-skia-real-skia-pr-smoke.yml, every PR and push-to-main)
+## L2 Features (moui-renderer-real-skia-ci.yml, every PR and push-to-main)
 
-All L2 features use release-provider real-Skia with static linking. Each
+All L2 features use release-provider real Skia with static linking. Each
 platform job runs `verify-native-smoke-log` and `verify-acceptance-log` to
 assert pixel markers and acceptance markers.
 
@@ -64,32 +64,32 @@ assert pixel markers and acceptance markers.
 ## L3 Cross-Platform Consistency
 
 `feature-proof-summary.yml` runs after `ci.yml` or
-`moui-skia-real-skia-pr-smoke.yml` completes (via
+`moui-renderer-real-skia-ci.yml` completes (via
 `workflow_run`). It collects all job statuses from `ci.yml` and
-`moui-skia-real-skia-pr-smoke.yml`, generates a proof report, and verifies
+`moui-renderer-real-skia-ci.yml`, generates a proof report, and verifies
 coverage:
 
 - L1 jobs must pass (ci.yml).
-- L2 jobs must pass on all three platforms (moui-skia-real-skia-pr-smoke.yml).
+- L2 jobs must pass on all three platforms (moui-renderer-real-skia-ci.yml).
 
 ## Artifact Paths
 
 | CI job | Artifact name | Content |
 |--------|--------------|---------|
-| `macos-real-skia` | `macos-real-skia-pr-smoke` | `moui_skia/logs/macos-*.log` (native/renderer/text-emoji/acceptance) |
-| `linux-real-skia` | `linux-real-skia-pr-smoke` | `moui_skia/logs/linux-*.log` (native/renderer/text-emoji/acceptance) |
-| `windows-real-skia` | `windows-real-skia-pr-smoke` | `moui_skia/logs/windows-*.log` (native/renderer/text-emoji/acceptance) |
+| `macos-real-skia` | `macos-renderer-real-skia-ci` | `moui_skia/logs/macos-*.log` (native/renderer/text-emoji/acceptance) |
+| `linux-real-skia` | `linux-renderer-real-skia-ci` | `moui_skia/logs/linux-*.log` (native/renderer/text-emoji/acceptance) |
+| `windows-real-skia` | `windows-renderer-real-skia-ci` | `moui_skia/logs/windows-*.log` (native/renderer/text-emoji/acceptance) |
 | `summarize` | `feature-proof-summary` | `artifacts/feature-proof/proof-report.json` + `.md` |
 
 ## Adding CI Proof For A New Feature
 
 1. If the feature is L1 (no real renderer needed): add a package test under
-   the appropriate `moui/` package. The `conformance` job in `ci.yml` will
-   pick it up via `dev-check.sh`.
+   the appropriate `moui/` package. The `pr-profile` job in `ci.yml` will
+   pick it up via `check.sh --profile daily`.
 2. If the feature is L2 (needs real Skia): add a smoke assertion to
    `moui_skia/scripts/native_smoke/` and update
    `moui_skia/native/capabilities.json` if needed. The
-   `moui-skia-real-skia-pr-smoke.yml` jobs will pick it up automatically.
+   `moui-renderer-real-skia-ci.yml` jobs will pick it up automatically.
 3. Add the feature to the tables above.
 4. Update `scripts/generate-feature-proof-report.mjs` feature list if a new
    L2 feature job name was introduced.
@@ -99,10 +99,12 @@ coverage:
 | Workflow | Trigger condition | Paths filter |
 |----------|------------------|-------------|
 | `ci.yml` | push/PR to main | none (always) |
-| `moui-skia-fallback.yml` | push/PR to main | `moui_skia/**` (moui_skia package self-test) |
-| `moui-skia-real-skia-pr-smoke.yml` | push/PR to main | none (validates framework rendering on push and every PR) |
-| `moui-runtime-smoke-gates.yml` | schedule nightly + manual | none |
-| `moui-skia-macos-real-skia-smoke.yml` | manual | none |
-| `moui-skia-linux-real-skia-smoke.yml` | weekly + manual | none |
-| `moui-skia-windows-real-skia-smoke.yml` | manual | none |
-| `feature-proof-summary.yml` | `workflow_run` on `ci.yml` or `moui-skia-real-skia-pr-smoke.yml` completed | none |
+| `moui-skia-provider-fallback-ci.yml` | push/PR to main | `moui_skia/**` (moui_skia package self-test) |
+| `moui-renderer-real-skia-ci.yml` | push/PR to main | none (validates framework rendering on push and every PR) |
+| `moui-runtime-gates.yml` | schedule nightly + manual | none |
+| `moui-macos-app-real-skia-manual.yml` | manual | none (MoUI macOS app/runtime validation) |
+| `moui-skia-provider-macos-real-skia-manual.yml` | manual | none |
+| `moui-skia-provider-linux-real-skia-nightly.yml` | weekly + manual | none |
+| `moui-skia-provider-windows-real-skia-manual.yml` | manual | none |
+| `moui-skia-provider-real-skia-acceptance.yml` | push-to-main + weekly + manual | `moui_skia/**` on push; none on schedule/manual |
+| `feature-proof-summary.yml` | `workflow_run` on `ci.yml` or `moui-renderer-real-skia-ci.yml` completed | none |

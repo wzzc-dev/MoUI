@@ -133,14 +133,13 @@ test "absent failure names stale token" {
 ///|
 test "daily quality gate tokens include moonbit-backed api surface guard" {
   let tokens = daily_quality_gate_tokens()
-  assert_true(tokens.contains("node scripts/validate-api-surface.mjs"))
-  assert_true(tokens.contains("moon test moui/core --target native"))
+  assert_true(tokens.contains("scripts/validate-api-surface.mjs"))
+  assert_true(tokens.contains("scripts/test-check-runner.mjs"))
+  assert_true(tokens.contains("moui/core"))
   assert_false(
     tokens.contains("moon test examples/design_systems/app --target native"),
   )
-  assert_true(
-    tokens.contains("moon build examples/showcase/web_wasm --target wasm-gc"),
-  )
+  assert_true(tokens.contains("examples/showcase/web_wasm"))
   assert_false(
     tokens.contains(
       "moon build examples/design_systems/web_wasm --target wasm-gc",
@@ -153,7 +152,7 @@ test "release readiness quality tokens summarize current daily gates" {
   let tokens = release_readiness_quality_tokens()
   assert_true(tokens.contains("node scripts/validate-api-surface.mjs"))
   assert_true(tokens.contains("dedicated checked-artifact validators"))
-  assert_true(tokens.contains("--theme-diagnostics"))
+  assert_true(tokens.contains("scripts/check.sh --profile theme"))
   assert_true(tokens.contains("Design Systems is addon diagnostic coverage"))
 }
 
@@ -162,7 +161,7 @@ test "agent quality gate tokens cover AGENTS sync points" {
   let tokens = agent_quality_gate_tokens()
   assert_true(tokens.contains("node scripts/validate-api-surface.mjs"))
   assert_true(tokens.contains("node scripts/validate-guidance-consistency.mjs"))
-  assert_true(tokens.contains("--theme-diagnostics"))
+  assert_true(tokens.contains("scripts/check.sh --profile theme"))
   assert_true(tokens.contains("Design Systems is addon diagnostic coverage"))
 }
 
@@ -171,13 +170,12 @@ test "theme diagnostic rules cover opt-in addon checks" {
   let rules = theme_diagnostic_rules()
   assert_true(
     rules.any(rule => {
-      rule.path == "scripts/dev-check.sh" && rule.token == "--theme-diagnostics"
+      rule.path == "checks/profiles.json" && rule.token == "\"theme\""
     }),
   )
   assert_true(
     rules.any(rule => {
-      rule.path == "scripts/dev-check.sh" &&
-      rule.token == "moon test moui_theme/common --target native"
+      rule.path == "checks/profiles.json" && rule.token == "moui_theme/common"
     }),
   )
   assert_true(
@@ -186,4 +184,56 @@ test "theme diagnostic rules cover opt-in addon checks" {
       rule.token == "Design Systems is addon diagnostic coverage"
     }),
   )
+}
+
+///|
+test "forbidden guidance tokens include deleted entrypoints and old flags" {
+  let tokens = forbidden_guidance_tokens()
+  assert_true(tokens.contains("dev-check.sh"))
+  assert_true(tokens.contains("dev_check.ps1"))
+  assert_true(tokens.contains("conformance-check.sh"))
+  assert_true(tokens.contains("--theme-diagnostics"))
+  assert_true(tokens.contains("--skia-real-smoke"))
+  let workflow_tokens = legacy_workflow_guidance_tokens()
+  assert_true(workflow_tokens.contains("moui-real-skia-smoke.yml"))
+  assert_true(workflow_tokens.contains("moui-skia-real-skia-pr-smoke.yml"))
+  assert_true(workflow_tokens.contains("moui-renderer-real-skia-ci-smoke.yml"))
+  assert_true(workflow_tokens.contains("moui-runtime-smoke-gates.yml"))
+  assert_true(workflow_tokens.contains("moui-skia-fallback.yml"))
+  assert_true(workflow_tokens.contains("Platform Evidence Dispatch"))
+}
+
+///|
+test "forbidden guidance token failure points at fixture-only allowance" {
+  let failures = forbidden_guidance_token_failures(
+    "docs/testing.md", "Run sh scripts/dev-check.sh or pass --theme-diagnostics.",
+  )
+  assert_true(failures.length() == 2)
+  assert_true(
+    failures.contains(
+      "docs/testing.md: deleted or legacy check token 'dev-check.sh' must not be recommended; validator fixtures are the only allowed location for intentional negative tests",
+    ),
+  )
+  assert_true(
+    failures.contains(
+      "docs/testing.md: deleted or legacy check token '--theme-diagnostics' must not be recommended; validator fixtures are the only allowed location for intentional negative tests",
+    ),
+  )
+}
+
+///|
+test "legacy workflow guidance rejects current docs but permits session history" {
+  let current_failures = forbidden_guidance_token_failures(
+    "docs/testing.md", "Use moui-renderer-real-skia-ci-smoke.yml.",
+  )
+  assert_true(current_failures.length() == 1)
+  assert_true(
+    current_failures.contains(
+      "docs/testing.md: legacy workflow name 'moui-renderer-real-skia-ci-smoke.yml' must not be recommended; docs/ai-sessions history and validator fixtures are the only allowed locations",
+    ),
+  )
+  let historical_failures = forbidden_guidance_token_failures(
+    "docs/ai-sessions/2026-06-29-ci-feature-proof-system.md", "Historically used moui-skia-real-skia-pr-smoke.yml.",
+  )
+  assert_true(historical_failures.is_empty())
 }

@@ -56,8 +56,16 @@ done
 
 skia_repo="$REPO_ROOT/moui_skia"
 case "$log_dir" in
-  /*|?:/*) resolved_log_dir="$log_dir" ;;
-  *) resolved_log_dir="$REPO_ROOT/$log_dir" ;;
+  /*) resolved_log_dir="$log_dir" ;;
+  *) if [[ "$log_dir" =~ ^[A-Za-z]:[\\/].* ]]; then
+       if command -v cygpath >/dev/null 2>&1; then
+         resolved_log_dir="$(cygpath -u "$log_dir")"
+       else
+         resolved_log_dir="$log_dir"
+       fi
+     else
+       resolved_log_dir="$REPO_ROOT/$log_dir"
+     fi ;;
 esac
 
 showcase_log="$resolved_log_dir/showcase-windows-skia-first-frame.log"
@@ -113,7 +121,7 @@ echo "  skia_root=$skia_root
 if [[ -z "$skia_root" || -z "$skia_include" || -z "$skia_lib_dir" ]]; then
   echo "Skia provider did not resolve complete paths" >&2
   echo "windows-platform-evidence.sh expects to be run inside moui_skia CI context" >&2
-  echo "Use the moui-skia-windows-real-skia-smoke workflow for full provider setup." >&2
+  echo "Use the moui-skia-provider-windows-real-skia-manual workflow for full provider setup." >&2
   exit 1
 fi
 
@@ -122,14 +130,15 @@ fi
 #
 echo "=== Step 2: Configure moui_skia/native/moon.pkg ===" | tee -a "$preflight_log"
 
-# Use pwsh to invoke the existing Windows native pkg configurator.
+# Use the MSVC configurator so Skia headers are compiled with the required
+# C++ standard and SkParagraph native/unavailable files are target-gated.
 powershell -NoProfile -ExecutionPolicy Bypass -File \
-  "$skia_repo/scripts/configure-windows-native-pkg.ps1" \
+  "$skia_repo/scripts/configure-windows-msvc-native-pkg.ps1" \
+  -SkiaRoot "$skia_root" \
   -SkiaInclude "$skia_include" \
   -SkiaLibDir "$skia_lib_dir" \
-  -SkiaLib "$skia_lib" \
-  -LinkMode "$skia_link_mode" \
-  -Write 2>&1 | tee -a "$preflight_log" || true
+  -SkiaLinkMode "$skia_link_mode" \
+  -Write 2>&1 | tee -a "$preflight_log"
 
 #
 # Step 3: Compute stub-cc-flags / cc-link-flags for example packages
@@ -137,11 +146,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File \
 echo "=== Step 3: Resolve example link flags ===" | tee -a "$preflight_log"
 
 generated_output="$(powershell -NoProfile -ExecutionPolicy Bypass -File \
-  "$skia_repo/scripts/configure-windows-native-pkg.ps1" \
+  "$skia_repo/scripts/configure-windows-msvc-native-pkg.ps1" \
+  -SkiaRoot "$skia_root" \
   -SkiaInclude "$skia_include" \
   -SkiaLibDir "$skia_lib_dir" \
-  -SkiaLib "$skia_lib" \
-  -LinkMode "$skia_link_mode" 2>/dev/null || true)"
+  -SkiaLinkMode "$skia_link_mode" 2>/dev/null)"
 
 windows_link_flags="$(printf '%s\n' "$generated_output" | sed -n 's/.*"cc-link-flags": "\(.*\)",/\1/p' | tr -d '\r')"
 windows_stub_cc_flags="$(printf '%s\n' "$generated_output" | sed -n 's/.*"stub-cc-flags": "\(.*\)",/\1/p' | tr -d '\r')"
@@ -156,15 +165,28 @@ echo "=== Step 4: Configure example windows_skia moon.pkg ===" | tee -a "$prefli
 
 showcase_pkg="$REPO_ROOT/examples/showcase/windows_skia/moon.pkg"
 showcase_backup="$showcase_pkg.moui-evidence.bak"
+markdown_pkg="$REPO_ROOT/examples/markdown_editor/windows_skia/moon.pkg"
+markdown_backup="$markdown_pkg.moui-evidence.bak"
 cp "$showcase_pkg" "$showcase_backup"
+if [[ -f "$markdown_pkg" ]]; then
+  cp "$markdown_pkg" "$markdown_backup"
+fi
 
-cat > "$showcase_pkg" <<PKGEOF
+write_example_pkg() {
+  local pkg_path="$1"
+  local app_import="$2"
+  local app_alias="$3"
+  local backend_alias="$4"
+  local host_import="$5"
+
+  cat > "$pkg_path" <<PKGEOF
 import {
   "moonbitlang/core/env",
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/backend/windows" @windows_backend,
+${host_import}
+  "wzzc-dev/moui/backend/windows" @${backend_alias},
   "wzzc-dev/moui/backend/windows/skia" @windows_skia_backend,
-  "examples/showcase/app" @showcase_app,
+  "${app_import}" @${app_alias},
 }
 
 supported_targets = "native"
@@ -180,13 +202,36 @@ options(
   targets: { "main.mbt": [ "native" ] },
 )
 PKGEOF
+}
+
+write_example_pkg \
+  "$showcase_pkg" \
+  "examples/showcase/app" \
+  "showcase_app" \
+  "windows_backend" \
+  ""
 echo "  Wrote $showcase_pkg" | tee -a "$preflight_log"
+
+if [[ -f "$markdown_pkg" ]]; then
+  write_example_pkg \
+    "$markdown_pkg" \
+    "examples/markdown_editor/app" \
+    "markdown_app" \
+    "windows_host" \
+    '  "wzzc-dev/moui/backend/host",'
+  echo "  Wrote $markdown_pkg" | tee -a "$preflight_log"
+fi
 
 restore_example_pkgs() {
   if [[ -f "$showcase_backup" ]]; then
     cp "$showcase_backup" "$showcase_pkg"
     rm -f "$showcase_backup"
     echo "Restored $showcase_pkg"
+  fi
+  if [[ -f "$markdown_backup" ]]; then
+    cp "$markdown_backup" "$markdown_pkg"
+    rm -f "$markdown_backup"
+    echo "Restored $markdown_pkg"
   fi
   cd "$REPO_ROOT"
   git checkout -- moui_skia/native/moon.pkg 2>/dev/null || true
@@ -202,7 +247,7 @@ cd "$REPO_ROOT"
 MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
   MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
   moon build examples/showcase/windows_skia --target native 2>&1 \
-  | tee -a "$preflight_log" || true
+  | tee -a "$preflight_log"
 echo "  Built examples/showcase/windows_skia" | tee -a "$preflight_log"
 
 #

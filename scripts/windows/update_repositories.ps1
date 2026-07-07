@@ -112,7 +112,11 @@ if (-not $SkipSubmodules) {
 }
 
 if (-not $SkipLocalRepos) {
-  Write-Host "==> No local dependency repositories are updated; run moon update for registry packages such as wzzc-dev/window@0.5.1-0.1.4."
+  $windowPackage = (& node "scripts/window-dependency-info.mjs" "--print-package").Trim()
+  if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($windowPackage)) {
+    $windowPackage = "wzzc-dev/window"
+  }
+  Write-Host "==> No local dependency repositories are updated; run moon update for registry packages such as $windowPackage."
 }
 
 Write-Host "==> Repository update complete."

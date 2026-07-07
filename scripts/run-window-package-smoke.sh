@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-WINDOW_VERSION="${MOUI_WINDOW_VERSION:-0.5.1-0.1.4}"
+WINDOW_VERSION="${MOUI_WINDOW_VERSION:-$(node "$ROOT_DIR/scripts/window-dependency-info.mjs" --print-version)}"
 WINDOW_PACKAGE="wzzc-dev/window@${WINDOW_VERSION}"
 WINDOW_ZIP="${MOUI_WINDOW_PACKAGE_ZIP:-$HOME/.moon/registry/cache/wzzc-dev/window/${WINDOW_VERSION}.zip}"
 

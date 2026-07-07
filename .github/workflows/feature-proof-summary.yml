@@ -2,7 +2,7 @@ name: MoUI Feature Proof Summary
 
 on:
   workflow_run:
-    workflows: ["MoUI CI", "MoUI Skia Real-Skia Smoke"]
+    workflows: ["MoUI CI", "MoUI Renderer Real Skia CI"]
     types: [completed]
   workflow_dispatch:
     inputs:
@@ -94,33 +94,33 @@ jobs:
             const status = {};
             // Map display names to short keys used by generate-feature-proof-report.mjs
             const jobNameToKey = {
-              "Core conformance": "conformance",
+              "PR profile gate": "pr-profile",
               "Public API surface": "api-surface",
               "Linux platform contracts": "linux-platform",
               "macOS packaging smoke": "macos-packaging",
               "Benchmark scaffold": "benchmark-scaffold",
               "Windows MSVC native smoke": "windows-native",
-              "macOS real-Skia smoke": "macos-real-skia",
-              "Linux real-Skia smoke": "linux-real-skia",
-              "Windows real-Skia smoke": "windows-real-skia",
+              "macOS renderer real Skia": "macos-real-skia",
+              "Linux renderer real Skia": "linux-real-skia",
+              "Windows renderer real Skia": "windows-real-skia",
             };
             for (const job of ciJobs.data.jobs) {
               const key = jobNameToKey[job.name] ?? job.name;
               status[key] = job.conclusion;
             }
 
-            // Collect completed Skia smoke job statuses for the same SHA.
+            // Collect completed renderer real Skia job statuses for the same SHA.
             // Only accept completed runs to avoid the race condition where ci.yml
-            // finishes before Skia smoke is done (in-progress jobs have null
+            // finishes before renderer real Skia is done (in-progress jobs have null
             // conclusion, which would mark L2 features as failed instead of skipped).
             // Only successful runs are collected so that failed Skia smoke runs
             // are treated as "skipped" (no proof) rather than "failed", keeping
-            // the verification focused on L1 gaps. Skia smoke failures are
-            // tracked by the Skia smoke workflow itself.
+            // the verification focused on L1 gaps. Renderer real Skia failures
+            // are tracked by their workflow.
             try {
               const skiaRuns = await github.rest.actions.listWorkflowRuns({
                 owner, repo,
-                workflow_id: 'moui-skia-real-skia-pr-smoke.yml',
+                workflow_id: 'moui-renderer-real-skia-ci.yml',
                 per_page: 10,
               });
               const matchingSkiaRun = skiaRuns.data.workflow_runs.find(

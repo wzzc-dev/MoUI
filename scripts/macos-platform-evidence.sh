@@ -152,7 +152,12 @@ echo "=== Step 3: Configure example macos_skia moon.pkg ===" | tee -a "$prefligh
 
 showcase_pkg="$REPO_ROOT/examples/showcase/macos_skia/moon.pkg"
 showcase_backup="$showcase_pkg.moui-evidence.bak"
+markdown_pkg="$REPO_ROOT/examples/markdown_editor/macos_skia/moon.pkg"
+markdown_backup="$markdown_pkg.moui-evidence.bak"
 cp "$showcase_pkg" "$showcase_backup"
+if [[ -f "$markdown_pkg" ]]; then
+  cp "$markdown_pkg" "$markdown_backup"
+fi
 
 cat > "$showcase_pkg" <<PKGEOF
 import {
@@ -179,11 +184,47 @@ options(
 PKGEOF
 echo "  Wrote $showcase_pkg" | tee -a "$preflight_log"
 
+if [[ -f "$markdown_pkg" ]]; then
+  cat > "$markdown_pkg" <<PKGEOF
+import {
+  "moonbitlang/core/env",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/macos" @macos_host,
+  "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
+  "wzzc-dev/moui/render/skia" @skia_renderer,
+  "wzzc-dev/window/dpi",
+  "wzzc-dev/window/macos" @window_macos,
+  "examples/markdown_editor/app",
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "stub-cc-flags": "$macos_stub_cc_flags",
+      "cc-link-flags": "$macos_link_flags",
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)
+PKGEOF
+  echo "  Wrote $markdown_pkg" | tee -a "$preflight_log"
+fi
+
 restore_example_pkgs() {
   if [[ -f "$showcase_backup" ]]; then
     cp "$showcase_backup" "$showcase_pkg"
     rm -f "$showcase_backup"
     echo "Restored $showcase_pkg"
+  fi
+  if [[ -f "$markdown_backup" ]]; then
+    cp "$markdown_backup" "$markdown_pkg"
+    rm -f "$markdown_backup"
+    echo "Restored $markdown_pkg"
   fi
   cd "$REPO_ROOT"
   git checkout -- moui_skia/native/moon.pkg 2>/dev/null || true

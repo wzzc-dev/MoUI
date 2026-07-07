@@ -52,10 +52,10 @@ if (fallback.vars.MOUI_SKIA_STUB_CC_FLAGS !== "") {
 
 const realSkia = runPrebuild();
 if (!realSkia.vars.MOUI_SKIA_STUB_CC_FLAGS.includes("-DMOUI_SKIA_HAS_SKIA")) {
-  throw new Error("real-Skia prebuild should expose provider stub Skia flags");
+  throw new Error("real Skia prebuild should expose provider stub Skia flags");
 }
 if (!realSkia.vars.MOUI_SKIA_STUB_CC_FLAGS.includes("/tmp/moui-skia-include")) {
-  throw new Error("real-Skia prebuild should reuse moui_skia include flags");
+  throw new Error("real Skia prebuild should reuse moui_skia include flags");
 }
 
 console.log("moui prebuild tests: ok");

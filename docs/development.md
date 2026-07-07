@@ -64,7 +64,7 @@ moon build examples/markdown_editor/web_wasm --target wasm-gc
 ```
 
 `moon update` refreshes registry packages, including the `window` fork package.
-The default `sh scripts/dev-check.sh` path guards dependency shape and the
+The default `sh scripts/check.sh --profile daily` path guards dependency shape and the
 repo-local `moui_skia` acceptance surface. The Skia binding is part of the main
 checkout at `moui_skia`.
 
@@ -136,17 +136,21 @@ binding workspace itself ships
 `moui_skia/scripts/verify-native-capability-contract.sh`, which require
 `skia-platform-status.json`, `skia-provider-lock.json`,
 `SKIA_PLATFORM_STATUS.md`, `native/capabilities.json`, and `native/ownership.json`
-to prove the editable binding workspace still has a pinned real-Skia
+to prove the editable binding workspace still has a pinned real Skia
 artifact/status contract, CI evidence wiring, fallback parity, FFI
 ownership/borrow coverage, and native smoke marker coverage. That does not prove
-a MoUI platform entrypoint has rendered with real Skia; use `--skia-real-smoke`
-after configuring real Skia native link flags for that renderer-level proof.
-The binding's GitHub Actions workflows are maintained at the repository root as
-`.github/workflows/moui-skia-*.yml`; the root
-`.github/workflows/copilot-setup-steps.yml` sets up MoonBit from the
-`moui_skia` workspace for GitHub Copilot coding agent runs. Keep workflow files
-in the root `.github/workflows` directory so GitHub discovers them in this
-monorepo layout.
+a MoUI platform entrypoint has rendered with real Skia; use
+`scripts/macos-skia-renderer-smoke.sh` after configuring real Skia native link
+flags for that renderer-level proof.
+The binding/provider GitHub Actions workflows are maintained at the repository
+root as `.github/workflows/moui-skia-*.yml`; these are the workflows expected
+to move with `moui_skia` if it becomes its own repository. The root
+`.github/workflows/moui-renderer-real-skia-ci.yml` workflow stays
+MoUI-owned because it proves framework renderer integration against the Skia
+binding, and `.github/workflows/copilot-setup-steps.yml` sets up MoonBit from
+the `moui_skia` workspace for GitHub Copilot coding agent runs. Keep workflow
+files in the root `.github/workflows` directory so GitHub discovers them in
+this monorepo layout.
 
 GitHub Actions installs MoonBit through the repository-local
 `.github/actions/setup-moonbit` action. The pinned compiler version lives in
@@ -186,7 +190,7 @@ sh scripts/window-dev-mode.sh on      # add ./window to moon.work (local overrid
 sh scripts/window-dev-mode.sh off     # remove ./window; resolve from mooncakes.io
 ```
 
-`scripts/validate-window-dependency.mjs` (run by `dev-check.sh` and CI) fails
+`scripts/validate-window-dependency.mjs` (run by `check.sh --profile daily` and CI) fails
 if `moon.work` lists `./window` on the main branch, so the default state stays
 on the published dependency. After publishing a new window version, update the
 pinned version in `moui/moon.mod`, `moui_skia/moon.mod`, `moui_webview/moon.mod`,
@@ -222,7 +226,7 @@ moon run examples/mo_workbench/macos_skia --target native
 For routine local development, prefer the bounded daily check:
 
 ```sh
-sh scripts/dev-check.sh
+sh scripts/check.sh --profile daily
 ```
 
 The detailed daily gate membership, focused package checks, maintenance
@@ -260,7 +264,7 @@ network, or mutate global/user state.
 Run the real Skia native smoke only after configuring local Skia link flags:
 
 ```sh
-sh scripts/dev-check.sh --skia-real-smoke
+scripts/macos-skia-renderer-smoke.sh
 ```
 
 That opt-in check runs both the `moui_skia` native binding smoke and MoUI's
@@ -406,7 +410,7 @@ machine-local paths and generated `artifacts/` evidence.
 Run the daily validation script for routine handoff:
 
 ```sh
-sh scripts/dev-check.sh
+sh scripts/check.sh --profile daily
 ```
 
 Keep this section as an entrypoint only. The full daily command inventory,
@@ -429,9 +433,22 @@ GitHub Actions installs MoonBit through `.github/actions/setup-moonbit`. The
 pinned compiler version lives in `.moonbit-toolchain`; update that file when
 moving CI to a new MoonBit toolchain version.
 
-The binding workflows for `moui_skia` live in root `.github/workflows/` so
-GitHub discovers them in this monorepo layout. Do not move workflow files into
-sub-workspace `.github/workflows` directories.
+`ci.yml` expresses routine gates through the checked wrappers: the PR profile
+gate runs `sh scripts/check.sh --profile pr`, and Linux platform contracts run
+`sh scripts/check.sh --profile platform`. The Windows MSVC job intentionally
+keeps setup, backend/provider tests, and packaging as explicit PowerShell steps;
+it adds only a wrapper contract check:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\check.ps1 -Profile Pr -DryRun -Json -SkipSubmoduleInit
+```
+
+The binding workflows for `moui_skia` live in root `.github/workflows/` with
+the `moui-skia-*` prefix so GitHub discovers them in this monorepo layout. Do
+not move workflow files into sub-workspace `.github/workflows` directories.
+MoUI-owned renderer/platform workflows, such as
+`moui-renderer-real-skia-ci.yml` and `moui-macos-app-real-skia-manual.yml`,
+keep the `moui-*` prefix instead of the package-owned `moui-skia-*` prefix.
 
 On Windows, use the repository update helper when refreshing local checkouts:
 
@@ -441,17 +458,17 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\update_repositories.p
 
 On Windows, use the native PowerShell entry point for daily checks (no MSYS
 required). It initializes the `window` submodule on first run and runs the
-same bounded mainline package checks as `scripts/dev-check.sh`:
+same bounded mainline package checks as `scripts/check.sh --profile daily`:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\dev_check.ps1
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\dev_check.ps1 -PlatformExamplesTest
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\check.ps1 -Profile Daily
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\check.ps1 -Profile Platform
 ```
 
 Alternatively, run the shell version under Git Bash:
 
 ```sh
-sh scripts/dev-check.sh --platform-examples-test
+sh scripts/check.sh --profile platform
 ```
 
 Native platform example builds such as
@@ -461,7 +478,7 @@ and native renderer libraries, so cold builds can be slow. Include them only
 when validating the current host platform's executable examples:
 
 ```sh
-sh scripts/dev-check.sh --platform-examples-build
+sh scripts/check.sh --profile full
 ```
 
 ## Native Packaging Helpers
@@ -550,7 +567,7 @@ moon test moui/render/wgpu --target native
 moon test moui/render/skia --target native
 moon test moui/render/sun --target native
 moon test moui_skia --target native
-sh scripts/dev-check.sh --theme-diagnostics
+sh scripts/check.sh --profile theme
 moon test moui_sun/graphics --target native
 moon test moui_sun/text --target native
 moon test moui_sun/renderer --target native
@@ -560,7 +577,7 @@ moon test moui/render/webgpu_adapter --target wasm-gc
 moon test moui/tests/tooling --target native
 moon test moui/backend/web --target wasm-gc
 node scripts/validate-renderer-provider-manifests.mjs
-sh scripts/dev-check.sh --platform-examples-test
+sh scripts/check.sh --profile platform
 moon test examples/counter/app --target native
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
@@ -572,7 +589,7 @@ moon test examples/pdf_workbench/pdfium_adapter --target native
 moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
-sh scripts/dev-check.sh --platform-examples-build
+sh scripts/check.sh --profile full
 moon build examples/showcase/macos_skia --target native
 moon build examples/design_systems/macos_skia --target native
 moon build examples/showcase/windows_skia --target native
@@ -594,9 +611,10 @@ For PDF Workbench app-only or `pdflite_adapter` checks, set
 is the thing being validated.
 
 Use the direct native example builds only on a matching configured host. The
-helper flags keep current-platform backend/provider checks separate from slow
-native example builds. Run native WGPU and Cosmic text-provider entrypoint
-builds only when explicitly validating the experimental WGPU diagnostic route.
+check profiles keep shared platform service checks, current-host
+backend/provider checks, and slow native example builds separate. Run native
+WGPU and Cosmic text-provider entrypoint builds only when explicitly validating
+the experimental WGPU diagnostic route.
 
 ## Mooncakes Integration Notes
 

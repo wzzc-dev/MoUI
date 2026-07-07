@@ -269,6 +269,7 @@ $systemLibs = @(
   "d2d1.lib",
   "dxgi.lib",
   "advapi32.lib",
+  "comdlg32.lib",
   "shell32.lib"
 )
 $linkItems = $orderedPackageLibs + $systemLibs
