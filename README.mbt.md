@@ -69,7 +69,7 @@ listed in this repository's `moon.work` and is not built by `dev-check.sh`. It
 is the recommended starting template for new apps.
 
 When cloning this repository for framework or example development, include
-submodules so Mo Workbench can resolve OpenSeek:
+submodules (required for the `wzzc-dev/window` fork):
 
 ```sh
 git clone --recurse-submodules git@github.com:wzzc-dev/MoUI.git
@@ -148,12 +148,11 @@ moon run examples/markdown_editor/linux_skia --target native
 ### Mo Workbench
 
 Native-Skia-first desktop agent dogfood app. Only `macos_skia` is wired today;
-Linux/Windows/Web entrypoints are reserved. Enable the `openseek` submodule
-first (`git submodule update --init --recursive openseek`) and run
-`sh scripts/openseek-dev-mode.sh on` so `moon.work` lists `./openseek`.
+Linux/Windows/Web entrypoints are reserved. The `bobzhang/openseek` dependency
+resolves from mooncakes.io (pinned in `examples/mo_workbench/moon.mod`); no
+submodule or workspace member override is required.
 
 ```sh
-# macOS Skia (requires openseek submodule)
 moon run examples/mo_workbench/macos_skia --target native
 ```
 

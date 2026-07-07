@@ -302,12 +302,11 @@ moon build examples/markdown_editor/macos_wgpu --target native
 ./_build/native/debug/build/examples/markdown_editor/macos_wgpu/macos_wgpu.exe
 ```
 
-Mo Workbench currently ships the macOS Skia entrypoint only. Enable the
-`openseek` submodule before building it:
+Mo Workbench currently ships the macOS Skia entrypoint only. The
+`bobzhang/openseek` dependency resolves from mooncakes.io; no submodule
+override is needed:
 
 ```sh
-git submodule update --init openseek
-sh scripts/openseek-dev-mode.sh on
 moon run examples/mo_workbench/macos_skia --target native
 ```
 

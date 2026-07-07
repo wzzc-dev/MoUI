@@ -20,15 +20,15 @@ behavior that is not wired yet.
   `SessionSummary`, `WorkbenchModel`, `WorkbenchMsg`, and `MoWorkbenchApp`.
 - `examples/mo_workbench/openseek_native_transport` is a native-only package
   that bridges `AgentCommand` / `AgentEvent` to the in-process OpenSeek agent
-  (`run_turn_in_scope`, `SessionStore`, tool registry). It depends on the
-  `openseek` git submodule (`git@github.com:moonbitlang/openseek.git`).
+  (`run_turn_in_scope`, `SessionStore`, tool registry). It depends on
+  `bobzhang/openseek` from mooncakes.io (pinned in
+  `examples/mo_workbench/moon.mod`).
 - `examples/mo_workbench/macos_skia` injects
   `openseek_native_transport::openseek_backend_from_env()` when
   `OPENAI_API_KEY` or `DEEPSEEK` is set (`OPENAI_BASE_URL` overrides the
-  DeepSeek client URL); otherwise `AgentBackendRuntime::stub()`. Enable the
-  submodule with `git submodule update --init --recursive openseek`, then add
-  it to the workspace with `sh scripts/openseek-dev-mode.sh on` (adds
-  `./openseek` to `moon.work`).
+  DeepSeek client URL); otherwise `AgentBackendRuntime::stub()`. No git
+  submodule or workspace member override is needed; just run `moon update`
+  after pinning a new openseek version.
 
 ## Workspace Architecture
 
