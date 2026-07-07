@@ -28,6 +28,129 @@ pub(all) enum TurnStatus {
 } derive(Eq, Debug)
 
 ///|
+/// Agent backend selected by the workbench.
+pub(all) enum AgentBackendKind {
+  OpenSeek
+  Acp
+} derive(Eq, Debug)
+
+///|
+pub fn agent_backend_kind_id(kind : AgentBackendKind) -> String {
+  match kind {
+    OpenSeek => "openseek"
+    Acp => "acp"
+  }
+}
+
+///|
+pub fn agent_backend_kind_from_id(id : String) -> AgentBackendKind {
+  match id {
+    "acp" => AgentBackendKind::Acp
+    _ => AgentBackendKind::OpenSeek
+  }
+}
+
+///|
+pub(all) enum AgentConfigValue {
+  Boolean(Bool)
+  ValueId(String)
+} derive(Eq, Debug)
+
+///|
+pub(all) enum PermissionOutcome {
+  Selected(String)
+  Cancelled
+} derive(Eq, Debug)
+
+///|
+pub struct AgentPermissionOption {
+  id : String
+  name : String
+  kind : String
+} derive(Eq, Debug)
+
+///|
+pub fn agent_permission_option(
+  id~ : String,
+  name~ : String,
+  kind? : String = "",
+) -> AgentPermissionOption {
+  { id, name, kind }
+}
+
+///|
+pub struct AgentPermissionRequest {
+  request_id : String
+  session_id : String
+  tool_call_id : String
+  title : String
+  kind : String
+  options : Array[AgentPermissionOption]
+} derive(Eq, Debug)
+
+///|
+pub fn agent_permission_request(
+  request_id~ : String,
+  session_id~ : String,
+  tool_call_id? : String = "",
+  title? : String = "",
+  kind? : String = "",
+  options? : Array[AgentPermissionOption] = [],
+) -> AgentPermissionRequest {
+  { request_id, session_id, tool_call_id, title, kind, options }
+}
+
+///|
+pub struct AgentSessionMode {
+  id : String
+  name : String
+  description : String?
+} derive(Eq, Debug)
+
+///|
+pub fn agent_session_mode(
+  id~ : String,
+  name~ : String,
+  description? : String? = None,
+) -> AgentSessionMode {
+  { id, name, description }
+}
+
+///|
+pub struct AgentSessionModeState {
+  current_mode_id : String
+  available_modes : Array[AgentSessionMode]
+} derive(Eq, Debug)
+
+///|
+pub fn agent_session_mode_state(
+  current_mode_id~ : String,
+  available_modes~ : Array[AgentSessionMode],
+) -> AgentSessionModeState {
+  { current_mode_id, available_modes }
+}
+
+///|
+pub struct AgentSessionConfigOption {
+  id : String
+  name : String
+  description : String?
+  current_value : AgentConfigValue
+  values : Array[AgentPermissionOption]
+} derive(Eq, Debug)
+
+///|
+pub fn agent_session_config_option(
+  id~ : String,
+  name~ : String,
+  description? : String? = None,
+  current_value~ : AgentConfigValue,
+  values? : Array[AgentPermissionOption] = [],
+) -> AgentSessionConfigOption {
+  { id, name, description, current_value, values }
+}
+
+///|
 /// Neutral agent events projected from the backend into the UI.
 /// The backend (openseek) maps its `SessionItem` / runtime events into these.
 pub(all) enum AgentEvent {
@@ -44,6 +167,20 @@ pub(all) enum AgentEvent {
   TurnTerminal(TurnStatus, String)
   /// Best-effort progress notice (lossy, e.g. "calling model...", "running tool...").
   ProgressNotice(String)
+  /// A streamed user message chunk. Carries `(message_id, content)`.
+  UserMessageChunk(String?, String)
+  /// A streamed assistant message chunk. Carries `(message_id, content)`.
+  AssistantMessageChunk(String?, String)
+  /// A streamed reasoning/thought chunk. Carries `(message_id, content)`.
+  ThoughtMessageChunk(String?, String)
+  /// The backend has reported ACP session mode state.
+  SessionModeStateChanged(AgentSessionModeState)
+  /// The backend has reported ACP session config options.
+  SessionConfigOptionsChanged(Array[AgentSessionConfigOption])
+  /// The backend requires a user permission choice before continuing.
+  PermissionRequested(AgentPermissionRequest)
+  /// Session title/timestamp changed: `(session_id, title, updated_at_iso)`.
+  SessionInfoUpdated(String, String?, String?)
   /// The active session's full message stream was rebuilt (e.g. after switch).
   /// Carries the complete ordered list of items to replace the UI message list.
   SessionRebuilt(Array[AgentEvent])
@@ -95,6 +232,14 @@ pub(all) enum AgentCommand {
   SetModel(String, String, String)
   /// Change the thinking mode.
   SetThinking(ThinkingChoice)
+  /// Cancel the active turn.
+  CancelTurn
+  /// Change an ACP session mode.
+  SetSessionMode(String)
+  /// Change an ACP session config option.
+  SetSessionConfigOption(String, AgentConfigValue)
+  /// Respond to an ACP permission request.
+  RespondPermission(String, PermissionOutcome)
   /// Request the session list from the store.
   FetchSessionList
   /// Stop the backend loop.
@@ -156,6 +301,12 @@ pub fn AgentBackendRuntime::stub() -> AgentBackendRuntime {
         }
         SetModel(_, _, _) => ()
         SetThinking(_) => ()
+        CancelTurn => emit(TurnTerminal(TurnStatus::Aborted, "Cancelled"))
+        SetSessionMode(mode_id) =>
+          emit(RuntimeNoticeAdded("ACP mode ignored by stub: " + mode_id))
+        SetSessionConfigOption(config_id, _) =>
+          emit(RuntimeNoticeAdded("ACP config ignored by stub: " + config_id))
+        RespondPermission(_, _) => ()
         FetchSessionList => emit(SessionListed([]))
         Shutdown => ()
       }

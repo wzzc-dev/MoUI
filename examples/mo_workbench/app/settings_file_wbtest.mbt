@@ -18,6 +18,7 @@ test "default settings file matches template defaults" {
   inspect(file.providers[1].id, content="openai")
   inspect(file.providers[1].base_url, content="https://api.openai.com/v1")
   inspect_active_provider_id(file.active_provider_id, "deepseek")
+  inspect(file.agent_backend.unwrap(), content="openseek")
   inspect(file.font_size, content="14")
   inspect(file.appearance, content="system")
 }
@@ -37,8 +38,12 @@ test "decode modern multi-provider settings json" {
     #|  ],
     #|  "active_provider_id": "deepseek",
     #|  "current_model": "deepseek-v4-flash",
+    #|  "agent_backend": "acp",
     #|  "mo_workbench_workspace": ".",
     #|  "mo_workbench_session_root": "./.openseek",
+    #|  "acp_command": "agent",
+    #|  "acp_args": "[\"--stdio\"]",
+    #|  "acp_process_cwd": ".",
     #|  "approval_policy": "write",
     #|  "sandbox_mode": "workspace",
     #|  "font_size": 16,
@@ -49,6 +54,9 @@ test "decode modern multi-provider settings json" {
   }
   inspect(file.providers[0].api_key, content="sk-test")
   inspect(file.providers[0].base_url, content="https://api.deepseek.com/v1")
+  inspect(file.agent_backend.unwrap(), content="acp")
+  inspect(file.acp_command.unwrap(), content="agent")
+  inspect(file.acp_args.unwrap(), content="[\"--stdio\"]")
   inspect(file.appearance, content="dark")
   inspect(file.font_size, content="16")
 }
@@ -92,8 +100,12 @@ test "merge settings file into workspace" {
     ],
     active_provider_id: Some("deepseek"),
     current_model: "deepseek-v4-flash",
+    agent_backend: Some("acp"),
     mo_workbench_workspace: "/tmp/ws",
     mo_workbench_session_root: "/tmp/sessions",
+    acp_command: Some("agent"),
+    acp_args: Some("--stdio"),
+    acp_process_cwd: Some("/tmp/ws"),
     approval_policy: "never",
     sandbox_mode: "read-only",
     font_size: 12,
@@ -108,6 +120,9 @@ test "merge settings file into workspace" {
   inspect_active_provider_id(merged.active_provider_id, "deepseek")
   inspect(merged.working_dir, content="/tmp/ws")
   inspect(merged.session_root, content="/tmp/sessions")
+  inspect(merged.agent_backend == AgentBackendKind::Acp, content="true")
+  inspect(merged.acp_command, content="agent")
+  inspect(merged.acp_args, content="--stdio")
   inspect(merged.font_size, content="12")
   inspect(merged.approval_policy == ApprovalPolicy::NeverAsk, content="true")
 }
