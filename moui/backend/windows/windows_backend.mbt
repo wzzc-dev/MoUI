@@ -275,7 +275,7 @@ pub fn windows_input_capabilities() -> @host.HostInputCapabilities {
 
 ///|
 pub fn windows_capability_summary(
-  services? : @host.HostServiceCapabilities = windows_service_bridge().capabilities,
+  services? : @host.HostServiceCapabilities = windows_service_bridge().capabilities(),
 ) -> @host.HostCapabilitySummary {
   @host.HostCapabilitySummary::from_contracts(
     info=windows_host_info(),

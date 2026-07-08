@@ -387,7 +387,7 @@ fn package_budgets() -> Array[PackageBudget] {
       package_token: "package \"wzzc-dev/moui/backend/host\"",
       max_lines: 1100,
       max_pub_lines: 480,
-      max_pub_all_lines: 68,
+      max_pub_all_lines: 66,
       required_tokens: [
         "HostWindowRenderer", "HostAsyncImageLoader", "HostRouteSource", "pub(all) struct HostRouteLocation",
         "pub(all) struct HostRouteQueryParam",
@@ -402,7 +402,7 @@ fn package_budgets() -> Array[PackageBudget] {
       package_token: "package \"wzzc-dev/moui/render\"",
       max_lines: 380,
       max_pub_lines: 110,
-      max_pub_all_lines: 31,
+      max_pub_all_lines: 29,
       required_tokens: [
         "RendererBackendKind", "RendererDescriptor", "RenderFrameResult",
       ],

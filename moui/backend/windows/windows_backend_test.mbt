@@ -40,9 +40,9 @@ test "windows service bridge exposes clipboard open url and system theme contrac
     opened_url.val = url
     true
   })
-  inspect(bridge.capabilities.clipboard, content="true")
-  inspect(bridge.capabilities.open_url, content="true")
-  inspect(bridge.capabilities.system_theme, content="true")
+  inspect(bridge.capabilities().clipboard, content="true")
+  inspect(bridge.capabilities().open_url, content="true")
+  inspect(bridge.capabilities().system_theme, content="true")
   match
     bridge.dispatch(@host.HostServiceRequest::OpenUrl("https://example.test")) {
     @host.HostServiceResponse::UrlOpened => ()
@@ -74,7 +74,7 @@ test "windows service bridge exposes file dialog contract" {
     seen_kind.val = options.kind
     ["C:\\Users\\moui\\note.md"]
   })
-  inspect(bridge.capabilities.file_dialogs, content="true")
+  inspect(bridge.capabilities().file_dialogs, content="true")
   match
     bridge.dispatch(
       @host.HostServiceRequest::FileDialog(
@@ -101,7 +101,7 @@ test "windows service bridge exposes menu contract" {
     seen_count.val = commands.length()
     1
   })
-  inspect(bridge.capabilities.menus, content="true")
+  inspect(bridge.capabilities().menus, content="true")
   match
     bridge.dispatch(
       @host.HostServiceRequest::ShowMenu([

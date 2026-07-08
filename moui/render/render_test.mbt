@@ -110,37 +110,40 @@ test "collect rect batches expands strokes into border rects" {
   ])
   inspect(batches.length(), content="4")
   assert_true(
-    batches[0].rect == @core.Rect::new(x=2.0, y=3.0, width=10.0, height=1.0),
+    batches[0].rect() == @core.Rect::new(x=2.0, y=3.0, width=10.0, height=1.0),
   )
   assert_true(
-    batches[1].rect == @core.Rect::new(x=2.0, y=10.0, width=10.0, height=1.0),
+    batches[1].rect() == @core.Rect::new(x=2.0, y=10.0, width=10.0, height=1.0),
   )
   assert_true(
-    batches[2].rect == @core.Rect::new(x=2.0, y=4.0, width=1.0, height=6.0),
+    batches[2].rect() == @core.Rect::new(x=2.0, y=4.0, width=1.0, height=6.0),
   )
   assert_true(
-    batches[3].rect == @core.Rect::new(x=11.0, y=4.0, width=1.0, height=6.0),
+    batches[3].rect() == @core.Rect::new(x=11.0, y=4.0, width=1.0, height=6.0),
   )
 }
 
 ///|
 test "rect batches convert to colored vertices" {
   let batches : Array[@render.RectBatch] = [
-    {
-      rect: @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
-      color: @core.Color::blue(),
-    },
+    @render.RectBatch::new(
+      rect=@core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
+      color=@core.Color::blue(),
+    ),
   ]
   let vertices = @render.rect_batches_to_vertices(
     batches,
     @core.Size::new(width=100.0, height=100.0),
   )
   inspect(vertices.length(), content="6")
-  assert_true(
-    vertices[0] == { x: -1.0, y: 1.0, r: 0.12, g: 0.36, b: 0.95, a: 1.0 },
-  )
-  assert_true(vertices[2].x == -0.8)
-  assert_true(vertices[2].y == 0.8)
+  assert_true(vertices[0].x() == -1.0)
+  assert_true(vertices[0].y() == 1.0)
+  assert_true(vertices[0].r() == 0.12)
+  assert_true(vertices[0].g() == 0.36)
+  assert_true(vertices[0].b() == 0.95)
+  assert_true(vertices[0].a() == 1.0)
+  assert_true(vertices[2].x() == -0.8)
+  assert_true(vertices[2].y() == 0.8)
   inspect(@render.rect_vertices_to_bytes(vertices).length(), content="144")
 }
 
@@ -172,7 +175,7 @@ test "rounded rects are collectable as rect batches for simple renderers" {
   ])
   inspect(batches.length(), content="1")
   assert_true(
-    batches[0].rect == @core.Rect::new(x=1.0, y=2.0, width=30.0, height=40.0),
+    batches[0].rect() == @core.Rect::new(x=1.0, y=2.0, width=30.0, height=40.0),
   )
 }
 
@@ -258,9 +261,9 @@ test "brush commands degrade to deterministic rect batches" {
     ),
   ])
   inspect(batches.length(), content="6")
-  assert_true(batches[0].color == @core.Color::blue())
-  assert_true(batches[1].color == @core.Color::rgba(r=0.8, g=0.1, b=0.1))
-  assert_true(batches[2].color == @core.Color::gray())
+  assert_true(batches[0].color() == @core.Color::blue())
+  assert_true(batches[1].color() == @core.Color::rgba(r=0.8, g=0.1, b=0.1))
+  assert_true(batches[2].color() == @core.Color::gray())
 }
 
 ///|
@@ -278,5 +281,5 @@ test "shadow command degrades to layered rect batches" {
     ),
   ])
   inspect(batches.length(), content="3")
-  assert_true(batches[0].color.a > batches[2].color.a)
+  assert_true(batches[0].color().a > batches[2].color().a)
 }

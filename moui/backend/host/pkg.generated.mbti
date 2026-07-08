@@ -539,13 +539,14 @@ pub fn HostServiceAsyncQueue::reject(Self, HostServiceRequestId, String) -> Bool
 pub fn HostServiceAsyncQueue::submit(Self, HostServiceRequest) -> HostServiceResponse
 pub fn HostServiceAsyncQueue::take_completed(Self, HostServiceRequestId) -> HostCompletedServiceResponse?
 
-pub(all) struct HostServiceBridge {
+pub struct HostServiceBridge {
   capabilities : HostServiceCapabilities
   handle : (HostServiceRequest) -> HostServiceResponse
   mut services : Array[HostServiceHandler]
   channels : PlatformChannelRegistry
 }
 pub fn HostServiceBridge::can_handle(Self, HostServiceRequest) -> Bool
+pub fn HostServiceBridge::capabilities(Self) -> HostServiceCapabilities
 pub fn HostServiceBridge::dispatch(Self, HostServiceRequest) -> HostServiceResponse
 pub fn HostServiceBridge::dispatch_channel(Self, PlatformChannelRequest) -> PlatformChannelResponse
 pub fn HostServiceBridge::dispatch_registered_service(Self, HostServiceRequest) -> HostServiceResponse?
@@ -568,7 +569,7 @@ pub fn HostServiceCapabilities::enabled_labels(Self) -> Array[String]
 pub fn HostServiceCapabilities::new(clipboard? : Bool, menus? : Bool, file_dialogs? : Bool, file_access? : Bool, open_url? : Bool, system_theme? : Bool) -> Self
 pub fn HostServiceCapabilities::none() -> Self
 
-pub(all) struct HostServiceHandler {
+pub struct HostServiceHandler {
   kind : HostServiceKind
   handle : (HostServiceRequest) -> HostServiceResponse
 }
