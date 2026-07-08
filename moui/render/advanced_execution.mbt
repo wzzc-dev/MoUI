@@ -5,36 +5,36 @@ pub(all) enum ShaderRegistryStatus {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct ShaderRegistryResult {
-  name : String
-  status : ShaderRegistryStatus
-  fallback : @core.Brush
-  diagnostic : String
+pub struct ShaderRegistryResult {
+  priv name : String
+  priv status : ShaderRegistryStatus
+  priv fallback : @core.Brush
+  priv diagnostic : String
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct PathVertex {
-  x : Double
-  y : Double
-  brush_kind : Double
-  start_x : Double
-  start_y : Double
-  end_x : Double
-  end_y : Double
-  r : Double
-  g : Double
-  b : Double
-  a : Double
-  r1 : Double
-  g1 : Double
-  b1 : Double
-  a1 : Double
+pub struct PathVertex {
+  priv x : Double
+  priv y : Double
+  priv brush_kind : Double
+  priv start_x : Double
+  priv start_y : Double
+  priv end_x : Double
+  priv end_y : Double
+  priv r : Double
+  priv g : Double
+  priv b : Double
+  priv a : Double
+  priv r1 : Double
+  priv g1 : Double
+  priv b1 : Double
+  priv a1 : Double
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct PathMesh {
-  vertices : Array[PathVertex]
-  diagnostics : Array[String]
+pub struct PathMesh {
+  priv vertices : Array[PathVertex]
+  priv diagnostics : Array[String]
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -49,6 +49,61 @@ priv struct PathBrushPayload {
 ///|
 pub fn builtin_shader_names() -> Array[String] {
   ["solid", "checker", "linear-gradient-debug", "vignette"]
+}
+
+///|
+pub fn ShaderRegistryResult::name(self : ShaderRegistryResult) -> String {
+  self.name
+}
+
+///|
+pub fn ShaderRegistryResult::status(
+  self : ShaderRegistryResult,
+) -> ShaderRegistryStatus {
+  self.status
+}
+
+///|
+pub fn ShaderRegistryResult::fallback(
+  self : ShaderRegistryResult,
+) -> @core.Brush {
+  self.fallback
+}
+
+///|
+pub fn ShaderRegistryResult::diagnostic(self : ShaderRegistryResult) -> String {
+  self.diagnostic
+}
+
+///|
+pub fn PathVertex::components(self : PathVertex) -> Array[Double] {
+  [
+    self.x,
+    self.y,
+    self.brush_kind,
+    self.start_x,
+    self.start_y,
+    self.end_x,
+    self.end_y,
+    self.r,
+    self.g,
+    self.b,
+    self.a,
+    self.r1,
+    self.g1,
+    self.b1,
+    self.a1,
+  ]
+}
+
+///|
+pub fn PathMesh::vertices(self : PathMesh) -> Array[PathVertex] {
+  self.vertices
+}
+
+///|
+pub fn PathMesh::diagnostics(self : PathMesh) -> Array[String] {
+  self.diagnostics
 }
 
 ///|

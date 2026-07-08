@@ -36,50 +36,55 @@ pub fn renderer_descriptor() -> @render.RendererDescriptor
 // Errors
 
 // Types and methods
-pub(all) struct HostWgpuSurface {
-  instance : @wgpu_mbt.Instance
-  surface : @wgpu_mbt.Surface
+pub struct HostWgpuSurface {
+  // private fields
 }
+pub fn HostWgpuSurface::instance(Self) -> @wgpu_mbt.Instance
 pub fn HostWgpuSurface::new(instance~ : @wgpu_mbt.Instance, surface~ : @wgpu_mbt.Surface) -> Self
+pub fn HostWgpuSurface::surface(Self) -> @wgpu_mbt.Surface
 
 pub struct NativeGlyphKey {
   // private fields
 }
 
-pub(all) struct NativeGlyphPlacement {
-  key : NativeGlyphKey
-  x : Double
-  y : Double
+pub struct NativeGlyphPlacement {
+  // private fields
 }
+pub fn NativeGlyphPlacement::key(Self) -> NativeGlyphKey
 pub fn NativeGlyphPlacement::new(key~ : NativeGlyphKey, x~ : Double, y? : Double) -> Self
+pub fn NativeGlyphPlacement::x(Self) -> Double
+pub fn NativeGlyphPlacement::y(Self) -> Double
 
 pub struct NativePlatformTextProvider {
   // private fields
 }
 pub fn NativePlatformTextProvider::new(id~ : String, measure~ : (@core.TextLayoutInput) -> NativeTextLayout?, layout_run~ : (@core.TextRun, Double) -> NativeTextLayout?, raster_glyph~ : (String, Bytes) -> NativeRasterGlyph?, register_font_data? : (@core.FontFamily, Bytes) -> Unit) -> Self
 
-pub(all) struct NativeRasterGlyph {
-  width : Int
-  height : Int
-  bearing_x : Int
-  bearing_y : Int
-  format : NativeRasterGlyphFormat
-  pixels : Bytes
+pub struct NativeRasterGlyph {
+  // private fields
 }
+pub fn NativeRasterGlyph::bearing_x(Self) -> Int
+pub fn NativeRasterGlyph::bearing_y(Self) -> Int
+pub fn NativeRasterGlyph::format(Self) -> NativeRasterGlyphFormat
+pub fn NativeRasterGlyph::height(Self) -> Int
 pub fn NativeRasterGlyph::new(width~ : Int, height~ : Int, bearing_x~ : Int, bearing_y~ : Int, format? : NativeRasterGlyphFormat, pixels~ : Bytes) -> Self
+pub fn NativeRasterGlyph::pixels(Self) -> Bytes
+pub fn NativeRasterGlyph::width(Self) -> Int
 
 pub(all) enum NativeRasterGlyphFormat {
   AlphaMask
   ColorRgba
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct NativeRendererSmokeFrame {
-  width : Int
-  height : Int
-  row_bytes : Int
-  pixels : Bytes
-  flip_y : Bool
+pub struct NativeRendererSmokeFrame {
+  // private fields
 }
+pub fn NativeRendererSmokeFrame::flip_y(Self) -> Bool
+pub fn NativeRendererSmokeFrame::height(Self) -> Int
+pub fn NativeRendererSmokeFrame::new(width~ : Int, height~ : Int, row_bytes~ : Int, pixels~ : Bytes, flip_y? : Bool) -> Self
+pub fn NativeRendererSmokeFrame::pixels(Self) -> Bytes
+pub fn NativeRendererSmokeFrame::row_bytes(Self) -> Int
+pub fn NativeRendererSmokeFrame::width(Self) -> Int
 
 pub struct NativeTextEngine {
   // private fields
@@ -92,21 +97,23 @@ pub(all) enum NativeTextEngineSetting {
   PlatformDefault
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct NativeTextLayout {
-  size : @core.Size
-  baseline : Double
-  caret_positions : Array[Double]
-  glyphs : Array[NativeGlyphPlacement]
+pub struct NativeTextLayout {
+  // private fields
 }
+pub fn NativeTextLayout::baseline(Self) -> Double
+pub fn NativeTextLayout::caret_positions(Self) -> Array[Double]
+pub fn NativeTextLayout::glyphs(Self) -> Array[NativeGlyphPlacement]
 pub fn NativeTextLayout::new(size~ : @core.Size, baseline~ : Double, caret_positions? : Array[Double], glyphs? : Array[NativeGlyphPlacement]) -> Self
+pub fn NativeTextLayout::size(Self) -> @core.Size
 
 type RendererHandle
 
-pub(all) struct SurfaceHostInfo {
-  platform : String
-  owns_instance : Bool
-  description : String
+pub struct SurfaceHostInfo {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SurfaceHostInfo::description(Self) -> String
+pub fn SurfaceHostInfo::owns_instance(Self) -> Bool
+pub fn SurfaceHostInfo::platform(Self) -> String
 
 pub struct WgpuRenderer {
   // private fields

@@ -25,9 +25,9 @@ test "sun renderer DrawPath without fill or stroke is no-op" {
   match presented.val {
     Some(frame) => {
       inspect(renderer.unsupported_command_count(), content="0")
-      assert_true(frame.pixels[0].to_int() == 255)
-      assert_true(frame.pixels[1].to_int() == 255)
-      assert_true(frame.pixels[2].to_int() == 255)
+      assert_true(frame.pixels()[0].to_int() == 255)
+      assert_true(frame.pixels()[1].to_int() == 255)
+      assert_true(frame.pixels()[2].to_int() == 255)
     }
     None => fail("expected Sun frame")
   }

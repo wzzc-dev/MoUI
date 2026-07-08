@@ -5,28 +5,140 @@ let sun_cached_layer_max_entries : Int = 32
 let sun_cached_layer_admission_max_records : Int = 512
 
 ///|
-pub(all) struct SunCachedLayerAdmissionDiagnostic {
-  identity_key : String
-  update_streak : Int
-  hit_count : Int
-  skip_reason : String
-  churn_without_hit : Bool
+pub struct SunCachedLayerAdmissionDiagnostic {
+  priv identity_key : String
+  priv update_streak : Int
+  priv hit_count : Int
+  priv skip_reason : String
+  priv churn_without_hit : Bool
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct SunCachedLayerDiagnostic {
-  cached_layer_count : Int
-  max_cached_layer_count : Int
-  total_hit_count : Int
-  total_miss_count : Int
-  total_update_count : Int
-  total_evict_count : Int
-  admission_record_count : Int
-  churn_without_hit_count : Int
-  cached_layer_keys : Array[String]
-  admission_records : Array[SunCachedLayerAdmissionDiagnostic]
-  cache_ready : Bool
+pub struct SunCachedLayerDiagnostic {
+  priv cached_layer_count : Int
+  priv max_cached_layer_count : Int
+  priv total_hit_count : Int
+  priv total_miss_count : Int
+  priv total_update_count : Int
+  priv total_evict_count : Int
+  priv admission_record_count : Int
+  priv churn_without_hit_count : Int
+  priv cached_layer_keys : Array[String]
+  priv admission_records : Array[SunCachedLayerAdmissionDiagnostic]
+  priv cache_ready : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub fn SunCachedLayerAdmissionDiagnostic::identity_key(
+  self : SunCachedLayerAdmissionDiagnostic,
+) -> String {
+  self.identity_key
+}
+
+///|
+pub fn SunCachedLayerAdmissionDiagnostic::update_streak(
+  self : SunCachedLayerAdmissionDiagnostic,
+) -> Int {
+  self.update_streak
+}
+
+///|
+pub fn SunCachedLayerAdmissionDiagnostic::hit_count(
+  self : SunCachedLayerAdmissionDiagnostic,
+) -> Int {
+  self.hit_count
+}
+
+///|
+pub fn SunCachedLayerAdmissionDiagnostic::skip_reason(
+  self : SunCachedLayerAdmissionDiagnostic,
+) -> String {
+  self.skip_reason
+}
+
+///|
+pub fn SunCachedLayerAdmissionDiagnostic::churn_without_hit(
+  self : SunCachedLayerAdmissionDiagnostic,
+) -> Bool {
+  self.churn_without_hit
+}
+
+///|
+pub fn SunCachedLayerDiagnostic::cached_layer_count(
+  self : SunCachedLayerDiagnostic,
+) -> Int {
+  self.cached_layer_count
+}
+
+///|
+pub fn SunCachedLayerDiagnostic::max_cached_layer_count(
+  self : SunCachedLayerDiagnostic,
+) -> Int {
+  self.max_cached_layer_count
+}
+
+///|
+pub fn SunCachedLayerDiagnostic::total_hit_count(
+  self : SunCachedLayerDiagnostic,
+) -> Int {
+  self.total_hit_count
+}
+
+///|
+pub fn SunCachedLayerDiagnostic::total_miss_count(
+  self : SunCachedLayerDiagnostic,
+) -> Int {
+  self.total_miss_count
+}
+
+///|
+pub fn SunCachedLayerDiagnostic::total_update_count(
+  self : SunCachedLayerDiagnostic,
+) -> Int {
+  self.total_update_count
+}
+
+///|
+pub fn SunCachedLayerDiagnostic::total_evict_count(
+  self : SunCachedLayerDiagnostic,
+) -> Int {
+  self.total_evict_count
+}
+
+///|
+pub fn SunCachedLayerDiagnostic::admission_record_count(
+  self : SunCachedLayerDiagnostic,
+) -> Int {
+  self.admission_record_count
+}
+
+///|
+pub fn SunCachedLayerDiagnostic::churn_without_hit_count(
+  self : SunCachedLayerDiagnostic,
+) -> Int {
+  self.churn_without_hit_count
+}
+
+///|
+pub fn SunCachedLayerDiagnostic::cached_layer_keys(
+  self : SunCachedLayerDiagnostic,
+) -> Array[String] {
+  self.cached_layer_keys
+}
+
+///|
+pub fn SunCachedLayerDiagnostic::admission_records(
+  self : SunCachedLayerDiagnostic,
+) -> Array[SunCachedLayerAdmissionDiagnostic] {
+  self.admission_records
+}
+
+///|
+pub fn SunCachedLayerDiagnostic::cache_ready(
+  self : SunCachedLayerDiagnostic,
+) -> Bool {
+  self.cache_ready
+}
 
 ///|
 pub struct SunCachedLayerAdmissionRecord {

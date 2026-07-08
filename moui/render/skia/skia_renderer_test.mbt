@@ -240,16 +240,18 @@ test "skia selection geometry diagnostic covers line ranges hit testing and bidi
     is Some(diagnostic) else {
     fail("expected Skia selection geometry diagnostic")
   }
-  assert_true(diagnostic.selection_rect_count >= 2)
-  assert_true(diagnostic.selected_line_count >= 2)
-  assert_true(diagnostic.line_count >= 2)
-  inspect(diagnostic.hit_test_line_index, content="1")
-  assert_true(diagnostic.hit_test_inside)
-  assert_true(diagnostic.hit_test_offset >= diagnostic.selection_range.start)
+  assert_true(diagnostic.selection_rect_count() >= 2)
+  assert_true(diagnostic.selected_line_count() >= 2)
+  assert_true(diagnostic.line_count() >= 2)
+  inspect(diagnostic.hit_test_line_index(), content="1")
+  assert_true(diagnostic.hit_test_inside())
+  assert_true(
+    diagnostic.hit_test_offset() >= diagnostic.selection_range().start,
+  )
   if skia_available() {
-    assert_true(diagnostic.visual_order_differs)
-    assert_true(diagnostic.visual_segment_count >= 3)
-    assert_true(diagnostic.bidi_visual_order_observed)
+    assert_true(diagnostic.visual_order_differs())
+    assert_true(diagnostic.visual_segment_count() >= 3)
+    assert_true(diagnostic.bidi_visual_order_observed())
   }
 }
 
@@ -257,41 +259,41 @@ test "skia selection geometry diagnostic covers line ranges hit testing and bidi
 test "skia emoji font fallback diagnostic records glyph metadata and confirms color emoji readiness" {
   match skia_emoji_font_fallback_diagnostic() {
     Some(diagnostic) => {
-      inspect(diagnostic.font_family, content="emoji")
-      inspect(diagnostic.font_source, content="skia-system-fontmgr")
-      inspect(diagnostic.fallback_language_tags.length(), content="2")
-      inspect(diagnostic.fallback_language_tags[0], content="und-Zsye")
-      inspect(diagnostic.fallback_language_tags[1], content="en")
-      inspect(diagnostic.fallback_script_tag, content="und-Zsye")
-      inspect(diagnostic.fallback_language_tag_count, content="2")
-      inspect(diagnostic.fallback_request_language_count, content="2")
-      assert_true(diagnostic.text_system_id == "skia-raster-text-system")
-      assert_true(diagnostic.emoji_hint)
-      assert_true(diagnostic.emoji_fallback_attempted)
-      assert_true(diagnostic.fallback_request_ready)
-      assert_true(diagnostic.missing_glyph_recovery_ready)
-      assert_true(diagnostic.deterministic_color_emoji_ready)
-      inspect(diagnostic.glyph_format, content="rgba")
-      assert_true(diagnostic.glyph_key.contains("skia-system-fontmgr"))
-      assert_true(diagnostic.glyph_key.contains("skia-raster-text-system"))
-      assert_true(diagnostic.glyph_key.contains("script=und-Zsye"))
-      assert_true(diagnostic.glyph_key.contains("langs=2"))
-      assert_true(diagnostic.glyph_key.contains("lang-tags=und-Zsye+en"))
+      let language_tags = diagnostic.fallback_language_tags()
+      let glyph_key = diagnostic.glyph_key()
+      inspect(diagnostic.font_family(), content="emoji")
+      inspect(diagnostic.font_source(), content="skia-system-fontmgr")
+      inspect(language_tags.length(), content="2")
+      inspect(language_tags[0], content="und-Zsye")
+      inspect(language_tags[1], content="en")
+      inspect(diagnostic.fallback_script_tag(), content="und-Zsye")
+      inspect(diagnostic.fallback_language_tag_count(), content="2")
+      inspect(diagnostic.fallback_request_language_count(), content="2")
+      assert_true(diagnostic.text_system_id() == "skia-raster-text-system")
+      assert_true(diagnostic.emoji_hint())
+      assert_true(diagnostic.emoji_fallback_attempted())
+      assert_true(diagnostic.fallback_request_ready())
+      assert_true(diagnostic.missing_glyph_recovery_ready())
+      assert_true(diagnostic.deterministic_color_emoji_ready())
+      inspect(diagnostic.glyph_format(), content="rgba")
+      assert_true(glyph_key.contains("skia-system-fontmgr"))
+      assert_true(glyph_key.contains("skia-raster-text-system"))
+      assert_true(glyph_key.contains("script=und-Zsye"))
+      assert_true(glyph_key.contains("langs=2"))
+      assert_true(glyph_key.contains("lang-tags=und-Zsye+en"))
       assert_true(
-        diagnostic.glyph_key.contains(
-          "emoji-u+\{diagnostic.fallback_character}",
-        ),
+        glyph_key.contains("emoji-u+\{diagnostic.fallback_character()}"),
       )
-      assert_true(diagnostic.glyph_key.contains("rgba"))
-      assert_true(diagnostic.glyph_count >= 1)
-      assert_true(diagnostic.cluster_count == 1)
-      assert_true(diagnostic.glyph_width > 0)
-      assert_true(diagnostic.glyph_height > 0)
-      assert_true(diagnostic.resolved_missing_glyph_count >= 0)
-      assert_true(diagnostic.fallback_character == 0x1F469)
-      assert_true(diagnostic.resolved_font_name.length() > 0)
-      assert_true(diagnostic.resolved_font_name != "no-fontmgr")
-      assert_true(diagnostic.resolved_font_name != "no-match")
+      assert_true(glyph_key.contains("rgba"))
+      assert_true(diagnostic.glyph_count() >= 1)
+      assert_true(diagnostic.cluster_count() == 1)
+      assert_true(diagnostic.glyph_width() > 0)
+      assert_true(diagnostic.glyph_height() > 0)
+      assert_true(diagnostic.resolved_missing_glyph_count() >= 0)
+      assert_true(diagnostic.fallback_character() == 0x1F469)
+      assert_true(diagnostic.resolved_font_name().length() > 0)
+      assert_true(diagnostic.resolved_font_name() != "no-fontmgr")
+      assert_true(diagnostic.resolved_font_name() != "no-match")
     }
     None => assert_true(!skia_available())
   }
@@ -333,11 +335,11 @@ test "skia pixel frame carries presenter payload" {
   guard captured.val is Some(frame) else {
     fail("expected presenter callback to receive pixel frame")
   }
-  inspect(frame.width, content="2")
-  inspect(frame.height, content="2")
-  inspect(frame.scale_factor, content="2")
-  inspect(frame.row_bytes, content="8")
-  inspect(frame.pixels.length(), content="16")
+  inspect(frame.width(), content="2")
+  inspect(frame.height(), content="2")
+  inspect(frame.scale_factor(), content="2")
+  inspect(frame.row_bytes(), content="8")
+  inspect(frame.pixels().length(), content="16")
 }
 
 ///|

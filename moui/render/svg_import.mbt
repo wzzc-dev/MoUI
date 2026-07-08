@@ -1,8 +1,20 @@
 ///|
-pub(all) struct SvgImportResult {
-  commands : Array[@core.DrawCommand]
-  diagnostics : Array[String]
+pub struct SvgImportResult {
+  priv commands : Array[@core.DrawCommand]
+  priv diagnostics : Array[String]
 } derive(Eq, Debug, ToJson)
+
+///|
+pub fn SvgImportResult::commands(
+  self : SvgImportResult,
+) -> Array[@core.DrawCommand] {
+  self.commands
+}
+
+///|
+pub fn SvgImportResult::diagnostics(self : SvgImportResult) -> Array[String] {
+  self.diagnostics
+}
 
 ///|
 pub fn import_svg(svg : String) -> SvgImportResult {

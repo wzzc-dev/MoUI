@@ -203,8 +203,8 @@ test "sun renderer text drawing scales nonzero 2x frame without hiding glyphs" {
 
   match presented.val {
     Some(frame) => {
-      inspect(frame.width, content="128")
-      inspect(frame.height, content="64")
+      inspect(frame.width(), content="128")
+      inspect(frame.height(), content="64")
       assert_true(
         sun_text_test_region_has_dark_pixel(
           frame,
@@ -271,20 +271,20 @@ test "sun renderer text maturity diagnostic separates geometry readiness from ga
   )
   renderer.register_font_bytes("sun-diag", sun_test_ttf_for_codes([65, 0x20]))
   let diagnostic = renderer.text_maturity_diagnostic(text="A A", max_width=12.0)
-  inspect(diagnostic.text_system_id, content="sun-raster-text-system")
-  assert_true(diagnostic.registered_font_count >= 1)
-  assert_true(diagnostic.paragraph_layout_ready)
-  assert_true(diagnostic.line_metrics_ready)
-  assert_true(diagnostic.selection_rects_ready)
-  assert_true(diagnostic.hit_test_ready)
-  assert_true(diagnostic.bidi_visual_order_ready)
-  assert_false(diagnostic.native_paragraph_ready)
-  assert_false(diagnostic.color_emoji_ready)
-  assert_true(diagnostic.paragraph_line_count >= 2)
-  assert_true(diagnostic.selection_rect_count > 0)
-  assert_true(diagnostic.hit_test_inside)
-  inspect(diagnostic.ready_count, content="7")
-  inspect(diagnostic.gap_count, content="2")
+  inspect(diagnostic.text_system_id(), content="sun-raster-text-system")
+  assert_true(diagnostic.registered_font_count() >= 1)
+  assert_true(diagnostic.paragraph_layout_ready())
+  assert_true(diagnostic.line_metrics_ready())
+  assert_true(diagnostic.selection_rects_ready())
+  assert_true(diagnostic.hit_test_ready())
+  assert_true(diagnostic.bidi_visual_order_ready())
+  assert_false(diagnostic.native_paragraph_ready())
+  assert_false(diagnostic.color_emoji_ready())
+  assert_true(diagnostic.paragraph_line_count() >= 2)
+  assert_true(diagnostic.selection_rect_count() > 0)
+  assert_true(diagnostic.hit_test_inside())
+  inspect(diagnostic.ready_count(), content="7")
+  inspect(diagnostic.gap_count(), content="2")
   assert_true(diagnostic.summary().contains("Sun text maturity audit partial"))
   assert_true(diagnostic.summary().contains("paragraph geometry ready"))
   assert_true(
@@ -312,19 +312,19 @@ test "sun renderer text selection diagnostic records wrapped geometry" {
     selection=Some(@core.TextRange::new(start=0, end=3)),
     max_width=12.0,
   )
-  inspect(diagnostic.text, content="A A")
-  inspect(diagnostic.selection_range.start, content="0")
-  inspect(diagnostic.selection_range.end, content="3")
-  assert_true(diagnostic.selection_rect_count >= 2)
-  assert_true(diagnostic.selected_line_count >= 2)
-  assert_true(diagnostic.line_count >= 2)
-  assert_true(diagnostic.hit_test_inside)
-  assert_true(diagnostic.hit_test_offset >= 0)
-  assert_true(diagnostic.hit_test_line_index >= 0)
-  assert_true(diagnostic.bidi_visual_order_ready)
-  assert_false(diagnostic.visual_order_differs)
-  inspect(diagnostic.visual_segment_count, content="1")
-  assert_false(diagnostic.bidi_visual_order_observed)
+  inspect(diagnostic.text(), content="A A")
+  inspect(diagnostic.selection_range().start, content="0")
+  inspect(diagnostic.selection_range().end, content="3")
+  assert_true(diagnostic.selection_rect_count() >= 2)
+  assert_true(diagnostic.selected_line_count() >= 2)
+  assert_true(diagnostic.line_count() >= 2)
+  assert_true(diagnostic.hit_test_inside())
+  assert_true(diagnostic.hit_test_offset() >= 0)
+  assert_true(diagnostic.hit_test_line_index() >= 0)
+  assert_true(diagnostic.bidi_visual_order_ready())
+  assert_false(diagnostic.visual_order_differs())
+  inspect(diagnostic.visual_segment_count(), content="1")
+  assert_false(diagnostic.bidi_visual_order_observed())
 }
 
 ///|
@@ -346,10 +346,10 @@ test "sun renderer text selection diagnostic observes rtl visual order" {
     text="ABC \u{05D0}\u{05D1}\u{05D2} 123",
     max_width=96.0,
   )
-  assert_true(diagnostic.bidi_visual_order_ready)
-  assert_true(diagnostic.visual_order_differs)
-  inspect(diagnostic.visual_segment_count, content="3")
-  assert_true(diagnostic.bidi_visual_order_observed)
+  assert_true(diagnostic.bidi_visual_order_ready())
+  assert_true(diagnostic.visual_order_differs())
+  inspect(diagnostic.visual_segment_count(), content="3")
+  assert_true(diagnostic.bidi_visual_order_observed())
 }
 
 ///|
@@ -380,15 +380,15 @@ test "sun renderer text visual order diagnostic records rtl metadata" {
     is Some(diagnostic) else {
     fail("expected Sun visual order diagnostic")
   }
-  inspect(diagnostic.logical_text, content="ABC \u{05D0}\u{05D1}\u{05D2} 123")
-  inspect(diagnostic.visual_text, content="ABC \u{05D2}\u{05D1}\u{05D0} 123")
-  assert_true(diagnostic.bidi_visual_order_ready)
-  assert_true(diagnostic.visual_order_differs)
-  inspect(diagnostic.logical_cluster_count, content="11")
-  inspect(diagnostic.visual_cluster_count, content="11")
-  inspect(diagnostic.segment_count, content="3")
-  inspect(diagnostic.glyph_count, content="11")
-  assert_true(diagnostic.width > 0.0)
+  inspect(diagnostic.logical_text(), content="ABC \u{05D0}\u{05D1}\u{05D2} 123")
+  inspect(diagnostic.visual_text(), content="ABC \u{05D2}\u{05D1}\u{05D0} 123")
+  assert_true(diagnostic.bidi_visual_order_ready())
+  assert_true(diagnostic.visual_order_differs())
+  inspect(diagnostic.logical_cluster_count(), content="11")
+  inspect(diagnostic.visual_cluster_count(), content="11")
+  inspect(diagnostic.segment_count(), content="3")
+  inspect(diagnostic.glyph_count(), content="11")
+  assert_true(diagnostic.width() > 0.0)
 }
 
 ///|
@@ -405,10 +405,10 @@ test "sun renderer text selection diagnostic defaults to wrapped line range" {
     text="A A",
     max_width=12.0,
   )
-  inspect(diagnostic.selection_range.start, content="0")
-  inspect(diagnostic.selection_range.end, content="3")
-  assert_true(diagnostic.selected_line_count >= 2)
-  assert_true(diagnostic.selection_rect_count >= 2)
+  inspect(diagnostic.selection_range().start, content="0")
+  inspect(diagnostic.selection_range().end, content="3")
+  assert_true(diagnostic.selected_line_count() >= 2)
+  assert_true(diagnostic.selection_rect_count() >= 2)
 }
 
 ///|
@@ -429,11 +429,11 @@ test "sun renderer text selection diagnostic normalizes grapheme range" {
     selection=Some(@core.TextRange::new(start=2, end=3)),
     max_width=96.0,
   )
-  inspect(diagnostic.selection_range.start, content="1")
-  inspect(diagnostic.selection_range.end, content="3")
-  assert_true(diagnostic.selection_rect_count >= 1)
-  inspect(diagnostic.visual_segment_count, content="3")
-  assert_false(diagnostic.bidi_visual_order_observed)
+  inspect(diagnostic.selection_range().start, content="1")
+  inspect(diagnostic.selection_range().end, content="3")
+  assert_true(diagnostic.selection_rect_count() >= 1)
+  inspect(diagnostic.visual_segment_count(), content="3")
+  assert_false(diagnostic.bidi_visual_order_observed())
 }
 
 ///|
@@ -463,52 +463,52 @@ test "sun renderer emoji fallback diagnostic reports registered font fallback wi
       size=10.0,
     ),
   )
-  inspect(diagnostic.text_system_id, content="sun-raster-text-system")
-  inspect(diagnostic.requested_font_family, content="SunLatinOnly")
-  inspect(diagnostic.font_source, content="sun-registered-font-chain")
-  inspect(diagnostic.shaper, content="font-fallback-plan")
-  assert_true(diagnostic.resolved_fallback_face_index > 0)
+  inspect(diagnostic.text_system_id(), content="sun-raster-text-system")
+  inspect(diagnostic.requested_font_family(), content="SunLatinOnly")
+  inspect(diagnostic.font_source(), content="sun-registered-font-chain")
+  inspect(diagnostic.shaper(), content="font-fallback-plan")
+  assert_true(diagnostic.resolved_fallback_face_index() > 0)
   inspect(
-    diagnostic.resolved_font_name,
-    content="sun-registered-face-\{diagnostic.resolved_fallback_face_index}",
+    diagnostic.resolved_font_name(),
+    content="sun-registered-face-\{diagnostic.resolved_fallback_face_index()}",
   )
-  inspect(diagnostic.fallback_language_tags.length(), content="2")
-  inspect(diagnostic.fallback_language_tags[0], content="und-Zsye")
-  inspect(diagnostic.fallback_language_tags[1], content="en")
-  inspect(diagnostic.fallback_script_tag, content="und-Zsye")
-  inspect(diagnostic.fallback_language_tag_count, content="2")
-  inspect(diagnostic.fallback_request_language_count, content="2")
-  assert_true(diagnostic.registered_font_count >= 2)
-  assert_true(diagnostic.resolved_face_count >= 2)
-  assert_true(diagnostic.span_count >= 2)
-  assert_true(diagnostic.fallback_span_count >= 1)
-  inspect(diagnostic.missing_char_count, content="0")
-  inspect(diagnostic.covered_char_count, content="2")
-  assert_true(diagnostic.emoji_hint)
-  assert_true(diagnostic.emoji_fallback_attempted)
-  assert_true(diagnostic.fallback_request_ready)
-  assert_true(diagnostic.registered_font_fallback_ready)
-  assert_true(diagnostic.missing_glyph_recovery_ready)
-  assert_false(diagnostic.deterministic_color_emoji_ready)
-  inspect(diagnostic.glyph_format, content="coverage-mask")
-  assert_true(diagnostic.glyph_key.contains("sun-registered-font-chain"))
-  assert_true(diagnostic.glyph_key.contains("sun-raster-text-system"))
-  assert_true(diagnostic.glyph_key.contains("font-fallback-plan"))
+  inspect(diagnostic.fallback_language_tags().length(), content="2")
+  inspect(diagnostic.fallback_language_tags()[0], content="und-Zsye")
+  inspect(diagnostic.fallback_language_tags()[1], content="en")
+  inspect(diagnostic.fallback_script_tag(), content="und-Zsye")
+  inspect(diagnostic.fallback_language_tag_count(), content="2")
+  inspect(diagnostic.fallback_request_language_count(), content="2")
+  assert_true(diagnostic.registered_font_count() >= 2)
+  assert_true(diagnostic.resolved_face_count() >= 2)
+  assert_true(diagnostic.span_count() >= 2)
+  assert_true(diagnostic.fallback_span_count() >= 1)
+  inspect(diagnostic.missing_char_count(), content="0")
+  inspect(diagnostic.covered_char_count(), content="2")
+  assert_true(diagnostic.emoji_hint())
+  assert_true(diagnostic.emoji_fallback_attempted())
+  assert_true(diagnostic.fallback_request_ready())
+  assert_true(diagnostic.registered_font_fallback_ready())
+  assert_true(diagnostic.missing_glyph_recovery_ready())
+  assert_false(diagnostic.deterministic_color_emoji_ready())
+  inspect(diagnostic.glyph_format(), content="coverage-mask")
+  assert_true(diagnostic.glyph_key().contains("sun-registered-font-chain"))
+  assert_true(diagnostic.glyph_key().contains("sun-raster-text-system"))
+  assert_true(diagnostic.glyph_key().contains("font-fallback-plan"))
   assert_true(
-    diagnostic.glyph_key.contains(
-      "resolved-face=\{diagnostic.resolved_fallback_face_index}",
-    ),
+    diagnostic
+    .glyph_key()
+    .contains("resolved-face=\{diagnostic.resolved_fallback_face_index()}"),
   )
-  assert_true(diagnostic.glyph_key.contains("script=und-Zsye"))
-  assert_true(diagnostic.glyph_key.contains("langs=2"))
-  assert_true(diagnostic.glyph_key.contains("lang-tags=und-Zsye+en"))
-  assert_true(diagnostic.glyph_key.contains("format=coverage-mask"))
-  inspect(diagnostic.glyph_count, content="2")
-  inspect(diagnostic.cluster_count, content="2")
-  assert_true(diagnostic.glyph_width > 0)
-  assert_true(diagnostic.glyph_height > 0)
-  inspect(diagnostic.resolved_missing_glyph_count, content="0")
-  inspect(diagnostic.fallback_character, content="128512")
+  assert_true(diagnostic.glyph_key().contains("script=und-Zsye"))
+  assert_true(diagnostic.glyph_key().contains("langs=2"))
+  assert_true(diagnostic.glyph_key().contains("lang-tags=und-Zsye+en"))
+  assert_true(diagnostic.glyph_key().contains("format=coverage-mask"))
+  inspect(diagnostic.glyph_count(), content="2")
+  inspect(diagnostic.cluster_count(), content="2")
+  assert_true(diagnostic.glyph_width() > 0)
+  assert_true(diagnostic.glyph_height() > 0)
+  inspect(diagnostic.resolved_missing_glyph_count(), content="0")
+  inspect(diagnostic.fallback_character(), content="128512")
   assert_true(diagnostic.summary().contains("registered-font fallback ready"))
   assert_true(diagnostic.summary().contains("color emoji pending"))
 }
@@ -540,16 +540,16 @@ test "sun renderer fallback diagnostic prefers non ascii representative script m
       size=10.0,
     ),
   )
-  assert_false(diagnostic.emoji_hint)
-  assert_true(diagnostic.fallback_request_ready)
-  assert_true(diagnostic.resolved_fallback_face_index > 0)
-  inspect(diagnostic.fallback_character, content="20320")
-  inspect(diagnostic.fallback_language_tags.length(), content="2")
-  inspect(diagnostic.fallback_language_tags[0], content="zh-Hans")
-  inspect(diagnostic.fallback_language_tags[1], content="en")
-  inspect(diagnostic.fallback_script_tag, content="zh-Hans")
-  assert_true(diagnostic.glyph_key.contains("script=zh-Hans"))
-  assert_true(diagnostic.glyph_key.contains("lang-tags=zh-Hans+en"))
+  assert_false(diagnostic.emoji_hint())
+  assert_true(diagnostic.fallback_request_ready())
+  assert_true(diagnostic.resolved_fallback_face_index() > 0)
+  inspect(diagnostic.fallback_character(), content="20320")
+  inspect(diagnostic.fallback_language_tags().length(), content="2")
+  inspect(diagnostic.fallback_language_tags()[0], content="zh-Hans")
+  inspect(diagnostic.fallback_language_tags()[1], content="en")
+  inspect(diagnostic.fallback_script_tag(), content="zh-Hans")
+  assert_true(diagnostic.glyph_key().contains("script=zh-Hans"))
+  assert_true(diagnostic.glyph_key().contains("lang-tags=zh-Hans+en"))
 }
 
 ///|
@@ -1043,15 +1043,15 @@ fn sun_test_dark_pixel_count(
   row_start~ : Int,
   row_end~ : Int,
 ) -> Int {
-  let start = row_start.max(0).min(frame.height)
-  let end = row_end.max(start).min(frame.height)
+  let start = row_start.max(0).min(frame.height())
+  let end = row_end.max(start).min(frame.height())
   let mut count = 0
   for row in start..<end {
-    for column in 0..<frame.width {
-      let offset = (row * frame.width + column) * 4
-      let red = frame.pixels[offset].to_int()
-      let green = frame.pixels[offset + 1].to_int()
-      let blue = frame.pixels[offset + 2].to_int()
+    for column in 0..<frame.width() {
+      let offset = (row * frame.width() + column) * 4
+      let red = frame.pixels()[offset].to_int()
+      let green = frame.pixels()[offset + 1].to_int()
+      let blue = frame.pixels()[offset + 2].to_int()
       if red < 220 && green < 220 && blue < 220 {
         count += 1
       }
@@ -1069,18 +1069,18 @@ fn sun_text_test_region_has_dark_pixel(
   let start_y = rect.origin.y.floor().max(0.0).to_int()
   let end_x = (rect.origin.x + rect.size.width)
     .ceil()
-    .min(frame.width.to_double())
+    .min(frame.width().to_double())
     .to_int()
   let end_y = (rect.origin.y + rect.size.height)
     .ceil()
-    .min(frame.height.to_double())
+    .min(frame.height().to_double())
     .to_int()
   for row in start_y..<end_y {
     for column in start_x..<end_x {
-      let offset = (row * frame.width + column) * 4
-      let red = frame.pixels[offset].to_int()
-      let green = frame.pixels[offset + 1].to_int()
-      let blue = frame.pixels[offset + 2].to_int()
+      let offset = (row * frame.width() + column) * 4
+      let red = frame.pixels()[offset].to_int()
+      let green = frame.pixels()[offset + 1].to_int()
+      let blue = frame.pixels()[offset + 2].to_int()
       if red < 220 && green < 220 && blue < 220 {
         return true
       }

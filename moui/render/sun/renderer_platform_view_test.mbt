@@ -34,12 +34,12 @@ test "sun renderer draws platform view pixels before presenting frame" {
   inspect(result.presented, content="true")
   match presented.val {
     Some(frame) => {
-      let red = (1 * frame.width + 1) * 4
-      let green = (1 * frame.width + 2) * 4
-      assert_true(frame.pixels[red].to_int() > 200)
-      assert_true(frame.pixels[red + 1].to_int() < 80)
-      assert_true(frame.pixels[green + 1].to_int() > 200)
-      assert_true(frame.pixels[green].to_int() < 80)
+      let red = (1 * frame.width() + 1) * 4
+      let green = (1 * frame.width() + 2) * 4
+      assert_true(frame.pixels()[red].to_int() > 200)
+      assert_true(frame.pixels()[red + 1].to_int() < 80)
+      assert_true(frame.pixels()[green + 1].to_int() > 200)
+      assert_true(frame.pixels()[green].to_int() < 80)
     }
     None => fail("expected Sun frame with platform-view pixels")
   }

@@ -14,28 +14,6 @@ pub fn SunRendererError::message(self : SunRendererError) -> String {
 }
 
 ///|
-pub(all) struct SunPixelFrame {
-  width : Int
-  height : Int
-  row_bytes : Int
-  scale_factor : Double
-  pixels : FixedArray[Byte]
-  bytes : Bytes
-} derive(Debug)
-
-///|
-pub struct SunPresentTarget {
-  description : String
-  present : (SunPixelFrame) -> Bool
-}
-
-///|
-pub(all) struct SunUnsupportedCommandDiagnostic {
-  command : String
-  reason : String
-} derive(Eq, Debug, ToJson)
-
-///|
 priv enum SunCanvasScopeKind {
   Clip
   RoundedClip
@@ -73,14 +51,6 @@ pub struct SunRasterRenderer {
   mut blur_radius_stack : Array[Double]
   mut rounded_clip_stack : Array[@core.RoundedRect]
   mut platform_view_draw_fn : (() -> Unit)?
-}
-
-///|
-pub fn SunPresentTarget::new(
-  description~ : String,
-  present~ : (SunPixelFrame) -> Bool,
-) -> SunPresentTarget {
-  { description, present }
 }
 
 ///|

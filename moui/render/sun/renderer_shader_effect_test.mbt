@@ -32,12 +32,12 @@ test "sun renderer linear gradient debug shader uses fallback colors" {
       let left_idx = 0
       let mid_idx = 8 * 4
       let right_idx = 15 * 4
-      let left_r = frame.pixels[left_idx].to_int()
-      let left_b = frame.pixels[left_idx + 2].to_int()
-      let mid_r = frame.pixels[mid_idx].to_int()
-      let mid_b = frame.pixels[mid_idx + 2].to_int()
-      let right_r = frame.pixels[right_idx].to_int()
-      let right_b = frame.pixels[right_idx + 2].to_int()
+      let left_r = frame.pixels()[left_idx].to_int()
+      let left_b = frame.pixels()[left_idx + 2].to_int()
+      let mid_r = frame.pixels()[mid_idx].to_int()
+      let mid_b = frame.pixels()[mid_idx + 2].to_int()
+      let right_r = frame.pixels()[right_idx].to_int()
+      let right_b = frame.pixels()[right_idx + 2].to_int()
       assert_true(left_r > 200 && left_b < 80)
       assert_true(mid_r > 80 && mid_b > 80)
       assert_true(right_r < 80 && right_b > 200)
@@ -76,9 +76,9 @@ test "sun renderer solid shader fills fallback without diagnostic" {
     Some(frame) => {
       let painted_idx = (1 * 4 + 1) * 4
       let outside_idx = 0
-      assert_true(frame.pixels[painted_idx + 1].to_int() > 180)
-      assert_true(frame.pixels[painted_idx].to_int() < 80)
-      assert_true(frame.pixels[outside_idx].to_int() == 255)
+      assert_true(frame.pixels()[painted_idx + 1].to_int() > 180)
+      assert_true(frame.pixels()[painted_idx].to_int() < 80)
+      assert_true(frame.pixels()[outside_idx].to_int() == 255)
       inspect(renderer.unsupported_command_count(), content="0")
     }
     None => fail("expected Sun frame")
@@ -118,10 +118,10 @@ test "sun renderer checker shader uses fallback colors and cell count" {
     Some(frame) => {
       let red_idx = (1 * 8 + 1) * 4
       let blue_idx = (1 * 8 + 5) * 4
-      assert_true(frame.pixels[red_idx].to_int() > 200)
-      assert_true(frame.pixels[red_idx + 2].to_int() < 80)
-      assert_true(frame.pixels[blue_idx].to_int() < 80)
-      assert_true(frame.pixels[blue_idx + 2].to_int() > 200)
+      assert_true(frame.pixels()[red_idx].to_int() > 200)
+      assert_true(frame.pixels()[red_idx + 2].to_int() < 80)
+      assert_true(frame.pixels()[blue_idx].to_int() < 80)
+      assert_true(frame.pixels()[blue_idx + 2].to_int() > 200)
       inspect(renderer.unsupported_command_count(), content="0")
     }
     None => fail("expected Sun frame")
@@ -158,9 +158,9 @@ test "sun renderer vignette shader uses fallback center color" {
     Some(frame) => {
       let center_idx = (8 * 16 + 8) * 4
       let edge_idx = (0 * 16 + 0) * 4
-      assert_true(frame.pixels[center_idx + 1].to_int() > 180)
-      assert_true(frame.pixels[center_idx].to_int() < 80)
-      assert_true(frame.pixels[edge_idx].to_int() < 80)
+      assert_true(frame.pixels()[center_idx + 1].to_int() > 180)
+      assert_true(frame.pixels()[center_idx].to_int() < 80)
+      assert_true(frame.pixels()[edge_idx].to_int() < 80)
       inspect(renderer.unsupported_command_count(), content="0")
     }
     None => fail("expected Sun frame")

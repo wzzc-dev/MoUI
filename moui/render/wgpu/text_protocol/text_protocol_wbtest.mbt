@@ -188,11 +188,11 @@ test "native text protocol parses versioned measure layout" {
   push_f64_bits_le(bytes, 0x4030000000000000UL)
   match native_measure_layout_from_bytes(input, Bytes::from_array(bytes)) {
     Some(layout) => {
-      inspect(layout.size.width, content="12")
-      inspect(layout.size.height, content="16")
-      inspect(layout.baseline, content="10")
-      inspect(layout.caret_positions.length(), content="3")
-      inspect(layout.caret_positions[2], content="12")
+      inspect(layout.size().width, content="12")
+      inspect(layout.size().height, content="16")
+      inspect(layout.baseline(), content="10")
+      inspect(layout.caret_positions().length(), content="3")
+      inspect(layout.caret_positions()[2], content="12")
     }
     None => fail("expected native text layout payload to parse")
   }
@@ -260,12 +260,12 @@ test "native text protocol parses versioned run layout" {
   }
   match native_run_layout_from_bytes(Bytes::from_array(bytes)) {
     Some(layout) => {
-      inspect(layout.size.width, content="64")
-      inspect(layout.size.height, content="16")
-      inspect(layout.baseline, content="12")
-      inspect(layout.glyphs.length(), content="1")
-      inspect(layout.glyphs[0].x, content="1.5")
-      inspect(layout.glyphs[0].y, content="2")
+      inspect(layout.size().width, content="64")
+      inspect(layout.size().height, content="16")
+      inspect(layout.baseline(), content="12")
+      inspect(layout.glyphs().length(), content="1")
+      inspect(layout.glyphs()[0].x(), content="1.5")
+      inspect(layout.glyphs()[0].y(), content="2")
     }
     None => fail("expected native run layout payload to parse")
   }
@@ -326,14 +326,14 @@ test "native text protocol parses versioned raster glyph" {
   bytes.push(b'\x01')
   match native_raster_glyph_from_bytes(Bytes::from_array(bytes)) {
     Some(glyph) => {
-      inspect(glyph.width, content="2")
-      inspect(glyph.height, content="2")
-      inspect(glyph.bearing_x, content="1")
-      inspect(glyph.bearing_y, content="-3")
+      inspect(glyph.width(), content="2")
+      inspect(glyph.height(), content="2")
+      inspect(glyph.bearing_x(), content="1")
+      inspect(glyph.bearing_y(), content="-3")
       assert_true(
-        glyph.format == @wgpu_renderer.NativeRasterGlyphFormat::AlphaMask,
+        glyph.format() == @wgpu_renderer.NativeRasterGlyphFormat::AlphaMask,
       )
-      inspect(glyph.pixels.length(), content="4")
+      inspect(glyph.pixels().length(), content="4")
     }
     None => fail("expected native raster glyph payload to parse")
   }
@@ -399,12 +399,12 @@ test "native text protocol parses color raster glyph" {
   bytes.push(b'\x80')
   match native_raster_glyph_from_bytes(Bytes::from_array(bytes)) {
     Some(glyph) => {
-      inspect(glyph.width, content="1")
-      inspect(glyph.height, content="2")
+      inspect(glyph.width(), content="1")
+      inspect(glyph.height(), content="2")
       assert_true(
-        glyph.format == @wgpu_renderer.NativeRasterGlyphFormat::ColorRgba,
+        glyph.format() == @wgpu_renderer.NativeRasterGlyphFormat::ColorRgba,
       )
-      inspect(glyph.pixels.length(), content="8")
+      inspect(glyph.pixels().length(), content="8")
     }
     None => fail("expected color native raster glyph payload to parse")
   }

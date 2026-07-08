@@ -11,21 +11,64 @@ pub let native_raster_glyph_protocol_version : Int = 1
 pub let native_font_registration_protocol_version : Int = 1
 
 ///|
-pub(all) struct NativeFontRegistrationPayload {
-  family_name : Bytes
-  data : Bytes
+pub struct NativeFontRegistrationPayload {
+  priv family_name : Bytes
+  priv data : Bytes
 }
 
 ///|
 pub let native_font_spec_protocol_version : Int = 1
 
 ///|
-pub(all) struct NativeFontSpecPayload {
-  size : Double
-  size_key : Int
-  weight : Int
-  style : @core.FontStyle
-  family_names : Array[Bytes]
+pub struct NativeFontSpecPayload {
+  priv size : Double
+  priv size_key : Int
+  priv weight : Int
+  priv style : @core.FontStyle
+  priv family_names : Array[Bytes]
+}
+
+///|
+pub fn NativeFontRegistrationPayload::family_name(
+  self : NativeFontRegistrationPayload,
+) -> Bytes {
+  self.family_name
+}
+
+///|
+pub fn NativeFontRegistrationPayload::data(
+  self : NativeFontRegistrationPayload,
+) -> Bytes {
+  self.data
+}
+
+///|
+pub fn NativeFontSpecPayload::size(self : NativeFontSpecPayload) -> Double {
+  self.size
+}
+
+///|
+pub fn NativeFontSpecPayload::size_key(self : NativeFontSpecPayload) -> Int {
+  self.size_key
+}
+
+///|
+pub fn NativeFontSpecPayload::weight(self : NativeFontSpecPayload) -> Int {
+  self.weight
+}
+
+///|
+pub fn NativeFontSpecPayload::style(
+  self : NativeFontSpecPayload,
+) -> @core.FontStyle {
+  self.style
+}
+
+///|
+pub fn NativeFontSpecPayload::family_names(
+  self : NativeFontSpecPayload,
+) -> Array[Bytes] {
+  self.family_names
 }
 
 ///|

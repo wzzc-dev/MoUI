@@ -831,7 +831,7 @@ test "renderer neutral draw command scopes keep visible path out of fallback pla
   guard commands[6] is @core.DrawCommand::DrawPath(path) else {
     fail("expected path command")
   }
-  inspect(@render.tessellate_path(path).vertices.length(), content="3")
+  inspect(@render.tessellate_path(path).vertices().length(), content="3")
 }
 
 ///|
@@ -1003,8 +1003,8 @@ test "path tessellator lowers fill stroke and curves into vertices" {
     stroke_width=2.0,
   )
   let mesh = @render.tessellate_path(path)
-  assert_true(mesh.vertices.length() > 3)
-  inspect(mesh.diagnostics.length(), content="0")
+  assert_true(mesh.vertices().length() > 3)
+  inspect(mesh.diagnostics().length(), content="0")
 }
 
 ///|
@@ -1028,21 +1028,22 @@ test "path tessellator preserves radial path brush payload" {
     ),
   )
   let mesh = @render.tessellate_path(path)
-  inspect(mesh.vertices.length(), content="3")
-  inspect(mesh.diagnostics.length(), content="0")
-  for vertex in mesh.vertices {
-    assert_true(vertex.brush_kind == 1.0)
-    assert_true(vertex.start_x == 4.0)
-    assert_true(vertex.start_y == 4.0)
-    assert_true(vertex.end_x == 8.0)
-    assert_true(vertex.r == center_color.r)
-    assert_true(vertex.g == center_color.g)
-    assert_true(vertex.b == center_color.b)
-    assert_true(vertex.a == center_color.a)
-    assert_true(vertex.r1 == edge_color.r)
-    assert_true(vertex.g1 == edge_color.g)
-    assert_true(vertex.b1 == edge_color.b)
-    assert_true(vertex.a1 == edge_color.a)
+  inspect(mesh.vertices().length(), content="3")
+  inspect(mesh.diagnostics().length(), content="0")
+  for vertex in mesh.vertices() {
+    let components = vertex.components()
+    assert_true(components[2] == 1.0)
+    assert_true(components[3] == 4.0)
+    assert_true(components[4] == 4.0)
+    assert_true(components[5] == 8.0)
+    assert_true(components[7] == center_color.r)
+    assert_true(components[8] == center_color.g)
+    assert_true(components[9] == center_color.b)
+    assert_true(components[10] == center_color.a)
+    assert_true(components[11] == edge_color.r)
+    assert_true(components[12] == edge_color.g)
+    assert_true(components[13] == edge_color.b)
+    assert_true(components[14] == edge_color.a)
   }
 }
 
@@ -1057,11 +1058,12 @@ test "path tessellator lowers open line stroke into local quad" {
     stroke_width=2.0,
   )
   let mesh = @render.tessellate_path(path)
-  inspect(mesh.vertices.length(), content="6")
-  inspect(mesh.diagnostics.length(), content="0")
-  for vertex in mesh.vertices {
-    assert_true(vertex.x >= 9.0 && vertex.x <= 15.0)
-    assert_true(vertex.y >= 19.0 && vertex.y <= 25.0)
+  inspect(mesh.vertices().length(), content="6")
+  inspect(mesh.diagnostics().length(), content="0")
+  for vertex in mesh.vertices() {
+    let components = vertex.components()
+    assert_true(components[0] >= 9.0 && components[0] <= 15.0)
+    assert_true(components[1] >= 19.0 && components[1] <= 25.0)
   }
 }
 
@@ -1083,8 +1085,8 @@ test "path tessellator uses zeno for cubic and degenerate paths" {
     stroke_width=1.0,
   )
   let cubic_mesh = @render.tessellate_path(cubic)
-  assert_true(cubic_mesh.vertices.length() > 0)
-  inspect(cubic_mesh.diagnostics.length(), content="0")
+  assert_true(cubic_mesh.vertices().length() > 0)
+  inspect(cubic_mesh.diagnostics().length(), content="0")
   let degenerate = @core.PathSpec::new(
     verbs=[
       @core.PathVerb::LineTo(@core.Point::new(x=1.0, y=1.0)),
@@ -1093,8 +1095,8 @@ test "path tessellator uses zeno for cubic and degenerate paths" {
     fill=Some(@core.Brush::solid(@core.Color::rgba(r=1.0, g=0.0, b=0.0))),
   )
   let degenerate_mesh = @render.tessellate_path(degenerate)
-  inspect(degenerate_mesh.vertices.length(), content="0")
-  inspect(degenerate_mesh.diagnostics.length(), content="2")
+  inspect(degenerate_mesh.vertices().length(), content="0")
+  inspect(degenerate_mesh.diagnostics().length(), content="2")
 }
 
 ///|
@@ -1103,12 +1105,12 @@ test "shader registry resolves builtins and reports fallback" {
   let ready = @render.resolve_shader_effect(
     @core.ShaderEffectSpec::new(name="checker", frame=rect),
   )
-  assert_true(ready.status == @render.ShaderRegistryStatus::ShaderReady)
+  assert_true(ready.status() == @render.ShaderRegistryStatus::ShaderReady)
   let fallback = @render.resolve_shader_effect(
     @core.ShaderEffectSpec::new(name="missing", frame=rect),
   )
-  assert_true(fallback.status == @render.ShaderRegistryStatus::ShaderFallback)
-  assert_true(fallback.diagnostic.contains("missing"))
+  assert_true(fallback.status() == @render.ShaderRegistryStatus::ShaderFallback)
+  assert_true(fallback.diagnostic().contains("missing"))
 }
 
 ///|
@@ -1259,17 +1261,17 @@ test "image lifecycle exposes app visible snapshot records" {
 test "svg importer lowers shapes to draw commands" {
   let svg = "<svg><rect x=\"1\" y=\"2\" width=\"10\" height=\"20\" fill=\"blue\"/><circle cx=\"8\" cy=\"8\" r=\"4\" fill=\"red\"/><line x1=\"0\" y1=\"0\" x2=\"10\" y2=\"0\" stroke=\"black\" stroke-width=\"2\"/><polygon points=\"0,0 10,0 10,10\" fill=\"green\"/></svg>"
   let result = @render.import_svg(svg)
-  inspect(result.diagnostics.length(), content="0")
-  inspect(result.commands.length(), content="4")
-  guard result.commands[0] is @core.DrawCommand::FillRect(rect, color) else {
+  inspect(result.diagnostics().length(), content="0")
+  inspect(result.commands().length(), content="4")
+  guard result.commands()[0] is @core.DrawCommand::FillRect(rect, color) else {
     fail("expected rect command")
   }
   inspect(rect.origin.x, content="1")
   assert_true(color == @core.Color::rgba(r=0.0, g=0.0, b=1.0))
-  guard result.commands[1] is @core.DrawCommand::DrawPath(circle) else {
+  guard result.commands()[1] is @core.DrawCommand::DrawPath(circle) else {
     fail("expected circle path")
   }
-  assert_true(@render.tessellate_path(circle).vertices.length() > 0)
+  assert_true(@render.tessellate_path(circle).vertices().length() > 0)
 }
 
 ///|
@@ -1277,5 +1279,5 @@ test "svg importer reports unsupported embedded features" {
   let result = @render.import_svg(
     "<svg><foreignObject/><animate attributeName=\"x\"/></svg>",
   )
-  inspect(result.diagnostics.length(), content="2")
+  inspect(result.diagnostics().length(), content="2")
 }

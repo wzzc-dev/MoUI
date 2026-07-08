@@ -292,9 +292,23 @@ test "views facade exposes control-specific contracts" {
 ///|
 test "host and renderer public all budgets ratchet down" {
   let host = budget_by_label("host contracts")
-  inspect(host.max_pub_all_lines, content="66")
+  inspect(host.max_pub_all_lines, content="62")
   let renderer = budget_by_label("renderer facade")
-  inspect(renderer.max_pub_all_lines, content="29")
+  inspect(renderer.max_pub_all_lines, content="25")
+  let skia = budget_by_label("skia renderer")
+  inspect(skia.max_pub_all_lines, content="3")
+  let sun = budget_by_label("sun renderer")
+  inspect(sun.max_pub_all_lines, content="1")
+  let webgpu = budget_by_label("webgpu adapter")
+  inspect(webgpu.max_pub_all_lines, content="2")
+  let wgpu = budget_by_label("native wgpu renderer")
+  inspect(wgpu.max_pub_all_lines, content="2")
+  let text_protocol = budget_by_label("native text protocol")
+  inspect(text_protocol.max_pub_all_lines, content="0")
+  assert_true(sun.forbidden_tokens.contains("HostWindowRenderer"))
+  assert_true(webgpu.forbidden_tokens.contains("SkiaRasterRenderer"))
+  assert_true(wgpu.forbidden_tokens.contains("\"wzzc-dev/moui/backend/host\""))
+  assert_true(text_protocol.forbidden_tokens.contains("RendererHandle"))
 }
 
 ///|

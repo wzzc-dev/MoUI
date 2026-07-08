@@ -129,9 +129,9 @@ test "host app services facade reports unavailable service responses" {
 test "host binary file diagnostics summarize bytes without dumping payloads" {
   let request = HostBinaryFileRequest::WriteBytes("/tmp/report.pdf", b"%PDF")
   let diagnostic = request.diagnostic()
-  inspect(diagnostic.path, content="/tmp/report.pdf")
-  inspect(diagnostic.operation, content="write-bytes")
-  inspect(diagnostic.byte_length, content="4")
+  inspect(diagnostic.path(), content="/tmp/report.pdf")
+  inspect(diagnostic.operation(), content="write-bytes")
+  inspect(diagnostic.byte_length(), content="4")
 
   match
     HostServiceResponse::BinaryFileContent(
@@ -139,9 +139,9 @@ test "host binary file diagnostics summarize bytes without dumping payloads" {
       Bytes::make(32, b'\xff'),
     ).binary_file_diagnostic() {
     Some(summary) => {
-      inspect(summary.path, content="/tmp/report.pdf")
-      inspect(summary.operation, content="read-bytes")
-      inspect(summary.byte_length, content="32")
+      inspect(summary.path(), content="/tmp/report.pdf")
+      inspect(summary.operation(), content="read-bytes")
+      inspect(summary.byte_length(), content="32")
     }
     None => fail("expected binary content diagnostic summary")
   }

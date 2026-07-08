@@ -39,7 +39,7 @@ fn WebGpuWasmRenderer::sync_web_image_resource(
   self : WebGpuWasmRenderer,
   source : String,
 ) -> Unit {
-  match (self.port.image_resource)(source) {
+  match self.port.image_resource(source) {
     Some({ status: @render.ImageResourceStatus::ImageReady, width, height, .. }) =>
       ignore(self.image_lifecycle.mark_ready(source, width~, height~))
     Some({ status: @render.ImageResourceStatus::ImageFailed, diagnostic, .. }) =>

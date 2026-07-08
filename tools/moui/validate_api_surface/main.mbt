@@ -387,7 +387,7 @@ fn package_budgets() -> Array[PackageBudget] {
       package_token: "package \"wzzc-dev/moui/backend/host\"",
       max_lines: 1100,
       max_pub_lines: 480,
-      max_pub_all_lines: 66,
+      max_pub_all_lines: 62,
       required_tokens: [
         "HostWindowRenderer", "HostAsyncImageLoader", "HostRouteSource", "pub(all) struct HostRouteLocation",
         "pub(all) struct HostRouteQueryParam",
@@ -402,7 +402,7 @@ fn package_budgets() -> Array[PackageBudget] {
       package_token: "package \"wzzc-dev/moui/render\"",
       max_lines: 380,
       max_pub_lines: 110,
-      max_pub_all_lines: 29,
+      max_pub_all_lines: 25,
       required_tokens: [
         "RendererBackendKind", "RendererDescriptor", "RenderFrameResult",
       ],
@@ -415,12 +415,71 @@ fn package_budgets() -> Array[PackageBudget] {
       path: "moui/render/skia/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/render/skia\"",
       max_lines: 220,
-      max_pub_lines: 50,
-      max_pub_all_lines: 8,
+      max_pub_lines: 93,
+      max_pub_all_lines: 3,
       required_tokens: [
         "SkiaRasterRenderer", "skia_available", "skia_image_load_completion",
       ],
       forbidden_tokens: ["\"wzzc-dev/moui/backend/host\"", "HostWindowRenderer"],
+    },
+    {
+      label: "sun renderer",
+      path: "moui/render/sun/pkg.generated.mbti",
+      package_token: "package \"wzzc-dev/moui/render/sun\"",
+      max_lines: 231,
+      max_pub_lines: 138,
+      max_pub_all_lines: 1,
+      required_tokens: [
+        "SunRasterRenderer", "SunRendererError", "SunPixelFrame",
+      ],
+      forbidden_tokens: [
+        "\"wzzc-dev/moui/backend/host\"", "HostWindowRenderer", "SkiaRasterRenderer",
+        "WgpuRenderer",
+      ],
+    },
+    {
+      label: "webgpu adapter",
+      path: "moui/render/webgpu_adapter/pkg.generated.mbti",
+      package_token: "package \"wzzc-dev/moui/render/webgpu_adapter\"",
+      max_lines: 150,
+      max_pub_lines: 60,
+      max_pub_all_lines: 2,
+      required_tokens: [
+        "WebGpuHostCall", "WebGpuHostError", "WebGpuWasmRenderer",
+      ],
+      forbidden_tokens: [
+        "\"wzzc-dev/moui/backend/host\"", "HostWindowRenderer", "SkiaRasterRenderer",
+        "WgpuRenderer",
+      ],
+    },
+    {
+      label: "native wgpu renderer",
+      path: "moui/render/wgpu/pkg.generated.mbti",
+      package_token: "package \"wzzc-dev/moui/render/wgpu\"",
+      max_lines: 150,
+      max_pub_lines: 65,
+      max_pub_all_lines: 2,
+      required_tokens: [
+        "NativeTextEngine", "HostWgpuSurface", "NativeTextLayout",
+      ],
+      forbidden_tokens: [
+        "\"wzzc-dev/moui/backend/host\"", "HostWindowRenderer", "SkiaRasterRenderer",
+      ],
+    },
+    {
+      label: "native text protocol",
+      path: "moui/render/wgpu/text_protocol/pkg.generated.mbti",
+      package_token: "package \"wzzc-dev/moui/render/wgpu/text_protocol\"",
+      max_lines: 60,
+      max_pub_lines: 23,
+      max_pub_all_lines: 0,
+      required_tokens: [
+        "NativeFontRegistrationPayload", "native_measure_layout_from_bytes",
+      ],
+      forbidden_tokens: [
+        "\"wzzc-dev/moui/backend/host\"", "HostWindowRenderer", "WgpuRenderer", "HostWgpuSurface",
+        "RendererHandle",
+      ],
     },
   ]
 }

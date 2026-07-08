@@ -1,56 +1,350 @@
 ///|
-pub(all) struct SkiaTextVisualOrderDiagnostic {
-  logical_text : String
-  visual_text : String
-  logical_cluster_count : Int
-  visual_cluster_count : Int
-  segment_count : Int
-  glyph_count : Int
-  width : Double
-  visual_order_differs : Bool
+pub struct SkiaTextVisualOrderDiagnostic {
+  priv logical_text : String
+  priv visual_text : String
+  priv logical_cluster_count : Int
+  priv visual_cluster_count : Int
+  priv segment_count : Int
+  priv glyph_count : Int
+  priv width : Double
+  priv visual_order_differs : Bool
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct SkiaTextSelectionGeometryDiagnostic {
-  text : String
-  selection_range : @core.TextRange
-  selection_rect_count : Int
-  selected_line_count : Int
-  line_count : Int
-  hit_test_offset : Int
-  hit_test_line_index : Int
-  hit_test_inside : Bool
-  visual_order_differs : Bool
-  visual_segment_count : Int
-  bidi_visual_order_observed : Bool
+pub struct SkiaTextSelectionGeometryDiagnostic {
+  priv text : String
+  priv selection_range : @core.TextRange
+  priv selection_rect_count : Int
+  priv selected_line_count : Int
+  priv line_count : Int
+  priv hit_test_offset : Int
+  priv hit_test_line_index : Int
+  priv hit_test_inside : Bool
+  priv visual_order_differs : Bool
+  priv visual_segment_count : Int
+  priv bidi_visual_order_observed : Bool
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct SkiaEmojiFontFallbackDiagnostic {
-  text : String
-  text_system_id : String
-  font_family : String
-  font_source : String
-  resolved_font_name : String
-  fallback_language_tags : Array[String]
-  fallback_script_tag : String
-  fallback_language_tag_count : Int
-  fallback_request_language_count : Int
-  shaper : String
-  glyph_format : String
-  glyph_key : String
-  glyph_count : Int
-  cluster_count : Int
-  glyph_width : Int
-  glyph_height : Int
-  resolved_missing_glyph_count : Int
-  fallback_character : Int
-  emoji_hint : Bool
-  emoji_fallback_attempted : Bool
-  fallback_request_ready : Bool
-  missing_glyph_recovery_ready : Bool
-  deterministic_color_emoji_ready : Bool
+pub struct SkiaEmojiFontFallbackDiagnostic {
+  priv text : String
+  priv text_system_id : String
+  priv font_family : String
+  priv font_source : String
+  priv resolved_font_name : String
+  priv fallback_language_tags : Array[String]
+  priv fallback_script_tag : String
+  priv fallback_language_tag_count : Int
+  priv fallback_request_language_count : Int
+  priv shaper : String
+  priv glyph_format : String
+  priv glyph_key : String
+  priv glyph_count : Int
+  priv cluster_count : Int
+  priv glyph_width : Int
+  priv glyph_height : Int
+  priv resolved_missing_glyph_count : Int
+  priv fallback_character : Int
+  priv emoji_hint : Bool
+  priv emoji_fallback_attempted : Bool
+  priv fallback_request_ready : Bool
+  priv missing_glyph_recovery_ready : Bool
+  priv deterministic_color_emoji_ready : Bool
 } derive(Eq, Debug, ToJson)
+
+///|
+pub fn SkiaTextVisualOrderDiagnostic::logical_text(
+  self : SkiaTextVisualOrderDiagnostic,
+) -> String {
+  self.logical_text
+}
+
+///|
+pub fn SkiaTextVisualOrderDiagnostic::visual_text(
+  self : SkiaTextVisualOrderDiagnostic,
+) -> String {
+  self.visual_text
+}
+
+///|
+pub fn SkiaTextVisualOrderDiagnostic::logical_cluster_count(
+  self : SkiaTextVisualOrderDiagnostic,
+) -> Int {
+  self.logical_cluster_count
+}
+
+///|
+pub fn SkiaTextVisualOrderDiagnostic::visual_cluster_count(
+  self : SkiaTextVisualOrderDiagnostic,
+) -> Int {
+  self.visual_cluster_count
+}
+
+///|
+pub fn SkiaTextVisualOrderDiagnostic::segment_count(
+  self : SkiaTextVisualOrderDiagnostic,
+) -> Int {
+  self.segment_count
+}
+
+///|
+pub fn SkiaTextVisualOrderDiagnostic::glyph_count(
+  self : SkiaTextVisualOrderDiagnostic,
+) -> Int {
+  self.glyph_count
+}
+
+///|
+pub fn SkiaTextVisualOrderDiagnostic::width(
+  self : SkiaTextVisualOrderDiagnostic,
+) -> Double {
+  self.width
+}
+
+///|
+pub fn SkiaTextVisualOrderDiagnostic::visual_order_differs(
+  self : SkiaTextVisualOrderDiagnostic,
+) -> Bool {
+  self.visual_order_differs
+}
+
+///|
+pub fn SkiaTextSelectionGeometryDiagnostic::text(
+  self : SkiaTextSelectionGeometryDiagnostic,
+) -> String {
+  self.text
+}
+
+///|
+pub fn SkiaTextSelectionGeometryDiagnostic::selection_range(
+  self : SkiaTextSelectionGeometryDiagnostic,
+) -> @core.TextRange {
+  self.selection_range
+}
+
+///|
+pub fn SkiaTextSelectionGeometryDiagnostic::selection_rect_count(
+  self : SkiaTextSelectionGeometryDiagnostic,
+) -> Int {
+  self.selection_rect_count
+}
+
+///|
+pub fn SkiaTextSelectionGeometryDiagnostic::selected_line_count(
+  self : SkiaTextSelectionGeometryDiagnostic,
+) -> Int {
+  self.selected_line_count
+}
+
+///|
+pub fn SkiaTextSelectionGeometryDiagnostic::line_count(
+  self : SkiaTextSelectionGeometryDiagnostic,
+) -> Int {
+  self.line_count
+}
+
+///|
+pub fn SkiaTextSelectionGeometryDiagnostic::hit_test_offset(
+  self : SkiaTextSelectionGeometryDiagnostic,
+) -> Int {
+  self.hit_test_offset
+}
+
+///|
+pub fn SkiaTextSelectionGeometryDiagnostic::hit_test_line_index(
+  self : SkiaTextSelectionGeometryDiagnostic,
+) -> Int {
+  self.hit_test_line_index
+}
+
+///|
+pub fn SkiaTextSelectionGeometryDiagnostic::hit_test_inside(
+  self : SkiaTextSelectionGeometryDiagnostic,
+) -> Bool {
+  self.hit_test_inside
+}
+
+///|
+pub fn SkiaTextSelectionGeometryDiagnostic::visual_order_differs(
+  self : SkiaTextSelectionGeometryDiagnostic,
+) -> Bool {
+  self.visual_order_differs
+}
+
+///|
+pub fn SkiaTextSelectionGeometryDiagnostic::visual_segment_count(
+  self : SkiaTextSelectionGeometryDiagnostic,
+) -> Int {
+  self.visual_segment_count
+}
+
+///|
+pub fn SkiaTextSelectionGeometryDiagnostic::bidi_visual_order_observed(
+  self : SkiaTextSelectionGeometryDiagnostic,
+) -> Bool {
+  self.bidi_visual_order_observed
+}
+
+///|
+pub fn SkiaEmojiFontFallbackDiagnostic::text(
+  self : SkiaEmojiFontFallbackDiagnostic,
+) -> String {
+  self.text
+}
+
+///|
+pub fn SkiaEmojiFontFallbackDiagnostic::text_system_id(
+  self : SkiaEmojiFontFallbackDiagnostic,
+) -> String {
+  self.text_system_id
+}
+
+///|
+pub fn SkiaEmojiFontFallbackDiagnostic::font_family(
+  self : SkiaEmojiFontFallbackDiagnostic,
+) -> String {
+  self.font_family
+}
+
+///|
+pub fn SkiaEmojiFontFallbackDiagnostic::font_source(
+  self : SkiaEmojiFontFallbackDiagnostic,
+) -> String {
+  self.font_source
+}
+
+///|
+pub fn SkiaEmojiFontFallbackDiagnostic::resolved_font_name(
+  self : SkiaEmojiFontFallbackDiagnostic,
+) -> String {
+  self.resolved_font_name
+}
+
+///|
+pub fn SkiaEmojiFontFallbackDiagnostic::fallback_language_tags(
+  self : SkiaEmojiFontFallbackDiagnostic,
+) -> Array[String] {
+  self.fallback_language_tags
+}
+
+///|
+pub fn SkiaEmojiFontFallbackDiagnostic::fallback_script_tag(
+  self : SkiaEmojiFontFallbackDiagnostic,
+) -> String {
+  self.fallback_script_tag
+}
+
+///|
+pub fn SkiaEmojiFontFallbackDiagnostic::fallback_language_tag_count(
+  self : SkiaEmojiFontFallbackDiagnostic,
+) -> Int {
+  self.fallback_language_tag_count
+}
+
+///|
+pub fn SkiaEmojiFontFallbackDiagnostic::fallback_request_language_count(
+  self : SkiaEmojiFontFallbackDiagnostic,
+) -> Int {
+  self.fallback_request_language_count
+}
+
+///|
+pub fn SkiaEmojiFontFallbackDiagnostic::shaper(
+  self : SkiaEmojiFontFallbackDiagnostic,
+) -> String {
+  self.shaper
+}
+
+///|
+pub fn SkiaEmojiFontFallbackDiagnostic::glyph_format(
+  self : SkiaEmojiFontFallbackDiagnostic,
+) -> String {
+  self.glyph_format
+}
+
+///|
+pub fn SkiaEmojiFontFallbackDiagnostic::glyph_key(
+  self : SkiaEmojiFontFallbackDiagnostic,
+) -> String {
+  self.glyph_key
+}
+
+///|
+pub fn SkiaEmojiFontFallbackDiagnostic::glyph_count(
+  self : SkiaEmojiFontFallbackDiagnostic,
+) -> Int {
+  self.glyph_count
+}
+
+///|
+pub fn SkiaEmojiFontFallbackDiagnostic::cluster_count(
+  self : SkiaEmojiFontFallbackDiagnostic,
+) -> Int {
+  self.cluster_count
+}
+
+///|
+pub fn SkiaEmojiFontFallbackDiagnostic::glyph_width(
+  self : SkiaEmojiFontFallbackDiagnostic,
+) -> Int {
+  self.glyph_width
+}
+
+///|
+pub fn SkiaEmojiFontFallbackDiagnostic::glyph_height(
+  self : SkiaEmojiFontFallbackDiagnostic,
+) -> Int {
+  self.glyph_height
+}
+
+///|
+pub fn SkiaEmojiFontFallbackDiagnostic::resolved_missing_glyph_count(
+  self : SkiaEmojiFontFallbackDiagnostic,
+) -> Int {
+  self.resolved_missing_glyph_count
+}
+
+///|
+pub fn SkiaEmojiFontFallbackDiagnostic::fallback_character(
+  self : SkiaEmojiFontFallbackDiagnostic,
+) -> Int {
+  self.fallback_character
+}
+
+///|
+pub fn SkiaEmojiFontFallbackDiagnostic::emoji_hint(
+  self : SkiaEmojiFontFallbackDiagnostic,
+) -> Bool {
+  self.emoji_hint
+}
+
+///|
+pub fn SkiaEmojiFontFallbackDiagnostic::emoji_fallback_attempted(
+  self : SkiaEmojiFontFallbackDiagnostic,
+) -> Bool {
+  self.emoji_fallback_attempted
+}
+
+///|
+pub fn SkiaEmojiFontFallbackDiagnostic::fallback_request_ready(
+  self : SkiaEmojiFontFallbackDiagnostic,
+) -> Bool {
+  self.fallback_request_ready
+}
+
+///|
+pub fn SkiaEmojiFontFallbackDiagnostic::missing_glyph_recovery_ready(
+  self : SkiaEmojiFontFallbackDiagnostic,
+) -> Bool {
+  self.missing_glyph_recovery_ready
+}
+
+///|
+pub fn SkiaEmojiFontFallbackDiagnostic::deterministic_color_emoji_ready(
+  self : SkiaEmojiFontFallbackDiagnostic,
+) -> Bool {
+  self.deterministic_color_emoji_ready
+}
 
 ///|
 pub fn skia_text_visual_order_diagnostic(

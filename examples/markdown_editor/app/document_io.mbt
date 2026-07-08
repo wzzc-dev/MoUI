@@ -344,12 +344,15 @@ fn markdown_editor_tree_children_from_listing(
 ) -> Array[@views.TreeItem] {
   let child_items : Array[@views.TreeItem] = []
   for entry in markdown_editor_sorted_directory_entries(entries) {
-    if entry.is_directory {
+    if entry.is_directory() {
       child_items.push(
-        markdown_editor_directory_tree_item(path=entry.path, label=entry.name),
+        markdown_editor_directory_tree_item(
+          path=entry.path(),
+          label=entry.name(),
+        ),
       )
     } else {
-      child_items.push(@views.tree_item(id=entry.path, label=entry.name))
+      child_items.push(@views.tree_item(id=entry.path(), label=entry.name()))
     }
   }
   if child_items.length() == 0 {
@@ -389,10 +392,10 @@ fn markdown_editor_directory_entry_before(
   left : @host.HostDirectoryEntry,
   right : @host.HostDirectoryEntry,
 ) -> Bool {
-  if left.is_directory != right.is_directory {
-    left.is_directory
+  if left.is_directory() != right.is_directory() {
+    left.is_directory()
   } else {
-    markdown_editor_case_insensitive_less(left.name, right.name)
+    markdown_editor_case_insensitive_less(left.name(), right.name())
   }
 }
 

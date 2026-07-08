@@ -1,10 +1,10 @@
 ///|
-pub(all) struct SkiaPixelFrame {
-  width : Int
-  height : Int
-  row_bytes : Int
-  scale_factor : Double
-  pixels : Bytes
+pub struct SkiaPixelFrame {
+  priv width : Int
+  priv height : Int
+  priv row_bytes : Int
+  priv scale_factor : Double
+  priv pixels : Bytes
 } derive(Eq, Debug)
 
 ///|
@@ -122,6 +122,31 @@ pub fn SkiaPresentTarget::new(
   present~ : (SkiaPixelFrame) -> Bool,
 ) -> SkiaPresentTarget {
   { description, present }
+}
+
+///|
+pub fn SkiaPixelFrame::width(self : SkiaPixelFrame) -> Int {
+  self.width
+}
+
+///|
+pub fn SkiaPixelFrame::height(self : SkiaPixelFrame) -> Int {
+  self.height
+}
+
+///|
+pub fn SkiaPixelFrame::row_bytes(self : SkiaPixelFrame) -> Int {
+  self.row_bytes
+}
+
+///|
+pub fn SkiaPixelFrame::scale_factor(self : SkiaPixelFrame) -> Double {
+  self.scale_factor
+}
+
+///|
+pub fn SkiaPixelFrame::pixels(self : SkiaPixelFrame) -> Bytes {
+  self.pixels
 }
 
 ///|

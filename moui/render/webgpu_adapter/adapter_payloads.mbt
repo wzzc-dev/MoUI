@@ -1,22 +1,10 @@
 ///|
 fn path_mesh_payload(mesh : @render.PathMesh) -> String {
   let values : Array[String] = []
-  for vertex in mesh.vertices {
-    values.push(vertex.x.to_string())
-    values.push(vertex.y.to_string())
-    values.push(vertex.brush_kind.to_string())
-    values.push(vertex.start_x.to_string())
-    values.push(vertex.start_y.to_string())
-    values.push(vertex.end_x.to_string())
-    values.push(vertex.end_y.to_string())
-    values.push(vertex.r.to_string())
-    values.push(vertex.g.to_string())
-    values.push(vertex.b.to_string())
-    values.push(vertex.a.to_string())
-    values.push(vertex.r1.to_string())
-    values.push(vertex.g1.to_string())
-    values.push(vertex.b1.to_string())
-    values.push(vertex.a1.to_string())
+  for vertex in mesh.vertices() {
+    for component in vertex.components() {
+      values.push(component.to_string())
+    }
   }
   values.join(",")
 }

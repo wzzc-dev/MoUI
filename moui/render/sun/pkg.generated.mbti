@@ -1,0 +1,231 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/render/sun"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui_sun/graphics",
+  "wzzc-dev/moui_sun/renderer",
+  "wzzc-dev/moui_sun/text",
+}
+
+// Values
+pub fn backend_info() -> @render.RendererBackendInfo
+
+pub fn create_with_present_target(@render.RendererSurfaceMetrics, SunPresentTarget, async_image_loading? : Bool) -> SunRasterRenderer raise SunRendererError
+
+pub fn renderer_descriptor() -> @render.RendererDescriptor
+
+pub fn sun_image_load_completion(String) -> @render.ImageResourceLoadCompletion
+
+pub fn sun_image_load_completion_from_bytes(String, Bytes, background_io? : Bool) -> @render.ImageResourceLoadCompletion
+
+pub fn sun_raster_native_descriptor() -> @render.RendererDescriptor
+
+// Errors
+pub(all) suberror SunRendererError {
+  InvalidSurfaceSize(Int, Int)
+  PresentFailed(String)
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SunRendererError::message(Self) -> String
+
+// Types and methods
+pub struct SunCachedLayerAdmissionDiagnostic {
+  // private fields
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SunCachedLayerAdmissionDiagnostic::churn_without_hit(Self) -> Bool
+pub fn SunCachedLayerAdmissionDiagnostic::hit_count(Self) -> Int
+pub fn SunCachedLayerAdmissionDiagnostic::identity_key(Self) -> String
+pub fn SunCachedLayerAdmissionDiagnostic::skip_reason(Self) -> String
+pub fn SunCachedLayerAdmissionDiagnostic::update_streak(Self) -> Int
+
+pub struct SunCachedLayerAdmissionRecord {
+  identity_key : String
+  mut update_streak : Int
+  mut hit_count : Int
+  mut skip_reason : String
+  mut last_revision : Int
+}
+
+pub struct SunCachedLayerDiagnostic {
+  // private fields
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SunCachedLayerDiagnostic::admission_record_count(Self) -> Int
+pub fn SunCachedLayerDiagnostic::admission_records(Self) -> Array[SunCachedLayerAdmissionDiagnostic]
+pub fn SunCachedLayerDiagnostic::cache_ready(Self) -> Bool
+pub fn SunCachedLayerDiagnostic::cached_layer_count(Self) -> Int
+pub fn SunCachedLayerDiagnostic::cached_layer_keys(Self) -> Array[String]
+pub fn SunCachedLayerDiagnostic::churn_without_hit_count(Self) -> Int
+pub fn SunCachedLayerDiagnostic::max_cached_layer_count(Self) -> Int
+pub fn SunCachedLayerDiagnostic::summary(Self) -> String
+pub fn SunCachedLayerDiagnostic::total_evict_count(Self) -> Int
+pub fn SunCachedLayerDiagnostic::total_hit_count(Self) -> Int
+pub fn SunCachedLayerDiagnostic::total_miss_count(Self) -> Int
+pub fn SunCachedLayerDiagnostic::total_update_count(Self) -> Int
+
+pub struct SunEmojiFontFallbackDiagnostic {
+  // private fields
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SunEmojiFontFallbackDiagnostic::cluster_count(Self) -> Int
+pub fn SunEmojiFontFallbackDiagnostic::covered_char_count(Self) -> Int
+pub fn SunEmojiFontFallbackDiagnostic::deterministic_color_emoji_ready(Self) -> Bool
+pub fn SunEmojiFontFallbackDiagnostic::emoji_fallback_attempted(Self) -> Bool
+pub fn SunEmojiFontFallbackDiagnostic::emoji_hint(Self) -> Bool
+pub fn SunEmojiFontFallbackDiagnostic::fallback_character(Self) -> Int
+pub fn SunEmojiFontFallbackDiagnostic::fallback_language_tag_count(Self) -> Int
+pub fn SunEmojiFontFallbackDiagnostic::fallback_language_tags(Self) -> Array[String]
+pub fn SunEmojiFontFallbackDiagnostic::fallback_request_language_count(Self) -> Int
+pub fn SunEmojiFontFallbackDiagnostic::fallback_request_ready(Self) -> Bool
+pub fn SunEmojiFontFallbackDiagnostic::fallback_script_tag(Self) -> String
+pub fn SunEmojiFontFallbackDiagnostic::fallback_span_count(Self) -> Int
+pub fn SunEmojiFontFallbackDiagnostic::font_source(Self) -> String
+pub fn SunEmojiFontFallbackDiagnostic::glyph_count(Self) -> Int
+pub fn SunEmojiFontFallbackDiagnostic::glyph_format(Self) -> String
+pub fn SunEmojiFontFallbackDiagnostic::glyph_height(Self) -> Int
+pub fn SunEmojiFontFallbackDiagnostic::glyph_key(Self) -> String
+pub fn SunEmojiFontFallbackDiagnostic::glyph_width(Self) -> Int
+pub fn SunEmojiFontFallbackDiagnostic::missing_char_count(Self) -> Int
+pub fn SunEmojiFontFallbackDiagnostic::missing_glyph_recovery_ready(Self) -> Bool
+pub fn SunEmojiFontFallbackDiagnostic::registered_font_count(Self) -> Int
+pub fn SunEmojiFontFallbackDiagnostic::registered_font_fallback_ready(Self) -> Bool
+pub fn SunEmojiFontFallbackDiagnostic::requested_font_family(Self) -> String
+pub fn SunEmojiFontFallbackDiagnostic::resolved_face_count(Self) -> Int
+pub fn SunEmojiFontFallbackDiagnostic::resolved_fallback_face_index(Self) -> Int
+pub fn SunEmojiFontFallbackDiagnostic::resolved_font_name(Self) -> String
+pub fn SunEmojiFontFallbackDiagnostic::resolved_missing_glyph_count(Self) -> Int
+pub fn SunEmojiFontFallbackDiagnostic::shaper(Self) -> String
+pub fn SunEmojiFontFallbackDiagnostic::span_count(Self) -> Int
+pub fn SunEmojiFontFallbackDiagnostic::summary(Self) -> String
+pub fn SunEmojiFontFallbackDiagnostic::text(Self) -> String
+pub fn SunEmojiFontFallbackDiagnostic::text_system_id(Self) -> String
+
+pub struct SunPixelFrame {
+  // private fields
+} derive(@debug.Debug)
+pub fn SunPixelFrame::bytes(Self) -> Bytes
+pub fn SunPixelFrame::height(Self) -> Int
+pub fn SunPixelFrame::pixels(Self) -> FixedArray[Byte]
+pub fn SunPixelFrame::row_bytes(Self) -> Int
+pub fn SunPixelFrame::scale_factor(Self) -> Double
+pub fn SunPixelFrame::width(Self) -> Int
+
+pub struct SunPresentTarget {
+  description : String
+  present : (SunPixelFrame) -> Bool
+}
+pub fn SunPresentTarget::new(description~ : String, present~ : (SunPixelFrame) -> Bool) -> Self
+
+pub struct SunRasterRenderer {
+  mut metrics : @render.RendererSurfaceMetrics
+  target : SunPresentTarget
+  mut canvas : @graphics.Canvas
+  mut present_count : Int
+  mut unsupported_command_count : Int
+  unsupported_command_diagnostics : Array[SunUnsupportedCommandDiagnostic]
+  mut last_frame : SunPixelFrame?
+  text_system : @text.TextSystem
+  resources : @renderer.RendererResources
+  image_lifecycle : @render.ImageResourceLifecycle
+  async_image_loading : Bool
+  mut on_image_resource_change : ((@render.ImageResourceSnapshot) -> Unit)?
+  mut canvas_stack : Array[@graphics.Canvas]
+  mut filter_stack : Array[@graphics.PaintFilter]
+  mut cached_layer_pixmaps : Map[String, @graphics.Pixmap]
+  mut cached_layer_revisions : Map[String, Int]
+  mut cached_layer_scales : Map[String, Double]
+  mut cached_layer_order : Array[String]
+  mut cached_layer_hit_count : Int
+  mut cached_layer_miss_count : Int
+  mut cached_layer_update_count : Int
+  mut cached_layer_evict_count : Int
+  cached_layer_admissions : Array[SunCachedLayerAdmissionRecord]
+  mut blur_radius_stack : Array[Double]
+  mut rounded_clip_stack : Array[@core.RoundedRect]
+  mut platform_view_draw_fn : (() -> Unit)?
+}
+pub fn SunRasterRenderer::apply_image_resource_load_completion(Self, @render.ImageResourceLoadCompletion) -> @render.ImageResourceSnapshot
+pub fn SunRasterRenderer::cached_layer_diagnostic(Self) -> SunCachedLayerDiagnostic
+pub fn SunRasterRenderer::cached_layer_hit_count(Self) -> Int
+pub fn SunRasterRenderer::cached_layer_miss_count(Self) -> Int
+pub fn SunRasterRenderer::dispose(Self) -> Unit
+pub fn SunRasterRenderer::draw_platform_view_pixels(Self, Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit
+pub fn SunRasterRenderer::emoji_font_fallback_diagnostic(Self, text? : String, font? : @core.FontSpec) -> SunEmojiFontFallbackDiagnostic
+pub fn SunRasterRenderer::image_resource_snapshot(Self) -> @render.ImageResourceSnapshot
+pub fn SunRasterRenderer::image_resources(Self) -> Array[@render.ImageResourceRecord]
+pub fn SunRasterRenderer::last_frame(Self) -> SunPixelFrame?
+pub fn SunRasterRenderer::present_count(Self) -> Int
+pub fn SunRasterRenderer::register_font_bytes(Self, String, Bytes) -> Unit
+pub fn SunRasterRenderer::register_font_file(Self, String, String, font_index? : Int) -> Unit
+pub fn SunRasterRenderer::render(Self, Array[@core.DrawCommand]) -> Unit raise SunRendererError
+pub fn SunRasterRenderer::render_frame(Self, @core.DrawFrame) -> @render.RenderFrameResult
+pub fn SunRasterRenderer::resize(Self, @render.RendererSurfaceMetrics) -> Unit raise SunRendererError
+pub fn SunRasterRenderer::set_image_resource_change_callback(Self, ((@render.ImageResourceSnapshot) -> Unit)?) -> Unit
+pub fn SunRasterRenderer::set_platform_view_draw_fn(Self, (() -> Unit)?) -> Unit
+pub fn SunRasterRenderer::surface_diagnostic_summary(Self) -> String
+pub fn SunRasterRenderer::text_maturity_diagnostic(Self, text? : String, font? : @core.FontSpec, max_width? : Double) -> SunTextMaturityDiagnostic
+pub fn SunRasterRenderer::text_selection_geometry_diagnostic(Self, text? : String, selection? : @core.TextRange?, font? : @core.FontSpec, max_width? : Double) -> SunTextSelectionGeometryDiagnostic
+pub fn SunRasterRenderer::text_system(Self) -> @core.TextSystem
+pub fn SunRasterRenderer::text_visual_order_diagnostic(Self, String, font? : @core.FontSpec, max_width? : Double) -> SunTextVisualOrderDiagnostic?
+pub fn SunRasterRenderer::unsupported_command_count(Self) -> Int
+pub fn SunRasterRenderer::unsupported_command_diagnostics(Self) -> Array[SunUnsupportedCommandDiagnostic]
+
+pub struct SunTextMaturityDiagnostic {
+  // private fields
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SunTextMaturityDiagnostic::bidi_visual_order_ready(Self) -> Bool
+pub fn SunTextMaturityDiagnostic::color_emoji_ready(Self) -> Bool
+pub fn SunTextMaturityDiagnostic::gap_count(Self) -> Int
+pub fn SunTextMaturityDiagnostic::hit_test_inside(Self) -> Bool
+pub fn SunTextMaturityDiagnostic::hit_test_ready(Self) -> Bool
+pub fn SunTextMaturityDiagnostic::line_metrics_ready(Self) -> Bool
+pub fn SunTextMaturityDiagnostic::native_paragraph_ready(Self) -> Bool
+pub fn SunTextMaturityDiagnostic::paragraph_layout_ready(Self) -> Bool
+pub fn SunTextMaturityDiagnostic::paragraph_line_count(Self) -> Int
+pub fn SunTextMaturityDiagnostic::ready_count(Self) -> Int
+pub fn SunTextMaturityDiagnostic::registered_font_count(Self) -> Int
+pub fn SunTextMaturityDiagnostic::selection_rect_count(Self) -> Int
+pub fn SunTextMaturityDiagnostic::selection_rects_ready(Self) -> Bool
+pub fn SunTextMaturityDiagnostic::summary(Self) -> String
+pub fn SunTextMaturityDiagnostic::text_system_id(Self) -> String
+pub fn SunTextMaturityDiagnostic::unicode_17_grapheme_boundary_ready(Self) -> Bool
+
+pub struct SunTextSelectionGeometryDiagnostic {
+  // private fields
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SunTextSelectionGeometryDiagnostic::bidi_visual_order_observed(Self) -> Bool
+pub fn SunTextSelectionGeometryDiagnostic::bidi_visual_order_ready(Self) -> Bool
+pub fn SunTextSelectionGeometryDiagnostic::hit_test_inside(Self) -> Bool
+pub fn SunTextSelectionGeometryDiagnostic::hit_test_line_index(Self) -> Int
+pub fn SunTextSelectionGeometryDiagnostic::hit_test_offset(Self) -> Int
+pub fn SunTextSelectionGeometryDiagnostic::line_count(Self) -> Int
+pub fn SunTextSelectionGeometryDiagnostic::selected_line_count(Self) -> Int
+pub fn SunTextSelectionGeometryDiagnostic::selection_range(Self) -> @core.TextRange
+pub fn SunTextSelectionGeometryDiagnostic::selection_rect_count(Self) -> Int
+pub fn SunTextSelectionGeometryDiagnostic::text(Self) -> String
+pub fn SunTextSelectionGeometryDiagnostic::visual_order_differs(Self) -> Bool
+pub fn SunTextSelectionGeometryDiagnostic::visual_segment_count(Self) -> Int
+
+pub struct SunTextVisualOrderDiagnostic {
+  // private fields
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SunTextVisualOrderDiagnostic::bidi_visual_order_ready(Self) -> Bool
+pub fn SunTextVisualOrderDiagnostic::glyph_count(Self) -> Int
+pub fn SunTextVisualOrderDiagnostic::logical_cluster_count(Self) -> Int
+pub fn SunTextVisualOrderDiagnostic::logical_text(Self) -> String
+pub fn SunTextVisualOrderDiagnostic::segment_count(Self) -> Int
+pub fn SunTextVisualOrderDiagnostic::visual_cluster_count(Self) -> Int
+pub fn SunTextVisualOrderDiagnostic::visual_order_differs(Self) -> Bool
+pub fn SunTextVisualOrderDiagnostic::visual_text(Self) -> String
+pub fn SunTextVisualOrderDiagnostic::width(Self) -> Double
+
+pub struct SunUnsupportedCommandDiagnostic {
+  // private fields
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SunUnsupportedCommandDiagnostic::command(Self) -> String
+pub fn SunUnsupportedCommandDiagnostic::reason(Self) -> String
+
+// Type aliases
+
+// Traits
+

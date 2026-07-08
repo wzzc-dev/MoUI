@@ -33,10 +33,10 @@ test "coretext explicit emoji measure folds zwj interior carets" {
       @core.TextLayoutInput::new(text="\u{1F469}\u{200D}\u{1F4BB}", font~),
     ) {
     Some(layout) => {
-      inspect(layout.caret_positions.length(), content="4")
+      inspect(layout.caret_positions().length(), content="4")
       inspect(
-        layout.caret_positions[1] == layout.caret_positions[2] &&
-        layout.caret_positions[2] == layout.caret_positions[3],
+        layout.caret_positions()[1] == layout.caret_positions()[2] &&
+        layout.caret_positions()[2] == layout.caret_positions()[3],
         content="true",
       )
     }
@@ -58,11 +58,11 @@ fn bytes_has_nonzero(bytes : Bytes) -> Bool {
 fn glyph_nonzero_row_bounds(
   glyph : @wgpu_renderer.NativeRasterGlyph,
 ) -> (Int, Int)? {
-  let mut min_y = glyph.height
+  let mut min_y = glyph.height()
   let mut max_y = -1
-  for y in 0..<glyph.height {
-    for x in 0..<glyph.width {
-      if glyph.pixels[y * glyph.width + x] != b'\x00' {
+  for y in 0..<glyph.height() {
+    for x in 0..<glyph.width() {
+      if glyph.pixels()[y * glyph.width() + x] != b'\x00' {
         min_y = min_y.min(y)
         max_y = max_y.max(y)
       }
@@ -190,10 +190,10 @@ test "coretext run layout returns shaped glyph placements" {
   )
   match coretext_layout_for_run(run, 2.0) {
     Some(layout) => {
-      inspect(layout.glyphs.length() > 0, content="true")
-      inspect(layout.caret_positions.length(), content="7")
+      inspect(layout.glyphs().length() > 0, content="true")
+      inspect(layout.caret_positions().length(), content="7")
       inspect(
-        caret_positions_are_monotonic(layout.caret_positions),
+        caret_positions_are_monotonic(layout.caret_positions()),
         content="true",
       )
     }
@@ -360,12 +360,12 @@ test "coretext text engine measures mixed system text" {
   )
   match coretext_measure_layout(input) {
     Some(layout) => {
-      inspect(layout.size.width > 0.0, content="true")
-      inspect(layout.size.height > 0.0, content="true")
-      inspect(layout.baseline > 0.0, content="true")
-      inspect(layout.caret_positions.length(), content="5")
+      inspect(layout.size().width > 0.0, content="true")
+      inspect(layout.size().height > 0.0, content="true")
+      inspect(layout.baseline() > 0.0, content="true")
+      inspect(layout.caret_positions().length(), content="5")
       inspect(
-        caret_positions_are_monotonic(layout.caret_positions),
+        caret_positions_are_monotonic(layout.caret_positions()),
         content="true",
       )
     }
@@ -383,19 +383,19 @@ test "coretext text engine conforms for mixed cjk emoji and bidi text" {
   )
   match coretext_measure_layout(input) {
     Some(layout) => {
-      inspect(layout.size.width > 0.0, content="true")
-      inspect(layout.size.width <= 64.0, content="true")
-      inspect(layout.size.height > 0.0, content="true")
-      inspect(layout.baseline > 0.0, content="true")
+      inspect(layout.size().width > 0.0, content="true")
+      inspect(layout.size().width <= 64.0, content="true")
+      inspect(layout.size().height > 0.0, content="true")
+      inspect(layout.baseline() > 0.0, content="true")
       inspect(
-        layout.caret_positions.length(),
+        layout.caret_positions().length(),
         content="\{text.to_array().length() + 1}",
       )
       inspect(
-        caret_positions_are_monotonic(layout.caret_positions),
+        caret_positions_are_monotonic(layout.caret_positions()),
         content="true",
       )
-      for caret in layout.caret_positions {
+      for caret in layout.caret_positions() {
         inspect(caret <= 64.0, content="true")
       }
     }
@@ -421,9 +421,9 @@ test "coretext text engine rasterizes cjk glyphs with serialized run fonts" {
         inspect(record.key.font_name.length() > 0, content="true")
         match coretext_raster_glyph(record.key) {
           Some(glyph) => {
-            inspect(glyph.width > 0, content="true")
-            inspect(glyph.height > 0, content="true")
-            inspect(bytes_has_nonzero(glyph.pixels), content="true")
+            inspect(glyph.width() > 0, content="true")
+            inspect(glyph.height() > 0, content="true")
+            inspect(bytes_has_nonzero(glyph.pixels()), content="true")
           }
           None => fail("expected cjk glyph to rasterize")
         }
@@ -445,10 +445,10 @@ test "coretext text engine accepts named family stacks" {
   let input = @core.TextLayoutInput::new(text="family", font~)
   match coretext_measure_layout(input) {
     Some(layout) => {
-      inspect(layout.size.width > 0.0, content="true")
-      inspect(layout.caret_positions.length(), content="7")
+      inspect(layout.size().width > 0.0, content="true")
+      inspect(layout.caret_positions().length(), content="7")
       inspect(
-        caret_positions_are_monotonic(layout.caret_positions),
+        caret_positions_are_monotonic(layout.caret_positions()),
         content="true",
       )
     }
@@ -462,7 +462,7 @@ test "coretext text engine accepts named family stacks" {
     align=@core.TextAlign::TextStart,
   )
   match coretext_layout_for_run(run, 1.0) {
-    Some(layout) => inspect(layout.glyphs.length() > 0, content="true")
+    Some(layout) => inspect(layout.glyphs().length() > 0, content="true")
     None => inspect("missing", content="available")
   }
 }
@@ -555,12 +555,18 @@ test "coretext text engine rasterizes system glyphs" {
       scale_factor=1.0,
     ) {
     Some(glyph) => {
-      inspect(glyph.width > 0, content="true")
-      inspect(glyph.height > 0, content="true")
-      inspect(glyph.pixels.length() > 0, content="true")
-      inspect(bytes_has_nonzero(glyph.pixels), content="true")
-      inspect(glyph.bearing_x > -128 && glyph.bearing_x < 128, content="true")
-      inspect(glyph.bearing_y > -128 && glyph.bearing_y < 128, content="true")
+      inspect(glyph.width() > 0, content="true")
+      inspect(glyph.height() > 0, content="true")
+      inspect(glyph.pixels().length() > 0, content="true")
+      inspect(bytes_has_nonzero(glyph.pixels()), content="true")
+      inspect(
+        glyph.bearing_x() > -128 && glyph.bearing_x() < 128,
+        content="true",
+      )
+      inspect(
+        glyph.bearing_y() > -128 && glyph.bearing_y() < 128,
+        content="true",
+      )
     }
     None => inspect("missing", content="available")
   }
@@ -579,10 +585,10 @@ test "coretext raster glyph rows follow top-left baseline convention" {
     Some(glyph) =>
       match glyph_nonzero_row_bounds(glyph) {
         Some((min_row, max_row)) => {
-          let baseline_row = -glyph.bearing_y
+          let baseline_row = -glyph.bearing_y()
           inspect(min_row > 0, content="true")
           inspect(baseline_row > 0, content="true")
-          inspect(baseline_row < glyph.height, content="true")
+          inspect(baseline_row < glyph.height(), content="true")
           inspect(max_row < baseline_row, content="true")
         }
         None => fail("expected non-empty coretext glyph alpha")

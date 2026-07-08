@@ -176,13 +176,13 @@ fn coretext_folded_zwj_layout(
   text : String,
   layout : @wgpu_renderer.NativeTextLayout,
 ) -> @wgpu_renderer.NativeTextLayout {
-  let carets = layout.caret_positions.copy()
+  let carets = layout.caret_positions().copy()
   coretext_fold_zwj_caret_positions(text, carets)
   @wgpu_renderer.NativeTextLayout::new(
-    size=layout.size,
-    baseline=layout.baseline,
+    size=layout.size(),
+    baseline=layout.baseline(),
     caret_positions=carets,
-    glyphs=layout.glyphs,
+    glyphs=layout.glyphs(),
   )
 }
 
@@ -237,9 +237,9 @@ fn coretext_layout_for_run(
         Some(glyphs) =>
           Some(
             @wgpu_renderer.NativeTextLayout::new(
-              size=layout.size,
-              baseline=layout.baseline,
-              caret_positions=layout.caret_positions,
+              size=layout.size(),
+              baseline=layout.baseline(),
+              caret_positions=layout.caret_positions(),
               glyphs~,
             ),
           )

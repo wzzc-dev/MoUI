@@ -72,13 +72,13 @@ pub fn draw_commands_to_host_calls(
 fn ensure_required_capabilities(
   capabilities : WebGpuHostCapabilities,
 ) -> Unit raise WebGpuHostError {
-  if !capabilities.webgpu_available {
+  if !capabilities.webgpu_available() {
     raise WebGpuHostError::Unavailable
   }
-  if !capabilities.adapter_ready {
+  if !capabilities.adapter_ready() {
     raise WebGpuHostError::AdapterUnavailable
   }
-  if !capabilities.can_render {
+  if !capabilities.can_render() {
     raise WebGpuHostError::PipelineUnavailable
   }
 }

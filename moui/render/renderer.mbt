@@ -283,18 +283,18 @@ pub fn WgpuSurfaceContract::new(
 
 ///|
 pub struct RectBatch {
-  rect : @core.Rect
-  color : @core.Color
+  priv rect : @core.Rect
+  priv color : @core.Color
 } derive(Eq, Debug, ToJson)
 
 ///|
 pub struct RectVertex {
-  x : Double
-  y : Double
-  r : Double
-  g : Double
-  b : Double
-  a : Double
+  priv x : Double
+  priv y : Double
+  priv r : Double
+  priv g : Double
+  priv b : Double
+  priv a : Double
 } derive(Eq, Debug, ToJson)
 
 ///|

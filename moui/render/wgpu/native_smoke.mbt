@@ -1,10 +1,52 @@
 ///|
-pub(all) struct NativeRendererSmokeFrame {
-  width : Int
-  height : Int
-  row_bytes : Int
-  pixels : Bytes
-  flip_y : Bool
+pub struct NativeRendererSmokeFrame {
+  priv width : Int
+  priv height : Int
+  priv row_bytes : Int
+  priv pixels : Bytes
+  priv flip_y : Bool
+}
+
+///|
+pub fn NativeRendererSmokeFrame::new(
+  width~ : Int,
+  height~ : Int,
+  row_bytes~ : Int,
+  pixels~ : Bytes,
+  flip_y? : Bool = false,
+) -> NativeRendererSmokeFrame {
+  { width, height, row_bytes, pixels, flip_y }
+}
+
+///|
+pub fn NativeRendererSmokeFrame::width(self : NativeRendererSmokeFrame) -> Int {
+  self.width
+}
+
+///|
+pub fn NativeRendererSmokeFrame::height(self : NativeRendererSmokeFrame) -> Int {
+  self.height
+}
+
+///|
+pub fn NativeRendererSmokeFrame::row_bytes(
+  self : NativeRendererSmokeFrame,
+) -> Int {
+  self.row_bytes
+}
+
+///|
+pub fn NativeRendererSmokeFrame::pixels(
+  self : NativeRendererSmokeFrame,
+) -> Bytes {
+  self.pixels
+}
+
+///|
+pub fn NativeRendererSmokeFrame::flip_y(
+  self : NativeRendererSmokeFrame,
+) -> Bool {
+  self.flip_y
 }
 
 ///|

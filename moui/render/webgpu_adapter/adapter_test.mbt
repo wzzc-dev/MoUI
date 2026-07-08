@@ -1,15 +1,17 @@
 ///|
 test "wgpu web adapter is wasm-gc host-import only" {
   let info = adapter_info()
-  assert_true(info.renderer.backend == @render.RendererBackendKind::WebGpuWasm)
   assert_true(
-    info.renderer.status == @render.RendererCapabilityStatus::Supported,
+    info.renderer().backend == @render.RendererBackendKind::WebGpuWasm,
   )
-  inspect(info.renderer.can_render, content="true")
-  inspect(info.renderer.can_resize, content="true")
-  inspect(info.surface_contract.ready, content="true")
-  inspect(info.imports.import_module, content="webgpu")
-  inspect(info.imports.target, content="wasm-gc")
+  assert_true(
+    info.renderer().status == @render.RendererCapabilityStatus::Supported,
+  )
+  inspect(info.renderer().can_render, content="true")
+  inspect(info.renderer().can_resize, content="true")
+  inspect(info.surface_contract().ready, content="true")
+  inspect(info.imports().import_module(), content="webgpu")
+  inspect(info.imports().target(), content="wasm-gc")
 }
 
 ///|
@@ -23,14 +25,15 @@ test "wgpu web surface must be created through host port" {
     port~,
   )
   inspect(created.val, content="1")
-  inspect(surface.canvas_id, content="moui-web-wasm")
+  inspect(surface.canvas_id(), content="moui-web-wasm")
   assert_true(
-    surface.metrics.logical_size == @core.Size::new(width=320.0, height=180.0),
+    surface.metrics().logical_size == @core.Size::new(width=320.0, height=180.0),
   )
   assert_true(
-    surface.metrics.physical_size == @core.Size::new(width=480.0, height=270.0),
+    surface.metrics().physical_size ==
+    @core.Size::new(width=480.0, height=270.0),
   )
-  inspect(surface.metrics.scale_factor, content="1.5")
+  inspect(surface.metrics().scale_factor, content="1.5")
 }
 
 ///|
@@ -96,11 +99,14 @@ test "wgpu web renderer fails startup when host lacks capabilities" {
     create_renderer(
       canvas_id="moui-web-wasm",
       logical_size=@core.Size::new(width=100.0, height=50.0),
-      port=test_port(created=Ref(0), capabilities={
-        webgpu_available: false,
-        adapter_ready: true,
-        can_render: true,
-      }),
+      port=test_port(
+        created=Ref(0),
+        capabilities=WebGpuHostCapabilities::new(
+          webgpu_available=false,
+          adapter_ready=true,
+          can_render=true,
+        ),
+      ),
     )
   catch {
     e =>
@@ -266,7 +272,7 @@ test "wgpu web command bridge forwards DrawPath to host ABI" {
   guard calls[1] is WebGpuHostCall::DrawPath(forwarded) else {
     fail("expected DrawPath host call")
   }
-  inspect(@render.tessellate_path(forwarded).vertices.length(), content="3")
+  inspect(@render.tessellate_path(forwarded).vertices().length(), content="3")
   assert_true(calls[2] is WebGpuHostCall::Present)
 }
 
@@ -300,18 +306,19 @@ test "wgpu web command bridge preserves radial DrawPath shader payload" {
   }
   assert_true(gradient.center_color == @core.Color::blue())
   let mesh = @render.tessellate_path(forwarded)
-  inspect(mesh.vertices.length(), content="3")
-  for vertex in mesh.vertices {
-    assert_true(vertex.brush_kind == 1.0)
-    assert_true(vertex.start_x == 4.0)
-    assert_true(vertex.start_y == 4.0)
-    assert_true(vertex.end_x == 8.0)
-    assert_true(vertex.r == @core.Color::blue().r)
-    assert_true(vertex.g == @core.Color::blue().g)
-    assert_true(vertex.b == @core.Color::blue().b)
-    assert_true(vertex.r1 == @core.Color::gray().r)
-    assert_true(vertex.g1 == @core.Color::gray().g)
-    assert_true(vertex.b1 == @core.Color::gray().b)
+  inspect(mesh.vertices().length(), content="3")
+  for vertex in mesh.vertices() {
+    let components = vertex.components()
+    assert_true(components[2] == 1.0)
+    assert_true(components[3] == 4.0)
+    assert_true(components[4] == 4.0)
+    assert_true(components[5] == 8.0)
+    assert_true(components[7] == @core.Color::blue().r)
+    assert_true(components[8] == @core.Color::blue().g)
+    assert_true(components[9] == @core.Color::blue().b)
+    assert_true(components[11] == @core.Color::gray().r)
+    assert_true(components[12] == @core.Color::gray().g)
+    assert_true(components[13] == @core.Color::gray().b)
   }
 }
 
@@ -787,18 +794,18 @@ fn test_port(
   on_submit? : (Array[WebGpuHostCall]) -> Unit = _ => (),
   on_dispose? : () -> Unit = () => (),
 ) -> WebGpuHostRendererPort {
-  {
-    capabilities: () => capabilities,
-    create_surface: (canvas_id, metrics) => {
+  WebGpuHostRendererPort::new(
+    capabilities=() => capabilities,
+    create_surface=(canvas_id, metrics) => {
       created.val = created.val + 1
-      { canvas_id, metrics }
+      WebGpuHostSurface::new(canvas_id~, metrics~)
     },
-    create_renderer: _surface => (),
-    resize: _metrics => on_resize(),
-    measure_text: on_measure,
-    register_font_data: on_register,
-    image_resource: on_image_resource,
-    submit: calls => on_submit(calls),
-    dispose: on_dispose,
-  }
+    create_renderer=_surface => (),
+    resize=_metrics => on_resize(),
+    measure_text=on_measure,
+    register_font_data=on_register,
+    image_resource=on_image_resource,
+    submit=calls => on_submit(calls),
+    dispose=on_dispose,
+  )
 }

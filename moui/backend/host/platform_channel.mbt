@@ -13,14 +13,14 @@ pub(all) enum PlatformChannelResponse {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct PlatformChannelHandler {
-  channel : String
-  handle : (PlatformChannelRequest) -> PlatformChannelResponse
+pub struct PlatformChannelHandler {
+  priv channel : String
+  priv handle : (PlatformChannelRequest) -> PlatformChannelResponse
 }
 
 ///|
-pub(all) struct PlatformChannelRegistry {
-  mut handlers : Array[PlatformChannelHandler]
+pub struct PlatformChannelRegistry {
+  priv mut handlers : Array[PlatformChannelHandler]
 }
 
 ///|

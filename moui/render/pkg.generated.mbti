@@ -109,44 +109,26 @@ pub(all) enum ImageResourceStatus {
   ImageDisposed
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct PathMesh {
-  vertices : Array[PathVertex]
-  diagnostics : Array[String]
+pub struct PathMesh {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PathMesh::diagnostics(Self) -> Array[String]
+pub fn PathMesh::vertices(Self) -> Array[PathVertex]
 
-pub(all) struct PathVertex {
-  x : Double
-  y : Double
-  brush_kind : Double
-  start_x : Double
-  start_y : Double
-  end_x : Double
-  end_y : Double
-  r : Double
-  g : Double
-  b : Double
-  a : Double
-  r1 : Double
-  g1 : Double
-  b1 : Double
-  a1 : Double
+pub struct PathVertex {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PathVertex::components(Self) -> Array[Double]
 
 pub struct RectBatch {
-  rect : @core.Rect
-  color : @core.Color
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RectBatch::color(Self) -> @core.Color
 pub fn RectBatch::new(rect~ : @core.Rect, color~ : @core.Color) -> Self
 pub fn RectBatch::rect(Self) -> @core.Rect
 
 pub struct RectVertex {
-  x : Double
-  y : Double
-  r : Double
-  g : Double
-  b : Double
-  a : Double
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RectVertex::a(Self) -> Double
 pub fn RectVertex::b(Self) -> Double
@@ -323,22 +305,24 @@ pub(all) enum RendererTarget {
   Web
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct ShaderRegistryResult {
-  name : String
-  status : ShaderRegistryStatus
-  fallback : @core.Brush
-  diagnostic : String
+pub struct ShaderRegistryResult {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ShaderRegistryResult::diagnostic(Self) -> String
+pub fn ShaderRegistryResult::fallback(Self) -> @core.Brush
+pub fn ShaderRegistryResult::name(Self) -> String
+pub fn ShaderRegistryResult::status(Self) -> ShaderRegistryStatus
 
 pub(all) enum ShaderRegistryStatus {
   ShaderReady
   ShaderFallback
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct SvgImportResult {
-  commands : Array[@core.DrawCommand]
-  diagnostics : Array[String]
+pub struct SvgImportResult {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SvgImportResult::commands(Self) -> Array[@core.DrawCommand]
+pub fn SvgImportResult::diagnostics(Self) -> Array[String]
 
 pub(all) struct WgpuSurfaceContract {
   source : WgpuSurfaceSourceKind
