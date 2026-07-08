@@ -290,6 +290,14 @@ test "views facade exposes control-specific contracts" {
 }
 
 ///|
+test "host and renderer public all budgets ratchet down" {
+  let host = budget_by_label("host contracts")
+  inspect(host.max_pub_all_lines, content="66")
+  let renderer = budget_by_label("renderer facade")
+  inspect(renderer.max_pub_all_lines, content="29")
+}
+
+///|
 test "core descriptor payloads stay opaque" {
   let core = budget_by_label("core")
   inspect(core.max_lines, content="1820")

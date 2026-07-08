@@ -116,7 +116,7 @@ test "web service bridge exposes clipboard write contract" {
     clipboard.val = text
     true
   })
-  inspect(bridge.capabilities.clipboard, content="true")
+  inspect(bridge.capabilities().clipboard, content="true")
   match
     bridge.dispatch(
       @host.HostServiceRequest::Clipboard(
@@ -153,7 +153,7 @@ test "web service bridge exposes clipboard write contract" {
 ///|
 test "web service bridge exposes browser-selected text-file reads when enabled" {
   let bridge = web_service_bridge(file_access=true)
-  inspect(bridge.capabilities.file_access, content="true")
+  inspect(bridge.capabilities().file_access, content="true")
   match
     bridge.dispatch(
       @host.HostServiceRequest::TextFile(
@@ -191,9 +191,9 @@ test "web service bridge can defer async clipboard read, file dialogs, and write
     file_access=true,
     async_queue=Some(queue),
   )
-  inspect(bridge.capabilities.clipboard, content="true")
-  inspect(bridge.capabilities.file_dialogs, content="true")
-  inspect(bridge.capabilities.file_access, content="true")
+  inspect(bridge.capabilities().clipboard, content="true")
+  inspect(bridge.capabilities().file_dialogs, content="true")
+  inspect(bridge.capabilities().file_access, content="true")
   match
     bridge.dispatch(
       @host.HostServiceRequest::Clipboard(@host.HostClipboardRequest::ReadText),

@@ -21,6 +21,16 @@ test "generated unicode fixtures are excluded from oversized ratchet scan" {
 }
 
 ///|
+fn pub_all_budget_by_label(label : String) -> CountBudget raise {
+  for budget in pub_all_budgets() {
+    if budget.label == label {
+      return budget
+    }
+  }
+  fail("missing pub(all) budget: " + label)
+}
+
+///|
 test "tracked budgets include current maintenance hotspots" {
   let paths = tracked_budget_paths()
   inspect(paths.contains("moui/backend/host/host_test.mbt"), content="true")
@@ -61,6 +71,8 @@ test "pub all budgets lock current maintenance exposure" {
   inspect(labels.contains("moui/core"), content="true")
   inspect(labels.contains("moui/views"), content="true")
   inspect(labels.contains("moui/backend/host"), content="true")
+  inspect(pub_all_budget_by_label("moui/backend/host").max_count, content="66")
+  inspect(pub_all_budget_by_label("moui/render").max_count, content="64")
   inspect(labels.contains("examples/markdown_editor/app"), content="true")
   inspect(labels.contains("website/app"), content="true")
 }

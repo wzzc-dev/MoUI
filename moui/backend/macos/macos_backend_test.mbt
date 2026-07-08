@@ -145,7 +145,7 @@ test "macos service bridge exposes file dialog contract" {
     seen_title.val = options.title
     ["/tmp/moui.md"]
   })
-  inspect(bridge.capabilities.file_dialogs, content="true")
+  inspect(bridge.capabilities().file_dialogs, content="true")
   match
     bridge.dispatch(
       @host.HostServiceRequest::FileDialog(
@@ -172,7 +172,7 @@ test "macos service bridge exposes menu contract" {
     seen_count.val = commands.length()
     1
   })
-  inspect(bridge.capabilities.menus, content="true")
+  inspect(bridge.capabilities().menus, content="true")
   match
     bridge.dispatch(
       @host.HostServiceRequest::ShowMenu([

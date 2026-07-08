@@ -282,13 +282,13 @@ pub fn WgpuSurfaceContract::new(
 }
 
 ///|
-pub(all) struct RectBatch {
+pub struct RectBatch {
   rect : @core.Rect
   color : @core.Color
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct RectVertex {
+pub struct RectVertex {
   x : Double
   y : Double
   r : Double
@@ -296,6 +296,51 @@ pub(all) struct RectVertex {
   b : Double
   a : Double
 } derive(Eq, Debug, ToJson)
+
+///|
+pub fn RectBatch::new(rect~ : @core.Rect, color~ : @core.Color) -> RectBatch {
+  { rect, color }
+}
+
+///|
+pub fn RectBatch::rect(self : RectBatch) -> @core.Rect {
+  self.rect
+}
+
+///|
+pub fn RectBatch::color(self : RectBatch) -> @core.Color {
+  self.color
+}
+
+///|
+pub fn RectVertex::x(self : RectVertex) -> Double {
+  self.x
+}
+
+///|
+pub fn RectVertex::y(self : RectVertex) -> Double {
+  self.y
+}
+
+///|
+pub fn RectVertex::r(self : RectVertex) -> Double {
+  self.r
+}
+
+///|
+pub fn RectVertex::g(self : RectVertex) -> Double {
+  self.g
+}
+
+///|
+pub fn RectVertex::b(self : RectVertex) -> Double {
+  self.b
+}
+
+///|
+pub fn RectVertex::a(self : RectVertex) -> Double {
+  self.a
+}
 
 ///|
 pub fn collect_rect_batches(

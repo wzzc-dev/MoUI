@@ -100,13 +100,13 @@ pub(all) enum HostServiceKind {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct HostServiceHandler {
+pub struct HostServiceHandler {
   kind : HostServiceKind
   handle : (HostServiceRequest) -> HostServiceResponse
 }
 
 ///|
-pub(all) struct HostServiceBridge {
+pub struct HostServiceBridge {
   capabilities : HostServiceCapabilities
   handle : (HostServiceRequest) -> HostServiceResponse
   mut services : Array[HostServiceHandler]
@@ -165,6 +165,13 @@ pub fn HostServiceBridge::unavailable() -> HostServiceBridge {
   HostServiceBridge::new(capabilities=HostServiceCapabilities::none(), handle=request => {
     HostServiceResponse::Unavailable(request.unavailable_message())
   })
+}
+
+///|
+pub fn HostServiceBridge::capabilities(
+  self : HostServiceBridge,
+) -> HostServiceCapabilities {
+  self.capabilities
 }
 
 ///|
