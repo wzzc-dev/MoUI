@@ -1,6 +1,6 @@
 ---
 name: moui-app-development
-description: Build and maintain MoUI application packages and examples. Use when working in examples/*/app, app-specific service packages, platform entrypoints such as web_wasm/macos_skia/windows_skia/linux_skia/android_skia, app views built with wzzc-dev/moui/views, model/update/view logic, host-service integration from app code, or app-focused tests and smoke runs.
+description: Build and maintain MoUI application packages and examples. Use when working in examples/*/app, app-specific service packages, platform entrypoints such as web_wasm/macos_skia/windows_skia/linux_skia/android_skia/ios_skia, app views built with wzzc-dev/moui/views, model/update/view logic, host-service integration from app code, or app-focused tests and smoke runs.
 ---
 
 # MoUI App Development
@@ -38,6 +38,8 @@ examples/<name>/windows_skia/
 examples/<name>/linux_skia/
 examples/<name>/android_skia/   # experimental embedded-session route
 examples/<name>/android_app/    # app-owned APK/JNI/CMake shell when present
+examples/<name>/ios_skia/       # experimental embedded-session route
+examples/<name>/ios_app/        # app-owned UIKit .app shell when present
 ```
 
 Default shared app imports:
@@ -141,6 +143,8 @@ Common examples:
 moon test examples/counter/app --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/counter/android_skia --target native
 scripts/build-counter-android-apk.sh --fallback-skia
+MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/counter/ios_skia --target native
+scripts/build-counter-ios-app.sh --fallback-skia
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
 moon test examples/pdf_workbench/app --target native
@@ -167,6 +171,12 @@ first-frame or input/lifecycle runtime claims. Use
 official SDK/NDK/CMake toolchain when the local machine does not already have
 one. The setup helper requires a JDK on `PATH`; the APK builder also uses
 `javac` and `keytool`.
+For iOS, the fallback `.app` command only validates MoonBit C generation, UIKit
+shell compilation, native-stub compilation, bundle layout, and ad-hoc simulator
+signing; a non-fallback `.app` plus matching simulator/device smoke is still
+required for first-frame or input/lifecycle runtime claims. Use Xcode command
+line tools (`xcrun --sdk iphonesimulator clang/clang++`) rather than a checked-in
+Xcode project for the current Counter shell.
 
 ## Docs
 

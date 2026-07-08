@@ -107,6 +107,32 @@ requires a device or emulator run with the default real-Skia path.
 See [android-support.md](android-support.md) for the Activity/Surface ownership
 boundary and runtime-evidence requirements.
 
+iOS is also an embedded native scaffold rather than a full app-owned event
+loop. For iOS Simulator Skia cross-build checks, set `MOUI_SKIA_PLATFORM=iosSim`
+and an explicit `MOUI_SKIA_ARCH` so the prebuild selects the locked simulator
+artifact instead of the desktop host artifact:
+
+```sh
+MOUI_SKIA_PLATFORM=iosSim MOUI_SKIA_ARCH=arm64 \
+  moon check examples/counter/ios_skia --target native
+```
+
+To build the experimental Counter iOS Simulator app, install/select Xcode and
+run:
+
+```sh
+scripts/build-counter-ios-app.sh
+```
+
+The default output is `artifacts/ios/counter/MoUICounter.app`. Use
+`scripts/build-counter-ios-app.sh --fallback-skia` for a packaging-only smoke
+that avoids the iOS Skia provider download. That `.app` proves the MoonBit
+C/UIKit shell/native-stub/bundle path only; real iOS runtime evidence still
+requires a simulator or device run with the default real-Skia path.
+
+See [ios-support.md](ios-support.md) for the UIKit ownership boundary, Xcode CLI
+setup, simulator install commands, and runtime-evidence requirements.
+
 `moon update` refreshes registry packages, including the `window` fork package.
 The default `sh scripts/check.sh --profile daily` path guards dependency shape and the
 repo-local `moui_skia` acceptance surface. The Skia binding is part of the main

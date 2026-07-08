@@ -92,6 +92,8 @@ moon test moui/render/webgpu_adapter --target wasm-gc
 moon test moui/backend/host --target native
 moon test moui/backend/android --target native
 moon test moui/backend/android/skia --target native
+moon test moui/backend/ios --target native
+moon test moui/backend/ios/skia --target native
 moon test moui/backend/web --target wasm-gc
 moon test moui_tester --target native
 moon test moui_devtools --target native
@@ -111,6 +113,8 @@ moon test examples/pdf_workbench/pdflite_service_native_transport --target nativ
 moon test examples/pdf_workbench/pdfium_adapter --target native
 moon check examples/counter/android_skia --target native
 scripts/build-counter-android-apk.sh --fallback-skia
+MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/counter/ios_skia --target native
+scripts/build-counter-ios-app.sh --fallback-skia
 ```
 
 Use `moon test moui/render/wgpu --target native` only for the native WGPU
@@ -218,6 +222,14 @@ JNI/CMake, Java/resource packaging, and debug signing. It is not real Skia
 renderer or platform runtime evidence. Android first-frame/input/lifecycle
 claims still require `scripts/build-counter-android-apk.sh` without fallback
 and a matching device or emulator run with recorded observations.
+
+For iOS packaging changes, `scripts/build-counter-ios-app.sh --fallback-skia`
+is a fast build-system smoke that covers MoonBit C export, UIKit shell
+compilation, iOS runtime compatibility, native-stub compilation, bundle layout,
+and ad-hoc simulator signing. It is not real Skia renderer or platform runtime
+evidence. iOS first-frame/input/lifecycle claims still require
+`scripts/build-counter-ios-app.sh` without fallback and a matching simulator or
+device run with recorded observations.
 
 `smoke/gates.json` is the checked-in smoke gate catalog. It describes the daily,
 nightly, and release smoke tiers, each suite command, the structured result

@@ -1,0 +1,28 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/backend/ios/skia"
+
+import {
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/ios",
+  "wzzc-dev/moui/runtime",
+}
+
+// Values
+pub fn create_session(runtime~ : @runtime.AppRuntime, view~ : @ios.IosViewHandle, metrics~ : @host.HostSurfaceMetrics, options? : IosSkiaAppOptions) -> @ios.IosRuntimeSession?
+
+pub fn ios_skia_provider_preflight_summary(options? : IosSkiaAppOptions) -> String
+
+pub fn renderer_provider(options? : IosSkiaAppOptions) -> @ios.IosRendererProvider
+
+// Errors
+
+// Types and methods
+pub struct IosSkiaAppOptions {
+  // private fields
+}
+pub fn IosSkiaAppOptions::new(font_resolution? : @wzzc-dev/moui/render/skia.SkiaFontResolution) -> Self
+
+// Type aliases
+
+// Traits
+

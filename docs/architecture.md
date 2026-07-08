@@ -25,8 +25,8 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 | `moui/views/` | Public view constructors, app-facing control APIs, default themes, form/navigation/data helpers, and concrete custom view behavior built with `@core.View::node`. |
 | `moui/runtime/` | AppRuntime construction, runtime state, element/layout/render tree generation, event dispatch, program queue drain, effects, subscriptions, diagnostics, and inspector snapshots. |
 | `moui/backend/host/` | Shared host contracts for windows, routes, timers, host services, WebView, async image loading, accessibility, input, redraw scheduling, and renderer handoff. |
-| `moui/backend/{macos,windows,linux,android,web}/` | Concrete platform host implementations. Native platform packages normalize events into host contracts; Android is currently an embedded-session scaffold driven by Activity/Surface callbacks; web is the canonical browser host. |
-| `moui/backend/{macos,windows,linux,android}/skia/` | Native Skia renderer provider packages for the main native route. Android presents CPU pixel frames to an `ANativeWindow` supplied by the embedder. |
+| `moui/backend/{macos,windows,linux,android,ios,web}/` | Concrete platform host implementations. Native platform packages normalize events into host contracts; Android and iOS are currently embedded-session scaffolds driven by platform-owned callbacks; web is the canonical browser host. |
+| `moui/backend/{macos,windows,linux,android,ios}/skia/` | Native Skia renderer provider packages for the main native route. Android presents CPU pixel frames to an `ANativeWindow`; iOS presents CPU pixel frames to a UIKit `UIImageView` child. |
 | `moui/backend/{macos,windows,linux}/wgpu/` | Native WGPU diagnostic provider packages. |
 | `moui/render/` | Renderer facade, shared render capability models, fallback planning, shader/image helpers, and renderer-neutral command handling. |
 | `moui/render/skia/` | Native Skia renderer facade over `moui_skia`. |
@@ -108,6 +108,13 @@ workspace.
   `moui/render/skia` -> `moui_skia`. The app or Android Activity layer owns
   lifecycle, `ANativeWindow` handle acquisition, and input forwarding until a
   checked APK/device smoke promotes the route.
+- iOS Skia route (experimental scaffold): shared app package ->
+  `examples/<app>/ios_skia` plus app-owned UIKit shell such as
+  `examples/counter/ios_app` ->
+  `moui/backend/ios` embedded session -> `moui/backend/ios/skia` ->
+  `moui/render/skia` -> `moui_skia`. The app or UIKit view controller owns
+  lifecycle, `UIView` handle ownership, and touch forwarding until a checked
+  simulator/device smoke promotes the route.
 - Native WGPU route: shared app package -> platform `*_wgpu` entrypoint ->
   platform WGPU provider -> `moui/render/wgpu`. This is diagnostic, not the
   default mainline.
@@ -216,6 +223,8 @@ moui/backend/linux/skia/      Linux Skia renderer provider mainline
 moui/backend/linux/wgpu/      Linux WGPU renderer provider diagnostic
 moui/backend/android/         Android embedded native host scaffold over shared host/runtime contracts
 moui/backend/android/skia/    Android Skia renderer provider over ANativeWindow pixel presentation
+moui/backend/ios/             iOS embedded native host scaffold over shared host/runtime contracts
+moui/backend/ios/skia/        iOS Skia renderer provider over UIKit UIImageView pixel presentation
 moui/backend/web/             canonical Web host on wasm-gc plus browser JS assets
 moui/render/                  renderer facade and shared draw helpers
 moui/render/skia/             native Skia raster renderer facade over moui_skia
@@ -233,8 +242,9 @@ moui/tests/skia_cached_layer_benchmark/ opt-in real Skia cached-layer benchmark 
 moui/tests/skia_text_emoji_smoke/ opt-in real Skia text/emoji renderer smoke
 moui/tests/wgpu_renderer_smoke/ opt-in native WGPU renderer smoke
 examples/counter/app/         smallest shared app shape
-examples/counter/{macos_skia,web_wasm,android_skia,macos_wgpu,windows_wgpu,linux_wgpu}/ platform counter entrypoints
+examples/counter/{macos_skia,web_wasm,android_skia,ios_skia,macos_wgpu,windows_wgpu,linux_wgpu}/ platform counter entrypoints
 examples/counter/android_app/ Counter Android Activity/JNI/CMake APK shell
+examples/counter/ios_app/     Counter iOS UIKit simulator app shell
 examples/counter/windows_wgpu_cosmic/ Windows counter selecting Moon Cosmic text
 examples/agent_counter/       minimal agent-controllable runtime example (shared app at example root plus main/ and macos_skia/ entrypoints)
 examples/button_freeze_probe/app/ minimal native Skia button-freeze repro app

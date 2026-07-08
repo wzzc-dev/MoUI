@@ -60,13 +60,17 @@ response.
 Native renderer choice is package selection, not a field on host-core app
 options. Use `backend/<platform>/skia` for the native Skia raster mainline.
 Use `backend/<platform>/wgpu` only for native WGPU experimental diagnostics.
-Android is the exception to the desktop event-loop shape: `backend/android`
-currently exposes an embedded-session contract that must be driven by an
-Activity/JNI/CMake layer with an `ANativeWindow` handle. The Counter example
-includes `examples/counter/android_app` and
-`scripts/build-counter-android-apk.sh` for APK packaging, but fallback APK
-builds are build-system evidence only. Treat Android as an experimental scaffold
-until matching device or emulator runtime smoke evidence exists.
+Android and iOS are exceptions to the desktop event-loop shape:
+`backend/android` currently exposes an embedded-session contract that must be
+driven by an Activity/JNI/CMake layer with an `ANativeWindow` handle, while
+`backend/ios` exposes an embedded-session contract driven by a UIKit shell with
+a raw `UIView` handle. The Counter example includes
+`examples/counter/android_app` plus `scripts/build-counter-android-apk.sh` for
+APK packaging, and `examples/counter/ios_app` plus
+`scripts/build-counter-ios-app.sh` for iOS Simulator `.app` packaging, but
+fallback APK/`.app` builds are build-system evidence only. Treat both Android
+and iOS as experimental scaffolds until matching device/simulator runtime smoke
+evidence exists.
 The Skia provider preflights `moui_skia/native` availability before handing
 control to the host app runner. Fallback builds therefore return with a clear
 diagnostic instead of opening a platform window that later fails to attach a
