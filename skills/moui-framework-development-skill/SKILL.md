@@ -23,6 +23,9 @@ Read only what the task needs:
 ## Ownership Rules
 
 - `moui/core`: cross-runtime protocols and neutral value types only.
+- `moui/{geometry,graphics,animation,text,state}`: app-facing domain facades
+  and light extensions over `moui/core`; they may depend on `core`, but `core`
+  must not depend on them or on `views`.
 - `moui/views`: app-facing controls, control styles, default themes,
   form/navigation/data helpers, WebView facade, and concrete custom view
   behavior.
@@ -63,16 +66,27 @@ owning-package boundaries clear.
 
 ## Package Map
 
-- `core/`: one MoonBit package for platform-neutral runtime, view specs, state,
-  app-owned route/history helpers, `Program` / `Effect` / `Subscription`,
-  layout, input, semantics, rich text editing, draw commands, styles, and theme
-  tokens. Keep files grouped by responsibility
+- `core/`: one MoonBit foundation package for cross-runtime protocols and
+  neutral value types: `View`, `Program` / `Effect` / `Subscription`, geometry,
+  input, layout, paint/draw command protocols, semantics, text contracts, theme
+  token schema, and custom view callback contracts. Concrete controls, routing
+  helpers, rich text documents, runtime diagnostics, and platform services live
+  outside `core`. Keep files grouped by responsibility
   (`runtime_state`,
   `component_context`, `input_*`, `paint_*`, `rich_text_*`) without adding
   subpackages.
-- root `moui`: public facade over core/views plus neutral default/light/dark
-  theme helpers and custom `@core.Theme` builder APIs. It does not import
-  `moui_theme`.
+- root `moui`: app-loop public facade for `View`, `Program`, `Effect`,
+  `Subscription`, `Theme`, `Environment`, and `ViewEnvironment`. It does not
+  import `moui_theme` or replace the domain facades.
+- `geometry/`, `graphics/`, `animation/`, `text/`, `state/`: app-facing domain
+  facades over `core`. Use them for high-frequency geometry, paint/drawing,
+  transition/easing, text, and state/focus value types. They are not `core`
+  dependencies.
+- `views/`: public view constructors, command/menu facade, control styles,
+  default themes, form/navigation/data helpers, WebView facade, `DateValue`
+  compatibility facade, and concrete custom view behavior. It should not become
+  a catch-all re-export surface for low-level drawing, animation, focus,
+  semantics, runtime id, or component kernel types.
 - `moui_theme/common/`: repo-local addon common package for shared
   source-mapped design-system
   manifests, golden token mappings, golden source-usage audits,
@@ -103,7 +117,6 @@ owning-package boundaries clear.
   typography role parity,
   component-token matrix coverage plus
   adaptation-difference closure.
-- `views/`: public view constructors returning opaque `@core.View[Msg]`.
 - `backend/host/`: shared `HostEvent`, surface metrics, input contracts,
   window lifecycle registry, window scene resolver, per-window runtime slot
   collection, platform-window id map, renderer-neutral `HostWindowRenderer`
@@ -426,11 +439,14 @@ Run:
 
 ```sh
 node scripts/validate-maintenance-baseline.mjs
+moon run tools/moui/validate_maintenance_baseline --target native -- --scope full
 ```
 
 when changing file organization, public facade size, `pub(all)` exposure, test
-file sizes, package boundaries, or MoonBit-backed JS validator wrappers. Keep
-those wrappers as thin compatibility shims over
+file sizes, package boundaries, or MoonBit-backed JS validator wrappers. The
+Node wrapper runs the daily scope; use `--scope full` for addon/tool workspace
+hotspots tracked outside the daily gate. Keep those wrappers as thin
+compatibility shims over
 `scripts/lib/moonbit-tool-runner.mjs`; do not reintroduce local process
 runners, direct filesystem parsing, or hard-coded native `_build` executable
 paths there. If a refactor reduces a budget, ratchet the baseline down in the

@@ -1,54 +1,7 @@
 ///|
-struct CliOptions {
-  repo_root : String
-  help : Bool
-}
-
-///|
-fn usage() -> String {
-  let text =
-    #|Usage: tools/moui/validate_maintenance_baseline [--repo-root PATH]
-    #|
-    #|Checks the tracked maintenance ratchets for oversized files, direct
-    #|source-level pub(all) counts, and root facade type forwarding. The
-    #|current max values lock in previous debt so future refactors can ratchet
-    #|them down after splitting files or shrinking public exposure.
-    #|
-    #|Options:
-    #|  --repo-root PATH   Repository root used to resolve paths. Defaults to cwd.
-    #|  -h, --help         Show this help.
-    #|
-  text
-}
-
-///|
-fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
-  let repo_root = Ref(@env.current_dir().unwrap_or(""))
-  let help = Ref(false)
-  let mut index = 0
-  while index < args.length() {
-    match args[index] {
-      "--repo-root" => {
-        if index + 1 >= args.length() {
-          return Err("missing value for --repo-root")
-        }
-        repo_root.val = args[index + 1]
-        index += 2
-      }
-      "-h" | "--help" => {
-        help.val = true
-        index += 1
-      }
-      other => return Err("unknown argument: " + other)
-    }
-  }
-  Ok({ repo_root: repo_root.val, help: help.val })
-}
-
-///|
-fn run_checks(repo_root : String) -> Array[String] {
+fn run_checks(repo_root : String, scope : String) -> Array[String] {
   let failures : Array[String] = []
-  let overflows = collect_line_budget_overflows(repo_root, failures)
+  let overflows = collect_line_budget_overflows(repo_root, scope, failures)
   let count_overflows = collect_count_budget_overflows(repo_root, failures)
   let wrapper_failures = collect_moonbit_tool_wrapper_failures(repo_root)
   if !failures.is_empty() {
@@ -69,7 +22,7 @@ fn run(args : Array[String]) -> Int {
       0
     }
     Ok(options) => {
-      let failures = run_checks(options.repo_root)
+      let failures = run_checks(options.repo_root, options.scope)
       if failures.is_empty() {
         println("maintenance baseline guardrails: ok")
         0

@@ -69,7 +69,10 @@ fn advanced_rendering_canvas(
       constraints.constrain(@geometry.Size::new(width~, height~))
     },
     draw=(ctx, frame) => {
-      let bg = @views.RoundedRect::new(rect=frame, radius=theme.radius_scale.md)
+      let bg = @graphics.RoundedRect::new(
+        rect=frame,
+        radius=theme.radius_scale.md,
+      )
       let inset = 14.0
       let left = frame.origin.x + inset
       let top = frame.origin.y + inset
@@ -80,7 +83,7 @@ fn advanced_rendering_canvas(
         width=96.0,
         height=58.0,
       )
-      let layer_mask = @views.LayerMask::RoundedMask(bg)
+      let layer_mask = @graphics.LayerMask::RoundedMask(bg)
       push_clip(ctx, frame)
       fill_rounded_rect(
         ctx,
@@ -93,36 +96,36 @@ fn advanced_rendering_canvas(
         "blend" => {
           fill_rounded_rect(
             ctx,
-            @views.RoundedRect::new(rect=rect_a, radius=12.0),
+            @graphics.RoundedRect::new(rect=rect_a, radius=12.0),
             @graphics.Brush::solid(theme.palette.primary.multiply_alpha(0.82)),
           )
           push_layer(
             ctx,
-            @views.LayerSpec::new(
+            @graphics.LayerSpec::new(
               opacity=0.86,
-              blend_mode=@views.BlendMode::Multiply,
+              blend_mode=@graphics.BlendMode::Multiply,
               mask=layer_mask,
               offscreen=true,
             ),
           )
           fill_rounded_rect(
             ctx,
-            @views.RoundedRect::new(rect=rect_b, radius=18.0),
+            @graphics.RoundedRect::new(rect=rect_b, radius=18.0),
             @graphics.Brush::solid(theme.palette.primary.multiply_alpha(0.84)),
           )
           pop_layer(ctx)
           push_layer(
             ctx,
-            @views.LayerSpec::new(
+            @graphics.LayerSpec::new(
               opacity=0.72,
-              blend_mode=@views.BlendMode::Screen,
+              blend_mode=@graphics.BlendMode::Screen,
               mask=layer_mask,
               offscreen=true,
             ),
           )
           fill_rounded_rect(
             ctx,
-            @views.RoundedRect::new(
+            @graphics.RoundedRect::new(
               rect=@geometry.Rect::new(
                 x=left + 96.0,
                 y=top + 8.0,
@@ -136,16 +139,16 @@ fn advanced_rendering_canvas(
           pop_layer(ctx)
           push_layer(
             ctx,
-            @views.LayerSpec::new(
+            @graphics.LayerSpec::new(
               opacity=0.68,
-              blend_mode=@views.BlendMode::Overlay,
+              blend_mode=@graphics.BlendMode::Overlay,
               mask=layer_mask,
               offscreen=true,
             ),
           )
           fill_rounded_rect(
             ctx,
-            @views.RoundedRect::new(
+            @graphics.RoundedRect::new(
               rect=@geometry.Rect::new(
                 x=left + 18.0,
                 y=top + 58.0,
@@ -161,15 +164,15 @@ fn advanced_rendering_canvas(
           pop_layer(ctx)
         }
         "filter" => {
-          push_filter(ctx, @views.FilterEffect::blur(4.0))
+          push_filter(ctx, @graphics.FilterEffect::blur(4.0))
           fill_rounded_rect(
             ctx,
-            @views.RoundedRect::new(rect=rect_a, radius=16.0),
+            @graphics.RoundedRect::new(rect=rect_a, radius=16.0),
             @graphics.Brush::solid(theme.palette.primary.multiply_alpha(0.66)),
           )
           fill_rounded_rect(
             ctx,
-            @views.RoundedRect::new(rect=rect_b, radius=16.0),
+            @graphics.RoundedRect::new(rect=rect_b, radius=16.0),
             @graphics.Brush::solid(
               theme.palette.foreground.multiply_alpha(0.22),
             ),
@@ -179,7 +182,7 @@ fn advanced_rendering_canvas(
         "shader" => {
           fill_rounded_rect(
             ctx,
-            @views.RoundedRect::new(
+            @graphics.RoundedRect::new(
               rect=frame.inset(@geometry.Insets::all(14.0)),
               radius=theme.radius_scale.lg,
             ),
@@ -195,7 +198,7 @@ fn advanced_rendering_canvas(
           )
           draw_shader_effect(
             ctx,
-            @views.ShaderEffectSpec::new(
+            @graphics.ShaderEffectSpec::new(
               name="checker",
               frame=frame.inset(@geometry.Insets::all(10.0)),
               uniforms=[8.0, 0.6],
@@ -204,7 +207,7 @@ fn advanced_rendering_canvas(
           )
           draw_shader_effect(
             ctx,
-            @views.ShaderEffectSpec::new(
+            @graphics.ShaderEffectSpec::new(
               name="vignette",
               frame=frame.inset(@geometry.Insets::all(24.0)),
               uniforms=[0.35],
@@ -225,40 +228,40 @@ fn advanced_rendering_canvas(
           push_clip(ctx, clip)
           push_layer(
             ctx,
-            @views.LayerSpec::new(
+            @graphics.LayerSpec::new(
               opacity=0.96,
-              blend_mode=@views.BlendMode::SourceOver,
-              mask=@views.LayerMask::RoundedMask(
-                @views.RoundedRect::new(rect=mask_rect, radius=18.0),
+              blend_mode=@graphics.BlendMode::SourceOver,
+              mask=@graphics.LayerMask::RoundedMask(
+                @graphics.RoundedRect::new(rect=mask_rect, radius=18.0),
               ),
               offscreen=true,
             ),
           )
-          push_filter(ctx, @views.FilterEffect::Saturate(1.08))
+          push_filter(ctx, @graphics.FilterEffect::Saturate(1.08))
           fill_rounded_rect(
             ctx,
-            @views.RoundedRect::new(rect=mask_rect, radius=18.0),
+            @graphics.RoundedRect::new(rect=mask_rect, radius=18.0),
             @graphics.Brush::solid(
               @graphics.Color::rgba(r=0.03, g=0.08, b=0.12),
             ),
           )
           push_transform(
             ctx,
-            @views.Transform2D::translation(
+            @graphics.Transform2D::translation(
               dx=mask_rect.origin.x + 16.0,
               dy=mask_rect.origin.y + 10.0,
             ),
           )
-          push_transform(ctx, @views.Transform2D::scale(sx=1.08, sy=0.92))
+          push_transform(ctx, @graphics.Transform2D::scale(sx=1.08, sy=0.92))
           draw_path(
             ctx,
-            @views.PathSpec::new(
+            @graphics.PathSpec::new(
               verbs=[
-                @views.PathVerb::MoveTo(@geometry.Point::new(x=0.0, y=60.0)),
-                @views.PathVerb::LineTo(@geometry.Point::new(x=34.0, y=4.0)),
-                @views.PathVerb::LineTo(@geometry.Point::new(x=78.0, y=54.0)),
-                @views.PathVerb::LineTo(@geometry.Point::new(x=42.0, y=44.0)),
-                @views.PathVerb::Close,
+                @graphics.PathVerb::MoveTo(@geometry.Point::new(x=0.0, y=60.0)),
+                @graphics.PathVerb::LineTo(@geometry.Point::new(x=34.0, y=4.0)),
+                @graphics.PathVerb::LineTo(@geometry.Point::new(x=78.0, y=54.0)),
+                @graphics.PathVerb::LineTo(@geometry.Point::new(x=42.0, y=44.0)),
+                @graphics.PathVerb::Close,
               ],
               fill=Some(
                 @graphics.Brush::solid(
@@ -275,7 +278,7 @@ fn advanced_rendering_canvas(
           )
           fill_rounded_rect(
             ctx,
-            @views.RoundedRect::new(
+            @graphics.RoundedRect::new(
               rect=@geometry.Rect::new(x=8.0, y=18.0, width=46.0, height=24.0),
               radius=8.0,
             ),
@@ -283,17 +286,17 @@ fn advanced_rendering_canvas(
           )
           fill_rounded_rect(
             ctx,
-            @views.RoundedRect::new(
+            @graphics.RoundedRect::new(
               rect=@geometry.Rect::new(x=72.0, y=10.0, width=54.0, height=32.0),
               radius=10.0,
             ),
             @graphics.Brush::solid(@graphics.Color::rgba(r=0.0, g=0.82, b=0.92)),
           )
-          draw_image(ctx, @views.ImageRun::{
+          draw_image(ctx, @graphics.ImageRun::{
             source: showcase_image_source(),
             frame: @geometry.Rect::new(x=118.0, y=18.0, width=52.0, height=30.0),
             opacity: 0.95,
-            fit: @views.ImageFit::Cover,
+            fit: @graphics.ImageFit::Cover,
           })
           draw_text(
             ctx,
@@ -326,7 +329,7 @@ fn advanced_rendering_canvas(
           )
           fill_rounded_rect(
             ctx,
-            @views.RoundedRect::new(
+            @graphics.RoundedRect::new(
               rect=@geometry.Rect::new(x=left, y=top, width=78.0, height=78.0),
               radius=18.0,
             ),
@@ -337,7 +340,7 @@ fn advanced_rendering_canvas(
               edge_color=@graphics.Color::rgba(r=0.02, g=0.2, b=1.0),
             ),
           )
-          draw_image(ctx, @views.ImageRun::{
+          draw_image(ctx, @graphics.ImageRun::{
             source: showcase_image_source(),
             frame: @geometry.Rect::new(
               x=left + 92.0,
@@ -346,7 +349,7 @@ fn advanced_rendering_canvas(
               height=32.0,
             ),
             opacity: 1.0,
-            fit: @views.ImageFit::Cover,
+            fit: @graphics.ImageFit::Cover,
           })
           draw_text(
             ctx,
@@ -397,23 +400,26 @@ fn advanced_rendering_canvas(
         }
         _ => {
           push_opacity(ctx, 0.82)
-          push_transform(ctx, @views.Transform2D::translation(dx=18.0, dy=4.0))
+          push_transform(
+            ctx,
+            @graphics.Transform2D::translation(dx=18.0, dy=4.0),
+          )
           draw_path(
             ctx,
-            @views.PathSpec::new(
+            @graphics.PathSpec::new(
               verbs=[
-                @views.PathVerb::MoveTo(
+                @graphics.PathVerb::MoveTo(
                   @geometry.Point::new(x=left + 8.0, y=top + 74.0),
                 ),
-                @views.PathVerb::CubicTo(
+                @graphics.PathVerb::CubicTo(
                   @geometry.Point::new(x=left + 42.0, y=top - 6.0),
                   @geometry.Point::new(x=left + 104.0, y=top + 14.0),
                   @geometry.Point::new(x=left + 136.0, y=top + 76.0),
                 ),
-                @views.PathVerb::LineTo(
+                @graphics.PathVerb::LineTo(
                   @geometry.Point::new(x=left + 70.0, y=top + 48.0),
                 ),
-                @views.PathVerb::Close,
+                @graphics.PathVerb::Close,
               ],
               fill=Some(
                 @graphics.Brush::solid(

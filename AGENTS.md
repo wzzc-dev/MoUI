@@ -46,9 +46,11 @@ For task-specific workflows, use the repo-local skills:
   - `sh scripts/check.sh --profile daily` when changing core/view/render/backend packages
 - **Synchronize async test patterns**: When a test spawns background threads and polls for results, ensure the polling loop yields the thread (e.g. `Sleep(0)` on Windows) so the background thread can execute before the poll budget is exhausted.
 - Ordinary app packages should default to `wzzc-dev/moui` (app-loop `@moui.*`),
-  `wzzc-dev/moui/<geometry|graphics|text|state>` as needed, and `wzzc-dev/moui/views`;
-  use domain sugar and `@views` re-exports; reserve `@core` for tests (`for "test"`)
-  or advanced kernel (see `docs/moui-app-package-boundary.md`, ADR `docs/decisions/0003-domain-sugar-and-root-facade.md`).
+  `wzzc-dev/moui/<geometry|graphics|animation|text|state>` as needed, and
+  `wzzc-dev/moui/views`; use domain facades for drawing, animation, text,
+  geometry, state/focus value types, and reserve `@core` for tests (`for "test"`)
+  or advanced kernel/diagnostics (see `docs/moui-app-package-boundary.md`, ADR
+  `docs/decisions/0003-domain-sugar-and-root-facade.md`).
 - Put new controls, control styles, form/navigation/data helpers, and default
   app-facing themes in `moui/views`.
 - Put neutral cross-runtime protocols and value types in `moui/core`.
@@ -166,7 +168,7 @@ Windows check wrapper plan with
 The `platform` profile starts with shared platform service checks; host-specific
 backend/provider tests are declared in `checks/profiles.json`.
 
-- Root app-loop aliases and domain sugar forwards are enforced by
+- Root app-loop aliases and domain facade forwards are enforced by
   `tools/moui/validate_api_surface/main.mbt`. Update `root_app_shape_tokens()` or
   `sugar_<domain>_tokens()` and matching budgets when changing facade surfaces.
 

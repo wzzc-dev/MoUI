@@ -94,7 +94,17 @@ fn sugar_geometry_tokens() -> Array[String] {
 ///|
 /// Types forwarded by the `moui/graphics` domain sugar package.
 fn sugar_graphics_tokens() -> Array[String] {
-  ["Color", "Brush", "BorderStyle", "ShadowStyle"]
+  [
+    "Color", "Brush", "BorderStyle", "ShadowStyle", "RoundedRect", "PathSpec", "PathVerb",
+    "ImageRun", "ImageFit", "BlendMode", "LayerSpec", "LayerMask", "FilterEffect",
+    "ShadowSpec", "Transform2D", "ShaderEffectSpec",
+  ]
+}
+
+///|
+/// Types forwarded by the `moui/animation` domain facade package.
+fn sugar_animation_tokens() -> Array[String] {
+  ["Easing", "TransitionSpec", "TransitionStyle"]
 }
 
 ///|
@@ -110,7 +120,7 @@ fn sugar_text_tokens() -> Array[String] {
 fn sugar_state_tokens() -> Array[String] {
   [
     "State", "Binding", "DerivedState", "ScrollState", "FocusState", "NavigationState",
-    "ColorScheme", "LayoutDirection",
+    "ColorScheme", "LayoutDirection", "FocusScope", "FocusScopeItem",
   ]
 }
 
@@ -136,11 +146,15 @@ fn sugar_cross_domain_forbidden_tokens(
   let all = [
     "View", "Program", "Effect", "Subscription", "Theme", "Environment", "ViewEnvironment",
     "Point", "Size", "Rect", "Insets", "Constraints", "Axis", "Alignment", "Color",
-    "Brush", "BorderStyle", "ShadowStyle", "FontSpec", "FontFamily", "TextRange",
-    "TextAlign", "State", "Binding", "DerivedState", "ScrollState", "FocusState",
-    "NavigationState", "ColorScheme", "LayoutDirection", "CommandIntent", "KeyboardShortcut",
+    "Brush", "BorderStyle", "ShadowStyle", "RoundedRect", "PathSpec", "PathVerb",
+    "ImageRun", "ImageFit", "BlendMode", "LayerSpec", "LayerMask", "FilterEffect",
+    "ShadowSpec", "Transform2D", "ShaderEffectSpec", "Easing", "TransitionSpec",
+    "TransitionStyle", "FontSpec", "FontFamily", "TextRange", "TextAlign", "State",
+    "Binding", "DerivedState", "ScrollState", "FocusState", "NavigationState", "ColorScheme",
+    "LayoutDirection", "FocusScope", "FocusScopeItem", "CommandIntent", "KeyboardShortcut",
     "KeyModifiers", "DateValue", "FontFamilyStack", "AccessibilityContrast", "ContentSizeCategory",
-    "ActionCommand", "ActionCommandMap", "CommandBinding",
+    "ActionCommand", "ActionCommandMap", "CommandBinding", "ComponentContext", "ElementId",
+    "SemanticsRole",
   ]
   let forbidden : Array[String] = []
   for type_name in all {
@@ -215,12 +229,24 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "graphics sugar",
       path: "moui/graphics/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/graphics\"",
-      max_lines: 30,
-      max_pub_lines: 8,
+      max_lines: 80,
+      max_pub_lines: 20,
       max_pub_all_lines: 0,
       required_tokens: sugar_required_tokens(sugar_graphics_tokens()),
       forbidden_tokens: sugar_cross_domain_forbidden_tokens(
         sugar_graphics_tokens(),
+      ),
+    },
+    {
+      label: "animation sugar",
+      path: "moui/animation/pkg.generated.mbti",
+      package_token: "package \"wzzc-dev/moui/animation\"",
+      max_lines: 24,
+      max_pub_lines: 4,
+      max_pub_all_lines: 0,
+      required_tokens: sugar_required_tokens(sugar_animation_tokens()),
+      forbidden_tokens: sugar_cross_domain_forbidden_tokens(
+        sugar_animation_tokens(),
       ),
     },
     {
@@ -237,8 +263,8 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "state sugar",
       path: "moui/state/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/state\"",
-      max_lines: 32,
-      max_pub_lines: 8,
+      max_lines: 40,
+      max_pub_lines: 10,
       max_pub_all_lines: 0,
       required_tokens: sugar_required_tokens(sugar_state_tokens()),
       forbidden_tokens: sugar_cross_domain_forbidden_tokens(
@@ -329,7 +355,7 @@ fn package_budgets() -> Array[PackageBudget] {
         "ViewTreeInspectorSnapshot::from_runtime(", "LayoutInspectorSnapshot::from_runtime(",
         "RenderInspectorSnapshot::from_runtime(", "SemanticsInspectorSnapshot::from_runtime(",
         "RouteFocusStore::restore(", "RouteFocusStore::restore_location(", "ComponentContext::new_for_runtime",
-        "RichText",
+        "RichText", "SheetPresentationMode",
       ],
     },
     {
@@ -343,7 +369,16 @@ fn package_budgets() -> Array[PackageBudget] {
       forbidden_tokens: [
         "ViewSpec", "ViewNode", "VirtualNode", "RuntimeState", "HostWindowRenderer",
         "SkiaRasterRenderer", "RichText", "rich_text_", "markdown_editor", "pub fn[Msg] raw_",
-        "RawPickerOption", "RawDatePickerDisplayMode",
+        "RawPickerOption", "RawDatePickerDisplayMode", "pub using @core {type ComponentContext}",
+        "pub using @core {type FocusScope}", "pub using @core {type FocusScopeItem}",
+        "pub using @core {type FontFamilyStack}", "pub using @core {type ImageFit}",
+        "pub using @core {type ImageRun}", "pub using @core {type TextRun}", "pub using @core {type BlendMode}",
+        "pub using @core {type Easing}", "pub using @core {type FilterEffect}", "pub using @core {type LayerMask}",
+        "pub using @core {type LayerSpec}", "pub using @core {type PathSpec}", "pub using @core {type PathVerb}",
+        "pub using @core {type RoundedRect}", "pub using @core {type ShaderEffectSpec}",
+        "pub using @core {type ShadowSpec}", "pub using @core {type Transform2D}",
+        "pub using @core {type TransitionSpec}", "pub using @core {type TransitionStyle}",
+        "pub using @core {type ElementId}", "pub using @core {type SemanticsRole}",
       ],
     },
     {
@@ -421,6 +456,61 @@ fn view_return_rules() -> Array[ViewReturnRule] {
     {
       name: "navigation_stack",
       signature_prefix: "pub fn[Msg] navigation_stack(",
+      return_token: "-> @core.View[Msg]",
+    },
+    {
+      name: "image",
+      signature_prefix: "pub fn[Msg] image(",
+      return_token: "-> @core.View[Msg]",
+    },
+    {
+      name: "canvas",
+      signature_prefix: "pub fn[Msg] canvas(",
+      return_token: "-> @core.View[Msg]",
+    },
+    {
+      name: "custom_layout",
+      signature_prefix: "pub fn[Msg] custom_layout(",
+      return_token: "-> @core.View[Msg]",
+    },
+    {
+      name: "custom_children_layout",
+      signature_prefix: "pub fn[Msg] custom_children_layout(",
+      return_token: "-> @core.View[Msg]",
+    },
+    {
+      name: "component",
+      signature_prefix: "pub fn[Msg] component(",
+      return_token: "-> @core.View[Msg]",
+    },
+    {
+      name: "empty",
+      signature_prefix: "pub fn[Msg] empty(",
+      return_token: "-> @core.View[Msg]",
+    },
+    {
+      name: "spacer",
+      signature_prefix: "pub fn[Msg] spacer(",
+      return_token: "-> @core.View[Msg]",
+    },
+    {
+      name: "picker",
+      signature_prefix: "pub fn[Msg] picker(",
+      return_token: "-> @core.View[Msg]",
+    },
+    {
+      name: "datepicker",
+      signature_prefix: "pub fn[Msg] datepicker(",
+      return_token: "-> @core.View[Msg]",
+    },
+    {
+      name: "sheet",
+      signature_prefix: "pub fn[Msg] sheet(",
+      return_token: "-> @core.View[Msg]",
+    },
+    {
+      name: "sheet_host",
+      signature_prefix: "pub fn[Msg] sheet_host(",
       return_token: "-> @core.View[Msg]",
     },
   ]
@@ -1383,6 +1473,8 @@ fn validate_shared_app_core_imports(
   let paths : Array[String] = []
   collect_shared_app_moon_pkgs(repo_root, paths, failures)
   let mut core_imports = 0
+  let mut unauthorized_core_imports = 0
+  let allowed = allowed_shared_app_core_imports()
   for path in paths {
     let text = match read_repo_text(repo_root, path) {
       Ok(value) => value
@@ -1393,6 +1485,13 @@ fn validate_shared_app_core_imports(
     }
     if moon_pkg_has_default_import(text, "\"wzzc-dev/moui/core\"") {
       core_imports += 1
+      if !allowed.contains(path) {
+        unauthorized_core_imports += 1
+        failures.push(
+          path +
+          ": shared app packages should prefer @moui/domain facades; default-import core only for advanced kernel/diagnostics use",
+        )
+      }
     }
   }
   let max_core_imports = max_shared_app_core_imports()
@@ -1402,7 +1501,7 @@ fn validate_shared_app_core_imports(
     )
   }
   println(
-    "api surface: shared app default core imports=\{core_imports}/\{max_core_imports}",
+    "api surface: shared app default core imports=\{core_imports}/\{max_core_imports}; unauthorized=\{unauthorized_core_imports}",
   )
 }
 

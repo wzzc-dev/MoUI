@@ -422,7 +422,7 @@ fn showcase_inspector_snapshot(
       dirty_paint_count: 0,
       nodes: [
         @runtime.ViewInspectorSummary::{
-          element_id: @views.ElementId::new(1),
+          element_id: @core.ElementId::new(1),
           kind: "component",
           key: "inspector-root",
           child_count: 1,
@@ -431,7 +431,7 @@ fn showcase_inspector_snapshot(
           needs_paint: false,
         },
         @runtime.ViewInspectorSummary::{
-          element_id: @views.ElementId::new(2),
+          element_id: @core.ElementId::new(2),
           kind: "surface",
           key: "inspector-surface",
           child_count: 1,
@@ -440,7 +440,7 @@ fn showcase_inspector_snapshot(
           needs_paint: false,
         },
         @runtime.ViewInspectorSummary::{
-          element_id: @views.ElementId::new(3),
+          element_id: @core.ElementId::new(3),
           kind: "column",
           key: "inspector-column",
           child_count: 3,
@@ -457,19 +457,19 @@ fn showcase_inspector_snapshot(
       max_depth: 3,
       bounds: [
         @runtime.LayoutBoundsInspectorEntry::{
-          element_id: @views.ElementId::new(1),
+          element_id: @core.ElementId::new(1),
           frame: @geometry.Rect::new(x=0.0, y=0.0, width=220.0, height=120.0),
           depth: 0,
           child_count: 1,
         },
         @runtime.LayoutBoundsInspectorEntry::{
-          element_id: @views.ElementId::new(2),
+          element_id: @core.ElementId::new(2),
           frame: @geometry.Rect::new(x=8.0, y=8.0, width=180.0, height=104.0),
           depth: 1,
           child_count: 1,
         },
         @runtime.LayoutBoundsInspectorEntry::{
-          element_id: @views.ElementId::new(3),
+          element_id: @core.ElementId::new(3),
           frame: @geometry.Rect::new(x=16.0, y=16.0, width=150.0, height=80.0),
           depth: 2,
           child_count: 3,
@@ -491,7 +491,7 @@ fn showcase_inspector_snapshot(
       unbalanced_pop_count: 0,
     },
     semantics: @runtime.SemanticsInspectorSnapshot::{
-      root_role: @views.SemanticsRole::Group,
+      root_role: @core.SemanticsRole::Group,
       node_count: 4,
       focusable_count: 1,
       action_count: 1,

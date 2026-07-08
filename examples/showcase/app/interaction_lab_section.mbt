@@ -135,15 +135,15 @@ fn ShowcaseModel::focus_shortcut_card(
   width : Double,
 ) -> @moui.View[ShowcaseMsg] {
   ignore(self)
-  let focus_scope = @views.FocusScope::new(
+  let focus_scope = @state.FocusScope::new(
     current=Some("name"),
     default_action="save",
     dismiss_action="cancel",
     items=[
-      @views.FocusScopeItem::new(id="name"),
-      @views.FocusScopeItem::new(id="archived", enabled=false),
-      @views.FocusScopeItem::new(id="email"),
-      @views.FocusScopeItem::new(id="save", focusable=false),
+      @state.FocusScopeItem::new(id="name"),
+      @state.FocusScopeItem::new(id="archived", enabled=false),
+      @state.FocusScopeItem::new(id="email"),
+      @state.FocusScopeItem::new(id="save", focusable=false),
     ],
   )
   let validation_summary = @views.FormValidationSummary::from_errors([
@@ -304,7 +304,7 @@ fn ShowcaseModel::focus_shortcut_card(
     height=412.0,
     padding=theme.spacing_scale.md,
   )
-  .semantics_role(@views.SemanticsRole::Group)
+  .semantics_role(@core.SemanticsRole::Group)
   .accessibility_label("Focus scope keyboard rules")
 }
 
@@ -546,7 +546,7 @@ fn image_lifecycle_tile(
         height=44.0,
         opacity=if label == "Loading" { 0.36 } else { 1.0 },
         corner_radius=theme.radius_scale.sm,
-        fit=@views.ImageFit::Cover,
+        fit=@graphics.ImageFit::Cover,
       )
       .background(theme.palette.surface_variant.multiply_alpha(0.5))
       .clip(),

@@ -72,7 +72,11 @@ Design Systems is addon diagnostic coverage. Use
 `examples/design_systems`.
 
 Native WGPU is diagnostic. Use `sh scripts/check.sh --profile full`
-only when changing that route.
+when changing that route or when you need the full-workspace hotspot guard.
+The full profile runs the daily maintenance baseline plus
+`moon run tools/moui/validate_maintenance_baseline --target native -- --scope full`
+to report registered large-file hotspots in addon/tool workspaces without
+expanding the daily gate.
 
 ## Focused
 
@@ -162,8 +166,9 @@ Use focused `moon test ...` package commands while editing. The `platform`
 profile starts with shared platform service checks for host/Web contracts and
 opportunistic Linux protocol/cache sanity, then `checks/profiles.json` owns the
 host-specific backend/provider package steps. `theme` covers Design Systems
-addon diagnostics, and `full` adds text diagnostics, capture scaffolds, theme
-checks, platform checks, and current-host native example builds.
+addon diagnostics, and `full` adds full-workspace hotspot scanning, text
+diagnostics, capture scaffolds, theme checks, platform checks, and current-host
+native example builds.
 
 Capture scaffolds write local manifests under ignored `artifacts/` paths for
 screenshot or benchmark handoff. They are not checked-in capability
