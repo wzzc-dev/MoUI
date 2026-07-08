@@ -116,13 +116,14 @@ fn android_skia_present_target(
   @skia_renderer.SkiaPresentTarget::new(
     description=android_skia_presenter_description(),
     present=frame => {
+      let pixels = frame.pixels()
       android_present_skia_pixels_to_surface(
         surface.raw(),
-        frame.width,
-        frame.height,
-        frame.row_bytes,
-        frame.pixels,
-        frame.pixels.length(),
+        frame.width(),
+        frame.height(),
+        frame.row_bytes(),
+        pixels,
+        pixels.length(),
       ) !=
       0
     },
