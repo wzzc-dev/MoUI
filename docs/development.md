@@ -63,6 +63,19 @@ moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
 ```
 
+Android is currently an embedded native scaffold rather than a full app-owned
+event loop. For Android Skia cross-build checks, set
+`MOUI_SKIA_PLATFORM=android` and an explicit `MOUI_SKIA_ARCH` so the prebuild
+selects the locked Android Skia artifact instead of the desktop host artifact:
+
+```sh
+MOUI_SKIA_PLATFORM=android MOUI_SKIA_ARCH=arm64 \
+  moon check examples/counter/android_skia --target native
+```
+
+See [android-support.md](android-support.md) for the Activity/Surface ownership
+boundary and runtime-evidence requirements.
+
 `moon update` refreshes registry packages, including the `window` fork package.
 The default `sh scripts/check.sh --profile daily` path guards dependency shape and the
 repo-local `moui_skia` acceptance surface. The Skia binding is part of the main

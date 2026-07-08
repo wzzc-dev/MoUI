@@ -379,6 +379,12 @@ compile path. Environment values for `MOUI_SKIA_SKIA_INCLUDE`,
 `MOUI_SKIA_SKIA_LIB_DIR`, `MOUI_SKIA_SKIA_LIB`,
 `MOUI_SKIA_EXTRA_CC_FLAGS`, `MOUI_SKIA_EXTRA_LINK_FLAGS`, and
 `MOUI_SKIA_LINK_MODE` take precedence over the release provider defaults.
+For cross-builds, set `MOUI_SKIA_PLATFORM` (`macos`, `linux`, `windows`,
+`android`, `ios`, `iosSim`, `tvos`, `tvosSim`, or `wasm`),
+`MOUI_SKIA_ARCH` (`arm64`, `x64`, or `riscv64`), and optionally
+`MOUI_SKIA_CONFIG=Release|Debug`. Android builds should set
+`MOUI_SKIA_PLATFORM=android` explicitly so the prebuild uses the locked Android
+artifact rather than the current desktop host platform.
 
 To build a small CPU-only Skia from source for the macOS smoke test, run:
 

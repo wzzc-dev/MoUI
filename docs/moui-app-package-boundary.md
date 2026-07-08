@@ -199,7 +199,7 @@ capability 展示依赖 `@render`；普通 app 不应把这两个示例用途当
 - `wzzc-dev/moui/runtime`
 - `wzzc-dev/moui/render/*`
 - `wzzc-dev/moui/backend/{web,macos,windows,linux}`
-- `wzzc-dev/moui/backend/{macos,windows,linux}/skia`
+- `wzzc-dev/moui/backend/{macos,windows,linux,android}/skia`
 - `wzzc-dev/moui/backend/{macos,windows,linux}/wgpu`
 - `moui_theme/*`,除非该 app 本身是设计系统 addon 或 preview app。
 
@@ -388,8 +388,8 @@ MoUI 当前把两类入口统一在 `moui/views`：普通 app 使用高层 const
 - `wzzc-dev/moui/runtime`
 - `wzzc-dev/moui/backend/web`
 - `wzzc-dev/moui/backend/host`
-- `wzzc-dev/moui/backend/{macos,windows,linux}`
-- `wzzc-dev/moui/backend/{macos,windows,linux}/skia`
+- `wzzc-dev/moui/backend/{macos,windows,linux,android}`
+- `wzzc-dev/moui/backend/{macos,windows,linux,android}/skia`
 - `wzzc-dev/moui/render/skia`
 - 对应的 shared app package，例如 `examples/showcase/app`
 

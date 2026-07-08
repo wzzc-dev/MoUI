@@ -1,6 +1,6 @@
 ---
 name: moui-app-development
-description: Build and maintain MoUI application packages and examples. Use when working in examples/*/app, app-specific service packages, platform entrypoints such as web_wasm/macos_skia/windows_skia/linux_skia, app views built with wzzc-dev/moui/views, model/update/view logic, host-service integration from app code, or app-focused tests and smoke runs.
+description: Build and maintain MoUI application packages and examples. Use when working in examples/*/app, app-specific service packages, platform entrypoints such as web_wasm/macos_skia/windows_skia/linux_skia/android_skia, app views built with wzzc-dev/moui/views, model/update/view logic, host-service integration from app code, or app-focused tests and smoke runs.
 ---
 
 # MoUI App Development
@@ -36,6 +36,7 @@ examples/<name>/web_wasm/
 examples/<name>/macos_skia/
 examples/<name>/windows_skia/
 examples/<name>/linux_skia/
+examples/<name>/android_skia/   # experimental embedded-session route
 ```
 
 Default shared app imports:
@@ -137,6 +138,7 @@ Common examples:
 
 ```sh
 moon test examples/counter/app --target native
+MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/counter/android_skia --target native
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
 moon test examples/pdf_workbench/app --target native

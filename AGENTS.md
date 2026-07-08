@@ -33,6 +33,11 @@ For task-specific workflows, use the repo-local skills:
 ## Working Rules
 
 - Keep shared app logic in `examples/<name>/app`; keep platform entrypoints thin.
+- Keep Android work on the embedded-session route for now:
+  `moui/backend/android` owns Activity/Surface-driven host contracts and
+  `moui/backend/android/skia` owns the `ANativeWindow` Skia presenter. Do not
+  claim Android runtime support as passed until a matching device/emulator smoke
+  records first-frame and input/lifecycle evidence.
 
 ### CI Safety Rules
 

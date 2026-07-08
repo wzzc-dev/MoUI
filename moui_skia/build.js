@@ -37,6 +37,70 @@ function targetKind(config) {
   );
 }
 
+function hostSkiaPlatform() {
+  if (process.platform === "darwin") {
+    return "macos";
+  }
+  if (process.platform === "win32") {
+    return "windows";
+  }
+  return process.platform;
+}
+
+function skiaReleasePlatform(config) {
+  const platform = (
+    configEnvValue(config, "MOUI_SKIA_PLATFORM") ||
+    configEnvValue(config, "MOUI_SKIA_RELEASE_PLATFORM") ||
+    "auto"
+  ).trim();
+  const allowed = [
+    "auto",
+    "macos",
+    "linux",
+    "windows",
+    "android",
+    "ios",
+    "iosSim",
+    "tvos",
+    "tvosSim",
+    "wasm",
+  ];
+  if (!allowed.includes(platform)) {
+    throw new Error(`unsupported MOUI_SKIA_PLATFORM: ${platform}`);
+  }
+  return platform;
+}
+
+function skiaTargetPlatform(config) {
+  const platform = skiaReleasePlatform(config);
+  return platform === "auto" ? hostSkiaPlatform() : platform;
+}
+
+function skiaReleaseArch(config) {
+  const arch = (
+    configEnvValue(config, "MOUI_SKIA_ARCH") ||
+    configEnvValue(config, "MOUI_SKIA_RELEASE_ARCH") ||
+    "auto"
+  ).trim();
+  const allowed = ["auto", "arm64", "x64", "riscv64"];
+  if (!allowed.includes(arch)) {
+    throw new Error(`unsupported MOUI_SKIA_ARCH: ${arch}`);
+  }
+  return arch;
+}
+
+function skiaReleaseConfig(config) {
+  const releaseConfig = (
+    configEnvValue(config, "MOUI_SKIA_CONFIG") ||
+    configEnvValue(config, "MOUI_SKIA_RELEASE_CONFIG") ||
+    "Release"
+  ).trim();
+  if (!["Release", "Debug"].includes(releaseConfig)) {
+    throw new Error(`unsupported MOUI_SKIA_CONFIG: ${releaseConfig}`);
+  }
+  return releaseConfig;
+}
+
 function shouldConfigureSkia(config) {
   const kind = targetKind(config);
   if (kind && ["wasm", "wasm32", "wasmgc", "wasm-gc", "js"].includes(kind)) {
@@ -151,11 +215,11 @@ function runPowerShell(script, args, description) {
 function fetchSkiaEnv(config) {
   const common = [
     "--platform",
-    "auto",
+    skiaReleasePlatform(config),
     "--arch",
-    "auto",
+    skiaReleaseArch(config),
     "--config",
-    "Release",
+    skiaReleaseConfig(config),
     "--link-mode",
     skiaLinkMode(config),
     "--cache-dir",
@@ -168,11 +232,11 @@ function fetchSkiaEnv(config) {
         path.join(repoRoot, "scripts", "fetch-release-skia.ps1"),
         [
           "-Platform",
-          "auto",
+          skiaReleasePlatform(config),
           "-Arch",
-          "auto",
+          skiaReleaseArch(config),
           "-Config",
-          "Release",
+          skiaReleaseConfig(config),
           "-LinkMode",
           skiaLinkMode(config),
           "-CacheDir",
@@ -220,8 +284,8 @@ function appendMissingFlags(base, flags) {
   return parts.join(" ");
 }
 
-function macosExampleLinkFlags(base, extraFrameworks) {
-  if (process.platform !== "darwin") {
+function macosExampleLinkFlags(base, extraFrameworks, platform = hostSkiaPlatform()) {
+  if (platform !== "macos") {
     return base;
   }
   return appendFlags(base, extraFrameworks);
@@ -246,6 +310,12 @@ function skiaValues(config) {
     "MOUI_SKIA_EXTRA_CC_FLAGS",
     "MOUI_SKIA_EXTRA_LINK_FLAGS",
     "MOUI_SKIA_LINK_MODE",
+    "MOUI_SKIA_PLATFORM",
+    "MOUI_SKIA_RELEASE_PLATFORM",
+    "MOUI_SKIA_ARCH",
+    "MOUI_SKIA_RELEASE_ARCH",
+    "MOUI_SKIA_CONFIG",
+    "MOUI_SKIA_RELEASE_CONFIG",
     "MOUI_SKIA_PROVIDER",
     "MOUI_SKIA_SKIA_PROVIDER",
     "MOUI_SKIA_RELEASE_TAG",
@@ -431,6 +501,24 @@ function linuxStaticSkiaParagraphLinkFlags(libPath, skiaLib) {
   ].join(" ");
 }
 
+function androidStaticSkiaParagraphLinkFlags(libPath, skiaLib) {
+  const skiaFlag = path.join(libPath, `lib${skiaLib}.a`);
+  const paragraphFlags = skiaParagraphLinkLibraryNames("android")
+    .map(name => unixLibraryFlag(
+      libPath,
+      name,
+      "static",
+      unixDynamicLibrarySuffix("android"),
+    ));
+  return [
+    `-L${libPath}`,
+    "-Wl,--start-group",
+    skiaFlag,
+    ...paragraphFlags,
+    "-Wl,--end-group",
+  ].join(" ");
+}
+
 function linuxReleaseSkParagraphAbiFlags(values) {
   // The locked Linux release SkParagraph archive exports old libstdc++ ABI symbols.
   const provider = (
@@ -479,6 +567,7 @@ function platformFlags(config, values) {
   const includePath = requireValue(values, "MOUI_SKIA_SKIA_INCLUDE");
   const libPath = requireValue(values, "MOUI_SKIA_SKIA_LIB_DIR");
   const skiaLib = values.MOUI_SKIA_SKIA_LIB || "skia";
+  const platform = skiaTargetPlatform(config);
   let extraCcFlags = values.MOUI_SKIA_EXTRA_CC_FLAGS || "";
   const extraLinkFlags = values.MOUI_SKIA_EXTRA_LINK_FLAGS || "";
   const linkMode = (values.MOUI_SKIA_LINK_MODE || skiaLinkMode(config)).trim().toLowerCase();
@@ -497,7 +586,7 @@ function platformFlags(config, values) {
   let stubCcFlags = `-DMOUI_SKIA_HAS_SKIA -I${includePath}`;
   let linkFlags = `-L${libPath} -l${skiaLib}`;
 
-  if (process.platform === "win32") {
+  if (platform === "windows") {
     stubCcFlags = `/DMOUI_SKIA_HAS_SKIA /std:c++20 /EHsc /I${includePath}`;
     const staticLib = path.join(libPath, `${skiaLib}.lib`);
     const dynamicImportLib = path.join(libPath, `${skiaLib}.dll.lib`);
@@ -538,7 +627,7 @@ function platformFlags(config, values) {
     if (paragraphEnabled) {
       stubCcFlags = appendFlags(stubCcFlags, "/DMOUI_SKIA_HAS_SKPARAGRAPH /DMOUI_SKIA_HAS_SKSHAPER");
     }
-  } else if (process.platform === "darwin") {
+  } else if (platform === "macos") {
     const resolvedLinkMode = resolveUnixLibraryMode(linkMode, libPath, skiaLib, ".dylib");
     stubCcFlags = `-DMOUI_SKIA_HAS_SKIA -std=c++17 -I${includePath}`;
     linkFlags = macosLibraryFlags(config, libPath, skiaLib, skiaMetalGpuEnabled(config), linkMode) +
@@ -560,7 +649,7 @@ function platformFlags(config, values) {
         "-framework Metal -framework QuartzCore -framework CoreVideo -framework IOSurface -framework AppKit -lobjc",
       );
     }
-  } else if (process.platform === "linux") {
+  } else if (platform === "linux") {
     stubCcFlags = `-DMOUI_SKIA_HAS_SKIA -std=c++17 -I${includePath}`;
     const staticLib = path.join(libPath, `lib${skiaLib}.a`);
     const dynamicLib = path.join(libPath, `lib${skiaLib}.so`);
@@ -601,29 +690,73 @@ function platformFlags(config, values) {
       }
     }
     linkFlags = appendMissingFlags(linkFlags, ["-lstdc++"]);
+  } else if (platform === "android") {
+    stubCcFlags = `-DMOUI_SKIA_HAS_SKIA -std=c++17 -I${includePath}`;
+    const staticLib = path.join(libPath, `lib${skiaLib}.a`);
+    const dynamicLib = path.join(libPath, `lib${skiaLib}.so`);
+    const resolvedLinkMode = resolveUnixLibraryMode(linkMode, libPath, skiaLib, ".so");
+    if (resolvedLinkMode === "static") {
+      if (!fs.existsSync(staticLib)) {
+        throw new Error(
+          `MOUI_SKIA_LINK_MODE=static requested, but ${staticLib} was not found`,
+        );
+      }
+      linkFlags = paragraphEnabled
+        ? androidStaticSkiaParagraphLinkFlags(libPath, skiaLib)
+        : staticLib;
+    } else {
+      if (!fs.existsSync(dynamicLib)) {
+        throw new Error(
+          `MOUI_SKIA_LINK_MODE=dynamic requested, but ${dynamicLib} was not found`,
+        );
+      }
+      linkFlags = `-L${libPath} -l${skiaLib}`;
+    }
+    linkFlags = appendMissingFlags(linkFlags, [
+      "-landroid",
+      "-llog",
+      "-lc++",
+      "-lm",
+      "-ldl",
+    ]);
+    if (paragraphEnabled) {
+      stubCcFlags = appendFlags(
+        stubCcFlags,
+        "-DMOUI_SKIA_HAS_SKPARAGRAPH -DMOUI_SKIA_HAS_SKSHAPER",
+      );
+      if (resolvedLinkMode !== "static") {
+        linkFlags = appendFlags(linkFlags, skiaParagraphLinkFlags(libPath, resolvedLinkMode, "android"));
+      }
+    }
   }
 
   return {
     stubCcFlags: appendFlags(stubCcFlags, extraCcFlags),
     linkFlags: appendFlags(linkFlags, extraLinkFlags),
+    androidLinkFlags: platform === "android" ? "-landroid -llog" : "",
   };
 }
 
 function main() {
+  const config = readJsonFromStdin();
+  const platform = skiaTargetPlatform(config);
   if (truthy(process.env.MOUI_SKIA_DISABLE_PREBUILD_SKIA)) {
     const triangleLinkFlags = macosExampleLinkFlags(
       "",
       "-framework QuartzCore -framework AppKit",
+      platform,
     );
     const metalWindowLinkFlags = macosExampleLinkFlags(
       "",
       "-framework Metal -framework QuartzCore -framework CoreVideo -framework IOSurface -framework AppKit",
+      platform,
     );
     console.log(
       JSON.stringify({
         vars: {
           MOUI_SKIA_STUB_CC_FLAGS: "",
           MOUI_SKIA_CC_LINK_FLAGS: "",
+          MOUI_SKIA_ANDROID_LINK_FLAGS: "",
           MOUI_SKIA_EXAMPLE_MACOS_WINDOW_LINK_FLAGS: triangleLinkFlags,
           MOUI_SKIA_EXAMPLE_MACOS_METAL_WINDOW_LINK_FLAGS: metalWindowLinkFlags,
         },
@@ -631,22 +764,24 @@ function main() {
     );
     return;
   }
-  const config = readJsonFromStdin();
   rejectLegacyLinkModeEnv(config);
   if (!shouldConfigureSkia(config)) {
     const triangleLinkFlags = macosExampleLinkFlags(
       "",
       "-framework QuartzCore -framework AppKit",
+      platform,
     );
     const metalWindowLinkFlags = macosExampleLinkFlags(
       "",
       "-framework Metal -framework QuartzCore -framework CoreVideo -framework IOSurface -framework AppKit",
+      platform,
     );
     console.log(
       JSON.stringify({
         vars: {
           MOUI_SKIA_STUB_CC_FLAGS: "",
           MOUI_SKIA_CC_LINK_FLAGS: "",
+          MOUI_SKIA_ANDROID_LINK_FLAGS: "",
           MOUI_SKIA_EXAMPLE_MACOS_WINDOW_LINK_FLAGS: triangleLinkFlags,
           MOUI_SKIA_EXAMPLE_MACOS_METAL_WINDOW_LINK_FLAGS: metalWindowLinkFlags,
         },
@@ -662,10 +797,12 @@ function main() {
   const triangleLinkFlags = macosExampleLinkFlags(
     flags.linkFlags,
     "-framework QuartzCore -framework AppKit",
+    platform,
   );
   const metalWindowLinkFlags = macosExampleLinkFlags(
     flags.linkFlags,
     "-framework Metal -framework QuartzCore -framework CoreVideo -framework IOSurface -framework AppKit",
+    platform,
   );
 
   console.log(
@@ -673,6 +810,7 @@ function main() {
       vars: {
         MOUI_SKIA_STUB_CC_FLAGS: flags.stubCcFlags,
         MOUI_SKIA_CC_LINK_FLAGS: flags.linkFlags,
+        MOUI_SKIA_ANDROID_LINK_FLAGS: flags.androidLinkFlags,
         MOUI_SKIA_EXAMPLE_MACOS_WINDOW_LINK_FLAGS: triangleLinkFlags,
         MOUI_SKIA_EXAMPLE_MACOS_METAL_WINDOW_LINK_FLAGS: metalWindowLinkFlags,
       },
