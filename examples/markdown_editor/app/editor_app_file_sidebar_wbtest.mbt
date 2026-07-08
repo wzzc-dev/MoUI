@@ -235,10 +235,10 @@ test "markdown editor file tree sorts folders before files by name" {
     ),
   ])
   inspect(sorted.length(), content="4")
-  inspect(sorted[0].name, content="Archive")
-  inspect(sorted[1].name, content="drafts")
-  inspect(sorted[2].name, content="Alpha.md")
-  inspect(sorted[3].name, content="zeta.md")
+  inspect(sorted[0].name(), content="Archive")
+  inspect(sorted[1].name(), content="drafts")
+  inspect(sorted[2].name(), content="Alpha.md")
+  inspect(sorted[3].name(), content="zeta.md")
 }
 
 ///|

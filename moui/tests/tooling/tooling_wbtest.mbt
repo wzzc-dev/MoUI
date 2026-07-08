@@ -50,9 +50,9 @@ test "quickcheck exercises svg rect lowering dimensions" {
         height.to_string() +
         "\" fill=\"red\"/></svg>"
       let result = @render.import_svg(svg)
-      result.diagnostics.length() == 0 &&
-      result.commands.length() == 1 &&
-      svg_rect_command_matches(result.commands[0], width, height)
+      result.diagnostics().length() == 0 &&
+      result.commands().length() == 1 &&
+      svg_rect_command_matches(result.commands()[0], width, height)
     },
     max_success=64,
   )

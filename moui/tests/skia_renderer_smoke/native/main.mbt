@@ -70,17 +70,18 @@ fn assert_pixel(
   b : Int,
   a : Int,
 ) -> Unit {
-  if x < 0 || y < 0 || x >= frame.width || y >= frame.height {
+  if x < 0 || y < 0 || x >= frame.width() || y >= frame.height() {
     fail_smoke("pixel sample is outside the Skia frame")
   }
-  let offset = y * frame.row_bytes + x * 4
-  if offset + 3 >= frame.pixels.length() {
+  let pixels = frame.pixels()
+  let offset = y * frame.row_bytes() + x * 4
+  if offset + 3 >= pixels.length() {
     fail_smoke("pixel sample exceeds the Skia frame payload")
   }
-  let actual_r = frame.pixels[offset].to_int()
-  let actual_g = frame.pixels[offset + 1].to_int()
-  let actual_b = frame.pixels[offset + 2].to_int()
-  let actual_a = frame.pixels[offset + 3].to_int()
+  let actual_r = pixels[offset].to_int()
+  let actual_g = pixels[offset + 1].to_int()
+  let actual_b = pixels[offset + 2].to_int()
+  let actual_a = pixels[offset + 3].to_int()
   if actual_r != r || actual_g != g || actual_b != b || actual_a != a {
     println("unexpected Skia renderer pixel at \{x},\{y}")
     println("expected rgba=\{r},\{g},\{b},\{a}")
@@ -100,17 +101,18 @@ fn assert_pixel_near(
   a : Int,
   tolerance : Int,
 ) -> Unit {
-  if x < 0 || y < 0 || x >= frame.width || y >= frame.height {
+  if x < 0 || y < 0 || x >= frame.width() || y >= frame.height() {
     fail_smoke("pixel sample is outside the Skia frame")
   }
-  let offset = y * frame.row_bytes + x * 4
-  if offset + 3 >= frame.pixels.length() {
+  let pixels = frame.pixels()
+  let offset = y * frame.row_bytes() + x * 4
+  if offset + 3 >= pixels.length() {
     fail_smoke("pixel sample exceeds the Skia frame payload")
   }
-  let actual_r = frame.pixels[offset].to_int()
-  let actual_g = frame.pixels[offset + 1].to_int()
-  let actual_b = frame.pixels[offset + 2].to_int()
-  let actual_a = frame.pixels[offset + 3].to_int()
+  let actual_r = pixels[offset].to_int()
+  let actual_g = pixels[offset + 1].to_int()
+  let actual_b = pixels[offset + 2].to_int()
+  let actual_a = pixels[offset + 3].to_int()
   if !component_near(actual_r, r, tolerance) ||
     !component_near(actual_g, g, tolerance) ||
     !component_near(actual_b, b, tolerance) ||
@@ -158,17 +160,18 @@ fn assert_pixel_luma_between(
   max_luma : Int,
   a : Int,
 ) -> Unit {
-  if x < 0 || y < 0 || x >= frame.width || y >= frame.height {
+  if x < 0 || y < 0 || x >= frame.width() || y >= frame.height() {
     fail_smoke("pixel sample is outside the Skia frame")
   }
-  let offset = y * frame.row_bytes + x * 4
-  if offset + 3 >= frame.pixels.length() {
+  let pixels = frame.pixels()
+  let offset = y * frame.row_bytes() + x * 4
+  if offset + 3 >= pixels.length() {
     fail_smoke("pixel sample exceeds the Skia frame payload")
   }
-  let actual_r = frame.pixels[offset].to_int()
-  let actual_g = frame.pixels[offset + 1].to_int()
-  let actual_b = frame.pixels[offset + 2].to_int()
-  let actual_a = frame.pixels[offset + 3].to_int()
+  let actual_r = pixels[offset].to_int()
+  let actual_g = pixels[offset + 1].to_int()
+  let actual_b = pixels[offset + 2].to_int()
+  let actual_a = pixels[offset + 3].to_int()
   let actual_luma = (actual_r + actual_g + actual_b) / 3
   if actual_luma < min_luma || actual_luma > max_luma || actual_a != a {
     println("unexpected Skia renderer luma at \{x},\{y}")
@@ -192,19 +195,24 @@ fn assert_region_has_pixel_near(
 ) -> Unit {
   let min_x = rect.origin.x.floor().to_int().max(0)
   let min_y = rect.origin.y.floor().to_int().max(0)
-  let max_x = (rect.origin.x + rect.size.width).ceil().to_int().min(frame.width)
+  let max_x = (rect.origin.x + rect.size.width)
+    .ceil()
+    .to_int()
+    .min(frame.width())
   let max_y = (rect.origin.y + rect.size.height)
     .ceil()
     .to_int()
-    .min(frame.height)
+    .min(frame.height())
+  let pixels = frame.pixels()
+  let row_bytes = frame.row_bytes()
   for y in min_y..<max_y {
     for x in min_x..<max_x {
-      let offset = y * frame.row_bytes + x * 4
-      if offset + 3 < frame.pixels.length() {
-        let actual_r = frame.pixels[offset].to_int()
-        let actual_g = frame.pixels[offset + 1].to_int()
-        let actual_b = frame.pixels[offset + 2].to_int()
-        let actual_a = frame.pixels[offset + 3].to_int()
+      let offset = y * row_bytes + x * 4
+      if offset + 3 < pixels.length() {
+        let actual_r = pixels[offset].to_int()
+        let actual_g = pixels[offset + 1].to_int()
+        let actual_b = pixels[offset + 2].to_int()
+        let actual_a = pixels[offset + 3].to_int()
         if component_near(actual_r, r, tolerance) &&
           component_near(actual_g, g, tolerance) &&
           component_near(actual_b, b, tolerance) &&
@@ -315,19 +323,24 @@ fn region_has_pixel_matching(
 ) -> Bool {
   let min_x = rect.origin.x.floor().to_int().max(0)
   let min_y = rect.origin.y.floor().to_int().max(0)
-  let max_x = (rect.origin.x + rect.size.width).ceil().to_int().min(frame.width)
+  let max_x = (rect.origin.x + rect.size.width)
+    .ceil()
+    .to_int()
+    .min(frame.width())
   let max_y = (rect.origin.y + rect.size.height)
     .ceil()
     .to_int()
-    .min(frame.height)
+    .min(frame.height())
+  let pixels = frame.pixels()
+  let row_bytes = frame.row_bytes()
   for y in min_y..<max_y {
     for x in min_x..<max_x {
-      let offset = y * frame.row_bytes + x * 4
-      if offset + 3 < frame.pixels.length() {
-        let actual_r = frame.pixels[offset].to_int()
-        let actual_g = frame.pixels[offset + 1].to_int()
-        let actual_b = frame.pixels[offset + 2].to_int()
-        let actual_a = frame.pixels[offset + 3].to_int()
+      let offset = y * row_bytes + x * 4
+      if offset + 3 < pixels.length() {
+        let actual_r = pixels[offset].to_int()
+        let actual_g = pixels[offset + 1].to_int()
+        let actual_b = pixels[offset + 2].to_int()
+        let actual_a = pixels[offset + 3].to_int()
         if predicate(actual_r, actual_g, actual_b, actual_a) {
           return true
         }
@@ -344,19 +357,24 @@ fn region_has_dark_pixel(
 ) -> Bool {
   let min_x = rect.origin.x.floor().to_int().max(0)
   let min_y = rect.origin.y.floor().to_int().max(0)
-  let max_x = (rect.origin.x + rect.size.width).ceil().to_int().min(frame.width)
+  let max_x = (rect.origin.x + rect.size.width)
+    .ceil()
+    .to_int()
+    .min(frame.width())
   let max_y = (rect.origin.y + rect.size.height)
     .ceil()
     .to_int()
-    .min(frame.height)
+    .min(frame.height())
+  let pixels = frame.pixels()
+  let row_bytes = frame.row_bytes()
   for y in min_y..<max_y {
     for x in min_x..<max_x {
-      let offset = y * frame.row_bytes + x * 4
-      if offset + 3 < frame.pixels.length() {
-        let actual_r = frame.pixels[offset].to_int()
-        let actual_g = frame.pixels[offset + 1].to_int()
-        let actual_b = frame.pixels[offset + 2].to_int()
-        let actual_a = frame.pixels[offset + 3].to_int()
+      let offset = y * row_bytes + x * 4
+      if offset + 3 < pixels.length() {
+        let actual_r = pixels[offset].to_int()
+        let actual_g = pixels[offset + 1].to_int()
+        let actual_b = pixels[offset + 2].to_int()
+        let actual_a = pixels[offset + 3].to_int()
         if actual_a > 0 && actual_r < 210 && actual_g < 210 && actual_b < 210 {
           return true
         }
@@ -884,7 +902,7 @@ fn assert_no_unexpected_unsupported_commands(
   let unexpected : Array[@skia_renderer.SkiaUnsupportedCommandDiagnostic] = []
   for diagnostic in diagnostics {
     let tolerate = !color_filters_available() &&
-      diagnostic.command == "PushFilter"
+      diagnostic.command() == "PushFilter"
     if !tolerate {
       unexpected.push(diagnostic)
     }
@@ -894,7 +912,7 @@ fn assert_no_unexpected_unsupported_commands(
       "MoUI Skia renderer smoke unsupported command diagnostics (\{context}):",
     )
     for diagnostic in diagnostics {
-      println("  - \{diagnostic.command}: \{diagnostic.reason}")
+      println("  - \{diagnostic.command()}: \{diagnostic.reason()}")
     }
     fail_smoke("MoUI Skia renderer smoke hit unsupported commands (\{context})")
   }
@@ -1623,7 +1641,9 @@ fn main {
 
   match captured.val {
     Some(frame) => {
-      if frame.width != 216 || frame.height != 152 || frame.row_bytes < 864 {
+      if frame.width() != 216 ||
+        frame.height() != 152 ||
+        frame.row_bytes() < 864 {
         fail_smoke("MoUI Skia smoke frame dimensions are unexpected")
       }
       assert_pixel(frame, 0, 0, 255, 255, 255, 255)

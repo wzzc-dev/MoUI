@@ -22,9 +22,9 @@ pub fn SkiaRendererError::message(self : SkiaRendererError) -> String {
 }
 
 ///|
-pub(all) struct SkiaUnsupportedCommandDiagnostic {
-  command : String
-  reason : String
+pub struct SkiaUnsupportedCommandDiagnostic {
+  priv command : String
+  priv reason : String
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -32,6 +32,20 @@ pub(all) enum SkiaFontResolution {
   SystemFontMgr
   EmptyTypeface
 } derive(Eq, Debug, ToJson)
+
+///|
+pub fn SkiaUnsupportedCommandDiagnostic::command(
+  self : SkiaUnsupportedCommandDiagnostic,
+) -> String {
+  self.command
+}
+
+///|
+pub fn SkiaUnsupportedCommandDiagnostic::reason(
+  self : SkiaUnsupportedCommandDiagnostic,
+) -> String {
+  self.reason
+}
 
 ///|
 pub struct SkiaRasterRenderer {

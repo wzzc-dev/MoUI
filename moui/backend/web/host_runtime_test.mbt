@@ -78,19 +78,21 @@ test "web app options carry scene resolver and platform event sources" {
 
 ///|
 test "web renderer exposes app-visible ready image resource snapshots" {
-  let port : @webgpu.WebGpuHostRendererPort = {
-    capabilities: () => @webgpu.required_capabilities(),
-    create_surface: (canvas_id, metrics) => { canvas_id, metrics },
-    create_renderer: _surface => (),
-    resize: _metrics => (),
-    measure_text: input => @core.TextSystem::fallback().measure_text(input),
-    register_font_data: (_family, _data) => (),
-    image_resource: source => {
+  let port : @webgpu.WebGpuHostRendererPort = @webgpu.WebGpuHostRendererPort::new(
+    capabilities=() => @webgpu.required_capabilities(),
+    create_surface=(canvas_id, metrics) => {
+      @webgpu.WebGpuHostSurface::new(canvas_id~, metrics~)
+    },
+    create_renderer=_surface => (),
+    resize=_metrics => (),
+    measure_text=input => @core.TextSystem::fallback().measure_text(input),
+    register_font_data=(_family, _data) => (),
+    image_resource=source => {
       Some(@render.ImageResourceRecord::ready(source, width=80, height=40))
     },
-    submit: _calls => (),
-    dispose: () => (),
-  }
+    submit=_calls => (),
+    dispose=() => (),
+  )
   let renderer : WebRenderer = {
     renderer: @webgpu.create_renderer(
       canvas_id="moui-test-canvas",
@@ -119,21 +121,23 @@ test "web renderer exposes app-visible ready image resource snapshots" {
 
 ///|
 test "web renderer exposes app-visible failed image resource snapshots" {
-  let port : @webgpu.WebGpuHostRendererPort = {
-    capabilities: () => @webgpu.required_capabilities(),
-    create_surface: (canvas_id, metrics) => { canvas_id, metrics },
-    create_renderer: _surface => (),
-    resize: _metrics => (),
-    measure_text: input => @core.TextSystem::fallback().measure_text(input),
-    register_font_data: (_family, _data) => (),
-    image_resource: source => {
+  let port : @webgpu.WebGpuHostRendererPort = @webgpu.WebGpuHostRendererPort::new(
+    capabilities=() => @webgpu.required_capabilities(),
+    create_surface=(canvas_id, metrics) => {
+      @webgpu.WebGpuHostSurface::new(canvas_id~, metrics~)
+    },
+    create_renderer=_surface => (),
+    resize=_metrics => (),
+    measure_text=input => @core.TextSystem::fallback().measure_text(input),
+    register_font_data=(_family, _data) => (),
+    image_resource=source => {
       Some(
         @render.ImageResourceRecord::failed(source, diagnostic="load failed"),
       )
     },
-    submit: _calls => (),
-    dispose: () => (),
-  }
+    submit=_calls => (),
+    dispose=() => (),
+  )
   let renderer : WebRenderer = {
     renderer: @webgpu.create_renderer(
       canvas_id="moui-test-canvas",
@@ -158,17 +162,19 @@ test "web renderer exposes app-visible failed image resource snapshots" {
 
 ///|
 test "web renderer applies app-visible image load completions" {
-  let port : @webgpu.WebGpuHostRendererPort = {
-    capabilities: () => @webgpu.required_capabilities(),
-    create_surface: (canvas_id, metrics) => { canvas_id, metrics },
-    create_renderer: _surface => (),
-    resize: _metrics => (),
-    measure_text: input => @core.TextSystem::fallback().measure_text(input),
-    register_font_data: (_family, _data) => (),
-    image_resource: _source => None,
-    submit: _calls => (),
-    dispose: () => (),
-  }
+  let port : @webgpu.WebGpuHostRendererPort = @webgpu.WebGpuHostRendererPort::new(
+    capabilities=() => @webgpu.required_capabilities(),
+    create_surface=(canvas_id, metrics) => {
+      @webgpu.WebGpuHostSurface::new(canvas_id~, metrics~)
+    },
+    create_renderer=_surface => (),
+    resize=_metrics => (),
+    measure_text=input => @core.TextSystem::fallback().measure_text(input),
+    register_font_data=(_family, _data) => (),
+    image_resource=_source => None,
+    submit=_calls => (),
+    dispose=() => (),
+  )
   let renderer : WebRenderer = {
     renderer: @webgpu.create_renderer(
       canvas_id="moui-test-canvas",
