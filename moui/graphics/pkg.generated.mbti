@@ -12,13 +12,37 @@ import {
 // Types and methods
 
 // Type aliases
+pub using @core {type BlendMode}
+
 pub using @core {type BorderStyle}
 
 pub using @core {type Brush}
 
 pub using @core {type Color}
 
+pub using @core {type FilterEffect}
+
+pub using @core {type ImageFit}
+
+pub using @core {type ImageRun}
+
+pub using @core {type LayerMask}
+
+pub using @core {type LayerSpec}
+
+pub using @core {type PathSpec}
+
+pub using @core {type PathVerb}
+
+pub using @core {type RoundedRect}
+
+pub using @core {type ShaderEffectSpec}
+
+pub using @core {type ShadowSpec}
+
 pub using @core {type ShadowStyle}
+
+pub using @core {type Transform2D}
 
 // Traits
 

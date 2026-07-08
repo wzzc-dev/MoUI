@@ -29,6 +29,7 @@ test "tracked budgets include current maintenance hotspots" {
     paths.contains("moui/runtime/program_runtime_diagnostics.mbt"),
     content="true",
   )
+  inspect(paths.contains("moui/views/layout_metrics.mbt"), content="true")
   inspect(
     paths.contains("tools/moui/validate_guidance_consistency/main.mbt"),
     content="true",
@@ -37,6 +38,19 @@ test "tracked budgets include current maintenance hotspots" {
     paths.contains(
       "tools/moui/validate_guidance_consistency/forbidden_guidance.mbt",
     ),
+    content="true",
+  )
+}
+
+///|
+test "full scope tracks addon and tool hotspots outside daily" {
+  let daily = tracked_budget_paths()
+  let full = tracked_budget_paths(scope="full")
+  inspect(daily.contains("moui_richtext/rich_text_editor.mbt"), content="false")
+  inspect(full.contains("moui_richtext/rich_text_editor.mbt"), content="true")
+  inspect(full.contains("moui_sun/graphics/path.mbt"), content="true")
+  inspect(
+    full.contains("tools/moui/validate_api_surface/main.mbt"),
     content="true",
   )
 }

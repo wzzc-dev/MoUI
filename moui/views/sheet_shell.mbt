@@ -1,7 +1,7 @@
 ///|
 fn[Msg] sheet_shell(
   content~ : @core.View[Msg],
-  presentation_mode? : @core.SheetPresentationMode = @core.SheetPresentationMode::Modal,
+  presentation_mode? : SheetPresentationMode = SheetPresentationMode::Modal,
   theme? : @core.Theme,
   background? : @core.Brush,
   corner_radius? : Double,
@@ -23,8 +23,8 @@ fn[Msg] sheet_shell(
     child_constraints=constraints => {
       let content_constraints = constraints.deflate(sheet_content_insets())
       match presentation_mode {
-        @core.SheetPresentationMode::Modal => content_constraints
-        @core.SheetPresentationMode::BottomSheet => content_constraints.loosen()
+        SheetPresentationMode::Modal => content_constraints
+        SheetPresentationMode::BottomSheet => content_constraints.loosen()
       }
     },
     layout=ctx => {
@@ -116,14 +116,14 @@ fn sheet_content_insets() -> @core.Insets {
 
 ///|
 fn sheet_content_frame(
-  presentation_mode : @core.SheetPresentationMode,
+  presentation_mode : SheetPresentationMode,
   frame : @core.Rect,
   child_size : @core.Size,
 ) -> @core.Rect {
   let content = frame.inset(sheet_content_insets())
   match presentation_mode {
-    @core.SheetPresentationMode::Modal => content
-    @core.SheetPresentationMode::BottomSheet => {
+    SheetPresentationMode::Modal => content
+    SheetPresentationMode::BottomSheet => {
       let height = sheet_min_double(content.size.height, child_size.height)
       @core.Rect::new(
         x=content.origin.x,
@@ -147,10 +147,10 @@ fn sheet_point_outside_content(
 }
 
 ///|
-fn sheet_presentation_revision(mode : @core.SheetPresentationMode) -> String {
+fn sheet_presentation_revision(mode : SheetPresentationMode) -> String {
   match mode {
-    @core.SheetPresentationMode::Modal => "modal"
-    @core.SheetPresentationMode::BottomSheet => "bottom"
+    SheetPresentationMode::Modal => "modal"
+    SheetPresentationMode::BottomSheet => "bottom"
   }
 }
 

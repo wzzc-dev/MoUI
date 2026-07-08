@@ -18,6 +18,10 @@ pub using @core {type ColorScheme}
 
 pub using @core {type DerivedState}
 
+pub using @core {type FocusScope}
+
+pub using @core {type FocusScopeItem}
+
 pub using @core {type FocusState}
 
 pub using @core {type LayoutDirection}

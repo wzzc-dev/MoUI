@@ -21,7 +21,7 @@ fn ShowcaseModel::text_media_section(
               width=120.0,
               height=72.0,
               opacity~,
-              fit=@views.ImageFit::Cover,
+              fit=@graphics.ImageFit::Cover,
             ).clip(),
           ],
           spacing=theme.spacing_scale.md,

@@ -205,7 +205,7 @@ fn layout_tile_marker(theme : @moui.Theme) -> @moui.View[ShowcaseMsg] {
     paint=(ctx, frame) => {
       fill_rounded_rect(
         ctx,
-        @views.RoundedRect::new(rect=frame, radius=2.0),
+        @graphics.RoundedRect::new(rect=frame, radius=2.0),
         @graphics.Brush::solid(theme.palette.primary.multiply_alpha(0.72)),
       )
     },
@@ -227,14 +227,14 @@ fn ShowcaseModel::visual_card(
   let media_width = max_showcase_double(120.0, card_width - 36.0)
   let media_height = if metrics.compact { 96.0 } else { 136.0 }
   let card_height = if metrics.compact { 250.0 } else { 300.0 }
-  let transition = @views.TransitionSpec::new(
-    from=@views.TransitionStyle::identity()
+  let transition = @animation.TransitionSpec::new(
+    from=@animation.TransitionStyle::identity()
       .with_opacity(0.66)
       .with_offset(dx=offset, dy=0.0),
-    to=@views.TransitionStyle::identity()
+    to=@animation.TransitionStyle::identity()
       .with_opacity(opacity)
       .with_offset(dx=offset, dy=0.0),
-    easing=@views.Easing::Linear,
+    easing=@animation.Easing::Linear,
   )
   let gradient = @graphics.Brush::linear_gradient(
     start=@geometry.Point::new(x=0.0, y=0.0),
@@ -255,7 +255,7 @@ fn ShowcaseModel::visual_card(
           height=media_height,
           opacity~,
           corner_radius=theme.radius_scale.lg,
-          fit=@views.ImageFit::Cover,
+          fit=@graphics.ImageFit::Cover,
         )
         .background_brush(gradient)
         .corner_radius(theme.radius_scale.lg)
@@ -518,10 +518,10 @@ fn ShowcaseModel::visual_correctness_card(
   opacity : Double,
 ) -> @moui.View[ShowcaseMsg] {
   ignore(self)
-  let image_motion = @views.TransitionSpec::slide(
+  let image_motion = @animation.TransitionSpec::slide(
     from_offset=@geometry.Point::new(x=0.0, y=0.0),
     to_offset=@geometry.Point::new(x=if active { 10.0 } else { 0.0 }, y=0.0),
-    easing=@views.Easing::Linear,
+    easing=@animation.Easing::Linear,
   )
   showcase_soft_card(
     theme,
@@ -533,7 +533,7 @@ fn ShowcaseModel::visual_correctness_card(
           height=50.0,
           opacity=1.0,
           corner_radius=theme.radius_scale.sm,
-          fit=@views.ImageFit::Contain,
+          fit=@graphics.ImageFit::Contain,
         ).clip(),
         image(
           showcase_image_source(),
@@ -541,7 +541,7 @@ fn ShowcaseModel::visual_correctness_card(
           height=50.0,
           opacity~,
           corner_radius=theme.radius_scale.sm,
-          fit=@views.ImageFit::Cover,
+          fit=@graphics.ImageFit::Cover,
         ).clip(),
         image(
           showcase_image_source(),
@@ -549,7 +549,7 @@ fn ShowcaseModel::visual_correctness_card(
           height=50.0,
           opacity=0.92,
           corner_radius=theme.radius_scale.sm,
-          fit=@views.ImageFit::FitWidth,
+          fit=@graphics.ImageFit::FitWidth,
         ).clip(),
         image(
           showcase_image_source(),
@@ -557,7 +557,7 @@ fn ShowcaseModel::visual_correctness_card(
           height=50.0,
           opacity=0.86,
           corner_radius=theme.radius_scale.sm,
-          fit=@views.ImageFit::FitHeight,
+          fit=@graphics.ImageFit::FitHeight,
         ).clip(),
         image(
           showcase_image_source(),
@@ -565,7 +565,7 @@ fn ShowcaseModel::visual_correctness_card(
           height=50.0,
           opacity=0.78,
           corner_radius=theme.radius_scale.md,
-          fit=@views.ImageFit::ScaleDown,
+          fit=@graphics.ImageFit::ScaleDown,
         )
         .clip()
         .scale(sx=0.92, sy=0.92)
@@ -680,41 +680,41 @@ fn ShowcaseModel::vector_path_card(
       )
       fill_rounded_rect(
         ctx,
-        @views.RoundedRect::new(rect=frame, radius=theme.radius_scale.md),
+        @graphics.RoundedRect::new(rect=frame, radius=theme.radius_scale.md),
         @graphics.Brush::solid(
           theme.palette.surface_variant.multiply_alpha(0.42),
         ),
       )
       draw_path(
         ctx,
-        @views.PathSpec::new(
+        @graphics.PathSpec::new(
           verbs=[
-            @views.PathVerb::MoveTo(@geometry.Point::new(x=left, y=bottom)),
-            @views.PathVerb::CubicTo(
+            @graphics.PathVerb::MoveTo(@geometry.Point::new(x=left, y=bottom)),
+            @graphics.PathVerb::CubicTo(
               @geometry.Point::new(x=left + 24.0, y=top - 4.0),
               @geometry.Point::new(x=left + 58.0, y=top + 4.0),
               @geometry.Point::new(x=left + 82.0, y=bottom),
             ),
-            @views.PathVerb::LineTo(
+            @graphics.PathVerb::LineTo(
               @geometry.Point::new(x=left + 42.0, y=mid_y),
             ),
-            @views.PathVerb::Close,
+            @graphics.PathVerb::Close,
           ],
           fill=Some(fill),
         ),
       )
       draw_path(
         ctx,
-        @views.PathSpec::new(
+        @graphics.PathSpec::new(
           verbs=[
-            @views.PathVerb::MoveTo(
+            @graphics.PathVerb::MoveTo(
               @geometry.Point::new(x=left + 116.0, y=bottom),
             ),
-            @views.PathVerb::QuadTo(
+            @graphics.PathVerb::QuadTo(
               @geometry.Point::new(x=left + 148.0, y=top),
               @geometry.Point::new(x=left + 180.0, y=bottom),
             ),
-            @views.PathVerb::CubicTo(
+            @graphics.PathVerb::CubicTo(
               @geometry.Point::new(x=left + 196.0, y=mid_y),
               @geometry.Point::new(x=left + 216.0, y=mid_y),
               @geometry.Point::new(x=left + 236.0, y=top + 8.0),
@@ -749,12 +749,12 @@ fn ShowcaseModel::sparkline(
       )
       fill_rounded_rect(
         ctx,
-        @views.RoundedRect::new(rect=frame, radius=theme.radius_scale.sm),
+        @graphics.RoundedRect::new(rect=frame, radius=theme.radius_scale.sm),
         @graphics.Brush::solid(theme.palette.surface_variant),
       )
       fill_rounded_rect(
         ctx,
-        @views.RoundedRect::new(rect=fill, radius=7.0),
+        @graphics.RoundedRect::new(rect=fill, radius=7.0),
         @graphics.Brush::solid(theme.palette.primary),
       )
     },

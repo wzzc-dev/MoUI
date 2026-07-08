@@ -237,15 +237,15 @@ fn ShowcaseModel::navigation_transition_card(
   self : ShowcaseModel,
   theme : @moui.Theme,
 ) -> @moui.View[ShowcaseMsg] {
-  let transition = @views.TransitionSpec::new(
-    from=@views.TransitionStyle::identity()
+  let transition = @animation.TransitionSpec::new(
+    from=@animation.TransitionStyle::identity()
       .with_opacity(0.72)
       .with_offset(dx=-18.0, dy=0.0),
-    to=@views.TransitionStyle::identity()
+    to=@animation.TransitionStyle::identity()
       .with_opacity(1.0)
       .with_offset(dx=0.0, dy=0.0),
     duration_ms=180.0,
-    easing=@views.Easing::EaseOut,
+    easing=@animation.Easing::EaseOut,
   )
   let progress = clamp_double(self.slider_value, 0.0, 1.0)
   container(

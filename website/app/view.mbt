@@ -177,7 +177,7 @@ fn showcase_card(
             showcase_thumbnail_data_uri(slug),
             width=width - 2.0,
             height=thumb_height,
-            fit=@views.ImageFit::Cover,
+            fit=@graphics.ImageFit::Cover,
           ),
           width~,
           height=thumb_height,
@@ -798,12 +798,12 @@ fn website_scrollbar(
       )
       fill_rounded_rect(
         ctx,
-        @views.RoundedRect::new(rect=track, radius=2.5),
+        @graphics.RoundedRect::new(rect=track, radius=2.5),
         @graphics.Brush::solid(theme.palette.outline.multiply_alpha(0.26)),
       )
       fill_rounded_rect(
         ctx,
-        @views.RoundedRect::new(rect=thumb, radius=2.5),
+        @graphics.RoundedRect::new(rect=thumb, radius=2.5),
         @graphics.Brush::solid(theme.palette.primary.multiply_alpha(0.72)),
       )
     },
@@ -974,7 +974,7 @@ fn showcase_thumb(
     paint=(ctx, frame) => {
       fill_rounded_rect(
         ctx,
-        @views.RoundedRect::new(rect=frame, radius=12.0),
+        @graphics.RoundedRect::new(rect=frame, radius=12.0),
         @graphics.Brush::solid(accent.multiply_alpha(0.08)),
       )
       let stripe = 12.0
@@ -985,15 +985,15 @@ fn showcase_thumb(
         let start_x = frame.origin.x + index.to_double() * stripe
         draw_path(
           ctx,
-          @views.PathSpec::new(
+          @graphics.PathSpec::new(
             verbs=[
-              @views.PathVerb::MoveTo(
+              @graphics.PathVerb::MoveTo(
                 @geometry.Point::new(
                   x=start_x,
                   y=frame.origin.y + frame.size.height,
                 ),
               ),
-              @views.PathVerb::LineTo(
+              @graphics.PathVerb::LineTo(
                 @geometry.Point::new(
                   x=start_x - frame.size.height,
                   y=frame.origin.y,

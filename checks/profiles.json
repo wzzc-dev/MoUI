@@ -84,6 +84,7 @@
       "includes": ["daily", "platform", "theme"],
       "steps": [
         { "name": "script lint (full)", "argv": ["node", "scripts/lint-scripts.mjs", "--profile", "full"] },
+        { "name": "maintenance baseline full workspace hotspots", "argv": ["moon", "run", "tools/moui/validate_maintenance_baseline", "--target", "native", "--", "--scope", "full"] },
         { "name": "stable text conformance", "argv": ["moon", "test", "moui/tests/text_conformance/native", "--target", "native"] },
         { "name": "Web text conformance", "argv": ["moon", "test", "moui/tests/text_conformance/web", "--target", "wasm-gc"] },
         { "name": "golden capture scaffold", "argv": ["node", "scripts/conformance-capture-scaffold.mjs", "--mode", "golden"] },

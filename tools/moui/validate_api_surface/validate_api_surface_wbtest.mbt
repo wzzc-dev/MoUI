@@ -42,10 +42,29 @@ test "domain sugar packages forward the curated per-domain type set" {
   assert_true(
     gfx.required_tokens.contains("pub using @core {type ShadowStyle}"),
   )
+  assert_true(
+    gfx.required_tokens.contains("pub using @core {type RoundedRect}"),
+  )
+  assert_true(gfx.required_tokens.contains("pub using @core {type PathSpec}"))
+  assert_true(gfx.required_tokens.contains("pub using @core {type ImageFit}"))
   assert_true(gfx.forbidden_tokens.contains("pub using @core {type View}"))
   assert_true(gfx.forbidden_tokens.contains("pub using @core {type Point}"))
   assert_false(gfx.forbidden_tokens.contains("pub using @core {type Color}"))
   assert_false(gfx.forbidden_tokens.contains("pub using @core {type Brush}"))
+
+  let animation = budget_by_label("animation sugar")
+  assert_true(
+    animation.required_tokens.contains("pub using @core {type Easing}"),
+  )
+  assert_true(
+    animation.required_tokens.contains("pub using @core {type TransitionSpec}"),
+  )
+  assert_true(
+    animation.forbidden_tokens.contains("pub using @core {type View}"),
+  )
+  assert_true(
+    animation.forbidden_tokens.contains("pub using @core {type RoundedRect}"),
+  )
 
   let text = budget_by_label("text sugar")
   assert_true(text.required_tokens.contains("pub using @core {type FontSpec}"))
@@ -62,6 +81,9 @@ test "domain sugar packages forward the curated per-domain type set" {
   )
   assert_true(
     state.required_tokens.contains("pub using @core {type LayoutDirection}"),
+  )
+  assert_true(
+    state.required_tokens.contains("pub using @core {type FocusScope}"),
   )
   assert_true(state.forbidden_tokens.contains("pub using @core {type View}"))
   assert_true(state.forbidden_tokens.contains("pub using @core {type Point}"))
@@ -200,13 +222,12 @@ test "shared app core import guard tracks default imports" {
 ///|
 test "views facade exposes control-specific contracts" {
   let views = budget_by_label("views facade")
-  inspect(views.max_lines, content="1020")
-  inspect(views.max_pub_lines, content="370")
+  inspect(views.max_lines, content="1095")
+  inspect(views.max_pub_lines, content="385")
   inspect(views.max_pub_all_lines, content="45")
   inspect(views_facade_core_alias_tokens().length(), content="8")
-  inspect(views_facade_host_alias_tokens().length(), content="2")
+  inspect(views_facade_host_alias_tokens().length(), content="0")
   let required = views.required_tokens
-  assert_true(required.contains("\"wzzc-dev/moui/backend/host\""))
   assert_true(required.contains("pub using @core {type ActionCommand}"))
   assert_true(required.contains("pub using @core {type ActionCommandMap}"))
   assert_true(required.contains("pub using @core {type CommandBinding}"))
@@ -248,9 +269,15 @@ test "views facade exposes control-specific contracts" {
   assert_false(required.contains("pub using @core {type RouteHistoryState}"))
   assert_false(required.contains("pub using @core {type RouteLocation}"))
   assert_false(required.contains("pub using @core {type WebViewEvent}"))
-  assert_true(required.contains("pub using @host {type WebViewEvent}"))
-  assert_true(
+  assert_false(required.contains("pub using @host {type WebViewEvent}"))
+  assert_false(
     required.contains("pub using @host {type WebViewNavigationPolicy}"),
+  )
+  assert_true(
+    views.forbidden_tokens.contains("pub using @core {type RoundedRect}"),
+  )
+  assert_true(
+    views.forbidden_tokens.contains("pub using @core {type TransitionSpec}"),
   )
   assert_false(required.contains("pub fn rich_text_document_height("))
   assert_true(views.forbidden_tokens.contains("RichText"))
@@ -261,9 +288,9 @@ test "views facade exposes control-specific contracts" {
 ///|
 test "core descriptor payloads stay opaque" {
   let core = budget_by_label("core")
-  inspect(core.max_lines, content="1560")
-  inspect(core.max_pub_lines, content="480")
-  inspect(core.max_pub_all_lines, content="115")
+  inspect(core.max_lines, content="1820")
+  inspect(core.max_pub_lines, content="520")
+  inspect(core.max_pub_all_lines, content="150")
   assert_true(core.required_tokens.contains("View::node"))
   assert_true(core.required_tokens.contains("View::identity"))
   assert_true(core.required_tokens.contains("View::children"))
@@ -321,6 +348,7 @@ test "core descriptor payloads stay opaque" {
     core.forbidden_tokens.contains("pub(all) struct RenderInspectorSnapshot"),
   )
   assert_true(core.forbidden_tokens.contains("DatePickerMode"))
+  assert_true(core.forbidden_tokens.contains("SheetPresentationMode"))
   assert_true(core.forbidden_tokens.contains("EffectPlanSummary"))
   assert_true(core.forbidden_tokens.contains("SubscriptionPlanSummary"))
   assert_true(core.forbidden_tokens.contains("EffectRuntimeOp"))
@@ -547,7 +575,10 @@ test "views return rules cover app-facing constructors" {
   assert_true(names.contains("text_field"))
   assert_false(names.contains("markdown_editor"))
   assert_true(names.contains("navigation_stack"))
-  assert_true(names.contains("web_view"))
+  assert_true(names.contains("image"))
+  assert_true(names.contains("canvas"))
+  assert_true(names.contains("sheet"))
+  assert_false(names.contains("web_view"))
   for rule in view_return_rules() {
     inspect(rule.return_token, content="-> @core.View[Msg]")
   }

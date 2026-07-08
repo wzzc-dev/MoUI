@@ -43,15 +43,23 @@ Default shared app imports:
 ```moonbit
 import {
   "wzzc-dev/moui",
+  "wzzc-dev/moui/geometry",
+  "wzzc-dev/moui/graphics",
+  "wzzc-dev/moui/animation",
+  "wzzc-dev/moui/text",
+  "wzzc-dev/moui/state",
   "wzzc-dev/moui/views",
 }
 ```
 
-Use `wzzc-dev/moui/core` only for neutral protocol types not re-exported by the
-root facade. Use `wzzc-dev/moui/backend/host` only for host service protocols.
-Do not import `runtime`, concrete platform backends, renderer packages, or
-`moui_theme` from ordinary apps unless the app is explicitly a showcase,
-diagnostic, or design-system preview.
+Import only the domain facades an app actually uses. Use `wzzc-dev/moui/core`
+only for advanced kernel/diagnostic types not exposed by a domain facade or
+`moui/views`; drawing and paint types belong behind `@graphics`, transition
+types behind `@animation`, text types behind `@text`, and focus scope types
+behind `@state`. Use `wzzc-dev/moui/backend/host` only for host service
+protocols. Do not import `runtime`, concrete platform backends, renderer
+packages, or `moui_theme` from ordinary apps unless the app is explicitly a
+showcase, diagnostic, or design-system preview.
 
 ## App Pattern
 

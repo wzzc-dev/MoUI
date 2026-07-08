@@ -2,26 +2,29 @@
 
 MoUI is still a prototype, so backward compatibility is not the first priority.
 The project should still keep a readable public shape: application code should
-start from the root `moui` facade plus `moui/views`, runtime construction
-should go through `moui/runtime`, and host/renderer packages expose narrower
-contracts for platform and renderer integration.
+start from the root `moui` app-loop facade, domain facades, and `moui/views`;
+runtime construction should go through `moui/runtime`, and host/renderer
+packages expose narrower contracts for platform and renderer integration.
 
 ## Surface Tiers
 
-- App-facing API: `moui` (app-loop sugar only), domain sugar packages
-  (`moui/geometry`, `moui/graphics`, `moui/text`, `moui/state`), and
-  `moui/views`. Theme builders and extra kernel re-exports for apps (commands,
-  draw helpers, `ColorPalette`) live in `moui/views`.
+- App-facing API: `moui` (app-loop sugar only), domain facade packages
+  (`moui/geometry`, `moui/graphics`, `moui/animation`, `moui/text`,
+  `moui/state`), and `moui/views`. Command/menu facade types, control styles,
+  theme builders, and the temporary `DateValue` facade live in `moui/views`;
+  drawing/paint value types live in `moui/graphics`, transition/easing types
+  live in `moui/animation`, and focus-scope types live in `moui/state`.
   Runtime handles such as `AppRuntime` stay in `moui/runtime`; reactive and
-  geometry types are available through domain sugar and `@moui` where listed in
+  geometry types are available through domain facades where listed in
   `docs/moui-app-package-boundary.md`.
   Shared apps should minimize default `moui/core` imports; the API surface guard
   tracks shared-app core import budget (see `validate_api_surface`).
-  Diagnostics, draw commands, renderer details, and lower-level geometry/style
-  records stay in `moui/core` or their owning packages.
+  Diagnostics, draw commands, renderer details, semantics/runtime ids, and
+  lower-level kernel protocols stay in `moui/core` or their owning packages.
   `moui/views` exposes constructor helpers that return opaque `@moui.View[Msg]`
   values plus control-specific app-facing contracts such as
-  `@views.ActionCommand`, `@views.Color`, and `@views.WebViewEvent`.
+  `@views.ActionCommand`, `@views.WebViewEvent`, and
+  `@views.SheetPresentationMode`.
 - Runtime API: `moui/runtime`. This is the app/host runtime entrypoint package.
   Runtime consumers should type and construct runtimes through
   `@runtime.AppRuntime`, `@runtime.new_view`, `@runtime.new_program`, or the
@@ -30,14 +33,15 @@ contracts for platform and renderer integration.
   runtime owns program execution, runtime state, tree/layout/paint, event
   dispatch, and consumes opaque views through `View[Msg]`.
 - Core framework API: `moui/core`. This owns `View[Msg]`, `Program`, `Effect`,
-  `Subscription`, layout, input, semantics, draw-command, diagnostic snapshot,
+  `Subscription`, layout, input, semantics, draw-command protocols,
   renderer-neutral platform-view contracts, and the `View::node` callback
   surface used by concrete controls in `moui/views`. New controls should not add core
   enum variants, `@core.View::primitive_*_view` constructors, `ViewLoweringSink`,
-  or runtime lowering arms. It does not expose `RuntimeKernel`, `RuntimeState`,
-  `ViewSpec`, `ElementNode`, or `ElementTree`. It may expose diagnostic and
-  support records while the prototype matures, but implementation payloads
-  should not leak into the root facade. Component-facing contracts such as
+  or runtime lowering arms. `core` must not depend on `geometry`, `graphics`,
+  `animation`, `text`, `state`, `views`, `runtime`, `backend`, `render`, or addon
+  packages. It does not expose `RuntimeKernel`, `RuntimeState`, `ViewSpec`,
+  `ElementNode`, or `ElementTree`, and concrete control semantics such as
+  `SheetPresentationMode` stay out of `core`. Component-facing contracts such as
   `ComponentContext` keep runtime/effect storage fields private and expose behavior
   through methods.
 - Integration API: `moui/backend/host`, `moui/render`, and renderer/provider
@@ -72,6 +76,11 @@ entrypoint. It checks current generated interface files for:
 
 - line and exported-declaration budgets on key packages;
 - root facade imports and forbidden host/renderer/runtime tokens;
+- required domain facade tokens for geometry, graphics, animation, text, and
+  state/focus packages, plus cross-domain forbidden aliases;
+- `moui/views` staying app-facing by exposing constructors, command/menu/theme
+  helpers, and `DateValue` while rejecting low-level drawing, animation,
+  focus-scope, semantics, runtime-id, and component-kernel re-exports;
 - `moui/runtime` existence, an opaque `AppRuntime` with bounded runtime methods,
   runtime source not wrapping `@core.AppRuntime` or `@core.RuntimeKernel`, and
   app/host source usage of `@runtime.AppRuntime`;
@@ -87,8 +96,9 @@ entrypoint. It checks current generated interface files for:
   construction and control-level helpers instead of direct `@moui.View::*`
   constructors;
 - required app-facing re-exports such as `View`, `Program`, `State`, `Binding`,
-  `Effect`, `Subscription`, and `Theme`, while keeping runtime bridges,
-  diagnostic descriptors, and draw command types out of the root facade;
+  `Effect`, `Subscription`, `Theme`, graphics, animation, and state/focus
+  facade tokens, while keeping runtime bridges, diagnostic descriptors, and draw
+  command types out of the root facade and `@views`;
 - `moui/views` constructors returning `@moui.View[Msg]`;
 - host/render/package boundary tokens staying in their owning packages.
 

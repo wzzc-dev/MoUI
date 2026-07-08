@@ -1160,11 +1160,6 @@ pub(all) struct ShadowStyle {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ShadowStyle::new(color~ : Color, offset? : Point, blur_radius? : Double, spread? : Double) -> Self
 
-pub(all) enum SheetPresentationMode {
-  Modal
-  BottomSheet
-} derive(Eq, ToJson, @debug.Debug)
-
 pub(all) struct Size {
   width : Double
   height : Double

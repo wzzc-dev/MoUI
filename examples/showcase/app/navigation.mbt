@@ -351,12 +351,12 @@ fn sidebar_scrollbar(
       )
       fill_rounded_rect(
         ctx,
-        @views.RoundedRect::new(rect=track, radius=2.0),
+        @graphics.RoundedRect::new(rect=track, radius=2.0),
         @graphics.Brush::solid(theme.palette.outline.multiply_alpha(0.22)),
       )
       fill_rounded_rect(
         ctx,
-        @views.RoundedRect::new(rect=thumb, radius=2.0),
+        @graphics.RoundedRect::new(rect=thumb, radius=2.0),
         @graphics.Brush::solid(theme.palette.primary.multiply_alpha(0.72)),
       )
     },

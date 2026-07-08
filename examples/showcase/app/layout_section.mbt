@@ -108,7 +108,7 @@ fn ShowcaseModel::layout_section(
       paint=(ctx, frame) => {
         stroke_rounded_rect(
           ctx,
-          @views.RoundedRect::new(rect=frame, radius=theme.radius_scale.sm),
+          @graphics.RoundedRect::new(rect=frame, radius=theme.radius_scale.sm),
           @graphics.Brush::solid(theme.palette.primary),
           1.0,
         )

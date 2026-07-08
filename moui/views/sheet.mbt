@@ -1,7 +1,13 @@
 ///|
+pub(all) enum SheetPresentationMode {
+  Modal
+  BottomSheet
+} derive(Eq, Debug, ToJson)
+
+///|
 pub fn[Msg] sheet(
   content~ : @core.View[Msg],
-  presentation_mode? : @core.SheetPresentationMode = @core.SheetPresentationMode::Modal,
+  presentation_mode? : SheetPresentationMode = SheetPresentationMode::Modal,
   theme? : @core.Theme,
   background? : @core.Color,
   corner_radius? : Double,
@@ -31,7 +37,7 @@ pub fn[Msg] sheet_host(
   child~ : @core.View[Msg],
   sheet? : @core.View[Msg]? = None,
   presented? : Bool = false,
-  presentation_mode? : @core.SheetPresentationMode = @core.SheetPresentationMode::Modal,
+  presentation_mode? : SheetPresentationMode = SheetPresentationMode::Modal,
   theme? : @core.Theme,
   on_dismiss? : Msg? = None,
   trap_focus? : Bool = true,
@@ -45,12 +51,12 @@ pub fn[Msg] sheet_host(
     }
     // The sheet content
     let aligned_sheet = match presentation_mode {
-      @core.SheetPresentationMode::Modal =>
+      SheetPresentationMode::Modal =>
         sheet_spec
         .frame(width=400.0, height=400.0)
         .corner_radius(resolved_theme.radius_scale.lg)
         .align()
-      @core.SheetPresentationMode::BottomSheet =>
+      SheetPresentationMode::BottomSheet =>
         sheet_spec
         .corner_radius(resolved_theme.radius_scale.lg)
         .align(alignment=@core.Alignment::new(x=0.0, y=1.0))

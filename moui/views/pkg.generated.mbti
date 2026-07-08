@@ -301,9 +301,9 @@ pub fn[Msg] selectable_list_item(id~ : String, title~ : String, message~ : Msg, 
 
 pub fn[Msg] selection_toolbar(selected_count~ : Int, total_count? : Int, actions? : Array[ActionItem[Msg]], on_clear? : Msg?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
-pub fn[Msg] sheet(content~ : @core.View[Msg], presentation_mode? : @core.SheetPresentationMode, theme? : @core.Theme, background? : @core.Color, corner_radius? : Double, shadow? : @core.ShadowStyle?, on_dismiss? : Msg?) -> @core.View[Msg]
+pub fn[Msg] sheet(content~ : @core.View[Msg], presentation_mode? : SheetPresentationMode, theme? : @core.Theme, background? : @core.Color, corner_radius? : Double, shadow? : @core.ShadowStyle?, on_dismiss? : Msg?) -> @core.View[Msg]
 
-pub fn[Msg] sheet_host(child~ : @core.View[Msg], sheet? : @core.View[Msg]?, presented? : Bool, presentation_mode? : @core.SheetPresentationMode, theme? : @core.Theme, on_dismiss? : Msg?, trap_focus? : Bool) -> @core.View[Msg]
+pub fn[Msg] sheet_host(child~ : @core.View[Msg], sheet? : @core.View[Msg]?, presented? : Bool, presentation_mode? : SheetPresentationMode, theme? : @core.Theme, on_dismiss? : Msg?, trap_focus? : Bool) -> @core.View[Msg]
 
 pub fn[Msg] shortcut_button(String, on_click~ : Msg, shortcut~ : @core.KeyboardShortcut, variant? : ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double, shortcut_width? : Double) -> @core.View[Msg]
 
@@ -876,6 +876,11 @@ pub fn SelectionState::count(Self) -> Int
 pub fn SelectionState::new(selected? : Array[String]) -> Self
 pub fn SelectionState::toggle(Self, String) -> Self
 
+pub(all) enum SheetPresentationMode {
+  Modal
+  BottomSheet
+} derive(Eq, ToJson, @debug.Debug)
+
 pub struct SidebarItem[Msg] {
   id : String
   label : String
@@ -1016,8 +1021,6 @@ pub using @core {type ActionCommand}
 
 pub using @core {type ActionCommandMap}
 
-pub using @core {type BlendMode}
-
 pub using @core {type Color}
 
 pub using @core {type ColorPalette}
@@ -1028,57 +1031,13 @@ pub using @core {type CommandBinding}
 
 pub using @core {type CommandIntent}
 
-pub using @core {type ComponentContext}
-
 pub using @core {type ControlStateStyle}
 
 pub using @core {type DateValue}
 
-pub using @core {type Easing}
-
-pub using @core {type ElementId}
-
-pub using @core {type FilterEffect}
-
-pub using @core {type FocusScope}
-
-pub using @core {type FocusScopeItem}
-
-pub using @core {type FontFamilyStack}
-
-pub using @core {type ImageFit}
-
-pub using @core {type ImageRun}
-
 pub using @core {type KeyModifiers}
 
 pub using @core {type KeyboardShortcut}
-
-pub using @core {type LayerMask}
-
-pub using @core {type LayerSpec}
-
-pub using @core {type PathSpec}
-
-pub using @core {type PathVerb}
-
-pub using @core {type RoundedRect}
-
-pub using @core {type SemanticsRole}
-
-pub using @core {type ShaderEffectSpec}
-
-pub using @core {type ShadowSpec}
-
-pub using @core {type SheetPresentationMode}
-
-pub using @core {type TextRun}
-
-pub using @core {type Transform2D}
-
-pub using @core {type TransitionSpec}
-
-pub using @core {type TransitionStyle}
 
 pub using @core {type TypographyScale}
 

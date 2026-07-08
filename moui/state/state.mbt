@@ -1,10 +1,10 @@
 ///|
-/// Domain sugar package `moui/state`:
+/// Domain facade package `moui/state`:
 /// re-exports high-frequency state holder and environment-kind types
 /// from `moui/core`.
-/// `@core` is the type source of truth; this package only provides
-/// prefix-shortening sugar for the most common state types.
-/// See `docs/moui-app-package-boundary.md` "领域糖包暴露规则".
+/// `@core` is the type source of truth; this package provides the
+/// app-facing state/focus prefix for common state value types.
+/// See `docs/moui-app-package-boundary.md` "领域 facade 暴露规则".
 
 ///|
 pub using @core {type State}
@@ -29,3 +29,9 @@ pub using @core {type ColorScheme}
 
 ///|
 pub using @core {type LayoutDirection}
+
+///|
+pub using @core {type FocusScope}
+
+///|
+pub using @core {type FocusScopeItem}
