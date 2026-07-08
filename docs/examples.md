@@ -37,7 +37,7 @@ shape outside `examples/` so MoUI can render its own bilingual homepage.
 | --- | --- | --- | --- |
 | Website | MoUI-built homepage workspace | `website/app/` | Bilingual product homepage, first-screen MoUI brand hero, compact Counter code snippet, interactive runtime preview, framework foundations, platform matrix, release-readiness cards, quick-start Web commands, runtime Docs portal that fetches packaged same-origin `docs/*.md` Markdown plus MoUI and `moui_skia` README copies, Web-only `website/web_wasm` entrypoint |
 | Agent Counter | Minimal agent-controllable runtime example | `examples/agent_counter/`, `examples/agent_counter/main/`, `examples/agent_counter/macos_skia/` | Counter app with semantics/command-intent flow for agent observation and control, plus a native macOS Skia entrypoint |
-| Counter | Minimal model/update/view app | `examples/counter/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages |
+| Counter | Minimal model/update/view app | `examples/counter/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages, and an experimental Android Skia embedded-session entrypoint |
 | Button Freeze Probe | Native Skia button freeze repro | `examples/button_freeze_probe/app/` | Minimal `data_filter_bar` filter chips, red primary accent, repeated click counter, direct primary/tonal button comparison, native Skia macOS/Windows/Linux entrypoints |
 | Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | TEA-first `Model / Msg / update / view` app, public `views` constructors, built-in Counter/Todo examples, validating form fields and workflow bars, `ToastQueue`-backed toast stack/progress/status surfaces with dismiss state, `status_badge` feedback chips, helper-backed table/selectable-list data views with app-owned sort/page/column visibility state, route header/section-nav/sidebar/breadcrumb shells with app-owned route/deep-link history and route focus restore state, custom dialog/alert/sheet/menu surfaces, light Markdown preview, neutral core theme toggling, presentation, renderer capability status, advanced rendering demos, text diagnostics, interaction wiring. Showcase intentionally has no `moui_theme` dependency and is not an official design-system compatibility claim. |
 | Design Systems | Addon diagnostic source-mapped design-system preview and first-party theme sampler | `examples/design_systems/app/`, `examples/design_systems/{web_wasm,macos_skia,windows_skia,linux_skia}/` | Material, Carbon, Primer, and Fluent switching through the `moui_theme/material`, `moui_theme/carbon`, `moui_theme/primer`, and `moui_theme/fluent` entrypoints over shared `moui_theme/common` models, Sickle switching through `moui_theme/sickle` as a first-party theme addon, light/dark/high-contrast/system variants for official source-mapped presets, compact/standard/comfortable density, semantic palette roles, typography specimen, spacing/density grid, component-token matrix sampling, component style bundle usage, custom inheritance/override API, Web and native Skia host entrypoints, coverage/parity status labels, and explicit source-mapped preview wording rather than official-complete claims |
@@ -72,9 +72,10 @@ GitHub Pages workflow copies those Markdown sources directly into
 
 Counter is the smallest recommended app shape. It keeps user code in
 `Model / Msg / update / view`, then lets `Program::simple` connect that pure
-model loop to the runtime. It has Web, macOS, Windows, Linux, and
-`windows_wgpu_cosmic` entrypoints, so it is also the quickest way to verify a thin
-platform package without the full Showcase surface:
+model loop to the runtime. It has Web, macOS, Windows, Linux, an experimental
+Android Skia embedded-session entrypoint, and `windows_wgpu_cosmic` entrypoints,
+so it is also the quickest way to verify a thin platform package without the
+full Showcase surface:
 
 ```moonbit
 using @views {button, card, center, column, row, text}
@@ -123,6 +124,7 @@ Focused Counter checks:
 ```sh
 moon test examples/counter/app --target native
 moon build examples/counter/web_wasm --target wasm-gc
+MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/counter/android_skia --target native
 ```
 
 ## Button Freeze Probe

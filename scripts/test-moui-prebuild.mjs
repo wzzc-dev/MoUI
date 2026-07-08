@@ -25,6 +25,7 @@ console.log(JSON.stringify({
   vars: {
     MOUI_SKIA_STUB_CC_FLAGS: "-DMOUI_SKIA_HAS_SKIA -std=c++17 -I/tmp/moui-skia-include",
     MOUI_SKIA_CC_LINK_FLAGS: "/tmp/libskia.a",
+    MOUI_SKIA_ANDROID_LINK_FLAGS: "-landroid -llog",
   },
 }));
 `,
@@ -49,6 +50,9 @@ const fallback = runPrebuild({ MOUI_SKIA_DISABLE_PREBUILD_SKIA: "1" });
 if (fallback.vars.MOUI_SKIA_STUB_CC_FLAGS !== "") {
   throw new Error("fallback prebuild should expose empty MOUI_SKIA_STUB_CC_FLAGS");
 }
+if (fallback.vars.MOUI_SKIA_ANDROID_LINK_FLAGS !== "") {
+  throw new Error("fallback prebuild should expose empty MOUI_SKIA_ANDROID_LINK_FLAGS");
+}
 
 const realSkia = runPrebuild();
 if (!realSkia.vars.MOUI_SKIA_STUB_CC_FLAGS.includes("-DMOUI_SKIA_HAS_SKIA")) {
@@ -56,6 +60,9 @@ if (!realSkia.vars.MOUI_SKIA_STUB_CC_FLAGS.includes("-DMOUI_SKIA_HAS_SKIA")) {
 }
 if (!realSkia.vars.MOUI_SKIA_STUB_CC_FLAGS.includes("/tmp/moui-skia-include")) {
   throw new Error("real Skia prebuild should reuse moui_skia include flags");
+}
+if (!realSkia.vars.MOUI_SKIA_ANDROID_LINK_FLAGS.includes("-landroid")) {
+  throw new Error("real Skia prebuild should expose Android presenter link flags");
 }
 
 console.log("moui prebuild tests: ok");

@@ -1,0 +1,91 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/backend/android"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/runtime",
+}
+
+// Values
+pub fn android_capability_matrix() -> AndroidBackendCapabilities
+
+pub fn android_capability_summary(services? : @host.HostServiceCapabilities) -> @host.HostCapabilitySummary
+
+pub fn android_input_capabilities() -> @host.HostInputCapabilities
+
+pub fn android_readiness() -> AndroidBackendReadiness
+
+pub fn android_service_capabilities() -> @host.HostServiceCapabilities
+
+pub fn backend_info() -> AndroidBackendInfo
+
+pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : AndroidSurfaceHandle, metrics~ : @host.HostSurfaceMetrics, provider~ : AndroidRendererProvider) -> AndroidRuntimeSession?
+
+// Errors
+
+// Types and methods
+pub(all) struct AndroidBackendCapabilities {
+  embedded_surface : Bool
+  external_event_loop : Bool
+  renderer_provider : Bool
+  pointer : Bool
+  scroll : Bool
+  keyboard : Bool
+  text_input : Bool
+  ime : Bool
+  clipboard : Bool
+  system_theme : Bool
+  accessibility : Bool
+  async_image : Bool
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct AndroidBackendInfo {
+  host_info : @host.HostAppInfo
+  capabilities : AndroidBackendCapabilities
+  services : @host.HostServiceCapabilities
+  input : @host.HostInputCapabilities
+  readiness : AndroidBackendReadiness
+  description : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct AndroidBackendReadiness {
+  ready : Bool
+  blocked_by : Array[String]
+  next_steps : Array[String]
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct AndroidRendererProvider {
+  // private fields
+}
+pub fn AndroidRendererProvider::has_async_image_loader(Self) -> Bool
+pub fn AndroidRendererProvider::new(create_renderer~ : (AndroidSurfaceHandle, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?, sync_surface? : (AndroidSurfaceHandle, @host.HostSurfaceMetrics) -> Unit, image_loader? : @host.HostAsyncImageLoader?) -> Self
+
+pub struct AndroidRuntimeSession {
+  // private fields
+}
+pub fn AndroidRuntimeSession::dispatch(Self, @host.HostEvent) -> @host.HostEventResult
+pub fn AndroidRuntimeSession::dispose(Self) -> Unit
+pub fn AndroidRuntimeSession::disposed(Self) -> Bool
+pub fn AndroidRuntimeSession::metrics(Self) -> @host.HostSurfaceMetrics
+pub fn AndroidRuntimeSession::present_count(Self) -> Int
+pub fn AndroidRuntimeSession::redraw_requested(Self) -> Bool
+pub fn AndroidRuntimeSession::render_frame(Self) -> @render.RenderFrameResult
+pub fn AndroidRuntimeSession::resize(Self, @host.HostSurfaceMetrics) -> @host.HostEventResult
+pub fn AndroidRuntimeSession::runtime(Self) -> @runtime.AppRuntime
+pub fn AndroidRuntimeSession::surface(Self) -> AndroidSurfaceHandle
+pub fn AndroidRuntimeSession::sync_surface(Self, AndroidRendererProvider) -> Unit
+pub fn AndroidRuntimeSession::take_redraw_requested(Self) -> Bool
+
+pub(all) struct AndroidSurfaceHandle {
+  raw : UInt64
+} derive(Eq, ToJson, @debug.Debug)
+pub fn AndroidSurfaceHandle::new(raw~ : UInt64) -> Self
+pub fn AndroidSurfaceHandle::none() -> Self
+pub fn AndroidSurfaceHandle::raw(Self) -> UInt64
+
+// Type aliases
+
+// Traits
+

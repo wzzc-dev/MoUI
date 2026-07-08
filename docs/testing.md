@@ -90,6 +90,8 @@ moon test moui/render --target native
 moon test moui/render/skia --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 moon test moui/backend/host --target native
+moon test moui/backend/android --target native
+moon test moui/backend/android/skia --target native
 moon test moui/backend/web --target wasm-gc
 moon test moui_tester --target native
 moon test moui_devtools --target native
@@ -107,6 +109,7 @@ moon test examples/pdf_workbench/pdflite_adapter --target native
 moon test examples/pdf_workbench/pdflite_service_protocol --target native
 moon test examples/pdf_workbench/pdflite_service_native_transport --target native
 moon test examples/pdf_workbench/pdfium_adapter --target native
+moon check examples/counter/android_skia --target native
 ```
 
 Use `moon test moui/render/wgpu --target native` only for the native WGPU
