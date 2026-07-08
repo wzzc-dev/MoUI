@@ -1,6 +1,6 @@
 # MoUI 跨平台可核验申报书
 
-> 版本: 2026-07-07
+> 版本: 2026-07-09
 > 下文的每一项声明均可通过引用的 CI 工作流、运行记录、制品名称或测试文件独立核验。
 
 ---
@@ -72,6 +72,16 @@ moon run examples/showcase/macos_skia --target native
 | **L2 — 运行时行为** | 真实 Skia/WebGPU 下的像素级渲染验证 | 每次 PR (`moui-renderer-real-skia-ci.yml`) | 匹配宿主 |
 | **L3 — 全平台证据** | 首帧呈现、IME、剪贴板、窗口服务等全平台运行时 | 定时调度 + 手动触发 | 匹配宿主（Wayland/MSVC/AppKit） |
 
+### 证据口径
+
+- L2 renderer proof 与 L3 platform runtime proof 分开记录。真实 Skia
+  渲染通过不等于平台窗口、IME、剪贴板、辅助功能等服务全部通过。
+- L3 中的首帧/Wayland 证据只证明对应平台路由能在匹配宿主上呈现第一帧；
+  只有 IME、窗口服务、输入、剪贴板等观察项也有匹配宿主日志时，才描述为
+  完整平台运行时通过。
+- 本页的“当前”状态以最近可核验的成功 workflow run 为准。历史失败或部分通过
+  run 可以作为诊断背景，但不能覆盖更新的成功证据。
+
 ## 三、平台证据矩阵
 
 ### 3.1 macOS / Darwin
@@ -98,7 +108,7 @@ moon run examples/showcase/macos_skia --target native
 |----------|------|----------|-------------|
 | L0: `moon check` | ✅ 通过 | `ci.yml → windows-native` → `moon check`（跨平台，不在 Win CI 中单独跑但受 `check.sh --profile daily` 保护） | 每次 PR |
 | L0: `moon info` | ✅ 无漂移 | `ci.yml → api-surface` | 每次 PR |
-| L1: Windows 后端测试 | ✅ 通过 | `ci.yml → windows-native` → `moon test moui/backend/windows --target native` + `moon test moui/backend/windows/skia --target native` | 每次 PR，Run [28509416649](https://github.com/wzzc-dev/MoUI/actions/runs/28509416649) |
+| L1: Windows 后端测试 | ✅ 通过 | `ci.yml → windows-native` → `moon test moui/backend/windows --target native` + `moon test moui/backend/windows/skia --target native` | 每次 PR，Run [28964136358](https://github.com/wzzc-dev/MoUI/actions/runs/28964136358) |
 | L1: Windows Skia 提供者预检 | ✅ 通过 | 同一 job 中 `windows_skia_provider_preflight_summary()` | 每次 PR |
 | L1: Windows MSVC 构建 | ✅ 通过 | `ci.yml → windows-native` → MSVC Skia entrypoint 构建成功，制品上传 | 每次 PR |
 | L2: 真实 Skia 渲染器（Windows） | ✅ 通过 | `moui-renderer-real-skia-ci.yml → windows-real-skia` | 每次 PR |
@@ -143,12 +153,11 @@ moon run examples/showcase/windows_skia --target native
 | L0: `moon info` | ✅ 无漂移 | `ci.yml → api-surface` | 每次 PR |
 | L1: Linux 后端测试 | ✅ 通过 | `ci.yml → linux-platform` → `sh scripts/check.sh --profile platform` | 每次 PR |
 | L1: Linux 包测试 | ✅ 通过 | `ci.yml → linux-platform` — core/views/render/backend/host native 测试 | 每次 PR |
-| L2: 真实 Skia 渲染器（Linux） | ✅ **部分通过** | `moui-renderer-real-skia-ci.yml → linux-real-skia` — 17 渲染特性中 **14 项通过, 3 项因文本布局 pending** | 每次 PR |
-| L2: Linux 异步图像 | ✅ 通过 | Linux renderer-proof 含 asyncImageSecondFrame=passed (run 27217209784) | 2026-06-17 |
-| L2: Linux 径向渐变/变换像素 | ✅ 通过 | Linux renderer-proof 含 radialGradient=passed, transformPixels=passed | run 27217209784 |
-| L2: 文本布局/IME 相关 | ⚠️ **待完善** | colorEmojiPixels/zwjGrapheme/bidiLayout/paragraphWrapping/selectionRects/graphemeEditing/imeCandidateAnchor/imeCompositionVisual = failed | — |
-| L3: Linux 平台运行时证据 | ✅ **通过** | `MoUI Linux Platform Evidence` → GitHub Actions Run [28865240929](https://github.com/wzzc-dev/MoUI/actions/runs/28865240929) | 2026-07-07 |
-| L3: Linux 首帧呈现 | ✅ **通过** | 同一工作流，`moui_tester/linux_skia_first_frame_smoke` 首帧日志含 `Linux renderer presented first frame; exiting by request; title=MoUI Text Input Smoke` 标记，制品 `moui-linux-platform-evidence` | run 28865240929 |
+| L2: 真实 Skia 渲染器（Linux） | ✅ 通过 | `moui-renderer-real-skia-ci.yml → Linux renderer real Skia` | Run [28964136550](https://github.com/wzzc-dev/MoUI/actions/runs/28964136550), 2026-07-08 |
+| L2: Linux 文本/表情/异步图像 | ✅ 通过 | 同一 workflow 覆盖 text/emoji smoke 与 renderer smoke 成功标记 | Run 28964136550 |
+| L2: 历史 Linux renderer 部分通过记录 | ℹ️ 历史诊断 | Run [27217209784](https://github.com/wzzc-dev/MoUI/actions/runs/27217209784) 曾有 Linux 文本项 failed；已由更新的 run 28964136550 取代 | 2026-06-17 |
+| L3: Linux 首帧 / Wayland 运行时路由 | ✅ 通过 | `MoUI Linux Platform Evidence` → `Linux platform runtime evidence` job | Run [28889055278](https://github.com/wzzc-dev/MoUI/actions/runs/28889055278), 2026-07-07 |
+| L3: Linux 完整平台服务 / IME 证据 | ⚠️ 待补 | IME runtime smoke、剪贴板图片、目录列表、透明标题栏等仍是 tracked gaps | — |
 
 #### Linux L3 证据详情
 
@@ -164,9 +173,9 @@ environment: ubuntu-24.04 + Weston headless + Wayland
   └── weston-headless.log
 ```
 
-首次成功运行: GitHub Actions Run [28865240929](https://github.com/wzzc-dev/MoUI/actions/runs/28865240929), commit `a469b10`.
+最近成功运行: GitHub Actions Run [28889055278](https://github.com/wzzc-dev/MoUI/actions/runs/28889055278), commit `8a054c5914adbfa34a6943570c1ceb01cc603ef5`.
 
-证据脚本使用 `moui_tester/linux_skia_first_frame_smoke` 专用测试程序（类似 macOS 的 `moui_tester/macos_skia_first_frame_smoke`），硬编码 `first_frame_smoke_auto_exit=true`，呈现第一帧后自动退出并打印标记。
+证据脚本使用 `moui_tester/linux_skia_first_frame_smoke` 专用测试程序（类似 macOS 的 `moui_tester/macos_skia_first_frame_smoke`），硬编码 `first_frame_smoke_auto_exit=true`，呈现第一帧后自动退出并打印标记。该 run 证明 Linux Wayland + Skia 首帧路由，不单独证明 Linux IME、剪贴板或完整平台服务。
 
 #### Linux 证据参考
 
@@ -175,7 +184,7 @@ environment: ubuntu-24.04 + Weston headless + Wayland
 | CI 工作流 | `moui-linux-platform-evidence.yml` — Weston headless 合成器 + 60 分钟超时 |
 | 证据脚本 | `scripts/linux-platform-evidence.sh` — 7 步全自动证据收集 |
 | Linux Skia 依赖脚本 | `moui_skia/scripts/install-linux-smoke-deps.sh` |
-| Renderer Proof 制品 | `artifacts/tmp-gh-renderer-proof-skia-native-linux-27217209784/conformance/renderer-proof/skia-native-linux.json` |
+| Renderer Proof 制品 | `moui-renderer-real-skia-ci.yml` run 28964136550 上传的 `linux-renderer-real-skia-ci` 日志 |
 | 证据记录脚本 | `window/scripts/record_moui_evidence.sh` — 支持 linux 后端 |
 | 运行时捕获脚本 | `window/scripts/capture_moui_runtime_evidence.sh` — Linux 运行时证据端到端捕获 |
 
@@ -213,16 +222,17 @@ environment: ubuntu-24.04 + Weston headless + Wayland
 | EmojiText | ✅ | ✅ | ✅ |
 | AsyncImage | ✅ | ✅ | ✅ |
 
-**核验入口**: `moui-renderer-real-skia-ci.yml` 每次 PR 运行，所有三平台 job 同时通过。
+**核验入口**: `moui-renderer-real-skia-ci.yml` 每次 PR 运行。最近核验的三平台成功 run 为 [28964136550](https://github.com/wzzc-dev/MoUI/actions/runs/28964136550)，head SHA `91f596e80d5a5f80d30fa94a8510e5ce4653189e`。
 
 ## 五、可核验 CI 运行记录
 
 | 工作流 | 运行 ID | 关键通过的 Job | 上传制品 | SHA |
 |--------|---------|----------------|----------|-----|
-| MoUI CI | [28509416649](https://github.com/wzzc-dev/MoUI/actions/runs/28509416649) | Windows MSVC native smoke, Linux platform contracts, Public API surface, PR profile gate, macOS packaging smoke, Benchmark scaffold | moui-showcase-windows-msvc-portable, moui-showcase-macos-app ... | `2538874b` |
+| MoUI CI | [28964136358](https://github.com/wzzc-dev/MoUI/actions/runs/28964136358) | Windows MSVC native smoke, Linux platform contracts, Public API surface, PR profile gate, macOS packaging smoke, Benchmark scaffold | moui-showcase-windows-msvc-portable, moui-webview-demo-windows-msvc-portable, moui-showcase-macos-app ... | `91f596e` |
+| MoUI Renderer Real Skia CI | [28964136550](https://github.com/wzzc-dev/MoUI/actions/runs/28964136550) | macOS renderer real Skia, Linux renderer real Skia, Windows renderer real Skia | macOS/Linux/Windows renderer real Skia logs | `91f596e` |
 | MoUI macOS Platform Evidence | [27217345886](https://github.com/wzzc-dev/MoUI/actions/runs/27217345886) | macOS platform runtime evidence → status=passed; Native Skia renderer proof (macos) → status=passed | moui-macos-platform-runtime-evidence, moui-renderer-proof-skia-native-macos | `5bb2d810` |
-| MoUI Linux Platform Evidence | [28865240929](https://github.com/wzzc-dev/MoUI/actions/runs/28865240929) | Linux platform runtime evidence → success | moui-linux-platform-evidence | `a469b10` |
-| Deploy Website | [27064953468](https://github.com/wzzc-dev/MoUI/actions/runs/27064953468) | Build website, Deploy website | github-pages | `04562724` |
+| MoUI Linux Platform Evidence | [28889055278](https://github.com/wzzc-dev/MoUI/actions/runs/28889055278) | Linux platform runtime evidence → first-frame Wayland route success | moui-linux-platform-evidence | `8a054c` |
+| Deploy Website | [28964136340](https://github.com/wzzc-dev/MoUI/actions/runs/28964136340) | Build website, Deploy website | github-pages | `91f596e` |
 
 ## 六、缺失证据与补全计划
 
@@ -235,21 +245,21 @@ environment: ubuntu-24.04 + Weston headless + Wayland
 | Windows IME 运行时观测 | `window/scripts/capture_moui_runtime_evidence.sh` windows 流程 + `record_moui_evidence.sh` windows | Windows 主机 + MSVC + 真实 Skia | 1 次本地或 CI 运行 |
 | Windows 全证据清单更新 | 将结果写入 `platform-runtime-evidence.json` windows 条目 | 以上三项完成 | 1 次 PR |
 
-### 6.2 Linux L3 — 平台运行时
+### 6.2 Linux L3 — 完整平台运行时
 
 | 缺失项 | 补全动作 | 前置条件 | 预估工期 |
 |--------|---------|----------|---------|
-| Showcase Linux 首帧日志 | `moui-linux-platform-evidence.yml` 定时调度 UTC 每周一 05:17 自动产出 | Run [28865240929](https://github.com/wzzc-dev/MoUI/actions/runs/28865240929) — 首帧标记首次通过 | ✅ 已完成 |
+| Linux 首帧 / Wayland route 日志 | `moui-linux-platform-evidence.yml` 产出 | Run [28889055278](https://github.com/wzzc-dev/MoUI/actions/runs/28889055278) — 首帧标记通过 | ✅ 已完成 |
 | Linux IME 运行时观测 | `window/scripts/capture_moui_runtime_evidence.sh` linux 流程 | Wayland 主机 + 真实 Skia | 1 次本地或 CI 运行 |
-| Linux 全证据清单更新 | 将结果写入 `platform-runtime-evidence.json` linux 条目 | 以上两项完成 | 1 次 PR |
+| Linux 完整平台服务观测 | 记录剪贴板图片、目录列表、透明标题栏等 tracked gaps 的通过或 pending 状态 | Wayland 主机 + 真实 Skia + 对应 host 服务 | 1 次本地或 CI 运行 |
+| Linux 全证据清单更新 | 将完整服务/IME 结果写入 `platform-runtime-evidence.json` linux 条目 | 以上观测完成 | 1 次 PR |
 
-### 6.3 Linux L2 — 文本布局（3 项 pending）
+### 6.3 Android / iOS — 嵌入式 scaffold 运行时
 
-Linux 真实 Skia 渲染器证明中以下项目为 `failed`:
-
-- colorEmojiPixels / zwjGrapheme / bidiLayout / paragraphWrapping / selectionRects / graphemeEditing / imeCandidateAnchor / imeCompositionVisual
-
-**原因**: Linux 的 SkParagraph 和 emoji font fallback 路径与 macOS/Windows 的字体基础设施不同（fontconfig + FreeType vs CoreText vs DirectWrite），需额外调试。文本布局证据通过 `moui-renderer-real-skia-ci.yml` PR job 自动跟踪进展，每次 PR 更新状态。
+Android 和 iOS 当前只有 embedded-session scaffold、package/cross-build 检查、
+以及 Counter app 包装 smoke。fallback APK / `.app` 只能作为包装证据；非
+fallback 构建加匹配设备、模拟器或 simulator 的首帧、输入、生命周期、IME、
+剪贴板、辅助功能和 async image 观测完成前，不能声明 Android 或 iOS 平台通过。
 
 ## 七、核验操作指引
 
@@ -275,7 +285,7 @@ moon run moui/tests/skia_text_emoji_smoke/native --target native
 # L3 — macOS 平台运行时证据（macOS 主机）
 MOUI_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/showcase/macos_skia --target native
 
-# L3 — Linux 平台运行时证据（Wayland 主机）
+# L3 — Linux 首帧 / Wayland route 证据（Wayland 主机）
 moon run moui_tester/linux_skia_first_frame_smoke --target native
 
 # L3 — Windows 平台运行时证据（MSVC 主机）（需要安装、配置 MSVC 工具链）
