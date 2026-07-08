@@ -379,13 +379,14 @@ fn macos_skia_present_target(
   @skia_renderer.SkiaPresentTarget::new(
     description=macos_skia_presenter_description(),
     present=frame => {
+      let pixels = frame.pixels()
       macos_present_skia_pixels_to_view(
         raw_content_view_handle,
-        frame.width,
-        frame.height,
-        frame.row_bytes,
-        frame.pixels,
-        frame.pixels.length(),
+        frame.width(),
+        frame.height(),
+        frame.row_bytes(),
+        pixels,
+        pixels.length(),
       ) ==
       0
     },
