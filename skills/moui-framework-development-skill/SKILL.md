@@ -33,12 +33,13 @@ Read only what the task needs:
   dispatch, effects, subscriptions, diagnostics, inspector snapshots.
 - `moui/backend/host`: host service protocols, window/timer/route sources,
   WebView protocol, async image service, accessibility/input/redraw contracts.
-- `moui/backend/<platform>`: concrete platform hosts. Android is currently an
-  embedded-session scaffold driven by Activity/Surface callbacks rather than a
-  desktop-style event loop.
+- `moui/backend/<platform>`: concrete platform hosts. Android and iOS are
+  currently embedded-session scaffolds driven by platform-owned callbacks
+  rather than desktop-style event loops.
 - `moui/backend/<platform>/skia`: native Skia mainline renderer providers.
   Android Skia presents copied pixel frames to an embedder-supplied
-  `ANativeWindow`.
+  `ANativeWindow`; iOS Skia presents copied pixel frames to a UIKit
+  `UIImageView` child in an embedder-supplied `UIView`.
 - `moui/backend/<platform>/wgpu`: native WGPU diagnostic providers.
 - `moui/render`: renderer facade and renderer-neutral capability/fallback
   planning.
@@ -167,6 +168,21 @@ owning-package boundaries clear.
   `scripts/build-counter-android-apk.sh --fallback-skia` for packaging/JNI/CMake
   smoke only; use the non-fallback path plus matching device/emulator evidence
   before claiming Android runtime support.
+- `backend/ios/`: experimental iOS embedded native host scaffold. The UIKit
+  layer owns `UIApplicationDelegate` / `UIViewController` lifecycle, raw
+  `UIView` handle ownership, and touch forwarding into `IosRuntimeSession`;
+  package checks are not runtime platform evidence.
+- `backend/ios/skia/`: iOS Skia provider over `render/skia`, with a UIKit
+  `UIImageView` RGBA pixel presenter and preflight summary. Use
+  `MOUI_SKIA_PLATFORM=iosSim` plus `MOUI_SKIA_ARCH=<arch>` for iOS Simulator
+  Skia cross-build checks.
+- `examples/counter/ios_app`: experimental Counter iOS Simulator `.app` shell.
+  It packages UIKit app/view-controller glue, MoonBit-generated C, MoonBit
+  runtime, iOS presenter, runtime compatibility shim, and `moui_skia/native`
+  stubs through `xcrun clang/clang++`. Use
+  `scripts/build-counter-ios-app.sh --fallback-skia` for packaging/native-stub
+  smoke only; use the non-fallback path plus matching simulator/device evidence
+  before claiming iOS runtime support.
 - `render/`: renderer facade, shared draw helpers, and capability report API.
 - `render/skia/`: native Skia raster mainline renderer over the local
   `moui_skia` binding, including renderer-local command/reason diagnostics for
@@ -444,6 +460,9 @@ moon test moui/backend/host --target native
 moon test moui/backend/android --target native
 moon test moui/backend/android/skia --target native
 scripts/build-counter-android-apk.sh --fallback-skia
+moon test moui/backend/ios --target native
+moon test moui/backend/ios/skia --target native
+scripts/build-counter-ios-app.sh --fallback-skia
 moon test moui/backend/web --target wasm-gc
 moon test moui_tester --target native
 moon test moui_devtools --target native

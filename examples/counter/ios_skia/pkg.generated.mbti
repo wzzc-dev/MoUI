@@ -1,0 +1,22 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/counter/ios_skia"
+
+// Values
+pub fn ios_counter_attach_view(UInt64, Int, Int, Double) -> Bool
+
+pub fn ios_counter_detach_view() -> Unit
+
+pub fn ios_counter_dispatch_pointer(Int, Double, Double, Double) -> Bool
+
+pub fn ios_counter_render_frame() -> Bool
+
+pub fn ios_counter_resize(Int, Int, Double) -> Bool
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

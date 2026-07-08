@@ -26,8 +26,15 @@
 #if defined(_WIN32) && !defined(SK_BUILD_FOR_WIN)
 #define SK_BUILD_FOR_WIN
 #endif
-#if defined(__APPLE__) && !defined(SK_BUILD_FOR_MAC)
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#if TARGET_OS_IPHONE
+#if !defined(SK_BUILD_FOR_IOS)
+#define SK_BUILD_FOR_IOS
+#endif
+#elif !defined(SK_BUILD_FOR_MAC)
 #define SK_BUILD_FOR_MAC
+#endif
 #endif
 #include "include/core/SkCanvas.h"
 #include "include/core/SkBitmap.h"

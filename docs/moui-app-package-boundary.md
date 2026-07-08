@@ -384,14 +384,17 @@ MoUI 当前把两类入口统一在 `moui/views`：普通 app 使用高层 const
 这类 `is-main` package。它们负责创建 runtime、连接平台 backend、选择 renderer。
 Android 例外地拆成 `examples/*/android_skia` MoonBit embedded-session 入口和
 app-owned APK/JNI/CMake shell（例如 `examples/counter/android_app`）。
+iOS 同样走 embedded-session 入口：`examples/*/ios_skia` 暴露 MoonBit C exports，
+app-owned UIKit shell（例如 `examples/counter/ios_app`）负责
+`UIApplicationDelegate` / `UIViewController` 生命周期与触摸转发。
 
 平台入口包可以依赖：
 
 - `wzzc-dev/moui/runtime`
 - `wzzc-dev/moui/backend/web`
 - `wzzc-dev/moui/backend/host`
-- `wzzc-dev/moui/backend/{macos,windows,linux,android}`
-- `wzzc-dev/moui/backend/{macos,windows,linux,android}/skia`
+- `wzzc-dev/moui/backend/{macos,windows,linux,android,ios}`
+- `wzzc-dev/moui/backend/{macos,windows,linux,android,ios}/skia`
 - `wzzc-dev/moui/render/skia`
 - 对应的 shared app package，例如 `examples/showcase/app`
 
