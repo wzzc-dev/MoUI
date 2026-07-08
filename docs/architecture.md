@@ -102,7 +102,8 @@ workspace.
   platform backend -> platform Skia provider -> `moui/render/skia` ->
   `moui_skia`.
 - Android Skia route (experimental scaffold): shared app package ->
-  `examples/<app>/android_skia` or app-owned JNI/CMake wrapper ->
+  `examples/<app>/android_skia` plus app-owned APK/JNI/CMake wrapper such as
+  `examples/counter/android_app` ->
   `moui/backend/android` embedded session -> `moui/backend/android/skia` ->
   `moui/render/skia` -> `moui_skia`. The app or Android Activity layer owns
   lifecycle, `ANativeWindow` handle acquisition, and input forwarding until a
@@ -233,6 +234,7 @@ moui/tests/skia_text_emoji_smoke/ opt-in real Skia text/emoji renderer smoke
 moui/tests/wgpu_renderer_smoke/ opt-in native WGPU renderer smoke
 examples/counter/app/         smallest shared app shape
 examples/counter/{macos_skia,web_wasm,android_skia,macos_wgpu,windows_wgpu,linux_wgpu}/ platform counter entrypoints
+examples/counter/android_app/ Counter Android Activity/JNI/CMake APK shell
 examples/counter/windows_wgpu_cosmic/ Windows counter selecting Moon Cosmic text
 examples/agent_counter/       minimal agent-controllable runtime example (shared app at example root plus main/ and macos_skia/ entrypoints)
 examples/button_freeze_probe/app/ minimal native Skia button-freeze repro app

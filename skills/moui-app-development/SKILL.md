@@ -37,6 +37,7 @@ examples/<name>/macos_skia/
 examples/<name>/windows_skia/
 examples/<name>/linux_skia/
 examples/<name>/android_skia/   # experimental embedded-session route
+examples/<name>/android_app/    # app-owned APK/JNI/CMake shell when present
 ```
 
 Default shared app imports:
@@ -139,6 +140,7 @@ Common examples:
 ```sh
 moon test examples/counter/app --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/counter/android_skia --target native
+scripts/build-counter-android-apk.sh --fallback-skia
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
 moon test examples/pdf_workbench/app --target native
@@ -157,6 +159,14 @@ Run `sh scripts/check.sh --profile theme` for `moui_theme` or
 current-host backend/provider coverage; the shared platform service checks stay
 separate from host-specific steps. Run platform smoke only when
 the change claims real platform/browser/renderer behavior.
+For Android, the fallback APK command only validates packaging/JNI/CMake; a
+non-fallback APK plus matching device/emulator smoke is still required for
+first-frame or input/lifecycle runtime claims. Use
+`scripts/setup-android-sdk.sh --accept-licenses` followed by
+`eval "$(scripts/setup-android-sdk.sh --print-env)"` to install and expose the
+official SDK/NDK/CMake toolchain when the local machine does not already have
+one. The setup helper requires a JDK on `PATH`; the APK builder also uses
+`javac` and `keytool`.
 
 ## Docs
 

@@ -6,6 +6,8 @@ pub fn android_counter_attach_surface(UInt64, Int, Int, Double) -> Bool
 
 pub fn android_counter_detach_surface() -> Unit
 
+pub fn android_counter_dispatch_pointer(Int, Double, Double, Double) -> Bool
+
 pub fn android_counter_render_frame() -> Bool
 
 pub fn android_counter_resize(Int, Int, Double) -> Bool
@@ -17,4 +19,3 @@ pub fn android_counter_resize(Int, Int, Double) -> Bool
 // Type aliases
 
 // Traits
-

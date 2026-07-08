@@ -772,6 +772,89 @@ static bool moonbit_skia_font_mgr_has_families(
   return font_mgr && font_mgr->countFamilies() > 0;
 }
 
+#if defined(__ANDROID__)
+static SkFontMgr* moonbit_skia_android_font_mgr(void) {
+  static sk_sp<SkFontMgr> font_mgr = []() -> sk_sp<SkFontMgr> {
+#if defined(MOUI_SKIA_HAS_ANDROID_NDK_FONTMGR)
+    sk_sp<SkFontMgr> ndk_mgr = SkFontMgr_New_AndroidNDK(
+      true,
+      SkFontScanner_Make_FreeType()
+    );
+    if (moonbit_skia_font_mgr_has_families(ndk_mgr)) {
+      return ndk_mgr;
+    }
+#endif
+#if defined(MOUI_SKIA_HAS_ANDROID_FONTMGR)
+    sk_sp<SkFontMgr> legacy_mgr = SkFontMgr_New_Android(
+      nullptr,
+      SkFontScanner_Make_FreeType()
+    );
+    if (moonbit_skia_font_mgr_has_families(legacy_mgr)) {
+      return legacy_mgr;
+    }
+#endif
+    return SkFontMgr::RefEmpty();
+  }();
+  return font_mgr.get();
+}
+
+static sk_sp<SkTypeface> moonbit_skia_android_typeface_from_family(
+  const char* family_name,
+  const SkFontStyle& style
+) {
+  SkFontMgr* font_mgr = moonbit_skia_android_font_mgr();
+  if (font_mgr == nullptr) {
+    return nullptr;
+  }
+
+  const bool has_family_name = family_name != nullptr && family_name[0] != '\0';
+  if (has_family_name) {
+    sk_sp<SkTypeface> typeface = font_mgr->matchFamilyStyle(
+      family_name,
+      style
+    );
+    if (typeface) {
+      return typeface;
+    }
+  }
+
+  const char* en_bcp47[] = {"en"};
+  return font_mgr->matchFamilyStyleCharacter(
+    has_family_name ? family_name : nullptr,
+    style,
+    en_bcp47,
+    1,
+    'S'
+  );
+}
+
+static sk_sp<SkTypeface> moonbit_skia_android_typeface_for_characters(
+  const char* family_name,
+  const SkFontStyle& style,
+  const SkUnichar* characters,
+  size_t character_count
+) {
+  SkFontMgr* font_mgr = moonbit_skia_android_font_mgr();
+  if (font_mgr == nullptr || characters == nullptr || character_count == 0) {
+    return nullptr;
+  }
+
+  const bool has_family_name = family_name != nullptr && family_name[0] != '\0';
+  const char* en_bcp47[] = {"en"};
+  sk_sp<SkTypeface> typeface = font_mgr->matchFamilyStyleCharacter(
+    has_family_name ? family_name : nullptr,
+    style,
+    en_bcp47,
+    1,
+    characters[0]
+  );
+  if (moonbit_skia_typeface_can_draw_characters(typeface, characters, character_count)) {
+    return typeface;
+  }
+  return nullptr;
+}
+#endif
+
 static sk_sp<SkFontMgr> moonbit_skia_linux_fontconfig_font_mgr(void) {
 #if defined(MOUI_SKIA_HAS_FONTCONFIG_FONTMGR)
   sk_sp<SkFontMgr> font_mgr = SkFontMgr_New_FontConfig(
@@ -1098,6 +1181,26 @@ sk_sp<SkTypeface> moonbit_skia_default_typeface(void) {
     nullptr,
     SkFontStyle::Normal()
   );
+#elif defined(__ANDROID__)
+  SkUnichar latin_sample[] = {'S'};
+  const char* android_families[] = {
+    "sans-serif",
+    "Roboto",
+    "Noto Sans",
+    nullptr,
+  };
+  for (const char* family : android_families) {
+    sk_sp<SkTypeface> typeface = moonbit_skia_android_typeface_for_characters(
+      family,
+      SkFontStyle::Normal(),
+      latin_sample,
+      1
+    );
+    if (typeface) {
+      return typeface;
+    }
+  }
+  return moonbit_skia_android_typeface_from_family(nullptr, SkFontStyle::Normal());
 #elif defined(__linux__) && \
   (defined(MOUI_SKIA_HAS_FONTCONFIG_FONTMGR) || defined(MOUI_SKIA_HAS_DIRECTORY_FONTMGR))
   SkUnichar mixed_script_sample[] = {0x4F60, 'S'};
@@ -1155,6 +1258,8 @@ sk_sp<SkTypeface> moonbit_skia_typeface_from_family(
   return moonbit_skia_windows_typeface_from_family(family_name, style);
 #elif defined(__APPLE__)
   return moonbit_skia_macos_typeface_from_family(family_name, style);
+#elif defined(__ANDROID__)
+  return moonbit_skia_android_typeface_from_family(family_name, style);
 #elif defined(__linux__) && \
   (defined(MOUI_SKIA_HAS_FONTCONFIG_FONTMGR) || defined(MOUI_SKIA_HAS_DIRECTORY_FONTMGR))
   return moonbit_skia_linux_typeface_from_family(family_name, style);
@@ -1175,6 +1280,13 @@ sk_sp<SkFontMgr> moonbit_skia_default_font_mgr(void) {
   return sk_sp<SkFontMgr>(font_mgr);
 #elif defined(__APPLE__)
   SkFontMgr* font_mgr = moonbit_skia_macos_font_mgr();
+  if (font_mgr == nullptr) {
+    return nullptr;
+  }
+  font_mgr->ref();
+  return sk_sp<SkFontMgr>(font_mgr);
+#elif defined(__ANDROID__)
+  SkFontMgr* font_mgr = moonbit_skia_android_font_mgr();
   if (font_mgr == nullptr) {
     return nullptr;
   }

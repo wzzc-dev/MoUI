@@ -382,6 +382,8 @@ MoUI 当前把两类入口统一在 `moui/views`：普通 app 使用高层 const
 
 平台入口包指 `examples/*/{web_wasm,macos_skia,windows_skia,linux_skia}`
 这类 `is-main` package。它们负责创建 runtime、连接平台 backend、选择 renderer。
+Android 例外地拆成 `examples/*/android_skia` MoonBit embedded-session 入口和
+app-owned APK/JNI/CMake shell（例如 `examples/counter/android_app`）。
 
 平台入口包可以依赖：
 

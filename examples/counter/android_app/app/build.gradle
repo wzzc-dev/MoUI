@@ -1,0 +1,44 @@
+plugins {
+    id "com.android.application"
+}
+
+def repoRoot = file("../../../..")
+def generatedRoot = file(System.getenv("MOUI_COUNTER_ANDROID_GENERATED_DIR") ?: "${buildDir}/generated/moui-counter")
+def moonbitC = file(System.getenv("MOUI_COUNTER_ANDROID_MOONBIT_C") ?: "${generatedRoot}/moonbit/android_skia.c")
+def moonHome = file(System.getenv("MOON_HOME") ?: "${System.properties["user.home"]}/.moon")
+
+android {
+    namespace "dev.wzzc.moui.counter"
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "dev.wzzc.moui.counter"
+        minSdk 23
+        targetSdk 35
+        versionCode 1
+        versionName "0.1.0"
+
+        externalNativeBuild {
+            cmake {
+                arguments(
+                    "-DMOUI_REPO_ROOT=${repoRoot.absolutePath}",
+                    "-DMOUI_MOON_HOME=${moonHome.absolutePath}",
+                    "-DMOUI_COUNTER_ANDROID_MOONBIT_C=${moonbitC.absolutePath}",
+                    "-DMOUI_SKIA_STUB_CC_FLAGS=${System.getenv("MOUI_SKIA_STUB_CC_FLAGS") ?: ""}",
+                    "-DMOUI_SKIA_CC_LINK_FLAGS=${System.getenv("MOUI_SKIA_CC_LINK_FLAGS") ?: ""}",
+                )
+            }
+        }
+
+        ndk {
+            abiFilters "arm64-v8a"
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+            version "3.22.1"
+        }
+    }
+}

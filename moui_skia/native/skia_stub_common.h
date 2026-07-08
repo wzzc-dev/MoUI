@@ -129,6 +129,20 @@ class GrDirectContext;
 #if defined(__APPLE__)
 #include "include/ports/SkFontMgr_mac_ct.h"
 #endif
+#if defined(__ANDROID__) && \
+  __has_include("include/ports/SkFontMgr_android_ndk.h") && \
+  __has_include("include/ports/SkFontScanner_FreeType.h")
+#include "include/ports/SkFontMgr_android_ndk.h"
+#include "include/ports/SkFontScanner_FreeType.h"
+#define MOUI_SKIA_HAS_ANDROID_NDK_FONTMGR 1
+#endif
+#if defined(__ANDROID__) && \
+  __has_include("include/ports/SkFontMgr_android.h") && \
+  __has_include("include/ports/SkFontScanner_FreeType.h")
+#include "include/ports/SkFontMgr_android.h"
+#include "include/ports/SkFontScanner_FreeType.h"
+#define MOUI_SKIA_HAS_ANDROID_FONTMGR 1
+#endif
 #if defined(__linux__) && __has_include(<fontconfig/fontconfig.h>) && \
   __has_include("include/ports/SkFontMgr_fontconfig.h") && \
   __has_include("include/ports/SkFontScanner_FreeType.h")

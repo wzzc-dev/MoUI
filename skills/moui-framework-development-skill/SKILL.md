@@ -161,6 +161,12 @@ owning-package boundaries clear.
   `ANativeWindow` RGBA pixel presenter and preflight summary. Use
   `MOUI_SKIA_PLATFORM=android` plus `MOUI_SKIA_ARCH=<arch>` for Android Skia
   cross-build checks.
+- `examples/counter/android_app`: experimental Counter APK shell. It packages
+  Java `SurfaceView` glue, JNI, MoonBit-generated C, MoonBit runtime, Android
+  presenter, and `moui_skia/native` stubs through CMake. Use
+  `scripts/build-counter-android-apk.sh --fallback-skia` for packaging/JNI/CMake
+  smoke only; use the non-fallback path plus matching device/emulator evidence
+  before claiming Android runtime support.
 - `render/`: renderer facade, shared draw helpers, and capability report API.
 - `render/skia/`: native Skia raster mainline renderer over the local
   `moui_skia` binding, including renderer-local command/reason diagnostics for
@@ -437,6 +443,7 @@ moon test moui/render/skia --target native
 moon test moui/backend/host --target native
 moon test moui/backend/android --target native
 moon test moui/backend/android/skia --target native
+scripts/build-counter-android-apk.sh --fallback-skia
 moon test moui/backend/web --target wasm-gc
 moon test moui_tester --target native
 moon test moui_devtools --target native
