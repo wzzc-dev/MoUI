@@ -177,12 +177,12 @@ fn app_bench_assert_renderer_supported(
 fn app_bench_pipeline_counters(
   runtime : @runtime.AppRuntime,
 ) -> AppBenchPipelineCounters {
-  let snapshot = runtime.inspector_snapshot().runtime
+  let snapshot = runtime.inspector_snapshot().runtime()
   {
-    rebuild_pass_count: snapshot.rebuild_pass_count,
-    layout_pass_count: snapshot.layout_pass_count,
-    paint_pass_count: snapshot.paint_pass_count,
-    draw_command_build_count: snapshot.draw_command_build_count,
+    rebuild_pass_count: snapshot.rebuild_pass_count(),
+    layout_pass_count: snapshot.layout_pass_count(),
+    paint_pass_count: snapshot.paint_pass_count(),
+    draw_command_build_count: snapshot.draw_command_build_count(),
   }
 }
 
