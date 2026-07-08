@@ -130,7 +130,7 @@ fn MarkdownEditorApp::chrome_theme(self : MarkdownEditorApp) -> @moui.Theme {
 ///|
 fn MarkdownEditorApp::reactive_root(
   self : MarkdownEditorApp,
-  ctx : @views.ComponentContext,
+  ctx : @core.ComponentContext,
 ) -> @moui.View[MarkdownEditorMsg] {
   ignore(ctx.watch(self.document))
   ignore(ctx.watch(self.document_session))

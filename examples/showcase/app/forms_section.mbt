@@ -5,12 +5,12 @@ fn ShowcaseModel::forms_section(
   metrics : ShowcaseMetrics,
 ) -> @moui.View[ShowcaseMsg] {
   let field_width = if metrics.compact { metrics.body_width } else { 420.0 }
-  let profile_focus_scope = @views.FocusScope::new(
+  let profile_focus_scope = @state.FocusScope::new(
     items=[
-      @views.FocusScopeItem::new(id="display_name"),
-      @views.FocusScopeItem::new(id="email"),
-      @views.FocusScopeItem::new(id="account_id", focusable=false),
-      @views.FocusScopeItem::new(id="save_profile", focusable=false),
+      @state.FocusScopeItem::new(id="display_name"),
+      @state.FocusScopeItem::new(id="email"),
+      @state.FocusScopeItem::new(id="account_id", focusable=false),
+      @state.FocusScopeItem::new(id="save_profile", focusable=false),
     ],
     current=Some("display_name"),
     default_action="save_profile",

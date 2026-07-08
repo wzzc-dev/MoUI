@@ -172,9 +172,3 @@ fn[T] option_prefer(value : T?, fallback : T?) -> T? {
     None => fallback
   }
 }
-
-///|
-pub(all) enum SheetPresentationMode {
-  Modal
-  BottomSheet
-} derive(Eq, Debug, ToJson)

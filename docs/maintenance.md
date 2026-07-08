@@ -57,6 +57,21 @@ not need to solve the whole backlog. When a refactor splits a file, moves
 control-level entrypoints into `views`, shrinks public surface area, or removes
 root facade forwards, lower the corresponding budget in the same commit.
 
+The default wrapper runs the `daily` scope. The MoonBit tool also supports a
+full-workspace hotspot scope:
+
+```sh
+moon run tools/moui/validate_maintenance_baseline --target native -- --scope full
+```
+
+The `full` scope keeps the daily budgets and additionally scans addon/tool
+workspace roots such as `moui_richtext`, `moui_skia`, `moui_sun`, `moui_theme`,
+`moui_tester`, `moui_devtools`, `moui_webview`, `moui_agent*`, and `tools`.
+Known large files have explicit full-only temporary budgets so broad validation
+can report hotspots without forcing every 2k-4k line diagnostic/test file into
+the daily baseline or this refactor. Split those files in focused follow-up
+changes and ratchet their full-only budgets down as each split lands.
+
 ## Diagnostic Routes
 
 Native WGPU is a renderer diagnostic route. It stays available through

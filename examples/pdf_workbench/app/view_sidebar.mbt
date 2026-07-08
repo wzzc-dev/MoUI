@@ -159,11 +159,11 @@ fn pdf_workbench_page_thumbnail(
       fill_rect(ctx, page_rect, @graphics.Color::white())
       match thumbnail_raster {
         Some(raster) =>
-          draw_image(ctx, @views.ImageRun::{
+          draw_image(ctx, @graphics.ImageRun::{
             source: raster.image_source,
             frame: page_rect,
             opacity: 1.0,
-            fit: @views.ImageFit::Contain,
+            fit: @graphics.ImageFit::Contain,
           })
         None => ()
       }

@@ -1,11 +1,7 @@
 ///|
-fn monitored_roots() -> Array[String] {
-  ["moui", "examples", "website"]
-}
-
-///|
 fn generated_fixture_path(path : String) -> Bool {
-  path.has_suffix("_unicode_17_wbtest.mbt")
+  path.has_suffix("_unicode_17_wbtest.mbt") ||
+  path.contains("grapheme_break_unicode_17_wbtest.mbt")
 }
 
 ///|

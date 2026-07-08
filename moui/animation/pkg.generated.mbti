@@ -1,0 +1,22 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/animation"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @core {type Easing}
+
+pub using @core {type TransitionSpec}
+
+pub using @core {type TransitionStyle}
+
+// Traits
+

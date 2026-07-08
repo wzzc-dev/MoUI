@@ -5,12 +5,8 @@ struct LineBudgetOverflow {
 }
 
 ///|
-fn tracked_budget_paths() -> Array[String] {
-  let paths : Array[String] = []
-  for budget in file_budgets() {
-    paths.push(budget.path)
-  }
-  paths
+fn oversized_file_threshold() -> Int {
+  1800
 }
 
 ///|
@@ -36,14 +32,15 @@ fn record_file_budget_overflow(
 ///|
 fn record_untracked_oversized_files(
   repo_root : String,
+  scope : String,
   overflows : Array[LineBudgetOverflow],
   failures : Array[String],
 ) -> Unit {
   let files : Array[String] = []
-  for root in monitored_roots() {
+  for root in monitored_roots(scope) {
     collect_mbt_files(repo_root, root, files, failures)
   }
-  let tracked_paths = tracked_budget_paths()
+  let tracked_paths = tracked_budget_paths(scope~)
   for path in files {
     if !generated_fixture_path(path) && !array_contains(tracked_paths, path) {
       let text = match read_repo_text(repo_root, path) {
@@ -84,13 +81,14 @@ fn line_budget_overflow_paths(
 ///|
 fn collect_line_budget_overflows(
   repo_root : String,
+  scope : String,
   failures : Array[String],
 ) -> Array[LineBudgetOverflow] {
   let overflows : Array[LineBudgetOverflow] = []
-  for budget in file_budgets() {
+  for budget in line_budget_file_budgets(scope) {
     record_file_budget_overflow(repo_root, budget, overflows, failures)
   }
-  record_untracked_oversized_files(repo_root, overflows, failures)
+  record_untracked_oversized_files(repo_root, scope, overflows, failures)
   sort_line_budget_overflows(overflows)
   overflows
 }

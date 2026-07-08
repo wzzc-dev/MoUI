@@ -19,8 +19,9 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 
 | Path | Owner responsibility |
 | --- | --- |
-| `moui/` | Root public facade for app-safe neutral types such as `View`, `Program`, `Effect`, `Subscription`, `Theme`, geometry, text, environment, and common state aliases. |
-| `moui/core/` | Platform-neutral contracts: opaque `View`, typed events, `Program`, `Effect`, `Subscription`, geometry, draw commands, semantics, text editing, theme token surface, and custom view protocol. |
+| `moui/` | Root public facade for app-loop types: `View`, `Program`, `Effect`, `Subscription`, `Theme`, `Environment`, and `ViewEnvironment`. |
+| `moui/{geometry,graphics,animation,text,state}/` | Domain facades over `moui/core` for app-facing geometry, paint/drawing, motion, text, and state/focus value types. They depend on `core`; `core` does not depend on them. |
+| `moui/core/` | Platform-neutral foundation contracts: opaque `View`, typed events, `Program`, `Effect`, `Subscription`, geometry, draw commands, semantics, text editing, theme token surface, and custom view protocol. |
 | `moui/views/` | Public view constructors, app-facing control APIs, default themes, form/navigation/data helpers, and concrete custom view behavior built with `@core.View::node`. |
 | `moui/runtime/` | AppRuntime construction, runtime state, element/layout/render tree generation, event dispatch, program queue drain, effects, subscriptions, diagnostics, and inspector snapshots. |
 | `moui/backend/host/` | Shared host contracts for windows, routes, timers, host services, WebView, async image loading, accessibility, input, redraw scheduling, and renderer handoff. |
@@ -47,12 +48,15 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 Shared app packages should default to:
 
 - `wzzc-dev/moui`
+- domain facades such as `wzzc-dev/moui/geometry`,
+  `wzzc-dev/moui/graphics`, `wzzc-dev/moui/animation`,
+  `wzzc-dev/moui/text`, and `wzzc-dev/moui/state` as needed
 - `wzzc-dev/moui/views`
 
-Use `wzzc-dev/moui/core` only when the app needs a neutral protocol type that
-is not exposed by the root facade. Use `wzzc-dev/moui/backend/host` only for
-host service protocols such as file import, WebView commands, route events,
-or async image service integration.
+Use `wzzc-dev/moui/core` only when the app needs advanced kernel/diagnostic
+types that are not exposed by a domain facade or `moui/views`. Use
+`wzzc-dev/moui/backend/host` only for host service protocols such as file
+import, WebView commands, route events, or async image service integration.
 
 Avoid direct dependencies from ordinary app packages to:
 
@@ -72,6 +76,9 @@ the detailed policy.
 Add new APIs to the narrowest owning package:
 
 - Cross-runtime protocols and neutral value types belong in `moui/core`.
+- App-facing domain facades over `core` belong in
+  `moui/{geometry,graphics,animation,text,state}`. They can depend on `core`,
+  but `core` must not depend on them.
 - App-facing controls, control styles, form/navigation helpers, WebView facade,
   default themes, and concrete custom view implementations belong in
   `moui/views`.
@@ -145,10 +152,12 @@ manual smoke gates described in `docs/testing.md` and `docs/release-readiness.md
 - `moui/runtime` is the app/host runtime entrypoint package. It exposes opaque
   `@runtime.AppRuntime` construction/query/dispatch methods and owns program
   message drain, effect task, subscription lifecycle, and runtime diagnostics.
-- Public root package aliases only the curated app/theme types
-  `View`, `Program`, `Effect`, `Subscription`, and `Theme` for
-  `@wzzc-dev/moui` consumers. Neutral default/light/dark/custom theme builders
-  live in `moui/views` and return plain `@moui.Theme` values.
+- Public root package aliases only the curated app-loop types
+  `View`, `Program`, `Effect`, `Subscription`, `Theme`, `Environment`, and
+  `ViewEnvironment` for `@wzzc-dev/moui` consumers. Geometry, graphics,
+  animation, text, and state/focus aliases live in their domain facades.
+  Neutral default/light/dark/custom theme builders live in `moui/views` and
+  return plain `@moui.Theme` values.
 - `moui_theme/common` is the app-facing construction surface of the optional
   design-system addon: `DesignPreset`, `DesignSystemTokens`, the per-system
   token structs with their `core_*` projection methods, and the
