@@ -21,7 +21,7 @@ pub fn HostAppServices::unavailable() -> HostAppServices {
 pub fn HostAppServices::capabilities(
   self : HostAppServices,
 ) -> HostServiceCapabilities {
-  self.bridge.capabilities
+  self.bridge.capabilities()
 }
 
 ///|

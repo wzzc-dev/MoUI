@@ -98,7 +98,7 @@ pub fn macos_input_capabilities() -> @host.HostInputCapabilities {
 
 ///|
 pub fn macos_capability_summary(
-  services? : @host.HostServiceCapabilities = macos_service_bridge().capabilities,
+  services? : @host.HostServiceCapabilities = macos_service_bridge().capabilities(),
 ) -> @host.HostCapabilitySummary {
   @host.HostCapabilitySummary::from_contracts(
     info=backend_info().host_info,

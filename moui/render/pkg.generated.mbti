@@ -132,12 +132,15 @@ pub(all) struct PathVertex {
   a1 : Double
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct RectBatch {
+pub struct RectBatch {
   rect : @core.Rect
   color : @core.Color
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RectBatch::color(Self) -> @core.Color
+pub fn RectBatch::new(rect~ : @core.Rect, color~ : @core.Color) -> Self
+pub fn RectBatch::rect(Self) -> @core.Rect
 
-pub(all) struct RectVertex {
+pub struct RectVertex {
   x : Double
   y : Double
   r : Double
@@ -145,6 +148,12 @@ pub(all) struct RectVertex {
   b : Double
   a : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RectVertex::a(Self) -> Double
+pub fn RectVertex::b(Self) -> Double
+pub fn RectVertex::g(Self) -> Double
+pub fn RectVertex::r(Self) -> Double
+pub fn RectVertex::x(Self) -> Double
+pub fn RectVertex::y(Self) -> Double
 
 pub(all) struct RenderFrameInput {
   metrics : RendererSurfaceMetrics

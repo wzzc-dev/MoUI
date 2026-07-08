@@ -262,11 +262,11 @@ test "linux service bridge routes real service contracts through handlers" {
     },
     menu=_commands => -2,
   )
-  inspect(bridge.capabilities.clipboard, content="true")
-  inspect(bridge.capabilities.file_dialogs, content="true")
-  inspect(bridge.capabilities.file_access, content="true")
-  inspect(bridge.capabilities.open_url, content="true")
-  inspect(bridge.capabilities.menus, content="true")
+  inspect(bridge.capabilities().clipboard, content="true")
+  inspect(bridge.capabilities().file_dialogs, content="true")
+  inspect(bridge.capabilities().file_access, content="true")
+  inspect(bridge.capabilities().open_url, content="true")
+  inspect(bridge.capabilities().menus, content="true")
   match
     bridge.dispatch(
       @host.HostServiceRequest::Clipboard(
@@ -328,7 +328,7 @@ test "linux service bridge exposes menu selection dispatch" {
     seen_count.val = commands.length()
     1
   })
-  inspect(bridge.capabilities.menus, content="true")
+  inspect(bridge.capabilities().menus, content="true")
   match
     bridge.dispatch(
       @host.HostServiceRequest::ShowMenu([
