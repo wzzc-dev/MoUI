@@ -55,6 +55,71 @@ fn max_showcase_int(a : Int, b : Int) -> Int {
 }
 
 ///|
+fn min_showcase_int(a : Int, b : Int) -> Int {
+  if a < b {
+    a
+  } else {
+    b
+  }
+}
+
+///|
+fn showcase_string_array_contains(
+  values : Array[String],
+  target : String,
+) -> Bool {
+  for value in values {
+    if value == target {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn showcase_string_array_set(
+  values : Array[String],
+  target : String,
+  selected : Bool,
+) -> Array[String] {
+  let next = values.filter(value => value != target)
+  if selected {
+    next.push(target)
+  }
+  next
+}
+
+///|
+fn showcase_grid_columns(
+  body_width : Double,
+  compact : Bool,
+  max_columns : Int,
+) -> Int {
+  if compact || max_columns <= 1 {
+    1
+  } else if max_columns >= 3 && body_width >= 920.0 {
+    3
+  } else if body_width >= 600.0 {
+    min_showcase_int(max_columns, 2)
+  } else {
+    1
+  }
+}
+
+///|
+fn showcase_grid_card_width(
+  body_width : Double,
+  columns : Int,
+  spacing : Double,
+) -> Double {
+  if columns <= 1 {
+    body_width
+  } else {
+    (body_width - (columns - 1).to_double() * spacing) / columns.to_double()
+  }
+}
+
+///|
 fn showcase_metrics(
   viewport : @geometry.Size,
   theme : @moui.Theme,

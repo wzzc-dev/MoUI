@@ -27,9 +27,8 @@ test "showcase app emits visual polish commands" {
   assert_true(
     commands.any(command => command is @core.DrawCommand::PushClip(_)),
   )
-  assert_true(
-    commands.any(command => command is @core.DrawCommand::PushOpacity(_)),
-  )
+  assert_true(has_text(commands, "Activate"))
+  assert_false(has_text(commands, "Raised card with motion"))
   assert_true(
     commands.any(command => {
       command
@@ -49,6 +48,9 @@ test "showcase state toggles theme and active copy" {
   let runtime = model.runtime(width=760.0, height=420.0)
   let commands = runtime.draw_commands()
   assert_true(has_text(commands, "State-driven visuals are active"))
+  assert_true(has_text(commands, "Activated state visual"))
+  assert_true(has_text(commands, "Settle"))
+  assert_false(has_text(commands, "Activate"))
   match text_color(commands, "MoUI View Showcase") {
     Some(color) => assert_true(color == @views.dark_theme().palette.foreground)
     None => fail("expected dark-themed showcase title text")
@@ -223,6 +225,25 @@ test "showcase covers text media controls and layout sections" {
   let after_header_click = table_runtime.draw_commands()
   assert_false(has_text(after_header_click, "State-driven visuals are active"))
   assert_true(has_text(after_header_click, "3 results"))
+  assert_true(has_text(after_header_click, "Status ^"))
+  assert_true(
+    has_text(
+      after_header_click, "Data helpers: sort=status asc, page 2/4, selected 2",
+    ),
+  )
+  click_text(table_runtime, "Next")
+  let after_next_click = table_runtime.draw_commands()
+  assert_true(has_text(after_next_click, "Page 3 of 4"))
+  click_text(table_runtime, "Previous")
+  let after_previous_click = table_runtime.draw_commands()
+  assert_true(has_text(after_previous_click, "Page 2 of 4"))
+  let visible_owner_commands = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("data"))
+    .update(@app.ShowcaseMsg::DataColumnVisibilityChanged("owner", true))
+    .runtime(width=960.0, height=620.0)
+    .draw_commands()
+  assert_true(has_text(visible_owner_commands, "3 of 3 columns visible"))
+  assert_true(has_text(visible_owner_commands, "Owner"))
   click_text(table_runtime, "Billing Flow")
   let after_row_click = table_runtime.draw_commands()
   assert_false(has_text(after_row_click, "State-driven visuals are active"))
@@ -370,12 +391,12 @@ test "showcase sidebar follows recommended catalog order" {
     .runtime(width=1400.0, height=760.0)
     .draw_commands()
   let labels = [
-    "Overview", "Text & Media", "Controls", "Forms", "Data", "Layout", "Navigation Shell",
-    "Feedback", "Runtime/Renderer", "Diagnostics",
+    "Overview", "Examples", "Text & Media", "Controls", "Forms", "Data", "Layout",
+    "Navigation Shell", "Feedback", "Runtime/Renderer", "Diagnostics",
   ]
   let mut previous_y = -1.0
   for label in labels {
-    guard text_frame(commands, label) is Some(frame) else {
+    guard last_text_frame(commands, label) is Some(frame) else {
       fail("expected sidebar label " + label)
     }
     assert_true(frame.origin.y > previous_y)

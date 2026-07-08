@@ -39,7 +39,7 @@ shape outside `examples/` so MoUI can render its own bilingual homepage.
 | Agent Counter | Minimal agent-controllable runtime example | `examples/agent_counter/`, `examples/agent_counter/main/`, `examples/agent_counter/macos_skia/` | Counter app with semantics/command-intent flow for agent observation and control, plus a native macOS Skia entrypoint |
 | Counter | Minimal model/update/view app | `examples/counter/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages |
 | Button Freeze Probe | Native Skia button freeze repro | `examples/button_freeze_probe/app/` | Minimal `data_filter_bar` filter chips, red primary accent, repeated click counter, direct primary/tonal button comparison, native Skia macOS/Windows/Linux entrypoints |
-| Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | TEA-first `Model / Msg / update / view` app, public `views` constructors, validating form fields and workflow bars, `ToastQueue`-backed toast stack/progress/status surfaces, `status_badge` feedback chips, helper-backed table/selectable-list data views, column visibility panel, route header/section-nav/sidebar/breadcrumb shells with app-owned route/deep-link history and route focus restore state, custom dialog/alert/sheet/menu surfaces, built-in Counter/Todo patterns, light Markdown preview, neutral core theme toggling, presentation, renderer capability status, advanced rendering demos, text diagnostics, interaction wiring. Showcase intentionally has no `moui_theme` dependency and is not an official design-system compatibility claim. |
+| Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | TEA-first `Model / Msg / update / view` app, public `views` constructors, built-in Counter/Todo examples, validating form fields and workflow bars, `ToastQueue`-backed toast stack/progress/status surfaces with dismiss state, `status_badge` feedback chips, helper-backed table/selectable-list data views with app-owned sort/page/column visibility state, route header/section-nav/sidebar/breadcrumb shells with app-owned route/deep-link history and route focus restore state, custom dialog/alert/sheet/menu surfaces, light Markdown preview, neutral core theme toggling, presentation, renderer capability status, advanced rendering demos, text diagnostics, interaction wiring. Showcase intentionally has no `moui_theme` dependency and is not an official design-system compatibility claim. |
 | Design Systems | Addon diagnostic source-mapped design-system preview and first-party theme sampler | `examples/design_systems/app/`, `examples/design_systems/{web_wasm,macos_skia,windows_skia,linux_skia}/` | Material, Carbon, Primer, and Fluent switching through the `moui_theme/material`, `moui_theme/carbon`, `moui_theme/primer`, and `moui_theme/fluent` entrypoints over shared `moui_theme/common` models, Sickle switching through `moui_theme/sickle` as a first-party theme addon, light/dark/high-contrast/system variants for official source-mapped presets, compact/standard/comfortable density, semantic palette roles, typography specimen, spacing/density grid, component-token matrix sampling, component style bundle usage, custom inheritance/override API, Web and native Skia host entrypoints, coverage/parity status labels, and explicit source-mapped preview wording rather than official-complete claims |
 | Settings | Settings shell pattern | `examples/settings/app/` | Form sections, sidebar navigation, segmented theme mode, toggle preferences, saveable state snapshot/restore |
 | Data Table | Operational data browser pattern | `examples/data_table/app/` | Search/filter toolbar pattern, status chips, `ColumnVisibilityState`, sortable table headers with `DataSortState`, app-owned column width/order state, row selection with `SelectionState`, selection toolbar actions, tree filters, loading/error/empty states, `PaginationState`, public `pagination` and `detail_panel`, model-level filtering and data slicing |
@@ -210,15 +210,15 @@ moon check examples/webview_demo/linux_skia --target native
 ```
 
 Showcase is organized around the main catalog order:
-`Overview -> Text & Media -> Controls -> Forms -> Data -> Layout -> Navigation
-Shell -> Feedback -> Runtime/Renderer -> Diagnostics`. The first eight sections
+`Overview -> Examples -> Text & Media -> Controls -> Forms -> Data -> Layout ->
+Navigation Shell -> Feedback -> Runtime/Renderer -> Diagnostics`. The first nine sections
 cover user-facing components and layout patterns. `Runtime/Renderer` displays
 host capability and renderer status cards. `Diagnostics` shows a compact
 inspector snapshot with runtime, TEA program message/effect task/subscription,
 duplicate key names, view, layout, semantics, render command, and render-scope
 counters, then links to the deeper diagnostic routes for
-interaction wiring, text diagnostics, advanced rendering, and reusable examples
-without crowding the main sidebar.
+interaction wiring, text diagnostics, and advanced rendering without crowding
+the main sidebar.
 
 The hidden diagnostic routes remain directly addressable for focused tests and
 development workflows:

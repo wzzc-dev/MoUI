@@ -57,6 +57,7 @@ fn ShowcaseModel::text_diagnostics_section(
       column_spacing=theme.spacing_scale.md,
     ),
     metrics~,
+    eyebrow=showcase_route_eyebrow("text-diagnostics"),
   )
 }
 

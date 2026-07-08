@@ -24,6 +24,7 @@ fn ShowcaseModel::interaction_lab_section(
       column_spacing=theme.spacing_scale.md,
     ),
     metrics~,
+    eyebrow=showcase_route_eyebrow("interaction-lab"),
   )
 }
 

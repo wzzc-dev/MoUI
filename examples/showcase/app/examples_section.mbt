@@ -4,21 +4,38 @@ fn ShowcaseModel::examples_section(
   theme : @moui.Theme,
   metrics : ShowcaseMetrics,
 ) -> @moui.View[ShowcaseMsg] {
+  let columns = if metrics.compact || metrics.body_width < 960.0 {
+    1
+  } else {
+    2
+  }
+  let preview_width = showcase_grid_card_width(
+    metrics.body_width,
+    columns,
+    theme.spacing_scale.md,
+  )
   self.section_panel(
     theme,
     "Examples",
     "Counter and Todo are built into Showcase as reusable app patterns.",
-    scroll_view(
-      column(
-        [
-          example_preview(theme, "Counter Preview", self.counter_preview(theme)),
-          example_preview(theme, "Todo Preview", self.todo_preview(theme)),
-        ],
-        spacing=theme.spacing_scale.md,
-        align=@views.CrossAlign::Start,
-      ),
-      width=metrics.body_width,
-      height=metrics.body_height,
+    grid(
+      [
+        example_preview(
+          theme,
+          "Counter Preview",
+          self.counter_preview(theme),
+          width=preview_width,
+        ),
+        example_preview(
+          theme,
+          "Todo Preview",
+          self.todo_preview(theme),
+          width=preview_width,
+        ),
+      ],
+      columns~,
+      row_spacing=theme.spacing_scale.md,
+      column_spacing=theme.spacing_scale.md,
     ),
     metrics~,
   )

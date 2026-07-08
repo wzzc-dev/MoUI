@@ -5,15 +5,20 @@ fn ShowcaseModel::feedback_section(
   metrics : ShowcaseMetrics,
 ) -> @moui.View[ShowcaseMsg] {
   let action = @views.StateViewAction::new(label="Retry", message=ToggleActive)
-  let toast_queue : @views.ToastQueue[ShowcaseMsg] = @views.ToastQueue::new(items=[
-    @views.ToastQueueItem::new(
-      id="saved",
-      message="Workspace saved",
-      tone=@views.FeedbackTone::Success,
-      dismiss=Some(ToggleActive),
-      created_at_ms=0.0,
-      ttl_ms=5000.0,
-    ),
+  let queued_toasts : Array[@views.ToastQueueItem[ShowcaseMsg]] = []
+  if !showcase_string_array_contains(self.feedback_dismissed_toasts, "saved") {
+    queued_toasts.push(
+      @views.ToastQueueItem::new(
+        id="saved",
+        message="Workspace saved",
+        tone=@views.FeedbackTone::Success,
+        dismiss=Some(FeedbackToastDismissed("saved")),
+        created_at_ms=0.0,
+        ttl_ms=5000.0,
+      ),
+    )
+  }
+  queued_toasts.push(
     @views.ToastQueueItem::new(
       id="queued",
       message="Sync queued for retry",
@@ -22,60 +27,105 @@ fn ShowcaseModel::feedback_section(
       created_at_ms=1000.0,
       ttl_ms=0.0,
     ),
-  ])
+  )
+  let toast_queue : @views.ToastQueue[ShowcaseMsg] = @views.ToastQueue::new(
+    items=queued_toasts,
+  )
   let toast_items = toast_queue.to_stack_items()
+  let main_width = metrics.body_width
+  let columns = showcase_grid_columns(main_width, metrics.compact, 2)
+  let card_width = showcase_grid_card_width(
+    main_width,
+    columns,
+    theme.spacing_scale.md,
+  )
+  let badge_views : Array[@moui.View[ShowcaseMsg]] = [
+    @views.badge("Beta", tone=@views.BadgeTone::Accent, theme~),
+    @views.status_badge(
+      "Ready",
+      tone=@views.BadgeTone::Success,
+      detail="Sync is healthy",
+      theme~,
+    ),
+    @views.status_badge(
+      "Queued",
+      tone=@views.BadgeTone::Warning,
+      detail="Waiting for host service",
+      theme~,
+    ),
+    @views.status_badge(
+      "Failed",
+      tone=@views.BadgeTone::Danger,
+      detail="Last operation failed",
+      theme~,
+    ),
+  ]
+  let badges = if metrics.compact {
+    column(
+      badge_views,
+      spacing=theme.spacing_scale.sm,
+      align=@views.CrossAlign::Start,
+    )
+  } else {
+    row(
+      badge_views,
+      spacing=theme.spacing_scale.sm,
+      align=@views.CrossAlign::Center,
+    )
+  }
   self.section_panel(
     theme,
     "Feedback",
     "Status, notification, badge, and empty-state components for app workflows.",
     column(
       [
-        row(
+        grid(
           [
             toast(
               "Saved settings",
               tone=@views.FeedbackTone::Success,
               theme~,
-              width=240.0,
+              width=card_width,
             ),
             toast(
               "Sync warning",
               tone=@views.FeedbackTone::Warning,
               theme~,
-              width=240.0,
+              width=card_width,
             ),
           ],
-          spacing=theme.spacing_scale.md,
-          align=@views.CrossAlign::Start,
+          columns~,
+          row_spacing=theme.spacing_scale.md,
+          column_spacing=theme.spacing_scale.md,
         ),
         text(
           "ToastQueue helper: \{toast_items.length()} active items; app timers own ttl",
           role=@views.TextRole::Caption,
           theme~,
-          width=520.0,
+          width=main_width,
           height=22.0,
         ),
-        toast_stack(toast_items, theme~, width=520.0),
+        toast_stack(toast_items, theme~, width=main_width),
         banner(
           "Connection interrupted",
           "Changes are queued until the host service reconnects.",
           tone=@views.FeedbackTone::Warning,
           action=Some(action),
           theme~,
-          width=520.0,
+          width=main_width,
         ),
         callout(
           "Tip",
           "Use callouts for contextual guidance without adding a modal.",
           tone=@views.FeedbackTone::Info,
           theme~,
-          width=520.0,
+          width=main_width,
         ),
         inline_error(
           "Email is already used by another workspace member.",
           action=Some(action),
           theme~,
-          width=520.0,
+          width=main_width,
         ),
         progress_status(
           "Exporting report",
@@ -86,7 +136,7 @@ fn ShowcaseModel::feedback_section(
             @views.StateViewAction::new(label="Cancel", message=ToggleActive),
           ),
           theme~,
-          width=520.0,
+          width=main_width,
         ),
         grid(
           [
@@ -95,20 +145,20 @@ fn ShowcaseModel::feedback_section(
               "Drop files here or open a picker.",
               action=Some(action),
               theme~,
-              width=240.0,
+              width=card_width,
             ),
             loading_state(
               title="Loading preview",
               message="The app model owns async state.",
               theme~,
-              width=240.0,
+              width=card_width,
             ),
             error_state(
               "Import failed",
               "The selected file could not be read.",
               action=Some(action),
               theme~,
-              width=240.0,
+              width=card_width,
             ),
             stat_card(
               "Completed",
@@ -116,10 +166,10 @@ fn ShowcaseModel::feedback_section(
               caption="Tasks today",
               tone=@views.FeedbackTone::Success,
               theme~,
-              width=180.0,
+              width=card_width,
             ),
           ],
-          columns=2,
+          columns~,
           row_spacing=theme.spacing_scale.md,
           column_spacing=theme.spacing_scale.md,
         ),
@@ -127,34 +177,10 @@ fn ShowcaseModel::feedback_section(
           "Status Badge",
           role=@views.TextRole::Control,
           theme~,
-          width=520.0,
+          width=main_width,
           height=24.0,
         ),
-        row(
-          [
-            @views.badge("Beta", tone=@views.BadgeTone::Accent, theme~),
-            @views.status_badge(
-              "Ready",
-              tone=@views.BadgeTone::Success,
-              detail="Sync is healthy",
-              theme~,
-            ),
-            @views.status_badge(
-              "Queued",
-              tone=@views.BadgeTone::Warning,
-              detail="Waiting for host service",
-              theme~,
-            ),
-            @views.status_badge(
-              "Failed",
-              tone=@views.BadgeTone::Danger,
-              detail="Last operation failed",
-              theme~,
-            ),
-          ],
-          spacing=theme.spacing_scale.sm,
-          align=@views.CrossAlign::Center,
-        ),
+        badges,
         accordion(
           [
             @views.WizardStep::new(
@@ -181,7 +207,7 @@ fn ShowcaseModel::feedback_section(
           expanded=if self.active { ["details", "queue"] } else { ["details"] },
           on_toggle=_id => ToggleActive,
           theme~,
-          width=520.0,
+          width=main_width,
         ),
         disclosure(
           "Inline Disclosure",
@@ -190,7 +216,7 @@ fn ShowcaseModel::feedback_section(
           on_toggle=ToggleActive,
           subtitle="No renderer changes",
           theme~,
-          width=520.0,
+          width=main_width,
         ),
         collapsible_panel(
           "Collapsible Panel",
@@ -203,12 +229,12 @@ fn ShowcaseModel::feedback_section(
           on_toggle=ToggleActive,
           subtitle="Collapsed when inactive",
           theme~,
-          width=520.0,
+          width=main_width,
         ),
       ],
       spacing=theme.spacing_scale.md,
       align=@views.CrossAlign::Start,
-    ).frame(width=metrics.body_width),
+    ).frame(width=main_width),
     metrics~,
   )
 }

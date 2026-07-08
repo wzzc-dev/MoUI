@@ -1,9 +1,76 @@
 ///|
+priv struct ShowcaseDataRecord {
+  name : String
+  status : String
+  owner : String
+}
+
+///|
+fn showcase_data_records(ascending : Bool) -> Array[ShowcaseDataRecord] {
+  let active = { name: "Project Atlas", status: "Active", owner: "Mira" }
+  let review = { name: "Billing Flow", status: "Review", owner: "Noah" }
+  let paused = { name: "Import Queue", status: "Paused", owner: "Iris" }
+  if ascending {
+    [active, paused, review]
+  } else {
+    [review, paused, active]
+  }
+}
+
+///|
+fn showcase_data_cell(
+  record : ShowcaseDataRecord,
+  column_id : String,
+) -> String {
+  if column_id == "status" {
+    record.status
+  } else if column_id == "owner" {
+    record.owner
+  } else {
+    record.name
+  }
+}
+
+///|
+fn showcase_visible_columns(
+  columns : Array[@views.TableColumn],
+  visible : Array[String],
+) -> Array[@views.TableColumn] {
+  columns.filter(column => showcase_string_array_contains(visible, column.id()))
+}
+
+///|
+fn showcase_data_table_rows(
+  columns : Array[@views.TableColumn],
+  ascending : Bool,
+) -> Array[Array[String]] {
+  let rows : Array[Array[String]] = []
+  for record in showcase_data_records(ascending) {
+    let values : Array[String] = []
+    for column in columns {
+      values.push(showcase_data_cell(record, column.id()))
+    }
+    rows.push(values)
+  }
+  rows
+}
+
+///|
 fn ShowcaseModel::data_section(
   self : ShowcaseModel,
   theme : @moui.Theme,
   metrics : ShowcaseMetrics,
 ) -> @moui.View[ShowcaseMsg] {
+  let lower_columns = showcase_grid_columns(
+    metrics.body_width,
+    metrics.compact,
+    2,
+  )
+  let lower_width = showcase_grid_card_width(
+    metrics.body_width,
+    lower_columns,
+    theme.spacing_scale.md,
+  )
   self.section_panel(
     theme,
     "Data",
@@ -12,13 +79,14 @@ fn ShowcaseModel::data_section(
       [
         self.data_table_card(theme, metrics.body_width),
         self.data_selectable_list_card(theme, metrics.body_width),
-        row(
+        grid(
           [
-            self.data_tree_card(theme, metrics.body_width * 0.44),
-            self.data_profile_card(theme, metrics.body_width * 0.44),
+            self.data_tree_card(theme, lower_width),
+            self.data_profile_card(theme, lower_width),
           ],
-          spacing=theme.spacing_scale.md,
-          align=@views.CrossAlign::Start,
+          columns=lower_columns,
+          row_spacing=theme.spacing_scale.md,
+          column_spacing=theme.spacing_scale.md,
         ),
       ],
       spacing=theme.spacing_scale.md,
@@ -34,22 +102,32 @@ fn ShowcaseModel::data_table_card(
   theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[ShowcaseMsg] {
-  let sort = @views.DataSortState::new(column="status", ascending=false)
+  let sort = @views.DataSortState::new(
+    column=self.data_sort_column,
+    ascending=self.data_sort_ascending,
+  )
   let visibility = @views.ColumnVisibilityState::new(
-    visible=["name", "owner"],
+    visible=self.data_visible_columns,
     locked=["name"],
   )
   let selection = @views.SelectionState::new(selected=["atlas", "billing"])
   let page_state = @views.PaginationState::new(
-    page=1,
+    page=self.data_page,
     page_size=3,
     total_count=10,
   ).clamped()
-  let columns = [
+  let all_columns = [
     table_column(id="name", label="Name", width=150.0),
     table_column(id="status", label="Status", width=112.0),
     table_column(id="owner", label="Owner", width=132.0),
   ]
+  let columns = showcase_visible_columns(all_columns, visibility.visible())
+  let table_rows = showcase_data_table_rows(columns, sort.ascending())
+  let inner_width = max_showcase_double(
+    260.0,
+    width - theme.spacing_scale.md * 2.0,
+  )
+  let direction = if sort.ascending() { "asc" } else { "desc" }
   showcase_soft_card(
     theme,
     column(
@@ -58,14 +136,14 @@ fn ShowcaseModel::data_table_card(
           "Data Table",
           role=@views.TextRole::Control,
           theme~,
-          width=width - 32.0,
+          width=inner_width,
           height=28.0,
         ),
         text(
-          "Data helpers: sort=status desc, page \{page_state.page() + 1}/\{page_state.page_count()}, selected \{selection.count()}",
+          "Data helpers: sort=\{sort.column()} \{direction}, page \{page_state.page() + 1}/\{page_state.page_count()}, selected \{selection.count()}",
           role=@views.TextRole::Caption,
           theme~,
-          width=392.0,
+          width=inner_width,
           height=22.0,
         ),
         data_filter_bar(
@@ -88,31 +166,29 @@ fn ShowcaseModel::data_table_card(
           result_count=self.data_filter_result_count(),
           on_clear=Some(ClearDataFilters),
           theme~,
-          width=392.0,
+          width=inner_width,
         ),
         table(
           columns,
-          [
-            ["Project Atlas", "Active", "Mira"],
-            ["Billing Flow", "Review", "Noah"],
-            ["Import Queue", "Paused", "Iris"],
-          ],
+          table_rows,
           selected_row=if selection.contains("billing") {
-            Some(1)
+            Some(if sort.ascending() { 2 } else { 0 })
           } else {
             None
           },
           sort_column=sort.column(),
           sort_ascending=sort.ascending(),
+          on_sort=Some(column => DataSortChanged(column)),
+          sortable_columns=["status"],
           theme~,
         ),
         column_visibility_panel(
-          columns,
+          all_columns,
           visible=visibility.visible(),
           locked=visibility.locked(),
-          on_toggle=(_id, _visible) => ToggleActive,
+          on_toggle=(id, visible) => DataColumnVisibilityChanged(id, visible),
           theme~,
-          width=392.0,
+          width=inner_width,
         ),
         selection_toolbar(
           selected_count=selection.count(),
@@ -123,15 +199,15 @@ fn ShowcaseModel::data_table_card(
           ],
           on_clear=Some(ClearFilter),
           theme~,
-          width=392.0,
+          width=inner_width,
         ),
         pagination(
           page=page_state.page(),
           page_count=page_state.page_count(),
-          on_previous=ToggleActive,
-          on_next=ToggleActive,
+          on_previous=DataPreviousPage,
+          on_next=DataNextPage,
           theme~,
-          width=392.0,
+          width=inner_width,
         ),
         detail_panel(
           "Selected row",
@@ -141,14 +217,14 @@ fn ShowcaseModel::data_table_card(
           ],
           subtitle="Compact detail panel",
           theme~,
-          width=392.0,
+          width=inner_width,
           height=142.0,
         ),
       ],
       spacing=theme.spacing_scale.sm,
       align=@views.CrossAlign::Start,
     ),
-    width=430.0,
+    width~,
     height=724.0,
     padding=theme.spacing_scale.md,
   )
@@ -178,6 +254,10 @@ fn ShowcaseModel::data_selectable_list_card(
   width : Double,
 ) -> @moui.View[ShowcaseMsg] {
   ignore(self)
+  let inner_width = max_showcase_double(
+    220.0,
+    width - theme.spacing_scale.md * 2.0,
+  )
   showcase_soft_card(
     theme,
     column(
@@ -186,7 +266,7 @@ fn ShowcaseModel::data_selectable_list_card(
           "Selectable List",
           role=@views.TextRole::Control,
           theme~,
-          width=width - 32.0,
+          width=inner_width,
           height=28.0,
         ),
         selectable_list(
@@ -216,14 +296,14 @@ fn ShowcaseModel::data_selectable_list_card(
           ],
           selected="billing",
           theme~,
-          width=392.0,
+          width=inner_width,
           row_height=58.0,
         ),
       ],
       spacing=theme.spacing_scale.sm,
       align=@views.CrossAlign::Start,
     ),
-    width=430.0,
+    width~,
     height=240.0,
     padding=theme.spacing_scale.md,
   )
@@ -236,6 +316,10 @@ fn ShowcaseModel::data_tree_card(
   width : Double,
 ) -> @moui.View[ShowcaseMsg] {
   ignore(self)
+  let inner_width = max_showcase_double(
+    160.0,
+    width - theme.spacing_scale.md * 2.0,
+  )
   let tree = [
     tree_item(id="workspace", label="Workspace", children=[
       tree_item(id="forms", label="Forms"),
@@ -251,7 +335,7 @@ fn ShowcaseModel::data_tree_card(
           "Tree View",
           role=@views.TextRole::Control,
           theme~,
-          width=width - 32.0,
+          width=inner_width,
           height=28.0,
         ),
         tree_view(
@@ -261,7 +345,7 @@ fn ShowcaseModel::data_tree_card(
           on_select=Some(route => SelectSection(route)),
           on_toggle=Some(_id => ToggleActive),
           theme~,
-          width=width - 32.0,
+          width=inner_width,
         ),
       ],
       spacing=theme.spacing_scale.sm,
@@ -280,6 +364,11 @@ fn ShowcaseModel::data_profile_card(
   width : Double,
 ) -> @moui.View[ShowcaseMsg] {
   ignore(self)
+  let inner_width = max_showcase_double(
+    160.0,
+    width - theme.spacing_scale.md * 2.0,
+  )
+  let profile_text_width = max_showcase_double(112.0, inner_width - 56.0)
   showcase_soft_card(
     theme,
     column(
@@ -293,14 +382,14 @@ fn ShowcaseModel::data_profile_card(
                   "Mira Chen",
                   role=@views.TextRole::Control,
                   theme~,
-                  width=180.0,
+                  width=profile_text_width,
                   height=24.0,
                 ),
                 text(
                   "Product lead",
                   role=@views.TextRole::Caption,
                   theme~,
-                  width=180.0,
+                  width=profile_text_width,
                   height=22.0,
                 ),
               ],
@@ -318,7 +407,7 @@ fn ShowcaseModel::data_profile_card(
             description_item("Status", "Available"),
           ],
           theme~,
-          width=width - 32.0,
+          width=inner_width,
         ),
         avatar_group(["Mira", "Noah", "Iris", "Ava", "Kai"], theme~, size=32.0),
       ],
