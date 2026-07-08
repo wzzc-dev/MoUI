@@ -57,10 +57,10 @@ test "file importer handles mocked pending completion" {
   )
   assert_true(update.model.status is FileImporterStatus::Requesting)
   let summary = @runtime.effect_plan_summary(update.effect)
-  inspect(summary.descriptors.length(), content="1")
-  inspect(summary.descriptors[0].key(), content="host:file-import")
-  inspect(summary.descriptors[0].kind(), content="host-service")
-  inspect(summary.descriptors[0].label(), content="Import files")
+  inspect(summary.descriptors().length(), content="1")
+  inspect(summary.descriptors()[0].key(), content="host:file-import")
+  inspect(summary.descriptors()[0].kind(), content="host-service")
+  inspect(summary.descriptors()[0].label(), content="Import files")
   let model = @state.State::new(update.model)
   match update.effect {
     @moui.Effect::Run(_descriptor, run) =>
@@ -92,8 +92,8 @@ test "file importer handles mocked pending completion" {
   assert_true(has_text(commands, "/tmp/later.txt"))
   assert_true(has_text(commands, "Imported 1 file(s) from Dialog"))
   let snapshot = runtime.program_runtime_snapshot()
-  inspect(snapshot.started_subscription_count, content="1")
-  inspect(snapshot.cancelled_subscription_count, content="1")
+  inspect(snapshot.started_subscription_count(), content="1")
+  inspect(snapshot.cancelled_subscription_count(), content="1")
 }
 
 ///|
@@ -180,48 +180,48 @@ test "file importer child effect maps pending completion into parent" {
   assert_true(has_text(runtime.draw_commands(), "Parent Shell"))
   let pending_snapshot = runtime.program_runtime_snapshot()
   inspect(
-    pending_snapshot.last_scheduled_effect_summary.descriptors.length(),
+    pending_snapshot.last_scheduled_effect_summary().descriptors().length(),
     content="1",
   )
   inspect(
-    pending_snapshot.last_scheduled_effect_summary.descriptors[0].key(),
+    pending_snapshot.last_scheduled_effect_summary().descriptors()[0].key(),
     content="host:file-import",
   )
   inspect(
-    pending_snapshot.last_scheduled_effect_summary.descriptors[0].kind(),
+    pending_snapshot.last_scheduled_effect_summary().descriptors()[0].kind(),
     content="host-service",
   )
   inspect(
-    pending_snapshot.last_scheduled_effect_summary.descriptors[0].label(),
+    pending_snapshot.last_scheduled_effect_summary().descriptors()[0].label(),
     content="Import files",
   )
   inspect(
-    pending_snapshot.last_subscription_plan_summary.descriptors.length(),
+    pending_snapshot.last_subscription_plan_summary().descriptors().length(),
     content="1",
   )
   inspect(
-    pending_snapshot.last_subscription_plan_summary.descriptors[0]
+    pending_snapshot.last_subscription_plan_summary().descriptors()[0]
     .key()
     .contains("host-service:completion:"),
     content="true",
   )
   inspect(
-    pending_snapshot.last_subscription_plan_summary.descriptors[0].kind(),
+    pending_snapshot.last_subscription_plan_summary().descriptors()[0].kind(),
     content="host-service",
   )
   inspect(
-    pending_snapshot.last_subscription_plan_summary.descriptors[0].label(),
+    pending_snapshot.last_subscription_plan_summary().descriptors()[0].label(),
     content="Import files completion",
   )
-  inspect(pending_snapshot.active_subscriptions.length(), content="1")
+  inspect(pending_snapshot.active_subscriptions().length(), content="1")
   inspect(
-    pending_snapshot.active_subscriptions[0]
+    pending_snapshot.active_subscriptions()[0]
     .key()
     .contains("host-service:completion:"),
     content="true",
   )
   inspect(
-    pending_snapshot.active_subscriptions[0].label(),
+    pending_snapshot.active_subscriptions()[0].label(),
     content="Import files completion",
   )
   let pending = services.drain_pending()
@@ -237,11 +237,13 @@ test "file importer child effect maps pending completion into parent" {
   assert_true(has_text(commands, "/tmp/child-later.csv"))
   assert_true(has_text(commands, "Imported 1 file(s) from Dialog"))
   let completed_snapshot = runtime.program_runtime_snapshot()
-  inspect(completed_snapshot.cancelled_subscription_count, content="1")
+  inspect(completed_snapshot.cancelled_subscription_count(), content="1")
   assert_true(
-    completed_snapshot.subscription_lifecycle.any(entry => {
-      entry.key.contains("host-service:completion:") &&
-      entry.status ==
+    completed_snapshot
+    .subscription_lifecycle()
+    .any(entry => {
+      entry.key().contains("host-service:completion:") &&
+      entry.status() ==
       @runtime.SubscriptionLifecycleStatus::SubscriptionCancelled
     }),
   )

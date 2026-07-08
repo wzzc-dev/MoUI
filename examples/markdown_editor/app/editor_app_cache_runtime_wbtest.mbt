@@ -104,10 +104,10 @@ test "markdown editor scroll does not reparse session" {
     ),
   )
   let dirty = runtime.inspector_snapshot()
-  inspect(dirty.runtime.dirty_layout_count, content="0")
-  assert_true(dirty.runtime.dirty_paint_count > 0)
-  inspect(dirty.view_tree.dirty_layout_count, content="0")
-  assert_true(dirty.view_tree.dirty_paint_count > 0)
+  inspect(dirty.runtime().dirty_layout_count(), content="0")
+  assert_true(dirty.runtime().dirty_paint_count() > 0)
+  inspect(dirty.view_tree().dirty_layout_count(), content="0")
+  assert_true(dirty.view_tree().dirty_paint_count() > 0)
   ignore(runtime.draw_frame())
   assert_true(app.editor_scroll_y() > 0.0)
   inspect(
@@ -142,7 +142,11 @@ test "markdown editor long scroll keeps cached layer tracking bounded" {
     )
   }
   assert_true(app.editor_scroll_y() > 0.0)
-  let cached_layer_count = runtime.inspector_snapshot().runtime.dirty_state.cached_layer_count
+  let cached_layer_count = runtime
+    .inspector_snapshot()
+    .runtime()
+    .dirty_state()
+    .cached_layer_count()
   if cached_layer_count > last_cached_command_count {
     fail("expected long-scroll cached layer tracking to stay frame scoped")
   }

@@ -116,8 +116,8 @@ test "Linux Sun native image loader completes loading resources" {
   let result = loader.schedule_loading_resources(
     window_id, renderer, completion_source,
   )
-  inspect(result.loading_count, content="1")
-  inspect(result.scheduled_count, content="1")
+  inspect(result.loading_count(), content="1")
+  inspect(result.scheduled_count(), content="1")
   match lifecycle.lookup(source) {
     Some(record) => {
       assert_true(record.status == @render.ImageResourceStatus::ImageReady)
@@ -150,11 +150,11 @@ test "Linux Sun async image path records loading then second-frame completion" {
   let tracker = @host.HostImageResourceRepaintTracker::new()
   let first_frame = tracker.record_presented(window_id, renderer)
   assert_true(
-    first_frame.status ==
+    first_frame.status() ==
     @host.HostImageResourceRepaintStatus::ImageRepaintRecorded,
   )
-  inspect(first_frame.current_status_counts.loading_count, content="1")
-  inspect(first_frame.current_status_counts.ready_count, content="0")
+  inspect(first_frame.current_status_counts().loading_count(), content="1")
+  inspect(first_frame.current_status_counts().ready_count(), content="0")
   let redraws : Array[@host.HostWindowId] = []
   let completion_source = @host.HostImageResourceCompletionSource::new(
     tracker~,
@@ -164,8 +164,8 @@ test "Linux Sun async image path records loading then second-frame completion" {
   let scheduled = loader.schedule_loading_resources(
     window_id, renderer, completion_source,
   )
-  inspect(scheduled.loading_count, content="1")
-  inspect(scheduled.scheduled_count, content="1")
+  inspect(scheduled.loading_count(), content="1")
+  inspect(scheduled.scheduled_count(), content="1")
   inspect(native_source.pending_requests().length(), content="1")
   inspect(redraws.length(), content="0")
   match lifecycle.lookup(source) {
@@ -174,10 +174,10 @@ test "Linux Sun async image path records loading then second-frame completion" {
     None => fail("expected deferred Linux Sun image record")
   }
   let tracked_loading = tracker.snapshot()
-  inspect(tracked_loading.tracked_window_count, content="1")
-  inspect(tracked_loading.tracked_windows[0].revision, content="1")
+  inspect(tracked_loading.tracked_window_count(), content="1")
+  inspect(tracked_loading.tracked_windows()[0].revision(), content="1")
   inspect(
-    tracked_loading.tracked_windows[0].status_counts.loading_count,
+    tracked_loading.tracked_windows()[0].status_counts().loading_count(),
     content="1",
   )
   let delivered = native_source.complete(
@@ -185,7 +185,7 @@ test "Linux Sun async image path records loading then second-frame completion" {
     @sun_renderer.sun_image_load_completion(source),
   )
   assert_true(
-    delivered.status ==
+    delivered.status() ==
     @host.HostNativeAsyncImageCompletionStatus::NativeAsyncImageCompletionDelivered,
   )
   match lifecycle.lookup(source) {
@@ -199,21 +199,21 @@ test "Linux Sun async image path records loading then second-frame completion" {
   inspect(redraws.length(), content="1")
   assert_true(redraws[0] == window_id)
   let tracked_completed = tracker.snapshot()
-  inspect(tracked_completed.tracked_window_count, content="1")
-  inspect(tracked_completed.tracked_windows[0].revision, content="2")
+  inspect(tracked_completed.tracked_window_count(), content="1")
+  inspect(tracked_completed.tracked_windows()[0].revision(), content="2")
   inspect(
-    tracked_completed.tracked_windows[0].status_counts.ready_count,
+    tracked_completed.tracked_windows()[0].status_counts().ready_count(),
     content="1",
   )
   let second_frame = tracker.record_presented(window_id, renderer)
   assert_true(
-    second_frame.status ==
+    second_frame.status() ==
     @host.HostImageResourceRepaintStatus::ImageRepaintRecorded,
   )
-  inspect(second_frame.current_status_counts.ready_count, content="1")
-  inspect(second_frame.current_status_counts.failed_count, content="0")
-  inspect(loader.diagnostics().completed_count, content="1")
-  inspect(native_source.diagnostics().pending_count, content="0")
+  inspect(second_frame.current_status_counts().ready_count(), content="1")
+  inspect(second_frame.current_status_counts().failed_count(), content="0")
+  inspect(loader.diagnostics().completed_count(), content="1")
+  inspect(native_source.diagnostics().pending_count(), content="0")
 }
 
 ///|

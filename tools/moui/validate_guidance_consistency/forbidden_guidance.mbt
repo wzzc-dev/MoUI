@@ -32,6 +32,11 @@ fn guidance_scan_roots() -> Array[String] {
 }
 
 ///|
+fn top_level_guidance_files() -> Array[String] {
+  ["AGENTS.md", "README.md", "CONTRIBUTING.md", "GOVERNANCE.md"]
+}
+
+///|
 fn guidance_scan_suffixes() -> Array[String] {
   [".md", ".yml", ".yaml"]
 }
@@ -104,7 +109,7 @@ fn guidance_surface_files(
   repo_root : String,
   failures : Array[String],
 ) -> Array[String] {
-  let files : Array[String] = ["AGENTS.md"]
+  let files : Array[String] = top_level_guidance_files()
   for root in guidance_scan_roots() {
     collect_guidance_surface_files(repo_root, root, files, failures)
   }

@@ -19,17 +19,20 @@ test "host event source subscription dispatches mapped host events" {
   )
   inspect(source.active_handler_count(), content="1")
   let initial = runtime.program_runtime_snapshot()
-  inspect(initial.active_subscription_count, content="1")
-  inspect(initial.active_subscriptions[0].key(), content="host:event")
-  inspect(initial.active_subscriptions[0].kind(), content="host-event")
-  inspect(initial.active_subscriptions[0].label(), content="Host event adapter")
+  inspect(initial.active_subscription_count(), content="1")
+  inspect(initial.active_subscriptions()[0].key(), content="host:event")
+  inspect(initial.active_subscriptions()[0].kind(), content="host-event")
+  inspect(
+    initial.active_subscriptions()[0].label(),
+    content="Host event adapter",
+  )
   inspect(source.publish(HostEvent::RedrawRequested), content="1")
-  inspect(runtime.program_runtime_snapshot().dispatched_count, content="0")
+  inspect(runtime.program_runtime_snapshot().dispatched_count(), content="0")
   inspect(
     source.publish(HostEvent::ThemeChanged(@core.ColorScheme::Dark)),
     content="1",
   )
-  inspect(runtime.program_runtime_snapshot().dispatched_count, content="1")
+  inspect(runtime.program_runtime_snapshot().dispatched_count(), content="1")
   assert_true(
     runtime
     .draw_commands()
@@ -67,8 +70,8 @@ test "host event source subscription cleanup removes late publishers" {
     content="0",
   )
   let destroyed = runtime.program_runtime_snapshot()
-  inspect(destroyed.cancelled_subscription_count, content="1")
-  inspect(destroyed.ignored_subscription_dispatch_count, content="0")
+  inspect(destroyed.cancelled_subscription_count(), content="1")
+  inspect(destroyed.ignored_subscription_dispatch_count(), content="0")
 }
 
 ///|
@@ -116,7 +119,7 @@ test "host platform event sources publish host and window subscriptions" {
   )
   inspect(result.host_event_count, content="1")
   inspect(result.window_event_count, content="1")
-  inspect(runtime.program_runtime_snapshot().dispatched_count, content="2")
+  inspect(runtime.program_runtime_snapshot().dispatched_count(), content="2")
   assert_true(
     runtime
     .draw_commands()
@@ -160,28 +163,28 @@ test "host window event source subscription dispatches mapped window events" {
   )
   inspect(source.active_handler_count(), content="1")
   let initial = runtime.program_runtime_snapshot()
-  inspect(initial.active_subscription_count, content="1")
-  inspect(initial.active_subscriptions[0].key(), content="host:window-event")
-  inspect(initial.active_subscriptions[0].kind(), content="window-event")
+  inspect(initial.active_subscription_count(), content="1")
+  inspect(initial.active_subscriptions()[0].key(), content="host:window-event")
+  inspect(initial.active_subscriptions()[0].kind(), content="window-event")
   inspect(
-    initial.active_subscriptions[0].label(),
+    initial.active_subscriptions()[0].label(),
     content="Host window event adapter",
   )
   inspect(
     source.publish(window_id=other, event=HostEvent::CloseRequested),
     content="1",
   )
-  inspect(runtime.program_runtime_snapshot().dispatched_count, content="0")
+  inspect(runtime.program_runtime_snapshot().dispatched_count(), content="0")
   inspect(
     source.publish(window_id=target, event=HostEvent::RedrawRequested),
     content="1",
   )
-  inspect(runtime.program_runtime_snapshot().dispatched_count, content="0")
+  inspect(runtime.program_runtime_snapshot().dispatched_count(), content="0")
   inspect(
     source.publish(window_id=target, event=HostEvent::CloseRequested),
     content="1",
   )
-  inspect(runtime.program_runtime_snapshot().dispatched_count, content="1")
+  inspect(runtime.program_runtime_snapshot().dispatched_count(), content="1")
   assert_true(
     runtime
     .draw_commands()
@@ -219,6 +222,6 @@ test "host window event source subscription cleanup removes late publishers" {
     content="0",
   )
   let destroyed = runtime.program_runtime_snapshot()
-  inspect(destroyed.cancelled_subscription_count, content="1")
-  inspect(destroyed.ignored_subscription_dispatch_count, content="0")
+  inspect(destroyed.cancelled_subscription_count(), content="1")
+  inspect(destroyed.ignored_subscription_dispatch_count(), content="0")
 }

@@ -12,20 +12,23 @@ test "host image repaint tracker routes revision changes per window" {
     inspector_id, inspector_renderer,
   )
   assert_true(
-    main_baseline.status == HostImageResourceRepaintStatus::ImageRepaintRecorded,
+    main_baseline.status() ==
+    HostImageResourceRepaintStatus::ImageRepaintRecorded,
   )
-  inspect(inspector_baseline.current_revision, content="0")
+  inspect(inspector_baseline.current_revision(), content="0")
   inspect(tracker.tracked_count(), content="2")
   let baseline_snapshot = tracker.snapshot()
-  inspect(baseline_snapshot.tracked_window_count, content="2")
-  assert_true(baseline_snapshot.tracked_windows[0].window_id == main_id)
-  inspect(baseline_snapshot.tracked_windows[0].revision, content="0")
+  inspect(baseline_snapshot.tracked_window_count(), content="2")
+  assert_true(baseline_snapshot.tracked_windows()[0].window_id() == main_id)
+  inspect(baseline_snapshot.tracked_windows()[0].revision(), content="0")
   inspect(
-    baseline_snapshot.tracked_windows[0].status_counts.record_count,
+    baseline_snapshot.tracked_windows()[0].status_counts().record_count(),
     content="0",
   )
-  assert_true(baseline_snapshot.tracked_windows[1].window_id == inspector_id)
-  inspect(baseline_snapshot.tracked_windows[1].revision, content="0")
+  assert_true(
+    baseline_snapshot.tracked_windows()[1].window_id() == inspector_id,
+  )
+  inspect(baseline_snapshot.tracked_windows()[1].revision(), content="0")
   inspector_revision.val = 1
   let requested : Array[HostWindowId] = []
   let inspector_result = tracker.request_redraw_if_changed(
@@ -35,21 +38,23 @@ test "host image repaint tracker routes revision changes per window" {
     request_redraw=id => requested.push(id),
   )
   assert_true(
-    inspector_result.status ==
+    inspector_result.status() ==
     HostImageResourceRepaintStatus::ImageRepaintRequested,
   )
-  inspect(inspector_result.previous_revision, content="0")
-  inspect(inspector_result.current_revision, content="1")
+  inspect(inspector_result.previous_revision(), content="0")
+  inspect(inspector_result.current_revision(), content="1")
   inspect(requested.length(), content="1")
   assert_true(requested[0] == inspector_id)
   let requested_snapshot = tracker.snapshot()
-  inspect(requested_snapshot.tracked_window_count, content="2")
-  assert_true(requested_snapshot.tracked_windows[0].window_id == main_id)
-  inspect(requested_snapshot.tracked_windows[0].revision, content="0")
-  assert_true(requested_snapshot.tracked_windows[1].window_id == inspector_id)
-  inspect(requested_snapshot.tracked_windows[1].revision, content="1")
+  inspect(requested_snapshot.tracked_window_count(), content="2")
+  assert_true(requested_snapshot.tracked_windows()[0].window_id() == main_id)
+  inspect(requested_snapshot.tracked_windows()[0].revision(), content="0")
+  assert_true(
+    requested_snapshot.tracked_windows()[1].window_id() == inspector_id,
+  )
+  inspect(requested_snapshot.tracked_windows()[1].revision(), content="1")
   inspect(
-    requested_snapshot.tracked_windows[1].status_counts.record_count,
+    requested_snapshot.tracked_windows()[1].status_counts().record_count(),
     content="0",
   )
   let unchanged = tracker.request_redraw_if_changed(
@@ -59,7 +64,7 @@ test "host image repaint tracker routes revision changes per window" {
     request_redraw=id => requested.push(id),
   )
   assert_true(
-    unchanged.status == HostImageResourceRepaintStatus::ImageRepaintUnchanged,
+    unchanged.status() == HostImageResourceRepaintStatus::ImageRepaintUnchanged,
   )
   inspect(requested.length(), content="1")
   main_revision.val = 3
@@ -70,7 +75,8 @@ test "host image repaint tracker routes revision changes per window" {
     request_redraw=id => requested.push(id),
   )
   assert_true(
-    main_result.status == HostImageResourceRepaintStatus::ImageRepaintRequested,
+    main_result.status() ==
+    HostImageResourceRepaintStatus::ImageRepaintRequested,
   )
   inspect(requested.length(), content="2")
   assert_true(requested[1] == main_id)
@@ -92,7 +98,7 @@ test "host image repaint tracker routes callback snapshots without renderer read
     }),
   )
   let baseline = tracker.record_presented(window_id, renderer)
-  inspect(baseline.current_revision, content="1")
+  inspect(baseline.current_revision(), content="1")
   inspect(snapshot_reads.val, content="1")
   let requested : Array[HostWindowId] = []
   let result = tracker.request_redraw_for_snapshot_if_changed(
@@ -104,11 +110,11 @@ test "host image repaint tracker routes callback snapshots without renderer read
     request_redraw=id => requested.push(id),
   )
   assert_true(
-    result.status == HostImageResourceRepaintStatus::ImageRepaintRequested,
+    result.status() == HostImageResourceRepaintStatus::ImageRepaintRequested,
   )
-  inspect(result.previous_revision, content="1")
-  inspect(result.current_revision, content="2")
-  inspect(result.current_status_counts.ready_count, content="1")
+  inspect(result.previous_revision(), content="1")
+  inspect(result.current_revision(), content="2")
+  inspect(result.current_status_counts().ready_count(), content="1")
   inspect(snapshot_reads.val, content="1")
   inspect(requested.length(), content="1")
   assert_true(requested[0] == window_id)
@@ -136,20 +142,20 @@ test "host image repaint tracker snapshots lifecycle status counts" {
     }),
   )
   let baseline = tracker.record_presented(window_id, renderer)
-  inspect(baseline.current_revision, content="1")
-  inspect(baseline.previous_status_counts.record_count, content="0")
-  inspect(baseline.current_status_counts.record_count, content="3")
-  inspect(baseline.current_status_counts.loading_count, content="1")
-  inspect(baseline.current_status_counts.ready_count, content="1")
-  inspect(baseline.current_status_counts.failed_count, content="1")
+  inspect(baseline.current_revision(), content="1")
+  inspect(baseline.previous_status_counts().record_count(), content="0")
+  inspect(baseline.current_status_counts().record_count(), content="3")
+  inspect(baseline.current_status_counts().loading_count(), content="1")
+  inspect(baseline.current_status_counts().ready_count(), content="1")
+  inspect(baseline.current_status_counts().failed_count(), content="1")
   let baseline_snapshot = tracker.snapshot()
-  inspect(baseline_snapshot.tracked_window_count, content="1")
-  let baseline_counts = baseline_snapshot.tracked_windows[0].status_counts
-  inspect(baseline_counts.record_count, content="3")
-  inspect(baseline_counts.loading_count, content="1")
-  inspect(baseline_counts.ready_count, content="1")
-  inspect(baseline_counts.failed_count, content="1")
-  inspect(baseline_counts.disposed_count, content="0")
+  inspect(baseline_snapshot.tracked_window_count(), content="1")
+  let baseline_counts = baseline_snapshot.tracked_windows()[0].status_counts()
+  inspect(baseline_counts.record_count(), content="3")
+  inspect(baseline_counts.loading_count(), content="1")
+  inspect(baseline_counts.ready_count(), content="1")
+  inspect(baseline_counts.failed_count(), content="1")
+  inspect(baseline_counts.disposed_count(), content="0")
   revision.val = 2
   records.val = [
     @render.ImageResourceRecord::ready("loading.png", width=12, height=8),
@@ -165,24 +171,24 @@ test "host image repaint tracker snapshots lifecycle status counts" {
     request_redraw=_id => redraws.val = redraws.val + 1,
   )
   assert_true(
-    result.status == HostImageResourceRepaintStatus::ImageRepaintRequested,
+    result.status() == HostImageResourceRepaintStatus::ImageRepaintRequested,
   )
   inspect(redraws.val, content="1")
-  inspect(result.previous_status_counts.record_count, content="3")
-  inspect(result.previous_status_counts.loading_count, content="1")
-  inspect(result.current_status_counts.record_count, content="4")
-  inspect(result.current_status_counts.loading_count, content="0")
-  inspect(result.current_status_counts.ready_count, content="2")
-  inspect(result.current_status_counts.failed_count, content="1")
-  inspect(result.current_status_counts.disposed_count, content="1")
+  inspect(result.previous_status_counts().record_count(), content="3")
+  inspect(result.previous_status_counts().loading_count(), content="1")
+  inspect(result.current_status_counts().record_count(), content="4")
+  inspect(result.current_status_counts().loading_count(), content="0")
+  inspect(result.current_status_counts().ready_count(), content="2")
+  inspect(result.current_status_counts().failed_count(), content="1")
+  inspect(result.current_status_counts().disposed_count(), content="1")
   let updated_snapshot = tracker.snapshot()
-  inspect(updated_snapshot.tracked_windows[0].revision, content="2")
-  let updated_counts = updated_snapshot.tracked_windows[0].status_counts
-  inspect(updated_counts.record_count, content="4")
-  inspect(updated_counts.loading_count, content="0")
-  inspect(updated_counts.ready_count, content="2")
-  inspect(updated_counts.failed_count, content="1")
-  inspect(updated_counts.disposed_count, content="1")
+  inspect(updated_snapshot.tracked_windows()[0].revision(), content="2")
+  let updated_counts = updated_snapshot.tracked_windows()[0].status_counts()
+  inspect(updated_counts.record_count(), content="4")
+  inspect(updated_counts.loading_count(), content="0")
+  inspect(updated_counts.ready_count(), content="2")
+  inspect(updated_counts.failed_count(), content="1")
+  inspect(updated_counts.disposed_count(), content="1")
 }
 
 ///|
@@ -205,7 +211,7 @@ test "host image repaint tracker ignores stale snapshot revisions" {
     }),
   )
   let baseline = tracker.record_presented(window_id, renderer)
-  inspect(baseline.current_revision, content="5")
+  inspect(baseline.current_revision(), content="5")
   revision.val = 3
   records.val = [@render.ImageResourceRecord::disposed("ready.png")]
   let redraws = Ref(0)
@@ -216,19 +222,19 @@ test "host image repaint tracker ignores stale snapshot revisions" {
     request_redraw=_id => redraws.val = redraws.val + 1,
   )
   assert_true(
-    stale.status == HostImageResourceRepaintStatus::ImageRepaintUnchanged,
+    stale.status() == HostImageResourceRepaintStatus::ImageRepaintUnchanged,
   )
-  inspect(stale.previous_revision, content="5")
-  inspect(stale.current_revision, content="5")
-  inspect(stale.previous_status_counts.ready_count, content="1")
-  inspect(stale.current_status_counts.ready_count, content="1")
-  inspect(stale.current_status_counts.disposed_count, content="0")
+  inspect(stale.previous_revision(), content="5")
+  inspect(stale.current_revision(), content="5")
+  inspect(stale.previous_status_counts().ready_count(), content="1")
+  inspect(stale.current_status_counts().ready_count(), content="1")
+  inspect(stale.current_status_counts().disposed_count(), content="0")
   inspect(redraws.val, content="0")
   let stale_snapshot = tracker.snapshot()
-  inspect(stale_snapshot.tracked_windows[0].revision, content="5")
-  let stale_counts = stale_snapshot.tracked_windows[0].status_counts
-  inspect(stale_counts.ready_count, content="1")
-  inspect(stale_counts.disposed_count, content="0")
+  inspect(stale_snapshot.tracked_windows()[0].revision(), content="5")
+  let stale_counts = stale_snapshot.tracked_windows()[0].status_counts()
+  inspect(stale_counts.ready_count(), content="1")
+  inspect(stale_counts.disposed_count(), content="0")
   revision.val = 6
   let fresh = tracker.request_redraw_if_changed(
     window_id,
@@ -237,10 +243,10 @@ test "host image repaint tracker ignores stale snapshot revisions" {
     request_redraw=_id => redraws.val = redraws.val + 1,
   )
   assert_true(
-    fresh.status == HostImageResourceRepaintStatus::ImageRepaintRequested,
+    fresh.status() == HostImageResourceRepaintStatus::ImageRepaintRequested,
   )
-  inspect(fresh.previous_revision, content="5")
-  inspect(fresh.current_revision, content="6")
+  inspect(fresh.previous_revision(), content="5")
+  inspect(fresh.current_revision(), content="6")
   inspect(redraws.val, content="1")
 }
 
@@ -266,8 +272,8 @@ test "host image repaint tracker discards closed window changes" {
     }),
   )
   let baseline = tracker.record_presented(window_id, renderer)
-  inspect(baseline.current_revision, content="1")
-  inspect(baseline.current_status_counts.loading_count, content="1")
+  inspect(baseline.current_revision(), content="1")
+  inspect(baseline.current_status_counts().loading_count(), content="1")
   inspect(snapshot_reads.val, content="1")
   revision.val = 2
   records.val = [
@@ -281,17 +287,18 @@ test "host image repaint tracker discards closed window changes" {
     request_redraw=_id => redraws.val = redraws.val + 1,
   )
   assert_true(
-    result.status == HostImageResourceRepaintStatus::ImageRepaintDiscardedClosed,
+    result.status() ==
+    HostImageResourceRepaintStatus::ImageRepaintDiscardedClosed,
   )
-  inspect(result.previous_revision, content="1")
-  inspect(result.current_revision, content="1")
-  inspect(result.previous_status_counts.record_count, content="1")
-  inspect(result.previous_status_counts.loading_count, content="1")
-  inspect(result.current_status_counts.record_count, content="0")
+  inspect(result.previous_revision(), content="1")
+  inspect(result.current_revision(), content="1")
+  inspect(result.previous_status_counts().record_count(), content="1")
+  inspect(result.previous_status_counts().loading_count(), content="1")
+  inspect(result.current_status_counts().record_count(), content="0")
   inspect(redraws.val, content="0")
   inspect(snapshot_reads.val, content="1")
   inspect(tracker.tracked_count(), content="0")
   let snapshot = tracker.snapshot()
-  inspect(snapshot.tracked_window_count, content="0")
-  inspect(snapshot.tracked_windows.length(), content="0")
+  inspect(snapshot.tracked_window_count(), content="0")
+  inspect(snapshot.tracked_windows().length(), content="0")
 }

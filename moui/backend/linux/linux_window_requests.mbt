@@ -411,7 +411,7 @@ fn LinuxApp::request_image_resource_redraw_if_changed(
           @host.HostWindowLifecyclePhase::WindowClosed,
         request_redraw=id => self.request_platform_redraw(id),
       )
-      result.status ==
+      result.status() ==
       @host.HostImageResourceRepaintStatus::ImageRepaintRequested
     }
     (Some(platform_slot), None) => {

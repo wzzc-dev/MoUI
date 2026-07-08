@@ -165,8 +165,8 @@ test "linux skia async image loader completes loading resources" {
   let result = loader.schedule_loading_resources(
     window_id, renderer, completion_source,
   )
-  inspect(result.loading_count, content="1")
-  inspect(result.scheduled_count, content="1")
+  inspect(result.loading_count(), content="1")
+  inspect(result.scheduled_count(), content="1")
   match lifecycle.lookup(source) {
     Some(record) =>
       if @skia_renderer.skia_available() {
@@ -207,11 +207,11 @@ test "linux skia async image path records loading then second-frame completion" 
   let tracker = @host.HostImageResourceRepaintTracker::new()
   let first_frame = tracker.record_presented(window_id, renderer)
   assert_true(
-    first_frame.status ==
+    first_frame.status() ==
     @host.HostImageResourceRepaintStatus::ImageRepaintRecorded,
   )
-  inspect(first_frame.current_status_counts.loading_count, content="1")
-  inspect(first_frame.current_status_counts.ready_count, content="0")
+  inspect(first_frame.current_status_counts().loading_count(), content="1")
+  inspect(first_frame.current_status_counts().ready_count(), content="0")
   let redraws : Array[@host.HostWindowId] = []
   let completion_source = @host.HostImageResourceCompletionSource::new(
     tracker~,
@@ -221,15 +221,15 @@ test "linux skia async image path records loading then second-frame completion" 
   let scheduled = loader.schedule_loading_resources(
     window_id, renderer, completion_source,
   )
-  inspect(scheduled.loading_count, content="1")
-  inspect(scheduled.scheduled_count, content="1")
+  inspect(scheduled.loading_count(), content="1")
+  inspect(scheduled.scheduled_count(), content="1")
   inspect(native_source.pending_requests().length(), content="1")
   inspect(redraws.length(), content="0")
   let tracked_loading = tracker.snapshot()
-  inspect(tracked_loading.tracked_window_count, content="1")
-  inspect(tracked_loading.tracked_windows[0].revision, content="1")
+  inspect(tracked_loading.tracked_window_count(), content="1")
+  inspect(tracked_loading.tracked_windows()[0].revision(), content="1")
   inspect(
-    tracked_loading.tracked_windows[0].status_counts.loading_count,
+    tracked_loading.tracked_windows()[0].status_counts().loading_count(),
     content="1",
   )
   let delivered = native_source.complete(
@@ -237,7 +237,7 @@ test "linux skia async image path records loading then second-frame completion" 
     @skia_renderer.skia_image_load_completion(source),
   )
   assert_true(
-    delivered.status ==
+    delivered.status() ==
     @host.HostNativeAsyncImageCompletionStatus::NativeAsyncImageCompletionDelivered,
   )
   if @skia_renderer.skia_available() {
@@ -247,30 +247,30 @@ test "linux skia async image path records loading then second-frame completion" 
     assert_true(redraws.length() == 0 || redraws.length() == 1)
   }
   let tracked_completed = tracker.snapshot()
-  inspect(tracked_completed.tracked_window_count, content="1")
-  inspect(tracked_completed.tracked_windows[0].revision, content="2")
+  inspect(tracked_completed.tracked_window_count(), content="1")
+  inspect(tracked_completed.tracked_windows()[0].revision(), content="2")
   let second_frame = tracker.record_presented(window_id, renderer)
   assert_true(
-    second_frame.status ==
+    second_frame.status() ==
     @host.HostImageResourceRepaintStatus::ImageRepaintRecorded,
   )
   if @skia_renderer.skia_available() {
     inspect(
-      tracked_completed.tracked_windows[0].status_counts.ready_count,
+      tracked_completed.tracked_windows()[0].status_counts().ready_count(),
       content="1",
     )
-    inspect(second_frame.current_status_counts.ready_count, content="1")
-    inspect(second_frame.current_status_counts.failed_count, content="0")
+    inspect(second_frame.current_status_counts().ready_count(), content="1")
+    inspect(second_frame.current_status_counts().failed_count(), content="0")
   } else {
     inspect(
-      tracked_completed.tracked_windows[0].status_counts.failed_count,
+      tracked_completed.tracked_windows()[0].status_counts().failed_count(),
       content="1",
     )
-    inspect(second_frame.current_status_counts.ready_count, content="0")
-    inspect(second_frame.current_status_counts.failed_count, content="1")
+    inspect(second_frame.current_status_counts().ready_count(), content="0")
+    inspect(second_frame.current_status_counts().failed_count(), content="1")
   }
-  inspect(loader.diagnostics().completed_count, content="1")
-  inspect(native_source.diagnostics().pending_count, content="0")
+  inspect(loader.diagnostics().completed_count(), content="1")
+  inspect(native_source.diagnostics().pending_count(), content="0")
   if !@skia_renderer.skia_available() {
     assert_true(redraws.length() == 0 || redraws.length() == 1)
   }
@@ -304,8 +304,8 @@ test "linux skia deferred native source completes through decode helper" {
   let scheduled = loader.schedule_loading_resources(
     window_id, renderer, completion_source,
   )
-  inspect(scheduled.loading_count, content="1")
-  inspect(scheduled.scheduled_count, content="1")
+  inspect(scheduled.loading_count(), content="1")
+  inspect(scheduled.scheduled_count(), content="1")
   inspect(native_source.pending_requests().length(), content="1")
   inspect(redraws.length(), content="0")
   match lifecycle.lookup(source) {
@@ -318,7 +318,7 @@ test "linux skia deferred native source completes through decode helper" {
     @skia_renderer.skia_image_load_completion(source),
   )
   assert_true(
-    delivered.status ==
+    delivered.status() ==
     @host.HostNativeAsyncImageCompletionStatus::NativeAsyncImageCompletionDelivered,
   )
   match lifecycle.lookup(source) {
@@ -339,8 +339,8 @@ test "linux skia deferred native source completes through decode helper" {
   } else {
     assert_true(redraws.length() == 0 || redraws.length() == 1)
   }
-  inspect(loader.diagnostics().completed_count, content="1")
-  inspect(native_source.diagnostics().pending_count, content="0")
+  inspect(loader.diagnostics().completed_count(), content="1")
+  inspect(native_source.diagnostics().pending_count(), content="0")
 }
 
 ///|
@@ -354,6 +354,7 @@ fn skia_provider_test_png_bytes() -> Bytes {
 }
 
 ///|
+#cfg(platform="linux")
 test "linux skia async image background decode confirmed" {
   guard @skia_renderer.skia_available() else { return () }
   let path = "/tmp/moui-bg-decode-test-linux.png"
