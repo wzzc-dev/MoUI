@@ -689,7 +689,7 @@ pub fn ViewStyle::from_theme(theme : Theme) -> ViewStyle {
 pub fn Theme::revision_fingerprint(self : Theme) -> String {
   let p = self.palette
   let b = self.components.button.primary
-  "theme:\{scheme_label(self.scheme)}:fg:\{color_fp(p.foreground)}:bg:\{color_fp(p.background)}:sf:\{color_fp(p.surface)}:sv:\{color_fp(p.surface_variant)}:pr:\{color_fp(p.primary)}:op:\{color_fp(p.on_primary)}:ol:\{color_fp(p.outline)}:mt:\{color_fp(p.muted)}:sc:\{color_fp(p.success)}:wn:\{color_fp(p.warning)}:dg:\{color_fp(p.danger)}:if:\{color_fp(p.info)}:fc:\{color_fp(p.focus)}:bp:\{color_fp(b.foreground)}:\{color_fp(b.background)}:\{b.radius}:r:\{self.radius_scale.md}:sm:\{self.shadow_scale.md.blur_radius}"
+  "theme:\{scheme_label(self.scheme)}:fg:\{color_fp(p.foreground)}:bg:\{color_fp(p.background)}:sf:\{color_fp(p.surface)}:sv:\{color_fp(p.surface_variant)}:pr:\{color_fp(p.primary)}:op:\{color_fp(p.on_primary)}:ol:\{color_fp(p.outline)}:mt:\{color_fp(p.muted)}:sc:\{color_fp(p.success)}:wn:\{color_fp(p.warning)}:dg:\{color_fp(p.danger)}:if:\{color_fp(p.info)}:fc:\{color_fp(p.focus)}:bp:\{color_fp(b.foreground)}:\{color_fp(b.background)}:\{b.radius}:ty:\{typography_fp(self.typography)}:r:\{self.radius_scale.md}:sm:\{self.shadow_scale.md.blur_radius}"
 }
 
 ///|
@@ -720,4 +720,14 @@ fn contrast_label(contrast : AccessibilityContrast) -> String {
 ///|
 fn color_fp(color : Color) -> String {
   "\{color.r}:\{color.g}:\{color.b}:\{color.a}"
+}
+
+///|
+fn typography_fp(typography : TypographyScale) -> String {
+  "d:\{font_fp(typography.display)}:h:\{font_fp(typography.headline)}:t:\{font_fp(typography.title)}:s:\{font_fp(typography.subtitle)}:b:\{font_fp(typography.body)}:l:\{font_fp(typography.label)}:c:\{font_fp(typography.caption)}:o:\{font_fp(typography.overline)}:ctrl:\{font_fp(typography.control)}"
+}
+
+///|
+fn font_fp(font : FontSpec) -> String {
+  "\{font.css_family()}:\{font.size}:\{font.weight}:\{font.css_style()}"
 }

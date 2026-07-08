@@ -47,9 +47,10 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 ## Screenshots
 
 <div align="center">
-  <img src="resource/screenshots/mo_workbench.png" width="400px"/>
   <img src="resource/screenshots/markdown_editor.png" width="400px"/>
   <img src="resource/screenshots/showcase.png" width="400px"/>
+  <img src="resource/screenshots/mo_workbench.png" width="400px"/>
+  <img src="resource/screenshots/excel.png" width="400px"/>
 </div>
 
 ## Quick Start
@@ -58,8 +59,6 @@ The fastest way to try MoUI is the standalone `moui_example` counter app, a
 small repo that pins a published MoUI crate and renders the same Model /
 Msg / update / view loop on both macOS Skia and Web wasm-gc.
 
-```sh
-git clone git@github.com:moui-mbt/moui_example.git
 cd moui_example
 moon update
 ```

@@ -343,6 +343,7 @@ pub struct CodeWorkspace {
   last_thought_message_id : String?
   error : String?
   scroll_state : @state.ScrollState
+  follow_latest : Bool
 }
 
 ///|
@@ -367,6 +368,7 @@ fn CodeWorkspace::new() -> CodeWorkspace {
     last_thought_message_id: None,
     error: None,
     scroll_state: @state.ScrollState::new(),
+    follow_latest: true,
   }
 }
 
@@ -569,6 +571,7 @@ pub(all) enum CodeMsg {
   SetSessionConfigOption(String, AgentConfigValue)
   RespondPermission(String, PermissionOutcome)
   ClearError
+  MessageListScrolled(@geometry.Point)
   ReceiveAgentEvent(AgentEvent)
 }
 

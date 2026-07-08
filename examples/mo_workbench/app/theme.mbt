@@ -45,6 +45,81 @@ fn workbench_theme(
   { ..base, palette, }
 }
 
+///|
+fn workbench_conversation_theme(
+  theme : @moui.Theme,
+  font_size : Int,
+) -> @moui.Theme {
+  let effective_size = if font_size <= 10 { 10 } else { font_size }
+  let font = @text.FontSpec::new(size=effective_size.to_double(), weight=260)
+  theme.with_typography({
+    display: font,
+    headline: font,
+    title: font,
+    subtitle: font,
+    body: font,
+    label: font,
+    caption: font,
+    overline: font,
+    control: font,
+  })
+}
+
+///|
+fn workbench_lightweight_theme(
+  theme : @moui.Theme,
+  font_size : Int,
+) -> @moui.Theme {
+  let font = @text.FontSpec::new(
+    size=font_size.to_double().max(10.0),
+    weight=260,
+  )
+  theme.with_typography({
+    display: font,
+    headline: font,
+    title: font,
+    subtitle: font,
+    body: font,
+    label: font,
+    caption: font,
+    overline: font,
+    control: font,
+  })
+}
+
+///|
+fn workbench_default_typography_theme(theme : @moui.Theme) -> @moui.Theme {
+  let base = match theme.scheme {
+    Light => @views.light_theme()
+    Dark => @views.dark_theme()
+  }
+  theme.with_typography(base.typography)
+}
+
+///|
+fn workbench_sidebar_theme(theme : @moui.Theme) -> @moui.Theme {
+  theme.with_typography({
+    display: workbench_font_variant(theme.typography.display, 1.0, 450),
+    headline: workbench_font_variant(theme.typography.headline, 1.0, 450),
+    title: workbench_font_variant(theme.typography.title, 1.0, 450),
+    subtitle: workbench_font_variant(theme.typography.subtitle, 1.0, 450),
+    body: workbench_font_variant(theme.typography.body, 1.0, 450),
+    label: workbench_font_variant(theme.typography.label, 1.0, 450),
+    caption: workbench_font_variant(theme.typography.caption, 1.0, 450),
+    overline: workbench_font_variant(theme.typography.overline, 1.0, 450),
+    control: workbench_font_variant(theme.typography.control, 1.0, 450),
+  })
+}
+
+///|
+fn workbench_font_variant(
+  font : @text.FontSpec,
+  size_delta : Double,
+  weight : Int,
+) -> @text.FontSpec {
+  { ..font, size: (font.size + size_delta).max(10.0), weight }
+}
+
 // ---------------------------------------------------------------------------
 // Background layers  (bg-app → bg-sidebar → bg-canvas)
 // ---------------------------------------------------------------------------
@@ -454,48 +529,19 @@ fn user_message_background(theme : @moui.Theme) -> @graphics.Color {
 }
 
 ///|
-/// User avatar circle fill.
-fn user_avatar_color(theme : @moui.Theme) -> @graphics.Color {
-  match theme.scheme {
-    Light =>
-      @graphics.Color::rgba(
-        r=70.0 / 255.0,
-        g=129.0 / 255.0,
-        b=255.0 / 255.0,
-        a=1.0,
-      )
-    Dark =>
-      @graphics.Color::rgba(
-        r=96.0 / 255.0,
-        g=165.0 / 255.0,
-        b=250.0 / 255.0,
-        a=1.0,
-      )
-  }
-}
-
-///|
-/// Assistant avatar circle fill — warm amber.
-fn assistant_avatar_color(theme : @moui.Theme) -> @graphics.Color {
-  match theme.scheme {
-    Light => @graphics.Color::rgba(r=0.8, g=0.5, b=0.2, a=1.0)
-    Dark => @graphics.Color::rgba(r=0.9, g=0.6, b=0.3, a=1.0)
-  }
-}
-
-///|
 /// Purple circular send control (square frame + radius = diameter / 2).
 fn[Msg] workbench_send_button(
   theme : @moui.Theme,
-  diameter? : Double = 32.0,
+  diameter? : Double = 28.0,
   on_tap~ : Msg,
 ) -> @moui.View[Msg] {
   let radius = diameter / 2.0
+  let icon_size = (diameter * 0.50).max(12.0)
   @views.container(
     @views.center(
       @views.icon(
         @views.IconName::ArrowRight,
-        size=16.0,
+        size=icon_size,
         color=@graphics.Color::rgba(r=1.0, g=1.0, b=1.0, a=1.0),
       ),
       width=diameter,

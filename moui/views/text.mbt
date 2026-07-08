@@ -5,6 +5,7 @@ pub fn[Msg] text(
   theme? : @core.Theme,
   width? : Double = 160.0,
   height? : Double = 32.0,
+  align? : @core.TextAlign = @core.TextAlign::TextCenter,
 ) -> @core.View[Msg] {
   let size = @core.Size::new(width~, height~)
   let theme_revision = match theme {
@@ -14,7 +15,7 @@ pub fn[Msg] text(
   @core.View::node(
     identity=() => @core.ViewIdentity::new(kind="Text"),
     revision=() => {
-      "text:\{text}:\{size.width}:\{size.height}:\{text_role_revision(role)}:\{theme_revision}"
+      "text:\{text}:\{size.width}:\{size.height}:\{text_role_revision(role)}:\{text_align_revision(align)}:\{theme_revision}"
     },
     layout=ctx => {
       @core.ViewLayoutResult::new(size=ctx.constraints.constrain(size))
@@ -31,7 +32,7 @@ pub fn[Msg] text(
       }
       @core.ViewPaintPlan::commands([
         @core.DrawCommand::DrawText(
-          @core.TextRun::new(text~, frame=ctx.frame, font~, color~),
+          @core.TextRun::new(text~, frame=ctx.frame, font~, color~, align~),
         ),
       ])
     },
@@ -43,6 +44,15 @@ pub fn[Msg] text(
       )
     },
   )
+}
+
+///|
+fn text_align_revision(align : @core.TextAlign) -> String {
+  match align {
+    @core.TextAlign::TextStart => "start"
+    @core.TextAlign::TextCenter => "center"
+    @core.TextAlign::TextEnd => "end"
+  }
 }
 
 ///|
@@ -63,17 +73,7 @@ fn text_role_revision(role : TextRole) -> String {
 
 ///|
 fn text_theme_revision(theme : @core.Theme) -> String {
-  let foreground = theme.palette.foreground
-  let muted = theme.palette.muted
-  "theme:\{text_scheme_revision(theme.scheme)}:\{foreground.r}:\{foreground.g}:\{foreground.b}:\{foreground.a}:\{muted.r}:\{muted.g}:\{muted.b}:\{muted.a}"
-}
-
-///|
-fn text_scheme_revision(scheme : @core.ColorScheme) -> String {
-  match scheme {
-    Light => "light"
-    Dark => "dark"
-  }
+  theme.revision_fingerprint()
 }
 
 ///|
