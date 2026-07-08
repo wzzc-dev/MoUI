@@ -31,6 +31,49 @@ pub fn[Msg] align(
 }
 
 ///|
+pub fn[Msg] rounded_clip(
+  child : @core.View[Msg],
+  radius? : Double = 0.0,
+) -> @core.View[Msg] {
+  @core.View::node(
+    identity=() => @core.ViewIdentity::new(kind="RoundedClip"),
+    revision=() => "rounded-clip:\{radius}:\{child.revision()}",
+    children=() => [child],
+    child_constraints=constraints => constraints,
+    layout=ctx => {
+      let child_size = if ctx.child_sizes.is_empty() {
+        ctx.constraints.constrain(@core.Size::new(width=0.0, height=0.0))
+      } else {
+        ctx.constraints.constrain(ctx.child_sizes[0])
+      }
+      @core.ViewLayoutResult::new(size=child_size, child_frames=[
+        @core.Rect::new(
+          x=0.0,
+          y=0.0,
+          width=child_size.width,
+          height=child_size.height,
+        ),
+      ])
+    },
+    paint=ctx => {
+      let rounded = @core.RoundedRect::new(rect=ctx.frame, radius~)
+      {
+        commands: [@core.DrawCommand::PushRoundedClip(rounded)],
+        child_layers: [],
+        post_commands: [@core.DrawCommand::PopRoundedClip],
+        overlay_commands: [],
+        platform_views: [],
+        repaint_boundary: false,
+        animating: false,
+      }
+    },
+    semantics=() => {
+      @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
+    },
+  )
+}
+
+///|
 pub fn[Msg] aspect_ratio(
   child : @core.View[Msg],
   ratio : Double,

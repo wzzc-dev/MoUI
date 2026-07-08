@@ -6,7 +6,6 @@
 
 ///|
 /// Render a single chat message as a view.
-/// User and assistant messages render with a small avatar circle.
 fn message_row(
   msg : ChatMessage,
   theme : @moui.Theme,
@@ -22,7 +21,47 @@ fn message_row(
     PermissionRequest(request) => permission_request_row(request, theme, width)
     Terminal(status, message) => terminal_row(status, message, theme, width)
   }
-  @views.padding_edges(inner, top=6.0, bottom=6.0)
+  @views.padding_edges(inner, top=2.0, bottom=2.0)
+}
+
+///|
+fn aligned_message_bubble(
+  bubble : @moui.View[CodeMsg],
+  width : Double,
+  bubble_width : Double,
+  align_right : Bool,
+) -> @moui.View[CodeMsg] {
+  @views.custom_children_layout(
+    children=[bubble],
+    measure=ctx => {
+      let height = if ctx.child_sizes.is_empty() {
+        0.0
+      } else {
+        ctx.child_sizes[0].height
+      }
+      ctx.constraints.constrain(@geometry.Size::new(width~, height~))
+    },
+    place=ctx => {
+      let child_height = if ctx.child_sizes.is_empty() {
+        0.0
+      } else {
+        ctx.child_sizes[0].height
+      }
+      let child_width = bubble_width.min(ctx.frame.size.width)
+      let x = if align_right {
+        (ctx.frame.size.width - child_width).max(0.0)
+      } else {
+        0.0
+      }
+      [@geometry.Rect::new(x~, y=0.0, width=child_width, height=child_height)]
+    },
+    paint=(_ctx, _frame) => (),
+    semantics_label=if align_right {
+      "User message"
+    } else {
+      "Assistant message"
+    },
+  )
 }
 
 ///|
@@ -32,62 +71,19 @@ fn user_message_row(
   width : Double,
 ) -> @moui.View[CodeMsg] {
   let bubble_width = width * 0.72
-  let avatar_size = 28.0
-  @views.container(
-    @views.row(
-      [
-        @views.spacer(),
-        @views.container(
-          @views.column(
-            [
-              chat_message_body(
-                text_,
-                @views.TextRole::Body,
-                theme,
-                bubble_width - 24.0,
-              ),
-            ],
-            spacing=4.0,
-            align=@views.CrossAlign::Start,
-          ),
-          width=bubble_width,
-          background=user_message_background(theme),
-          corner_radius=12.0,
-          padding=14.0,
-        ),
-        user_avatar(theme, avatar_size),
-      ],
-      spacing=8.0,
+  let content_width = (bubble_width - 28.0).max(80.0)
+  let bubble = @views.container(
+    @views.column(
+      [chat_message_body(text_, @views.TextRole::Body, theme, content_width)],
+      spacing=4.0,
       align=@views.CrossAlign::Start,
     ),
-    width~,
+    width=bubble_width,
+    background=user_message_background(theme),
+    corner_radius=12.0,
+    padding=14.0,
   )
-}
-
-///|
-fn user_avatar(
-  theme : @moui.Theme,
-  avatar_size : Double,
-) -> @moui.View[CodeMsg] {
-  @views.container(
-    @views.center(
-      @views.text(
-        "U",
-        role=@views.TextRole::Label,
-        theme~,
-        width=avatar_size,
-        height=avatar_size,
-      ).foreground(@graphics.Color::rgba(r=1.0, g=1.0, b=1.0, a=1.0)),
-      width=avatar_size,
-      height=avatar_size,
-      theme~,
-    ),
-    width=avatar_size,
-    height=avatar_size,
-    background=user_avatar_color(theme),
-    corner_radius=avatar_size / 2.0,
-    padding=0.0,
-  )
+  aligned_message_bubble(bubble, width, bubble_width, true)
 }
 
 ///|
@@ -98,7 +94,7 @@ fn assistant_message_row(
   width : Double,
 ) -> @moui.View[CodeMsg] {
   let bubble_width = width * 0.82
-  let avatar_size = 28.0
+  let content_width = (bubble_width - 28.0).max(80.0)
   let rows : Array[@moui.View[CodeMsg]] = []
   // Optional reasoning shown as a collapsed muted block above the content.
   match reasoning {
@@ -106,13 +102,13 @@ fn assistant_message_row(
       if !r.is_empty() {
         rows.push(
           @views.container(
-            @views.text(
+            chat_message_body(
               r,
-              role=@views.TextRole::Caption,
-              theme~,
-              width=bubble_width - 24.0,
+              @views.TextRole::Caption,
+              theme,
+              (content_width - 16.0).max(64.0),
             ).foreground(theme.palette.muted),
-            width=bubble_width,
+            width=content_width,
             padding=8.0,
           ),
         )
@@ -120,42 +116,16 @@ fn assistant_message_row(
     None => ()
   }
   rows.push(
-    chat_message_body(
-      content,
-      @views.TextRole::Body,
-      theme,
-      bubble_width - 24.0,
-    ),
+    chat_message_body(content, @views.TextRole::Body, theme, content_width),
   )
-  @views.container(
-    @views.row(
-      [
-        @views.container(
-          @views.icon(
-            @views.IconName::CodeInline,
-            size=14.0,
-            color=assistant_avatar_color(theme),
-          ),
-          width=avatar_size,
-          height=avatar_size,
-          background=assistant_avatar_color(theme).with_alpha(0.15),
-          corner_radius=avatar_size / 2.0,
-          padding=0.0,
-        ),
-        @views.container(
-          @views.column(rows, spacing=4.0, align=@views.CrossAlign::Start),
-          width=bubble_width,
-          background=workbench_subtle_background(theme),
-          corner_radius=12.0,
-          padding=14.0,
-        ).border(hairline_border(theme)),
-        @views.spacer(),
-      ],
-      spacing=10.0,
-      align=@views.CrossAlign::Start,
-    ),
-    width~,
+  let bubble = @views.container(
+    @views.column(rows, spacing=4.0, align=@views.CrossAlign::Start),
+    width=bubble_width,
+    background=user_message_background(theme),
+    corner_radius=12.0,
+    padding=14.0,
   )
+  aligned_message_bubble(bubble, width, bubble_width, false)
 }
 
 ///|
@@ -190,12 +160,7 @@ fn tool_result_row(
     None => content
   }
   rows.push(
-    @views.text(
-      shown,
-      role=@views.TextRole::Mono,
-      theme~,
-      width=card_width - 24.0,
-    ),
+    chat_message_body(shown, @views.TextRole::Mono, theme, card_width - 24.0),
   )
   @views.container(
     @views.row(
@@ -226,12 +191,9 @@ fn runtime_notice_row(
     @views.row(
       [
         @views.spacer(),
-        @views.text(
-          text_,
-          role=@views.TextRole::Caption,
-          theme~,
-          width=width - 16.0,
-        ).foreground(theme.palette.muted),
+        chat_message_body(text_, @views.TextRole::Caption, theme, width - 16.0).foreground(
+          theme.palette.muted,
+        ),
         @views.spacer(),
       ],
       align=@views.CrossAlign::Center,
@@ -275,11 +237,11 @@ fn permission_request_row(
   )
   if !request.kind.is_empty() {
     rows.push(
-      @views.text(
+      chat_message_body(
         request.kind,
-        role=@views.TextRole::Caption,
-        theme~,
-        width=card_width - 24.0,
+        @views.TextRole::Caption,
+        theme,
+        card_width - 24.0,
       ).foreground(theme.palette.muted),
     )
   }
@@ -359,11 +321,11 @@ fn terminal_row(
     @views.row(
       [
         @views.badge(label, tone~, theme~, width=64.0),
-        @views.text(
+        chat_message_body(
           message,
-          role=@views.TextRole::Caption,
-          theme~,
-          width=width - 96.0,
+          @views.TextRole::Caption,
+          theme,
+          width - 96.0,
         ).foreground(theme.palette.muted),
         @views.spacer(),
       ],

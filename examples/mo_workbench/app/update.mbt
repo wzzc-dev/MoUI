@@ -54,7 +54,11 @@ fn project_agent_event(
         Aborted => Some(message)
         _ => None
       }
-      ([ChatMessage::Terminal(status, message)], true, err)
+      let messages = match status {
+        Finished => []
+        _ => [ChatMessage::Terminal(status, message)]
+      }
+      (messages, true, err)
     }
     ProgressNotice(_) => ([], false, None) // handled directly in apply_agent_event
     UserMessageChunk(_, _) => ([], false, None)
@@ -171,6 +175,32 @@ fn append_thought_chunk(
   out
 }
 
+///|
+fn CodeWorkspace::scroll_to_latest(self : CodeWorkspace) -> Unit {
+  self.scroll_state.scroll_to(x=0.0, y=1.0e9)
+}
+
+///|
+fn CodeWorkspace::scroll_to_latest_if_following(self : CodeWorkspace) -> Unit {
+  if self.follow_latest {
+    self.scroll_to_latest()
+  }
+}
+
+///|
+fn code_follow_latest_after_scroll(
+  current : Bool,
+  delta : @geometry.Point,
+) -> Bool {
+  if delta.y > 0.0 {
+    false
+  } else if delta.y < 0.0 {
+    true
+  } else {
+    current
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Code workspace sub-update
 // ---------------------------------------------------------------------------
@@ -192,7 +222,9 @@ fn CodeWorkspace::apply_agent_event(
         message_id,
         content,
       )
-      { ..self, messages, last_user_message_id: message_id }
+      let model = { ..self, messages, last_user_message_id: message_id }
+      model.scroll_to_latest_if_following()
+      model
     }
     AssistantMessageChunk(message_id, content) => {
       let messages = append_assistant_chunk(
@@ -201,7 +233,9 @@ fn CodeWorkspace::apply_agent_event(
         message_id,
         content,
       )
-      { ..self, messages, last_assistant_message_id: message_id }
+      let model = { ..self, messages, last_assistant_message_id: message_id }
+      model.scroll_to_latest_if_following()
+      model
     }
     ThoughtMessageChunk(message_id, content) => {
       let messages = append_thought_chunk(
@@ -210,7 +244,9 @@ fn CodeWorkspace::apply_agent_event(
         message_id,
         content,
       )
-      { ..self, messages, last_thought_message_id: message_id }
+      let model = { ..self, messages, last_thought_message_id: message_id }
+      model.scroll_to_latest_if_following()
+      model
     }
     SessionModeStateChanged(modes) => {
       let merged_modes = match self.session_modes {
@@ -258,16 +294,23 @@ fn CodeWorkspace::apply_agent_event(
           rebuilt.push(m)
         }
       }
-      {
+      let model = {
         ..self,
         messages: rebuilt,
         progress_notice: None,
         last_user_message_id: None,
         last_assistant_message_id: None,
         last_thought_message_id: None,
+        follow_latest: true,
       }
+      model.scroll_to_latest()
+      model
     }
-    ProgressNotice(text) => { ..self, progress_notice: Some(text) }
+    ProgressNotice(text) => {
+      let model = { ..self, progress_notice: Some(text) }
+      model.scroll_to_latest_if_following()
+      model
+    }
     _ => {
       let (appended, is_terminal, err) = project_agent_event(event)
       let messages = Array::copy(self.messages)
@@ -285,10 +328,8 @@ fn CodeWorkspace::apply_agent_event(
       }
       let model = { ..self, messages, is_streaming, progress_notice, error }
       // Auto-scroll to bottom on new content.
-      if !appended.is_empty() {
-        // Estimate bottom offset; the scroll view will clamp.
-        let estimated = messages.length().to_double() * 64.0
-        model.scroll_state.smooth_scroll_to(x=0.0, y=estimated)
+      if !appended.is_empty() || is_terminal || self.is_streaming {
+        model.scroll_to_latest_if_following()
       }
       model
     }
@@ -308,6 +349,17 @@ fn CodeWorkspace::update(
     PromptChanged(value) => ({ ..self, prompt: value }, @moui.Effect::none())
     SteerChanged(value) => ({ ..self, steer_text: value }, @moui.Effect::none())
     ClearError => ({ ..self, error: None }, @moui.Effect::none())
+    MessageListScrolled(delta) =>
+      (
+        {
+          ..self,
+          follow_latest: code_follow_latest_after_scroll(
+            self.follow_latest,
+            delta,
+          ),
+        },
+        @moui.Effect::none(),
+      )
     ModelChanged(provider_id, model_id) =>
       // The shell intercepts `ModelChanged` to also dispatch the backend
       // `SetModel` with the provider's live connection; this arm keeps the
@@ -408,7 +460,9 @@ fn CodeWorkspace::update(
           is_streaming: true,
           progress_notice: Some("Starting agent turn..."),
           error: None,
+          follow_latest: true,
         }
+        model.scroll_to_latest()
         (
           model,
           backend.effect([SendTask(task)], event => {
@@ -426,7 +480,9 @@ fn CodeWorkspace::update(
           ..self,
           steer_text: "",
           progress_notice: Some("Sending steering note..."),
+          follow_latest: true,
         }
+        model.scroll_to_latest()
         (
           model,
           backend.effect([Steer(text)], event => {
@@ -444,6 +500,7 @@ fn CodeWorkspace::update(
         progress_notice: None,
         error: None,
         prompt: "",
+        follow_latest: true,
       }
       (
         model,
@@ -460,6 +517,7 @@ fn CodeWorkspace::update(
         progress_notice: None,
         error: None,
         active_session_id: Some(id),
+        follow_latest: true,
       }
       (
         model,

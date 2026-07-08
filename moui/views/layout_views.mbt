@@ -333,13 +333,18 @@ fn[Msg] scroll_container(
             (event.wheel_delta.x != 0.0 || event.wheel_delta.y != 0.0) {
             match (state, on_scroll) {
               (Some(state), Some(handler)) => {
-                state.scroll_to(
-                  x=0.0,
-                  y=max_scroll_offset(
-                    0.0,
-                    state.offset().y - event.wheel_delta.y,
-                  ),
+                let viewport_size = viewport.unwrap_or(ctx.frame.size)
+                let child_size = first_child_frame_size(
+                  ctx.child_frames,
+                  viewport_size,
                 )
+                let next = scroll_offset_after_wheel(
+                  state.offset(),
+                  event.wheel_delta,
+                  viewport_size,
+                  child_size,
+                )
+                state.scroll_to(x=next.x, y=next.y)
                 view_event_result(
                   changed=true,
                   activated=true,
@@ -349,13 +354,18 @@ fn[Msg] scroll_container(
                 )
               }
               (Some(state), None) => {
-                state.scroll_to(
-                  x=0.0,
-                  y=max_scroll_offset(
-                    0.0,
-                    state.offset().y - event.wheel_delta.y,
-                  ),
+                let viewport_size = viewport.unwrap_or(ctx.frame.size)
+                let child_size = first_child_frame_size(
+                  ctx.child_frames,
+                  viewport_size,
                 )
+                let next = scroll_offset_after_wheel(
+                  state.offset(),
+                  event.wheel_delta,
+                  viewport_size,
+                  child_size,
+                )
+                state.scroll_to(x=next.x, y=next.y)
                 view_event_result(
                   changed=true,
                   captured=true,
@@ -491,21 +501,53 @@ fn scroll_child_frame(
   viewport~ : @core.Size,
   child_size~ : @core.Size,
 ) -> @core.Rect {
+  let clamped = scroll_clamp_offset(offset, viewport, child_size)
   @core.Rect::new(
-    x=frame.origin.x - offset.x,
-    y=frame.origin.y - offset.y,
+    x=frame.origin.x - clamped.x,
+    y=frame.origin.y - clamped.y,
     width=view_max_double(viewport.width, child_size.width),
     height=view_max_double(viewport.height, child_size.height),
   )
 }
 
 ///|
-fn max_scroll_offset(min : Double, value : Double) -> Double {
-  if value < min {
-    min
-  } else {
-    value
+fn first_child_frame_size(
+  frames : Array[@core.Rect],
+  fallback : @core.Size,
+) -> @core.Size {
+  match frames.get(0) {
+    Some(frame) => frame.size
+    None => fallback
   }
+}
+
+///|
+fn scroll_offset_after_wheel(
+  current : @core.Point,
+  delta : @core.Point,
+  viewport : @core.Size,
+  child_size : @core.Size,
+) -> @core.Point {
+  let clamped = scroll_clamp_offset(current, viewport, child_size)
+  scroll_clamp_offset(
+    @core.Point::new(x=clamped.x - delta.x, y=clamped.y - delta.y),
+    viewport,
+    child_size,
+  )
+}
+
+///|
+fn scroll_clamp_offset(
+  offset : @core.Point,
+  viewport : @core.Size,
+  child_size : @core.Size,
+) -> @core.Point {
+  let max_x = view_max_double(0.0, child_size.width - viewport.width)
+  let max_y = view_max_double(0.0, child_size.height - viewport.height)
+  @core.Point::new(
+    x=view_min_double(max_x, view_max_double(0.0, offset.x)),
+    y=view_min_double(max_y, view_max_double(0.0, offset.y)),
+  )
 }
 
 ///|
