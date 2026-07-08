@@ -34,6 +34,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Set up MoonBit
+        uses: ./.github/actions/setup-moonbit
+
+      - name: Install dependencies
+        run: |
+          moon version --all
+          sh scripts/ci-moon-update.sh
+
       - name: Validate smoke gate catalog
         run: |
           node --check scripts/smoke-check.mjs
