@@ -74,6 +74,12 @@ fn showcase_sections() -> Array[ShowcaseSection] {
       group: "Start",
     },
     {
+      route: "examples",
+      title: "Examples",
+      summary: "Counter and Todo reusable patterns",
+      group: "Start",
+    },
+    {
       route: "text-media",
       title: "Text & Media",
       summary: "Text, images, rich text, Markdown",
@@ -128,6 +134,43 @@ fn showcase_sections() -> Array[ShowcaseSection] {
       group: "Runtime",
     },
   ]
+}
+
+///|
+fn showcase_sidebar_route(route : String) -> String {
+  if showcase_route_is_diagnostics_child(route) {
+    "diagnostics"
+  } else {
+    route
+  }
+}
+
+///|
+fn showcase_route_is_diagnostics_child(route : String) -> Bool {
+  route == "interaction-lab" ||
+  route == "text-diagnostics" ||
+  route == "advanced-rendering"
+}
+
+///|
+fn showcase_hidden_route_title(route : String) -> String? {
+  if route == "interaction-lab" {
+    Some("Interaction Lab")
+  } else if route == "text-diagnostics" {
+    Some("Text Diagnostics")
+  } else if route == "advanced-rendering" {
+    Some("Advanced Rendering")
+  } else {
+    None
+  }
+}
+
+///|
+fn showcase_route_eyebrow(route : String) -> String {
+  match showcase_hidden_route_title(route) {
+    Some(title) => "Diagnostics / " + title
+    None => ""
+  }
 }
 
 ///|
@@ -223,7 +266,7 @@ fn ShowcaseModel::sidebar(
         self.sidebar_item(
           theme,
           section,
-          self.selected_section == section.route,
+          showcase_sidebar_route(self.selected_section) == section.route,
           list_width,
         ),
       )

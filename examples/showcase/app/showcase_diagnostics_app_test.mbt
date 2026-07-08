@@ -46,11 +46,12 @@ test "showcase navigates to system gallery sections" {
   assert_true(has_text(diagnostics_commands, "Interaction Lab"))
   assert_true(has_text(diagnostics_commands, "Text Diagnostics"))
   assert_true(has_text(diagnostics_commands, "Advanced Rendering"))
-  assert_true(has_text(diagnostics_commands, "Examples"))
+  assert_false(has_text(diagnostics_commands, "Counter Preview"))
   let runtime = @app.ShowcaseModel::new()
     .update(@app.ShowcaseMsg::SelectSection("advanced-rendering"))
     .runtime(width=960.0, height=620.0)
   let advanced_commands = runtime.draw_commands()
+  assert_true(has_text(advanced_commands, "Diagnostics / Advanced Rendering"))
   assert_true(has_text(advanced_commands, "Advanced Rendering"))
   assert_true(has_text(advanced_commands, "Layer + Blend"))
   assert_true(has_text(advanced_commands, "Filter"))
@@ -76,6 +77,7 @@ test "showcase navigates to system gallery sections" {
     .update(@app.ShowcaseMsg::SelectSection("text-diagnostics"))
     .runtime(width=960.0, height=620.0)
     .draw_commands()
+  assert_true(has_text(text_commands, "Diagnostics / Text Diagnostics"))
   assert_true(has_text(text_commands, "Text Diagnostics"))
   assert_true(has_text(text_commands, "CJK"))
   assert_true(has_text(text_commands, "RTL / Bidi"))
@@ -85,6 +87,7 @@ test "showcase navigates to system gallery sections" {
     .update(@app.ShowcaseMsg::SelectSection("interaction-lab"))
     .runtime(width=960.0, height=620.0)
     .draw_commands()
+  assert_true(has_text(interaction_commands, "Diagnostics / Interaction Lab"))
   assert_true(has_text(interaction_commands, "Interaction Lab"))
   assert_true(has_text(interaction_commands, "Tooltip"))
   assert_true(has_text(interaction_commands, "File Drop"))
@@ -150,6 +153,17 @@ test "showcase navigates to system gallery sections" {
   assert_true(has_text(feedback_commands, "Disclosure Details"))
   assert_true(has_text(feedback_commands, "Inline Disclosure"))
   assert_true(has_text(feedback_commands, "Collapsible Panel"))
+  let feedback_runtime = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("feedback"))
+    .runtime(width=980.0, height=720.0)
+  click_text(feedback_runtime, "Dismiss")
+  let dismissed_feedback = feedback_runtime.draw_commands()
+  assert_true(
+    has_text(
+      dismissed_feedback, "ToastQueue helper: 1 active items; app timers own ttl",
+    ),
+  )
+  assert_false(has_text(dismissed_feedback, "Workspace saved"))
   let navigation_commands = @app.ShowcaseModel::new()
     .update(@app.ShowcaseMsg::SelectSection("navigation"))
     .runtime(width=980.0, height=720.0)
@@ -230,6 +244,34 @@ test "showcase advanced rendering emits low level draw commands" {
       is @core.DrawCommand::PushLayer({ mask: @core.LayerMask::NoMask, .. })
     }),
   )
+  let wide_size = @geometry.Size::new(width=1400.0, height=760.0)
+  let wide_commands = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("advanced-rendering"))
+    .runtime(width=wide_size.width, height=wide_size.height)
+    .draw_commands()
+  guard text_frame(wide_commands, "Renderer Smoke") is Some(first_card) else {
+    fail("expected first advanced rendering card")
+  }
+  guard text_frame(wide_commands, "Transform Pixel") is Some(second_card) else {
+    fail("expected second advanced rendering card")
+  }
+  guard text_frame(wide_commands, "Layer + Blend") is Some(third_card) else {
+    fail("expected third advanced rendering card")
+  }
+  assert_true(second_card.origin.x > first_card.origin.x)
+  assert_true(third_card.origin.x > second_card.origin.x)
+  assert_true(text_within(wide_commands, "Layer + Blend", wide_size))
+  let compact_commands = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("advanced-rendering"))
+    .runtime(width=760.0, height=620.0)
+    .draw_commands()
+  guard text_frame(compact_commands, "Renderer Smoke") is Some(compact_first) else {
+    fail("expected compact first advanced rendering card")
+  }
+  guard text_frame(compact_commands, "Transform Pixel") is Some(compact_second) else {
+    fail("expected compact second advanced rendering card")
+  }
+  assert_true(compact_second.origin.y > compact_first.origin.y)
 }
 
 ///|
