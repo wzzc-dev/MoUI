@@ -42,13 +42,15 @@ pub(all) suberror WebGpuHostError {
 } derive(Eq, ToJson, @debug.Debug)
 
 // Types and methods
-pub(all) struct WebGpuHostAdapterInfo {
-  renderer : @render.RendererBackendInfo
-  surface_contract : @render.WgpuSurfaceContract
-  imports : WebGpuHostImportInfo
-  capabilities : WebGpuHostCapabilities
-  description : String
+pub struct WebGpuHostAdapterInfo {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn WebGpuHostAdapterInfo::capabilities(Self) -> WebGpuHostCapabilities
+pub fn WebGpuHostAdapterInfo::description(Self) -> String
+pub fn WebGpuHostAdapterInfo::imports(Self) -> WebGpuHostImportInfo
+pub fn WebGpuHostAdapterInfo::new(renderer~ : @render.RendererBackendInfo, surface_contract~ : @render.WgpuSurfaceContract, imports~ : WebGpuHostImportInfo, capabilities~ : WebGpuHostCapabilities, description? : String) -> Self
+pub fn WebGpuHostAdapterInfo::renderer(Self) -> @render.RendererBackendInfo
+pub fn WebGpuHostAdapterInfo::surface_contract(Self) -> @render.WgpuSurfaceContract
 
 pub(all) enum WebGpuHostCall {
   BeginFrame(@core.Size)
@@ -79,45 +81,46 @@ pub(all) enum WebGpuHostCall {
   Present
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct WebGpuHostCapabilities {
-  webgpu_available : Bool
-  adapter_ready : Bool
-  can_render : Bool
+pub struct WebGpuHostCapabilities {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn WebGpuHostCapabilities::adapter_ready(Self) -> Bool
+pub fn WebGpuHostCapabilities::can_render(Self) -> Bool
+pub fn WebGpuHostCapabilities::new(webgpu_available? : Bool, adapter_ready? : Bool, can_render? : Bool) -> Self
+pub fn WebGpuHostCapabilities::webgpu_available(Self) -> Bool
 
-pub(all) struct WebGpuHostImportInfo {
-  import_module : String
-  target : String
-  surface_resource : String
-  renderer_resource : String
-  description : String
+pub struct WebGpuHostImportInfo {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn WebGpuHostImportInfo::description(Self) -> String
+pub fn WebGpuHostImportInfo::import_module(Self) -> String
+pub fn WebGpuHostImportInfo::new(import_module~ : String, target~ : String, surface_resource~ : String, renderer_resource~ : String, description? : String) -> Self
+pub fn WebGpuHostImportInfo::renderer_resource(Self) -> String
+pub fn WebGpuHostImportInfo::surface_resource(Self) -> String
+pub fn WebGpuHostImportInfo::target(Self) -> String
 
-pub(all) struct WebGpuHostRendererPort {
-  capabilities : () -> WebGpuHostCapabilities raise WebGpuHostError
-  create_surface : (String, @render.RendererSurfaceMetrics) -> WebGpuHostSurface raise WebGpuHostError
-  create_renderer : (WebGpuHostSurface) -> Unit raise WebGpuHostError
-  resize : (@render.RendererSurfaceMetrics) -> Unit raise WebGpuHostError
-  measure_text : (@core.TextLayoutInput) -> @core.TextLayoutResult
-  register_font_data : (@core.FontFamily, Bytes) -> Unit
-  image_resource : (String) -> @render.ImageResourceRecord?
-  submit : (Array[WebGpuHostCall]) -> Unit raise WebGpuHostError
-  dispose : () -> Unit
+pub struct WebGpuHostRendererPort {
+  // private fields
 }
+pub fn WebGpuHostRendererPort::capabilities(Self) -> WebGpuHostCapabilities raise WebGpuHostError
+pub fn WebGpuHostRendererPort::create_renderer(Self, WebGpuHostSurface) -> Unit raise WebGpuHostError
+pub fn WebGpuHostRendererPort::create_surface(Self, String, @render.RendererSurfaceMetrics) -> WebGpuHostSurface raise WebGpuHostError
+pub fn WebGpuHostRendererPort::dispose(Self) -> Unit
+pub fn WebGpuHostRendererPort::image_resource(Self, String) -> @render.ImageResourceRecord?
+pub fn WebGpuHostRendererPort::measure_text(Self, @core.TextLayoutInput) -> @core.TextLayoutResult
+pub fn WebGpuHostRendererPort::new(capabilities~ : () -> WebGpuHostCapabilities raise WebGpuHostError, create_surface~ : (String, @render.RendererSurfaceMetrics) -> WebGpuHostSurface raise WebGpuHostError, create_renderer~ : (WebGpuHostSurface) -> Unit raise WebGpuHostError, resize~ : (@render.RendererSurfaceMetrics) -> Unit raise WebGpuHostError, measure_text~ : (@core.TextLayoutInput) -> @core.TextLayoutResult, register_font_data~ : (@core.FontFamily, Bytes) -> Unit, image_resource~ : (String) -> @render.ImageResourceRecord?, submit~ : (Array[WebGpuHostCall]) -> Unit raise WebGpuHostError, dispose~ : () -> Unit) -> Self
+pub fn WebGpuHostRendererPort::register_font_data(Self, @core.FontFamily, Bytes) -> Unit
+pub fn WebGpuHostRendererPort::resize(Self, @render.RendererSurfaceMetrics) -> Unit raise WebGpuHostError
+pub fn WebGpuHostRendererPort::submit(Self, Array[WebGpuHostCall]) -> Unit raise WebGpuHostError
 
-pub(all) struct WebGpuHostSurface {
-  canvas_id : String
-  mut metrics : @render.RendererSurfaceMetrics
+pub struct WebGpuHostSurface {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn WebGpuHostSurface::canvas_id(Self) -> String
+pub fn WebGpuHostSurface::metrics(Self) -> @render.RendererSurfaceMetrics
+pub fn WebGpuHostSurface::new(canvas_id~ : String, metrics~ : @render.RendererSurfaceMetrics) -> Self
 
-pub(all) struct WebGpuWasmRenderer {
-  surface : WebGpuHostSurface
-  port : WebGpuHostRendererPort
-  mut size : @core.Size
-  mut present_count : Int
-  mut last_calls : Array[WebGpuHostCall]
-  mut last_fallback_plan : @render.RendererCommandPlan
-  image_lifecycle : @render.ImageResourceLifecycle
+pub struct WebGpuWasmRenderer {
   // private fields
 }
 pub fn WebGpuWasmRenderer::apply_image_resource_load_completion(Self, @render.ImageResourceLoadCompletion) -> @render.ImageResourceSnapshot
@@ -132,6 +135,7 @@ pub fn WebGpuWasmRenderer::present_count(Self) -> Int
 pub fn WebGpuWasmRenderer::render(Self, Array[@core.DrawCommand]) -> Unit raise WebGpuHostError
 pub fn WebGpuWasmRenderer::render_frame(Self, @core.DrawFrame) -> @render.RenderFrameResult
 pub fn WebGpuWasmRenderer::resize(Self, @render.RendererSurfaceMetrics) -> Unit raise WebGpuHostError
+pub fn WebGpuWasmRenderer::surface(Self) -> WebGpuHostSurface
 pub fn WebGpuWasmRenderer::text_system(Self) -> @core.TextSystem
 
 // Type aliases

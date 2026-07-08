@@ -124,7 +124,7 @@ fn append_path_item(
   }
   let mesh = @render.tessellate_path(path)
   let start = vertices.length()
-  for vertex in mesh.vertices {
+  for vertex in mesh.vertices() {
     push_path_visual_vertex(vertices, vertex, state, size)
   }
   let count = vertices.length() - start
@@ -287,30 +287,33 @@ fn push_path_visual_vertex(
   state : NativePaintState,
   size : @core.Size,
 ) -> Unit {
-  let transformed = transform_point(state.transform, vertex.x, vertex.y)
+  let components = vertex.components()
+  let x = components[0]
+  let y = components[1]
+  let transformed = transform_point(state.transform, x, y)
   vertices.push({
     x: visual_pixel_x_to_ndc(transformed.x, size.width),
     y: visual_pixel_y_to_ndc(transformed.y, size.height),
-    local_x: vertex.x,
-    local_y: vertex.y,
+    local_x: x,
+    local_y: y,
     width: 0.0,
     height: 0.0,
     radius: 0.0,
     mode: visual_mode_path,
     stroke_width: 0.0,
-    blur_radius: vertex.brush_kind,
-    start_x: vertex.start_x,
-    start_y: vertex.start_y,
-    end_x: vertex.end_x,
-    end_y: vertex.end_y,
-    r0: vertex.r,
-    g0: vertex.g,
-    b0: vertex.b,
-    a0: vertex.a * state.opacity,
-    r1: vertex.r1,
-    g1: vertex.g1,
-    b1: vertex.b1,
-    a1: vertex.a1 * state.opacity,
+    blur_radius: components[2],
+    start_x: components[3],
+    start_y: components[4],
+    end_x: components[5],
+    end_y: components[6],
+    r0: components[7],
+    g0: components[8],
+    b0: components[9],
+    a0: components[10] * state.opacity,
+    r1: components[11],
+    g1: components[12],
+    b1: components[13],
+    a1: components[14] * state.opacity,
   })
 }
 

@@ -198,8 +198,8 @@ test "cosmic text provider skips whitespace glyphs without dropping words" {
     match cache.layout_for_run(run, 1.0) {
       Some(layout) => {
         inspect(whitespace_glyph_count > 0, content="true")
-        inspect(layout.glyphs.length() > 0, content="true")
-        inspect(layout.glyphs.length() < raw_glyph_count, content="true")
+        inspect(layout.glyphs().length() > 0, content="true")
+        inspect(layout.glyphs().length() < raw_glyph_count, content="true")
       }
       None => fail("expected cosmic layout for text with spaces")
     }
@@ -234,16 +234,17 @@ test "cosmic text rasterizes lowercase and digits with valid glyph bitmaps" {
         match cache.raster_cosmic_glyph(fallback) {
           Some(raster) => {
             assert_true(
-              raster.format == @wgpu_renderer.NativeRasterGlyphFormat::AlphaMask,
+              raster.format() ==
+              @wgpu_renderer.NativeRasterGlyphFormat::AlphaMask,
             )
             match
               cosmic_text_char_at_index(
                 run.text,
                 cosmic_text_utf16_offset_to_char_index(run.text, glyph.start),
               ) {
-              Some('A') => upper_height = raster.height
-              Some('a') => letter_height = raster.height
-              Some('1') => digit_height = raster.height
+              Some('A') => upper_height = raster.height()
+              Some('a') => letter_height = raster.height()
+              Some('1') => digit_height = raster.height()
               _ => ()
             }
           }
@@ -286,7 +287,7 @@ test "cosmic text keeps cjk glyphs near requested font size" {
           physical.cache_key,
         )
         match cache.raster_cosmic_glyph(fallback) {
-          Some(raster) => cjk_height = raster.height
+          Some(raster) => cjk_height = raster.height()
           None => ()
         }
       }
@@ -400,10 +401,10 @@ test "cosmic explicit emoji measure folds zwj interior carets" {
         @core.TextLayoutInput::new(text="\u{1F469}\u{200D}\u{1F4BB}", font~),
       ) {
       Some(layout) => {
-        inspect(layout.caret_positions.length(), content="4")
+        inspect(layout.caret_positions().length(), content="4")
         inspect(
-          layout.caret_positions[1] == layout.caret_positions[2] &&
-          layout.caret_positions[2] == layout.caret_positions[3],
+          layout.caret_positions()[1] == layout.caret_positions()[2] &&
+          layout.caret_positions()[2] == layout.caret_positions()[3],
           content="true",
         )
       }
@@ -501,16 +502,16 @@ fn assert_cosmic_run_layout_contract_sample(text : String) -> Unit raise {
   )
   match cache.layout_for_run(run, 1.0) {
     Some(layout) => {
-      inspect(layout.size.width > 0.0, content="true")
-      inspect(layout.size.height > 0.0, content="true")
-      inspect(layout.baseline > 0.0, content="true")
-      inspect(layout.glyphs.length() > 0, content="true")
+      inspect(layout.size().width > 0.0, content="true")
+      inspect(layout.size().height > 0.0, content="true")
+      inspect(layout.baseline() > 0.0, content="true")
+      inspect(layout.glyphs().length() > 0, content="true")
       inspect(
-        layout.caret_positions.length(),
+        layout.caret_positions().length(),
         content="\{text.to_array().length() + 1}",
       )
       inspect(
-        cosmic_test_carets_are_monotonic(layout.caret_positions),
+        cosmic_test_carets_are_monotonic(layout.caret_positions()),
         content="true",
       )
     }

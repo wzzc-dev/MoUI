@@ -77,11 +77,13 @@ test "sun renderer presents rect pixels" {
   inspect(renderer.present_count(), content="1")
   match presented.val {
     Some(frame) => {
-      inspect(frame.width, content="4")
-      inspect(frame.height, content="4")
-      inspect(frame.bytes.length(), content="64")
-      assert_true(frame.pixels[(1 * frame.width + 1) * 4 + 2].to_int() > 200)
-      assert_true(frame.pixels[3].to_int() == 255)
+      inspect(frame.width(), content="4")
+      inspect(frame.height(), content="4")
+      inspect(frame.bytes().length(), content="64")
+      assert_true(
+        frame.pixels()[(1 * frame.width() + 1) * 4 + 2].to_int() > 200,
+      )
+      assert_true(frame.pixels()[3].to_int() == 255)
     }
     None => fail("expected Sun frame")
   }
@@ -120,7 +122,7 @@ test "sun renderer applies multiply blend mode in layer compositing" {
   match presented.val {
     Some(frame) => {
       // With Multiply blend: 200*128/255 ≈ 100, not 128 (SourceOver would overwrite)
-      let r = frame.pixels[0].to_int()
+      let r = frame.pixels()[0].to_int()
       assert_true(r > 85 && r < 115)
       // If it were SourceOver, r would be ~128
       assert_true(r < 120)
@@ -153,10 +155,10 @@ test "sun renderer applies layer spec opacity at compositing" {
   ])
   match presented.val {
     Some(frame) => {
-      let idx = (2 * frame.width + 2) * 4
-      assert_true(frame.pixels[idx].to_int() > 240)
-      assert_true(frame.pixels[idx + 1].to_int() > 100)
-      assert_true(frame.pixels[idx + 1].to_int() < 200)
+      let idx = (2 * frame.width() + 2) * 4
+      assert_true(frame.pixels()[idx].to_int() > 240)
+      assert_true(frame.pixels()[idx + 1].to_int() > 100)
+      assert_true(frame.pixels()[idx + 1].to_int() < 200)
       inspect(renderer.unsupported_command_count(), content="0")
     }
     None => fail("expected Sun frame")
@@ -193,12 +195,12 @@ test "sun renderer applies rectangular layer mask" {
   ])
   match presented.val {
     Some(frame) => {
-      let inside = (1 * frame.width + 1) * 4
+      let inside = (1 * frame.width() + 1) * 4
       let outside = 0
-      assert_true(frame.pixels[inside + 2].to_int() > 200)
-      assert_true(frame.pixels[outside].to_int() > 240)
-      assert_true(frame.pixels[outside + 1].to_int() > 240)
-      assert_true(frame.pixels[outside + 2].to_int() > 240)
+      assert_true(frame.pixels()[inside + 2].to_int() > 200)
+      assert_true(frame.pixels()[outside].to_int() > 240)
+      assert_true(frame.pixels()[outside + 1].to_int() > 240)
+      assert_true(frame.pixels()[outside + 2].to_int() > 240)
       inspect(renderer.unsupported_command_count(), content="0")
     }
     None => fail("expected Sun frame")
@@ -235,11 +237,11 @@ test "sun renderer applies rounded layer mask corners" {
   ])
   match presented.val {
     Some(frame) => {
-      let corner = (2 * frame.width + 2) * 4
-      let center = (8 * frame.width + 8) * 4
-      assert_true(frame.pixels[corner].to_int() > 240)
-      assert_true(frame.pixels[corner + 1].to_int() > 240)
-      assert_true(frame.pixels[center + 2].to_int() > 200)
+      let corner = (2 * frame.width() + 2) * 4
+      let center = (8 * frame.width() + 8) * 4
+      assert_true(frame.pixels()[corner].to_int() > 240)
+      assert_true(frame.pixels()[corner + 1].to_int() > 240)
+      assert_true(frame.pixels()[center + 2].to_int() > 200)
       inspect(renderer.unsupported_command_count(), content="0")
     }
     None => fail("expected Sun frame")
@@ -274,11 +276,11 @@ test "sun renderer draws text without unsupported diagnostic" {
   match presented.val {
     Some(frame) => {
       let mut dark_pixels = 0
-      for index in 0..<(frame.width * frame.height) {
+      for index in 0..<(frame.width() * frame.height()) {
         let offset = index * 4
-        if frame.pixels[offset].to_int() < 64 &&
-          frame.pixels[offset + 1].to_int() < 64 &&
-          frame.pixels[offset + 2].to_int() < 64 {
+        if frame.pixels()[offset].to_int() < 64 &&
+          frame.pixels()[offset + 1].to_int() < 64 &&
+          frame.pixels()[offset + 2].to_int() < 64 {
           dark_pixels = dark_pixels + 1
         }
       }
@@ -314,13 +316,13 @@ test "sun renderer works at 2x scale factor" {
   match presented.val {
     Some(frame) => {
       // At 2x scale, canvas is 8x8 physical pixels
-      inspect(frame.width, content="8")
-      inspect(frame.height, content="8")
-      inspect(frame.bytes.length(), content="256")
+      inspect(frame.width(), content="8")
+      inspect(frame.height(), content="8")
+      inspect(frame.bytes().length(), content="256")
       // Logical (1,1) mapped to physical (2,2), blue channel should be > 200
-      let blue_byte = frame.pixels[(2 * frame.width + 2) * 4 + 2]
+      let blue_byte = frame.pixels()[(2 * frame.width() + 2) * 4 + 2]
       assert_true(blue_byte.to_int() > 200)
-      assert_true(frame.pixels[3].to_int() == 255)
+      assert_true(frame.pixels()[3].to_int() == 255)
     }
     None => fail("expected Sun frame")
   }
@@ -356,10 +358,10 @@ test "sun renderer renders linear gradient pixels" {
   ])
   match presented.val {
     Some(frame) => {
-      let left_r = frame.pixels[0].to_int()
-      let right_r = frame.pixels[7 * 4].to_int()
-      let left_b = frame.pixels[2].to_int()
-      let right_b = frame.pixels[7 * 4 + 2].to_int()
+      let left_r = frame.pixels()[0].to_int()
+      let right_r = frame.pixels()[7 * 4].to_int()
+      let left_b = frame.pixels()[2].to_int()
+      let right_b = frame.pixels()[7 * 4 + 2].to_int()
       assert_true(left_r > right_r)
       assert_true(right_b > left_b)
     }
@@ -613,10 +615,10 @@ test "sun renderer rounded clip + blur integration" {
   match presented.val {
     Some(frame) => {
       // Center should be red (inside rounded clip, blurred)
-      let center_r = frame.pixels[(8 * 16 + 8) * 4].to_int()
+      let center_r = frame.pixels()[(8 * 16 + 8) * 4].to_int()
       assert_true(center_r > 200)
       // Corner should be white (outside rounded clip)
-      let corner_r = frame.pixels[(0 * 16 + 0) * 4].to_int()
+      let corner_r = frame.pixels()[(0 * 16 + 0) * 4].to_int()
       assert_true(corner_r > 240)
       inspect(renderer.unsupported_command_count(), content="0")
     }
@@ -653,7 +655,7 @@ test "sun renderer nested layers with opacity compositing" {
   match presented.val {
     Some(frame) => {
       // With 50% opacity red over white, center should show blended color
-      let center_g = frame.pixels[(4 * 8 + 4) * 4 + 1].to_int()
+      let center_g = frame.pixels()[(4 * 8 + 4) * 4 + 1].to_int()
       // Green channel should be ~127 (white blended through 50% opacity)
       assert_true(center_g > 100)
       assert_true(center_g < 200)
@@ -690,9 +692,9 @@ test "sun renderer triple-pass blur produces smooth falloff" {
       // Three-pass blur should produce a smooth gradient at the boundary.
       // Check that the boundary pixel at x=8 is a blend of red and white,
       // not a sharp edge (neither pure red nor pure white).
-      let far_left_g = frame.pixels[(4 * 16 + 2) * 4 + 1].to_int()
-      let boundary_g = frame.pixels[(4 * 16 + 8) * 4 + 1].to_int()
-      let far_right_g = frame.pixels[(4 * 16 + 14) * 4 + 1].to_int()
+      let far_left_g = frame.pixels()[(4 * 16 + 2) * 4 + 1].to_int()
+      let boundary_g = frame.pixels()[(4 * 16 + 8) * 4 + 1].to_int()
+      let far_right_g = frame.pixels()[(4 * 16 + 14) * 4 + 1].to_int()
       // Far left should be mostly red (low green)
       assert_true(far_left_g < 50)
       // Boundary should be a blend (green channel between 0 and 255)
@@ -733,9 +735,9 @@ test "sun renderer vignette shader paints radial fallback" {
     Some(frame) => {
       // Vignette follows Skia's radial fallback-color shader:
       // center uses the fallback color and corners clamp to black.
-      let center_r = frame.pixels[(8 * 16 + 8) * 4].to_int()
+      let center_r = frame.pixels()[(8 * 16 + 8) * 4].to_int()
       assert_true(center_r > 200)
-      let corner_r = frame.pixels[(0 * 16 + 0) * 4].to_int()
+      let corner_r = frame.pixels()[(0 * 16 + 0) * 4].to_int()
       assert_true(corner_r < 80)
       assert_true(center_r > corner_r)
       inspect(renderer.unsupported_command_count(), content="0")
@@ -771,7 +773,7 @@ test "sun renderer brightness filter applies via pixmap compositing" {
     Some(frame) => {
       // Center pixel should be brightened (0.5 * 2.0 = 1.0 = 255)
       let idx = (2 * 4 + 2) * 4
-      let r = frame.pixels[idx].to_int()
+      let r = frame.pixels()[idx].to_int()
       assert_true(r > 240)
       inspect(renderer.unsupported_command_count(), content="0")
     }
@@ -810,16 +812,16 @@ test "sun renderer blur filter softens edge" {
     Some(frame) => {
       // Far-left pixel should be mostly red
       let left_idx = (4 * 16 + 1) * 4
-      let left_r = frame.pixels[left_idx].to_int()
+      let left_r = frame.pixels()[left_idx].to_int()
       assert_true(left_r > 200)
       // Far-right pixel should be mostly blue
       let right_idx = (4 * 16 + 14) * 4
-      let right_b = frame.pixels[right_idx + 2].to_int()
+      let right_b = frame.pixels()[right_idx + 2].to_int()
       assert_true(right_b > 200)
       // Boundary pixel (x=8) should be a blend of red and blue, not pure red or pure blue
       let bound_idx = (4 * 16 + 8) * 4
-      let bound_r = frame.pixels[bound_idx].to_int()
-      let bound_b = frame.pixels[bound_idx + 2].to_int()
+      let bound_r = frame.pixels()[bound_idx].to_int()
+      let bound_b = frame.pixels()[bound_idx + 2].to_int()
       // After blur, boundary should have both red and blue components
       assert_true(bound_r > 50)
       assert_true(bound_b > 50)
@@ -861,8 +863,8 @@ test "sun renderer rounded clip draws center pixel" {
     Some(frame) => {
       // center pixel (8,8) should be blue
       let idx = (8 * 16 + 8) * 4
-      assert_true(frame.pixels[idx + 2].to_int() > 200) // blue channel
-      assert_true(frame.pixels[idx + 3].to_int() > 200) // alpha
+      assert_true(frame.pixels()[idx + 2].to_int() > 200) // blue channel
+      assert_true(frame.pixels()[idx + 3].to_int() > 200) // alpha
     }
     None => fail("expected Sun frame")
   }
@@ -901,7 +903,7 @@ test "sun renderer rounded clip masks corner pixel" {
       // since the radius is 4, the corner is well inside the rounding region
       let idx = (2 * 16 + 2) * 4
       // background is white (255,255,255,255), corner pixel should be mostly white
-      let r = frame.pixels[idx].to_int()
+      let r = frame.pixels()[idx].to_int()
       assert_true(r > 200) // still mostly white
     }
     None => fail("expected Sun frame")
@@ -939,10 +941,10 @@ test "sun renderer rounded clip with zero radius acts as rect clip" {
     Some(frame) => {
       // pixel inside the clip rect should be blue
       let inside_idx = (4 * 8 + 4) * 4
-      assert_true(frame.pixels[inside_idx + 2].to_int() > 200)
+      assert_true(frame.pixels()[inside_idx + 2].to_int() > 200)
       // pixel outside the clip rect should be white
       let outside_idx = (0 * 8 + 0) * 4
-      assert_true(frame.pixels[outside_idx].to_int() > 200) // red channel of white
+      assert_true(frame.pixels()[outside_idx].to_int() > 200) // red channel of white
     }
     None => fail("expected Sun frame")
   }
@@ -1071,7 +1073,7 @@ test "sun renderer cached layer renders and caches on first draw" {
   inspect(renderer.unsupported_command_count(), content="0")
   match presented.val {
     Some(frame) => {
-      let r = frame.pixels[0].to_int()
+      let r = frame.pixels()[0].to_int()
       assert_true(r > 200)
     }
     None => fail("expected Sun frame")
@@ -1267,12 +1269,12 @@ test "sun renderer DrawPath fills a rect path" {
     Some(frame) => {
       // Center of path (8,8) should be red
       let center = (8 * 16 + 8) * 4
-      assert_true(frame.pixels[center].to_int() > 200)
-      assert_true(frame.pixels[center + 3].to_int() == 255)
+      assert_true(frame.pixels()[center].to_int() > 200)
+      assert_true(frame.pixels()[center + 3].to_int() == 255)
       // Corner outside path (0,0) should be white
-      assert_true(frame.pixels[0].to_int() > 200)
-      assert_true(frame.pixels[1].to_int() > 200)
-      assert_true(frame.pixels[2].to_int() > 200)
+      assert_true(frame.pixels()[0].to_int() > 200)
+      assert_true(frame.pixels()[1].to_int() > 200)
+      assert_true(frame.pixels()[2].to_int() > 200)
     }
     None => fail("expected Sun frame")
   }
@@ -1311,12 +1313,12 @@ test "sun renderer DrawPath strokes a rect path" {
     Some(frame) => {
       // Edge pixel at (4,4) should be blue (on the stroke)
       let edge = (4 * 16 + 4) * 4
-      assert_true(frame.pixels[edge + 2].to_int() > 200)
+      assert_true(frame.pixels()[edge + 2].to_int() > 200)
       // Interior at (8,8) should remain white (no fill)
       let center = (8 * 16 + 8) * 4
-      assert_true(frame.pixels[center].to_int() > 200)
-      assert_true(frame.pixels[center + 1].to_int() > 200)
-      assert_true(frame.pixels[center + 2].to_int() > 200)
+      assert_true(frame.pixels()[center].to_int() > 200)
+      assert_true(frame.pixels()[center + 1].to_int() > 200)
+      assert_true(frame.pixels()[center + 2].to_int() > 200)
     }
     None => fail("expected Sun frame")
   }
@@ -1355,11 +1357,11 @@ test "sun renderer DrawShadow renders shadow behind rect" {
       // A pixel in the shadow area should have some darkening
       // (16,16) is roughly at the center-bottom of the rect
       let px = (16 * 32 + 16) * 4
-      let r = frame.pixels[px].to_int()
+      let r = frame.pixels()[px].to_int()
       // Should be darker than pure white (255)
       assert_true(r < 230)
       // Far corner (0,0) should be mostly white (beyond shadow reach)
-      assert_true(frame.pixels[0].to_int() > 240)
+      assert_true(frame.pixels()[0].to_int() > 240)
     }
     None => fail("expected Sun frame")
   }
@@ -1390,9 +1392,9 @@ test "sun renderer saturate filter desaturates red to gray" {
   match presented.val {
     Some(frame) => {
       let idx = (2 * 4 + 2) * 4
-      let r = frame.pixels[idx].to_int()
-      let g = frame.pixels[idx + 1].to_int()
-      let b = frame.pixels[idx + 2].to_int()
+      let r = frame.pixels()[idx].to_int()
+      let g = frame.pixels()[idx + 1].to_int()
+      let b = frame.pixels()[idx + 2].to_int()
       // Desaturated red should be gray-ish: all channels near luminance ~77
       assert_true(r > 60 && r < 95)
       assert_true(g > 60 && g < 95)
@@ -1431,7 +1433,7 @@ test "sun renderer contrast filter increases contrast" {
   match presented.val {
     Some(frame) => {
       let idx = (2 * 4 + 2) * 4
-      let r = frame.pixels[idx].to_int()
+      let r = frame.pixels()[idx].to_int()
       // Light gray (178) with contrast(2.0): (178-128)*2+128 = 228
       assert_true(r > 210)
       inspect(renderer.unsupported_command_count(), content="0")
@@ -1473,11 +1475,11 @@ test "sun renderer checker shader alternates tiles" {
     Some(frame) => {
       // Tile (0,0): row=0,col=0, (0+0)%2==0 → c1=(200,200,200)
       let c1_idx = (1 * 8 + 1) * 4
-      let c1 = frame.pixels[c1_idx].to_int()
+      let c1 = frame.pixels()[c1_idx].to_int()
       assert_true(c1 > 190 && c1 < 210)
       // Tile (0,1): row=0,col=1, (0+1)%2==1 → c2=(255,255,255)
       let c2_idx = (1 * 8 + 5) * 4
-      let c2 = frame.pixels[c2_idx].to_int()
+      let c2 = frame.pixels()[c2_idx].to_int()
       assert_true(c2 > 245)
       // They should be different
       assert_true(c1 < c2)
@@ -1518,10 +1520,10 @@ test "sun renderer radial gradient varies center to edge" {
   match presented.val {
     Some(frame) => {
       // Center pixel (8,0) should be near white
-      let center_r = frame.pixels[8 * 4].to_int()
+      let center_r = frame.pixels()[8 * 4].to_int()
       assert_true(center_r > 200)
       // Edge pixel (0,0) should be dark
-      let edge_r = frame.pixels[0].to_int()
+      let edge_r = frame.pixels()[0].to_int()
       assert_true(edge_r < 80)
       assert_true(center_r > edge_r)
     }
@@ -1559,7 +1561,7 @@ test "sun renderer screen blend mode brightens" {
   ])
   match presented.val {
     Some(frame) => {
-      let r = frame.pixels[0].to_int()
+      let r = frame.pixels()[0].to_int()
       // Screen(200, 128) = 255 - (255-200)*(255-128)/255 = 255 - 55*127/255 ≈ 228
       // SourceOver would be ~128
       assert_true(r > 210)
@@ -1602,7 +1604,7 @@ test "sun renderer darken blend mode keeps darker" {
   ])
   match presented.val {
     Some(frame) => {
-      let r = frame.pixels[0].to_int()
+      let r = frame.pixels()[0].to_int()
       // Darken(100, 200) = 100, SourceOver would be 200
       assert_true(r > 85 && r < 115)
     }
@@ -1643,7 +1645,7 @@ test "sun renderer lighten blend mode keeps lighter" {
   ])
   match presented.val {
     Some(frame) => {
-      let r = frame.pixels[0].to_int()
+      let r = frame.pixels()[0].to_int()
       // Lighten(200, 100) = 200, SourceOver would be 100
       assert_true(r > 185 && r < 215)
     }
@@ -1685,7 +1687,7 @@ test "sun renderer overlay blend mode combines correctly" {
   ])
   match presented.val {
     Some(frame) => {
-      let r = frame.pixels[0].to_int()
+      let r = frame.pixels()[0].to_int()
       // Overlay(200, 100) should differ from SourceOver (100)
       assert_true(r > 150)
       assert_true(r < 220)
@@ -1727,9 +1729,9 @@ test "sun renderer color matrix filter inverts via matrix" {
     Some(frame) => {
       let idx = (2 * 4 + 2) * 4
       // Red (255,0,0) inverted should be (0,255,255) = cyan
-      let r = frame.pixels[idx].to_int()
-      let g = frame.pixels[idx + 1].to_int()
-      let b = frame.pixels[idx + 2].to_int()
+      let r = frame.pixels()[idx].to_int()
+      let g = frame.pixels()[idx + 1].to_int()
+      let b = frame.pixels()[idx + 2].to_int()
       assert_true(r < 20)
       assert_true(g > 230)
       assert_true(b > 230)
@@ -1775,8 +1777,8 @@ test "sun renderer gradient stroke on path" {
   match presented.val {
     Some(frame) => {
       // Left pixel should lean red, right pixel should lean blue
-      let left_r = frame.pixels[0].to_int()
-      let right_b = frame.pixels[7 * 4 + 2].to_int()
+      let left_r = frame.pixels()[0].to_int()
+      let right_b = frame.pixels()[7 * 4 + 2].to_int()
       assert_true(left_r > 100)
       assert_true(right_b > 100)
     }

@@ -155,11 +155,12 @@ pub(all) enum HostBackendKind {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostBackendKind::label(Self) -> String
 
-pub(all) struct HostBinaryFileDiagnostic {
-  path : String
-  byte_length : Int
-  operation : String
+pub struct HostBinaryFileDiagnostic {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostBinaryFileDiagnostic::byte_length(Self) -> Int
+pub fn HostBinaryFileDiagnostic::operation(Self) -> String
+pub fn HostBinaryFileDiagnostic::path(Self) -> String
 
 pub(all) enum HostBinaryFileRequest {
   ReadBytes(String)
@@ -219,12 +220,13 @@ pub(all) enum HostCoordinateSpace {
   PhysicalPixels
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct HostDirectoryEntry {
-  name : String
-  path : String
-  is_directory : Bool
+pub struct HostDirectoryEntry {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostDirectoryEntry::is_directory(Self) -> Bool
+pub fn HostDirectoryEntry::name(Self) -> String
 pub fn HostDirectoryEntry::new(name~ : String, path~ : String, is_directory? : Bool) -> Self
+pub fn HostDirectoryEntry::path(Self) -> String
 
 pub(all) enum HostEvent {
   Resized(HostSurfaceMetrics)
@@ -540,10 +542,7 @@ pub fn HostServiceAsyncQueue::submit(Self, HostServiceRequest) -> HostServiceRes
 pub fn HostServiceAsyncQueue::take_completed(Self, HostServiceRequestId) -> HostCompletedServiceResponse?
 
 pub struct HostServiceBridge {
-  capabilities : HostServiceCapabilities
-  handle : (HostServiceRequest) -> HostServiceResponse
-  mut services : Array[HostServiceHandler]
-  channels : PlatformChannelRegistry
+  // private fields
 }
 pub fn HostServiceBridge::can_handle(Self, HostServiceRequest) -> Bool
 pub fn HostServiceBridge::capabilities(Self) -> HostServiceCapabilities
@@ -570,8 +569,7 @@ pub fn HostServiceCapabilities::new(clipboard? : Bool, menus? : Bool, file_dialo
 pub fn HostServiceCapabilities::none() -> Self
 
 pub struct HostServiceHandler {
-  kind : HostServiceKind
-  handle : (HostServiceRequest) -> HostServiceResponse
+  // private fields
 }
 pub fn HostServiceHandler::new(kind~ : HostServiceKind, handle~ : (HostServiceRequest) -> HostServiceResponse) -> Self
 
@@ -928,14 +926,13 @@ pub(all) struct NativeAccessibilityNode {
 pub fn NativeAccessibilityNode::from_accesskit(@moon_accesskit.TreeUpdate, @wzzc-dev/moui/core.ElementId, @wzzc-dev/moui/core.SemanticsRole) -> Self
 pub fn NativeAccessibilityNode::from_semantics(@wzzc-dev/moui/core.SemanticsNode, native_role? : String) -> Self
 
-pub(all) struct PlatformChannelHandler {
-  channel : String
-  handle : (PlatformChannelRequest) -> PlatformChannelResponse
+pub struct PlatformChannelHandler {
+  // private fields
 }
 pub fn PlatformChannelHandler::new(channel~ : String, handle~ : (PlatformChannelRequest) -> PlatformChannelResponse) -> Self
 
-pub(all) struct PlatformChannelRegistry {
-  mut handlers : Array[PlatformChannelHandler]
+pub struct PlatformChannelRegistry {
+  // private fields
 }
 pub fn PlatformChannelRegistry::can_dispatch(Self, String) -> Bool
 pub fn PlatformChannelRegistry::dispatch(Self, PlatformChannelRequest) -> PlatformChannelResponse

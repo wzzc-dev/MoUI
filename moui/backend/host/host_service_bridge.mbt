@@ -34,10 +34,10 @@ pub(all) enum HostBinaryFileRequest {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct HostDirectoryEntry {
-  name : String
-  path : String
-  is_directory : Bool
+pub struct HostDirectoryEntry {
+  priv name : String
+  priv path : String
+  priv is_directory : Bool
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -50,10 +50,25 @@ pub fn HostDirectoryEntry::new(
 }
 
 ///|
-pub(all) struct HostBinaryFileDiagnostic {
-  path : String
-  byte_length : Int
-  operation : String
+pub fn HostDirectoryEntry::name(self : HostDirectoryEntry) -> String {
+  self.name
+}
+
+///|
+pub fn HostDirectoryEntry::path(self : HostDirectoryEntry) -> String {
+  self.path
+}
+
+///|
+pub fn HostDirectoryEntry::is_directory(self : HostDirectoryEntry) -> Bool {
+  self.is_directory
+}
+
+///|
+pub struct HostBinaryFileDiagnostic {
+  priv path : String
+  priv byte_length : Int
+  priv operation : String
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -101,16 +116,16 @@ pub(all) enum HostServiceKind {
 
 ///|
 pub struct HostServiceHandler {
-  kind : HostServiceKind
-  handle : (HostServiceRequest) -> HostServiceResponse
+  priv kind : HostServiceKind
+  priv handle : (HostServiceRequest) -> HostServiceResponse
 }
 
 ///|
 pub struct HostServiceBridge {
-  capabilities : HostServiceCapabilities
-  handle : (HostServiceRequest) -> HostServiceResponse
-  mut services : Array[HostServiceHandler]
-  channels : PlatformChannelRegistry
+  priv capabilities : HostServiceCapabilities
+  priv handle : (HostServiceRequest) -> HostServiceResponse
+  priv mut services : Array[HostServiceHandler]
+  priv channels : PlatformChannelRegistry
 }
 
 ///|
@@ -132,6 +147,27 @@ pub fn HostBinaryFileRequest::diagnostic(
     WriteBytes(path, bytes) =>
       { path, byte_length: bytes.length(), operation: "write-bytes" }
   }
+}
+
+///|
+pub fn HostBinaryFileDiagnostic::path(
+  self : HostBinaryFileDiagnostic,
+) -> String {
+  self.path
+}
+
+///|
+pub fn HostBinaryFileDiagnostic::byte_length(
+  self : HostBinaryFileDiagnostic,
+) -> Int {
+  self.byte_length
+}
+
+///|
+pub fn HostBinaryFileDiagnostic::operation(
+  self : HostBinaryFileDiagnostic,
+) -> String {
+  self.operation
 }
 
 ///|

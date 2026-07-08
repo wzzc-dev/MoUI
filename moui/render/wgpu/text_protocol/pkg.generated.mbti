@@ -38,18 +38,20 @@ pub fn native_utf32_bytes(String) -> Bytes
 // Errors
 
 // Types and methods
-pub(all) struct NativeFontRegistrationPayload {
-  family_name : Bytes
-  data : Bytes
+pub struct NativeFontRegistrationPayload {
+  // private fields
 }
+pub fn NativeFontRegistrationPayload::data(Self) -> Bytes
+pub fn NativeFontRegistrationPayload::family_name(Self) -> Bytes
 
-pub(all) struct NativeFontSpecPayload {
-  size : Double
-  size_key : Int
-  weight : Int
-  style : @core.FontStyle
-  family_names : Array[Bytes]
+pub struct NativeFontSpecPayload {
+  // private fields
 }
+pub fn NativeFontSpecPayload::family_names(Self) -> Array[Bytes]
+pub fn NativeFontSpecPayload::size(Self) -> Double
+pub fn NativeFontSpecPayload::size_key(Self) -> Int
+pub fn NativeFontSpecPayload::style(Self) -> @core.FontStyle
+pub fn NativeFontSpecPayload::weight(Self) -> Int
 
 // Type aliases
 

@@ -12,18 +12,22 @@ pub fn backend_info() -> @render.RendererBackendInfo {
 
 ///|
 pub fn host_import_info() -> WebGpuHostImportInfo {
-  {
-    import_module: "webgpu",
-    target: "wasm-gc",
-    surface_resource: "browser canvas WebGPU surface handle",
-    renderer_resource: "browser WebGPU renderer handle",
-    description: "MoonBit calls synchronous wasm-gc host imports; the browser loader must initialize navigator.gpu before instantiating the app.",
-  }
+  WebGpuHostImportInfo::new(
+    import_module="webgpu",
+    target="wasm-gc",
+    surface_resource="browser canvas WebGPU surface handle",
+    renderer_resource="browser WebGPU renderer handle",
+    description="MoonBit calls synchronous wasm-gc host imports; the browser loader must initialize navigator.gpu before instantiating the app.",
+  )
 }
 
 ///|
 pub fn required_capabilities() -> WebGpuHostCapabilities {
-  { webgpu_available: true, adapter_ready: true, can_render: true }
+  WebGpuHostCapabilities::new(
+    webgpu_available=true,
+    adapter_ready=true,
+    can_render=true,
+  )
 }
 
 ///|
@@ -55,13 +59,13 @@ pub fn renderer_descriptor() -> @render.RendererDescriptor {
 
 ///|
 pub fn adapter_info() -> WebGpuHostAdapterInfo {
-  {
-    renderer: backend_info(),
-    surface_contract: canvas_surface_contract(),
-    imports: host_import_info(),
-    capabilities: required_capabilities(),
-    description: "Web/Wasm uses a single wasm-gc path: window/web events plus browser WebGPU host imports. Missing host capabilities fail startup instead of falling back.",
-  }
+  WebGpuHostAdapterInfo::new(
+    renderer=backend_info(),
+    surface_contract=canvas_surface_contract(),
+    imports=host_import_info(),
+    capabilities=required_capabilities(),
+    description="Web/Wasm uses a single wasm-gc path: window/web events plus browser WebGPU host imports. Missing host capabilities fail startup instead of falling back.",
+  )
 }
 
 ///|
@@ -82,13 +86,15 @@ pub fn create_webgpu_renderer(
 pub fn wasm_gc_host_port() -> WebGpuHostRendererPort {
   let surface_ref : Ref[HostWebGpuSurface?] = Ref(None)
   let renderer_ref : Ref[HostWebGpuRenderer?] = Ref(None)
-  {
-    capabilities: () => {
-      webgpu_available: host_webgpu_available(),
-      adapter_ready: host_adapter_ready(),
-      can_render: host_can_render(),
+  WebGpuHostRendererPort::new(
+    capabilities=() => {
+      WebGpuHostCapabilities::new(
+        webgpu_available=host_webgpu_available(),
+        adapter_ready=host_adapter_ready(),
+        can_render=host_can_render(),
+      )
     },
-    create_surface: (canvas_id, metrics) => {
+    create_surface=(canvas_id, metrics) => {
       let surface = host_create_surface(
         host_string(canvas_id),
         metrics.logical_size.width,
@@ -99,9 +105,9 @@ pub fn wasm_gc_host_port() -> WebGpuHostRendererPort {
         raise WebGpuHostError::SurfaceUnavailable
       }
       surface_ref.val = Some(surface)
-      { canvas_id, metrics }
+      WebGpuHostSurface::new(canvas_id~, metrics~)
     },
-    create_renderer: _surface => {
+    create_renderer=_surface => {
       match surface_ref.val {
         Some(surface) => {
           let renderer = host_create_renderer(surface)
@@ -113,7 +119,7 @@ pub fn wasm_gc_host_port() -> WebGpuHostRendererPort {
         None => raise WebGpuHostError::SurfaceUnavailable
       }
     },
-    resize: metrics => {
+    resize=metrics => {
       match (surface_ref.val, renderer_ref.val) {
         (Some(surface), Some(renderer)) => {
           raise_for_host_status(
@@ -136,8 +142,8 @@ pub fn wasm_gc_host_port() -> WebGpuHostRendererPort {
         _ => raise WebGpuHostError::InvalidResource
       }
     },
-    measure_text: input => host_measure_text_layout(input),
-    register_font_data: (family, data) => {
+    measure_text=input => host_measure_text_layout(input),
+    register_font_data=(family, data) => {
       ignore(
         host_register_font_data(
           host_string(family.css_token()),
@@ -145,19 +151,19 @@ pub fn wasm_gc_host_port() -> WebGpuHostRendererPort {
         ),
       )
     },
-    image_resource: source => {
+    image_resource=source => {
       match renderer_ref.val {
         Some(renderer) => host_image_resource_record(renderer, source)
         None => None
       }
     },
-    submit: calls => {
+    submit=calls => {
       match renderer_ref.val {
         Some(renderer) => submit_host_calls(renderer, calls)
         None => raise WebGpuHostError::InvalidResource
       }
     },
-    dispose: () => {
+    dispose=() => {
       match renderer_ref.val {
         Some(renderer) => host_renderer_dispose(renderer)
         None => ()
@@ -169,7 +175,7 @@ pub fn wasm_gc_host_port() -> WebGpuHostRendererPort {
       renderer_ref.val = None
       surface_ref.val = None
     },
-  }
+  )
 }
 
 ///|
@@ -183,7 +189,7 @@ pub fn create_surface(
     size=logical_size,
     scale_factor~,
   )
-  (port.create_surface)(canvas_id, metrics)
+  port.create_surface(canvas_id, metrics)
 }
 
 ///|
@@ -193,10 +199,10 @@ pub fn create_renderer(
   scale_factor? : Double = 1.0,
   port~ : WebGpuHostRendererPort,
 ) -> WebGpuWasmRenderer raise WebGpuHostError {
-  let capabilities = (port.capabilities)()
+  let capabilities = port.capabilities()
   ensure_required_capabilities(capabilities)
   let surface = create_surface(canvas_id~, logical_size~, scale_factor~, port~)
-  (port.create_renderer)(surface)
+  port.create_renderer(surface)
   {
     surface,
     port,
@@ -230,7 +236,7 @@ pub fn WebGpuWasmRenderer::resize(
   self : WebGpuWasmRenderer,
   metrics : @render.RendererSurfaceMetrics,
 ) -> Unit raise WebGpuHostError {
-  (self.port.resize)(metrics)
+  self.port.resize(metrics)
   self.surface.metrics = metrics
   self.size = metrics.logical_size
 }
@@ -243,7 +249,7 @@ pub fn WebGpuWasmRenderer::render(
   self.last_fallback_plan = @render.plan_renderer_command_fallbacks(commands)
   self.record_web_image_commands(commands)
   let calls = draw_commands_to_host_calls(commands, self.size)
-  (self.port.submit)(calls)
+  self.port.submit(calls)
   self.refresh_web_image_commands(commands)
   self.last_calls = calls
   self.present_count = self.present_count + 1
@@ -272,16 +278,16 @@ pub fn WebGpuWasmRenderer::text_system(
 ) -> @core.TextSystem {
   @core.TextSystem::new(
     id="webgpu-wasm-host",
-    measure=input => (self.port.measure_text)(input),
+    measure=input => self.port.measure_text(input),
     register_font_data=(family, data) => {
-      (self.port.register_font_data)(family, data)
+      self.port.register_font_data(family, data)
     },
   )
 }
 
 ///|
 pub fn WebGpuWasmRenderer::dispose(self : WebGpuWasmRenderer) -> Unit {
-  (self.port.dispose)()
+  self.port.dispose()
 }
 
 ///|

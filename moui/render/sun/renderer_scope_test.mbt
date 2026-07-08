@@ -23,12 +23,12 @@ test "sun renderer layer inherits 2x scale factor" {
   ])
   match presented.val {
     Some(frame) => {
-      let inside = (5 * frame.width + 5) * 4
-      let outside = (1 * frame.width + 1) * 4
-      assert_true(frame.pixels[inside + 2].to_int() > 200)
-      assert_true(frame.pixels[outside].to_int() > 240)
-      assert_true(frame.pixels[outside + 1].to_int() > 240)
-      assert_true(frame.pixels[outside + 2].to_int() > 240)
+      let inside = (5 * frame.width() + 5) * 4
+      let outside = (1 * frame.width() + 1) * 4
+      assert_true(frame.pixels()[inside + 2].to_int() > 200)
+      assert_true(frame.pixels()[outside].to_int() > 240)
+      assert_true(frame.pixels()[outside + 1].to_int() > 240)
+      assert_true(frame.pixels()[outside + 2].to_int() > 240)
       inspect(renderer.unsupported_command_count(), content="0")
     }
     None => fail("expected Sun frame")
@@ -66,12 +66,12 @@ test "sun renderer rectangular layer mask inherits 2x scale factor" {
   ])
   match presented.val {
     Some(frame) => {
-      let inside = (5 * frame.width + 5) * 4
-      let outside = (1 * frame.width + 1) * 4
-      assert_true(frame.pixels[inside + 2].to_int() > 200)
-      assert_true(frame.pixels[outside].to_int() > 240)
-      assert_true(frame.pixels[outside + 1].to_int() > 240)
-      assert_true(frame.pixels[outside + 2].to_int() > 240)
+      let inside = (5 * frame.width() + 5) * 4
+      let outside = (1 * frame.width() + 1) * 4
+      assert_true(frame.pixels()[inside + 2].to_int() > 200)
+      assert_true(frame.pixels()[outside].to_int() > 240)
+      assert_true(frame.pixels()[outside + 1].to_int() > 240)
+      assert_true(frame.pixels()[outside + 2].to_int() > 240)
       inspect(renderer.unsupported_command_count(), content="0")
     }
     None => fail("expected Sun frame")
@@ -105,12 +105,12 @@ test "sun renderer rectangular clip inherits 2x scale factor" {
   ])
   match presented.val {
     Some(frame) => {
-      let inside = (5 * frame.width + 5) * 4
-      let outside = (1 * frame.width + 1) * 4
-      assert_true(frame.pixels[inside + 2].to_int() > 200)
-      assert_true(frame.pixels[outside].to_int() > 240)
-      assert_true(frame.pixels[outside + 1].to_int() > 240)
-      assert_true(frame.pixels[outside + 2].to_int() > 240)
+      let inside = (5 * frame.width() + 5) * 4
+      let outside = (1 * frame.width() + 1) * 4
+      assert_true(frame.pixels()[inside + 2].to_int() > 200)
+      assert_true(frame.pixels()[outside].to_int() > 240)
+      assert_true(frame.pixels()[outside + 1].to_int() > 240)
+      assert_true(frame.pixels()[outside + 2].to_int() > 240)
       inspect(renderer.unsupported_command_count(), content="0")
     }
     None => fail("expected Sun frame")
@@ -147,12 +147,12 @@ test "sun renderer rounded clip inherits 2x scale factor" {
   ])
   match presented.val {
     Some(frame) => {
-      let center = (8 * frame.width + 8) * 4
-      let corner = (3 * frame.width + 3) * 4
-      assert_true(frame.pixels[center + 2].to_int() > 200)
-      assert_true(frame.pixels[corner].to_int() > 240)
-      assert_true(frame.pixels[corner + 1].to_int() > 240)
-      assert_true(frame.pixels[corner + 2].to_int() > 240)
+      let center = (8 * frame.width() + 8) * 4
+      let corner = (3 * frame.width() + 3) * 4
+      assert_true(frame.pixels()[center + 2].to_int() > 200)
+      assert_true(frame.pixels()[corner].to_int() > 240)
+      assert_true(frame.pixels()[corner + 1].to_int() > 240)
+      assert_true(frame.pixels()[corner + 2].to_int() > 240)
       inspect(renderer.unsupported_command_count(), content="0")
     }
     None => fail("expected Sun frame")
@@ -185,11 +185,11 @@ test "sun renderer transform scope translates drawing" {
   ])
   match presented.val {
     Some(frame) => {
-      assert_true(frame.pixels[0].to_int() > 200)
-      assert_true(frame.pixels[1].to_int() > 200)
-      assert_true(frame.pixels[2].to_int() > 200)
+      assert_true(frame.pixels()[0].to_int() > 200)
+      assert_true(frame.pixels()[1].to_int() > 200)
+      assert_true(frame.pixels()[2].to_int() > 200)
       let idx = (5 * 8 + 5) * 4
-      assert_true(frame.pixels[idx].to_int() > 200)
+      assert_true(frame.pixels()[idx].to_int() > 200)
       inspect(renderer.unsupported_command_count(), content="0")
     }
     None => fail("expected Sun frame")
@@ -224,11 +224,11 @@ test "sun renderer layer inherits transform scope" {
   ])
   match presented.val {
     Some(frame) => {
-      let translated = (4 * frame.width + 4) * 4
-      assert_true(frame.pixels[translated].to_int() > 200)
-      assert_true(frame.pixels[0].to_int() < 20)
-      assert_true(frame.pixels[1].to_int() < 20)
-      assert_true(frame.pixels[2].to_int() < 20)
+      let translated = (4 * frame.width() + 4) * 4
+      assert_true(frame.pixels()[translated].to_int() > 200)
+      assert_true(frame.pixels()[0].to_int() < 20)
+      assert_true(frame.pixels()[1].to_int() < 20)
+      assert_true(frame.pixels()[2].to_int() < 20)
       inspect(renderer.unsupported_command_count(), content="0")
     }
     None => fail("expected Sun frame")
@@ -264,9 +264,9 @@ test "sun renderer nested filter inside transform scope" {
   match presented.val {
     Some(frame) => {
       let idx = (4 * 8 + 4) * 4
-      let r = frame.pixels[idx].to_int()
+      let r = frame.pixels()[idx].to_int()
       assert_true(r > 200)
-      assert_true(frame.pixels[0].to_int() < 20)
+      assert_true(frame.pixels()[0].to_int() < 20)
       inspect(renderer.unsupported_command_count(), content="0")
     }
     None => fail("expected Sun frame")
@@ -298,13 +298,13 @@ test "sun unmatched scope pops are ignored and counted" {
   inspect(renderer.unsupported_command_count(), content="6")
   let diagnostics = renderer.unsupported_command_diagnostics()
   inspect(diagnostics.length(), content="6")
-  inspect(diagnostics[0].command, content="PopClip")
-  assert_true(diagnostics[0].reason.contains("no matching push"))
-  inspect(diagnostics[5].command, content="PopFilter")
+  inspect(diagnostics[0].command(), content="PopClip")
+  assert_true(diagnostics[0].reason().contains("no matching push"))
+  inspect(diagnostics[5].command(), content="PopFilter")
   inspect(renderer.present_count(), content="1")
   guard renderer.last_frame() is Some(frame) else { fail("expected Sun frame") }
-  inspect(frame.width, content="8")
-  inspect(frame.height, content="8")
+  inspect(frame.width(), content="8")
+  inspect(frame.height(), content="8")
 }
 
 ///|
@@ -331,8 +331,8 @@ test "sun mismatched scope pop preserves active clip" {
   inspect(renderer.unsupported_command_count(), content="1")
   let diagnostics = renderer.unsupported_command_diagnostics()
   inspect(diagnostics.length(), content="1")
-  inspect(diagnostics[0].command, content="PopTransform")
-  assert_true(diagnostics[0].reason.contains("active clip scope"))
+  inspect(diagnostics[0].command(), content="PopTransform")
+  assert_true(diagnostics[0].reason().contains("active clip scope"))
   guard renderer.last_frame() is Some(frame) else { fail("expected Sun frame") }
   assert_true(
     sun_test_frame_has_dark_pixel(
@@ -370,8 +370,8 @@ test "sun unclosed scopes are counted and restored at frame boundary" {
   inspect(renderer.unsupported_command_count(), content="1")
   let diagnostics = renderer.unsupported_command_diagnostics()
   inspect(diagnostics.length(), content="1")
-  inspect(diagnostics[0].command, content="PushClip")
-  assert_true(diagnostics[0].reason.contains("open clip scope"))
+  inspect(diagnostics[0].command(), content="PushClip")
+  assert_true(diagnostics[0].reason().contains("open clip scope"))
   guard renderer.last_frame() is Some(clipped_frame) else {
     fail("expected clipped Sun frame")
   }
@@ -430,9 +430,9 @@ test "sun unsupported command diagnostics reset per frame" {
   inspect(renderer.unsupported_command_count(), content="1")
   let diagnostics = renderer.unsupported_command_diagnostics()
   inspect(diagnostics.length(), content="1")
-  inspect(diagnostics[0].command, content="DrawShaderEffect")
-  assert_true(diagnostics[0].reason.contains("missing-shader"))
-  assert_true(diagnostics[0].reason.contains("fallback brush"))
+  inspect(diagnostics[0].command(), content="DrawShaderEffect")
+  assert_true(diagnostics[0].reason().contains("missing-shader"))
+  assert_true(diagnostics[0].reason().contains("fallback brush"))
   inspect(renderer.present_count(), content="1")
 
   renderer.render([@core.DrawCommand::Clear(@core.Color::white())])
@@ -450,18 +450,18 @@ fn sun_test_frame_has_dark_pixel(
   let start_y = rect.origin.y.floor().max(0.0).to_int()
   let end_x = (rect.origin.x + rect.size.width)
     .ceil()
-    .min(frame.width.to_double())
+    .min(frame.width().to_double())
     .to_int()
   let end_y = (rect.origin.y + rect.size.height)
     .ceil()
-    .min(frame.height.to_double())
+    .min(frame.height().to_double())
     .to_int()
   for y in start_y..<end_y {
     for x in start_x..<end_x {
-      let offset = (y * frame.width + x) * 4
-      if frame.pixels[offset].to_int() < 64 &&
-        frame.pixels[offset + 1].to_int() < 64 &&
-        frame.pixels[offset + 2].to_int() < 64 {
+      let offset = (y * frame.width() + x) * 4
+      if frame.pixels()[offset].to_int() < 64 &&
+        frame.pixels()[offset + 1].to_int() < 64 &&
+        frame.pixels()[offset + 2].to_int() < 64 {
         return true
       }
     }

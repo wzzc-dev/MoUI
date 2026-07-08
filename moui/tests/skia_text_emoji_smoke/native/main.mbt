@@ -6,7 +6,7 @@ fn fail_smoke(message : String) -> Unit {
 
 ///|
 fn pixel_offset(frame : @skia_renderer.SkiaPixelFrame, x : Int, y : Int) -> Int {
-  y * frame.row_bytes + x * 4
+  y * frame.row_bytes() + x * 4
 }
 
 ///|
@@ -21,12 +21,12 @@ fn rect_min_y(rect : @core.Rect) -> Int {
 
 ///|
 fn rect_max_x(frame : @skia_renderer.SkiaPixelFrame, rect : @core.Rect) -> Int {
-  (rect.origin.x + rect.size.width).ceil().to_int().min(frame.width)
+  (rect.origin.x + rect.size.width).ceil().to_int().min(frame.width())
 }
 
 ///|
 fn rect_max_y(frame : @skia_renderer.SkiaPixelFrame, rect : @core.Rect) -> Int {
-  (rect.origin.y + rect.size.height).ceil().to_int().min(frame.height)
+  (rect.origin.y + rect.size.height).ceil().to_int().min(frame.height())
 }
 
 ///|
@@ -35,14 +35,15 @@ fn rect_high_saturation_pixels(
   rect : @core.Rect,
 ) -> Int {
   let mut count = 0
+  let pixels = frame.pixels()
   for y in rect_min_y(rect)..<rect_max_y(frame, rect) {
     for x in rect_min_x(rect)..<rect_max_x(frame, rect) {
       let offset = pixel_offset(frame, x, y)
-      if offset + 3 < frame.pixels.length() {
-        let r = frame.pixels[offset].to_int()
-        let g = frame.pixels[offset + 1].to_int()
-        let b = frame.pixels[offset + 2].to_int()
-        let a = frame.pixels[offset + 3].to_int()
+      if offset + 3 < pixels.length() {
+        let r = pixels[offset].to_int()
+        let g = pixels[offset + 1].to_int()
+        let b = pixels[offset + 2].to_int()
+        let a = pixels[offset + 3].to_int()
         if a >= 160 {
           let max_channel = r.max(g).max(b)
           let min_channel = r.min(g).min(b)
@@ -62,11 +63,12 @@ fn rect_alpha_pixels(
   rect : @core.Rect,
 ) -> Int {
   let mut count = 0
+  let pixels = frame.pixels()
   for y in rect_min_y(rect)..<rect_max_y(frame, rect) {
     for x in rect_min_x(rect)..<rect_max_x(frame, rect) {
       let offset = pixel_offset(frame, x, y)
-      if offset + 3 < frame.pixels.length() {
-        let a = frame.pixels[offset + 3].to_int()
+      if offset + 3 < pixels.length() {
+        let a = pixels[offset + 3].to_int()
         if a >= 160 {
           count = count + 1
         }
@@ -87,14 +89,15 @@ fn rect_dark_rows(
   rect : @core.Rect,
 ) -> Int {
   let rows : Array[Int] = []
+  let pixels = frame.pixels()
   for y in rect_min_y(rect)..<rect_max_y(frame, rect) {
     for x in rect_min_x(rect)..<rect_max_x(frame, rect) {
       let offset = pixel_offset(frame, x, y)
-      if offset + 3 < frame.pixels.length() {
-        let r = frame.pixels[offset].to_int()
-        let g = frame.pixels[offset + 1].to_int()
-        let b = frame.pixels[offset + 2].to_int()
-        let a = frame.pixels[offset + 3].to_int()
+      if offset + 3 < pixels.length() {
+        let r = pixels[offset].to_int()
+        let g = pixels[offset + 1].to_int()
+        let b = pixels[offset + 2].to_int()
+        let a = pixels[offset + 3].to_int()
         if a >= 160 && r <= 80 && g <= 80 && b <= 80 && !row_seen(rows, y) {
           rows.push(y)
         }
@@ -110,14 +113,15 @@ fn rect_blue_pixels(
   rect : @core.Rect,
 ) -> Int {
   let mut count = 0
+  let pixels = frame.pixels()
   for y in rect_min_y(rect)..<rect_max_y(frame, rect) {
     for x in rect_min_x(rect)..<rect_max_x(frame, rect) {
       let offset = pixel_offset(frame, x, y)
-      if offset + 3 < frame.pixels.length() {
-        let r = frame.pixels[offset].to_int()
-        let g = frame.pixels[offset + 1].to_int()
-        let b = frame.pixels[offset + 2].to_int()
-        let a = frame.pixels[offset + 3].to_int()
+      if offset + 3 < pixels.length() {
+        let r = pixels[offset].to_int()
+        let g = pixels[offset + 1].to_int()
+        let b = pixels[offset + 2].to_int()
+        let a = pixels[offset + 3].to_int()
         if a >= 160 && b >= 120 && b - r >= 48 && b - g >= 48 {
           count = count + 1
         }
@@ -191,13 +195,13 @@ fn emoji_variant_diagnostics_ready(text : String, label : String) -> Bool {
     ) {
     Some(fallback) => {
       println(
-        "MoUI Skia text/emoji smoke emoji variant \{label} glyph_count=\{fallback.glyph_count} cluster_count=\{fallback.cluster_count} glyph_format=\{fallback.glyph_format} fallback_request_ready=\{fallback.fallback_request_ready} emoji_hint=\{fallback.emoji_hint}",
+        "MoUI Skia text/emoji smoke emoji variant \{label} glyph_count=\{fallback.glyph_count()} cluster_count=\{fallback.cluster_count()} glyph_format=\{fallback.glyph_format()} fallback_request_ready=\{fallback.fallback_request_ready()} emoji_hint=\{fallback.emoji_hint()}",
       )
-      fallback.fallback_request_ready &&
-      fallback.emoji_hint &&
-      fallback.glyph_count >= 1 &&
-      fallback.cluster_count >= 1 &&
-      fallback.glyph_format == "rgba"
+      fallback.fallback_request_ready() &&
+      fallback.emoji_hint() &&
+      fallback.glyph_count() >= 1 &&
+      fallback.cluster_count() >= 1 &&
+      fallback.glyph_format() == "rgba"
     }
     None => {
       println(
@@ -221,29 +225,28 @@ fn emoji_diagnostic_font() -> @core.FontSpec {
 fn skia_color_emoji_glyph_key_metadata_ready(
   fallback : @skia_renderer.SkiaEmojiFontFallbackDiagnostic,
 ) -> Bool {
-  let language_tags_key = fallback.fallback_language_tags.join("+")
-  fallback.glyph_key.contains(fallback.font_source) &&
-  fallback.glyph_key.contains(fallback.text_system_id) &&
-  fallback.glyph_key.contains(fallback.shaper) &&
-  fallback.glyph_key.contains("script=\{fallback.fallback_script_tag}") &&
-  fallback.glyph_key.contains(
-    "langs=\{fallback.fallback_request_language_count}",
-  ) &&
-  fallback.glyph_key.contains("lang-tags=\{language_tags_key}") &&
-  fallback.glyph_key.contains("emoji-u+\{fallback.fallback_character}") &&
-  fallback.glyph_key.contains(fallback.glyph_format)
+  let language_tags_key = fallback.fallback_language_tags().join("+")
+  let glyph_key = fallback.glyph_key()
+  glyph_key.contains(fallback.font_source()) &&
+  glyph_key.contains(fallback.text_system_id()) &&
+  glyph_key.contains(fallback.shaper()) &&
+  glyph_key.contains("script=\{fallback.fallback_script_tag()}") &&
+  glyph_key.contains("langs=\{fallback.fallback_request_language_count()}") &&
+  glyph_key.contains("lang-tags=\{language_tags_key}") &&
+  glyph_key.contains("emoji-u+\{fallback.fallback_character()}") &&
+  glyph_key.contains(fallback.glyph_format())
 }
 
 ///|
 fn skia_color_emoji_fallback_language_metadata_ready(
   fallback : @skia_renderer.SkiaEmojiFontFallbackDiagnostic,
 ) -> Bool {
-  fallback.fallback_language_tags.length() ==
-  fallback.fallback_language_tag_count &&
-  fallback.fallback_language_tag_count >= 1 &&
-  fallback.fallback_request_language_count ==
-  fallback.fallback_language_tag_count &&
-  fallback.fallback_language_tags[0] == fallback.fallback_script_tag
+  fallback.fallback_language_tags().length() ==
+  fallback.fallback_language_tag_count() &&
+  fallback.fallback_language_tag_count() >= 1 &&
+  fallback.fallback_request_language_count() ==
+  fallback.fallback_language_tag_count() &&
+  fallback.fallback_language_tags()[0] == fallback.fallback_script_tag()
 }
 
 ///|
@@ -252,25 +255,25 @@ fn skia_color_emoji_diagnostic_metadata_ready(
   high_saturation_pixels : Int,
   alpha_pixels : Int,
 ) -> Bool {
-  fallback.font_family != "" &&
-  fallback.font_family != "unknown" &&
-  fallback.font_source != "" &&
-  fallback.font_source != "unknown" &&
-  fallback.text_system_id != "" &&
-  fallback.text_system_id != "unknown" &&
-  fallback.shaper != "" &&
-  fallback.shaper != "unknown" &&
-  fallback.emoji_hint &&
-  fallback.fallback_request_ready &&
-  fallback.missing_glyph_recovery_ready &&
-  fallback.fallback_script_tag != "" &&
+  fallback.font_family() != "" &&
+  fallback.font_family() != "unknown" &&
+  fallback.font_source() != "" &&
+  fallback.font_source() != "unknown" &&
+  fallback.text_system_id() != "" &&
+  fallback.text_system_id() != "unknown" &&
+  fallback.shaper() != "" &&
+  fallback.shaper() != "unknown" &&
+  fallback.emoji_hint() &&
+  fallback.fallback_request_ready() &&
+  fallback.missing_glyph_recovery_ready() &&
+  fallback.fallback_script_tag() != "" &&
   skia_color_emoji_fallback_language_metadata_ready(fallback) &&
-  fallback.glyph_format == "rgba" &&
-  fallback.glyph_count >= 1 &&
-  fallback.cluster_count >= 1 &&
-  fallback.glyph_width > 0 &&
-  fallback.glyph_height > 0 &&
-  fallback.resolved_missing_glyph_count >= 0 &&
+  fallback.glyph_format() == "rgba" &&
+  fallback.glyph_count() >= 1 &&
+  fallback.cluster_count() >= 1 &&
+  fallback.glyph_width() > 0 &&
+  fallback.glyph_height() > 0 &&
+  fallback.resolved_missing_glyph_count() >= 0 &&
   high_saturation_pixels >= 8 &&
   alpha_pixels > 0 &&
   skia_color_emoji_glyph_key_metadata_ready(fallback)
@@ -848,10 +851,10 @@ fn main {
           ) {
           Some(fallback) => {
             println(
-              "MoUI Skia text/emoji smoke color emoji high_saturation_pixels=\{emoji_pixels} fallback_character=\{fallback.fallback_character} emoji_hint=\{fallback.emoji_hint} fallback_request_ready=\{fallback.fallback_request_ready}",
+              "MoUI Skia text/emoji smoke color emoji high_saturation_pixels=\{emoji_pixels} fallback_character=\{fallback.fallback_character()} emoji_hint=\{fallback.emoji_hint()} fallback_request_ready=\{fallback.fallback_request_ready()}",
             )
             println(
-              "MoUI renderer smoke colorEmojiPixels metadata font_family=\{fallback.font_family} font_source=\{fallback.font_source} text_system=\{fallback.text_system_id} shaper=\{fallback.shaper} glyph_format=\{fallback.glyph_format} glyph_count=\{fallback.glyph_count} cluster_count=\{fallback.cluster_count} high_saturation_pixels=\{emoji_pixels} alpha_pixels=\{emoji_alpha_pixels} glyph_key=\{fallback.glyph_key} glyph_width=\{fallback.glyph_width} glyph_height=\{fallback.glyph_height} fallback_script_tag=\{fallback.fallback_script_tag} fallback_language_tags=\{fallback.fallback_language_tags.join("+")} fallback_language_tag_count=\{fallback.fallback_language_tag_count} fallback_request_language_count=\{fallback.fallback_request_language_count} fallback_request_character=\{fallback.fallback_character} resolved_missing_glyph_count=\{fallback.resolved_missing_glyph_count} missing_glyph_recovery_ready=\{fallback.missing_glyph_recovery_ready}",
+              "MoUI renderer smoke colorEmojiPixels metadata font_family=\{fallback.font_family()} font_source=\{fallback.font_source()} text_system=\{fallback.text_system_id()} shaper=\{fallback.shaper()} glyph_format=\{fallback.glyph_format()} glyph_count=\{fallback.glyph_count()} cluster_count=\{fallback.cluster_count()} high_saturation_pixels=\{emoji_pixels} alpha_pixels=\{emoji_alpha_pixels} glyph_key=\{fallback.glyph_key()} glyph_width=\{fallback.glyph_width()} glyph_height=\{fallback.glyph_height()} fallback_script_tag=\{fallback.fallback_script_tag()} fallback_language_tags=\{fallback.fallback_language_tags().join("+")} fallback_language_tag_count=\{fallback.fallback_language_tag_count()} fallback_request_language_count=\{fallback.fallback_request_language_count()} fallback_request_character=\{fallback.fallback_character()} resolved_missing_glyph_count=\{fallback.resolved_missing_glyph_count()} missing_glyph_recovery_ready=\{fallback.missing_glyph_recovery_ready()}",
             )
             if skia_color_emoji_diagnostic_metadata_ready(
                 fallback, emoji_pixels, emoji_alpha_pixels,

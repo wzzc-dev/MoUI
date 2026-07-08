@@ -90,8 +90,8 @@ fn RendererHandle::create_with_host_surface(
 ) -> RendererHandle raise @wgpu_mbt.WgpuError {
   create_with_surface(
     metrics,
-    host_surface.instance,
-    host_surface.surface,
+    host_surface.instance(),
+    host_surface.surface(),
     native_noop_text_engine(),
   )
 }
@@ -104,8 +104,8 @@ fn RendererHandle::create_with_host_surface_and_text_engine(
 ) -> RendererHandle raise @wgpu_mbt.WgpuError {
   create_with_surface(
     metrics,
-    host_surface.instance,
-    host_surface.surface,
+    host_surface.instance(),
+    host_surface.surface(),
     text_engine,
   )
 }
