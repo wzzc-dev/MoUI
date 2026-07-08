@@ -73,6 +73,37 @@ MOUI_SKIA_PLATFORM=android MOUI_SKIA_ARCH=arm64 \
   moon check examples/counter/android_skia --target native
 ```
 
+To build the experimental Counter Android debug APK, first install Android SDK
+Platform 35, Build-Tools 35.0.0, Platform-Tools, NDK, and CMake through Android
+Studio's SDK Manager, the official `sdkmanager` command-line tools, or the
+repository helper. See
+[android-support.md](android-support.md#android-sdk-and-ndk) for the full setup
+flow. Make sure a JDK is installed first so `java`, `javac`, and `keytool` are
+available. The shortest path is:
+
+```sh
+scripts/setup-android-sdk.sh --accept-licenses
+eval "$(scripts/setup-android-sdk.sh --print-env)"
+scripts/build-counter-android-apk.sh
+```
+
+If you already have an Android SDK installed, point `ANDROID_HOME` at that SDK
+root and run:
+
+```sh
+ANDROID_HOME=/path/to/Android/Sdk \
+scripts/build-counter-android-apk.sh
+```
+
+Set `ANDROID_NDK_HOME=/path/to/Android/Sdk/ndk/<version>` only when you need to
+pin a specific side-by-side NDK; otherwise the script uses the latest NDK under
+`$ANDROID_HOME/ndk`.
+
+For a packaging-only smoke that avoids the Android Skia provider download, use
+`scripts/build-counter-android-apk.sh --fallback-skia`. That APK proves the
+MoonBit C/JNI/CMake/SDK packaging path only; real Android runtime evidence still
+requires a device or emulator run with the default real-Skia path.
+
 See [android-support.md](android-support.md) for the Activity/Surface ownership
 boundary and runtime-evidence requirements.
 

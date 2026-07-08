@@ -35,9 +35,11 @@ For task-specific workflows, use the repo-local skills:
 - Keep shared app logic in `examples/<name>/app`; keep platform entrypoints thin.
 - Keep Android work on the embedded-session route for now:
   `moui/backend/android` owns Activity/Surface-driven host contracts and
-  `moui/backend/android/skia` owns the `ANativeWindow` Skia presenter. Do not
-  claim Android runtime support as passed until a matching device/emulator smoke
-  records first-frame and input/lifecycle evidence.
+  `moui/backend/android/skia` owns the `ANativeWindow` Skia presenter.
+  `examples/counter/android_app` and `scripts/build-counter-android-apk.sh`
+  own the current Counter APK shell. Fallback APK builds are packaging evidence
+  only; do not claim Android runtime support as passed until a matching
+  device/emulator smoke records first-frame and input/lifecycle evidence.
 
 ### CI Safety Rules
 
