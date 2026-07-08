@@ -273,6 +273,8 @@ pub fn resolve_route(RouteLocation, Array[RouteDescriptor]) -> RouteDescriptor?
 
 pub fn[Msg] responsive_grid(Array[@core.View[Msg]], width? : Double, min_column_width? : Double, row_spacing? : Double, column_spacing? : Double) -> @core.View[Msg]
 
+pub fn[Msg] rounded_clip(@core.View[Msg], radius? : Double) -> @core.View[Msg]
+
 pub fn[Msg] route_header(String, subtitle? : String, actions? : Array[ActionItem[Msg]], theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] router_stack(RouterState, Array[NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
@@ -341,7 +343,7 @@ pub fn table_column(id~ : String, label~ : String, width? : Double) -> TableColu
 
 pub fn[Msg] tag(String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] text(String, role? : TextRole, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] text(String, role? : TextRole, theme? : @core.Theme, width? : Double, height? : Double, align? : @core.TextAlign) -> @core.View[Msg]
 
 pub fn[Msg] text_area(String, on_input~ : (String) -> Msg, placeholder? : String, lines? : Int, variant? : TextFieldVariant, theme? : @core.Theme, width? : Double, line_height? : Double, on_submit? : Msg?) -> @core.View[Msg]
 

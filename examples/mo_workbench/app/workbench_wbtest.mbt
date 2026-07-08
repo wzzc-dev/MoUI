@@ -45,6 +45,62 @@ fn drain_workbench_effect(
 }
 
 ///|
+test "workbench right surface themes use configured font size" {
+  let base = @views.light_theme()
+  let surface = workbench_lightweight_theme(base, 18)
+  let conversation = workbench_conversation_theme(base, 18)
+  inspect(surface.typography.body.size, content="18")
+  inspect(surface.typography.control.size, content="18")
+  inspect(conversation.typography.body.size, content="18")
+  inspect(conversation.typography.control.size, content="18")
+}
+
+///|
+test "code chat message list uses explicit scroll viewport" {
+  let model = test_model(script=_cmd => [])
+  let theme = @views.light_theme()
+  let list_height = code_message_list_height(
+    model.code,
+    model.settings,
+    theme,
+    640.0,
+    520.0,
+  )
+  inspect(list_height, content="410")
+  let list = code_message_list(
+    { ..model.code, messages: [ChatMessage::User("hello")] },
+    theme,
+    640.0,
+    list_height,
+  )
+  let children = list.children()
+  guard children.get(0) is Some(scroll) else { fail("expected scroll child") }
+  inspect(scroll.revision().contains("584x390"), content="true")
+}
+
+///|
+test "code composer prompt grows from two lines with content" {
+  let model = test_model(script=_cmd => [])
+  let theme = @views.light_theme()
+  inspect(code_composer_prompt_lines("", theme, 360.0), content="2")
+  inspect(
+    code_composer_prompt_lines("one\ntwo\nthree", theme, 360.0),
+    content="3",
+  )
+  let taller = { ..model.code, prompt: "one\ntwo\nthree" }
+  inspect(
+    code_composer_height(taller, model.settings, theme, 640.0) >
+    code_composer_height(model.code, model.settings, theme, 640.0),
+    content="true",
+  )
+  inspect(
+    code_message_list_height(taller, model.settings, theme, 640.0, 520.0) <
+    code_message_list_height(model.code, model.settings, theme, 640.0, 520.0),
+    content="true",
+  )
+}
+
+///|
 fn workbench_view_test_state() -> @core.ViewStateContext {
   {
     focused: false,
@@ -73,7 +129,7 @@ fn workbench_view_test_text_control() -> @core.TextControlStateContext {
 
 ///|
 fn workbench_view_test_paint_context(
-  frame~ : @core.Rect,
+  frame~ : @geometry.Rect,
   theme~ : @moui.Theme,
 ) -> @core.ViewPaintContext {
   {
@@ -118,7 +174,7 @@ test "chat message text paints reply body left aligned" {
   )
   let plan = view.paint(
     workbench_view_test_paint_context(
-      frame=@core.Rect::new(x=0.0, y=0.0, width=240.0, height=24.0),
+      frame=@geometry.Rect::new(x=0.0, y=0.0, width=240.0, height=24.0),
       theme~,
     ),
   )
@@ -126,7 +182,21 @@ test "chat message text paints reply body left aligned" {
     fail("expected text draw command")
   }
   inspect(text, content="assistant reply")
-  inspect(align == @core.TextAlign::TextStart, content="true")
+  inspect(align == @text.TextAlign::TextStart, content="true")
+}
+
+///|
+test "chat message display lines wraps ascii and wide text" {
+  let ascii = chat_message_display_lines(
+    "abcdefghijklmnopqrstuvwxyz", 60.0, 14.0,
+  )
+  inspect(ascii.length() > 1, content="true")
+  inspect(ascii[0], content="abcdefgh")
+  let wide = chat_message_display_lines(
+    "这是一段很长的中文消息", 60.0, 14.0,
+  )
+  inspect(wide.length() > 1, content="true")
+  inspect(wide[0].char_length(), content="4")
 }
 
 ///|
@@ -154,10 +224,90 @@ test "submit prompt appends user message and starts streaming" {
   // Prompt is cleared and streaming flag is set.
   inspect(model.code.prompt, content="")
   assert_true(model.code.is_streaming)
+  inspect(model.code.scroll_state.offset().y > 0.0, content="true")
 }
 
 ///|
-test "receive assistant event appends message and clears streaming on terminal" {
+test "streaming progress notice scrolls to latest placeholder" {
+  let model = test_model(script=_cmd => [])
+  let model = {
+    ..model,
+    code: {
+      ..model.code,
+      messages: [ChatMessage::User("hello")],
+      is_streaming: true,
+    },
+  }
+  model.code.scroll_state.scroll_to(x=0.0, y=0.0)
+  let (model, _effect) = model.update(
+    WorkbenchMsg::CodeMsg(
+      CodeMsg::ReceiveAgentEvent(ProgressNotice("thinking...")),
+    ),
+  )
+  inspect(model.code.messages.length(), content="1")
+  guard model.code.progress_notice is Some(text) else {
+    fail("expected progress notice")
+  }
+  inspect(text, content="thinking...")
+  inspect(model.code.scroll_state.offset().y > 0.0, content="true")
+}
+
+///|
+test "manual upward message scroll pauses auto-follow" {
+  let model = test_model(script=_cmd => [])
+  let model = {
+    ..model,
+    code: {
+      ..model.code,
+      messages: [ChatMessage::User("hello")],
+      is_streaming: true,
+      follow_latest: true,
+    },
+  }
+  model.code.scroll_state.scroll_to(x=0.0, y=120.0)
+  let (model, _effect) = model.update(
+    WorkbenchMsg::CodeMsg(
+      CodeMsg::MessageListScrolled(@geometry.Point::new(x=0.0, y=40.0)),
+    ),
+  )
+  inspect(model.code.follow_latest, content="false")
+  let (model, _effect) = model.update(
+    WorkbenchMsg::CodeMsg(
+      CodeMsg::ReceiveAgentEvent(AssistantMessageChunk(Some("a1"), "reply")),
+    ),
+  )
+  inspect(model.code.scroll_state.offset().y, content="120")
+}
+
+///|
+test "manual downward message scroll resumes auto-follow" {
+  let model = test_model(script=_cmd => [])
+  let model = {
+    ..model,
+    code: {
+      ..model.code,
+      messages: [ChatMessage::User("hello")],
+      is_streaming: true,
+      follow_latest: false,
+    },
+  }
+  model.code.scroll_state.scroll_to(x=0.0, y=120.0)
+  let (model, _effect) = model.update(
+    WorkbenchMsg::CodeMsg(
+      CodeMsg::MessageListScrolled(@geometry.Point::new(x=0.0, y=-40.0)),
+    ),
+  )
+  inspect(model.code.follow_latest, content="true")
+  let (model, _effect) = model.update(
+    WorkbenchMsg::CodeMsg(
+      CodeMsg::ReceiveAgentEvent(AssistantMessageChunk(Some("a1"), "reply")),
+    ),
+  )
+  inspect(model.code.scroll_state.offset().y > 1.0e8, content="true")
+}
+
+///|
+test "receive assistant event appends message and hides successful terminal" {
   let model = test_model(script=_cmd => [])
   let model = { ..model, code: { ..model.code, is_streaming: true } }
   let (model, _effect) = model.update(
@@ -179,11 +329,11 @@ test "receive assistant event appends message and clears streaming on terminal" 
     ),
   )
   assert_false(model.code.is_streaming)
-  inspect(model.code.messages.length(), content="2")
-  guard model.code.messages[1] is Terminal(status, _) else {
-    fail("expected terminal message")
+  inspect(model.code.messages.length(), content="1")
+  guard model.code.messages[0] is Assistant(content, _) else {
+    fail("expected assistant message to remain last")
   }
-  inspect(status == TurnStatus::Finished, content="true")
+  inspect(content, content="hi")
 }
 
 ///|
@@ -314,6 +464,12 @@ test "failed terminal sets error" {
   assert_false(model.code.is_streaming)
   guard model.code.error is Some(err) else { fail("expected error to be set") }
   inspect(err, content="network error")
+  inspect(model.code.messages.length(), content="1")
+  guard model.code.messages[0] is Terminal(status, message) else {
+    fail("expected failed terminal message")
+  }
+  inspect(status == TurnStatus::Failed, content="true")
+  inspect(message, content="network error")
 }
 
 ///|
@@ -695,28 +851,6 @@ test "design tab summary reflects tasks and settings" {
   inspect(summary.approval, content="Command")
   inspect(summary.sandbox, content="Full access")
   inspect(summary.font_size, content="18 pt")
-}
-
-///|
-test "statusbar labels keep runtime and session only on wide layouts" {
-  let model = test_model(script=_cmd => [])
-  let model = {
-    ..model,
-    code: { ..model.code, active_session_id: Some("active-session-1234567890") },
-  }
-  let labels = statusbar_labels(model, 920.0)
-  inspect(labels.length(), content="2")
-  inspect(labels[0], content="Runtime: ready")
-  inspect(labels[1], content="Session: active-session-123...")
-}
-
-///|
-test "statusbar labels stay compact on narrow layouts" {
-  let model = test_model(script=_cmd => [])
-  let labels = statusbar_labels(model, 560.0)
-  inspect(labels.length(), content="2")
-  inspect(labels[0], content="Runtime: ready")
-  inspect(labels[1], content="Session: draft")
 }
 
 ///|
@@ -1221,22 +1355,42 @@ test "workbench theme token helpers use neutral gray reference colors" {
   let light = @views.light_theme()
   inspect(
     workbench_app_background(light) ==
-    @core.Color::rgba(r=243.0 / 255.0, g=245.0 / 255.0, b=252.0 / 255.0, a=1.0),
+    @graphics.Color::rgba(
+      r=243.0 / 255.0,
+      g=245.0 / 255.0,
+      b=252.0 / 255.0,
+      a=1.0,
+    ),
     content="true",
   )
   inspect(
     workbench_sidebar_background(light) ==
-    @core.Color::rgba(r=238.0 / 255.0, g=242.0 / 255.0, b=250.0 / 255.0, a=1.0),
+    @graphics.Color::rgba(
+      r=238.0 / 255.0,
+      g=242.0 / 255.0,
+      b=250.0 / 255.0,
+      a=1.0,
+    ),
     content="true",
   )
   inspect(
     workbench_accent(light) ==
-    @core.Color::rgba(r=100.0 / 255.0, g=100.0 / 255.0, b=100.0 / 255.0, a=1.0),
+    @graphics.Color::rgba(
+      r=100.0 / 255.0,
+      g=100.0 / 255.0,
+      b=100.0 / 255.0,
+      a=1.0,
+    ),
     content="true",
   )
   inspect(
     workbench_sidebar_active(light) ==
-    @core.Color::rgba(r=200.0 / 255.0, g=200.0 / 255.0, b=200.0 / 255.0, a=0.50),
+    @graphics.Color::rgba(
+      r=200.0 / 255.0,
+      g=200.0 / 255.0,
+      b=200.0 / 255.0,
+      a=0.50,
+    ),
     content="true",
   )
 }

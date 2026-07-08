@@ -2,22 +2,20 @@
 // tree list + user area), center work surface routed by the active top tab,
 // and a settings overlay rendered on top when `settings_open` is true.
 //
-// Layout: HorizontalSplit(sidebar=~300px) | Center(column: topbar + main +
-// statusbar). Sidebar tabs use a Segmented Control; task list is a tree with
+// Layout: HorizontalSplit(sidebar=~300px) | Center(column: topbar + main).
+// Sidebar tabs use a Segmented Control; task list is a tree with
 // expandable folder groups.
 
 ///|
 priv struct WorkbenchLayout {
   sidebar_width : Double
   topbar_height : Double
-  statusbar_height : Double
   center_height : Double
 }
 
 ///|
 fn workbench_layout(viewport : @geometry.Size) -> WorkbenchLayout {
   let topbar_height = 50.0
-  let statusbar_height = 26.0
   let app_margin = 8.0
   let sidebar_width = if viewport.width < 760.0 {
     200.0
@@ -26,11 +24,10 @@ fn workbench_layout(viewport : @geometry.Size) -> WorkbenchLayout {
   } else {
     280.0
   }
-  let center_height = (viewport.height -
-  topbar_height -
-  statusbar_height -
-  app_margin * 2.0).max(262.0)
-  { sidebar_width, topbar_height, statusbar_height, center_height }
+  let center_height = (viewport.height - topbar_height - app_margin * 2.0).max(
+    262.0,
+  )
+  { sidebar_width, topbar_height, center_height }
 }
 
 ///|
@@ -39,6 +36,7 @@ fn workbench_view(
   env : @moui.ViewEnvironment,
 ) -> @moui.View[WorkbenchMsg] {
   let theme = workbench_theme(model.appearance, env)
+  let sidebar_theme = workbench_sidebar_theme(theme)
   let viewport = env.viewport_size()
   let layout = workbench_layout(viewport)
   let main_height = viewport.height
@@ -56,33 +54,35 @@ fn workbench_view(
           @views.spacer(min_length=78.0, weight=0.0),
           width=left_width,
           height=40.0,
-          background=workbench_sidebar_background(theme),
+          background=workbench_sidebar_background(sidebar_theme),
           padding=0.0,
         ),
-        sidebar_view(model, theme, left_width, main_height - 40.0),
+        sidebar_view(model, sidebar_theme, left_width, main_height - 40.0),
       ],
       spacing=0.0,
       align=@views.CrossAlign::Stretch,
     ),
     width=left_width,
     height=main_height,
-    background=workbench_sidebar_background(theme),
+    background=workbench_sidebar_background(sidebar_theme),
     padding=0.0,
   )
-  // Right column: symmetric app-bg margin, canvas + statusbar.
+  // Right column: symmetric app-bg margin around the main canvas.
   let right_width = viewport.width - left_width
   let app_margin = 8.0
   let right_inner_width = (right_width - app_margin * 2.0).max(280.0)
   let canvas_height = (main_height - app_margin * 2.0).max(200.0)
+  let right_canvas = @views.container(
+    center_shell(model, theme, layout, right_inner_width),
+    width=right_inner_width,
+    height=canvas_height,
+    background=workbench_canvas_background(theme),
+    corner_radius=14.0,
+    padding=0.0,
+  )
   let right_column = @views.container(
     @views.padding_edges(
-      @views.container(
-        center_shell(model, theme, layout, right_inner_width),
-        width=right_inner_width,
-        height=canvas_height,
-        background=workbench_canvas_background(theme),
-        padding=0.0,
-      ),
+      @views.rounded_clip(right_canvas, radius=14.0),
       top=app_margin,
       left=app_margin,
       right=app_margin,
@@ -139,9 +139,18 @@ fn workbench_view(
   )
   let base = @views.overlay(shell, toggle_overlay)
   if model.settings_open {
+    let settings_theme = workbench_lightweight_theme(
+      theme,
+      model.settings.font_size,
+    )
     @views.overlay(
       base,
-      settings_overlay_view(model, theme, viewport.width, viewport.height),
+      settings_overlay_view(
+        model,
+        settings_theme,
+        viewport.width,
+        viewport.height,
+      ),
     )
   } else {
     base
@@ -155,20 +164,16 @@ fn center_shell(
   layout : WorkbenchLayout,
   center_width : Double,
 ) -> @moui.View[WorkbenchMsg] {
-  let shell_height = layout.topbar_height +
-    layout.center_height +
-    layout.statusbar_height
+  let shell_height = layout.topbar_height + layout.center_height
+  let surface_theme = workbench_lightweight_theme(
+    theme,
+    model.settings.font_size,
+  )
   @views.container(
     @views.column(
       [
-        topbar_view(model, theme, center_width, layout.topbar_height),
-        main_surface(model, theme, center_width, layout.center_height),
-        @views.center(
-          statusbar_view(model, theme, center_width, layout.statusbar_height),
-          width=center_width,
-          height=layout.statusbar_height,
-          theme~,
-        ),
+        topbar_view(model, surface_theme, center_width, layout.topbar_height),
+        main_surface(model, surface_theme, center_width, layout.center_height),
       ],
       spacing=0.0,
       align=@views.CrossAlign::Stretch,
@@ -176,6 +181,7 @@ fn center_shell(
     width=center_width,
     height=shell_height,
     background=workbench_canvas_background(theme),
+    corner_radius=14.0,
     padding=0.0,
   )
 }
@@ -226,76 +232,6 @@ fn topbar_view(
     background=workbench_card_background(theme),
     padding=0.0,
   )
-}
-
-///|
-fn statusbar_view(
-  model : WorkbenchModel,
-  theme : @moui.Theme,
-  width : Double,
-  height : Double,
-) -> @moui.View[WorkbenchMsg] {
-  let labels = statusbar_labels(model, width)
-  let segments : Array[@moui.View[WorkbenchMsg]] = []
-  for label in labels {
-    segments.push(
-      @views.text(
-        label,
-        role=@views.TextRole::Caption,
-        theme~,
-        width=statusbar_label_width(label),
-        height=22.0,
-      ).foreground(workbench_text_muted(theme)),
-    )
-  }
-  let bar_inner_width = workbench_statusbar_inner_width(labels).min(
-    (width - 24.0).max(280.0),
-  )
-  @views.container(
-    @views.row(
-      segments,
-      spacing=8.0,
-      align=@views.CrossAlign::Center,
-      justify=@views.MainAlign::Center,
-    ),
-    width=bar_inner_width,
-    height~,
-    background=theme.palette.surface_variant.multiply_alpha(0.52),
-    corner_radius=theme.radius_scale.sm,
-    padding=4.0,
-  )
-}
-
-///|
-fn statusbar_labels(model : WorkbenchModel, width : Double) -> Array[String] {
-  let runtime_status = if model.code.is_streaming {
-    "Runtime: " + truncate_text(code_activity_text(model.code), 28)
-  } else {
-    "Runtime: ready"
-  }
-  let session_status = match model.code.active_session_id {
-    Some(id) => "Session: " + truncate_text(id, 18)
-    None => "Session: draft"
-  }
-  if width >= 420.0 {
-    [runtime_status, session_status]
-  } else {
-    [runtime_status]
-  }
-}
-
-///|
-fn statusbar_label_width(label : String) -> Double {
-  label.length().to_double() * 6.5 + 10.0
-}
-
-///|
-fn workbench_statusbar_inner_width(labels : Array[String]) -> Double {
-  let mut total = 20.0
-  for label in labels {
-    total = total + statusbar_label_width(label) + 8.0
-  }
-  total.min(920.0).max(280.0)
 }
 
 // ---------------------------------------------------------------------------
@@ -421,15 +357,15 @@ fn new_task_section(
           "新建任务",
           on_click=WorkbenchMsg::NewTask,
           variant=@views.ButtonVariant::Tonal,
-          theme~,
+          theme=sidebar_control_theme(theme, size_delta=-0.5, weight=300),
           icon=Some(@views.IconName::Plus),
           width=width - 32.0,
           height=36.0,
         ),
         @views.row(
           [
-            @views.chip("技能", theme~, width=64.0, height=26.0),
-            @views.chip("自动化", theme~, width=76.0, height=26.0),
+            sidebar_secondary_chip("技能", theme, 60.0, 24.0),
+            sidebar_secondary_chip("自动化", theme, 70.0, 24.0),
             @views.spacer(),
           ],
           spacing=8.0,
@@ -441,6 +377,69 @@ fn new_task_section(
     ),
     horizontal=16.0,
     vertical=10.0,
+  )
+}
+
+///|
+fn sidebar_fine_font(
+  theme : @moui.Theme,
+  size_delta? : Double = -1.0,
+  weight? : Int = 300,
+) -> @text.FontSpec {
+  let base = theme.typography.caption
+  { ..base, size: (base.size + size_delta).max(10.0), weight }
+}
+
+///|
+fn sidebar_control_font(
+  theme : @moui.Theme,
+  size_delta? : Double = -0.5,
+  weight? : Int = 300,
+) -> @text.FontSpec {
+  let base = theme.typography.control
+  { ..base, size: (base.size + size_delta).max(10.0), weight }
+}
+
+///|
+fn sidebar_control_theme(
+  theme : @moui.Theme,
+  size_delta? : Double = -0.5,
+  weight? : Int = 300,
+) -> @moui.Theme {
+  theme.with_typography({
+    ..theme.typography,
+    control: sidebar_control_font(theme, size_delta~, weight~),
+  })
+}
+
+///|
+fn sidebar_secondary_chip(
+  label : String,
+  theme : @moui.Theme,
+  width : Double,
+  height : Double,
+) -> @moui.View[WorkbenchMsg] {
+  @views.container(
+    @views.center(
+      @views.text(
+        label,
+        role=@views.TextRole::Caption,
+        theme~,
+        width=(width - 16.0).max(32.0),
+        height=16.0,
+      )
+      .font(sidebar_fine_font(theme, size_delta=-1.0, weight=280))
+      .foreground(workbench_text_muted(theme)),
+      width=width - 8.0,
+      height=height - 8.0,
+      theme~,
+    ),
+    width~,
+    height~,
+    background=workbench_subtle_background(theme),
+    corner_radius=height / 2.0,
+    border=Some(hairline_border(theme)),
+    padding=4.0,
   )
 }
 
@@ -469,10 +468,13 @@ fn task_tree_view(
           [
             @views.text(
               "任务列表",
-              role=@views.TextRole::Label,
+              role=@views.TextRole::Caption,
               theme~,
               width=title_width,
-            ),
+              height=20.0,
+            )
+            .font(sidebar_fine_font(theme, size_delta=0.5, weight=320))
+            .foreground(workbench_text_muted(theme)),
             @views.container(
               @views.icon(
                 @views.IconName::ListOrdered,
@@ -530,9 +532,20 @@ fn task_search_field(
     placeholder="搜索任务或 session",
     variant=@views.TextFieldVariant::Filled,
     theme~,
+    style=sidebar_search_field_style(theme),
     width~,
     height=30.0,
   )
+}
+
+///|
+fn sidebar_search_field_style(theme : @moui.Theme) -> @views.TextFieldStyle {
+  let base = @views.TextFieldStyle::filled(theme~)
+  {
+    ..base,
+    font: sidebar_fine_font(theme, size_delta=-0.75, weight=280),
+    placeholder_color: workbench_text_muted(theme),
+  }
 }
 
 ///|
@@ -548,14 +561,16 @@ fn task_filter_chip(
       role=@views.TextRole::Caption,
       theme~,
       width=width - 6.0,
-      height=16.0,
-    ).foreground(workbench_accent(theme)),
+      height=15.0,
+    )
+    .font(sidebar_fine_font(theme, size_delta=-1.5, weight=300))
+    .foreground(workbench_accent(theme)),
     width~,
-    height=22.0,
+    height=20.0,
     background=workbench_accent_soft(theme),
-    corner_radius=11.0,
+    corner_radius=10.0,
     border=Some(hairline_border(theme)),
-    padding=3.0,
+    padding=2.5,
   ).on_tap(WorkbenchMsg::CycleTaskFilter)
 }
 
@@ -580,23 +595,26 @@ fn task_tree_node_view(
             [
               @views.container(
                 @views.icon(icon, size=12.0, color=theme.palette.muted),
-                width=20.0,
-                height=20.0,
+                width=18.0,
+                height=18.0,
                 padding=0.0,
               ),
               @views.text(
                 title,
-                role=@views.TextRole::Label,
+                role=@views.TextRole::Caption,
                 theme~,
-                width=width - 28.0,
-              ),
+                width=width - 26.0,
+                height=18.0,
+              )
+              .font(sidebar_fine_font(theme, size_delta=-1.0, weight=300))
+              .foreground(workbench_text_muted(theme)),
             ],
             spacing=4.0,
             align=@views.CrossAlign::Center,
           ),
           width~,
           corner_radius=4.0,
-          padding=6.0,
+          padding=4.0,
         ).on_tap(WorkbenchMsg::ToggleFolder(id)),
       ]
       if expanded {
@@ -664,26 +682,29 @@ fn task_row(
       [
         @views.container(
           @views.spacer(min_length=0.0),
-          width=8.0,
-          height=8.0,
+          width=6.0,
+          height=6.0,
           background=status_color,
-          corner_radius=4.0,
+          corner_radius=3.0,
           padding=0.0,
         ),
         @views.text(
           truncate_text(title, 22),
-          role=@views.TextRole::Label,
+          role=@views.TextRole::Caption,
           theme~,
-          width=width - 28.0,
-        ).foreground(title_color),
+          width=width - 24.0,
+          height=18.0,
+        )
+        .font(sidebar_fine_font(theme, size_delta=-1.0, weight=300))
+        .foreground(title_color),
       ],
-      spacing=10.0,
+      spacing=8.0,
       align=@views.CrossAlign::Center,
     ),
     width~,
     background=row_bg,
     corner_radius=6.0,
-    padding=8.0,
+    padding=6.0,
   ).on_tap(WorkbenchMsg::SelectTask(id))
 }
 

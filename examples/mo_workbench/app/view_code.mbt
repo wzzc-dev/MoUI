@@ -10,10 +10,12 @@ fn code_workspace_view(
   width : Double,
   height : Double,
 ) -> @moui.View[CodeMsg] {
+  let chat_theme = workbench_conversation_theme(theme, settings.font_size)
+  let title_theme = workbench_default_typography_theme(theme)
   if model.messages.is_empty() && !model.is_streaming {
-    code_welcome_view(model, settings, theme, width, height)
+    code_welcome_view(model, settings, title_theme, chat_theme, width, height)
   } else {
-    code_chat_pane_view(model, settings, theme, width, height)
+    code_chat_pane_view(model, settings, chat_theme, width, height)
   }
 }
 
@@ -26,7 +28,10 @@ fn code_chat_pane_view(
   width : Double,
   height : Double,
 ) -> @moui.View[CodeMsg] {
-  let list = code_message_list(model, theme, width)
+  let list_height = code_message_list_height(
+    model, settings, theme, width, height,
+  )
+  let list = code_message_list(model, theme, width, list_height)
   let composer = code_composer(model, settings, theme, width)
   @views.container(
     @views.custom_children_layout(
@@ -54,12 +59,90 @@ fn code_chat_pane_view(
 }
 
 ///|
+fn code_message_list_height(
+  model : CodeWorkspace,
+  settings : SettingsWorkspace,
+  theme : @moui.Theme,
+  width : Double,
+  height : Double,
+) -> Double {
+  (height - code_composer_height(model, settings, theme, width)).max(0.0)
+}
+
+///|
+fn code_composer_height(
+  model : CodeWorkspace,
+  settings : SettingsWorkspace,
+  theme : @moui.Theme,
+  width : Double,
+) -> Double {
+  let outer_padding = 16.0
+  let input_card_height = code_composer_input_card_height(model, theme, width)
+  let row_spacing = 6.0
+  let mut content_height = input_card_height
+  match model.error {
+    Some(_) => content_height = content_height + 32.0 + row_spacing
+    None => ()
+  }
+  if model.model_picker_open {
+    content_height = content_height +
+      row_spacing +
+      code_model_dropdown_panel_height(settings)
+  }
+  outer_padding + content_height
+}
+
+///|
+fn code_composer_prompt_line_height() -> Double {
+  22.0
+}
+
+///|
+fn code_composer_prompt_text_area_height(lines : Int) -> Double {
+  lines.to_double() * code_composer_prompt_line_height() + 16.0
+}
+
+///|
+fn code_composer_prompt_lines(
+  prompt : String,
+  theme : @moui.Theme,
+  width : Double,
+) -> Int {
+  if prompt.is_empty() {
+    2
+  } else {
+    let text_width = (width - 16.0).max(64.0)
+    let lines = chat_message_display_lines(
+      prompt,
+      text_width,
+      theme.typography.body.size,
+    ).length()
+    if lines < 2 {
+      2
+    } else {
+      lines
+    }
+  }
+}
+
+///|
+fn code_composer_input_card_height(
+  model : CodeWorkspace,
+  theme : @moui.Theme,
+  width : Double,
+) -> Double {
+  let lines = code_composer_prompt_lines(model.prompt, theme, width)
+  code_composer_prompt_text_area_height(lines) + 34.0
+}
+
+///|
 /// Brand title + input card, context bar with icons, and bottom quick-action
 /// chips. The whole block scrolls so it fits narrow windows.
 fn code_welcome_view(
   model : CodeWorkspace,
   settings : SettingsWorkspace,
-  theme : @moui.Theme,
+  title_theme : @moui.Theme,
+  content_theme : @moui.Theme,
   width : Double,
   height : Double,
 ) -> @moui.View[CodeMsg] {
@@ -69,16 +152,16 @@ fn code_welcome_view(
       @views.text(
         "Code with Mo",
         role=@views.TextRole::Headline,
-        theme~,
+        theme=title_theme,
         width=inner_width,
-      ).foreground(workbench_accent(theme)),
+      ).foreground(workbench_accent(title_theme)),
       @views.spacer(min_length=30.0, weight=0.0),
-      code_input_card(model, settings, theme, inner_width),
+      code_input_card(model, settings, content_theme, inner_width),
       @views.spacer(min_length=10.0, weight=0.0),
-      code_context_bar(settings, theme, inner_width),
+      code_context_bar(settings, content_theme, inner_width),
       @views.spacer(min_length=50.0, weight=0.0),
       @views.container(
-        quick_action_chips(theme, inner_width),
+        quick_action_chips(content_theme, inner_width),
         width=inner_width,
         padding=0.0,
       ),
@@ -88,10 +171,15 @@ fn code_welcome_view(
   )
   let welcome_area_height = (height - 96.0).max(0.0)
   @views.container(
-    @views.center(welcome_block, width~, height=welcome_area_height, theme~),
+    @views.center(
+      welcome_block,
+      width~,
+      height=welcome_area_height,
+      theme=content_theme,
+    ),
     width~,
     height~,
-    background=workbench_canvas_background(theme),
+    background=workbench_canvas_background(title_theme),
     padding=48.0,
   )
 }
@@ -115,10 +203,10 @@ fn code_input_card(
       on_submit=Some(CodeMsg::SubmitPrompt),
       placeholder="帮你编写代码、调试 Bug、优化性能等开发工作…",
       lines=4,
-      variant=@views.TextFieldVariant::Filled,
+      variant=@views.TextFieldVariant::Plain,
       theme=text_area_theme,
       width~,
-      line_height=28.0,
+      line_height=25.0,
     ),
   )
   rows.push(
@@ -150,7 +238,7 @@ fn code_input_card(
     width~,
     background=workbench_card_background(theme),
     corner_radius=14.0,
-    border=Some(hairline_border(theme)),
+    border=None,
     padding=1.0,
   )
 }
@@ -189,9 +277,9 @@ fn code_agent_controls(
           code_model_picker(
             code,
             theme,
-            code_model_picker_width(code, max_width=(width - 66.0).max(96.0)),
+            code_model_picker_width(code, max_width=(width - 68.0).max(96.0)),
           ),
-          code_thinking_picker(code, theme, 58.0),
+          code_thinking_picker(code, theme, 65.0),
         ],
         spacing=6.0,
         align=@views.CrossAlign::Center,
@@ -315,9 +403,9 @@ fn code_model_picker_width(
   code : CodeWorkspace,
   max_width? : Double = 320.0,
 ) -> Double {
-  let text_width = code.current_model.to_array().length().to_double() * 8.0 +
-    28.0
-  text_width.max(82.0).min(max_width)
+  let text_width = code.current_model.to_array().length().to_double() * 7.2 +
+    24.0
+  text_width.max(74.0).min(max_width)
 }
 
 ///|
@@ -365,7 +453,7 @@ fn code_model_dropdown_panel(
       }
     None => ()
   }
-  let list_h = (rows.length().to_double() * 44.0 + 16.0).min(300.0)
+  let list_h = code_model_dropdown_list_height(settings)
   @views.container(
     @views.scroll_view(
       @views.column(rows, spacing=4.0, align=@views.CrossAlign::Stretch),
@@ -378,6 +466,30 @@ fn code_model_dropdown_panel(
     border=Some(hairline_border(theme)),
     padding=8.0,
   )
+}
+
+///|
+fn code_model_dropdown_row_count(settings : SettingsWorkspace) -> Int {
+  let base_rows = 2
+  match settings.active_provider() {
+    Some(p) =>
+      if p.models.is_empty() {
+        base_rows + 1
+      } else {
+        base_rows + p.models.length()
+      }
+    None => base_rows
+  }
+}
+
+///|
+fn code_model_dropdown_list_height(settings : SettingsWorkspace) -> Double {
+  (code_model_dropdown_row_count(settings).to_double() * 44.0 + 16.0).min(300.0)
+}
+
+///|
+fn code_model_dropdown_panel_height(settings : SettingsWorkspace) -> Double {
+  code_model_dropdown_list_height(settings) + 16.0
 }
 
 ///|
@@ -524,24 +636,36 @@ fn code_compact_select_chip(
   theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[CodeMsg] {
+  let content_width = (width - 6.0).max(32.0)
   @views.container(
     @views.center(
-      @views.text(
-        label,
-        role=@views.TextRole::Caption,
-        theme~,
-        width=(width - 12.0).max(32.0),
-        height=18.0,
-      ).foreground(workbench_accent(theme)),
-      width=(width - 12.0).max(32.0),
-      height=22.0,
+      @views.row(
+        [
+          @views.text(
+            label,
+            role=@views.TextRole::Caption,
+            theme~,
+            width=(content_width - 14.0).max(24.0),
+            height=18.0,
+          ).foreground(workbench_accent(theme)),
+          @views.icon(
+            @views.IconName::ChevronDown,
+            size=9.0,
+            color=workbench_accent(theme),
+          ),
+        ],
+        spacing=4.0,
+        align=@views.CrossAlign::Center,
+      ),
+      width=content_width,
+      height=20.0,
       theme~,
     ),
     width~,
-    height=32.0,
+    height=26.0,
     background=workbench_subtle_background(theme),
-    corner_radius=14.0,
-    padding=4.0,
+    corner_radius=11.0,
+    padding=2.0,
   )
 }
 
@@ -722,23 +846,44 @@ fn code_message_list(
   model : CodeWorkspace,
   theme : @moui.Theme,
   width : Double,
+  height : Double,
 ) -> @moui.View[CodeMsg] {
   let inner_width = (width - 56.0).max(320.0)
+  let inner_height = (height - 20.0).max(0.0)
   let rows : Array[@moui.View[CodeMsg]] = []
   for msg in model.messages {
     rows.push(message_row(msg, theme, inner_width))
   }
-  if model.is_streaming {
-    rows.push(code_activity_row(model, theme, inner_width))
+  if code_should_show_streaming_placeholder(model) {
+    rows.push(code_streaming_placeholder_row(model, theme, inner_width))
   }
-  @views.padding(
+  @views.padding_edges(
     @views.scroll_view(
-      @views.list(rows, spacing=12.0),
+      @views.list(rows, spacing=4.0),
       state=Some(model.scroll_state),
       width=inner_width,
+      height=inner_height,
+      on_scroll=Some(delta => CodeMsg::MessageListScrolled(delta)),
     ),
-    28.0,
+    top=12.0,
+    left=28.0,
+    right=28.0,
+    bottom=8.0,
   )
+}
+
+///|
+fn code_should_show_streaming_placeholder(model : CodeWorkspace) -> Bool {
+  if !model.is_streaming {
+    false
+  } else if model.messages.is_empty() {
+    true
+  } else {
+    match model.messages[model.messages.length() - 1] {
+      Assistant(content, _) => content.trim().is_empty()
+      _ => true
+    }
+  }
 }
 
 ///|
@@ -750,12 +895,28 @@ fn code_activity_text(model : CodeWorkspace) -> String {
 }
 
 ///|
-fn code_activity_row(
+fn code_streaming_placeholder_row(
   model : CodeWorkspace,
   theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[CodeMsg] {
-  let card_width = (width * 0.62).max(260.0).min(width)
+  let bubble_width = width * 0.82
+  aligned_message_bubble(
+    code_streaming_steer_panel(model, theme, bubble_width),
+    width,
+    bubble_width,
+    false,
+  )
+}
+
+///|
+fn code_streaming_steer_panel(
+  model : CodeWorkspace,
+  theme : @moui.Theme,
+  width : Double,
+) -> @moui.View[CodeMsg] {
+  let status_width = (width * 0.34).max(136.0).min(width - 180.0)
+  let steer_width = (width - status_width - 104.0).max(120.0)
   @views.container(
     @views.row(
       [
@@ -772,21 +933,39 @@ fn code_activity_row(
           padding=0.0,
         ),
         @views.text(
-          truncate_text(code_activity_text(model), 54),
+          "AI " + truncate_text(code_activity_text(model), 32),
           role=@views.TextRole::Caption,
           theme~,
-          width=card_width - 38.0,
+          width=status_width - 30.0,
           height=22.0,
         ).foreground(workbench_text_muted(theme)),
+        @views.text_field(
+          model.steer_text,
+          on_input=value => CodeMsg::SteerChanged(value),
+          on_submit=Some(CodeMsg::SubmitSteer),
+          placeholder="Steer the running turn...",
+          variant=@views.TextFieldVariant::Filled,
+          theme~,
+          width=steer_width,
+          height=34.0,
+        ),
+        @views.button(
+          "Steer",
+          on_click=CodeMsg::SubmitSteer,
+          variant=@views.ButtonVariant::Ghost,
+          theme~,
+          width=72.0,
+          height=34.0,
+        ),
       ],
       spacing=8.0,
       align=@views.CrossAlign::Center,
     ),
-    width=card_width,
+    width~,
     background=workbench_subtle_background(theme),
     corner_radius=12.0,
     border=Some(hairline_border(theme)),
-    padding=10.0,
+    padding=8.0,
   )
 }
 
@@ -800,8 +979,6 @@ fn code_composer(
   width : Double,
 ) -> @moui.View[CodeMsg] {
   let inner_width = (width - 56.0).max(320.0)
-  let send_diameter = 32.0
-  let controls_width = (inner_width - send_diameter - 64.0).max(120.0)
   let rows : Array[@moui.View[CodeMsg]] = []
   match model.error {
     Some(err) =>
@@ -815,22 +992,50 @@ fn code_composer(
       )
     None => ()
   }
-  // Prompt input above a compact tool row.
+  rows.push(code_composer_input_card(model, settings, theme, inner_width))
+  if model.model_picker_open {
+    rows.push(code_model_dropdown_panel(model, settings, theme, inner_width))
+  }
+  @views.padding_edges(
+    @views.column(rows, spacing=6.0, align=@views.CrossAlign::Stretch),
+    top=8.0,
+    left=28.0,
+    right=28.0,
+    bottom=8.0,
+  )
+}
+
+///|
+fn code_composer_input_card(
+  model : CodeWorkspace,
+  settings : SettingsWorkspace,
+  theme : @moui.Theme,
+  width : Double,
+) -> @moui.View[CodeMsg] {
+  let send_diameter = 28.0
+  let cancel_width = if model.is_streaming { 72.0 } else { 0.0 }
+  let controls_width = (width - send_diameter - cancel_width - 34.0).max(120.0)
+  let prompt_lines = code_composer_prompt_lines(model.prompt, theme, width)
+  let prompt_height = code_composer_prompt_text_area_height(prompt_lines)
+  let rows : Array[@moui.View[CodeMsg]] = []
   rows.push(
-    @views.text_field(
+    @views.text_area(
       model.prompt,
       on_input=value => CodeMsg::PromptChanged(value),
       on_submit=Some(CodeMsg::SubmitPrompt),
       placeholder=if model.is_streaming {
-        "Agent 正在运行；请使用下方 Steer 调整方向"
+        "Agent 正在运行；可在上方 Steer 调整方向"
       } else {
         "继续描述你的任务…"
       },
-      variant=@views.TextFieldVariant::Filled,
+      lines=prompt_lines,
+      variant=@views.TextFieldVariant::Plain,
       theme~,
-      width=inner_width,
-      height=44.0,
-    ).disabled(disabled=model.is_streaming),
+      width~,
+      line_height=code_composer_prompt_line_height(),
+    )
+    .frame(height=prompt_height)
+    .disabled(disabled=model.is_streaming),
   )
   rows.push(
     @views.row(
@@ -843,7 +1048,7 @@ fn code_composer(
             on_click=CodeMsg::CancelTurn,
             variant=@views.ButtonVariant::Ghost,
             theme~,
-            width=72.0,
+            width=cancel_width,
             height=32.0,
           )
         } else {
@@ -863,41 +1068,13 @@ fn code_composer(
       align=@views.CrossAlign::Center,
     ),
   )
-  if model.model_picker_open {
-    rows.push(code_model_dropdown_panel(model, settings, theme, inner_width))
-  }
-  // Steer field while streaming.
-  if model.is_streaming {
-    rows.push(
-      @views.row(
-        [
-          @views.text_field(
-            model.steer_text,
-            on_input=value => CodeMsg::SteerChanged(value),
-            on_submit=Some(CodeMsg::SubmitSteer),
-            placeholder="Steer the running turn...",
-            variant=@views.TextFieldVariant::Filled,
-            theme~,
-            width=inner_width - 96.0,
-            height=34.0,
-          ),
-          @views.button(
-            "Steer",
-            on_click=CodeMsg::SubmitSteer,
-            variant=@views.ButtonVariant::Ghost,
-            theme~,
-            width=80.0,
-            height=34.0,
-          ),
-        ],
-        spacing=10.0,
-        align=@views.CrossAlign::Center,
-      ),
-    )
-  }
-  @views.padding(
-    @views.column(rows, spacing=10.0, align=@views.CrossAlign::Stretch),
-    28.0,
+  @views.container(
+    @views.column(rows, spacing=0.0, align=@views.CrossAlign::Stretch),
+    width~,
+    background=workbench_card_background(theme),
+    corner_radius=14.0,
+    border=None,
+    padding=1.0,
   )
 }
 
