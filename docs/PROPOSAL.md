@@ -1,7 +1,7 @@
 # MoUI 项目申报书
 
 ## 项目名称与仓库
-MoUI。GitHub: https://github.com/wzzc-dev/MoUI.git；Gitlink: 待同步后填写；Mooncakes 包名: `wzzc-dev/moui`；许可证: Apache-2.0。
+MoUI。GitHub: https://github.com/wzzc-dev/MoUI.git；Gitlink: https://gitlink.org.cn/wzzc/MoUI；Mooncakes 包名: `wzzc-dev/moui`；许可证: Apache-2.0。
 
 ## 项目简介
 MoUI 是一个原创的 MoonBit 跨平台声明式 GUI 框架，面向桌面应用、Web 应用、开发工具和复杂交互界面。项目采用 Model / Msg / update / view 架构，让应用层业务逻辑保持平台中立，再通过薄平台入口接入 macOS、Linux、Windows 和浏览器运行环境。
@@ -23,4 +23,4 @@ MoUI 是一个原创的 MoonBit 跨平台声明式 GUI 框架，面向桌面应�
 完整 MoonBit 源码、根目录 README 与 Apache-2.0 LICENSE、可运行示例、核心测试、GitHub Actions CI、mooncakes.io 发布包、GitHub 与 Gitlink 同步仓库，以及面向使用者的开发文档和平台 smoke 证据。
 
 ## 原创性与合规说明
-MoUI 是原创项目，不是对已有 GUI 框架的直接移植。项目会明确记录第三方依赖、FFI 绑定、生成代码、测试数据和示例素材来源，遵守 Apache-2.0 及所有上游许可证要求，不包含未授权的私有、闭源或商业代码。
+MoUI 是原创项目，不是对已有 GUI 框架的直接移植。项目会明确记录第三方依赖、FFI 绑定、生成代码、测试数据和示例素材来源；根目录 `THIRD_PARTY.md` 记录主要第三方来源和合规边界。项目遵守 Apache-2.0 及所有上游许可证要求，不包含未授权的私有、闭源或商业代码。
