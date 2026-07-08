@@ -11,5 +11,16 @@ supported_targets = "native"
 
 options(
   "is-main": true,
+  link: {
+    "native": {
+      "exports": [
+        "android_counter_attach_surface",
+        "android_counter_resize",
+        "android_counter_dispatch_pointer",
+        "android_counter_render_frame",
+        "android_counter_detach_surface",
+      ],
+    },
+  },
   targets: { "main.mbt": [ "native" ] },
 )

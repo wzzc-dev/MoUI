@@ -110,6 +110,7 @@ moon test examples/pdf_workbench/pdflite_service_protocol --target native
 moon test examples/pdf_workbench/pdflite_service_native_transport --target native
 moon test examples/pdf_workbench/pdfium_adapter --target native
 moon check examples/counter/android_skia --target native
+scripts/build-counter-android-apk.sh --fallback-skia
 ```
 
 Use `moon test moui/render/wgpu --target native` only for the native WGPU
@@ -210,6 +211,13 @@ scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke
 scripts/macos-skia-renderer-smoke.sh --run-ime-smoke
 sh scripts/ci-web-runtime-presentation.sh
 ```
+
+For Android packaging changes, `scripts/build-counter-android-apk.sh
+--fallback-skia` is a fast build-system smoke that covers MoonBit C export,
+JNI/CMake, Java/resource packaging, and debug signing. It is not real Skia
+renderer or platform runtime evidence. Android first-frame/input/lifecycle
+claims still require `scripts/build-counter-android-apk.sh` without fallback
+and a matching device or emulator run with recorded observations.
 
 `smoke/gates.json` is the checked-in smoke gate catalog. It describes the daily,
 nightly, and release smoke tiers, each suite command, the structured result

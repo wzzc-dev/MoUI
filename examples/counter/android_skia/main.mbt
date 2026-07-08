@@ -33,6 +33,17 @@ fn android_counter_runtime(
 }
 
 ///|
+fn android_counter_pointer_phase(phase : Int) -> @core.PointerPhase? {
+  match phase {
+    0 => Some(@core.PointerPhase::Down)
+    1 => Some(@core.PointerPhase::Move)
+    2 => Some(@core.PointerPhase::Up)
+    3 => Some(@core.PointerPhase::Cancel)
+    _ => None
+  }
+}
+
+///|
 pub fn android_counter_attach_surface(
   surface_handle : UInt64,
   width : Int,
@@ -69,6 +80,39 @@ pub fn android_counter_resize(
       true
     }
     None => false
+  }
+}
+
+///|
+pub fn android_counter_dispatch_pointer(
+  phase : Int,
+  x : Double,
+  y : Double,
+  time_ms : Double,
+) -> Bool {
+  match (android_counter_session.val, android_counter_pointer_phase(phase)) {
+    (Some(session), Some(pointer_phase)) => {
+      let metrics = session.metrics()
+      let scale = if metrics.scale_factor > 0.0 {
+        metrics.scale_factor
+      } else {
+        1.0
+      }
+      ignore(
+        session.dispatch(
+          @host.HostEvent::Pointer(
+            @core.PointerEvent::new(
+              position=@core.Point::new(x=x / scale, y=y / scale),
+              phase=pointer_phase,
+              button=0,
+              time_ms~,
+            ),
+          ),
+        ),
+      )
+      true
+    }
+    _ => false
   }
 }
 
