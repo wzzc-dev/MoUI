@@ -824,10 +824,10 @@ test "renderer neutral draw command scopes keep visible path out of fallback pla
   ]
   inspect(@render.collect_rect_batches(commands).length(), content="0")
   let plan = @render.plan_renderer_command_fallbacks(commands)
-  inspect(plan.total_commands, content="14")
-  inspect(plan.fallback_count, content="0")
-  inspect(plan.final_layer_depth, content="0")
-  inspect(plan.final_filter_depth, content="0")
+  inspect(plan.total_commands(), content="14")
+  inspect(plan.fallback_count(), content="0")
+  inspect(plan.final_layer_depth(), content="0")
+  inspect(plan.final_filter_depth(), content="0")
   guard commands[6] is @core.DrawCommand::DrawPath(path) else {
     fail("expected path command")
   }
@@ -844,21 +844,25 @@ test "renderer command planner reports unbalanced draw command scopes" {
     @core.DrawCommand::PopLayer,
     @core.DrawCommand::PushFilter(@core.FilterEffect::blur(2.0)),
   ])
-  inspect(plan.fallback_count, content="6")
+  inspect(plan.fallback_count(), content="6")
   assert_true(
-    plan.fallbacks[0].kind == @render.RendererCommandFallbackKind::UnbalancedPop,
+    plan.fallbacks()[0].kind() ==
+    @render.RendererCommandFallbackKind::UnbalancedPop,
   )
-  assert_true(plan.fallbacks[0].feature == @render.RendererFeature::Clip)
-  inspect(plan.fallbacks[1].command, content="PopRoundedClip")
-  assert_true(plan.fallbacks[2].feature == @render.RendererFeature::Transform)
-  assert_true(plan.fallbacks[3].feature == @render.RendererFeature::Opacity)
+  assert_true(plan.fallbacks()[0].feature() == @render.RendererFeature::Clip)
+  inspect(plan.fallbacks()[1].command(), content="PopRoundedClip")
   assert_true(
-    plan.fallbacks[4].feature == @render.RendererFeature::LayerCompositing,
+    plan.fallbacks()[2].feature() == @render.RendererFeature::Transform,
+  )
+  assert_true(plan.fallbacks()[3].feature() == @render.RendererFeature::Opacity)
+  assert_true(
+    plan.fallbacks()[4].feature() == @render.RendererFeature::LayerCompositing,
   )
   assert_true(
-    plan.fallbacks[5].kind == @render.RendererCommandFallbackKind::UnclosedScope,
+    plan.fallbacks()[5].kind() ==
+    @render.RendererCommandFallbackKind::UnclosedScope,
   )
-  inspect(plan.final_filter_depth, content="1")
+  inspect(plan.final_filter_depth(), content="1")
 }
 
 ///|
@@ -876,20 +880,20 @@ test "renderer command planner reports unclosed draw command scopes" {
     @core.DrawCommand::PushLayer(@core.LayerSpec::new()),
     @core.DrawCommand::PushFilter(@core.FilterEffect::blur(2.0)),
   ])
-  inspect(plan.fallback_count, content="6")
-  inspect(plan.fallbacks[0].command, content="PushClip")
-  inspect(plan.fallbacks[1].command, content="PushRoundedClip")
-  inspect(plan.fallbacks[2].command, content="PushTransform")
-  inspect(plan.fallbacks[3].command, content="PushOpacity")
-  inspect(plan.fallbacks[4].command, content="PushLayer")
-  inspect(plan.fallbacks[5].command, content="PushFilter")
-  for fallback in plan.fallbacks {
+  inspect(plan.fallback_count(), content="6")
+  inspect(plan.fallbacks()[0].command(), content="PushClip")
+  inspect(plan.fallbacks()[1].command(), content="PushRoundedClip")
+  inspect(plan.fallbacks()[2].command(), content="PushTransform")
+  inspect(plan.fallbacks()[3].command(), content="PushOpacity")
+  inspect(plan.fallbacks()[4].command(), content="PushLayer")
+  inspect(plan.fallbacks()[5].command(), content="PushFilter")
+  for fallback in plan.fallbacks() {
     assert_true(
-      fallback.kind == @render.RendererCommandFallbackKind::UnclosedScope,
+      fallback.kind() == @render.RendererCommandFallbackKind::UnclosedScope,
     )
   }
-  inspect(plan.final_layer_depth, content="1")
-  inspect(plan.final_filter_depth, content="1")
+  inspect(plan.final_layer_depth(), content="1")
+  inspect(plan.final_filter_depth(), content="1")
 }
 
 ///|

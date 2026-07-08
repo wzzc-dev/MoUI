@@ -39,10 +39,10 @@ fn assert_linux_wgpu_async_repaint_proof() -> Unit {
   let scheduled = loader.schedule_loading_resources(
     window_id, renderer, completion_source,
   )
-  if scheduled.loading_count < 1 || scheduled.scheduled_count < 1 {
+  if scheduled.loading_count() < 1 || scheduled.scheduled_count() < 1 {
     abort("Linux WGPU smoke async image was not scheduled")
   }
-  if completion_source.diagnostics().redraw_requested_count < 1 ||
+  if completion_source.diagnostics().redraw_requested_count() < 1 ||
     redraws.length() < 1 {
     abort("Linux WGPU smoke async image did not request repaint")
   }

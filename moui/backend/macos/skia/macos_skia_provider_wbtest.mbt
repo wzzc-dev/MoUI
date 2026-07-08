@@ -174,8 +174,8 @@ test "macos skia async image loader completes loading resources" {
   let result = loader.schedule_loading_resources(
     window_id, renderer, completion_source,
   )
-  inspect(result.loading_count, content="1")
-  inspect(result.scheduled_count, content="1")
+  inspect(result.loading_count(), content="1")
+  inspect(result.scheduled_count(), content="1")
   match lifecycle.lookup(source) {
     Some(record) =>
       if @skia_renderer.skia_available() {
@@ -220,8 +220,8 @@ test "macos skia deferred native source completes through decode helper" {
   let scheduled = loader.schedule_loading_resources(
     window_id, renderer, completion_source,
   )
-  inspect(scheduled.loading_count, content="1")
-  inspect(scheduled.scheduled_count, content="1")
+  inspect(scheduled.loading_count(), content="1")
+  inspect(scheduled.scheduled_count(), content="1")
   inspect(native_source.pending_requests().length(), content="1")
   inspect(redraws.length(), content="0")
   match lifecycle.lookup(source) {
@@ -234,7 +234,7 @@ test "macos skia deferred native source completes through decode helper" {
     @skia_renderer.skia_image_load_completion(source),
   )
   assert_true(
-    delivered.status ==
+    delivered.status() ==
     @host.HostNativeAsyncImageCompletionStatus::NativeAsyncImageCompletionDelivered,
   )
   match lifecycle.lookup(source) {
@@ -251,8 +251,8 @@ test "macos skia deferred native source completes through decode helper" {
   }
   inspect(redraws.length(), content="1")
   assert_true(redraws[0] == window_id)
-  inspect(loader.diagnostics().completed_count, content="1")
-  inspect(native_source.diagnostics().pending_count, content="0")
+  inspect(loader.diagnostics().completed_count(), content="1")
+  inspect(native_source.diagnostics().pending_count(), content="0")
 }
 
 ///|

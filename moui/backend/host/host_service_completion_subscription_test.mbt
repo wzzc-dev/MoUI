@@ -56,14 +56,14 @@ test "host app services completion subscription dispatches typed messages" {
     size=@core.Size::new(width=320.0, height=80.0),
   )
   let initial = runtime.program_runtime_snapshot()
-  inspect(initial.active_subscription_count, content="1")
+  inspect(initial.active_subscription_count(), content="1")
   inspect(
-    initial.active_subscriptions[0].key(),
+    initial.active_subscriptions()[0].key(),
     content="host-service:completion:1",
   )
-  inspect(initial.active_subscriptions[0].kind(), content="host-service")
+  inspect(initial.active_subscriptions()[0].kind(), content="host-service")
   inspect(
-    initial.active_subscriptions[0].label(),
+    initial.active_subscriptions()[0].label(),
     content="File dialog completion",
   )
   let pending = services.drain_pending()
@@ -82,10 +82,10 @@ test "host app services completion subscription dispatches typed messages" {
     }),
   )
   let completed = runtime.program_runtime_snapshot()
-  inspect(completed.dispatched_count, content="1")
-  inspect(completed.update_count, content="1")
-  inspect(completed.active_subscription_count, content="0")
-  inspect(completed.cancelled_subscription_count, content="1")
+  inspect(completed.dispatched_count(), content="1")
+  inspect(completed.update_count(), content="1")
+  inspect(completed.active_subscription_count(), content="0")
+  inspect(completed.cancelled_subscription_count(), content="1")
   inspect(services.completed_count(), content="0")
 }
 
@@ -139,13 +139,13 @@ test "host app services completion subscription cancels queue handler" {
     size=@core.Size::new(width=320.0, height=80.0),
   )
   let initial = runtime.program_runtime_snapshot()
-  inspect(initial.active_subscription_count, content="1")
+  inspect(initial.active_subscription_count(), content="1")
   let pending = services.drain_pending()
   inspect(pending.length(), content="1")
   runtime.destroy()
   let destroyed = runtime.program_runtime_snapshot()
-  inspect(destroyed.active_subscription_count, content="0")
-  inspect(destroyed.cancelled_subscription_count, content="1")
+  inspect(destroyed.active_subscription_count(), content="0")
+  inspect(destroyed.cancelled_subscription_count(), content="1")
   assert_true(
     services.complete(
       pending_id,
@@ -154,7 +154,7 @@ test "host app services completion subscription cancels queue handler" {
   )
   inspect(services.completed_count(), content="1")
   inspect(
-    runtime.program_runtime_snapshot().ignored_subscription_dispatch_count,
+    runtime.program_runtime_snapshot().ignored_subscription_dispatch_count(),
     content="0",
   )
   match services.take_completed(pending_id) {

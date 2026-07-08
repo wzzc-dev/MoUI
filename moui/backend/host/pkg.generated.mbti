@@ -120,13 +120,14 @@ pub fn HostAppServices::write_clipboard_image(Self, String, Bytes) -> HostServic
 pub fn HostAppServices::write_clipboard_text(Self, String) -> HostServiceResponse
 pub fn HostAppServices::write_text_file(Self, String, String) -> HostServiceResponse
 
-pub(all) struct HostAsyncImageLoadScheduleResult {
-  window_id : HostWindowId
-  snapshot_revision : Int
-  loading_count : Int
-  scheduled_count : Int
-  already_in_flight_count : Int
+pub struct HostAsyncImageLoadScheduleResult {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostAsyncImageLoadScheduleResult::already_in_flight_count(Self) -> Int
+pub fn HostAsyncImageLoadScheduleResult::loading_count(Self) -> Int
+pub fn HostAsyncImageLoadScheduleResult::scheduled_count(Self) -> Int
+pub fn HostAsyncImageLoadScheduleResult::snapshot_revision(Self) -> Int
+pub fn HostAsyncImageLoadScheduleResult::window_id(Self) -> HostWindowId
 
 pub struct HostAsyncImageLoader {
   // private fields
@@ -138,13 +139,14 @@ pub fn HostAsyncImageLoader::new(start_load~ : (HostWindowId, String, (@render.I
 pub fn HostAsyncImageLoader::new_with_drain(start_load~ : (HostWindowId, String, (@render.ImageResourceLoadCompletion) -> Unit) -> (() -> Unit)?, drain~ : () -> Unit) -> Self
 pub fn HostAsyncImageLoader::schedule_loading_resources(Self, HostWindowId, HostWindowRenderer, HostImageResourceCompletionSource) -> HostAsyncImageLoadScheduleResult
 
-pub(all) struct HostAsyncImageLoaderDiagnostics {
-  scheduled_count : Int
-  completed_count : Int
-  cancelled_count : Int
-  already_in_flight_count : Int
-  in_flight_count : Int
+pub struct HostAsyncImageLoaderDiagnostics {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostAsyncImageLoaderDiagnostics::already_in_flight_count(Self) -> Int
+pub fn HostAsyncImageLoaderDiagnostics::cancelled_count(Self) -> Int
+pub fn HostAsyncImageLoaderDiagnostics::completed_count(Self) -> Int
+pub fn HostAsyncImageLoaderDiagnostics::in_flight_count(Self) -> Int
+pub fn HostAsyncImageLoaderDiagnostics::scheduled_count(Self) -> Int
 
 pub(all) enum HostBackendKind {
   Native
@@ -283,28 +285,31 @@ pub fn HostImageResourceCompletionSource::diagnostics(Self) -> HostImageResource
 pub fn HostImageResourceCompletionSource::new(tracker~ : HostImageResourceRepaintTracker, window_open~ : (HostWindowId) -> Bool, request_redraw~ : (HostWindowId) -> Unit) -> Self
 pub fn HostImageResourceCompletionSource::publish(Self, HostWindowId, @render.ImageResourceSnapshot) -> HostImageResourceRepaintResult
 
-pub(all) struct HostImageResourceCompletionSourceDiagnostics {
-  publish_count : Int
-  recorded_count : Int
-  redraw_requested_count : Int
-  unchanged_count : Int
-  discarded_closed_count : Int
-  tracked_window_count : Int
+pub struct HostImageResourceCompletionSourceDiagnostics {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostImageResourceCompletionSourceDiagnostics::discarded_closed_count(Self) -> Int
+pub fn HostImageResourceCompletionSourceDiagnostics::publish_count(Self) -> Int
+pub fn HostImageResourceCompletionSourceDiagnostics::recorded_count(Self) -> Int
+pub fn HostImageResourceCompletionSourceDiagnostics::redraw_requested_count(Self) -> Int
+pub fn HostImageResourceCompletionSourceDiagnostics::tracked_window_count(Self) -> Int
+pub fn HostImageResourceCompletionSourceDiagnostics::unchanged_count(Self) -> Int
 
-pub(all) struct HostImageResourceRepaintResult {
-  window_id : HostWindowId
-  previous_revision : Int
-  current_revision : Int
-  previous_status_counts : HostImageResourceStatusCounts
-  current_status_counts : HostImageResourceStatusCounts
-  status : HostImageResourceRepaintStatus
+pub struct HostImageResourceRepaintResult {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostImageResourceRepaintResult::current_revision(Self) -> Int
+pub fn HostImageResourceRepaintResult::current_status_counts(Self) -> HostImageResourceStatusCounts
+pub fn HostImageResourceRepaintResult::previous_revision(Self) -> Int
+pub fn HostImageResourceRepaintResult::previous_status_counts(Self) -> HostImageResourceStatusCounts
+pub fn HostImageResourceRepaintResult::status(Self) -> HostImageResourceRepaintStatus
+pub fn HostImageResourceRepaintResult::window_id(Self) -> HostWindowId
 
-pub(all) struct HostImageResourceRepaintSnapshot {
-  tracked_window_count : Int
-  tracked_windows : Array[HostImageResourceTrackedWindow]
+pub struct HostImageResourceRepaintSnapshot {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostImageResourceRepaintSnapshot::tracked_window_count(Self) -> Int
+pub fn HostImageResourceRepaintSnapshot::tracked_windows(Self) -> Array[HostImageResourceTrackedWindow]
 
 pub(all) enum HostImageResourceRepaintStatus {
   ImageRepaintRecorded
@@ -325,19 +330,21 @@ pub fn HostImageResourceRepaintTracker::revision_for(Self, HostWindowId) -> Int?
 pub fn HostImageResourceRepaintTracker::snapshot(Self) -> HostImageResourceRepaintSnapshot
 pub fn HostImageResourceRepaintTracker::tracked_count(Self) -> Int
 
-pub(all) struct HostImageResourceStatusCounts {
-  record_count : Int
-  loading_count : Int
-  ready_count : Int
-  failed_count : Int
-  disposed_count : Int
+pub struct HostImageResourceStatusCounts {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostImageResourceStatusCounts::disposed_count(Self) -> Int
+pub fn HostImageResourceStatusCounts::failed_count(Self) -> Int
+pub fn HostImageResourceStatusCounts::loading_count(Self) -> Int
+pub fn HostImageResourceStatusCounts::ready_count(Self) -> Int
+pub fn HostImageResourceStatusCounts::record_count(Self) -> Int
 
-pub(all) struct HostImageResourceTrackedWindow {
-  window_id : HostWindowId
-  revision : Int
-  status_counts : HostImageResourceStatusCounts
+pub struct HostImageResourceTrackedWindow {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostImageResourceTrackedWindow::revision(Self) -> Int
+pub fn HostImageResourceTrackedWindow::status_counts(Self) -> HostImageResourceStatusCounts
+pub fn HostImageResourceTrackedWindow::window_id(Self) -> HostWindowId
 
 pub(all) struct HostInputCapabilities {
   pointer : Bool
@@ -359,21 +366,23 @@ pub(all) struct HostInputContract {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostInputContract::new(capabilities? : HostInputCapabilities, coordinates? : HostCoordinatePolicy) -> Self
 
-pub(all) struct HostNativeAsyncImageCompletionResult {
-  window_id : HostWindowId
-  source : String
-  status : HostNativeAsyncImageCompletionStatus
+pub struct HostNativeAsyncImageCompletionResult {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostNativeAsyncImageCompletionResult::source(Self) -> String
+pub fn HostNativeAsyncImageCompletionResult::status(Self) -> HostNativeAsyncImageCompletionStatus
+pub fn HostNativeAsyncImageCompletionResult::window_id(Self) -> HostWindowId
 
 pub(all) enum HostNativeAsyncImageCompletionStatus {
   NativeAsyncImageCompletionDelivered
   NativeAsyncImageCompletionMissing
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct HostNativeAsyncImageLoadRequest {
-  window_id : HostWindowId
-  source : String
+pub struct HostNativeAsyncImageLoadRequest {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostNativeAsyncImageLoadRequest::source(Self) -> String
+pub fn HostNativeAsyncImageLoadRequest::window_id(Self) -> HostWindowId
 
 pub struct HostNativeAsyncImageSource {
   // private fields
@@ -385,13 +394,14 @@ pub fn HostNativeAsyncImageSource::loader_with_drain(Self, spawn~ : (HostWindowI
 pub fn HostNativeAsyncImageSource::new() -> Self
 pub fn HostNativeAsyncImageSource::pending_requests(Self) -> Array[HostNativeAsyncImageLoadRequest]
 
-pub(all) struct HostNativeAsyncImageSourceDiagnostics {
-  requested_count : Int
-  completed_count : Int
-  cancelled_count : Int
-  missing_completion_count : Int
-  pending_count : Int
+pub struct HostNativeAsyncImageSourceDiagnostics {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostNativeAsyncImageSourceDiagnostics::cancelled_count(Self) -> Int
+pub fn HostNativeAsyncImageSourceDiagnostics::completed_count(Self) -> Int
+pub fn HostNativeAsyncImageSourceDiagnostics::missing_completion_count(Self) -> Int
+pub fn HostNativeAsyncImageSourceDiagnostics::pending_count(Self) -> Int
+pub fn HostNativeAsyncImageSourceDiagnostics::requested_count(Self) -> Int
 
 pub(all) struct HostPendingServiceRequest {
   id : HostServiceRequestId

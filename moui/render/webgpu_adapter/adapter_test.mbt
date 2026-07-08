@@ -341,7 +341,7 @@ test "wgpu web renderer submits DrawPath without fallback diagnostics" {
       ),
     ),
   ])
-  inspect(renderer.last_fallback_plan().fallback_count, content="0")
+  inspect(renderer.last_fallback_plan().fallback_count(), content="0")
   inspect(last_calls.length(), content="3")
   assert_true(last_calls[1] is WebGpuHostCall::DrawPath(_))
 }
@@ -650,7 +650,7 @@ test "wgpu web renderer forwards advanced layer filter and shader commands" {
     @core.DrawCommand::PopLayer,
   ])
   let plan = renderer.last_fallback_plan()
-  inspect(plan.fallback_count, content="0")
+  inspect(plan.fallback_count(), content="0")
   inspect(last_calls.length(), content="7")
   assert_true(last_calls[0] is WebGpuHostCall::BeginFrame(_))
   assert_true(last_calls[1] is WebGpuHostCall::PushLayer(_))

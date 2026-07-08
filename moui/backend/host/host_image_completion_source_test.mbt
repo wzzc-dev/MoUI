@@ -18,8 +18,8 @@ test "host image completion source routes native loader completions" {
     }),
   )
   let baseline = tracker.record_presented(window_id, renderer)
-  inspect(baseline.current_revision, content="1")
-  inspect(baseline.current_status_counts.loading_count, content="1")
+  inspect(baseline.current_revision(), content="1")
+  inspect(baseline.current_status_counts().loading_count(), content="1")
   let requested : Array[HostWindowId] = []
   let source = HostImageResourceCompletionSource::new(
     tracker~,
@@ -37,22 +37,22 @@ test "host image completion source routes native loader completions" {
     ]),
   )
   assert_true(
-    result.status == HostImageResourceRepaintStatus::ImageRepaintRequested,
+    result.status() == HostImageResourceRepaintStatus::ImageRepaintRequested,
   )
-  inspect(result.previous_revision, content="1")
-  inspect(result.current_revision, content="2")
-  inspect(result.previous_status_counts.loading_count, content="1")
-  inspect(result.current_status_counts.ready_count, content="1")
-  inspect(result.current_status_counts.failed_count, content="1")
+  inspect(result.previous_revision(), content="1")
+  inspect(result.current_revision(), content="2")
+  inspect(result.previous_status_counts().loading_count(), content="1")
+  inspect(result.current_status_counts().ready_count(), content="1")
+  inspect(result.current_status_counts().failed_count(), content="1")
   inspect(requested.length(), content="1")
   assert_true(requested[0] == window_id)
   let diagnostics = source.diagnostics()
-  inspect(diagnostics.publish_count, content="1")
-  inspect(diagnostics.recorded_count, content="0")
-  inspect(diagnostics.redraw_requested_count, content="1")
-  inspect(diagnostics.unchanged_count, content="0")
-  inspect(diagnostics.discarded_closed_count, content="0")
-  inspect(diagnostics.tracked_window_count, content="1")
+  inspect(diagnostics.publish_count(), content="1")
+  inspect(diagnostics.recorded_count(), content="0")
+  inspect(diagnostics.redraw_requested_count(), content="1")
+  inspect(diagnostics.unchanged_count(), content="0")
+  inspect(diagnostics.discarded_closed_count(), content="0")
+  inspect(diagnostics.tracked_window_count(), content="1")
 }
 
 ///|
@@ -70,7 +70,7 @@ test "host image completion source discards closed-window completions" {
     }),
   )
   let baseline = tracker.record_presented(window_id, renderer)
-  inspect(baseline.current_revision, content="3")
+  inspect(baseline.current_revision(), content="3")
   inspect(tracker.tracked_count(), content="1")
   let redraws = Ref(0)
   let source = HostImageResourceCompletionSource::new(
@@ -85,19 +85,20 @@ test "host image completion source discards closed-window completions" {
     ]),
   )
   assert_true(
-    result.status == HostImageResourceRepaintStatus::ImageRepaintDiscardedClosed,
+    result.status() ==
+    HostImageResourceRepaintStatus::ImageRepaintDiscardedClosed,
   )
-  inspect(result.previous_revision, content="3")
-  inspect(result.current_revision, content="3")
-  inspect(result.previous_status_counts.loading_count, content="1")
-  inspect(result.current_status_counts.record_count, content="0")
+  inspect(result.previous_revision(), content="3")
+  inspect(result.current_revision(), content="3")
+  inspect(result.previous_status_counts().loading_count(), content="1")
+  inspect(result.current_status_counts().record_count(), content="0")
   inspect(redraws.val, content="0")
   inspect(tracker.tracked_count(), content="0")
   let diagnostics = source.diagnostics()
-  inspect(diagnostics.publish_count, content="1")
-  inspect(diagnostics.discarded_closed_count, content="1")
-  inspect(diagnostics.redraw_requested_count, content="0")
-  inspect(diagnostics.tracked_window_count, content="0")
+  inspect(diagnostics.publish_count(), content="1")
+  inspect(diagnostics.discarded_closed_count(), content="1")
+  inspect(diagnostics.redraw_requested_count(), content="0")
+  inspect(diagnostics.tracked_window_count(), content="0")
 }
 
 ///|
@@ -115,7 +116,7 @@ test "host image completion source ignores stale completion revisions" {
     }),
   )
   let baseline = tracker.record_presented(window_id, renderer)
-  inspect(baseline.current_revision, content="6")
+  inspect(baseline.current_revision(), content="6")
   let redraws = Ref(0)
   let source = HostImageResourceCompletionSource::new(
     tracker~,
@@ -132,22 +133,25 @@ test "host image completion source ignores stale completion revisions" {
     ]),
   )
   assert_true(
-    stale.status == HostImageResourceRepaintStatus::ImageRepaintUnchanged,
+    stale.status() == HostImageResourceRepaintStatus::ImageRepaintUnchanged,
   )
-  inspect(stale.previous_revision, content="6")
-  inspect(stale.current_revision, content="6")
-  inspect(stale.previous_status_counts.ready_count, content="1")
-  inspect(stale.current_status_counts.ready_count, content="1")
-  inspect(stale.current_status_counts.failed_count, content="0")
+  inspect(stale.previous_revision(), content="6")
+  inspect(stale.current_revision(), content="6")
+  inspect(stale.previous_status_counts().ready_count(), content="1")
+  inspect(stale.current_status_counts().ready_count(), content="1")
+  inspect(stale.current_status_counts().failed_count(), content="0")
   inspect(redraws.val, content="0")
   let diagnostics = source.diagnostics()
-  inspect(diagnostics.publish_count, content="1")
-  inspect(diagnostics.unchanged_count, content="1")
-  inspect(diagnostics.redraw_requested_count, content="0")
-  inspect(diagnostics.tracked_window_count, content="1")
+  inspect(diagnostics.publish_count(), content="1")
+  inspect(diagnostics.unchanged_count(), content="1")
+  inspect(diagnostics.redraw_requested_count(), content="0")
+  inspect(diagnostics.tracked_window_count(), content="1")
   let snapshot = tracker.snapshot()
-  inspect(snapshot.tracked_windows[0].revision, content="6")
-  inspect(snapshot.tracked_windows[0].status_counts.ready_count, content="1")
+  inspect(snapshot.tracked_windows()[0].revision(), content="6")
+  inspect(
+    snapshot.tracked_windows()[0].status_counts().ready_count(),
+    content="1",
+  )
 }
 
 ///|
@@ -168,8 +172,8 @@ test "host image completion source applies renderer load completions" {
     }),
   )
   let baseline = tracker.record_presented(window_id, renderer)
-  inspect(baseline.current_revision, content="1")
-  inspect(baseline.current_status_counts.loading_count, content="1")
+  inspect(baseline.current_revision(), content="1")
+  inspect(baseline.current_status_counts().loading_count(), content="1")
   let requested : Array[HostWindowId] = []
   let source = HostImageResourceCompletionSource::new(
     tracker~,
@@ -182,12 +186,12 @@ test "host image completion source applies renderer load completions" {
     @render.ImageResourceLoadCompletion::ready("async.png", width=72, height=36),
   )
   assert_true(
-    result.status == HostImageResourceRepaintStatus::ImageRepaintRequested,
+    result.status() == HostImageResourceRepaintStatus::ImageRepaintRequested,
   )
-  inspect(result.previous_revision, content="1")
-  inspect(result.current_revision, content="2")
-  inspect(result.previous_status_counts.loading_count, content="1")
-  inspect(result.current_status_counts.ready_count, content="1")
+  inspect(result.previous_revision(), content="1")
+  inspect(result.current_revision(), content="2")
+  inspect(result.previous_status_counts().loading_count(), content="1")
+  inspect(result.current_status_counts().ready_count(), content="1")
   inspect(applied_sources.length(), content="1")
   inspect(applied_sources[0], content="async.png")
   inspect(requested.length(), content="1")
@@ -201,6 +205,6 @@ test "host image completion source applies renderer load completions" {
     None => fail("expected applied async image record")
   }
   let diagnostics = source.diagnostics()
-  inspect(diagnostics.publish_count, content="1")
-  inspect(diagnostics.redraw_requested_count, content="1")
+  inspect(diagnostics.publish_count(), content="1")
+  inspect(diagnostics.redraw_requested_count(), content="1")
 }

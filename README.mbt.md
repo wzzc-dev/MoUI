@@ -64,8 +64,8 @@ moon update
 ```
 
 `moui_example` is an independent sub-repo on `wzzc-dev/moui@0.1.5-1`; it is not
-listed in this repository's `moon.work` and is not built by `dev-check.sh`. It
-is the recommended starting template for new apps.
+listed in this repository's `moon.work` and is not built by the repository
+daily check. It is the recommended starting template for new apps.
 
 When cloning this repository for framework or example development, include
 submodules (required for the `wzzc-dev/window` fork):
@@ -84,21 +84,20 @@ git submodule update --init --recursive
 The default daily baseline covers the core framework, maintenance baseline
 ratchets, Web wasm-gc, native Skia mainline contracts, Showcase, and Markdown
 Editor. Design Systems is addon diagnostic coverage; run
-`sh scripts/dev-check.sh --theme-diagnostics` when changing `moui_theme` or
+`sh scripts/check.sh --profile theme` when changing `moui_theme` or
 `examples/design_systems`.
 
 For current-host backend/provider checks, run:
 
 ```sh
-sh scripts/dev-check.sh --platform-examples-test
-sh scripts/conformance-check.sh --platform-services
+sh scripts/check.sh --profile platform
 ```
 
 For release-oriented screenshot and benchmark handoffs, use:
 
 ```sh
-sh scripts/conformance-check.sh --golden
-sh scripts/conformance-check.sh --bench
+node scripts/conformance-capture-scaffold.mjs --mode golden
+node scripts/conformance-capture-scaffold.mjs --mode benchmark
 ```
 
 These commands generate local scaffold manifests and logs under `artifacts/`;

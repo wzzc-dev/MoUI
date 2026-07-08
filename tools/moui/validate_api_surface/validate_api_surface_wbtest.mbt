@@ -95,9 +95,9 @@ test "domain sugar packages forward the curated per-domain type set" {
 ///|
 test "runtime facade budget pins the opaque runtime boundary" {
   let runtime = budget_by_label("runtime facade")
-  inspect(runtime.max_lines, content="360")
-  inspect(runtime.max_pub_lines, content="45")
-  inspect(runtime.max_pub_all_lines, content="22")
+  inspect(runtime.max_lines, content="380")
+  inspect(runtime.max_pub_lines, content="270")
+  inspect(runtime.max_pub_all_lines, content="6")
   assert_true(runtime.required_tokens.contains("pub struct AppRuntime"))
   assert_true(runtime.required_tokens.contains("pub fn[Msg] new_view("))
   assert_true(
@@ -120,20 +120,24 @@ test "runtime facade budget pins the opaque runtime boundary" {
       "pub fn AppRuntime::program_runtime_snapshot(Self) -> ProgramRuntimeSnapshot",
     ),
   )
+  assert_true(runtime.required_tokens.contains("pub struct InspectorSnapshot"))
   assert_true(
-    runtime.required_tokens.contains("pub(all) struct InspectorSnapshot"),
+    runtime.required_tokens.contains("pub struct ProgramRuntimeSnapshot"),
   )
   assert_true(
-    runtime.required_tokens.contains("pub(all) struct ProgramRuntimeSnapshot"),
+    runtime.required_tokens.contains("pub struct RuntimeInspectorSnapshot"),
+  )
+  assert_true(runtime.required_tokens.contains("pub struct EffectPlanSummary"))
+  assert_true(
+    runtime.required_tokens.contains("pub struct SubscriptionPlanSummary"),
   )
   assert_true(
-    runtime.required_tokens.contains("pub(all) struct RuntimeInspectorSnapshot"),
+    runtime.required_tokens.contains("pub fn InspectorSnapshot::runtime(Self)"),
   )
   assert_true(
-    runtime.required_tokens.contains("pub(all) struct EffectPlanSummary"),
-  )
-  assert_true(
-    runtime.required_tokens.contains("pub(all) struct SubscriptionPlanSummary"),
+    runtime.required_tokens.contains(
+      "pub fn ProgramRuntimeSnapshot::dispatched_count(Self)",
+    ),
   )
   assert_true(
     runtime.required_tokens.contains("pub fn[Msg] effect_plan_summary("),

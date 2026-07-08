@@ -141,7 +141,7 @@ A successor (maintainer, fork, or contributor picking up the work) can rely
 on these surfaces being self-sufficient:
 
 - `AGENTS.md` and `docs/` for boundaries, setup, and validation.
-- `scripts/dev-check.sh` and the maintenance baseline ratchets for keeping
+- `scripts/check.sh --profile daily` and the maintenance baseline ratchets for keeping
   entropy bounded.
 - `pkg.generated.mbti` and `scripts/validate-api-surface.mjs` for the public
   API surface.

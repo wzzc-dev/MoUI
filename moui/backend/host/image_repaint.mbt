@@ -7,63 +7,63 @@ pub(all) enum HostImageResourceRepaintStatus {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct HostImageResourceRepaintResult {
-  window_id : HostWindowId
-  previous_revision : Int
-  current_revision : Int
-  previous_status_counts : HostImageResourceStatusCounts
-  current_status_counts : HostImageResourceStatusCounts
-  status : HostImageResourceRepaintStatus
+pub struct HostImageResourceRepaintResult {
+  priv window_id : HostWindowId
+  priv previous_revision : Int
+  priv current_revision : Int
+  priv previous_status_counts : HostImageResourceStatusCounts
+  priv current_status_counts : HostImageResourceStatusCounts
+  priv status : HostImageResourceRepaintStatus
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct HostImageResourceStatusCounts {
-  record_count : Int
-  loading_count : Int
-  ready_count : Int
-  failed_count : Int
-  disposed_count : Int
+pub struct HostImageResourceStatusCounts {
+  priv record_count : Int
+  priv loading_count : Int
+  priv ready_count : Int
+  priv failed_count : Int
+  priv disposed_count : Int
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct HostImageResourceTrackedWindow {
-  window_id : HostWindowId
-  revision : Int
-  status_counts : HostImageResourceStatusCounts
+pub struct HostImageResourceTrackedWindow {
+  priv window_id : HostWindowId
+  priv revision : Int
+  priv status_counts : HostImageResourceStatusCounts
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct HostImageResourceRepaintSnapshot {
-  tracked_window_count : Int
-  tracked_windows : Array[HostImageResourceTrackedWindow]
+pub struct HostImageResourceRepaintSnapshot {
+  priv tracked_window_count : Int
+  priv tracked_windows : Array[HostImageResourceTrackedWindow]
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct HostImageResourceCompletionSourceDiagnostics {
-  publish_count : Int
-  recorded_count : Int
-  redraw_requested_count : Int
-  unchanged_count : Int
-  discarded_closed_count : Int
-  tracked_window_count : Int
+pub struct HostImageResourceCompletionSourceDiagnostics {
+  priv publish_count : Int
+  priv recorded_count : Int
+  priv redraw_requested_count : Int
+  priv unchanged_count : Int
+  priv discarded_closed_count : Int
+  priv tracked_window_count : Int
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct HostAsyncImageLoadScheduleResult {
-  window_id : HostWindowId
-  snapshot_revision : Int
-  loading_count : Int
-  scheduled_count : Int
-  already_in_flight_count : Int
+pub struct HostAsyncImageLoadScheduleResult {
+  priv window_id : HostWindowId
+  priv snapshot_revision : Int
+  priv loading_count : Int
+  priv scheduled_count : Int
+  priv already_in_flight_count : Int
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct HostAsyncImageLoaderDiagnostics {
-  scheduled_count : Int
-  completed_count : Int
-  cancelled_count : Int
-  already_in_flight_count : Int
-  in_flight_count : Int
+pub struct HostAsyncImageLoaderDiagnostics {
+  priv scheduled_count : Int
+  priv completed_count : Int
+  priv cancelled_count : Int
+  priv already_in_flight_count : Int
+  priv in_flight_count : Int
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -73,26 +73,320 @@ pub(all) enum HostNativeAsyncImageCompletionStatus {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct HostNativeAsyncImageLoadRequest {
-  window_id : HostWindowId
-  source : String
+pub struct HostNativeAsyncImageLoadRequest {
+  priv window_id : HostWindowId
+  priv source : String
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct HostNativeAsyncImageCompletionResult {
-  window_id : HostWindowId
-  source : String
-  status : HostNativeAsyncImageCompletionStatus
+pub struct HostNativeAsyncImageCompletionResult {
+  priv window_id : HostWindowId
+  priv source : String
+  priv status : HostNativeAsyncImageCompletionStatus
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct HostNativeAsyncImageSourceDiagnostics {
-  requested_count : Int
-  completed_count : Int
-  cancelled_count : Int
-  missing_completion_count : Int
-  pending_count : Int
+pub struct HostNativeAsyncImageSourceDiagnostics {
+  priv requested_count : Int
+  priv completed_count : Int
+  priv cancelled_count : Int
+  priv missing_completion_count : Int
+  priv pending_count : Int
 } derive(Eq, Debug, ToJson)
+
+///|
+pub fn HostImageResourceRepaintResult::window_id(
+  self : HostImageResourceRepaintResult,
+) -> HostWindowId {
+  self.window_id
+}
+
+///|
+pub fn HostImageResourceRepaintResult::previous_revision(
+  self : HostImageResourceRepaintResult,
+) -> Int {
+  self.previous_revision
+}
+
+///|
+pub fn HostImageResourceRepaintResult::current_revision(
+  self : HostImageResourceRepaintResult,
+) -> Int {
+  self.current_revision
+}
+
+///|
+pub fn HostImageResourceRepaintResult::previous_status_counts(
+  self : HostImageResourceRepaintResult,
+) -> HostImageResourceStatusCounts {
+  self.previous_status_counts
+}
+
+///|
+pub fn HostImageResourceRepaintResult::current_status_counts(
+  self : HostImageResourceRepaintResult,
+) -> HostImageResourceStatusCounts {
+  self.current_status_counts
+}
+
+///|
+pub fn HostImageResourceRepaintResult::status(
+  self : HostImageResourceRepaintResult,
+) -> HostImageResourceRepaintStatus {
+  self.status
+}
+
+///|
+pub fn HostImageResourceStatusCounts::record_count(
+  self : HostImageResourceStatusCounts,
+) -> Int {
+  self.record_count
+}
+
+///|
+pub fn HostImageResourceStatusCounts::loading_count(
+  self : HostImageResourceStatusCounts,
+) -> Int {
+  self.loading_count
+}
+
+///|
+pub fn HostImageResourceStatusCounts::ready_count(
+  self : HostImageResourceStatusCounts,
+) -> Int {
+  self.ready_count
+}
+
+///|
+pub fn HostImageResourceStatusCounts::failed_count(
+  self : HostImageResourceStatusCounts,
+) -> Int {
+  self.failed_count
+}
+
+///|
+pub fn HostImageResourceStatusCounts::disposed_count(
+  self : HostImageResourceStatusCounts,
+) -> Int {
+  self.disposed_count
+}
+
+///|
+pub fn HostImageResourceTrackedWindow::window_id(
+  self : HostImageResourceTrackedWindow,
+) -> HostWindowId {
+  self.window_id
+}
+
+///|
+pub fn HostImageResourceTrackedWindow::revision(
+  self : HostImageResourceTrackedWindow,
+) -> Int {
+  self.revision
+}
+
+///|
+pub fn HostImageResourceTrackedWindow::status_counts(
+  self : HostImageResourceTrackedWindow,
+) -> HostImageResourceStatusCounts {
+  self.status_counts
+}
+
+///|
+pub fn HostImageResourceRepaintSnapshot::tracked_window_count(
+  self : HostImageResourceRepaintSnapshot,
+) -> Int {
+  self.tracked_window_count
+}
+
+///|
+pub fn HostImageResourceRepaintSnapshot::tracked_windows(
+  self : HostImageResourceRepaintSnapshot,
+) -> Array[HostImageResourceTrackedWindow] {
+  self.tracked_windows
+}
+
+///|
+pub fn HostImageResourceCompletionSourceDiagnostics::publish_count(
+  self : HostImageResourceCompletionSourceDiagnostics,
+) -> Int {
+  self.publish_count
+}
+
+///|
+pub fn HostImageResourceCompletionSourceDiagnostics::recorded_count(
+  self : HostImageResourceCompletionSourceDiagnostics,
+) -> Int {
+  self.recorded_count
+}
+
+///|
+pub fn HostImageResourceCompletionSourceDiagnostics::redraw_requested_count(
+  self : HostImageResourceCompletionSourceDiagnostics,
+) -> Int {
+  self.redraw_requested_count
+}
+
+///|
+pub fn HostImageResourceCompletionSourceDiagnostics::unchanged_count(
+  self : HostImageResourceCompletionSourceDiagnostics,
+) -> Int {
+  self.unchanged_count
+}
+
+///|
+pub fn HostImageResourceCompletionSourceDiagnostics::discarded_closed_count(
+  self : HostImageResourceCompletionSourceDiagnostics,
+) -> Int {
+  self.discarded_closed_count
+}
+
+///|
+pub fn HostImageResourceCompletionSourceDiagnostics::tracked_window_count(
+  self : HostImageResourceCompletionSourceDiagnostics,
+) -> Int {
+  self.tracked_window_count
+}
+
+///|
+pub fn HostAsyncImageLoadScheduleResult::window_id(
+  self : HostAsyncImageLoadScheduleResult,
+) -> HostWindowId {
+  self.window_id
+}
+
+///|
+pub fn HostAsyncImageLoadScheduleResult::snapshot_revision(
+  self : HostAsyncImageLoadScheduleResult,
+) -> Int {
+  self.snapshot_revision
+}
+
+///|
+pub fn HostAsyncImageLoadScheduleResult::loading_count(
+  self : HostAsyncImageLoadScheduleResult,
+) -> Int {
+  self.loading_count
+}
+
+///|
+pub fn HostAsyncImageLoadScheduleResult::scheduled_count(
+  self : HostAsyncImageLoadScheduleResult,
+) -> Int {
+  self.scheduled_count
+}
+
+///|
+pub fn HostAsyncImageLoadScheduleResult::already_in_flight_count(
+  self : HostAsyncImageLoadScheduleResult,
+) -> Int {
+  self.already_in_flight_count
+}
+
+///|
+pub fn HostAsyncImageLoaderDiagnostics::scheduled_count(
+  self : HostAsyncImageLoaderDiagnostics,
+) -> Int {
+  self.scheduled_count
+}
+
+///|
+pub fn HostAsyncImageLoaderDiagnostics::completed_count(
+  self : HostAsyncImageLoaderDiagnostics,
+) -> Int {
+  self.completed_count
+}
+
+///|
+pub fn HostAsyncImageLoaderDiagnostics::cancelled_count(
+  self : HostAsyncImageLoaderDiagnostics,
+) -> Int {
+  self.cancelled_count
+}
+
+///|
+pub fn HostAsyncImageLoaderDiagnostics::already_in_flight_count(
+  self : HostAsyncImageLoaderDiagnostics,
+) -> Int {
+  self.already_in_flight_count
+}
+
+///|
+pub fn HostAsyncImageLoaderDiagnostics::in_flight_count(
+  self : HostAsyncImageLoaderDiagnostics,
+) -> Int {
+  self.in_flight_count
+}
+
+///|
+pub fn HostNativeAsyncImageLoadRequest::window_id(
+  self : HostNativeAsyncImageLoadRequest,
+) -> HostWindowId {
+  self.window_id
+}
+
+///|
+pub fn HostNativeAsyncImageLoadRequest::source(
+  self : HostNativeAsyncImageLoadRequest,
+) -> String {
+  self.source
+}
+
+///|
+pub fn HostNativeAsyncImageCompletionResult::window_id(
+  self : HostNativeAsyncImageCompletionResult,
+) -> HostWindowId {
+  self.window_id
+}
+
+///|
+pub fn HostNativeAsyncImageCompletionResult::source(
+  self : HostNativeAsyncImageCompletionResult,
+) -> String {
+  self.source
+}
+
+///|
+pub fn HostNativeAsyncImageCompletionResult::status(
+  self : HostNativeAsyncImageCompletionResult,
+) -> HostNativeAsyncImageCompletionStatus {
+  self.status
+}
+
+///|
+pub fn HostNativeAsyncImageSourceDiagnostics::requested_count(
+  self : HostNativeAsyncImageSourceDiagnostics,
+) -> Int {
+  self.requested_count
+}
+
+///|
+pub fn HostNativeAsyncImageSourceDiagnostics::completed_count(
+  self : HostNativeAsyncImageSourceDiagnostics,
+) -> Int {
+  self.completed_count
+}
+
+///|
+pub fn HostNativeAsyncImageSourceDiagnostics::cancelled_count(
+  self : HostNativeAsyncImageSourceDiagnostics,
+) -> Int {
+  self.cancelled_count
+}
+
+///|
+pub fn HostNativeAsyncImageSourceDiagnostics::missing_completion_count(
+  self : HostNativeAsyncImageSourceDiagnostics,
+) -> Int {
+  self.missing_completion_count
+}
+
+///|
+pub fn HostNativeAsyncImageSourceDiagnostics::pending_count(
+  self : HostNativeAsyncImageSourceDiagnostics,
+) -> Int {
+  self.pending_count
+}
 
 ///|
 pub struct HostImageResourceRepaintTracker {

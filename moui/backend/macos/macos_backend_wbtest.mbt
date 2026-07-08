@@ -103,8 +103,8 @@ test "macos renderer provider exposes async image loader hook" {
       source,
     ) {
     Some(result) => {
-      inspect(result.loading_count, content="0")
-      inspect(result.scheduled_count, content="0")
+      inspect(result.loading_count(), content="0")
+      inspect(result.scheduled_count(), content="0")
     }
     None => fail("expected macOS async image loader hook result")
   }
