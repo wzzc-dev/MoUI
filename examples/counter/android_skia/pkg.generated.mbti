@@ -1,0 +1,20 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/counter/android_skia"
+
+// Values
+pub fn android_counter_attach_surface(UInt64, Int, Int, Double) -> Bool
+
+pub fn android_counter_detach_surface() -> Unit
+
+pub fn android_counter_render_frame() -> Bool
+
+pub fn android_counter_resize(Int, Int, Double) -> Bool
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

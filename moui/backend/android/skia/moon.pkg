@@ -1,0 +1,20 @@
+import {
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/android" @android_host,
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/skia" @skia_renderer,
+}
+
+supported_targets = "native"
+
+options(
+  link: {
+    "native": {
+      "stub-cc-flags": "${build.MOUI_SKIA_STUB_CC_FLAGS}",
+      "cc-link-flags": "${build.MOUI_SKIA_ANDROID_LINK_FLAGS}",
+    },
+  },
+  "native-stub": [ "android_skia_presenter.cpp" ],
+  targets: { },
+)

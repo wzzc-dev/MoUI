@@ -443,6 +443,9 @@ configuration is enabled by default; set `MOUI_SKIA_ENABLE_PREBUILD_SKIA=0` or
 `MOUI_SKIA_DISABLE_PREBUILD_SKIA=1` to keep the fallback-unavailable native
 compile. On macOS, `MOUI_SKIA_LINK_MODE=auto` selects `libskia.dylib` when
 that file exists in `MOUI_SKIA_SKIA_LIB_DIR`, otherwise it selects `libskia.a`.
+For cross-builds, set `MOUI_SKIA_PLATFORM`, `MOUI_SKIA_ARCH`, and optionally
+`MOUI_SKIA_CONFIG`; Android builds should use `MOUI_SKIA_PLATFORM=android`
+instead of relying on host auto-detection.
 
 To generate a persistent `native/moon.pkg` for an existing macOS Skia build,
 preview the config first and then write it explicitly:

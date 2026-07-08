@@ -1,0 +1,15 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/android" @android_host,
+  "wzzc-dev/moui/backend/android/skia" @android_skia_backend,
+  "examples/counter/app" @counter_app,
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  targets: { "main.mbt": [ "native" ] },
+)

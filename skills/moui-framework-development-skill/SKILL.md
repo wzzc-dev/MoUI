@@ -33,8 +33,12 @@ Read only what the task needs:
   dispatch, effects, subscriptions, diagnostics, inspector snapshots.
 - `moui/backend/host`: host service protocols, window/timer/route sources,
   WebView protocol, async image service, accessibility/input/redraw contracts.
-- `moui/backend/<platform>`: concrete platform hosts.
+- `moui/backend/<platform>`: concrete platform hosts. Android is currently an
+  embedded-session scaffold driven by Activity/Surface callbacks rather than a
+  desktop-style event loop.
 - `moui/backend/<platform>/skia`: native Skia mainline renderer providers.
+  Android Skia presents copied pixel frames to an embedder-supplied
+  `ANativeWindow`.
 - `moui/backend/<platform>/wgpu`: native WGPU diagnostic providers.
 - `moui/render`: renderer facade and renderer-neutral capability/fallback
   planning.
@@ -149,6 +153,14 @@ owning-package boundaries clear.
   native Skia mainline presenter path plus native WGPU diagnostic surface path,
   optional WebKitGTK platform-view sync, shared host event conversion, and
   explicit native menu/AT-SPI follow-up reporting.
+- `backend/android/`: experimental Android embedded native host scaffold. The
+  Activity/JNI layer owns lifecycle, `ANativeWindow` handle acquisition, and
+  input forwarding into `AndroidRuntimeSession`; package checks are not runtime
+  platform evidence.
+- `backend/android/skia/`: Android Skia provider over `render/skia`, with an
+  `ANativeWindow` RGBA pixel presenter and preflight summary. Use
+  `MOUI_SKIA_PLATFORM=android` plus `MOUI_SKIA_ARCH=<arch>` for Android Skia
+  cross-build checks.
 - `render/`: renderer facade, shared draw helpers, and capability report API.
 - `render/skia/`: native Skia raster mainline renderer over the local
   `moui_skia` binding, including renderer-local command/reason diagnostics for
@@ -423,6 +435,8 @@ moon test moui/core --target native
 moon test moui/views --target native
 moon test moui/render/skia --target native
 moon test moui/backend/host --target native
+moon test moui/backend/android --target native
+moon test moui/backend/android/skia --target native
 moon test moui/backend/web --target wasm-gc
 moon test moui_tester --target native
 moon test moui_devtools --target native
