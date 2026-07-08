@@ -59,6 +59,7 @@ The fastest way to try MoUI is the standalone `moui_example` counter app, a
 small repo that pins a published MoUI crate and renders the same Model /
 Msg / update / view loop on both macOS Skia and Web wasm-gc.
 
+```sh
 cd moui_example
 moon update
 ```
@@ -237,3 +238,6 @@ external contributions. Pull requests are the primary entry point for changes.
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE).
+
+Third-party dependency and attribution notes are collected in
+[THIRD_PARTY.md](THIRD_PARTY.md).
