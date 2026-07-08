@@ -1,0 +1,26 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/ios" @ios_host,
+  "wzzc-dev/moui/backend/ios/skia" @ios_skia_backend,
+  "examples/counter/app" @counter_app,
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "exports": [
+        "ios_counter_attach_view",
+        "ios_counter_resize",
+        "ios_counter_dispatch_pointer",
+        "ios_counter_render_frame",
+        "ios_counter_detach_view",
+      ],
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)
