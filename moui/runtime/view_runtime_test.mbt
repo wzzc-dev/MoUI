@@ -120,12 +120,12 @@ test "virtual node layout constrains children and inspector keeps identity" {
     None => fail("expected padded child")
   }
   let snapshot = runtime.inspector_snapshot()
-  if snapshot.view_tree.root_kind != "Padding" {
+  if snapshot.view_tree().root_kind() != "Padding" {
     fail("expected virtual node kind in inspector")
   }
-  match snapshot.view_tree.nodes.get(0) {
+  match snapshot.view_tree().nodes().get(0) {
     Some(node) =>
-      if node.key != "outer" {
+      if node.key() != "outer" {
         fail("expected virtual node key in inspector")
       }
     None => fail("expected inspector root node")
@@ -150,8 +150,8 @@ test "virtual node component builds child and reports component inspector state"
     None => fail("expected component virtual node to build child")
   }
   let snapshot = runtime.inspector_snapshot()
-  if snapshot.view_tree.root_kind != "Component" ||
-    snapshot.view_tree.component_count != 1 {
+  if snapshot.view_tree().root_kind() != "Component" ||
+    snapshot.view_tree().component_count() != 1 {
     fail("expected generic virtual node component in inspector")
   }
 }
@@ -219,9 +219,9 @@ test "virtual node scroll updates state and marks layout dirty" {
     fail("expected virtual node scroll to dispatch on_scroll message")
   }
   let snapshot = runtime.inspector_snapshot()
-  match snapshot.view_tree.nodes.get(0) {
+  match snapshot.view_tree().nodes().get(0) {
     Some(node) =>
-      if !node.needs_layout {
+      if !node.needs_layout() {
         fail("expected virtual node scroll to mark layout dirty")
       }
     None => fail("expected inspector root node")
@@ -312,9 +312,9 @@ test "virtual node picker dispatches overlay selection without core primitive" {
     ),
   )
   let opened = runtime.inspector_snapshot()
-  match opened.view_tree.nodes.get(1) {
+  match opened.view_tree().nodes().get(1) {
     Some(node) =>
-      if !node.needs_paint {
+      if !node.needs_paint() {
         fail("expected opening picker to dirty paint")
       }
     None => fail("expected picker inspector node")
@@ -332,14 +332,14 @@ test "virtual node picker dispatches overlay selection without core primitive" {
     fail("expected picker overlay selection message")
   }
   let snapshot = runtime.inspector_snapshot()
-  match snapshot.view_tree.nodes.get(1) {
+  match snapshot.view_tree().nodes().get(1) {
     Some(node) =>
-      if node.kind != "Picker" {
+      if node.kind() != "Picker" {
         fail("expected picker virtual node identity in inspector")
       }
     None => fail("expected picker inspector node")
   }
-  if snapshot.view_tree.root_kind != "Frame" {
+  if snapshot.view_tree().root_kind() != "Frame" {
     fail("expected picker virtual node identity in inspector")
   }
 }
@@ -371,9 +371,9 @@ test "virtual node datepicker dispatches overlay selection without core primitiv
     ),
   )
   let opened = runtime.inspector_snapshot()
-  match opened.view_tree.nodes.get(1) {
+  match opened.view_tree().nodes().get(1) {
     Some(node) =>
-      if !node.needs_paint {
+      if !node.needs_paint() {
         fail("expected opening datepicker to dirty paint")
       }
     None => fail("expected datepicker inspector node")
@@ -391,9 +391,9 @@ test "virtual node datepicker dispatches overlay selection without core primitiv
     fail("expected datepicker overlay selection message")
   }
   let snapshot = runtime.inspector_snapshot()
-  match snapshot.view_tree.nodes.get(1) {
+  match snapshot.view_tree().nodes().get(1) {
     Some(node) =>
-      if node.kind != "DatePicker" {
+      if node.kind() != "DatePicker" {
         fail("expected datepicker virtual node identity in inspector")
       }
     None => fail("expected datepicker inspector node")
@@ -439,7 +439,7 @@ test "virtual node sheet handles outside dismiss and preserves child event" {
     fail("expected sheet content tap and outside dismiss messages")
   }
   let snapshot = runtime.inspector_snapshot()
-  if snapshot.view_tree.root_kind != "Sheet" {
+  if snapshot.view_tree().root_kind() != "Sheet" {
     fail("expected sheet virtual node identity in inspector")
   }
 }

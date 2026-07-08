@@ -48,10 +48,10 @@ From the repository root:
 
 ```sh
 moon update
-sh scripts/dev-check.sh
+sh scripts/check.sh --profile daily
 ```
 
-`moon update` refreshes registry packages. `dev-check.sh`
+`moon update` refreshes registry packages. `sh scripts/check.sh --profile daily`
 is the daily validation gate (dependency guards, guidance consistency,
 maintenance baseline ratchets, API surface, `moon check`, core/view/render/
 backend package tests, Showcase and Markdown Editor app tests, Web wasm-gc
@@ -111,9 +111,9 @@ Every PR should:
 
 1. **Stay focused.** One logical change per PR. Broad churn is harder to
    review and more likely to be rejected.
-2. **Run `sh scripts/dev-check.sh`** locally and ensure it passes. If your
+2. **Run `sh scripts/check.sh --profile daily`** locally and ensure it passes. If your
    change touches `moui_theme` or `examples/design_systems`, also run
-   `sh scripts/dev-check.sh --theme-diagnostics`.
+   `sh scripts/check.sh --profile theme`.
 3. **Update the API surface** when public API changes. Regenerate
    `pkg.generated.mbti` and confirm `node scripts/validate-api-surface.mjs`
    passes. The maintenance baseline tracks `pub(all)` counts and root facade

@@ -204,6 +204,15 @@ test "forbidden guidance tokens include deleted entrypoints and old flags" {
 }
 
 ///|
+test "forbidden guidance scan covers top-level public docs" {
+  let files = top_level_guidance_files()
+  assert_true(files.contains("AGENTS.md"))
+  assert_true(files.contains("README.md"))
+  assert_true(files.contains("CONTRIBUTING.md"))
+  assert_true(files.contains("GOVERNANCE.md"))
+}
+
+///|
 test "forbidden guidance token failure points at fixture-only allowance" {
   let failures = forbidden_guidance_token_failures(
     "docs/testing.md", "Run sh scripts/dev-check.sh or pass --theme-diagnostics.",

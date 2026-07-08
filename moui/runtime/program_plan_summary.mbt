@@ -9,19 +9,19 @@ pub(all) enum EffectPlanKind {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct EffectPlanSummary {
-  root_kind : EffectPlanKind
-  none_count : Int
-  batch_count : Int
-  send_count : Int
-  dispatch_count : Int
-  run_count : Int
-  task_count : Int
-  scheduled_count : Int
-  max_depth : Int
-  descriptors : Array[@core.EffectDescriptor]
-  duplicate_descriptor_key_count : Int
-  duplicate_descriptor_keys : Array[String]
+pub struct EffectPlanSummary {
+  priv root_kind : EffectPlanKind
+  priv none_count : Int
+  priv batch_count : Int
+  priv send_count : Int
+  priv dispatch_count : Int
+  priv run_count : Int
+  priv task_count : Int
+  priv scheduled_count : Int
+  priv max_depth : Int
+  priv descriptors : Array[@core.EffectDescriptor]
+  priv duplicate_descriptor_key_count : Int
+  priv duplicate_descriptor_keys : Array[String]
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -32,16 +32,138 @@ pub(all) enum SubscriptionPlanKind {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct SubscriptionPlanSummary {
-  root_kind : SubscriptionPlanKind
-  none_count : Int
-  batch_count : Int
-  source_count : Int
-  duplicate_key_count : Int
-  duplicate_keys : Array[String]
-  max_depth : Int
-  descriptors : Array[@core.SubscriptionDescriptor]
+pub struct SubscriptionPlanSummary {
+  priv root_kind : SubscriptionPlanKind
+  priv none_count : Int
+  priv batch_count : Int
+  priv source_count : Int
+  priv duplicate_key_count : Int
+  priv duplicate_keys : Array[String]
+  priv max_depth : Int
+  priv descriptors : Array[@core.SubscriptionDescriptor]
 } derive(Eq, Debug, ToJson)
+
+///|
+pub fn EffectPlanSummary::root_kind(self : EffectPlanSummary) -> EffectPlanKind {
+  self.root_kind
+}
+
+///|
+pub fn EffectPlanSummary::none_count(self : EffectPlanSummary) -> Int {
+  self.none_count
+}
+
+///|
+pub fn EffectPlanSummary::batch_count(self : EffectPlanSummary) -> Int {
+  self.batch_count
+}
+
+///|
+pub fn EffectPlanSummary::send_count(self : EffectPlanSummary) -> Int {
+  self.send_count
+}
+
+///|
+pub fn EffectPlanSummary::dispatch_count(self : EffectPlanSummary) -> Int {
+  self.dispatch_count
+}
+
+///|
+pub fn EffectPlanSummary::run_count(self : EffectPlanSummary) -> Int {
+  self.run_count
+}
+
+///|
+pub fn EffectPlanSummary::task_count(self : EffectPlanSummary) -> Int {
+  self.task_count
+}
+
+///|
+pub fn EffectPlanSummary::scheduled_count(self : EffectPlanSummary) -> Int {
+  self.scheduled_count
+}
+
+///|
+pub fn EffectPlanSummary::max_depth(self : EffectPlanSummary) -> Int {
+  self.max_depth
+}
+
+///|
+pub fn EffectPlanSummary::descriptors(
+  self : EffectPlanSummary,
+) -> Array[@core.EffectDescriptor] {
+  self.descriptors
+}
+
+///|
+pub fn EffectPlanSummary::duplicate_descriptor_key_count(
+  self : EffectPlanSummary,
+) -> Int {
+  self.duplicate_descriptor_key_count
+}
+
+///|
+pub fn EffectPlanSummary::duplicate_descriptor_keys(
+  self : EffectPlanSummary,
+) -> Array[String] {
+  self.duplicate_descriptor_keys
+}
+
+///|
+pub fn SubscriptionPlanSummary::root_kind(
+  self : SubscriptionPlanSummary,
+) -> SubscriptionPlanKind {
+  self.root_kind
+}
+
+///|
+pub fn SubscriptionPlanSummary::none_count(
+  self : SubscriptionPlanSummary,
+) -> Int {
+  self.none_count
+}
+
+///|
+pub fn SubscriptionPlanSummary::batch_count(
+  self : SubscriptionPlanSummary,
+) -> Int {
+  self.batch_count
+}
+
+///|
+pub fn SubscriptionPlanSummary::source_count(
+  self : SubscriptionPlanSummary,
+) -> Int {
+  self.source_count
+}
+
+///|
+pub fn SubscriptionPlanSummary::duplicate_key_count(
+  self : SubscriptionPlanSummary,
+) -> Int {
+  self.duplicate_key_count
+}
+
+///|
+pub fn SubscriptionPlanSummary::duplicate_keys(
+  self : SubscriptionPlanSummary,
+) -> Array[String] {
+  self.duplicate_keys
+}
+
+///|
+pub fn SubscriptionPlanSummary::max_depth(
+  self : SubscriptionPlanSummary,
+) -> Int {
+  self.max_depth
+}
+
+///|
+pub fn SubscriptionPlanSummary::descriptors(
+  self : SubscriptionPlanSummary,
+) -> Array[@core.SubscriptionDescriptor] {
+  self.descriptors
+}
 
 ///|
 pub fn EffectPlanSummary::empty() -> EffectPlanSummary {

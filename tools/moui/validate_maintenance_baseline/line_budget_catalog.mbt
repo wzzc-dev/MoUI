@@ -7,7 +7,7 @@ struct FileBudget {
 ///|
 fn file_budgets() -> Array[FileBudget] {
   [
-    { path: "examples/showcase/app/showcase_app_test.mbt", max_lines: 386 },
+    { path: "examples/showcase/app/showcase_app_test.mbt", max_lines: 410 },
     {
       path: "examples/showcase/app/showcase_examples_app_test.mbt",
       max_lines: 105,
@@ -18,7 +18,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/showcase/app/showcase_diagnostics_app_test.mbt",
-      max_lines: 380,
+      max_lines: 420,
     },
     {
       path: "examples/showcase/app/showcase_navigation_app_test.mbt",
@@ -165,7 +165,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "tools/moui/validate_guidance_consistency/forbidden_guidance.mbt",
-      max_lines: 161,
+      max_lines: 170,
     },
     {
       path: "tools/moui/validate_guidance_consistency/guidance_common.mbt",
@@ -245,7 +245,9 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/views/form_validation.mbt", max_lines: 205 },
     { path: "moui/views/form_workflow.mbt", max_lines: 198 },
     { path: "moui/views/form_support_text.mbt", max_lines: 48 },
-    { path: "moui/views/text_input_controls.mbt", max_lines: 882 },
+    { path: "moui/views/text_input_controls.mbt", max_lines: 305 },
+    { path: "moui/views/text_input_event_handlers.mbt", max_lines: 225 },
+    { path: "moui/views/text_input_apply.mbt", max_lines: 365 },
     { path: "moui/views/text_input_editing.mbt", max_lines: 438 },
     { path: "moui/views/text_input_paint.mbt", max_lines: 462 },
     { path: "moui/views/text_area_control.mbt", max_lines: 519 },

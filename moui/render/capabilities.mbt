@@ -50,22 +50,86 @@ pub(all) enum RendererCommandFallbackKind {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct RendererCommandFallback {
-  index : Int
-  feature : RendererFeature
-  command : String
-  kind : RendererCommandFallbackKind
-  reason : String
+pub struct RendererCommandFallback {
+  priv index : Int
+  priv feature : RendererFeature
+  priv command : String
+  priv kind : RendererCommandFallbackKind
+  priv reason : String
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct RendererCommandPlan {
-  total_commands : Int
-  fallback_count : Int
-  final_layer_depth : Int
-  final_filter_depth : Int
-  fallbacks : Array[RendererCommandFallback]
+pub struct RendererCommandPlan {
+  priv total_commands : Int
+  priv fallback_count : Int
+  priv final_layer_depth : Int
+  priv final_filter_depth : Int
+  priv fallbacks : Array[RendererCommandFallback]
 } derive(Eq, Debug, ToJson)
+
+///|
+pub fn RendererCommandFallback::index(self : RendererCommandFallback) -> Int {
+  self.index
+}
+
+///|
+pub fn RendererCommandFallback::feature(
+  self : RendererCommandFallback,
+) -> RendererFeature {
+  self.feature
+}
+
+///|
+pub fn RendererCommandFallback::command(
+  self : RendererCommandFallback,
+) -> String {
+  self.command
+}
+
+///|
+pub fn RendererCommandFallback::kind(
+  self : RendererCommandFallback,
+) -> RendererCommandFallbackKind {
+  self.kind
+}
+
+///|
+pub fn RendererCommandFallback::reason(
+  self : RendererCommandFallback,
+) -> String {
+  self.reason
+}
+
+///|
+pub fn RendererCommandPlan::total_commands(self : RendererCommandPlan) -> Int {
+  self.total_commands
+}
+
+///|
+pub fn RendererCommandPlan::fallback_count(self : RendererCommandPlan) -> Int {
+  self.fallback_count
+}
+
+///|
+pub fn RendererCommandPlan::final_layer_depth(
+  self : RendererCommandPlan,
+) -> Int {
+  self.final_layer_depth
+}
+
+///|
+pub fn RendererCommandPlan::final_filter_depth(
+  self : RendererCommandPlan,
+) -> Int {
+  self.final_filter_depth
+}
+
+///|
+pub fn RendererCommandPlan::fallbacks(
+  self : RendererCommandPlan,
+) -> Array[RendererCommandFallback] {
+  self.fallbacks
+}
 
 ///|
 pub fn RendererFeature::label(self : RendererFeature) -> String {

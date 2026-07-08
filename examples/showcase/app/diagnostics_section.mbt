@@ -1,4 +1,75 @@
 ///|
+priv struct ShowcaseInspectorSnapshot {
+  runtime : ShowcaseRuntimeInspectorSnapshot
+  view_tree : ShowcaseViewTreeInspectorSnapshot
+  layout : ShowcaseLayoutInspectorSnapshot
+  render : ShowcaseRenderInspectorSnapshot
+  semantics : ShowcaseSemanticsInspectorSnapshot
+}
+
+///|
+priv struct ShowcaseRuntimeInspectorSnapshot {
+  dirty_state : ShowcaseDirtyStateSummary
+  program_dispatched_count : Int
+  program_update_count : Int
+  program_effect_plan_count : Int
+  program_effect_run_count : Int
+  active_effect_task_count : Int
+  completed_effect_task_count : Int
+  cancelled_effect_task_count : Int
+  last_scheduled_effect_summary : @runtime.EffectPlanSummary
+  program_subscription_plan_count : Int
+  last_subscription_plan_summary : @runtime.SubscriptionPlanSummary
+  active_subscription_count : Int
+  started_subscription_count : Int
+  active_subscriptions : Array[@core.SubscriptionDescriptor]
+  active_subscription_kind_counts : Array[ShowcaseSubscriptionKindCount]
+}
+
+///|
+priv struct ShowcaseDirtyStateSummary {
+  dirty_count : Int
+  reason : String
+}
+
+///|
+priv struct ShowcaseSubscriptionKindCount {
+  kind : String
+  count : Int
+}
+
+///|
+priv struct ShowcaseViewTreeInspectorSnapshot {
+  node_count : Int
+  component_count : Int
+}
+
+///|
+priv struct ShowcaseLayoutInspectorSnapshot {
+  bounds_count : Int
+  max_depth : Int
+}
+
+///|
+priv struct ShowcaseRenderInspectorSnapshot {
+  command_count : Int
+  text_count : Int
+  clip_depth : Int
+  open_clip_depth : Int
+  layer_depth : Int
+  open_layer_depth : Int
+  filter_depth : Int
+  open_filter_depth : Int
+  unbalanced_pop_count : Int
+}
+
+///|
+priv struct ShowcaseSemanticsInspectorSnapshot {
+  node_count : Int
+  invalid_count : Int
+}
+
+///|
 fn ShowcaseModel::diagnostics_section(
   self : ShowcaseModel,
   theme : @moui.Theme,
@@ -74,9 +145,11 @@ fn ShowcaseModel::inspector_snapshot_card(
     snapshot.render.open_layer_depth.to_string() +
     "/" +
     snapshot.render.open_filter_depth.to_string()
-  let scheduled_effect_label = if runtime.last_scheduled_effect_summary.descriptors.length() >
+  let scheduled_effect_label = if runtime.last_scheduled_effect_summary
+    .descriptors()
+    .length() >
     0 {
-    runtime.last_scheduled_effect_summary.descriptors[0].label()
+    runtime.last_scheduled_effect_summary.descriptors()[0].label()
   } else {
     "none"
   }
@@ -88,15 +161,19 @@ fn ShowcaseModel::inspector_snapshot_card(
   let active_subscription_kinds = subscription_kind_count_summary(
     runtime.active_subscription_kind_counts,
   )
-  let duplicate_effect_keys = if runtime.last_scheduled_effect_summary.duplicate_descriptor_keys.length() >
+  let duplicate_effect_keys = if runtime.last_scheduled_effect_summary
+    .duplicate_descriptor_keys()
+    .length() >
     0 {
-    runtime.last_scheduled_effect_summary.duplicate_descriptor_keys.join(", ")
+    runtime.last_scheduled_effect_summary.duplicate_descriptor_keys().join(", ")
   } else {
     "none"
   }
-  let duplicate_subscription_keys = if runtime.last_subscription_plan_summary.duplicate_keys.length() >
+  let duplicate_subscription_keys = if runtime.last_subscription_plan_summary
+    .duplicate_keys()
+    .length() >
     0 {
-    runtime.last_subscription_plan_summary.duplicate_keys.join(", ")
+    runtime.last_subscription_plan_summary.duplicate_keys().join(", ")
   } else {
     "none"
   }
@@ -127,7 +204,7 @@ fn ShowcaseModel::inspector_snapshot_card(
             ),
             stat_card(
               "Layout bounds",
-              snapshot.layout.bounds.length().to_string(),
+              snapshot.layout.bounds_count.to_string(),
               caption="Max depth " + snapshot.layout.max_depth.to_string(),
               theme~,
               width=stat_width,
@@ -176,7 +253,9 @@ fn ShowcaseModel::inspector_snapshot_card(
               "Subscription plans",
               runtime.program_subscription_plan_count.to_string(),
               caption="Sources " +
-                runtime.last_subscription_plan_summary.source_count.to_string(),
+                runtime.last_subscription_plan_summary
+                .source_count()
+                .to_string(),
               theme~,
               width=stat_width,
               height=96.0,
@@ -281,7 +360,7 @@ fn ShowcaseModel::inspector_snapshot_card(
 
 ///|
 fn subscription_kind_count_summary(
-  counts : Array[@runtime.SubscriptionKindCount],
+  counts : Array[ShowcaseSubscriptionKindCount],
 ) -> String {
   if counts.length() == 0 {
     "none"
@@ -297,217 +376,48 @@ fn subscription_kind_count_summary(
 ///|
 fn showcase_inspector_snapshot(
   theme : @moui.Theme,
-) -> @runtime.InspectorSnapshot {
+) -> ShowcaseInspectorSnapshot {
   ignore(theme)
   let effect_summary = showcase_inspector_effect_summary()
   let subscription_summary = showcase_inspector_subscription_summary()
-  let no_effect : @moui.Effect[ShowcaseMsg] = @moui.Effect::none()
-  let no_effect_summary = @runtime.effect_plan_summary(no_effect)
-  let dirty_state = @runtime.RuntimeDirtyStateSummary::{
-    dirty_count: 0,
-    dirty_element_ids: [],
-    dirty_build_count: 0,
-    dirty_build_element_ids: [],
-    dirty_layout_count: 0,
-    dirty_layout_element_ids: [],
-    dirty_paint_count: 0,
-    dirty_paint_element_ids: [],
-    needs_rebuild: false,
-    needs_layout: false,
-    needs_paint: false,
-    needs_redraw: true,
-    has_pending_work: true,
-    reason: "redraw requested",
-    reasons: ["redraw requested"],
-    damage_kind: "full",
-    damage_rect_count: 0,
-    damage_full_reason: "redraw requested",
-    cache_epoch: 1,
-    cached_layer_count: 0,
-  }
-  @runtime.InspectorSnapshot::{
-    runtime: @runtime.RuntimeInspectorSnapshot::{
-      size: @geometry.Size::new(width=220.0, height=120.0),
-      dirty_count: 0,
-      dirty_element_ids: [],
-      dirty_build_count: 0,
-      dirty_build_element_ids: [],
-      dirty_layout_count: 0,
-      dirty_layout_element_ids: [],
-      dirty_paint_count: 0,
-      dirty_paint_element_ids: [],
-      dirty_state,
-      needs_rebuild: false,
-      needs_layout: false,
-      needs_paint: false,
-      needs_redraw: true,
-      draw_command_count: 8,
-      rebuild_pass_count: 1,
-      layout_pass_count: 1,
-      paint_pass_count: 1,
-      draw_command_build_count: 1,
+  {
+    runtime: {
+      dirty_state: { dirty_count: 0, reason: "redraw requested" },
       program_dispatched_count: 1,
       program_update_count: 1,
-      ignored_program_dispatch_count: 0,
-      program_message_enqueue_count: 1,
-      program_message_drain_count: 1,
-      program_pending_message_count: 0,
-      program_max_pending_message_count: 1,
       program_effect_plan_count: 2,
-      program_effect_count: 2,
-      program_effect_none_count: 1,
-      program_effect_batch_count: 1,
-      program_effect_send_count: 0,
-      program_effect_dispatch_count: 0,
       program_effect_run_count: 1,
-      program_effect_task_count: 1,
-      duplicate_effect_descriptor_key_count: 0,
-      duplicate_effect_descriptor_keys: [],
-      last_effect_summary: no_effect_summary,
-      last_scheduled_effect_summary: effect_summary,
       active_effect_task_count: 1,
-      started_effect_task_count: 1,
       completed_effect_task_count: 0,
       cancelled_effect_task_count: 0,
-      ignored_effect_task_dispatch_count: 0,
-      active_effect_tasks: [effect_summary.descriptors[1]],
-      effect_task_lifecycle: [
-        @runtime.EffectTaskLifecycleSnapshot::{
-          key: "diagnostics:task",
-          kind: "inspector",
-          label: "Inspector task",
-          status: @runtime.EffectTaskLifecycleStatus::EffectTaskActive,
-          cancel_reason: None,
-        },
-      ],
+      last_scheduled_effect_summary: effect_summary,
       program_subscription_plan_count: 2,
       last_subscription_plan_summary: subscription_summary,
       active_subscription_count: 2,
       started_subscription_count: 2,
-      reused_subscription_count: 0,
-      cancelled_subscription_count: 0,
-      duplicate_subscription_key_count: 1,
-      duplicate_subscription_keys: ["diagnostics:tick"],
-      ignored_subscription_dispatch_count: 0,
       active_subscriptions: [
-        subscription_summary.descriptors[0],
-        subscription_summary.descriptors[2],
+        subscription_summary.descriptors()[0],
+        subscription_summary.descriptors()[2],
       ],
       active_subscription_kind_counts: [
-        @runtime.SubscriptionKindCount::{ kind: "animation", count: 1 },
-        @runtime.SubscriptionKindCount::{ kind: "host-event", count: 1 },
-      ],
-      subscription_lifecycle: [
-        @runtime.SubscriptionLifecycleSnapshot::{
-          key: "diagnostics:tick",
-          kind: "animation",
-          label: "Inspector tick",
-          status: @runtime.SubscriptionLifecycleStatus::SubscriptionActive,
-          cancel_reason: None,
-        },
-        @runtime.SubscriptionLifecycleSnapshot::{
-          key: "diagnostics:host",
-          kind: "host-event",
-          label: "Inspector host event",
-          status: @runtime.SubscriptionLifecycleStatus::SubscriptionActive,
-          cancel_reason: None,
-        },
-      ],
-      rebuild_reason: "redraw requested",
-      dirty_reasons: ["redraw requested"],
-    },
-    view_tree: @runtime.ViewTreeInspectorSnapshot::{
-      root_kind: "component",
-      node_count: 6,
-      component_count: 1,
-      control_count: 2,
-      modified_count: 1,
-      dirty_build_count: 0,
-      dirty_layout_count: 0,
-      dirty_paint_count: 0,
-      nodes: [
-        @runtime.ViewInspectorSummary::{
-          element_id: @core.ElementId::new(1),
-          kind: "component",
-          key: "inspector-root",
-          child_count: 1,
-          needs_build: false,
-          needs_layout: false,
-          needs_paint: false,
-        },
-        @runtime.ViewInspectorSummary::{
-          element_id: @core.ElementId::new(2),
-          kind: "surface",
-          key: "inspector-surface",
-          child_count: 1,
-          needs_build: false,
-          needs_layout: false,
-          needs_paint: false,
-        },
-        @runtime.ViewInspectorSummary::{
-          element_id: @core.ElementId::new(3),
-          kind: "column",
-          key: "inspector-column",
-          child_count: 3,
-          needs_build: false,
-          needs_layout: false,
-          needs_paint: false,
-        },
+        { kind: "animation", count: 1 },
+        { kind: "host-event", count: 1 },
       ],
     },
-    layout: @runtime.LayoutInspectorSnapshot::{
-      root_frame: @geometry.Rect::new(x=0.0, y=0.0, width=220.0, height=120.0),
-      node_count: 6,
-      leaf_count: 3,
-      max_depth: 3,
-      bounds: [
-        @runtime.LayoutBoundsInspectorEntry::{
-          element_id: @core.ElementId::new(1),
-          frame: @geometry.Rect::new(x=0.0, y=0.0, width=220.0, height=120.0),
-          depth: 0,
-          child_count: 1,
-        },
-        @runtime.LayoutBoundsInspectorEntry::{
-          element_id: @core.ElementId::new(2),
-          frame: @geometry.Rect::new(x=8.0, y=8.0, width=180.0, height=104.0),
-          depth: 1,
-          child_count: 1,
-        },
-        @runtime.LayoutBoundsInspectorEntry::{
-          element_id: @core.ElementId::new(3),
-          frame: @geometry.Rect::new(x=16.0, y=16.0, width=150.0, height=80.0),
-          depth: 2,
-          child_count: 3,
-        },
-      ],
-    },
-    render: @runtime.RenderInspectorSnapshot::{
+    view_tree: { node_count: 6, component_count: 1 },
+    layout: { bounds_count: 3, max_depth: 3 },
+    render: {
       command_count: 8,
       text_count: 3,
-      image_count: 0,
       clip_depth: 1,
       open_clip_depth: 0,
       layer_depth: 1,
       open_layer_depth: 0,
       filter_depth: 0,
       open_filter_depth: 0,
-      path_count: 0,
-      shader_count: 0,
       unbalanced_pop_count: 0,
     },
-    semantics: @runtime.SemanticsInspectorSnapshot::{
-      root_role: @core.SemanticsRole::Group,
-      node_count: 4,
-      focusable_count: 1,
-      action_count: 1,
-      max_depth: 3,
-      selected_count: 0,
-      checked_count: 0,
-      expanded_count: 0,
-      invalid_count: 1,
-      required_count: 0,
-      described_count: 1,
-    },
+    semantics: { node_count: 4, invalid_count: 1 },
   }
 }
 

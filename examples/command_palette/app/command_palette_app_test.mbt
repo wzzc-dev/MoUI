@@ -89,10 +89,10 @@ test "command palette host menu service dispatches selected command" {
   )
   inspect(opening.last_result, content="Opening native menu")
   let summary = @runtime.effect_plan_summary(effect)
-  inspect(summary.descriptors.length(), content="1")
-  inspect(summary.descriptors[0].key(), content="host:command-menu")
-  inspect(summary.descriptors[0].kind(), content="host-service")
-  inspect(summary.descriptors[0].label(), content="Show command menu")
+  inspect(summary.descriptors().length(), content="1")
+  inspect(summary.descriptors()[0].key(), content="host:command-menu")
+  inspect(summary.descriptors()[0].kind(), content="host-service")
+  inspect(summary.descriptors()[0].label(), content="Show command menu")
   let model = @state.State::new(opening)
   match effect {
     @moui.Effect::Run(_descriptor, run) =>

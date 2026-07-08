@@ -17,9 +17,9 @@ test "host async image loader schedules loading records and completes redraw" {
     }),
   )
   let baseline = tracker.record_presented(window_id, renderer)
-  inspect(baseline.current_revision, content="2")
-  inspect(baseline.current_status_counts.loading_count, content="1")
-  inspect(baseline.current_status_counts.ready_count, content="1")
+  inspect(baseline.current_revision(), content="2")
+  inspect(baseline.current_status_counts().loading_count(), content="1")
+  inspect(baseline.current_status_counts().ready_count(), content="1")
   let requested : Array[HostWindowId] = []
   let completion_source = HostImageResourceCompletionSource::new(
     tracker~,
@@ -40,10 +40,10 @@ test "host async image loader schedules loading records and completes redraw" {
   let scheduled = loader.schedule_loading_resources(
     window_id, renderer, completion_source,
   )
-  inspect(scheduled.snapshot_revision, content="2")
-  inspect(scheduled.loading_count, content="1")
-  inspect(scheduled.scheduled_count, content="1")
-  inspect(scheduled.already_in_flight_count, content="0")
+  inspect(scheduled.snapshot_revision(), content="2")
+  inspect(scheduled.loading_count(), content="1")
+  inspect(scheduled.scheduled_count(), content="1")
+  inspect(scheduled.already_in_flight_count(), content="0")
   inspect(started_windows.length(), content="1")
   assert_true(started_windows[0] == window_id)
   inspect(started_sources.length(), content="1")
@@ -51,9 +51,9 @@ test "host async image loader schedules loading records and completes redraw" {
   let duplicate = loader.schedule_loading_resources(
     window_id, renderer, completion_source,
   )
-  inspect(duplicate.loading_count, content="1")
-  inspect(duplicate.scheduled_count, content="0")
-  inspect(duplicate.already_in_flight_count, content="1")
+  inspect(duplicate.loading_count(), content="1")
+  inspect(duplicate.scheduled_count(), content="0")
+  inspect(duplicate.already_in_flight_count(), content="1")
   match captured_completion.val {
     Some(complete) =>
       complete(
@@ -78,13 +78,13 @@ test "host async image loader schedules loading records and completes redraw" {
     None => fail("expected completed async image record")
   }
   let loader_diagnostics = loader.diagnostics()
-  inspect(loader_diagnostics.scheduled_count, content="1")
-  inspect(loader_diagnostics.completed_count, content="1")
-  inspect(loader_diagnostics.already_in_flight_count, content="1")
-  inspect(loader_diagnostics.in_flight_count, content="0")
+  inspect(loader_diagnostics.scheduled_count(), content="1")
+  inspect(loader_diagnostics.completed_count(), content="1")
+  inspect(loader_diagnostics.already_in_flight_count(), content="1")
+  inspect(loader_diagnostics.in_flight_count(), content="0")
   let completion_diagnostics = completion_source.diagnostics()
-  inspect(completion_diagnostics.publish_count, content="1")
-  inspect(completion_diagnostics.redraw_requested_count, content="1")
+  inspect(completion_diagnostics.publish_count(), content="1")
+  inspect(completion_diagnostics.redraw_requested_count(), content="1")
 }
 
 ///|
@@ -129,7 +129,7 @@ test "host async image loader cancels window loads and ignores late completions"
   let scheduled = loader.schedule_loading_resources(
     window_id, renderer, completion_source,
   )
-  inspect(scheduled.scheduled_count, content="1")
+  inspect(scheduled.scheduled_count(), content="1")
   inspect(loader.cancel_window(window_id), content="1")
   inspect(cancelled.val, content="1")
   match captured_completion.val {
@@ -149,11 +149,11 @@ test "host async image loader cancels window loads and ignores late completions"
     None => fail("expected cancelled async image record to remain loading")
   }
   let diagnostics = loader.diagnostics()
-  inspect(diagnostics.scheduled_count, content="1")
-  inspect(diagnostics.completed_count, content="0")
-  inspect(diagnostics.cancelled_count, content="1")
-  inspect(diagnostics.in_flight_count, content="0")
-  inspect(completion_source.diagnostics().publish_count, content="0")
+  inspect(diagnostics.scheduled_count(), content="1")
+  inspect(diagnostics.completed_count(), content="0")
+  inspect(diagnostics.cancelled_count(), content="1")
+  inspect(diagnostics.in_flight_count(), content="0")
+  inspect(completion_source.diagnostics().publish_count(), content="0")
 }
 
 ///|
@@ -186,7 +186,9 @@ test "host async image loader ignores mismatched completion sources" {
     Some(() => ())
   })
   inspect(
-    loader.schedule_loading_resources(window_id, renderer, completion_source).scheduled_count,
+    loader
+    .schedule_loading_resources(window_id, renderer, completion_source)
+    .scheduled_count(),
     content="1",
   )
   match captured_completion.val {
@@ -206,11 +208,13 @@ test "host async image loader ignores mismatched completion sources" {
       assert_true(record.status == @render.ImageResourceStatus::ImageLoading)
     None => fail("expected original async image record")
   }
-  inspect(loader.diagnostics().completed_count, content="0")
-  inspect(loader.diagnostics().in_flight_count, content="0")
-  inspect(completion_source.diagnostics().publish_count, content="0")
+  inspect(loader.diagnostics().completed_count(), content="0")
+  inspect(loader.diagnostics().in_flight_count(), content="0")
+  inspect(completion_source.diagnostics().publish_count(), content="0")
   inspect(
-    loader.schedule_loading_resources(window_id, renderer, completion_source).scheduled_count,
+    loader
+    .schedule_loading_resources(window_id, renderer, completion_source)
+    .scheduled_count(),
     content="1",
   )
 }
@@ -242,8 +246,8 @@ test "host native async image source defers completion until platform callback" 
   let scheduled = loader.schedule_loading_resources(
     window_id, renderer, completion_source,
   )
-  inspect(scheduled.loading_count, content="1")
-  inspect(scheduled.scheduled_count, content="1")
+  inspect(scheduled.loading_count(), content="1")
+  inspect(scheduled.scheduled_count(), content="1")
   inspect(redraws.length(), content="0")
   match lifecycle.lookup("deferred.png") {
     Some(record) =>
@@ -252,8 +256,8 @@ test "host native async image source defers completion until platform callback" 
   }
   let requests = native_source.pending_requests()
   inspect(requests.length(), content="1")
-  assert_true(requests[0].window_id == window_id)
-  inspect(requests[0].source, content="deferred.png")
+  assert_true(requests[0].window_id() == window_id)
+  inspect(requests[0].source(), content="deferred.png")
   let delivered = native_source.complete(
     window_id,
     @render.ImageResourceLoadCompletion::ready(
@@ -263,7 +267,7 @@ test "host native async image source defers completion until platform callback" 
     ),
   )
   assert_true(
-    delivered.status ==
+    delivered.status() ==
     HostNativeAsyncImageCompletionStatus::NativeAsyncImageCompletionDelivered,
   )
   inspect(redraws.length(), content="1")
@@ -277,13 +281,13 @@ test "host native async image source defers completion until platform callback" 
     None => fail("expected completed deferred image record")
   }
   let native_diagnostics = native_source.diagnostics()
-  inspect(native_diagnostics.requested_count, content="1")
-  inspect(native_diagnostics.completed_count, content="1")
-  inspect(native_diagnostics.pending_count, content="0")
+  inspect(native_diagnostics.requested_count(), content="1")
+  inspect(native_diagnostics.completed_count(), content="1")
+  inspect(native_diagnostics.pending_count(), content="0")
   let loader_diagnostics = loader.diagnostics()
-  inspect(loader_diagnostics.completed_count, content="1")
-  inspect(loader_diagnostics.in_flight_count, content="0")
-  inspect(completion_source.diagnostics().redraw_requested_count, content="1")
+  inspect(loader_diagnostics.completed_count(), content="1")
+  inspect(loader_diagnostics.in_flight_count(), content="0")
+  inspect(completion_source.diagnostics().redraw_requested_count(), content="1")
 }
 
 ///|
@@ -311,7 +315,9 @@ test "host native async image source drops completions after loader cancellation
   let native_source = HostNativeAsyncImageSource::new()
   let loader = native_source.loader()
   inspect(
-    loader.schedule_loading_resources(window_id, renderer, completion_source).scheduled_count,
+    loader
+    .schedule_loading_resources(window_id, renderer, completion_source)
+    .scheduled_count(),
     content="1",
   )
   inspect(native_source.pending_requests().length(), content="1")
@@ -325,7 +331,7 @@ test "host native async image source drops completions after loader cancellation
     ),
   )
   assert_true(
-    missing.status ==
+    missing.status() ==
     HostNativeAsyncImageCompletionStatus::NativeAsyncImageCompletionMissing,
   )
   inspect(redraws.val, content="0")
@@ -335,15 +341,15 @@ test "host native async image source drops completions after loader cancellation
     None => fail("expected cancelled native source image record")
   }
   let native_diagnostics = native_source.diagnostics()
-  inspect(native_diagnostics.requested_count, content="1")
-  inspect(native_diagnostics.cancelled_count, content="1")
-  inspect(native_diagnostics.completed_count, content="0")
-  inspect(native_diagnostics.missing_completion_count, content="1")
+  inspect(native_diagnostics.requested_count(), content="1")
+  inspect(native_diagnostics.cancelled_count(), content="1")
+  inspect(native_diagnostics.completed_count(), content="0")
+  inspect(native_diagnostics.missing_completion_count(), content="1")
   let loader_diagnostics = loader.diagnostics()
-  inspect(loader_diagnostics.cancelled_count, content="1")
-  inspect(loader_diagnostics.completed_count, content="0")
-  inspect(loader_diagnostics.in_flight_count, content="0")
-  inspect(completion_source.diagnostics().publish_count, content="0")
+  inspect(loader_diagnostics.cancelled_count(), content="1")
+  inspect(loader_diagnostics.completed_count(), content="0")
+  inspect(loader_diagnostics.in_flight_count(), content="0")
+  inspect(completion_source.diagnostics().publish_count(), content="0")
 }
 
 ///|
@@ -409,7 +415,7 @@ test "host native async image source loader_with_drain spawns and drains" {
   let scheduled = loader.schedule_loading_resources(
     window_id, renderer, completion_source,
   )
-  inspect(scheduled.scheduled_count, content="1")
+  inspect(scheduled.scheduled_count(), content="1")
   inspect(spawned.length(), content="1")
   inspect(spawned[0], content="spawn-drain.png")
   inspect(drain_count.val, content="1")
@@ -423,7 +429,7 @@ test "host native async image source loader_with_drain spawns and drains" {
     ),
   )
   assert_true(
-    delivered.status ==
+    delivered.status() ==
     HostNativeAsyncImageCompletionStatus::NativeAsyncImageCompletionDelivered,
   )
   match lifecycle.lookup("spawn-drain.png") {

@@ -68,21 +68,22 @@ pub(all) enum EffectPlanKind {
   EffectPlanTask
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct EffectPlanSummary {
-  root_kind : EffectPlanKind
-  none_count : Int
-  batch_count : Int
-  send_count : Int
-  dispatch_count : Int
-  run_count : Int
-  task_count : Int
-  scheduled_count : Int
-  max_depth : Int
-  descriptors : Array[@core.EffectDescriptor]
-  duplicate_descriptor_key_count : Int
-  duplicate_descriptor_keys : Array[String]
+pub struct EffectPlanSummary {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn EffectPlanSummary::batch_count(Self) -> Int
+pub fn EffectPlanSummary::descriptors(Self) -> Array[@core.EffectDescriptor]
+pub fn EffectPlanSummary::dispatch_count(Self) -> Int
+pub fn EffectPlanSummary::duplicate_descriptor_key_count(Self) -> Int
+pub fn EffectPlanSummary::duplicate_descriptor_keys(Self) -> Array[String]
 pub fn EffectPlanSummary::empty() -> Self
+pub fn EffectPlanSummary::max_depth(Self) -> Int
+pub fn EffectPlanSummary::none_count(Self) -> Int
+pub fn EffectPlanSummary::root_kind(Self) -> EffectPlanKind
+pub fn EffectPlanSummary::run_count(Self) -> Int
+pub fn EffectPlanSummary::scheduled_count(Self) -> Int
+pub fn EffectPlanSummary::send_count(Self) -> Int
+pub fn EffectPlanSummary::task_count(Self) -> Int
 
 pub(all) enum EffectTaskCancelReason {
   EffectTaskKeyChanged
@@ -90,13 +91,14 @@ pub(all) enum EffectTaskCancelReason {
   EffectTaskRuntimeDestroyed
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct EffectTaskLifecycleSnapshot {
-  key : String
-  kind : String
-  label : String
-  status : EffectTaskLifecycleStatus
-  cancel_reason : EffectTaskCancelReason?
+pub struct EffectTaskLifecycleSnapshot {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn EffectTaskLifecycleSnapshot::cancel_reason(Self) -> EffectTaskCancelReason?
+pub fn EffectTaskLifecycleSnapshot::key(Self) -> String
+pub fn EffectTaskLifecycleSnapshot::kind(Self) -> String
+pub fn EffectTaskLifecycleSnapshot::label(Self) -> String
+pub fn EffectTaskLifecycleSnapshot::status(Self) -> EffectTaskLifecycleStatus
 
 pub(all) enum EffectTaskLifecycleStatus {
   EffectTaskActive
@@ -104,184 +106,192 @@ pub(all) enum EffectTaskLifecycleStatus {
   EffectTaskCancelled
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct InspectorSnapshot {
-  runtime : RuntimeInspectorSnapshot
-  view_tree : ViewTreeInspectorSnapshot
-  layout : LayoutInspectorSnapshot
-  render : RenderInspectorSnapshot
-  semantics : SemanticsInspectorSnapshot
+pub struct InspectorSnapshot {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn InspectorSnapshot::layout(Self) -> LayoutInspectorSnapshot
+pub fn InspectorSnapshot::render(Self) -> RenderInspectorSnapshot
+pub fn InspectorSnapshot::runtime(Self) -> RuntimeInspectorSnapshot
+pub fn InspectorSnapshot::semantics(Self) -> SemanticsInspectorSnapshot
+pub fn InspectorSnapshot::view_tree(Self) -> ViewTreeInspectorSnapshot
 
-pub(all) struct LayoutBoundsInspectorEntry {
-  element_id : @core.ElementId
-  frame : @core.Rect
-  depth : Int
-  child_count : Int
+pub struct LayoutBoundsInspectorEntry {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn LayoutBoundsInspectorEntry::child_count(Self) -> Int
+pub fn LayoutBoundsInspectorEntry::depth(Self) -> Int
+pub fn LayoutBoundsInspectorEntry::element_id(Self) -> @core.ElementId
+pub fn LayoutBoundsInspectorEntry::frame(Self) -> @core.Rect
 
-pub(all) struct LayoutInspectorSnapshot {
-  root_frame : @core.Rect
-  node_count : Int
-  leaf_count : Int
-  max_depth : Int
-  bounds : Array[LayoutBoundsInspectorEntry]
+pub struct LayoutInspectorSnapshot {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn LayoutInspectorSnapshot::bounds(Self) -> Array[LayoutBoundsInspectorEntry]
+pub fn LayoutInspectorSnapshot::leaf_count(Self) -> Int
+pub fn LayoutInspectorSnapshot::max_depth(Self) -> Int
+pub fn LayoutInspectorSnapshot::node_count(Self) -> Int
+pub fn LayoutInspectorSnapshot::root_frame(Self) -> @core.Rect
 
-pub(all) struct ProgramRuntimeSnapshot {
-  dispatched_count : Int
-  update_count : Int
-  ignored_program_dispatch_count : Int
-  message_enqueue_count : Int
-  message_drain_count : Int
-  pending_message_count : Int
-  max_pending_message_count : Int
-  effect_plan_count : Int
-  effect_count : Int
-  effect_none_count : Int
-  effect_batch_count : Int
-  effect_send_count : Int
-  effect_dispatch_count : Int
-  effect_run_count : Int
-  effect_task_count : Int
-  duplicate_effect_descriptor_key_count : Int
-  duplicate_effect_descriptor_keys : Array[String]
-  last_effect_summary : EffectPlanSummary
-  last_scheduled_effect_summary : EffectPlanSummary
-  active_effect_task_count : Int
-  started_effect_task_count : Int
-  completed_effect_task_count : Int
-  cancelled_effect_task_count : Int
-  ignored_effect_task_dispatch_count : Int
-  active_effect_tasks : Array[@core.EffectDescriptor]
-  effect_task_lifecycle : Array[EffectTaskLifecycleSnapshot]
-  subscription_plan_count : Int
-  last_subscription_plan_summary : SubscriptionPlanSummary
-  active_subscription_count : Int
-  started_subscription_count : Int
-  reused_subscription_count : Int
-  cancelled_subscription_count : Int
-  duplicate_subscription_key_count : Int
-  duplicate_subscription_keys : Array[String]
-  ignored_subscription_dispatch_count : Int
-  active_subscriptions : Array[@core.SubscriptionDescriptor]
-  active_subscription_kind_counts : Array[SubscriptionKindCount]
-  subscription_lifecycle : Array[SubscriptionLifecycleSnapshot]
+pub struct ProgramRuntimeSnapshot {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ProgramRuntimeSnapshot::active_effect_task_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::active_effect_tasks(Self) -> Array[@core.EffectDescriptor]
+pub fn ProgramRuntimeSnapshot::active_subscription_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::active_subscription_kind_counts(Self) -> Array[SubscriptionKindCount]
+pub fn ProgramRuntimeSnapshot::active_subscriptions(Self) -> Array[@core.SubscriptionDescriptor]
+pub fn ProgramRuntimeSnapshot::cancelled_effect_task_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::cancelled_subscription_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::completed_effect_task_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::dispatched_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::duplicate_effect_descriptor_key_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::duplicate_effect_descriptor_keys(Self) -> Array[String]
+pub fn ProgramRuntimeSnapshot::duplicate_subscription_key_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::duplicate_subscription_keys(Self) -> Array[String]
+pub fn ProgramRuntimeSnapshot::effect_batch_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::effect_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::effect_dispatch_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::effect_none_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::effect_plan_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::effect_run_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::effect_send_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::effect_task_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::effect_task_lifecycle(Self) -> Array[EffectTaskLifecycleSnapshot]
+pub fn ProgramRuntimeSnapshot::ignored_effect_task_dispatch_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::ignored_program_dispatch_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::ignored_subscription_dispatch_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::last_effect_summary(Self) -> EffectPlanSummary
+pub fn ProgramRuntimeSnapshot::last_scheduled_effect_summary(Self) -> EffectPlanSummary
+pub fn ProgramRuntimeSnapshot::last_subscription_plan_summary(Self) -> SubscriptionPlanSummary
+pub fn ProgramRuntimeSnapshot::max_pending_message_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::message_drain_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::message_enqueue_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::pending_message_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::reused_subscription_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::started_effect_task_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::started_subscription_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::subscription_lifecycle(Self) -> Array[SubscriptionLifecycleSnapshot]
+pub fn ProgramRuntimeSnapshot::subscription_plan_count(Self) -> Int
+pub fn ProgramRuntimeSnapshot::update_count(Self) -> Int
 
-pub(all) struct RenderInspectorSnapshot {
-  command_count : Int
-  text_count : Int
-  image_count : Int
-  clip_depth : Int
-  open_clip_depth : Int
-  layer_depth : Int
-  open_layer_depth : Int
-  filter_depth : Int
-  open_filter_depth : Int
-  path_count : Int
-  shader_count : Int
-  unbalanced_pop_count : Int
+pub struct RenderInspectorSnapshot {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RenderInspectorSnapshot::clip_depth(Self) -> Int
+pub fn RenderInspectorSnapshot::command_count(Self) -> Int
+pub fn RenderInspectorSnapshot::filter_depth(Self) -> Int
 pub fn RenderInspectorSnapshot::from_commands(Array[@core.DrawCommand]) -> Self
+pub fn RenderInspectorSnapshot::image_count(Self) -> Int
+pub fn RenderInspectorSnapshot::layer_depth(Self) -> Int
+pub fn RenderInspectorSnapshot::open_clip_depth(Self) -> Int
+pub fn RenderInspectorSnapshot::open_filter_depth(Self) -> Int
+pub fn RenderInspectorSnapshot::open_layer_depth(Self) -> Int
+pub fn RenderInspectorSnapshot::path_count(Self) -> Int
+pub fn RenderInspectorSnapshot::shader_count(Self) -> Int
+pub fn RenderInspectorSnapshot::text_count(Self) -> Int
+pub fn RenderInspectorSnapshot::unbalanced_pop_count(Self) -> Int
 
-pub(all) struct RuntimeDirtyStateSummary {
-  dirty_count : Int
-  dirty_element_ids : Array[@core.ElementId]
-  dirty_build_count : Int
-  dirty_build_element_ids : Array[@core.ElementId]
-  dirty_layout_count : Int
-  dirty_layout_element_ids : Array[@core.ElementId]
-  dirty_paint_count : Int
-  dirty_paint_element_ids : Array[@core.ElementId]
-  needs_rebuild : Bool
-  needs_layout : Bool
-  needs_paint : Bool
-  needs_redraw : Bool
-  has_pending_work : Bool
-  reason : String
-  reasons : Array[String]
-  damage_kind : String
-  damage_rect_count : Int
-  damage_full_reason : String
-  cache_epoch : Int
-  cached_layer_count : Int
+pub struct RuntimeDirtyStateSummary {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RuntimeDirtyStateSummary::cache_epoch(Self) -> Int
+pub fn RuntimeDirtyStateSummary::cached_layer_count(Self) -> Int
+pub fn RuntimeDirtyStateSummary::damage_full_reason(Self) -> String
+pub fn RuntimeDirtyStateSummary::damage_kind(Self) -> String
+pub fn RuntimeDirtyStateSummary::damage_rect_count(Self) -> Int
+pub fn RuntimeDirtyStateSummary::dirty_build_count(Self) -> Int
+pub fn RuntimeDirtyStateSummary::dirty_build_element_ids(Self) -> Array[@core.ElementId]
+pub fn RuntimeDirtyStateSummary::dirty_count(Self) -> Int
+pub fn RuntimeDirtyStateSummary::dirty_element_ids(Self) -> Array[@core.ElementId]
+pub fn RuntimeDirtyStateSummary::dirty_layout_count(Self) -> Int
+pub fn RuntimeDirtyStateSummary::dirty_layout_element_ids(Self) -> Array[@core.ElementId]
+pub fn RuntimeDirtyStateSummary::dirty_paint_count(Self) -> Int
+pub fn RuntimeDirtyStateSummary::dirty_paint_element_ids(Self) -> Array[@core.ElementId]
+pub fn RuntimeDirtyStateSummary::has_pending_work(Self) -> Bool
+pub fn RuntimeDirtyStateSummary::needs_layout(Self) -> Bool
+pub fn RuntimeDirtyStateSummary::needs_paint(Self) -> Bool
+pub fn RuntimeDirtyStateSummary::needs_rebuild(Self) -> Bool
+pub fn RuntimeDirtyStateSummary::needs_redraw(Self) -> Bool
+pub fn RuntimeDirtyStateSummary::reason(Self) -> String
+pub fn RuntimeDirtyStateSummary::reasons(Self) -> Array[String]
 
-pub(all) struct RuntimeInspectorSnapshot {
-  size : @core.Size
-  dirty_count : Int
-  dirty_element_ids : Array[@core.ElementId]
-  dirty_build_count : Int
-  dirty_build_element_ids : Array[@core.ElementId]
-  dirty_layout_count : Int
-  dirty_layout_element_ids : Array[@core.ElementId]
-  dirty_paint_count : Int
-  dirty_paint_element_ids : Array[@core.ElementId]
-  dirty_state : RuntimeDirtyStateSummary
-  needs_rebuild : Bool
-  needs_layout : Bool
-  needs_paint : Bool
-  needs_redraw : Bool
-  draw_command_count : Int
-  rebuild_pass_count : Int
-  layout_pass_count : Int
-  paint_pass_count : Int
-  draw_command_build_count : Int
-  program_dispatched_count : Int
-  program_update_count : Int
-  ignored_program_dispatch_count : Int
-  program_message_enqueue_count : Int
-  program_message_drain_count : Int
-  program_pending_message_count : Int
-  program_max_pending_message_count : Int
-  program_effect_plan_count : Int
-  program_effect_count : Int
-  program_effect_none_count : Int
-  program_effect_batch_count : Int
-  program_effect_send_count : Int
-  program_effect_dispatch_count : Int
-  program_effect_run_count : Int
-  program_effect_task_count : Int
-  duplicate_effect_descriptor_key_count : Int
-  duplicate_effect_descriptor_keys : Array[String]
-  last_effect_summary : EffectPlanSummary
-  last_scheduled_effect_summary : EffectPlanSummary
-  active_effect_task_count : Int
-  started_effect_task_count : Int
-  completed_effect_task_count : Int
-  cancelled_effect_task_count : Int
-  ignored_effect_task_dispatch_count : Int
-  active_effect_tasks : Array[@core.EffectDescriptor]
-  effect_task_lifecycle : Array[EffectTaskLifecycleSnapshot]
-  program_subscription_plan_count : Int
-  last_subscription_plan_summary : SubscriptionPlanSummary
-  active_subscription_count : Int
-  started_subscription_count : Int
-  reused_subscription_count : Int
-  cancelled_subscription_count : Int
-  duplicate_subscription_key_count : Int
-  duplicate_subscription_keys : Array[String]
-  ignored_subscription_dispatch_count : Int
-  active_subscriptions : Array[@core.SubscriptionDescriptor]
-  active_subscription_kind_counts : Array[SubscriptionKindCount]
-  subscription_lifecycle : Array[SubscriptionLifecycleSnapshot]
-  rebuild_reason : String
-  dirty_reasons : Array[String]
+pub struct RuntimeInspectorSnapshot {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RuntimeInspectorSnapshot::active_effect_task_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::active_effect_tasks(Self) -> Array[@core.EffectDescriptor]
+pub fn RuntimeInspectorSnapshot::active_subscription_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::active_subscription_kind_counts(Self) -> Array[SubscriptionKindCount]
+pub fn RuntimeInspectorSnapshot::active_subscriptions(Self) -> Array[@core.SubscriptionDescriptor]
+pub fn RuntimeInspectorSnapshot::cancelled_effect_task_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::cancelled_subscription_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::completed_effect_task_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::dirty_build_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::dirty_build_element_ids(Self) -> Array[@core.ElementId]
+pub fn RuntimeInspectorSnapshot::dirty_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::dirty_element_ids(Self) -> Array[@core.ElementId]
+pub fn RuntimeInspectorSnapshot::dirty_layout_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::dirty_layout_element_ids(Self) -> Array[@core.ElementId]
+pub fn RuntimeInspectorSnapshot::dirty_paint_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::dirty_paint_element_ids(Self) -> Array[@core.ElementId]
+pub fn RuntimeInspectorSnapshot::dirty_reasons(Self) -> Array[String]
+pub fn RuntimeInspectorSnapshot::dirty_state(Self) -> RuntimeDirtyStateSummary
+pub fn RuntimeInspectorSnapshot::draw_command_build_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::draw_command_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::duplicate_effect_descriptor_key_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::duplicate_effect_descriptor_keys(Self) -> Array[String]
+pub fn RuntimeInspectorSnapshot::duplicate_subscription_key_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::duplicate_subscription_keys(Self) -> Array[String]
+pub fn RuntimeInspectorSnapshot::effect_task_lifecycle(Self) -> Array[EffectTaskLifecycleSnapshot]
+pub fn RuntimeInspectorSnapshot::ignored_effect_task_dispatch_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::ignored_program_dispatch_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::ignored_subscription_dispatch_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::last_effect_summary(Self) -> EffectPlanSummary
+pub fn RuntimeInspectorSnapshot::last_scheduled_effect_summary(Self) -> EffectPlanSummary
+pub fn RuntimeInspectorSnapshot::last_subscription_plan_summary(Self) -> SubscriptionPlanSummary
+pub fn RuntimeInspectorSnapshot::layout_pass_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::needs_layout(Self) -> Bool
+pub fn RuntimeInspectorSnapshot::needs_paint(Self) -> Bool
+pub fn RuntimeInspectorSnapshot::needs_rebuild(Self) -> Bool
+pub fn RuntimeInspectorSnapshot::needs_redraw(Self) -> Bool
+pub fn RuntimeInspectorSnapshot::paint_pass_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::program_dispatched_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::program_effect_batch_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::program_effect_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::program_effect_dispatch_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::program_effect_none_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::program_effect_plan_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::program_effect_run_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::program_effect_send_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::program_effect_task_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::program_max_pending_message_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::program_message_drain_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::program_message_enqueue_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::program_pending_message_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::program_subscription_plan_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::program_update_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::rebuild_pass_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::rebuild_reason(Self) -> String
+pub fn RuntimeInspectorSnapshot::reused_subscription_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::size(Self) -> @core.Size
+pub fn RuntimeInspectorSnapshot::started_effect_task_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::started_subscription_count(Self) -> Int
+pub fn RuntimeInspectorSnapshot::subscription_lifecycle(Self) -> Array[SubscriptionLifecycleSnapshot]
 
-pub(all) struct SemanticsInspectorSnapshot {
-  root_role : @core.SemanticsRole
-  node_count : Int
-  focusable_count : Int
-  action_count : Int
-  max_depth : Int
-  selected_count : Int
-  checked_count : Int
-  expanded_count : Int
-  invalid_count : Int
-  required_count : Int
-  described_count : Int
+pub struct SemanticsInspectorSnapshot {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsInspectorSnapshot::action_count(Self) -> Int
+pub fn SemanticsInspectorSnapshot::checked_count(Self) -> Int
+pub fn SemanticsInspectorSnapshot::described_count(Self) -> Int
+pub fn SemanticsInspectorSnapshot::expanded_count(Self) -> Int
+pub fn SemanticsInspectorSnapshot::focusable_count(Self) -> Int
+pub fn SemanticsInspectorSnapshot::invalid_count(Self) -> Int
+pub fn SemanticsInspectorSnapshot::max_depth(Self) -> Int
+pub fn SemanticsInspectorSnapshot::node_count(Self) -> Int
+pub fn SemanticsInspectorSnapshot::required_count(Self) -> Int
+pub fn SemanticsInspectorSnapshot::root_role(Self) -> @core.SemanticsRole
+pub fn SemanticsInspectorSnapshot::selected_count(Self) -> Int
 
 pub(all) enum SubscriptionCancelReason {
   SubscriptionKeyChanged
@@ -289,18 +299,20 @@ pub(all) enum SubscriptionCancelReason {
   SubscriptionRuntimeDestroyed
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct SubscriptionKindCount {
-  kind : String
-  count : Int
+pub struct SubscriptionKindCount {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SubscriptionKindCount::count(Self) -> Int
+pub fn SubscriptionKindCount::kind(Self) -> String
 
-pub(all) struct SubscriptionLifecycleSnapshot {
-  key : String
-  kind : String
-  label : String
-  status : SubscriptionLifecycleStatus
-  cancel_reason : SubscriptionCancelReason?
+pub struct SubscriptionLifecycleSnapshot {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SubscriptionLifecycleSnapshot::cancel_reason(Self) -> SubscriptionCancelReason?
+pub fn SubscriptionLifecycleSnapshot::key(Self) -> String
+pub fn SubscriptionLifecycleSnapshot::kind(Self) -> String
+pub fn SubscriptionLifecycleSnapshot::label(Self) -> String
+pub fn SubscriptionLifecycleSnapshot::status(Self) -> SubscriptionLifecycleStatus
 
 pub(all) enum SubscriptionLifecycleStatus {
   SubscriptionActive
@@ -313,39 +325,42 @@ pub(all) enum SubscriptionPlanKind {
   SubscriptionPlanSource
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct SubscriptionPlanSummary {
-  root_kind : SubscriptionPlanKind
-  none_count : Int
-  batch_count : Int
-  source_count : Int
-  duplicate_key_count : Int
-  duplicate_keys : Array[String]
-  max_depth : Int
-  descriptors : Array[@core.SubscriptionDescriptor]
+pub struct SubscriptionPlanSummary {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SubscriptionPlanSummary::batch_count(Self) -> Int
+pub fn SubscriptionPlanSummary::descriptors(Self) -> Array[@core.SubscriptionDescriptor]
+pub fn SubscriptionPlanSummary::duplicate_key_count(Self) -> Int
+pub fn SubscriptionPlanSummary::duplicate_keys(Self) -> Array[String]
 pub fn SubscriptionPlanSummary::empty() -> Self
+pub fn SubscriptionPlanSummary::max_depth(Self) -> Int
+pub fn SubscriptionPlanSummary::none_count(Self) -> Int
+pub fn SubscriptionPlanSummary::root_kind(Self) -> SubscriptionPlanKind
+pub fn SubscriptionPlanSummary::source_count(Self) -> Int
 
-pub(all) struct ViewInspectorSummary {
-  element_id : @core.ElementId
-  kind : String
-  key : String
-  child_count : Int
-  needs_build : Bool
-  needs_layout : Bool
-  needs_paint : Bool
+pub struct ViewInspectorSummary {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ViewInspectorSummary::child_count(Self) -> Int
+pub fn ViewInspectorSummary::element_id(Self) -> @core.ElementId
+pub fn ViewInspectorSummary::key(Self) -> String
+pub fn ViewInspectorSummary::kind(Self) -> String
+pub fn ViewInspectorSummary::needs_build(Self) -> Bool
+pub fn ViewInspectorSummary::needs_layout(Self) -> Bool
+pub fn ViewInspectorSummary::needs_paint(Self) -> Bool
 
-pub(all) struct ViewTreeInspectorSnapshot {
-  root_kind : String
-  node_count : Int
-  component_count : Int
-  control_count : Int
-  modified_count : Int
-  dirty_build_count : Int
-  dirty_layout_count : Int
-  dirty_paint_count : Int
-  nodes : Array[ViewInspectorSummary]
+pub struct ViewTreeInspectorSnapshot {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ViewTreeInspectorSnapshot::component_count(Self) -> Int
+pub fn ViewTreeInspectorSnapshot::control_count(Self) -> Int
+pub fn ViewTreeInspectorSnapshot::dirty_build_count(Self) -> Int
+pub fn ViewTreeInspectorSnapshot::dirty_layout_count(Self) -> Int
+pub fn ViewTreeInspectorSnapshot::dirty_paint_count(Self) -> Int
+pub fn ViewTreeInspectorSnapshot::modified_count(Self) -> Int
+pub fn ViewTreeInspectorSnapshot::node_count(Self) -> Int
+pub fn ViewTreeInspectorSnapshot::nodes(Self) -> Array[ViewInspectorSummary]
+pub fn ViewTreeInspectorSnapshot::root_kind(Self) -> String
 
 // Type aliases
 

@@ -149,11 +149,11 @@ pub impl AgentHost for RuntimeAgentHost with fn state(self : RuntimeAgentHost) -
   let snap = self.runtime.program_runtime_snapshot()
   let dirty = self.runtime.dirty_element_ids().map(id => "\{id.value()}")
   RuntimeStateSnapshot::{
-    dispatched_count: snap.dispatched_count,
-    update_count: snap.update_count,
-    pending_message_count: snap.pending_message_count,
-    active_subscription_count: snap.active_subscription_count,
-    active_effect_task_count: snap.active_effect_task_count,
+    dispatched_count: snap.dispatched_count(),
+    update_count: snap.update_count(),
+    pending_message_count: snap.pending_message_count(),
+    active_subscription_count: snap.active_subscription_count(),
+    active_effect_task_count: snap.active_effect_task_count(),
     dirty_element_ids: dirty,
   }
 }

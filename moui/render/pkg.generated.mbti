@@ -200,13 +200,14 @@ pub(all) enum RendererCapabilityStatus {
   Unavailable
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct RendererCommandFallback {
-  index : Int
-  feature : RendererFeature
-  command : String
-  kind : RendererCommandFallbackKind
-  reason : String
+pub struct RendererCommandFallback {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RendererCommandFallback::command(Self) -> String
+pub fn RendererCommandFallback::feature(Self) -> RendererFeature
+pub fn RendererCommandFallback::index(Self) -> Int
+pub fn RendererCommandFallback::kind(Self) -> RendererCommandFallbackKind
+pub fn RendererCommandFallback::reason(Self) -> String
 
 pub(all) enum RendererCommandFallbackKind {
   PlannedFallback
@@ -214,13 +215,14 @@ pub(all) enum RendererCommandFallbackKind {
   UnclosedScope
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct RendererCommandPlan {
-  total_commands : Int
-  fallback_count : Int
-  final_layer_depth : Int
-  final_filter_depth : Int
-  fallbacks : Array[RendererCommandFallback]
+pub struct RendererCommandPlan {
+  // private fields
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RendererCommandPlan::fallback_count(Self) -> Int
+pub fn RendererCommandPlan::fallbacks(Self) -> Array[RendererCommandFallback]
+pub fn RendererCommandPlan::final_filter_depth(Self) -> Int
+pub fn RendererCommandPlan::final_layer_depth(Self) -> Int
+pub fn RendererCommandPlan::total_commands(Self) -> Int
 
 pub(all) struct RendererDescriptor {
   backend : RendererBackendKind

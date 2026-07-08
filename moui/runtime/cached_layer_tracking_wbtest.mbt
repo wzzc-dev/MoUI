@@ -141,7 +141,11 @@ test "runtime cached layer tracking is frame scoped for transient layers" {
   let frame = runtime.draw_frame()
   inspect(runtime_test_begin_cached_layer_count(frame.commands), content="0")
   inspect(runtime_test_draw_cached_layer_count(frame.commands), content="0")
-  let count = runtime.inspector_snapshot().runtime.dirty_state.cached_layer_count
+  let count = runtime
+    .inspector_snapshot()
+    .runtime()
+    .dirty_state()
+    .cached_layer_count()
   inspect(count, content="0")
 }
 

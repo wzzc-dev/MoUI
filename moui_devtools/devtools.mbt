@@ -21,15 +21,15 @@ pub fn SnapshotSummary::from_snapshot(
   snapshot : @runtime.InspectorSnapshot,
 ) -> SnapshotSummary {
   {
-    width: snapshot.runtime.size.width,
-    height: snapshot.runtime.size.height,
-    dirty_count: snapshot.runtime.dirty_count,
-    draw_command_count: snapshot.runtime.draw_command_count,
-    view_node_count: snapshot.view_tree.node_count,
-    layout_node_count: snapshot.layout.node_count,
-    semantics_node_count: snapshot.semantics.node_count,
-    active_effect_task_count: snapshot.runtime.active_effect_task_count,
-    active_subscription_count: snapshot.runtime.active_subscription_count,
+    width: snapshot.runtime().size().width,
+    height: snapshot.runtime().size().height,
+    dirty_count: snapshot.runtime().dirty_count(),
+    draw_command_count: snapshot.runtime().draw_command_count(),
+    view_node_count: snapshot.view_tree().node_count(),
+    layout_node_count: snapshot.layout().node_count(),
+    semantics_node_count: snapshot.semantics().node_count(),
+    active_effect_task_count: snapshot.runtime().active_effect_task_count(),
+    active_subscription_count: snapshot.runtime().active_subscription_count(),
   }
 }
 

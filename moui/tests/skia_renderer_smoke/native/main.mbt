@@ -1261,7 +1261,7 @@ fn run_async_image_second_frame_smoke() -> Unit {
   let window_id = @host.HostWindowId::new(99)
   let tracker = @host.HostImageResourceRepaintTracker::new()
   let baseline = tracker.record_presented(window_id, host_renderer)
-  if baseline.current_status_counts.loading_count != 2 {
+  if baseline.current_status_counts().loading_count() != 2 {
     remove_local_smoke_file(local_png_path)
     fail_smoke("Skia async image smoke did not baseline two loading images")
   }
@@ -1282,7 +1282,7 @@ fn run_async_image_second_frame_smoke() -> Unit {
   let scheduled = loader.schedule_loading_resources(
     window_id, host_renderer, completion_source,
   )
-  if scheduled.loading_count != 2 || scheduled.scheduled_count != 2 {
+  if scheduled.loading_count() != 2 || scheduled.scheduled_count() != 2 {
     remove_local_smoke_file(local_png_path)
     fail_smoke("Skia async image smoke did not schedule both loading images")
   }
@@ -1290,11 +1290,11 @@ fn run_async_image_second_frame_smoke() -> Unit {
     remove_local_smoke_file(local_png_path)
     fail_smoke("Skia async image smoke did not request a repaint")
   }
-  if loader.diagnostics().completed_count != 2 {
+  if loader.diagnostics().completed_count() != 2 {
     remove_local_smoke_file(local_png_path)
     fail_smoke("Skia async image smoke did not complete both image loads")
   }
-  if completion_source.diagnostics().redraw_requested_count < 1 {
+  if completion_source.diagnostics().redraw_requested_count() < 1 {
     remove_local_smoke_file(local_png_path)
     fail_smoke("Skia async image smoke did not route through repaint tracker")
   }
@@ -1438,7 +1438,7 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
   let window_id = @host.HostWindowId::new(100)
   let tracker = @host.HostImageResourceRepaintTracker::new()
   let baseline = tracker.record_presented(window_id, host_renderer)
-  if baseline.current_status_counts.loading_count != 2 {
+  if baseline.current_status_counts().loading_count() != 2 {
     remove_local_smoke_file(local_png_path)
     fail_smoke(
       "Skia async image deferred-completion smoke did not baseline two loading images",
@@ -1457,7 +1457,7 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
   let scheduled = loader.schedule_loading_resources(
     window_id, host_renderer, completion_source,
   )
-  if scheduled.loading_count != 2 || scheduled.scheduled_count != 2 {
+  if scheduled.loading_count() != 2 || scheduled.scheduled_count() != 2 {
     remove_local_smoke_file(local_png_path)
     fail_smoke(
       "Skia async image deferred-completion smoke did not schedule both loading images",
@@ -1471,7 +1471,7 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
       "Skia async image deferred-completion smoke did not register two pending requests",
     )
   }
-  if loader.diagnostics().completed_count != 0 {
+  if loader.diagnostics().completed_count() != 0 {
     remove_local_smoke_file(local_png_path)
     fail_smoke(
       "Skia async image deferred-completion smoke completed loads prematurely",
@@ -1482,7 +1482,7 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
     window_id,
     @skia_renderer.skia_image_load_completion(one_pixel_red_png_data_uri()),
   )
-  if completion1.status !=
+  if completion1.status() !=
     @host.HostNativeAsyncImageCompletionStatus::NativeAsyncImageCompletionDelivered {
     remove_local_smoke_file(local_png_path)
     fail_smoke(
@@ -1493,7 +1493,7 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
     window_id,
     @skia_renderer.skia_image_load_completion(local_png_path),
   )
-  if completion2.status !=
+  if completion2.status() !=
     @host.HostNativeAsyncImageCompletionStatus::NativeAsyncImageCompletionDelivered {
     remove_local_smoke_file(local_png_path)
     fail_smoke(
@@ -1506,13 +1506,13 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
       "Skia async image deferred-completion smoke did not request a repaint after completion",
     )
   }
-  if loader.diagnostics().completed_count != 2 {
+  if loader.diagnostics().completed_count() != 2 {
     remove_local_smoke_file(local_png_path)
     fail_smoke(
       "Skia async image deferred-completion smoke did not complete both image loads",
     )
   }
-  if completion_source.diagnostics().redraw_requested_count < 1 {
+  if completion_source.diagnostics().redraw_requested_count() < 1 {
     remove_local_smoke_file(local_png_path)
     fail_smoke(
       "Skia async image deferred-completion smoke did not route through repaint tracker",
