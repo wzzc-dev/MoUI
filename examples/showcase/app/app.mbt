@@ -19,6 +19,11 @@ pub(all) struct ShowcaseModel {
   data_filter_query : String
   data_filter_active : Bool
   data_filter_review : Bool
+  data_sort_column : String
+  data_sort_ascending : Bool
+  data_page : Int
+  data_visible_columns : Array[String]
+  feedback_dismissed_toasts : Array[String]
   slider_value : Double
   picker_value : String
   date_value : @views.DateValue
@@ -64,6 +69,11 @@ pub(all) enum ShowcaseMsg {
   DataActiveFilterChanged(Bool)
   DataReviewFilterChanged(Bool)
   ClearDataFilters
+  DataSortChanged(String)
+  DataPreviousPage
+  DataNextPage
+  DataColumnVisibilityChanged(String, Bool)
+  FeedbackToastDismissed(String)
   DraftChanged(String)
   SliderChanged(Double)
   PickerSelected(String)
@@ -144,6 +154,11 @@ pub fn ShowcaseModel::new() -> ShowcaseModel {
     data_filter_query: "atlas",
     data_filter_active: true,
     data_filter_review: false,
+    data_sort_column: "status",
+    data_sort_ascending: false,
+    data_page: 1,
+    data_visible_columns: ["name", "status"],
+    feedback_dismissed_toasts: [],
     slider_value: 0.64,
     picker_value: "native",
     date_value: @views.DateValue::new(year=2026, month=5, day=21),
@@ -241,15 +256,72 @@ pub fn ShowcaseModel::update(
     TabSelected(route) => { ..self, tab: route }
     ClearFilter => { ..self, filter: "" }
     FilterChanged(value) => { ..self, filter: value }
-    DataFilterQueryChanged(value) => { ..self, data_filter_query: value }
-    DataActiveFilterChanged(value) => { ..self, data_filter_active: value }
-    DataReviewFilterChanged(value) => { ..self, data_filter_review: value }
+    DataFilterQueryChanged(value) =>
+      { ..self, data_filter_query: value, data_page: 0 }
+    DataActiveFilterChanged(value) =>
+      { ..self, data_filter_active: value, data_page: 0 }
+    DataReviewFilterChanged(value) =>
+      { ..self, data_filter_review: value, data_page: 0 }
     ClearDataFilters =>
       {
         ..self,
         data_filter_query: "",
         data_filter_active: false,
         data_filter_review: false,
+        data_page: 0,
+      }
+    DataSortChanged(column) => {
+      let sort = @views.DataSortState::new(
+        column=self.data_sort_column,
+        ascending=self.data_sort_ascending,
+      ).toggle(column)
+      {
+        ..self,
+        data_sort_column: sort.column(),
+        data_sort_ascending: sort.ascending(),
+      }
+    }
+    DataPreviousPage => {
+      let page = @views.PaginationState::new(
+          page=self.data_page,
+          page_size=3,
+          total_count=10,
+        )
+        .previous()
+        .page()
+      { ..self, data_page: page }
+    }
+    DataNextPage => {
+      let page = @views.PaginationState::new(
+          page=self.data_page,
+          page_size=3,
+          total_count=10,
+        )
+        .next()
+        .page()
+      { ..self, data_page: page }
+    }
+    DataColumnVisibilityChanged(id, visible) =>
+      if id == "name" {
+        self
+      } else {
+        {
+          ..self,
+          data_visible_columns: showcase_string_array_set(
+            self.data_visible_columns,
+            id,
+            visible,
+          ),
+        }
+      }
+    FeedbackToastDismissed(id) =>
+      {
+        ..self,
+        feedback_dismissed_toasts: showcase_string_array_set(
+          self.feedback_dismissed_toasts,
+          id,
+          true,
+        ),
       }
     DraftChanged(value) => { ..self, draft: value }
     SliderChanged(value) => { ..self, slider_value: value }
@@ -445,6 +517,10 @@ fn showcase_route_title(route : String) -> String {
     if section.route == route {
       return section.title
     }
+  }
+  match showcase_hidden_route_title(route) {
+    Some(title) => return title
+    None => ()
   }
   route
 }

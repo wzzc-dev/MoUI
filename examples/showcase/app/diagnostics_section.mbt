@@ -4,7 +4,16 @@ fn ShowcaseModel::diagnostics_section(
   theme : @moui.Theme,
   metrics : ShowcaseMetrics,
 ) -> @moui.View[ShowcaseMsg] {
-  let card_width = if metrics.compact { metrics.body_width } else { 300.0 }
+  let card_columns = showcase_grid_columns(
+    metrics.body_width,
+    metrics.compact,
+    2,
+  )
+  let card_width = showcase_grid_card_width(
+    metrics.body_width,
+    card_columns,
+    theme.spacing_scale.md,
+  )
   self.section_panel(
     theme,
     "Diagnostics",
@@ -26,12 +35,8 @@ fn ShowcaseModel::diagnostics_section(
               theme, "Advanced Rendering", "Layer, blend, filter, shader, path, transform and opacity commands",
               "advanced-rendering", card_width,
             ),
-            self.diagnostics_route_card(
-              theme, "Examples", "Counter and Todo reusable app patterns before dedicated examples land",
-              "examples", card_width,
-            ),
           ],
-          columns=if metrics.compact { 1 } else { 2 },
+          columns=card_columns,
           row_spacing=theme.spacing_scale.md,
           column_spacing=theme.spacing_scale.md,
         ),

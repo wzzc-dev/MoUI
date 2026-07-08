@@ -270,7 +270,7 @@ test "showcase sidebar catalog scrolls to lower sections" {
       @core.PointerEvent::new(
         position=@geometry.Point::new(x=80.0, y=330.0),
         phase=@core.PointerPhase::Move,
-        wheel_delta=@geometry.Point::new(x=0.0, y=-260.0),
+        wheel_delta=@geometry.Point::new(x=0.0, y=-420.0),
       ),
     ),
   )

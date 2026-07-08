@@ -5,17 +5,27 @@ fn section_panel(
   summary : String,
   body : @moui.View[ShowcaseMsg],
   metrics~ : ShowcaseMetrics,
+  eyebrow? : String = "",
   scroll_offset? : @geometry.Point = @geometry.Point::new(x=0.0, y=0.0),
   scroll_state? : @state.ScrollState? = None,
   on_scroll? : ((@geometry.Point) -> ShowcaseMsg)? = None,
 ) -> @moui.View[ShowcaseMsg] {
+  let header_extra = if eyebrow == "" {
+    0.0
+  } else {
+    20.0 + theme.spacing_scale.xs
+  }
+  let scroll_height = max_showcase_double(
+    80.0,
+    metrics.body_height - header_extra,
+  )
   let scroll_body = match on_scroll {
     Some(handler) =>
       scroll_view(
         body.repaint_boundary(),
         offset=scroll_offset,
         width=metrics.body_width,
-        height=metrics.body_height,
+        height=scroll_height,
         state=scroll_state,
         on_scroll=Some(handler),
       )
@@ -24,7 +34,7 @@ fn section_panel(
         body.repaint_boundary(),
         offset=scroll_offset,
         width=metrics.body_width,
-        height=metrics.body_height,
+        height=scroll_height,
         state=scroll_state,
       )
   }
@@ -33,18 +43,29 @@ fn section_panel(
       theme.palette.surface_variant.multiply_alpha(0.32)
     @state.ColorScheme::Dark => @graphics.Color::white().multiply_alpha(0.04)
   }
+  let header_rows : Array[@moui.View[ShowcaseMsg]] = []
+  if eyebrow != "" {
+    header_rows.push(
+      text(eyebrow, width=metrics.body_width, height=20.0)
+      .font(theme.typography.caption)
+      .foreground(theme.palette.primary),
+    )
+  }
+  header_rows.push(
+    text(title, width=metrics.body_width, height=30.0)
+    .font(theme.typography.control)
+    .foreground(theme.palette.foreground),
+  )
+  header_rows.push(
+    text(summary, width=metrics.body_width, height=28.0)
+    .font(theme.typography.caption)
+    .foreground(theme.palette.muted),
+  )
   container(
     column(
       [
         column(
-          [
-            text(title, width=metrics.body_width, height=30.0)
-            .font(theme.typography.control)
-            .foreground(theme.palette.foreground),
-            text(summary, width=metrics.body_width, height=28.0)
-            .font(theme.typography.caption)
-            .foreground(theme.palette.muted),
-          ],
+          header_rows,
           spacing=theme.spacing_scale.xs,
           align=@views.CrossAlign::Start,
         ),
@@ -75,6 +96,7 @@ fn ShowcaseModel::section_panel(
   summary : String,
   body : @moui.View[ShowcaseMsg],
   metrics~ : ShowcaseMetrics,
+  eyebrow? : String = "",
 ) -> @moui.View[ShowcaseMsg] {
   let offset = @geometry.Point::new(
     x=0.0,
@@ -86,6 +108,7 @@ fn ShowcaseModel::section_panel(
     summary,
     body,
     metrics~,
+    eyebrow~,
     scroll_offset=offset,
     scroll_state=Some(self.detail_scroll),
   )
@@ -136,19 +159,21 @@ fn example_preview(
   theme : @moui.Theme,
   title : String,
   child : @moui.View[ShowcaseMsg],
+  width? : Double = 500.0,
 ) -> @moui.View[ShowcaseMsg] {
+  let inner_width = max_showcase_double(220.0, width - 30.0)
   container(
     column(
       [
-        text(title, width=220.0, height=26.0)
+        text(title, width=inner_width, height=26.0)
         .font(theme.typography.caption)
         .foreground(theme.palette.muted),
-        child.frame(width=470.0, height=150.0),
+        child.frame(width=inner_width, height=150.0),
       ],
       spacing=theme.spacing_scale.xs,
       align=@views.CrossAlign::Start,
     ),
-    width=500.0,
+    width~,
     height=190.0,
     variant=@views.ContainerVariant::Raised,
     theme~,
@@ -227,15 +252,6 @@ fn ShowcaseModel::visual_card(
   let media_width = max_showcase_double(120.0, card_width - 36.0)
   let media_height = if metrics.compact { 96.0 } else { 136.0 }
   let card_height = if metrics.compact { 250.0 } else { 300.0 }
-  let transition = @animation.TransitionSpec::new(
-    from=@animation.TransitionStyle::identity()
-      .with_opacity(0.66)
-      .with_offset(dx=offset, dy=0.0),
-    to=@animation.TransitionStyle::identity()
-      .with_opacity(opacity)
-      .with_offset(dx=offset, dy=0.0),
-    easing=@animation.Easing::Linear,
-  )
   let gradient = @graphics.Brush::linear_gradient(
     start=@geometry.Point::new(x=0.0, y=0.0),
     end=@geometry.Point::new(x=260.0, y=160.0),
@@ -260,10 +276,10 @@ fn ShowcaseModel::visual_card(
         .background_brush(gradient)
         .corner_radius(theme.radius_scale.lg)
         .clip()
-        .transition(spec=transition, progress=1.0),
+        .offset(dx=offset, dy=0.0),
         text(
           if active {
-            "Raised card with motion"
+            "Activated state visual"
           } else {
             "Layered card with image"
           },
@@ -276,7 +292,7 @@ fn ShowcaseModel::visual_card(
           if active {
             "Settle"
           } else {
-            "Animate"
+            "Activate"
           },
           on_click=ToggleActive,
           variant=@views.ButtonVariant::Primary,

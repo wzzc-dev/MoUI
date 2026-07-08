@@ -35,6 +35,11 @@ pub(all) struct ShowcaseModel {
   data_filter_query : String
   data_filter_active : Bool
   data_filter_review : Bool
+  data_sort_column : String
+  data_sort_ascending : Bool
+  data_page : Int
+  data_visible_columns : Array[String]
+  feedback_dismissed_toasts : Array[String]
   slider_value : Double
   picker_value : String
   date_value : @core.DateValue
@@ -79,6 +84,11 @@ pub(all) enum ShowcaseMsg {
   DataActiveFilterChanged(Bool)
   DataReviewFilterChanged(Bool)
   ClearDataFilters
+  DataSortChanged(String)
+  DataPreviousPage
+  DataNextPage
+  DataColumnVisibilityChanged(String, Bool)
+  FeedbackToastDismissed(String)
   DraftChanged(String)
   SliderChanged(Double)
   PickerSelected(String)

@@ -5,7 +5,12 @@ fn ShowcaseModel::advanced_rendering_section(
   metrics : ShowcaseMetrics,
 ) -> @moui.View[ShowcaseMsg] {
   ignore(self)
-  let card_width = if metrics.compact { 260.0 } else { 300.0 }
+  let columns = showcase_grid_columns(metrics.body_width, metrics.compact, 3)
+  let card_width = showcase_grid_card_width(
+    metrics.body_width,
+    columns,
+    theme.spacing_scale.md,
+  )
   let cards = [
     advanced_rendering_card(
       theme, "Renderer Smoke", card_width, "renderer-smoke",
@@ -24,11 +29,12 @@ fn ShowcaseModel::advanced_rendering_section(
     "Layers, blend modes, filters, shader effects, paths, transforms, and opacity.",
     grid(
       cards,
-      columns=if metrics.compact { 1 } else { 2 },
+      columns~,
       row_spacing=theme.spacing_scale.md,
       column_spacing=theme.spacing_scale.md,
     ),
     metrics~,
+    eyebrow=showcase_route_eyebrow("advanced-rendering"),
   )
 }
 
