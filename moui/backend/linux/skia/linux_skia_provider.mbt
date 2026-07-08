@@ -288,11 +288,12 @@ fn linux_skia_present_target(
   @skia_renderer.SkiaPresentTarget::new(
     description=linux_skia_presenter_description(),
     present=frame => {
+      let pixels = frame.pixels()
       window.present_rgba_pixels(
-        frame.width,
-        frame.height,
-        frame.row_bytes,
-        frame.pixels,
+        frame.width(),
+        frame.height(),
+        frame.row_bytes(),
+        pixels,
       ) ==
       0
     },

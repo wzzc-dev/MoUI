@@ -299,13 +299,14 @@ fn windows_skia_present_target(
   @skia_renderer.SkiaPresentTarget::new(
     description=windows_skia_presenter_description(),
     present=frame => {
+      let pixels = frame.pixels()
       windows_present_skia_pixels_to_hwnd(
         hwnd,
-        frame.width,
-        frame.height,
-        frame.row_bytes,
-        frame.pixels,
-        frame.pixels.length(),
+        frame.width(),
+        frame.height(),
+        frame.row_bytes(),
+        pixels,
+        pixels.length(),
       ) ==
       0
     },
