@@ -1,0 +1,13 @@
+import {
+  "wzzc-dev/moui/backend/windows/skia" @windows_skia_backend,
+  "wzzc-dev/moui/runtime",
+  "examples/component_gallery/app" @component_gallery_app,
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: { "native": { "cc-link-flags": "" } },
+  targets: { "main.mbt": [ "native" ] },
+)
