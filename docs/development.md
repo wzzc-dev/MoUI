@@ -119,7 +119,8 @@ contract directly in their own `mobile.json`. The reusable mobile templates and
 build entrypoints live under `moui/mobile` and `moui/scripts/mobile` so they
 are available after publishing the `wzzc-dev/moui` package. Run
 `node scripts/check-mobile-app-config.mjs` for a fast repository example
-registration consistency check before attempting a full APK or `.app` build.
+registration consistency check before attempting a full APK, `.app`, or HAP
+build.
 
 See [android-support.md](android-support.md) for the Activity/Surface ownership
 boundary and runtime-evidence requirements.
@@ -162,12 +163,15 @@ MOUI_SKIA_PLATFORM=harmonyos MOUI_SKIA_ARCH=arm64 MOUI_SKIA_LINK_MODE=dynamic \
 The standalone demo lives at `examples/harmonyos_demo` rather than extending
 Counter. `examples/harmonyos_demo/app` owns the platform-neutral UI,
 `examples/harmonyos_demo/harmonyos_skia` owns the MoonBit native exports, and
-`examples/harmonyos_demo/harmonyos_app` owns the experimental Stage
-Ability/XComponent/NAPI shell. Use `scripts/build-harmonyos-demo-app.sh
---fallback-skia` for a packaging-only smoke that avoids the HarmonyOS Skia
-download and validates MoonBit C generation, native glue compilation, and staged
-HAP layout. Real HarmonyOS runtime evidence still requires a non-fallback build
-plus matching device/emulator first-frame, input, resize, and lifecycle smoke.
+`examples/harmonyos_demo/harmonyos_app` owns the app-specific Stage
+Ability/XComponent shell over the package-published `moui/mobile/harmonyos`
+NAPI/CMake template. Use `scripts/build-harmonyos-demo-app.sh --fallback-skia`
+for a packaging-only smoke that avoids the HarmonyOS Skia download and validates
+MoonBit C generation, native glue compilation, and staged HAP layout. External
+apps can copy `moui/mobile/harmonyos/template` and build with
+`moui/scripts/mobile/build-harmonyos-hap.sh`. Real HarmonyOS runtime evidence
+still requires a non-fallback build plus matching device/emulator first-frame,
+input, resize, and lifecycle smoke.
 
 See [harmonyos-support.md](harmonyos-support.md) for the Stage
 Ability/XComponent ownership boundary, SDK/toolchain installation, emulator

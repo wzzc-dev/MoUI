@@ -1,13 +1,11 @@
 cmake_minimum_required(VERSION 3.22)
-project(moui_harmonyos_demo LANGUAGES C CXX)
+project(moui_mobile_harmonyos LANGUAGES C CXX)
 
 if(NOT DEFINED MOUI_ROOT)
   if(DEFINED ENV{MOUI_PACKAGE_ROOT} AND NOT "$ENV{MOUI_PACKAGE_ROOT}" STREQUAL "")
     set(MOUI_ROOT "$ENV{MOUI_PACKAGE_ROOT}")
-  elseif(DEFINED ENV{MOUI_REPO_ROOT} AND NOT "$ENV{MOUI_REPO_ROOT}" STREQUAL "")
-    set(MOUI_ROOT "$ENV{MOUI_REPO_ROOT}/moui")
   else()
-    get_filename_component(MOUI_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../../../../../moui" ABSOLUTE)
+    get_filename_component(MOUI_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../../../.mooncakes/wzzc-dev/moui" ABSOLUTE)
   endif()
 endif()
 

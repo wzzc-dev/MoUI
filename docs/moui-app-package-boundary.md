@@ -389,7 +389,8 @@ app-owned UIKit shell（例如 `examples/counter/ios_app`）负责
 `UIApplicationDelegate` / `UIViewController` 生命周期与触摸转发。
 HarmonyOS 同样走 embedded-session 入口：`examples/*/harmonyos_skia` 暴露
 MoonBit C exports，app-owned Stage Ability/XComponent/NAPI shell（例如
-`examples/harmonyos_demo/harmonyos_app`）负责 XComponent surface 生命周期与触摸转发。
+`examples/harmonyos_demo/harmonyos_app`）负责 XComponent surface 生命周期与触摸转发；
+可复用的 HarmonyOS shell/CMake/NAPI 模板由 `moui/mobile/harmonyos` 提供。
 
 平台入口包可以依赖：
 

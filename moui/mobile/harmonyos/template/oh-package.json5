@@ -1,0 +1,10 @@
+{
+  "modelVersion": "6.0.1",
+  "name": "my-app-harmonyos",
+  "version": "0.1.0",
+  "description": "MoUI HarmonyOS app shell",
+  "main": "",
+  "author": "wzzc-dev",
+  "license": "Apache-2.0",
+  "dependencies": {}
+}

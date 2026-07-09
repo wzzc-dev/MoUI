@@ -119,7 +119,9 @@ workspace.
   simulator/device smoke promotes the route.
 - HarmonyOS Skia route (experimental scaffold): shared app package ->
   `examples/<app>/harmonyos_skia` plus app-owned Stage Ability/XComponent shell
-  such as `examples/harmonyos_demo/harmonyos_app` ->
+  such as `examples/harmonyos_demo/harmonyos_app`, using the
+  package-published `moui/mobile/harmonyos` Stage Ability/XComponent/NAPI/CMake
+  template ->
   `moui/backend/harmonyos` embedded session ->
   `moui/backend/harmonyos/skia` -> `moui/render/skia` -> `moui_skia`.
   The app or HarmonyOS shell owns lifecycle, XComponent native surface handle
@@ -237,6 +239,7 @@ moui/backend/ios/             iOS embedded native host scaffold over shared host
 moui/backend/ios/skia/        iOS Skia renderer provider over UIKit UIImageView pixel presentation
 moui/backend/harmonyos/       HarmonyOS embedded native host scaffold over shared host/runtime contracts
 moui/backend/harmonyos/skia/  HarmonyOS Skia renderer provider over XComponent native-window pixel presentation
+moui/mobile/harmonyos/        HarmonyOS reusable Stage Ability/XComponent/NAPI/CMake template and native glue
 moui/backend/web/             canonical Web host on wasm-gc plus browser JS assets
 moui/render/                  renderer facade and shared draw helpers
 moui/render/skia/             native Skia raster renderer facade over moui_skia
@@ -260,7 +263,7 @@ examples/counter/ios_app/     Counter iOS UIKit simulator app shell
 examples/counter/windows_wgpu_cosmic/ Windows counter selecting Moon Cosmic text
 examples/harmonyos_demo/app/  standalone HarmonyOS demo app with viewport/tap feedback
 examples/harmonyos_demo/harmonyos_skia/ HarmonyOS demo embedded-session Skia entrypoint
-examples/harmonyos_demo/harmonyos_app/ HarmonyOS Stage Ability/XComponent/NAPI shell scaffold
+examples/harmonyos_demo/harmonyos_app/ HarmonyOS app-owned Stage Ability/XComponent shell over mobile/harmonyos
 examples/agent_counter/       minimal agent-controllable runtime example (shared app at example root plus main/ and macos_skia/ entrypoints)
 examples/button_freeze_probe/app/ minimal native Skia button-freeze repro app
 examples/button_freeze_probe/{macos_skia,windows_skia,linux_skia}/ platform Button Freeze Probe entrypoints

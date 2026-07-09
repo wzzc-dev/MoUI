@@ -1,0 +1,6 @@
+{
+  "name": "libmoui_mobile_harmonyos.so",
+  "types": "./Index.d.ts",
+  "version": "1.0.0",
+  "description": "MoUI HarmonyOS native NAPI bridge"
+}

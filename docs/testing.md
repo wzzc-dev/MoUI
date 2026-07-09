@@ -248,11 +248,12 @@ produce the checked mobile runtime manifest for release/manual claims.
 
 For HarmonyOS packaging changes, `scripts/build-harmonyos-demo-app.sh
 --fallback-skia` is a fast build-system smoke that covers the standalone demo's
-MoonBit C export, Stage Ability/XComponent/NAPI shell layout, native glue
-compilation, native-stub compilation, and staged HAP archive. It is not real
-Skia renderer or platform runtime evidence. HarmonyOS first-frame/input/
-lifecycle claims still require `scripts/build-harmonyos-demo-app.sh` without
-fallback and a matching device or emulator run with recorded observations.
+MoonBit C export, app-owned Stage Ability/XComponent shell over the
+`moui/mobile/harmonyos` NAPI/CMake template, native glue compilation,
+native-stub compilation, and staged HAP archive. It is not real Skia renderer or
+platform runtime evidence. HarmonyOS first-frame/input/lifecycle claims still
+require `scripts/build-harmonyos-demo-app.sh` without fallback and a matching
+device or emulator run with recorded observations.
 
 `smoke/gates.json` is the checked-in smoke gate catalog. It describes the daily,
 nightly, and release smoke tiers, each suite command, the structured result

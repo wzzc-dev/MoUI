@@ -42,5 +42,27 @@
         "detachView": "my_app_ios_detach_view"
       }
     }
+  },
+  "harmonyos": {
+    "bundleName": "dev.example.mouiapp",
+    "productName": "MoUIMobileHarmonyOS",
+    "appName": "My MoUI App",
+    "moduleName": "entry",
+    "moduleDescription": "MoUI HarmonyOS app",
+    "entryDescription": "MoUI HarmonyOS app entry ability",
+    "native": {
+      "moonPackage": "harmonyos_skia",
+      "generatedC": "harmonyos_skia.c",
+      "nativeLibrary": "moui_mobile_harmonyos",
+      "appArg": "my-app-harmonyos",
+      "moonbitMainAlias": "my_app_harmonyos_moonbit_generated_main",
+      "exports": {
+        "attachSurface": "my_app_harmonyos_attach_surface",
+        "resize": "my_app_harmonyos_resize",
+        "dispatchPointer": "my_app_harmonyos_dispatch_pointer",
+        "renderFrame": "my_app_harmonyos_render_frame",
+        "detachSurface": "my_app_harmonyos_detach_surface"
+      }
+    }
   }
 }

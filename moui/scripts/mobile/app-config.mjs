@@ -62,6 +62,16 @@ const assertObject = (value, label) => {
   return value;
 };
 
+const optionalObject = (value, label) => {
+  if (value === undefined) return null;
+  return assertObject(value, label);
+};
+
+const optionalString = (value, label, fallback = "") => {
+  if (value === undefined) return fallback;
+  return assertString(value, label);
+};
+
 const appMetadataPath = (workspaceRoot, appId, explicitPath) => {
   if (explicitPath) return normalize(workspaceRoot, explicitPath);
   const candidates = [
@@ -95,12 +105,26 @@ const requireMetadata = ({ appId, workspaceRoot, appConfigPath }) => {
   const mobile = assertObject(metadata.mobile, `${path}: mobile`);
   assertBool(mobile.fullscreen, `${path}: mobile.fullscreen`);
   assertBool(mobile.supportsScroll, `${path}: mobile.supportsScroll`);
-  const android = assertObject(metadata.android, `${path}: android`);
-  assertString(android.applicationId, `${path}: android.applicationId`);
-  const ios = assertObject(metadata.ios, `${path}: ios`);
-  assertString(ios.bundleId, `${path}: ios.bundleId`);
-  assertString(ios.productName, `${path}: ios.productName`);
-  assertString(ios.infoPlist, `${path}: ios.infoPlist`);
+  const android = optionalObject(metadata.android, `${path}: android`);
+  if (android) assertString(android.applicationId, `${path}: android.applicationId`);
+  const ios = optionalObject(metadata.ios, `${path}: ios`);
+  if (ios) {
+    assertString(ios.bundleId, `${path}: ios.bundleId`);
+    assertString(ios.productName, `${path}: ios.productName`);
+    assertString(ios.infoPlist, `${path}: ios.infoPlist`);
+  }
+  const harmonyos = optionalObject(metadata.harmonyos, `${path}: harmonyos`);
+  if (harmonyos) {
+    assertString(harmonyos.bundleName, `${path}: harmonyos.bundleName`);
+    assertString(harmonyos.productName, `${path}: harmonyos.productName`);
+    optionalString(harmonyos.appName, `${path}: harmonyos.appName`);
+    optionalString(harmonyos.moduleName, `${path}: harmonyos.moduleName`);
+    optionalString(harmonyos.moduleDescription, `${path}: harmonyos.moduleDescription`);
+    optionalString(harmonyos.entryDescription, `${path}: harmonyos.entryDescription`);
+  }
+  if (!android && !ios && !harmonyos) {
+    throw new Error(`${path}: at least one of android, ios, or harmonyos must be configured`);
+  }
   return { metadata, path };
 };
 
@@ -129,10 +153,25 @@ const validateIosContract = (label, contract, supportsScroll) => {
   if (supportsScroll) assertString(exports.dispatchScroll, `${label}.exports.dispatchScroll`);
 };
 
+const validateHarmonyosContract = (label, contract, supportsScroll) => {
+  assertString(contract.moonPackage, `${label}.moonPackage`);
+  assertString(contract.generatedC, `${label}.generatedC`);
+  assertString(contract.nativeLibrary, `${label}.nativeLibrary`);
+  assertString(contract.appArg, `${label}.appArg`);
+  assertString(contract.moonbitMainAlias, `${label}.moonbitMainAlias`);
+  const exports = assertObject(contract.exports, `${label}.exports`);
+  for (const field of ["attachSurface", "resize", "dispatchPointer", "renderFrame", "detachSurface"]) {
+    assertString(exports[field], `${label}.exports.${field}`);
+  }
+  if (supportsScroll) assertString(exports.dispatchScroll, `${label}.exports.dispatchScroll`);
+};
+
 const platformContract = ({ appId, platform, metadataPlatform, builtInContracts }) => {
   const fromBuiltIn = builtInContracts?.[appId]?.[platform] || {};
-  const fromNative = metadataPlatform.native || {};
-  const fromBuild = metadataPlatform.build || {};
+  const hasBuiltIn = Object.keys(fromBuiltIn).length > 0;
+  if (!metadataPlatform && !hasBuiltIn) return null;
+  const fromNative = metadataPlatform?.native || {};
+  const fromBuild = metadataPlatform?.build || {};
   return {
     ...fromBuiltIn,
     ...fromNative,
@@ -168,9 +207,22 @@ const mergeApp = ({ appId, metadata, metadataPath, contractsFile, builtInContrac
     metadataPlatform: metadata.ios,
     builtInContracts,
   });
-  validateAndroidContract(`${metadataPath}: android.native or ${contractsFile}: apps.${appId}.android`, androidContract, mobile.supportsScroll);
-  validateIosContract(`${metadataPath}: ios.native or ${contractsFile}: apps.${appId}.ios`, iosContract, mobile.supportsScroll);
-  return {
+  const harmonyosContract = platformContract({
+    appId,
+    platform: "harmonyos",
+    metadataPlatform: metadata.harmonyos,
+    builtInContracts,
+  });
+  if (androidContract) {
+    validateAndroidContract(`${metadataPath}: android.native or ${contractsFile}: apps.${appId}.android`, androidContract, mobile.supportsScroll);
+  }
+  if (iosContract) {
+    validateIosContract(`${metadataPath}: ios.native or ${contractsFile}: apps.${appId}.ios`, iosContract, mobile.supportsScroll);
+  }
+  if (harmonyosContract) {
+    validateHarmonyosContract(`${metadataPath}: harmonyos.native or ${contractsFile}: apps.${appId}.harmonyos`, harmonyosContract, mobile.supportsScroll);
+  }
+  const app = {
     id: appId,
     displayName: metadata.displayName,
     artifactName: metadata.artifactName,
@@ -183,21 +235,39 @@ const mergeApp = ({ appId, metadata, metadataPath, contractsFile, builtInContrac
       metadata: metadataPath,
       contracts: contractsFile,
     },
-    android: {
+  };
+  if (androidContract) {
+    app.android = {
       ...androidContract,
       applicationId: metadata.android.applicationId,
       fullscreen: mobile.fullscreen,
       supportsScroll: mobile.supportsScroll,
-    },
-    ios: {
+    };
+  }
+  if (iosContract) {
+    app.ios = {
       ...iosContract,
       bundleId: metadata.ios.bundleId,
       productName: metadata.ios.productName,
       infoPlist: metadata.ios.infoPlist,
       fullscreen: mobile.fullscreen,
       supportsScroll: mobile.supportsScroll,
-    },
-  };
+    };
+  }
+  if (harmonyosContract) {
+    app.harmonyos = {
+      ...harmonyosContract,
+      bundleName: metadata.harmonyos.bundleName,
+      productName: metadata.harmonyos.productName,
+      appName: optionalString(metadata.harmonyos.appName, `${metadataPath}: harmonyos.appName`, metadata.displayName),
+      moduleName: optionalString(metadata.harmonyos.moduleName, `${metadataPath}: harmonyos.moduleName`, "entry"),
+      moduleDescription: optionalString(metadata.harmonyos.moduleDescription, `${metadataPath}: harmonyos.moduleDescription`, metadata.displayName),
+      entryDescription: optionalString(metadata.harmonyos.entryDescription, `${metadataPath}: harmonyos.entryDescription`, metadata.displayName),
+      fullscreen: mobile.fullscreen,
+      supportsScroll: mobile.supportsScroll,
+    };
+  }
+  return app;
 };
 
 export const readMobileApp = (appId, options = {}) => {
