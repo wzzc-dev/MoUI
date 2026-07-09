@@ -43,12 +43,28 @@ function truthy(value) {
   return /^(1|true|yes|on)$/i.test(String(value || "").trim());
 }
 
+function pdfiumPathOverrides(config) {
+  const includePath = configEnvValue(config, "MOUI_PDFIUM_INCLUDE");
+  const libDir = configEnvValue(config, "MOUI_PDFIUM_LIB_DIR");
+  return {
+    includePath,
+    libDir,
+    complete: Boolean(includePath && libDir),
+  };
+}
+
 function shouldConfigurePdfium(config) {
   const kind = targetKind(config);
   if (kind && ["wasm", "wasm32", "wasmgc", "wasm-gc", "js"].includes(kind)) {
     return false;
   }
-  return !truthy(configEnvValue(config, "MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM"));
+  if (truthy(configEnvValue(config, "MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM"))) {
+    return false;
+  }
+  if (pdfiumPathOverrides(config).complete) {
+    return true;
+  }
+  return truthy(configEnvValue(config, "MOUI_PDFIUM_ENABLE_PREBUILD_PDFIUM"));
 }
 
 function pdfiumLinkMode(config) {
@@ -189,13 +205,12 @@ function extractArchive(archivePath, extractDir) {
 }
 
 function bundledValues(config) {
-  const includeOverride = configEnvValue(config, "MOUI_PDFIUM_INCLUDE");
-  const libDirOverride = configEnvValue(config, "MOUI_PDFIUM_LIB_DIR");
-  if (includeOverride && libDirOverride) {
+  const overrides = pdfiumPathOverrides(config);
+  if (overrides.complete) {
     return {
-      includePath: includeOverride,
-      libDir: libDirOverride,
-      binDir: libDirOverride,
+      includePath: overrides.includePath,
+      libDir: overrides.libDir,
+      binDir: overrides.libDir,
     };
   }
 
@@ -354,10 +369,6 @@ function disabledVars() {
 }
 
 function main() {
-  if (truthy(process.env.MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM)) {
-    console.log(JSON.stringify({ vars: disabledVars() }));
-    return;
-  }
   const config = readJsonFromStdin();
   if (!shouldConfigurePdfium(config)) {
     console.log(JSON.stringify({ vars: disabledVars() }));

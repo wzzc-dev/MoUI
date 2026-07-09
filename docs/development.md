@@ -681,9 +681,11 @@ moon build examples/showcase/linux_sun --target native
 moon build examples/markdown_editor/linux_skia --target native
 ```
 
-For PDF Workbench app-only or `pdflite_adapter` checks, set
-`MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1` unless the native PDFium raster adapter
-is the thing being validated.
+PDF Workbench app-only and `pdflite_adapter` checks no longer download PDFium by
+default. Set `MOUI_PDFIUM_ENABLE_PREBUILD_PDFIUM=1` only when validating the
+native PDFium raster adapter, or provide `MOUI_PDFIUM_INCLUDE` plus
+`MOUI_PDFIUM_LIB_DIR` to use a local PDFium install without downloading the
+locked prebuild.
 
 Use the direct native example builds only on a matching configured host. The
 check profiles keep shared platform service checks, current-host
