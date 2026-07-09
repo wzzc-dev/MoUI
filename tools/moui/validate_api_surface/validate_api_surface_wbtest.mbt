@@ -19,6 +19,166 @@ fn budget_by_label(label : String) -> PackageBudget raise {
 }
 
 ///|
+fn classification_budget(
+  path : String,
+  category : String,
+) -> ApiSurfaceCategoryBudget raise {
+  for budget in api_surface_classification_budgets() {
+    if budget.path == path && budget.category == category {
+      return budget
+    }
+  }
+  fail("missing classification budget: " + path + " " + category)
+}
+
+///|
+test "api surface semantic categories cover public surface tiers" {
+  let categories = api_surface_semantic_categories()
+  inspect(categories.length(), content="10")
+  assert_true(categories.contains("app_constructor"))
+  assert_true(categories.contains("app_state_helper"))
+  assert_true(categories.contains("app_style"))
+  assert_true(categories.contains("advanced_core_protocol"))
+  assert_true(categories.contains("runtime_diagnostic"))
+  assert_true(categories.contains("host_contract"))
+  assert_true(categories.contains("renderer_contract"))
+  assert_true(categories.contains("required_protocol"))
+  assert_true(categories.contains("test_exposure"))
+  assert_true(categories.contains("migration_debt"))
+  let paths = api_surface_classification_paths()
+  inspect(paths.length(), content="5")
+  assert_true(paths.contains("moui/core/pkg.generated.mbti"))
+  assert_true(paths.contains("moui/views/pkg.generated.mbti"))
+  assert_true(paths.contains("moui/runtime/pkg.generated.mbti"))
+  assert_true(paths.contains("moui/backend/host/pkg.generated.mbti"))
+  assert_true(paths.contains("moui/render/pkg.generated.mbti"))
+}
+
+///|
+test "api surface classification budgets pin current high-risk packages" {
+  inspect(
+    classification_budget(
+      "moui/core/pkg.generated.mbti", "advanced_core_protocol",
+    ).max_count,
+    content="521",
+  )
+  inspect(
+    classification_budget("moui/core/pkg.generated.mbti", "required_protocol").max_count,
+    content="138",
+  )
+  inspect(
+    classification_budget("moui/views/pkg.generated.mbti", "app_constructor").max_count,
+    content="134",
+  )
+  inspect(
+    classification_budget("moui/views/pkg.generated.mbti", "app_state_helper").max_count,
+    content="164",
+  )
+  inspect(
+    classification_budget("moui/views/pkg.generated.mbti", "app_style").max_count,
+    content="30",
+  )
+  inspect(
+    classification_budget(
+      "moui/views/pkg.generated.mbti", "advanced_core_protocol",
+    ).max_count,
+    content="26",
+  )
+  inspect(
+    classification_budget("moui/views/pkg.generated.mbti", "migration_debt").max_count,
+    content="43",
+  )
+  inspect(
+    classification_budget(
+      "moui/runtime/pkg.generated.mbti", "runtime_diagnostic",
+    ).max_count,
+    content="261",
+  )
+  inspect(
+    classification_budget(
+      "moui/backend/host/pkg.generated.mbti", "host_contract",
+    ).max_count,
+    content="422",
+  )
+  inspect(
+    classification_budget("moui/render/pkg.generated.mbti", "renderer_contract").max_count,
+    content="100",
+  )
+}
+
+///|
+test "api surface classification assigns representative lines" {
+  fn category(path : String, line : String) -> String {
+    match classify_api_surface_line(path, line) {
+      Some(value) => value
+      None => "none"
+    }
+  }
+  inspect(
+    category(
+      "moui/views/pkg.generated.mbti", "pub fn[Msg] button(String) -> @core.View[Msg]",
+    ),
+    content="app_constructor",
+  )
+  inspect(
+    category(
+      "moui/views/pkg.generated.mbti", "pub fn picker_item(String, String) -> PickerItem",
+    ),
+    content="app_state_helper",
+  )
+  inspect(
+    category("moui/views/pkg.generated.mbti", "pub(all) struct ButtonStyle {"),
+    content="migration_debt",
+  )
+  inspect(
+    category(
+      "moui/views/pkg.generated.mbti", "pub fn draw_path(PaintContext, @core.PathSpec) -> Unit",
+    ),
+    content="advanced_core_protocol",
+  )
+  inspect(
+    category(
+      "moui/core/pkg.generated.mbti", "pub fn View::node(identity~ : () -> ViewIdentity) -> View[Msg]",
+    ),
+    content="advanced_core_protocol",
+  )
+  inspect(
+    category(
+      "moui/runtime/pkg.generated.mbti", "pub fn AppRuntime::inspector_snapshot(Self) -> InspectorSnapshot",
+    ),
+    content="runtime_diagnostic",
+  )
+  inspect(
+    category(
+      "moui/backend/host/pkg.generated.mbti", "pub fn HostRouteSource::subscription(Self) -> @core.Subscription[Msg]",
+    ),
+    content="host_contract",
+  )
+  inspect(
+    category(
+      "moui/render/pkg.generated.mbti", "pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability]",
+    ),
+    content="renderer_contract",
+  )
+}
+
+///|
+test "api surface classification rejects unclassified public lines" {
+  let failures : Array[String] = []
+  let fixture =
+    #|// Generated using `moon info`, DON'T EDIT IT
+    #|package "wzzc-dev/moui/core"
+    #|pub fn surprise_kernel_escape() -> Unit
+    #|
+  validate_api_surface_classification_text(
+    "moui/core/pkg.generated.mbti", fixture, failures,
+  )
+  inspect(failures.length(), content="1")
+  assert_true(failures[0].contains("unclassified public API line"))
+  assert_true(failures[0].contains("add classification or move API"))
+}
+
+///|
 test "root facade budget forwards app-loop sugar only" {
   let root = budget_by_label("root facade (app-loop sugar)")
   inspect(root.max_pub_all_lines, content="0")

@@ -26,6 +26,8 @@ The default daily baseline covers:
 - renderer/provider static checks and lightweight Web handoff validation
 - maintenance baseline ratchets for oversized source files, source-level
   `pub(all)` counts, and root facade type-forwarding counts
+- API surface package budgets plus semantic classification budgets for
+  `core`, `views`, `runtime`, `backend/host`, and `render`
 
 Complete platform runtime smoke is a release or matching-host gate, not a
 default daily gate. Daily checks do not require fresh matching-host promotion.
@@ -51,6 +53,13 @@ The guard tracks three budgets:
 - direct package source `pub(all)` counts for core, views, host, render,
   mainline examples, Mo Workbench, PDF Workbench, and Website;
 - root facade `pub type` forwarding count in `moui/moui.mbt`.
+
+The API surface guard is separate from this maintenance baseline. It tracks
+generated public API size, forbidden boundary tokens, and semantic API
+classification budgets such as `app_constructor`, `advanced_core_protocol`,
+`runtime_diagnostic`, `host_contract`, and `renderer_contract`. See
+[API surface](api-surface.md) and
+[API surface audit](api-surface-audit.md) before expanding public API.
 
 Current `max` values intentionally match today's debt so unrelated changes do
 not need to solve the whole backlog. When a refactor splits a file, moves
