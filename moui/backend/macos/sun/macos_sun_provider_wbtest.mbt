@@ -140,10 +140,11 @@ test "macOS Sun host renderer forwards platform view pixels" {
   inspect(result.presented, content="true")
   match presented.val {
     Some(frame) => {
-      let red = (1 * frame.width + 1) * 4
-      assert_true(frame.pixels[red].to_int() > 200)
-      assert_true(frame.pixels[red + 1].to_int() < 80)
-      assert_true(frame.pixels[red + 2].to_int() < 80)
+      let pixels = frame.pixels()
+      let red = (1 * frame.width() + 1) * 4
+      assert_true(pixels[red].to_int() > 200)
+      assert_true(pixels[red + 1].to_int() < 80)
+      assert_true(pixels[red + 2].to_int() < 80)
     }
     None => fail("expected macOS Sun frame with platform-view pixels")
   }
