@@ -7,15 +7,15 @@ import {
 }
 
 // Values
+pub fn gallery_item_id_from_string(String) -> ComponentGalleryItemId?
+
+pub fn gallery_item_id_to_string(ComponentGalleryItemId) -> String
+
 pub fn platform_id_from_string(String) -> PlatformId?
 
 pub fn platform_id_to_string(PlatformId) -> String
 
 pub fn program(active_platform~ : PlatformId) -> @core.Program[ComponentGalleryModel, ComponentGalleryMsg]
-
-pub fn story_id_from_string(String) -> ComponentGalleryStoryId?
-
-pub fn story_id_to_string(ComponentGalleryStoryId) -> String
 
 pub fn update(ComponentGalleryModel, ComponentGalleryMsg) -> ComponentGalleryModel
 
@@ -24,13 +24,55 @@ pub fn view(ComponentGalleryModel, @core.ViewEnvironment) -> @core.View[Componen
 // Errors
 
 // Types and methods
+pub(all) enum ComponentGalleryItemId {
+  Welcome
+  Button
+  TextField
+  TextArea
+  ClearableTextField
+  PasswordField
+  NumberField
+  Stepper
+  Checkbox
+  Toggle
+  Radio
+  RadioGroup
+  CheckboxGroup
+  SegmentedControl
+  Picker
+  Slider
+  Chips
+  Badge
+  Progress
+  Banner
+  Callout
+  StatePanel
+  InlineError
+  Toast
+  Snackbar
+  StatCard
+  Avatar
+  Divider
+  Toolbar
+  StatusBar
+  Surface
+  RowColumn
+  ResponsiveGrid
+  ScrollView
+  PlatformRoutes
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct ComponentGalleryModel {
   active_platform : PlatformId
-  active_story : ComponentGalleryStoryId
+  active_item : ComponentGalleryItemId
   selected_platform : PlatformId
   page_scroll : @core.ScrollState
+  sidebar_scroll : @core.ScrollState
+  content_scroll : @core.ScrollState
   search_query : String
   sample_text : String
+  sample_number : String
+  password_revealed : Bool
   selected_mode : String
   selected_density : String
   feature_enabled : Bool
@@ -40,26 +82,19 @@ pub(all) struct ComponentGalleryModel {
 pub fn ComponentGalleryModel::new(active_platform~ : PlatformId) -> Self
 
 pub(all) enum ComponentGalleryMsg {
-  SelectStory(String)
+  SelectItem(String)
   SearchChanged(String)
   SelectPlatform(String)
   SelectMode(String)
   SelectDensity(String)
   SampleTextChanged(String)
+  SampleNumberChanged(String)
+  TogglePasswordReveal
   FeatureToggled(Bool)
   SliderChanged(Double)
   Increment
   Decrement
   Reset
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) enum ComponentGalleryStoryId {
-  Welcome
-  Buttons
-  Inputs
-  Feedback
-  Layout
-  Platforms
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum PlatformId {

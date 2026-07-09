@@ -1,14 +1,16 @@
 ///|
 test "component gallery update changes model" {
   let model = ComponentGalleryModel::new(active_platform=PlatformId::MacOS)
-  let story = update(model, SelectStory("inputs"))
-  assert_true(story.active_story == @app.ComponentGalleryStoryId::Inputs)
-  let selected = update(story, SelectPlatform("android"))
+  let item = update(model, SelectItem("text-field"))
+  assert_true(item.active_item == @app.ComponentGalleryItemId::TextField)
+  let selected = update(item, SelectPlatform("android"))
   assert_true(selected.selected_platform == @app.PlatformId::Android)
-  assert_true(selected.active_story == @app.ComponentGalleryStoryId::Platforms)
+  assert_true(
+    selected.active_item == @app.ComponentGalleryItemId::PlatformRoutes,
+  )
   let searched = update(selected, SearchChanged("button"))
   inspect(searched.search_query, content="button")
-  assert_true(searched.active_story == @app.ComponentGalleryStoryId::Buttons)
+  assert_true(searched.active_item == @app.ComponentGalleryItemId::Button)
   let edited = update(searched, SampleTextChanged("Reusable controls"))
   inspect(edited.sample_text, content="Reusable controls")
   let toggled = update(edited, FeatureToggled(false))
@@ -21,7 +23,7 @@ test "component gallery update changes model" {
 }
 
 ///|
-test "component gallery runtime renders story browser" {
+test "component gallery runtime renders component catalog" {
   let runtime = @runtime.new_program_with_dimensions(
     program=program(active_platform=@app.PlatformId::Linux),
     width=1040.0,
@@ -29,13 +31,41 @@ test "component gallery runtime renders story browser" {
   )
   let commands = runtime.draw_commands()
   assert_true(has_text(commands, "Component Gallery"))
-  assert_true(has_text(commands, "Stories"))
-  assert_true(has_text(commands, "Getting Started"))
   assert_true(has_text(commands, "Components"))
-  assert_true(has_text(commands, "Buttons"))
-  assert_true(has_text(commands, "Inputs"))
+  assert_true(has_text(commands, "Getting Started"))
+  assert_true(has_text(commands, "Controls"))
+  assert_true(has_text(commands, "Button"))
+  assert_true(has_text(commands, "Text Field"))
+  assert_true(has_text(commands, "Text Area"))
+  assert_true(has_text(commands, "Password Field"))
+  assert_true(has_text(commands, "Number Field"))
+  assert_true(has_text(commands, "Checkbox"))
+  assert_true(has_text(commands, "Toggle"))
+  assert_true(has_text(commands, "Radio"))
+  assert_true(has_text(commands, "Segmented Control"))
+  assert_true(has_text(commands, "Picker"))
+  assert_true(has_text(commands, "Slider"))
+  assert_true(has_text(commands, "Chips"))
   assert_true(has_text(commands, "Feedback"))
-  assert_true(has_text(commands, "Adaptive Layout"))
+  assert_true(has_text(commands, "Badge"))
+  assert_true(has_text(commands, "Progress"))
+  assert_true(has_text(commands, "Banner"))
+  assert_true(has_text(commands, "Callout"))
+  assert_true(has_text(commands, "State Panel"))
+  assert_true(has_text(commands, "Toast"))
+  assert_true(has_text(commands, "Snackbar"))
+  assert_true(has_text(commands, "Display"))
+  assert_true(has_text(commands, "Stat Card"))
+  assert_true(has_text(commands, "Avatar"))
+  assert_true(has_text(commands, "Layout"))
+  assert_true(has_text(commands, "Divider"))
+  assert_true(has_text(commands, "Toolbar"))
+  assert_true(has_text(commands, "Status Bar"))
+  assert_true(has_text(commands, "Surface"))
+  assert_true(has_text(commands, "Row & Column"))
+  assert_true(has_text(commands, "Responsive Grid"))
+  assert_true(has_text(commands, "Scroll View"))
+  assert_true(has_text(commands, "Runtime"))
   assert_true(has_text(commands, "Platform Routes"))
   assert_true(has_text(commands, "macOS"))
   assert_true(has_text(commands, "Linux"))
@@ -57,14 +87,73 @@ test "component gallery mobile host fills device width" {
 }
 
 ///|
-test "component gallery header story count stays inside header" {
-  assert_story_count_inside_header(width=1040.0, height=720.0)
-  assert_story_count_inside_header(width=390.0, height=640.0)
+test "component gallery selecting component preserves sidebar scroll" {
+  let model = ComponentGalleryModel::new(active_platform=PlatformId::MacOS)
+  model.sidebar_scroll.scroll_to(x=0.0, y=260.0)
+  model.content_scroll.scroll_to(x=0.0, y=420.0)
+  model.page_scroll.scroll_to(x=0.0, y=180.0)
+  let selected = update(model, SelectItem("slider"))
+  assert_true(selected.active_item == @app.ComponentGalleryItemId::Slider)
+  assert_true(selected.sidebar_scroll.offset().y == 260.0)
+  assert_true(selected.content_scroll.offset().y == 0.0)
+  assert_true(selected.page_scroll.offset().y == 0.0)
+}
+
+///|
+test "component gallery desktop sidebar wheel does not move preview" {
+  let runtime = @runtime.new_program_with_dimensions(
+    program=program(active_platform=@app.PlatformId::Linux),
+    width=1040.0,
+    height=720.0,
+  )
+  let before_commands = runtime.draw_commands()
+  guard first_text_frame_before_x(before_commands, text="Button", max_x=280.0)
+    is Some(before_left) else {
+    fail("expected Button in sidebar before scroll")
+  }
+  guard first_text_frame_after_x(
+      commands=before_commands,
+      text="Welcome",
+      min_x=300.0,
+    )
+    is Some(before_right) else {
+    fail("expected Welcome preview before scroll")
+  }
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=40.0, y=180.0),
+        phase=@core.PointerPhase::Move,
+        wheel_delta=@core.Point::new(x=0.0, y=-160.0),
+      ),
+    ),
+  )
+  let after_commands = runtime.draw_commands()
+  guard first_text_frame_before_x(after_commands, text="Button", max_x=280.0)
+    is Some(after_left) else {
+    fail("expected Button in sidebar after scroll")
+  }
+  guard first_text_frame_after_x(
+      commands=after_commands,
+      text="Welcome",
+      min_x=300.0,
+    )
+    is Some(after_right) else {
+    fail("expected Welcome preview after scroll")
+  }
+  assert_true(after_left.origin.y < before_left.origin.y)
+  assert_true(after_right.origin.y == before_right.origin.y)
+}
+
+///|
+test "component gallery header demo count stays inside header" {
+  assert_component_count_inside_header(width=1040.0, height=720.0)
+  assert_component_count_inside_header(width=390.0, height=640.0)
 }
 
 ///|
 test "component gallery welcome header mode badge stays inside header" {
-  assert_story_header_badge_inside_header(width=1040.0, height=720.0)
+  assert_component_header_badge_inside_header(width=1040.0, height=720.0)
 }
 
 ///|
@@ -75,12 +164,12 @@ test "component gallery welcome wraps copy and keeps runtime chips inside sectio
     height=720.0,
   )
   let commands = runtime.draw_commands()
-  assert_false(has_text(commands, welcome_intro_copy()))
+  assert_false(has_text(commands, welcome_index_copy()))
   assert_true(
-    has_text_containing(commands, "Component Gallery groups MoUI controls"),
+    has_text_containing(commands, "Use the sidebar to jump between small"),
   )
-  guard first_text_frame(commands~, text="Runtime Targets") is Some(title) else {
-    fail("expected Runtime Targets title")
+  guard first_text_frame(commands~, text="Runtime Hosts") is Some(title) else {
+    fail("expected Runtime Hosts title")
   }
   guard enclosing_rounded_rect(
       commands~,
@@ -89,7 +178,7 @@ test "component gallery welcome wraps copy and keeps runtime chips inside sectio
       min_height=120.0,
     )
     is Some(section) else {
-    fail("expected Runtime Targets section frame")
+    fail("expected Runtime Hosts section frame")
   }
   for label in ["macOS", "Linux", "Windows", "Android", "iOS", "Web"] {
     assert_platform_chip_inside_section(commands~, text=label, section~)
@@ -137,18 +226,49 @@ test "component gallery ids roundtrip" {
     assert_true(platform_id_from_string(platform_id_to_string(id)) == Some(id))
   }
   assert_true(platform_id_from_string("plan9") is None)
-  let stories = [
-    @app.ComponentGalleryStoryId::Welcome,
-    @app.ComponentGalleryStoryId::Buttons,
-    @app.ComponentGalleryStoryId::Inputs,
-    @app.ComponentGalleryStoryId::Feedback,
-    @app.ComponentGalleryStoryId::Layout,
-    @app.ComponentGalleryStoryId::Platforms,
+  let items = [
+    @app.ComponentGalleryItemId::Welcome,
+    @app.ComponentGalleryItemId::Button,
+    @app.ComponentGalleryItemId::TextField,
+    @app.ComponentGalleryItemId::TextArea,
+    @app.ComponentGalleryItemId::ClearableTextField,
+    @app.ComponentGalleryItemId::PasswordField,
+    @app.ComponentGalleryItemId::NumberField,
+    @app.ComponentGalleryItemId::Stepper,
+    @app.ComponentGalleryItemId::Checkbox,
+    @app.ComponentGalleryItemId::Toggle,
+    @app.ComponentGalleryItemId::Radio,
+    @app.ComponentGalleryItemId::RadioGroup,
+    @app.ComponentGalleryItemId::CheckboxGroup,
+    @app.ComponentGalleryItemId::SegmentedControl,
+    @app.ComponentGalleryItemId::Picker,
+    @app.ComponentGalleryItemId::Slider,
+    @app.ComponentGalleryItemId::Chips,
+    @app.ComponentGalleryItemId::Badge,
+    @app.ComponentGalleryItemId::Progress,
+    @app.ComponentGalleryItemId::Banner,
+    @app.ComponentGalleryItemId::Callout,
+    @app.ComponentGalleryItemId::StatePanel,
+    @app.ComponentGalleryItemId::InlineError,
+    @app.ComponentGalleryItemId::Toast,
+    @app.ComponentGalleryItemId::Snackbar,
+    @app.ComponentGalleryItemId::StatCard,
+    @app.ComponentGalleryItemId::Avatar,
+    @app.ComponentGalleryItemId::Divider,
+    @app.ComponentGalleryItemId::Toolbar,
+    @app.ComponentGalleryItemId::StatusBar,
+    @app.ComponentGalleryItemId::Surface,
+    @app.ComponentGalleryItemId::RowColumn,
+    @app.ComponentGalleryItemId::ResponsiveGrid,
+    @app.ComponentGalleryItemId::ScrollView,
+    @app.ComponentGalleryItemId::PlatformRoutes,
   ]
-  for id in stories {
-    assert_true(story_id_from_string(story_id_to_string(id)) == Some(id))
+  for id in items {
+    assert_true(
+      gallery_item_id_from_string(gallery_item_id_to_string(id)) == Some(id),
+    )
   }
-  assert_true(story_id_from_string("unknown") is None)
+  assert_true(gallery_item_id_from_string("unknown") is None)
 }
 
 ///|
@@ -196,7 +316,7 @@ fn text_y(commands~ : Array[@core.DrawCommand], text~ : String) -> Double? {
 }
 
 ///|
-fn assert_story_count_inside_header(
+fn assert_component_count_inside_header(
   width~ : Double,
   height~ : Double,
 ) -> Unit raise {
@@ -207,10 +327,7 @@ fn assert_story_count_inside_header(
   )
   let commands = runtime.draw_commands()
   match
-    (
-      first_text_frame(commands~, text="6 stories"),
-      first_header_frame(commands),
-    ) {
+    (first_text_frame(commands~, text="35 demos"), first_header_frame(commands)) {
     (Some(text_frame), Some(header_frame)) => {
       assert_true(text_frame.origin.x >= header_frame.origin.x)
       assert_true(
@@ -223,12 +340,12 @@ fn assert_story_count_inside_header(
         header_frame.origin.y + header_frame.size.height,
       )
     }
-    _ => fail("expected story-count text and header frame")
+    _ => fail("expected demo-count text and header frame")
   }
 }
 
 ///|
-fn assert_story_header_badge_inside_header(
+fn assert_component_header_badge_inside_header(
   width~ : Double,
   height~ : Double,
 ) -> Unit raise {
@@ -240,7 +357,7 @@ fn assert_story_header_badge_inside_header(
   let commands = runtime.draw_commands()
   guard first_text_frame_after_x(commands~, text="Welcome", min_x=280.0)
     is Some(title_frame) else {
-    fail("expected Welcome story header title")
+    fail("expected Welcome item header title")
   }
   guard first_text_frame_after_x(commands~, text="Canvas", min_x=280.0)
     is Some(canvas_frame) else {
@@ -254,7 +371,7 @@ fn assert_story_header_badge_inside_header(
       min_height=80.0,
     )
     is Some(header_frame) else {
-    fail("expected story header frame containing Welcome and Canvas")
+    fail("expected item header frame containing Welcome and Canvas")
   }
   assert_rect_inside(canvas_frame, header_frame)
 }
@@ -295,6 +412,24 @@ fn first_text_frame_after_x(
 }
 
 ///|
+fn first_text_frame_before_x(
+  commands : Array[@core.DrawCommand],
+  text~ : String,
+  max_x~ : Double,
+) -> @core.Rect? {
+  for command in commands {
+    match command {
+      @core.DrawCommand::DrawText({ text: value, frame, .. }) =>
+        if value == text && frame.origin.x < max_x {
+          return Some(frame)
+        }
+      _ => ()
+    }
+  }
+  None
+}
+
+///|
 fn first_header_frame(commands : Array[@core.DrawCommand]) -> @core.Rect? {
   for command in commands {
     match command {
@@ -309,8 +444,8 @@ fn first_header_frame(commands : Array[@core.DrawCommand]) -> @core.Rect? {
 }
 
 ///|
-fn welcome_intro_copy() -> String {
-  "Component Gallery groups MoUI controls into focused stories. The same model/update/view app is rendered by desktop Skia, mobile embedded sessions, and Web wasm-gc."
+fn welcome_index_copy() -> String {
+  "Use the sidebar to jump between small component demos. Each demo is plain app code that can be reused in another MoUI example."
 }
 
 ///|
