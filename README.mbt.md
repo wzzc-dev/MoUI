@@ -51,6 +51,8 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
   <img src="resource/screenshots/showcase.png" width="400px"/>
   <img src="resource/screenshots/mo_workbench.png" width="400px"/>
   <img src="resource/screenshots/excel.png" width="400px"/>
+  <img src="resource/screenshots/webview.png" width="600px"/>
+  <img src="resource/screenshots/ios-componentgallery.png" width="200px"/>
 </div>
 
 ## Quick Start
