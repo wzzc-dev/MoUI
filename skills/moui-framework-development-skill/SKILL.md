@@ -33,13 +33,14 @@ Read only what the task needs:
   dispatch, effects, subscriptions, diagnostics, inspector snapshots.
 - `moui/backend/host`: host service protocols, window/timer/route sources,
   WebView protocol, async image service, accessibility/input/redraw contracts.
-- `moui/backend/<platform>`: concrete platform hosts. Android and iOS are
+- `moui/backend/<platform>`: concrete platform hosts. Android, iOS, and HarmonyOS are
   currently embedded-session scaffolds driven by platform-owned callbacks
   rather than desktop-style event loops.
 - `moui/backend/<platform>/skia`: native Skia mainline renderer providers.
   Android Skia presents copied pixel frames to an embedder-supplied
   `ANativeWindow`; iOS Skia presents copied pixel frames to a UIKit
-  `UIImageView` child in an embedder-supplied `UIView`.
+  `UIImageView` child in an embedder-supplied `UIView`; HarmonyOS Skia presents
+  copied pixel frames to an embedder-supplied XComponent native-window handle.
 - `moui/backend/<platform>/wgpu`: native WGPU diagnostic providers.
 - `moui/render`: renderer facade and renderer-neutral capability/fallback
   planning.
@@ -184,6 +185,21 @@ owning-package boundaries clear.
   --fallback-skia` for packaging/native-stub smoke only; use the non-fallback
   path plus `record-mobile-runtime-smoke.mjs` matching simulator/device evidence
   before claiming iOS runtime support.
+- `backend/harmonyos/`: experimental HarmonyOS embedded native host scaffold.
+  The Stage Ability/XComponent/NAPI layer owns lifecycle, native surface handle
+  acquisition, and input forwarding into `HarmonyOsRuntimeSession`; package
+  checks are not runtime platform evidence.
+- `backend/harmonyos/skia/`: HarmonyOS Skia provider over `render/skia`, with an
+  XComponent native-window RGBA pixel presenter and preflight summary. Use
+  `MOUI_SKIA_PLATFORM=harmonyos`, `MOUI_SKIA_ARCH=arm64`, and
+  `MOUI_SKIA_LINK_MODE=dynamic` for HarmonyOS Skia cross-build checks.
+- `examples/harmonyos_demo`: standalone experimental HarmonyOS demo. It packages
+  shared app logic, a HarmonyOS Skia MoonBit export package, Stage
+  Ability/XComponent/NAPI shell files, MoonBit-generated C, MoonBit runtime,
+  HarmonyOS presenter, and `moui_skia/native` stubs through CMake. Use
+  `scripts/build-harmonyos-demo-app.sh --fallback-skia` for packaging/native-glue
+  smoke only; use the non-fallback path plus matching device/emulator evidence
+  before claiming HarmonyOS runtime support.
 - `render/`: renderer facade, shared draw helpers, and capability report API.
 - `render/skia/`: native Skia raster mainline renderer over the local
   `moui_skia` binding, including renderer-local command/reason diagnostics for
@@ -464,6 +480,9 @@ scripts/build-mobile-android-apk.sh --app counter --fallback-skia
 moon test moui/backend/ios --target native
 moon test moui/backend/ios/skia --target native
 scripts/build-mobile-ios-app.sh --app counter --fallback-skia
+moon test moui/backend/harmonyos --target native
+moon test moui/backend/harmonyos/skia --target native
+scripts/build-harmonyos-demo-app.sh --fallback-skia
 moon test moui/backend/web --target wasm-gc
 moon test moui_tester --target native
 moon test moui_devtools --target native

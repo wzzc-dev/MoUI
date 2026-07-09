@@ -1,0 +1,33 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/harmonyos_demo/app"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn program() -> @core.Program[Model, Msg]
+
+pub fn update(Model, Msg) -> Model
+
+pub fn view(Model, @core.ViewEnvironment) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+pub struct Model {
+  tap_count : Int
+  render_hint : Int
+}
+pub fn Model::new() -> Self
+
+pub(all) enum Msg {
+  TapDemo
+  Reset
+  MarkRendered
+}
+
+// Type aliases
+
+// Traits
+

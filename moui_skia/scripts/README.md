@@ -77,6 +77,11 @@ currently points at tag `dev-6d73578a36`, commit
 the default; dynamic assets are selected explicitly with
 `MOUI_SKIA_LINK_MODE=dynamic` or `--link-mode dynamic`.
 
+HarmonyOS is intentionally locked through a separate `harmonyos_release`
+provider entry because its first arm64 assets are published on
+`dev-fcb9c18e54`. Use `--platform harmonyos --arch arm64` to select that
+provider while leaving the default desktop release lock unchanged.
+
 Fetch or inspect the selected package with:
 
 ```bash

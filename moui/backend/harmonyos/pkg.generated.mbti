@@ -1,0 +1,90 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/backend/harmonyos"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/runtime",
+}
+
+// Values
+pub fn backend_info() -> HarmonyOsBackendInfo
+
+pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : HarmonyOsSurfaceHandle, metrics~ : @host.HostSurfaceMetrics, provider~ : HarmonyOsRendererProvider) -> HarmonyOsRuntimeSession?
+
+pub fn harmonyos_capability_matrix() -> HarmonyOsBackendCapabilities
+
+pub fn harmonyos_capability_summary(services? : @host.HostServiceCapabilities) -> @host.HostCapabilitySummary
+
+pub fn harmonyos_input_capabilities() -> @host.HostInputCapabilities
+
+pub fn harmonyos_readiness() -> HarmonyOsBackendReadiness
+
+pub fn harmonyos_service_capabilities() -> @host.HostServiceCapabilities
+
+// Errors
+
+// Types and methods
+pub(all) struct HarmonyOsBackendCapabilities {
+  embedded_surface : Bool
+  external_event_loop : Bool
+  renderer_provider : Bool
+  pointer : Bool
+  scroll : Bool
+  keyboard : Bool
+  text_input : Bool
+  ime : Bool
+  clipboard : Bool
+  system_theme : Bool
+  accessibility : Bool
+  async_image : Bool
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct HarmonyOsBackendInfo {
+  host_info : @host.HostAppInfo
+  capabilities : HarmonyOsBackendCapabilities
+  services : @host.HostServiceCapabilities
+  input : @host.HostInputCapabilities
+  readiness : HarmonyOsBackendReadiness
+  description : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct HarmonyOsBackendReadiness {
+  ready : Bool
+  blocked_by : Array[String]
+  next_steps : Array[String]
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct HarmonyOsRendererProvider {
+  // private fields
+}
+pub fn HarmonyOsRendererProvider::has_async_image_loader(Self) -> Bool
+pub fn HarmonyOsRendererProvider::new(create_renderer~ : (HarmonyOsSurfaceHandle, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?, sync_surface? : (HarmonyOsSurfaceHandle, @host.HostSurfaceMetrics) -> Unit, image_loader? : @host.HostAsyncImageLoader?) -> Self
+
+pub struct HarmonyOsRuntimeSession {
+  // private fields
+}
+pub fn HarmonyOsRuntimeSession::dispatch(Self, @host.HostEvent) -> @host.HostEventResult
+pub fn HarmonyOsRuntimeSession::dispose(Self) -> Unit
+pub fn HarmonyOsRuntimeSession::disposed(Self) -> Bool
+pub fn HarmonyOsRuntimeSession::metrics(Self) -> @host.HostSurfaceMetrics
+pub fn HarmonyOsRuntimeSession::present_count(Self) -> Int
+pub fn HarmonyOsRuntimeSession::redraw_requested(Self) -> Bool
+pub fn HarmonyOsRuntimeSession::render_frame(Self) -> @render.RenderFrameResult
+pub fn HarmonyOsRuntimeSession::resize(Self, @host.HostSurfaceMetrics) -> @host.HostEventResult
+pub fn HarmonyOsRuntimeSession::runtime(Self) -> @runtime.AppRuntime
+pub fn HarmonyOsRuntimeSession::surface(Self) -> HarmonyOsSurfaceHandle
+pub fn HarmonyOsRuntimeSession::sync_surface(Self, HarmonyOsRendererProvider) -> Unit
+pub fn HarmonyOsRuntimeSession::take_redraw_requested(Self) -> Bool
+
+pub(all) struct HarmonyOsSurfaceHandle {
+  raw : UInt64
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HarmonyOsSurfaceHandle::new(raw~ : UInt64) -> Self
+pub fn HarmonyOsSurfaceHandle::none() -> Self
+pub fn HarmonyOsSurfaceHandle::raw(Self) -> UInt64
+
+// Type aliases
+
+// Traits

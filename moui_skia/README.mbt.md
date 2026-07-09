@@ -300,6 +300,14 @@ dynamic libraries are selected explicitly with
 bash scripts/fetch-release-skia.sh --platform auto --arch auto --print-env
 ```
 
+HarmonyOS uses a platform-specific `harmonyos_release` provider entry because
+the first accepted HarmonyOS assets live on release `dev-fcb9c18e54` rather than
+the default desktop/mobile provider release. Select it explicitly with:
+
+```bash
+bash scripts/fetch-release-skia.sh --platform harmonyos --arch arm64 --link-mode dynamic --print-env
+```
+
 ```powershell
 .\scripts\fetch-release-skia.ps1 -Platform auto -Arch auto -PrintEnv
 ```

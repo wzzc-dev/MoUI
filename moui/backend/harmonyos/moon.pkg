@@ -1,0 +1,16 @@
+import {
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/render",
+}
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views",
+} for "test"
+
+supported_targets = "native"
+
+options(
+  targets: { },
+)

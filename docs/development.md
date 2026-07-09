@@ -28,6 +28,7 @@ code.
 - `./moui_theme`
 - `./moui_sun`
 - `./examples/counter`
+- `./examples/harmonyos_demo`
 - `./examples/component_gallery`
 - `./examples/button_freeze_probe`
 - `./examples/showcase`
@@ -149,6 +150,29 @@ requires a simulator or device run with the default real-Skia path.
 See [ios-support.md](ios-support.md) for the UIKit ownership boundary, Xcode CLI
 setup, simulator install commands, and runtime-evidence requirements.
 
+HarmonyOS is also an embedded native scaffold. For HarmonyOS Skia cross-build
+checks, set `MOUI_SKIA_PLATFORM=harmonyos`, `MOUI_SKIA_ARCH=arm64`, and dynamic
+linking so the prebuild selects the locked HarmonyOS Skia release artifact:
+
+```sh
+MOUI_SKIA_PLATFORM=harmonyos MOUI_SKIA_ARCH=arm64 MOUI_SKIA_LINK_MODE=dynamic \
+  moon check examples/harmonyos_demo/harmonyos_skia --target native
+```
+
+The standalone demo lives at `examples/harmonyos_demo` rather than extending
+Counter. `examples/harmonyos_demo/app` owns the platform-neutral UI,
+`examples/harmonyos_demo/harmonyos_skia` owns the MoonBit native exports, and
+`examples/harmonyos_demo/harmonyos_app` owns the experimental Stage
+Ability/XComponent/NAPI shell. Use `scripts/build-harmonyos-demo-app.sh
+--fallback-skia` for a packaging-only smoke that avoids the HarmonyOS Skia
+download and validates MoonBit C generation, native glue compilation, and staged
+HAP layout. Real HarmonyOS runtime evidence still requires a non-fallback build
+plus matching device/emulator first-frame, input, resize, and lifecycle smoke.
+
+See [harmonyos-support.md](harmonyos-support.md) for the Stage
+Ability/XComponent ownership boundary, SDK/toolchain installation, emulator
+setup, SDK environment variables, and runtime evidence requirements.
+
 `moon update` refreshes registry packages, including the `window` fork package.
 The default `sh scripts/check.sh --profile daily` path guards dependency shape and the
 repo-local `moui_skia` acceptance surface. The Skia binding is part of the main
@@ -180,6 +204,7 @@ members = [
   "./moui_theme",
   "./moui_sun",
   "./examples/counter",
+  "./examples/harmonyos_demo",
   "./examples/component_gallery",
   "./examples/button_freeze_probe",
   "./examples/showcase",
