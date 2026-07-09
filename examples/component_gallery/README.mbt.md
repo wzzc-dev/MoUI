@@ -1,7 +1,7 @@
 # Component Gallery
 
-Component Gallery is MoUI's reusable component story browser. It is organized
-around grouped stories for common `moui/views` controls, with one shared
+Component Gallery is MoUI's reusable component catalog. It is organized
+around grouped demos for common `moui/views` controls, with one shared
 model/update/view app running on macOS, Linux, Windows, Android, iOS, and Web.
 
 This example intentionally uses plain entrypoint names:
@@ -17,12 +17,18 @@ spell out the renderer, such as `macos_wgpu`.
 ## Package Shape
 
 - `app/` - shared app logic split by responsibility:
-  - `model.mbt` owns `PlatformId`, story selection, component sample state, and
+  - `model.mbt` owns `PlatformId`, component selection, sample state, and
     the TEA `update`.
-  - `stories.mbt` owns story ids, groups, metadata, and search helpers.
+  - `catalog.mbt` owns component ids, groups, metadata, and search helpers.
   - `platforms.mbt` owns six-host route metadata and commands.
-  - `view.mbt` owns the responsive story browser shell.
-  - `story_views.mbt` owns reusable component story content.
+  - `view.mbt` owns the responsive component catalog shell.
+  - `component_views.mbt` dispatches the active component demo.
+  - `component_shared.mbt` owns reusable demo section/layout helpers.
+  - `component_welcome.mbt`, `component_controls.mbt`,
+    `component_inputs.mbt`, `component_choices.mbt`,
+    `component_feedback.mbt`, `component_guidance.mbt`,
+    `component_display.mbt`, `component_layout.mbt`, and
+    `component_platforms.mbt` own focused demo content.
   - `app.mbt` stays as the thin `program(active_platform~)` facade.
 - `macos/`, `linux/`, `windows/` - thin desktop entrypoints. Each creates a
   1040x720 runtime titled "Component Gallery" and calls the matching Skia
