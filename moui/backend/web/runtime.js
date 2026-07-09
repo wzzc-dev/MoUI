@@ -1,11 +1,10 @@
 // Browser WebGPU is required for the primary rendering path.
-// canvas2d_runtime.js provides a Canvas2D fallback when WebGPU is
-// unavailable (e.g. WebKitGTK, older browsers, restricted contexts).
+// canvas2d_runtime.js is loaded on demand as the Canvas2D fallback when WebGPU
+// is unavailable (e.g. WebKitGTK, older browsers, restricted contexts).
 import {
   connectWindowWeb,
   createWindowWebImports,
 } from "./browser_runtime.js";
-import { createCanvas2dImports } from "./canvas2d_runtime.js";
 
 const VISUAL_STRIDE_FLOATS = 22;
 const TEXT_STRIDE_FLOATS = 8;
@@ -2842,8 +2841,9 @@ function alphaBlend() {
 
 export async function createWebGpuImportsAsync(options = {}) {
   const report = options.onStatus ?? (() => {});
-  const fallbackToCanvas2d = () => {
+  const fallbackToCanvas2d = async () => {
     report("WebGPU unavailable; switching to Canvas2D renderer.");
+    const { createCanvas2dImports } = await import("./canvas2d_runtime.js");
     return createCanvas2dImports(options);
   };
 
