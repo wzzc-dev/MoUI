@@ -38,7 +38,7 @@ shape outside `examples/` so MoUI can render its own bilingual homepage.
 | Website | MoUI-built homepage workspace | `website/app/` | Bilingual product homepage, first-screen MoUI brand hero, compact Counter code snippet, interactive runtime preview, framework foundations, platform matrix, release-readiness cards, quick-start Web commands, runtime Docs portal that fetches packaged same-origin `docs/*.md` Markdown plus MoUI and `moui_skia` README copies, Web-only `website/web_wasm` entrypoint |
 | Agent Counter | Minimal agent-controllable runtime example | `examples/agent_counter/`, `examples/agent_counter/main/`, `examples/agent_counter/macos_skia/` | Counter app with semantics/command-intent flow for agent observation and control, plus a native macOS Skia entrypoint |
 | Counter | Minimal model/update/view app | `examples/counter/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages, experimental Android/iOS Skia embedded-session entrypoints, a Counter Android APK shell, and a Counter iOS Simulator app shell |
-| Platform Showcase | Six-platform app showcase | `examples/platform_showcase/app/` | One shared `Program::simple_with_environment` app presenting a cross-platform release-console surface with overview metrics, launch review workflow, live controls, runtime evidence matrix, adaptive mobile/desktop layout, default Skia desktop entrypoints named `macos`, `linux`, and `windows`, experimental Android/iOS embedded-session entrypoints named `android` and `ios`, a Web wasm-gc entrypoint named `web`, plus app-owned Android APK and UIKit iOS shells |
+| Component Gallery | Six-platform component story browser | `examples/component_gallery/app/` | Grouped story browser for reusable `moui/views` controls, searchable sidebar/index, active story preview sections, buttons, inputs, feedback, layout, and platform-route stories, adaptive mobile/desktop layout, default Skia desktop entrypoints named `macos`, `linux`, and `windows`, experimental Android/iOS embedded-session entrypoints named `android` and `ios`, a Web wasm-gc entrypoint named `web`, plus app-owned Android APK and UIKit iOS shells |
 | Button Freeze Probe | Native Skia button freeze repro | `examples/button_freeze_probe/app/` | Minimal `data_filter_bar` filter chips, red primary accent, repeated click counter, direct primary/tonal button comparison, native Skia macOS/Windows/Linux entrypoints |
 | Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | TEA-first `Model / Msg / update / view` app, public `views` constructors, built-in Counter/Todo examples, validating form fields and workflow bars, `ToastQueue`-backed toast stack/progress/status surfaces with dismiss state, `status_badge` feedback chips, helper-backed table/selectable-list data views with app-owned sort/page/column visibility state, route header/section-nav/sidebar/breadcrumb shells with app-owned route/deep-link history and route focus restore state, custom dialog/alert/sheet/menu surfaces, light Markdown preview, neutral core theme toggling, presentation, renderer capability status, advanced rendering demos, text diagnostics, interaction wiring. Showcase intentionally has no `moui_theme` dependency and is not an official design-system compatibility claim. |
 | Design Systems | Addon diagnostic source-mapped design-system preview and first-party theme sampler | `examples/design_systems/app/`, `examples/design_systems/{web_wasm,macos_skia,windows_skia,linux_skia}/` | Material, Carbon, Primer, and Fluent switching through the `moui_theme/material`, `moui_theme/carbon`, `moui_theme/primer`, and `moui_theme/fluent` entrypoints over shared `moui_theme/common` models, Sickle switching through `moui_theme/sickle` as a first-party theme addon, light/dark/high-contrast/system variants for official source-mapped presets, compact/standard/comfortable density, semantic palette roles, typography specimen, spacing/density grid, component-token matrix sampling, component style bundle usage, custom inheritance/override API, Web and native Skia host entrypoints, coverage/parity status labels, and explicit source-mapped preview wording rather than official-complete claims |
@@ -139,58 +139,63 @@ support; use `scripts/build-counter-ios-app.sh` without `--fallback-skia` plus
 a matching simulator/device smoke before claiming iOS Skia first-frame runtime
 support.
 
-## Platform Showcase
+## Component Gallery
 
-Platform Showcase is the six-platform app showcase. It complements the older
-desktop-oriented framework Showcase by exercising a product-like MoUI surface on
-macOS, Linux, Windows, Android, iOS, and Web. Its shared package keeps the
-model/update/view logic in `examples/platform_showcase/app`, while each platform
+Component Gallery is the six-platform component story browser. It complements
+the older desktop-oriented framework Showcase with a grouped, searchable story
+surface for reusable `moui/views` controls. Its shared package keeps the
+model/update/view logic in `examples/component_gallery/app`, while each platform
 entrypoint only creates the runtime, selects an active `PlatformId`, and calls
 the matching Skia backend, embedded session, or Web host.
 
+The shared app is split for reuse: `model.mbt` owns story state and update
+logic, `stories.mbt` owns grouped story metadata and search, `platforms.mbt`
+owns six-host route metadata, `view.mbt` owns the responsive browser shell, and
+`story_views.mbt` owns the component story content.
+
 This example deliberately does not use `_skia` in its entrypoint directory
-names. In `examples/platform_showcase`, `macos`, `linux`, `windows`, `android`,
+names. In `examples/component_gallery`, `macos`, `linux`, `windows`, `android`,
 and `ios` mean the default Skia route. The Web wasm-gc entrypoint is named
 `web`. Future non-default renderer routes should spell out the renderer in the
 directory name, such as `macos_wgpu`.
 
-Focused Platform Showcase checks:
+Focused Component Gallery checks:
 
 ```sh
-moon test examples/platform_showcase/app --target native
-moon check examples/platform_showcase/macos --target native
-moon check examples/platform_showcase/windows --target native
-moon check examples/platform_showcase/linux --target native
-moon build examples/platform_showcase/web --target wasm-gc
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/platform_showcase/android --target native
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/platform_showcase/ios --target native
-bash -n scripts/build-platform-showcase-android-apk.sh
-bash -n scripts/build-platform-showcase-ios-app.sh
-scripts/build-platform-showcase-android-apk.sh --fallback-skia
-scripts/build-platform-showcase-ios-app.sh --fallback-skia
+moon test examples/component_gallery/app --target native
+moon check examples/component_gallery/macos --target native
+moon check examples/component_gallery/windows --target native
+moon check examples/component_gallery/linux --target native
+moon build examples/component_gallery/web --target wasm-gc
+MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/component_gallery/android --target native
+MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/component_gallery/ios --target native
+bash -n scripts/build-component-gallery-android-apk.sh
+bash -n scripts/build-component-gallery-ios-app.sh
+scripts/build-component-gallery-android-apk.sh --fallback-skia
+scripts/build-component-gallery-ios-app.sh --fallback-skia
 ```
 
 Run desktop entrypoints from the repository root:
 
 ```sh
-moon run examples/platform_showcase/macos --target native
-moon run examples/platform_showcase/linux --target native
-moon run examples/platform_showcase/windows --target native
+moon run examples/component_gallery/macos --target native
+moon run examples/component_gallery/linux --target native
+moon run examples/component_gallery/windows --target native
 ```
 
 Build and serve the Web entrypoint from the repository root:
 
 ```sh
-moon build examples/platform_showcase/web --target wasm-gc
+moon build examples/component_gallery/web --target wasm-gc
 python3 -m http.server 8080 --bind 127.0.0.1
 ```
 
-Then open `http://127.0.0.1:8080/examples/platform_showcase/web/`.
+Then open `http://127.0.0.1:8080/examples/component_gallery/web/`.
 
-The Android and iOS shells are experimental scaffolds. The fallback APK and
-`.app` commands are packaging evidence only; real mobile runtime support still
-requires non-fallback builds plus matching device/simulator first-frame, input,
-and lifecycle smoke evidence.
+The Android and iOS shells can be packaged as real app shells. Fallback APK and
+`.app` commands remain packaging evidence only; real mobile runtime support
+claims still require non-fallback builds plus matching device/simulator
+first-frame, input, and lifecycle smoke evidence.
 
 ## Button Freeze Probe
 

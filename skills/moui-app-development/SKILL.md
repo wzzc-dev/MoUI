@@ -42,10 +42,10 @@ examples/<name>/ios_skia/       # experimental embedded-session route
 examples/<name>/ios_app/        # app-owned UIKit .app shell when present
 ```
 
-`examples/platform_showcase` is the documented exception for the default route
+`examples/component_gallery` is the documented exception for the default route
 names: it uses `web`, `macos`, `linux`, `windows`, `android`, and `ios` because
-Skia is the default native/mobile route for that showcase and the Web route is
-named plainly.
+Skia is the default native/mobile route for Component Gallery and the Web route
+is named plainly.
 
 Default shared app imports:
 

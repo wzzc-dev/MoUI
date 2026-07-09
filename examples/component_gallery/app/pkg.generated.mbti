@@ -1,0 +1,77 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/component_gallery/app"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn platform_id_from_string(String) -> PlatformId?
+
+pub fn platform_id_to_string(PlatformId) -> String
+
+pub fn program(active_platform~ : PlatformId) -> @core.Program[ComponentGalleryModel, ComponentGalleryMsg]
+
+pub fn story_id_from_string(String) -> ComponentGalleryStoryId?
+
+pub fn story_id_to_string(ComponentGalleryStoryId) -> String
+
+pub fn update(ComponentGalleryModel, ComponentGalleryMsg) -> ComponentGalleryModel
+
+pub fn view(ComponentGalleryModel, @core.ViewEnvironment) -> @core.View[ComponentGalleryMsg]
+
+// Errors
+
+// Types and methods
+pub(all) struct ComponentGalleryModel {
+  active_platform : PlatformId
+  active_story : ComponentGalleryStoryId
+  selected_platform : PlatformId
+  page_scroll : @core.ScrollState
+  search_query : String
+  sample_text : String
+  selected_mode : String
+  selected_density : String
+  feature_enabled : Bool
+  slider_value : Double
+  counter : Int
+}
+pub fn ComponentGalleryModel::new(active_platform~ : PlatformId) -> Self
+
+pub(all) enum ComponentGalleryMsg {
+  SelectStory(String)
+  SearchChanged(String)
+  SelectPlatform(String)
+  SelectMode(String)
+  SelectDensity(String)
+  SampleTextChanged(String)
+  FeatureToggled(Bool)
+  SliderChanged(Double)
+  Increment
+  Decrement
+  Reset
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum ComponentGalleryStoryId {
+  Welcome
+  Buttons
+  Inputs
+  Feedback
+  Layout
+  Platforms
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum PlatformId {
+  MacOS
+  Linux
+  Windows
+  Android
+  IOS
+  Web
+} derive(Eq, ToJson, @debug.Debug)
+
+// Type aliases
+
+// Traits
+

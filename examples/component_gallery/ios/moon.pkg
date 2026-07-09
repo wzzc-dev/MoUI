@@ -1,0 +1,27 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/ios" @ios_host,
+  "wzzc-dev/moui/backend/ios/skia" @ios_skia_backend,
+  "examples/component_gallery/app" @component_gallery_app,
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "exports": [
+        "component_gallery_ios_attach_view",
+        "component_gallery_ios_resize",
+        "component_gallery_ios_dispatch_pointer",
+        "component_gallery_ios_dispatch_scroll",
+        "component_gallery_ios_render_frame",
+        "component_gallery_ios_detach_view",
+      ],
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)
