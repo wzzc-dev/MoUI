@@ -36,18 +36,19 @@ For task-specific workflows, use the repo-local skills:
 - Keep Android work on the embedded-session route for now:
   `moui/backend/android` owns Activity/Surface-driven host contracts and
   `moui/backend/android/skia` owns the `ANativeWindow` Skia presenter.
-  `examples/counter/android_app` and `scripts/build-counter-android-apk.sh`
-  own the current Counter APK shell. Fallback APK builds are packaging evidence
-  only; do not claim Android runtime support as passed until a matching
-  device/emulator smoke records first-frame and input/lifecycle evidence.
+  `moui/mobile/android` owns the package-published Gradle/Activity/JNI/CMake
+  template; `examples/*/android_app` are repository example metadata projects
+  over that template. Fallback APK builds are packaging evidence only; do not
+  claim Android runtime support as passed until a matching device/emulator
+  smoke records first-frame and input/lifecycle evidence.
 - Keep iOS work on the embedded-session route for now:
   `moui/backend/ios` owns UIKit view-driven host contracts and
   `moui/backend/ios/skia` owns the UIKit `UIImageView` Skia pixel presenter.
-  `examples/counter/ios_app` and `scripts/build-counter-ios-app.sh` own the
-  current Counter iOS Simulator `.app` shell. Fallback `.app` builds are
-  packaging evidence only; do not claim iOS runtime support as passed until a
-  matching simulator/device smoke records first-frame and input/lifecycle
-  evidence.
+  `moui/mobile/ios` owns the package-published UIKit/Xcode/native build
+  template; `examples/*/ios_app` are repository example metadata projects over
+  that template. Fallback `.app` builds are packaging evidence only; do not
+  claim iOS runtime support as passed until a matching simulator/device smoke
+  records first-frame and input/lifecycle evidence.
 
 ### CI Safety Rules
 

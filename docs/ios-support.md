@@ -78,26 +78,42 @@ No repository-private SDK directory is required.
 `scripts/build-counter-ios-app.sh` uses `xcrun --sdk <sdk> clang/clang++` and
 the selected SDK path.
 
-## Counter Simulator App
+## Mobile Xcode Builds
+
+iOS builds now use minimal Xcode projects as the primary entrypoint. The
+repository examples keep checked-in legacy targets under `examples/*/ios_app`;
+the reusable UIKit shell, native build script, copyable Xcode template, and
+compatibility contracts live under the package-published `moui/mobile` and
+`moui/scripts/mobile` directories. The builder consumes app-facing metadata
+from `examples/<app>/mobile.json` for repository examples, or the external
+app's own `mobile.json`, then generates MoonBit C plus Skia response files,
+compiles the shared UIKit shell, and writes a Simulator `.app` bundle.
 
 Build the experimental Counter iOS Simulator app from the repository root:
 
 ```sh
-scripts/build-counter-ios-app.sh
+scripts/build-mobile-ios-app.sh --app counter
+```
+
+Build Component Gallery with the same route:
+
+```sh
+scripts/build-mobile-ios-app.sh --app component_gallery
 ```
 
 The default output is:
 
 ```text
 artifacts/ios/counter/MoUICounter.app
+artifacts/ios/component_gallery/ComponentGallery.app
 ```
 
 Useful options:
 
 ```sh
-scripts/build-counter-ios-app.sh --arch x86_64
-scripts/build-counter-ios-app.sh --deployment-target 15.0
-scripts/build-counter-ios-app.sh --sdk iphoneos --arch arm64
+scripts/build-mobile-ios-app.sh --app counter --arch x86_64
+scripts/build-mobile-ios-app.sh --app counter --deployment-target 15.0
+scripts/build-mobile-ios-app.sh --app counter --sdk iphoneos --arch arm64
 ```
 
 `--sdk iphoneos` only builds an unsigned device bundle. Real-device install
@@ -108,12 +124,32 @@ For packaging-only smoke, use:
 
 ```sh
 scripts/build-counter-ios-app.sh --fallback-skia
+scripts/build-component-gallery-ios-app.sh --fallback-skia
 ```
 
 `--fallback-skia` validates MoonBit C generation, UIKit shell compilation,
 runtime compatibility, native-stub compilation, bundle layout, and ad-hoc
 simulator signing. It reports native Skia unavailable and must not be used as
 first-frame runtime evidence.
+
+The old app-specific build scripts remain compatibility wrappers over
+`scripts/build-mobile-ios-app.sh --app ...`.
+
+For an external app, copy `moui/mobile/ios/template` to `ios_app`, copy
+`moui/mobile/template.mobile.json` to `mobile.json`, fill in the bundle id,
+Info.plist, and `ios.native` export contract, then run the package-published
+script from the app workspace:
+
+```sh
+.mooncakes/wzzc-dev/moui/scripts/mobile/build-ios-app.sh \
+  --workspace-root "$PWD" \
+  --moui-root "$PWD/.mooncakes/wzzc-dev/moui" \
+  --app my_app \
+  --app-config "$PWD/mobile.json" \
+  --xcode-project "$PWD/ios_app/MoUIMobileApp.xcodeproj" \
+  --scheme MoUIMobileApp \
+  --product-name MoUIMobileApp
+```
 
 ## Simulator Smoke
 
@@ -125,7 +161,13 @@ xcrun simctl install booted artifacts/ios/counter/MoUICounter.app
 xcrun simctl launch booted dev.wzzc.moui.counter
 ```
 
-Record screenshot and log evidence before promoting any runtime claim.
+Record screenshot and log evidence before promoting any runtime claim. The
+catalog-backed recorder automates the local evidence shape:
+
+```sh
+node scripts/record-mobile-runtime-smoke.mjs --platform ios --app counter --require-passed
+node scripts/record-mobile-runtime-smoke.mjs --platform ios --app component_gallery --require-passed
+```
 
 ## Runtime Evidence Required
 

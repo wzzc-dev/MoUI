@@ -224,6 +224,9 @@ JNI/CMake, Java/resource packaging, and debug signing. It is not real Skia
 renderer or platform runtime evidence. Android first-frame/input/lifecycle
 claims still require `scripts/build-counter-android-apk.sh` without fallback
 and a matching device or emulator run with recorded observations.
+The canonical Android build entrypoint is now
+`scripts/build-mobile-android-apk.sh --app <counter|component_gallery>`; the
+app-specific scripts are compatibility wrappers.
 
 For iOS packaging changes, `scripts/build-counter-ios-app.sh --fallback-skia`
 is a fast build-system smoke that covers MoonBit C export, UIKit shell
@@ -232,6 +235,11 @@ and ad-hoc simulator signing. It is not real Skia renderer or platform runtime
 evidence. iOS first-frame/input/lifecycle claims still require
 `scripts/build-counter-ios-app.sh` without fallback and a matching simulator or
 device run with recorded observations.
+The canonical iOS build entrypoint is now
+`scripts/build-mobile-ios-app.sh --app <counter|component_gallery>` through the
+checked-in Xcode project. Use `node scripts/record-mobile-runtime-smoke.mjs
+--platform <android|ios> --app <counter|component_gallery> --require-passed` to
+produce the checked mobile runtime manifest for release/manual claims.
 
 `smoke/gates.json` is the checked-in smoke gate catalog. It describes the daily,
 nightly, and release smoke tiers, each suite command, the structured result
@@ -242,6 +250,7 @@ without running platform smoke:
 node --check scripts/smoke-check.mjs
 node --check scripts/test-smoke-check.mjs
 node scripts/test-smoke-check.mjs
+node scripts/test-validate-mobile-runtime-manifest.mjs
 node scripts/smoke-check.mjs --check
 node scripts/smoke-check.mjs --tier nightly --list
 node scripts/smoke-check.mjs --tier release --json
