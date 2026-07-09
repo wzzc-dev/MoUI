@@ -103,6 +103,7 @@ pub(all) enum PlatformId {
   Windows
   Android
   IOS
+  HarmonyOs
   Web
 } derive(Eq, ToJson, @debug.Debug)
 

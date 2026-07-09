@@ -2,12 +2,13 @@
 
 Component Gallery is MoUI's reusable component catalog. It is organized
 around grouped demos for common `moui/views` controls, with one shared
-model/update/view app running on macOS, Linux, Windows, Android, iOS, and Web.
+model/update/view app running on macOS, Linux, Windows, Android, iOS,
+HarmonyOS, and Web.
 
 This example intentionally uses plain entrypoint names:
 
 - `macos`, `linux`, and `windows` are the default native Skia routes.
-- `android` and `ios` are experimental embedded-session Skia routes.
+- `android`, `ios`, and `harmonyos` are experimental embedded-session Skia routes.
 - `web` is the Web wasm-gc route.
 
 The directories do not use `_skia` or `web_wasm` here because Skia and Web are
@@ -20,7 +21,7 @@ spell out the renderer, such as `macos_wgpu`.
   - `model.mbt` owns `PlatformId`, component selection, sample state, and
     the TEA `update`.
   - `catalog.mbt` owns component ids, groups, metadata, and search helpers.
-  - `platforms.mbt` owns six-host route metadata and commands.
+  - `platforms.mbt` owns seven-host route metadata and commands.
   - `view.mbt` owns the responsive component catalog shell.
   - `component_views.mbt` dispatches the active component demo.
   - `component_shared.mbt` owns reusable demo section/layout helpers.
@@ -41,6 +42,11 @@ spell out the renderer, such as `macos_wgpu`.
 - `ios/` - native embedded-session exports for UIKit view attach, resize,
   pointer dispatch, render, and detach.
 - `ios_app/` - app-owned UIKit shell. Its bundle id is
+  `dev.wzzc.moui.componentgallery`.
+- `harmonyos/` - native embedded-session exports for XComponent surface attach,
+  resize, pointer/scroll dispatch, render, and detach.
+- `harmonyos_app/` - app-owned HarmonyOS Stage Ability/XComponent shell over
+  `moui/mobile/harmonyos`. Its bundle name is
   `dev.wzzc.moui.componentgallery`.
 
 ## Running Desktop
@@ -120,6 +126,36 @@ Fallback `.app` bundles are packaging evidence only. Real iOS runtime support
 still requires a non-fallback build plus matching simulator/device first-frame,
 input, and lifecycle smoke evidence.
 
+## HarmonyOS Packaging
+
+```sh
+scripts/build-component-gallery-harmonyos-hap.sh
+```
+
+For a packaging-only smoke that does not fetch or link real Skia:
+
+```sh
+scripts/build-component-gallery-harmonyos-hap.sh --fallback-skia
+```
+
+The default output is:
+
+```text
+artifacts/harmonyos/component_gallery/ComponentGallery.hap
+```
+
+Install and launch on a running HarmonyOS emulator/device:
+
+```sh
+HDC="$HARMONYOS_SDK_HOME/toolchains/hdc"
+"$HDC" install -r artifacts/harmonyos/component_gallery/ComponentGallery.hap
+"$HDC" shell aa start -a EntryAbility -b dev.wzzc.moui.componentgallery -m entry
+```
+
+Fallback HAP archives are packaging evidence only. Real HarmonyOS runtime
+support still requires a non-fallback build plus matching device/emulator
+first-frame, input, and lifecycle smoke evidence.
+
 ## Focused Checks
 
 ```sh
@@ -130,8 +166,11 @@ moon check examples/component_gallery/linux --target native
 moon build examples/component_gallery/web --target wasm-gc
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/component_gallery/android --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/component_gallery/ios --target native
+MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/component_gallery/harmonyos --target native
 bash -n scripts/build-component-gallery-android-apk.sh
 bash -n scripts/build-component-gallery-ios-app.sh
+bash -n scripts/build-component-gallery-harmonyos-hap.sh
+scripts/build-component-gallery-harmonyos-hap.sh --fallback-skia
 ```
 
 See `docs/examples.md` for the cross-example command catalog and evidence

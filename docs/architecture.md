@@ -264,6 +264,8 @@ examples/counter/windows_wgpu_cosmic/ Windows counter selecting Moon Cosmic text
 examples/harmonyos_demo/app/  standalone HarmonyOS demo app with viewport/tap feedback
 examples/harmonyos_demo/harmonyos_skia/ HarmonyOS demo embedded-session Skia entrypoint
 examples/harmonyos_demo/harmonyos_app/ HarmonyOS app-owned Stage Ability/XComponent shell over mobile/harmonyos
+examples/component_gallery/harmonyos/ Component Gallery HarmonyOS embedded-session Skia entrypoint
+examples/component_gallery/harmonyos_app/ Component Gallery HarmonyOS Stage Ability/XComponent shell
 examples/agent_counter/       minimal agent-controllable runtime example (shared app at example root plus main/ and macos_skia/ entrypoints)
 examples/button_freeze_probe/app/ minimal native Skia button-freeze repro app
 examples/button_freeze_probe/{macos_skia,windows_skia,linux_skia}/ platform Button Freeze Probe entrypoints
