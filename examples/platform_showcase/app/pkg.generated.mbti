@@ -1,0 +1,60 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/platform_showcase/app"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn platform_id_from_string(String) -> PlatformId?
+
+pub fn platform_id_to_string(PlatformId) -> String
+
+pub fn program(active_platform~ : PlatformId) -> @core.Program[PlatformShowcaseModel, PlatformShowcaseMsg]
+
+pub fn update(PlatformShowcaseModel, PlatformShowcaseMsg) -> PlatformShowcaseModel
+
+pub fn view(PlatformShowcaseModel, @core.ViewEnvironment) -> @core.View[PlatformShowcaseMsg]
+
+// Errors
+
+// Types and methods
+pub(all) enum PlatformId {
+  MacOS
+  Linux
+  Windows
+  Android
+  IOS
+  Web
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct PlatformShowcaseModel {
+  active_platform : PlatformId
+  selected_platform : PlatformId
+  page_scroll : @core.ScrollState
+  sample_text : String
+  selected_mode : String
+  selected_density : String
+  feature_enabled : Bool
+  slider_value : Double
+  counter : Int
+}
+pub fn PlatformShowcaseModel::new(active_platform~ : PlatformId) -> Self
+
+pub(all) enum PlatformShowcaseMsg {
+  SelectPlatform(String)
+  SelectMode(String)
+  SelectDensity(String)
+  SampleTextChanged(String)
+  FeatureToggled(Bool)
+  SliderChanged(Double)
+  Increment
+  Decrement
+  Reset
+} derive(Eq, ToJson, @debug.Debug)
+
+// Type aliases
+
+// Traits
+

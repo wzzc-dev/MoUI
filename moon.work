@@ -12,6 +12,7 @@ members = [
   "./moui_theme",
   "./moui_sun",
   "./examples/counter",
+  "./examples/platform_showcase",
   "./examples/button_freeze_probe",
   "./examples/showcase",
   "./examples/design_systems",
