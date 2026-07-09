@@ -127,6 +127,7 @@ function main() {
   fs.writeFileSync(logPath, "");
   const env = {
     ...process.env,
+    MOUI_PDFIUM_ENABLE_PREBUILD_PDFIUM: "1",
     MOUI_PDFIUM_LINK_MODE: options.linkMode,
     MOUI_PDF_WORKBENCH_STARTUP_PDF: pdfPath,
   };

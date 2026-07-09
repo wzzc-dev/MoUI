@@ -496,14 +496,14 @@ for page bitmaps.
 Focused PDF Workbench checks:
 
 ```sh
-MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 moon test examples/pdf_workbench/app --target native
-MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 moon test examples/pdf_workbench/app --target native --filter 'pdf workbench lightweight smoke covers startup raster navigation search and cache'
-MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 moon test examples/pdf_workbench/app --target wasm-gc
-MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 moon test examples/pdf_workbench/pdflite_service_protocol --target native
-MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 moon test examples/pdf_workbench/pdflite_service_protocol --target wasm-gc
-MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 moon test examples/pdf_workbench/pdflite_service_native_transport --target native
-MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 moon test examples/pdf_workbench/pdflite_adapter --target native
-moon test examples/pdf_workbench/pdfium_adapter --target native
+moon test examples/pdf_workbench/app --target native
+moon test examples/pdf_workbench/app --target native --filter 'pdf workbench lightweight smoke covers startup raster navigation search and cache'
+moon test examples/pdf_workbench/app --target wasm-gc
+moon test examples/pdf_workbench/pdflite_service_protocol --target native
+moon test examples/pdf_workbench/pdflite_service_protocol --target wasm-gc
+moon test examples/pdf_workbench/pdflite_service_native_transport --target native
+moon test examples/pdf_workbench/pdflite_adapter --target native
+MOUI_PDFIUM_ENABLE_PREBUILD_PDFIUM=1 moon test examples/pdf_workbench/pdfium_adapter --target native
 moon test moui/backend/host --target native
 moon build examples/pdf_workbench/macos_skia --target native
 node scripts/pdf-workbench-native-smoke.mjs
@@ -513,9 +513,10 @@ moon build examples/pdf_workbench/windows_skia --target native
 moon build examples/pdf_workbench/linux_skia --target native
 ```
 
-Because the PDFium provider is a module-level prebuild hook, disable it for
-app-only, protocol, native-transport, or `pdflite_adapter` checks when the
-raster adapter is not under test.
+The PDFium provider is a module-level prebuild hook, but it does not download
+PDFium by default. Set `MOUI_PDFIUM_ENABLE_PREBUILD_PDFIUM=1` only for real
+raster adapter validation, or provide `MOUI_PDFIUM_INCLUDE` plus
+`MOUI_PDFIUM_LIB_DIR` to use a local PDFium install.
 The named lightweight smoke uses fake document and raster services to exercise
 startup open, bitmap drawing, multi-page navigation, search, zoom, and raster
 cache reuse without compiling the pdflite helper executable.

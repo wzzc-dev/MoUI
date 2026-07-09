@@ -178,7 +178,7 @@ moonbit_bytes_t moui_pdf_workbench_pdfium_render_page(
   (void)cache_key;
   return moui_pdfium_response1(
       "UNAVAILABLE",
-      "PDFium raster service unavailable; set MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=0 or provide MOUI_PDFIUM_INCLUDE/MOUI_PDFIUM_LIB_DIR");
+      "PDFium raster service unavailable; set MOUI_PDFIUM_ENABLE_PREBUILD_PDFIUM=1 or provide MOUI_PDFIUM_INCLUDE/MOUI_PDFIUM_LIB_DIR");
 }
 
 #else
