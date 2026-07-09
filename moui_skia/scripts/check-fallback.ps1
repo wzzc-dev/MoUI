@@ -442,6 +442,21 @@ try {
       throw "fetch-release-skia.ps1 did not map Windows x64 Release dynamic to the locked package"
     }
 
+    $fetchHarmonyosDryRunEnv = & (Join-Path $repoRoot "scripts/fetch-release-skia.ps1") `
+      -Platform harmonyos `
+      -Arch arm64 `
+      -Config Release `
+      -LinkMode dynamic `
+      -CacheDir (Join-Path $dryRunRoot "release-cache") `
+      -DryRunConfig `
+      -PrintEnv
+    if (($fetchHarmonyosDryRunEnv -join "`n") -notlike "*MOUI_SKIA_SKIA_PROVIDER=harmonyos_release*" -or
+      ($fetchHarmonyosDryRunEnv -join "`n") -notlike "*MOUI_SKIA_LINK_MODE=dynamic*" -or
+      ($fetchHarmonyosDryRunEnv -join "`n") -notlike "*MOUI_SKIA_SKIA_PACKAGE=Skia-dev-fcb9c18e54-harmonyos-Release-arm64-shared.zip*" -or
+      ($fetchHarmonyosDryRunEnv -join "`n") -notlike "*MOUI_SKIA_SKIA_PACKAGE_SHA256=55c050fec9da3468c56022b7188cb133ca476c4c90d9ce1aa67d31f22f374aa1*") {
+      throw "fetch-release-skia.ps1 did not map HarmonyOS arm64 Release dynamic to the locked package"
+    }
+
     $fakeMsvcSharedRoot = Join-Path $dryRunRoot "fake-msvc-shared-root"
     New-Item -ItemType Directory -Force -Path (Join-Path $fakeMsvcSharedRoot "include/core") | Out-Null
     New-Item -ItemType Directory -Force -Path (Join-Path $fakeMsvcSharedRoot "out/Release-windows-x64-shared") | Out-Null

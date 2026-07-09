@@ -194,12 +194,14 @@ test "skia font resolver maps MoUI font families to platform candidates" {
   )
   let system_ui = skia_font_family_candidates(@core.FontFamily::SystemUi)
   assert_true(
+    system_ui.contains("HarmonyOS Sans") ||
     system_ui.contains("Helvetica Neue") ||
     system_ui.contains("Segoe UI") ||
     system_ui.contains("DejaVu Sans"),
   )
   let sans = skia_font_family_candidates(@core.FontFamily::SansSerif)
   assert_true(
+    sans.contains("HarmonyOS Sans SC") ||
     sans.contains("Segoe UI") ||
     sans.contains("DejaVu Sans") ||
     sans.contains("Arial"),
@@ -217,6 +219,7 @@ test "skia font resolver maps MoUI font families to platform candidates" {
   )
   let emoji = skia_font_family_candidates(@core.FontFamily::Emoji)
   assert_true(
+    emoji.contains("HMOS Color Emoji") ||
     emoji.contains("Apple Color Emoji") ||
     emoji.contains("Noto Color Emoji") ||
     emoji.contains("Segoe UI Emoji"),

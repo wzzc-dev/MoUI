@@ -1,5 +1,5 @@
 param(
-  [ValidateSet("auto", "macos", "linux", "windows", "android", "ios", "iosSim", "tvos", "tvosSim", "wasm")]
+  [ValidateSet("auto", "macos", "linux", "windows", "android", "harmonyos", "ios", "iosSim", "tvos", "tvosSim", "wasm")]
   [string] $Platform = "auto",
 
   [ValidateSet("auto", "arm64", "x64", "riscv64")]
@@ -132,10 +132,15 @@ if ($resolvedPlatform -eq "wasm") {
 }
 
 $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
-$provider = $manifest.providers.release
-if (!$provider) { throw "skia-provider-lock.json is missing providers.release" }
+$providers = $manifest.providers
+$providerKey = "release"
+if ($resolvedPlatform -eq "harmonyos" -and (Get-JsonPropertyValue -Object $providers -Name "harmonyos_release")) {
+  $providerKey = "harmonyos_release"
+}
+$provider = Get-JsonPropertyValue -Object $providers -Name $providerKey
+if (!$provider) { throw "skia-provider-lock.json is missing providers.$providerKey" }
 if ([string]::IsNullOrWhiteSpace($Tag)) { $Tag = $provider.tag }
-if ($provider.tag -ne $Tag) { throw "manifest only locks release tag $($provider.tag), requested $Tag" }
+if ($provider.tag -ne $Tag) { throw "manifest provider $providerKey only locks release tag $($provider.tag), requested $Tag" }
 
 $platformAssets = Get-JsonPropertyValue -Object $provider.assets -Name $resolvedPlatform
 if (!$platformAssets) { throw "manifest has no release assets for platform=$resolvedPlatform" }
@@ -219,15 +224,22 @@ $skiaInclude = $skiaInclude -replace "\\", "/"
 $skiaLibDir = $skiaLibDir -replace "\\", "/"
 $skiaRoot = $skiaInclude
 $libDirNormalized = $skiaLibDir.TrimEnd("/").ToLowerInvariant()
-if ($libDirNormalized.EndsWith("/out/$Config-$resolvedArch".ToLowerInvariant())) {
-  $trimLength = ("/out/$Config-$resolvedArch").Length
-  $skiaRoot = $skiaLibDir.Substring(0, $skiaLibDir.Length - $trimLength)
+foreach ($suffix in @(
+    "/out/$Config-$resolvedPlatform-$resolvedArch-shared",
+    "/out/$Config-$resolvedPlatform-$resolvedArch",
+    "/out/$Config-$resolvedArch-shared",
+    "/out/$Config-$resolvedArch"
+  )) {
+  if ($libDirNormalized.EndsWith($suffix.ToLowerInvariant())) {
+    $skiaRoot = $skiaLibDir.Substring(0, $skiaLibDir.Length - $suffix.Length)
+    break
+  }
 }
 
 if ($PrintEnv) {
   @(
-    "MOUI_SKIA_PROVIDER=release"
-    "MOUI_SKIA_SKIA_PROVIDER=release"
+    "MOUI_SKIA_PROVIDER=$providerKey"
+    "MOUI_SKIA_SKIA_PROVIDER=$providerKey"
     "MOUI_SKIA_RELEASE_OWNER=$($provider.owner)"
     "MOUI_SKIA_RELEASE_REPO=$($provider.repo)"
     "MOUI_SKIA_RELEASE_TAG=$Tag"
@@ -248,7 +260,7 @@ if ($PrintEnv) {
 
 @(
   "Skia release provider:"
-  "  skia_provider=release"
+  "  skia_provider=$providerKey"
   "  release_owner=$($provider.owner)"
   "  release_repo=$($provider.repo)"
   "  release_tag=$Tag"

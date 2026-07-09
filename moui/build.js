@@ -130,11 +130,23 @@ function skiaAndroidLinkFlags(config, prebuildVars) {
   return prebuildVars.MOUI_SKIA_ANDROID_LINK_FLAGS || "";
 }
 
+function skiaCcLinkFlags(config, prebuildVars) {
+  const explicit = configEnvValue(config, "MOUI_SKIA_CC_LINK_FLAGS");
+  if (explicit) {
+    return explicit;
+  }
+  if (!shouldConfigureSkia(config)) {
+    return "";
+  }
+  return prebuildVars.MOUI_SKIA_CC_LINK_FLAGS || "";
+}
+
 function main() {
   const config = readJsonFromStdin();
   const linuxGlib = linuxGlibFlags(config);
   const skiaVars = shouldConfigureSkia(config) ? mouiSkiaPrebuildVars(config) : {};
   const skiaStub = skiaStubCcFlags(config, skiaVars);
+  const skiaCcLink = skiaCcLinkFlags(config, skiaVars);
   const skiaAndroidLink = skiaAndroidLinkFlags(config, skiaVars);
   const linkConfigs = [];
   if (linuxGlib.linkFlags) {
@@ -149,6 +161,7 @@ function main() {
         MOUI_LINUX_GLIB_STUB_CC_FLAGS: linuxGlib.stubCcFlags,
         MOUI_LINUX_GLIB_CC_LINK_FLAGS: linuxGlib.linkFlags,
         MOUI_SKIA_STUB_CC_FLAGS: skiaStub,
+        MOUI_SKIA_CC_LINK_FLAGS: skiaCcLink,
         MOUI_SKIA_ANDROID_LINK_FLAGS: skiaAndroidLink,
       },
       link_configs: linkConfigs,

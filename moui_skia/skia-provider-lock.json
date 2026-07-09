@@ -777,6 +777,72 @@
           }
         }
       }
+    },
+    "harmonyos_release": {
+      "kind": "github-release",
+      "owner": "wzzc-dev",
+      "repo": "skia",
+      "tag": "dev-fcb9c18e54",
+      "commit": "fcb9c18e54fd98fa79cfc32ef87bf807c9297136",
+      "release_url": "https://github.com/wzzc-dev/skia/releases/tag/dev-fcb9c18e54",
+      "source_archive": {
+        "name": "wzzc-dev-skia-dev-fcb9c18e54-source.zip",
+        "url": "https://github.com/wzzc-dev/skia/archive/refs/tags/dev-fcb9c18e54.zip"
+      },
+      "default_extra_cc_flags": {
+        "harmonyos": ""
+      },
+      "default_extra_link_flags": {
+        "harmonyos": ""
+      },
+      "assets": {
+        "harmonyos": {
+          "Debug": {
+            "arm64": {
+              "dynamic": {
+                "name": "Skia-dev-fcb9c18e54-harmonyos-Debug-arm64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-fcb9c18e54/Skia-dev-fcb9c18e54-harmonyos-Debug-arm64-shared.zip",
+                "sha256": "0d8b3e6864f90811db8d3837c0e6360562b5ef379e5b1bd85671b89bd10e471d",
+                "size": 97819122,
+                "library_names": [
+                  "libskia.so"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-fcb9c18e54-harmonyos-Debug-arm64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-fcb9c18e54/Skia-dev-fcb9c18e54-harmonyos-Debug-arm64.zip",
+                "sha256": "5f796c81cbd76acb81a2beaef87cafc412ca95c12b4d44f40530b00a3f4112cc",
+                "size": 353422352,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            }
+          },
+          "Release": {
+            "arm64": {
+              "dynamic": {
+                "name": "Skia-dev-fcb9c18e54-harmonyos-Release-arm64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-fcb9c18e54/Skia-dev-fcb9c18e54-harmonyos-Release-arm64-shared.zip",
+                "sha256": "55c050fec9da3468c56022b7188cb133ca476c4c90d9ce1aa67d31f22f374aa1",
+                "size": 13277428,
+                "library_names": [
+                  "libskia.so"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-fcb9c18e54-harmonyos-Release-arm64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-fcb9c18e54/Skia-dev-fcb9c18e54-harmonyos-Release-arm64.zip",
+                "sha256": "2819c8c11ca22a504d073c574d558539ef84d388d9c2a049b6a23272969afccb",
+                "size": 46672433,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

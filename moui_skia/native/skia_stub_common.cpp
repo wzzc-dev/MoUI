@@ -886,6 +886,12 @@ static void moonbit_skia_linux_append_font_dir(
 static sk_sp<SkFontMgr> moonbit_skia_linux_directory_font_mgr(void) {
 #if defined(MOUI_SKIA_HAS_DIRECTORY_FONTMGR) && defined(MOUI_SKIA_HAS_ORDERED_FONTMGR)
   sk_sp<SkOrderedFontMgr> ordered = sk_make_sp<SkOrderedFontMgr>();
+#if defined(__OHOS__)
+  moonbit_skia_linux_append_font_dir(ordered.get(), "/system/fonts");
+  moonbit_skia_linux_append_font_dir(ordered.get(), "/system/font");
+  moonbit_skia_linux_append_font_dir(ordered.get(), "/product/fonts");
+  moonbit_skia_linux_append_font_dir(ordered.get(), "/vendor/fonts");
+#endif
   moonbit_skia_linux_append_font_dir(ordered.get(), "/usr/share/fonts/truetype/dejavu");
   moonbit_skia_linux_append_font_dir(ordered.get(), "/usr/share/fonts/truetype/droid");
   moonbit_skia_linux_append_font_dir(ordered.get(), "/usr/share/fonts/truetype/noto");
@@ -1205,6 +1211,8 @@ sk_sp<SkTypeface> moonbit_skia_default_typeface(void) {
   (defined(MOUI_SKIA_HAS_FONTCONFIG_FONTMGR) || defined(MOUI_SKIA_HAS_DIRECTORY_FONTMGR))
   SkUnichar mixed_script_sample[] = {0x4F60, 'S'};
   const char* mixed_script_families[] = {
+    "HarmonyOS Sans SC",
+    "HarmonyOS Sans",
     "Noto Sans CJK SC",
     "Noto Sans CJK",
     "Source Han Sans SC",
@@ -1228,6 +1236,7 @@ sk_sp<SkTypeface> moonbit_skia_default_typeface(void) {
 
   SkUnichar latin_sample[] = {'S'};
   const char* latin_families[] = {
+    "HarmonyOS Sans",
     "DejaVu Sans",
     "Noto Sans",
     "Liberation Sans",
