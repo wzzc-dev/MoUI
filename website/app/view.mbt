@@ -174,10 +174,10 @@ fn showcase_card(
       [
         container(
           image(
-            showcase_thumbnail_data_uri(slug),
+            showcase_image_source(slug),
             width=width - 2.0,
             height=thumb_height,
-            fit=@graphics.ImageFit::Cover,
+            fit=@graphics.ImageFit::Contain,
           ),
           width~,
           height=thumb_height,
@@ -230,10 +230,16 @@ priv struct WebsiteShowcaseEntry {
 fn website_showcase_entries() -> Array[WebsiteShowcaseEntry] {
   [
     {
-      slug: "excel",
-      title: "Excel Viewer",
-      subtitle: "MoonBit Excel file renderer",
-      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/excel",
+      slug: "showcase",
+      title: "Showcase",
+      subtitle: "Visual component catalog",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase",
+    },
+    {
+      slug: "ios-componentgallery",
+      title: "iOS Component Gallery",
+      subtitle: "Reusable controls on iOS",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/component_gallery",
     },
     {
       slug: "markdown_editor",
@@ -248,10 +254,28 @@ fn website_showcase_entries() -> Array[WebsiteShowcaseEntry] {
       source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/mo_workbench",
     },
     {
-      slug: "showcase",
-      title: "Showcase",
-      subtitle: "Visual component catalog",
-      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase",
+      slug: "excel",
+      title: "Excel Viewer",
+      subtitle: "MoonBit Excel file renderer",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/excel",
+    },
+    {
+      slug: "webview",
+      title: "WebView Demo",
+      subtitle: "Native platform WebView shell",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/webview_demo",
+    },
+    {
+      slug: "android_counter",
+      title: "Android Counter",
+      subtitle: "Experimental Android app shell",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/counter/android_app",
+    },
+    {
+      slug: "ios_counter",
+      title: "iOS Counter",
+      subtitle: "Experimental iOS app shell",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/counter/ios_app",
     },
   ]
 }

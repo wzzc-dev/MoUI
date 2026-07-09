@@ -72,6 +72,30 @@ test "website hero CTA buttons open repository URL" {
 }
 
 ///|
+test "website showcases page renders all screenshot assets" {
+  let commands = Model::new()
+    .update(OpenShowcases)
+    .test_runtime(width=1180.0, height=1800.0)
+    .draw_commands()
+  let showcase_titles = [
+    "Showcase", "iOS Component Gallery", "Markdown Editor", "Mo Workbench", "Excel Viewer",
+    "WebView Demo", "Android Counter", "iOS Counter",
+  ]
+  for title in showcase_titles {
+    assert_true(has_text(commands, title))
+  }
+  let screenshot_sources = [
+    "assets/screenshots/showcase.png", "assets/screenshots/ios-componentgallery.png",
+    "assets/screenshots/markdown_editor.png", "assets/screenshots/mo_workbench.png",
+    "assets/screenshots/excel.png", "assets/screenshots/webview.png", "assets/screenshots/android_counter.jpg",
+    "assets/screenshots/ios_counter.png",
+  ]
+  for source in screenshot_sources {
+    assert_true(has_image_source(commands, source))
+  }
+}
+
+///|
 test "website docs portal loads runtime markdown through host text service" {
   let requested_paths : Array[String] = []
   let bridge = @host.HostServiceBridge::new(
@@ -435,6 +459,17 @@ fn last_text_frame(
 fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
   commands.any(command => {
     command is @core.DrawCommand::DrawText({ text: value, .. }) && value == text
+  })
+}
+
+///|
+fn has_image_source(
+  commands : Array[@core.DrawCommand],
+  source : String,
+) -> Bool {
+  commands.any(command => {
+    command is @core.DrawCommand::DrawImage({ source: value, .. }) &&
+    value == source
   })
 }
 
