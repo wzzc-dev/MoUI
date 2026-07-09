@@ -1,0 +1,23 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/platform_showcase/android"
+
+// Values
+pub fn platform_showcase_android_attach_surface(UInt64, Int, Int, Double) -> Bool
+
+pub fn platform_showcase_android_detach_surface() -> Unit
+
+pub fn platform_showcase_android_dispatch_pointer(Int, Double, Double, Double) -> Bool
+
+pub fn platform_showcase_android_dispatch_scroll(Double, Double, Double, Double, Int) -> Bool
+
+pub fn platform_showcase_android_render_frame() -> Bool
+
+pub fn platform_showcase_android_resize(Int, Int, Double) -> Bool
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

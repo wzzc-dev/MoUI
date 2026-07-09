@@ -1,0 +1,27 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/android" @android_host,
+  "wzzc-dev/moui/backend/android/skia" @android_skia_backend,
+  "examples/platform_showcase/app" @platform_showcase_app,
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "exports": [
+        "platform_showcase_android_attach_surface",
+        "platform_showcase_android_resize",
+        "platform_showcase_android_dispatch_pointer",
+        "platform_showcase_android_dispatch_scroll",
+        "platform_showcase_android_render_frame",
+        "platform_showcase_android_detach_surface",
+      ],
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)

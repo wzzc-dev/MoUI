@@ -28,6 +28,7 @@ code.
 - `./moui_theme`
 - `./moui_sun`
 - `./examples/counter`
+- `./examples/platform_showcase`
 - `./examples/button_freeze_probe`
 - `./examples/showcase`
 - `./examples/design_systems`
@@ -51,7 +52,10 @@ When adding or removing a workspace member, update this list,
 
 Shared app logic belongs in `examples/<name>/app`. Platform entrypoints should
 stay thin and live under names such as `web_wasm`, `macos_skia`,
-`windows_skia`, or `linux_skia`.
+`windows_skia`, or `linux_skia`. `examples/platform_showcase` intentionally uses
+`macos`, `linux`, `windows`, `android`, `ios`, and `web`; the Skia-backed
+entries omit `_skia` because Skia is the default renderer route for that
+showcase.
 
 Use the smallest useful loop:
 
@@ -164,6 +168,7 @@ members = [
   "./moui_theme",
   "./moui_sun",
   "./examples/counter",
+  "./examples/platform_showcase",
   "./examples/button_freeze_probe",
   "./examples/showcase",
   "./examples/design_systems",
