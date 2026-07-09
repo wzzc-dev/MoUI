@@ -1,6 +1,8 @@
 ///|
 using @views {
+  badge,
   button,
+  card,
   checkbox,
   choice_item,
   column,
@@ -27,26 +29,38 @@ pub fn view(
   let theme = @views.light_theme()
   let viewport = env.viewport_size()
   let page_width = responsive_page_width(model.active_platform, viewport.width)
+  let page_height = viewport.height.max(1.0)
   let compact = page_width < 820.0
-  container(
-    scroll_view(
-      container(
-        gallery_body(model, theme, page_width, compact),
+  if compact {
+    container(
+      scroll_view(
+        container(
+          gallery_body(model, theme, page_width, page_height, compact),
+          width=page_width,
+          background=theme.palette.background,
+          padding=16.0,
+          theme~,
+        ),
         width=page_width,
-        background=theme.palette.background,
-        padding=16.0,
-        theme~,
+        height=page_height,
+        state=Some(model.page_scroll),
       ),
       width=page_width,
-      height=viewport.height.max(1.0),
-      state=Some(model.page_scroll),
-    ),
-    width=page_width,
-    height=viewport.height.max(1.0),
-    background=theme.palette.background,
-    padding=0.0,
-    theme~,
-  )
+      height=page_height,
+      background=theme.palette.background,
+      padding=0.0,
+      theme~,
+    )
+  } else {
+    container(
+      gallery_body(model, theme, page_width, page_height, compact),
+      width=page_width,
+      height=page_height,
+      background=theme.palette.background,
+      padding=16.0,
+      theme~,
+    )
+  }
 }
 
 ///|
@@ -54,39 +68,55 @@ fn gallery_body(
   model : ComponentGalleryModel,
   theme : @moui.Theme,
   page_width : Double,
+  page_height : Double,
   compact : Bool,
 ) -> @moui.View[ComponentGalleryMsg] {
   let content_width = (page_width - 32.0).max(288.0)
-  let header = gallery_header(model, theme, content_width, compact)
+  let content_height = (page_height - 32.0).max(240.0)
   if compact {
     column(
       [
-        header,
-        mobile_story_index(model, theme, content_width),
-        story_workspace(model, theme, content_width, compact),
+        gallery_header(model, theme, content_width, compact),
+        mobile_component_index(model, theme, content_width),
+        component_workspace(model, theme, content_width, compact),
       ],
       spacing=theme.spacing_scale.md,
       align=@views.CrossAlign::Stretch,
     )
   } else {
     let gap = theme.spacing_scale.md
+    let header_height = 110.0
     let sidebar_width = 270.0
     let main_width = (content_width - sidebar_width - gap).max(420.0)
+    let panel_height = (content_height - header_height - gap).max(220.0)
     column(
       [
-        header,
+        gallery_header(model, theme, content_width, compact).frame(
+          width=content_width,
+          height=header_height,
+        ),
         row(
           [
-            story_sidebar(model, theme, sidebar_width),
-            story_workspace(model, theme, main_width, compact),
+            scroll_view(
+              gallery_sidebar(model, theme, sidebar_width),
+              width=sidebar_width,
+              height=panel_height,
+              state=Some(model.sidebar_scroll),
+            ),
+            scroll_view(
+              component_workspace(model, theme, main_width, compact),
+              width=main_width,
+              height=panel_height,
+              state=Some(model.content_scroll),
+            ),
           ],
           spacing=gap,
           align=@views.CrossAlign::Start,
         ),
       ],
-      spacing=theme.spacing_scale.md,
+      spacing=gap,
       align=@views.CrossAlign::Stretch,
-    )
+    ).frame(width=content_width, height=content_height)
   }
 }
 
@@ -97,14 +127,14 @@ fn gallery_header(
   width : Double,
   compact : Bool,
 ) -> @moui.View[ComponentGalleryMsg] {
-  let story = story_info(model.active_story)
+  let item = gallery_item_info(model.active_item)
   let inner_width = (width - 32.0).max(256.0)
   let gap = theme.spacing_scale.xs
   let host_badge_width = 128.0
-  let story_badge_width = 148.0
+  let item_badge_width = 148.0
   let count_badge_width = 118.0
   let badge_total_width = host_badge_width +
-    story_badge_width +
+    item_badge_width +
     count_badge_width +
     gap * 2.0
   let title_width = if compact {
@@ -123,7 +153,7 @@ fn gallery_header(
         align=@text.TextAlign::TextStart,
       ),
       wrapped_text(
-        "Grouped MoUI component stories running on macOS, Linux, Windows, Android, iOS, and Web.",
+        "Focused MoUI demos for controls, feedback, layout, and runtime routes.",
         role=@views.TextRole::Caption,
         theme~,
         width=title_width,
@@ -143,14 +173,14 @@ fn gallery_header(
       width=host_badge_width,
     ),
     status_badge(
-      story.badge,
-      tone=story.tone,
-      detail=story.group,
+      item.badge,
+      tone=item.tone,
+      detail=item.group,
       theme~,
-      width=story_badge_width,
+      width=item_badge_width,
     ),
     status_badge(
-      "\{filtered_story_count(model.search_query)} stories",
+      "\{filtered_gallery_item_count(model.search_query)} demos",
       tone=@views.BadgeTone::Neutral,
       theme~,
       width=count_badge_width,
@@ -190,7 +220,7 @@ fn gallery_header(
 }
 
 ///|
-fn story_sidebar(
+fn gallery_sidebar(
   model : ComponentGalleryModel,
   theme : @moui.Theme,
   width : Double,
@@ -198,7 +228,7 @@ fn story_sidebar(
   let inner = width - 28.0
   let rows : Array[@moui.View[ComponentGalleryMsg]] = [
     text(
-      "Stories",
+      "Components",
       role=@views.TextRole::Subtitle,
       theme~,
       width=inner,
@@ -208,7 +238,7 @@ fn story_sidebar(
     text_field(
       model.search_query,
       on_input=value => SearchChanged(value),
-      placeholder="Search stories",
+      placeholder="Search components",
       variant=@views.TextFieldVariant::Outline,
       theme~,
       width=inner,
@@ -221,7 +251,7 @@ fn story_sidebar(
       width=inner,
     ),
   ]
-  append_story_groups(rows, model, theme, inner)
+  append_component_gallery_groups(rows, model, theme, inner)
   container(
     column(
       rows,
@@ -237,7 +267,7 @@ fn story_sidebar(
 }
 
 ///|
-fn mobile_story_index(
+fn mobile_component_index(
   model : ComponentGalleryModel,
   theme : @moui.Theme,
   width : Double,
@@ -246,17 +276,17 @@ fn mobile_story_index(
     text_field(
       model.search_query,
       on_input=value => SearchChanged(value),
-      placeholder="Search stories",
+      placeholder="Search components",
       variant=@views.TextFieldVariant::Outline,
       theme~,
       width~,
     ),
   ]
-  let stories = filtered_stories(model.search_query)
-  if stories.length() == 0 {
+  let items = filtered_gallery_items(model.search_query)
+  if items.length() == 0 {
     rows.push(
       text(
-        "No matching stories",
+        "No matching components",
         role=@views.TextRole::Caption,
         theme~,
         width~,
@@ -267,8 +297,8 @@ fn mobile_story_index(
   } else {
     rows.push(
       responsive_grid(
-        stories.map(story => {
-          story_nav_button(model, story, theme, (width - 12.0) / 2.0)
+        items.map(item => {
+          gallery_nav_button(model, item, theme, (width - 12.0) / 2.0)
         }),
         width~,
         min_column_width=150.0,
@@ -292,14 +322,14 @@ fn mobile_story_index(
 }
 
 ///|
-fn append_story_groups(
+fn append_component_gallery_groups(
   rows : Array[@moui.View[ComponentGalleryMsg]],
   model : ComponentGalleryModel,
   theme : @moui.Theme,
   width : Double,
 ) -> Unit {
-  for group in story_groups() {
-    if story_group_has_matches(group.id, model.search_query) {
+  for group in component_gallery_groups() {
+    if gallery_group_has_matches(group.id, model.search_query) {
       rows.push(
         text(
           group.name,
@@ -310,20 +340,10 @@ fn append_story_groups(
           align=@text.TextAlign::TextStart,
         ).foreground(theme.palette.muted),
       )
-      rows.push(
-        wrapped_text(
-          group.detail,
-          role=@views.TextRole::Caption,
-          theme~,
-          width~,
-          height=38.0,
-          align=@text.TextAlign::TextStart,
-        ).foreground(theme.palette.muted),
-      )
-      for story in component_gallery_stories() {
-        if story.group == group.id &&
-          story_matches_query(story, model.search_query) {
-          rows.push(story_nav_button(model, story, theme, width))
+      for item in component_gallery_items() {
+        if item.group == group.id &&
+          gallery_item_matches_query(item, model.search_query) {
+          rows.push(gallery_nav_button(model, item, theme, width))
         }
       }
     }
@@ -331,16 +351,16 @@ fn append_story_groups(
 }
 
 ///|
-fn story_nav_button(
+fn gallery_nav_button(
   model : ComponentGalleryModel,
-  story : ComponentGalleryStoryInfo,
+  item : ComponentGalleryItemInfo,
   theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[ComponentGalleryMsg] {
   button(
-    story.name,
-    on_click=SelectStory(story_id_to_string(story.id)),
-    variant=if story.id == model.active_story {
+    item.name,
+    on_click=SelectItem(gallery_item_id_to_string(item.id)),
+    variant=if item.id == model.active_item {
       @views.ButtonVariant::Primary
     } else {
       @views.ButtonVariant::Ghost
@@ -351,17 +371,17 @@ fn story_nav_button(
 }
 
 ///|
-fn story_workspace(
+fn component_workspace(
   model : ComponentGalleryModel,
   theme : @moui.Theme,
   width : Double,
   compact : Bool,
 ) -> @moui.View[ComponentGalleryMsg] {
-  let story = story_info(model.active_story)
+  let item = gallery_item_info(model.active_item)
   column(
     [
-      story_header(model, story, theme, width, compact),
-      story_body(model, story.id, theme, width, compact),
+      component_header(model, item, theme, width, compact),
+      component_body(model, item.id, theme, width, compact),
     ],
     spacing=theme.spacing_scale.md,
     align=@views.CrossAlign::Stretch,
@@ -369,9 +389,9 @@ fn story_workspace(
 }
 
 ///|
-fn story_header(
+fn component_header(
   model : ComponentGalleryModel,
-  story : ComponentGalleryStoryInfo,
+  item : ComponentGalleryItemInfo,
   theme : @moui.Theme,
   width : Double,
   compact : Bool,
@@ -388,7 +408,7 @@ fn story_header(
   let title_block = column(
     [
       text(
-        story.name,
+        item.name,
         role=@views.TextRole::Headline,
         theme~,
         width=title_width,
@@ -396,7 +416,7 @@ fn story_header(
         align=@text.TextAlign::TextStart,
       ),
       wrapped_text(
-        story.description,
+        item.description,
         role=@views.TextRole::Body,
         theme~,
         width=title_width,
@@ -414,8 +434,8 @@ fn story_header(
           title_block,
           status_badge(
             mode_label(model.selected_mode),
-            tone=story.tone,
-            detail=story.badge,
+            tone=item.tone,
+            detail=item.badge,
             theme~,
             width=badge_width,
           ),
@@ -430,8 +450,8 @@ fn story_header(
           spacer(weight=1.0),
           status_badge(
             mode_label(model.selected_mode),
-            tone=story.tone,
-            detail=story.badge,
+            tone=item.tone,
+            detail=item.badge,
             theme~,
             width=badge_width,
           ),

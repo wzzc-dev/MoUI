@@ -9,23 +9,56 @@ pub(all) enum PlatformId {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) enum ComponentGalleryStoryId {
+pub(all) enum ComponentGalleryItemId {
   Welcome
-  Buttons
-  Inputs
-  Feedback
-  Layout
-  Platforms
+  Button
+  TextField
+  TextArea
+  ClearableTextField
+  PasswordField
+  NumberField
+  Stepper
+  Checkbox
+  Toggle
+  Radio
+  RadioGroup
+  CheckboxGroup
+  SegmentedControl
+  Picker
+  Slider
+  Chips
+  Badge
+  Progress
+  Banner
+  Callout
+  StatePanel
+  InlineError
+  Toast
+  Snackbar
+  StatCard
+  Avatar
+  Divider
+  Toolbar
+  StatusBar
+  Surface
+  RowColumn
+  ResponsiveGrid
+  ScrollView
+  PlatformRoutes
 } derive(Eq, Debug, ToJson)
 
 ///|
 pub(all) struct ComponentGalleryModel {
   active_platform : PlatformId
-  active_story : ComponentGalleryStoryId
+  active_item : ComponentGalleryItemId
   selected_platform : PlatformId
   page_scroll : @state.ScrollState
+  sidebar_scroll : @state.ScrollState
+  content_scroll : @state.ScrollState
   search_query : String
   sample_text : String
+  sample_number : String
+  password_revealed : Bool
   selected_mode : String
   selected_density : String
   feature_enabled : Bool
@@ -35,12 +68,14 @@ pub(all) struct ComponentGalleryModel {
 
 ///|
 pub(all) enum ComponentGalleryMsg {
-  SelectStory(String)
+  SelectItem(String)
   SearchChanged(String)
   SelectPlatform(String)
   SelectMode(String)
   SelectDensity(String)
   SampleTextChanged(String)
+  SampleNumberChanged(String)
+  TogglePasswordReveal
   FeatureToggled(Bool)
   SliderChanged(Double)
   Increment
@@ -54,11 +89,15 @@ pub fn ComponentGalleryModel::new(
 ) -> ComponentGalleryModel {
   {
     active_platform,
-    active_story: ComponentGalleryStoryId::Welcome,
+    active_item: ComponentGalleryItemId::Welcome,
     selected_platform: active_platform,
     page_scroll: @state.ScrollState::new(),
+    sidebar_scroll: @state.ScrollState::new(),
+    content_scroll: @state.ScrollState::new(),
     search_query: "",
     sample_text: "Component Gallery",
+    sample_number: "24",
+    password_revealed: false,
     selected_mode: "canvas",
     selected_density: "regular",
     feature_enabled: true,
@@ -73,32 +112,46 @@ pub fn update(
   message : ComponentGalleryMsg,
 ) -> ComponentGalleryModel {
   match message {
-    SelectStory(id) => {
-      let next = story_id_from_string(id).unwrap_or(model.active_story)
-      if next != model.active_story {
+    SelectItem(id) => {
+      let next = gallery_item_id_from_string(id).unwrap_or(model.active_item)
+      if next != model.active_item {
         model.page_scroll.scroll_to(x=0.0, y=0.0)
+        model.content_scroll.scroll_to(x=0.0, y=0.0)
       }
-      { ..model, active_story: next }
+      { ..model, active_item: next }
     }
     SearchChanged(query) => {
-      let next = if story_matches_query(story_info(model.active_story), query) {
-        model.active_story
+      let next = if gallery_item_matches_query(
+          gallery_item_info(model.active_item),
+          query,
+        ) {
+        model.active_item
       } else {
-        first_story_matching(query).unwrap_or(model.active_story)
+        first_gallery_item_matching(query).unwrap_or(model.active_item)
       }
-      { ..model, search_query: query, active_story: next }
+      if next != model.active_item {
+        model.page_scroll.scroll_to(x=0.0, y=0.0)
+        model.content_scroll.scroll_to(x=0.0, y=0.0)
+      }
+      { ..model, search_query: query, active_item: next }
     }
-    SelectPlatform(id) =>
+    SelectPlatform(id) => {
+      model.page_scroll.scroll_to(x=0.0, y=0.0)
+      model.content_scroll.scroll_to(x=0.0, y=0.0)
       {
         ..model,
         selected_platform: platform_id_from_string(id).unwrap_or(
           model.selected_platform,
         ),
-        active_story: ComponentGalleryStoryId::Platforms,
+        active_item: ComponentGalleryItemId::PlatformRoutes,
       }
+    }
     SelectMode(id) => { ..model, selected_mode: id }
     SelectDensity(id) => { ..model, selected_density: id }
     SampleTextChanged(value) => { ..model, sample_text: value }
+    SampleNumberChanged(value) => { ..model, sample_number: value }
+    TogglePasswordReveal =>
+      { ..model, password_revealed: !model.password_revealed }
     FeatureToggled(value) => { ..model, feature_enabled: value }
     SliderChanged(value) => { ..model, slider_value: value }
     Increment => { ..model, counter: model.counter + 1 }
@@ -107,6 +160,8 @@ pub fn update(
       {
         ..model,
         sample_text: "Component Gallery",
+        sample_number: "24",
+        password_revealed: false,
         selected_mode: "canvas",
         selected_density: "regular",
         feature_enabled: true,
