@@ -45,9 +45,9 @@ examples/<name>/harmonyos_app/  # app-owned Stage Ability/XComponent shell over 
 ```
 
 `examples/component_gallery` is the documented exception for the default route
-names: it uses `web`, `macos`, `linux`, `windows`, `android`, and `ios` because
-Skia is the default native/mobile route for Component Gallery and the Web route
-is named plainly.
+names: it uses `web`, `macos`, `linux`, `windows`, `android`, `ios`, and
+`harmonyos` because Skia is the default native/mobile route for Component
+Gallery and the Web route is named plainly.
 
 Default shared app imports:
 

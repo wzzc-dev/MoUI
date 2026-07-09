@@ -72,6 +72,7 @@ test "component gallery runtime renders component catalog" {
   assert_true(has_text(commands, "Windows"))
   assert_true(has_text(commands, "Android"))
   assert_true(has_text(commands, "iOS"))
+  assert_true(has_text(commands, "HarmonyOS"))
   assert_true(has_text(commands, "Web"))
 }
 
@@ -180,7 +181,8 @@ test "component gallery welcome wraps copy and keeps runtime chips inside sectio
     is Some(section) else {
     fail("expected Runtime Hosts section frame")
   }
-  for label in ["macOS", "Linux", "Windows", "Android", "iOS", "Web"] {
+  for
+    label in ["macOS", "Linux", "Windows", "Android", "iOS", "HarmonyOS", "Web"] {
     assert_platform_chip_inside_section(commands~, text=label, section~)
   }
 }
@@ -220,6 +222,7 @@ test "component gallery ids roundtrip" {
     @app.PlatformId::Windows,
     @app.PlatformId::Android,
     @app.PlatformId::IOS,
+    @app.PlatformId::HarmonyOs,
     @app.PlatformId::Web,
   ]
   for id in platforms {

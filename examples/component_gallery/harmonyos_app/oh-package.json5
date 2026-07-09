@@ -1,0 +1,10 @@
+{
+  "modelVersion": "6.0.1",
+  "name": "component-gallery-harmonyos",
+  "version": "0.1.0",
+  "description": "Component Gallery HarmonyOS app shell",
+  "main": "",
+  "author": "wzzc-dev",
+  "license": "Apache-2.0",
+  "dependencies": {}
+}

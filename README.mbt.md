@@ -47,12 +47,25 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 ## Screenshots
 
 <div align="center">
-  <img src="resource/screenshots/markdown_editor.png" width="400px"/>
-  <img src="resource/screenshots/showcase.png" width="400px"/>
-  <img src="resource/screenshots/mo_workbench.png" width="400px"/>
-  <img src="resource/screenshots/excel.png" width="400px"/>
-  <img src="resource/screenshots/webview.png" width="600px"/>
-  <img src="resource/screenshots/ios-componentgallery.png" width="200px"/>
+
+  <img src="resource/screenshots/showcase.png" width="48%" alt="Showcase"/>
+  <img src="resource/screenshots/markdown_editor.png" width="48%" alt="Markdown Editor"/>
+
+  <br/><br/>
+
+  <img src="resource/screenshots/mo_workbench.png" width="48%" alt="Mo Workbench"/>
+  <img src="resource/screenshots/excel.png" width="48%" alt="Excel"/>
+
+  <br/><br/>
+
+  <img src="resource/screenshots/webview.png" width="70%" alt="WebView Demo"/>
+  <img src="resource/screenshots/ios-componentgallery.png" width="25%" alt="iOS Component Gallery"/>
+
+  <br/><br/>
+
+  <img src="resource/screenshots/harmonyos-componentgallery.png" width="45%" alt="HarmonyOS Component Gallery"/>
+  <img src="resource/screenshots/android-componentgallery.jpg" width="48%" alt="Android Component Gallery"/>
+
 </div>
 
 ## Quick Start
