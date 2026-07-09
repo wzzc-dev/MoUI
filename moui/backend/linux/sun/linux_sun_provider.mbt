@@ -241,10 +241,10 @@ fn linux_sun_present_target(
     description=linux_sun_presenter_description(),
     present=frame => {
       window.present_rgba_pixels(
-        frame.width,
-        frame.height,
-        frame.row_bytes,
-        frame.bytes,
+        frame.width(),
+        frame.height(),
+        frame.row_bytes(),
+        frame.bytes(),
       ) ==
       0
     },

@@ -313,13 +313,13 @@ fn macos_sun_present_target(
   @sun_renderer.SunPresentTarget::new(
     description=macos_sun_presenter_description(),
     present=frame => {
-      surface.resize(frame.width, frame.height)
+      surface.resize(frame.width(), frame.height())
       match
         surface.present_pixels(
-          frame.width,
-          frame.height,
-          frame.row_bytes,
-          frame.pixels,
+          frame.width(),
+          frame.height(),
+          frame.row_bytes(),
+          frame.pixels(),
         ) {
         Ok(_) => true
         Err(_) => {
