@@ -41,7 +41,7 @@ examples/<name>/android_app/    # app-owned APK/JNI/CMake shell when present
 examples/<name>/ios_skia/       # experimental embedded-session route
 examples/<name>/ios_app/        # app-owned UIKit .app shell when present
 examples/<name>/harmonyos_skia/ # experimental embedded-session route
-examples/<name>/harmonyos_app/  # app-owned Stage Ability/XComponent shell when present
+examples/<name>/harmonyos_app/  # app-owned Stage Ability/XComponent shell over moui/mobile/harmonyos when present
 ```
 
 `examples/component_gallery` is the documented exception for the default route
@@ -200,12 +200,11 @@ should instead put their native contract in their own `mobile.json`. Run
 `node scripts/check-mobile-app-config.mjs` after changing repository example
 mobile metadata or contracts.
 For HarmonyOS, the fallback HAP command only validates MoonBit C generation,
-Stage Ability/XComponent/NAPI shell layout, native glue compilation,
-native-stub compilation, and staged package layout; a non-fallback HAP plus
-matching device/emulator smoke is still required for first-frame or
-input/lifecycle runtime claims. Use `HARMONYOS_SDK_HOME` as the canonical SDK
-environment variable, with `OHOS_SDK_HOME` accepted as fallback, for the current
-standalone HarmonyOS Demo shell.
+the app-owned Stage Ability/XComponent shell over `moui/mobile/harmonyos`,
+native glue compilation, native-stub compilation, and staged package layout; a
+non-fallback HAP plus matching device/emulator smoke is still required for
+first-frame or input/lifecycle runtime claims. Use `HARMONYOS_SDK_HOME` as the
+canonical SDK environment variable, with `OHOS_SDK_HOME` accepted as fallback.
 
 ## Docs
 
