@@ -165,8 +165,9 @@ fn app_bench_assert_renderer_supported(
   if renderer.unsupported_command_count() != 0 {
     let diagnostics = renderer.unsupported_command_diagnostics()
     if diagnostics.length() > 0 {
+      let diagnostic = diagnostics[0]
       fail_bench(
-        "\{label} recorded unsupported Skia command: \{diagnostics[0].command} \{diagnostics[0].reason}",
+        "\{label} recorded unsupported Skia command: \{diagnostic.command()} \{diagnostic.reason()}",
       )
     }
     fail_bench("\{label} recorded unsupported Skia commands")

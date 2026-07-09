@@ -246,13 +246,13 @@ fn windows_sun_present_target(
   @sun_renderer.SunPresentTarget::new(
     description=windows_sun_presenter_description(),
     present=frame => {
-      surface.resize(frame.width, frame.height)
+      surface.resize(frame.width(), frame.height())
       match
         surface.present_bytes(
-          frame.width,
-          frame.height,
-          frame.row_bytes,
-          frame.bytes,
+          frame.width(),
+          frame.height(),
+          frame.row_bytes(),
+          frame.bytes(),
         ) {
         Ok(_) => true
         Err(_) => {
