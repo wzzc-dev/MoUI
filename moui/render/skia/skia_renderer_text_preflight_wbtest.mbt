@@ -193,19 +193,15 @@ test "skia font resolver maps MoUI font families to platform candidates" {
     ["Acme Sans"],
   )
   let system_ui = skia_font_family_candidates(@core.FontFamily::SystemUi)
-  assert_true(
-    system_ui.contains("HarmonyOS Sans") ||
-    system_ui.contains("Helvetica Neue") ||
-    system_ui.contains("Segoe UI") ||
-    system_ui.contains("DejaVu Sans"),
-  )
+  assert_true(system_ui[0] == "Helvetica Neue")
+  assert_true(system_ui[1] == "Segoe UI")
+  assert_true(system_ui[2] == "Arial")
+  assert_true(system_ui.contains("HarmonyOS Sans"))
+  assert_true(system_ui.contains("HarmonyOS Sans SC"))
   let sans = skia_font_family_candidates(@core.FontFamily::SansSerif)
-  assert_true(
-    sans.contains("HarmonyOS Sans SC") ||
-    sans.contains("Segoe UI") ||
-    sans.contains("DejaVu Sans") ||
-    sans.contains("Arial"),
-  )
+  assert_true(sans[0] == "Helvetica Neue")
+  assert_true(sans.contains("HarmonyOS Sans SC"))
+  assert_true(sans.contains("DejaVu Sans"))
   assert_true(
     skia_font_family_candidates(@core.FontFamily::Serif).contains(
       "Times New Roman",
@@ -218,12 +214,11 @@ test "skia font resolver maps MoUI font families to platform candidates" {
     mono.contains("Liberation Mono"),
   )
   let emoji = skia_font_family_candidates(@core.FontFamily::Emoji)
-  assert_true(
-    emoji.contains("HMOS Color Emoji") ||
-    emoji.contains("Apple Color Emoji") ||
-    emoji.contains("Noto Color Emoji") ||
-    emoji.contains("Segoe UI Emoji"),
-  )
+  assert_true(emoji[0] == "Apple Color Emoji")
+  assert_true(emoji[1] == "Segoe UI Emoji")
+  assert_true(emoji.contains("HMOS Color Emoji"))
+  assert_true(emoji.contains("HarmonyOS Color Emoji"))
+  assert_true(emoji.contains("Noto Color Emoji"))
   assert_true(skia_font_slant(@core.FontStyle::Normal) == 0)
   assert_true(skia_font_slant(@core.FontStyle::Italic) == 1)
 }
