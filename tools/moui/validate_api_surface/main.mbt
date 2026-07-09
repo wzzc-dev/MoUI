@@ -1839,6 +1839,7 @@ fn run_checks(repo_root : String) -> Array[String] {
   for budget in package_budgets() {
     validate_package_budget(repo_root, budget, failures)
   }
+  validate_api_surface_classifications(repo_root, failures)
   validate_root_facade_shape(repo_root, failures)
   validate_core_legacy_family_budgets(repo_root, failures)
   validate_views_return_types(repo_root, failures)

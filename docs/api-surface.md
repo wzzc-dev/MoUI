@@ -8,49 +8,34 @@ packages expose narrower contracts for platform and renderer integration.
 
 ## Surface Tiers
 
-- App-facing API: `moui` (app-loop sugar only), domain facade packages
+- **Stable app API**: `moui` (app-loop sugar only), domain facade packages
   (`moui/geometry`, `moui/graphics`, `moui/animation`, `moui/text`,
-  `moui/state`), and `moui/views`. Command/menu facade types, control styles,
-  theme builders, and the temporary `DateValue` facade live in `moui/views`;
-  drawing/paint value types live in `moui/graphics`, transition/easing types
-  live in `moui/animation`, and focus-scope types live in `moui/state`.
-  Runtime handles such as `AppRuntime` stay in `moui/runtime`; reactive and
-  geometry types are available through domain facades where listed in
-  `docs/moui-app-package-boundary.md`.
-  Shared apps should minimize default `moui/core` imports; the API surface guard
-  tracks shared-app core import budget (see `validate_api_surface`).
-  Diagnostics, draw commands, renderer details, semantics/runtime ids, and
-  lower-level kernel protocols stay in `moui/core` or their owning packages.
-  `moui/views` exposes constructor helpers that return opaque `@moui.View[Msg]`
-  values plus control-specific app-facing contracts such as
-  `@views.ActionCommand`, `@views.WebViewEvent`, and
-  `@views.SheetPresentationMode`.
-- Runtime API: `moui/runtime`. This is the app/host runtime entrypoint package.
-  Runtime consumers should type and construct runtimes through
-  `@runtime.AppRuntime`, `@runtime.new_view`, `@runtime.new_program`, or the
-  width/height entrypoint helper `@runtime.new_program_with_dimensions`. Core
-  no longer exposes `@core.AppRuntime`, `RuntimeKernel`, or `RuntimeState`;
-  runtime owns program execution, runtime state, tree/layout/paint, event
-  dispatch, and consumes opaque views through `View[Msg]`.
-- Core framework API: `moui/core`. This owns `View[Msg]`, `Program`, `Effect`,
-  `Subscription`, layout, input, semantics, draw-command protocols,
+  `moui/state`), and everyday `moui/views` constructors. This is the surface
+  ordinary app packages should learn first. `moui/views` exposes constructor
+  helpers returning opaque `@moui.View[Msg]` values plus control-specific
+  app-facing contracts such as command/menu descriptors, control styles, theme
+  builders, and `SheetPresentationMode`.
+- **Advanced core API**: `moui/core`. This owns `View[Msg]`, `Program`,
+  `Effect`, `Subscription`, layout, input, semantics, draw-command protocols,
   renderer-neutral platform-view contracts, and the `View::node` callback
-  surface used by concrete controls in `moui/views`. New controls should not add core
-  enum variants, `@core.View::primitive_*_view` constructors, `ViewLoweringSink`,
-  or runtime lowering arms. `core` must not depend on `geometry`, `graphics`,
-  `animation`, `text`, `state`, `views`, `runtime`, `backend`, `render`, or addon
-  packages. It does not expose `RuntimeKernel`, `RuntimeState`, `ViewSpec`,
-  `ElementNode`, or `ElementTree`, and concrete control semantics such as
-  `SheetPresentationMode` stay out of `core`. Component-facing contracts such as
-  `ComponentContext` keep runtime/effect storage fields private and expose behavior
-  through methods.
-- Integration API: `moui/backend/host`, `moui/render`, and renderer/provider
-  packages. These are public because platform backends, renderers, examples,
-  and observation tools need them, but they are not the everyday app authoring
+  surface used by concrete controls in `moui/views`. New controls should not add
+  core enum variants, `@core.View::primitive_*_view` constructors,
+  `ViewLoweringSink`, or runtime lowering arms. Shared apps should minimize
+  default `moui/core` imports; the guard tracks a shared-app core import budget.
+- **Runtime API**: `moui/runtime`. Runtime consumers should construct runtimes
+  through `@runtime.AppRuntime`, `@runtime.new_view`, `@runtime.new_program`, or
+  `@runtime.new_program_with_dimensions`. Runtime owns program execution,
+  element/layout/render state, effect/subscription lifecycle, inspector
+  snapshots, and diagnostics; `core` no longer exposes `AppRuntime`,
+  `RuntimeKernel`, or `RuntimeState`.
+- **Integration API**: `moui/backend/host`, `moui/render`, and renderer/provider
+  packages. These packages are public for platform backends, renderers,
+  examples, and observation tooling, but they are not the normal app authoring
   surface.
-- Addon API: `moui_theme/*` packages. These remain outside `core`, `views`,
-  and the root facade so design-system preview work does not become a required
-  dependency for normal MoUI apps.
+- **Diagnostic/addon API**: diagnostic renderer routes such as native WGPU,
+  `moui_theme/audit`, source-mapped theme previews, platform scaffolds, and
+  opt-in smoke/evidence helpers. These stay outside `core`, `views`, and the
+  root facade unless explicitly promoted by tests and docs.
 
 ## Review Rules
 
@@ -75,6 +60,13 @@ The guard is implemented in MoonBit at
 entrypoint. It checks current generated interface files for:
 
 - line and exported-declaration budgets on key packages;
+- semantic classification budgets for the high-risk packages
+  `moui/core`, `moui/views`, `moui/runtime`, `moui/backend/host`, and
+  `moui/render`, so new public declarations must be categorized as
+  `app_constructor`, `app_state_helper`, `app_style`,
+  `advanced_core_protocol`, `runtime_diagnostic`, `host_contract`,
+  `renderer_contract`, `required_protocol`, `test_exposure`, or
+  `migration_debt`;
 - root facade imports and forbidden host/renderer/runtime tokens;
 - required domain facade tokens for geometry, graphics, animation, text, and
   state/focus packages, plus cross-domain forbidden aliases;
@@ -103,5 +95,6 @@ entrypoint. It checks current generated interface files for:
 - host/render/package boundary tokens staying in their owning packages.
 
 Budget failures are review prompts, not compatibility promises. If a deliberate
-API expansion is worth keeping, update the budget and explain the reason in the
-same change.
+API expansion is worth keeping, update the numeric and semantic budgets and
+explain the owning package reason in the same change. Current counts and
+follow-up candidates live in [API surface audit](api-surface-audit.md).

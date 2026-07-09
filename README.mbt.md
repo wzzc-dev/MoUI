@@ -211,6 +211,7 @@ files into `website/web_wasm/docs/` with `node scripts/sync-website-docs.mjs`.
 - [Development](docs/development.md)
 - [Testing](docs/testing.md)
 - [API surface](docs/api-surface.md)
+- [API surface audit](docs/api-surface-audit.md)
 - [Maintenance mainline](docs/maintenance.md)
 - [Platform notes](docs/platform-notes.md)
 - [Renderer capability report](docs/renderer-capability-report.md)
