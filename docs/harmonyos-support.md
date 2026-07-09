@@ -14,8 +14,11 @@ MoUI owns the runtime session and Skia renderer provider contracts.
 - `examples/harmonyos_demo/app` owns the platform-neutral TEA demo UI.
 - `examples/harmonyos_demo/harmonyos_skia` owns the MoonBit native exports used
   by the HarmonyOS shell.
-- `examples/harmonyos_demo/harmonyos_app` owns the experimental ArkTS Stage
-  Ability, XComponent, NAPI, and CMake shell.
+- `moui/mobile/harmonyos` owns the reusable ArkTS Stage Ability/XComponent
+  template plus shared NAPI/CMake native glue published with the `wzzc-dev/moui`
+  package.
+- `examples/harmonyos_demo/harmonyos_app` owns the app-specific HarmonyOS
+  project metadata and shell files for the standalone demo.
 
 ## Skia Artifact
 
@@ -68,6 +71,7 @@ Use `HARMONYOS_SDK_HOME` as the canonical SDK environment variable. Set
 export HARMONYOS_SDK_HOME=/path/to/DevEco/sdk/default/openharmony
 export PATH="$HARMONYOS_SDK_HOME/toolchains:$PATH"
 
+test -f "$HARMONYOS_SDK_HOME/native/build/cmake/ohos.toolchain.cmake" && echo ok
 hdc version
 cmake --version
 moon version
@@ -99,6 +103,14 @@ bash -n scripts/build-harmonyos-demo-app.sh
 scripts/build-harmonyos-demo-app.sh --fallback-skia
 ```
 
+External apps can copy `moui/mobile/harmonyos/template` as `harmonyos_app/` and
+invoke:
+
+```sh
+moui/scripts/mobile/build-harmonyos-hap.sh --app <id> \
+  --harmonyos-project harmonyos_app
+```
+
 Use a HarmonyOS/OpenHarmony SDK for non-fallback native builds. The build helper
 uses `HARMONYOS_SDK_HOME` first and `OHOS_SDK_HOME` as a fallback:
 
@@ -128,6 +140,18 @@ HDC="$HARMONYOS_SDK_HOME/toolchains/hdc"
 "$HDC" list targets
 ```
 
+If using the DevEco emulator CLI directly on macOS, pass `-path` as the parent
+directory containing the named device folder, not the device folder itself:
+
+```sh
+EMU="/Applications/DevEco-Studio.app/Contents/tools/emulator/Emulator"
+HVD="MateBook Pro"
+HVD_ROOT="$HOME/.Huawei/Emulator/deployed"
+IMAGE_ROOT="$HOME/Library/Huawei/Sdk"
+
+"$EMU" -hvd "$HVD" -path "$HVD_ROOT" -imageRoot "$IMAGE_ROOT"
+```
+
 Build a non-fallback HAP with the real HarmonyOS Skia artifact:
 
 ```sh
@@ -141,9 +165,13 @@ scripts/build-harmonyos-demo-app.sh
 Install, launch, and capture a screenshot:
 
 ```sh
+export HARMONYOS_SDK_HOME=/path/to/DevEco/sdk/default/openharmony
+export PATH="$HARMONYOS_SDK_HOME/toolchains:$PATH"
+
 HDC="$HARMONYOS_SDK_HOME/toolchains/hdc"
 HAP=artifacts/harmonyos/harmonyos_demo/MoUIHarmonyOSDemo.hap
 
+hdc version
 "$HDC" install -r "$HAP"
 "$HDC" shell aa start -a EntryAbility -b dev.wzzc.moui.harmonyosdemo -m entry
 "$HDC" shell snapshot_display -f /data/local/tmp/moui-harmonyos-demo.jpeg
@@ -153,8 +181,8 @@ HAP=artifacts/harmonyos/harmonyos_demo/MoUIHarmonyOSDemo.hap
 ```
 
 Stop the emulator from Device Manager after collecting evidence. If using the
-DevEco emulator CLI directly, use the virtual device name configured on that
-machine rather than documenting a machine-local name.
+DevEco emulator CLI directly, use the virtual device name and deployed/image
+roots configured on that machine.
 
 ## Runtime Evidence Boundary
 

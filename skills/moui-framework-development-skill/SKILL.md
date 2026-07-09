@@ -193,10 +193,12 @@ owning-package boundaries clear.
   XComponent native-window RGBA pixel presenter and preflight summary. Use
   `MOUI_SKIA_PLATFORM=harmonyos`, `MOUI_SKIA_ARCH=arm64`, and
   `MOUI_SKIA_LINK_MODE=dynamic` for HarmonyOS Skia cross-build checks.
+- `mobile/harmonyos/`: package-published reusable HarmonyOS Stage
+  Ability/XComponent/NAPI/CMake template and native glue used by app-owned
+  HarmonyOS shells.
 - `examples/harmonyos_demo`: standalone experimental HarmonyOS demo. It packages
-  shared app logic, a HarmonyOS Skia MoonBit export package, Stage
-  Ability/XComponent/NAPI shell files, MoonBit-generated C, MoonBit runtime,
-  HarmonyOS presenter, and `moui_skia/native` stubs through CMake. Use
+  shared app logic, a HarmonyOS Skia MoonBit export package, and an app-owned
+  Stage Ability/XComponent shell over `mobile/harmonyos`. Use
   `scripts/build-harmonyos-demo-app.sh --fallback-skia` for packaging/native-glue
   smoke only; use the non-fallback path plus matching device/emulator evidence
   before claiming HarmonyOS runtime support.

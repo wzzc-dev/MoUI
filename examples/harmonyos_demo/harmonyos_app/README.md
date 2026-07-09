@@ -8,8 +8,8 @@ The shell is an embedded-session route:
 
 - ArkTS Stage Ability owns the app lifecycle.
 - XComponent owns the native drawing surface.
-- NAPI/CMake glue owns calls into the MoonBit native exports in
-  `examples/harmonyos_demo/harmonyos_skia`.
+- Shared NAPI/CMake glue from `moui/mobile/harmonyos` owns calls into the
+  MoonBit native exports in `examples/harmonyos_demo/harmonyos_skia`.
 - `moui/backend/harmonyos/skia` presents Skia RGBA frames to the supplied
   native surface handle.
 

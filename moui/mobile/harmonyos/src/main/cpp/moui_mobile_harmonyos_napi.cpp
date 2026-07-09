@@ -2,6 +2,22 @@
 #include <cstdarg>
 #include <mutex>
 
+#ifndef MOUI_MOBILE_APP_ARG
+#define MOUI_MOBILE_APP_ARG "moui-mobile-harmonyos"
+#endif
+
+#ifndef MOUI_MOBILE_APP_ID
+#define MOUI_MOBILE_APP_ID "unknown"
+#endif
+
+#ifndef MOUI_MOBILE_SMOKE_ATTACH_SURFACE
+#define MOUI_MOBILE_SMOKE_ATTACH_SURFACE moui_mobile_harmonyos_attach_surface_for_smoke
+#endif
+
+#ifndef MOUI_MOBILE_SMOKE_RENDER_FRAME
+#define MOUI_MOBILE_SMOKE_RENDER_FRAME moui_mobile_harmonyos_render_frame_for_smoke
+#endif
+
 #if defined(__has_include)
 #if __has_include(<hilog/log.h>)
 #include <hilog/log.h>
@@ -66,26 +82,26 @@ OH_NativeXComponent_Callback g_xcomponent_callback;
 extern "C" void moonbit_runtime_init(int argc, char **argv);
 extern "C" void moonbit_init(void);
 
-extern "C" int32_t harmonyos_demo_attach_surface(
+extern "C" int32_t MOUI_MOBILE_ATTACH_SURFACE(
     uint64_t surface_handle,
     int32_t width,
     int32_t height,
     double scale_factor);
-extern "C" int32_t harmonyos_demo_resize(
+extern "C" int32_t MOUI_MOBILE_RESIZE(
     int32_t width,
     int32_t height,
     double scale_factor);
-extern "C" int32_t harmonyos_demo_dispatch_pointer(
+extern "C" int32_t MOUI_MOBILE_DISPATCH_POINTER(
     int32_t phase,
     double x,
     double y,
     double time_ms);
-extern "C" int32_t harmonyos_demo_render_frame(void);
-extern "C" void harmonyos_demo_detach_surface(void);
+extern "C" int32_t MOUI_MOBILE_RENDER_FRAME(void);
+extern "C" void MOUI_MOBILE_DETACH_SURFACE(void);
 
 void ensure_moonbit_runtime() {
   std::call_once(g_runtime_once, [] {
-    static char app_name[] = "moui-harmonyos-demo";
+    static char app_name[] = MOUI_MOBILE_APP_ARG;
     static char *argv[] = {app_name};
     moonbit_runtime_init(1, argv);
     moonbit_init();
@@ -126,11 +142,11 @@ bool attach_or_resize(uint64_t surface_handle, int32_t width, int32_t height, do
     same_surface ? 1 : 0
   );
   if (same_surface) {
-    const bool resized = harmonyos_demo_resize(width, height, scale) != 0;
+    const bool resized = MOUI_MOBILE_RESIZE(width, height, scale) != 0;
     log_info("HarmonyOS runtime resize result=%{public}d", resized ? 1 : 0);
     return resized;
   }
-  const bool attached = harmonyos_demo_attach_surface(surface_handle, width, height, scale) != 0;
+  const bool attached = MOUI_MOBILE_ATTACH_SURFACE(surface_handle, width, height, scale) != 0;
   log_info("HarmonyOS runtime attach result=%{public}d", attached ? 1 : 0);
   return attached;
 }
@@ -165,7 +181,7 @@ void on_surface_created(OH_NativeXComponent *component, void *window) {
     static_cast<int32_t>(height > 0 ? height : 1),
     1.0
   );
-  const bool rendered = harmonyos_demo_render_frame() != 0;
+  const bool rendered = MOUI_MOBILE_RENDER_FRAME() != 0;
   log_info(
     "XComponent surface created width=%{public}llu height=%{public}llu attach=%{public}d render=%{public}d",
     static_cast<unsigned long long>(width),
@@ -189,7 +205,7 @@ void on_surface_changed(OH_NativeXComponent *component, void *window) {
     static_cast<int32_t>(height > 0 ? height : 1),
     1.0
   );
-  const bool rendered = harmonyos_demo_render_frame() != 0;
+  const bool rendered = MOUI_MOBILE_RENDER_FRAME() != 0;
   log_info(
     "XComponent surface changed width=%{public}llu height=%{public}llu resize=%{public}d render=%{public}d",
     static_cast<unsigned long long>(width),
@@ -203,7 +219,7 @@ void on_surface_destroyed(OH_NativeXComponent *component, void *window) {
   (void)component;
   (void)window;
   ensure_moonbit_runtime();
-  harmonyos_demo_detach_surface();
+  MOUI_MOBILE_DETACH_SURFACE();
   g_surface_handle = 0;
   log_info("XComponent surface destroyed detach=1");
 }
@@ -219,13 +235,13 @@ void dispatch_touch_event(OH_NativeXComponent *component, void *window) {
     log_warn("XComponent touch read failed");
     return;
   }
-  const bool dispatched = harmonyos_demo_dispatch_pointer(
+  const bool dispatched = MOUI_MOBILE_DISPATCH_POINTER(
     static_cast<int32_t>(xcomponent_touch_phase(event.type)),
     event.x,
     event.y,
     0.0
   ) != 0;
-  const bool rendered = harmonyos_demo_render_frame() != 0;
+  const bool rendered = MOUI_MOBILE_RENDER_FRAME() != 0;
   log_info(
     "XComponent touch type=%{public}d x=%{public}f y=%{public}f dispatch=%{public}d render=%{public}d",
     static_cast<int>(event.type),
@@ -264,7 +280,7 @@ napi_value napi_bool(napi_env env, bool value) {
 napi_value napi_render_frame(napi_env env, napi_callback_info info) {
   (void)info;
   ensure_moonbit_runtime();
-  const bool rendered = harmonyos_demo_render_frame() != 0;
+  const bool rendered = MOUI_MOBILE_RENDER_FRAME() != 0;
   log_info("NAPI renderFrame result=%{public}d", rendered ? 1 : 0);
   return napi_bool(env, rendered);
 }
@@ -272,7 +288,7 @@ napi_value napi_render_frame(napi_env env, napi_callback_info info) {
 napi_value napi_detach_surface(napi_env env, napi_callback_info info) {
   (void)info;
   ensure_moonbit_runtime();
-  harmonyos_demo_detach_surface();
+  MOUI_MOBILE_DETACH_SURFACE();
   g_surface_handle = 0;
   log_info("NAPI detachSurface result=1");
   return napi_bool(env, true);
@@ -298,7 +314,7 @@ napi_value napi_dispatch_pointer(napi_env env, napi_callback_info info) {
     log_warn("NAPI dispatchPointer rejected invalid args");
     return napi_bool(env, false);
   }
-  const bool ok = harmonyos_demo_dispatch_pointer(
+  const bool ok = MOUI_MOBILE_DISPATCH_POINTER(
     static_cast<int32_t>(phase),
     x,
     y,
@@ -373,7 +389,7 @@ napi_value napi_resize(napi_env env, napi_callback_info info) {
   } else {
     g_scale = scale > 0.0 ? scale : 1.0;
   }
-  const bool ok = harmonyos_demo_resize(physical_width, physical_height, g_scale) != 0;
+  const bool ok = MOUI_MOBILE_RESIZE(physical_width, physical_height, g_scale) != 0;
   log_info(
     "NAPI resize logical=%{public}fx%{public}f physical=%{public}dx%{public}d scale=%{public}f result=%{public}d",
     width,
@@ -413,7 +429,7 @@ napi_value init(napi_env env, napi_value exports) {
 
 }  // namespace
 
-extern "C" int32_t moui_harmonyos_demo_attach_surface_for_smoke(
+extern "C" int32_t MOUI_MOBILE_SMOKE_ATTACH_SURFACE(
     uint64_t surface_handle,
     int32_t width,
     int32_t height,
@@ -421,14 +437,14 @@ extern "C" int32_t moui_harmonyos_demo_attach_surface_for_smoke(
   return attach_or_resize(surface_handle, width, height, scale_factor) ? 1 : 0;
 }
 
-extern "C" int32_t moui_harmonyos_demo_render_frame_for_smoke(void) {
+extern "C" int32_t MOUI_MOBILE_SMOKE_RENDER_FRAME(void) {
   ensure_moonbit_runtime();
-  return harmonyos_demo_render_frame();
+  return MOUI_MOBILE_RENDER_FRAME();
 }
 
 #if defined(MOUI_HARMONYOS_HAS_NAPI)
 #ifndef NODE_GYP_MODULE_NAME
-#define NODE_GYP_MODULE_NAME moui_harmonyos_demo
+#define NODE_GYP_MODULE_NAME moui_mobile_harmonyos
 #endif
 NAPI_MODULE(NODE_GYP_MODULE_NAME, init)
 #endif
