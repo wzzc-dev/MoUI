@@ -522,7 +522,7 @@ fn skia_font_family_candidates(family : @core.FontFamily) -> Array[String] {
 ///|
 fn skia_system_sans_families() -> Array[String] {
   [
-    "HarmonyOS Sans", "HarmonyOS Sans SC", "Helvetica Neue", "Segoe UI", "Arial",
+    "Helvetica Neue", "Segoe UI", "Arial", "HarmonyOS Sans", "HarmonyOS Sans SC",
     "DejaVu Sans", "Noto Sans", "Noto Sans CJK SC", "Liberation Sans",
   ]
 }
@@ -544,7 +544,7 @@ fn skia_monospace_families() -> Array[String] {
 ///|
 fn skia_emoji_families() -> Array[String] {
   [
-    "HMOS Color Emoji", "HarmonyOS Color Emoji", "Apple Color Emoji", "Segoe UI Emoji",
+    "Apple Color Emoji", "Segoe UI Emoji", "HMOS Color Emoji", "HarmonyOS Color Emoji",
     "Noto Color Emoji",
   ]
 }
