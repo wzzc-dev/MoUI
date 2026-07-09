@@ -1,6 +1,6 @@
 ---
 name: moui-app-development
-description: Build and maintain MoUI application packages and examples. Use when working in examples/*/app, app-specific service packages, platform entrypoints such as web_wasm/macos_skia/windows_skia/linux_skia/android_skia/ios_skia, app views built with wzzc-dev/moui/views, model/update/view logic, host-service integration from app code, or app-focused tests and smoke runs.
+description: Build and maintain MoUI application packages and examples. Use when working in examples/*/app, app-specific service packages, platform entrypoints such as web_wasm/macos_skia/windows_skia/linux_skia/android_skia/ios_skia/harmonyos_skia, app views built with wzzc-dev/moui/views, model/update/view logic, host-service integration from app code, or app-focused tests and smoke runs.
 ---
 
 # MoUI App Development
@@ -40,6 +40,8 @@ examples/<name>/android_skia/   # experimental embedded-session route
 examples/<name>/android_app/    # app-owned APK/JNI/CMake shell when present
 examples/<name>/ios_skia/       # experimental embedded-session route
 examples/<name>/ios_app/        # app-owned UIKit .app shell when present
+examples/<name>/harmonyos_skia/ # experimental embedded-session route
+examples/<name>/harmonyos_app/  # app-owned Stage Ability/XComponent shell when present
 ```
 
 `examples/component_gallery` is the documented exception for the default route
@@ -150,6 +152,9 @@ MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/counter/android_skia --tar
 scripts/build-mobile-android-apk.sh --app counter --fallback-skia
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/counter/ios_skia --target native
 scripts/build-mobile-ios-app.sh --app counter --fallback-skia
+MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test examples/harmonyos_demo/app --target native
+MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/harmonyos_demo/harmonyos_skia --target native
+scripts/build-harmonyos-demo-app.sh --fallback-skia
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
 moon test examples/pdf_workbench/app --target native
@@ -194,6 +199,13 @@ native contracts in `moui/mobile/build-contracts.json`; external app authors
 should instead put their native contract in their own `mobile.json`. Run
 `node scripts/check-mobile-app-config.mjs` after changing repository example
 mobile metadata or contracts.
+For HarmonyOS, the fallback HAP command only validates MoonBit C generation,
+Stage Ability/XComponent/NAPI shell layout, native glue compilation,
+native-stub compilation, and staged package layout; a non-fallback HAP plus
+matching device/emulator smoke is still required for first-frame or
+input/lifecycle runtime claims. Use `HARMONYOS_SDK_HOME` as the canonical SDK
+environment variable, with `OHOS_SDK_HOME` accepted as fallback, for the current
+standalone HarmonyOS Demo shell.
 
 ## Docs
 

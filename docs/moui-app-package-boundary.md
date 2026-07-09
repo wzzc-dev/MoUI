@@ -387,14 +387,17 @@ app-owned APK/JNI/CMake shell（例如 `examples/counter/android_app`）。
 iOS 同样走 embedded-session 入口：`examples/*/ios_skia` 暴露 MoonBit C exports，
 app-owned UIKit shell（例如 `examples/counter/ios_app`）负责
 `UIApplicationDelegate` / `UIViewController` 生命周期与触摸转发。
+HarmonyOS 同样走 embedded-session 入口：`examples/*/harmonyos_skia` 暴露
+MoonBit C exports，app-owned Stage Ability/XComponent/NAPI shell（例如
+`examples/harmonyos_demo/harmonyos_app`）负责 XComponent surface 生命周期与触摸转发。
 
 平台入口包可以依赖：
 
 - `wzzc-dev/moui/runtime`
 - `wzzc-dev/moui/backend/web`
 - `wzzc-dev/moui/backend/host`
-- `wzzc-dev/moui/backend/{macos,windows,linux,android,ios}`
-- `wzzc-dev/moui/backend/{macos,windows,linux,android,ios}/skia`
+- `wzzc-dev/moui/backend/{macos,windows,linux,android,ios,harmonyos}`
+- `wzzc-dev/moui/backend/{macos,windows,linux,android,ios,harmonyos}/skia`
 - `wzzc-dev/moui/render/skia`
 - 对应的 shared app package，例如 `examples/showcase/app`
 

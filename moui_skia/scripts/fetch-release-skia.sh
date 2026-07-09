@@ -6,7 +6,7 @@ usage() {
 Usage: scripts/fetch-release-skia.sh [options]
 
 Options:
-  --platform auto|macos|linux|windows|android|ios|iosSim|tvos|tvosSim|wasm
+  --platform auto|macos|linux|windows|android|harmonyos|ios|iosSim|tvos|tvosSim|wasm
                          Target release package platform. Default: auto.
   --arch auto|arm64|x64|riscv64
                          Target package architecture. Default: auto.
@@ -102,7 +102,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "$platform" in
-  auto|macos|linux|windows|android|ios|iosSim|tvos|tvosSim|wasm) ;;
+  auto|macos|linux|windows|android|harmonyos|ios|iosSim|tvos|tvosSim|wasm) ;;
   *) echo "unsupported platform: $platform" >&2; exit 2 ;;
 esac
 case "$arch" in
@@ -177,13 +177,19 @@ arch = sys.argv[5]
 requested_mode = sys.argv[6]
 
 manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-provider = manifest.get("providers", {}).get("release")
+providers = manifest.get("providers", {})
+provider_key = "release"
+if platform == "harmonyos" and isinstance(providers.get("harmonyos_release"), dict):
+    provider_key = "harmonyos_release"
+provider = providers.get(provider_key)
 if not isinstance(provider, dict):
-    raise SystemExit("skia-provider-lock.json is missing providers.release")
+    raise SystemExit(f"skia-provider-lock.json is missing providers.{provider_key}")
 
 tag = requested_tag or provider.get("tag", "")
 if tag != provider.get("tag"):
-    raise SystemExit(f"manifest only locks release tag {provider.get('tag')}, requested {tag}")
+    raise SystemExit(
+        f"manifest provider {provider_key} only locks release tag {provider.get('tag')}, requested {tag}"
+    )
 
 entry = (
     provider.get("assets", {})
@@ -207,6 +213,7 @@ if not isinstance(asset, dict):
 
 source = provider.get("source_archive", {})
 items = {
+    "provider_key": provider_key,
     "owner": provider["owner"],
     "repo": provider["repo"],
     "tag": tag,
@@ -236,6 +243,7 @@ get_manifest_value() {
 }
 
 owner="$(get_manifest_value owner)"
+provider_key="$(get_manifest_value provider_key)"
 repo="$(get_manifest_value repo)"
 tag="$(get_manifest_value tag)"
 commit="$(get_manifest_value commit)"
@@ -442,15 +450,21 @@ fi
 
 skia_root="$skia_include"
 lib_dir_normalized="${skia_lib_dir%/}"
-suffix="/out/$config-$resolved_arch"
-if [[ "$lib_dir_normalized" == *"$suffix" ]]; then
-  skia_root="${lib_dir_normalized:0:${#lib_dir_normalized}-${#suffix}}"
-fi
+for suffix in \
+  "/out/$config-$resolved_platform-$resolved_arch-shared" \
+  "/out/$config-$resolved_platform-$resolved_arch" \
+  "/out/$config-$resolved_arch-shared" \
+  "/out/$config-$resolved_arch"; do
+  if [[ "$lib_dir_normalized" == *"$suffix" ]]; then
+    skia_root="${lib_dir_normalized:0:${#lib_dir_normalized}-${#suffix}}"
+    break
+  fi
+done
 
 if [[ $print_env -eq 1 ]]; then
   cat <<EOF
-MOUI_SKIA_PROVIDER=release
-MOUI_SKIA_SKIA_PROVIDER=release
+MOUI_SKIA_PROVIDER=$provider_key
+MOUI_SKIA_SKIA_PROVIDER=$provider_key
 MOUI_SKIA_RELEASE_OWNER=$owner
 MOUI_SKIA_RELEASE_REPO=$repo
 MOUI_SKIA_RELEASE_TAG=$tag
@@ -471,7 +485,7 @@ fi
 
 cat <<EOF
 Skia release provider:
-  skia_provider=release
+  skia_provider=$provider_key
   release_owner=$owner
   release_repo=$repo
   release_tag=$tag

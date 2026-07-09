@@ -49,6 +49,14 @@ For task-specific workflows, use the repo-local skills:
   that template. Fallback `.app` builds are packaging evidence only; do not
   claim iOS runtime support as passed until a matching simulator/device smoke
   records first-frame and input/lifecycle evidence.
+- Keep HarmonyOS work on the embedded-session route for now:
+  `moui/backend/harmonyos` owns Stage Ability/XComponent-driven host contracts
+  and `moui/backend/harmonyos/skia` owns the XComponent native-window Skia
+  presenter. `examples/harmonyos_demo` and
+  `scripts/build-harmonyos-demo-app.sh` own the standalone experimental demo
+  shell. Fallback HAP builds are packaging evidence only; do not claim
+  HarmonyOS runtime support as passed until a matching device/emulator smoke
+  records first-frame and input/lifecycle evidence.
 
 ### CI Safety Rules
 

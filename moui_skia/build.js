@@ -59,6 +59,7 @@ function skiaReleasePlatform(config) {
     "linux",
     "windows",
     "android",
+    "harmonyos",
     "ios",
     "iosSim",
     "tvos",
@@ -502,13 +503,17 @@ function linuxStaticSkiaParagraphLinkFlags(libPath, skiaLib) {
 }
 
 function androidStaticSkiaParagraphLinkFlags(libPath, skiaLib) {
+  return unixStaticSkiaParagraphLinkFlags(libPath, skiaLib, "android");
+}
+
+function unixStaticSkiaParagraphLinkFlags(libPath, skiaLib, platform) {
   const skiaFlag = path.join(libPath, `lib${skiaLib}.a`);
-  const paragraphFlags = skiaParagraphLinkLibraryNames("android")
+  const paragraphFlags = skiaParagraphLinkLibraryNames(platform)
     .map(name => unixLibraryFlag(
       libPath,
       name,
       "static",
-      unixDynamicLibrarySuffix("android"),
+      unixDynamicLibrarySuffix(platform),
     ));
   return [
     `-L${libPath}`,
@@ -726,6 +731,42 @@ function platformFlags(config, values) {
       );
       if (resolvedLinkMode !== "static") {
         linkFlags = appendFlags(linkFlags, skiaParagraphLinkFlags(libPath, resolvedLinkMode, "android"));
+      }
+    }
+  } else if (platform === "harmonyos") {
+    stubCcFlags = `-DMOUI_SKIA_HAS_SKIA -std=c++17 -I${includePath}`;
+    const staticLib = path.join(libPath, `lib${skiaLib}.a`);
+    const dynamicLib = path.join(libPath, `lib${skiaLib}.so`);
+    const resolvedLinkMode = resolveUnixLibraryMode(linkMode, libPath, skiaLib, ".so");
+    if (resolvedLinkMode === "static") {
+      if (!fs.existsSync(staticLib)) {
+        throw new Error(
+          `MOUI_SKIA_LINK_MODE=static requested, but ${staticLib} was not found`,
+        );
+      }
+      linkFlags = paragraphEnabled
+        ? unixStaticSkiaParagraphLinkFlags(libPath, skiaLib, "harmonyos")
+        : staticLib;
+    } else {
+      if (!fs.existsSync(dynamicLib)) {
+        throw new Error(
+          `MOUI_SKIA_LINK_MODE=dynamic requested, but ${dynamicLib} was not found`,
+        );
+      }
+      linkFlags = `-L${libPath} -l${skiaLib}`;
+    }
+    linkFlags = appendMissingFlags(linkFlags, [
+      "-lc++",
+      "-lm",
+      "-ldl",
+    ]);
+    if (paragraphEnabled) {
+      stubCcFlags = appendFlags(
+        stubCcFlags,
+        "-DMOUI_SKIA_HAS_SKPARAGRAPH -DMOUI_SKIA_HAS_SKSHAPER",
+      );
+      if (resolvedLinkMode !== "static") {
+        linkFlags = appendFlags(linkFlags, skiaParagraphLinkFlags(libPath, resolvedLinkMode, "harmonyos"));
       }
     }
   }

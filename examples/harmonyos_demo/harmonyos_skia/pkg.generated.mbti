@@ -1,0 +1,21 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/harmonyos_demo/harmonyos_skia"
+
+// Values
+pub fn harmonyos_demo_attach_surface(UInt64, Int, Int, Double) -> Bool
+
+pub fn harmonyos_demo_detach_surface() -> Unit
+
+pub fn harmonyos_demo_dispatch_pointer(Int, Double, Double, Double) -> Bool
+
+pub fn harmonyos_demo_render_frame() -> Bool
+
+pub fn harmonyos_demo_resize(Int, Int, Double) -> Bool
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
