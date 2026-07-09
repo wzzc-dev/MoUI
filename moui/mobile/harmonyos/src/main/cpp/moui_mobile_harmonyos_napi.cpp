@@ -96,6 +96,14 @@ extern "C" int32_t MOUI_MOBILE_DISPATCH_POINTER(
     double x,
     double y,
     double time_ms);
+#if MOUI_MOBILE_ENABLE_SCROLL
+extern "C" int32_t MOUI_MOBILE_DISPATCH_SCROLL(
+    double x,
+    double y,
+    double delta_x,
+    double delta_y,
+    int32_t phase);
+#endif
 extern "C" int32_t MOUI_MOBILE_RENDER_FRAME(void);
 extern "C" void MOUI_MOBILE_DETACH_SURFACE(void);
 
@@ -330,6 +338,49 @@ napi_value napi_dispatch_pointer(napi_env env, napi_callback_info info) {
   return napi_bool(env, ok);
 }
 
+#if MOUI_MOBILE_ENABLE_SCROLL
+napi_value napi_dispatch_scroll(napi_env env, napi_callback_info info) {
+  ensure_moonbit_runtime();
+  size_t argc = 5;
+  napi_value argv[5];
+  napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
+  if (argc < 5) {
+    log_warn("NAPI dispatchScroll rejected argc=%{public}llu", static_cast<unsigned long long>(argc));
+    return napi_bool(env, false);
+  }
+  double x = 0.0;
+  double y = 0.0;
+  double delta_x = 0.0;
+  double delta_y = 0.0;
+  double phase = 0.0;
+  if (!napi_get_number(env, argv[0], &x) ||
+      !napi_get_number(env, argv[1], &y) ||
+      !napi_get_number(env, argv[2], &delta_x) ||
+      !napi_get_number(env, argv[3], &delta_y) ||
+      !napi_get_number(env, argv[4], &phase)) {
+    log_warn("NAPI dispatchScroll rejected invalid args");
+    return napi_bool(env, false);
+  }
+  const bool ok = MOUI_MOBILE_DISPATCH_SCROLL(
+    x,
+    y,
+    delta_x,
+    delta_y,
+    static_cast<int32_t>(phase)
+  ) != 0;
+  log_info(
+    "NAPI dispatchScroll x=%{public}f y=%{public}f dx=%{public}f dy=%{public}f phase=%{public}d result=%{public}d",
+    x,
+    y,
+    delta_x,
+    delta_y,
+    static_cast<int32_t>(phase),
+    ok ? 1 : 0
+  );
+  return napi_bool(env, ok);
+}
+#endif
+
 napi_value napi_attach_surface(napi_env env, napi_callback_info info) {
   ensure_moonbit_runtime();
   size_t argc = 4;
@@ -418,6 +469,9 @@ napi_value init(napi_env env, napi_value exports) {
     {"attachSurface", nullptr, napi_attach_surface, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"resize", nullptr, napi_resize, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"dispatchPointer", nullptr, napi_dispatch_pointer, nullptr, nullptr, nullptr, napi_default, nullptr},
+#if MOUI_MOBILE_ENABLE_SCROLL
+    {"dispatchScroll", nullptr, napi_dispatch_scroll, nullptr, nullptr, nullptr, napi_default, nullptr},
+#endif
     {"renderFrame", nullptr, napi_render_frame, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"detachSurface", nullptr, napi_detach_surface, nullptr, nullptr, nullptr, napi_default, nullptr},
   };

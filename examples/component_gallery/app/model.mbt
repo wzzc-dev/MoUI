@@ -5,6 +5,7 @@ pub(all) enum PlatformId {
   Windows
   Android
   IOS
+  HarmonyOs
   Web
 } derive(Eq, Debug, ToJson)
 

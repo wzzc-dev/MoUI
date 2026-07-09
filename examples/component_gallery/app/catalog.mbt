@@ -305,8 +305,8 @@ fn component_gallery_items() -> Array[ComponentGalleryItemInfo] {
       id: ComponentGalleryItemId::PlatformRoutes,
       group: "runtime",
       name: "Platform Routes",
-      description: "macOS, Linux, Windows, Android, iOS, and Web launch routes.",
-      badge: "six hosts",
+      description: "macOS, Linux, Windows, Android, iOS, HarmonyOS, and Web launch routes.",
+      badge: "seven hosts",
       tone: @views.BadgeTone::Accent,
     },
   ]

@@ -18,6 +18,7 @@ pub fn platform_id_to_string(id : PlatformId) -> String {
     PlatformId::Windows => "windows"
     PlatformId::Android => "android"
     PlatformId::IOS => "ios"
+    PlatformId::HarmonyOs => "harmonyos"
     PlatformId::Web => "web"
   }
 }
@@ -30,6 +31,7 @@ pub fn platform_id_from_string(id : String) -> PlatformId? {
     "windows" => Some(PlatformId::Windows)
     "android" => Some(PlatformId::Android)
     "ios" => Some(PlatformId::IOS)
+    "harmonyos" => Some(PlatformId::HarmonyOs)
     "web" => Some(PlatformId::Web)
     _ => None
   }
@@ -87,6 +89,16 @@ fn platform_runtime_infos() -> Array[PlatformRuntimeInfo] {
       tone: @views.FeedbackTone::Info,
       badge_tone: @views.BadgeTone::Accent,
       progress: 0.72,
+    },
+    {
+      id: PlatformId::HarmonyOs,
+      name: "HarmonyOS",
+      route: "examples/component_gallery/harmonyos + harmonyos_app",
+      status: "packaged",
+      command: "scripts/build-mobile-harmonyos-hap.sh --app component_gallery",
+      tone: @views.FeedbackTone::Info,
+      badge_tone: @views.BadgeTone::Accent,
+      progress: 0.62,
     },
     {
       id: PlatformId::Web,

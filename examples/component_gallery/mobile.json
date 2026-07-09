@@ -15,5 +15,28 @@
     "bundleId": "dev.wzzc.moui.componentgallery",
     "productName": "ComponentGallery",
     "infoPlist": "examples/component_gallery/ios_app/Info.plist"
+  },
+  "harmonyos": {
+    "bundleName": "dev.wzzc.moui.componentgallery",
+    "productName": "ComponentGallery",
+    "appName": "Component Gallery",
+    "moduleName": "entry",
+    "moduleDescription": "MoUI Component Gallery HarmonyOS app",
+    "entryDescription": "Component Gallery HarmonyOS entry ability",
+    "native": {
+      "moonPackage": "examples/component_gallery/harmonyos",
+      "generatedC": "harmonyos.c",
+      "nativeLibrary": "component_gallery_harmonyos",
+      "appArg": "moui-component-gallery-harmonyos",
+      "moonbitMainAlias": "moui_component_gallery_harmonyos_moonbit_generated_main",
+      "exports": {
+        "attachSurface": "component_gallery_harmonyos_attach_surface",
+        "resize": "component_gallery_harmonyos_resize",
+        "dispatchPointer": "component_gallery_harmonyos_dispatch_pointer",
+        "dispatchScroll": "component_gallery_harmonyos_dispatch_scroll",
+        "renderFrame": "component_gallery_harmonyos_render_frame",
+        "detachSurface": "component_gallery_harmonyos_detach_surface"
+      }
+    }
   }
 }

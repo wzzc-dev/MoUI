@@ -202,6 +202,10 @@ owning-package boundaries clear.
   `scripts/build-harmonyos-demo-app.sh --fallback-skia` for packaging/native-glue
   smoke only; use the non-fallback path plus matching device/emulator evidence
   before claiming HarmonyOS runtime support.
+- `examples/component_gallery/harmonyos` and
+  `examples/component_gallery/harmonyos_app`: Component Gallery's HarmonyOS
+  embedded-session entrypoint and app-owned Stage Ability/XComponent shell over
+  `mobile/harmonyos`.
 - `render/`: renderer facade, shared draw helpers, and capability report API.
 - `render/skia/`: native Skia raster mainline renderer over the local
   `moui_skia` binding, including renderer-local command/reason diagnostics for

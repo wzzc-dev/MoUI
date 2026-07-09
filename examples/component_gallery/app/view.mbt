@@ -474,7 +474,8 @@ fn responsive_page_width(
   viewport_width : Double,
 ) -> Double {
   match platform {
-    PlatformId::Android | PlatformId::IOS => viewport_width.max(320.0)
+    PlatformId::Android | PlatformId::IOS | PlatformId::HarmonyOs =>
+      viewport_width.max(320.0)
     _ => viewport_width.max(360.0).min(1180.0)
   }
 }

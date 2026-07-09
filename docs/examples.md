@@ -50,7 +50,7 @@ after changing repository example mobile metadata or contracts.
 | Agent Counter | Minimal agent-controllable runtime example | `examples/agent_counter/`, `examples/agent_counter/main/`, `examples/agent_counter/macos_skia/` | Counter app with semantics/command-intent flow for agent observation and control, plus a native macOS Skia entrypoint |
 | Counter | Minimal model/update/view app | `examples/counter/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages, experimental Android/iOS Skia embedded-session entrypoints, a Counter Android APK shell, and a Counter iOS Simulator app shell |
 | HarmonyOS Demo | Standalone experimental HarmonyOS embedded Skia demo | `examples/harmonyos_demo/app/`, `examples/harmonyos_demo/harmonyos_skia/`, `examples/harmonyos_demo/harmonyos_app/` | Platform-neutral viewport/tap feedback demo, HarmonyOS Skia embedded-session MoonBit exports, app-owned Stage Ability/XComponent shell over the package-published `moui/mobile/harmonyos` NAPI/CMake template, and fallback HAP packaging smoke via `scripts/build-harmonyos-demo-app.sh --fallback-skia`; runtime support remains pending device/emulator first-frame, input, resize, and lifecycle evidence |
-| Component Gallery | Six-platform component catalog | `examples/component_gallery/app/` | Grouped catalog for reusable `moui/views` controls, searchable sidebar/index, focused component demos for button, text inputs, checkbox, toggle, radio, segmented control, picker, slider, chips, badge, progress, banner, callout, state panels, toast/snackbar, stat card, avatar, divider, toolbar/status bar, surfaces, row/column, responsive grid, scroll view, and platform routes, adaptive mobile/desktop layout, default Skia desktop entrypoints named `macos`, `linux`, and `windows`, experimental Android/iOS embedded-session entrypoints named `android` and `ios`, a Web wasm-gc entrypoint named `web`, plus app-owned Android APK and UIKit iOS shells |
+| Component Gallery | Seven-platform component catalog | `examples/component_gallery/app/` | Grouped catalog for reusable `moui/views` controls, searchable sidebar/index, focused component demos for button, text inputs, checkbox, toggle, radio, segmented control, picker, slider, chips, badge, progress, banner, callout, state panels, toast/snackbar, stat card, avatar, divider, toolbar/status bar, surfaces, row/column, responsive grid, scroll view, and platform routes, adaptive mobile/desktop layout, default Skia desktop entrypoints named `macos`, `linux`, and `windows`, experimental Android/iOS/HarmonyOS embedded-session entrypoints named `android`, `ios`, and `harmonyos`, a Web wasm-gc entrypoint named `web`, plus app-owned Android APK, UIKit iOS, and HarmonyOS Stage Ability shells |
 | Button Freeze Probe | Native Skia button freeze repro | `examples/button_freeze_probe/app/` | Minimal `data_filter_bar` filter chips, red primary accent, repeated click counter, direct primary/tonal button comparison, native Skia macOS/Windows/Linux entrypoints |
 | Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | TEA-first `Model / Msg / update / view` app, public `views` constructors, built-in Counter/Todo examples, validating form fields and workflow bars, `ToastQueue`-backed toast stack/progress/status surfaces with dismiss state, `status_badge` feedback chips, helper-backed table/selectable-list data views with app-owned sort/page/column visibility state, route header/section-nav/sidebar/breadcrumb shells with app-owned route/deep-link history and route focus restore state, custom dialog/alert/sheet/menu surfaces, light Markdown preview, neutral core theme toggling, presentation, renderer capability status, advanced rendering demos, text diagnostics, interaction wiring. Showcase intentionally has no `moui_theme` dependency and is not an official design-system compatibility claim. |
 | Design Systems | Addon diagnostic source-mapped design-system preview and first-party theme sampler | `examples/design_systems/app/`, `examples/design_systems/{web_wasm,macos_skia,windows_skia,linux_skia}/` | Material, Carbon, Primer, and Fluent switching through the `moui_theme/material`, `moui_theme/carbon`, `moui_theme/primer`, and `moui_theme/fluent` entrypoints over shared `moui_theme/common` models, Sickle switching through `moui_theme/sickle` as a first-party theme addon, light/dark/high-contrast/system variants for official source-mapped presets, compact/standard/comfortable density, semantic palette roles, typography specimen, spacing/density grid, component-token matrix sampling, component style bundle usage, custom inheritance/override API, Web and native Skia host entrypoints, coverage/parity status labels, and explicit source-mapped preview wording rather than official-complete claims |
@@ -187,7 +187,7 @@ runtime support.
 
 ## Component Gallery
 
-Component Gallery is the six-platform component catalog. It complements
+Component Gallery is the seven-platform component catalog. It complements
 the older desktop-oriented framework Showcase with a grouped, searchable demo
 surface for reusable `moui/views` controls. Its shared package keeps the
 model/update/view logic in `examples/component_gallery/app`, while each platform
@@ -196,7 +196,7 @@ the matching Skia backend, embedded session, or Web host.
 
 The shared app is split for reuse: `model.mbt` owns component selection and
 update logic, `catalog.mbt` owns grouped component metadata and search,
-`platforms.mbt` owns six-host route metadata, `view.mbt` owns the responsive
+`platforms.mbt` owns seven-host route metadata, `view.mbt` owns the responsive
 catalog shell, `component_views.mbt` dispatches the active component demo, and
 the focused demo content is split across `component_welcome.mbt`,
 `component_controls.mbt`, `component_inputs.mbt`, `component_choices.mbt`,
@@ -206,9 +206,9 @@ the focused demo content is split across `component_welcome.mbt`,
 
 This example deliberately does not use `_skia` in its entrypoint directory
 names. In `examples/component_gallery`, `macos`, `linux`, `windows`, `android`,
-and `ios` mean the default Skia route. The Web wasm-gc entrypoint is named
-`web`. Future non-default renderer routes should spell out the renderer in the
-directory name, such as `macos_wgpu`.
+`ios`, and `harmonyos` mean the default Skia route. The Web wasm-gc entrypoint
+is named `web`. Future non-default renderer routes should spell out the
+renderer in the directory name, such as `macos_wgpu`.
 
 Focused Component Gallery checks:
 
@@ -220,17 +220,21 @@ moon check examples/component_gallery/linux --target native
 moon build examples/component_gallery/web --target wasm-gc
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/component_gallery/android --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/component_gallery/ios --target native
+MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/component_gallery/harmonyos --target native
 bash -n scripts/build-component-gallery-android-apk.sh
 bash -n scripts/build-component-gallery-ios-app.sh
+bash -n scripts/build-component-gallery-harmonyos-hap.sh
 scripts/build-component-gallery-android-apk.sh --fallback-skia
 scripts/build-component-gallery-ios-app.sh --fallback-skia
+scripts/build-component-gallery-harmonyos-hap.sh --fallback-skia
 ```
 
 The canonical mobile commands are
 `scripts/build-mobile-android-apk.sh --app component_gallery` and
-`scripts/build-mobile-ios-app.sh --app component_gallery`; the app-specific
-scripts are compatibility wrappers. Component Gallery mobile runtime evidence
-must include scroll input in the mobile runtime manifest.
+`scripts/build-mobile-ios-app.sh --app component_gallery`, plus
+`scripts/build-mobile-harmonyos-hap.sh --app component_gallery` for HarmonyOS;
+the app-specific scripts are compatibility wrappers. Component Gallery mobile
+runtime evidence must include scroll input in the mobile runtime manifest.
 
 Run desktop entrypoints from the repository root:
 

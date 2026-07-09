@@ -53,12 +53,12 @@ For task-specific workflows, use the repo-local skills:
   `moui/backend/harmonyos` owns Stage Ability/XComponent-driven host contracts
   and `moui/backend/harmonyos/skia` owns the XComponent native-window Skia
   presenter. `moui/mobile/harmonyos` owns the package-published Stage
-  Ability/XComponent/NAPI/CMake template; `examples/harmonyos_demo` is the
-  standalone experimental demo over that template, and
-  `scripts/build-harmonyos-demo-app.sh` is its repository wrapper. Fallback HAP
-  builds are packaging evidence only; do not claim HarmonyOS runtime support as
-  passed until a matching device/emulator smoke records first-frame and
-  input/lifecycle evidence.
+  Ability/XComponent/NAPI/CMake template; `examples/*/harmonyos_app` are
+  repository example metadata projects over that template. The standalone
+  `examples/harmonyos_demo` keeps `scripts/build-harmonyos-demo-app.sh` as a
+  compatibility wrapper. Fallback HAP builds are packaging evidence only; do not
+  claim HarmonyOS runtime support as passed until a matching device/emulator
+  smoke records first-frame and input/lifecycle evidence.
 
 ### CI Safety Rules
 

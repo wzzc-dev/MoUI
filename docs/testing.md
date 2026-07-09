@@ -122,6 +122,8 @@ scripts/build-counter-ios-app.sh --fallback-skia
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test examples/harmonyos_demo/app --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/harmonyos_demo/harmonyos_skia --target native
 scripts/build-harmonyos-demo-app.sh --fallback-skia
+MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/component_gallery/harmonyos --target native
+scripts/build-component-gallery-harmonyos-hap.sh --fallback-skia
 ```
 
 Use `moon test moui/render/wgpu --target native` only for the native WGPU
@@ -247,13 +249,14 @@ checked-in Xcode project. Use `node scripts/record-mobile-runtime-smoke.mjs
 produce the checked mobile runtime manifest for release/manual claims.
 
 For HarmonyOS packaging changes, `scripts/build-harmonyos-demo-app.sh
---fallback-skia` is a fast build-system smoke that covers the standalone demo's
-MoonBit C export, app-owned Stage Ability/XComponent shell over the
-`moui/mobile/harmonyos` NAPI/CMake template, native glue compilation,
-native-stub compilation, and staged HAP archive. It is not real Skia renderer or
-platform runtime evidence. HarmonyOS first-frame/input/lifecycle claims still
-require `scripts/build-harmonyos-demo-app.sh` without fallback and a matching
-device or emulator run with recorded observations.
+--fallback-skia` and `scripts/build-component-gallery-harmonyos-hap.sh
+--fallback-skia` are fast build-system smokes that cover MoonBit C exports,
+app-owned Stage Ability/XComponent shells over the `moui/mobile/harmonyos`
+NAPI/CMake template, native glue compilation, native-stub compilation, and
+staged HAP archives. They are not real Skia renderer or platform runtime
+evidence. HarmonyOS first-frame/input/lifecycle claims still require a
+non-fallback HAP and a matching device or emulator run with recorded
+observations.
 
 `smoke/gates.json` is the checked-in smoke gate catalog. It describes the daily,
 nightly, and release smoke tiers, each suite command, the structured result

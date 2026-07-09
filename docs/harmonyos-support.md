@@ -99,8 +99,11 @@ MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test moui/backend/harmonyos --target nati
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test moui/backend/harmonyos/skia --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test examples/harmonyos_demo/app --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/harmonyos_demo/harmonyos_skia --target native
+MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/component_gallery/harmonyos --target native
 bash -n scripts/build-harmonyos-demo-app.sh
+bash -n scripts/build-component-gallery-harmonyos-hap.sh
 scripts/build-harmonyos-demo-app.sh --fallback-skia
+scripts/build-component-gallery-harmonyos-hap.sh --fallback-skia
 ```
 
 External apps can copy `moui/mobile/harmonyos/template` as `harmonyos_app/` and
@@ -120,6 +123,16 @@ MOUI_SKIA_PLATFORM=harmonyos \
 MOUI_SKIA_ARCH=arm64 \
 MOUI_SKIA_LINK_MODE=dynamic \
 scripts/build-harmonyos-demo-app.sh
+```
+
+Build Component Gallery with the same route:
+
+```sh
+HARMONYOS_SDK_HOME=/path/to/HarmonyOS/Sdk \
+MOUI_SKIA_PLATFORM=harmonyos \
+MOUI_SKIA_ARCH=arm64 \
+MOUI_SKIA_LINK_MODE=dynamic \
+scripts/build-component-gallery-harmonyos-hap.sh
 ```
 
 `--fallback-skia` validates MoonBit C generation, native glue compilation, and
@@ -166,6 +179,7 @@ Install, launch, and capture a screenshot:
 
 ```sh
 export HARMONYOS_SDK_HOME=/path/to/DevEco/sdk/default/openharmony
+# export HARMONYOS_SDK_HOME="/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony"
 export PATH="$HARMONYOS_SDK_HOME/toolchains:$PATH"
 
 HDC="$HARMONYOS_SDK_HOME/toolchains/hdc"
