@@ -33,6 +33,17 @@ The templates cover counter, dashboard, and document-editor skeletons without
 introducing a generator. The root `website/` workspace uses the same app-first
 shape outside `examples/` so MoUI can render its own bilingual homepage.
 
+Mobile packaging metadata is intentionally split by publish boundary.
+Application authors keep app-owned identity, capability metadata, and native
+export contracts in their app `mobile.json`. In this repository the examples
+use `examples/<app>/mobile.json` for identity metadata and
+`moui/mobile/build-contracts.json` for Counter/Component Gallery compatibility
+defaults. The reusable Gradle, JNI, CMake, UIKit, Xcode, and prepare scripts
+live under the package-published `moui/mobile` and `moui/scripts/mobile`
+directories, so ordinary UI code still lives in `examples/<app>/app` and does
+not depend on native shell details. Run `node scripts/check-mobile-app-config.mjs`
+after changing repository example mobile metadata or contracts.
+
 | Example | Purpose | Shared app package | Main coverage |
 | --- | --- | --- | --- |
 | Website | MoUI-built homepage workspace | `website/app/` | Bilingual product homepage, first-screen MoUI brand hero, compact Counter code snippet, interactive runtime preview, framework foundations, platform matrix, release-readiness cards, quick-start Web commands, runtime Docs portal that fetches packaged same-origin `docs/*.md` Markdown plus MoUI and `moui_skia` README copies, Web-only `website/web_wasm` entrypoint |
@@ -136,9 +147,9 @@ scripts/build-counter-ios-app.sh --fallback-skia
 ```
 
 The fallback APK and `.app` commands validate packaging paths only. Use
-`scripts/build-counter-android-apk.sh` without `--fallback-skia` plus a
+`scripts/build-mobile-android-apk.sh --app counter` without `--fallback-skia` plus a
 matching device/emulator smoke before claiming Android Skia first-frame runtime
-support; use `scripts/build-counter-ios-app.sh` without `--fallback-skia` plus
+support; use `scripts/build-mobile-ios-app.sh --app counter` without `--fallback-skia` plus
 a matching simulator/device smoke before claiming iOS Skia first-frame runtime
 support.
 
@@ -182,6 +193,12 @@ bash -n scripts/build-component-gallery-ios-app.sh
 scripts/build-component-gallery-android-apk.sh --fallback-skia
 scripts/build-component-gallery-ios-app.sh --fallback-skia
 ```
+
+The canonical mobile commands are
+`scripts/build-mobile-android-apk.sh --app component_gallery` and
+`scripts/build-mobile-ios-app.sh --app component_gallery`; the app-specific
+scripts are compatibility wrappers. Component Gallery mobile runtime evidence
+must include scroll input in the mobile runtime manifest.
 
 Run desktop entrypoints from the repository root:
 

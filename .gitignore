@@ -24,3 +24,7 @@ trace.json
 .openseek/sessions/*
 .kilo/*
 .mo_workbench/settings.json
+.gradle/
+examples/*/android_app/build/
+examples/*/android_app/app/.cxx/
+examples/*/android_app/app/build/

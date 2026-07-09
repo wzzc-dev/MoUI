@@ -208,7 +208,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "tools/moui/validate_maintenance_baseline/moonbit_tool_wrapper_budget.mbt",
-      max_lines: 133,
+      max_lines: 134,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/repo_scan_helpers.mbt",

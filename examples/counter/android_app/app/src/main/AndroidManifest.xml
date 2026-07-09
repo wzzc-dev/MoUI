@@ -1,12 +1,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
         android:allowBackup="false"
-        android:label="MoUI Counter"
+        android:label="${mouiAppLabel}"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".MainActivity"
+            android:name="dev.wzzc.moui.mobile.MobileActivity"
             android:configChanges="density|keyboard|keyboardHidden|orientation|screenSize"
             android:exported="true">
+            <meta-data
+                android:name="dev.wzzc.moui.NATIVE_LIBRARY"
+                android:value="${mouiNativeLibrary}" />
+            <meta-data
+                android:name="dev.wzzc.moui.SUPPORTS_SCROLL"
+                android:value="${mouiSupportsScroll}" />
+            <meta-data
+                android:name="dev.wzzc.moui.FULLSCREEN"
+                android:value="${mouiFullscreen}" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

@@ -126,6 +126,122 @@
       },
       "docs": ["docs/testing.md", "docs/release-readiness.md"],
       "artifacts": ["artifacts/window-package-smoke/<platform>.log"]
+    },
+    {
+      "id": "android.counter-runtime",
+      "tier": "release",
+      "kind": "mobile-runtime-smoke",
+      "host": "android-device-or-emulator",
+      "purpose": "Record non-fallback Counter Android Activity, ANativeWindow, first-frame, input, resize, and shutdown evidence.",
+      "defaultDevCheck": false,
+      "commands": [
+        {
+          "argv": ["node", "scripts/record-mobile-runtime-smoke.mjs", "--platform", "android", "--app", "counter", "--manifest", "artifacts/mobile-runtime/android/counter/mobile-runtime-smoke.json", "--require-passed"],
+          "mode": "manual"
+        }
+      ],
+      "result": {
+        "type": "manifest",
+        "path": "artifacts/mobile-runtime/android/counter/mobile-runtime-smoke.json",
+        "validator": ["node", "scripts/validate-mobile-runtime-manifest.mjs", "artifacts/mobile-runtime/android/counter/mobile-runtime-smoke.json", "--require-passed"]
+      },
+      "ci": {
+        "workflow": ".github/workflows/moui-runtime-gates.yml",
+        "gate": "release-manual"
+      },
+      "docs": ["docs/android-support.md", "docs/testing.md", "docs/release-readiness.md"],
+      "artifacts": [
+        "artifacts/mobile-runtime/android/counter/mobile-runtime-smoke.json",
+        "artifacts/mobile-runtime/android/counter/screenshot.png",
+        "artifacts/mobile-runtime/android/counter/runtime.log"
+      ]
+    },
+    {
+      "id": "ios.counter-runtime",
+      "tier": "release",
+      "kind": "mobile-runtime-smoke",
+      "host": "macos-ios-simulator",
+      "purpose": "Record non-fallback Counter iOS Simulator UIKit, UIView, first-frame, touch, resize, and shutdown evidence.",
+      "defaultDevCheck": false,
+      "commands": [
+        {
+          "argv": ["node", "scripts/record-mobile-runtime-smoke.mjs", "--platform", "ios", "--app", "counter", "--manifest", "artifacts/mobile-runtime/ios/counter/mobile-runtime-smoke.json", "--require-passed"],
+          "mode": "manual"
+        }
+      ],
+      "result": {
+        "type": "manifest",
+        "path": "artifacts/mobile-runtime/ios/counter/mobile-runtime-smoke.json",
+        "validator": ["node", "scripts/validate-mobile-runtime-manifest.mjs", "artifacts/mobile-runtime/ios/counter/mobile-runtime-smoke.json", "--require-passed"]
+      },
+      "ci": {
+        "workflow": ".github/workflows/moui-runtime-gates.yml",
+        "gate": "release-manual"
+      },
+      "docs": ["docs/ios-support.md", "docs/testing.md", "docs/release-readiness.md"],
+      "artifacts": [
+        "artifacts/mobile-runtime/ios/counter/mobile-runtime-smoke.json",
+        "artifacts/mobile-runtime/ios/counter/screenshot.png",
+        "artifacts/mobile-runtime/ios/counter/runtime.log"
+      ]
+    },
+    {
+      "id": "android.component-gallery-runtime",
+      "tier": "release",
+      "kind": "mobile-runtime-smoke",
+      "host": "android-device-or-emulator",
+      "purpose": "Record non-fallback Component Gallery Android runtime evidence including scroll input.",
+      "defaultDevCheck": false,
+      "commands": [
+        {
+          "argv": ["node", "scripts/record-mobile-runtime-smoke.mjs", "--platform", "android", "--app", "component_gallery", "--manifest", "artifacts/mobile-runtime/android/component_gallery/mobile-runtime-smoke.json", "--require-passed"],
+          "mode": "manual"
+        }
+      ],
+      "result": {
+        "type": "manifest",
+        "path": "artifacts/mobile-runtime/android/component_gallery/mobile-runtime-smoke.json",
+        "validator": ["node", "scripts/validate-mobile-runtime-manifest.mjs", "artifacts/mobile-runtime/android/component_gallery/mobile-runtime-smoke.json", "--require-passed"]
+      },
+      "ci": {
+        "workflow": ".github/workflows/moui-runtime-gates.yml",
+        "gate": "release-manual"
+      },
+      "docs": ["docs/android-support.md", "docs/testing.md", "docs/release-readiness.md"],
+      "artifacts": [
+        "artifacts/mobile-runtime/android/component_gallery/mobile-runtime-smoke.json",
+        "artifacts/mobile-runtime/android/component_gallery/screenshot.png",
+        "artifacts/mobile-runtime/android/component_gallery/runtime.log"
+      ]
+    },
+    {
+      "id": "ios.component-gallery-runtime",
+      "tier": "release",
+      "kind": "mobile-runtime-smoke",
+      "host": "macos-ios-simulator",
+      "purpose": "Record non-fallback Component Gallery iOS Simulator runtime evidence including scroll input.",
+      "defaultDevCheck": false,
+      "commands": [
+        {
+          "argv": ["node", "scripts/record-mobile-runtime-smoke.mjs", "--platform", "ios", "--app", "component_gallery", "--manifest", "artifacts/mobile-runtime/ios/component_gallery/mobile-runtime-smoke.json", "--require-passed"],
+          "mode": "manual"
+        }
+      ],
+      "result": {
+        "type": "manifest",
+        "path": "artifacts/mobile-runtime/ios/component_gallery/mobile-runtime-smoke.json",
+        "validator": ["node", "scripts/validate-mobile-runtime-manifest.mjs", "artifacts/mobile-runtime/ios/component_gallery/mobile-runtime-smoke.json", "--require-passed"]
+      },
+      "ci": {
+        "workflow": ".github/workflows/moui-runtime-gates.yml",
+        "gate": "release-manual"
+      },
+      "docs": ["docs/ios-support.md", "docs/testing.md", "docs/release-readiness.md"],
+      "artifacts": [
+        "artifacts/mobile-runtime/ios/component_gallery/mobile-runtime-smoke.json",
+        "artifacts/mobile-runtime/ios/component_gallery/screenshot.png",
+        "artifacts/mobile-runtime/ios/component_gallery/runtime.log"
+      ]
     }
   ]
 }
