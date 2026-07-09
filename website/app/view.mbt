@@ -242,6 +242,12 @@ fn website_showcase_entries() -> Array[WebsiteShowcaseEntry] {
       source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/component_gallery",
     },
     {
+      slug: "harmonyos-componentgallery",
+      title: "HarmonyOS Component Gallery",
+      subtitle: "Reusable controls on HarmonyOS",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/component_gallery",
+    },
+    {
       slug: "markdown_editor",
       title: "Markdown Editor",
       subtitle: "WYSIWYG Markdown editing",
@@ -266,16 +272,10 @@ fn website_showcase_entries() -> Array[WebsiteShowcaseEntry] {
       source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/webview_demo",
     },
     {
-      slug: "android_counter",
-      title: "Android Counter",
-      subtitle: "Experimental Android app shell",
-      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/counter/android_app",
-    },
-    {
-      slug: "ios_counter",
-      title: "iOS Counter",
-      subtitle: "Experimental iOS app shell",
-      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/counter/ios_app",
+      slug: "android-componentgallery",
+      title: "Android Component Gallery",
+      subtitle: "Reusable controls on Android",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/component_gallery",
     },
   ]
 }

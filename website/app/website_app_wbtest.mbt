@@ -78,17 +78,17 @@ test "website showcases page renders all screenshot assets" {
     .test_runtime(width=1180.0, height=1800.0)
     .draw_commands()
   let showcase_titles = [
-    "Showcase", "iOS Component Gallery", "Markdown Editor", "Mo Workbench", "Excel Viewer",
-    "WebView Demo", "Android Counter", "iOS Counter",
+    "Showcase", "iOS Component Gallery", "HarmonyOS Component Gallery", "Markdown Editor",
+    "Mo Workbench", "Excel Viewer", "WebView Demo", "Android Component Gallery",
   ]
   for title in showcase_titles {
     assert_true(has_text(commands, title))
   }
   let screenshot_sources = [
     "assets/screenshots/showcase.png", "assets/screenshots/ios-componentgallery.png",
-    "assets/screenshots/markdown_editor.png", "assets/screenshots/mo_workbench.png",
-    "assets/screenshots/excel.png", "assets/screenshots/webview.png", "assets/screenshots/android_counter.jpg",
-    "assets/screenshots/ios_counter.png",
+    "assets/screenshots/harmonyos-componentgallery.png", "assets/screenshots/markdown_editor.png",
+    "assets/screenshots/mo_workbench.png", "assets/screenshots/excel.png", "assets/screenshots/webview.png",
+    "assets/screenshots/android-componentgallery.jpg",
   ]
   for source in screenshot_sources {
     assert_true(has_image_source(commands, source))

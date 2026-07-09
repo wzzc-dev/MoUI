@@ -6,10 +6,12 @@
 ///|
 fn showcase_image_source(slug : String) -> String {
   match slug {
-    "android_counter" => "assets/screenshots/android_counter.jpg"
+    "android-componentgallery" =>
+      "assets/screenshots/android-componentgallery.jpg"
     "excel" => "assets/screenshots/excel.png"
+    "harmonyos-componentgallery" =>
+      "assets/screenshots/harmonyos-componentgallery.png"
     "ios-componentgallery" => "assets/screenshots/ios-componentgallery.png"
-    "ios_counter" => "assets/screenshots/ios_counter.png"
     "markdown_editor" => "assets/screenshots/markdown_editor.png"
     "mo_workbench" => "assets/screenshots/mo_workbench.png"
     "showcase" => "assets/screenshots/showcase.png"
