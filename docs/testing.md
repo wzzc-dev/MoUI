@@ -40,6 +40,8 @@ node scripts/test-validate-conformance-capture-manifest.mjs
 node --check scripts/generate-grapheme-break-fixtures.mjs
 node scripts/generate-grapheme-break-fixtures.mjs --check
 node scripts/test-validate-web-runtime-handoff-manifest.mjs
+node scripts/test-web-canvas2d-lazy-fallback.mjs
+node scripts/test-web-bundle-tools.mjs
 node scripts/test-record-web-runtime-presentation.mjs
 node scripts/test-validate-web-runtime-presentation-manifest.mjs
 node scripts/test-check-runner.mjs

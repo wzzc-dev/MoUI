@@ -40,6 +40,8 @@
         { "name": "grapheme fixture syntax", "argv": ["node", "--check", "scripts/generate-grapheme-break-fixtures.mjs"] },
         { "name": "grapheme fixture check", "argv": ["node", "scripts/generate-grapheme-break-fixtures.mjs", "--check"] },
         { "name": "Web runtime handoff manifest tests", "argv": ["node", "scripts/test-validate-web-runtime-handoff-manifest.mjs"] },
+        { "name": "Web Canvas2D lazy fallback tests", "argv": ["node", "scripts/test-web-canvas2d-lazy-fallback.mjs"] },
+        { "name": "Web bundle tool tests", "argv": ["node", "scripts/test-web-bundle-tools.mjs"] },
         { "name": "Web runtime presentation recorder tests", "argv": ["node", "scripts/test-record-web-runtime-presentation.mjs"] },
         { "name": "Web runtime presentation manifest tests", "argv": ["node", "scripts/test-validate-web-runtime-presentation-manifest.mjs"] },
         { "name": "check runner tests", "argv": ["node", "scripts/test-check-runner.mjs"] },

@@ -12,6 +12,7 @@ export const runCommand = (command, args, options = {}) => {
     options.exitOnFailure === false;
   const result = spawnSync(command, args, {
     cwd: options.cwd ?? repoRoot,
+    env: options.env ?? process.env,
     encoding: captureOutput ? (options.encoding ?? "utf8") : undefined,
     stdio: captureOutput ? undefined : "inherit",
   });
@@ -44,5 +45,13 @@ export const runMoonbitTool = (toolPackage, toolArgs = [], options = {}) =>
   runCommand(
     "moon",
     [ "run", toolPackage, "--target", "native", "--", ...toolArgs ],
-    options,
+    {
+      ...options,
+      env: {
+        ...process.env,
+        MOUI_SKIA_DISABLE_PREBUILD_SKIA:
+          process.env.MOUI_SKIA_DISABLE_PREBUILD_SKIA || "1",
+        ...(options.env ?? {}),
+      },
+    },
   );
