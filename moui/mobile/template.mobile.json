@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "id": "my_app",
+  "displayName": "My MoUI App",
+  "artifactName": "my_app",
+  "appPackage": "app",
+  "mobile": {
+    "fullscreen": false,
+    "supportsScroll": false
+  },
+  "android": {
+    "applicationId": "dev.example.myapp",
+    "native": {
+      "moonPackage": "android_skia",
+      "generatedC": "android_skia.c",
+      "nativeLibrary": "my_app_android",
+      "appArg": "my-app-android",
+      "moonbitMainAlias": "my_app_android_moonbit_generated_main",
+      "exports": {
+        "attachSurface": "my_app_android_attach_surface",
+        "resize": "my_app_android_resize",
+        "dispatchPointer": "my_app_android_dispatch_pointer",
+        "renderFrame": "my_app_android_render_frame",
+        "detachSurface": "my_app_android_detach_surface"
+      }
+    }
+  },
+  "ios": {
+    "bundleId": "dev.example.myapp",
+    "productName": "MoUIMobileApp",
+    "infoPlist": "ios_app/Info.plist",
+    "native": {
+      "moonPackage": "ios_skia",
+      "generatedC": "ios_skia.c",
+      "appArg": "my-app-ios",
+      "moonbitMainAlias": "my_app_ios_moonbit_generated_main",
+      "exports": {
+        "attachView": "my_app_ios_attach_view",
+        "resize": "my_app_ios_resize",
+        "dispatchPointer": "my_app_ios_dispatch_pointer",
+        "renderFrame": "my_app_ios_render_frame",
+        "detachView": "my_app_ios_detach_view"
+      }
+    }
+  }
+}

@@ -205,6 +205,53 @@ cd moui_example
 moon update
 ```
 
+## Mobile Packaging
+
+Android and iOS packaging support is published inside this package under
+`moui/mobile` and `moui/scripts/mobile`. An application project owns its own
+shared app package, mobile platform entrypoint packages, `mobile.json`, Android
+Gradle project, and iOS Xcode project; the MoUI package supplies the reusable
+Gradle/JNI/CMake and UIKit/native build templates.
+
+Start from the copyable files in:
+
+```text
+.mooncakes/wzzc-dev/moui/mobile/template.mobile.json
+.mooncakes/wzzc-dev/moui/mobile/android/template/
+.mooncakes/wzzc-dev/moui/mobile/ios/template/
+```
+
+Android debug APK from an app workspace:
+
+```sh
+.mooncakes/wzzc-dev/moui/scripts/mobile/build-android-apk.sh \
+  --workspace-root "$PWD" \
+  --moui-root "$PWD/.mooncakes/wzzc-dev/moui" \
+  --app my_app \
+  --app-config "$PWD/mobile.json" \
+  --android-project "$PWD/android_app"
+```
+
+iOS Simulator app from an app workspace:
+
+```sh
+.mooncakes/wzzc-dev/moui/scripts/mobile/build-ios-app.sh \
+  --workspace-root "$PWD" \
+  --moui-root "$PWD/.mooncakes/wzzc-dev/moui" \
+  --app my_app \
+  --app-config "$PWD/mobile.json" \
+  --xcode-project "$PWD/ios_app/MoUIMobileApp.xcodeproj" \
+  --scheme MoUIMobileApp \
+  --product-name MoUIMobileApp
+```
+
+`mobile.json` must include the app id, package paths, bundle/application ids,
+and the native export contract under `android.native` and `ios.native` unless
+the app is one of this repository's built-in examples. Fallback Skia builds
+(`--fallback-skia`) prove packaging only; passed Android/iOS runtime claims
+still require a non-fallback build plus matching emulator/simulator or device
+smoke evidence.
+
 ## Web Wasm-GC
 
 Build and serve the MoUI homepage:

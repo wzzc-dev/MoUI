@@ -71,7 +71,11 @@ project requirements.
 
 The repository helper installs the official command-line tools and required SDK
 packages. It requires a JDK on `PATH` because `sdkmanager`, `javac`, and
-`keytool` are used:
+`keytool` are used. APK builds additionally require `jlink`, so point
+`JAVA_HOME` at a complete JDK rather than a stripped runtime. Use Java 17 or
+newer for Android Gradle Plugin 9.x; Java 21 is the recommended local default.
+Java 11 is too old for the APK build, while very new JDKs may be ahead of
+Gradle/Groovy support.
 
 ```sh
 scripts/setup-android-sdk.sh --accept-licenses
@@ -113,13 +117,30 @@ The APK script auto-selects the latest NDK under `$ANDROID_HOME/ndk` when
 `ANDROID_NDK_HOME` is not set. Set `ANDROID_NDK_HOME` only when a specific NDK
 must be pinned.
 
-## Counter APK
+## Mobile APK Builds
+
+Android APK builds now use the shared mobile Gradle route. The app-specific
+shells under `examples/counter/android_app` and
+`examples/component_gallery/android_app` consume app-facing metadata from
+`examples/<app>/mobile.json` plus package-published compatibility contracts
+from `moui/mobile/build-contracts.json`. The reusable Gradle plugin, Java
+Activity, JNI, CMake, and copyable project template live under `moui/mobile`
+so external apps can use the same route from the published `wzzc-dev/moui`
+package. A Gradle pre-build task generates MoonBit C plus Skia flags, compiles
+the shared JNI/CMake template, and lets Gradle package/sign the debug APK.
 
 Build the experimental Counter debug APK from the repository root:
 
 ```sh
 ANDROID_HOME=/path/to/Android/Sdk \
-scripts/build-counter-android-apk.sh
+scripts/build-mobile-android-apk.sh --app counter
+```
+
+Build Component Gallery with the same route:
+
+```sh
+ANDROID_HOME=/path/to/Android/Sdk \
+scripts/build-mobile-android-apk.sh --app component_gallery
 ```
 
 When multiple side-by-side NDK versions are installed, pin the intended one:
@@ -127,16 +148,17 @@ When multiple side-by-side NDK versions are installed, pin the intended one:
 ```sh
 ANDROID_HOME=/path/to/Android/Sdk \
 ANDROID_NDK_HOME=/path/to/Android/Sdk/ndk/25.2.9519653 \
-scripts/build-counter-android-apk.sh
+scripts/build-mobile-android-apk.sh --app counter
 ```
 
 The default APK path resolves the locked Android Skia provider through
 `moui_skia/build.js`, uses the dynamic Android Skia artifact so native
-dependencies can be packaged, builds `libmoui_counter_android.so`, packages the
-Java `SurfaceView` glue, and writes:
+dependencies can be packaged, builds the app's native library, packages the
+shared Java `SurfaceView` glue, and writes:
 
 ```text
 artifacts/android/counter/app-debug.apk
+artifacts/android/component_gallery/app-debug.apk
 ```
 
 The default `arm64-v8a` APK includes `libmoui_counter_android.so`, `libskia.so`,
@@ -147,11 +169,29 @@ For packaging-only smoke, use:
 
 ```sh
 scripts/build-counter-android-apk.sh --fallback-skia
+scripts/build-component-gallery-android-apk.sh --fallback-skia
 ```
 
 `--fallback-skia` validates MoonBit C generation, JNI, CMake,
 Java/resource packaging, and debug signing. It reports native Skia unavailable
 and must not be used as first-frame runtime evidence.
+
+The old app-specific build scripts remain compatibility wrappers over
+`scripts/build-mobile-android-apk.sh --app ...`.
+
+For an external app, copy `moui/mobile/android/template` to `android_app`, copy
+`moui/mobile/template.mobile.json` to `mobile.json`, fill in the app id and
+`android.native` export contract, then run the package-published script from
+the app workspace:
+
+```sh
+.mooncakes/wzzc-dev/moui/scripts/mobile/build-android-apk.sh \
+  --workspace-root "$PWD" \
+  --moui-root "$PWD/.mooncakes/wzzc-dev/moui" \
+  --app my_app \
+  --app-config "$PWD/mobile.json" \
+  --android-project "$PWD/android_app"
+```
 
 ## Runtime Evidence Required
 
@@ -167,3 +207,11 @@ device/emulator evidence for at least:
 
 Until those observations exist, describe Android as an experimental embedded
 scaffold, not as a passed platform.
+
+The checked smoke catalog now contains release/manual Android mobile runtime
+suites. After a non-fallback build, record and validate evidence with:
+
+```sh
+node scripts/record-mobile-runtime-smoke.mjs --platform android --app counter --require-passed
+node scripts/record-mobile-runtime-smoke.mjs --platform android --app component_gallery --require-passed
+```

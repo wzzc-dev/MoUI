@@ -102,15 +102,17 @@ workspace.
   platform backend -> platform Skia provider -> `moui/render/skia` ->
   `moui_skia`.
 - Android Skia route (experimental scaffold): shared app package ->
-  `examples/<app>/android_skia` plus app-owned APK/JNI/CMake wrapper such as
-  `examples/counter/android_app` ->
+  `examples/<app>/android_skia` plus app-owned Gradle metadata project such as
+  `examples/counter/android_app`, using the package-published
+  `moui/mobile/android` Gradle/Activity/JNI/CMake template ->
   `moui/backend/android` embedded session -> `moui/backend/android/skia` ->
   `moui/render/skia` -> `moui_skia`. The app or Android Activity layer owns
   lifecycle, `ANativeWindow` handle acquisition, and input forwarding until a
   checked APK/device smoke promotes the route.
 - iOS Skia route (experimental scaffold): shared app package ->
-  `examples/<app>/ios_skia` plus app-owned UIKit shell such as
-  `examples/counter/ios_app` ->
+  `examples/<app>/ios_skia` plus app-owned Xcode metadata project such as
+  `examples/counter/ios_app`, using the package-published
+  `moui/mobile/ios` UIKit/Xcode/native build template ->
   `moui/backend/ios` embedded session -> `moui/backend/ios/skia` ->
   `moui/render/skia` -> `moui_skia`. The app or UIKit view controller owns
   lifecycle, `UIView` handle ownership, and touch forwarding until a checked

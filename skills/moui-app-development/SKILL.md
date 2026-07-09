@@ -147,9 +147,9 @@ Common examples:
 ```sh
 moon test examples/counter/app --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/counter/android_skia --target native
-scripts/build-counter-android-apk.sh --fallback-skia
+scripts/build-mobile-android-apk.sh --app counter --fallback-skia
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/counter/ios_skia --target native
-scripts/build-counter-ios-app.sh --fallback-skia
+scripts/build-mobile-ios-app.sh --app counter --fallback-skia
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
 moon test examples/pdf_workbench/app --target native
@@ -169,20 +169,31 @@ Run `sh scripts/check.sh --profile theme` for `moui_theme` or
 current-host backend/provider coverage; the shared platform service checks stay
 separate from host-specific steps. Run platform smoke only when
 the change claims real platform/browser/renderer behavior.
-For Android, the fallback APK command only validates packaging/JNI/CMake; a
+For Android, the canonical build command is
+`scripts/build-mobile-android-apk.sh --app <counter|component_gallery>`, with
+app-specific scripts kept as compatibility wrappers. The fallback APK command only validates packaging/JNI/CMake; a
 non-fallback APK plus matching device/emulator smoke is still required for
 first-frame or input/lifecycle runtime claims. Use
 `scripts/setup-android-sdk.sh --accept-licenses` followed by
 `eval "$(scripts/setup-android-sdk.sh --print-env)"` to install and expose the
 official SDK/NDK/CMake toolchain when the local machine does not already have
 one. The setup helper requires a JDK on `PATH`; the APK builder also uses
-`javac` and `keytool`.
-For iOS, the fallback `.app` command only validates MoonBit C generation, UIKit
-shell compilation, native-stub compilation, bundle layout, and ad-hoc simulator
-signing; a non-fallback `.app` plus matching simulator/device smoke is still
-required for first-frame or input/lifecycle runtime claims. Use Xcode command
-line tools (`xcrun --sdk iphonesimulator clang/clang++`) rather than a checked-in
-Xcode project for the current Counter shell.
+`javac`, `jlink`, and `keytool`. Use Java 17 or newer for Android Gradle Plugin
+9.x; Java 21 is the recommended local default.
+For iOS, the canonical build command is
+`scripts/build-mobile-ios-app.sh --app <counter|component_gallery>` through the
+checked-in Xcode project. The fallback `.app` command only validates MoonBit C
+generation, shared UIKit shell compilation, native-stub compilation, bundle
+layout, and ad-hoc simulator signing; a non-fallback `.app` plus matching
+simulator/device smoke is still required for first-frame or input/lifecycle
+runtime claims.
+Repository example mobile metadata lives in `examples/<app>/mobile.json`.
+Reusable mobile templates and scripts live in the published `moui/mobile` and
+`moui/scripts/mobile` directories. Keep Counter/Component Gallery compatibility
+native contracts in `moui/mobile/build-contracts.json`; external app authors
+should instead put their native contract in their own `mobile.json`. Run
+`node scripts/check-mobile-app-config.mjs` after changing repository example
+mobile metadata or contracts.
 
 ## Docs
 

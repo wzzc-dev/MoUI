@@ -162,12 +162,13 @@ owning-package boundaries clear.
   `ANativeWindow` RGBA pixel presenter and preflight summary. Use
   `MOUI_SKIA_PLATFORM=android` plus `MOUI_SKIA_ARCH=<arch>` for Android Skia
   cross-build checks.
-- `examples/counter/android_app`: experimental Counter APK shell. It packages
-  Java `SurfaceView` glue, JNI, MoonBit-generated C, MoonBit runtime, Android
-  presenter, and `moui_skia/native` stubs through CMake. Use
-  `scripts/build-counter-android-apk.sh --fallback-skia` for packaging/JNI/CMake
-  smoke only; use the non-fallback path plus matching device/emulator evidence
-  before claiming Android runtime support.
+- `examples/counter/android_app` and `examples/component_gallery/android_app`:
+  experimental app-owned Gradle metadata projects over the shared
+  package-published `moui/mobile/android` Activity/JNI/CMake template. Use
+  `scripts/build-mobile-android-apk.sh --app <counter|component_gallery>
+  --fallback-skia` for packaging/JNI/CMake smoke only; use the non-fallback path
+  plus `record-mobile-runtime-smoke.mjs` matching device/emulator evidence before
+  claiming Android runtime support.
 - `backend/ios/`: experimental iOS embedded native host scaffold. The UIKit
   layer owns `UIApplicationDelegate` / `UIViewController` lifecycle, raw
   `UIView` handle ownership, and touch forwarding into `IosRuntimeSession`;
@@ -176,12 +177,12 @@ owning-package boundaries clear.
   `UIImageView` RGBA pixel presenter and preflight summary. Use
   `MOUI_SKIA_PLATFORM=iosSim` plus `MOUI_SKIA_ARCH=<arch>` for iOS Simulator
   Skia cross-build checks.
-- `examples/counter/ios_app`: experimental Counter iOS Simulator `.app` shell.
-  It packages UIKit app/view-controller glue, MoonBit-generated C, MoonBit
-  runtime, iOS presenter, runtime compatibility shim, and `moui_skia/native`
-  stubs through `xcrun clang/clang++`. Use
-  `scripts/build-counter-ios-app.sh --fallback-skia` for packaging/native-stub
-  smoke only; use the non-fallback path plus matching simulator/device evidence
+- `examples/counter/ios_app` and `examples/component_gallery/ios_app`:
+  experimental app-owned Xcode metadata projects over the shared
+  package-published `moui/mobile/ios` UIKit/native build template. Use
+  `scripts/build-mobile-ios-app.sh --app <counter|component_gallery>
+  --fallback-skia` for packaging/native-stub smoke only; use the non-fallback
+  path plus `record-mobile-runtime-smoke.mjs` matching simulator/device evidence
   before claiming iOS runtime support.
 - `render/`: renderer facade, shared draw helpers, and capability report API.
 - `render/skia/`: native Skia raster mainline renderer over the local
@@ -459,10 +460,10 @@ moon test moui/render/skia --target native
 moon test moui/backend/host --target native
 moon test moui/backend/android --target native
 moon test moui/backend/android/skia --target native
-scripts/build-counter-android-apk.sh --fallback-skia
+scripts/build-mobile-android-apk.sh --app counter --fallback-skia
 moon test moui/backend/ios --target native
 moon test moui/backend/ios/skia --target native
-scripts/build-counter-ios-app.sh --fallback-skia
+scripts/build-mobile-ios-app.sh --app counter --fallback-skia
 moon test moui/backend/web --target wasm-gc
 moon test moui_tester --target native
 moon test moui_devtools --target native

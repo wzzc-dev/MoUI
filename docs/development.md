@@ -83,13 +83,14 @@ Platform 35, Build-Tools 35.0.0, Platform-Tools, NDK, and CMake through Android
 Studio's SDK Manager, the official `sdkmanager` command-line tools, or the
 repository helper. See
 [android-support.md](android-support.md#android-sdk-and-ndk) for the full setup
-flow. Make sure a JDK is installed first so `java`, `javac`, and `keytool` are
-available. The shortest path is:
+flow. Make sure a complete JDK is installed first so `java`, `javac`, `jlink`,
+and `keytool` are available. Use Java 17 or newer for Android Gradle Plugin
+9.x; Java 21 is the recommended local default. The shortest path is:
 
 ```sh
 scripts/setup-android-sdk.sh --accept-licenses
 eval "$(scripts/setup-android-sdk.sh --print-env)"
-scripts/build-counter-android-apk.sh
+scripts/build-mobile-android-apk.sh --app counter
 ```
 
 If you already have an Android SDK installed, point `ANDROID_HOME` at that SDK
@@ -97,7 +98,7 @@ root and run:
 
 ```sh
 ANDROID_HOME=/path/to/Android/Sdk \
-scripts/build-counter-android-apk.sh
+scripts/build-mobile-android-apk.sh --app counter
 ```
 
 Set `ANDROID_NDK_HOME=/path/to/Android/Sdk/ndk/<version>` only when you need to
@@ -105,9 +106,19 @@ pin a specific side-by-side NDK; otherwise the script uses the latest NDK under
 `$ANDROID_HOME/ndk`.
 
 For a packaging-only smoke that avoids the Android Skia provider download, use
-`scripts/build-counter-android-apk.sh --fallback-skia`. That APK proves the
+`scripts/build-counter-android-apk.sh --fallback-skia`. That compatibility
+wrapper calls `scripts/build-mobile-android-apk.sh --app counter`. The APK proves the
 MoonBit C/JNI/CMake/SDK packaging path only; real Android runtime evidence still
 requires a device or emulator run with the default real-Skia path.
+
+Mobile app registration is split by publish boundary. Repository examples edit
+`examples/<app>/mobile.json` and use compatibility defaults in
+`moui/mobile/build-contracts.json`; external apps should keep the native
+contract directly in their own `mobile.json`. The reusable mobile templates and
+build entrypoints live under `moui/mobile` and `moui/scripts/mobile` so they
+are available after publishing the `wzzc-dev/moui` package. Run
+`node scripts/check-mobile-app-config.mjs` for a fast repository example
+registration consistency check before attempting a full APK or `.app` build.
 
 See [android-support.md](android-support.md) for the Activity/Surface ownership
 boundary and runtime-evidence requirements.
@@ -126,13 +137,13 @@ To build the experimental Counter iOS Simulator app, install/select Xcode and
 run:
 
 ```sh
-scripts/build-counter-ios-app.sh
+scripts/build-mobile-ios-app.sh --app counter
 ```
 
 The default output is `artifacts/ios/counter/MoUICounter.app`. Use
 `scripts/build-counter-ios-app.sh --fallback-skia` for a packaging-only smoke
 that avoids the iOS Skia provider download. That `.app` proves the MoonBit
-C/UIKit shell/native-stub/bundle path only; real iOS runtime evidence still
+C/shared UIKit shell/native-stub/bundle path only; real iOS runtime evidence still
 requires a simulator or device run with the default real-Skia path.
 
 See [ios-support.md](ios-support.md) for the UIKit ownership boundary, Xcode CLI

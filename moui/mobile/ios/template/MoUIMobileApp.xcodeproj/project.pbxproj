@@ -1,0 +1,66 @@
+// !$*UTF8*$!
+{
+  archiveVersion = 1;
+  classes = {};
+  objectVersion = 56;
+  objects = {
+    300000000000000000000001 = {
+      isa = PBXProject;
+      attributes = { LastUpgradeCheck = 1500; };
+      buildConfigurationList = 300000000000000000000002;
+      compatibilityVersion = "Xcode 14.0";
+      developmentRegion = en;
+      hasScannedForEncodings = 0;
+      mainGroup = 300000000000000000000003;
+      projectDirPath = "";
+      projectRoot = "";
+      targets = (300000000000000000000004);
+    };
+    300000000000000000000002 = {
+      isa = XCConfigurationList;
+      buildConfigurations = (300000000000000000000005, 300000000000000000000006);
+      defaultConfigurationIsVisible = 0;
+      defaultConfigurationName = Debug;
+    };
+    300000000000000000000003 = { isa = PBXGroup; children = (); sourceTree = "<group>"; };
+    300000000000000000000004 = {
+      isa = PBXLegacyTarget;
+      buildArgumentsString = "-lc \"\\\"${MOUI_PACKAGE_ROOT:-.mooncakes/wzzc-dev/moui}/scripts/mobile/build-ios-app-core.sh\\\" --app ${MOUI_MOBILE_APP:-my_app}\"";
+      buildConfigurationList = 300000000000000000000007;
+      buildPhases = ();
+      buildToolPath = /bin/bash;
+      buildWorkingDirectory = ..;
+      dependencies = ();
+      name = MoUIMobileApp;
+      passBuildSettingsInEnvironment = 1;
+      productName = MoUIMobileApp;
+    };
+    300000000000000000000005 = { isa = XCBuildConfiguration; buildSettings = {}; name = Debug; };
+    300000000000000000000006 = { isa = XCBuildConfiguration; buildSettings = {}; name = Release; };
+    300000000000000000000007 = {
+      isa = XCConfigurationList;
+      buildConfigurations = (300000000000000000000008, 300000000000000000000009);
+      defaultConfigurationIsVisible = 0;
+      defaultConfigurationName = Debug;
+    };
+    300000000000000000000008 = {
+      isa = XCBuildConfiguration;
+      buildSettings = {
+        IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+        PRODUCT_NAME = MoUIMobileApp;
+        SDKROOT = iphonesimulator;
+      };
+      name = Debug;
+    };
+    300000000000000000000009 = {
+      isa = XCBuildConfiguration;
+      buildSettings = {
+        IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+        PRODUCT_NAME = MoUIMobileApp;
+        SDKROOT = iphonesimulator;
+      };
+      name = Release;
+    };
+  };
+  rootObject = 300000000000000000000001;
+}

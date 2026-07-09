@@ -1,0 +1,153 @@
+import groovy.json.JsonSlurper
+
+def appId = (project.findProperty("mouiApp") ?: project.ext.mouiDefaultApp).toString()
+def workspaceRoot = file(project.findProperty("mouiWorkspaceRoot") ?: "${rootProject.projectDir}/../../..")
+def mouiRoot = file(project.findProperty("mouiRoot") ?: "${workspaceRoot}/moui")
+def defaultSkiaRoot = [
+    "${workspaceRoot}/moui_skia",
+    "${mouiRoot.parentFile}/moui_skia",
+    "${workspaceRoot}/.mooncakes/wzzc-dev/moui_skia",
+].find { file(it).isDirectory() } ?: "${workspaceRoot}/moui_skia"
+def skiaRoot = file(project.findProperty("mouiSkiaRoot") ?: defaultSkiaRoot)
+def defaultMetadataFile = file("${workspaceRoot}/examples/${appId}/mobile.json")
+if (!defaultMetadataFile.isFile()) {
+    defaultMetadataFile = file("${workspaceRoot}/mobile.json")
+}
+def metadataFile = file(project.findProperty("mouiAppConfig") ?: defaultMetadataFile)
+def contractsFile = file(project.findProperty("mouiContracts") ?: "${mouiRoot}/mobile/build-contracts.json")
+if (!metadataFile.isFile()) {
+    throw new GradleException("MoUI mobile app metadata not found: ${metadataFile}")
+}
+def appConfig = new JsonSlurper().parse(metadataFile)
+def contracts = contractsFile.isFile() ? new JsonSlurper().parse(contractsFile).apps : [:]
+def contractConfig = contracts[appId] ?: [:]
+if (appConfig == null || appConfig.android == null || appConfig.mobile == null) {
+    throw new GradleException("Unknown MoUI Android app: ${appId}")
+}
+
+def mergePlatformConfig = { builtInConfig, appPlatformConfig ->
+    def merged = [:]
+    if (builtInConfig instanceof Map) {
+        merged.putAll(builtInConfig)
+    }
+    [appPlatformConfig.native ?: [:], appPlatformConfig.build ?: [:]].each { source ->
+        source.each { key, value ->
+            if (key == "exports" && value instanceof Map) {
+                def exports = [:]
+                if (merged.exports instanceof Map) {
+                    exports.putAll(merged.exports)
+                }
+                exports.putAll(value)
+                merged.exports = exports
+            } else {
+                merged[key] = value
+            }
+        }
+    }
+    appPlatformConfig.each { key, value ->
+        if (key != "native" && key != "build") {
+            merged[key] = value
+        }
+    }
+    return merged
+}
+
+def androidConfig = mergePlatformConfig(contractConfig.android ?: [:], appConfig.android)
+androidConfig.fullscreen = appConfig.mobile.fullscreen
+androidConfig.supportsScroll = appConfig.mobile.supportsScroll
+[
+    "applicationId",
+    "moonPackage",
+    "generatedC",
+    "nativeLibrary",
+    "appArg",
+    "moonbitMainAlias",
+].each { key ->
+    if (!androidConfig[key]) {
+        throw new GradleException("MoUI Android app ${appId} is missing ${key} in ${metadataFile} or ${contractsFile}")
+    }
+}
+["attachSurface", "resize", "dispatchPointer", "renderFrame", "detachSurface"].each { key ->
+    if (!(androidConfig.exports instanceof Map) || !androidConfig.exports[key]) {
+        throw new GradleException("MoUI Android app ${appId} is missing exports.${key} in ${metadataFile} or ${contractsFile}")
+    }
+}
+if (androidConfig.supportsScroll && !androidConfig.exports.dispatchScroll) {
+    throw new GradleException("MoUI Android app ${appId} supports scroll but is missing exports.dispatchScroll")
+}
+def abi = (project.findProperty("mouiAbi") ?: "arm64-v8a").toString()
+def minSdkVersion = (project.findProperty("mouiMinSdk") ?: "23").toString().toInteger()
+def compileSdkVersion = (project.findProperty("mouiCompileSdk") ?: "35").toString().toInteger()
+def generatedRoot = file(project.findProperty("mouiBuildDir") ?: "${workspaceRoot}/artifacts/android/${appId}")
+def fallbackSkia = (project.findProperty("mouiFallbackSkia") ?: "false").toString().toBoolean()
+
+def prepareMouiMobileNative = tasks.register("prepareMouiMobileNative", Exec) {
+    workingDir workspaceRoot
+    commandLine "node",
+        "${mouiRoot}/scripts/mobile/prepare-native-build.mjs",
+        "--platform", "android",
+        "--app", appId,
+        "--workspace-root", workspaceRoot.absolutePath,
+        "--moui-root", mouiRoot.absolutePath,
+        "--skia-root", skiaRoot.absolutePath,
+        "--app-config", metadataFile.absolutePath,
+        "--contracts", contractsFile.absolutePath,
+        "--abi", abi,
+        "--build-dir", generatedRoot.absolutePath
+    if (fallbackSkia) {
+        args "--fallback-skia"
+    }
+}
+
+android {
+    namespace = androidConfig.applicationId
+    compileSdk = compileSdkVersion
+
+    defaultConfig {
+        applicationId = androidConfig.applicationId
+        minSdk = minSdkVersion
+        targetSdk = compileSdkVersion
+        versionCode = 1
+        versionName = "0.1.0"
+
+        manifestPlaceholders = [
+            mouiAppLabel: appConfig.displayName,
+            mouiNativeLibrary: androidConfig.nativeLibrary,
+            mouiSupportsScroll: androidConfig.supportsScroll.toString(),
+            mouiFullscreen: androidConfig.fullscreen.toString(),
+        ]
+
+        externalNativeBuild {
+            cmake {
+                arguments(
+                    "-DMOUI_ROOT=${mouiRoot.absolutePath}",
+                    "-DMOUI_MOBILE_NATIVE_CONFIG=${generatedRoot.absolutePath}/native/moui-mobile-native.cmake",
+                )
+            }
+        }
+
+        ndk {
+            abiFilters += abi
+        }
+    }
+
+    sourceSets {
+        main {
+            java.srcDirs += ["${mouiRoot}/mobile/android/src/main/java"]
+            jniLibs.srcDirs += ["${generatedRoot}/jniLibs"]
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
+    }
+}
+
+tasks.configureEach { task ->
+    if (task.name == "preBuild" || task.name.startsWith("configureCMake") || task.name.startsWith("externalNativeBuild")) {
+        task.dependsOn prepareMouiMobileNative
+    }
+}

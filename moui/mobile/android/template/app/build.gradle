@@ -1,0 +1,10 @@
+plugins {
+    id "com.android.application"
+}
+
+def resolvedMouiRoot = project.findProperty("mouiRoot") ?:
+    System.getenv("MOUI_PACKAGE_ROOT") ?:
+    "${rootProject.projectDir}/../.mooncakes/wzzc-dev/moui"
+
+ext.mouiDefaultApp = "my_app"
+apply from: file("${resolvedMouiRoot}/mobile/android/mobile-app.gradle")

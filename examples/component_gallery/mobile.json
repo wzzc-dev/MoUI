@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "component_gallery",
+  "displayName": "Component Gallery",
+  "artifactName": "component_gallery",
+  "appPackage": "examples/component_gallery/app",
+  "mobile": {
+    "fullscreen": true,
+    "supportsScroll": true
+  },
+  "android": {
+    "applicationId": "dev.wzzc.moui.componentgallery"
+  },
+  "ios": {
+    "bundleId": "dev.wzzc.moui.componentgallery",
+    "productName": "ComponentGallery",
+    "infoPlist": "examples/component_gallery/ios_app/Info.plist"
+  }
+}

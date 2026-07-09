@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "apps": {
+    "counter": {
+      "android": {
+        "moonPackage": "examples/counter/android_skia",
+        "generatedC": "android_skia.c",
+        "nativeLibrary": "moui_counter_android",
+        "appArg": "moui-counter-android",
+        "moonbitMainAlias": "moui_android_moonbit_generated_main",
+        "exports": {
+          "attachSurface": "android_counter_attach_surface",
+          "resize": "android_counter_resize",
+          "dispatchPointer": "android_counter_dispatch_pointer",
+          "renderFrame": "android_counter_render_frame",
+          "detachSurface": "android_counter_detach_surface"
+        }
+      },
+      "ios": {
+        "moonPackage": "examples/counter/ios_skia",
+        "generatedC": "ios_skia.c",
+        "appArg": "moui-counter-ios",
+        "moonbitMainAlias": "moui_ios_moonbit_generated_main",
+        "exports": {
+          "attachView": "ios_counter_attach_view",
+          "resize": "ios_counter_resize",
+          "dispatchPointer": "ios_counter_dispatch_pointer",
+          "renderFrame": "ios_counter_render_frame",
+          "detachView": "ios_counter_detach_view"
+        }
+      }
+    },
+    "component_gallery": {
+      "android": {
+        "moonPackage": "examples/component_gallery/android",
+        "generatedC": "android.c",
+        "nativeLibrary": "component_gallery_android",
+        "appArg": "moui-component-gallery-android",
+        "moonbitMainAlias": "moui_component_gallery_android_moonbit_generated_main",
+        "exports": {
+          "attachSurface": "component_gallery_android_attach_surface",
+          "resize": "component_gallery_android_resize",
+          "dispatchPointer": "component_gallery_android_dispatch_pointer",
+          "dispatchScroll": "component_gallery_android_dispatch_scroll",
+          "renderFrame": "component_gallery_android_render_frame",
+          "detachSurface": "component_gallery_android_detach_surface"
+        }
+      },
+      "ios": {
+        "moonPackage": "examples/component_gallery/ios",
+        "generatedC": "ios.c",
+        "appArg": "moui-component-gallery-ios",
+        "moonbitMainAlias": "moui_component_gallery_ios_moonbit_generated_main",
+        "exports": {
+          "attachView": "component_gallery_ios_attach_view",
+          "resize": "component_gallery_ios_resize",
+          "dispatchPointer": "component_gallery_ios_dispatch_pointer",
+          "dispatchScroll": "component_gallery_ios_dispatch_scroll",
+          "renderFrame": "component_gallery_ios_render_frame",
+          "detachView": "component_gallery_ios_detach_view"
+        }
+      }
+    }
+  }
+}
