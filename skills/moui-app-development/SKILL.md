@@ -155,6 +155,7 @@ moon test examples/markdown_editor/app --target native
 moon test examples/pdf_workbench/app --target native
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
+node scripts/web-bundle-size.mjs examples/counter/web_wasm --json
 ```
 
 Before handoff, prefer:
@@ -192,3 +193,9 @@ when a reusable app pattern changes. Run:
 ```sh
 node scripts/sync-website-docs.mjs
 ```
+
+For Web apps, keep large runtime resources out of MoonBit source. Put large
+images, Markdown, JSON, and fixtures under the Web entrypoint's `assets/`
+directory, reference them with relative URLs, and use
+`scripts/package-web-app.mjs <web-package> --out <dir>` for release-style output
+with copied assets plus gzip/brotli siblings.

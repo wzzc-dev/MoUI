@@ -66,8 +66,11 @@ does not precompile Markdown into wasm; the Web host text-file service fetches
 the selected same-origin Markdown file from `docs/` at runtime. For local
 preview, run `node scripts/sync-website-docs.mjs` so `website/web_wasm/docs/`
 contains the root docs plus `moui-readme.md` and `moui-skia-readme.md`. The
-GitHub Pages workflow copies those Markdown sources directly into
-`dist/pages/docs/` while staging the deployment artifact.
+GitHub Pages workflow packages `website/web_wasm` with
+`scripts/package-web-app.mjs` for release/strip wasm, local runtime JS,
+precompressed assets, and `bundle-size.json`, then runs
+`node scripts/sync-website-docs.mjs --out dist/pages/docs` so the published
+site fetches the same Markdown paths from `docs/`.
 
 ## Counter
 
@@ -659,6 +662,22 @@ Web path uses `wasm-gc + window/web + browser WebGPU host imports`; there is no
 JS-target fallback. Serve from the repository root when testing Website Docs so
 the browser can fetch the static `docs/*.md` files by relative path.
 
+For release-size checks and packaged Web artifacts, use:
+
+```sh
+node scripts/web-bundle-size.mjs examples/counter/web_wasm --json
+node scripts/package-web-app.mjs examples/counter/web_wasm --out artifacts/web/counter
+```
+
+The package helper emits release/strip wasm, MoUI Web runtime JS, precompressed
+`.gz`/`.br` siblings, `bundle-size.json`, and any files under the Web entrypoint
+`assets/` directory. Keep large app resources out of MoonBit source: small
+constants can remain in code, but large images, long Markdown, large JSON, and
+fixtures should live under `assets/` and be referenced with relative URLs such
+as `assets/logo.png` or `assets/story/buttons.json`. Web text/Markdown/JSON
+loads must stay same-origin; the browser host rejects cross-origin text-file
+fetches.
+
 ## macOS Native
 
 macOS examples use the shared app package plus the macOS host core and renderer
@@ -856,6 +875,7 @@ moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
 moon build website/web_wasm --target wasm-gc
+node scripts/web-bundle-size.mjs examples/counter/web_wasm --json
 ```
 
 Before changing platform entrypoints, include the affected host package tests and

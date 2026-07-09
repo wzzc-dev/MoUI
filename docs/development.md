@@ -65,6 +65,7 @@ moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
+node scripts/web-bundle-size.mjs examples/counter/web_wasm --json
 ```
 
 Android is currently an embedded native scaffold rather than a full app-owned
@@ -443,6 +444,22 @@ When previewing the website, run `node scripts/sync-website-docs.mjs` first or
 use the preview loop for `website/web_wasm`; the website fetches same-origin
 Markdown files from `website/web_wasm/docs/`.
 
+For release-style Web output, use the package helper instead of serving the
+debug `_build` tree directly:
+
+```sh
+node scripts/package-web-app.mjs examples/counter/web_wasm --out artifacts/web/counter
+```
+
+The helper builds with `--release --strip`, copies `index.html`, the app wasm,
+MoUI Web runtime JS, and package-local `assets/`, then writes `.gz`/`.br`
+siblings plus `bundle-size.json`. Keep large images, long Markdown, large JSON,
+and fixtures under the Web entrypoint's `assets/` directory and reference them
+with relative URLs such as `assets/story/buttons.json`. Text/Markdown/JSON
+resources should load through the Web host's same-origin text-file service;
+image sources should stay as URL strings so the renderer can load them outside
+the wasm module.
+
 ## Framework Iteration
 
 Use focused package tests while editing internals:
@@ -476,9 +493,11 @@ node scripts/sync-website-docs.mjs
 node scripts/sync-website-docs.mjs --check
 ```
 
-GitHub Pages stages `docs/*.md`, root `README.mbt.md` as `moui-readme.md`, and
-`moui_skia/README.mbt.md` as `moui-skia-readme.md`. Keep root docs free of
-machine-local paths and generated `artifacts/` evidence.
+GitHub Pages packages `website/web_wasm` with
+`scripts/package-web-app.mjs website/web_wasm --out dist/pages`, then stages
+the same Markdown set with
+`node scripts/sync-website-docs.mjs --out dist/pages/docs`. Keep root docs free
+of machine-local paths and generated `artifacts/` evidence.
 
 ## Daily Validation
 
@@ -664,6 +683,7 @@ moon test examples/pdf_workbench/pdfium_adapter --target native
 moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
+node scripts/package-web-app.mjs examples/counter/web_wasm --out artifacts/web/counter
 sh scripts/check.sh --profile full
 moon build examples/showcase/macos_skia --target native
 moon build examples/design_systems/macos_skia --target native
