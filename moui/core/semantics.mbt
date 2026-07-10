@@ -2,6 +2,10 @@
 pub(all) enum SemanticsRole {
   None
   Text
+  Link
+  Heading
+  Navigation
+  Main
   Button
   Checkbox
   TextField
@@ -55,6 +59,8 @@ pub(all) struct SemanticsState {
 pub(all) struct SemanticsNode {
   element_id : ElementId
   role : SemanticsRole
+  level : Int?
+  url : String
   label : String
   value : String
   description : String
@@ -78,3 +84,11 @@ pub fn SemanticsState::default() -> SemanticsState {
     required: false,
   }
 }
+
+///|
+pub(all) enum ScrollAlignment {
+  Start
+  Center
+  End
+  Nearest
+} derive(Eq, Debug, ToJson)

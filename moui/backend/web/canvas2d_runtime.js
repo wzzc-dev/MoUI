@@ -24,7 +24,11 @@ export function createCanvas2dImports(options = {}) {
     return handle;
   };
 
-  const stringValue = handle => strings.get(handle)?.value ?? "";
+  const stringValue = handle => {
+    const value = strings.get(handle)?.value ?? "";
+    strings.delete(handle);
+    return value;
+  };
   const ok = () => 0;
   const invalidResource = () => 6;
 

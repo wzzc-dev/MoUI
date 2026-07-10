@@ -1,12 +1,35 @@
 ///|
 fn main {
-  @web.run_app(
-    "MoUI Website",
-    @runtime.new_program_with_dimensions(
-      program=@website_app.program_with_services(@web.web_app_services()),
-      width=1180.0,
-      height=760.0,
+  let route_source = @host.HostRouteSource::new()
+  let runtime_ref : Ref[@runtime.AppRuntime?] = Ref(None)
+  let route_host = @website_app.WebsiteRouteHost::new(
+    route_source~,
+    push_route=route => @web.web_history_push_route(route),
+    scroll_to_key=(key, alignment) => {
+      match runtime_ref.val {
+        Some(runtime) => ignore(runtime.scroll_to_key(key, alignment~))
+        None => ()
+      }
+    },
+    update_metadata=(title, description, canonical) => {
+      @web.web_update_document_metadata(
+        @web.WebDocumentMetadata::new(title~, description~, canonical~),
+      )
+    },
+  )
+  let runtime = @runtime.new_program_with_dimensions(
+    program=@website_app.program_with_services(
+      @web.web_app_services(),
+      route_host=Some(route_host),
     ),
+    width=1180.0,
+    height=760.0,
+  )
+  runtime_ref.val = Some(runtime)
+  @web.run_app_with_options(
+    "MoUI - MoonBit GUI Framework",
+    runtime,
+    options=@web.WebAppOptions::new(route_source=Some(route_source)),
   )
 }
 
@@ -20,6 +43,21 @@ pub fn web_dispatch_event(
   text_id : Int,
 ) -> Unit {
   @web.web_dispatch_event(kind, raw_id, arg0, arg1, argd, text_id)
+}
+
+///|
+pub fn web_dispatch_route(source_code : Int, text_id : Int) -> Unit {
+  @web.web_dispatch_route(source_code, text_id)
+}
+
+///|
+pub fn web_dispatch_semantics_action(
+  raw_id : Int,
+  element_id : Int,
+  action_code : Int,
+  value_id : Int,
+) -> Unit {
+  @web.web_dispatch_semantics_action(raw_id, element_id, action_code, value_id)
 }
 
 ///|

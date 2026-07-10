@@ -35,6 +35,7 @@ fn RuntimeState::layout_current_tree(self : RuntimeState) -> Unit {
   }
   self.needs_rebuild = false
   self.needs_layout = false
+  ignore(self.try_pending_scroll_from_current_layout())
 }
 
 ///|

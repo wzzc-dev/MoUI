@@ -212,6 +212,7 @@ pub impl @window_web.ApplicationHandler for WebApp with fn can_create_surfaces(
               renderer,
             }),
           )
+          register_web_semantics_runtime(window.id().into_raw(), self.runtime)
           window.request_redraw()
         }
       }
@@ -248,6 +249,11 @@ fn WebApp::redraw_window(self : WebApp, window_id : @host.HostWindowId) -> Unit 
       )
       runtime_slot.driver.apply_render_frame_result(result)
       runtime_slot.driver.finish_redraw()
+      sync_web_semantics(
+        platform_slot.platform_id.into_raw(),
+        window_web_default_canvas_id(platform_slot.platform_id.into_raw()),
+        runtime_slot.driver.runtime.semantics(),
+      )
     }
     _ => ()
   }
@@ -427,6 +433,7 @@ fn WebApp::dispose_window(
   ignore(self.platform_windows.remove_host(window_id))
   match self.platform_slots.remove_host(window_id) {
     Some(slot) => {
+      unregister_web_semantics_runtime(slot.platform_id.into_raw())
       slot.renderer.dispose()
       slot.window.drop()
     }

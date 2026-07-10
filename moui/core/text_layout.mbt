@@ -287,7 +287,8 @@ fn fallback_paragraph_layout_result(
   measure : (TextLayoutInput) -> TextLayoutResult,
   text_system_id : String,
 ) -> TextParagraphLayoutResult {
-  let line_ranges = fallback_paragraph_line_ranges(input, measure)
+  let measured = measure(TextLayoutInput::new(text=input.text, font=input.font))
+  let line_ranges = fallback_paragraph_line_ranges(input, measured)
   let caret_rects : Array[Rect] = []
   let text_length = input.text.to_array().length()
   let caret_count = text_length + 1
@@ -295,18 +296,21 @@ fn fallback_paragraph_layout_result(
     caret_rects.push(Rect::new(x=0.0, y=0.0, width=1.0, height=0.0))
   }
   let lines : Array[TextParagraphLineMetrics] = []
-  let chars = input.text.to_array()
   let mut y = 0.0
   let mut width = 0.0
   let mut first_baseline = 0.0
   for line_index, range in line_ranges {
-    let line_text = String::from_array(chars[range.start:range.end])
-    let measured = measure(
-      TextLayoutInput::new(text=line_text, font=input.font),
+    let line_measured = fallback_paragraph_range_measure(
+      measured,
+      range,
+      input.font,
     )
-    let line_height = measured.size.height.max(input.font.size * 1.25)
-    let line_width = fallback_paragraph_line_width(measured.size.width, input)
-    let baseline = y + measured.baseline
+    let line_height = line_measured.size.height.max(input.font.size * 1.25)
+    let line_width = fallback_paragraph_line_width(
+      line_measured.size.width,
+      input,
+    )
+    let baseline = y + line_measured.baseline
     if line_index == 0 {
       first_baseline = baseline
     }
@@ -320,7 +324,7 @@ fn fallback_paragraph_layout_result(
     fallback_fill_paragraph_caret_rects(
       caret_rects,
       range,
-      measured,
+      line_measured,
       y~,
       line_height~,
     )
@@ -349,7 +353,7 @@ fn fallback_paragraph_layout_result(
 ///|
 fn fallback_paragraph_line_ranges(
   input : TextLayoutInput,
-  measure : (TextLayoutInput) -> TextLayoutResult,
+  measured : TextLayoutResult,
 ) -> Array[TextRange] {
   let chars = input.text.to_array()
   let length = chars.length()
@@ -370,10 +374,9 @@ fn fallback_paragraph_line_ranges(
       cursor = next
       last_soft_break = -1
     } else {
-      let candidate = String::from_array(chars[line_start:next])
-      let candidate_width = measure(
-          TextLayoutInput::new(text=candidate, font=input.font),
-        ).size.width
+      let candidate_width = fallback_paragraph_caret_span_width(
+        measured, line_start, next,
+      )
       if fallback_paragraph_should_wrap(input.max_width, candidate_width) &&
         line_start < cursor {
         let break_end = if last_soft_break > line_start {
@@ -395,6 +398,64 @@ fn fallback_paragraph_line_ranges(
   }
   ranges.push(TextRange::new(start=line_start, end=length))
   ranges
+}
+
+///|
+fn fallback_paragraph_range_measure(
+  measured : TextLayoutResult,
+  range : TextRange,
+  font : FontSpec,
+) -> TextLayoutResult {
+  let origin = fallback_paragraph_caret_position(measured, range.start)
+  let carets : Array[Double] = []
+  for offset in range.start..<=range.end {
+    carets.push(
+      max_double(
+        0.0,
+        fallback_paragraph_caret_position(measured, offset) - origin,
+      ),
+    )
+  }
+  {
+    size: Size::new(
+      width=fallback_paragraph_caret_span_width(
+        measured,
+        range.start,
+        range.end,
+      ),
+      height=measured.size.height.max(font.size * 1.25),
+    ),
+    baseline: measured.baseline,
+    caret_positions: carets,
+  }
+}
+
+///|
+fn fallback_paragraph_caret_span_width(
+  measured : TextLayoutResult,
+  start : Int,
+  end : Int,
+) -> Double {
+  max_double(
+    0.0,
+    fallback_paragraph_caret_position(measured, end) -
+    fallback_paragraph_caret_position(measured, start),
+  )
+}
+
+///|
+fn fallback_paragraph_caret_position(
+  measured : TextLayoutResult,
+  offset : Int,
+) -> Double {
+  if measured.caret_positions.is_empty() {
+    return 0.0
+  }
+  measured.caret_positions[clamp_int(
+    offset,
+    0,
+    measured.caret_positions.length() - 1,
+  )]
 }
 
 ///|
@@ -508,4 +569,23 @@ fn fallback_text_layout_result(input : TextLayoutInput) -> TextLayoutResult {
     baseline: input.font.size * 0.8,
     caret_positions: carets,
   }
+}
+
+///|
+test "fallback paragraph derives wrapping from one text measurement" {
+  let measure_count = [0]
+  let system = TextSystem::new(id="counted-fallback", measure=input => {
+    measure_count[0] = measure_count[0] + 1
+    fallback_text_layout_result(input)
+  })
+  let paragraph = system.layout_paragraph(
+    TextLayoutInput::new(
+      text="one two three four five six seven eight nine ten",
+      font=FontSpec::new(size=14.0),
+      max_width=80.0,
+    ),
+  )
+  assert_true(paragraph.lines.length() > 1)
+  assert_eq(measure_count[0], 1)
+  assert_eq(paragraph.caret_rects.length(), 49)
 }

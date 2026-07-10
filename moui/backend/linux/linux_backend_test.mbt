@@ -435,6 +435,8 @@ test "linux accessibility bridge dispatches semantics actions" {
   let node = @core.SemanticsNode::{
     element_id: @core.ElementId::new(1),
     role: @core.SemanticsRole::Button,
+    level: None,
+    url: "",
     label: "Run",
     value: "",
     description: "",

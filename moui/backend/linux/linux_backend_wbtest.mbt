@@ -120,6 +120,8 @@ test "linux at-spi binding publishes semantics dispatches actions and disposes" 
   let child = @core.SemanticsNode::{
     element_id: @core.ElementId::new(12),
     role: @core.SemanticsRole::Button,
+    level: None,
+    url: "",
     label: "Apply",
     value: "",
     description: "",
@@ -132,6 +134,8 @@ test "linux at-spi binding publishes semantics dispatches actions and disposes" 
   let root = @core.SemanticsNode::{
     element_id: @core.ElementId::new(11),
     role: @core.SemanticsRole::Group,
+    level: None,
+    url: "",
     label: "Panel",
     value: "",
     description: "",

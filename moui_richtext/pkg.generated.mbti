@@ -87,6 +87,8 @@ pub fn markdown_split_lines(String) -> Array[String]
 
 pub fn markdown_split_table_cells(String) -> Array[String]
 
+pub fn[Msg] markdown_viewer(source~ : String, size~ : @core.Size, font? : @core.FontSpec, foreground? : @core.Color, background? : @core.Brush, corner_radius? : Double, on_link_click? : ((String) -> Msg)?, visible_scroll_y? : Double, visible_viewport_height? : Double, visible_overscan? : Double, visible_scroll_state? : @core.ScrollState?, key? : String?) -> @core.View[Msg]
+
 pub fn parse_markdown(String) -> Array[MarkdownBlock]
 
 pub fn parse_markdown_inlines(String) -> Array[MarkdownInline]
@@ -100,6 +102,8 @@ pub fn rich_text_document_height(RichTextDocument, @core.FontSpec, text_system? 
 pub fn[Msg] rich_text_editor(value~ : @core.Binding[String], placeholder~ : String, size~ : @core.Size, format~ : (String) -> RichTextDocument, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_input? : ((String) -> Msg)?, on_input_edit? : ((String, Int, @core.TextRange?) -> Msg)?, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, on_command_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool, visible_scroll_y? : Double, visible_viewport_height? : Double, visible_overscan? : Double, visible_scroll_state? : @core.ScrollState?, selection_caret? : Int, selection_range? : @core.TextRange?, kind? : String, key? : String?) -> @core.View[Msg]
 
 pub fn rich_text_editor_content_rect(@core.Rect) -> @core.Rect
+
+pub fn[Msg] text_viewer(source~ : String, size~ : @core.Size, font? : @core.FontSpec, foreground? : @core.Color, key? : String?) -> @core.View[Msg]
 
 // Errors
 

@@ -326,3 +326,20 @@ test "web accessibility maps semantics to aria nodes" {
   inspect(aria.disabled, content="false")
   assert_true(aria.actions.any(action => action == "activate"))
 }
+
+///|
+test "web accessibility maps landmarks heading level and link url" {
+  let runtime = @runtime.AppRuntime::new_view(
+    root=(
+      @views.text("Docs", width=120.0, height=32.0)
+      .semantics_role(@core.SemanticsRole::Heading)
+      .semantics_level(2)
+      .semantics_url("https://example.test/docs") : @core.View[Unit]),
+    size=@core.Size::new(width=140.0, height=40.0),
+  )
+  let aria = semantics_to_aria(runtime.semantics())
+  inspect(aria.role, content="heading")
+  assert_true(aria.level == Some(2))
+  inspect(aria.url, content="https://example.test/docs")
+  assert_true(aria.element_id.value() >= 0)
+}

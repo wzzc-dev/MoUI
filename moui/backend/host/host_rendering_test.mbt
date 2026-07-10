@@ -2,7 +2,9 @@
 test "native accessibility bridge snapshots semantics recursively" {
   let child = @core.SemanticsNode::{
     element_id: @core.ElementId::new(2),
-    role: @core.SemanticsRole::Button,
+    role: @core.SemanticsRole::Heading,
+    level: Some(2),
+    url: "https://example.test/save",
     label: "Save",
     value: "",
     description: "Save current document",
@@ -15,6 +17,8 @@ test "native accessibility bridge snapshots semantics recursively" {
   let root = @core.SemanticsNode::{
     element_id: @core.ElementId::new(1),
     role: @core.SemanticsRole::Group,
+    level: None,
+    url: "",
     label: "Root",
     value: "",
     description: "",
@@ -33,7 +37,11 @@ test "native accessibility bridge snapshots semantics recursively" {
       inspect(snapshot.tree() is Some(_), content="true")
       inspect(snapshot.focus(), content="NodeId(1)")
       let child_update = snapshot.nodes()[1]
-      inspect(child_update.node().role(), content="Button")
+      inspect(child_update.node().role(), content="Heading")
+      assert_true(child_update.node().level() == Some(2))
+      assert_true(
+        child_update.node().url() == Some("https://example.test/save"),
+      )
       match child_update.node().label() {
         Some(label) => inspect(label, content="Save")
         None => fail("expected child accessibility label")
@@ -58,6 +66,8 @@ test "native accessibility bridge validates action roundtrip" {
   let node = @core.SemanticsNode::{
     element_id: @core.ElementId::new(42),
     role: @core.SemanticsRole::TextField,
+    level: None,
+    url: "",
     label: "Name",
     value: "MoUI",
     description: "Required profile name",

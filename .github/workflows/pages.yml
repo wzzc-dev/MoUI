@@ -57,10 +57,18 @@ jobs:
           test -f dist/pages/browser_runtime.js.br
           test -f dist/pages/canvas2d_runtime.js
           test -f dist/pages/canvas2d_runtime.js.br
+          test -f dist/pages/semantics_dom.js
+          test -f dist/pages/semantics_dom.js.br
           test -f dist/pages/bundle-size.json
           test -f dist/pages/docs/architecture.md
           test -f dist/pages/docs/moui-readme.md
           test -f dist/pages/docs/moui-skia-readme.md
+          test -f dist/pages/docs/catalog.json
+          test -f dist/pages/docs/android-support.md
+          test -f dist/pages/docs/ios-support.md
+          test -f dist/pages/docs/harmonyos-support.md
+          test -f dist/pages/robots.txt
+          test -f dist/pages/sitemap.xml
           grep -q 'from "./runtime.js"' dist/pages/index.html
           grep -q '"./web_wasm.wasm"' dist/pages/index.html
           ! grep -q '_build/wasm-gc' dist/pages/index.html

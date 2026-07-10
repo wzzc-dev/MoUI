@@ -1,6 +1,9 @@
 ///|
 pub(all) struct AriaNode {
+  element_id : @core.ElementId
   role : String
+  level : Int?
+  url : String
   label : String
   value : String
   description : String
@@ -19,7 +22,10 @@ pub(all) struct AriaNode {
 ///|
 pub fn semantics_to_aria(node : @core.SemanticsNode) -> AriaNode {
   {
+    element_id: node.element_id,
     role: aria_role(node.role),
+    level: node.level,
+    url: node.url,
     label: node.label,
     value: node.value,
     description: node.description,
@@ -37,10 +43,115 @@ pub fn semantics_to_aria(node : @core.SemanticsNode) -> AriaNode {
 }
 
 ///|
+priv struct WebSemanticsRuntimeBinding {
+  raw_id : Int
+  runtime : @runtime.AppRuntime
+}
+
+///|
+let web_semantics_runtime_bindings : Array[WebSemanticsRuntimeBinding] = []
+
+///|
+fn register_web_semantics_runtime(
+  raw_id : Int,
+  runtime : @runtime.AppRuntime,
+) -> Unit {
+  unregister_web_semantics_runtime(raw_id)
+  web_semantics_runtime_bindings.push({ raw_id, runtime })
+}
+
+///|
+fn unregister_web_semantics_runtime(raw_id : Int) -> Unit {
+  let retained : Array[WebSemanticsRuntimeBinding] = []
+  for binding in web_semantics_runtime_bindings {
+    if binding.raw_id != raw_id {
+      retained.push(binding)
+    }
+  }
+  web_semantics_runtime_bindings.clear()
+  web_semantics_runtime_bindings.append(retained)
+  web_remove_semantics_host(raw_id)
+}
+
+///|
+fn sync_web_semantics(
+  raw_id : Int,
+  canvas_id : String,
+  semantics : @core.SemanticsNode,
+) -> Unit {
+  let json = (semantics_to_aria(semantics).to_json() : Json).stringify()
+  web_sync_semantics_host(
+    raw_id,
+    web_host_string(canvas_id),
+    web_host_string(json),
+  )
+}
+
+///|
+pub fn web_dispatch_semantics_action(
+  raw_id : Int,
+  element_id : Int,
+  action_code : Int,
+  value_id : Int,
+) -> Unit {
+  match web_semantics_action(action_code) {
+    Some(action) =>
+      for binding in web_semantics_runtime_bindings {
+        if binding.raw_id == raw_id {
+          let value = if value_id > 0 {
+            Some(web_host_string_from_id(value_id))
+          } else {
+            None
+          }
+          if binding.runtime.dispatch_semantics_action(
+              @core.ElementId::new(element_id),
+              action,
+              value~,
+            ) {
+            ()
+          }
+          return ()
+        }
+      }
+    None => ()
+  }
+}
+
+///|
+fn web_semantics_action(code : Int) -> @core.SemanticsAction? {
+  match code {
+    0 => Some(@core.SemanticsAction::Activate)
+    1 => Some(@core.SemanticsAction::Focus)
+    2 => Some(@core.SemanticsAction::SetText)
+    3 => Some(@core.SemanticsAction::Submit)
+    4 => Some(@core.SemanticsAction::Scroll)
+    5 => Some(@core.SemanticsAction::Select)
+    6 => Some(@core.SemanticsAction::Expand)
+    7 => Some(@core.SemanticsAction::Collapse)
+    8 => Some(@core.SemanticsAction::Dismiss)
+    _ => None
+  }
+}
+
+///|
+fn web_sync_semantics_host(
+  raw_id : Int,
+  canvas_id : WebHostString,
+  json : WebHostString,
+) -> Unit = "window_web" "sync_semantics"
+
+///|
+fn web_remove_semantics_host(raw_id : Int) -> Unit = "window_web" "remove_semantics"
+
+///|
 fn aria_role(role : @core.SemanticsRole) -> String {
   match role {
     @core.SemanticsRole::None => "presentation"
     @core.SemanticsRole::Text => "text"
+    @core.SemanticsRole::Link => "link"
+    @core.SemanticsRole::Heading => "heading"
+    @core.SemanticsRole::Navigation => "navigation"
+    @core.SemanticsRole::Main => "main"
     @core.SemanticsRole::Button => "button"
     @core.SemanticsRole::Checkbox => "checkbox"
     @core.SemanticsRole::TextField => "textbox"

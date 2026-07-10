@@ -37,6 +37,8 @@ priv enum ViewModifier[Msg] {
   DisabledModifier(Bool)
   AccessibilityLabelModifier(String)
   SemanticsRoleModifier(SemanticsRole)
+  SemanticsLevelModifier(Int)
+  SemanticsUrlModifier(String)
   SemanticsSelectedModifier(Bool)
   SemanticsPressedModifier(Bool)
   SemanticsCheckedModifier(Bool)
@@ -144,6 +146,8 @@ fn[Msg] modifier_kind(modifier : ViewModifier[Msg]) -> String {
     DisabledModifier(_) => "Disabled"
     AccessibilityLabelModifier(_) => "AccessibilityLabel"
     SemanticsRoleModifier(_) => "SemanticsRole"
+    SemanticsLevelModifier(_) => "SemanticsLevel"
+    SemanticsUrlModifier(_) => "SemanticsUrl"
     SemanticsSelectedModifier(_) => "SemanticsSelected"
     SemanticsPressedModifier(_) => "SemanticsPressed"
     SemanticsCheckedModifier(_) => "SemanticsChecked"
@@ -199,6 +203,8 @@ fn[Msg] modifier_revision(modifier : ViewModifier[Msg]) -> String {
     DisabledModifier(disabled) => "disabled:\{disabled}"
     AccessibilityLabelModifier(label) => "accessibility-label:\{label}"
     SemanticsRoleModifier(role) => "semantics-role:\{role_label(role)}"
+    SemanticsLevelModifier(level) => "semantics-level:\{level}"
+    SemanticsUrlModifier(url) => "semantics-url:\{url}"
     SemanticsSelectedModifier(selected) => "semantics-selected:\{selected}"
     SemanticsPressedModifier(pressed) => "semantics-pressed:\{pressed}"
     SemanticsCheckedModifier(checked) => "semantics-checked:\{checked}"
@@ -632,6 +638,8 @@ fn[Msg] modifier_semantics(modifier : ViewModifier[Msg]) -> ViewSemanticsInfo {
     AccessibilityLabelModifier(label) =>
       ViewSemanticsInfo::new(label~, value=label)
     SemanticsRoleModifier(role) => ViewSemanticsInfo::new(role~)
+    SemanticsLevelModifier(level) => ViewSemanticsInfo::new(level~)
+    SemanticsUrlModifier(url) => ViewSemanticsInfo::new(url~)
     DisabledModifier(disabled) => ViewSemanticsInfo::new(disabled~)
     FocusableModifier(focusable) =>
       ViewSemanticsInfo::new(actions=if focusable { [Focus] } else { [] })
@@ -801,96 +809,5 @@ fn button_state_to_view_state(
     ButtonState::Normal => { ..state, hovered: false, pressed: false }
     ButtonState::Hovered => { ..state, hovered: true, pressed: false }
     ButtonState::Pressed => { ..state, hovered: true, pressed: true }
-  }
-}
-
-///|
-fn option_double_revision(value : Double?) -> String {
-  match value {
-    Some(value) => "\{value}"
-    None => "none"
-  }
-}
-
-///|
-fn color_revision(color : Color) -> String {
-  "\{color.r},\{color.g},\{color.b},\{color.a}"
-}
-
-///|
-fn brush_revision(value : Brush) -> String {
-  match value {
-    Brush::Solid(color) => "solid:\{color_revision(color)}"
-    Brush::LinearGradient(spec) =>
-      "linear:\{spec.start.x},\{spec.start.y},\{spec.end.x},\{spec.end.y},\{color_revision(spec.start_color)},\{color_revision(spec.end_color)}"
-    Brush::RadialGradient(spec) =>
-      "radial:\{spec.center.x},\{spec.center.y},\{spec.radius},\{color_revision(spec.center_color)},\{color_revision(spec.edge_color)}"
-  }
-}
-
-///|
-fn role_label(role : SemanticsRole) -> String {
-  match role {
-    None => "none"
-    Group => "group"
-    Text => "text"
-    Button => "button"
-    TextField => "text-field"
-    Checkbox => "checkbox"
-    Grid => "grid"
-    ScrollView => "scroll-view"
-    Switch => "switch"
-    Radio => "radio"
-    Slider => "slider"
-    Progress => "progress"
-    Tab => "tab"
-    List => "list"
-    ListItem => "list-item"
-    Dialog => "dialog"
-    Tooltip => "tooltip"
-    Menu => "menu"
-    ButtonGroup => "button-group"
-    Form => "form"
-    FormField => "form-field"
-    Tree => "tree"
-    TreeItem => "tree-item"
-    WebView => "web-view"
-  }
-}
-
-///|
-fn action_label(action : SemanticsAction) -> String {
-  match action {
-    Activate => "activate"
-    Focus => "focus"
-    SetText => "set-text"
-    Submit => "submit"
-    Scroll => "scroll"
-    Select => "select"
-    Dismiss => "dismiss"
-    Expand => "expand"
-    Collapse => "collapse"
-  }
-}
-
-///|
-fn main_axis_alignment_label(alignment : MainAxisAlignment) -> String {
-  match alignment {
-    MainStart => "start"
-    MainCenter => "center"
-    MainEnd => "end"
-    SpaceAround => "space-around"
-    SpaceBetween => "space-between"
-    SpaceEvenly => "space-evenly"
-  }
-}
-
-///|
-fn cross_axis_alignment_label(alignment : CrossAxisAlignment) -> String {
-  match alignment {
-    CrossStart => "start"
-    CrossCenter => "center"
-    CrossEnd => "end"
-    CrossStretch => "stretch"
   }
 }

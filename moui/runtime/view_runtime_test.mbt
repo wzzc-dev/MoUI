@@ -470,6 +470,76 @@ test "runtime semantics includes declared state modifiers" {
 }
 
 ///|
+test "runtime semantics preserves heading level and link url" {
+  let root : @core.View[Unit] = @views.text("API", width=80.0, height=24.0)
+    .semantics_role(@core.SemanticsRole::Heading)
+    .semantics_level(2)
+    .semantics_url("https://example.test/api")
+  let semantics = AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=100.0, height=32.0),
+  ).semantics()
+  assert_true(semantics.role == @core.SemanticsRole::Heading)
+  assert_true(semantics.level == Some(2))
+  assert_true(semantics.url == "https://example.test/api")
+}
+
+///|
+test "runtime dispatches semantic activation through view event path" {
+  let received : Array[Int] = []
+  let root = @views.text("Open", width=80.0, height=24.0)
+    .on_tap(7)
+    .semantics_role(@core.SemanticsRole::Link)
+    .semantics_url("https://example.test")
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=100.0, height=32.0),
+    on_message=Some(message => received.push(message)),
+  )
+  let semantics = runtime.semantics()
+  assert_true(
+    runtime.dispatch_semantics_action(
+      semantics.element_id,
+      @core.SemanticsAction::Activate,
+    ),
+  )
+  assert_true(received == [7])
+}
+
+///|
+test "runtime scrolls nearest scroll view to keyed descendant" {
+  let state = @core.ScrollState::new()
+  let target : @core.View[Unit] = @views.text(
+    "Target",
+    width=100.0,
+    height=40.0,
+  ).key("target")
+  let content = @views.column(
+    [
+      @views.text("Before", width=100.0, height=240.0),
+      target,
+      @views.text("After", width=100.0, height=120.0),
+    ],
+    spacing=0.0,
+    align=@views.CrossAlign::Start,
+  )
+  let runtime = AppRuntime::new_view(
+    root=@views.scroll_view(
+      content,
+      state=Some(state),
+      width=100.0,
+      height=100.0,
+    ),
+    size=@core.Size::new(width=100.0, height=100.0),
+  )
+  assert_true(
+    runtime.scroll_to_key("target", alignment=@core.ScrollAlignment::Start),
+  )
+  assert_true(state.offset().y == 240.0)
+  assert_true(!runtime.scroll_to_key("missing"))
+}
+
+///|
 test "runtime propagates text style modifiers into draw commands" {
   let color = @core.Color::rgba(r=0.91, g=0.12, b=0.18)
   let font = @core.FontSpec::new(size=23.0, weight=700)
