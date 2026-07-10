@@ -129,6 +129,11 @@ entrypoints under `web_wasm`, `macos_skia`, `windows_skia`, and `linux_skia`.
 Run the matching entrypoint for your host; `mo_workbench` currently ships a
 macOS Skia entrypoint only; `excel` ships `macos_skia` and `linux_skia`.
 
+To try Component Gallery on a mobile platform, follow the platform-specific
+setup, build, and run instructions for [Android](examples/component_gallery/android_app/README.md),
+[iOS](examples/component_gallery/ios_app/README.md), or
+[HarmonyOS](examples/component_gallery/harmonyos_app/README.md).
+
 > **Windows prerequisite:** before building or running any `windows_skia`
 > entrypoint, initialize the MSVC toolchain in a PowerShell session:
 >
