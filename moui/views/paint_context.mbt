@@ -1,7 +1,7 @@
 ///|
 /// Drawing context that collects `DrawCommand`s internally.
 /// Users call methods instead of constructing `DrawCommand` variants directly.
-pub(all) struct PaintContext {
+struct PaintContext {
   commands : Array[@core.DrawCommand]
 }
 

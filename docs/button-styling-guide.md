@@ -104,8 +104,11 @@ let style : @views.ButtonStyle = {
 button("Label", on_click=Msg, variant=@views.ButtonVariant::Primary, theme~, style~, width=104.0)
 ```
 
-`ControlStateStyle` is `pub(all)` and re-exported through `@views`, so app
-packages can construct it directly. `ButtonStyle` is also `pub(all)`.
+`ControlStateStyle` is `pub(all)` in `@core` and re-exported through `@views`.
+App packages construct it via `@views.new_control_state_style(...)`.
+`ButtonStyle` is `pub struct` (field-private); construct via
+`ButtonStyle::new(...)` or factory methods (`::filled`, `::tonal`, etc.),
+and modify via `with_xxx(...)` methods (Flutter `copyWith` pattern).
 
 ### Strategy B — Theme-level component override (global to one app)
 
