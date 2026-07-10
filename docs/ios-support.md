@@ -13,7 +13,8 @@ redraw callbacks into MoUI.
 | Skia provider | Scaffolded in `moui/backend/ios/skia` | Provider/preflight checks prove wiring, not simulator/device pixels. |
 | Counter entrypoint | `examples/counter/ios_skia` exports thin native hooks | Compile/check evidence only. |
 | UIKit app shell | `examples/counter/ios_app` plus `scripts/build-counter-ios-app.sh` | Packaging evidence; fallback `.app` is not runtime proof. |
-| Runtime support claim | Pending | Requires a non-fallback app plus matching simulator/device smoke. |
+| First-frame runtime evidence | Non-fallback Component Gallery app on iOS device/simulator; nonblank first-frame screenshot in `resource/screenshots/ios-componentgallery.png` (2026-07-09) | First-frame pixels proven; full runtime smoke pending. |
+| Runtime support claim | Partial — first-frame proven, full smoke pending | Requires matching simulator/device smoke manifest for lifecycle, touch, IME, clipboard, and accessibility observations. |
 
 ## Ownership
 

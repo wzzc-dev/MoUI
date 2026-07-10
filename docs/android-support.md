@@ -13,7 +13,8 @@ redraw callbacks into MoUI.
 | Skia provider | Scaffolded in `moui/backend/android/skia` | Provider/preflight checks prove wiring, not device pixels. |
 | Counter entrypoint | `examples/counter/android_skia` exports thin native hooks | Compile/check evidence only. |
 | APK shell | `examples/counter/android_app` plus `scripts/build-counter-android-apk.sh` | Packaging evidence; fallback APK is not runtime proof. |
-| Runtime support claim | Pending | Requires a non-fallback APK plus matching device/emulator smoke. |
+| First-frame runtime evidence | Non-fallback Component Gallery APK on HUAWEI SCM-W09 device; nonblank first-frame screenshot in `resource/screenshots/android-componentgallery.jpg` (2026-07-10) | First-frame pixels proven; full runtime smoke pending. |
+| Runtime support claim | Partial — first-frame proven, full smoke pending | Requires matching device/emulator smoke manifest for lifecycle, input, IME, clipboard, and accessibility observations. |
 
 ## Ownership
 
