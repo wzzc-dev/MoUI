@@ -126,38 +126,22 @@ fn assert_diagnostic_native_text_matrix(
 fn diagnostic_native_text_field_view(
   value : @core.State[String],
 ) -> @core.View[Unit] {
-  let field_style : @views.TextFieldStyle = {
-    normal: {
-      foreground: @core.Color::black(),
-      background: @core.Brush::solid(@core.Color::white()),
-      border: None,
-      radius: 4.0,
-      shadow: None,
-      bottom_border_only: false,
-      inner_focus_border: None,
-    },
-    focused: {
-      foreground: @core.Color::black(),
-      background: @core.Brush::solid(@core.Color::white()),
-      border: None,
-      radius: 4.0,
-      shadow: None,
-      bottom_border_only: false,
-      inner_focus_border: None,
-    },
-    disabled: {
-      foreground: @core.Color::black(),
-      background: @core.Brush::solid(@core.Color::white()),
-      border: None,
-      radius: 4.0,
-      shadow: None,
-      bottom_border_only: false,
-      inner_focus_border: None,
-    },
-    placeholder_color: @core.Color::gray(),
-    cursor_color: @core.Color::blue(),
-    font: @core.FontSpec::new(size=18.0, weight=500),
-  }
+  let black = @core.Color::black()
+  let white_brush = @core.Brush::solid(@core.Color::white())
+  let state_style = @views.new_control_state_style(
+    foreground=black,
+    background=white_brush,
+    radius=4.0,
+    bottom_border_only=false,
+  )
+  let field_style : @views.TextFieldStyle = @views.TextFieldStyle::new(
+    normal=state_style,
+    focused=state_style,
+    disabled=state_style,
+    placeholder_color=@core.Color::gray(),
+    cursor_color=@core.Color::blue(),
+    font=@core.FontSpec::new(size=18.0, weight=500),
+  )
   @views.component(ctx => {
     @views.text_field(
       ctx.watch(value),
