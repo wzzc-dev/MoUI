@@ -254,12 +254,16 @@ environment: ubuntu-24.04 + Weston headless + Wayland
 | Linux 完整平台服务观测 | 记录剪贴板图片、目录列表、透明标题栏等 tracked gaps 的通过或 pending 状态 | Wayland 主机 + 真实 Skia + 对应 host 服务 | 1 次本地或 CI 运行 |
 | Linux 全证据清单更新 | 将完整服务/IME 结果写入 `platform-runtime-evidence.json` linux 条目 | 以上观测完成 | 1 次 PR |
 
-### 6.3 Android / iOS — 嵌入式 scaffold 运行时
+### 6.3 Android / iOS / HarmonyOS — 嵌入式 scaffold 运行时（首帧已验证）
 
-Android 和 iOS 当前只有 embedded-session scaffold、package/cross-build 检查、
-以及 Counter app 包装 smoke。fallback APK / `.app` 只能作为包装证据；非
-fallback 构建加匹配设备、模拟器或 simulator 的首帧、输入、生命周期、IME、
-剪贴板、辅助功能和 async image 观测完成前，不能声明 Android 或 iOS 平台通过。
+Android、iOS 和 HarmonyOS 均已通过非 fallback Skia 构建在匹配设备上完成
+首帧渲染验证（截图见 `resource/screenshots/{android,ios,harmonyos}-componentgallery`，
+2026-07-09/10）。`mobile-build.json` 确认 `fallbackSkia: false`。
+
+但完整的运行时 smoke manifest（生命周期回调、输入交互、IME、剪贴板、辅助功能、
+async image 观测）尚未通过 `scripts/record-mobile-runtime-smoke.mjs` 记录和验证。
+在匹配设备/模拟器的完整 smoke manifest 生成并通过验证之前，不能声明移动平台
+运行时完全通过。
 
 ## 七、核验操作指引
 

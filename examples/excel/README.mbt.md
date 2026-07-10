@@ -10,7 +10,7 @@ sheet tabs, cell grid, formula bar, status bar, context menu, and heat map
 mode; cell selection, editing, and formula entry flow through a single
 `Program[ExcelApp, ExcelMsg]`.
 
-> Excel Viewer is on `wzzc-dev/moui@0.1.5-1`.
+> Excel Viewer is on `wzzc-dev/moui@0.1.6`.
 
 ## Package Shape
 
@@ -26,7 +26,7 @@ mode; cell selection, editing, and formula entry flow through a single
 
 ```toml
 import {
-  "wzzc-dev/moui@0.1.5-1",
+  "wzzc-dev/moui@0.1.6",
   "bobzhang/mbtexcel@0.1.6",
 }
 ```

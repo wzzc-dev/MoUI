@@ -1,6 +1,6 @@
 name = "wzzc-dev/moui_sun"
 
-version = "0.1.1"
+version = "0.1.6"
 
 import {
   "moonbitlang/x@0.4.43",

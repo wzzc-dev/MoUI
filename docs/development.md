@@ -189,7 +189,7 @@ the local workspace members in `moon.work`:
 ```moonbit
 import {
   "wzzc-dev/window@0.5.1-0.1.6",
-  "wzzc-dev/moui_skia@0.1.4",
+  "wzzc-dev/moui_skia@0.1.6",
 }
 ```
 
