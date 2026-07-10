@@ -41,18 +41,23 @@ plain `pub` count printed by the package budget summary.
 - `test_exposure` is budgeted at zero for the tracked packages. Prefer
   package-private helpers and test-only files over public declarations that
   exist only for tests.
-- `migration_debt` currently tracks `moui/views` `pub(all)` declarations. Do
-  not grow it without a concrete migration note; shrink it when helper types can
-  become private, opaque, or narrower.
+- `migration_debt` tracks `moui/views` `pub(all) struct` declarations (currently
+  0 — all 24 structs migrated to `pub struct` or opaque `type` per ADR 0004).
+  `pub(all) enum` is no longer classified as debt: MoonBit requires `pub(all)`
+  to expose enum variants for external construction, so enums are treated as
+  intentional public API and classified into `app_style` or `app_state_helper`.
 
 ## Freeze And Migration Candidates
 
 - Keep `moui/core` closed to new concrete controls, form/routing/WebView
   workflows, runtime snapshots, and design-system defaults. The existing legacy
   family guard should remain at zero occurrences for these families.
-- Review `moui/views` `pub(all)` types first when doing API cleanup. Good
-  candidates are helper models that can become opaque `type` declarations or
-  be constructed only through public helper functions.
+- Review `moui/views` `pub(all) struct` types first when doing API cleanup
+  (currently 0 remaining). `pub(all) enum` types are intentional public API
+  in MoonBit (variants need `pub(all)` for external construction); they are
+  not migration candidates. Good struct candidates were opaque `type`
+  declarations or `pub struct` with constructors and `with_xxx` methods —
+  see ADR 0004 for the completed migration.
 - Avoid adding more low-level paint helpers to `moui/views` unless they are
   necessary for `canvas` and app-facing custom drawing. Domain paint value types
   should stay under `moui/graphics` or direct `moui/core`.

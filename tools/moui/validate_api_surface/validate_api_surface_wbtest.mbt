@@ -72,21 +72,21 @@ test "api surface classification budgets pin current high-risk packages" {
   )
   inspect(
     classification_budget("moui/views/pkg.generated.mbti", "app_state_helper").max_count,
-    content="164",
+    content="300",
   )
   inspect(
     classification_budget("moui/views/pkg.generated.mbti", "app_style").max_count,
-    content="30",
+    content="210",
   )
   inspect(
     classification_budget(
       "moui/views/pkg.generated.mbti", "advanced_core_protocol",
     ).max_count,
-    content="26",
+    content="40",
   )
   inspect(
     classification_budget("moui/views/pkg.generated.mbti", "migration_debt").max_count,
-    content="43",
+    content="0",
   )
   inspect(
     classification_budget(
@@ -127,8 +127,8 @@ test "api surface classification assigns representative lines" {
     content="app_state_helper",
   )
   inspect(
-    category("moui/views/pkg.generated.mbti", "pub(all) struct ButtonStyle {"),
-    content="migration_debt",
+    category("moui/views/pkg.generated.mbti", "pub struct ButtonStyle {"),
+    content="app_style",
   )
   inspect(
     category(
@@ -386,9 +386,9 @@ test "shared app core import guard tracks default imports" {
 ///|
 test "views facade exposes control-specific contracts" {
   let views = budget_by_label("views facade")
-  inspect(views.max_lines, content="1095")
-  inspect(views.max_pub_lines, content="385")
-  inspect(views.max_pub_all_lines, content="45")
+  inspect(views.max_lines, content="1250")
+  inspect(views.max_pub_lines, content="560")
+  inspect(views.max_pub_all_lines, content="19")
   inspect(views_facade_core_alias_tokens().length(), content="8")
   inspect(views_facade_host_alias_tokens().length(), content="0")
   let required = views.required_tokens
@@ -400,8 +400,8 @@ test "views facade exposes control-specific contracts" {
   assert_true(required.contains("pub using @core {type CommandIntent}"))
   assert_true(required.contains("pub using @core {type KeyModifiers}"))
   assert_true(required.contains("pub using @core {type KeyboardShortcut}"))
-  assert_true(required.contains("pub(all) struct ButtonStyle"))
-  assert_true(required.contains("pub(all) struct FormFieldState"))
+  assert_true(required.contains("pub struct ButtonStyle"))
+  assert_true(required.contains("type FormFieldState"))
   assert_true(required.contains("pub(all) enum DatePickerMode"))
   assert_true(required.contains("pub fn default_theme()"))
   assert_true(required.contains("pub fn light_theme()"))
@@ -426,8 +426,8 @@ test "views facade exposes control-specific contracts" {
   assert_true(views.forbidden_tokens.contains("pub fn[Msg] raw_"))
   assert_true(views.forbidden_tokens.contains("RawDatePickerDisplayMode"))
   assert_true(views.forbidden_tokens.contains("RawPickerOption"))
-  assert_true(required.contains("pub(all) struct RouteLocation"))
-  assert_true(required.contains("pub(all) struct RouteHistoryState"))
+  assert_true(required.contains("pub struct RouteLocation"))
+  assert_true(required.contains("pub struct RouteHistoryState"))
   assert_true(required.contains("type RouteFocusStore"))
   assert_true(required.contains("type RouterState"))
   assert_false(required.contains("pub using @core {type RouteHistoryState}"))

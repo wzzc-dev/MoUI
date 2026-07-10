@@ -83,11 +83,14 @@ fn ShowcaseModel::forms_section(
             ),
             form_workflow_bar(
               summary=@views.FormValidationSummary::from_errors([
-                { name: "email", message: "Email is required" },
-                {
-                  name: "display_name",
-                  message: "Display name must be at least 2 characters",
-                },
+                @views.FormFieldError::new(
+                  name="email",
+                  message="Email is required",
+                ),
+                @views.FormFieldError::new(
+                  name="display_name",
+                  message="Display name must be at least 2 characters",
+                ),
               ]),
               primary=@views.StateViewAction::new(
                 label="Save profile",

@@ -505,15 +505,14 @@ pub fn DesignSurfaceTokens::core_surfaces(
 pub fn DesignControlStateTokens::core_style(
   self : DesignControlStateTokens,
 ) -> @views.ControlStateStyle {
-  {
-    foreground: self.foreground,
-    background: @core.Brush::solid(self.background),
-    border: control_state_border(self),
-    radius: self.radius,
-    shadow: None,
-    bottom_border_only: self.bottom_border_only,
-    inner_focus_border: self.inner_focus_border,
-  }
+  @views.new_control_state_style(
+    foreground=self.foreground,
+    background=@core.Brush::solid(self.background),
+    border?=control_state_border(self),
+    radius=self.radius,
+    bottom_border_only=self.bottom_border_only,
+    inner_focus_border=self.inner_focus_border,
+  )
 }
 
 ///|
@@ -570,14 +569,14 @@ pub fn DesignButtonTokens::core_styles(
 pub fn DesignTextFieldTokens::core_style(
   self : DesignTextFieldTokens,
 ) -> @views.TextFieldStyle {
-  {
-    normal: self.normal.core_style(),
-    focused: self.focused.core_style(),
-    disabled: self.disabled.core_style(),
-    placeholder_color: self.placeholder,
-    cursor_color: self.cursor,
-    font: self.font,
-  }
+  @views.TextFieldStyle::new(
+    normal=self.normal.core_style(),
+    focused=self.focused.core_style(),
+    disabled=self.disabled.core_style(),
+    placeholder_color=self.placeholder,
+    cursor_color=self.cursor,
+    font=self.font,
+  )
 }
 
 ///|
@@ -586,13 +585,14 @@ pub fn DesignTextFieldTokens::core_styles(
 ) -> DesignTextFieldCoreStyles {
   let filled = self.core_style()
   let clear = @core.Brush::solid(transparent())
-  let plain_normal = {
-    ..filled.normal,
-    background: clear,
-    border: None,
-    radius: 0.0,
-  }
-  let plain = { ..filled, normal: plain_normal, focused: plain_normal }
+  let plain_normal = @views.new_control_state_style(
+    foreground=self.normal.foreground,
+    background=clear,
+    radius=0.0,
+  )
+  let plain = filled
+    .with_normal(normal=plain_normal)
+    .with_focused(focused=plain_normal)
   { filled, outline: filled, plain }
 }
 
@@ -600,51 +600,51 @@ pub fn DesignTextFieldTokens::core_styles(
 pub fn DesignChoiceControlTokens::core_style(
   self : DesignChoiceControlTokens,
 ) -> @views.ChoiceControlStyle {
-  {
-    foreground: self.foreground,
-    selected_color: self.selected_color,
-    disabled_foreground: self.disabled_foreground,
-    disabled_selected_color: self.disabled_selected_color,
-    control_size: self.control_size,
-  }
+  @views.ChoiceControlStyle::new(
+    foreground=self.foreground,
+    selected_color=self.selected_color,
+    disabled_foreground=self.disabled_foreground,
+    disabled_selected_color=self.disabled_selected_color,
+    control_size=self.control_size,
+  )
 }
 
 ///|
 pub fn DesignProgressTokens::core_style(
   self : DesignProgressTokens,
 ) -> @views.ProgressStyle {
-  {
-    foreground: self.foreground,
-    background: self.background,
-    radius: self.radius,
-  }
+  @views.ProgressStyle::new(
+    foreground=self.foreground,
+    background=self.background,
+    radius=self.radius,
+  )
 }
 
 ///|
 pub fn DesignSliderTokens::core_style(
   self : DesignSliderTokens,
 ) -> @views.SliderStyle {
-  {
-    foreground: self.foreground,
-    background: self.background,
-    thumb_color: self.thumb_color,
-    track_height: self.track_height,
-    thumb_size: self.thumb_size,
-    radius: self.radius,
-  }
+  @views.SliderStyle::new(
+    foreground=self.foreground,
+    background=self.background,
+    thumb_color=self.thumb_color,
+    track_height=self.track_height,
+    thumb_size=self.thumb_size,
+    radius=self.radius,
+  )
 }
 
 ///|
 pub fn DesignPickerTokens::core_style(
   self : DesignPickerTokens,
 ) -> @views.PickerStyle {
-  {
-    font: self.font,
-    foreground: self.foreground,
-    background: self.background,
-    radius: self.radius,
-    popup_max_height: self.popup_max_height,
-  }
+  @views.PickerStyle::new(
+    font=self.font,
+    foreground=self.foreground,
+    background=self.background,
+    radius=self.radius,
+    popup_max_height=self.popup_max_height,
+  )
 }
 
 ///|
@@ -652,32 +652,26 @@ pub fn DesignSurfaceComponentTokens::core_styles(
   self : DesignSurfaceComponentTokens,
   theme : @core.Theme,
 ) -> DesignSurfaceCoreStyles {
-  let base = {
-    ..@views.SurfaceStyle::default(theme~),
-    padding: @core.Insets::all(self.base_padding),
-    radius: self.base_radius,
-    shadow: self.base_shadow,
-  }
-  let raised = {
-    ..@views.SurfaceStyle::raised(theme~),
-    padding: @core.Insets::all(self.raised_padding),
-    radius: self.raised_radius,
-    shadow: self.raised_shadow,
-  }
+  let base = @views.SurfaceStyle::default(theme~)
+    .with_padding(padding=@core.Insets::all(self.base_padding))
+    .with_radius(radius=self.base_radius)
+    .with_shadow(shadow=self.base_shadow)
+  let raised = @views.SurfaceStyle::raised(theme~)
+    .with_padding(padding=@core.Insets::all(self.raised_padding))
+    .with_radius(radius=self.raised_radius)
+    .with_shadow(shadow=self.raised_shadow)
   let overlay_shadow = match self.overlay_shadow {
     Some(value) => Some(value)
     None => Some(theme.shadow_scale.sm)
   }
-  let overlay = {
-    ..@views.SurfaceStyle::default(theme~),
-    brush: theme.surface_brush(@core.SurfaceLevel::Overlay),
-    padding: @core.Insets::all(self.overlay_padding),
-    radius: self.overlay_radius,
+  let overlay = @views.SurfaceStyle::default(theme~)
+    .with_brush(brush=theme.surface_brush(@core.SurfaceLevel::Overlay))
+    .with_padding(padding=@core.Insets::all(self.overlay_padding))
+    .with_radius(radius=self.overlay_radius)
     // Fluent supplies a layered overlay shadow; otherwise fall back to the
     // neutral minimal faint shadow used before per-tier elevation existed.
-    shadow: overlay_shadow,
-    level: @core.SurfaceLevel::Overlay,
-  }
+    .with_shadow(shadow=overlay_shadow)
+    .with_level(level=@core.SurfaceLevel::Overlay)
   { base, raised, overlay }
 }
 
@@ -685,54 +679,54 @@ pub fn DesignSurfaceComponentTokens::core_styles(
 pub fn DesignToneTokens::core_style(
   self : DesignToneTokens,
 ) -> @views.ToneStyle {
-  {
-    foreground: self.foreground,
-    background: self.background,
-    border: self.border,
-  }
+  @views.ToneStyle::new(
+    foreground=self.foreground,
+    background=self.background,
+    border=self.border,
+  )
 }
 
 ///|
 pub fn DesignFeedbackTokens::core_style(
   self : DesignFeedbackTokens,
 ) -> @views.FeedbackStyle {
-  {
-    neutral: self.neutral.core_style(),
-    info: self.info.core_style(),
-    success: self.success.core_style(),
-    warning: self.warning.core_style(),
-    danger: self.danger.core_style(),
-    radius: self.radius,
-    padding: self.padding,
-  }
+  @views.FeedbackStyle::new(
+    neutral=self.neutral.core_style(),
+    info=self.info.core_style(),
+    success=self.success.core_style(),
+    warning=self.warning.core_style(),
+    danger=self.danger.core_style(),
+    radius=self.radius,
+    padding=self.padding,
+  )
 }
 
 ///|
 pub fn DesignBadgeTokens::core_style(
   self : DesignBadgeTokens,
 ) -> @views.BadgeStyle {
-  {
-    neutral: self.neutral.core_style(),
-    accent: self.accent.core_style(),
-    success: self.success.core_style(),
-    warning: self.warning.core_style(),
-    danger: self.danger.core_style(),
-    radius: self.radius,
-    padding: self.padding,
-  }
+  @views.BadgeStyle::new(
+    neutral=self.neutral.core_style(),
+    accent=self.accent.core_style(),
+    success=self.success.core_style(),
+    warning=self.warning.core_style(),
+    danger=self.danger.core_style(),
+    radius=self.radius,
+    padding=self.padding,
+  )
 }
 
 ///|
 pub fn DesignFormValidationTokens::core_style(
   self : DesignFormValidationTokens,
 ) -> @views.FormValidationStyle {
-  {
-    foreground: self.foreground,
-    background: self.background,
-    border: self.border,
-    radius: self.radius,
-    padding: self.padding,
-  }
+  @views.FormValidationStyle::new(
+    foreground=self.foreground,
+    background=self.background,
+    border=self.border,
+    radius=self.radius,
+    padding=self.padding,
+  )
 }
 
 ///|
@@ -2118,34 +2112,45 @@ fn button_core_style(
   state_layer : DesignStateLayerTokens,
 ) -> @views.ButtonStyle {
   let normal = state.core_style()
-  let hovered = {
-    ..normal,
-    background: @core.Brush::solid(
+  let hovered = @views.new_control_state_style(
+    foreground=normal.foreground,
+    background=@core.Brush::solid(
       state_layer_background(
         state.background,
         state_layer.color,
         state_layer.hover_alpha,
       ),
     ),
-  }
-  let pressed = {
-    ..normal,
-    background: @core.Brush::solid(
+    border?=normal.border,
+    radius=normal.radius,
+    shadow?=normal.shadow,
+    bottom_border_only=normal.bottom_border_only,
+    inner_focus_border=normal.inner_focus_border,
+  )
+  let pressed = @views.new_control_state_style(
+    foreground=normal.foreground,
+    background=@core.Brush::solid(
       state_layer_background(
         state.background,
         state_layer.color,
         state_layer.pressed_alpha,
       ),
     ),
-  }
-  let disabled = {
-    ..normal,
-    foreground: normal.foreground.multiply_alpha(state_layer.disabled_alpha),
-    background: normal.background.multiply_alpha(state_layer.disabled_alpha),
-    border: control_state_disabled_border(normal.border, state_layer),
-    shadow: None,
-  }
-  { normal, hovered, pressed, disabled }
+    border?=normal.border,
+    radius=normal.radius,
+    shadow?=normal.shadow,
+    bottom_border_only=normal.bottom_border_only,
+    inner_focus_border=normal.inner_focus_border,
+  )
+  let disabled = @views.new_control_state_style(
+    foreground=normal.foreground.multiply_alpha(state_layer.disabled_alpha),
+    background=normal.background.multiply_alpha(state_layer.disabled_alpha),
+    border?=control_state_disabled_border(normal.border, state_layer),
+    radius=normal.radius,
+    bottom_border_only=normal.bottom_border_only,
+    inner_focus_border=normal.inner_focus_border,
+  )
+  @views.ButtonStyle::new(normal~, hovered~, pressed~, disabled~)
 }
 
 ///|

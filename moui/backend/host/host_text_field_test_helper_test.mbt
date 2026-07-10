@@ -25,24 +25,26 @@ fn host_test_text_field(
   } else {
     None
   }
-  let normal : @views.ControlStateStyle = {
-    foreground: @core.Color::black(),
-    background: @core.Brush::solid(@core.Color::white()),
-    border: normal_border,
-    radius: 0.0,
-    shadow: None,
-    bottom_border_only: false,
-    inner_focus_border: None,
-  }
-  let focused = { ..normal, border: focused_border }
-  let field_style : @views.TextFieldStyle = {
-    normal,
-    focused,
-    disabled: normal,
-    placeholder_color: @core.Color::gray(),
-    cursor_color: @core.Color::blue(),
-    font: @core.FontSpec::new(size=16.0, weight=400),
-  }
+  let normal = @views.new_control_state_style(
+    foreground=@core.Color::black(),
+    background=@core.Brush::solid(@core.Color::white()),
+    border?=normal_border,
+    radius=0.0,
+  )
+  let focused = @views.new_control_state_style(
+    foreground=@core.Color::black(),
+    background=@core.Brush::solid(@core.Color::white()),
+    border?=focused_border,
+    radius=0.0,
+  )
+  let field_style = @views.TextFieldStyle::new(
+    normal~,
+    focused~,
+    disabled=normal,
+    placeholder_color=@core.Color::gray(),
+    cursor_color=@core.Color::blue(),
+    font=@core.FontSpec::new(size=16.0, weight=400),
+  )
   @views.component(ctx => {
     @views.text_field(
       ctx.watch(value),

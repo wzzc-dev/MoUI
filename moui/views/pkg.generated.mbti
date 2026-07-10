@@ -207,6 +207,8 @@ pub fn[Msg] navigation_stack(@core.NavigationState, Array[NavigationDestination[
 
 pub fn[Msg] navigation_stack_selected(String, Array[NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
 
+pub fn new_control_state_style(foreground~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle, radius? : Double, shadow? : @core.ShadowStyle, bottom_border_only? : Bool, inner_focus_border? : @core.Color?) -> @core.ControlStateStyle
+
 pub fn[Msg] number_field(String, on_input~ : (String) -> Msg, on_step? : ((Double) -> Msg)?, step? : Double, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] overlay(@core.View[Msg], @core.View[Msg]) -> @core.View[Msg]
@@ -386,7 +388,7 @@ pub struct ActionItem[Msg] {
 }
 pub fn[Msg] ActionItem::new(id~ : String, label~ : String, message~ : Msg, enabled? : Bool) -> Self[Msg]
 
-pub(all) struct BadgeStyle {
+pub struct BadgeStyle {
   neutral : ToneStyle
   accent : ToneStyle
   success : ToneStyle
@@ -395,7 +397,22 @@ pub(all) struct BadgeStyle {
   radius : Double
   padding : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn BadgeStyle::accent(Self) -> ToneStyle
+pub fn BadgeStyle::danger(Self) -> ToneStyle
 pub fn BadgeStyle::default(theme? : @core.Theme) -> Self
+pub fn BadgeStyle::neutral(Self) -> ToneStyle
+pub fn BadgeStyle::new(neutral~ : ToneStyle, accent~ : ToneStyle, success~ : ToneStyle, warning~ : ToneStyle, danger~ : ToneStyle, radius~ : Double, padding~ : Double) -> Self
+pub fn BadgeStyle::padding(Self) -> Double
+pub fn BadgeStyle::radius(Self) -> Double
+pub fn BadgeStyle::success(Self) -> ToneStyle
+pub fn BadgeStyle::warning(Self) -> ToneStyle
+pub fn BadgeStyle::with_accent(Self, accent~ : ToneStyle) -> Self
+pub fn BadgeStyle::with_danger(Self, danger~ : ToneStyle) -> Self
+pub fn BadgeStyle::with_neutral(Self, neutral~ : ToneStyle) -> Self
+pub fn BadgeStyle::with_padding(Self, padding~ : Double) -> Self
+pub fn BadgeStyle::with_radius(Self, radius~ : Double) -> Self
+pub fn BadgeStyle::with_success(Self, success~ : ToneStyle) -> Self
+pub fn BadgeStyle::with_warning(Self, warning~ : ToneStyle) -> Self
 
 pub(all) enum BadgeTone {
   Neutral
@@ -404,6 +421,7 @@ pub(all) enum BadgeTone {
   Warning
   Danger
 } derive(Eq, ToJson, @debug.Debug)
+pub fn BadgeTone::to_string(Self) -> String
 
 pub struct BaselineFormRow[Msg] {
   label : @core.View[Msg]
@@ -418,16 +436,25 @@ pub struct BreadcrumbItem[Msg] {
 }
 pub fn[Msg] BreadcrumbItem::new(id~ : String, label~ : String, message? : Msg?) -> Self[Msg]
 
-pub(all) struct ButtonStyle {
+pub struct ButtonStyle {
   normal : @core.ControlStateStyle
   hovered : @core.ControlStateStyle
   pressed : @core.ControlStateStyle
   disabled : @core.ControlStateStyle
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ButtonStyle::disabled(Self) -> @core.ControlStateStyle
 pub fn ButtonStyle::filled(theme? : @core.Theme) -> Self
 pub fn ButtonStyle::ghost(theme? : @core.Theme) -> Self
+pub fn ButtonStyle::hovered(Self) -> @core.ControlStateStyle
+pub fn ButtonStyle::new(normal~ : @core.ControlStateStyle, hovered~ : @core.ControlStateStyle, pressed~ : @core.ControlStateStyle, disabled~ : @core.ControlStateStyle) -> Self
+pub fn ButtonStyle::normal(Self) -> @core.ControlStateStyle
 pub fn ButtonStyle::outline(theme? : @core.Theme) -> Self
+pub fn ButtonStyle::pressed(Self) -> @core.ControlStateStyle
 pub fn ButtonStyle::tonal(theme? : @core.Theme) -> Self
+pub fn ButtonStyle::with_disabled(Self, disabled~ : @core.ControlStateStyle) -> Self
+pub fn ButtonStyle::with_hovered(Self, hovered~ : @core.ControlStateStyle) -> Self
+pub fn ButtonStyle::with_normal(Self, normal~ : @core.ControlStateStyle) -> Self
+pub fn ButtonStyle::with_pressed(Self, pressed~ : @core.ControlStateStyle) -> Self
 
 pub(all) enum ButtonVariant {
   Primary
@@ -437,21 +464,34 @@ pub(all) enum ButtonVariant {
   Subtle
   SubtleBrand
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ButtonVariant::to_string(Self) -> String
 
 pub(all) enum ChipVariant {
   Filled
   Outline
   Soft
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ChipVariant::to_string(Self) -> String
 
-pub(all) struct ChoiceControlStyle {
+pub struct ChoiceControlStyle {
   foreground : @core.Color
   selected_color : @core.Color
   disabled_foreground : @core.Color
   disabled_selected_color : @core.Color
   control_size : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ChoiceControlStyle::control_size(Self) -> Double
 pub fn ChoiceControlStyle::default(theme? : @core.Theme) -> Self
+pub fn ChoiceControlStyle::disabled_foreground(Self) -> @core.Color
+pub fn ChoiceControlStyle::disabled_selected_color(Self) -> @core.Color
+pub fn ChoiceControlStyle::foreground(Self) -> @core.Color
+pub fn ChoiceControlStyle::new(foreground~ : @core.Color, selected_color~ : @core.Color, disabled_foreground~ : @core.Color, disabled_selected_color~ : @core.Color, control_size~ : Double) -> Self
+pub fn ChoiceControlStyle::selected_color(Self) -> @core.Color
+pub fn ChoiceControlStyle::with_control_size(Self, control_size~ : Double) -> Self
+pub fn ChoiceControlStyle::with_disabled_foreground(Self, disabled_foreground~ : @core.Color) -> Self
+pub fn ChoiceControlStyle::with_disabled_selected_color(Self, disabled_selected_color~ : @core.Color) -> Self
+pub fn ChoiceControlStyle::with_foreground(Self, foreground~ : @core.Color) -> Self
+pub fn ChoiceControlStyle::with_selected_color(Self, selected_color~ : @core.Color) -> Self
 
 pub struct ChoiceItem {
   id : String
@@ -496,6 +536,7 @@ pub(all) enum ContainerVariant {
   Raised
   Overlay
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ContainerVariant::to_string(Self) -> String
 
 pub(all) enum CrossAlign {
   Start
@@ -503,6 +544,7 @@ pub(all) enum CrossAlign {
   End
   Stretch
 } derive(Eq, ToJson, @debug.Debug)
+pub fn CrossAlign::to_string(Self) -> String
 
 pub struct DataFilter[Msg] {
   id : String
@@ -526,6 +568,7 @@ pub(all) enum DatePickerMode {
   DateAndTime
   Time
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DatePickerMode::to_string(Self) -> String
 
 pub struct DescriptionItem {
   term : String
@@ -538,7 +581,7 @@ pub struct DropdownState {
 }
 pub fn DropdownState::new(expanded? : Bool, selected? : String) -> Self
 
-pub(all) struct FeedbackStyle {
+pub struct FeedbackStyle {
   neutral : ToneStyle
   info : ToneStyle
   success : ToneStyle
@@ -547,7 +590,22 @@ pub(all) struct FeedbackStyle {
   radius : Double
   padding : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn FeedbackStyle::danger(Self) -> ToneStyle
 pub fn FeedbackStyle::default(theme? : @core.Theme) -> Self
+pub fn FeedbackStyle::info(Self) -> ToneStyle
+pub fn FeedbackStyle::neutral(Self) -> ToneStyle
+pub fn FeedbackStyle::new(neutral~ : ToneStyle, info~ : ToneStyle, success~ : ToneStyle, warning~ : ToneStyle, danger~ : ToneStyle, radius~ : Double, padding~ : Double) -> Self
+pub fn FeedbackStyle::padding(Self) -> Double
+pub fn FeedbackStyle::radius(Self) -> Double
+pub fn FeedbackStyle::success(Self) -> ToneStyle
+pub fn FeedbackStyle::warning(Self) -> ToneStyle
+pub fn FeedbackStyle::with_danger(Self, danger~ : ToneStyle) -> Self
+pub fn FeedbackStyle::with_info(Self, info~ : ToneStyle) -> Self
+pub fn FeedbackStyle::with_neutral(Self, neutral~ : ToneStyle) -> Self
+pub fn FeedbackStyle::with_padding(Self, padding~ : Double) -> Self
+pub fn FeedbackStyle::with_radius(Self, radius~ : Double) -> Self
+pub fn FeedbackStyle::with_success(Self, success~ : ToneStyle) -> Self
+pub fn FeedbackStyle::with_warning(Self, warning~ : ToneStyle) -> Self
 
 pub(all) enum FeedbackTone {
   Neutral
@@ -556,12 +614,14 @@ pub(all) enum FeedbackTone {
   Danger
   Info
 } derive(Eq, ToJson, @debug.Debug)
+pub fn FeedbackTone::to_string(Self) -> String
 
 pub(all) enum FileImportAvailability {
   Available
   Unavailable(String)
   Pending
-}
+} derive(Eq, @debug.Debug)
+pub fn FileImportAvailability::to_string(Self) -> String
 
 pub struct FileSelection {
   paths : Array[String]
@@ -573,22 +633,21 @@ pub fn FormController::field_error(Self, String) -> String
 pub fn FormController::new(fields~ : Array[FormFieldState]) -> Self
 pub fn FormController::validate(Self) -> FormValidationSummary
 
-pub(all) struct FormFieldError {
+pub struct FormFieldError {
   name : String
   message : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn FormFieldError::message(Self) -> String
+pub fn FormFieldError::name(Self) -> String
+pub fn FormFieldError::new(name~ : String, message~ : String) -> Self
 
 pub(all) enum FormFieldLayout {
   Vertical
   Horizontal
 } derive(Eq, ToJson, @debug.Debug)
+pub fn FormFieldLayout::to_string(Self) -> String
 
-pub(all) struct FormFieldState {
-  name : String
-  label : String
-  value : @core.State[String]
-  rules : Array[FormValidationRule]
-}
+type FormFieldState
 pub fn FormFieldState::binding(Self) -> @core.Binding[String]
 pub fn FormFieldState::new(name~ : String, initial? : String, label? : String, validator? : (String) -> String?, rules? : Array[FormValidationRule]) -> Self
 pub fn FormFieldState::validate(Self) -> FormFieldError?
@@ -601,40 +660,61 @@ pub(all) enum FormFieldStatus {
   Disabled
   ReadOnly
 } derive(Eq, ToJson, @debug.Debug)
+pub fn FormFieldStatus::to_string(Self) -> String
 
 pub(all) enum FormValidationDisplay {
   Always
   OnInvalid
   Hidden
 } derive(Eq, ToJson, @debug.Debug)
+pub fn FormValidationDisplay::to_string(Self) -> String
 
-pub(all) struct FormValidationResult {
+pub struct FormValidationResult {
   valid : Bool
   errors : Array[FormFieldError]
   summary : FormValidationSummary
 } derive(Eq, ToJson, @debug.Debug)
+pub fn FormValidationResult::errors(Self) -> Array[FormFieldError]
+pub fn FormValidationResult::new(valid~ : Bool, errors~ : Array[FormFieldError], summary~ : FormValidationSummary) -> Self
+pub fn FormValidationResult::summary(Self) -> FormValidationSummary
+pub fn FormValidationResult::valid(Self) -> Bool
 
 type FormValidationRule
 pub fn FormValidationRule::from_validator((String) -> String?) -> Self
 pub fn FormValidationRule::new(message~ : String, validate~ : (String) -> Bool) -> Self
 pub fn FormValidationRule::required(message? : String) -> Self
 
-pub(all) struct FormValidationStyle {
+pub struct FormValidationStyle {
   foreground : @core.Color
   background : @core.Color
   border : @core.Color
   radius : Double
   padding : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn FormValidationStyle::background(Self) -> @core.Color
+pub fn FormValidationStyle::border(Self) -> @core.Color
 pub fn FormValidationStyle::default(theme? : @core.Theme) -> Self
+pub fn FormValidationStyle::foreground(Self) -> @core.Color
+pub fn FormValidationStyle::new(foreground~ : @core.Color, background~ : @core.Color, border~ : @core.Color, radius~ : Double, padding~ : Double) -> Self
+pub fn FormValidationStyle::padding(Self) -> Double
+pub fn FormValidationStyle::radius(Self) -> Double
+pub fn FormValidationStyle::with_background(Self, background~ : @core.Color) -> Self
+pub fn FormValidationStyle::with_border(Self, border~ : @core.Color) -> Self
+pub fn FormValidationStyle::with_foreground(Self, foreground~ : @core.Color) -> Self
+pub fn FormValidationStyle::with_padding(Self, padding~ : Double) -> Self
+pub fn FormValidationStyle::with_radius(Self, radius~ : Double) -> Self
 
-pub(all) struct FormValidationSummary {
+pub struct FormValidationSummary {
   valid : Bool
   errors : Array[FormFieldError]
   first_invalid_id : String?
 } derive(Eq, ToJson, @debug.Debug)
+pub fn FormValidationSummary::errors(Self) -> Array[FormFieldError]
+pub fn FormValidationSummary::first_invalid_id(Self) -> String?
 pub fn FormValidationSummary::from_errors(Array[FormFieldError]) -> Self
 pub fn FormValidationSummary::from_fields(Array[FormFieldState]) -> Self
+pub fn FormValidationSummary::new(valid~ : Bool, errors~ : Array[FormFieldError], first_invalid_id? : String?) -> Self
+pub fn FormValidationSummary::valid(Self) -> Bool
 
 pub(all) enum IconName {
   Check
@@ -668,6 +748,7 @@ pub(all) enum IconName {
   Columns
   Sidebar
 } derive(Eq, ToJson, @debug.Debug)
+pub fn IconName::to_string(Self) -> String
 
 pub(all) enum MainAlign {
   Start
@@ -677,6 +758,7 @@ pub(all) enum MainAlign {
   Around
   Evenly
 } derive(Eq, ToJson, @debug.Debug)
+pub fn MainAlign::to_string(Self) -> String
 
 pub struct MenuItem[Msg] {
   id : String
@@ -706,9 +788,7 @@ pub fn PaginationState::page_size(Self) -> Int
 pub fn PaginationState::previous(Self) -> Self
 pub fn PaginationState::start_index(Self) -> Int
 
-pub(all) struct PaintContext {
-  commands : Array[@core.DrawCommand]
-}
+type PaintContext
 
 pub struct PickerItem {
   id : String
@@ -718,21 +798,33 @@ pub fn PickerItem::id(Self) -> String
 pub fn PickerItem::label(Self) -> String
 pub fn PickerItem::new(id~ : String, label~ : String) -> Self
 
-pub(all) struct PickerStyle {
+pub struct PickerStyle {
   font : @core.FontSpec
   foreground : @core.Color
   background : @core.Brush
   radius : Double
   popup_max_height : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PickerStyle::background(Self) -> @core.Brush
 pub fn PickerStyle::default(theme? : @core.Theme) -> Self
+pub fn PickerStyle::font(Self) -> @core.FontSpec
+pub fn PickerStyle::foreground(Self) -> @core.Color
+pub fn PickerStyle::new(font~ : @core.FontSpec, foreground~ : @core.Color, background~ : @core.Brush, radius~ : Double, popup_max_height~ : Double) -> Self
+pub fn PickerStyle::popup_max_height(Self) -> Double
+pub fn PickerStyle::radius(Self) -> Double
+pub fn PickerStyle::with_background(Self, background~ : @core.Brush) -> Self
+pub fn PickerStyle::with_font(Self, font~ : @core.FontSpec) -> Self
+pub fn PickerStyle::with_foreground(Self, foreground~ : @core.Color) -> Self
+pub fn PickerStyle::with_popup_max_height(Self, popup_max_height~ : Double) -> Self
+pub fn PickerStyle::with_radius(Self, radius~ : Double) -> Self
 
 pub(all) enum PopoverPlacement {
   BottomStart
   BottomEnd
   TopStart
   TopEnd
-}
+} derive(Eq, @debug.Debug)
+pub fn PopoverPlacement::to_string(Self) -> String
 
 pub(all) enum PresenceStatus {
   Available
@@ -742,21 +834,33 @@ pub(all) enum PresenceStatus {
   Unknown
 } derive(Eq, ToJson, @debug.Debug)
 pub fn PresenceStatus::label(Self) -> String
+pub fn PresenceStatus::to_string(Self) -> String
 
-pub(all) struct ProgressStyle {
+pub struct ProgressStyle {
   foreground : @core.Color
   background : @core.Color
   radius : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ProgressStyle::background(Self) -> @core.Color
 pub fn ProgressStyle::default(theme? : @core.Theme) -> Self
+pub fn ProgressStyle::foreground(Self) -> @core.Color
+pub fn ProgressStyle::new(foreground~ : @core.Color, background~ : @core.Color, radius~ : Double) -> Self
+pub fn ProgressStyle::radius(Self) -> Double
+pub fn ProgressStyle::with_background(Self, background~ : @core.Color) -> Self
+pub fn ProgressStyle::with_foreground(Self, foreground~ : @core.Color) -> Self
+pub fn ProgressStyle::with_radius(Self, radius~ : Double) -> Self
 
-pub(all) struct RouteDescriptor {
+pub struct RouteDescriptor {
   id : String
   path : String
   title : String
   fallback : Bool
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RouteDescriptor::fallback(Self) -> Bool
+pub fn RouteDescriptor::id(Self) -> String
 pub fn RouteDescriptor::new(id~ : String, path~ : String, title? : String, fallback? : Bool) -> Self
+pub fn RouteDescriptor::path(Self) -> String
+pub fn RouteDescriptor::title(Self) -> String
 
 type RouteFocusStore
 pub fn RouteFocusStore::focus_key(Self, String) -> String?
@@ -765,15 +869,18 @@ pub fn RouteFocusStore::new() -> Self
 pub fn RouteFocusStore::remember(Self, route~ : String, focus_key~ : String) -> Unit
 pub fn RouteFocusStore::remember_location(Self, RouteLocation, focus_key~ : String) -> Unit
 
-pub(all) struct RouteHistoryEntry {
+pub struct RouteHistoryEntry {
   route : String
   title : String
   source : String
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RouteHistoryEntry::location(Self) -> RouteLocation
 pub fn RouteHistoryEntry::new(route~ : String, title? : String, source? : String) -> Self
+pub fn RouteHistoryEntry::route(Self) -> String
+pub fn RouteHistoryEntry::source(Self) -> String
+pub fn RouteHistoryEntry::title(Self) -> String
 
-pub(all) struct RouteHistoryState {
+pub struct RouteHistoryState {
   entries : Array[RouteHistoryEntry]
   cursor : Int
 } derive(Eq, ToJson, @debug.Debug)
@@ -783,6 +890,8 @@ pub fn RouteHistoryState::can_go_forward(Self) -> Bool
 pub fn RouteHistoryState::current(Self) -> RouteLocation
 pub fn RouteHistoryState::current_entry(Self) -> RouteHistoryEntry?
 pub fn RouteHistoryState::current_route(Self) -> String
+pub fn RouteHistoryState::cursor(Self) -> Int
+pub fn RouteHistoryState::entries(Self) -> Array[RouteHistoryEntry]
 pub fn RouteHistoryState::forward(Self) -> Self
 pub fn RouteHistoryState::from_deep_link(String, title? : String, source? : String) -> Self
 pub fn RouteHistoryState::from_routes(routes~ : Array[String], cursor? : Int, title? : String, source? : String) -> Self
@@ -793,7 +902,7 @@ pub fn RouteHistoryState::replace(Self, RouteLocation, title? : String, source? 
 pub fn RouteHistoryState::restore_router(Self, RouterState) -> Unit
 pub fn RouteHistoryState::router_snapshot(Self) -> RouterSnapshot
 
-pub(all) struct RouteLocation {
+pub struct RouteLocation {
   path : String
   query : Array[RouteQueryParam]
 } derive(Eq, ToJson, @debug.Debug)
@@ -801,25 +910,32 @@ pub fn RouteLocation::new(path~ : String, query? : Array[RouteQueryParam]) -> Se
 pub fn RouteLocation::param_value(Self, String) -> String?
 pub fn RouteLocation::params(Self) -> Array[RouteParam]
 pub fn RouteLocation::parse(String) -> Self
+pub fn RouteLocation::path(Self) -> String
+pub fn RouteLocation::query(Self) -> Array[RouteQueryParam]
 pub fn RouteLocation::query_value(Self, String) -> String?
 pub fn RouteLocation::to_route(Self) -> String
 
-pub(all) struct RouteParam {
+pub struct RouteParam {
   key : String
   value : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RouteParam::key(Self) -> String
 pub fn RouteParam::new(key~ : String, value~ : String) -> Self
+pub fn RouteParam::value(Self) -> String
 
-pub(all) struct RouteQueryParam {
+pub struct RouteQueryParam {
   key : String
   value : String
 } derive(Eq, ToJson, @debug.Debug)
+pub fn RouteQueryParam::key(Self) -> String
 pub fn RouteQueryParam::new(key~ : String, value~ : String) -> Self
+pub fn RouteQueryParam::value(Self) -> String
 
-pub(all) struct RouterSnapshot {
+pub struct RouterSnapshot {
   routes : Array[String]
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RouterSnapshot::new(routes~ : Array[String]) -> Self
+pub fn RouterSnapshot::routes(Self) -> Array[String]
 
 type RouterState
 pub fn RouterState::current(Self) -> RouteLocation
@@ -857,6 +973,7 @@ pub(all) enum SegmentedControlSize {
   Compact
   Regular
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SegmentedControlSize::to_string(Self) -> String
 
 pub struct SelectableListItem[Msg] {
   id : String
@@ -880,6 +997,7 @@ pub(all) enum SheetPresentationMode {
   Modal
   BottomSheet
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SheetPresentationMode::to_string(Self) -> String
 
 pub struct SidebarItem[Msg] {
   id : String
@@ -889,7 +1007,7 @@ pub struct SidebarItem[Msg] {
 }
 pub fn[Msg] SidebarItem::new(id~ : String, label~ : String, message~ : Msg, enabled? : Bool) -> Self[Msg]
 
-pub(all) struct SliderStyle {
+pub struct SliderStyle {
   foreground : @core.Color
   background : @core.Color
   thumb_color : @core.Color
@@ -897,7 +1015,20 @@ pub(all) struct SliderStyle {
   thumb_size : Double
   radius : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SliderStyle::background(Self) -> @core.Color
 pub fn SliderStyle::default(theme? : @core.Theme) -> Self
+pub fn SliderStyle::foreground(Self) -> @core.Color
+pub fn SliderStyle::new(foreground~ : @core.Color, background~ : @core.Color, thumb_color~ : @core.Color, track_height~ : Double, thumb_size~ : Double, radius~ : Double) -> Self
+pub fn SliderStyle::radius(Self) -> Double
+pub fn SliderStyle::thumb_color(Self) -> @core.Color
+pub fn SliderStyle::thumb_size(Self) -> Double
+pub fn SliderStyle::track_height(Self) -> Double
+pub fn SliderStyle::with_background(Self, background~ : @core.Color) -> Self
+pub fn SliderStyle::with_foreground(Self, foreground~ : @core.Color) -> Self
+pub fn SliderStyle::with_radius(Self, radius~ : Double) -> Self
+pub fn SliderStyle::with_thumb_color(Self, thumb_color~ : @core.Color) -> Self
+pub fn SliderStyle::with_thumb_size(Self, thumb_size~ : Double) -> Self
+pub fn SliderStyle::with_track_height(Self, track_height~ : Double) -> Self
 
 pub struct StateViewAction[Msg] {
   label : String
@@ -905,7 +1036,7 @@ pub struct StateViewAction[Msg] {
 }
 pub fn[Msg] StateViewAction::new(label~ : String, message~ : Msg) -> Self[Msg]
 
-pub(all) struct SurfaceStyle {
+pub struct SurfaceStyle {
   brush : @core.Brush
   border : @core.BorderStyle?
   radius : Double
@@ -913,8 +1044,21 @@ pub(all) struct SurfaceStyle {
   padding : @core.Insets
   level : @core.SurfaceLevel
 } derive(Eq, ToJson, @debug.Debug)
+pub fn SurfaceStyle::border(Self) -> @core.BorderStyle?
+pub fn SurfaceStyle::brush(Self) -> @core.Brush
 pub fn SurfaceStyle::default(theme? : @core.Theme) -> Self
+pub fn SurfaceStyle::level(Self) -> @core.SurfaceLevel
+pub fn SurfaceStyle::new(brush~ : @core.Brush, border? : @core.BorderStyle?, radius~ : Double, shadow? : @core.ShadowStyle?, padding~ : @core.Insets, level~ : @core.SurfaceLevel) -> Self
+pub fn SurfaceStyle::padding(Self) -> @core.Insets
+pub fn SurfaceStyle::radius(Self) -> Double
 pub fn SurfaceStyle::raised(theme? : @core.Theme) -> Self
+pub fn SurfaceStyle::shadow(Self) -> @core.ShadowStyle?
+pub fn SurfaceStyle::with_border(Self, border~ : @core.BorderStyle?) -> Self
+pub fn SurfaceStyle::with_brush(Self, brush~ : @core.Brush) -> Self
+pub fn SurfaceStyle::with_level(Self, level~ : @core.SurfaceLevel) -> Self
+pub fn SurfaceStyle::with_padding(Self, padding~ : @core.Insets) -> Self
+pub fn SurfaceStyle::with_radius(Self, radius~ : Double) -> Self
+pub fn SurfaceStyle::with_shadow(Self, shadow~ : @core.ShadowStyle?) -> Self
 
 pub struct TabItem[Msg] {
   route : String
@@ -930,7 +1074,7 @@ pub struct TableColumn {
 pub fn TableColumn::id(Self) -> String
 pub fn TableColumn::width(Self) -> Double
 
-pub(all) struct TextFieldStyle {
+pub struct TextFieldStyle {
   normal : @core.ControlStateStyle
   focused : @core.ControlStateStyle
   disabled : @core.ControlStateStyle
@@ -938,14 +1082,28 @@ pub(all) struct TextFieldStyle {
   cursor_color : @core.Color
   font : @core.FontSpec
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextFieldStyle::cursor_color(Self) -> @core.Color
+pub fn TextFieldStyle::disabled(Self) -> @core.ControlStateStyle
 pub fn TextFieldStyle::filled(theme? : @core.Theme) -> Self
+pub fn TextFieldStyle::focused(Self) -> @core.ControlStateStyle
+pub fn TextFieldStyle::font(Self) -> @core.FontSpec
+pub fn TextFieldStyle::new(normal~ : @core.ControlStateStyle, focused~ : @core.ControlStateStyle, disabled~ : @core.ControlStateStyle, placeholder_color~ : @core.Color, cursor_color~ : @core.Color, font~ : @core.FontSpec) -> Self
+pub fn TextFieldStyle::normal(Self) -> @core.ControlStateStyle
 pub fn TextFieldStyle::outline(theme? : @core.Theme) -> Self
+pub fn TextFieldStyle::placeholder_color(Self) -> @core.Color
+pub fn TextFieldStyle::with_cursor_color(Self, cursor_color~ : @core.Color) -> Self
+pub fn TextFieldStyle::with_disabled(Self, disabled~ : @core.ControlStateStyle) -> Self
+pub fn TextFieldStyle::with_focused(Self, focused~ : @core.ControlStateStyle) -> Self
+pub fn TextFieldStyle::with_font(Self, font~ : @core.FontSpec) -> Self
+pub fn TextFieldStyle::with_normal(Self, normal~ : @core.ControlStateStyle) -> Self
+pub fn TextFieldStyle::with_placeholder_color(Self, placeholder_color~ : @core.Color) -> Self
 
 pub(all) enum TextFieldVariant {
   Filled
   Outline
   Plain
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextFieldVariant::to_string(Self) -> String
 
 pub(all) enum TextRole {
   Body
@@ -959,13 +1117,19 @@ pub(all) enum TextRole {
   Label
   Overline
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextRole::to_string(Self) -> String
 
-pub(all) struct TextStyle {
+pub struct TextStyle {
   font : @core.FontSpec
   color : @core.Color
 } derive(Eq, ToJson, @debug.Debug)
 pub fn TextStyle::body(theme? : @core.Theme) -> Self
+pub fn TextStyle::color(Self) -> @core.Color
+pub fn TextStyle::font(Self) -> @core.FontSpec
+pub fn TextStyle::new(font~ : @core.FontSpec, color~ : @core.Color) -> Self
 pub fn TextStyle::title(theme? : @core.Theme) -> Self
+pub fn TextStyle::with_color(Self, color~ : @core.Color) -> Self
+pub fn TextStyle::with_font(Self, font~ : @core.FontSpec) -> Self
 
 pub struct ToastQueue[Msg] {
   items : Array[ToastQueueItem[Msg]]
@@ -995,11 +1159,18 @@ pub struct ToastStackItem[Msg] {
 }
 pub fn[Msg] ToastStackItem::new(id~ : String, message~ : String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, dismiss? : Msg?) -> Self[Msg]
 
-pub(all) struct ToneStyle {
+pub struct ToneStyle {
   foreground : @core.Color
   background : @core.Color
   border : @core.Color
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ToneStyle::background(Self) -> @core.Color
+pub fn ToneStyle::border(Self) -> @core.Color
+pub fn ToneStyle::foreground(Self) -> @core.Color
+pub fn ToneStyle::new(foreground~ : @core.Color, background~ : @core.Color, border~ : @core.Color) -> Self
+pub fn ToneStyle::with_background(Self, background~ : @core.Color) -> Self
+pub fn ToneStyle::with_border(Self, border~ : @core.Color) -> Self
+pub fn ToneStyle::with_foreground(Self, foreground~ : @core.Color) -> Self
 
 pub struct TreeItem {
   id : String
