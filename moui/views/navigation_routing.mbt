@@ -1,23 +1,23 @@
 ///|
-pub(all) struct RouteLocation {
+pub struct RouteLocation {
   path : String
   query : Array[RouteQueryParam]
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct RouteQueryParam {
+pub struct RouteQueryParam {
   key : String
   value : String
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct RouteParam {
+pub struct RouteParam {
   key : String
   value : String
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct RouteDescriptor {
+pub struct RouteDescriptor {
   id : String
   path : String
   title : String
@@ -25,19 +25,19 @@ pub(all) struct RouteDescriptor {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct RouterSnapshot {
+pub struct RouterSnapshot {
   routes : Array[String]
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct RouteHistoryEntry {
+pub struct RouteHistoryEntry {
   route : String
   title : String
   source : String
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct RouteHistoryState {
+pub struct RouteHistoryState {
   entries : Array[RouteHistoryEntry]
   cursor : Int
 } derive(Eq, Debug, ToJson)
@@ -533,4 +533,86 @@ fn clamp_route_history_cursor(
   } else {
     cursor
   }
+}
+
+///|
+pub fn RouteLocation::path(self : RouteLocation) -> String {
+  self.path
+}
+
+///|
+pub fn RouteLocation::query(self : RouteLocation) -> Array[RouteQueryParam] {
+  self.query
+}
+
+///|
+pub fn RouteQueryParam::key(self : RouteQueryParam) -> String {
+  self.key
+}
+
+///|
+pub fn RouteQueryParam::value(self : RouteQueryParam) -> String {
+  self.value
+}
+
+///|
+pub fn RouteParam::key(self : RouteParam) -> String {
+  self.key
+}
+
+///|
+pub fn RouteParam::value(self : RouteParam) -> String {
+  self.value
+}
+
+///|
+pub fn RouteDescriptor::id(self : RouteDescriptor) -> String {
+  self.id
+}
+
+///|
+pub fn RouteDescriptor::path(self : RouteDescriptor) -> String {
+  self.path
+}
+
+///|
+pub fn RouteDescriptor::title(self : RouteDescriptor) -> String {
+  self.title
+}
+
+///|
+pub fn RouteDescriptor::fallback(self : RouteDescriptor) -> Bool {
+  self.fallback
+}
+
+///|
+pub fn RouterSnapshot::routes(self : RouterSnapshot) -> Array[String] {
+  self.routes
+}
+
+///|
+pub fn RouteHistoryEntry::route(self : RouteHistoryEntry) -> String {
+  self.route
+}
+
+///|
+pub fn RouteHistoryEntry::title(self : RouteHistoryEntry) -> String {
+  self.title
+}
+
+///|
+pub fn RouteHistoryEntry::source(self : RouteHistoryEntry) -> String {
+  self.source
+}
+
+///|
+pub fn RouteHistoryState::entries(
+  self : RouteHistoryState,
+) -> Array[RouteHistoryEntry] {
+  self.entries
+}
+
+///|
+pub fn RouteHistoryState::cursor(self : RouteHistoryState) -> Int {
+  self.cursor
 }

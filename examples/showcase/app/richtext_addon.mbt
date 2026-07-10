@@ -11,13 +11,12 @@ fn showcase_text_field_style(
       let clear = @graphics.Brush::solid(
         @graphics.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0),
       )
-      let normal = {
-        ..base.normal,
-        background: clear,
-        border: None,
-        radius: 0.0,
-      }
-      { ..base, normal, focused: normal }
+      let normal = @views.new_control_state_style(
+        foreground=theme.palette.foreground,
+        background=clear,
+        radius=0.0,
+      )
+      base.with_normal(normal~).with_focused(focused=normal)
     }
   }
 }

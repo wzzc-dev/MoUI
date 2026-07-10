@@ -1,5 +1,5 @@
 ///|
-pub(all) struct FormFieldState {
+struct FormFieldState {
   name : String
   label : String
   value : @core.State[String]
@@ -7,14 +7,14 @@ pub(all) struct FormFieldState {
 }
 
 ///|
-pub(all) struct FormValidationResult {
+pub struct FormValidationResult {
   valid : Bool
   errors : Array[FormFieldError]
   summary : FormValidationSummary
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct FormFieldError {
+pub struct FormFieldError {
   name : String
   message : String
 } derive(Eq, Debug, ToJson)
@@ -25,7 +25,7 @@ struct FormValidationRule {
 }
 
 ///|
-pub(all) struct FormValidationSummary {
+pub struct FormValidationSummary {
   valid : Bool
   errors : Array[FormFieldError]
   first_invalid_id : String?
@@ -150,4 +150,75 @@ pub fn FormController::field_error(
 ///|
 pub fn required_field(message? : String = "Required") -> (String) -> String? {
   value => if value == "" { Some(message) } else { None }
+}
+
+///|
+pub fn FormValidationResult::new(
+  valid~ : Bool,
+  errors~ : Array[FormFieldError],
+  summary~ : FormValidationSummary,
+) -> FormValidationResult {
+  { valid, errors, summary }
+}
+
+///|
+pub fn FormValidationResult::valid(self : FormValidationResult) -> Bool {
+  self.valid
+}
+
+///|
+pub fn FormValidationResult::errors(
+  self : FormValidationResult,
+) -> Array[FormFieldError] {
+  self.errors
+}
+
+///|
+pub fn FormValidationResult::summary(
+  self : FormValidationResult,
+) -> FormValidationSummary {
+  self.summary
+}
+
+///|
+pub fn FormFieldError::new(name~ : String, message~ : String) -> FormFieldError {
+  { name, message }
+}
+
+///|
+pub fn FormFieldError::name(self : FormFieldError) -> String {
+  self.name
+}
+
+///|
+pub fn FormFieldError::message(self : FormFieldError) -> String {
+  self.message
+}
+
+///|
+pub fn FormValidationSummary::new(
+  valid~ : Bool,
+  errors~ : Array[FormFieldError],
+  first_invalid_id? : String? = None,
+) -> FormValidationSummary {
+  { valid, errors, first_invalid_id }
+}
+
+///|
+pub fn FormValidationSummary::valid(self : FormValidationSummary) -> Bool {
+  self.valid
+}
+
+///|
+pub fn FormValidationSummary::errors(
+  self : FormValidationSummary,
+) -> Array[FormFieldError] {
+  self.errors
+}
+
+///|
+pub fn FormValidationSummary::first_invalid_id(
+  self : FormValidationSummary,
+) -> String? {
+  self.first_invalid_id
 }

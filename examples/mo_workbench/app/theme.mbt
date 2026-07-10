@@ -248,16 +248,17 @@ fn workbench_tab_selected_button_style(
     Light => @graphics.Color::rgba(r=1.0, g=1.0, b=1.0, a=1.0)
     Dark => workbench_text(theme)
   }
-  let state : @views.ControlStateStyle = {
-    foreground: fg,
-    background: @graphics.Brush::solid(bg),
-    border: None,
-    radius: 6.0,
-    shadow: None,
-    bottom_border_only: false,
-    inner_focus_border: None,
-  }
-  { normal: state, hovered: state, pressed: state, disabled: state }
+  let state = @views.new_control_state_style(
+    foreground=fg,
+    background=@graphics.Brush::solid(bg),
+    radius=6.0,
+  )
+  @views.ButtonStyle::new(
+    normal=state,
+    hovered=state,
+    pressed=state,
+    disabled=state,
+  )
 }
 
 ///|

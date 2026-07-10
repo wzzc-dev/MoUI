@@ -26,7 +26,7 @@ pub(all) enum PopoverPlacement {
   BottomEnd
   TopStart
   TopEnd
-}
+} derive(Eq, Debug)
 
 ///|
 pub struct DropdownState {

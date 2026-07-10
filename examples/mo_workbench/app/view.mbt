@@ -541,11 +541,9 @@ fn task_search_field(
 ///|
 fn sidebar_search_field_style(theme : @moui.Theme) -> @views.TextFieldStyle {
   let base = @views.TextFieldStyle::filled(theme~)
-  {
-    ..base,
-    font: sidebar_fine_font(theme, size_delta=-0.75, weight=280),
-    placeholder_color: workbench_text_muted(theme),
-  }
+  base
+  .with_font(font=sidebar_fine_font(theme, size_delta=-0.75, weight=280))
+  .with_placeholder_color(placeholder_color=workbench_text_muted(theme))
 }
 
 ///|

@@ -181,8 +181,8 @@ fn views_facade_host_alias_tokens() -> Array[String] {
 ///|
 fn views_facade_required_tokens() -> Array[String] {
   let tokens = [
-    "\"wzzc-dev/moui/core\"", "pub fn[Msg] button(", "pub fn[Msg] column(", "pub(all) struct ButtonStyle",
-    "pub(all) struct FormFieldState", "pub(all) struct RouteLocation", "pub(all) struct RouteHistoryState",
+    "\"wzzc-dev/moui/core\"", "pub fn[Msg] button(", "pub fn[Msg] column(", "pub struct ButtonStyle",
+    "type FormFieldState", "pub struct RouteLocation", "pub struct RouteHistoryState",
     "type RouteFocusStore", "type RouterState", "pub fn resolve_route(", "pub(all) enum DatePickerMode",
     "pub fn default_theme()", "pub fn light_theme()", "pub fn dark_theme()", "pub fn[Msg] text(",
     "pub fn[Msg] empty()", "pub fn[Msg] spacer(", "pub fn[Msg] picker(", "pub fn picker_item(",
@@ -362,9 +362,9 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "views facade",
       path: "moui/views/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/views\"",
-      max_lines: 1095,
-      max_pub_lines: 385,
-      max_pub_all_lines: 45,
+      max_lines: 1250,
+      max_pub_lines: 560,
+      max_pub_all_lines: 19,
       required_tokens: views_facade_required_tokens(),
       forbidden_tokens: [
         "ViewSpec", "ViewNode", "VirtualNode", "RuntimeState", "HostWindowRenderer",

@@ -3,7 +3,7 @@ pub(all) enum FileImportAvailability {
   Available
   Unavailable(String)
   Pending
-}
+} derive(Eq, Debug)
 
 ///|
 pub struct FileSelection {

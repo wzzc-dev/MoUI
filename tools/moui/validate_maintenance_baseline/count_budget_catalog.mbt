@@ -10,7 +10,7 @@ struct CountBudget {
 fn pub_all_budgets() -> Array[CountBudget] {
   [
     { kind: "pub(all)", label: "moui/core", path: "moui/core", max_count: 280 },
-    { kind: "pub(all)", label: "moui/views", path: "moui/views", max_count: 82 },
+    { kind: "pub(all)", label: "moui/views", path: "moui/views", max_count: 19 },
     {
       kind: "pub(all)",
       label: "moui/runtime",

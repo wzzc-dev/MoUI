@@ -451,7 +451,11 @@ fn ShowcaseModel::with_host_route_event(
     )
   } else {
     match showcase_route_history_cursor_for_route(self.route_history, route) {
-      Some(cursor) => { ..self.route_history, cursor, }
+      Some(cursor) =>
+        @views.RouteHistoryState::from_routes(
+          routes=self.route_history.entries().map(entry => entry.route()),
+          cursor~,
+        )
       None =>
         self.route_history.push(
           location,

@@ -148,7 +148,7 @@ fn ShowcaseModel::focus_shortcut_card(
     ],
   )
   let validation_summary = @views.FormValidationSummary::from_errors([
-    { name: "email", message: "Email required" },
+    @views.FormFieldError::new(name="email", message="Email required"),
   ])
   showcase_soft_card(
     theme,
