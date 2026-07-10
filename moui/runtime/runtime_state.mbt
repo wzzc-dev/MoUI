@@ -42,6 +42,13 @@ priv struct RuntimeState {
   /// keeps `needs_redraw` set on each `FrameTick` so the host keeps ticking
   /// until every in-flight animation settles.
   mut active_animations : Bool
+  mut pending_scroll_request : ScrollRequest?
+}
+
+///|
+priv struct ScrollRequest {
+  key : String
+  alignment : ScrollAlignment
 }
 
 ///|
@@ -102,6 +109,7 @@ fn RuntimeState::new_erased_view_node(
     saveable_state: SaveableStateStore::new(),
     now_ms: 0.0,
     active_animations: false,
+    pending_scroll_request: None,
   }
   let mounted = mount_erased_view_node_for_runtime(root, Some(state), 1)
   state.element_tree = ElementTree::new(mounted.node)
@@ -179,6 +187,7 @@ fn RuntimeState::destroy(self : RuntimeState) -> Unit {
   self.dirty_paint_elements.clear()
   self.focused_element = None
   self.active_pointer_capture = None
+  self.pending_scroll_request = None
   self.needs_rebuild = false
   self.needs_layout = false
   self.needs_paint = false

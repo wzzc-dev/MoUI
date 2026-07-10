@@ -403,6 +403,8 @@ test "windows accessibility bridge dispatches semantics actions" {
   let node = @core.SemanticsNode::{
     element_id: @core.ElementId::new(11),
     role: @core.SemanticsRole::Checkbox,
+    level: None,
+    url: "",
     label: "Enable",
     value: "false",
     description: "",

@@ -30,6 +30,7 @@ using @core {
   type Point,
   type Rect,
   type SaveableStateStore,
+  type ScrollAlignment,
   type SemanticsAction,
   type SemanticsNode,
   type SemanticsState,

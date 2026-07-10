@@ -28,3 +28,5 @@ trace.json
 examples/*/android_app/build/
 examples/*/android_app/app/.cxx/
 examples/*/android_app/app/build/
+.playwright-cli/*
+output/playwright/*

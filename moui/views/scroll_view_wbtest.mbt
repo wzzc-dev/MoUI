@@ -93,3 +93,112 @@ test "scroll wheel starts from clamped visual offset after auto-scroll overshoot
   assert_true(result.captured)
   assert_true(state.offset() == @core.Point::new(x=0.0, y=360.0))
 }
+
+///|
+test "scroll wheel at a clamped edge does not dirty or capture" {
+  let state = @core.ScrollState::new(offset=@core.Point::new(x=0.0, y=400.0))
+  let view = scroll_view(
+    scroll_test_rect(width=100.0, height=500.0),
+    state=Some(state),
+    width=100.0,
+    height=100.0,
+  )
+  let layout = view.layout(
+    scroll_test_layout_context(
+      child_size=@core.Size::new(width=100.0, height=500.0),
+    ),
+  )
+  let result = view.event({
+    frame: @core.Rect::new(x=0.0, y=0.0, width=100.0, height=100.0),
+    child_frames: layout.child_frames,
+    event: @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=50.0, y=50.0),
+        phase=@core.PointerPhase::Move,
+        wheel_delta=@core.Point::new(x=0.0, y=-40.0),
+      ),
+    ),
+    focused: false,
+    state: scroll_test_state_context(),
+    text_control: scroll_test_text_control_context(),
+    text_system: @core.TextSystem::fallback(),
+    environment: @core.Environment::neutral(),
+    style: @core.ViewStyle::empty(),
+    now_ms: 0.0,
+  })
+  assert_false(result.changed)
+  assert_false(result.captured)
+  assert_true(result.dirty is @core.ViewDirtyHint::ViewClean)
+  assert_true(state.offset() == @core.Point::new(x=0.0, y=400.0))
+}
+
+///|
+test "scroll indicator is opt-in and draggable" {
+  let state = @core.ScrollState::new()
+  let view = scroll_view(
+    scroll_test_rect(width=100.0, height=500.0),
+    state=Some(state),
+    width=100.0,
+    height=100.0,
+    shows_indicator=true,
+  )
+  let layout = view.layout(
+    scroll_test_layout_context(
+      child_size=@core.Size::new(width=100.0, height=500.0),
+    ),
+  )
+  let paint = view.paint({
+    frame: @core.Rect::new(x=0.0, y=0.0, width=100.0, height=100.0),
+    child_frames: layout.child_frames,
+    focused: false,
+    state: scroll_test_state_context(),
+    text_control: scroll_test_text_control_context(),
+    text_system: @core.TextSystem::fallback(),
+    environment: @core.Environment::neutral(),
+    style: @core.ViewStyle::empty(),
+    now_ms: 0.0,
+  })
+  assert_true(paint.overlay_commands.length() == 1)
+  let result = view.event({
+    frame: @core.Rect::new(x=0.0, y=0.0, width=100.0, height=100.0),
+    child_frames: layout.child_frames,
+    event: @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=98.0, y=80.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+    focused: false,
+    state: scroll_test_state_context(),
+    text_control: scroll_test_text_control_context(),
+    text_system: @core.TextSystem::fallback(),
+    environment: @core.Environment::neutral(),
+    style: @core.ViewStyle::empty(),
+    now_ms: 0.0,
+  })
+  assert_true(result.captured)
+  assert_true(state.offset().y > 0.0)
+  let hidden = scroll_view(
+    scroll_test_rect(width=100.0, height=500.0),
+    state=Some(@core.ScrollState::new()),
+    width=100.0,
+    height=100.0,
+  )
+  let hidden_layout = hidden.layout(
+    scroll_test_layout_context(
+      child_size=@core.Size::new(width=100.0, height=500.0),
+    ),
+  )
+  let hidden_paint = hidden.paint({
+    frame: @core.Rect::new(x=0.0, y=0.0, width=100.0, height=100.0),
+    child_frames: hidden_layout.child_frames,
+    focused: false,
+    state: scroll_test_state_context(),
+    text_control: scroll_test_text_control_context(),
+    text_system: @core.TextSystem::fallback(),
+    environment: @core.Environment::neutral(),
+    style: @core.ViewStyle::empty(),
+    now_ms: 0.0,
+  })
+  assert_true(hidden_paint.overlay_commands.is_empty())
+}

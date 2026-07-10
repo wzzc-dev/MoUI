@@ -76,6 +76,8 @@ test "schema: SemanticsSnapshot carries node_count and depth" {
   let leaf : @core.SemanticsNode = {
     element_id: @core.ElementId::new(1),
     role: @core.SemanticsRole::Text,
+    level: None,
+    url: "",
     label: "hi",
     value: "",
     description: "",

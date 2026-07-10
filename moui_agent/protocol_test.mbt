@@ -9,6 +9,8 @@
 let mock_root : @core.SemanticsNode = {
   element_id: @core.ElementId::new(1),
   role: @core.SemanticsRole::Button,
+  level: None,
+  url: "",
   label: "mock-button",
   value: "",
   description: "",

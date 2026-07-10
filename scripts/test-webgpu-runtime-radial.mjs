@@ -176,8 +176,13 @@ const stringHandle = value => {
   return imports.finish_create_string(handle);
 };
 
-const surface = imports.create_surface(stringHandle("radial-canvas"), 100, 60, 1);
+const canvasIdHandle = stringHandle("radial-canvas");
+const surface = imports.create_surface(canvasIdHandle, 100, 60, 1);
 assert(surface > 0, "expected fake WebGPU surface");
+assert(
+  imports.create_surface(canvasIdHandle, 100, 60, 1) === 0,
+  "WebGPU string handles should be consumed after one host call",
+);
 const renderer = imports.create_renderer(surface);
 assert(renderer > 0, "expected fake WebGPU renderer");
 

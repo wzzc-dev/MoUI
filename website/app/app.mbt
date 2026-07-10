@@ -1,29 +1,50 @@
 ///|
 pub struct Model {
   dark : Bool
-  body_scroll_y : Double
-  docs_scroll_y : Double
   hero_count : Int
   page : WebsitePage
   selected_doc_slug : String
+  catalog_state : WebsiteCatalogLoadState
   doc_state : WebsiteDocLoadState
+  docs_search : String
+  mobile_menu_open : Bool
+  docs_drawer_open : Bool
+  compact_hero_tab : String
+  home_scroll : @state.ScrollState
+  docs_body_scroll : @state.ScrollState
+  docs_scroll : @state.ScrollState
+  showcases_scroll : @state.ScrollState
+  showcase_grid_scroll : @state.ScrollState
+  route_history : @views.RouteHistoryState
+  pending_anchor : String?
+  copy_feedback_active : Bool
 }
 
 ///|
 pub enum Msg {
   ToggleDark
-  ScrollBodyTo(Double)
-  ScrollDocsTo(Double)
   CounterIncrement
   CounterReset
   OpenRepository
   OpenHome
   OpenHomeAt(Double)
+  OpenHomeAnchor(String)
   OpenDocs
   OpenShowcases
   OpenShowcaseSource(String)
   SelectDoc(String)
+  OpenDocLink(String)
+  CopyText(String)
+  RetryCatalog
   RetryDoc
+  SearchDocs(String)
+  ToggleMobileMenu
+  CloseMobileMenu
+  ToggleDocsDrawer
+  CloseDocsDrawer
+  SelectCompactHeroTab(String)
+  HostRouteChanged(@host.HostRouteEvent)
+  HostCatalogCompleted(@host.HostCompletedServiceResponse)
   HostDocsCompleted(@host.HostCompletedServiceResponse)
 }
 
@@ -31,12 +52,11 @@ pub enum Msg {
 priv struct Metrics {
   viewport : @geometry.Size
   compact : Bool
+  nav_compact : Bool
+  docs_compact : Bool
   content_width : Double
-  body_width : Double
   body_scroll_width : Double
   body_height : Double
-  body_content_height : Double
-  scrollbar_width : Double
   top_bar_height : Double
   section_top : Double
   section_bottom : Double
@@ -50,54 +70,193 @@ priv struct Metrics {
 
 ///|
 fn Model::new() -> Model {
-  let doc = website_default_doc_entry()
   {
     dark: false,
-    body_scroll_y: 0.0,
-    docs_scroll_y: 0.0,
     hero_count: 0,
     page: WebsiteHome,
-    selected_doc_slug: doc.slug,
+    selected_doc_slug: "moui-readme",
+    catalog_state: CatalogNotLoaded,
     doc_state: DocNotLoaded,
+    docs_search: "",
+    mobile_menu_open: false,
+    docs_drawer_open: false,
+    compact_hero_tab: "source",
+    home_scroll: @state.ScrollState::new(),
+    docs_body_scroll: @state.ScrollState::new(),
+    docs_scroll: @state.ScrollState::new(),
+    showcases_scroll: @state.ScrollState::new(),
+    showcase_grid_scroll: @state.ScrollState::new(),
+    route_history: @views.RouteHistoryState::new(
+      initial=@views.RouteLocation::new(path="home"),
+      title="MoUI",
+      source="website",
+    ),
+    pending_anchor: None,
+    copy_feedback_active: false,
   }
 }
 
 ///|
 fn Model::update(self : Model, message : Msg) -> Model {
   match message {
-    ToggleDark => { ..self, dark: !self.dark }
-    ScrollBodyTo(offset_y) =>
-      { ..self, body_scroll_y: max_website_double(0.0, offset_y) }
-    ScrollDocsTo(offset_y) =>
-      { ..self, docs_scroll_y: max_website_double(0.0, offset_y) }
-    CounterIncrement => { ..self, hero_count: self.hero_count + 1 }
-    CounterReset => { ..self, hero_count: 0 }
-    OpenRepository => self
-    OpenHome => { ..self, page: WebsiteHome }
-    OpenHomeAt(offset_y) =>
-      {
-        ..self,
-        page: WebsiteHome,
-        body_scroll_y: max_website_double(0.0, offset_y),
-      }
-    OpenDocs => { ..self, page: WebsiteDocs }
-    OpenShowcases => {
-      let model = { ..self, page: WebsiteShowcases, body_scroll_y: 0.0 }
-      model
+    ToggleDark => { ..self, dark: !self.dark, copy_feedback_active: false }
+    CounterIncrement =>
+      { ..self, hero_count: self.hero_count + 1, copy_feedback_active: false }
+    CounterReset => { ..self, hero_count: 0, copy_feedback_active: false }
+    OpenRepository | OpenShowcaseSource(_) | OpenDocLink(_) =>
+      { ..self, copy_feedback_active: false }
+    CopyText(_) => { ..self, copy_feedback_active: true }
+    OpenHome => { ..self.with_route("home"), copy_feedback_active: false }
+    OpenHomeAt(offset_y) => {
+      self.home_scroll.scroll_to(x=0.0, y=max_website_double(0.0, offset_y))
+      { ..self.with_route("home"), copy_feedback_active: false }
     }
-    OpenShowcaseSource(_) => self
-    SelectDoc(slug) => {
-      let entry = website_doc_entry_by_slug(slug)
+    OpenHomeAnchor(anchor) =>
       {
-        ..self,
-        page: WebsiteDocs,
-        selected_doc_slug: entry.slug,
-        docs_scroll_y: 0.0,
-        doc_state: DocNotLoaded,
+        ..self.with_route("home?anchor=" + anchor),
+        copy_feedback_active: false,
       }
-    }
-    RetryDoc => { ..self, doc_state: DocNotLoaded }
+    OpenDocs =>
+      {
+        ..self.with_route("docs/" + self.selected_doc_slug),
+        copy_feedback_active: false,
+      }
+    OpenShowcases =>
+      { ..self.with_route("showcases"), copy_feedback_active: false }
+    SelectDoc(slug) =>
+      { ..self.with_route("docs/" + slug), copy_feedback_active: false }
+    RetryCatalog =>
+      { ..self, catalog_state: CatalogNotLoaded, copy_feedback_active: false }
+    RetryDoc => { ..self, doc_state: DocNotLoaded, copy_feedback_active: false }
+    SearchDocs(value) =>
+      { ..self, docs_search: value, copy_feedback_active: false }
+    ToggleMobileMenu => { ..self, mobile_menu_open: !self.mobile_menu_open }
+    CloseMobileMenu => { ..self, mobile_menu_open: false }
+    ToggleDocsDrawer => { ..self, docs_drawer_open: !self.docs_drawer_open }
+    CloseDocsDrawer => { ..self, docs_drawer_open: false }
+    SelectCompactHeroTab(tab) => { ..self, compact_hero_tab: tab }
+    HostRouteChanged(event) => self.with_host_route(event)
+    HostCatalogCompleted(completion) =>
+      self.apply_catalog_completion(completion)
     HostDocsCompleted(completion) => self.apply_docs_completion(completion)
+  }
+}
+
+///|
+fn Model::current_body_scroll(self : Model) -> @state.ScrollState {
+  match self.page {
+    WebsiteHome => self.home_scroll
+    WebsiteDocs => self.docs_body_scroll
+    WebsiteShowcases => self.showcases_scroll
+  }
+}
+
+///|
+fn Model::with_route(self : Model, route : String) -> Model {
+  let location = @views.RouteLocation::parse(website_normalize_route(route))
+  let page = website_page_from_location(location)
+  let selected_doc_slug = website_doc_slug_from_location(location).unwrap_or(
+    self.selected_doc_slug,
+  )
+  let anchor = location.query_value("anchor")
+  if page != self.page {
+    match page {
+      WebsiteHome => self.home_scroll.scroll_to(x=0.0, y=0.0)
+      WebsiteDocs => {
+        self.docs_body_scroll.scroll_to(x=0.0, y=0.0)
+        self.docs_scroll.scroll_to(x=0.0, y=0.0)
+      }
+      WebsiteShowcases => self.showcases_scroll.scroll_to(x=0.0, y=0.0)
+    }
+  } else if page is WebsiteDocs && selected_doc_slug != self.selected_doc_slug {
+    self.docs_scroll.scroll_to(x=0.0, y=0.0)
+  }
+  let history = if self.route_history.current_route() == location.to_route() {
+    self.route_history.replace(
+      location,
+      title=website_route_title(location),
+      source="website",
+    )
+  } else {
+    self.route_history.push(
+      location,
+      title=website_route_title(location),
+      source="website",
+    )
+  }
+  {
+    ..self,
+    page,
+    selected_doc_slug,
+    doc_state: if selected_doc_slug != self.selected_doc_slug {
+      DocNotLoaded
+    } else {
+      self.doc_state
+    },
+    route_history: history,
+    pending_anchor: anchor,
+    mobile_menu_open: false,
+    docs_drawer_open: false,
+  }
+}
+
+///|
+fn Model::with_host_route(self : Model, event : @host.HostRouteEvent) -> Model {
+  let normalized = website_normalize_route(event.location.to_route())
+  let location = @views.RouteLocation::parse(normalized)
+  let next = self.with_route(normalized)
+  {
+    ..next,
+    route_history: self.route_history.replace(
+      location,
+      title=website_route_title(location),
+      source=event.source,
+    ),
+  }
+}
+
+///|
+fn website_normalize_route(route : String) -> String {
+  let location = @views.RouteLocation::parse(route)
+  let path = location.path()
+  if path == "" || path == "/" || path == "overview" {
+    "home"
+  } else {
+    location.to_route()
+  }
+}
+
+///|
+fn website_page_from_location(location : @views.RouteLocation) -> WebsitePage {
+  let path = location.path()
+  if path == "showcases" {
+    WebsiteShowcases
+  } else if path.has_prefix("docs/") || path == "docs" {
+    WebsiteDocs
+  } else {
+    WebsiteHome
+  }
+}
+
+///|
+fn website_doc_slug_from_location(location : @views.RouteLocation) -> String? {
+  let path = location.path()
+  if path.has_prefix("docs/") && path.length() > 5 {
+    Some(path[5:].to_owned())
+  } else {
+    None
+  }
+}
+
+///|
+fn website_route_title(location : @views.RouteLocation) -> String {
+  let path = location.path()
+  if path == "showcases" {
+    "Showcases"
+  } else if path.has_prefix("docs/") {
+    "Docs"
+  } else {
+    "MoUI"
   }
 }
 
@@ -106,52 +265,275 @@ fn Model::update_with_services(
   self : Model,
   message : Msg,
   services : @host.HostAppServices,
+  route_host : WebsiteRouteHost?,
 ) -> (Model, @moui.Effect[Msg]) {
   match message {
     OpenRepository =>
       (
         self,
-        @moui.Effect::host_service(
-          key="host:open-moui-repository",
-          label="Open MoUI repository",
-          run=_dispatch => ignore(services.open_url(moui_repository_url())),
+        website_open_url_effect(
+          services,
+          moui_repository_url(),
+          "Open MoUI repository",
         ),
       )
-    OpenDocs => {
-      let model = { ..self, page: WebsiteDocs }
-      model.request_selected_doc(services)
-    }
-    OpenShowcases => {
-      let model = { ..self, page: WebsiteShowcases, body_scroll_y: 0.0 }
-      (model, @moui.Effect::none())
-    }
     OpenShowcaseSource(url) =>
+      (self, website_open_url_effect(services, url, "Open showcase source"))
+    OpenDocLink(target) => self.open_doc_link(target, services, route_host)
+    CopyText(value) =>
       (
-        self,
+        self.update(message),
         @moui.Effect::host_service(
-          key="host:open-showcase-source:" + url,
-          label="Open showcase source",
-          run=_dispatch => ignore(services.open_url(url)),
+          key="website:copy",
+          label="Copy website text",
+          run=_dispatch => ignore(services.write_clipboard_text(value)),
         ),
       )
-    SelectDoc(slug) => {
-      let entry = website_doc_entry_by_slug(slug)
-      let model = {
-        ..self,
-        page: WebsiteDocs,
-        selected_doc_slug: entry.slug,
-        docs_scroll_y: 0.0,
-        doc_state: DocNotLoaded,
+    RetryCatalog => self.request_catalog(services)
+    RetryDoc => self.request_selected_doc(services)
+    ToggleDocsDrawer => {
+      let next = self.update(message)
+      let effect = if next.docs_drawer_open {
+        WebsiteRouteCommand::ScrollToKey(
+          "docs-nav-" + next.selected_doc_slug,
+          @core.ScrollAlignment::Center,
+        ).effect(route_host)
+      } else {
+        @moui.Effect::none()
       }
-      model.request_selected_doc(services)
+      (next, effect)
     }
-    RetryDoc => {
-      let model = { ..self, doc_state: DocNotLoaded, docs_scroll_y: 0.0 }
-      model.request_selected_doc(services)
+    HostCatalogCompleted(completion) => {
+      let next = self.apply_catalog_completion(completion)
+      let (prepared, effect) = if next.page is WebsiteDocs &&
+        next.catalog_state is CatalogLoaded(_) &&
+        next.doc_state is DocNotLoaded {
+        next.request_selected_doc(services)
+      } else {
+        (next, @moui.Effect::none())
+      }
+      (prepared.with_metadata_updated(route_host), effect)
     }
     HostDocsCompleted(completion) =>
       (self.apply_docs_completion(completion), @moui.Effect::none())
+    OpenHome
+    | OpenHomeAt(_)
+    | OpenHomeAnchor(_)
+    | OpenDocs
+    | OpenShowcases
+    | SelectDoc(_) => {
+      let next = self.update(message)
+      let route = next.route_history.current_route()
+      let route_effect = WebsiteRouteCommand::PushRoute(route).effect(
+        route_host,
+      )
+      let anchor_effect = match next.pending_anchor {
+        Some(anchor) =>
+          WebsiteRouteCommand::ScrollToKey(
+            website_anchor_key(anchor),
+            @core.ScrollAlignment::Start,
+          ).effect(route_host)
+        None => @moui.Effect::none()
+      }
+      let (prepared, doc_effect) = if next.page is WebsiteDocs &&
+        next.doc_state is DocNotLoaded {
+        next.request_selected_doc(services)
+      } else {
+        (next, @moui.Effect::none())
+      }
+      (
+        prepared.with_metadata_updated(route_host),
+        @moui.Effect::batch([route_effect, anchor_effect, doc_effect]),
+      )
+    }
+    HostRouteChanged(event) => {
+      let next = self.with_host_route(event)
+      let (prepared, doc_effect) = if next.page is WebsiteDocs &&
+        next.doc_state is DocNotLoaded {
+        next.request_selected_doc(services)
+      } else {
+        (next, @moui.Effect::none())
+      }
+      let anchor_effect = match next.pending_anchor {
+        Some(anchor) =>
+          WebsiteRouteCommand::ScrollToKey(
+            website_anchor_key(anchor),
+            @core.ScrollAlignment::Start,
+          ).effect(route_host)
+        None => @moui.Effect::none()
+      }
+      (
+        prepared.with_metadata_updated(route_host),
+        @moui.Effect::batch([doc_effect, anchor_effect]),
+      )
+    }
     _ => (self.update(message), @moui.Effect::none())
+  }
+}
+
+///|
+fn WebsiteRouteCommand::effect(
+  self : WebsiteRouteCommand,
+  route_host : WebsiteRouteHost?,
+) -> @moui.Effect[Msg] {
+  match route_host {
+    Some(host) =>
+      @moui.Effect::host_service(
+        key="website:route-command",
+        label="Website route command",
+        run=_dispatch => {
+          match self {
+            PushRoute(route) => (host.push_route)(route)
+            ScrollToKey(key, alignment) => (host.scroll_to_key)(key, alignment)
+          }
+        },
+      )
+    None => @moui.Effect::none()
+  }
+}
+
+///|
+fn Model::with_metadata_updated(
+  self : Model,
+  route_host : WebsiteRouteHost?,
+) -> Model {
+  match route_host {
+    Some(host) => {
+      let (title, description, canonical) = self.document_metadata()
+      (host.update_metadata)(title, description, canonical)
+    }
+    None => ()
+  }
+  self
+}
+
+///|
+fn Model::document_metadata(self : Model) -> (String, String, String) {
+  let site_url = match self.website_catalog() {
+    Some(catalog) => catalog.siteUrl
+    None => "https://wzzc-dev.github.io/MoUI/"
+  }
+  match self.page {
+    WebsiteHome =>
+      (
+        "MoUI - MoonBit GUI Framework", "Typed, declarative MoonBit UI for Web and native hosts.",
+        site_url,
+      )
+    WebsiteShowcases =>
+      (
+        "Showcases - MoUI",
+        "Applications and platform surfaces built with MoUI.",
+        site_url + "?section=showcases",
+      )
+    WebsiteDocs =>
+      match self.website_doc_selected_entry() {
+        Some(entry) =>
+          (
+            entry.title + " - MoUI Docs",
+            entry.summary,
+            site_url + "?section=docs/" + entry.slug,
+          )
+        None =>
+          (
+            "Not Found - MoUI Docs",
+            "The requested MoUI documentation page was not found.",
+            site_url + "?section=docs/" + self.selected_doc_slug,
+          )
+      }
+  }
+}
+
+///|
+fn website_anchor_key(anchor : String) -> String {
+  if anchor == "tour" {
+    "home-tour"
+  } else if anchor == "quick-start" {
+    "home-quick-start"
+  } else {
+    "doc-heading-" + anchor
+  }
+}
+
+///|
+fn website_open_url_effect(
+  services : @host.HostAppServices,
+  url : String,
+  label : String,
+) -> @moui.Effect[Msg] {
+  @moui.Effect::host_service(key="website:open-url:" + url, label~, run=_dispatch => {
+    ignore(services.open_url(url))
+  })
+}
+
+///|
+fn Model::open_doc_link(
+  self : Model,
+  target : String,
+  services : @host.HostAppServices,
+  route_host : WebsiteRouteHost?,
+) -> (Model, @moui.Effect[Msg]) {
+  if target.has_prefix("https://") || target.has_prefix("http://") {
+    return (
+      self,
+      website_open_url_effect(services, target, "Open documentation link"),
+    )
+  }
+  if target.has_prefix("#") {
+    let anchor = website_heading_anchor(target[1:].to_owned())
+    let route = "docs/" + self.selected_doc_slug + "?anchor=" + anchor
+    let next = self.with_route(route)
+    return (
+      next,
+      @moui.Effect::batch([
+        WebsiteRouteCommand::PushRoute(route).effect(route_host),
+        WebsiteRouteCommand::ScrollToKey(
+          website_anchor_key(anchor),
+          @core.ScrollAlignment::Start,
+        ).effect(route_host),
+      ]),
+    )
+  }
+  let parts = target.split("#").to_array()
+  let path = parts[0].to_owned()
+  let anchor = if parts.length() > 1 {
+    Some(website_heading_anchor(parts[1].to_owned()))
+  } else {
+    None
+  }
+  let filename = path
+    .split("/")
+    .last()
+    .map(view => view.to_owned())
+    .unwrap_or(path)
+  let mut resolved : WebsiteDocEntry? = None
+  match self.website_catalog() {
+    Some(catalog) =>
+      for entry in catalog.entries {
+        if entry.path.has_suffix("/" + filename) || entry.path == filename {
+          resolved = Some(entry)
+          break
+        }
+      }
+    None => ()
+  }
+  match resolved {
+    Some(entry) => {
+      let suffix = match anchor {
+        Some(anchor) => "?anchor=" + anchor
+        None => ""
+      }
+      let route = "docs/" + entry.slug + suffix
+      let next = self.with_route(route)
+      let load = next.request_selected_doc(services).1
+      (
+        next,
+        @moui.Effect::batch([
+          WebsiteRouteCommand::PushRoute(route).effect(route_host),
+          load,
+        ]),
+      )
+    }
+    None => (self, @moui.Effect::none())
   }
 }
 
@@ -159,50 +541,25 @@ fn Model::update_with_services(
 fn Model::view(self : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
   let theme = website_theme(self.dark)
   let metrics = website_metrics(env.viewport_size())
-  let content_height = self.website_current_content_height(metrics)
-  let scroll_y = match self.page {
-    WebsiteHome => self.body_scroll_y
-    WebsiteDocs => self.docs_scroll_y
-    WebsiteShowcases => self.body_scroll_y
-  }
-  let max_scroll = max_website_double(0.0, content_height - metrics.body_height)
-  let body_scroll_y = clamp_website_double(scroll_y, 0.0, max_scroll)
-  let body_content = match self.page {
+  let content = match self.page {
     WebsiteHome => self.home_content(theme, metrics)
     WebsiteDocs => self.docs_content(theme, metrics)
     WebsiteShowcases => self.showcases_content(theme, metrics)
   }
-  let body = row(
-    [
-      scroll_view(
-        body_content,
-        offset=@geometry.Point::new(x=0.0, y=body_scroll_y),
-        width=metrics.body_scroll_width,
-        height=metrics.body_height,
-        on_scroll=Some(delta => {
-          let next = clamp_website_double(
-            body_scroll_y + delta.y,
-            0.0,
-            max_scroll,
-          )
-          match self.page {
-            WebsiteHome => ScrollBodyTo(next)
-            WebsiteDocs => ScrollDocsTo(next)
-            WebsiteShowcases => ScrollBodyTo(next)
-          }
-        }),
-      ),
-      website_scrollbar(
-        theme,
-        viewport_height=metrics.body_height,
-        content_height~,
-        offset_y=body_scroll_y,
-      ).frame(width=metrics.scrollbar_width, height=metrics.body_height),
-    ],
-    spacing=0.0,
-    align=@views.CrossAlign::Start,
-  ).frame(width=metrics.body_width, height=metrics.body_height)
-  container(
+  let body = if self.page is WebsiteDocs {
+    frame(content, width=metrics.body_scroll_width, height=metrics.body_height).semantics_role(
+      @core.SemanticsRole::Main,
+    )
+  } else {
+    scroll_view(
+      content,
+      state=Some(self.current_body_scroll()),
+      width=metrics.body_scroll_width,
+      height=metrics.body_height,
+      shows_indicator=true,
+    ).semantics_role(@core.SemanticsRole::Main)
+  }
+  let shell = container(
     column(
       [self.top_bar(theme, metrics), body],
       spacing=0.0,
@@ -214,6 +571,7 @@ fn Model::view(self : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
     theme~,
     padding=0.0,
   )
+  self.website_overlay_hosts(shell, theme, metrics)
 }
 
 ///|
@@ -225,12 +583,20 @@ fn Model::program(self : Model) -> @moui.Program[Model, Msg] {
 fn Model::program_with_services(
   self : Model,
   services : @host.HostAppServices,
+  route_host? : WebsiteRouteHost? = None,
 ) -> @moui.Program[Model, Msg] {
   @moui.Program::new_with_environment(
-    init=() => (self, @moui.Effect::none()),
-    update=(model, message) => model.update_with_services(message, services),
+    init=() => {
+      match self.catalog_state {
+        CatalogNotLoaded => self.request_catalog(services)
+        _ => (self, @moui.Effect::none())
+      }
+    },
+    update=(model, message) => {
+      model.update_with_services(message, services, route_host)
+    },
     view=(model, env) => model.view(env),
-    subscriptions=model => model.subscriptions(services),
+    subscriptions=model => model.subscriptions(services, route_host),
   )
 }
 
@@ -244,9 +610,9 @@ fn Model::home_content(
     [
       self.hero(theme, metrics),
       self.capability_strip(theme, metrics),
-      self.foundation_section(theme, metrics),
+      self.foundation_section(theme, metrics).key("home-tour"),
       self.platform_section(theme, metrics),
-      self.quick_start_section(theme, metrics),
+      self.quick_start_section(theme, metrics).key("home-quick-start"),
     ],
     spacing=0.0,
     align=@views.CrossAlign::Start,
@@ -257,21 +623,74 @@ fn Model::home_content(
 fn Model::subscriptions(
   self : Model,
   services : @host.HostAppServices,
+  route_host : WebsiteRouteHost?,
 ) -> @moui.Subscription[Msg] {
-  match self.doc_state.pending_id() {
+  let subscriptions : Array[@moui.Subscription[Msg]] = []
+  match self.catalog_state.pending_id() {
     Some(id) =>
-      if id.value <= 0 {
-        @moui.Subscription::none()
-      } else {
-        services.completion_subscription(
-          id,
-          map=completion => HostDocsCompleted(completion),
-          key="website:docs:" + id.value.to_string(),
-          label="Website docs markdown completion",
+      if id.value > 0 {
+        subscriptions.push(
+          services.completion_subscription(
+            id,
+            map=completion => HostCatalogCompleted(completion),
+            key="website:catalog:" + id.value.to_string(),
+            label="Website docs catalog completion",
+          ),
         )
       }
-    None => @moui.Subscription::none()
+    None => ()
   }
+  match self.doc_state.pending_id() {
+    Some(id) =>
+      if id.value > 0 {
+        subscriptions.push(
+          services.completion_subscription(
+            id,
+            map=completion => HostDocsCompleted(completion),
+            key="website:docs:" + id.value.to_string(),
+            label="Website docs markdown completion",
+          ),
+        )
+      }
+    None => ()
+  }
+  match route_host {
+    Some(host) =>
+      subscriptions.push(
+        host.route_source.subscription(
+          key="website:host-route",
+          label="Website host route",
+          map=event => Some(HostRouteChanged(event)),
+        ),
+      )
+    None => ()
+  }
+  @moui.Subscription::batch(subscriptions)
+}
+
+///|
+fn Model::request_catalog(
+  self : Model,
+  services : @host.HostAppServices,
+) -> (Model, @moui.Effect[Msg]) {
+  (
+    {
+      ..self,
+      catalog_state: CatalogLoading(@host.HostServiceRequestId::new(0)),
+    },
+    @moui.Effect::host_service(
+      key="website:load-docs-catalog",
+      label="Load website docs catalog",
+      run=dispatch => {
+        let response = services.read_text_file("docs/catalog.json")
+        dispatch(
+          HostCatalogCompleted(
+            website_file_completion("docs/catalog.json", response),
+          ),
+        )
+      },
+    ),
+  )
 }
 
 ///|
@@ -279,25 +698,82 @@ fn Model::request_selected_doc(
   self : Model,
   services : @host.HostAppServices,
 ) -> (Model, @moui.Effect[Msg]) {
-  let entry = self.website_doc_selected_entry()
-  (
-    {
-      ..self,
-      page: WebsiteDocs,
-      selected_doc_slug: entry.slug,
-      doc_state: DocLoading(@host.HostServiceRequestId::new(0), entry.path),
-    },
-    @moui.Effect::host_service(
-      key="website:load-doc:" + entry.slug,
-      label="Load website markdown doc",
-      run=dispatch => {
-        let response = services.read_text_file(entry.path)
-        dispatch(
-          HostDocsCompleted(website_doc_completion(entry.path, response)),
-        )
-      },
-    ),
-  )
+  match self.website_doc_selected_entry() {
+    Some(entry) =>
+      (
+        {
+          ..self,
+          page: WebsiteDocs,
+          doc_state: DocLoading(@host.HostServiceRequestId::new(0), entry.path),
+        },
+        @moui.Effect::host_service(
+          key="website:load-doc:" + entry.slug,
+          label="Load website Markdown document",
+          run=dispatch => {
+            let response = services.read_text_file(entry.path)
+            dispatch(
+              HostDocsCompleted(website_file_completion(entry.path, response)),
+            )
+          },
+        ),
+      )
+    None =>
+      match self.catalog_state {
+        CatalogLoaded(_) =>
+          (
+            { ..self, doc_state: DocNotFound(self.selected_doc_slug) },
+            @moui.Effect::none(),
+          )
+        _ => (self, @moui.Effect::none())
+      }
+  }
+}
+
+///|
+fn Model::apply_catalog_completion(
+  self : Model,
+  completion : @host.HostCompletedServiceResponse,
+) -> Model {
+  if !self.catalog_completion_matches(completion) {
+    return self
+  }
+  match completion.response {
+    @host.HostServiceResponse::Pending(id) =>
+      { ..self, catalog_state: CatalogLoading(id) }
+    @host.HostServiceResponse::TextFileContent(_, text) =>
+      match website_parse_catalog(text) {
+        Some(catalog) => { ..self, catalog_state: CatalogLoaded(catalog) }
+        None =>
+          {
+            ..self,
+            catalog_state: CatalogFailed("The generated catalog is invalid."),
+          }
+      }
+    @host.HostServiceResponse::Unavailable(reason) =>
+      { ..self, catalog_state: CatalogFailed(reason) }
+    _ =>
+      {
+        ..self,
+        catalog_state: CatalogFailed("Unexpected catalog host response."),
+      }
+  }
+}
+
+///|
+fn Model::catalog_completion_matches(
+  self : Model,
+  completion : @host.HostCompletedServiceResponse,
+) -> Bool {
+  match self.catalog_state {
+    CatalogLoading(id) =>
+      if id.value == 0 {
+        completion.id.value == 0 ||
+        completion.response is @host.HostServiceResponse::Pending(_)
+      } else {
+        completion.id == id
+      }
+    _ => false
+  }
 }
 
 ///|
@@ -310,9 +786,6 @@ fn Model::apply_docs_completion(
       @host.HostTextFileRequest::ReadText(path)
     ) => path
     _ => self.website_doc_loading_path()
-  }
-  if path != self.website_doc_loading_path() {
-    return self
   }
   if !self.docs_completion_matches_current(completion, path) {
     return self
@@ -330,9 +803,7 @@ fn Model::apply_docs_completion(
     _ =>
       {
         ..self,
-        doc_state: DocFailed(
-          path, "unexpected host response while loading docs",
-        ),
+        doc_state: DocFailed(path, "Unexpected document host response."),
       }
   }
 }
@@ -348,10 +819,8 @@ fn Model::docs_completion_matches_current(
       if path != loading_path {
         false
       } else if id.value == 0 {
-        match completion.response {
-          @host.HostServiceResponse::Pending(_) => true
-          _ => completion.id == id
-        }
+        completion.id.value == 0 ||
+        completion.response is @host.HostServiceResponse::Pending(_)
       } else {
         completion.id == id
       }
@@ -360,7 +829,7 @@ fn Model::docs_completion_matches_current(
 }
 
 ///|
-fn website_doc_completion(
+fn website_file_completion(
   path : String,
   response : @host.HostServiceResponse,
 ) -> @host.HostCompletedServiceResponse {
@@ -378,18 +847,6 @@ fn website_doc_completion(
 }
 
 ///|
-fn Model::website_current_content_height(
-  self : Model,
-  metrics : Metrics,
-) -> Double {
-  match self.page {
-    WebsiteHome => metrics.body_content_height
-    WebsiteDocs => self.website_docs_content_height(metrics)
-    WebsiteShowcases => self.showcases_content_height(metrics)
-  }
-}
-
-///|
 pub fn program() -> @moui.Program[Model, Msg] {
   Model::new().program()
 }
@@ -397,8 +854,9 @@ pub fn program() -> @moui.Program[Model, Msg] {
 ///|
 pub fn program_with_services(
   services : @host.HostAppServices,
+  route_host? : WebsiteRouteHost? = None,
 ) -> @moui.Program[Model, Msg] {
-  Model::new().program_with_services(services)
+  Model::new().program_with_services(services, route_host~)
 }
 
 ///|
@@ -409,11 +867,9 @@ fn moui_repository_url() -> String {
 ///|
 fn website_metrics(viewport : @geometry.Size) -> Metrics {
   let compact = viewport.width < 820.0
-  let scrollbar_width = 14.0
-  let body_scroll_width = max_website_double(
-    120.0,
-    viewport.width - scrollbar_width,
-  )
+  let nav_compact = viewport.width < 980.0
+  let docs_compact = viewport.width < 1040.0
+  let body_scroll_width = max_website_double(120.0, viewport.width)
   let horizontal_margin = if compact { 20.0 } else { 40.0 }
   let content_width = min_website_double(
     max_website_double(280.0, body_scroll_width - horizontal_margin * 2.0),
@@ -423,7 +879,7 @@ fn website_metrics(viewport : @geometry.Size) -> Metrics {
   let section_top = if compact { 52.0 } else { 82.0 }
   let section_bottom = if compact { 52.0 } else { 82.0 }
   let hero_scene_width = content_width
-  let hero_scene_height = if compact { 260.0 } else { 300.0 }
+  let hero_scene_height = if compact { 330.0 } else { 300.0 }
   let hero_copy_width = if compact {
     content_width
   } else {
@@ -439,16 +895,15 @@ fn website_metrics(viewport : @geometry.Size) -> Metrics {
   } else {
     clamp_website_double((content_width - 36.0) / 4.0, 240.0, 280.0)
   }
-  let docs_sidebar_width = if compact { content_width } else { 270.0 }
+  let docs_sidebar_width = if docs_compact { content_width } else { 280.0 }
   {
     viewport,
     compact,
+    nav_compact,
+    docs_compact,
     content_width,
-    body_width: viewport.width,
     body_scroll_width,
     body_height: max_website_double(120.0, viewport.height - top_bar_height),
-    body_content_height: website_body_content_height(compact),
-    scrollbar_width,
     top_bar_height,
     section_top,
     section_bottom,
@@ -458,15 +913,6 @@ fn website_metrics(viewport : @geometry.Size) -> Metrics {
     hero_scene_height,
     feature_card_width,
     platform_card_width,
-  }
-}
-
-///|
-fn website_body_content_height(compact : Bool) -> Double {
-  if compact {
-    3600.0
-  } else {
-    2960.0
   }
 }
 

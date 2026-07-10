@@ -155,8 +155,13 @@ try {
   for (const ch of "canvas") {
     fallback.string_append_char(canvasId, ch.codePointAt(0));
   }
-  const surface = fallback.create_surface(fallback.finish_create_string(canvasId), 160, 120, 2);
+  const finishedCanvasId = fallback.finish_create_string(canvasId);
+  const surface = fallback.create_surface(finishedCanvasId, 160, 120, 2);
   assert(surface > 0, "Canvas2D fallback should create a surface through dynamic import");
+  assert(
+    fallback.create_surface(finishedCanvasId, 160, 120, 2) === 0,
+    "Canvas2D string handles should be consumed after one host call",
+  );
   assert(canvas.width === 640 && canvas.height === 480, "Canvas2D fallback should size canvas with host DPR");
 } finally {
   restoreGlobal("document", previousDocument);

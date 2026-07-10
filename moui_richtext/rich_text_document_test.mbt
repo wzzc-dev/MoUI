@@ -102,6 +102,58 @@ test "parse_markdown keeps soft-wrapped paragraph lines in one block" {
 }
 
 ///|
+test "markdown_block_to_rich_text replaces newlines with spaces in paragraph visual_text" {
+  let blocks = parse_markdown("word1\nword2")
+  let block = markdown_block_to_rich_text(blocks[0], @core.FontSpec::new())
+  let mut has_newline_in_visual = false
+  let mut all_visual_text = ""
+  let mut run_details = ""
+  let mut run_index = 0
+  for run in block.runs {
+    let visual = match run.visual_text {
+      Some(t) => t
+      None => run.text
+    }
+    all_visual_text = all_visual_text + visual
+    run_details = run_details +
+      "run\{run_index}: text=\{run.text}, visual=\{visual}\n"
+    run_index = run_index + 1
+    if visual.contains("\n") {
+      has_newline_in_visual = true
+    }
+  }
+  if has_newline_in_visual || all_visual_text.contains("  ") {
+    fail("debug: \{run_details} all_visual=\{all_visual_text}")
+  }
+  assert_false(has_newline_in_visual)
+  assert_true(all_visual_text.contains("word1 word2"))
+  assert_false(all_visual_text.contains("  "))
+}
+
+///|
+test "real markdown paragraph soft-break joins with single space" {
+  let src = "MoUI is a multi-platform MoonBit GUI framework for building\ndeclarative UI apps with shared platform-neutral app logic. Native host cores\nown windows, events, services, and lifecycle, then receive concrete renderers\nthrough platform renderer provider packages."
+  let blocks = parse_markdown(src)
+  let block = markdown_block_to_rich_text(blocks[0], @core.FontSpec::new())
+  let mut all_visual = ""
+  let mut run_details = ""
+  let mut idx = 0
+  for run in block.runs {
+    let visual = match run.visual_text {
+      Some(t) => t
+      None => run.text
+    }
+    all_visual = all_visual + visual
+    run_details = run_details +
+      "run\{idx}: text='\{run.text}' visual='\{visual}'\n"
+    idx = idx + 1
+  }
+  assert_false(all_visual.contains("  "))
+  assert_true(all_visual.contains("cores own"))
+  assert_true(all_visual.contains("renderers through"))
+}
+
+///|
 test "parse_markdown keeps multiline setext heading in one block" {
   let blocks = parse_markdown("Alpha\nBeta\n---\nTail")
   inspect(blocks.length(), content="2")

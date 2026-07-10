@@ -27,6 +27,8 @@ fn RecordingHost::new() -> RecordingHost {
 let test_semantics_root : @core.SemanticsNode = {
   element_id: @core.ElementId::new(1),
   role: @core.SemanticsRole::Button,
+  level: None,
+  url: "",
   label: "click-me",
   value: "",
   description: "",

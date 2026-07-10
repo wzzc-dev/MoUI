@@ -169,6 +169,16 @@ pub fn[Msg] View::semantics_role(
 }
 
 ///|
+pub fn[Msg] View::semantics_level(self : View[Msg], level : Int) -> View[Msg] {
+  self.apply_modifier(SemanticsLevelModifier(level))
+}
+
+///|
+pub fn[Msg] View::semantics_url(self : View[Msg], url : String) -> View[Msg] {
+  self.apply_modifier(SemanticsUrlModifier(url))
+}
+
+///|
 pub fn[Msg] View::semantics_selected(
   self : View[Msg],
   selected? : Bool = true,

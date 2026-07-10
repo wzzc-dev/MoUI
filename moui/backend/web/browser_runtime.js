@@ -5,6 +5,11 @@
 // `wzzc-dev/window/web` package without exposing registry cache paths to the
 // browser.
 
+import {
+  createSemanticsDomManager,
+  updateDocumentMetadata,
+} from "./semantics_dom.js";
+
 export function createWindowWebImports(options = {}) {
   const canvases = new Map();
   const listeners = new Map();
@@ -19,6 +24,7 @@ export function createWindowWebImports(options = {}) {
   let dispatchRoute = null;
   let wasmExports = null;
   let routeListenerInstalled = false;
+  const semantics = createSemanticsDomManager();
   const eventObserver =
     typeof options.onEvent === "function"
       ? options.onEvent
@@ -246,7 +252,9 @@ export function createWindowWebImports(options = {}) {
 
   const stringValue = handle => {
     if (typeof handle === "number") {
-      return stringHandles.get(handle)?.value ?? "";
+      const value = stringHandles.get(handle)?.value ?? "";
+      stringHandles.delete(handle);
+      return value;
     }
     if (typeof handle === "string") {
       return handle;
@@ -1011,6 +1019,36 @@ export function createWindowWebImports(options = {}) {
     },
     set_wasm_exports(exports) {
       wasmExports = exports;
+      semantics.setDispatch((rawId, elementId, actionCode, value) => {
+        const dispatch = wasmExports?.web_dispatch_semantics_action;
+        if (typeof dispatch !== "function") return;
+        const valueId = value ? nextEventTextId++ : 0;
+        if (valueId) eventTexts.set(valueId, value);
+        try {
+          dispatch(rawId, elementId, actionCode, valueId);
+        } finally {
+          if (valueId) eventTexts.delete(valueId);
+        }
+      });
+    },
+    sync_semantics(rawId, canvasId, json) {
+      const canvas = globalThis.document?.getElementById?.(stringValue(canvasId));
+      if (!(canvas instanceof globalThis.HTMLCanvasElement)) return;
+      try {
+        semantics.sync(rawId, canvas, JSON.parse(stringValue(json)));
+      } catch (error) {
+        globalThis.console?.error?.("MoUI semantics synchronization failed", error);
+      }
+    },
+    remove_semantics(rawId) {
+      semantics.remove(rawId);
+    },
+    update_document_metadata(json) {
+      try {
+        updateDocumentMetadata(JSON.parse(stringValue(json)));
+      } catch (error) {
+        globalThis.console?.error?.("MoUI document metadata update failed", error);
+      }
     },
     history_current_route() {
       return createStringHandle(currentBrowserRoute());
@@ -1237,7 +1275,7 @@ export function createWindowWebImports(options = {}) {
       });
       add(canvas, "wheel", event => {
         event.preventDefault();
-        emit(30, rawId, Math.round(event.deltaX), Math.round(event.deltaY));
+        emit(30, rawId, Math.round(event.deltaX), -Math.round(event.deltaY));
       }, { passive: false });
       add(canvas, "touchstart", event => {
         const touch = firstTouch(event.changedTouches) ?? firstTouch(event.touches);

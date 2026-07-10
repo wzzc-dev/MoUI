@@ -55,3 +55,39 @@ test "wgpu web adapter keeps solid rounded brush on solid host payload" {
   }
   assert_true(color == @core.Color::blue())
 }
+
+///|
+test "wgpu web host derives long text carets from one measured width" {
+  let text = "Wi你🙂 ".repeat(800)
+  let input = @core.TextLayoutInput::new(
+    text~,
+    font=@core.FontSpec::new(size=16.0, weight=500),
+  )
+  let result = host_text_layout_from_measured_width(input, 24000.0)
+  inspect(
+    result.caret_positions.length(),
+    content="\{text.to_array().length() + 1}",
+  )
+  assert_true(web_adapter_wb_carets_are_monotonic(result.caret_positions))
+  inspect(result.size.width, content="24000")
+  assert_true(
+    (result.caret_positions[result.caret_positions.length() - 1] - 24000.0).abs() <
+    0.01,
+  )
+  let clamped = host_text_layout_from_measured_width(
+    { ..input, max_width: Some(320.0) },
+    24000.0,
+  )
+  inspect(clamped.size.width, content="320")
+  assert_true(clamped.caret_positions.all(caret => caret <= 320.0))
+}
+
+///|
+fn web_adapter_wb_carets_are_monotonic(carets : Array[Double]) -> Bool {
+  for index in 1..<carets.length() {
+    if carets[index] < carets[index - 1] {
+      return false
+    }
+  }
+  true
+}

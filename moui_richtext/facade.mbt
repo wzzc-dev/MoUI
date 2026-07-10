@@ -7,6 +7,54 @@ pub fn markdown_document(
 }
 
 ///|
+/// A read-only plain text viewer that renders text using proper text
+/// measurement and word-wrapping, matching the RichText pipeline.
+pub fn[Msg] text_viewer(
+  source~ : String,
+  size~ : @core.Size,
+  font? : @core.FontSpec = @core.FontSpec::new(),
+  foreground? : @core.Color = @core.Color::black(),
+  key? : String? = None,
+) -> @core.View[Msg] {
+  let cache = RichTextDocumentViewCache::new()
+  @core.View::node(
+    identity=() => @core.ViewIdentity::new(kind="TextViewer", key~),
+    revision=() => {
+      "text-viewer:\{source.length()}:\{view_size_revision(size)}:\{view_font_revision(font)}:\{view_color_revision(foreground)}"
+    },
+    layout=ctx => {
+      let measured_height = rich_text_document_session_view_measure_height(
+        source,
+        size,
+        font,
+        ctx.text_system,
+        cache,
+      )
+      let measured = @core.Size::new(width=size.width, height=measured_height)
+      @core.ViewLayoutResult::new(size=ctx.constraints.constrain(measured))
+    },
+    paint=ctx => {
+      rich_text_document_session_view_paint(
+        ctx,
+        source,
+        font,
+        foreground,
+        @core.Brush::solid(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
+        0.0,
+        0.0,
+        0.0,
+        320.0,
+        None,
+        cache,
+      )
+    },
+    semantics=() => {
+      @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Text, label=source)
+    },
+  )
+}
+
+///|
 pub fn markdown_input_transform(
   source : String,
   caret : Int,

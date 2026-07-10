@@ -37,6 +37,8 @@ test "macos accessibility bridge dispatches semantics actions" {
   let node = @core.SemanticsNode::{
     element_id: @core.ElementId::new(9),
     role: @core.SemanticsRole::Button,
+    level: None,
+    url: "",
     label: "Run",
     value: "",
     description: "",

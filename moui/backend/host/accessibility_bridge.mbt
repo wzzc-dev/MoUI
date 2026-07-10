@@ -104,6 +104,10 @@ pub fn accesskit_role_from_semantics(
   match role {
     @core.SemanticsRole::None => @accesskit.Role::GenericContainer
     @core.SemanticsRole::Text => @accesskit.Role::TextRun
+    @core.SemanticsRole::Link => @accesskit.Role::Link
+    @core.SemanticsRole::Heading => @accesskit.Role::Heading
+    @core.SemanticsRole::Navigation => @accesskit.Role::Navigation
+    @core.SemanticsRole::Main => @accesskit.Role::Main
     @core.SemanticsRole::Button => @accesskit.Role::Button
     @core.SemanticsRole::Checkbox => @accesskit.Role::CheckBox
     @core.SemanticsRole::TextField => @accesskit.Role::TextInput
@@ -160,6 +164,13 @@ pub fn accesskit_node_from_semantics(
   }
   if node.description != "" {
     access_node.set_description(node.description)
+  }
+  match node.level {
+    Some(level) => if level > 0 { access_node.set_level(level) }
+    None => ()
+  }
+  if node.url != "" {
+    access_node.set_url(node.url)
   }
   if node.state.disabled {
     access_node.set_disabled()
@@ -242,6 +253,8 @@ pub fn NativeAccessibilityNode::from_accesskit(
   NativeAccessibilityNode::from_semantics(@core.SemanticsNode::{
     element_id,
     role,
+    level: None,
+    url: "",
     label: "",
     value: "",
     description: "",
@@ -399,6 +412,10 @@ fn native_accessibility_role(role : @core.SemanticsRole) -> String {
   match role {
     @core.SemanticsRole::None => "ignored"
     @core.SemanticsRole::Text => "staticText"
+    @core.SemanticsRole::Link => "link"
+    @core.SemanticsRole::Heading => "heading"
+    @core.SemanticsRole::Navigation => "navigation"
+    @core.SemanticsRole::Main => "main"
     @core.SemanticsRole::Button => "button"
     @core.SemanticsRole::Checkbox => "checkbox"
     @core.SemanticsRole::TextField => "textField"

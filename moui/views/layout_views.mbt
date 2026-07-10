@@ -275,6 +275,7 @@ fn[Msg] scroll_container(
   viewport? : @core.Size? = None,
   state? : @core.ScrollState? = None,
   on_scroll? : ((@core.Point) -> Msg)? = None,
+  shows_indicator? : Bool = false,
   kind? : String = "Scroll",
   key? : String? = None,
 ) -> @core.View[Msg] {
@@ -282,7 +283,7 @@ fn[Msg] scroll_container(
     identity=() => @core.ViewIdentity::new(kind~, key~),
     revision=() => {
       let current = scroll_offset(offset, state)
-      "scroll:\{current.x}:\{current.y}:\{view_size_option_revision(viewport)}:\{state is Some(_)}:\{on_scroll is Some(_)}"
+      "scroll:\{current.x}:\{current.y}:\{view_size_option_revision(viewport)}:\{state is Some(_)}:\{on_scroll is Some(_)}:\{shows_indicator}"
     },
     children=() => [child],
     child_constraints=_constraints => @core.Constraints::unbounded(),
@@ -320,7 +321,15 @@ fn[Msg] scroll_container(
         ],
         child_layers: [],
         post_commands: [@core.DrawCommand::PopClip],
-        overlay_commands: [],
+        overlay_commands: if shows_indicator {
+          scroll_indicator_commands(
+            ctx.frame,
+            first_child_frame_size(ctx.child_frames, viewport_size),
+            scroll_offset(offset, state),
+          )
+        } else {
+          []
+        },
         platform_views: [],
         repaint_boundary: false,
         animating: false,
@@ -329,7 +338,16 @@ fn[Msg] scroll_container(
     event=ctx => {
       match ctx.event {
         @core.AppEvent::Pointer(event) =>
-          if ctx.frame.contains(event.position) &&
+          if shows_indicator && scroll_indicator_handles_event(ctx, event) {
+            scroll_indicator_event_result(
+              ctx,
+              event,
+              offset~,
+              viewport~,
+              state~,
+              on_scroll~,
+            )
+          } else if ctx.frame.contains(event.position) &&
             (event.wheel_delta.x != 0.0 || event.wheel_delta.y != 0.0) {
             match (state, on_scroll) {
               (Some(state), Some(handler)) => {
@@ -338,20 +356,25 @@ fn[Msg] scroll_container(
                   ctx.child_frames,
                   viewport_size,
                 )
+                let current = state.offset()
                 let next = scroll_offset_after_wheel(
-                  state.offset(),
+                  current,
                   event.wheel_delta,
                   viewport_size,
                   child_size,
                 )
-                state.scroll_to(x=next.x, y=next.y)
-                view_event_result(
-                  changed=true,
-                  activated=true,
-                  captured=true,
-                  dirty=@core.ViewDirtyHint::ViewLayoutDirty,
-                  messages=[handler(event.wheel_delta)],
-                )
+                if next == current {
+                  @core.ViewEventResult::ignored()
+                } else {
+                  state.scroll_to(x=next.x, y=next.y)
+                  view_event_result(
+                    changed=true,
+                    activated=true,
+                    captured=true,
+                    dirty=@core.ViewDirtyHint::ViewLayoutDirty,
+                    messages=[handler(event.wheel_delta)],
+                  )
+                }
               }
               (Some(state), None) => {
                 let viewport_size = viewport.unwrap_or(ctx.frame.size)
@@ -359,18 +382,23 @@ fn[Msg] scroll_container(
                   ctx.child_frames,
                   viewport_size,
                 )
+                let current = state.offset()
                 let next = scroll_offset_after_wheel(
-                  state.offset(),
+                  current,
                   event.wheel_delta,
                   viewport_size,
                   child_size,
                 )
-                state.scroll_to(x=next.x, y=next.y)
-                view_event_result(
-                  changed=true,
-                  captured=true,
-                  dirty=@core.ViewDirtyHint::ViewLayoutDirty,
-                )
+                if next == current {
+                  @core.ViewEventResult::ignored()
+                } else {
+                  state.scroll_to(x=next.x, y=next.y)
+                  view_event_result(
+                    changed=true,
+                    captured=true,
+                    dirty=@core.ViewDirtyHint::ViewLayoutDirty,
+                  )
+                }
               }
               (None, Some(handler)) =>
                 view_event_result(
@@ -389,9 +417,138 @@ fn[Msg] scroll_container(
       }
     },
     semantics=() => {
-      @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
+      @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::ScrollView, actions=[
+        @core.SemanticsAction::Scroll,
+      ])
     },
   )
+}
+
+///|
+fn scroll_indicator_thumb(
+  frame : @core.Rect,
+  child_size : @core.Size,
+  offset : @core.Point,
+) -> @core.Rect? {
+  let viewport_height = frame.size.height
+  if viewport_height <= 0.0 || child_size.height <= viewport_height {
+    return None
+  }
+  let track_top = frame.origin.y + 4.0
+  let track_height = view_max_double(1.0, viewport_height - 8.0)
+  let thumb_height = view_max_double(
+    28.0,
+    track_height * viewport_height / child_size.height,
+  )
+  let travel = view_max_double(0.0, track_height - thumb_height)
+  let max_offset = view_max_double(1.0, child_size.height - viewport_height)
+  let clamped = scroll_clamp_offset(offset, frame.size, child_size)
+  Some(
+    @core.Rect::new(
+      x=frame.origin.x + frame.size.width - 7.0,
+      y=track_top + travel * clamped.y / max_offset,
+      width=3.0,
+      height=thumb_height,
+    ),
+  )
+}
+
+///|
+fn scroll_indicator_commands(
+  frame : @core.Rect,
+  child_size : @core.Size,
+  offset : @core.Point,
+) -> Array[@core.DrawCommand] {
+  match scroll_indicator_thumb(frame, child_size, offset) {
+    Some(thumb) =>
+      [
+        @core.DrawCommand::FillRoundedRectBrush(
+          @core.RoundedRect::new(rect=thumb, radius=1.5),
+          @core.Brush::solid(@core.Color::rgba(r=0.15, g=0.18, b=0.22, a=0.48)),
+        ),
+      ]
+    None => []
+  }
+}
+
+///|
+fn scroll_indicator_handles_event(
+  ctx : @core.ViewEventContext,
+  event : @core.PointerEvent,
+) -> Bool {
+  ctx.state.scratch == "scroll-indicator-drag" ||
+  (
+    ctx.frame.contains(event.position) &&
+    event.position.x >= ctx.frame.origin.x + ctx.frame.size.width - 16.0 &&
+    event.phase == @core.PointerPhase::Down
+  )
+}
+
+///|
+fn[Msg] scroll_indicator_event_result(
+  ctx : @core.ViewEventContext,
+  event : @core.PointerEvent,
+  offset~ : @core.Point,
+  viewport~ : @core.Size?,
+  state~ : @core.ScrollState?,
+  on_scroll~ : ((@core.Point) -> Msg)?,
+) -> @core.ViewEventResult[Msg] {
+  let viewport_size = viewport.unwrap_or(ctx.frame.size)
+  let child_size = first_child_frame_size(ctx.child_frames, viewport_size)
+  let current = scroll_clamp_offset(
+    scroll_offset(offset, state),
+    viewport_size,
+    child_size,
+  )
+  let next_scratch = if event.phase == @core.PointerPhase::Down ||
+    event.phase == @core.PointerPhase::Move {
+    "scroll-indicator-drag"
+  } else {
+    ""
+  }
+  let should_move = event.phase == @core.PointerPhase::Down ||
+    event.phase == @core.PointerPhase::Move
+  let next_y = if should_move {
+    let track_height = view_max_double(1.0, viewport_size.height - 8.0)
+    let thumb_height = view_max_double(
+      28.0,
+      track_height *
+      viewport_size.height /
+      view_max_double(viewport_size.height, child_size.height),
+    )
+    let travel = view_max_double(1.0, track_height - thumb_height)
+    let ratio = clamp_view_double(
+      (event.position.y - ctx.frame.origin.y - 4.0 - thumb_height / 2.0) /
+      travel,
+      0.0,
+      1.0,
+    )
+    ratio * view_max_double(0.0, child_size.height - viewport_size.height)
+  } else {
+    current.y
+  }
+  match state {
+    Some(state) => state.scroll_to(x=current.x, y=next_y)
+    None => ()
+  }
+  {
+    changed: should_move || next_scratch != ctx.state.scratch,
+    activated: should_move && on_scroll is Some(_),
+    focused: false,
+    captured: true,
+    state: Some({ ..ctx.state, scratch: next_scratch }),
+    text_control: None,
+    dirty: @core.ViewDirtyHint::ViewLayoutDirty,
+    messages: match on_scroll {
+      Some(handler) =>
+        if should_move {
+          [handler(@core.Point::new(x=0.0, y=current.y - next_y))]
+        } else {
+          []
+        }
+      None => []
+    },
+  }
 }
 
 ///|

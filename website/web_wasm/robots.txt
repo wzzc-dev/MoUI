@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://wzzc-dev.github.io/MoUI/sitemap.xml

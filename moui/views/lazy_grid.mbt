@@ -22,7 +22,7 @@ pub fn[T, Msg] lazy_grid(
   for row_index in 0..<row_count {
     let top = row_index.to_double() * row_stride
     let bottom = top + item_height
-    if bottom >= offset && top <= limit {
+    if bottom >= offset - row_stride && top <= limit + row_stride {
       if first_visible_row < 0 {
         first_visible_row = row_index
       }

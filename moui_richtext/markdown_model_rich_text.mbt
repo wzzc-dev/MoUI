@@ -265,11 +265,12 @@ fn markdown_inlines_to_rich_text(
 
 ///|
 fn markdown_inline_visual_text(inline : MarkdownInline) -> String {
-  match inline.kind {
+  let text = match inline.kind {
     Image => markdown_inline_source_text(inline)
     FootnoteReference => inline.text
     _ => inline.text
   }
+  text.replace(old="\n", new=" ")
 }
 
 ///|

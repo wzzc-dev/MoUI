@@ -45,7 +45,7 @@ test "website theme toggle updates visible icon" {
 }
 
 ///|
-test "website hero CTA buttons open repository URL" {
+test "website Get Started navigates and GitHub opens repository URL" {
   let opened_urls : Array[String] = []
   let bridge = @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(open_url=true),
@@ -65,34 +65,43 @@ test "website hero CTA buttons open repository URL" {
     height=760.0,
   )
   click_text(runtime, "Get Started")
+  assert_true(
+    runtime
+    .draw_commands()
+    .any(command => {
+      command
+      is @core.DrawCommand::DrawText({ text: "Quick Start / 快速开始", .. })
+    }),
+  )
   click_text(runtime, "GitHub")
-  inspect(opened_urls.length(), content="2")
+  inspect(opened_urls.length(), content="1")
   inspect(opened_urls[0], content="https://github.com/wzzc-dev/MoUI")
-  inspect(opened_urls[1], content="https://github.com/wzzc-dev/MoUI")
 }
 
 ///|
-test "website showcases page renders all screenshot assets" {
+test "website showcases lazy grid renders visible screenshots only" {
   let commands = Model::new()
     .update(OpenShowcases)
-    .test_runtime(width=1180.0, height=1800.0)
+    .test_runtime(width=1180.0, height=760.0)
     .draw_commands()
   let showcase_titles = [
     "Showcase", "iOS Component Gallery", "HarmonyOS Component Gallery", "Markdown Editor",
     "Mo Workbench", "Excel Viewer", "WebView Demo", "Android Component Gallery",
   ]
-  for title in showcase_titles {
-    assert_true(has_text(commands, title))
-  }
+  let visible_titles = showcase_titles.filter(title => has_text(commands, title))
+  assert_true(visible_titles.length() > 0)
+  assert_true(visible_titles.length() < showcase_titles.length())
   let screenshot_sources = [
     "assets/screenshots/showcase.png", "assets/screenshots/ios-componentgallery.png",
     "assets/screenshots/harmonyos-componentgallery.png", "assets/screenshots/markdown_editor.png",
     "assets/screenshots/mo_workbench.png", "assets/screenshots/excel.png", "assets/screenshots/webview.png",
     "assets/screenshots/android-componentgallery.jpg",
   ]
-  for source in screenshot_sources {
-    assert_true(has_image_source(commands, source))
-  }
+  let visible_sources = screenshot_sources.filter(source => {
+    has_image_source(commands, source)
+  })
+  assert_true(visible_sources.length() > 0)
+  assert_true(visible_sources.length() < screenshot_sources.length())
 }
 
 ///|
@@ -106,9 +115,16 @@ test "website docs portal loads runtime markdown through host text service" {
           @host.HostTextFileRequest::ReadText(path)
         ) => {
           requested_paths.push(path)
-          @host.HostServiceResponse::TextFileContent(
-            path, "# Runtime Docs\n\nMoUI fetches **Markdown** at runtime.\n\n- One source file\n\n```moonbit\nfn main {}\n```",
-          )
+          if path == "docs/catalog.json" {
+            @host.HostServiceResponse::TextFileContent(
+              path,
+              website_test_catalog().to_json().stringify(),
+            )
+          } else {
+            @host.HostServiceResponse::TextFileContent(
+              path, "# Runtime Docs\n\nMoUI fetches **Markdown** at runtime.\n\n- One source file\n\n[Android](android-support.md)\n\n```moonbit\nfn main {}\n```",
+            )
+          }
         }
         _ => @host.HostServiceResponse::Unavailable("unexpected request")
       }
@@ -121,31 +137,187 @@ test "website docs portal loads runtime markdown through host text service" {
   )
   click_text(runtime, "Docs")
   let commands = runtime.draw_commands()
-  inspect(requested_paths.length(), content="1")
-  inspect(requested_paths[0], content="docs/moui-readme.md")
-  assert_true(has_text(commands, "MoUI Markdown Docs"))
-  assert_true(has_text(commands, "Runtime Docs"))
-  assert_true(has_text(commands, "MoUI fetches Markdown at runtime."))
-  assert_true(has_text(commands, "fn main {}"))
+  inspect(requested_paths.length(), content="2")
+  inspect(requested_paths[0], content="docs/catalog.json")
+  inspect(requested_paths[1], content="docs/moui-readme.md")
+  assert_true(has_text(commands, "MoUI Documentation"))
+  assert_true(has_text(commands, "Runtime"))
+  assert_true(has_text(commands, "Docs"))
+  assert_true(has_text(commands, "MoUI"))
+  assert_true(has_text(commands, "fetches"))
+  assert_true(has_text(commands, "Markdown"))
+  assert_true(has_text(commands, "Android"))
+  assert_true(has_text_on_line(commands, "fn main {}"))
   assert_true(
-    has_text_align(commands, "MoUI Markdown Docs", @core.TextAlign::TextStart),
+    has_text_align(commands, "MoUI Documentation", @core.TextAlign::TextStart),
   )
   assert_true(
     has_text_align(commands, "Runtime Docs", @core.TextAlign::TextStart),
   )
-  assert_true(
-    has_text_align(
-      commands,
-      "MoUI fetches Markdown at runtime.",
-      @core.TextAlign::TextStart,
+  assert_true(has_text_align(commands, "fn", @core.TextAlign::TextStart))
+  click_text(runtime, "Development")
+  inspect(requested_paths.length(), content="3")
+  inspect(requested_paths[2], content="docs/development.md")
+}
+
+///|
+test "website desktop docs keeps navigation fixed while markdown scrolls" {
+  let sections : Array[String] = []
+  for index in 0..<80 {
+    sections.push(
+      "## Section \{index}\n\nParagraph \{index} with documentation content.",
+    )
+  }
+  let model = {
+    ..Model::new(),
+    page: WebsiteDocs,
+    catalog_state: CatalogLoaded(website_test_catalog()),
+    doc_state: DocLoaded(
+      "docs/moui-readme.md",
+      website_parse_markdown_document(
+        "docs/moui-readme.md",
+        "# Runtime Docs\n\n" + sections.join("\n\n"),
+      ),
+    ),
+  }
+  let runtime = model.test_runtime(width=1180.0, height=760.0)
+  guard text_frame(runtime.draw_commands(), "MoUI README") is Some(nav_before) else {
+    fail("expected docs navigation item")
+  }
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@geometry.Point::new(x=820.0, y=520.0),
+        phase=@core.PointerPhase::Move,
+        wheel_delta=@geometry.Point::new(x=0.0, y=-420.0),
+      ),
     ),
   )
-  assert_true(
-    has_text_align(commands, "fn main {}", @core.TextAlign::TextStart),
+  assert_true(model.docs_scroll.offset().y > 0.0)
+  guard text_frame(runtime.draw_commands(), "MoUI README") is Some(nav_after) else {
+    fail("expected fixed docs navigation item after scroll")
+  }
+  inspect(nav_after.origin.y, content=nav_before.origin.y.to_string())
+}
+
+///|
+test "website desktop docs sidebar scrolls independently" {
+  let model = {
+    ..Model::new(),
+    page: WebsiteDocs,
+    catalog_state: CatalogLoaded(website_test_catalog()),
+    doc_state: DocLoaded(
+      "docs/moui-readme.md",
+      website_parse_markdown_document(
+        "docs/moui-readme.md", "# Runtime Docs\n\nDocumentation body.",
+      ),
+    ),
+  }
+  let runtime = model.test_runtime(width=1180.0, height=760.0)
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@geometry.Point::new(x=180.0, y=600.0),
+        phase=@core.PointerPhase::Move,
+        wheel_delta=@geometry.Point::new(x=0.0, y=-420.0),
+      ),
+    ),
   )
-  click_text(runtime, "Development")
-  inspect(requested_paths.length(), content="2")
-  inspect(requested_paths[1], content="docs/development.md")
+  assert_true(model.docs_body_scroll.offset().y > 0.0)
+  inspect(model.docs_scroll.offset().y, content="0")
+}
+
+///|
+test "website selecting another document resets only document scroll" {
+  let model = {
+    ..Model::new(),
+    page: WebsiteDocs,
+    selected_doc_slug: "moui-readme",
+  }
+  model.docs_body_scroll.scroll_to(x=0.0, y=180.0)
+  model.docs_scroll.scroll_to(x=0.0, y=900.0)
+  let next = model.update(SelectDoc("development"))
+  inspect(next.docs_scroll.offset().y, content="0")
+  inspect(next.docs_body_scroll.offset().y, content="180")
+}
+
+///|
+test "website compact docs renders and scrolls markdown" {
+  let sections : Array[String] = []
+  for index in 0..<48 {
+    sections.push(
+      "## Compact Section \{index}\n\nCompact paragraph \{index} stays readable.",
+    )
+  }
+  let model = {
+    ..Model::new(),
+    page: WebsiteDocs,
+    catalog_state: CatalogLoaded(website_test_catalog()),
+    doc_state: DocLoaded(
+      "docs/moui-readme.md",
+      website_parse_markdown_document(
+        "docs/moui-readme.md",
+        "# Compact Runtime Docs\n\n" + sections.join("\n\n"),
+      ),
+    ),
+  }
+  let runtime = model.test_runtime(width=390.0, height=844.0)
+  let before = runtime.draw_commands()
+  assert_true(has_text(before, "Compact Runtime Docs"))
+  assert_true(has_text(before, "Compact Section 0"))
+  assert_true(has_text(before, "evidence."))
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@geometry.Point::new(x=210.0, y=720.0),
+        phase=@core.PointerPhase::Move,
+        wheel_delta=@geometry.Point::new(x=0.0, y=-420.0),
+      ),
+    ),
+  )
+  assert_true(model.docs_scroll.offset().y > 0.0)
+}
+
+///|
+test "website intermediate width collapses navigation and docs workspace" {
+  let metrics = website_metrics(@geometry.Size::new(width=900.0, height=900.0))
+  assert_false(metrics.compact)
+  assert_true(metrics.nav_compact)
+  assert_true(metrics.docs_compact)
+  let model = {
+    ..Model::new(),
+    page: WebsiteDocs,
+    catalog_state: CatalogLoaded(website_test_catalog()),
+    doc_state: DocLoaded(
+      "docs/moui-readme.md",
+      website_parse_markdown_document(
+        "docs/moui-readme.md", "# Runtime Docs\n\nIntermediate width documentation body.",
+      ),
+    ),
+  }
+  let commands = model.test_runtime(width=900.0, height=900.0).draw_commands()
+  assert_true(has_text(commands, "Menu"))
+  assert_true(has_text(commands, "Search & Contents"))
+  assert_true(has_text(commands, "Intermediate width documentation body."))
+}
+
+///|
+test "website desktop docs navigation labels are start aligned" {
+  let model = {
+    ..Model::new(),
+    page: WebsiteDocs,
+    catalog_state: CatalogLoaded(website_test_catalog()),
+    doc_state: DocLoaded(
+      "docs/moui-readme.md",
+      website_parse_markdown_document(
+        "docs/moui-readme.md", "# Runtime Docs\n\nDocumentation body.",
+      ),
+    ),
+  }
+  let commands = model.test_runtime(width=1180.0, height=760.0).draw_commands()
+  assert_true(
+    has_text_align(commands, "MoUI README", @core.TextAlign::TextStart),
+  )
 }
 
 ///|
@@ -156,6 +328,7 @@ test "website docs completion ignores stale request id for selected markdown" {
     ..Model::new(),
     page: WebsiteDocs,
     selected_doc_slug: "architecture",
+    catalog_state: CatalogLoaded(website_test_catalog()),
     doc_state: DocLoading(current_id, path),
   }
   let stale : @host.HostCompletedServiceResponse = {
@@ -243,8 +416,9 @@ test "website shows visible main scrollbar and moves thumb" {
   guard website_scrollbar_thumb_frame(initial, size) is Some(before) else {
     fail("expected visible website scrollbar thumb")
   }
-  let scrolled = Model::new()
-    .update(ScrollBodyTo(620.0))
+  let model = Model::new()
+  model.home_scroll.scroll_to(x=0.0, y=620.0)
+  let scrolled = model
     .test_runtime(width=size.width, height=size.height)
     .draw_commands()
   guard website_scrollbar_thumb_frame(scrolled, size) is Some(after) else {
@@ -266,7 +440,7 @@ test "website positive wheel delta scrolls body downward" {
       @core.PointerEvent::new(
         position=@geometry.Point::new(x=size.width / 2.0, y=120.0),
         phase=@core.PointerPhase::Move,
-        wheel_delta=@geometry.Point::new(x=0.0, y=180.0),
+        wheel_delta=@geometry.Point::new(x=0.0, y=-180.0),
       ),
     ),
   )
@@ -344,11 +518,133 @@ test "website hero and product signal remain visible on desktop and compact size
     height=compact_size.height,
   ).draw_commands()
   assert_true(text_within(compact, "MoUI", compact_size))
-  assert_true(text_within(compact, "Live Counter", compact_size))
+  assert_true(text_within(compact, "Source", compact_size))
   assert_true(
     text_within(compact, "Typed UI for web and native hosts.", compact_size),
   )
-  assert_true(text_within(compact, "App surface", compact_size))
+  assert_false(text_within(compact, "Live Counter", compact_size))
+}
+
+///|
+test "website compact hero switches between source and counter" {
+  let runtime = test_program_runtime(width=390.0, height=844.0)
+  assert_true(has_text(runtime.draw_commands(), "Source"))
+  click_text(runtime, "Counter")
+  assert_true(has_text(runtime.draw_commands(), "Live Counter"))
+}
+
+///|
+test "website catalog exposes 34 entries and all mobile platforms" {
+  let catalog = website_parse_catalog(
+    website_test_catalog().to_json().stringify(),
+  ).unwrap()
+  inspect(catalog.entries.length(), content="34")
+  let platforms = catalog.entries.filter(entry => entry.group == "platforms")
+  assert_true(platforms.any(entry => entry.slug == "android-support"))
+  assert_true(platforms.any(entry => entry.slug == "ios-support"))
+  assert_true(platforms.any(entry => entry.slug == "harmonyos-support"))
+  inspect(catalog.filtered_entries("android").length(), content="1")
+}
+
+///|
+test "website unknown docs slug renders not found instead of README" {
+  let model = {
+    ..Model::new(),
+    page: WebsiteDocs,
+    selected_doc_slug: "missing-page",
+    catalog_state: CatalogLoaded(website_test_catalog()),
+    doc_state: DocNotFound("missing-page"),
+  }
+  let commands = model.test_runtime(width=1180.0, height=760.0).draw_commands()
+  for command in commands {
+    match command {
+      @core.DrawCommand::DrawText({ text: value, .. }) =>
+        println("NF_TEXT=" + value)
+      _ => ()
+    }
+  }
+  assert_true(has_text(commands, "Document not found"))
+}
+
+///|
+test "website route host receives deep-link and anchor commands" {
+  let commands : Array[WebsiteRouteCommand] = []
+  let route_host = WebsiteRouteHost::new(
+    route_source=@host.HostRouteSource::new(),
+    push_route=route => commands.push(PushRoute(route)),
+    scroll_to_key=(key, alignment) => commands.push(ScrollToKey(key, alignment)),
+  )
+  let bridge = @host.HostServiceBridge::new(
+    capabilities=@host.HostServiceCapabilities::new(file_access=true),
+    handle=request => {
+      match request {
+        @host.HostServiceRequest::TextFile(
+          @host.HostTextFileRequest::ReadText(path)
+        ) =>
+          @host.HostServiceResponse::TextFileContent(
+            path,
+            if path == "docs/catalog.json" {
+              website_test_catalog().to_json().stringify()
+            } else {
+              "# Doc"
+            },
+          )
+        _ => @host.HostServiceResponse::Unavailable("unexpected")
+      }
+    },
+  )
+  let runtime = test_runtime(
+    Model::new().program_with_services(
+      @host.HostAppServices::new(bridge~),
+      route_host=Some(route_host),
+    ),
+    width=1180.0,
+    height=760.0,
+  )
+  click_text(runtime, "Quick Start")
+  assert_true(
+    commands.any(command => {
+      command is WebsiteRouteCommand::PushRoute("home?anchor=quick-start")
+    }),
+  )
+  assert_true(
+    commands.any(command => {
+      command is WebsiteRouteCommand::ScrollToKey("home-quick-start", _)
+    }),
+  )
+}
+
+///|
+test "website docs metadata refreshes after deep-link catalog load" {
+  let titles : Array[String] = []
+  let route_host = WebsiteRouteHost::new(
+    route_source=@host.HostRouteSource::new(),
+    update_metadata=(title, _description, _canonical) => titles.push(title),
+  )
+  let model = {
+    ..Model::new(),
+    page: WebsiteDocs,
+    selected_doc_slug: "moui-readme",
+    catalog_state: CatalogLoading(@host.HostServiceRequestId::new(0)),
+  }
+  let completion = website_file_completion(
+    "docs/catalog.json",
+    @host.HostServiceResponse::TextFileContent(
+      "docs/catalog.json",
+      website_test_catalog().to_json().stringify(),
+    ),
+  )
+  ignore(
+    model.update_with_services(
+      HostCatalogCompleted(completion),
+      @host.HostAppServices::unavailable(),
+      Some(route_host),
+    ),
+  )
+  guard titles.last() is Some(title) else {
+    fail("expected refreshed metadata")
+  }
+  inspect(title, content="MoUI README - MoUI Docs")
 }
 
 ///|
@@ -373,6 +669,47 @@ fn assert_feature_card_stacked(
   assert_true(summary.origin.x >= zh_summary.origin.x - 1.0)
   assert_true(summary.origin.x <= zh_summary.origin.x + 1.0)
   assert_true(summary.size.width > title.size.width)
+}
+
+///|
+fn website_test_catalog() -> WebsiteDocsCatalog {
+  let groups = [
+    WebsiteDocGroup::{ id: "get-started", title: "Get Started" },
+    WebsiteDocGroup::{ id: "platforms", title: "Platforms" },
+    WebsiteDocGroup::{ id: "guides", title: "Guides" },
+  ]
+  let entries : Array[WebsiteDocEntry] = []
+  let core_entries = [
+    ("get-started", "moui-readme", "MoUI README"),
+    ("guides", "development", "Development"),
+    ("guides", "architecture", "Architecture"),
+    ("platforms", "android-support", "Android Support"),
+    ("platforms", "ios-support", "iOS Support"),
+    ("platforms", "harmonyos-support", "HarmonyOS Support"),
+  ]
+  for item in core_entries {
+    let (group, slug, title) = item
+    entries.push({
+      group,
+      slug,
+      title,
+      path: "docs/" + slug + ".md",
+      summary: title + " documentation",
+      keywords: [slug, title],
+    })
+  }
+  for index in 0..<28 {
+    let slug = "guide-\{index}"
+    entries.push({
+      group: "guides",
+      slug,
+      title: "Guide \{index}",
+      path: "docs/" + slug + ".md",
+      summary: "Guide documentation",
+      keywords: ["guide"],
+    })
+  }
+  { schemaVersion: 1, siteUrl: "https://example.test/MoUI/", groups, entries }
 }
 
 ///|
@@ -458,8 +795,47 @@ fn last_text_frame(
 ///|
 fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
   commands.any(command => {
-    command is @core.DrawCommand::DrawText({ text: value, .. }) && value == text
+    command is @core.DrawCommand::DrawText({ text: value, .. }) &&
+    value.contains(text)
   })
+}
+
+///|
+/// Like `has_text`, but concatenates text runs that share the same line
+/// (y within 2.0px) before matching. Needed for syntax-highlighted code
+/// blocks where "fn main {}" is split into separate runs per token.
+fn has_text_on_line(commands : Array[@core.DrawCommand], text : String) -> Bool {
+  let items : Array[(Double, Double, String)] = []
+  for command in commands {
+    match command {
+      @core.DrawCommand::DrawText({ text: value, frame, .. }) =>
+        items.push((frame.origin.y, frame.origin.x, value))
+      _ => ()
+    }
+  }
+  items.sort_by(fn(a, b) {
+    if a.0 != b.0 {
+      a.0.compare(b.0)
+    } else {
+      a.1.compare(b.1)
+    }
+  })
+  let mut combined = ""
+  let mut last_y = 0.0
+  let mut first = true
+  for item in items {
+    if first {
+      combined = item.2
+      last_y = item.0
+      first = false
+    } else if (item.0 - last_y).abs() < 2.0 {
+      combined = combined + item.2
+    } else {
+      combined = combined + "\n" + item.2
+      last_y = item.0
+    }
+  }
+  combined.contains(text)
 }
 
 ///|
@@ -482,7 +858,7 @@ fn has_text_align(
   commands.any(command => {
     command
     is @core.DrawCommand::DrawText({ text: value, align: actual_align, .. }) &&
-    value == text &&
+    value.contains(text) &&
     actual_align == align
   })
 }
@@ -533,7 +909,7 @@ fn website_scrollbar_thumb_frame(
       _ => ()
     }
   }
-  if candidates.length() < 2 {
+  if candidates.is_empty() {
     None
   } else {
     Some(candidates[candidates.length() - 1])

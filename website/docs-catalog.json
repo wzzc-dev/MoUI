@@ -1,0 +1,297 @@
+{
+  "schemaVersion": 1,
+  "siteUrl": "https://wzzc-dev.github.io/MoUI/",
+  "groups": [
+    { "id": "get-started", "title": "Get Started" },
+    { "id": "guides", "title": "Guides" },
+    { "id": "examples", "title": "Examples" },
+    { "id": "platforms", "title": "Platforms" },
+    { "id": "architecture-api", "title": "Architecture & API" },
+    { "id": "contributing", "title": "Contributing" },
+    { "id": "status-roadmap", "title": "Status & Roadmap" }
+  ],
+  "entries": [
+    {
+      "group": "get-started",
+      "slug": "moui-readme",
+      "title": "MoUI README",
+      "path": "docs/moui-readme.md",
+      "summary": "Project overview, installation, platform evidence, and the fastest path to a first MoUI app.",
+      "keywords": ["MoUI", "MoonBit", "quick start", "installation"]
+    },
+    {
+      "group": "get-started",
+      "slug": "moui-app-package-boundary",
+      "title": "App Package Boundary",
+      "path": "docs/moui-app-package-boundary.md",
+      "summary": "App-safe dependencies, package ownership, and the public facades used by ordinary MoUI applications.",
+      "keywords": ["packages", "dependencies", "facade", "application"]
+    },
+    {
+      "group": "get-started",
+      "slug": "tea-program-model",
+      "title": "TEA Program Model",
+      "path": "docs/tea-program-model.md",
+      "summary": "Model, message, update, view, effects, and subscriptions in MoUI's typed application loop.",
+      "keywords": ["TEA", "program", "model", "update", "effects"]
+    },
+    {
+      "group": "get-started",
+      "slug": "tutorials",
+      "title": "Tutorials",
+      "path": "docs/tutorials.md",
+      "summary": "Implementation skeletons for controls, renderers, backends, examples, tests, and docs.",
+      "keywords": ["tutorial", "control", "renderer", "backend"]
+    },
+    {
+      "group": "guides",
+      "slug": "views-api-guide",
+      "title": "Views API Guide",
+      "path": "docs/views-api-guide.md",
+      "summary": "Practical reference for composing and styling public MoUI views.",
+      "keywords": ["views", "layout", "controls", "API"]
+    },
+    {
+      "group": "guides",
+      "slug": "view-catalog",
+      "title": "View Catalog",
+      "path": "docs/view-catalog.md",
+      "summary": "Catalog of current public constructors, controls, layout helpers, and component coverage.",
+      "keywords": ["views", "catalog", "components", "controls"]
+    },
+    {
+      "group": "guides",
+      "slug": "button-styling-guide",
+      "title": "Button Styling Guide",
+      "path": "docs/button-styling-guide.md",
+      "summary": "Button palette, component-token, state-resolution, and app-level override strategies.",
+      "keywords": ["button", "style", "theme", "color"]
+    },
+    {
+      "group": "guides",
+      "slug": "visual-theme-system",
+      "title": "Visual Theme System",
+      "path": "docs/visual-theme-system.md",
+      "summary": "Theme tokens, typography, component styles, and visual-system extension points.",
+      "keywords": ["theme", "tokens", "typography", "design system"]
+    },
+    {
+      "group": "guides",
+      "slug": "text-system",
+      "title": "Text System",
+      "path": "docs/text-system.md",
+      "summary": "Text measurement, shaping, line breaking, editing, and provider boundaries.",
+      "keywords": ["text", "shaping", "layout", "editing"]
+    },
+    {
+      "group": "guides",
+      "slug": "non-render-component-cookbook",
+      "title": "Non-Render Component Cookbook",
+      "path": "docs/non-render-component-cookbook.md",
+      "summary": "Reusable form, navigation, command, import, notification, and state patterns.",
+      "keywords": ["cookbook", "forms", "navigation", "state"]
+    },
+    {
+      "group": "guides",
+      "slug": "app-templates",
+      "title": "App Templates",
+      "path": "docs/app-templates.md",
+      "summary": "Starter package shapes for shared apps, dashboards, editors, and host services.",
+      "keywords": ["template", "starter", "dashboard", "editor"]
+    },
+    {
+      "group": "guides",
+      "slug": "templates",
+      "title": "Package and Plugin Templates",
+      "path": "docs/templates.md",
+      "summary": "Reusable implementation checklists and prompts for packages, controls, renderers, and plugins.",
+      "keywords": ["templates", "packages", "plugins", "checklist"]
+    },
+    {
+      "group": "examples",
+      "slug": "examples",
+      "title": "Examples",
+      "path": "docs/examples.md",
+      "summary": "Runnable example applications, platform entrypoints, and validation commands.",
+      "keywords": ["examples", "applications", "samples", "run"]
+    },
+    {
+      "group": "examples",
+      "slug": "showcases",
+      "title": "Showcases",
+      "path": "docs/showcases.md",
+      "summary": "Featured applications built with MoUI, with screenshots and source links.",
+      "keywords": ["showcase", "applications", "source", "gallery"]
+    },
+    {
+      "group": "examples",
+      "slug": "markdown-editor",
+      "title": "Markdown Editor",
+      "path": "docs/markdown-editor.md",
+      "summary": "The Markdown editor's document model, WYSIWYG behavior, commands, and host integration.",
+      "keywords": ["Markdown", "editor", "rich text", "WYSIWYG"]
+    },
+    {
+      "group": "examples",
+      "slug": "mo-workbench",
+      "title": "Mo Workbench",
+      "path": "docs/mo-workbench.md",
+      "summary": "Architecture and workflows of the MoUI-built agent desktop workbench.",
+      "keywords": ["workbench", "agent", "desktop", "dogfood"]
+    },
+    {
+      "group": "platforms",
+      "slug": "platform-notes",
+      "title": "Platform Notes",
+      "path": "docs/platform-notes.md",
+      "summary": "Current Web and native backend setup notes and platform-specific constraints.",
+      "keywords": ["platform", "web", "native", "backend"]
+    },
+    {
+      "group": "platforms",
+      "slug": "platform-host-contract",
+      "title": "Platform Host Contract",
+      "path": "docs/platform-host-contract.md",
+      "summary": "Shared host runtime, window, input, service, rendering, and accessibility contracts.",
+      "keywords": ["host", "contract", "window", "services"]
+    },
+    {
+      "group": "platforms",
+      "slug": "platform-readiness-declaration",
+      "title": "Platform Readiness Declaration",
+      "path": "docs/platform-readiness-declaration.md",
+      "summary": "Auditable declaration of MoUI's cross-platform support and evidence levels.",
+      "keywords": ["platform", "readiness", "support", "evidence"]
+    },
+    {
+      "group": "platforms",
+      "slug": "android-support",
+      "title": "Android Support",
+      "path": "docs/android-support.md",
+      "summary": "Android embedded-session architecture, packaging workflow, and runtime evidence requirements.",
+      "keywords": ["Android", "mobile", "Skia", "JNI"]
+    },
+    {
+      "group": "platforms",
+      "slug": "ios-support",
+      "title": "iOS Support",
+      "path": "docs/ios-support.md",
+      "summary": "iOS UIKit embedded-session architecture, Xcode packaging, and smoke evidence requirements.",
+      "keywords": ["iOS", "UIKit", "mobile", "Skia"]
+    },
+    {
+      "group": "platforms",
+      "slug": "harmonyos-support",
+      "title": "HarmonyOS Support",
+      "path": "docs/harmonyos-support.md",
+      "summary": "HarmonyOS Stage Ability and XComponent integration, packaging, and runtime evidence requirements.",
+      "keywords": ["HarmonyOS", "XComponent", "NAPI", "mobile"]
+    },
+    {
+      "group": "platforms",
+      "slug": "renderer-capability-report",
+      "title": "Renderer Capability Report",
+      "path": "docs/renderer-capability-report.md",
+      "summary": "Renderer feature matrix, support tiers, tracked gaps, and verification commands.",
+      "keywords": ["renderer", "Skia", "WebGPU", "capabilities"]
+    },
+    {
+      "group": "architecture-api",
+      "slug": "architecture",
+      "title": "Architecture",
+      "path": "docs/architecture.md",
+      "summary": "Package map and the View-to-renderer runtime pipeline across supported hosts.",
+      "keywords": ["architecture", "runtime", "renderer", "packages"]
+    },
+    {
+      "group": "architecture-api",
+      "slug": "api-surface",
+      "title": "API Surface",
+      "path": "docs/api-surface.md",
+      "summary": "Public package contracts, facade policy, compatibility expectations, and API checks.",
+      "keywords": ["API", "public surface", "facade", "compatibility"]
+    },
+    {
+      "group": "architecture-api",
+      "slug": "moui-skia-readme",
+      "title": "MoUI Skia README",
+      "path": "docs/moui-skia-readme.md",
+      "summary": "Skia binding API, native ownership boundary, build setup, and smoke workflow.",
+      "keywords": ["Skia", "binding", "native", "renderer"]
+    },
+    {
+      "group": "contributing",
+      "slug": "development",
+      "title": "Development",
+      "path": "docs/development.md",
+      "summary": "Workspace setup, dependency workflow, docs sync, and focused development loops.",
+      "keywords": ["development", "setup", "workspace", "workflow"]
+    },
+    {
+      "group": "contributing",
+      "slug": "testing",
+      "title": "Testing",
+      "path": "docs/testing.md",
+      "summary": "Focused tests, repository profiles, conformance checks, and manual smoke evidence.",
+      "keywords": ["testing", "CI", "smoke", "validation"]
+    },
+    {
+      "group": "contributing",
+      "slug": "maintenance",
+      "title": "Maintenance Mainline",
+      "path": "docs/maintenance.md",
+      "summary": "Maintenance ratchets, package health checks, and repository cleanup policy.",
+      "keywords": ["maintenance", "ratchet", "quality", "cleanup"]
+    },
+    {
+      "group": "contributing",
+      "slug": "release-readiness",
+      "title": "Release Readiness",
+      "path": "docs/release-readiness.md",
+      "summary": "Release gates, runtime smoke catalog, evidence policy, and artifact requirements.",
+      "keywords": ["release", "readiness", "gates", "artifacts"]
+    },
+    {
+      "group": "contributing",
+      "slug": "ai-collaboration",
+      "title": "AI Collaboration",
+      "path": "docs/ai-collaboration.md",
+      "summary": "Repository guidance for agent sessions, decisions, review, and durable records.",
+      "keywords": ["AI", "agents", "collaboration", "ADR"]
+    },
+    {
+      "group": "status-roadmap",
+      "slug": "feature-proof-matrix",
+      "title": "Feature Proof Matrix",
+      "path": "docs/feature-proof-matrix.md",
+      "summary": "Feature-level implementation and test evidence across MoUI packages and platforms.",
+      "keywords": ["features", "proof", "coverage", "evidence"]
+    },
+    {
+      "group": "status-roadmap",
+      "slug": "feature-status-dashboard",
+      "title": "Feature Status Dashboard",
+      "path": "docs/feature-status-dashboard.md",
+      "summary": "Current feature status, proof level, owner, gaps, and next verification actions.",
+      "keywords": ["status", "dashboard", "features", "gaps"]
+    },
+    {
+      "group": "status-roadmap",
+      "slug": "roadmap-2026",
+      "title": "2026 Roadmap",
+      "path": "docs/roadmap-2026.md",
+      "summary": "Planned framework, renderer, backend, examples, and release-readiness milestones.",
+      "keywords": ["roadmap", "2026", "milestones", "planning"]
+    }
+  ],
+  "excluded": [
+    {
+      "path": "docs/PROPOSAL.md",
+      "reason": "Competition proposal material is not part of the public framework documentation set."
+    },
+    {
+      "path": "docs/api-surface-audit.md",
+      "reason": "Internal API audit and maintenance budgets are intentionally not published."
+    }
+  ]
+}

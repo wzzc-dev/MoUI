@@ -130,6 +130,8 @@ pub(all) struct ViewTextCommandResult[Msg] {
 ///|
 pub(all) struct ViewSemanticsInfo {
   role : SemanticsRole
+  level : Int?
+  url : String
   label : String
   value : String
   description : String
@@ -318,6 +320,8 @@ pub fn[Msg] ViewTextCommandResult::new(
 ///|
 pub fn ViewSemanticsInfo::new(
   role? : SemanticsRole = SemanticsRole::Group,
+  level? : Int,
+  url? : String = "",
   label? : String = "",
   value? : String = "",
   description? : String = "",
@@ -332,6 +336,8 @@ pub fn ViewSemanticsInfo::new(
 ) -> ViewSemanticsInfo {
   {
     role,
+    level,
+    url,
     label,
     value,
     description,

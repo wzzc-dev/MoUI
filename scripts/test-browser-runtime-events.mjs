@@ -470,4 +470,21 @@ if (!routeEvents[2].href.includes("debug=1") || !routeEvents[2].href.includes("s
   process.exit(1);
 }
 
+const stringImports = createWindowWebImports();
+const titleHandle = stringImports.begin_create_string();
+for (const ch of "Transient title") {
+  stringImports.string_append_char(titleHandle, ch.codePointAt(0));
+}
+const finishedTitleHandle = stringImports.finish_create_string(titleHandle);
+stringImports.set_document_title(finishedTitleHandle);
+if (fakeDocument.title !== "Transient title") {
+  console.error("browser runtime should resolve outbound string handles");
+  process.exit(1);
+}
+stringImports.set_document_title(finishedTitleHandle);
+if (fakeDocument.title !== "") {
+  console.error("browser runtime should consume outbound string handles once");
+  process.exit(1);
+}
+
 console.log("browser runtime event fallback tests: ok");
