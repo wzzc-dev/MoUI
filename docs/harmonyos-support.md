@@ -1,7 +1,8 @@
 # HarmonyOS Support
 
-HarmonyOS support is currently an experimental embedded Skia scaffold. It is
-parallel to the Android and iOS embedded-session routes: the platform shell owns
+HarmonyOS support is currently an experimental embedded Skia scaffold with
+first-frame runtime evidence. It is parallel to the Android and iOS
+embedded-session routes: the platform shell owns
 lifecycle, native surface handle acquisition, input forwarding, and packaging;
 MoUI owns the runtime session and Skia renderer provider contracts.
 
@@ -200,15 +201,18 @@ roots configured on that machine.
 
 ## Runtime Evidence Boundary
 
-Do not mark HarmonyOS support as passed until a matching device or emulator run
-records all of the following from a non-fallback build:
+A non-fallback Component Gallery HAP was built and launched on a HarmonyOS
+device; the first Skia frame is visibly nonblank (see
+`resource/screenshots/harmonyos-componentgallery.png`, 2026-07-10). The real
+`libskia.so` from the locked HarmonyOS release asset loads successfully.
+
+Do not mark HarmonyOS support as fully passed until a matching device or
+emulator run also records the following:
 
 - Stage Ability and XComponent lifecycle create, resize, render, and dispose the
-  `HarmonyOsRuntimeSession`.
-- The first Skia frame is visibly nonblank.
+  `HarmonyOsRuntimeSession` (verified via runtime log).
 - Pointer/tap input reaches the standalone demo and changes UI state.
 - Resize and lifecycle events produce a new frame without crashing.
-- The real `libskia.so` from the locked HarmonyOS release asset loads.
 
 IME, clipboard, accessibility, async image, native WebView, and deeper platform
 services remain pending unless separate implementation and matching-host smoke
