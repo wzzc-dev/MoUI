@@ -115,6 +115,8 @@ pub impl AgentHost for RuntimeAgentHost with fn semantics(
     let empty : @core.SemanticsNode = {
       element_id: @core.ElementId::new(0),
       role: @core.SemanticsRole::None,
+      level: None,
+      url: "",
       label: "",
       value: "",
       description: "",

@@ -86,7 +86,11 @@ export function createWebGpuImports(options = {}) {
     return handle;
   };
 
-  const stringValue = handle => strings.get(handle)?.value ?? "";
+  const stringValue = handle => {
+    const value = strings.get(handle)?.value ?? "";
+    strings.delete(handle);
+    return value;
+  };
   const ok = () => 0;
   const invalidResource = () => 6;
 
@@ -2933,6 +2937,8 @@ export async function bootMouiWasmGcApp(options = {}) {
   report("Preparing window/web host imports...");
   const windowWeb = createWindowWebImports({
     canvasHost: options.canvasHost ?? "#canvas-host",
+    onEvent: options.onEvent,
+    onRoute: options.onRoute,
   });
   const userWebGpuOptions = options.webgpu ?? {};
   const notifyImageResourceChanged = createImageResourceChangeNotifier(

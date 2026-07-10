@@ -19,10 +19,18 @@ pub fn[Msg] scroll_view(
   height? : Double,
   state? : @core.ScrollState? = None,
   on_scroll? : ((@core.Point) -> Msg)? = None,
+  shows_indicator? : Bool = false,
 ) -> @core.View[Msg] {
   let viewport = match (width, height) {
     (Some(width), Some(height)) => Some(@core.Size::new(width~, height~))
     _ => None
   }
-  scroll_container(child~, offset~, viewport~, state~, on_scroll~)
+  scroll_container(
+    child~,
+    offset~,
+    viewport~,
+    state~,
+    on_scroll~,
+    shows_indicator~,
+  )
 }

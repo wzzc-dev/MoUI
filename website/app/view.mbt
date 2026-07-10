@@ -11,18 +11,13 @@ fn Model::top_bar(
     "Switch to dark theme"
   }
   let items : Array[@moui.View[Msg]] = [brand_mark(theme)]
-  if !metrics.compact {
+  if !metrics.nav_compact {
     items.push(
       nav_button(theme, "Home", self.page is WebsiteHome, OpenHomeAt(0.0)),
     )
-    items.push(nav_button(theme, "Tour", false, OpenHomeAt(700.0)))
+    items.push(nav_button(theme, "Tour", false, OpenHomeAnchor("tour")))
     items.push(
-      nav_button(
-        theme,
-        "Quick Start",
-        false,
-        OpenHomeAt(quick_start_nav_offset()),
-      ),
+      nav_button(theme, "Quick Start", false, OpenHomeAnchor("quick-start")),
     )
     items.push(
       nav_button(
@@ -36,20 +31,14 @@ fn Model::top_bar(
     items.push(nav_button(theme, "GitHub", false, OpenRepository))
   } else {
     items.push(
-      nav_button(
-        theme,
-        if self.page is WebsiteDocs {
-          "Home"
-        } else {
-          "Docs"
-        },
-        false,
-        if self.page is WebsiteDocs {
-          OpenHome
-        } else {
-          OpenDocs
-        },
-      ),
+      button(
+        "Menu",
+        on_click=ToggleMobileMenu,
+        variant=@views.ButtonVariant::Outline,
+        theme~,
+        width=72.0,
+        height=34.0,
+      ).semantics_expanded(expanded=self.mobile_menu_open),
     )
   }
   items.push(spacer(min_length=12.0, weight=1.0))
@@ -71,7 +60,7 @@ fn Model::top_bar(
       frame(
         row(
           items,
-          spacing=if metrics.compact { 8.0 } else { 18.0 },
+          spacing=if metrics.nav_compact { 8.0 } else { 18.0 },
           align=@views.CrossAlign::Center,
         ),
         width=metrics.content_width,
@@ -94,7 +83,10 @@ fn Model::top_bar(
     corner_radius=0.0,
     theme~,
     padding=0.0,
-  ).border(website_border(theme))
+  )
+  .border(website_border(theme))
+  .semantics_role(@core.SemanticsRole::Navigation)
+  .accessibility_label("Website navigation")
 }
 
 ///|
@@ -119,16 +111,23 @@ fn Model::showcases_content(
   theme : @moui.Theme,
   metrics : Metrics,
 ) -> @moui.View[Msg] {
-  ignore(self)
   let card_width = if metrics.compact {
     metrics.content_width
   } else {
     clamp_website_double((metrics.content_width - 32.0) / 2.0, 360.0, 540.0)
   }
   let thumb_height = card_width * 0.56
-  let cards = website_showcase_entries().map(entry => {
-    showcase_card(theme, entry, card_width, thumb_height)
-  })
+  let entries = website_showcase_entries()
+  let columns = if metrics.compact { 1 } else { 2 }
+  let card_height = thumb_height + 110.0
+  let grid_height = min_website_double(
+    max_website_double(card_height + 20.0, metrics.body_height - 190.0),
+    if metrics.compact {
+      card_height * 2.0 + 20.0
+    } else {
+      card_height * 1.5
+    },
+  )
   section_shell(
     theme,
     metrics,
@@ -141,10 +140,15 @@ fn Model::showcases_content(
           "Click any screenshot to open its source on GitHub.",
           metrics.content_width,
         ),
-        responsive_grid(
-          cards,
-          width=metrics.content_width,
-          min_column_width=card_width,
+        lazy_grid(
+          entries,
+          entry => entry.slug,
+          entry => showcase_card(theme, entry, card_width, thumb_height),
+          state=self.showcase_grid_scroll,
+          columns~,
+          item_height=card_height,
+          viewport_width=metrics.content_width,
+          viewport_height=grid_height,
           row_spacing=20.0,
           column_spacing=16.0,
         ),
@@ -178,7 +182,11 @@ fn showcase_card(
             width=width - 2.0,
             height=thumb_height,
             fit=@graphics.ImageFit::Contain,
-          ),
+          )
+          .on_tap(OpenShowcaseSource(source_url))
+          .semantics_role(@core.SemanticsRole::Link)
+          .semantics_url(source_url)
+          .accessibility_label("Open source for " + title),
           width~,
           height=thumb_height,
           corner_radius=8.0,
@@ -212,7 +220,7 @@ fn showcase_card(
     width~,
     height=thumb_height + 110.0,
     background=theme.palette.background,
-    corner_radius=12.0,
+    corner_radius=8.0,
     theme~,
     padding=1.0,
   ).border(website_border(theme))
@@ -281,31 +289,6 @@ fn website_showcase_entries() -> Array[WebsiteShowcaseEntry] {
 }
 
 ///|
-fn Model::showcases_content_height(self : Model, metrics : Metrics) -> Double {
-  ignore(self)
-  let card_width = if metrics.compact {
-    metrics.content_width
-  } else {
-    clamp_website_double((metrics.content_width - 32.0) / 2.0, 360.0, 540.0)
-  }
-  let thumb_height = card_width * 0.56
-  let card_height = thumb_height + 110.0
-  let entries = website_showcase_entries()
-  let grid_rows = if metrics.compact {
-    entries.length().to_double()
-  } else {
-    ((entries.length() + 1) / 2).to_double()
-  }
-  let header_height = 46.0 + 30.0 + 30.0 + 4.0 + 4.0
-  metrics.section_top +
-  header_height +
-  24.0 +
-  grid_rows * card_height +
-  max_website_double(0.0, grid_rows - 1.0) * 20.0 +
-  metrics.section_bottom
-}
-
-///|
 fn nav_button(
   theme : @moui.Theme,
   label : String,
@@ -342,7 +325,7 @@ fn Model::hero(
     [
       button(
         "Get Started",
-        on_click=OpenRepository,
+        on_click=OpenHomeAnchor("quick-start"),
         variant=@views.ButtonVariant::Outline,
         theme~,
         width=134.0,
@@ -439,13 +422,43 @@ fn Model::hero(
       align=@views.CrossAlign::Center,
     )
   }
-  let visual = hero_demo_panel(
-    theme,
-    metrics.hero_scene_width,
-    metrics.hero_scene_height,
-    metrics.compact,
-    self.hero_count,
-  )
+  let visual = if metrics.compact {
+    let tab = segmented_control(
+      [
+        @views.choice_item("source", "Source"),
+        @views.choice_item("counter", "Counter"),
+      ],
+      selected=self.compact_hero_tab,
+      on_select=value => SelectCompactHeroTab(value),
+      theme~,
+      width=metrics.hero_scene_width,
+    )
+    let panel = if self.compact_hero_tab == "counter" {
+      hero_counter_panel(
+        theme,
+        metrics.hero_scene_width,
+        metrics.hero_scene_height - 48.0,
+        true,
+        self.hero_count,
+      )
+    } else {
+      hero_source_panel(
+        theme,
+        metrics.hero_scene_width,
+        metrics.hero_scene_height - 48.0,
+        true,
+      )
+    }
+    column([tab, panel], spacing=8.0, align=@views.CrossAlign::Start)
+  } else {
+    hero_demo_panel(
+      theme,
+      metrics.hero_scene_width,
+      metrics.hero_scene_height,
+      false,
+      self.hero_count,
+    )
+  }
   let hero_body = column(
     [copy, visual],
     spacing=if metrics.compact { 18.0 } else { 14.0 },
@@ -687,7 +700,6 @@ fn Model::quick_start_section(
   theme : @moui.Theme,
   metrics : Metrics,
 ) -> @moui.View[Msg] {
-  ignore(self)
   let copy_width = if metrics.compact { metrics.content_width } else { 520.0 }
   section_shell(
     theme,
@@ -695,7 +707,7 @@ fn Model::quick_start_section(
     column(
       [
         quick_start_copy(theme, copy_width),
-        quick_start_placeholder(theme, copy_width),
+        self.quick_start_placeholder(theme, copy_width),
       ],
       spacing=22.0,
       align=@views.CrossAlign::Center,
@@ -780,58 +792,6 @@ fn section_header(
     ],
     spacing=4.0,
     align=@views.CrossAlign::Center,
-  )
-}
-
-///|
-fn website_scrollbar(
-  theme : @moui.Theme,
-  viewport_height~ : Double,
-  content_height~ : Double,
-  offset_y~ : Double,
-) -> @moui.View[Msg] {
-  let width = 14.0
-  custom_layout(
-    measure=_constraints => @geometry.Size::new(width~, height=viewport_height),
-    paint=(ctx, frame) => {
-      let max_scroll = max_website_double(0.0, content_height - viewport_height)
-      if max_scroll <= 0.0 {
-        return
-      }
-      let track_width = 5.0
-      let track = @geometry.Rect::new(
-        x=frame.origin.x + (frame.size.width - track_width) / 2.0,
-        y=frame.origin.y + 8.0,
-        width=track_width,
-        height=max_website_double(0.0, frame.size.height - 16.0),
-      )
-      let thumb_height = clamp_website_double(
-        track.size.height * viewport_height / content_height,
-        38.0,
-        track.size.height,
-      )
-      let thumb_y = track.origin.y +
-        (track.size.height - thumb_height) *
-        clamp_website_double(offset_y, 0.0, max_scroll) /
-        max_scroll
-      let thumb = @geometry.Rect::new(
-        x=track.origin.x,
-        y=thumb_y,
-        width=track_width,
-        height=thumb_height,
-      )
-      fill_rounded_rect(
-        ctx,
-        @graphics.RoundedRect::new(rect=track, radius=2.5),
-        @graphics.Brush::solid(theme.palette.outline.multiply_alpha(0.26)),
-      )
-      fill_rounded_rect(
-        ctx,
-        @graphics.RoundedRect::new(rect=thumb, radius=2.5),
-        @graphics.Brush::solid(theme.palette.primary.multiply_alpha(0.72)),
-      )
-    },
-    semantics_label="Website main scrollbar",
   )
 }
 
@@ -1080,10 +1040,18 @@ fn quick_start_copy(theme : @moui.Theme, width : Double) -> @moui.View[Msg] {
 }
 
 ///|
-fn quick_start_placeholder(
+fn Model::quick_start_placeholder(
+  self : Model,
   theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[Msg] {
+  let code_text = "git clone git@github.com:moui-mbt/moui_example.git"
+  let mono_font = @text.FontSpec::new(
+    size=if width < 400.0 { 12.0 } else { 13.5 },
+    weight=600,
+    families=@text.FontFamilyStack::monospace(),
+  )
+  let copied = self.copy_feedback_active
   container(
     column(
       [
@@ -1093,13 +1061,39 @@ fn quick_start_placeholder(
           theme~,
           width=118.0,
         ),
-        text(
-          "git clone git@github.com:moui-mbt/moui_example.git",
+        container(
+          row(
+            [
+              text(code_text, width=width - 84.0, height=34.0)
+              .font(mono_font)
+              .foreground(theme.palette.foreground),
+              button(
+                if copied {
+                  "✓"
+                } else {
+                  "Copy"
+                },
+                on_click=CopyText(code_text),
+                variant=if copied {
+                  @views.ButtonVariant::Primary
+                } else {
+                  @views.ButtonVariant::Outline
+                },
+                theme~,
+                width=if copied { 32.0 } else { 52.0 },
+                height=28.0,
+              ),
+            ],
+            spacing=6.0,
+            align=@views.CrossAlign::Center,
+          ),
           width=width - 36.0,
-          height=38.0,
-        )
-        .font(@text.FontSpec::new(size=18.0, weight=720))
-        .foreground(theme.palette.foreground),
+          height=40.0,
+          background=theme.palette.surface_variant.multiply_alpha(0.5),
+          corner_radius=6.0,
+          theme~,
+          padding=if copied { 3.0 } else { 6.0 },
+        ),
         wrapped_caption(
           theme,
           width - 36.0,
@@ -1109,10 +1103,10 @@ fn quick_start_placeholder(
         ),
       ],
       spacing=10.0,
-      align=@views.CrossAlign::Center,
+      align=@views.CrossAlign::Start,
     ),
     width~,
-    height=180.0,
+    height=200.0,
     background=soft_panel_background(theme),
     corner_radius=theme.radius_scale.lg,
     theme~,
@@ -1219,11 +1213,6 @@ fn website_border(theme : @moui.Theme) -> @graphics.BorderStyle {
     brush=@graphics.Brush::solid(theme.palette.outline.multiply_alpha(0.62)),
     width=1.0,
   )
-}
-
-///|
-fn quick_start_nav_offset() -> Double {
-  2400.0
 }
 
 ///|

@@ -171,6 +171,10 @@ fn WebApp::attach_resolved_window(
           renderer,
         }),
       )
+      register_web_semantics_runtime(
+        window.id().into_raw(),
+        resolved.instance.runtime,
+      )
       self.request_platform_redraw(resolved.id)
       @host.HostWindowRequestResult::WindowOpened(resolved.id)
     }

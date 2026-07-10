@@ -156,7 +156,7 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/backend/web/web_host.mbt", max_lines: 390 },
     { path: "moui/backend/web/web_window_requests.mbt", max_lines: 200 },
     { path: "moui/backend/web/web_window_slots.mbt", max_lines: 85 },
-    { path: "moui/core/view_tree.mbt", max_lines: 896 },
+    { path: "moui/core/view_tree.mbt", max_lines: 813 },
     { path: "moui/core/view_style.mbt", max_lines: 180 },
     { path: "moui/core/custom_layout.mbt", max_lines: 130 },
     { path: "moui/core/date_value.mbt", max_lines: 135 },

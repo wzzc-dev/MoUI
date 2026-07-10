@@ -2,72 +2,123 @@
 package "website/app"
 
 import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views",
 }
 
 // Values
 pub fn program() -> @core.Program[Model, Msg]
 
-pub fn program_with_services(@host.HostAppServices) -> @core.Program[Model, Msg]
+pub fn program_with_services(@host.HostAppServices, route_host? : WebsiteRouteHost?) -> @core.Program[Model, Msg]
 
 // Errors
 
 // Types and methods
 pub struct Model {
   dark : Bool
-  body_scroll_y : Double
-  docs_scroll_y : Double
   hero_count : Int
   page : WebsitePage
   selected_doc_slug : String
+  catalog_state : WebsiteCatalogLoadState
   doc_state : WebsiteDocLoadState
+  docs_search : String
+  mobile_menu_open : Bool
+  docs_drawer_open : Bool
+  compact_hero_tab : String
+  home_scroll : @core.ScrollState
+  docs_body_scroll : @core.ScrollState
+  docs_scroll : @core.ScrollState
+  showcases_scroll : @core.ScrollState
+  showcase_grid_scroll : @core.ScrollState
+  route_history : @views.RouteHistoryState
+  pending_anchor : String?
+  copy_feedback_active : Bool
 }
 
 pub enum Msg {
   ToggleDark
-  ScrollBodyTo(Double)
-  ScrollDocsTo(Double)
   CounterIncrement
   CounterReset
   OpenRepository
   OpenHome
   OpenHomeAt(Double)
+  OpenHomeAnchor(String)
   OpenDocs
   OpenShowcases
   OpenShowcaseSource(String)
   SelectDoc(String)
+  OpenDocLink(String)
+  CopyText(String)
+  RetryCatalog
   RetryDoc
+  SearchDocs(String)
+  ToggleMobileMenu
+  CloseMobileMenu
+  ToggleDocsDrawer
+  CloseDocsDrawer
+  SelectCompactHeroTab(String)
+  HostRouteChanged(@host.HostRouteEvent)
+  HostCatalogCompleted(@host.HostCompletedServiceResponse)
   HostDocsCompleted(@host.HostCompletedServiceResponse)
 }
 
-pub enum WebsiteDocBlock {
-  DocHeading(Int, String)
-  DocParagraph(String)
-  DocListItem(String, String)
-  DocQuote(String)
-  DocCodeBlock(String, String)
-  DocTable(Array[String])
-  DocRule
+pub enum WebsiteCatalogLoadState {
+  CatalogNotLoaded
+  CatalogLoading(@host.HostServiceRequestId)
+  CatalogLoaded(WebsiteDocsCatalog)
+  CatalogFailed(String)
 }
 
 pub struct WebsiteDocDocument {
   title : String
-  blocks : Array[WebsiteDocBlock]
+  source : String
 }
+
+pub struct WebsiteDocEntry {
+  group : String
+  slug : String
+  title : String
+  path : String
+  summary : String
+  keywords : Array[String]
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub struct WebsiteDocGroup {
+  id : String
+  title : String
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub enum WebsiteDocLoadState {
   DocNotLoaded
   DocLoading(@host.HostServiceRequestId, String)
   DocLoaded(String, WebsiteDocDocument)
   DocFailed(String, String)
+  DocNotFound(String)
 }
+
+pub struct WebsiteDocsCatalog {
+  schemaVersion : Int
+  siteUrl : String
+  groups : Array[WebsiteDocGroup]
+  entries : Array[WebsiteDocEntry]
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub enum WebsitePage {
   WebsiteHome
   WebsiteDocs
   WebsiteShowcases
+} derive(Eq, @debug.Debug)
+
+pub struct WebsiteRouteHost {
+  route_source : @host.HostRouteSource
+  push_route : (String) -> Unit
+  scroll_to_key : (String, @core.ScrollAlignment) -> Unit
+  update_metadata : (String, String, String) -> Unit
 }
+pub fn WebsiteRouteHost::new(route_source~ : @host.HostRouteSource, push_route? : (String) -> Unit, scroll_to_key? : (String, @core.ScrollAlignment) -> Unit, update_metadata? : (String, String, String) -> Unit) -> Self
 
 // Type aliases
 

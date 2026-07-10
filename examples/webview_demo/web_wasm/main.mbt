@@ -34,6 +34,16 @@ pub fn web_dispatch_route(source_code : Int, text_id : Int) -> Unit {
 }
 
 ///|
+pub fn web_dispatch_semantics_action(
+  raw_id : Int,
+  element_id : Int,
+  action_code : Int,
+  value_id : Int,
+) -> Unit {
+  @web.web_dispatch_semantics_action(raw_id, element_id, action_code, value_id)
+}
+
+///|
 pub fn web_complete_async_clipboard_read(
   id : Int,
   ok : Bool,

@@ -62,11 +62,16 @@ try {
   }
   const packagedAssetsRoot = join(outDir, "assets");
   copyDirectory(join(sourceRoot, "assets"), packagedAssetsRoot);
+  const packagedDocsRoot = join(outDir, "docs");
+  copyDirectory(join(sourceRoot, "docs"), packagedDocsRoot);
 
   for (const filePath of copiedFiles) {
     writeCompressedSiblings(filePath);
   }
   for (const asset of collectAssetFiles(packagedAssetsRoot)) {
+    writeCompressedSiblings(asset.fullPath);
+  }
+  for (const asset of collectAssetFiles(packagedDocsRoot)) {
     writeCompressedSiblings(asset.fullPath);
   }
   const manifest = collectBundleSize(options.packagePath);

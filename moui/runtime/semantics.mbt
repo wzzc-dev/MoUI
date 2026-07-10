@@ -36,7 +36,9 @@ fn ElementNode::build_semantics(
   let state = self.semantics_state(info, children, focused)
   {
     element_id: self.id,
-    role: info.role,
+    role: self.semantics_role(info.role),
+    level: self.semantics_level(info.level),
+    url: self.semantics_url(info.url),
     label: self.semantics_label(info.label),
     value: self.semantics_value(info.value),
     description: self.semantics_description(info.description),
@@ -45,6 +47,84 @@ fn ElementNode::build_semantics(
     focus_order,
     frame: render.frame,
     children,
+  }
+}
+
+///|
+fn ElementNode::semantics_role(
+  self : ElementNode,
+  role : @core.SemanticsRole,
+) -> @core.SemanticsRole {
+  if role != @core.SemanticsRole::Group {
+    role
+  } else if self.children.length() > 0 {
+    self.children[0].primary_semantics_role()
+  } else {
+    role
+  }
+}
+
+///|
+fn ElementNode::semantics_level(self : ElementNode, level : Int?) -> Int? {
+  match level {
+    Some(_) => level
+    None =>
+      if self.children.length() > 0 {
+        self.children[0].primary_semantics_level()
+      } else {
+        None
+      }
+  }
+}
+
+///|
+fn ElementNode::semantics_url(self : ElementNode, url : String) -> String {
+  if url != "" {
+    url
+  } else if self.children.length() > 0 {
+    self.children[0].primary_semantics_url()
+  } else {
+    ""
+  }
+}
+
+///|
+fn ElementNode::primary_semantics_role(
+  self : ElementNode,
+) -> @core.SemanticsRole {
+  let info = (self.erased_view_node.semantics)()
+  if info.role != @core.SemanticsRole::Group {
+    info.role
+  } else if self.children.length() > 0 {
+    self.children[0].primary_semantics_role()
+  } else {
+    info.role
+  }
+}
+
+///|
+fn ElementNode::primary_semantics_level(self : ElementNode) -> Int? {
+  let info = (self.erased_view_node.semantics)()
+  match info.level {
+    Some(_) => info.level
+    None =>
+      if self.children.length() > 0 {
+        self.children[0].primary_semantics_level()
+      } else {
+        None
+      }
+  }
+}
+
+///|
+fn ElementNode::primary_semantics_url(self : ElementNode) -> String {
+  let info = (self.erased_view_node.semantics)()
+  if info.url != "" {
+    info.url
+  } else if self.children.length() > 0 {
+    self.children[0].primary_semantics_url()
+  } else {
+    ""
   }
 }
 
