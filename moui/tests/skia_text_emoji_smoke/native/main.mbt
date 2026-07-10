@@ -717,7 +717,6 @@ fn bidi_visual_order_observed_available(
 
 ///|
 fn bidi_arabic_observed_available(
-  frame : @skia_renderer.SkiaPixelFrame,
   text_system : @core.TextSystem,
 ) -> Bool {
   // Arabic 样本：Latin + Arabic Ba/Alef + digits，触发 bidi 重排。
@@ -741,7 +740,6 @@ fn bidi_arabic_observed_available(
 
 ///|
 fn bidi_mixed_direction_observed_available(
-  frame : @skia_renderer.SkiaPixelFrame,
   text_system : @core.TextSystem,
 ) -> Bool {
   // 混合方向嵌套样本：Hebrew Aleph + Latin + Hebrew Bet，验证嵌套方向处理。
@@ -927,7 +925,7 @@ fn main {
         )
       }
 
-      if bidi_arabic_observed_available(frame, renderer.text_system()) {
+      if bidi_arabic_observed_available(renderer.text_system()) {
         println(
           "MoUI renderer smoke bidiLayoutArabic passed engine=skparagraph bidi_visual_order_ready=true visual-order arabic",
         )
@@ -937,7 +935,7 @@ fn main {
         )
       }
 
-      if bidi_mixed_direction_observed_available(frame, renderer.text_system()) {
+      if bidi_mixed_direction_observed_available(renderer.text_system()) {
         println(
           "MoUI renderer smoke bidiLayoutMixed passed engine=skparagraph bidi_visual_order_ready=true visual-order mixed-direction",
         )
