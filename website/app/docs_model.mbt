@@ -54,10 +54,28 @@ fn website_docs_entries() -> Array[WebsiteDocEntry] {
       summary: "Skia binding API surface, native boundary, and smoke workflow.",
     },
     {
+      slug: "moui-app-package-boundary",
+      title: "App Package Boundary",
+      path: "docs/moui-app-package-boundary.md",
+      summary: "App-safe dependencies, package ownership, and the public facades used by ordinary MoUI applications.",
+    },
+    {
+      slug: "tea-program-model",
+      title: "TEA Program Model",
+      path: "docs/tea-program-model.md",
+      summary: "Model, message, update, view, effects, and subscriptions in MoUI's typed application loop.",
+    },
+    {
       slug: "architecture",
       title: "Architecture",
       path: "docs/architecture.md",
       summary: "Runtime, host, renderer, and package boundaries.",
+    },
+    {
+      slug: "api-surface",
+      title: "API Surface",
+      path: "docs/api-surface.md",
+      summary: "Public package contracts, facade policy, compatibility expectations, and API checks.",
     },
     {
       slug: "development",
@@ -70,6 +88,36 @@ fn website_docs_entries() -> Array[WebsiteDocEntry] {
       title: "Platform Notes",
       path: "docs/platform-notes.md",
       summary: "Web and native backend setup notes.",
+    },
+    {
+      slug: "android-support",
+      title: "Android Support",
+      path: "docs/android-support.md",
+      summary: "Android embedded-session architecture, packaging, and runtime evidence.",
+    },
+    {
+      slug: "ios-support",
+      title: "iOS Support",
+      path: "docs/ios-support.md",
+      summary: "iOS UIKit embedded-session, Xcode packaging, and smoke evidence.",
+    },
+    {
+      slug: "harmonyos-support",
+      title: "HarmonyOS Support",
+      path: "docs/harmonyos-support.md",
+      summary: "HarmonyOS Stage Ability & XComponent integration and packaging.",
+    },
+    {
+      slug: "platform-host-contract",
+      title: "Platform Host Contract",
+      path: "docs/platform-host-contract.md",
+      summary: "Shared host runtime, window, input, service, rendering, and accessibility contracts.",
+    },
+    {
+      slug: "platform-readiness-declaration",
+      title: "Platform Readiness Declaration",
+      path: "docs/platform-readiness-declaration.md",
+      summary: "Auditable declaration of MoUI's cross-platform support and evidence levels.",
     },
     {
       slug: "text-system",
@@ -106,6 +154,18 @@ fn website_docs_entries() -> Array[WebsiteDocEntry] {
       title: "App Templates",
       path: "docs/app-templates.md",
       summary: "Starter shapes for shared app packages.",
+    },
+    {
+      slug: "button-styling-guide",
+      title: "Button Styling Guide",
+      path: "docs/button-styling-guide.md",
+      summary: "Button palette, component-token, state-resolution, and app-level override strategies.",
+    },
+    {
+      slug: "visual-theme-system",
+      title: "Visual Theme System",
+      path: "docs/visual-theme-system.md",
+      summary: "Theme tokens, typography, component styles, and visual-system extension points.",
     },
     {
       slug: "examples",
@@ -166,6 +226,24 @@ fn website_docs_entries() -> Array[WebsiteDocEntry] {
       title: "2026 Roadmap",
       path: "docs/roadmap-2026.md",
       summary: "Planned implementation slices.",
+    },
+    {
+      slug: "feature-proof-matrix",
+      title: "Feature Proof Matrix",
+      path: "docs/feature-proof-matrix.md",
+      summary: "Feature-level implementation and test evidence across MoUI packages and platforms.",
+    },
+    {
+      slug: "feature-status-dashboard",
+      title: "Feature Status Dashboard",
+      path: "docs/feature-status-dashboard.md",
+      summary: "Current feature status, proof level, owner, gaps, and next verification actions.",
+    },
+    {
+      slug: "maintenance",
+      title: "Maintenance Mainline",
+      path: "docs/maintenance.md",
+      summary: "Maintenance ratchets, package health checks, and repository cleanup policy.",
     },
   ]
 }
