@@ -716,9 +716,7 @@ fn bidi_visual_order_observed_available(
 }
 
 ///|
-fn bidi_arabic_observed_available(
-  text_system : @core.TextSystem,
-) -> Bool {
+fn bidi_arabic_observed_available(text_system : @core.TextSystem) -> Bool {
   // Arabic 样本：Latin + Arabic Ba/Alef + digits，触发 bidi 重排。
   let sample = "abc \u{0628}\u{0627} 123"
   let layout = text_system.layout_paragraph(
