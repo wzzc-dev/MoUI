@@ -231,3 +231,26 @@ Remaining Linux gaps stay visible in `backend/linux.readiness()`:
   file drag/drop host surfaces are implemented, but passed platform status still
   requires matching-host Wayland/desktop-service observation rather than package
   preflight alone.
+
+#### WSL2 Verification Progress (2026-07-11)
+
+On 2026-07-11, an end-to-end runtime evidence capture was completed on WSL2 + WSLg (Debian 13 on Windows):
+
+```sh
+bash window/scripts/capture_moui_runtime_evidence.sh linux \
+  --log artifacts/platform-evidence/linux/moui-linux-runtime.log
+```
+
+**Passed:**
+- ✅ Wayland surface/handles/present/cursor/resize/redraw — all working correctly
+- ✅ **IME probe: all 8 fields passed** (`enabled`, `hint`, `surrounding`, `cursor`, `updated`, `updated_hint`, `updated_cursor`, `disabled` all `true`)
+- ✅ Clipboard data device: `clipboard=true clipboard_roundtrip=true drag_drop=true`
+- ✅ `check_ci.sh` CI check passed
+
+**Still requires a real Wayland desktop:**
+- ❌ Interactive pointer/keyboard input (cannot be sent automatically in WSL2)
+- ❌ Complete destroy sequence (requires focused window interaction)
+
+The IME protocol functionality has been verified via WSL2. Full L3 runtime
+pass requires running `WINDOW_MOUI_LINUX_REQUIRE_INPUT=1` mode on a real Wayland
+desktop (Ubuntu 24.04+) with actual keyboard presses and mouse clicks.
