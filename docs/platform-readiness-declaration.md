@@ -157,7 +157,7 @@ moon run examples/showcase/windows_skia --target native
 | L2: Linux 文本/表情/异步图像 | ✅ 通过 | 同一 workflow 覆盖 text/emoji smoke 与 renderer smoke 成功标记 | Run 28964136550 |
 | L2: 历史 Linux renderer 部分通过记录 | ℹ️ 历史诊断 | Run [27217209784](https://github.com/wzzc-dev/MoUI/actions/runs/27217209784) 曾有 Linux 文本项 failed；已由更新的 run 28964136550 取代 | 2026-06-17 |
 | L3: Linux 首帧 / Wayland 运行时路由 | ✅ 通过 | `MoUI Linux Platform Evidence` → `Linux platform runtime evidence` job | Run [28889055278](https://github.com/wzzc-dev/MoUI/actions/runs/28889055278), 2026-07-07 |
-| L3: Linux 完整平台服务 / IME 证据 | ✅ 通过 | 首帧渲染已验证（本地 Wayland/WSL2 `linux-platform-evidence.sh` 通过，Skia `6d73578a`）；代码级服务完整（目录列表、剪贴板图片动态缓冲区、字体回退）；完整 IME 运行时观测仍需 matching-host 证据脚本 | 2026-07-11 |
+| L3: Linux 完整平台服务 / IME 证据 | ⏳ **部分通过** | 首帧渲染已验证（CI Run 28889055278）；代码级服务完整（剪贴板、文件对话框、目录列表、IME、AT-SPI 等）；WSL2 验证 IME 探测全部 8 字段通过（enabled/hint/surrounding/cursor/updated/updated_hint/updated_cursor/disabled=true），但交互式输入（pointer/keyboard）和 complete destroy 序列仍需匹配 Wayland 桌面宿主的严格输入日志证据 | 2026-07-11 |
 
 #### Linux L3 证据详情
 
@@ -177,7 +177,38 @@ environment: ubuntu-24.04 + Weston headless + Wayland
 
 证据脚本使用 `moui_tester/linux_skia_first_frame_smoke` 专用测试程序（类似 macOS 的 `moui_tester/macos_skia_first_frame_smoke`），硬编码 `first_frame_smoke_auto_exit=true`，呈现第一帧后自动退出并打印标记。该 run 证明 Linux Wayland + Skia 首帧路由。
 
-代码级服务完整性：Linux 后端现已全部接通——clipboard（text + image 动态缓冲区 + GTK fallback）、file dialog（portal + zenity）、directory listing（`@fs.read_dir`）、text/binary file I/O、open URL（portal + xdg-open）、system theme、native menus（zenity + kdialog）、IME、drag-drop、AT-SPI accessibility、GLib timer、client-side decorations、multi-window、platform view plugins、async image loading（pthread + Skia decode）。`readiness()` 已标记 `ready: true` 且 `blocked_by: []`。完整的 IME 运行时证据仍需 matching-host Wayland 主机上的 `capture_moui_runtime_evidence.sh linux` 运行。
+代码级服务完整性：Linux 后端现已全部接通——clipboard（text + image 动态缓冲区 + GTK fallback）、file dialog（portal + zenity）、directory listing（`@fs.read_dir`）、text/binary file I/O、open URL（portal + xdg-open）、system theme、native menus（zenity + kdialog）、IME、drag-drop、AT-SPI accessibility、GLib timer、client-side decorations、multi-window、platform view plugins、async image loading（pthread + Skia decode）。`readiness()` 已标记 `ready: true` 且 `blocked_by: []`。
+
+#### WSL2 验证结果（2026-07-11）
+
+在 WSL2 + WSLg（Debian 13 on Windows）环境下对 Linux 后端进行了端到端运行时证据捕获：
+
+```
+bash window/scripts/capture_moui_runtime_evidence.sh linux \
+  --log artifacts/platform-evidence/linux/moui-linux-runtime.log
+```
+
+**通过项：**
+- ✅ Wayland surface/handle/probe：全部正常工作（`wl_display`, `wl_surface`, `xdg_surface`, `xdg_toplevel` 均非零）
+- ✅ Present：`present result=0`
+- ✅ Cursor：`Icon(Text)`
+- ✅ 调整大小 + 重绘：请求 400×240 → 实际 320×180，`pre_present_notify` 确认
+- ✅ **IME 探测：全部 8 字段通过！** `enabled=true hint=true surrounding=true cursor=true updated=true updated_hint=true updated_cursor=true disabled=true`
+- ✅ 剪贴板数据设备：`clipboard=true clipboard_roundtrip=true drag_drop=true`
+- ✅ `check_ci.sh` CI 检查通过
+
+**未通过项（因 WSL2 非交互环境限制）：**
+- ❌ `pointer=false` — 无鼠标事件自动传入
+- ❌ `keyboard=false` — 无键盘事件自动传入
+- ❌ `current=false`（monitor）— 窗口未获得焦点
+- ❌ Destroy 序列未完成 — 进程在超时后退出
+
+**结论：** IME 协议在 WSL2/WSLg 中功能完整，所有 IME 探测字段均通过。
+完整的 L3 运行时通过仍需在**真实 Wayland 桌面**（Ubuntu 24.04+）上运行
+`WINDOW_MOUI_LINUX_REQUIRE_INPUT=1` 模式，由操作员在烟雾测试窗口聚焦时
+提供实际的键盘按键（例如按 `a`）和鼠标点击以获取指针/键盘证据。
+
+完整的 IME 运行时证据仍需 matching-host Wayland 主机上的 `capture_moui_runtime_evidence.sh linux` 运行。
 
 #### Linux 证据参考
 
@@ -189,6 +220,7 @@ environment: ubuntu-24.04 + Weston headless + Wayland
 | Renderer Proof 制品 | `moui-renderer-real-skia-ci.yml` run 28964136550 上传的 `linux-renderer-real-skia-ci` 日志 |
 | 证据记录脚本 | `window/scripts/record_moui_evidence.sh` — 支持 linux 后端 |
 | 运行时捕获脚本 | `window/scripts/capture_moui_runtime_evidence.sh` — Linux 运行时证据端到端捕获 |
+| WSL2 验证运行 | 本地捕获日志 `artifacts/platform-evidence/linux/moui-linux-runtime.log` — 2026-07-11, WSL2 + WSLg, IME 8/8 字段通过 |
 
 ### 3.4 Web / Wasm-gc
 
@@ -252,9 +284,10 @@ environment: ubuntu-24.04 + Weston headless + Wayland
 | 缺失项 | 补全动作 | 前置条件 | 预估工期 |
 |--------|---------|----------|---------|
 | Linux 首帧 / Wayland route 日志 | `scripts/linux-platform-evidence.sh` | ✅ 通过（CI Run 28889055278；本地 WSL2/Wayland 2026-07-11） | ✅ 已完成 |
-| Linux IME 运行时观测 | `window/scripts/capture_moui_runtime_evidence.sh` linux 流程 | Wayland 主机 + 真实 Skia + 交互式输入 | 1 次本地或 CI 运行 |
+| Linux IME 运行时观测（交互式输入） | `window/scripts/capture_moui_runtime_evidence.sh linux --require-input` 或在真实 Wayland 桌面运行 `WINDOW_MOUI_LINUX_REQUIRE_INPUT=1 bash window/scripts/check_moui_linux_smoke.sh --run` 并确保操作员在窗口聚焦时按键 | Wayland 桌面宿主 + 交互式输入 | 1 次本地运行 |
+| Linux IME 协议功能 | WSL2 验证已通过：全部 8 个 IME 探测字段（enabled/hint/surrounding/cursor/updated/updated_hint/updated_cursor/disabled）均为 true | 在 WSL2 + WSLg 上已用 `capture_moui_runtime_evidence.sh` 验证 | ✅ 已完成（WSL2 2026-07-11） |
 | Linux 完整平台服务观测 | 剪贴板图片、目录列表、字体回退 | 目录列表、剪贴板图片已实现并测试；首帧渲染已验证 | ✅ 已完成（代码级） |
-| Linux 全证据清单更新 | 将完整服务/IME 结果写入 `platform-runtime-evidence.json` linux 条目 | IME 运行时观测完成 | 1 次 PR |
+| Linux 全证据清单更新 | 将完整服务/IME 结果写入 `platform-runtime-evidence.json` linux 条目 | IME 交互式输入运行时观测完成 | 1 次 PR |
 
 ### 6.3 Android / iOS / HarmonyOS — 嵌入式 scaffold 运行时（首帧已验证）
 
