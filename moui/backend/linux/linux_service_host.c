@@ -120,6 +120,47 @@ static char *capture_command(const char *command) {
   return buffer;
 }
 
+static moonbit_bytes_t read_binary_command(const char *command) {
+  FILE *pipe = popen(command, "r");
+  if (!pipe) {
+    return moonbit_make_bytes(0, 0);
+  }
+  size_t capacity = 4096;
+  size_t length = 0;
+  uint8_t *buffer = (uint8_t *)malloc(capacity);
+  if (!buffer) {
+    pclose(pipe);
+    return moonbit_make_bytes(0, 0);
+  }
+  while (!feof(pipe)) {
+    if (length + 2048 > capacity) {
+      size_t next_capacity = capacity * 2;
+      uint8_t *next = (uint8_t *)realloc(buffer, next_capacity);
+      if (!next) {
+        free(buffer);
+        pclose(pipe);
+        return moonbit_make_bytes(0, 0);
+      }
+      buffer = next;
+      capacity = next_capacity;
+    }
+    size_t n = fread(buffer + length, 1, capacity - length, pipe);
+    if (n == 0) {
+      break;
+    }
+    length += n;
+  }
+  int status = pclose(pipe);
+  if (status != 0 || length == 0) {
+    free(buffer);
+    return moonbit_make_bytes(0, 0);
+  }
+  moonbit_bytes_t result = moonbit_make_bytes((int32_t)length, 0);
+  memcpy(result, buffer, length);
+  free(buffer);
+  return result;
+}
+
 static char *extract_object_path(const char *text) {
   if (!text) {
     return NULL;
@@ -729,26 +770,27 @@ int32_t moui_linux_show_menu(moonbit_bytes_t commands_bytes) {
 /// Uses wl-clipboard (wl-paste/wl-copy) to read/write PNG images.
 MOONBIT_FFI_EXPORT
 moonbit_bytes_t moui_linux_clipboard_read_image() {
-  const char *cmd = "wl-paste --type image/png 2>/dev/null || true";
-  FILE *pipe = popen(cmd, "r");
-  if (!pipe) {
-    return moonbit_make_bytes(0, 0);
+  // Read binary clipboard image data with a dynamic buffer.
+  // Primary: wl-paste for PNG images.
+  moonbit_bytes_t result = read_binary_command(
+    "wl-paste --type image/png 2>/dev/null");
+  if (result && Moonbit_array_length(result) > 0) {
+    return result;
   }
-  char buffer[8192];
-  size_t len = fread(buffer, 1, sizeof(buffer), pipe);
-  pclose(pipe);
-  if (len == 0) {
-    return moonbit_make_bytes(0, 0);
+  // Fallback: try GTK for older environments.
+  result = read_binary_command(
+    "gdbus call --session --dest org.gtk.Clipboard "
+    "--object-path /org/gtk/Clipboard "
+    "--method org.gtk.Clipboard.ReadImage 2>/dev/null");
+  if (result) {
+    return result;
   }
-  moonbit_bytes_t result = moonbit_make_bytes((int32_t)len, 0);
-  memcpy(result, buffer, len);
-  return result;
+  return moonbit_make_bytes(0, 0);
 }
 
 MOONBIT_FFI_EXPORT
 int32_t moui_linux_clipboard_write_image(moonbit_bytes_t mime,
                                          moonbit_bytes_t data) {
-  // MIME type is currently ignored in this simple impl
   if (!data) {
     return 0;
   }
@@ -756,8 +798,27 @@ int32_t moui_linux_clipboard_write_image(moonbit_bytes_t mime,
   if (data_len <= 0) {
     return 0;
   }
-  // Primary: Try wl-copy with image/png
-  FILE *pipe = popen("wl-copy --type image/png 2>/dev/null", "w");
+  // Choose MIME type: use the provided mime or default to image/png.
+  const char *mime_type = "image/png";
+  if (mime) {
+    int32_t mime_len = (int32_t)Moonbit_array_length(mime);
+    if (mime_len > 0) {
+      // Accept common image MIME types passed from MoonBit.
+      const char *mime_cstr = (const char *)mime;
+      if (strncmp(mime_cstr, "image/", 6) == 0) {
+        mime_type = mime_cstr;
+      }
+    }
+  }
+  // Primary: wl-copy with the resolved MIME type.
+  size_t cmd_len = strlen(mime_type) + 64;
+  char *cmd = (char *)malloc(cmd_len);
+  if (!cmd) {
+    return 0;
+  }
+  snprintf(cmd, cmd_len, "wl-copy --type %s 2>/dev/null", mime_type);
+  FILE *pipe = popen(cmd, "w");
+  free(cmd);
   if (!pipe) {
     return 0;
   }
@@ -806,52 +867,19 @@ int32_t moui_linux_show_menu(moonbit_bytes_t commands) {
 }
 
 ///|
-/// Clipboard image support.
-/// Uses wl-clipboard (wl-paste/wl-copy) as primary, with a simple fallback
-/// that returns empty data if tools are unavailable.
+/// Clipboard image stubs.
+/// These functions are only called on Linux; non-Linux stubs return empty.
 MOONBIT_FFI_EXPORT
 moonbit_bytes_t moui_linux_clipboard_read_image() {
-  // Primary: Try wl-paste for PNG
-  // Note: A real implementation would check for other formats or use a
-  // more sophisticated library like wl-clipboard or GTK.
-  const char *cmd = "wl-paste --type image/png 2>/dev/null || true";
-  FILE *pipe = popen(cmd, "r");
-  if (!pipe) {
-    return moonbit_make_bytes(0, 0);
-  }
-  // Read output into a MoonBit bytes buffer
-  // (Simplified: real impl would use a dynamic buffer)
-  char buffer[8192];
-  size_t len = fread(buffer, 1, sizeof(buffer), pipe);
-  pclose(pipe);
-  if (len == 0) {
-    return moonbit_make_bytes(0, 0);
-  }
-  moonbit_bytes_t result = moonbit_make_bytes((int32_t)len, 0);
-  memcpy(result, buffer, len);
-  return result;
+  return moonbit_make_bytes(0, 0);
 }
 
 MOONBIT_FFI_EXPORT
-int32_t moui_linux_clipboard_write_image(const uint8_t *mime, int32_t mime_len,
-                                         const uint8_t *data, int32_t data_len) {
-  (void)mime; // MIME type is currently ignored in this simple impl
-  (void)mime_len;
-  if (!data || data_len <= 0) {
-    return 0;
-  }
-  // Primary: Try wl-copy with image/png
-  // Note: This pipes data to wl-copy. A robust impl would handle MIME negotiation.
-  FILE *pipe = popen("wl-copy --type image/png 2>/dev/null", "w");
-  if (!pipe) {
-    return 0;
-  }
-  size_t written = fwrite(data, 1, (size_t)data_len, pipe);
-  int status = pclose(pipe);
-  if (written != (size_t)data_len || status != 0) {
-    return 0;
-  }
-  return 1;
+int32_t moui_linux_clipboard_write_image(moonbit_bytes_t mime,
+                                         moonbit_bytes_t data) {
+  (void)mime;
+  (void)data;
+  return 0;
 }
 
 #endif

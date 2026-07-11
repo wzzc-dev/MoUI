@@ -75,7 +75,8 @@ Checklist:
 - Keep the root `README.md` as the short entrypoint; its source is
   root `README.mbt.md`.
 - Put setup and command loops in `docs/development.md`.
-- Put platform caveats in `docs/platform-notes.md`.
+- Put platform caveats in `docs/platform-notes-<platform>.md` (e.g., `platform-notes-linux.md`).
+  Cross-platform host contracts go in `docs/platform-notes.md`.
 - Put text architecture in `docs/text-system.md`.
 - Put Markdown Editor behavior in `docs/markdown-editor.md`.
 - Put validation policy in `docs/testing.md`.

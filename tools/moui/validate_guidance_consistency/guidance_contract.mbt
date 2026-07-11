@@ -167,8 +167,8 @@ fn guidance_absent_rules() -> Array[TextRule] {
 ///|
 fn guidance_window_dependency_paths() -> Array[String] {
   [
-    "docs/development.md", "docs/platform-notes.md", "docs/examples.md", "docs/release-readiness.md",
-    "moui/README.mbt.md", "skills/moui-framework-development-skill/SKILL.md",
+    "docs/development.md", "docs/platform-notes.md", "docs/platform-notes-linux.md",
+    "docs/examples.md", "docs/release-readiness.md", "moui/README.mbt.md", "skills/moui-framework-development-skill/SKILL.md",
   ]
 }
 

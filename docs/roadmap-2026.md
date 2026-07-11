@@ -44,8 +44,9 @@ The package boundaries follow that pipeline:
 - `backend/<platform>/skia` owns the native Skia raster mainline assembly;
   `backend/<platform>/wgpu` remains available for explicit native WGPU
   diagnostics.
-- `backend/linux/` is a Wayland host core with explicit remaining matching-host
-  runtime-evidence and native font-provider gaps.
+- `backend/linux/` is a Wayland host core with runtime-evidence, IME,
+  clipboard, file dialog, directory listing, accessibility, and async image
+  loading all wired through matching-host CI providers.
 - `render/` owns renderer facades and capability reporting.
 - `render/skia/` implements the native Skia raster renderer facade.
 - `render/wgpu/` implements the experimental native wgpu renderer.
@@ -200,8 +201,8 @@ Focus areas:
   vcpkg `zlib:x64-windows`, and renderer-aware build/package helpers. Native
   Skia packages should not download or bundle `wgpu_native.dll`; explicit WGPU
   diagnostic packages keep the existing `wgpu_mbt` dynamic route.
-- Keep Linux clearly marked as preview until matching-host runtime evidence and
-  native font-provider gaps are closed.
+- Keep Linux supported on Ubuntu 24.04+ Wayland with matching-host runtime
+  evidence and font-provider coverage (fonts-noto-core, fonts-dejavu-core).
 - Use `HostServiceBridge` as the typed host-service boundary for clipboard,
   menus, file dialogs, URL opening, and system-theme queries.
 - Use `HostServiceAsyncQueue` for browser or platform services that require
@@ -345,7 +346,11 @@ Use this snapshot as the final handoff checklist for the current project shape:
 - Platform validation remains opt-in through `--profile platform` and
   `--profile full` because native executable builds depend on the
   current host setup.
-- Linux remains a minimal backend with tracked platform gaps until the remaining
-  native services and text-provider work land.
+- Linux backend is fully wired: clipboard (text + image), file dialog (portal +
+  zenity fallback), directory listing, text/binary file I/O, open URL, system
+  theme, native menus (zenity + kdialog), IME, drag-drop, AT-SPI accessibility,
+  GLib timer host, client-side decorations, multi-window, platform view
+  plugins, and async image loading (pthread + Skia decode). Keep runtime
+  evidence current on matching Wayland hosts.
 - `AGENTS.md` and repo-local skills have been checked against the current docs,
   examples, validation commands, and text/rendering architecture.

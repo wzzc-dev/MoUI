@@ -23,7 +23,8 @@ test "linux backend reports Wayland renderer readiness with explicit gaps" {
   inspect(info.services.menus, content="true")
   inspect(info.services.system_theme, content="true")
   inspect(info.readiness.ready, content="true")
-  assert_true(info.readiness.blocked_by.length() >= 1)
+  inspect(info.readiness.blocked_by.length(), content="0")
+  assert_true(info.readiness.next_steps.length() >= 1)
 }
 
 ///|
@@ -475,5 +476,91 @@ test "linux accessibility bridge dispatches semantics actions" {
     @host.NativeAccessibilityActionResult::Handled =>
       inspect(invoked.val, content="1")
     _ => fail("expected Linux accessibility bridge action dispatch")
+  }
+}
+
+///|
+test "linux list directory service returns entries for existing directory" {
+  let bridge = linux_service_bridge()
+  match bridge.dispatch(@host.HostServiceRequest::ListDirectory("/tmp")) {
+    @host.HostServiceResponse::DirectoryListing(path, entries) => {
+      inspect(path, content="/tmp")
+      assert_true(entries.length() >= 0)
+    }
+    @host.HostServiceResponse::Unavailable(_) =>
+      fail(
+        "expected Linux ListDirectory to use @fs.read_dir instead of unavailable",
+      )
+    _ => fail("expected DirectoryListing response")
+  }
+}
+
+///|
+test "linux list directory returns empty list for missing path" {
+  let bridge = linux_service_bridge()
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::ListDirectory(
+        "/tmp/moui-nonexistent-directory-xyz",
+      ),
+    ) {
+    @host.HostServiceResponse::DirectoryListing(path, entries) => {
+      inspect(path, content="/tmp/moui-nonexistent-directory-xyz")
+      inspect(entries.length(), content="0")
+    }
+    _ => fail("expected empty DirectoryListing for missing path")
+  }
+}
+
+///|
+test "linux list directory hides dotfiles and reports is_directory" {
+  let bridge = linux_service_bridge(list_directory=path => {
+    let entries : Array[@host.HostDirectoryEntry] = [
+      @host.HostDirectoryEntry::new(
+        name="readme.md",
+        path=path + "/readme.md",
+        is_directory=false,
+      ),
+      @host.HostDirectoryEntry::new(
+        name="src",
+        path=path + "/src",
+        is_directory=true,
+      ),
+      @host.HostDirectoryEntry::new(
+        name=".git",
+        path=path + "/.git",
+        is_directory=true,
+      ),
+    ]
+    @host.HostServiceResponse::DirectoryListing(path, entries)
+  })
+  match
+    bridge.dispatch(@host.HostServiceRequest::ListDirectory("/tmp/project")) {
+    @host.HostServiceResponse::DirectoryListing(path, entries) => {
+      inspect(path, content="/tmp/project")
+      inspect(entries.length(), content="3")
+      assert_true(
+        entries.any(entry => {
+          entry.name() == "readme.md" && !entry.is_directory()
+        }),
+      )
+      assert_true(
+        entries.any(entry => entry.name() == "src" && entry.is_directory()),
+      )
+      assert_true(
+        entries.any(entry => entry.name() == ".git" && entry.is_directory()),
+      )
+    }
+    _ => fail("expected ListDirectory response with test entries")
+  }
+}
+
+///|
+test "linux list directory filters hidden files in real dispatch" {
+  let bridge = linux_service_bridge()
+  match bridge.dispatch(@host.HostServiceRequest::ListDirectory("/tmp")) {
+    @host.HostServiceResponse::DirectoryListing(_, listing) =>
+      assert_true(listing.all(entry => !entry.name().has_prefix(".")))
+    _ => ()
   }
 }

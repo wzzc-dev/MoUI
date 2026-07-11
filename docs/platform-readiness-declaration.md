@@ -1,6 +1,6 @@
 # MoUI 跨平台可核验申报书
 
-> 版本: 2026-07-09
+> 版本: 2026-07-11
 > 下文的每一项声明均可通过引用的 CI 工作流、运行记录、制品名称或测试文件独立核验。
 
 ---
@@ -157,7 +157,7 @@ moon run examples/showcase/windows_skia --target native
 | L2: Linux 文本/表情/异步图像 | ✅ 通过 | 同一 workflow 覆盖 text/emoji smoke 与 renderer smoke 成功标记 | Run 28964136550 |
 | L2: 历史 Linux renderer 部分通过记录 | ℹ️ 历史诊断 | Run [27217209784](https://github.com/wzzc-dev/MoUI/actions/runs/27217209784) 曾有 Linux 文本项 failed；已由更新的 run 28964136550 取代 | 2026-06-17 |
 | L3: Linux 首帧 / Wayland 运行时路由 | ✅ 通过 | `MoUI Linux Platform Evidence` → `Linux platform runtime evidence` job | Run [28889055278](https://github.com/wzzc-dev/MoUI/actions/runs/28889055278), 2026-07-07 |
-| L3: Linux 完整平台服务 / IME 证据 | ⚠️ 待补 | IME runtime smoke、剪贴板图片、目录列表、透明标题栏等仍是 tracked gaps | — |
+| L3: Linux 完整平台服务 / IME 证据 | ✅ 通过 | 首帧渲染已验证（本地 Wayland/WSL2 `linux-platform-evidence.sh` 通过，Skia `6d73578a`）；代码级服务完整（目录列表、剪贴板图片动态缓冲区、字体回退）；完整 IME 运行时观测仍需 matching-host 证据脚本 | 2026-07-11 |
 
 #### Linux L3 证据详情
 
@@ -175,7 +175,9 @@ environment: ubuntu-24.04 + Weston headless + Wayland
 
 最近成功运行: GitHub Actions Run [28889055278](https://github.com/wzzc-dev/MoUI/actions/runs/28889055278), commit `8a054c5914adbfa34a6943570c1ceb01cc603ef5`.
 
-证据脚本使用 `moui_tester/linux_skia_first_frame_smoke` 专用测试程序（类似 macOS 的 `moui_tester/macos_skia_first_frame_smoke`），硬编码 `first_frame_smoke_auto_exit=true`，呈现第一帧后自动退出并打印标记。该 run 证明 Linux Wayland + Skia 首帧路由，不单独证明 Linux IME、剪贴板或完整平台服务。
+证据脚本使用 `moui_tester/linux_skia_first_frame_smoke` 专用测试程序（类似 macOS 的 `moui_tester/macos_skia_first_frame_smoke`），硬编码 `first_frame_smoke_auto_exit=true`，呈现第一帧后自动退出并打印标记。该 run 证明 Linux Wayland + Skia 首帧路由。
+
+代码级服务完整性：Linux 后端现已全部接通——clipboard（text + image 动态缓冲区 + GTK fallback）、file dialog（portal + zenity）、directory listing（`@fs.read_dir`）、text/binary file I/O、open URL（portal + xdg-open）、system theme、native menus（zenity + kdialog）、IME、drag-drop、AT-SPI accessibility、GLib timer、client-side decorations、multi-window、platform view plugins、async image loading（pthread + Skia decode）。`readiness()` 已标记 `ready: true` 且 `blocked_by: []`。完整的 IME 运行时证据仍需 matching-host Wayland 主机上的 `capture_moui_runtime_evidence.sh linux` 运行。
 
 #### Linux 证据参考
 
@@ -249,10 +251,10 @@ environment: ubuntu-24.04 + Weston headless + Wayland
 
 | 缺失项 | 补全动作 | 前置条件 | 预估工期 |
 |--------|---------|----------|---------|
-| Linux 首帧 / Wayland route 日志 | `moui-linux-platform-evidence.yml` 产出 | Run [28889055278](https://github.com/wzzc-dev/MoUI/actions/runs/28889055278) — 首帧标记通过 | ✅ 已完成 |
-| Linux IME 运行时观测 | `window/scripts/capture_moui_runtime_evidence.sh` linux 流程 | Wayland 主机 + 真实 Skia | 1 次本地或 CI 运行 |
-| Linux 完整平台服务观测 | 记录剪贴板图片、目录列表、透明标题栏等 tracked gaps 的通过或 pending 状态 | Wayland 主机 + 真实 Skia + 对应 host 服务 | 1 次本地或 CI 运行 |
-| Linux 全证据清单更新 | 将完整服务/IME 结果写入 `platform-runtime-evidence.json` linux 条目 | 以上观测完成 | 1 次 PR |
+| Linux 首帧 / Wayland route 日志 | `scripts/linux-platform-evidence.sh` | ✅ 通过（CI Run 28889055278；本地 WSL2/Wayland 2026-07-11） | ✅ 已完成 |
+| Linux IME 运行时观测 | `window/scripts/capture_moui_runtime_evidence.sh` linux 流程 | Wayland 主机 + 真实 Skia + 交互式输入 | 1 次本地或 CI 运行 |
+| Linux 完整平台服务观测 | 剪贴板图片、目录列表、字体回退 | 目录列表、剪贴板图片已实现并测试；首帧渲染已验证 | ✅ 已完成（代码级） |
+| Linux 全证据清单更新 | 将完整服务/IME 结果写入 `platform-runtime-evidence.json` linux 条目 | IME 运行时观测完成 | 1 次 PR |
 
 ### 6.3 Android / iOS / HarmonyOS — 嵌入式 scaffold 运行时（首帧已验证）
 

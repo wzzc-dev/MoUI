@@ -102,11 +102,10 @@ pub fn linux_capability_summary(
 pub fn readiness() -> LinuxBackendReadiness {
   {
     ready: true,
-    blocked_by: [
-      "Linux Preview Ready runtime status still requires matching-host Wayland/Skia observation artifacts",
-    ],
+    blocked_by: [],
     next_steps: [
-      "record matching-host Linux Showcase and Markdown Editor Skia first-frame observation",
+      "keep matching-host Linux Showcase and Markdown Editor Skia first-frame observation current",
+      "capture full IME and platform service runtime evidence on matching Wayland host",
     ],
   }
 }
@@ -157,6 +156,30 @@ pub fn linux_accessibility_bridge(
 }
 
 ///|
+fn dispatch_linux_menu(commands : Array[@core.ActionCommand]) -> Int {
+  linux_show_menu_bytes(encode_menu_commands(commands))
+}
+
+///|
+fn dispatch_linux_list_directory(path : String) -> @host.HostServiceResponse {
+  let names_opt : Array[String]? = Some(@fs.read_dir(path)) catch { _ => None }
+  let names = names_opt.unwrap_or([])
+  let entries : Array[@host.HostDirectoryEntry] = []
+  for name in names {
+    if name.has_prefix(".") {
+      continue
+    }
+    let child_path = path + "/" + name
+    let is_dir_opt : Bool? = Some(@fs.is_dir(child_path)) catch { _ => None }
+    let is_dir = is_dir_opt.unwrap_or(false)
+    entries.push(
+      @host.HostDirectoryEntry::new(name~, path=child_path, is_directory=is_dir),
+    )
+  }
+  @host.HostServiceResponse::DirectoryListing(path, entries)
+}
+
+///|
 pub fn linux_service_bridge(
   system_theme? : @core.ColorScheme = @core.ColorScheme::Light,
   clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse = dispatch_linux_clipboard,
@@ -165,6 +188,7 @@ pub fn linux_service_bridge(
   text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse = dispatch_linux_text_file,
   binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse = dispatch_linux_binary_file,
   menu? : (Array[@core.ActionCommand]) -> Int = dispatch_linux_menu,
+  list_directory? : (String) -> @host.HostServiceResponse = dispatch_linux_list_directory,
 ) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(capabilities=service_capabilities(), handle=request => {
     match request {
@@ -186,17 +210,9 @@ pub fn linux_service_bridge(
         binary_file(binary_file_request)
       @host.HostServiceRequest::ShowMenu(commands) =>
         linux_menu_command_response(commands, menu(commands))
-      @host.HostServiceRequest::ListDirectory(_) =>
-        @host.HostServiceResponse::Unavailable(
-          "directory listing service is unavailable",
-        )
+      @host.HostServiceRequest::ListDirectory(path) => list_directory(path)
     }
   })
-}
-
-///|
-fn dispatch_linux_menu(commands : Array[@core.ActionCommand]) -> Int {
-  linux_show_menu_bytes(encode_menu_commands(commands))
 }
 
 ///|
@@ -258,17 +274,27 @@ fn dispatch_linux_file_dialog(
   let title = encode_host_string(options.title)
   let filters = encode_host_filter_list(options.filters)
   let default_name = encode_host_string(options.default_name.unwrap_or(""))
-  decode_file_dialog_selection(
-    linux_file_dialog_bytes(
-      host_file_dialog_kind_code(options.kind),
-      title,
-      title.length(),
-      filters,
-      filters.length(),
-      default_name,
-      default_name.length(),
-    ),
+  let raw_bytes = linux_file_dialog_bytes(
+    host_file_dialog_kind_code(options.kind),
+    title,
+    title.length(),
+    filters,
+    filters.length(),
+    default_name,
+    default_name.length(),
   )
+  let selection = decode_file_dialog_selection(raw_bytes)
+  if selection.length() == 0 {
+    // No paths returned — portal desktop and zenity both failed silently.
+    // This usually means neither dialog tool is available in the current
+    // environment. Install zenity: sudo apt-get install zenity
+    println(
+      "linux file dialog: " +
+      options.title +
+      " returned empty selection (portal+zenity unavailable)",
+    )
+  }
+  selection
 }
 
 ///|
