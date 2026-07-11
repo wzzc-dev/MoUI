@@ -301,7 +301,7 @@ be noticeably slower than package tests or Web wasm-gc example builds, so
 they are kept out of the default development check.
 
 For macOS `moon run` linker errors, see
-[Platform notes](docs/platform-notes.md#macos-native).
+[macOS platform notes](docs/platform-notes-macos.md).
 
 Build and run the visual showcase on the Skia mainline:
 

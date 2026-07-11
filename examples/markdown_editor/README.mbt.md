@@ -40,6 +40,19 @@ again before committing.
 
 ## Running
 
+### Linux Dependencies
+
+The Linux Skia entrypoint requires `zenity` for file and folder dialogs:
+
+```sh
+sudo apt-get install zenity
+```
+
+See [platform-notes-linux.md](../../docs/platform-notes-linux.md) for the full
+list of Linux runtime requirements.
+
+### Commands
+
 ```sh
 # Web (wasm-gc)
 moon build examples/markdown_editor/web_wasm --target wasm-gc
