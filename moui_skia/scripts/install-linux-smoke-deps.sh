@@ -29,6 +29,9 @@ packages=(
   libfreetype-dev
   libharfbuzz-dev
   fonts-noto-cjk
+  fonts-noto-core
+  fonts-dejavu-core
+  zenity
   libwayland-dev
   libwayland-bin
   wayland-protocols
