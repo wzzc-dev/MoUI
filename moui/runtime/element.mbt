@@ -181,15 +181,14 @@ fn ElementNode::mark_build_dirty_by_id(
     self.clear_cached_layout_and_paint()
     true
   } else {
-    let mut found = false
     for child in self.children {
-      found = child.mark_build_dirty_by_id(id) || found
+      if child.mark_build_dirty_by_id(id) {
+        self.dirty.mark_layout()
+        self.clear_cached_layout_and_paint()
+        return true
+      }
     }
-    if found {
-      self.dirty.mark_layout()
-      self.clear_cached_layout_and_paint()
-    }
-    found
+    false
   }
 }
 
@@ -203,15 +202,14 @@ fn ElementNode::mark_paint_dirty_by_id(
     self.render_cache.clear()
     true
   } else {
-    let mut found = false
     for child in self.children {
-      found = child.mark_paint_dirty_by_id(id) || found
+      if child.mark_paint_dirty_by_id(id) {
+        self.dirty.mark_paint()
+        self.render_cache.clear()
+        return true
+      }
     }
-    if found {
-      self.dirty.mark_paint()
-      self.render_cache.clear()
-    }
-    found
+    false
   }
 }
 
