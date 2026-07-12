@@ -267,6 +267,9 @@ pub(all) enum SkiaGpuContextSupportStatus {
   SkiaGpuContextMetalOptInDisabled
   SkiaGpuContextMetalHeadersUnavailable
   SkiaGpuContextMetalRuntimeUnavailable
+  SkiaGpuContextDirect3DOptInDisabled
+  SkiaGpuContextDirect3DHeadersUnavailable
+  SkiaGpuContextDirect3DRuntimeUnavailable
 } derive(Debug, Eq)
 
 ///|

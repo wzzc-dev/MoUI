@@ -191,6 +191,59 @@ extern "C" fn native_surface_gpu_metal_headers_available() -> Bool = "moonbit_sk
 extern "C" fn native_surface_gpu_metal_runtime_available() -> Bool = "moonbit_skia_surface_gpu_metal_runtime_available"
 
 ///|
+extern "C" fn native_gpu_context_direct3d() -> GpuContextHandle = "moonbit_skia_gpu_context_direct3d"
+
+///|
+/// Wrap a platform window-backed Direct3D 11 swap chain back buffer as a Skia
+/// GPU surface.
+///
+/// `hwnd_ptr` is a raw `HWND` handle (typed as `UInt64` for FFI portability)
+/// obtained from the host window. The host presenter owns the HWND lifecycle;
+/// Skia borrows the swap chain's back buffer texture for rendering. The
+/// returned `Surface` must be flushed and then presented via
+/// `Surface::direct3d_present_and_acquire_next` to advance to the next back
+/// buffer.
+#borrow(context)
+extern "C" fn native_surface_direct3d_window(
+  context : GpuContextHandle,
+  hwnd_ptr : UInt64,
+  width : Int,
+  height : Int,
+  origin : Int,
+  sample_count : Int,
+  stencil_bits : Int,
+) -> SurfaceHandle = "moonbit_skia_surface_direct3d_window"
+
+///|
+/// Present the swap chain backing a `Surface` created via
+/// `native_surface_direct3d_window`, and return the next back buffer wrapped as
+/// a fresh `Surface` for the following frame.
+///
+/// `hwnd_ptr` is passed for interface symmetry with the Metal layer_ptr
+/// parameter but is not used by D3D present (the swap chain already knows its
+/// HWND). Returns a null handle when the swap chain cannot produce a next back
+/// buffer (e.g. device lost, or the native Skia build lacks D3D support).
+#borrow(surface)
+extern "C" fn native_surface_direct3d_present_and_acquire_next(
+  surface : SurfaceHandle,
+  hwnd_ptr : UInt64,
+  width : Int,
+  height : Int,
+  origin : Int,
+  sample_count : Int,
+  stencil_bits : Int,
+) -> SurfaceHandle = "moonbit_skia_surface_direct3d_present_and_acquire_next"
+
+///|
+extern "C" fn native_surface_gpu_d3d_opt_in_enabled() -> Bool = "moonbit_skia_surface_gpu_d3d_opt_in_enabled"
+
+///|
+extern "C" fn native_surface_gpu_d3d_headers_available() -> Bool = "moonbit_skia_surface_gpu_d3d_headers_available"
+
+///|
+extern "C" fn native_surface_gpu_d3d_runtime_available() -> Bool = "moonbit_skia_surface_gpu_d3d_runtime_available"
+
+///|
 #borrow(surface)
 extern "C" fn native_surface_is_null(surface : SurfaceHandle) -> Bool = "moonbit_skia_surface_is_null"
 
@@ -699,6 +752,116 @@ pub fn Surface::metal_gpu_context_runtime_available() -> Bool {
 }
 
 ///|
+/// Create a Direct3D 11 GPU context from the host platform's default D3D11
+/// device. Returns `None` when the native Skia build lacks D3D support, when
+/// the D3D11 device cannot be created, or when `descriptor.backend` is not
+/// `Direct3D12GpuContext`.
+pub fn GpuContext::direct3d12(
+  descriptor : @skia.GpuContextDescriptor,
+) -> GpuContext? {
+  if !Surface::gpu_context_support_status(descriptor).is_available() ||
+    descriptor.backend != @skia.Direct3D12GpuContext {
+    None
+  } else {
+    GpuContext::from_handle(native_gpu_context_direct3d(), descriptor)
+  }
+}
+
+///|
+/// Wrap a platform window-backed Direct3D 11 swap chain back buffer as a Skia
+/// GPU surface.
+///
+/// `hwnd_ptr` is a raw `HWND` handle (typed as `UInt64` for FFI portability)
+/// obtained from the host window. The host presenter owns the HWND lifecycle;
+/// Skia borrows the swap chain's back buffer texture for rendering. The
+/// returned `Surface` must be flushed and then presented via
+/// `Surface::direct3d_present_and_acquire_next` to advance to the next back
+/// buffer.
+///
+/// Returns `None` when the GPU context is unavailable, the size is empty, or
+/// the native Skia build cannot wrap a D3D11 swap chain (e.g. the opt-in flags
+/// `MOUI_SKIA_ENABLE_GPU_D3D` / `MOUI_SKIA_HAS_GANESH_D3D_HEADERS` are not
+/// enabled at link time).
+pub fn Surface::direct3d_window_surface(
+  context : GpuContext,
+  hwnd_ptr : UInt64,
+  descriptor : @skia.SurfaceDescriptor,
+) -> Surface? {
+  if descriptor.is_empty() || !descriptor.is_gpu() || !context.is_available() {
+    None
+  } else if hwnd_ptr == 0 {
+    None
+  } else {
+    Surface::from_handle(
+      native_surface_direct3d_window(
+        context.handle,
+        hwnd_ptr,
+        descriptor.width(),
+        descriptor.height(),
+        native_surface_origin_ordinal(descriptor.origin),
+        descriptor.sample_count,
+        descriptor.stencil_bits,
+      ),
+      descriptor,
+    )
+  }
+}
+
+///|
+/// Present the swap chain backing a `Surface` created via
+/// `Surface::direct3d_window_surface`, and return the next back buffer wrapped
+/// as a fresh `Surface` for the following frame.
+///
+/// The host renderer has already called `Surface::flush_and_submit()` before
+/// this function; this call only asks the swap chain to present and acquires
+/// the next back buffer. Returns:
+/// - `Some(next_surface)` when the swap chain was presented and a next back
+///   buffer was successfully acquired and wrapped.
+/// - `None` when the swap chain cannot produce a next back buffer (e.g. device
+///   lost, or the native Skia build lacks D3D support). The caller should
+///   treat `None` as a present failure.
+pub fn Surface::direct3d_present_and_acquire_next(
+  surface : Surface,
+  context : GpuContext,
+  hwnd_ptr : UInt64,
+) -> Surface? {
+  if !context.is_available() || hwnd_ptr == 0 {
+    return None
+  }
+  let descriptor = surface.descriptor
+  Surface::from_handle(
+    native_surface_direct3d_present_and_acquire_next(
+      surface.handle,
+      hwnd_ptr,
+      descriptor.width(),
+      descriptor.height(),
+      native_surface_origin_ordinal(descriptor.origin),
+      descriptor.sample_count,
+      descriptor.stencil_bits,
+    ),
+    descriptor,
+  )
+}
+
+///|
+/// Report whether the Windows Direct3D Skia GPU-context probe is enabled for this native build.
+pub fn Surface::direct3d_gpu_context_opt_in_enabled() -> Bool {
+  native_surface_gpu_d3d_opt_in_enabled()
+}
+
+///|
+/// Report whether this native build can see the Skia Ganesh Direct3D headers.
+pub fn Surface::direct3d_gpu_context_headers_available() -> Bool {
+  native_surface_gpu_d3d_headers_available()
+}
+
+///|
+/// Report whether the opt-in Direct3D GPU-context probe can create a D3D11 device.
+pub fn Surface::direct3d_gpu_context_runtime_available() -> Bool {
+  native_surface_gpu_d3d_runtime_available()
+}
+
+///|
 /// Classify native support for a value-layer GPU context descriptor.
 pub fn Surface::gpu_context_support_status(
   context : @skia.GpuContextDescriptor,
@@ -717,6 +880,16 @@ pub fn Surface::gpu_context_support_status(
           SkiaGpuContextMetalHeadersUnavailable
         } else if !Surface::metal_gpu_context_runtime_available() {
           SkiaGpuContextMetalRuntimeUnavailable
+        } else {
+          SkiaGpuContextAvailable
+        }
+      @skia.Direct3D12GpuContext =>
+        if !Surface::direct3d_gpu_context_opt_in_enabled() {
+          SkiaGpuContextDirect3DOptInDisabled
+        } else if !Surface::direct3d_gpu_context_headers_available() {
+          SkiaGpuContextDirect3DHeadersUnavailable
+        } else if !Surface::direct3d_gpu_context_runtime_available() {
+          SkiaGpuContextDirect3DRuntimeUnavailable
         } else {
           SkiaGpuContextAvailable
         }

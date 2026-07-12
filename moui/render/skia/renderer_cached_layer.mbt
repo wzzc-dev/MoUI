@@ -490,12 +490,17 @@ fn SkiaRasterRenderer::create_layer_surface(
           @skia_native.Surface::for_target_with_gpu_context(target, gpu_context)
         None => None
       }
+    Direct3DGpuSurfaceRoute =>
+      match self.gpu_context {
+        Some(gpu_context) =>
+          @skia_native.Surface::for_target_with_gpu_context(target, gpu_context)
+        None => None
+      }
     // Phase 1.1: reserved GPU routes; `create_gpu_context` rejects them at
     // renderer construction so this branch is unreachable today. Returning
     // None keeps the match total without inventing a fake surface.
     VulkanGpuSurfaceRoute => None
     EglGpuSurfaceRoute => None
-    Direct3DGpuSurfaceRoute => None
   }
 }
 

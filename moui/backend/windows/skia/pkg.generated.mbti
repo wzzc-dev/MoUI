@@ -24,7 +24,7 @@ pub fn windows_skia_provider_preflight_summary(options? : WindowsSkiaAppOptions)
 pub struct WindowsSkiaAppOptions {
   // private fields
 }
-pub fn WindowsSkiaAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, font_resolution? : @wzzc-dev/moui/render/skia.SkiaFontResolution, web_view_commands? : @host.HostWebViewCommandQueue?, web_view_events? : @host.HostWebViewEventSource?) -> Self
+pub fn WindowsSkiaAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, font_resolution? : @wzzc-dev/moui/render/skia.SkiaFontResolution, surface_route? : @wzzc-dev/moui/render/skia.SkiaSurfaceRoute, platform_view_plugins? : Array[@host.PlatformViewPlugin]) -> Self
 
 pub struct WindowsSkiaSmokeOptions {
   // private fields

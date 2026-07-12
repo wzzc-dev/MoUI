@@ -403,6 +403,7 @@ static void moonbit_skia_surface_finalize(void* ptr) {
 #endif
   if (wrapper->host_present_handle != nullptr) {
     moonbit_skia_objc_release(wrapper->host_present_handle);
+    moonbit_skia_com_release(wrapper->host_present_handle);
     wrapper->host_present_handle = nullptr;
   }
 }
@@ -417,8 +418,14 @@ static void moonbit_skia_gpu_context_finalize(void* ptr) {
 #else
   wrapper->context = nullptr;
 #endif
-  wrapper->device = nullptr;
-  wrapper->queue = nullptr;
+  if (wrapper->device != nullptr) {
+    moonbit_skia_com_release(wrapper->device);
+    wrapper->device = nullptr;
+  }
+  if (wrapper->queue != nullptr) {
+    moonbit_skia_com_release(wrapper->queue);
+    wrapper->queue = nullptr;
+  }
   wrapper->backend = 0;
 }
 

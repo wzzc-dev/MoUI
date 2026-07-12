@@ -411,9 +411,7 @@ fn SkiaRasterRenderer::render_frame_inner(
       // (Metal `CAMetalDrawable` pattern); swap it in for the next frame.
       match self.gpu_target {
         Some(gpu_target) => {
-          let outcome = (gpu_target.present_gpu)(
-            self.gpu_context, self.surface,
-          )
+          let outcome = (gpu_target.present_gpu)(self.gpu_context, self.surface)
           if outcome.succeeded() {
             self.present_count = self.present_count + 1
             self.last_frame = None

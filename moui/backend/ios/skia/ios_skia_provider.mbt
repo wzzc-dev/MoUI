@@ -10,9 +10,7 @@ extern "C" fn ios_present_skia_pixels_to_view(
 ) -> Int = "moui_ios_present_skia_pixels_to_view"
 
 ///|
-extern "C" fn ios_skia_metal_layer_for_view(
-  view_handle : UInt64,
-) -> UInt64 = "moui_ios_skia_metal_layer_for_view"
+extern "C" fn ios_skia_metal_layer_for_view(view_handle : UInt64) -> UInt64 = "moui_ios_skia_metal_layer_for_view"
 
 ///|
 extern "C" fn ios_skia_create_metal_view(
@@ -23,9 +21,7 @@ extern "C" fn ios_skia_create_metal_view(
 ) -> UInt64 = "moui_ios_skia_create_metal_view"
 
 ///|
-extern "C" fn ios_skia_release_metal_view(
-  raw_view_handle : UInt64,
-) -> Unit = "moui_ios_skia_release_metal_view"
+extern "C" fn ios_skia_release_metal_view(raw_view_handle : UInt64) -> Unit = "moui_ios_skia_release_metal_view"
 
 ///|
 pub struct IosSkiaAppOptions {
@@ -112,22 +108,18 @@ fn create_renderer(
   let layer_ptr = ios_skia_metal_layer_for_view(view.raw())
   let gpu_available = @skia_native.Surface::metal_gpu_context_runtime_available()
   if gpu_available && layer_ptr != 0UL {
-    try
-      Some(
-        host_renderer_from_skia(
-          @skia_renderer.create_with_present_target_and_route(
-            renderer_metrics_from_host(metrics),
-            ios_skia_present_target(view),
-            surface_route=@skia_renderer.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
-            gpu_target=Some(
-              ios_skia_gpu_present_target(view.raw(), layer_ptr),
-            ),
-            font_resolution=options.font_resolution,
-            async_image_loading=true,
-          ),
+    Some(
+      host_renderer_from_skia(
+        @skia_renderer.create_with_present_target_and_route(
+          renderer_metrics_from_host(metrics),
+          ios_skia_present_target(view),
+          surface_route=@skia_renderer.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
+          gpu_target=Some(ios_skia_gpu_present_target(view.raw(), layer_ptr)),
+          font_resolution=options.font_resolution,
+          async_image_loading=true,
         ),
-      )
-    catch {
+      ),
+    ) catch {
       err => {
         println(
           "error creating iOS Skia Metal GPU renderer, falling back to raster: \{err.message()}",
@@ -241,10 +233,9 @@ fn ios_skia_gpu_present_target(
             next_surface=None,
           )
         Some(context) => {
-          let outcome =
-            @skia_native.Surface::metal_present_and_acquire_next(
-              surface, context, layer_ptr,
-            )
+          let outcome = @skia_native.Surface::metal_present_and_acquire_next(
+            surface, context, layer_ptr,
+          )
           match outcome {
             Some(next_surface) =>
               @skia_renderer.HostGpuPresentOutcome::new(

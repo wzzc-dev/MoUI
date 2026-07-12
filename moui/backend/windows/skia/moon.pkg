@@ -6,6 +6,8 @@ import {
   "wzzc-dev/moui/backend/windows" @windows_host,
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/skia" @skia_renderer,
+  "wzzc-dev/moui_skia",
+  "wzzc-dev/moui_skia/native" @skia_native,
   "wzzc-dev/window/windows" @win,
 }
 
