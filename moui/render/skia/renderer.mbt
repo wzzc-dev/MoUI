@@ -64,8 +64,10 @@ pub struct SkiaRasterRenderer {
   priv mut unsupported_command_count : Int
   priv unsupported_command_diagnostics : Array[SkiaUnsupportedCommandDiagnostic]
   priv mut last_frame : SkiaPixelFrame?
-  priv layer_cache : Array[SkiaCachedLayerImageEntry]
-  priv layer_cache_admissions : Array[SkiaCachedLayerAdmissionRecord]
+  priv layer_cache : Map[String, SkiaCachedLayerImageEntry]
+  priv layer_cache_identity_index : Map[String, String]
+  priv layer_cache_admissions : Map[String, SkiaCachedLayerAdmissionRecord]
+  priv mut layer_cache_total_bytes : Int64
   priv mut layer_cache_tick : Int
   priv mut platform_view_draw_fn : (() -> Unit)?
 }
@@ -191,8 +193,10 @@ pub fn create_with_present_target_and_route(
     unsupported_command_count: 0,
     unsupported_command_diagnostics: [],
     last_frame: None,
-    layer_cache: [],
-    layer_cache_admissions: [],
+    layer_cache: {},
+    layer_cache_identity_index: {},
+    layer_cache_admissions: {},
+    layer_cache_total_bytes: 0L,
     layer_cache_tick: 0,
     platform_view_draw_fn: None,
   }
@@ -257,13 +261,69 @@ pub fn SkiaRasterRenderer::render_frame(
 }
 
 ///|
+fn SkiaRasterRenderer::resolve_effective_damage(
+  self : SkiaRasterRenderer,
+  frame : @core.DrawFrame,
+) -> @core.DamageRegion {
+  let _ = self
+  match frame.damage {
+    @core.DamageRegion::Empty =>
+      @core.DamageRegion::full("empty damage fallback")
+    @core.DamageRegion::FullSurface(reason) =>
+      @core.DamageRegion::FullSurface(reason)
+    @core.DamageRegion::Rects(rects) => {
+      let mut has_scope = false
+      for command in frame.commands {
+        match command {
+          @core.DrawCommand::PushOpacity(_)
+          | @core.DrawCommand::PushLayer(_)
+          | @core.DrawCommand::PushFilter(_) => {
+            has_scope = true
+            break
+          }
+          _ => ()
+        }
+      }
+      if has_scope {
+        @core.DamageRegion::full("scope commands present with damage rects")
+      } else {
+        @core.DamageRegion::Rects(rects)
+      }
+    }
+  }
+}
+
+///|
+fn SkiaRasterRenderer::apply_damage_clear(
+  self : SkiaRasterRenderer,
+  canvas : @skia_native.Canvas,
+  damage : @core.DamageRegion,
+  clear_color : @core.Color,
+) -> Unit {
+  let _ = self
+  match damage {
+    @core.DamageRegion::FullSurface(_) => canvas.clear(skia_color(clear_color))
+    @core.DamageRegion::Rects(rects) =>
+      // Per-rect clip + clear ensures each dirty region is independently cleared.
+      for rect in rects {
+        let saved = canvas.save()
+        canvas.clip_rect(skia_rect(rect))
+        canvas.clear(skia_color(clear_color))
+        canvas.restore_to_count(saved)
+      }
+    @core.DamageRegion::Empty => ()
+  }
+}
+
+///|
 fn SkiaRasterRenderer::render_frame_inner(
   self : SkiaRasterRenderer,
   frame : @core.DrawFrame,
 ) -> @render.RenderFrameResult raise SkiaRendererError {
   match self.surface.canvas() {
     Some(canvas) => {
-      canvas.clear(skia_color(frame.clear_color))
+      let effective_damage = self.resolve_effective_damage(frame)
+      self.apply_damage_clear(canvas, effective_damage, frame.clear_color)
       let saved = canvas.save()
       canvas.scale(
         @moui_skia.Size::new(
@@ -282,6 +342,7 @@ fn SkiaRasterRenderer::render_frame_inner(
         end_index=frame.commands.length(),
         canvas_scopes,
         stats,
+        damage=effective_damage,
       )
       if !canvas_scopes.is_empty() {
         for scope in canvas_scopes {

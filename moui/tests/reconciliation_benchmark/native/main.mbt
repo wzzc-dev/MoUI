@@ -50,11 +50,7 @@ fn bench_env_int(name : String, fallback : Int) -> Int {
 fn bench_build_items(count : Int, keyed : Bool) -> Array[BenchItem] {
   let items : Array[BenchItem] = []
   for index in 0..<count {
-    let key = if keyed {
-      Some("item-\{index}")
-    } else {
-      None
-    }
+    let key = if keyed { Some("item-\{index}") } else { None }
     items.push({ key, kind: 1 })
   }
   items
@@ -73,7 +69,8 @@ fn bench_shuffle_order(count : Int, seed : Int) -> Array[Int] {
   for swap_index in 0..<(count - 1) {
     state = state * 6364136223846793005L + 1442695040888963407L
     let range = (count - swap_index).to_int64()
-    let pick = ((state.reinterpret_as_uint64() >> 33) % range.reinterpret_as_uint64()).to_int()
+    let pick = ((state.reinterpret_as_uint64() >> 33) %
+    range.reinterpret_as_uint64()).to_int()
     let target = swap_index + pick
     let tmp = order[swap_index]
     order[swap_index] = order[target]
@@ -130,9 +127,7 @@ fn bench_find_linear(
 }
 
 ///|
-fn bench_build_index(
-  old_items : Array[BenchItem],
-) -> Map[String, Array[Int]] {
+fn bench_build_index(old_items : Array[BenchItem]) -> Map[String, Array[Int]] {
   let index : Map[String, Array[Int]] = {}
   for old_index, old_item in old_items {
     match old_item.key {
@@ -203,7 +198,9 @@ fn bench_run_linear(
       used.push(false)
     }
     for index, next_item in next_items {
-      let (found, comparisons) = bench_find_linear(old_items, used, next_item, index)
+      let (found, comparisons) = bench_find_linear(
+        old_items, used, next_item, index,
+      )
       total_comparisons += comparisons.to_int64()
       match found {
         Some(old_index) => used[old_index] = true
