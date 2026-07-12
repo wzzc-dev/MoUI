@@ -1,6 +1,6 @@
 name = "wzzc-dev/moui_tools"
 
-version = "0.1.6"
+version = "0.1.7"
 
 import {
   "moonbitlang/x@0.4.45",

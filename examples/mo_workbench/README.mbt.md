@@ -34,7 +34,7 @@ stdio agent subprocess from
 ```toml
 import {
   "moonbitlang/async@0.19.4",
-  "wzzc-dev/moui@0.1.6",
+  "wzzc-dev/moui@0.1.7",
   "bobzhang/openseek@0.2.2",
 }
 ```

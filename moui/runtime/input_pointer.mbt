@@ -147,7 +147,8 @@ fn ElementNode::dispatch_pointer_to_children(
       let child_render = render.children[index]
       let has_capture = capture_lookup &&
         child.has_active_pointer_capture(event.phase)
-      let hit = has_capture || child_render.hit_bounds().contains(event.position)
+      let hit = has_capture ||
+        child_render.hit_bounds().contains(event.position)
       if hit && !delivered_main_event {
         let result = child.dispatch_pointer(
           event,
