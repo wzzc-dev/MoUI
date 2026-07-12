@@ -285,7 +285,7 @@ pub fn[Msg] row(Array[@core.View[Msg]], spacing? : Double, justify? : MainAlign,
 
 pub fn scroll_to_index(@core.ScrollState, index~ : Int, item_height? : Double, spacing? : Double) -> ScrollToIndexIntent
 
-pub fn[Msg] scroll_view(@core.View[Msg], offset? : @core.Point, width? : Double, height? : Double, state? : @core.ScrollState?, on_scroll? : ((@core.Point) -> Msg)?) -> @core.View[Msg]
+pub fn[Msg] scroll_view(@core.View[Msg], offset? : @core.Point, width? : Double, height? : Double, state? : @core.ScrollState?, on_scroll? : ((@core.Point) -> Msg)?, shows_indicator? : Bool) -> @core.View[Msg]
 
 pub fn[Msg] searchbar(query~ : String, on_input~ : (String) -> Msg, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, on_submit? : Msg?, on_clear? : Msg?) -> @core.View[Msg]
 

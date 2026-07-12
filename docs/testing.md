@@ -15,10 +15,11 @@ sh scripts/check.sh --profile daily
 
 The script runs local dependency guards, guidance consistency, maintenance
 baseline ratchets, API surface checks, renderer provider and native Skia
-entrypoint static checks, smoke gate catalog validation, `moon check`, core
-package tests, Web wasm-gc package tests, native Skia mainline package tests,
-`moui_tester` harness tests, `moui_devtools` snapshot/debug tests, Showcase and
-Markdown Editor app tests, and Web builds.
+entrypoint static checks, smoke gate catalog validation, `moon check`, generated
+public-interface drift detection, core package tests, Web wasm-gc package tests,
+native Skia mainline package tests, `moui_tester` harness tests,
+`moui_devtools` snapshot/debug tests, Showcase and Markdown Editor app tests,
+and Web builds.
 
 The daily gate is sourced from `checks/profiles.json` and can be inspected with
 `node scripts/check.mjs --profile daily --list`. Representative command tokens
@@ -50,6 +51,7 @@ node scripts/smoke-check.mjs --check
 node scripts/test-smoke-gate.mjs
 node scripts/smoke-gate.mjs --tier nightly --dry-run --json
 moon check
+node scripts/check-generated-interfaces.mjs
 moon test moui/core --target native
 moon test moui/views --target native
 moon test moui/render --target native
@@ -79,6 +81,11 @@ The full profile runs the daily maintenance baseline plus
 `moon run tools/moui/validate_maintenance_baseline --target native -- --scope full`
 to report registered large-file hotspots in addon/tool workspaces without
 expanding the daily gate.
+
+The generated-interface step snapshots every tracked `pkg.generated.mbti`, runs
+one workspace-wide `moon info`, and fails only when generation creates new
+differences. This keeps the check useful in a dirty working tree while a clean
+CI checkout still rejects uncommitted public-interface drift.
 
 ## Focused
 

@@ -32,6 +32,7 @@ pub fn AppRuntime::dispatch_action_command(Self, @core.ActionCommand) -> Bool
 pub fn AppRuntime::dispatch_command(Self, @core.CommandIntent) -> Bool
 pub fn AppRuntime::dispatch_event(Self, @core.AppEvent) -> Unit
 pub fn AppRuntime::dispatch_focused_text_command(Self, @core.CommandIntent, paste_text? : String?) -> @core.TextCommandResult
+pub fn AppRuntime::dispatch_semantics_action(Self, @core.ElementId, @core.SemanticsAction, value? : String?) -> Bool
 pub fn AppRuntime::draw_commands(Self) -> Array[@core.DrawCommand]
 pub fn AppRuntime::draw_frame(Self) -> @core.DrawFrame
 pub fn AppRuntime::environment(Self) -> @core.Environment
@@ -50,6 +51,7 @@ pub fn[Model, Msg] AppRuntime::new_program(program~ : @core.Program[Model, Msg],
 pub fn[Msg] AppRuntime::new_view(root~ : @core.View[Msg], size~ : @core.Size, environment? : @core.Environment, on_message? : ((Msg) -> Unit)?) -> Self
 pub fn AppRuntime::program_runtime_snapshot(Self) -> ProgramRuntimeSnapshot
 pub fn AppRuntime::register_font_data(Self, @core.FontFamily, Bytes) -> Unit
+pub fn AppRuntime::scroll_to_key(Self, String, alignment? : @core.ScrollAlignment) -> Bool
 pub fn AppRuntime::semantics(Self) -> @core.SemanticsNode
 pub fn AppRuntime::set_action_commands(Self, @core.ActionCommandMap) -> Unit
 pub fn AppRuntime::set_environment(Self, @core.Environment) -> Unit

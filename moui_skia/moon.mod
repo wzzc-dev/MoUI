@@ -3,7 +3,7 @@ name = "wzzc-dev/moui_skia"
 version = "0.1.6"
 
 import {
-  "wzzc-dev/window@0.5.1-0.1.6",
+  "wzzc-dev/window@0.5.1-0.1.6-2",
 }
 
 readme = "README.mbt.md"
