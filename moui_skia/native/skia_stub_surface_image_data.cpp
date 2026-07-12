@@ -24,7 +24,7 @@
 
 extern "C" void* MTLCreateSystemDefaultDevice(void);
 
-static void moonbit_skia_objc_release(void* object) {
+void moonbit_skia_objc_release(void* object) {
   if (object == nullptr) {
     return;
   }
@@ -59,6 +59,20 @@ static GrDirectContext* moonbit_skia_make_metal_direct_context(void) {
   moonbit_skia_objc_release(device);
 
   return context.release();
+}
+#elif defined(__APPLE__)
+#include <objc/message.h>
+#include <objc/runtime.h>
+
+void moonbit_skia_objc_release(void* object) {
+  if (object == nullptr) {
+    return;
+  }
+  using ObjcSendVoidNoArg = void (*)(void*, SEL);
+  reinterpret_cast<ObjcSendVoidNoArg>(objc_msgSend)(
+    object,
+    sel_registerName("release")
+  );
 }
 #endif
 
@@ -672,7 +686,180 @@ moonbit_skia_surface_gpu_n32_premul(
 #endif
 }
 
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaSurface*
+moonbit_skia_surface_metal_window(
+  MoonbitSkiaGpuContext* context,
+  uint64_t layer_ptr,
+  int32_t width,
+  int32_t height,
+  int32_t origin,
+  int32_t sample_count,
+  int32_t stencil_bits
+) {
+  if (
+    width <= 0 ||
+    height <= 0 ||
+    layer_ptr == 0 ||
+    context == nullptr ||
+    context->context == nullptr ||
+    context->backend != MOONBIT_SKIA_GPU_BACKEND_METAL
+  ) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+#if defined(MOUI_SKIA_ENABLE_GPU_METAL) && \
+  defined(MOUI_SKIA_HAS_GANESH_METAL_HEADERS)
+  (void)sample_count;
+  (void)stencil_bits;
 
+  void* layer = reinterpret_cast<void*>(static_cast<uintptr_t>(layer_ptr));
+
+  // [CAMetalLayer nextDrawable] → id<CAMetalDrawable>
+  using ObjcSendNoArg = void* (*)(void*, SEL);
+  void* drawable = reinterpret_cast<ObjcSendNoArg>(objc_msgSend)(
+    layer,
+    sel_registerName("nextDrawable")
+  );
+  if (drawable == nullptr) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+
+  // [CAMetalDrawable texture] → id<MTLTexture>
+  void* texture = reinterpret_cast<ObjcSendNoArg>(objc_msgSend)(
+    drawable,
+    sel_registerName("texture")
+  );
+  if (texture == nullptr) {
+    moonbit_skia_objc_release(drawable);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+
+  // Wrap the MTLTexture as an SkSurface via SkSurfaces::WrapMetalBackendSurface.
+  // The drawable owns the texture; we retain the drawable in host_present_handle
+  // so the texture stays alive for the lifetime of this surface.
+  GrMtlTextureInfo texture_info;
+  texture_info.fTexture = static_cast<GrMTLHandle>(texture);
+
+  sk_sp<SkSurface> surface = SkSurfaces::WrapMetalBackendSurface(
+    context->context,
+    texture_info,
+    moonbit_skia_surface_origin(origin),
+    nullptr
+  );
+  if (!surface) {
+    moonbit_skia_objc_release(drawable);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+
+  MoonbitSkiaSurface* wrapper = moonbit_skia_surface_wrapper_with_gpu_context(
+    surface.release(),
+    context->context
+  );
+  wrapper->host_present_handle = drawable;
+  return wrapper;
+#else
+  (void)layer_ptr;
+  (void)origin;
+  (void)sample_count;
+  (void)stencil_bits;
+  return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaSurface*
+moonbit_skia_surface_metal_present_and_acquire_next(
+  MoonbitSkiaSurface* wrapper,
+  uint64_t layer_ptr,
+  int32_t width,
+  int32_t height,
+  int32_t origin,
+  int32_t sample_count,
+  int32_t stencil_bits
+) {
+  if (
+    wrapper == nullptr ||
+    wrapper->surface == nullptr ||
+    wrapper->host_present_handle == nullptr ||
+    wrapper->gpu_context_owner == nullptr ||
+    layer_ptr == 0
+  ) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+#if defined(MOUI_SKIA_ENABLE_GPU_METAL) && \
+  defined(MOUI_SKIA_HAS_GANESH_METAL_HEADERS)
+  (void)width;
+  (void)height;
+  (void)sample_count;
+  (void)stencil_bits;
+
+  void* layer = reinterpret_cast<void*>(static_cast<uintptr_t>(layer_ptr));
+  void* old_drawable = wrapper->host_present_handle;
+  GrDirectContext* gpu_context = wrapper->gpu_context_owner;
+
+  // The host renderer has already called flush_and_submit() on the surface.
+  // Present the drawable so Core Animation displays the rendered content.
+  using ObjcSendVoidNoArg = void (*)(void*, SEL);
+  reinterpret_cast<ObjcSendVoidNoArg>(objc_msgSend)(
+    old_drawable,
+    sel_registerName("present")
+  );
+
+  // Release the old drawable and SkSurface; they are no longer needed.
+  moonbit_skia_objc_release(old_drawable);
+  wrapper->surface->unref();
+  wrapper->surface = nullptr;
+  wrapper->host_present_handle = nullptr;
+  // gpu_context_owner is left for the finalizer to unref.
+
+  // Acquire the next drawable for the following frame.
+  using ObjcSendNoArg = void* (*)(void*, SEL);
+  void* next_drawable = reinterpret_cast<ObjcSendNoArg>(objc_msgSend)(
+    layer,
+    sel_registerName("nextDrawable")
+  );
+  if (next_drawable == nullptr) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+  }
+
+  void* next_texture = reinterpret_cast<ObjcSendNoArg>(objc_msgSend)(
+    next_drawable,
+    sel_registerName("texture")
+  );
+  if (next_texture == nullptr) {
+    moonbit_skia_objc_release(next_drawable);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+  }
+
+  GrMtlTextureInfo texture_info;
+  texture_info.fTexture = static_cast<GrMTLHandle>(next_texture);
+
+  sk_sp<SkSurface> next_surface = SkSurfaces::WrapMetalBackendSurface(
+    gpu_context,
+    texture_info,
+    moonbit_skia_surface_origin(origin),
+    nullptr
+  );
+  if (!next_surface) {
+    moonbit_skia_objc_release(next_drawable);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+  }
+
+  MoonbitSkiaSurface* new_wrapper =
+    moonbit_skia_surface_wrapper_with_gpu_context(
+      next_surface.release(),
+      gpu_context
+    );
+  new_wrapper->host_present_handle = next_drawable;
+  return new_wrapper;
+#else
+  (void)layer_ptr;
+  (void)width;
+  (void)height;
+  (void)origin;
+  (void)sample_count;
+  (void)stencil_bits;
+  return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+#endif
+}
 
 extern "C" MOONBIT_FFI_EXPORT int32_t
 moonbit_skia_surface_flush_and_submit(MoonbitSkiaSurface* wrapper) {

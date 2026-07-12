@@ -27,7 +27,11 @@ fn pub_all_budgets() -> Array[CountBudget] {
       kind: "pub(all)",
       label: "moui/render",
       path: "moui/render",
-      max_count: 35,
+      // 37 = 35 (prior baseline) + 1 for SkiaPresentKind (the discriminator
+      // for the CpuPixelFrame vs HostGpuSurface present path) + 1 for
+      // HostGpuPresentOutcome (the present-gpu outcome struct), both
+      // introduced by Phase 1.1 of the readback-elimination plan (ADR 0006).
+      max_count: 37,
     },
     {
       kind: "pub(all)",

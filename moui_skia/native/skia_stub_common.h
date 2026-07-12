@@ -179,7 +179,19 @@ struct MoonbitSkiaSurface {
   void* surface;
   void* gpu_context_owner;
 #endif
+  /// Retained host present handle (e.g. id<CAMetalDrawable>) that owns the
+  /// MTLTexture backing this surface. Null for raster / offscreen GPU surfaces.
+  void* host_present_handle;
 };
+
+#if defined(__APPLE__)
+/// Release a retained Objective-C object (e.g. CAMetalDrawable) stored as
+/// host_present_handle. Safe to call with nullptr. On non-Apple platforms
+/// this is a no-op stub.
+void moonbit_skia_objc_release(void* object);
+#else
+static inline void moonbit_skia_objc_release(void* object) { (void)object; }
+#endif
 
 struct MoonbitSkiaGpuContext {
 #if defined(MOUI_SKIA_HAS_SKIA)
