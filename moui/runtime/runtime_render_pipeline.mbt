@@ -236,7 +236,6 @@ fn RuntimeState::queue_dirty_element(
 
 ///|
 fn RuntimeState::queue_build_dirty(self : RuntimeState, id : ElementId) -> Unit {
-  self.queue_dirty_element(id)
   push_unique_element_id(self.dirty_build_elements, id)
 }
 
@@ -245,18 +244,17 @@ fn RuntimeState::queue_layout_dirty(
   self : RuntimeState,
   id : ElementId,
 ) -> Unit {
-  self.queue_dirty_element(id)
   push_unique_element_id(self.dirty_layout_elements, id)
 }
 
 ///|
 fn RuntimeState::queue_paint_dirty(self : RuntimeState, id : ElementId) -> Unit {
-  self.queue_dirty_element(id)
   push_unique_element_id(self.dirty_paint_elements, id)
 }
 
 ///|
 fn RuntimeState::mark_build_dirty(self : RuntimeState, id : ElementId) -> Unit {
+  self.queue_dirty_element(id)
   self.queue_build_dirty(id)
   self.queue_layout_dirty(id)
   self.queue_paint_dirty(id)
@@ -268,6 +266,7 @@ fn RuntimeState::mark_build_dirty(self : RuntimeState, id : ElementId) -> Unit {
 
 ///|
 fn RuntimeState::mark_layout_dirty(self : RuntimeState, id : ElementId) -> Unit {
+  self.queue_dirty_element(id)
   self.queue_layout_dirty(id)
   self.queue_paint_dirty(id)
   self.needs_layout = true
@@ -277,6 +276,7 @@ fn RuntimeState::mark_layout_dirty(self : RuntimeState, id : ElementId) -> Unit 
 
 ///|
 fn RuntimeState::mark_dirty(self : RuntimeState, id : ElementId) -> Unit {
+  self.queue_dirty_element(id)
   self.queue_paint_dirty(id)
   ignore(self.element_tree.root.mark_paint_dirty_by_id(id))
   self.needs_paint = true
