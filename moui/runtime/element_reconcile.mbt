@@ -185,11 +185,19 @@ fn reconcile_children_for_runtime(
   for _ in old_children {
     used.push(false)
   }
+  // Build a key->[old_indices] index for keyed children lookup when the old
+  // children list is large enough that linear scanning would be quadratic.
+  // Below the threshold the index construction cost outweighs the savings.
+  let key_index = if old_children.length() >= keyed_index_threshold() {
+    Some(build_keyed_child_index(old_children))
+  } else {
+    None
+  }
   let mut next = next_id
   let mut dirty = ReconcileDirtyKind::ReconcileClean
   for index, child_erased_view_node in next_erased_view_nodes {
     let old_index = find_reusable_child(
-      old_children, used, child_erased_view_node, index,
+      old_children, used, key_index, child_erased_view_node, index,
     )
     match old_index {
       Some(old_index) => {
@@ -241,24 +249,76 @@ fn ElementNode::apply_reconcile_dirty(
   }
 }
 
+/// Threshold for switching from linear scan to indexed lookup.
+/// Below this, the overhead of building the index outweighs the savings.
+fn keyed_index_threshold() -> Int {
+  32
+}
+
+/// Build a composite-key -> [old_indices] index for keyed children.
+/// Composite key is "{key.value}|{kind}" so same-key-different-kind nodes
+/// (a developer error) do not cross-match. The array preserves encounter
+/// order so the first !used match semantics of the original linear scan
+/// is preserved. Duplicate keys are rare, so arrays are usually length 1.
+fn build_keyed_child_index(
+  old_children : Array[ElementNode],
+) -> Map[String, Array[Int]] {
+  let index : Map[String, Array[Int]] = {}
+  for old_index, old_child in old_children {
+    match old_child.key {
+      Some(key) => {
+        let composite = "\{key.value()}|\{old_child.erased_view_node.kind()}"
+        match index.get(composite) {
+          Some(arr) => arr.push(old_index)
+          None => index[composite] = [old_index]
+        }
+      }
+      None => ()
+    }
+  }
+  index
+}
+
 ///|
 fn find_reusable_child(
   old_children : Array[ElementNode],
   used : Array[Bool],
+  key_index : Map[String, Array[Int]]?,
   child_erased_view_node : ErasedViewNode,
   index : Int,
 ) -> Int? {
   match child_erased_view_node.identity_key() {
-    Some(key) => {
-      for old_index, old_child in old_children {
-        if !used[old_index] &&
-          old_child.key == Some(key) &&
-          old_child.erased_view_node.kind() == child_erased_view_node.kind() {
-          return Some(old_index)
+    Some(key) =>
+      match key_index {
+        Some(idx) => {
+          let composite = "\{key.value()}|\{child_erased_view_node.kind()}"
+          match idx.get(composite) {
+            Some(candidates) => {
+              // candidates is usually length 1 (unique keys); rare
+              // duplicates keep a short array. Find first !used.
+              for old_index in candidates {
+                if !used[old_index] {
+                  return Some(old_index)
+                }
+              }
+              None
+            }
+            None => None
+          }
+        }
+        None => {
+          // Below threshold: original linear scan.
+          for old_index, old_child in old_children {
+            if !used[old_index] &&
+              old_child.key == Some(key) &&
+              old_child.erased_view_node.kind() ==
+              child_erased_view_node.kind() {
+              return Some(old_index)
+            }
+          }
+          None
         }
       }
-      None
-    }
     None =>
       if index < old_children.length() &&
         !used[index] &&
