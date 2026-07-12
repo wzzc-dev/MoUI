@@ -150,6 +150,13 @@ Install and launch on a running HarmonyOS emulator/device:
 export HARMONYOS_SDK_HOME="/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony"
 export PATH="$HARMONYOS_SDK_HOME/toolchains:$PATH"
 ./scripts/build-component-gallery-harmonyos-hap.sh
+
+EMU="/Applications/DevEco-Studio.app/Contents/tools/emulator/Emulator"
+HVD="MateBook Pro"
+HVD_ROOT="$HOME/.Huawei/Emulator/deployed"
+IMAGE_ROOT="$HOME/Library/Huawei/Sdk"
+"$EMU" -hvd "$HVD" -path "$HVD_ROOT" -imageRoot "$IMAGE_ROOT"
+
 HDC="$HARMONYOS_SDK_HOME/toolchains/hdc"
 "$HDC" install -r artifacts/harmonyos/component_gallery/ComponentGallery.hap
 "$HDC" shell aa start -a EntryAbility -b dev.wzzc.moui.componentgallery -m entry
