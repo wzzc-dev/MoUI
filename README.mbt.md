@@ -79,7 +79,7 @@ cd moui_example
 moon update
 ```
 
-`moui_example` is an independent sub-repo on `wzzc-dev/moui@0.1.6`; it is not
+`moui_example` is an independent sub-repo on `wzzc-dev/moui@0.1.7`; it is not
 listed in this repository's `moon.work` and is not built by the repository
 daily check. It is the recommended starting template for new apps.
 

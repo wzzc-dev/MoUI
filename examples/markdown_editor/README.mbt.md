@@ -28,9 +28,9 @@ proof of the `@moui_richtext` markdown editing surface.
 
 ```toml
 import {
-  "wzzc-dev/moui@0.1.6",
-  "wzzc-dev/moui_richtext@0.1.6",
-  "wzzc-dev/window@0.5.1-0.1.6-2",
+  "wzzc-dev/moui@0.1.7",
+  "wzzc-dev/moui_richtext@0.1.7",
+  "wzzc-dev/window@0.5.1-0.1.7-2",
 }
 ```
 
