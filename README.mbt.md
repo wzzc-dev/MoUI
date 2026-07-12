@@ -83,19 +83,8 @@ moon update
 listed in this repository's `moon.work` and is not built by the repository
 daily check. It is the recommended starting template for new apps.
 
-When cloning this repository for framework or example development, include
-submodules (required for the `wzzc-dev/window` fork):
-
-```sh
-git clone --recurse-submodules git@github.com:wzzc-dev/MoUI.git
-cd MoUI
-```
-
-If you already cloned without submodules, initialize them once:
-
-```sh
-git submodule update --init --recursive
-```
+Framework setup details, including optional submodules and the `window/`
+local-source workflow, live in [Development](docs/development.md).
 
 The default daily baseline covers the core framework, maintenance baseline
 ratchets, Web wasm-gc, native Skia mainline contracts, Showcase, and Markdown
@@ -123,19 +112,22 @@ instead of committing generated artifacts.
 
 ## Running Examples
 
-The featured examples — `markdown_editor`, `mo_workbench`, `showcase`, and
-`excel` — share app logic in `examples/<name>/app` and expose thin platform
-entrypoints under `web_wasm`, `macos_skia`, `windows_skia`, and `linux_skia`.
-Run the matching entrypoint for your host; `mo_workbench` currently ships a
-macOS Skia entrypoint only; `excel` ships `macos_skia` and `linux_skia`.
+The featured examples — `component_gallery`, `showcase`, `markdown_editor`,
+`mo_workbench`, and `excel` — share app logic in `examples/<name>/app` and expose
+thin platform entrypoints. Most examples use `web_wasm`, `macos_skia`,
+`windows_skia`, and `linux_skia`; Component Gallery uses plain `web`, `macos`,
+`windows`, `linux`, `android`, `ios`, and `harmonyos` entrypoint names because
+those are its default routes.
 
 To try Component Gallery on a mobile platform, follow the platform-specific
-setup, build, and run instructions for [Android](examples/component_gallery/android_app/README.md),
+setup, build, and run instructions for
+[Android](examples/component_gallery/android_app/README.md),
 [iOS](examples/component_gallery/ios_app/README.md), or
 [HarmonyOS](examples/component_gallery/harmonyos_app/README.md).
 
-> **Windows prerequisite:** before building or running any `windows_skia`
-> entrypoint, initialize the MSVC toolchain in a PowerShell session:
+> **Windows prerequisite:** before building or running any Windows native Skia
+> entrypoint (`windows_skia`, or Component Gallery's `windows`), initialize the
+> MSVC toolchain in a PowerShell session:
 >
 > ```powershell
 > .\scripts\windows\msvc_env.ps1
@@ -143,6 +135,27 @@ setup, build, and run instructions for [Android](examples/component_gallery/andr
 >
 > This sets up the MSVC environment required by the native Skia link step.
 > Run it once per shell before `moon run ... --target native` on Windows.
+
+### Component Gallery
+
+Reusable component catalog for common `moui/views` controls across desktop,
+mobile, and Web. Source lives in `examples/component_gallery/app`; platform
+entrypoints are thin.
+
+```sh
+# Web (wasm-gc)
+moon build examples/component_gallery/web --target wasm-gc
+
+# macOS Skia
+moon run examples/component_gallery/macos --target native
+
+# Windows Skia (run msvc_env.ps1 first in PowerShell)
+.\scripts\windows\msvc_env.ps1
+moon run examples/component_gallery/windows --target native
+
+# Linux Skia
+moon run examples/component_gallery/linux --target native
+```
 
 ### Markdown Editor
 
@@ -212,13 +225,15 @@ moon run examples/excel/linux_skia --target native
 Focused app-package tests for the featured examples:
 
 ```sh
+moon test examples/component_gallery/app --target native
 moon test examples/markdown_editor/app --target native
 moon test examples/mo_workbench/app --target native
 moon test examples/showcase/app --target native
 moon test examples/excel/app --target native
 ```
 
-See [Examples](docs/examples.md), [Markdown Editor](docs/markdown-editor.md),
+See [Component Gallery](examples/component_gallery/README.mbt.md),
+[Examples](docs/examples.md), [Markdown Editor](docs/markdown-editor.md),
 [Mo Workbench](docs/mo-workbench.md), and [Showcases](docs/showcases.md) for
 package shapes and platform coverage.
 

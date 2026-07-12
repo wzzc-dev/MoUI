@@ -23,25 +23,25 @@ app-framework helpers for routing, forms, and devtool snapshots.
 
 Detailed notes live in:
 
-- [Architecture](docs/architecture.md)
-- [Development](docs/development.md)
-- [Platform notes](docs/platform-notes.md)
-- [Text system](docs/text-system.md)
-- [Renderer capability report](docs/renderer-capability-report.md)
-- [View catalog](docs/view-catalog.md)
-- [Views API guide](docs/views-api-guide.md)
-- [Non-render component cookbook](docs/non-render-component-cookbook.md)
-- [App templates](docs/app-templates.md)
-- [API surface](docs/api-surface.md)
-- [Maintenance mainline](docs/maintenance.md)
-- [Examples](docs/examples.md)
-- [Markdown Editor](docs/markdown-editor.md)
-- [Mo Workbench](docs/mo-workbench.md)
-- [Showcases](docs/showcases.md)
-- [Testing](docs/testing.md)
-- [AI collaboration](docs/ai-collaboration.md)
-- [2026 roadmap](docs/roadmap-2026.md)
-- [Release readiness](docs/release-readiness.md)
+- [Architecture](https://github.com/wzzc-dev/MoUI/blob/main/docs/architecture.md)
+- [Development](https://github.com/wzzc-dev/MoUI/blob/main/docs/development.md)
+- [Platform notes](https://github.com/wzzc-dev/MoUI/blob/main/docs/platform-notes.md)
+- [Text system](https://github.com/wzzc-dev/MoUI/blob/main/docs/text-system.md)
+- [Renderer capability report](https://github.com/wzzc-dev/MoUI/blob/main/docs/renderer-capability-report.md)
+- [View catalog](https://github.com/wzzc-dev/MoUI/blob/main/docs/view-catalog.md)
+- [Views API guide](https://github.com/wzzc-dev/MoUI/blob/main/docs/views-api-guide.md)
+- [Non-render component cookbook](https://github.com/wzzc-dev/MoUI/blob/main/docs/non-render-component-cookbook.md)
+- [App templates](https://github.com/wzzc-dev/MoUI/blob/main/docs/app-templates.md)
+- [API surface](https://github.com/wzzc-dev/MoUI/blob/main/docs/api-surface.md)
+- [Maintenance mainline](https://github.com/wzzc-dev/MoUI/blob/main/docs/maintenance.md)
+- [Examples](https://github.com/wzzc-dev/MoUI/blob/main/docs/examples.md)
+- [Markdown Editor](https://github.com/wzzc-dev/MoUI/blob/main/docs/markdown-editor.md)
+- [Mo Workbench](https://github.com/wzzc-dev/MoUI/blob/main/docs/mo-workbench.md)
+- [Showcases](https://github.com/wzzc-dev/MoUI/blob/main/docs/showcases.md)
+- [Testing](https://github.com/wzzc-dev/MoUI/blob/main/docs/testing.md)
+- [AI collaboration](https://github.com/wzzc-dev/MoUI/blob/main/docs/ai-collaboration.md)
+- [2026 roadmap](https://github.com/wzzc-dev/MoUI/blob/main/docs/roadmap-2026.md)
+- [Release readiness](https://github.com/wzzc-dev/MoUI/blob/main/docs/release-readiness.md)
 
 The example suite is intentionally small but covers the breadth of the
 runtime. Showcase is the visual component catalog; Markdown Editor is the
@@ -301,7 +301,7 @@ be noticeably slower than package tests or Web wasm-gc example builds, so
 they are kept out of the default development check.
 
 For macOS `moon run` linker errors, see
-[macOS platform notes](docs/platform-notes-macos.md).
+[macOS platform notes](https://github.com/wzzc-dev/MoUI/blob/main/docs/platform-notes-macos.md).
 
 Build and run the visual showcase on the Skia mainline:
 

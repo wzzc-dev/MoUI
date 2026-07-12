@@ -18,6 +18,12 @@ Read only the smallest useful set:
 - `docs/testing.md` for focused app checks and manual smoke.
 - `docs/examples.md` when changing example coverage or commands.
 
+Ordinary app and example work should use the published `wzzc-dev/window`
+dependency resolved from mooncakes.io. Do not add `./window` to `moon.work` for
+app fixes; if a task truly requires editing window source locally, switch to the
+framework skill and follow the `window` local-source workflow in
+`docs/development.md`.
+
 ## Package Shape
 
 Shared app package:
