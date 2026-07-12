@@ -275,7 +275,10 @@ fn build_keyed_child_index(
   for old_index, old_child in old_children {
     match old_child.key {
       Some(key) => {
-        let composite = { key: key.value(), kind: old_child.erased_view_node.kind() }
+        let composite = {
+          key: key.value(),
+          kind: old_child.erased_view_node.kind(),
+        }
         match index.get(composite) {
           Some(arr) => arr.push(old_index)
           None => index[composite] = [old_index]
@@ -299,7 +302,10 @@ fn find_reusable_child(
     Some(key) =>
       match key_index {
         Some(idx) => {
-          let composite = { key: key.value(), kind: child_erased_view_node.kind() }
+          let composite = {
+            key: key.value(),
+            kind: child_erased_view_node.kind(),
+          }
           match idx.get(composite) {
             Some(candidates) => {
               // candidates is usually length 1 (unique keys); rare

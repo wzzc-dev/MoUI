@@ -310,7 +310,9 @@ fn RuntimeState::focused_text_input(self : RuntimeState) -> TextInputState {
 ///|
 fn RuntimeState::build_draw_commands(self : RuntimeState) -> Array[DrawCommand] {
   self.draw_command_build_count = self.draw_command_build_count + 1
-  let commands : Array[DrawCommand] = Array::new(capacity=self.last_command_count.max(64))
+  let commands : Array[DrawCommand] = Array::new(
+    capacity=self.last_command_count.max(64),
+  )
   commands.push(Clear(Color::white()))
   self.rebuild_if_possible()
   self.ensure_render_tree()
@@ -322,7 +324,9 @@ fn RuntimeState::build_draw_commands(self : RuntimeState) -> Array[DrawCommand] 
 ///|
 fn RuntimeState::build_draw_frame(self : RuntimeState) -> DrawFrame {
   self.draw_command_build_count = self.draw_command_build_count + 1
-  let commands : Array[DrawCommand] = Array::new(capacity=self.last_command_count.max(64))
+  let commands : Array[DrawCommand] = Array::new(
+    capacity=self.last_command_count.max(64),
+  )
   commands.push(Clear(Color::white()))
   let next_known_layers : Array[CachedLayerState] = []
   let next_admissions : Array[CachedLayerAdmissionState] = []
