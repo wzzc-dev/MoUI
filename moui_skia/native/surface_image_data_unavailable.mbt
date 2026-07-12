@@ -353,6 +353,20 @@ pub fn Surface::vulkan_present_and_acquire_next(
 }
 
 ///|
+pub fn Surface::vulkan_wayland_surface(
+  context : GpuContext,
+  display_ptr : UInt64,
+  surface_ptr : UInt64,
+  descriptor : @skia.SurfaceDescriptor,
+) -> Surface? {
+  ignore(context)
+  ignore(display_ptr)
+  ignore(surface_ptr)
+  ignore(descriptor)
+  None
+}
+
+///|
 pub fn Surface::vulkan_gpu_context_opt_in_enabled() -> Bool {
   false
 }

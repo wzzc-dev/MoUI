@@ -298,6 +298,29 @@ extern "C" fn native_surface_gpu_vulkan_headers_available() -> Bool = "moonbit_s
 extern "C" fn native_surface_gpu_vulkan_runtime_available() -> Bool = "moonbit_skia_surface_gpu_vulkan_runtime_available"
 
 ///|
+/// Wrap a Linux Wayland `wl_surface` as a Vulkan-backed Skia GPU surface.
+///
+/// `display_ptr` is a raw `wl_display*` and `surface_ptr` is a raw
+/// `wl_surface*` (both typed as `UInt64` for FFI portability) obtained
+/// from the window package's `Window::display_handle()` /
+/// `Window::window_handle()`. The host presenter owns the Wayland
+/// surface lifecycle; Skia borrows the swap chain's back buffer image
+/// for rendering. The returned `Surface` must be flushed and then
+/// presented via `Surface::vulkan_present_and_acquire_next` to advance
+/// to the next back buffer.
+#borrow(context)
+extern "C" fn native_surface_vulkan_wayland_window(
+  context : GpuContextHandle,
+  display_ptr : UInt64,
+  surface_ptr : UInt64,
+  width : Int,
+  height : Int,
+  origin : Int,
+  sample_count : Int,
+  stencil_bits : Int,
+) -> SurfaceHandle = "moonbit_skia_surface_vulkan_wayland_window"
+
+///|
 extern "C" fn native_gpu_context_egl() -> GpuContextHandle = "moonbit_skia_gpu_context_egl"
 
 ///|
@@ -1030,6 +1053,43 @@ pub fn Surface::vulkan_present_and_acquire_next(
       native_surface_vulkan_present_and_acquire_next(
         surface.handle,
         anw_ptr,
+        descriptor.width(),
+        descriptor.height(),
+        native_surface_origin_ordinal(descriptor.origin),
+        descriptor.sample_count,
+        descriptor.stencil_bits,
+      ),
+      descriptor,
+    )
+  }
+}
+
+///|
+/// Wrap a Linux Wayland `wl_surface`-backed Vulkan swap chain image as a
+/// Skia GPU surface. The caller passes the raw `wl_display*` as
+/// `display_ptr` and `wl_surface*` as `surface_ptr`. Skia borrows the
+/// swap chain's back buffer image; the host presenter owns the Wayland
+/// surface lifecycle. The returned `Surface` must be flushed and then
+/// presented via `Surface::vulkan_present_and_acquire_next` to advance
+/// to the next back buffer.
+pub fn Surface::vulkan_wayland_surface(
+  context : GpuContext,
+  display_ptr : UInt64,
+  surface_ptr : UInt64,
+  descriptor : @skia.SurfaceDescriptor,
+) -> Surface? {
+  if descriptor.is_empty() ||
+    !descriptor.is_gpu() ||
+    !context.is_available() {
+    None
+  } else if display_ptr == 0 || surface_ptr == 0 {
+    None
+  } else {
+    Surface::from_handle(
+      native_surface_vulkan_wayland_window(
+        context.handle,
+        display_ptr,
+        surface_ptr,
         descriptor.width(),
         descriptor.height(),
         native_surface_origin_ordinal(descriptor.origin),
