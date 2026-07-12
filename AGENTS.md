@@ -239,8 +239,12 @@ Root `docs/` is the source of truth. The website preview copy lives under
 
 ```sh
 node scripts/sync-website-docs.mjs
-node scripts/sync-website-docs.mjs --check
+node scripts/check-website-docs.mjs
 ```
+
+The first command refreshes the ignored local preview copy. The check command
+generates into an OS temporary directory, validates that output, and leaves the
+source checkout untouched so it also works in a clean CI checkout.
 
 When workflow guidance changes, update `docs/`, this `AGENTS.md`, and the
 relevant files under `skills/`. The guidance consistency guard checks these

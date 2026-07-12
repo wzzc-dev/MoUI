@@ -32,6 +32,7 @@ node scripts/validate-guidance-consistency.mjs
 node scripts/validate-api-surface.mjs
 node scripts/validate-window-dependency.mjs
 node scripts/validate-maintenance-baseline.mjs
+node scripts/check-website-docs.mjs
 node scripts/validate-renderer-provider-manifests.mjs
 node scripts/validate-skia-entrypoints.mjs
 node scripts/test-validate-skia-entrypoints.mjs
@@ -329,5 +330,5 @@ When changing repository guidance, update the synchronized surfaces together:
 Then run:
 
 ```sh
-node scripts/sync-website-docs.mjs --check
+node scripts/check-website-docs.mjs
 ```
