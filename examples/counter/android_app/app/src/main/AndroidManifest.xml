@@ -3,6 +3,11 @@
         android:allowBackup="false"
         android:label="${mouiAppLabel}"
         android:theme="@style/AppTheme">
+        <provider
+            android:name="dev.wzzc.moui.mobile.MobileClipboardProvider"
+            android:authorities="${applicationId}.moui.clipboard"
+            android:exported="false"
+            android:grantUriPermissions="true" />
         <activity
             android:name="dev.wzzc.moui.mobile.MobileActivity"
             android:configChanges="density|keyboard|keyboardHidden|orientation|screenSize"

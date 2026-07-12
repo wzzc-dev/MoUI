@@ -193,12 +193,12 @@ fn assert_observation_present(
 
 ///|
 fn valid_app(app : String) -> Bool {
-  app == "counter" || app == "component_gallery"
+  app == "counter" || app == "component_gallery" || app == "harmonyos_demo"
 }
 
 ///|
 fn valid_platform(platform : String) -> Bool {
-  platform == "android" || platform == "ios"
+  platform == "android" || platform == "ios" || platform == "harmonyos"
 }
 
 ///|
@@ -220,15 +220,15 @@ fn validate_manifest_fields(
   }
   let platform = require_string(manifest, "platform", "platform", failures)
   if platform != "" && !valid_platform(platform) {
-    failures.push("platform must be android or ios")
+    failures.push("platform must be android, ios, or harmonyos")
   }
   let app = require_string(manifest, "app", "app", failures)
   if app != "" && !valid_app(app) {
-    failures.push("app must be counter or component_gallery")
+    failures.push("app must be counter, component_gallery, or harmonyos_demo")
   }
   let status = require_string(manifest, "status", "status", failures)
-  if status != "passed" && status != "failed" {
-    failures.push("status must be passed or failed")
+  if status != "passed" && status != "partial" && status != "failed" {
+    failures.push("status must be passed, partial, or failed")
   }
   let build = require_object(manifest, "build", "build", failures)
   let fallback = require_bool(
@@ -237,6 +237,11 @@ fn validate_manifest_fields(
   ignore(require_string(build, "artifact", "build.artifact", failures))
   ignore(require_string(build, "command", "build.command", failures))
   let artifacts = require_object(manifest, "artifacts", "artifacts", failures)
+  ignore(
+    require_string(
+      artifacts, "screenshotBefore", "artifacts.screenshotBefore", failures,
+    ),
+  )
   ignore(
     require_string(artifacts, "screenshot", "artifacts.screenshot", failures),
   )
@@ -257,6 +262,20 @@ fn validate_manifest_fields(
   let distinct = require_number(
     screenshot, "distinctColorBuckets", "screenshot.distinctColorBuckets", failures,
   )
+  let pixel_change = require_object(
+    manifest, "pixelChange", "pixelChange", failures,
+  )
+  let comparable = require_bool(
+    pixel_change, "comparable", "pixelChange.comparable", failures,
+  )
+  let changed_pixels = require_number(
+    pixel_change, "changedPixels", "pixelChange.changedPixels", failures,
+  )
+  ignore(
+    require_number(
+      pixel_change, "changedRatio", "pixelChange.changedRatio", failures,
+    ),
+  )
   let observations = require_object(
     manifest, "observations", "observations", failures,
   )
@@ -264,7 +283,7 @@ fn validate_manifest_fields(
     field in [
       "lifecycleAttach", "lifecycleDetach", "nonblankFirstFrame", "resize", "representativeInput",
       "scrollInput", "cleanShutdown", "ime", "clipboard", "accessibility", "asyncImage",
-      "realDeviceSigning",
+      "accessibilityTree", "accessibilityFocus", "accessibilityAction", "realDeviceSigning",
     ] {
     assert_observation_present(observations, field, failures)
   }
@@ -294,10 +313,17 @@ fn validate_manifest_fields(
     if distinct < 4.0 {
       failures.push("passed screenshot.distinctColorBuckets must be at least 4")
     }
+    if !comparable {
+      failures.push("passed pixelChange.comparable must be true")
+    }
+    if changed_pixels < 16.0 {
+      failures.push("passed pixelChange.changedPixels must be at least 16")
+    }
     for
       field in [
         "lifecycleAttach", "lifecycleDetach", "nonblankFirstFrame", "resize", "representativeInput",
-        "cleanShutdown",
+        "cleanShutdown", "ime", "clipboard", "accessibility", "asyncImage", "accessibilityTree",
+        "accessibilityFocus", "accessibilityAction",
       ] {
       assert_yes(observations, field, failures)
     }

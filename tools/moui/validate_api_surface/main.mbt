@@ -302,7 +302,7 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "core",
       path: "moui/core/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/core\"",
-      max_lines: 1828,
+      max_lines: 1830,
       max_pub_lines: 520,
       max_pub_all_lines: 150,
       required_tokens: [
@@ -385,9 +385,9 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "host contracts",
       path: "moui/backend/host/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/backend/host\"",
-      max_lines: 1100,
+      max_lines: 1140,
       max_pub_lines: 480,
-      max_pub_all_lines: 62,
+      max_pub_all_lines: 70,
       required_tokens: [
         "HostWindowRenderer", "HostAsyncImageLoader", "HostRouteSource", "pub(all) struct HostRouteLocation",
         "pub(all) struct HostRouteQueryParam",
@@ -402,7 +402,7 @@ fn package_budgets() -> Array[PackageBudget] {
       package_token: "package \"wzzc-dev/moui/render\"",
       max_lines: 380,
       max_pub_lines: 110,
-      max_pub_all_lines: 25,
+      max_pub_all_lines: 27,
       required_tokens: [
         "RendererBackendKind", "RendererDescriptor", "RenderFrameResult",
       ],

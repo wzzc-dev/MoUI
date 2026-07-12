@@ -52,6 +52,8 @@ to app code or view/runtime trees. Current descriptors are:
   and `Web`.
 - `SkiaRasterNative`: family `Skia`, presentation `CpuPixelFrame`, target
   `Native`.
+- `SkiaGpuNative`: family `Skia`, presentation `HostGpuSurface`, target
+  `Native`.
 - `SunRasterNative`: family `Sun`, presentation `CpuPixelFrame`, target
   `Native`.
 
@@ -61,14 +63,14 @@ For feature proof coverage (which CI job proves each feature), see
 
 `RendererDescriptor` describes static renderer capability identity. Native host
 runtime assembly is handled by platform renderer providers instead:
-`backend/<platform>/skia` selects the `SkiaRasterNative` native mainline and
+`backend/<platform>/skia` currently selects the `SkiaRasterNative` native mainline and
 `backend/<platform>/wgpu` selects the `NativeWgpu` diagnostic route.
 `backend/<platform>/sun` selects the `SunRasterNative` CPU raster
 route. The `RendererSelection` helper remains useful for reports and tests that match
 families or backend ids, but it is not a native host-core option or provider
-contract. Web keeps using the WebGPU wasm backend; future Skia Web or Skia GPU
-variants can add new `RendererBackendKind` values without changing the
-capability record shape.
+contract. Web keeps using the WebGPU wasm backend. Mobile selection can report
+the existing `SkiaGpuNative` identity without changing raster semantics; that
+identity is not a runtime-completion claim.
 
 The Skia binding now has an explicit opt-in macOS Metal/Ganesh context and
 offscreen GPU surface boundary behind `MOUI_SKIA_ENABLE_GPU_METAL=1`, and
@@ -81,10 +83,11 @@ existing pixel-present callback. In the same helper, `--run-gpu-smoke` also
 sets `MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu` for Showcase and Markdown Editor
 first-frame runs, and their logs must include `surface_route=metal-gpu;
 surface_gpu=true` provider diagnostics before the normal first-frame marker.
-This is not yet a renderer descriptor promotion: `SkiaRasterNative` still
-presents copied CPU pixel frames through platform presenters, and a Skia GPU
-backend kind should only be added after matching-host window presentation and
-pixel/screenshot observation prove the GPU path.
+This remains offscreen/readback evidence only. `SkiaRasterNative` still
+presents copied CPU pixel frames through platform presenters. Although the
+formal `SkiaGpuNative` descriptor now exists, it must not become a mobile
+default until direct matching-host window presentation has zero full-frame CPU
+readback/copy and passes `docs/mobile-mainline-roadmap.md` promotion gates.
 
 ## Current Native WGPU Diagnostic Notes
 

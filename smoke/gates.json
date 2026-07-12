@@ -152,6 +152,7 @@
       "docs": ["docs/android-support.md", "docs/testing.md", "docs/release-readiness.md"],
       "artifacts": [
         "artifacts/mobile-runtime/android/counter/mobile-runtime-smoke.json",
+        "artifacts/mobile-runtime/android/counter/screenshot-before.png",
         "artifacts/mobile-runtime/android/counter/screenshot.png",
         "artifacts/mobile-runtime/android/counter/runtime.log"
       ]
@@ -181,6 +182,7 @@
       "docs": ["docs/ios-support.md", "docs/testing.md", "docs/release-readiness.md"],
       "artifacts": [
         "artifacts/mobile-runtime/ios/counter/mobile-runtime-smoke.json",
+        "artifacts/mobile-runtime/ios/counter/screenshot-before.png",
         "artifacts/mobile-runtime/ios/counter/screenshot.png",
         "artifacts/mobile-runtime/ios/counter/runtime.log"
       ]
@@ -210,6 +212,7 @@
       "docs": ["docs/android-support.md", "docs/testing.md", "docs/release-readiness.md"],
       "artifacts": [
         "artifacts/mobile-runtime/android/component_gallery/mobile-runtime-smoke.json",
+        "artifacts/mobile-runtime/android/component_gallery/screenshot-before.png",
         "artifacts/mobile-runtime/android/component_gallery/screenshot.png",
         "artifacts/mobile-runtime/android/component_gallery/runtime.log"
       ]
@@ -239,8 +242,69 @@
       "docs": ["docs/ios-support.md", "docs/testing.md", "docs/release-readiness.md"],
       "artifacts": [
         "artifacts/mobile-runtime/ios/component_gallery/mobile-runtime-smoke.json",
+        "artifacts/mobile-runtime/ios/component_gallery/screenshot-before.png",
         "artifacts/mobile-runtime/ios/component_gallery/screenshot.png",
         "artifacts/mobile-runtime/ios/component_gallery/runtime.log"
+      ]
+    },
+    {
+      "id": "harmonyos.demo-runtime",
+      "tier": "release",
+      "kind": "mobile-runtime-smoke",
+      "host": "harmonyos-device-or-emulator",
+      "purpose": "Record non-fallback HarmonyOS demo Stage Ability/XComponent first-frame, single-touch, lifecycle, and platform-service evidence.",
+      "defaultDevCheck": false,
+      "commands": [
+        {
+          "argv": ["node", "scripts/record-mobile-runtime-smoke.mjs", "--platform", "harmonyos", "--app", "harmonyos_demo", "--manifest", "artifacts/mobile-runtime/harmonyos/harmonyos_demo/mobile-runtime-smoke.json", "--require-passed"],
+          "mode": "manual"
+        }
+      ],
+      "result": {
+        "type": "manifest",
+        "path": "artifacts/mobile-runtime/harmonyos/harmonyos_demo/mobile-runtime-smoke.json",
+        "validator": ["node", "scripts/validate-mobile-runtime-manifest.mjs", "artifacts/mobile-runtime/harmonyos/harmonyos_demo/mobile-runtime-smoke.json", "--require-passed"]
+      },
+      "ci": {
+        "workflow": ".github/workflows/moui-runtime-gates.yml",
+        "gate": "release-manual"
+      },
+      "docs": ["docs/harmonyos-support.md", "docs/testing.md", "docs/release-readiness.md"],
+      "artifacts": [
+        "artifacts/mobile-runtime/harmonyos/harmonyos_demo/mobile-runtime-smoke.json",
+        "artifacts/mobile-runtime/harmonyos/harmonyos_demo/screenshot-before.png",
+        "artifacts/mobile-runtime/harmonyos/harmonyos_demo/screenshot.png",
+        "artifacts/mobile-runtime/harmonyos/harmonyos_demo/runtime.log"
+      ]
+    },
+    {
+      "id": "harmonyos.component-gallery-runtime",
+      "tier": "release",
+      "kind": "mobile-runtime-smoke",
+      "host": "harmonyos-device-or-emulator",
+      "purpose": "Record non-fallback Component Gallery HarmonyOS input, scroll, lifecycle, and platform-service evidence.",
+      "defaultDevCheck": false,
+      "commands": [
+        {
+          "argv": ["node", "scripts/record-mobile-runtime-smoke.mjs", "--platform", "harmonyos", "--app", "component_gallery", "--manifest", "artifacts/mobile-runtime/harmonyos/component_gallery/mobile-runtime-smoke.json", "--require-passed"],
+          "mode": "manual"
+        }
+      ],
+      "result": {
+        "type": "manifest",
+        "path": "artifacts/mobile-runtime/harmonyos/component_gallery/mobile-runtime-smoke.json",
+        "validator": ["node", "scripts/validate-mobile-runtime-manifest.mjs", "artifacts/mobile-runtime/harmonyos/component_gallery/mobile-runtime-smoke.json", "--require-passed"]
+      },
+      "ci": {
+        "workflow": ".github/workflows/moui-runtime-gates.yml",
+        "gate": "release-manual"
+      },
+      "docs": ["docs/harmonyos-support.md", "docs/testing.md", "docs/release-readiness.md"],
+      "artifacts": [
+        "artifacts/mobile-runtime/harmonyos/component_gallery/mobile-runtime-smoke.json",
+        "artifacts/mobile-runtime/harmonyos/component_gallery/screenshot-before.png",
+        "artifacts/mobile-runtime/harmonyos/component_gallery/screenshot.png",
+        "artifacts/mobile-runtime/harmonyos/component_gallery/runtime.log"
       ]
     }
   ]

@@ -281,6 +281,161 @@ fn append_unique_semantics_actions(
 }
 
 ///|
+fn SemanticsNode::find_element(
+  self : SemanticsNode,
+  target : ElementId,
+) -> SemanticsNode? {
+  if self.element_id == target {
+    Some(self)
+  } else {
+    for child in self.children {
+      match child.find_element(target) {
+        Some(found) => return Some(found)
+        None => ()
+      }
+    }
+    None
+  }
+}
+
+///|
+fn RuntimeState::apply_semantics_event_result(
+  self : RuntimeState,
+  result : ElementEventResult,
+) -> Unit {
+  self.needs_redraw = self.needs_redraw || result.changed
+  self.needs_rebuild = self.needs_rebuild || result.activated
+  self.needs_paint = self.needs_paint || result.changed
+  if result.changed || result.activated {
+    self.mark_current_dirty_elements()
+  }
+  if result.activated {
+    self.request_activation_rebuild()
+  }
+}
+
+///|
+fn RuntimeState::dispatch_semantics_pointer(
+  self : RuntimeState,
+  target : ElementId,
+  phase : PointerPhase,
+  wheel_delta? : Point = Point::new(x=0.0, y=0.0),
+) -> Bool {
+  self.ensure_render_tree()
+  match self.render_tree.root.find_render_node(target) {
+    Some(render) => {
+      let point = Point::new(
+        x=render.frame.origin.x + render.frame.size.width / 2.0,
+        y=render.frame.origin.y + render.frame.size.height / 2.0,
+      )
+      match
+        self.element_tree.root.dispatch_pointer_to_target(
+          target,
+          PointerEvent::new(position=point, phase~, wheel_delta~),
+          self.render_tree.root,
+          environment=self.environment,
+          text_system=self.text_system,
+          now_ms=self.now_ms,
+        ) {
+        Some(result) => {
+          self.apply_semantics_event_result(result)
+          true
+        }
+        None => false
+      }
+    }
+    None => false
+  }
+}
+
+///|
+fn RuntimeState::dispatch_semantics_action(
+  self : RuntimeState,
+  target : ElementId,
+  action : SemanticsAction,
+  value : String?,
+) -> Bool {
+  let semantics = self.semantics()
+  let node = match semantics.find_element(target) {
+    Some(node) => node
+    None => return false
+  }
+  if node.state.disabled || !node.actions.any(item => item == action) {
+    return false
+  }
+  match action {
+    SemanticsAction::Focus => self.focus_element(target)
+    SemanticsAction::SetText => {
+      if !self.focus_element(target) {
+        return false
+      }
+      let state = self.focused_text_input()
+      let replacement = value.unwrap_or("")
+      self.dispatch_event(
+        AppEvent::TextInput(
+          TextInputEvent::ReplaceText(
+            TextRange::new(start=0, end=state.text.char_length()),
+            replacement,
+          ),
+        ),
+      )
+      true
+    }
+    SemanticsAction::Submit => {
+      if !self.focus_element(target) {
+        return false
+      }
+      self.dispatch_event(
+        AppEvent::Keyboard(KeyboardEvent::new(key="Enter", text=Some("\n"))),
+      )
+      true
+    }
+    SemanticsAction::Scroll => {
+      let direction = value.unwrap_or("forward")
+      let horizontal = direction == "left" || direction == "right"
+      let backwards = direction == "backward" ||
+        direction == "up" ||
+        direction == "left"
+      let amount = if horizontal {
+        let candidate = node.frame.size.width * 0.8
+        if candidate > 24.0 {
+          candidate
+        } else {
+          24.0
+        }
+      } else {
+        let candidate = node.frame.size.height * 0.8
+        if candidate > 24.0 {
+          candidate
+        } else {
+          24.0
+        }
+      }
+      let signed = if backwards { -amount } else { amount }
+      self.dispatch_semantics_pointer(
+        target,
+        PointerPhase::Move,
+        wheel_delta=if horizontal {
+          Point::new(x=signed, y=0.0)
+        } else {
+          Point::new(x=0.0, y=signed)
+        },
+      )
+    }
+    SemanticsAction::Activate
+    | SemanticsAction::Select
+    | SemanticsAction::Expand
+    | SemanticsAction::Collapse
+    | SemanticsAction::Dismiss => {
+      ignore(self.focus_element(target))
+      let down = self.dispatch_semantics_pointer(target, PointerPhase::Down)
+      let up = self.dispatch_semantics_pointer(target, PointerPhase::Up)
+      down && up
+    }
+  }
+}
+
+///|
 fn option_bool(value : Bool?, fallback : Bool) -> Bool {
   match value {
     Some(value) => value

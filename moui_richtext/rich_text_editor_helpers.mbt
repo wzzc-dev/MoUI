@@ -86,6 +86,45 @@ fn apply_text_input(
       )
       apply_text_edit(control, text, edit, record_history~)
     }
+    @core.TextInputEvent::ReplaceText(range, replacement) => {
+      let normalized = @core.normalize_grapheme_range(
+        @core.TextGraphemeBoundaries::new(text~),
+        range,
+      )
+      let next_text = @core.replace_text_range(text, normalized, replacement)
+      let edit : TextEditResult = {
+        text: next_text,
+        caret: normalized.start + text_length(replacement),
+        selection: None,
+      }
+      apply_text_edit(control, text, edit, record_history~)
+    }
+    @core.TextInputEvent::SetSelection(range) => {
+      let normalized = @core.normalize_grapheme_range(
+        @core.TextGraphemeBoundaries::new(text~),
+        range,
+      )
+      let next_selection = if normalized.is_collapsed() {
+        None
+      } else {
+        Some(normalized)
+      }
+      let next_control = {
+        ..control,
+        caret: normalized.end,
+        selection: next_selection,
+        composition: None,
+        composition_cursor: None,
+      }
+      {
+        text,
+        control: next_control,
+        changed: next_control.caret != control.caret ||
+        next_control.selection != control.selection ||
+        control.composition is Some(_) ||
+        control.composition_cursor is Some(_),
+      }
+    }
     @core.TextInputEvent::CompositionStart => {
       let next_control = {
         ..control,

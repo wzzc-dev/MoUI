@@ -14,10 +14,16 @@ options(
   link: {
     "native": {
       "exports": [
+        "moui_mobile_take_host_updates_json",
+        "moui_mobile_dispatch_text_input",
+        "moui_mobile_dispatch_command",
+        "moui_mobile_dispatch_accessibility",
+        "moui_mobile_complete_clipboard",
         "component_gallery_ios_attach_view",
         "component_gallery_ios_resize",
         "component_gallery_ios_dispatch_pointer",
         "component_gallery_ios_dispatch_scroll",
+        "component_gallery_ios_frame_tick",
         "component_gallery_ios_render_frame",
         "component_gallery_ios_detach_view",
       ],

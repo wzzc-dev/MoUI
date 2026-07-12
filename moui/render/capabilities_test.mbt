@@ -958,24 +958,30 @@ test "renderer capability follow ups stay focused on incomplete features" {
 ///|
 test "renderer capability report exposes backend-driven entries" {
   let backends = @render.renderer_capability_backends()
-  inspect(backends.length(), content="4")
+  inspect(backends.length(), content="5")
   assert_true(backends[0] == @render.RendererBackendKind::SkiaRasterNative)
-  assert_true(backends[1] == @render.RendererBackendKind::WebGpuWasm)
-  assert_true(backends[2] == @render.RendererBackendKind::NativeWgpu)
-  assert_true(backends[3] == @render.RendererBackendKind::SunRasterNative)
+  assert_true(backends[1] == @render.RendererBackendKind::SkiaGpuNative)
+  assert_true(backends[2] == @render.RendererBackendKind::WebGpuWasm)
+  assert_true(backends[3] == @render.RendererBackendKind::NativeWgpu)
+  assert_true(backends[4] == @render.RendererBackendKind::SunRasterNative)
   let wgpu = @render.renderer_backend_capabilities(
     @render.RendererBackendKind::NativeWgpu,
   )
   let skia = @render.renderer_backend_capabilities(
     @render.RendererBackendKind::SkiaRasterNative,
   )
+  let skia_gpu = @render.renderer_backend_capabilities(
+    @render.RendererBackendKind::SkiaGpuNative,
+  )
   let sun = @render.renderer_backend_capabilities(
     @render.RendererBackendKind::SunRasterNative,
   )
   inspect(wgpu.length(), content="17")
   inspect(skia.length(), content="17")
+  inspect(skia_gpu.length(), content="17")
   inspect(sun.length(), content="17")
   assert_true(skia.any(capability => capability.note.contains("moui_skia")))
+  assert_true(skia_gpu.any(capability => capability.note.contains("Skia GPU")))
   assert_true(sun.any(capability => capability.note.contains("moui_sun")))
   assert_true(
     sun.any(capability => {

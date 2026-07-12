@@ -128,6 +128,31 @@ test "native accessibility bridge validates action roundtrip" {
 }
 
 ///|
+test "mobile renderer auto mode requires availability and promotion" {
+  let pending = select_mobile_renderer(
+    MobileRendererMode::Auto,
+    gpu_available=true,
+    gpu_promoted=false,
+  )
+  assert_true(pending.selected == @render.RendererBackendKind::SkiaRasterNative)
+  assert_true(pending.fallback_reason is Some(_))
+  let promoted = select_mobile_renderer(
+    MobileRendererMode::Auto,
+    gpu_available=true,
+    gpu_promoted=true,
+  )
+  assert_true(promoted.selected == @render.RendererBackendKind::SkiaGpuNative)
+  let unavailable = select_mobile_renderer(
+    MobileRendererMode::SkiaGpu,
+    gpu_available=false,
+    gpu_promoted=false,
+  )
+  assert_true(
+    unavailable.selected == @render.RendererBackendKind::SkiaRasterNative,
+  )
+}
+
+///|
 test "host driver dispatches resize and deduplicates redraw requests" {
   let scheduled = Ref(0)
   let runtime = host_test_runtime(

@@ -135,6 +135,97 @@ pub fn harmonyos_demo_render_frame() -> Bool {
 }
 
 ///|
+pub fn harmonyos_demo_frame_tick(time_ms : Double) -> Bool {
+  match harmonyos_demo_session.val {
+    Some(session) => {
+      session.advance_time(time_ms)
+      if session.take_redraw_requested() || session.runtime().needs_redraw() {
+        ignore(session.render_frame())
+        true
+      } else {
+        false
+      }
+    }
+    None => false
+  }
+}
+
+///|
+pub fn moui_mobile_take_host_updates_json() -> String {
+  match harmonyos_demo_session.val {
+    Some(session) => session.drain_host_updates_json()
+    None => "[]"
+  }
+}
+
+///|
+pub fn moui_mobile_dispatch_text_input(
+  kind : Int,
+  text : String,
+  start : Int,
+  end : Int,
+) -> Bool {
+  match
+    (
+      harmonyos_demo_session.val,
+      @host.mobile_text_input_response(kind, text, start, end),
+    ) {
+    (Some(session), Some(response)) => session.dispatch_host_response(response)
+    _ => false
+  }
+}
+
+///|
+pub fn moui_mobile_dispatch_command(kind : Int) -> Bool {
+  match (harmonyos_demo_session.val, @host.mobile_command_response(kind)) {
+    (Some(session), Some(response)) => session.dispatch_host_response(response)
+    _ => false
+  }
+}
+
+///|
+pub fn moui_mobile_dispatch_accessibility(
+  element_id : Int,
+  action : Int,
+  value : String,
+) -> Bool {
+  match
+    (
+      harmonyos_demo_session.val,
+      @host.mobile_accessibility_response(element_id, action, value),
+    ) {
+    (Some(session), Some(response)) => session.dispatch_host_response(response)
+    _ => false
+  }
+}
+
+///|
+pub fn moui_mobile_complete_clipboard(
+  id : Int,
+  kind : Int,
+  text : String,
+  bytes : Bytes,
+) -> Bool {
+  match harmonyos_demo_session.val {
+    Some(session) => {
+      let result = match kind {
+        1 => @host.HostServiceResponse::ClipboardText(text)
+        2 => @host.HostServiceResponse::ClipboardImage(bytes)
+        3 => @host.HostServiceResponse::ClipboardWritten
+        _ => @host.HostServiceResponse::Unavailable(text)
+      }
+      session.dispatch_host_response(
+        @host.MobileHostResponse::Clipboard(
+          @host.HostServiceRequestId::new(id),
+          result,
+        ),
+      )
+    }
+    None => false
+  }
+}
+
+///|
 pub fn harmonyos_demo_detach_surface() -> Unit {
   match harmonyos_demo_session.val {
     Some(session) => session.dispose()

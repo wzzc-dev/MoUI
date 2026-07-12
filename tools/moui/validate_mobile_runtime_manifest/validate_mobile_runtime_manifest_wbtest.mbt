@@ -14,6 +14,7 @@ fn valid_manifest() -> String {
     #|    "command": "scripts/build-mobile-ios-app.sh --app component_gallery"
     #|  },
     #|  "artifacts": {
+    #|    "screenshotBefore": "artifacts/mobile-runtime/ios/component_gallery/screenshot-before.png",
     #|    "screenshot": "artifacts/mobile-runtime/ios/component_gallery/screenshot.png",
     #|    "log": "artifacts/mobile-runtime/ios/component_gallery/runtime.log"
     #|  },
@@ -24,6 +25,11 @@ fn valid_manifest() -> String {
     #|    "contentPixels": 42000,
     #|    "distinctColorBuckets": 20
     #|  },
+    #|  "pixelChange": {
+    #|    "comparable": true,
+    #|    "changedPixels": 2400,
+    #|    "changedRatio": 0.007
+    #|  },
     #|  "observations": {
     #|    "lifecycleAttach": "yes",
     #|    "lifecycleDetach": "yes",
@@ -32,10 +38,13 @@ fn valid_manifest() -> String {
     #|    "representativeInput": "yes",
     #|    "scrollInput": "yes",
     #|    "cleanShutdown": "yes",
-    #|    "ime": "pending",
-    #|    "clipboard": "pending",
-    #|    "accessibility": "pending",
-    #|    "asyncImage": "pending",
+    #|    "ime": "yes",
+    #|    "clipboard": "yes",
+    #|    "accessibility": "yes",
+    #|    "accessibilityTree": "yes",
+    #|    "accessibilityFocus": "yes",
+    #|    "accessibilityAction": "yes",
+    #|    "asyncImage": "yes",
     #|    "realDeviceSigning": "pending"
     #|  },
     #|  "evidenceBoundary": "non-fallback matching-host smoke evidence; fallback builds are packaging only"
@@ -67,4 +76,34 @@ test "component gallery requires scroll evidence" {
   )
   let failures = validate_manifest_text(text, true)
   assert_true(failures.any(message => message.contains("scrollInput")))
+}
+
+///|
+test "passed evidence requires visible input change" {
+  let text = valid_manifest().replace(
+    old="\"changedPixels\": 2400",
+    new="\"changedPixels\": 0",
+  )
+  let failures = validate_manifest_text(text, true)
+  assert_true(failures.any(message => message.contains("changedPixels")))
+}
+
+///|
+test "passed evidence requires platform service observations" {
+  let text = valid_manifest().replace(
+    old="\"ime\": \"yes\"",
+    new="\"ime\": \"pending\"",
+  )
+  let failures = validate_manifest_text(text, true)
+  assert_true(failures.any(message => message.contains("observations.ime")))
+}
+
+///|
+test "partial evidence is valid but cannot satisfy require passed" {
+  let text = valid_manifest()
+    .replace(old="\"status\": \"passed\"", new="\"status\": \"partial\"")
+    .replace(old="\"resize\": \"yes\"", new="\"resize\": \"no\"")
+  debug_inspect(validate_manifest_text(text, false), content="[]")
+  let failures = validate_manifest_text(text, true)
+  assert_true(failures.any(message => message.contains("--require-passed")))
 }

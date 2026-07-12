@@ -146,6 +146,42 @@ pub(all) struct RenderFrameInput {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RenderFrameInput::new(metrics~ : RendererSurfaceMetrics, commands~ : Array[@core.DrawCommand], damage? : @core.DamageRegion, clear_color? : @core.Color?, cache_epoch? : Int) -> Self
 
+pub struct RenderFrameMailbox {
+  mut surface_generation : Int
+  mut next_sequence : Int
+  mut in_flight : RenderFramePacket?
+  mut pending : RenderFramePacket?
+  mut submitted : Int
+  mut started : Int
+  mut completed : Int
+  mut replaced_pending : Int
+  mut rejected_generation : Int
+}
+pub fn RenderFrameMailbox::begin_next(Self) -> RenderFramePacket?
+pub fn RenderFrameMailbox::complete(Self, Int) -> Bool
+pub fn RenderFrameMailbox::diagnostics(Self) -> RenderFrameMailboxDiagnostics
+pub fn RenderFrameMailbox::new(surface_generation? : Int) -> Self
+pub fn RenderFrameMailbox::replace_surface_generation(Self, Int) -> Unit
+pub fn RenderFrameMailbox::submit(Self, RenderFrameInput) -> Int
+
+pub(all) struct RenderFrameMailboxDiagnostics {
+  submitted : Int
+  started : Int
+  completed : Int
+  replaced_pending : Int
+  rejected_generation : Int
+  surface_generation : Int
+  in_flight : Bool
+  pending : Bool
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct RenderFramePacket {
+  sequence : Int
+  surface_generation : Int
+  input : RenderFrameInput
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RenderFramePacket::new(sequence~ : Int, surface_generation~ : Int, RenderFrameInput) -> Self
+
 pub(all) struct RenderFrameResult {
   presented : Bool
   cache_hit_count : Int

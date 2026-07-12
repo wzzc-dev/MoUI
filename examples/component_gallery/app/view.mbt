@@ -31,7 +31,62 @@ pub fn view(
   let page_width = responsive_page_width(model.active_platform, viewport.width)
   let page_height = viewport.height.max(1.0)
   let compact = page_width < 820.0
-  if compact {
+  if compact && model.active_item == ComponentGalleryItemId::MobileServiceProbe {
+    let content_width = (page_width - 32.0).max(288.0)
+    container(
+      scroll_view(
+        container(
+          column(
+            [
+              spacer(min_length=44.0),
+              column(
+                [
+                  text(
+                    "Component Gallery",
+                    role=@views.TextRole::Subtitle,
+                    theme~,
+                    width=content_width,
+                    height=30.0,
+                    align=@text.TextAlign::TextStart,
+                  ),
+                  button(
+                    "Browse all components",
+                    on_click=SelectItem("welcome"),
+                    variant=@views.ButtonVariant::Outline,
+                    theme~,
+                    width=content_width,
+                  ),
+                ],
+                spacing=theme.spacing_scale.sm,
+                align=@views.CrossAlign::Stretch,
+              ),
+              mobile_service_probe(
+                model,
+                theme,
+                content_width,
+                compact,
+                height=page_height,
+              ),
+            ],
+            spacing=theme.spacing_scale.md,
+            align=@views.CrossAlign::Stretch,
+          ),
+          width=page_width,
+          background=theme.palette.background,
+          padding=16.0,
+          theme~,
+        ),
+        width=page_width,
+        height=page_height,
+        state=Some(model.page_scroll),
+      ),
+      width=page_width,
+      height=page_height,
+      background=theme.palette.background,
+      padding=0.0,
+      theme~,
+    )
+  } else if compact {
     container(
       scroll_view(
         container(

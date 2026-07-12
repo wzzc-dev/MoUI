@@ -12,6 +12,7 @@
           "attachSurface": "android_counter_attach_surface",
           "resize": "android_counter_resize",
           "dispatchPointer": "android_counter_dispatch_pointer",
+          "frameTick": "android_counter_frame_tick",
           "renderFrame": "android_counter_render_frame",
           "detachSurface": "android_counter_detach_surface"
         }
@@ -25,6 +26,7 @@
           "attachView": "ios_counter_attach_view",
           "resize": "ios_counter_resize",
           "dispatchPointer": "ios_counter_dispatch_pointer",
+          "frameTick": "ios_counter_frame_tick",
           "renderFrame": "ios_counter_render_frame",
           "detachView": "ios_counter_detach_view"
         }
@@ -42,6 +44,7 @@
           "resize": "component_gallery_android_resize",
           "dispatchPointer": "component_gallery_android_dispatch_pointer",
           "dispatchScroll": "component_gallery_android_dispatch_scroll",
+          "frameTick": "component_gallery_android_frame_tick",
           "renderFrame": "component_gallery_android_render_frame",
           "detachSurface": "component_gallery_android_detach_surface"
         }
@@ -56,6 +59,7 @@
           "resize": "component_gallery_ios_resize",
           "dispatchPointer": "component_gallery_ios_dispatch_pointer",
           "dispatchScroll": "component_gallery_ios_dispatch_scroll",
+          "frameTick": "component_gallery_ios_frame_tick",
           "renderFrame": "component_gallery_ios_render_frame",
           "detachView": "component_gallery_ios_detach_view"
         }

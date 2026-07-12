@@ -258,6 +258,31 @@ test "virtual node button dispatches click through runtime" {
 }
 
 ///|
+test "runtime dispatches declared accessibility activation by element id" {
+  let received : Array[String] = []
+  let runtime = AppRuntime::new_view(
+    root=@views.button("Go", on_click="clicked", width=80.0, height=32.0),
+    size=@core.Size::new(width=80.0, height=32.0),
+    on_message=Some(message => received.push(message)),
+  )
+  let semantics = runtime.semantics()
+  assert_true(
+    runtime.dispatch_semantics_action(
+      semantics.element_id,
+      @core.SemanticsAction::Activate,
+    ),
+  )
+  inspect(received, content="[clicked]")
+  assert_false(
+    runtime.dispatch_semantics_action(
+      semantics.element_id,
+      @core.SemanticsAction::SetText,
+      value=Some("nope"),
+    ),
+  )
+}
+
+///|
 test "virtual node checkbox controlled event dispatches without core primitive" {
   let received : Array[Bool] = []
   let runtime = AppRuntime::new_view(

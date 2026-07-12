@@ -2,6 +2,7 @@
 pub fn renderer_capability_backends() -> Array[RendererBackendKind] {
   [
     RendererBackendKind::SkiaRasterNative,
+    RendererBackendKind::SkiaGpuNative,
     RendererBackendKind::WebGpuWasm,
     RendererBackendKind::NativeWgpu,
     RendererBackendKind::SunRasterNative,
@@ -39,6 +40,13 @@ fn renderer_feature_capability_entry(
       feature,
       RendererBackendKind::SkiaRasterNative,
       skia_status,
+      skia_note,
+    ),
+    renderer_backend_feature(
+      feature,
+      RendererBackendKind::SkiaGpuNative,
+      skia_status,
+      "Skia GPU reuses the native Skia command and resource semantics; " +
       skia_note,
     ),
     renderer_backend_feature(

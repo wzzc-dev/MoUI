@@ -17,6 +17,8 @@ Read only what the task needs:
 - `docs/development.md` for setup and focused package commands.
 - `docs/testing.md` for Daily check, focused checks, and Manual smoke.
 - `docs/release-readiness.md` for release gates and smoke catalog policy.
+- `docs/mobile-mainline-roadmap.md` for mobile service, VSync, input, GPU, and
+  promotion ownership.
 - `moui_skia/AGENTS.md` before changing `moui_skia` native/fallback binding
   ownership.
 
@@ -32,7 +34,8 @@ Read only what the task needs:
 - `moui/runtime`: runtime lifecycle, element/layout/render trees, event
   dispatch, effects, subscriptions, diagnostics, inspector snapshots.
 - `moui/backend/host`: host service protocols, window/timer/route sources,
-  WebView protocol, async image service, accessibility/input/redraw contracts.
+  WebView protocol, async image service, accessibility/input/redraw contracts,
+  and the shared `MobileHostChannel`.
 - `moui/backend/<platform>`: concrete platform hosts. Android, iOS, and HarmonyOS are
   currently embedded-session scaffolds driven by platform-owned callbacks
   rather than desktop-style event loops.
@@ -41,6 +44,9 @@ Read only what the task needs:
   `ANativeWindow`; iOS Skia presents copied pixel frames to a UIKit
   `UIImageView` child in an embedder-supplied `UIView`; HarmonyOS Skia presents
   copied pixel frames to an embedder-supplied XComponent native-window handle.
+  These are raster fallback paths. `SkiaGpuNative` must not be called complete
+  until direct Metal/Vulkan/EGL window presentation has zero full-frame
+  readback/copy and passes matching-device promotion evidence.
 - `moui/backend/<platform>/wgpu`: native WGPU diagnostic providers.
 - `moui/render`: renderer facade and renderer-neutral capability/fallback
   planning.
@@ -157,8 +163,12 @@ owning-package boundaries clear.
   explicit native menu/AT-SPI follow-up reporting.
 - `backend/android/`: experimental Android embedded native host scaffold. The
   Activity/JNI layer owns lifecycle, `ANativeWindow` handle acquisition, and
-  input forwarding into `AndroidRuntimeSession`; package checks are not runtime
+  Choreographer/IME/clipboard/accessibility forwarding into
+  `AndroidRuntimeSession`; package checks are not runtime
   platform evidence.
+  Mobile build entrypoints accept `--renderer auto|skia-gpu|skia-raster` and
+  record requested/selected modes. GPU requests remain explicit raster
+  fallbacks until direct host GPU presentation passes promotion gates.
 - `backend/android/skia/`: Android Skia provider over `render/skia`, with an
   `ANativeWindow` RGBA pixel presenter and preflight summary. Use
   `MOUI_SKIA_PLATFORM=android` plus `MOUI_SKIA_ARCH=<arch>` for Android Skia
@@ -184,11 +194,15 @@ owning-package boundaries clear.
   `scripts/build-mobile-ios-app.sh --app <counter|component_gallery>
   --fallback-skia` for packaging/native-stub smoke only; use the non-fallback
   path plus `record-mobile-runtime-smoke.mjs` matching simulator/device evidence
-  before claiming iOS runtime support.
+  before claiming iOS runtime support. Keep `UILaunchScreen` in Info.plists;
+  iOS Simulator input smoke uses `idb` accessibility frames and current-PID
+  application logs because stock `simctl` cannot inject tap/swipe events.
 - `backend/harmonyos/`: experimental HarmonyOS embedded native host scaffold.
   The Stage Ability/XComponent/NAPI layer owns lifecycle, native surface handle
   acquisition, and input forwarding into `HarmonyOsRuntimeSession`; package
   checks are not runtime platform evidence.
+  API 20 is the compatibility floor. Native XComponent callbacks exclusively
+  own surface/pointer/resize/detach; ArkTS owns displaySync and platform services.
 - `backend/harmonyos/skia/`: HarmonyOS Skia provider over `render/skia`, with an
   XComponent native-window RGBA pixel presenter and preflight summary. Use
   `MOUI_SKIA_PLATFORM=harmonyos`, `MOUI_SKIA_ARCH=arm64`, and
@@ -206,6 +220,15 @@ owning-package boundaries clear.
   `examples/component_gallery/harmonyos_app`: Component Gallery's HarmonyOS
   embedded-session entrypoint and app-owned Stage Ability/XComponent shell over
   `mobile/harmonyos`.
+- Component Gallery's mobile entrypoints open the shared `Mobile Service Probe`
+  for matching-host IME, system text clipboard, accessibility action,
+  rotation/resize, scroll, and async-image evidence. The mobile recorder only
+  accepts clipboard write/read, two distinct surface sizes, accessibility
+  tree/focus/action, and async loading/ready application logs.
+- Mobile runtime manifest status is `passed`, `partial`, or `failed`. Use
+  `partial` when useful runtime evidence exists but required observations are
+  missing; keep `failed` for runs with no usable evidence, and keep
+  `--require-passed` strict.
 - `render/`: renderer facade, shared draw helpers, and capability report API.
 - `render/skia/`: native Skia raster mainline renderer over the local
   `moui_skia` binding, including renderer-local command/reason diagnostics for

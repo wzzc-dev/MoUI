@@ -283,3 +283,30 @@ test "shadow command degrades to layered rect batches" {
   inspect(batches.length(), content="3")
   assert_true(batches[0].color().a > batches[2].color().a)
 }
+
+///|
+test "render mailbox keeps one in-flight and latest pending frame" {
+  let mailbox = @render.RenderFrameMailbox::new()
+  let input = @render.RenderFrameInput::new(
+    metrics=@render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=100.0, height=80.0),
+    ),
+    commands=[],
+  )
+  let first = mailbox.submit(input)
+  match mailbox.begin_next() {
+    Some(packet) => assert_true(packet.sequence == first)
+    None => fail("expected first render packet")
+  }
+  ignore(mailbox.submit(input))
+  let latest = mailbox.submit(input)
+  assert_true(mailbox.begin_next() is None)
+  assert_true(mailbox.complete(first))
+  match mailbox.begin_next() {
+    Some(packet) => assert_true(packet.sequence == latest)
+    None => fail("expected latest pending render packet")
+  }
+  let diagnostics = mailbox.diagnostics()
+  inspect(diagnostics.replaced_pending, content="1")
+  inspect(diagnostics.submitted, content="3")
+}

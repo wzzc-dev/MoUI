@@ -98,6 +98,24 @@ pub fn HostRuntimeDriver::dispatch_platform_view(
 }
 
 ///|
+pub fn HostRuntimeDriver::dispatch_semantics_action(
+  self : HostRuntimeDriver,
+  element_id : @core.ElementId,
+  action : @core.SemanticsAction,
+  value? : String? = None,
+) -> Bool {
+  let handled = self.runtime.dispatch_semantics_action(
+    element_id,
+    action,
+    value~,
+  )
+  if handled {
+    self.request_redraw_if_needed()
+  }
+  handled
+}
+
+///|
 pub fn HostRuntimeDriver::dispatch_command_with_services(
   self : HostRuntimeDriver,
   intent : @core.CommandIntent,

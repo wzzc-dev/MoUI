@@ -2,8 +2,10 @@
 #include <android/native_window.h>
 #include <android/native_window_jni.h>
 #include <jni.h>
+#include <moonbit.h>
 
 #include <cstdint>
+#include <cstring>
 #include <mutex>
 
 #ifndef MOUI_MOBILE_APP_ARG
@@ -12,6 +14,14 @@
 
 #ifndef MOUI_MOBILE_APP_ID
 #define MOUI_MOBILE_APP_ID "unknown"
+#endif
+
+#ifndef MOUI_MOBILE_RENDERER_REQUESTED
+#define MOUI_MOBILE_RENDERER_REQUESTED "auto"
+#endif
+
+#ifndef MOUI_MOBILE_RENDERER_SELECTED
+#define MOUI_MOBILE_RENDERER_SELECTED "skia-raster"
 #endif
 
 namespace {
@@ -46,8 +56,25 @@ extern "C" int32_t MOUI_MOBILE_DISPATCH_SCROLL(
     double delta_y,
     int32_t phase);
 #endif
+extern "C" int32_t MOUI_MOBILE_FRAME_TICK(double time_ms);
 extern "C" int32_t MOUI_MOBILE_RENDER_FRAME(void);
 extern "C" void MOUI_MOBILE_DETACH_SURFACE(void);
+extern "C" moonbit_string_t moui_mobile_take_host_updates_json(void);
+extern "C" int32_t moui_mobile_dispatch_text_input(
+    int32_t kind,
+    moonbit_string_t text,
+    int32_t start,
+    int32_t end);
+extern "C" int32_t moui_mobile_dispatch_command(int32_t kind);
+extern "C" int32_t moui_mobile_dispatch_accessibility(
+    int32_t element_id,
+    int32_t action,
+    moonbit_string_t value);
+extern "C" int32_t moui_mobile_complete_clipboard(
+    int32_t id,
+    int32_t kind,
+    moonbit_string_t text,
+    moonbit_bytes_t bytes);
 
 void ensure_moonbit_runtime() {
   std::call_once(g_init_once, [] {
@@ -55,7 +82,13 @@ void ensure_moonbit_runtime() {
     static char *argv[] = {app_name};
     moonbit_runtime_init(1, argv);
     moonbit_init();
-    __android_log_print(ANDROID_LOG_INFO, kLogTag, "moui-mobile runtime initialized app=%s", MOUI_MOBILE_APP_ID);
+    __android_log_print(
+        ANDROID_LOG_INFO,
+        kLogTag,
+        "moui-mobile runtime initialized app=%s renderer-requested=%s renderer-selected=%s",
+        MOUI_MOBILE_APP_ID,
+        MOUI_MOBILE_RENDERER_REQUESTED,
+        MOUI_MOBILE_RENDERER_SELECTED);
   });
 }
 
@@ -64,6 +97,40 @@ void release_window_locked() {
     ANativeWindow_release(g_window);
     g_window = nullptr;
   }
+}
+
+moonbit_string_t moonbit_string_from_java(JNIEnv *env, jstring value) {
+  if (value == nullptr) {
+    return moonbit_make_string(0, 0);
+  }
+  const jsize length = env->GetStringLength(value);
+  moonbit_string_t result = moonbit_make_string_raw(length);
+  env->GetStringRegion(value, 0, length, reinterpret_cast<jchar *>(result));
+  return result;
+}
+
+jstring java_string_from_moonbit(JNIEnv *env, moonbit_string_t value) {
+  if (value == nullptr) {
+    return env->NewStringUTF("");
+  }
+  const int32_t length = Moonbit_array_length(value);
+  jstring result = env->NewString(reinterpret_cast<const jchar *>(value), length);
+  moonbit_decref(value);
+  return result;
+}
+
+moonbit_bytes_t moonbit_bytes_from_java(JNIEnv *env, jbyteArray value) {
+  if (value == nullptr) {
+    return moonbit_make_bytes(0, 0);
+  }
+  const jsize length = env->GetArrayLength(value);
+  moonbit_bytes_t result = moonbit_make_bytes_raw(length);
+  env->GetByteArrayRegion(
+      value,
+      0,
+      length,
+      reinterpret_cast<jbyte *>(result));
+  return result;
 }
 
 }  // namespace
@@ -147,6 +214,81 @@ extern "C" JNIEXPORT jboolean JNICALL
 Java_dev_wzzc_moui_mobile_MobileActivity_nativeRenderFrame(JNIEnv *, jclass) {
   ensure_moonbit_runtime();
   return MOUI_MOBILE_RENDER_FRAME() != 0 ? JNI_TRUE : JNI_FALSE;
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_dev_wzzc_moui_mobile_MobileActivity_nativeFrameTick(
+    JNIEnv *,
+    jclass,
+    jdouble time_ms) {
+  ensure_moonbit_runtime();
+  return MOUI_MOBILE_FRAME_TICK(time_ms) != 0 ? JNI_TRUE : JNI_FALSE;
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_dev_wzzc_moui_mobile_MobileActivity_nativeTakeHostUpdates(
+    JNIEnv *env,
+    jclass) {
+  ensure_moonbit_runtime();
+  return java_string_from_moonbit(env, moui_mobile_take_host_updates_json());
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_dev_wzzc_moui_mobile_MobileActivity_nativeDispatchTextInput(
+    JNIEnv *env,
+    jclass,
+    jint kind,
+    jstring text,
+    jint start,
+    jint end) {
+  ensure_moonbit_runtime();
+  moonbit_string_t native_text = moonbit_string_from_java(env, text);
+  const int32_t result = moui_mobile_dispatch_text_input(
+      kind, native_text, start, end);
+  moonbit_decref(native_text);
+  return result != 0 ? JNI_TRUE : JNI_FALSE;
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_dev_wzzc_moui_mobile_MobileActivity_nativeDispatchCommand(
+    JNIEnv *,
+    jclass,
+    jint kind) {
+  ensure_moonbit_runtime();
+  return moui_mobile_dispatch_command(kind) != 0 ? JNI_TRUE : JNI_FALSE;
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_dev_wzzc_moui_mobile_MobileActivity_nativeDispatchAccessibility(
+    JNIEnv *env,
+    jclass,
+    jint element_id,
+    jint action,
+    jstring value) {
+  ensure_moonbit_runtime();
+  moonbit_string_t native_value = moonbit_string_from_java(env, value);
+  const int32_t result = moui_mobile_dispatch_accessibility(
+      element_id, action, native_value);
+  moonbit_decref(native_value);
+  return result != 0 ? JNI_TRUE : JNI_FALSE;
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_dev_wzzc_moui_mobile_MobileActivity_nativeCompleteClipboard(
+    JNIEnv *env,
+    jclass,
+    jint id,
+    jint kind,
+    jstring text,
+    jbyteArray bytes) {
+  ensure_moonbit_runtime();
+  moonbit_string_t native_text = moonbit_string_from_java(env, text);
+  moonbit_bytes_t native_bytes = moonbit_bytes_from_java(env, bytes);
+  const int32_t result = moui_mobile_complete_clipboard(
+      id, kind, native_text, native_bytes);
+  moonbit_decref(native_text);
+  moonbit_decref(native_bytes);
+  return result != 0 ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT void JNICALL

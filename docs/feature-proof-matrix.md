@@ -63,6 +63,18 @@ assert pixel markers and acceptance markers.
 
 ## L3 Cross-Platform Consistency
 
+Mobile host-channel, IME replacement/selection, semantics action validation,
+renderer selection, and mailbox behavior have L1 package-test proof. Mobile L3
+is separate and remains pending until each platform's release/manual
+`mobile-runtime-smoke` manifest passes on a matching device or simulator. The
+manifest requires before/after pixels, app receipt, actual detach, IME,
+text/image clipboard, accessibility tree/focus/action, and async image.
+
+Registered suites cover Android and iOS Counter/Component Gallery plus
+HarmonyOS Demo/Component Gallery. GPU promotion is not part of current L1/L2
+renderer proof; it needs the per-platform performance and recovery manifest in
+`mobile-mainline-roadmap.md`.
+
 `feature-proof-summary.yml` runs after `ci.yml` or
 `moui-renderer-real-skia-ci.yml` completes (via
 `workflow_run`). It collects all job statuses from `ci.yml` and

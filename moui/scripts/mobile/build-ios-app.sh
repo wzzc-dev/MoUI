@@ -20,6 +20,7 @@ Options:
   --sdk <sdk>               Apple SDK, iphonesimulator or iphoneos. Default iphonesimulator.
   --arch <arch>             Target arch, default arm64.
   --deployment-target <ver> iOS deployment target. Default 15.0.
+  --renderer <mode>         auto, skia-gpu, or skia-raster. Default auto.
   --build-dir <dir>         Working directory, default artifacts/ios/<app>.
   --output <app>            App bundle output path.
   --fallback-skia           Do not fetch/link real Skia; packaging smoke only.
@@ -40,6 +41,7 @@ contracts=""
 sdk="iphonesimulator"
 arch="arm64"
 deployment_target="15.0"
+renderer="auto"
 build_dir=""
 output_app=""
 fallback_skia=0
@@ -59,6 +61,7 @@ while [ "$#" -gt 0 ]; do
     --sdk) sdk="${2:?missing SDK after --sdk}"; shift 2 ;;
     --arch) arch="${2:?missing arch after --arch}"; shift 2 ;;
     --deployment-target) deployment_target="${2:?missing version after --deployment-target}"; shift 2 ;;
+    --renderer) renderer="${2:?missing mode after --renderer}"; shift 2 ;;
     --build-dir) build_dir="${2:?missing dir after --build-dir}"; shift 2 ;;
     --output) output_app="${2:?missing app path after --output}"; shift 2 ;;
     --fallback-skia) fallback_skia=1; shift ;;
@@ -94,7 +97,7 @@ elif [ "${output_app#/}" = "$output_app" ]; then
   output_app="$workspace_root/$output_app"
 fi
 
-prepare_args=(--platform ios --app "$app" --workspace-root "$workspace_root" --moui-root "$moui_root" --sdk "$sdk" --arch "$arch" --build-dir "$build_dir")
+prepare_args=(--platform ios --app "$app" --workspace-root "$workspace_root" --moui-root "$moui_root" --sdk "$sdk" --arch "$arch" --renderer "$renderer" --build-dir "$build_dir")
 [ -z "$skia_root" ] || prepare_args+=(--skia-root "$skia_root")
 [ -z "$app_config" ] || prepare_args+=(--app-config "$app_config")
 [ -z "$contracts" ] || prepare_args+=(--contracts "$contracts")
@@ -123,6 +126,7 @@ MOUI_MOBILE_OUTPUT_APP="$output_app" \
 MOUI_MOBILE_ARCH="$arch" \
 MOUI_MOBILE_DEPLOYMENT_TARGET="$deployment_target" \
 MOUI_MOBILE_SDK="$sdk" \
+MOUI_MOBILE_RENDERER="$renderer" \
 MOUI_MOBILE_FALLBACK_SKIA="$fallback_value" \
   xcodebuild \
     -project "$xcode_project" \

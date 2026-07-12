@@ -29,6 +29,8 @@ Copy `TEMPLATE.md` and fill in all sections. Keep it concise.
 
 | # | Title | Date | Status |
 |---|-------|------|--------|
+| 0006 | [Mobile GPU surface and render thread ownership](0006-mobile-gpu-surface-and-render-thread.md) | 2026-07-11 | Accepted |
+| 0005 | [Mobile host channel ownership](0005-mobile-host-channel-ownership.md) | 2026-07-11 | Accepted |
 | 0004 | [Views API visibility migration](0004-views-api-visibility-migration.md) | 2026-07-10 | Accepted |
 | 0003 | [Domain facade and root app-loop facade](0003-domain-sugar-and-root-facade.md) | 2026-07-04 | Accepted |
 | 0002 | [MouiRichtext optimization](0002-moui-richtext-optimization.md) | 2026-06-29 | Accepted |

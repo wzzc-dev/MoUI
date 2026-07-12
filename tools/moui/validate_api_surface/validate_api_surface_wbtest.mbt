@@ -98,11 +98,11 @@ test "api surface classification budgets pin current high-risk packages" {
     classification_budget(
       "moui/backend/host/pkg.generated.mbti", "host_contract",
     ).max_count,
-    content="422",
+    content="442",
   )
   inspect(
     classification_budget("moui/render/pkg.generated.mbti", "renderer_contract").max_count,
-    content="100",
+    content="108",
   )
 }
 
@@ -452,9 +452,9 @@ test "views facade exposes control-specific contracts" {
 ///|
 test "host and renderer public all budgets ratchet down" {
   let host = budget_by_label("host contracts")
-  inspect(host.max_pub_all_lines, content="62")
+  inspect(host.max_pub_all_lines, content="70")
   let renderer = budget_by_label("renderer facade")
-  inspect(renderer.max_pub_all_lines, content="25")
+  inspect(renderer.max_pub_all_lines, content="27")
   let skia = budget_by_label("skia renderer")
   inspect(skia.max_pub_all_lines, content="3")
   let sun = budget_by_label("sun renderer")
@@ -474,7 +474,7 @@ test "host and renderer public all budgets ratchet down" {
 ///|
 test "core descriptor payloads stay opaque" {
   let core = budget_by_label("core")
-  inspect(core.max_lines, content="1828")
+  inspect(core.max_lines, content="1830")
   inspect(core.max_pub_lines, content="520")
   inspect(core.max_pub_all_lines, content="150")
   assert_true(core.required_tokens.contains("View::node"))

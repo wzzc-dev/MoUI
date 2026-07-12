@@ -16,6 +16,7 @@ Options:
   --moui-root <dir>             MoUI package root. Default this script's package.
   --skia-root <dir>             moui_skia package root.
   --arch <arch>                 HarmonyOS Skia arch, default arm64.
+  --renderer <mode>             auto, skia-gpu, or skia-raster. Default auto.
   --build-dir <dir>             Working directory, default artifacts/harmonyos/<app>.
   --output <hap>                HAP archive output path.
   --sdk-home <dir>              HarmonyOS/OpenHarmony SDK root. Defaults to HARMONYOS_SDK_HOME or OHOS_SDK_HOME.
@@ -40,6 +41,7 @@ harmonyos_project=""
 app_config=""
 contracts=""
 arch="arm64"
+renderer="auto"
 build_dir=""
 output_hap=""
 sdk_home="${HARMONYOS_SDK_HOME:-${OHOS_SDK_HOME:-}}"
@@ -58,6 +60,7 @@ while [ "$#" -gt 0 ]; do
     --moui-root) moui_root="${2:?missing dir after --moui-root}"; shift 2 ;;
     --skia-root) skia_root="${2:?missing dir after --skia-root}"; shift 2 ;;
     --arch) arch="${2:?missing arch after --arch}"; shift 2 ;;
+    --renderer) renderer="${2:?missing mode after --renderer}"; shift 2 ;;
     --build-dir) build_dir="${2:?missing directory after --build-dir}"; shift 2 ;;
     --output) output_hap="${2:?missing HAP path after --output}"; shift 2 ;;
     --sdk-home) sdk_home="${2:?missing SDK path after --sdk-home}"; shift 2 ;;
@@ -241,6 +244,7 @@ prepare_args=(
   "--workspace-root" "$workspace_root"
   "--moui-root" "$moui_root"
   "--arch" "$arch"
+  "--renderer" "$renderer"
   "--build-dir" "$build_dir"
 )
 [ -z "$skia_root" ] || prepare_args+=("--skia-root" "$skia_root")

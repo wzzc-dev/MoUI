@@ -1,9 +1,9 @@
 # HarmonyOS Support
 
-HarmonyOS support is currently an experimental embedded Skia scaffold with
-first-frame runtime evidence. It is parallel to the Android and iOS
-embedded-session routes: the platform shell owns
-lifecycle, native surface handle acquisition, input forwarding, and packaging;
+HarmonyOS support is currently an experimental embedded Skia route with
+first-frame runtime evidence. Native XComponent callbacks are the sole source
+of surface lifecycle, pointer, resize, and detach. ArkTS owns `displaySync`,
+the transparent IME proxy, pasteboard, accessibility overlays, and packaging;
 MoUI owns the runtime session and Skia renderer provider contracts.
 
 ## Ownership
@@ -18,6 +18,11 @@ MoUI owns the runtime session and Skia renderer provider contracts.
 - `moui/mobile/harmonyos` owns the reusable ArkTS Stage Ability/XComponent
   template plus shared NAPI/CMake native glue published with the `wzzc-dev/moui`
   package.
+
+The minimum compatible SDK is API 20. Touch movement below the native slop
+remains pointer input. Crossing slop sends one pointer Cancel followed by
+Scroll Begin/Move; Scroll End/Cancel suppresses Pointer Up. The removed ArkTS
+`.onTouch` path must not be reintroduced.
 - `examples/harmonyos_demo/harmonyos_app` owns the app-specific HarmonyOS
   project metadata and shell files for the standalone demo.
 
@@ -139,6 +144,11 @@ scripts/build-component-gallery-harmonyos-hap.sh
 `--fallback-skia` validates MoonBit C generation, native glue compilation, and
 staged HAP layout only. It does not prove renderer or platform runtime support.
 
+All HarmonyOS mobile build wrappers also accept
+`--renderer auto|skia-gpu|skia-raster`. Until direct EGL/GLES presentation is
+implemented, `auto` and `skia-gpu` record an explicit selection fallback to
+`skia-raster` in `mobile-build.json` and the native startup log.
+
 ## Emulator Setup And Smoke
 
 Install the emulator through DevEco Studio rather than this repository:
@@ -214,6 +224,29 @@ emulator run also records the following:
 - Pointer/tap input reaches the standalone demo and changes UI state.
 - Resize and lifecycle events produce a new frame without crashing.
 
-IME, clipboard, accessibility, async image, native WebView, and deeper platform
-services remain pending unless separate implementation and matching-host smoke
-evidence are recorded.
+The source route now includes transparent `TextInput` composition/selection,
+text and ArrayBuffer image pasteboard handling, and API 20 accessibility
+virtual overlays. These remain runtime-evidence pending. A passed manifest must
+record IME state/edit, clipboard completion, accessibility tree/focus/action,
+async image, application detach, and before/after pixels:
+
+```sh
+node scripts/record-mobile-runtime-smoke.mjs --platform harmonyos --app harmonyos_demo --require-passed
+node scripts/record-mobile-runtime-smoke.mjs --platform harmonyos --app component_gallery --require-passed
+```
+
+Component Gallery opens `Mobile Service Probe` directly. Use it for transparent
+TextInput composition, system pasteboard, accessibility focus/activate,
+portrait-landscape-portrait resize, scrolling, and async-image loading/ready.
+The native bridge logs resize width and height so the recorder can reject a
+duplicate initial XComponent callback. Run with `--device <hdc-target>` and
+keep screen reader interaction manual when the installed `uitest` tool cannot
+drive the platform accessibility focus model.
+
+No HarmonyOS target is currently connected on the development host, so no new
+matching-device service manifest is claimed. A physical-device pass must also
+round-trip a PNG through another app before promoting image clipboard support.
+
+The direct GPU target is EGL/GLES over `OHNativeWindow`, with Vulkan as a later
+option. It is not implemented; the current raster presenter still copies the
+full pixel frame.

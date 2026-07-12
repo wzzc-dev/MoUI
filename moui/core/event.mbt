@@ -55,6 +55,8 @@ struct CompositionUpdate {
 ///|
 pub(all) enum TextInputEvent {
   InsertText(String)
+  ReplaceText(TextRange, String)
+  SetSelection(TextRange)
   CompositionStart
   CompositionUpdate(CompositionUpdate)
   CompositionEnd(String)

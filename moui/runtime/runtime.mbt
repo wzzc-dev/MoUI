@@ -300,6 +300,16 @@ pub fn AppRuntime::semantics(self : AppRuntime) -> @core.SemanticsNode {
 }
 
 ///|
+pub fn AppRuntime::dispatch_semantics_action(
+  self : AppRuntime,
+  element_id : @core.ElementId,
+  action : @core.SemanticsAction,
+  value? : String? = None,
+) -> Bool {
+  self.state.dispatch_semantics_action(element_id, action, value)
+}
+
+///|
 pub fn AppRuntime::focused_text_input(
   self : AppRuntime,
 ) -> @core.TextInputState {

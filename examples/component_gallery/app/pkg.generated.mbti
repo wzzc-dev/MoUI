@@ -60,6 +60,7 @@ pub(all) enum ComponentGalleryItemId {
   ResponsiveGrid
   ScrollView
   PlatformRoutes
+  MobileServiceProbe
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct ComponentGalleryModel {
@@ -78,6 +79,9 @@ pub(all) struct ComponentGalleryModel {
   feature_enabled : Bool
   slider_value : Double
   counter : Int
+  probe_text : String
+  probe_action_count : Int
+  probe_submit_count : Int
 }
 pub fn ComponentGalleryModel::new(active_platform~ : PlatformId) -> Self
 
@@ -95,6 +99,9 @@ pub(all) enum ComponentGalleryMsg {
   Increment
   Decrement
   Reset
+  ProbeTextChanged(String)
+  ProbeAction
+  ProbeSubmit
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum PlatformId {
