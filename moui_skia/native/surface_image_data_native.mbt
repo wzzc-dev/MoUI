@@ -244,6 +244,60 @@ extern "C" fn native_surface_gpu_d3d_headers_available() -> Bool = "moonbit_skia
 extern "C" fn native_surface_gpu_d3d_runtime_available() -> Bool = "moonbit_skia_surface_gpu_d3d_runtime_available"
 
 ///|
+extern "C" fn native_gpu_context_vulkan() -> GpuContextHandle = "moonbit_skia_gpu_context_vulkan"
+
+///|
+/// Wrap a platform window-backed Vulkan swap chain image as a Skia GPU
+/// surface.
+///
+/// `anw_ptr` is a raw `ANativeWindow*` handle (typed as `UInt64` for FFI
+/// portability) obtained from the Android host. The host presenter owns the
+/// ANativeWindow lifecycle; Skia borrows the swap chain's back buffer image
+/// for rendering. The returned `Surface` must be flushed and then presented
+/// via `Surface::vulkan_present_and_acquire_next` to advance to the next
+/// back buffer.
+#borrow(context)
+extern "C" fn native_surface_vulkan_window(
+  context : GpuContextHandle,
+  anw_ptr : UInt64,
+  width : Int,
+  height : Int,
+  origin : Int,
+  sample_count : Int,
+  stencil_bits : Int,
+) -> SurfaceHandle = "moonbit_skia_surface_vulkan_window"
+
+///|
+/// Present the swap chain backing a `Surface` created via
+/// `native_surface_vulkan_window`, and return the next swap chain image
+/// wrapped as a fresh `Surface` for the following frame.
+///
+/// `anw_ptr` is passed for interface symmetry with the Metal layer_ptr
+/// and Direct3D hwnd_ptr parameters but is not used by Vulkan present (the
+/// swap chain already knows its surface). Returns a null handle when the
+/// swap chain cannot produce a next image (e.g. device lost, or the native
+/// Skia build lacks Vulkan support).
+#borrow(surface)
+extern "C" fn native_surface_vulkan_present_and_acquire_next(
+  surface : SurfaceHandle,
+  anw_ptr : UInt64,
+  width : Int,
+  height : Int,
+  origin : Int,
+  sample_count : Int,
+  stencil_bits : Int,
+) -> SurfaceHandle = "moonbit_skia_surface_vulkan_present_and_acquire_next"
+
+///|
+extern "C" fn native_surface_gpu_vulkan_opt_in_enabled() -> Bool = "moonbit_skia_surface_gpu_vulkan_opt_in_enabled"
+
+///|
+extern "C" fn native_surface_gpu_vulkan_headers_available() -> Bool = "moonbit_skia_surface_gpu_vulkan_headers_available"
+
+///|
+extern "C" fn native_surface_gpu_vulkan_runtime_available() -> Bool = "moonbit_skia_surface_gpu_vulkan_runtime_available"
+
+///|
 #borrow(surface)
 extern "C" fn native_surface_is_null(surface : SurfaceHandle) -> Bool = "moonbit_skia_surface_is_null"
 
@@ -862,6 +916,93 @@ pub fn Surface::direct3d_gpu_context_runtime_available() -> Bool {
 }
 
 ///|
+pub fn GpuContext::vulkan(
+  descriptor : @skia.GpuContextDescriptor,
+) -> GpuContext? {
+  if !Surface::gpu_context_support_status(descriptor).is_available() ||
+    descriptor.backend != @skia.VulkanGpuContext {
+    None
+  } else {
+    GpuContext::from_handle(native_gpu_context_vulkan(), descriptor)
+  }
+}
+
+///|
+/// Wrap an Android `ANativeWindow`-backed Vulkan swap chain image as a Skia
+/// GPU surface. The caller passes the raw `ANativeWindow*` as `anw_ptr`.
+/// Skia borrows the swap chain's back buffer image; the host presenter owns
+/// the ANativeWindow lifecycle. The returned `Surface` must be flushed and
+/// then presented via `Surface::vulkan_present_and_acquire_next` to advance
+/// to the next back buffer.
+pub fn Surface::vulkan_window_surface(
+  context : GpuContext,
+  anw_ptr : UInt64,
+  descriptor : @skia.SurfaceDescriptor,
+) -> Surface? {
+  if descriptor.is_empty() || !descriptor.is_gpu() || !context.is_available() {
+    None
+  } else if anw_ptr == 0 {
+    None
+  } else {
+    Surface::from_handle(
+      native_surface_vulkan_window(
+        context.handle,
+        anw_ptr,
+        descriptor.width(),
+        descriptor.height(),
+        native_surface_origin_ordinal(descriptor.origin),
+        descriptor.sample_count,
+        descriptor.stencil_bits,
+      ),
+      descriptor,
+    )
+  }
+}
+
+///|
+/// Present the Vulkan swap chain backing a `Surface` created via
+/// `Surface::vulkan_window_surface`, and return the next swap chain image
+/// wrapped as a fresh `Surface` for the following frame.
+pub fn Surface::vulkan_present_and_acquire_next(
+  surface : Surface,
+  context : GpuContext,
+  anw_ptr : UInt64,
+) -> Surface? {
+  if !context.is_available() {
+    None
+  } else {
+    let descriptor = surface.descriptor
+    Surface::from_handle(
+      native_surface_vulkan_present_and_acquire_next(
+        surface.handle,
+        anw_ptr,
+        descriptor.width(),
+        descriptor.height(),
+        native_surface_origin_ordinal(descriptor.origin),
+        descriptor.sample_count,
+        descriptor.stencil_bits,
+      ),
+      descriptor,
+    )
+  }
+}
+
+///|
+pub fn Surface::vulkan_gpu_context_opt_in_enabled() -> Bool {
+  native_surface_gpu_vulkan_opt_in_enabled()
+}
+
+///|
+pub fn Surface::vulkan_gpu_context_headers_available() -> Bool {
+  native_surface_gpu_vulkan_headers_available()
+}
+
+///|
+pub fn Surface::vulkan_gpu_context_runtime_available() -> Bool {
+  native_surface_gpu_vulkan_runtime_available()
+}
+
+///|
 /// Classify native support for a value-layer GPU context descriptor.
 pub fn Surface::gpu_context_support_status(
   context : @skia.GpuContextDescriptor,
@@ -890,6 +1031,16 @@ pub fn Surface::gpu_context_support_status(
           SkiaGpuContextDirect3DHeadersUnavailable
         } else if !Surface::direct3d_gpu_context_runtime_available() {
           SkiaGpuContextDirect3DRuntimeUnavailable
+        } else {
+          SkiaGpuContextAvailable
+        }
+      @skia.VulkanGpuContext =>
+        if !Surface::vulkan_gpu_context_opt_in_enabled() {
+          SkiaGpuContextVulkanOptInDisabled
+        } else if !Surface::vulkan_gpu_context_headers_available() {
+          SkiaGpuContextVulkanHeadersUnavailable
+        } else if !Surface::vulkan_gpu_context_runtime_available() {
+          SkiaGpuContextVulkanRuntimeUnavailable
         } else {
           SkiaGpuContextAvailable
         }

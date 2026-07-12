@@ -23,6 +23,19 @@
 #define MOUI_SKIA_HAS_GANESH_D3D_HEADERS 1
 #endif
 
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(__ANDROID__) && \
+  __has_include("include/gpu/ganesh/GrDirectContext.h") && \
+  __has_include("include/gpu/ganesh/vk/GrVkBackendContext.h") && \
+  __has_include("include/gpu/ganesh/vk/GrVkDirectContext.h") && \
+  __has_include("include/gpu/ganesh/vk/GrVkTypes.h") && \
+  __has_include("include/gpu/ganesh/GrBackendRenderTarget.h") && \
+  __has_include("include/gpu/ganesh/SkSurfaceGanesh.h") && \
+  __has_include(<vulkan/vulkan.h>) && \
+  __has_include(<vulkan/vulkan_android.h>) && \
+  __has_include(<android/native_window.h>)
+#define MOUI_SKIA_HAS_GANESH_VULKAN_HEADERS 1
+#endif
+
 #if defined(MOUI_SKIA_ENABLE_GPU_METAL) && \
   defined(MOUI_SKIA_HAS_GANESH_METAL_HEADERS)
 #include "include/gpu/ganesh/mtl/GrMtlBackendContext.h"
@@ -161,6 +174,7 @@ void moonbit_skia_com_release(void* object) { (void)object; }
 
 static const int32_t MOONBIT_SKIA_GPU_BACKEND_METAL = 1;
 static const int32_t MOONBIT_SKIA_GPU_BACKEND_D3D = 2;
+static const int32_t MOONBIT_SKIA_GPU_BACKEND_VULKAN = 3;
 
 static MoonbitSkiaSurface* moonbit_skia_surface_wrapper_with_gpu_context(
 #if defined(MOUI_SKIA_HAS_SKIA)
@@ -336,6 +350,242 @@ moonbit_skia_gpu_context_direct3d(void) {
     device_ptr,
     nullptr,
     MOONBIT_SKIA_GPU_BACKEND_D3D
+  );
+#else
+  return moonbit_skia_make_gpu_context_wrapper(nullptr, nullptr, nullptr, 0);
+#endif
+}
+
+#if defined(MOUI_SKIA_ENABLE_GPU_VULKAN) && \
+  defined(MOUI_SKIA_HAS_GANESH_VULKAN_HEADERS)
+#include "include/gpu/ganesh/vk/GrVkBackendContext.h"
+#include "include/gpu/ganesh/vk/GrVkDirectContext.h"
+#include "include/gpu/ganesh/vk/GrVkTypes.h"
+#include "include/gpu/ganesh/GrBackendRenderTarget.h"
+#include "include/gpu/ganesh/SkSurfaceGanesh.h"
+
+#include <vulkan/vulkan.h>
+#include <vulkan/vulkan_android.h>
+#include <android/native_window.h>
+
+/// Heap-allocated Vulkan context state. Stored as the `device` field of
+/// MoonbitSkiaGpuContext. The finalizer calls
+/// moonbit_skia_vulkan_release_context which destroys the VkDevice and
+/// VkInstance in that order.
+struct MoonbitSkiaVulkanContext {
+  VkInstance instance;
+  VkPhysicalDevice physical_device;
+  VkDevice device;
+  VkQueue queue;
+  uint32_t queue_family_index;
+};
+
+/// Heap-allocated Vulkan swapchain state. Stored as the `host_present_handle`
+/// of MoonbitSkiaSurface. The finalizer calls
+/// moonbit_skia_vulkan_release_swapchain which destroys the swapchain and
+/// surface. The VkDevice, VkInstance, VkQueue are borrowed from the context
+/// and not released here.
+struct MoonbitSkiaVulkanSwapChain {
+  VkDevice device;
+  VkInstance instance;
+  VkQueue queue;
+  VkSwapchainKHR swapchain;
+  VkSurfaceKHR surface;
+  VkFormat image_format;
+  uint32_t queue_family_index;
+};
+
+void moonbit_skia_vulkan_release_context(void* object) {
+  if (object == nullptr) {
+    return;
+  }
+  auto* ctx = static_cast<MoonbitSkiaVulkanContext*>(object);
+  if (ctx->device != VK_NULL_HANDLE) {
+    vkDestroyDevice(ctx->device, nullptr);
+  }
+  if (ctx->instance != VK_NULL_HANDLE) {
+    vkDestroyInstance(ctx->instance, nullptr);
+  }
+  delete ctx;
+}
+
+void moonbit_skia_vulkan_release_swapchain(void* object) {
+  if (object == nullptr) {
+    return;
+  }
+  auto* sc = static_cast<MoonbitSkiaVulkanSwapChain*>(object);
+  if (sc->device != VK_NULL_HANDLE) {
+    if (sc->swapchain != VK_NULL_HANDLE) {
+      vkDestroySwapchainKHR(sc->device, sc->swapchain, nullptr);
+    }
+  }
+  if (sc->instance != VK_NULL_HANDLE && sc->surface != VK_NULL_HANDLE) {
+    vkDestroySurfaceKHR(sc->instance, sc->surface, nullptr);
+  }
+  delete sc;
+}
+
+static GrDirectContext* moonbit_skia_make_vulkan_direct_context(
+  MoonbitSkiaVulkanContext** out_context
+) {
+  VkInstanceCreateInfo instance_info = {};
+  instance_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+  VkInstance instance = VK_NULL_HANDLE;
+  VkResult err = vkCreateInstance(&instance_info, nullptr, &instance);
+  if (err != VK_SUCCESS || instance == VK_NULL_HANDLE) {
+    return nullptr;
+  }
+
+  uint32_t gpu_count = 0;
+  err = vkEnumeratePhysicalDevices(instance, &gpu_count, nullptr);
+  if (err != VK_SUCCESS || gpu_count == 0) {
+    vkDestroyInstance(instance, nullptr);
+    return nullptr;
+  }
+  std::vector<VkPhysicalDevice> gpus(gpu_count);
+  err = vkEnumeratePhysicalDevices(instance, &gpu_count, gpus.data());
+  if (err != VK_SUCCESS || gpus.empty()) {
+    vkDestroyInstance(instance, nullptr);
+    return nullptr;
+  }
+  VkPhysicalDevice physical_device = gpus[0];
+
+  uint32_t queue_family_count = 0;
+  vkGetPhysicalDeviceQueueFamilyProperties(
+    physical_device, &queue_family_count, nullptr
+  );
+  if (queue_family_count == 0) {
+    vkDestroyInstance(instance, nullptr);
+    return nullptr;
+  }
+  std::vector<VkQueueFamilyProperties> queue_families(queue_family_count);
+  vkGetPhysicalDeviceQueueFamilyProperties(
+    physical_device, &queue_family_count, queue_families.data()
+  );
+  uint32_t queue_family_index = 0;
+  bool found_graphics = false;
+  for (uint32_t i = 0; i < queue_family_count; ++i) {
+    if (queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+      queue_family_index = i;
+      found_graphics = true;
+      break;
+    }
+  }
+  if (!found_graphics) {
+    vkDestroyInstance(instance, nullptr);
+    return nullptr;
+  }
+
+  float queue_priority = 1.0f;
+  VkDeviceQueueCreateInfo queue_info = {};
+  queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+  queue_info.queueFamilyIndex = queue_family_index;
+  queue_info.queueCount = 1;
+  queue_info.pQueuePriorities = &queue_priority;
+
+  const char* device_extensions[] = {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+  };
+  VkDeviceCreateInfo device_info = {};
+  device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+  device_info.queueCreateInfoCount = 1;
+  device_info.pQueueCreateInfos = &queue_info;
+  device_info.enabledExtensionCount = 1;
+  device_info.ppEnabledExtensionNames = device_extensions;
+  VkDevice device = VK_NULL_HANDLE;
+  err = vkCreateDevice(physical_device, &device_info, nullptr, &device);
+  if (err != VK_SUCCESS || device == VK_NULL_HANDLE) {
+    vkDestroyInstance(instance, nullptr);
+    return nullptr;
+  }
+  VkQueue queue;
+  vkGetDeviceQueue(device, queue_family_index, 0, &queue);
+
+  GrVkBackendContext backend_context;
+  backend_context.fInstance = instance;
+  backend_context.fPhysicalDevice = physical_device;
+  backend_context.fDevice = device;
+  backend_context.fQueue = queue;
+  backend_context.fGraphicsQueueIndex = queue_family_index;
+
+  sk_sp<GrDirectContext> context = GrDirectContexts::MakeVulkan(
+    backend_context
+  );
+  if (!context) {
+    vkDestroyDevice(device, nullptr);
+    vkDestroyInstance(instance, nullptr);
+    return nullptr;
+  }
+
+  auto* vk_context = new MoonbitSkiaVulkanContext();
+  vk_context->instance = instance;
+  vk_context->physical_device = physical_device;
+  vk_context->device = device;
+  vk_context->queue = queue;
+  vk_context->queue_family_index = queue_family_index;
+  *out_context = vk_context;
+  return context.release();
+}
+#endif
+
+extern "C" MOONBIT_FFI_EXPORT int32_t
+moonbit_skia_surface_gpu_vulkan_opt_in_enabled(void) {
+#if defined(MOUI_SKIA_ENABLE_GPU_VULKAN) && defined(__ANDROID__)
+  return 1;
+#else
+  return 0;
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT int32_t
+moonbit_skia_surface_gpu_vulkan_headers_available(void) {
+#if defined(MOUI_SKIA_HAS_GANESH_VULKAN_HEADERS)
+  return 1;
+#else
+  return 0;
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT int32_t
+moonbit_skia_surface_gpu_vulkan_runtime_available(void) {
+#if defined(MOUI_SKIA_ENABLE_GPU_VULKAN) && \
+  defined(MOUI_SKIA_HAS_GANESH_VULKAN_HEADERS)
+  MoonbitSkiaVulkanContext* vk_context = nullptr;
+  GrDirectContext* context = moonbit_skia_make_vulkan_direct_context(
+    &vk_context
+  );
+  if (context == nullptr) {
+    return 0;
+  }
+  context->unref();
+  if (vk_context != nullptr) {
+    moonbit_skia_vulkan_release_context(vk_context);
+  }
+  return 1;
+#else
+  return 0;
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaGpuContext*
+moonbit_skia_gpu_context_vulkan(void) {
+#if defined(MOUI_SKIA_ENABLE_GPU_VULKAN) && \
+  defined(MOUI_SKIA_HAS_GANESH_VULKAN_HEADERS)
+  MoonbitSkiaVulkanContext* vk_context = nullptr;
+  GrDirectContext* context = moonbit_skia_make_vulkan_direct_context(
+    &vk_context
+  );
+  if (!context || vk_context == nullptr) {
+    if (vk_context != nullptr) {
+      moonbit_skia_vulkan_release_context(vk_context);
+    }
+    return moonbit_skia_make_gpu_context_wrapper(nullptr, nullptr, nullptr, 0);
+  }
+  return moonbit_skia_make_gpu_context_wrapper(
+    context,
+    vk_context,
+    nullptr,
+    MOONBIT_SKIA_GPU_BACKEND_VULKAN
   );
 #else
   return moonbit_skia_make_gpu_context_wrapper(nullptr, nullptr, nullptr, 0);
@@ -1269,6 +1519,309 @@ moonbit_skia_surface_direct3d_present_and_acquire_next(
 #endif
 }
 
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaSurface*
+moonbit_skia_surface_vulkan_window(
+  MoonbitSkiaGpuContext* context,
+  uint64_t anw_ptr,
+  int32_t width,
+  int32_t height,
+  int32_t origin,
+  int32_t sample_count,
+  int32_t stencil_bits
+) {
+  if (
+    width <= 0 ||
+    height <= 0 ||
+    anw_ptr == 0 ||
+    context == nullptr ||
+    context->context == nullptr ||
+    context->backend != MOONBIT_SKIA_GPU_BACKEND_VULKAN
+  ) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+#if defined(MOUI_SKIA_ENABLE_GPU_VULKAN) && \
+  defined(MOUI_SKIA_HAS_GANESH_VULKAN_HEADERS)
+  (void)sample_count;
+  (void)stencil_bits;
+
+  auto* vk_context = static_cast<MoonbitSkiaVulkanContext*>(
+    context->device
+  );
+  if (vk_context == nullptr) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+
+  ANativeWindow* window = reinterpret_cast<ANativeWindow*>(
+    static_cast<uintptr_t>(anw_ptr)
+  );
+
+  // Create VkSurfaceKHR from the ANativeWindow
+  VkAndroidSurfaceCreateInfoKHR surface_info = {};
+  surface_info.sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
+  surface_info.window = window;
+  VkSurfaceKHR surface = VK_NULL_HANDLE;
+  VkResult err = vkCreateAndroidSurfaceKHR(
+    vk_context->instance,
+    &surface_info,
+    nullptr,
+    &surface
+  );
+  if (err != VK_SUCCESS || surface == VK_NULL_HANDLE) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+
+  // Query surface capabilities
+  VkSurfaceCapabilitiesKHR capabilities;
+  err = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
+    vk_context->physical_device,
+    surface,
+    &capabilities
+  );
+  if (err != VK_SUCCESS) {
+    vkDestroySurfaceKHR(vk_context->instance, surface, nullptr);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+
+  // Select surface format (prefer RGBA8)
+  uint32_t format_count = 0;
+  vkGetPhysicalDeviceSurfaceFormatsKHR(
+    vk_context->physical_device, surface, &format_count, nullptr
+  );
+  if (format_count == 0) {
+    vkDestroySurfaceKHR(vk_context->instance, surface, nullptr);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+  std::vector<VkSurfaceFormatKHR> formats(format_count);
+  vkGetPhysicalDeviceSurfaceFormatsKHR(
+    vk_context->physical_device, surface, &format_count, formats.data()
+  );
+  VkFormat chosen_format = formats[0].format;
+  VkColorSpaceKHR chosen_color_space = formats[0].colorSpace;
+  for (const auto& f : formats) {
+    if (
+      f.format == VK_FORMAT_R8G8B8A8_UNORM &&
+      f.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+    ) {
+      chosen_format = f.format;
+      chosen_color_space = f.colorSpace;
+      break;
+    }
+  }
+
+  // Create the swapchain
+  VkSwapchainCreateInfoKHR swap_info = {};
+  swap_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+  swap_info.surface = surface;
+  swap_info.minImageCount = 2;
+  swap_info.imageFormat = chosen_format;
+  swap_info.imageColorSpace = chosen_color_space;
+  swap_info.imageExtent.width = static_cast<uint32_t>(width);
+  swap_info.imageExtent.height = static_cast<uint32_t>(height);
+  swap_info.imageArrayLayers = 1;
+  swap_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  swap_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  swap_info.preTransform = capabilities.currentTransform;
+  swap_info.compositeAlpha = VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR;
+  swap_info.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+  swap_info.clipped = VK_TRUE;
+  VkSwapchainKHR swapchain = VK_NULL_HANDLE;
+  err = vkCreateSwapchainKHR(vk_context->device, &swap_info, nullptr, &swapchain);
+  if (err != VK_SUCCESS || swapchain == VK_NULL_HANDLE) {
+    vkDestroySurfaceKHR(vk_context->instance, surface, nullptr);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+
+  // Get the first swapchain image
+  uint32_t image_count = 0;
+  vkGetSwapchainImagesKHR(vk_context->device, swapchain, &image_count, nullptr);
+  if (image_count == 0) {
+    vkDestroySwapchainKHR(vk_context->device, swapchain, nullptr);
+    vkDestroySurfaceKHR(vk_context->instance, surface, nullptr);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+  std::vector<VkImage> images(image_count);
+  vkGetSwapchainImagesKHR(
+    vk_context->device, swapchain, &image_count, images.data()
+  );
+  VkImage swapchain_image = images[0];
+
+  // Wrap as GrVkImageInfo
+  GrVkImageInfo image_info;
+  image_info.fImage = swapchain_image;
+  image_info.fAlloc = nullptr;
+  image_info.fFormat = chosen_format;
+  image_info.fImageTiling = VK_IMAGE_TILING_OPTIMAL;
+  image_info.fImageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  image_info.fSampleCount = 1;
+  image_info.fLevelCount = 1;
+  image_info.fCurrentQueueFamily = vk_context->queue_family_index;
+  image_info.fProtectedLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+  GrBackendRenderTarget backend_rt = GrBackendRenderTargets::MakeVk(
+    width, height, image_info
+  );
+
+  sk_sp<SkSurface> surface_obj = SkSurfaces::WrapBackendSurface(
+    context->context,
+    backend_rt,
+    moonbit_skia_surface_origin(origin),
+    nullptr,
+    nullptr
+  );
+  if (!surface_obj) {
+    vkDestroySwapchainKHR(vk_context->device, swapchain, nullptr);
+    vkDestroySurfaceKHR(vk_context->instance, surface, nullptr);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+
+  MoonbitSkiaSurface* wrapper = moonbit_skia_surface_wrapper_with_gpu_context(
+    surface_obj.release(),
+    context->context
+  );
+  auto* sc = new MoonbitSkiaVulkanSwapChain();
+  sc->device = vk_context->device;
+  sc->instance = vk_context->instance;
+  sc->queue = vk_context->queue;
+  sc->swapchain = swapchain;
+  sc->surface = surface;
+  sc->image_format = chosen_format;
+  sc->queue_family_index = vk_context->queue_family_index;
+  wrapper->host_present_handle = sc;
+  return wrapper;
+#else
+  (void)anw_ptr;
+  (void)origin;
+  (void)sample_count;
+  (void)stencil_bits;
+  return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaSurface*
+moonbit_skia_surface_vulkan_present_and_acquire_next(
+  MoonbitSkiaSurface* wrapper,
+  uint64_t anw_ptr,
+  int32_t width,
+  int32_t height,
+  int32_t origin,
+  int32_t sample_count,
+  int32_t stencil_bits
+) {
+  if (
+    wrapper == nullptr ||
+    wrapper->surface == nullptr ||
+    wrapper->host_present_handle == nullptr ||
+    wrapper->gpu_context_owner == nullptr
+  ) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+#if defined(MOUI_SKIA_ENABLE_GPU_VULKAN) && \
+  defined(MOUI_SKIA_HAS_GANESH_VULKAN_HEADERS)
+  (void)anw_ptr;
+  (void)sample_count;
+  (void)stencil_bits;
+
+  auto* sc = static_cast<MoonbitSkiaVulkanSwapChain*>(
+    wrapper->host_present_handle
+  );
+  GrDirectContext* gpu_context = wrapper->gpu_context_owner;
+
+  // Present the current frame via queue submission
+  VkPresentInfoKHR present_info = {};
+  present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+  present_info.swapchainCount = 1;
+  present_info.pSwapchains = &sc->swapchain;
+  uint32_t image_index = 0;
+  present_info.pImageIndices = &image_index;
+  VkResult err = vkQueuePresentKHR(sc->queue, &present_info);
+  if (err != VK_SUCCESS && err != VK_SUBOPTIMAL_KHR) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+  }
+
+  // Acquire the next swapchain image
+  VkSemaphore semaphore = VK_NULL_HANDLE;
+  VkSemaphoreCreateInfo sem_info = {};
+  sem_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+  err = vkCreateSemaphore(sc->device, &sem_info, nullptr, &semaphore);
+  if (err != VK_SUCCESS) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+  }
+  err = vkAcquireNextImageKHR(
+    sc->device,
+    sc->swapchain,
+    UINT64_MAX,
+    semaphore,
+    VK_NULL_HANDLE,
+    &image_index
+  );
+  vkDestroySemaphore(sc->device, semaphore, nullptr);
+  if (err != VK_SUCCESS && err != VK_SUBOPTIMAL_KHR) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+  }
+
+  // Get the swapchain image at the acquired index
+  uint32_t image_count = 0;
+  vkGetSwapchainImagesKHR(sc->device, sc->swapchain, &image_count, nullptr);
+  if (image_count <= image_index) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+  }
+  std::vector<VkImage> images(image_count);
+  vkGetSwapchainImagesKHR(
+    sc->device, sc->swapchain, &image_count, images.data()
+  );
+  VkImage next_image = images[image_index];
+
+  // Release the old surface; the swapchain state is moved to the new wrapper.
+  wrapper->surface->unref();
+  wrapper->surface = nullptr;
+  wrapper->host_present_handle = nullptr;
+
+  // Wrap the next swapchain image as a new SkSurface
+  GrVkImageInfo image_info;
+  image_info.fImage = next_image;
+  image_info.fAlloc = nullptr;
+  image_info.fFormat = sc->image_format;
+  image_info.fImageTiling = VK_IMAGE_TILING_OPTIMAL;
+  image_info.fImageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  image_info.fSampleCount = 1;
+  image_info.fLevelCount = 1;
+  image_info.fCurrentQueueFamily = sc->queue_family_index;
+  image_info.fProtectedLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+  GrBackendRenderTarget backend_rt = GrBackendRenderTargets::MakeVk(
+    width, height, image_info
+  );
+
+  sk_sp<SkSurface> next_surface = SkSurfaces::WrapBackendSurface(
+    gpu_context,
+    backend_rt,
+    moonbit_skia_surface_origin(origin),
+    nullptr,
+    nullptr
+  );
+  if (!next_surface) {
+    moonbit_skia_vulkan_release_swapchain(sc);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+  }
+
+  MoonbitSkiaSurface* new_wrapper =
+    moonbit_skia_surface_wrapper_with_gpu_context(
+      next_surface.release(),
+      gpu_context
+    );
+  new_wrapper->host_present_handle = sc;
+  return new_wrapper;
+#else
+  (void)anw_ptr;
+  (void)width;
+  (void)height;
+  (void)origin;
+  (void)sample_count;
+  (void)stencil_bits;
+  return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+#endif
+}
+
 extern "C" MOONBIT_FFI_EXPORT int32_t
 moonbit_skia_surface_flush_and_submit(MoonbitSkiaSurface* wrapper) {
   if (wrapper == nullptr || wrapper->surface == nullptr) {
@@ -1278,7 +1831,7 @@ moonbit_skia_surface_flush_and_submit(MoonbitSkiaSurface* wrapper) {
   if (wrapper->gpu_context_owner == nullptr) {
     return wrapper->surface->recordingContext() == nullptr;
   }
-#if (defined(MOUI_SKIA_ENABLE_GPU_METAL) || defined(MOUI_SKIA_ENABLE_GPU_D3D)) && \
+#if (defined(MOUI_SKIA_ENABLE_GPU_METAL) || defined(MOUI_SKIA_ENABLE_GPU_D3D) || defined(MOUI_SKIA_ENABLE_GPU_VULKAN)) && \
   defined(MOUI_SKIA_HAS_GANESH_DIRECT_CONTEXT)
   wrapper->gpu_context_owner->flushAndSubmit(wrapper->surface);
   return 1;

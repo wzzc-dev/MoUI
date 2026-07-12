@@ -270,6 +270,9 @@ pub(all) enum SkiaGpuContextSupportStatus {
   SkiaGpuContextDirect3DOptInDisabled
   SkiaGpuContextDirect3DHeadersUnavailable
   SkiaGpuContextDirect3DRuntimeUnavailable
+  SkiaGpuContextVulkanOptInDisabled
+  SkiaGpuContextVulkanHeadersUnavailable
+  SkiaGpuContextVulkanRuntimeUnavailable
 } derive(Debug, Eq)
 
 ///|

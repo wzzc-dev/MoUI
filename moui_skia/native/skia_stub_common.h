@@ -202,6 +202,26 @@ void moonbit_skia_com_release(void* object);
 static inline void moonbit_skia_com_release(void* object) { (void)object; }
 #endif
 
+#if defined(__ANDROID__)
+/// Release a heap-allocated MoonbitSkiaVulkanContext stored as the `device`
+/// field of MoonbitSkiaGpuContext on Android. Safe to call with nullptr. On
+/// non-Android platforms this is a no-op stub. The definition lives in
+/// skia_stub_surface_image_data.cpp.
+void moonbit_skia_vulkan_release_context(void* object);
+/// Release a heap-allocated MoonbitSkiaVulkanSwapChain stored as
+/// host_present_handle on Android. Safe to call with nullptr. On non-Android
+/// platforms this is a no-op stub. The definition lives in
+/// skia_stub_surface_image_data.cpp.
+void moonbit_skia_vulkan_release_swapchain(void* object);
+#else
+static inline void moonbit_skia_vulkan_release_context(void* object) {
+  (void)object;
+}
+static inline void moonbit_skia_vulkan_release_swapchain(void* object) {
+  (void)object;
+}
+#endif
+
 struct MoonbitSkiaGpuContext {
 #if defined(MOUI_SKIA_HAS_SKIA)
   GrDirectContext* context;
