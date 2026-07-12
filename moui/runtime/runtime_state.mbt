@@ -369,12 +369,7 @@ fn RuntimeState::rebuild_if_possible(self : RuntimeState) -> Unit {
       self.element_tree = ElementTree::new(result.node)
       self.next_element_id = result.next_id
       self.clear_stale_pointer_capture()
-      self.needs_rebuild = self.element_tree.root.has_dirty_build()
-      self.needs_layout = self.needs_layout ||
-        self.element_tree.root.has_dirty_layout()
-      self.needs_paint = self.needs_paint ||
-        self.element_tree.root.has_dirty_paint()
-      self.needs_redraw = true
+      self.mark_current_dirty_elements()
     }
   }
 }
