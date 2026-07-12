@@ -5,7 +5,7 @@ test "macos skia options default to system font resolution and host resolver" {
     options.font_resolution == @skia_renderer.SkiaFontResolution::SystemFontMgr,
   )
   assert_true(
-    options.surface_route == @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute,
+    options.surface_route == @render.SkiaSurfaceRoute::RasterSurfaceRoute,
   )
   let smoke_options = MacosSkiaSmokeOptions::new(
     first_frame_smoke_auto_exit=true,
@@ -134,7 +134,7 @@ test "macos skia provider preflight records package observation boundary" {
   let empty = macos_skia_provider_preflight_summary(
     options=MacosSkiaAppOptions::new(
       font_resolution=@skia_renderer.SkiaFontResolution::EmptyTypeface,
-      surface_route=@skia_renderer.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
+      surface_route=@render.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
     ),
   )
   assert_true(empty.contains("font=empty-typeface"))

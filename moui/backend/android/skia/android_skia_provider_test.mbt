@@ -23,7 +23,7 @@ test "android skia preflight names scaffold requirements" {
 test "android skia preflight reports vulkan direct gpu presenter path" {
   let summary = android_skia_provider_preflight_summary(
     options=AndroidSkiaAppOptions::new(
-      surface_route=@skia_renderer.SkiaSurfaceRoute::VulkanGpuSurfaceRoute,
+      surface_route=@render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute,
     ),
   )
   assert_true(summary.contains("surface_route=vulkan-gpu"))

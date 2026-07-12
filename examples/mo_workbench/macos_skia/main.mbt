@@ -2,9 +2,9 @@
 async fn main {
   let surface_route = if @env.get_env_var("MOUI_MACOS_SKIA_SURFACE_ROUTE") ==
     Some("metal-gpu") {
-    @skia_renderer.SkiaSurfaceRoute::MetalGpuSurfaceRoute
+    @render.SkiaSurfaceRoute::MetalGpuSurfaceRoute
   } else {
-    @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute
+    @render.SkiaSurfaceRoute::RasterSurfaceRoute
   }
   let app_options = @macos_skia_backend.MacosSkiaAppOptions::new(
     surface_route~,
