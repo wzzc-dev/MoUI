@@ -28,8 +28,8 @@ priv struct ElementControlState {
   mut text_selection_anchor : Int?
   mut composition : String?
   mut composition_cursor : TextRange?
-  text_undo_stack : Array[TextHistoryEntry]
-  text_redo_stack : Array[TextHistoryEntry]
+  text_undo_stack : Array[@core.TextHistoryEntryContext]
+  text_redo_stack : Array[@core.TextHistoryEntryContext]
 }
 
 ///|
@@ -60,27 +60,6 @@ priv struct ElementRenderCache {
 }
 
 ///|
-priv struct TextHistoryEntry {
-  text : String
-  caret : Int
-  selection : TextRange?
-}
-
-///|
-fn TextHistoryEntry::to_context(
-  self : TextHistoryEntry,
-) -> @core.TextHistoryEntryContext {
-  { text: self.text, caret: self.caret, selection: self.selection }
-}
-
-///|
-fn TextHistoryEntry::from_context(
-  value : @core.TextHistoryEntryContext,
-) -> TextHistoryEntry {
-  { text: value.text, caret: value.caret, selection: value.selection }
-}
-
-///|
 fn ElementControlState::text_context(
   self : ElementControlState,
 ) -> @core.TextControlStateContext {
@@ -90,8 +69,8 @@ fn ElementControlState::text_context(
     text_selection_anchor: self.text_selection_anchor,
     composition: self.composition,
     composition_cursor: self.composition_cursor,
-    undo_stack: self.text_undo_stack.map(entry => entry.to_context()),
-    redo_stack: self.text_redo_stack.map(entry => entry.to_context()),
+    undo_stack: self.text_undo_stack.copy(),
+    redo_stack: self.text_redo_stack.copy(),
   }
 }
 
@@ -106,13 +85,9 @@ fn ElementControlState::apply_text_context(
   self.composition = value.composition
   self.composition_cursor = value.composition_cursor
   self.text_undo_stack.clear()
-  self.text_undo_stack.append(
-    value.undo_stack.map(entry => TextHistoryEntry::from_context(entry)),
-  )
+  self.text_undo_stack.append(value.undo_stack.copy())
   self.text_redo_stack.clear()
-  self.text_redo_stack.append(
-    value.redo_stack.map(entry => TextHistoryEntry::from_context(entry)),
-  )
+  self.text_redo_stack.append(value.redo_stack.copy())
 }
 
 ///|
