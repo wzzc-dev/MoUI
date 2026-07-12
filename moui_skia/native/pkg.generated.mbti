@@ -218,6 +218,7 @@ pub fn GpuContext::is_available(Self) -> Bool
 pub fn GpuContext::metal(@moui_skia.GpuContextDescriptor) -> Self?
 pub fn GpuContext::resource_key(Self) -> @moui_skia.RendererResourceKey
 pub fn GpuContext::support_status(Self) -> SkiaGpuContextSupportStatus
+pub fn GpuContext::vulkan(@moui_skia.GpuContextDescriptor) -> Self?
 
 pub(all) struct Image {
   // private fields
@@ -388,6 +389,9 @@ pub(all) enum SkiaGpuContextSupportStatus {
   SkiaGpuContextDirect3DOptInDisabled
   SkiaGpuContextDirect3DHeadersUnavailable
   SkiaGpuContextDirect3DRuntimeUnavailable
+  SkiaGpuContextVulkanOptInDisabled
+  SkiaGpuContextVulkanHeadersUnavailable
+  SkiaGpuContextVulkanRuntimeUnavailable
 } derive(Eq, @debug.Debug)
 pub fn SkiaGpuContextSupportStatus::is_available(Self) -> Bool
 
@@ -421,6 +425,11 @@ pub fn Surface::render_frame(Self, @moui_skia.RenderFrameDescriptor, font? : Fon
 pub fn Surface::render_frame_with_resources(Self, @moui_skia.RenderFrameDescriptor, NativeReplayResources, font? : Font?, frame_index? : Int) -> SurfaceFrameReplayStats
 pub fn Surface::target_support_status(@moui_skia.SurfaceTargetDescriptor) -> SurfaceTargetSupportStatus
 pub fn Surface::target_support_status_with_gpu_context(@moui_skia.SurfaceTargetDescriptor, GpuContext) -> SurfaceTargetSupportStatus
+pub fn Surface::vulkan_gpu_context_headers_available() -> Bool
+pub fn Surface::vulkan_gpu_context_opt_in_enabled() -> Bool
+pub fn Surface::vulkan_gpu_context_runtime_available() -> Bool
+pub fn Surface::vulkan_present_and_acquire_next(Self, GpuContext, UInt64) -> Self?
+pub fn Surface::vulkan_window_surface(GpuContext, UInt64, @moui_skia.SurfaceDescriptor) -> Self?
 pub fn Surface::width(Self) -> Int
 
 pub(all) struct SurfaceFrameReplayStats {
