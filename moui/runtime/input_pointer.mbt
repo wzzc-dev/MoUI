@@ -167,7 +167,18 @@ fn ElementNode::dispatch_pointer_to_children(
           Some(_) => focused = result.focused
           None => ()
         }
-        delivered_main_event = true
+        // Only consider the main event delivered when the child actually
+        // handled it — matching the original `break` condition. A hit child
+        // that did not handle the event (e.g. a non-interactive container)
+        // lets the traversal continue so a sibling beneath it can receive
+        // the event. For Move/Exit, the loop keeps going regardless so that
+        // previously hovered siblings get a synthetic Exit to clear hover.
+        if has_capture ||
+          result.changed ||
+          result.activated ||
+          result.focused is Some(_) {
+          delivered_main_event = true
+        }
       } else if is_move && child.has_hovered_descendant() {
         // Pointer moved off this child (or a descendant it previously
         // hovered) — send an `Exit` so its hover clears. The exit carries the
