@@ -1082,7 +1082,7 @@ fn run_gpu_metal_renderer_smoke() -> Unit {
         scale_factor=1.0,
       ),
       target,
-      surface_route=@skia_renderer.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
+      surface_route=@render.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
     )
   catch {
     err => Err(err)

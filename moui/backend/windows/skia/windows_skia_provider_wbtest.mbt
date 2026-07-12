@@ -91,7 +91,7 @@ test "windows skia provider preflight records package observation boundary" {
   let empty = windows_skia_provider_preflight_summary(
     options=WindowsSkiaAppOptions::new(
       font_resolution=@skia_renderer.SkiaFontResolution::EmptyTypeface,
-      surface_route=@skia_renderer.SkiaSurfaceRoute::Direct3DGpuSurfaceRoute,
+      surface_route=@render.SkiaSurfaceRoute::Direct3DGpuSurfaceRoute,
     ),
   )
   assert_true(empty.contains("font=empty-typeface"))
@@ -230,7 +230,7 @@ test "windows skia options default to system font resolution" {
     options.font_resolution == @skia_renderer.SkiaFontResolution::SystemFontMgr,
   )
   assert_true(
-    options.surface_route == @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute,
+    options.surface_route == @render.SkiaSurfaceRoute::RasterSurfaceRoute,
   )
   assert_false(WindowsSkiaSmokeOptions::new().first_frame_smoke_auto_exit)
   let request = @host.HostWindowOpenRequest::new(

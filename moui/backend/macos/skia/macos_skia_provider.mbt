@@ -23,7 +23,7 @@ extern "C" fn macos_skia_install_metal_layer(
 pub struct MacosSkiaAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
   priv font_resolution : @skia_renderer.SkiaFontResolution
-  priv surface_route : @skia_renderer.SkiaSurfaceRoute
+  priv surface_route : @render.SkiaSurfaceRoute
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
   priv transparent_titlebar : Bool
   priv platform_attributes : @window_core.PlatformWindowAttributes
@@ -41,7 +41,7 @@ pub struct MacosSkiaSmokeOptions {
 pub fn MacosSkiaAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
-  surface_route? : @skia_renderer.SkiaSurfaceRoute = @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute,
+  surface_route? : @render.SkiaSurfaceRoute = @render.SkiaSurfaceRoute::RasterSurfaceRoute,
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
   transparent_titlebar? : Bool = false,
   platform_attributes? : @window_core.PlatformWindowAttributes = @window_core.PlatformWindowAttributes::default(),
@@ -407,7 +407,7 @@ fn create_raster_renderer(
     let renderer = @skia_renderer.create_with_present_target_and_route(
       renderer_metrics_from_host(metrics),
       macos_skia_present_target(raw_content_view_handle),
-      surface_route=@skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute,
+      surface_route=@render.SkiaSurfaceRoute::RasterSurfaceRoute,
       font_resolution=options.font_resolution,
       async_image_loading=true,
     )

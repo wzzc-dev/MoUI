@@ -50,9 +50,9 @@ let valid_main =
   #|  )
   #|  let surface_route = if @env.get_env_var("MOUI_MACOS_SKIA_SURFACE_ROUTE") ==
   #|    Some("metal-gpu") {
-  #|    @skia_renderer.SkiaSurfaceRoute::MetalGpuSurfaceRoute
+  #|    @render.SkiaSurfaceRoute::MetalGpuSurfaceRoute
   #|  } else {
-  #|    @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute
+  #|    @render.SkiaSurfaceRoute::RasterSurfaceRoute
   #|  }
   #|  @macos_skia_backend.run_app_with_options(
   #|    "MoUI Showcase",
