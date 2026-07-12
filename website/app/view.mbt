@@ -1097,7 +1097,7 @@ fn Model::quick_start_placeholder(
         wrapped_caption(
           theme,
           width - 36.0,
-          "Clones the standalone `moui_example` counter repo (recommended starting template, pins `wzzc-dev/moui@0.1.6`).",
+          "Clones the standalone `moui_example` counter repo (recommended starting template, pins `wzzc-dev/moui@0.1.7`).",
           12.0,
           20.0,
         ),
