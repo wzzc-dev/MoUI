@@ -52,6 +52,12 @@ fn ReconcileDirtyKind::combine(
 }
 
 ///|
+priv struct KeyedChildComposite {
+  key : String
+  kind : Int
+} derive(Eq, Hash)
+
+///|
 fn mount_erased_view_node(spec : ErasedViewNode) -> ElementNode {
   mount_erased_view_node_with_next(spec, 1).node
 }
@@ -264,12 +270,12 @@ fn keyed_index_threshold() -> Int {
 /// is preserved. Duplicate keys are rare, so arrays are usually length 1.
 fn build_keyed_child_index(
   old_children : Array[ElementNode],
-) -> Map[String, Array[Int]] {
-  let index : Map[String, Array[Int]] = {}
+) -> Map[KeyedChildComposite, Array[Int]] {
+  let index : Map[KeyedChildComposite, Array[Int]] = {}
   for old_index, old_child in old_children {
     match old_child.key {
       Some(key) => {
-        let composite = "\{key.value()}|\{old_child.erased_view_node.kind()}"
+        let composite = { key: key.value(), kind: old_child.erased_view_node.kind() }
         match index.get(composite) {
           Some(arr) => arr.push(old_index)
           None => index[composite] = [old_index]
@@ -285,7 +291,7 @@ fn build_keyed_child_index(
 fn find_reusable_child(
   old_children : Array[ElementNode],
   used : Array[Bool],
-  key_index : Map[String, Array[Int]]?,
+  key_index : Map[KeyedChildComposite, Array[Int]]?,
   child_erased_view_node : ErasedViewNode,
   index : Int,
 ) -> Int? {
@@ -293,7 +299,7 @@ fn find_reusable_child(
     Some(key) =>
       match key_index {
         Some(idx) => {
-          let composite = "\{key.value()}|\{child_erased_view_node.kind()}"
+          let composite = { key: key.value(), kind: child_erased_view_node.kind() }
           match idx.get(composite) {
             Some(candidates) => {
               // candidates is usually length 1 (unique keys); rare
