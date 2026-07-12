@@ -28,6 +28,7 @@ test "windows skia provider preflight records package observation boundary" {
     preflight.contains("skia_available=\{@skia_renderer.skia_available()}"),
   )
   assert_true(preflight.contains("font=system-font-mgr"))
+  assert_true(preflight.contains("surface_route=raster"))
   assert_true(preflight.contains("Windows GDI Skia pixel presenter"))
   assert_true(preflight.contains("renderer_bridge=HostWindowRenderer"))
   assert_true(
@@ -90,9 +91,22 @@ test "windows skia provider preflight records package observation boundary" {
   let empty = windows_skia_provider_preflight_summary(
     options=WindowsSkiaAppOptions::new(
       font_resolution=@skia_renderer.SkiaFontResolution::EmptyTypeface,
+      surface_route=@skia_renderer.SkiaSurfaceRoute::Direct3DGpuSurfaceRoute,
     ),
   )
   assert_true(empty.contains("font=empty-typeface"))
+  assert_true(empty.contains("surface_route=direct3d-gpu"))
+}
+
+///|
+test "windows skia preflight reports gpu direct3d direct presenter path" {
+  let summary = windows_skia_provider_preflight_summary()
+  assert_true(
+    summary.contains(
+      "gpu_presenter=Windows Direct3D 11 Skia direct GPU presenter",
+    ),
+  )
+  assert_true(summary.contains("gpu_runtime_available="))
 }
 
 ///|
@@ -214,6 +228,9 @@ test "windows skia options default to system font resolution" {
   let options = WindowsSkiaAppOptions::new()
   assert_true(
     options.font_resolution == @skia_renderer.SkiaFontResolution::SystemFontMgr,
+  )
+  assert_true(
+    options.surface_route == @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute,
   )
   assert_false(WindowsSkiaSmokeOptions::new().first_frame_smoke_auto_exit)
   let request = @host.HostWindowOpenRequest::new(

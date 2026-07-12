@@ -18,7 +18,9 @@ test "ios skia preflight names scaffold requirements" {
 test "ios skia preflight reports gpu metal direct presenter path" {
   let summary = ios_skia_provider_preflight_summary()
   assert_true(
-    summary.contains("gpu_presenter=iOS CAMetalLayer Skia Metal direct GPU presenter"),
+    summary.contains(
+      "gpu_presenter=iOS CAMetalLayer Skia Metal direct GPU presenter",
+    ),
   )
   assert_true(summary.contains("gpu_runtime_available="))
   assert_true(summary.contains("metal_view_factory=available"))
