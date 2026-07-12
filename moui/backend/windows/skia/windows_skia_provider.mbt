@@ -13,6 +13,7 @@ extern "C" fn windows_present_skia_pixels_to_hwnd(
 pub struct WindowsSkiaAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
   priv font_resolution : @skia_renderer.SkiaFontResolution
+  priv surface_route : @skia_renderer.SkiaSurfaceRoute
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
 }
 
@@ -25,9 +26,10 @@ pub struct WindowsSkiaSmokeOptions {
 pub fn WindowsSkiaAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
+  surface_route? : @skia_renderer.SkiaSurfaceRoute = @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute,
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
 ) -> WindowsSkiaAppOptions {
-  { scene_resolver, font_resolution, platform_view_plugins }
+  { scene_resolver, font_resolution, surface_route, platform_view_plugins }
 }
 
 ///|
@@ -241,8 +243,10 @@ pub fn windows_skia_provider_preflight_summary(
     @skia_renderer.SkiaFontResolution::SystemFontMgr => "system-font-mgr"
     @skia_renderer.SkiaFontResolution::EmptyTypeface => "empty-typeface"
   }
+  let surface_route = options.surface_route.label()
   let host_preflight = @windows_host.windows_capability_summary().preflight_fields()
-  "Windows Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; presenter=\{windows_skia_presenter_description()}; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=smoke log required; unavailable=\"\{windows_skia_unavailable_message()}\""
+  let gpu_runtime_available = @skia_native.Surface::direct3d_gpu_context_runtime_available()
+  "Windows Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; surface_route=\{surface_route}; presenter=\{windows_skia_presenter_description()}; gpu_presenter=\{windows_skia_gpu_presenter_description()}; gpu_runtime_available=\{gpu_runtime_available}; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=smoke log required; unavailable=\"\{windows_skia_unavailable_message()}\""
 }
 
 ///|
@@ -260,16 +264,78 @@ fn create_renderer(
     println(windows_skia_unavailable_message())
     return None
   }
-  Some(
-    host_renderer_from_skia(
-      @skia_renderer.create_with_present_target(
-        renderer_metrics_from_host(metrics),
-        windows_skia_present_target(window.window_handle()),
-        font_resolution=options.font_resolution,
-        async_image_loading=true,
-      ),
-    ),
-  ) catch {
+  let hwnd = window.window_handle()
+  match resolve_gpu_present_target(hwnd, options) {
+    Some(gpu_target) =>
+      try {
+        let renderer = @skia_renderer.create_with_present_target_and_route(
+          renderer_metrics_from_host(metrics),
+          windows_skia_present_target(hwnd),
+          surface_route=options.surface_route,
+          gpu_target=Some(gpu_target),
+          font_resolution=options.font_resolution,
+          async_image_loading=true,
+        )
+        println(
+          "Windows Skia renderer route diagnostics: \{renderer.surface_diagnostic_summary()}",
+        )
+        Some(host_renderer_from_skia(renderer))
+      } catch {
+        err => {
+          println(
+            "error creating Windows Skia D3D GPU renderer, falling back to raster: \{err.message()}",
+          )
+          create_raster_renderer(hwnd, metrics, options)
+        }
+      }
+    None => create_raster_renderer(hwnd, metrics, options)
+  }
+}
+
+///|
+/// Resolve the optional `HostGpuPresentTarget` for the Direct3D 11
+/// direct-present path. Returns `Some` when the user selected the D3D GPU
+/// route AND the Skia build links Ganesh Direct3D AND a valid HWND is
+/// available. Returns `None` to fall back to raster.
+fn resolve_gpu_present_target(
+  hwnd : UInt64,
+  options : WindowsSkiaAppOptions,
+) -> @skia_renderer.HostGpuPresentTarget? {
+  if !options.surface_route.is_gpu() {
+    return None
+  }
+  if hwnd == 0UL {
+    println(
+      "Windows Skia D3D GPU route requested but HWND is unavailable; falling back to raster",
+    )
+    return None
+  }
+  let gpu_available = @skia_native.Surface::direct3d_gpu_context_runtime_available()
+  if !gpu_available {
+    println(
+      "Windows Skia Direct3D GPU route requested but Ganesh Direct3D runtime is unavailable; falling back to raster",
+    )
+    return None
+  }
+  Some(windows_skia_gpu_present_target(hwnd))
+}
+
+///|
+fn create_raster_renderer(
+  hwnd : UInt64,
+  metrics : @host.HostSurfaceMetrics,
+  options : WindowsSkiaAppOptions,
+) -> @host.HostWindowRenderer? {
+  try {
+    let renderer = @skia_renderer.create_with_present_target_and_route(
+      renderer_metrics_from_host(metrics),
+      windows_skia_present_target(hwnd),
+      surface_route=@skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute,
+      font_resolution=options.font_resolution,
+      async_image_loading=true,
+    )
+    Some(host_renderer_from_skia(renderer))
+  } catch {
     err => {
       println("error creating Windows Skia renderer: \{err.message()}")
       None
@@ -310,6 +376,75 @@ fn windows_skia_present_target(
       ) ==
       0
     },
+  )
+}
+
+///|
+fn windows_skia_gpu_presenter_description() -> String {
+  "Windows Direct3D 11 Skia direct GPU presenter"
+}
+
+///|
+/// Build the `HostGpuPresentTarget` for the Windows Direct3D 11 direct-present
+/// path. `hwnd` is the raw `HWND` handle retained by the host window.
+/// `create_window_surface` is invoked at renderer creation and on resize;
+/// `present_gpu` is invoked per-frame after `flush_and_submit` to present the
+/// swap chain and acquire the next back buffer.
+fn windows_skia_gpu_present_target(
+  hwnd : UInt64,
+) -> @skia_renderer.HostGpuPresentTarget {
+  @skia_renderer.HostGpuPresentTarget::new(
+    description=windows_skia_gpu_presenter_description(),
+    create_window_surface=(gpu_context, metrics) => {
+      match gpu_context {
+        None => None
+        Some(context) =>
+          @skia_native.Surface::direct3d_window_surface(
+            context,
+            hwnd,
+            windows_skia_d3d_surface_descriptor(metrics),
+          )
+      }
+    },
+    present_gpu=(gpu_context, surface) => {
+      match gpu_context {
+        None =>
+          @skia_renderer.HostGpuPresentOutcome::new(
+            succeeded=false,
+            next_surface=None,
+          )
+        Some(context) => {
+          let outcome = @skia_native.Surface::direct3d_present_and_acquire_next(
+            surface, context, hwnd,
+          )
+          match outcome {
+            Some(next_surface) =>
+              @skia_renderer.HostGpuPresentOutcome::new(
+                succeeded=true,
+                next_surface=Some(next_surface),
+              )
+            None =>
+              @skia_renderer.HostGpuPresentOutcome::new(
+                succeeded=false,
+                next_surface=None,
+              )
+          }
+        }
+      }
+    },
+  )
+}
+
+///|
+fn windows_skia_d3d_surface_descriptor(
+  metrics : @render.RendererSurfaceMetrics,
+) -> @moui_skia.SurfaceDescriptor {
+  let physical = metrics.physical_size
+  @moui_skia.SurfaceDescriptor::gpu_n32_premul(
+    @moui_skia.ISize::new(
+      physical.width.ceil().max(1.0).to_int(),
+      physical.height.ceil().max(1.0).to_int(),
+    ),
   )
 }
 

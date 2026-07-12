@@ -357,7 +357,8 @@ fn create_renderer(
               create_raster_renderer(raw_content_view_handle, metrics, options)
             }
           }
-        None => create_raster_renderer(raw_content_view_handle, metrics, options)
+        None =>
+          create_raster_renderer(raw_content_view_handle, metrics, options)
       }
     None => None
   }
@@ -503,10 +504,9 @@ fn macos_skia_gpu_present_target(
             next_surface=None,
           )
         Some(context) => {
-          let outcome =
-            @skia_native.Surface::metal_present_and_acquire_next(
-              surface, context, layer_ptr,
-            )
+          let outcome = @skia_native.Surface::metal_present_and_acquire_next(
+            surface, context, layer_ptr,
+          )
           match outcome {
             Some(next_surface) =>
               @skia_renderer.HostGpuPresentOutcome::new(

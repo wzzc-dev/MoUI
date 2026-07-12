@@ -193,6 +193,15 @@ void moonbit_skia_objc_release(void* object);
 static inline void moonbit_skia_objc_release(void* object) { (void)object; }
 #endif
 
+#if defined(_WIN32)
+/// Release a COM object (e.g. IDXGISwapChain) stored as host_present_handle on
+/// Windows. Safe to call with nullptr. On non-Windows platforms this is a
+/// no-op stub. The definition lives in skia_stub_surface_image_data.cpp.
+void moonbit_skia_com_release(void* object);
+#else
+static inline void moonbit_skia_com_release(void* object) { (void)object; }
+#endif
+
 struct MoonbitSkiaGpuContext {
 #if defined(MOUI_SKIA_HAS_SKIA)
   GrDirectContext* context;
