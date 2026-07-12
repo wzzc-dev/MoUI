@@ -11,7 +11,7 @@
         { "name": "public API surface", "argv": ["node", "scripts/validate-api-surface.mjs"] },
         { "name": "window dependency", "argv": ["node", "scripts/validate-window-dependency.mjs"] },
         { "name": "maintenance baseline", "argv": ["node", "scripts/validate-maintenance-baseline.mjs"] },
-        { "name": "website docs catalog", "argv": ["node", "scripts/sync-website-docs.mjs", "--check"] },
+        { "name": "website docs catalog", "argv": ["node", "scripts/check-website-docs.mjs"] },
         { "name": "renderer provider manifests", "argv": ["node", "scripts/validate-renderer-provider-manifests.mjs"] },
         { "name": "Skia entrypoints", "argv": ["node", "scripts/validate-skia-entrypoints.mjs"] },
         { "name": "mobile app config", "argv": ["node", "scripts/check-mobile-app-config.mjs"] },

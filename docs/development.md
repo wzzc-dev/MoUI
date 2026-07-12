@@ -530,8 +530,12 @@ After editing docs:
 
 ```sh
 node scripts/sync-website-docs.mjs
-node scripts/sync-website-docs.mjs --check
+node scripts/check-website-docs.mjs
 ```
+
+The sync command refreshes the ignored local preview copy. The check command
+generates and validates an isolated temporary copy, so it does not require
+`website/web_wasm/docs/` to exist in a clean checkout.
 
 GitHub Pages packages `website/web_wasm` with
 `scripts/package-web-app.mjs website/web_wasm --out dist/pages`, then stages

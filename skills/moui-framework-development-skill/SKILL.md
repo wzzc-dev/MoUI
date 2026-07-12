@@ -591,8 +591,12 @@ Then sync website docs:
 
 ```sh
 node scripts/sync-website-docs.mjs
-node scripts/sync-website-docs.mjs --check
+node scripts/check-website-docs.mjs
 ```
+
+The sync command refreshes the ignored local preview copy. The check command
+generates into an OS temporary directory and validates that isolated output, so
+clean CI checkouts do not depend on ignored files.
 
 Design Systems is addon diagnostic coverage. Run
 `sh scripts/check.sh --profile theme` when changing `moui_theme` or
