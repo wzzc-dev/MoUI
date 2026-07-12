@@ -118,7 +118,7 @@ struct Index {
           .accessibilityLevel('yes')
           .accessibilityText(node.label.length > 0 ? node.label : node.value)
           .accessibilityDescription(node.description)
-          .accessibilityRole(this.accessibilityRole(node.role))
+          .accessibilityRole(this.toAccessibilityRole(node.role))
           .accessibilityChecked(node.state.checked)
           .accessibilitySelected(node.state.selected)
           .enabled(!node.state.disabled)
@@ -205,7 +205,7 @@ struct Index {
     }
   }
 
-  private accessibilityRole(role: string): AccessibilityRoleType {
+  private toAccessibilityRole(role: string): AccessibilityRoleType {
     if (role === 'Button') return AccessibilityRoleType.BUTTON;
     if (role === 'TextField') return AccessibilityRoleType.TEXT_INPUT;
     if (role === 'Checkbox') return AccessibilityRoleType.CHECKBOX;

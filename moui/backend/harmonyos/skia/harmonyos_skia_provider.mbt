@@ -12,13 +12,15 @@ extern "C" fn harmonyos_present_skia_pixels_to_surface(
 ///|
 pub struct HarmonyOsSkiaAppOptions {
   priv font_resolution : @skia_renderer.SkiaFontResolution
+  priv surface_route : @skia_renderer.SkiaSurfaceRoute
 }
 
 ///|
 pub fn HarmonyOsSkiaAppOptions::new(
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
+  surface_route? : @skia_renderer.SkiaSurfaceRoute = @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute,
 ) -> HarmonyOsSkiaAppOptions {
-  { font_resolution, }
+  { font_resolution, surface_route }
 }
 
 ///|
@@ -70,8 +72,10 @@ pub fn harmonyos_skia_provider_preflight_summary(
     @skia_renderer.SkiaFontResolution::SystemFontMgr => "system-font-mgr"
     @skia_renderer.SkiaFontResolution::EmptyTypeface => "empty-typeface"
   }
+  let surface_route = options.surface_route.label()
+  let gpu_runtime_available = @skia_native.Surface::egl_gpu_context_runtime_available()
   let host_preflight = @harmonyos_host.harmonyos_capability_summary().preflight_fields()
-  "HarmonyOS Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; presenter=\{harmonyos_skia_presenter_description()}; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=harmonyos-device-smoke-required; runtime_status=experimental-scaffold; unavailable=\"\{harmonyos_skia_unavailable_message()}\""
+  "HarmonyOS Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; surface_route=\{surface_route}; presenter=\{harmonyos_skia_presenter_description()}; gpu_presenter=\{harmonyos_skia_gpu_presenter_description()}; gpu_runtime_available=\{gpu_runtime_available}; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=harmonyos-device-smoke-required; runtime_status=experimental-scaffold; unavailable=\"\{harmonyos_skia_unavailable_message()}\""
 }
 
 ///|
@@ -89,16 +93,78 @@ fn create_renderer(
     println(harmonyos_skia_unavailable_message())
     return None
   }
-  Some(
-    host_renderer_from_skia(
-      @skia_renderer.create_with_present_target(
-        renderer_metrics_from_host(metrics),
-        harmonyos_skia_present_target(surface),
-        font_resolution=options.font_resolution,
-        async_image_loading=true,
-      ),
-    ),
-  ) catch {
+  let native_window = surface.raw()
+  match resolve_gpu_present_target(native_window, options) {
+    Some(gpu_target) =>
+      try {
+        let renderer = @skia_renderer.create_with_present_target_and_route(
+          renderer_metrics_from_host(metrics),
+          harmonyos_skia_present_target(surface),
+          surface_route=options.surface_route,
+          gpu_target=Some(gpu_target),
+          font_resolution=options.font_resolution,
+          async_image_loading=true,
+        )
+        println(
+          "HarmonyOS Skia renderer route diagnostics: \{renderer.surface_diagnostic_summary()}",
+        )
+        Some(host_renderer_from_skia(renderer))
+      } catch {
+        err => {
+          println(
+            "error creating HarmonyOS Skia EGL GPU renderer, falling back to raster: \{err.message()}",
+          )
+          create_raster_renderer(surface, metrics, options)
+        }
+      }
+    None => create_raster_renderer(surface, metrics, options)
+  }
+}
+
+///|
+/// Resolve the optional `HostGpuPresentTarget` for the HarmonyOS EGL
+/// direct-present path. Returns `Some` when the user selected the EGL GPU
+/// route AND the Skia build links Ganesh GL AND a valid OHNativeWindow is
+/// available. Returns `None` to fall back to raster.
+fn resolve_gpu_present_target(
+  native_window : UInt64,
+  options : HarmonyOsSkiaAppOptions,
+) -> @skia_renderer.HostGpuPresentTarget? {
+  if !options.surface_route.is_gpu() {
+    return None
+  }
+  if native_window == 0UL {
+    println(
+      "HarmonyOS Skia EGL GPU route requested but OHNativeWindow is unavailable; falling back to raster",
+    )
+    return None
+  }
+  let gpu_available = @skia_native.Surface::egl_gpu_context_runtime_available()
+  if !gpu_available {
+    println(
+      "HarmonyOS Skia EGL GPU route requested but Ganesh GL runtime is unavailable; falling back to raster",
+    )
+    return None
+  }
+  Some(harmonyos_skia_gpu_present_target(native_window))
+}
+
+///|
+fn create_raster_renderer(
+  surface : @harmonyos_host.HarmonyOsSurfaceHandle,
+  metrics : @host.HostSurfaceMetrics,
+  options : HarmonyOsSkiaAppOptions,
+) -> @host.HostWindowRenderer? {
+  try {
+    let renderer = @skia_renderer.create_with_present_target_and_route(
+      renderer_metrics_from_host(metrics),
+      harmonyos_skia_present_target(surface),
+      surface_route=@skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute,
+      font_resolution=options.font_resolution,
+      async_image_loading=true,
+    )
+    Some(host_renderer_from_skia(renderer))
+  } catch {
     err => {
       println("error creating HarmonyOS Skia renderer: \{err.message()}")
       None
@@ -119,6 +185,76 @@ fn harmonyos_skia_unavailable_message() -> String {
 ///|
 fn harmonyos_skia_presenter_description() -> String {
   "HarmonyOS XComponent native window RGBA8888 Skia pixel presenter"
+}
+
+///|
+fn harmonyos_skia_gpu_presenter_description() -> String {
+  "HarmonyOS EGL Skia direct GPU presenter"
+}
+
+///|
+/// Build the `HostGpuPresentTarget` for the HarmonyOS EGL direct-present
+/// path. `native_window` is the raw `OHNativeWindow*` handle obtained from
+/// the XComponent and retained by the HarmonyOS host surface.
+/// `create_window_surface` is invoked at renderer creation and on resize;
+/// `present_gpu` is invoked per-frame after `flush_and_submit` to swap the
+/// EGL surface and re-wrap the new back buffer as a fresh Skia `Surface`.
+fn harmonyos_skia_gpu_present_target(
+  native_window : UInt64,
+) -> @skia_renderer.HostGpuPresentTarget {
+  @skia_renderer.HostGpuPresentTarget::new(
+    description=harmonyos_skia_gpu_presenter_description(),
+    create_window_surface=(gpu_context, metrics) => {
+      match gpu_context {
+        None => None
+        Some(context) =>
+          @skia_native.Surface::egl_window_surface(
+            context,
+            native_window,
+            harmonyos_skia_egl_surface_descriptor(metrics),
+          )
+      }
+    },
+    present_gpu=(gpu_context, surface) => {
+      match gpu_context {
+        None =>
+          @skia_renderer.HostGpuPresentOutcome::new(
+            succeeded=false,
+            next_surface=None,
+          )
+        Some(context) => {
+          let outcome = @skia_native.Surface::egl_present_and_acquire_next(
+            surface, context, native_window,
+          )
+          match outcome {
+            Some(next_surface) =>
+              @skia_renderer.HostGpuPresentOutcome::new(
+                succeeded=true,
+                next_surface=Some(next_surface),
+              )
+            None =>
+              @skia_renderer.HostGpuPresentOutcome::new(
+                succeeded=false,
+                next_surface=None,
+              )
+          }
+        }
+      }
+    },
+  )
+}
+
+///|
+fn harmonyos_skia_egl_surface_descriptor(
+  metrics : @render.RendererSurfaceMetrics,
+) -> @moui_skia.SurfaceDescriptor {
+  let physical = metrics.physical_size
+  @moui_skia.SurfaceDescriptor::gpu_n32_premul(
+    @moui_skia.ISize::new(
+      physical.width.ceil().max(1.0).to_int(),
+      physical.height.ceil().max(1.0).to_int(),
+    ),
+  )
 }
 
 ///|

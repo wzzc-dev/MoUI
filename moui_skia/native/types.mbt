@@ -273,6 +273,9 @@ pub(all) enum SkiaGpuContextSupportStatus {
   SkiaGpuContextVulkanOptInDisabled
   SkiaGpuContextVulkanHeadersUnavailable
   SkiaGpuContextVulkanRuntimeUnavailable
+  SkiaGpuContextEglOptInDisabled
+  SkiaGpuContextEglHeadersUnavailable
+  SkiaGpuContextEglRuntimeUnavailable
 } derive(Debug, Eq)
 
 ///|

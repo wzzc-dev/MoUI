@@ -36,6 +36,20 @@
 #define MOUI_SKIA_HAS_GANESH_VULKAN_HEADERS 1
 #endif
 
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(__OHOS__) && \
+  __has_include("include/gpu/ganesh/GrDirectContext.h") && \
+  __has_include("include/gpu/ganesh/gl/GrGLBackendContext.h") && \
+  __has_include("include/gpu/ganesh/gl/GrGLDirectContext.h") && \
+  __has_include("include/gpu/ganesh/gl/GrGLTypes.h") && \
+  __has_include("include/gpu/ganesh/GrBackendRenderTarget.h") && \
+  __has_include("include/gpu/ganesh/SkSurfaceGanesh.h") && \
+  __has_include(<EGL/egl.h>) && \
+  __has_include(<EGL/eglext.h>) && \
+  __has_include(<GLES3/gl3.h>) && \
+  __has_include(<native_window/external_window.h>)
+#define MOUI_SKIA_HAS_GANESH_EGL_HEADERS 1
+#endif
+
 #if defined(MOUI_SKIA_ENABLE_GPU_METAL) && \
   defined(MOUI_SKIA_HAS_GANESH_METAL_HEADERS)
 #include "include/gpu/ganesh/mtl/GrMtlBackendContext.h"
@@ -175,6 +189,7 @@ void moonbit_skia_com_release(void* object) { (void)object; }
 static const int32_t MOONBIT_SKIA_GPU_BACKEND_METAL = 1;
 static const int32_t MOONBIT_SKIA_GPU_BACKEND_D3D = 2;
 static const int32_t MOONBIT_SKIA_GPU_BACKEND_VULKAN = 3;
+static const int32_t MOONBIT_SKIA_GPU_BACKEND_EGL = 4;
 
 static MoonbitSkiaSurface* moonbit_skia_surface_wrapper_with_gpu_context(
 #if defined(MOUI_SKIA_HAS_SKIA)
@@ -586,6 +601,219 @@ moonbit_skia_gpu_context_vulkan(void) {
     vk_context,
     nullptr,
     MOONBIT_SKIA_GPU_BACKEND_VULKAN
+  );
+#else
+  return moonbit_skia_make_gpu_context_wrapper(nullptr, nullptr, nullptr, 0);
+#endif
+}
+
+// Release function stubs for HarmonyOS when EGL is not opted in. The real
+// definitions live in the opt-in block below. These are safe because no EGL
+// objects are ever allocated when the opt-in is disabled, so the finalizers
+// in skia_stub_common.cpp only call these with nullptr.
+#if defined(__OHOS__) && \
+  (!defined(MOUI_SKIA_ENABLE_GPU_EGL) || \
+   !defined(MOUI_SKIA_HAS_GANESH_EGL_HEADERS))
+void moonbit_skia_egl_release_context(void* object) { (void)object; }
+void moonbit_skia_egl_release_window(void* object) { (void)object; }
+#endif
+
+#if defined(MOUI_SKIA_ENABLE_GPU_EGL) && \
+  defined(MOUI_SKIA_HAS_GANESH_EGL_HEADERS)
+#include "include/gpu/ganesh/gl/GrGLBackendContext.h"
+#include "include/gpu/ganesh/gl/GrGLDirectContext.h"
+#include "include/gpu/ganesh/gl/GrGLTypes.h"
+#include "include/gpu/ganesh/GrBackendRenderTarget.h"
+#include "include/gpu/ganesh/SkSurfaceGanesh.h"
+
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+#include <GLES3/gl3.h>
+#include <native_window/external_window.h>
+
+/// Heap-allocated EGL context state. Stored as the `device` field of
+/// MoonbitSkiaGpuContext. The finalizer calls
+/// moonbit_skia_egl_release_context which destroys the EGLContext and
+/// terminates the EGLDisplay in that order.
+struct MoonbitSkiaEglContext {
+  EGLDisplay display;
+  EGLContext context;
+  EGLConfig config;
+};
+
+/// Heap-allocated EGL window surface state. Stored as the
+/// `host_present_handle` of MoonbitSkiaSurface. The finalizer calls
+/// moonbit_skia_egl_release_window which destroys the EGLSurface. The
+/// EGLDisplay and EGLContext are borrowed from the context and not released
+/// here.
+struct MoonbitSkiaEglWindow {
+  EGLDisplay display;
+  EGLSurface surface;
+};
+
+void moonbit_skia_egl_release_context(void* object) {
+  if (object == nullptr) {
+    return;
+  }
+  auto* ctx = static_cast<MoonbitSkiaEglContext*>(object);
+  if (ctx->context != EGL_NO_CONTEXT) {
+    eglMakeCurrent(
+      ctx->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT
+    );
+    eglDestroyContext(ctx->display, ctx->context);
+  }
+  if (ctx->display != EGL_NO_DISPLAY) {
+    eglTerminate(ctx->display);
+  }
+  delete ctx;
+}
+
+void moonbit_skia_egl_release_window(void* object) {
+  if (object == nullptr) {
+    return;
+  }
+  auto* win = static_cast<MoonbitSkiaEglWindow*>(object);
+  if (win->display != EGL_NO_DISPLAY && win->surface != EGL_NO_SURFACE) {
+    eglDestroySurface(win->display, win->surface);
+  }
+  delete win;
+}
+
+static GrDirectContext* moonbit_skia_make_egl_direct_context(
+  MoonbitSkiaEglContext** out_context
+) {
+  EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+  if (display == EGL_NO_DISPLAY) {
+    return nullptr;
+  }
+  EGLint major = 0;
+  EGLint minor = 0;
+  if (!eglInitialize(display, &major, &minor)) {
+    return nullptr;
+  }
+  if (major < 1 || (major == 1 && minor < 4)) {
+    eglTerminate(display);
+    return nullptr;
+  }
+
+  const EGLint config_attribs[] = {
+    EGL_RED_SIZE, 8,
+    EGL_GREEN_SIZE, 8,
+    EGL_BLUE_SIZE, 8,
+    EGL_ALPHA_SIZE, 8,
+    EGL_DEPTH_SIZE, 0,
+    EGL_STENCIL_SIZE, 0,
+    EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT,
+    EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+    EGL_NONE,
+  };
+  EGLConfig config = nullptr;
+  EGLint num_configs = 0;
+  if (!eglChooseConfig(display, config_attribs, &config, 1, &num_configs) ||
+      num_configs < 1 || config == nullptr) {
+    eglTerminate(display);
+    return nullptr;
+  }
+
+  eglBindAPI(EGL_OPENGL_ES_API);
+
+  const EGLint context_attribs[] = {
+    EGL_CONTEXT_CLIENT_VERSION, 3,
+    EGL_NONE,
+  };
+  EGLContext context = eglCreateContext(display, config, EGL_NO_CONTEXT, context_attribs);
+  if (context == EGL_NO_CONTEXT) {
+    eglTerminate(display);
+    return nullptr;
+  }
+
+  // Make the context current so GrGLMakeNativeInterface can pick up
+  // platform GL function pointers via eglGetProcAddress.
+  if (!eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, context)) {
+    eglDestroyContext(display, context);
+    eglTerminate(display);
+    return nullptr;
+  }
+
+  sk_sp<GrGLInterface> gl_interface = GrGLMakeNativeInterface();
+  if (!gl_interface) {
+    eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    eglDestroyContext(display, context);
+    eglTerminate(display);
+    return nullptr;
+  }
+
+  GrDirectContext* gpu_context = GrDirectContexts::MakeGL(gl_interface).release();
+  if (!gpu_context) {
+    eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    eglDestroyContext(display, context);
+    eglTerminate(display);
+    return nullptr;
+  }
+
+  auto* egl_context = new MoonbitSkiaEglContext();
+  egl_context->display = display;
+  egl_context->context = context;
+  egl_context->config = config;
+  *out_context = egl_context;
+  return gpu_context;
+}
+#endif
+
+extern "C" MOONBIT_FFI_EXPORT int32_t
+moonbit_skia_surface_gpu_egl_opt_in_enabled(void) {
+#if defined(MOUI_SKIA_ENABLE_GPU_EGL) && defined(__OHOS__)
+  return 1;
+#else
+  return 0;
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT int32_t
+moonbit_skia_surface_gpu_egl_headers_available(void) {
+#if defined(MOUI_SKIA_HAS_GANESH_EGL_HEADERS)
+  return 1;
+#else
+  return 0;
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT int32_t
+moonbit_skia_surface_gpu_egl_runtime_available(void) {
+#if defined(MOUI_SKIA_ENABLE_GPU_EGL) && \
+  defined(MOUI_SKIA_HAS_GANESH_EGL_HEADERS)
+  MoonbitSkiaEglContext* egl_context = nullptr;
+  GrDirectContext* context = moonbit_skia_make_egl_direct_context(&egl_context);
+  if (context == nullptr) {
+    return 0;
+  }
+  context->unref();
+  if (egl_context != nullptr) {
+    moonbit_skia_egl_release_context(egl_context);
+  }
+  return 1;
+#else
+  return 0;
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaGpuContext*
+moonbit_skia_gpu_context_egl(void) {
+#if defined(MOUI_SKIA_ENABLE_GPU_EGL) && \
+  defined(MOUI_SKIA_HAS_GANESH_EGL_HEADERS)
+  MoonbitSkiaEglContext* egl_context = nullptr;
+  GrDirectContext* context = moonbit_skia_make_egl_direct_context(&egl_context);
+  if (!context || egl_context == nullptr) {
+    if (egl_context != nullptr) {
+      moonbit_skia_egl_release_context(egl_context);
+    }
+    return moonbit_skia_make_gpu_context_wrapper(nullptr, nullptr, nullptr, 0);
+  }
+  return moonbit_skia_make_gpu_context_wrapper(
+    context,
+    egl_context,
+    nullptr,
+    MOONBIT_SKIA_GPU_BACKEND_EGL
   );
 #else
   return moonbit_skia_make_gpu_context_wrapper(nullptr, nullptr, nullptr, 0);
@@ -1822,6 +2050,213 @@ moonbit_skia_surface_vulkan_present_and_acquire_next(
 #endif
 }
 
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaSurface*
+moonbit_skia_surface_egl_window(
+  MoonbitSkiaGpuContext* context,
+  uint64_t native_window_ptr,
+  int32_t width,
+  int32_t height,
+  int32_t origin,
+  int32_t sample_count,
+  int32_t stencil_bits
+) {
+  if (
+    width <= 0 ||
+    height <= 0 ||
+    native_window_ptr == 0 ||
+    context == nullptr ||
+    context->context == nullptr ||
+    context->backend != MOONBIT_SKIA_GPU_BACKEND_EGL
+  ) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+#if defined(MOUI_SKIA_ENABLE_GPU_EGL) && \
+  defined(MOUI_SKIA_HAS_GANESH_EGL_HEADERS)
+  (void)sample_count;
+  (void)stencil_bits;
+
+  auto* egl_context = static_cast<MoonbitSkiaEglContext*>(context->device);
+  if (egl_context == nullptr) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+
+  OHNativeWindow* window = reinterpret_cast<OHNativeWindow*>(
+    static_cast<uintptr_t>(native_window_ptr)
+  );
+  if (window == nullptr) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+
+  // Create an EGL window surface from the OHNativeWindow.
+  const EGLint surface_attribs[] = {
+    EGL_RENDER_BUFFER, EGL_BACK_BUFFER,
+    EGL_NONE,
+  };
+  EGLSurface egl_surface = eglCreateWindowSurface(
+    egl_context->display,
+    egl_context->config,
+    reinterpret_cast<EGLNativeWindowType>(window),
+    surface_attribs
+  );
+  if (egl_surface == EGL_NO_SURFACE) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+
+  // Make the new surface current so Skia can issue GL commands against it.
+  if (!eglMakeCurrent(
+        egl_context->display, egl_surface, egl_surface, egl_context->context
+      )) {
+    eglDestroySurface(egl_context->display, egl_surface);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+
+  // Query the framebuffer object id that Skia will render into. On EGL with
+  // a window surface, the default framebuffer is 0 (the window surface's
+  // back buffer).
+  GrGLFramebufferInfo fb_info;
+  fb_info.fFBOID = 0;
+  fb_info.fFormat = GL_RGBA8;
+
+  int32_t actual_stencil = stencil_bits;
+  int32_t actual_samples = sample_count;
+  if (actual_stencil < 0) {
+    actual_stencil = 0;
+  }
+  if (actual_samples < 0) {
+    actual_samples = 0;
+  }
+  GrBackendRenderTarget backend_rt = GrBackendRenderTargets::MakeGL(
+    width, height, actual_stencil, actual_samples, fb_info
+  );
+
+  sk_sp<SkSurface> surface_obj = SkSurfaces::WrapBackendSurface(
+    context->context,
+    backend_rt,
+    moonbit_skia_surface_origin(origin),
+    nullptr,
+    nullptr
+  );
+  if (!surface_obj) {
+    eglMakeCurrent(
+      egl_context->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT
+    );
+    eglDestroySurface(egl_context->display, egl_surface);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+
+  MoonbitSkiaSurface* wrapper = moonbit_skia_surface_wrapper_with_gpu_context(
+    surface_obj.release(),
+    context->context
+  );
+  auto* egl_win = new MoonbitSkiaEglWindow();
+  egl_win->display = egl_context->display;
+  egl_win->surface = egl_surface;
+  wrapper->host_present_handle = egl_win;
+  return wrapper;
+#else
+  (void)native_window_ptr;
+  (void)origin;
+  (void)sample_count;
+  (void)stencil_bits;
+  return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaSurface*
+moonbit_skia_surface_egl_present_and_acquire_next(
+  MoonbitSkiaSurface* wrapper,
+  uint64_t native_window_ptr,
+  int32_t width,
+  int32_t height,
+  int32_t origin,
+  int32_t sample_count,
+  int32_t stencil_bits
+) {
+  if (
+    wrapper == nullptr ||
+    wrapper->surface == nullptr ||
+    wrapper->host_present_handle == nullptr ||
+    wrapper->gpu_context_owner == nullptr
+  ) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+#if defined(MOUI_SKIA_ENABLE_GPU_EGL) && \
+  defined(MOUI_SKIA_HAS_GANESH_EGL_HEADERS)
+  (void)native_window_ptr;
+  (void)width;
+  (void)height;
+  (void)origin;
+  (void)sample_count;
+  (void)stencil_bits;
+
+  auto* egl_win = static_cast<MoonbitSkiaEglWindow*>(
+    wrapper->host_present_handle
+  );
+  GrDirectContext* gpu_context = wrapper->gpu_context_owner;
+
+  // eglSwapBuffers swaps the back buffer to the window surface's front
+  // buffer. The same EGLSurface is reused across frames; no need to acquire
+  // a new one. Return a fresh SkSurface wrapper around the same back buffer.
+  EGLBoolean swapped = eglSwapBuffers(egl_win->display, egl_win->surface);
+  if (swapped != EGL_TRUE) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+  }
+
+  // Release the old surface wrapper (the underlying SkSurface is no longer
+  // valid because the back buffer it pointed to is now the front buffer).
+  wrapper->surface->unref();
+  wrapper->surface = nullptr;
+  // The EGLSurface and host_present_handle are reused for the next frame.
+
+  // Re-wrap the new back buffer as a fresh SkSurface. The framebuffer id
+  // remains 0 (window surface default framebuffer).
+  GrGLFramebufferInfo fb_info;
+  fb_info.fFBOID = 0;
+  fb_info.fFormat = GL_RGBA8;
+
+  int32_t actual_stencil = stencil_bits;
+  int32_t actual_samples = sample_count;
+  if (actual_stencil < 0) {
+    actual_stencil = 0;
+  }
+  if (actual_samples < 0) {
+    actual_samples = 0;
+  }
+  GrBackendRenderTarget backend_rt = GrBackendRenderTargets::MakeGL(
+    width, height, actual_stencil, actual_samples, fb_info
+  );
+
+  sk_sp<SkSurface> next_surface = SkSurfaces::WrapBackendSurface(
+    gpu_context,
+    backend_rt,
+    moonbit_skia_surface_origin(origin),
+    nullptr,
+    nullptr
+  );
+  if (!next_surface) {
+    moonbit_skia_egl_release_window(egl_win);
+    wrapper->host_present_handle = nullptr;
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+  }
+
+  MoonbitSkiaSurface* new_wrapper =
+    moonbit_skia_surface_wrapper_with_gpu_context(
+      next_surface.release(),
+      gpu_context
+    );
+  new_wrapper->host_present_handle = egl_win;
+  return new_wrapper;
+#else
+  (void)native_window_ptr;
+  (void)width;
+  (void)height;
+  (void)origin;
+  (void)sample_count;
+  (void)stencil_bits;
+  return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+#endif
+}
+
 extern "C" MOONBIT_FFI_EXPORT int32_t
 moonbit_skia_surface_flush_and_submit(MoonbitSkiaSurface* wrapper) {
   if (wrapper == nullptr || wrapper->surface == nullptr) {
@@ -1831,7 +2266,7 @@ moonbit_skia_surface_flush_and_submit(MoonbitSkiaSurface* wrapper) {
   if (wrapper->gpu_context_owner == nullptr) {
     return wrapper->surface->recordingContext() == nullptr;
   }
-#if (defined(MOUI_SKIA_ENABLE_GPU_METAL) || defined(MOUI_SKIA_ENABLE_GPU_D3D) || defined(MOUI_SKIA_ENABLE_GPU_VULKAN)) && \
+#if (defined(MOUI_SKIA_ENABLE_GPU_METAL) || defined(MOUI_SKIA_ENABLE_GPU_D3D) || defined(MOUI_SKIA_ENABLE_GPU_VULKAN) || defined(MOUI_SKIA_ENABLE_GPU_EGL)) && \
   defined(MOUI_SKIA_HAS_GANESH_DIRECT_CONTEXT)
   wrapper->gpu_context_owner->flushAndSubmit(wrapper->surface);
   return 1;
