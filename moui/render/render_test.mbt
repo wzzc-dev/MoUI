@@ -310,3 +310,115 @@ test "render mailbox keeps one in-flight and latest pending frame" {
   inspect(diagnostics.replaced_pending, content="1")
   inspect(diagnostics.submitted, content="3")
 }
+
+///|
+/// Phase 2.1 (ADR 0006 § Renderer-thread ownership): control messages are
+/// appended to an unbounded ordered queue and never dropped, even when the
+/// runtime/UI thread floods frame submissions.
+test "render mailbox control queue is ordered and never dropped" {
+  let mailbox = @render.RenderFrameMailbox::new()
+  assert_false(mailbox.has_control())
+  inspect(mailbox.control_pending(), content="0")
+  ignore(mailbox.submit_control(@render.RendererControlMessage::Resize(
+    @core.Size::new(width=200.0, height=120.0),
+  )))
+  ignore(mailbox.submit_control(@render.RendererControlMessage::Detach))
+  ignore(mailbox.submit_control(
+    @render.RendererControlMessage::ContextLoss("metal-device-lost"),
+  ))
+  ignore(mailbox.submit_control(@render.RendererControlMessage::Shutdown))
+  assert_true(mailbox.has_control())
+  inspect(mailbox.control_pending(), content="4")
+  let drained = mailbox.drain_control()
+  inspect(drained.length(), content="4")
+  // FIFO order preserved: Resize, Detach, ContextLoss, Shutdown.
+  match drained[0] {
+    Resize(size) => {
+      inspect(size.width, content="200")
+      inspect(size.height, content="120")
+    }
+    _ => fail("expected Resize as first control message")
+  }
+  assert_true(drained[1] is Detach)
+  match drained[2] {
+    ContextLoss(reason) => inspect(reason, content="metal-device-lost")
+    _ => fail("expected ContextLoss as third control message")
+  }
+  assert_true(drained[3] is Shutdown)
+  // Drain clears the queue.
+  assert_false(mailbox.has_control())
+  inspect(mailbox.control_pending(), content="0")
+  let diagnostics = mailbox.diagnostics()
+  inspect(diagnostics.control_submitted, content="4")
+  inspect(diagnostics.control_drained, content="4")
+  inspect(diagnostics.control_pending, content="0")
+}
+
+///|
+/// Control messages must coexist with frame submissions: frames follow
+/// capacity-two latest-wins (one in-flight + one pending), control messages
+/// follow FIFO never-dropped. The renderer thread drains control before
+/// beginning the next frame; neither queue interferes with the other.
+test "render mailbox control and frame queues coexist without interference" {
+  let mailbox = @render.RenderFrameMailbox::new()
+  let input = @render.RenderFrameInput::new(
+    metrics=@render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=64.0, height=64.0),
+    ),
+    commands=[],
+  )
+  // Submit a frame, then a Resize, then more frames. The Resize must
+  // survive frame flooding and be drained in order.
+  let first = mailbox.submit(input)
+  ignore(mailbox.submit_control(@render.RendererControlMessage::Resize(
+    @core.Size::new(width=128.0, height=128.0),
+  )))
+  ignore(mailbox.submit(input))
+  let latest = mailbox.submit(input)
+  ignore(mailbox.submit_control(@render.RendererControlMessage::Shutdown))
+  // Frames still behave as capacity-two latest-wins: pending now holds
+  // `latest` and `first` was discarded when `latest` replaced the prior
+  // pending entry.
+  let diagnostics_before = mailbox.diagnostics()
+  inspect(diagnostics_before.submitted, content="3")
+  inspect(diagnostics_before.control_pending, content="2")
+  // Drain control first (renderer thread policy).
+  let controls = mailbox.drain_control()
+  inspect(controls.length(), content="2")
+  assert_true(controls[0] is Resize(_))
+  assert_true(controls[1] is Shutdown)
+  // Then drain frames. begin_next moves `latest` into in-flight; the
+  // first frame was already replaced in the pending slot.
+  match mailbox.begin_next() {
+    Some(packet) => assert_true(packet.sequence == latest)
+    None => fail("expected latest pending frame to survive control drain")
+  }
+  // in_flight occupied; no second frame to begin.
+  assert_true(mailbox.begin_next() is None)
+  // Releasing in_flight and beginning again should now return None.
+  assert_true(mailbox.complete(latest))
+  assert_true(mailbox.begin_next() is None)
+  // The discarded `first` sequence must not reappear.
+  ignore(first)
+  let diagnostics_after = mailbox.diagnostics()
+  inspect(diagnostics_after.control_drained, content="2")
+  inspect(diagnostics_after.control_pending, content="0")
+}
+
+///|
+/// A `Shutdown` does not implicitly drop pending control messages: the
+/// renderer thread must observe every control message in order, including
+/// any queued before the shutdown signal.
+test "render mailbox shutdown does not drop earlier control messages" {
+  let mailbox = @render.RenderFrameMailbox::new()
+  ignore(mailbox.submit_control(@render.RendererControlMessage::ContextLoss(
+    "vulkan-device-lost",
+  )))
+  ignore(mailbox.submit_control(@render.RendererControlMessage::Detach))
+  ignore(mailbox.submit_control(@render.RendererControlMessage::Shutdown))
+  let drained = mailbox.drain_control()
+  inspect(drained.length(), content="3")
+  assert_true(drained[0] is ContextLoss(_))
+  assert_true(drained[1] is Detach)
+  assert_true(drained[2] is Shutdown)
+}
