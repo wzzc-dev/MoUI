@@ -316,6 +316,14 @@ The daily check runs `sh scripts/check-local-deps.sh`, which verifies
 window checkout, verifies the repo-local `moui_skia` workspace, and checks the
 window package's MoUI-oriented smoke/evidence files when the package is present
 in the MoonBit registry cache, including `scripts/record_moui_evidence.sh`.
+Keep the root README focused on reviewer/user quick paths; detailed `window/`
+submodule and local-source instructions belong in `docs/development.md` and this
+skill. Ordinary MoUI framework work should resolve `wzzc-dev/window` from
+mooncakes.io. When a task explicitly requires editing window source, initialize
+the `window` submodule if needed, run `sh scripts/window-dev-mode.sh on`, make
+the dependency changes, validate them through MoUI, then run
+`sh scripts/window-dev-mode.sh off` before committing so `moon.work` returns to
+the published dependency.
 Use `scripts/run-window-package-smoke.sh <platform>` for matching-host smoke
 runs from the resolved package instead of creating a local window checkout. Run
 `moon update` if the package cache is stale or missing. The MoonBit package
