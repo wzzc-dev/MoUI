@@ -15,7 +15,11 @@ fn pub_all_budgets() -> Array[CountBudget] {
       kind: "pub(all)",
       label: "moui/runtime",
       path: "moui/runtime",
-      max_count: 6,
+      // 9 = 6 (prior baseline) + 3 for Phase 2.2 context-loss recovery
+      // scaffolding (RendererRecoveryState enum, RendererRecoveryBudget
+      // struct, RendererRecoverySnapshot struct), all introduced by ADR
+      // 0006 § Context-loss recovery.
+      max_count: 9,
     },
     {
       kind: "pub(all)",
@@ -27,11 +31,13 @@ fn pub_all_budgets() -> Array[CountBudget] {
       kind: "pub(all)",
       label: "moui/render",
       path: "moui/render",
-      // 37 = 35 (prior baseline) + 1 for SkiaPresentKind (the discriminator
+      // 38 = 35 (prior baseline) + 1 for SkiaPresentKind (the discriminator
       // for the CpuPixelFrame vs HostGpuSurface present path) + 1 for
       // HostGpuPresentOutcome (the present-gpu outcome struct), both
-      // introduced by Phase 1.1 of the readback-elimination plan (ADR 0006).
-      max_count: 37,
+      // introduced by Phase 1.1 of the readback-elimination plan (ADR 0006),
+      // + 1 for RendererControlMessage (Phase 2.1 renderer-thread mailbox
+      // control message enum, ADR 0006 § Renderer-thread ownership).
+      max_count: 38,
     },
     {
       kind: "pub(all)",
