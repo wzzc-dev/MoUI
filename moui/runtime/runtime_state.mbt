@@ -12,6 +12,7 @@ priv struct RuntimeState {
   mut layout_pass_count : Int
   mut paint_pass_count : Int
   mut draw_command_build_count : Int
+  mut last_command_count : Int
   mut cache_epoch : Int
   mut last_damage_region : DamageRegion
   known_layer_cache_keys : Array[CachedLayerState]
@@ -89,6 +90,7 @@ fn RuntimeState::new_erased_view_node(
     layout_pass_count: 0,
     paint_pass_count: 0,
     draw_command_build_count: 0,
+    last_command_count: 0,
     cache_epoch: 0,
     last_damage_region: DamageRegion::full("initial frame"),
     known_layer_cache_keys: [],
@@ -308,17 +310,20 @@ fn RuntimeState::focused_text_input(self : RuntimeState) -> TextInputState {
 ///|
 fn RuntimeState::build_draw_commands(self : RuntimeState) -> Array[DrawCommand] {
   self.draw_command_build_count = self.draw_command_build_count + 1
-  let commands : Array[DrawCommand] = [Clear(Color::white())]
+  let commands : Array[DrawCommand] = Array::new(capacity=self.last_command_count.max(64))
+  commands.push(Clear(Color::white()))
   self.rebuild_if_possible()
   self.ensure_render_tree()
   self.render_tree.root.collect_draw_commands(commands)
+  self.last_command_count = commands.length()
   commands
 }
 
 ///|
 fn RuntimeState::build_draw_frame(self : RuntimeState) -> DrawFrame {
   self.draw_command_build_count = self.draw_command_build_count + 1
-  let commands : Array[DrawCommand] = [Clear(Color::white())]
+  let commands : Array[DrawCommand] = Array::new(capacity=self.last_command_count.max(64))
+  commands.push(Clear(Color::white()))
   let next_known_layers : Array[CachedLayerState] = []
   let next_admissions : Array[CachedLayerAdmissionState] = []
   self.rebuild_if_possible()
@@ -333,6 +338,7 @@ fn RuntimeState::build_draw_frame(self : RuntimeState) -> DrawFrame {
   let platform_views : Array[PlatformViewPlacement] = []
   self.render_tree.root.collect_platform_views(platform_views)
   self.record_cached_layer_frame(next_known_layers, next_admissions)
+  self.last_command_count = commands.length()
   DrawFrame::new(
     commands~,
     platform_views~,
