@@ -130,6 +130,23 @@ test "linux skia provider preflight records package observation boundary" {
     ),
   )
   assert_true(empty.contains("font=empty-typeface"))
+  assert_true(empty.contains("surface_route=raster"))
+  assert_true(empty.contains("gpu_presenter="))
+  assert_true(empty.contains("gpu_runtime_available="))
+}
+
+///|
+test "linux skia preflight reports vulkan direct gpu presenter path" {
+  let summary = linux_skia_provider_preflight_summary(
+    options=LinuxSkiaAppOptions::new(
+      surface_route=@skia_renderer.SkiaSurfaceRoute::VulkanGpuSurfaceRoute,
+    ),
+  )
+  assert_true(summary.contains("surface_route=vulkan-gpu"))
+  assert_true(
+    summary.contains("gpu_presenter=Linux Wayland Vulkan Skia direct GPU presenter"),
+  )
+  assert_true(summary.contains("gpu_runtime_available="))
 }
 
 ///|

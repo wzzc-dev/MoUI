@@ -1925,6 +1925,203 @@ moonbit_skia_surface_vulkan_window(
 #endif
 }
 
+/// Create a Vulkan window surface for Linux Wayland. Takes the raw
+/// `wl_display*` and `wl_surface*` handles (as UInt64) from the window
+/// package's `Window::display_handle()` / `Window::window_handle()`.
+/// The swapchain and SkSurface wrapping follow the same pattern as the
+/// Android path; only the VkSurfaceKHR creation differs
+/// (`vkCreateWaylandSurfaceKHR` vs `vkCreateAndroidSurfaceKHR`).
+#if defined(MOUI_SKIA_ENABLE_GPU_VULKAN) && \
+  defined(MOUI_SKIA_HAS_GANESH_VULKAN_HEADERS) && defined(__linux__)
+#include <vulkan/vulkan_wayland.h>
+#include <wayland-client.h>
+#endif
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaSurface*
+moonbit_skia_surface_vulkan_wayland_window(
+  MoonbitSkiaGpuContext* context,
+  uint64_t display_ptr,
+  uint64_t surface_ptr,
+  int32_t width,
+  int32_t height,
+  int32_t origin,
+  int32_t sample_count,
+  int32_t stencil_bits
+) {
+  if (
+    width <= 0 ||
+    height <= 0 ||
+    display_ptr == 0 ||
+    surface_ptr == 0 ||
+    context == nullptr ||
+    context->context == nullptr ||
+    context->backend != MOONBIT_SKIA_GPU_BACKEND_VULKAN
+  ) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+#if defined(MOUI_SKIA_ENABLE_GPU_VULKAN) && \
+  defined(MOUI_SKIA_HAS_GANESH_VULKAN_HEADERS) && defined(__linux__)
+  (void)sample_count;
+  (void)stencil_bits;
+
+  auto* vk_context = static_cast<MoonbitSkiaVulkanContext*>(
+    context->device
+  );
+  if (vk_context == nullptr) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+
+  wl_display* wl_dpy = reinterpret_cast<wl_display*>(
+    static_cast<uintptr_t>(display_ptr)
+  );
+  wl_surface* wl_surf = reinterpret_cast<wl_surface*>(
+    static_cast<uintptr_t>(surface_ptr)
+  );
+
+  // Create VkSurfaceKHR from the Wayland display and surface
+  VkWaylandSurfaceCreateInfoKHR surface_info = {};
+  surface_info.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
+  surface_info.display = wl_dpy;
+  surface_info.surface = wl_surf;
+  VkSurfaceKHR surface = VK_NULL_HANDLE;
+  VkResult err = vkCreateWaylandSurfaceKHR(
+    vk_context->instance,
+    &surface_info,
+    nullptr,
+    &surface
+  );
+  if (err != VK_SUCCESS || surface == VK_NULL_HANDLE) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+
+  // Query surface capabilities
+  VkSurfaceCapabilitiesKHR capabilities;
+  err = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
+    vk_context->physical_device,
+    surface,
+    &capabilities
+  );
+  if (err != VK_SUCCESS) {
+    vkDestroySurfaceKHR(vk_context->instance, surface, nullptr);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+
+  // Select surface format (prefer RGBA8)
+  uint32_t format_count = 0;
+  vkGetPhysicalDeviceSurfaceFormatsKHR(
+    vk_context->physical_device, surface, &format_count, nullptr
+  );
+  if (format_count == 0) {
+    vkDestroySurfaceKHR(vk_context->instance, surface, nullptr);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+  std::vector<VkSurfaceFormatKHR> formats(format_count);
+  vkGetPhysicalDeviceSurfaceFormatsKHR(
+    vk_context->physical_device, surface, &format_count, formats.data()
+  );
+  VkFormat chosen_format = formats[0].format;
+  VkColorSpaceKHR chosen_color_space = formats[0].colorSpace;
+  for (const auto& f : formats) {
+    if (
+      f.format == VK_FORMAT_R8G8B8A8_UNORM &&
+      f.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+    ) {
+      chosen_format = f.format;
+      chosen_color_space = f.colorSpace;
+      break;
+    }
+  }
+
+  // Create the swapchain
+  VkSwapchainCreateInfoKHR swap_info = {};
+  swap_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+  swap_info.surface = surface;
+  swap_info.minImageCount = 2;
+  swap_info.imageFormat = chosen_format;
+  swap_info.imageColorSpace = chosen_color_space;
+  swap_info.imageExtent.width = static_cast<uint32_t>(width);
+  swap_info.imageExtent.height = static_cast<uint32_t>(height);
+  swap_info.imageArrayLayers = 1;
+  swap_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  swap_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  swap_info.preTransform = capabilities.currentTransform;
+  swap_info.compositeAlpha = VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR;
+  swap_info.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+  swap_info.clipped = VK_TRUE;
+  VkSwapchainKHR swapchain = VK_NULL_HANDLE;
+  err = vkCreateSwapchainKHR(vk_context->device, &swap_info, nullptr, &swapchain);
+  if (err != VK_SUCCESS || swapchain == VK_NULL_HANDLE) {
+    vkDestroySurfaceKHR(vk_context->instance, surface, nullptr);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+
+  // Get the first swapchain image
+  uint32_t image_count = 0;
+  vkGetSwapchainImagesKHR(vk_context->device, swapchain, &image_count, nullptr);
+  if (image_count == 0) {
+    vkDestroySwapchainKHR(vk_context->device, swapchain, nullptr);
+    vkDestroySurfaceKHR(vk_context->instance, surface, nullptr);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+  std::vector<VkImage> images(image_count);
+  vkGetSwapchainImagesKHR(
+    vk_context->device, swapchain, &image_count, images.data()
+  );
+  VkImage swapchain_image = images[0];
+
+  // Wrap as GrVkImageInfo
+  GrVkImageInfo image_info;
+  image_info.fImage = swapchain_image;
+  image_info.fAlloc = nullptr;
+  image_info.fFormat = chosen_format;
+  image_info.fImageTiling = VK_IMAGE_TILING_OPTIMAL;
+  image_info.fImageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  image_info.fSampleCount = 1;
+  image_info.fLevelCount = 1;
+  image_info.fCurrentQueueFamily = vk_context->queue_family_index;
+  image_info.fProtectedLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+  GrBackendRenderTarget backend_rt = GrBackendRenderTargets::MakeVk(
+    width, height, image_info
+  );
+
+  sk_sp<SkSurface> surface_obj = SkSurfaces::WrapBackendSurface(
+    context->context,
+    backend_rt,
+    moonbit_skia_surface_origin(origin),
+    nullptr,
+    nullptr
+  );
+  if (!surface_obj) {
+    vkDestroySwapchainKHR(vk_context->device, swapchain, nullptr);
+    vkDestroySurfaceKHR(vk_context->instance, surface, nullptr);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+
+  MoonbitSkiaSurface* wrapper = moonbit_skia_surface_wrapper_with_gpu_context(
+    surface_obj.release(),
+    context->context
+  );
+  auto* sc = new MoonbitSkiaVulkanSwapChain();
+  sc->device = vk_context->device;
+  sc->instance = vk_context->instance;
+  sc->queue = vk_context->queue;
+  sc->swapchain = swapchain;
+  sc->surface = surface;
+  sc->image_format = chosen_format;
+  sc->queue_family_index = vk_context->queue_family_index;
+  wrapper->host_present_handle = sc;
+  return wrapper;
+#else
+  (void)display_ptr;
+  (void)surface_ptr;
+  (void)origin;
+  (void)sample_count;
+  (void)stencil_bits;
+  return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+#endif
+}
+
 extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaSurface*
 moonbit_skia_surface_vulkan_present_and_acquire_next(
   MoonbitSkiaSurface* wrapper,
