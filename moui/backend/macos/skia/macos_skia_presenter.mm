@@ -1,5 +1,7 @@
 #import <AppKit/AppKit.h>
 #import <CoreGraphics/CoreGraphics.h>
+#import <QuartzCore/QuartzCore.h>
+#import <Metal/Metal.h>
 #import <moonbit.h>
 #import <stdint.h>
 #import <string.h>
@@ -138,4 +140,65 @@ int32_t moui_macos_present_skia_pixels_to_view(uint64_t raw_content_view_handle,
   [ns_image release];
   CGImageRelease(image);
   return MOUI_MACOS_SKIA_PRESENT_OK;
+}
+
+/// Return the raw `CAMetalLayer*` handle for the content view, or 0 when the
+/// view's backing layer is not a `CAMetalLayer`. Use
+/// `moui_macos_skia_install_metal_layer` first to install a `CAMetalLayer`
+/// as the view's backing layer; this probe then returns that layer.
+extern "C" MOONBIT_FFI_EXPORT
+uint64_t moui_macos_skia_metal_layer_for_view(uint64_t raw_view_handle) {
+  if (raw_view_handle == 0) {
+    return 0;
+  }
+  NSView *view = (__bridge NSView *)(void *)raw_view_handle;
+  if (view == nil) {
+    return 0;
+  }
+  CALayer *layer = view.layer;
+  if (![layer isKindOfClass:[CAMetalLayer class]]) {
+    return 0;
+  }
+  CAMetalLayer *metal_layer = static_cast<CAMetalLayer *>(layer);
+  return static_cast<uint64_t>(reinterpret_cast<uintptr_t>(metal_layer));
+}
+
+/// Install a `CAMetalLayer` as the content view's backing layer. The view is
+/// configured `wantsLayer:YES` and its `layer` is replaced with a new
+/// `CAMetalLayer` bound to the default system device. Returns the raw
+/// `CAMetalLayer*` handle on success, or 0 on failure (non-macOS build, nil
+/// view, or device unavailable). Must be called on the main thread.
+extern "C" MOONBIT_FFI_EXPORT
+uint64_t moui_macos_skia_install_metal_layer(uint64_t raw_view_handle) {
+  if (raw_view_handle == 0) {
+    return 0;
+  }
+  NSView *view = (__bridge NSView *)(void *)raw_view_handle;
+  if (view == nil) {
+    return 0;
+  }
+  // Enable layer-backing; the view's existing layer (if any) is replaced.
+  view.wantsLayer = YES;
+  id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+  if (device == nil) {
+    return 0;
+  }
+  CAMetalLayer *metal_layer = [CAMetalLayer layer];
+  if (metal_layer == nil) {
+    return 0;
+  }
+  metal_layer.device = device;
+  // Skia renders premultiplied RGBA; opaque is off to support compositing.
+  metal_layer.opaque = NO;
+  metal_layer.framebufferOnly = YES;
+  NSWindow *window = view.window;
+  if (window != nil) {
+    metal_layer.contentsScale = window.backingScaleFactor > 0.0
+      ? window.backingScaleFactor
+      : 1.0;
+  } else {
+    metal_layer.contentsScale = [[NSScreen mainScreen] backingScaleFactor];
+  }
+  view.layer = metal_layer;
+  return static_cast<uint64_t>(reinterpret_cast<uintptr_t>(metal_layer));
 }
