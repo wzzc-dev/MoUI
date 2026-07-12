@@ -292,6 +292,11 @@ If the repository was cloned without submodules, initialize them once:
 git submodule update --init --recursive
 ```
 
+### Window Submodule And Local Source Mode
+
+The root README intentionally keeps this workflow out of the quick start.
+Ordinary MoUI builds do not need a local `window/` checkout.
+
 The `window` submodule is **not** a `moon.work` workspace member by default.
 MoonBit resolves `wzzc-dev/window` from mooncakes.io (the published version
 pinned in each consumer's `moon.mod`). The `window/` submodule checkout exists
@@ -306,12 +311,13 @@ sh scripts/window-dev-mode.sh on      # add ./window to moon.work (local overrid
 sh scripts/window-dev-mode.sh off     # remove ./window; resolve from mooncakes.io
 ```
 
-`scripts/validate-window-dependency.mjs` (run by `check.sh --profile daily` and CI) fails
-if `moon.work` lists `./window` on the main branch, so the default state stays
-on the published dependency. After publishing a new window version, update the
-pinned version in `moui/moon.mod`, `moui_skia/moon.mod`, `moui_webview/moon.mod`,
-and `examples/markdown_editor/moon.mod`, then run `moon update` to refresh the
-registry cache.
+`scripts/validate-window-dependency.mjs` (run by `check.sh --profile daily` and
+CI) fails if `moon.work` lists `./window` on the main branch, so the default
+state stays on the published dependency. Do not add `./window` to committed
+workspace state just to fix a MoUI build. After publishing a new window version,
+update the pinned version in `moui/moon.mod`, `moui_skia/moon.mod`,
+`moui_webview/moon.mod`, and `examples/markdown_editor/moon.mod`, then run
+`moon update` to refresh the registry cache.
 
 On Windows, use the repository update helper:
 
