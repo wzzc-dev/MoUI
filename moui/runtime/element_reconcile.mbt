@@ -249,12 +249,14 @@ fn ElementNode::apply_reconcile_dirty(
   }
 }
 
+///|
 /// Threshold for switching from linear scan to indexed lookup.
 /// Below this, the overhead of building the index outweighs the savings.
 fn keyed_index_threshold() -> Int {
   32
 }
 
+///|
 /// Build a composite-key -> [old_indices] index for keyed children.
 /// Composite key is "{key.value}|{kind}" so same-key-different-kind nodes
 /// (a developer error) do not cross-match. The array preserves encounter
@@ -311,8 +313,7 @@ fn find_reusable_child(
           for old_index, old_child in old_children {
             if !used[old_index] &&
               old_child.key == Some(key) &&
-              old_child.erased_view_node.kind() ==
-              child_erased_view_node.kind() {
+              old_child.erased_view_node.kind() == child_erased_view_node.kind() {
               return Some(old_index)
             }
           }

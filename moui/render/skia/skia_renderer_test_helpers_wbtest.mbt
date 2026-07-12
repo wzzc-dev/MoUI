@@ -107,6 +107,14 @@ fn skia_test_draw_frame(commands : Array[@core.DrawCommand]) -> @core.DrawFrame 
 }
 
 ///|
+fn skia_test_draw_frame_with_damage(
+  commands : Array[@core.DrawCommand],
+  damage : @core.DamageRegion,
+) -> @core.DrawFrame {
+  @core.DrawFrame::new(commands~, damage~)
+}
+
+///|
 fn skia_test_font(font : @core.FontSpec) -> @skia_native.Font? {
   skia_font_with_resolution_for_text(
     font,

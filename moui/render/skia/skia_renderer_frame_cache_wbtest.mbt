@@ -746,10 +746,11 @@ test "skia render_frame skips churny cached layer admission" {
     } else {
       inspect(result.cache_update_count, content="0")
       inspect(renderer.layer_cache.length(), content="0")
-      inspect(
-        renderer.layer_cache_admissions[0].skip_reason,
-        content="churn-without-hit",
-      )
+      let mut churn_skip_reason = ""
+      for _, record in renderer.layer_cache_admissions {
+        churn_skip_reason = record.skip_reason
+      }
+      inspect(churn_skip_reason, content="churn-without-hit")
     }
   }
   inspect(renderer.unsupported_command_count(), content="0")
@@ -812,5 +813,9 @@ test "skia render_frame keeps hot cached layer admitted across revisions" {
     inspect(update.cache_update_count, content="1")
   }
   inspect(renderer.layer_cache.length(), content="1")
-  inspect(renderer.layer_cache_admissions[0].hit_count, content="1")
+  let mut hot_hit_count = 0
+  for _, record in renderer.layer_cache_admissions {
+    hot_hit_count = record.hit_count
+  }
+  inspect(hot_hit_count, content="1")
 }
