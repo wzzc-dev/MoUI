@@ -142,8 +142,13 @@ Mobile runtime sessions share `MobileHostChannel` for revisioned IME and
 semantics updates plus asynchronous clipboard/accessibility responses. See
 [Mobile Mainline And GPU Roadmap](mobile-mainline-roadmap.md), ADR 0005, and
 ADR 0006. `SkiaRasterNative` remains the mobile default. `SkiaGpuNative` is a
-formal `HostGpuSurface` descriptor, but direct Metal/Vulkan/EGL window
-presentation and renderer-thread ownership are still pending.
+formal `HostGpuSurface` descriptor with direct GPU presentation capability
+implemented per Phase 1 (iOS Metal, macOS Metal, Android Vulkan/GLES,
+HarmonyOS EGL/GLES, Windows D3D11, Linux Vulkan); the Phase 2 promotion gate
+scaffolding (renderer mailbox control queue, context-loss recovery, manifest
+schema) is in place, but `gpu_promoted` stays `false` on every platform until
+matching-device evidence passes the seven ADR 0006 gates. Renderer-thread
+ownership remains pending.
 
 ## Extension Rules
 

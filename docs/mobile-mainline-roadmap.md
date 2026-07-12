@@ -13,19 +13,26 @@ diagnostic route.
 | IME | Shared replace/selection events and mobile IME snapshots; Android `InputConnection`, iOS UIKit text proxy, HarmonyOS transparent `TextInput` proxy | Chinese composition, emoji/ZWJ, selection, candidate-anchor device proof pending |
 | Clipboard | Async host channel with text and image payloads; Android `ClipboardManager`/`FileProvider`, iOS `UIPasteboard`, HarmonyOS pasteboard ArrayBuffer path | Cross-app text/PNG round-trip proof pending |
 | Accessibility | Revisioned flat semantics snapshots and targeted runtime action routing; native virtual/container nodes on all three platforms | Tree, focus, and action screen-reader proof pending |
-| Renderer selection | Formal `SkiaGpuNative`/`HostGpuSurface` descriptor and promotion-aware `auto`, `skia-gpu`, `skia-raster` selection | GPU stays unpromoted |
-| Renderer mailbox | Capacity-two latest-wins frame mailbox with non-droppable control messages and surface-generation rejection | Renderer-thread integration pending |
-| Direct GPU presentation | Not implemented | Pending: Metal, Vulkan/GLES, and HarmonyOS EGL/GLES window presentation |
+| Renderer selection | Formal `SkiaGpuNative`/`HostGpuSurface` descriptor and promotion-aware `auto`, `skia-gpu`, `skia-raster` selection; `MobileRendererSelection` carries `surface_route` per Phase 1.8 | `gpu_promoted` stays `false` on every platform until matching-device manifest passes |
+| Renderer mailbox | Capacity-two latest-wins frame mailbox with non-droppable control messages and surface-generation rejection; `RendererControlMessage` (Resize/Detach/ContextLoss/Shutdown) ordered and never dropped under frame flooding (Phase 2.1) | Renderer-thread integration still pending; mailbox unit tests pass |
+| Context-loss recovery | `RendererRecovery` state machine in `moui/runtime/renderer_recovery.mbt` (Idle → Lost → Recovering → Recovered → Idle; terminal `FallbackToRaster` after 2 consecutive failures; 3-VSync deadline) per Phase 2.2 | Per-platform loss detector wiring and matching-device recovery evidence pending |
+| Direct GPU presentation | Phase 1 capability implemented per platform: iOS Metal, macOS Metal, Android Vulkan/GLES, HarmonyOS EGL/GLES, Windows D3D11, Linux Vulkan (Wayland). `HostGpuPresentTarget` bypasses `read_frame()` on the GPU route. | `auto` and `skia-gpu` resolve to `SkiaRasterNative` with explicit fallback reason; matching-device smoke pending per platform |
 
 `SkiaRasterNative` remains the default and the compatibility/test fallback.
-The current mobile presenter still performs CPU pixel-frame transfer. A GPU
-descriptor or offscreen GPU surface does not count as direct presentation.
+The GPU direct-presentation capability has landed in source per Phase 1
+(iOS Metal, macOS Metal, Android Vulkan/GLES, HarmonyOS EGL/GLES); until a
+platform's matching-device manifest (see ADR 0006 § Phase 2 Promotion Gate
+Evidence) passes the seven promotion gates, `auto` and `skia-gpu` select
+`skia-raster` with an explicit fallback reason. A GPU descriptor or offscreen
+GPU surface does not count as direct presentation; full-frame readback or
+platform image intermediates are forbidden on the GPU production path.
 
 All three mobile build entrypoints accept
 `--renderer auto|skia-gpu|skia-raster`. The generated `mobile-build.json` and
 native startup log record both requested and selected modes. Until a direct
-host GPU surface exists, `auto` and `skia-gpu` select `skia-raster` with an
-explicit fallback reason; this option does not promote the GPU descriptor.
+host GPU surface is promoted on a given platform, `auto` and `skia-gpu`
+select `skia-raster` with an explicit fallback reason; this option does not
+promote the GPU descriptor.
 
 ## Mobile Host Channel
 

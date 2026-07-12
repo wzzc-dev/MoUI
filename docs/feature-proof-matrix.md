@@ -75,6 +75,36 @@ HarmonyOS Demo/Component Gallery. GPU promotion is not part of current L1/L2
 renderer proof; it needs the per-platform performance and recovery manifest in
 `mobile-mainline-roadmap.md`.
 
+## L2 GPU Direct Presentation Phase 1 Capability
+
+Phase 1 of the GPU readback elimination plan has landed the direct GPU
+presentation capability in source behind the `--renderer skia-gpu` opt-in
+(see ADR 0006 and `.trae/documents/gpu-readback-elimination-plan.md`). The
+capability is implemented per platform but `gpu_promoted` stays `false` on
+every platform until Phase 2 matching-device evidence passes the seven ADR
+0006 gates (`readbackEliminated`, `rendererThread`, `mailboxOk`,
+`performance`, `memory`, `contextLoss`, `rasterFallback`).
+
+| Platform | Backend | Surface route | Phase 1 source | Phase 2 promotion |
+| --- | --- | --- | --- | --- |
+| iOS | Metal | `MetalGpuSurfaceRoute` | implemented | pending matching-device manifest |
+| macOS | Metal | `MetalGpuSurfaceRoute` | implemented | pending matching-device manifest |
+| Android | Vulkan / GLES | `VulkanGpuSurfaceRoute` / `EglGpuSurfaceRoute` | implemented | pending matching-device manifest |
+| HarmonyOS | EGL/GLES | `EglGpuSurfaceRoute` | implemented | pending matching-device manifest |
+| Windows | Direct3D 11 | `Direct3DGpuSurfaceRoute` | implemented | pending matching-device manifest |
+| Linux | Vulkan (Wayland) | `VulkanGpuSurfaceRoute` | implemented | pending matching-device manifest |
+
+The Phase 2 promotion gate scaffolding has L1 package-test proof:
+
+| Gate | Source | L1 proof |
+| --- | --- | --- |
+| Renderer mailbox control queue | `moui/render/render_frame_mailbox.mbt` | `moui/render` whitebox tests (capacity-two latest-wins; control messages never dropped) |
+| Context-loss recovery state machine | `moui/runtime/renderer_recovery.mbt` | `moui/runtime` whitebox tests (Idle → Lost → Recovering → Recovered → Idle; terminal `FallbackToRaster`) |
+| Manifest schema + `gpuPromotionEvidence` | `tools/moui/validate_mobile_runtime_manifest` | `validate_mobile_runtime_manifest_wbtest` (9 new Phase 2.3 tests) |
+
+Phase 2 per-platform promotion flips `MobileRendererSelection::gpu_promoted`
+to `true` only after the matching-device manifest passes `--require-passed`.
+
 `feature-proof-summary.yml` runs after `ci.yml` or
 `moui-renderer-real-skia-ci.yml` completes (via
 `workflow_run`). It collects all job statuses from `ci.yml` and
