@@ -60,11 +60,11 @@ test "api surface classification budgets pin current high-risk packages" {
     classification_budget(
       "moui/core/pkg.generated.mbti", "advanced_core_protocol",
     ).max_count,
-    content="521",
+    content="523",
   )
   inspect(
     classification_budget("moui/core/pkg.generated.mbti", "required_protocol").max_count,
-    content="138",
+    content="139",
   )
   inspect(
     classification_budget("moui/views/pkg.generated.mbti", "app_constructor").max_count,
@@ -92,7 +92,7 @@ test "api surface classification budgets pin current high-risk packages" {
     classification_budget(
       "moui/runtime/pkg.generated.mbti", "runtime_diagnostic",
     ).max_count,
-    content="261",
+    content="263",
   )
   inspect(
     classification_budget(
@@ -474,7 +474,7 @@ test "host and renderer public all budgets ratchet down" {
 ///|
 test "core descriptor payloads stay opaque" {
   let core = budget_by_label("core")
-  inspect(core.max_lines, content="1820")
+  inspect(core.max_lines, content="1828")
   inspect(core.max_pub_lines, content="520")
   inspect(core.max_pub_all_lines, content="150")
   assert_true(core.required_tokens.contains("View::node"))

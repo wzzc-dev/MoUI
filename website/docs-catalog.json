@@ -149,6 +149,38 @@
     },
     {
       "group": "platforms",
+      "slug": "platform-notes-web",
+      "title": "Web Platform Notes",
+      "path": "docs/platform-notes-web.md",
+      "summary": "Web wasm-gc setup, browser runtime behavior, rendering paths, and validation commands.",
+      "keywords": ["Web", "wasm-gc", "browser", "WebGPU"]
+    },
+    {
+      "group": "platforms",
+      "slug": "platform-notes-macos",
+      "title": "macOS Platform Notes",
+      "path": "docs/platform-notes-macos.md",
+      "summary": "macOS AppKit host setup, native Skia rendering, services, and runtime evidence.",
+      "keywords": ["macOS", "AppKit", "Skia", "native"]
+    },
+    {
+      "group": "platforms",
+      "slug": "platform-notes-windows",
+      "title": "Windows Platform Notes",
+      "path": "docs/platform-notes-windows.md",
+      "summary": "Windows host setup, native Skia rendering, platform services, and validation workflow.",
+      "keywords": ["Windows", "Win32", "Skia", "native"]
+    },
+    {
+      "group": "platforms",
+      "slug": "platform-notes-linux",
+      "title": "Linux Platform Notes",
+      "path": "docs/platform-notes-linux.md",
+      "summary": "Linux Wayland host setup, native Skia rendering, system dependencies, and validation workflow.",
+      "keywords": ["Linux", "Wayland", "Skia", "native"]
+    },
+    {
+      "group": "platforms",
       "slug": "platform-host-contract",
       "title": "Platform Host Contract",
       "path": "docs/platform-host-contract.md",

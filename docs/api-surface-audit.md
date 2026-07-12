@@ -9,9 +9,9 @@ counts against generated `pkg.generated.mbti` files.
 
 | Package | Public declarations | Semantic categories | Primary audience |
 | --- | ---: | --- | --- |
-| `moui/core` | 503 `pub`, 138 `pub(all)` | 521 `advanced_core_protocol`, 138 `required_protocol` | Framework authors, custom-view authors, render/runtime boundaries |
+| `moui/core` | 505 `pub`, 139 `pub(all)` | 523 `advanced_core_protocol`, 139 `required_protocol` | Framework authors, custom-view authors, render/runtime boundaries |
 | `moui/views` | 350 `pub`, 43 `pub(all)` | 134 `app_constructor`, 164 `app_state_helper`, 30 `app_style`, 26 `advanced_core_protocol`, 43 `migration_debt` | App authors and app-facing control authors |
-| `moui/runtime` | 261 `pub`, 6 `pub(all)` | 261 `runtime_diagnostic`, 6 `required_protocol` | Host/runtime assembly, diagnostics, devtools |
+| `moui/runtime` | 263 `pub`, 6 `pub(all)` | 263 `runtime_diagnostic`, 6 `required_protocol` | Host/runtime assembly, diagnostics, devtools |
 | `moui/backend/host` | 422 `pub`, 62 `pub(all)` | 422 `host_contract`, 62 `required_protocol` | Platform backends and host-service integrations |
 | `moui/render` | 100 `pub`, 25 `pub(all)` | 100 `renderer_contract`, 25 `required_protocol` | Renderer implementers and renderer capability tooling |
 

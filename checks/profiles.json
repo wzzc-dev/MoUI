@@ -19,6 +19,7 @@
         { "name": "smoke nightly dry-run", "argv": ["node", "scripts/smoke-gate.mjs", "--tier", "nightly", "--dry-run", "--json"] },
         { "name": "MoonBit format", "argv": ["moon", "fmt", "--check"] },
         { "name": "MoonBit workspace check", "argv": ["moon", "check"] },
+        { "name": "generated interface drift", "argv": ["node", "scripts/check-generated-interfaces.mjs"] },
         { "name": "core tests", "argv": ["moon", "test", "moui/core", "--target", "native"] },
         { "name": "views tests", "argv": ["moon", "test", "moui/views", "--target", "native"] },
         { "name": "render facade tests", "argv": ["moon", "test", "moui/render", "--target", "native"] },

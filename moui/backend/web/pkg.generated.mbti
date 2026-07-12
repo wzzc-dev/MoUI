@@ -56,6 +56,8 @@ pub fn web_dispatch_event(Int, Int, Int, Int, Double, Int) -> Unit
 
 pub fn web_dispatch_route(Int, Int) -> Unit
 
+pub fn web_dispatch_semantics_action(Int, Int, Int, Int) -> Unit
+
 pub fn web_history_back() -> Unit
 
 pub fn web_history_forward() -> Unit
@@ -67,6 +69,8 @@ pub fn web_history_replace_route(String) -> Unit
 pub fn web_host_info() -> @host.HostAppInfo
 
 pub fn web_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, open_url? : (String) -> Bool, clipboard? : Bool, clipboard_read? : Bool, clipboard_write? : (String) -> Bool, file_dialog? : Bool, file_access? : Bool, async_queue? : @host.HostServiceAsyncQueue?) -> @host.HostServiceBridge
+
+pub fn web_update_document_metadata(WebDocumentMetadata) -> Unit
 
 pub fn webgpu_canvas_surface_contract() -> @render.WgpuSurfaceContract
 
@@ -80,7 +84,10 @@ pub fn window_event_to_host_with_modifiers(@wzzc-dev/window/core.WindowEvent, @w
 
 // Types and methods
 pub(all) struct AriaNode {
+  element_id : @wzzc-dev/moui/core.ElementId
   role : String
+  level : Int?
+  url : String
   label : String
   value : String
   description : String
@@ -126,6 +133,14 @@ pub(all) struct WebBackendInfo {
   surface_contract : @render.WgpuSurfaceContract
   description : String
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct WebDocumentMetadata {
+  title : String
+  description : String
+  canonical : String
+  image : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn WebDocumentMetadata::new(title~ : String, description? : String, canonical? : String, image? : String) -> Self
 
 pub(all) struct WebRenderer {
   renderer : @webgpu_adapter.WebGpuWasmRenderer

@@ -150,7 +150,7 @@ owning-package boundaries clear.
   native WKWebView platform-view sync, and CAMetalLayer WGPU surface creation.
 - `backend/windows/`: Win32/window host, resolver-backed multi-window slots,
   optional WebView2 platform-view sync, and HWND WGPU surface creation.
-- `backend/linux/`: Wayland host over `wzzc-dev/window@0.5.1-0.1.6`, Linux
+- `backend/linux/`: Wayland host over `wzzc-dev/window@0.5.1-0.1.6-2`, Linux
   host-service bridge, text-input/IME request sync, drag/drop conversion, a
   native Skia mainline presenter path plus native WGPU diagnostic surface path,
   optional WebKitGTK platform-view sync, shared host event conversion, and
@@ -289,7 +289,7 @@ sh scripts/check.sh --profile daily
 ```
 
 The daily check runs `sh scripts/check-local-deps.sh`, which verifies
-`wzzc-dev/window@0.5.1-0.1.6`, confirms `moon.work` does not include a local
+`wzzc-dev/window@0.5.1-0.1.6-2`, confirms `moon.work` does not include a local
 window checkout, verifies the repo-local `moui_skia` workspace, and checks the
 window package's MoUI-oriented smoke/evidence files when the package is present
 in the MoonBit registry cache, including `scripts/record_moui_evidence.sh`.
@@ -322,10 +322,13 @@ discovered by GitHub Actions in the monorepo. The
 `.github/workflows/moui-renderer-real-skia-ci.yml` workflow is
 MoUI-owned integration proof, not a package-owned `moui_skia` workflow.
 The daily check profile also runs the MoonBit-backed maintenance baseline
-guard, API surface guard, checked conformance artifact guard, dedicated
-checked-artifact validators for platform runtime evidence, Web runtime
-handoff/presentation, conformance capture, renderer proof manifests, and check
-runner self-tests, plus app/Web checks for Showcase and Markdown Editor.
+guard, API surface guard, generated `pkg.generated.mbti` drift detection,
+checked conformance artifact guard, dedicated checked-artifact validators for
+platform runtime evidence, Web runtime handoff/presentation, conformance
+capture, renderer proof manifests, and check runner self-tests, plus app/Web
+checks for Showcase and Markdown Editor. The interface drift step snapshots
+tracked interface files before running workspace-wide `moon info`, so existing
+local changes may be validated while newly generated drift still fails.
 `ci.yml` uses `sh scripts/check.sh --profile pr` for the PR profile gate and
 `sh scripts/check.sh --profile platform` for Linux platform contracts. The
 Windows MSVC job keeps setup/build/package steps explicit and only verifies the
@@ -392,7 +395,7 @@ Linux, and WebGPU wasm proof
 artifacts to validate as passed before mainline capability promotion; native
 WGPU diagnostic artifacts are uploaded separately but do not block the summary.
 The platform evidence manifest is schema v2 and records the
-`wzzc-dev/window@0.5.1-0.1.6` package monitor/cursor probe as
+`wzzc-dev/window@0.5.1-0.1.6-2` package monitor/cursor probe as
 `monitorCursor`; native passed entries must set it to
 `yes`, while Web browser-session evidence may leave it pending. Native passed
 entries must also set `imeCandidateAnchor`, `imeSurroundingText`,
@@ -446,7 +449,7 @@ first-frame line, respectively.
 Use `record-macos-platform-runtime-evidence.mjs` only for macOS platform
 promotion after macOS `skiaEvidence` is passed and every native IME observation
 has already been recorded by `record-native-ime-evidence.mjs`. The macOS helper
-validates the `wzzc-dev/window@0.5.1-0.1.6` package runtime smoke transcript
+validates the `wzzc-dev/window@0.5.1-0.1.6-2` package runtime smoke transcript
 through `--window-smoke-log` for window/open/resize/redraw/input/monitor/cursor/shutdown
 source observations, and validates a Showcase or Markdown Editor `macos_skia`
 first-frame source log through `--app-runtime-log` before delegating to the
