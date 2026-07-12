@@ -355,6 +355,27 @@ fn RuntimeState::focus_key(self : RuntimeState, key : String) -> Bool {
 }
 
 ///|
+fn RuntimeState::focus_element(self : RuntimeState, target : ElementId) -> Bool {
+  self.ensure_render_tree()
+  if !self.element_tree.root.is_focusable_id(target) {
+    return false
+  }
+  let previous_focus = self.focused_element
+  let constrained = self.element_tree.root.constrained_focus_target(
+    Some(target),
+    current=previous_focus,
+  )
+  if constrained != Some(target) {
+    return false
+  }
+  self.focused_element = Some(target)
+  if previous_focus != self.focused_element {
+    self.mark_dirty(self.element_tree.id())
+  }
+  true
+}
+
+///|
 fn RuntimeState::advance_time(self : RuntimeState, time_ms : Double) -> Unit {
   self.dispatch_event(FrameTick(self.clock.frame(time_ms)))
 }

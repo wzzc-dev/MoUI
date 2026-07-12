@@ -4,6 +4,16 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
+import {
+  hasMobileResizeTransition,
+  hasMobileTextClipboardRoundTrip,
+  hasIosApplicationLog,
+  iosIdbElementPlan,
+  iosIdbInputPlan,
+  iosIdbServiceProbePlan,
+  iosSimulatorLaunchPid,
+  mobileRuntimeStatus,
+} from "./lib/mobile-runtime-log.mjs";
 
 const tmp = mkdtempSync(join(tmpdir(), "moui-mobile-runtime-manifest-"));
 const validator = "scripts/validate-mobile-runtime-manifest.mjs";
@@ -21,6 +31,7 @@ const baseManifest = (overrides = {}) => ({
     command: "scripts/build-mobile-ios-app.sh --app component_gallery",
   },
   artifacts: {
+    screenshotBefore: "artifacts/mobile-runtime/ios/component_gallery/screenshot-before.png",
     screenshot: "artifacts/mobile-runtime/ios/component_gallery/screenshot.png",
     log: "artifacts/mobile-runtime/ios/component_gallery/runtime.log",
   },
@@ -31,6 +42,11 @@ const baseManifest = (overrides = {}) => ({
     contentPixels: 42000,
     distinctColorBuckets: 20,
   },
+  pixelChange: {
+    comparable: true,
+    changedPixels: 2400,
+    changedRatio: 0.007,
+  },
   observations: {
     lifecycleAttach: "yes",
     lifecycleDetach: "yes",
@@ -39,10 +55,13 @@ const baseManifest = (overrides = {}) => ({
     representativeInput: "yes",
     scrollInput: "yes",
     cleanShutdown: "yes",
-    ime: "pending",
-    clipboard: "pending",
-    accessibility: "pending",
-    asyncImage: "pending",
+    ime: "yes",
+    clipboard: "yes",
+    accessibility: "yes",
+    accessibilityTree: "yes",
+    accessibilityFocus: "yes",
+    accessibilityAction: "yes",
+    asyncImage: "yes",
     realDeviceSigning: "pending",
   },
   evidenceBoundary: "non-fallback matching-host smoke evidence; fallback builds are packaging only",
@@ -74,7 +93,130 @@ assert(result.status !== 0, "component_gallery must require scrollInput when pas
 result = run(baseManifest({ app: "counter", observations: { ...baseManifest().observations, scrollInput: "pending" } }), ["--require-passed"]);
 assert(result.status === 0, "counter may leave scrollInput pending");
 
+result = run(baseManifest({ platform: "harmonyos", app: "harmonyos_demo", observations: { ...baseManifest().observations, scrollInput: "pending" } }), ["--require-passed"]);
+assert(result.status === 0, "HarmonyOS demo may provide passed matching-device evidence");
+
+result = run(baseManifest({ pixelChange: { comparable: true, changedPixels: 0, changedRatio: 0 } }), ["--require-passed"]);
+assert(result.status !== 0, "input injection without visible pixel change must not pass");
+
+result = run(baseManifest({ observations: { ...baseManifest().observations, ime: "pending" } }), ["--require-passed"]);
+assert(result.status !== 0, "passed evidence must include IME observation");
+
 result = run(baseManifest({ status: "failed", screenshot: { width: 0, height: 0, totalPixels: 0, contentPixels: 0, distinctColorBuckets: 0 } }));
 assert(result.status === 0, "failed diagnostic manifest should validate without --require-passed");
+
+result = run(baseManifest({ status: "partial", observations: { ...baseManifest().observations, resize: "no" } }));
+assert(result.status === 0, "partial evidence manifest should validate without --require-passed");
+result = run(baseManifest({ status: "partial" }), ["--require-passed"]);
+assert(result.status !== 0, "partial evidence must not satisfy --require-passed");
+
+const completeScreenshot = baseManifest().screenshot;
+assert(
+  mobileRuntimeStatus(baseManifest().observations, completeScreenshot, true) === "passed",
+  "complete observations and screenshot should produce passed status",
+);
+assert(
+  mobileRuntimeStatus(
+    { ...baseManifest().observations, resize: "no" },
+    completeScreenshot,
+    true,
+  ) === "partial",
+  "useful but incomplete observations should produce partial status",
+);
+assert(
+  mobileRuntimeStatus(
+    Object.fromEntries(Object.keys(baseManifest().observations).map(key => [key, "pending"])),
+    { width: 0, height: 0, contentPixels: 0, distinctColorBuckets: 0 },
+    true,
+  ) === "failed",
+  "a run with no usable evidence should produce failed status",
+);
+
+assert(
+  !hasIosApplicationLog(
+    "log[12:0] args: eventMessage CONTAINS 'moui-mobile lifecycle detach'",
+    "ComponentGallery",
+    "moui-mobile lifecycle detach",
+  ),
+  "iOS log query command must not count as application detach evidence",
+);
+assert(
+  hasIosApplicationLog(
+    "ComponentGallery[42:7] moui-mobile lifecycle detach app=component_gallery",
+    "ComponentGallery",
+    "moui-mobile lifecycle detach",
+  ),
+  "target iOS application lifecycle log should count as detach evidence",
+);
+assert(
+  iosSimulatorLaunchPid("dev.wzzc.moui.counter: 95720\n") === "95720"
+    && iosSimulatorLaunchPid("launch failed") === "",
+  "iOS simulator launch PID parsing should isolate the current app process",
+);
+assert(
+  hasMobileResizeTransition([
+    "moui-mobile lifecycle attach width=1206 height=2622",
+    "moui-mobile resize width=2622 height=1206",
+  ].join("\n")),
+  "mobile resize evidence should require two distinct physical sizes",
+);
+assert(
+  !hasMobileResizeTransition([
+    "moui-mobile lifecycle attach width=1206 height=2622",
+    "moui-mobile resize width=1206 height=2622",
+  ].join("\n")),
+  "a duplicate initial surface callback must not count as resize evidence",
+);
+assert(
+  hasMobileTextClipboardRoundTrip([
+    "moui-mobile service clipboard complete operation=write-text",
+    "moui-mobile service clipboard complete operation=read-text",
+  ].join("\n"))
+    && !hasMobileTextClipboardRoundTrip(
+      "moui-mobile service clipboard complete operation=write-text",
+    ),
+  "mobile clipboard evidence should require system write and read completion",
+);
+
+const idbPlan = iosIdbInputPlan(JSON.stringify([
+  { type: "Application", frame: { x: 0, y: 0, width: 402, height: 874 } },
+  { type: "Button", role: "AXButton", AXLabel: "+", enabled: true,
+    frame: { x: 261, y: 459, width: 100, height: 40 } },
+]));
+assert(
+  idbPlan?.tap.x === 311 && idbPlan?.tap.y === 479,
+  "idb input plan should tap the center of the first enabled button",
+);
+assert(
+  idbPlan?.swipe.xStart === 201 && idbPlan?.swipe.yStart === 656
+    && idbPlan?.swipe.yEnd === 219,
+  "idb input plan should derive a vertical swipe from the application frame",
+);
+assert(
+  iosIdbInputPlan("not-json") === null
+    && iosIdbInputPlan(JSON.stringify([{ type: "Button", enabled: false,
+      frame: { x: 0, y: 0, width: 10, height: 10 } }])) === null,
+  "idb input plan should reject malformed trees and disabled-only controls",
+);
+
+const probeTree = JSON.stringify([
+  { type: "Application", frame: { x: 0, y: 0, width: 402, height: 874 } },
+  { type: "TextField", AXLabel: "Service probe text", enabled: true,
+    frame: { x: 16, y: 96, width: 370, height: 40 } },
+  { type: "Button", role: "AXButton", AXLabel: "Activate service probe", enabled: true,
+    frame: { x: 16, y: 180, width: 220, height: 40 } },
+  { type: "Button", role: "AXButton", AXLabel: "Paste", enabled: true,
+    frame: { x: 180, y: 60, width: 64, height: 44 } },
+]);
+const probePlan = iosIdbServiceProbePlan(probeTree);
+assert(
+  probePlan?.textField.tap.x === 201 && probePlan?.textField.tap.y === 116
+    && probePlan?.action.tap.x === 126 && probePlan?.action.tap.y === 200,
+  "service probe plan should locate its text field and action by stable labels",
+);
+assert(
+  iosIdbElementPlan(probeTree, ["Paste"])?.tap.x === 212,
+  "idb element plan should locate system edit-menu actions by label",
+);
 
 console.log("mobile runtime manifest validator tests passed");

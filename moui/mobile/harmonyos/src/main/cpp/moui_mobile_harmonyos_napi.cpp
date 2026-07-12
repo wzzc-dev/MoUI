@@ -1,6 +1,11 @@
 #include <cstdint>
 #include <cstdarg>
+#include <chrono>
+#include <cmath>
+#include <cstring>
 #include <mutex>
+#include <moonbit.h>
+#include <vector>
 
 #ifndef MOUI_MOBILE_APP_ARG
 #define MOUI_MOBILE_APP_ARG "moui-mobile-harmonyos"
@@ -8,6 +13,14 @@
 
 #ifndef MOUI_MOBILE_APP_ID
 #define MOUI_MOBILE_APP_ID "unknown"
+#endif
+
+#ifndef MOUI_MOBILE_RENDERER_REQUESTED
+#define MOUI_MOBILE_RENDERER_REQUESTED "auto"
+#endif
+
+#ifndef MOUI_MOBILE_RENDERER_SELECTED
+#define MOUI_MOBILE_RENDERER_SELECTED "skia-raster"
 #endif
 
 #ifndef MOUI_MOBILE_SMOKE_ATTACH_SURFACE
@@ -105,7 +118,24 @@ extern "C" int32_t MOUI_MOBILE_DISPATCH_SCROLL(
     int32_t phase);
 #endif
 extern "C" int32_t MOUI_MOBILE_RENDER_FRAME(void);
+extern "C" int32_t MOUI_MOBILE_FRAME_TICK(double time_ms);
 extern "C" void MOUI_MOBILE_DETACH_SURFACE(void);
+extern "C" moonbit_string_t moui_mobile_take_host_updates_json(void);
+extern "C" int32_t moui_mobile_dispatch_text_input(
+    int32_t kind,
+    moonbit_string_t text,
+    int32_t start,
+    int32_t end);
+extern "C" int32_t moui_mobile_dispatch_command(int32_t kind);
+extern "C" int32_t moui_mobile_dispatch_accessibility(
+    int32_t element_id,
+    int32_t action,
+    moonbit_string_t value);
+extern "C" int32_t moui_mobile_complete_clipboard(
+    int32_t id,
+    int32_t kind,
+    moonbit_string_t text,
+    moonbit_bytes_t bytes);
 
 void ensure_moonbit_runtime() {
   std::call_once(g_runtime_once, [] {
@@ -113,7 +143,12 @@ void ensure_moonbit_runtime() {
     static char *argv[] = {app_name};
     moonbit_runtime_init(1, argv);
     moonbit_init();
-    log_info("MoonBit runtime initialized");
+    log_info(
+      "moui-mobile runtime initialized app=%{public}s renderer-requested=%{public}s renderer-selected=%{public}s",
+      MOUI_MOBILE_APP_ID,
+      MOUI_MOBILE_RENDERER_REQUESTED,
+      MOUI_MOBILE_RENDERER_SELECTED
+    );
   });
 }
 
@@ -152,27 +187,52 @@ bool attach_or_resize(uint64_t surface_handle, int32_t width, int32_t height, do
   if (same_surface) {
     const bool resized = MOUI_MOBILE_RESIZE(width, height, scale) != 0;
     log_info("HarmonyOS runtime resize result=%{public}d", resized ? 1 : 0);
+    log_info(
+      "moui-mobile resize width=%{public}d height=%{public}d result=%{public}d",
+      width,
+      height,
+      resized ? 1 : 0
+    );
     return resized;
   }
   const bool attached = MOUI_MOBILE_ATTACH_SURFACE(surface_handle, width, height, scale) != 0;
   log_info("HarmonyOS runtime attach result=%{public}d", attached ? 1 : 0);
+  log_info("moui-mobile lifecycle attach result=%{public}d", attached ? 1 : 0);
   return attached;
 }
 
 #if defined(MOUI_HARMONYOS_HAS_XCOMPONENT)
-double xcomponent_touch_phase(OH_NativeXComponent_TouchEventType type) {
+int32_t xcomponent_touch_phase(OH_NativeXComponent_TouchEventType type) {
   switch (type) {
     case OH_NATIVEXCOMPONENT_DOWN:
-      return 0.0;
+      return 0;
     case OH_NATIVEXCOMPONENT_MOVE:
-      return 1.0;
+      return 1;
     case OH_NATIVEXCOMPONENT_UP:
-      return 2.0;
+      return 2;
     case OH_NATIVEXCOMPONENT_CANCEL:
-      return 3.0;
+      return 3;
     default:
-      return 1.0;
+      return 1;
   }
+}
+
+double monotonic_time_ms() {
+  return std::chrono::duration<double, std::milli>(
+      std::chrono::steady_clock::now().time_since_epoch()).count();
+}
+
+bool g_touch_active = false;
+bool g_touch_scrolling = false;
+double g_touch_start_x = 0.0;
+double g_touch_start_y = 0.0;
+double g_touch_last_x = 0.0;
+double g_touch_last_y = 0.0;
+constexpr double k_touch_slop = 8.0;
+
+void reset_touch_gesture() {
+  g_touch_active = false;
+  g_touch_scrolling = false;
 }
 
 void on_surface_created(OH_NativeXComponent *component, void *window) {
@@ -189,13 +249,11 @@ void on_surface_created(OH_NativeXComponent *component, void *window) {
     static_cast<int32_t>(height > 0 ? height : 1),
     1.0
   );
-  const bool rendered = MOUI_MOBILE_RENDER_FRAME() != 0;
   log_info(
-    "XComponent surface created width=%{public}llu height=%{public}llu attach=%{public}d render=%{public}d",
+    "XComponent surface created width=%{public}llu height=%{public}llu attach=%{public}d",
     static_cast<unsigned long long>(width),
     static_cast<unsigned long long>(height),
-    attached ? 1 : 0,
-    rendered ? 1 : 0
+    attached ? 1 : 0
   );
 }
 
@@ -213,13 +271,11 @@ void on_surface_changed(OH_NativeXComponent *component, void *window) {
     static_cast<int32_t>(height > 0 ? height : 1),
     1.0
   );
-  const bool rendered = MOUI_MOBILE_RENDER_FRAME() != 0;
   log_info(
-    "XComponent surface changed width=%{public}llu height=%{public}llu resize=%{public}d render=%{public}d",
+    "XComponent surface changed width=%{public}llu height=%{public}llu resize=%{public}d",
     static_cast<unsigned long long>(width),
     static_cast<unsigned long long>(height),
-    resized ? 1 : 0,
-    rendered ? 1 : 0
+    resized ? 1 : 0
   );
 }
 
@@ -229,7 +285,9 @@ void on_surface_destroyed(OH_NativeXComponent *component, void *window) {
   ensure_moonbit_runtime();
   MOUI_MOBILE_DETACH_SURFACE();
   g_surface_handle = 0;
+  reset_touch_gesture();
   log_info("XComponent surface destroyed detach=1");
+  log_info("moui-mobile lifecycle detach reason=surface-destroyed");
 }
 
 void dispatch_touch_event(OH_NativeXComponent *component, void *window) {
@@ -243,21 +301,69 @@ void dispatch_touch_event(OH_NativeXComponent *component, void *window) {
     log_warn("XComponent touch read failed");
     return;
   }
-  const bool dispatched = MOUI_MOBILE_DISPATCH_POINTER(
-    static_cast<int32_t>(xcomponent_touch_phase(event.type)),
-    event.x,
-    event.y,
-    0.0
-  ) != 0;
-  const bool rendered = MOUI_MOBILE_RENDER_FRAME() != 0;
+  const int32_t phase = xcomponent_touch_phase(event.type);
+  const double now_ms = monotonic_time_ms();
+  bool dispatched = false;
+  bool scroll_dispatched = false;
+  if (phase == 0) {
+    g_touch_active = true;
+    g_touch_scrolling = false;
+    g_touch_start_x = event.x;
+    g_touch_start_y = event.y;
+    g_touch_last_x = event.x;
+    g_touch_last_y = event.y;
+    dispatched = MOUI_MOBILE_DISPATCH_POINTER(0, event.x, event.y, now_ms) != 0;
+  } else if (phase == 1 && g_touch_active) {
+#if MOUI_MOBILE_ENABLE_SCROLL
+    if (!g_touch_scrolling) {
+      const double dx = event.x - g_touch_start_x;
+      const double dy = event.y - g_touch_start_y;
+      if (dx * dx + dy * dy > k_touch_slop * k_touch_slop) {
+        dispatched = MOUI_MOBILE_DISPATCH_POINTER(3, event.x, event.y, now_ms) != 0;
+        scroll_dispatched = MOUI_MOBILE_DISPATCH_SCROLL(
+          g_touch_start_x, g_touch_start_y, 0.0, 0.0, 0) != 0;
+        g_touch_scrolling = true;
+      }
+    }
+    if (g_touch_scrolling) {
+      scroll_dispatched = MOUI_MOBILE_DISPATCH_SCROLL(
+        event.x,
+        event.y,
+        event.x - g_touch_last_x,
+        event.y - g_touch_last_y,
+        1) != 0 || scroll_dispatched;
+    } else {
+      dispatched = MOUI_MOBILE_DISPATCH_POINTER(1, event.x, event.y, now_ms) != 0;
+    }
+#else
+    dispatched = MOUI_MOBILE_DISPATCH_POINTER(1, event.x, event.y, now_ms) != 0;
+#endif
+    g_touch_last_x = event.x;
+    g_touch_last_y = event.y;
+  } else if ((phase == 2 || phase == 3) && g_touch_active) {
+#if MOUI_MOBILE_ENABLE_SCROLL
+    if (g_touch_scrolling) {
+      scroll_dispatched = MOUI_MOBILE_DISPATCH_SCROLL(
+        event.x, event.y, 0.0, 0.0, phase == 2 ? 2 : 3) != 0;
+    } else {
+      dispatched = MOUI_MOBILE_DISPATCH_POINTER(phase, event.x, event.y, now_ms) != 0;
+    }
+#else
+    dispatched = MOUI_MOBILE_DISPATCH_POINTER(phase, event.x, event.y, now_ms) != 0;
+#endif
+    reset_touch_gesture();
+  }
   log_info(
-    "XComponent touch type=%{public}d x=%{public}f y=%{public}f dispatch=%{public}d render=%{public}d",
+    "moui-mobile input pointer type=%{public}d x=%{public}f y=%{public}f pointer=%{public}d scroll=%{public}d",
     static_cast<int>(event.type),
     event.x,
     event.y,
     dispatched ? 1 : 0,
-    rendered ? 1 : 0
+    scroll_dispatched ? 1 : 0
   );
+  if (scroll_dispatched) {
+    log_info("moui-mobile input scroll x=%{public}f y=%{public}f", event.x, event.y);
+  }
 }
 
 void register_xcomponent_callbacks() {
@@ -285,12 +391,164 @@ napi_value napi_bool(napi_env env, bool value) {
   return result;
 }
 
+moonbit_string_t napi_moonbit_string(napi_env env, napi_value value) {
+  size_t length = 0;
+  if (napi_get_value_string_utf16(env, value, nullptr, 0, &length) != napi_ok) {
+    return moonbit_make_string(0, 0);
+  }
+  std::vector<char16_t> buffer(length + 1, 0);
+  size_t written = 0;
+  napi_get_value_string_utf16(env, value, buffer.data(), buffer.size(), &written);
+  moonbit_string_t result = moonbit_make_string_raw(static_cast<int32_t>(length));
+  memcpy(result, buffer.data(), written * sizeof(char16_t));
+  return result;
+}
+
+napi_value napi_moonbit_string_value(napi_env env, moonbit_string_t value) {
+  napi_value result;
+  const int32_t length = value == nullptr ? 0 : Moonbit_array_length(value);
+  napi_create_string_utf16(
+    env,
+    value == nullptr ? u"" : reinterpret_cast<const char16_t *>(value),
+    static_cast<size_t>(length),
+    &result
+  );
+  if (value != nullptr) {
+    moonbit_decref(value);
+  }
+  return result;
+}
+
 napi_value napi_render_frame(napi_env env, napi_callback_info info) {
   (void)info;
   ensure_moonbit_runtime();
   const bool rendered = MOUI_MOBILE_RENDER_FRAME() != 0;
   log_info("NAPI renderFrame result=%{public}d", rendered ? 1 : 0);
   return napi_bool(env, rendered);
+}
+
+napi_value napi_frame_tick(napi_env env, napi_callback_info info) {
+  ensure_moonbit_runtime();
+  size_t argc = 1;
+  napi_value argv[1];
+  napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
+  double time_ms = 0.0;
+  if (argc < 1 || !napi_get_number(env, argv[0], &time_ms)) {
+    log_warn("NAPI frameTick rejected invalid args");
+    return napi_bool(env, false);
+  }
+  return napi_bool(env, MOUI_MOBILE_FRAME_TICK(time_ms) != 0);
+}
+
+napi_value napi_take_host_updates(napi_env env, napi_callback_info info) {
+  (void)info;
+  ensure_moonbit_runtime();
+  return napi_moonbit_string_value(env, moui_mobile_take_host_updates_json());
+}
+
+napi_value napi_dispatch_text_input(napi_env env, napi_callback_info info) {
+  ensure_moonbit_runtime();
+  size_t argc = 4;
+  napi_value argv[4];
+  napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
+  double kind = 0.0;
+  double start = 0.0;
+  double end = 0.0;
+  if (argc < 4 || !napi_get_number(env, argv[0], &kind) ||
+      !napi_get_number(env, argv[2], &start) ||
+      !napi_get_number(env, argv[3], &end)) {
+    return napi_bool(env, false);
+  }
+  moonbit_string_t text = napi_moonbit_string(env, argv[1]);
+  const int32_t result = moui_mobile_dispatch_text_input(
+    static_cast<int32_t>(kind),
+    text,
+    static_cast<int32_t>(start),
+    static_cast<int32_t>(end)
+  );
+  log_info(
+    "moui-mobile service ime edit kind=%{public}d result=%{public}d",
+    static_cast<int32_t>(kind),
+    result
+  );
+  moonbit_decref(text);
+  return napi_bool(env, result != 0);
+}
+
+napi_value napi_dispatch_command(napi_env env, napi_callback_info info) {
+  ensure_moonbit_runtime();
+  size_t argc = 1;
+  napi_value argv[1];
+  napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
+  double kind = 0.0;
+  if (argc < 1 || !napi_get_number(env, argv[0], &kind)) {
+    return napi_bool(env, false);
+  }
+  return napi_bool(env, moui_mobile_dispatch_command(static_cast<int32_t>(kind)) != 0);
+}
+
+napi_value napi_dispatch_accessibility(napi_env env, napi_callback_info info) {
+  ensure_moonbit_runtime();
+  size_t argc = 3;
+  napi_value argv[3];
+  napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
+  double element_id = 0.0;
+  double action = 0.0;
+  if (argc < 3 || !napi_get_number(env, argv[0], &element_id) ||
+      !napi_get_number(env, argv[1], &action)) {
+    return napi_bool(env, false);
+  }
+  moonbit_string_t value = napi_moonbit_string(env, argv[2]);
+  const int32_t result = moui_mobile_dispatch_accessibility(
+    static_cast<int32_t>(element_id),
+    static_cast<int32_t>(action),
+    value
+  );
+  log_info(
+    "moui-mobile service accessibility %{public}s id=%{public}d action=%{public}d result=%{public}d",
+    static_cast<int32_t>(action) == 1 ? "focus" : "action",
+    static_cast<int32_t>(element_id),
+    static_cast<int32_t>(action),
+    result
+  );
+  moonbit_decref(value);
+  return napi_bool(env, result != 0);
+}
+
+napi_value napi_complete_clipboard(napi_env env, napi_callback_info info) {
+  ensure_moonbit_runtime();
+  size_t argc = 4;
+  napi_value argv[4];
+  napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
+  double id = 0.0;
+  double kind = 0.0;
+  if (argc < 4 || !napi_get_number(env, argv[0], &id) ||
+      !napi_get_number(env, argv[1], &kind)) {
+    return napi_bool(env, false);
+  }
+  moonbit_string_t text = napi_moonbit_string(env, argv[2]);
+  void *data = nullptr;
+  size_t byte_length = 0;
+  napi_get_arraybuffer_info(env, argv[3], &data, &byte_length);
+  moonbit_bytes_t bytes = moonbit_make_bytes_raw(static_cast<int32_t>(byte_length));
+  if (data != nullptr && byte_length > 0) {
+    memcpy(bytes, data, byte_length);
+  }
+  const int32_t result = moui_mobile_complete_clipboard(
+    static_cast<int32_t>(id),
+    static_cast<int32_t>(kind),
+    text,
+    bytes
+  );
+  log_info(
+    "moui-mobile service clipboard complete id=%{public}d kind=%{public}d result=%{public}d",
+    static_cast<int32_t>(id),
+    static_cast<int32_t>(kind),
+    result
+  );
+  moonbit_decref(text);
+  moonbit_decref(bytes);
+  return napi_bool(env, result != 0);
 }
 
 napi_value napi_detach_surface(napi_env env, napi_callback_info info) {
@@ -472,6 +730,12 @@ napi_value init(napi_env env, napi_value exports) {
 #if MOUI_MOBILE_ENABLE_SCROLL
     {"dispatchScroll", nullptr, napi_dispatch_scroll, nullptr, nullptr, nullptr, napi_default, nullptr},
 #endif
+    {"frameTick", nullptr, napi_frame_tick, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"takeHostUpdates", nullptr, napi_take_host_updates, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"dispatchTextInput", nullptr, napi_dispatch_text_input, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"dispatchCommand", nullptr, napi_dispatch_command, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"dispatchAccessibility", nullptr, napi_dispatch_accessibility, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"completeClipboard", nullptr, napi_complete_clipboard, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"renderFrame", nullptr, napi_render_frame, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"detachSurface", nullptr, napi_detach_surface, nullptr, nullptr, nullptr, napi_default, nullptr},
   };

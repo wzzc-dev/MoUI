@@ -1,15 +1,17 @@
 # iOS Support
 
-iOS support is currently an experimental embedded native scaffold. MoUI does
-not own a UIKit application loop yet. The UIKit layer owns the app shell,
-supplies a raw `UIView` handle, and forwards lifecycle, resize, touch, and
-redraw callbacks into MoUI.
+iOS support is currently an experimental embedded native route. The shared
+UIKit shell supplies a raw `UIView` handle, drives frames with `CADisplayLink`,
+and forwards lifecycle, resize, touch, IME, pasteboard, and accessibility
+traffic into MoUI.
 
 ## Status
 
 | Area | Current state | Evidence boundary |
 | --- | --- | --- |
 | Host contract | Scaffolded in `moui/backend/ios` | Package tests prove protocol behavior only. |
+| Platform services | UIKit text proxy, text/image `UIPasteboard`, and `UIAccessibilityElement` container are wired through `MobileHostChannel` | Full composition/candidate, cross-app PNG, and VoiceOver tree/focus/action evidence pending. |
+| Frame pacing | Input/resize request redraw; presentation runs from `CADisplayLink` ticks | 60/120 Hz device pacing evidence pending. |
 | Skia provider | Scaffolded in `moui/backend/ios/skia` | Provider/preflight checks prove wiring, not simulator/device pixels. |
 | Counter entrypoint | `examples/counter/ios_skia` exports thin native hooks | Compile/check evidence only. |
 | UIKit app shell | `examples/counter/ios_app` plus `scripts/build-counter-ios-app.sh` | Packaging evidence; fallback `.app` is not runtime proof. |
@@ -28,9 +30,14 @@ redraw callbacks into MoUI.
   so a UIKit shell can own `UIApplicationDelegate` and `UIViewController`
   lifecycle.
 - `examples/counter/ios_app` owns the experimental app delegate, view
-  controller, layout, touch forwarding, runtime compatibility shim,
+  controller, layout, display link, text proxy, pasteboard/accessibility
+  adapters, touch forwarding, runtime compatibility shim,
   MoonBit-generated C, MoonBit runtime, iOS presenter, and `moui_skia/native`
   stubs.
+
+iOS 15 remains the deployment floor. Direct `CAMetalLayer`/Skia drawable
+presentation is not implemented; `SkiaRasterNative` still uses the
+`NSData -> CGImage -> UIImage -> UIImageView` compatibility path.
 
 ## Focused Checks
 
@@ -115,7 +122,13 @@ Useful options:
 scripts/build-mobile-ios-app.sh --app counter --arch x86_64
 scripts/build-mobile-ios-app.sh --app counter --deployment-target 15.0
 scripts/build-mobile-ios-app.sh --app counter --sdk iphoneos --arch arm64
+scripts/build-mobile-ios-app.sh --app counter --renderer auto
 ```
+
+The allowed renderer modes are `auto`, `skia-gpu`, and `skia-raster`.
+Generated build metadata and startup logs record requested and selected modes.
+Until direct `CAMetalLayer` presentation exists, `auto` and `skia-gpu` fall
+back to `skia-raster` explicitly.
 
 `--sdk iphoneos` only builds an unsigned device bundle. Real-device install
 still requires provisioning and signing, which is outside the first iOS
@@ -152,6 +165,10 @@ script from the app workspace:
   --product-name MoUIMobileApp
 ```
 
+Keep the template's empty `UILaunchScreen` dictionary. Without a modern launch
+screen declaration, iOS may run the app in legacy `320x480` compatibility mode,
+which letterboxes presentation and changes touch-coordinate mapping.
+
 ## Simulator Smoke
 
 After building the non-fallback app, install and launch it in a booted
@@ -169,6 +186,57 @@ catalog-backed recorder automates the local evidence shape:
 node scripts/record-mobile-runtime-smoke.mjs --platform ios --app counter --require-passed
 node scripts/record-mobile-runtime-smoke.mjs --platform ios --app component_gallery --require-passed
 ```
+
+The iOS recorder uses Meta `idb` because stock Apple `simctl` has no tap or
+swipe subcommand. Install the client and companion before running iOS smoke:
+
+```sh
+brew tap facebook/fb
+brew trust --formula facebook/fb/idb-companion
+brew install idb-companion
+pipx install fb-idb
+```
+
+The recorder connects the companion, waits for a non-empty accessibility tree,
+selects the first enabled button with a valid frame, taps its center, and sends
+a real HOME event for lifecycle detach. Input passes only when the current
+launched PID logs pointer receipt and the before/after pixels change.
+
+Component Gallery opens `Mobile Service Probe` directly on iOS. The recorder
+finds `Service probe text` and `Activate service probe` by accessibility label,
+uses `idb ui text`, drives the native Select/Copy/Paste menu, seeds and reads the
+Simulator pasteboard with `simctl pbcopy`/`pbpaste`, scrolls the page, and waits
+for deferred-image loading/ready logs. Add `--assistive-tech` only when a live
+VoiceOver session is available.
+
+Xcode 26.3 does not expose rotation through `simctl io`; the recorder uses the
+Simulator Device menu through `osascript`. macOS must grant Accessibility
+permission to that automation process. Without it the app cannot produce a
+second surface size, so `resize` remains `no`. A preference write that does not
+activate VoiceOver does not satisfy accessibility focus/action evidence.
+
+The latest local iPhone 17 Pro Simulator run proves lifecycle attach/detach,
+nonblank presentation, pointer and scroll receipt with changed pixels, IME
+state/edit, system text-clipboard write/read, the semantics tree, and async
+image loading/ready. Resize and accessibility focus/action remain pending for
+the reasons above; the manifest is therefore `partial`, not `passed`.
+
+## Physical Device Acceptance
+
+Build the device artifact first:
+
+```sh
+scripts/build-mobile-ios-app.sh \
+  --app component_gallery --sdk iphoneos --arch arm64
+```
+
+The current builder intentionally emits an unsigned bundle. Provision and sign
+it with the app's real team/profile before install, then run the same probe on
+the device with VoiceOver enabled and collect app logs/screenshots. Acceptance
+requires Chinese composition and emoji/ZWJ editing, system text and PNG
+clipboard round trips, VoiceOver tree/focus/activate, portrait-landscape-
+portrait resize, async-image loading/ready, background detach, and clean
+relaunch. Record `realDeviceSigning=yes` only from that signed installed run.
 
 ## Runtime Evidence Required
 

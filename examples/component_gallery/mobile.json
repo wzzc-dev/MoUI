@@ -34,6 +34,7 @@
         "resize": "component_gallery_harmonyos_resize",
         "dispatchPointer": "component_gallery_harmonyos_dispatch_pointer",
         "dispatchScroll": "component_gallery_harmonyos_dispatch_scroll",
+        "frameTick": "component_gallery_harmonyos_frame_tick",
         "renderFrame": "component_gallery_harmonyos_render_frame",
         "detachSurface": "component_gallery_harmonyos_detach_surface"
       }

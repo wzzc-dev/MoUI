@@ -130,6 +130,20 @@ pub fn skia_raster_native_descriptor() -> @render.RendererDescriptor {
 }
 
 ///|
+pub fn skia_gpu_native_descriptor() -> @render.RendererDescriptor {
+  @render.RendererDescriptor::new(
+    backend=@render.RendererBackendKind::SkiaGpuNative,
+    family=@render.RendererFamily::Skia,
+    presentation=@render.RendererPresentationModel::HostGpuSurface,
+    supported_targets=[@render.RendererTarget::Native],
+    capabilities=@render.renderer_backend_capabilities(
+      @render.RendererBackendKind::SkiaGpuNative,
+    ),
+    description="Native Skia GPU renderer identity for direct host GPU surfaces. Providers must prove a matching Metal, Vulkan, or OpenGL surface before selecting it.",
+  )
+}
+
+///|
 pub fn create_with_present_target(
   metrics : @render.RendererSurfaceMetrics,
   target : SkiaPresentTarget,

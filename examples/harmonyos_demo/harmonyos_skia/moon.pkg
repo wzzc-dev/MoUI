@@ -14,9 +14,15 @@ options(
   link: {
     "native": {
       "exports": [
+        "moui_mobile_take_host_updates_json",
+        "moui_mobile_dispatch_text_input",
+        "moui_mobile_dispatch_command",
+        "moui_mobile_dispatch_accessibility",
+        "moui_mobile_complete_clipboard",
         "harmonyos_demo_attach_surface",
         "harmonyos_demo_resize",
         "harmonyos_demo_dispatch_pointer",
+        "harmonyos_demo_frame_tick",
         "harmonyos_demo_render_frame",
         "harmonyos_demo_detach_surface",
       ],

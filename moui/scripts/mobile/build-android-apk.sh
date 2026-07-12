@@ -18,6 +18,7 @@ Options:
   --abi <abi>             Android ABI, default arm64-v8a.
   --api <level>           Android min SDK, default 23.
   --compile-sdk <n>       Android compile/target SDK, default 35.
+  --renderer <mode>       auto, skia-gpu, or skia-raster. Default auto.
   --build-dir <dir>       Shared generated inputs, default artifacts/android/<app>.
   --output <apk>          Copy the Gradle APK to this path.
   --fallback-skia         Build packaging plumbing without real Skia.
@@ -36,6 +37,7 @@ contracts=""
 abi="arm64-v8a"
 api_level="23"
 compile_sdk="35"
+renderer="auto"
 build_dir=""
 output_apk=""
 fallback_skia=0
@@ -53,6 +55,7 @@ while [ "$#" -gt 0 ]; do
     --abi) abi="${2:?missing ABI after --abi}"; shift 2 ;;
     --api) api_level="${2:?missing API level after --api}"; shift 2 ;;
     --compile-sdk) compile_sdk="${2:?missing SDK level after --compile-sdk}"; shift 2 ;;
+    --renderer) renderer="${2:?missing mode after --renderer}"; shift 2 ;;
     --build-dir) build_dir="${2:?missing directory after --build-dir}"; shift 2 ;;
     --output) output_apk="${2:?missing APK path after --output}"; shift 2 ;;
     --fallback-skia) fallback_skia=1; shift ;;
@@ -105,6 +108,7 @@ prepare_args=(
   "--workspace-root" "$workspace_root"
   "--moui-root" "$moui_root"
   "--abi" "$abi"
+  "--renderer" "$renderer"
   "--build-dir" "$build_dir"
 )
 [ -z "$skia_root" ] || prepare_args+=("--skia-root" "$skia_root")
@@ -152,6 +156,7 @@ gradle_args=(
   "-PmouiAbi=$abi"
   "-PmouiMinSdk=$api_level"
   "-PmouiCompileSdk=$compile_sdk"
+  "-PmouiRenderer=$renderer"
   "-PmouiBuildDir=$build_dir"
   "-PmouiWorkspaceRoot=$workspace_root"
   "-PmouiRoot=$moui_root"

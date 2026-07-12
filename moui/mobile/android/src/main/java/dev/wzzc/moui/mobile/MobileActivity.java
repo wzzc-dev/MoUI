@@ -7,10 +7,10 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Choreographer;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -21,20 +21,38 @@ public final class MobileActivity extends Activity implements SurfaceHolder.Call
     private static final String META_SUPPORTS_SCROLL = "dev.wzzc.moui.SUPPORTS_SCROLL";
     private static final String META_FULLSCREEN = "dev.wzzc.moui.FULLSCREEN";
 
-    private SurfaceView surfaceView;
+    private MobileSurfaceView surfaceView;
     private boolean attached;
     private boolean supportsScroll;
     private boolean fullscreen;
     private boolean hasLastTouchPoint;
     private float lastTouchX;
     private float lastTouchY;
+    private boolean frameLoopRunning;
+    private final Choreographer.FrameCallback frameCallback = new Choreographer.FrameCallback() {
+        @Override
+        public void doFrame(long frameTimeNanos) {
+            if (!frameLoopRunning || !attached) {
+                return;
+            }
+            nativeFrameTick(frameTimeNanos / 1_000_000.0);
+            surfaceView.applyHostUpdates(nativeTakeHostUpdates());
+            Choreographer.getInstance().postFrameCallback(this);
+        }
+    };
 
-    private static native boolean nativeAttachSurface(Surface surface, int width, int height, double density);
-    private static native boolean nativeResize(int width, int height, double density);
-    private static native boolean nativeDispatchPointer(int phase, double x, double y, double timeMs);
-    private static native boolean nativeDispatchScroll(double x, double y, double deltaX, double deltaY, int phase);
-    private static native boolean nativeRenderFrame();
-    private static native void nativeDetachSurface();
+    static native boolean nativeAttachSurface(Surface surface, int width, int height, double density);
+    static native boolean nativeResize(int width, int height, double density);
+    static native boolean nativeDispatchPointer(int phase, double x, double y, double timeMs);
+    static native boolean nativeDispatchScroll(double x, double y, double deltaX, double deltaY, int phase);
+    static native boolean nativeFrameTick(double timeMs);
+    static native String nativeTakeHostUpdates();
+    static native boolean nativeDispatchTextInput(int kind, String text, int start, int end);
+    static native boolean nativeDispatchCommand(int kind);
+    static native boolean nativeDispatchAccessibility(int elementId, int action, String value);
+    static native boolean nativeCompleteClipboard(int id, int kind, String text, byte[] bytes);
+    static native boolean nativeRenderFrame();
+    static native void nativeDetachSurface();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +63,7 @@ public final class MobileActivity extends Activity implements SurfaceHolder.Call
         if (fullscreen) {
             configureFullscreenWindow();
         }
-        surfaceView = new SurfaceView(this);
+        surfaceView = new MobileSurfaceView(this);
         surfaceView.getHolder().addCallback(this);
         surfaceView.setFocusable(true);
         surfaceView.setFocusableInTouchMode(true);
@@ -56,7 +74,6 @@ public final class MobileActivity extends Activity implements SurfaceHolder.Call
                     return true;
                 }
                 dispatchMotionEvent(event);
-                nativeRenderFrame();
                 return true;
             }
         });
@@ -73,6 +90,7 @@ public final class MobileActivity extends Activity implements SurfaceHolder.Call
 
     @Override
     protected void onDestroy() {
+        stopFrameLoop();
         nativeDetachSurface();
         attached = false;
         Log.i(LOG_TAG, "moui-mobile lifecycle detach reason=destroy");
@@ -86,7 +104,7 @@ public final class MobileActivity extends Activity implements SurfaceHolder.Call
         int height = Math.max(1, surfaceView.getHeight());
         attached = nativeAttachSurface(surface, width, height, density());
         Log.i(LOG_TAG, "moui-mobile lifecycle attach width=" + width + " height=" + height + " attached=" + attached);
-        nativeRenderFrame();
+        startFrameLoop();
     }
 
     @Override
@@ -96,15 +114,29 @@ public final class MobileActivity extends Activity implements SurfaceHolder.Call
         if (attached) {
             nativeResize(surfaceWidth, surfaceHeight, density());
             Log.i(LOG_TAG, "moui-mobile resize width=" + surfaceWidth + " height=" + surfaceHeight);
-            nativeRenderFrame();
         }
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
+        stopFrameLoop();
         nativeDetachSurface();
         attached = false;
         Log.i(LOG_TAG, "moui-mobile lifecycle detach reason=surface-destroyed");
+    }
+
+    private void startFrameLoop() {
+        if (!frameLoopRunning && attached) {
+            frameLoopRunning = true;
+            Choreographer.getInstance().postFrameCallback(frameCallback);
+        }
+    }
+
+    private void stopFrameLoop() {
+        if (frameLoopRunning) {
+            frameLoopRunning = false;
+            Choreographer.getInstance().removeFrameCallback(frameCallback);
+        }
     }
 
     private void dispatchMotionEvent(MotionEvent event) {

@@ -80,6 +80,7 @@ arch="${MOUI_MOBILE_ARCH:-${ARCHS:-arm64}}"
 arch="${arch%% *}"
 deployment_target="${MOUI_MOBILE_DEPLOYMENT_TARGET:-${IPHONEOS_DEPLOYMENT_TARGET:-15.0}}"
 fallback_skia="${MOUI_MOBILE_FALLBACK_SKIA:-0}"
+renderer="${MOUI_MOBILE_RENDERER:-auto}"
 configuration="${CONFIGURATION:-Debug}"
 build_dir="${MOUI_MOBILE_BUILD_DIR:-$workspace_root/artifacts/ios/$app}"
 if [ "${build_dir#/}" = "$build_dir" ]; then
@@ -94,6 +95,7 @@ prepare_args=(
   "--skia-root" "$skia_root"
   "--sdk" "$sdk"
   "--arch" "$arch"
+  "--renderer" "$renderer"
   "--build-dir" "$build_dir"
 )
 [ -z "$app_config" ] || prepare_args+=("--app-config" "$app_config")
@@ -147,10 +149,13 @@ app_arg="$(json_get appArg)"
 main_alias="$(json_get moonbitMainAlias)"
 fullscreen="$(json_get fullscreen)"
 supports_scroll="$(json_get supportsScroll)"
+renderer_requested="$(json_get renderer.requested)"
+renderer_selected="$(json_get renderer.selected)"
 attach_view="$(json_get exports.attachView)"
 resize_symbol="$(json_get exports.resize)"
 dispatch_pointer="$(json_get exports.dispatchPointer)"
 dispatch_scroll="$(json_get exports.dispatchScroll)"
+frame_tick="$(json_get exports.frameTick)"
 render_frame="$(json_get exports.renderFrame)"
 detach_view="$(json_get exports.detachView)"
 
@@ -218,12 +223,15 @@ compile_c "$moui_root/mobile/ios/moui_ios_compat.c" "$obj_dir/moui_ios_compat.o"
 compile_objcxx "$moui_root/mobile/ios/moui_mobile_app.mm" "$obj_dir/moui_mobile_app.o" \
   -DMOUI_MOBILE_APP_ARG="\"$app_arg\"" \
   -DMOUI_MOBILE_APP_ID="\"$app\"" \
+  -DMOUI_MOBILE_RENDERER_REQUESTED="\"$renderer_requested\"" \
+  -DMOUI_MOBILE_RENDERER_SELECTED="\"$renderer_selected\"" \
   -DMOUI_MOBILE_ENABLE_SCROLL="$supports_scroll" \
   -DMOUI_MOBILE_FULLSCREEN="$fullscreen" \
   -DMOUI_MOBILE_ATTACH_VIEW="$attach_view" \
   -DMOUI_MOBILE_RESIZE="$resize_symbol" \
   -DMOUI_MOBILE_DISPATCH_POINTER="$dispatch_pointer" \
   -DMOUI_MOBILE_DISPATCH_SCROLL="${dispatch_scroll:-moui_mobile_no_scroll}" \
+  -DMOUI_MOBILE_FRAME_TICK="$frame_tick" \
   -DMOUI_MOBILE_RENDER_FRAME="$render_frame" \
   -DMOUI_MOBILE_DETACH_VIEW="$detach_view"
 compile_objcxx "$moui_root/backend/ios/skia/ios_skia_presenter.mm" "$obj_dir/ios_skia_presenter.o"

@@ -20,6 +20,17 @@ test "component gallery update changes model" {
   inspect(update(slid, Increment).counter, content="1")
   inspect(update(update(slid, Increment), Decrement).counter, content="0")
   inspect(update(slid, Reset).slider_value, content="0.66")
+  let probe = ComponentGalleryModel::new(active_platform=PlatformId::IOS)
+  assert_true(
+    probe.active_item == @app.ComponentGalleryItemId::MobileServiceProbe,
+  )
+  let edited_probe = update(
+    probe,
+    ProbeTextChanged("hello \u{1F469}\u{200D}\u{1F4BB}"),
+  )
+  inspect(edited_probe.probe_text, content="hello \u{1F469}\u{200D}\u{1F4BB}")
+  inspect(update(edited_probe, ProbeAction).probe_action_count, content="1")
+  inspect(update(edited_probe, ProbeSubmit).probe_submit_count, content="1")
 }
 
 ///|
@@ -85,6 +96,25 @@ test "component gallery mobile host fills device width" {
   )
   let commands = runtime.draw_commands()
   assert_true(has_fill_at_least_width(commands, 1366.0))
+  assert_true(has_text(commands, "Mobile Service Probe"))
+  assert_true(has_text(commands, "IME value: mobile-service-probe"))
+  assert_true(
+    commands.any(command => command is @core.DrawCommand::DrawImage(_)),
+  )
+}
+
+///|
+test "component gallery portrait probe keeps compact gallery navigation" {
+  let runtime = @runtime.new_program_with_dimensions(
+    program=program(active_platform=@app.PlatformId::IOS),
+    width=390.0,
+    height=844.0,
+  )
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "Component Gallery"))
+  assert_true(has_text(commands, "Browse all components"))
+  assert_true(has_text(commands, "Mobile Service Probe"))
+  assert_true(has_text(commands, "IME value: mobile-service-probe"))
 }
 
 ///|
@@ -196,7 +226,7 @@ test "component gallery page scroll responds to wheel delta" {
   )
   let before = text_y(
     commands=runtime.draw_commands(),
-    text="Component Gallery",
+    text="Mobile Service Probe",
   )
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
@@ -207,7 +237,10 @@ test "component gallery page scroll responds to wheel delta" {
       ),
     ),
   )
-  let after = text_y(commands=runtime.draw_commands(), text="Component Gallery")
+  let after = text_y(
+    commands=runtime.draw_commands(),
+    text="Mobile Service Probe",
+  )
   match (before, after) {
     (Some(before), Some(after)) => assert_true(after < before)
     _ => fail("expected clipped page content before and after scroll")
@@ -265,6 +298,7 @@ test "component gallery ids roundtrip" {
     @app.ComponentGalleryItemId::ResponsiveGrid,
     @app.ComponentGalleryItemId::ScrollView,
     @app.ComponentGalleryItemId::PlatformRoutes,
+    @app.ComponentGalleryItemId::MobileServiceProbe,
   ]
   for id in items {
     assert_true(
@@ -324,13 +358,13 @@ fn assert_component_count_inside_header(
   height~ : Double,
 ) -> Unit raise {
   let runtime = @runtime.new_program_with_dimensions(
-    program=program(active_platform=@app.PlatformId::IOS),
+    program=program(active_platform=@app.PlatformId::MacOS),
     width~,
     height~,
   )
   let commands = runtime.draw_commands()
   match
-    (first_text_frame(commands~, text="35 demos"), first_header_frame(commands)) {
+    (first_text_frame(commands~, text="36 demos"), first_header_frame(commands)) {
     (Some(text_frame), Some(header_frame)) => {
       assert_true(text_frame.origin.x >= header_frame.origin.x)
       assert_true(

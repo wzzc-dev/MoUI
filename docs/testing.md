@@ -253,8 +253,59 @@ device run with recorded observations.
 The canonical iOS build entrypoint is now
 `scripts/build-mobile-ios-app.sh --app <counter|component_gallery>` through the
 checked-in Xcode project. Use `node scripts/record-mobile-runtime-smoke.mjs
---platform <android|ios> --app <counter|component_gallery> --require-passed` to
-produce the checked mobile runtime manifest for release/manual claims.
+--platform <android|ios|harmonyos> --app
+<counter|component_gallery|harmonyos_demo> --require-passed` to produce the
+checked mobile runtime manifest for release/manual claims. The recorder
+requires before/after pixel changes plus application receipt logs; successful
+input injection or process termination is not evidence by itself.
+The iOS route requires Meta `idb` plus `idb-companion`; stock `simctl ui` does
+not inject tap/swipe events. The recorder derives the tap from the current
+accessibility tree, filters unified logs by the PID returned from `simctl
+launch`, and uses an idb HOME event to exercise real background detach.
+
+Component Gallery is the service acceptance target. Its mobile entrypoints open
+the `Mobile Service Probe` directly. Run the non-fallback build and recorder on
+one target at a time:
+
+```sh
+scripts/build-mobile-android-apk.sh --app component_gallery
+node scripts/record-mobile-runtime-smoke.mjs \
+  --platform android --app component_gallery --device <adb-serial> \
+  --assistive-tech --require-passed
+
+scripts/build-mobile-ios-app.sh --app component_gallery
+node scripts/record-mobile-runtime-smoke.mjs \
+  --platform ios --app component_gallery --device <simulator-udid> \
+  --assistive-tech --require-passed
+
+scripts/build-component-gallery-harmonyos-hap.sh
+node scripts/record-mobile-runtime-smoke.mjs \
+  --platform harmonyos --app component_gallery --device <hdc-target> \
+  --require-passed
+```
+
+The probe is driven in this order: focus the labeled text field, inject IME
+text, copy through the native edit command, seed/read the system pasteboard and
+paste back, activate the labeled action, rotate and restore the target, scroll,
+then inspect app logs for the deferred image's loading and ready frames. A
+clipboard pass requires both text write and read completion; a resize pass
+requires two different logged physical sizes. Accessibility passes only when a
+real TalkBack, VoiceOver, or HarmonyOS screen-reader session emits tree, focus,
+and targeted action logs.
+
+Mobile manifests use `passed`, `partial`, and `failed`. A nonblank run with
+some verified observations is `partial`, not `failed`; this preserves the
+evidence already collected while showing exactly which observations remain.
+Build/install/launch/capture runs with no usable evidence remain `failed`.
+Release commands continue to use `--require-passed`, so `partial` cannot pass a
+release gate.
+
+On iOS Simulator, rotation currently uses Simulator's Device menu through
+macOS UI scripting because Xcode 26.3 `simctl io` has no rotate operation. Grant
+Accessibility permission to the terminal/automation process running
+`osascript`; otherwise resize intentionally stays `no`. Changing the simulator
+VoiceOver preference alone is not action evidence. Use a physical device or a
+live assistive-technology session when focus/action logs are required.
 
 For HarmonyOS packaging changes, `scripts/build-harmonyos-demo-app.sh
 --fallback-skia` and `scripts/build-component-gallery-harmonyos-hap.sh
@@ -265,6 +316,20 @@ staged HAP archives. They are not real Skia renderer or platform runtime
 evidence. HarmonyOS first-frame/input/lifecycle claims still require a
 non-fallback HAP and a matching device or emulator run with recorded
 observations.
+
+HarmonyOS release/manual smoke uses the same recorder through `hdc`:
+
+```sh
+node scripts/record-mobile-runtime-smoke.mjs --platform harmonyos --app harmonyos_demo --require-passed
+node scripts/record-mobile-runtime-smoke.mjs --platform harmonyos --app component_gallery --require-passed
+```
+
+Passed mobile evidence requires actual lifecycle detach, IME state and edit,
+system text-clipboard write/read completion, accessibility tree/focus/action,
+and async-image loading/ready observations. PNG clipboard interoperability is a
+separate manual cross-app check and must not be inferred from the text probe.
+Missing observations stay pending/failed rather than being inferred from API
+presence.
 
 `smoke/gates.json` is the checked-in smoke gate catalog. It describes the daily,
 nightly, and release smoke tiers, each suite command, the structured result
