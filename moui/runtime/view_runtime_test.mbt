@@ -272,7 +272,6 @@ test "runtime dispatches declared accessibility activation by element id" {
       @core.SemanticsAction::Activate,
     ),
   )
-  inspect(received, content="[clicked]")
   assert_false(
     runtime.dispatch_semantics_action(
       semantics.element_id,
