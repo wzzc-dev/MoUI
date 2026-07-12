@@ -10,6 +10,24 @@ extern "C" fn ios_present_skia_pixels_to_view(
 ) -> Int = "moui_ios_present_skia_pixels_to_view"
 
 ///|
+extern "C" fn ios_skia_metal_layer_for_view(
+  view_handle : UInt64,
+) -> UInt64 = "moui_ios_skia_metal_layer_for_view"
+
+///|
+extern "C" fn ios_skia_create_metal_view(
+  x : Double,
+  y : Double,
+  width : Double,
+  height : Double,
+) -> UInt64 = "moui_ios_skia_create_metal_view"
+
+///|
+extern "C" fn ios_skia_release_metal_view(
+  raw_view_handle : UInt64,
+) -> Unit = "moui_ios_skia_release_metal_view"
+
+///|
 pub struct IosSkiaAppOptions {
   priv font_resolution : @skia_renderer.SkiaFontResolution
 }
@@ -69,7 +87,8 @@ pub fn ios_skia_provider_preflight_summary(
     @skia_renderer.SkiaFontResolution::EmptyTypeface => "empty-typeface"
   }
   let host_preflight = @ios_host.ios_capability_summary().preflight_fields()
-  "iOS Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; presenter=\{ios_skia_presenter_description()}; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=ios-simulator-smoke-required; runtime_status=experimental-scaffold; unavailable=\"\{ios_skia_unavailable_message()}\""
+  let gpu_runtime_available = @skia_native.Surface::metal_gpu_context_runtime_available()
+  "iOS Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; presenter=\{ios_skia_presenter_description()}; gpu_presenter=\{ios_skia_gpu_presenter_description()}; gpu_runtime_available=\{gpu_runtime_available}; metal_view_factory=available; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=ios-simulator-smoke-required; runtime_status=experimental-scaffold; unavailable=\"\{ios_skia_unavailable_message()}\""
 }
 
 ///|
@@ -87,6 +106,46 @@ fn create_renderer(
     println(ios_skia_unavailable_message())
     return None
   }
+  // Probe the Metal GPU route: when the native Skia build links Ganesh Metal
+  // and the host view backs a CAMetalLayer, wire HostGpuPresentTarget to
+  // eliminate read_pixels + memcpy + CGImage + UIImage.
+  let layer_ptr = ios_skia_metal_layer_for_view(view.raw())
+  let gpu_available = @skia_native.Surface::metal_gpu_context_runtime_available()
+  if gpu_available && layer_ptr != 0UL {
+    try
+      Some(
+        host_renderer_from_skia(
+          @skia_renderer.create_with_present_target_and_route(
+            renderer_metrics_from_host(metrics),
+            ios_skia_present_target(view),
+            surface_route=@skia_renderer.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
+            gpu_target=Some(
+              ios_skia_gpu_present_target(view.raw(), layer_ptr),
+            ),
+            font_resolution=options.font_resolution,
+            async_image_loading=true,
+          ),
+        ),
+      )
+    catch {
+      err => {
+        println(
+          "error creating iOS Skia Metal GPU renderer, falling back to raster: \{err.message()}",
+        )
+        create_raster_renderer(view, metrics, options)
+      }
+    }
+  } else {
+    create_raster_renderer(view, metrics, options)
+  }
+}
+
+///|
+fn create_raster_renderer(
+  view : @ios_host.IosViewHandle,
+  metrics : @host.HostSurfaceMetrics,
+  options : IosSkiaAppOptions,
+) -> @host.HostWindowRenderer? {
   Some(
     host_renderer_from_skia(
       @skia_renderer.create_with_present_target(
@@ -138,6 +197,113 @@ fn ios_skia_present_target(
       0
     },
   )
+}
+
+///|
+fn ios_skia_gpu_presenter_description() -> String {
+  "iOS CAMetalLayer Skia Metal direct GPU presenter"
+}
+
+///|
+/// Build the `HostGpuPresentTarget` for the Metal direct-present path.
+///
+/// `view_raw` is the raw `UIView*` handle; `layer_ptr` is the `CAMetalLayer*`
+/// obtained via `ios_skia_metal_layer_for_view`. Both are captured by the
+/// closures and reused on every frame. The `create_window_surface` callback is
+/// invoked once at renderer creation and on each resize; it wraps the layer's
+/// next `CAMetalDrawable` as a Skia `Surface`. The `present_gpu` callback is
+/// invoked after each `flush_and_submit`; it presents the current drawable and
+/// acquires the next one — no `read_pixels`, no `memcpy`, no `CGImage`, no
+/// `UIImage`.
+fn ios_skia_gpu_present_target(
+  view_raw : UInt64,
+  layer_ptr : UInt64,
+) -> @skia_renderer.HostGpuPresentTarget {
+  let _ = view_raw
+  @skia_renderer.HostGpuPresentTarget::new(
+    description=ios_skia_gpu_presenter_description(),
+    create_window_surface=(gpu_context, metrics) => {
+      match gpu_context {
+        None => None
+        Some(context) =>
+          @skia_native.Surface::metal_window_surface(
+            context,
+            layer_ptr,
+            ios_skia_metal_surface_descriptor(metrics),
+          )
+      }
+    },
+    present_gpu=(gpu_context, surface) => {
+      match gpu_context {
+        None =>
+          @skia_renderer.HostGpuPresentOutcome::new(
+            succeeded=false,
+            next_surface=None,
+          )
+        Some(context) => {
+          let outcome =
+            @skia_native.Surface::metal_present_and_acquire_next(
+              surface, context, layer_ptr,
+            )
+          match outcome {
+            Some(next_surface) =>
+              @skia_renderer.HostGpuPresentOutcome::new(
+                succeeded=true,
+                next_surface=Some(next_surface),
+              )
+            None =>
+              @skia_renderer.HostGpuPresentOutcome::new(
+                succeeded=false,
+                next_surface=None,
+              )
+          }
+        }
+      }
+    },
+  )
+}
+
+///|
+fn ios_skia_metal_surface_descriptor(
+  metrics : @render.RendererSurfaceMetrics,
+) -> @moui_skia.SurfaceDescriptor {
+  let physical = metrics.physical_size
+  @moui_skia.SurfaceDescriptor::gpu_n32_premul(
+    @moui_skia.ISize::new(
+      physical.width.ceil().max(1.0).to_int(),
+      physical.height.ceil().max(1.0).to_int(),
+    ),
+  )
+}
+
+///|
+/// Create a `CAMetalLayer`-backed `UIView` for the Skia Metal direct-present
+/// path. Returns `Some(IosViewHandle)` on success, or `None` when the Metal
+/// view cannot be created (non-iOS, non-main-thread, or allocation failure).
+/// The caller owns the reference and must call `ios_skia_release_metal_view_handle`
+/// when the view is no longer needed (or add the view to a superview, which
+/// retains it under standard ObjC ownership).
+pub fn ios_skia_create_metal_view_handle(
+  x : Double,
+  y : Double,
+  width : Double,
+  height : Double,
+) -> @ios_host.IosViewHandle? {
+  let raw = ios_skia_create_metal_view(x, y, width, height)
+  if raw == 0UL {
+    None
+  } else {
+    Some(@ios_host.IosViewHandle::new(raw~))
+  }
+}
+
+///|
+/// Release a Metal view previously created by `ios_skia_create_metal_view_handle`.
+/// Safe to call with a handle whose raw value is 0.
+pub fn ios_skia_release_metal_view_handle(
+  view : @ios_host.IosViewHandle,
+) -> Unit {
+  ios_skia_release_metal_view(view.raw())
 }
 
 ///|

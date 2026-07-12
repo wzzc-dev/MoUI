@@ -135,6 +135,28 @@ int32_t moui_ios_present_skia_pixels_to_view(uint64_t raw_view_handle,
   CGImageRelease(image);
   return 1;
 }
+
+/// Return the raw `CAMetalLayer*` handle for `view`, or 0 when the view's
+/// backing layer is not a `CAMetalLayer`. The host view must be configured
+/// with `+[CAMetalLayer class]` as its `+layerClass` before this returns a
+/// non-zero handle. The caller retains the layer; Skia borrows per-frame
+/// drawables from it without taking ownership.
+extern "C" MOONBIT_FFI_EXPORT
+uint64_t moui_ios_skia_metal_layer_for_view(uint64_t raw_view_handle) {
+  if (raw_view_handle == 0 || ![NSThread isMainThread]) {
+    return 0;
+  }
+  UIView *view = (__bridge UIView *)(void *)(uintptr_t)raw_view_handle;
+  if (view == nil) {
+    return 0;
+  }
+  CALayer *layer = view.layer;
+  if (![layer isKindOfClass:[CAMetalLayer class]]) {
+    return 0;
+  }
+  CAMetalLayer *metal_layer = static_cast<CAMetalLayer *>(layer);
+  return static_cast<uint64_t>(reinterpret_cast<uintptr_t>(metal_layer));
+}
 #else
 extern "C" MOONBIT_FFI_EXPORT
 int32_t moui_ios_present_skia_pixels_to_view(uint64_t raw_view_handle,
@@ -148,6 +170,12 @@ int32_t moui_ios_present_skia_pixels_to_view(uint64_t raw_view_handle,
   (void)row_bytes;
   (void)pixels;
   (void)pixels_len;
+  return 0;
+}
+
+extern "C" MOONBIT_FFI_EXPORT
+uint64_t moui_ios_skia_metal_layer_for_view(uint64_t raw_view_handle) {
+  (void)raw_view_handle;
   return 0;
 }
 #endif

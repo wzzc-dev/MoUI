@@ -10,6 +10,16 @@ extern "C" fn macos_present_skia_pixels_to_view(
 ) -> Int = "moui_macos_present_skia_pixels_to_view"
 
 ///|
+extern "C" fn macos_skia_metal_layer_for_view(
+  raw_view_handle : UInt64,
+) -> UInt64 = "moui_macos_skia_metal_layer_for_view"
+
+///|
+extern "C" fn macos_skia_install_metal_layer(
+  raw_view_handle : UInt64,
+) -> UInt64 = "moui_macos_skia_install_metal_layer"
+
+///|
 pub struct MacosSkiaAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
   priv font_resolution : @skia_renderer.SkiaFontResolution
@@ -303,7 +313,8 @@ pub fn macos_skia_provider_preflight_summary(
   }
   let surface_route = options.surface_route.label()
   let host_preflight = @macos_host.macos_capability_summary().preflight_fields()
-  "macOS Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; surface_route=\{surface_route}; presenter=\{macos_skia_presenter_description()}; gpu_route=\{@skia_renderer.skia_gpu_metal_preflight_summary()}; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=first-frame smoke required; unavailable=\"\{macos_skia_unavailable_message()}\""
+  let gpu_runtime_available = @skia_native.Surface::metal_gpu_context_runtime_available()
+  "macOS Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; surface_route=\{surface_route}; presenter=\{macos_skia_presenter_description()}; gpu_presenter=\{macos_skia_gpu_presenter_description()}; gpu_runtime_available=\{gpu_runtime_available}; metal_layer_install=available; gpu_route=\{@skia_renderer.skia_gpu_metal_preflight_summary()}; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=first-frame smoke required; unavailable=\"\{macos_skia_unavailable_message()}\""
 }
 
 ///|
@@ -323,27 +334,88 @@ fn create_renderer(
   }
   match content_view_handle(window) {
     Some(raw_content_view_handle) =>
-      try {
-        let renderer = @skia_renderer.create_with_present_target_and_route(
-          renderer_metrics_from_host(metrics),
-          macos_skia_present_target(raw_content_view_handle),
-          surface_route=options.surface_route,
-          font_resolution=options.font_resolution,
-          async_image_loading=true,
-        )
-        if options.surface_route.is_gpu() {
-          println(
-            "macOS Skia renderer route diagnostics: \{renderer.surface_diagnostic_summary()}",
-          )
-        }
-        Some(host_renderer_from_skia(renderer))
-      } catch {
-        err => {
-          println("error creating macOS Skia renderer: \{err.message()}")
-          None
-        }
+      match resolve_gpu_present_target(raw_content_view_handle, options) {
+        Some(gpu_target) =>
+          try {
+            let renderer = @skia_renderer.create_with_present_target_and_route(
+              renderer_metrics_from_host(metrics),
+              macos_skia_present_target(raw_content_view_handle),
+              surface_route=options.surface_route,
+              gpu_target=Some(gpu_target),
+              font_resolution=options.font_resolution,
+              async_image_loading=true,
+            )
+            println(
+              "macOS Skia renderer route diagnostics: \{renderer.surface_diagnostic_summary()}",
+            )
+            Some(host_renderer_from_skia(renderer))
+          } catch {
+            err => {
+              println(
+                "error creating macOS Skia Metal GPU renderer, falling back to raster: \{err.message()}",
+              )
+              create_raster_renderer(raw_content_view_handle, metrics, options)
+            }
+          }
+        None => create_raster_renderer(raw_content_view_handle, metrics, options)
       }
     None => None
+  }
+}
+
+///|
+/// Resolve the optional `HostGpuPresentTarget` for the Metal direct-present
+/// path. Returns `Some` when the user selected the Metal GPU route AND the
+/// Skia build links Ganesh Metal AND a `CAMetalLayer` is installed (or can be
+/// installed) on the content view. Returns `None` to fall back to raster.
+fn resolve_gpu_present_target(
+  raw_content_view_handle : UInt64,
+  options : MacosSkiaAppOptions,
+) -> @skia_renderer.HostGpuPresentTarget? {
+  if !options.surface_route.is_gpu() {
+    return None
+  }
+  let gpu_available = @skia_native.Surface::metal_gpu_context_runtime_available()
+  if !gpu_available {
+    println(
+      "macOS Skia Metal GPU route requested but Ganesh Metal runtime is unavailable; falling back to raster",
+    )
+    return None
+  }
+  // Probe for an existing CAMetalLayer; install one when absent.
+  let mut layer_ptr = macos_skia_metal_layer_for_view(raw_content_view_handle)
+  if layer_ptr == 0UL {
+    layer_ptr = macos_skia_install_metal_layer(raw_content_view_handle)
+  }
+  if layer_ptr == 0UL {
+    println(
+      "macOS Skia Metal GPU route requested but CAMetalLayer could not be installed on the content view; falling back to raster",
+    )
+    return None
+  }
+  Some(macos_skia_gpu_present_target(raw_content_view_handle, layer_ptr))
+}
+
+///|
+fn create_raster_renderer(
+  raw_content_view_handle : UInt64,
+  metrics : @host.HostSurfaceMetrics,
+  options : MacosSkiaAppOptions,
+) -> @host.HostWindowRenderer? {
+  try {
+    let renderer = @skia_renderer.create_with_present_target_and_route(
+      renderer_metrics_from_host(metrics),
+      macos_skia_present_target(raw_content_view_handle),
+      surface_route=@skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute,
+      font_resolution=options.font_resolution,
+      async_image_loading=true,
+    )
+    Some(host_renderer_from_skia(renderer))
+  } catch {
+    err => {
+      println("error creating macOS Skia renderer: \{err.message()}")
+      None
+    }
   }
 }
 
@@ -390,6 +462,79 @@ fn macos_skia_present_target(
       ) ==
       0
     },
+  )
+}
+
+///|
+fn macos_skia_gpu_presenter_description() -> String {
+  "macOS CAMetalLayer Skia Metal direct GPU presenter"
+}
+
+///|
+/// Build the `HostGpuPresentTarget` for the macOS Metal direct-present path.
+/// `raw_content_view_handle` is the `NSView*` handle (retained by the host
+/// window); `layer_ptr` is the `CAMetalLayer*` installed via
+/// `macos_skia_install_metal_layer`. `create_window_surface` is invoked at
+/// renderer creation and on resize; `present_gpu` is invoked per-frame after
+/// `flush_and_submit` to present the current drawable and acquire the next.
+fn macos_skia_gpu_present_target(
+  raw_content_view_handle : UInt64,
+  layer_ptr : UInt64,
+) -> @skia_renderer.HostGpuPresentTarget {
+  let _ = raw_content_view_handle
+  @skia_renderer.HostGpuPresentTarget::new(
+    description=macos_skia_gpu_presenter_description(),
+    create_window_surface=(gpu_context, metrics) => {
+      match gpu_context {
+        None => None
+        Some(context) =>
+          @skia_native.Surface::metal_window_surface(
+            context,
+            layer_ptr,
+            macos_skia_metal_surface_descriptor(metrics),
+          )
+      }
+    },
+    present_gpu=(gpu_context, surface) => {
+      match gpu_context {
+        None =>
+          @skia_renderer.HostGpuPresentOutcome::new(
+            succeeded=false,
+            next_surface=None,
+          )
+        Some(context) => {
+          let outcome =
+            @skia_native.Surface::metal_present_and_acquire_next(
+              surface, context, layer_ptr,
+            )
+          match outcome {
+            Some(next_surface) =>
+              @skia_renderer.HostGpuPresentOutcome::new(
+                succeeded=true,
+                next_surface=Some(next_surface),
+              )
+            None =>
+              @skia_renderer.HostGpuPresentOutcome::new(
+                succeeded=false,
+                next_surface=None,
+              )
+          }
+        }
+      }
+    },
+  )
+}
+
+///|
+fn macos_skia_metal_surface_descriptor(
+  metrics : @render.RendererSurfaceMetrics,
+) -> @moui_skia.SurfaceDescriptor {
+  let physical = metrics.physical_size
+  @moui_skia.SurfaceDescriptor::gpu_n32_premul(
+    @moui_skia.ISize::new(
+      physical.width.ceil().max(1.0).to_int(),
+      physical.height.ceil().max(1.0).to_int(),
+    ),
   )
 }
 

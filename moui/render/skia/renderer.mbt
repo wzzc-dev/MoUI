@@ -51,6 +51,7 @@ pub fn SkiaUnsupportedCommandDiagnostic::reason(
 pub struct SkiaRasterRenderer {
   priv mut metrics : @render.RendererSurfaceMetrics
   priv target : SkiaPresentTarget
+  priv gpu_target : HostGpuPresentTarget?
   priv font_resolution : SkiaFontResolution
   priv surface_route : SkiaSurfaceRoute
   priv gpu_context : @skia_native.GpuContext?
@@ -168,6 +169,7 @@ pub fn create_with_present_target_and_route(
   metrics : @render.RendererSurfaceMetrics,
   target : SkiaPresentTarget,
   surface_route? : SkiaSurfaceRoute = RasterSurfaceRoute,
+  gpu_target? : HostGpuPresentTarget? = None,
   font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
   async_image_loading? : Bool = false,
   on_image_resource_change? : ((@render.ImageResourceSnapshot) -> Unit)? = None,
@@ -175,11 +177,27 @@ pub fn create_with_present_target_and_route(
   if !skia_available() {
     raise SkiaRendererError::SkiaUnavailable
   }
+  // The direct GPU present path requires a GPU surface route; pairing a
+  // HostGpuPresentTarget with a RasterSurfaceRoute would silently present
+  // a raster surface through a GPU presenter, which is a configuration error.
+  if gpu_target is Some(_) && !surface_route.is_gpu() {
+    raise SkiaRendererError::GpuContextUnavailable(
+      "gpu-target-requires-gpu-surface-route",
+    )
+  }
   let gpu_context = create_gpu_context(surface_route)
-  let surface = create_surface(metrics, surface_route, gpu_context)
+  let surface = match gpu_target {
+    Some(target) =>
+      match (target.create_window_surface)(gpu_context, metrics) {
+        Some(surface) => surface
+        None => raise SkiaRendererError::SurfaceUnavailable
+      }
+    None => create_surface(metrics, surface_route, gpu_context)
+  }
   {
     metrics,
     target,
+    gpu_target,
     font_resolution,
     surface_route,
     gpu_context,
@@ -235,12 +253,34 @@ pub fn SkiaRasterRenderer::render(
       if !self.surface.flush_and_submit() {
         raise SkiaRendererError::SurfaceUnavailable
       }
-      let frame = self.read_frame()
-      self.last_frame = Some(frame)
-      if (self.target.present)(frame) {
-        self.present_count = self.present_count + 1
-      } else {
-        raise SkiaRendererError::PresentFailed(self.target.description)
+      // Dispatch on the present target kind. When a HostGpuPresentTarget is
+      // bound, the platform owns the drawable and Skia has already flushed;
+      // skip `read_frame` (no CPU readback) and clear `last_frame`. The
+      // presenter may return a fresh `Surface` bound to the next drawable
+      // (Metal `CAMetalDrawable` pattern); swap it in for the next frame.
+      match self.gpu_target {
+        Some(gpu_target) => {
+          let outcome = (gpu_target.present_gpu)(self.gpu_context, self.surface)
+          if outcome.succeeded() {
+            self.present_count = self.present_count + 1
+            self.last_frame = None
+            match outcome.next_surface() {
+              Some(next_surface) => self.surface = next_surface
+              None => ()
+            }
+          } else {
+            raise SkiaRendererError::PresentFailed(gpu_target.description)
+          }
+        }
+        None => {
+          let frame = self.read_frame()
+          self.last_frame = Some(frame)
+          if (self.target.present)(frame) {
+            self.present_count = self.present_count + 1
+          } else {
+            raise SkiaRendererError::PresentFailed(self.target.description)
+          }
+        }
       }
     }
     None => raise SkiaRendererError::CanvasUnavailable
@@ -364,13 +404,38 @@ fn SkiaRasterRenderer::render_frame_inner(
       if !self.surface.flush_and_submit() {
         raise SkiaRendererError::SurfaceUnavailable
       }
-      let skia_frame = self.read_frame()
-      self.last_frame = Some(skia_frame)
-      if (self.target.present)(skia_frame) {
-        self.present_count = self.present_count + 1
-        stats.to_render_frame_result(presented=true)
-      } else {
-        raise SkiaRendererError::PresentFailed(self.target.description)
+      // Dispatch on the present target kind. When a HostGpuPresentTarget is
+      // bound, the platform owns the drawable and Skia has already flushed;
+      // skip `read_frame` (no CPU readback) and clear `last_frame`. The
+      // presenter may return a fresh `Surface` bound to the next drawable
+      // (Metal `CAMetalDrawable` pattern); swap it in for the next frame.
+      match self.gpu_target {
+        Some(gpu_target) => {
+          let outcome = (gpu_target.present_gpu)(
+            self.gpu_context, self.surface,
+          )
+          if outcome.succeeded() {
+            self.present_count = self.present_count + 1
+            self.last_frame = None
+            match outcome.next_surface() {
+              Some(next_surface) => self.surface = next_surface
+              None => ()
+            }
+            stats.to_render_frame_result(presented=true)
+          } else {
+            raise SkiaRendererError::PresentFailed(gpu_target.description)
+          }
+        }
+        None => {
+          let skia_frame = self.read_frame()
+          self.last_frame = Some(skia_frame)
+          if (self.target.present)(skia_frame) {
+            self.present_count = self.present_count + 1
+            stats.to_render_frame_result(presented=true)
+          } else {
+            raise SkiaRendererError::PresentFailed(self.target.description)
+          }
+        }
       }
     }
     None => raise SkiaRendererError::CanvasUnavailable

@@ -141,6 +141,47 @@ extern "C" fn native_surface_gpu_n32_premul(
 ) -> SurfaceHandle = "moonbit_skia_surface_gpu_n32_premul"
 
 ///|
+/// Wrap a platform window-backed Metal drawable as a Skia GPU surface.
+///
+/// `layer_ptr` is a raw `CAMetalLayer*` handle obtained from the host view.
+/// `next_drawable_handle` receives the next `CAMetalDrawable*` (its
+/// `MTLTexture` is what Skia will render into). The host presenter owns the
+/// layer and drawable lifecycle; Skia only borrows the texture for the duration
+/// of one frame.
+#borrow(context)
+extern "C" fn native_surface_metal_window(
+  context : GpuContextHandle,
+  layer_ptr : UInt64,
+  width : Int,
+  height : Int,
+  origin : Int,
+  sample_count : Int,
+  stencil_bits : Int,
+) -> SurfaceHandle = "moonbit_skia_surface_metal_window"
+
+///|
+/// Present the `CAMetalDrawable` whose `MTLTexture` backs the given
+/// `SurfaceHandle`. The host renderer has already called
+/// `surface.flush_and_submit()`; this call only asks the drawable to present
+/// and returns the *next* drawable's `MTLTexture` wrapped as a fresh
+/// `SurfaceHandle` so the renderer can swap surfaces for the next frame.
+///
+/// `layer_ptr` is the same `CAMetalLayer*` passed to
+/// `native_surface_metal_window`. When the layer cannot produce a next
+/// drawable (e.g. layer was detached), the returned handle is null and the
+/// caller should treat it as a present failure.
+#borrow(surface)
+extern "C" fn native_surface_metal_present_and_acquire_next(
+  surface : SurfaceHandle,
+  layer_ptr : UInt64,
+  width : Int,
+  height : Int,
+  origin : Int,
+  sample_count : Int,
+  stencil_bits : Int,
+) -> SurfaceHandle = "moonbit_skia_surface_metal_present_and_acquire_next"
+
+///|
 extern "C" fn native_surface_gpu_metal_opt_in_enabled() -> Bool = "moonbit_skia_surface_gpu_metal_opt_in_enabled"
 
 ///|
@@ -563,6 +604,80 @@ pub fn Surface::gpu_n32_premul(
       descriptor,
     )
   }
+}
+
+///|
+/// Wrap a platform window-backed Metal drawable as a Skia GPU surface.
+///
+/// `layer_ptr` is a raw `CAMetalLayer*` handle (typed as `UInt64` for FFI
+/// portability) obtained from the host view. The host presenter owns the layer
+/// and drawable lifecycle; Skia borrows the drawable's `MTLTexture` for one
+/// frame. The returned `Surface` must be flushed and then presented via
+/// `Surface::metal_present_and_acquire_next` to advance to the next drawable.
+///
+/// Returns `None` when the GPU context is unavailable, the size is empty, or
+/// the native Skia build cannot wrap a Metal drawable (e.g. the opt-in flags
+/// `MOUI_SKIA_ENABLE_GPU_METAL` / `MOUI_SKIA_HAS_GANESH_METAL_HEADERS` are not
+/// enabled at link time).
+pub fn Surface::metal_window_surface(
+  context : GpuContext,
+  layer_ptr : UInt64,
+  descriptor : @skia.SurfaceDescriptor,
+) -> Surface? {
+  if descriptor.is_empty() || !descriptor.is_gpu() || !context.is_available() {
+    None
+  } else if layer_ptr == 0 {
+    None
+  } else {
+    Surface::from_handle(
+      native_surface_metal_window(
+        context.handle,
+        layer_ptr,
+        descriptor.width(),
+        descriptor.height(),
+        native_surface_origin_ordinal(descriptor.origin),
+        descriptor.sample_count,
+        descriptor.stencil_bits,
+      ),
+      descriptor,
+    )
+  }
+}
+
+///|
+/// Present the `CAMetalDrawable` backing a `Surface` created via
+/// `Surface::metal_window_surface`, and return the next drawable wrapped as a
+/// fresh `Surface` for the following frame.
+///
+/// The host renderer has already called `Surface::flush_and_submit()` before
+/// this function; this call only asks the current drawable to present and
+/// acquires the next one. Returns:
+/// - `Some(next_surface)` when the drawable was presented and a next drawable
+///   was successfully acquired and wrapped.
+/// - `None` when the layer cannot produce a next drawable (e.g. layer was
+///   detached, device lost, or the native Skia build lacks Metal support).
+///   The caller should treat `None` as a present failure.
+pub fn Surface::metal_present_and_acquire_next(
+  surface : Surface,
+  context : GpuContext,
+  layer_ptr : UInt64,
+) -> Surface? {
+  if !context.is_available() || layer_ptr == 0 {
+    return None
+  }
+  let descriptor = surface.descriptor
+  Surface::from_handle(
+    native_surface_metal_present_and_acquire_next(
+      surface.handle,
+      layer_ptr,
+      descriptor.width(),
+      descriptor.height(),
+      native_surface_origin_ordinal(descriptor.origin),
+      descriptor.sample_count,
+      descriptor.stencil_bits,
+    ),
+    descriptor,
+  )
 }
 
 ///|

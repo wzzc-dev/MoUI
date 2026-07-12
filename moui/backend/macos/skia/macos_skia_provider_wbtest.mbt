@@ -142,6 +142,18 @@ test "macos skia provider preflight records package observation boundary" {
 }
 
 ///|
+test "macos skia preflight reports gpu metal direct presenter path" {
+  let summary = macos_skia_provider_preflight_summary()
+  assert_true(
+    summary.contains(
+      "gpu_presenter=macOS CAMetalLayer Skia Metal direct GPU presenter",
+    ),
+  )
+  assert_true(summary.contains("gpu_runtime_available="))
+  assert_true(summary.contains("metal_layer_install=available"))
+}
+
+///|
 fn skia_test_png_data_uri() -> String {
   "data:image/png;base64," +
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg=="

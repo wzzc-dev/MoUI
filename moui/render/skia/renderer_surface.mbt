@@ -14,14 +14,137 @@ pub struct SkiaPresentTarget {
 }
 
 ///|
+/// Discriminator for which present path a `SkiaRasterRenderer` is wired to.
+///
+/// - `CpuPixelFrame`: the renderer reads pixels back via `Surface::read_pixels`
+///   and hands a `SkiaPixelFrame` to the platform presenter. This is the only
+///   path wired today on every platform and remains the default/test fallback
+///   per ADR 0006.
+/// - `HostGpuSurface`: the renderer is bound to a `HostGpuPresentTarget`. The
+///   platform presenter owns a window-backed GPU surface (Metal drawable,
+///   Vulkan swapchain, EGL surface, D3D11 swapchain) and Skia flushes the
+///   drawable directly. `read_pixels` and the second CPU copy are skipped.
+pub(all) enum SkiaPresentKind {
+  CpuPixelFrame
+  HostGpuSurface
+} derive(Eq, Debug, ToJson)
+
+///|
+/// Present target for the direct host-GPU-surface route. The presenter takes a
+/// flushed `@skia_native.Surface` and lets the platform present its underlying
+/// drawable (Metal `CAMetalDrawable`, `VkSwapchainKHR` image, `EGLSurface`
+/// backbuffer, or D3D11 swapchain backbuffer). No `SkiaPixelFrame`, no `Bytes`,
+/// no `CGImage`/`UIImage`/`NSImage`/`Bitmap`/`PixelMap` intermediate.
+///
+/// `HostGpuPresentTarget` is a sibling of `SkiaPresentTarget`; both are
+/// accepted by `create_with_present_target_and_route`. A renderer is bound to
+/// exactly one of them. When `gpu_target = Some(_)`, `target_kind()` returns
+/// `HostGpuSurface` and the render loop bypasses `read_frame`.
+///
+/// `create_window_surface` is invoked once at renderer creation and again on
+/// each resize. It receives the `GpuContext` the renderer created internally
+/// (via `create_gpu_context`) and the current surface metrics, and returns a
+/// window-backed `Surface` (e.g. one wrapping a Metal `CAMetalDrawable`'s
+/// `MTLTexture`). When it returns `None`, the renderer raises
+/// `SurfaceUnavailable`. This callback replaces the default offscreen
+/// `create_surface` path so the renderer renders directly into the host
+/// drawable — no intermediate offscreen render target, no `read_pixels`.
+///
+/// `present_gpu` is invoked each frame after `flush_and_submit`. It receives
+/// the same `GpuContext` and the flushed `Surface`. It returns the optional
+/// `Surface` to use for the *next* frame. GPU backends whose Skia `Surface` is
+/// bound to a per-frame drawable (Metal `CAMetalDrawable`, Vulkan swapchain
+/// image) return a fresh `Surface`; backends that reuse the same `Surface`
+/// (e.g. a long-lived `EGLSurface`/D3D11 swapchain backbuffer wrapped via
+/// `SkSurfaces::WrapBackendSurface`) return `None` to keep the current one.
+/// Returning `Some(surface)` causes the renderer to swap `self.surface` to
+/// the returned value before the next frame.
+pub struct HostGpuPresentTarget {
+  priv description : String
+  priv create_window_surface : (
+    @skia_native.GpuContext?,
+    @render.RendererSurfaceMetrics,
+  ) -> @skia_native.Surface?
+  priv present_gpu : (
+    @skia_native.GpuContext?,
+    @skia_native.Surface,
+  ) -> HostGpuPresentOutcome
+}
+
+///|
+/// Outcome of a `HostGpuPresentTarget::present_gpu` call.
+///
+/// - `succeeded`: whether the platform presented the drawable successfully.
+/// - `next_surface`: `Some(surface)` to swap the renderer's surface for the
+///   next frame (per-drawable GPU backends); `None` to keep the current
+///   surface (long-lived GPU backends).
+pub(all) struct HostGpuPresentOutcome {
+  priv succeeded : Bool
+  priv next_surface : @skia_native.Surface?
+}
+
+///|
+pub fn HostGpuPresentOutcome::new(
+  succeeded~ : Bool,
+  next_surface? : @skia_native.Surface? = None,
+) -> HostGpuPresentOutcome {
+  { succeeded, next_surface }
+}
+
+///|
+pub fn HostGpuPresentOutcome::succeeded(
+  self : HostGpuPresentOutcome,
+) -> Bool {
+  self.succeeded
+}
+
+///|
+pub fn HostGpuPresentOutcome::next_surface(
+  self : HostGpuPresentOutcome,
+) -> @skia_native.Surface? {
+  self.next_surface
+}
+
+///|
+pub fn HostGpuPresentTarget::new(
+  description~ : String,
+  create_window_surface~ : (
+    @skia_native.GpuContext?,
+    @render.RendererSurfaceMetrics,
+  ) -> @skia_native.Surface?,
+  present_gpu~ : (
+    @skia_native.GpuContext?,
+    @skia_native.Surface,
+  ) -> HostGpuPresentOutcome,
+) -> HostGpuPresentTarget {
+  { description, create_window_surface, present_gpu }
+}
+
+///|
+pub fn HostGpuPresentTarget::description(
+  self : HostGpuPresentTarget,
+) -> String {
+  self.description
+}
+
+///|
 pub(all) enum SkiaSurfaceRoute {
   RasterSurfaceRoute
   MetalGpuSurfaceRoute
+  VulkanGpuSurfaceRoute
+  EglGpuSurfaceRoute
+  Direct3DGpuSurfaceRoute
 } derive(Eq, Debug, ToJson)
 
 ///|
 pub fn SkiaSurfaceRoute::is_gpu(self : SkiaSurfaceRoute) -> Bool {
-  self is MetalGpuSurfaceRoute
+  match self {
+    RasterSurfaceRoute => false
+    MetalGpuSurfaceRoute => true
+    VulkanGpuSurfaceRoute => true
+    EglGpuSurfaceRoute => true
+    Direct3DGpuSurfaceRoute => true
+  }
 }
 
 ///|
@@ -29,6 +152,25 @@ pub fn SkiaSurfaceRoute::label(self : SkiaSurfaceRoute) -> String {
   match self {
     RasterSurfaceRoute => "raster"
     MetalGpuSurfaceRoute => "metal-gpu"
+    VulkanGpuSurfaceRoute => "vulkan-gpu"
+    EglGpuSurfaceRoute => "egl-gpu"
+    Direct3DGpuSurfaceRoute => "direct3d-gpu"
+  }
+}
+
+///|
+/// Returns true when the route is wired into the renderer (a GPU context can be
+/// created and a host window surface can be produced). Phase 1.1 of the
+/// readback-elimination plan keeps only `MetalGpuSurfaceRoute` implemented;
+/// the other GPU variants are reserved for the per-platform Phase 1.2-1.7 work
+/// so providers can already negotiate the surface route at selection time.
+pub fn SkiaSurfaceRoute::is_implemented(self : SkiaSurfaceRoute) -> Bool {
+  match self {
+    RasterSurfaceRoute => true
+    MetalGpuSurfaceRoute => true
+    VulkanGpuSurfaceRoute => false
+    EglGpuSurfaceRoute => false
+    Direct3DGpuSurfaceRoute => false
   }
 }
 
@@ -171,6 +313,18 @@ fn create_gpu_context(
         }
       }
     }
+    VulkanGpuSurfaceRoute =>
+      raise SkiaRendererError::GpuContextUnavailable(
+        "vulkan-gpu-route-not-yet-implemented",
+      )
+    EglGpuSurfaceRoute =>
+      raise SkiaRendererError::GpuContextUnavailable(
+        "egl-gpu-route-not-yet-implemented",
+      )
+    Direct3DGpuSurfaceRoute =>
+      raise SkiaRendererError::GpuContextUnavailable(
+        "direct3d-gpu-route-not-yet-implemented",
+      )
   }
 }
 
@@ -202,6 +356,12 @@ fn create_surface(
             None => raise SkiaRendererError::SurfaceUnavailable
           }
       }
+    VulkanGpuSurfaceRoute =>
+      raise SkiaRendererError::SurfaceUnavailable
+    EglGpuSurfaceRoute =>
+      raise SkiaRendererError::SurfaceUnavailable
+    Direct3DGpuSurfaceRoute =>
+      raise SkiaRendererError::SurfaceUnavailable
   }
 }
 
@@ -235,6 +395,15 @@ fn skia_surface_target_for_physical_size(
           None => None
         },
       )
+    // Phase 1.1: the remaining GPU routes are reserved for Phase 1.2-1.7.
+    // `create_gpu_context` raises before this target is consumed, so the
+    // raster fallback is unreachable in production but keeps the match total.
+    VulkanGpuSurfaceRoute =>
+      @moui_skia.SurfaceTargetDescriptor::raster_n32_premul(size)
+    EglGpuSurfaceRoute =>
+      @moui_skia.SurfaceTargetDescriptor::raster_n32_premul(size)
+    Direct3DGpuSurfaceRoute =>
+      @moui_skia.SurfaceTargetDescriptor::raster_n32_premul(size)
   }
 }
 
@@ -279,14 +448,19 @@ fn raster_surface_preflight(
 }
 
 ///|
-
-///|
 pub fn SkiaRasterRenderer::resize(
   self : SkiaRasterRenderer,
   metrics : @render.RendererSurfaceMetrics,
 ) -> Unit raise SkiaRendererError {
   self.metrics = metrics
-  self.surface = create_surface(metrics, self.surface_route, self.gpu_context)
+  self.surface = match self.gpu_target {
+    Some(gpu_target) =>
+      match (gpu_target.create_window_surface)(self.gpu_context, metrics) {
+        Some(surface) => surface
+        None => raise SkiaRendererError::SurfaceUnavailable
+      }
+    None => create_surface(metrics, self.surface_route, self.gpu_context)
+  }
   self.clear_layer_cache()
 }
 
@@ -303,6 +477,29 @@ pub fn SkiaRasterRenderer::surface_is_gpu(self : SkiaRasterRenderer) -> Bool {
 }
 
 ///|
+/// Returns which present path the renderer is bound to. `CpuPixelFrame` reads
+/// pixels back via `Surface::read_pixels` and hands a `SkiaPixelFrame` to the
+/// platform presenter; `HostGpuSurface` lets the platform present a
+/// window-backed GPU drawable directly with no CPU readback.
+pub fn SkiaRasterRenderer::target_kind(
+  self : SkiaRasterRenderer,
+) -> SkiaPresentKind {
+  match self.gpu_target {
+    Some(_) => SkiaPresentKind::HostGpuSurface
+    None => SkiaPresentKind::CpuPixelFrame
+  }
+}
+
+///|
+/// Returns the bound `HostGpuPresentTarget` when the renderer is on the direct
+/// GPU present path. Returns `None` for the legacy CPU pixel-frame route.
+pub fn SkiaRasterRenderer::gpu_target(
+  self : SkiaRasterRenderer,
+) -> HostGpuPresentTarget? {
+  self.gpu_target
+}
+
+///|
 pub fn SkiaRasterRenderer::surface_diagnostic_summary(
   self : SkiaRasterRenderer,
 ) -> String {
@@ -312,7 +509,11 @@ pub fn SkiaRasterRenderer::surface_diagnostic_summary(
     None => "none"
   }
   let gpu_surface = if self.surface_is_gpu() { "true" } else { "false" }
-  "surface_route=\{self.surface_route.label()}; surface_gpu=\{gpu_surface}; gpu_context=\{context}; dimensions=\{self.surface.width()}x\{self.surface.height()}"
+  let present_kind = match self.target_kind() {
+    SkiaPresentKind::CpuPixelFrame => "cpu-pixel-frame"
+    SkiaPresentKind::HostGpuSurface => "host-gpu-surface"
+  }
+  "surface_route=\{self.surface_route.label()}; surface_gpu=\{gpu_surface}; gpu_context=\{context}; present_kind=\{present_kind}; dimensions=\{self.surface.width()}x\{self.surface.height()}"
 }
 
 ///|
