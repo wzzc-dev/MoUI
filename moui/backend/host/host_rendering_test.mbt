@@ -133,22 +133,70 @@ test "mobile renderer auto mode requires availability and promotion" {
     MobileRendererMode::Auto,
     gpu_available=true,
     gpu_promoted=false,
+    surface_route=@render.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
   )
   assert_true(pending.selected == @render.RendererBackendKind::SkiaRasterNative)
   assert_true(pending.fallback_reason is Some(_))
+  assert_true(
+    pending.surface_route == @render.SkiaSurfaceRoute::RasterSurfaceRoute,
+  )
   let promoted = select_mobile_renderer(
     MobileRendererMode::Auto,
     gpu_available=true,
     gpu_promoted=true,
+    surface_route=@render.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
   )
   assert_true(promoted.selected == @render.RendererBackendKind::SkiaGpuNative)
+  assert_true(
+    promoted.surface_route ==
+      @render.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
+  )
   let unavailable = select_mobile_renderer(
     MobileRendererMode::SkiaGpu,
     gpu_available=false,
     gpu_promoted=false,
+    surface_route=@render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute,
   )
   assert_true(
     unavailable.selected == @render.RendererBackendKind::SkiaRasterNative,
+  )
+  assert_true(
+    unavailable.surface_route ==
+      @render.SkiaSurfaceRoute::RasterSurfaceRoute,
+  )
+}
+
+///|
+test "mobile renderer surface route reflects platform selection" {
+  let android = select_mobile_renderer(
+    MobileRendererMode::SkiaGpu,
+    gpu_available=true,
+    gpu_promoted=false,
+    surface_route=@render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute,
+  )
+  assert_true(
+    android.surface_route ==
+      @render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute,
+  )
+  let harmonyos = select_mobile_renderer(
+    MobileRendererMode::SkiaGpu,
+    gpu_available=true,
+    gpu_promoted=false,
+    surface_route=@render.SkiaSurfaceRoute::EglGpuSurfaceRoute,
+  )
+  assert_true(
+    harmonyos.surface_route ==
+      @render.SkiaSurfaceRoute::EglGpuSurfaceRoute,
+  )
+  let windows = select_mobile_renderer(
+    MobileRendererMode::SkiaGpu,
+    gpu_available=true,
+    gpu_promoted=false,
+    surface_route=@render.SkiaSurfaceRoute::Direct3DGpuSurfaceRoute,
+  )
+  assert_true(
+    windows.surface_route ==
+      @render.SkiaSurfaceRoute::Direct3DGpuSurfaceRoute,
   )
 }
 

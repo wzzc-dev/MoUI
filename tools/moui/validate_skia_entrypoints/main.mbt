@@ -276,7 +276,7 @@ fn validate_entry_texts(
   if entry.surface_route_env != "" {
     assert_contains(main, entry.surface_route_env, main_path, failures)
     assert_contains(
-      main, "@skia_renderer.SkiaSurfaceRoute::MetalGpuSurfaceRoute", main_path, failures,
+      main, "@render.SkiaSurfaceRoute::MetalGpuSurfaceRoute", main_path, failures,
     )
     assert_contains(main, "surface_route~", main_path, failures)
   } else {

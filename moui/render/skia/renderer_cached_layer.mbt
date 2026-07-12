@@ -6,7 +6,7 @@ priv struct SkiaCachedLayerImageEntry {
   image : @skia_native.Image
   physical_size : @moui_skia.ISize
   scale_factor : Double
-  surface_route : SkiaSurfaceRoute
+  surface_route : @render.SkiaSurfaceRoute
   content_revision : Int
   byte_size : Int64
   update_streak : Int

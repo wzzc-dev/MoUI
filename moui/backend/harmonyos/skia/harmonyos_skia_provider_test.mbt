@@ -24,7 +24,7 @@ test "harmonyos skia preflight names scaffold requirements" {
 test "harmonyos skia preflight reports egl direct gpu presenter path" {
   let summary = harmonyos_skia_provider_preflight_summary(
     options=HarmonyOsSkiaAppOptions::new(
-      surface_route=@skia_renderer.SkiaSurfaceRoute::EglGpuSurfaceRoute,
+      surface_route=@render.SkiaSurfaceRoute::EglGpuSurfaceRoute,
     ),
   )
   assert_true(summary.contains("surface_route=egl-gpu"))

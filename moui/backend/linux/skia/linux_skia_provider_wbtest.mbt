@@ -139,7 +139,7 @@ test "linux skia provider preflight records package observation boundary" {
 test "linux skia preflight reports vulkan direct gpu presenter path" {
   let summary = linux_skia_provider_preflight_summary(
     options=LinuxSkiaAppOptions::new(
-      surface_route=@skia_renderer.SkiaSurfaceRoute::VulkanGpuSurfaceRoute,
+      surface_route=@render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute,
     ),
   )
   assert_true(summary.contains("surface_route=vulkan-gpu"))

@@ -118,55 +118,13 @@ pub fn HostGpuPresentTarget::description(self : HostGpuPresentTarget) -> String 
 }
 
 ///|
-pub(all) enum SkiaSurfaceRoute {
-  RasterSurfaceRoute
-  MetalGpuSurfaceRoute
-  VulkanGpuSurfaceRoute
-  EglGpuSurfaceRoute
-  Direct3DGpuSurfaceRoute
-} derive(Eq, Debug, ToJson)
-
-///|
-pub fn SkiaSurfaceRoute::is_gpu(self : SkiaSurfaceRoute) -> Bool {
-  match self {
-    RasterSurfaceRoute => false
-    MetalGpuSurfaceRoute => true
-    VulkanGpuSurfaceRoute => true
-    EglGpuSurfaceRoute => true
-    Direct3DGpuSurfaceRoute => true
-  }
-}
-
-///|
-pub fn SkiaSurfaceRoute::label(self : SkiaSurfaceRoute) -> String {
-  match self {
-    RasterSurfaceRoute => "raster"
-    MetalGpuSurfaceRoute => "metal-gpu"
-    VulkanGpuSurfaceRoute => "vulkan-gpu"
-    EglGpuSurfaceRoute => "egl-gpu"
-    Direct3DGpuSurfaceRoute => "direct3d-gpu"
-  }
-}
-
-///|
-/// Returns true when the route is wired into the renderer (a GPU context can be
-/// created and a host window surface can be produced). Phase 1.1 of the
-/// readback-elimination plan keeps only `MetalGpuSurfaceRoute` implemented;
-/// Phase 1.6 promotes `Direct3DGpuSurfaceRoute` for the Windows presenter;
-/// Phase 1.4 promotes `VulkanGpuSurfaceRoute` for the Android presenter;
-/// Phase 1.5 promotes `EglGpuSurfaceRoute` for the HarmonyOS presenter.
-/// The remaining GPU variant is reserved for the per-platform
-/// Phase 1.7 work so providers can already negotiate the surface
-/// route at selection time.
-pub fn SkiaSurfaceRoute::is_implemented(self : SkiaSurfaceRoute) -> Bool {
-  match self {
-    RasterSurfaceRoute => true
-    MetalGpuSurfaceRoute => true
-    VulkanGpuSurfaceRoute => true
-    EglGpuSurfaceRoute => true
-    Direct3DGpuSurfaceRoute => true
-  }
-}
+/// `SkiaSurfaceRoute` now lives in the cross-platform `moui/render` package
+/// (see `moui/render/skia_surface_route.mbt`) so cross-runtime packages such
+/// as `moui/backend/host` can carry the route on their value types without
+/// pulling in the native-only `moui/render/skia` dependency graph. Existing
+/// consumers that already import `@skia_renderer` should switch to
+/// `@render.SkiaSurfaceRoute`; new cross-runtime consumers must use
+/// `@render.SkiaSurfaceRoute`.
 
 ///|
 priv struct SkiaRasterSurfacePreflight {
@@ -303,11 +261,11 @@ pub fn SkiaPixelFrame::pixels(self : SkiaPixelFrame) -> Bytes {
 
 ///|
 fn create_gpu_context(
-  surface_route : SkiaSurfaceRoute,
+  surface_route : @render.SkiaSurfaceRoute,
 ) -> @skia_native.GpuContext? raise SkiaRendererError {
   match surface_route {
-    RasterSurfaceRoute => None
-    MetalGpuSurfaceRoute => {
+    @render.SkiaSurfaceRoute::RasterSurfaceRoute => None
+    @render.SkiaSurfaceRoute::MetalGpuSurfaceRoute => {
       let descriptor = @moui_skia.GpuContextDescriptor::metal(
         b"moui-render-skia-metal-gpu",
       )
@@ -323,7 +281,7 @@ fn create_gpu_context(
         }
       }
     }
-    Direct3DGpuSurfaceRoute => {
+    @render.SkiaSurfaceRoute::Direct3DGpuSurfaceRoute => {
       let descriptor = @moui_skia.GpuContextDescriptor::direct3d12(
         b"moui-render-skia-direct3d-gpu",
       )
@@ -339,7 +297,7 @@ fn create_gpu_context(
         }
       }
     }
-    VulkanGpuSurfaceRoute => {
+    @render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute => {
       let descriptor = @moui_skia.GpuContextDescriptor::vulkan(
         b"moui-render-skia-vulkan-gpu",
       )
@@ -355,7 +313,7 @@ fn create_gpu_context(
         }
       }
     }
-    EglGpuSurfaceRoute => {
+    @render.SkiaSurfaceRoute::EglGpuSurfaceRoute => {
       let descriptor = @moui_skia.GpuContextDescriptor::opengl(
         b"moui-render-skia-egl-gpu",
       )
@@ -377,17 +335,17 @@ fn create_gpu_context(
 ///|
 fn create_surface(
   metrics : @render.RendererSurfaceMetrics,
-  surface_route : SkiaSurfaceRoute,
+  surface_route : @render.SkiaSurfaceRoute,
   gpu_context : @skia_native.GpuContext?,
 ) -> @skia_native.Surface raise SkiaRendererError {
   let target = skia_surface_target(metrics, surface_route, gpu_context)
   match surface_route {
-    RasterSurfaceRoute =>
+    @render.SkiaSurfaceRoute::RasterSurfaceRoute =>
       match @skia_native.Surface::for_target(target) {
         Some(surface) => surface
         None => raise SkiaRendererError::SurfaceUnavailable
       }
-    MetalGpuSurfaceRoute =>
+    @render.SkiaSurfaceRoute::MetalGpuSurfaceRoute =>
       match gpu_context {
         None =>
           raise SkiaRendererError::GpuContextUnavailable(
@@ -402,7 +360,7 @@ fn create_surface(
             None => raise SkiaRendererError::SurfaceUnavailable
           }
       }
-    Direct3DGpuSurfaceRoute =>
+    @render.SkiaSurfaceRoute::Direct3DGpuSurfaceRoute =>
       match gpu_context {
         None =>
           raise SkiaRendererError::GpuContextUnavailable(
@@ -417,7 +375,7 @@ fn create_surface(
             None => raise SkiaRendererError::SurfaceUnavailable
           }
       }
-    VulkanGpuSurfaceRoute =>
+    @render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute =>
       match gpu_context {
         None =>
           raise SkiaRendererError::GpuContextUnavailable(
@@ -432,7 +390,7 @@ fn create_surface(
             None => raise SkiaRendererError::SurfaceUnavailable
           }
       }
-    EglGpuSurfaceRoute =>
+    @render.SkiaSurfaceRoute::EglGpuSurfaceRoute =>
       match gpu_context {
         None =>
           raise SkiaRendererError::GpuContextUnavailable(
@@ -453,7 +411,7 @@ fn create_surface(
 ///|
 fn skia_surface_target(
   metrics : @render.RendererSurfaceMetrics,
-  surface_route : SkiaSurfaceRoute,
+  surface_route : @render.SkiaSurfaceRoute,
   gpu_context : @skia_native.GpuContext?,
 ) -> @moui_skia.SurfaceTargetDescriptor {
   let size = @moui_skia.ISize::new(
@@ -466,13 +424,13 @@ fn skia_surface_target(
 ///|
 fn skia_surface_target_for_physical_size(
   size : @moui_skia.ISize,
-  surface_route : SkiaSurfaceRoute,
+  surface_route : @render.SkiaSurfaceRoute,
   gpu_context : @skia_native.GpuContext?,
 ) -> @moui_skia.SurfaceTargetDescriptor {
   match surface_route {
-    RasterSurfaceRoute =>
+    @render.SkiaSurfaceRoute::RasterSurfaceRoute =>
       @moui_skia.SurfaceTargetDescriptor::raster_n32_premul(size)
-    MetalGpuSurfaceRoute =>
+    @render.SkiaSurfaceRoute::MetalGpuSurfaceRoute =>
       @moui_skia.SurfaceTargetDescriptor::gpu_n32_premul(
         size,
         gpu_context_key=match gpu_context {
@@ -480,7 +438,7 @@ fn skia_surface_target_for_physical_size(
           None => None
         },
       )
-    Direct3DGpuSurfaceRoute =>
+    @render.SkiaSurfaceRoute::Direct3DGpuSurfaceRoute =>
       @moui_skia.SurfaceTargetDescriptor::gpu_n32_premul(
         size,
         gpu_context_key=match gpu_context {
@@ -488,7 +446,7 @@ fn skia_surface_target_for_physical_size(
           None => None
         },
       )
-    VulkanGpuSurfaceRoute =>
+    @render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute =>
       @moui_skia.SurfaceTargetDescriptor::gpu_n32_premul(
         size,
         gpu_context_key=match gpu_context {
@@ -496,7 +454,7 @@ fn skia_surface_target_for_physical_size(
           None => None
         },
       )
-    EglGpuSurfaceRoute =>
+    @render.SkiaSurfaceRoute::EglGpuSurfaceRoute =>
       @moui_skia.SurfaceTargetDescriptor::gpu_n32_premul(
         size,
         gpu_context_key=match gpu_context {
@@ -567,7 +525,7 @@ pub fn SkiaRasterRenderer::resize(
 ///|
 pub fn SkiaRasterRenderer::surface_route(
   self : SkiaRasterRenderer,
-) -> SkiaSurfaceRoute {
+) -> @render.SkiaSurfaceRoute {
   self.surface_route
 }
 

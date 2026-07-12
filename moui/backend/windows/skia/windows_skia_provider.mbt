@@ -13,7 +13,7 @@ extern "C" fn windows_present_skia_pixels_to_hwnd(
 pub struct WindowsSkiaAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
   priv font_resolution : @skia_renderer.SkiaFontResolution
-  priv surface_route : @skia_renderer.SkiaSurfaceRoute
+  priv surface_route : @render.SkiaSurfaceRoute
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
 }
 
@@ -26,7 +26,7 @@ pub struct WindowsSkiaSmokeOptions {
 pub fn WindowsSkiaAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
-  surface_route? : @skia_renderer.SkiaSurfaceRoute = @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute,
+  surface_route? : @render.SkiaSurfaceRoute = @render.SkiaSurfaceRoute::RasterSurfaceRoute,
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
 ) -> WindowsSkiaAppOptions {
   { scene_resolver, font_resolution, surface_route, platform_view_plugins }
@@ -330,7 +330,7 @@ fn create_raster_renderer(
     let renderer = @skia_renderer.create_with_present_target_and_route(
       renderer_metrics_from_host(metrics),
       windows_skia_present_target(hwnd),
-      surface_route=@skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute,
+      surface_route=@render.SkiaSurfaceRoute::RasterSurfaceRoute,
       font_resolution=options.font_resolution,
       async_image_loading=true,
     )

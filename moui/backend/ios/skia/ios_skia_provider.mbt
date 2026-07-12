@@ -113,7 +113,7 @@ fn create_renderer(
         @skia_renderer.create_with_present_target_and_route(
           renderer_metrics_from_host(metrics),
           ios_skia_present_target(view),
-          surface_route=@skia_renderer.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
+          surface_route=@render.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
           gpu_target=Some(ios_skia_gpu_present_target(view.raw(), layer_ptr)),
           font_resolution=options.font_resolution,
           async_image_loading=true,

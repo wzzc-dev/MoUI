@@ -12,13 +12,13 @@ extern "C" fn android_present_skia_pixels_to_surface(
 ///|
 pub struct AndroidSkiaAppOptions {
   priv font_resolution : @skia_renderer.SkiaFontResolution
-  priv surface_route : @skia_renderer.SkiaSurfaceRoute
+  priv surface_route : @render.SkiaSurfaceRoute
 }
 
 ///|
 pub fn AndroidSkiaAppOptions::new(
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
-  surface_route? : @skia_renderer.SkiaSurfaceRoute = @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute,
+  surface_route? : @render.SkiaSurfaceRoute = @render.SkiaSurfaceRoute::RasterSurfaceRoute,
 ) -> AndroidSkiaAppOptions {
   { font_resolution, surface_route }
 }
@@ -159,7 +159,7 @@ fn create_raster_renderer(
     let renderer = @skia_renderer.create_with_present_target_and_route(
       renderer_metrics_from_host(metrics),
       android_skia_present_target(surface),
-      surface_route=@skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute,
+      surface_route=@render.SkiaSurfaceRoute::RasterSurfaceRoute,
       font_resolution=options.font_resolution,
       async_image_loading=true,
     )
