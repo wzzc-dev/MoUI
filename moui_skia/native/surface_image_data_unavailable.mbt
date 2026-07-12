@@ -368,6 +368,53 @@ pub fn Surface::vulkan_gpu_context_runtime_available() -> Bool {
 }
 
 ///|
+pub fn GpuContext::egl(
+  descriptor : @skia.GpuContextDescriptor,
+) -> GpuContext? {
+  ignore(descriptor)
+  None
+}
+
+///|
+pub fn Surface::egl_window_surface(
+  context : GpuContext,
+  native_window_ptr : UInt64,
+  descriptor : @skia.SurfaceDescriptor,
+) -> Surface? {
+  ignore(context)
+  ignore(native_window_ptr)
+  ignore(descriptor)
+  None
+}
+
+///|
+pub fn Surface::egl_present_and_acquire_next(
+  surface : Surface,
+  context : GpuContext,
+  native_window_ptr : UInt64,
+) -> Surface? {
+  ignore(surface)
+  ignore(context)
+  ignore(native_window_ptr)
+  None
+}
+
+///|
+pub fn Surface::egl_gpu_context_opt_in_enabled() -> Bool {
+  false
+}
+
+///|
+pub fn Surface::egl_gpu_context_headers_available() -> Bool {
+  false
+}
+
+///|
+pub fn Surface::egl_gpu_context_runtime_available() -> Bool {
+  false
+}
+
+///|
 pub fn Surface::gpu_context_support_status(
   context : @skia.GpuContextDescriptor,
 ) -> SkiaGpuContextSupportStatus {

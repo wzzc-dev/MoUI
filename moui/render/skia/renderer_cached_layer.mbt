@@ -502,10 +502,12 @@ fn SkiaRasterRenderer::create_layer_surface(
           @skia_native.Surface::for_target_with_gpu_context(target, gpu_context)
         None => None
       }
-    // Phase 1.1: reserved GPU route; `create_gpu_context` rejects it at
-    // renderer construction so this branch is unreachable today. Returning
-    // None keeps the match total without inventing a fake surface.
-    EglGpuSurfaceRoute => None
+    EglGpuSurfaceRoute =>
+      match self.gpu_context {
+        Some(gpu_context) =>
+          @skia_native.Surface::for_target_with_gpu_context(target, gpu_context)
+        None => None
+      }
   }
 }
 

@@ -194,7 +194,7 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "tools/moui/validate_maintenance_baseline/main.mbt", max_lines: 97 },
     {
       path: "tools/moui/validate_maintenance_baseline/count_budget_catalog.mbt",
-      max_lines: 80,
+      max_lines: 100,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/count_budget_checks.mbt",

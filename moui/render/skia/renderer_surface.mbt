@@ -153,16 +153,17 @@ pub fn SkiaSurfaceRoute::label(self : SkiaSurfaceRoute) -> String {
 /// created and a host window surface can be produced). Phase 1.1 of the
 /// readback-elimination plan keeps only `MetalGpuSurfaceRoute` implemented;
 /// Phase 1.6 promotes `Direct3DGpuSurfaceRoute` for the Windows presenter;
-/// Phase 1.4 promotes `VulkanGpuSurfaceRoute` for the Android presenter.
+/// Phase 1.4 promotes `VulkanGpuSurfaceRoute` for the Android presenter;
+/// Phase 1.5 promotes `EglGpuSurfaceRoute` for the HarmonyOS presenter.
 /// The remaining GPU variant is reserved for the per-platform
-/// Phase 1.5/1.7 work so providers can already negotiate the surface
+/// Phase 1.7 work so providers can already negotiate the surface
 /// route at selection time.
 pub fn SkiaSurfaceRoute::is_implemented(self : SkiaSurfaceRoute) -> Bool {
   match self {
     RasterSurfaceRoute => true
     MetalGpuSurfaceRoute => true
     VulkanGpuSurfaceRoute => true
-    EglGpuSurfaceRoute => false
+    EglGpuSurfaceRoute => true
     Direct3DGpuSurfaceRoute => true
   }
 }
@@ -231,6 +232,11 @@ fn skia_gpu_context_status_label(
       "vulkan-headers-unavailable"
     @skia_native.SkiaGpuContextVulkanRuntimeUnavailable =>
       "vulkan-runtime-unavailable"
+    @skia_native.SkiaGpuContextEglOptInDisabled => "egl-opt-in-disabled"
+    @skia_native.SkiaGpuContextEglHeadersUnavailable =>
+      "egl-headers-unavailable"
+    @skia_native.SkiaGpuContextEglRuntimeUnavailable =>
+      "egl-runtime-unavailable"
   }
 }
 
@@ -349,10 +355,22 @@ fn create_gpu_context(
         }
       }
     }
-    EglGpuSurfaceRoute =>
-      raise SkiaRendererError::GpuContextUnavailable(
-        "egl-gpu-route-not-yet-implemented",
+    EglGpuSurfaceRoute => {
+      let descriptor = @moui_skia.GpuContextDescriptor::opengl(
+        b"moui-render-skia-egl-gpu",
       )
+      match @skia_native.GpuContext::egl(descriptor) {
+        Some(context) => Some(context)
+        None => {
+          let status = @skia_native.Surface::gpu_context_support_status(
+            descriptor,
+          )
+          raise SkiaRendererError::GpuContextUnavailable(
+            skia_gpu_context_status_label(status),
+          )
+        }
+      }
+    }
   }
 }
 
@@ -414,7 +432,21 @@ fn create_surface(
             None => raise SkiaRendererError::SurfaceUnavailable
           }
       }
-    EglGpuSurfaceRoute => raise SkiaRendererError::SurfaceUnavailable
+    EglGpuSurfaceRoute =>
+      match gpu_context {
+        None =>
+          raise SkiaRendererError::GpuContextUnavailable(
+            "missing-egl-gpu-context",
+          )
+        Some(gpu_context) =>
+          match
+            @skia_native.Surface::for_target_with_gpu_context(
+              target, gpu_context,
+            ) {
+            Some(surface) => surface
+            None => raise SkiaRendererError::SurfaceUnavailable
+          }
+      }
   }
 }
 
@@ -464,11 +496,14 @@ fn skia_surface_target_for_physical_size(
           None => None
         },
       )
-    // Phase 1.1: the remaining GPU route is reserved for Phase 1.5/1.7.
-    // `create_gpu_context` raises before this target is consumed, so the
-    // raster fallback is unreachable in production but keeps the match total.
     EglGpuSurfaceRoute =>
-      @moui_skia.SurfaceTargetDescriptor::raster_n32_premul(size)
+      @moui_skia.SurfaceTargetDescriptor::gpu_n32_premul(
+        size,
+        gpu_context_key=match gpu_context {
+          Some(gpu_context) => Some(gpu_context.resource_key())
+          None => None
+        },
+      )
   }
 }
 

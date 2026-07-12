@@ -222,6 +222,26 @@ static inline void moonbit_skia_vulkan_release_swapchain(void* object) {
 }
 #endif
 
+#if defined(__OHOS__)
+/// Release a heap-allocated MoonbitSkiaEglContext stored as the `device`
+/// field of MoonbitSkiaGpuContext on HarmonyOS. Safe to call with nullptr.
+/// On non-HarmonyOS platforms this is a no-op stub. The definition lives in
+/// skia_stub_surface_image_data.cpp.
+void moonbit_skia_egl_release_context(void* object);
+/// Release a heap-allocated MoonbitSkiaEglWindow stored as
+/// host_present_handle on HarmonyOS. Safe to call with nullptr. On
+/// non-HarmonyOS platforms this is a no-op stub. The definition lives in
+/// skia_stub_surface_image_data.cpp.
+void moonbit_skia_egl_release_window(void* object);
+#else
+static inline void moonbit_skia_egl_release_context(void* object) {
+  (void)object;
+}
+static inline void moonbit_skia_egl_release_window(void* object) {
+  (void)object;
+}
+#endif
+
 struct MoonbitSkiaGpuContext {
 #if defined(MOUI_SKIA_HAS_SKIA)
   GrDirectContext* context;

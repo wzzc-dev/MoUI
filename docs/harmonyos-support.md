@@ -74,8 +74,11 @@ Use `HARMONYOS_SDK_HOME` as the canonical SDK environment variable. Set
 `OHOS_SDK_HOME` only as a fallback for existing local setups:
 
 ```sh
-export HARMONYOS_SDK_HOME=/path/to/DevEco/sdk/default/openharmony
+export HARMONYOS_SDK_HOME="/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony"
 export PATH="$HARMONYOS_SDK_HOME/toolchains:$PATH"
+
+# export HARMONYOS_SDK_HOME=/path/to/DevEco/sdk/default/openharmony
+# export PATH="$HARMONYOS_SDK_HOME/toolchains:$PATH"
 
 test -f "$HARMONYOS_SDK_HOME/native/build/cmake/ohos.toolchain.cmake" && echo ok
 hdc version
