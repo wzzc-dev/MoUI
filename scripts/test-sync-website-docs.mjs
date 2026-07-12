@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -11,6 +11,7 @@ const fixture = () => {
   mkdirSync(join(root, "website"), { recursive: true });
   mkdirSync(join(root, "docs"), { recursive: true });
   mkdirSync(join(root, "moui_skia"), { recursive: true });
+  cpSync("scripts/check-website-docs.mjs", join(root, "scripts/check-website-docs.mjs"));
   cpSync("scripts/sync-website-docs.mjs", join(root, "scripts/sync-website-docs.mjs"));
   cpSync("scripts/lib/website-docs-catalog.mjs", join(root, "scripts/lib/website-docs-catalog.mjs"));
   writeFileSync(join(root, "docs/guide.md"), "# Guide\n");
@@ -35,6 +36,9 @@ const fixture = () => {
 const run = (root, ...args) =>
   spawnSync(process.execPath, [join(root, "scripts/sync-website-docs.mjs"), "--root", root, ...args], { encoding: "utf8" });
 
+const runTemporaryCheck = root =>
+  spawnSync(process.execPath, [join(root, "scripts/check-website-docs.mjs"), "--root", root], { encoding: "utf8" });
+
 const expectPass = (label, result) => {
   if (result.status !== 0) {
     console.error(`${label}: expected pass\n${result.stderr}`);
@@ -55,6 +59,15 @@ const updateCatalog = (root, mutate) => {
   mutate(value);
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
 };
+
+{
+  const { root } = fixture();
+  expectPass("temporary output check", runTemporaryCheck(root));
+  if (existsSync(join(root, "website/web_wasm/docs"))) {
+    console.error("temporary output check should not write into the source checkout");
+    process.exit(1);
+  }
+}
 
 {
   const { root } = fixture();
