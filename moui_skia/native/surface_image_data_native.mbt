@@ -298,6 +298,60 @@ extern "C" fn native_surface_gpu_vulkan_headers_available() -> Bool = "moonbit_s
 extern "C" fn native_surface_gpu_vulkan_runtime_available() -> Bool = "moonbit_skia_surface_gpu_vulkan_runtime_available"
 
 ///|
+extern "C" fn native_gpu_context_egl() -> GpuContextHandle = "moonbit_skia_gpu_context_egl"
+
+///|
+/// Wrap a platform window-backed EGL surface as a Skia GPU surface.
+///
+/// `native_window_ptr` is a raw `OHNativeWindow*` handle (typed as `UInt64`
+/// for FFI portability) obtained from the HarmonyOS XComponent host. The
+/// host presenter owns the OHNativeWindow lifecycle; Skia borrows the
+/// EGLSurface's back buffer for rendering. The returned `Surface` must be
+/// flushed and then presented via
+/// `Surface::egl_present_and_acquire_next` to swap the back buffer to the
+/// front buffer.
+#borrow(context)
+extern "C" fn native_surface_egl_window(
+  context : GpuContextHandle,
+  native_window_ptr : UInt64,
+  width : Int,
+  height : Int,
+  origin : Int,
+  sample_count : Int,
+  stencil_bits : Int,
+) -> SurfaceHandle = "moonbit_skia_surface_egl_window"
+
+///|
+/// Present the EGL surface backing a `Surface` created via
+/// `native_surface_egl_window`, and return a fresh `Surface` wrapping the
+/// next back buffer for the following frame.
+///
+/// `native_window_ptr` is passed for interface symmetry with the Metal
+/// layer_ptr, Direct3D hwnd_ptr, and Vulkan anw_ptr parameters but is not
+/// used by EGL present (the EGLSurface already knows its window). Returns a
+/// null handle when `eglSwapBuffers` fails (e.g. context lost, or the
+/// native Skia build lacks EGL support).
+#borrow(surface)
+extern "C" fn native_surface_egl_present_and_acquire_next(
+  surface : SurfaceHandle,
+  native_window_ptr : UInt64,
+  width : Int,
+  height : Int,
+  origin : Int,
+  sample_count : Int,
+  stencil_bits : Int,
+) -> SurfaceHandle = "moonbit_skia_surface_egl_present_and_acquire_next"
+
+///|
+extern "C" fn native_surface_gpu_egl_opt_in_enabled() -> Bool = "moonbit_skia_surface_gpu_egl_opt_in_enabled"
+
+///|
+extern "C" fn native_surface_gpu_egl_headers_available() -> Bool = "moonbit_skia_surface_gpu_egl_headers_available"
+
+///|
+extern "C" fn native_surface_gpu_egl_runtime_available() -> Bool = "moonbit_skia_surface_gpu_egl_runtime_available"
+
+///|
 #borrow(surface)
 extern "C" fn native_surface_is_null(surface : SurfaceHandle) -> Bool = "moonbit_skia_surface_is_null"
 
@@ -1003,6 +1057,92 @@ pub fn Surface::vulkan_gpu_context_runtime_available() -> Bool {
 }
 
 ///|
+pub fn GpuContext::egl(descriptor : @skia.GpuContextDescriptor) -> GpuContext? {
+  if !Surface::gpu_context_support_status(descriptor).is_available() ||
+    descriptor.backend != @skia.OpenGLGpuContext {
+    None
+  } else {
+    GpuContext::from_handle(native_gpu_context_egl(), descriptor)
+  }
+}
+
+///|
+/// Wrap a HarmonyOS `OHNativeWindow`-backed EGL surface as a Skia GPU
+/// surface. The caller passes the raw `OHNativeWindow*` as
+/// `native_window_ptr`. Skia borrows the EGLSurface's back buffer; the host
+/// presenter owns the OHNativeWindow lifecycle. The returned `Surface` must
+/// be flushed and then presented via
+/// `Surface::egl_present_and_acquire_next` to swap the back buffer to the
+/// front buffer.
+pub fn Surface::egl_window_surface(
+  context : GpuContext,
+  native_window_ptr : UInt64,
+  descriptor : @skia.SurfaceDescriptor,
+) -> Surface? {
+  if descriptor.is_empty() || !descriptor.is_gpu() || !context.is_available() {
+    None
+  } else if native_window_ptr == 0 {
+    None
+  } else {
+    Surface::from_handle(
+      native_surface_egl_window(
+        context.handle,
+        native_window_ptr,
+        descriptor.width(),
+        descriptor.height(),
+        native_surface_origin_ordinal(descriptor.origin),
+        descriptor.sample_count,
+        descriptor.stencil_bits,
+      ),
+      descriptor,
+    )
+  }
+}
+
+///|
+/// Present the EGL surface backing a `Surface` created via
+/// `Surface::egl_window_surface`, and return a fresh `Surface` wrapping the
+/// next back buffer for the following frame.
+pub fn Surface::egl_present_and_acquire_next(
+  surface : Surface,
+  context : GpuContext,
+  native_window_ptr : UInt64,
+) -> Surface? {
+  if !context.is_available() {
+    None
+  } else {
+    let descriptor = surface.descriptor
+    Surface::from_handle(
+      native_surface_egl_present_and_acquire_next(
+        surface.handle,
+        native_window_ptr,
+        descriptor.width(),
+        descriptor.height(),
+        native_surface_origin_ordinal(descriptor.origin),
+        descriptor.sample_count,
+        descriptor.stencil_bits,
+      ),
+      descriptor,
+    )
+  }
+}
+
+///|
+pub fn Surface::egl_gpu_context_opt_in_enabled() -> Bool {
+  native_surface_gpu_egl_opt_in_enabled()
+}
+
+///|
+pub fn Surface::egl_gpu_context_headers_available() -> Bool {
+  native_surface_gpu_egl_headers_available()
+}
+
+///|
+pub fn Surface::egl_gpu_context_runtime_available() -> Bool {
+  native_surface_gpu_egl_runtime_available()
+}
+
+///|
 /// Classify native support for a value-layer GPU context descriptor.
 pub fn Surface::gpu_context_support_status(
   context : @skia.GpuContextDescriptor,
@@ -1041,6 +1181,16 @@ pub fn Surface::gpu_context_support_status(
           SkiaGpuContextVulkanHeadersUnavailable
         } else if !Surface::vulkan_gpu_context_runtime_available() {
           SkiaGpuContextVulkanRuntimeUnavailable
+        } else {
+          SkiaGpuContextAvailable
+        }
+      @skia.OpenGLGpuContext =>
+        if !Surface::egl_gpu_context_opt_in_enabled() {
+          SkiaGpuContextEglOptInDisabled
+        } else if !Surface::egl_gpu_context_headers_available() {
+          SkiaGpuContextEglHeadersUnavailable
+        } else if !Surface::egl_gpu_context_runtime_available() {
+          SkiaGpuContextEglRuntimeUnavailable
         } else {
           SkiaGpuContextAvailable
         }

@@ -4,6 +4,8 @@ import {
   "wzzc-dev/moui/backend/harmonyos" @harmonyos_host,
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/skia" @skia_renderer,
+  "wzzc-dev/moui_skia",
+  "wzzc-dev/moui_skia/native" @skia_native,
 }
 
 supported_targets = "native"
