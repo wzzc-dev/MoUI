@@ -81,6 +81,9 @@ fn SkiaRasterRenderer::render_cached_command_range(
   end_index~ : Int,
   canvas_scopes : Array[SkiaCanvasScopeKind],
   stats : SkiaCachedLayerFrameStats,
+  damage? : @core.DamageRegion = @core.DamageRegion::full(
+    "offscreen layer render",
+  ),
 ) -> Bool {
   let mut index = start_index
   while index < end_index {
@@ -109,12 +112,16 @@ fn SkiaRasterRenderer::render_cached_command_range(
           }
         }
       @core.DrawCommand::EndCachedLayer(_) => return true
-      @core.DrawCommand::DrawCachedLayer(spec) => {
-        if !self.draw_cached_layer(canvas, spec, stats) {
-          return false
+      @core.DrawCommand::DrawCachedLayer(spec) =>
+        if self.should_skip_command_for_damage(spec.frame, damage) {
+          // Outside damage rects: skip draw without counting hit or miss.
+          index = index + 1
+        } else {
+          if !self.draw_cached_layer(canvas, spec, stats) {
+            return false
+          }
+          index = index + 1
         }
-        index = index + 1
-      }
       command => {
         self.render_command(canvas, command, canvas_scopes)
         index = index + 1
@@ -122,6 +129,33 @@ fn SkiaRasterRenderer::render_cached_command_range(
     }
   }
   true
+}
+
+///|
+fn SkiaRasterRenderer::should_skip_command_for_damage(
+  self : SkiaRasterRenderer,
+  bounds : @core.Rect,
+  damage : @core.DamageRegion,
+) -> Bool {
+  let _ = self
+  match damage {
+    @core.DamageRegion::Empty => false
+    @core.DamageRegion::FullSurface(_) => false
+    @core.DamageRegion::Rects(rects) => {
+      let mut intersects = false
+      for rect in rects {
+        match bounds.intersection(rect) {
+          Some(overlap) =>
+            if !overlap.is_empty() {
+              intersects = true
+              break
+            }
+          None => ()
+        }
+      }
+      !intersects
+    }
+  }
 }
 
 ///|
@@ -482,22 +516,22 @@ fn SkiaRasterRenderer::layer_cache_admission_record(
   self : SkiaRasterRenderer,
   identity_key : String,
 ) -> SkiaCachedLayerAdmissionRecord {
-  for record in self.layer_cache_admissions {
-    if record.identity_key == identity_key {
-      return record
+  match self.layer_cache_admissions.get(identity_key) {
+    Some(record) => record
+    None => {
+      let record = SkiaCachedLayerAdmissionRecord::{
+        identity_key,
+        update_streak: 0,
+        hit_count: 0,
+        skip_reason: "",
+        last_admitted_frame: 0,
+        last_revision: -1,
+      }
+      self.layer_cache_admissions[identity_key] = record
+      self.prune_layer_cache_admission_records(identity_key)
+      record
     }
   }
-  let record = SkiaCachedLayerAdmissionRecord::{
-    identity_key,
-    update_streak: 0,
-    hit_count: 0,
-    skip_reason: "",
-    last_admitted_frame: 0,
-    last_revision: -1,
-  }
-  self.layer_cache_admissions.push(record)
-  self.prune_layer_cache_admission_records(identity_key)
-  record
 }
 
 ///|
@@ -512,44 +546,43 @@ fn SkiaRasterRenderer::prune_layer_cache_admission_records(
 ) -> Unit {
   while self.layer_cache_admissions.length() >
         skia_layer_cache_admission_limit() {
-    match self.layer_cache_admission_eviction_index(protected_identity_key) {
-      Some(index) => ignore(self.layer_cache_admissions.remove(index))
+    match self.layer_cache_admission_eviction_key(protected_identity_key) {
+      Some(key) => self.layer_cache_admissions.remove(key)
       None => return
     }
   }
 }
 
 ///|
-fn SkiaRasterRenderer::layer_cache_admission_eviction_index(
+fn SkiaRasterRenderer::layer_cache_admission_eviction_key(
   self : SkiaRasterRenderer,
   protected_identity_key : String,
-) -> Int? {
-  let mut candidate : Int? = None
+) -> String? {
+  let mut candidate_key : String? = None
   let mut candidate_live = true
   let mut candidate_tick = 0
-  for index in 0..<self.layer_cache_admissions.length() {
-    let record = self.layer_cache_admissions[index]
-    if record.identity_key == protected_identity_key {
+  for key, record in self.layer_cache_admissions {
+    if key == protected_identity_key {
       continue
     }
     let live = self.layer_cache_has_identity(record.identity_key)
     let tick = record.last_admitted_frame
-    match candidate {
+    match candidate_key {
       None => {
-        candidate = Some(index)
+        candidate_key = Some(key)
         candidate_live = live
         candidate_tick = tick
       }
       Some(_) =>
         if (candidate_live && !live) ||
           (candidate_live == live && tick < candidate_tick) {
-          candidate = Some(index)
+          candidate_key = Some(key)
           candidate_live = live
           candidate_tick = tick
         }
     }
   }
-  candidate
+  candidate_key
 }
 
 ///|
@@ -557,7 +590,7 @@ fn SkiaRasterRenderer::layer_cache_has_identity(
   self : SkiaRasterRenderer,
   identity_key : String,
 ) -> Bool {
-  self.layer_cache.any(entry => entry.identity_key == identity_key)
+  self.layer_cache_identity_index.get(identity_key) is Some(_)
 }
 
 ///|
@@ -593,12 +626,7 @@ fn SkiaRasterRenderer::lookup_cached_layer(
   self : SkiaRasterRenderer,
   key : String,
 ) -> SkiaCachedLayerImageEntry? {
-  for entry in self.layer_cache {
-    if entry.key == key {
-      return Some(entry)
-    }
-  }
-  None
+  self.layer_cache.get(key)
 }
 
 ///|
@@ -613,25 +641,20 @@ fn SkiaRasterRenderer::store_cached_layer(
   self.remove_stale_cached_layers_for_entry(entry)
   let admitted_frame = self.next_layer_cache_tick()
   admission.last_admitted_frame = admitted_frame
-  for index in 0..<self.layer_cache.length() {
-    if self.layer_cache[index].key == entry.key {
-      self.layer_cache[index] = {
-        ..entry,
-        hit_count: admission.hit_count,
-        skip_reason: admission.skip_reason,
-        last_admitted_frame: admitted_frame,
-        last_used: admitted_frame,
-      }
-      return true
-    }
-  }
-  self.layer_cache.push({
+  let new_entry = {
     ..entry,
     hit_count: admission.hit_count,
     skip_reason: admission.skip_reason,
     last_admitted_frame: admitted_frame,
     last_used: admitted_frame,
-  })
+  }
+  match self.layer_cache.get(entry.key) {
+    Some(old) => self.layer_cache_total_bytes -= old.byte_size
+    None => ()
+  }
+  self.layer_cache[entry.key] = new_entry
+  self.layer_cache_identity_index[entry.identity_key] = entry.key
+  self.layer_cache_total_bytes += new_entry.byte_size
   true
 }
 
@@ -640,14 +663,16 @@ fn SkiaRasterRenderer::remove_stale_cached_layers_for_entry(
   self : SkiaRasterRenderer,
   entry : SkiaCachedLayerImageEntry,
 ) -> Unit {
-  let mut index = 0
-  while index < self.layer_cache.length() {
-    let current = self.layer_cache[index]
-    if current.identity_key == entry.identity_key && current.key != entry.key {
-      ignore(self.layer_cache.remove(index))
-    } else {
-      index = index + 1
-    }
+  match self.layer_cache_identity_index.get(entry.identity_key) {
+    Some(old_key) =>
+      if old_key != entry.key {
+        match self.layer_cache.get(old_key) {
+          Some(old) => self.layer_cache_total_bytes -= old.byte_size
+          None => ()
+        }
+        self.layer_cache.remove(old_key)
+      }
+    None => ()
   }
 }
 
@@ -656,13 +681,16 @@ fn SkiaRasterRenderer::remove_cached_layers_by_identity(
   self : SkiaRasterRenderer,
   identity_key : String,
 ) -> Unit {
-  let mut index = 0
-  while index < self.layer_cache.length() {
-    if self.layer_cache[index].identity_key == identity_key {
-      ignore(self.layer_cache.remove(index))
-    } else {
-      index = index + 1
+  match self.layer_cache_identity_index.get(identity_key) {
+    Some(key) => {
+      match self.layer_cache.get(key) {
+        Some(entry) => self.layer_cache_total_bytes -= entry.byte_size
+        None => ()
+      }
+      self.layer_cache.remove(key)
+      self.layer_cache_identity_index.remove(identity_key)
     }
+    None => ()
   }
 }
 
@@ -671,28 +699,28 @@ fn SkiaRasterRenderer::evict_cached_layers_if_needed(
   self : SkiaRasterRenderer,
 ) -> Int {
   let budget = self.layer_cache_budget_bytes()
-  let mut bytes = self.layer_cache_byte_size()
   let mut evicted = 0
-  while budget > 0L && bytes > budget && self.layer_cache.length() > 0 {
-    let index = self.cached_layer_eviction_index(budget)
-    let entry = self.layer_cache[index]
-    bytes -= entry.byte_size
-    ignore(self.layer_cache.remove(index))
+  while budget > 0L &&
+        self.layer_cache_byte_size() > budget &&
+        self.layer_cache.length() > 0 {
+    let (key, entry) = self.cached_layer_eviction_entry(budget)
+    self.layer_cache_total_bytes -= entry.byte_size
+    self.layer_cache.remove(key)
+    self.layer_cache_identity_index.remove(entry.identity_key)
     evicted = evicted + 1
   }
   evicted
 }
 
 ///|
-fn SkiaRasterRenderer::cached_layer_eviction_index(
+fn SkiaRasterRenderer::cached_layer_eviction_entry(
   self : SkiaRasterRenderer,
   budget : Int64,
-) -> Int {
-  let mut candidate = -1
+) -> (String, SkiaCachedLayerImageEntry) {
+  let mut candidate_key : String? = None
   let mut candidate_bytes = 0L
   let mut candidate_last_used = 0
-  for index in 0..<self.layer_cache.length() {
-    let entry = self.layer_cache[index]
+  for key, entry in self.layer_cache {
     let large_cold = entry.hit_count == 0 &&
       entry.byte_size * 10L >= budget * 2L
     let churny_cold = entry.hit_count == 0 &&
@@ -704,49 +732,62 @@ fn SkiaRasterRenderer::cached_layer_eviction_index(
       entry.last_used
     }
     if large_cold || churny_cold {
-      if candidate < 0 ||
-        entry.byte_size > candidate_bytes ||
-        (
-          entry.byte_size == candidate_bytes &&
-          entry_last_used < candidate_last_used
-        ) {
-        candidate = index
-        candidate_bytes = entry.byte_size
-        candidate_last_used = entry_last_used
+      match candidate_key {
+        None => {
+          candidate_key = Some(key)
+          candidate_bytes = entry.byte_size
+          candidate_last_used = entry_last_used
+        }
+        Some(_) =>
+          if entry.byte_size > candidate_bytes ||
+            (
+              entry.byte_size == candidate_bytes &&
+              entry_last_used < candidate_last_used
+            ) {
+            candidate_key = Some(key)
+            candidate_bytes = entry.byte_size
+            candidate_last_used = entry_last_used
+          }
       }
     }
   }
-  if candidate >= 0 {
-    candidate
-  } else {
-    self.oldest_cached_layer_index()
+  match candidate_key {
+    Some(key) => (key, self.layer_cache[key])
+    None => self.oldest_cached_layer_entry()
   }
 }
 
 ///|
-fn SkiaRasterRenderer::oldest_cached_layer_index(
+fn SkiaRasterRenderer::oldest_cached_layer_entry(
   self : SkiaRasterRenderer,
-) -> Int {
-  let mut oldest_index = 0
-  let mut oldest_tick = self.layer_cache[0].last_used
-  for index in 1..<self.layer_cache.length() {
-    if self.layer_cache[index].last_used < oldest_tick {
-      oldest_index = index
-      oldest_tick = self.layer_cache[index].last_used
+) -> (String, SkiaCachedLayerImageEntry) {
+  let mut oldest_key : String? = None
+  let mut oldest_tick = 0
+  for key, entry in self.layer_cache {
+    match oldest_key {
+      None => {
+        oldest_key = Some(key)
+        oldest_tick = entry.last_used
+      }
+      Some(_) =>
+        if entry.last_used < oldest_tick {
+          oldest_key = Some(key)
+          oldest_tick = entry.last_used
+        }
     }
   }
-  oldest_index
+  let key = match oldest_key {
+    Some(k) => k
+    None => abort("oldest_cached_layer_entry called on empty layer cache")
+  }
+  (key, self.layer_cache[key])
 }
 
 ///|
 fn SkiaRasterRenderer::layer_cache_byte_size(
   self : SkiaRasterRenderer,
 ) -> Int64 {
-  let mut bytes = 0L
-  for entry in self.layer_cache {
-    bytes += entry.byte_size
-  }
-  bytes
+  self.layer_cache_total_bytes
 }
 
 ///|
@@ -774,7 +815,9 @@ fn SkiaRasterRenderer::next_layer_cache_tick(self : SkiaRasterRenderer) -> Int {
 ///|
 fn SkiaRasterRenderer::clear_layer_cache(self : SkiaRasterRenderer) -> Unit {
   self.layer_cache.clear()
+  self.layer_cache_identity_index.clear()
   self.layer_cache_admissions.clear()
+  self.layer_cache_total_bytes = 0L
   self.layer_cache_tick = 0
 }
 
