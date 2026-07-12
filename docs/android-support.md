@@ -1,15 +1,17 @@
 # Android Support
 
-Android support is currently an experimental embedded native scaffold. MoUI does
-not own an Android `Activity` or app event loop yet. The Android layer owns the
-shell, supplies an `ANativeWindow`, and forwards lifecycle, resize, input, and
-redraw callbacks into MoUI.
+Android support is currently an experimental embedded native route. The shared
+mobile template owns `MobileActivity`/`MobileSurfaceView`, supplies an
+`ANativeWindow`, drives frames with `Choreographer`, and forwards lifecycle,
+resize, pointer, IME, clipboard, and accessibility traffic into MoUI.
 
 ## Status
 
 | Area | Current state | Evidence boundary |
 | --- | --- | --- |
 | Host contract | Scaffolded in `moui/backend/android` | Package tests prove protocol behavior only. |
+| Platform services | `InputConnection`, text/image `ClipboardManager`, `FileProvider`, and virtual `AccessibilityNodeProvider` are wired through `MobileHostChannel` | Full IME, cross-app PNG, TalkBack tree/focus/action evidence pending. |
+| Frame pacing | Input/resize request redraw; presentation runs from `Choreographer` frame ticks | 60/120 Hz device pacing evidence pending. |
 | Skia provider | Scaffolded in `moui/backend/android/skia` | Provider/preflight checks prove wiring, not device pixels. |
 | Counter entrypoint | `examples/counter/android_skia` exports thin native hooks | Compile/check evidence only. |
 | APK shell | `examples/counter/android_app` plus `scripts/build-counter-android-apk.sh` | Packaging evidence; fallback APK is not runtime proof. |
@@ -27,9 +29,14 @@ redraw callbacks into MoUI.
   Its attach/resize/pointer/render/detach exports stay small so the Android app
   can own the shell.
 - `examples/counter/android_app` owns the experimental Java `Activity`,
-  `SurfaceView` lifecycle, touch forwarding, JNI `ANativeWindow` acquisition,
+  `MobileSurfaceView` lifecycle, touch/IME/clipboard/accessibility forwarding,
+  `Choreographer`, JNI `ANativeWindow` acquisition,
   CMake wiring, MoonBit-generated C, MoonBit runtime, Android presenter, and
   `moui_skia/native` stubs.
+
+Android stays on minSdk 23. The direct GPU target is Vulkan on API 24+ with
+GLES fallback, and GLES on API 23. That production GPU path is not implemented;
+`SkiaRasterNative` remains the default and still copies full pixel frames.
 
 ## Focused Checks
 
@@ -144,6 +151,17 @@ ANDROID_HOME=/path/to/Android/Sdk \
 scripts/build-mobile-android-apk.sh --app component_gallery
 ```
 
+Renderer mode is explicit and auditable:
+
+```sh
+scripts/build-mobile-android-apk.sh --app counter --renderer auto
+scripts/build-mobile-android-apk.sh --app counter --renderer skia-raster
+```
+
+`--renderer skia-gpu` is accepted for forward-compatible configuration, but it
+currently records a fallback to `skia-raster` because direct Android
+Vulkan/GLES window presentation is not implemented.
+
 When multiple side-by-side NDK versions are installed, pin the intended one:
 
 ```sh
@@ -216,3 +234,17 @@ suites. After a non-fallback build, record and validate evidence with:
 node scripts/record-mobile-runtime-smoke.mjs --platform android --app counter --require-passed
 node scripts/record-mobile-runtime-smoke.mjs --platform android --app component_gallery --require-passed
 ```
+
+Component Gallery opens `Mobile Service Probe` directly. The recorder locates
+its text field and action in the Android accessibility tree, injects IME text,
+uses the native Copy/Cut/Paste key events, rotates and restores the device,
+scrolls, and requires async-image loading/ready logs. Pass `--device
+<adb-serial> --assistive-tech` for physical-device acceptance with TalkBack
+already installed and enabled. A passed run requires two distinct logged
+surface sizes plus accessibility tree, focus, and targeted action receipts;
+ordinary coordinate taps do not substitute for TalkBack actions.
+
+No Android target is currently connected on the development host, so this
+change provides the probe and recorder but does not claim a new Android
+real-device pass. Device acceptance must also manually round-trip a PNG through
+another app before the image clipboard capability can be promoted.

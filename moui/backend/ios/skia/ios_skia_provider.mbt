@@ -25,8 +25,17 @@ pub fn IosSkiaAppOptions::new(
 pub fn renderer_provider(
   options? : IosSkiaAppOptions = IosSkiaAppOptions::new(),
 ) -> @ios_host.IosRendererProvider {
-  @ios_host.IosRendererProvider::new(create_renderer=(view, metrics) => {
-    create_renderer(view, metrics, options)
+  @ios_host.IosRendererProvider::new(
+    create_renderer=(view, metrics) => create_renderer(view, metrics, options),
+    image_loader=Some(ios_skia_async_image_loader()),
+  )
+}
+
+///|
+fn ios_skia_async_image_loader() -> @host.HostAsyncImageLoader {
+  @host.HostAsyncImageLoader::new(start_load=(_window_id, source, complete) => {
+    complete(@skia_renderer.skia_image_load_completion(source))
+    None
   })
 }
 
@@ -84,6 +93,7 @@ fn create_renderer(
         renderer_metrics_from_host(metrics),
         ios_skia_present_target(view),
         font_resolution=options.font_resolution,
+        async_image_loading=true,
       ),
     ),
   ) catch {

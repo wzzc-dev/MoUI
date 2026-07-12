@@ -20,3 +20,7 @@ Build through the published package script:
 The app's `mobile.json` must provide iOS native export metadata under
 `ios.native` unless the app id is listed in
 `moui/mobile/build-contracts.json`.
+
+Keep `UILaunchScreen` in `Info.plist`. It opts the shell into modern full-screen
+geometry; removing it may cause legacy `320x480` compatibility scaling on
+current iOS simulators and devices.

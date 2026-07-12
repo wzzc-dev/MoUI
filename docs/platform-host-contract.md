@@ -151,6 +151,24 @@ they describe static capability identity and matching, not native host runtime
 assembly. `View` still describes UI declaration trees only, and
 `Binding[T]` remains the TEA/control/state two-way binding term.
 
+## Mobile Host Channel
+
+`MobileHostChannel` is the shared Android/iOS/HarmonyOS service boundary. It
+coalesces `MobileImeRequest` updates, emits revisioned flattened semantics
+snapshots only when the tree changes, and carries asynchronous text/image
+clipboard requests and responses. A disposed channel rejects late responses.
+
+`TextInputEvent::ReplaceText` and `SetSelection` preserve arbitrary native IME
+replacement and UTF-16 selection updates. Mobile requests include text,
+selection, composition, caret, and candidate rectangle without changing the
+desktop `window_core.ImeRequest` contract.
+
+Accessibility actions enter through
+`AppRuntime::dispatch_semantics_action(ElementId, SemanticsAction, String?)`.
+The runtime verifies that the current node declares the action, then dispatches
+directly to that element. Native adapters must not convert an accessibility
+action back into screen-coordinate input.
+
 Typed host services live on the same boundary. `HostServiceBridge` exposes
 capability-checked dispatch for clipboard, file dialogs, menus, open-URL, and
 system-theme requests. Backends can report unavailable services without

@@ -309,6 +309,14 @@ fn component_gallery_items() -> Array[ComponentGalleryItemInfo] {
       badge: "seven hosts",
       tone: @views.BadgeTone::Accent,
     },
+    {
+      id: ComponentGalleryItemId::MobileServiceProbe,
+      group: "runtime",
+      name: "Mobile Service Probe",
+      description: "Matching-host probe for IME, clipboard, accessibility, async image, and resize evidence.",
+      badge: "mobile host",
+      tone: @views.BadgeTone::Accent,
+    },
   ]
 }
 
@@ -350,6 +358,7 @@ pub fn gallery_item_id_to_string(id : ComponentGalleryItemId) -> String {
     ComponentGalleryItemId::ResponsiveGrid => "responsive-grid"
     ComponentGalleryItemId::ScrollView => "scroll-view"
     ComponentGalleryItemId::PlatformRoutes => "platform-routes"
+    ComponentGalleryItemId::MobileServiceProbe => "mobile-service-probe"
   }
 }
 
@@ -391,6 +400,7 @@ pub fn gallery_item_id_from_string(id : String) -> ComponentGalleryItemId? {
     "responsive-grid" => Some(ComponentGalleryItemId::ResponsiveGrid)
     "scroll-view" => Some(ComponentGalleryItemId::ScrollView)
     "platform-routes" => Some(ComponentGalleryItemId::PlatformRoutes)
+    "mobile-service-probe" => Some(ComponentGalleryItemId::MobileServiceProbe)
     _ => None
   }
 }

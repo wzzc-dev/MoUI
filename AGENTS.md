@@ -20,6 +20,8 @@ For task-specific workflows, use the repo-local skills:
   smoke commands.
 - `docs/release-readiness.md` for release gates, smoke gate catalog policy, and
   artifact policy.
+- `docs/mobile-mainline-roadmap.md` before changing Android/iOS/HarmonyOS
+  VSync, input, IME, clipboard, accessibility, renderer selection, or GPU work.
 - `docs/button-styling-guide.md` for the button color/style resolution pipeline
   and app-level override strategies (per-control `style=`, theme component
   override, palette seed). Read this before any "change button color" task
@@ -40,7 +42,9 @@ For task-specific workflows, use the repo-local skills:
   template; `examples/*/android_app` are repository example metadata projects
   over that template. Fallback APK builds are packaging evidence only; do not
   claim Android runtime support as passed until a matching device/emulator
-  smoke records first-frame and input/lifecycle evidence.
+  smoke records changed pixels, app-received input, actual detach, IME,
+  clipboard, accessibility tree/focus/action, and async image. Frames are paced
+  by `Choreographer`; input/resize must request redraw, not present synchronously.
 - Keep iOS work on the embedded-session route for now:
   `moui/backend/ios` owns UIKit view-driven host contracts and
   `moui/backend/ios/skia` owns the UIKit `UIImageView` Skia pixel presenter.
@@ -48,7 +52,12 @@ For task-specific workflows, use the repo-local skills:
   template; `examples/*/ios_app` are repository example metadata projects over
   that template. Fallback `.app` builds are packaging evidence only; do not
   claim iOS runtime support as passed until a matching simulator/device smoke
-  records first-frame and input/lifecycle evidence.
+  records the complete mobile observations. Frames are paced by
+  `CADisplayLink`; the current UIImageView presenter remains the raster fallback.
+  Keep `UILaunchScreen` in mobile Info.plists to avoid legacy compatibility
+  geometry. Simulator input smoke uses `idb`/`idb-companion`, selects controls
+  from the accessibility tree, and filters app logs by the current launch PID;
+  stock `simctl` does not provide tap/swipe injection.
 - Keep HarmonyOS work on the embedded-session route for now:
   `moui/backend/harmonyos` owns Stage Ability/XComponent-driven host contracts
   and `moui/backend/harmonyos/skia` owns the XComponent native-window Skia
@@ -58,7 +67,28 @@ For task-specific workflows, use the repo-local skills:
   `examples/harmonyos_demo` keeps `scripts/build-harmonyos-demo-app.sh` as a
   compatibility wrapper. Fallback HAP builds are packaging evidence only; do not
   claim HarmonyOS runtime support as passed until a matching device/emulator
-  smoke records first-frame and input/lifecycle evidence.
+  smoke records the complete mobile observations. HarmonyOS compatible SDK is
+  API 20. Native XComponent callbacks are the only surface/pointer/resize/detach
+  source; do not restore ArkTS `.onTouch` or duplicate lifecycle calls. ArkTS
+  owns displaySync and platform services.
+- Mobile services cross `moui/backend/host::MobileHostChannel`; keep JNI,
+  Obj-C++, and NAPI adapters thin. `SkiaRasterNative` remains default/fallback.
+  Mobile build entrypoints accept `--renderer auto|skia-gpu|skia-raster` and
+  must record requested/selected modes; `auto` and `skia-gpu` remain explicit
+  raster fallbacks until direct host GPU presentation is promoted.
+  `SkiaGpuNative` is only a descriptor until direct Metal/Vulkan/EGL window
+  presentation, renderer-thread ownership, zero readback/copy, and matching
+  device promotion gates pass. Native WGPU remains diagnostic.
+- Use Component Gallery's mobile `Mobile Service Probe` for matching-host IME,
+  system text clipboard, accessibility action, resize, scroll, and async-image
+  acceptance. Recorder evidence requires clipboard write/read completion, two
+  distinct physical surface sizes, accessibility tree/focus/action, and async
+  loading/ready logs; coordinate injection or a duplicate initial resize is not
+  enough.
+- Mobile runtime manifests use `passed` for complete evidence, `partial` for a
+  useful run with missing observations, and `failed` only when no usable
+  runtime evidence was collected. `--require-passed` must continue to reject
+  both `partial` and `failed`.
 
 ### CI Safety Rules
 

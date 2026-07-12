@@ -179,6 +179,9 @@ For Android, the canonical build command is
 app-specific scripts kept as compatibility wrappers. The fallback APK command only validates packaging/JNI/CMake; a
 non-fallback APK plus matching device/emulator smoke is still required for
 first-frame or input/lifecycle runtime claims. Use
+`--renderer auto|skia-gpu|skia-raster` to record the requested and selected
+mobile renderer; GPU requests currently record a raster fallback until direct
+host GPU presentation passes promotion gates. Use
 `scripts/setup-android-sdk.sh --accept-licenses` followed by
 `eval "$(scripts/setup-android-sdk.sh --print-env)"` to install and expose the
 official SDK/NDK/CMake toolchain when the local machine does not already have
@@ -192,6 +195,12 @@ generation, shared UIKit shell compilation, native-stub compilation, bundle
 layout, and ad-hoc simulator signing; a non-fallback `.app` plus matching
 simulator/device smoke is still required for first-frame or input/lifecycle
 runtime claims.
+Keep the iOS template's `UILaunchScreen` entry to avoid legacy `320x480`
+compatibility mode. iOS Simulator smoke requires `idb`/`idb-companion`; stock
+`simctl` does not inject tap/swipe events. The recorder chooses a control from
+the accessibility tree and filters receipt logs by the current launch PID.
+The iOS and HarmonyOS mobile build entrypoints use the same `--renderer`
+contract and evidence boundary.
 Repository example mobile metadata lives in `examples/<app>/mobile.json`.
 Reusable mobile templates and scripts live in the published `moui/mobile` and
 `moui/scripts/mobile` directories. Keep Counter/Component Gallery compatibility
@@ -205,6 +214,20 @@ native glue compilation, native-stub compilation, and staged package layout; a
 non-fallback HAP plus matching device/emulator smoke is still required for
 first-frame or input/lifecycle runtime claims. Use `HARMONYOS_SDK_HOME` as the
 canonical SDK environment variable, with `OHOS_SDK_HOME` accepted as fallback.
+Use `node scripts/record-mobile-runtime-smoke.mjs --platform
+<android|ios|harmonyos> --app <id> --require-passed` for release evidence.
+Successful input injection is insufficient: the recorder requires app receipt,
+before/after pixel change, actual detach, IME state/edit, clipboard completion,
+accessibility tree/focus/action, and async image. HarmonyOS uses API 20 and
+native XComponent as the only input/lifecycle source.
+Use Component Gallery's dedicated `Mobile Service Probe` for mobile service
+acceptance. Clipboard evidence requires system text write and read completion;
+resize evidence requires two distinct physical sizes; async-image evidence
+requires loading and ready frames. Assistive-technology focus/action must come
+from a live TalkBack, VoiceOver, or HarmonyOS screen-reader session.
+Mobile runtime manifests use `passed`, `partial`, and `failed`: incomplete but
+useful matching-host evidence is `partial`, while `--require-passed` accepts
+only complete `passed` evidence.
 
 ## Docs
 

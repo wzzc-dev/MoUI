@@ -14,9 +14,15 @@ options(
   link: {
     "native": {
       "exports": [
+        "moui_mobile_take_host_updates_json",
+        "moui_mobile_dispatch_text_input",
+        "moui_mobile_dispatch_command",
+        "moui_mobile_dispatch_accessibility",
+        "moui_mobile_complete_clipboard",
         "android_counter_attach_surface",
         "android_counter_resize",
         "android_counter_dispatch_pointer",
+        "android_counter_frame_tick",
         "android_counter_render_frame",
         "android_counter_detach_surface",
       ],

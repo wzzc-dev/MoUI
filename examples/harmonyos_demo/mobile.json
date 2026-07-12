@@ -25,6 +25,7 @@
         "attachSurface": "harmonyos_demo_attach_surface",
         "resize": "harmonyos_demo_resize",
         "dispatchPointer": "harmonyos_demo_dispatch_pointer",
+        "frameTick": "harmonyos_demo_frame_tick",
         "renderFrame": "harmonyos_demo_render_frame",
         "detachSurface": "harmonyos_demo_detach_surface"
       }

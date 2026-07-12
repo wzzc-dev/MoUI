@@ -57,5 +57,7 @@ fn component_body(
     ComponentGalleryItemId::ScrollView => scroll_view_demo(model, theme, width)
     ComponentGalleryItemId::PlatformRoutes =>
       platform_routes_demo(model, theme, width, compact)
+    ComponentGalleryItemId::MobileServiceProbe =>
+      mobile_service_probe(model, theme, width, compact, height=720.0)
   }
 }

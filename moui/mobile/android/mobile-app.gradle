@@ -67,7 +67,7 @@ androidConfig.supportsScroll = appConfig.mobile.supportsScroll
         throw new GradleException("MoUI Android app ${appId} is missing ${key} in ${metadataFile} or ${contractsFile}")
     }
 }
-["attachSurface", "resize", "dispatchPointer", "renderFrame", "detachSurface"].each { key ->
+["attachSurface", "resize", "dispatchPointer", "frameTick", "renderFrame", "detachSurface"].each { key ->
     if (!(androidConfig.exports instanceof Map) || !androidConfig.exports[key]) {
         throw new GradleException("MoUI Android app ${appId} is missing exports.${key} in ${metadataFile} or ${contractsFile}")
     }
@@ -80,6 +80,7 @@ def minSdkVersion = (project.findProperty("mouiMinSdk") ?: "23").toString().toIn
 def compileSdkVersion = (project.findProperty("mouiCompileSdk") ?: "35").toString().toInteger()
 def generatedRoot = file(project.findProperty("mouiBuildDir") ?: "${workspaceRoot}/artifacts/android/${appId}")
 def fallbackSkia = (project.findProperty("mouiFallbackSkia") ?: "false").toString().toBoolean()
+def renderer = (project.findProperty("mouiRenderer") ?: "auto").toString()
 
 def prepareMouiMobileNative = tasks.register("prepareMouiMobileNative", Exec) {
     workingDir workspaceRoot
@@ -93,6 +94,7 @@ def prepareMouiMobileNative = tasks.register("prepareMouiMobileNative", Exec) {
         "--app-config", metadataFile.absolutePath,
         "--contracts", contractsFile.absolutePath,
         "--abi", abi,
+        "--renderer", renderer,
         "--build-dir", generatedRoot.absolutePath
     if (fallbackSkia) {
         args "--fallback-skia"

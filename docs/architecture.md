@@ -107,7 +107,8 @@ workspace.
   `moui/mobile/android` Gradle/Activity/JNI/CMake template ->
   `moui/backend/android` embedded session -> `moui/backend/android/skia` ->
   `moui/render/skia` -> `moui_skia`. The app or Android Activity layer owns
-  lifecycle, `ANativeWindow` handle acquisition, and input forwarding until a
+  lifecycle, `ANativeWindow` handle acquisition, `Choreographer` pacing,
+  `InputConnection`, clipboard, virtual accessibility nodes, and input forwarding until a
   checked APK/device smoke promotes the route.
 - iOS Skia route (experimental scaffold): shared app package ->
   `examples/<app>/ios_skia` plus app-owned Xcode metadata project such as
@@ -115,7 +116,8 @@ workspace.
   `moui/mobile/ios` UIKit/Xcode/native build template ->
   `moui/backend/ios` embedded session -> `moui/backend/ios/skia` ->
   `moui/render/skia` -> `moui_skia`. The app or UIKit view controller owns
-  lifecycle, `UIView` handle ownership, and touch forwarding until a checked
+  lifecycle, `UIView` handle ownership, `CADisplayLink` pacing, the UIKit text
+  proxy, pasteboard, accessibility container, and touch forwarding until a checked
   simulator/device smoke promotes the route.
 - HarmonyOS Skia route (experimental scaffold): shared app package ->
   `examples/<app>/harmonyos_skia` plus app-owned Stage Ability/XComponent shell
@@ -124,9 +126,10 @@ workspace.
   template ->
   `moui/backend/harmonyos` embedded session ->
   `moui/backend/harmonyos/skia` -> `moui/render/skia` -> `moui_skia`.
-  The app or HarmonyOS shell owns lifecycle, XComponent native surface handle
-  ownership, and input forwarding until a checked device/emulator smoke promotes
-  the route.
+  Native XComponent callbacks exclusively own surface/pointer lifecycle and
+  touch-slop scroll arbitration. ArkTS owns `displaySync`, the transparent IME
+  proxy, pasteboard, and accessibility overlays. A checked device/emulator smoke
+  is still required before promotion.
 - Native WGPU route: shared app package -> platform `*_wgpu` entrypoint ->
   platform WGPU provider -> `moui/render/wgpu`. This is diagnostic, not the
   default mainline.
@@ -134,6 +137,13 @@ workspace.
 Platform entrypoints should stay thin: create the program/runtime, select the
 backend and renderer provider, and pass app-owned service adapters. Business
 model/update/view logic should remain in the shared app package.
+
+Mobile runtime sessions share `MobileHostChannel` for revisioned IME and
+semantics updates plus asynchronous clipboard/accessibility responses. See
+[Mobile Mainline And GPU Roadmap](mobile-mainline-roadmap.md), ADR 0005, and
+ADR 0006. `SkiaRasterNative` remains the mobile default. `SkiaGpuNative` is a
+formal `HostGpuSurface` descriptor, but direct Metal/Vulkan/EGL window
+presentation and renderer-thread ownership are still pending.
 
 ## Extension Rules
 

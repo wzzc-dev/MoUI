@@ -19,6 +19,7 @@ Options:
   --abi <abi>                Android ABI, default arm64-v8a.
   --sdk <sdk>                iOS SDK, iphonesimulator or iphoneos.
   --arch <arch>              iOS or HarmonyOS arch, default arm64.
+  --renderer <mode>          auto, skia-gpu, or skia-raster. Default auto.
   --fallback-skia            Prepare native build inputs without real Skia.
   -h, --help                 Show this help.
 `;
@@ -73,6 +74,7 @@ const parseArgs = argv => {
     abi: "arm64-v8a",
     sdk: "iphonesimulator",
     arch: "arm64",
+    renderer: "auto",
     fallbackSkia: false,
     help: false,
   };
@@ -110,6 +112,9 @@ const parseArgs = argv => {
       index += 2;
     } else if (arg === "--arch") {
       options.arch = argv[index + 1] || "";
+      index += 2;
+    } else if (arg === "--renderer") {
+      options.renderer = argv[index + 1] || "";
       index += 2;
     } else if (arg === "--fallback-skia") {
       options.fallbackSkia = true;
@@ -286,7 +291,7 @@ const generateMoonbitC = ({ workspaceRoot, moonPackage, generatedC, buildDir }) 
   }
 };
 
-const writeAndroidCmakeConfig = ({ config, app, buildDir, moonbitC, skia, abi, workspaceRoot, mouiRoot, skiaRoot }) => {
+const writeAndroidCmakeConfig = ({ config, app, buildDir, moonbitC, skia, abi, rendererSelection, workspaceRoot, mouiRoot, skiaRoot }) => {
   const nativeDir = join(buildDir, "native");
   ensureDir(nativeDir);
   const cmakePath = join(nativeDir, "moui-mobile-native.cmake");
@@ -301,11 +306,14 @@ const writeAndroidCmakeConfig = ({ config, app, buildDir, moonbitC, skia, abi, w
     `set(MOUI_MOBILE_MOONBIT_MAIN_ALIAS "${quoteCmake(config.moonbitMainAlias)}")`,
     `set(MOUI_MOBILE_APP_ARG "${quoteCmake(config.appArg)}")`,
     `set(MOUI_MOBILE_APP_ID "${quoteCmake(app)}")`,
+    `set(MOUI_MOBILE_RENDERER_REQUESTED "${quoteCmake(rendererSelection.requested)}")`,
+    `set(MOUI_MOBILE_RENDERER_SELECTED "${quoteCmake(rendererSelection.selected)}")`,
     `set(MOUI_MOBILE_ENABLE_SCROLL ${config.supportsScroll ? "ON" : "OFF"})`,
     `set(MOUI_MOBILE_ATTACH_SURFACE_SYMBOL "${quoteCmake(config.exports.attachSurface)}")`,
     `set(MOUI_MOBILE_RESIZE_SYMBOL "${quoteCmake(config.exports.resize)}")`,
     `set(MOUI_MOBILE_DISPATCH_POINTER_SYMBOL "${quoteCmake(config.exports.dispatchPointer)}")`,
     `set(MOUI_MOBILE_DISPATCH_SCROLL_SYMBOL "${quoteCmake(config.exports.dispatchScroll || "moui_mobile_no_scroll")}")`,
+    `set(MOUI_MOBILE_FRAME_TICK_SYMBOL "${quoteCmake(config.exports.frameTick)}")`,
     `set(MOUI_MOBILE_RENDER_FRAME_SYMBOL "${quoteCmake(config.exports.renderFrame)}")`,
     `set(MOUI_MOBILE_DETACH_SURFACE_SYMBOL "${quoteCmake(config.exports.detachSurface)}")`,
     `set(MOUI_SKIA_STUB_CC_FLAGS "${quoteCmake(skia.stubFlags)}")`,
@@ -317,7 +325,7 @@ const writeAndroidCmakeConfig = ({ config, app, buildDir, moonbitC, skia, abi, w
   return cmakePath;
 };
 
-const writeHarmonyosCmakeConfig = ({ config, app, buildDir, moonbitC, skia, ohosArch, workspaceRoot, mouiRoot, skiaRoot }) => {
+const writeHarmonyosCmakeConfig = ({ config, app, buildDir, moonbitC, skia, ohosArch, rendererSelection, workspaceRoot, mouiRoot, skiaRoot }) => {
   const nativeDir = join(buildDir, "native");
   ensureDir(nativeDir);
   const cmakePath = join(nativeDir, "moui-mobile-harmonyos.cmake");
@@ -332,11 +340,14 @@ const writeHarmonyosCmakeConfig = ({ config, app, buildDir, moonbitC, skia, ohos
     `set(MOUI_MOBILE_MOONBIT_MAIN_ALIAS "${quoteCmake(config.moonbitMainAlias)}")`,
     `set(MOUI_MOBILE_APP_ARG "${quoteCmake(config.appArg)}")`,
     `set(MOUI_MOBILE_APP_ID "${quoteCmake(app)}")`,
+    `set(MOUI_MOBILE_RENDERER_REQUESTED "${quoteCmake(rendererSelection.requested)}")`,
+    `set(MOUI_MOBILE_RENDERER_SELECTED "${quoteCmake(rendererSelection.selected)}")`,
     `set(MOUI_MOBILE_ENABLE_SCROLL ${config.supportsScroll ? "ON" : "OFF"})`,
     `set(MOUI_MOBILE_ATTACH_SURFACE_SYMBOL "${quoteCmake(config.exports.attachSurface)}")`,
     `set(MOUI_MOBILE_RESIZE_SYMBOL "${quoteCmake(config.exports.resize)}")`,
     `set(MOUI_MOBILE_DISPATCH_POINTER_SYMBOL "${quoteCmake(config.exports.dispatchPointer)}")`,
     `set(MOUI_MOBILE_DISPATCH_SCROLL_SYMBOL "${quoteCmake(config.exports.dispatchScroll || "moui_mobile_no_scroll")}")`,
+    `set(MOUI_MOBILE_FRAME_TICK_SYMBOL "${quoteCmake(config.exports.frameTick)}")`,
     `set(MOUI_MOBILE_RENDER_FRAME_SYMBOL "${quoteCmake(config.exports.renderFrame)}")`,
     `set(MOUI_MOBILE_DETACH_SURFACE_SYMBOL "${quoteCmake(config.exports.detachSurface)}")`,
     `set(MOUI_SKIA_STUB_CC_FLAGS "${quoteCmake(skia.stubFlags)}")`,
@@ -358,7 +369,20 @@ const writeBuildJson = (path, value) => {
   writeFileSync(path, JSON.stringify(value, null, 2) + "\n");
 };
 
-const prepareAndroid = ({ app, config, buildDir, abi, fallbackSkia, workspaceRoot, mouiRoot, skiaRoot }) => {
+const selectRenderer = requested => {
+  if (!["auto", "skia-gpu", "skia-raster"].includes(requested)) {
+    throw new Error(`--renderer must be auto, skia-gpu, or skia-raster: ${requested}`);
+  }
+  return {
+    requested,
+    selected: "skia-raster",
+    fallbackReason: requested === "skia-raster"
+      ? null
+      : "direct host GPU surface is unavailable",
+  };
+};
+
+const prepareAndroid = ({ app, config, buildDir, abi, renderer, fallbackSkia, workspaceRoot, mouiRoot, skiaRoot }) => {
   if (!androidAbiToSkiaArch.has(abi)) throw new Error(`unsupported Android ABI: ${abi}`);
   generateMoonbitC({ workspaceRoot, moonPackage: config.moonPackage, generatedC: config.generatedC, buildDir });
   const moonbitC = moonbitCPath(buildDir, config.moonPackage, config.generatedC);
@@ -380,7 +404,8 @@ const prepareAndroid = ({ app, config, buildDir, abi, fallbackSkia, workspaceRoo
       jniLibsDir: join(buildDir, "jniLibs"),
     });
   }
-  const cmakeConfig = writeAndroidCmakeConfig({ config, app, buildDir, moonbitC, skia, abi, workspaceRoot, mouiRoot, skiaRoot });
+  const rendererSelection = selectRenderer(renderer);
+  const cmakeConfig = writeAndroidCmakeConfig({ config, app, buildDir, moonbitC, skia, abi, rendererSelection, workspaceRoot, mouiRoot, skiaRoot });
   writeBuildJson(join(buildDir, "mobile-build.json"), {
     schemaVersion: 1,
     platform: "android",
@@ -389,10 +414,11 @@ const prepareAndroid = ({ app, config, buildDir, abi, fallbackSkia, workspaceRoo
     cmakeConfig,
     jniLibsDir: join(buildDir, "jniLibs"),
     fallbackSkia,
+    renderer: rendererSelection,
   });
 };
 
-const prepareIos = ({ app, config, buildDir, sdk, arch, fallbackSkia, workspaceRoot, mouiRoot, skiaRoot }) => {
+const prepareIos = ({ app, config, buildDir, sdk, arch, renderer, fallbackSkia, workspaceRoot, mouiRoot, skiaRoot }) => {
   if (!iosSdkToSkiaPlatform.has(sdk)) throw new Error(`unsupported iOS SDK: ${sdk}`);
   if (!iosArchToSkiaArch.has(arch)) throw new Error(`unsupported iOS arch: ${arch}`);
   if (sdk === "iphoneos" && arch === "x86_64") throw new Error("x86_64 is only valid for iphonesimulator");
@@ -409,6 +435,7 @@ const prepareIos = ({ app, config, buildDir, sdk, arch, fallbackSkia, workspaceR
   const nativeDir = join(buildDir, "native");
   const cxxRsp = join(nativeDir, "skia-cxx-flags.rsp");
   const linkRsp = join(nativeDir, "skia-link-flags.rsp");
+  const rendererSelection = selectRenderer(renderer);
   writeRsp(cxxRsp, skia.stubFlags);
   writeRsp(linkRsp, skia.linkFlags);
   writeBuildJson(join(buildDir, "mobile-build.json"), {
@@ -419,6 +446,7 @@ const prepareIos = ({ app, config, buildDir, sdk, arch, fallbackSkia, workspaceR
     skiaCxxRsp: cxxRsp,
     skiaLinkRsp: linkRsp,
     fallbackSkia,
+    renderer: rendererSelection,
     appArg: config.appArg,
     productName: config.productName,
     bundleId: config.bundleId,
@@ -434,7 +462,7 @@ const prepareIos = ({ app, config, buildDir, sdk, arch, fallbackSkia, workspaceR
   });
 };
 
-const prepareHarmonyos = ({ app, config, buildDir, arch, fallbackSkia, workspaceRoot, mouiRoot, skiaRoot }) => {
+const prepareHarmonyos = ({ app, config, buildDir, arch, renderer, fallbackSkia, workspaceRoot, mouiRoot, skiaRoot }) => {
   if (!harmonyosArchToOhosArch.has(arch)) throw new Error(`unsupported HarmonyOS arch: ${arch}`);
   generateMoonbitC({ workspaceRoot, moonPackage: config.moonPackage, generatedC: config.generatedC, buildDir });
   const moonbitC = moonbitCPath(buildDir, config.moonPackage, config.generatedC);
@@ -447,7 +475,8 @@ const prepareHarmonyos = ({ app, config, buildDir, arch, fallbackSkia, workspace
     fallback: fallbackSkia,
   });
   const ohosArch = harmonyosArchToOhosArch.get(arch);
-  const cmakeConfig = writeHarmonyosCmakeConfig({ config, app, buildDir, moonbitC, skia, ohosArch, workspaceRoot, mouiRoot, skiaRoot });
+  const rendererSelection = selectRenderer(renderer);
+  const cmakeConfig = writeHarmonyosCmakeConfig({ config, app, buildDir, moonbitC, skia, ohosArch, rendererSelection, workspaceRoot, mouiRoot, skiaRoot });
   const sharedLibs = [];
   if (containsFlag(skia.linkFlags, "-lskia")) {
     const skiaLibDir = firstLinkDir(skia.linkFlags);
@@ -461,6 +490,7 @@ const prepareHarmonyos = ({ app, config, buildDir, arch, fallbackSkia, workspace
     moonbitC,
     cmakeConfig,
     fallbackSkia,
+    renderer: rendererSelection,
     appArg: config.appArg,
     bundleName: config.bundleName,
     productName: config.productName,
@@ -492,6 +522,7 @@ try {
   if (!["android", "ios", "harmonyos"].includes(options.platform)) {
     throw new Error("--platform must be android, ios, or harmonyos");
   }
+  selectRenderer(options.renderer);
   const workspaceRoot = resolve(options.workspaceRoot || defaultWorkspaceRoot());
   const mouiRootValue = options.mouiRoot || defaultMouiRoot(workspaceRoot);
   if (!mouiRootValue) throw new Error("unable to resolve MoUI package root; set MOUI_PACKAGE_ROOT or --moui-root");
@@ -516,6 +547,7 @@ try {
       config: platformConfig,
       buildDir,
       abi: options.abi,
+      renderer: options.renderer,
       fallbackSkia: options.fallbackSkia,
       workspaceRoot,
       mouiRoot,
@@ -528,6 +560,7 @@ try {
       buildDir,
       sdk: options.sdk,
       arch: options.arch,
+      renderer: options.renderer,
       fallbackSkia: options.fallbackSkia,
       workspaceRoot,
       mouiRoot,
@@ -539,6 +572,7 @@ try {
       config: platformConfig,
       buildDir,
       arch: options.arch,
+      renderer: options.renderer,
       fallbackSkia: options.fallbackSkia,
       workspaceRoot,
       mouiRoot,

@@ -46,6 +46,7 @@ pub(all) enum ComponentGalleryItemId {
   ResponsiveGrid
   ScrollView
   PlatformRoutes
+  MobileServiceProbe
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -65,6 +66,9 @@ pub(all) struct ComponentGalleryModel {
   feature_enabled : Bool
   slider_value : Double
   counter : Int
+  probe_text : String
+  probe_action_count : Int
+  probe_submit_count : Int
 }
 
 ///|
@@ -82,6 +86,9 @@ pub(all) enum ComponentGalleryMsg {
   Increment
   Decrement
   Reset
+  ProbeTextChanged(String)
+  ProbeAction
+  ProbeSubmit
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -90,7 +97,12 @@ pub fn ComponentGalleryModel::new(
 ) -> ComponentGalleryModel {
   {
     active_platform,
-    active_item: ComponentGalleryItemId::Welcome,
+    active_item: if active_platform
+      is (PlatformId::Android | PlatformId::IOS | PlatformId::HarmonyOs) {
+      ComponentGalleryItemId::MobileServiceProbe
+    } else {
+      ComponentGalleryItemId::Welcome
+    },
     selected_platform: active_platform,
     page_scroll: @state.ScrollState::new(),
     sidebar_scroll: @state.ScrollState::new(),
@@ -104,6 +116,9 @@ pub fn ComponentGalleryModel::new(
     feature_enabled: true,
     slider_value: 0.66,
     counter: 0,
+    probe_text: "mobile-service-probe",
+    probe_action_count: 0,
+    probe_submit_count: 0,
   }
 }
 
@@ -157,6 +172,9 @@ pub fn update(
     SliderChanged(value) => { ..model, slider_value: value }
     Increment => { ..model, counter: model.counter + 1 }
     Decrement => { ..model, counter: model.counter - 1 }
+    ProbeTextChanged(value) => { ..model, probe_text: value }
+    ProbeAction => { ..model, probe_action_count: model.probe_action_count + 1 }
+    ProbeSubmit => { ..model, probe_submit_count: model.probe_submit_count + 1 }
     Reset =>
       {
         ..model,
@@ -168,6 +186,9 @@ pub fn update(
         feature_enabled: true,
         slider_value: 0.66,
         counter: 0,
+        probe_text: "mobile-service-probe",
+        probe_action_count: 0,
+        probe_submit_count: 0,
       }
   }
 }

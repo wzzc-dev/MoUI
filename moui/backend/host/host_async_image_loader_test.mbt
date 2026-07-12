@@ -88,6 +88,48 @@ test "host async image loader schedules loading records and completes redraw" {
 }
 
 ///|
+test "mobile image coordinator presents loading then ready on a follow-up frame" {
+  let lifecycle = @render.ImageResourceLifecycle::new()
+  ignore(lifecycle.mark_loading("data:image/png;base64,probe"))
+  let applied = Ref(0)
+  let renderer = HostWindowRenderer::new(
+    resize=_ => (),
+    render=_ => (),
+    text_system=() => @core.TextSystem::fallback(),
+    image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
+    apply_image_resource_load_completion=Some(completion => {
+      applied.val = applied.val + 1
+      lifecycle.apply_load_completion(completion)
+    }),
+  )
+  let loader = HostAsyncImageLoader::new(start_load=(
+    _window_id,
+    source,
+    complete,
+  ) => {
+    complete(
+      @render.ImageResourceLoadCompletion::ready(source, width=32, height=18),
+    )
+    None
+  })
+  let redraws = Ref(0)
+  let coordinator = MobileImageCoordinator::new(
+    renderer~,
+    image_loader=Some(loader),
+    request_redraw=() => redraws.val = redraws.val + 1,
+  )
+  let loading = coordinator.after_present(present_count=1)
+  inspect(loading.loading_count, content="1")
+  inspect(loading.scheduled_count, content="1")
+  inspect(applied.val, content="1")
+  inspect(redraws.val, content="1")
+  let ready = coordinator.after_present(present_count=2)
+  inspect(ready.ready_count, content="1")
+  inspect(ready.scheduled_count, content="0")
+  coordinator.dispose()
+}
+
+///|
 test "host async image loader cancels window loads and ignores late completions" {
   let tracker = HostImageResourceRepaintTracker::new()
   let window_id = HostWindowId::new(13)

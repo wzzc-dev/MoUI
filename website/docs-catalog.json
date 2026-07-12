@@ -221,6 +221,14 @@
     },
     {
       "group": "platforms",
+      "slug": "mobile-mainline-roadmap",
+      "title": "Mobile Mainline Roadmap",
+      "path": "docs/mobile-mainline-roadmap.md",
+      "summary": "Mobile embedded-session ownership, renderer selection, host services, and GPU promotion gates.",
+      "keywords": ["mobile", "Android", "iOS", "HarmonyOS", "GPU"]
+    },
+    {
+      "group": "platforms",
       "slug": "renderer-capability-report",
       "title": "Renderer Capability Report",
       "path": "docs/renderer-capability-report.md",

@@ -139,6 +139,20 @@ fn guidance_include_rules() -> Array[TextRule] {
     { path: "AGENTS.md", token: "Windows check wrapper plan" },
     { path: "AGENTS.md", token: "shared platform service checks" },
     { path: "AGENTS.md", token: "Script Tooling Policy" },
+    { path: "AGENTS.md", token: "MobileHostChannel" },
+    { path: "AGENTS.md", token: "Native XComponent callbacks are the only" },
+    {
+      path: "docs/mobile-mainline-roadmap.md",
+      token: "Direct GPU presentation | Not implemented",
+    },
+    {
+      path: "skills/moui-framework-development-skill/SKILL.md",
+      token: "SkiaGpuNative",
+    },
+    {
+      path: "skills/moui-app-development/SKILL.md",
+      token: "before/after pixel change",
+    },
     { path: "docs/development.md", token: "Script Tooling Policy" },
     { path: "docs/testing.md", token: "Script Tooling Policy" },
     {
@@ -176,12 +190,13 @@ fn guidance_window_dependency_paths() -> Array[String] {
 fn guidance_file_exists_rules() -> Array[String] {
   [
     "AGENTS.md", "docs/architecture.md", "docs/development.md", "docs/testing.md",
-    "scripts/check.mjs", "scripts/check.sh", "scripts/windows/check.ps1", "scripts/validate-guidance-consistency.mjs",
-    ".github/workflows/moui-renderer-real-skia-ci.yml", ".github/workflows/moui-macos-app-real-skia-manual.yml",
-    ".github/workflows/moui-runtime-gates.yml", ".github/workflows/moui-skia-provider-fallback-ci.yml",
-    ".github/workflows/moui-skia-provider-linux-real-skia-nightly.yml", ".github/workflows/moui-skia-provider-macos-real-skia-manual.yml",
-    ".github/workflows/moui-skia-provider-windows-real-skia-manual.yml", ".github/workflows/moui-skia-provider-real-skia-acceptance.yml",
-    "checks/profiles.json", "skills/moui-app-development/SKILL.md", "skills/moui-framework-development-skill/SKILL.md",
+    "docs/mobile-mainline-roadmap.md", "scripts/check.mjs", "scripts/check.sh", "scripts/windows/check.ps1",
+    "scripts/validate-guidance-consistency.mjs", ".github/workflows/moui-renderer-real-skia-ci.yml",
+    ".github/workflows/moui-macos-app-real-skia-manual.yml", ".github/workflows/moui-runtime-gates.yml",
+    ".github/workflows/moui-skia-provider-fallback-ci.yml", ".github/workflows/moui-skia-provider-linux-real-skia-nightly.yml",
+    ".github/workflows/moui-skia-provider-macos-real-skia-manual.yml", ".github/workflows/moui-skia-provider-windows-real-skia-manual.yml",
+    ".github/workflows/moui-skia-provider-real-skia-acceptance.yml", "checks/profiles.json",
+    "skills/moui-app-development/SKILL.md", "skills/moui-framework-development-skill/SKILL.md",
     "tools/moui/validate_guidance_consistency/moon.pkg",
   ]
 }

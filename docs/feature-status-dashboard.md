@@ -99,6 +99,18 @@ proof status:
   decoded RGBA pixels, row bytes, `background_io`, and `background_decode`, and
   Skia applies decoded completions directly into the image cache.
 
+## Mobile Status
+
+Android, iOS, and HarmonyOS have source-level VSync and mobile service bridges.
+HarmonyOS also has native-only XComponent pointer/lifecycle ownership and
+touch-slop scroll arbitration. Full mobile runtime status remains pending
+because no new matching-device manifest in this change proves IME, clipboard,
+accessibility tree/focus/action, async image, input pixel change, and detach.
+
+`SkiaGpuNative` is an available descriptor, not a supported mobile production
+path. All three platforms remain on `SkiaRasterNative` until direct window GPU
+presentation and platform-specific promotion gates pass.
+
 ## Evidence Traceability
 
 | CI workflow | Artifact name | Content |

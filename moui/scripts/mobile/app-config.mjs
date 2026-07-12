@@ -135,7 +135,7 @@ const validateAndroidContract = (label, contract, supportsScroll) => {
   assertString(contract.appArg, `${label}.appArg`);
   assertString(contract.moonbitMainAlias, `${label}.moonbitMainAlias`);
   const exports = assertObject(contract.exports, `${label}.exports`);
-  for (const field of ["attachSurface", "resize", "dispatchPointer", "renderFrame", "detachSurface"]) {
+  for (const field of ["attachSurface", "resize", "dispatchPointer", "frameTick", "renderFrame", "detachSurface"]) {
     assertString(exports[field], `${label}.exports.${field}`);
   }
   if (supportsScroll) assertString(exports.dispatchScroll, `${label}.exports.dispatchScroll`);
@@ -147,7 +147,7 @@ const validateIosContract = (label, contract, supportsScroll) => {
   assertString(contract.appArg, `${label}.appArg`);
   assertString(contract.moonbitMainAlias, `${label}.moonbitMainAlias`);
   const exports = assertObject(contract.exports, `${label}.exports`);
-  for (const field of ["attachView", "resize", "dispatchPointer", "renderFrame", "detachView"]) {
+  for (const field of ["attachView", "resize", "dispatchPointer", "frameTick", "renderFrame", "detachView"]) {
     assertString(exports[field], `${label}.exports.${field}`);
   }
   if (supportsScroll) assertString(exports.dispatchScroll, `${label}.exports.dispatchScroll`);
@@ -160,7 +160,7 @@ const validateHarmonyosContract = (label, contract, supportsScroll) => {
   assertString(contract.appArg, `${label}.appArg`);
   assertString(contract.moonbitMainAlias, `${label}.moonbitMainAlias`);
   const exports = assertObject(contract.exports, `${label}.exports`);
-  for (const field of ["attachSurface", "resize", "dispatchPointer", "renderFrame", "detachSurface"]) {
+  for (const field of ["attachSurface", "resize", "dispatchPointer", "frameTick", "renderFrame", "detachSurface"]) {
     assertString(exports[field], `${label}.exports.${field}`);
   }
   if (supportsScroll) assertString(exports.dispatchScroll, `${label}.exports.dispatchScroll`);

@@ -25,10 +25,20 @@ pub fn HarmonyOsSkiaAppOptions::new(
 pub fn renderer_provider(
   options? : HarmonyOsSkiaAppOptions = HarmonyOsSkiaAppOptions::new(),
 ) -> @harmonyos_host.HarmonyOsRendererProvider {
-  @harmonyos_host.HarmonyOsRendererProvider::new(create_renderer=(
-    surface,
-    metrics,
-  ) => create_renderer(surface, metrics, options))
+  @harmonyos_host.HarmonyOsRendererProvider::new(
+    create_renderer=(surface, metrics) => {
+      create_renderer(surface, metrics, options)
+    },
+    image_loader=Some(harmonyos_skia_async_image_loader()),
+  )
+}
+
+///|
+fn harmonyos_skia_async_image_loader() -> @host.HostAsyncImageLoader {
+  @host.HostAsyncImageLoader::new(start_load=(_window_id, source, complete) => {
+    complete(@skia_renderer.skia_image_load_completion(source))
+    None
+  })
 }
 
 ///|
@@ -85,6 +95,7 @@ fn create_renderer(
         renderer_metrics_from_host(metrics),
         harmonyos_skia_present_target(surface),
         font_resolution=options.font_resolution,
+        async_image_loading=true,
       ),
     ),
   ) catch {
