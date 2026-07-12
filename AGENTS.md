@@ -182,9 +182,10 @@ sh scripts/check.sh --profile daily
 ```
 
 The daily validation script includes `moon check`, maintenance baseline guards,
-API surface guards, check runner self-tests, smoke catalog validation,
-core/view/render/backend package tests, `moui_tester`, `moui_devtools`,
-Showcase and Markdown Editor app tests, and Web wasm-gc builds.
+API surface guards, generated `pkg.generated.mbti` drift detection, check runner
+self-tests, smoke catalog validation, core/view/render/backend package tests,
+`moui_tester`, `moui_devtools`, Showcase and Markdown Editor app tests, and Web
+wasm-gc builds.
 
 `ci.yml` uses `sh scripts/check.sh --profile pr` and
 `sh scripts/check.sh --profile platform` for POSIX profile gates. The Windows

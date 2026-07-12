@@ -534,12 +534,16 @@ test "website compact hero switches between source and counter" {
 }
 
 ///|
-test "website catalog exposes 34 entries and all mobile platforms" {
+test "website catalog exposes 38 entries and all platform documents" {
   let catalog = website_parse_catalog(
     website_test_catalog().to_json().stringify(),
   ).unwrap()
-  inspect(catalog.entries.length(), content="34")
+  inspect(catalog.entries.length(), content="38")
   let platforms = catalog.entries.filter(entry => entry.group == "platforms")
+  assert_true(platforms.any(entry => entry.slug == "platform-notes-web"))
+  assert_true(platforms.any(entry => entry.slug == "platform-notes-macos"))
+  assert_true(platforms.any(entry => entry.slug == "platform-notes-windows"))
+  assert_true(platforms.any(entry => entry.slug == "platform-notes-linux"))
   assert_true(platforms.any(entry => entry.slug == "android-support"))
   assert_true(platforms.any(entry => entry.slug == "ios-support"))
   assert_true(platforms.any(entry => entry.slug == "harmonyos-support"))
@@ -683,6 +687,10 @@ fn website_test_catalog() -> WebsiteDocsCatalog {
     ("get-started", "moui-readme", "MoUI README"),
     ("guides", "development", "Development"),
     ("guides", "architecture", "Architecture"),
+    ("platforms", "platform-notes-web", "Web Platform Notes"),
+    ("platforms", "platform-notes-macos", "macOS Platform Notes"),
+    ("platforms", "platform-notes-windows", "Windows Platform Notes"),
+    ("platforms", "platform-notes-linux", "Linux Platform Notes"),
     ("platforms", "android-support", "Android Support"),
     ("platforms", "ios-support", "iOS Support"),
     ("platforms", "harmonyos-support", "HarmonyOS Support"),

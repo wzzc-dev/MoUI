@@ -1048,6 +1048,13 @@ pub fn SaveableStateStore::set_int(Self, String, Int) -> Unit
 pub fn SaveableStateStore::set_string(Self, String, String) -> Unit
 pub fn SaveableStateStore::snapshot(Self) -> SaveableStateSnapshot
 
+pub(all) enum ScrollAlignment {
+  Start
+  Center
+  End
+  Nearest
+} derive(Eq, ToJson, @debug.Debug)
+
 pub struct ScrollState {
   offset_slot : State[Point]
   smooth_target : State[Point?]
@@ -1079,6 +1086,8 @@ pub(all) enum SemanticsAction {
 pub(all) struct SemanticsNode {
   element_id : ElementId
   role : SemanticsRole
+  level : Int?
+  url : String
   label : String
   value : String
   description : String
@@ -1092,6 +1101,10 @@ pub(all) struct SemanticsNode {
 pub(all) enum SemanticsRole {
   None
   Text
+  Link
+  Heading
+  Navigation
+  Main
   Button
   Checkbox
   TextField
@@ -1643,10 +1656,12 @@ pub fn[Msg] View::semantics_description(Self[Msg], String) -> Self[Msg]
 pub fn[Msg] View::semantics_dismiss_action(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::semantics_expanded(Self[Msg], expanded? : Bool) -> Self[Msg]
 pub fn[Msg] View::semantics_invalid(Self[Msg], invalid? : Bool) -> Self[Msg]
+pub fn[Msg] View::semantics_level(Self[Msg], Int) -> Self[Msg]
 pub fn[Msg] View::semantics_pressed(Self[Msg], pressed? : Bool) -> Self[Msg]
 pub fn[Msg] View::semantics_required(Self[Msg], required? : Bool) -> Self[Msg]
 pub fn[Msg] View::semantics_role(Self[Msg], SemanticsRole) -> Self[Msg]
 pub fn[Msg] View::semantics_selected(Self[Msg], selected? : Bool) -> Self[Msg]
+pub fn[Msg] View::semantics_url(Self[Msg], String) -> Self[Msg]
 pub fn[Msg] View::shadow(Self[Msg], ShadowStyle) -> Self[Msg]
 pub fn[Msg] View::spacing(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::text_command(Self[Msg], ViewEventContext, CommandIntent, paste_text? : String?) -> TextCommandResult
@@ -1752,6 +1767,8 @@ pub fn ViewPaintPlan::empty() -> Self
 
 pub(all) struct ViewSemanticsInfo {
   role : SemanticsRole
+  level : Int?
+  url : String
   label : String
   value : String
   description : String
@@ -1764,7 +1781,7 @@ pub(all) struct ViewSemanticsInfo {
   invalid : Bool?
   required : Bool?
 } derive(Eq, @debug.Debug)
-pub fn ViewSemanticsInfo::new(role? : SemanticsRole, label? : String, value? : String, description? : String, actions? : Array[SemanticsAction], disabled? : Bool, selected? : Bool, pressed? : Bool, checked? : Bool, expanded? : Bool, invalid? : Bool, required? : Bool) -> Self
+pub fn ViewSemanticsInfo::new(role? : SemanticsRole, level? : Int, url? : String, label? : String, value? : String, description? : String, actions? : Array[SemanticsAction], disabled? : Bool, selected? : Bool, pressed? : Bool, checked? : Bool, expanded? : Bool, invalid? : Bool, required? : Bool) -> Self
 
 pub(all) struct ViewStateContext {
   focused : Bool
