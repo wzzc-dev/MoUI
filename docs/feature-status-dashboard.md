@@ -107,9 +107,22 @@ touch-slop scroll arbitration. Full mobile runtime status remains pending
 because no new matching-device manifest in this change proves IME, clipboard,
 accessibility tree/focus/action, async image, input pixel change, and detach.
 
-`SkiaGpuNative` is an available descriptor, not a supported mobile production
-path. All three platforms remain on `SkiaRasterNative` until direct window GPU
-presentation and platform-specific promotion gates pass.
+`SkiaGpuNative` carries a direct GPU presentation capability per Phase 1 of
+the GPU readback elimination plan (iOS Metal, macOS Metal, Android
+Vulkan/GLES, HarmonyOS EGL/GLES, Windows D3D11, Linux Vulkan). The Phase 2
+promotion gate scaffolding has L1 package-test proof:
+
+| Gate | L1 proof |
+| --- | --- |
+| Renderer mailbox control queue (`moui/render/render_frame_mailbox.mbt`) | `moui/render` whitebox tests (capacity-two latest-wins; `RendererControlMessage` never dropped) |
+| Context-loss recovery (`moui/runtime/renderer_recovery.mbt`) | `moui/runtime` whitebox tests (Idle → Lost → Recovering → Recovered → Idle; `FallbackToRaster` after 2 failures) |
+| Manifest schema + `gpuPromotionEvidence` (`tools/moui/validate_mobile_runtime_manifest`) | `validate_mobile_runtime_manifest_wbtest` (9 new Phase 2.3 tests) |
+
+All platforms remain on `SkiaRasterNative`. `gpu_promoted` stays `false` on
+every platform until matching-device evidence passes the seven ADR 0006 gates
+under `--require-passed`. See ADR 0006 § Implementation Status and
+`mobile-mainline-roadmap.md` § Current State for per-platform Phase 1 source
+state and Phase 2 promotion status.
 
 ## Evidence Traceability
 

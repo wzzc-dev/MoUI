@@ -76,9 +76,16 @@ For task-specific workflows, use the repo-local skills:
   Mobile build entrypoints accept `--renderer auto|skia-gpu|skia-raster` and
   must record requested/selected modes; `auto` and `skia-gpu` remain explicit
   raster fallbacks until direct host GPU presentation is promoted.
-  `SkiaGpuNative` is only a descriptor until direct Metal/Vulkan/EGL window
-  presentation, renderer-thread ownership, zero readback/copy, and matching
-  device promotion gates pass. Native WGPU remains diagnostic.
+  `SkiaGpuNative` carries a direct GPU presentation capability per Phase 1
+  (iOS Metal, macOS Metal, Android Vulkan/GLES, HarmonyOS EGL/GLES, Windows
+  D3D11, Linux Vulkan), but `gpu_promoted` stays `false` on every platform
+  until matching-device evidence passes the seven ADR 0006 gates (readback
+  eliminated, renderer thread, mailbox ok, performance, memory, context loss
+  recovery, raster fallback). Phase 2 scaffolding (renderer mailbox control
+  queue in `moui/render/render_frame_mailbox.mbt`, context-loss recovery in
+  `moui/runtime/renderer_recovery.mbt`, manifest schema in
+  `tools/moui/validate_mobile_runtime_manifest`) is in place. Renderer-thread
+  ownership remains pending. Native WGPU remains diagnostic.
 - Use Component Gallery's mobile `Mobile Service Probe` for matching-host IME,
   system text clipboard, accessibility action, resize, scroll, and async-image
   acceptance. Recorder evidence requires clipboard write/read completion, two
