@@ -139,6 +139,7 @@ fn ElementNode::dispatch_pointer_to_children(
   // overlay still gets cleared when the pointer leaves the overlay's frame.
   let is_move = event.phase == PointerPhase::Move ||
     event.phase == PointerPhase::Exit
+  let mut delivered_main_event = false
   let mut index = self.children.length() - 1
   while index >= 0 {
     if index < render.children.length() {
@@ -146,7 +147,8 @@ fn ElementNode::dispatch_pointer_to_children(
       let child_render = render.children[index]
       let has_capture = capture_lookup &&
         child.has_active_pointer_capture(event.phase)
-      if has_capture || child_render.hit_bounds().contains(event.position) {
+      let hit = has_capture || child_render.hit_bounds().contains(event.position)
+      if hit && !delivered_main_event {
         let result = child.dispatch_pointer(
           event,
           child_render,
@@ -156,19 +158,15 @@ fn ElementNode::dispatch_pointer_to_children(
           capture_lookup~,
           now_ms~,
         )
-        changed = result.changed
-        activated = result.activated
-        layout_changed = result.changed && child.has_dirty_layout()
+        changed = changed || result.changed
+        activated = activated || result.activated
+        layout_changed = layout_changed ||
+          (result.changed && child.has_dirty_layout())
         match result.focused {
           Some(_) => focused = result.focused
           None => ()
         }
-        if has_capture ||
-          result.changed ||
-          result.activated ||
-          result.focused is Some(_) {
-          break
-        }
+        delivered_main_event = true
       } else if is_move && child.has_hovered_descendant() {
         // Pointer moved off this child (or a descendant it previously
         // hovered) — send an `Exit` so its hover clears. The exit carries the

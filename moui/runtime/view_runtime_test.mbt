@@ -819,6 +819,74 @@ test "runtime delivers synthetic Exit to clear hover on pointer leave" {
 }
 
 ///|
+/// Regression: when the pointer moves from one sibling control directly onto
+/// another, the previously hovered sibling must receive a synthetic `Exit`
+/// even though the new sibling was hit first. This mirrors the button hover
+/// case that can leave the old control painted in its hover state.
+test "runtime clears hover when moving between sibling controls" {
+  let left_log : Array[Bool] = []
+  let right_log : Array[Bool] = []
+  let root : @core.View[Unit] = @core.View::node(
+    identity=() => @core.ViewIdentity::new(kind="SiblingHoverStage"),
+    revision=() => "sibling-hover-stage",
+    children=() => {
+      [
+        runtime_test_hover_tracker(width=100.0, height=40.0, log=left_log),
+        runtime_test_hover_tracker(width=100.0, height=40.0, log=right_log),
+      ]
+    },
+    child_constraints=_constraints => @core.Constraints::unbounded(),
+    layout=ctx => {
+      let frames : Array[@core.Rect] = []
+      for index, _size in ctx.child_sizes {
+        let x = if index == 0 { 0.0 } else { 100.0 }
+        frames.push(@core.Rect::new(x~, y=0.0, width=100.0, height=40.0))
+      }
+      @core.ViewLayoutResult::new(
+        size=ctx.constraints.constrain(
+          @core.Size::new(width=200.0, height=40.0),
+        ),
+        child_frames=frames,
+      )
+    },
+    paint=_ctx => @core.ViewPaintPlan::commands([]),
+  )
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=200.0, height=40.0),
+  )
+  ignore(runtime.layout())
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=10.0, y=10.0),
+        phase=@core.PointerPhase::Move,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=150.0, y=10.0),
+        phase=@core.PointerPhase::Move,
+      ),
+    ),
+  )
+  if left_log != [true, false] {
+    let rendered = left_log
+      .map(b => if b { "true" } else { "false" })
+      .join(", ")
+    fail("expected left hover log [true, false] but got [\{rendered}]")
+  }
+  if right_log != [true] {
+    let rendered = right_log
+      .map(b => if b { "true" } else { "false" })
+      .join(", ")
+    fail("expected right hover log [true] but got [\{rendered}]")
+  }
+}
+
+///|
 fn runtime_test_unused_log() -> Array[Bool] {
   []
 }
