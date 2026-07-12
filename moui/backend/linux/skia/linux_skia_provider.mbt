@@ -2,6 +2,7 @@
 pub struct LinuxSkiaAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
   priv font_resolution : @skia_renderer.SkiaFontResolution
+  priv surface_route : @skia_renderer.SkiaSurfaceRoute
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
 }
 
@@ -14,9 +15,10 @@ pub struct LinuxSkiaSmokeOptions {
 pub fn LinuxSkiaAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
+  surface_route? : @skia_renderer.SkiaSurfaceRoute = @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute,
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
 ) -> LinuxSkiaAppOptions {
-  { scene_resolver, font_resolution, platform_view_plugins }
+  { scene_resolver, font_resolution, surface_route, platform_view_plugins }
 }
 
 ///|
@@ -230,8 +232,10 @@ pub fn linux_skia_provider_preflight_summary(
     @skia_renderer.SkiaFontResolution::SystemFontMgr => "system-font-mgr"
     @skia_renderer.SkiaFontResolution::EmptyTypeface => "empty-typeface"
   }
+  let surface_route = options.surface_route.label()
+  let gpu_runtime_available = @skia_native.Surface::vulkan_gpu_context_runtime_available()
   let host_preflight = @linux_host.linux_capability_summary().preflight_fields()
-  "Linux Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; presenter=\{linux_skia_presenter_description()}; first_frame_smoke=disabled; first_frame_env=MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT|MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=smoke log required; runtime_smokes=showcase-linux-skia,markdown-editor-linux-skia,window-package-linux; service_runtime_evidence=clipboard,file-dialog,text-file,open-url,ime,drag-drop; unavailable=\"\{linux_skia_unavailable_message()}\""
+  "Linux Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; surface_route=\{surface_route}; presenter=\{linux_skia_presenter_description()}; gpu_presenter=\{linux_skia_gpu_presenter_description()}; gpu_runtime_available=\{gpu_runtime_available}; first_frame_smoke=disabled; first_frame_env=MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT|MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=smoke log required; runtime_smokes=showcase-linux-skia,markdown-editor-linux-skia,window-package-linux-skia; service_runtime_evidence=clipboard,file-dialog,text-file,open-url,ime,drag-drop; unavailable=\"\{linux_skia_unavailable_message()}\""
 }
 
 ///|
@@ -249,16 +253,80 @@ fn create_renderer(
     println(linux_skia_unavailable_message())
     return None
   }
-  Some(
-    host_renderer_from_skia(
-      @skia_renderer.create_with_present_target(
-        renderer_metrics_from_host(metrics),
-        linux_skia_present_target(window),
-        font_resolution=options.font_resolution,
-        async_image_loading=true,
-      ),
-    ),
-  ) catch {
+  let display_ptr = window.display_handle()
+  let surface_ptr = window.window_handle()
+  match resolve_gpu_present_target(display_ptr, surface_ptr, options) {
+    Some(gpu_target) =>
+      try {
+        let renderer = @skia_renderer.create_with_present_target_and_route(
+          renderer_metrics_from_host(metrics),
+          linux_skia_present_target(window),
+          surface_route=options.surface_route,
+          gpu_target=Some(gpu_target),
+          font_resolution=options.font_resolution,
+          async_image_loading=true,
+        )
+        println(
+          "Linux Skia renderer route diagnostics: \{renderer.surface_diagnostic_summary()}",
+        )
+        Some(host_renderer_from_skia(renderer))
+      } catch {
+        err => {
+          println(
+            "error creating Linux Skia Vulkan GPU renderer, falling back to raster: \{err.message()}",
+          )
+          create_raster_renderer(window, metrics, options)
+        }
+      }
+    None => create_raster_renderer(window, metrics, options)
+  }
+}
+
+///|
+/// Resolve the optional `HostGpuPresentTarget` for the Linux Wayland Vulkan
+/// direct-present path. Returns `Some` when the user selected the Vulkan GPU
+/// route AND the Skia build links Ganesh Vulkan AND valid wl_display +
+/// wl_surface handles are available. Returns `None` to fall back to raster.
+fn resolve_gpu_present_target(
+  display_ptr : UInt64,
+  surface_ptr : UInt64,
+  options : LinuxSkiaAppOptions,
+) -> @skia_renderer.HostGpuPresentTarget? {
+  if !options.surface_route.is_gpu() {
+    return None
+  }
+  if display_ptr == 0UL || surface_ptr == 0UL {
+    println(
+      "Linux Skia Vulkan GPU route requested but Wayland handles are unavailable; falling back to raster",
+    )
+    return None
+  }
+  let gpu_available = @skia_native.Surface::vulkan_gpu_context_runtime_available()
+  if !gpu_available {
+    println(
+      "Linux Skia Vulkan GPU route requested but Ganesh Vulkan runtime is unavailable; falling back to raster",
+    )
+    return None
+  }
+  Some(linux_skia_gpu_present_target(display_ptr, surface_ptr))
+}
+
+///|
+fn create_raster_renderer(
+  window : @window_linux.Window,
+  metrics : @host.HostSurfaceMetrics,
+  options : LinuxSkiaAppOptions,
+) -> @host.HostWindowRenderer? {
+  try {
+    let renderer = @skia_renderer.create_with_present_target_and_route(
+      renderer_metrics_from_host(metrics),
+      linux_skia_present_target(window),
+      surface_route=@skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute,
+      font_resolution=options.font_resolution,
+      async_image_loading=true,
+    )
+    Some(host_renderer_from_skia(renderer))
+  } catch {
     err => {
       println("error creating Linux Skia renderer: \{err.message()}")
       None
@@ -279,6 +347,78 @@ fn linux_skia_unavailable_message() -> String {
 ///|
 fn linux_skia_presenter_description() -> String {
   "Linux Wayland wl_shm Skia pixel presenter"
+}
+
+///|
+fn linux_skia_gpu_presenter_description() -> String {
+  "Linux Wayland Vulkan Skia direct GPU presenter"
+}
+
+///|
+/// Build the `HostGpuPresentTarget` for the Linux Wayland Vulkan direct-present
+/// path. `display_ptr` is the raw `wl_display*` and `surface_ptr` is the raw
+/// `wl_surface*` obtained from the window package.
+/// `create_window_surface` is invoked at renderer creation and on resize;
+/// `present_gpu` is invoked per-frame after `flush_and_submit` to present the
+/// Vulkan swapchain and acquire the next image.
+fn linux_skia_gpu_present_target(
+  display_ptr : UInt64,
+  surface_ptr : UInt64,
+) -> @skia_renderer.HostGpuPresentTarget {
+  @skia_renderer.HostGpuPresentTarget::new(
+    description=linux_skia_gpu_presenter_description(),
+    create_window_surface=(gpu_context, metrics) => {
+      match gpu_context {
+        None => None
+        Some(context) =>
+          @skia_native.Surface::vulkan_wayland_surface(
+            context,
+            display_ptr,
+            surface_ptr,
+            linux_skia_vulkan_surface_descriptor(metrics),
+          )
+      }
+    },
+    present_gpu=(gpu_context, surface) => {
+      match gpu_context {
+        None =>
+          @skia_renderer.HostGpuPresentOutcome::new(
+            succeeded=false,
+            next_surface=None,
+          )
+        Some(context) => {
+          let outcome = @skia_native.Surface::vulkan_present_and_acquire_next(
+            surface, context, 0UL,
+          )
+          match outcome {
+            Some(next_surface) =>
+              @skia_renderer.HostGpuPresentOutcome::new(
+                succeeded=true,
+                next_surface=Some(next_surface),
+              )
+            None =>
+              @skia_renderer.HostGpuPresentOutcome::new(
+                succeeded=false,
+                next_surface=None,
+              )
+          }
+        }
+      }
+    },
+  )
+}
+
+///|
+fn linux_skia_vulkan_surface_descriptor(
+  metrics : @render.RendererSurfaceMetrics,
+) -> @moui_skia.SurfaceDescriptor {
+  let physical = metrics.physical_size
+  @moui_skia.SurfaceDescriptor::gpu_n32_premul(
+    @moui_skia.ISize::new(
+      physical.width.ceil().max(1.0).to_int(),
+      physical.height.ceil().max(1.0).to_int(),
+    ),
+  )
 }
 
 ///|
