@@ -27,5 +27,6 @@ members = [
   "./examples/code_editor",
   "./examples/webview_demo",
   "./benchmarks/app_cached_layer",
+  "./benchmarks/full_cycle",
   "./website",
 ]
