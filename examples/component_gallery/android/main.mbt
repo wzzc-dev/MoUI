@@ -35,6 +35,17 @@ fn component_gallery_android_runtime(
 }
 
 ///|
+fn component_gallery_android_renderer_options() -> @android_skia_backend.AndroidSkiaAppOptions {
+  let selection = @host.mobile_renderer_selection(
+    @render.NativeGpuPlatform::Android,
+    gpu_available=@android_skia_backend.android_skia_gpu_available(),
+  )
+  @android_skia_backend.AndroidSkiaAppOptions::new(
+    surface_route=selection.surface_route,
+  )
+}
+
+///|
 fn component_gallery_android_pointer_phase(phase : Int) -> @core.PointerPhase? {
   match phase {
     0 => Some(@core.PointerPhase::Down)
@@ -59,6 +70,7 @@ pub fn component_gallery_android_attach_surface(
       runtime~,
       surface=@android_host.AndroidSurfaceHandle::new(raw=surface_handle),
       metrics~,
+      options=component_gallery_android_renderer_options(),
     ) {
     Some(session) => {
       component_gallery_android_session.val = Some(session)
@@ -66,6 +78,19 @@ pub fn component_gallery_android_attach_surface(
     }
     None => false
   }
+}
+
+///|
+pub fn moui_mobile_renderer_configure(mode : String) -> Bool {
+  @host.mobile_renderer_configure(mode)
+}
+
+///|
+pub fn moui_mobile_renderer_status_json() -> String {
+  @host.mobile_renderer_status_json(
+    @render.NativeGpuPlatform::Android,
+    gpu_available=@android_skia_backend.android_skia_gpu_available(),
+  )
 }
 
 ///|

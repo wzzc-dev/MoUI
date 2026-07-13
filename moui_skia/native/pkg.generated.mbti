@@ -58,6 +58,7 @@ pub fn Canvas::draw_paragraph(Self, Paragraph, origin? : @moui_skia.Point) -> Bo
 pub fn Canvas::draw_path(Self, Path, @moui_skia.Paint) -> Unit
 pub fn Canvas::draw_path_shader(Self, Path, Shader, @moui_skia.Paint) -> Unit
 pub fn Canvas::draw_path_value(Self, @moui_skia.Path, @moui_skia.Paint) -> Unit
+pub fn Canvas::draw_picture(Self, Picture) -> Unit
 pub fn Canvas::draw_point(Self, @moui_skia.Point, @moui_skia.Paint) -> Unit
 pub fn Canvas::draw_points(Self, Array[@moui_skia.Point], @moui_skia.Paint, mode? : @moui_skia.PointMode) -> Unit
 pub fn Canvas::draw_rect(Self, @moui_skia.Rect, @moui_skia.Paint) -> Unit
@@ -221,6 +222,93 @@ pub fn GpuContext::resource_key(Self) -> @moui_skia.RendererResourceKey
 pub fn GpuContext::support_status(Self) -> SkiaGpuContextSupportStatus
 pub fn GpuContext::vulkan(@moui_skia.GpuContextDescriptor) -> Self?
 
+pub(all) struct GpuRenderCompletion {
+  sequence : Int
+  surface_generation : Int
+  image_resource_revision : Int64
+  submitted_at_ms : Double
+  gpu_completed_at_ms : Double
+  presented_at_ms : Double
+  status : GpuRenderCompletionStatus
+  context_generation : Int
+} derive(Eq, @debug.Debug)
+
+pub(all) enum GpuRenderCompletionStatus {
+  PictureRecorded
+  Presented
+  Dropped
+  FallbackToRaster
+} derive(Eq, @debug.Debug)
+
+type GpuRenderPictureFrame
+
+pub struct GpuRenderWorker {
+  mut state : GpuRenderWorkerState
+  mut next_sequence : Int
+  mut surface_generation : Int
+  mut context_generation : Int
+  mut in_flight : GpuRenderPictureFrame?
+  mut pending : GpuRenderPictureFrame?
+  controls : Array[GpuRenderWorkerControl]
+  completions : Array[GpuRenderCompletion]
+  mut submitted : Int
+  mut started : Int
+  mut completed : Int
+  mut dropped : Int
+  mut replaced_pending : Int
+  mut rejected_generation : Int
+  mut recovery_count : Int
+  mut recovery_failures : Int
+  mut fail_next_recovery : Bool
+  resource_cache_bytes : Int64
+  worker_thread_id : Int64
+}
+pub fn GpuRenderWorker::diagnostics(Self) -> GpuRenderWorkerDiagnostics
+pub fn GpuRenderWorker::drain_completions(Self) -> Array[GpuRenderCompletion]
+pub fn GpuRenderWorker::fail_next_context_recovery(Self) -> Unit
+pub fn GpuRenderWorker::new(surface_generation? : Int, worker_thread_id? : Int64) -> Self
+pub fn GpuRenderWorker::poll(Self, gpu_completed_at_ms? : Double, presented_at_ms? : Double) -> Unit
+pub fn GpuRenderWorker::submit(Self, Picture?, image_resource_revision? : Int64, submitted_at_ms? : Double) -> Int
+pub fn GpuRenderWorker::submit_control(Self, GpuRenderWorkerControl) -> Int
+
+pub(all) enum GpuRenderWorkerControl {
+  Attach(UInt64)
+  AttachSurface(UInt64, UInt64)
+  Resize(Int, Int)
+  Detach
+  ContextLoss(String)
+  Shutdown
+} derive(Eq, @debug.Debug)
+
+pub(all) struct GpuRenderWorkerDiagnostics {
+  state : GpuRenderWorkerState
+  submitted : Int
+  started : Int
+  completed : Int
+  dropped : Int
+  replaced_pending : Int
+  rejected_generation : Int
+  surface_generation : Int
+  context_generation : Int
+  recovery_count : Int
+  recovery_failures : Int
+  readback_count : Int
+  resource_cache_bytes : Int64
+  control_pending : Int
+  in_flight : Bool
+  pending : Bool
+  worker_thread_id : Int64
+} derive(Eq, @debug.Debug)
+
+pub(all) enum GpuRenderWorkerState {
+  Idle
+  Lost
+  Recovering
+  Recovered
+  FallbackToRaster
+  Shutdown
+} derive(Eq, @debug.Debug)
+
 pub(all) struct Image {
   // private fields
 }
@@ -245,6 +333,53 @@ pub(all) struct MaskFilter {
 }
 pub fn MaskFilter::blur(Float) -> Self?
 pub fn MaskFilter::is_available(Self) -> Bool
+
+pub struct NativeGpuRenderWorker {
+}
+pub fn NativeGpuRenderWorker::diagnostics(Self) -> NativeGpuWorkerDiagnostics
+pub fn NativeGpuRenderWorker::drain_completions(Self) -> Array[NativeGpuWorkerCompletion]
+pub fn NativeGpuRenderWorker::new() -> Self?
+pub fn NativeGpuRenderWorker::shutdown(Self) -> Unit
+pub fn NativeGpuRenderWorker::submit_control(Self, GpuRenderWorkerControl) -> Int64
+pub fn NativeGpuRenderWorker::submit_empty_picture(Self, image_resource_revision? : Int64, submitted_at_ms? : Double) -> Int64
+pub fn NativeGpuRenderWorker::submit_picture(Self, Picture, image_resource_revision? : Int64, submitted_at_ms? : Double) -> Int64
+pub fn NativeGpuRenderWorker::wait_completion(Self, timeout_ms? : Int) -> Bool
+
+pub(all) struct NativeGpuWorkerCompletion {
+  sequence : Int64
+  control_token : Int64
+  surface_generation : Int
+  context_generation : Int
+  image_resource_revision : Int64
+  submitted_at_ms : Double
+  processed_at_ms : Double
+  presented_at_ms : Double
+  status : NativeGpuWorkerCompletionStatus
+} derive(Eq, @debug.Debug)
+
+pub(all) enum NativeGpuWorkerCompletionStatus {
+  PictureRecorded
+  Dropped
+  ControlAcknowledged
+  FallbackToRaster
+  Presented
+  Unknown(Int)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct NativeGpuWorkerDiagnostics {
+  worker_thread_id : Int64
+  submitted : Int64
+  completed : Int64
+  dropped : Int64
+  replaced_pending : Int64
+  readback_count : Int64
+  surface_generation : Int
+  context_generation : Int
+  recovery_count : Int64
+  resource_cache_bytes : Int64
+  control_pending : Int
+  completion_pending : Int
+} derive(Eq, @debug.Debug)
 
 pub(all) struct NativeReplayResourceStats {
   cache_count : Int
@@ -352,6 +487,21 @@ pub fn Path::segment_masks(Self) -> @moui_skia.PathSegmentMask
 pub fn Path::set_fill_type(Self, @moui_skia.PathFillType) -> Unit
 pub fn Path::transform(Self, @moui_skia.Matrix) -> Unit
 
+pub(all) struct Picture {
+  // private fields
+}
+pub fn Picture::approximate_bytes_used(Self) -> Int64
+pub fn Picture::is_available(Self) -> Bool
+pub fn Picture::unique_id(Self) -> Int
+
+pub(all) struct PictureRecorder {
+  // private fields
+}
+pub fn PictureRecorder::begin(Self, Int, Int) -> Canvas?
+pub fn PictureRecorder::finish(Self) -> Picture?
+pub fn PictureRecorder::new() -> Self?
+pub fn PictureRecorder::record_empty(Self, Int, Int) -> Unit
+
 pub(all) struct ResolvedTypeface {
   typeface : Typeface
   resolution : @moui_skia.FontFallbackResolutionDescriptor
@@ -428,6 +578,8 @@ pub fn Surface::image_snapshot_with_bounds(Self, @moui_skia.IRect) -> Image?
 pub fn Surface::metal_gpu_context_headers_available() -> Bool
 pub fn Surface::metal_gpu_context_opt_in_enabled() -> Bool
 pub fn Surface::metal_gpu_context_runtime_available() -> Bool
+pub fn Surface::metal_present_and_acquire_next(Self, GpuContext, UInt64) -> Self?
+pub fn Surface::metal_window_surface(GpuContext, UInt64, @moui_skia.SurfaceDescriptor) -> Self?
 pub fn Surface::raster_n32_premul(@moui_skia.ISize) -> Self?
 pub fn Surface::read_pixels(Self, bounds? : @moui_skia.IRect) -> @moui_skia.Pixmap?
 pub fn Surface::render_frame(Self, @moui_skia.RenderFrameDescriptor, font? : Font?, frame_index? : Int) -> SurfaceFrameReplayStats

@@ -102,9 +102,7 @@ test "windows skia provider preflight records package observation boundary" {
 test "windows skia preflight reports gpu direct3d direct presenter path" {
   let summary = windows_skia_provider_preflight_summary()
   assert_true(
-    summary.contains(
-      "gpu_presenter=Windows Direct3D 11 Skia direct GPU presenter",
-    ),
+    summary.contains("gpu_presenter=Windows D3D12 Skia direct GPU presenter"),
   )
   assert_true(summary.contains("gpu_runtime_available="))
 }

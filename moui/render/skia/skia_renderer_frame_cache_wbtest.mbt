@@ -539,6 +539,114 @@ test "skia render_frame snapshots nested cached layers into parent cache" {
 }
 
 ///|
+test "skia picture producer caches nested layers as pictures without surfaces" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=20.0, height=20.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  let outer = @core.CachedLayerSpec::new(
+    key="picture-outer",
+    frame=@core.Rect::new(x=2.0, y=2.0, width=14.0, height=14.0),
+    content_revision=1,
+  )
+  let inner = @core.CachedLayerSpec::new(
+    key="picture-inner",
+    frame=@core.Rect::new(x=6.0, y=6.0, width=6.0, height=6.0),
+    content_revision=1,
+  )
+  let first = renderer.record_frame_picture(
+    skia_test_draw_frame([
+      @core.DrawCommand::BeginCachedLayer(outer),
+      @core.DrawCommand::FillRect(outer.frame, @core.Color::gray()),
+      @core.DrawCommand::BeginCachedLayer(inner),
+      @core.DrawCommand::FillRect(inner.frame, @core.Color::black()),
+      @core.DrawCommand::EndCachedLayer(inner.key),
+      @core.DrawCommand::EndCachedLayer(outer.key),
+    ]),
+  )
+  assert_true(first is Some(_))
+  inspect(renderer.picture_layer_cache.length(), content="2")
+  inspect(renderer.layer_cache.length(), content="0")
+  let second = renderer.record_frame_picture(
+    skia_test_draw_frame([@core.DrawCommand::DrawCachedLayer(outer)]),
+  )
+  assert_true(second is Some(_))
+  inspect(renderer.picture_layer_cache.length(), content="2")
+  inspect(renderer.layer_cache.length(), content="0")
+  guard renderer.picture_layer_cache.get(
+      renderer.skia_layer_cache_key(
+        outer,
+        skia_cached_layer_physical_size(
+          outer.frame,
+          renderer.metrics.scale_factor,
+        ),
+      ),
+    )
+    is Some(entry) else {
+    fail("expected outer picture cache entry")
+  }
+  assert_true(entry.hit_count >= 1)
+  renderer.dispose()
+}
+
+///|
+test "skia raster fallback replays cached layers recorded by GPU producer" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=16.0, height=16.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  let spec = @core.CachedLayerSpec::new(
+    key="gpu-picture-to-raster",
+    frame=@core.Rect::new(x=2.0, y=2.0, width=8.0, height=8.0),
+    content_revision=1,
+  )
+  let recorded = renderer.record_frame_picture(
+    skia_test_draw_frame([
+      @core.DrawCommand::BeginCachedLayer(spec),
+      @core.DrawCommand::FillRect(
+        @core.Rect::new(x=4.0, y=4.0, width=4.0, height=4.0),
+        @core.Color::black(),
+      ),
+      @core.DrawCommand::EndCachedLayer(spec.key),
+    ]),
+  )
+  assert_true(recorded is Some(_))
+  inspect(renderer.picture_layer_cache.length(), content="1")
+  inspect(renderer.layer_cache.length(), content="0")
+  let fallback = renderer.render_frame(
+    skia_test_draw_frame([
+      @core.DrawCommand::Clear(@core.Color::white()),
+      @core.DrawCommand::DrawCachedLayer(spec),
+    ]),
+  )
+  inspect(fallback.presented, content="true")
+  inspect(fallback.cache_hit_count, content="1")
+  inspect(fallback.cache_miss_count, content="0")
+  guard renderer.last_frame() is Some(frame) else {
+    fail("expected raster fallback frame")
+  }
+  assert_true(
+    skia_test_region_has_dark_pixel(
+      frame,
+      @core.Rect::new(x=4.0, y=4.0, width=4.0, height=4.0),
+    ),
+  )
+  renderer.dispose()
+}
+
+///|
 test "skia render_frame cache miss does not present or replace last frame" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)

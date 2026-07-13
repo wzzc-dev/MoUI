@@ -1,7 +1,15 @@
 #include "skia_stub_common.h"
 
+#include <cstdio>
+#include <cstdlib>
+
 #ifndef __has_include
 #define __has_include(x) 0
+#endif
+
+#if defined(__ANDROID__) && defined(MOUI_SKIA_ENABLE_GPU_VULKAN) && \
+  !defined(VK_NO_PROTOTYPES)
+#define VK_NO_PROTOTYPES
 #endif
 
 #if defined(MOUI_SKIA_HAS_SKIA) && defined(__APPLE__) && \
@@ -9,7 +17,10 @@
   __has_include("include/gpu/ganesh/mtl/GrMtlBackendContext.h") && \
   __has_include("include/gpu/ganesh/mtl/GrMtlDirectContext.h") && \
   __has_include("include/gpu/ganesh/mtl/GrMtlTypes.h") && \
-  __has_include("include/gpu/ganesh/SkSurfaceGanesh.h")
+  __has_include("include/gpu/ganesh/mtl/GrMtlBackendSurface.h") && \
+  __has_include("include/gpu/ganesh/GrBackendSurface.h") && \
+  __has_include("include/gpu/ganesh/SkSurfaceGanesh.h") && \
+  __has_include("include/gpu/ganesh/mtl/SkSurfaceMetal.h")
 #define MOUI_SKIA_HAS_GANESH_METAL_HEADERS 1
 #endif
 
@@ -18,35 +29,43 @@
   __has_include("include/gpu/ganesh/d3d/GrD3DBackendContext.h") && \
   __has_include("include/gpu/ganesh/d3d/GrD3DDirectContext.h") && \
   __has_include("include/gpu/ganesh/d3d/GrD3DTypes.h") && \
-  __has_include("include/gpu/ganesh/GrBackendRenderTarget.h") && \
+  __has_include("include/gpu/ganesh/d3d/GrD3DBackendSurface.h") && \
+  __has_include("include/gpu/ganesh/GrBackendSurface.h") && \
   __has_include("include/gpu/ganesh/SkSurfaceGanesh.h")
 #define MOUI_SKIA_HAS_GANESH_D3D_HEADERS 1
 #endif
 
-#if defined(MOUI_SKIA_HAS_SKIA) && defined(__ANDROID__) && \
+#if defined(MOUI_SKIA_HAS_SKIA) && \
   __has_include("include/gpu/ganesh/GrDirectContext.h") && \
-  __has_include("include/gpu/ganesh/vk/GrVkBackendContext.h") && \
   __has_include("include/gpu/ganesh/vk/GrVkDirectContext.h") && \
   __has_include("include/gpu/ganesh/vk/GrVkTypes.h") && \
-  __has_include("include/gpu/ganesh/GrBackendRenderTarget.h") && \
+  __has_include("include/gpu/ganesh/vk/GrVkBackendSurface.h") && \
+  __has_include("include/gpu/vk/VulkanBackendContext.h") && \
+  __has_include("include/android/vk/AndroidVulkanMemoryAllocator.h") && \
+  __has_include("include/gpu/ganesh/GrBackendSurface.h") && \
   __has_include("include/gpu/ganesh/SkSurfaceGanesh.h") && \
-  __has_include(<vulkan/vulkan.h>) && \
-  __has_include(<vulkan/vulkan_android.h>) && \
-  __has_include(<android/native_window.h>)
+  __has_include(<vulkan/vulkan.h>)
+#if (defined(__ANDROID__) && __has_include(<vulkan/vulkan_android.h>) && \
+  __has_include(<android/native_window.h>)) || \
+  (defined(__linux__) && __has_include(<vulkan/vulkan_wayland.h>) && \
+  __has_include(<wayland-client.h>))
 #define MOUI_SKIA_HAS_GANESH_VULKAN_HEADERS 1
 #endif
+#endif
 
-#if defined(MOUI_SKIA_HAS_SKIA) && defined(__OHOS__) && \
+#if defined(MOUI_SKIA_HAS_SKIA) && \
+  (defined(__OHOS__) || defined(__ANDROID__)) && \
   __has_include("include/gpu/ganesh/GrDirectContext.h") && \
   __has_include("include/gpu/ganesh/gl/GrGLBackendContext.h") && \
   __has_include("include/gpu/ganesh/gl/GrGLDirectContext.h") && \
   __has_include("include/gpu/ganesh/gl/GrGLTypes.h") && \
-  __has_include("include/gpu/ganesh/GrBackendRenderTarget.h") && \
+  __has_include("include/gpu/ganesh/GrBackendSurface.h") && \
   __has_include("include/gpu/ganesh/SkSurfaceGanesh.h") && \
   __has_include(<EGL/egl.h>) && \
   __has_include(<EGL/eglext.h>) && \
   __has_include(<GLES3/gl3.h>) && \
-  __has_include(<native_window/external_window.h>)
+  ((defined(__OHOS__) && __has_include(<native_window/external_window.h>)) || \
+   (defined(__ANDROID__) && __has_include(<android/native_window.h>)))
 #define MOUI_SKIA_HAS_GANESH_EGL_HEADERS 1
 #endif
 
@@ -55,7 +74,10 @@
 #include "include/gpu/ganesh/mtl/GrMtlBackendContext.h"
 #include "include/gpu/ganesh/mtl/GrMtlDirectContext.h"
 #include "include/gpu/ganesh/mtl/GrMtlTypes.h"
+#include "include/gpu/ganesh/mtl/GrMtlBackendSurface.h"
+#include "include/gpu/ganesh/GrBackendSurface.h"
 #include "include/gpu/ganesh/SkSurfaceGanesh.h"
+#include "include/gpu/ganesh/mtl/SkSurfaceMetal.h"
 #include <objc/message.h>
 #include <objc/runtime.h>
 
@@ -72,7 +94,27 @@ void moonbit_skia_objc_release(void* object) {
   );
 }
 
-static GrDirectContext* moonbit_skia_make_metal_direct_context(void) {
+void moonbit_skia_objc_retain(void* object) {
+  if (object == nullptr) {
+    return;
+  }
+  using ObjcSendNoArg = void* (*)(void*, SEL);
+  reinterpret_cast<ObjcSendNoArg>(objc_msgSend)(
+    object,
+    sel_registerName("retain")
+  );
+}
+
+static GrDirectContext* moonbit_skia_make_metal_direct_context(
+  void** retained_device = nullptr,
+  void** retained_queue = nullptr
+) {
+  if (retained_device != nullptr) {
+    *retained_device = nullptr;
+  }
+  if (retained_queue != nullptr) {
+    *retained_queue = nullptr;
+  }
   void* device = MTLCreateSystemDefaultDevice();
   if (device == nullptr) {
     return nullptr;
@@ -92,92 +134,154 @@ static GrDirectContext* moonbit_skia_make_metal_direct_context(void) {
   backend_context.fQueue.retain(static_cast<GrMTLHandle>(queue));
   sk_sp<GrDirectContext> context = GrDirectContexts::MakeMetal(backend_context);
 
-  moonbit_skia_objc_release(queue);
-  moonbit_skia_objc_release(device);
+  if (!context) {
+    moonbit_skia_objc_release(queue);
+    moonbit_skia_objc_release(device);
+    return nullptr;
+  }
+  if (retained_device != nullptr) {
+    *retained_device = device;
+  } else {
+    moonbit_skia_objc_release(device);
+  }
+  if (retained_queue != nullptr) {
+    *retained_queue = queue;
+  } else {
+    moonbit_skia_objc_release(queue);
+  }
 
   return context.release();
 }
 #elif defined(__APPLE__)
-#include <objc/message.h>
-#include <objc/runtime.h>
-
 void moonbit_skia_objc_release(void* object) {
-  if (object == nullptr) {
-    return;
-  }
-  using ObjcSendVoidNoArg = void (*)(void*, SEL);
-  reinterpret_cast<ObjcSendVoidNoArg>(objc_msgSend)(
-    object,
-    sel_registerName("release")
-  );
+  (void)object;
 }
 #endif
 
 #if defined(MOUI_SKIA_ENABLE_GPU_D3D) && \
   defined(MOUI_SKIA_HAS_GANESH_D3D_HEADERS)
 #include "include/gpu/ganesh/d3d/GrD3DBackendContext.h"
+#include "include/gpu/ganesh/d3d/GrD3DBackendSurface.h"
 #include "include/gpu/ganesh/d3d/GrD3DDirectContext.h"
 #include "include/gpu/ganesh/d3d/GrD3DTypes.h"
-#include "include/gpu/ganesh/GrBackendRenderTarget.h"
+#include "include/gpu/ganesh/GrBackendSurface.h"
 #include "include/gpu/ganesh/SkSurfaceGanesh.h"
 
-#include <d3d11.h>
-#include <dxgi.h>
+#include <d3d12.h>
+#include <dxgi1_4.h>
+#include <windows.h>
 #include <wrl/client.h>
 
 using Microsoft::WRL::ComPtr;
+
+static constexpr uint64_t MOONBIT_SKIA_D3D12_SWAPCHAIN_MAGIC =
+  0x4D4F554944334431ULL;
+
+struct MoonbitSkiaD3D12SwapChain {
+  uint64_t magic = MOONBIT_SKIA_D3D12_SWAPCHAIN_MAGIC;
+  ComPtr<IDXGISwapChain3> swap_chain;
+  ComPtr<ID3D12Device> device;
+  ComPtr<ID3D12CommandQueue> queue;
+  ComPtr<ID3D12Fence> fence;
+  HANDLE fence_event = nullptr;
+  uint64_t fence_value = 0;
+  HRESULT last_device_removed_reason = S_OK;
+  UINT frame_index = 0;
+  UINT width = 0;
+  UINT height = 0;
+};
+
+static MoonbitSkiaD3D12SwapChain* moonbit_skia_d3d12_swap_chain(
+  void* object
+) {
+  if (object == nullptr) {
+    return nullptr;
+  }
+  auto* candidate = static_cast<MoonbitSkiaD3D12SwapChain*>(object);
+  return candidate->magic == MOONBIT_SKIA_D3D12_SWAPCHAIN_MAGIC
+    ? candidate
+    : nullptr;
+}
 
 void moonbit_skia_com_release(void* object) {
   if (object == nullptr) {
     return;
   }
+  if (auto* swap_chain = moonbit_skia_d3d12_swap_chain(object)) {
+    if (swap_chain->fence_event != nullptr) {
+      CloseHandle(swap_chain->fence_event);
+      swap_chain->fence_event = nullptr;
+    }
+    delete swap_chain;
+    return;
+  }
   static_cast<IUnknown*>(object)->Release();
 }
 
-static GrDirectContext* moonbit_skia_make_d3d_direct_context(void) {
-  ComPtr<ID3D11Device> device;
-  ComPtr<ID3D11DeviceContext> immediate_context;
-  D3D_FEATURE_LEVEL feature_level;
-  HRESULT hr = D3D11CreateDevice(
-    nullptr,
-    D3D_DRIVER_TYPE_HARDWARE,
-    nullptr,
-    0,
-    nullptr,
-    0,
-    D3D11_SDK_VERSION,
-    &device,
-    &feature_level,
-    &immediate_context
-  );
+static bool moonbit_skia_make_d3d12_objects(
+  ComPtr<IDXGIAdapter1>& adapter,
+  ComPtr<ID3D12Device>& device,
+  ComPtr<ID3D12CommandQueue>& queue
+) {
+  ComPtr<IDXGIFactory4> factory;
+  HRESULT hr = CreateDXGIFactory1(IID_PPV_ARGS(&factory));
   if (FAILED(hr)) {
-    return nullptr;
+    return false;
   }
 
-  ComPtr<IDXGIDevice> dxgi_device;
-  hr = device.As(&dxgi_device);
-  if (FAILED(hr)) {
-    return nullptr;
+  for (UINT index = 0;; index += 1) {
+    ComPtr<IDXGIAdapter1> candidate;
+    hr = factory->EnumAdapters1(index, &candidate);
+    if (hr == DXGI_ERROR_NOT_FOUND) {
+      break;
+    }
+    if (FAILED(hr)) {
+      continue;
+    }
+    DXGI_ADAPTER_DESC1 description;
+    if (FAILED(candidate->GetDesc1(&description)) ||
+      (description.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) != 0) {
+      continue;
+    }
+    if (FAILED(D3D12CreateDevice(
+      candidate.Get(),
+      D3D_FEATURE_LEVEL_11_0,
+      IID_PPV_ARGS(&device)
+    ))) {
+      device.Reset();
+      continue;
+    }
+    adapter = candidate;
+    break;
+  }
+  if (adapter == nullptr || device == nullptr) {
+    return false;
   }
 
-  ComPtr<IDXGIAdapter> base_adapter;
-  hr = dxgi_device->GetAdapter(&base_adapter);
-  if (FAILED(hr)) {
+  D3D12_COMMAND_QUEUE_DESC queue_description = {};
+  queue_description.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+  queue_description.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+  queue_description.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+  queue_description.NodeMask = 0;
+  return SUCCEEDED(device->CreateCommandQueue(
+    &queue_description,
+    IID_PPV_ARGS(&queue)
+  ));
+}
+
+static GrDirectContext* moonbit_skia_make_d3d_direct_context(
+  ComPtr<IDXGIAdapter1>& adapter,
+  ComPtr<ID3D12Device>& device,
+  ComPtr<ID3D12CommandQueue>& queue
+) {
+  if (!moonbit_skia_make_d3d12_objects(adapter, device, queue)) {
     return nullptr;
   }
-
-  ComPtr<IDXGIAdapter1> adapter;
-  hr = base_adapter.As(&adapter);
-  if (FAILED(hr)) {
-    return nullptr;
-  }
-
   GrD3DBackendContext backend_context;
-  backend_context.fDevice = device;
-  backend_context.fQueue = immediate_context;
-  backend_context.fAdapter = adapter;
-
-  sk_sp<GrDirectContext> context = GrDirectContexts::MakeDirect3D(
+  backend_context.fAdapter.retain(adapter.Get());
+  backend_context.fDevice.retain(device.Get());
+  backend_context.fQueue.retain(queue.Get());
+  sk_sp<GrDirectContext> context = GrDirectContexts::MakeD3D(
     backend_context
   );
   return context.release();
@@ -190,6 +294,15 @@ static const int32_t MOONBIT_SKIA_GPU_BACKEND_METAL = 1;
 static const int32_t MOONBIT_SKIA_GPU_BACKEND_D3D = 2;
 static const int32_t MOONBIT_SKIA_GPU_BACKEND_VULKAN = 3;
 static const int32_t MOONBIT_SKIA_GPU_BACKEND_EGL = 4;
+
+#if defined(MOUI_SKIA_HAS_GANESH_METAL_HEADERS) || \
+  defined(MOUI_SKIA_HAS_GANESH_D3D_HEADERS) || \
+  defined(MOUI_SKIA_HAS_GANESH_VULKAN_HEADERS) || \
+  defined(MOUI_SKIA_HAS_GANESH_EGL_HEADERS)
+static GrSurfaceOrigin moonbit_skia_surface_origin(int32_t origin) {
+  return origin == 1 ? kBottomLeft_GrSurfaceOrigin : kTopLeft_GrSurfaceOrigin;
+}
+#endif
 
 static MoonbitSkiaSurface* moonbit_skia_surface_wrapper_with_gpu_context(
 #if defined(MOUI_SKIA_HAS_SKIA)
@@ -252,14 +365,19 @@ extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaGpuContext*
 moonbit_skia_gpu_context_metal(void) {
 #if defined(MOUI_SKIA_ENABLE_GPU_METAL) && \
   defined(MOUI_SKIA_HAS_GANESH_METAL_HEADERS)
-  GrDirectContext* context = moonbit_skia_make_metal_direct_context();
+  void* device = nullptr;
+  void* queue = nullptr;
+  GrDirectContext* context = moonbit_skia_make_metal_direct_context(
+    &device,
+    &queue
+  );
   if (context == nullptr) {
     return moonbit_skia_make_gpu_context_wrapper(nullptr, nullptr, nullptr, 0);
   }
   return moonbit_skia_make_gpu_context_wrapper(
     context,
-    nullptr,
-    nullptr,
+    device,
+    queue,
     MOONBIT_SKIA_GPU_BACKEND_METAL
   );
 #else
@@ -289,7 +407,14 @@ extern "C" MOONBIT_FFI_EXPORT int32_t
 moonbit_skia_surface_gpu_d3d_runtime_available(void) {
 #if defined(MOUI_SKIA_ENABLE_GPU_D3D) && \
   defined(MOUI_SKIA_HAS_GANESH_D3D_HEADERS)
-  GrDirectContext* context = moonbit_skia_make_d3d_direct_context();
+  ComPtr<IDXGIAdapter1> adapter;
+  ComPtr<ID3D12Device> device;
+  ComPtr<ID3D12CommandQueue> queue;
+  GrDirectContext* context = moonbit_skia_make_d3d_direct_context(
+    adapter,
+    device,
+    queue
+  );
   if (context == nullptr) {
     return 0;
   }
@@ -304,66 +429,35 @@ extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaGpuContext*
 moonbit_skia_gpu_context_direct3d(void) {
 #if defined(MOUI_SKIA_ENABLE_GPU_D3D) && \
   defined(MOUI_SKIA_HAS_GANESH_D3D_HEADERS)
-  ComPtr<ID3D11Device> device;
-  ComPtr<ID3D11DeviceContext> immediate_context;
-  D3D_FEATURE_LEVEL feature_level;
-  HRESULT hr = D3D11CreateDevice(
-    nullptr,
-    D3D_DRIVER_TYPE_HARDWARE,
-    nullptr,
-    0,
-    nullptr,
-    0,
-    D3D11_SDK_VERSION,
-    &device,
-    &feature_level,
-    &immediate_context
-  );
-  if (FAILED(hr)) {
-    return moonbit_skia_make_gpu_context_wrapper(nullptr, nullptr, nullptr, 0);
-  }
-
-  ComPtr<IDXGIDevice> dxgi_device;
-  hr = device.As(&dxgi_device);
-  if (FAILED(hr)) {
-    return moonbit_skia_make_gpu_context_wrapper(nullptr, nullptr, nullptr, 0);
-  }
-
-  ComPtr<IDXGIAdapter> base_adapter;
-  hr = dxgi_device->GetAdapter(&base_adapter);
-  if (FAILED(hr)) {
-    return moonbit_skia_make_gpu_context_wrapper(nullptr, nullptr, nullptr, 0);
-  }
-
   ComPtr<IDXGIAdapter1> adapter;
-  hr = base_adapter.As(&adapter);
-  if (FAILED(hr)) {
+  ComPtr<ID3D12Device> device;
+  ComPtr<ID3D12CommandQueue> queue;
+  if (!moonbit_skia_make_d3d12_objects(adapter, device, queue)) {
     return moonbit_skia_make_gpu_context_wrapper(nullptr, nullptr, nullptr, 0);
   }
-
-  // Store a device reference before the ComPtr is moved into the backend
-  // context. The caller (MoonbitSkiaGpuContext.device) owns this reference and
-  // releases it via moonbit_skia_com_release in the finalizer.
-  ID3D11Device* device_ptr = device.Get();
-  device_ptr->AddRef();
 
   GrD3DBackendContext backend_context;
-  backend_context.fDevice = device;
-  backend_context.fQueue = immediate_context;
-  backend_context.fAdapter = adapter;
-
-  sk_sp<GrDirectContext> context = GrDirectContexts::MakeDirect3D(
+  backend_context.fAdapter.retain(adapter.Get());
+  backend_context.fDevice.retain(device.Get());
+  backend_context.fQueue.retain(queue.Get());
+  sk_sp<GrDirectContext> context = GrDirectContexts::MakeD3D(
     backend_context
   );
   if (!context) {
-    device_ptr->Release();
     return moonbit_skia_make_gpu_context_wrapper(nullptr, nullptr, nullptr, 0);
   }
+
+  // The wrapper owns independent COM references so the native context can be
+  // destroyed without invalidating the provider-owned device and queue.
+  ID3D12Device* device_ptr = device.Get();
+  device_ptr->AddRef();
+  ID3D12CommandQueue* queue_ptr = queue.Get();
+  queue_ptr->AddRef();
 
   return moonbit_skia_make_gpu_context_wrapper(
     context.release(),
     device_ptr,
-    nullptr,
+    queue_ptr,
     MOONBIT_SKIA_GPU_BACKEND_D3D
   );
 #else
@@ -371,17 +465,114 @@ moonbit_skia_gpu_context_direct3d(void) {
 #endif
 }
 
+#if defined(MOUI_SKIA_ENABLE_GPU_D3D) && \
+  defined(MOUI_SKIA_HAS_GANESH_D3D_HEADERS)
+static bool moonbit_skia_d3d12_wait_for_frame(
+  MoonbitSkiaD3D12SwapChain* swap_chain
+) {
+  if (swap_chain == nullptr || swap_chain->queue == nullptr ||
+    swap_chain->fence == nullptr || swap_chain->fence_event == nullptr) {
+    return false;
+  }
+  const uint64_t fence_value = ++swap_chain->fence_value;
+  if (FAILED(swap_chain->queue->Signal(
+    swap_chain->fence.Get(),
+    fence_value
+  ))) {
+    return false;
+  }
+  if (swap_chain->fence->GetCompletedValue() < fence_value) {
+    if (FAILED(swap_chain->fence->SetEventOnCompletion(
+      fence_value,
+      swap_chain->fence_event
+    ))) {
+      return false;
+    }
+    return WaitForSingleObject(swap_chain->fence_event, INFINITE) == WAIT_OBJECT_0;
+  }
+  return true;
+}
+
+static MoonbitSkiaSurface* moonbit_skia_d3d12_wrap_back_buffer(
+  GrDirectContext* gpu_context,
+  MoonbitSkiaD3D12SwapChain* swap_chain,
+  int32_t width,
+  int32_t height,
+  int32_t origin
+) {
+  if (gpu_context == nullptr ||
+    swap_chain == nullptr || swap_chain->swap_chain == nullptr ||
+    width <= 0 || height <= 0) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+  ComPtr<ID3D12Resource> back_buffer;
+  if (FAILED(swap_chain->swap_chain->GetBuffer(
+    swap_chain->frame_index,
+    IID_PPV_ARGS(&back_buffer)
+  ))) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+
+  GrD3DTextureResourceInfo resource_info;
+  resource_info.fResource.retain(back_buffer.Get());
+  resource_info.fResourceState = D3D12_RESOURCE_STATE_COMMON;
+  resource_info.fFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+  resource_info.fSampleCount = 1;
+
+  GrBackendRenderTarget backend_rt = GrBackendRenderTargets::MakeD3D(
+    width,
+    height,
+    resource_info
+  );
+  sk_sp<SkSurface> surface = SkSurfaces::WrapBackendRenderTarget(
+    gpu_context,
+    backend_rt,
+    moonbit_skia_surface_origin(origin),
+    kRGBA_8888_SkColorType,
+    nullptr,
+    nullptr
+  );
+  if (!surface) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+  MoonbitSkiaSurface* wrapper = moonbit_skia_surface_wrapper_with_gpu_context(
+    surface.release(),
+    gpu_context
+  );
+  wrapper->host_present_handle = swap_chain;
+  return wrapper;
+}
+#endif
+
 #if defined(MOUI_SKIA_ENABLE_GPU_VULKAN) && \
   defined(MOUI_SKIA_HAS_GANESH_VULKAN_HEADERS)
-#include "include/gpu/ganesh/vk/GrVkBackendContext.h"
+#include "include/gpu/ganesh/vk/GrVkBackendSurface.h"
 #include "include/gpu/ganesh/vk/GrVkDirectContext.h"
 #include "include/gpu/ganesh/vk/GrVkTypes.h"
-#include "include/gpu/ganesh/GrBackendRenderTarget.h"
+#include "include/gpu/vk/VulkanBackendContext.h"
+#include "include/android/vk/AndroidVulkanMemoryAllocator.h"
+#include "include/gpu/ganesh/GrBackendSurface.h"
 #include "include/gpu/ganesh/SkSurfaceGanesh.h"
 
 #include <vulkan/vulkan.h>
+#if defined(__ANDROID__)
 #include <vulkan/vulkan_android.h>
 #include <android/native_window.h>
+#include "android_vulkan_loader.h"
+#elif defined(__linux__)
+#include <vulkan/vulkan_wayland.h>
+#include <wayland-client.h>
+#endif
+
+static SkColorType moonbit_skia_vulkan_color_type(VkFormat format) {
+  switch (format) {
+    case VK_FORMAT_B8G8R8A8_UNORM:
+    case VK_FORMAT_B8G8R8A8_SRGB:
+      return kBGRA_8888_SkColorType;
+    default:
+      return kRGBA_8888_SkColorType;
+  }
+}
 
 /// Heap-allocated Vulkan context state. Stored as the `device` field of
 /// MoonbitSkiaGpuContext. The finalizer calls
@@ -408,6 +599,11 @@ struct MoonbitSkiaVulkanSwapChain {
   VkSurfaceKHR surface;
   VkFormat image_format;
   uint32_t queue_family_index;
+  std::vector<VkImage> images;
+  std::vector<VkFence> image_fences;
+  VkFence acquire_fence;
+  VkSemaphore render_finished;
+  uint32_t current_image_index;
 };
 
 void moonbit_skia_vulkan_release_context(void* object) {
@@ -430,6 +626,19 @@ void moonbit_skia_vulkan_release_swapchain(void* object) {
   }
   auto* sc = static_cast<MoonbitSkiaVulkanSwapChain*>(object);
   if (sc->device != VK_NULL_HANDLE) {
+    if (sc->render_finished != VK_NULL_HANDLE) {
+      vkDestroySemaphore(sc->device, sc->render_finished, nullptr);
+      sc->render_finished = VK_NULL_HANDLE;
+    }
+    if (sc->acquire_fence != VK_NULL_HANDLE) {
+      vkDestroyFence(sc->device, sc->acquire_fence, nullptr);
+      sc->acquire_fence = VK_NULL_HANDLE;
+    }
+    for (VkFence fence : sc->image_fences) {
+      if (fence != VK_NULL_HANDLE) {
+        vkDestroyFence(sc->device, fence, nullptr);
+      }
+    }
     if (sc->swapchain != VK_NULL_HANDLE) {
       vkDestroySwapchainKHR(sc->device, sc->swapchain, nullptr);
     }
@@ -440,11 +649,128 @@ void moonbit_skia_vulkan_release_swapchain(void* object) {
   delete sc;
 }
 
+static bool moonbit_skia_vulkan_prepare_swapchain(
+  MoonbitSkiaVulkanSwapChain* sc
+) {
+  if (sc == nullptr || sc->device == VK_NULL_HANDLE ||
+    sc->swapchain == VK_NULL_HANDLE || sc->images.empty()) {
+    return false;
+  }
+  VkSemaphoreCreateInfo semaphore_info = {};
+  semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+  if (vkCreateSemaphore(
+    sc->device,
+    &semaphore_info,
+    nullptr,
+    &sc->render_finished
+  ) != VK_SUCCESS) {
+    return false;
+  }
+
+  VkFenceCreateInfo acquire_fence_info = {};
+  acquire_fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  if (vkCreateFence(
+    sc->device,
+    &acquire_fence_info,
+    nullptr,
+    &sc->acquire_fence
+  ) != VK_SUCCESS) {
+    return false;
+  }
+  VkFenceCreateInfo fence_info = acquire_fence_info;
+  fence_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+  sc->image_fences.resize(sc->images.size(), VK_NULL_HANDLE);
+  for (VkFence& fence : sc->image_fences) {
+    if (vkCreateFence(sc->device, &fence_info, nullptr, &fence) != VK_SUCCESS) {
+      return false;
+    }
+  }
+  VkResult acquire = vkAcquireNextImageKHR(
+    sc->device,
+    sc->swapchain,
+    UINT64_MAX,
+    VK_NULL_HANDLE,
+    sc->acquire_fence,
+    &sc->current_image_index
+  );
+  if (acquire != VK_SUCCESS && acquire != VK_SUBOPTIMAL_KHR) {
+    return false;
+  }
+  if (vkWaitForFences(sc->device, 1, &sc->acquire_fence, VK_TRUE, UINT64_MAX) !=
+    VK_SUCCESS) {
+    return false;
+  }
+  vkResetFences(sc->device, 1, &sc->acquire_fence);
+  VkFence current_fence = sc->image_fences[sc->current_image_index];
+  if (vkWaitForFences(sc->device, 1, &current_fence, VK_TRUE, UINT64_MAX) !=
+    VK_SUCCESS) {
+    return false;
+  }
+  vkResetFences(sc->device, 1, &current_fence);
+  return true;
+}
+
+static bool moonbit_skia_vulkan_acquire_next(
+  MoonbitSkiaVulkanSwapChain* sc
+) {
+  if (sc == nullptr || sc->image_fences.empty()) {
+    return false;
+  }
+  VkResult acquire = vkAcquireNextImageKHR(
+    sc->device,
+    sc->swapchain,
+    UINT64_MAX,
+    VK_NULL_HANDLE,
+    sc->acquire_fence,
+    &sc->current_image_index
+  );
+  if (acquire != VK_SUCCESS && acquire != VK_SUBOPTIMAL_KHR) {
+    return false;
+  }
+  if (vkWaitForFences(sc->device, 1, &sc->acquire_fence, VK_TRUE, UINT64_MAX) !=
+    VK_SUCCESS) {
+    return false;
+  }
+  vkResetFences(sc->device, 1, &sc->acquire_fence);
+  VkFence current_fence = sc->image_fences[sc->current_image_index];
+  if (vkWaitForFences(sc->device, 1, &current_fence, VK_TRUE, UINT64_MAX) !=
+    VK_SUCCESS) {
+    return false;
+  }
+  vkResetFences(sc->device, 1, &current_fence);
+  return true;
+}
+
 static GrDirectContext* moonbit_skia_make_vulkan_direct_context(
   MoonbitSkiaVulkanContext** out_context
 ) {
+#if defined(__ANDROID__)
+  if (!moui_skia_android_vulkan_load()) {
+    return nullptr;
+  }
+#endif
+  const char* instance_extensions[] = {
+    VK_KHR_SURFACE_EXTENSION_NAME,
+#if defined(__ANDROID__)
+    VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,
+#elif defined(__linux__)
+    VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME,
+#endif
+  };
+  VkApplicationInfo application_info = {};
+  application_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+  application_info.pApplicationName = "MoUI";
+  application_info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+  application_info.pEngineName = "Skia";
+  application_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+  application_info.apiVersion = VK_API_VERSION_1_1;
   VkInstanceCreateInfo instance_info = {};
   instance_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+  instance_info.pApplicationInfo = &application_info;
+  instance_info.enabledExtensionCount = static_cast<uint32_t>(
+    sizeof(instance_extensions) / sizeof(instance_extensions[0])
+  );
+  instance_info.ppEnabledExtensionNames = instance_extensions;
   VkInstance instance = VK_NULL_HANDLE;
   VkResult err = vkCreateInstance(&instance_info, nullptr, &instance);
   if (err != VK_SUCCESS || instance == VK_NULL_HANDLE) {
@@ -516,12 +842,35 @@ static GrDirectContext* moonbit_skia_make_vulkan_direct_context(
   VkQueue queue;
   vkGetDeviceQueue(device, queue_family_index, 0, &queue);
 
-  GrVkBackendContext backend_context;
+  skgpu::VulkanBackendContext backend_context;
   backend_context.fInstance = instance;
   backend_context.fPhysicalDevice = physical_device;
   backend_context.fDevice = device;
   backend_context.fQueue = queue;
   backend_context.fGraphicsQueueIndex = queue_family_index;
+  backend_context.fMaxAPIVersion = VK_API_VERSION_1_1;
+  backend_context.fGetProc = [](
+    const char* name,
+    VkInstance proc_instance,
+    VkDevice proc_device
+  ) -> PFN_vkVoidFunction {
+    if (proc_device != VK_NULL_HANDLE) {
+      PFN_vkVoidFunction proc = vkGetDeviceProcAddr(proc_device, name);
+      if (proc != nullptr) {
+        return proc;
+      }
+    }
+    return vkGetInstanceProcAddr(proc_instance, name);
+  };
+  backend_context.fMemoryAllocator = SkiaVMA::Make(
+    backend_context,
+    SkiaVMA::Options()
+  );
+  if (!backend_context.fMemoryAllocator) {
+    vkDestroyDevice(device, nullptr);
+    vkDestroyInstance(instance, nullptr);
+    return nullptr;
+  }
 
   sk_sp<GrDirectContext> context = GrDirectContexts::MakeVulkan(
     backend_context
@@ -545,7 +894,8 @@ static GrDirectContext* moonbit_skia_make_vulkan_direct_context(
 
 extern "C" MOONBIT_FFI_EXPORT int32_t
 moonbit_skia_surface_gpu_vulkan_opt_in_enabled(void) {
-#if defined(MOUI_SKIA_ENABLE_GPU_VULKAN) && defined(__ANDROID__)
+#if defined(MOUI_SKIA_ENABLE_GPU_VULKAN) && \
+  (defined(__ANDROID__) || defined(__linux__))
   return 1;
 #else
   return 0;
@@ -611,7 +961,7 @@ moonbit_skia_gpu_context_vulkan(void) {
 // definitions live in the opt-in block below. These are safe because no EGL
 // objects are ever allocated when the opt-in is disabled, so the finalizers
 // in skia_stub_common.cpp only call these with nullptr.
-#if defined(__OHOS__) && \
+#if (defined(__OHOS__) || defined(__ANDROID__)) && \
   (!defined(MOUI_SKIA_ENABLE_GPU_EGL) || \
    !defined(MOUI_SKIA_HAS_GANESH_EGL_HEADERS))
 void moonbit_skia_egl_release_context(void* object) { (void)object; }
@@ -623,13 +973,23 @@ void moonbit_skia_egl_release_window(void* object) { (void)object; }
 #include "include/gpu/ganesh/gl/GrGLBackendContext.h"
 #include "include/gpu/ganesh/gl/GrGLDirectContext.h"
 #include "include/gpu/ganesh/gl/GrGLTypes.h"
-#include "include/gpu/ganesh/GrBackendRenderTarget.h"
+#include "include/gpu/ganesh/GrBackendSurface.h"
 #include "include/gpu/ganesh/SkSurfaceGanesh.h"
 
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <GLES3/gl3.h>
+#if defined(__OHOS__)
 #include <native_window/external_window.h>
+#else
+#include <android/native_window.h>
+#endif
+
+#if defined(__OHOS__)
+using MoonbitSkiaEglNativeWindow = OHNativeWindow;
+#else
+using MoonbitSkiaEglNativeWindow = ANativeWindow;
+#endif
 
 /// Heap-allocated EGL context state. Stored as the `device` field of
 /// MoonbitSkiaGpuContext. The finalizer calls
@@ -639,6 +999,7 @@ struct MoonbitSkiaEglContext {
   EGLDisplay display;
   EGLContext context;
   EGLConfig config;
+  EGLSurface bootstrap_surface;
 };
 
 /// Heap-allocated EGL window surface state. Stored as the
@@ -660,6 +1021,11 @@ void moonbit_skia_egl_release_context(void* object) {
     eglMakeCurrent(
       ctx->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT
     );
+  }
+  if (ctx->bootstrap_surface != EGL_NO_SURFACE) {
+    eglDestroySurface(ctx->display, ctx->bootstrap_surface);
+  }
+  if (ctx->context != EGL_NO_CONTEXT) {
     eglDestroyContext(ctx->display, ctx->context);
   }
   if (ctx->display != EGL_NO_DISPLAY) {
@@ -704,7 +1070,7 @@ static GrDirectContext* moonbit_skia_make_egl_direct_context(
     EGL_DEPTH_SIZE, 0,
     EGL_STENCIL_SIZE, 0,
     EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT,
-    EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+    EGL_SURFACE_TYPE, EGL_WINDOW_BIT | EGL_PBUFFER_BIT,
     EGL_NONE,
   };
   EGLConfig config = nullptr;
@@ -727,9 +1093,26 @@ static GrDirectContext* moonbit_skia_make_egl_direct_context(
     return nullptr;
   }
 
-  // Make the context current so GrGLMakeNativeInterface can pick up
-  // platform GL function pointers via eglGetProcAddress.
-  if (!eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, context)) {
+  const EGLint pbuffer_attribs[] = {
+    EGL_WIDTH, 1,
+    EGL_HEIGHT, 1,
+    EGL_NONE,
+  };
+  EGLSurface bootstrap_surface = eglCreatePbufferSurface(
+    display,
+    config,
+    pbuffer_attribs
+  );
+  if (bootstrap_surface == EGL_NO_SURFACE) {
+    eglDestroyContext(display, context);
+    eglTerminate(display);
+    return nullptr;
+  }
+
+  // The bootstrap pbuffer lets API 23 devices initialize the GL interface
+  // even when surfaceless contexts are unavailable.
+  if (!eglMakeCurrent(display, bootstrap_surface, bootstrap_surface, context)) {
+    eglDestroySurface(display, bootstrap_surface);
     eglDestroyContext(display, context);
     eglTerminate(display);
     return nullptr;
@@ -738,6 +1121,7 @@ static GrDirectContext* moonbit_skia_make_egl_direct_context(
   sk_sp<GrGLInterface> gl_interface = GrGLMakeNativeInterface();
   if (!gl_interface) {
     eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    eglDestroySurface(display, bootstrap_surface);
     eglDestroyContext(display, context);
     eglTerminate(display);
     return nullptr;
@@ -746,6 +1130,7 @@ static GrDirectContext* moonbit_skia_make_egl_direct_context(
   GrDirectContext* gpu_context = GrDirectContexts::MakeGL(gl_interface).release();
   if (!gpu_context) {
     eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    eglDestroySurface(display, bootstrap_surface);
     eglDestroyContext(display, context);
     eglTerminate(display);
     return nullptr;
@@ -755,6 +1140,7 @@ static GrDirectContext* moonbit_skia_make_egl_direct_context(
   egl_context->display = display;
   egl_context->context = context;
   egl_context->config = config;
+  egl_context->bootstrap_surface = bootstrap_surface;
   *out_context = egl_context;
   return gpu_context;
 }
@@ -762,7 +1148,8 @@ static GrDirectContext* moonbit_skia_make_egl_direct_context(
 
 extern "C" MOONBIT_FFI_EXPORT int32_t
 moonbit_skia_surface_gpu_egl_opt_in_enabled(void) {
-#if defined(MOUI_SKIA_ENABLE_GPU_EGL) && defined(__OHOS__)
+#if defined(MOUI_SKIA_ENABLE_GPU_EGL) && \
+  (defined(__OHOS__) || defined(__ANDROID__))
   return 1;
 #else
   return 0;
@@ -1297,8 +1684,64 @@ moonbit_skia_surface_raster_n32_premul(int32_t width, int32_t height) {
 
 #if defined(MOUI_SKIA_ENABLE_GPU_METAL) && \
   defined(MOUI_SKIA_HAS_GANESH_METAL_HEADERS)
-static GrSurfaceOrigin moonbit_skia_surface_origin(int32_t origin) {
-  return origin == 1 ? kBottomLeft_GrSurfaceOrigin : kTopLeft_GrSurfaceOrigin;
+static sk_sp<SkSurface> moonbit_skia_wrap_metal_layer(
+  GrDirectContext* context,
+  void* layer,
+  int32_t width,
+  int32_t height,
+  int32_t origin,
+  GrMTLHandle* drawable_handle
+) {
+  if (drawable_handle != nullptr) {
+    *drawable_handle = nullptr;
+  }
+  using ObjcSendNoArg = void* (*)(void*, SEL);
+  void* drawable = reinterpret_cast<ObjcSendNoArg>(objc_msgSend)(
+    layer,
+    sel_registerName("nextDrawable")
+  );
+  if (drawable == nullptr) {
+    if (std::getenv("MOUI_SKIA_GPU_DIAGNOSTICS") != nullptr) {
+      std::fprintf(stderr, "MoUI macOS Metal acquire failed: nextDrawable returned nil\n");
+    }
+    return nullptr;
+  }
+  void* texture = reinterpret_cast<ObjcSendNoArg>(objc_msgSend)(
+    drawable,
+    sel_registerName("texture")
+  );
+  if (texture == nullptr) {
+    if (std::getenv("MOUI_SKIA_GPU_DIAGNOSTICS") != nullptr) {
+      std::fprintf(stderr, "MoUI macOS Metal acquire failed: drawable texture was nil\n");
+    }
+    return nullptr;
+  }
+
+  GrMtlTextureInfo texture_info;
+  texture_info.fTexture.retain(static_cast<GrMTLHandle>(texture));
+  GrBackendRenderTarget render_target = GrBackendRenderTargets::MakeMtl(
+    width,
+    height,
+    texture_info
+  );
+  sk_sp<SkSurface> surface = SkSurfaces::WrapBackendRenderTarget(
+    context,
+    render_target,
+    moonbit_skia_surface_origin(origin),
+    kBGRA_8888_SkColorType,
+    nullptr,
+    nullptr
+  );
+  if (!surface) {
+    if (std::getenv("MOUI_SKIA_GPU_DIAGNOSTICS") != nullptr) {
+      std::fprintf(stderr, "MoUI macOS Metal acquire failed: Skia backend wrap returned null\n");
+    }
+    return nullptr;
+  }
+  if (drawable_handle != nullptr) {
+    *drawable_handle = static_cast<GrMTLHandle>(drawable);
+  }
+  return surface;
 }
 #endif
 
@@ -1374,48 +1817,33 @@ moonbit_skia_surface_metal_window(
   }
 #if defined(MOUI_SKIA_ENABLE_GPU_METAL) && \
   defined(MOUI_SKIA_HAS_GANESH_METAL_HEADERS)
-  (void)sample_count;
   (void)stencil_bits;
 
   void* layer = reinterpret_cast<void*>(static_cast<uintptr_t>(layer_ptr));
-
-  // [CAMetalLayer nextDrawable] → id<CAMetalDrawable>
-  using ObjcSendNoArg = void* (*)(void*, SEL);
-  void* drawable = reinterpret_cast<ObjcSendNoArg>(objc_msgSend)(
-    layer,
-    sel_registerName("nextDrawable")
-  );
-  if (drawable == nullptr) {
-    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  if (context->device != nullptr) {
+    using ObjcSendSetObject = void (*)(void*, SEL, void*);
+    reinterpret_cast<ObjcSendSetObject>(objc_msgSend)(
+      layer,
+      sel_registerName("setDevice:"),
+      context->device
+    );
   }
-
-  // [CAMetalDrawable texture] → id<MTLTexture>
-  void* texture = reinterpret_cast<ObjcSendNoArg>(objc_msgSend)(
-    drawable,
-    sel_registerName("texture")
-  );
-  if (texture == nullptr) {
-    moonbit_skia_objc_release(drawable);
-    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
-  }
-
-  // Wrap the MTLTexture as an SkSurface via SkSurfaces::WrapMetalBackendSurface.
-  // The drawable owns the texture; we retain the drawable in host_present_handle
-  // so the texture stays alive for the lifetime of this surface.
-  GrMtlTextureInfo texture_info;
-  texture_info.fTexture = static_cast<GrMTLHandle>(texture);
-
-  sk_sp<SkSurface> surface = SkSurfaces::WrapMetalBackendSurface(
+  GrMTLHandle drawable_handle = nullptr;
+  sk_sp<SkSurface> surface = moonbit_skia_wrap_metal_layer(
     context->context,
-    texture_info,
-    moonbit_skia_surface_origin(origin),
-    nullptr
+    layer,
+    width,
+    height,
+    origin,
+    &drawable_handle
   );
-  if (!surface) {
-    moonbit_skia_objc_release(drawable);
+  (void)sample_count;
+  if (!surface || drawable_handle == nullptr) {
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
   }
 
+  void* drawable = const_cast<void*>(drawable_handle);
+  moonbit_skia_objc_retain(drawable);
   MoonbitSkiaSurface* wrapper = moonbit_skia_surface_wrapper_with_gpu_context(
     surface.release(),
     context->context
@@ -1425,7 +1853,6 @@ moonbit_skia_surface_metal_window(
 #else
   (void)layer_ptr;
   (void)origin;
-  (void)sample_count;
   (void)stencil_bits;
   return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
 #endif
@@ -1476,39 +1903,22 @@ moonbit_skia_surface_metal_present_and_acquire_next(
   wrapper->host_present_handle = nullptr;
   // gpu_context_owner is left for the finalizer to unref.
 
-  // Acquire the next drawable for the following frame.
-  using ObjcSendNoArg = void* (*)(void*, SEL);
-  void* next_drawable = reinterpret_cast<ObjcSendNoArg>(objc_msgSend)(
-    layer,
-    sel_registerName("nextDrawable")
-  );
-  if (next_drawable == nullptr) {
-    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
-  }
-
-  void* next_texture = reinterpret_cast<ObjcSendNoArg>(objc_msgSend)(
-    next_drawable,
-    sel_registerName("texture")
-  );
-  if (next_texture == nullptr) {
-    moonbit_skia_objc_release(next_drawable);
-    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
-  }
-
-  GrMtlTextureInfo texture_info;
-  texture_info.fTexture = static_cast<GrMTLHandle>(next_texture);
-
-  sk_sp<SkSurface> next_surface = SkSurfaces::WrapMetalBackendSurface(
+  // Acquire and wrap the next drawable using Skia's current Ganesh Metal API.
+  GrMTLHandle next_drawable_handle = nullptr;
+  sk_sp<SkSurface> next_surface = moonbit_skia_wrap_metal_layer(
     gpu_context,
-    texture_info,
-    moonbit_skia_surface_origin(origin),
-    nullptr
+    layer,
+    width,
+    height,
+    origin,
+    &next_drawable_handle
   );
-  if (!next_surface) {
-    moonbit_skia_objc_release(next_drawable);
+  if (!next_surface || next_drawable_handle == nullptr) {
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
   }
 
+  void* next_drawable = const_cast<void*>(next_drawable_handle);
+  moonbit_skia_objc_retain(next_drawable);
   MoonbitSkiaSurface* new_wrapper =
     moonbit_skia_surface_wrapper_with_gpu_context(
       next_surface.release(),
@@ -1553,98 +1963,81 @@ moonbit_skia_surface_direct3d_window(
   (void)stencil_bits;
 
   HWND hwnd = reinterpret_cast<HWND>(static_cast<uintptr_t>(hwnd_ptr));
-  ID3D11Device* device = static_cast<ID3D11Device*>(context->device);
-  if (device == nullptr) {
+  ID3D12Device* device = static_cast<ID3D12Device*>(context->device);
+  ID3D12CommandQueue* queue = static_cast<ID3D12CommandQueue*>(context->queue);
+  if (device == nullptr || queue == nullptr) {
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
   }
 
-  // Get DXGI factory from the device
-  ComPtr<IDXGIDevice> dxgi_device;
-  HRESULT hr = device->QueryInterface(
-    __uuidof(IDXGIDevice),
-    reinterpret_cast<void**>(dxgi_device.GetAddressOf())
+  ComPtr<IDXGIFactory4> factory;
+  HRESULT hr = CreateDXGIFactory1(IID_PPV_ARGS(&factory));
+  if (FAILED(hr)) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+
+  DXGI_SWAP_CHAIN_DESC1 description = {};
+  description.Width = static_cast<UINT>(width);
+  description.Height = static_cast<UINT>(height);
+  description.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+  description.Stereo = FALSE;
+  description.SampleDesc.Count = 1;
+  description.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+  description.BufferCount = 3;
+  description.Scaling = DXGI_SCALING_STRETCH;
+  description.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+  description.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
+  description.Flags = 0;
+
+  ComPtr<IDXGISwapChain1> swap_chain_v1;
+  hr = factory->CreateSwapChainForHwnd(
+    queue,
+    hwnd,
+    &description,
+    nullptr,
+    nullptr,
+    &swap_chain_v1
   );
   if (FAILED(hr)) {
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
   }
+  factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
 
-  ComPtr<IDXGIAdapter> adapter;
-  hr = dxgi_device->GetAdapter(&adapter);
+  auto* swap_chain = new MoonbitSkiaD3D12SwapChain();
+  hr = swap_chain_v1.As(&swap_chain->swap_chain);
   if (FAILED(hr)) {
+    delete swap_chain;
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
   }
-
-  ComPtr<IDXGIFactory1> factory;
-  hr = adapter->GetParent(
-    __uuidof(IDXGIFactory1),
-    reinterpret_cast<void**>(factory.GetAddressOf())
-  );
-  if (FAILED(hr)) {
-    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
-  }
-
-  // Create swap chain targeting the HWND
-  DXGI_SWAP_CHAIN_DESC desc;
-  ZeroMemory(&desc, sizeof(desc));
-  desc.BufferCount = 2;
-  desc.BufferDesc.Width = width;
-  desc.BufferDesc.Height = height;
-  desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-  desc.BufferDesc.RefreshRate.Numerator = 60;
-  desc.BufferDesc.RefreshRate.Denominator = 1;
-  desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-  desc.OutputWindow = hwnd;
-  desc.SampleDesc.Count = 1;
-  desc.SampleDesc.Quality = 0;
-  desc.Windowed = TRUE;
-  desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-
-  ComPtr<IDXGISwapChain> swap_chain;
-  hr = factory->CreateSwapChain(device, &desc, swap_chain.GetAddressOf());
-  if (FAILED(hr)) {
-    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
-  }
-
-  // Get the back buffer texture
-  ComPtr<ID3D11Texture2D> back_buffer;
-  hr = swap_chain->GetBuffer(
+  swap_chain->device = device;
+  swap_chain->queue = queue;
+  swap_chain->width = static_cast<UINT>(width);
+  swap_chain->height = static_cast<UINT>(height);
+  swap_chain->frame_index = swap_chain->swap_chain->GetCurrentBackBufferIndex();
+  hr = device->CreateFence(
     0,
-    __uuidof(ID3D11Texture2D),
-    reinterpret_cast<void**>(back_buffer.GetAddressOf())
+    D3D12_FENCE_FLAG_NONE,
+    IID_PPV_ARGS(&swap_chain->fence)
   );
   if (FAILED(hr)) {
+    delete swap_chain;
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+  swap_chain->fence_event = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+  if (swap_chain->fence_event == nullptr) {
+    delete swap_chain;
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
   }
 
-  // Wrap the back buffer as a GrBackendRenderTarget
-  GrD3DTextureResourceInfo resource_info;
-  resource_info.fTexture = back_buffer;
-  resource_info.fFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-
-  GrBackendRenderTarget backend_rt = GrBackendRenderTargets::MakeDirect3D(
+  MoonbitSkiaSurface* wrapper = moonbit_skia_d3d12_wrap_back_buffer(
+    context->context,
+    swap_chain,
     width,
     height,
-    resource_info
+    origin
   );
-
-  sk_sp<SkSurface> surface = SkSurfaces::WrapBackendSurface(
-    context->context,
-    backend_rt,
-    moonbit_skia_surface_origin(origin),
-    nullptr,
-    nullptr
-  );
-  if (!surface) {
-    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  if (wrapper->surface == nullptr) {
+    moonbit_skia_com_release(swap_chain);
   }
-
-  MoonbitSkiaSurface* wrapper = moonbit_skia_surface_wrapper_with_gpu_context(
-    surface.release(),
-    context->context
-  );
-  // The swap chain is stored as host_present_handle and released in the
-  // finalizer via moonbit_skia_com_release.
-  wrapper->host_present_handle = swap_chain.Detach();
   return wrapper;
 #else
   (void)hwnd_ptr;
@@ -1679,62 +2072,71 @@ moonbit_skia_surface_direct3d_present_and_acquire_next(
   (void)sample_count;
   (void)stencil_bits;
 
-  IDXGISwapChain* swap_chain = static_cast<IDXGISwapChain*>(
-    wrapper->host_present_handle
-  );
+  auto* swap_chain = moonbit_skia_d3d12_swap_chain(wrapper->host_present_handle);
   GrDirectContext* gpu_context = wrapper->gpu_context_owner;
+  if (swap_chain == nullptr || gpu_context == nullptr) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
 
-  // Present the rendered frame (vsync on)
-  HRESULT hr = swap_chain->Present(1, 0);
-  if (FAILED(hr)) {
+  GrFlushInfo flush_info;
+  gpu_context->flush(
+    wrapper->surface,
+    SkSurfaces::BackendSurfaceAccess::kPresent,
+    flush_info
+  );
+  if (!gpu_context->submit()) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+  }
+  if (!moonbit_skia_d3d12_wait_for_frame(swap_chain)) {
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
   }
 
-  // Release the old surface; the swap chain is moved to the new wrapper.
+  HRESULT hr = swap_chain->swap_chain->Present(1, 0);
+  if (FAILED(hr)) {
+    swap_chain->last_device_removed_reason = swap_chain->device->GetDeviceRemovedReason();
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+  }
+
+  // Transfer the swap-chain state to the next surface wrapper. The old
+  // back-buffer resource must be released before ResizeBuffers.
   wrapper->surface->unref();
   wrapper->surface = nullptr;
   wrapper->host_present_handle = nullptr;
 
-  // Acquire the next back buffer
-  ComPtr<ID3D11Texture2D> back_buffer;
-  hr = swap_chain->GetBuffer(
-    0,
-    __uuidof(ID3D11Texture2D),
-    reinterpret_cast<void**>(back_buffer.GetAddressOf())
-  );
-  if (FAILED(hr)) {
-    swap_chain->Release();
+  if (width <= 0 || height <= 0) {
+    moonbit_skia_com_release(swap_chain);
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
   }
-
-  GrD3DTextureResourceInfo resource_info;
-  resource_info.fTexture = back_buffer;
-  resource_info.fFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-
-  GrBackendRenderTarget backend_rt = GrBackendRenderTargets::MakeDirect3D(
+  if (swap_chain->width != static_cast<UINT>(width) ||
+    swap_chain->height != static_cast<UINT>(height)) {
+    gpu_context->freeGpuResources();
+    hr = swap_chain->swap_chain->ResizeBuffers(
+      3,
+      static_cast<UINT>(width),
+      static_cast<UINT>(height),
+      DXGI_FORMAT_R8G8B8A8_UNORM,
+      0
+    );
+    if (FAILED(hr)) {
+      swap_chain->last_device_removed_reason = swap_chain->device->GetDeviceRemovedReason();
+      moonbit_skia_com_release(swap_chain);
+      return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+    }
+    swap_chain->width = static_cast<UINT>(width);
+    swap_chain->height = static_cast<UINT>(height);
+  }
+  swap_chain->frame_index = swap_chain->swap_chain->GetCurrentBackBufferIndex();
+  MoonbitSkiaSurface* new_wrapper = moonbit_skia_d3d12_wrap_back_buffer(
+    gpu_context,
+    swap_chain,
     width,
     height,
-    resource_info
+    origin
   );
-
-  sk_sp<SkSurface> next_surface = SkSurfaces::WrapBackendSurface(
-    gpu_context,
-    backend_rt,
-    moonbit_skia_surface_origin(origin),
-    nullptr,
-    nullptr
-  );
-  if (!next_surface) {
-    swap_chain->Release();
+  if (new_wrapper->surface == nullptr) {
+    moonbit_skia_com_release(swap_chain);
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
   }
-
-  MoonbitSkiaSurface* new_wrapper =
-    moonbit_skia_surface_wrapper_with_gpu_context(
-      next_surface.release(),
-      gpu_context
-    );
-  new_wrapper->host_present_handle = swap_chain;
   return new_wrapper;
 #else
   (void)hwnd_ptr;
@@ -1768,7 +2170,7 @@ moonbit_skia_surface_vulkan_window(
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
   }
 #if defined(MOUI_SKIA_ENABLE_GPU_VULKAN) && \
-  defined(MOUI_SKIA_HAS_GANESH_VULKAN_HEADERS)
+  defined(MOUI_SKIA_HAS_GANESH_VULKAN_HEADERS) && defined(__ANDROID__)
   (void)sample_count;
   (void)stencil_bits;
 
@@ -1795,6 +2197,17 @@ moonbit_skia_surface_vulkan_window(
     &surface
   );
   if (err != VK_SUCCESS || surface == VK_NULL_HANDLE) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+  VkBool32 present_supported = VK_FALSE;
+  err = vkGetPhysicalDeviceSurfaceSupportKHR(
+    vk_context->physical_device,
+    vk_context->queue_family_index,
+    surface,
+    &present_supported
+  );
+  if (err != VK_SUCCESS || present_supported != VK_TRUE) {
+    vkDestroySurfaceKHR(vk_context->instance, surface, nullptr);
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
   }
 
@@ -1871,41 +2284,6 @@ moonbit_skia_surface_vulkan_window(
   vkGetSwapchainImagesKHR(
     vk_context->device, swapchain, &image_count, images.data()
   );
-  VkImage swapchain_image = images[0];
-
-  // Wrap as GrVkImageInfo
-  GrVkImageInfo image_info;
-  image_info.fImage = swapchain_image;
-  image_info.fAlloc = nullptr;
-  image_info.fFormat = chosen_format;
-  image_info.fImageTiling = VK_IMAGE_TILING_OPTIMAL;
-  image_info.fImageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-  image_info.fSampleCount = 1;
-  image_info.fLevelCount = 1;
-  image_info.fCurrentQueueFamily = vk_context->queue_family_index;
-  image_info.fProtectedLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-
-  GrBackendRenderTarget backend_rt = GrBackendRenderTargets::MakeVk(
-    width, height, image_info
-  );
-
-  sk_sp<SkSurface> surface_obj = SkSurfaces::WrapBackendSurface(
-    context->context,
-    backend_rt,
-    moonbit_skia_surface_origin(origin),
-    nullptr,
-    nullptr
-  );
-  if (!surface_obj) {
-    vkDestroySwapchainKHR(vk_context->device, swapchain, nullptr);
-    vkDestroySurfaceKHR(vk_context->instance, surface, nullptr);
-    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
-  }
-
-  MoonbitSkiaSurface* wrapper = moonbit_skia_surface_wrapper_with_gpu_context(
-    surface_obj.release(),
-    context->context
-  );
   auto* sc = new MoonbitSkiaVulkanSwapChain();
   sc->device = vk_context->device;
   sc->instance = vk_context->instance;
@@ -1914,6 +2292,45 @@ moonbit_skia_surface_vulkan_window(
   sc->surface = surface;
   sc->image_format = chosen_format;
   sc->queue_family_index = vk_context->queue_family_index;
+  sc->images = std::move(images);
+  if (!moonbit_skia_vulkan_prepare_swapchain(sc)) {
+    moonbit_skia_vulkan_release_swapchain(sc);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+  VkImage swapchain_image = sc->images[sc->current_image_index];
+
+  // Wrap as GrVkImageInfo
+  GrVkImageInfo image_info;
+  image_info.fImage = swapchain_image;
+  image_info.fFormat = chosen_format;
+  image_info.fImageTiling = VK_IMAGE_TILING_OPTIMAL;
+  image_info.fImageLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  image_info.fImageUsageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  image_info.fSampleCount = 1;
+  image_info.fLevelCount = 1;
+  image_info.fCurrentQueueFamily = vk_context->queue_family_index;
+
+  GrBackendRenderTarget backend_rt = GrBackendRenderTargets::MakeVk(
+    width, height, image_info
+  );
+
+  sk_sp<SkSurface> surface_obj = SkSurfaces::WrapBackendRenderTarget(
+    context->context,
+    backend_rt,
+    moonbit_skia_surface_origin(origin),
+    moonbit_skia_vulkan_color_type(chosen_format),
+    nullptr,
+    nullptr
+  );
+  if (!surface_obj) {
+    moonbit_skia_vulkan_release_swapchain(sc);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+
+  MoonbitSkiaSurface* wrapper = moonbit_skia_surface_wrapper_with_gpu_context(
+    surface_obj.release(),
+    context->context
+  );
   wrapper->host_present_handle = sc;
   return wrapper;
 #else
@@ -1931,12 +2348,6 @@ moonbit_skia_surface_vulkan_window(
 /// The swapchain and SkSurface wrapping follow the same pattern as the
 /// Android path; only the VkSurfaceKHR creation differs
 /// (`vkCreateWaylandSurfaceKHR` vs `vkCreateAndroidSurfaceKHR`).
-#if defined(MOUI_SKIA_ENABLE_GPU_VULKAN) && \
-  defined(MOUI_SKIA_HAS_GANESH_VULKAN_HEADERS) && defined(__linux__)
-#include <vulkan/vulkan_wayland.h>
-#include <wayland-client.h>
-#endif
-
 extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaSurface*
 moonbit_skia_surface_vulkan_wayland_window(
   MoonbitSkiaGpuContext* context,
@@ -1960,7 +2371,8 @@ moonbit_skia_surface_vulkan_wayland_window(
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
   }
 #if defined(MOUI_SKIA_ENABLE_GPU_VULKAN) && \
-  defined(MOUI_SKIA_HAS_GANESH_VULKAN_HEADERS) && defined(__linux__)
+  defined(MOUI_SKIA_HAS_GANESH_VULKAN_HEADERS) && defined(__linux__) && \
+  !defined(__ANDROID__)
   (void)sample_count;
   (void)stencil_bits;
 
@@ -1993,6 +2405,17 @@ moonbit_skia_surface_vulkan_wayland_window(
   if (err != VK_SUCCESS || surface == VK_NULL_HANDLE) {
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
   }
+  VkBool32 present_supported = VK_FALSE;
+  err = vkGetPhysicalDeviceSurfaceSupportKHR(
+    vk_context->physical_device,
+    vk_context->queue_family_index,
+    surface,
+    &present_supported
+  );
+  if (err != VK_SUCCESS || present_supported != VK_TRUE) {
+    vkDestroySurfaceKHR(vk_context->instance, surface, nullptr);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
 
   // Query surface capabilities
   VkSurfaceCapabilitiesKHR capabilities;
@@ -2067,41 +2490,6 @@ moonbit_skia_surface_vulkan_wayland_window(
   vkGetSwapchainImagesKHR(
     vk_context->device, swapchain, &image_count, images.data()
   );
-  VkImage swapchain_image = images[0];
-
-  // Wrap as GrVkImageInfo
-  GrVkImageInfo image_info;
-  image_info.fImage = swapchain_image;
-  image_info.fAlloc = nullptr;
-  image_info.fFormat = chosen_format;
-  image_info.fImageTiling = VK_IMAGE_TILING_OPTIMAL;
-  image_info.fImageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-  image_info.fSampleCount = 1;
-  image_info.fLevelCount = 1;
-  image_info.fCurrentQueueFamily = vk_context->queue_family_index;
-  image_info.fProtectedLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-
-  GrBackendRenderTarget backend_rt = GrBackendRenderTargets::MakeVk(
-    width, height, image_info
-  );
-
-  sk_sp<SkSurface> surface_obj = SkSurfaces::WrapBackendSurface(
-    context->context,
-    backend_rt,
-    moonbit_skia_surface_origin(origin),
-    nullptr,
-    nullptr
-  );
-  if (!surface_obj) {
-    vkDestroySwapchainKHR(vk_context->device, swapchain, nullptr);
-    vkDestroySurfaceKHR(vk_context->instance, surface, nullptr);
-    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
-  }
-
-  MoonbitSkiaSurface* wrapper = moonbit_skia_surface_wrapper_with_gpu_context(
-    surface_obj.release(),
-    context->context
-  );
   auto* sc = new MoonbitSkiaVulkanSwapChain();
   sc->device = vk_context->device;
   sc->instance = vk_context->instance;
@@ -2110,6 +2498,45 @@ moonbit_skia_surface_vulkan_wayland_window(
   sc->surface = surface;
   sc->image_format = chosen_format;
   sc->queue_family_index = vk_context->queue_family_index;
+  sc->images = std::move(images);
+  if (!moonbit_skia_vulkan_prepare_swapchain(sc)) {
+    moonbit_skia_vulkan_release_swapchain(sc);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+  VkImage swapchain_image = sc->images[sc->current_image_index];
+
+  // Wrap as GrVkImageInfo
+  GrVkImageInfo image_info;
+  image_info.fImage = swapchain_image;
+  image_info.fFormat = chosen_format;
+  image_info.fImageTiling = VK_IMAGE_TILING_OPTIMAL;
+  image_info.fImageLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  image_info.fImageUsageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  image_info.fSampleCount = 1;
+  image_info.fLevelCount = 1;
+  image_info.fCurrentQueueFamily = vk_context->queue_family_index;
+
+  GrBackendRenderTarget backend_rt = GrBackendRenderTargets::MakeVk(
+    width, height, image_info
+  );
+
+  sk_sp<SkSurface> surface_obj = SkSurfaces::WrapBackendRenderTarget(
+    context->context,
+    backend_rt,
+    moonbit_skia_surface_origin(origin),
+    moonbit_skia_vulkan_color_type(chosen_format),
+    nullptr,
+    nullptr
+  );
+  if (!surface_obj) {
+    moonbit_skia_vulkan_release_swapchain(sc);
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+
+  MoonbitSkiaSurface* wrapper = moonbit_skia_surface_wrapper_with_gpu_context(
+    surface_obj.release(),
+    context->context
+  );
   wrapper->host_present_handle = sc;
   return wrapper;
 #else
@@ -2151,50 +2578,61 @@ moonbit_skia_surface_vulkan_present_and_acquire_next(
   );
   GrDirectContext* gpu_context = wrapper->gpu_context_owner;
 
-  // Present the current frame via queue submission
-  VkPresentInfoKHR present_info = {};
-  present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-  present_info.swapchainCount = 1;
-  present_info.pSwapchains = &sc->swapchain;
-  uint32_t image_index = 0;
-  present_info.pImageIndices = &image_index;
-  VkResult err = vkQueuePresentKHR(sc->queue, &present_info);
-  if (err != VK_SUCCESS && err != VK_SUBOPTIMAL_KHR) {
+  // Skia has queued rendering work on the same graphics queue. Submit a
+  // lightweight signal-only batch so presentation waits for that work without
+  // reading pixels back to the CPU.
+  GrFlushInfo flush_info;
+  gpu_context->flush(
+    wrapper->surface,
+    SkSurfaces::BackendSurfaceAccess::kPresent,
+    flush_info
+  );
+  if (!gpu_context->submit()) {
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
   }
-
-  // Acquire the next swapchain image
-  VkSemaphore semaphore = VK_NULL_HANDLE;
-  VkSemaphoreCreateInfo sem_info = {};
-  sem_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-  err = vkCreateSemaphore(sc->device, &sem_info, nullptr, &semaphore);
+  if (sc == nullptr || sc->images.empty() ||
+    sc->current_image_index >= sc->images.size() ||
+    sc->render_finished == VK_NULL_HANDLE) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+  }
+  VkFence current_fence = sc->image_fences[sc->current_image_index];
+  vkResetFences(sc->device, 1, &current_fence);
+  VkSubmitInfo submit_info = {};
+  submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submit_info.signalSemaphoreCount = 1;
+  submit_info.pSignalSemaphores = &sc->render_finished;
+  VkResult err = vkQueueSubmit(sc->queue, 1, &submit_info, current_fence);
   if (err != VK_SUCCESS) {
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
   }
-  err = vkAcquireNextImageKHR(
-    sc->device,
-    sc->swapchain,
-    UINT64_MAX,
-    semaphore,
-    VK_NULL_HANDLE,
-    &image_index
-  );
-  vkDestroySemaphore(sc->device, semaphore, nullptr);
+
+  // Present the image that was acquired before rendering. The semaphore is
+  // signaled by the queue after Skia's submitted work.
+  VkPresentInfoKHR present_info = {};
+  present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+  present_info.waitSemaphoreCount = 1;
+  present_info.pWaitSemaphores = &sc->render_finished;
+  present_info.swapchainCount = 1;
+  present_info.pSwapchains = &sc->swapchain;
+  uint32_t image_index = sc->current_image_index;
+  present_info.pImageIndices = &image_index;
+  err = vkQueuePresentKHR(sc->queue, &present_info);
+  if (err == VK_ERROR_OUT_OF_DATE_KHR || err == VK_ERROR_DEVICE_LOST) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+  }
   if (err != VK_SUCCESS && err != VK_SUBOPTIMAL_KHR) {
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
   }
 
-  // Get the swapchain image at the acquired index
-  uint32_t image_count = 0;
-  vkGetSwapchainImagesKHR(sc->device, sc->swapchain, &image_count, nullptr);
-  if (image_count <= image_index) {
+  // Acquire and fence the next image before wrapping its backend resource.
+  if (!moonbit_skia_vulkan_acquire_next(sc)) {
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
   }
-  std::vector<VkImage> images(image_count);
-  vkGetSwapchainImagesKHR(
-    sc->device, sc->swapchain, &image_count, images.data()
-  );
-  VkImage next_image = images[image_index];
+  image_index = sc->current_image_index;
+  if (image_index >= sc->images.size()) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+  }
+  VkImage next_image = sc->images[image_index];
 
   // Release the old surface; the swapchain state is moved to the new wrapper.
   wrapper->surface->unref();
@@ -2204,23 +2642,23 @@ moonbit_skia_surface_vulkan_present_and_acquire_next(
   // Wrap the next swapchain image as a new SkSurface
   GrVkImageInfo image_info;
   image_info.fImage = next_image;
-  image_info.fAlloc = nullptr;
   image_info.fFormat = sc->image_format;
   image_info.fImageTiling = VK_IMAGE_TILING_OPTIMAL;
-  image_info.fImageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  image_info.fImageLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  image_info.fImageUsageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
   image_info.fSampleCount = 1;
   image_info.fLevelCount = 1;
   image_info.fCurrentQueueFamily = sc->queue_family_index;
-  image_info.fProtectedLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
   GrBackendRenderTarget backend_rt = GrBackendRenderTargets::MakeVk(
     width, height, image_info
   );
 
-  sk_sp<SkSurface> next_surface = SkSurfaces::WrapBackendSurface(
+  sk_sp<SkSurface> next_surface = SkSurfaces::WrapBackendRenderTarget(
     gpu_context,
     backend_rt,
     moonbit_skia_surface_origin(origin),
+    moonbit_skia_vulkan_color_type(sc->image_format),
     nullptr,
     nullptr
   );
@@ -2277,14 +2715,14 @@ moonbit_skia_surface_egl_window(
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
   }
 
-  OHNativeWindow* window = reinterpret_cast<OHNativeWindow*>(
+  MoonbitSkiaEglNativeWindow* window = reinterpret_cast<MoonbitSkiaEglNativeWindow*>(
     static_cast<uintptr_t>(native_window_ptr)
   );
   if (window == nullptr) {
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
   }
 
-  // Create an EGL window surface from the OHNativeWindow.
+  // Create an EGL window surface from the platform native window.
   const EGLint surface_attribs[] = {
     EGL_RENDER_BUFFER, EGL_BACK_BUFFER,
     EGL_NONE,
@@ -2326,10 +2764,11 @@ moonbit_skia_surface_egl_window(
     width, height, actual_stencil, actual_samples, fb_info
   );
 
-  sk_sp<SkSurface> surface_obj = SkSurfaces::WrapBackendSurface(
+  sk_sp<SkSurface> surface_obj = SkSurfaces::WrapBackendRenderTarget(
     context->context,
     backend_rt,
     moonbit_skia_surface_origin(origin),
+    kRGBA_8888_SkColorType,
     nullptr,
     nullptr
   );
@@ -2423,10 +2862,11 @@ moonbit_skia_surface_egl_present_and_acquire_next(
     width, height, actual_stencil, actual_samples, fb_info
   );
 
-  sk_sp<SkSurface> next_surface = SkSurfaces::WrapBackendSurface(
+  sk_sp<SkSurface> next_surface = SkSurfaces::WrapBackendRenderTarget(
     gpu_context,
     backend_rt,
     moonbit_skia_surface_origin(origin),
+    kRGBA_8888_SkColorType,
     nullptr,
     nullptr
   );

@@ -3,7 +3,7 @@
 /// for monitoring GPU context-loss signals and deciding when to fall back
 /// to `SkiaRasterNative`. Per-platform loss detectors (Metal
 /// `MTLDevice deviceLostHandler`, Vulkan `VK_ERROR_DEVICE_LOST`, EGL
-/// `EGL_CONTEXT_LOST`, D3D11 `GetDeviceRemovedReason`) feed this module via
+/// `EGL_CONTEXT_LOST`, D3D12 `GetDeviceRemovedReason`) feed this module via
 /// `report_context_loss`; the renderer thread consults `should_recover` and
 /// `should_fallback_to_raster` each frame to drive cache tear-down,
 /// context recreation, and the final raster fallback. AppRuntime state is
@@ -82,11 +82,7 @@ pub fn RendererRecoveryBudget::new(
   recovery_vsync_budget~ : Int,
   max_consecutive_recovery_failures~ : Int,
 ) -> RendererRecoveryBudget {
-  {
-    vsync_ms,
-    recovery_vsync_budget,
-    max_consecutive_recovery_failures,
-  }
+  { vsync_ms, recovery_vsync_budget, max_consecutive_recovery_failures }
 }
 
 ///|
@@ -133,18 +129,14 @@ pub fn RendererRecovery::loss_count(self : RendererRecovery) -> Int {
 ///|
 /// Returns the most recent loss reason reported by a platform detector,
 /// or the empty string if no loss has been observed.
-pub fn RendererRecovery::last_loss_reason(
-  self : RendererRecovery,
-) -> String {
+pub fn RendererRecovery::last_loss_reason(self : RendererRecovery) -> String {
   self.last_loss_reason
 }
 
 ///|
 /// Returns the number of consecutive recovery failures since the last
 /// successful recovery. Resets to 0 on `report_recovery_succeeded`.
-pub fn RendererRecovery::consecutive_failures(
-  self : RendererRecovery,
-) -> Int {
+pub fn RendererRecovery::consecutive_failures(self : RendererRecovery) -> Int {
   self.consecutive_failures
 }
 
@@ -289,9 +281,7 @@ pub fn RendererRecovery::report_recovery_failed(
 /// Transitions the state machine back to `Idle` from `Recovered`. Called by
 /// the renderer thread once it has resumed GPU presentation. Calling from
 /// any other state is a no-op.
-pub fn RendererRecovery::acknowledge_recovered(
-  self : RendererRecovery,
-) -> Unit {
+pub fn RendererRecovery::acknowledge_recovered(self : RendererRecovery) -> Unit {
   match self.state {
     Recovered => self.state = Idle
     _ => ()

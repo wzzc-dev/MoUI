@@ -17,6 +17,8 @@ export const dispatchPointer: (
 ) => boolean;
 export const frameTick: (timeMs: number) => boolean;
 export const takeHostUpdates: () => string;
+export const rendererConfigure: (mode: string) => boolean;
+export const rendererStatusJson: () => string;
 export const dispatchTextInput: (kind: number, text: string, start: number, end: number) => boolean;
 export const dispatchCommand: (kind: number) => boolean;
 export const dispatchAccessibility: (elementId: number, action: number, value: string) => boolean;

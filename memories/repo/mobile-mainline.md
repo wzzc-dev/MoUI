@@ -5,14 +5,27 @@
   own only JNI/Obj-C++/NAPI conversion and native API calls.
 - HarmonyOS compatible SDK is API 20. Native XComponent callbacks are the only
   surface/pointer lifecycle source; ArkTS owns VSync and platform services.
-- `SkiaRasterNative` remains default/fallback. `SkiaGpuNative` is a formal
-  `HostGpuSurface` descriptor but direct Metal/Vulkan/EGL presentation and
-  renderer-thread integration are still pending.
+- `SkiaRasterNative` remains the `auto` default/fallback until promotion.
+  Explicit `skia-gpu` uses a worker-owned native path: Metal on macOS/iOS,
+  D3D12 on Windows, Wayland Vulkan on Linux, Vulkan with EGL/GLES fallback on
+  Android, and EGL/GLES on HarmonyOS. Source implementation is not promotion.
+- Runtime threads record immutable `SkPicture`; the C++ worker retains only
+  pictures and POD metadata. It owns GPU context/surface/swapchain/cache/sync,
+  uses latest-wins frame submission, preserves ordered controls, and
+  acknowledges detach before host handles are released.
+- Queueing is not presentation. Providers count only `Presented`; desktop
+  hosts poll `frame_pending` without duplicate submission, and Android/iOS/
+  HarmonyOS drain worker completions on every VSync. `PictureRecorded` must
+  never update first-frame or image-present trackers.
+- Cached layers are nested pictures, and platform-view pixels are recorded into
+  the active picture. `SkiaHybridRenderer` routes later frames to raster after
+  terminal GPU failure while retaining the same `AppRuntime` and app state.
 - Mobile runtime proof must use before/after pixels plus application receipt
   logs. Input injection or force-stop success alone is never proof.
 - Mobile build entrypoints accept `--renderer auto|skia-gpu|skia-raster` and
-  record requested/selected modes. Until direct GPU presentation is promoted,
-  `auto` and `skia-gpu` explicitly select `skia-raster`.
+  record requested/selected modes. Before promotion, `auto` selects raster;
+  explicit `skia-gpu` exercises the unpromoted worker path and is build/smoke
+  evidence only.
 - iOS lifecycle handling observes `UISceneDidEnterBackgroundNotification` and
   `UISceneWillEnterForegroundNotification`; smoke detach evidence must contain
   the target application process line, not only the log query marker.

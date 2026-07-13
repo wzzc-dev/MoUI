@@ -259,6 +259,30 @@ pub fn Surface::gpu_n32_premul(
 }
 
 ///|
+pub fn Surface::metal_window_surface(
+  context : GpuContext,
+  layer_ptr : UInt64,
+  descriptor : @skia.SurfaceDescriptor,
+) -> Surface? {
+  ignore(context)
+  ignore(layer_ptr)
+  ignore(descriptor)
+  None
+}
+
+///|
+pub fn Surface::metal_present_and_acquire_next(
+  surface : Surface,
+  context : GpuContext,
+  layer_ptr : UInt64,
+) -> Surface? {
+  ignore(surface)
+  ignore(context)
+  ignore(layer_ptr)
+  None
+}
+
+///|
 pub fn Surface::metal_gpu_context_opt_in_enabled() -> Bool {
   false
 }
@@ -382,9 +406,7 @@ pub fn Surface::vulkan_gpu_context_runtime_available() -> Bool {
 }
 
 ///|
-pub fn GpuContext::egl(
-  descriptor : @skia.GpuContextDescriptor,
-) -> GpuContext? {
+pub fn GpuContext::egl(descriptor : @skia.GpuContextDescriptor) -> GpuContext? {
   ignore(descriptor)
   None
 }

@@ -78,12 +78,12 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
     {
       path: "moui/runtime/pkg.generated.mbti",
       category: "runtime_diagnostic",
-      max_count: 263,
+      max_count: 285,
     },
     {
       path: "moui/runtime/pkg.generated.mbti",
       category: "required_protocol",
-      max_count: 6,
+      max_count: 10,
     },
     {
       path: "moui/runtime/pkg.generated.mbti",
@@ -98,7 +98,7 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
     {
       path: "moui/backend/host/pkg.generated.mbti",
       category: "host_contract",
-      max_count: 442,
+      max_count: 455,
     },
     {
       path: "moui/backend/host/pkg.generated.mbti",
@@ -118,12 +118,12 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
     {
       path: "moui/render/pkg.generated.mbti",
       category: "renderer_contract",
-      max_count: 108,
+      max_count: 150,
     },
     {
       path: "moui/render/pkg.generated.mbti",
       category: "required_protocol",
-      max_count: 27,
+      max_count: 40,
     },
     {
       path: "moui/render/pkg.generated.mbti",

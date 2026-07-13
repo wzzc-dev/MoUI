@@ -33,6 +33,17 @@ fn android_counter_runtime(
 }
 
 ///|
+fn android_counter_renderer_options() -> @android_skia_backend.AndroidSkiaAppOptions {
+  let selection = @host.mobile_renderer_selection(
+    @render.NativeGpuPlatform::Android,
+    gpu_available=@android_skia_backend.android_skia_gpu_available(),
+  )
+  @android_skia_backend.AndroidSkiaAppOptions::new(
+    surface_route=selection.surface_route,
+  )
+}
+
+///|
 fn android_counter_pointer_phase(phase : Int) -> @core.PointerPhase? {
   match phase {
     0 => Some(@core.PointerPhase::Down)
@@ -57,6 +68,7 @@ pub fn android_counter_attach_surface(
       runtime~,
       surface=@android_host.AndroidSurfaceHandle::new(raw=surface_handle),
       metrics~,
+      options=android_counter_renderer_options(),
     ) {
     Some(session) => {
       android_counter_session.val = Some(session)
@@ -64,6 +76,19 @@ pub fn android_counter_attach_surface(
     }
     None => false
   }
+}
+
+///|
+pub fn moui_mobile_renderer_configure(mode : String) -> Bool {
+  @host.mobile_renderer_configure(mode)
+}
+
+///|
+pub fn moui_mobile_renderer_status_json() -> String {
+  @host.mobile_renderer_status_json(
+    @render.NativeGpuPlatform::Android,
+    gpu_available=@android_skia_backend.android_skia_gpu_available(),
+  )
 }
 
 ///|

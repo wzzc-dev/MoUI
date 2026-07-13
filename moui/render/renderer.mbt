@@ -83,11 +83,37 @@ pub(all) struct RenderFrameInput {
 ///|
 pub(all) struct RenderFrameResult {
   presented : Bool
+  queued : Bool
   cache_hit_count : Int
   cache_miss_count : Int
   cache_update_count : Int
   cache_evict_count : Int
   missing_layer_keys : Array[String]
+} derive(Eq, Debug, ToJson)
+
+///|
+/// Completion emitted by an asynchronous renderer worker. A queued frame is
+/// not considered presented until the host drains this record.
+pub(all) enum RenderPresentStatus {
+  Recorded
+  Presented
+  Dropped
+  FallbackToRaster
+} derive(Eq, Debug, ToJson)
+
+///|
+/// Renderer-worker completion metadata. The timestamps are host monotonic
+/// milliseconds; `image_resource_revision` lets host repaint tracking avoid
+/// marking a newer image revision as presented than the one used by the frame.
+pub(all) struct RenderPresentCompletion {
+  frame_sequence : Int
+  surface_generation : Int
+  image_resource_revision : Int64
+  submitted_at_ms : Double
+  completed_at_ms : Double
+  presented_at_ms : Double
+  status : RenderPresentStatus
+  gpu_context_generation : Int
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -255,6 +281,7 @@ pub fn RenderFrameInput::new(
 ///|
 pub fn RenderFrameResult::new(
   presented? : Bool = true,
+  queued? : Bool = false,
   cache_hit_count? : Int = 0,
   cache_miss_count? : Int = 0,
   cache_update_count? : Int = 0,
@@ -263,12 +290,92 @@ pub fn RenderFrameResult::new(
 ) -> RenderFrameResult {
   {
     presented,
+    queued,
     cache_hit_count,
     cache_miss_count,
     cache_update_count,
     cache_evict_count,
     missing_layer_keys,
   }
+}
+
+///|
+pub fn RenderPresentCompletion::new(
+  frame_sequence~ : Int,
+  surface_generation~ : Int,
+  image_resource_revision~ : Int64,
+  submitted_at_ms~ : Double,
+  completed_at_ms~ : Double,
+  presented_at_ms~ : Double,
+  status~ : RenderPresentStatus,
+  gpu_context_generation~ : Int,
+) -> RenderPresentCompletion {
+  {
+    frame_sequence,
+    surface_generation,
+    image_resource_revision,
+    submitted_at_ms,
+    completed_at_ms,
+    presented_at_ms,
+    status,
+    gpu_context_generation,
+  }
+}
+
+///|
+pub fn RenderPresentCompletion::frame_sequence(
+  self : RenderPresentCompletion,
+) -> Int {
+  self.frame_sequence
+}
+
+///|
+pub fn RenderPresentCompletion::surface_generation(
+  self : RenderPresentCompletion,
+) -> Int {
+  self.surface_generation
+}
+
+///|
+pub fn RenderPresentCompletion::image_resource_revision(
+  self : RenderPresentCompletion,
+) -> Int64 {
+  self.image_resource_revision
+}
+
+///|
+pub fn RenderPresentCompletion::submitted_at_ms(
+  self : RenderPresentCompletion,
+) -> Double {
+  self.submitted_at_ms
+}
+
+///|
+pub fn RenderPresentCompletion::completed_at_ms(
+  self : RenderPresentCompletion,
+) -> Double {
+  self.completed_at_ms
+}
+
+///|
+pub fn RenderPresentCompletion::presented_at_ms(
+  self : RenderPresentCompletion,
+) -> Double {
+  self.presented_at_ms
+}
+
+///|
+pub fn RenderPresentCompletion::status(
+  self : RenderPresentCompletion,
+) -> RenderPresentStatus {
+  self.status
+}
+
+///|
+pub fn RenderPresentCompletion::gpu_context_generation(
+  self : RenderPresentCompletion,
+) -> Int {
+  self.gpu_context_generation
 }
 
 ///|

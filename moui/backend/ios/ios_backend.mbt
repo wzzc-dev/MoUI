@@ -323,6 +323,7 @@ pub fn IosRuntimeSession::render_frame(
 ) -> @render.RenderFrameResult {
   self.driver.begin_redraw()
   let result = self.renderer.render_frame(self.driver.draw_frame())
+  ignore(self.renderer.drain_present_completions())
   self.driver.apply_render_frame_result(result)
   self.driver.finish_redraw()
   let image = self.image_coordinator.after_present(

@@ -49,7 +49,9 @@ test "skia surface routes keep raster default and gate metal gpu explicitly" {
   assert_false(@render.SkiaSurfaceRoute::RasterSurfaceRoute.is_gpu())
   assert_true(@render.SkiaSurfaceRoute::MetalGpuSurfaceRoute.is_gpu())
   assert_true(@render.SkiaSurfaceRoute::RasterSurfaceRoute.label() == "raster")
-  assert_true(@render.SkiaSurfaceRoute::MetalGpuSurfaceRoute.label() == "metal-gpu")
+  assert_true(
+    @render.SkiaSurfaceRoute::MetalGpuSurfaceRoute.label() == "metal-gpu",
+  )
 
   let target = SkiaPresentTarget::new(description="test", present=_frame => true)
   let metrics = @render.RendererSurfaceMetrics::from_logical(

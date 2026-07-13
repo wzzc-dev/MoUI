@@ -37,6 +37,8 @@ pub fn renderer_feature_follow_ups() -> Array[RendererFeatureCapability]
 
 pub fn resolve_shader_effect(@core.ShaderEffectSpec) -> ShaderRegistryResult
 
+pub fn select_native_renderer(NativeGpuPlatform, NativeRendererMode, gpu_available~ : Bool, gpu_promoted~ : Bool) -> NativeRendererSelection
+
 pub fn size_dim_to_uint(Double) -> UInt
 
 pub fn tessellate_path(@core.PathSpec) -> PathMesh
@@ -44,6 +46,89 @@ pub fn tessellate_path(@core.PathSpec) -> PathMesh
 // Errors
 
 // Types and methods
+pub enum GpuHostSurfaceDescriptor {
+  MetalLayer(UInt64)
+  D3D12Hwnd(UInt64)
+  AndroidVulkanWindow(UInt64)
+  WaylandVulkanSurface(UInt64, UInt64)
+  EglNativeWindow(UInt64)
+} derive(Eq, ToJson, @debug.Debug)
+pub fn GpuHostSurfaceDescriptor::android_vulkan_window(UInt64) -> Self?
+pub fn GpuHostSurfaceDescriptor::d3d12_hwnd(UInt64) -> Self?
+pub fn GpuHostSurfaceDescriptor::egl_native_window(UInt64) -> Self?
+pub fn GpuHostSurfaceDescriptor::metal_layer(UInt64) -> Self?
+pub fn GpuHostSurfaceDescriptor::wayland_vulkan_surface(UInt64, UInt64) -> Self?
+
+pub struct GpuRenderWorker {
+  mut state : GpuRenderWorkerState
+  mut surface_generation : Int
+  mut gpu_context_generation : Int
+  mut next_sequence : Int
+  mut in_flight : GpuRenderWorkerFrame?
+  mut pending : GpuRenderWorkerFrame?
+  controls : Array[RendererControlMessage]
+  completions : Array[RenderPresentCompletion]
+  mut submitted : Int
+  mut started : Int
+  mut completed : Int
+  mut dropped : Int
+  mut replaced_pending : Int
+  mut rejected_generation : Int
+  mut recovery_count : Int
+  mut recovery_failures : Int
+  readback_count : Int
+  resource_cache_bytes : Int64
+  worker_thread_id : Int
+  mut fail_next_recovery : Bool
+}
+pub fn GpuRenderWorker::diagnostics(Self) -> GpuRenderWorkerDiagnostics
+pub fn GpuRenderWorker::drain_present_completions(Self) -> Array[RenderPresentCompletion]
+pub fn GpuRenderWorker::fail_next_context_recovery(Self) -> Unit
+pub fn GpuRenderWorker::gpu_context_generation(Self) -> Int
+pub fn GpuRenderWorker::new(surface_generation? : Int, worker_thread_id? : Int) -> Self
+pub fn GpuRenderWorker::poll(Self, completed_at_ms? : Double) -> Unit
+pub fn GpuRenderWorker::state(Self) -> GpuRenderWorkerState
+pub fn GpuRenderWorker::submit(Self, RenderFrameInput, image_resource_revision? : Int64, submitted_at_ms? : Double) -> RenderFrameResult
+pub fn GpuRenderWorker::submit_control(Self, RendererControlMessage) -> Int
+pub fn GpuRenderWorker::surface_generation(Self) -> Int
+
+pub(all) struct GpuRenderWorkerDiagnostics {
+  state : GpuRenderWorkerState
+  submitted : Int
+  started : Int
+  completed : Int
+  dropped : Int
+  replaced_pending : Int
+  rejected_generation : Int
+  surface_generation : Int
+  gpu_context_generation : Int
+  recovery_count : Int
+  recovery_failures : Int
+  readback_count : Int
+  resource_cache_bytes : Int64
+  in_flight : Bool
+  pending : Bool
+  control_pending : Int
+  worker_thread_id : Int
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct GpuRenderWorkerFrame {
+  sequence : Int
+  surface_generation : Int
+  image_resource_revision : Int64
+  submitted_at_ms : Double
+  input : RenderFrameInput
+} derive(@debug.Debug)
+
+pub(all) enum GpuRenderWorkerState {
+  Idle
+  Lost
+  Recovering
+  Recovered
+  FallbackToRaster
+  Shutdown
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct ImageResourceLifecycle {
   mut records : Map[String, ImageResourceRecord]
   mut revision : Int
@@ -108,6 +193,37 @@ pub(all) enum ImageResourceStatus {
   ImageFailed
   ImageDisposed
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum NativeGpuPlatform {
+  Macos
+  Windows
+  Linux
+  Android
+  Ios
+  HarmonyOs
+} derive(Eq, ToJson, @debug.Debug)
+pub fn NativeGpuPlatform::gpu_promoted(Self) -> Bool
+pub fn NativeGpuPlatform::label(Self) -> String
+pub fn NativeGpuPlatform::surface_route(Self) -> SkiaSurfaceRoute
+
+pub(all) enum NativeRendererMode {
+  Auto
+  SkiaGpu
+  SkiaRaster
+} derive(Eq, ToJson, @debug.Debug)
+pub fn NativeRendererMode::label(Self) -> String
+pub fn NativeRendererMode::parse(String) -> Self?
+
+pub(all) struct NativeRendererSelection {
+  platform : NativeGpuPlatform
+  requested : NativeRendererMode
+  selected : RendererBackendKind
+  gpu_available : Bool
+  gpu_promoted : Bool
+  surface_route : SkiaSurfaceRoute
+  fallback_reason : String?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn NativeRendererSelection::new(platform~ : NativeGpuPlatform, requested~ : NativeRendererMode, selected~ : RendererBackendKind, gpu_available~ : Bool, gpu_promoted~ : Bool, surface_route~ : SkiaSurfaceRoute, fallback_reason~ : String?) -> Self
 
 pub struct PathMesh {
   // private fields
@@ -194,13 +310,41 @@ pub fn RenderFramePacket::new(sequence~ : Int, surface_generation~ : Int, Render
 
 pub(all) struct RenderFrameResult {
   presented : Bool
+  queued : Bool
   cache_hit_count : Int
   cache_miss_count : Int
   cache_update_count : Int
   cache_evict_count : Int
   missing_layer_keys : Array[String]
 } derive(Eq, ToJson, @debug.Debug)
-pub fn RenderFrameResult::new(presented? : Bool, cache_hit_count? : Int, cache_miss_count? : Int, cache_update_count? : Int, cache_evict_count? : Int, missing_layer_keys? : Array[String]) -> Self
+pub fn RenderFrameResult::new(presented? : Bool, queued? : Bool, cache_hit_count? : Int, cache_miss_count? : Int, cache_update_count? : Int, cache_evict_count? : Int, missing_layer_keys? : Array[String]) -> Self
+
+pub(all) struct RenderPresentCompletion {
+  frame_sequence : Int
+  surface_generation : Int
+  image_resource_revision : Int64
+  submitted_at_ms : Double
+  completed_at_ms : Double
+  presented_at_ms : Double
+  status : RenderPresentStatus
+  gpu_context_generation : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RenderPresentCompletion::completed_at_ms(Self) -> Double
+pub fn RenderPresentCompletion::frame_sequence(Self) -> Int
+pub fn RenderPresentCompletion::gpu_context_generation(Self) -> Int
+pub fn RenderPresentCompletion::image_resource_revision(Self) -> Int64
+pub fn RenderPresentCompletion::new(frame_sequence~ : Int, surface_generation~ : Int, image_resource_revision~ : Int64, submitted_at_ms~ : Double, completed_at_ms~ : Double, presented_at_ms~ : Double, status~ : RenderPresentStatus, gpu_context_generation~ : Int) -> Self
+pub fn RenderPresentCompletion::presented_at_ms(Self) -> Double
+pub fn RenderPresentCompletion::status(Self) -> RenderPresentStatus
+pub fn RenderPresentCompletion::submitted_at_ms(Self) -> Double
+pub fn RenderPresentCompletion::surface_generation(Self) -> Int
+
+pub(all) enum RenderPresentStatus {
+  Recorded
+  Presented
+  Dropped
+  FallbackToRaster
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct RendererBackendFeatureCapability {
   feature : RendererFeature

@@ -420,6 +420,10 @@ moon run examples/mo_workbench/macos_skia --target native
 Use `MOUI_SKIA_LINK_MODE=dynamic|static|auto` for direct `moon run`/`moon build`
 commands. The `--link-mode dynamic|static|auto` script option remains available
 for helper-driven smoke runs and overrides the environment for that invocation.
+In `auto`, the helper uses the shared provider artifact when it builds an app
+entrypoint, because split static Skia archives are order-sensitive at the
+transitive app link boundary; renderer-only smoke with
+`--skip-showcase-build` keeps using the static artifact.
 Use `--write-local-config` only when intentionally writing machine-local
 absolute Skia paths into package files; keep those edits out of commits.
 

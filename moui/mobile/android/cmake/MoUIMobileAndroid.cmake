@@ -18,6 +18,9 @@ set(MOUI_SKIA_STUB_SOURCES
   "${MOUI_SKIA_ROOT}/native/skia_stub_text_font.cpp"
   "${MOUI_SKIA_ROOT}/native/skia_stub_paragraph.cpp"
   "${MOUI_SKIA_ROOT}/native/skia_stub_shader_filter.cpp"
+  "${MOUI_SKIA_ROOT}/native/skia_stub_picture.cpp"
+  "${MOUI_SKIA_ROOT}/native/android_vulkan_loader.cpp"
+  "${MOUI_SKIA_ROOT}/native/skia_stub_gpu_worker.cpp"
 )
 
 add_library(${MOUI_MOBILE_LIBRARY_NAME} SHARED

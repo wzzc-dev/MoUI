@@ -24,6 +24,7 @@ test "harmonyos runtime session renders through supplied provider" {
   let render_count = Ref(0)
   let resize_count = Ref(0)
   let sync_count = Ref(0)
+  let completion_drain_count = Ref(0)
   let provider = HarmonyOsRendererProvider::new(
     create_renderer=(_surface, _metrics) => {
       Some(
@@ -33,6 +34,10 @@ test "harmonyos runtime session renders through supplied provider" {
           render_frame=Some(_frame => {
             render_count.val = render_count.val + 1
             @render.RenderFrameResult::new(presented=true)
+          }),
+          drain_present_completions=Some(() => {
+            completion_drain_count.val = completion_drain_count.val + 1
+            []
           }),
           text_system=() => @core.TextSystem::fallback(),
           present_count=() => render_count.val,
@@ -61,6 +66,7 @@ test "harmonyos runtime session renders through supplied provider" {
       assert_true(session.take_redraw_requested())
       ignore(session.render_frame())
       inspect(render_count.val, content="1")
+      inspect(completion_drain_count.val, content="1")
       inspect(session.present_count(), content="1")
       let resized = @host.HostSurfaceMetrics::from_logical(
         size=@core.Size::new(width=160.0, height=120.0),
