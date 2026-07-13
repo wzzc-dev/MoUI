@@ -156,13 +156,20 @@ pub struct RenderFrameMailbox {
   mut completed : Int
   mut replaced_pending : Int
   mut rejected_generation : Int
+  control_queue : Array[RendererControlMessage]
+  mut control_submitted : Int
+  mut control_drained : Int
 }
 pub fn RenderFrameMailbox::begin_next(Self) -> RenderFramePacket?
 pub fn RenderFrameMailbox::complete(Self, Int) -> Bool
+pub fn RenderFrameMailbox::control_pending(Self) -> Int
 pub fn RenderFrameMailbox::diagnostics(Self) -> RenderFrameMailboxDiagnostics
+pub fn RenderFrameMailbox::drain_control(Self) -> Array[RendererControlMessage]
+pub fn RenderFrameMailbox::has_control(Self) -> Bool
 pub fn RenderFrameMailbox::new(surface_generation? : Int) -> Self
 pub fn RenderFrameMailbox::replace_surface_generation(Self, Int) -> Unit
 pub fn RenderFrameMailbox::submit(Self, RenderFrameInput) -> Int
+pub fn RenderFrameMailbox::submit_control(Self, RendererControlMessage) -> Int
 
 pub(all) struct RenderFrameMailboxDiagnostics {
   submitted : Int
@@ -173,6 +180,9 @@ pub(all) struct RenderFrameMailboxDiagnostics {
   surface_generation : Int
   in_flight : Bool
   pending : Bool
+  control_pending : Int
+  control_submitted : Int
+  control_drained : Int
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct RenderFramePacket {
@@ -250,6 +260,13 @@ pub fn RendererCommandPlan::fallbacks(Self) -> Array[RendererCommandFallback]
 pub fn RendererCommandPlan::final_filter_depth(Self) -> Int
 pub fn RendererCommandPlan::final_layer_depth(Self) -> Int
 pub fn RendererCommandPlan::total_commands(Self) -> Int
+
+pub(all) enum RendererControlMessage {
+  Resize(@core.Size)
+  Detach
+  ContextLoss(String)
+  Shutdown
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct RendererDescriptor {
   backend : RendererBackendKind
@@ -353,6 +370,17 @@ pub(all) enum ShaderRegistryStatus {
   ShaderReady
   ShaderFallback
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum SkiaSurfaceRoute {
+  RasterSurfaceRoute
+  MetalGpuSurfaceRoute
+  VulkanGpuSurfaceRoute
+  EglGpuSurfaceRoute
+  Direct3DGpuSurfaceRoute
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SkiaSurfaceRoute::is_gpu(Self) -> Bool
+pub fn SkiaSurfaceRoute::is_implemented(Self) -> Bool
+pub fn SkiaSurfaceRoute::label(Self) -> String
 
 pub struct SvgImportResult {
   // private fields

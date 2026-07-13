@@ -55,7 +55,7 @@ pub fn physical_size_to_core(@dpi.PhysicalSize) -> @wzzc-dev/moui/core.Size
 
 pub fn platform_view_plugins_next_deadline(Array[PlatformViewPlugin]) -> Int64?
 
-pub fn select_mobile_renderer(MobileRendererMode, gpu_available~ : Bool, gpu_promoted~ : Bool) -> MobileRendererSelection
+pub fn select_mobile_renderer(MobileRendererMode, gpu_available~ : Bool, gpu_promoted~ : Bool, surface_route~ : @render.SkiaSurfaceRoute) -> MobileRendererSelection
 
 pub fn semantics_action_label(@wzzc-dev/moui/core.SemanticsAction) -> String
 
@@ -962,6 +962,7 @@ pub(all) struct MobileRendererSelection {
   selected : @render.RendererBackendKind
   gpu_available : Bool
   gpu_promoted : Bool
+  surface_route : @render.SkiaSurfaceRoute
   fallback_reason : String?
 } derive(Eq, ToJson, @debug.Debug)
 

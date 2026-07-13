@@ -214,6 +214,7 @@ pub(all) struct GpuContext {
   // private fields
 }
 pub fn GpuContext::direct3d12(@moui_skia.GpuContextDescriptor) -> Self?
+pub fn GpuContext::egl(@moui_skia.GpuContextDescriptor) -> Self?
 pub fn GpuContext::is_available(Self) -> Bool
 pub fn GpuContext::metal(@moui_skia.GpuContextDescriptor) -> Self?
 pub fn GpuContext::resource_key(Self) -> @moui_skia.RendererResourceKey
@@ -392,6 +393,9 @@ pub(all) enum SkiaGpuContextSupportStatus {
   SkiaGpuContextVulkanOptInDisabled
   SkiaGpuContextVulkanHeadersUnavailable
   SkiaGpuContextVulkanRuntimeUnavailable
+  SkiaGpuContextEglOptInDisabled
+  SkiaGpuContextEglHeadersUnavailable
+  SkiaGpuContextEglRuntimeUnavailable
 } derive(Eq, @debug.Debug)
 pub fn SkiaGpuContextSupportStatus::is_available(Self) -> Bool
 
@@ -407,6 +411,11 @@ pub fn Surface::direct3d_gpu_context_opt_in_enabled() -> Bool
 pub fn Surface::direct3d_gpu_context_runtime_available() -> Bool
 pub fn Surface::direct3d_present_and_acquire_next(Self, GpuContext, UInt64) -> Self?
 pub fn Surface::direct3d_window_surface(GpuContext, UInt64, @moui_skia.SurfaceDescriptor) -> Self?
+pub fn Surface::egl_gpu_context_headers_available() -> Bool
+pub fn Surface::egl_gpu_context_opt_in_enabled() -> Bool
+pub fn Surface::egl_gpu_context_runtime_available() -> Bool
+pub fn Surface::egl_present_and_acquire_next(Self, GpuContext, UInt64) -> Self?
+pub fn Surface::egl_window_surface(GpuContext, UInt64, @moui_skia.SurfaceDescriptor) -> Self?
 pub fn Surface::flush_and_submit(Self) -> Bool
 pub fn Surface::for_target(@moui_skia.SurfaceTargetDescriptor) -> Self?
 pub fn Surface::for_target_with_gpu_context(@moui_skia.SurfaceTargetDescriptor, GpuContext) -> Self?
@@ -429,6 +438,7 @@ pub fn Surface::vulkan_gpu_context_headers_available() -> Bool
 pub fn Surface::vulkan_gpu_context_opt_in_enabled() -> Bool
 pub fn Surface::vulkan_gpu_context_runtime_available() -> Bool
 pub fn Surface::vulkan_present_and_acquire_next(Self, GpuContext, UInt64) -> Self?
+pub fn Surface::vulkan_wayland_surface(GpuContext, UInt64, UInt64, @moui_skia.SurfaceDescriptor) -> Self?
 pub fn Surface::vulkan_window_surface(GpuContext, UInt64, @moui_skia.SurfaceDescriptor) -> Self?
 pub fn Surface::width(Self) -> Int
 
