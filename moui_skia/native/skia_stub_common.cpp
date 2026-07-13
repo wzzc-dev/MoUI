@@ -421,12 +421,14 @@ static void moonbit_skia_gpu_context_finalize(void* ptr) {
   wrapper->context = nullptr;
 #endif
   if (wrapper->device != nullptr) {
+    moonbit_skia_objc_release(wrapper->device);
     moonbit_skia_com_release(wrapper->device);
     moonbit_skia_vulkan_release_context(wrapper->device);
     moonbit_skia_egl_release_context(wrapper->device);
     wrapper->device = nullptr;
   }
   if (wrapper->queue != nullptr) {
+    moonbit_skia_objc_release(wrapper->queue);
     moonbit_skia_com_release(wrapper->queue);
     wrapper->queue = nullptr;
   }
@@ -444,6 +446,60 @@ static void moonbit_skia_canvas_finalize(void* ptr) {
   wrapper->surface_owner = nullptr;
 #endif
   wrapper->canvas = nullptr;
+}
+
+static void moonbit_skia_picture_finalize(void* ptr) {
+  MoonbitSkiaPicture* wrapper = static_cast<MoonbitSkiaPicture*>(ptr);
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_PICTURE)
+  if (wrapper->picture != nullptr) {
+    wrapper->picture->unref();
+    wrapper->picture = nullptr;
+  }
+#else
+  wrapper->picture = nullptr;
+#endif
+}
+
+static void moonbit_skia_picture_recorder_finalize(void* ptr) {
+  MoonbitSkiaPictureRecorder* wrapper = static_cast<MoonbitSkiaPictureRecorder*>(ptr);
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_PICTURE)
+  delete wrapper->recorder;
+#endif
+  wrapper->recorder = nullptr;
+}
+
+MoonbitSkiaPicture* moonbit_skia_make_picture_wrapper(
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_PICTURE)
+  SkPicture* picture
+#else
+  void* picture
+#endif
+) {
+  MoonbitSkiaPicture* wrapper = static_cast<MoonbitSkiaPicture*>(
+    moonbit_make_external_object(
+      moonbit_skia_picture_finalize,
+      sizeof(MoonbitSkiaPicture)
+    )
+  );
+  wrapper->picture = picture;
+  return wrapper;
+}
+
+MoonbitSkiaPictureRecorder* moonbit_skia_make_picture_recorder_wrapper(
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_PICTURE)
+  SkPictureRecorder* recorder
+#else
+  void* recorder
+#endif
+) {
+  MoonbitSkiaPictureRecorder* wrapper = static_cast<MoonbitSkiaPictureRecorder*>(
+    moonbit_make_external_object(
+      moonbit_skia_picture_recorder_finalize,
+      sizeof(MoonbitSkiaPictureRecorder)
+    )
+  );
+  wrapper->recorder = recorder;
+  return wrapper;
 }
 
 MoonbitSkiaFont* moonbit_skia_make_font_wrapper(

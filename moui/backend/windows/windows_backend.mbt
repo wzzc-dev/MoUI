@@ -84,6 +84,7 @@ priv struct WindowsWindowPlatformSlot {
   platform_id : @window_core.WindowId
   window : @win.Window
   renderer : @host.HostWindowRenderer
+  mut frame_pending : Bool
 }
 
 ///|
@@ -613,6 +614,7 @@ pub impl @win.ApplicationHandler for WindowsApp with fn can_create_surfaces(
               platform_id: window.id(),
               window,
               renderer,
+              frame_pending: false,
             }),
           )
           window.request_redraw()
@@ -731,10 +733,53 @@ fn WindowsApp::redraw_window(
       self.runtime_slots.lookup(window_id),
     ) {
     (Some(platform_slot), Some(runtime_slot)) => {
+      let prior_completions = platform_slot.renderer.drain_present_completions()
+      let prior_presented = @host.render_present_completions_have_presented(
+        prior_completions,
+      )
+      let prior_terminal = @host.render_present_completions_have_terminal(
+        prior_completions,
+      )
+      if platform_slot.frame_pending {
+        if !prior_terminal {
+          platform_slot.window.request_redraw()
+          return false
+        }
+        platform_slot.frame_pending = false
+        if prior_presented {
+          ignore(
+            self.image_repaint_tracker.record_presented(
+              window_id,
+              platform_slot.renderer,
+            ),
+          )
+          ignore(
+            self.renderer_provider.schedule_image_resource_loads(
+              window_id,
+              platform_slot.renderer,
+              self.image_resource_completion_source(),
+            ),
+          )
+          self.sync_text_input_session()
+          if self.first_frame_smoke_auto_exit {
+            println(
+              "Windows renderer presented first frame; exiting by request; title=" +
+              runtime_slot.record.title,
+            )
+            self.first_frame_smoke_auto_exit = false
+            self.dispose_window(window_id)
+            return true
+          }
+          if !runtime_slot_needs_redraw(runtime_slot) {
+            return false
+          }
+        }
+      }
       platform_slot.window.pre_present_notify()
       runtime_slot.driver.begin_redraw()
       let frame = runtime_slot.driver.draw_frame()
       let result = platform_slot.renderer.render_frame(frame)
+      let present_completions = platform_slot.renderer.drain_present_completions()
       let handle = platform_slot.window.window_handle()
       for plugin in self.platform_view_plugins {
         (plugin.sync_platform_views)(handle, frame, 0.0)
@@ -742,7 +787,15 @@ fn WindowsApp::redraw_window(
       }
       runtime_slot.driver.apply_render_frame_result(result)
       runtime_slot.driver.finish_redraw()
-      if result.presented {
+      let completion_presented = @host.render_present_completions_have_presented(
+        present_completions,
+      )
+      let completion_terminal = @host.render_present_completions_have_terminal(
+        present_completions,
+      )
+      platform_slot.frame_pending = result.queued && !completion_terminal
+      if completion_presented ||
+        (present_completions.is_empty() && result.presented) {
         ignore(
           self.image_repaint_tracker.record_presented(
             window_id,
@@ -758,8 +811,9 @@ fn WindowsApp::redraw_window(
         ),
       )
       self.sync_text_input_session()
-      if self.first_frame_smoke_auto_exit &&
-        platform_slot.renderer.present_count() > 0 {
+      let presented = completion_presented ||
+        (present_completions.is_empty() && result.presented)
+      if self.first_frame_smoke_auto_exit && presented {
         println(
           "Windows renderer presented first frame; exiting by request; title=" +
           runtime_slot.record.title,
@@ -768,6 +822,10 @@ fn WindowsApp::redraw_window(
         self.dispose_window(window_id)
         true
       } else {
+        if platform_slot.frame_pending ||
+          (result.queued && completion_terminal && !completion_presented) {
+          platform_slot.window.request_redraw()
+        }
         false
       }
     }
@@ -1029,6 +1087,7 @@ fn WindowsApp::attach_resolved_window(
           platform_id: window.id(),
           window,
           renderer,
+          frame_pending: false,
         }),
       )
       self.request_platform_redraw(resolved.id)

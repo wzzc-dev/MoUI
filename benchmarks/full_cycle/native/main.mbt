@@ -1,5 +1,7 @@
+///|
 extern "c" fn bench_now_ms() -> Double = "moui_reconciliation_benchmark_now_ms"
 
+///|
 struct FCResult {
   label : String
   total_nodes : Int
@@ -11,6 +13,7 @@ struct FCResult {
   command_build_count : Int
 }
 
+///|
 fn bench_env_int(name : String, fallback : Int) -> Int {
   match @env.get_env_var(name) {
     Some(value) => {
@@ -31,6 +34,7 @@ fn bench_env_int(name : String, fallback : Int) -> Int {
   }
 }
 
+///|
 fn bench_tree(depth : Int, width : Int, msg_base : Int) -> @core.View[Int] {
   if depth <= 0 {
     @views.button("x", on_click=msg_base)
@@ -43,6 +47,7 @@ fn bench_tree(depth : Int, width : Int, msg_base : Int) -> @core.View[Int] {
   }
 }
 
+///|
 fn bench_node_count(depth : Int, width : Int) -> Int {
   if depth <= 0 {
     1
@@ -51,6 +56,7 @@ fn bench_node_count(depth : Int, width : Int) -> Int {
   }
 }
 
+///|
 fn bench_run(
   label : String,
   depth : Int,
@@ -59,11 +65,11 @@ fn bench_run(
   trigger_rebuild : Bool,
 ) -> FCResult {
   let total = bench_node_count(depth, width)
-  let program = @core.Program::simple(
-    init=0,
-    update=fn(_model, msg) { msg },
-    view=fn(model) { bench_tree(depth, width, model + 1000) },
-  )
+  let program = @core.Program::simple(init=0, update=fn(_model, msg) { msg }, view=fn(
+    model,
+  ) {
+    bench_tree(depth, width, model + 1000)
+  })
   let runtime = @runtime.AppRuntime::new_program(
     program~,
     size=@core.Size::new(width=800.0, height=600.0),
@@ -90,14 +96,17 @@ fn bench_run(
     total_nodes: total,
     frames,
     total_ms: elapsed,
-    rebuild_count: snap_after.rebuild_pass_count() - snap_before.rebuild_pass_count(),
-    layout_count: snap_after.layout_pass_count() - snap_before.layout_pass_count(),
+    rebuild_count: snap_after.rebuild_pass_count() -
+    snap_before.rebuild_pass_count(),
+    layout_count: snap_after.layout_pass_count() -
+    snap_before.layout_pass_count(),
     paint_count: snap_after.paint_pass_count() - snap_before.paint_pass_count(),
     command_build_count: snap_after.draw_command_build_count() -
     snap_before.draw_command_build_count(),
   }
 }
 
+///|
 fn bench_print(r : FCResult) -> Unit {
   let avg = if r.frames > 0 { r.total_ms / r.frames.to_double() } else { 0.0 }
   println(
@@ -111,10 +120,13 @@ fn bench_print(r : FCResult) -> Unit {
   )
 }
 
+///|
 fn main {
   let frames = bench_env_int("MOUI_FC_FRAMES", 50)
 
-  println("MoUI runtime full-cycle benchmark (Program-based, env-toggle rebuild)")
+  println(
+    "MoUI runtime full-cycle benchmark (Program-based, env-toggle rebuild)",
+  )
   println("A/C/E: idle frames, B/D/F: set_environment toggle each frame")
   println("")
 

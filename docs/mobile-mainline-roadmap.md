@@ -14,25 +14,32 @@ diagnostic route.
 | Clipboard | Async host channel with text and image payloads; Android `ClipboardManager`/`FileProvider`, iOS `UIPasteboard`, HarmonyOS pasteboard ArrayBuffer path | Cross-app text/PNG round-trip proof pending |
 | Accessibility | Revisioned flat semantics snapshots and targeted runtime action routing; native virtual/container nodes on all three platforms | Tree, focus, and action screen-reader proof pending |
 | Renderer selection | Formal `SkiaGpuNative`/`HostGpuSurface` descriptor and promotion-aware `auto`, `skia-gpu`, `skia-raster` selection; `MobileRendererSelection` carries `surface_route` per Phase 1.8 | `gpu_promoted` stays `false` on every platform until matching-device manifest passes |
-| Renderer mailbox | Capacity-two latest-wins frame mailbox with non-droppable control messages and surface-generation rejection; `RendererControlMessage` (Resize/Detach/ContextLoss/Shutdown) ordered and never dropped under frame flooding (Phase 2.1) | Renderer-thread integration still pending; mailbox unit tests pass |
-| Context-loss recovery | `RendererRecovery` state machine in `moui/runtime/renderer_recovery.mbt` (Idle → Lost → Recovering → Recovered → Idle; terminal `FallbackToRaster` after 2 consecutive failures; 3-VSync deadline) per Phase 2.2 | Per-platform loss detector wiring and matching-device recovery evidence pending |
-| Direct GPU presentation | Phase 1 capability implemented per platform: iOS Metal, macOS Metal, Android Vulkan/GLES, HarmonyOS EGL/GLES, Windows D3D11, Linux Vulkan (Wayland). `HostGpuPresentTarget` bypasses `read_frame()` on the GPU route. | `auto` and `skia-gpu` resolve to `SkiaRasterNative` with explicit fallback reason; matching-device smoke pending per platform |
+| Renderer mailbox | Capacity-two latest-wins frame mailbox with non-droppable control messages and surface-generation rejection; native `std::thread` safely retains `SkPicture` plus POD metadata and acknowledges detach | Desktop hosts poll a pending frame without duplicate submission; mobile sessions drain completions each VSync; matching-device stress evidence remains pending |
+| Context-loss recovery | `RendererRecovery` state machine in `moui/runtime/renderer_recovery.mbt` (Idle → Lost → Recovering → Recovered → Idle; terminal `FallbackToRaster` after 2 consecutive failures; 3-VSync deadline); hybrid rendering keeps the same runtime and routes later frames to raster | Mock fallback/state-preservation tests pass; matching-device forced-loss and deadline evidence pending |
+| Direct GPU presentation | Worker-owned paths exist for iOS/macOS Metal, Android Vulkan/GLES, HarmonyOS EGL/GLES, Windows D3D12, and Linux Wayland Vulkan. Android GPU APK, HarmonyOS GPU HAP, and iOS simulator GPU App builds pass; macOS has a local first-frame smoke. | Physical iOS/Android/HarmonyOS, Windows MSVC, Linux Wayland, and full promotion manifests remain pending |
 
 `SkiaRasterNative` remains the default and the compatibility/test fallback.
-The GPU direct-presentation capability has landed in source per Phase 1
-(iOS Metal, macOS Metal, Android Vulkan/GLES, HarmonyOS EGL/GLES); until a
-platform's matching-device manifest (see ADR 0006 § Phase 2 Promotion Gate
-Evidence) passes the seven promotion gates, `auto` and `skia-gpu` select
-`skia-raster` with an explicit fallback reason. A GPU descriptor or offscreen
-GPU surface does not count as direct presentation; full-frame readback or
-platform image intermediates are forbidden on the GPU production path.
+Window-surface GPU source paths have landed per Phase 1. Until a platform's
+matching-device manifest passes the seven promotion gates, `auto` selects
+`skia-raster`; an explicit `skia-gpu` request may exercise the unpromoted path
+when available but is not completion or promotion evidence. A GPU descriptor,
+offscreen GPU surface, or `PictureRecorded` worker completion does not count as
+direct presentation; full-frame readback or platform image intermediates are
+forbidden on the promoted GPU production path.
 
 All three mobile build entrypoints accept
 `--renderer auto|skia-gpu|skia-raster`. The generated `mobile-build.json` and
-native startup log record both requested and selected modes. Until a direct
-host GPU surface is promoted on a given platform, `auto` and `skia-gpu`
-select `skia-raster` with an explicit fallback reason; this option does not
-promote the GPU descriptor.
+native startup log record both requested and selected modes. Before promotion,
+`auto` selects raster with an explicit reason. `skia-gpu` is an opt-in
+validation route and never promotes the GPU descriptor by itself.
+
+Worker submission and presentation are separate contracts. A queued frame or
+`PictureRecorded` completion does not advance first-frame or image-resource
+tracking. Providers count only `Presented`; desktop event loops keep polling a
+pending frame without recording it again, while Android, iOS, and HarmonyOS
+drain completions from their platform VSync callbacks. Cached layers and
+platform-view pixels are part of the immutable picture, so terminal GPU
+fallback can replay the same content on raster without rebuilding app state.
 
 ## Mobile Host Channel
 
@@ -69,8 +76,23 @@ proves all of the following:
   the existing `AppRuntime` state.
 
 The intended backend order is iOS Metal, Android Vulkan with GLES fallback,
-then HarmonyOS EGL/GLES followed by optional Vulkan. These paths remain pending
-until they exist in source and pass their own promotion manifest.
+then HarmonyOS EGL/GLES followed by optional Vulkan. Worker-owned source is
+connected; these paths remain unpromoted until their matching-device manifests
+pass.
+
+Desktop and Web use the shared schema illustrated by
+`docs/gpu-promotion-manifest.example.json`. Validate a pending or diagnostic
+manifest with:
+
+```sh
+node scripts/validate-gpu-promotion-manifest.mjs <manifest.json>
+```
+
+Release promotion must use `--require-passed`. The generic validator covers
+macOS Metal, Windows D3D12, Linux Wayland Vulkan, Android Vulkan/EGL, iOS Metal,
+HarmonyOS EGL/GLES, and WebGPU, including 60/120 Hz thresholds, a 600-second
+run, 100 recreation/lifecycle cycles, provenance, recovery, and fallback. It
+does not create evidence; matching-hardware runners must supply the manifest.
 
 ## Runtime Smoke
 

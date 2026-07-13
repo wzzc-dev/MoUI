@@ -2335,7 +2335,7 @@ export function createWebGpuImports(options = {}) {
     renderer.layerStack.push(layer);
   };
 
-  return {
+  const imports = {
     begin_create_string() {
       return createStringHandle("");
     },
@@ -2814,7 +2814,56 @@ export function createWebGpuImports(options = {}) {
       disposeTextSelectionLayer(renderer?.textSelection);
       renderers.delete(rendererHandle);
     },
+    __moui_recovery_snapshot() {
+      return {
+        surfaces: [...surfaces.entries()].map(([handle, surface]) => ({
+          handle,
+          canvasId: surface.canvas?.id ?? "",
+          width: surface.width,
+          height: surface.height,
+          scaleFactor: surface.scaleFactor,
+        })),
+        renderers: [...renderers.entries()].map(([handle, renderer]) => ({
+          handle,
+          surfaceHandle: [...surfaces.entries()].find(([, surface]) =>
+            surface === renderer.surface)?.[0] ?? 0,
+        })),
+      };
+    },
+    __moui_recovery_restore(snapshot = {}) {
+      let restoredSurfaces = 0;
+      let restoredRenderers = 0;
+      for (const record of snapshot.surfaces ?? []) {
+        const canvasId = createStringHandle(record.canvasId ?? "");
+        const actual = imports.create_surface(
+          canvasId,
+          record.width,
+          record.height,
+          record.scaleFactor,
+        );
+        if (!actual) continue;
+        if (actual !== record.handle) {
+          surfaces.set(record.handle, surfaces.get(actual));
+          surfaces.delete(actual);
+        }
+        nextSurfaceHandle = Math.max(nextSurfaceHandle, Number(record.handle) + 1);
+        restoredSurfaces += 1;
+      }
+      for (const record of snapshot.renderers ?? []) {
+        const actual = imports.create_renderer(record.surfaceHandle);
+        if (!actual) continue;
+        if (actual !== record.handle) {
+          renderers.set(record.handle, renderers.get(actual));
+          renderers.delete(actual);
+        }
+        nextRendererHandle = Math.max(nextRendererHandle, Number(record.handle) + 1);
+        restoredRenderers += 1;
+      }
+      return { restoredSurfaces, restoredRenderers };
+    },
   };
+
+  return imports;
 
   function uploadVertexBuffer(vertices) {
     if (!vertices.length) return undefined;
@@ -2865,50 +2914,171 @@ export async function createWebGpuImportsAsync(options = {}) {
         ),
       ),
     ]);
-  report("Requesting WebGPU adapter...");
-  let adapter;
-  try {
-    adapter = await withTimeout(
+  const requestDevice = async () => {
+    report("Requesting WebGPU adapter...");
+    const adapter = await withTimeout(
       navigator.gpu.requestAdapter(),
       "requesting a WebGPU adapter",
     );
-  } catch (error) {
-    report("WebGPU adapter request failed: " + error.message);
-    return fallbackToCanvas2d();
-  }
-  if (!adapter) {
-    report("No WebGPU adapter available.");
-    return fallbackToCanvas2d();
-  }
-  report("Requesting WebGPU device...");
-  let device;
-  try {
-    device = await withTimeout(
+    if (!adapter) throw new Error("No WebGPU adapter available.");
+    report("Requesting WebGPU device...");
+    return withTimeout(
       adapter.requestDevice(),
       "requesting a WebGPU device",
     );
+  };
+  const restoreImports = (next, snapshot) => {
+    if (!snapshot) return { restoredSurfaces: 0, restoredRenderers: 0 };
+    if (typeof next.__moui_recovery_restore === "function") {
+      return next.__moui_recovery_restore(snapshot);
+    }
+    const makeString = value => {
+      const handle = next.begin_create_string();
+      for (const char of `${value ?? ""}`) {
+        next.string_append_char(handle, char.codePointAt(0));
+      }
+      return next.finish_create_string(handle);
+    };
+    let restoredSurfaces = 0;
+    let restoredRenderers = 0;
+    for (const record of snapshot.surfaces ?? []) {
+      const handle = next.create_surface(
+        makeString(record.canvasId),
+        record.width,
+        record.height,
+        record.scaleFactor,
+      );
+      if (handle !== record.handle) {
+        throw new Error(`renderer recovery surface handle mismatch: expected ${record.handle}, got ${handle}`);
+      }
+      restoredSurfaces += 1;
+    }
+    for (const record of snapshot.renderers ?? []) {
+      const handle = next.create_renderer(record.surfaceHandle);
+      if (handle !== record.handle) {
+        throw new Error(`renderer recovery handle mismatch: expected ${record.handle}, got ${handle}`);
+      }
+      restoredRenderers += 1;
+    }
+    return { restoredSurfaces, restoredRenderers };
+  };
+  const createStableImports = initial => {
+    let current = initial;
+    const diagnostics = {
+      state: "idle",
+      generation: 1,
+      recoveryCount: 0,
+      recoveryFailures: 0,
+      fallbackCount: 0,
+      readbackCount: 0,
+      lastLossReason: "",
+    };
+    const stable = {};
+    for (const [name, value] of Object.entries(initial)) {
+      if (name.startsWith("__moui_")) continue;
+      stable[name] = typeof value === "function"
+        ? (...args) => current[name](...args)
+        : value;
+    }
+    Object.defineProperties(stable, {
+      __moui_recovery_snapshot: {
+        value: () => current.__moui_recovery_snapshot?.(),
+      },
+      __moui_recovery_diagnostics: {
+        value: () => ({ ...diagnostics }),
+      },
+      __moui_replace_imports: {
+        value: (next, state) => {
+          current = next;
+          Object.assign(diagnostics, state);
+        },
+      },
+      __moui_update_diagnostics: {
+        value: state => Object.assign(diagnostics, state),
+      },
+    });
+    return stable;
+  };
+  const observeDeviceErrors = (device, stable, format) => {
+    device.addEventListener?.("uncapturederror", event => {
+      const message = event?.error?.message || event?.error || "unknown WebGPU error";
+      globalThis.console?.error?.(`MoUI WebGPU uncaptured error: ${message}`);
+      report(`WebGPU uncaptured error: ${message}`);
+    });
+    device.lost?.then(async info => {
+      const reason = `${info?.reason || ""}`.toLowerCase();
+      const message = info?.message || info?.reason || "unknown reason";
+      if (reason === "destroyed" || `${message}`.toLowerCase().includes("destroyed")) {
+        globalThis.console?.info?.(`MoUI WebGPU device destroyed during shutdown: ${message}`);
+        return;
+      }
+      globalThis.console?.error?.(`MoUI WebGPU device lost: ${message}`);
+      report(`WebGPU device lost: ${message}`);
+      const snapshot = stable.__moui_recovery_snapshot?.();
+      for (let attempt = 1; attempt <= 2; attempt += 1) {
+        try {
+          stable.__moui_update_diagnostics?.({
+            state: "recovering",
+            lastLossReason: `${message}`,
+          });
+          const recoveredDevice = await requestDevice();
+          const recovered = createWebGpuImports({
+            ...options,
+            device: recoveredDevice,
+            format,
+          });
+          const restored = restoreImports(recovered, snapshot);
+          const previous = stable.__moui_recovery_diagnostics?.() ?? {};
+          stable.__moui_replace_imports(recovered, {
+            state: "recovered",
+            generation: Number(previous.generation || 1) + 1,
+            recoveryCount: Number(previous.recoveryCount || 0) + 1,
+            recoveryFailures: 0,
+            lastLossReason: `${message}`,
+          });
+          report(`WebGPU recovered generation=${Number(previous.generation || 1) + 1} surfaces=${restored.restoredSurfaces} renderers=${restored.restoredRenderers}.`);
+          observeDeviceErrors(recoveredDevice, stable, format);
+          return;
+        } catch (error) {
+          const previous = stable.__moui_recovery_diagnostics?.() ?? {};
+          stable.__moui_update_diagnostics?.({
+            state: "lost",
+            recoveryFailures: Number(previous.recoveryFailures || 0) + 1,
+            lastLossReason: `${message}`,
+          });
+          report(`WebGPU recovery attempt ${attempt} failed: ${error?.message || error}`);
+        }
+      }
+      try {
+        const { createCanvas2dImports } = await import("./canvas2d_runtime.js");
+        const fallback = createCanvas2dImports(options);
+        restoreImports(fallback, snapshot);
+        const previous = stable.__moui_recovery_diagnostics?.() ?? {};
+        stable.__moui_replace_imports(fallback, {
+          state: "fallback-to-canvas2d",
+          fallbackCount: Number(previous.fallbackCount || 0) + 1,
+          lastLossReason: `${message}`,
+        });
+        report("WebGPU recovery failed twice; switched to Canvas2D renderer.");
+      } catch (error) {
+        report(`Canvas2D recovery fallback failed: ${error?.message || error}`);
+      }
+    });
+  };
+  let device;
+  try {
+    device = await requestDevice();
   } catch (error) {
-    report("WebGPU device request failed: " + error.message);
+    report("WebGPU initialization failed: " + error.message);
     return fallbackToCanvas2d();
   }
-  device.addEventListener?.("uncapturederror", event => {
-    const message = event?.error?.message || event?.error || "unknown WebGPU error";
-    globalThis.console?.error?.(`MoUI WebGPU uncaptured error: ${message}`);
-    report(`WebGPU uncaptured error: ${message}`);
-  });
-  device.lost?.then(info => {
-    const reason = `${info?.reason || ""}`.toLowerCase();
-    const message = info?.message || info?.reason || "unknown reason";
-    if (reason === "destroyed" || `${message}`.toLowerCase().includes("destroyed")) {
-      globalThis.console?.info?.(`MoUI WebGPU device destroyed during shutdown: ${message}`);
-      return;
-    }
-    globalThis.console?.error?.(`MoUI WebGPU device lost: ${message}`);
-    report(`WebGPU device lost: ${message}`);
-  });
   const format = navigator.gpu.getPreferredCanvasFormat();
+  const stable = createStableImports(
+    createWebGpuImports({ ...options, device, format }),
+  );
+  observeDeviceErrors(device, stable, format);
   report("WebGPU ready.");
-  return createWebGpuImports({ ...options, device, format });
+  return stable;
 }
 
 async function instantiateWasm(url, imports, report) {

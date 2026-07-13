@@ -129,7 +129,7 @@ fn run_app_until_first_present(
 ) -> Unit {
   let mut remaining = macos_first_present_pump_limit
   while remaining > 0 && !event_loop.exiting() {
-    match event_loop.pump_app_events(Some(0), app) {
+    match event_loop.pump_app_events(Some(1), app) {
       @window_core.PumpStatus::Exit(_) => return ()
       @window_core.PumpStatus::Continue => ()
     }

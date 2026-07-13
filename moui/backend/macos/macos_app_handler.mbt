@@ -63,6 +63,7 @@ pub impl @window_macos.ApplicationHandler for MacosApp with fn can_create_surfac
               platform_id: window.id(),
               window,
               renderer,
+              frame_pending: false,
             }),
           )
           window.request_redraw()
@@ -214,10 +215,47 @@ fn MacosApp::redraw_window(
       self.runtime_slots.lookup(window_id),
     ) {
     (Some(platform_slot), Some(runtime_slot)) => {
+      let prior_completions = platform_slot.renderer.drain_present_completions()
+      let prior_presented = @host.render_present_completions_have_presented(
+        prior_completions,
+      )
+      let prior_terminal = @host.render_present_completions_have_terminal(
+        prior_completions,
+      )
+      if platform_slot.frame_pending {
+        if !prior_terminal {
+          platform_slot.window.request_redraw()
+          return false
+        }
+        platform_slot.frame_pending = false
+        if prior_presented {
+          ignore(
+            self.image_repaint_tracker.record_presented(
+              window_id,
+              platform_slot.renderer,
+            ),
+          )
+          ignore(
+            self.renderer_provider.schedule_image_resource_loads(
+              window_id,
+              platform_slot.renderer,
+              self.image_resource_completion_source(),
+            ),
+          )
+          self.sync_text_input_session()
+          if self.finish_presented_window(window_id, runtime_slot) {
+            return true
+          }
+          if !runtime_slot_needs_redraw(runtime_slot) {
+            return false
+          }
+        }
+      }
       platform_slot.window.pre_present_notify()
       runtime_slot.driver.begin_redraw()
       let frame = runtime_slot.driver.draw_frame()
       let result = platform_slot.renderer.render_frame(frame)
+      let present_completions = platform_slot.renderer.drain_present_completions()
       match macos_native_view_handle(platform_slot.window) {
         Some(handle) =>
           for plugin in self.platform_view_plugins {
@@ -228,7 +266,15 @@ fn MacosApp::redraw_window(
       }
       runtime_slot.driver.apply_render_frame_result(result)
       runtime_slot.driver.finish_redraw()
-      if result.presented {
+      let completion_presented = @host.render_present_completions_have_presented(
+        present_completions,
+      )
+      let completion_terminal = @host.render_present_completions_have_terminal(
+        present_completions,
+      )
+      platform_slot.frame_pending = result.queued && !completion_terminal
+      if completion_presented ||
+        (present_completions.is_empty() && result.presented) {
         ignore(
           self.image_repaint_tracker.record_presented(
             window_id,
@@ -244,22 +290,43 @@ fn MacosApp::redraw_window(
         ),
       )
       self.sync_text_input_session()
-      if self.record_native_ime_runtime_smoke(window_id) {
-        true
-      } else if self.first_frame_smoke_auto_exit &&
-        platform_slot.renderer.present_count() > 0 {
-        println(
-          "macOS renderer presented first frame; exiting by request; title=" +
-          runtime_slot.record.title,
-        )
-        self.first_frame_smoke_auto_exit = false
-        self.dispose_window(window_id)
-        true
+      let presented = completion_presented ||
+        (present_completions.is_empty() && result.presented)
+      if presented {
+        self.finish_presented_window(window_id, runtime_slot)
       } else {
+        if platform_slot.frame_pending {
+          platform_slot.window.request_redraw()
+        } else if result.queued && completion_terminal {
+          // Dropped and terminal fallback completions retry against the same
+          // AppRuntime; the provider will select raster after fallback.
+          platform_slot.window.request_redraw()
+        }
         false
       }
     }
     _ => false
+  }
+}
+
+///|
+fn MacosApp::finish_presented_window(
+  self : MacosApp,
+  window_id : @host.HostWindowId,
+  runtime_slot : @host.HostWindowRuntimeSlot,
+) -> Bool {
+  if self.record_native_ime_runtime_smoke(window_id) {
+    true
+  } else if self.first_frame_smoke_auto_exit {
+    println(
+      "macOS renderer presented first frame; exiting by request; title=" +
+      runtime_slot.record.title,
+    )
+    self.first_frame_smoke_auto_exit = false
+    self.dispose_window(window_id)
+    true
+  } else {
+    false
   }
 }
 

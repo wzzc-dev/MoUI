@@ -107,14 +107,19 @@ touch-slop scroll arbitration. Full mobile runtime status remains pending
 because no new matching-device manifest in this change proves IME, clipboard,
 accessibility tree/focus/action, async image, input pixel change, and detach.
 
-`SkiaGpuNative` carries a direct GPU presentation capability per Phase 1 of
-the GPU readback elimination plan (iOS Metal, macOS Metal, Android
-Vulkan/GLES, HarmonyOS EGL/GLES, Windows D3D11, Linux Vulkan). The Phase 2
-promotion gate scaffolding has L1 package-test proof:
+`SkiaGpuNative` carries unpromoted window-surface source paths per Phase 1 of
+the GPU readback elimination plan (iOS/macOS Metal, Android Vulkan/GLES,
+HarmonyOS EGL/GLES, Windows D3D12, Linux Wayland Vulkan). The native worker
+proves safe `SkPicture`/POD handoff on an independent thread. Its macOS branch
+now owns Ganesh/Metal context and drawable presentation and emits `Presented`
+after a local first-frame smoke; remaining platform worker ownership and all
+promotion manifests are still pending. The Phase 2 promotion gate scaffolding
+has L1 package-test proof:
 
 | Gate | L1 proof |
 | --- | --- |
 | Renderer mailbox control queue (`moui/render/render_frame_mailbox.mbt`) | `moui/render` whitebox tests (capacity-two latest-wins; `RendererControlMessage` never dropped) |
+| Native Picture handoff (`moui_skia/native/skia_stub_gpu_worker.cpp`) | focused native tests (independent thread, retained picture, detach acknowledgement, zero readback counter) |
 | Context-loss recovery (`moui/runtime/renderer_recovery.mbt`) | `moui/runtime` whitebox tests (Idle → Lost → Recovering → Recovered → Idle; `FallbackToRaster` after 2 failures) |
 | Manifest schema + `gpuPromotionEvidence` (`tools/moui/validate_mobile_runtime_manifest`) | `validate_mobile_runtime_manifest_wbtest` (9 new Phase 2.3 tests) |
 

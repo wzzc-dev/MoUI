@@ -35,6 +35,7 @@ node scripts/validate-maintenance-baseline.mjs
 node scripts/check-website-docs.mjs
 node scripts/validate-renderer-provider-manifests.mjs
 node scripts/validate-skia-entrypoints.mjs
+node scripts/validate-gpu-promotion-manifest.mjs docs/gpu-promotion-manifest.example.json
 node scripts/test-validate-skia-entrypoints.mjs
 node --check scripts/test-moui-prebuild.mjs
 node scripts/test-moui-prebuild.mjs
@@ -46,6 +47,7 @@ node scripts/test-web-canvas2d-lazy-fallback.mjs
 node scripts/test-web-bundle-tools.mjs
 node scripts/test-record-web-runtime-presentation.mjs
 node scripts/test-validate-web-runtime-presentation-manifest.mjs
+moon test tools/moui/validate_gpu_promotion_manifest --target native
 node scripts/test-check-runner.mjs
 node scripts/test-smoke-check.mjs
 node scripts/smoke-check.mjs --check

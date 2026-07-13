@@ -31,13 +31,17 @@ fn pub_all_budgets() -> Array[CountBudget] {
       kind: "pub(all)",
       label: "moui/render",
       path: "moui/render",
+      // 46 = 38 (prior baseline) + 8 for the unified native renderer
+      // selection, completion, worker, and recovery diagnostics contracts.
+      // The integration API is intentionally budgeted here rather than
+      // leaking these types into the app facade.
       // 38 = 35 (prior baseline) + 1 for SkiaPresentKind (the discriminator
       // for the CpuPixelFrame vs HostGpuSurface present path) + 1 for
       // HostGpuPresentOutcome (the present-gpu outcome struct), both
       // introduced by Phase 1.1 of the readback-elimination plan (ADR 0006),
       // + 1 for RendererControlMessage (Phase 2.1 renderer-thread mailbox
       // control message enum, ADR 0006 § Renderer-thread ownership).
-      max_count: 38,
+      max_count: 46,
     },
     {
       kind: "pub(all)",

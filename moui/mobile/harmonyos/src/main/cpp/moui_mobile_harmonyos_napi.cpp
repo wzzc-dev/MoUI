@@ -20,7 +20,7 @@
 #endif
 
 #ifndef MOUI_MOBILE_RENDERER_SELECTED
-#define MOUI_MOBILE_RENDERER_SELECTED "skia-raster"
+#define MOUI_MOBILE_RENDERER_SELECTED MOUI_MOBILE_RENDERER_REQUESTED
 #endif
 
 #ifndef MOUI_MOBILE_SMOKE_ATTACH_SURFACE
@@ -121,6 +121,8 @@ extern "C" int32_t MOUI_MOBILE_RENDER_FRAME(void);
 extern "C" int32_t MOUI_MOBILE_FRAME_TICK(double time_ms);
 extern "C" void MOUI_MOBILE_DETACH_SURFACE(void);
 extern "C" moonbit_string_t moui_mobile_take_host_updates_json(void);
+extern "C" int32_t moui_mobile_renderer_configure(moonbit_string_t mode);
+extern "C" moonbit_string_t moui_mobile_renderer_status_json(void);
 extern "C" int32_t moui_mobile_dispatch_text_input(
     int32_t kind,
     moonbit_string_t text,
@@ -137,17 +139,39 @@ extern "C" int32_t moui_mobile_complete_clipboard(
     moonbit_string_t text,
     moonbit_bytes_t bytes);
 
+moonbit_string_t moonbit_string_from_ascii(const char *value) {
+  const size_t length = value == nullptr ? 0 : std::strlen(value);
+  moonbit_string_t result = moonbit_make_string_raw(static_cast<int32_t>(length));
+  auto *units = reinterpret_cast<uint16_t *>(result);
+  for (size_t index = 0; index < length; ++index) {
+    units[index] = static_cast<uint8_t>(value[index]);
+  }
+  return result;
+}
+
 void ensure_moonbit_runtime() {
   std::call_once(g_runtime_once, [] {
     static char app_name[] = MOUI_MOBILE_APP_ARG;
     static char *argv[] = {app_name};
     moonbit_runtime_init(1, argv);
     moonbit_init();
+    moonbit_string_t renderer_mode = moonbit_string_from_ascii(
+      MOUI_MOBILE_RENDERER_REQUESTED
+    );
+    const int32_t renderer_configured = moui_mobile_renderer_configure(
+      renderer_mode
+    );
+    moonbit_decref(renderer_mode);
     log_info(
       "moui-mobile runtime initialized app=%{public}s renderer-requested=%{public}s renderer-selected=%{public}s",
       MOUI_MOBILE_APP_ID,
       MOUI_MOBILE_RENDERER_REQUESTED,
       MOUI_MOBILE_RENDERER_SELECTED
+    );
+    log_info(
+      "moui-mobile renderer configure requested=%{public}s ok=%{public}d",
+      MOUI_MOBILE_RENDERER_REQUESTED,
+      renderer_configured
     );
   });
 }
@@ -446,6 +470,26 @@ napi_value napi_take_host_updates(napi_env env, napi_callback_info info) {
   return napi_moonbit_string_value(env, moui_mobile_take_host_updates_json());
 }
 
+napi_value napi_renderer_configure(napi_env env, napi_callback_info info) {
+  ensure_moonbit_runtime();
+  size_t argc = 1;
+  napi_value argv[1];
+  napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
+  if (argc < 1) {
+    return napi_bool(env, false);
+  }
+  moonbit_string_t mode = napi_moonbit_string(env, argv[0]);
+  const int32_t result = moui_mobile_renderer_configure(mode);
+  moonbit_decref(mode);
+  return napi_bool(env, result != 0);
+}
+
+napi_value napi_renderer_status(napi_env env, napi_callback_info info) {
+  (void)info;
+  ensure_moonbit_runtime();
+  return napi_moonbit_string_value(env, moui_mobile_renderer_status_json());
+}
+
 napi_value napi_dispatch_text_input(napi_env env, napi_callback_info info) {
   ensure_moonbit_runtime();
   size_t argc = 4;
@@ -732,6 +776,8 @@ napi_value init(napi_env env, napi_value exports) {
 #endif
     {"frameTick", nullptr, napi_frame_tick, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"takeHostUpdates", nullptr, napi_take_host_updates, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"rendererConfigure", nullptr, napi_renderer_configure, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"rendererStatusJson", nullptr, napi_renderer_status, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"dispatchTextInput", nullptr, napi_dispatch_text_input, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"dispatchCommand", nullptr, napi_dispatch_command, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"dispatchAccessibility", nullptr, napi_dispatch_accessibility, nullptr, nullptr, nullptr, napi_default, nullptr},

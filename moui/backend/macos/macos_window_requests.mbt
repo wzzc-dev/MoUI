@@ -223,6 +223,7 @@ fn MacosApp::attach_resolved_window(
           platform_id: window.id(),
           window,
           renderer,
+          frame_pending: false,
         }),
       )
       self.request_platform_redraw(resolved.id)

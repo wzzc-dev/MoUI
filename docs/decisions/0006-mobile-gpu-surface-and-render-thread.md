@@ -1,6 +1,6 @@
 # ADR 0006: Mobile GPU Surface And Render Thread Ownership
 
-- Status: Accepted (Phase 1 capability implemented; Phase 2 promotion pending per-platform matching-device evidence)
+- Status: Accepted (all native worker backends implemented in source; matching-hardware promotion pending)
 - Date: 2026-07-11
 
 ## Context
@@ -23,9 +23,10 @@ persistent GPU caches. Immutable, deeply owned render packets cross a
 capacity-two latest-wins mailbox. Lifecycle and context control messages are
 ordered and never dropped.
 
-Direct presentation means Metal drawable-backed Skia on iOS, Vulkan with GLES
-fallback on Android, and EGL/GLES first on HarmonyOS. Full-frame readback or
-platform image intermediates are forbidden on the GPU production path.
+Direct presentation means Metal drawable-backed Skia on iOS/macOS, Vulkan with
+GLES fallback on Android, EGL/GLES first on HarmonyOS, D3D12 on Windows, and
+Wayland Vulkan on Linux. Web keeps WebGPU. Full-frame readback or platform image
+intermediates are forbidden on a promoted GPU production path.
 
 ## Consequences
 
@@ -39,27 +40,30 @@ platform image intermediates are forbidden on the GPU production path.
 
 ## Implementation Status
 
-### Phase 1 — Direct GPU presentation capability (implemented)
+### Phase 1 — Window-surface source paths (implemented, unpromoted)
 
-The Phase 1 capability has landed in source behind the `--renderer skia-gpu`
-opt-in. Each platform can build the GPU direct-presentation path; `auto` and
-`skia-gpu` both resolve to `SkiaRasterNative` with an explicit fallback reason
-until Phase 2 promotion evidence is recorded on matching hardware.
+The Phase 1 paths have landed in source behind the `--renderer skia-gpu`
+opt-in. Android Vulkan/EGL, HarmonyOS EGL, and iOS Metal now also pass their
+target build pipelines; Windows D3D12 and Linux Wayland Vulkan still require
+matching-host compilation, and every backend still requires matching-hardware
+validation. `auto` remains
+`SkiaRasterNative` until promotion evidence is recorded on matching hardware.
 
 | Platform | Backend | Surface route | Source state |
 | --- | --- | --- | --- |
-| iOS | Metal | `MetalGpuSurfaceRoute` | Implemented (Phase 1.2) |
-| macOS | Metal | `MetalGpuSurfaceRoute` | Implemented (Phase 1.3) |
-| Android | Vulkan (GLES fallback) | `VulkanGpuSurfaceRoute` / `EglGpuSurfaceRoute` | Implemented (Phase 1.4) |
-| HarmonyOS | EGL/GLES | `EglGpuSurfaceRoute` | Implemented (Phase 1.5) |
-| Windows | Direct3D 11 | `Direct3DGpuSurfaceRoute` | Implemented (Phase 1.6) |
-| Linux | Vulkan (Wayland) | `VulkanGpuSurfaceRoute` | Implemented (Phase 1.7) |
+| iOS | Metal | `MetalGpuSurfaceRoute` | Worker-owned source; simulator GPU build and nonblank first frame passed; physical-device validation pending |
+| macOS | Metal | `MetalGpuSurfaceRoute` | Worker-owned context/picture replay/present source path; local first-frame smoke passed |
+| Android | Vulkan (GLES fallback) | `VulkanGpuSurfaceRoute` / `EglGpuSurfaceRoute` | Worker-owned source; minSdk 23 GPU APK cross-build passed; device validation pending |
+| HarmonyOS | EGL/GLES | `EglGpuSurfaceRoute` | Worker-owned source; native Ninja and HAP build passed; signed-device validation pending |
+| Windows | Direct3D 12 | `Direct3DGpuSurfaceRoute` | Worker-owned source; MSVC build and hardware validation pending |
+| Linux | Vulkan (Wayland) | `VulkanGpuSurfaceRoute` | Worker-owned source; matching Wayland build/validation pending |
 
 The cross-platform `SkiaSurfaceRoute` enum lives in `moui/render` so it can be
 referenced from both native-only `moui/render/skia` and the wasm-gc-compatible
 `moui/backend/host::MobileRendererSelection`. `HostGpuPresentTarget` takes a
-flushed `@skia_native.Surface` and bypasses `read_frame()` on the GPU route;
-the second per-row CPU copy in each platform presenter is skipped.
+flushed `@skia_native.Surface` and bypasses `read_frame()` on the GPU route.
+These caller-thread bindings remain compatibility/diagnostic integration APIs;
+native platform providers use the Picture worker for production GPU routing.
 
 ### Phase 2 — Promotion gate scaffolding (implemented)
 
@@ -71,6 +75,27 @@ The shared Phase 2 scaffolding required before any platform can flip
   never-dropped control message queue (`RendererControlMessage`:
   `Resize` / `Detach` / `ContextLoss` / `Shutdown`). Control messages survive
   frame flooding so the renderer thread always observes lifecycle transitions.
+- **Native Picture handoff** (`moui_skia/native/skia_stub_gpu_worker.cpp`): an
+  independent `std::thread` retains only `SkPicture` and POD metadata, uses a
+  latest-wins pending slot plus ordered controls, acknowledges detach, and
+  exposes polling diagnostics. An unattached worker reports `PictureRecorded`.
+  Metal, D3D12, Vulkan WSI, and EGL branches own their context, surface or
+  swapchain, synchronization, picture replay, flush, and present resources.
+  Android dynamically loads Vulkan on API 24+ and uses EGL/GLES when the
+  loader or a present-capable queue is unavailable. Only a completed platform
+  present reports `Presented`.
+- **Completion-driven host accounting** (`moui/backend/host` and platform
+  backends): queued submission is not presentation. macOS, Windows, and Linux
+  retain a `frame_pending` flag and poll completions without resubmitting the
+  same frame; Android, iOS, and HarmonyOS drain completions on every VSync.
+  First-frame state, image-present revisions, and provider present counts move
+  only on `Presented`. `Dropped` and `FallbackToRaster` request another frame
+  without replacing `AppRuntime`.
+- **Picture-backed cache and platform pixels** (`moui/render/skia`): cached
+  layers are nested immutable pictures, so the same recorded frame can replay
+  after terminal raster fallback. Platform-view/WebView pixels are copied into
+  the active picture canvas before recording ends; the GPU producer never
+  needs an UI-thread `Surface` or `Image` cache.
 - **Context-loss recovery** (`moui/runtime/renderer_recovery.mbt`):
   cross-platform `RendererRecovery` state machine
   (`Idle → Lost → Recovering → Recovered → Idle`, terminal `FallbackToRaster`
@@ -91,11 +116,28 @@ The shared Phase 2 scaffolding required before any platform can flip
   `rasterFallback` (automatic after repeated failure). Under `--require-passed`
   every gate must be satisfied.
 
+### Phase 2 — Worker-owned GPU presentation (source implemented; promotion pending)
+
+All native providers now record immutable pictures on the runtime thread and
+queue them to the native worker. The worker owns Metal, D3D12, Vulkan, or EGL
+resources, processes ordered lifecycle controls, acknowledges detach before
+releasing host handles, and retains raster as the same-runtime fallback after
+two failed presents. Provider accounting accepts only `Presented`; recording
+and queueing are deliberately non-presenting states. macOS has a matching-host
+worker-owned first-frame smoke; iOS has a simulator GPU first frame; Android
+and HarmonyOS have target build evidence. Windows MSVC and Linux Wayland builds
+plus matching-hardware resize, context-loss deadline, performance, and memory
+evidence remain required.
+
 ### Phase 2 — Per-platform promotion evidence (pending)
 
 `gpu_promoted` stays `false` on every platform. Promotion is recorded here as
 each platform's matching-device manifest passes the seven gates above. The
 promotions table is filled in incrementally:
+
+Native mobile runs embed the gate block in the mobile runtime manifest.
+Desktop and Web use `docs/gpu-promotion-manifest.example.json`, validated by
+`scripts/validate-gpu-promotion-manifest.mjs --require-passed`.
 
 | Platform | Backend | `gpu_promoted` | Promotion date | Manifest evidence |
 | --- | --- | --- | --- | --- |
@@ -103,9 +145,10 @@ promotions table is filled in incrementally:
 | macOS | Metal | `false` | pending | pending matching-device smoke |
 | Android | Vulkan / GLES | `false` | pending | pending matching-device smoke |
 | HarmonyOS | EGL/GLES | `false` | pending | pending matching-device smoke |
-| Windows | Direct3D 11 | `false` | pending | pending matching-device smoke |
+| Windows | Direct3D 12 | `false` | pending | pending matching-device smoke |
 | Linux | Vulkan (Wayland) | `false` | pending | pending matching-device smoke |
+| Web | WebGPU | `false` | pending | pending Chrome WebGPU device-loss/performance manifest |
 
 The intended backend order is iOS Metal, Android Vulkan with GLES fallback,
 then HarmonyOS EGL/GLES followed by optional Vulkan. The desktop order is
-macOS Metal, Windows D3D11, Linux Vulkan.
+macOS Metal, Windows D3D12, Linux Vulkan.

@@ -21,7 +21,7 @@
 #endif
 
 #ifndef MOUI_MOBILE_RENDERER_SELECTED
-#define MOUI_MOBILE_RENDERER_SELECTED "skia-raster"
+#define MOUI_MOBILE_RENDERER_SELECTED MOUI_MOBILE_RENDERER_REQUESTED
 #endif
 
 namespace {
@@ -60,6 +60,8 @@ extern "C" int32_t MOUI_MOBILE_FRAME_TICK(double time_ms);
 extern "C" int32_t MOUI_MOBILE_RENDER_FRAME(void);
 extern "C" void MOUI_MOBILE_DETACH_SURFACE(void);
 extern "C" moonbit_string_t moui_mobile_take_host_updates_json(void);
+extern "C" int32_t moui_mobile_renderer_configure(moonbit_string_t mode);
+extern "C" moonbit_string_t moui_mobile_renderer_status_json(void);
 extern "C" int32_t moui_mobile_dispatch_text_input(
     int32_t kind,
     moonbit_string_t text,
@@ -76,12 +78,27 @@ extern "C" int32_t moui_mobile_complete_clipboard(
     moonbit_string_t text,
     moonbit_bytes_t bytes);
 
+moonbit_string_t moonbit_string_from_ascii(const char *value) {
+  const size_t length = value == nullptr ? 0 : std::strlen(value);
+  moonbit_string_t result = moonbit_make_string_raw(static_cast<int32_t>(length));
+  auto *units = reinterpret_cast<uint16_t *>(result);
+  for (size_t index = 0; index < length; ++index) {
+    units[index] = static_cast<uint8_t>(value[index]);
+  }
+  return result;
+}
+
 void ensure_moonbit_runtime() {
   std::call_once(g_init_once, [] {
     static char app_name[] = MOUI_MOBILE_APP_ARG;
     static char *argv[] = {app_name};
     moonbit_runtime_init(1, argv);
     moonbit_init();
+    moonbit_string_t renderer_mode = moonbit_string_from_ascii(
+        MOUI_MOBILE_RENDERER_REQUESTED);
+    const int32_t renderer_configured = moui_mobile_renderer_configure(
+        renderer_mode);
+    moonbit_decref(renderer_mode);
     __android_log_print(
         ANDROID_LOG_INFO,
         kLogTag,
@@ -89,6 +106,12 @@ void ensure_moonbit_runtime() {
         MOUI_MOBILE_APP_ID,
         MOUI_MOBILE_RENDERER_REQUESTED,
         MOUI_MOBILE_RENDERER_SELECTED);
+    __android_log_print(
+        renderer_configured != 0 ? ANDROID_LOG_INFO : ANDROID_LOG_WARN,
+        kLogTag,
+        "moui-mobile renderer configure requested=%s ok=%d",
+        MOUI_MOBILE_RENDERER_REQUESTED,
+        renderer_configured);
   });
 }
 
@@ -163,6 +186,26 @@ Java_dev_wzzc_moui_mobile_MobileActivity_nativeAttachSurface(
       density);
   __android_log_print(ANDROID_LOG_INFO, kLogTag, "moui-mobile attach app=%s ok=%d width=%d height=%d", MOUI_MOBILE_APP_ID, ok, width, height);
   return ok != 0 ? JNI_TRUE : JNI_FALSE;
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_dev_wzzc_moui_mobile_MobileActivity_nativeRendererConfigure(
+    JNIEnv *env,
+    jclass,
+    jstring mode) {
+  ensure_moonbit_runtime();
+  moonbit_string_t native_mode = moonbit_string_from_java(env, mode);
+  const int32_t configured = moui_mobile_renderer_configure(native_mode);
+  moonbit_decref(native_mode);
+  return configured != 0 ? JNI_TRUE : JNI_FALSE;
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_dev_wzzc_moui_mobile_MobileActivity_nativeRendererStatusJson(
+    JNIEnv *env,
+    jclass) {
+  ensure_moonbit_runtime();
+  return java_string_from_moonbit(env, moui_mobile_renderer_status_json());
 }
 
 extern "C" JNIEXPORT jboolean JNICALL

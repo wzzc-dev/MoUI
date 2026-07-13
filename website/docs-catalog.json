@@ -332,6 +332,10 @@
     {
       "path": "docs/api-surface-audit.md",
       "reason": "Internal API audit and maintenance budgets are intentionally not published."
+    },
+    {
+      "path": "docs/invariants.md",
+      "reason": "Repository invariants are contributor-agent guidance and are not part of the public website documentation set."
     }
   ]
 }

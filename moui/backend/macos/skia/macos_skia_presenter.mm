@@ -3,6 +3,8 @@
 #import <QuartzCore/QuartzCore.h>
 #import <Metal/Metal.h>
 #import <moonbit.h>
+#import <stdio.h>
+#import <stdlib.h>
 #import <stdint.h>
 #import <string.h>
 
@@ -188,9 +190,11 @@ uint64_t moui_macos_skia_install_metal_layer(uint64_t raw_view_handle) {
     return 0;
   }
   metal_layer.device = device;
-  // Skia renders premultiplied RGBA; opaque is off to support compositing.
+  metal_layer.pixelFormat = MTLPixelFormatBGRA8Unorm;
+  metal_layer.frame = view.bounds;
+  // Skia renders premultiplied BGRA; opaque is off to support compositing.
   metal_layer.opaque = NO;
-  metal_layer.framebufferOnly = YES;
+  metal_layer.framebufferOnly = NO;
   NSWindow *window = view.window;
   if (window != nil) {
     metal_layer.contentsScale = window.backingScaleFactor > 0.0
@@ -199,6 +203,47 @@ uint64_t moui_macos_skia_install_metal_layer(uint64_t raw_view_handle) {
   } else {
     metal_layer.contentsScale = [[NSScreen mainScreen] backingScaleFactor];
   }
+  CGFloat width = MAX(1.0, NSWidth(view.bounds) * metal_layer.contentsScale);
+  CGFloat height = MAX(1.0, NSHeight(view.bounds) * metal_layer.contentsScale);
+  metal_layer.drawableSize = CGSizeMake(width, height);
   view.layer = metal_layer;
   return static_cast<uint64_t>(reinterpret_cast<uintptr_t>(metal_layer));
+}
+
+/// Synchronize a CAMetalLayer with the renderer's physical pixel size before
+/// Skia asks the layer for a drawable. Must be called on the main thread.
+extern "C" MOONBIT_FFI_EXPORT
+int32_t moui_macos_skia_configure_metal_layer(uint64_t raw_view_handle,
+                                              uint64_t raw_layer_handle,
+                                              int32_t width,
+                                              int32_t height) {
+  if (raw_view_handle == 0 || raw_layer_handle == 0 || width <= 0 || height <= 0) {
+    return 0;
+  }
+  NSView *view = (__bridge NSView *)(void *)raw_view_handle;
+  CAMetalLayer *metal_layer = (__bridge CAMetalLayer *)(void *)raw_layer_handle;
+  if (view == nil || metal_layer == nil ||
+      ![metal_layer isKindOfClass:[CAMetalLayer class]] ||
+      metal_layer.device == nil) {
+    return 0;
+  }
+  CGFloat scale = view.window.backingScaleFactor > 0.0
+    ? view.window.backingScaleFactor
+    : MAX(1.0, metal_layer.contentsScale);
+  metal_layer.pixelFormat = MTLPixelFormatBGRA8Unorm;
+  metal_layer.frame = view.bounds;
+  metal_layer.contentsScale = scale;
+  metal_layer.drawableSize = CGSizeMake((CGFloat)width, (CGFloat)height);
+  if (getenv("MOUI_SKIA_GPU_DIAGNOSTICS") != NULL) {
+    fprintf(stderr,
+            "MoUI macOS Metal layer diagnostics: window_visible=%s; "
+            "layer_matches_view=%s; view_bounds=%.0fx%.0f; "
+            "drawable_size=%.0fx%.0f; contents_scale=%.2f\n",
+            view.window.isVisible ? "true" : "false",
+            view.layer == metal_layer ? "true" : "false",
+            NSWidth(view.bounds), NSHeight(view.bounds),
+            metal_layer.drawableSize.width, metal_layer.drawableSize.height,
+            metal_layer.contentsScale);
+  }
+  return 1;
 }

@@ -138,6 +138,55 @@ try {
     "mock WebGPU path should not load Canvas2D fallback",
   );
 
+  let resolveLost;
+  let deviceRequests = 0;
+  const recoverableDevice = {
+    ...fakeDevice,
+    lost: new Promise(resolve => {
+      resolveLost = resolve;
+    }),
+  };
+  Object.defineProperty(globalThis, "navigator", {
+    configurable: true,
+    value: {
+      gpu: {
+        async requestAdapter() {
+          return {
+            async requestDevice() {
+              deviceRequests += 1;
+              if (deviceRequests === 1) return recoverableDevice;
+              throw new Error("simulated recovery failure");
+            },
+          };
+        },
+        getPreferredCanvasFormat() {
+          return "rgba8unorm";
+        },
+      },
+    },
+  });
+  const recoveryStatuses = [];
+  const recovering = await createWebGpuImportsAsync({
+    onStatus: message => recoveryStatuses.push(message),
+  });
+  resolveLost({ reason: "unknown", message: "simulated device loss" });
+  for (let index = 0; index < 50; index += 1) {
+    if (recoveryStatuses.some(message => message.includes("switched to Canvas2D"))) break;
+    await new Promise(resolve => setTimeout(resolve, 0));
+  }
+  assert(
+    recoveryStatuses.filter(message => message.includes("recovery attempt")).length === 2,
+    "device loss should attempt WebGPU recovery twice",
+  );
+  assert(
+    recovering.__moui_recovery_diagnostics().state === "fallback-to-canvas2d",
+    "device loss should switch the stable imports proxy to Canvas2D",
+  );
+  assert(
+    recovering.__moui_recovery_diagnostics().readbackCount === 0,
+    "WebGPU recovery diagnostics should preserve zero readback",
+  );
+
   const fallbackStatuses = [];
   const fallback = await createWebGpuImportsAsync({
     forceUnavailable: true,

@@ -44,6 +44,20 @@ For core/view/render/backend changes, also run `sh scripts/check.sh --profile da
 For platform behavior: `sh scripts/check.sh --profile platform`.
 For theme changes: `sh scripts/check.sh --profile theme`.
 
+Design Systems is addon diagnostic coverage; run the theme profile for it.
+The Windows check wrapper plan and shared platform service checks are tracked
+in `docs/testing.md` and `checks/profiles.json`.
+
+## Script Tooling Policy
+
+Repository validators should use MoonBit-backed tools where practical; keep
+Node for browser/CDP, Web smoke, HTTP, and artifact orchestration. The
+`rule`/`dev_build` helpers are only for deterministic package generation, not
+dependency installation or smoke execution.
+
+Mobile sessions share `MobileHostChannel`. Native XComponent callbacks are the only
+surface/pointer/resize/detach source on HarmonyOS.
+
 ## Manual Smoke (real platform/renderer evidence)
 
 ```sh

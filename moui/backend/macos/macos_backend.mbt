@@ -81,6 +81,7 @@ priv struct MacosWindowPlatformSlot {
   platform_id : @window_core.WindowId
   window : @window_macos.Window
   renderer : @host.HostWindowRenderer
+  mut frame_pending : Bool
 }
 
 ///|

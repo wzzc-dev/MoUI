@@ -263,6 +263,7 @@ fn LinuxApp::attach_resolved_window(
           window,
           renderer,
           decorations,
+          frame_pending: false,
         }),
       )
       self.request_platform_redraw(resolved.id)

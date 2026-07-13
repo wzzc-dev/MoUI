@@ -62,6 +62,11 @@
 #include "include/core/SkShader.h"
 #include "include/core/SkString.h"
 #include "include/core/SkSurface.h"
+#if __has_include("include/core/SkPicture.h")
+#include "include/core/SkPicture.h"
+#include "include/core/SkPictureRecorder.h"
+#define MOUI_SKIA_HAS_PICTURE 1
+#endif
 #include "include/core/SkTypeface.h"
 #include "include/core/SkTypes.h"
 #if __has_include("include/gpu/ganesh/GrDirectContext.h")
@@ -185,11 +190,14 @@ struct MoonbitSkiaSurface {
 };
 
 #if defined(__APPLE__)
+/// Retain an Objective-C object that crosses an asynchronous native boundary.
+void moonbit_skia_objc_retain(void* object);
 /// Release a retained Objective-C object (e.g. CAMetalDrawable) stored as
 /// host_present_handle. Safe to call with nullptr. On non-Apple platforms
 /// this is a no-op stub.
 void moonbit_skia_objc_release(void* object);
 #else
+static inline void moonbit_skia_objc_retain(void* object) { (void)object; }
 static inline void moonbit_skia_objc_release(void* object) { (void)object; }
 #endif
 
@@ -222,15 +230,15 @@ static inline void moonbit_skia_vulkan_release_swapchain(void* object) {
 }
 #endif
 
-#if defined(__OHOS__)
+#if defined(__OHOS__) || defined(__ANDROID__)
 /// Release a heap-allocated MoonbitSkiaEglContext stored as the `device`
-/// field of MoonbitSkiaGpuContext on HarmonyOS. Safe to call with nullptr.
-/// On non-HarmonyOS platforms this is a no-op stub. The definition lives in
+/// field of MoonbitSkiaGpuContext on HarmonyOS or Android. Safe to call with
+/// nullptr. On other platforms this is a no-op stub. The definition lives in
 /// skia_stub_surface_image_data.cpp.
 void moonbit_skia_egl_release_context(void* object);
 /// Release a heap-allocated MoonbitSkiaEglWindow stored as
-/// host_present_handle on HarmonyOS. Safe to call with nullptr. On
-/// non-HarmonyOS platforms this is a no-op stub. The definition lives in
+/// host_present_handle on HarmonyOS or Android. Safe to call with nullptr. On
+/// other platforms this is a no-op stub. The definition lives in
 /// skia_stub_surface_image_data.cpp.
 void moonbit_skia_egl_release_window(void* object);
 #else
@@ -252,6 +260,8 @@ struct MoonbitSkiaGpuContext {
   void* queue;
   int32_t backend;
 };
+
+struct MoonbitSkiaNativeGpuWorker;
 
 struct MoonbitSkiaData {
 #if defined(MOUI_SKIA_HAS_SKIA)
@@ -359,6 +369,38 @@ struct MoonbitSkiaBitmap {
   void* bitmap;
 #endif
 };
+
+struct MoonbitSkiaPicture {
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_PICTURE)
+  SkPicture* picture;
+#else
+  void* picture;
+#endif
+};
+
+struct MoonbitSkiaPictureRecorder {
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_PICTURE)
+  SkPictureRecorder* recorder;
+#else
+  void* recorder;
+#endif
+};
+
+MoonbitSkiaPicture* moonbit_skia_make_picture_wrapper(
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_PICTURE)
+  SkPicture* picture
+#else
+  void* picture
+#endif
+);
+
+MoonbitSkiaPictureRecorder* moonbit_skia_make_picture_recorder_wrapper(
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_PICTURE)
+  SkPictureRecorder* recorder
+#else
+  void* recorder
+#endif
+);
 
 struct MoonbitSkiaPoint {
   float x;

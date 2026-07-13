@@ -3,6 +3,9 @@ pub struct HostWindowRenderer {
   priv resize_fn : (HostSurfaceMetrics) -> Unit
   priv render_fn : (Array[@core.DrawCommand]) -> Unit
   priv render_frame_fn : (@core.DrawFrame) -> @render.RenderFrameResult
+  priv drain_present_completions_fn : () -> Array[
+    @render.RenderPresentCompletion,
+  ]
   priv text_system_fn : () -> @core.TextSystem
   priv image_resources_fn : () -> Array[@render.ImageResourceRecord]
   priv image_resource_snapshot_fn : () -> @render.ImageResourceSnapshot
@@ -48,6 +51,7 @@ pub fn HostWindowRenderer::new(
   resize~ : (HostSurfaceMetrics) -> Unit,
   render~ : (Array[@core.DrawCommand]) -> Unit,
   render_frame? : ((@core.DrawFrame) -> @render.RenderFrameResult)? = None,
+  drain_present_completions? : (() -> Array[@render.RenderPresentCompletion])? = None,
   text_system~ : () -> @core.TextSystem,
   image_resources? : () -> Array[@render.ImageResourceRecord] = () => [],
   image_resource_snapshot? : (() -> @render.ImageResourceSnapshot)? = None,
@@ -94,10 +98,15 @@ pub fn HostWindowRenderer::new(
         )
       }
   }
+  let drain_present_completions_fn = match drain_present_completions {
+    Some(drain) => drain
+    None => () => []
+  }
   {
     resize_fn: resize,
     render_fn: render,
     render_frame_fn,
+    drain_present_completions_fn,
     text_system_fn: text_system,
     image_resources_fn: image_resources,
     image_resource_snapshot_fn: image_resource_snapshot,
@@ -133,6 +142,48 @@ pub fn HostWindowRenderer::render_frame(
   frame : @core.DrawFrame,
 ) -> @render.RenderFrameResult {
   (self.render_frame_fn)(frame)
+}
+
+///|
+/// Drain asynchronous renderer-worker completions. Synchronous raster
+/// providers return an empty array; GPU workers return one record per frame
+/// that reached present, was dropped, or triggered raster fallback.
+pub fn HostWindowRenderer::drain_present_completions(
+  self : HostWindowRenderer,
+) -> Array[@render.RenderPresentCompletion] {
+  (self.drain_present_completions_fn)()
+}
+
+///|
+/// Report whether a renderer-worker completion proves a window present.
+pub fn render_present_completion_is_presented(
+  completion : @render.RenderPresentCompletion,
+) -> Bool {
+  completion.status() is @render.RenderPresentStatus::Presented
+}
+
+///|
+/// Report whether any drained completion proves a window present.
+pub fn render_present_completions_have_presented(
+  completions : Array[@render.RenderPresentCompletion],
+) -> Bool {
+  completions.any(render_present_completion_is_presented)
+}
+
+///|
+/// Report whether a queued frame reached any terminal outcome. `Recorded` is
+/// an internal handoff signal and does not complete a window presentation.
+pub fn render_present_completions_have_terminal(
+  completions : Array[@render.RenderPresentCompletion],
+) -> Bool {
+  completions.any(completion => {
+    match completion.status() {
+      @render.RenderPresentStatus::Presented
+      | @render.RenderPresentStatus::Dropped
+      | @render.RenderPresentStatus::FallbackToRaster => true
+      @render.RenderPresentStatus::Recorded => false
+    }
+  })
 }
 
 ///|

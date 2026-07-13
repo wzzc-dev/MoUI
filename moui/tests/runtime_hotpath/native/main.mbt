@@ -5,8 +5,10 @@
 //
 // Uses set_environment toggle each frame to force a full rebuild path.
 
+///|
 extern "c" fn bench_now_ms() -> Double = "moui_reconciliation_benchmark_now_ms"
 
+///|
 fn bench_env_int(name : String, fallback : Int) -> Int {
   match @env.get_env_var(name) {
     Some(value) => {
@@ -27,6 +29,7 @@ fn bench_env_int(name : String, fallback : Int) -> Int {
   }
 }
 
+///|
 fn bench_deep_view(depth : Int, width_per_level : Int) -> @core.View[Int] {
   if depth <= 0 {
     @views.text("leaf")
@@ -39,6 +42,7 @@ fn bench_deep_view(depth : Int, width_per_level : Int) -> @core.View[Int] {
   }
 }
 
+///|
 fn bench_dirty(
   label : String,
   depth : Int,
@@ -49,7 +53,9 @@ fn bench_dirty(
   // the full rebuild→layout→paint→draw cycle.
   let view = bench_deep_view(depth, width_per_level)
   let env_light = @core.Environment::neutral()
-  let env_dark = @core.Environment::neutral().with_system_scheme(@core.ColorScheme::Dark)
+  let env_dark = @core.Environment::neutral().with_system_scheme(
+    @core.ColorScheme::Dark,
+  )
   let runtime = @runtime.AppRuntime::new_view(
     root=view,
     size=@core.Size::new(width=800.0, height=600.0),
@@ -78,6 +84,7 @@ fn bench_dirty(
   )
 }
 
+///|
 fn main {
   let frames = bench_env_int("MOUI_HOTPATH_FRAMES", 20)
 

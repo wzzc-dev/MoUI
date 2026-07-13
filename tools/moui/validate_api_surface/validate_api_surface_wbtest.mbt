@@ -92,17 +92,17 @@ test "api surface classification budgets pin current high-risk packages" {
     classification_budget(
       "moui/runtime/pkg.generated.mbti", "runtime_diagnostic",
     ).max_count,
-    content="263",
+    content="285",
   )
   inspect(
     classification_budget(
       "moui/backend/host/pkg.generated.mbti", "host_contract",
     ).max_count,
-    content="442",
+    content="455",
   )
   inspect(
     classification_budget("moui/render/pkg.generated.mbti", "renderer_contract").max_count,
-    content="108",
+    content="150",
   )
 }
 
@@ -255,9 +255,9 @@ test "domain sugar packages forward the curated per-domain type set" {
 ///|
 test "runtime facade budget pins the opaque runtime boundary" {
   let runtime = budget_by_label("runtime facade")
-  inspect(runtime.max_lines, content="380")
-  inspect(runtime.max_pub_lines, content="270")
-  inspect(runtime.max_pub_all_lines, content="6")
+  inspect(runtime.max_lines, content="430")
+  inspect(runtime.max_pub_lines, content="285")
+  inspect(runtime.max_pub_all_lines, content="9")
   assert_true(runtime.required_tokens.contains("pub struct AppRuntime"))
   assert_true(runtime.required_tokens.contains("pub fn[Msg] new_view("))
   assert_true(
@@ -454,7 +454,7 @@ test "host and renderer public all budgets ratchet down" {
   let host = budget_by_label("host contracts")
   inspect(host.max_pub_all_lines, content="70")
   let renderer = budget_by_label("renderer facade")
-  inspect(renderer.max_pub_all_lines, content="27")
+  inspect(renderer.max_pub_all_lines, content="40")
   let skia = budget_by_label("skia renderer")
   inspect(skia.max_pub_all_lines, content="3")
   let sun = budget_by_label("sun renderer")

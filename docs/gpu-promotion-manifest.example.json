@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "renderer": "skia-gpu-native",
+  "platform": "macos",
+  "backend": "metal",
+  "gpuPromoted": false,
+  "requestedMode": "auto",
+  "surfaceRoute": "metal-gpu",
+  "evidenceProvenance": {
+    "kind": "pending",
+    "runner": "",
+    "artifact": ""
+  },
+  "diagnostics": {
+    "readbackCount": 0,
+    "workerThread": true,
+    "surfaceGeneration": 0,
+    "contextGeneration": 0,
+    "recoveryCount": 0,
+    "fallbackCount": 0
+  },
+  "promotionGates": {
+    "readbackEliminated": false,
+    "rendererThread": false,
+    "mailboxOk": false,
+    "performance": {
+      "refreshHz": 60,
+      "durationSeconds": 0,
+      "p95FrameMs": 0,
+      "droppedFramePercent": 100,
+      "inputToPresentPVsyncIntervals": 0
+    },
+    "memory": {
+      "bounded": false,
+      "surfaceRecreationCycles": 0,
+      "foregroundBackgroundCycles": 0
+    },
+    "contextLoss": {
+      "recoveredWithinVsyncs": 0,
+      "rasterFallbackPreservedAppRuntime": false
+    },
+    "rasterFallback": {
+      "automaticAfterRepeatedFailure": false
+    }
+  }
+}

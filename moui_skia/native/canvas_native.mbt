@@ -221,6 +221,13 @@ extern "C" fn native_canvas_draw_color(
 ) -> Unit = "moonbit_skia_canvas_draw_color"
 
 ///|
+#borrow(canvas, picture)
+extern "C" fn native_canvas_draw_picture(
+  canvas : CanvasHandle,
+  picture : PictureHandle,
+) -> Unit = "moonbit_skia_canvas_draw_picture"
+
+///|
 #borrow(canvas)
 extern "C" fn native_canvas_draw_paint(
   canvas : CanvasHandle,
@@ -954,6 +961,11 @@ pub fn Canvas::draw_color(
 ///|
 pub fn Canvas::clear(self : Canvas, color : @skia.Color) -> Unit {
   self.draw_color(color, blend_mode=Src)
+}
+
+///|
+pub fn Canvas::draw_picture(self : Canvas, picture : Picture) -> Unit {
+  native_canvas_draw_picture(self.handle, picture.handle)
 }
 
 ///|

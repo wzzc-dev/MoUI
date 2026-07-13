@@ -60,10 +60,7 @@ test "renderer recovery falls back to raster after repeated failure" {
   // First loss.
   recovery.report_context_loss("egl-context-lost", now_ms=10.0)
   recovery.report_recovery_started()
-  recovery.report_recovery_failed(
-    "egl-create-context-failed",
-    now_ms=12.0,
-  )
+  recovery.report_recovery_failed("egl-create-context-failed", now_ms=12.0)
   inspect(recovery.consecutive_failures(), content="1")
   // First failure: retry, state goes back to Lost with a fresh deadline.
   assert_true(recovery.state() is @runtime.RendererRecoveryState::Lost(_, _))
@@ -153,15 +150,12 @@ test "renderer recovery custom budget is honored" {
     max_consecutive_recovery_failures=1,
   )
   let recovery = @runtime.RendererRecovery::new(budget~)
-  recovery.report_context_loss("d3d11-device-removed", now_ms=0.0)
+  recovery.report_context_loss("d3d12-device-removed", now_ms=0.0)
   // Deadline = 0 + 8.33 * 2 = 16.66 ms.
   assert_true(recovery.should_recover(now_ms=16.65))
   assert_false(recovery.should_recover(now_ms=16.67))
   recovery.report_recovery_started()
   // Only 1 failure allowed before fallback.
-  recovery.report_recovery_failed(
-    "d3d11-create-device-failed",
-    now_ms=5.0,
-  )
+  recovery.report_recovery_failed("d3d12-create-device-failed", now_ms=5.0)
   assert_true(recovery.should_fallback_to_raster())
 }

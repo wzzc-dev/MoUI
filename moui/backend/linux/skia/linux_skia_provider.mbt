@@ -15,10 +15,27 @@ pub struct LinuxSkiaSmokeOptions {
 pub fn LinuxSkiaAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
-  surface_route? : @render.SkiaSurfaceRoute = @render.SkiaSurfaceRoute::RasterSurfaceRoute,
+  surface_route? : @render.SkiaSurfaceRoute = linux_surface_route_from_environment(),
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
 ) -> LinuxSkiaAppOptions {
   { scene_resolver, font_resolution, surface_route, platform_view_plugins }
+}
+
+///|
+fn linux_surface_route_from_environment() -> @render.SkiaSurfaceRoute {
+  let requested = match @env.get_env_var("MOUI_SKIA_RENDERER") {
+    Some(value) =>
+      @render.NativeRendererMode::parse(value).unwrap_or(
+        @render.NativeRendererMode::Auto,
+      )
+    None => @render.NativeRendererMode::Auto
+  }
+  @render.select_native_renderer(
+    @render.NativeGpuPlatform::Linux,
+    requested,
+    gpu_available=@skia_native.Surface::vulkan_gpu_context_runtime_available(),
+    gpu_promoted=@render.NativeGpuPlatform::Linux.gpu_promoted(),
+  ).surface_route
 }
 
 ///|
@@ -255,60 +272,70 @@ fn create_renderer(
   }
   let display_ptr = window.display_handle()
   let surface_ptr = window.window_handle()
-  match resolve_gpu_present_target(display_ptr, surface_ptr, options) {
-    Some(gpu_target) =>
-      try {
-        let renderer = @skia_renderer.create_with_present_target_and_route(
-          renderer_metrics_from_host(metrics),
-          linux_skia_present_target(window),
-          surface_route=options.surface_route,
-          gpu_target=Some(gpu_target),
-          font_resolution=options.font_resolution,
-          async_image_loading=true,
-        )
-        println(
-          "Linux Skia renderer route diagnostics: \{renderer.surface_diagnostic_summary()}",
-        )
-        Some(host_renderer_from_skia(renderer))
-      } catch {
-        err => {
-          println(
-            "error creating Linux Skia Vulkan GPU renderer, falling back to raster: \{err.message()}",
-          )
-          create_raster_renderer(window, metrics, options)
-        }
-      }
-    None => create_raster_renderer(window, metrics, options)
+  if options.surface_route.is_gpu() &&
+    display_ptr != 0UL &&
+    surface_ptr != 0UL &&
+    @skia_native.Surface::vulkan_gpu_context_runtime_available() {
+    create_gpu_worker_renderer(
+      window, display_ptr, surface_ptr, metrics, options,
+    )
+  } else {
+    create_raster_renderer(window, metrics, options)
   }
 }
 
 ///|
-/// Resolve the optional `HostGpuPresentTarget` for the Linux Wayland Vulkan
-/// direct-present path. Returns `Some` when the user selected the Vulkan GPU
-/// route AND the Skia build links Ganesh Vulkan AND valid wl_display +
-/// wl_surface handles are available. Returns `None` to fall back to raster.
-fn resolve_gpu_present_target(
+fn create_gpu_worker_renderer(
+  window : @window_linux.Window,
   display_ptr : UInt64,
   surface_ptr : UInt64,
+  metrics : @host.HostSurfaceMetrics,
   options : LinuxSkiaAppOptions,
-) -> @skia_renderer.HostGpuPresentTarget? {
-  if !options.surface_route.is_gpu() {
-    return None
-  }
-  if display_ptr == 0UL || surface_ptr == 0UL {
-    println(
-      "Linux Skia Vulkan GPU route requested but Wayland handles are unavailable; falling back to raster",
+) -> @host.HostWindowRenderer? {
+  try {
+    let renderer = @skia_renderer.create_with_present_target(
+      renderer_metrics_from_host(metrics),
+      linux_skia_present_target(window),
+      font_resolution=options.font_resolution,
+      async_image_loading=true,
     )
-    return None
+    match @skia_native.NativeGpuRenderWorker::new() {
+      None => create_raster_renderer(window, metrics, options)
+      Some(worker) => {
+        let dimensions = linux_skia_vulkan_surface_descriptor(
+          renderer_metrics_from_host(metrics),
+        ).dimensions()
+        ignore(
+          worker.submit_control(
+            @skia_native.GpuRenderWorkerControl::AttachSurface(
+              display_ptr, surface_ptr,
+            ),
+          ),
+        )
+        ignore(
+          worker.submit_control(
+            @skia_native.GpuRenderWorkerControl::Resize(
+              dimensions.width,
+              dimensions.height,
+            ),
+          ),
+        )
+        ignore(worker.wait_completion(timeout_ms=1000))
+        ignore(worker.drain_completions())
+        println(
+          "Linux Skia renderer route diagnostics: surface_route=wayland-vulkan-gpu; surface_gpu=true; gpu_context=worker-owned; present_kind=host-gpu-surface; dimensions=\{dimensions.width}x\{dimensions.height}",
+        )
+        Some(host_renderer_from_native_gpu_worker(renderer, worker))
+      }
+    }
+  } catch {
+    err => {
+      println(
+        "error creating Linux Skia Vulkan worker renderer, falling back to raster: \{err.message()}",
+      )
+      create_raster_renderer(window, metrics, options)
+    }
   }
-  let gpu_available = @skia_native.Surface::vulkan_gpu_context_runtime_available()
-  if !gpu_available {
-    println(
-      "Linux Skia Vulkan GPU route requested but Ganesh Vulkan runtime is unavailable; falling back to raster",
-    )
-    return None
-  }
-  Some(linux_skia_gpu_present_target(display_ptr, surface_ptr))
 }
 
 ///|
@@ -355,60 +382,6 @@ fn linux_skia_gpu_presenter_description() -> String {
 }
 
 ///|
-/// Build the `HostGpuPresentTarget` for the Linux Wayland Vulkan direct-present
-/// path. `display_ptr` is the raw `wl_display*` and `surface_ptr` is the raw
-/// `wl_surface*` obtained from the window package.
-/// `create_window_surface` is invoked at renderer creation and on resize;
-/// `present_gpu` is invoked per-frame after `flush_and_submit` to present the
-/// Vulkan swapchain and acquire the next image.
-fn linux_skia_gpu_present_target(
-  display_ptr : UInt64,
-  surface_ptr : UInt64,
-) -> @skia_renderer.HostGpuPresentTarget {
-  @skia_renderer.HostGpuPresentTarget::new(
-    description=linux_skia_gpu_presenter_description(),
-    create_window_surface=(gpu_context, metrics) => {
-      match gpu_context {
-        None => None
-        Some(context) =>
-          @skia_native.Surface::vulkan_wayland_surface(
-            context,
-            display_ptr,
-            surface_ptr,
-            linux_skia_vulkan_surface_descriptor(metrics),
-          )
-      }
-    },
-    present_gpu=(gpu_context, surface) => {
-      match gpu_context {
-        None =>
-          @skia_renderer.HostGpuPresentOutcome::new(
-            succeeded=false,
-            next_surface=None,
-          )
-        Some(context) => {
-          let outcome = @skia_native.Surface::vulkan_present_and_acquire_next(
-            surface, context, 0UL,
-          )
-          match outcome {
-            Some(next_surface) =>
-              @skia_renderer.HostGpuPresentOutcome::new(
-                succeeded=true,
-                next_surface=Some(next_surface),
-              )
-            None =>
-              @skia_renderer.HostGpuPresentOutcome::new(
-                succeeded=false,
-                next_surface=None,
-              )
-          }
-        }
-      }
-    },
-  )
-}
-
-///|
 fn linux_skia_vulkan_surface_descriptor(
   metrics : @render.RendererSurfaceMetrics,
 ) -> @moui_skia.SurfaceDescriptor {
@@ -418,6 +391,156 @@ fn linux_skia_vulkan_surface_descriptor(
       physical.width.ceil().max(1.0).to_int(),
       physical.height.ceil().max(1.0).to_int(),
     ),
+  )
+}
+
+///|
+fn linux_native_gpu_completion_to_render(
+  completion : @skia_native.NativeGpuWorkerCompletion,
+) -> @render.RenderPresentCompletion? {
+  let status = match completion.status {
+    @skia_native.NativeGpuWorkerCompletionStatus::PictureRecorded =>
+      @render.RenderPresentStatus::Recorded
+    @skia_native.NativeGpuWorkerCompletionStatus::Presented =>
+      @render.RenderPresentStatus::Presented
+    @skia_native.NativeGpuWorkerCompletionStatus::Dropped =>
+      @render.RenderPresentStatus::Dropped
+    @skia_native.NativeGpuWorkerCompletionStatus::FallbackToRaster =>
+      @render.RenderPresentStatus::FallbackToRaster
+    @skia_native.NativeGpuWorkerCompletionStatus::ControlAcknowledged
+    | @skia_native.NativeGpuWorkerCompletionStatus::Unknown(_) => return None
+  }
+  Some(
+    @render.RenderPresentCompletion::new(
+      frame_sequence=completion.sequence.to_int(),
+      surface_generation=completion.surface_generation,
+      image_resource_revision=completion.image_resource_revision,
+      submitted_at_ms=completion.submitted_at_ms,
+      completed_at_ms=completion.processed_at_ms,
+      presented_at_ms=completion.presented_at_ms,
+      status~,
+      gpu_context_generation=completion.context_generation,
+    ),
+  )
+}
+
+///|
+fn host_renderer_from_native_gpu_worker(
+  renderer : @skia_renderer.SkiaRasterRenderer,
+  worker : @skia_native.NativeGpuRenderWorker,
+) -> @host.HostWindowRenderer {
+  let pending_completions : Array[@render.RenderPresentCompletion] = []
+  let presented_count = Ref(0)
+  let fallback_to_raster = Ref(false)
+  let disposed = Ref(false)
+  let collect_completions = () => {
+    for completion in worker.drain_completions() {
+      match linux_native_gpu_completion_to_render(completion) {
+        Some(render_completion) => {
+          match render_completion.status() {
+            @render.RenderPresentStatus::Presented =>
+              presented_count.val = presented_count.val + 1
+            @render.RenderPresentStatus::FallbackToRaster =>
+              fallback_to_raster.val = true
+            _ => ()
+          }
+          pending_completions.push(render_completion)
+        }
+        None => ()
+      }
+    }
+  }
+  @host.HostWindowRenderer::new(
+    resize=metrics => {
+      renderer.resize(renderer_metrics_from_host(metrics)) catch {
+        err => println("error resizing Linux Skia producer: \{err.message()}")
+      }
+      if !fallback_to_raster.val {
+        let dimensions = linux_skia_vulkan_surface_descriptor(
+          renderer_metrics_from_host(metrics),
+        ).dimensions()
+        ignore(
+          worker.submit_control(
+            @skia_native.GpuRenderWorkerControl::Resize(
+              dimensions.width,
+              dimensions.height,
+            ),
+          ),
+        )
+      }
+    },
+    render=commands => {
+      renderer.render(commands) catch {
+        err => println("error rendering Linux Skia frame: \{err.message()}")
+      }
+    },
+    render_frame=Some(frame => {
+      collect_completions()
+      if fallback_to_raster.val {
+        return renderer.render_frame(frame)
+      }
+      match renderer.record_frame_picture(frame) {
+        None => renderer.render_frame(frame)
+        Some(picture) => {
+          let revision = renderer.image_resource_snapshot().revision.to_int64()
+          let sequence = worker.submit_picture(
+            picture,
+            image_resource_revision=revision,
+          )
+          if sequence == 0L {
+            fallback_to_raster.val = true
+            renderer.render_frame(frame)
+          } else {
+            @render.RenderFrameResult::new(presented=false, queued=true)
+          }
+        }
+      }
+    }),
+    drain_present_completions=Some(() => {
+      collect_completions()
+      let completions = pending_completions.copy()
+      pending_completions.clear()
+      completions
+    }),
+    text_system=() => renderer.text_system(),
+    image_resources=() => renderer.image_resources(),
+    image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
+    apply_image_resource_load_completion=Some(completion => {
+      renderer.apply_image_resource_load_completion(completion)
+    }),
+    set_image_resource_change_callback=callback => {
+      renderer.set_image_resource_change_callback(callback)
+    },
+    present_count=() => presented_count.val + renderer.present_count(),
+    dispose=() => {
+      if !disposed.val {
+        disposed.val = true
+        ignore(
+          worker.submit_control(@skia_native.GpuRenderWorkerControl::Detach),
+        )
+        ignore(worker.wait_completion(timeout_ms=1000))
+        ignore(worker.drain_completions())
+        worker.shutdown()
+        renderer.dispose()
+      }
+    },
+    draw_platform_view_pixels=fn(
+      pixels,
+      src_width,
+      src_height,
+      src_stride,
+      dst_x,
+      dst_y,
+      dst_width,
+      dst_height,
+    ) {
+      renderer.draw_platform_view_pixels(
+        pixels, src_width, src_height, src_stride, dst_x, dst_y, dst_width, dst_height,
+      )
+    },
+    set_platform_view_draw_fn=draw_fn => {
+      renderer.set_platform_view_draw_fn(draw_fn)
+    },
   )
 }
 

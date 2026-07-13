@@ -144,7 +144,9 @@ test "linux skia preflight reports vulkan direct gpu presenter path" {
   )
   assert_true(summary.contains("surface_route=vulkan-gpu"))
   assert_true(
-    summary.contains("gpu_presenter=Linux Wayland Vulkan Skia direct GPU presenter"),
+    summary.contains(
+      "gpu_presenter=Linux Wayland Vulkan Skia direct GPU presenter",
+    ),
   )
   assert_true(summary.contains("gpu_runtime_available="))
 }

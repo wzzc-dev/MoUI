@@ -23,7 +23,9 @@
         "ImageFilter",
         "MaskFilter",
         "Bitmap",
-        "GpuContext"
+        "GpuContext",
+        "Picture",
+        "PictureRecorder"
       ],
       "smoke_markers": [],
       "non_smoke_rationale": "Private handle declarations are proven through native ownership and fallback parity gates rather than runtime smoke markers."
@@ -108,7 +110,8 @@
         "Typeface",
         "ColorFilter",
         "ImageFilter",
-        "MaskFilter"
+        "MaskFilter",
+        "Picture"
       ],
       "smoke_markers": [
         "native smoke canvas state restored",
@@ -204,6 +207,27 @@
         "native smoke render mask filter cache hits"
       ],
       "non_smoke_rationale": ""
+    },
+    {
+      "id": "native.picture",
+      "area": "Canvas",
+      "native_file": "picture_native.mbt",
+      "unavailable_file": "picture_unavailable.mbt",
+      "handles": [
+        "Picture",
+        "PictureRecorder"
+      ],
+      "smoke_markers": [],
+      "non_smoke_rationale": "Picture lifecycle and fallback parity are covered by package tests; matching-host worker presentation evidence is tracked by GPU promotion manifests."
+    },
+    {
+      "id": "native.gpu-worker",
+      "area": "Surface",
+      "native_file": "native_gpu_worker_native.mbt",
+      "unavailable_file": "native_gpu_worker_unavailable.mbt",
+      "handles": [],
+      "smoke_markers": [],
+      "non_smoke_rationale": "Native std::thread ownership, POD control/completion queues, detach acknowledgement, and zero-readback diagnostics are covered by focused native tests; matching-host presentation remains promotion-manifest evidence."
     },
     {
       "id": "native.path",

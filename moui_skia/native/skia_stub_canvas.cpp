@@ -1121,6 +1121,22 @@ extern "C" MOONBIT_FFI_EXPORT void moonbit_skia_canvas_draw_color(
 #endif
 }
 
+extern "C" MOONBIT_FFI_EXPORT void moonbit_skia_canvas_draw_picture(
+  MoonbitSkiaCanvas* canvas,
+  MoonbitSkiaPicture* picture
+) {
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_PICTURE)
+  if (canvas == nullptr || canvas->canvas == nullptr ||
+      picture == nullptr || picture->picture == nullptr) {
+    return;
+  }
+  canvas->canvas->drawPicture(picture->picture);
+#else
+  (void)canvas;
+  (void)picture;
+#endif
+}
+
 extern "C" MOONBIT_FFI_EXPORT void moonbit_skia_canvas_draw_paint(
   MoonbitSkiaCanvas* wrapper,
   uint32_t color_argb,

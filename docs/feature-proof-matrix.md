@@ -77,33 +77,36 @@ renderer proof; it needs the per-platform performance and recovery manifest in
 
 ## L2 GPU Direct Presentation Phase 1 Capability
 
-Phase 1 of the GPU readback elimination plan has landed the direct GPU
-presentation capability in source behind the `--renderer skia-gpu` opt-in
+Phase 1 of the GPU readback elimination plan has landed window-surface GPU
+source paths behind the `--renderer skia-gpu` opt-in
 (see ADR 0006 and `.trae/documents/gpu-readback-elimination-plan.md`). The
-capability is implemented per platform but `gpu_promoted` stays `false` on
+paths are unpromoted and `gpu_promoted` stays `false` on
 every platform until Phase 2 matching-device evidence passes the seven ADR
 0006 gates (`readbackEliminated`, `rendererThread`, `mailboxOk`,
 `performance`, `memory`, `contextLoss`, `rasterFallback`).
 
 | Platform | Backend | Surface route | Phase 1 source | Phase 2 promotion |
 | --- | --- | --- | --- | --- |
-| iOS | Metal | `MetalGpuSurfaceRoute` | implemented | pending matching-device manifest |
-| macOS | Metal | `MetalGpuSurfaceRoute` | implemented | pending matching-device manifest |
-| Android | Vulkan / GLES | `VulkanGpuSurfaceRoute` / `EglGpuSurfaceRoute` | implemented | pending matching-device manifest |
-| HarmonyOS | EGL/GLES | `EglGpuSurfaceRoute` | implemented | pending matching-device manifest |
-| Windows | Direct3D 11 | `Direct3DGpuSurfaceRoute` | implemented | pending matching-device manifest |
-| Linux | Vulkan (Wayland) | `VulkanGpuSurfaceRoute` | implemented | pending matching-device manifest |
+| iOS | Metal | `MetalGpuSurfaceRoute` | worker-owned source; simulator GPU build/first frame | pending physical-device manifest |
+| macOS | Metal | `MetalGpuSurfaceRoute` | worker-owned context/picture replay/present; local first-frame smoke | pending matching-device manifest |
+| Android | Vulkan / GLES | `VulkanGpuSurfaceRoute` / `EglGpuSurfaceRoute` | worker-owned source; minSdk 23 GPU APK build | pending Vulkan and GLES device manifests |
+| HarmonyOS | EGL/GLES | `EglGpuSurfaceRoute` | worker-owned source; native/HAP build | pending signed-device manifest |
+| Windows | Direct3D 12 | `Direct3DGpuSurfaceRoute` | worker-owned source; MSVC validation pending | pending matching-device manifest |
+| Linux | Vulkan (Wayland) | `VulkanGpuSurfaceRoute` | worker-owned source; Wayland build/validation pending | pending matching-device manifest |
+| Web | WebGPU | browser canvas | device-loss/fallback source path | pending Chrome WebGPU manifest |
 
 The Phase 2 promotion gate scaffolding has L1 package-test proof:
 
 | Gate | Source | L1 proof |
 | --- | --- | --- |
 | Renderer mailbox control queue | `moui/render/render_frame_mailbox.mbt` | `moui/render` whitebox tests (capacity-two latest-wins; control messages never dropped) |
+| Native Picture handoff | `moui_skia/native/skia_stub_gpu_worker.cpp` | focused native worker tests (`SkPicture` retain, independent thread, detach acknowledgement, zero readback counter), macOS worker-owned Metal first-frame smoke, Android NDK GPU build, HarmonyOS native/HAP build, and iOS simulator GPU build |
 | Context-loss recovery state machine | `moui/runtime/renderer_recovery.mbt` | `moui/runtime` whitebox tests (Idle → Lost → Recovering → Recovered → Idle; terminal `FallbackToRaster`) |
 | Manifest schema + `gpuPromotionEvidence` | `tools/moui/validate_mobile_runtime_manifest` | `validate_mobile_runtime_manifest_wbtest` (9 new Phase 2.3 tests) |
 
-Phase 2 per-platform promotion flips `MobileRendererSelection::gpu_promoted`
-to `true` only after the matching-device manifest passes `--require-passed`.
+Phase 2 per-platform promotion may flip a platform's `gpu_promoted` value only
+after worker-owned presentation and its matching-hardware manifest pass
+`--require-passed`.
 
 `feature-proof-summary.yml` runs after `ci.yml` or
 `moui-renderer-real-skia-ci.yml` completes (via

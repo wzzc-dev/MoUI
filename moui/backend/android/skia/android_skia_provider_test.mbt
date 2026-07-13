@@ -16,7 +16,8 @@ test "android skia preflight names scaffold requirements" {
   assert_true(summary.contains("font=empty-typeface"))
   assert_true(summary.contains("surface_route=raster"))
   assert_true(summary.contains("gpu_presenter="))
-  assert_true(summary.contains("gpu_runtime_available="))
+  assert_true(summary.contains("vulkan_runtime_available="))
+  assert_true(summary.contains("egl_runtime_available="))
 }
 
 ///|
@@ -28,7 +29,10 @@ test "android skia preflight reports vulkan direct gpu presenter path" {
   )
   assert_true(summary.contains("surface_route=vulkan-gpu"))
   assert_true(
-    summary.contains("gpu_presenter=Android Vulkan Skia direct GPU presenter"),
+    summary.contains(
+      "gpu_presenter=Android Vulkan with EGL/GLES fallback Skia direct GPU presenter",
+    ),
   )
-  assert_true(summary.contains("gpu_runtime_available="))
+  assert_true(summary.contains("vulkan_runtime_available="))
+  assert_true(summary.contains("egl_runtime_available="))
 }

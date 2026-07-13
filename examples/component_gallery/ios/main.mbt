@@ -35,6 +35,17 @@ fn component_gallery_ios_runtime(
 }
 
 ///|
+fn component_gallery_ios_renderer_options() -> @ios_skia_backend.IosSkiaAppOptions {
+  let selection = @host.mobile_renderer_selection(
+    @render.NativeGpuPlatform::Ios,
+    gpu_available=@ios_skia_backend.ios_skia_gpu_available(),
+  )
+  @ios_skia_backend.IosSkiaAppOptions::new(
+    surface_route=selection.surface_route,
+  )
+}
+
+///|
 fn component_gallery_ios_pointer_phase(phase : Int) -> @core.PointerPhase? {
   match phase {
     0 => Some(@core.PointerPhase::Down)
@@ -59,6 +70,7 @@ pub fn component_gallery_ios_attach_view(
       runtime~,
       view=@ios_host.IosViewHandle::new(raw=view_handle),
       metrics~,
+      options=component_gallery_ios_renderer_options(),
     ) {
     Some(session) => {
       component_gallery_ios_session.val = Some(session)
@@ -66,6 +78,19 @@ pub fn component_gallery_ios_attach_view(
     }
     None => false
   }
+}
+
+///|
+pub fn moui_mobile_renderer_configure(mode : String) -> Bool {
+  @host.mobile_renderer_configure(mode)
+}
+
+///|
+pub fn moui_mobile_renderer_status_json() -> String {
+  @host.mobile_renderer_status_json(
+    @render.NativeGpuPlatform::Ios,
+    gpu_available=@ios_skia_backend.ios_skia_gpu_available(),
+  )
 }
 
 ///|

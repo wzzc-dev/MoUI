@@ -229,7 +229,7 @@ if [[ -n "$extra_cc_flags" ]]; then
   cc_flags="$cc_flags $extra_cc_flags"
 fi
 
-link_flags="$skia_library_link_flag -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices -framework UniformTypeIdentifiers"
+link_flags="$skia_library_link_flag -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices -framework UniformTypeIdentifiers -lobjc"
 if [[ -n "$skia_runtime_link_flags" ]]; then
   link_flags="$link_flags $skia_runtime_link_flags"
 fi
@@ -255,6 +255,8 @@ options(
     "skia_stub_text_font.cpp",
     "skia_stub_paragraph.cpp",
     "skia_stub_shader_filter.cpp",
+    "skia_stub_picture.cpp",
+    "skia_stub_gpu_worker.cpp",
   ],
   link: {
     "native": {
@@ -272,6 +274,8 @@ options(
     "text_font_native.mbt": [ "native", "llvm" ],
     "paragraph_native.mbt": [ "native", "llvm" ],
     "shader_filter_native.mbt": [ "native", "llvm" ],
+    "picture_native.mbt": [ "native", "llvm" ],
+    "native_gpu_worker_native.mbt": [ "native", "llvm" ],
     "shader_filter_ffi_wbtest.mbt": [ "native", "llvm" ],
     "handles_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
     "skia_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
@@ -282,6 +286,8 @@ options(
     "text_font_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
     "paragraph_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
     "shader_filter_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
+    "picture_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
+    "native_gpu_worker_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
   },
 )
 EOF

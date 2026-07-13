@@ -99,6 +99,7 @@ priv struct LinuxWindowPlatformSlot {
   window : @window_linux.Window
   renderer : @host.HostWindowRenderer
   mut decorations : LinuxClientDecorationState
+  mut frame_pending : Bool
 }
 
 ///|

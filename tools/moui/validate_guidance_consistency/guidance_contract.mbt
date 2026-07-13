@@ -143,7 +143,7 @@ fn guidance_include_rules() -> Array[TextRule] {
     { path: "AGENTS.md", token: "Native XComponent callbacks are the only" },
     {
       path: "docs/mobile-mainline-roadmap.md",
-      token: "Direct GPU presentation | Phase 1 capability implemented",
+      token: "Direct GPU presentation | Worker-owned paths exist",
     },
     {
       path: "skills/moui-framework-development-skill/SKILL.md",

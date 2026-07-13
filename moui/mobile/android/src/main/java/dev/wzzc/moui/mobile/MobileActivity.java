@@ -53,11 +53,14 @@ public final class MobileActivity extends Activity implements SurfaceHolder.Call
     static native boolean nativeCompleteClipboard(int id, int kind, String text, byte[] bytes);
     static native boolean nativeRenderFrame();
     static native void nativeDetachSurface();
+    static native boolean nativeRendererConfigure(String mode);
+    static native String nativeRendererStatusJson();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         loadNativeLibraryFromManifest();
+        Log.i(LOG_TAG, "moui-mobile renderer status=" + nativeRendererStatusJson());
         supportsScroll = manifestBoolean(META_SUPPORTS_SCROLL, false);
         fullscreen = manifestBoolean(META_FULLSCREEN, false);
         if (fullscreen) {

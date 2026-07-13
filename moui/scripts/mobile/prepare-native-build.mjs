@@ -59,6 +59,9 @@ const skiaStubSources = [
   "native/skia_stub_text_font.cpp",
   "native/skia_stub_paragraph.cpp",
   "native/skia_stub_shader_filter.cpp",
+  "native/skia_stub_picture.cpp",
+  "native/android_vulkan_loader.cpp",
+  "native/skia_stub_gpu_worker.cpp",
 ];
 
 const parseArgs = argv => {
@@ -211,7 +214,7 @@ const copyAndroidSharedLibs = ({ abi, ndkHome, skiaLinkFlags, jniLibsDir }) => {
   }
 };
 
-const resolveSkia = ({ skiaRoot, platform, arch, linkMode, fallback }) => {
+const resolveSkia = ({ skiaRoot, platform, arch, linkMode, fallback, gpuEnvironment = {} }) => {
   if (fallback) return { stubFlags: "", linkFlags: "" };
   const result = run("node", ["build.js"], {
     cwd: skiaRoot,
@@ -220,6 +223,7 @@ const resolveSkia = ({ skiaRoot, platform, arch, linkMode, fallback }) => {
       MOUI_SKIA_PLATFORM: platform,
       MOUI_SKIA_ARCH: arch,
       MOUI_SKIA_LINK_MODE: linkMode,
+      ...gpuEnvironment,
     },
     stdio: ["pipe", "pipe", "inherit"],
   });
@@ -369,16 +373,27 @@ const writeBuildJson = (path, value) => {
   writeFileSync(path, JSON.stringify(value, null, 2) + "\n");
 };
 
-const selectRenderer = requested => {
+const selectRenderer = (requested, fallbackSkia) => {
   if (!["auto", "skia-gpu", "skia-raster"].includes(requested)) {
     throw new Error(`--renderer must be auto, skia-gpu, or skia-raster: ${requested}`);
+  }
+  if (requested === "skia-gpu" && !fallbackSkia) {
+    return {
+      requested,
+      selected: "skia-gpu",
+      gpuPromoted: false,
+      fallbackReason: null,
+    };
   }
   return {
     requested,
     selected: "skia-raster",
+    gpuPromoted: false,
     fallbackReason: requested === "skia-raster"
       ? null
-      : "direct host GPU surface is unavailable",
+      : requested === "skia-gpu"
+        ? "fallback Skia build cannot provide a native GPU route"
+        : "native GPU route has not passed platform promotion gates",
   };
 };
 
@@ -387,12 +402,21 @@ const prepareAndroid = ({ app, config, buildDir, abi, renderer, fallbackSkia, wo
   generateMoonbitC({ workspaceRoot, moonPackage: config.moonPackage, generatedC: config.generatedC, buildDir });
   const moonbitC = moonbitCPath(buildDir, config.moonPackage, config.generatedC);
   if (!existsSync(moonbitC)) throw new Error(`MoonBit generated C was not found: ${moonbitC}`);
+  const rendererSelection = selectRenderer(renderer, fallbackSkia);
   const skia = resolveSkia({
     skiaRoot,
     platform: "android",
     arch: androidAbiToSkiaArch.get(abi),
-    linkMode: process.env.MOUI_SKIA_LINK_MODE || "dynamic",
+    linkMode: process.env.MOUI_SKIA_LINK_MODE || (
+      rendererSelection.selected === "skia-gpu" ? "static" : "dynamic"
+    ),
     fallback: fallbackSkia,
+    gpuEnvironment: rendererSelection.selected === "skia-gpu"
+      ? {
+        MOUI_SKIA_ENABLE_GPU_VULKAN: "1",
+        MOUI_SKIA_ENABLE_GPU_EGL: "1",
+      }
+      : {},
   });
   const sdkRoot = androidHome();
   const ndkHome = sdkRoot ? androidNdkHome(sdkRoot) : "";
@@ -404,7 +428,6 @@ const prepareAndroid = ({ app, config, buildDir, abi, renderer, fallbackSkia, wo
       jniLibsDir: join(buildDir, "jniLibs"),
     });
   }
-  const rendererSelection = selectRenderer(renderer);
   const cmakeConfig = writeAndroidCmakeConfig({ config, app, buildDir, moonbitC, skia, abi, rendererSelection, workspaceRoot, mouiRoot, skiaRoot });
   writeBuildJson(join(buildDir, "mobile-build.json"), {
     schemaVersion: 1,
@@ -425,17 +448,20 @@ const prepareIos = ({ app, config, buildDir, sdk, arch, renderer, fallbackSkia, 
   generateMoonbitC({ workspaceRoot, moonPackage: config.moonPackage, generatedC: config.generatedC, buildDir });
   const moonbitC = moonbitCPath(buildDir, config.moonPackage, config.generatedC);
   if (!existsSync(moonbitC)) throw new Error(`MoonBit generated C was not found: ${moonbitC}`);
+  const rendererSelection = selectRenderer(renderer, fallbackSkia);
   const skia = resolveSkia({
     skiaRoot,
     platform: iosSdkToSkiaPlatform.get(sdk),
     arch: iosArchToSkiaArch.get(arch),
     linkMode: process.env.MOUI_SKIA_LINK_MODE || "static",
     fallback: fallbackSkia,
+    gpuEnvironment: rendererSelection.selected === "skia-gpu"
+      ? { MOUI_SKIA_ENABLE_GPU_METAL: "1" }
+      : {},
   });
   const nativeDir = join(buildDir, "native");
   const cxxRsp = join(nativeDir, "skia-cxx-flags.rsp");
   const linkRsp = join(nativeDir, "skia-link-flags.rsp");
-  const rendererSelection = selectRenderer(renderer);
   writeRsp(cxxRsp, skia.stubFlags);
   writeRsp(linkRsp, skia.linkFlags);
   writeBuildJson(join(buildDir, "mobile-build.json"), {
@@ -467,15 +493,20 @@ const prepareHarmonyos = ({ app, config, buildDir, arch, renderer, fallbackSkia,
   generateMoonbitC({ workspaceRoot, moonPackage: config.moonPackage, generatedC: config.generatedC, buildDir });
   const moonbitC = moonbitCPath(buildDir, config.moonPackage, config.generatedC);
   if (!existsSync(moonbitC)) throw new Error(`MoonBit generated C was not found: ${moonbitC}`);
+  const rendererSelection = selectRenderer(renderer, fallbackSkia);
   const skia = resolveSkia({
     skiaRoot,
     platform: "harmonyos",
     arch,
-    linkMode: process.env.MOUI_SKIA_LINK_MODE || "dynamic",
+    linkMode: process.env.MOUI_SKIA_LINK_MODE || (
+      rendererSelection.selected === "skia-gpu" ? "static" : "dynamic"
+    ),
     fallback: fallbackSkia,
+    gpuEnvironment: rendererSelection.selected === "skia-gpu"
+      ? { MOUI_SKIA_ENABLE_GPU_EGL: "1" }
+      : {},
   });
   const ohosArch = harmonyosArchToOhosArch.get(arch);
-  const rendererSelection = selectRenderer(renderer);
   const cmakeConfig = writeHarmonyosCmakeConfig({ config, app, buildDir, moonbitC, skia, ohosArch, rendererSelection, workspaceRoot, mouiRoot, skiaRoot });
   const sharedLibs = [];
   if (containsFlag(skia.linkFlags, "-lskia")) {

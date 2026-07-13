@@ -163,6 +163,12 @@ pub fn Canvas::draw_color(
 }
 
 ///|
+pub fn Canvas::draw_picture(self : Canvas, picture : Picture) -> Unit {
+  ignore(self)
+  ignore(picture)
+}
+
+///|
 pub fn Canvas::clear(self : Canvas, color : @skia.Color) -> Unit {
   ignore(self)
   ignore(color)

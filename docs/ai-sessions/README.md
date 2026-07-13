@@ -34,6 +34,7 @@ Keep it brief — aim for 1–2 pages max per session.
 ## Index
 
 <!-- Add new entries newest-first: -->
+- [2026-07-13: All-platform native GPU workers](2026-07-13-all-platform-native-gpu-workers.md)
 - [2026-07-12: Skia layer cache indexing and damage region partial clear](2026-07-12-skia-layer-cache-damage-region.md)
 - [2026-07-11: Mobile mainline and host services](2026-07-11-mobile-mainline-host-services.md)
 - [2026-07-07: Native Code Editor Example](2026-07-07-code-editor-example.md)

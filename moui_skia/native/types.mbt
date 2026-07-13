@@ -220,6 +220,21 @@ pub(all) struct Bitmap {
 }
 
 ///|
+/// Immutable Skia display list. A picture is safe to retain and replay on the
+/// renderer worker; it does not contain MoonBit objects.
+#warnings("-struct_never_constructed-unused_field")
+pub(all) struct Picture {
+  priv handle : PictureHandle
+}
+
+///|
+/// Native recorder for immutable Skia pictures.
+#warnings("-struct_never_constructed-unused_field")
+pub(all) struct PictureRecorder {
+  priv handle : PictureRecorderHandle
+}
+
+///|
 /// Native Skia GPU context. The handle owns a Ganesh direct context when a GPU
 /// backend is linked.
 #warnings("-struct_never_constructed-unused_field")
@@ -291,6 +306,7 @@ pub fn SkiaGpuContextSupportStatus::is_available(
 pub(all) struct Canvas {
   priv handle : CanvasHandle
   priv owner : Surface?
+  priv recorder_owner : PictureRecorder?
 }
 
 ///|

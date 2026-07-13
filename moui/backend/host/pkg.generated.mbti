@@ -39,6 +39,14 @@ pub fn mobile_accessibility_response(Int, Int, String) -> MobileHostResponse?
 
 pub fn mobile_command_response(Int) -> MobileHostResponse?
 
+pub fn mobile_renderer_configure(String) -> Bool
+
+pub fn mobile_renderer_requested() -> @render.NativeRendererMode
+
+pub fn mobile_renderer_selection(@render.NativeGpuPlatform, gpu_available~ : Bool) -> @render.NativeRendererSelection
+
+pub fn mobile_renderer_status_json(@render.NativeGpuPlatform, gpu_available~ : Bool) -> String
+
 pub fn mobile_text_input_response(Int, String, Int, Int) -> MobileHostResponse?
 
 pub fn modifiers_to_core(@wzzc-dev/window/core.Modifiers) -> @wzzc-dev/moui/core.KeyModifiers
@@ -54,6 +62,12 @@ pub fn physical_position_to_core(@dpi.PhysicalPositionF64, scale_factor? : Doubl
 pub fn physical_size_to_core(@dpi.PhysicalSize) -> @wzzc-dev/moui/core.Size
 
 pub fn platform_view_plugins_next_deadline(Array[PlatformViewPlugin]) -> Int64?
+
+pub fn render_present_completion_is_presented(@render.RenderPresentCompletion) -> Bool
+
+pub fn render_present_completions_have_presented(Array[@render.RenderPresentCompletion]) -> Bool
+
+pub fn render_present_completions_have_terminal(Array[@render.RenderPresentCompletion]) -> Bool
 
 pub fn select_mobile_renderer(MobileRendererMode, gpu_available~ : Bool, gpu_promoted~ : Bool, surface_route~ : @render.SkiaSurfaceRoute) -> MobileRendererSelection
 
@@ -753,10 +767,11 @@ pub struct HostWindowRenderer {
 }
 pub fn HostWindowRenderer::apply_image_resource_load_completion(Self, @render.ImageResourceLoadCompletion) -> @render.ImageResourceSnapshot
 pub fn HostWindowRenderer::dispose(Self) -> Unit
+pub fn HostWindowRenderer::drain_present_completions(Self) -> Array[@render.RenderPresentCompletion]
 pub fn HostWindowRenderer::draw_platform_view_pixels(Self, Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit
 pub fn HostWindowRenderer::image_resource_snapshot(Self) -> @render.ImageResourceSnapshot
 pub fn HostWindowRenderer::image_resources(Self) -> Array[@render.ImageResourceRecord]
-pub fn HostWindowRenderer::new(resize~ : (HostSurfaceMetrics) -> Unit, render~ : (Array[@wzzc-dev/moui/core.DrawCommand]) -> Unit, render_frame? : ((@wzzc-dev/moui/core.DrawFrame) -> @render.RenderFrameResult)?, text_system~ : () -> @wzzc-dev/moui/core.TextSystem, image_resources? : () -> Array[@render.ImageResourceRecord], image_resource_snapshot? : (() -> @render.ImageResourceSnapshot)?, apply_image_resource_load_completion? : ((@render.ImageResourceLoadCompletion) -> @render.ImageResourceSnapshot)?, set_image_resource_change_callback? : (((@render.ImageResourceSnapshot) -> Unit)?) -> Unit, present_count? : () -> Int, dispose? : () -> Unit, draw_platform_view_pixels? : (Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit, set_platform_view_draw_fn? : ((() -> Unit)?) -> Unit) -> Self
+pub fn HostWindowRenderer::new(resize~ : (HostSurfaceMetrics) -> Unit, render~ : (Array[@wzzc-dev/moui/core.DrawCommand]) -> Unit, render_frame? : ((@wzzc-dev/moui/core.DrawFrame) -> @render.RenderFrameResult)?, drain_present_completions? : (() -> Array[@render.RenderPresentCompletion])?, text_system~ : () -> @wzzc-dev/moui/core.TextSystem, image_resources? : () -> Array[@render.ImageResourceRecord], image_resource_snapshot? : (() -> @render.ImageResourceSnapshot)?, apply_image_resource_load_completion? : ((@render.ImageResourceLoadCompletion) -> @render.ImageResourceSnapshot)?, set_image_resource_change_callback? : (((@render.ImageResourceSnapshot) -> Unit)?) -> Unit, present_count? : () -> Int, dispose? : () -> Unit, draw_platform_view_pixels? : (Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit, set_platform_view_draw_fn? : ((() -> Unit)?) -> Unit) -> Self
 pub fn HostWindowRenderer::present_count(Self) -> Int
 pub fn HostWindowRenderer::render(Self, Array[@wzzc-dev/moui/core.DrawCommand]) -> Unit
 pub fn HostWindowRenderer::render_frame(Self, @wzzc-dev/moui/core.DrawFrame) -> @render.RenderFrameResult

@@ -44,9 +44,10 @@ Read only what the task needs:
   `ANativeWindow`; iOS Skia presents copied pixel frames to a UIKit
   `UIImageView` child in an embedder-supplied `UIView`; HarmonyOS Skia presents
   copied pixel frames to an embedder-supplied XComponent native-window handle.
-  These are raster fallback paths. `SkiaGpuNative` must not be called complete
-  until direct Metal/Vulkan/EGL window presentation has zero full-frame
-  readback/copy and passes matching-device promotion evidence.
+  These are raster fallback paths. Unpromoted Metal/D3D12/Vulkan/EGL window
+  paths and safe native `SkPicture` handoff exist, but `SkiaGpuNative` must not
+  be called complete until the worker owns GPU resources, presentation has zero
+  full-frame readback/copy, and matching-device promotion evidence passes.
 - `moui/backend/<platform>/wgpu`: native WGPU diagnostic providers.
 - `moui/render`: renderer facade and renderer-neutral capability/fallback
   planning.
@@ -167,8 +168,9 @@ owning-package boundaries clear.
   `AndroidRuntimeSession`; package checks are not runtime
   platform evidence.
   Mobile build entrypoints accept `--renderer auto|skia-gpu|skia-raster` and
-  record requested/selected modes. GPU requests remain explicit raster
-  fallbacks until direct host GPU presentation passes promotion gates.
+  record requested/selected modes. `auto` remains raster until promotion;
+  explicit GPU requests may exercise unpromoted source paths but are not
+  promotion evidence.
 - `backend/android/skia/`: Android Skia provider over `render/skia`, with an
   `ANativeWindow` RGBA pixel presenter and preflight summary. Use
   `MOUI_SKIA_PLATFORM=android` plus `MOUI_SKIA_ARCH=<arch>` for Android Skia
@@ -355,7 +357,7 @@ MoUI-owned integration proof, not a package-owned `moui_skia` workflow.
 The daily check profile also runs the MoonBit-backed maintenance baseline
 guard, API surface guard, generated `pkg.generated.mbti` drift detection,
 checked conformance artifact guard, dedicated checked-artifact validators for
-platform runtime evidence, Web runtime handoff/presentation, conformance
+platform runtime evidence, Web runtime handoff/presentation, GPU promotion, conformance
 capture, renderer proof manifests, and check runner self-tests, plus app/Web
 checks for Showcase and Markdown Editor. The interface drift step snapshots
 tracked interface files before running workspace-wide `moon info`, so existing

@@ -443,10 +443,9 @@ fn SkiaRasterRenderer::draw_cached_layer(
       )
       true
     }
-    None => {
-      stats.record_missing(spec.key)
-      false
-    }
+    // The native GPU producer stores cached layers as immutable pictures.
+    // Keep those entries usable when the same renderer falls back to raster.
+    None => self.draw_picture_cached_layer(canvas, spec, stats)
   }
 }
 
@@ -608,7 +607,8 @@ fn SkiaRasterRenderer::layer_cache_has_identity(
   self : SkiaRasterRenderer,
   identity_key : String,
 ) -> Bool {
-  self.layer_cache_identity_index.get(identity_key) is Some(_)
+  self.layer_cache_identity_index.get(identity_key) is Some(_) ||
+  self.picture_layer_cache_identity_index.get(identity_key) is Some(_)
 }
 
 ///|
@@ -834,8 +834,11 @@ fn SkiaRasterRenderer::next_layer_cache_tick(self : SkiaRasterRenderer) -> Int {
 fn SkiaRasterRenderer::clear_layer_cache(self : SkiaRasterRenderer) -> Unit {
   self.layer_cache.clear()
   self.layer_cache_identity_index.clear()
+  self.picture_layer_cache.clear()
+  self.picture_layer_cache_identity_index.clear()
   self.layer_cache_admissions.clear()
   self.layer_cache_total_bytes = 0L
+  self.picture_layer_cache_total_bytes = 0L
   self.layer_cache_tick = 0
 }
 

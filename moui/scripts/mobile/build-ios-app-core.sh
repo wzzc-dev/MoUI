@@ -235,6 +235,7 @@ compile_objcxx "$moui_root/mobile/ios/moui_mobile_app.mm" "$obj_dir/moui_mobile_
   -DMOUI_MOBILE_RENDER_FRAME="$render_frame" \
   -DMOUI_MOBILE_DETACH_VIEW="$detach_view"
 compile_objcxx "$moui_root/backend/ios/skia/ios_skia_presenter.mm" "$obj_dir/ios_skia_presenter.o"
+compile_objcxx "$moui_root/backend/ios/skia/ios_skia_view_glue.mm" "$obj_dir/ios_skia_view_glue.o"
 
 while IFS= read -r src || [ -n "$src" ]; do
   [ -n "$src" ] || continue
@@ -254,6 +255,7 @@ ios_link_flags=(
   -framework CoreText
   -framework ImageIO
   -framework QuartzCore
+  -framework Metal
   -lz
   -lobjc
 )

@@ -1,0 +1,42 @@
+#ifndef MOUI_SKIA_ANDROID_VULKAN_LOADER_H
+#define MOUI_SKIA_ANDROID_VULKAN_LOADER_H
+
+#if defined(__ANDROID__) && defined(MOUI_SKIA_ENABLE_GPU_VULKAN)
+#ifndef VK_NO_PROTOTYPES
+#define VK_NO_PROTOTYPES
+#endif
+#include <vulkan/vulkan.h>
+#include <vulkan/vulkan_android.h>
+
+extern PFN_vkAcquireNextImageKHR vkAcquireNextImageKHR;
+extern PFN_vkCreateAndroidSurfaceKHR vkCreateAndroidSurfaceKHR;
+extern PFN_vkCreateDevice vkCreateDevice;
+extern PFN_vkCreateFence vkCreateFence;
+extern PFN_vkCreateInstance vkCreateInstance;
+extern PFN_vkCreateSemaphore vkCreateSemaphore;
+extern PFN_vkCreateSwapchainKHR vkCreateSwapchainKHR;
+extern PFN_vkDestroyDevice vkDestroyDevice;
+extern PFN_vkDestroyFence vkDestroyFence;
+extern PFN_vkDestroyInstance vkDestroyInstance;
+extern PFN_vkDestroySemaphore vkDestroySemaphore;
+extern PFN_vkDestroySurfaceKHR vkDestroySurfaceKHR;
+extern PFN_vkDestroySwapchainKHR vkDestroySwapchainKHR;
+extern PFN_vkDeviceWaitIdle vkDeviceWaitIdle;
+extern PFN_vkEnumeratePhysicalDevices vkEnumeratePhysicalDevices;
+extern PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr;
+extern PFN_vkGetDeviceQueue vkGetDeviceQueue;
+extern PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr;
+extern PFN_vkGetPhysicalDeviceQueueFamilyProperties vkGetPhysicalDeviceQueueFamilyProperties;
+extern PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR vkGetPhysicalDeviceSurfaceCapabilitiesKHR;
+extern PFN_vkGetPhysicalDeviceSurfaceFormatsKHR vkGetPhysicalDeviceSurfaceFormatsKHR;
+extern PFN_vkGetPhysicalDeviceSurfaceSupportKHR vkGetPhysicalDeviceSurfaceSupportKHR;
+extern PFN_vkGetSwapchainImagesKHR vkGetSwapchainImagesKHR;
+extern PFN_vkQueuePresentKHR vkQueuePresentKHR;
+extern PFN_vkQueueSubmit vkQueueSubmit;
+extern PFN_vkResetFences vkResetFences;
+extern PFN_vkWaitForFences vkWaitForFences;
+
+bool moui_skia_android_vulkan_load();
+#endif
+
+#endif
