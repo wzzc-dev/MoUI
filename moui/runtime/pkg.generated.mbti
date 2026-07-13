@@ -193,6 +193,57 @@ pub fn RenderInspectorSnapshot::shader_count(Self) -> Int
 pub fn RenderInspectorSnapshot::text_count(Self) -> Int
 pub fn RenderInspectorSnapshot::unbalanced_pop_count(Self) -> Int
 
+pub struct RendererRecovery {
+  mut state : RendererRecoveryState
+  mut loss_count : Int
+  mut last_loss_reason : String
+  mut last_loss_time_ms : Double
+  mut consecutive_failures : Int
+  mut recovery_started_for_loss : Bool
+  budget : RendererRecoveryBudget
+}
+pub fn RendererRecovery::acknowledge_recovered(Self) -> Unit
+pub fn RendererRecovery::consecutive_failures(Self) -> Int
+pub fn RendererRecovery::last_loss_reason(Self) -> String
+pub fn RendererRecovery::loss_count(Self) -> Int
+pub fn RendererRecovery::new(budget? : RendererRecoveryBudget) -> Self
+pub fn RendererRecovery::recovery_deadline_expired(Self, now_ms~ : Double) -> Bool
+pub fn RendererRecovery::report_context_loss(Self, String, now_ms~ : Double) -> Unit
+pub fn RendererRecovery::report_recovery_failed(Self, String, now_ms~ : Double) -> Unit
+pub fn RendererRecovery::report_recovery_started(Self) -> Unit
+pub fn RendererRecovery::report_recovery_succeeded(Self) -> Unit
+pub fn RendererRecovery::should_fallback_to_raster(Self) -> Bool
+pub fn RendererRecovery::should_recover(Self, now_ms~ : Double) -> Bool
+pub fn RendererRecovery::snapshot(Self) -> RendererRecoverySnapshot
+pub fn RendererRecovery::state(Self) -> RendererRecoveryState
+
+pub(all) struct RendererRecoveryBudget {
+  vsync_ms : Double
+  recovery_vsync_budget : Int
+  max_consecutive_recovery_failures : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RendererRecoveryBudget::default() -> Self
+pub fn RendererRecoveryBudget::new(vsync_ms~ : Double, recovery_vsync_budget~ : Int, max_consecutive_recovery_failures~ : Int) -> Self
+pub fn RendererRecoveryBudget::recovery_deadline_ms(Self, Double) -> Double
+
+pub(all) struct RendererRecoverySnapshot {
+  state : String
+  loss_count : Int
+  last_loss_reason : String
+  last_loss_time_ms : Double
+  recovery_deadline_ms : Double
+  consecutive_failures : Int
+  fallback_reason : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum RendererRecoveryState {
+  Idle
+  Lost(String, Double)
+  Recovering
+  Recovered
+  FallbackToRaster(String)
+} derive(Eq, ToJson, @debug.Debug)
+
 pub struct RuntimeDirtyStateSummary {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
