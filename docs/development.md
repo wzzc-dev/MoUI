@@ -43,6 +43,7 @@ code.
 - `./examples/code_editor`
 - `./examples/webview_demo`
 - `./benchmarks/app_cached_layer`
+- `./benchmarks/full_cycle`
 - `./website`
 
 When adding or removing a workspace member, update this list,
@@ -223,6 +224,7 @@ members = [
   "./examples/code_editor",
   "./examples/webview_demo",
   "./benchmarks/app_cached_layer",
+  "./benchmarks/full_cycle",
   "./website",
 ]
 ```
