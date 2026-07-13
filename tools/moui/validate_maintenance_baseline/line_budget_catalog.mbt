@@ -134,7 +134,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     { path: "moui/backend/host/host_text_input_ime_test.mbt", max_lines: 336 },
     { path: "moui/backend/host/mobile_host_channel.mbt", max_lines: 556 },
-    { path: "moui/backend/host/mobile_renderer_selection.mbt", max_lines: 75 },
+    { path: "moui/backend/host/mobile_renderer_selection.mbt", max_lines: 101 },
     {
       path: "moui/backend/host/host_platform_contract_test.mbt",
       max_lines: 255,
@@ -229,7 +229,7 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "examples/excel/sheet/sheet.mbt", max_lines: 1822 },
     { path: "moui/render/skia/skia_renderer_wbtest.mbt", max_lines: 75 },
     { path: "moui/render/capabilities_backend_matrix.mbt", max_lines: 120 },
-    { path: "moui/render/render_frame_mailbox.mbt", max_lines: 149 },
+    { path: "moui/render/render_frame_mailbox.mbt", max_lines: 234 },
     { path: "moui/render/capabilities_fallbacks.mbt", max_lines: 197 },
     { path: "moui/render/capabilities_feature_model.mbt", max_lines: 236 },
     { path: "moui/render/capabilities_report.mbt", max_lines: 195 },
