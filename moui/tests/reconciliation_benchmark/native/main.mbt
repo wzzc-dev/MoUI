@@ -287,6 +287,107 @@ fn bench_comparison_reduction(
 }
 
 ///|
+struct BenchCompositeKey {
+  key : String
+  kind : Int
+} derive(Eq, Hash)
+
+///|
+fn bench_build_index_struct(
+  old_items : Array[BenchItem],
+) -> Map[BenchCompositeKey, Array[Int]] {
+  let index : Map[BenchCompositeKey, Array[Int]] = {}
+  for old_index, old_item in old_items {
+    match old_item.key {
+      Some(key) => {
+        let composite : BenchCompositeKey = { key, kind: old_item.kind }
+        match index.get(composite) {
+          Some(arr) => arr.push(old_index)
+          None => index[composite] = [old_index]
+        }
+      }
+      None => ()
+    }
+  }
+  index
+}
+
+///|
+fn bench_find_indexed_struct(
+  old_items : Array[BenchItem],
+  used : Array[Bool],
+  key_index : Map[BenchCompositeKey, Array[Int]],
+  next_item : BenchItem,
+  index : Int,
+) -> (Int?, Int) {
+  let mut comparisons = 0
+  match next_item.key {
+    Some(key) => {
+      let composite : BenchCompositeKey = { key, kind: next_item.kind }
+      comparisons += 1
+      match key_index.get(composite) {
+        Some(candidates) => {
+          for old_index in candidates {
+            comparisons += 1
+            if !used[old_index] {
+              return (Some(old_index), comparisons)
+            }
+          }
+          (None, comparisons)
+        }
+        None => (None, comparisons)
+      }
+    }
+    None => {
+      comparisons += 1
+      if index < old_items.length() &&
+        !used[index] &&
+        old_items[index].key is None &&
+        old_items[index].kind == next_item.kind {
+        (Some(index), comparisons)
+      } else {
+        (None, comparisons)
+      }
+    }
+  }
+}
+
+///|
+fn bench_run_indexed_struct(
+  old_items : Array[BenchItem],
+  next_items : Array[BenchItem],
+  iterations : Int,
+) -> BenchRunResult {
+  let mut total_comparisons : Int64 = 0L
+  let start = bench_now_ms()
+  for _ in 0..<iterations {
+    let used : Array[Bool] = []
+    for _ in old_items {
+      used.push(false)
+    }
+    let key_index = bench_build_index_struct(old_items)
+    for index, next_item in next_items {
+      let (found, comparisons) = bench_find_indexed_struct(
+        old_items, used, key_index, next_item, index,
+      )
+      total_comparisons += comparisons.to_int64()
+      match found {
+        Some(old_index) => used[old_index] = true
+        None => ()
+      }
+    }
+  }
+  let elapsed = bench_now_ms() - start
+  {
+    label: "struct-indexed",
+    child_count: old_items.length(),
+    iterations,
+    elapsed_ms: elapsed,
+    comparisons: total_comparisons,
+  }
+}
+
+///|
 fn bench_print_result(result : BenchRunResult) -> Unit {
   println(
     "  \{result.label}: children=\{result.child_count} iterations=\{result.iterations} elapsed_ms=\{result.elapsed_ms} avg_ms=\{bench_avg_ms(result)} comparisons=\{result.comparisons}",
@@ -307,15 +408,18 @@ fn bench_run_scenario(
   // Warmup to stabilize caches and JIT.
   ignore(bench_run_linear(old_items, next_items, 1))
   ignore(bench_run_indexed(old_items, next_items, 1))
+  ignore(bench_run_indexed_struct(old_items, next_items, 1))
   let linear = bench_run_linear(old_items, next_items, iterations)
   let indexed = bench_run_indexed(old_items, next_items, iterations)
+  let struct_idx = bench_run_indexed_struct(old_items, next_items, iterations)
   bench_print_result(linear)
   bench_print_result(indexed)
+  bench_print_result(struct_idx)
   println(
-    "  speedup=\{bench_speedup(linear, indexed)}x comparison_reduction=\{bench_comparison_reduction(linear, indexed) * 100.0}%",
+    "  string-speedup=\{bench_speedup(linear, indexed)}x struct-speedup=\{bench_speedup(linear, struct_idx)}x struct-vs-string=\{bench_speedup(indexed, struct_idx)}x comparison_reduction=\{bench_comparison_reduction(linear, indexed) * 100.0}%",
   )
   println(
-    "{\"benchmark\":\"\{label}\",\"children\":\{child_count},\"iterations\":\{iterations},\"linear\":{\"elapsed_ms\":\{linear.elapsed_ms},\"comparisons\":\{linear.comparisons}},\"indexed\":{\"elapsed_ms\":\{indexed.elapsed_ms},\"comparisons\":\{indexed.comparisons}},\"speedup\":\{bench_speedup(linear, indexed)},\"comparison_reduction\":\{bench_comparison_reduction(linear, indexed)}}",
+    "{\"benchmark\":\"\{label}\",\"children\":\{child_count},\"iterations\":\{iterations},\"linear\":{\"elapsed_ms\":\{linear.elapsed_ms},\"comparisons\":\{linear.comparisons}},\"string-indexed\":{\"elapsed_ms\":\{indexed.elapsed_ms},\"comparisons\":\{indexed.comparisons}},\"struct-indexed\":{\"elapsed_ms\":\{struct_idx.elapsed_ms},\"comparisons\":\{struct_idx.comparisons}},\"struct-vs-string-speedup\":\{bench_speedup(indexed, struct_idx)}}",
   )
 }
 
@@ -327,7 +431,7 @@ fn main {
   let large = bench_env_int("MOUI_RECONCILE_BENCH_LARGE", 512)
   let xlarge = bench_env_int("MOUI_RECONCILE_BENCH_XLARGE", 1024)
   println(
-    "MoUI reconciliation benchmark: linear-scan (O(n^2)) vs indexed-lookup (O(n))",
+    "MoUI reconciliation benchmark: linear-scan (O(n^2)) vs string-indexed vs struct-indexed",
   )
   println(
     "Each iteration: build index (if indexed), then find reusable child for each next item with shuffled order.",
