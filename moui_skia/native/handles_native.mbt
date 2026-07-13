@@ -65,3 +65,11 @@ priv type MaskFilterHandle
 ///|
 /// Opaque native Skia bitmap handle.
 priv type BitmapHandle
+
+///|
+/// Opaque native Skia immutable picture handle.
+priv type PictureHandle
+
+///|
+/// Opaque native Skia picture recorder handle.
+priv type PictureRecorderHandle

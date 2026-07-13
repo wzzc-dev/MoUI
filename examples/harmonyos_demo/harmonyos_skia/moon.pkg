@@ -4,6 +4,7 @@ import {
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/harmonyos" @harmonyos_host,
   "wzzc-dev/moui/backend/harmonyos/skia" @harmonyos_skia_backend,
+  "wzzc-dev/moui/render",
   "examples/harmonyos_demo/app" @harmonyos_demo_app,
 }
 
@@ -15,6 +16,8 @@ options(
     "native": {
       "exports": [
         "moui_mobile_take_host_updates_json",
+        "moui_mobile_renderer_configure",
+        "moui_mobile_renderer_status_json",
         "moui_mobile_dispatch_text_input",
         "moui_mobile_dispatch_command",
         "moui_mobile_dispatch_accessibility",

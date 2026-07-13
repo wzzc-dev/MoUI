@@ -24,7 +24,7 @@ pub(all) enum RendererControlMessage {
   /// must tear down GPU caches and recreate the context + surface within
   /// 3 VSyncs, per ADR 0006. The payload is a backend-specific loss reason
   /// (e.g. `MTLDevice deviceLostHandler`, `VK_ERROR_DEVICE_LOST`,
-  /// `EGL_CONTEXT_LOST`, `D3D11 GetDeviceRemovedReason`).
+  /// `EGL_CONTEXT_LOST`, `D3D12 GetDeviceRemovedReason`).
   ContextLoss(String)
   /// The renderer thread must exit. Pending frames are dropped. The
   /// renderer thread must release all GPU resources before exiting.
@@ -115,9 +115,7 @@ pub fn RenderFrameMailbox::submit_control(
 /// renderer thread should drain control messages before beginning the next
 /// frame: a `Resize` may invalidate the current surface, and `Shutdown`
 /// terminates the loop.
-pub fn RenderFrameMailbox::has_control(
-  self : RenderFrameMailbox,
-) -> Bool {
+pub fn RenderFrameMailbox::has_control(self : RenderFrameMailbox) -> Bool {
   !self.control_queue.is_empty()
 }
 
@@ -136,9 +134,7 @@ pub fn RenderFrameMailbox::drain_control(
 
 ///|
 /// Returns the number of pending control messages without draining.
-pub fn RenderFrameMailbox::control_pending(
-  self : RenderFrameMailbox,
-) -> Int {
+pub fn RenderFrameMailbox::control_pending(self : RenderFrameMailbox) -> Int {
   self.control_queue.length()
 }
 

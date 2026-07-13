@@ -305,8 +305,11 @@ async image 观测）尚未通过 `scripts/record-mobile-runtime-smoke.mjs` 记�
 实现和包级证据，不等于实机通过。新 recorder 必须同时看到输入前后像素变化与
 应用接收日志；detach 只接受应用回调；无障碍必须分别记录树、焦点和动作。
 
-`SkiaGpuNative` descriptor 和 latest-wins mailbox 已存在，但 Metal/Vulkan/EGL
-窗口直出与 renderer thread 尚未实现，因此三端 `auto` 仍选择 raster。
+`SkiaGpuNative` descriptor 和 latest-wins `SkPicture` native thread 交接已存在，
+Metal/Vulkan/EGL 的 context、surface/swapchain、同步与 present 也已迁入 worker。
+iOS 模拟器 GPU 首帧、Android minSdk 23 GPU APK、HarmonyOS native/HAP 构建已通过；
+但物理设备上的性能、恢复、内存和 fallback manifest 尚未通过，因此三端 `auto`
+仍选择 raster，`gpu_promoted` 仍为 `false`。
 
 ## 七、核验操作指引
 

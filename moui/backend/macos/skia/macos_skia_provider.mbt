@@ -20,6 +20,14 @@ extern "C" fn macos_skia_install_metal_layer(
 ) -> UInt64 = "moui_macos_skia_install_metal_layer"
 
 ///|
+extern "C" fn macos_skia_configure_metal_layer(
+  raw_view_handle : UInt64,
+  raw_layer_handle : UInt64,
+  width : Int,
+  height : Int,
+) -> Int = "moui_macos_skia_configure_metal_layer"
+
+///|
 pub struct MacosSkiaAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
   priv font_resolution : @skia_renderer.SkiaFontResolution
@@ -41,7 +49,7 @@ pub struct MacosSkiaSmokeOptions {
 pub fn MacosSkiaAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
-  surface_route? : @render.SkiaSurfaceRoute = @render.SkiaSurfaceRoute::RasterSurfaceRoute,
+  surface_route? : @render.SkiaSurfaceRoute = macos_surface_route_from_environment(),
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
   transparent_titlebar? : Bool = false,
   platform_attributes? : @window_core.PlatformWindowAttributes = @window_core.PlatformWindowAttributes::default(),
@@ -58,6 +66,23 @@ pub fn MacosSkiaAppOptions::new(
     on_ready,
     min_window_size,
   }
+}
+
+///|
+fn macos_surface_route_from_environment() -> @render.SkiaSurfaceRoute {
+  let requested = match @env.get_env_var("MOUI_SKIA_RENDERER") {
+    Some(value) =>
+      @render.NativeRendererMode::parse(value).unwrap_or(
+        @render.NativeRendererMode::Auto,
+      )
+    None => @render.NativeRendererMode::Auto
+  }
+  @render.select_native_renderer(
+    @render.NativeGpuPlatform::Macos,
+    requested,
+    gpu_available=@skia_native.Surface::metal_gpu_context_runtime_available(),
+    gpu_promoted=@render.NativeGpuPlatform::Macos.gpu_promoted(),
+  ).surface_route
 }
 
 ///|
@@ -334,29 +359,11 @@ fn create_renderer(
   }
   match content_view_handle(window) {
     Some(raw_content_view_handle) =>
-      match resolve_gpu_present_target(raw_content_view_handle, options) {
-        Some(gpu_target) =>
-          try {
-            let renderer = @skia_renderer.create_with_present_target_and_route(
-              renderer_metrics_from_host(metrics),
-              macos_skia_present_target(raw_content_view_handle),
-              surface_route=options.surface_route,
-              gpu_target=Some(gpu_target),
-              font_resolution=options.font_resolution,
-              async_image_loading=true,
-            )
-            println(
-              "macOS Skia renderer route diagnostics: \{renderer.surface_diagnostic_summary()}",
-            )
-            Some(host_renderer_from_skia(renderer))
-          } catch {
-            err => {
-              println(
-                "error creating macOS Skia Metal GPU renderer, falling back to raster: \{err.message()}",
-              )
-              create_raster_renderer(raw_content_view_handle, metrics, options)
-            }
-          }
+      match resolve_gpu_layer(raw_content_view_handle, options) {
+        Some(layer_ptr) =>
+          create_gpu_worker_renderer(
+            raw_content_view_handle, layer_ptr, metrics, options,
+          )
         None =>
           create_raster_renderer(raw_content_view_handle, metrics, options)
       }
@@ -369,10 +376,10 @@ fn create_renderer(
 /// path. Returns `Some` when the user selected the Metal GPU route AND the
 /// Skia build links Ganesh Metal AND a `CAMetalLayer` is installed (or can be
 /// installed) on the content view. Returns `None` to fall back to raster.
-fn resolve_gpu_present_target(
+fn resolve_gpu_layer(
   raw_content_view_handle : UInt64,
   options : MacosSkiaAppOptions,
-) -> @skia_renderer.HostGpuPresentTarget? {
+) -> UInt64? {
   if !options.surface_route.is_gpu() {
     return None
   }
@@ -394,7 +401,7 @@ fn resolve_gpu_present_target(
     )
     return None
   }
-  Some(macos_skia_gpu_present_target(raw_content_view_handle, layer_ptr))
+  Some(layer_ptr)
 }
 
 ///|
@@ -416,6 +423,75 @@ fn create_raster_renderer(
     err => {
       println("error creating macOS Skia renderer: \{err.message()}")
       None
+    }
+  }
+}
+
+///|
+fn create_gpu_worker_renderer(
+  raw_content_view_handle : UInt64,
+  layer_ptr : UInt64,
+  metrics : @host.HostSurfaceMetrics,
+  options : MacosSkiaAppOptions,
+) -> @host.HostWindowRenderer? {
+  try {
+    let renderer = @skia_renderer.create_with_present_target_and_route(
+      renderer_metrics_from_host(metrics),
+      macos_skia_present_target(raw_content_view_handle),
+      surface_route=@render.SkiaSurfaceRoute::RasterSurfaceRoute,
+      font_resolution=options.font_resolution,
+      async_image_loading=true,
+    )
+    match @skia_native.NativeGpuRenderWorker::new() {
+      None => create_raster_renderer(raw_content_view_handle, metrics, options)
+      Some(worker) => {
+        let descriptor = macos_skia_metal_surface_descriptor(
+          renderer_metrics_from_host(metrics),
+        )
+        let dimensions = descriptor.dimensions()
+        if macos_skia_configure_metal_layer(
+            raw_content_view_handle,
+            layer_ptr,
+            dimensions.width,
+            dimensions.height,
+          ) ==
+          0 {
+          worker.shutdown()
+          return create_raster_renderer(
+            raw_content_view_handle, metrics, options,
+          )
+        }
+        ignore(
+          worker.submit_control(
+            @skia_native.GpuRenderWorkerControl::Attach(layer_ptr),
+          ),
+        )
+        ignore(
+          worker.submit_control(
+            @skia_native.GpuRenderWorkerControl::Resize(
+              dimensions.width,
+              dimensions.height,
+            ),
+          ),
+        )
+        ignore(worker.wait_completion(timeout_ms=1000))
+        ignore(worker.drain_completions())
+        println(
+          "macOS Skia renderer route diagnostics: surface_route=metal-gpu; surface_gpu=true; gpu_context=worker-owned; present_kind=host-gpu-surface; dimensions=\{dimensions.width}x\{dimensions.height}",
+        )
+        Some(
+          host_renderer_from_native_gpu_worker(
+            renderer, worker, raw_content_view_handle, layer_ptr,
+          ),
+        )
+      }
+    }
+  } catch {
+    err => {
+      println(
+        "error creating macOS Skia Metal GPU worker renderer, falling back to raster: \{err.message()}",
+      )
+      create_raster_renderer(raw_content_view_handle, metrics, options)
     }
   }
 }
@@ -472,60 +548,6 @@ fn macos_skia_gpu_presenter_description() -> String {
 }
 
 ///|
-/// Build the `HostGpuPresentTarget` for the macOS Metal direct-present path.
-/// `raw_content_view_handle` is the `NSView*` handle (retained by the host
-/// window); `layer_ptr` is the `CAMetalLayer*` installed via
-/// `macos_skia_install_metal_layer`. `create_window_surface` is invoked at
-/// renderer creation and on resize; `present_gpu` is invoked per-frame after
-/// `flush_and_submit` to present the current drawable and acquire the next.
-fn macos_skia_gpu_present_target(
-  raw_content_view_handle : UInt64,
-  layer_ptr : UInt64,
-) -> @skia_renderer.HostGpuPresentTarget {
-  let _ = raw_content_view_handle
-  @skia_renderer.HostGpuPresentTarget::new(
-    description=macos_skia_gpu_presenter_description(),
-    create_window_surface=(gpu_context, metrics) => {
-      match gpu_context {
-        None => None
-        Some(context) =>
-          @skia_native.Surface::metal_window_surface(
-            context,
-            layer_ptr,
-            macos_skia_metal_surface_descriptor(metrics),
-          )
-      }
-    },
-    present_gpu=(gpu_context, surface) => {
-      match gpu_context {
-        None =>
-          @skia_renderer.HostGpuPresentOutcome::new(
-            succeeded=false,
-            next_surface=None,
-          )
-        Some(context) => {
-          let outcome = @skia_native.Surface::metal_present_and_acquire_next(
-            surface, context, layer_ptr,
-          )
-          match outcome {
-            Some(next_surface) =>
-              @skia_renderer.HostGpuPresentOutcome::new(
-                succeeded=true,
-                next_surface=Some(next_surface),
-              )
-            None =>
-              @skia_renderer.HostGpuPresentOutcome::new(
-                succeeded=false,
-                next_surface=None,
-              )
-          }
-        }
-      }
-    },
-  )
-}
-
-///|
 fn macos_skia_metal_surface_descriptor(
   metrics : @render.RendererSurfaceMetrics,
 ) -> @moui_skia.SurfaceDescriptor {
@@ -535,6 +557,159 @@ fn macos_skia_metal_surface_descriptor(
       physical.width.ceil().max(1.0).to_int(),
       physical.height.ceil().max(1.0).to_int(),
     ),
+  )
+}
+
+///|
+fn native_gpu_completion_to_render(
+  completion : @skia_native.NativeGpuWorkerCompletion,
+) -> @render.RenderPresentCompletion? {
+  let status = match completion.status {
+    @skia_native.NativeGpuWorkerCompletionStatus::PictureRecorded =>
+      @render.RenderPresentStatus::Recorded
+    @skia_native.NativeGpuWorkerCompletionStatus::Presented =>
+      @render.RenderPresentStatus::Presented
+    @skia_native.NativeGpuWorkerCompletionStatus::Dropped =>
+      @render.RenderPresentStatus::Dropped
+    @skia_native.NativeGpuWorkerCompletionStatus::FallbackToRaster =>
+      @render.RenderPresentStatus::FallbackToRaster
+    @skia_native.NativeGpuWorkerCompletionStatus::ControlAcknowledged
+    | @skia_native.NativeGpuWorkerCompletionStatus::Unknown(_) => return None
+  }
+  Some(
+    @render.RenderPresentCompletion::new(
+      frame_sequence=completion.sequence.to_int(),
+      surface_generation=completion.surface_generation,
+      image_resource_revision=completion.image_resource_revision,
+      submitted_at_ms=completion.submitted_at_ms,
+      completed_at_ms=completion.processed_at_ms,
+      presented_at_ms=completion.presented_at_ms,
+      status~,
+      gpu_context_generation=completion.context_generation,
+    ),
+  )
+}
+
+///|
+fn host_renderer_from_native_gpu_worker(
+  renderer : @skia_renderer.SkiaRasterRenderer,
+  worker : @skia_native.NativeGpuRenderWorker,
+  raw_content_view_handle : UInt64,
+  layer_ptr : UInt64,
+) -> @host.HostWindowRenderer {
+  let pending_completions : Array[@render.RenderPresentCompletion] = []
+  let presented_count = Ref(0)
+  let fallback_to_raster = Ref(false)
+  let disposed = Ref(false)
+  let collect_completions = () => {
+    let presented = Ref(false)
+    for completion in worker.drain_completions() {
+      match native_gpu_completion_to_render(completion) {
+        Some(render_completion) => {
+          if render_completion.status()
+            is @render.RenderPresentStatus::Presented {
+            presented.val = true
+            presented_count.val = presented_count.val + 1
+          } else if render_completion.status()
+            is @render.RenderPresentStatus::FallbackToRaster {
+            fallback_to_raster.val = true
+          }
+          pending_completions.push(render_completion)
+        }
+        None => ()
+      }
+    }
+    presented.val
+  }
+  @host.HostWindowRenderer::new(
+    resize=metrics => {
+      renderer.resize(renderer_metrics_from_host(metrics)) catch {
+        err => println("error resizing macOS Skia producer: \{err.message()}")
+      }
+      if !fallback_to_raster.val {
+        let descriptor = macos_skia_metal_surface_descriptor(
+          renderer_metrics_from_host(metrics),
+        )
+        let dimensions = descriptor.dimensions()
+        if macos_skia_configure_metal_layer(
+            raw_content_view_handle,
+            layer_ptr,
+            dimensions.width,
+            dimensions.height,
+          ) ==
+          0 {
+          fallback_to_raster.val = true
+        } else {
+          ignore(
+            worker.submit_control(
+              @skia_native.GpuRenderWorkerControl::Resize(
+                dimensions.width,
+                dimensions.height,
+              ),
+            ),
+          )
+          ignore(collect_completions())
+        }
+      }
+    },
+    render=commands => {
+      renderer.render(commands) catch {
+        err =>
+          println(
+            "error rendering macOS Skia compatibility frame: \{err.message()}",
+          )
+      }
+    },
+    render_frame=Some(frame => {
+      ignore(collect_completions())
+      if fallback_to_raster.val {
+        return renderer.render_frame(frame)
+      }
+      match renderer.record_frame_picture(frame) {
+        None => renderer.render_frame(frame)
+        Some(picture) => {
+          let revision = renderer.image_resource_snapshot().revision.to_int64()
+          let sequence = worker.submit_picture(
+            picture,
+            image_resource_revision=revision,
+          )
+          if sequence == 0L {
+            fallback_to_raster.val = true
+            renderer.render_frame(frame)
+          } else {
+            @render.RenderFrameResult::new(presented=false, queued=true)
+          }
+        }
+      }
+    }),
+    drain_present_completions=Some(() => {
+      ignore(collect_completions())
+      let completions = pending_completions.copy()
+      pending_completions.clear()
+      completions
+    }),
+    text_system=() => renderer.text_system(),
+    image_resources=() => renderer.image_resources(),
+    image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
+    apply_image_resource_load_completion=Some(completion => {
+      renderer.apply_image_resource_load_completion(completion)
+    }),
+    set_image_resource_change_callback=callback => {
+      renderer.set_image_resource_change_callback(callback)
+    },
+    present_count=() => presented_count.val + renderer.present_count(),
+    dispose=() => {
+      if !disposed.val {
+        disposed.val = true
+        ignore(
+          worker.submit_control(@skia_native.GpuRenderWorkerControl::Detach),
+        )
+        ignore(worker.wait_completion(timeout_ms=1000))
+        ignore(worker.drain_completions())
+        worker.shutdown()
+        renderer.dispose()
+      }
+    },
   )
 }
 
@@ -553,7 +728,18 @@ fn host_renderer_from_skia(
         err => println("error rendering macOS Skia frame: \{err.message()}")
       }
     },
-    render_frame=Some(frame => renderer.render_frame(frame)),
+    render_frame=Some(frame => {
+      let result = renderer.render_frame(frame)
+      if !result.presented {
+        for diagnostic in renderer.unsupported_command_diagnostics() {
+          if diagnostic.command() == "RenderFrame" {
+            let reason = diagnostic.reason()
+            println("error rendering macOS Skia frame: \{reason}")
+          }
+        }
+      }
+      result
+    }),
     text_system=() => renderer.text_system(),
     image_resources=() => renderer.image_resources(),
     image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),

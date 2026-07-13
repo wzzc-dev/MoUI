@@ -56,6 +56,7 @@ pub struct SkiaRasterRenderer {
   priv surface_route : @render.SkiaSurfaceRoute
   priv gpu_context : @skia_native.GpuContext?
   priv mut surface : @skia_native.Surface
+  priv mut gpu_surface_attached : Bool
   priv image_cache : Map[String, @skia_native.Image]
   priv failed_images : Map[String, String]
   priv image_lifecycle : @render.ImageResourceLifecycle
@@ -67,10 +68,14 @@ pub struct SkiaRasterRenderer {
   priv mut last_frame : SkiaPixelFrame?
   priv layer_cache : Map[String, SkiaCachedLayerImageEntry]
   priv layer_cache_identity_index : Map[String, String]
+  priv picture_layer_cache : Map[String, SkiaCachedLayerPictureEntry]
+  priv picture_layer_cache_identity_index : Map[String, String]
   priv layer_cache_admissions : Map[String, SkiaCachedLayerAdmissionRecord]
   priv mut layer_cache_total_bytes : Int64
+  priv mut picture_layer_cache_total_bytes : Int64
   priv mut layer_cache_tick : Int
   priv mut platform_view_draw_fn : (() -> Unit)?
+  priv mut platform_view_recording_canvas : @skia_native.Canvas?
 }
 
 ///|
@@ -186,14 +191,10 @@ pub fn create_with_present_target_and_route(
     )
   }
   let gpu_context = create_gpu_context(surface_route)
-  let surface = match gpu_target {
-    Some(target) =>
-      match (target.create_window_surface)(gpu_context, metrics) {
-        Some(surface) => surface
-        None => raise SkiaRendererError::SurfaceUnavailable
-      }
-    None => create_surface(metrics, surface_route, gpu_context)
-  }
+  // Window systems such as AppKit cannot supply a drawable until control has
+  // returned to the event loop. Keep an offscreen GPU surface only as a typed
+  // placeholder; the first render replaces it before recording any commands.
+  let surface = create_surface(metrics, surface_route, gpu_context)
   {
     metrics,
     target,
@@ -202,6 +203,7 @@ pub fn create_with_present_target_and_route(
     surface_route,
     gpu_context,
     surface,
+    gpu_surface_attached: gpu_target is None,
     image_cache: {},
     failed_images: {},
     image_lifecycle: @render.ImageResourceLifecycle::new(),
@@ -213,10 +215,14 @@ pub fn create_with_present_target_and_route(
     last_frame: None,
     layer_cache: {},
     layer_cache_identity_index: {},
+    picture_layer_cache: {},
+    picture_layer_cache_identity_index: {},
     layer_cache_admissions: {},
     layer_cache_total_bytes: 0L,
+    picture_layer_cache_total_bytes: 0L,
     layer_cache_tick: 0,
     platform_view_draw_fn: None,
+    platform_view_recording_canvas: None,
   }
 }
 
@@ -225,6 +231,7 @@ pub fn SkiaRasterRenderer::render(
   self : SkiaRasterRenderer,
   commands : Array[@core.DrawCommand],
 ) -> Unit raise SkiaRendererError {
+  self.ensure_gpu_window_surface()
   match self.surface.canvas() {
     Some(canvas) => {
       canvas.clear(skia_color(@render.first_clear_color(commands)))
@@ -360,44 +367,14 @@ fn SkiaRasterRenderer::render_frame_inner(
   self : SkiaRasterRenderer,
   frame : @core.DrawFrame,
 ) -> @render.RenderFrameResult raise SkiaRendererError {
+  self.ensure_gpu_window_surface()
   match self.surface.canvas() {
     Some(canvas) => {
-      let effective_damage = self.resolve_effective_damage(frame)
-      self.apply_damage_clear(canvas, effective_damage, frame.clear_color)
-      let saved = canvas.save()
-      canvas.scale(
-        @moui_skia.Size::new(
-          Float::from_double(self.metrics.scale_factor),
-          Float::from_double(self.metrics.scale_factor),
-        ),
-      )
-      self.unsupported_command_count = 0
-      self.unsupported_command_diagnostics.clear()
-      let stats = SkiaCachedLayerFrameStats::new()
-      let canvas_scopes : Array[SkiaCanvasScopeKind] = []
-      let complete = self.render_cached_command_range(
+      let (stats, complete) = self.draw_frame_to_canvas(
         canvas,
-        frame.commands,
-        start_index=0,
-        end_index=frame.commands.length(),
-        canvas_scopes,
-        stats,
-        damage=effective_damage,
+        frame,
+        draw_platform_views=true,
       )
-      if !canvas_scopes.is_empty() {
-        for scope in canvas_scopes {
-          self.record_unsupported_command(
-            skia_scope_push_command(scope),
-            "command stream ended with an open \{skia_scope_name(scope)} scope",
-          )
-        }
-      }
-      canvas.restore_to_count(saved)
-      // Draw platform view pixels (e.g., offscreen webview) after commands but before flush
-      match self.platform_view_draw_fn {
-        Some(draw_fn) => draw_fn()
-        None => ()
-      }
       if !complete {
         return stats.to_render_frame_result(presented=false)
       }
@@ -437,6 +414,89 @@ fn SkiaRasterRenderer::render_frame_inner(
       }
     }
     None => raise SkiaRendererError::CanvasUnavailable
+  }
+}
+
+///|
+fn SkiaRasterRenderer::draw_frame_to_canvas(
+  self : SkiaRasterRenderer,
+  canvas : @skia_native.Canvas,
+  frame : @core.DrawFrame,
+  draw_platform_views~ : Bool,
+) -> (SkiaCachedLayerFrameStats, Bool) {
+  let effective_damage = self.resolve_effective_damage(frame)
+  self.apply_damage_clear(canvas, effective_damage, frame.clear_color)
+  let saved = canvas.save()
+  canvas.scale(
+    @moui_skia.Size::new(
+      Float::from_double(self.metrics.scale_factor),
+      Float::from_double(self.metrics.scale_factor),
+    ),
+  )
+  self.unsupported_command_count = 0
+  self.unsupported_command_diagnostics.clear()
+  let stats = SkiaCachedLayerFrameStats::new()
+  let canvas_scopes : Array[SkiaCanvasScopeKind] = []
+  let complete = self.render_cached_command_range(
+    canvas,
+    frame.commands,
+    start_index=0,
+    end_index=frame.commands.length(),
+    canvas_scopes,
+    stats,
+    damage=effective_damage,
+  )
+  if !canvas_scopes.is_empty() {
+    for scope in canvas_scopes {
+      self.record_unsupported_command(
+        skia_scope_push_command(scope),
+        "command stream ended with an open \{skia_scope_name(scope)} scope",
+      )
+    }
+  }
+  canvas.restore_to_count(saved)
+  if draw_platform_views {
+    match self.platform_view_draw_fn {
+      Some(draw_fn) => draw_fn()
+      None => ()
+    }
+  }
+  (stats, complete)
+}
+
+///|
+/// Record a frame into an immutable picture for replay by a native renderer
+/// worker. No MoonBit object crosses the thread boundary.
+pub fn SkiaRasterRenderer::record_frame_picture(
+  self : SkiaRasterRenderer,
+  frame : @core.DrawFrame,
+) -> @skia_native.Picture? {
+  match @skia_native.PictureRecorder::new() {
+    None => None
+    Some(recorder) => {
+      let physical = self.metrics.physical_size
+      let width = physical.width.ceil().max(1.0).to_int()
+      let height = physical.height.ceil().max(1.0).to_int()
+      match recorder.begin(width, height) {
+        None => None
+        Some(canvas) => {
+          let complete = self.draw_frame_to_picture_canvas(canvas, frame)
+          if !complete {
+            None
+          } else {
+            match self.platform_view_draw_fn {
+              Some(draw_fn) => {
+                self.platform_view_recording_canvas = Some(canvas)
+                draw_fn()
+                self.platform_view_recording_canvas = None
+              }
+              None => ()
+            }
+            recorder.finish()
+          }
+        }
+      }
+    }
   }
 }
 
@@ -497,7 +557,12 @@ pub fn SkiaRasterRenderer::draw_platform_view_pixels(
   dst_width : Double,
   dst_height : Double,
 ) -> Unit {
-  match self.surface.canvas() {
+  let recording_canvas = self.platform_view_recording_canvas
+  let canvas = match recording_canvas {
+    Some(canvas) => Some(canvas)
+    None => self.surface.canvas()
+  }
+  match canvas {
     Some(canvas) =>
       match
         @skia_native.Bitmap::from_pixels(
@@ -525,8 +590,9 @@ pub fn SkiaRasterRenderer::draw_platform_view_pixels(
                 @moui_skia.Paint::new(),
                 sampling=@moui_skia.SamplingOptions::linear(),
               )
-              // Flush to ensure the drawing is committed
-              ignore(self.surface.flush_and_submit())
+              if recording_canvas is None {
+                ignore(self.surface.flush_and_submit())
+              }
             }
             None => ()
           }

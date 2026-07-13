@@ -43,6 +43,17 @@ fn harmonyos_demo_runtime(
 }
 
 ///|
+fn harmonyos_demo_renderer_options() -> @harmonyos_skia_backend.HarmonyOsSkiaAppOptions {
+  let selection = @host.mobile_renderer_selection(
+    @render.NativeGpuPlatform::HarmonyOs,
+    gpu_available=@harmonyos_skia_backend.harmonyos_skia_gpu_available(),
+  )
+  @harmonyos_skia_backend.HarmonyOsSkiaAppOptions::new(
+    surface_route=selection.surface_route,
+  )
+}
+
+///|
 fn harmonyos_demo_pointer_phase(phase : Int) -> @core.PointerPhase? {
   match phase {
     0 => Some(@core.PointerPhase::Down)
@@ -68,6 +79,7 @@ pub fn harmonyos_demo_attach_surface(
       runtime~,
       surface=@harmonyos_host.HarmonyOsSurfaceHandle::new(raw=surface_handle),
       metrics~,
+      options=harmonyos_demo_renderer_options(),
     ) {
     Some(session) => {
       harmonyos_demo_session.val = Some(session)
@@ -75,6 +87,19 @@ pub fn harmonyos_demo_attach_surface(
     }
     None => false
   }
+}
+
+///|
+pub fn moui_mobile_renderer_configure(mode : String) -> Bool {
+  @host.mobile_renderer_configure(mode)
+}
+
+///|
+pub fn moui_mobile_renderer_status_json() -> String {
+  @host.mobile_renderer_status_json(
+    @render.NativeGpuPlatform::HarmonyOs,
+    gpu_available=@harmonyos_skia_backend.harmonyos_skia_gpu_available(),
+  )
 }
 
 ///|

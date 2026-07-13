@@ -37,10 +37,15 @@
     if (device != nil) {
       metal_layer.device = device;
     }
-    // Skia renders premultiplied RGBA; opaque is off to support compositing.
+    metal_layer.pixelFormat = MTLPixelFormatBGRA8Unorm;
+    // Skia may sample or copy the drawable while resolving GPU effects.
     metal_layer.opaque = NO;
-    metal_layer.framebufferOnly = YES;
+    metal_layer.framebufferOnly = NO;
     metal_layer.contentsScale = [UIScreen mainScreen].scale;
+    metal_layer.drawableSize = CGSizeMake(
+      MAX(1.0, CGRectGetWidth(frame) * metal_layer.contentsScale),
+      MAX(1.0, CGRectGetHeight(frame) * metal_layer.contentsScale)
+    );
   }
   return self;
 }
@@ -79,6 +84,30 @@ void moui_ios_skia_release_metal_view(uint64_t raw_view_handle) {
   }
   CFRelease((CFTypeRef)(void *)(uintptr_t)raw_view_handle);
 }
+
+extern "C" MOONBIT_FFI_EXPORT
+int32_t moui_ios_skia_configure_metal_layer(uint64_t raw_view_handle,
+                                            uint64_t raw_layer_handle,
+                                            int32_t width,
+                                            int32_t height) {
+  if (raw_view_handle == 0 || raw_layer_handle == 0 ||
+      width <= 0 || height <= 0 || ![NSThread isMainThread]) {
+    return 0;
+  }
+  UIView *view = (__bridge UIView *)(void *)(uintptr_t)raw_view_handle;
+  CAMetalLayer *layer = (__bridge CAMetalLayer *)(void *)(uintptr_t)raw_layer_handle;
+  if (view == nil || layer == nil || view.layer != layer || layer.device == nil) {
+    return 0;
+  }
+  layer.pixelFormat = MTLPixelFormatBGRA8Unorm;
+  layer.framebufferOnly = NO;
+  layer.frame = view.bounds;
+  layer.contentsScale = view.window.screen.scale > 0.0
+    ? view.window.screen.scale
+    : [UIScreen mainScreen].scale;
+  layer.drawableSize = CGSizeMake((CGFloat)width, (CGFloat)height);
+  return 1;
+}
 #else
 extern "C" MOONBIT_FFI_EXPORT
 uint64_t moui_ios_skia_create_metal_view(double x, double y,
@@ -93,5 +122,17 @@ uint64_t moui_ios_skia_create_metal_view(double x, double y,
 extern "C" MOONBIT_FFI_EXPORT
 void moui_ios_skia_release_metal_view(uint64_t raw_view_handle) {
   (void)raw_view_handle;
+}
+
+extern "C" MOONBIT_FFI_EXPORT
+int32_t moui_ios_skia_configure_metal_layer(uint64_t raw_view_handle,
+                                            uint64_t raw_layer_handle,
+                                            int32_t width,
+                                            int32_t height) {
+  (void)raw_view_handle;
+  (void)raw_layer_handle;
+  (void)width;
+  (void)height;
+  return 0;
 }
 #endif

@@ -19,7 +19,7 @@
 #endif
 
 #ifndef MOUI_MOBILE_RENDERER_SELECTED
-#define MOUI_MOBILE_RENDERER_SELECTED "skia-raster"
+#define MOUI_MOBILE_RENDERER_SELECTED MOUI_MOBILE_RENDERER_REQUESTED
 #endif
 
 namespace {
@@ -51,6 +51,8 @@ extern "C" int32_t MOUI_MOBILE_FRAME_TICK(double time_ms);
 extern "C" int32_t MOUI_MOBILE_RENDER_FRAME(void);
 extern "C" void MOUI_MOBILE_DETACH_VIEW(void);
 extern "C" moonbit_string_t moui_mobile_take_host_updates_json(void);
+extern "C" int32_t moui_mobile_renderer_configure(moonbit_string_t mode);
+extern "C" moonbit_string_t moui_mobile_renderer_status_json(void);
 extern "C" int32_t moui_mobile_dispatch_text_input(
     int32_t kind,
     moonbit_string_t text,
@@ -73,6 +75,16 @@ moonbit_string_t moonbit_string_from_nsstring(NSString *value) {
   if (length > 0) {
     [value getCharacters:reinterpret_cast<unichar *>(result)
                   range:NSMakeRange(0, length)];
+  }
+  return result;
+}
+
+moonbit_string_t moonbit_string_from_ascii(const char *value) {
+  size_t length = value == nullptr ? 0 : std::strlen(value);
+  moonbit_string_t result = moonbit_make_string_raw((int32_t)length);
+  auto *units = reinterpret_cast<uint16_t *>(result);
+  for (size_t index = 0; index < length; ++index) {
+    units[index] = static_cast<uint8_t>(value[index]);
   }
   return result;
 }
@@ -126,10 +138,18 @@ void ensure_moonbit_runtime() {
     static char *argv[] = {app_name};
     moonbit_runtime_init(1, argv);
     moonbit_init();
+    moonbit_string_t rendererMode = moonbit_string_from_ascii(
+        MOUI_MOBILE_RENDERER_REQUESTED);
+    int32_t rendererConfigured = moui_mobile_renderer_configure(rendererMode);
+    moonbit_decref(rendererMode);
     NSLog(@"moui-mobile runtime initialized app=%s renderer-requested=%s renderer-selected=%s",
           MOUI_MOBILE_APP_ID,
           MOUI_MOBILE_RENDERER_REQUESTED,
           MOUI_MOBILE_RENDERER_SELECTED);
+    NSLog(@"moui-mobile renderer configure requested=%s ok=%d status=%@",
+          MOUI_MOBILE_RENDERER_REQUESTED,
+          rendererConfigured,
+          nsstring_from_moonbit(moui_mobile_renderer_status_json()));
   });
 }
 

@@ -319,13 +319,19 @@ test "render mailbox control queue is ordered and never dropped" {
   let mailbox = @render.RenderFrameMailbox::new()
   assert_false(mailbox.has_control())
   inspect(mailbox.control_pending(), content="0")
-  ignore(mailbox.submit_control(@render.RendererControlMessage::Resize(
-    @core.Size::new(width=200.0, height=120.0),
-  )))
+  ignore(
+    mailbox.submit_control(
+      @render.RendererControlMessage::Resize(
+        @core.Size::new(width=200.0, height=120.0),
+      ),
+    ),
+  )
   ignore(mailbox.submit_control(@render.RendererControlMessage::Detach))
-  ignore(mailbox.submit_control(
-    @render.RendererControlMessage::ContextLoss("metal-device-lost"),
-  ))
+  ignore(
+    mailbox.submit_control(
+      @render.RendererControlMessage::ContextLoss("metal-device-lost"),
+    ),
+  )
   ignore(mailbox.submit_control(@render.RendererControlMessage::Shutdown))
   assert_true(mailbox.has_control())
   inspect(mailbox.control_pending(), content="4")
@@ -370,9 +376,13 @@ test "render mailbox control and frame queues coexist without interference" {
   // Submit a frame, then a Resize, then more frames. The Resize must
   // survive frame flooding and be drained in order.
   let first = mailbox.submit(input)
-  ignore(mailbox.submit_control(@render.RendererControlMessage::Resize(
-    @core.Size::new(width=128.0, height=128.0),
-  )))
+  ignore(
+    mailbox.submit_control(
+      @render.RendererControlMessage::Resize(
+        @core.Size::new(width=128.0, height=128.0),
+      ),
+    ),
+  )
   ignore(mailbox.submit(input))
   let latest = mailbox.submit(input)
   ignore(mailbox.submit_control(@render.RendererControlMessage::Shutdown))
@@ -411,9 +421,11 @@ test "render mailbox control and frame queues coexist without interference" {
 /// any queued before the shutdown signal.
 test "render mailbox shutdown does not drop earlier control messages" {
   let mailbox = @render.RenderFrameMailbox::new()
-  ignore(mailbox.submit_control(@render.RendererControlMessage::ContextLoss(
-    "vulkan-device-lost",
-  )))
+  ignore(
+    mailbox.submit_control(
+      @render.RendererControlMessage::ContextLoss("vulkan-device-lost"),
+    ),
+  )
   ignore(mailbox.submit_control(@render.RendererControlMessage::Detach))
   ignore(mailbox.submit_control(@render.RendererControlMessage::Shutdown))
   let drained = mailbox.drain_control()

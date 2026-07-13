@@ -148,8 +148,7 @@ test "mobile renderer auto mode requires availability and promotion" {
   )
   assert_true(promoted.selected == @render.RendererBackendKind::SkiaGpuNative)
   assert_true(
-    promoted.surface_route ==
-      @render.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
+    promoted.surface_route == @render.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
   )
   let unavailable = select_mobile_renderer(
     MobileRendererMode::SkiaGpu,
@@ -161,8 +160,7 @@ test "mobile renderer auto mode requires availability and promotion" {
     unavailable.selected == @render.RendererBackendKind::SkiaRasterNative,
   )
   assert_true(
-    unavailable.surface_route ==
-      @render.SkiaSurfaceRoute::RasterSurfaceRoute,
+    unavailable.surface_route == @render.SkiaSurfaceRoute::RasterSurfaceRoute,
   )
 }
 
@@ -175,8 +173,7 @@ test "mobile renderer surface route reflects platform selection" {
     surface_route=@render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute,
   )
   assert_true(
-    android.surface_route ==
-      @render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute,
+    android.surface_route == @render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute,
   )
   let harmonyos = select_mobile_renderer(
     MobileRendererMode::SkiaGpu,
@@ -185,8 +182,7 @@ test "mobile renderer surface route reflects platform selection" {
     surface_route=@render.SkiaSurfaceRoute::EglGpuSurfaceRoute,
   )
   assert_true(
-    harmonyos.surface_route ==
-      @render.SkiaSurfaceRoute::EglGpuSurfaceRoute,
+    harmonyos.surface_route == @render.SkiaSurfaceRoute::EglGpuSurfaceRoute,
   )
   let windows = select_mobile_renderer(
     MobileRendererMode::SkiaGpu,
@@ -195,9 +191,40 @@ test "mobile renderer surface route reflects platform selection" {
     surface_route=@render.SkiaSurfaceRoute::Direct3DGpuSurfaceRoute,
   )
   assert_true(
-    windows.surface_route ==
-      @render.SkiaSurfaceRoute::Direct3DGpuSurfaceRoute,
+    windows.surface_route == @render.SkiaSurfaceRoute::Direct3DGpuSurfaceRoute,
   )
+}
+
+///|
+test "present completion helpers distinguish terminal outcomes" {
+  let completion = status => {
+    @render.RenderPresentCompletion::new(
+      frame_sequence=1,
+      surface_generation=1,
+      image_resource_revision=0L,
+      submitted_at_ms=1.0,
+      completed_at_ms=2.0,
+      presented_at_ms=if status is @render.RenderPresentStatus::Presented {
+        2.0
+      } else {
+        0.0
+      },
+      status~,
+      gpu_context_generation=1,
+    )
+  }
+  let recorded = [completion(@render.RenderPresentStatus::Recorded)]
+  assert_false(render_present_completions_have_terminal(recorded))
+  assert_false(render_present_completions_have_presented(recorded))
+  let dropped = [completion(@render.RenderPresentStatus::Dropped)]
+  assert_true(render_present_completions_have_terminal(dropped))
+  assert_false(render_present_completions_have_presented(dropped))
+  let fallback = [completion(@render.RenderPresentStatus::FallbackToRaster)]
+  assert_true(render_present_completions_have_terminal(fallback))
+  assert_false(render_present_completions_have_presented(fallback))
+  let presented = [completion(@render.RenderPresentStatus::Presented)]
+  assert_true(render_present_completions_have_terminal(presented))
+  assert_true(render_present_completions_have_presented(presented))
 }
 
 ///|

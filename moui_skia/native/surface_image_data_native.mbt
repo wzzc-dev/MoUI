@@ -194,7 +194,7 @@ extern "C" fn native_surface_gpu_metal_runtime_available() -> Bool = "moonbit_sk
 extern "C" fn native_gpu_context_direct3d() -> GpuContextHandle = "moonbit_skia_gpu_context_direct3d"
 
 ///|
-/// Wrap a platform window-backed Direct3D 11 swap chain back buffer as a Skia
+/// Wrap a platform window-backed Direct3D 12 swap chain back buffer as a Skia
 /// GPU surface.
 ///
 /// `hwnd_ptr` is a raw `HWND` handle (typed as `UInt64` for FFI portability)
@@ -326,9 +326,9 @@ extern "C" fn native_gpu_context_egl() -> GpuContextHandle = "moonbit_skia_gpu_c
 ///|
 /// Wrap a platform window-backed EGL surface as a Skia GPU surface.
 ///
-/// `native_window_ptr` is a raw `OHNativeWindow*` handle (typed as `UInt64`
-/// for FFI portability) obtained from the HarmonyOS XComponent host. The
-/// host presenter owns the OHNativeWindow lifecycle; Skia borrows the
+/// `native_window_ptr` is a raw platform native-window handle (typed as
+/// `UInt64` for FFI portability) obtained from the host. The host presenter
+/// owns the native-window lifecycle; Skia borrows the
 /// EGLSurface's back buffer for rendering. The returned `Surface` must be
 /// flushed and then presented via
 /// `Surface::egl_present_and_acquire_next` to swap the back buffer to the
@@ -883,9 +883,9 @@ pub fn Surface::metal_gpu_context_runtime_available() -> Bool {
 }
 
 ///|
-/// Create a Direct3D 11 GPU context from the host platform's default D3D11
+/// Create a Direct3D 12 GPU context from the host platform's default D3D12
 /// device. Returns `None` when the native Skia build lacks D3D support, when
-/// the D3D11 device cannot be created, or when `descriptor.backend` is not
+/// the D3D12 device cannot be created, or when `descriptor.backend` is not
 /// `Direct3D12GpuContext`.
 pub fn GpuContext::direct3d12(
   descriptor : @skia.GpuContextDescriptor,
@@ -899,7 +899,7 @@ pub fn GpuContext::direct3d12(
 }
 
 ///|
-/// Wrap a platform window-backed Direct3D 11 swap chain back buffer as a Skia
+/// Wrap a platform window-backed Direct3D 12 swap chain back buffer as a Skia
 /// GPU surface.
 ///
 /// `hwnd_ptr` is a raw `HWND` handle (typed as `UInt64` for FFI portability)
@@ -910,7 +910,7 @@ pub fn GpuContext::direct3d12(
 /// buffer.
 ///
 /// Returns `None` when the GPU context is unavailable, the size is empty, or
-/// the native Skia build cannot wrap a D3D11 swap chain (e.g. the opt-in flags
+/// the native Skia build cannot wrap a D3D12 swap chain (e.g. the opt-in flags
 /// `MOUI_SKIA_ENABLE_GPU_D3D` / `MOUI_SKIA_HAS_GANESH_D3D_HEADERS` are not
 /// enabled at link time).
 pub fn Surface::direct3d_window_surface(
@@ -987,7 +987,7 @@ pub fn Surface::direct3d_gpu_context_headers_available() -> Bool {
 }
 
 ///|
-/// Report whether the opt-in Direct3D GPU-context probe can create a D3D11 device.
+/// Report whether the opt-in Direct3D GPU-context probe can create a D3D12 device.
 pub fn Surface::direct3d_gpu_context_runtime_available() -> Bool {
   native_surface_gpu_d3d_runtime_available()
 }
@@ -1078,9 +1078,7 @@ pub fn Surface::vulkan_wayland_surface(
   surface_ptr : UInt64,
   descriptor : @skia.SurfaceDescriptor,
 ) -> Surface? {
-  if descriptor.is_empty() ||
-    !descriptor.is_gpu() ||
-    !context.is_available() {
+  if descriptor.is_empty() || !descriptor.is_gpu() || !context.is_available() {
     None
   } else if display_ptr == 0 || surface_ptr == 0 {
     None
@@ -1127,10 +1125,10 @@ pub fn GpuContext::egl(descriptor : @skia.GpuContextDescriptor) -> GpuContext? {
 }
 
 ///|
-/// Wrap a HarmonyOS `OHNativeWindow`-backed EGL surface as a Skia GPU
-/// surface. The caller passes the raw `OHNativeWindow*` as
-/// `native_window_ptr`. Skia borrows the EGLSurface's back buffer; the host
-/// presenter owns the OHNativeWindow lifecycle. The returned `Surface` must
+/// Wrap an Android `ANativeWindow` or HarmonyOS `OHNativeWindow`-backed EGL
+/// surface as a Skia GPU surface. The caller passes the raw native-window
+/// pointer as `native_window_ptr`. Skia borrows the EGLSurface's back buffer;
+/// the host presenter owns the native-window lifecycle. The returned `Surface` must
 /// be flushed and then presented via
 /// `Surface::egl_present_and_acquire_next` to swap the back buffer to the
 /// front buffer.
@@ -1254,7 +1252,6 @@ pub fn Surface::gpu_context_support_status(
         } else {
           SkiaGpuContextAvailable
         }
-      _ => SkiaGpuContextBackendUnsupported
     }
   }
 }
@@ -1473,6 +1470,6 @@ pub fn Surface::canvas(self : Surface) -> Canvas? {
   if native_canvas_is_null(handle) {
     None
   } else {
-    Some({ handle, owner: Some(self) })
+    Some({ handle, owner: Some(self), recorder_owner: None })
   }
 }

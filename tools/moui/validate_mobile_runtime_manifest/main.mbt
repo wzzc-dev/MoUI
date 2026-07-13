@@ -256,9 +256,11 @@ fn validate_renderer_block(
           "renderer.surfaceRoute must be raster, metal-gpu, vulkan-gpu, egl-gpu, or direct3d-gpu",
         )
       }
-      ignore(require_bool(
-        renderer, "gpuAvailable", "renderer.gpuAvailable", failures,
-      ))
+      ignore(
+        require_bool(
+          renderer, "gpuAvailable", "renderer.gpuAvailable", failures,
+        ),
+      )
       let gpu_promoted = require_bool(
         renderer, "gpuPromoted", "renderer.gpuPromoted", failures,
       )
@@ -268,8 +270,7 @@ fn validate_renderer_block(
       // require the field to be present as a string; empty is allowed.
       match renderer.get("fallbackReason") {
         Some(Json::String(_)) => ()
-        _ =>
-          failures.push("field 'renderer.fallbackReason' must be a string")
+        _ => failures.push("field 'renderer.fallbackReason' must be a string")
       }
       // Per ADR 0006, gpu_promoted=true requires the matching evidence
       // block (Phase 2 promotion gates). The evidence block is validated
@@ -280,12 +281,11 @@ fn validate_renderer_block(
       }
       gpu_promoted
     }
-    _ => {
+    _ =>
       // The renderer block is optional: legacy manifests produced before
       // Phase 1.8 do not carry it. We only fail when --require-passed is
       // used and the manifest claims a GPU route.
       false
-    }
   }
 }
 
@@ -313,110 +313,66 @@ fn validate_gpu_promotion_evidence(
   failures : Array[String],
 ) -> Unit {
   let evidence = require_object(
-    manifest,
-    "gpuPromotionEvidence",
-    "gpuPromotionEvidence",
-    failures,
+    manifest, "gpuPromotionEvidence", "gpuPromotionEvidence", failures,
   )
   // Gates 1-3 are booleans.
   let readback_eliminated = require_bool(
-    evidence,
-    "readbackEliminated",
-    "gpuPromotionEvidence.readbackEliminated",
-    failures,
+    evidence, "readbackEliminated", "gpuPromotionEvidence.readbackEliminated", failures,
   )
   let renderer_thread = require_bool(
-    evidence,
-    "rendererThread",
-    "gpuPromotionEvidence.rendererThread",
-    failures,
+    evidence, "rendererThread", "gpuPromotionEvidence.rendererThread", failures,
   )
   let mailbox_ok = require_bool(
-    evidence,
-    "mailboxOk",
-    "gpuPromotionEvidence.mailboxOk",
-    failures,
+    evidence, "mailboxOk", "gpuPromotionEvidence.mailboxOk", failures,
   )
   // Gate 4: performance.
   let performance = require_object(
-    evidence,
-    "performance",
-    "gpuPromotionEvidence.performance",
-    failures,
+    evidence, "performance", "gpuPromotionEvidence.performance", failures,
   )
   let p95_frame_ms = require_number(
-    performance,
-    "p95FrameMs",
-    "gpuPromotionEvidence.performance.p95FrameMs",
-    failures,
+    performance, "p95FrameMs", "gpuPromotionEvidence.performance.p95FrameMs", failures,
   )
   let dropped_frame_percent = require_number(
-    performance,
-    "droppedFramePercent",
-    "gpuPromotionEvidence.performance.droppedFramePercent",
+    performance, "droppedFramePercent", "gpuPromotionEvidence.performance.droppedFramePercent",
     failures,
   )
   let input_to_present_p_vsync = require_number(
-    performance,
-    "inputToPresentPVsyncIntervals",
-    "gpuPromotionEvidence.performance.inputToPresentPVsyncIntervals",
+    performance, "inputToPresentPVsyncIntervals", "gpuPromotionEvidence.performance.inputToPresentPVsyncIntervals",
     failures,
   )
   // Gate 5: memory.
   let memory = require_object(
-    evidence,
-    "memory",
-    "gpuPromotionEvidence.memory",
-    failures,
+    evidence, "memory", "gpuPromotionEvidence.memory", failures,
   )
   let memory_bounded = require_bool(
-    memory,
-    "bounded",
-    "gpuPromotionEvidence.memory.bounded",
-    failures,
+    memory, "bounded", "gpuPromotionEvidence.memory.bounded", failures,
   )
   let surface_recreation_cycles = require_number(
-    memory,
-    "surfaceRecreationCycles",
-    "gpuPromotionEvidence.memory.surfaceRecreationCycles",
+    memory, "surfaceRecreationCycles", "gpuPromotionEvidence.memory.surfaceRecreationCycles",
     failures,
   )
   let foreground_background_cycles = require_number(
-    memory,
-    "foregroundBackgroundCycles",
-    "gpuPromotionEvidence.memory.foregroundBackgroundCycles",
+    memory, "foregroundBackgroundCycles", "gpuPromotionEvidence.memory.foregroundBackgroundCycles",
     failures,
   )
   // Gate 6: context loss.
   let context_loss = require_object(
-    evidence,
-    "contextLoss",
-    "gpuPromotionEvidence.contextLoss",
-    failures,
+    evidence, "contextLoss", "gpuPromotionEvidence.contextLoss", failures,
   )
   let recovered_within_vsyncs = require_number(
-    context_loss,
-    "recoveredWithinVsyncs",
-    "gpuPromotionEvidence.contextLoss.recoveredWithinVsyncs",
+    context_loss, "recoveredWithinVsyncs", "gpuPromotionEvidence.contextLoss.recoveredWithinVsyncs",
     failures,
   )
   let raster_fallback_preserved = require_bool(
-    context_loss,
-    "rasterFallbackPreservedAppRuntime",
-    "gpuPromotionEvidence.contextLoss.rasterFallbackPreservedAppRuntime",
+    context_loss, "rasterFallbackPreservedAppRuntime", "gpuPromotionEvidence.contextLoss.rasterFallbackPreservedAppRuntime",
     failures,
   )
   // Gate 7: raster fallback.
   let raster_fallback = require_object(
-    evidence,
-    "rasterFallback",
-    "gpuPromotionEvidence.rasterFallback",
-    failures,
+    evidence, "rasterFallback", "gpuPromotionEvidence.rasterFallback", failures,
   )
   let automatic_after_failure = require_bool(
-    raster_fallback,
-    "automaticAfterRepeatedFailure",
-    "gpuPromotionEvidence.rasterFallback.automaticAfterRepeatedFailure",
+    raster_fallback, "automaticAfterRepeatedFailure", "gpuPromotionEvidence.rasterFallback.automaticAfterRepeatedFailure",
     failures,
   )
   // When --require-passed is used, every gate must be satisfied.
@@ -585,7 +541,9 @@ fn validate_manifest_fields(
   }
   // Phase 2.3: validate the optional renderer selection block + GPU
   // promotion evidence. Returns whether gpu_promoted=true was claimed.
-  let _gpu_promoted = validate_renderer_block(manifest, require_passed, failures)
+  let _gpu_promoted = validate_renderer_block(
+    manifest, require_passed, failures,
+  )
   if require_passed || status == "passed" {
     if status != "passed" {
       failures.push("status must be passed when --require-passed is used")

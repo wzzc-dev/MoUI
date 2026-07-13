@@ -342,6 +342,16 @@ function skiaMetalGpuEnabled(config) {
   return truthy(configEnvValue(config, "MOUI_SKIA_ENABLE_GPU_METAL"));
 }
 
+function skiaGpuEnabled(config, platform) {
+  const names = {
+    windows: ["MOUI_SKIA_ENABLE_GPU_D3D12", "MOUI_SKIA_ENABLE_GPU_D3D"],
+    linux: ["MOUI_SKIA_ENABLE_GPU_VULKAN"],
+    android: ["MOUI_SKIA_ENABLE_GPU_VULKAN", "MOUI_SKIA_ENABLE_GPU_EGL"],
+    harmonyos: ["MOUI_SKIA_ENABLE_GPU_EGL"],
+  }[platform] || [];
+  return names.some(name => truthy(configEnvValue(config, name)));
+}
+
 function skiaParagraphEnabled(config) {
   const value = configEnvValue(config, "MOUI_SKIA_ENABLE_SKPARAGRAPH");
   if (value !== null && String(value).trim() !== "") {
@@ -541,7 +551,11 @@ function macosLibraryFlags(config, libPath, skiaLib, includeGaneshExt = false, r
   const staticLib = path.join(libPath, `lib${skiaLib}.a`);
   const dynamicLib = path.join(libPath, `lib${skiaLib}.dylib`);
   const ganeshExtStaticLib = path.join(libPath, "libskia_ganesh_ext.a");
-  const mode = resolveUnixLibraryMode(requestedMode, libPath, skiaLib, ".dylib");
+  const ganeshExtDynamicLib = path.join(libPath, "libskia_ganesh_ext.dylib");
+  const mode = includeGaneshExt && requestedMode === "auto" &&
+    fs.existsSync(staticLib) && fs.existsSync(ganeshExtStaticLib)
+    ? "static"
+    : resolveUnixLibraryMode(requestedMode, libPath, skiaLib, ".dylib");
 
   if (mode === "dynamic") {
     if (!fs.existsSync(dynamicLib)) {
@@ -549,7 +563,13 @@ function macosLibraryFlags(config, libPath, skiaLib, includeGaneshExt = false, r
         `MOUI_SKIA_LINK_MODE=dynamic requested, but ${dynamicLib} was not found`,
       );
     }
-    return `${dynamicLib} -Wl,-rpath,${libPath}`;
+    if (includeGaneshExt && !fs.existsSync(ganeshExtDynamicLib)) {
+      throw new Error(
+        `MOUI_SKIA_ENABLE_GPU_METAL with dynamic linking requested, but ${ganeshExtDynamicLib} was not found`,
+      );
+    }
+    const ganeshExtFlag = includeGaneshExt ? `${ganeshExtDynamicLib} ` : "";
+    return `${ganeshExtFlag}${dynamicLib} -Wl,-rpath,${libPath}`;
   }
 
   if (!fs.existsSync(staticLib)) {
@@ -629,6 +649,13 @@ function platformFlags(config, values) {
       ...packageLibs.filter(candidate => candidate !== skiaLibFlag),
     ].map(candidate => candidate.replace(/\\/g, "/"));
     linkFlags = `${orderedPackageLibs.join(" ")} user32.lib gdi32.lib ole32.lib opengl32.lib usp10.lib fontsub.lib imm32.lib winmm.lib version.lib dwrite.lib d2d1.lib dxgi.lib advapi32.lib shell32.lib`;
+    if (skiaGpuEnabled(config, platform)) {
+      stubCcFlags = appendFlags(
+        stubCcFlags,
+        "/DMOUI_SKIA_ENABLE_GPU_D3D /DMOUI_SKIA_ENABLE_GPU_D3D12",
+      );
+      linkFlags = appendFlags(linkFlags, "d3d12.lib dxguid.lib");
+    }
     if (paragraphEnabled) {
       stubCcFlags = appendFlags(stubCcFlags, "/DMOUI_SKIA_HAS_SKPARAGRAPH /DMOUI_SKIA_HAS_SKSHAPER");
     }
@@ -636,7 +663,7 @@ function platformFlags(config, values) {
     const resolvedLinkMode = resolveUnixLibraryMode(linkMode, libPath, skiaLib, ".dylib");
     stubCcFlags = `-DMOUI_SKIA_HAS_SKIA -std=c++17 -I${includePath}`;
     linkFlags = macosLibraryFlags(config, libPath, skiaLib, skiaMetalGpuEnabled(config), linkMode) +
-      " -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices";
+      " -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices -lobjc";
     if (paragraphEnabled) {
       stubCcFlags = appendFlags(
         stubCcFlags,
@@ -651,7 +678,34 @@ function platformFlags(config, values) {
       stubCcFlags = appendFlags(stubCcFlags, "-DMOUI_SKIA_ENABLE_GPU_METAL");
       linkFlags = appendFlags(
         linkFlags,
-        "-framework Metal -framework QuartzCore -framework CoreVideo -framework IOSurface -framework AppKit -lobjc",
+        "-framework Metal -framework QuartzCore -framework CoreVideo -framework IOSurface -framework AppKit",
+      );
+    }
+  } else if (platform === "ios" || platform === "iosSim") {
+    const resolvedLinkMode = resolveUnixLibraryMode(linkMode, libPath, skiaLib, ".dylib");
+    stubCcFlags = `-DMOUI_SKIA_HAS_SKIA -std=c++17 -I${includePath}`;
+    linkFlags = macosLibraryFlags(
+      config,
+      libPath,
+      skiaLib,
+      skiaMetalGpuEnabled(config),
+      linkMode,
+    ) + " -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework QuartzCore -framework UIKit -lobjc";
+    if (paragraphEnabled) {
+      stubCcFlags = appendFlags(
+        stubCcFlags,
+        "-DMOUI_SKIA_HAS_SKPARAGRAPH -DMOUI_SKIA_HAS_SKSHAPER",
+      );
+      linkFlags = appendFlags(
+        linkFlags,
+        skiaParagraphLinkFlags(libPath, resolvedLinkMode, "darwin"),
+      );
+    }
+    if (skiaMetalGpuEnabled(config)) {
+      stubCcFlags = appendFlags(stubCcFlags, "-DMOUI_SKIA_ENABLE_GPU_METAL");
+      linkFlags = appendFlags(
+        linkFlags,
+        "-framework Metal -framework CoreVideo -framework IOSurface",
       );
     }
   } else if (platform === "linux") {
@@ -681,6 +735,19 @@ function platformFlags(config, values) {
       "-lfreetype",
       "-lharfbuzz",
     ]);
+    if (skiaGpuEnabled(config, platform)) {
+      const ganeshExtStaticLib = path.join(libPath, "libskia_ganesh_ext.a");
+      if (!fs.existsSync(ganeshExtStaticLib)) {
+        throw new Error(
+          `MOUI_SKIA_ENABLE_GPU_VULKAN requested, but ${ganeshExtStaticLib} was not found`,
+        );
+      }
+      stubCcFlags = appendFlags(stubCcFlags, "-DMOUI_SKIA_ENABLE_GPU_VULKAN");
+      linkFlags = appendMissingFlags(
+        `${ganeshExtStaticLib} ${linkFlags}`,
+        ["-lvulkan", "-ldl"],
+      );
+    }
     if (paragraphEnabled) {
       stubCcFlags = appendFlags(
         stubCcFlags,
@@ -694,7 +761,7 @@ function platformFlags(config, values) {
         linkFlags = appendFlags(linkFlags, skiaParagraphLinkFlags(libPath, resolvedLinkMode, "linux"));
       }
     }
-    linkFlags = appendMissingFlags(linkFlags, ["-lstdc++"]);
+    linkFlags = appendMissingFlags(linkFlags, ["-lstdc++", "-pthread"]);
   } else if (platform === "android") {
     stubCcFlags = `-DMOUI_SKIA_HAS_SKIA -std=c++17 -I${includePath}`;
     const staticLib = path.join(libPath, `lib${skiaLib}.a`);
@@ -724,6 +791,20 @@ function platformFlags(config, values) {
       "-lm",
       "-ldl",
     ]);
+    if (truthy(configEnvValue(config, "MOUI_SKIA_ENABLE_GPU_VULKAN"))) {
+      const ganeshExtStaticLib = path.join(libPath, "libskia_ganesh_ext.a");
+      if (!fs.existsSync(ganeshExtStaticLib)) {
+        throw new Error(
+          `MOUI_SKIA_ENABLE_GPU_VULKAN requested, but ${ganeshExtStaticLib} was not found`,
+        );
+      }
+      stubCcFlags = appendFlags(stubCcFlags, "-DMOUI_SKIA_ENABLE_GPU_VULKAN");
+      linkFlags = `${ganeshExtStaticLib} ${linkFlags}`;
+    }
+    if (truthy(configEnvValue(config, "MOUI_SKIA_ENABLE_GPU_EGL"))) {
+      stubCcFlags = appendFlags(stubCcFlags, "-DMOUI_SKIA_ENABLE_GPU_EGL");
+      linkFlags = appendMissingFlags(linkFlags, ["-lEGL", "-lGLESv2"]);
+    }
     if (paragraphEnabled) {
       stubCcFlags = appendFlags(
         stubCcFlags,
@@ -760,6 +841,19 @@ function platformFlags(config, values) {
       "-lm",
       "-ldl",
     ]);
+    if (skiaGpuEnabled(config, platform)) {
+      const ganeshExtStaticLib = path.join(libPath, "libskia_ganesh_ext.a");
+      if (!fs.existsSync(ganeshExtStaticLib)) {
+        throw new Error(
+          `MOUI_SKIA_ENABLE_GPU_EGL requested, but ${ganeshExtStaticLib} was not found`,
+        );
+      }
+      stubCcFlags = appendFlags(stubCcFlags, "-DMOUI_SKIA_ENABLE_GPU_EGL");
+      linkFlags = appendMissingFlags(
+        `${ganeshExtStaticLib} ${linkFlags}`,
+        ["-lEGL", "-lGLESv3"],
+      );
+    }
     if (paragraphEnabled) {
       stubCcFlags = appendFlags(
         stubCcFlags,
@@ -778,10 +872,24 @@ function platformFlags(config, values) {
   };
 }
 
+function fallbackNativeRuntimeLinkFlags(platform) {
+  if (platform === "windows") {
+    return "";
+  }
+  if (platform === "linux") {
+    return "-lstdc++ -pthread";
+  }
+  return "-lc++";
+}
+
 function main() {
   const config = readJsonFromStdin();
   const platform = skiaTargetPlatform(config);
   if (truthy(process.env.MOUI_SKIA_DISABLE_PREBUILD_SKIA)) {
+    const nativeRuntimeLinkFlags =
+      process.env.MOUI_SKIA_CC_LINK_FLAGS ||
+      fallbackNativeRuntimeLinkFlags(platform);
+    const nativePackageName = `${readModuleName()}/native`;
     const triangleLinkFlags = macosExampleLinkFlags(
       "",
       "-framework QuartzCore -framework AppKit",
@@ -795,18 +903,31 @@ function main() {
     console.log(
       JSON.stringify({
         vars: {
-          MOUI_SKIA_STUB_CC_FLAGS: "",
-          MOUI_SKIA_CC_LINK_FLAGS: "",
-          MOUI_SKIA_ANDROID_LINK_FLAGS: "",
+          MOUI_SKIA_STUB_CC_FLAGS:
+            process.env.MOUI_SKIA_STUB_CC_FLAGS || "",
+          MOUI_SKIA_CC_LINK_FLAGS:
+            nativeRuntimeLinkFlags,
+          MOUI_SKIA_ANDROID_LINK_FLAGS:
+            process.env.MOUI_SKIA_ANDROID_LINK_FLAGS || "",
           MOUI_SKIA_EXAMPLE_MACOS_WINDOW_LINK_FLAGS: triangleLinkFlags,
           MOUI_SKIA_EXAMPLE_MACOS_METAL_WINDOW_LINK_FLAGS: metalWindowLinkFlags,
         },
+        link_configs: [
+          {
+            package: nativePackageName,
+            link_flags: nativeRuntimeLinkFlags,
+          },
+        ],
       }),
     );
     return;
   }
   rejectLegacyLinkModeEnv(config);
   if (!shouldConfigureSkia(config)) {
+    const nativeRuntimeLinkFlags =
+      process.env.MOUI_SKIA_CC_LINK_FLAGS ||
+      fallbackNativeRuntimeLinkFlags(platform);
+    const nativePackageName = `${readModuleName()}/native`;
     const triangleLinkFlags = macosExampleLinkFlags(
       "",
       "-framework QuartzCore -framework AppKit",
@@ -821,11 +942,17 @@ function main() {
       JSON.stringify({
         vars: {
           MOUI_SKIA_STUB_CC_FLAGS: "",
-          MOUI_SKIA_CC_LINK_FLAGS: "",
+          MOUI_SKIA_CC_LINK_FLAGS: nativeRuntimeLinkFlags,
           MOUI_SKIA_ANDROID_LINK_FLAGS: "",
           MOUI_SKIA_EXAMPLE_MACOS_WINDOW_LINK_FLAGS: triangleLinkFlags,
           MOUI_SKIA_EXAMPLE_MACOS_METAL_WINDOW_LINK_FLAGS: metalWindowLinkFlags,
         },
+        link_configs: [
+          {
+            package: nativePackageName,
+            link_flags: nativeRuntimeLinkFlags,
+          },
+        ],
       }),
     );
     return;

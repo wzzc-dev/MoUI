@@ -30,9 +30,9 @@ Options:
   --skia-lib NAME        Library name without lib prefix, default: skia.
   --link-mode auto|dynamic|static
                          Select Skia library link mode. Default: auto.
-                         auto uses dynamic for --write-local-config, and
-                         static for temporary smoke/build
-                         setup when libskia.a exists.
+                         auto uses static for Metal GPU or renderer-only smoke,
+                         and dynamic for other app builds or
+                         --write-local-config.
   --skia-rev REV         Skia git revision, branch, or tag for source provider.
                          Default: moui_skia/skia-revision.txt.
   --jetbrains-tag TAG    JetBrains/skia release tag. Default: m148-8967a2e80c.
@@ -516,7 +516,9 @@ else
   fi
   fetch_link_mode="$macos_link_mode"
   if [[ "$fetch_link_mode" == "auto" ]]; then
-    if [[ $write_local_config -eq 1 ]]; then
+    if [[ $run_gpu_smoke -eq 1 ]]; then
+      fetch_link_mode="static"
+    elif [[ $write_local_config -eq 1 || $skip_showcase_build -eq 0 || $run_markdown_smoke -eq 1 || $run_ime_smoke -eq 1 ]]; then
       fetch_link_mode="dynamic"
     else
       fetch_link_mode="static"
@@ -559,6 +561,7 @@ fi
 static_lib="$lib_path/lib$skia_lib.a"
 dynamic_lib="$lib_path/lib$skia_lib.dylib"
 ganesh_ext_static_lib="$lib_path/libskia_ganesh_ext.a"
+ganesh_ext_dynamic_lib="$lib_path/libskia_ganesh_ext.dylib"
 
 if [[ $dry_run_config -eq 0 ]]; then
   if [[ "$skia_provider" == "source" ]]; then
@@ -584,6 +587,7 @@ if [[ $dry_run_config -eq 0 ]]; then
   static_lib="$lib_path/lib$skia_lib.a"
   dynamic_lib="$lib_path/lib$skia_lib.dylib"
   ganesh_ext_static_lib="$lib_path/libskia_ganesh_ext.a"
+  ganesh_ext_dynamic_lib="$lib_path/libskia_ganesh_ext.dylib"
   if [[ ! -f "$include_path/include/core/SkSurface.h" ]]; then
     echo "Skia include path does not look like a Skia checkout/root: $include_path" >&2
     exit 1
@@ -638,11 +642,16 @@ if [[ $enable_skparagraph -eq 1 ]]; then
     echo "MOUI_SKIA_REQUIRE_SKPARAGRAPH requested, but one or more SkParagraph libraries are missing in $lib_path" >&2
     exit 1
   fi
+  if [[ $require_skparagraph -eq 0 && ( "$paragraph_headers_status" != "available" || "$paragraph_libraries_status" != "available" ) ]]; then
+    enable_skparagraph=0
+  fi
 fi
 
 resolved_link_mode="$macos_link_mode"
 if [[ "$resolved_link_mode" == "auto" ]]; then
-  if [[ $write_local_config -eq 1 ]]; then
+  if [[ $run_gpu_smoke -eq 1 && ( -f "$static_lib" || $dry_run_config -eq 1 ) ]]; then
+    resolved_link_mode="static"
+  elif [[ $write_local_config -eq 1 || $skip_showcase_build -eq 0 || $run_markdown_smoke -eq 1 || $run_ime_smoke -eq 1 ]]; then
     if [[ -f "$dynamic_lib" || $dry_run_config -eq 1 ]]; then
       resolved_link_mode="dynamic"
     else
@@ -677,12 +686,23 @@ case "$resolved_link_mode" in
 esac
 
 ganesh_link_flags=""
-if [[ $run_gpu_smoke -eq 1 && "$resolved_link_mode" == "static" ]]; then
-  if [[ $dry_run_config -eq 0 && ! -f "$ganesh_ext_static_lib" ]]; then
-    echo "Requested Metal GPU Skia smoke, but $ganesh_ext_static_lib was not found" >&2
-    exit 1
-  fi
-  ganesh_link_flags="$ganesh_ext_static_lib"
+if [[ $run_gpu_smoke -eq 1 ]]; then
+  case "$resolved_link_mode" in
+    dynamic)
+      if [[ $dry_run_config -eq 0 && ! -f "$ganesh_ext_dynamic_lib" ]]; then
+        echo "Requested dynamic Metal GPU Skia smoke, but $ganesh_ext_dynamic_lib was not found; a static Ganesh extension cannot link against a hidden-symbol Skia dylib" >&2
+        exit 1
+      fi
+      ganesh_link_flags="$ganesh_ext_dynamic_lib"
+      ;;
+    static)
+      if [[ $dry_run_config -eq 0 && ! -f "$ganesh_ext_static_lib" ]]; then
+        echo "Requested Metal GPU Skia smoke, but $ganesh_ext_static_lib was not found" >&2
+        exit 1
+      fi
+      ganesh_link_flags="$ganesh_ext_static_lib"
+      ;;
+  esac
 fi
 
 native_extra_cc_flags="$extra_cc_flags"
@@ -738,7 +758,7 @@ fi
 if [[ $run_gpu_smoke -eq 1 ]]; then
   native_extra_cc_flags="-DMOUI_SKIA_ENABLE_GPU_METAL${native_extra_cc_flags:+ $native_extra_cc_flags}"
   if [[ -n "$ganesh_link_flags" ]]; then
-    native_extra_link_flags="$ganesh_link_flags $static_lib${native_extra_link_flags:+ $native_extra_link_flags}"
+    native_extra_link_flags="$ganesh_link_flags $skia_library_link_flag${native_extra_link_flags:+ $native_extra_link_flags}"
   fi
   native_extra_link_flags="-framework Metal -framework QuartzCore -framework CoreVideo -framework IOSurface -framework AppKit -lobjc${native_extra_link_flags:+ $native_extra_link_flags}"
 fi
@@ -757,7 +777,7 @@ if [[ -n "$extra_cc_flags" ]]; then
   cc_flags="$cc_flags $extra_cc_flags"
 fi
 
-skia_link_flags="$skia_library_link_flag -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices -framework UniformTypeIdentifiers"
+skia_link_flags="$skia_library_link_flag -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices -framework UniformTypeIdentifiers -lobjc"
 if [[ -n "$ganesh_link_flags" ]]; then
   skia_link_flags="$ganesh_link_flags $skia_link_flags"
 fi
@@ -941,9 +961,11 @@ write_showcase_pkg_config() {
   cat > "$showcase_pkg" <<EOF
 import {
   "moonbitlang/core/env",
+  "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/macos" @macos_backend,
   "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
   "wzzc-dev/moui/render/skia" @skia_renderer,
+  "wzzc-dev/moui/render",
   "examples/showcase/app",
 }
 
@@ -965,10 +987,15 @@ write_markdown_pkg_config() {
   cat > "$markdown_pkg" <<EOF
 import {
   "moonbitlang/core/env",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/macos" @macos_host,
   "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
   "wzzc-dev/moui/render/skia" @skia_renderer,
+  "wzzc-dev/moui/render",
+  "wzzc-dev/window/dpi",
+  "wzzc-dev/window/macos" @window_macos,
   "examples/markdown_editor/app",
 }
 
@@ -989,12 +1016,17 @@ EOF
 write_workbench_pkg_config() {
   cat > "$workbench_pkg" <<EOF
 import {
-  "moonbitlang/async",
   "moonbitlang/core/env",
+  "moonbitlang/async",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/macos" @macos_host,
   "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
   "wzzc-dev/moui/render/skia" @skia_renderer,
+  "wzzc-dev/moui/render",
   "examples/mo_workbench/app",
-  "examples/mo_workbench/native_transport",
+  "examples/mo_workbench/acp_native_transport" @acp_transport,
+  "examples/mo_workbench/openseek_native_transport" @openseek_transport,
 }
 
 supported_targets = "native"
@@ -1279,6 +1311,7 @@ if [[ $skip_showcase_build -eq 0 ]]; then
   if [[ $run_showcase_smoke -eq 1 ]]; then
     MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
       MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
+      MOUI_SKIA_CC_LINK_FLAGS="$skia_link_flags" \
       moon build moui_tester/macos_skia_first_frame_smoke --target native
     first_frame_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui_tester/macos_skia_first_frame_smoke/macos_skia_first_frame_smoke.exe"
     if [[ ! -x "$first_frame_exe" ]]; then
@@ -1296,7 +1329,9 @@ if [[ $skip_showcase_build -eq 0 ]]; then
 
     set +e
     if [[ $run_gpu_smoke -eq 1 ]]; then
-      MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu "$first_frame_exe" >"$showcase_log" 2>&1 &
+      MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu \
+        MOUI_SKIA_GPU_DIAGNOSTICS=1 \
+        "$first_frame_exe" >"$showcase_log" 2>&1 &
     else
       "$first_frame_exe" >"$showcase_log" 2>&1 &
     fi
@@ -1345,6 +1380,7 @@ if [[ $run_markdown_smoke -eq 1 ]]; then
 
   MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
     MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
+    MOUI_SKIA_CC_LINK_FLAGS="$skia_link_flags" \
     moon build moui_tester/macos_skia_first_frame_smoke --target native
   first_frame_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui_tester/macos_skia_first_frame_smoke/macos_skia_first_frame_smoke.exe"
   if [[ ! -x "$first_frame_exe" ]]; then
@@ -1363,7 +1399,9 @@ if [[ $run_markdown_smoke -eq 1 ]]; then
 
   set +e
   if [[ $run_gpu_smoke -eq 1 ]]; then
-    MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu "$first_frame_exe" >"$markdown_log" 2>&1 &
+    MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu \
+      MOUI_SKIA_GPU_DIAGNOSTICS=1 \
+      "$first_frame_exe" >"$markdown_log" 2>&1 &
   else
     "$first_frame_exe" >"$markdown_log" 2>&1 &
   fi
@@ -1400,6 +1438,7 @@ fi
 if [[ $run_ime_smoke -eq 1 ]]; then
   MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
     MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
+    MOUI_SKIA_CC_LINK_FLAGS="$skia_link_flags" \
     moon build moui_tester/macos_skia_ime_smoke --target native
   ime_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui_tester/macos_skia_ime_smoke/macos_skia_ime_smoke.exe"
   if [[ ! -x "$ime_exe" ]]; then

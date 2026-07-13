@@ -170,6 +170,26 @@
       "factory": "moonbit_skia_make_bitmap_wrapper",
       "finalizer": "moonbit_skia_bitmap_finalize",
       "ownership": "owned_delete"
+    },
+    {
+      "name": "Picture",
+      "moonbit_handle": "PictureHandle",
+      "moonbit_type": "Picture",
+      "wrapper_struct": "MoonbitSkiaPicture",
+      "field": "picture",
+      "factory": "moonbit_skia_make_picture_wrapper",
+      "finalizer": "moonbit_skia_picture_finalize",
+      "ownership": "sk_refcnt"
+    },
+    {
+      "name": "PictureRecorder",
+      "moonbit_handle": "PictureRecorderHandle",
+      "moonbit_type": "PictureRecorder",
+      "wrapper_struct": "MoonbitSkiaPictureRecorder",
+      "field": "recorder",
+      "factory": "moonbit_skia_make_picture_recorder_wrapper",
+      "finalizer": "moonbit_skia_picture_recorder_finalize",
+      "ownership": "owned_delete"
     }
   ],
   "regular_objects": [

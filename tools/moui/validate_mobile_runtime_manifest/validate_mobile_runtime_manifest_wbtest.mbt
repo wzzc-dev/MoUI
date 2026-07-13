@@ -239,9 +239,7 @@ test "gpuPromoted=true without gpuPromotionEvidence fails" {
     #|}
   let text = manifest_with_gpu_promoted_renderer().replace(old~, new~)
   let failures = validate_manifest_text(text, true)
-  assert_true(
-    failures.any(message => message.contains("gpuPromotionEvidence")),
-  )
+  assert_true(failures.any(message => message.contains("gpuPromotionEvidence")))
 }
 
 ///|
@@ -254,9 +252,7 @@ test "gpuPromoted=true under require-passed rejects readbackEliminated=false" {
   )
   let failures = validate_manifest_text(text, true)
   assert_true(
-    failures.any(message =>
-      message.contains("readbackEliminated must be true")
-    ),
+    failures.any(message => message.contains("readbackEliminated must be true")),
   )
 }
 
@@ -283,9 +279,9 @@ test "gpuPromoted=true under require-passed rejects low surface recreation cycle
   )
   let failures = validate_manifest_text(text, true)
   assert_true(
-    failures.any(message =>
+    failures.any(message => {
       message.contains("surfaceRecreationCycles must be ≥ 100")
-    ),
+    }),
   )
 }
 
@@ -298,9 +294,9 @@ test "gpuPromoted=true under require-passed rejects slow context loss recovery" 
   )
   let failures = validate_manifest_text(text, true)
   assert_true(
-    failures.any(message =>
+    failures.any(message => {
       message.contains("recoveredWithinVsyncs must be positive and ≤ 3.0")
-    ),
+    }),
   )
 }
 
