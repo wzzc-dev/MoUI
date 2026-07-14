@@ -79,19 +79,23 @@ const flagsFor = (name) =>
       ?.link_flags || "",
   );
 
-// Linux host/skia/wgpu + fontconfig are always emitted.
+// Linux host/skia/wgpu are always emitted; fontconfig libs only on Linux hosts.
 requirePackage("wzzc-dev/moui/backend/linux");
 requirePackage("wzzc-dev/moui/backend/linux/skia");
 requirePackage("wzzc-dev/moui/backend/linux/wgpu");
-requirePackage("wzzc-dev/moui/render/wgpu/fontconfig");
 if (!flagsFor("wzzc-dev/moui/backend/linux").includes("-lz")) {
   throw new Error("linux host link_configs should include -lz");
 }
 if (!flagsFor("wzzc-dev/moui/backend/linux/skia").includes("/tmp/libskia.a")) {
   throw new Error("linux/skia link_configs should include Skia link flags");
 }
-if (!flagsFor("wzzc-dev/moui/render/wgpu/fontconfig").includes("fontconfig")) {
-  throw new Error("fontconfig link_configs should include fontconfig libs");
+if (process.platform === "linux") {
+  requirePackage("wzzc-dev/moui/render/wgpu/fontconfig");
+  if (!flagsFor("wzzc-dev/moui/render/wgpu/fontconfig").includes("fontconfig")) {
+    throw new Error("fontconfig link_configs should include fontconfig libs");
+  }
+} else if (flagsFor("wzzc-dev/moui/render/wgpu/fontconfig").includes("fontconfig")) {
+  throw new Error("fontconfig link_configs should be omitted off Linux");
 }
 
 // Windows skia + directwrite are always emitted.

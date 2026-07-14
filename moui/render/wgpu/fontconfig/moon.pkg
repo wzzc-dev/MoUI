@@ -10,8 +10,10 @@ supported_targets = "native"
 options(
   link: {
     "native": {
-      "stub-cc-flags": "-I/usr/include/freetype2 -I/usr/include/harfbuzz",
-      "cc-link-flags": "-lfontconfig -lharfbuzz -lfreetype -lz",
+      // Host-specific include/link flags come from moui/build.js prebuild
+      // link_configs on Linux. Off-Linux hosts compile the no-op stub path.
+      "stub-cc-flags": "",
+      "cc-link-flags": "",
     },
   },
   "native-stub": [ "linux_fontconfig_text.c" ],
