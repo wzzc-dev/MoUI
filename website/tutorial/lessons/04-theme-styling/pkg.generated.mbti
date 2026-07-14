@@ -1,0 +1,21 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "website/tutorial/lessons/04-theme-styling"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn program() -> @core.Program[Model, Unit]
+
+// Errors
+
+// Types and methods
+pub struct Model {
+  dark : Bool
+}
+
+// Type aliases
+
+// Traits
+

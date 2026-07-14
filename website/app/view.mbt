@@ -15,7 +15,9 @@ fn Model::top_bar(
     items.push(
       nav_button(theme, "Home", self.page is WebsiteHome, OpenHomeAt(0.0)),
     )
-    items.push(nav_button(theme, "Tour", false, OpenHomeAnchor("tour")))
+    items.push(
+      nav_button(theme, "Tutorial", self.page is WebsiteTutorial, OpenTutorial),
+    )
     items.push(
       nav_button(theme, "Quick Start", false, OpenHomeAnchor("quick-start")),
     )

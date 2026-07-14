@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MoUI Playground</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%23111827'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-size='30' font-family='Arial' font-weight='700' fill='%23ffffff'%3EM%3C/text%3E%3C/svg%3E" />
+    <style>
+      * { box-sizing: border-box; }
+      html, body, #playground-shell { width: 100%; height: 100%; margin: 0; }
+      body {
+        overflow: hidden;
+        background: #ffffff;
+        color: #24292f;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      #playground-shell {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr);
+      }
+      #canvas-host {
+        position: relative;
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+        border-right: 1px solid #d8dee4;
+        background: #ffffff;
+      }
+      #canvas-host > canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+      }
+      .moui-text-selection-layer { overflow: hidden; pointer-events: none; user-select: text; }
+      .moui-text-selection-layer span { pointer-events: auto; color: transparent; white-space: pre; user-select: text; }
+      #preview-frame {
+        display: block;
+        position: relative;
+        min-width: 0;
+        min-height: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background: #ffffff;
+      }
+      @media (max-width: 799px) {
+        #playground-shell {
+          grid-template-columns: minmax(0, 1fr);
+          grid-template-rows: minmax(280px, 58fr) minmax(220px, 42fr);
+        }
+        #canvas-host {
+          border-right: 0;
+          border-bottom: 1px solid #d8dee4;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main id="playground-shell">
+      <div id="canvas-host" aria-label="MoUI Playground canvas host"></div>
+      <iframe id="preview-frame" title="Compiled MoUI preview" sandbox="allow-scripts"></iframe>
+    </main>
+    <script type="module">
+      import { bootMouiWasmGcApp } from "../../../moui/backend/web/runtime.js";
+      import { PlaygroundBridge } from "../host/playground-bridge.js";
+      import { PreviewHost } from "../host/preview-host.js";
+      const bridge = new PlaygroundBridge({ workerUrl: new URL("../host/compiler-worker.js", import.meta.url) });
+      const runtimeSources = Promise.all([
+        ["runtime", "runtime.js"],
+        ["browser", "browser_runtime.js"],
+        ["canvas2d", "canvas2d_runtime.js"],
+        ["semantics", "semantics_dom.js"],
+      ].map(async ([name, path]) => [name, await fetch(`./${path}`).then(response => {
+        if (!response.ok) throw new Error(`Failed to load preview runtime asset ${path}`);
+        return response.text();
+      })])).then(entries => Object.fromEntries(entries));
+      const preview = new PreviewHost(document.querySelector("#preview-frame"), {
+        runtimeSources,
+      });
+      bridge.attach(window);
+      const compileRequests = new Map();
+      const shareRequests = new Map();
+      const exampleRequests = new Map();
+      let nextCompileHandle = 1;
+      const playgroundImports = {
+        begin_compile_request(revision) {
+          const handle = nextCompileHandle++;
+          compileRequests.set(handle, { revision: Number(revision), text: "" });
+          return handle;
+        },
+        append_compile_char(handle, character) {
+          const request = compileRequests.get(Number(handle));
+          if (request) request.text += String.fromCodePoint(Number(character));
+        },
+        finish_compile_request(handle) {
+          const request = compileRequests.get(Number(handle));
+          compileRequests.delete(Number(handle));
+          if (!request) return;
+          try {
+            const value = JSON.parse(request.text);
+            bridge.compile({
+              revision: request.revision,
+              files: Object.fromEntries((value.files || []).map(file => [file.path, file.source])),
+              lessonId: value.lesson_id || "",
+            });
+          } catch (error) {
+            bridge.status(error.stack || String(error));
+          }
+        },
+        begin_share_request() {
+          const handle = nextCompileHandle++;
+          shareRequests.set(handle, "");
+          return handle;
+        },
+        append_share_char(handle, character) {
+          if (shareRequests.has(Number(handle))) {
+            shareRequests.set(Number(handle), shareRequests.get(Number(handle)) + String.fromCodePoint(Number(character)));
+          }
+        },
+        finish_share_request(handle) {
+          const request = shareRequests.get(Number(handle));
+          shareRequests.delete(Number(handle));
+          if (!request) return;
+          try {
+            const url = bridge.createShareUrl(JSON.parse(request));
+            const copy = navigator.clipboard?.writeText(url);
+            if (copy) copy.catch(() => {});
+            bridge.status("Share link copied to clipboard.");
+            window.history.replaceState({}, "", url);
+          } catch (error) {
+            bridge.status(error.stack || String(error));
+          }
+        },
+        begin_example_request() {
+          const handle = nextCompileHandle++;
+          exampleRequests.set(handle, "");
+          return handle;
+        },
+        append_example_char(handle, character) {
+          if (exampleRequests.has(Number(handle))) {
+            exampleRequests.set(Number(handle), exampleRequests.get(Number(handle)) + String.fromCodePoint(Number(character)));
+          }
+        },
+        finish_example_request(handle) {
+          const id = exampleRequests.get(Number(handle));
+          exampleRequests.delete(Number(handle));
+          if (id) bridge.selectExample(id);
+        },
+      };
+      bridge.onResult(result => {
+        if (result.status === "success" && result.wasmBytes) {
+          preview.run(result.wasmBytes).catch(error => bridge.status(error.stack || String(error)));
+        }
+        if (result.status !== "success") preview.stop();
+      });
+      window.__mouiPlaygroundRun = request => bridge.compile(request);
+      const host = document.querySelector("#canvas-host");
+      bootMouiWasmGcApp({
+        wasmUrl: new URL("../../../_build/wasm-gc/debug/build/website/playground/web_wasm/web_wasm.wasm", import.meta.url),
+        canvasHost: host,
+        imports: { moui_playground: playgroundImports },
+        webgpu: { textSelection: { enabled: true } },
+        onStatus: message => bridge.status(message),
+      })
+        .then(instance => setTimeout(() => bridge.setWasmExports(instance.exports), 0))
+        .catch(error => bridge.status(error.stack || String(error)));
+    </script>
+  </body>
+</html>

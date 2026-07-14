@@ -92,6 +92,21 @@ CI checkout still rejects uncommitted public-interface drift.
 
 ## Focused
 
+Playground-focused checks should cover both MoonBit editor behavior and the
+static browser bundle:
+
+```sh
+moon test moui_richtext/code_editor --target native
+moon check moui_richtext/code_editor --target wasm-gc
+moon test website/playground/app --target native
+moon build website/playground/web_wasm --target wasm-gc
+node scripts/generate-playground-assets.mjs --out dist/playground
+node --check website/playground/host/compiler-worker.js
+node --check website/playground/host/playground-bridge.js
+node --check website/playground/host/preview-host.js
+node scripts/test-playground-assets.mjs --root dist/playground
+```
+
 Use smaller package checks while editing implementation code:
 
 ```sh

@@ -33,6 +33,7 @@ pub struct Model {
   docs_scroll : @core.ScrollState
   showcases_scroll : @core.ScrollState
   showcase_grid_scroll : @core.ScrollState
+  tutorial_scroll : @core.ScrollState
   route_history : @views.RouteHistoryState
   pending_anchor : String?
   copy_feedback_active : Bool
@@ -46,6 +47,9 @@ pub enum Msg {
   OpenHome
   OpenHomeAt(Double)
   OpenHomeAnchor(String)
+  OpenTutorial
+  OpenPlayground
+  OpenPlaygroundLesson(String)
   OpenDocs
   OpenShowcases
   OpenShowcaseSource(String)
@@ -108,6 +112,7 @@ pub struct WebsiteDocsCatalog {
 
 pub enum WebsitePage {
   WebsiteHome
+  WebsiteTutorial
   WebsiteDocs
   WebsiteShowcases
 } derive(Eq, @debug.Debug)

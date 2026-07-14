@@ -1,0 +1,21 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "website/tutorial/lessons/05-component-composition"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn program() -> @core.Program[Model, Unit]
+
+// Errors
+
+// Types and methods
+pub struct Model {
+  name : String
+}
+
+// Type aliases
+
+// Traits
+
