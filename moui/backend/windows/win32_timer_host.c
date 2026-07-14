@@ -1,10 +1,8 @@
+#ifdef _WIN32
+
 // Windows timer host: drives HostTimerSource subscriptions via a timer-queue
 // timer that calls back into MoonBit on each tick. The returned handle cancels
 // the timer via DeleteTimerQueueTimer.
-
-#ifndef _WIN32
-#error "win32_timer_host.c is only for Windows"
-#endif
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -87,3 +85,28 @@ void moui_windows_timer_cancel(void *handle) {
   }
   free(timer);
 }
+
+#else
+
+#include <moonbit.h>
+#include <stdint.h>
+#include <stdlib.h>
+
+typedef void (*moui_windows_timer_trampoline_t)(void *closure);
+
+MOONBIT_FFI_EXPORT
+void *moui_windows_timer_start(double interval_ms,
+                               moui_windows_timer_trampoline_t trampoline,
+                               void *closure) {
+  (void)interval_ms;
+  (void)trampoline;
+  (void)closure;
+  return NULL;
+}
+
+MOONBIT_FFI_EXPORT
+void moui_windows_timer_cancel(void *handle) {
+  (void)handle;
+}
+
+#endif

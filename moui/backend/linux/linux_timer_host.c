@@ -69,4 +69,28 @@ void moui_linux_timer_cancel(void *handle) {
   free(timer);
 }
 
-#endif // __linux__
+
+#else
+
+#include <moonbit.h>
+#include <stdint.h>
+#include <stdlib.h>
+
+typedef void (*moui_linux_timer_trampoline_t)(void *closure);
+
+MOONBIT_FFI_EXPORT
+void *moui_linux_timer_start(double interval_ms,
+                             moui_linux_timer_trampoline_t trampoline,
+                             void *closure) {
+  (void)interval_ms;
+  (void)trampoline;
+  (void)closure;
+  return NULL;
+}
+
+MOONBIT_FFI_EXPORT
+void moui_linux_timer_cancel(void *handle) {
+  (void)handle;
+}
+
+#endif

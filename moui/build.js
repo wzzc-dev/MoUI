@@ -211,11 +211,15 @@ function linuxLinkConfigs(linuxGlib, skiaCcLink) {
   );
   pushLinkConfig(configs, "wzzc-dev/moui/backend/linux/sun", linuxBackendSunHostFlags);
   pushLinkConfig(configs, "wzzc-dev/moui/backend/linux/wgpu", linuxBackendWgpuHostFlags);
-  pushLinkConfig(
-    configs,
-    "wzzc-dev/moui/render/wgpu/fontconfig",
-    linuxFontconfigLinkFlags,
-  );
+  // fontconfig/FreeType are Linux-only; the C stub already no-ops off Linux, so
+  // avoid requiring -lfontconfig when compiling/tests run on macOS/Windows.
+  if (process.platform === "linux") {
+    pushLinkConfig(
+      configs,
+      "wzzc-dev/moui/render/wgpu/fontconfig",
+      linuxFontconfigLinkFlags,
+    );
+  }
   return configs;
 }
 

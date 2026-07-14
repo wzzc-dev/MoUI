@@ -560,13 +560,6 @@ test "website unknown docs slug renders not found instead of README" {
     doc_state: DocNotFound("missing-page"),
   }
   let commands = model.test_runtime(width=1180.0, height=760.0).draw_commands()
-  for command in commands {
-    match command {
-      @core.DrawCommand::DrawText({ text: value, .. }) =>
-        println("NF_TEXT=" + value)
-      _ => ()
-    }
-  }
   assert_true(has_text(commands, "Document not found"))
 }
 

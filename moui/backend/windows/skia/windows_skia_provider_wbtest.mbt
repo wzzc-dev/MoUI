@@ -266,6 +266,9 @@ extern "C" fn moui_windows_async_image_spawn_sync(
 ///|
 test "windows skia async image background decode confirmed" {
   guard @skia_renderer.skia_available() else { return () }
+  // The native async-image stub only runs on Windows; on other hosts the
+  // spawn_sync/take_result pair is a no-op that returns 0 bytes.
+  guard @env.get_env_var("OS") == Some("Windows_NT") else { return () }
   let base = match @env.get_env_var("TEMP") {
     Some(v) => v
     None =>

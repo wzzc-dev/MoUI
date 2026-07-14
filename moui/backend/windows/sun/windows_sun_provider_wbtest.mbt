@@ -272,6 +272,9 @@ extern "C" fn moui_windows_sun_async_image_spawn_sync(
 
 ///|
 test "Windows Sun async image background_io confirmed" {
+  // The native async-image stub only runs on Windows; on other hosts the
+  // spawn_sync/take_result pair is a no-op that returns 0 bytes.
+  guard @env.get_env_var("OS") == Some("Windows_NT") else { return () }
   let base = match @env.get_env_var("TEMP") {
     Some(value) => value
     None =>

@@ -1,3 +1,5 @@
+#ifdef _WIN32
+
 // Windows Sun async image I/O: background file reading via CreateThread,
 // results drained on the main thread. The background thread only uses C stdlib
 // and malloc; it never touches MoonBit GC objects.
@@ -204,3 +206,34 @@ void moui_windows_sun_async_image_spawn_sync(int64_t window_id,
   req->is_background = 1;
   moui_windows_sun_async_image_read_file(req);
 }
+
+#else
+
+
+#include <moonbit.h>
+#include <stdint.h>
+
+MOONBIT_FFI_EXPORT
+void moui_windows_sun_async_image_spawn(int64_t window_id,
+                                        moonbit_bytes_t source_bytes,
+                                        int32_t source_len) {
+  (void)window_id;
+  (void)source_bytes;
+  (void)source_len;
+}
+
+MOONBIT_FFI_EXPORT
+void moui_windows_sun_async_image_spawn_sync(int64_t window_id,
+                                             moonbit_bytes_t source_bytes,
+                                             int32_t source_len) {
+  (void)window_id;
+  (void)source_bytes;
+  (void)source_len;
+}
+
+MOONBIT_FFI_EXPORT
+moonbit_bytes_t moui_windows_sun_async_image_take_result(void) {
+  return moonbit_make_bytes(0, 0);
+}
+
+#endif

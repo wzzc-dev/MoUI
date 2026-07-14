@@ -1,6 +1,4 @@
-#ifndef _WIN32
-#error "win32_service_host.c is only for Windows"
-#endif
+#ifdef _WIN32
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -352,3 +350,54 @@ int32_t moui_windows_show_menu(moonbit_bytes_t commands) {
   }
   return (int32_t)command - 1;
 }
+
+#else
+
+#include <moonbit.h>
+#include <stdint.h>
+
+MOONBIT_FFI_EXPORT
+int32_t moui_windows_clipboard_has_text(void) {
+  return 0;
+}
+
+MOONBIT_FFI_EXPORT
+moonbit_bytes_t moui_windows_clipboard_read_text(void) {
+  return moonbit_make_bytes(0, 0);
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_windows_clipboard_write_text(moonbit_bytes_t text) {
+  (void)text;
+  return 0;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_windows_open_url(moonbit_bytes_t url) {
+  (void)url;
+  return 0;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_windows_system_theme_is_light(void) {
+  return 1;
+}
+
+MOONBIT_FFI_EXPORT
+moonbit_bytes_t moui_windows_file_dialog(int32_t kind, moonbit_bytes_t title,
+                                         moonbit_bytes_t filters,
+                                         moonbit_bytes_t default_name) {
+  (void)kind;
+  (void)title;
+  (void)filters;
+  (void)default_name;
+  return moonbit_make_bytes(0, 0);
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_windows_show_menu(moonbit_bytes_t commands) {
+  (void)commands;
+  return -1;
+}
+
+#endif

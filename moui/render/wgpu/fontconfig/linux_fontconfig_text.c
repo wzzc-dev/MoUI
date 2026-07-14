@@ -1690,4 +1690,25 @@ int32_t moui_linux_fontconfig_debug_color_emoji_raster_pixels(void) {
   return -1;
 }
 
+MOONBIT_FFI_EXPORT
+int32_t moui_linux_fontconfig_debug_registered_font_data_len(
+  moonbit_bytes_t family_name
+) {
+  (void)family_name;
+  return -1;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_linux_fontconfig_debug_latin_raster_pixels(void) {
+  return -1;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_linux_fontconfig_debug_register_system_font_data(
+  moonbit_bytes_t family_name
+) {
+  (void)family_name;
+  return -1;
+}
+
 #endif
