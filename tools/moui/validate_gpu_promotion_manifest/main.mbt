@@ -73,7 +73,7 @@ fn require_object(
     Some(Json::Object(fields)) => fields
     _ => {
       failures.push("field '" + label + "' must be an object")
-      {}
+      Map([])
     }
   }
 }

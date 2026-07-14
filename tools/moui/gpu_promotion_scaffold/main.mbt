@@ -409,27 +409,27 @@ fn parse_metrics_overlay(text : String) -> Result[MetricsOverlay, String] {
     Json::Object(root) => {
       let diagnostics = match root.get("diagnostics") {
         Some(Json::Object(fields)) => fields
-        _ => {}
+        _ => Map([])
       }
       let gates = match root.get("promotionGates") {
         Some(Json::Object(fields)) => fields
-        _ => {}
+        _ => Map([])
       }
       let performance = match gates.get("performance") {
         Some(Json::Object(fields)) => fields
-        _ => {}
+        _ => Map([])
       }
       let memory = match gates.get("memory") {
         Some(Json::Object(fields)) => fields
-        _ => {}
+        _ => Map([])
       }
       let context_loss = match gates.get("contextLoss") {
         Some(Json::Object(fields)) => fields
-        _ => {}
+        _ => Map([])
       }
       let raster_fallback = match gates.get("rasterFallback") {
         Some(Json::Object(fields)) => fields
-        _ => {}
+        _ => Map([])
       }
       Ok({
         has_values: true,

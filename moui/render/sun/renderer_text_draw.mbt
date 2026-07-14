@@ -419,7 +419,7 @@ fn SunRasterRenderer::resolved_faces(
   font : @core.FontSpec,
 ) -> Array[@sun_text.FontFace] {
   let faces : Array[@sun_text.FontFace] = []
-  let seen : Map[String, Unit] = {}
+  let seen : Map[String, Unit] = Map([])
   for key in sun_font_spec_candidate_keys(font) {
     if seen.contains(key) {
       continue

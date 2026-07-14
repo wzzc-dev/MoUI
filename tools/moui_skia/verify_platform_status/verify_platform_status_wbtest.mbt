@@ -193,7 +193,7 @@ fn write_extra_marker_capability(
 fn write_required_capabilities(builder : StringBuilder) -> Unit {
   builder.write_string("\"native_smoke_capabilities\":[")
   let first = Ref(true)
-  let seen_markers : Map[String, Bool] = {}
+  let seen_markers : Map[String, Bool] = Map([])
   let areas = required_native_smoke_areas()
   let area_index = Ref(0)
   for capability_id in required_native_smoke_capability_ids() {
@@ -321,7 +321,7 @@ fn parse_object_or_fail(text : String) -> Map[String, Json] {
   let parsed = try! @json.parse(text)
   match parsed {
     Json::Object(fields) => fields
-    _ => {}
+    _ => Map([])
   }
 }
 

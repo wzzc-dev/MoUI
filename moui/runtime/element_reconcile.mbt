@@ -271,7 +271,7 @@ fn keyed_index_threshold() -> Int {
 fn build_keyed_child_index(
   old_children : Array[ElementNode],
 ) -> Map[KeyedChildComposite, Array[Int]] {
-  let index : Map[KeyedChildComposite, Array[Int]] = {}
+  let index : Map[KeyedChildComposite, Array[Int]] = Map([])
   for old_index, old_child in old_children {
     match old_child.key {
       Some(key) => {

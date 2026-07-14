@@ -128,7 +128,7 @@ fn bench_find_linear(
 
 ///|
 fn bench_build_index(old_items : Array[BenchItem]) -> Map[String, Array[Int]] {
-  let index : Map[String, Array[Int]] = {}
+  let index : Map[String, Array[Int]] = Map([])
   for old_index, old_item in old_items {
     match old_item.key {
       Some(key) => {
@@ -296,7 +296,7 @@ struct BenchCompositeKey {
 fn bench_build_index_struct(
   old_items : Array[BenchItem],
 ) -> Map[BenchCompositeKey, Array[Int]] {
-  let index : Map[BenchCompositeKey, Array[Int]] = {}
+  let index : Map[BenchCompositeKey, Array[Int]] = Map([])
   for old_index, old_item in old_items {
     match old_item.key {
       Some(key) => {

@@ -687,9 +687,9 @@ fn SunRasterRenderer::remove_cached_layer_order_entries(
 
 ///|
 fn SunRasterRenderer::clear_cached_layers(self : SunRasterRenderer) -> Unit {
-  self.cached_layer_pixmaps = {}
-  self.cached_layer_revisions = {}
-  self.cached_layer_scales = {}
+  self.cached_layer_pixmaps = Map([])
+  self.cached_layer_revisions = Map([])
+  self.cached_layer_scales = Map([])
   self.cached_layer_order = []
   self.cached_layer_hit_count = 0
   self.cached_layer_miss_count = 0

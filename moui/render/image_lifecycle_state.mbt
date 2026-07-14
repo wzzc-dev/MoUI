@@ -1,6 +1,6 @@
 ///|
 pub fn ImageResourceLifecycle::new() -> ImageResourceLifecycle {
-  { records: {}, revision: 0 }
+  { records: Map([]), revision: 0 }
 }
 
 ///|

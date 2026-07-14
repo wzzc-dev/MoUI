@@ -258,7 +258,7 @@ fn parse_target_entries(
   text : String,
 ) -> Result[Map[String, Array[String]], String] {
   let chars = text.to_array()
-  let entries : Map[String, Array[String]] = {}
+  let entries : Map[String, Array[String]] = Map([])
   let mut index = 0
   while index < chars.length() {
     match read_quoted(chars, index) {
@@ -351,7 +351,7 @@ fn parse_public_function_at(chars : Array[Char], start : Int) -> (String, Int)? 
 ///|
 fn public_functions(text : String) -> Map[String, Bool] {
   let chars = text.to_array()
-  let names : Map[String, Bool] = {}
+  let names : Map[String, Bool] = Map([])
   let mut index = 0
   while index < chars.length() {
     match parse_public_function_at(chars, index) {
@@ -413,7 +413,7 @@ fn required_array_field(
 fn owned_names(
   ownership : Map[String, Json],
 ) -> Result[Map[String, Bool], String] {
-  let names : Map[String, Bool] = {}
+  let names : Map[String, Bool] = Map([])
   for section in ["external_wrappers", "regular_objects"] {
     let entries = match
       json_array_field_or_empty(
@@ -443,7 +443,7 @@ fn owned_names(
 fn status_markers(
   status : Map[String, Json],
 ) -> Result[Map[String, Bool], String] {
-  let markers : Map[String, Bool] = {}
+  let markers : Map[String, Bool] = Map([])
   for
     section in [
       "native_smoke_capabilities", "native_smoke_conditional_capabilities",
@@ -732,10 +732,10 @@ fn verify_capability_contract_data(
     Ok(value) => value
     Err(message) => return Err(message)
   }
-  let covered_native_files : Map[String, Bool] = {}
-  let covered_fallback_files : Map[String, Bool] = {}
-  let seen_ids : Map[String, Bool] = {}
-  let seen_markers : Map[String, Bool] = {}
+  let covered_native_files : Map[String, Bool] = Map([])
+  let covered_fallback_files : Map[String, Bool] = Map([])
+  let seen_ids : Map[String, Bool] = Map([])
+  let seen_markers : Map[String, Bool] = Map([])
   for capability in capabilities {
     match
       verify_capability_entry(
@@ -798,7 +798,7 @@ fn read_file_map(
     Ok(value) => value
     Err(message) => return Err(label + " " + message)
   }
-  let files : Map[String, String] = {}
+  let files : Map[String, String] = Map([])
   for name in names {
     let path = @tools.join_path(directory, name)
     match @tools.read_required_text(path, label + " file") {

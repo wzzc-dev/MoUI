@@ -214,7 +214,7 @@ fn verify_capability_markers(
     Err(message) => return Err(message)
   }
 
-  let seen_markers : Map[String, Bool] = {}
+  let seen_markers : Map[String, Bool] = Map([])
   let missing_from_source : Array[String] = []
 
   for capability in capabilities {

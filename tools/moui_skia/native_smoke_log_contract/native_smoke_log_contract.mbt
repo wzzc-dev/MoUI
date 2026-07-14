@@ -79,7 +79,7 @@ pub fn parse_smoke_contract(
   }
 
   let stage_markers : Array[String] = []
-  let seen_markers : Map[String, Bool] = {}
+  let seen_markers : Map[String, Bool] = Map([])
   for capability in capability_values {
     let fields = match
       json_object(

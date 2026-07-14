@@ -157,7 +157,7 @@ fn validate_acceptance_state_patch_text(text : String) -> Result[Unit, String] {
   if text == "" {
     return Err("acceptance state patch is empty")
   }
-  let diff_files : Map[String, Bool] = {}
+  let diff_files : Map[String, Bool] = Map([])
   for line in text.split("\n") {
     match parse_diff_header(line.to_owned()) {
       Some((old_path, new_path)) => {

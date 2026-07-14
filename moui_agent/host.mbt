@@ -196,7 +196,7 @@ pub impl AgentHost for RuntimeAgentHost with fn capabilities(
     AgentCapability::{
       kind: "get_state",
       description: "Read runtime counters and dirty element ids.",
-      schema: ({} : Json),
+      schema: Json::empty_object(),
     },
     AgentCapability::{
       kind: "dispatch_command",

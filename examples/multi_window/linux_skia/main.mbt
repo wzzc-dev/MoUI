@@ -11,7 +11,8 @@ fn main {
             runtime=runtime_for(scene, windows, request.metrics.logical_size),
           ),
         )
-      None => @host.HostWindowSceneResolution::SceneRejected("unknown sample scene")
+      None =>
+        @host.HostWindowSceneResolution::SceneRejected("unknown sample scene")
     }
   })
   @linux_skia_backend.run_app_with_options(
@@ -21,7 +22,9 @@ fn main {
       windows,
       @geometry.Size::new(width=640.0, height=420.0),
     ),
-    options=@linux_skia_backend.LinuxSkiaAppOptions::new(scene_resolver=resolver),
+    options=@linux_skia_backend.LinuxSkiaAppOptions::new(
+      scene_resolver=resolver,
+    ),
     window_requests=queue,
   )
 }
@@ -30,7 +33,7 @@ fn main {
 fn runtime_for(
   scene : @multi_window_app.Scene,
   windows : @host.HostWindowActions,
-  size : @core.Size,
+  size : @geometry.Size,
 ) -> @runtime.AppRuntime {
   @runtime.new_program_with_dimensions(
     program=@multi_window_app.program(scene, windows),
