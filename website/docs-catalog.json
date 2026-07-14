@@ -21,6 +21,14 @@
     },
     {
       "group": "get-started",
+      "slug": "getting-started",
+      "title": "Getting Started with Playground",
+      "path": "docs/getting-started.md",
+      "summary": "Build a first MoUI app with the MoonBit-native tutorial and browser Playground.",
+      "keywords": ["Playground", "tutorial", "editor", "wasm-gc"]
+    },
+    {
+      "group": "get-started",
       "slug": "moui-app-package-boundary",
       "title": "App Package Boundary",
       "path": "docs/moui-app-package-boundary.md",

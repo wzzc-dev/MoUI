@@ -142,6 +142,20 @@ assert(main.children.length === 1, "removed semantic nodes should leave the DOM"
 assert(main.children[0] === heading, "keyed semantic node should be reused");
 assert(heading.textContent === "Guides" && heading.style.left === "24px", "reused nodes should update attributes and geometry");
 
+const hiddenTextInput = documentRef.createElement("textarea");
+hiddenTextInput.dataset.mouiTextInput = "true";
+documentRef.activeElement = hiddenTextInput;
+manager.sync(11, canvasOne, node(4, "textbox", [20, 90, 260, 80], [], {
+  label: "Source",
+  value: "line one\nline two",
+  focused: true,
+  actions: ["focus", "set-text"],
+}));
+const multiline = manager.layer(11).children[0];
+assert(multiline.tagName === "TEXTAREA", "multiline textboxes should preserve newlines");
+assert(multiline.value === "line one\nline two", "multiline textbox value should retain line breaks");
+assert(documentRef.activeElement === hiddenTextInput, "semantics sync must not steal focus from the canvas text input");
+
 manager.sync(22, canvasTwo, node(9, "navigation", [0, 0, 200, 50]));
 assert(manager.layer(22) !== layerOne, "each canvas should own an isolated semantics layer");
 manager.remove(11);

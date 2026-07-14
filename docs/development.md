@@ -52,6 +52,20 @@ When adding or removing a workspace member, update this list,
 
 ## App Iteration
 
+The MoonBit-native Playground lives under `website/playground`. Its visible
+editor is a `moui_richtext` control; the small JavaScript host is limited to
+browser Worker, iframe, and Wasm APIs. Build and stage it with:
+
+```sh
+moon test website/playground/app --target native
+moon build website/playground/web_wasm --target wasm-gc
+node scripts/generate-playground-assets.mjs --out dist/playground
+```
+
+Keep course sources under `website/tutorial/lessons` compile-checkable. The
+asset generator copies those sources, the app-safe dependency manifest, and
+the pinned `@moonbit/moonc-worker` asset into the static Playground output.
+
 Shared app logic belongs in `examples/<name>/app`. Platform entrypoints should
 stay thin and live under names such as `web_wasm`, `macos_skia`,
 `windows_skia`, or `linux_skia`. `examples/component_gallery` intentionally uses

@@ -46,6 +46,7 @@ jobs:
       - name: Stage website artifact
         run: |
           node scripts/package-web-app.mjs website/web_wasm --out dist/pages
+          node scripts/package-website-playground.mjs --out dist/pages/playground
           node scripts/sync-website-docs.mjs --out dist/pages/docs
 
           test -f dist/pages/index.html
@@ -69,9 +70,21 @@ jobs:
           test -f dist/pages/docs/harmonyos-support.md
           test -f dist/pages/robots.txt
           test -f dist/pages/sitemap.xml
+          test -f dist/pages/playground/index.html
+          test -f dist/pages/playground/playground.wasm
+          test -f dist/pages/playground/runtime.js
+          test -f dist/pages/playground/host/compiler-worker.js
+          test -f dist/pages/playground/assets/moonc-web.cjs
+          test -f dist/pages/playground/assets/moonc-worker.js
+          test -f dist/pages/playground/assets/moonbit-core/core.core
+          test -f dist/pages/playground/assets/manifest.json
+          test -f dist/pages/playground/lessons/catalog.json
           grep -q 'from "./runtime.js"' dist/pages/index.html
           grep -q '"./web_wasm.wasm"' dist/pages/index.html
           ! grep -q '_build/wasm-gc' dist/pages/index.html
+          ! grep -q '_build' dist/pages/playground/index.html
+          ! grep -q 'CodeMirror' dist/pages/playground/index.html
+          node scripts/test-playground-assets.mjs --root dist/pages/playground
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v5

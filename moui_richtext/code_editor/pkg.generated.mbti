@@ -1,0 +1,122 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_richtext/code_editor"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn auto_indent_for_position(String, Int) -> String
+
+pub fn code_bracket_match(String, Int) -> BracketMatch?
+
+pub fn code_editor_caret_position(String, Int) -> CodeEditorCaretPosition
+
+pub fn code_editor_diagnostic_lines(String, Array[CodeDiagnostic]) -> Array[Int]
+
+pub fn code_editor_source_lines(String) -> Array[CodeEditorSourceLine]
+
+pub fn code_find_matches(String, String) -> Array[@core.TextRange]
+
+pub fn code_insert_text(String, Array[CodeCursor], String) -> (String, Array[CodeCursor])
+
+pub fn code_replace_all(String, String, String) -> String
+
+// Errors
+
+// Types and methods
+pub(all) struct BracketMatch {
+  open : Int
+  close : Int
+}
+
+pub(all) struct CodeCompletionItem {
+  label : String
+  insert_text : String
+  detail : String
+}
+pub fn CodeCompletionItem::new(label~ : String, insert_text~ : String, detail? : String) -> Self
+
+pub(all) struct CodeCursor {
+  position : Int
+  selection : @core.TextRange?
+}
+pub fn CodeCursor::new(position~ : Int, selection? : @core.TextRange?) -> Self
+
+pub(all) struct CodeDiagnostic {
+  range : @core.TextRange
+  severity : CodeDiagnosticSeverity
+  message : String
+}
+pub fn CodeDiagnostic::new(range~ : @core.TextRange, severity~ : CodeDiagnosticSeverity, message~ : String) -> Self
+
+pub(all) enum CodeDiagnosticSeverity {
+  Info
+  Warning
+  Error
+}
+pub fn CodeDiagnosticSeverity::label(Self) -> String
+
+pub(all) struct CodeEditorCaretPosition {
+  line : Int
+  column : Int
+  offset : Int
+}
+
+pub(all) struct CodeEditorSourceLine {
+  number : Int
+  start : Int
+  end : Int
+  text : String
+}
+
+pub(all) struct CodeEditorToken {
+  text : String
+  kind : String
+}
+
+pub(all) struct CodeFindState {
+  query : String
+  replacement : String
+  matches : Array[@core.TextRange]
+  active_index : Int
+}
+pub fn CodeFindState::new() -> Self
+pub fn CodeFindState::recompute(Self, String) -> Self
+
+pub(all) struct CodeLanguageRegistry {
+  language_id : String
+}
+pub fn CodeLanguageRegistry::completions(Self, String, Int) -> Array[CodeCompletionItem]
+pub fn CodeLanguageRegistry::new(language_id? : String) -> Self
+pub fn CodeLanguageRegistry::tokenize(Self, String) -> Array[CodeEditorToken]
+
+pub(all) struct EditorDocument {
+  path : String
+  text : String
+  language : String
+  dirty : Bool
+}
+pub fn EditorDocument::new(path~ : String, text~ : String, language? : String) -> Self
+
+pub(all) struct EditorState {
+  documents : Array[EditorDocument]
+  active_file : String
+  cursors : Array[CodeCursor]
+  selection : @core.TextRange?
+  diagnostics : Array[CodeDiagnostic]
+  completions : Array[CodeCompletionItem]
+  find : CodeFindState
+  status : String
+}
+pub fn EditorState::active_document(Self) -> EditorDocument
+pub fn EditorState::new(source~ : String) -> Self
+pub fn EditorState::with_completions(Self, Array[CodeCompletionItem]) -> Self
+pub fn EditorState::with_diagnostics(Self, Array[CodeDiagnostic]) -> Self
+pub fn EditorState::with_selection(Self, Int, @core.TextRange?) -> Self
+pub fn EditorState::with_source(Self, String) -> Self
+
+// Type aliases
+
+// Traits
+

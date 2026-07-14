@@ -19,7 +19,7 @@ const semanticTag = node => {
     case "navigation": return "nav";
     case "main": return "main";
     case "button": return "button";
-    case "textbox": return "input";
+    case "textbox": return `${node.value ?? ""}`.includes("\n") ? "textarea" : "input";
     default: return "div";
   }
 };
@@ -139,7 +139,9 @@ export function createSemanticsDomManager(options = {}) {
     } else {
       element.textContent = node.label || node.value || "";
     }
-    if (node.focused && documentRef.activeElement !== element) {
+    const hostTextInputFocused =
+      documentRef.activeElement?.dataset?.mouiTextInput === "true";
+    if (node.focused && documentRef.activeElement !== element && !hostTextInputFocused) {
       element.focus({ preventScroll: true });
     }
   };

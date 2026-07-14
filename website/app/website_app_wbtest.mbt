@@ -953,3 +953,43 @@ fn text_frame(
   }
   None
 }
+
+///|
+test "website tutorial route is available" {
+  let model = Model::new().update(OpenTutorial)
+  let is_tutorial = match model.page {
+    WebsiteTutorial => true
+    _ => false
+  }
+  inspect(is_tutorial, content="true")
+}
+
+///|
+test "website tutorial cards wrap within the desktop content width" {
+  let size = @geometry.Size::new(width=1180.0, height=1400.0)
+  let commands = Model::new()
+    .update(OpenTutorial)
+    .test_runtime(width=size.width, height=size.height)
+    .draw_commands()
+  guard text_frame(commands, "01-hello-world") is Some(first) else {
+    fail("expected first tutorial card")
+  }
+  guard text_frame(commands, "03-state-events") is Some(third) else {
+    fail("expected third tutorial card")
+  }
+  assert_true(third.origin.y > first.origin.y)
+  assert_true(text_within(commands, "06-debug-and-publish", size))
+  assert_true(has_text(commands, "MOUI TUTORIAL"))
+  assert_true(has_text(commands, "Course map / 课程地图"))
+  assert_true(has_text(commands, "LESSON 06"))
+  assert_true(has_text(commands, "Open lesson"))
+}
+
+///|
+test "website playground links stay relative to the current deployment" {
+  inspect(website_playground_url(), content="./playground/")
+  inspect(
+    website_playground_url(example="01-hello-world"),
+    content="./playground/?example=01-hello-world",
+  )
+}

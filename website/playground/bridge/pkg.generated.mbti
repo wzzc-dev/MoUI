@@ -1,0 +1,34 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "website/playground/bridge"
+
+// Values
+pub fn append_compile_result_char(Char) -> Unit
+
+pub fn append_project_load_char(Char) -> Unit
+
+pub fn begin_compile_result() -> Unit
+
+pub fn begin_project_load() -> Unit
+
+pub fn finish_compile_result() -> Unit
+
+pub fn finish_project_load() -> Unit
+
+pub fn register_project_dispatch((String) -> Unit) -> Unit
+
+pub fn request_compile(Int, String) -> Unit
+
+pub fn request_example(String) -> Unit
+
+pub fn request_share(String) -> Unit
+
+pub fn start_compile(Int, String, (String) -> Unit) -> Unit
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+
