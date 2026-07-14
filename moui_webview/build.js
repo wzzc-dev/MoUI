@@ -180,11 +180,22 @@ function windowsWebView2Flags(config) {
   return { stubCcFlags: "", linkFlags: "" };
 }
 
+// Final is-main links do not reliably inherit library package `cc-link-flags`.
+// Inject WebKit for macOS so example entrypoints can stay free of framework
+// boilerplate (same pattern as moui/build.js macOS link_configs).
+const macosBackendWebKitFlags = "-framework WebKit";
+
 function main() {
   const config = readJsonFromStdin();
   const windows = windowsWebView2Flags(config);
   const linux = linuxWebKitGtkFlags(config);
   const linkConfigs = [];
+  if (process.platform === "darwin") {
+    linkConfigs.push({
+      package: "wzzc-dev/moui_webview/backend/macos",
+      link_flags: macosBackendWebKitFlags,
+    });
+  }
   if (windows.linkFlags) {
     linkConfigs.push({
       package: "wzzc-dev/moui_webview/backend/windows",
@@ -204,6 +215,7 @@ function main() {
         MOUI_WINDOWS_WEBVIEW2_CC_LINK_FLAGS: windows.linkFlags,
         MOUI_LINUX_WEBKITGTK_STUB_CC_FLAGS: linux.stubCcFlags,
         MOUI_LINUX_WEBKITGTK_CC_LINK_FLAGS: linux.linkFlags,
+        MOUI_MACOS_WEBVIEW_LINK_FLAGS: macosBackendWebKitFlags,
       },
       link_configs: linkConfigs,
     }),

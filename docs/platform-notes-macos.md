@@ -103,33 +103,31 @@ matching-host artifact only when the async second-frame marker is present.
 
 ## Link Flags
 
-Packages that use `backend/macos` directly must link the AppKit service bridge
-frameworks during the final native link step. Missing `_objc_msgSend` or
-`___CFConstantStringClassReference` usually means that link step is missing the
-host-core flags:
+macOS host/Skia frameworks and Skia/Ganesh libraries are injected by
+`moui/build.js` prebuild `link_configs` for:
+
+- `wzzc-dev/moui/backend/macos`
+- `wzzc-dev/moui/backend/macos/skia` (host frameworks + `MOUI_SKIA_CC_LINK_FLAGS`)
+
+Example `macos_skia` entrypoints should not repeat AppKit/Metal/Skia paths.
+They only need an empty `cc-link-flags` override so Moon disables `tcc -run`
+and uses the system linker for the final binary:
 
 ```moonbit
 link: {
   "native": {
-    "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -lz"
+    "cc-link-flags": "",
   },
 },
 ```
 
-Packages that use `backend/macos/wgpu` also need QuartzCore, CoreText,
-CoreGraphics, Foundation, CoreFoundation, and Objective-C flags for the WGPU
-surface and native text provider. Missing `CAMetalLayer` or CoreText raster
-symbols mean the provider flags are absent from the final link:
-
-```moonbit
-link: {
-  "native": {
-    "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework CoreText -framework CoreGraphics -framework Foundation -framework CoreFoundation -lobjc -lz"
-  },
-},
-```
+`backend/macos/wgpu` packages still declare their own provider `cc-link-flags`
+for CoreText/WebKit surface symbols. Missing `_objc_msgSend`,
+`___CFConstantStringClassReference`, `CAMetalLayer`, or Skia Ganesh symbols
+usually means the prebuild `link_configs` did not apply or `tcc -run` was not
+disabled.
 
 Use `moon run <package> --target native --dry-run -v` to inspect the final
-`cc` command and confirm the expected flags are present. If `moon build` works
-but `moon run` links a temporary native stub dylib without those flags, use the
-README build-and-execute flow while debugging the toolchain/link configuration.
+`cc` command and confirm AppKit/Metal/Skia flags are present. If `moon build`
+works but `moon run` fails with `tcc: error: file 'AppKit' not found`, the
+entrypoint is missing the empty `cc-link-flags` override.

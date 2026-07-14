@@ -12,7 +12,7 @@ options(
   "is-main": true,
   link: {
     "native": {
-      "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework WebKit -lz ${build.MOUI_SKIA_CC_LINK_FLAGS}",
+      "cc-link-flags": "",
     },
   },
   targets: { "main.mbt": [ "native" ] },

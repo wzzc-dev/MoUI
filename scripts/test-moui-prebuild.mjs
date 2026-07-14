@@ -65,4 +65,29 @@ if (!realSkia.vars.MOUI_SKIA_ANDROID_LINK_FLAGS.includes("-landroid")) {
   throw new Error("real Skia prebuild should expose Android presenter link flags");
 }
 
+if (process.platform === "darwin") {
+  if (!Array.isArray(realSkia.link_configs) || realSkia.link_configs.length < 2) {
+    throw new Error("darwin prebuild should expose macOS backend link_configs");
+  }
+  const packages = new Set(realSkia.link_configs.map((entry) => entry.package));
+  if (!packages.has("wzzc-dev/moui/backend/macos")) {
+    throw new Error("missing backend/macos link_configs entry");
+  }
+  if (!packages.has("wzzc-dev/moui/backend/macos/skia")) {
+    throw new Error("missing backend/macos/skia link_configs entry");
+  }
+  const skiaEntry = realSkia.link_configs.find(
+    (entry) => entry.package === "wzzc-dev/moui/backend/macos/skia",
+  );
+  if (!String(skiaEntry.link_flags || "").includes("AppKit")) {
+    throw new Error("macos/skia link_configs should include AppKit");
+  }
+  if (!String(skiaEntry.link_flags || "").includes("/tmp/libskia.a")) {
+    throw new Error("macos/skia link_configs should include Skia link flags");
+  }
+  if (!String(fallback.vars.MOUI_MACOS_BACKEND_HOST_LINK_FLAGS || "").includes("AppKit")) {
+    throw new Error("fallback should still expose macOS host framework vars");
+  }
+}
+
 console.log("moui prebuild tests: ok");
