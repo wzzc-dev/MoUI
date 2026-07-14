@@ -141,6 +141,39 @@ function skiaCcLinkFlags(config, prebuildVars) {
   return prebuildVars.MOUI_SKIA_CC_LINK_FLAGS || "";
 }
 
+// Final is-main links do not reliably inherit library package `cc-link-flags`.
+// Expose host frameworks via prebuild link_configs (same pattern as
+// window/macos and moui_skia/native) so example entrypoints can stay free of
+// machine/framework boilerplate.
+const macosBackendHostFlags =
+  "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -lz -lobjc";
+const macosBackendSkiaHostFlags =
+  "-framework AppKit -framework QuartzCore -framework Metal -framework UniformTypeIdentifiers -framework CoreGraphics -framework CoreFoundation -lz -lobjc";
+
+function appendLinkFlags(base, extra) {
+  if (!extra) return base || "";
+  if (!base) return extra;
+  return `${base} ${extra}`;
+}
+
+function macosLinkConfigs(skiaCcLink) {
+  if (process.platform !== "darwin") {
+    return [];
+  }
+  return [
+    {
+      package: "wzzc-dev/moui/backend/macos",
+      link_flags: macosBackendHostFlags,
+    },
+    {
+      // macos/skia native stubs reference both AppKit and Skia symbols; final
+      // is-main links need both host frameworks and Skia/Ganesh flags here.
+      package: "wzzc-dev/moui/backend/macos/skia",
+      link_flags: appendLinkFlags(macosBackendSkiaHostFlags, skiaCcLink),
+    },
+  ];
+}
+
 function main() {
   const config = readJsonFromStdin();
   const linuxGlib = linuxGlibFlags(config);
@@ -148,7 +181,7 @@ function main() {
   const skiaStub = skiaStubCcFlags(config, skiaVars);
   const skiaCcLink = skiaCcLinkFlags(config, skiaVars);
   const skiaAndroidLink = skiaAndroidLinkFlags(config, skiaVars);
-  const linkConfigs = [];
+  const linkConfigs = [...macosLinkConfigs(skiaCcLink)];
   if (linuxGlib.linkFlags) {
     linkConfigs.push({
       package: "wzzc-dev/moui/backend/linux",
@@ -163,6 +196,11 @@ function main() {
         MOUI_SKIA_STUB_CC_FLAGS: skiaStub,
         MOUI_SKIA_CC_LINK_FLAGS: skiaCcLink,
         MOUI_SKIA_ANDROID_LINK_FLAGS: skiaAndroidLink,
+        MOUI_MACOS_BACKEND_HOST_LINK_FLAGS: macosBackendHostFlags,
+        MOUI_MACOS_BACKEND_SKIA_LINK_FLAGS: appendLinkFlags(
+          macosBackendSkiaHostFlags,
+          skiaCcLink,
+        ),
       },
       link_configs: linkConfigs,
     }),
