@@ -7,6 +7,8 @@ MoonBit 0.10.4 before an upstream release.
 
 - Add `derive(Debug)` to public types used with `assert_eq` under the
   MoonBit 0.10.4 `assert_eq : [T : Eq + Debug]` requirement.
+- Set `warnings = "-deprecated"` on the module/package so upstream test-only
+  `try?` usage does not flood MoUI `moon check` output.
 
 ## Integration
 
