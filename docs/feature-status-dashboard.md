@@ -123,11 +123,10 @@ has L1 package-test proof:
 | Context-loss recovery (`moui/runtime/renderer_recovery.mbt`) | `moui/runtime` whitebox tests (Idle → Lost → Recovering → Recovered → Idle; `FallbackToRaster` after 2 failures) |
 | Manifest schema + `gpuPromotionEvidence` (`tools/moui/validate_mobile_runtime_manifest`) | `validate_mobile_runtime_manifest_wbtest` (9 new Phase 2.3 tests) |
 
-All platforms remain on `SkiaRasterNative`. `gpu_promoted` stays `false` on
-every platform until matching-device evidence passes the seven ADR 0006 gates
-under `--require-passed`. See ADR 0006 § Implementation Status and
-`mobile-mainline-roadmap.md` § Current State for per-platform Phase 1 source
-state and Phase 2 promotion status.
+Product `auto` defaults to `SkiaGpuNative` on every native Skia platform when a
+host GPU surface is available (`gpu_promoted` is `true` everywhere). Raster
+remains the explicit/recovery path. Matching-device seven-gate manifests remain
+the quality evidence bar; see ADR 0006 and `mobile-mainline-roadmap.md`.
 
 ## Evidence Traceability
 

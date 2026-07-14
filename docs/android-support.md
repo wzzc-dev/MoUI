@@ -34,9 +34,10 @@ resize, pointer, IME, clipboard, and accessibility traffic into MoUI.
   CMake wiring, MoonBit-generated C, MoonBit runtime, Android presenter, and
   `moui_skia/native` stubs.
 
-Android stays on minSdk 23. The direct GPU target is Vulkan on API 24+ with
-GLES fallback, and GLES on API 23. That production GPU path is not implemented;
-`SkiaRasterNative` remains the default and still copies full pixel frames.
+Android stays on minSdk 23. Product `auto` prefers Vulkan on API 24+ with GLES
+fallback (and GLES on API 23) when the host GPU surface is available.
+`SkiaRasterNative` remains the explicit mode and sticky recovery fallback and
+still copies full pixel frames on that path.
 
 ## Focused Checks
 
@@ -158,9 +159,8 @@ scripts/build-mobile-android-apk.sh --app counter --renderer auto
 scripts/build-mobile-android-apk.sh --app counter --renderer skia-raster
 ```
 
-`--renderer skia-gpu` is accepted for forward-compatible configuration, but it
-currently records a fallback to `skia-raster` because direct Android
-Vulkan/GLES window presentation is not implemented.
+For real Skia packages, `auto` and `skia-gpu` select GPU (`gpuPromoted: true`).
+Fallback-Skia builds and explicit `skia-raster` stay on the CPU presenter.
 
 When multiple side-by-side NDK versions are installed, pin the intended one:
 

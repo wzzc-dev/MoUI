@@ -77,18 +77,18 @@ renderer proof; it needs the per-platform performance and recovery manifest in
 
 ## L2 GPU Direct Presentation Phase 1 Capability
 
-Phase 1 of the GPU readback elimination plan has landed window-surface GPU
-source paths behind the `--renderer skia-gpu` opt-in
-(see ADR 0006 and `.trae/documents/gpu-readback-elimination-plan.md`). The
-paths are unpromoted and `gpu_promoted` stays `false` on
-every platform until Phase 2 matching-device evidence passes the seven ADR
-0006 gates (`readbackEliminated`, `rendererThread`, `mailboxOk`,
-`performance`, `memory`, `contextLoss`, `rasterFallback`).
+Phase 1 of the GPU readback elimination plan landed window-surface GPU source
+paths (see ADR 0006 and `.trae/documents/gpu-readback-elimination-plan.md`).
+Product policy now defaults `auto` to GPU on all native Skia platforms
+(`gpu_promoted=true`); matching-device seven-gate manifests
+(`readbackEliminated`, `rendererThread`, `mailboxOk`, `performance`, `memory`,
+`contextLoss`, `rasterFallback`) remain the quality evidence bar rather than
+the product-default gate.
 
 | Platform | Backend | Surface route | Phase 1 source | Phase 2 promotion |
 | --- | --- | --- | --- | --- |
 | iOS | Metal | `MetalGpuSurfaceRoute` | worker-owned source; simulator GPU build/first frame | pending physical-device manifest |
-| macOS | Metal | `MetalGpuSurfaceRoute` | worker-owned context/picture replay/present; local first-frame smoke | pending matching-device manifest |
+| macOS | Metal | `MetalGpuSurfaceRoute` | worker-owned context/picture replay/present; local first-frame smoke | matching-host claim recorded 2026-07-14 |
 | Android | Vulkan / GLES | `VulkanGpuSurfaceRoute` / `EglGpuSurfaceRoute` | worker-owned source; minSdk 23 GPU APK build | pending Vulkan and GLES device manifests |
 | HarmonyOS | EGL/GLES | `EglGpuSurfaceRoute` | worker-owned source; native/HAP build | pending signed-device manifest |
 | Windows | Direct3D 12 | `Direct3DGpuSurfaceRoute` | worker-owned source; MSVC validation pending | pending matching-device manifest |

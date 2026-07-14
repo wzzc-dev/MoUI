@@ -130,7 +130,8 @@ test "linux skia provider preflight records package observation boundary" {
     ),
   )
   assert_true(empty.contains("font=empty-typeface"))
-  assert_true(empty.contains("surface_route=raster"))
+  let expected_route = linux_surface_route_from_environment().label()
+  assert_true(empty.contains("surface_route=\{expected_route}"))
   assert_true(empty.contains("gpu_presenter="))
   assert_true(empty.contains("gpu_runtime_available="))
 }

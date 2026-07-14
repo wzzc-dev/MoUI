@@ -150,6 +150,7 @@ fn manifest_with_gpu_promoted_renderer() -> String {
     #|    "fallbackReason": ""
     #|  },
     #|  "gpuPromotionEvidence": {
+    #|    "claimed": true,
     #|    "readbackEliminated": true,
     #|    "rendererThread": true,
     #|    "mailboxOk": true,
@@ -212,6 +213,7 @@ test "gpuPromoted=true without gpuPromotionEvidence fails" {
   let old =
     #|  },
     #|  "gpuPromotionEvidence": {
+    #|    "claimed": true,
     #|    "readbackEliminated": true,
     #|    "rendererThread": true,
     #|    "mailboxOk": true,

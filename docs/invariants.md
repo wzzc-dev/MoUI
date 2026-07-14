@@ -23,8 +23,8 @@ If you must break an invariant, open an RFC first (see `GOVERNANCE.md`).
 | # | Constraint | Detection | Exemption |
 |---|-----------|-----------|-----------|
 | R1 | Native Skia is the mainline; native WGPU is diagnostic | code review | RFC-required to reclassify |
-| R2 | `SkiaRasterNative` is the default/fallback on all mobile platforms; `SkiaGpuNative` is a descriptor only until matching-device evidence passes ADR 0006 gates | `validate-renderer-provider-manifests.mjs` | none |
-| R3 | Mobile build entrypoints accept `--renderer auto\|skia-gpu\|skia-raster` and record requested/selected modes; `auto` remains raster before promotion, while explicit `skia-gpu` may exercise an unpromoted source path but is never promotion evidence | code review | none |
+| R2 | `SkiaGpuNative` is the product `auto` default on all native Skia platforms when a host GPU surface is available; `SkiaRasterNative` remains the explicit mode and sticky recovery fallback | `validate-renderer-provider-manifests.mjs` | none |
+| R3 | Mobile/desktop entrypoints accept `--renderer auto\|skia-gpu\|skia-raster` (or `MOUI_SKIA_RENDERER`) and record requested/selected modes; `auto` and `skia-gpu` select GPU when available, while `skia-raster` forces the CPU path | code review | none |
 | R4 | `moon.work` must not list `./window`; use `sh scripts/window-dev-mode.sh on/off` | `validate-window-dependency.mjs` (daily CI) | local development only |
 | R5 | `moon.work` must not list `./openseek`; `examples/mo_workbench` uses registry pin | `validate-maintenance-baseline.mjs` | none |
 | R6 | Do not claim mobile runtime support as `passed` without matching-device smoke evidence (pixels changed, input received, detach, IME, clipboard, accessibility, async image) | `validate_mobile_runtime_manifest` | fallback APK builds are packaging evidence only |

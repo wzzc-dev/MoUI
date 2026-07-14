@@ -77,19 +77,27 @@ pub fn MacosSkiaAppOptions::new(
 
 ///|
 fn macos_surface_route_from_environment() -> @render.SkiaSurfaceRoute {
-  let requested = match @env.get_env_var("MOUI_SKIA_RENDERER") {
-    Some(value) =>
-      @render.NativeRendererMode::parse(value).unwrap_or(
-        @render.NativeRendererMode::Auto,
-      )
-    None => @render.NativeRendererMode::Auto
+  // Smoke/scripts may force a concrete route. Unset falls through to
+  // MOUI_SKIA_RENDERER (default auto -> GPU when Metal is available).
+  match @env.get_env_var("MOUI_MACOS_SKIA_SURFACE_ROUTE") {
+    Some("metal-gpu") => @render.SkiaSurfaceRoute::MetalGpuSurfaceRoute
+    Some("raster") => @render.SkiaSurfaceRoute::RasterSurfaceRoute
+    _ => {
+      let requested = match @env.get_env_var("MOUI_SKIA_RENDERER") {
+        Some(value) =>
+          @render.NativeRendererMode::parse(value).unwrap_or(
+            @render.NativeRendererMode::Auto,
+          )
+        None => @render.NativeRendererMode::Auto
+      }
+      @render.select_native_renderer(
+        @render.NativeGpuPlatform::Macos,
+        requested,
+        gpu_available=@skia_native.Surface::metal_gpu_context_runtime_available(),
+        gpu_promoted=@render.NativeGpuPlatform::Macos.gpu_promoted(),
+      ).surface_route
+    }
   }
-  @render.select_native_renderer(
-    @render.NativeGpuPlatform::Macos,
-    requested,
-    gpu_available=@skia_native.Surface::metal_gpu_context_runtime_available(),
-    gpu_promoted=@render.NativeGpuPlatform::Macos.gpu_promoted(),
-  ).surface_route
 }
 
 ///|

@@ -5,10 +5,12 @@
   own only JNI/Obj-C++/NAPI conversion and native API calls.
 - HarmonyOS compatible SDK is API 20. Native XComponent callbacks are the only
   surface/pointer lifecycle source; ArkTS owns VSync and platform services.
-- `SkiaRasterNative` remains the `auto` default/fallback until promotion.
-  Explicit `skia-gpu` uses a worker-owned native path: Metal on macOS/iOS,
-  D3D12 on Windows, Wayland Vulkan on Linux, Vulkan with EGL/GLES fallback on
-  Android, and EGL/GLES on HarmonyOS. Source implementation is not promotion.
+- Product default is `SkiaGpuNative` for `auto` on all native platforms when a
+  host GPU surface is available (`NativeGpuPlatform::gpu_promoted` is true
+  everywhere). Worker-owned paths: Metal on macOS/iOS, D3D12 on Windows,
+  Wayland Vulkan on Linux, Vulkan with EGL/GLES fallback on Android, and
+  EGL/GLES on HarmonyOS. `SkiaRasterNative` is explicit `skia-raster` plus sticky
+  recovery fallback after terminal GPU failure.
 - Runtime threads record immutable `SkPicture`; the C++ worker retains only
   pictures and POD metadata. It owns GPU context/surface/swapchain/cache/sync,
   uses latest-wins frame submission, preserves ordered controls, and
@@ -23,9 +25,9 @@
 - Mobile runtime proof must use before/after pixels plus application receipt
   logs. Input injection or force-stop success alone is never proof.
 - Mobile build entrypoints accept `--renderer auto|skia-gpu|skia-raster` and
-  record requested/selected modes. Before promotion, `auto` selects raster;
-  explicit `skia-gpu` exercises the unpromoted worker path and is build/smoke
-  evidence only.
+  record requested/selected modes. For real Skia packages, `auto`/`skia-gpu`
+  select GPU (`gpuPromoted: true`); fallback-Skia and explicit raster stay
+  raster.
 - iOS lifecycle handling observes `UISceneDidEnterBackgroundNotification` and
   `UISceneWillEnterForegroundNotification`; smoke detach evidence must contain
   the target application process line, not only the log query marker.
@@ -36,9 +38,18 @@
   Recorder acceptance requires system text clipboard write/read, two distinct
   physical resize dimensions, accessibility tree/focus/action, and async-image
   loading/ready logs. PNG clipboard remains a separate cross-app device check.
+- Runtime evidence (2026-07-14): iOS Simulator Component Gallery is **`passed`**
+  at `artifacts/mobile-runtime/ios/component_gallery/` (`--require-passed` ok;
+  Metal GPU configure; seven-gate claim still pending). HarmonyOS had no `hdc`
+  target (packaging + first-frame screenshot only).
 - Xcode 26.3 `simctl io` has no rotate operation. iOS Simulator rotation uses
   Simulator menu UI scripting and therefore needs macOS Accessibility
   permission; VoiceOver preference writes alone are not focus/action evidence.
+- Runtime evidence (2026-07-14): iOS Simulator counter + component_gallery
+  mobile-runtime smokes are `partial` under `artifacts/mobile-runtime/ios/` with
+  product GPU configure/build metadata; seven-gate claims remain pending scaffolds
+  under `artifacts/gpu-promotion/{ios,harmonyos}/scaffold-latest/`. HarmonyOS had
+  no `hdc` target (packaging + first-frame screenshot only).
 - Mobile smoke status is three-state: `passed` is complete, `partial` preserves
   useful evidence with missing observations, and `failed` means no usable
   runtime evidence. `--require-passed` accepts only `passed`.

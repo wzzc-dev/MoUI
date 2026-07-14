@@ -44,10 +44,10 @@ Read only what the task needs:
   `ANativeWindow`; iOS Skia presents copied pixel frames to a UIKit
   `UIImageView` child in an embedder-supplied `UIView`; HarmonyOS Skia presents
   copied pixel frames to an embedder-supplied XComponent native-window handle.
-  These are raster fallback paths. Unpromoted Metal/D3D12/Vulkan/EGL window
-  paths and safe native `SkPicture` handoff exist, but `SkiaGpuNative` must not
-  be called complete until the worker owns GPU resources, presentation has zero
-  full-frame readback/copy, and matching-device promotion evidence passes.
+  Raster presenters remain the explicit/recovery path. Product `auto` prefers
+  `SkiaGpuNative` worker-owned Metal/D3D12/Vulkan/EGL window paths when
+  available; matching-device seven-gate evidence remains the quality bar, not the
+  product-default gate.
 - `moui/backend/<platform>/wgpu`: native WGPU diagnostic providers.
 - `moui/render`: renderer facade and renderer-neutral capability/fallback
   planning.
@@ -168,9 +168,9 @@ owning-package boundaries clear.
   `AndroidRuntimeSession`; package checks are not runtime
   platform evidence.
   Mobile build entrypoints accept `--renderer auto|skia-gpu|skia-raster` and
-  record requested/selected modes. `auto` remains raster until promotion;
-  explicit GPU requests may exercise unpromoted source paths but are not
-  promotion evidence.
+  record requested/selected modes. Product `auto`/`skia-gpu` select GPU when a
+  real Skia package is linked; explicit `skia-raster` and sticky recovery keep
+  the CPU path.
 - `backend/android/skia/`: Android Skia provider over `render/skia`, with an
   `ANativeWindow` RGBA pixel presenter and preflight summary. Use
   `MOUI_SKIA_PLATFORM=android` plus `MOUI_SKIA_ARCH=<arch>` for Android Skia

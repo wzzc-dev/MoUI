@@ -332,6 +332,24 @@ Build/install/launch/capture runs with no usable evidence remain `failed`.
 Release commands continue to use `--require-passed`, so `partial` cannot pass a
 release gate.
 
+The recorder also captures an optional `renderer` block from
+`moui-mobile renderer configure ... status={...}` (or falls back to
+`mobile-build.json`). When `renderer.gpuPromoted=true`, it attaches a **pending**
+seven-gate `gpuPromotionEvidence` skeleton so schema validation succeeds without
+claiming performance/memory/context-loss gates. Product GPU default and seven-gate
+quality claims remain separate.
+
+Local evidence snapshot (2026-07-14):
+
+- iOS Simulator Component Gallery: `artifacts/mobile-runtime/ios/component_gallery/` (**`passed`**, `--require-passed` ok; Metal GPU configure + full service observations except `realDeviceSigning`)
+- iOS Simulator counter: earlier `artifacts/mobile-runtime/ios/counter/` (`partial`)
+- iOS/HarmonyOS GPU promotion scaffolds: `artifacts/gpu-promotion/{ios,harmonyos}/scaffold-latest/`
+- HarmonyOS: no `hdc` target; see `artifacts/mobile-runtime/harmonyos/harmonyos_demo/README.md`
+
+Seven-gate GPU claim thresholds are **not** required for mobile runtime
+`--require-passed` unless the manifest asserts `gpuPromotionClaim=true` or
+`gpuPromotionEvidence.claimed=true`.
+
 On iOS Simulator, rotation currently uses Simulator's Device menu through
 macOS UI scripting because Xcode 26.3 `simctl io` has no rotate operation. Grant
 Accessibility permission to the terminal/automation process running

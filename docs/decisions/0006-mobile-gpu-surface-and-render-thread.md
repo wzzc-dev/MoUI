@@ -1,7 +1,8 @@
 # ADR 0006: Mobile GPU Surface And Render Thread Ownership
 
-- Status: Accepted (all native worker backends implemented in source; matching-hardware promotion pending)
+- Status: Accepted (product default is GPU on all native Skia platforms; matching-hardware evidence still tracked)
 - Date: 2026-07-11
+- Superseding note: 2026-07-14 product default flipped all `NativeGpuPlatform::gpu_promoted` arms to `true` without waiting for every matching-device seven-gate manifest.
 
 ## Context
 
@@ -12,10 +13,12 @@ architecture.
 
 ## Decision
 
-`SkiaGpuNative` describes the direct `HostGpuSurface` route. It does not change
-`SkiaRasterNative`. Platform templates expose `auto`, `skia-gpu`, and
-`skia-raster`; `auto` remains raster until platform-specific promotion gates
-pass.
+`SkiaGpuNative` describes the direct `HostGpuSurface` route. Platform templates
+expose `auto`, `skia-gpu`, and `skia-raster`. Product policy is now
+**GPU-by-default**: `auto` selects GPU when the host surface is available on
+every native Skia platform. `skia-raster` remains the explicit CPU path and the
+sticky recovery fallback after terminal GPU failure. Matching-device seven-gate
+manifests remain the quality evidence bar, not the gate that enables `auto`.
 
 The runtime/UI thread owns `AppRuntime`, layout, and event dispatch. A renderer
 thread exclusively owns the GPU context, window surface, Skia GPU objects, and
@@ -42,12 +45,11 @@ intermediates are forbidden on a promoted GPU production path.
 
 ### Phase 1 — Window-surface source paths (implemented, unpromoted)
 
-The Phase 1 paths have landed in source behind the `--renderer skia-gpu`
-opt-in. Android Vulkan/EGL, HarmonyOS EGL, and iOS Metal now also pass their
-target build pipelines; Windows D3D12 and Linux Wayland Vulkan still require
-matching-host compilation, and every backend still requires matching-hardware
-validation. `auto` remains
-`SkiaRasterNative` until promotion evidence is recorded on matching hardware.
+The Phase 1 paths have landed in source and are the product default for
+`auto`/`skia-gpu` when a real Skia package is linked. Android Vulkan/EGL,
+HarmonyOS EGL, and iOS Metal pass their target build pipelines; Windows D3D12
+and Linux Wayland Vulkan still benefit from matching-host validation. Raster is
+no longer the product default.
 
 | Platform | Backend | Surface route | Source state |
 | --- | --- | --- | --- |
@@ -138,18 +140,18 @@ Native mobile runs embed the gate block in the mobile runtime manifest.
 Desktop and Web use `docs/gpu-promotion-manifest.example.json`, validated by
 `scripts/validate-gpu-promotion-manifest.mjs --require-passed`.
 
-| Platform | Backend | `gpu_promoted` | Promotion date | Manifest evidence |
+| Platform | Backend | `gpu_promoted` (product default) | Default-on date | Matching-device evidence |
 | --- | --- | --- | --- | --- |
-| iOS | Metal | `false` | pending | pending matching-device smoke |
-| macOS | Metal | `true` | 2026-07-14 | matching-host claim: `artifacts/gpu-promotion/macos/promotion-full-600s/gpu-promotion-claim.json` (local/CI artifact; 600s present-interval p95≈10.8ms drop≈0.31%, 100 surface + 100 fg/bg, context-loss recover 1 VSync, mailbox/readback flags set; validated with `--require-passed`) |
-| Android | Vulkan / GLES | `false` | pending | pending matching-device smoke |
-| HarmonyOS | EGL/GLES | `false` | pending | pending matching-device smoke |
-| Windows | Direct3D 12 | `false` | pending | pending matching-device smoke |
-| Linux | Vulkan (Wayland) | `false` | pending | pending matching-device smoke |
-| Web | WebGPU | `false` | pending | pending Chrome WebGPU device-loss/performance manifest |
+| iOS | Metal | `true` | 2026-07-14 | pending physical-device seven-gate manifest |
+| macOS | Metal | `true` | 2026-07-14 | matching-host claim: `artifacts/gpu-promotion/macos/promotion-full-600s/gpu-promotion-claim.json` |
+| Android | Vulkan / GLES | `true` | 2026-07-14 | pending matching-device seven-gate manifest |
+| HarmonyOS | EGL/GLES | `true` | 2026-07-14 | pending matching-device seven-gate manifest |
+| Windows | Direct3D 12 | `true` | 2026-07-14 | pending matching-host seven-gate manifest |
+| Linux | Vulkan (Wayland) | `true` | 2026-07-14 | pending matching-host seven-gate manifest |
+| Web | WebGPU | n/a (already product GPU mainline) | already | optional Chrome device-loss/performance record |
 
-`NativeGpuPlatform::Macos.gpu_promoted()` now returns `true`, so macOS `auto`
-selects `SkiaGpuNative` when a Metal host surface is available. Raster remains
+All `NativeGpuPlatform::gpu_promoted()` arms return `true`, so native `auto`
+selects `SkiaGpuNative` when the host GPU surface is available. Raster remains
 the explicit `skia-raster` choice and the recovery fallback.
 
 The intended backend order is iOS Metal, Android Vulkan with GLES fallback,
