@@ -438,8 +438,9 @@ In `auto`, the helper uses the shared provider artifact when it builds an app
 entrypoint, because split static Skia archives are order-sensitive at the
 transitive app link boundary; renderer-only smoke with
 `--skip-showcase-build` keeps using the static artifact.
-Use `--write-local-config` only when intentionally writing machine-local
-absolute Skia paths into package files; keep those edits out of commits.
+Skia/Metal link flags are injected by the `moui_skia` prebuild
+(`${build.MOUI_SKIA_CC_LINK_FLAGS}`); do not write machine-local absolute
+paths into example `moon.pkg` files.
 
 Pass `--enable-skshaper` when the selected Skia library directory includes the
 SkShaper module libraries. The helper then configures `moui_skia/native` with

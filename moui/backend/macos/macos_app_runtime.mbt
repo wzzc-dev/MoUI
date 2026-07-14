@@ -40,6 +40,9 @@ pub fn run_app_with_renderer_provider_smoke(
   if smoke_options.first_frame_smoke_auto_exit {
     run_app_until_first_present(event_loop, app)
   } else {
+    // Performance smoke uses the normal event loop so platform VSync / redraw
+    // pacing can produce a continuous present stream. Completion still exits
+    // from finish_presented_window once duration + samples are met.
     event_loop.run_app(app)
   }
 }
@@ -112,6 +115,36 @@ fn create_macos_app(
     native_ime_runtime_smoke_phase: 0,
     native_ime_runtime_smoke_wait_redraws: 0,
     native_ime_runtime_smoke_before_commit_text: "",
+    performance_smoke_duration_ms: smoke_options.performance_smoke_duration_ms,
+    performance_smoke_warm_up_presents: smoke_options.performance_smoke_warm_up_presents,
+    performance_smoke_refresh_hz: smoke_options.performance_smoke_refresh_hz,
+    performance_smoke_active: smoke_options.performance_enabled() &&
+    !smoke_options.first_frame_smoke_auto_exit,
+    performance_smoke_presented: 0,
+    performance_smoke_started_ms: 0.0,
+    performance_smoke_measure_started_ms: 0.0,
+    performance_smoke_last_present_ms: 0.0,
+    performance_smoke_last_checkpoint_ms: 0.0,
+    performance_smoke_intervals_ms: [],
+    promotion_lifecycle_enabled: smoke_options.promotion_lifecycle_enabled &&
+    smoke_options.performance_enabled() &&
+    !smoke_options.first_frame_smoke_auto_exit,
+    promotion_surface_cycles_target: smoke_options.promotion_surface_cycles,
+    promotion_fg_bg_cycles_target: smoke_options.promotion_fg_bg_cycles,
+    promotion_context_loss_target: smoke_options.promotion_context_loss_count,
+    promotion_phase: 0,
+    promotion_surface_cycles_done: 0,
+    promotion_fg_bg_cycles_done: 0,
+    promotion_context_loss_done: 0,
+    promotion_context_loss_injected: 0,
+    promotion_wait_presents: 0,
+    promotion_mailbox_ok: false,
+    promotion_readback_eliminated: false,
+    promotion_runtime_preserved: true,
+    promotion_automatic_fallback: false,
+    promotion_recovered_within_vsyncs: 0,
+    promotion_recovery_count_before: 0,
+    promotion_fallback_count: 0,
   }
   app.driver.set_redraw_scheduler(() => app.request_redraw())
   for plugin in options.platform_view_plugins {

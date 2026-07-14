@@ -146,7 +146,7 @@ formal `HostGpuSurface` descriptor with unpromoted window-surface source paths
 implemented per Phase 1 (iOS Metal, macOS Metal, Android Vulkan/GLES,
 HarmonyOS EGL/GLES, Windows D3D12, Linux Vulkan); the Phase 2 promotion gate
 scaffolding (renderer mailbox control queue, context-loss recovery, manifest
-schema) is in place, but `gpu_promoted` stays `false` on every platform until
+schema) is in place, but `gpu_promoted` is `true` for macOS Metal; other platforms stay `false` until
 matching-device evidence passes the seven ADR 0006 gates. Native
 `SkPicture`/POD handoff now runs on an independent `std::thread` with a
 latest-wins frame slot, ordered controls, detach acknowledgement, and polling

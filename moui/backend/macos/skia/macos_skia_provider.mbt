@@ -43,6 +43,13 @@ pub struct MacosSkiaAppOptions {
 pub struct MacosSkiaSmokeOptions {
   priv first_frame_smoke_auto_exit : Bool
   priv native_ime_runtime_smoke : Bool
+  priv performance_smoke_duration_ms : Int
+  priv performance_smoke_warm_up_presents : Int
+  priv performance_smoke_refresh_hz : Int
+  priv promotion_lifecycle_enabled : Bool
+  priv promotion_surface_cycles : Int
+  priv promotion_fg_bg_cycles : Int
+  priv promotion_context_loss_count : Int
 }
 
 ///|
@@ -89,8 +96,25 @@ fn macos_surface_route_from_environment() -> @render.SkiaSurfaceRoute {
 pub fn MacosSkiaSmokeOptions::new(
   first_frame_smoke_auto_exit? : Bool = false,
   native_ime_runtime_smoke? : Bool = false,
+  performance_smoke_duration_ms? : Int = 0,
+  performance_smoke_warm_up_presents? : Int = 30,
+  performance_smoke_refresh_hz? : Int = 60,
+  promotion_lifecycle_enabled? : Bool = false,
+  promotion_surface_cycles? : Int = 100,
+  promotion_fg_bg_cycles? : Int = 100,
+  promotion_context_loss_count? : Int = 1,
 ) -> MacosSkiaSmokeOptions {
-  { first_frame_smoke_auto_exit, native_ime_runtime_smoke }
+  {
+    first_frame_smoke_auto_exit,
+    native_ime_runtime_smoke,
+    performance_smoke_duration_ms,
+    performance_smoke_warm_up_presents,
+    performance_smoke_refresh_hz,
+    promotion_lifecycle_enabled,
+    promotion_surface_cycles,
+    promotion_fg_bg_cycles,
+    promotion_context_loss_count,
+  }
 }
 
 ///|
@@ -101,17 +125,63 @@ fn MacosSkiaSmokeOptions::from_environment() -> MacosSkiaSmokeOptions {
       ) ||
       env_flag("MOUI_MARKDOWN_EDITOR_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT"),
     native_ime_runtime_smoke=env_flag("MOUI_MACOS_NATIVE_IME_EVIDENCE"),
+    performance_smoke_duration_ms=env_int(
+      "MOUI_MACOS_SKIA_PERF_DURATION_MS",
+      0,
+    ),
+    performance_smoke_warm_up_presents=env_int(
+      "MOUI_MACOS_SKIA_PERF_WARM_UP_PRESENTS",
+      30,
+    ),
+    performance_smoke_refresh_hz=env_int("MOUI_MACOS_SKIA_PERF_REFRESH_HZ", 60),
+    promotion_lifecycle_enabled=env_flag("MOUI_MACOS_SKIA_PROMOTION_LIFECYCLE") ||
+    env_flag("MOUI_MACOS_SKIA_PROMOTION_GATES"),
+    promotion_surface_cycles=env_int("MOUI_MACOS_SKIA_PROMOTION_SURFACE_CYCLES", 100),
+    promotion_fg_bg_cycles=env_int("MOUI_MACOS_SKIA_PROMOTION_FG_BG_CYCLES", 100),
+    promotion_context_loss_count=env_int(
+      "MOUI_MACOS_SKIA_PROMOTION_CONTEXT_LOSS",
+      1,
+    ),
   )
 }
 
 ///|
 fn MacosSkiaSmokeOptions::enabled(self : MacosSkiaSmokeOptions) -> Bool {
-  self.first_frame_smoke_auto_exit || self.native_ime_runtime_smoke
+  self.first_frame_smoke_auto_exit ||
+  self.native_ime_runtime_smoke ||
+  self.performance_smoke_duration_ms > 0
 }
 
 ///|
 fn env_flag(name : String) -> Bool {
   @env.get_env_var(name) == Some("1")
+}
+
+///|
+fn env_int(name : String, fallback : Int) -> Int {
+  match @env.get_env_var(name) {
+    Some(value) => {
+      let trimmed = value.trim()
+      if trimmed.length() == 0 {
+        return fallback
+      }
+      let mut parsed = 0
+      let mut saw_digit = false
+      for ch in trimmed {
+        if ch < '0' || ch > '9' {
+          return fallback
+        }
+        saw_digit = true
+        parsed = parsed * 10 + (ch.to_int() - '0'.to_int())
+      }
+      if saw_digit {
+        parsed
+      } else {
+        fallback
+      }
+    }
+    None => fallback
+  }
 }
 
 ///|
@@ -189,6 +259,13 @@ pub fn run_smoke_app_with_options(
     smoke_options=@macos_host.MacosHostSmokeOptions::new(
       first_frame_smoke_auto_exit=smoke_options.first_frame_smoke_auto_exit,
       native_ime_runtime_smoke=smoke_options.native_ime_runtime_smoke,
+      performance_smoke_duration_ms=smoke_options.performance_smoke_duration_ms,
+      performance_smoke_warm_up_presents=smoke_options.performance_smoke_warm_up_presents,
+      performance_smoke_refresh_hz=smoke_options.performance_smoke_refresh_hz,
+      promotion_lifecycle_enabled=smoke_options.promotion_lifecycle_enabled,
+      promotion_surface_cycles=smoke_options.promotion_surface_cycles,
+      promotion_fg_bg_cycles=smoke_options.promotion_fg_bg_cycles,
+      promotion_context_loss_count=smoke_options.promotion_context_loss_count,
     ),
     window_requests~,
   )
@@ -660,6 +737,18 @@ fn host_renderer_from_native_gpu_worker(
           )
       }
     },
+    inject_context_loss=() => {
+      if !fallback_to_raster.val {
+        ignore(
+          worker.submit_control(
+            @skia_native.GpuRenderWorkerControl::ContextLoss("promotion-harness"),
+          ),
+        )
+        ignore(collect_completions())
+      }
+    },
+    gpu_recovery_count=() => worker.diagnostics().recovery_count.to_int(),
+    gpu_fallback_active=() => fallback_to_raster.val,
     render_frame=Some(frame => {
       ignore(collect_completions())
       if fallback_to_raster.val {

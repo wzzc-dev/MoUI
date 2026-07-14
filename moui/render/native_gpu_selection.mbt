@@ -144,12 +144,16 @@ pub fn NativeRendererMode::label(self : NativeRendererMode) -> String {
 }
 
 ///|
-/// Promotion is deliberately false until a matching-host manifest is
-/// recorded and reviewed. This source-level default prevents a capability
-/// probe or package test from silently changing `Auto` to GPU.
+/// Per-platform promotion flags. A platform flips to `true` only after a
+/// matching-host ADR 0006 seven-gate manifest passes `--require-passed`.
+/// macOS Metal evidence:
+/// `artifacts/gpu-promotion/macos/promotion-full-600s/gpu-promotion-claim.json`
+/// (600s performance + lifecycle/context-loss; reviewed 2026-07-14).
 pub fn NativeGpuPlatform::gpu_promoted(self : NativeGpuPlatform) -> Bool {
-  let _ = self
-  false
+  match self {
+    Macos => true
+    Windows | Linux | Android | Ios | HarmonyOs => false
+  }
 }
 
 ///|
