@@ -4,6 +4,8 @@ import {
   "moonbitlang/core/math",
 }
 
+warnings = "-deprecated"
+
 options(
   targets: {
     "avif_encode_js.mbt": [ "js" ],
