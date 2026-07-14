@@ -31,58 +31,58 @@ test "native gpu picture worker preserves control fifo" {
 
 ///|
 test "native gpu worker runs on an independent thread and acknowledges detach" {
-  match NativeGpuRenderWorker::new() {
-    Some(worker) => {
-      let sequence = match PictureRecorder::new() {
-        Some(recorder) => {
-          match recorder.begin(8, 8) {
-            Some(canvas) => canvas.clear(@skia.Color::blue())
-            None => recorder.record_empty(8, 8)
-          }
-          match recorder.finish() {
-            Some(picture) =>
-              worker.submit_picture(
-                picture,
-                image_resource_revision=9L,
-                submitted_at_ms=1.0,
-              )
-            None =>
-              worker.submit_empty_picture(
-                image_resource_revision=9L,
-                submitted_at_ms=1.0,
-              )
-          }
-        }
-        None => worker.submit_empty_picture(submitted_at_ms=1.0)
-      }
-      assert_true(sequence > 0L)
-      assert_true(worker.wait_completion(timeout_ms=1000))
-      let frames = worker.drain_completions()
-      assert_true(
-        frames.any(completion => {
-          completion.sequence == sequence &&
-          completion.image_resource_revision == 9L &&
-          completion.submitted_at_ms == 1.0 &&
-          completion.processed_at_ms > 0.0 &&
-          completion.status is NativeGpuWorkerCompletionStatus::PictureRecorded
-        }),
-      )
-
-      let detach = worker.submit_control(GpuRenderWorkerControl::Detach)
-      assert_true(detach > 0L)
-      assert_true(worker.wait_completion(timeout_ms=1000))
-      let controls = worker.drain_completions()
-      assert_true(
-        controls.any(completion => completion.control_token == detach),
-      )
-      let diagnostics = worker.diagnostics()
-      assert_true(diagnostics.worker_thread_id != 0L)
-      assert_eq(diagnostics.readback_count, 0L)
-      assert_true(diagnostics.surface_generation >= 2)
-      assert_eq(diagnostics.resource_cache_bytes, 0L)
-      assert_eq(diagnostics.completion_pending, 0)
-      worker.shutdown()
-    }
-    None => fail("native GPU worker should be available on the native target")
+  guard skia_available() else { return () }
+  let worker = match NativeGpuRenderWorker::new() {
+    Some(worker) => worker
+    None => fail("skia_available() but NativeGpuRenderWorker::new() returned None")
   }
+  let sequence = match PictureRecorder::new() {
+    Some(recorder) => {
+      match recorder.begin(8, 8) {
+        Some(canvas) => canvas.clear(@skia.Color::blue())
+        None => recorder.record_empty(8, 8)
+      }
+      match recorder.finish() {
+        Some(picture) =>
+          worker.submit_picture(
+            picture,
+            image_resource_revision=9L,
+            submitted_at_ms=1.0,
+          )
+        None =>
+          worker.submit_empty_picture(
+            image_resource_revision=9L,
+            submitted_at_ms=1.0,
+          )
+      }
+    }
+    None => worker.submit_empty_picture(submitted_at_ms=1.0)
+  }
+  assert_true(sequence > 0L)
+  assert_true(worker.wait_completion(timeout_ms=1000))
+  let frames = worker.drain_completions()
+  assert_true(
+    frames.any(completion => {
+      completion.sequence == sequence &&
+      completion.image_resource_revision == 9L &&
+      completion.submitted_at_ms == 1.0 &&
+      completion.processed_at_ms > 0.0 &&
+      completion.status is NativeGpuWorkerCompletionStatus::PictureRecorded
+    }),
+  )
+
+  let detach = worker.submit_control(GpuRenderWorkerControl::Detach)
+  assert_true(detach > 0L)
+  assert_true(worker.wait_completion(timeout_ms=1000))
+  let controls = worker.drain_completions()
+  assert_true(
+    controls.any(completion => completion.control_token == detach),
+  )
+  let diagnostics = worker.diagnostics()
+  assert_true(diagnostics.worker_thread_id != 0L)
+  assert_eq(diagnostics.readback_count, 0L)
+  assert_true(diagnostics.surface_generation >= 2)
+  assert_eq(diagnostics.resource_cache_bytes, 0L)
+  assert_eq(diagnostics.completion_pending, 0)
+  worker.shutdown()
 }

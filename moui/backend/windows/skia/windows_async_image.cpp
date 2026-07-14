@@ -1,3 +1,5 @@
+#ifdef _WIN32
+
 // Windows async image loading: background file read plus Skia decode via
 // CreateThread. The worker uses C/C++ allocations only and never touches
 // MoonBit GC objects. The main-thread drain copies decoded pixels into
@@ -276,3 +278,33 @@ moonbit_bytes_t moui_windows_async_image_take_result(void) {
   free(result);
   return out;
 }
+
+#else
+
+#include <moonbit.h>
+#include <stdint.h>
+
+extern "C" MOONBIT_FFI_EXPORT
+void moui_windows_async_image_spawn(int64_t window_id,
+                                    moonbit_bytes_t source_bytes,
+                                    int32_t source_len) {
+  (void)window_id;
+  (void)source_bytes;
+  (void)source_len;
+}
+
+extern "C" MOONBIT_FFI_EXPORT
+void moui_windows_async_image_spawn_sync(int64_t window_id,
+                                         moonbit_bytes_t source_bytes,
+                                         int32_t source_len) {
+  (void)window_id;
+  (void)source_bytes;
+  (void)source_len;
+}
+
+extern "C" MOONBIT_FFI_EXPORT
+moonbit_bytes_t moui_windows_async_image_take_result(void) {
+  return moonbit_make_bytes(0, 0);
+}
+
+#endif

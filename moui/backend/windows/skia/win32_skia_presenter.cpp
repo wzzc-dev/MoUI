@@ -1,6 +1,4 @@
-#ifndef _WIN32
-#error "win32_skia_presenter.cpp is only for Windows"
-#endif
+#ifdef _WIN32
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -96,3 +94,29 @@ int32_t moui_windows_present_skia_pixels_to_hwnd(uint64_t raw_hwnd,
   }
   return MOUI_WINDOWS_SKIA_PRESENT_OK;
 }
+
+#else
+
+#include <moonbit.h>
+#include <stdint.h>
+
+enum {
+  MOUI_WINDOWS_SKIA_PRESENT_BAD_WINDOW = 1,
+};
+
+extern "C" MOONBIT_FFI_EXPORT
+int32_t moui_windows_present_skia_pixels_to_hwnd(uint64_t raw_hwnd,
+                                                 int32_t width, int32_t height,
+                                                 int32_t row_bytes,
+                                                 const uint8_t *pixels,
+                                                 int32_t pixels_len) {
+  (void)raw_hwnd;
+  (void)width;
+  (void)height;
+  (void)row_bytes;
+  (void)pixels;
+  (void)pixels_len;
+  return MOUI_WINDOWS_SKIA_PRESENT_BAD_WINDOW;
+}
+
+#endif
