@@ -48,6 +48,9 @@ node scripts/test-web-bundle-tools.mjs
 node scripts/test-record-web-runtime-presentation.mjs
 node scripts/test-validate-web-runtime-presentation-manifest.mjs
 moon test tools/moui/validate_gpu_promotion_manifest --target native
+moon test tools/moui/gpu_promotion_scaffold --target native
+node scripts/test-gpu-promotion-manifest-lib.mjs
+node scripts/test-gpu-performance-metrics.mjs
 node scripts/test-check-runner.mjs
 node scripts/test-smoke-check.mjs
 node scripts/smoke-check.mjs --check
@@ -238,6 +241,18 @@ Proof levels:
 - **L3** (`feature-proof-summary.yml`): all required L1 and L2 passed.
 
 ## Smoke
+
+### GPU promotion scaffolds (Wave A)
+
+Pending manifests and gap reports (does **not** flip `gpu_promoted`):
+
+```sh
+node scripts/record-gpu-promotion-smoke.mjs --platform macos
+node scripts/validate-gpu-promotion-manifest.mjs docs/gpu-promotion-manifest.example.json
+```
+
+See [gpu-promotion-runbook.md](gpu-promotion-runbook.md).
+
 
 Use smoke runs when behavior depends on a real renderer, browser, or platform
 host:

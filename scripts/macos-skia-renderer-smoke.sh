@@ -9,14 +9,12 @@ usage() {
   cat <<'EOF'
 Usage: scripts/macos-skia-renderer-smoke.sh [options]
 
-Temporarily configures the local moui_skia native package plus MoUI's Skia
-renderer smoke, examples/showcase/macos_skia, and
-examples/markdown_editor/macos_skia entrypoints, plus the Mo Workbench macOS
-Skia entrypoint for local direct runs. It runs the renderer pixel smoke, builds
-examples/showcase/macos_skia, optionally runs tester-owned first-frame and IME
-smokes, then restores all package files.
-Use --write-local-config when you want to keep the resolved local link flags so
-direct moon run/build commands can use the native Skia packages afterwards.
+Runs the MoUI Skia renderer smoke and optional Showcase / Markdown / IME /
+GPU smokes. Skia/Metal link flags always come from the moui_skia prebuild
+(`${build.MOUI_SKIA_CC_LINK_FLAGS}`). This script resolves a Skia provider,
+exports MOUI_SKIA_* for that prebuild, builds and runs smokes, and does not
+rewrite moon.pkg files.
+For ordinary app runs: moon run examples/<app>/macos_skia --target native
 
 Options:
   --skia-provider existing|jetbrains|source
@@ -31,8 +29,7 @@ Options:
   --link-mode auto|dynamic|static
                          Select Skia library link mode. Default: auto.
                          auto uses static for Metal GPU or renderer-only smoke,
-                         and dynamic for other app builds or
-                         --write-local-config.
+                         and dynamic for other app builds.
   --skia-rev REV         Skia git revision, branch, or tag for source provider.
                          Default: moui_skia/skia-revision.txt.
   --jetbrains-tag TAG    JetBrains/skia release tag. Default: m148-8967a2e80c.
@@ -91,13 +88,7 @@ Options:
                          Seconds to wait for --run-markdown-smoke. Default: 20.
   --ime-timeout SECONDS  Seconds to wait for --run-ime-smoke. Default: 20.
   --dry-run-config       Print resolved paths and flags, then exit without
-                         rewriting package files or building executables.
-  --write-local-config   Persistently write resolved link flags into the local
-                         moui_skia native, renderer smoke, Showcase macos_skia,
-                         Markdown Editor macos_skia, and Mo Workbench
-                         macos_skia package files, then exit. Leaves
-                         machine-local moon.pkg edits; do not commit those
-                         path-specific package files.
+                         building executables.
   -h, --help             Show this help.
 
 Environment defaults:
@@ -164,7 +155,6 @@ showcase_timeout=20
 markdown_timeout=20
 ime_timeout=20
 dry_run_config=0
-write_local_config=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -309,8 +299,9 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --write-local-config)
-      write_local_config=1
-      shift
+      echo "--write-local-config was removed; moui_skia prebuild injects Skia/Metal flags." >&2
+      echo "Use: moon run examples/<app>/macos_skia --target native" >&2
+      exit 2
       ;;
     -h|--help)
       usage
@@ -336,18 +327,6 @@ fi
 
 repo_root="$(cd "$script_dir/.." && pwd)"
 skia_repo="$repo_root/moui_skia"
-native_pkg="$skia_repo/native/moon.pkg"
-native_pkg_backup="$native_pkg.moui-smoke.bak"
-renderer_pkg="$repo_root/moui/tests/skia_renderer_smoke/native/moon.pkg"
-renderer_pkg_backup="$renderer_pkg.moui-smoke.bak"
-text_emoji_pkg="$repo_root/moui/tests/skia_text_emoji_smoke/native/moon.pkg"
-text_emoji_pkg_backup="$text_emoji_pkg.moui-smoke.bak"
-showcase_pkg="$repo_root/examples/showcase/macos_skia/moon.pkg"
-showcase_pkg_backup="$showcase_pkg.moui-smoke.bak"
-markdown_pkg="$repo_root/examples/markdown_editor/macos_skia/moon.pkg"
-markdown_pkg_backup="$markdown_pkg.moui-smoke.bak"
-workbench_pkg="$repo_root/examples/mo_workbench/macos_skia/moon.pkg"
-workbench_pkg_backup="$workbench_pkg.moui-smoke.bak"
 build_log=""
 smoke_log=""
 text_emoji_log=""
@@ -359,20 +338,6 @@ text_emoji_log_is_temporary=0
 showcase_log_is_temporary=0
 markdown_log_is_temporary=0
 ime_log_is_temporary=0
-
-check_package_backups() {
-  for backup in "$native_pkg_backup" "$renderer_pkg_backup" "$text_emoji_pkg_backup" "$showcase_pkg_backup" "$markdown_pkg_backup" "$workbench_pkg_backup"; do
-    if [[ -f "$backup" ]]; then
-      echo "package backup already exists: $backup" >&2
-      echo "Resolve the stale backup before running the MoUI Skia renderer smoke." >&2
-      exit 1
-    fi
-  done
-}
-
-if [[ $dry_run_config -eq 0 ]]; then
-  check_package_backups
-fi
 
 if [[ $skia_rev_explicit -eq 0 && -f "$skia_repo/skia-revision.txt" ]]; then
   pinned_skia_rev="$(grep -v '^[[:space:]]*#' "$skia_repo/skia-revision.txt" | grep -v '^[[:space:]]*$' | head -n 1 || true)"
@@ -430,34 +395,14 @@ if [[ $run_showcase_smoke -eq 1 && $skip_showcase_build -eq 1 ]]; then
   exit 2
 fi
 
-if [[ $dry_run_config -eq 1 && $write_local_config -eq 1 ]]; then
-  echo "--dry-run-config and --write-local-config cannot be combined" >&2
-  exit 2
-fi
 case "$macos_link_mode" in
   auto|dynamic|static) ;;
   *) echo "unsupported --link-mode: $macos_link_mode" >&2; exit 2 ;;
 esac
 
-if [[ $run_showcase_smoke -eq 1 && $write_local_config -eq 1 ]]; then
-  echo "--write-local-config writes package files and exits; run the showcase smoke afterwards" >&2
-  exit 2
-fi
 
-if [[ $run_markdown_smoke -eq 1 && $write_local_config -eq 1 ]]; then
-  echo "--write-local-config writes package files and exits; run the Markdown Editor smoke afterwards" >&2
-  exit 2
-fi
 
-if [[ $run_ime_smoke -eq 1 && $write_local_config -eq 1 ]]; then
-  echo "--write-local-config writes package files and exits; run the tester IME smoke afterwards" >&2
-  exit 2
-fi
 
-if [[ $run_gpu_smoke -eq 1 && $write_local_config -eq 1 ]]; then
-  echo "--write-local-config writes package files and exits; run the GPU smoke afterwards" >&2
-  exit 2
-fi
 
 if ! [[ "$showcase_timeout" =~ ^[0-9]+$ ]] || [[ "$showcase_timeout" -lt 1 ]]; then
   echo "--showcase-timeout must be a positive integer number of seconds" >&2
@@ -518,7 +463,7 @@ else
   if [[ "$fetch_link_mode" == "auto" ]]; then
     if [[ $run_gpu_smoke -eq 1 ]]; then
       fetch_link_mode="static"
-    elif [[ $write_local_config -eq 1 || $skip_showcase_build -eq 0 || $run_markdown_smoke -eq 1 || $run_ime_smoke -eq 1 ]]; then
+    elif [[ $skip_showcase_build -eq 0 || $run_markdown_smoke -eq 1 || $run_ime_smoke -eq 1 ]]; then
       fetch_link_mode="dynamic"
     else
       fetch_link_mode="static"
@@ -651,7 +596,7 @@ resolved_link_mode="$macos_link_mode"
 if [[ "$resolved_link_mode" == "auto" ]]; then
   if [[ $run_gpu_smoke -eq 1 && ( -f "$static_lib" || $dry_run_config -eq 1 ) ]]; then
     resolved_link_mode="static"
-  elif [[ $write_local_config -eq 1 || $skip_showcase_build -eq 0 || $run_markdown_smoke -eq 1 || $run_ime_smoke -eq 1 ]]; then
+  elif [[ $skip_showcase_build -eq 0 || $run_markdown_smoke -eq 1 || $run_ime_smoke -eq 1 ]]; then
     if [[ -f "$dynamic_lib" || $dry_run_config -eq 1 ]]; then
       resolved_link_mode="dynamic"
     else
@@ -867,7 +812,6 @@ echo "  run_text_emoji_smoke=$run_text_emoji_smoke"
 echo "  run_markdown_smoke=$run_markdown_smoke"
 echo "  run_ime_smoke=$run_ime_smoke"
 echo "  run_gpu_smoke=$run_gpu_smoke"
-echo "  write_local_config=$write_local_config"
 if [[ $run_showcase_smoke -eq 1 ]]; then
   echo "  showcase_timeout=$showcase_timeout"
 fi
@@ -886,186 +830,7 @@ if [[ $dry_run_config -eq 1 ]]; then
   exit 0
 fi
 
-write_native_pkg_config() {
-  configure_args=(
-    --skia-include "$include_path" \
-    --skia-lib-dir "$lib_path" \
-    --skia-lib "$skia_lib" \
-    --link-mode "$resolved_link_mode" \
-    --extra-cc-flags "$native_extra_cc_flags" \
-    --extra-link-flags "$native_extra_link_flags" \
-    --output "$native_pkg" \
-    --write
-  )
-  if [[ $enable_skparagraph -eq 1 ]]; then
-    configure_args+=(--enable-skparagraph)
-  fi
-  if [[ $require_skparagraph -eq 1 ]]; then
-    configure_args+=(--require-skparagraph)
-  fi
-  bash "$skia_repo/scripts/configure-macos-native-pkg.sh" "${configure_args[@]}" >/dev/null
-}
-
-write_renderer_smoke_pkg_config() {
-  cat > "$renderer_pkg" <<EOF
-import {
-  "moonbitlang/core/encoding/base64",
-  "moonbitlang/core/env",
-  "moonbitlang/x/fs",
-  "wzzc-dev/moui_skia/native" @skia_native,
-  "wzzc-dev/moui/backend/host",
-  "wzzc-dev/moui/core",
-  "wzzc-dev/moui/render",
-  "wzzc-dev/moui/render/skia" @skia_renderer,
-}
-
-supported_targets = "native"
-
-options(
-  "is-main": true,
-  link: {
-    "native": {
-      "cc-link-flags": "$skia_link_flags",
-    },
-  },
-  targets: { "main.mbt": [ "native" ] },
-)
-EOF
-}
-
-write_text_emoji_pkg_config() {
-  cat > "$text_emoji_pkg" <<EOF
-import {
-  "wzzc-dev/moui_skia/native" @skia_native,
-  "wzzc-dev/moui/backend/host",
-  "wzzc-dev/moui/core",
-  "wzzc-dev/moui/render",
-  "wzzc-dev/moui/render/skia" @skia_renderer,
-}
-
-supported_targets = "native"
-
-options(
-  "is-main": true,
-  link: {
-    "native": {
-      "cc-link-flags": "$skia_link_flags",
-    },
-  },
-  targets: { "main.mbt": [ "native" ] },
-)
-EOF
-}
-
-write_showcase_pkg_config() {
-  cat > "$showcase_pkg" <<EOF
-import {
-  "moonbitlang/core/env",
-  "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/backend/macos" @macos_backend,
-  "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
-  "wzzc-dev/moui/render/skia" @skia_renderer,
-  "wzzc-dev/moui/render",
-  "examples/showcase/app",
-}
-
-supported_targets = "native"
-
-options(
-  "is-main": true,
-  link: {
-    "native": {
-      "cc-link-flags": "$showcase_link_flags",
-    },
-  },
-  targets: { "main.mbt": [ "native" ] },
-)
-EOF
-}
-
-write_markdown_pkg_config() {
-  cat > "$markdown_pkg" <<EOF
-import {
-  "moonbitlang/core/env",
-  "wzzc-dev/moui/core",
-  "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/backend/host",
-  "wzzc-dev/moui/backend/macos" @macos_host,
-  "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
-  "wzzc-dev/moui/render/skia" @skia_renderer,
-  "wzzc-dev/moui/render",
-  "wzzc-dev/window/dpi",
-  "wzzc-dev/window/macos" @window_macos,
-  "examples/markdown_editor/app",
-}
-
-supported_targets = "native"
-
-options(
-  "is-main": true,
-  link: {
-    "native": {
-      "cc-link-flags": "$showcase_link_flags",
-    },
-  },
-  targets: { "main.mbt": [ "native" ] },
-)
-EOF
-}
-
-write_workbench_pkg_config() {
-  cat > "$workbench_pkg" <<EOF
-import {
-  "moonbitlang/core/env",
-  "moonbitlang/async",
-  "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/backend/host",
-  "wzzc-dev/moui/backend/macos" @macos_host,
-  "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
-  "wzzc-dev/moui/render/skia" @skia_renderer,
-  "wzzc-dev/moui/render",
-  "examples/mo_workbench/app",
-  "examples/mo_workbench/acp_native_transport" @acp_transport,
-  "examples/mo_workbench/openseek_native_transport" @openseek_transport,
-}
-
-supported_targets = "native"
-
-options(
-  "is-main": true,
-  link: {
-    "native": {
-      "cc-link-flags": "$showcase_link_flags",
-    },
-  },
-  targets: { "main.mbt": [ "native" ] },
-)
-EOF
-}
-
-if [[ $write_local_config -eq 1 ]]; then
-  write_native_pkg_config
-  echo "Wrote local moui_skia/native/moon.pkg with macOS Skia link flags."
-  write_renderer_smoke_pkg_config
-  echo "Wrote local MoUI renderer smoke package link flags."
-  write_text_emoji_pkg_config
-  echo "Wrote local MoUI text/emoji smoke package link flags."
-  write_showcase_pkg_config
-  echo "Wrote local macos_skia showcase package link flags."
-  write_markdown_pkg_config
-  echo "Wrote local markdown_editor/macos_skia package link flags."
-  write_workbench_pkg_config
-  echo "Wrote local mo_workbench/macos_skia package link flags."
-  echo "Local macOS Skia configuration is ready. Direct run command:"
-  echo "  moon run moui/tests/skia_text_emoji_smoke/native --target native"
-  echo "  moon run examples/showcase/macos_skia --target native"
-  echo "  moon run examples/markdown_editor/macos_skia --target native"
-  echo "  moon run examples/mo_workbench/macos_skia --target native"
-  echo "These package files contain machine-local paths; keep them out of commits."
-  exit 0
-fi
-
-restore_packages() {
+cleanup_temp_logs() {
   if [[ $smoke_log_is_temporary -eq 1 && -n "${smoke_log:-}" && -f "$smoke_log" ]]; then
     rm -f "$smoke_log"
   fi
@@ -1081,67 +846,23 @@ restore_packages() {
   if [[ $ime_log_is_temporary -eq 1 && -n "${ime_log:-}" && -f "$ime_log" ]]; then
     rm -f "$ime_log"
   fi
-  if [[ -f "$native_pkg_backup" ]]; then
-    cp "$native_pkg_backup" "$native_pkg"
-    rm -f "$native_pkg_backup"
-    echo "Restored moui_skia/native/moon.pkg after MoUI Skia renderer smoke."
-  fi
-  if [[ -f "$renderer_pkg_backup" ]]; then
-    cp "$renderer_pkg_backup" "$renderer_pkg"
-    rm -f "$renderer_pkg_backup"
-    echo "Restored moui/tests/skia_renderer_smoke/native/moon.pkg after MoUI Skia renderer smoke."
-  fi
-  if [[ -f "$text_emoji_pkg_backup" ]]; then
-    cp "$text_emoji_pkg_backup" "$text_emoji_pkg"
-    rm -f "$text_emoji_pkg_backup"
-    echo "Restored moui/tests/skia_text_emoji_smoke/native/moon.pkg after MoUI Skia renderer smoke."
-  fi
-  if [[ -f "$showcase_pkg_backup" ]]; then
-    cp "$showcase_pkg_backup" "$showcase_pkg"
-    rm -f "$showcase_pkg_backup"
-    echo "Restored examples/showcase/macos_skia/moon.pkg after MoUI Skia renderer smoke."
-  fi
-  if [[ -f "$markdown_pkg_backup" ]]; then
-    cp "$markdown_pkg_backup" "$markdown_pkg"
-    rm -f "$markdown_pkg_backup"
-    echo "Restored examples/markdown_editor/macos_skia/moon.pkg after MoUI Skia renderer smoke."
-  fi
-  if [[ -f "$workbench_pkg_backup" ]]; then
-    cp "$workbench_pkg_backup" "$workbench_pkg"
-    rm -f "$workbench_pkg_backup"
-    echo "Restored examples/mo_workbench/macos_skia/moon.pkg after MoUI Skia renderer smoke."
-  fi
 }
-trap restore_packages EXIT
-
-cp "$native_pkg" "$native_pkg_backup"
-cp "$renderer_pkg" "$renderer_pkg_backup"
-cp "$text_emoji_pkg" "$text_emoji_pkg_backup"
-cp "$showcase_pkg" "$showcase_pkg_backup"
-cp "$markdown_pkg" "$markdown_pkg_backup"
-cp "$workbench_pkg" "$workbench_pkg_backup"
-
-write_native_pkg_config
-echo "Wrote temporary moui_skia/native/moon.pkg with macOS Skia link flags."
-
-write_renderer_smoke_pkg_config
-echo "Wrote temporary MoUI renderer smoke package link flags."
-
-write_text_emoji_pkg_config
-echo "Wrote temporary MoUI text/emoji smoke package link flags."
-
-write_showcase_pkg_config
-echo "Wrote temporary macos_skia showcase package link flags."
-
-write_markdown_pkg_config
-echo "Wrote temporary markdown_editor/macos_skia package link flags."
-
-write_workbench_pkg_config
-echo "Wrote temporary mo_workbench/macos_skia package link flags."
+trap cleanup_temp_logs EXIT
 
 cd "$repo_root"
+# Drive moui_skia prebuild with the Skia tree resolved above. No moon.pkg rewrites.
+export MOUI_SKIA_SKIA_INCLUDE="$include_path"
+export MOUI_SKIA_SKIA_LIB_DIR="$lib_path"
+export MOUI_SKIA_SKIA_LIB="$skia_lib"
+export MOUI_SKIA_LINK_MODE="$resolved_link_mode"
+export MOUI_SKIA_EXTRA_CC_FLAGS="$native_extra_cc_flags"
+export MOUI_SKIA_EXTRA_LINK_FLAGS="$native_extra_link_flags"
+if [[ $run_gpu_smoke -eq 1 ]]; then
+  export MOUI_SKIA_ENABLE_GPU_METAL=1
+fi
+unset MOUI_SKIA_DISABLE_PREBUILD_SKIA || true
+
 MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-  MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
   moon build moui/tests/skia_renderer_smoke/native --target native
 renderer_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui/tests/skia_renderer_smoke/native/native.exe"
 if [[ ! -x "$renderer_exe" ]]; then
@@ -1199,7 +920,6 @@ fi
 
 if [[ $run_text_emoji_smoke -eq 1 ]]; then
   MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-    MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
     moon build moui/tests/skia_text_emoji_smoke/native --target native
   text_emoji_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui/tests/skia_text_emoji_smoke/native/native.exe"
   if [[ ! -x "$text_emoji_exe" ]]; then
@@ -1298,7 +1018,6 @@ fi
 
 if [[ $skip_showcase_build -eq 0 ]]; then
   MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-    MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
     moon build examples/showcase/macos_skia --target native
   showcase_exe="$repo_root/_build/native/debug/build/examples/showcase/macos_skia/macos_skia.exe"
   if [[ -x "$showcase_exe" ]]; then
@@ -1310,8 +1029,6 @@ if [[ $skip_showcase_build -eq 0 ]]; then
 
   if [[ $run_showcase_smoke -eq 1 ]]; then
     MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-      MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
-      MOUI_SKIA_CC_LINK_FLAGS="$skia_link_flags" \
       moon build moui_tester/macos_skia_first_frame_smoke --target native
     first_frame_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui_tester/macos_skia_first_frame_smoke/macos_skia_first_frame_smoke.exe"
     if [[ ! -x "$first_frame_exe" ]]; then
@@ -1368,7 +1085,6 @@ fi
 
 if [[ $run_markdown_smoke -eq 1 ]]; then
   MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-    MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
     moon build examples/markdown_editor/macos_skia --target native
   markdown_exe="$repo_root/_build/native/debug/build/examples/markdown_editor/macos_skia/macos_skia.exe"
   if [[ -x "$markdown_exe" ]]; then
@@ -1379,8 +1095,6 @@ if [[ $run_markdown_smoke -eq 1 ]]; then
   fi
 
   MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-    MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
-    MOUI_SKIA_CC_LINK_FLAGS="$skia_link_flags" \
     moon build moui_tester/macos_skia_first_frame_smoke --target native
   first_frame_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui_tester/macos_skia_first_frame_smoke/macos_skia_first_frame_smoke.exe"
   if [[ ! -x "$first_frame_exe" ]]; then
@@ -1437,8 +1151,6 @@ fi
 
 if [[ $run_ime_smoke -eq 1 ]]; then
   MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
-    MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
-    MOUI_SKIA_CC_LINK_FLAGS="$skia_link_flags" \
     moon build moui_tester/macos_skia_ime_smoke --target native
   ime_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui_tester/macos_skia_ime_smoke/macos_skia_ime_smoke.exe"
   if [[ ! -x "$ime_exe" ]]; then

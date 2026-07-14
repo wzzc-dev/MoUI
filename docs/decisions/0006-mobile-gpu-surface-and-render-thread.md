@@ -129,11 +129,10 @@ and HarmonyOS have target build evidence. Windows MSVC and Linux Wayland builds
 plus matching-hardware resize, context-loss deadline, performance, and memory
 evidence remain required.
 
-### Phase 2 — Per-platform promotion evidence (pending)
+### Phase 2 — Per-platform promotion evidence
 
-`gpu_promoted` stays `false` on every platform. Promotion is recorded here as
-each platform's matching-device manifest passes the seven gates above. The
-promotions table is filled in incrementally:
+Promotion is recorded here as each platform's matching-device manifest passes
+the seven gates above. The promotions table is filled in incrementally.
 
 Native mobile runs embed the gate block in the mobile runtime manifest.
 Desktop and Web use `docs/gpu-promotion-manifest.example.json`, validated by
@@ -142,12 +141,16 @@ Desktop and Web use `docs/gpu-promotion-manifest.example.json`, validated by
 | Platform | Backend | `gpu_promoted` | Promotion date | Manifest evidence |
 | --- | --- | --- | --- | --- |
 | iOS | Metal | `false` | pending | pending matching-device smoke |
-| macOS | Metal | `false` | pending | pending matching-device smoke |
+| macOS | Metal | `true` | 2026-07-14 | matching-host claim: `artifacts/gpu-promotion/macos/promotion-full-600s/gpu-promotion-claim.json` (local/CI artifact; 600s present-interval p95≈10.8ms drop≈0.31%, 100 surface + 100 fg/bg, context-loss recover 1 VSync, mailbox/readback flags set; validated with `--require-passed`) |
 | Android | Vulkan / GLES | `false` | pending | pending matching-device smoke |
 | HarmonyOS | EGL/GLES | `false` | pending | pending matching-device smoke |
 | Windows | Direct3D 12 | `false` | pending | pending matching-device smoke |
 | Linux | Vulkan (Wayland) | `false` | pending | pending matching-device smoke |
 | Web | WebGPU | `false` | pending | pending Chrome WebGPU device-loss/performance manifest |
+
+`NativeGpuPlatform::Macos.gpu_promoted()` now returns `true`, so macOS `auto`
+selects `SkiaGpuNative` when a Metal host surface is available. Raster remains
+the explicit `skia-raster` choice and the recovery fallback.
 
 The intended backend order is iOS Metal, Android Vulkan with GLES fallback,
 then HarmonyOS EGL/GLES followed by optional Vulkan. The desktop order is

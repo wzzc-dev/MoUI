@@ -339,7 +339,16 @@ function skiaLinkMode(config) {
 }
 
 function skiaMetalGpuEnabled(config) {
-  return truthy(configEnvValue(config, "MOUI_SKIA_ENABLE_GPU_METAL"));
+  // Explicit enable/disable wins. Otherwise default Metal on for host macOS
+  // builds after Macos GPU promotion, matching auto -> SkiaGpuNative.
+  const explicit = configEnvValue(config, "MOUI_SKIA_ENABLE_GPU_METAL");
+  if (explicit !== null && String(explicit).trim() !== "") {
+    return !falsy(explicit);
+  }
+  if (truthy(configEnvValue(config, "MOUI_SKIA_DISABLE_GPU_METAL"))) {
+    return false;
+  }
+  return process.platform === "darwin";
 }
 
 function skiaGpuEnabled(config, platform) {

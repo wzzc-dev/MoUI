@@ -35,6 +35,18 @@ pub struct MacosHostAppOptions {
 pub struct MacosHostSmokeOptions {
   priv first_frame_smoke_auto_exit : Bool
   priv native_ime_runtime_smoke : Bool
+  /// When > 0, keep presenting for this many milliseconds after warm-up and
+  /// emit a performance summary line. Mutually exclusive with first-frame
+  /// auto-exit in normal use; first-frame takes precedence if both are set.
+  priv performance_smoke_duration_ms : Int
+  priv performance_smoke_warm_up_presents : Int
+  priv performance_smoke_refresh_hz : Int
+  /// When true, after the performance measure window also runs resize/fg-bg
+  /// cycles and injects context-loss controls for remaining ADR 0006 gates.
+  priv promotion_lifecycle_enabled : Bool
+  priv promotion_surface_cycles : Int
+  priv promotion_fg_bg_cycles : Int
+  priv promotion_context_loss_count : Int
 }
 
 ///|
@@ -73,6 +85,33 @@ struct MacosApp {
   mut native_ime_runtime_smoke_phase : Int
   mut native_ime_runtime_smoke_wait_redraws : Int
   mut native_ime_runtime_smoke_before_commit_text : String
+  performance_smoke_duration_ms : Int
+  performance_smoke_warm_up_presents : Int
+  performance_smoke_refresh_hz : Int
+  mut performance_smoke_active : Bool
+  mut performance_smoke_presented : Int
+  mut performance_smoke_started_ms : Double
+  mut performance_smoke_measure_started_ms : Double
+  mut performance_smoke_last_present_ms : Double
+  mut performance_smoke_last_checkpoint_ms : Double
+  performance_smoke_intervals_ms : Array[Double]
+  promotion_lifecycle_enabled : Bool
+  promotion_surface_cycles_target : Int
+  promotion_fg_bg_cycles_target : Int
+  promotion_context_loss_target : Int
+  mut promotion_phase : Int
+  mut promotion_surface_cycles_done : Int
+  mut promotion_fg_bg_cycles_done : Int
+  mut promotion_context_loss_done : Int
+  mut promotion_context_loss_injected : Int
+  mut promotion_wait_presents : Int
+  mut promotion_mailbox_ok : Bool
+  mut promotion_readback_eliminated : Bool
+  mut promotion_runtime_preserved : Bool
+  mut promotion_automatic_fallback : Bool
+  mut promotion_recovered_within_vsyncs : Int
+  mut promotion_recovery_count_before : Int
+  mut promotion_fallback_count : Int
 }
 
 ///|
@@ -121,8 +160,32 @@ pub fn MacosHostAppOptions::platform_view_plugins(
 pub fn MacosHostSmokeOptions::new(
   first_frame_smoke_auto_exit? : Bool = false,
   native_ime_runtime_smoke? : Bool = false,
+  performance_smoke_duration_ms? : Int = 0,
+  performance_smoke_warm_up_presents? : Int = 30,
+  performance_smoke_refresh_hz? : Int = 60,
+  promotion_lifecycle_enabled? : Bool = false,
+  promotion_surface_cycles? : Int = 100,
+  promotion_fg_bg_cycles? : Int = 100,
+  promotion_context_loss_count? : Int = 1,
 ) -> MacosHostSmokeOptions {
-  { first_frame_smoke_auto_exit, native_ime_runtime_smoke }
+  {
+    first_frame_smoke_auto_exit,
+    native_ime_runtime_smoke,
+    performance_smoke_duration_ms,
+    performance_smoke_warm_up_presents,
+    performance_smoke_refresh_hz,
+    promotion_lifecycle_enabled,
+    promotion_surface_cycles,
+    promotion_fg_bg_cycles,
+    promotion_context_loss_count,
+  }
+}
+
+///|
+pub fn MacosHostSmokeOptions::performance_enabled(
+  self : MacosHostSmokeOptions,
+) -> Bool {
+  self.performance_smoke_duration_ms > 0
 }
 
 ///|

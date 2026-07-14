@@ -309,7 +309,7 @@ async image 观测）尚未通过 `scripts/record-mobile-runtime-smoke.mjs` 记�
 Metal/Vulkan/EGL 的 context、surface/swapchain、同步与 present 也已迁入 worker。
 iOS 模拟器 GPU 首帧、Android minSdk 23 GPU APK、HarmonyOS native/HAP 构建已通过；
 但物理设备上的性能、恢复、内存和 fallback manifest 尚未通过，因此三端 `auto`
-仍选择 raster，`gpu_promoted` 仍为 `false`。
+仍选择 raster，macOS `gpu_promoted` 已为 `true`（2026-07-14）；其它平台仍为 `false`。
 
 ## 七、核验操作指引
 
