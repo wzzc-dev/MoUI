@@ -28,6 +28,10 @@ pub struct HostWindowRenderer {
     Double,
   ) -> Unit
   priv set_platform_view_draw_fn_fn : ((() -> Unit)?) -> Unit
+  /// Optional GPU promotion harness hooks (no-op for raster providers).
+  priv inject_context_loss_fn : () -> Unit
+  priv gpu_recovery_count_fn : () -> Int
+  priv gpu_fallback_active_fn : () -> Bool
   priv layer_cache : HostLayerCommandCache
 }
 
@@ -72,6 +76,9 @@ pub fn HostWindowRenderer::new(
     Double,
   ) -> Unit = fn(_pixels, _w, _h, _s, _dx, _dy, _dw, _dh) {  },
   set_platform_view_draw_fn? : ((() -> Unit)?) -> Unit = _fn => (),
+  inject_context_loss? : () -> Unit = () => (),
+  gpu_recovery_count? : () -> Int = () => 0,
+  gpu_fallback_active? : () -> Bool = () => false,
 ) -> HostWindowRenderer {
   let image_resource_snapshot = match image_resource_snapshot {
     Some(snapshot) => snapshot
@@ -120,6 +127,9 @@ pub fn HostWindowRenderer::new(
     dispose_fn: dispose,
     draw_platform_view_pixels_fn: draw_platform_view_pixels,
     set_platform_view_draw_fn_fn: set_platform_view_draw_fn,
+    inject_context_loss_fn: inject_context_loss,
+    gpu_recovery_count_fn: gpu_recovery_count,
+    gpu_fallback_active_fn: gpu_fallback_active,
     layer_cache,
   }
 }
@@ -230,6 +240,28 @@ pub fn HostWindowRenderer::set_image_resource_change_callback(
 ///|
 pub fn HostWindowRenderer::present_count(self : HostWindowRenderer) -> Int {
   (self.present_count_fn)()
+}
+
+///|
+/// Inject a synthetic GPU context-loss control for promotion harnesses.
+pub fn HostWindowRenderer::inject_context_loss(
+  self : HostWindowRenderer,
+) -> Unit {
+  (self.inject_context_loss_fn)()
+}
+
+///|
+pub fn HostWindowRenderer::gpu_recovery_count(
+  self : HostWindowRenderer,
+) -> Int {
+  (self.gpu_recovery_count_fn)()
+}
+
+///|
+pub fn HostWindowRenderer::gpu_fallback_active(
+  self : HostWindowRenderer,
+) -> Bool {
+  (self.gpu_fallback_active_fn)()
 }
 
 ///|

@@ -1,7 +1,7 @@
 ///|
 test "native renderer auto remains raster before promotion" {
   let result = select_native_renderer(
-    NativeGpuPlatform::Macos,
+    NativeGpuPlatform::Windows,
     NativeRendererMode::Auto,
     gpu_available=true,
     gpu_promoted=false,
@@ -9,6 +9,24 @@ test "native renderer auto remains raster before promotion" {
   assert_true(result.selected == RendererBackendKind::SkiaRasterNative)
   assert_true(result.surface_route == SkiaSurfaceRoute::RasterSurfaceRoute)
   assert_true(result.fallback_reason is Some(_))
+}
+
+///|
+test "macos platform promotion flag is enabled" {
+  assert_true(NativeGpuPlatform::Macos.gpu_promoted())
+  assert_false(NativeGpuPlatform::Windows.gpu_promoted())
+  assert_false(NativeGpuPlatform::Linux.gpu_promoted())
+  assert_false(NativeGpuPlatform::Android.gpu_promoted())
+  assert_false(NativeGpuPlatform::Ios.gpu_promoted())
+  assert_false(NativeGpuPlatform::HarmonyOs.gpu_promoted())
+  let auto = select_native_renderer(
+    NativeGpuPlatform::Macos,
+    NativeRendererMode::Auto,
+    gpu_available=true,
+    gpu_promoted=NativeGpuPlatform::Macos.gpu_promoted(),
+  )
+  assert_true(auto.selected == RendererBackendKind::SkiaGpuNative)
+  assert_true(auto.surface_route == SkiaSurfaceRoute::MetalGpuSurfaceRoute)
 }
 
 ///|
