@@ -148,9 +148,9 @@ scripts/build-component-gallery-harmonyos-hap.sh
 staged HAP layout only. It does not prove renderer or platform runtime support.
 
 All HarmonyOS mobile build wrappers also accept
-`--renderer auto|skia-gpu|skia-raster`. Until direct EGL/GLES presentation is
-implemented, `auto` and `skia-gpu` record an explicit selection fallback to
-`skia-raster` in `mobile-build.json` and the native startup log.
+`--renderer auto|skia-gpu|skia-raster`. For real Skia packages, `auto` and
+`skia-gpu` select GPU (`gpuPromoted: true`); fallback-Skia and explicit
+`skia-raster` stay on the CPU presenter.
 
 ## Emulator Setup And Smoke
 
@@ -214,10 +214,21 @@ roots configured on that machine.
 
 ## Runtime Evidence Boundary
 
-A non-fallback Component Gallery HAP was built and launched on a HarmonyOS
-device; the first Skia frame is visibly nonblank (see
-`resource/screenshots/harmonyos-componentgallery.png`, 2026-07-10). The real
-`libskia.so` from the locked HarmonyOS release asset loads successfully.
+Three evidence layers stay separate: **product GPU default** (source/`auto`),
+**mobile runtime smoke**, and **seven-gate GPU promotion claim**.
+
+| Layer | Current state (2026-07-14) | Path / note |
+| --- | --- | --- |
+| Product GPU default | `auto` → `SkiaGpuNative` / `egl-gpu` when available | Source `gpu_promoted=true`; rebuild HAP with `--renderer auto` for current `mobile-build.json` |
+| Packaging | Non-fallback HAPs present | `artifacts/harmonyos/harmonyos_demo/`, `artifacts/harmonyos/component_gallery/` |
+| First-frame pixels | Proven historically | `resource/screenshots/harmonyos-componentgallery.png` (2026-07-10) |
+| Mobile runtime smoke | **Not recorded on this host** | `hdc list targets` empty; see `artifacts/mobile-runtime/harmonyos/harmonyos_demo/README.md` |
+| GPU promotion claim | Scaffold only | `artifacts/gpu-promotion/harmonyos/scaffold-latest/` (`gpuPromoted=false`) |
+
+A non-fallback Component Gallery HAP was previously built and launched on a
+HarmonyOS device; the first Skia frame is visibly nonblank (see the screenshot
+above). The real `libskia.so` from the locked HarmonyOS release asset loads
+successfully. That is **not** a current `mobile-runtime-smoke.json` pass.
 
 Do not mark HarmonyOS support as fully passed until a matching device or
 emulator run also records the following:
@@ -234,8 +245,14 @@ record IME state/edit, clipboard completion, accessibility tree/focus/action,
 async image, application detach, and before/after pixels:
 
 ```sh
-node scripts/record-mobile-runtime-smoke.mjs --platform harmonyos --app harmonyos_demo --require-passed
-node scripts/record-mobile-runtime-smoke.mjs --platform harmonyos --app component_gallery --require-passed
+scripts/build-mobile-harmonyos-hap.sh --app component_gallery --renderer auto
+hdc list targets
+node scripts/record-mobile-runtime-smoke.mjs --platform harmonyos --app harmonyos_demo --device <hdc-target>
+node scripts/record-mobile-runtime-smoke.mjs --platform harmonyos --app component_gallery --device <hdc-target>
+node scripts/validate-mobile-runtime-manifest.mjs \
+  artifacts/mobile-runtime/harmonyos/component_gallery/mobile-runtime-smoke.json
+# release bar only when complete:
+node scripts/record-mobile-runtime-smoke.mjs --platform harmonyos --app component_gallery --device <hdc-target> --require-passed
 ```
 
 Component Gallery opens `Mobile Service Probe` directly. Use it for transparent
@@ -246,10 +263,11 @@ duplicate initial XComponent callback. Run with `--device <hdc-target>` and
 keep screen reader interaction manual when the installed `uitest` tool cannot
 drive the platform accessibility focus model.
 
-No HarmonyOS target is currently connected on the development host, so no new
-matching-device service manifest is claimed. A physical-device pass must also
-round-trip a PNG through another app before promoting image clipboard support.
+No HarmonyOS target is currently connected on the development host
+(`hdc list targets` empty as of 2026-07-14), so no new matching-device service
+manifest is claimed. A physical-device pass must also round-trip a PNG through
+another app before promoting image clipboard support.
 
-The direct GPU target is EGL/GLES over `OHNativeWindow`, with Vulkan as a later
-option. It is not implemented; the current raster presenter still copies the
-full pixel frame.
+The product GPU path is EGL/GLES over `OHNativeWindow`, with Vulkan as a later
+option. The raster presenter still copies the full pixel frame for explicit
+`skia-raster` and sticky recovery fallback.

@@ -6,15 +6,13 @@ pub(all) enum MobileRendererMode {
 } derive(Eq, Debug, ToJson)
 
 ///|
-/// Result of selecting a mobile Skia renderer. Per ADR 0006, `gpu_promoted`
-/// stays `false` until the platform's matching-device promotion manifest
-/// (Phase 2.3) has passed; `Auto` therefore resolves to `SkiaRasterNative`
-/// until evidence flips the per-platform gate. When `gpu_promoted` is `true`,
-/// `surface_route` carries the platform-selected direct-present route
-/// (`MetalGpuSurfaceRoute` / `VulkanGpuSurfaceRoute` / `EglGpuSurfaceRoute`
-/// / `Direct3DGpuSurfaceRoute`) so the provider knows which
-/// `Surface::*_window_surface` constructor to call. `RasterSurfaceRoute` is
-/// reported whenever the raster fallback is selected.
+/// Result of selecting a mobile Skia renderer. Product default is GPU: when
+/// `gpu_promoted` and `gpu_available` are both true, `Auto` resolves to
+/// `SkiaGpuNative` and `surface_route` carries the platform direct-present
+/// route (`MetalGpuSurfaceRoute` / `VulkanGpuSurfaceRoute` /
+/// `EglGpuSurfaceRoute` / `Direct3DGpuSurfaceRoute`). `RasterSurfaceRoute` is
+/// reported for explicit raster requests, unavailable GPU, or recovery
+/// fallback.
 pub(all) struct MobileRendererSelection {
   requested : MobileRendererMode
   selected : @render.RendererBackendKind

@@ -7,16 +7,22 @@ traffic into MoUI.
 
 ## Status
 
+Three evidence layers stay separate: **product GPU default** (source/`auto`),
+**mobile runtime smoke** (`artifacts/mobile-runtime/...`), and **seven-gate GPU
+promotion claim** (`gpuPromotionEvidence` / `artifacts/gpu-promotion/...`).
+
 | Area | Current state | Evidence boundary |
 | --- | --- | --- |
 | Host contract | Scaffolded in `moui/backend/ios` | Package tests prove protocol behavior only. |
 | Platform services | UIKit text proxy, text/image `UIPasteboard`, and `UIAccessibilityElement` container are wired through `MobileHostChannel` | Full composition/candidate, cross-app PNG, and VoiceOver tree/focus/action evidence pending. |
 | Frame pacing | Input/resize request redraw; presentation runs from `CADisplayLink` ticks | 60/120 Hz device pacing evidence pending. |
 | Skia provider | Scaffolded in `moui/backend/ios/skia` | Provider/preflight checks prove wiring, not simulator/device pixels. |
-| Counter entrypoint | `examples/counter/ios_skia` exports thin native hooks | Compile/check evidence only. |
-| UIKit app shell | `examples/counter/ios_app` plus `scripts/build-counter-ios-app.sh` | Packaging evidence; fallback `.app` is not runtime proof. |
-| First-frame runtime evidence | Non-fallback Component Gallery app on iOS device/simulator; nonblank first-frame screenshot in `resource/screenshots/ios-componentgallery.png` (2026-07-09) | First-frame pixels proven; full runtime smoke pending. |
-| Runtime support claim | Partial — first-frame proven, full smoke pending | Requires matching simulator/device smoke manifest for lifecycle, touch, IME, clipboard, and accessibility observations. |
+| Product GPU default | `auto` → `SkiaGpuNative` / `metal-gpu` when available (`gpu_promoted=true`) | Source + rebuild `mobile-build.json`; not a seven-gate claim. |
+| UIKit app shell | `examples/counter/ios_app` / Component Gallery + `scripts/build-mobile-ios-app.sh` | Packaging evidence; fallback `.app` is not runtime proof. |
+| First-frame runtime evidence | Nonblank screenshots: `resource/screenshots/ios-componentgallery.png` (2026-07-09) and simulator smokes below | First-frame pixels proven. |
+| Runtime smoke (simulator, 2026-07-14) | Component Gallery **`status=passed`** at `artifacts/mobile-runtime/ios/component_gallery/` (`--require-passed` ok) | Lifecycle, nonblank first frame, resize, input/scroll, IME, clipboard write/read, a11y tree/focus/action, async-image, clean shutdown; Metal GPU configure with pending seven-gate skeleton (`claimed=false`). `realDeviceSigning` pending on Simulator. |
+| GPU promotion claim | Scaffold only: `artifacts/gpu-promotion/ios/scaffold-latest/` (`gpuPromoted=false`) | No matching-device seven-gate claim; product default already on. Runtime smoke pass ≠ seven-gate promotion claim. |
+| Runtime support claim | **Simulator service smoke passed** (Component Gallery) | Physical-device signing + live device VoiceOver matrix still pending for release-device claims. |
 
 ## Ownership
 
@@ -35,9 +41,10 @@ traffic into MoUI.
   MoonBit-generated C, MoonBit runtime, iOS presenter, and `moui_skia/native`
   stubs.
 
-iOS 15 remains the deployment floor. Direct `CAMetalLayer`/Skia drawable
-presentation is not implemented; `SkiaRasterNative` still uses the
-`NSData -> CGImage -> UIImage -> UIImageView` compatibility path.
+iOS 15 remains the deployment floor. Product `auto` prefers the Metal
+`CAMetalLayer` / worker-owned GPU path when available; the raster compatibility
+path still presents via `NSData -> CGImage -> UIImage -> UIImageView` for
+explicit `skia-raster` and sticky recovery fallback.
 
 ## Focused Checks
 
@@ -127,8 +134,8 @@ scripts/build-mobile-ios-app.sh --app counter --renderer auto
 
 The allowed renderer modes are `auto`, `skia-gpu`, and `skia-raster`.
 Generated build metadata and startup logs record requested and selected modes.
-Until direct `CAMetalLayer` presentation exists, `auto` and `skia-gpu` fall
-back to `skia-raster` explicitly.
+For real Skia packages, `auto` and `skia-gpu` select GPU; fallback-Skia builds
+and explicit `skia-raster` stay on the CPU presenter.
 
 `--sdk iphoneos` only builds an unsigned device bundle. Real-device install
 still requires provisioning and signing, which is outside the first iOS
@@ -215,11 +222,24 @@ permission to that automation process. Without it the app cannot produce a
 second surface size, so `resize` remains `no`. A preference write that does not
 activate VoiceOver does not satisfy accessibility focus/action evidence.
 
-The latest local iPhone 17 Pro Simulator run proves lifecycle attach/detach,
-nonblank presentation, pointer and scroll receipt with changed pixels, IME
-state/edit, system text-clipboard write/read, the semantics tree, and async
-image loading/ready. Resize and accessibility focus/action remain pending for
-the reasons above; the manifest is therefore `partial`, not `passed`.
+The 2026-07-14 local iPhone 17 Pro Simulator Component Gallery smoke is
+schema-valid **`status=passed`** at
+`artifacts/mobile-runtime/ios/component_gallery/mobile-runtime-smoke.json`
+(validated with `--require-passed`).
+
+It records lifecycle attach/detach, nonblank first frame, resize, representative
+input + scroll, IME, clipboard write/read, accessibility tree/focus/action,
+async-image loading/ready, clean shutdown, and Metal GPU configure
+(`SkiaGpuNative` / `metal-gpu` / `gpuPromoted=true`) with a **pending** seven-gate
+skeleton (`gpuPromotionEvidence.claimed=false`). Simulator `realDeviceSigning`
+stays `pending`.
+
+Recorder improvements that made this pass possible:
+
+- continuous `log stream` (so attach/IME/clipboard are not drowned by scroll)
+- service-probe-first idb planning
+- deterministic `MOUI_MOBILE_A11Y_SMOKE=1` focus/activate once-fire on the iOS shell
+- seven-gate thresholds only enforced when a promotion claim is asserted
 
 ## Physical Device Acceptance
 

@@ -13,6 +13,8 @@ import {
   iosIdbServiceProbePlan,
   iosSimulatorLaunchPid,
   mobileRuntimeStatus,
+  parseMobileRendererStatus,
+  rendererBlockFromMobileBuild,
 } from "./lib/mobile-runtime-log.mjs";
 
 const tmp = mkdtempSync(join(tmpdir(), "moui-mobile-runtime-manifest-"));
@@ -217,6 +219,39 @@ assert(
 assert(
   iosIdbElementPlan(probeTree, ["Paste"])?.tap.x === 212,
   "idb element plan should locate system edit-menu actions by label",
+);
+
+const rendererLog = [
+  'moui-mobile renderer configure requested=auto ok=1 status={"platform":"ios","requested":"auto","selected":"skia-gpu-native","surfaceRoute":"metal-gpu","gpuAvailable":true,"gpuPromoted":true,"fallbackReason":null}',
+  'moui-mobile lifecycle attach app=counter width=1206 height=2622 attached=1',
+].join("\n");
+const parsedRenderer = parseMobileRendererStatus(rendererLog);
+assert(
+  parsedRenderer?.requested === "auto"
+    && parsedRenderer?.selected === "SkiaGpuNative"
+    && parsedRenderer?.surfaceRoute === "metal-gpu"
+    && parsedRenderer?.gpuAvailable === true
+    && parsedRenderer?.gpuPromoted === true
+    && parsedRenderer?.fallbackReason === "",
+  "runtime renderer configure status should map into the mobile-runtime renderer block",
+);
+assert(
+  parseMobileRendererStatus("no configure line") === null,
+  "missing renderer configure status should not invent a renderer block",
+);
+const buildRenderer = rendererBlockFromMobileBuild({
+  renderer: {
+    requested: "auto",
+    selected: "skia-raster",
+    gpuPromoted: false,
+    fallbackReason: "fallback Skia build cannot provide a native GPU route",
+  },
+});
+assert(
+  buildRenderer?.selected === "SkiaRasterNative"
+    && buildRenderer?.surfaceRoute === "raster"
+    && buildRenderer?.gpuPromoted === false,
+  "mobile-build.json renderer should normalize to the runtime schema",
 );
 
 console.log("mobile runtime manifest validator tests passed");

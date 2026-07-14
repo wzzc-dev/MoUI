@@ -338,9 +338,9 @@ function skiaLinkMode(config) {
   return mode;
 }
 
-function skiaMetalGpuEnabled(config) {
-  // Explicit enable/disable wins. Otherwise default Metal on for host macOS
-  // builds after Macos GPU promotion, matching auto -> SkiaGpuNative.
+function skiaMetalGpuEnabled(config, platform) {
+  // Explicit enable/disable wins. Otherwise default Metal on for Apple
+  // native targets so auto -> SkiaGpuNative can probe a real Metal path.
   const explicit = configEnvValue(config, "MOUI_SKIA_ENABLE_GPU_METAL");
   if (explicit !== null && String(explicit).trim() !== "") {
     return !falsy(explicit);
@@ -348,6 +348,11 @@ function skiaMetalGpuEnabled(config) {
   if (truthy(configEnvValue(config, "MOUI_SKIA_DISABLE_GPU_METAL"))) {
     return false;
   }
+  const target = platform || process.env.MOUI_SKIA_PLATFORM || "";
+  if (["macos", "ios", "iosSim"].includes(String(target))) {
+    return true;
+  }
+  // Host macOS builds without an explicit platform still default Metal on.
   return process.platform === "darwin";
 }
 
@@ -358,7 +363,16 @@ function skiaGpuEnabled(config, platform) {
     android: ["MOUI_SKIA_ENABLE_GPU_VULKAN", "MOUI_SKIA_ENABLE_GPU_EGL"],
     harmonyos: ["MOUI_SKIA_ENABLE_GPU_EGL"],
   }[platform] || [];
-  return names.some(name => truthy(configEnvValue(config, name)));
+  // Explicit enable wins; explicit disable of any listed flag turns the path off.
+  const values = names.map(name => configEnvValue(config, name));
+  if (values.some(value => value !== null && String(value).trim() !== "" && truthy(value))) {
+    return true;
+  }
+  if (values.some(value => value !== null && String(value).trim() !== "" && falsy(value))) {
+    return false;
+  }
+  // Product default: native GPU backends are on for the matching target.
+  return names.length > 0;
 }
 
 function skiaParagraphEnabled(config) {
@@ -670,8 +684,9 @@ function platformFlags(config, values) {
     }
   } else if (platform === "macos") {
     const resolvedLinkMode = resolveUnixLibraryMode(linkMode, libPath, skiaLib, ".dylib");
+    const metalGpu = skiaMetalGpuEnabled(config, platform);
     stubCcFlags = `-DMOUI_SKIA_HAS_SKIA -std=c++17 -I${includePath}`;
-    linkFlags = macosLibraryFlags(config, libPath, skiaLib, skiaMetalGpuEnabled(config), linkMode) +
+    linkFlags = macosLibraryFlags(config, libPath, skiaLib, metalGpu, linkMode) +
       " -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices -lobjc";
     if (paragraphEnabled) {
       stubCcFlags = appendFlags(
@@ -683,7 +698,7 @@ function platformFlags(config, values) {
         skiaParagraphLinkFlags(libPath, resolvedLinkMode, "darwin"),
       );
     }
-    if (skiaMetalGpuEnabled(config)) {
+    if (metalGpu) {
       stubCcFlags = appendFlags(stubCcFlags, "-DMOUI_SKIA_ENABLE_GPU_METAL");
       linkFlags = appendFlags(
         linkFlags,
@@ -692,12 +707,13 @@ function platformFlags(config, values) {
     }
   } else if (platform === "ios" || platform === "iosSim") {
     const resolvedLinkMode = resolveUnixLibraryMode(linkMode, libPath, skiaLib, ".dylib");
+    const metalGpu = skiaMetalGpuEnabled(config, platform);
     stubCcFlags = `-DMOUI_SKIA_HAS_SKIA -std=c++17 -I${includePath}`;
     linkFlags = macosLibraryFlags(
       config,
       libPath,
       skiaLib,
-      skiaMetalGpuEnabled(config),
+      metalGpu,
       linkMode,
     ) + " -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework QuartzCore -framework UIKit -lobjc";
     if (paragraphEnabled) {
@@ -710,7 +726,7 @@ function platformFlags(config, values) {
         skiaParagraphLinkFlags(libPath, resolvedLinkMode, "darwin"),
       );
     }
-    if (skiaMetalGpuEnabled(config)) {
+    if (metalGpu) {
       stubCcFlags = appendFlags(stubCcFlags, "-DMOUI_SKIA_ENABLE_GPU_METAL");
       linkFlags = appendFlags(
         linkFlags,
@@ -800,19 +816,30 @@ function platformFlags(config, values) {
       "-lm",
       "-ldl",
     ]);
-    if (truthy(configEnvValue(config, "MOUI_SKIA_ENABLE_GPU_VULKAN"))) {
+    if (skiaGpuEnabled(config, platform)) {
       const ganeshExtStaticLib = path.join(libPath, "libskia_ganesh_ext.a");
       if (!fs.existsSync(ganeshExtStaticLib)) {
         throw new Error(
-          `MOUI_SKIA_ENABLE_GPU_VULKAN requested, but ${ganeshExtStaticLib} was not found`,
+          `Android GPU default/enable requested, but ${ganeshExtStaticLib} was not found`,
         );
       }
-      stubCcFlags = appendFlags(stubCcFlags, "-DMOUI_SKIA_ENABLE_GPU_VULKAN");
-      linkFlags = `${ganeshExtStaticLib} ${linkFlags}`;
-    }
-    if (truthy(configEnvValue(config, "MOUI_SKIA_ENABLE_GPU_EGL"))) {
-      stubCcFlags = appendFlags(stubCcFlags, "-DMOUI_SKIA_ENABLE_GPU_EGL");
-      linkFlags = appendMissingFlags(linkFlags, ["-lEGL", "-lGLESv2"]);
+      // Default product path enables both Vulkan and EGL so runtime can pick.
+      const vulkanExplicit = configEnvValue(config, "MOUI_SKIA_ENABLE_GPU_VULKAN");
+      const eglExplicit = configEnvValue(config, "MOUI_SKIA_ENABLE_GPU_EGL");
+      const enableVulkan = vulkanExplicit === null || String(vulkanExplicit).trim() === ""
+        ? true
+        : !falsy(vulkanExplicit);
+      const enableEgl = eglExplicit === null || String(eglExplicit).trim() === ""
+        ? true
+        : !falsy(eglExplicit);
+      if (enableVulkan) {
+        stubCcFlags = appendFlags(stubCcFlags, "-DMOUI_SKIA_ENABLE_GPU_VULKAN");
+        linkFlags = `${ganeshExtStaticLib} ${linkFlags}`;
+      }
+      if (enableEgl) {
+        stubCcFlags = appendFlags(stubCcFlags, "-DMOUI_SKIA_ENABLE_GPU_EGL");
+        linkFlags = appendMissingFlags(linkFlags, ["-lEGL", "-lGLESv2"]);
+      }
     }
     if (paragraphEnabled) {
       stubCcFlags = appendFlags(

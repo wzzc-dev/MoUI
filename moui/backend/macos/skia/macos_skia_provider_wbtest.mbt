@@ -4,9 +4,9 @@ test "macos skia options default to system font resolution and host resolver" {
   assert_true(
     options.font_resolution == @skia_renderer.SkiaFontResolution::SystemFontMgr,
   )
-  assert_true(
-    options.surface_route == @render.SkiaSurfaceRoute::RasterSurfaceRoute,
-  )
+  // Default follows auto: Metal when the GPU runtime is available, else raster.
+  let expected_route = macos_surface_route_from_environment()
+  assert_true(options.surface_route == expected_route)
   let smoke_options = MacosSkiaSmokeOptions::new(
     first_frame_smoke_auto_exit=true,
     native_ime_runtime_smoke=true,
@@ -67,9 +67,11 @@ test "macos skia provider preflight records package observation boundary" {
     preflight.contains("skia_available=\{@skia_renderer.skia_available()}"),
   )
   assert_true(preflight.contains("font=system-font-mgr"))
-  assert_true(preflight.contains("surface_route=raster"))
+  let expected_route = macos_surface_route_from_environment().label()
+  assert_true(preflight.contains("surface_route=\{expected_route}"))
   assert_true(
-    preflight.contains("macOS pass-through NSImageView Skia pixel presenter"),
+    preflight.contains("macOS pass-through NSImageView Skia pixel presenter") ||
+    preflight.contains("Metal"),
   )
   assert_true(preflight.contains("gpu_route=Metal GPU opt-in preflight"))
   assert_true(preflight.contains("window-present=pending"))

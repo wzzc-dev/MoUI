@@ -63,15 +63,12 @@ For feature proof coverage (which CI job proves each feature), see
 
 `RendererDescriptor` describes static renderer capability identity. Native host
 runtime assembly is handled by platform renderer providers instead:
-`backend/<platform>/skia` selects the promotion-aware native Skia route and
-`backend/<platform>/wgpu` selects the `NativeWgpu` diagnostic route.
-`backend/<platform>/sun` selects the `SunRasterNative` CPU raster
-route. The `RendererSelection` helper remains useful for reports and tests that match
-families or backend ids, but it is not a native host-core option or provider
-contract. Web keeps using the WebGPU wasm backend. Mobile selection can report
-the existing `SkiaGpuNative` identity and explicit requests may exercise an
-unpromoted window-surface path; that identity or run is not a promotion or
-runtime-completion claim.
+`backend/<platform>/skia` selects the native Skia route (product `auto` prefers
+GPU when available) and `backend/<platform>/wgpu` selects the `NativeWgpu`
+diagnostic route. `backend/<platform>/sun` selects the `SunRasterNative` CPU
+raster route. The `RendererSelection` helper remains useful for reports and
+tests that match families or backend ids, but it is not a native host-core
+option or provider contract. Web keeps using the WebGPU wasm backend.
 
 The Skia binding has explicit Metal, D3D12, Vulkan, and EGL/GLES window-surface
 source paths, while `render/skia` reports route preflight diagnostics. The macOS real
@@ -90,10 +87,9 @@ flushes, presents, and emits `Presented` without calling `read_pixels`.
 The same worker owns D3D12 swapchains/fences, Vulkan acquire/render-finished
 synchronization, and EGL contexts/surfaces in the other native providers.
 Android and HarmonyOS cross-build those paths; iOS simulator selects the Metal
-GPU route. Windows/Linux matching-host validation is still pending.
-`SkiaGpuNative` must not become an `auto` default until each platform has
-worker-owned matching-host presentation and passes
-`docs/mobile-mainline-roadmap.md` promotion gates.
+GPU route. Product `auto` defaults to `SkiaGpuNative` on every native Skia
+platform when the host GPU surface is available. Windows/Linux and physical
+mobile seven-gate quality manifests may still be incomplete.
 
 ## Current Native WGPU Diagnostic Notes
 
