@@ -16,9 +16,14 @@
   keyed by `identity_key` (not by revision key). Admission records track
   update streak, hit count, skip reason, last admitted frame, and last
   revision across multiple revisions of the same identity.
+- `DrawFrame.clear_color` owns frame initialization; runtime frame commands do
+  not contain a leading `Clear`. Legacy host/Web renderer adapters materialize
+  that clear when lowering to command-only backends.
 - The renderer consumes `DrawFrame.damage` via `resolve_effective_damage` +
-  `apply_damage_clear`. `Empty` and scope-command-present frames auto-fallback
-  to `FullSurface`. `Rects` triggers per-rect `clip_rect + clear`.
+  `apply_damage_clip` + `apply_damage_clear`. `Empty` and
+  scope-command-present frames auto-fallback to `FullSurface`. `Rects` are
+  conservatively unioned, then the complete command stream is clipped in
+  logical coordinates after canvas scaling.
 - `render_cached_command_range` takes `damage~ : DamageRegion` (defaults to
   `FullSurface`). `DrawCachedLayer` commands whose `frame` does not intersect
   any damage rect are skipped. Offscreen layer rendering (inside
@@ -32,4 +37,6 @@
   64 MiB cache cap, 512 admission record limit, LRU eviction with
   cold/large and churn-without-hit priority.
 - See ADR `docs/decisions/0007-skia-layer-cache-indexing-and-damage-region.md`
-  for full design rationale, options considered, and benchmark data.
+  for cache design and ADR
+  `docs/decisions/0009-draw-frame-clear-and-skia-damage-clip.md` for the
+  corrected frame/damage contract.

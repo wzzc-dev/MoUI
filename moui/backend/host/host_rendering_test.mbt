@@ -315,7 +315,6 @@ test "host renderer expands cached layer updates and replays cached hits" {
   let first = renderer.render_frame(
     @core.DrawFrame::new(
       commands=[
-        @core.DrawCommand::Clear(@core.Color::white()),
         @core.DrawCommand::BeginCachedLayer(spec),
         text,
         @core.DrawCommand::EndCachedLayer(spec.key),
@@ -327,16 +326,15 @@ test "host renderer expands cached layer updates and replays cached hits" {
   inspect(first.cache_hit_count, content="0")
   let second = renderer.render_frame(
     @core.DrawFrame::new(
-      commands=[
-        @core.DrawCommand::Clear(@core.Color::white()),
-        @core.DrawCommand::DrawCachedLayer(spec),
-      ],
+      commands=[@core.DrawCommand::DrawCachedLayer(spec)],
       damage=@core.DamageRegion::empty(),
     ),
   )
   inspect(second.cache_hit_count, content="1")
   inspect(second.cache_miss_count, content="0")
   inspect(rendered.length(), content="2")
+  assert_true(rendered[0][0] is @core.DrawCommand::Clear(_))
+  assert_true(rendered[1][0] is @core.DrawCommand::Clear(_))
   assert_true(
     rendered[1].any(command => {
       command is @core.DrawCommand::DrawText({ text: "cached", .. })

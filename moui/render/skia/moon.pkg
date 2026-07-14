@@ -9,6 +9,10 @@ import {
   "wzzc-dev/moui_skia/native" @skia_native,
 }
 
+import {
+  "wzzc-dev/moui/runtime",
+} for "wbtest"
+
 supported_targets = "native"
 
 options(

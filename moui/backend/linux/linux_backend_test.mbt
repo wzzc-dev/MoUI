@@ -35,7 +35,7 @@ test "linux client decoration commands reserve a titlebar" {
   let decorations = LinuxClientDecorationState::new(active=true)
   let commands = linux_client_decorated_commands(
     [
-      @core.DrawCommand::Clear(@core.Color::white()),
+      @core.DrawCommand::Clear(@core.Color::gray()),
       @core.DrawCommand::FillRect(
         @core.Rect::new(x=0.0, y=0.0, width=320.0, height=200.0),
         @core.Color::blue(),
@@ -46,9 +46,10 @@ test "linux client decoration commands reserve a titlebar" {
     decorations~,
   )
   assert_true(commands.length() > 6)
-  guard commands[0] is @core.DrawCommand::Clear(_) else {
+  guard commands[0] is @core.DrawCommand::Clear(clear_color) else {
     fail("expected wrapper clear")
   }
+  assert_true(clear_color == @core.Color::gray())
   guard commands[1]
     is @core.DrawCommand::FillRect({ size: { height, .. }, .. }, _) else {
     fail("expected titlebar fill")
