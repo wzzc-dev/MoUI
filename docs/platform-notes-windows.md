@@ -60,6 +60,25 @@ The ordinary Windows Skia entrypoints are interactive app entrypoints. Keep
 matching-host first-frame smoke in tester/backend smoke runners rather than
 adding auto-exit flags to Showcase or Markdown Editor packages.
 
+## Link Flags
+
+Windows Skia/Ganesh libraries are injected by `moui/build.js` prebuild
+`link_configs` for `wzzc-dev/moui/backend/windows/skia` (from
+`MOUI_SKIA_CC_LINK_FLAGS`). Win32 system libraries for the window host come
+from `window/windows` prebuild `link_configs`. DirectWrite WGPU text uses
+`render/wgpu/directwrite` link_configs (`-lz`).
+
+Example `windows_skia` / `windows_wgpu` entrypoints should not repeat Skia or
+Win32 link flags. They only need an empty `cc-link-flags` override so Moon
+disables `tcc -run` when required:
+
+```moonbit
+link: { "native": { "cc-link-flags": "" } },
+```
+
+WebView2 flags remain owned by `moui_webview/build.js` `link_configs` for
+`backend/windows` when the SDK is detected.
+
 ## Host Architecture
 
 The Windows host follows the same `HostEvent` and `HostRuntimeDriver` path as

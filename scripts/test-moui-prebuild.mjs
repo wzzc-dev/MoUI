@@ -65,29 +65,59 @@ if (!realSkia.vars.MOUI_SKIA_ANDROID_LINK_FLAGS.includes("-landroid")) {
   throw new Error("real Skia prebuild should expose Android presenter link flags");
 }
 
-if (process.platform === "darwin") {
-  if (!Array.isArray(realSkia.link_configs) || realSkia.link_configs.length < 2) {
-    throw new Error("darwin prebuild should expose macOS backend link_configs");
+const linkPackages = new Set(
+  (realSkia.link_configs || []).map((entry) => entry.package),
+);
+const requirePackage = (name) => {
+  if (!linkPackages.has(name)) {
+    throw new Error(`missing link_configs entry for ${name}`);
   }
-  const packages = new Set(realSkia.link_configs.map((entry) => entry.package));
-  if (!packages.has("wzzc-dev/moui/backend/macos")) {
-    throw new Error("missing backend/macos link_configs entry");
-  }
-  if (!packages.has("wzzc-dev/moui/backend/macos/skia")) {
-    throw new Error("missing backend/macos/skia link_configs entry");
-  }
-  const skiaEntry = realSkia.link_configs.find(
-    (entry) => entry.package === "wzzc-dev/moui/backend/macos/skia",
+};
+const flagsFor = (name) =>
+  String(
+    (realSkia.link_configs || []).find((entry) => entry.package === name)
+      ?.link_flags || "",
   );
-  if (!String(skiaEntry.link_flags || "").includes("AppKit")) {
+
+// Linux host/skia/wgpu + fontconfig are always emitted.
+requirePackage("wzzc-dev/moui/backend/linux");
+requirePackage("wzzc-dev/moui/backend/linux/skia");
+requirePackage("wzzc-dev/moui/backend/linux/wgpu");
+requirePackage("wzzc-dev/moui/render/wgpu/fontconfig");
+if (!flagsFor("wzzc-dev/moui/backend/linux").includes("-lz")) {
+  throw new Error("linux host link_configs should include -lz");
+}
+if (!flagsFor("wzzc-dev/moui/backend/linux/skia").includes("/tmp/libskia.a")) {
+  throw new Error("linux/skia link_configs should include Skia link flags");
+}
+if (!flagsFor("wzzc-dev/moui/render/wgpu/fontconfig").includes("fontconfig")) {
+  throw new Error("fontconfig link_configs should include fontconfig libs");
+}
+
+// Windows skia + directwrite are always emitted.
+requirePackage("wzzc-dev/moui/backend/windows/skia");
+requirePackage("wzzc-dev/moui/render/wgpu/directwrite");
+if (!flagsFor("wzzc-dev/moui/backend/windows/skia").includes("/tmp/libskia.a")) {
+  throw new Error("windows/skia link_configs should include Skia link flags");
+}
+
+if (process.platform === "darwin") {
+  requirePackage("wzzc-dev/moui/backend/macos");
+  requirePackage("wzzc-dev/moui/backend/macos/skia");
+  requirePackage("wzzc-dev/moui/backend/macos/wgpu");
+  if (!flagsFor("wzzc-dev/moui/backend/macos/skia").includes("AppKit")) {
     throw new Error("macos/skia link_configs should include AppKit");
   }
-  if (!String(skiaEntry.link_flags || "").includes("/tmp/libskia.a")) {
+  if (!flagsFor("wzzc-dev/moui/backend/macos/skia").includes("/tmp/libskia.a")) {
     throw new Error("macos/skia link_configs should include Skia link flags");
   }
   if (!String(fallback.vars.MOUI_MACOS_BACKEND_HOST_LINK_FLAGS || "").includes("AppKit")) {
     throw new Error("fallback should still expose macOS host framework vars");
   }
+}
+
+if (!String(realSkia.vars.MOUI_LINUX_BACKEND_HOST_LINK_FLAGS || "").includes("-lz")) {
+  throw new Error("prebuild should expose MOUI_LINUX_BACKEND_HOST_LINK_FLAGS");
 }
 
 console.log("moui prebuild tests: ok");

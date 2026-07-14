@@ -8,6 +8,6 @@ supported_targets = "native"
 
 options(
   "is-main": true,
-  link: { "native": { "cc-link-flags": "-lz " } },
+  link: { "native": { "cc-link-flags": "" } },
   targets: { "main.mbt": [ "native" ] },
 )

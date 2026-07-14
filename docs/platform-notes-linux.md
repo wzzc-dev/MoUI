@@ -50,17 +50,22 @@ Linux runtime requirements are intentionally native:
   ```
   When neither portal nor zenity is available, file and folder selection
   silently returns cancelled, and the app prints a diagnostic message to stdout.
-- zlib in the final native link; Linux entrypoints and `backend/linux` include
-  `-lz`.
+- zlib / pthread / fontconfig system libraries for the final native link.
+  `moui/build.js` injects them through prebuild `link_configs` for
+  `backend/linux`, `backend/linux/skia`, `backend/linux/sun`,
+  `backend/linux/wgpu`, and `render/wgpu/fontconfig`. Linux example entrypoints
+  should not repeat `-lz` or fontconfig stacks; they only need an empty
+  `cc-link-flags` override so Moon disables `tcc -run` when required.
 - glib-2.0 development headers and runtime library. `backend/linux`
   unconditionally drives `HostTimerSource` subscriptions through the GLib main
   loop (`g_timeout_add` / `g_source_remove`), so the `moui` prebuild resolves
   `glib-2.0` through `pkg-config` and feeds the resulting `-I` include flags
-  into `stub-cc-flags` and `-lglib-2.0` into `cc-link-flags` for
-  `backend/linux`. On hosts where `pkg-config` cannot find `glib-2.0`, both
-  resolve to empty (the C stub body is guarded by `#ifdef __linux__` and only
-  matters on Linux). Distro-specific setups can override the resolved flags
-  with `MOUI_LINUX_GLIB_STUB_CC_FLAGS` and `MOUI_LINUX_GLIB_CC_LINK_FLAGS`.
+  into `stub-cc-flags` and merges the libs into the `backend/linux`
+  `link_configs` entry. On hosts where `pkg-config` cannot find `glib-2.0`,
+  both resolve to empty (the C stub body is guarded by `#ifdef __linux__` and
+  only matters on Linux). Distro-specific setups can override the resolved
+  flags with `MOUI_LINUX_GLIB_STUB_CC_FLAGS` and
+  `MOUI_LINUX_GLIB_CC_LINK_FLAGS`.
 - WebKitGTK development packages (`libwebkit2gtk-4.1-dev` or `4.0`) for native
   WebView support. The `moui_webview` prebuild auto-detects
   `gtk+-3.0` with `webkit2gtk-4.1` or `webkit2gtk-4.0` through `pkg-config`;
