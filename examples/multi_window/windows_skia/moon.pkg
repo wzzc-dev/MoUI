@@ -1,0 +1,14 @@
+import {
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/geometry",
+  "wzzc-dev/moui/backend/windows/skia" @windows_skia_backend,
+  "wzzc-dev/moui/runtime",
+  "examples/multi_window/app" @multi_window_app,
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  targets: { "main.mbt": [ "native" ] },
+)
