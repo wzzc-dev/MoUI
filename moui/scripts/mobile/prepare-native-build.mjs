@@ -377,23 +377,29 @@ const selectRenderer = (requested, fallbackSkia) => {
   if (!["auto", "skia-gpu", "skia-raster"].includes(requested)) {
     throw new Error(`--renderer must be auto, skia-gpu, or skia-raster: ${requested}`);
   }
-  if (requested === "skia-gpu" && !fallbackSkia) {
+  // Product default is GPU for auto/skia-gpu when a real Skia package is linked.
+  // fallbackSkia builds cannot provide a native GPU route, so they stay raster.
+  if (requested === "skia-raster") {
     return {
       requested,
-      selected: "skia-gpu",
+      selected: "skia-raster",
       gpuPromoted: false,
       fallbackReason: null,
     };
   }
+  if (fallbackSkia) {
+    return {
+      requested,
+      selected: "skia-raster",
+      gpuPromoted: false,
+      fallbackReason: "fallback Skia build cannot provide a native GPU route",
+    };
+  }
   return {
     requested,
-    selected: "skia-raster",
-    gpuPromoted: false,
-    fallbackReason: requested === "skia-raster"
-      ? null
-      : requested === "skia-gpu"
-        ? "fallback Skia build cannot provide a native GPU route"
-        : "native GPU route has not passed platform promotion gates",
+    selected: "skia-gpu",
+    gpuPromoted: true,
+    fallbackReason: null,
   };
 };
 

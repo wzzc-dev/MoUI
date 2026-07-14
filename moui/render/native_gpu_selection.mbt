@@ -10,9 +10,10 @@ pub(all) enum NativeGpuPlatform {
 } derive(Eq, Debug, ToJson)
 
 ///|
-/// User-visible native renderer preference. `Auto` is promotion-gated;
-/// `SkiaGpu` is an explicit request and may still fall back when the host
-/// surface or provider is unavailable.
+/// User-visible native renderer preference. `Auto` prefers GPU when the host
+/// surface is available; `SkiaGpu` is an explicit request and may still fall
+/// back when the host surface or provider is unavailable. `SkiaRaster` forces
+/// the CPU path. Runtime recovery may still sticky-fallback to raster.
 pub(all) enum NativeRendererMode {
   Auto
   SkiaGpu
@@ -144,15 +145,13 @@ pub fn NativeRendererMode::label(self : NativeRendererMode) -> String {
 }
 
 ///|
-/// Per-platform promotion flags. A platform flips to `true` only after a
-/// matching-host ADR 0006 seven-gate manifest passes `--require-passed`.
-/// macOS Metal evidence:
-/// `artifacts/gpu-promotion/macos/promotion-full-600s/gpu-promotion-claim.json`
-/// (600s performance + lifecycle/context-loss; reviewed 2026-07-14).
+/// Per-platform default GPU gate for `auto`. All native Skia platforms default
+/// to GPU when the host surface is available; raster remains the explicit mode
+/// and the sticky recovery fallback. Evidence tooling may still record
+/// matching-host manifests, but does not block the product default.
 pub fn NativeGpuPlatform::gpu_promoted(self : NativeGpuPlatform) -> Bool {
   match self {
-    Macos => true
-    Windows | Linux | Android | Ios | HarmonyOs => false
+    Macos | Windows | Linux | Android | Ios | HarmonyOs => true
   }
 }
 

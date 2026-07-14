@@ -13,25 +13,26 @@ diagnostic route.
 | IME | Shared replace/selection events and mobile IME snapshots; Android `InputConnection`, iOS UIKit text proxy, HarmonyOS transparent `TextInput` proxy | Chinese composition, emoji/ZWJ, selection, candidate-anchor device proof pending |
 | Clipboard | Async host channel with text and image payloads; Android `ClipboardManager`/`FileProvider`, iOS `UIPasteboard`, HarmonyOS pasteboard ArrayBuffer path | Cross-app text/PNG round-trip proof pending |
 | Accessibility | Revisioned flat semantics snapshots and targeted runtime action routing; native virtual/container nodes on all three platforms | Tree, focus, and action screen-reader proof pending |
-| Renderer selection | Formal `SkiaGpuNative`/`HostGpuSurface` descriptor and promotion-aware `auto`, `skia-gpu`, `skia-raster` selection; `MobileRendererSelection` carries `surface_route` per Phase 1.8 | `gpu_promoted` is `true` for macOS Metal (2026-07-14 matching-host claim); other platforms stay `false` until their manifests pass |
+| Renderer selection | Formal `SkiaGpuNative`/`HostGpuSurface` descriptor and `auto`/`skia-gpu`/`skia-raster` selection; `MobileRendererSelection` carries `surface_route` | Product default: all native platforms `gpu_promoted=true`; `auto` selects GPU when available, raster on explicit request or recovery fallback |
 | Renderer mailbox | Capacity-two latest-wins frame mailbox with non-droppable control messages and surface-generation rejection; native `std::thread` safely retains `SkPicture` plus POD metadata and acknowledges detach | Desktop hosts poll a pending frame without duplicate submission; mobile sessions drain completions each VSync; matching-device stress evidence remains pending |
 | Context-loss recovery | `RendererRecovery` state machine in `moui/runtime/renderer_recovery.mbt` (Idle → Lost → Recovering → Recovered → Idle; terminal `FallbackToRaster` after 2 consecutive failures; 3-VSync deadline); hybrid rendering keeps the same runtime and routes later frames to raster | Mock fallback/state-preservation tests pass; matching-device forced-loss and deadline evidence pending |
 | Direct GPU presentation | Worker-owned paths exist for iOS/macOS Metal, Android Vulkan/GLES, HarmonyOS EGL/GLES, Windows D3D12, and Linux Wayland Vulkan. Android GPU APK, HarmonyOS GPU HAP, and iOS simulator GPU App builds pass; macOS has a local first-frame smoke. | Physical iOS/Android/HarmonyOS, Windows MSVC, Linux Wayland, and full promotion manifests remain pending |
+| Mobile runtime smoke | Recorder writes optional `renderer` (+ pending `gpuPromotionEvidence` skeleton when `gpuPromoted=true`, `claimed=false`) | iOS Simulator Component Gallery **`status=passed`** (`artifacts/mobile-runtime/ios/component_gallery/`, 2026-07-14); HarmonyOS host had no `hdc` target (packaging + scaffold only) |
 
-`SkiaRasterNative` remains the default and the compatibility/test fallback.
-Window-surface GPU source paths have landed per Phase 1. Until a platform's
-matching-device manifest passes the seven promotion gates, `auto` selects
-`skia-raster`; an explicit `skia-gpu` request may exercise the unpromoted path
-when available but is not completion or promotion evidence. A GPU descriptor,
-offscreen GPU surface, or `PictureRecorded` worker completion does not count as
-direct presentation; full-frame readback or platform image intermediates are
-forbidden on the promoted GPU production path.
+`SkiaGpuNative` is the product `auto` default on all native Skia platforms when
+a host GPU surface is available. `SkiaRasterNative` remains the explicit mode
+and the sticky recovery fallback. Window-surface GPU paths exist for iOS/macOS
+Metal, Android Vulkan/GLES, HarmonyOS EGL/GLES, Windows D3D12, and Linux
+Wayland Vulkan. A GPU descriptor, offscreen GPU surface, or `PictureRecorded`
+worker completion still does not count as direct presentation; full-frame
+readback or platform image intermediates are forbidden on the GPU production
+path.
 
 All three mobile build entrypoints accept
 `--renderer auto|skia-gpu|skia-raster`. The generated `mobile-build.json` and
-native startup log record both requested and selected modes. Before promotion,
-`auto` selects raster with an explicit reason. `skia-gpu` is an opt-in
-validation route and never promotes the GPU descriptor by itself.
+native startup log record both requested and selected modes. For real Skia
+packages, `auto` and `skia-gpu` select GPU (`gpuPromoted: true`); fallback-Skia
+or explicit `skia-raster` stays raster.
 
 Worker submission and presentation are separate contracts. A queued frame or
 `PictureRecorded` completion does not advance first-frame or image-resource
@@ -55,11 +56,12 @@ screen-coordinate hit test. `SetText` uses `ReplaceText`; focus, activation,
 submit, selection, expand/collapse/dismiss, and normalized scrolling use the
 existing runtime/control paths.
 
-## GPU Promotion Contract
+## GPU Default And Evidence Contract
 
-Each platform promotes independently. Before promotion, `auto` selects raster.
-A platform may select GPU by default only when its matching-device manifest
-proves all of the following:
+Product `auto` already selects GPU on every native Skia platform when the host
+surface is available. Matching-device seven-gate manifests remain the bar for
+claiming hardware-proven quality, not for enabling the default. A strong
+manifest should still prove all of the following:
 
 - direct window-surface presentation with zero full-frame CPU readback, RGBA
   copy, Bitmap, CGImage, UIImage, or PixelMap intermediates;
@@ -75,10 +77,10 @@ proves all of the following:
 - automatic raster fallback after repeated GPU recovery failure while keeping
   the existing `AppRuntime` state.
 
-The intended backend order is iOS Metal, Android Vulkan with GLES fallback,
-then HarmonyOS EGL/GLES followed by optional Vulkan. Worker-owned source is
-connected; these paths remain unpromoted until their matching-device manifests
-pass.
+Backend order for evidence collection remains iOS Metal, Android Vulkan with
+GLES fallback, then HarmonyOS EGL/GLES followed by optional Vulkan. Worker-owned
+source is connected and is the product default; incomplete manifests only mean
+matching-device quality claims are still pending.
 
 Desktop and Web use the shared schema illustrated by
 `docs/gpu-promotion-manifest.example.json`. Validate a pending or diagnostic

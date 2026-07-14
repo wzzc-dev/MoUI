@@ -1,13 +1,8 @@
 ///|
 async fn main {
-  let surface_route = if @env.get_env_var("MOUI_MACOS_SKIA_SURFACE_ROUTE") ==
-    Some("metal-gpu") {
-    @render.SkiaSurfaceRoute::MetalGpuSurfaceRoute
-  } else {
-    @render.SkiaSurfaceRoute::RasterSurfaceRoute
-  }
+  // Surface route defaults via MacosSkiaAppOptions (auto -> GPU when available;
+  // override with MOUI_SKIA_RENDERER or MOUI_MACOS_SKIA_SURFACE_ROUTE).
   let app_options = @macos_skia_backend.MacosSkiaAppOptions::new(
-    surface_route~,
     transparent_titlebar=true,
   )
   let host_services = @host.HostAppServices::new(

@@ -375,8 +375,21 @@ fn validate_gpu_promotion_evidence(
     raster_fallback, "automaticAfterRepeatedFailure", "gpuPromotionEvidence.rasterFallback.automaticAfterRepeatedFailure",
     failures,
   )
-  // When --require-passed is used, every gate must be satisfied.
-  if require_passed {
+  // Thresholds only apply when the manifest explicitly claims seven-gate
+  // promotion. Product-default GPU (`renderer.gpuPromoted=true`) may attach a
+  // pending skeleton for schema completeness without blocking runtime smoke
+  // `--require-passed`.
+  let claim_passed = match manifest.get("gpuPromotionClaim") {
+    Some(Json::True) => true
+    Some(Json::String(value)) => value == "true" || value == "passed"
+    _ =>
+      match evidence.get("claimed") {
+        Some(Json::True) => true
+        Some(Json::String(value)) => value == "true" || value == "passed"
+        _ => false
+      }
+  }
+  if require_passed && claim_passed {
     if !readback_eliminated {
       failures.push(
         "gpuPromotionEvidence.readbackEliminated must be true for passed GPU promotion evidence",

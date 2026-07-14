@@ -148,23 +148,23 @@ node scripts/record-gpu-promotion-smoke.mjs --platform macos --mode short-smoke
 # expect shortPathOk=true, gpuPromoted=false, schema validate ok
 ```
 
-## Flipping `auto` → GPU (after evidence)
+## Product default (current)
 
-1. Produce a real `full` (or equivalent) matching-host run with provenance.
-2. Pass `--require-passed`.
-3. Update `NativeGpuPlatform::gpu_promoted` for **that platform only** in
-   `moui/render/native_gpu_selection.mbt`.
-4. Update the promotions table in
-   [`decisions/0006-mobile-gpu-surface-and-render-thread.md`](decisions/0006-mobile-gpu-surface-and-render-thread.md).
-5. Keep raster fallback and `skia-raster` override working.
+As of 2026-07-14, **all** `NativeGpuPlatform::gpu_promoted` arms return `true`.
+Product `auto` selects GPU whenever the host surface is available. This runbook
+still records matching-host seven-gate evidence for quality claims; it no longer
+gates the product default.
 
-Until step 3, providers keep calling `gpu_promoted()` which returns `false` for
-every platform.
+Keep working:
 
-## Platform order (recommended)
+- explicit `skia-raster` / `MOUI_SKIA_RENDERER=skia-raster`
+- sticky raster recovery after terminal GPU failure
+- fallback-Skia packaging (`gpuPromoted: false`, selected raster)
 
-1. macOS Metal  
-2. Web WebGPU (promotion record; already product GPU mainline)  
+## Platform order for evidence collection (recommended)
+
+1. macOS Metal (claim already recorded)  
+2. Web WebGPU (optional promotion record; already product GPU mainline)  
 3. iOS Metal (device)  
 4. Android Vulkan (+ API 23 GLES fallback evidence)  
 5. HarmonyOS EGL (signed device)  

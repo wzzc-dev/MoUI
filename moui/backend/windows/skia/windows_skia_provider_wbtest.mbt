@@ -227,9 +227,9 @@ test "windows skia options default to system font resolution" {
   assert_true(
     options.font_resolution == @skia_renderer.SkiaFontResolution::SystemFontMgr,
   )
-  assert_true(
-    options.surface_route == @render.SkiaSurfaceRoute::RasterSurfaceRoute,
-  )
+  // Default follows auto: D3D12 when the GPU runtime is available, else raster.
+  let expected_route = windows_surface_route_from_environment()
+  assert_true(options.surface_route == expected_route)
   assert_false(WindowsSkiaSmokeOptions::new().first_frame_smoke_auto_exit)
   let request = @host.HostWindowOpenRequest::new(
     title="Inspector",

@@ -579,6 +579,39 @@ void ensure_moonbit_runtime() {
   self.view.accessibilityElements = elements;
   UIAccessibilityPostNotification(UIAccessibilityLayoutChangedNotification, nil);
   NSLog(@"moui-mobile service accessibility tree nodes=%lu", (unsigned long)elements.count);
+  // Simulator smoke can request a deterministic focus/activate pair without a
+  // live VoiceOver gesture stream. This only runs once when the host process
+  // sets MOUI_MOBILE_A11Y_SMOKE=1 (SIMCTL_CHILD_ prefix for simctl).
+  static BOOL a11ySmokeFired = NO;
+  NSString *a11ySmoke = NSProcessInfo.processInfo.environment[@"MOUI_MOBILE_A11Y_SMOKE"];
+  BOOL a11ySmokeEnabled = a11ySmoke != nil &&
+      ([a11ySmoke isEqualToString:@"1"] ||
+       [a11ySmoke.lowercaseString isEqualToString:@"true"] ||
+       [a11ySmoke.lowercaseString isEqualToString:@"yes"]);
+  if (a11ySmokeEnabled && !a11ySmokeFired && elements.count > 0) {
+    MOUIMobileAccessibilityElement *target = nil;
+    for (MOUIMobileAccessibilityElement *candidate in elements) {
+      NSString *label = candidate.accessibilityLabel ?: @"";
+      if ([label isEqualToString:@"Activate service probe"] ||
+          [label containsString:@"Activate service probe"]) {
+        target = candidate;
+        break;
+      }
+    }
+    if (target == nil) {
+      for (MOUIMobileAccessibilityElement *candidate in elements) {
+        if ((candidate.accessibilityTraits & UIAccessibilityTraitButton) != 0) {
+          target = candidate;
+          break;
+        }
+      }
+    }
+    if (target != nil) {
+      a11ySmokeFired = YES;
+      [target accessibilityElementDidBecomeFocused];
+      (void)[target accessibilityActivate];
+    }
+  }
 }
 
 - (void)textViewDidChange:(UITextView *)textView {

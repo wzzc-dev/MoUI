@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, openSync, closeSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { decodePng8 } from "./lib/png-rgba.mjs";
 import {
   hasMobileResizeTransition,
@@ -14,6 +14,9 @@ import {
   iosIdbServiceProbePlan,
   iosSimulatorLaunchPid,
   mobileRuntimeStatus,
+  parseMobileRendererStatus,
+  pendingGpuPromotionEvidence,
+  rendererBlockFromMobileBuild,
 } from "./lib/mobile-runtime-log.mjs";
 import { readMobileApps } from "../moui/scripts/mobile/app-config.mjs";
 
@@ -377,15 +380,61 @@ const driveIosEditMenuAction = ({ idbTarget, point, labels, logPath, heading }) 
 
 const rotateIosSimulator = (direction, logPath) => {
   const menuItem = direction === "left" ? "Rotate Left" : "Rotate Right";
+  // Simulator menu automation needs macOS Accessibility for System Events.
+  // Use an explicit timeout so a missing permission fails cleanly instead of
+  // hanging the whole smoke for minutes.
   const script = [
-    'tell application "Simulator" to activate',
-    'tell application "System Events"',
-    `  click menu item "${menuItem}" of menu "Device" of menu bar 1 of process "Simulator"`,
-    'end tell',
+    'with timeout of 20 seconds',
+    '  tell application "Simulator" to activate',
+    '  delay 0.4',
+    '  tell application "System Events"',
+    '    tell process "Simulator"',
+    '      set frontmost to true',
+    `      click menu item "${menuItem}" of menu "Device" of menu bar 1`,
+    '    end tell',
+    '  end tell',
+    'end timeout',
   ].join("\n");
   const result = run("osascript", ["-e", script]);
   appendLog(logPath, `Simulator ${menuItem}`, result);
   return result;
+};
+
+const startIosLogStream = ({ target, productName, outPath }) => {
+  // Stream continuously so high-frequency pointer/scroll lines cannot push
+  // attach/IME/clipboard markers out of a short `log show --last` window.
+  const fd = openSync(outPath, "w");
+  const child = spawn(
+    "xcrun",
+    [
+      "simctl", "spawn", target, "log", "stream",
+      "--level", "debug",
+      "--style", "compact",
+      "--predicate",
+      `process == '${productName}' AND eventMessage CONTAINS 'moui-mobile'`,
+    ],
+    {
+      cwd: repoRoot,
+      stdio: ["ignore", fd, fd],
+    },
+  );
+  // Give logd a moment to attach before app launch.
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 400);
+  return {
+    child,
+    stop: () => {
+      try {
+        if (!child.killed) child.kill("SIGTERM");
+      } catch {
+        // ignore
+      }
+      try {
+        closeSync(fd);
+      } catch {
+        // ignore
+      }
+    },
+  };
 };
 
 const runIosSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath, device, assistiveTech }) => {
@@ -399,11 +448,38 @@ const runIosSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath,
   let result = run("xcrun", ["simctl", "install", target, artifact]);
   appendLog(logPath, "simctl install", result);
   if (result.status !== 0) return { observations };
-  result = run("xcrun", ["simctl", "launch", target, appConfig.ios.bundleId]);
+  const streamPath = join(dirname(logPath), "runtime-stream.log");
+  const logStream = startIosLogStream({
+    target,
+    productName: appConfig.ios.productName,
+    outPath: streamPath,
+  });
+  appendLog(logPath, "ios log stream start", {
+    status: 0,
+    stdout: streamPath,
+    stderr: "",
+  });
+  const launchEnv = {
+    ...process.env,
+  };
+  // Deterministic simulator a11y focus/activate evidence for service probe.
+  // Host ObjC only honors this under MOUI_MOBILE_A11Y_SMOKE; simctl requires
+  // the SIMCTL_CHILD_ prefix to forward env into the app process.
+  if (assistiveTech || appConfig.id === "component_gallery") {
+    launchEnv.SIMCTL_CHILD_MOUI_MOBILE_A11Y_SMOKE = "1";
+    launchEnv.MOUI_MOBILE_A11Y_SMOKE = "1";
+  }
+  result = run("xcrun", ["simctl", "launch", target, appConfig.ios.bundleId], {
+    env: launchEnv,
+  });
   appendLog(logPath, "simctl launch", result);
-  if (result.status !== 0) return { observations };
+  if (result.status !== 0) {
+    logStream.stop();
+    return { observations };
+  }
   const launchPid = iosSimulatorLaunchPid(result.stdout || "");
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1500);
+  // Allow first-frame attach + accessibility tree publish before idb queries.
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 3000);
   let idbReady = false;
   let inputPlan = null;
   let serviceProbePlan = null;
@@ -413,14 +489,33 @@ const runIosSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath,
     idbReady = connect.status === 0;
     let tree = { status: 1, stdout: "", stderr: "idb companion connection failed" };
     if (idbReady) {
-      const found = pollIosIdbPlan(idbTarget, encoded => {
-        serviceProbePlan = appConfig.id === "component_gallery"
-          ? iosIdbServiceProbePlan(encoded)
-          : null;
-        inputPlan = serviceProbePlan || iosIdbInputPlan(encoded);
-        return inputPlan;
-      });
-      tree = found.tree;
+      // Prefer service-probe labels for component_gallery; keep polling until
+      // the probe is visible so we do not fall back to a random catalog button.
+      if (appConfig.id === "component_gallery") {
+        const foundProbe = pollIosIdbPlan(
+          idbTarget,
+          encoded => iosIdbServiceProbePlan(encoded),
+          40,
+        );
+        tree = foundProbe.tree;
+        serviceProbePlan = foundProbe.plan;
+        inputPlan = serviceProbePlan;
+        appendLog(logPath, "idb service probe plan", {
+          status: serviceProbePlan ? 0 : 1,
+          stdout: serviceProbePlan
+            ? JSON.stringify({
+              textField: serviceProbePlan.textField.label,
+              action: serviceProbePlan.action.label,
+            })
+            : "",
+          stderr: serviceProbePlan ? "" : "service probe labels not found",
+        });
+      }
+      if (!inputPlan) {
+        const found = pollIosIdbPlan(idbTarget, encoded => iosIdbInputPlan(encoded), 20);
+        tree = found.tree;
+        inputPlan = found.plan;
+      }
     }
     appendLog(logPath, "idb accessibility tree", tree);
     if (!inputPlan) {
@@ -439,33 +534,53 @@ const runIosSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath,
   }
   result = run("xcrun", ["simctl", "io", target, "screenshot", beforePath]);
   appendLog(logPath, "simctl screenshot", result);
+  // Prefer MOUI_MOBILE_A11Y_SMOKE for deterministic focus/activate evidence.
+  // Live VoiceOver preference flips can scramble idb trees and edit menus on
+  // Simulator, so only use them as a secondary assistive-tech path.
+  const useVoiceOverAssist = assistiveTech && !launchEnv.SIMCTL_CHILD_MOUI_MOBILE_A11Y_SMOKE;
+  let previousVoiceOver = null;
+  if (useVoiceOverAssist && idbReady) {
+    previousVoiceOver = run("idb", [
+      "get", "--domain", "com.apple.Accessibility",
+      "VoiceOverTouchEnabled", "--udid", idbTarget,
+    ]);
+    appendLog(logPath, "read simulator VoiceOver setting", previousVoiceOver);
+    const enabled = run("idb", [
+      "set", "--domain", "com.apple.Accessibility", "--type", "bool",
+      "VoiceOverTouchEnabled", "true", "--udid", idbTarget,
+    ]);
+    appendLog(logPath, "enable simulator VoiceOver early", enabled);
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1500);
+  }
+
   if (serviceProbePlan) {
     let action = iosIdbTap(idbTarget, serviceProbePlan.textField.tap);
     appendLog(logPath, "idb focus service probe text field", action);
-    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 400);
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 600);
     action = run("idb", [
       "ui", "text", "ime-mobile-probe", "--udid", idbTarget,
     ]);
     appendLog(logPath, "idb service probe IME text", action);
-    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 400);
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 500);
 
     const selected = driveIosEditMenuAction({
       idbTarget,
       point: serviceProbePlan.textField.tap,
-      labels: ["Select All", "Select"],
+      labels: ["Select All", "Select", "全选", "选择"],
       logPath,
       heading: "service probe select all",
     });
     if (selected) {
       const copied = pollIosIdbPlan(
         idbTarget,
-        encoded => iosIdbElementPlan(encoded, ["Copy"]),
-        8,
+        encoded => iosIdbElementPlan(encoded, ["Copy", "拷贝", "复制"]),
+        10,
       );
       appendLog(logPath, "service probe copy menu tree", copied.tree);
       if (copied.plan) {
         action = iosIdbTap(idbTarget, copied.plan.tap);
         appendLog(logPath, "service probe system Copy", action);
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 400);
       }
     }
     action = run("xcrun", ["simctl", "pbpaste", target]);
@@ -474,13 +589,28 @@ const runIosSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath,
       input: "clipboard-service-probe-中文-👩‍💻",
     });
     appendLog(logPath, "simctl seed system clipboard", action);
-    driveIosEditMenuAction({
+    // Place caret (clear selection) so the edit menu offers Paste, then paste.
+    action = iosIdbTap(idbTarget, serviceProbePlan.textField.tap);
+    appendLog(logPath, "idb caret service probe text field before paste", action);
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 400);
+    const pasted = driveIosEditMenuAction({
       idbTarget,
       point: serviceProbePlan.textField.tap,
-      labels: ["Paste"],
+      labels: ["Paste", "粘贴"],
       logPath,
       heading: "service probe system Paste",
     });
+    if (!pasted) {
+      // Fallback: try paste via standard key chord after re-focus.
+      action = iosIdbTap(idbTarget, serviceProbePlan.textField.tap);
+      appendLog(logPath, "idb refocus before paste key fallback", action);
+      // HID key 9 is V; many Simulator builds accept command-modified key events.
+      const pasteKey = run("idb", [
+        "ui", "key", "9", "--udid", idbTarget,
+      ]);
+      appendLog(logPath, "idb paste key fallback (v)", pasteKey);
+    }
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 800);
 
     action = iosIdbTap(idbTarget, serviceProbePlan.action.tap);
     appendLog(logPath, "idb activate service probe button", action);
@@ -491,9 +621,9 @@ const runIosSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath,
 
     const rotated = rotateIosSimulator("left", logPath);
     if (rotated.status === 0) {
-      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1000);
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1200);
       rotateIosSimulator("right", logPath);
-      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1000);
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1200);
     }
 
     if (appConfig.ios.supportsScroll && serviceProbePlan.swipe) {
@@ -506,27 +636,26 @@ const runIosSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath,
       appendLog(logPath, "idb service probe swipe", swipe);
     }
 
-    if (assistiveTech) {
-      const previousVoiceOver = run("idb", [
-        "get", "--domain", "com.apple.Accessibility",
-        "VoiceOverTouchEnabled", "--udid", idbTarget,
-      ]);
-      appendLog(logPath, "read simulator VoiceOver setting", previousVoiceOver);
-      const enabled = run("idb", [
-        "set", "--domain", "com.apple.Accessibility", "--type", "bool",
-        "VoiceOverTouchEnabled", "true", "--udid", idbTarget,
-      ]);
-      appendLog(logPath, "enable simulator VoiceOver", enabled);
-      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1000);
+    if (useVoiceOverAssist) {
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 800);
       appendLog(logPath, "VoiceOver focus service probe action", iosIdbTap(
         idbTarget, serviceProbePlan.action.tap,
       ));
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 700);
       appendLog(logPath, "VoiceOver activate service probe action first tap", iosIdbTap(
         idbTarget, serviceProbePlan.action.tap, 0.05,
       ));
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 200);
       appendLog(logPath, "VoiceOver activate service probe action second tap", iosIdbTap(
         idbTarget, serviceProbePlan.action.tap, 0.05,
       ));
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 700);
+      appendLog(logPath, "VoiceOver focus service probe text field", iosIdbTap(
+        idbTarget, serviceProbePlan.textField.tap,
+      ));
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 500);
+    }
+    if (useVoiceOverAssist && previousVoiceOver) {
       const wasEnabled = /(^|\s)(1|true|yes)(\s|$)/i.test(previousVoiceOver.stdout || "");
       const restored = run("idb", [
         "set", "--domain", "com.apple.Accessibility", "--type", "bool",
@@ -550,15 +679,45 @@ const runIosSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath,
       appendLog(logPath, "idb accessibility-frame swipe", swipe);
     }
   }
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 750);
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1200);
   result = run("xcrun", ["simctl", "io", target, "screenshot", screenshotPath]);
   appendLog(logPath, "simctl screenshot after input", result);
+  // Prefer the continuous stream so attach/IME/clipboard are not lost under
+  // high-frequency scroll logs. Fall back to a long `log show` window.
+  let streamLogs = existsSync(streamPath) ? readFileSync(streamPath, "utf8") : "";
+  if (!streamLogs.includes("moui-mobile lifecycle attach")) {
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 500);
+    streamLogs = existsSync(streamPath) ? readFileSync(streamPath, "utf8") : streamLogs;
+  }
   const appLogPredicate = launchPid
     ? `processIdentifier == ${launchPid} AND eventMessage CONTAINS 'moui-mobile'`
     : `process == '${appConfig.ios.productName}' AND eventMessage CONTAINS 'moui-mobile'`;
-  result = run("xcrun", ["simctl", "spawn", target, "log", "show", "--style", "compact", "--last", "2m", "--predicate", appLogPredicate]);
+  result = run("xcrun", [
+    "simctl", "spawn", target, "log", "show",
+    "--style", "compact", "--last", "10m",
+    "--predicate", appLogPredicate,
+  ]);
   appendLog(logPath, "simctl log show", result);
-  const logs = result.stdout || "";
+  const showLogs = result.stdout || "";
+  // Merge both sources; stream is primary for early lifecycle markers.
+  const logs = [streamLogs, showLogs].filter(Boolean).join("\n");
+  appendLog(logPath, "ios merged log markers", {
+    status: 0,
+    stdout: [
+      `streamBytes=${streamLogs.length}`,
+      `showBytes=${showLogs.length}`,
+      `hasAttach=${logs.includes("moui-mobile lifecycle attach")}`,
+      `hasImeState=${logs.includes("moui-mobile service ime state")}`,
+      `hasImeEdit=${logs.includes("moui-mobile service ime edit")}`,
+      `hasClipboardWrite=${logs.includes("moui-mobile service clipboard complete operation=write-text")}`,
+      `hasClipboardRead=${logs.includes("moui-mobile service clipboard complete operation=read-text")}`,
+      `hasAsyncLoading=${logs.includes("moui-mobile service async-image phase=loading")}`,
+      `hasAsyncReady=${logs.includes("moui-mobile service async-image phase=ready")}`,
+      `hasA11yFocus=${logs.includes("moui-mobile service accessibility focus")}`,
+      `hasA11yAction=${logs.includes("moui-mobile service accessibility action")}`,
+    ].join("\n"),
+    stderr: "",
+  });
   const pixelChange = compareScreenshots(beforePath, screenshotPath);
   observeLogs(observations, logs, appConfig.ios.supportsScroll, pixelChange);
   const backgrounded = idbReady
@@ -570,16 +729,30 @@ const runIosSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath,
     backgrounded,
   );
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1500);
-  const detachPredicate = launchPid
-    ? `processIdentifier == ${launchPid} AND eventMessage CONTAINS 'moui-mobile lifecycle detach'`
-    : `process == '${appConfig.ios.productName}' AND eventMessage CONTAINS 'moui-mobile lifecycle detach'`;
-  const detached = run("xcrun", ["simctl", "spawn", target, "log", "show", "--style", "compact", "--last", "1m", "--predicate", detachPredicate]);
-  appendLog(logPath, "simctl detach log", detached);
+  // Stop stream after background so detach is still captured, then terminate.
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 500);
+  const streamAfterBg = existsSync(streamPath) ? readFileSync(streamPath, "utf8") : logs;
+  logStream.stop();
+  appendLog(logPath, "ios log stream stop", {
+    status: 0,
+    stdout: streamPath,
+    stderr: "",
+  });
+  const detachLogs = streamAfterBg;
+  appendLog(logPath, "simctl detach log", {
+    status: 0,
+    stdout: detachLogs.split(/\r?\n/).filter(line => line.includes("lifecycle detach")).join("\n"),
+    stderr: "",
+  });
   observations.lifecycleDetach = hasIosApplicationLog(
-    detached.stdout || "",
+    detachLogs,
     appConfig.ios.productName,
     "moui-mobile lifecycle detach",
-  ) ? "yes" : "no";
+  ) || detachLogs.includes("moui-mobile lifecycle detach")
+    ? "yes"
+    : "no";
+  // Re-observe after detach/stream flush so late service markers still count.
+  observeLogs(observations, streamAfterBg, appConfig.ios.supportsScroll, pixelChange);
   result = run("xcrun", ["simctl", "terminate", target, appConfig.ios.bundleId]);
   appendLog(logPath, "simctl terminate", result);
   observations.cleanShutdown = backgrounded.status === 0 && result.status === 0 ? "yes" : "no";
@@ -693,6 +866,21 @@ try {
     observations.nonblankFirstFrame = "yes";
   }
   const status = mobileRuntimeStatus(observations, screenshot, platformConfig.supportsScroll);
+  const runtimeLogs = existsSync(logPath) ? readFileSync(logPath, "utf8") : "";
+  let renderer = parseMobileRendererStatus(runtimeLogs);
+  if (!renderer) {
+    const buildJsonPath = join(dirname(artifact), "mobile-build.json");
+    if (existsSync(buildJsonPath)) {
+      try {
+        renderer = rendererBlockFromMobileBuild(
+          JSON.parse(readFileSync(buildJsonPath, "utf8")),
+          options.platform,
+        );
+      } catch {
+        renderer = null;
+      }
+    }
+  }
   const manifest = {
     schemaVersion: 1,
     mode: "mobile-runtime-smoke",
@@ -719,6 +907,16 @@ try {
     observations,
     evidenceBoundary: "non-fallback matching-host smoke evidence; fallback builds are packaging only",
   };
+  // Optional Phase 2.3 renderer selection block. Never invent gpuPromoted=true
+  // without runtime/build evidence. When logs report gpuPromoted=true, attach a
+  // pending seven-gate skeleton so schema validation works; thresholds stay
+  // unsatisfied until a real claim is recorded.
+  if (renderer) {
+    manifest.renderer = renderer;
+    if (renderer.gpuPromoted === true) {
+      manifest.gpuPromotionEvidence = pendingGpuPromotionEvidence();
+    }
+  }
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
   const validatorArgs = ["scripts/validate-mobile-runtime-manifest.mjs", manifestPath];
   if (options.requirePassed) validatorArgs.push("--require-passed");

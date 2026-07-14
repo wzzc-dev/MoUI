@@ -141,24 +141,23 @@ model/update/view logic should remain in the shared app package.
 Mobile runtime sessions share `MobileHostChannel` for revisioned IME and
 semantics updates plus asynchronous clipboard/accessibility responses. See
 [Mobile Mainline And GPU Roadmap](mobile-mainline-roadmap.md), ADR 0005, and
-ADR 0006. `SkiaRasterNative` remains the mobile default. `SkiaGpuNative` is a
-formal `HostGpuSurface` descriptor with unpromoted window-surface source paths
-implemented per Phase 1 (iOS Metal, macOS Metal, Android Vulkan/GLES,
-HarmonyOS EGL/GLES, Windows D3D12, Linux Vulkan); the Phase 2 promotion gate
-scaffolding (renderer mailbox control queue, context-loss recovery, manifest
-schema) is in place, but `gpu_promoted` is `true` for macOS Metal; other platforms stay `false` until
-matching-device evidence passes the seven ADR 0006 gates. Native
-`SkPicture`/POD handoff now runs on an independent `std::thread` with a
-latest-wins frame slot, ordered controls, detach acknowledgement, and polling
-diagnostics. Platform branches now own Metal, D3D12, Vulkan WSI, or EGL
-context/surface/swapchain/synchronization resources on that worker and emit
-`Presented` only after the platform present call. Android dynamically loads
-Vulkan so API 23 can remain loadable and fall back to EGL/GLES. Matching-host
-builds are complete for macOS/iOS/Android/HarmonyOS. Native hosts poll worker
-completions independently from frame submission, count only `Presented`, and
-keep the current `AppRuntime` when terminal GPU recovery switches to raster.
-Windows MSVC, Linux Wayland, and all matching-hardware promotion manifests
-remain blockers.
+ADR 0006. Product default is now `SkiaGpuNative` for every native Skia platform
+when the host GPU surface is available (`NativeGpuPlatform::gpu_promoted` is
+`true` for macOS, Windows, Linux, Android, iOS, and HarmonyOS). Window-surface
+paths are Metal (macOS/iOS), Vulkan with EGL/GLES fallback (Android), EGL/GLES
+(HarmonyOS), D3D12 (Windows), and Wayland Vulkan (Linux). `SkiaRasterNative`
+remains the explicit `skia-raster` mode and the sticky recovery fallback after
+terminal GPU failure. Matching-device seven-gate manifests remain useful
+evidence and may still be incomplete for non-macOS hosts, but they no longer
+gate the product `auto` default. Native `SkPicture`/POD handoff runs on an
+independent `std::thread` with a latest-wins frame slot, ordered controls,
+detach acknowledgement, and polling diagnostics. Platform branches own Metal,
+D3D12, Vulkan WSI, or EGL context/surface/swapchain/synchronization resources
+on that worker and emit `Presented` only after the platform present call.
+Android dynamically loads Vulkan so API 23 can remain loadable and fall back to
+EGL/GLES. Native hosts poll worker completions independently from frame
+submission, count only `Presented`, and keep the current `AppRuntime` when
+terminal GPU recovery switches to raster.
 
 ## Extension Rules
 
