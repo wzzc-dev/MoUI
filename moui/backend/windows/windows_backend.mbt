@@ -632,6 +632,14 @@ pub impl @win.ApplicationHandler for WindowsApp with fn can_create_surfaces(
 }
 
 ///|
+pub impl @win.ApplicationHandler for WindowsApp with fn about_to_wait(
+  self,
+  event_loop,
+) {
+  self.drain_window_requests(event_loop)
+}
+
+///|
 pub impl @win.ApplicationHandler for WindowsApp with fn window_event(
   self,
   event_loop,

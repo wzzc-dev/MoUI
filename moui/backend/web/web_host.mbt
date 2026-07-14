@@ -92,7 +92,7 @@ pub fn web_capability_summary(
     info=web_host_info(),
     services~,
     input=canvas_input_host().capabilities(),
-    label="Web host",
+    label="Web multi-canvas host",
     window_lifecycle=true,
     multi_window=true,
     text_input_available=true,
@@ -100,7 +100,7 @@ pub fn web_capability_summary(
     drag_drop_available=true,
     async_services~,
     native_accessibility_available=false,
-    description="Browser canvas host with WebGPU imports, async clipboard/file dialogs, logical pointer coordinates, and app-level file drops.",
+    description="Browser multi-canvas host with WebGPU imports, async clipboard/file dialogs, logical pointer coordinates, and app-level file drops; it does not manage browser popup windows or tabs.",
   )
 }
 

@@ -665,6 +665,13 @@ pub struct HostTimerSource {
 pub fn HostTimerSource::new(start_timer~ : (Double, (@wzzc-dev/moui/core.Frame) -> Unit) -> (() -> Unit)?) -> Self
 pub fn[Msg] HostTimerSource::subscription(Self, interval_ms~ : Double, key? : String, label? : String, map~ : (@wzzc-dev/moui/core.Frame) -> Msg) -> @wzzc-dev/moui/core.Subscription[Msg]
 
+pub struct HostWindowActions {
+  queue : HostWindowRequestQueue
+}
+pub fn HostWindowActions::new(queue? : HostWindowRequestQueue) -> Self
+pub fn HostWindowActions::open(Self, title~ : String, scene? : HostWindowScene, metrics~ : HostSurfaceMetrics, primary? : Bool) -> Unit
+pub fn HostWindowActions::unavailable() -> Self
+
 pub struct HostWindowCommands {
   queue : HostWindowRequestQueue
 }

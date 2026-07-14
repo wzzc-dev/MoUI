@@ -89,6 +89,14 @@ pub impl @window_macos.ApplicationHandler for MacosApp with fn can_create_surfac
 }
 
 ///|
+pub impl @window_macos.ApplicationHandler for MacosApp with fn about_to_wait(
+  self,
+  event_loop,
+) {
+  self.drain_window_requests(event_loop)
+}
+
+///|
 pub impl @window_macos.ApplicationHandler for MacosApp with fn window_event(
   self,
   event_loop,

@@ -67,7 +67,7 @@ test "canvas host creates surface and input contracts" {
 test "web capability summary exposes known browser host services" {
   let summary = web_capability_summary()
   inspect(summary.backend.label(), content="Web")
-  inspect(summary.label, content="Web host")
+  inspect(summary.label, content="Web multi-canvas host")
   inspect(summary.services.clipboard, content="true")
   inspect(summary.services.file_dialogs, content="true")
   inspect(summary.services.file_access, content="true")
