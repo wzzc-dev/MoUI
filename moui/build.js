@@ -142,13 +142,24 @@ function skiaCcLinkFlags(config, prebuildVars) {
 }
 
 // Final is-main links do not reliably inherit library package `cc-link-flags`.
-// Expose host frameworks via prebuild link_configs (same pattern as
-// window/macos and moui_skia/native) so example entrypoints can stay free of
-// machine/framework boilerplate.
+// Expose host/renderer system libraries via prebuild link_configs (same pattern
+// as window/* and moui_skia/native) so example entrypoints can stay free of
+// platform boilerplate and only use an empty cc-link-flags override when the
+// Moon toolchain would otherwise pick tcc -run.
 const macosBackendHostFlags =
   "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -lz -lobjc";
 const macosBackendSkiaHostFlags =
   "-framework AppKit -framework QuartzCore -framework Metal -framework UniformTypeIdentifiers -framework CoreGraphics -framework CoreFoundation -lz -lobjc";
+const macosBackendSunHostFlags =
+  "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework WebKit -framework CoreGraphics -framework CoreFoundation -lobjc -lz";
+const macosBackendWgpuHostFlags =
+  "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework WebKit -framework CoreText -framework CoreGraphics -framework Foundation -framework CoreFoundation -lobjc -lz";
+const linuxBackendHostFlags = "-lz";
+const linuxBackendSkiaHostFlags = "-lz -lpthread";
+const linuxBackendSunHostFlags = "-lpthread";
+const linuxBackendWgpuHostFlags = "-lz";
+const linuxFontconfigLinkFlags = "-lfontconfig -lharfbuzz -lfreetype -lz";
+const windowsDirectWriteLinkFlags = "-lz";
 
 function appendLinkFlags(base, extra) {
   if (!extra) return base || "";
@@ -156,22 +167,69 @@ function appendLinkFlags(base, extra) {
   return `${base} ${extra}`;
 }
 
+function pushLinkConfig(configs, packageName, linkFlags) {
+  if (!packageName || !linkFlags) {
+    return;
+  }
+  configs.push({
+    package: packageName,
+    link_flags: linkFlags,
+  });
+}
+
 function macosLinkConfigs(skiaCcLink) {
   if (process.platform !== "darwin") {
     return [];
   }
-  return [
-    {
-      package: "wzzc-dev/moui/backend/macos",
-      link_flags: macosBackendHostFlags,
-    },
-    {
-      // macos/skia native stubs reference both AppKit and Skia symbols; final
-      // is-main links need both host frameworks and Skia/Ganesh flags here.
-      package: "wzzc-dev/moui/backend/macos/skia",
-      link_flags: appendLinkFlags(macosBackendSkiaHostFlags, skiaCcLink),
-    },
-  ];
+  const configs = [];
+  pushLinkConfig(configs, "wzzc-dev/moui/backend/macos", macosBackendHostFlags);
+  // macos/skia native stubs reference both AppKit and Skia symbols; final
+  // is-main links need both host frameworks and Skia/Ganesh flags here.
+  pushLinkConfig(
+    configs,
+    "wzzc-dev/moui/backend/macos/skia",
+    appendLinkFlags(macosBackendSkiaHostFlags, skiaCcLink),
+  );
+  pushLinkConfig(configs, "wzzc-dev/moui/backend/macos/sun", macosBackendSunHostFlags);
+  pushLinkConfig(configs, "wzzc-dev/moui/backend/macos/wgpu", macosBackendWgpuHostFlags);
+  return configs;
+}
+
+function linuxLinkConfigs(linuxGlib, skiaCcLink) {
+  // Always emit the static host flags. glib libs are optional on non-Linux
+  // hosts (pkg-config empty) but must be merged into backend/linux when present.
+  const configs = [];
+  pushLinkConfig(
+    configs,
+    "wzzc-dev/moui/backend/linux",
+    appendLinkFlags(linuxBackendHostFlags, linuxGlib.linkFlags),
+  );
+  pushLinkConfig(
+    configs,
+    "wzzc-dev/moui/backend/linux/skia",
+    appendLinkFlags(linuxBackendSkiaHostFlags, skiaCcLink),
+  );
+  pushLinkConfig(configs, "wzzc-dev/moui/backend/linux/sun", linuxBackendSunHostFlags);
+  pushLinkConfig(configs, "wzzc-dev/moui/backend/linux/wgpu", linuxBackendWgpuHostFlags);
+  pushLinkConfig(
+    configs,
+    "wzzc-dev/moui/render/wgpu/fontconfig",
+    linuxFontconfigLinkFlags,
+  );
+  return configs;
+}
+
+function windowsLinkConfigs(skiaCcLink) {
+  const configs = [];
+  // windows/skia only needs Skia/Ganesh libs from the prebuild; host Win32 libs
+  // come from window/windows link_configs.
+  pushLinkConfig(configs, "wzzc-dev/moui/backend/windows/skia", skiaCcLink);
+  pushLinkConfig(
+    configs,
+    "wzzc-dev/moui/render/wgpu/directwrite",
+    windowsDirectWriteLinkFlags,
+  );
+  return configs;
 }
 
 function main() {
@@ -181,13 +239,11 @@ function main() {
   const skiaStub = skiaStubCcFlags(config, skiaVars);
   const skiaCcLink = skiaCcLinkFlags(config, skiaVars);
   const skiaAndroidLink = skiaAndroidLinkFlags(config, skiaVars);
-  const linkConfigs = [...macosLinkConfigs(skiaCcLink)];
-  if (linuxGlib.linkFlags) {
-    linkConfigs.push({
-      package: "wzzc-dev/moui/backend/linux",
-      link_flags: linuxGlib.linkFlags,
-    });
-  }
+  const linkConfigs = [
+    ...macosLinkConfigs(skiaCcLink),
+    ...linuxLinkConfigs(linuxGlib, skiaCcLink),
+    ...windowsLinkConfigs(skiaCcLink),
+  ];
   console.log(
     JSON.stringify({
       vars: {
@@ -201,6 +257,15 @@ function main() {
           macosBackendSkiaHostFlags,
           skiaCcLink,
         ),
+        MOUI_LINUX_BACKEND_HOST_LINK_FLAGS: appendLinkFlags(
+          linuxBackendHostFlags,
+          linuxGlib.linkFlags,
+        ),
+        MOUI_LINUX_BACKEND_SKIA_LINK_FLAGS: appendLinkFlags(
+          linuxBackendSkiaHostFlags,
+          skiaCcLink,
+        ),
+        MOUI_WINDOWS_BACKEND_SKIA_LINK_FLAGS: skiaCcLink,
       },
       link_configs: linkConfigs,
     }),
