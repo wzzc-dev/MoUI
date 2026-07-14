@@ -94,6 +94,41 @@ test "wgpu web renderer forwards resize render and dispose to host port" {
 }
 
 ///|
+test "wgpu web render_frame materializes the frame clear color" {
+  let last_calls : Array[WebGpuHostCall] = []
+  let renderer = create_renderer(
+    canvas_id="moui-web-wasm",
+    logical_size=@core.Size::new(width=100.0, height=50.0),
+    port=test_port(created=Ref(0), on_submit=calls => {
+      last_calls.clear()
+      last_calls.append(calls)
+    }),
+  )
+  ignore(
+    renderer.render_frame(
+      @core.DrawFrame::new(
+        commands=[
+          @core.DrawCommand::FillRect(
+            @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
+            @core.Color::blue(),
+          ),
+        ],
+        damage=@core.DamageRegion::full("web frame clear contract"),
+        clear_color=@core.Color::gray(),
+      ),
+    ),
+  )
+  inspect(last_calls.length(), content="4")
+  assert_true(last_calls[0] is WebGpuHostCall::BeginFrame(_))
+  guard last_calls[1] is WebGpuHostCall::Clear(color) else {
+    fail("expected frame clear call")
+  }
+  assert_true(color == @core.Color::gray())
+  assert_true(last_calls[2] is WebGpuHostCall::FillRect(_, _))
+  assert_true(last_calls[3] is WebGpuHostCall::Present)
+}
+
+///|
 test "wgpu web renderer fails startup when host lacks capabilities" {
   let result = try
     create_renderer(

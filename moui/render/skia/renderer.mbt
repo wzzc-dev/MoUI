@@ -334,9 +334,40 @@ fn SkiaRasterRenderer::resolve_effective_damage(
       if has_scope {
         @core.DamageRegion::full("scope commands present with damage rects")
       } else {
-        @core.DamageRegion::Rects(rects)
+        match skia_damage_rect_union(rects) {
+          Some(rect) => @core.DamageRegion::Rects([rect])
+          None => @core.DamageRegion::full("empty damage rects fallback")
+        }
       }
     }
+  }
+}
+
+///|
+fn skia_damage_rect_union(rects : Array[@core.Rect]) -> @core.Rect? {
+  match rects {
+    [] => None
+    [first, .. rest] => {
+      let mut bounds = first
+      for rect in rest {
+        bounds = bounds.union(rect)
+      }
+      Some(bounds)
+    }
+  }
+}
+
+///|
+fn SkiaRasterRenderer::apply_damage_clip(
+  self : SkiaRasterRenderer,
+  canvas : @skia_native.Canvas,
+  damage : @core.DamageRegion,
+) -> Unit {
+  let _ = self
+  match damage {
+    @core.DamageRegion::Rects([rect, ..]) => canvas.clip_rect(skia_rect(rect))
+    @core.DamageRegion::Empty | @core.DamageRegion::FullSurface(_) => ()
+    @core.DamageRegion::Rects([]) => ()
   }
 }
 
@@ -425,7 +456,6 @@ fn SkiaRasterRenderer::draw_frame_to_canvas(
   draw_platform_views~ : Bool,
 ) -> (SkiaCachedLayerFrameStats, Bool) {
   let effective_damage = self.resolve_effective_damage(frame)
-  self.apply_damage_clear(canvas, effective_damage, frame.clear_color)
   let saved = canvas.save()
   canvas.scale(
     @moui_skia.Size::new(
@@ -433,6 +463,11 @@ fn SkiaRasterRenderer::draw_frame_to_canvas(
       Float::from_double(self.metrics.scale_factor),
     ),
   )
+  // Damage bounds are logical coordinates. Keep every command, including
+  // full-surface backgrounds and explicit compatibility Clears, inside the
+  // same damage clip so skipped cached layers retain their previous pixels.
+  self.apply_damage_clip(canvas, effective_damage)
+  self.apply_damage_clear(canvas, effective_damage, frame.clear_color)
   self.unsupported_command_count = 0
   self.unsupported_command_diagnostics.clear()
   let stats = SkiaCachedLayerFrameStats::new()

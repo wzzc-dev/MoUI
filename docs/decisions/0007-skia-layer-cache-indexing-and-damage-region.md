@@ -4,6 +4,8 @@
 - **Status**: Accepted
 - **Deciders**: Agent-assisted (Trae AI, GLM-5.2)
 - **Related**: `moui/render/skia/renderer.mbt`, `moui/render/skia/renderer_cached_layer.mbt`, `moui/core/damage.mbt`, `docs/architecture.md`
+- **Amended by**: ADR 0009, which adds the missing full-command damage clip
+  invariant and makes `DrawFrame.clear_color` authoritative.
 
 ## Context
 

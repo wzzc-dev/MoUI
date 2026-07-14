@@ -88,7 +88,11 @@ pub fn HostWindowRenderer::new(
     None =>
       frame => {
         let expanded = layer_cache.expand_frame_commands(frame.commands)
-        render(expanded.commands)
+        let commands : Array[@core.DrawCommand] = [
+          @core.DrawCommand::Clear(frame.clear_color),
+        ]
+        commands.append(expanded.commands)
+        render(commands)
         @render.RenderFrameResult::new(
           cache_hit_count=expanded.cache_hit_count,
           cache_miss_count=expanded.cache_miss_count,

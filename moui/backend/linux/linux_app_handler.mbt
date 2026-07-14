@@ -380,11 +380,12 @@ fn LinuxApp::redraw_window(
       runtime_slot.driver.begin_redraw()
       let surface_metrics = linux_window_surface_metrics(platform_slot.window)
       let frame = runtime_slot.driver.draw_frame()
-      let commands = linux_client_decorated_commands(
+      let commands = linux_client_decorated_commands_with_clear_color(
         frame.commands,
         title=runtime_slot.record.title,
         metrics=surface_metrics,
         decorations=platform_slot.decorations,
+        clear_color=frame.clear_color,
       )
 
       // Set up platform-view pixel drawing through any plugin that provides a

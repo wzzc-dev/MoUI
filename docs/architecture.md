@@ -420,7 +420,12 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
   platform-neutral `DrawCommand` values. `RenderNode` entries retain paint
   bounds, content revisions, and repaint-boundary cache keys. The normal host
   path asks `AppRuntime::draw_frame()` for commands plus a `DamageRegion` and
-  cache epoch; `DrawFrame.platform_views` carries native platform-view
+  cache epoch. `DrawFrame.clear_color` owns frame initialization, while its
+  command array contains view content without a leading `Clear`; legacy
+  command-only renderer adapters materialize that clear when lowering the
+  frame. Rect-damage renderers must constrain the complete command stream to
+  the effective damage clip before skipping retained cached layers.
+  `DrawFrame.platform_views` carries native platform-view
   placements such as `web_view` without adding them to `DrawCommand`. Legacy
   tests can still call `draw_commands()` for a full command stream. Renderers
   may degrade based on capability, but view constructors preserve brush, border,

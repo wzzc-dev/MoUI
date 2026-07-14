@@ -188,11 +188,15 @@ test "skia render_frame skips draw_cached_layer outside damage rects" {
   inspect(first.cache_update_count, content="1")
   inspect(first.cache_hit_count, content="0")
   inspect(first.cache_miss_count, content="0")
-  // Frame 2: damage rect at (10,10,4,4) does not intersect the cached layer
-  // at (2,2,4,4). DrawCachedLayer should be skipped without counting hit/miss.
+  // Frame 2 covers compatibility callers that still include a full-surface
+  // Clear. Damage at (10,10,4,4) does not intersect the cached layer at
+  // (2,2,4,4), so the damage clip must keep the skipped layer visible.
   let second = renderer.render_frame(
     skia_test_draw_frame_with_damage(
-      [@core.DrawCommand::DrawCachedLayer(spec)],
+      [
+        @core.DrawCommand::Clear(@core.Color::white()),
+        @core.DrawCommand::DrawCachedLayer(spec),
+      ],
       @core.DamageRegion::Rects([
         @core.Rect::new(x=10.0, y=10.0, width=4.0, height=4.0),
       ]),
@@ -201,6 +205,67 @@ test "skia render_frame skips draw_cached_layer outside damage rects" {
   inspect(second.presented, content="true")
   inspect(second.cache_hit_count, content="0")
   inspect(second.cache_miss_count, content="0")
+  guard renderer.last_frame() is Some(second_frame) else {
+    fail("expected second frame")
+  }
+  assert_true(
+    skia_test_region_has_dark_pixel(
+      second_frame,
+      @core.Rect::new(x=2.0, y=2.0, width=4.0, height=4.0),
+    ),
+  )
+}
+
+///|
+test "skia rect damage uses logical coordinates on hidpi surfaces" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=16.0, height=16.0),
+      scale_factor=2.0,
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  ignore(
+    renderer.render_frame(
+      skia_test_draw_frame_with_damage(
+        [
+          @core.DrawCommand::FillRect(
+            @core.Rect::new(x=0.0, y=0.0, width=16.0, height=16.0),
+            @core.Color::black(),
+          ),
+        ],
+        @core.DamageRegion::full("baseline black"),
+      ),
+    ),
+  )
+  let second = renderer.render_frame(
+    skia_test_draw_frame_with_damage(
+      [],
+      @core.DamageRegion::Rects([
+        @core.Rect::new(x=0.0, y=0.0, width=8.0, height=16.0),
+      ]),
+    ),
+  )
+  inspect(second.presented, content="true")
+  guard renderer.last_frame() is Some(second_frame) else {
+    fail("expected second frame")
+  }
+  assert_false(
+    skia_test_region_has_dark_pixel(
+      second_frame,
+      @core.Rect::new(x=0.0, y=0.0, width=16.0, height=32.0),
+    ),
+  )
+  assert_true(
+    skia_test_region_has_dark_pixel(
+      second_frame,
+      @core.Rect::new(x=16.0, y=0.0, width=16.0, height=32.0),
+    ),
+  )
 }
 
 ///|
