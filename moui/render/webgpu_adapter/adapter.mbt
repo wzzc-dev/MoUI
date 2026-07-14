@@ -261,7 +261,11 @@ pub fn WebGpuWasmRenderer::render_frame(
   frame : @core.DrawFrame,
 ) -> @render.RenderFrameResult {
   let expanded = self.layer_cache.expand_frame_commands(frame.commands)
-  self.render(expanded.commands) catch {
+  let commands : Array[@core.DrawCommand] = [
+    @core.DrawCommand::Clear(frame.clear_color),
+  ]
+  commands.append(expanded.commands)
+  self.render(commands) catch {
     _ => ()
   }
   @render.RenderFrameResult::new(

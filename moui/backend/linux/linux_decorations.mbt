@@ -39,6 +39,23 @@ pub fn linux_client_decorated_commands(
   metrics~ : @host.HostSurfaceMetrics,
   decorations~ : LinuxClientDecorationState,
 ) -> Array[@core.DrawCommand] {
+  linux_client_decorated_commands_with_clear_color(
+    commands,
+    title~,
+    metrics~,
+    decorations~,
+    clear_color=linux_first_clear_color(commands),
+  )
+}
+
+///|
+fn linux_client_decorated_commands_with_clear_color(
+  commands : Array[@core.DrawCommand],
+  title~ : String,
+  metrics~ : @host.HostSurfaceMetrics,
+  decorations~ : LinuxClientDecorationState,
+  clear_color~ : @core.Color,
+) -> Array[@core.DrawCommand] {
   if !decorations.active {
     commands
   } else {
@@ -46,7 +63,7 @@ pub fn linux_client_decorated_commands(
     let width = metrics.logical_size.width
     let height = metrics.logical_size.height
     let output : Array[@core.DrawCommand] = []
-    output.push(@core.DrawCommand::Clear(linux_first_clear_color(commands)))
+    output.push(@core.DrawCommand::Clear(clear_color))
     output.push(
       @core.DrawCommand::FillRect(
         @core.Rect::new(x=0.0, y=0.0, width~, height=titlebar),

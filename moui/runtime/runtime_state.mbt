@@ -327,7 +327,6 @@ fn RuntimeState::build_draw_frame(self : RuntimeState) -> DrawFrame {
   let commands : Array[DrawCommand] = Array::new(
     capacity=self.last_command_count.max(64),
   )
-  commands.push(Clear(Color::white()))
   let next_known_layers : Array[CachedLayerState] = []
   let next_admissions : Array[CachedLayerAdmissionState] = []
   self.rebuild_if_possible()
