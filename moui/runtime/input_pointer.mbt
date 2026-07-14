@@ -140,8 +140,33 @@ fn ElementNode::dispatch_pointer_to_children(
   let is_move = event.phase == PointerPhase::Move ||
     event.phase == PointerPhase::Exit
   let mut delivered_main_event = false
-  let mut index = self.children.length() - 1
-  while index >= 0 {
+  let mut overlay_index = -1
+  let mut overlay_search = self.children.length() - 1
+  while overlay_search >= 0 {
+    if overlay_search < render.children.length() {
+      match render.children[overlay_search].overlay_hit_bounds() {
+        Some(bounds) =>
+          if bounds.contains(event.position) {
+            overlay_index = overlay_search
+            break
+          }
+        None => ()
+      }
+    }
+    overlay_search = overlay_search - 1
+  }
+  let dispatch_order : Array[Int] = []
+  if overlay_index >= 0 {
+    dispatch_order.push(overlay_index)
+  }
+  let mut regular_index = self.children.length() - 1
+  while regular_index >= 0 {
+    if regular_index != overlay_index {
+      dispatch_order.push(regular_index)
+    }
+    regular_index = regular_index - 1
+  }
+  for index in dispatch_order {
     if index < render.children.length() {
       let child = self.children[index]
       let child_render = render.children[index]
@@ -203,7 +228,6 @@ fn ElementNode::dispatch_pointer_to_children(
         }
       }
     }
-    index = index - 1
   }
   if changed {
     if layout_changed {
@@ -236,6 +260,26 @@ fn ElementNode::has_hovered_descendant(self : ElementNode) -> Bool {
 ///|
 fn RenderNode::hit_bounds(self : RenderNode) -> Rect {
   self.paint_bounds
+}
+
+///|
+fn RenderNode::overlay_hit_bounds(self : RenderNode) -> Rect? {
+  let mut bounds : Rect? = None
+  match self.cached_overlay_draw_commands {
+    Some(commands) =>
+      for command in commands {
+        bounds = @core.optional_rect_union(bounds, command.bounds())
+      }
+    None => {
+      for command in self.overlay_paint_commands {
+        bounds = @core.optional_rect_union(bounds, command.bounds())
+      }
+      for child in self.children {
+        bounds = @core.optional_rect_union(bounds, child.overlay_hit_bounds())
+      }
+    }
+  }
+  bounds
 }
 
 ///|

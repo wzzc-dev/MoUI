@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "lessons": [
+    {"id":"01-hello-world","title":{"zh":"第一个 MoUI 程序","en":"Your first MoUI program"},"summary":{"zh":"认识 Model、View 和 Program。","en":"Meet Model, View, and Program."},"concepts":["program","view"]},
+    {"id":"02-layout","title":{"zh":"布局","en":"Layout"},"summary":{"zh":"用 Row 和 Column 组织界面。","en":"Compose screens with rows and columns."},"concepts":["row","column","spacing"]},
+    {"id":"03-state-events","title":{"zh":"状态与事件","en":"State and events"},"summary":{"zh":"让界面响应消息并更新状态。","en":"Make the UI respond to messages."},"concepts":["model","msg","update"]},
+    {"id":"04-theme-styling","title":{"zh":"主题与样式","en":"Themes and styling"},"summary":{"zh":"使用主题保持视觉一致。","en":"Keep visual decisions consistent with themes."},"concepts":["theme","surface","spacing"]},
+    {"id":"05-component-composition","title":{"zh":"组件拆分","en":"Component composition"},"summary":{"zh":"把重复的界面提取为组件。","en":"Extract reusable UI components."},"concepts":["component","reuse"]},
+    {"id":"06-debug-and-publish","title":{"zh":"调试、运行与分享","en":"Debug, run, and share"},"summary":{"zh":"理解诊断、运行和分享链接。","en":"Use diagnostics, preview, and sharing."},"concepts":["diagnostics","preview","share"]}
+  ]
+}

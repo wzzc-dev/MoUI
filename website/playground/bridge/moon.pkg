@@ -1,0 +1,5 @@
+supported_targets = "+native+wasm-gc"
+
+options(
+  targets: { "host_native.mbt": [ "native" ], "host_wasm.mbt": [ "wasm-gc" ] },
+)

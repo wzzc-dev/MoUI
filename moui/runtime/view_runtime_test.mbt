@@ -369,6 +369,58 @@ test "virtual node picker dispatches overlay selection without core primitive" {
 }
 
 ///|
+test "picker overlay receives pointer events before covered siblings" {
+  let received : Array[String] = []
+  let runtime = AppRuntime::new_view(
+    root=@views.column(
+      [
+        @views.frame(
+          @views.picker(
+            [@views.picker_item("one", "One"), @views.picker_item("two", "Two")],
+            selected="one",
+            on_select=id => id,
+            placeholder="Pick",
+            max_height=160.0,
+          ),
+          width=200.0,
+          height=40.0,
+        ),
+        @views.button(
+          "Covered action",
+          on_click="covered",
+          width=200.0,
+          height=120.0,
+        ),
+      ],
+      spacing=0.0,
+    ),
+    size=@core.Size::new(width=200.0, height=160.0),
+    on_message=Some(message => received.push(message)),
+  )
+  ignore(runtime.draw_frame())
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=12.0, y=12.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  ignore(runtime.draw_frame())
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=12.0, y=84.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  if received != ["two"] {
+    fail("expected picker overlay to win over the covered sibling")
+  }
+}
+
+///|
 test "virtual node datepicker dispatches overlay selection without core primitive" {
   let received : Array[@core.DateValue] = []
   let runtime = AppRuntime::new_view(

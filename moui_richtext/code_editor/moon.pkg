@@ -1,0 +1,10 @@
+import {
+  "wzzc-dev/moui_richtext" @richtext,
+  "wzzc-dev/moui/text",
+}
+
+supported_targets = "+native+wasm-gc"
+
+options(
+  targets: { },
+)

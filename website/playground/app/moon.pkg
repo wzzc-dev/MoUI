@@ -1,0 +1,18 @@
+import {
+  "wzzc-dev/moui",
+  "wzzc-dev/moui/geometry",
+  "wzzc-dev/moui/graphics",
+  "wzzc-dev/moui/state",
+  "wzzc-dev/moui/text",
+  "wzzc-dev/moui/views",
+  "wzzc-dev/moui_richtext",
+  "wzzc-dev/moui_richtext/code_editor",
+  "website/playground/bridge" @playground_bridge,
+  "moonbitlang/core/json",
+}
+
+supported_targets = "+native+wasm-gc"
+
+options(
+  targets: { },
+)

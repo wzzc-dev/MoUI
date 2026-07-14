@@ -55,8 +55,8 @@ fn Model::mobile_menu_sheet(
             height=40.0,
           ),
           button(
-            "Tour",
-            on_click=OpenHomeAnchor("tour"),
+            "Tutorial",
+            on_click=OpenTutorial,
             variant=@views.ButtonVariant::Ghost,
             theme~,
             width=item_width,

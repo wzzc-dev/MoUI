@@ -1,6 +1,7 @@
 ///|
 pub enum WebsitePage {
   WebsiteHome
+  WebsiteTutorial
   WebsiteDocs
   WebsiteShowcases
 } derive(Eq, Debug)

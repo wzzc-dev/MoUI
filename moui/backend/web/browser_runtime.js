@@ -372,6 +372,7 @@ export function createWindowWebImports(options = {}) {
   const createHiddenTextInput = canvas => {
     const input = document.createElement("textarea");
     input.setAttribute("aria-label", "Text input");
+    input.dataset.mouiTextInput = "true";
     input.autocomplete = "off";
     input.autocapitalize = "off";
     input.spellcheck = false;

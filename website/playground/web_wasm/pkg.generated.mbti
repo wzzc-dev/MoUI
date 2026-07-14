@@ -1,0 +1,32 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "website/playground/web_wasm"
+
+// Values
+pub fn playground_append_compile_result_char(Char) -> Unit
+
+pub fn playground_append_project_load_char(Char) -> Unit
+
+pub fn playground_begin_compile_result() -> Unit
+
+pub fn playground_begin_project_load() -> Unit
+
+pub fn playground_finish_compile_result() -> Unit
+
+pub fn playground_finish_project_load() -> Unit
+
+pub fn web_complete_async_clipboard_read(Int, Bool, Int) -> Unit
+
+pub fn web_dispatch_event(Int, Int, Int, Int, Double, Int) -> Unit
+
+pub fn web_dispatch_route(Int, Int) -> Unit
+
+pub fn web_dispatch_semantics_action(Int, Int, Int, Int) -> Unit
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

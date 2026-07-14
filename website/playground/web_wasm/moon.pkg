@@ -1,0 +1,29 @@
+import {
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/web",
+  "website/playground/bridge" @playground_bridge,
+  "website/playground/app" @playground_app,
+}
+
+supported_targets = "wasm-gc"
+
+options(
+  "is-main": true,
+  link: {
+    "wasm-gc": {
+      "exports": [
+        "web_dispatch_event",
+        "web_dispatch_route",
+        "web_dispatch_semantics_action",
+        "web_complete_async_clipboard_read",
+        "playground_begin_compile_result",
+        "playground_append_compile_result_char",
+        "playground_finish_compile_result",
+        "playground_begin_project_load",
+        "playground_append_project_load_char",
+        "playground_finish_project_load",
+      ],
+    },
+  },
+  targets: { "main.mbt": [ "wasm-gc" ] },
+)

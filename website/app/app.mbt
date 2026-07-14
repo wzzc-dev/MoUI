@@ -15,6 +15,7 @@ pub struct Model {
   docs_scroll : @state.ScrollState
   showcases_scroll : @state.ScrollState
   showcase_grid_scroll : @state.ScrollState
+  tutorial_scroll : @state.ScrollState
   route_history : @views.RouteHistoryState
   pending_anchor : String?
   copy_feedback_active : Bool
@@ -29,6 +30,9 @@ pub enum Msg {
   OpenHome
   OpenHomeAt(Double)
   OpenHomeAnchor(String)
+  OpenTutorial
+  OpenPlayground
+  OpenPlaygroundLesson(String)
   OpenDocs
   OpenShowcases
   OpenShowcaseSource(String)
@@ -86,6 +90,7 @@ fn Model::new() -> Model {
     docs_scroll: @state.ScrollState::new(),
     showcases_scroll: @state.ScrollState::new(),
     showcase_grid_scroll: @state.ScrollState::new(),
+    tutorial_scroll: @state.ScrollState::new(),
     route_history: @views.RouteHistoryState::new(
       initial=@views.RouteLocation::new(path="home"),
       title="MoUI",
@@ -116,6 +121,10 @@ fn Model::update(self : Model, message : Msg) -> Model {
         ..self.with_route("home?anchor=" + anchor),
         copy_feedback_active: false,
       }
+    OpenTutorial =>
+      { ..self.with_route("tutorial"), copy_feedback_active: false }
+    OpenPlayground => { ..self, copy_feedback_active: false }
+    OpenPlaygroundLesson(_) => { ..self, copy_feedback_active: false }
     OpenDocs =>
       {
         ..self.with_route("docs/" + self.selected_doc_slug),
@@ -146,6 +155,7 @@ fn Model::update(self : Model, message : Msg) -> Model {
 fn Model::current_body_scroll(self : Model) -> @state.ScrollState {
   match self.page {
     WebsiteHome => self.home_scroll
+    WebsiteTutorial => self.tutorial_scroll
     WebsiteDocs => self.docs_body_scroll
     WebsiteShowcases => self.showcases_scroll
   }
@@ -162,6 +172,7 @@ fn Model::with_route(self : Model, route : String) -> Model {
   if page != self.page {
     match page {
       WebsiteHome => self.home_scroll.scroll_to(x=0.0, y=0.0)
+      WebsiteTutorial => self.tutorial_scroll.scroll_to(x=0.0, y=0.0)
       WebsiteDocs => {
         self.docs_body_scroll.scroll_to(x=0.0, y=0.0)
         self.docs_scroll.scroll_to(x=0.0, y=0.0)
@@ -231,6 +242,8 @@ fn website_page_from_location(location : @views.RouteLocation) -> WebsitePage {
   let path = location.path()
   if path == "showcases" {
     WebsiteShowcases
+  } else if path == "tutorial" {
+    WebsiteTutorial
   } else if path.has_prefix("docs/") || path == "docs" {
     WebsiteDocs
   } else {
@@ -253,6 +266,8 @@ fn website_route_title(location : @views.RouteLocation) -> String {
   let path = location.path()
   if path == "showcases" {
     "Showcases"
+  } else if path == "tutorial" {
+    "Tutorial"
   } else if path.has_prefix("docs/") {
     "Docs"
   } else {
@@ -275,6 +290,24 @@ fn Model::update_with_services(
           services,
           moui_repository_url(),
           "Open MoUI repository",
+        ),
+      )
+    OpenPlayground =>
+      (
+        self,
+        website_open_url_effect(
+          services,
+          website_playground_url(),
+          "Open MoUI Playground",
+        ),
+      )
+    OpenPlaygroundLesson(id) =>
+      (
+        self,
+        website_open_url_effect(
+          services,
+          website_playground_url(example=id),
+          "Open lesson in MoUI Playground",
         ),
       )
     OpenShowcaseSource(url) =>
@@ -319,6 +352,7 @@ fn Model::update_with_services(
     OpenHome
     | OpenHomeAt(_)
     | OpenHomeAnchor(_)
+    | OpenTutorial
     | OpenDocs
     | OpenShowcases
     | SelectDoc(_) => {
@@ -418,6 +452,12 @@ fn Model::document_metadata(self : Model) -> (String, String, String) {
       (
         "MoUI - MoonBit GUI Framework", "Typed, declarative MoonBit UI for Web and native hosts.",
         site_url,
+      )
+    WebsiteTutorial =>
+      (
+        "Tutorial - MoUI",
+        "A bilingual MoonBit-native introduction to Model, View, and Program.",
+        site_url + "?section=tutorial",
       )
     WebsiteShowcases =>
       (
@@ -543,6 +583,7 @@ fn Model::view(self : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
   let metrics = website_metrics(env.viewport_size())
   let content = match self.page {
     WebsiteHome => self.home_content(theme, metrics)
+    WebsiteTutorial => self.tutorial_content(theme, metrics)
     WebsiteDocs => self.docs_content(theme, metrics)
     WebsiteShowcases => self.showcases_content(theme, metrics)
   }
@@ -862,6 +903,15 @@ pub fn program_with_services(
 ///|
 fn moui_repository_url() -> String {
   "https://github.com/wzzc-dev/MoUI"
+}
+
+///|
+fn website_playground_url(example? : String) -> String {
+  let base = "./playground/"
+  match example {
+    Some(id) => base + "?example=" + id
+    None => base
+  }
 }
 
 ///|

@@ -1,0 +1,107 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "website/playground/app"
+
+import {
+  "moonbitlang/core/json",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui_richtext/code_editor",
+}
+
+// Values
+pub fn current_source(Model) -> String
+
+pub fn program() -> @core.Program[Model, Msg]
+
+pub fn update(Model, Msg) -> Model
+
+pub fn view(Model, @core.ViewEnvironment) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+pub(all) struct CompileDiagnostic {
+  severity : String
+  message : String
+  file : String
+  line : Int
+  column : Int
+  end_line : Int
+  end_column : Int
+} derive(ToJson, @json.FromJson)
+
+pub(all) struct CompileFile {
+  path : String
+  source : String
+} derive(ToJson, @json.FromJson)
+
+pub(all) struct CompileRequest {
+  revision : Int
+  files : Array[CompileFile]
+  lesson_id : String
+} derive(ToJson, @json.FromJson)
+pub fn CompileRequest::new(Model) -> Self
+pub fn CompileRequest::to_json_line(Self) -> String
+
+pub(all) struct CompileResult {
+  revision : Int
+  status : CompileStatus
+  diagnostics : Array[CompileDiagnostic]
+} derive(ToJson, @json.FromJson)
+
+pub(all) enum CompileStatus {
+  Success
+  Failed
+  Unavailable
+} derive(Eq, ToJson, @json.FromJson)
+
+pub(all) struct Model {
+  editor : @code_editor.EditorState
+  editor_scroll : @core.ScrollState
+  moon_pkg : String
+  active_file : PlaygroundFile
+  find_query : String
+  replace_text : String
+  show_find : Bool
+  status : String
+  preview_status : String
+  lesson_id : String
+  revision : Int
+}
+pub fn Model::new() -> Self
+
+pub(all) enum Msg {
+  SourceChanged(String)
+  PackageChanged(String)
+  SelectFile(PlaygroundFile)
+  SelectExample(String)
+  SetFindQuery(String)
+  SetReplaceText(String)
+  EditorSelectionChanged(Int, @core.TextRange?)
+  ReplaceAll
+  FindNext
+  Run
+  Share
+  Stop
+  Reset
+  LoadProject(String)
+  CompilerStatus(String)
+  CompileFinished(CompileResult)
+}
+
+pub(all) enum PlaygroundFile {
+  Main
+  Package
+} derive(Eq)
+
+pub(all) struct PlaygroundProject {
+  schema_version : Int
+  files : Array[CompileFile]
+  lesson_id : String
+} derive(ToJson, @json.FromJson)
+pub fn PlaygroundProject::new(Model) -> Self
+pub fn PlaygroundProject::to_json_line(Self) -> String
+
+// Type aliases
+
+// Traits
+
