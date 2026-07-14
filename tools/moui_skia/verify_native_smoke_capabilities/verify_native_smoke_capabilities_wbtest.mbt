@@ -14,10 +14,10 @@ fn sample_status() -> Map[String, Json] {
     #|    }
     #|  ]
     #|}
-  let json = @json.parse(text) catch { _ => return {} }
+  let json = @json.parse(text) catch { _ => return Map([]) }
   match json {
     Json::Object(fields) => fields
-    _ => {}
+    _ => Map([])
   }
 }
 
@@ -59,10 +59,10 @@ test "rejects conditional marker with unknown condition marker" {
     #|    }
     #|  ]
     #|}
-  let json = @json.parse(text) catch { _ => Json::object({}) }
+  let json = @json.parse(text) catch { _ => Json::empty_object() }
   let status = match json {
     Json::Object(fields) => fields
-    _ => {}
+    _ => Map([])
   }
   let result = verify_capability_markers(
     status, "native smoke surface descriptor backend\nnative smoke shaped glyph count",

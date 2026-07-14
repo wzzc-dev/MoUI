@@ -55,7 +55,7 @@ pub fn FontFileSource::get_font_index(self : FontFileSource) -> Int {
 ///|
 /// Create an empty in-memory font loader.
 pub fn MemoryFontLoader::new() -> MemoryFontLoader {
-  { fonts: {} }
+  { fonts: Map([]) }
 }
 
 ///|
@@ -99,7 +99,7 @@ pub fn MemoryFontLoader::remove(self : MemoryFontLoader, key : String) -> Unit {
 ///|
 /// Drop all registered in-memory font entries.
 pub fn MemoryFontLoader::clear(self : MemoryFontLoader) -> Unit {
-  self.fonts = {}
+  self.fonts = Map([])
 }
 
 ///|
@@ -113,7 +113,7 @@ pub impl FontLoader for MemoryFontLoader with fn load_font_data(self, key) {
 ///|
 /// Create an empty file-backed font loader.
 pub fn FileFontLoader::new() -> FileFontLoader {
-  { sources: {} }
+  { sources: Map([]) }
 }
 
 ///|
@@ -154,7 +154,7 @@ pub fn FileFontLoader::remove(self : FileFontLoader, key : String) -> Unit {
 ///|
 /// Drop all registered file sources.
 pub fn FileFontLoader::clear(self : FileFontLoader) -> Unit {
-  self.sources = {}
+  self.sources = Map([])
 }
 
 ///|

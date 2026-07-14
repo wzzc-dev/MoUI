@@ -416,7 +416,7 @@ fn validate_manifest_fields(
     failures.push("url must point at /examples/showcase/web_wasm/")
   }
   let benchmark_targets = benchmark_targets_for_mode(manifest, mode, failures)
-  let seen_benchmark_target_names : Map[String, Bool] = {}
+  let seen_benchmark_target_names : Map[String, Bool] = Map([])
   for index in 0..<benchmark_targets.length() {
     for
       failure in validate_benchmark_target(
@@ -452,7 +452,7 @@ fn validate_manifest_fields(
   let screenshot_artifacts = require_array(
     manifest, "screenshotArtifacts", "screenshotArtifacts", failures,
   )
-  let seen_screenshot_names : Map[String, Bool] = {}
+  let seen_screenshot_names : Map[String, Bool] = Map([])
   for index in 0..<screenshot_artifacts.length() {
     for
       failure in validate_screenshot_artifact(

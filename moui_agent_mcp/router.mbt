@@ -50,17 +50,17 @@ fn mcp_tools() -> Json {
     tool_descriptor(
       "get_state",
       "Read runtime counters and dirty element ids.",
-      ({ "type": "object", "properties": {} } : Json),
+      ({ "type": "object", "properties": Json::empty_object() } : Json),
     ),
     tool_descriptor(
       "get_frame",
       "Read what the compositor paints to the screen right now (the visible frame's text).",
-      ({ "type": "object", "properties": {} } : Json),
+      ({ "type": "object", "properties": Json::empty_object() } : Json),
     ),
     tool_descriptor(
       "get_capabilities",
       "List the operations this host accepts.",
-      ({ "type": "object", "properties": {} } : Json),
+      ({ "type": "object", "properties": Json::empty_object() } : Json),
     ),
     tool_descriptor(
       "dispatch_command",
@@ -190,7 +190,7 @@ pub fn[Host : @agent.AgentHost] route_notify(
         (
           {
             "protocolVersion": mcp_protocol_version,
-            "capabilities": { "tools": {} },
+            "capabilities": { "tools": Json::empty_object() },
             "serverInfo": { "name": "moui-agent", "version": "0.1.0" },
           } : Json),
       )

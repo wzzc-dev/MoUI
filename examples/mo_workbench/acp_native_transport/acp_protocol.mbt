@@ -61,7 +61,7 @@ pub fn acp_initialize_request_line(id : String) -> String {
         "clientInfo": { "name": "Mo Workbench", "version": "0.1.0" },
         "clientCapabilities": {
           "fs": { "readTextFile": false, "writeTextFile": false },
-          "session": { "configOptions": { "boolean": {}, "select": {} } },
+          "session": { "configOptions": { "boolean": Json::empty_object(), "select": Json::empty_object() } },
           "terminal": false,
         },
       } : Json),
@@ -106,7 +106,7 @@ fn acp_cancel_notification_line(session_id : String) -> String {
 
 ///|
 fn acp_list_sessions_request_line(id : String) -> String {
-  acp_rpc_request(id, "session/list", ({} : Json)).stringify()
+  acp_rpc_request(id, "session/list", Json::empty_object()).stringify()
 }
 
 ///|

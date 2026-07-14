@@ -24,13 +24,13 @@ pub struct PixmapCacheDecodeResult {
 ///|
 /// Create an empty pixmap cache.
 pub fn PixmapCache::new() -> PixmapCache {
-  { pixmaps: {}, access_order: [], capacity: 0, is_bounded: false }
+  { pixmaps: Map([]), access_order: [], capacity: 0, is_bounded: false }
 }
 
 ///|
 /// Create an empty pixmap cache with least-recently-used eviction.
 pub fn PixmapCache::with_capacity(capacity : Int) -> PixmapCache {
-  { pixmaps: {}, access_order: [], capacity: capacity.max(1), is_bounded: true }
+  { pixmaps: Map([]), access_order: [], capacity: capacity.max(1), is_bounded: true }
 }
 
 ///|
@@ -273,7 +273,7 @@ pub fn PixmapCache::remove(self : PixmapCache, key : String) -> Unit {
 ///|
 /// Drop all cached pixmaps.
 pub fn PixmapCache::clear(self : PixmapCache) -> Unit {
-  self.pixmaps = {}
+  self.pixmaps = Map([])
   self.access_order = []
 }
 

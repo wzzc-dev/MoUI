@@ -177,7 +177,7 @@ pub fn GlyphMaskAtlas::new(width : Int, height : Int) -> GlyphMaskAtlas {
     width,
     height,
     pixels: FixedArray::make(width * height, b"\x00"[0]),
-    entries: {},
+    entries: Map([]),
     cursor_x: 0,
     cursor_y: 0,
     row_height: 0,
@@ -306,7 +306,7 @@ pub fn GlyphMaskAtlas::insert_or_clear(
 ///|
 /// Remove all atlas entries and clear atlas pixels.
 pub fn GlyphMaskAtlas::clear(self : GlyphMaskAtlas) -> Unit {
-  self.entries = {}
+  self.entries = Map([])
   self.cursor_x = 0
   self.cursor_y = 0
   self.row_height = 0
@@ -432,13 +432,13 @@ struct FaceGlyphMaskCacheResult {
 ///|
 /// Create an empty glyph mask cache.
 pub fn GlyphMaskCache::new() -> GlyphMaskCache {
-  { masks: {}, access_order: [], capacity: 0, is_bounded: false }
+  { masks: Map([]), access_order: [], capacity: 0, is_bounded: false }
 }
 
 ///|
 /// Create an empty glyph mask cache with least-recently-used eviction.
 pub fn GlyphMaskCache::with_capacity(capacity : Int) -> GlyphMaskCache {
-  { masks: {}, access_order: [], capacity: capacity.max(1), is_bounded: true }
+  { masks: Map([]), access_order: [], capacity: capacity.max(1), is_bounded: true }
 }
 
 ///|
@@ -673,7 +673,7 @@ pub fn GlyphMaskCache::remove(self : GlyphMaskCache, key : String) -> Unit {
 ///|
 /// Drop all cached glyph masks.
 pub fn GlyphMaskCache::clear(self : GlyphMaskCache) -> Unit {
-  self.masks = {}
+  self.masks = Map([])
   self.access_order = []
 }
 
@@ -726,13 +726,13 @@ struct TextMaskCacheRenderResult {
 ///|
 /// Create an empty text mask cache.
 pub fn TextMaskCache::new() -> TextMaskCache {
-  { masks: {}, access_order: [], capacity: 0, is_bounded: false }
+  { masks: Map([]), access_order: [], capacity: 0, is_bounded: false }
 }
 
 ///|
 /// Create an empty text mask cache with least-recently-used eviction.
 pub fn TextMaskCache::with_capacity(capacity : Int) -> TextMaskCache {
-  { masks: {}, access_order: [], capacity: capacity.max(1), is_bounded: true }
+  { masks: Map([]), access_order: [], capacity: capacity.max(1), is_bounded: true }
 }
 
 ///|
@@ -860,7 +860,7 @@ pub fn TextMaskCache::remove(self : TextMaskCache, key : String) -> Unit {
 ///|
 /// Drop all cached masks.
 pub fn TextMaskCache::clear(self : TextMaskCache) -> Unit {
-  self.masks = {}
+  self.masks = Map([])
   self.access_order = []
 }
 

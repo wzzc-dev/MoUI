@@ -452,7 +452,7 @@ fn validate_manifest_fields(manifest : Map[String, Json]) -> Array[String] {
     failures,
   )
   let targets = require_array(manifest, "targets", "targets", failures)
-  let seen_targets : Map[String, Bool] = {}
+  let seen_targets : Map[String, Bool] = Map([])
   for index in 0..<targets.length() {
     for failure in validate_target(targets[index], index, seen_targets) {
       failures.push(failure)

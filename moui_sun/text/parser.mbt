@@ -87,7 +87,7 @@ fn parse_table_directory(
     )
   }
 
-  let tables : Map[String, TableRecord] = {}
+  let tables : Map[String, TableRecord] = Map([])
   for i in 0..<num_tables {
     let pos = 12 + i * 16
     let tag = read_tag_at(data, pos)
@@ -950,7 +950,7 @@ fn parse_cmap(
   }
   let base_offset = table.offset.reinterpret_as_int()
   let table_length = table.length.reinterpret_as_int()
-  let cmap : Map[Int, Int] = {}
+  let cmap : Map[Int, Int] = Map([])
 
   let version = read_u16_be_at(data, base_offset).to_int()
   guard version is 0 else {
@@ -1008,7 +1008,7 @@ fn parse_cmap_format4(
   table : TableRecord,
   subtable_offset : Int,
 ) -> Result[Map[Int, Int], FontParseError] {
-  let cmap : Map[Int, Int] = {}
+  let cmap : Map[Int, Int] = Map([])
   let table_base = table.offset.reinterpret_as_int()
   let table_length = table.length.reinterpret_as_int()
   match require_table_bytes("cmap", table_length, subtable_offset, 4) {
@@ -1104,7 +1104,7 @@ fn parse_cmap_format12(
   table : TableRecord,
   subtable_offset : Int,
 ) -> Result[Map[Int, Int], FontParseError] {
-  let cmap : Map[Int, Int] = {}
+  let cmap : Map[Int, Int] = Map([])
   let table_base = table.offset.reinterpret_as_int()
   let table_length = table.length.reinterpret_as_int()
   match require_table_bytes("cmap", table_length, subtable_offset, 16) {

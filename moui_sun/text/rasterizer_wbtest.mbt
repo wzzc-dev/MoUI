@@ -69,7 +69,7 @@ fn make_consecutive_off_curve_glyph() -> SimpleGlyph {
 
 ///|
 fn make_box_font() -> Font {
-  let cmap : Map[Int, Int] = {}
+  let cmap : Map[Int, Int] = Map([])
   cmap['A'.to_int()] = 1
   cmap['B'.to_int()] = 1
   cmap[' '.to_int()] = 2
@@ -97,7 +97,7 @@ fn make_box_font() -> Font {
 
 ///|
 fn make_space_only_font() -> Font {
-  let cmap : Map[Int, Int] = {}
+  let cmap : Map[Int, Int] = Map([])
   cmap[' '.to_int()] = 1
   {
     head: { units_per_em: 10, index_to_loc_format: 0 },

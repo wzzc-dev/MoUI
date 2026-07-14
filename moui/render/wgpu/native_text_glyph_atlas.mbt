@@ -7,7 +7,7 @@ fn GlyphAtlas::new(width~ : Int, height~ : Int) -> GlyphAtlas {
     next_x: 0,
     next_y: 0,
     shelf_height: 0,
-    entries: {},
+    entries: Map([]),
     pixels: Array::make(width * height * 4, b'\x00'),
     dirty: true,
   }
@@ -18,7 +18,7 @@ fn GlyphAtlas::clear(self : GlyphAtlas) -> Unit {
   self.next_x = 0
   self.next_y = 0
   self.shelf_height = 0
-  self.entries = {}
+  self.entries = Map([])
   self.pixels = Array::make(self.width * self.height * 4, b'\x00')
   self.dirty = true
 }

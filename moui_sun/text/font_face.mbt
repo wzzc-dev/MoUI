@@ -54,13 +54,13 @@ struct FontFaceCacheParseResult {
 ///|
 /// Create an empty font-face cache.
 pub fn FontFaceCache::new() -> FontFaceCache {
-  { faces: {}, access_order: [], capacity: 0, is_bounded: false }
+  { faces: Map([]), access_order: [], capacity: 0, is_bounded: false }
 }
 
 ///|
 /// Create an empty font-face cache with least-recently-used eviction.
 pub fn FontFaceCache::with_capacity(capacity : Int) -> FontFaceCache {
-  { faces: {}, access_order: [], capacity: capacity.max(1), is_bounded: true }
+  { faces: Map([]), access_order: [], capacity: capacity.max(1), is_bounded: true }
 }
 
 ///|
@@ -182,7 +182,7 @@ pub fn FontFaceCache::remove(self : FontFaceCache, key : String) -> Unit {
 ///|
 /// Drop all cached faces.
 pub fn FontFaceCache::clear(self : FontFaceCache) -> Unit {
-  self.faces = {}
+  self.faces = Map([])
   self.access_order = []
 }
 
