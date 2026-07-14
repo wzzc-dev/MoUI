@@ -1,0 +1,15 @@
+import {
+  "mizchi/zlib",
+  "moonbitlang/core/bench",
+  "moonbitlang/core/math",
+}
+
+options(
+  targets: {
+    "avif_encode_js.mbt": [ "js" ],
+    "avif_encode_non_js.mbt": [ "native", "wasm-gc" ],
+    "avif_encode_test.mbt": [ "js" ],
+    "png_filter_scalar.mbt": [ "not", "wasm" ],
+    "png_filter_simd.mbt": [ "wasm" ],
+  },
+)

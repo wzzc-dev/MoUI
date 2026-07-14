@@ -70,7 +70,7 @@ fn make_composite_transform_font() -> Font {
       { advance_width: 10, lsb: 0 },
       { advance_width: 10, lsb: 0 },
     ],
-    cmap: {},
+    cmap: Map([]),
     glyphs: [
       GlyphData::Empty,
       GlyphData::Simple(make_transform_base_glyph()),

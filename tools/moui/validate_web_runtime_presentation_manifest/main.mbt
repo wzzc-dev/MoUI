@@ -247,7 +247,7 @@ fn require_object(
     Some(Json::Object(fields)) => fields
     _ => {
       failures.push("field '" + label + "' must be an object")
-      {}
+      Map([])
     }
   }
 }
@@ -1017,7 +1017,7 @@ fn validate_target(
       label + ".screenshot.transformPixels counts must be nonnegative",
     )
   }
-  let smoke_passed : Map[String, Bool] = {}
+  let smoke_passed : Map[String, Bool] = Map([])
   for smoke_key in renderer_smoke_keys() {
     validate_renderer_smoke(
       screenshot, smoke_key, label, name, smoke_passed, failures,
@@ -1241,7 +1241,7 @@ fn validate_manifest_fields(
   let failures : Array[String] = []
   let overall_status = validate_header(manifest, require_passed, failures)
   let targets = require_array(manifest, "targets", "targets", failures)
-  let seen_targets : Map[String, Bool] = {}
+  let seen_targets : Map[String, Bool] = Map([])
   let passed_count = Ref(0)
   for index in 0..<targets.length() {
     for

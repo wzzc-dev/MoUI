@@ -482,8 +482,8 @@ fn validate_catalog_fields(
   if suites.is_empty() {
     push(failures, "suites must be non-empty")
   }
-  let ids : Map[String, Bool] = {}
-  let tier_counts : Map[String, Int] = {}
+  let ids : Map[String, Bool] = Map([])
+  let tier_counts : Map[String, Int] = Map([])
   let default_daily_check_count = Ref(0)
   for suite_json in suites {
     let suite = match json_object(suite_json) {
@@ -633,7 +633,7 @@ fn command_string_for_check(command : Map[String, Json]) -> String {
 
 ///|
 fn suite_check_plan_json(suite : Map[String, Json]) -> Json {
-  let object : Map[String, Json] = {}
+  let object : Map[String, Json] = Map([])
   object["id"] = Json::string(json_string(suite.get("id")).unwrap_or(""))
   object["tier"] = Json::string(json_string(suite.get("tier")).unwrap_or(""))
   object["kind"] = Json::string(json_string(suite.get("kind")).unwrap_or(""))
@@ -650,8 +650,8 @@ fn suite_check_plan_json(suite : Map[String, Json]) -> Json {
     }
   }
   object["commands"] = Json::array(commands)
-  object["result"] = suite.get("result").unwrap_or(Json::object({}))
-  object["ci"] = suite.get("ci").unwrap_or(Json::object({}))
+  object["result"] = suite.get("result").unwrap_or(Json::empty_object())
+  object["ci"] = suite.get("ci").unwrap_or(Json::empty_object())
   match suite.get("artifacts") {
     Some(value) => object["artifacts"] = value
     None => ()
@@ -667,7 +667,7 @@ fn normalized_check_plan(catalog : Map[String, Json], tier : String?) -> Json {
       suites.push(suite_check_plan_json(suite))
     }
   }
-  let object : Map[String, Json] = {}
+  let object : Map[String, Json] = Map([])
   object["schemaVersion"] = catalog
     .get("schemaVersion")
     .unwrap_or(Json::number(1.0, repr="1"))
@@ -778,7 +778,7 @@ fn command_gate_json(
   for arg in argv {
     argv_json.push(Json::string(arg))
   }
-  let object : Map[String, Json] = {}
+  let object : Map[String, Json] = Map([])
   object["mode"] = Json::string(json_string(command.get("mode")).unwrap_or(""))
   object["argv"] = Json::array(argv_json)
   Ok(Json::object(object))
@@ -800,7 +800,7 @@ fn result_gate_json(
   if json_string(fields.get("type")).unwrap_or("") != "manifest" {
     return Ok(result)
   }
-  let output : Map[String, Json] = {}
+  let output : Map[String, Json] = Map([])
   for key, value in fields {
     output[key] = value
   }
@@ -825,7 +825,7 @@ fn suite_gate_plan_json(
   gate_mode : String,
   platform : String?,
 ) -> Result[Json, String] {
-  let object : Map[String, Json] = {}
+  let object : Map[String, Json] = Map([])
   object["id"] = Json::string(json_string(suite.get("id")).unwrap_or(""))
   object["tier"] = Json::string(json_string(suite.get("tier")).unwrap_or(""))
   object["kind"] = Json::string(json_string(suite.get("kind")).unwrap_or(""))
@@ -842,7 +842,7 @@ fn suite_gate_plan_json(
     }
   }
   object["commands"] = Json::array(commands)
-  let result = suite.get("result").unwrap_or(Json::object({}))
+  let result = suite.get("result").unwrap_or(Json::empty_object())
   match result_gate_json(result, gate_mode, platform) {
     Ok(value) => object["result"] = value
     Err(message) => return Err(message)
@@ -881,7 +881,7 @@ fn select_gate_suites(
       }
     None => ()
   }
-  let requested : Map[String, Bool] = {}
+  let requested : Map[String, Bool] = Map([])
   for suite in options.suites {
     requested[suite] = true
   }
@@ -922,7 +922,7 @@ fn gate_plan_json(
       Err(message) => return Err(message)
     }
   }
-  let object : Map[String, Json] = {}
+  let object : Map[String, Json] = Map([])
   object["mode"] = Json::string(options.gate_mode)
   object["tier"] = match options.tier {
     Some(value) => Json::string(value)

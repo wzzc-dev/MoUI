@@ -424,11 +424,11 @@ fn provider_lock_from_text(text : String) -> Result[ProviderLock, String] {
   }
   let jetbrains = match object_field(providers, "jetbrains", "providers") {
     Ok(value) => value
-    Err(_) => {}
+    Err(_) => Map([])
   }
   let release = match object_field(providers, "release", "providers") {
     Ok(value) => value
-    Err(_) => {}
+    Err(_) => Map([])
   }
   Ok({
     jetbrains_commit: ascii_lower(
@@ -509,7 +509,7 @@ fn build_ci_gate_context(
         "schema v4 platform status is missing ci_gate_evidence_files list",
       )
   }
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   let parts : Array[String] = []
   for value in evidence_values {
     let raw = match value {
@@ -677,9 +677,9 @@ fn verify_ci_gate_contract(
     Ok(values) if !values.is_empty() => values
     _ => return Err("schema v4 platform status is missing ci_gates list")
   }
-  let seen_gate_ids : Map[String, Bool] = {}
-  let seen_gate_commands : Map[String, Bool] = {}
-  let seen_gate_areas : Map[String, Bool] = {}
+  let seen_gate_ids : Map[String, Bool] = Map([])
+  let seen_gate_commands : Map[String, Bool] = Map([])
+  let seen_gate_areas : Map[String, Bool] = Map([])
   for gate_json in gates {
     let gate = match json_object(gate_json, "ci_gates entries") {
       Ok(value) => value
@@ -783,9 +783,9 @@ fn verify_native_smoke_contract(
     Ok(values) => values
     Err(message) => return Err(message)
   }
-  let seen_ids : Map[String, Bool] = {}
-  let seen_markers : Map[String, Bool] = {}
-  let seen_areas : Map[String, Bool] = {}
+  let seen_ids : Map[String, Bool] = Map([])
+  let seen_markers : Map[String, Bool] = Map([])
+  let seen_areas : Map[String, Bool] = Map([])
   for capability_json in capabilities {
     let capability = match
       json_object(capability_json, "native_smoke_capabilities entries") {
@@ -859,8 +859,8 @@ fn verify_native_smoke_contract(
         "schema v4 platform status is missing native_smoke_conditional_capabilities list",
       )
   }
-  let seen_conditional_ids : Map[String, Bool] = {}
-  let seen_conditional_markers : Map[String, Bool] = {}
+  let seen_conditional_ids : Map[String, Bool] = Map([])
+  let seen_conditional_markers : Map[String, Bool] = Map([])
   for conditional_json in conditional_capabilities {
     let conditional = match
       json_object(
@@ -973,7 +973,7 @@ fn verify_native_smoke_contract(
       }
     }
   }
-  let required_conditional_seen : Map[String, Bool] = {}
+  let required_conditional_seen : Map[String, Bool] = Map([])
   for required in required_native_smoke_conditionals() {
     if seen_conditional_ids.contains(required.id) {
       required_conditional_seen[required.id] = true
@@ -999,7 +999,7 @@ fn verify_native_smoke_contract(
         "schema v4 platform status is missing native_smoke_expected_values list",
       )
   }
-  let seen_expected_markers : Map[String, String] = {}
+  let seen_expected_markers : Map[String, String] = Map([])
   for expected_json in expected_values {
     let expected = match
       json_object(expected_json, "native_smoke_expected_values entries") {
@@ -1342,7 +1342,7 @@ fn verify_status_doc(
   status_doc_text : String,
   summaries : Array[PlatformSummary],
 ) -> Result[Unit, String] {
-  let rows : Map[String, Array[String]] = {}
+  let rows : Map[String, Array[String]] = Map([])
   let in_current_matrix = Ref(false)
   for line in status_doc_text.split("\n") {
     let stripped = line.trim().to_owned()

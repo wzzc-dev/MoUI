@@ -742,7 +742,7 @@ fn scan_identifiers_with_prefix(
 ) -> Map[String, Bool] {
   let chars = text.to_array()
   let prefix_chars = prefix.to_array()
-  let names : Map[String, Bool] = {}
+  let names : Map[String, Bool] = Map([])
   let mut index = 0
   while index < chars.length() {
     match find_substring(chars, prefix_chars, index) {
@@ -766,7 +766,7 @@ fn scan_identifiers_with_prefix(
 fn scan_static_void_finalizers(text : String) -> Map[String, Bool] {
   let chars = text.to_array()
   let prefix = "static void ".to_array()
-  let names : Map[String, Bool] = {}
+  let names : Map[String, Bool] = Map([])
   let mut index = 0
   while index < chars.length() {
     match find_substring(chars, prefix, index) {
@@ -788,7 +788,7 @@ fn scan_static_void_finalizers(text : String) -> Map[String, Bool] {
 
 ///|
 fn declared_handles(text : String) -> Map[String, Bool] {
-  let handles : Map[String, Bool] = {}
+  let handles : Map[String, Bool] = Map([])
   for line_view in text.split("\n") {
     let line = line_view.trim().to_owned()
     if line.has_prefix("priv type ") {
@@ -811,7 +811,7 @@ fn sorted_missing(
   left : Map[String, Bool],
   right : Map[String, Bool],
 ) -> Array[String] {
-  let missing : Map[String, Bool] = {}
+  let missing : Map[String, Bool] = Map([])
   for key in left.keys() {
     if !right.contains(key) {
       missing[key] = true
@@ -826,7 +826,7 @@ fn ensure_unique(
   key : String,
   label : String,
 ) -> Result[Unit, String] {
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   for value in values {
     if value == "" {
       return Err(label + " entry is missing " + key)
@@ -880,11 +880,11 @@ fn collect_manifest_sets(
   Map[String, Bool],
   Map[String, Bool],
 ) {
-  let handles : Map[String, Bool] = {}
-  let external_factories : Map[String, Bool] = {}
-  let regular_factories : Map[String, Bool] = {}
-  let finalizers : Map[String, Bool] = {}
-  let all_factories : Map[String, Bool] = {}
+  let handles : Map[String, Bool] = Map([])
+  let external_factories : Map[String, Bool] = Map([])
+  let regular_factories : Map[String, Bool] = Map([])
+  let finalizers : Map[String, Bool] = Map([])
+  let all_factories : Map[String, Bool] = Map([])
   for entry in manifest.external_wrappers {
     handles[entry.moonbit_handle] = true
     external_factories[entry.factory] = true
@@ -972,7 +972,7 @@ fn verify_unique_manifest_entries(
 ///|
 fn discovered_external_factories(source : String) -> Map[String, Bool] {
   let names = scan_identifiers_with_prefix(source, "moonbit_skia_make_")
-  let result : Map[String, Bool] = {}
+  let result : Map[String, Bool] = Map([])
   for name in names.keys() {
     if name.has_suffix("_wrapper") {
       result[name] = true
@@ -984,7 +984,7 @@ fn discovered_external_factories(source : String) -> Map[String, Bool] {
 ///|
 fn discovered_regular_factories(source : String) -> Map[String, Bool] {
   let names = scan_identifiers_with_prefix(source, "moonbit_skia_make_")
-  let result : Map[String, Bool] = {}
+  let result : Map[String, Bool] = Map([])
   for name in names.keys() {
     if !name.has_suffix("_wrapper") {
       match function_body(source, name, "regular object factory " + name) {

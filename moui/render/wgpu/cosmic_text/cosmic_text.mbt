@@ -46,9 +46,9 @@ fn CosmicTextCache::new() -> CosmicTextCache {
     ),
     swash_cache: @moon_cosmic.SwashCache::new(),
     catalog: CosmicFontCatalog::platform_default(),
-    loaded_paths: {},
-    warned_paths: {},
-    glyph_keys: {},
+    loaded_paths: Map([]),
+    warned_paths: Map([]),
+    glyph_keys: Map([]),
     emoji_font_ids: [],
   }
 }

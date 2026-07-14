@@ -279,7 +279,7 @@ fn validate_catalog_text(
         Some(fields) => fields
         None => {
           push(failures, "profiles must be an object")
-          {}
+          Map([])
         }
       }
       validate_required_profiles(profiles, failures)

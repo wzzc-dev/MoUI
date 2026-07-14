@@ -228,7 +228,7 @@ fn parse_params(
   path : String,
   fn_name : String,
 ) -> Result[Map[String, String], String] {
-  let params : Map[String, String] = {}
+  let params : Map[String, String] = Map([])
   for part in split_top_level(params_text) {
     if part == "" {
       continue
@@ -292,8 +292,8 @@ fn parse_annotations(
   let chars = prefix.to_array()
   let borrow = "#borrow(".to_array()
   let owned = "#owned(".to_array()
-  let annotated : Map[String, String] = {}
-  let duplicates : Map[String, Bool] = {}
+  let annotated : Map[String, String] = Map([])
+  let duplicates : Map[String, Bool] = Map([])
   let mut index = 0
   while index < chars.length() {
     let found = match find_substring(chars, borrow, index) {

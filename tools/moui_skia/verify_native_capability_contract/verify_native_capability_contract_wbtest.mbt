@@ -34,10 +34,10 @@ let valid_status_text =
 
 ///|
 fn object_from_text(text : String) -> Map[String, Json] {
-  let parsed = @json.parse(text) catch { _ => return {} }
+  let parsed = @json.parse(text) catch { _ => return Map([]) }
   match parsed {
     Json::Object(fields) => fields
-    _ => {}
+    _ => Map([])
   }
 }
 
@@ -67,14 +67,14 @@ fn valid_targets() -> Map[String, Array[String]] {
 ///|
 fn valid_native_files() -> Map[String, String] {
   {
-    "canvas_native.mbt": "pub extern \"C\" fn canvas_make(handle : Int) -> Unit\npub fn Canvas::draw() -> Unit { () }",
+    "canvas_native.mbt": "pub extern \"C\" fn canvas_make(handle : Int) -> Unit\npub fn Canvas::draw() -> Unit Map([])",
   }
 }
 
 ///|
 fn valid_fallback_files() -> Map[String, String] {
   {
-    "canvas_unavailable.mbt": "pub fn canvas_make(handle : Int) -> Unit { () }\npub fn Canvas::draw() -> Unit { () }",
+    "canvas_unavailable.mbt": "pub fn canvas_make(handle : Int) -> Unit Map([])\npub fn Canvas::draw() -> Unit Map([])",
   }
 }
 
@@ -102,7 +102,7 @@ test "accepts valid native capability contract data" {
 test "parses public extern and method functions" {
   let source =
     #|pub extern "C" fn canvas_make(handle : Int) -> Unit
-    #|pub(all) fn Canvas::draw() -> Unit { () }
+    #|pub(all) fn Canvas::draw() -> Unit Map([])
   let exports = public_functions(source)
   inspect(exports.contains("canvas_make"), content="true")
   inspect(exports.contains("Canvas::draw"), content="true")
@@ -111,7 +111,7 @@ test "parses public extern and method functions" {
 ///|
 test "rejects missing fallback public API" {
   let fallback_files = {
-    "canvas_unavailable.mbt": "pub fn canvas_make(handle : Int) -> Unit { () }",
+    "canvas_unavailable.mbt": "pub fn canvas_make(handle : Int) -> Unit Map([])",
   }
   match verify_fixture(fallback_files~) {
     Ok(_) => inspect("ok", content="err")
@@ -167,8 +167,8 @@ test "rejects marker absent from status" {
 ///|
 test "rejects uncovered native files" {
   let native_files = {
-    "canvas_native.mbt": "pub extern \"C\" fn canvas_make(handle : Int) -> Unit\npub fn Canvas::draw() -> Unit { () }",
-    "path_native.mbt": "pub fn path_make() -> Unit { () }",
+    "canvas_native.mbt": "pub extern \"C\" fn canvas_make(handle : Int) -> Unit\npub fn Canvas::draw() -> Unit Map([])",
+    "path_native.mbt": "pub fn path_make() -> Unit Map([])",
   }
   match verify_fixture(native_files~) {
     Ok(_) => inspect("ok", content="err")

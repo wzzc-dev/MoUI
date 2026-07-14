@@ -119,7 +119,7 @@ fn parse_target_entries(
   text : String,
 ) -> Result[Map[String, Array[String]], String] {
   let chars = text.to_array()
-  let entries : Map[String, Array[String]] = {}
+  let entries : Map[String, Array[String]] = Map([])
   let mut index = 0
   while index < chars.length() {
     match read_quoted(chars, index) {
@@ -221,7 +221,7 @@ fn require_targets(
 
 ///|
 fn map_from_names(names : Array[String]) -> Map[String, Bool] {
-  let result : Map[String, Bool] = {}
+  let result : Map[String, Bool] = Map([])
   for name in names {
     result[name] = true
   }
@@ -230,7 +230,7 @@ fn map_from_names(names : Array[String]) -> Map[String, Bool] {
 
 ///|
 fn base_names(names : Array[String], suffix : String) -> Map[String, Bool] {
-  let result : Map[String, Bool] = {}
+  let result : Map[String, Bool] = Map([])
   for name in names {
     match @tools.strip_suffix(name, suffix) {
       Some(base) => result[base] = true

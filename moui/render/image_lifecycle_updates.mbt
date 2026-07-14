@@ -57,7 +57,7 @@ pub fn ImageResourceLifecycle::evict_disposed(
   self : ImageResourceLifecycle,
 ) -> Int {
   let mut removed = 0
-  let kept : Map[String, ImageResourceRecord] = {}
+  let kept : Map[String, ImageResourceRecord] = Map([])
   for key, record in self.records {
     if record.status == ImageResourceStatus::ImageDisposed {
       removed = removed + 1
