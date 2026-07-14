@@ -18,3 +18,4 @@ description = "Image codec primitives for MoonBit with PNG/BMP/JPEG decode+encod
 
 source = "src"
 
+warnings = "-deprecated"
