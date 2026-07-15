@@ -1,7 +1,6 @@
 ///|
 #borrow(text)
-extern "C" fn write_output_native(stream : Int, text : Bytes) -> Unit =
-  "moui_cli_write_output"
+extern "C" fn write_output_native(stream : Int, text : Bytes) -> Unit = "moui_cli_write_output"
 
 ///|
 fn write_output(stream : Int, text : String) -> Unit {
