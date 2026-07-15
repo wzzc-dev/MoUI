@@ -89,8 +89,9 @@ scripts/build-mobile-android-apk.sh --app counter
 ```
 
 Set `ANDROID_NDK_HOME=/path/to/Android/Sdk/ndk/<version>` only when you need to
-pin a specific side-by-side NDK; otherwise the script uses the latest NDK under
-`$ANDROID_HOME/ndk`.
+pin a specific side-by-side NDK; otherwise the script uses the required
+`MOUI_ANDROID_NDK_VERSION` installation (28.2.13676358 by default) under
+`$ANDROID_HOME/ndk` and ignores incompatible overrides.
 
 For a packaging-only smoke that avoids the Android Skia provider download, use
 `scripts/build-counter-android-apk.sh --fallback-skia`. That compatibility
