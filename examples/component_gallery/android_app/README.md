@@ -1,8 +1,9 @@
 # Component Gallery Android
 
 This is the app-owned Gradle project for the experimental Component Gallery
-Android route. The shared mobile Android template owns the Java `Activity`,
-JNI, `ANativeWindow` handling, and CMake source list; this project supplies app
+Android route. The shared mobile Android template owns the Kotlin/AndroidX
+managed `Activity`, registered JNI bridge, `ANativeWindow` handling,
+PlatformView overlay, and CMake source list; this project supplies app
 metadata from `examples/component_gallery/mobile.json`. Component Gallery's
 repository compatibility native symbol and MoonBit C details live in
 `moui/mobile/build-contracts.json`.
@@ -43,3 +44,7 @@ lifecycle observations.
 
 Use `scripts/build-component-gallery-android-apk.sh --fallback-skia` only for a fast
 packaging/JNI/CMake smoke; that APK reports Skia unavailable.
+
+The Java shell under `moui/mobile/legacy/android` is only the Release N
+compatibility fixture and must be selected explicitly with
+`--legacy-java-shell --compile-sdk 35`.

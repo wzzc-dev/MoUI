@@ -1,8 +1,9 @@
 # MoUI Counter Android
 
 This is the app-owned Gradle project for the experimental Counter Android
-route. The shared mobile Android template owns the Java `Activity`, JNI,
-`ANativeWindow` handling, and CMake source list; this project supplies app
+route. The shared mobile Android template owns the Kotlin/AndroidX managed
+`Activity`, registered JNI bridge, `ANativeWindow` handling, PlatformView
+overlay, and CMake source list; this project supplies app
 metadata from `examples/counter/mobile.json`. Counter's repository
 compatibility native symbol and MoonBit C details live in
 `moui/mobile/build-contracts.json`.
@@ -43,3 +44,7 @@ lifecycle observations.
 
 Use `scripts/build-counter-android-apk.sh --fallback-skia` only for a fast
 packaging/JNI/CMake smoke; that APK reports Skia unavailable.
+
+Release N compatibility can be audited explicitly with
+`scripts/build-mobile-android-apk.sh --app counter --fallback-skia
+--legacy-java-shell --compile-sdk 35`. This is not the production shell.
