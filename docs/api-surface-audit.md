@@ -7,17 +7,11 @@ counts against generated `pkg.generated.mbti` files.
 
 ## Current Snapshot
 
-| Package | Public declarations | Semantic categories | Primary audience |
-| --- | ---: | --- | --- |
-| `moui/core` | 505 `pub`, 139 `pub(all)` | 523 `advanced_core_protocol`, 139 `required_protocol` | Framework authors, custom-view authors, render/runtime boundaries |
-| `moui/views` | 350 `pub`, 43 `pub(all)` | 134 `app_constructor`, 164 `app_state_helper`, 30 `app_style`, 26 `advanced_core_protocol`, 43 `migration_debt` | App authors and app-facing control authors |
-| `moui/runtime` | 263 `pub`, 6 `pub(all)` | 263 `runtime_diagnostic`, 6 `required_protocol` | Host/runtime assembly, diagnostics, devtools |
-| `moui/backend/host` | 422 `pub`, 62 `pub(all)` | 422 `host_contract`, 62 `required_protocol` | Platform backends and host-service integrations |
-| `moui/render` | 100 `pub`, 25 `pub(all)` | 100 `renderer_contract`, 25 `required_protocol` | Renderer implementers and renderer capability tooling |
-
-The count sum includes generated `type` aliases in addition to `pub` and
-`pub(all)` declarations. That is why semantic counts can be higher than the
-plain `pub` count printed by the package budget summary.
+The canonical numeric snapshot is generated in
+[Repository Facts](repository-facts.md#api-surface) from the API validator's
+structured report. Semantic category budgets remain executable policy in
+`tools/moui/validate_api_surface`; this narrative deliberately does not copy
+their current counts.
 
 ## Growth Policy
 
@@ -41,8 +35,8 @@ plain `pub` count printed by the package budget summary.
 - `test_exposure` is budgeted at zero for the tracked packages. Prefer
   package-private helpers and test-only files over public declarations that
   exist only for tests.
-- `migration_debt` tracks `moui/views` `pub(all) struct` declarations (currently
-  0 — all 24 structs migrated to `pub struct` or opaque `type` per ADR 0004).
+- `migration_debt` tracks `moui/views` `pub(all) struct` declarations. The
+  completed visibility migration is recorded in ADR 0004.
   `pub(all) enum` is no longer classified as debt: MoonBit requires `pub(all)`
   to expose enum variants for external construction, so enums are treated as
   intentional public API and classified into `app_style` or `app_state_helper`.
@@ -52,12 +46,11 @@ plain `pub` count printed by the package budget summary.
 - Keep `moui/core` closed to new concrete controls, form/routing/WebView
   workflows, runtime snapshots, and design-system defaults. The existing legacy
   family guard should remain at zero occurrences for these families.
-- Review `moui/views` `pub(all) struct` types first when doing API cleanup
-  (currently 0 remaining). `pub(all) enum` types are intentional public API
-  in MoonBit (variants need `pub(all)` for external construction); they are
-  not migration candidates. Good struct candidates were opaque `type`
-  declarations or `pub struct` with constructors and `with_xxx` methods —
-  see ADR 0004 for the completed migration.
+- Review any future `moui/views` `pub(all) struct` types first when doing API
+  cleanup. `pub(all) enum` types are intentional public API in MoonBit
+  (variants need `pub(all)` for external construction); they are not migration
+  candidates. Prefer opaque `type` declarations or `pub struct` with
+  constructors and `with_xxx` methods; see ADR 0004.
 - Avoid adding more low-level paint helpers to `moui/views` unless they are
   necessary for `canvas` and app-facing custom drawing. Domain paint value types
   should stay under `moui/graphics` or direct `moui/core`.
@@ -76,4 +69,5 @@ When a public declaration is added or removed:
 3. If the semantic classification budget fails, either move the API to the
    owning package or update the category budget with a short rationale in the
    same change.
-4. Update this audit when the intended current snapshot changes.
+4. Run `node scripts/generate-repo-docs.mjs --write` and commit the generated
+   facts when the intended snapshot changes.

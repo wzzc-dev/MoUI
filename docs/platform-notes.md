@@ -62,15 +62,21 @@ options. Use `backend/<platform>/skia` for the native Skia raster mainline.
 Use `backend/<platform>/wgpu` only for native WGPU experimental diagnostics.
 Android and iOS are exceptions to the desktop event-loop shape:
 `backend/android` currently exposes an embedded-session contract that must be
-driven by an Activity/JNI/CMake layer with an `ANativeWindow` handle, while
-`backend/ios` exposes an embedded-session contract driven by a UIKit shell with
-a raw `UIView` handle. The Counter example includes
-`examples/counter/android_app` plus `scripts/build-counter-android-apk.sh` for
-APK packaging, and `examples/counter/ios_app` plus
-`scripts/build-counter-ios-app.sh` for iOS Simulator `.app` packaging, but
-fallback APK/`.app` builds are build-system evidence only. Treat both Android
-and iOS as experimental scaffolds until matching device/simulator runtime smoke
-evidence exists.
+driven by the package-owned Kotlin/AndroidX managed shell with registered JNI,
+a PlatformView overlay, and an `ANativeWindow` handle, while
+`backend/ios` exposes an embedded-session contract driven by the package-owned
+SwiftUI shell with a raw `CAMetalLayer`-backed `UIView` handle and a narrow ABI
+v1 Objective-C++ bridge. Repository wrappers stage those canonical projects by
+default. The checked-in `examples/counter/{android_app,ios_app}` projects are
+selected only by explicit Release N legacy flags. Fallback APK/`.app` builds
+are build-system evidence only; treat both routes as experimental until
+matching device/simulator runtime smoke evidence exists.
+
+`backend/harmonyos` follows the same embedded-session shape through the
+package-owned ArkTS `MoUIRoot`. Native XComponent callbacks exclusively own
+surface/input/resize/detach, while ArkTS owns `displaySync` and platform
+services. The default repository wrapper stages the canonical shell; checked-in
+`examples/*/harmonyos_app` projects are Release N fixtures.
 The Skia provider preflights `moui_skia/native` availability before handing
 control to the host app runner. Fallback builds therefore return with a clear
 diagnostic instead of opening a platform window that later fails to attach a
@@ -177,10 +183,10 @@ For detailed platform-specific setup, requirements, and runtime evidence:
   auto-detection, and host architecture.
 - [Linux](platform-notes-linux.md) — Wayland host, runtime requirements, Skia provider,
   runtime evidence, and remaining gaps.
-- [Android](android-support.md) (experimental) — embedded Activity/JNI/CMake scaffold,
+- [Android](android-support.md) (experimental) — embedded Kotlin/AndroidX managed shell with registered JNI/CMake,
   APK packaging, and first-frame pixels.
-- [iOS](ios-support.md) (experimental) — embedded UIKit/Xcode scaffold,
-  Simulator packaging, and first-frame pixels.
+- [iOS](ios-support.md) (experimental) — canonical SwiftUI/Xcode managed shell,
+  Simulator packaging, and historical Release N first-frame pixels.
 - [HarmonyOS](harmonyos-support.md) (experimental) — embedded Stage Ability scaffold,
   HAP packaging, and first-frame pixels.
 

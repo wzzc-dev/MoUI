@@ -29,6 +29,7 @@ Copy `TEMPLATE.md` and fill in all sections. Keep it concise.
 
 | # | Title | Date | Status |
 |---|-------|------|--------|
+| 0010 | [Managed mobile shells and stable runtime ABI](0010-managed-mobile-shells-and-runtime-abi.md) | 2026-07-15 | Accepted |
 | 0009 | [DrawFrame clear ownership and Skia damage clipping](0009-draw-frame-clear-and-skia-damage-clip.md) | 2026-07-14 | Accepted |
 | 0008 | [MoonBit-native browser Playground](0008-moonbit-native-playground.md) | 2026-07-13 | Accepted |
 | 0007 | [Skia layer cache indexing and damage region partial clear](0007-skia-layer-cache-indexing-and-damage-region.md) | 2026-07-12 | Accepted |

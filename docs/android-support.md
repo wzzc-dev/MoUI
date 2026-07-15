@@ -17,7 +17,7 @@ PlatformView overlay.
 | Frame pacing | Input/resize request redraw; presentation runs from `Choreographer` frame ticks | 60/120 Hz device pacing evidence pending. |
 | Skia provider | Scaffolded in `moui/backend/android/skia` | Provider/preflight checks prove wiring, not device pixels. |
 | Counter entrypoint | `examples/counter/android_skia` exports thin native hooks | Compile/check evidence only. |
-| APK shell | Package-owned Kotlin/AndroidX managed shell plus app-owned Gradle metadata under `examples/*/android_app` | Packaging evidence; fallback APK is not runtime proof. |
+| APK shell | Package-owned Kotlin/AndroidX managed shell staged under `artifacts/`; `examples/*/android_app` is Release N compatibility metadata | Packaging evidence; fallback APK is not runtime proof. |
 | First-frame runtime evidence | Non-fallback Component Gallery APK on HUAWEI SCM-W09 device; nonblank first-frame screenshot in `resource/screenshots/android-componentgallery.jpg` (2026-07-10) | First-frame pixels proven. |
 | Runtime support claim | Release N Java shell reached **L2 `passed`** on an emulator (Component Gallery, 2026-07-15); the canonical managed shell needs a fresh matching-device run | Historical evidence does not automatically promote the replacement shell. Re-run `scripts/android-mobile-runtime-evidence.sh` without shell-side probes before claiming managed-shell runtime support. |
 
@@ -36,8 +36,8 @@ PlatformView overlay.
   virtual accessibility bridge, `Choreographer`, registered JNI adapter,
   `ANativeWindow` acquisition, and reusable CMake wiring.
 - `examples/counter/android_app` and
-  `examples/component_gallery/android_app` own only app Gradle metadata,
-  manifest/resources, and their thin CMake include.
+  `examples/component_gallery/android_app` are repository-only Release N
+  Gradle metadata fixtures; managed applications do not store them.
 - `moui/mobile/legacy/android` preserves the Release N Java shell and
   name-mangled JNI adapter as a one-release compatibility fixture. It is never
   selected implicitly.
@@ -150,16 +150,14 @@ empty runtime streams. If native fails to load, reinstall NDK 28.2, clean
 
 ## Mobile APK Builds
 
-Android APK builds now use the shared mobile Gradle route. The app-specific
-shells under `examples/counter/android_app` and
-`examples/component_gallery/android_app` consume app-facing metadata from
-`examples/<app>/mobile.json` plus package-published compatibility contracts
-from `moui/mobile/build-contracts.json`. The reusable Gradle script, Kotlin
-`ComponentActivity`, registered JNI bridge, CMake module, and copyable project
-template live under `moui/mobile`
-so external apps can use the same route from the published `wzzc-dev/moui`
-package. A Gradle pre-build task generates MoonBit C plus Skia flags, compiles
-the shared JNI/CMake template, and lets Gradle package/sign the debug APK.
+Android APK builds now use the shared mobile Gradle route. The build stages the
+Kotlin `ComponentActivity`, registered JNI bridge, Gradle project, CMake
+module, and plugin registry from the resolved `wzzc-dev/moui` package.
+Repository examples provide only `examples/<app>/mobile.json` and the MoonBit
+entrypoint; `moui/mobile/build-contracts.json` is used only by the explicit
+Release N legacy matrix. A Gradle pre-build task generates MoonBit C plus Skia
+flags, compiles the staged JNI/CMake project, and lets Gradle package/sign the
+debug APK.
 
 Build the experimental Counter debug APK from the repository root:
 
@@ -236,19 +234,23 @@ This flag switches the Java/Kotlin source root, manifest Activity/provider,
 and CMake JNI glue root as one unit. It is a compatibility audit, not a second
 production mode.
 
-For an external app, copy `moui/mobile/android/template` to `android_app`, copy
-`moui/mobile/template.mobile.json` to `mobile.json`, fill in the app id and
-`android.native` export contract, then run the package-published script from
-the app workspace:
+For an external app, use `moui new --platform android` or add the Android block
+to schema v2 `mobile.json`. Managed builds derive the fixed runtime ABI and
+stage the canonical project; there is no `android.native` export map or native
+project copy in the app repository:
 
 ```sh
 .mooncakes/wzzc-dev/moui/scripts/mobile/build-android-apk.sh \
   --workspace-root "$PWD" \
   --moui-root "$PWD/.mooncakes/wzzc-dev/moui" \
   --app my_app \
-  --app-config "$PWD/mobile.json" \
-  --android-project "$PWD/android_app"
+  --app-config "$PWD/mobile.json"
 ```
+
+Use `moui mobile eject android --output android_app` only when application
+requirements exceed the managed plugin contract. Subsequent builds pass
+`--ejected-shell --android-project android_app`; MoUI validates the versioned
+lock but never overwrites that project.
 
 ## Emulator Setup And Smoke
 

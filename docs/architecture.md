@@ -102,28 +102,27 @@ workspace.
   platform backend -> platform Skia provider -> `moui/render/skia` ->
   `moui_skia`.
 - Android Skia route (experimental scaffold): shared app package ->
-  `examples/<app>/android_skia` plus app-owned Gradle metadata project such as
-  `examples/counter/android_app`, using the package-published
-  `moui/mobile/android` Gradle/Activity/JNI/CMake template ->
+  `examples/<app>/android_skia`, using a build-staged package-published
+  `moui/mobile/android` Kotlin/AndroidX/registered-JNI/CMake managed shell ->
   `moui/backend/android` embedded session -> `moui/backend/android/skia` ->
-  `moui/render/skia` -> `moui_skia`. The app or Android Activity layer owns
-  lifecycle, `ANativeWindow` handle acquisition, `Choreographer` pacing,
+  `moui/render/skia` -> `moui_skia`. The package-owned Android shell owns
+  lifecycle, PlatformView overlay composition, `ANativeWindow` acquisition, `Choreographer` pacing,
   `InputConnection`, clipboard, virtual accessibility nodes, and input forwarding until a
   checked APK/device smoke promotes the route.
 - iOS Skia route (experimental scaffold): shared app package ->
-  `examples/<app>/ios_skia` plus app-owned Xcode metadata project such as
-  `examples/counter/ios_app`, using the package-published
-  `moui/mobile/ios` UIKit/Xcode/native build template ->
+  `examples/<app>/ios_skia`, using a build-staged package-published
+  `moui/mobile/ios` SwiftUI/Swift-package/Xcode managed shell ->
   `moui/backend/ios` embedded session -> `moui/backend/ios/skia` ->
-  `moui/render/skia` -> `moui_skia`. The app or UIKit view controller owns
-  lifecycle, `UIView` handle ownership, `CADisplayLink` pacing, the UIKit text
-  proxy, pasteboard, accessibility container, and touch forwarding until a checked
-  simulator/device smoke promotes the route.
+  `moui/render/skia` -> `moui_skia`. The package-owned Swift shell owns the
+  single-scene lifecycle, `CAMetalLayer`-backed `UIView`, `CADisplayLink`
+  pacing, UIKit text proxy, pasteboard, accessibility container, PlatformView
+  overlay, Host Service plugins, and touch forwarding. Objective-C++ stays a
+  narrow Mobile Runtime ABI v1 bridge. A checked managed-shell simulator/device
+  smoke is still required before promotion.
 - HarmonyOS Skia route (experimental scaffold): shared app package ->
-  `examples/<app>/harmonyos_skia` plus app-owned Stage Ability/XComponent shell
-  such as `examples/harmonyos_demo/harmonyos_app`, using the
-  package-published `moui/mobile/harmonyos` Stage Ability/XComponent/NAPI/CMake
-  template ->
+  `examples/<app>/harmonyos_skia`, using the build-staged package-published
+  `moui/mobile/harmonyos` ArkTS Stage Ability/XComponent/NAPI/CMake managed
+  shell ->
   `moui/backend/harmonyos` embedded session ->
   `moui/backend/harmonyos/skia` -> `moui/render/skia` -> `moui_skia`.
   Native XComponent callbacks exclusively own surface/pointer lifecycle and
@@ -259,11 +258,16 @@ moui/backend/linux/skia/      Linux Skia renderer provider mainline
 moui/backend/linux/wgpu/      Linux WGPU renderer provider diagnostic
 moui/backend/android/         Android embedded native host scaffold over shared host/runtime contracts
 moui/backend/android/skia/    Android Skia renderer provider over ANativeWindow pixel presentation
+moui/mobile/android/          canonical Kotlin/AndroidX managed shell, registered JNI, Gradle/CMake template
+moui/mobile/legacy/android/   frozen Release N Java/name-mangled-JNI compatibility fixture
 moui/backend/ios/             iOS embedded native host scaffold over shared host/runtime contracts
 moui/backend/ios/skia/        iOS Skia renderer provider over UIKit UIImageView pixel presentation
+moui/mobile/ios/              canonical SwiftUI managed shell, ABI bridge, Swift package, Xcode template
+moui/mobile/ios/legacy/       frozen Release N UIKit/Objective-C++ compatibility fixture
 moui/backend/harmonyos/       HarmonyOS embedded native host scaffold over shared host/runtime contracts
 moui/backend/harmonyos/skia/  HarmonyOS Skia renderer provider over XComponent native-window pixel presentation
-moui/mobile/harmonyos/        HarmonyOS reusable Stage Ability/XComponent/NAPI/CMake template and native glue
+moui/mobile/harmonyos/        canonical ArkTS Stage Ability/XComponent managed shell, plugin registry, fixed-ABI NAPI/CMake glue
+moui/mobile/test-probe/       repository-only three-platform service/PlatformView contract plugin
 moui/backend/web/             canonical Web host on wasm-gc plus browser JS assets
 moui/render/                  renderer facade and shared draw helpers
 moui/render/skia/             native Skia raster renderer facade over moui_skia
@@ -282,14 +286,14 @@ moui/tests/skia_text_emoji_smoke/ opt-in real Skia text/emoji renderer smoke
 moui/tests/wgpu_renderer_smoke/ opt-in native WGPU renderer smoke
 examples/counter/app/         smallest shared app shape
 examples/counter/{macos_skia,web_wasm,android_skia,ios_skia,macos_wgpu,windows_wgpu,linux_wgpu}/ platform counter entrypoints
-examples/counter/android_app/ Counter Android Activity/JNI/CMake APK shell
-examples/counter/ios_app/     Counter iOS UIKit simulator app shell
+examples/counter/android_app/ Counter Android Release N Gradle metadata fixture
+examples/counter/ios_app/     Counter iOS Release N Xcode metadata fixture
 examples/counter/windows_wgpu_cosmic/ Windows counter selecting Moon Cosmic text
 examples/harmonyos_demo/app/  standalone HarmonyOS demo app with viewport/tap feedback
 examples/harmonyos_demo/harmonyos_skia/ HarmonyOS demo embedded-session Skia entrypoint
-examples/harmonyos_demo/harmonyos_app/ HarmonyOS app-owned Stage Ability/XComponent shell over mobile/harmonyos
+examples/harmonyos_demo/harmonyos_app/ HarmonyOS Release N app-owned project fixture
 examples/component_gallery/harmonyos/ Component Gallery HarmonyOS embedded-session Skia entrypoint
-examples/component_gallery/harmonyos_app/ Component Gallery HarmonyOS Stage Ability/XComponent shell
+examples/component_gallery/harmonyos_app/ Component Gallery HarmonyOS Release N project fixture
 examples/agent_counter/       minimal agent-controllable runtime example (shared app at example root plus main/ and macos_skia/ entrypoints)
 examples/button_freeze_probe/app/ minimal native Skia button-freeze repro app
 examples/button_freeze_probe/{macos_skia,windows_skia,linux_skia}/ platform Button Freeze Probe entrypoints

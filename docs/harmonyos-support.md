@@ -15,16 +15,16 @@ MoUI owns the runtime session and Skia renderer provider contracts.
 - `examples/harmonyos_demo/app` owns the platform-neutral TEA demo UI.
 - `examples/harmonyos_demo/harmonyos_skia` owns the MoonBit native exports used
   by the HarmonyOS shell.
-- `moui/mobile/harmonyos` owns the reusable ArkTS Stage Ability/XComponent
-  template plus shared NAPI/CMake native glue published with the `wzzc-dev/moui`
-  package.
+- `moui/mobile/harmonyos` owns the canonical ArkTS Stage Ability/XComponent
+  managed shell, generated plugin registry, fixed-ABI NAPI bridge, and CMake
+  template published with the `wzzc-dev/moui` package.
 
 The minimum compatible SDK is API 20. Touch movement below the native slop
 remains pointer input. Crossing slop sends one pointer Cancel followed by
 Scroll Begin/Move; Scroll End/Cancel suppresses Pointer Up. The removed ArkTS
 `.onTouch` path must not be reintroduced.
-- `examples/harmonyos_demo/harmonyos_app` owns the app-specific HarmonyOS
-  project metadata and shell files for the standalone demo.
+- `examples/harmonyos_demo/harmonyos_app` is the explicit Release N app-owned
+  project fixture. Normal builds stage the canonical shell under `artifacts/`.
 
 ## Skia Artifact
 
@@ -115,13 +115,18 @@ scripts/build-harmonyos-demo-app.sh --fallback-skia
 scripts/build-component-gallery-harmonyos-hap.sh --fallback-skia
 ```
 
-External apps can copy `moui/mobile/harmonyos/template` as `harmonyos_app/` and
+Managed external apps keep only `mobile.json` and the MoonBit entrypoint, then
 invoke:
 
 ```sh
 moui/scripts/mobile/build-harmonyos-hap.sh --app <id> \
-  --harmonyos-project harmonyos_app
+  --app-config mobile.json
 ```
+
+Use `moui mobile eject harmonyos --output harmonyos_app` only when application
+requirements exceed the managed plugin contract. Subsequent builds must pass
+`--ejected-shell --harmonyos-project harmonyos_app`; MoUI validates the lock
+versions but never overwrites that project.
 
 Use a HarmonyOS/OpenHarmony SDK for non-fallback native builds. The build helper
 uses `HARMONYOS_SDK_HOME` first and `OHOS_SDK_HOME` as a fallback:

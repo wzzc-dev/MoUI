@@ -150,9 +150,10 @@ those are its default routes.
 
 To try Component Gallery on a mobile platform, follow the platform-specific
 setup, build, and run instructions for
-[Android](examples/component_gallery/android_app/README.md),
-[iOS](examples/component_gallery/ios_app/README.md), or
-[HarmonyOS](examples/component_gallery/harmonyos_app/README.md).
+[Android](docs/android-support.md),
+[iOS](docs/ios-support.md), or
+[HarmonyOS](docs/harmonyos-support.md). The checked-in native projects under
+`examples/*/*_app` are Release N fixtures, not application templates.
 
 > **Windows prerequisite:** before building or running any Windows native Skia
 > entrypoint (`windows_skia`, or Component Gallery's `windows`), initialize the

@@ -21,7 +21,7 @@ promotion claim** (`gpuPromotionEvidence` / `artifacts/gpu-promotion/...`).
 | Frame pacing | Input/resize request redraw; presentation runs from `CADisplayLink` ticks | 60/120 Hz device pacing evidence pending. |
 | Skia provider | Scaffolded in `moui/backend/ios/skia` | Provider/preflight checks prove wiring, not simulator/device pixels. |
 | Product GPU default | `auto` → `SkiaGpuNative` / `metal-gpu` when available (`gpu_promoted=true`) | Source + rebuild `mobile-build.json`; not a seven-gate claim. |
-| Canonical SwiftUI shell | `moui/mobile/ios` + real `PBXNativeTarget` projects in the template, Counter, and Component Gallery | Managed fallback builds prove Swift/ObjC++/ABI/native packaging only; they are not runtime proof. |
+| Canonical SwiftUI shell | `moui/mobile/ios` + real `PBXNativeTarget` in the framework-staged template | Managed fallback builds prove Swift/ObjC++/ABI/native packaging only; they are not runtime proof. |
 | First-frame runtime evidence | Nonblank screenshots and the simulator smoke below were collected against the Release N UIKit shell | Historical pixels remain valid for that artifact, not for the replacement managed shell. |
 | Runtime smoke (simulator, 2026-07-15 re-verify) | Component Gallery **`status=passed`** under the frozen UIKit shell at `artifacts/mobile-runtime/ios/component_gallery/` | Managed SwiftUI lifecycle, pixels, input, IME, clipboard, accessibility, PlatformView, and async-image evidence must be recollected without a production-shell smoke probe. |
 | GPU promotion claim | Scaffold only: `artifacts/gpu-promotion/ios/scaffold-latest/` (`gpuPromoted=false`) | No matching-device seven-gate claim; product default already on. Runtime smoke pass ≠ seven-gate promotion claim. |

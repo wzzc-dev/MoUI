@@ -383,14 +383,18 @@ MoUI 当前把两类入口统一在 `moui/views`：普通 app 使用高层 const
 平台入口包指 `examples/*/{web_wasm,macos_skia,windows_skia,linux_skia}`
 这类 `is-main` package。它们负责创建 runtime、连接平台 backend、选择 renderer。
 Android 例外地拆成 `examples/*/android_skia` MoonBit embedded-session 入口和
-app-owned APK/JNI/CMake shell（例如 `examples/counter/android_app`）。
+package-owned Kotlin managed shell；构建时从已解析的 MoUI package staging，
+`examples/*/android_app` 只保留为 Release N legacy fixture。
 iOS 同样走 embedded-session 入口：`examples/*/ios_skia` 暴露 MoonBit C exports，
-app-owned UIKit shell（例如 `examples/counter/ios_app`）负责
-`UIApplicationDelegate` / `UIViewController` 生命周期与触摸转发。
+构建时 staging 的 `moui/mobile/ios` canonical SwiftUI shell 负责单 scene 生命周期、
+`CAMetalLayer` surface、`CADisplayLink`、UIKit service adapter 与触摸转发；
+Objective-C++ 仅保留 Mobile Runtime ABI v1 翻译和数据所有权；
+`examples/*/ios_app` 只保留为 Release N fixture。
 HarmonyOS 同样走 embedded-session 入口：`examples/*/harmonyos_skia` 暴露
-MoonBit C exports，app-owned Stage Ability/XComponent/NAPI shell（例如
-`examples/harmonyos_demo/harmonyos_app`）负责 XComponent surface 生命周期与触摸转发；
-可复用的 HarmonyOS shell/CMake/NAPI 模板由 `moui/mobile/harmonyos` 提供。
+MoonBit C exports；`moui/mobile/harmonyos` 的 canonical ArkTS
+Stage Ability/XComponent shell 由构建器 staging，native XComponent callback
+独占 surface/input/resize/detach。`examples/*/harmonyos_app` 仅为 Release N
+fixture。
 
 平台入口包可以依赖：
 

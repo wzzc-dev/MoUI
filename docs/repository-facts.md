@@ -89,9 +89,9 @@ This file is generated from repository manifests and validator reports.
 
 | Platform | Build/source | Renderer L2 | Runtime L3 | Shell | API/ABI | Deployment floor | Toolchain floor | Declared presenter | Actual presenter |
 |---|---|---|---|---|---|---|---|---|---|
-| android | partial | partial | partial | managed-kotlin | 1/1 | Android 23 | AGP 9.2.1 / Kotlin 2.2.10 / SDK 35 / NDK 28.2 | vulkan-direct | unverified |
-| harmonyos | partial | partial | partial | managed-arkts-xcomponent | 1/1 | HarmonyOS API 20 | target 21 / model 6.0.1 | egl-direct | unverified |
-| ios | partial | partial | partial | managed-swiftui | 1/1 | iOS 15.0 | Xcode 15.4 / Swift 5 | metal-direct | unverified |
+| android | passed | partial | partial | managed-kotlin | 1/1 | Android 23 | AGP 9.2.1 / Kotlin 2.2.10 / Gradle 9.6.1 / JVM 17 / compile SDK 36 / target SDK 35 / NDK 28.2 / CMake 3.22.1 | vulkan-direct | unverified |
+| harmonyos | passed | partial | partial | managed-arkts-xcomponent | 1/1 | HarmonyOS API 20 | HarmonyOS SDK API 21 / target API 21 / model 6.0.1 | egl-direct | unverified |
+| ios | passed | partial | partial | managed-swiftui | 1/1 | iOS 15.0 | Xcode 15.4 / Swift 5 | metal-direct | unverified |
 | linux | passed | passed | partial | native-wayland | 0/0 | Wayland compositor | Clang/GCC with Wayland and Vulkan | vulkan-wayland-direct | vulkan-wayland-direct |
 | macos | passed | passed | passed | native-window | 0/0 | current supported macOS runner | Apple Clang with Metal | metal-direct | metal-direct |
 | web | passed | passed | passed | browser | 0/0 | WebAssembly GC browser | MoonBit wasm-gc | browser-webgpu | browser-webgpu |

@@ -49,10 +49,10 @@ after changing repository example mobile metadata or contracts.
 | Website | MoUI-built homepage workspace | `website/app/` | Bilingual product homepage, first-screen MoUI brand hero, compact Counter code snippet, interactive runtime preview, framework foundations, platform matrix, release-readiness cards, quick-start Web commands, runtime Docs portal that fetches packaged same-origin `docs/*.md` Markdown plus MoUI and `moui_skia` README copies, Web-only `website/web_wasm` entrypoint |
 | Playground | MoonBit-native browser tutorial and editor | `website/playground/app/`, `website/playground/web_wasm/` | Code editor built with `moui_richtext`, controlled `main.mbt`/`moon.pkg` files, app-safe import validation, pinned MoonBit compiler Worker bridge, sandbox preview host, local persistence, share URL protocol, and six bilingual lesson assets |
 | Agent Counter | Minimal agent-controllable runtime example | `examples/agent_counter/`, `examples/agent_counter/main/`, `examples/agent_counter/macos_skia/` | Counter app with semantics/command-intent flow for agent observation and control, plus a native macOS Skia entrypoint |
-| Counter | Minimal model/update/view app | `examples/counter/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages, experimental Android/iOS Skia embedded-session entrypoints, Counter Android APK metadata, and Counter iOS Xcode metadata over the canonical SwiftUI shell |
+| Counter | Minimal model/update/view app | `examples/counter/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages, Android/iOS embedded-session MoonBit entrypoints, and managed Kotlin/SwiftUI packaging; checked-in native projects are Release N fixtures |
 | Multi Window | Host-managed scene example | `examples/multi_window/app/` | Independent main and inspector runtimes through `HostWindowRequestQueue` and `HostWindowSceneResolver`, with native macOS/Windows/Linux windows and a multi-canvas Web route |
-| HarmonyOS Demo | Standalone experimental HarmonyOS embedded Skia demo | `examples/harmonyos_demo/app/`, `examples/harmonyos_demo/harmonyos_skia/`, `examples/harmonyos_demo/harmonyos_app/` | Platform-neutral viewport/tap feedback demo, HarmonyOS Skia embedded-session MoonBit exports, app-owned Stage Ability/XComponent shell over the package-published `moui/mobile/harmonyos` NAPI/CMake template, and fallback HAP packaging smoke via `scripts/build-harmonyos-demo-app.sh --fallback-skia`; runtime support remains pending device/emulator first-frame, input, resize, and lifecycle evidence |
-| Component Gallery | Seven-platform component catalog | `examples/component_gallery/app/` | Grouped catalog for reusable `moui/views` controls, searchable sidebar/index, focused component demos for button, text inputs, checkbox, toggle, radio, segmented control, picker, slider, chips, badge, progress, banner, callout, state panels, toast/snackbar, stat card, avatar, divider, toolbar/status bar, surfaces, row/column, responsive grid, scroll view, and platform routes, adaptive mobile/desktop layout, default Skia desktop entrypoints named `macos`, `linux`, and `windows`, experimental Android/iOS/HarmonyOS embedded-session entrypoints named `android`, `ios`, and `harmonyos`, a Web wasm-gc entrypoint named `web`, plus app-owned Android APK metadata, iOS Xcode metadata over the canonical SwiftUI shell, and a HarmonyOS Stage Ability shell |
+| HarmonyOS Demo | Standalone experimental HarmonyOS embedded Skia demo | `examples/harmonyos_demo/app/`, `examples/harmonyos_demo/harmonyos_skia/` | Platform-neutral viewport/tap feedback demo, HarmonyOS Skia embedded-session MoonBit exports, package-owned ArkTS/XComponent managed shell staging, and fallback HAP packaging smoke via `scripts/build-harmonyos-demo-app.sh --fallback-skia`; the checked-in `harmonyos_app` is a Release N fixture and runtime support remains pending matching-device evidence |
+| Component Gallery | Seven-platform component catalog | `examples/component_gallery/app/` | Grouped catalog for reusable `moui/views` controls, searchable sidebar/index, focused component demos for button, text inputs, checkbox, toggle, radio, segmented control, picker, slider, chips, badge, progress, banner, callout, state panels, toast/snackbar, stat card, avatar, divider, toolbar/status bar, surfaces, row/column, responsive grid, scroll view, and platform routes, adaptive mobile/desktop layout, default Skia desktop entrypoints named `macos`, `linux`, and `windows`, Android/iOS/HarmonyOS embedded-session entrypoints named `android`, `ios`, and `harmonyos`, a Web wasm-gc entrypoint named `web`, and managed Kotlin/SwiftUI/ArkTS shell packaging with Release N fixtures kept separate |
 | Button Freeze Probe | Native Skia button freeze repro | `examples/button_freeze_probe/app/` | Minimal `data_filter_bar` filter chips, red primary accent, repeated click counter, direct primary/tonal button comparison, native Skia macOS/Windows/Linux entrypoints |
 | Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | TEA-first `Model / Msg / update / view` app, public `views` constructors, built-in Counter/Todo examples, validating form fields and workflow bars, `ToastQueue`-backed toast stack/progress/status surfaces with dismiss state, `status_badge` feedback chips, helper-backed table/selectable-list data views with app-owned sort/page/column visibility state, route header/section-nav/sidebar/breadcrumb shells with app-owned route/deep-link history and route focus restore state, custom dialog/alert/sheet/menu surfaces, light Markdown preview, neutral core theme toggling, presentation, renderer capability status, advanced rendering demos, text diagnostics, interaction wiring. Showcase intentionally has no `moui_theme` dependency and is not an official design-system compatibility claim. |
 | Design Systems | Addon diagnostic source-mapped design-system preview and first-party theme sampler | `examples/design_systems/app/`, `examples/design_systems/{web_wasm,macos_skia,windows_skia,linux_skia}/` | Material, Carbon, Primer, and Fluent switching through the `moui_theme/material`, `moui_theme/carbon`, `moui_theme/primer`, and `moui_theme/fluent` entrypoints over shared `moui_theme/common` models, Sickle switching through `moui_theme/sickle` as a first-party theme addon, light/dark/high-contrast/system variants for official source-mapped presets, compact/standard/comfortable density, semantic palette roles, typography specimen, spacing/density grid, component-token matrix sampling, component style bundle usage, custom inheritance/override API, Web and native Skia host entrypoints, coverage/parity status labels, and explicit source-mapped preview wording rather than official-complete claims |
@@ -91,9 +91,9 @@ site fetches the same Markdown paths from `docs/`.
 Counter is the smallest recommended app shape. It keeps user code in
 `Model / Msg / update / view`, then lets `Program::simple` connect that pure
 model loop to the runtime. It has Web, macOS, Windows, Linux, experimental
-Android and iOS Skia embedded-session entrypoints plus
-`examples/counter/android_app` APK metadata and `examples/counter/ios_app`
-Xcode metadata over the managed SwiftUI shell,
+Android and iOS Skia embedded-session entrypoints plus managed Kotlin/SwiftUI
+packaging. The checked-in `examples/counter/{android_app,ios_app}` projects are
+Release N fixtures,
 and `windows_wgpu_cosmic` entrypoints, so it is also the quickest way
 to verify a thin platform package without the full Showcase surface:
 
@@ -161,11 +161,10 @@ support.
 
 HarmonyOS Demo is the standalone experimental HarmonyOS app. It deliberately
 does not extend Counter: `examples/harmonyos_demo/app` owns the shared TEA UI
-with visible tap and viewport feedback, `examples/harmonyos_demo/harmonyos_skia`
-exports the embedded-session native bridge functions, and
-`examples/harmonyos_demo/harmonyos_app` owns the app-specific Stage
-Ability/XComponent shell over the shared `moui/mobile/harmonyos` NAPI/CMake
-template.
+with visible tap and viewport feedback, and
+`examples/harmonyos_demo/harmonyos_skia` exports the embedded-session native
+bridge functions. Normal builds stage the package-owned ArkTS/XComponent shell;
+`examples/harmonyos_demo/harmonyos_app` is only a Release N fixture.
 
 Focused HarmonyOS Demo checks:
 
