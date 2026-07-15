@@ -349,26 +349,35 @@ fn patch_ejected_shell_text(
         _ => value
       }
     "harmonyos" =>
-      if path == "entry/src/main/cpp/CMakeLists.txt" {
-        value
-        .replace_all(
-          old=(
-            #|include("${MOUI_ROOT}/mobile/harmonyos/cmake/MoUIMobileHarmonyOS.cmake")
-          ),
-          new=(
-            #|include("${CMAKE_CURRENT_LIST_DIR}/MoUIMobileHarmonyOS.cmake")
-          ),
-        )
-        .replace_all(
-          old=(
-            #|set(MOUI_MOBILE_SHARED_HARMONYOS_DIR "${MOUI_ROOT}/mobile/harmonyos")
-          ),
-          new=(
-            #|set(MOUI_MOBILE_SHARED_HARMONYOS_DIR "${CMAKE_CURRENT_LIST_DIR}/moui")
-          ),
-        )
-      } else {
-        value
+      match path {
+        "entry/src/main/cpp/CMakeLists.txt" =>
+          value.replace_all(
+            old=(
+              #|include("${MOUI_ROOT}/mobile/harmonyos/cmake/MoUIMobileHarmonyOS.cmake")
+            ),
+            new=(
+              #|include("${CMAKE_CURRENT_LIST_DIR}/MoUIMobileHarmonyOS.cmake")
+            ),
+          )
+        "entry/src/main/cpp/MoUIMobileHarmonyOS.cmake" => {
+          let local_runtime = "${CMAKE_CURRENT_LIST_DIR}/../../../../moui/runtime"
+          value
+          .replace_all(
+            old=(
+              #|set(MOUI_MOBILE_SHARED_HARMONYOS_DIR "${MOUI_ROOT}/mobile/harmonyos")
+            ),
+            new=(
+              #|set(MOUI_MOBILE_SHARED_HARMONYOS_DIR "${CMAKE_CURRENT_LIST_DIR}/moui")
+            ),
+          )
+          .replace_all(
+            old="${MOUI_MOBILE_SHARED_HARMONYOS_DIR}/src/main/cpp/moui_mobile_harmonyos_napi.cpp",
+            new="${MOUI_MOBILE_SHARED_HARMONYOS_DIR}/moui_mobile_harmonyos_napi.cpp",
+          )
+          .replace_all(old="${MOUI_ROOT}/mobile/include", new=local_runtime)
+          .replace_all(old="${MOUI_ROOT}/mobile/runtime", new=local_runtime)
+        }
+        _ => value
       }
     _ => value
   }

@@ -9,7 +9,7 @@ Build a MoUI HarmonyOS HAP through the package-owned managed shell.
 
 Options:
   --app <id>                    Mobile app id.
-  --harmonyos-project <dir>     App-owned project used only with --legacy-shell.
+  --harmonyos-project <dir>     Versioned ejected or Release N legacy project.
   --app-config <path>           App-owned mobile.json. Default examples/<app>/mobile.json or ./mobile.json.
   --contracts <path>            Native contract registry. Default <moui-root>/mobile/build-contracts.json.
   --workspace-root <dir>        App workspace root. Default current directory.
@@ -23,6 +23,7 @@ Options:
   --hvigorw <path>              Hvigor wrapper path for non-fallback builds. Defaults to HVIGORW or DevEco Studio.
   --ohpm <path>                 ohpm executable path for non-fallback builds. Defaults to OHPM or DevEco Studio.
   --fallback-skia               Do not fetch/link real Skia; packaging smoke only.
+  --ejected-shell               Build a versioned ejected schema v2 shell.
   --legacy-shell                Release N app-owned shell fallback (deprecated).
   --prepare-only                Generate MoonBit/Skia/CMake inputs, then stop after project preparation.
   -h, --help                    Show this help.
@@ -49,6 +50,7 @@ sdk_home="${HARMONYOS_SDK_HOME:-${OHOS_SDK_HOME:-}}"
 hvigorw_path="${HVIGORW:-}"
 ohpm_path="${OHPM:-}"
 fallback_skia=0
+ejected_shell=0
 legacy_shell=0
 prepare_only=0
 
@@ -69,6 +71,7 @@ while [ "$#" -gt 0 ]; do
     --hvigorw) hvigorw_path="${2:?missing path after --hvigorw}"; shift 2 ;;
     --ohpm) ohpm_path="${2:?missing path after --ohpm}"; shift 2 ;;
     --fallback-skia) fallback_skia=1; shift ;;
+    --ejected-shell) ejected_shell=1; shift ;;
     --legacy-shell) legacy_shell=1; shift ;;
     --prepare-only) prepare_only=1; shift ;;
     -h|--help) usage; exit 0 ;;
@@ -79,6 +82,10 @@ done
 if [ -z "$app" ]; then
   echo "--app is required" >&2
   usage >&2
+  exit 2
+fi
+if [ "$ejected_shell" -eq 1 ] && [ "$legacy_shell" -eq 1 ]; then
+  echo "--ejected-shell and --legacy-shell are mutually exclusive" >&2
   exit 2
 fi
 
@@ -305,7 +312,41 @@ elif [ "${build_dir#/}" = "$build_dir" ]; then
   build_dir="$workspace_root/$build_dir"
 fi
 
-if [ "$legacy_shell" -eq 1 ]; then
+if [ "$ejected_shell" -eq 0 ] && [ "$legacy_shell" -eq 0 ] && [ -n "$harmonyos_project" ]; then
+  echo "--harmonyos-project requires --ejected-shell or --legacy-shell" >&2
+  exit 2
+fi
+
+if [ "$ejected_shell" -eq 1 ]; then
+  if [ -z "$harmonyos_project" ] || [ ! -d "$harmonyos_project/entry/src/main/cpp" ]; then
+    echo "--ejected-shell requires --harmonyos-project with entry/src/main/cpp: $harmonyos_project" >&2
+    exit 1
+  fi
+  shell_lock="$harmonyos_project/.moui-shell.json"
+  if [ ! -f "$shell_lock" ]; then
+    echo "--ejected-shell requires a versioned .moui-shell.json: $shell_lock" >&2
+    exit 1
+  fi
+  node -e '
+const fs = require("fs");
+const path = process.argv[1];
+const lock = JSON.parse(fs.readFileSync(path, "utf8"));
+const expected = {
+  schemaVersion: 1,
+  mode: "ejected",
+  platform: "harmonyos",
+  shellApiVersion: 1,
+  runtimeAbiVersion: 1,
+};
+for (const [field, value] of Object.entries(expected)) {
+  if (lock[field] !== value) {
+    console.error(`${path}: ${field} must be ${JSON.stringify(value)}`);
+    process.exit(1);
+  }
+}
+' "$shell_lock"
+  log "Using versioned ejected HarmonyOS shell at $harmonyos_project"
+elif [ "$legacy_shell" -eq 1 ]; then
   if [ -z "$harmonyos_project" ] || [ ! -d "$harmonyos_project/entry/src/main/cpp" ]; then
     echo "--legacy-shell requires --harmonyos-project with entry/src/main/cpp: $harmonyos_project" >&2
     exit 1
@@ -367,6 +408,8 @@ if [ "$legacy_shell" -eq 1 ]; then
   "replacement": "schema v2 managed HarmonyOS shell"
 }
 JSON
+elif [ "$ejected_shell" -eq 1 ]; then
+  source_project="$harmonyos_project"
 else
   source_project="$build_dir/managed-shell"
   resolver_args=(

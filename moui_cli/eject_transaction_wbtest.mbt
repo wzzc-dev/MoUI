@@ -323,6 +323,52 @@ test "Android ejection rewrites runtime ABI paths to the local snapshot" {
 }
 
 ///|
+test "HarmonyOS ejection uses local shell glue and runtime ABI snapshot" {
+  let source =
+    #|set(MOUI_MOBILE_SHARED_HARMONYOS_DIR "${MOUI_ROOT}/mobile/harmonyos")
+    #|list(APPEND sources "${MOUI_MOBILE_SHARED_HARMONYOS_DIR}/src/main/cpp/moui_mobile_harmonyos_napi.cpp")
+    #|if(NOT EXISTS "${MOUI_ROOT}/mobile/include/moui_mobile_runtime_v1.h")
+    #|  message(FATAL_ERROR "missing runtime ABI")
+    #|endif()
+    #|list(APPEND sources "${MOUI_ROOT}/mobile/runtime/moui_mobile_runtime_v1.cpp")
+    #|target_include_directories(shell PRIVATE "${MOUI_ROOT}/mobile/include")
+  let rendered = patch_ejected_shell_text(
+    "entry/src/main/cpp/MoUIMobileHarmonyOS.cmake",
+    source,
+    "harmonyos",
+  )
+  let local_runtime = "${CMAKE_CURRENT_LIST_DIR}/../../../../moui/runtime"
+  inspect(
+    rendered.contains(
+      (
+        #|set(MOUI_MOBILE_SHARED_HARMONYOS_DIR "${CMAKE_CURRENT_LIST_DIR}/moui")
+      ),
+    ),
+    content="true",
+  )
+  inspect(
+    rendered.contains(local_runtime + "/moui_mobile_runtime_v1.h"),
+    content="true",
+  )
+  inspect(
+    rendered.contains(local_runtime + "/moui_mobile_runtime_v1.cpp"),
+    content="true",
+  )
+  inspect(
+    rendered.contains(
+      "${MOUI_MOBILE_SHARED_HARMONYOS_DIR}/moui_mobile_harmonyos_napi.cpp",
+    ),
+    content="true",
+  )
+  inspect(
+    rendered.contains("${MOUI_MOBILE_SHARED_HARMONYOS_DIR}/src/main/cpp"),
+    content="false",
+  )
+  inspect(rendered.contains("${MOUI_ROOT}/mobile/include"), content="false")
+  inspect(rendered.contains("${MOUI_ROOT}/mobile/runtime"), content="false")
+}
+
+///|
 test "iOS ejection invokes the local build script from PBX" {
   let source =
     #|SWIFT_VERSION = 5.0;
