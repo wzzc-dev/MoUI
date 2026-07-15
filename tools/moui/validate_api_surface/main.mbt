@@ -1,8 +1,18 @@
 ///|
 struct CliOptions {
   repo_root : String
+  report_path : String
   help : Bool
 }
+
+///|
+struct ApiPackageReport {
+  label : String
+  path : String
+  lines : Int
+  public_declarations : Int
+  pub_all_declarations : Int
+} derive(ToJson)
 
 ///|
 struct PackageBudget {
@@ -40,7 +50,7 @@ struct LegacyCoreFamilyBudget {
 ///|
 fn usage() -> String {
   let text =
-    #|Usage: tools/moui/validate_api_surface [--repo-root PATH]
+    #|Usage: tools/moui/validate_api_surface [--repo-root PATH] [--report PATH]
     #|
     #|Audits generated pkg.generated.mbti files for MoUI API-surface guardrails:
     #|package size budgets, root facade boundaries, and app-facing view return
@@ -48,6 +58,7 @@ fn usage() -> String {
     #|
     #|Options:
     #|  --repo-root PATH   Repository root used to resolve paths. Defaults to cwd.
+    #|  --report PATH      Write a schema v1 JSON package-count report.
     #|  -h, --help         Show this help.
     #|
   text
@@ -56,6 +67,7 @@ fn usage() -> String {
 ///|
 fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
   let repo_root = Ref(@env.current_dir().unwrap_or(""))
+  let report_path = Ref("")
   let help = Ref(false)
   let mut index = 0
   while index < args.length() {
@@ -67,6 +79,13 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
         repo_root.val = args[index + 1]
         index += 2
       }
+      "--report" => {
+        if index + 1 >= args.length() {
+          return Err("missing value for --report")
+        }
+        report_path.val = args[index + 1]
+        index += 2
+      }
       "-h" | "--help" => {
         help.val = true
         index += 1
@@ -74,7 +93,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
       other => return Err("unknown argument: " + other)
     }
   }
-  Ok({ repo_root: repo_root.val, help: help.val })
+  Ok({ repo_root: repo_root.val, report_path: report_path.val, help: help.val })
 }
 
 ///|
@@ -828,6 +847,7 @@ fn validate_package_budget(
   repo_root : String,
   budget : PackageBudget,
   failures : Array[String],
+  reports : Array[ApiPackageReport],
 ) -> Unit {
   let text = match read_repo_text(repo_root, budget.path) {
     Ok(value) => value
@@ -839,6 +859,13 @@ fn validate_package_budget(
   let lines = line_count(text)
   let pub_lines = count_lines_with_prefix(text, "pub ")
   let pub_all_lines = count_lines_with_prefix(text, "pub(all)")
+  reports.push({
+    label: budget.label,
+    path: budget.path,
+    lines,
+    public_declarations: pub_lines,
+    pub_all_declarations: pub_all_lines,
+  })
   println(
     "api surface: " +
     budget.label +
@@ -1914,10 +1941,13 @@ fn validate_core_runtime_boundary(
 }
 
 ///|
-fn run_checks(repo_root : String) -> Array[String] {
+fn run_checks(
+  repo_root : String,
+  reports : Array[ApiPackageReport],
+) -> Array[String] {
   let failures : Array[String] = []
   for budget in package_budgets() {
-    validate_package_budget(repo_root, budget, failures)
+    validate_package_budget(repo_root, budget, failures, reports)
   }
   validate_api_surface_classifications(repo_root, failures)
   validate_root_facade_shape(repo_root, failures)
@@ -1939,6 +1969,21 @@ fn run_checks(repo_root : String) -> Array[String] {
 }
 
 ///|
+fn write_api_package_report(
+  repo_root : String,
+  report_path : String,
+  reports : Array[ApiPackageReport],
+) -> Result[Unit, String] {
+  if report_path == "" {
+    return Ok(())
+  }
+  let path = @tools.resolve_path(repo_root, report_path)
+  let text = ({ "schemaVersion": 1, "packages": reports.to_json() } : Json).stringify() +
+    "\n"
+  @tools.write_text_file(path, text, "API surface report")
+}
+
+///|
 fn run(args : Array[String]) -> Int {
   match parse_cli(args) {
     Ok(options) if options.help => {
@@ -1946,7 +1991,17 @@ fn run(args : Array[String]) -> Int {
       0
     }
     Ok(options) => {
-      let failures = run_checks(options.repo_root)
+      let reports : Array[ApiPackageReport] = []
+      let failures = run_checks(options.repo_root, reports)
+      match
+        write_api_package_report(
+          options.repo_root,
+          options.report_path,
+          reports,
+        ) {
+        Err(message) => failures.push(message)
+        Ok(_) => ()
+      }
       if failures.is_empty() {
         println("api surface guardrails: ok")
         0

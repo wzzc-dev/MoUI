@@ -70,9 +70,7 @@ fn guidance_include_rules() -> Array[TextRule] {
       path: ".github/workflows/moui-skia-provider-windows-real-skia-manual.yml",
       token: "name: MoUI Skia Provider Windows Real Skia Manual",
     },
-    { path: "docs/development.md", token: "./moui_webview" },
-    { path: "docs/development.md", token: "./moui_sun" },
-    { path: "docs/development.md", token: "./examples/mo_workbench" },
+    { path: "docs/development.md", token: "repository-facts.md" },
     {
       path: "docs/development.md",
       token: "-Profile Pr -DryRun -Json -SkipSubmoduleInit",

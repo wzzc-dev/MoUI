@@ -269,6 +269,14 @@
     },
     {
       "group": "architecture-api",
+      "slug": "mobile-runtime-abi-v1",
+      "title": "Mobile Runtime ABI v1",
+      "path": "docs/mobile-runtime-abi-v1.md",
+      "summary": "Versioned mobile function table, lifecycle, ownership, capability, and symbol contracts.",
+      "keywords": ["mobile", "ABI", "FFI", "lifecycle", "ownership"]
+    },
+    {
+      "group": "architecture-api",
       "slug": "moui-skia-readme",
       "title": "MoUI Skia README",
       "path": "docs/moui-skia-readme.md",
@@ -314,6 +322,14 @@
       "path": "docs/ai-collaboration.md",
       "summary": "Repository guidance for agent sessions, decisions, review, and durable records.",
       "keywords": ["AI", "agents", "collaboration", "ADR"]
+    },
+    {
+      "group": "status-roadmap",
+      "slug": "repository-facts",
+      "title": "Repository Facts",
+      "path": "docs/repository-facts.md",
+      "summary": "Generated API counts, workspace members and examples, platform protocol status, and documentation catalog totals.",
+      "keywords": ["generated", "API", "workspace", "platform status", "catalog"]
     },
     {
       "group": "status-roadmap",

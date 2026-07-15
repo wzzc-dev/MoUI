@@ -12,27 +12,6 @@ test "extracts quoted moon.work members" {
 }
 
 ///|
-test "extracts workspace members from members block" {
-  let sample =
-    #|# Development
-    #|
-    #|```toml
-    #|members = [
-    #|  "./moui",
-    #|  "./examples/showcase",
-    #|]
-    #|```
-  match workspace_members_from_member_block(sample) {
-    Ok(values) => {
-      assert_true(values.length() == 2)
-      assert_true(values[0] == "./moui")
-      assert_true(values[1] == "./examples/showcase")
-    }
-    Err(message) => fail(message)
-  }
-}
-
-///|
 test "detects duplicate workspace members" {
   let duplicates = duplicate_values(["./moui", "./tools", "./moui"])
   assert_true(duplicates.length() == 1)
@@ -87,28 +66,6 @@ test "window dependency guidance requires a current mention" {
   assert_true(
     failures[0] ==
     "docs/examples.md: expected to mention wzzc-dev/window@0.5.1-0.1.6",
-  )
-}
-
-///|
-test "workspace member list match reports missing and stale entries" {
-  let failures : Array[String] = []
-  push_workspace_member_list_match(
-    "docs/development.md",
-    ["./moui", "./tools"],
-    ["./moui", "./legacy"],
-    failures,
-  )
-  assert_true(failures.length() == 2)
-  assert_true(
-    failures.contains(
-      "docs/development.md: workspace member list is missing: ./tools",
-    ),
-  )
-  assert_true(
-    failures.contains(
-      "docs/development.md: workspace member list has stale entries: ./legacy",
-    ),
   )
 }
 

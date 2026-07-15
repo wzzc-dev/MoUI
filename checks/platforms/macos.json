@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "platform": "macos",
+  "sourceBuild": {"status": "passed", "evidence": "matching-host CI"},
+  "rendererL2": {"status": "passed", "presenterRoute": "metal-direct"},
+  "runtimeL3": {"status": "passed", "evidence": "platform runtime evidence"},
+  "shellKind": "native-window",
+  "shellApiVersion": 0,
+  "runtimeAbiVersion": 0,
+  "deploymentFloor": "current supported macOS runner",
+  "toolchainFloor": "Apple Clang with Metal",
+  "actualPresenterRoute": "metal-direct"
+}
+

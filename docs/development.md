@@ -13,42 +13,11 @@ code.
 
 ## Workspace Members
 
-`moon.work` currently includes:
-
-- `./moui`
-- `./moui_richtext`
-- `./moui_tester`
-- `./moui_webview`
-- `./moui_devtools`
-- `./moui_agent`
-- `./moui_agent_mcp`
-- `./examples/agent_counter`
-- `./tools`
-- `./moui_skia`
-- `./moui_theme`
-- `./moui_sun`
-- `./examples/counter`
-- `./examples/harmonyos_demo`
-- `./examples/component_gallery`
-- `./examples/button_freeze_probe`
-- `./examples/showcase`
-- `./examples/design_systems`
-- `./examples/markdown_editor`
-- `./examples/pdf_workbench`
-- `./examples/settings`
-- `./examples/data_table`
-- `./examples/file_importer`
-- `./examples/command_palette`
-- `./examples/mo_workbench`
-- `./examples/code_editor`
-- `./examples/webview_demo`
-- `./benchmarks/app_cached_layer`
-- `./benchmarks/full_cycle`
-- `./website`
-
-When adding or removing a workspace member, update this list,
-`docs/examples.md` for example packages, and any guidance rules in
-`tools/moui/validate_guidance_consistency`.
+`moon.work` is the source of truth for workspace membership. The generated
+[Repository facts](repository-facts.md#workspace-members) page lists every
+member and combines workspace examples with `examples/catalog.json`. When
+adding or removing an example, update the catalog and its descriptive entry in
+`docs/examples.md`; do not copy the full workspace list into hand-written docs.
 
 ## App Iteration
 
@@ -95,13 +64,15 @@ MOUI_SKIA_PLATFORM=android MOUI_SKIA_ARCH=arm64 \
 ```
 
 To build the experimental Counter Android debug APK, first install Android SDK
-Platform 35, Build-Tools 35.0.0, Platform-Tools, NDK, and CMake through Android
+Platform 36, Build-Tools 35.0.0, Platform-Tools, NDK, and CMake through Android
 Studio's SDK Manager, the official `sdkmanager` command-line tools, or the
 repository helper. See
 [android-support.md](android-support.md#android-sdk-and-ndk) for the full setup
 flow. Make sure a complete JDK is installed first so `java`, `javac`, `jlink`,
-and `keytool` are available. Use Java 17 or newer for Android Gradle Plugin
-9.x; Java 21 is the recommended local default. The shortest path is:
+and `keytool` are available. The managed shell targets SDK 35 but compiles
+against SDK 36 because AndroidX Activity 1.13.0 requires it. Use Java 17 or
+newer for Android Gradle Plugin 9.x; Java 21 is the recommended local default.
+The shortest path is:
 
 ```sh
 scripts/setup-android-sdk.sh --accept-licenses
@@ -160,11 +131,14 @@ scripts/build-mobile-ios-app.sh --app counter
 The default output is `artifacts/ios/counter/MoUICounter.app`. Use
 `scripts/build-counter-ios-app.sh --fallback-skia` for a packaging-only smoke
 that avoids the iOS Skia provider download. That `.app` proves the MoonBit
-C/shared UIKit shell/native-stub/bundle path only; real iOS runtime evidence still
-requires a simulator or device run with the default real-Skia path.
+C/canonical SwiftUI shell/ABI bridge/native-stub/bundle path only; real iOS
+runtime evidence still requires a simulator or device run with the default
+real-Skia path. Xcode 15.4+, Swift 5 language mode, and iOS 15+ are required.
+Use `--legacy-uikit-shell` only for the frozen Release N compatibility fixture.
 
-See [ios-support.md](ios-support.md) for the UIKit ownership boundary, Xcode CLI
-setup, simulator install commands, and runtime-evidence requirements.
+See [ios-support.md](ios-support.md) for the SwiftUI/UIKit ownership boundary,
+single-scene ABI v1 rule, plugin/eject contract, Xcode CLI setup, simulator
+install commands, and runtime-evidence requirements.
 
 HarmonyOS is also an embedded native scaffold. For HarmonyOS Skia cross-build
 checks, set `MOUI_SKIA_PLATFORM=harmonyos`, `MOUI_SKIA_ARCH=arm64`, and dynamic
@@ -199,48 +173,14 @@ checkout at `moui_skia`.
 
 This keeps `wzzc-dev/window` and `wzzc-dev/moui_skia` declared in
 `moui/moon.mod`, keeps `wzzc-dev/moui_theme` as an addon module, and resolves
-the local workspace members in `moon.work`:
+local workspace members from `moon.work`. The exact list is generated into
+[Repository facts](repository-facts.md#workspace-members).
 
 ```moonbit
 import {
   "wzzc-dev/window@0.5.1-0.1.7",
   "wzzc-dev/moui_skia@0.1.7",
 }
-```
-
-```toml
-members = [
-  "./moui",
-  "./moui_richtext",
-  "./moui_tester",
-  "./moui_webview",
-  "./moui_devtools",
-  "./moui_agent",
-  "./moui_agent_mcp",
-  "./examples/agent_counter",
-  "./tools",
-  "./moui_skia",
-  "./moui_theme",
-  "./moui_sun",
-  "./examples/counter",
-  "./examples/harmonyos_demo",
-  "./examples/component_gallery",
-  "./examples/button_freeze_probe",
-  "./examples/showcase",
-  "./examples/design_systems",
-  "./examples/markdown_editor",
-  "./examples/pdf_workbench",
-  "./examples/settings",
-  "./examples/data_table",
-  "./examples/file_importer",
-  "./examples/command_palette",
-  "./examples/mo_workbench",
-  "./examples/code_editor",
-  "./examples/webview_demo",
-  "./benchmarks/app_cached_layer",
-  "./benchmarks/full_cycle",
-  "./website",
-]
 ```
 
 The MoonBit package ecosystem is still not as mature as older language

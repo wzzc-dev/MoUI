@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "platform": "ios",
+  "sourceBuild": {"status": "partial", "evidence": "managed, clean-ejected, and plugin fixture builds pending"},
+  "rendererL2": {"status": "partial", "presenterRoute": "metal-direct"},
+  "runtimeL3": {"status": "partial", "evidence": "SwiftUI matching-simulator suite pending"},
+  "shellKind": "managed-swiftui",
+  "shellApiVersion": 1,
+  "runtimeAbiVersion": 1,
+  "deploymentFloor": "iOS 15.0",
+  "toolchainFloor": "Xcode 15.4 / Swift 5",
+  "actualPresenterRoute": "unverified"
+}
+
