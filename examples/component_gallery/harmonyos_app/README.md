@@ -1,5 +1,10 @@
 # Component Gallery HarmonyOS
 
+> Release N legacy fixture: normal Component Gallery builds now stage the
+> framework-owned canonical shell from `moui/mobile/harmonyos/template` and do
+> not consume this app-owned project. Validate this project only through
+> `moui/mobile/harmonyos/tests/build-legacy-fixture.sh`.
+
 This directory contains the app-owned Stage Ability/XComponent shell for the
 experimental Component Gallery HarmonyOS route. The shell uses the reusable
 ArkTS, NAPI, and CMake support from `moui/mobile/harmonyos`; app metadata and
