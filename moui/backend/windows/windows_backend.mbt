@@ -348,6 +348,8 @@ pub fn windows_service_bridge(
           @host.HostServiceResponse::Unavailable(
             "directory listing service is unavailable",
           )
+        @host.HostServiceRequest::PlatformChannel(_) =>
+          @host.HostServiceResponse::Unavailable(request.unavailable_message())
       }
     },
   )

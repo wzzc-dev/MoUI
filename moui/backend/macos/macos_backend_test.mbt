@@ -141,6 +141,24 @@ test "macos service bridge reports failed open url" {
 }
 
 ///|
+test "macos service bridge reports unregistered platform channels unavailable" {
+  let bridge = macos_service_bridge(system_theme=@core.ColorScheme::Light)
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::PlatformChannel(
+        @host.PlatformChannelRequest::new(
+          channel="macos.missing",
+          operation="probe",
+        ),
+      ),
+    ) {
+    @host.HostServiceResponse::Unavailable(message) =>
+      inspect(message, content="platform channel is unavailable: macos.missing")
+    _ => fail("expected unavailable macOS platform channel")
+  }
+}
+
+///|
 test "macos service bridge exposes file dialog contract" {
   let seen_title = Ref("")
   let bridge = macos_service_bridge(system_theme=@core.ColorScheme::Light, file_dialog=options => {

@@ -110,6 +110,24 @@ test "web service bridge exposes open url and system theme contract" {
 }
 
 ///|
+test "web service bridge reports unregistered platform channels unavailable" {
+  let bridge = web_service_bridge()
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::PlatformChannel(
+        @host.PlatformChannelRequest::new(
+          channel="web.missing",
+          operation="probe",
+        ),
+      ),
+    ) {
+    @host.HostServiceResponse::Unavailable(message) =>
+      inspect(message, content="platform channel is unavailable: web.missing")
+    _ => fail("expected unavailable Web platform channel")
+  }
+}
+
+///|
 test "web service bridge exposes clipboard write contract" {
   let clipboard = Ref("")
   let bridge = web_service_bridge(clipboard=true, clipboard_write=text => {
