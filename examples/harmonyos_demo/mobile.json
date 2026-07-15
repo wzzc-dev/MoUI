@@ -1,12 +1,21 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "harmonyos_demo",
   "displayName": "MoUI HarmonyOS Demo",
   "artifactName": "harmonyos_demo",
   "appPackage": "examples/harmonyos_demo/app",
+  "shellApiVersion": 1,
+  "runtimeAbiVersion": 1,
   "mobile": {
-    "fullscreen": true,
-    "supportsScroll": false
+    "renderer": "auto",
+    "systemUi": {
+      "fullscreen": true,
+      "statusBar": "hidden"
+    },
+    "orientation": "any",
+    "resources": [],
+    "permissions": [],
+    "plugins": []
   },
   "harmonyos": {
     "bundleName": "dev.wzzc.moui.harmonyosdemo",
@@ -15,20 +24,7 @@
     "moduleName": "entry",
     "moduleDescription": "Experimental MoUI HarmonyOS embedded Skia demo",
     "entryDescription": "MoUI HarmonyOS demo entry ability",
-    "native": {
-      "moonPackage": "examples/harmonyos_demo/harmonyos_skia",
-      "generatedC": "harmonyos_skia.c",
-      "nativeLibrary": "moui_harmonyos_demo",
-      "appArg": "moui-harmonyos-demo",
-      "moonbitMainAlias": "moui_harmonyos_moonbit_generated_main",
-      "exports": {
-        "attachSurface": "harmonyos_demo_attach_surface",
-        "resize": "harmonyos_demo_resize",
-        "dispatchPointer": "harmonyos_demo_dispatch_pointer",
-        "frameTick": "harmonyos_demo_frame_tick",
-        "renderFrame": "harmonyos_demo_render_frame",
-        "detachSurface": "harmonyos_demo_detach_surface"
-      }
-    }
+    "shellMode": "managed",
+    "compatibleSdkVersion": 20
   }
 }

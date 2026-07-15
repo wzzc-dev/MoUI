@@ -1,68 +1,39 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "my_app",
   "displayName": "My MoUI App",
   "artifactName": "my_app",
   "appPackage": "app",
+  "shellApiVersion": 1,
+  "runtimeAbiVersion": 1,
   "mobile": {
-    "fullscreen": false,
-    "supportsScroll": false
+    "renderer": "auto",
+    "systemUi": {
+      "fullscreen": false,
+      "statusBar": "auto"
+    },
+    "orientation": "any",
+    "resources": [],
+    "permissions": [],
+    "plugins": []
   },
   "android": {
     "applicationId": "dev.example.myapp",
-    "native": {
-      "moonPackage": "android_skia",
-      "generatedC": "android_skia.c",
-      "nativeLibrary": "my_app_android",
-      "appArg": "my-app-android",
-      "moonbitMainAlias": "my_app_android_moonbit_generated_main",
-      "exports": {
-        "attachSurface": "my_app_android_attach_surface",
-        "resize": "my_app_android_resize",
-        "dispatchPointer": "my_app_android_dispatch_pointer",
-        "renderFrame": "my_app_android_render_frame",
-        "detachSurface": "my_app_android_detach_surface"
-      }
-    }
+    "shellMode": "managed",
+    "minSdk": 23
   },
   "ios": {
     "bundleId": "dev.example.myapp",
-    "productName": "MoUIMobileApp",
-    "infoPlist": "ios_app/Info.plist",
-    "native": {
-      "moonPackage": "ios_skia",
-      "generatedC": "ios_skia.c",
-      "appArg": "my-app-ios",
-      "moonbitMainAlias": "my_app_ios_moonbit_generated_main",
-      "exports": {
-        "attachView": "my_app_ios_attach_view",
-        "resize": "my_app_ios_resize",
-        "dispatchPointer": "my_app_ios_dispatch_pointer",
-        "renderFrame": "my_app_ios_render_frame",
-        "detachView": "my_app_ios_detach_view"
-      }
-    }
+    "productName": "MyApp",
+    "shellMode": "managed",
+    "deploymentTarget": "15.0"
   },
   "harmonyos": {
-    "bundleName": "dev.example.mouiapp",
-    "productName": "MoUIMobileHarmonyOS",
+    "bundleName": "dev.example.myapp",
+    "productName": "MyApp",
     "appName": "My MoUI App",
     "moduleName": "entry",
-    "moduleDescription": "MoUI HarmonyOS app",
-    "entryDescription": "MoUI HarmonyOS app entry ability",
-    "native": {
-      "moonPackage": "harmonyos_skia",
-      "generatedC": "harmonyos_skia.c",
-      "nativeLibrary": "moui_mobile_harmonyos",
-      "appArg": "my-app-harmonyos",
-      "moonbitMainAlias": "my_app_harmonyos_moonbit_generated_main",
-      "exports": {
-        "attachSurface": "my_app_harmonyos_attach_surface",
-        "resize": "my_app_harmonyos_resize",
-        "dispatchPointer": "my_app_harmonyos_dispatch_pointer",
-        "renderFrame": "my_app_harmonyos_render_frame",
-        "detachSurface": "my_app_harmonyos_detach_surface"
-      }
-    }
+    "shellMode": "managed",
+    "compatibleSdkVersion": 20
   }
 }
