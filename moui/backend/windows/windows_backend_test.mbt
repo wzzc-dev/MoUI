@@ -68,6 +68,27 @@ test "windows service bridge reports failed open url" {
 }
 
 ///|
+test "windows service bridge reports unregistered platform channels unavailable" {
+  let bridge = windows_service_bridge(system_theme=@core.ColorScheme::Light)
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::PlatformChannel(
+        @host.PlatformChannelRequest::new(
+          channel="windows.missing",
+          operation="probe",
+        ),
+      ),
+    ) {
+    @host.HostServiceResponse::Unavailable(message) =>
+      inspect(
+        message,
+        content="platform channel is unavailable: windows.missing",
+      )
+    _ => fail("expected unavailable Windows platform channel")
+  }
+}
+
+///|
 test "windows service bridge exposes file dialog contract" {
   let seen_kind = Ref(@host.HostFileDialogKind::OpenFile)
   let bridge = windows_service_bridge(system_theme=@core.ColorScheme::Light, file_dialog=options => {

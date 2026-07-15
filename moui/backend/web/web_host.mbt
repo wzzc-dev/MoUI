@@ -257,6 +257,8 @@ pub fn web_service_bridge(
           @host.HostServiceResponse::Unavailable(
             "binary file writing is unavailable on Web until binary browser downloads are wired",
           )
+        @host.HostServiceRequest::PlatformChannel(_) =>
+          @host.HostServiceResponse::Unavailable(request.unavailable_message())
         _ =>
           @host.HostServiceResponse::Unavailable(request.unavailable_message())
       }

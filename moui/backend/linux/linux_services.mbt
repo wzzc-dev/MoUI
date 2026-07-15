@@ -211,6 +211,8 @@ pub fn linux_service_bridge(
       @host.HostServiceRequest::ShowMenu(commands) =>
         linux_menu_command_response(commands, menu(commands))
       @host.HostServiceRequest::ListDirectory(path) => list_directory(path)
+      @host.HostServiceRequest::PlatformChannel(_) =>
+        @host.HostServiceResponse::Unavailable(request.unavailable_message())
     }
   })
 }

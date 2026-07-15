@@ -324,6 +324,24 @@ test "linux service bridge routes real service contracts through handlers" {
 }
 
 ///|
+test "linux service bridge reports unregistered platform channels unavailable" {
+  let bridge = linux_service_bridge()
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::PlatformChannel(
+        @host.PlatformChannelRequest::new(
+          channel="linux.missing",
+          operation="probe",
+        ),
+      ),
+    ) {
+    @host.HostServiceResponse::Unavailable(message) =>
+      inspect(message, content="platform channel is unavailable: linux.missing")
+    _ => fail("expected unavailable Linux platform channel")
+  }
+}
+
+///|
 test "linux service bridge exposes menu selection dispatch" {
   let seen_count = Ref(0)
   let bridge = linux_service_bridge(menu=commands => {
