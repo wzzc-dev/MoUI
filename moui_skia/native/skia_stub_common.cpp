@@ -414,6 +414,11 @@ static void moonbit_skia_gpu_context_finalize(void* ptr) {
   MoonbitSkiaGpuContext* wrapper = static_cast<MoonbitSkiaGpuContext*>(ptr);
 #if defined(MOUI_SKIA_HAS_GANESH_DIRECT_CONTEXT)
   if (wrapper->context != nullptr) {
+    // Abandon before unref so GrDirectContext teardown does not issue blocking
+    // GL/Vulkan submits while the host is already tearing the device down.
+    // On HarmonyOS HVD, ~GrDirectContext → glGetError during attach caused
+    // THREAD_BLOCK_6S freezes when the context was dropped on the UI thread.
+    wrapper->context->abandonContext();
     wrapper->context->unref();
     wrapper->context = nullptr;
   }

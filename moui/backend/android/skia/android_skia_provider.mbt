@@ -263,8 +263,20 @@ fn host_renderer_from_native_gpu_worker(
           match render_completion.status() {
             @render.RenderPresentStatus::Presented =>
               presented_count.val = presented_count.val + 1
-            @render.RenderPresentStatus::FallbackToRaster =>
+            @render.RenderPresentStatus::FallbackToRaster => {
+              // Release the Vulkan/EGL swapchain on ANativeWindow before the
+              // CPU presenter locks the same window. Wait once on sticky only
+              // (not on the every-frame path) so Detach finishes before lock.
+              if !fallback_to_raster.val {
+                ignore(
+                  worker.submit_control(
+                    @skia_native.GpuRenderWorkerControl::Detach,
+                  ),
+                )
+                ignore(worker.wait_completion(timeout_ms=500))
+              }
               fallback_to_raster.val = true
+            }
             _ => ()
           }
           pending_completions.push(render_completion)
@@ -311,9 +323,22 @@ fn host_renderer_from_native_gpu_worker(
             image_resource_revision=revision,
           )
           if sequence == 0L {
+            if !fallback_to_raster.val {
+              ignore(
+                worker.submit_control(
+                  @skia_native.GpuRenderWorkerControl::Detach,
+                ),
+              )
+              ignore(worker.wait_completion(timeout_ms=1000))
+            }
             fallback_to_raster.val = true
             renderer.render_frame(frame)
           } else {
+            // Never block the UI/Choreographer thread waiting for the GPU
+            // worker. Heavy catalog pages (Browse all components) record large
+            // pictures; a 500ms wait here freezes input and looks like a hang.
+            // Completions are drained non-blocking at the start of the next
+            // frame (and by drain_present_completions after render_frame).
             @render.RenderFrameResult::new(presented=false, queued=true)
           }
         }

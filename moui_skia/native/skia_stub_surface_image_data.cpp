@@ -53,19 +53,12 @@
 #endif
 #endif
 
-#if defined(MOUI_SKIA_HAS_SKIA) && \
-  (defined(__OHOS__) || defined(__ANDROID__)) && \
-  __has_include("include/gpu/ganesh/GrDirectContext.h") && \
-  __has_include("include/gpu/ganesh/gl/GrGLBackendContext.h") && \
-  __has_include("include/gpu/ganesh/gl/GrGLDirectContext.h") && \
-  __has_include("include/gpu/ganesh/gl/GrGLTypes.h") && \
-  __has_include("include/gpu/ganesh/GrBackendSurface.h") && \
-  __has_include("include/gpu/ganesh/SkSurfaceGanesh.h") && \
-  __has_include(<EGL/egl.h>) && \
-  __has_include(<EGL/eglext.h>) && \
-  __has_include(<GLES3/gl3.h>) && \
-  ((defined(__OHOS__) && __has_include(<native_window/external_window.h>)) || \
-   (defined(__ANDROID__) && __has_include(<android/native_window.h>)))
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_ENABLE_GPU_EGL) && \
+  (defined(__OHOS__) || defined(__ANDROID__))
+// Opt-in GPU-EGL builds already stage Skia + link -lEGL/-lGLESv*. Trust the
+// opt-in on mobile targets so a partial __has_include failure (common on the
+// HarmonyOS sysroot layout) cannot compile
+// moonbit_skia_surface_gpu_egl_runtime_available() as a constant 0.
 #define MOUI_SKIA_HAS_GANESH_EGL_HEADERS 1
 #endif
 
@@ -970,17 +963,36 @@ void moonbit_skia_egl_release_window(void* object) { (void)object; }
 
 #if defined(MOUI_SKIA_ENABLE_GPU_EGL) && \
   defined(MOUI_SKIA_HAS_GANESH_EGL_HEADERS)
-#include "include/gpu/ganesh/gl/GrGLBackendContext.h"
+// GrGLBackendContext.h is not shipped in every Skia package (HarmonyOS cache
+// omits it). GrGLDirectContext.h + GrGLInterface/Types + GrGLBackendSurface
+// are enough for MakeGL / MakeGL framebuffer targets.
 #include "include/gpu/ganesh/gl/GrGLDirectContext.h"
+#include "include/gpu/ganesh/gl/GrGLInterface.h"
 #include "include/gpu/ganesh/gl/GrGLTypes.h"
+#include "include/gpu/ganesh/gl/GrGLBackendSurface.h"
 #include "include/gpu/ganesh/GrBackendSurface.h"
 #include "include/gpu/ganesh/SkSurfaceGanesh.h"
+#if __has_include("include/gpu/ganesh/gl/egl/GrGLMakeEGLInterface.h")
+#include "include/gpu/ganesh/gl/egl/GrGLMakeEGLInterface.h"
+#endif
+#if __has_include("include/gpu/ganesh/gl/GrGLAssembleInterface.h")
+#include "include/gpu/ganesh/gl/GrGLAssembleInterface.h"
+#endif
+// Some Skia builds still expose GrGLMakeNativeInterface via GrGLInterface.h
+// without a separate assemble header.
 
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <GLES3/gl3.h>
 #if defined(__OHOS__)
+#include <native_buffer/native_buffer.h>
 #include <native_window/external_window.h>
+#if defined(__has_include)
+#if __has_include(<hilog/log.h>)
+#include <hilog/log.h>
+#define MOUI_SKIA_EGL_HAS_HILOG 1
+#endif
+#endif
 #else
 #include <android/native_window.h>
 #endif
@@ -1009,6 +1021,7 @@ struct MoonbitSkiaEglContext {
 /// here.
 struct MoonbitSkiaEglWindow {
   EGLDisplay display;
+  EGLContext context;
   EGLSurface surface;
 };
 
@@ -1017,19 +1030,39 @@ void moonbit_skia_egl_release_context(void* object) {
     return;
   }
   auto* ctx = static_cast<MoonbitSkiaEglContext*>(object);
-  if (ctx->context != EGL_NO_CONTEXT) {
-    eglMakeCurrent(
+  // Keep a current context only long enough to tear down cleanly. Destroy the
+  // bootstrap surface before the context so the display is not left current on
+  // a deleted surface (observed as main-thread THREAD_BLOCK_6S on OHOS HVD).
+  if (
+    ctx->display != EGL_NO_DISPLAY &&
+    ctx->context != EGL_NO_CONTEXT
+  ) {
+    if (ctx->bootstrap_surface != EGL_NO_SURFACE) {
+      (void)eglMakeCurrent(
+        ctx->display,
+        ctx->bootstrap_surface,
+        ctx->bootstrap_surface,
+        ctx->context
+      );
+    }
+    (void)eglMakeCurrent(
       ctx->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT
     );
   }
-  if (ctx->bootstrap_surface != EGL_NO_SURFACE) {
+  if (
+    ctx->display != EGL_NO_DISPLAY &&
+    ctx->bootstrap_surface != EGL_NO_SURFACE
+  ) {
     eglDestroySurface(ctx->display, ctx->bootstrap_surface);
+    ctx->bootstrap_surface = EGL_NO_SURFACE;
   }
-  if (ctx->context != EGL_NO_CONTEXT) {
+  if (ctx->display != EGL_NO_DISPLAY && ctx->context != EGL_NO_CONTEXT) {
     eglDestroyContext(ctx->display, ctx->context);
+    ctx->context = EGL_NO_CONTEXT;
   }
   if (ctx->display != EGL_NO_DISPLAY) {
     eglTerminate(ctx->display);
+    ctx->display = EGL_NO_DISPLAY;
   }
   delete ctx;
 }
@@ -1118,7 +1151,17 @@ static GrDirectContext* moonbit_skia_make_egl_direct_context(
     return nullptr;
   }
 
-  sk_sp<GrGLInterface> gl_interface = GrGLMakeNativeInterface();
+  sk_sp<const GrGLInterface> gl_interface;
+#if defined(SK_GL) || 1
+  // Prefer EGL-specific assembler when present; fall back to native interface.
+#if defined(GrGLMakeEGLInterface_DEFINED) || \
+  __has_include("include/gpu/ganesh/gl/egl/GrGLMakeEGLInterface.h")
+  gl_interface = GrGLInterfaces::MakeEGL();
+#endif
+  if (!gl_interface) {
+    gl_interface = GrGLMakeNativeInterface();
+  }
+#endif
   if (!gl_interface) {
     eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     eglDestroySurface(display, bootstrap_surface);
@@ -1169,15 +1212,12 @@ extern "C" MOONBIT_FFI_EXPORT int32_t
 moonbit_skia_surface_gpu_egl_runtime_available(void) {
 #if defined(MOUI_SKIA_ENABLE_GPU_EGL) && \
   defined(MOUI_SKIA_HAS_GANESH_EGL_HEADERS)
-  MoonbitSkiaEglContext* egl_context = nullptr;
-  GrDirectContext* context = moonbit_skia_make_egl_direct_context(&egl_context);
-  if (context == nullptr) {
-    return 0;
-  }
-  context->unref();
-  if (egl_context != nullptr) {
-    moonbit_skia_egl_release_context(egl_context);
-  }
+  // Do not allocate a temporary GrDirectContext just to answer this probe.
+  // Creating + destroying a probe context on the HarmonyOS main/XComponent
+  // thread has hung inside GrDirectContext::~GrDirectContext → glGetError
+  // (THREAD_BLOCK_6S / app freeze). Opt-in mobile builds already link EGL/GLES
+  // and force HAS_GANESH_EGL_HEADERS; real availability is proven when
+  // GpuContext::egl / window surface creation succeeds.
   return 1;
 #else
   return 0;
@@ -1759,13 +1799,23 @@ moonbit_skia_surface_gpu_n32_premul(
     width <= 0 ||
     height <= 0 ||
     context == nullptr ||
-    context->context == nullptr ||
-    context->backend != MOONBIT_SKIA_GPU_BACKEND_METAL
+    context->context == nullptr
   ) {
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
   }
-#if defined(MOUI_SKIA_ENABLE_GPU_METAL) && \
-  defined(MOUI_SKIA_HAS_GANESH_METAL_HEADERS)
+  // Offscreen GPU placeholders are used before the host window surface is
+  // attached (HostGpuPresentTarget path). Metal historically owned this entry
+  // point; EGL/Vulkan also need RenderTarget placeholders or
+  // create_with_present_target_and_route fails on first attach.
+  const bool backend_supported =
+    context->backend == MOONBIT_SKIA_GPU_BACKEND_METAL ||
+    context->backend == MOONBIT_SKIA_GPU_BACKEND_EGL ||
+    context->backend == MOONBIT_SKIA_GPU_BACKEND_VULKAN ||
+    context->backend == MOONBIT_SKIA_GPU_BACKEND_D3D;
+  if (!backend_supported) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+#if defined(MOUI_SKIA_HAS_GANESH_DIRECT_CONTEXT)
   SkImageInfo info = moonbit_skia_make_rgba8888_premul_info(width, height);
   sk_sp<SkSurface> surface = SkSurfaces::RenderTarget(
     context->context,
@@ -2722,6 +2772,26 @@ moonbit_skia_surface_egl_window(
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
   }
 
+#if defined(__OHOS__)
+  // XComponent native windows need geometry + GPU usage flags before
+  // eglCreateWindowSurface; without them HVD often presents pure black.
+  (void)OH_NativeWindow_NativeWindowHandleOpt(
+    window, SET_BUFFER_GEOMETRY, width, height
+  );
+  (void)OH_NativeWindow_NativeWindowHandleOpt(
+    window, SET_FORMAT, NATIVEBUFFER_PIXEL_FMT_RGBA_8888
+  );
+  (void)OH_NativeWindow_NativeWindowHandleOpt(
+    window,
+    SET_USAGE,
+    static_cast<uint64_t>(
+      NATIVEBUFFER_USAGE_HW_RENDER |
+      NATIVEBUFFER_USAGE_HW_TEXTURE |
+      NATIVEBUFFER_USAGE_MEM_DMA
+    )
+  );
+#endif
+
   // Create an EGL window surface from the platform native window.
   const EGLint surface_attribs[] = {
     EGL_RENDER_BUFFER, EGL_BACK_BUFFER,
@@ -2744,6 +2814,7 @@ moonbit_skia_surface_egl_window(
     eglDestroySurface(egl_context->display, egl_surface);
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
   }
+  (void)eglSwapInterval(egl_context->display, 1);
 
   // Query the framebuffer object id that Skia will render into. On EGL with
   // a window surface, the default framebuffer is 0 (the window surface's
@@ -2752,22 +2823,26 @@ moonbit_skia_surface_egl_window(
   fb_info.fFBOID = 0;
   fb_info.fFormat = GL_RGBA8;
 
+  // Skia signature: MakeGL(width, height, sampleCnt, stencilBits, info).
+  // Stencil must be 0/8/16 when wrapping; default FBO uses 0 samples/stencil
+  // (match skia_stub_gpu_worker.cpp).
+  int32_t actual_samples = sample_count > 0 ? sample_count : 0;
   int32_t actual_stencil = stencil_bits;
-  int32_t actual_samples = sample_count;
-  if (actual_stencil < 0) {
+  if (actual_stencil != 0 && actual_stencil != 8 && actual_stencil != 16) {
     actual_stencil = 0;
   }
-  if (actual_samples < 0) {
-    actual_samples = 0;
-  }
   GrBackendRenderTarget backend_rt = GrBackendRenderTargets::MakeGL(
-    width, height, actual_stencil, actual_samples, fb_info
+    width, height, actual_samples, actual_stencil, fb_info
   );
 
+  // GLES window default FBO is bottom-left. TopLeft on HostGpu presented
+  // upside-down on HVD once eglSwapBuffers was actually working.
+  const GrSurfaceOrigin wrap_origin = kBottomLeft_GrSurfaceOrigin;
+  (void)origin;
   sk_sp<SkSurface> surface_obj = SkSurfaces::WrapBackendRenderTarget(
     context->context,
     backend_rt,
-    moonbit_skia_surface_origin(origin),
+    wrap_origin,
     kRGBA_8888_SkColorType,
     nullptr,
     nullptr
@@ -2786,6 +2861,7 @@ moonbit_skia_surface_egl_window(
   );
   auto* egl_win = new MoonbitSkiaEglWindow();
   egl_win->display = egl_context->display;
+  egl_win->context = egl_context->context;
   egl_win->surface = egl_surface;
   wrapper->host_present_handle = egl_win;
   return wrapper;
@@ -2830,19 +2906,50 @@ moonbit_skia_surface_egl_present_and_acquire_next(
   );
   GrDirectContext* gpu_context = wrapper->gpu_context_owner;
 
+  // Keep the window surface current across present; some OHOS drivers reject
+  // eglSwapBuffers when the context is not current on that surface.
+  if (
+    egl_win->context != EGL_NO_CONTEXT &&
+    !eglMakeCurrent(
+      egl_win->display, egl_win->surface, egl_win->surface, egl_win->context
+    )
+  ) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
+  }
+
   // eglSwapBuffers swaps the back buffer to the window surface's front
   // buffer. The same EGLSurface is reused across frames; no need to acquire
   // a new one. Return a fresh SkSurface wrapper around the same back buffer.
   EGLBoolean swapped = eglSwapBuffers(egl_win->display, egl_win->surface);
+#if defined(MOUI_SKIA_EGL_HAS_HILOG)
+  // Distinguish true GPU direct present from CPU "present flushed native window".
+  static int s_egl_present_log_count = 0;
+  if (s_egl_present_log_count < 4) {
+    s_egl_present_log_count += 1;
+    OH_LOG_Print(
+      LOG_APP,
+      swapped == EGL_TRUE ? LOG_INFO : LOG_WARN,
+      0x4D4F,
+      "MoUIHarmony",
+      "egl present ok=%{public}d swap=%{public}d w=%{public}d h=%{public}d",
+      swapped == EGL_TRUE ? 1 : 0,
+      static_cast<int>(swapped),
+      width,
+      height
+    );
+  }
+#endif
   if (swapped != EGL_TRUE) {
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
   }
 
-  // Release the old surface wrapper (the underlying SkSurface is no longer
-  // valid because the back buffer it pointed to is now the front buffer).
+  // Release the old SkSurface. Transfer host_present_handle ownership to the
+  // next wrapper BEFORE the MoonBit finalizer runs on this wrapper — otherwise
+  // moonbit_skia_egl_release_window destroys the live EGL window surface and
+  // the XComponent goes black after the first frame.
   wrapper->surface->unref();
   wrapper->surface = nullptr;
-  // The EGLSurface and host_present_handle are reused for the next frame.
+  wrapper->host_present_handle = nullptr;
 
   // Re-wrap the new back buffer as a fresh SkSurface. The framebuffer id
   // remains 0 (window surface default framebuffer).
@@ -2850,31 +2957,34 @@ moonbit_skia_surface_egl_present_and_acquire_next(
   fb_info.fFBOID = 0;
   fb_info.fFormat = GL_RGBA8;
 
+  int32_t actual_samples = sample_count > 0 ? sample_count : 0;
   int32_t actual_stencil = stencil_bits;
-  int32_t actual_samples = sample_count;
-  if (actual_stencil < 0) {
+  if (actual_stencil != 0 && actual_stencil != 8 && actual_stencil != 16) {
     actual_stencil = 0;
   }
-  if (actual_samples < 0) {
-    actual_samples = 0;
-  }
   GrBackendRenderTarget backend_rt = GrBackendRenderTargets::MakeGL(
-    width, height, actual_stencil, actual_samples, fb_info
+    width, height, actual_samples, actual_stencil, fb_info
   );
 
+  const GrSurfaceOrigin wrap_origin = kBottomLeft_GrSurfaceOrigin;
+  (void)origin;
   sk_sp<SkSurface> next_surface = SkSurfaces::WrapBackendRenderTarget(
     gpu_context,
     backend_rt,
-    moonbit_skia_surface_origin(origin),
+    wrap_origin,
     kRGBA_8888_SkColorType,
     nullptr,
     nullptr
   );
   if (!next_surface) {
     moonbit_skia_egl_release_window(egl_win);
-    wrapper->host_present_handle = nullptr;
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, gpu_context);
   }
+
+  // Re-bind so subsequent Skia draws target the window back buffer.
+  (void)eglMakeCurrent(
+    egl_win->display, egl_win->surface, egl_win->surface, egl_win->context
+  );
 
   MoonbitSkiaSurface* new_wrapper =
     moonbit_skia_surface_wrapper_with_gpu_context(
@@ -2905,6 +3015,25 @@ moonbit_skia_surface_flush_and_submit(MoonbitSkiaSurface* wrapper) {
   }
 #if (defined(MOUI_SKIA_ENABLE_GPU_METAL) || defined(MOUI_SKIA_ENABLE_GPU_D3D) || defined(MOUI_SKIA_ENABLE_GPU_VULKAN) || defined(MOUI_SKIA_ENABLE_GPU_EGL)) && \
   defined(MOUI_SKIA_HAS_GANESH_DIRECT_CONTEXT)
+#if defined(MOUI_SKIA_ENABLE_GPU_EGL) && defined(MOUI_SKIA_HAS_GANESH_EGL_HEADERS)
+  // HostGpu EGL draws must target the window surface. If anything uncurrented
+  // the context (bootstrap pbuffer, other GL), flush would hit the wrong FBO.
+  if (wrapper->host_present_handle != nullptr) {
+    auto* egl_win = static_cast<MoonbitSkiaEglWindow*>(
+      wrapper->host_present_handle
+    );
+    if (
+      egl_win != nullptr &&
+      egl_win->display != EGL_NO_DISPLAY &&
+      egl_win->surface != EGL_NO_SURFACE &&
+      egl_win->context != EGL_NO_CONTEXT
+    ) {
+      (void)eglMakeCurrent(
+        egl_win->display, egl_win->surface, egl_win->surface, egl_win->context
+      );
+    }
+  }
+#endif
   wrapper->gpu_context_owner->flushAndSubmit(wrapper->surface);
   return 1;
 #else

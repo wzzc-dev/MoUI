@@ -217,18 +217,53 @@ roots configured on that machine.
 Three evidence layers stay separate: **product GPU default** (source/`auto`),
 **mobile runtime smoke**, and **seven-gate GPU promotion claim**.
 
-| Layer | Current state (2026-07-14) | Path / note |
+| Layer | Current state (2026-07-15) | Path / note |
 | --- | --- | --- |
-| Product GPU default | `auto` → `SkiaGpuNative` / `egl-gpu` when available | Source `gpu_promoted=true`; rebuild HAP with `--renderer auto` for current `mobile-build.json` |
-| Packaging | Non-fallback HAPs present | `artifacts/harmonyos/harmonyos_demo/`, `artifacts/harmonyos/component_gallery/` |
-| First-frame pixels | Proven historically | `resource/screenshots/harmonyos-componentgallery.png` (2026-07-10) |
-| Mobile runtime smoke | **Not recorded on this host** | `hdc list targets` empty; see `artifacts/mobile-runtime/harmonyos/harmonyos_demo/README.md` |
-| GPU promotion claim | Scaffold only | `artifacts/gpu-promotion/harmonyos/scaffold-latest/` (`gpuPromoted=false`) |
+| Product GPU default | `auto` → `SkiaGpuNative` / `egl-gpu` when available | Source `gpu_promoted=true`; rebuild HAP with `--renderer auto` |
+| Packaging (L1) | Non-fallback CG HAP with GPU flags | `artifacts/harmonyos/component_gallery/mobile-build.json` → `selected=skia-gpu`, `gpuPromoted=true` |
+| First-frame pixels | Historical device + **emulator smoke screenshots** | `resource/screenshots/harmonyos-componentgallery.png`; smoke PNGs under `artifacts/mobile-runtime/harmonyos/component_gallery/` |
+| Mobile runtime smoke (L2) | Component Gallery **`status=partial`** with **runtime GPU route + host-gpu direct present** | `artifacts/mobile-runtime/harmonyos/component_gallery/` — configure `SkiaGpuNative` / `egl-gpu` / `gpuAvailable=true`; hilog **`egl present ok=1`** (no CPU `present flushed`); attach + nonblank first frame; services incomplete |
+| GPU promotion claim (L3) | Scaffold only | `artifacts/gpu-promotion/harmonyos/scaffold-latest/` (`gpuPromoted=false`, not a claim) |
 
-A non-fallback Component Gallery HAP was previously built and launched on a
-HarmonyOS device; the first Skia frame is visibly nonblank (see the screenshot
-above). The real `libskia.so` from the locked HarmonyOS release asset loads
-successfully. That is **not** a current `mobile-runtime-smoke.json` pass.
+### GPU feasibility proof (L1 + L2, emulator 2026-07-15)
+
+DevEco **MateBook Pro** HVD (`hdc` target `127.0.0.1:5557`). Rebuild + smoke:
+
+```sh
+export HARMONYOS_SDK_HOME="${HARMONYOS_SDK_HOME:-/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony}"
+export PATH="$HARMONYOS_SDK_HOME/toolchains:$PATH"
+# Start HVD via Device Manager or:
+# Emulator -hvd "MateBook Pro" -path "$HOME/.Huawei/Emulator/deployed" -imageRoot "$HOME/Library/Huawei/Sdk"
+hdc list targets
+
+scripts/build-mobile-harmonyos-hap.sh --app component_gallery --renderer auto
+node scripts/record-mobile-runtime-smoke.mjs \
+  --platform harmonyos --app component_gallery --device 127.0.0.1:5557
+node scripts/validate-mobile-runtime-manifest.mjs \
+  artifacts/mobile-runtime/harmonyos/component_gallery/mobile-runtime-smoke.json
+```
+
+**Required GPU log markers** (`hilog -T MoUIHarmony` / `runtime-stream.log`):
+
+```text
+moui-mobile renderer configure requested=auto ok=1 status={
+  "platform":"harmonyos","requested":"auto",
+  "selected":"skia-gpu-native","surfaceRoute":"egl-gpu",
+  "gpuAvailable":true,"gpuPromoted":true,"fallbackReason":null}
+egl present ok=1 swap=1 w=… h=…
+```
+
+**True GPU direct present** = configure GPU **and** `egl present ok=1` from
+`eglSwapBuffers` (HostGpuPresentTarget). That is **not** the CPU path
+`present flushed native window` (sticky raster recovery only).
+
+**Proven on HVD (2026-07-15):** lifecycle attach, nonblank UI, a11y tree,
+async-image ready, clean process survival, **EGL GPU selected**, and
+**`egl present ok=1` host-gpu direct present** (no sticky raster / no
+`present flushed` on the success path).  
+**Still pending for full `passed`:** detach, resize, representative input/scroll, clipboard round-trip, a11y focus/action, `realDeviceSigning`.
+
+Note: `snapshot_display` on current images requires **`.jpeg`** remote paths; the recorder converts to PNG for `decodePng8`.
 
 Do not mark HarmonyOS support as fully passed until a matching device or
 emulator run also records the following:
@@ -263,11 +298,13 @@ duplicate initial XComponent callback. Run with `--device <hdc-target>` and
 keep screen reader interaction manual when the installed `uitest` tool cannot
 drive the platform accessibility focus model.
 
-No HarmonyOS target is currently connected on the development host
-(`hdc list targets` empty as of 2026-07-14), so no new matching-device service
-manifest is claimed. A physical-device pass must also round-trip a PNG through
-another app before promoting image clipboard support.
+A physical-device pass must still round-trip a PNG through another app before
+promoting image clipboard support, and must complete the pending service
+observations above for `status=passed`.
 
-The product GPU path is EGL/GLES over `OHNativeWindow`, with Vulkan as a later
-option. The raster presenter still copies the full pixel frame for explicit
-`skia-raster` and sticky recovery fallback.
+The product GPU path is EGL/GLES over `OHNativeWindow` (Ganesh GL) via
+main-thread `HostGpuPresentTarget` (`eglCreateWindowSurface` +
+`eglSwapBuffers`). Emulator L2 proves `surfaceRoute=egl-gpu`,
+`gpuAvailable=true`, and **`egl present ok=1` direct present**. The raster
+presenter remains for explicit `skia-raster` and sticky recovery after
+present/surface failures only.

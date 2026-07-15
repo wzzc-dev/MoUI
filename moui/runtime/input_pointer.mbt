@@ -137,8 +137,16 @@ fn ElementNode::dispatch_pointer_to_children(
   // element-id churn, which a separate top-down hover resolver got wrong. An
   // `Exit` itself cascades the same way, so a hovered leaf deep inside an
   // overlay still gets cleared when the pointer leaves the overlay's frame.
-  let is_move = event.phase == PointerPhase::Move ||
-    event.phase == PointerPhase::Exit
+  //
+  // Touch hosts (HarmonyOS / Android) often never emit Move between taps: Up
+  // leaves the control in `Hovered` (button_control treats Up-inside as hover),
+  // and the next Down hits a *different* control without a Move. Without Exit
+  // on Down, the previous button keeps its hover/press tint (gray-white) until
+  // some later full redraw. Include Down (and Cancel) in the stale-hover clear.
+  let clear_stale_hover = event.phase == PointerPhase::Move ||
+    event.phase == PointerPhase::Exit ||
+    event.phase == PointerPhase::Down ||
+    event.phase == PointerPhase::Cancel
   let mut delivered_main_event = false
   let mut overlay_index = -1
   let mut overlay_search = self.children.length() - 1
@@ -204,11 +212,10 @@ fn ElementNode::dispatch_pointer_to_children(
           result.focused is Some(_) {
           delivered_main_event = true
         }
-      } else if is_move && child.has_hovered_descendant() {
-        // Pointer moved off this child (or a descendant it previously
-        // hovered) — send an `Exit` so its hover clears. The exit carries the
-        // current position, which is by definition outside the child, so views
-        // that re-check `inside` see `false`.
+      } else if clear_stale_hover && child.has_hovered_descendant() {
+        // Pointer left this child (Move) or pressed elsewhere (Down on touch)
+        // without a host leave event — send `Exit` so hover/press clears. The
+        // exit carries the current position, outside this child by definition.
         let exit_event = PointerEvent::new(
           position=event.position,
           phase=PointerPhase::Exit,
@@ -241,12 +248,13 @@ fn ElementNode::dispatch_pointer_to_children(
 }
 
 ///|
-/// True if this element or any descendant currently reports `hovered` in its
-/// view state. Used to decide which children to send a synthetic `Exit` to on a
-/// `Move` that no longer hits them. A child without hover has nothing to clear,
+/// True if this element or any descendant currently reports `hovered` or
+/// `pressed` in its view state. Used to decide which children to send a
+/// synthetic `Exit` to when the pointer leaves them (Move) or presses
+/// elsewhere (Down on touch). A child without hover/press has nothing to clear,
 /// so it is skipped — this keeps the extra dispatch off the common case.
 fn ElementNode::has_hovered_descendant(self : ElementNode) -> Bool {
-  if self.erased_view_node.state.hovered {
+  if self.erased_view_node.state.hovered || self.erased_view_node.state.pressed {
     return true
   }
   for child in self.children {

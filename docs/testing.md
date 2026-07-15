@@ -339,12 +339,41 @@ seven-gate `gpuPromotionEvidence` skeleton so schema validation succeeds without
 claiming performance/memory/context-loss gates. Product GPU default and seven-gate
 quality claims remain separate.
 
-Local evidence snapshot (2026-07-14):
+Local evidence snapshot (2026-07-15):
 
-- iOS Simulator Component Gallery: `artifacts/mobile-runtime/ios/component_gallery/` (**`passed`**, `--require-passed` ok; Metal GPU configure + full service observations except `realDeviceSigning`)
-- iOS Simulator counter: earlier `artifacts/mobile-runtime/ios/counter/` (`partial`)
-- iOS/HarmonyOS GPU promotion scaffolds: `artifacts/gpu-promotion/{ios,harmonyos}/scaffold-latest/`
-- HarmonyOS: no `hdc` target; see `artifacts/mobile-runtime/harmonyos/harmonyos_demo/README.md`
+- **iOS** Simulator Component Gallery: `artifacts/mobile-runtime/ios/component_gallery/` (**`passed`**, Metal `gpuAvailable=true`)
+- **HarmonyOS** DevEco MateBook Pro HVD: `artifacts/mobile-runtime/harmonyos/component_gallery/` (**`partial`**, **EGL** configure `egl-gpu` + `gpuAvailable=true`, nonblank first frame; services incomplete)
+- **Android** emulator/device CG: `artifacts/mobile-runtime/android/component_gallery/` (**`partial`**, **`vulkan-gpu`** + `gpuAvailable=true`, attach/nonblank/input/a11y/async-image; pin **NDK 28.2** full `libc++_shared.so`). Do not run Android + HarmonyOS emulators together on low-memory hosts.
+- GPU promotion scaffolds: `artifacts/gpu-promotion/{ios,harmonyos,android}/scaffold-latest/` (not L2 proof)
+
+**GPU feasibility (L2) grep:**
+
+```sh
+rg -n 'renderer configure|surfaceRoute|gpuAvailable' \
+  artifacts/mobile-runtime/ios/component_gallery/runtime-stream.log \
+  artifacts/mobile-runtime/android/component_gallery/runtime-stream.log \
+  artifacts/mobile-runtime/harmonyos/component_gallery/runtime-stream.log
+```
+
+**Android emulator install → APK → verify (copy block):** full steps in
+[android-support.md — Emulator Setup And Smoke](android-support.md#emulator-setup-and-smoke).
+
+```sh
+scripts/setup-android-sdk.sh --accept-licenses --ndk 28.2.13676358
+eval "$(scripts/setup-android-sdk.sh --print-env)"
+export ANDROID_NDK_HOME="${ANDROID_NDK_HOME:-$ANDROID_HOME/ndk/28.2.13676358}"
+export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+sdkmanager --install "emulator" "system-images;android-34;google_apis;arm64-v8a"
+echo no | avdmanager create avd -n moui_api34 \
+  -k "system-images;android-34;google_apis;arm64-v8a" -d pixel_6 --force
+emulator -avd moui_api34 -gpu host -no-snapshot-save &
+adb wait-for-device
+scripts/build-mobile-android-apk.sh --app component_gallery --renderer auto
+node scripts/record-mobile-runtime-smoke.mjs \
+  --platform android --app component_gallery --device "$(adb devices | awk '/\tdevice$/{print $1; exit}')"
+rg -n 'renderer configure|surfaceRoute|gpuAvailable|UnsatisfiedLinkError' \
+  artifacts/mobile-runtime/android/component_gallery/runtime*.log
+```
 
 Seven-gate GPU claim thresholds are **not** required for mobile runtime
 `--require-passed` unless the manifest asserts `gpuPromotionClaim=true` or
