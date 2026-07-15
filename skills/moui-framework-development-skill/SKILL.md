@@ -320,11 +320,10 @@ Daily check:
 sh scripts/check.sh --profile daily
 ```
 
-The daily check runs `sh scripts/check-local-deps.sh`, which verifies
-`wzzc-dev/window@0.5.1-0.1.7`, confirms `moon.work` does not include a local
-window checkout, verifies the repo-local `moui_skia` workspace, and checks the
-window package's MoUI-oriented smoke/evidence files when the package is present
-in the MoonBit registry cache, including `scripts/record_moui_evidence.sh`.
+The daily check runs `node scripts/validate-window-dependency.mjs`, which
+confirms that all known consumers pin the same published
+`wzzc-dev/window@0.5.1-0.1.7` version and that `moon.work` does not include a
+local window checkout.
 Keep the root README focused on reviewer/user quick paths; detailed `window/`
 submodule and local-source instructions belong in `docs/development.md` and this
 skill. Ordinary MoUI framework work should resolve `wzzc-dev/window` from
@@ -345,15 +344,14 @@ validation.
 `wzzc-dev/moui_sun` module. Keep Sun graphics/text/softbuffer surface area in
 that workspace and keep MoUI integration in `render/sun` plus
 `backend/<platform>/sun`.
-The same local-dependency check also requires the `moui_skia` binding workspace's
-`skia-platform-status.json`, `skia-provider-lock.json`,
-`SKIA_PLATFORM_STATUS.md`, `native/capabilities.json`, `native/ownership.json`,
-and verifier scripts, then runs
-`moui_skia/scripts/verify-platform-status.sh` and
-`moui_skia/scripts/verify-native-capability-contract.sh`. Treat
-that as binding-level Skia provider/status and native capability evidence; MoUI
-renderer pixels and platform runtime behavior still need the opt-in real Skia
-smoke or matching-host example runs.
+The daily profile also runs `moon test moui_skia --target native`. The binding
+status/capability files and `verify-platform-status.sh` /
+`verify-native-capability-contract.sh` are validated by the dedicated
+`.github/workflows/moui-skia-provider-fallback-ci.yml` workflow; run those
+scripts explicitly when changing binding metadata. Treat those checks as
+binding-level provider/status evidence. MoUI renderer pixels and platform
+runtime behavior still need the opt-in real Skia smoke or matching-host example
+runs.
 The runnable `moui_skia` binding/provider GitHub Actions workflows live in the
 repository root as `.github/workflows/moui-skia-*.yml`, and Copilot setup lives
 at root `.github/workflows/copilot-setup-steps.yml`. Keep workflow files there
@@ -361,14 +359,14 @@ while `moui_skia` is a workspace member; nested workflow files are not
 discovered by GitHub Actions in the monorepo. The
 `.github/workflows/moui-renderer-real-skia-ci.yml` workflow is
 MoUI-owned integration proof, not a package-owned `moui_skia` workflow.
-The daily check profile also runs the MoonBit-backed maintenance baseline
-guard, API surface guard, generated `pkg.generated.mbti` drift detection,
-checked conformance artifact guard, dedicated checked-artifact validators for
-platform runtime evidence, Web runtime handoff/presentation, GPU promotion, conformance
-capture, renderer proof manifests, and check runner self-tests, plus app/Web
-checks for Showcase and Markdown Editor. The interface drift step snapshots
-tracked interface files before running workspace-wide `moon info`, so existing
-local changes may be validated while newly generated drift still fails.
+The daily profile also runs the maintenance/API/source-policy guards, generated
+repository and website docs checks, renderer/provider and mobile-config guards,
+GPU/smoke catalog checks, MoonBit format/workspace/interface drift checks,
+focused framework/app tests, Showcase and Markdown Editor Web builds, and the
+validator/runner self-tests listed in `checks/profiles.json`. The interface
+drift step snapshots tracked interface files before running workspace-wide
+`moon info`, so existing local changes may be validated while newly generated
+drift still fails.
 `ci.yml` uses `sh scripts/check.sh --profile pr` for the PR profile gate and
 `sh scripts/check.sh --profile platform` for Linux platform contracts. The
 Windows MSVC job keeps setup/build/package steps explicit and only verifies the
