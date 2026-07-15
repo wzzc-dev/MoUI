@@ -172,17 +172,15 @@ fn create_raster_skia_renderer(
   metrics : @host.HostSurfaceMetrics,
   options : HarmonyOsSkiaAppOptions,
 ) -> @skia_renderer.SkiaRasterRenderer? {
-  try {
-    Some(
-      @skia_renderer.create_with_present_target_and_route(
-        renderer_metrics_from_host(metrics),
-        harmonyos_skia_present_target(surface),
-        surface_route=@render.SkiaSurfaceRoute::RasterSurfaceRoute,
-        font_resolution=options.font_resolution,
-        async_image_loading=true,
-      ),
-    )
-  } catch {
+  Some(
+    @skia_renderer.create_with_present_target_and_route(
+      renderer_metrics_from_host(metrics),
+      harmonyos_skia_present_target(surface),
+      surface_route=@render.SkiaSurfaceRoute::RasterSurfaceRoute,
+      font_resolution=options.font_resolution,
+      async_image_loading=true,
+    ),
+  ) catch {
     err => {
       println("error creating HarmonyOS Skia renderer: \{err.message()}")
       None
@@ -351,7 +349,8 @@ fn host_renderer_from_skia(
       active.val.resize(renderer_metrics_from_host(metrics)) catch {
         err => {
           println("error resizing HarmonyOS Skia renderer: \{err.message()}")
-          if active.val.target_kind() is @skia_renderer.SkiaPresentKind::HostGpuSurface {
+          if active.val.target_kind()
+            is @skia_renderer.SkiaPresentKind::HostGpuSurface {
             try_fallback(metrics, err.message())
             if fallback_to_raster.val {
               active.val.resize(renderer_metrics_from_host(metrics)) catch {
@@ -374,7 +373,8 @@ fn host_renderer_from_skia(
       let result = active.val.render_frame(frame)
       if !result.presented &&
         !fallback_to_raster.val &&
-        active.val.target_kind() is @skia_renderer.SkiaPresentKind::HostGpuSurface &&
+        active.val.target_kind()
+        is @skia_renderer.SkiaPresentKind::HostGpuSurface &&
         host_gpu_present_failure(active.val.unsupported_command_diagnostics()) {
         try_fallback(last_metrics.val, "present-or-surface-unavailable")
         if fallback_to_raster.val {

@@ -12,7 +12,19 @@ repository = "https://github.com/mizchi/image-mbt"
 
 license = "Apache-2.0"
 
-keywords = [ "moonbit", "image", "bmp", "jpeg", "gif", "png", "webp", "ico", "avif", "encoder", "decoder" ]
+keywords = [
+  "moonbit",
+  "image",
+  "bmp",
+  "jpeg",
+  "gif",
+  "png",
+  "webp",
+  "ico",
+  "avif",
+  "encoder",
+  "decoder",
+]
 
 description = "Image codec primitives for MoonBit with PNG/BMP/JPEG decode+encode, GIF/WebP/ICO/AVIF encode, and resize."
 

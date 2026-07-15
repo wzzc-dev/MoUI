@@ -22,7 +22,8 @@ test "scene decoder recognizes the sample scenes" {
   inspect(
     scene_from_host(
       @host.HostWindowScene::new(scene_id="inspector", payload="main"),
-    ) == Some(Inspector("main")),
+    ) ==
+    Some(Inspector("main")),
     content="true",
   )
   inspect(

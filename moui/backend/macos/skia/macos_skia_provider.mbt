@@ -133,22 +133,21 @@ fn MacosSkiaSmokeOptions::from_environment() -> MacosSkiaSmokeOptions {
       ) ||
       env_flag("MOUI_MARKDOWN_EDITOR_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT"),
     native_ime_runtime_smoke=env_flag("MOUI_MACOS_NATIVE_IME_EVIDENCE"),
-    performance_smoke_duration_ms=env_int(
-      "MOUI_MACOS_SKIA_PERF_DURATION_MS",
-      0,
-    ),
+    performance_smoke_duration_ms=env_int("MOUI_MACOS_SKIA_PERF_DURATION_MS", 0),
     performance_smoke_warm_up_presents=env_int(
-      "MOUI_MACOS_SKIA_PERF_WARM_UP_PRESENTS",
-      30,
+      "MOUI_MACOS_SKIA_PERF_WARM_UP_PRESENTS", 30,
     ),
     performance_smoke_refresh_hz=env_int("MOUI_MACOS_SKIA_PERF_REFRESH_HZ", 60),
     promotion_lifecycle_enabled=env_flag("MOUI_MACOS_SKIA_PROMOTION_LIFECYCLE") ||
-    env_flag("MOUI_MACOS_SKIA_PROMOTION_GATES"),
-    promotion_surface_cycles=env_int("MOUI_MACOS_SKIA_PROMOTION_SURFACE_CYCLES", 100),
-    promotion_fg_bg_cycles=env_int("MOUI_MACOS_SKIA_PROMOTION_FG_BG_CYCLES", 100),
+      env_flag("MOUI_MACOS_SKIA_PROMOTION_GATES"),
+    promotion_surface_cycles=env_int(
+      "MOUI_MACOS_SKIA_PROMOTION_SURFACE_CYCLES", 100,
+    ),
+    promotion_fg_bg_cycles=env_int(
+      "MOUI_MACOS_SKIA_PROMOTION_FG_BG_CYCLES", 100,
+    ),
     promotion_context_loss_count=env_int(
-      "MOUI_MACOS_SKIA_PROMOTION_CONTEXT_LOSS",
-      1,
+      "MOUI_MACOS_SKIA_PROMOTION_CONTEXT_LOSS", 1,
     ),
   )
 }
@@ -749,7 +748,9 @@ fn host_renderer_from_native_gpu_worker(
       if !fallback_to_raster.val {
         ignore(
           worker.submit_control(
-            @skia_native.GpuRenderWorkerControl::ContextLoss("promotion-harness"),
+            @skia_native.GpuRenderWorkerControl::ContextLoss(
+              "promotion-harness",
+            ),
           ),
         )
         ignore(collect_completions())

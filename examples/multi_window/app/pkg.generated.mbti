@@ -1,0 +1,41 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/multi_window/app"
+
+import {
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn program(Scene, @host.HostWindowActions) -> @core.Program[Model, Msg]
+
+pub fn scene_from_host(@host.HostWindowScene) -> Scene?
+
+pub fn update(Model, Msg) -> Model
+
+pub fn view(Model) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+pub struct Model {
+  scene : Scene
+  count : Int
+  windows : @host.HostWindowActions
+}
+pub fn Model::new(Scene, @host.HostWindowActions) -> Self
+
+pub(all) enum Msg {
+  OpenInspector
+  Increment
+}
+
+pub(all) enum Scene {
+  Main
+  Inspector(String)
+} derive(Eq)
+
+// Type aliases
+
+// Traits
+

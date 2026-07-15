@@ -30,7 +30,12 @@ pub fn PixmapCache::new() -> PixmapCache {
 ///|
 /// Create an empty pixmap cache with least-recently-used eviction.
 pub fn PixmapCache::with_capacity(capacity : Int) -> PixmapCache {
-  { pixmaps: Map([]), access_order: [], capacity: capacity.max(1), is_bounded: true }
+  {
+    pixmaps: Map([]),
+    access_order: [],
+    capacity: capacity.max(1),
+    is_bounded: true,
+  }
 }
 
 ///|

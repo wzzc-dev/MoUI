@@ -34,7 +34,9 @@ test "all native platforms promote gpu for auto by default" {
     gpu_promoted=NativeGpuPlatform::Windows.gpu_promoted(),
   )
   assert_true(windows.selected == RendererBackendKind::SkiaGpuNative)
-  assert_true(windows.surface_route == SkiaSurfaceRoute::Direct3DGpuSurfaceRoute)
+  assert_true(
+    windows.surface_route == SkiaSurfaceRoute::Direct3DGpuSurfaceRoute,
+  )
   let linux = select_native_renderer(
     NativeGpuPlatform::Linux,
     NativeRendererMode::Auto,
