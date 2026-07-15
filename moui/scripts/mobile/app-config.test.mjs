@@ -131,6 +131,11 @@ test("schema v2 derives fixed managed build contracts without legacy maps", () =
     assert.equal(app.android.generatedC, "android_skia.c");
     assert.equal(app.android.exports.attachSurface, "moui_mobile_attach_surface");
     assert.equal(app.android.moonbitMainAlias, "moui_mobile_moonbit_generated_main");
+    assert.equal(app.android.minSdk, 23);
+    assert.equal(app.mobile.orientation, "portrait");
+    assert.deepEqual(app.mobile.systemUi, { fullscreen: false, statusBar: "visible" });
+    assert.deepEqual(app.mobile.resources, []);
+    assert.deepEqual(app.mobile.permissions, []);
     assert.equal(app.ios.moonPackage, "ios_skia");
     assert.equal(app.ios.exports.dispatchScroll, "moui_mobile_dispatch_scroll");
     assert.equal(app.ios.appArg, "moui-managed-fixture-ios");
