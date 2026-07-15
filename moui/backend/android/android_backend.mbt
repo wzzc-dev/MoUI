@@ -239,6 +239,13 @@ pub fn AndroidRuntimeSession::disposed(self : AndroidRuntimeSession) -> Bool {
 }
 
 ///|
+pub fn AndroidRuntimeSession::session_generation(
+  self : AndroidRuntimeSession,
+) -> Int {
+  self.core.session_generation()
+}
+
+///|
 pub fn AndroidRuntimeSession::dispatch(
   self : AndroidRuntimeSession,
   event : @host.HostEvent,
@@ -292,11 +299,26 @@ pub fn AndroidRuntimeSession::drain_host_updates_json(
 }
 
 ///|
+pub fn AndroidRuntimeSession::drain_host_update_envelope_json(
+  self : AndroidRuntimeSession,
+) -> String {
+  self.core.drain_host_update_envelope_json()
+}
+
+///|
 pub fn AndroidRuntimeSession::dispatch_host_response(
   self : AndroidRuntimeSession,
   response : @host.MobileHostResponse,
 ) -> Bool {
   self.core.dispatch_host_response(response)
+}
+
+///|
+pub fn AndroidRuntimeSession::dispatch_host_response_envelope(
+  self : AndroidRuntimeSession,
+  envelope : @host.MobileHostResponseEnvelope,
+) -> Bool {
+  self.core.dispatch_host_response_envelope(envelope)
 }
 
 ///|

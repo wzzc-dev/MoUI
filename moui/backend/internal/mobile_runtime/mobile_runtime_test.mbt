@@ -27,10 +27,19 @@ test "mobile runtime core owns shared render resize and dispose lifecycle" {
     size=metrics.logical_size,
   )
   let core = MobileRuntimeSessionCore::new(runtime~, renderer~, metrics~)
+  assert_true(core.session_generation() > 0)
   assert_true(core.take_redraw_requested())
   core.advance_time(16.0)
   assert_true(core.drain_host_updates().length() > 0)
   let submit = @host.mobile_command_response(3).unwrap()
+  assert_false(
+    core.dispatch_host_response_envelope(
+      @host.MobileHostResponseEnvelope::new(
+        session_generation=core.session_generation() + 1,
+        response=submit,
+      ),
+    ),
+  )
   assert_true(core.dispatch_host_response(submit))
   ignore(core.render_frame())
   inspect(render_count.val, content="1")
@@ -43,6 +52,9 @@ test "mobile runtime core owns shared render resize and dispose lifecycle" {
   inspect(resize_count.val, content="1")
   inspect(core.metrics().logical_size.width, content="160")
   inspect(core.host_service_bridge().capabilities().clipboard, content="true")
+  let envelope_json = core.drain_host_update_envelope_json()
+  assert_true(envelope_json.contains("\"schemaVersion\":1"))
+  assert_true(envelope_json.contains("\"sessionGeneration\":"))
   core.dispose()
   core.dispose()
   inspect(core.disposed(), content="true")

@@ -565,6 +565,8 @@ pub struct HostServiceAsyncQueue {
   mut completed : Array[HostCompletedServiceResponse]
   // private fields
 }
+pub fn HostServiceAsyncQueue::cancel(Self, HostServiceRequestId, String) -> Bool
+pub fn HostServiceAsyncQueue::cancel_all(Self) -> Int
 pub fn HostServiceAsyncQueue::complete(Self, HostServiceRequestId, HostServiceResponse) -> Bool
 pub fn HostServiceAsyncQueue::completed_count(Self) -> Int
 pub fn HostServiceAsyncQueue::drain_completed(Self) -> Array[HostCompletedServiceResponse]
@@ -619,6 +621,7 @@ pub(all) enum HostServiceKind {
   OpenUrlService
   SystemThemeService
   DirectoryListingService
+  PlatformChannelService
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum HostServiceRequest {
@@ -630,6 +633,7 @@ pub(all) enum HostServiceRequest {
   OpenUrl(String)
   QuerySystemTheme
   ListDirectory(String)
+  PlatformChannel(PlatformChannelRequest)
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostServiceRequest::kind(Self) -> HostServiceKind
 pub fn HostServiceRequest::unavailable_message(Self) -> String
@@ -655,6 +659,7 @@ pub(all) enum HostServiceResponse {
   UrlOpened
   SystemTheme(@wzzc-dev/moui/core.ColorScheme)
   DirectoryListing(String, Array[HostDirectoryEntry])
+  PlatformChannel(PlatformChannelResponse)
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostServiceResponse::binary_file_diagnostic(Self) -> HostBinaryFileDiagnostic?
 pub fn HostServiceResponse::is_pending(Self) -> Bool
@@ -924,35 +929,60 @@ pub fn InputHostState::text_event(Self, @wzzc-dev/moui/core.TextInputEvent) -> H
 
 pub struct MobileHostChannel {
   service_queue : HostServiceAsyncQueue
+  session_generation : Int
   mut updates : Array[MobileHostUpdate]
   mut ime_revision : Int
   mut last_text_input : @wzzc-dev/moui/core.TextInputState?
   mut semantics_revision : Int
   mut last_semantics_nodes : Array[MobileSemanticsNode]
+  mut platform_view_revision : Int
+  mut last_platform_views : Array[@wzzc-dev/moui/core.PlatformViewPlacement]
   mut disposed : Bool
 }
 pub fn MobileHostChannel::dispatch_response(Self, MobileHostResponse, HostRuntimeDriver) -> Bool
+pub fn MobileHostChannel::dispatch_response_envelope(Self, MobileHostResponseEnvelope, HostRuntimeDriver) -> Bool
 pub fn MobileHostChannel::dispose(Self) -> Unit
 pub fn MobileHostChannel::disposed(Self) -> Bool
+pub fn MobileHostChannel::drain_update_envelope(Self) -> MobileHostUpdateEnvelope
+pub fn MobileHostChannel::drain_update_envelope_json(Self) -> String
 pub fn MobileHostChannel::drain_updates(Self) -> Array[MobileHostUpdate]
 pub fn MobileHostChannel::drain_updates_json(Self) -> String
-pub fn MobileHostChannel::new() -> Self
+pub fn MobileHostChannel::new(session_generation? : Int) -> Self
 pub fn MobileHostChannel::push_diagnostic(Self, String) -> Bool
 pub fn MobileHostChannel::service_bridge(Self) -> HostServiceBridge
+pub fn MobileHostChannel::session_generation(Self) -> Int
 pub fn MobileHostChannel::sync(Self, @runtime.AppRuntime) -> Int
+pub fn MobileHostChannel::sync_platform_views(Self, Array[@wzzc-dev/moui/core.PlatformViewPlacement]) -> Bool
 
 pub(all) enum MobileHostResponse {
   TextInput(@wzzc-dev/moui/core.TextInputEvent)
   Command(@wzzc-dev/moui/core.CommandIntent)
   Clipboard(HostServiceRequestId, HostServiceResponse)
   Accessibility(NativeAccessibilityActionRequest)
+  PlatformView(String, String, @wzzc-dev/moui/core.PlatformViewEvent)
+  PlatformChannel(HostServiceRequestId, PlatformChannelResponse)
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct MobileHostResponseEnvelope {
+  schema_version : Int
+  session_generation : Int
+  response : MobileHostResponse
+} derive(Eq, ToJson, @debug.Debug)
+pub fn MobileHostResponseEnvelope::new(session_generation~ : Int, response~ : MobileHostResponse) -> Self
 
 pub(all) enum MobileHostUpdate {
   Ime(MobileImeRequest)
   Clipboard(HostPendingServiceRequest)
   Semantics(MobileSemanticsSnapshot)
   Diagnostic(String)
+  PlatformViews(MobilePlatformViewSnapshot)
+  PlatformChannel(HostPendingServiceRequest)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct MobileHostUpdateEnvelope {
+  schema_version : Int
+  session_generation : Int
+  updates : Array[MobileHostUpdate]
 } derive(Eq, ToJson, @debug.Debug)
 
 pub struct MobileImageCoordinator {
@@ -988,6 +1018,11 @@ pub(all) struct MobileImeRequest {
   candidate_anchor : @wzzc-dev/moui/core.Rect
 } derive(Eq, ToJson, @debug.Debug)
 pub fn MobileImeRequest::from_state(revision~ : Int, @wzzc-dev/moui/core.TextInputState) -> Self
+
+pub(all) struct MobilePlatformViewSnapshot {
+  revision : Int
+  placements : Array[@wzzc-dev/moui/core.PlatformViewPlacement]
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct MobileSemanticsNode {
   element_id : Int

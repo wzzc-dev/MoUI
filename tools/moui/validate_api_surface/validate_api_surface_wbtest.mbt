@@ -102,7 +102,7 @@ test "api surface classification budgets pin current high-risk packages" {
     classification_budget(
       "moui/backend/host/pkg.generated.mbti", "host_contract",
     ).max_count,
-    content="462",
+    content="470",
   )
   inspect(
     classification_budget("moui/render/pkg.generated.mbti", "renderer_contract").max_count,
@@ -456,7 +456,7 @@ test "views facade exposes control-specific contracts" {
 ///|
 test "host and renderer public all budgets ratchet down" {
   let host = budget_by_label("host contracts")
-  inspect(host.max_pub_all_lines, content="70")
+  inspect(host.max_pub_all_lines, content="71")
   let renderer = budget_by_label("renderer facade")
   inspect(renderer.max_pub_all_lines, content="40")
   let skia = budget_by_label("skia renderer")

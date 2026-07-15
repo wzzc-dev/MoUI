@@ -237,6 +237,11 @@ pub fn IosRuntimeSession::disposed(self : IosRuntimeSession) -> Bool {
 }
 
 ///|
+pub fn IosRuntimeSession::session_generation(self : IosRuntimeSession) -> Int {
+  self.core.session_generation()
+}
+
+///|
 pub fn IosRuntimeSession::dispatch(
   self : IosRuntimeSession,
   event : @host.HostEvent,
@@ -290,11 +295,26 @@ pub fn IosRuntimeSession::drain_host_updates_json(
 }
 
 ///|
+pub fn IosRuntimeSession::drain_host_update_envelope_json(
+  self : IosRuntimeSession,
+) -> String {
+  self.core.drain_host_update_envelope_json()
+}
+
+///|
 pub fn IosRuntimeSession::dispatch_host_response(
   self : IosRuntimeSession,
   response : @host.MobileHostResponse,
 ) -> Bool {
   self.core.dispatch_host_response(response)
+}
+
+///|
+pub fn IosRuntimeSession::dispatch_host_response_envelope(
+  self : IosRuntimeSession,
+  envelope : @host.MobileHostResponseEnvelope,
+) -> Bool {
+  self.core.dispatch_host_response_envelope(envelope)
 }
 
 ///|

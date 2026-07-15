@@ -85,7 +85,7 @@ fn file_budgets() -> Array[FileBudget] {
       max_lines: 430,
     },
     { path: "moui/backend/host/host_test.mbt", max_lines: 50 },
-    { path: "moui/backend/host/host_services_test.mbt", max_lines: 255 },
+    { path: "moui/backend/host/host_services_test.mbt", max_lines: 257 },
     {
       path: "moui/backend/host/host_driver_context_menu_test.mbt",
       max_lines: 240,
@@ -133,7 +133,7 @@ fn file_budgets() -> Array[FileBudget] {
       max_lines: 100,
     },
     { path: "moui/backend/host/host_text_input_ime_test.mbt", max_lines: 336 },
-    { path: "moui/backend/host/mobile_host_channel.mbt", max_lines: 556 },
+    { path: "moui/backend/host/mobile_host_channel.mbt", max_lines: 700 },
     {
       path: "moui/backend/host/host_platform_contract_test.mbt",
       max_lines: 255,

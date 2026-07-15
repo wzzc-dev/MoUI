@@ -241,6 +241,13 @@ pub fn HarmonyOsRuntimeSession::disposed(
 }
 
 ///|
+pub fn HarmonyOsRuntimeSession::session_generation(
+  self : HarmonyOsRuntimeSession,
+) -> Int {
+  self.core.session_generation()
+}
+
+///|
 pub fn HarmonyOsRuntimeSession::dispatch(
   self : HarmonyOsRuntimeSession,
   event : @host.HostEvent,
@@ -294,11 +301,26 @@ pub fn HarmonyOsRuntimeSession::drain_host_updates_json(
 }
 
 ///|
+pub fn HarmonyOsRuntimeSession::drain_host_update_envelope_json(
+  self : HarmonyOsRuntimeSession,
+) -> String {
+  self.core.drain_host_update_envelope_json()
+}
+
+///|
 pub fn HarmonyOsRuntimeSession::dispatch_host_response(
   self : HarmonyOsRuntimeSession,
   response : @host.MobileHostResponse,
 ) -> Bool {
   self.core.dispatch_host_response(response)
+}
+
+///|
+pub fn HarmonyOsRuntimeSession::dispatch_host_response_envelope(
+  self : HarmonyOsRuntimeSession,
+  envelope : @host.MobileHostResponseEnvelope,
+) -> Bool {
+  self.core.dispatch_host_response_envelope(envelope)
 }
 
 ///|

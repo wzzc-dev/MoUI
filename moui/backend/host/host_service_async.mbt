@@ -244,6 +244,30 @@ pub fn HostServiceAsyncQueue::reject(
 }
 
 ///|
+/// Cancel one outstanding request. Completion is still delivered through the
+/// normal exactly-once path so app subscriptions observe the cancellation.
+pub fn HostServiceAsyncQueue::cancel(
+  self : HostServiceAsyncQueue,
+  id : HostServiceRequestId,
+  reason : String,
+) -> Bool {
+  self.reject(id, reason)
+}
+
+///|
+/// Drop every outstanding request and completion handler during host teardown.
+/// Subsequent completions are rejected because their request ids no longer
+/// exist in either pending or in-flight state.
+pub fn HostServiceAsyncQueue::cancel_all(self : HostServiceAsyncQueue) -> Int {
+  let count = self.outstanding_count()
+  self.pending = []
+  self.in_flight = []
+  self.completed = []
+  self.completion_handlers = []
+  count
+}
+
+///|
 pub fn HostServiceAsyncQueue::take_completed(
   self : HostServiceAsyncQueue,
   id : HostServiceRequestId,

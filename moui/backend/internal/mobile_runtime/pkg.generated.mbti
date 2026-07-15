@@ -18,8 +18,10 @@ pub struct MobileRuntimeSessionCore {
 pub fn MobileRuntimeSessionCore::advance_time(Self, Double) -> Unit
 pub fn MobileRuntimeSessionCore::dispatch(Self, @host.HostEvent) -> @host.HostEventResult
 pub fn MobileRuntimeSessionCore::dispatch_host_response(Self, @host.MobileHostResponse) -> Bool
+pub fn MobileRuntimeSessionCore::dispatch_host_response_envelope(Self, @host.MobileHostResponseEnvelope) -> Bool
 pub fn MobileRuntimeSessionCore::dispose(Self) -> Unit
 pub fn MobileRuntimeSessionCore::disposed(Self) -> Bool
+pub fn MobileRuntimeSessionCore::drain_host_update_envelope_json(Self) -> String
 pub fn MobileRuntimeSessionCore::drain_host_updates(Self) -> Array[@host.MobileHostUpdate]
 pub fn MobileRuntimeSessionCore::drain_host_updates_json(Self) -> String
 pub fn MobileRuntimeSessionCore::host_service_bridge(Self) -> @host.HostServiceBridge
@@ -30,6 +32,7 @@ pub fn MobileRuntimeSessionCore::redraw_requested(Self) -> Bool
 pub fn MobileRuntimeSessionCore::render_frame(Self) -> @render.RenderFrameResult
 pub fn MobileRuntimeSessionCore::resize(Self, @host.HostSurfaceMetrics) -> @host.HostEventResult
 pub fn MobileRuntimeSessionCore::runtime(Self) -> @runtime.AppRuntime
+pub fn MobileRuntimeSessionCore::session_generation(Self) -> Int
 pub fn MobileRuntimeSessionCore::take_redraw_requested(Self) -> Bool
 
 // Type aliases

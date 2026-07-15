@@ -34,11 +34,19 @@ pub(all) struct MobileSemanticsSnapshot {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct MobilePlatformViewSnapshot {
+  revision : Int
+  placements : Array[@core.PlatformViewPlacement]
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) enum MobileHostUpdate {
   Ime(MobileImeRequest)
   Clipboard(HostPendingServiceRequest)
   Semantics(MobileSemanticsSnapshot)
   Diagnostic(String)
+  PlatformViews(MobilePlatformViewSnapshot)
+  PlatformChannel(HostPendingServiceRequest)
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -47,6 +55,22 @@ pub(all) enum MobileHostResponse {
   Command(@core.CommandIntent)
   Clipboard(HostServiceRequestId, HostServiceResponse)
   Accessibility(NativeAccessibilityActionRequest)
+  PlatformView(String, String, @core.PlatformViewEvent)
+  PlatformChannel(HostServiceRequestId, PlatformChannelResponse)
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct MobileHostUpdateEnvelope {
+  schema_version : Int
+  session_generation : Int
+  updates : Array[MobileHostUpdate]
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct MobileHostResponseEnvelope {
+  schema_version : Int
+  session_generation : Int
+  response : MobileHostResponse
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -147,11 +171,14 @@ pub fn mobile_accessibility_response(
 ///|
 pub struct MobileHostChannel {
   service_queue : HostServiceAsyncQueue
+  session_generation : Int
   mut updates : Array[MobileHostUpdate]
   mut ime_revision : Int
   mut last_text_input : @core.TextInputState?
   mut semantics_revision : Int
   mut last_semantics_nodes : Array[MobileSemanticsNode]
+  mut platform_view_revision : Int
+  mut last_platform_views : Array[@core.PlatformViewPlacement]
   mut disposed : Bool
 }
 
@@ -306,16 +333,34 @@ fn mobile_text_input_from_utf16(
 }
 
 ///|
-pub fn MobileHostChannel::new() -> MobileHostChannel {
+pub fn MobileHostChannel::new(
+  session_generation? : Int = 1,
+) -> MobileHostChannel {
   {
     service_queue: HostServiceAsyncQueue::new(),
+    session_generation: session_generation.max(1),
     updates: [],
     ime_revision: 0,
     last_text_input: None,
     semantics_revision: 0,
     last_semantics_nodes: [],
+    platform_view_revision: 0,
+    last_platform_views: [],
     disposed: false,
   }
+}
+
+///|
+pub fn MobileHostChannel::session_generation(self : MobileHostChannel) -> Int {
+  self.session_generation
+}
+
+///|
+pub fn MobileHostResponseEnvelope::new(
+  session_generation~ : Int,
+  response~ : MobileHostResponse,
+) -> MobileHostResponseEnvelope {
+  { schema_version: 1, session_generation, response }
 }
 
 ///|
@@ -354,6 +399,8 @@ pub fn MobileHostChannel::sync(
     match pending.request {
       HostServiceRequest::Clipboard(_) =>
         self.updates.push(MobileHostUpdate::Clipboard(pending))
+      HostServiceRequest::PlatformChannel(_) =>
+        self.updates.push(MobileHostUpdate::PlatformChannel(pending))
       _ =>
         ignore(
           self.service_queue.complete(
@@ -366,6 +413,26 @@ pub fn MobileHostChannel::sync(
     }
   }
   self.updates.length() - previous_count
+}
+
+///|
+pub fn MobileHostChannel::sync_platform_views(
+  self : MobileHostChannel,
+  placements : Array[@core.PlatformViewPlacement],
+) -> Bool {
+  if self.disposed || placements == self.last_platform_views {
+    false
+  } else {
+    self.platform_view_revision = self.platform_view_revision + 1
+    self.last_platform_views = placements.copy()
+    self.updates.push(
+      MobileHostUpdate::PlatformViews({
+        revision: self.platform_view_revision,
+        placements: placements.copy(),
+      }),
+    )
+    true
+  }
 }
 
 ///|
@@ -452,6 +519,30 @@ pub fn MobileHostChannel::drain_updates_json(
 }
 
 ///|
+pub fn MobileHostChannel::drain_update_envelope(
+  self : MobileHostChannel,
+) -> MobileHostUpdateEnvelope {
+  {
+    schema_version: 1,
+    session_generation: self.session_generation,
+    updates: self.drain_updates(),
+  }
+}
+
+///|
+pub fn MobileHostChannel::drain_update_envelope_json(
+  self : MobileHostChannel,
+) -> String {
+  let envelope = self.drain_update_envelope()
+  (
+    {
+      "schemaVersion": envelope.schema_version,
+      "sessionGeneration": envelope.session_generation,
+      "updates": envelope.updates.map(mobile_host_update_json),
+    } : Json).stringify()
+}
+
+///|
 pub fn MobileHostChannel::push_diagnostic(
   self : MobileHostChannel,
   message : String,
@@ -473,6 +564,19 @@ fn mobile_host_update_json(update : MobileHostUpdate) -> Json {
       ({ "kind": "semantics", "payload": snapshot.to_json() } : Json)
     MobileHostUpdate::Diagnostic(message) =>
       ({ "kind": "diagnostic", "payload": message } : Json)
+    MobileHostUpdate::PlatformViews(snapshot) =>
+      ({ "kind": "platform-views", "payload": snapshot.to_json() } : Json)
+    MobileHostUpdate::PlatformChannel(pending) =>
+      match pending.request {
+        HostServiceRequest::PlatformChannel(request) =>
+          (
+            {
+              "kind": "platform-channel",
+              "id": pending.id.value,
+              "payload": request.to_json(),
+            } : Json)
+        _ => ({ "kind": "unsupported", "id": pending.id.value } : Json)
+      }
     MobileHostUpdate::Clipboard(pending) =>
       match pending.request {
         HostServiceRequest::Clipboard(request) =>
@@ -525,23 +629,61 @@ pub fn MobileHostChannel::dispatch_response(
       )
       true
     }
-    MobileHostResponse::Clipboard(id, result) => {
-      if !self.service_queue.complete(id, result) {
-        return false
-      }
-      for completion in self.service_queue.drain_completed() {
-        ignore(
-          driver.dispatch_service_completion(completion, self.service_bridge()),
-        )
-      }
-      true
-    }
+    MobileHostResponse::Clipboard(id, result) =>
+      self.complete_service_response(id, result, driver)
     MobileHostResponse::Accessibility(request) =>
       driver.dispatch_semantics_action(
         request.element_id,
         request.action,
         value=request.value,
       )
+    MobileHostResponse::PlatformView(kind, id, event) => {
+      if !self.last_platform_views.any(placement => {
+          placement.kind == kind && placement.id == id
+        }) {
+        return false
+      }
+      driver.dispatch_platform_view(id, event)
+      true
+    }
+    MobileHostResponse::PlatformChannel(id, response) =>
+      self.complete_service_response(
+        id,
+        HostServiceResponse::PlatformChannel(response),
+        driver,
+      )
+  }
+}
+
+///|
+fn MobileHostChannel::complete_service_response(
+  self : MobileHostChannel,
+  id : HostServiceRequestId,
+  response : HostServiceResponse,
+  driver : HostRuntimeDriver,
+) -> Bool {
+  if !self.service_queue.complete(id, response) {
+    return false
+  }
+  for completion in self.service_queue.drain_completed() {
+    ignore(
+      driver.dispatch_service_completion(completion, self.service_bridge()),
+    )
+  }
+  true
+}
+
+///|
+pub fn MobileHostChannel::dispatch_response_envelope(
+  self : MobileHostChannel,
+  envelope : MobileHostResponseEnvelope,
+  driver : HostRuntimeDriver,
+) -> Bool {
+  if envelope.schema_version != 1 ||
+    envelope.session_generation != self.session_generation {
+    false
+  } else {
+    self.dispatch_response(envelope.response, driver)
   }
 }
 
@@ -552,5 +694,7 @@ pub fn MobileHostChannel::dispose(self : MobileHostChannel) -> Unit {
     self.updates = []
     self.last_text_input = None
     self.last_semantics_nodes = []
+    self.last_platform_views = []
+    ignore(self.service_queue.cancel_all())
   }
 }

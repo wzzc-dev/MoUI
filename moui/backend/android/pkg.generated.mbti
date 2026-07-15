@@ -68,8 +68,10 @@ pub struct AndroidRuntimeSession {
 pub fn AndroidRuntimeSession::advance_time(Self, Double) -> Unit
 pub fn AndroidRuntimeSession::dispatch(Self, @host.HostEvent) -> @host.HostEventResult
 pub fn AndroidRuntimeSession::dispatch_host_response(Self, @host.MobileHostResponse) -> Bool
+pub fn AndroidRuntimeSession::dispatch_host_response_envelope(Self, @host.MobileHostResponseEnvelope) -> Bool
 pub fn AndroidRuntimeSession::dispose(Self) -> Unit
 pub fn AndroidRuntimeSession::disposed(Self) -> Bool
+pub fn AndroidRuntimeSession::drain_host_update_envelope_json(Self) -> String
 pub fn AndroidRuntimeSession::drain_host_updates(Self) -> Array[@host.MobileHostUpdate]
 pub fn AndroidRuntimeSession::drain_host_updates_json(Self) -> String
 pub fn AndroidRuntimeSession::host_service_bridge(Self) -> @host.HostServiceBridge
@@ -79,6 +81,7 @@ pub fn AndroidRuntimeSession::redraw_requested(Self) -> Bool
 pub fn AndroidRuntimeSession::render_frame(Self) -> @render.RenderFrameResult
 pub fn AndroidRuntimeSession::resize(Self, @host.HostSurfaceMetrics) -> @host.HostEventResult
 pub fn AndroidRuntimeSession::runtime(Self) -> @runtime.AppRuntime
+pub fn AndroidRuntimeSession::session_generation(Self) -> Int
 pub fn AndroidRuntimeSession::surface(Self) -> AndroidSurfaceHandle
 pub fn AndroidRuntimeSession::sync_surface(Self, AndroidRendererProvider) -> Unit
 pub fn AndroidRuntimeSession::take_redraw_requested(Self) -> Bool
