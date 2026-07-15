@@ -33,12 +33,12 @@ If you must break an invariant, open an RFC first (see `GOVERNANCE.md`).
 
 | # | Constraint | Detection | Exemption |
 |---|-----------|-----------|-----------|
-| M1 | Android: embedded-session route; `backend/android` owns contracts, `backend/android/skia` owns `ANativeWindow` Skia presenter; `mobile/android` owns Gradle/Activity/JNI/CMake template | code review | none |
+| M1 | Android: embedded-session route; `backend/android` owns contracts, `backend/android/skia` owns the `ANativeWindow` Skia presenter; `mobile/android` owns the canonical Kotlin/AndroidX shell, registered JNI, and Gradle/CMake template; `mobile/legacy/android` is Release N compatibility only | code review | none |
 | M2 | Android frames paced by `Choreographer`; input/resize must request redraw, not present synchronously | code review | none |
-| M3 | iOS: embedded-session route; `backend/ios` owns UIKit contracts, `backend/ios/skia` owns `UIImageView` presenter; `mobile/ios` owns Xcode template | code review | none |
-| M4 | iOS frames paced by `CADisplayLink`; keep `UILaunchScreen` in Info.plists; simulator smoke uses `idb`/`idb-companion`, not `simctl` | code review | none |
-| M5 | HarmonyOS: SDK API 20; XComponent is the only pointer/surface/resize/detach source; do not restore `.onTouch` or duplicate lifecycle calls; ArkTS owns `displaySync` | code review | none |
-| M6 | Mobile services cross `MobileHostChannel`; JNI/Obj-C++/NAPI adapters are thin wire translators only | code review | none |
+| M3 | iOS: embedded-session route; `backend/ios` owns host contracts, `backend/ios/skia` owns the UIKit presenter; `mobile/ios` owns the canonical SwiftUI/CAMetalLayer shell, ABI bridge, plugin registry, and Xcode template; `mobile/ios/legacy` is Release N compatibility only | code review | none |
+| M4 | iOS ABI v1 is single-scene; frames are paced by `CADisplayLink`; keep `UILaunchScreen` and `UIApplicationSupportsMultipleScenes=false` in Info.plists; simulator smoke uses `idb`/`idb-companion`, not `simctl` | code review | none |
+| M5 | HarmonyOS: `mobile/harmonyos` owns the canonical ArkTS managed shell at API 20; XComponent is the only pointer/surface/resize/detach source; do not restore `.onTouch` or duplicate lifecycle calls; ArkTS owns `displaySync` | code review | none |
+| M6 | Mobile services cross `MobileHostChannel`; JNI/Obj-C++/NAPI adapters are thin wire translators only. The shared session core lives at `backend/internal/mobile_runtime`: MoonBit's internal visibility makes this package-private to all backend siblings, while `backend/host/internal` would incorrectly reject Android/iOS/HarmonyOS imports. | API import whitelist + code review | none |
 | M7 | Mobile runtime manifests: `passed` (complete evidence) / `partial` (useful run with missing observations) / `failed` (no usable evidence); `--require-passed` rejects both `partial` and `failed` | `validate_mobile_runtime_manifest` | none |
 | M8 | Mobile acceptance evidence requires clipboard write/read completion, two distinct surface sizes, accessibility tree/focus/action, async loading/ready logs | code review | none |
 

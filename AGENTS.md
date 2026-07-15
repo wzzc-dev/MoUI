@@ -28,6 +28,9 @@ First stop for contributors and AI agents. For task-specific workflows:
 - **App dependencies**: `@moui.*` + domain facades + `views` only. No direct deps on `runtime`, `render/*`, or platform backends.
 - **Mainline**: Native Skia. **Diagnostic**: Native WGPU. Do not reclassify without RFC.
 - **Mobile**: embedded-session routes; product `auto` default is `SkiaGpuNative` when the host GPU surface is available; `SkiaRasterNative` is explicit/recovery fallback.
+- **Mobile shells**: managed builds stage package-owned Kotlin/AndroidX,
+  SwiftUI, or ArkTS/XComponent canonical shells. App-owned native projects are
+  versioned ejected shells or explicit Release N legacy fixtures only.
 - **API discovery**: `moon ide doc` / `outline` / `peek-def` / `find-references` before inventing names.
 - **`moon.work`**: no `./window` (use `window-dev-mode.sh on/off`), no `./openseek`.
 

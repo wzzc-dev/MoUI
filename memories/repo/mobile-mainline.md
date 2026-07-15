@@ -2,7 +2,19 @@
 
 - Native Skia is the Android/iOS/HarmonyOS mainline; native WGPU is diagnostic.
 - Mobile services cross `moui/backend/host::MobileHostChannel`; platform shells
-  own only JNI/Obj-C++/NAPI conversion and native API calls.
+  own only native handles, provider creation, fixed-ABI translation, and native
+  API calls. `MobileRuntimeSessionCore` lives at
+  `moui/backend/internal/mobile_runtime`; `backend/host/internal` is not visible
+  to Android/iOS/HarmonyOS sibling packages.
+- Managed shells are package-owned and staged at build time: Kotlin/AndroidX
+  with registered JNI on Android, SwiftUI around a `CAMetalLayer` view on iOS,
+  and ArkTS `MoUIRoot` plus XComponent on HarmonyOS. App repositories keep
+  schema v2 `mobile.json`, MoonBit entrypoints, resources, and bounded local
+  plugins. Native project ownership requires a versioned eject.
+- Managed shells negotiate `moui_mobile_get_runtime_api_v1()` and exchange Host
+  Wire v1 envelopes scoped by `sessionGeneration`. Surface detach preserves
+  `AppRuntime`; application destroy is terminal. Late generation responses are
+  rejected.
 - HarmonyOS compatible SDK is API 20. Native XComponent callbacks are the only
   surface/pointer lifecycle source; ArkTS owns VSync and platform services.
 - Product default is `SkiaGpuNative` for `auto` on all native platforms when a
@@ -34,16 +46,17 @@
 - iOS Simulator smoke uses `idb` accessibility frames for tap/swipe and HOME
   lifecycle input, with logs filtered to the current `simctl launch` PID.
   Mobile Info.plists keep `UILaunchScreen` to avoid legacy `320x480` scaling.
-- Component Gallery mobile entrypoints open `Mobile Service Probe` directly.
+- Component Gallery mobile entrypoints expose the app workflow; automatic shell
+  smoke behavior lives only in the repo-only `moui.mobile.test-probe` plugin.
   Recorder acceptance requires system text clipboard write/read, two distinct
-  physical resize dimensions, accessibility tree/focus/action, and async-image
-  loading/ready logs. PNG clipboard remains a separate cross-app device check.
-- Runtime evidence (2026-07-15): iOS Simulator CG **`passed`** (Metal).
-  HarmonyOS MateBook Pro HVD CG **`partial`** but **L2 GPU feasible**:
-  `egl-gpu` + `gpuAvailable=true` under
-  `artifacts/mobile-runtime/harmonyos/component_gallery/`. Android L1
-  packaging fixed (full NDK28 libc++); L2 smoke after HarmonyOS (don't run
-  both emulators together).
+  physical resize dimensions, accessibility tree/focus/action, PlatformView and
+  Host Service completion, async-image loading/ready, GPU recovery, and stress
+  logs. PNG clipboard remains a separate cross-app device check.
+- Runtime evidence (2026-07-15): the iOS `passed` and Android `passed` artifacts
+  belong to Release N UIKit/Java shells. Canonical SwiftUI/Kotlin shells need
+  fresh matching-device runs. HarmonyOS canonical ArkTS evidence is `partial`.
+  All three structured platform manifests remain `partial` and keep
+  `actualPresenterRoute=unverified` until modern-shell evidence is recollected.
 - Xcode 26.3 `simctl io` has no rotate operation. iOS Simulator rotation uses
   Simulator menu UI scripting and therefore needs macOS Accessibility
   permission; VoiceOver preference writes alone are not focus/action evidence.

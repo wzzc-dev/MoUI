@@ -43,11 +43,11 @@ examples/<name>/macos_skia/
 examples/<name>/windows_skia/
 examples/<name>/linux_skia/
 examples/<name>/android_skia/   # experimental embedded-session route
-examples/<name>/android_app/    # app-owned APK/JNI/CMake shell when present
+examples/<name>/android_app/    # repository-only Release N fixture when present
 examples/<name>/ios_skia/       # experimental embedded-session route
-examples/<name>/ios_app/        # app-owned UIKit .app shell when present
+examples/<name>/ios_app/        # repository-only Release N fixture when present
 examples/<name>/harmonyos_skia/ # experimental embedded-session route
-examples/<name>/harmonyos_app/  # app-owned Stage Ability/XComponent shell over moui/mobile/harmonyos when present
+examples/<name>/harmonyos_app/  # repository-only Release N fixture when present
 ```
 
 `examples/component_gallery` is the documented exception for the default route
@@ -182,25 +182,34 @@ separate from host-specific steps. Run platform smoke only when
 the change claims real platform/browser/renderer behavior.
 For Android, the canonical build command is
 `scripts/build-mobile-android-apk.sh --app <counter|component_gallery>`, with
-app-specific scripts kept as compatibility wrappers. The fallback APK command only validates packaging/JNI/CMake; a
+app-specific scripts kept as compatibility wrappers. The default is the
+package-owned Kotlin/AndroidX managed shell with registered JNI and a native
+PlatformView overlay. The fallback APK command only validates packaging/JNI/CMake; a
 non-fallback APK plus matching device/emulator smoke is still required for
 first-frame or input/lifecycle runtime claims. Use
 `--renderer auto|skia-gpu|skia-raster` to record the requested and selected
-mobile renderer; GPU requests currently record a raster fallback until direct
-host GPU presentation passes promotion gates. Use
+mobile renderer. Real Skia packages use the GPU route for `auto` and
+`skia-gpu`; fallback-Skia builds, explicit `skia-raster`, and sticky terminal
+recovery use the raster route. Use
 `scripts/setup-android-sdk.sh --accept-licenses` followed by
 `eval "$(scripts/setup-android-sdk.sh --print-env)"` to install and expose the
 official SDK/NDK/CMake toolchain when the local machine does not already have
 one. The setup helper requires a JDK on `PATH`; the APK builder also uses
 `javac`, `jlink`, and `keytool`. Use Java 17 or newer for Android Gradle Plugin
-9.x; Java 21 is the recommended local default.
+9.x; Java 21 is the recommended local default. Install compile SDK 36 for
+AndroidX Activity 1.13.0; the product target remains SDK 35 and minSdk 23.
+`--legacy-java-shell --compile-sdk 35` validates only the frozen Release N
+compatibility fixture and is not an application template.
 For iOS, the canonical build command is
-`scripts/build-mobile-ios-app.sh --app <counter|component_gallery>` through the
-checked-in Xcode project. The fallback `.app` command only validates MoonBit C
-generation, shared UIKit shell compilation, native-stub compilation, bundle
-layout, and ad-hoc simulator signing; a non-fallback `.app` plus matching
+`scripts/build-mobile-ios-app.sh --app <counter|component_gallery>` through a
+staged canonical Xcode project. The fallback `.app` command only validates MoonBit C
+generation, canonical SwiftUI/UIKit adapter and ABI bridge compilation,
+native-stub compilation, bundle layout, and ad-hoc simulator signing; a
+non-fallback `.app` plus matching
 simulator/device smoke is still required for first-frame or input/lifecycle
 runtime claims.
+The managed route requires Xcode 15.4+, Swift 5, iOS 15+, and one active scene.
+Use `--legacy-uikit-shell` only for the frozen Release N fixture.
 Keep the iOS template's `UILaunchScreen` entry to avoid legacy `320x480`
 compatibility mode. iOS Simulator smoke requires `idb`/`idb-companion`; stock
 `simctl` does not inject tap/swipe events. The recorder chooses a control from
@@ -208,15 +217,16 @@ the accessibility tree and filters receipt logs by the current launch PID.
 The iOS and HarmonyOS mobile build entrypoints use the same `--renderer`
 contract and evidence boundary.
 Repository example mobile metadata lives in `examples/<app>/mobile.json`.
-Reusable mobile templates and scripts live in the published `moui/mobile` and
-`moui/scripts/mobile` directories. Keep Counter/Component Gallery compatibility
-native contracts in `moui/mobile/build-contracts.json`; external app authors
-should instead put their native contract in their own `mobile.json`. Run
+Reusable canonical shells and scripts live in the published `moui/mobile` and
+`moui/scripts/mobile` directories. Counter/Component Gallery app-specific
+contracts in `moui/mobile/build-contracts.json` are Release N schema v1
+fixtures only; schema v2 applications use the fixed Runtime ABI and must not
+put native symbols or project paths in `mobile.json`. Run
 `node scripts/check-mobile-app-config.mjs` after changing repository example
 mobile metadata or contracts.
 For HarmonyOS, the fallback HAP command only validates MoonBit C generation,
-the app-owned Stage Ability/XComponent shell over `moui/mobile/harmonyos`,
-native glue compilation, native-stub compilation, and staged package layout; a
+the package-owned ArkTS Stage Ability/XComponent managed shell, native glue
+compilation, native-stub compilation, and staged package layout; a
 non-fallback HAP plus matching device/emulator smoke is still required for
 first-frame or input/lifecycle runtime claims. Use `HARMONYOS_SDK_HOME` as the
 canonical SDK environment variable, with `OHOS_SDK_HOME` accepted as fallback.
