@@ -65,9 +65,14 @@ pub fn AndroidRendererProvider::new(create_renderer~ : (AndroidSurfaceHandle, @h
 pub struct AndroidRuntimeSession {
   // private fields
 }
+pub fn AndroidRuntimeSession::advance_time(Self, Double) -> Unit
 pub fn AndroidRuntimeSession::dispatch(Self, @host.HostEvent) -> @host.HostEventResult
+pub fn AndroidRuntimeSession::dispatch_host_response(Self, @host.MobileHostResponse) -> Bool
 pub fn AndroidRuntimeSession::dispose(Self) -> Unit
 pub fn AndroidRuntimeSession::disposed(Self) -> Bool
+pub fn AndroidRuntimeSession::drain_host_updates(Self) -> Array[@host.MobileHostUpdate]
+pub fn AndroidRuntimeSession::drain_host_updates_json(Self) -> String
+pub fn AndroidRuntimeSession::host_service_bridge(Self) -> @host.HostServiceBridge
 pub fn AndroidRuntimeSession::metrics(Self) -> @host.HostSurfaceMetrics
 pub fn AndroidRuntimeSession::present_count(Self) -> Int
 pub fn AndroidRuntimeSession::redraw_requested(Self) -> Bool
@@ -88,4 +93,3 @@ pub fn AndroidSurfaceHandle::raw(Self) -> UInt64
 // Type aliases
 
 // Traits
-

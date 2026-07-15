@@ -65,9 +65,14 @@ pub fn HarmonyOsRendererProvider::new(create_renderer~ : (HarmonyOsSurfaceHandle
 pub struct HarmonyOsRuntimeSession {
   // private fields
 }
+pub fn HarmonyOsRuntimeSession::advance_time(Self, Double) -> Unit
 pub fn HarmonyOsRuntimeSession::dispatch(Self, @host.HostEvent) -> @host.HostEventResult
+pub fn HarmonyOsRuntimeSession::dispatch_host_response(Self, @host.MobileHostResponse) -> Bool
 pub fn HarmonyOsRuntimeSession::dispose(Self) -> Unit
 pub fn HarmonyOsRuntimeSession::disposed(Self) -> Bool
+pub fn HarmonyOsRuntimeSession::drain_host_updates(Self) -> Array[@host.MobileHostUpdate]
+pub fn HarmonyOsRuntimeSession::drain_host_updates_json(Self) -> String
+pub fn HarmonyOsRuntimeSession::host_service_bridge(Self) -> @host.HostServiceBridge
 pub fn HarmonyOsRuntimeSession::metrics(Self) -> @host.HostSurfaceMetrics
 pub fn HarmonyOsRuntimeSession::present_count(Self) -> Int
 pub fn HarmonyOsRuntimeSession::redraw_requested(Self) -> Bool
