@@ -52,6 +52,25 @@ struct PlatformRow {
 }
 
 ///|
+struct MobilePlatformContractFacts {
+  platform : String
+  source_status : String
+  source_fact_statuses : Array[String]
+  source_verified_on : String
+  source_matrix_command : String
+  renderer_status : String
+  runtime_status : String
+  shell_kind : String
+  shell_api : Int
+  runtime_abi : Int
+  declared_presenter_route : String
+  actual_presenter_route : String
+  presenter_evidence_status : String
+  presenter_evidence_kind : String
+  presenter_evidence_reference : String
+}
+
+///|
 struct DocsGroupRow {
   id : String
   title : String
@@ -364,6 +383,135 @@ fn nested_string(
 }
 
 ///|
+fn platform_fact_status(
+  value : Json?,
+  label : String,
+) -> Result[String, String] {
+  let status = match json_string(value, label) {
+    Ok(value) => value
+    Err(message) => return Err(message)
+  }
+  if status != "passed" && status != "partial" && status != "failed" {
+    Err(label + " must be passed, partial, or failed")
+  } else {
+    Ok(status)
+  }
+}
+
+///|
+fn mobile_shell_kind(platform : String) -> String? {
+  match platform {
+    "android" => Some("managed-kotlin")
+    "ios" => Some("managed-swiftui")
+    "harmonyos" => Some("managed-arkts-xcomponent")
+    _ => None
+  }
+}
+
+///|
+fn validate_mobile_platform_contract(
+  facts : MobilePlatformContractFacts,
+  label : String,
+) -> Result[Unit, String] {
+  let expected_shell_kind = match mobile_shell_kind(facts.platform) {
+    Some(value) => value
+    None => return Ok(())
+  }
+  if facts.shell_kind != expected_shell_kind {
+    return Err(
+      label +
+      ".shellKind must be " +
+      expected_shell_kind +
+      " for " +
+      facts.platform,
+    )
+  }
+  if facts.shell_api != 1 || facts.runtime_abi != 1 {
+    return Err(
+      label + ": managed mobile shells require shell API 1 and runtime ABI 1",
+    )
+  }
+  if facts.source_fact_statuses.length() != 4 {
+    return Err(
+      label +
+      ".sourceBuild must record four managed/ejected/plugin/legacy facts",
+    )
+  }
+  let expected_source_status = if facts.source_fact_statuses.any(status => {
+      status == "failed"
+    }) {
+    "failed"
+  } else if facts.source_fact_statuses.all(status => status == "passed") {
+    "passed"
+  } else {
+    "partial"
+  }
+  if facts.source_status != expected_source_status {
+    return Err(
+      label +
+      ".sourceBuild.status must aggregate managed, cleanEjected, pluginFixture, and legacyFixture as " +
+      expected_source_status,
+    )
+  }
+  if facts.source_verified_on.length() != 10 ||
+    !facts.source_verified_on.contains("-") {
+    return Err(label + ".sourceBuild.verifiedOn must be an ISO date")
+  }
+  let expected_matrix_command = "run-mobile-shell-matrix.sh " + facts.platform
+  if !facts.source_matrix_command.contains(expected_matrix_command) {
+    return Err(
+      label +
+      ".sourceBuild.matrixCommand must run the " +
+      facts.platform +
+      " shell matrix",
+    )
+  }
+  if facts.actual_presenter_route == "unverified" {
+    if facts.presenter_evidence_status != "unverified" ||
+      facts.presenter_evidence_kind != "none" {
+      return Err(
+        label +
+        ": an unverified actual presenter route requires unverified/none presenter evidence",
+      )
+    }
+  } else {
+    if facts.actual_presenter_route != facts.declared_presenter_route {
+      return Err(
+        label +
+        ": actual presenter route must match the declared renderer route",
+      )
+    }
+    if facts.presenter_evidence_status != "verified" ||
+      facts.presenter_evidence_kind != "matching-device-direct-present" {
+      return Err(
+        label +
+        ": an actual presenter route requires matching-device direct-present evidence",
+      )
+    }
+  }
+  if facts.presenter_evidence_reference.trim().to_owned() == "" {
+    return Err(
+      label + ".rendererL2.presenterEvidence.reference must not be empty",
+    )
+  }
+  if facts.renderer_status == "passed" &&
+    facts.actual_presenter_route == "unverified" {
+    return Err(
+      label +
+      ": rendererL2 cannot pass with an unverified actual presenter route",
+    )
+  }
+  if facts.runtime_status == "passed" &&
+    facts.actual_presenter_route == "unverified" {
+    return Err(
+      label +
+      ": mobile runtimeL3 cannot pass with an unverified presenter route",
+    )
+  }
+  Ok(())
+}
+
+///|
 fn read_platform_rows(
   repo_root : String,
 ) -> Result[Array[PlatformRow], String] raise RepoDocsError {
@@ -419,6 +567,67 @@ fn read_platform_rows(
         fields.get("actualPresenterRoute"),
         path + ".actualPresenterRoute",
       ).or_raise()
+      let shell_kind = json_string(fields.get("shellKind"), path + ".shellKind").or_raise()
+      let deployment_floor = json_string(
+        fields.get("deploymentFloor"),
+        path + ".deploymentFloor",
+      ).or_raise()
+      let toolchain_floor = json_string(
+        fields.get("toolchainFloor"),
+        path + ".toolchainFloor",
+      ).or_raise()
+      if mobile_shell_kind(platform) is Some(_) {
+        let source = match fields.get("sourceBuild") {
+          Some(value) => json_object(value, path + ".sourceBuild").or_raise()
+          None => return Err(path + ".sourceBuild is missing")
+        }
+        let source_fact_statuses : Array[String] = []
+        for key in ["managed", "cleanEjected", "pluginFixture", "legacyFixture"] {
+          source_fact_statuses.push(
+            platform_fact_status(source.get(key), path + ".sourceBuild." + key).or_raise(),
+          )
+        }
+        let presenter_evidence = match renderer.get("presenterEvidence") {
+          Some(value) =>
+            json_object(value, path + ".rendererL2.presenterEvidence").or_raise()
+          None => return Err(path + ".rendererL2.presenterEvidence is missing")
+        }
+        validate_mobile_platform_contract(
+          {
+            platform,
+            source_status,
+            source_fact_statuses,
+            source_verified_on: json_string(
+              source.get("verifiedOn"),
+              path + ".sourceBuild.verifiedOn",
+            ).or_raise(),
+            source_matrix_command: json_string(
+              source.get("matrixCommand"),
+              path + ".sourceBuild.matrixCommand",
+            ).or_raise(),
+            renderer_status,
+            runtime_status,
+            shell_kind,
+            shell_api,
+            runtime_abi,
+            declared_presenter_route,
+            actual_presenter_route,
+            presenter_evidence_status: json_string(
+              presenter_evidence.get("status"),
+              path + ".rendererL2.presenterEvidence.status",
+            ).or_raise(),
+            presenter_evidence_kind: json_string(
+              presenter_evidence.get("kind"),
+              path + ".rendererL2.presenterEvidence.kind",
+            ).or_raise(),
+            presenter_evidence_reference: json_string(
+              presenter_evidence.get("reference"),
+              path + ".rendererL2.presenterEvidence.reference",
+            ).or_raise(),
+          },
+          path,
+        ).or_raise()
+      }
       if renderer_status == "passed" && actual_presenter_route == "unverified" {
         return Err(
           path +
@@ -430,17 +639,11 @@ fn read_platform_rows(
         source_status,
         renderer_status,
         runtime_status,
-        shell_kind: json_string(fields.get("shellKind"), path + ".shellKind").or_raise(),
+        shell_kind,
         shell_api,
         runtime_abi,
-        deployment_floor: json_string(
-          fields.get("deploymentFloor"),
-          path + ".deploymentFloor",
-        ).or_raise(),
-        toolchain_floor: json_string(
-          fields.get("toolchainFloor"),
-          path + ".toolchainFloor",
-        ).or_raise(),
+        deployment_floor,
+        toolchain_floor,
         declared_presenter_route,
         actual_presenter_route,
       })
