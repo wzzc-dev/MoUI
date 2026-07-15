@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "platform": "harmonyos",
+  "sourceBuild": {"status": "partial", "evidence": "managed, clean-ejected, and plugin fixture builds pending"},
+  "rendererL2": {"status": "partial", "presenterRoute": "egl-direct"},
+  "runtimeL3": {"status": "partial", "evidence": "canonical XComponent matching-device suite pending"},
+  "shellKind": "managed-arkts-xcomponent",
+  "shellApiVersion": 1,
+  "runtimeAbiVersion": 1,
+  "deploymentFloor": "HarmonyOS API 20",
+  "toolchainFloor": "target 21 / model 6.0.1",
+  "actualPresenterRoute": "unverified"
+}
+

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "examples": [
+    {"id": "agent_counter", "path": "examples/agent_counter", "title": "Agent Counter", "featured": false},
+    {"id": "counter", "path": "examples/counter", "title": "Counter", "featured": false},
+    {"id": "multi_window", "path": "examples/multi_window", "title": "Multi Window", "featured": false},
+    {"id": "harmonyos_demo", "path": "examples/harmonyos_demo", "title": "HarmonyOS Demo", "featured": false},
+    {"id": "component_gallery", "path": "examples/component_gallery", "title": "Component Gallery", "featured": true},
+    {"id": "button_freeze_probe", "path": "examples/button_freeze_probe", "title": "Button Freeze Probe", "featured": false},
+    {"id": "showcase", "path": "examples/showcase", "title": "Showcase", "featured": true},
+    {"id": "design_systems", "path": "examples/design_systems", "title": "Design Systems", "featured": false},
+    {"id": "markdown_editor", "path": "examples/markdown_editor", "title": "Markdown Editor", "featured": true},
+    {"id": "pdf_workbench", "path": "examples/pdf_workbench", "title": "PDF Workbench", "featured": false},
+    {"id": "settings", "path": "examples/settings", "title": "Settings", "featured": false},
+    {"id": "data_table", "path": "examples/data_table", "title": "Data Table", "featured": false},
+    {"id": "file_importer", "path": "examples/file_importer", "title": "File Importer", "featured": false},
+    {"id": "command_palette", "path": "examples/command_palette", "title": "Command Palette", "featured": false},
+    {"id": "mo_workbench", "path": "examples/mo_workbench", "title": "Mo Workbench", "featured": true},
+    {"id": "code_editor", "path": "examples/code_editor", "title": "Code Editor", "featured": false},
+    {"id": "webview_demo", "path": "examples/webview_demo", "title": "WebView Demo", "featured": false},
+    {"id": "excel", "path": "examples/excel", "title": "Excel Viewer", "featured": true}
+  ]
+}
+

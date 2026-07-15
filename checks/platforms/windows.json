@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "platform": "windows",
+  "sourceBuild": {"status": "passed", "evidence": "Windows MSVC package CI"},
+  "rendererL2": {"status": "passed", "presenterRoute": "d3d12-direct"},
+  "runtimeL3": {"status": "partial", "evidence": "full platform-service matching-host suite pending"},
+  "shellKind": "native-window",
+  "shellApiVersion": 0,
+  "runtimeAbiVersion": 0,
+  "deploymentFloor": "Windows 10",
+  "toolchainFloor": "MSVC 2022",
+  "actualPresenterRoute": "d3d12-direct"
+}
+
