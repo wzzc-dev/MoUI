@@ -333,9 +333,7 @@ test "HarmonyOS ejection uses local shell glue and runtime ABI snapshot" {
     #|list(APPEND sources "${MOUI_ROOT}/mobile/runtime/moui_mobile_runtime_v1.cpp")
     #|target_include_directories(shell PRIVATE "${MOUI_ROOT}/mobile/include")
   let rendered = patch_ejected_shell_text(
-    "entry/src/main/cpp/MoUIMobileHarmonyOS.cmake",
-    source,
-    "harmonyos",
+    "entry/src/main/cpp/MoUIMobileHarmonyOS.cmake", source, "harmonyos",
   )
   let local_runtime = "${CMAKE_CURRENT_LIST_DIR}/../../../../moui/runtime"
   inspect(
