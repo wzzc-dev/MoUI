@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { validateMobileMetadataV2 } from "./mobile-config-schema.mjs";
+import { readMouiPluginManifests } from "./plugin-manifest.mjs";
 
 export const mouiPackageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -332,7 +333,7 @@ export const readMobileApp = (appId, options = {}) => {
     appConfigPath: options.appConfigPath,
     allowLegacyConfig: options.allowLegacyConfig === true,
   });
-  return mergeApp({
+  const app = mergeApp({
     appId,
     metadata,
     metadataPath,
@@ -342,6 +343,20 @@ export const readMobileApp = (appId, options = {}) => {
     mouiRoot,
     skiaRoot,
   });
+  app.plugins = metadata.schemaVersion === 2
+    ? readMouiPluginManifests(metadata.mobile.plugins, { workspaceRoot })
+    : [];
+  const grantedPermissions = new Set(metadata.mobile.permissions || []);
+  for (const plugin of app.plugins) {
+    for (const permission of plugin.permissions) {
+      if (!grantedPermissions.has(permission)) {
+        throw new Error(
+          `${metadataPath}: plugin ${plugin.id} requires undeclared permission ${JSON.stringify(permission)}`,
+        );
+      }
+    }
+  }
+  return app;
 };
 
 export const readMobileApps = (options = {}) => {
