@@ -144,8 +144,8 @@ const generatedRegistry = plugins => {
 
 export const prepareAndroidPlugins = ({ plugins = [], buildDir, shellMode }) => {
   if (!isAbsolute(buildDir)) throw new Error("Android plugin buildDir must be absolute");
-  if (!["managed", "legacy"].includes(shellMode)) {
-    throw new Error(`Android plugin shell mode must be managed or legacy: ${shellMode}`);
+  if (!["managed", "ejected", "legacy"].includes(shellMode)) {
+    throw new Error(`Android plugin shell mode must be managed, ejected, or legacy: ${shellMode}`);
   }
   const root = join(buildDir, "android", "plugins");
   rmSync(root, { recursive: true, force: true });

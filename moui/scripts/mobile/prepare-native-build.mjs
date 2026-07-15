@@ -13,6 +13,7 @@ import { dirname, isAbsolute, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { defaultMouiRoot, defaultSkiaRoot, defaultWorkspaceRoot, readMobileApp } from "./app-config.mjs";
 import { prepareAndroidPlugins } from "../../mobile/android/prepare-plugins.mjs";
+import { resolveAndroidManagedShell } from "../../mobile/android/resolve-managed-shell.mjs";
 
 const usage = `Usage: moui/scripts/mobile/prepare-native-build.mjs --platform android|ios|harmonyos --app <id> --build-dir <dir> [options]
 
@@ -26,7 +27,7 @@ Options:
   --skia-root <path>         Resolved moui_skia package root. Default ./moui_skia or .mooncakes/wzzc-dev/moui_skia.
   --build-dir <dir>          Generated build input directory.
   --abi <abi>                Android ABI, default arm64-v8a.
-  --android-shell <mode>     Android managed or legacy shell, default managed.
+  --android-shell <mode>     Android managed, ejected, or legacy shell, default managed.
   --sdk <sdk>                iOS SDK, iphonesimulator or iphoneos.
   --arch <arch>              iOS or HarmonyOS arch, default arm64.
   --renderer <mode>          auto, skia-gpu, or skia-raster. Default auto.
@@ -477,9 +478,17 @@ const selectRenderer = (requested, fallbackSkia) => {
   };
 };
 
-const prepareAndroid = ({ app, config, plugins, buildDir, abi, androidShell, renderer, fallbackSkia, workspaceRoot, mouiRoot, skiaRoot }) => {
+const prepareAndroid = ({ app, appConfig, config, plugins, buildDir, abi, androidShell, renderer, fallbackSkia, workspaceRoot, mouiRoot, skiaRoot }) => {
   if (!androidAbiToSkiaArch.has(abi)) throw new Error(`unsupported Android ABI: ${abi}`);
   if (androidShell === "legacy") validateAndroidLegacyExports(config);
+  if (androidShell !== "legacy" && appConfig.android.shellMode !== androidShell) {
+    throw new Error(
+      `app ${app} requests Android shellMode=${appConfig.android.shellMode}; ${androidShell} shell required`,
+    );
+  }
+  const androidShellConfig = androidShell !== "legacy"
+    ? resolveAndroidManagedShell({ app: appConfig, buildDir, workspaceRoot })
+    : null;
   const androidPlugins = prepareAndroidPlugins({
     plugins,
     buildDir,
@@ -525,6 +534,7 @@ const prepareAndroid = ({ app, config, plugins, buildDir, abi, androidShell, ren
     fallbackSkia,
     renderer: rendererSelection,
     androidShell,
+    androidShellConfig,
     androidPlugins,
   });
 };
@@ -641,8 +651,8 @@ try {
   if (!["android", "ios", "harmonyos"].includes(options.platform)) {
     throw new Error("--platform must be android, ios, or harmonyos");
   }
-  if (options.platform === "android" && !["managed", "legacy"].includes(options.androidShell)) {
-    throw new Error("--android-shell must be managed or legacy");
+  if (options.platform === "android" && !["managed", "ejected", "legacy"].includes(options.androidShell)) {
+    throw new Error("--android-shell must be managed, ejected, or legacy");
   }
   selectRenderer(options.renderer);
   const workspaceRoot = resolve(options.workspaceRoot || defaultWorkspaceRoot());
@@ -666,6 +676,7 @@ try {
   if (options.platform === "android") {
     prepareAndroid({
       app: options.app,
+      appConfig,
       config: platformConfig,
       plugins: appConfig.plugins,
       buildDir,
