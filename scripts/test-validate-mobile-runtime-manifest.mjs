@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -21,6 +21,7 @@ import {
 
 const tmp = mkdtempSync(join(tmpdir(), "moui-mobile-runtime-manifest-"));
 const validator = "scripts/validate-mobile-runtime-manifest.mjs";
+const recorder = "scripts/record-mobile-runtime-smoke.mjs";
 
 const baseManifest = (overrides = {}) => ({
   schemaVersion: 1,
@@ -90,6 +91,23 @@ const run = (manifest, args = []) => {
   return spawnSync("node", [validator, path, ...args], { encoding: "utf8" });
 };
 
+const recordWithoutArtifact = (platform, app) => {
+  const manifestPath = join(tmp, `${platform}-${app}-recorded.json`);
+  const result = spawnSync("node", [
+    recorder,
+    "--platform", platform,
+    "--app", app,
+    "--artifact", join(tmp, "missing-artifact"),
+    "--manifest", manifestPath,
+  ], { encoding: "utf8" });
+  return {
+    result,
+    manifest: result.status === 0
+      ? JSON.parse(readFileSync(manifestPath, "utf8"))
+      : null,
+  };
+};
+
 const assert = (condition, message) => {
   if (!condition) {
     console.error(message);
@@ -111,6 +129,21 @@ assert(result.status === 0, "counter may leave scrollInput pending");
 
 result = run(baseManifest({ platform: "harmonyos", app: "harmonyos_demo", observations: { ...baseManifest().observations, scrollInput: "pending" } }), ["--require-passed"]);
 assert(result.status === 0, "HarmonyOS demo may provide passed matching-device evidence");
+
+const galleryRecording = recordWithoutArtifact("ios", "component_gallery");
+assert(
+  galleryRecording.result.status === 0
+    && galleryRecording.manifest?.status === "failed"
+    && galleryRecording.manifest?.observations.scrollInput === "no",
+  `Component Gallery recorder must require scroll evidence\n${galleryRecording.result.stdout}\n${galleryRecording.result.stderr}`,
+);
+const counterRecording = recordWithoutArtifact("ios", "counter");
+assert(
+  counterRecording.result.status === 0
+    && counterRecording.manifest?.status === "failed"
+    && counterRecording.manifest?.observations.scrollInput === "pending",
+  `Counter recorder must not require scroll evidence\n${counterRecording.result.stdout}\n${counterRecording.result.stderr}`,
+);
 
 result = run(baseManifest({ pixelChange: { comparable: true, changedPixels: 0, changedRatio: 0 } }), ["--require-passed"]);
 assert(result.status !== 0, "input injection without visible pixel change must not pass");
