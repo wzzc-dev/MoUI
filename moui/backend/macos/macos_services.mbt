@@ -168,6 +168,8 @@ pub fn macos_service_bridge(
           @host.HostServiceResponse::SystemTheme(system_theme)
         @host.HostServiceRequest::ListDirectory(path) =>
           dispatch_macos_list_directory(path)
+        @host.HostServiceRequest::PlatformChannel(_) =>
+          @host.HostServiceResponse::Unavailable(request.unavailable_message())
       }
     },
   )
