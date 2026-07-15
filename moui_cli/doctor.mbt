@@ -44,15 +44,6 @@ priv struct DoctorOptions {
 }
 
 ///|
-let android_compile_sdk : String = "36"
-
-///|
-let android_build_tools_version : String = "35.0.0"
-
-///|
-let android_cmake_version : String = "3.22.1"
-
-///|
 fn doctor_check(
   id : String,
   status : DoctorStatus,
@@ -408,7 +399,26 @@ fn wayland_doctor_check(host : HostPlatform, required : Bool) -> DoctorCheck {
       remediation="Install wayland-scanner, pkg-config, libwayland-dev, and wayland-protocols.",
     )
   }
-  let detail = scanner.unwrap() + " | " + pkg_config.unwrap()
+  let package_probe = run_doctor_probe(pkg_config.unwrap(), WaylandPackages)
+  if package_probe.status != 0 {
+    return doctor_check(
+      "wayland",
+      Fail,
+      true,
+      "Required Wayland pkg-config packages do not resolve",
+      detail="packages=wayland-client,wayland-cursor,wayland-protocols" +
+        (if package_probe.output == "" {
+          ""
+        } else {
+          " | " + package_probe.output
+        }),
+      remediation="Install libwayland-dev and wayland-protocols, then ensure PKG_CONFIG_PATH exposes their .pc files.",
+    )
+  }
+  let detail = scanner.unwrap() +
+    " | " +
+    pkg_config.unwrap() +
+    " | packages=wayland-client,wayland-cursor,wayland-protocols"
   if @env.get_env_var("WAYLAND_DISPLAY") is None {
     doctor_check(
       "wayland",
@@ -425,390 +435,6 @@ fn wayland_doctor_check(host : HostPlatform, required : Bool) -> DoctorCheck {
       true,
       "Wayland build and display environment is available",
       detail~,
-    )
-  }
-}
-
-///|
-fn valid_android_ndk(root : String) -> Bool {
-  if !path_is_nonempty_file(join_path(root, "source.properties")) {
-    return false
-  }
-  let prebuilt = join_path(root, "toolchains/llvm/prebuilt")
-  if !path_is_dir(prebuilt) {
-    return false
-  }
-  let hosts : Array[String] = @fs.read_dir(prebuilt) catch { _ => [] }
-  hosts.any(name => {
-    first_executable([
-      join_path(prebuilt, name + "/bin/clang"),
-      join_path(prebuilt, name + "/bin/clang.exe"),
-    ])
-    is Some(_)
-  })
-}
-
-///|
-fn android_doctor_check(
-  project_root : String,
-  host : HostPlatform,
-  required : Bool,
-) -> DoctorCheck {
-  if !required {
-    return skipped_check(
-      "android", "Android is not required by the selected platforms",
-    )
-  }
-  let sdk = env_directory(["ANDROID_SDK_ROOT", "ANDROID_HOME"])
-  guard sdk is Some(sdk_root) else {
-    return doctor_check(
-      "android",
-      Fail,
-      true,
-      "Android SDK root was not detected",
-      remediation="Set ANDROID_SDK_ROOT or ANDROID_HOME to an installed Android SDK.",
-    )
-  }
-  let ndk_version = @env.get_env_var("MOUI_ANDROID_NDK_VERSION").unwrap_or(
-    "28.2.13676358",
-  )
-  let ndk_candidates = [
-    @env.get_env_var("ANDROID_NDK_HOME").unwrap_or(""),
-    @env.get_env_var("ANDROID_NDK_ROOT").unwrap_or(""),
-    join_path(sdk_root, "ndk/" + ndk_version),
-  ]
-  let ndk = Ref("")
-  for candidate in ndk_candidates {
-    if candidate != "" && valid_android_ndk(candidate) {
-      ndk.val = candidate
-      break
-    }
-  }
-  if ndk.val == "" {
-    return doctor_check(
-      "android",
-      Fail,
-      true,
-      "Android SDK is present but no complete NDK installation was found",
-      detail=sdk_root,
-      remediation="Install Android NDK " +
-        ndk_version +
-        " or set ANDROID_NDK_HOME to a complete NDK.",
-    )
-  }
-  let java_home = env_directory(["JAVA_HOME"])
-  let java = find_executable_in_home("java", java_home, host)
-  let javac = find_executable_in_home("javac", java_home, host)
-  let jlink = find_executable_in_home("jlink", java_home, host)
-  if java is None || javac is None || jlink is None {
-    return doctor_check(
-      "android",
-      Fail,
-      true,
-      "Android builds require a complete JDK",
-      detail="java=" +
-        java.unwrap_or("missing") +
-        " javac=" +
-        javac.unwrap_or("missing") +
-        " jlink=" +
-        jlink.unwrap_or("missing"),
-      remediation="Install a Java 17+ JDK (Java 21 recommended) and set JAVA_HOME.",
-    )
-  }
-  if find_executable("node", host) is None {
-    return doctor_check(
-      "android",
-      Fail,
-      true,
-      "Node.js is missing from PATH",
-      remediation="Install Node.js for the MoUI mobile build preparation step.",
-    )
-  }
-  let gradle = first_executable([
-    join_path(project_root, "gradlew"),
-    join_path(project_root, "gradlew.bat"),
-  ]).unwrap_or_else(() => find_executable("gradle", host).unwrap_or(""))
-  if gradle == "" {
-    return doctor_check(
-      "android",
-      Fail,
-      true,
-      "Gradle was not found",
-      remediation="Add a Gradle wrapper at the project root or install Gradle.",
-    )
-  }
-  let android_jar = join_path(
-    sdk_root,
-    "platforms/android-" + android_compile_sdk + "/android.jar",
-  )
-  let aapt2 = first_executable([
-    join_path(sdk_root, "build-tools/" + android_build_tools_version + "/aapt2"),
-    join_path(
-      sdk_root,
-      "build-tools/" + android_build_tools_version + "/aapt2.exe",
-    ),
-  ])
-  let cmake = first_executable([
-    join_path(sdk_root, "cmake/" + android_cmake_version + "/bin/cmake"),
-    join_path(sdk_root, "cmake/" + android_cmake_version + "/bin/cmake.exe"),
-  ])
-  if !path_is_nonempty_file(android_jar) || aapt2 is None || cmake is None {
-    return doctor_check(
-      "android",
-      Fail,
-      true,
-      "Android SDK build components are incomplete",
-      detail="compileSdk" +
-        android_compile_sdk +
-        "=" +
-        (if path_is_nonempty_file(android_jar) {
-          android_jar
-        } else {
-          "missing"
-        }) +
-        " buildTools" +
-        android_build_tools_version +
-        "=" +
-        aapt2.unwrap_or("missing") +
-        " cmake" +
-        android_cmake_version +
-        "=" +
-        cmake.unwrap_or("missing"),
-      remediation="Install Android Platform " +
-        android_compile_sdk +
-        ", Build-Tools " +
-        android_build_tools_version +
-        ", and CMake " +
-        android_cmake_version +
-        ".",
-    )
-  }
-  let adb = first_executable([
-    join_path(sdk_root, "platform-tools/adb"),
-    join_path(sdk_root, "platform-tools/adb.exe"),
-  ])
-  match adb {
-    Some(path) =>
-      doctor_check(
-        "android",
-        Pass,
-        true,
-        "Android SDK, NDK, JDK, Gradle, CMake, and adb are available",
-        detail=path + " | " + ndk.val + " | " + gradle,
-      )
-    None =>
-      doctor_check(
-        "android",
-        Warn,
-        true,
-        "Android build tools are available, but adb was not found",
-        detail=sdk_root,
-        remediation="Install Android SDK Platform Tools before device runtime testing.",
-      )
-  }
-}
-
-///|
-fn xcode_developer_roots() -> Array[String] {
-  let home = @env.get_env_var("HOME").unwrap_or("")
-  [
-    @env.get_env_var("DEVELOPER_DIR").unwrap_or(""),
-    "/Applications/Xcode.app/Contents/Developer",
-    "/Applications/Xcode-beta.app/Contents/Developer",
-    join_path(home, "Applications/Xcode.app/Contents/Developer"),
-    "/Library/Developer/CommandLineTools",
-  ]
-}
-
-///|
-fn has_valid_apple_sdk(root : String) -> Bool {
-  if !path_is_dir(root) {
-    return false
-  }
-  let entries : Array[String] = @fs.read_dir(root) catch { _ => [] }
-  entries.any(name => {
-    path_is_nonempty_file(join_path(root, name + "/SDKSettings.json"))
-  })
-}
-
-///|
-fn xcode_root_supports_macos(root : String) -> Bool {
-  has_valid_apple_sdk(
-    join_path(root, "Platforms/MacOSX.platform/Developer/SDKs"),
-  ) ||
-  has_valid_apple_sdk(join_path(root, "SDKs"))
-}
-
-///|
-fn xcode_root_supports_ios(root : String) -> Bool {
-  has_valid_apple_sdk(
-    join_path(root, "Platforms/iPhoneOS.platform/Developer/SDKs"),
-  ) &&
-  has_valid_apple_sdk(
-    join_path(root, "Platforms/iPhoneSimulator.platform/Developer/SDKs"),
-  )
-}
-
-///|
-fn xcode_doctor_check(
-  host : HostPlatform,
-  macos_required : Bool,
-  ios_required : Bool,
-) -> DoctorCheck {
-  if !macos_required && !ios_required {
-    return skipped_check(
-      "xcode", "Xcode is not required by the selected platforms",
-    )
-  }
-  let xcodebuild = find_executable("xcodebuild", host)
-  let xcrun = find_executable("xcrun", host)
-  if xcodebuild is None || xcrun is None {
-    return doctor_check(
-      "xcode",
-      Fail,
-      true,
-      "Xcode command-line tools are incomplete",
-      detail="xcodebuild=" +
-        xcodebuild.unwrap_or("missing") +
-        " xcrun=" +
-        xcrun.unwrap_or("missing"),
-      remediation="Install Xcode and select it with xcode-select or DEVELOPER_DIR.",
-    )
-  }
-  for root in xcode_developer_roots() {
-    if root != "" &&
-      (!macos_required || xcode_root_supports_macos(root)) &&
-      (!ios_required || xcode_root_supports_ios(root)) {
-      return doctor_check(
-        "xcode",
-        Pass,
-        true,
-        if ios_required {
-          "Xcode macOS and iOS SDKs are available"
-        } else {
-          "Xcode macOS SDK is available"
-        },
-        detail=root + " | " + xcodebuild.unwrap() + " | " + xcrun.unwrap(),
-      )
-    }
-  }
-  doctor_check(
-    "xcode",
-    Fail,
-    true,
-    if ios_required {
-      "Xcode was found, but the iOS device/simulator SDKs are incomplete"
-    } else {
-      "Xcode command-line tools were found, but no macOS SDK was detected"
-    },
-    remediation="Install/select a complete Xcode developer directory.",
-  )
-}
-
-///|
-fn harmonyos_doctor_check(host : HostPlatform, required : Bool) -> DoctorCheck {
-  if !required {
-    return skipped_check(
-      "harmonyos", "HarmonyOS is not required by the selected platforms",
-    )
-  }
-  let home = @env.get_env_var("HOME").unwrap_or("")
-  let sdk_candidates = [
-    @env.get_env_var("HARMONYOS_SDK_HOME").unwrap_or(""),
-    @env.get_env_var("OHOS_SDK_HOME").unwrap_or(""),
-    "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony",
-    "/Applications/DevEco-Studio.app/Contents/sdk/default/hms",
-    "/Applications/DevEco Studio.app/Contents/sdk/default/openharmony",
-    "/Applications/DevEco Studio.app/Contents/sdk/default/hms",
-    join_path(home, "Library/OpenHarmony/Sdk/20"),
-  ]
-  let sdk_root = Ref("")
-  let toolchain_path = Ref("")
-  for candidate in sdk_candidates {
-    let toolchain = first_existing_file([
-      join_path(candidate, "native/build/cmake/ohos.toolchain.cmake"),
-      join_path(
-        candidate, "default/openharmony/native/build/cmake/ohos.toolchain.cmake",
-      ),
-      join_path(
-        candidate, "default/hms/native/build/cmake/ohos.toolchain.cmake",
-      ),
-      join_path(
-        candidate, "openharmony/native/build/cmake/ohos.toolchain.cmake",
-      ),
-    ])
-    match toolchain {
-      Some(path) if path_is_nonempty_file(path) => {
-        sdk_root.val = candidate
-        toolchain_path.val = path
-        break
-      }
-      _ => ()
-    }
-  }
-  if sdk_root.val == "" {
-    return doctor_check(
-      "harmonyos",
-      Fail,
-      true,
-      "HarmonyOS/OpenHarmony SDK root was not detected",
-      remediation="Install DevEco Studio and set HARMONYOS_SDK_HOME.",
-    )
-  }
-  let hvigor = first_executable([
-    @env.get_env_var("HVIGORW").unwrap_or(""),
-    "/Applications/DevEco-Studio.app/Contents/tools/hvigor/bin/hvigorw",
-    "/Applications/DevEco Studio.app/Contents/tools/hvigor/bin/hvigorw",
-  ]).unwrap_or_else(() => find_executable("hvigorw", host).unwrap_or(""))
-  let ohpm = first_executable([
-    @env.get_env_var("OHPM").unwrap_or(""),
-    "/Applications/DevEco-Studio.app/Contents/tools/ohpm/bin/ohpm",
-    "/Applications/DevEco Studio.app/Contents/tools/ohpm/bin/ohpm",
-  ]).unwrap_or_else(() => find_executable("ohpm", host).unwrap_or(""))
-  let node = find_executable("node", host)
-  let cmake = find_executable("cmake", host)
-  let zip = find_executable("zip", host)
-  if hvigor == "" || ohpm == "" || node is None || cmake is None || zip is None {
-    return doctor_check(
-      "harmonyos",
-      Fail,
-      true,
-      "HarmonyOS build tools are incomplete",
-      detail="hvigorw=" +
-        (if hvigor == "" { "missing" } else { hvigor }) +
-        " ohpm=" +
-        (if ohpm == "" { "missing" } else { ohpm }) +
-        " node=" +
-        node.unwrap_or("missing") +
-        " cmake=" +
-        cmake.unwrap_or("missing") +
-        " zip=" +
-        zip.unwrap_or("missing"),
-      remediation="Install DevEco Hvigor/ohpm plus Node.js, CMake, and zip; set HVIGORW/OHPM or add them to PATH.",
-    )
-  }
-  let hdc = first_executable([
-    join_path(sdk_root.val, "toolchains/hdc"),
-    join_path(sdk_root.val, "toolchains/hdc.exe"),
-    join_path(sdk_root.val, "../toolchains/hdc"),
-    join_path(sdk_root.val, "../toolchains/hdc.exe"),
-  ]).unwrap_or_else(() => find_executable("hdc", host).unwrap_or(""))
-  if hdc != "" {
-    doctor_check(
-      "harmonyos",
-      Pass,
-      true,
-      "HarmonyOS SDK, Hvigor, ohpm, native tools, and hdc are available",
-      detail=toolchain_path.val + " | " + hvigor + " | " + ohpm + " | " + hdc,
-    )
-  } else {
-    doctor_check(
-      "harmonyos",
-      Warn,
-      true,
-      "HarmonyOS build tools are available, but hdc was not found",
-      detail=toolchain_path.val,
-      remediation="Add the SDK toolchains directory to PATH before device runtime testing.",
     )
   }
 }
@@ -910,7 +536,11 @@ fn run_doctor(options : DoctorOptions) -> Result[DoctorReport, String] {
       platforms.contains("macos"),
       platforms.contains("ios"),
     ),
-    harmonyos_doctor_check(host_platform, platforms.contains("harmonyos")),
+    harmonyos_doctor_check(
+      options.project_root,
+      host_platform,
+      platforms.contains("harmonyos"),
+    ),
   ]
   for check in project_entrypoint_checks(options.project_root, platforms) {
     checks.push(check)
