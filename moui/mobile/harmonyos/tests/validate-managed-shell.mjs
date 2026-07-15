@@ -1,0 +1,244 @@
+#!/usr/bin/env node
+
+import assert from "node:assert/strict";
+import { execFileSync, spawnSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import test from "node:test";
+
+const testDir = dirname(fileURLToPath(import.meta.url));
+const repoRoot = resolve(testDir, "../../../..");
+const read = path => readFileSync(resolve(repoRoot, path), "utf8");
+const contains = (source, value, path) => assert.ok(source.includes(value), `${path} must contain ${value}`);
+const excludes = (source, value, path) => assert.ok(!source.includes(value), `${path} must not contain ${value}`);
+const escapeRegExp = value => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const requiresRuntimeCallLock = (source, functionName, path) => {
+  const pattern = new RegExp(
+    `\\b${escapeRegExp(functionName)}\\s*\\([^)]*\\)\\s*\\{\\s*` +
+      "RuntimeCallLock\\s+runtime_call_lock\\(g_runtime_call_mutex\\);",
+  );
+  assert.match(source, pattern, `${path}: ${functionName} must serialize Mobile Runtime ABI calls`);
+};
+
+test("canonical HarmonyOS shell owns ABI, XComponent, Host Wire, and plugin invariants", () => {
+  const indexPath = "moui/mobile/harmonyos/template/entry/src/main/ets/pages/Index.ets";
+  const rootPath = "moui/mobile/harmonyos/template/entry/src/main/ets/moui/MoUIRoot.ets";
+  const pluginsPath = "moui/mobile/harmonyos/template/entry/src/main/ets/moui/MoUIPlugins.ets";
+  const bridgePath = "moui/mobile/harmonyos/src/main/cpp/moui_mobile_harmonyos_napi.cpp";
+  const cmakePath = "moui/mobile/harmonyos/cmake/MoUIMobileHarmonyOS.cmake";
+  const buildPath = "moui/scripts/mobile/build-harmonyos-hap.sh";
+  const index = read(indexPath);
+  const root = read(rootPath);
+  const plugins = read(pluginsPath);
+  const bridge = read(bridgePath);
+  const cmake = read(cmakePath);
+  const build = read(buildPath);
+
+  contains(index, "MoUIRoot()", indexPath);
+  contains(root, "libraryname: 'moui_mobile_harmonyos'", rootPath);
+  contains(root, "sessionGeneration", rootPath);
+  contains(root, "platform-views", rootPath);
+  contains(root, "platform-channel", rootPath);
+  for (const forbidden of ["onAreaChange", ".onTouch", "attachSurface", "dispatchPointer", "detachSurface"]) {
+    excludes(root, forbidden, rootPath);
+  }
+  for (const forbidden of ["a11ySmoke", "serviceSmoke", "MOUI_MOBILE_A11Y_SMOKE"]) {
+    excludes(root, forbidden, rootPath);
+    excludes(bridge, forbidden, bridgePath);
+  }
+
+  contains(plugins, "`${kind.length}:${kind}${id}`", pluginsPath);
+  contains(plugins, "Math.max(left, clip.origin.x)", pluginsPath);
+  contains(plugins, "payload.placements.forEach", pluginsPath);
+  contains(root, ".zIndex(hosted.zIndex)", rootPath);
+  contains(plugins, "kind: 'platform-view'", pluginsPath);
+  contains(plugins, "completion.invalidate()", pluginsPath);
+  contains(plugins, "task.cancel()", pluginsPath);
+  contains(plugins, "this.pending.delete(key)", pluginsPath);
+  contains(plugins, "late/rejected PlatformChannel completion", pluginsPath);
+
+  contains(bridge, "moui_mobile_get_runtime_api_v1()", bridgePath);
+  contains(bridge, "moui_mobile_runtime_api_v1_is_compatible", bridgePath);
+  contains(bridge, "OwnedUtf8Buffer", bridgePath);
+  contains(bridge, "value_.release(value_.release_context, value_.data, value_.length)", bridgePath);
+  contains(bridge, "std::recursive_mutex g_runtime_call_mutex", bridgePath);
+  contains(bridge, "using RuntimeCallLock = std::lock_guard<std::recursive_mutex>", bridgePath);
+  for (const functionName of [
+    "ensure_runtime_initialized",
+    "attach_or_resize",
+    "on_surface_destroyed",
+    "dispatch_touch_event",
+    "napi_frame_tick",
+    "napi_take_host_updates",
+    "napi_renderer_configure",
+    "napi_renderer_status",
+    "napi_dispatch_host_response",
+    "napi_dispatch_text_input",
+    "napi_dispatch_command",
+    "napi_dispatch_accessibility",
+    "napi_complete_clipboard",
+    "napi_destroy_application",
+    "MOUI_MOBILE_SMOKE_RENDER_FRAME",
+  ]) {
+    requiresRuntimeCallLock(bridge, functionName, bridgePath);
+  }
+  contains(bridge, "OH_NativeXComponent_RegisterCallback", bridgePath);
+  contains(bridge, "source=native-xcomponent", bridgePath);
+  for (const forbidden of ["moonbit_string_t", "moonbit_runtime_init", "MOUI_MOBILE_ATTACH_SURFACE", "napi_attach_surface", "napi_dispatch_pointer", "napi_resize"]) {
+    excludes(bridge, forbidden, bridgePath);
+  }
+  contains(cmake, "mobile/runtime/moui_mobile_runtime_v1.cpp", cmakePath);
+  contains(cmake, '"${MOUI_ROOT}/mobile/include"', cmakePath);
+  contains(build, "resolve-managed-shell.mjs", buildPath);
+  contains(build, "--legacy-shell", buildPath);
+  contains(build, "harmonyos-app-owned-shell", buildPath);
+
+  const profile = read("moui/mobile/harmonyos/template/build-profile.json5");
+  contains(profile, '"targetSdkVersion": "6.0.1(21)"', "build-profile.json5");
+  contains(profile, '"compatibleSdkVersion": "6.0.0(20)"', "build-profile.json5");
+  const packageJson = read("moui/mobile/harmonyos/template/oh-package.json5");
+  contains(packageJson, '"modelVersion": "6.0.1"', "oh-package.json5");
+});
+
+test("managed resolver stages identity, resources, and generated plugin registry", () => {
+  const tempRoot = mkdtempSync(join(tmpdir(), "moui-harmonyos-managed-"));
+  const sourceConfigPath = resolve(repoRoot, "examples/component_gallery/mobile.json");
+  const configPath = resolve(
+    repoRoot,
+    `examples/component_gallery/.mobile-harmonyos-managed-test-${process.pid}.json`,
+  );
+  try {
+    const config = JSON.parse(readFileSync(sourceConfigPath, "utf8"));
+    config.mobile.plugins = ["moui/mobile/harmonyos/tests/fixtures/plugin/moui.plugin.json"];
+    writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
+    const output = join(tempRoot, "shell");
+    execFileSync("node", [
+      resolve(repoRoot, "moui/mobile/harmonyos/resolve-managed-shell.mjs"),
+      "--workspace-root", repoRoot,
+      "--moui-root", resolve(repoRoot, "moui"),
+      "--app", "component_gallery",
+      "--app-config", configPath,
+      "--renderer", "skia-gpu",
+      "--output", output,
+    ], { stdio: "pipe" });
+
+    const appScope = JSON.parse(readFileSync(join(output, "AppScope/app.json5"), "utf8"));
+    assert.equal(appScope.app.bundleName, "dev.wzzc.moui.componentgallery");
+    const generatedConfig = readFileSync(
+      join(output, "entry/src/main/ets/moui/MoUIGeneratedConfig.ets"),
+      "utf8",
+    );
+    contains(generatedConfig, 'renderer: "skia-gpu"', "generated config");
+    contains(generatedConfig, "fullscreen: true", "generated config");
+    const generatedPlugins = readFileSync(
+      join(output, "entry/src/main/ets/moui/MoUIGeneratedPlugins.ets"),
+      "utf8",
+    );
+    contains(generatedPlugins, "ProbePlugin as MoUIGeneratedPlugin0", "generated plugins");
+    contains(generatedPlugins, "new MoUIGeneratedPlugin0()", "generated plugins");
+    assert.ok(
+      readFileSync(
+        join(output, "entry/src/main/ets/plugins/0-dev_fixture_harmony_probe/ProbePlugin.ets"),
+        "utf8",
+      ).includes("dev.fixture.echo"),
+    );
+    const managed = JSON.parse(readFileSync(join(output, ".moui-managed-shell.json"), "utf8"));
+    assert.equal(managed.shellApiVersion, 1);
+    assert.equal(managed.runtimeAbiVersion, 1);
+    assert.equal(managed.targetSdkVersion, 21);
+    assert.deepEqual(managed.plugins.map(plugin => plugin.id), ["dev.fixture.harmony-probe"]);
+  } finally {
+    rmSync(configPath, { force: true });
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+});
+
+test("managed resolver isolates plugin ids that normalize to the same directory", () => {
+  const tempRoot = mkdtempSync(join(tmpdir(), "moui-harmonyos-plugin-collision-"));
+  const sourceConfigPath = resolve(repoRoot, "examples/component_gallery/mobile.json");
+  const configPath = resolve(
+    repoRoot,
+    `examples/component_gallery/.mobile-harmonyos-plugin-collision-${process.pid}.json`,
+  );
+  try {
+    const config = JSON.parse(readFileSync(sourceConfigPath, "utf8"));
+    config.mobile.plugins = [
+      "moui/mobile/harmonyos/tests/fixtures/plugin-collision/dash/moui.plugin.json",
+      "moui/mobile/harmonyos/tests/fixtures/plugin-collision/underscore/moui.plugin.json",
+    ];
+    writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
+    const output = join(tempRoot, "shell");
+    execFileSync("node", [
+      resolve(repoRoot, "moui/mobile/harmonyos/resolve-managed-shell.mjs"),
+      "--workspace-root", repoRoot,
+      "--moui-root", resolve(repoRoot, "moui"),
+      "--app", "component_gallery",
+      "--app-config", configPath,
+      "--renderer", "auto",
+      "--output", output,
+    ], { stdio: "pipe" });
+
+    const dashSource = readFileSync(
+      join(output, "entry/src/main/ets/plugins/0-dev_fixture_a_b/DashPlugin.ets"),
+      "utf8",
+    );
+    const underscoreSource = readFileSync(
+      join(output, "entry/src/main/ets/plugins/1-dev_fixture_a_b/UnderscorePlugin.ets"),
+      "utf8",
+    );
+    contains(dashSource, "plugin-id-with-dash", "dash collision fixture");
+    contains(underscoreSource, "plugin-id-with-underscore", "underscore collision fixture");
+    assert.equal(
+      readFileSync(
+        join(output, "entry/src/main/resources/rawfile/moui_plugins/0-dev_fixture_a_b/dash.txt"),
+        "utf8",
+      ),
+      "resource-with-dash\n",
+    );
+    assert.equal(
+      readFileSync(
+        join(output, "entry/src/main/resources/rawfile/moui_plugins/1-dev_fixture_a_b/underscore.txt"),
+        "utf8",
+      ),
+      "resource-with-underscore\n",
+    );
+    const managed = JSON.parse(readFileSync(join(output, ".moui-managed-shell.json"), "utf8"));
+    assert.deepEqual(managed.plugins.map(plugin => plugin.id), [
+      "dev.fixture.a-b",
+      "dev.fixture.a_b",
+    ]);
+    assert.match(managed.plugins[0].sources[0], /plugins\/0-dev_fixture_a_b\//);
+    assert.match(managed.plugins[1].sources[0], /plugins\/1-dev_fixture_a_b\//);
+    assert.match(managed.plugins[0].resources[0], /moui_plugins\/0-dev_fixture_a_b\//);
+    assert.match(managed.plugins[1].resources[0], /moui_plugins\/1-dev_fixture_a_b\//);
+  } finally {
+    rmSync(configPath, { force: true });
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+});
+
+test("managed resolver refuses to replace an unowned output directory", () => {
+  const tempRoot = mkdtempSync(join(tmpdir(), "moui-harmonyos-output-guard-"));
+  const output = join(tempRoot, "existing");
+  const sentinel = join(output, "keep.txt");
+  try {
+    mkdirSync(output, { recursive: true });
+    writeFileSync(sentinel, "owned by caller\n");
+    const result = spawnSync("node", [
+      resolve(repoRoot, "moui/mobile/harmonyos/resolve-managed-shell.mjs"),
+      "--workspace-root", repoRoot,
+      "--moui-root", resolve(repoRoot, "moui"),
+      "--app", "component_gallery",
+      "--app-config", resolve(repoRoot, "examples/component_gallery/mobile.json"),
+      "--renderer", "auto",
+      "--output", output,
+    ], { encoding: "utf8" });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /refusing to replace non-managed HarmonyOS shell directory/);
+    assert.equal(readFileSync(sentinel, "utf8"), "owned by caller\n");
+  } finally {
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+});
