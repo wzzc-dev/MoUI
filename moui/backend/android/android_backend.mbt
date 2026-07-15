@@ -44,24 +44,9 @@ pub struct AndroidRendererProvider {
 }
 
 ///|
-priv struct AndroidRedrawSignal {
-  mut requested : Bool
-}
-
-///|
 pub struct AndroidRuntimeSession {
   priv surface : AndroidSurfaceHandle
-  priv runtime : @runtime.AppRuntime
-  priv driver : @host.HostRuntimeDriver
-  priv renderer : @host.HostWindowRenderer
-  priv redraw_signal : AndroidRedrawSignal
-  priv host_channel : @host.MobileHostChannel
-  priv image_coordinator : @host.MobileImageCoordinator
-  priv mut metrics : @host.HostSurfaceMetrics
-  priv mut disposed : Bool
-  priv mut async_image_follow_up : Bool
-  priv mut async_image_ready_logged : Bool
-  priv mut async_image_failed_logged : Bool
+  priv core : @mobile_runtime.MobileRuntimeSessionCore
 }
 
 ///|
@@ -114,23 +99,6 @@ pub fn AndroidRendererProvider::has_async_image_loader(
   self : AndroidRendererProvider,
 ) -> Bool {
   self.image_loader is Some(_)
-}
-
-///|
-fn AndroidRedrawSignal::new() -> AndroidRedrawSignal {
-  { requested: false }
-}
-
-///|
-fn AndroidRedrawSignal::request(self : AndroidRedrawSignal) -> Unit {
-  self.requested = true
-}
-
-///|
-fn AndroidRedrawSignal::take(self : AndroidRedrawSignal) -> Bool {
-  let requested = self.requested
-  self.requested = false
-  requested
 }
 
 ///|
@@ -231,33 +199,14 @@ pub fn create_session(
 ) -> AndroidRuntimeSession? {
   match provider.create(surface, metrics) {
     Some(renderer) => {
-      let redraw_signal = AndroidRedrawSignal::new()
-      let driver = @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
-        redraw_signal.request()
-      })
-      let host_channel = @host.MobileHostChannel::new()
-      let image_coordinator = @host.MobileImageCoordinator::new(
+      let core = @mobile_runtime.MobileRuntimeSessionCore::new(
+        runtime~,
         renderer~,
         image_loader=provider.image_loader,
-        request_redraw=() => redraw_signal.request(),
+        metrics~,
       )
-      driver.set_text_system(renderer.text_system())
-      ignore(driver.dispatch(@host.HostEvent::Resized(metrics)))
       provider.sync(surface, metrics)
-      Some({
-        surface,
-        runtime,
-        driver,
-        renderer,
-        redraw_signal,
-        host_channel,
-        image_coordinator,
-        metrics,
-        disposed: false,
-        async_image_follow_up: false,
-        async_image_ready_logged: false,
-        async_image_failed_logged: false,
-      })
+      Some({ surface, core })
     }
     None => None
   }
@@ -267,7 +216,7 @@ pub fn create_session(
 pub fn AndroidRuntimeSession::metrics(
   self : AndroidRuntimeSession,
 ) -> @host.HostSurfaceMetrics {
-  self.metrics
+  self.core.metrics()
 }
 
 ///|
@@ -281,12 +230,12 @@ pub fn AndroidRuntimeSession::surface(
 pub fn AndroidRuntimeSession::runtime(
   self : AndroidRuntimeSession,
 ) -> @runtime.AppRuntime {
-  self.runtime
+  self.core.runtime()
 }
 
 ///|
 pub fn AndroidRuntimeSession::disposed(self : AndroidRuntimeSession) -> Bool {
-  self.disposed
+  self.core.disposed()
 }
 
 ///|
@@ -294,9 +243,7 @@ pub fn AndroidRuntimeSession::dispatch(
   self : AndroidRuntimeSession,
   event : @host.HostEvent,
 ) -> @host.HostEventResult {
-  let result = self.driver.dispatch(event)
-  ignore(self.host_channel.sync(self.runtime))
-  result
+  self.core.dispatch(event)
 }
 
 ///|
@@ -304,11 +251,7 @@ pub fn AndroidRuntimeSession::resize(
   self : AndroidRuntimeSession,
   metrics : @host.HostSurfaceMetrics,
 ) -> @host.HostEventResult {
-  self.metrics = metrics
-  self.renderer.resize(metrics)
-  let result = self.driver.dispatch(@host.HostEvent::Resized(metrics))
-  ignore(self.host_channel.sync(self.runtime))
-  result
+  self.core.resize(metrics)
 }
 
 ///|
@@ -316,50 +259,14 @@ pub fn AndroidRuntimeSession::sync_surface(
   self : AndroidRuntimeSession,
   provider : AndroidRendererProvider,
 ) -> Unit {
-  provider.sync(self.surface, self.metrics)
+  provider.sync(self.surface, self.core.metrics())
 }
 
 ///|
 pub fn AndroidRuntimeSession::render_frame(
   self : AndroidRuntimeSession,
 ) -> @render.RenderFrameResult {
-  self.driver.begin_redraw()
-  let result = self.renderer.render_frame(self.driver.draw_frame())
-  ignore(self.renderer.drain_present_completions())
-  self.driver.apply_render_frame_result(result)
-  self.driver.finish_redraw()
-  let image = self.image_coordinator.after_present(
-    present_count=self.renderer.present_count(),
-  )
-  if image.scheduled_count > 0 {
-    self.async_image_follow_up = true
-    self.redraw_signal.request()
-    ignore(
-      self.host_channel.push_diagnostic(
-        "moui-mobile service async-image phase=loading scheduled=\{image.scheduled_count} present=\{image.present_count}",
-      ),
-    )
-  }
-  if image.ready_count > 0 &&
-    image.present_count > 1 &&
-    !self.async_image_ready_logged {
-    self.async_image_ready_logged = true
-    ignore(
-      self.host_channel.push_diagnostic(
-        "moui-mobile service async-image phase=ready ready=\{image.ready_count} present=\{image.present_count}",
-      ),
-    )
-  }
-  if image.failed_count > 0 && !self.async_image_failed_logged {
-    self.async_image_failed_logged = true
-    ignore(
-      self.host_channel.push_diagnostic(
-        "moui-mobile service async-image phase=failed failed=\{image.failed_count} present=\{image.present_count}",
-      ),
-    )
-  }
-  ignore(self.host_channel.sync(self.runtime))
-  result
+  self.core.render_frame()
 }
 
 ///|
@@ -367,26 +274,21 @@ pub fn AndroidRuntimeSession::advance_time(
   self : AndroidRuntimeSession,
   time_ms : Double,
 ) -> Unit {
-  if !self.disposed {
-    self.runtime.advance_time(time_ms)
-    ignore(self.host_channel.sync(self.runtime))
-  }
+  self.core.advance_time(time_ms)
 }
 
 ///|
 pub fn AndroidRuntimeSession::drain_host_updates(
   self : AndroidRuntimeSession,
 ) -> Array[@host.MobileHostUpdate] {
-  ignore(self.host_channel.sync(self.runtime))
-  self.host_channel.drain_updates()
+  self.core.drain_host_updates()
 }
 
 ///|
 pub fn AndroidRuntimeSession::drain_host_updates_json(
   self : AndroidRuntimeSession,
 ) -> String {
-  ignore(self.host_channel.sync(self.runtime))
-  self.host_channel.drain_updates_json()
+  self.core.drain_host_updates_json()
 }
 
 ///|
@@ -394,54 +296,38 @@ pub fn AndroidRuntimeSession::dispatch_host_response(
   self : AndroidRuntimeSession,
   response : @host.MobileHostResponse,
 ) -> Bool {
-  let handled = self.host_channel.dispatch_response(response, self.driver)
-  if handled {
-    ignore(self.host_channel.sync(self.runtime))
-  }
-  handled
+  self.core.dispatch_host_response(response)
 }
 
 ///|
 pub fn AndroidRuntimeSession::host_service_bridge(
   self : AndroidRuntimeSession,
 ) -> @host.HostServiceBridge {
-  self.host_channel.service_bridge()
+  self.core.host_service_bridge()
 }
 
 ///|
 pub fn AndroidRuntimeSession::redraw_requested(
   self : AndroidRuntimeSession,
 ) -> Bool {
-  self.redraw_signal.requested
+  self.core.redraw_requested()
 }
 
 ///|
 pub fn AndroidRuntimeSession::take_redraw_requested(
   self : AndroidRuntimeSession,
 ) -> Bool {
-  let requested = self.redraw_signal.take()
-  if self.async_image_follow_up {
-    self.async_image_follow_up = false
-    true
-  } else {
-    requested
-  }
+  self.core.take_redraw_requested()
 }
 
 ///|
 pub fn AndroidRuntimeSession::present_count(
   self : AndroidRuntimeSession,
 ) -> Int {
-  self.renderer.present_count()
+  self.core.present_count()
 }
 
 ///|
 pub fn AndroidRuntimeSession::dispose(self : AndroidRuntimeSession) -> Unit {
-  if !self.disposed {
-    self.host_channel.dispose()
-    self.image_coordinator.dispose()
-    self.renderer.dispose()
-    self.runtime.destroy()
-    self.disposed = true
-  }
+  self.core.dispose()
 }
