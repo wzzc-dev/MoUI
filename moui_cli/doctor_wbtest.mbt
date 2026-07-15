@@ -148,6 +148,60 @@ test "missing required Skia package is a failure" {
 }
 
 ///|
+fn doctor_write_fixture(path : String, value : String) -> Unit raise {
+  match mkdir_p(parent_dir(path)) {
+    Ok(_) => ()
+    Err(message) => fail(message)
+  }
+  @fs.write_string_to_file(path, value) catch {
+    _ => fail("could not write doctor fixture: " + path)
+  }
+}
+
+///|
+test "Skia doctor resolves the nearest repository workspace" {
+  let root = test_temp_path("doctor-workspace-skia")
+  let project = join_path(root, "examples/sample")
+  let skia = join_path(root, "moui_skia")
+  remove_tree(root)
+  doctor_write_fixture(join_path(root, "moon.work"), "members = []\n")
+  doctor_write_fixture(join_path(skia, "moon.mod"), "name = \"fixture/skia\"\n")
+  doctor_write_fixture(join_path(skia, "build.js"), "export default {}\n")
+  doctor_write_fixture(join_path(skia, "skia-provider-lock.json"), "{}\n")
+  doctor_write_fixture(join_path(skia, "native/capabilities.json"), "{}\n")
+  match mkdir_p(project) {
+    Ok(_) => ()
+    Err(message) => fail(message)
+  }
+  let check = skia_doctor_check(project, true)
+  remove_tree(root)
+  inspect(check.status == Pass, content="true")
+  inspect(check.detail, content=skia)
+}
+
+///|
+fn doctor_mobile_entrypoint_contract_text() -> String {
+  let text =
+    #|moui_mobile_take_host_update_envelope_json
+    #|moui_mobile_dispatch_host_response_envelope_json
+    #|moui_mobile_renderer_configure
+    #|moui_mobile_renderer_status_json
+    #|moui_mobile_dispatch_text_input
+    #|moui_mobile_dispatch_command
+    #|moui_mobile_dispatch_accessibility
+    #|moui_mobile_complete_clipboard_v1
+    #|moui_mobile_attach_surface
+    #|moui_mobile_resize
+    #|moui_mobile_dispatch_pointer
+    #|moui_mobile_dispatch_scroll
+    #|moui_mobile_frame_tick
+    #|moui_mobile_render_frame
+    #|moui_mobile_detach_surface
+    #|moui_mobile_destroy_application
+  text
+}
+
+///|
 test "mobile entrypoint requires nonempty package and main files" {
   let root = test_temp_path("doctor-entrypoint")
   remove_tree(root)
@@ -165,24 +219,7 @@ test "mobile entrypoint requires nonempty package and main files" {
   let incomplete = project_entrypoint_checks(root, ["android"])
   @fs.write_string_to_file(
     join_path(root, "android_skia/main.mbt"),
-    (
-      #|moui_mobile_take_host_update_envelope_json
-      #|moui_mobile_dispatch_host_response_envelope_json
-      #|moui_mobile_renderer_configure
-      #|moui_mobile_renderer_status_json
-      #|moui_mobile_dispatch_text_input
-      #|moui_mobile_dispatch_command
-      #|moui_mobile_dispatch_accessibility
-      #|moui_mobile_complete_clipboard_v1
-      #|moui_mobile_attach_surface
-      #|moui_mobile_resize
-      #|moui_mobile_dispatch_pointer
-      #|moui_mobile_dispatch_scroll
-      #|moui_mobile_frame_tick
-      #|moui_mobile_render_frame
-      #|moui_mobile_detach_surface
-      #|moui_mobile_destroy_application
-    ),
+    doctor_mobile_entrypoint_contract_text(),
   ) catch {
     _ => {
       remove_tree(root)
@@ -204,6 +241,36 @@ test "mobile entrypoint requires nonempty package and main files" {
   inspect(incomplete[0].status == Warn, content="true")
   inspect(complete.length(), content="1")
   inspect(complete[0].status == Pass, content="true")
+}
+
+///|
+test "mobile entrypoint accepts the repository app layout" {
+  let root = test_temp_path("doctor-repository-entrypoint")
+  let package_path = join_path(root, "android/moon.pkg")
+  let main_path = join_path(root, "android/main.mbt")
+  remove_tree(root)
+  match mkdir_p(parent_dir(package_path)) {
+    Ok(_) => ()
+    Err(message) => fail(message)
+  }
+  let contract = doctor_mobile_entrypoint_contract_text()
+  @fs.write_string_to_file(package_path, contract) catch {
+    _ => {
+      remove_tree(root)
+      fail("could not write repository entrypoint package fixture")
+    }
+  }
+  @fs.write_string_to_file(main_path, contract) catch {
+    _ => {
+      remove_tree(root)
+      fail("could not write repository entrypoint main fixture")
+    }
+  }
+  let checks = project_entrypoint_checks(root, ["android"])
+  remove_tree(root)
+  inspect(checks.length(), content="1")
+  inspect(checks[0].status == Pass, content="true")
+  inspect(checks[0].detail.contains("android/moon.pkg"), content="true")
 }
 
 ///|
