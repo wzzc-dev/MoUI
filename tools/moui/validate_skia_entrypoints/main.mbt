@@ -15,10 +15,15 @@ struct SkiaEntry {
   host_summary_call : String
   options_type : String
   run_function : String
-  surface_route_env : String
   app_title : String
-  expected_link_token : String
   allow_async_pump : Bool
+}
+
+///|
+struct SkiaProviderContract {
+  platform : String
+  package_path : String
+  source_path : String
 }
 
 ///|
@@ -26,7 +31,7 @@ fn usage() -> String {
   let text =
     #|Usage: tools/moui/validate_skia_entrypoints [root]
     #|
-    #|Statically checks native Skia example entrypoint packages.
+    #|Statically checks native Skia example entrypoints and provider ownership.
     #|
   text
 }
@@ -72,9 +77,7 @@ fn skia_entries() -> Array[SkiaEntry] {
       host_summary_call: "@macos_backend.macos_capability_summary()",
       options_type: "MacosSkiaAppOptions",
       run_function: "run_app_with_options",
-      surface_route_env: "MOUI_MACOS_SKIA_SURFACE_ROUTE",
       app_title: "\"MoUI Showcase\"",
-      expected_link_token: "-framework AppKit",
       allow_async_pump: false,
     },
     {
@@ -87,9 +90,7 @@ fn skia_entries() -> Array[SkiaEntry] {
       host_summary_call: "@windows_backend.windows_capability_summary()",
       options_type: "WindowsSkiaAppOptions",
       run_function: "run_app_with_options",
-      surface_route_env: "",
       app_title: "\"MoUI Showcase\"",
-      expected_link_token: "",
       allow_async_pump: false,
     },
     {
@@ -102,9 +103,7 @@ fn skia_entries() -> Array[SkiaEntry] {
       host_summary_call: "@linux_backend.linux_capability_summary()",
       options_type: "LinuxSkiaAppOptions",
       run_function: "run_app_with_options",
-      surface_route_env: "",
       app_title: "\"MoUI Showcase\"",
-      expected_link_token: "-lz",
       allow_async_pump: false,
     },
     {
@@ -117,9 +116,7 @@ fn skia_entries() -> Array[SkiaEntry] {
       host_summary_call: "",
       options_type: "MacosSkiaAppOptions",
       run_function: "run_app_with_options",
-      surface_route_env: "MOUI_MACOS_SKIA_SURFACE_ROUTE",
       app_title: "\"MoUI Markdown Editor\"",
-      expected_link_token: "-framework AppKit",
       allow_async_pump: false,
     },
     {
@@ -132,9 +129,7 @@ fn skia_entries() -> Array[SkiaEntry] {
       host_summary_call: "",
       options_type: "WindowsSkiaAppOptions",
       run_function: "run_app_with_options",
-      surface_route_env: "",
       app_title: "\"MoUI Markdown Editor\"",
-      expected_link_token: "",
       allow_async_pump: false,
     },
     {
@@ -147,9 +142,7 @@ fn skia_entries() -> Array[SkiaEntry] {
       host_summary_call: "",
       options_type: "LinuxSkiaAppOptions",
       run_function: "run_app_with_options",
-      surface_route_env: "",
       app_title: "\"MoUI Markdown Editor\"",
-      expected_link_token: "-lz",
       allow_async_pump: false,
     },
     {
@@ -162,10 +155,29 @@ fn skia_entries() -> Array[SkiaEntry] {
       host_summary_call: "",
       options_type: "MacosSkiaAppOptions",
       run_function: "run_app_with_options_async_pump",
-      surface_route_env: "MOUI_MACOS_SKIA_SURFACE_ROUTE",
       app_title: "\"Mo Workbench\"",
-      expected_link_token: "-framework AppKit",
       allow_async_pump: true,
+    },
+  ]
+}
+
+///|
+fn skia_provider_contracts() -> Array[SkiaProviderContract] {
+  [
+    {
+      platform: "macos",
+      package_path: "moui/backend/macos/skia/moon.pkg",
+      source_path: "moui/backend/macos/skia/macos_skia_provider.mbt",
+    },
+    {
+      platform: "windows",
+      package_path: "moui/backend/windows/skia/moon.pkg",
+      source_path: "",
+    },
+    {
+      platform: "linux",
+      package_path: "moui/backend/linux/skia/moon.pkg",
+      source_path: "",
     },
   ]
 }
@@ -177,6 +189,24 @@ fn platform_backend_import(platform : String) -> String {
     "windows" => "\"wzzc-dev/moui/backend/windows/skia\" @windows_skia_backend"
     "linux" => "\"wzzc-dev/moui/backend/linux/skia\" @linux_skia_backend"
     _ => ""
+  }
+}
+
+///|
+fn entrypoint_platform_link_token(platform : String) -> String {
+  match platform {
+    "macos" => "-framework AppKit"
+    "linux" => "-lz"
+    _ => ""
+  }
+}
+
+///|
+fn provider_owned_package_token(platform : String) -> String {
+  match platform {
+    "windows" =>
+      "\"native-stub\": [ \"win32_skia_presenter.cpp\", \"windows_async_image.cpp\" ]"
+    _ => entrypoint_platform_link_token(platform)
   }
 }
 
@@ -219,17 +249,6 @@ fn validate_entry_texts(
   let main_path = entry.package_path + "/main.mbt"
   let failures : Array[String] = []
 
-  if entry.surface_route_env != "" {
-    assert_contains(pkg, "\"moonbitlang/core/env\"", pkg_path, failures)
-    assert_contains(
-      pkg, "\"wzzc-dev/moui/render/skia\" @skia_renderer", pkg_path, failures,
-    )
-  } else {
-    assert_not_contains(pkg, "\"moonbitlang/core/env\"", pkg_path, failures)
-    assert_not_contains(
-      pkg, "\"wzzc-dev/moui/render/skia\" @skia_renderer", pkg_path, failures,
-    )
-  }
   assert_contains(
     pkg,
     platform_backend_import(entry.platform),
@@ -239,13 +258,21 @@ fn validate_entry_texts(
   assert_contains(pkg, entry.host_backend_import, pkg_path, failures)
   assert_contains(pkg, entry.app_import, pkg_path, failures)
   assert_contains(pkg, "supported_targets = \"native\"", pkg_path, failures)
-  assert_contains(pkg, "\"is-main\": true", pkg_path, failures)
+  assert_contains(pkg, "pkgtype(kind: \"executable\")", pkg_path, failures)
+  assert_not_contains(pkg, "\"is-main\": true", pkg_path, failures)
+  assert_contains(pkg, "\"cc-link-flags\": \"\"", pkg_path, failures)
   assert_contains(
     pkg, "targets: { \"main.mbt\": [ \"native\" ] }", pkg_path, failures,
   )
-  assert_contains(pkg, entry.expected_link_token, pkg_path, failures)
+  assert_not_contains(
+    pkg,
+    entrypoint_platform_link_token(entry.platform),
+    pkg_path,
+    failures,
+  )
   assert_contains(pkg, "\"wzzc-dev/moui/runtime\"", pkg_path, failures)
 
+  assert_not_contains(pkg, "\"wzzc-dev/moui/render/skia\"", pkg_path, failures)
   assert_not_contains(pkg, "\"wzzc-dev/moui/render/wgpu\"", pkg_path, failures)
   assert_not_contains(
     pkg, "\"wzzc-dev/moui/backend/macos/wgpu\"", pkg_path, failures,
@@ -270,15 +297,19 @@ fn validate_entry_texts(
   assert_not_contains(main, legacy_first_frame_env_token(), main_path, failures)
   assert_not_contains(main, "first_frame_smoke_auto_exit", main_path, failures)
   assert_not_contains(main, "MOUI_MACOS_NATIVE_IME_SMOKE", main_path, failures)
+  assert_not_contains(
+    main, "MOUI_MACOS_NATIVE_IME_EVIDENCE", main_path, failures,
+  )
   assert_not_contains(main, "native_ime_runtime_smoke", main_path, failures)
   assert_not_contains(main, "EmptyTypeface", main_path, failures)
   assert_not_contains(main, "run_smoke_app_with_options", main_path, failures)
-  if entry.surface_route_env != "" {
-    assert_contains(main, entry.surface_route_env, main_path, failures)
-    assert_contains(
-      main, "@render.SkiaSurfaceRoute::MetalGpuSurfaceRoute", main_path, failures,
+  if entry.platform == "macos" {
+    assert_not_contains(
+      main, "@env.get_env_var(\"MOUI_MACOS_SKIA_SURFACE_ROUTE\")", main_path, failures,
     )
-    assert_contains(main, "surface_route~", main_path, failures)
+    assert_not_contains(main, "@render.SkiaSurfaceRoute::", main_path, failures)
+    assert_not_contains(main, "surface_route=", main_path, failures)
+    assert_not_contains(main, "surface_route~", main_path, failures)
   } else {
     assert_not_contains(main, "@env.", main_path, failures)
     assert_not_contains(main, "@skia_renderer.", main_path, failures)
@@ -305,6 +336,48 @@ fn validate_entry_texts(
 }
 
 ///|
+fn validate_provider_texts(
+  contract : SkiaProviderContract,
+  pkg : String,
+  source : String,
+) -> Array[String] {
+  let failures : Array[String] = []
+  assert_contains(
+    pkg,
+    provider_owned_package_token(contract.platform),
+    contract.package_path,
+    failures,
+  )
+  if contract.platform == "macos" {
+    assert_contains(
+      source,
+      "surface_route? : @render.SkiaSurfaceRoute = macos_surface_route_from_environment()",
+      contract.source_path,
+      failures,
+    )
+    assert_contains(
+      source,
+      "fn macos_surface_route_from_environment()",
+      contract.source_path,
+      failures,
+    )
+    assert_contains(
+      source,
+      "@env.get_env_var(\"MOUI_MACOS_SKIA_SURFACE_ROUTE\")",
+      contract.source_path,
+      failures,
+    )
+    assert_contains(
+      source,
+      "@render.select_native_renderer(",
+      contract.source_path,
+      failures,
+    )
+  }
+  failures
+}
+
+///|
 fn validate_entry(repo_root : String, entry : SkiaEntry) -> Array[String] {
   let pkg_path = entry.package_path + "/moon.pkg"
   let main_path = entry.package_path + "/main.mbt"
@@ -324,8 +397,36 @@ fn validate_entry(repo_root : String, entry : SkiaEntry) -> Array[String] {
 }
 
 ///|
+fn validate_provider(
+  repo_root : String,
+  contract : SkiaProviderContract,
+) -> Array[String] {
+  let resolved_pkg = @tools.resolve_path(repo_root, contract.package_path)
+  let pkg = match
+    @tools.read_required_text(resolved_pkg, "Skia provider package") {
+    Ok(value) => value
+    Err(message) => return [message]
+  }
+  let source = if contract.source_path == "" {
+    ""
+  } else {
+    let resolved_source = @tools.resolve_path(repo_root, contract.source_path)
+    match @tools.read_required_text(resolved_source, "Skia provider source") {
+      Ok(value) => value
+      Err(message) => return [message]
+    }
+  }
+  validate_provider_texts(contract, pkg, source)
+}
+
+///|
 fn validate_skia_entrypoints(repo_root : String) -> Array[String] {
   let failures : Array[String] = []
+  for contract in skia_provider_contracts() {
+    for failure in validate_provider(repo_root, contract) {
+      failures.push(failure)
+    }
+  }
   for entry in skia_entries() {
     for failure in validate_entry(repo_root, entry) {
       failures.push(failure)
