@@ -17,8 +17,10 @@ fn resolve_moui_root(options : EjectOptions) -> Result[String, String] {
     Some(value) => candidates.push(value)
     None => ()
   }
-  candidates.push(join_path(options.project_root, ".mooncakes/wzzc-dev/moui"))
-  candidates.push(join_path(options.project_root, "moui"))
+  for root in project_search_roots(options.project_root) {
+    candidates.push(join_path(root, ".mooncakes/wzzc-dev/moui"))
+    candidates.push(join_path(root, "moui"))
+  }
   for candidate in candidates {
     if path_is_dir(candidate) && path_is_dir(join_path(candidate, "mobile")) {
       return Ok(candidate)

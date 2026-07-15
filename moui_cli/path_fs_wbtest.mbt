@@ -56,3 +56,25 @@ test "atomic generation supports Unicode project paths" {
   inspect(result is Ok(_), content="true")
   inspect(content, content="ok\n")
 }
+
+///|
+test "project search roots include the nearest MoonBit workspace" {
+  let root = test_temp_path("workspace-search")
+  let project = join_path(root, "examples/sample")
+  remove_tree(root)
+  match mkdir_p(project) {
+    Ok(_) => ()
+    Err(message) => fail(message)
+  }
+  @fs.write_string_to_file(join_path(root, "moon.work"), "members = []\n") catch {
+    _ => {
+      remove_tree(root)
+      fail("could not write workspace marker fixture")
+    }
+  }
+  let roots = project_search_roots(project)
+  remove_tree(root)
+  inspect(roots.length(), content="2")
+  inspect(roots[0], content=project)
+  inspect(roots[1], content=root)
+}

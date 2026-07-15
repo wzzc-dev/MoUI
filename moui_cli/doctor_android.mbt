@@ -36,6 +36,24 @@ fn valid_android_ndk(root : String) -> Bool {
 }
 
 ///|
+fn android_gradle_command(
+  project_root : String,
+  host : HostPlatform,
+) -> (String, String) {
+  for root in project_search_roots(project_root) {
+    match
+      first_executable([
+        join_path(root, "gradlew"),
+        join_path(root, "gradlew.bat"),
+      ]) {
+      Some(path) => return (path, root)
+      None => ()
+    }
+  }
+  (find_executable("gradle", host).unwrap_or(""), project_root)
+}
+
+///|
 fn android_doctor_check(
   project_root : String,
   host : HostPlatform,
@@ -161,10 +179,7 @@ fn android_doctor_check(
       remediation="Install Node.js for the MoUI mobile build preparation step.",
     )
   }
-  let gradle = first_executable([
-    join_path(project_root, "gradlew"),
-    join_path(project_root, "gradlew.bat"),
-  ]).unwrap_or_else(() => find_executable("gradle", host).unwrap_or(""))
+  let (gradle, gradle_root) = android_gradle_command(project_root, host)
   if gradle == "" {
     return doctor_check(
       "android",
@@ -174,7 +189,7 @@ fn android_doctor_check(
       remediation="Add a Gradle wrapper at the project root or install Gradle.",
     )
   }
-  let gradle_version = match gradle_version_floor(project_root, gradle, host) {
+  let gradle_version = match gradle_version_floor(gradle_root, gradle, host) {
     Some(Ok(value)) => Some(value)
     Some(Err(message)) =>
       return doctor_check(

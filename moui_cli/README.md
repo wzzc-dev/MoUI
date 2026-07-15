@@ -38,6 +38,15 @@ moui doctor
 moui doctor --all --json
 ```
 
+From a MoUI repository checkout, point doctor at a repository app package; it
+discovers the nearest `moon.work` and reuses the workspace-owned framework,
+Skia package, and Gradle wrapper:
+
+```sh
+moui doctor --project-root examples/component_gallery \
+  --platform android --platform ios --platform harmonyos
+```
+
 Doctor JSON uses schema version 1 and `pass|warn|fail|skip` statuses. Exit code
 `0` means there are no required failures, `1` means required checks failed,
 and `2` means the command or project contract could not be parsed. Doctor does
