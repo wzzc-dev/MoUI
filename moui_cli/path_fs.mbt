@@ -70,6 +70,39 @@ fn resolve_path(root : String, path : String) -> String {
 }
 
 ///|
+fn moon_workspace_root(project_root : String) -> String? {
+  let current = Ref(normalized_path(project_root))
+  for _ in 0..<64 {
+    let marker = join_path(current.val, "moon.work")
+    let has_marker = @fs.is_file(marker) catch { _ => false }
+    if has_marker {
+      return Some(current.val)
+    }
+    let drive_root = current.val.length() == 2 && current.val[1] == ':'
+    if current.val == "/" || drive_root {
+      return None
+    }
+    let parent = parent_dir(current.val)
+    if parent == current.val {
+      return None
+    }
+    current.val = parent
+  }
+  None
+}
+
+///|
+fn project_search_roots(project_root : String) -> Array[String] {
+  let project_root = normalized_path(project_root)
+  let roots = [project_root]
+  match moon_workspace_root(project_root) {
+    Some(root) if root != project_root => roots.push(root)
+    _ => ()
+  }
+  roots
+}
+
+///|
 fn validate_relative_path(path : String) -> Result[Unit, String] {
   let normalized = normalized_path(path)
   if normalized == "" || path_is_absolute(normalized) {

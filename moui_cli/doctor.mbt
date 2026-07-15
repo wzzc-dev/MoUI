@@ -248,11 +248,11 @@ fn skia_doctor_check(project_root : String, required : Bool) -> DoctorCheck {
     )
   }
   let env_root = @env.get_env_var("MOUI_SKIA_ROOT").unwrap_or("")
-  let candidates = [
-    env_root,
-    join_path(project_root, "moui_skia"),
-    join_path(project_root, ".mooncakes/wzzc-dev/moui_skia"),
-  ]
+  let candidates = [env_root]
+  for root in project_search_roots(project_root) {
+    candidates.push(join_path(root, "moui_skia"))
+    candidates.push(join_path(root, ".mooncakes/wzzc-dev/moui_skia"))
+  }
   let invalid_root = Ref("")
   for path in candidates {
     if valid_skia_root(path) {
@@ -447,8 +447,21 @@ fn project_entrypoint_checks(
   let checks : Array[DoctorCheck] = []
   for platform in ["android", "ios", "harmonyos"] {
     if platforms.contains(platform) {
-      let package_path = join_path(project_root, platform + "_skia/moon.pkg")
-      let main_path = join_path(project_root, platform + "_skia/main.mbt")
+      let generated_root = join_path(project_root, platform + "_skia")
+      let repository_root = join_path(project_root, platform)
+      let entrypoint_root = if @fs.path_exists(
+          join_path(generated_root, "moon.pkg"),
+        ) ||
+        @fs.path_exists(join_path(generated_root, "main.mbt")) {
+        generated_root
+      } else if @fs.path_exists(join_path(repository_root, "moon.pkg")) ||
+        @fs.path_exists(join_path(repository_root, "main.mbt")) {
+        repository_root
+      } else {
+        generated_root
+      }
+      let package_path = join_path(entrypoint_root, "moon.pkg")
+      let main_path = join_path(entrypoint_root, "main.mbt")
       let package_text = @fs.read_file_to_string(package_path) catch { _ => "" }
       let main_text = @fs.read_file_to_string(main_path) catch { _ => "" }
       let common_markers = [

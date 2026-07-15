@@ -88,6 +88,32 @@ fn eject_test_prepare_project(root : String, moui_root : String) -> Unit raise {
 }
 
 ///|
+test "framework package resolution uses the nearest workspace ancestor" {
+  let root = eject_test_temp_path("workspace-root")
+  let project = join_path(root, "examples/sample")
+  let moui_root = join_path(root, "moui")
+  remove_tree(root)
+  eject_test_write_text(join_path(root, "moon.work"), "members = []\n")
+  eject_test_write_text(join_path(moui_root, "mobile/.keep"), "fixture\n")
+  match mkdir_p(project) {
+    Ok(_) => ()
+    Err(message) => fail(message)
+  }
+  let resolved = match
+    resolve_moui_root({
+      project_root: project,
+      platform: "android",
+      output: "",
+      moui_root: None,
+    }) {
+    Ok(value) => value
+    Err(message) => fail(message)
+  }
+  remove_tree(root)
+  inspect(resolved, content=moui_root)
+}
+
+///|
 test "mobile eject commits updated config and matching lock digest" {
   let root = eject_test_temp_path("commit")
   let moui_root = join_path(root, "moui-package")
