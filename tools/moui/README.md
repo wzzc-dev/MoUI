@@ -23,9 +23,10 @@ Current tools:
 - `validate_window_dependency/` checks that `wzzc-dev/window` resolves from
   mooncakes.io by default and that all known consumers pin the same published
   version.
-- `validate_skia_entrypoints/` statically checks native Skia example
-  entrypoint packages and `main.mbt` files for the expected renderer,
-  platform-backend, first-frame, and font-resolution wiring.
+- `validate_skia_entrypoints/` statically checks featured native Skia
+  entrypoints for executable/runtime/provider wiring, keeps platform link and
+  macOS route selection owned by provider packages, and rejects repo-only smoke
+  behavior in production entrypoints.
 - `validate_conformance_capture_manifest/` validates schema version 1
   conformance capture manifests for golden screenshot and Web benchmark
   capture handoffs.
