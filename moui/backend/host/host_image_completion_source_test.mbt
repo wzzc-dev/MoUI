@@ -10,12 +10,14 @@ test "host image completion source routes native loader completions" {
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image_resource_snapshot=Some(() => {
-      @render.ImageResourceSnapshot::new(
-        revision=revision.val,
-        records=records.val,
-      )
-    }),
+    image=HostRendererImageCapability::new(
+      image_resource_snapshot=Some(() => {
+        @render.ImageResourceSnapshot::new(
+          revision=revision.val,
+          records=records.val,
+        )
+      }),
+    ),
   )
   let baseline = tracker.record_presented(window_id, renderer)
   inspect(baseline.current_revision(), content="1")
@@ -63,11 +65,13 @@ test "host image completion source discards closed-window completions" {
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image_resource_snapshot=Some(() => {
-      @render.ImageResourceSnapshot::new(revision=3, records=[
-        @render.ImageResourceRecord::loading("closed.png"),
-      ])
-    }),
+    image=HostRendererImageCapability::new(
+      image_resource_snapshot=Some(() => {
+        @render.ImageResourceSnapshot::new(revision=3, records=[
+          @render.ImageResourceRecord::loading("closed.png"),
+        ])
+      }),
+    ),
   )
   let baseline = tracker.record_presented(window_id, renderer)
   inspect(baseline.current_revision(), content="3")
@@ -109,11 +113,13 @@ test "host image completion source ignores stale completion revisions" {
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image_resource_snapshot=Some(() => {
-      @render.ImageResourceSnapshot::new(revision=6, records=[
-        @render.ImageResourceRecord::ready("fresh.png", width=64, height=40),
-      ])
-    }),
+    image=HostRendererImageCapability::new(
+      image_resource_snapshot=Some(() => {
+        @render.ImageResourceSnapshot::new(revision=6, records=[
+          @render.ImageResourceRecord::ready("fresh.png", width=64, height=40),
+        ])
+      }),
+    ),
   )
   let baseline = tracker.record_presented(window_id, renderer)
   inspect(baseline.current_revision(), content="6")
@@ -165,11 +171,13 @@ test "host image completion source applies renderer load completions" {
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
-    apply_image_resource_load_completion=Some(completion => {
-      applied_sources.push(completion.source)
-      lifecycle.apply_load_completion(completion)
-    }),
+    image=HostRendererImageCapability::new(
+      image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
+      apply_image_resource_load_completion=Some(completion => {
+        applied_sources.push(completion.source)
+        lifecycle.apply_load_completion(completion)
+      }),
+    ),
   )
   let baseline = tracker.record_presented(window_id, renderer)
   inspect(baseline.current_revision(), content="1")

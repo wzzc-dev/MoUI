@@ -128,33 +128,33 @@ test "native accessibility bridge validates action roundtrip" {
 }
 
 ///|
-test "mobile renderer auto mode requires availability and promotion" {
-  let pending = select_mobile_renderer(
-    MobileRendererMode::Auto,
+test "native renderer auto mode requires availability and promotion" {
+  let pending = @render.select_native_renderer(
+    @render.NativeGpuPlatform::Macos,
+    @render.NativeRendererMode::Auto,
     gpu_available=true,
     gpu_promoted=false,
-    surface_route=@render.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
   )
   assert_true(pending.selected == @render.RendererBackendKind::SkiaRasterNative)
   assert_true(pending.fallback_reason is Some(_))
   assert_true(
     pending.surface_route == @render.SkiaSurfaceRoute::RasterSurfaceRoute,
   )
-  let promoted = select_mobile_renderer(
-    MobileRendererMode::Auto,
+  let promoted = @render.select_native_renderer(
+    @render.NativeGpuPlatform::Macos,
+    @render.NativeRendererMode::Auto,
     gpu_available=true,
     gpu_promoted=true,
-    surface_route=@render.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
   )
   assert_true(promoted.selected == @render.RendererBackendKind::SkiaGpuNative)
   assert_true(
     promoted.surface_route == @render.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
   )
-  let unavailable = select_mobile_renderer(
-    MobileRendererMode::SkiaGpu,
+  let unavailable = @render.select_native_renderer(
+    @render.NativeGpuPlatform::Android,
+    @render.NativeRendererMode::SkiaGpu,
     gpu_available=false,
     gpu_promoted=false,
-    surface_route=@render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute,
   )
   assert_true(
     unavailable.selected == @render.RendererBackendKind::SkiaRasterNative,
@@ -165,30 +165,30 @@ test "mobile renderer auto mode requires availability and promotion" {
 }
 
 ///|
-test "mobile renderer surface route reflects platform selection" {
-  let android = select_mobile_renderer(
-    MobileRendererMode::SkiaGpu,
+test "native renderer surface route reflects platform selection" {
+  let android = @render.select_native_renderer(
+    @render.NativeGpuPlatform::Android,
+    @render.NativeRendererMode::SkiaGpu,
     gpu_available=true,
     gpu_promoted=false,
-    surface_route=@render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute,
   )
   assert_true(
     android.surface_route == @render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute,
   )
-  let harmonyos = select_mobile_renderer(
-    MobileRendererMode::SkiaGpu,
+  let harmonyos = @render.select_native_renderer(
+    @render.NativeGpuPlatform::HarmonyOs,
+    @render.NativeRendererMode::SkiaGpu,
     gpu_available=true,
     gpu_promoted=false,
-    surface_route=@render.SkiaSurfaceRoute::EglGpuSurfaceRoute,
   )
   assert_true(
     harmonyos.surface_route == @render.SkiaSurfaceRoute::EglGpuSurfaceRoute,
   )
-  let windows = select_mobile_renderer(
-    MobileRendererMode::SkiaGpu,
+  let windows = @render.select_native_renderer(
+    @render.NativeGpuPlatform::Windows,
+    @render.NativeRendererMode::SkiaGpu,
     gpu_available=true,
     gpu_promoted=false,
-    surface_route=@render.SkiaSurfaceRoute::Direct3DGpuSurfaceRoute,
   )
   assert_true(
     windows.surface_route == @render.SkiaSurfaceRoute::Direct3DGpuSurfaceRoute,
@@ -340,6 +340,79 @@ test "host renderer expands cached layer updates and replays cached hits" {
       command is @core.DrawCommand::DrawText({ text: "cached", .. })
     }),
   )
+}
+
+///|
+test "host renderer capability records preserve optional callback behavior" {
+  let platform_draws = Ref(0)
+  let platform_callbacks = Ref(0)
+  let context_losses = Ref(0)
+  let renderer = HostWindowRenderer::new(
+    resize=_ => (),
+    render=_ => (),
+    text_system=() => @core.TextSystem::fallback(),
+    image=HostRendererImageCapability::new(image_resources=() => {
+      [@render.ImageResourceRecord::loading("pending.png")]
+    }),
+    platform_view=HostRendererPlatformViewCapability::new(
+      draw_platform_view_pixels=fn(
+        _pixels,
+        _src_width,
+        _src_height,
+        _src_stride,
+        _dst_x,
+        _dst_y,
+        _dst_width,
+        _dst_height,
+      ) {
+        platform_draws.val = platform_draws.val + 1
+      },
+      set_platform_view_draw_fn=draw_fn => {
+        match draw_fn {
+          Some(draw) => {
+            platform_callbacks.val = platform_callbacks.val + 1
+            draw()
+          }
+          None => ()
+        }
+      },
+    ),
+    gpu_recovery=HostRendererGpuRecoveryCapability::new(
+      inject_context_loss=() => context_losses.val = context_losses.val + 1,
+      gpu_recovery_count=() => 3,
+      gpu_fallback_active=() => true,
+    ),
+  )
+  inspect(renderer.image_resources().length(), content="1")
+  inspect(renderer.image_resource_snapshot().records.length(), content="1")
+  renderer.draw_platform_view_pixels(b"", 0, 0, 0, 0.0, 0.0, 0.0, 0.0)
+  renderer.set_platform_view_draw_fn(
+    Some(() => platform_draws.val = platform_draws.val + 1),
+  )
+  renderer.inject_context_loss()
+  inspect(platform_draws.val, content="2")
+  inspect(platform_callbacks.val, content="1")
+  inspect(context_losses.val, content="1")
+  inspect(renderer.gpu_recovery_count(), content="3")
+  assert_true(renderer.gpu_fallback_active())
+}
+
+///|
+test "host renderer absent capabilities keep no-op defaults" {
+  let platform_draws = Ref(0)
+  let renderer = HostWindowRenderer::new(resize=_ => (), render=_ => (), text_system=() => {
+    @core.TextSystem::fallback()
+  })
+  inspect(renderer.image_resources().length(), content="0")
+  inspect(renderer.image_resource_snapshot().records.length(), content="0")
+  renderer.draw_platform_view_pixels(b"", 0, 0, 0, 0.0, 0.0, 0.0, 0.0)
+  renderer.set_platform_view_draw_fn(
+    Some(() => platform_draws.val = platform_draws.val + 1),
+  )
+  renderer.inject_context_loss()
+  inspect(renderer.gpu_recovery_count(), content="0")
+  inspect(platform_draws.val, content="0")
+  assert_false(renderer.gpu_fallback_active())
 }
 
 ///|

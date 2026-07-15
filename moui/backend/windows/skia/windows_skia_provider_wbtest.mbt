@@ -124,10 +124,12 @@ test "windows skia async image loader completes loading resources" {
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
-    apply_image_resource_load_completion=Some(completion => {
-      lifecycle.apply_load_completion(completion)
-    }),
+    image=@host.HostRendererImageCapability::new(
+      image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
+      apply_image_resource_load_completion=Some(completion => {
+        lifecycle.apply_load_completion(completion)
+      }),
+    ),
   )
   let tracker = @host.HostImageResourceRepaintTracker::new()
   ignore(tracker.record_presented(window_id, renderer))
@@ -170,10 +172,12 @@ test "windows skia deferred native source completes through decode helper" {
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
-    apply_image_resource_load_completion=Some(completion => {
-      lifecycle.apply_load_completion(completion)
-    }),
+    image=@host.HostRendererImageCapability::new(
+      image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
+      apply_image_resource_load_completion=Some(completion => {
+        lifecycle.apply_load_completion(completion)
+      }),
+    ),
   )
   let tracker = @host.HostImageResourceRepaintTracker::new()
   ignore(tracker.record_presented(window_id, renderer))

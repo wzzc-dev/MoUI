@@ -62,7 +62,7 @@ no longer the product default.
 
 The cross-platform `SkiaSurfaceRoute` enum lives in `moui/render` so it can be
 referenced from both native-only `moui/render/skia` and the wasm-gc-compatible
-`moui/backend/host::MobileRendererSelection`. `HostGpuPresentTarget` takes a
+`moui/render::NativeRendererSelection`. `HostGpuPresentTarget` takes a
 flushed `@skia_native.Surface` and bypasses `read_frame()` on the GPU route.
 These caller-thread bindings remain compatibility/diagnostic integration APIs;
 native platform providers use the Picture worker for production GPU routing.

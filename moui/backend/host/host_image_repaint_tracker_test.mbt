@@ -92,10 +92,12 @@ test "host image repaint tracker routes callback snapshots without renderer read
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image_resource_snapshot=Some(() => {
-      snapshot_reads.val = snapshot_reads.val + 1
-      @render.ImageResourceSnapshot::new(revision=revision.val, records=[])
-    }),
+    image=HostRendererImageCapability::new(
+      image_resource_snapshot=Some(() => {
+        snapshot_reads.val = snapshot_reads.val + 1
+        @render.ImageResourceSnapshot::new(revision=revision.val, records=[])
+      }),
+    ),
   )
   let baseline = tracker.record_presented(window_id, renderer)
   inspect(baseline.current_revision(), content="1")
@@ -134,12 +136,14 @@ test "host image repaint tracker snapshots lifecycle status counts" {
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image_resource_snapshot=Some(() => {
-      @render.ImageResourceSnapshot::new(
-        revision=revision.val,
-        records=records.val,
-      )
-    }),
+    image=HostRendererImageCapability::new(
+      image_resource_snapshot=Some(() => {
+        @render.ImageResourceSnapshot::new(
+          revision=revision.val,
+          records=records.val,
+        )
+      }),
+    ),
   )
   let baseline = tracker.record_presented(window_id, renderer)
   inspect(baseline.current_revision(), content="1")
@@ -203,12 +207,14 @@ test "host image repaint tracker ignores stale snapshot revisions" {
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image_resource_snapshot=Some(() => {
-      @render.ImageResourceSnapshot::new(
-        revision=revision.val,
-        records=records.val,
-      )
-    }),
+    image=HostRendererImageCapability::new(
+      image_resource_snapshot=Some(() => {
+        @render.ImageResourceSnapshot::new(
+          revision=revision.val,
+          records=records.val,
+        )
+      }),
+    ),
   )
   let baseline = tracker.record_presented(window_id, renderer)
   inspect(baseline.current_revision(), content="5")
@@ -263,13 +269,15 @@ test "host image repaint tracker discards closed window changes" {
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image_resource_snapshot=Some(() => {
-      snapshot_reads.val = snapshot_reads.val + 1
-      @render.ImageResourceSnapshot::new(
-        revision=revision.val,
-        records=records.val,
-      )
-    }),
+    image=HostRendererImageCapability::new(
+      image_resource_snapshot=Some(() => {
+        snapshot_reads.val = snapshot_reads.val + 1
+        @render.ImageResourceSnapshot::new(
+          revision=revision.val,
+          records=records.val,
+        )
+      }),
+    ),
   )
   let baseline = tracker.record_presented(window_id, renderer)
   inspect(baseline.current_revision(), content="1")
