@@ -113,6 +113,36 @@ test("canonical HarmonyOS shell owns ABI, XComponent, Host Wire, and plugin inva
   contains(packageJson, '"modelVersion": "6.0.1"', "oh-package.json5");
 });
 
+test("legacy fixture honors the mobile shell CI artifact root", () => {
+  const tempRoot = mkdtempSync(join(tmpdir(), "moui-harmonyos-legacy-root-"));
+  const helper = resolve(repoRoot, "moui/mobile/harmonyos/tests/build-legacy-fixture.sh");
+  try {
+    const result = spawnSync("bash", ["-x", helper, "--help"], {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        MOUI_MOBILE_SHELL_CI_ROOT: tempRoot,
+      },
+    });
+    assert.equal(result.status, 0, result.stderr);
+    const trace = `${result.stdout}\n${result.stderr}`;
+    const legacyRoot = join(tempRoot, "harmonyos/legacy");
+    contains(trace, `--build-dir ${legacyRoot}`, "legacy fixture trace");
+    contains(
+      trace,
+      `--output ${join(legacyRoot, "ComponentGallery.hap")}`,
+      "legacy fixture trace",
+    );
+    excludes(
+      trace,
+      join(repoRoot, "artifacts/harmonyos/component-gallery-legacy-fixture"),
+      "legacy fixture trace",
+    );
+  } finally {
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+});
+
 test("managed resolver stages identity, resources, and generated plugin registry", () => {
   const tempRoot = mkdtempSync(join(tmpdir(), "moui-harmonyos-managed-"));
   const sourceConfigPath = resolve(repoRoot, "examples/component_gallery/mobile.json");
