@@ -29,12 +29,14 @@ test("canonical HarmonyOS shell owns ABI, XComponent, Host Wire, and plugin inva
   const bridgePath = "moui/mobile/harmonyos/src/main/cpp/moui_mobile_harmonyos_napi.cpp";
   const cmakePath = "moui/mobile/harmonyos/cmake/MoUIMobileHarmonyOS.cmake";
   const buildPath = "moui/scripts/mobile/build-harmonyos-hap.sh";
+  const repositoryBuildPath = "scripts/build-mobile-harmonyos-hap.sh";
   const index = read(indexPath);
   const root = read(rootPath);
   const plugins = read(pluginsPath);
   const bridge = read(bridgePath);
   const cmake = read(cmakePath);
   const build = read(buildPath);
+  const repositoryBuild = read(repositoryBuildPath);
 
   contains(index, "MoUIRoot()", indexPath);
   contains(root, "libraryname: 'moui_mobile_harmonyos'", rootPath);
@@ -97,6 +99,12 @@ test("canonical HarmonyOS shell owns ABI, XComponent, Host Wire, and plugin inva
   contains(build, "--ejected-shell requires a versioned .moui-shell.json", buildPath);
   contains(build, "--legacy-shell", buildPath);
   contains(build, "harmonyos-app-owned-shell", buildPath);
+  contains(repositoryBuild, 'legacy_shell=0', repositoryBuildPath);
+  contains(repositoryBuild, 'if [ "$legacy_shell" -eq 1 ]', repositoryBuildPath);
+  contains(repositoryBuild, '--harmonyos-project "$harmonyos_project"', repositoryBuildPath);
+  contains(repositoryBuild,
+    '--app-config "$repo_root/moui/mobile/legacy/fixtures/$app.mobile.json"',
+    repositoryBuildPath);
 
   const profile = read("moui/mobile/harmonyos/template/build-profile.json5");
   contains(profile, '"targetSdkVersion": "6.0.1(21)"', "build-profile.json5");
