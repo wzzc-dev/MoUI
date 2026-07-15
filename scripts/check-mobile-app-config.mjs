@@ -424,6 +424,13 @@ const validateAndroidManagedShell = failures => {
     '--app-config "$repo_root/moui/mobile/legacy/fixtures/$app.mobile.json"',
   ]);
   const recorder = readRepoFile("scripts/record-mobile-runtime-smoke.mjs");
+  if (recorder.includes(".supportsScroll")) {
+    failures.push("runtime recorder must derive scroll evidence from its smoke contract, not schema v2 supportsScroll");
+  }
+  requireTokens(failures, "mobile runtime scroll contract", recorder, [
+    'appConfig.id === "component_gallery"',
+    "!platformConfig.exports?.dispatchScroll",
+  ]);
   const androidStart = recorder.indexOf("const runAndroidSmoke");
   const androidEnd = recorder.indexOf("const iosIdbTree", androidStart);
   const androidRecorder = recorder.slice(androidStart, androidEnd);

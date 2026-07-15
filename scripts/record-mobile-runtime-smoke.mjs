@@ -88,6 +88,7 @@ const parseArgs = argv => {
 const normalize = path => isAbsolute(path) ? path : resolve(repoRoot, path);
 
 const ensureDir = path => mkdirSync(path, { recursive: true });
+const requiresScrollEvidence = appConfig => appConfig.id === "component_gallery";
 
 const run = (cmd, args, options = {}) => {
   const result = spawnSync(cmd, args, {
@@ -160,7 +161,7 @@ const compareScreenshots = (beforePath, afterPath) => {
   };
 };
 
-const observeLogs = (observations, logs, supportsScroll, pixelChange) => {
+const observeLogs = (observations, logs, scrollRequired, pixelChange) => {
   if (
     logs.includes("moui-mobile lifecycle attach")
     || /moui-mobile attach app=/.test(logs)
@@ -172,7 +173,7 @@ const observeLogs = (observations, logs, supportsScroll, pixelChange) => {
   const receivedScroll = logs.includes("moui-mobile input scroll");
   const visibleChange = pixelChange.changedPixels >= 16;
   if (receivedPointer && visibleChange) observations.representativeInput = "yes";
-  if (supportsScroll && receivedScroll && visibleChange) observations.scrollInput = "yes";
+  if (scrollRequired && receivedScroll && visibleChange) observations.scrollInput = "yes";
   // IME: require an edit event; accept either state+edit or edit alone after input.
   if (
     logs.includes("moui-mobile service ime edit")
@@ -198,13 +199,13 @@ const observeLogs = (observations, logs, supportsScroll, pixelChange) => {
   Object.assign(observations, mobileTestProbeObservations(logs));
 };
 
-const baseObservations = supportsScroll => ({
+const baseObservations = scrollRequired => ({
   lifecycleAttach: "no",
   lifecycleDetach: "no",
   nonblankFirstFrame: "no",
   resize: "no",
   representativeInput: "no",
-  scrollInput: supportsScroll ? "no" : "pending",
+  scrollInput: scrollRequired ? "no" : "pending",
   cleanShutdown: "no",
   ime: "pending",
   clipboard: "pending",
@@ -336,8 +337,8 @@ const startAndroidLogStream = ({ device, outPath }) => {
   };
 };
 
-const runAndroidSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath, device, assistiveTech }) => {
-  const observations = baseObservations(appConfig.android.supportsScroll);
+const runAndroidSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath, device, assistiveTech, scrollRequired }) => {
+  const observations = baseObservations(scrollRequired);
   const serialArgs = device ? ["-s", device] : [];
   let result = run("adb", ["devices"]);
   appendLog(logPath, "adb devices", result);
@@ -346,9 +347,6 @@ const runAndroidSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotP
   appendLog(logPath, "adb install", result);
   if (result.status !== 0) return { observations };
   run("adb", [...serialArgs, "logcat", "-c"]);
-  // Stream `adb logcat` continuously (filtered to MoUIMobile) so high-frequency
-  // pointer/scroll lines cannot push attach/IME/clipboard markers out of a
-  // short `logcat -d` window. Mirrors the iOS log stream contract.
   const androidStreamPath = join(dirname(logPath), "runtime-stream.log");
   const androidStream = startAndroidLogStream({ device, outPath: androidStreamPath });
   const launchArgs = [
@@ -414,7 +412,7 @@ const runAndroidSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotP
 
   // Scroll before rotation while the Activity still has a stable portrait layout.
   // Post-rotation swipes can miss the SurfaceView under immersive/fullscreen.
-  if (appConfig.android.supportsScroll) {
+  if (scrollRequired) {
     const swipeX = probePlan ? probePlan.action.x : 220;
     const swipeY0 = probePlan ? Math.max(probePlan.action.y + 200, 900) : 900;
     const swipeY1 = probePlan ? Math.max(probePlan.action.y - 100, 300) : 320;
@@ -492,7 +490,7 @@ const runAndroidSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotP
   result = run("adb", [...serialArgs, "logcat", "-d", "-t", "800"]);
   appendLog(logPath, "adb logcat", result);
   const logs = `${androidStreamLogs}\n${result.stdout || ""}`;
-  observeLogs(observations, logs, appConfig.android.supportsScroll, pixelChange);
+  observeLogs(observations, logs, scrollRequired, pixelChange);
   // Android logs sometimes use "lifecycle detach" without the exact marker prefix.
   observations.lifecycleDetach = (
     logs.includes("moui-mobile lifecycle detach")
@@ -606,8 +604,8 @@ const startIosLogStream = ({ target, productName, outPath }) => {
   };
 };
 
-const runIosSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath, device, assistiveTech }) => {
-  const observations = baseObservations(appConfig.ios.supportsScroll);
+const runIosSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath, device, assistiveTech, scrollRequired }) => {
+  const observations = baseObservations(scrollRequired);
   const target = device || "booted";
   const idbTargetResult = device
     ? { status: 0, stdout: device, stderr: "" }
@@ -790,7 +788,7 @@ const runIosSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath,
       Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1200);
     }
 
-    if (appConfig.ios.supportsScroll && serviceProbePlan.swipe) {
+    if (scrollRequired && serviceProbePlan.swipe) {
       const swipe = run("idb", [
         "ui", "swipe",
         String(serviceProbePlan.swipe.xStart), String(serviceProbePlan.swipe.yStart),
@@ -833,7 +831,7 @@ const runIosSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath,
       "--udid", idbTarget,
     ]);
     appendLog(logPath, `idb tap accessibility button ${JSON.stringify(inputPlan.label)}`, tap);
-    if (appConfig.ios.supportsScroll && inputPlan.swipe) {
+    if (scrollRequired && inputPlan.swipe) {
       const swipe = run("idb", [
         "ui", "swipe",
         String(inputPlan.swipe.xStart), String(inputPlan.swipe.yStart),
@@ -883,7 +881,7 @@ const runIosSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath,
     stderr: "",
   });
   const pixelChange = compareScreenshots(beforePath, screenshotPath);
-  observeLogs(observations, logs, appConfig.ios.supportsScroll, pixelChange);
+  observeLogs(observations, logs, scrollRequired, pixelChange);
   const backgrounded = idbReady
     ? run("idb", ["ui", "button", "HOME", "--udid", idbTarget])
     : run("xcrun", ["simctl", "launch", target, "com.apple.Preferences"]);
@@ -916,7 +914,7 @@ const runIosSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath,
     ? "yes"
     : "no";
   // Re-observe after detach/stream flush so late service markers still count.
-  observeLogs(observations, streamAfterBg, appConfig.ios.supportsScroll, pixelChange);
+  observeLogs(observations, streamAfterBg, scrollRequired, pixelChange);
   result = run("xcrun", ["simctl", "terminate", target, appConfig.ios.bundleId]);
   appendLog(logPath, "simctl terminate", result);
   observations.cleanShutdown = backgrounded.status === 0 && result.status === 0 ? "yes" : "no";
@@ -992,8 +990,8 @@ const startHarmonyLogStream = ({ device, outPath }) => {
   };
 };
 
-const runHarmonySmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath, device }) => {
-  const observations = baseObservations(appConfig.harmonyos.supportsScroll);
+const runHarmonySmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath, device, scrollRequired }) => {
+  const observations = baseObservations(scrollRequired);
   const targetArgs = hdcArgs(device);
   let result = run("hdc", ["list", "targets"]);
   appendLog(logPath, "hdc list targets", result);
@@ -1100,7 +1098,7 @@ const runHarmonySmoke = ({ appConfig, artifact, logPath, beforePath, screenshotP
   } else {
     clickAt(160, 240, "hdc click");
   }
-  if (appConfig.harmonyos.supportsScroll) {
+  if (scrollRequired) {
     result = run("hdc", [...targetArgs, "shell", "uitest", "uiInput", "swipe", "220", "680", "220", "320", "300"]);
     appendLog(logPath, "hdc swipe", result);
     if (result.status !== 0) {
@@ -1133,7 +1131,7 @@ const runHarmonySmoke = ({ appConfig, artifact, logPath, beforePath, screenshotP
   result = run("hdc", [...targetArgs, "shell", "hilog", "-x"]);
   appendLog(logPath, "hdc hilog", result);
   const logs = `${harmonyStreamLogs}\n${result.stdout || ""}`;
-  observeLogs(observations, logs, appConfig.harmonyos.supportsScroll, pixelChange);
+  observeLogs(observations, logs, scrollRequired, pixelChange);
   observations.lifecycleDetach = (
     logs.includes("moui-mobile lifecycle detach")
     || logs.includes("moui-mobile detach")
@@ -1154,6 +1152,8 @@ try {
   if (!appConfig) throw new Error(`unknown mobile app: ${options.app}`);
   const platformConfig = appConfig[options.platform];
   if (!platformConfig) throw new Error(`${options.app} does not support ${options.platform}`);
+  const scrollRequired = requiresScrollEvidence(appConfig);
+  if (scrollRequired && !platformConfig.exports?.dispatchScroll) throw new Error(`${options.platform}/${options.app} requires scroll evidence but the runtime ABI has no dispatchScroll`);
   const outDir = options.manifest
     ? dirname(normalize(options.manifest))
     : join(repoRoot, "artifacts/mobile-runtime", options.platform, options.app);
@@ -1166,7 +1166,7 @@ try {
   const beforePath = join(outDir, "screenshot-before.png");
   const screenshotPath = join(outDir, "screenshot.png");
   writeFileSync(logPath, "");
-  let observations = baseObservations(platformConfig.supportsScroll);
+  let observations = baseObservations(scrollRequired);
   let pixelChange = { comparable: false, changedPixels: 0, changedRatio: 0 };
   if (!existsSync(artifact)) {
     writeFileSync(logPath, `missing artifact: ${artifact}\n`, { flag: "a" });
@@ -1178,7 +1178,7 @@ try {
       beforePath,
       screenshotPath,
       device: options.device,
-      assistiveTech: options.assistiveTech,
+      assistiveTech: options.assistiveTech, scrollRequired,
     }));
   } else if (options.platform === "ios") {
     ({ observations, pixelChange } = runIosSmoke({
@@ -1188,16 +1188,16 @@ try {
       beforePath,
       screenshotPath,
       device: options.device,
-      assistiveTech: options.assistiveTech,
+      assistiveTech: options.assistiveTech, scrollRequired,
     }));
   } else {
-    ({ observations, pixelChange } = runHarmonySmoke({ appConfig, artifact, logPath, beforePath, screenshotPath, device: options.device }));
+    ({ observations, pixelChange } = runHarmonySmoke({ appConfig, artifact, logPath, beforePath, screenshotPath, device: options.device, scrollRequired }));
   }
   const screenshot = analyzeScreenshot(screenshotPath);
   if (screenshot.contentPixels >= 1024 && screenshot.distinctColorBuckets >= 4) {
     observations.nonblankFirstFrame = "yes";
   }
-  const status = mobileRuntimeStatus(observations, screenshot, platformConfig.supportsScroll);
+  const status = mobileRuntimeStatus(observations, screenshot, scrollRequired);
   const runtimeLogs = existsSync(logPath) ? readFileSync(logPath, "utf8") : "";
   let renderer = parseMobileRendererStatus(runtimeLogs);
   if (!renderer) {
