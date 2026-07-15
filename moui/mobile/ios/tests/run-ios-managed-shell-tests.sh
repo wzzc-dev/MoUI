@@ -3,3 +3,4 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 node "$script_dir/validate-managed-shell.mjs"
+node --test "$script_dir/../resolve-managed-shell.test.mjs"
