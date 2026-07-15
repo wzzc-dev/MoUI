@@ -51,7 +51,10 @@ run_static() {
   case "$platform" in
     ios) "$repo_root/moui/mobile/ios/tests/run-ios-managed-shell-tests.sh" ;;
     harmonyos) "$repo_root/moui/mobile/harmonyos/tests/run-harmonyos-managed-shell-tests.sh" ;;
-    android) node "$repo_root/scripts/check-mobile-app-config.mjs" ;;
+    android)
+      node --test "$repo_root/moui/mobile/android/resolve-managed-shell.test.mjs"
+      node "$repo_root/scripts/check-mobile-app-config.mjs"
+      ;;
   esac
 }
 
