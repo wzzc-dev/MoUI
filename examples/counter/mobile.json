@@ -1,19 +1,31 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "counter",
   "displayName": "MoUI Counter",
   "artifactName": "counter",
   "appPackage": "examples/counter/app",
+  "shellApiVersion": 1,
+  "runtimeAbiVersion": 1,
   "mobile": {
-    "fullscreen": false,
-    "supportsScroll": false
+    "renderer": "auto",
+    "systemUi": {
+      "fullscreen": false,
+      "statusBar": "auto"
+    },
+    "orientation": "any",
+    "resources": [],
+    "permissions": [],
+    "plugins": []
   },
   "android": {
-    "applicationId": "dev.wzzc.moui.counter"
+    "applicationId": "dev.wzzc.moui.counter",
+    "shellMode": "managed",
+    "minSdk": 23
   },
   "ios": {
     "bundleId": "dev.wzzc.moui.counter",
     "productName": "MoUICounter",
-    "infoPlist": "examples/counter/ios_app/Info.plist"
+    "shellMode": "managed",
+    "deploymentTarget": "15.0"
   }
 }

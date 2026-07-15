@@ -33,39 +33,39 @@ const validate = apps => {
     requirePath(failures, `${appId}.appPackage`, app.appPackage);
     if (app.android) {
       requirePath(failures, `${appId}.android.moonPackage`, app.android.moonPackage);
-      requirePath(failures, `${appId}.androidApp`, join("examples", appId, "android_app"));
+      requirePath(failures, `${appId}.androidShell`, "moui/mobile/android/template");
       if (!validAndroidApplicationId(app.android.applicationId)) {
         failures.push(`${appId}.android.applicationId is not a valid Android application id`);
       }
       if (!validNativeLibrary(app.android.nativeLibrary)) {
         failures.push(`${appId}.android.nativeLibrary must contain only letters, numbers, and underscores`);
       }
-      if (!app.mobile.supportsScroll && app.android.exports.dispatchScroll) {
-        failures.push(`${appId}.android.exports.dispatchScroll is internal-only and should be omitted when supportsScroll is false`);
+      if (app.android.shellMode === "managed" && app.android.minSdk < 23) {
+        failures.push(`${appId}.android.minSdk must be at least 23`);
       }
     }
     if (app.ios) {
       requirePath(failures, `${appId}.ios.moonPackage`, app.ios.moonPackage);
       requirePath(failures, `${appId}.ios.infoPlist`, app.ios.infoPlist);
-      requirePath(failures, `${appId}.iosApp`, join("examples", appId, "ios_app"));
+      requirePath(failures, `${appId}.iosShell`, "moui/mobile/ios/template");
       if (!validBundleId(app.ios.bundleId)) {
         failures.push(`${appId}.ios.bundleId is not a valid bundle id`);
       }
-      if (!app.mobile.supportsScroll && app.ios.exports.dispatchScroll) {
-        failures.push(`${appId}.ios.exports.dispatchScroll is internal-only and should be omitted when supportsScroll is false`);
+      if (app.ios.shellMode === "managed" && Number.parseFloat(app.ios.deploymentTarget) < 15) {
+        failures.push(`${appId}.ios.deploymentTarget must be at least 15.0`);
       }
     }
     if (app.harmonyos) {
       requirePath(failures, `${appId}.harmonyos.moonPackage`, app.harmonyos.moonPackage);
-      requirePath(failures, `${appId}.harmonyosApp`, join("examples", appId, "harmonyos_app"));
+      requirePath(failures, `${appId}.harmonyosShell`, "moui/mobile/harmonyos/template");
       if (!validBundleId(app.harmonyos.bundleName)) {
         failures.push(`${appId}.harmonyos.bundleName is not a valid bundle name`);
       }
       if (!validNativeLibrary(app.harmonyos.nativeLibrary)) {
         failures.push(`${appId}.harmonyos.nativeLibrary must contain only letters, numbers, and underscores`);
       }
-      if (!app.mobile.supportsScroll && app.harmonyos.exports.dispatchScroll) {
-        failures.push(`${appId}.harmonyos.exports.dispatchScroll is internal-only and should be omitted when supportsScroll is false`);
+      if (app.harmonyos.shellMode === "managed" && app.harmonyos.compatibleSdkVersion < 20) {
+        failures.push(`${appId}.harmonyos.compatibleSdkVersion must be at least 20`);
       }
     }
   }
