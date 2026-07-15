@@ -23,12 +23,39 @@ fn component_gallery_ios_metrics(
 }
 
 ///|
+fn component_gallery_ios_selection() -> @render.NativeRendererSelection {
+  @host.mobile_renderer_selection(
+    @render.NativeGpuPlatform::Ios,
+    gpu_available=@ios_skia_backend.ios_skia_gpu_available(),
+  )
+}
+
+///|
+fn component_gallery_ios_session_runtime() -> @component_gallery_app.SessionRuntimeInfo {
+  let selection = component_gallery_ios_selection()
+  @component_gallery_app.session_runtime_from_selection(
+    host="iOS",
+    backend=selection.selected.label(),
+    surface_route=selection.surface_route.label(),
+    requested=selection.requested.label(),
+    gpu_available=selection.gpu_available,
+    gpu_promoted=selection.gpu_promoted,
+    note=match selection.fallback_reason {
+      Some(reason) => reason
+      None =>
+        "Mobile product default is Skia GPU when the host surface is available."
+    },
+  )
+}
+
+///|
 fn component_gallery_ios_runtime(
   metrics : @host.HostSurfaceMetrics,
 ) -> @runtime.AppRuntime {
   @runtime.new_program(
     program=@component_gallery_app.program(
       active_platform=@component_gallery_app.PlatformId::IOS,
+      session_runtime=component_gallery_ios_session_runtime(),
     ),
     size=metrics.logical_size,
   )
@@ -36,10 +63,7 @@ fn component_gallery_ios_runtime(
 
 ///|
 fn component_gallery_ios_renderer_options() -> @ios_skia_backend.IosSkiaAppOptions {
-  let selection = @host.mobile_renderer_selection(
-    @render.NativeGpuPlatform::Ios,
-    gpu_available=@ios_skia_backend.ios_skia_gpu_available(),
-  )
+  let selection = component_gallery_ios_selection()
   @ios_skia_backend.IosSkiaAppOptions::new(
     surface_route=selection.surface_route,
   )

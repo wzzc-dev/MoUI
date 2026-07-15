@@ -186,16 +186,18 @@ fn gallery_header(
   let inner_width = (width - 32.0).max(256.0)
   let gap = theme.spacing_scale.xs
   let host_badge_width = 128.0
+  let path_badge_width = 132.0
   let item_badge_width = 148.0
   let count_badge_width = 118.0
   let badge_total_width = host_badge_width +
+    path_badge_width +
     item_badge_width +
     count_badge_width +
-    gap * 2.0
+    gap * 3.0
   let title_width = if compact {
     inner_width
   } else {
-    (inner_width - badge_total_width - theme.spacing_scale.sm).max(220.0)
+    (inner_width - badge_total_width - theme.spacing_scale.sm).max(200.0)
   }
   let title_block = column(
     [
@@ -219,6 +221,13 @@ fn gallery_header(
     spacing=2.0,
     align=@views.CrossAlign::Stretch,
   )
+  let path_tone = if model.session_runtime.path == "GPU" {
+    @views.BadgeTone::Success
+  } else if model.session_runtime.path == "CPU" {
+    @views.BadgeTone::Warning
+  } else {
+    @views.BadgeTone::Neutral
+  }
   let badge_items = [
     status_badge(
       platform_display_name(model.active_platform),
@@ -226,6 +235,13 @@ fn gallery_header(
       detail="host",
       theme~,
       width=host_badge_width,
+    ),
+    status_badge(
+      model.session_runtime.path,
+      tone=path_tone,
+      detail=model.session_runtime.backend,
+      theme~,
+      width=path_badge_width,
     ),
     status_badge(
       item.badge,

@@ -33,12 +33,39 @@ fn component_gallery_harmonyos_metrics(
 }
 
 ///|
+fn component_gallery_harmonyos_selection() -> @render.NativeRendererSelection {
+  @host.mobile_renderer_selection(
+    @render.NativeGpuPlatform::HarmonyOs,
+    gpu_available=@harmonyos_skia_backend.harmonyos_skia_gpu_available(),
+  )
+}
+
+///|
+fn component_gallery_harmonyos_session_runtime() -> @component_gallery_app.SessionRuntimeInfo {
+  let selection = component_gallery_harmonyos_selection()
+  @component_gallery_app.session_runtime_from_selection(
+    host="HarmonyOS",
+    backend=selection.selected.label(),
+    surface_route=selection.surface_route.label(),
+    requested=selection.requested.label(),
+    gpu_available=selection.gpu_available,
+    gpu_promoted=selection.gpu_promoted,
+    note=match selection.fallback_reason {
+      Some(reason) => reason
+      None =>
+        "Mobile product default is Skia GPU when the host surface is available."
+    },
+  )
+}
+
+///|
 fn component_gallery_harmonyos_runtime(
   metrics : @host.HostSurfaceMetrics,
 ) -> @runtime.AppRuntime {
   @runtime.new_program(
     program=@component_gallery_app.program(
       active_platform=@component_gallery_app.PlatformId::HarmonyOs,
+      session_runtime=component_gallery_harmonyos_session_runtime(),
     ),
     size=metrics.logical_size,
   )
@@ -46,10 +73,7 @@ fn component_gallery_harmonyos_runtime(
 
 ///|
 fn component_gallery_harmonyos_renderer_options() -> @harmonyos_skia_backend.HarmonyOsSkiaAppOptions {
-  let selection = @host.mobile_renderer_selection(
-    @render.NativeGpuPlatform::HarmonyOs,
-    gpu_available=@harmonyos_skia_backend.harmonyos_skia_gpu_available(),
-  )
+  let selection = component_gallery_harmonyos_selection()
   @harmonyos_skia_backend.HarmonyOsSkiaAppOptions::new(
     surface_route=selection.surface_route,
   )

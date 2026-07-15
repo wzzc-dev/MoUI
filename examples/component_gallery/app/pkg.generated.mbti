@@ -15,7 +15,11 @@ pub fn platform_id_from_string(String) -> PlatformId?
 
 pub fn platform_id_to_string(PlatformId) -> String
 
-pub fn program(active_platform~ : PlatformId) -> @core.Program[ComponentGalleryModel, ComponentGalleryMsg]
+pub fn program(active_platform~ : PlatformId, session_runtime? : SessionRuntimeInfo) -> @core.Program[ComponentGalleryModel, ComponentGalleryMsg]
+
+pub fn session_path_label(String, String) -> String
+
+pub fn session_runtime_from_selection(host~ : String, backend~ : String, surface_route~ : String, requested~ : String, gpu_available~ : Bool, gpu_promoted~ : Bool, note? : String) -> SessionRuntimeInfo
 
 pub fn update(ComponentGalleryModel, ComponentGalleryMsg) -> ComponentGalleryModel
 
@@ -67,6 +71,7 @@ pub(all) struct ComponentGalleryModel {
   active_platform : PlatformId
   active_item : ComponentGalleryItemId
   selected_platform : PlatformId
+  session_runtime : SessionRuntimeInfo
   page_scroll : @core.ScrollState
   sidebar_scroll : @core.ScrollState
   content_scroll : @core.ScrollState
@@ -83,7 +88,7 @@ pub(all) struct ComponentGalleryModel {
   probe_action_count : Int
   probe_submit_count : Int
 }
-pub fn ComponentGalleryModel::new(active_platform~ : PlatformId) -> Self
+pub fn ComponentGalleryModel::new(active_platform~ : PlatformId, session_runtime? : SessionRuntimeInfo) -> Self
 
 pub(all) enum ComponentGalleryMsg {
   SelectItem(String)
@@ -113,6 +118,19 @@ pub(all) enum PlatformId {
   HarmonyOs
   Web
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct SessionRuntimeInfo {
+  host : String
+  path : String
+  backend : String
+  surface_route : String
+  requested : String
+  gpu_available : Bool
+  gpu_promoted : Bool
+  note : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SessionRuntimeInfo::for_platform(PlatformId) -> Self
+pub fn SessionRuntimeInfo::new(host~ : String, path~ : String, backend~ : String, surface_route~ : String, requested~ : String, gpu_available~ : Bool, gpu_promoted~ : Bool, note? : String) -> Self
 
 // Type aliases
 
