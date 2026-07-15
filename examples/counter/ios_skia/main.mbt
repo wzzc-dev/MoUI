@@ -42,6 +42,11 @@ fn ios_counter_renderer_options() -> @ios_skia_backend.IosSkiaAppOptions {
 }
 
 ///|
+fn ios_counter_provider() -> @ios_host.IosRendererProvider {
+  @ios_skia_backend.renderer_provider(options=ios_counter_renderer_options())
+}
+
+///|
 fn ios_counter_pointer_phase(phase : Int) -> @core.PointerPhase? {
   match phase {
     0 => Some(@core.PointerPhase::Down)
@@ -60,19 +65,20 @@ pub fn ios_counter_attach_view(
   scale_factor : Double,
 ) -> Bool {
   let metrics = ios_counter_metrics(width, height, scale_factor)
-  let runtime = ios_counter_runtime(metrics)
-  match
-    @ios_skia_backend.create_session(
-      runtime~,
-      view=@ios_host.IosViewHandle::new(raw=view_handle),
-      metrics~,
-      options=ios_counter_renderer_options(),
-    ) {
-    Some(session) => {
-      ios_counter_session.val = Some(session)
-      true
+  let view = @ios_host.IosViewHandle::new(raw=view_handle)
+  let provider = ios_counter_provider()
+  match ios_counter_session.val {
+    Some(session) => session.attach_view(view, metrics, provider)
+    None => {
+      let runtime = ios_counter_runtime(metrics)
+      match @ios_host.create_session(runtime~, view~, metrics~, provider~) {
+        Some(session) => {
+          ios_counter_session.val = Some(session)
+          true
+        }
+        None => false
+      }
     }
-    None => false
   }
 }
 
@@ -138,6 +144,43 @@ pub fn ios_counter_dispatch_pointer(
 }
 
 ///|
+pub fn ios_counter_dispatch_scroll(
+  x : Double,
+  y : Double,
+  delta_x : Double,
+  delta_y : Double,
+  phase : Int,
+) -> Bool {
+  match ios_counter_session.val {
+    Some(session) => {
+      let scale = session.metrics().scale_factor.max(1.0)
+      let scroll_phase = match phase {
+        0 => @host.HostScrollPhase::Started
+        1 => @host.HostScrollPhase::Moved
+        2 => @host.HostScrollPhase::Ended
+        3 => @host.HostScrollPhase::Cancelled
+        _ => @host.HostScrollPhase::Moved
+      }
+      ignore(
+        session.dispatch(
+          @host.HostEvent::Scroll(
+            @host.HostScrollEvent::new(
+              position=@core.Point::new(x=x / scale, y=y / scale),
+              delta=@host.HostScrollDelta::Pixels(
+                @core.Point::new(x=delta_x / scale, y=delta_y / scale),
+              ),
+              phase=scroll_phase,
+            ),
+          ),
+        ),
+      )
+      true
+    }
+    None => false
+  }
+}
+
+///|
 pub fn ios_counter_render_frame() -> Bool {
   match ios_counter_session.val {
     Some(session) => {
@@ -169,6 +212,22 @@ pub fn moui_mobile_take_host_updates_json() -> String {
   match ios_counter_session.val {
     Some(session) => session.drain_host_updates_json()
     None => "[]"
+  }
+}
+
+///|
+pub fn moui_mobile_take_host_update_envelope_json() -> String {
+  match ios_counter_session.val {
+    Some(session) => session.drain_host_update_envelope_json()
+    None => "{\"schemaVersion\":1,\"sessionGeneration\":0,\"updates\":[]}"
+  }
+}
+
+///|
+pub fn moui_mobile_dispatch_host_response_envelope_json(text : String) -> Bool {
+  match ios_counter_session.val {
+    Some(session) => session.dispatch_host_response_envelope_json(text)
+    None => false
   }
 }
 
@@ -240,12 +299,95 @@ pub fn moui_mobile_complete_clipboard(
 }
 
 ///|
+pub fn moui_mobile_complete_clipboard_v1(
+  session_generation : Int,
+  id : Int,
+  kind : Int,
+  text : String,
+  bytes : Bytes,
+) -> Bool {
+  match ios_counter_session.val {
+    Some(session) if session.session_generation() == session_generation =>
+      moui_mobile_complete_clipboard(id, kind, text, bytes)
+    _ => false
+  }
+}
+
+///|
 pub fn ios_counter_detach_view() -> Unit {
+  match ios_counter_session.val {
+    Some(session) => ignore(session.detach_view())
+    None => ()
+  }
+}
+
+///|
+pub fn ios_counter_destroy_application() -> Unit {
   match ios_counter_session.val {
     Some(session) => session.dispose()
     None => ()
   }
   ios_counter_session.val = None
+}
+
+///|
+pub fn moui_mobile_attach_surface(
+  surface_handle : UInt64,
+  width : Int,
+  height : Int,
+  scale_factor : Double,
+) -> Bool {
+  ios_counter_attach_view(surface_handle, width, height, scale_factor)
+}
+
+///|
+pub fn moui_mobile_resize(
+  width : Int,
+  height : Int,
+  scale_factor : Double,
+) -> Bool {
+  ios_counter_resize(width, height, scale_factor)
+}
+
+///|
+pub fn moui_mobile_dispatch_pointer(
+  phase : Int,
+  x : Double,
+  y : Double,
+  time_ms : Double,
+) -> Bool {
+  ios_counter_dispatch_pointer(phase, x, y, time_ms)
+}
+
+///|
+pub fn moui_mobile_dispatch_scroll(
+  x : Double,
+  y : Double,
+  delta_x : Double,
+  delta_y : Double,
+  phase : Int,
+) -> Bool {
+  ios_counter_dispatch_scroll(x, y, delta_x, delta_y, phase)
+}
+
+///|
+pub fn moui_mobile_frame_tick(time_ms : Double) -> Bool {
+  ios_counter_frame_tick(time_ms)
+}
+
+///|
+pub fn moui_mobile_render_frame() -> Bool {
+  ios_counter_render_frame()
+}
+
+///|
+pub fn moui_mobile_detach_surface() -> Unit {
+  ios_counter_detach_view()
+}
+
+///|
+pub fn moui_mobile_destroy_application() -> Unit {
+  ios_counter_destroy_application()
 }
 
 ///|

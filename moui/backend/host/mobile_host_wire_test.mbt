@@ -59,7 +59,7 @@ test "mobile host wire validates platform view kind id and generation" {
     flag=true,
   )
   let response = MobileHostResponse::PlatformView(
-    "camera.preview", "preview", event,
+    1, "camera.preview", "preview", event,
   )
   assert_false(
     channel.dispatch_response_envelope(
@@ -69,7 +69,13 @@ test "mobile host wire validates platform view kind id and generation" {
   )
   assert_false(
     channel.dispatch_response(
-      MobileHostResponse::PlatformView("wrong.kind", "preview", event),
+      MobileHostResponse::PlatformView(1, "wrong.kind", "preview", event),
+      driver,
+    ),
+  )
+  assert_false(
+    channel.dispatch_response(
+      MobileHostResponse::PlatformView(0, "camera.preview", "preview", event),
       driver,
     ),
   )

@@ -11,34 +11,33 @@
 #include <mutex>
 
 #ifndef MOUI_MOBILE_RUNTIME_ATTACH_SURFACE
-#error "MOUI_MOBILE_RUNTIME_ATTACH_SURFACE must name the app attach export"
+#define MOUI_MOBILE_RUNTIME_ATTACH_SURFACE moui_mobile_attach_surface
 #endif
 #ifndef MOUI_MOBILE_RUNTIME_RESIZE
-#error "MOUI_MOBILE_RUNTIME_RESIZE must name the app resize export"
+#define MOUI_MOBILE_RUNTIME_RESIZE moui_mobile_resize
 #endif
 #ifndef MOUI_MOBILE_RUNTIME_DISPATCH_POINTER
-#error "MOUI_MOBILE_RUNTIME_DISPATCH_POINTER must name the app pointer export"
+#define MOUI_MOBILE_RUNTIME_DISPATCH_POINTER moui_mobile_dispatch_pointer
 #endif
 #ifndef MOUI_MOBILE_RUNTIME_FRAME_TICK
-#error "MOUI_MOBILE_RUNTIME_FRAME_TICK must name the app frame-tick export"
+#define MOUI_MOBILE_RUNTIME_FRAME_TICK moui_mobile_frame_tick
 #endif
 #ifndef MOUI_MOBILE_RUNTIME_RENDER_FRAME
-#error "MOUI_MOBILE_RUNTIME_RENDER_FRAME must name the app render export"
+#define MOUI_MOBILE_RUNTIME_RENDER_FRAME moui_mobile_render_frame
 #endif
 #ifndef MOUI_MOBILE_RUNTIME_DETACH_SURFACE
-#error "MOUI_MOBILE_RUNTIME_DETACH_SURFACE must name the app detach export"
+#define MOUI_MOBILE_RUNTIME_DETACH_SURFACE moui_mobile_detach_surface
 #endif
 #ifndef MOUI_MOBILE_RUNTIME_DESTROY_APPLICATION
-#error "MOUI_MOBILE_RUNTIME_DESTROY_APPLICATION must name the app destroy export"
+#define MOUI_MOBILE_RUNTIME_DESTROY_APPLICATION moui_mobile_destroy_application
 #endif
 
 #ifndef MOUI_MOBILE_RUNTIME_ENABLE_SCROLL
-#define MOUI_MOBILE_RUNTIME_ENABLE_SCROLL 0
+#define MOUI_MOBILE_RUNTIME_ENABLE_SCROLL 1
 #endif
 
-#if MOUI_MOBILE_RUNTIME_ENABLE_SCROLL && \
-    !defined(MOUI_MOBILE_RUNTIME_DISPATCH_SCROLL)
-#error "scroll capability requires MOUI_MOBILE_RUNTIME_DISPATCH_SCROLL"
+#ifndef MOUI_MOBILE_RUNTIME_DISPATCH_SCROLL
+#define MOUI_MOBILE_RUNTIME_DISPATCH_SCROLL moui_mobile_dispatch_scroll
 #endif
 
 #ifndef MOUI_MOBILE_RUNTIME_INIT
@@ -54,9 +53,9 @@
 #define MOUI_MOBILE_RUNTIME_RENDERER_STATUS_JSON \
   moui_mobile_renderer_status_json
 #endif
-#ifndef MOUI_MOBILE_RUNTIME_TAKE_HOST_UPDATES_JSON
-#define MOUI_MOBILE_RUNTIME_TAKE_HOST_UPDATES_JSON \
-  moui_mobile_take_host_updates_json
+#ifndef MOUI_MOBILE_RUNTIME_TAKE_HOST_UPDATE_ENVELOPE_JSON
+#define MOUI_MOBILE_RUNTIME_TAKE_HOST_UPDATE_ENVELOPE_JSON \
+  moui_mobile_take_host_update_envelope_json
 #endif
 #ifndef MOUI_MOBILE_RUNTIME_DISPATCH_HOST_RESPONSE_ENVELOPE
 #define MOUI_MOBILE_RUNTIME_DISPATCH_HOST_RESPONSE_ENVELOPE \
@@ -74,7 +73,7 @@
   moui_mobile_dispatch_accessibility
 #endif
 #ifndef MOUI_MOBILE_RUNTIME_COMPLETE_CLIPBOARD
-#define MOUI_MOBILE_RUNTIME_COMPLETE_CLIPBOARD moui_mobile_complete_clipboard
+#define MOUI_MOBILE_RUNTIME_COMPLETE_CLIPBOARD moui_mobile_complete_clipboard_v1
 #endif
 #ifndef MOUI_MOBILE_RUNTIME_DECREF
 #define MOUI_MOBILE_RUNTIME_DECREF moonbit_decref
@@ -117,7 +116,8 @@ extern "C" void MOUI_MOBILE_RUNTIME_DESTROY_APPLICATION(void);
 extern "C" int32_t MOUI_MOBILE_RUNTIME_RENDERER_CONFIGURE(
     moonbit_string_t mode);
 extern "C" moonbit_string_t MOUI_MOBILE_RUNTIME_RENDERER_STATUS_JSON(void);
-extern "C" moonbit_string_t MOUI_MOBILE_RUNTIME_TAKE_HOST_UPDATES_JSON(void);
+extern "C" moonbit_string_t
+MOUI_MOBILE_RUNTIME_TAKE_HOST_UPDATE_ENVELOPE_JSON(void);
 extern "C" int32_t MOUI_MOBILE_RUNTIME_DISPATCH_HOST_RESPONSE_ENVELOPE(
     moonbit_string_t envelope_json);
 extern "C" int32_t MOUI_MOBILE_RUNTIME_DISPATCH_TEXT_INPUT(
@@ -131,6 +131,7 @@ extern "C" int32_t MOUI_MOBILE_RUNTIME_DISPATCH_ACCESSIBILITY(
     int32_t action,
     moonbit_string_t value);
 extern "C" int32_t MOUI_MOBILE_RUNTIME_COMPLETE_CLIPBOARD(
+    int32_t session_generation,
     int32_t id,
     int32_t kind,
     moonbit_string_t text,
@@ -623,12 +624,13 @@ moui_mobile_utf8_buffer_v1 renderer_status_json_impl() {
   return make_owned_utf8_buffer(MOUI_MOBILE_RUNTIME_RENDERER_STATUS_JSON());
 }
 
-moui_mobile_utf8_buffer_v1 take_host_updates_json_impl() {
+moui_mobile_utf8_buffer_v1 take_host_update_envelope_json_impl() {
   const int32_t status = application_session_status();
   if (status != MOUI_MOBILE_RUNTIME_STATUS_OK_V1) {
     return failed_buffer(status);
   }
-  return make_owned_utf8_buffer(MOUI_MOBILE_RUNTIME_TAKE_HOST_UPDATES_JSON());
+  return make_owned_utf8_buffer(
+      MOUI_MOBILE_RUNTIME_TAKE_HOST_UPDATE_ENVELOPE_JSON());
 }
 
 int32_t dispatch_host_response_envelope_impl(
@@ -692,6 +694,7 @@ int32_t dispatch_accessibility_impl(
 }
 
 int32_t complete_clipboard_impl(
+    int32_t session_generation,
     int32_t id,
     int32_t kind,
     moui_mobile_utf8_view_v1 text,
@@ -723,7 +726,7 @@ int32_t complete_clipboard_impl(
   }
   OwnedMoonbitRef owned_bytes(raw_bytes);
   return MOUI_MOBILE_RUNTIME_COMPLETE_CLIPBOARD(
-      id, kind, raw_text, raw_bytes);
+      session_generation, id, kind, raw_text, raw_bytes);
 }
 
 constexpr uint64_t kCapabilities =
@@ -757,7 +760,7 @@ const moui_mobile_runtime_api_v1 kRuntimeApi = {
     render_frame_impl,
     configure_renderer_impl,
     renderer_status_json_impl,
-    take_host_updates_json_impl,
+    take_host_update_envelope_json_impl,
     dispatch_host_response_envelope_impl,
     dispatch_text_input_impl,
     dispatch_command_impl,

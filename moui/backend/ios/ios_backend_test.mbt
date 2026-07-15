@@ -23,9 +23,12 @@ test "ios runtime session renders through supplied provider" {
   let render_count = Ref(0)
   let resize_count = Ref(0)
   let sync_count = Ref(0)
+  let create_count = Ref(0)
+  let dispose_count = Ref(0)
   let completion_drain_count = Ref(0)
   let provider = IosRendererProvider::new(
     create_renderer=(_view, _metrics) => {
+      create_count.val = create_count.val + 1
       Some(
         @host.HostWindowRenderer::new(
           resize=_ => resize_count.val = resize_count.val + 1,
@@ -40,6 +43,7 @@ test "ios runtime session renders through supplied provider" {
           }),
           text_system=() => @core.TextSystem::fallback(),
           present_count=() => render_count.val,
+          dispose=() => dispose_count.val = dispose_count.val + 1,
         ),
       )
     },
@@ -60,7 +64,10 @@ test "ios runtime session renders through supplied provider" {
       provider~,
     ) {
     Some(session) => {
+      let first_generation = session.session_generation()
       assert_true(session.view().raw() == 42UL)
+      assert_true(first_generation > 0)
+      inspect(create_count.val, content="1")
       inspect(sync_count.val, content="1")
       assert_true(session.take_redraw_requested())
       ignore(session.render_frame())
@@ -73,10 +80,27 @@ test "ios runtime session renders through supplied provider" {
       ignore(session.resize(resized))
       inspect(resize_count.val, content="1")
       inspect(session.metrics().logical_size.width, content="160")
-      session.sync_view(provider)
+      assert_true(session.detach_view())
+      assert_false(session.detach_view())
+      inspect(session.disposed(), content="false")
+      inspect(session.surface_attached(), content="false")
+      inspect(session.view().raw(), content="0")
+      inspect(session.session_generation(), content="0")
+      inspect(dispose_count.val, content="1")
+      assert_true(
+        session.attach_view(IosViewHandle::new(raw=84UL), resized, provider),
+      )
+      assert_true(session.view().raw() == 84UL)
+      assert_true(session.session_generation() > first_generation)
+      inspect(create_count.val, content="2")
       inspect(sync_count.val, content="2")
+      ignore(session.render_frame())
+      inspect(render_count.val, content="2")
+      session.sync_view(provider)
+      inspect(sync_count.val, content="3")
       session.dispose()
       inspect(session.disposed(), content="true")
+      inspect(dispose_count.val, content="2")
     }
     None => fail("expected iOS session")
   }

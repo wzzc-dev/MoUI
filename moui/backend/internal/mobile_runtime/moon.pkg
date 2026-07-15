@@ -1,13 +1,18 @@
 import {
+  "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/render",
+  "moonbitlang/core/json",
 }
 
 import {
-  "wzzc-dev/moui/core",
   "wzzc-dev/moui/views",
 } for "test"
+
+import {
+  "wzzc-dev/moui/views",
+} for "wbtest"
 
 supported_targets = "native"
 

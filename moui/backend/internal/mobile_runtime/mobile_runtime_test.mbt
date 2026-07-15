@@ -27,7 +27,9 @@ test "mobile runtime core owns shared render resize and dispose lifecycle" {
     size=metrics.logical_size,
   )
   let core = MobileRuntimeSessionCore::new(runtime~, renderer~, metrics~)
-  assert_true(core.session_generation() > 0)
+  let first_generation = core.session_generation()
+  assert_true(first_generation > 0)
+  assert_true(core.surface_attached())
   assert_true(core.take_redraw_requested())
   core.advance_time(16.0)
   assert_true(core.drain_host_updates().length() > 0)
@@ -55,9 +57,51 @@ test "mobile runtime core owns shared render resize and dispose lifecycle" {
   let envelope_json = core.drain_host_update_envelope_json()
   assert_true(envelope_json.contains("\"schemaVersion\":1"))
   assert_true(envelope_json.contains("\"sessionGeneration\":"))
+  assert_true(core.detach_surface())
+  assert_false(core.detach_surface())
+  assert_false(core.surface_attached())
+  inspect(core.session_generation(), content="0")
+  inspect(core.present_count(), content="0")
+  inspect(core.dispatch_host_response(submit), content="false")
+  inspect(core.host_service_bridge().capabilities().clipboard, content="false")
+  inspect(dispose_count.val, content="1")
+  let detached_envelope = core.drain_host_update_envelope_json()
+  assert_true(detached_envelope.contains("\"sessionGeneration\":0"))
+  let second_renderer = @host.HostWindowRenderer::new(
+    resize=_ => resize_count.val = resize_count.val + 1,
+    render=_ => (),
+    render_frame=Some(_frame => {
+      render_count.val = render_count.val + 1
+      @render.RenderFrameResult::new(presented=true)
+    }),
+    drain_present_completions=Some(() => {
+      completion_drain_count.val = completion_drain_count.val + 1
+      []
+    }),
+    text_system=() => @core.TextSystem::fallback(),
+    present_count=() => render_count.val,
+    dispose=() => dispose_count.val = dispose_count.val + 1,
+  )
+  assert_true(core.attach_surface(renderer=second_renderer, metrics=resized))
+  let second_generation = core.session_generation()
+  assert_true(second_generation > first_generation)
+  assert_true(core.surface_attached())
+  assert_true(core.take_redraw_requested())
+  assert_false(
+    core.dispatch_host_response_envelope(
+      @host.MobileHostResponseEnvelope::new(
+        session_generation=first_generation,
+        response=submit,
+      ),
+    ),
+  )
+  assert_true(core.dispatch_host_response(submit))
+  ignore(core.render_frame())
+  inspect(render_count.val, content="2")
   core.dispose()
   core.dispose()
   inspect(core.disposed(), content="true")
+  inspect(core.surface_attached(), content="false")
   inspect(core.dispatch_host_response(submit), content="false")
-  inspect(dispose_count.val, content="1")
+  inspect(dispose_count.val, content="2")
 }

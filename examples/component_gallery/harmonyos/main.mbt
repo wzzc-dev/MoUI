@@ -80,6 +80,13 @@ fn component_gallery_harmonyos_renderer_options() -> @harmonyos_skia_backend.Har
 }
 
 ///|
+fn component_gallery_harmonyos_provider() -> @harmonyos_host.HarmonyOsRendererProvider {
+  @harmonyos_skia_backend.renderer_provider(
+    options=component_gallery_harmonyos_renderer_options(),
+  )
+}
+
+///|
 fn component_gallery_harmonyos_pointer_phase(
   phase : Int,
 ) -> @core.PointerPhase? {
@@ -99,21 +106,22 @@ pub fn component_gallery_harmonyos_attach_surface(
   height : Int,
   scale_factor : Double,
 ) -> Bool {
-  component_gallery_harmonyos_detach_surface()
   let metrics = component_gallery_harmonyos_metrics(width, height, scale_factor)
-  let runtime = component_gallery_harmonyos_runtime(metrics)
-  match
-    @harmonyos_skia_backend.create_session(
-      runtime~,
-      surface=@harmonyos_host.HarmonyOsSurfaceHandle::new(raw=surface_handle),
-      metrics~,
-      options=component_gallery_harmonyos_renderer_options(),
-    ) {
-    Some(session) => {
-      component_gallery_harmonyos_session.val = Some(session)
-      true
+  let surface = @harmonyos_host.HarmonyOsSurfaceHandle::new(raw=surface_handle)
+  let provider = component_gallery_harmonyos_provider()
+  match component_gallery_harmonyos_session.val {
+    Some(session) => session.attach_surface(surface, metrics, provider)
+    None => {
+      let runtime = component_gallery_harmonyos_runtime(metrics)
+      match
+        @harmonyos_host.create_session(runtime~, surface~, metrics~, provider~) {
+        Some(session) => {
+          component_gallery_harmonyos_session.val = Some(session)
+          true
+        }
+        None => false
+      }
     }
-    None => false
   }
 }
 
@@ -256,6 +264,22 @@ pub fn moui_mobile_take_host_updates_json() -> String {
 }
 
 ///|
+pub fn moui_mobile_take_host_update_envelope_json() -> String {
+  match component_gallery_harmonyos_session.val {
+    Some(session) => session.drain_host_update_envelope_json()
+    None => "{\"schemaVersion\":1,\"sessionGeneration\":0,\"updates\":[]}"
+  }
+}
+
+///|
+pub fn moui_mobile_dispatch_host_response_envelope_json(text : String) -> Bool {
+  match component_gallery_harmonyos_session.val {
+    Some(session) => session.dispatch_host_response_envelope_json(text)
+    None => false
+  }
+}
+
+///|
 pub fn moui_mobile_dispatch_text_input(
   kind : Int,
   text : String,
@@ -327,12 +351,97 @@ pub fn moui_mobile_complete_clipboard(
 }
 
 ///|
+pub fn moui_mobile_complete_clipboard_v1(
+  session_generation : Int,
+  id : Int,
+  kind : Int,
+  text : String,
+  bytes : Bytes,
+) -> Bool {
+  match component_gallery_harmonyos_session.val {
+    Some(session) if session.session_generation() == session_generation =>
+      moui_mobile_complete_clipboard(id, kind, text, bytes)
+    _ => false
+  }
+}
+
+///|
 pub fn component_gallery_harmonyos_detach_surface() -> Unit {
+  match component_gallery_harmonyos_session.val {
+    Some(session) => ignore(session.detach_surface())
+    None => ()
+  }
+}
+
+///|
+pub fn component_gallery_harmonyos_destroy_application() -> Unit {
   match component_gallery_harmonyos_session.val {
     Some(session) => session.dispose()
     None => ()
   }
   component_gallery_harmonyos_session.val = None
+}
+
+///|
+pub fn moui_mobile_attach_surface(
+  surface_handle : UInt64,
+  width : Int,
+  height : Int,
+  scale_factor : Double,
+) -> Bool {
+  component_gallery_harmonyos_attach_surface(
+    surface_handle, width, height, scale_factor,
+  )
+}
+
+///|
+pub fn moui_mobile_resize(
+  width : Int,
+  height : Int,
+  scale_factor : Double,
+) -> Bool {
+  component_gallery_harmonyos_resize(width, height, scale_factor)
+}
+
+///|
+pub fn moui_mobile_dispatch_pointer(
+  phase : Int,
+  x : Double,
+  y : Double,
+  time_ms : Double,
+) -> Bool {
+  component_gallery_harmonyos_dispatch_pointer(phase, x, y, time_ms)
+}
+
+///|
+pub fn moui_mobile_dispatch_scroll(
+  x : Double,
+  y : Double,
+  delta_x : Double,
+  delta_y : Double,
+  phase : Int,
+) -> Bool {
+  component_gallery_harmonyos_dispatch_scroll(x, y, delta_x, delta_y, phase)
+}
+
+///|
+pub fn moui_mobile_frame_tick(time_ms : Double) -> Bool {
+  component_gallery_harmonyos_frame_tick(time_ms)
+}
+
+///|
+pub fn moui_mobile_render_frame() -> Bool {
+  component_gallery_harmonyos_render_frame()
+}
+
+///|
+pub fn moui_mobile_detach_surface() -> Unit {
+  component_gallery_harmonyos_detach_surface()
+}
+
+///|
+pub fn moui_mobile_destroy_application() -> Unit {
+  component_gallery_harmonyos_destroy_application()
 }
 
 ///|

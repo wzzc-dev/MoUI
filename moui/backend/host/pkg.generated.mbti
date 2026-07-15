@@ -941,7 +941,7 @@ pub struct MobileHostChannel {
 }
 pub fn MobileHostChannel::dispatch_response(Self, MobileHostResponse, HostRuntimeDriver) -> Bool
 pub fn MobileHostChannel::dispatch_response_envelope(Self, MobileHostResponseEnvelope, HostRuntimeDriver) -> Bool
-pub fn MobileHostChannel::dispose(Self) -> Unit
+pub fn MobileHostChannel::dispose(Self, driver? : HostRuntimeDriver, reason? : String) -> Unit
 pub fn MobileHostChannel::disposed(Self) -> Bool
 pub fn MobileHostChannel::drain_update_envelope(Self) -> MobileHostUpdateEnvelope
 pub fn MobileHostChannel::drain_update_envelope_json(Self) -> String
@@ -959,7 +959,7 @@ pub(all) enum MobileHostResponse {
   Command(@wzzc-dev/moui/core.CommandIntent)
   Clipboard(HostServiceRequestId, HostServiceResponse)
   Accessibility(NativeAccessibilityActionRequest)
-  PlatformView(String, String, @wzzc-dev/moui/core.PlatformViewEvent)
+  PlatformView(Int, String, String, @wzzc-dev/moui/core.PlatformViewEvent)
   PlatformChannel(HostServiceRequestId, PlatformChannelResponse)
 } derive(Eq, ToJson, @debug.Debug)
 

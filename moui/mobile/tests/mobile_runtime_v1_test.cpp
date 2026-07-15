@@ -378,10 +378,12 @@ extern "C" int32_t mock_dispatch_accessibility(
 }
 
 extern "C" int32_t mock_complete_clipboard(
+    int32_t session_generation,
     int32_t id,
     int32_t kind,
     moonbit_string_t text,
     moonbit_bytes_t bytes) {
+  CHECK(session_generation == 7);
   g_clipboard_calls += 1;
   g_clipboard_id = id;
   g_clipboard_kind = kind;
@@ -470,7 +472,7 @@ void test_table_and_initialization(const moui_mobile_runtime_api_v1 *api) {
   CHECK(api->render_frame != nullptr);
   CHECK(api->configure_renderer != nullptr);
   CHECK(api->renderer_status_json != nullptr);
-  CHECK(api->take_host_updates_json != nullptr);
+  CHECK(api->take_host_update_envelope_json != nullptr);
   CHECK(api->dispatch_host_response_envelope != nullptr);
   CHECK(api->dispatch_text_input != nullptr);
   CHECK(api->dispatch_command != nullptr);
@@ -506,7 +508,7 @@ void test_table_and_initialization(const moui_mobile_runtime_api_v1 *api) {
   CHECK(preinit.release_context == nullptr);
   CHECK(preinit.release == nullptr);
   const moui_mobile_utf8_buffer_v1 preinit_updates =
-      api->take_host_updates_json();
+      api->take_host_update_envelope_json();
   CHECK(preinit_updates.status ==
         MOUI_MOBILE_RUNTIME_ERROR_NOT_INITIALIZED_V1);
   CHECK(preinit_updates.data == nullptr);
@@ -519,7 +521,7 @@ void test_table_and_initialization(const moui_mobile_runtime_api_v1 *api) {
         MOUI_MOBILE_RUNTIME_ERROR_NOT_INITIALIZED_V1);
   CHECK(api->dispatch_accessibility(0, 0, empty_text) ==
         MOUI_MOBILE_RUNTIME_ERROR_NOT_INITIALIZED_V1);
-  CHECK(api->complete_clipboard(0, 0, empty_text, empty_bytes) ==
+  CHECK(api->complete_clipboard(7, 0, 0, empty_text, empty_bytes) ==
         MOUI_MOBILE_RUNTIME_ERROR_NOT_INITIALIZED_V1);
   CHECK(g_detach_calls == 0);
   CHECK(g_destroy_calls == 0);
@@ -667,7 +669,8 @@ void test_utf8_and_ownership(const moui_mobile_runtime_api_v1 *api) {
   CHECK(consume_decref_count(g_last_returned_string) == 1);
   release_buffer(&status);
 
-  moui_mobile_utf8_buffer_v1 updates = api->take_host_updates_json();
+  moui_mobile_utf8_buffer_v1 updates =
+      api->take_host_update_envelope_json();
   CHECK(updates.status == MOUI_MOBILE_RUNTIME_STATUS_OK_V1);
   CHECK(updates.length == 0);
   CHECK(updates.data[0] == 0);
@@ -761,6 +764,7 @@ void test_host_services(const moui_mobile_runtime_api_v1 *api) {
   constexpr uint8_t clipboard_bytes[] = {
       UINT8_C(0x00), UINT8_C(0x01), UINT8_C(0x7F), UINT8_C(0xFF)};
   CHECK(api->complete_clipboard(
+            7,
             17,
             19,
             payload,
@@ -783,7 +787,7 @@ void test_host_services(const moui_mobile_runtime_api_v1 *api) {
   g_retained_clipboard_text = nullptr;
   g_retained_clipboard_bytes = nullptr;
 
-  CHECK(api->complete_clipboard(1, 2, payload, {nullptr, 1}) ==
+  CHECK(api->complete_clipboard(7, 1, 2, payload, {nullptr, 1}) ==
         MOUI_MOBILE_RUNTIME_ERROR_INVALID_ARGUMENT_V1);
   CHECK(g_clipboard_calls == 1);
 }
@@ -862,7 +866,7 @@ void test_destroy_is_terminal(const moui_mobile_runtime_api_v1 *api) {
   CHECK(renderer_status.release_context == nullptr);
   CHECK(renderer_status.release == nullptr);
   const moui_mobile_utf8_buffer_v1 host_updates =
-      api->take_host_updates_json();
+      api->take_host_update_envelope_json();
   CHECK(host_updates.status ==
         MOUI_MOBILE_RUNTIME_ERROR_APPLICATION_DESTROYED_V1);
   CHECK(host_updates.data == nullptr);
@@ -877,7 +881,7 @@ void test_destroy_is_terminal(const moui_mobile_runtime_api_v1 *api) {
         MOUI_MOBILE_RUNTIME_ERROR_APPLICATION_DESTROYED_V1);
   CHECK(api->dispatch_accessibility(0, 0, text) ==
         MOUI_MOBILE_RUNTIME_ERROR_APPLICATION_DESTROYED_V1);
-  CHECK(api->complete_clipboard(0, 0, text, bytes) ==
+  CHECK(api->complete_clipboard(7, 0, 0, text, bytes) ==
         MOUI_MOBILE_RUNTIME_ERROR_APPLICATION_DESTROYED_V1);
 
   CHECK(g_destroy_calls == 1);

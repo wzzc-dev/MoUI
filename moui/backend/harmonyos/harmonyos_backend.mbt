@@ -45,7 +45,7 @@ pub struct HarmonyOsRendererProvider {
 
 ///|
 pub struct HarmonyOsRuntimeSession {
-  priv surface : HarmonyOsSurfaceHandle
+  priv mut surface : HarmonyOsSurfaceHandle
   priv core : @mobile_runtime.MobileRuntimeSessionCore
 }
 
@@ -241,10 +241,53 @@ pub fn HarmonyOsRuntimeSession::disposed(
 }
 
 ///|
+pub fn HarmonyOsRuntimeSession::surface_attached(
+  self : HarmonyOsRuntimeSession,
+) -> Bool {
+  self.core.surface_attached()
+}
+
+///|
 pub fn HarmonyOsRuntimeSession::session_generation(
   self : HarmonyOsRuntimeSession,
 ) -> Int {
   self.core.session_generation()
+}
+
+///|
+pub fn HarmonyOsRuntimeSession::attach_surface(
+  self : HarmonyOsRuntimeSession,
+  surface : HarmonyOsSurfaceHandle,
+  metrics : @host.HostSurfaceMetrics,
+  provider : HarmonyOsRendererProvider,
+) -> Bool {
+  match provider.create(surface, metrics) {
+    Some(renderer) =>
+      if self.core.attach_surface(
+          renderer~,
+          metrics~,
+          image_loader=provider.image_loader,
+        ) {
+        self.surface = surface
+        provider.sync(surface, metrics)
+        true
+      } else {
+        false
+      }
+    None => false
+  }
+}
+
+///|
+pub fn HarmonyOsRuntimeSession::detach_surface(
+  self : HarmonyOsRuntimeSession,
+) -> Bool {
+  if self.core.detach_surface() {
+    self.surface = HarmonyOsSurfaceHandle::none()
+    true
+  } else {
+    false
+  }
 }
 
 ///|
@@ -268,7 +311,9 @@ pub fn HarmonyOsRuntimeSession::sync_surface(
   self : HarmonyOsRuntimeSession,
   provider : HarmonyOsRendererProvider,
 ) -> Unit {
-  provider.sync(self.surface, self.core.metrics())
+  if self.surface_attached() {
+    provider.sync(self.surface, self.core.metrics())
+  }
 }
 
 ///|
@@ -321,6 +366,14 @@ pub fn HarmonyOsRuntimeSession::dispatch_host_response_envelope(
   envelope : @host.MobileHostResponseEnvelope,
 ) -> Bool {
   self.core.dispatch_host_response_envelope(envelope)
+}
+
+///|
+pub fn HarmonyOsRuntimeSession::dispatch_host_response_envelope_json(
+  self : HarmonyOsRuntimeSession,
+  text : String,
+) -> Bool {
+  self.core.dispatch_host_response_envelope_json(text)
 }
 
 ///|
