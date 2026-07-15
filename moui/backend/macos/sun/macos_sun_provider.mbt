@@ -348,33 +348,37 @@ fn host_renderer_from_sun(
     },
     render_frame=Some(frame => renderer.render_frame(frame)),
     text_system=() => renderer.text_system(),
-    image_resources=() => renderer.image_resources(),
-    image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
-    apply_image_resource_load_completion=Some(completion => {
-      renderer.apply_image_resource_load_completion(completion)
-    }),
-    set_image_resource_change_callback=callback => {
-      renderer.set_image_resource_change_callback(callback)
-    },
     present_count=() => renderer.present_count(),
     dispose=() => renderer.dispose(),
-    draw_platform_view_pixels=fn(
-      pixels,
-      src_width,
-      src_height,
-      src_stride,
-      dst_x,
-      dst_y,
-      dst_width,
-      dst_height,
-    ) {
-      renderer.draw_platform_view_pixels(
-        pixels, src_width, src_height, src_stride, dst_x, dst_y, dst_width, dst_height,
-      )
-    },
-    set_platform_view_draw_fn=draw_fn => {
-      renderer.set_platform_view_draw_fn(draw_fn)
-    },
+    image=@host.HostRendererImageCapability::new(
+      image_resources=() => renderer.image_resources(),
+      image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
+      apply_image_resource_load_completion=Some(completion => {
+        renderer.apply_image_resource_load_completion(completion)
+      }),
+      set_image_resource_change_callback=callback => {
+        renderer.set_image_resource_change_callback(callback)
+      },
+    ),
+    platform_view=@host.HostRendererPlatformViewCapability::new(
+      draw_platform_view_pixels=fn(
+        pixels,
+        src_width,
+        src_height,
+        src_stride,
+        dst_x,
+        dst_y,
+        dst_width,
+        dst_height,
+      ) {
+        renderer.draw_platform_view_pixels(
+          pixels, src_width, src_height, src_stride, dst_x, dst_y, dst_width, dst_height,
+        )
+      },
+      set_platform_view_draw_fn=draw_fn => {
+        renderer.set_platform_view_draw_fn(draw_fn)
+      },
+    ),
   )
 }
 

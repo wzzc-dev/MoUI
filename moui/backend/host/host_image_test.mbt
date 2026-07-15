@@ -18,30 +18,32 @@ test "host window renderer forwards lifecycle closures" {
     resize=metrics => resized.val = metrics.logical_size,
     render=commands => rendered.val = commands.length(),
     text_system=() => @core.TextSystem::fallback(),
-    image_resources=() => image_records,
-    image_resource_snapshot=Some(() => {
-      @render.ImageResourceSnapshot::new(revision=7, records=image_records)
-    }),
-    apply_image_resource_load_completion=Some(completion => {
-      completion_sources.push(completion.source)
-      @render.ImageResourceSnapshot::new(revision=11, records=[
-        @render.ImageResourceRecord::ready(
-          completion.source,
-          width=completion.width,
-          height=completion.height,
-        ),
-      ])
-    }),
-    set_image_resource_change_callback=callback => {
-      callback_sets.val = callback_sets.val + 1
-      match callback {
-        Some(notify) =>
-          notify(@render.ImageResourceSnapshot::new(revision=9, records=[]))
-        None => ()
-      }
-    },
     present_count=() => presenter.val,
     dispose=() => disposed.val = disposed.val + 1,
+    image=HostRendererImageCapability::new(
+      image_resources=() => image_records,
+      image_resource_snapshot=Some(() => {
+        @render.ImageResourceSnapshot::new(revision=7, records=image_records)
+      }),
+      apply_image_resource_load_completion=Some(completion => {
+        completion_sources.push(completion.source)
+        @render.ImageResourceSnapshot::new(revision=11, records=[
+          @render.ImageResourceRecord::ready(
+            completion.source,
+            width=completion.width,
+            height=completion.height,
+          ),
+        ])
+      }),
+      set_image_resource_change_callback=callback => {
+        callback_sets.val = callback_sets.val + 1
+        match callback {
+          Some(notify) =>
+            notify(@render.ImageResourceSnapshot::new(revision=9, records=[]))
+          None => ()
+        }
+      },
+    ),
   )
   renderer.resize(
     HostSurfaceMetrics::from_logical(

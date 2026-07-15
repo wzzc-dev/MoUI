@@ -10,11 +10,13 @@ test "host async image loader schedules loading records and completes redraw" {
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
-    apply_image_resource_load_completion=Some(completion => {
-      applied_sources.push(completion.source)
-      lifecycle.apply_load_completion(completion)
-    }),
+    image=HostRendererImageCapability::new(
+      image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
+      apply_image_resource_load_completion=Some(completion => {
+        applied_sources.push(completion.source)
+        lifecycle.apply_load_completion(completion)
+      }),
+    ),
   )
   let baseline = tracker.record_presented(window_id, renderer)
   inspect(baseline.current_revision(), content="2")
@@ -96,11 +98,13 @@ test "mobile image coordinator presents loading then ready on a follow-up frame"
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
-    apply_image_resource_load_completion=Some(completion => {
-      applied.val = applied.val + 1
-      lifecycle.apply_load_completion(completion)
-    }),
+    image=HostRendererImageCapability::new(
+      image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
+      apply_image_resource_load_completion=Some(completion => {
+        applied.val = applied.val + 1
+        lifecycle.apply_load_completion(completion)
+      }),
+    ),
   )
   let loader = HostAsyncImageLoader::new(start_load=(
     _window_id,
@@ -139,10 +143,12 @@ test "host async image loader cancels window loads and ignores late completions"
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
-    apply_image_resource_load_completion=Some(completion => {
-      lifecycle.apply_load_completion(completion)
-    }),
+    image=HostRendererImageCapability::new(
+      image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
+      apply_image_resource_load_completion=Some(completion => {
+        lifecycle.apply_load_completion(completion)
+      }),
+    ),
   )
   ignore(tracker.record_presented(window_id, renderer))
   let redraws = Ref(0)
@@ -208,10 +214,12 @@ test "host async image loader ignores mismatched completion sources" {
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
-    apply_image_resource_load_completion=Some(completion => {
-      lifecycle.apply_load_completion(completion)
-    }),
+    image=HostRendererImageCapability::new(
+      image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
+      apply_image_resource_load_completion=Some(completion => {
+        lifecycle.apply_load_completion(completion)
+      }),
+    ),
   )
   ignore(tracker.record_presented(window_id, renderer))
   let redraws = Ref(0)
@@ -271,10 +279,12 @@ test "host native async image source defers completion until platform callback" 
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
-    apply_image_resource_load_completion=Some(completion => {
-      lifecycle.apply_load_completion(completion)
-    }),
+    image=HostRendererImageCapability::new(
+      image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
+      apply_image_resource_load_completion=Some(completion => {
+        lifecycle.apply_load_completion(completion)
+      }),
+    ),
   )
   ignore(tracker.record_presented(window_id, renderer))
   let redraws : Array[HostWindowId] = []
@@ -342,10 +352,12 @@ test "host native async image source drops completions after loader cancellation
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
-    apply_image_resource_load_completion=Some(completion => {
-      lifecycle.apply_load_completion(completion)
-    }),
+    image=HostRendererImageCapability::new(
+      image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
+      apply_image_resource_load_completion=Some(completion => {
+        lifecycle.apply_load_completion(completion)
+      }),
+    ),
   )
   ignore(tracker.record_presented(window_id, renderer))
   let redraws = Ref(0)
@@ -404,10 +416,12 @@ test "host async image loader new_with_drain invokes drain during schedule" {
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
-    apply_image_resource_load_completion=Some(completion => {
-      lifecycle.apply_load_completion(completion)
-    }),
+    image=HostRendererImageCapability::new(
+      image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
+      apply_image_resource_load_completion=Some(completion => {
+        lifecycle.apply_load_completion(completion)
+      }),
+    ),
   )
   ignore(tracker.record_presented(window_id, renderer))
   let completion_source = HostImageResourceCompletionSource::new(
@@ -436,10 +450,12 @@ test "host native async image source loader_with_drain spawns and drains" {
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
-    apply_image_resource_load_completion=Some(completion => {
-      lifecycle.apply_load_completion(completion)
-    }),
+    image=HostRendererImageCapability::new(
+      image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
+      apply_image_resource_load_completion=Some(completion => {
+        lifecycle.apply_load_completion(completion)
+      }),
+    ),
   )
   ignore(tracker.record_presented(window_id, renderer))
   let completion_source = HostImageResourceCompletionSource::new(

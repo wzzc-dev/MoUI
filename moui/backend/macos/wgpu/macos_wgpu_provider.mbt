@@ -247,13 +247,15 @@ fn host_renderer_from_wgpu(
     resize=metrics => renderer.resize(renderer_metrics_from_host(metrics)),
     render=commands => renderer.render(commands),
     text_system=() => renderer.text_system(),
-    image_resources=() => renderer.image_resources(),
-    image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
-    apply_image_resource_load_completion=Some(completion => {
-      renderer.apply_image_resource_load_completion(completion)
-    }),
     present_count=() => renderer.present_count(),
     dispose=() => renderer.dispose(),
+    image=@host.HostRendererImageCapability::new(
+      image_resources=() => renderer.image_resources(),
+      image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
+      apply_image_resource_load_completion=Some(completion => {
+        renderer.apply_image_resource_load_completion(completion)
+      }),
+    ),
   )
 }
 

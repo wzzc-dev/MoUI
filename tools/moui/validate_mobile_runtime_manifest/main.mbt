@@ -216,7 +216,7 @@ fn valid_surface_route(route : String) -> Bool {
 
 ///|
 /// Phase 2.3: validates the optional `renderer` selection block. The
-/// block mirrors `MobileRendererSelection` and is produced by
+/// block mirrors `NativeRendererSelection` and is produced by
 /// `scripts/record-mobile-runtime-smoke.mjs --renderer auto|skia-gpu|skia-raster`.
 /// When `gpuPromoted=true`, the validator requires the matching
 /// `gpuPromotionEvidence` block (see `validate_gpu_promotion_evidence`).
