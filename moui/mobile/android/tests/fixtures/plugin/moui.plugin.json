@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "dev.fixture.android-plugin",
+  "shellApi": 1,
+  "platforms": {
+    "android": {
+      "sources": [
+        "android/src"
+      ],
+      "resources": [
+        "android/res"
+      ],
+      "entry": "dev.fixture.android.FixturePlugin"
+    }
+  },
+  "platformViewKinds": [
+    "dev.fixture.android-plugin.view"
+  ],
+  "hostChannels": [
+    "dev.fixture.android-plugin.channel"
+  ],
+  "permissions": []
+}
