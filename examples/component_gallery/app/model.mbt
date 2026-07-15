@@ -10,6 +10,21 @@ pub(all) enum PlatformId {
 } derive(Eq, Debug, ToJson)
 
 ///|
+/// Live or default session renderer facts for the active host. Entrypoints can
+/// inject measured GPU/CPU selection; tests and desktop defaults fall back to
+/// product mainline expectations for the platform.
+pub(all) struct SessionRuntimeInfo {
+  host : String
+  path : String
+  backend : String
+  surface_route : String
+  requested : String
+  gpu_available : Bool
+  gpu_promoted : Bool
+  note : String
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) enum ComponentGalleryItemId {
   Welcome
   Button
@@ -54,6 +69,7 @@ pub(all) struct ComponentGalleryModel {
   active_platform : PlatformId
   active_item : ComponentGalleryItemId
   selected_platform : PlatformId
+  session_runtime : SessionRuntimeInfo
   page_scroll : @state.ScrollState
   sidebar_scroll : @state.ScrollState
   content_scroll : @state.ScrollState
@@ -92,8 +108,117 @@ pub(all) enum ComponentGalleryMsg {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub fn SessionRuntimeInfo::new(
+  host~ : String,
+  path~ : String,
+  backend~ : String,
+  surface_route~ : String,
+  requested~ : String,
+  gpu_available~ : Bool,
+  gpu_promoted~ : Bool,
+  note? : String = "",
+) -> SessionRuntimeInfo {
+  {
+    host,
+    path,
+    backend,
+    surface_route,
+    requested,
+    gpu_available,
+    gpu_promoted,
+    note,
+  }
+}
+
+///|
+pub fn SessionRuntimeInfo::for_platform(
+  platform : PlatformId,
+) -> SessionRuntimeInfo {
+  match platform {
+    PlatformId::MacOS =>
+      SessionRuntimeInfo::new(
+        host="macOS",
+        path="GPU",
+        backend="skia-gpu-native",
+        surface_route="metal-gpu",
+        requested="auto",
+        gpu_available=true,
+        gpu_promoted=true,
+        note="Product auto prefers Skia GPU (Metal) when the host surface is available; CPU raster is recovery fallback.",
+      )
+    PlatformId::Linux =>
+      SessionRuntimeInfo::new(
+        host="Linux",
+        path="GPU",
+        backend="skia-gpu-native",
+        surface_route="vulkan-gpu",
+        requested="auto",
+        gpu_available=true,
+        gpu_promoted=true,
+        note="Product auto prefers Skia GPU (Vulkan) when the host surface is available; CPU raster is recovery fallback.",
+      )
+    PlatformId::Windows =>
+      SessionRuntimeInfo::new(
+        host="Windows",
+        path="GPU",
+        backend="skia-gpu-native",
+        surface_route="direct3d-gpu",
+        requested="auto",
+        gpu_available=true,
+        gpu_promoted=true,
+        note="Product auto prefers Skia GPU (Direct3D) when the host surface is available; CPU raster is recovery fallback.",
+      )
+    PlatformId::Android =>
+      SessionRuntimeInfo::new(
+        host="Android",
+        path="GPU",
+        backend="skia-gpu-native",
+        surface_route="vulkan-gpu",
+        requested="auto",
+        gpu_available=true,
+        gpu_promoted=true,
+        note="Mobile product default is Skia GPU when the host surface is available; SkiaRaster is explicit/recovery.",
+      )
+    PlatformId::IOS =>
+      SessionRuntimeInfo::new(
+        host="iOS",
+        path="GPU",
+        backend="skia-gpu-native",
+        surface_route="metal-gpu",
+        requested="auto",
+        gpu_available=true,
+        gpu_promoted=true,
+        note="Mobile product default is Skia GPU when the host surface is available; SkiaRaster is explicit/recovery.",
+      )
+    PlatformId::HarmonyOs =>
+      SessionRuntimeInfo::new(
+        host="HarmonyOS",
+        path="GPU",
+        backend="skia-gpu-native",
+        surface_route="egl-gpu",
+        requested="auto",
+        gpu_available=true,
+        gpu_promoted=true,
+        note="Mobile product default is Skia GPU when the host surface is available; SkiaRaster is explicit/recovery.",
+      )
+    PlatformId::Web =>
+      SessionRuntimeInfo::new(
+        host="Web",
+        path="GPU",
+        backend="webgpu-wasm",
+        surface_route="web-canvas",
+        requested="webgpu",
+        gpu_available=true,
+        gpu_promoted=true,
+        note="Web mainline uses browser WebGPU on a canvas surface.",
+      )
+  }
+}
+
+///|
 pub fn ComponentGalleryModel::new(
   active_platform~ : PlatformId,
+  session_runtime? : SessionRuntimeInfo,
 ) -> ComponentGalleryModel {
   {
     active_platform,
@@ -104,6 +229,10 @@ pub fn ComponentGalleryModel::new(
       ComponentGalleryItemId::Welcome
     },
     selected_platform: active_platform,
+    session_runtime: match session_runtime {
+      Some(info) => info
+      None => SessionRuntimeInfo::for_platform(active_platform)
+    },
     page_scroll: @state.ScrollState::new(),
     sidebar_scroll: @state.ScrollState::new(),
     content_scroll: @state.ScrollState::new(),

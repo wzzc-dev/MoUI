@@ -127,3 +127,44 @@ fn platform_runtime_info(id : PlatformId) -> PlatformRuntimeInfo {
 fn platform_display_name(id : PlatformId) -> String {
   platform_runtime_info(id).name
 }
+
+///|
+pub fn session_path_label(backend : String, surface_route : String) -> String {
+  let lower = backend.to_lower()
+  if lower.contains("webgpu") {
+    "GPU"
+  } else if lower.contains("gpu") || surface_route.contains("gpu") {
+    "GPU"
+  } else if lower.contains("raster") ||
+    lower.contains("cpu") ||
+    surface_route == "raster" {
+    "CPU"
+  } else {
+    "Unknown"
+  }
+}
+
+///|
+/// Build a session snapshot from host-measured strings so platform entrypoints
+/// can inject live GPU/CPU selection without the shared app depending on
+/// renderer packages.
+pub fn session_runtime_from_selection(
+  host~ : String,
+  backend~ : String,
+  surface_route~ : String,
+  requested~ : String,
+  gpu_available~ : Bool,
+  gpu_promoted~ : Bool,
+  note? : String = "",
+) -> SessionRuntimeInfo {
+  SessionRuntimeInfo::new(
+    host~,
+    path=session_path_label(backend, surface_route),
+    backend~,
+    surface_route~,
+    requested~,
+    gpu_available~,
+    gpu_promoted~,
+    note~,
+  )
+}

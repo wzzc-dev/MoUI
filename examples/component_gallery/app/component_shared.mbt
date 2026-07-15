@@ -280,45 +280,72 @@ fn platform_route_card(
   } else {
     theme.palette.outline.multiply_alpha(0.5)
   }
-  let inner = width - 28.0
+  let padding = 14.0
+  let inner = (width - padding * 2.0).max(1.0)
+  let badge_width = 88.0
+  let title_width = (inner - badge_width - theme.spacing_scale.xs).max(96.0)
+  let stack = if inner < 240.0 {
+    column(
+      [
+        text(
+          info.name,
+          role=@views.TextRole::Subtitle,
+          theme~,
+          width=inner,
+          height=28.0,
+          align=@text.TextAlign::TextStart,
+        ),
+        status_badge(
+          if active {
+            "host"
+          } else {
+            info.status
+          },
+          tone=if active { @views.BadgeTone::Accent } else { info.badge_tone },
+          theme~,
+          width=badge_width,
+        ),
+      ],
+      spacing=theme.spacing_scale.xs,
+      align=@views.CrossAlign::Start,
+    )
+  } else {
+    row(
+      [
+        text(
+          info.name,
+          role=@views.TextRole::Subtitle,
+          theme~,
+          width=title_width,
+          height=28.0,
+          align=@text.TextAlign::TextStart,
+        ),
+        spacer(weight=1.0),
+        status_badge(
+          if active {
+            "host"
+          } else {
+            info.status
+          },
+          tone=if active { @views.BadgeTone::Accent } else { info.badge_tone },
+          theme~,
+          width=badge_width,
+        ),
+      ],
+      spacing=theme.spacing_scale.xs,
+      align=@views.CrossAlign::Center,
+    )
+  }
   container(
     column(
       [
-        row(
-          [
-            text(
-              info.name,
-              role=@views.TextRole::Subtitle,
-              theme~,
-              width=(inner - 104.0).max(130.0),
-              height=28.0,
-              align=@text.TextAlign::TextStart,
-            ),
-            spacer(weight=1.0),
-            status_badge(
-              if active {
-                "host"
-              } else {
-                info.status
-              },
-              tone=if active {
-                @views.BadgeTone::Accent
-              } else {
-                info.badge_tone
-              },
-              theme~,
-              width=92.0,
-            ),
-          ],
-          spacing=theme.spacing_scale.xs,
-          align=@views.CrossAlign::Center,
-        ),
+        stack,
         wrapped_text(
           info.route,
           role=@views.TextRole::Caption,
           theme~,
           width=inner,
-          height=36.0,
+          height=40.0,
           align=@text.TextAlign::TextStart,
         ),
         wrapped_text(
@@ -326,7 +353,7 @@ fn platform_route_card(
           role=@views.TextRole::Mono,
           theme~,
           width=inner,
-          height=44.0,
+          height=56.0,
           align=@text.TextAlign::TextStart,
         ),
         progress_status(
@@ -346,16 +373,15 @@ fn platform_route_card(
             @views.ButtonVariant::Tonal
           },
           theme~,
-          width=112.0,
+          width=if inner < 160.0 { inner } else { 112.0 },
         ),
       ],
       spacing=theme.spacing_scale.sm,
       align=@views.CrossAlign::Stretch,
     ),
     width~,
-    height=244.0,
     variant=@views.ContainerVariant::Raised,
-    padding=14.0,
+    padding~,
     corner_radius=8.0,
     theme~,
   ).border(

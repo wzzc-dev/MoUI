@@ -1,6 +1,8 @@
 ///|
 test "component gallery update changes model" {
   let model = ComponentGalleryModel::new(active_platform=PlatformId::MacOS)
+  inspect(model.session_runtime.path, content="GPU")
+  inspect(model.session_runtime.backend, content="skia-gpu-native")
   let item = update(model, SelectItem("text-field"))
   assert_true(item.active_item == @app.ComponentGalleryItemId::TextField)
   let selected = update(item, SelectPlatform("android"))
@@ -85,6 +87,48 @@ test "component gallery runtime renders component catalog" {
   assert_true(has_text(commands, "iOS"))
   assert_true(has_text(commands, "HarmonyOS"))
   assert_true(has_text(commands, "Web"))
+}
+
+///|
+test "component gallery platform routes show session runtime" {
+  let selected = update(
+    ComponentGalleryModel::new(
+      active_platform=PlatformId::Linux,
+      session_runtime=session_runtime_from_selection(
+        host="Linux",
+        backend="skia-raster-native",
+        surface_route="raster",
+        requested="auto",
+        gpu_available=false,
+        gpu_promoted=true,
+        note="Skia GPU host surface is unavailable",
+      ),
+    ),
+    SelectItem("platform-routes"),
+  )
+  assert_true(
+    selected.active_item == @app.ComponentGalleryItemId::PlatformRoutes,
+  )
+  inspect(selected.session_runtime.path, content="CPU")
+  let selected_runtime = @runtime.new_program_with_dimensions(
+    program=@moui.Program::simple_with_environment(
+      init=selected,
+      update~,
+      view~,
+    ),
+    width=1040.0,
+    height=720.0,
+  )
+  let commands = selected_runtime.draw_commands()
+  assert_true(has_text(commands, "Session Runtime"))
+  assert_true(has_text(commands, "Path"))
+  assert_true(has_text(commands, "CPU"))
+  assert_true(has_text(commands, "skia-raster-native"))
+  assert_true(has_text(commands, "raster"))
+  assert_true(has_text(commands, "Platform Routes"))
+  assert_true(
+    has_text_containing(commands, "Skia GPU host surface is unavailable"),
+  )
 }
 
 ///|
