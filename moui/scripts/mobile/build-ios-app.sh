@@ -24,6 +24,7 @@ Options:
   --build-dir <dir>         Working directory, default artifacts/ios/<app>.
   --output <app>            App bundle output path.
   --fallback-skia           Do not fetch/link real Skia; packaging smoke only.
+  --ejected-shell           Build a versioned ejected SwiftUI shell project.
   --legacy-uikit-shell      Build the frozen Release N UIKit compatibility shell.
   --prepare-only            Generate MoonBit/Skia inputs, then stop.
   -h, --help                Show this help.
@@ -47,6 +48,8 @@ build_dir=""
 output_app=""
 fallback_skia=0
 shell_mode="managed"
+ejected_shell=0
+legacy_uikit_shell=0
 prepare_only=0
 
 while [ "$#" -gt 0 ]; do
@@ -67,7 +70,8 @@ while [ "$#" -gt 0 ]; do
     --build-dir) build_dir="${2:?missing dir after --build-dir}"; shift 2 ;;
     --output) output_app="${2:?missing app path after --output}"; shift 2 ;;
     --fallback-skia) fallback_skia=1; shift ;;
-    --legacy-uikit-shell) shell_mode="legacy-uikit"; shift ;;
+    --ejected-shell) shell_mode="ejected"; ejected_shell=1; shift ;;
+    --legacy-uikit-shell) shell_mode="legacy-uikit"; legacy_uikit_shell=1; shift ;;
     --prepare-only) prepare_only=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unknown option: $1" >&2; usage >&2; exit 2 ;;
@@ -77,6 +81,10 @@ done
 if [ -z "$app" ]; then
   echo "--app is required" >&2
   usage >&2
+  exit 2
+fi
+if [ "$ejected_shell" -eq 1 ] && [ "$legacy_uikit_shell" -eq 1 ]; then
+  echo "--ejected-shell and --legacy-uikit-shell are mutually exclusive" >&2
   exit 2
 fi
 
@@ -106,6 +114,10 @@ if [ "$shell_mode" = "legacy-uikit" ] && { [ -z "$xcode_project" ] || [ -z "$sch
   echo "--legacy-uikit-shell requires --xcode-project and --scheme" >&2
   exit 2
 fi
+if [ "$shell_mode" = "ejected" ] && [ -z "$xcode_project" ]; then
+  echo "--ejected-shell requires --xcode-project" >&2
+  exit 2
+fi
 if [ -z "$xcode_project" ]; then
   xcode_project="$build_dir/ios-project/MoUIMobileApp.xcodeproj"
   stage_ios_project=1
@@ -114,6 +126,9 @@ else
   if [ "${xcode_project#/}" = "$xcode_project" ]; then
     xcode_project="$workspace_root/$xcode_project"
   fi
+fi
+if [ -z "$scheme" ] && [ "$shell_mode" = "ejected" ]; then
+  scheme="$(basename "$xcode_project" .xcodeproj)"
 fi
 [ -n "$scheme" ] || scheme="MoUIMobileApp"
 [ -n "$product_name" ] || product_name="$scheme"

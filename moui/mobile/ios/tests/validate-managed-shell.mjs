@@ -104,7 +104,10 @@ contains(resolver, "statusBar:", resolverPath);
 contains(resolver, "orientation:", resolverPath);
 
 contains(builder, 'shell_mode="managed"', builderPath);
+contains(builder, '--ejected-shell) shell_mode="ejected"', builderPath);
 contains(builder, '--legacy-uikit-shell) shell_mode="legacy-uikit"', builderPath);
+contains(builder, "--ejected-shell requires --xcode-project", builderPath);
+contains(builder, 'scheme="$(basename "$xcode_project" .xcodeproj)"', builderPath);
 contains(builder, "requires Xcode 15.4 or newer", builderPath);
 contains(builder, 'MOUI_MOBILE_IOS_SHELL="$shell_mode"', builderPath);
 contains(builder, 'xcode_project="$build_dir/ios-project/MoUIMobileApp.xcodeproj"', builderPath);
