@@ -34,6 +34,11 @@ interface HostUpdate {
   id?: number;
   payload: ImePayload | SemanticsPayload | ClipboardPayload | string;
 }
+interface HostUpdateEnvelope {
+  schemaVersion: number;
+  sessionGeneration: number;
+  updates: HostUpdate[];
+}
 
 @Entry
 @Component
@@ -160,16 +165,17 @@ struct Index {
 
   private processHostUpdates(): void {
     const encoded = componentGallery.takeHostUpdates();
-    if (encoded.length === 0 || encoded === '[]') return;
-    const updates = JSON.parse(encoded) as HostUpdate[];
-    updates.forEach((update: HostUpdate) => {
+    if (encoded.length === 0) return;
+    const envelope = JSON.parse(encoded) as HostUpdateEnvelope;
+    if (envelope.schemaVersion !== 1 || envelope.sessionGeneration <= 0) return;
+    envelope.updates.forEach((update: HostUpdate) => {
       if (update.kind === 'ime') {
         this.applyIme(update.payload as ImePayload);
       } else if (update.kind === 'semantics') {
         this.semanticsNodes = (update.payload as SemanticsPayload).nodes;
         hilog.info(0x4D4F, 'MoUIHarmony', 'moui-mobile service accessibility tree nodes=%{public}d', this.semanticsNodes.length);
       } else if (update.kind === 'clipboard' && update.id !== undefined) {
-        this.applyClipboard(update.id, update.payload as ClipboardPayload);
+        this.applyClipboard(envelope.sessionGeneration, update.id, update.payload as ClipboardPayload);
       } else if (update.kind === 'diagnostic') {
         hilog.info(0x4D4F, 'MoUIHarmony', '%{public}s', update.payload as string);
       }
@@ -195,38 +201,38 @@ struct Index {
     }
   }
 
-  private applyClipboard(id: number, payload: ClipboardPayload): void {
+  private applyClipboard(generation: number, id: number, payload: ClipboardPayload): void {
     const board = pasteboard.getSystemPasteboard();
     try {
       if (payload.operation === 'read-text') {
-        componentGallery.completeClipboard(id, 1, board.getDataSync().getPrimaryText(), new ArrayBuffer(0));
+        componentGallery.completeClipboard(generation, id, 1, board.getDataSync().getPrimaryText(), new ArrayBuffer(0));
         hilog.info(0x4D4F, 'MoUIHarmony', 'moui-mobile service clipboard complete operation=read-text');
       } else if (payload.operation === 'write-text') {
         board.setDataSync(pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, payload.text ?? ''));
-        componentGallery.completeClipboard(id, 3, '', new ArrayBuffer(0));
+        componentGallery.completeClipboard(generation, id, 3, '', new ArrayBuffer(0));
         hilog.info(0x4D4F, 'MoUIHarmony', 'moui-mobile service clipboard complete operation=write-text');
       } else if (payload.operation === 'write-image') {
         const bytes = new Uint8Array(payload.bytes ?? []).buffer;
         board.setDataSync(pasteboard.createData(payload.mime ?? 'image/png', bytes));
-        componentGallery.completeClipboard(id, 3, '', new ArrayBuffer(0));
+        componentGallery.completeClipboard(generation, id, 3, '', new ArrayBuffer(0));
         hilog.info(0x4D4F, 'MoUIHarmony', 'moui-mobile service clipboard complete operation=write-image');
       } else if (payload.operation === 'read-image') {
         const data = board.getDataSync();
         const mime = data.getPrimaryMimeType();
         data.getRecord(0).getData(mime).then((value: pasteboard.ValueType) => {
           if (value instanceof ArrayBuffer) {
-            componentGallery.completeClipboard(id, 2, '', value);
+            componentGallery.completeClipboard(generation, id, 2, '', value);
             hilog.info(0x4D4F, 'MoUIHarmony', 'moui-mobile service clipboard complete operation=read-image');
           } else {
-            componentGallery.completeClipboard(id, 0, 'clipboard image is unavailable', new ArrayBuffer(0));
+            componentGallery.completeClipboard(generation, id, 0, 'clipboard image is unavailable', new ArrayBuffer(0));
           }
         }).catch((error: Error) => {
-          componentGallery.completeClipboard(id, 0, error.message, new ArrayBuffer(0));
+          componentGallery.completeClipboard(generation, id, 0, error.message, new ArrayBuffer(0));
         });
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'clipboard operation failed';
-      componentGallery.completeClipboard(id, 0, message, new ArrayBuffer(0));
+      componentGallery.completeClipboard(generation, id, 0, message, new ArrayBuffer(0));
     }
   }
 

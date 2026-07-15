@@ -1,28 +1,16 @@
-export const attachSurface: (
-  surfaceHandle: number,
-  width: number,
-  height: number,
-  scaleFactor: number
-) => boolean;
-export const resize: (
-  width: number,
-  height: number,
-  scaleFactor: number
-) => boolean;
-export const dispatchPointer: (
-  phase: number,
-  x: number,
-  y: number,
-  timeMs: number
-) => boolean;
 export const frameTick: (timeMs: number) => boolean;
 export const takeHostUpdates: () => string;
 export const rendererConfigure: (mode: string) => boolean;
 export const rendererStatusJson: () => string;
-export const a11ySmokeEnabled: () => boolean;
+export const dispatchHostResponseEnvelope: (envelopeJson: string) => boolean;
 export const dispatchTextInput: (kind: number, text: string, start: number, end: number) => boolean;
 export const dispatchCommand: (kind: number) => boolean;
 export const dispatchAccessibility: (elementId: number, action: number, value: string) => boolean;
-export const completeClipboard: (id: number, kind: number, text: string, bytes: ArrayBuffer) => boolean;
-export const renderFrame: () => boolean;
-export const detachSurface: () => boolean;
+export const completeClipboard: (
+  sessionGeneration: number,
+  id: number,
+  kind: number,
+  text: string,
+  bytes: ArrayBuffer
+) => boolean;
+export const destroyApplication: () => boolean;

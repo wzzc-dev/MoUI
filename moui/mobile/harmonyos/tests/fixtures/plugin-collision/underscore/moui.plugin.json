@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "dev.fixture.a_b",
+  "shellApi": 1,
+  "platforms": {
+    "harmonyos": {
+      "sources": [
+        "UnderscorePlugin.ets"
+      ],
+      "resources": [
+        "underscore.txt"
+      ],
+      "entry": "UnderscorePlugin"
+    }
+  },
+  "platformViewKinds": [],
+  "hostChannels": [],
+  "permissions": []
+}

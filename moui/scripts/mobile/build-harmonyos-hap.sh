@@ -3,13 +3,13 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-Usage: moui/scripts/mobile/build-harmonyos-hap.sh --app <id> --harmonyos-project <dir> [options]
+Usage: moui/scripts/mobile/build-harmonyos-hap.sh --app <id> [options]
 
-Build a MoUI HarmonyOS HAP through an app Stage Ability/XComponent project.
+Build a MoUI HarmonyOS HAP through the package-owned managed shell.
 
 Options:
   --app <id>                    Mobile app id.
-  --harmonyos-project <dir>     HarmonyOS project directory. Default ./harmonyos_app.
+  --harmonyos-project <dir>     App-owned project used only with --legacy-shell.
   --app-config <path>           App-owned mobile.json. Default examples/<app>/mobile.json or ./mobile.json.
   --contracts <path>            Native contract registry. Default <moui-root>/mobile/build-contracts.json.
   --workspace-root <dir>        App workspace root. Default current directory.
@@ -23,6 +23,7 @@ Options:
   --hvigorw <path>              Hvigor wrapper path for non-fallback builds. Defaults to HVIGORW or DevEco Studio.
   --ohpm <path>                 ohpm executable path for non-fallback builds. Defaults to OHPM or DevEco Studio.
   --fallback-skia               Do not fetch/link real Skia; packaging smoke only.
+  --legacy-shell                Release N app-owned shell fallback (deprecated).
   --prepare-only                Generate MoonBit/Skia/CMake inputs, then stop after project preparation.
   -h, --help                    Show this help.
 
@@ -48,6 +49,7 @@ sdk_home="${HARMONYOS_SDK_HOME:-${OHOS_SDK_HOME:-}}"
 hvigorw_path="${HVIGORW:-}"
 ohpm_path="${OHPM:-}"
 fallback_skia=0
+legacy_shell=0
 prepare_only=0
 
 while [ "$#" -gt 0 ]; do
@@ -67,6 +69,7 @@ while [ "$#" -gt 0 ]; do
     --hvigorw) hvigorw_path="${2:?missing path after --hvigorw}"; shift 2 ;;
     --ohpm) ohpm_path="${2:?missing path after --ohpm}"; shift 2 ;;
     --fallback-skia) fallback_skia=1; shift ;;
+    --legacy-shell) legacy_shell=1; shift ;;
     --prepare-only) prepare_only=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unknown option: $1" >&2; usage >&2; exit 2 ;;
@@ -293,9 +296,7 @@ if [ -z "$skia_root" ]; then
 elif [ "${skia_root#/}" = "$skia_root" ]; then
   skia_root="$workspace_root/$skia_root"
 fi
-if [ -z "$harmonyos_project" ]; then
-  harmonyos_project="$workspace_root/harmonyos_app"
-elif [ "${harmonyos_project#/}" = "$harmonyos_project" ]; then
+if [ -n "$harmonyos_project" ] && [ "${harmonyos_project#/}" = "$harmonyos_project" ]; then
   harmonyos_project="$workspace_root/$harmonyos_project"
 fi
 if [ -z "$build_dir" ]; then
@@ -304,9 +305,26 @@ elif [ "${build_dir#/}" = "$build_dir" ]; then
   build_dir="$workspace_root/$build_dir"
 fi
 
-if [ ! -d "$harmonyos_project/entry/src/main/cpp" ]; then
-  echo "HarmonyOS project was not found or is missing entry/src/main/cpp: $harmonyos_project" >&2
-  exit 1
+if [ "$legacy_shell" -eq 1 ]; then
+  if [ -z "$harmonyos_project" ] || [ ! -d "$harmonyos_project/entry/src/main/cpp" ]; then
+    echo "--legacy-shell requires --harmonyos-project with entry/src/main/cpp: $harmonyos_project" >&2
+    exit 1
+  fi
+  if [ -z "$app_config" ]; then
+    echo "--legacy-shell requires an explicit schema v1 --app-config" >&2
+    exit 1
+  fi
+  legacy_config_path="$(make_absolute_path "$app_config")"
+  node -e '
+const fs = require("fs");
+const path = process.argv[1];
+const config = JSON.parse(fs.readFileSync(path, "utf8"));
+if (config.schemaVersion !== 1) {
+  console.error(`--legacy-shell requires schemaVersion 1: ${path}`);
+  process.exit(1);
+}
+' "$legacy_config_path"
+  log "Using deprecated Release N app-owned HarmonyOS shell"
 fi
 
 prepare_args=(
@@ -325,13 +343,49 @@ if [ "$fallback_skia" -eq 1 ]; then
   prepare_args+=("--fallback-skia")
 fi
 
-node "$moui_root/scripts/mobile/prepare-native-build.mjs" "${prepare_args[@]}"
+if [ "$legacy_shell" -eq 1 ]; then
+  MOUI_MOBILE_ALLOW_LEGACY_CONFIG=1 \
+    node "$moui_root/scripts/mobile/prepare-native-build.mjs" "${prepare_args[@]}"
+else
+  node "$moui_root/scripts/mobile/prepare-native-build.mjs" "${prepare_args[@]}"
+fi
 
 ohos_arch="$(json_get ohosArch)"
 native_library="$(json_get nativeLibrary)"
 product_name="$(json_get productName)"
 cmake_config="$(json_get cmakeConfig)"
 moon_home="${MOON_HOME:-$HOME/.moon}"
+
+if [ "$legacy_shell" -eq 1 ]; then
+  source_project="$harmonyos_project"
+  cat > "$build_dir/mobile-deprecation.json" <<'JSON'
+{
+  "schemaVersion": 1,
+  "code": "harmonyos-app-owned-shell",
+  "deprecated": true,
+  "removal": "Release N+1",
+  "replacement": "schema v2 managed HarmonyOS shell"
+}
+JSON
+else
+  source_project="$build_dir/managed-shell"
+  resolver_args=(
+    "--workspace-root" "$workspace_root"
+    "--moui-root" "$moui_root"
+    "--app" "$app"
+    "--renderer" "$renderer"
+    "--output" "$source_project"
+  )
+  [ -z "$app_config" ] || resolver_args+=("--app-config" "$app_config")
+  [ -z "$contracts" ] || resolver_args+=("--contracts" "$contracts")
+  log "Staging package-owned canonical HarmonyOS shell at $source_project"
+  node "$moui_root/mobile/harmonyos/resolve-managed-shell.mjs" "${resolver_args[@]}"
+fi
+
+if [ ! -d "$source_project/entry/src/main/cpp" ]; then
+  echo "resolved HarmonyOS shell is missing entry/src/main/cpp: $source_project" >&2
+  exit 1
+fi
 
 if [ -z "$output_hap" ]; then
   output_hap="$build_dir/$product_name.hap"
@@ -378,7 +432,7 @@ if [ "$fallback_skia" -eq 0 ]; then
 
   hvigor_project_dir="$build_dir/hvigor-project"
   log "Preparing temporary Hvigor project at $hvigor_project_dir"
-  stage_harmonyos_project "$harmonyos_project" "$hvigor_project_dir"
+  stage_harmonyos_project "$source_project" "$hvigor_project_dir"
   inject_harmonyos_signing_config "$hvigor_project_dir"
   rm -rf \
     "$hvigor_project_dir/.hvigor" \
@@ -425,6 +479,7 @@ if [ "$fallback_skia" -eq 0 ]; then
       MOUI_MOON_HOME="$moon_home" \
       MOUI_MOBILE_NATIVE_CONFIG="$cmake_config" \
       MOUI_HARMONYOS_FALLBACK=OFF \
+      MOUI_HARMONYOS_LEGACY_SHELL="$([ "$legacy_shell" -eq 1 ] && printf ON || printf OFF)" \
       "$hvigorw_path" --no-daemon assembleHap
   )
 
@@ -445,12 +500,17 @@ fi
 
 cmake_build_dir="$build_dir/cmake/fallback/$ohos_arch"
 stage_dir="$build_dir/hap-stage"
+# Managed, ejected, and Release N fixtures may reuse one build directory while
+# pointing CMake at different shell source trees. Never carry a source-bound
+# CMake cache across those modes.
+rm -rf "$cmake_build_dir"
 cmake_args=(
-  -S "$harmonyos_project/entry/src/main/cpp"
+  -S "$source_project/entry/src/main/cpp"
   -B "$cmake_build_dir"
   "-DMOUI_ROOT=$moui_root"
   "-DMOUI_MOBILE_NATIVE_CONFIG=$cmake_config"
   "-DMOUI_HARMONYOS_FALLBACK=ON"
+  "-DMOUI_HARMONYOS_LEGACY_SHELL=$([ "$legacy_shell" -eq 1 ] && printf ON || printf OFF)"
 )
 if command -v ninja >/dev/null 2>&1; then
   cmake_args=(-G Ninja "${cmake_args[@]}")
@@ -473,7 +533,7 @@ if [ -z "$native_lib" ]; then
 fi
 
 log "Staging HarmonyOS app layout"
-stage_harmonyos_project "$harmonyos_project" "$stage_dir"
+stage_harmonyos_project "$source_project" "$stage_dir"
 mkdir -p "$stage_dir/entry/libs/$ohos_arch"
 cp "$native_lib" "$stage_dir/entry/libs/$ohos_arch/lib${native_library}.so"
 while IFS= read -r shared_lib || [ -n "$shared_lib" ]; do

@@ -11,6 +11,10 @@
     {
       "name": "entry_desc",
       "value": "MoUI HarmonyOS app entry ability"
+    },
+    {
+      "name": "permission_read_pasteboard",
+      "value": "Allow clipboard content to be pasted into this app."
     }
   ]
 }

@@ -1,5 +1,9 @@
 # MoUI HarmonyOS Demo Shell
 
+> Release N legacy fixture: normal builds stage the framework-owned canonical
+> shell from `moui/mobile/harmonyos/template`; this app-owned project remains
+> only for explicit `--legacy-shell` compatibility validation.
+
 This directory owns the experimental HarmonyOS shell for the standalone
 `examples/harmonyos_demo` app. It is intentionally separate from Counter so the
 existing Android/iOS evidence remains stable while HarmonyOS support matures.

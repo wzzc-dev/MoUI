@@ -1,6 +1,7 @@
 import UIAbility from '@ohos.app.ability.UIAbility';
 import hilog from '@ohos.hilog';
 import window from '@ohos.window';
+import mouiDemo from 'libmoui_harmonyos_demo.so';
 
 const DOMAIN = 0x4D4F;
 const TAG = 'MoUIHarmony';
@@ -18,6 +19,7 @@ export default class EntryAbility extends UIAbility {
   }
 
   onDestroy(): void {
-    hilog.info(DOMAIN, TAG, 'ability destroyed');
+    const destroyed = mouiDemo.destroyApplication();
+    hilog.info(DOMAIN, TAG, 'ability destroyed runtime=%{public}d', destroyed ? 1 : 0);
   }
 }

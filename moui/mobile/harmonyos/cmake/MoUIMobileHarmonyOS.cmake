@@ -20,7 +20,23 @@ if(NOT DEFINED MOUI_HARMONYOS_FALLBACK)
   endif()
 endif()
 
+if(NOT DEFINED MOUI_HARMONYOS_LEGACY_SHELL)
+  if(DEFINED ENV{MOUI_HARMONYOS_LEGACY_SHELL} AND
+     NOT "$ENV{MOUI_HARMONYOS_LEGACY_SHELL}" STREQUAL "")
+    set(MOUI_HARMONYOS_LEGACY_SHELL
+      "$ENV{MOUI_HARMONYOS_LEGACY_SHELL}"
+      CACHE BOOL "Build Release N app-owned HarmonyOS shell"
+    )
+  else()
+    set(MOUI_HARMONYOS_LEGACY_SHELL OFF CACHE BOOL "Build Release N app-owned HarmonyOS shell")
+  endif()
+endif()
+
 set(MOUI_MOBILE_SHARED_HARMONYOS_DIR "${MOUI_ROOT}/mobile/harmonyos")
+if(NOT EXISTS "${MOUI_ROOT}/mobile/include/moui_mobile_runtime_v1.h" OR
+   NOT EXISTS "${MOUI_ROOT}/mobile/runtime/moui_mobile_runtime_v1.cpp")
+  message(FATAL_ERROR "HarmonyOS shell requires the MoUI Mobile Runtime ABI v1 adapter")
+endif()
 set(MOUI_SKIA_STUB_SOURCES
   "${MOUI_SKIA_ROOT}/native/skia_stub.cpp"
   "${MOUI_SKIA_ROOT}/native/skia_stub_common.cpp"
@@ -36,6 +52,7 @@ set(MOUI_SKIA_STUB_SOURCES
 
 add_library(${MOUI_MOBILE_LIBRARY_NAME} SHARED
   "${MOUI_MOBILE_SHARED_HARMONYOS_DIR}/src/main/cpp/moui_mobile_harmonyos_napi.cpp"
+  "${MOUI_ROOT}/mobile/runtime/moui_mobile_runtime_v1.cpp"
   "${MOUI_MOBILE_MOONBIT_C}"
   "${MOUI_MOON_HOME}/lib/runtime.c"
   "${MOUI_WORKSPACE_ROOT}/.mooncakes/moonbitlang/x/fs/fs_native.c"
@@ -45,6 +62,7 @@ add_library(${MOUI_MOBILE_LIBRARY_NAME} SHARED
 
 target_include_directories(${MOUI_MOBILE_LIBRARY_NAME} PRIVATE
   "${MOUI_MOON_HOME}/include"
+  "${MOUI_ROOT}/mobile/include"
   "${MOUI_SKIA_ROOT}/native"
 )
 
@@ -59,14 +77,6 @@ target_compile_definitions(${MOUI_MOBILE_LIBRARY_NAME} PRIVATE
   "MOUI_MOBILE_APP_ID=\"${MOUI_MOBILE_APP_ID}\""
   "MOUI_MOBILE_RENDERER_REQUESTED=\"${MOUI_MOBILE_RENDERER_REQUESTED}\""
   "MOUI_MOBILE_RENDERER_SELECTED=\"${MOUI_MOBILE_RENDERER_SELECTED}\""
-  "MOUI_MOBILE_ENABLE_SCROLL=$<IF:$<BOOL:${MOUI_MOBILE_ENABLE_SCROLL}>,1,0>"
-  "MOUI_MOBILE_ATTACH_SURFACE=${MOUI_MOBILE_ATTACH_SURFACE_SYMBOL}"
-  "MOUI_MOBILE_RESIZE=${MOUI_MOBILE_RESIZE_SYMBOL}"
-  "MOUI_MOBILE_DISPATCH_POINTER=${MOUI_MOBILE_DISPATCH_POINTER_SYMBOL}"
-  "MOUI_MOBILE_DISPATCH_SCROLL=${MOUI_MOBILE_DISPATCH_SCROLL_SYMBOL}"
-  "MOUI_MOBILE_FRAME_TICK=${MOUI_MOBILE_FRAME_TICK_SYMBOL}"
-  "MOUI_MOBILE_RENDER_FRAME=${MOUI_MOBILE_RENDER_FRAME_SYMBOL}"
-  "MOUI_MOBILE_DETACH_SURFACE=${MOUI_MOBILE_DETACH_SURFACE_SYMBOL}"
   "MOUI_MOBILE_SMOKE_ATTACH_SURFACE=${MOUI_MOBILE_LIBRARY_NAME}_attach_surface_for_smoke"
   "MOUI_MOBILE_SMOKE_RENDER_FRAME=${MOUI_MOBILE_LIBRARY_NAME}_render_frame_for_smoke"
   "NODE_GYP_MODULE_NAME=${MOUI_MOBILE_LIBRARY_NAME}"
@@ -74,6 +84,44 @@ target_compile_definitions(${MOUI_MOBILE_LIBRARY_NAME} PRIVATE
   # misses toolchain predefines through an unusual flag path.
   __OHOS__=1
 )
+
+if(MOUI_HARMONYOS_LEGACY_SHELL)
+  target_compile_definitions(${MOUI_MOBILE_LIBRARY_NAME} PRIVATE
+    "MOUI_MOBILE_RUNTIME_ENABLE_SCROLL=$<IF:$<BOOL:${MOUI_MOBILE_ENABLE_SCROLL}>,1,0>"
+    "MOUI_MOBILE_RUNTIME_ATTACH_SURFACE=${MOUI_MOBILE_ATTACH_SURFACE_SYMBOL}"
+    "MOUI_MOBILE_RUNTIME_RESIZE=${MOUI_MOBILE_RESIZE_SYMBOL}"
+    "MOUI_MOBILE_RUNTIME_DISPATCH_POINTER=${MOUI_MOBILE_DISPATCH_POINTER_SYMBOL}"
+    "MOUI_MOBILE_RUNTIME_DISPATCH_SCROLL=${MOUI_MOBILE_DISPATCH_SCROLL_SYMBOL}"
+    "MOUI_MOBILE_RUNTIME_FRAME_TICK=${MOUI_MOBILE_FRAME_TICK_SYMBOL}"
+    "MOUI_MOBILE_RUNTIME_RENDER_FRAME=${MOUI_MOBILE_RENDER_FRAME_SYMBOL}"
+    "MOUI_MOBILE_RUNTIME_DETACH_SURFACE=${MOUI_MOBILE_DETACH_SURFACE_SYMBOL}"
+  )
+else()
+  if(NOT "${MOUI_MOBILE_LIBRARY_NAME}" STREQUAL "moui_mobile_harmonyos")
+    message(FATAL_ERROR "managed HarmonyOS shell requires native library moui_mobile_harmonyos")
+  endif()
+  set(MOUI_HARMONYOS_FIXED_SYMBOLS
+    "MOUI_MOBILE_ATTACH_SURFACE_SYMBOL=moui_mobile_attach_surface"
+    "MOUI_MOBILE_RESIZE_SYMBOL=moui_mobile_resize"
+    "MOUI_MOBILE_DISPATCH_POINTER_SYMBOL=moui_mobile_dispatch_pointer"
+    "MOUI_MOBILE_DISPATCH_SCROLL_SYMBOL=moui_mobile_dispatch_scroll"
+    "MOUI_MOBILE_FRAME_TICK_SYMBOL=moui_mobile_frame_tick"
+    "MOUI_MOBILE_RENDER_FRAME_SYMBOL=moui_mobile_render_frame"
+    "MOUI_MOBILE_DETACH_SURFACE_SYMBOL=moui_mobile_detach_surface"
+  )
+  foreach(symbol_pair IN LISTS MOUI_HARMONYOS_FIXED_SYMBOLS)
+    string(REPLACE "=" ";" symbol_parts "${symbol_pair}")
+    list(GET symbol_parts 0 symbol_name)
+    list(GET symbol_parts 1 expected_symbol)
+    if(DEFINED ${symbol_name} AND
+       NOT "${${symbol_name}}" STREQUAL "${expected_symbol}")
+      message(FATAL_ERROR
+        "managed HarmonyOS shell rejects app-specific symbol ${symbol_name}=${${symbol_name}}"
+      )
+    endif()
+  endforeach()
+  set(MOUI_MOBILE_MOONBIT_MAIN_ALIAS moui_mobile_moonbit_generated_main)
+endif()
 
 set_source_files_properties("${MOUI_MOBILE_MOONBIT_C}" PROPERTIES
   LANGUAGE C
