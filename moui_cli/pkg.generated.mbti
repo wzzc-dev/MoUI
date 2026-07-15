@@ -1,0 +1,18 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_cli"
+
+// Values
+pub fn run_cli(Array[String], String) -> CliOutcome
+
+// Errors
+
+// Types and methods
+pub(all) struct CliOutcome {
+  exit_code : Int
+  stdout : String
+  stderr : String
+}
+
+// Type aliases
+
+// Traits

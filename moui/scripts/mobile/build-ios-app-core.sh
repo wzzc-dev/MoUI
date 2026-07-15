@@ -89,7 +89,7 @@ if [ "${build_dir#/}" = "$build_dir" ]; then
 fi
 
 case "$shell_mode" in
-  managed|legacy-uikit) ;;
+  managed|ejected|legacy-uikit) ;;
   *) echo "unsupported iOS shell mode: $shell_mode" >&2; exit 2 ;;
 esac
 if ! awk -v value="$deployment_target" 'BEGIN {
@@ -268,7 +268,7 @@ compile_swift_object() {
 }
 
 compiled_main_alias="$main_alias"
-if [ "$shell_mode" = "managed" ]; then
+if [ "$shell_mode" != "legacy-uikit" ]; then
   compiled_main_alias="moui_mobile_moonbit_generated_main"
 fi
 compile_c "$moonbit_c" "$obj_dir/moonbit.o" -Dmain="$compiled_main_alias"
@@ -300,6 +300,7 @@ else
     --moui-root "$moui_root"
     --app "$app"
     --renderer "$renderer_requested"
+    --shell-mode "$shell_mode"
     --output-swift "$managed_config"
     --output-manifest "$managed_manifest"
   )
@@ -369,11 +370,11 @@ ios_link_flags=(
   -lobjc
   -lc++
 )
-if [ "$shell_mode" = "managed" ]; then
+if [ "$shell_mode" != "legacy-uikit" ]; then
   ios_link_flags+=( -framework SwiftUI )
 fi
 log "Linking $product_name"
-if [ "$shell_mode" = "managed" ]; then
+if [ "$shell_mode" != "legacy-uikit" ]; then
   if [ -s "$skia_link_rsp" ]; then
     "$swiftc" "${swift_flags[@]}" -o "$executable_path" \
       "${objects[@]}" \
@@ -396,7 +397,7 @@ else
 fi
 
 cp "$info_plist" "$app_bundle/Info.plist"
-if [ "$shell_mode" = "managed" ]; then
+if [ "$shell_mode" != "legacy-uikit" ]; then
   while IFS= read -r resource || [ -n "$resource" ]; do
     [ -n "$resource" ] || continue
     cp -R "$resource" "$app_bundle/"

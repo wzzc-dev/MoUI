@@ -93,7 +93,8 @@ contains(plugins, '"revision": revision', pluginsPath);
 contains(plugins, '"viewKind": viewKind', pluginsPath);
 contains(plugins, '"sessionGeneration": sessionGeneration', pluginsPath);
 
-contains(resolver, 'app.ios.shellMode !== "managed"', resolverPath);
+contains(resolver, '["managed", "ejected"].includes(options.shellMode)', resolverPath);
+contains(resolver, "app.ios.shellMode !== options.shellMode", resolverPath);
 contains(resolver, "swiftSources", resolverPath);
 contains(resolver, "objcxxSources", resolverPath);
 contains(resolver, "resources", resolverPath);
@@ -118,6 +119,8 @@ contains(coreBuilder, "mobile/ios/legacy/moui_mobile_app.mm", coreBuilderPath);
 contains(coreBuilder, "mobile/ios/bridge/MoUIMobileRuntimeBridge.mm", coreBuilderPath);
 contains(coreBuilder, 'xcode_product="$TARGET_BUILD_DIR/$FULL_PRODUCT_NAME"', coreBuilderPath);
 contains(coreBuilder, 'compiled_main_alias="moui_mobile_moonbit_generated_main"', coreBuilderPath);
+contains(coreBuilder, 'managed|ejected|legacy-uikit', coreBuilderPath);
+contains(coreBuilder, '--shell-mode "$shell_mode"', coreBuilderPath);
 excludes(coreBuilder, "-DMOUI_MOBILE_RUNTIME_ATTACH_SURFACE", coreBuilderPath);
 excludes(coreBuilder, "-DMOUI_MOBILE_RUNTIME_DESTROY_APPLICATION", coreBuilderPath);
 
