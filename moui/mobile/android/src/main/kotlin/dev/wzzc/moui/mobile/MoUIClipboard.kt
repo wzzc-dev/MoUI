@@ -77,7 +77,7 @@ internal class MoUIClipboardService(private val context: Context) {
         }
         val operation = payload.optString("operation")
         try {
-            when (operation) {
+            val accepted = when (operation) {
                 "read-text" -> {
                     val clip = manager?.primaryClip
                     val text = if (clip != null && clip.itemCount > 0) {
@@ -142,7 +142,11 @@ internal class MoUIClipboardService(private val context: Context) {
                     "unsupported clipboard operation: $operation",
                 )
             }
-            Log.i(LOG_TAG, "moui-mobile service clipboard complete operation=$operation")
+            Log.i(
+                LOG_TAG,
+                "moui-mobile service clipboard complete operation=$operation " +
+                    "accepted=${if (accepted) 1 else 0}",
+            )
         } catch (error: Exception) {
             completeError(
                 sessionGeneration,
@@ -159,7 +163,7 @@ internal class MoUIClipboardService(private val context: Context) {
         return context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
     }
 
-    private fun completeError(sessionGeneration: Int, id: Int, message: String) {
+    private fun completeError(sessionGeneration: Int, id: Int, message: String): Boolean =
         MoUINativeBridge.completeClipboard(
             sessionGeneration,
             id,
@@ -167,7 +171,6 @@ internal class MoUIClipboardService(private val context: Context) {
             message,
             byteArrayOf(),
         )
-    }
 
     private fun JSONArray?.toByteArray(): ByteArray {
         if (this == null) return byteArrayOf()

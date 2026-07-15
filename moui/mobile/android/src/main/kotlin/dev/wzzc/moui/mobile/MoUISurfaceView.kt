@@ -22,7 +22,10 @@ import org.json.JSONObject
 import org.json.JSONTokener
 import kotlin.math.max
 
-internal class MoUISurfaceView(context: Context) : SurfaceView(context) {
+internal class MoUISurfaceView(
+    context: Context,
+    private val pluginCapabilities: MoUIMobilePluginCapabilities,
+) : SurfaceView(context) {
     private val editable = SpannableStringBuilder()
     private val accessibility = MoUIAccessibilityBridge(this)
     private val clipboard = MoUIClipboardService(context)
@@ -80,7 +83,10 @@ internal class MoUISurfaceView(context: Context) : SurfaceView(context) {
             ) {
                 clearHostState()
             }
-            if (generation != null) sessionGeneration = generation
+            if (generation != null) {
+                sessionGeneration = generation
+                pluginCapabilities.activateSession(generation)
+            }
             for (index in 0 until updates.length()) {
                 runCatching {
                     applyHostUpdate(updates.getJSONObject(index), generation, platformViews)
@@ -102,6 +108,7 @@ internal class MoUISurfaceView(context: Context) : SurfaceView(context) {
         editable.clear()
         inputMethodManager?.hideSoftInputFromWindow(windowToken, 0)
         accessibility.clear()
+        pluginCapabilities.resetSession()
         clearFocus()
     }
 
@@ -112,7 +119,16 @@ internal class MoUISurfaceView(context: Context) : SurfaceView(context) {
     ) {
         when (update.optString("kind")) {
             "ime" -> applyIme(update.getJSONObject("payload"))
-            "semantics" -> accessibility.update(update.getJSONObject("payload"))
+            "semantics" -> {
+                val semantics = accessibility.update(update.getJSONObject("payload"))
+                if (semantics != null && generation != null) {
+                    pluginCapabilities.publishSemantics(
+                        generation,
+                        semantics.revision,
+                        semantics.nodes,
+                    )
+                }
+            }
             "clipboard" -> clipboard.apply(update, generation)
             "diagnostic" -> Log.i(
                 LOG_TAG,

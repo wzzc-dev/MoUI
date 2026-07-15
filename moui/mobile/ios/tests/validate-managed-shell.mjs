@@ -20,6 +20,7 @@ const excludes = (source, token, label) => {
 
 const shellPath = "moui/mobile/ios/Sources/MoUIMobileShell/MoUIMobileShell.swift";
 const adaptersPath = "moui/mobile/ios/Sources/MoUIMobileShell/MoUIMobileHostAdapters.swift";
+const capabilitiesPath = "moui/mobile/ios/Sources/MoUIMobileShell/MoUIMobileCapabilities.swift";
 const pluginsPath = "moui/mobile/ios/Sources/MoUIMobileShell/MoUIMobilePlugins.swift";
 const bridgePath = "moui/mobile/ios/bridge/MoUIMobileRuntimeBridge.mm";
 const bridgeHeaderPath = "moui/mobile/ios/bridge/include/MoUIMobileRuntimeBridge.h";
@@ -32,6 +33,7 @@ const legacyPath = "moui/mobile/ios/legacy/moui_mobile_app.mm";
 
 const shell = read(shellPath);
 const adapters = read(adaptersPath);
+const capabilities = read(capabilitiesPath);
 const plugins = read(pluginsPath);
 const bridge = read(bridgePath);
 const bridgeHeader = read(bridgeHeaderPath);
@@ -79,6 +81,14 @@ contains(adapters, '"status": response.status.rawValue', adaptersPath);
 contains(adapters, '"payload": response.payload', adaptersPath);
 contains(adapters, "candidate_anchor", adaptersPath);
 contains(adapters, "action: 4", adaptersPath);
+contains(capabilities, 'values["moui.mobile.testProbe"] = enabled', capabilitiesPath);
+contains(capabilities, "public final class MOUIMobileRuntimeInputDispatcher", capabilitiesPath);
+contains(capabilities, "sessionGeneration: Int", capabilitiesPath);
+contains(capabilities, "private let epoch: UInt64", capabilitiesPath);
+contains(capabilities, "generation = nil", capabilitiesPath);
+contains(capabilities, "epoch &+= 1", capabilitiesPath);
+contains(capabilities, "guard Thread.isMainThread else { return false }", capabilitiesPath);
+contains(adapters, "pluginCapabilities.publishSemantics", adaptersPath);
 contains(plugins, "MOUIMobileHostChannelResponse", pluginsPath);
 contains(plugins, "MOUIMobileHostChannelRequest", pluginsPath);
 contains(plugins, "disposePlatformView", pluginsPath);

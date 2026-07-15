@@ -1,14 +1,26 @@
 import UIAbility from '@ohos.app.ability.UIAbility';
+import AbilityConstant from '@ohos.app.ability.AbilityConstant';
+import Want from '@ohos.app.ability.Want';
 import hilog from '@ohos.hilog';
 import window from '@ohos.window';
 import mouiRuntime from 'libmoui_mobile_harmonyos.so';
 
 import { mouiGeneratedConfiguration } from '../moui/MoUIGeneratedConfig';
+import { MoUIPluginRegistry } from '../moui/MoUIPlugins';
 
 const DOMAIN: number = 0x4D4F;
 const TAG: string = 'MoUIHarmony';
+const TEST_PROBE_LAUNCH_OPTION: string = 'moui.mobile.testProbe';
 
 export default class EntryAbility extends UIAbility {
+  onCreate(want: Want, _launchParam: AbilityConstant.LaunchParam): void {
+    this.applyLaunchOptions(want);
+  }
+
+  onNewWant(want: Want, _launchParam: AbilityConstant.LaunchParam): void {
+    this.applyLaunchOptions(want);
+  }
+
   onWindowStageCreate(windowStage: window.WindowStage): void {
     hilog.info(DOMAIN, TAG, 'window stage create');
     windowStage.loadContent('pages/Index', (error) => {
@@ -22,8 +34,22 @@ export default class EntryAbility extends UIAbility {
   }
 
   onDestroy(): void {
+    MoUIPluginRegistry.shared.destroyApplication();
     const destroyed = mouiRuntime.destroyApplication();
     hilog.info(DOMAIN, TAG, 'ability destroyed runtime=%{public}d', destroyed ? 1 : 0);
+  }
+
+  private applyLaunchOptions(want: Want): void {
+    const raw = want.parameters?.[TEST_PROBE_LAUNCH_OPTION];
+    let value: string | undefined = undefined;
+    if (typeof raw === 'string') {
+      value = raw;
+    } else if (typeof raw === 'boolean') {
+      value = raw ? 'true' : 'false';
+    } else if (typeof raw === 'number') {
+      value = raw.toString();
+    }
+    MoUIPluginRegistry.shared.setLaunchOption(TEST_PROBE_LAUNCH_OPTION, value);
   }
 
   private configureWindow(windowStage: window.WindowStage): void {
