@@ -12,6 +12,7 @@ import {
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { defaultMouiRoot, defaultSkiaRoot, defaultWorkspaceRoot, readMobileApp } from "./app-config.mjs";
+import { resolveAndroidNdkHome } from "./android-ndk.mjs";
 import { prepareAndroidPlugins } from "../../mobile/android/prepare-plugins.mjs";
 import { resolveAndroidManagedShell } from "../../mobile/android/resolve-managed-shell.mjs";
 
@@ -181,15 +182,6 @@ const firstLinkDir = flags => {
 
 const containsFlag = (flags, expected) => splitFlags(flags).includes(expected);
 
-const latestChildDir = path => {
-  if (!existsSync(path)) return "";
-  const result = spawnSync("find", [path, "-mindepth", "1", "-maxdepth", "1", "-type", "d"], {
-    encoding: "utf8",
-  });
-  if (result.status !== 0) return "";
-  return result.stdout.trim().split("\n").filter(Boolean).sort().at(-1) || "";
-};
-
 const androidHome = () => {
   if (process.env.ANDROID_HOME) return process.env.ANDROID_HOME;
   if (process.env.ANDROID_SDK_ROOT) return process.env.ANDROID_SDK_ROOT;
@@ -197,17 +189,6 @@ const androidHome = () => {
     if (existsSync(candidate)) return candidate;
   }
   return "";
-};
-
-const androidNdkHome = sdkRoot => {
-  if (process.env.ANDROID_NDK_HOME) return process.env.ANDROID_NDK_HOME;
-  // Keep prepare-native-build aligned with mobile-app.gradle ndkVersion pin.
-  const pinnedVersion = process.env.MOUI_ANDROID_NDK_VERSION || "28.2.13676358";
-  const pinned = join(sdkRoot, "ndk", pinnedVersion);
-  if (existsSync(pinned)) return pinned;
-  const bundled = join(sdkRoot, "ndk-bundle");
-  if (existsSync(bundled)) return bundled;
-  return latestChildDir(join(sdkRoot, "ndk"));
 };
 
 const androidPrebuiltHost = ndkHome => {
@@ -514,7 +495,7 @@ const prepareAndroid = ({ app, appConfig, config, plugins, buildDir, abi, androi
       : {},
   });
   const sdkRoot = androidHome();
-  const ndkHome = sdkRoot ? androidNdkHome(sdkRoot) : "";
+  const ndkHome = sdkRoot ? resolveAndroidNdkHome(sdkRoot) : "";
   if (ndkHome) {
     copyAndroidSharedLibs({
       abi,

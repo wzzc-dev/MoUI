@@ -67,7 +67,9 @@ jobs:
       - name: Validate mobile plugin and canonical shell contracts
         run: |
           node --test moui/scripts/mobile/plugin-manifest.test.mjs
+          node --test moui/scripts/mobile/android-ndk.test.mjs
           node --test moui/mobile/android/prepare-plugins.test.mjs
+          node --test moui/mobile/android/resolve-managed-shell.test.mjs
           node --test moui/mobile/test-probe/tests/validate-test-probe.mjs
           sh moui/mobile/tests/run-mobile-runtime-v1-tests.sh
           node moui/mobile/ios/tests/validate-managed-shell.mjs

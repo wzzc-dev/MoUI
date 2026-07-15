@@ -216,6 +216,8 @@ test("Android managed build consumes only generated schema v2 shell inputs", () 
   assert.match(gradle, /version = "3\.22\.1"/);
 
   assert.match(prepare, /import \{ resolveAndroidManagedShell \}/);
+  assert.match(prepare, /import \{ resolveAndroidNdkHome \} from "\.\/android-ndk\.mjs"/);
+  assert.match(prepare, /sdkRoot \? resolveAndroidNdkHome\(sdkRoot\) : ""/);
   assert.match(prepare, /resolveAndroidManagedShell\(\{ app: appConfig, buildDir, workspaceRoot \}\)/);
   assert.match(prepare, /androidShellConfig,/);
   assert.doesNotMatch(builder, /^\s+"-PmouiMinSdk=\$api_level"$/m);

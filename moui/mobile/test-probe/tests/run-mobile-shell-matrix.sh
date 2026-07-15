@@ -52,6 +52,7 @@ run_static() {
     ios) "$repo_root/moui/mobile/ios/tests/run-ios-managed-shell-tests.sh" ;;
     harmonyos) "$repo_root/moui/mobile/harmonyos/tests/run-harmonyos-managed-shell-tests.sh" ;;
     android)
+      node --test "$repo_root/moui/scripts/mobile/android-ndk.test.mjs"
       node --test "$repo_root/moui/mobile/android/resolve-managed-shell.test.mjs"
       node "$repo_root/scripts/check-mobile-app-config.mjs"
       ;;
