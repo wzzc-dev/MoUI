@@ -63,6 +63,39 @@
           "renderFrame": "component_gallery_ios_render_frame",
           "detachView": "component_gallery_ios_detach_view"
         }
+      },
+      "harmonyos": {
+        "moonPackage": "examples/component_gallery/harmonyos",
+        "generatedC": "harmonyos.c",
+        "nativeLibrary": "component_gallery_harmonyos",
+        "appArg": "moui-component-gallery-harmonyos",
+        "moonbitMainAlias": "moui_component_gallery_harmonyos_moonbit_generated_main",
+        "exports": {
+          "attachSurface": "component_gallery_harmonyos_attach_surface",
+          "resize": "component_gallery_harmonyos_resize",
+          "dispatchPointer": "component_gallery_harmonyos_dispatch_pointer",
+          "dispatchScroll": "component_gallery_harmonyos_dispatch_scroll",
+          "frameTick": "component_gallery_harmonyos_frame_tick",
+          "renderFrame": "component_gallery_harmonyos_render_frame",
+          "detachSurface": "component_gallery_harmonyos_detach_surface"
+        }
+      }
+    },
+    "harmonyos_demo": {
+      "harmonyos": {
+        "moonPackage": "examples/harmonyos_demo/harmonyos_skia",
+        "generatedC": "harmonyos_skia.c",
+        "nativeLibrary": "moui_harmonyos_demo",
+        "appArg": "moui-harmonyos-demo",
+        "moonbitMainAlias": "moui_harmonyos_moonbit_generated_main",
+        "exports": {
+          "attachSurface": "harmonyos_demo_attach_surface",
+          "resize": "harmonyos_demo_resize",
+          "dispatchPointer": "harmonyos_demo_dispatch_pointer",
+          "frameTick": "harmonyos_demo_frame_tick",
+          "renderFrame": "harmonyos_demo_render_frame",
+          "detachSurface": "harmonyos_demo_detach_surface"
+        }
       }
     }
   }

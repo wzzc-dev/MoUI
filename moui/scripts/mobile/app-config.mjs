@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { validateMobileMetadataV2 } from "./mobile-config-schema.mjs";
 
 export const mouiPackageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -87,15 +88,36 @@ const contractsPath = (workspaceRoot, mouiRoot, explicitPath) => {
   return join(mouiRoot, "mobile/build-contracts.json");
 };
 
-const requireMetadata = ({ appId, workspaceRoot, appConfigPath }) => {
+const requireMetadata = ({ appId, workspaceRoot, appConfigPath, allowLegacyConfig }) => {
   const path = appMetadataPath(workspaceRoot, appId, appConfigPath || envOr("MOUI_MOBILE_APP_CONFIG"));
   if (!existsSync(path)) {
     throw new Error(`mobile app metadata not found for ${appId}: ${path}`);
   }
-  const metadata = assertObject(readJson(path), path);
-  if (metadata.schemaVersion !== 1) {
-    throw new Error(`${path}: schemaVersion must be 1`);
+  const rawMetadata = assertObject(readJson(path), path);
+  if (rawMetadata.schemaVersion === 2) {
+    validateMobileMetadataV2(rawMetadata, { path, appId });
+    return {
+      metadata: {
+        ...rawMetadata,
+        mobile: {
+          ...rawMetadata.mobile,
+          fullscreen: rawMetadata.mobile.systemUi.fullscreen,
+        },
+      },
+      path,
+      legacy: false,
+    };
   }
+  if (rawMetadata.schemaVersion !== 1) {
+    throw new Error(`${path}: schemaVersion must be 2`);
+  }
+  if (!allowLegacyConfig && envOr("MOUI_MOBILE_ALLOW_LEGACY_CONFIG") !== "1") {
+    throw new Error(
+      `${path}: schemaVersion 1 is deprecated and requires the explicit legacy config flag; ` +
+        "set MOUI_MOBILE_ALLOW_LEGACY_CONFIG=1 for the Release N compatibility path",
+    );
+  }
+  const metadata = rawMetadata;
   if (metadata.id !== appId) {
     throw new Error(`${path}: id must match requested app ${appId}`);
   }
@@ -125,7 +147,7 @@ const requireMetadata = ({ appId, workspaceRoot, appConfigPath }) => {
   if (!android && !ios && !harmonyos) {
     throw new Error(`${path}: at least one of android, ios, or harmonyos must be configured`);
   }
-  return { metadata, path };
+  return { metadata, path, legacy: true };
 };
 
 const validateAndroidContract = (label, contract, supportsScroll) => {
@@ -195,6 +217,7 @@ const readContracts = path => {
 
 const mergeApp = ({ appId, metadata, metadataPath, contractsFile, builtInContracts, workspaceRoot, mouiRoot, skiaRoot }) => {
   const mobile = metadata.mobile;
+  const legacyConfig = metadata.schemaVersion === 1;
   const androidContract = platformContract({
     appId,
     platform: "android",
@@ -213,13 +236,13 @@ const mergeApp = ({ appId, metadata, metadataPath, contractsFile, builtInContrac
     metadataPlatform: metadata.harmonyos,
     builtInContracts,
   });
-  if (androidContract) {
+  if (androidContract && legacyConfig) {
     validateAndroidContract(`${metadataPath}: android.native or ${contractsFile}: apps.${appId}.android`, androidContract, mobile.supportsScroll);
   }
-  if (iosContract) {
+  if (iosContract && legacyConfig) {
     validateIosContract(`${metadataPath}: ios.native or ${contractsFile}: apps.${appId}.ios`, iosContract, mobile.supportsScroll);
   }
-  if (harmonyosContract) {
+  if (harmonyosContract && legacyConfig) {
     validateHarmonyosContract(`${metadataPath}: harmonyos.native or ${contractsFile}: apps.${appId}.harmonyos`, harmonyosContract, mobile.supportsScroll);
   }
   const app = {
@@ -227,7 +250,17 @@ const mergeApp = ({ appId, metadata, metadataPath, contractsFile, builtInContrac
     displayName: metadata.displayName,
     artifactName: metadata.artifactName,
     appPackage: metadata.appPackage,
-    mobile: { ...mobile },
+    schemaVersion: metadata.schemaVersion,
+    shellApiVersion: metadata.shellApiVersion || 0,
+    runtimeAbiVersion: metadata.runtimeAbiVersion || 0,
+    mobile: {
+      ...mobile,
+      supportsScroll: Boolean(
+        androidContract?.exports?.dispatchScroll ||
+          iosContract?.exports?.dispatchScroll ||
+          harmonyosContract?.exports?.dispatchScroll,
+      ),
+    },
     paths: {
       workspaceRoot,
       mouiRoot,
@@ -236,12 +269,21 @@ const mergeApp = ({ appId, metadata, metadataPath, contractsFile, builtInContrac
       contracts: contractsFile,
     },
   };
+  if (legacyConfig) {
+    app.deprecations = [{
+      code: "mobile-config-schema-v1",
+      removal: "Release N+1",
+      message: "schemaVersion 1 and app-specific native export maps are deprecated",
+    }];
+  }
   if (androidContract) {
     app.android = {
       ...androidContract,
       applicationId: metadata.android.applicationId,
       fullscreen: mobile.fullscreen,
-      supportsScroll: mobile.supportsScroll,
+      supportsScroll: legacyConfig ? mobile.supportsScroll : Boolean(androidContract.exports?.dispatchScroll),
+      shellMode: metadata.android.shellMode || "legacy",
+      minSdk: metadata.android.minSdk || 0,
     };
   }
   if (iosContract) {
@@ -249,9 +291,11 @@ const mergeApp = ({ appId, metadata, metadataPath, contractsFile, builtInContrac
       ...iosContract,
       bundleId: metadata.ios.bundleId,
       productName: metadata.ios.productName,
-      infoPlist: metadata.ios.infoPlist,
+      infoPlist: metadata.ios.infoPlist || join(mouiRoot, "mobile/ios/template/Info.plist"),
       fullscreen: mobile.fullscreen,
-      supportsScroll: mobile.supportsScroll,
+      supportsScroll: legacyConfig ? mobile.supportsScroll : Boolean(iosContract.exports?.dispatchScroll),
+      shellMode: metadata.ios.shellMode || "legacy",
+      deploymentTarget: metadata.ios.deploymentTarget || "0",
     };
   }
   if (harmonyosContract) {
@@ -264,7 +308,9 @@ const mergeApp = ({ appId, metadata, metadataPath, contractsFile, builtInContrac
       moduleDescription: optionalString(metadata.harmonyos.moduleDescription, `${metadataPath}: harmonyos.moduleDescription`, metadata.displayName),
       entryDescription: optionalString(metadata.harmonyos.entryDescription, `${metadataPath}: harmonyos.entryDescription`, metadata.displayName),
       fullscreen: mobile.fullscreen,
-      supportsScroll: mobile.supportsScroll,
+      supportsScroll: legacyConfig ? mobile.supportsScroll : Boolean(harmonyosContract.exports?.dispatchScroll),
+      shellMode: metadata.harmonyos.shellMode || "legacy",
+      compatibleSdkVersion: metadata.harmonyos.compatibleSdkVersion || 0,
     };
   }
   return app;
@@ -284,6 +330,7 @@ export const readMobileApp = (appId, options = {}) => {
     appId,
     workspaceRoot,
     appConfigPath: options.appConfigPath,
+    allowLegacyConfig: options.allowLegacyConfig === true,
   });
   return mergeApp({
     appId,
