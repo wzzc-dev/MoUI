@@ -1,5 +1,16 @@
 #include "skia_stub_common.h"
 
+#if defined(MOUI_SKIA_HAS_SKSHAPER_HEADERS)
+#if __has_include("modules/skshaper/include/SkShaper_harfbuzz.h")
+#include "modules/skshaper/include/SkShaper_harfbuzz.h"
+#define MOUI_SKIA_HAS_SKSHAPER_HARFBUZZ 1
+#endif
+#if __has_include("modules/skunicode/include/SkUnicode_icu.h")
+#include "modules/skunicode/include/SkUnicode_icu.h"
+#define MOUI_SKIA_HAS_SKUNICODE_ICU 1
+#endif
+#endif
+
 #if defined(MOUI_SKIA_HAS_SKIA)
 static SkFontMetrics moonbit_skia_get_font_metrics(MoonbitSkiaFont* wrapper) {
   SkFontMetrics metrics = {};
@@ -157,9 +168,37 @@ private:
 
 static std::unique_ptr<SkShaper> moonbit_skia_make_shaper() {
 #if defined(MOUI_SKIA_HAS_SKSHAPER_CORETEXT)
-  return SkShapers::CT::CoreText();
-#else
+  if (std::unique_ptr<SkShaper> shaper = SkShapers::CT::CoreText()) {
+    return shaper;
+  }
+#endif
+#if defined(MOUI_SKIA_HAS_SKSHAPER_HARFBUZZ) && defined(MOUI_SKIA_HAS_SKUNICODE_ICU)
+  // Prefer HarfBuzz on Android/Linux — MakePrimitive alone has crashed with a
+  // null deref when shaping denser layouts after rotation / catalog navigation.
+  if (sk_sp<SkUnicode> unicode = SkUnicodes::ICU::Make()) {
+    if (std::unique_ptr<SkShaper> shaper = SkShapers::HB::ShapeDontWrapOrReorder(
+          unicode,
+          moonbit_skia_default_font_mgr()
+        )) {
+      return shaper;
+    }
+    if (std::unique_ptr<SkShaper> shaper = SkShapers::HB::ShapeThenWrap(
+          unicode,
+          moonbit_skia_default_font_mgr()
+        )) {
+      return shaper;
+    }
+  }
+#endif
+#if defined(MOUI_SKIA_HAS_SKSHAPER_HEADERS)
+  if (std::unique_ptr<SkShaper> shaper = SkShaper::Make(
+        moonbit_skia_default_font_mgr()
+      )) {
+    return shaper;
+  }
   return SkShaper::MakePrimitive();
+#else
+  return nullptr;
 #endif
 }
 #endif
@@ -701,8 +740,16 @@ moonbit_skia_font_shape_text_utf8(
 #if defined(MOUI_SKIA_HAS_SKIA) && \
   defined(MOUI_SKIA_HAS_SKSHAPER_HEADERS) && \
   defined(MOUI_SKIA_HAS_SKSHAPER_LEGACY)
+  // Cap layout width so a pathological call cannot force huge run buffers.
+  // Callers that want "no wrap" still get effectively unconstrained layout.
+  const float layout_width = width > 1.0e7f ? 1.0e7f : width;
   std::unique_ptr<SkShaper> shaper = moonbit_skia_make_shaper();
   if (shaper == nullptr) {
+    return moonbit_skia_make_empty_shaped_text_run();
+  }
+  if (wrapper->font->getTypeface() == nullptr) {
+    // Empty typeface fonts must not enter the shaper — observed as
+    // SIGSEGV/null deref on Android after rotation / denser catalog layout.
     return moonbit_skia_make_empty_shaped_text_run();
   }
 
@@ -712,7 +759,7 @@ moonbit_skia_font_shape_text_utf8(
     static_cast<size_t>(Moonbit_array_length(text)),
     *wrapper->font,
     left_to_right != 0,
-    width,
+    layout_width,
     &handler
   );
   if (!handler.ok()) {
@@ -720,6 +767,9 @@ moonbit_skia_font_shape_text_utf8(
   }
 
   int32_t glyph_count = handler.glyph_count();
+  if (glyph_count <= 0 || glyph_count > 1000000) {
+    return moonbit_skia_make_empty_shaped_text_run();
+  }
   uint16_t* glyph_buffer = moonbit_skia_make_glyph_id_array_storage(
     glyph_count
   );
@@ -727,11 +777,17 @@ moonbit_skia_font_shape_text_utf8(
     glyph_count
   );
   int32_t* cluster_buffer = moonbit_make_int32_array_raw(glyph_count);
+  if (
+    glyph_buffer == nullptr ||
+    position_buffer == nullptr ||
+    cluster_buffer == nullptr
+  ) {
+    return moonbit_skia_make_empty_shaped_text_run();
+  }
   const std::vector<SkGlyphID>& glyphs = handler.glyphs();
   const std::vector<SkPoint>& positions = handler.positions();
   const std::vector<uint32_t>& clusters = handler.clusters();
   if (
-    glyph_count <= 0 ||
     glyphs.size() != static_cast<size_t>(glyph_count) ||
     positions.size() != static_cast<size_t>(glyph_count) ||
     clusters.size() != static_cast<size_t>(glyph_count)
@@ -741,10 +797,14 @@ moonbit_skia_font_shape_text_utf8(
   for (int32_t i = 0; i < glyph_count; ++i) {
     size_t index = static_cast<size_t>(i);
     glyph_buffer[index] = static_cast<uint16_t>(glyphs[index]);
-    position_buffer[index] = moonbit_skia_make_point(
+    MoonbitSkiaPoint* point = moonbit_skia_make_point(
       positions[index].x(),
       positions[index].y()
     );
+    if (point == nullptr) {
+      return moonbit_skia_make_empty_shaped_text_run();
+    }
+    position_buffer[index] = point;
     cluster_buffer[index] = clusters[index] >
       static_cast<uint32_t>(std::numeric_limits<int32_t>::max())
         ? std::numeric_limits<int32_t>::max()

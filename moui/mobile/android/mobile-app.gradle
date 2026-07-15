@@ -101,9 +101,17 @@ def prepareMouiMobileNative = tasks.register("prepareMouiMobileNative", Exec) {
     }
 }
 
+// Pin one complete NDK for CMake, jniLibs libc++, and packaging. Mixed NDK
+// 25/28 libc++ was shipping a minimal stripped libc++ without
+// std::ostringstream vtable → UnsatisfiedLinkError at dlopen.
+def pinnedNdkVersion = (project.findProperty("mouiNdkVersion")
+    ?: System.getenv("MOUI_ANDROID_NDK_VERSION")
+    ?: "28.2.13676358").toString()
+
 android {
     namespace = androidConfig.applicationId
     compileSdk = compileSdkVersion
+    ndkVersion = pinnedNdkVersion
 
     defaultConfig {
         applicationId = androidConfig.applicationId
@@ -121,9 +129,11 @@ android {
 
         externalNativeBuild {
             cmake {
+                // Match Skia prebuilts and jniLibs: full shared libc++ from the same NDK.
                 arguments(
                     "-DMOUI_ROOT=${mouiRoot.absolutePath}",
                     "-DMOUI_MOBILE_NATIVE_CONFIG=${generatedRoot.absolutePath}/native/moui-mobile-native.cmake",
+                    "-DANDROID_STL=c++_shared",
                 )
             }
         }
@@ -138,6 +148,24 @@ android {
             java.srcDirs += ["${mouiRoot}/mobile/android/src/main/java"]
             jniLibs.srcDirs += ["${generatedRoot}/jniLibs"]
         }
+    }
+
+    packaging {
+        jniLibs {
+            // Prefer the full NDK libc++ we stage under jniLibs over any
+            // stripped/minimal merge input. AGP strip must not drop STL symbols
+            // (missing ostringstream vtable → UnsatisfiedLinkError).
+            pickFirsts += ["**/libc++_shared.so"]
+            keepDebugSymbols += ["**/libc++_shared.so"]
+        }
+    }
+
+    // AGP 8+/9 packaging: do not strip libc++_shared.so at all.
+    packagingOptions {
+        doNotStrip "*/arm64-v8a/libc++_shared.so"
+        doNotStrip "*/armeabi-v7a/libc++_shared.so"
+        doNotStrip "*/x86_64/libc++_shared.so"
+        doNotStrip "*/x86/libc++_shared.so"
     }
 
     externalNativeBuild {

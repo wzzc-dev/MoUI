@@ -70,6 +70,9 @@ target_compile_definitions(${MOUI_MOBILE_LIBRARY_NAME} PRIVATE
   "MOUI_MOBILE_SMOKE_ATTACH_SURFACE=${MOUI_MOBILE_LIBRARY_NAME}_attach_surface_for_smoke"
   "MOUI_MOBILE_SMOKE_RENDER_FRAME=${MOUI_MOBILE_LIBRARY_NAME}_render_frame_for_smoke"
   "NODE_GYP_MODULE_NAME=${MOUI_MOBILE_LIBRARY_NAME}"
+  # Ensure Skia EGL stubs see the HarmonyOS platform even if a compile unit
+  # misses toolchain predefines through an unusual flag path.
+  __OHOS__=1
 )
 
 set_source_files_properties("${MOUI_MOBILE_MOONBIT_C}" PROPERTIES
@@ -110,6 +113,7 @@ if(NOT MOUI_HARMONYOS_FALLBACK)
     hilog_ndk.z
     native_window
     native_buffer
+    native_display_manager
   )
 endif()
 

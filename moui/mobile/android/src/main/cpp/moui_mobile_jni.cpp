@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <cstring>
 #include <mutex>
+#include <string>
 
 #ifndef MOUI_MOBILE_APP_ARG
 #define MOUI_MOBILE_APP_ARG "moui-mobile-android"
@@ -25,6 +26,8 @@
 #endif
 
 namespace {
+
+std::string std_string_from_moonbit(moonbit_string_t value);
 
 constexpr const char *kLogTag = "MoUIMobile";
 std::once_flag g_init_once;
@@ -109,9 +112,10 @@ void ensure_moonbit_runtime() {
     __android_log_print(
         renderer_configured != 0 ? ANDROID_LOG_INFO : ANDROID_LOG_WARN,
         kLogTag,
-        "moui-mobile renderer configure requested=%s ok=%d",
+        "moui-mobile renderer configure requested=%s ok=%d status=%s",
         MOUI_MOBILE_RENDERER_REQUESTED,
-        renderer_configured);
+        renderer_configured,
+        std_string_from_moonbit(moui_mobile_renderer_status_json()).c_str());
   });
 }
 
@@ -138,6 +142,34 @@ jstring java_string_from_moonbit(JNIEnv *env, moonbit_string_t value) {
   }
   const int32_t length = Moonbit_array_length(value);
   jstring result = env->NewString(reinterpret_cast<const jchar *>(value), length);
+  moonbit_decref(value);
+  return result;
+}
+
+// Converts a MoonBit string (length-prefixed UTF-16 units) to a UTF-8
+// std::string for logging. Renderer status JSON is ASCII, but the BMP->UTF-8
+// path keeps non-ASCII fallback reasons valid.
+std::string std_string_from_moonbit(moonbit_string_t value) {
+  if (value == nullptr) {
+    return {};
+  }
+  const int32_t length = Moonbit_array_length(value);
+  const auto *units = reinterpret_cast<const uint16_t *>(value);
+  std::string result;
+  result.reserve(static_cast<size_t>(length));
+  for (int32_t index = 0; index < length; ++index) {
+    const uint16_t unit = units[index];
+    if (unit < 0x80) {
+      result.push_back(static_cast<char>(unit));
+    } else if (unit < 0x800) {
+      result.push_back(static_cast<char>(0xC0 | (unit >> 6)));
+      result.push_back(static_cast<char>(0x80 | (unit & 0x3F)));
+    } else {
+      result.push_back(static_cast<char>(0xE0 | (unit >> 12)));
+      result.push_back(static_cast<char>(0x80 | ((unit >> 6) & 0x3F)));
+      result.push_back(static_cast<char>(0x80 | (unit & 0x3F)));
+    }
+  }
   moonbit_decref(value);
   return result;
 }

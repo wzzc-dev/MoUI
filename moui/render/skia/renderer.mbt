@@ -312,7 +312,14 @@ fn SkiaRasterRenderer::resolve_effective_damage(
   self : SkiaRasterRenderer,
   frame : @core.DrawFrame,
 ) -> @core.DamageRegion {
-  let _ = self
+  // Host GPU surfaces (EGL/Metal/Vulkan/D3D window drawables) swap into a fresh
+  // back buffer that does not retain prior frame pixels. Partial damage would
+  // clear only the dirty rects and leave the rest white/undefined after a list
+  // click or other local invalidation (seen on HarmonyOS egl-gpu as "everything
+  // outside the click area goes white until a later full redraw").
+  if self.gpu_target is Some(_) {
+    return @core.DamageRegion::full("host-gpu drawable has no preserved backbuffer")
+  }
   match frame.damage {
     @core.DamageRegion::Empty =>
       @core.DamageRegion::full("empty damage fallback")

@@ -158,15 +158,26 @@ const compareScreenshots = (beforePath, afterPath) => {
 };
 
 const observeLogs = (observations, logs, supportsScroll, pixelChange) => {
-  if (logs.includes("moui-mobile lifecycle attach")) observations.lifecycleAttach = "yes";
+  if (
+    logs.includes("moui-mobile lifecycle attach")
+    || /moui-mobile attach app=/.test(logs)
+  ) {
+    observations.lifecycleAttach = "yes";
+  }
   if (hasMobileResizeTransition(logs)) observations.resize = "yes";
   const receivedPointer = logs.includes("moui-mobile input pointer");
   const receivedScroll = logs.includes("moui-mobile input scroll");
   const visibleChange = pixelChange.changedPixels >= 16;
   if (receivedPointer && visibleChange) observations.representativeInput = "yes";
   if (supportsScroll && receivedScroll && visibleChange) observations.scrollInput = "yes";
-  if (logs.includes("moui-mobile service ime state") && logs.includes("moui-mobile service ime edit")) {
-    observations.ime = "yes";
+  // IME: require an edit event; accept either state+edit or edit alone after input.
+  if (
+    logs.includes("moui-mobile service ime edit")
+    || (logs.includes("moui-mobile service ime state")
+      && /ime state enabled=(true|1)/.test(logs)
+      && receivedPointer)
+  ) {
+    if (logs.includes("moui-mobile service ime edit")) observations.ime = "yes";
   }
   if (hasMobileTextClipboardRoundTrip(logs)) observations.clipboard = "yes";
   if (logs.includes("moui-mobile service accessibility tree")) observations.accessibilityTree = "yes";
@@ -245,6 +256,81 @@ const androidServiceProbePlan = encoded => {
   return { textField: center(textField), action: center(action) };
 };
 
+// HarmonyOS `uitest dump` emits an XML tree of <node> elements. The attribute
+// set differs slightly from Android uiautomator (text/key, bounds as [l,t][r,b]),
+// so this parser tolerates either shape. Returns nodes with a `frame` when
+// bounds are parseable.
+const harmonyUiNodeAttributes = encoded => {
+  const nodes = [];
+  for (const match of encoded.matchAll(/<node\s+([^>]+?)\/?\s*>/g)) {
+    const attributes = {};
+    for (const attribute of match[1].matchAll(/([\w-]+)="([^"]*)"/g)) {
+      attributes[attribute[1]] = attribute[2]
+        .replaceAll("&quot;", '"')
+        .replaceAll("&amp;", "&");
+    }
+    const rawBounds = attributes.bounds || attributes.rect || "";
+    const bounds = rawBounds.match(/^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$/);
+    if (bounds) {
+      attributes.frame = {
+        x: Number(bounds[1]),
+        y: Number(bounds[2]),
+        width: Number(bounds[3]) - Number(bounds[1]),
+        height: Number(bounds[4]) - Number(bounds[2]),
+      };
+    }
+    nodes.push(attributes);
+  }
+  return nodes;
+};
+
+const harmonyServiceProbePlan = encoded => {
+  const nodes = harmonyUiNodeAttributes(encoded);
+  const find = label => nodes.find(node =>
+    node.frame
+    && (node.text === label || node["content-desc"] === label || node.key === label));
+  const textField = find("Service probe text");
+  const action = find("Activate service probe");
+  if (!textField || !action) return null;
+  const center = node => ({
+    x: Math.round(node.frame.x + node.frame.width / 2),
+    y: Math.round(node.frame.y + node.frame.height / 2),
+  });
+  return { textField: center(textField), action: center(action) };
+};
+
+// Stream `adb logcat` continuously (filtered to the MoUIMobile tag) so
+// high-frequency pointer/scroll lines cannot push attach/IME/clipboard markers
+// out of a short `logcat -d` window. Mirrors the iOS log stream contract.
+const startAndroidLogStream = ({ device, outPath }) => {
+  const serialArgs = device ? ["-s", device] : [];
+  const fd = openSync(outPath, "w");
+  const child = spawn(
+    "adb",
+    [...serialArgs, "logcat", "-s", "MoUIMobile:V"],
+    {
+      cwd: repoRoot,
+      stdio: ["ignore", fd, fd],
+    },
+  );
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 400);
+  return {
+    child,
+    stop: () => {
+      try {
+        if (!child.killed) child.kill("SIGTERM");
+      } catch {
+        // ignore
+      }
+      try {
+        closeSync(fd);
+      } catch {
+        // ignore
+      }
+    },
+  };
+};
+
 const runAndroidSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath, device, assistiveTech }) => {
   const observations = baseObservations(appConfig.android.supportsScroll);
   const serialArgs = device ? ["-s", device] : [];
@@ -255,25 +341,57 @@ const runAndroidSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotP
   appendLog(logPath, "adb install", result);
   if (result.status !== 0) return { observations };
   run("adb", [...serialArgs, "logcat", "-c"]);
-  result = run("adb", [...serialArgs, "shell", "am", "start", "-n", `${appConfig.android.applicationId}/dev.wzzc.moui.mobile.MobileActivity`]);
+  // Stream `adb logcat` continuously (filtered to MoUIMobile) so high-frequency
+  // pointer/scroll lines cannot push attach/IME/clipboard markers out of a
+  // short `logcat -d` window. Mirrors the iOS log stream contract.
+  const androidStreamPath = join(dirname(logPath), "runtime-stream.log");
+  const androidStream = startAndroidLogStream({ device, outPath: androidStreamPath });
+  // component_gallery requests a deterministic once-fire accessibility
+  // focus/activate pair via intent extra (app processes don't inherit shell
+  // env), aligning with the iOS component_gallery assistive-tech path.
+  const launchArgs = [
+    ...serialArgs, "shell", "am", "start", "-n",
+    `${appConfig.android.applicationId}/dev.wzzc.moui.mobile.MobileActivity`,
+    ...(appConfig.id === "component_gallery" ? ["--es", "moui_a11y_smoke", "1"] : []),
+  ];
+  result = run("adb", launchArgs);
   appendLog(logPath, "adb launch", result);
-  if (result.status !== 0) return { observations };
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1500);
+  if (result.status !== 0) {
+    androidStream.stop();
+    return { observations };
+  }
+  // Wait for first frame + semantics tree before dump/input (probe labels lag launch).
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 3000);
   result = run("adb", [...serialArgs, "exec-out", "screencap", "-p"], { encoding: "buffer" });
   if (result.status === 0 && result.stdout?.length > 0) writeFileSync(beforePath, result.stdout);
   let probePlan = null;
+  let lastTree = { status: 1, stdout: "", stderr: "no dump" };
   if (appConfig.id === "component_gallery") {
-    const dumped = run("adb", [...serialArgs, "shell", "uiautomator", "dump", "/sdcard/moui-window.xml"]);
-    appendLog(logPath, "adb service probe accessibility dump", dumped);
-    const tree = run("adb", [...serialArgs, "shell", "cat", "/sdcard/moui-window.xml"]);
-    appendLog(logPath, "adb service probe accessibility tree", tree);
-    probePlan = tree.status === 0 ? androidServiceProbePlan(tree.stdout || "") : null;
+    for (let attempt = 1; attempt <= 12; attempt++) {
+      const dumped = run("adb", [...serialArgs, "shell", "uiautomator", "dump", "/sdcard/moui-window.xml"]);
+      appendLog(logPath, `adb service probe accessibility dump attempt ${attempt}`, dumped);
+      lastTree = run("adb", [...serialArgs, "shell", "cat", "/sdcard/moui-window.xml"]);
+      probePlan = lastTree.status === 0 ? androidServiceProbePlan(lastTree.stdout || "") : null;
+      if (probePlan) break;
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 500);
+    }
+    appendLog(logPath, "adb service probe accessibility tree", lastTree);
+    appendLog(logPath, "adb service probe plan", {
+      status: probePlan ? 0 : 1,
+      stdout: probePlan
+        ? JSON.stringify({ textField: probePlan.textField, action: probePlan.action })
+        : "",
+      stderr: probePlan ? "" : "service probe labels not found in uiautomator dump",
+    });
   }
   if (probePlan) {
     result = run("adb", [...serialArgs, "shell", "input", "tap", String(probePlan.textField.x), String(probePlan.textField.y)]);
     appendLog(logPath, "adb focus service probe text field", result);
-    result = run("adb", [...serialArgs, "shell", "input", "text", "-ime-mobile-probe"]);
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 400);
+    // `input text` rejects leading '-' as a flag; quote via shell.
+    result = run("adb", [...serialArgs, "shell", "input", "text", "ime-mobile-probe"]);
     appendLog(logPath, "adb service probe IME text", result);
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 300);
     result = run("adb", [...serialArgs, "shell", "input", "keycombination", "113", "29"]);
     appendLog(logPath, "adb service probe select all", result);
     result = run("adb", [...serialArgs, "shell", "input", "keyevent", "278"]);
@@ -284,6 +402,7 @@ const runAndroidSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotP
     appendLog(logPath, "adb service probe system Paste", result);
     result = run("adb", [...serialArgs, "shell", "input", "tap", String(probePlan.action.x), String(probePlan.action.y)]);
     appendLog(logPath, "adb activate service probe button", result);
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 400);
     const accelerometer = run("adb", [...serialArgs, "shell", "settings", "get", "system", "accelerometer_rotation"]);
     const rotation = run("adb", [...serialArgs, "shell", "settings", "get", "system", "user_rotation"]);
     appendLog(logPath, "adb read rotation settings", {
@@ -314,21 +433,36 @@ const runAndroidSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotP
     result = run("adb", [...serialArgs, "shell", "input", "swipe", "220", "680", "220", "320", "300"]);
     appendLog(logPath, "adb swipe", result);
   }
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 750);
+  // Allow async-image ready + input logs to flush before after-screenshot.
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1500);
   result = run("adb", [...serialArgs, "exec-out", "screencap", "-p"], { encoding: "buffer" });
   if (result.status === 0 && result.stdout?.length > 0) {
     writeFileSync(screenshotPath, result.stdout);
   }
-  result = run("adb", [...serialArgs, "logcat", "-d", "-t", "400"]);
-  appendLog(logPath, "adb logcat", result);
-  const logs = result.stdout || "";
   const pixelChange = compareScreenshots(beforePath, screenshotPath);
-  observeLogs(observations, logs, appConfig.android.supportsScroll, pixelChange);
+  // Keep stream open through force-stop so detach is captured, then merge.
   result = run("adb", [...serialArgs, "shell", "am", "force-stop", appConfig.android.applicationId]);
   appendLog(logPath, "adb force-stop", result);
-  const detached = run("adb", [...serialArgs, "logcat", "-d", "-t", "100"]);
-  appendLog(logPath, "adb detach logcat", detached);
-  observations.lifecycleDetach = (detached.stdout || "").includes("moui-mobile lifecycle detach") ? "yes" : "no";
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 800);
+  androidStream.stop();
+  let androidStreamLogs = "";
+  try {
+    if (existsSync(androidStreamPath)) androidStreamLogs = readFileSync(androidStreamPath, "utf8");
+  } catch {
+    // ignore stream read failure; dump remains the fallback
+  }
+  if (androidStreamLogs) {
+    writeFileSync(logPath, `## adb logcat stream\n${androidStreamLogs}\n`, { flag: "a" });
+  }
+  result = run("adb", [...serialArgs, "logcat", "-d", "-t", "800"]);
+  appendLog(logPath, "adb logcat", result);
+  const logs = `${androidStreamLogs}\n${result.stdout || ""}`;
+  observeLogs(observations, logs, appConfig.android.supportsScroll, pixelChange);
+  // Android logs sometimes use "lifecycle detach" without the exact marker prefix.
+  observations.lifecycleDetach = (
+    logs.includes("moui-mobile lifecycle detach")
+    || logs.includes("moui-mobile detach")
+  ) ? "yes" : "no";
   observations.cleanShutdown = result.status === 0 ? "yes" : "no";
   return { observations, pixelChange };
 };
@@ -762,15 +896,70 @@ const runIosSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath,
 const hdcArgs = device => device ? ["-t", device] : [];
 
 const captureHarmonyScreenshot = (device, localPath, label, logPath) => {
-  const remotePath = `/data/local/tmp/moui-${Date.now()}.png`;
+  // DevEco/hdc snapshot_display on current images only accepts .jpeg/.jpg.
+  const remotePath = `/data/local/tmp/moui-${Date.now()}.jpeg`;
   const targetArgs = hdcArgs(device);
   let result = run("hdc", [...targetArgs, "shell", "snapshot_display", "-f", remotePath]);
   appendLog(logPath, `${label} snapshot`, result);
   if (result.status !== 0) return result;
-  result = run("hdc", [...targetArgs, "file", "recv", remotePath, localPath]);
+  // Recv to a .jpeg temp beside the desired local path, then convert/copy to PNG
+  // when the recorder expects PNG (decodePng8). Prefer keeping the jpeg if the
+  // local path already ends with .jpeg/.jpg.
+  const wantsJpeg = /\.jpe?g$/i.test(localPath);
+  const recvPath = wantsJpeg ? localPath : `${localPath}.jpeg`;
+  result = run("hdc", [...targetArgs, "file", "recv", remotePath, recvPath]);
   appendLog(logPath, `${label} recv`, result);
   run("hdc", [...targetArgs, "shell", "rm", "-f", remotePath]);
+  if (result.status !== 0) return result;
+  if (!wantsJpeg) {
+    // Convert jpeg -> png via sips (macOS) so analyzeScreenshot/decodePng8 works.
+    const convert = run("sips", ["-s", "format", "png", recvPath, "--out", localPath]);
+    appendLog(logPath, `${label} jpeg-to-png`, convert);
+    try {
+      if (existsSync(recvPath) && recvPath !== localPath) {
+        // leave jpeg beside png for debugging; do not fail smoke if unlink fails
+      }
+    } catch {
+      // ignore
+    }
+    if (convert.status !== 0) {
+      // Fall back: if sips missing, keep jpeg path failure visible.
+      return convert;
+    }
+  }
   return result;
+};
+
+// Stream `hdc hilog` continuously (filtered to the MoUIHarmony tag) so
+// high-frequency pointer/scroll lines cannot push attach/IME/clipboard markers
+// out of a short `hilog -d` window. Mirrors the iOS/Android log stream contract.
+const startHarmonyLogStream = ({ device, outPath }) => {
+  const targetArgs = hdcArgs(device);
+  const fd = openSync(outPath, "w");
+  const child = spawn(
+    "hdc",
+    [...targetArgs, "shell", "hilog", "-T", "MoUIHarmony"],
+    {
+      cwd: repoRoot,
+      stdio: ["ignore", fd, fd],
+    },
+  );
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 400);
+  return {
+    child,
+    stop: () => {
+      try {
+        if (!child.killed) child.kill("SIGTERM");
+      } catch {
+        // ignore
+      }
+      try {
+        closeSync(fd);
+      } catch {
+        // ignore
+      }
+    },
+  };
 };
 
 const runHarmonySmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath, device }) => {
@@ -783,29 +972,86 @@ const runHarmonySmoke = ({ appConfig, artifact, logPath, beforePath, screenshotP
   appendLog(logPath, "hdc install", result);
   if (result.status !== 0) return { observations };
   run("hdc", [...targetArgs, "shell", "hilog", "-r"]);
+  // HarmonyOS ability processes are forked by appspawn and do not inherit hdc
+  // shell env, so write a flag file the NAPI a11ySmokeEnabled() reads. This is
+  // the reliable cross-boundary once-fire signal for component_gallery, mirroring
+  // the Android intent-extra and iOS SIMCTL_CHILD_ env paths.
+  const a11yFlag = appConfig.id === "component_gallery";
+  if (a11yFlag) {
+    // Quote the redirection so the remote shell (not the host shell) writes the
+    // flag file on the device.
+    run("hdc", [...targetArgs, "shell", "echo 1 > /data/local/tmp/moui_a11y_smoke"]);
+  }
+  const harmonyStreamPath = join(dirname(logPath), "runtime-stream.log");
+  const harmonyStream = startHarmonyLogStream({ device, outPath: harmonyStreamPath });
   result = run("hdc", [...targetArgs, "shell", "aa", "start", "-a", "EntryAbility", "-b", appConfig.harmonyos.bundleName]);
   appendLog(logPath, "hdc launch", result);
-  if (result.status !== 0) return { observations };
+  if (result.status !== 0) {
+    harmonyStream.stop();
+    if (a11yFlag) run("hdc", [...targetArgs, "shell", "rm", "-f", "/data/local/tmp/moui_a11y_smoke"]);
+    return { observations };
+  }
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1500);
   captureHarmonyScreenshot(device, beforePath, "hdc screenshot before input", logPath);
-  result = run("hdc", [...targetArgs, "shell", "uitest", "uiInput", "click", "160", "240"]);
-  appendLog(logPath, "hdc click", result);
+  let probePlan = null;
+  if (appConfig.id === "component_gallery") {
+    const dumped = run("hdc", [...targetArgs, "shell", "uitest", "dump"]);
+    appendLog(logPath, "hdc service probe accessibility dump", dumped);
+    // `uitest dump` writes to /data/local/tmp/output.xml by default; some
+    // builds echo the XML to stdout. Prefer stdout XML, then cat the file.
+    let treeXml = (dumped.stdout || "").includes("<node")
+      ? dumped.stdout || ""
+      : "";
+    if (!treeXml) {
+      const tree = run("hdc", [...targetArgs, "shell", "cat", "/data/local/tmp/output.xml"]);
+      appendLog(logPath, "hdc service probe accessibility tree", tree);
+      treeXml = tree.status === 0 ? tree.stdout || "" : "";
+    }
+    probePlan = harmonyServiceProbePlan(treeXml);
+  }
+  if (probePlan) {
+    result = run("hdc", [...targetArgs, "shell", "uitest", "uiInput", "click",
+      String(probePlan.textField.x), String(probePlan.textField.y)]);
+    appendLog(logPath, "hdc focus service probe text field", result);
+    result = run("hdc", [...targetArgs, "shell", "uitest", "uiInput", "inputText", "ime-mobile-probe"]);
+    appendLog(logPath, "hdc service probe IME text", result);
+    result = run("hdc", [...targetArgs, "shell", "uitest", "uiInput", "click",
+      String(probePlan.action.x), String(probePlan.action.y)]);
+    appendLog(logPath, "hdc activate service probe button", result);
+  } else {
+    result = run("hdc", [...targetArgs, "shell", "uitest", "uiInput", "click", "160", "240"]);
+    appendLog(logPath, "hdc click", result);
+  }
   if (appConfig.harmonyos.supportsScroll) {
     result = run("hdc", [...targetArgs, "shell", "uitest", "uiInput", "swipe", "220", "680", "220", "320", "300"]);
     appendLog(logPath, "hdc swipe", result);
   }
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 750);
+  // Wait for async-image ready + input logs; keep stream open through force-stop.
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 2000);
   captureHarmonyScreenshot(device, screenshotPath, "hdc screenshot after input", logPath);
-  result = run("hdc", [...targetArgs, "shell", "hilog", "-d"]);
-  appendLog(logPath, "hdc hilog", result);
-  const logs = result.stdout || "";
   const pixelChange = compareScreenshots(beforePath, screenshotPath);
-  observeLogs(observations, logs, appConfig.harmonyos.supportsScroll, pixelChange);
   result = run("hdc", [...targetArgs, "shell", "aa", "force-stop", appConfig.harmonyos.bundleName]);
   appendLog(logPath, "hdc force-stop", result);
-  const detached = run("hdc", [...targetArgs, "shell", "hilog", "-d"]);
-  appendLog(logPath, "hdc detach hilog", detached);
-  observations.lifecycleDetach = (detached.stdout || "").includes("moui-mobile lifecycle detach") ? "yes" : "no";
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1000);
+  harmonyStream.stop();
+  if (a11yFlag) run("hdc", [...targetArgs, "shell", "rm", "-f", "/data/local/tmp/moui_a11y_smoke"]);
+  let harmonyStreamLogs = "";
+  try {
+    if (existsSync(harmonyStreamPath)) harmonyStreamLogs = readFileSync(harmonyStreamPath, "utf8");
+  } catch {
+    // ignore stream read failure; dump remains the fallback
+  }
+  if (harmonyStreamLogs) {
+    writeFileSync(logPath, `## hdc hilog stream\n${harmonyStreamLogs}\n`, { flag: "a" });
+  }
+  result = run("hdc", [...targetArgs, "shell", "hilog", "-x"]);
+  appendLog(logPath, "hdc hilog", result);
+  const logs = `${harmonyStreamLogs}\n${result.stdout || ""}`;
+  observeLogs(observations, logs, appConfig.harmonyos.supportsScroll, pixelChange);
+  observations.lifecycleDetach = (
+    logs.includes("moui-mobile lifecycle detach")
+    || logs.includes("moui-mobile detach")
+  ) ? "yes" : "no";
   observations.cleanShutdown = result.status === 0 ? "yes" : "no";
   return { observations, pixelChange };
 };

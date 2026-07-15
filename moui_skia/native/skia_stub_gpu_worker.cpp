@@ -42,6 +42,7 @@
 #include <EGL/eglext.h>
 #include <GLES3/gl3.h>
 #if defined(__OHOS__)
+#include <native_buffer/native_buffer.h>
 #include <native_window/external_window.h>
 using NativeGpuEglWindow = OHNativeWindow;
 #else
@@ -76,6 +77,7 @@ using NativeGpuEglWindow = ANativeWindow;
 #include "include/gpu/ganesh/SkSurfaceGanesh.h"
 #include <vulkan/vulkan.h>
 #if defined(__ANDROID__)
+#include <android/log.h>
 #include <android/native_window.h>
 #include <vulkan/vulkan_android.h>
 #include "android_vulkan_loader.h"
@@ -250,6 +252,7 @@ struct MoonbitSkiaNativeGpuWorker {
   VkSwapchainKHR vulkan_swap_chain = VK_NULL_HANDLE;
   VkFormat vulkan_format = VK_FORMAT_UNDEFINED;
   VkColorSpaceKHR vulkan_color_space = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+  VkImageUsageFlags vulkan_image_usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
   VkExtent2D vulkan_extent = { 0, 0 };
   std::vector<VkImage> vulkan_images;
   std::vector<VkImageLayout> vulkan_image_layouts;
@@ -725,6 +728,7 @@ void release_vulkan_swap_chain(MoonbitSkiaNativeGpuWorker* worker) {
   worker->vulkan_acquire_fence = VK_NULL_HANDLE;
   worker->vulkan_swap_chain = VK_NULL_HANDLE;
   worker->vulkan_format = VK_FORMAT_UNDEFINED;
+  worker->vulkan_image_usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
   worker->vulkan_extent = { 0, 0 };
 }
 
@@ -1081,7 +1085,18 @@ bool ensure_vulkan_swap_chain(MoonbitSkiaNativeGpuWorker* worker) {
   swap_info.imageColorSpace = surface_format.colorSpace;
   swap_info.imageExtent = extent;
   swap_info.imageArrayLayers = 1;
-  swap_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  // Skia WrapBackendRenderTarget needs transfer bits for clear/upload paths in
+  // addition to color attachment; COLOR_ATTACHMENT alone fails wrap on some
+  // Android emulator drivers (observed as present fail=wrap format=37).
+  VkImageUsageFlags usage =
+    VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+    VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+    VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+  usage &= capabilities.supportedUsageFlags;
+  if ((usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) == 0) {
+    usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  }
+  swap_info.imageUsage = usage;
   swap_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
   swap_info.preTransform = capabilities.currentTransform;
   swap_info.compositeAlpha = choose_vulkan_composite_alpha(
@@ -1100,6 +1115,7 @@ bool ensure_vulkan_swap_chain(MoonbitSkiaNativeGpuWorker* worker) {
   }
   worker->vulkan_format = surface_format.format;
   worker->vulkan_color_space = surface_format.colorSpace;
+  worker->vulkan_image_usage = usage;
   worker->vulkan_extent = extent;
   uint32_t actual_image_count = 0;
   if (vkGetSwapchainImagesKHR(
@@ -1228,7 +1244,23 @@ bool render_vulkan_picture(
   MoonbitSkiaNativeGpuWorker* worker,
   const sk_sp<SkPicture>& picture
 ) {
-  if (!picture || !ensure_vulkan_swap_chain(worker)) {
+  if (!picture) {
+#if defined(__ANDROID__)
+    __android_log_print(ANDROID_LOG_WARN, "MoUIMobile", "vulkan present fail=no-picture");
+#endif
+    return false;
+  }
+  if (!ensure_vulkan_swap_chain(worker)) {
+#if defined(__ANDROID__)
+    __android_log_print(
+      ANDROID_LOG_WARN,
+      "MoUIMobile",
+      "vulkan present fail=swap-chain size=%dx%d attached=%llu",
+      worker->width,
+      worker->height,
+      static_cast<unsigned long long>(worker->attached_handle)
+    );
+#endif
     return false;
   }
   uint32_t image_index = 0;
@@ -1236,6 +1268,9 @@ bool render_vulkan_picture(
   if (acquire_result == VulkanAcquireResult::Recreate) {
     release_vulkan_swap_chain(worker);
     if (!ensure_vulkan_swap_chain(worker)) {
+#if defined(__ANDROID__)
+      __android_log_print(ANDROID_LOG_WARN, "MoUIMobile", "vulkan present fail=swap-recreate");
+#endif
       return false;
     }
     acquire_result = acquire_vulkan_image(worker, &image_index);
@@ -1244,22 +1279,50 @@ bool render_vulkan_picture(
     acquire_result != VulkanAcquireResult::Acquired ||
     image_index >= worker->vulkan_images.size()
   ) {
+#if defined(__ANDROID__)
+    __android_log_print(
+      ANDROID_LOG_WARN,
+      "MoUIMobile",
+      "vulkan present fail=acquire result=%d index=%u images=%zu",
+      static_cast<int>(acquire_result),
+      image_index,
+      worker->vulkan_images.size()
+    );
+#endif
     return false;
   }
   GrVkImageInfo image_info;
   image_info.fImage = worker->vulkan_images[image_index];
   image_info.fFormat = worker->vulkan_format;
   image_info.fImageTiling = VK_IMAGE_TILING_OPTIMAL;
-  image_info.fImageLayout = worker->vulkan_image_layouts[image_index];
-  image_info.fImageUsageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  // Always hand Skia UNDEFINED: after present the stored layout is PRESENT_SRC
+  // and WrapBackendRenderTarget(present_src) fails on Android emulator
+  // (fail=wrap format=37 after a few successful frames / heavy catalog redraw).
+  image_info.fImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  image_info.fImageUsageFlags = worker->vulkan_image_usage != 0
+    ? worker->vulkan_image_usage
+    : VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
   image_info.fSampleCount = 1;
   image_info.fLevelCount = 1;
   image_info.fCurrentQueueFamily = worker->vulkan_queue_family;
+  image_info.fSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  image_info.fProtected = skgpu::Protected::kNo;
   GrBackendRenderTarget render_target = GrBackendRenderTargets::MakeVk(
     static_cast<int>(worker->vulkan_extent.width),
     static_cast<int>(worker->vulkan_extent.height),
     image_info
   );
+  if (!render_target.isValid()) {
+#if defined(__ANDROID__)
+    __android_log_print(
+      ANDROID_LOG_WARN,
+      "MoUIMobile",
+      "vulkan present fail=backend-rt format=%u",
+      static_cast<unsigned>(worker->vulkan_format)
+    );
+#endif
+    return false;
+  }
   sk_sp<SkSurface> surface = SkSurfaces::WrapBackendRenderTarget(
     worker->vulkan_context,
     render_target,
@@ -1269,36 +1332,81 @@ bool render_vulkan_picture(
     nullptr
   );
   if (!surface) {
+#if defined(__ANDROID__)
+    __android_log_print(
+      ANDROID_LOG_WARN,
+      "MoUIMobile",
+      "vulkan present fail=wrap format=%u extent=%ux%u",
+      static_cast<unsigned>(worker->vulkan_format),
+      worker->vulkan_extent.width,
+      worker->vulkan_extent.height
+    );
+#endif
     return false;
   }
-  surface->getCanvas()->drawPicture(picture);
+  // Swapchain images start undefined/garbage. Always clear before replaying the
+  // picture so a failed/partial draw cannot present an opaque black buffer.
+  SkCanvas* canvas = surface->getCanvas();
+  canvas->clear(SK_ColorWHITE);
+  canvas->drawPicture(picture);
   GrFlushInfo flush_info;
   worker->vulkan_context->flush(
     surface.get(),
     SkSurfaces::BackendSurfaceAccess::kPresent,
     flush_info
   );
-  if (!worker->vulkan_context->submit()) {
+  // Non-blocking submit: SyncCpu::kYes on large catalog pictures can stall the
+  // GPU worker for hundreds of ms and stop subsequent presents (Browse freeze /
+  // landscape blank). Fence only the queue submit used for present ordering.
+  if (!worker->vulkan_context->submit(GrSyncCpu::kNo)) {
+#if defined(__ANDROID__)
+    __android_log_print(ANDROID_LOG_WARN, "MoUIMobile", "vulkan present fail=submit");
+#endif
     return false;
   }
-  VkSemaphore render_finished = worker->vulkan_render_finished[image_index];
   VkFence image_fence = worker->vulkan_image_fences[image_index];
-  VkSubmitInfo submit_info = {};
-  submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-  submit_info.signalSemaphoreCount = 1;
-  submit_info.pSignalSemaphores = &render_finished;
+  if (vkResetFences(worker->vulkan_device, 1, &image_fence) != VK_SUCCESS) {
+#if defined(__ANDROID__)
+    __android_log_print(ANDROID_LOG_WARN, "MoUIMobile", "vulkan present fail=reset-fence");
+#endif
+    return false;
+  }
+  VkSubmitInfo fence_submit = {};
+  fence_submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   if (vkQueueSubmit(
     worker->vulkan_queue,
     1,
-    &submit_info,
+    &fence_submit,
     image_fence
   ) != VK_SUCCESS) {
+#if defined(__ANDROID__)
+    __android_log_print(ANDROID_LOG_WARN, "MoUIMobile", "vulkan present fail=queue-submit");
+#endif
+    return false;
+  }
+  // Bounded wait — never hang the worker thread forever on a stuck device.
+  const VkResult fence_wait = vkWaitForFences(
+    worker->vulkan_device,
+    1,
+    &image_fence,
+    VK_TRUE,
+    50ull * 1000ull * 1000ull
+  );
+  if (fence_wait != VK_SUCCESS && fence_wait != VK_TIMEOUT) {
+#if defined(__ANDROID__)
+    __android_log_print(
+      ANDROID_LOG_WARN,
+      "MoUIMobile",
+      "vulkan present fail=fence-wait result=%d",
+      static_cast<int>(fence_wait)
+    );
+#endif
     return false;
   }
   VkPresentInfoKHR present_info = {};
   present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-  present_info.waitSemaphoreCount = 1;
-  present_info.pWaitSemaphores = &render_finished;
+  present_info.waitSemaphoreCount = 0;
+  present_info.pWaitSemaphores = nullptr;
   present_info.swapchainCount = 1;
   present_info.pSwapchains = &worker->vulkan_swap_chain;
   present_info.pImageIndices = &image_index;
@@ -1494,6 +1602,27 @@ bool ensure_egl_window_surface(MoonbitSkiaNativeGpuWorker* worker) {
   if (worker->egl_native_window == nullptr || !ensure_egl_context(worker)) {
     return false;
   }
+#if defined(__OHOS__)
+  // XComponent windows need geometry + GPU usage before eglCreateWindowSurface
+  // or HVD can present empty/black frames even when eglSwapBuffers succeeds.
+  if (worker->width > 0 && worker->height > 0) {
+    (void)OH_NativeWindow_NativeWindowHandleOpt(
+      worker->egl_native_window,
+      SET_BUFFER_GEOMETRY,
+      worker->width,
+      worker->height
+    );
+  }
+  (void)OH_NativeWindow_NativeWindowHandleOpt(
+    worker->egl_native_window,
+    SET_USAGE,
+    static_cast<uint64_t>(
+      NATIVEBUFFER_USAGE_HW_RENDER |
+      NATIVEBUFFER_USAGE_HW_TEXTURE |
+      NATIVEBUFFER_USAGE_MEM_DMA
+    )
+  );
+#endif
   if (worker->egl_window_surface == EGL_NO_SURFACE) {
     const EGLint surface_attributes[] = {
       EGL_RENDER_BUFFER, EGL_BACK_BUFFER,
@@ -1540,10 +1669,13 @@ bool render_egl_picture(
     0,
     framebuffer_info
   );
+  // Match Metal/Vulkan workers: Android/OHOS native windows present top-left
+  // origin content. Bottom-left here previously produced a black XComponent on
+  // the HarmonyOS emulator even though configure selected egl-gpu.
   sk_sp<SkSurface> surface = SkSurfaces::WrapBackendRenderTarget(
     worker->egl_context,
     render_target,
-    kBottomLeft_GrSurfaceOrigin,
+    kTopLeft_GrSurfaceOrigin,
     kRGBA_8888_SkColorType,
     nullptr,
     nullptr
@@ -1551,15 +1683,18 @@ bool render_egl_picture(
   if (!surface) {
     return false;
   }
-  surface->getCanvas()->drawPicture(picture);
+  SkCanvas* canvas = surface->getCanvas();
+  canvas->clear(SK_ColorWHITE);
+  canvas->drawPicture(picture);
   worker->egl_context->flushAndSubmit(surface.get(), GrSyncCpu::kNo);
   if (worker->egl_context->abandoned()) {
     return false;
   }
-  return eglSwapBuffers(
+  const EGLBoolean swapped = eglSwapBuffers(
     worker->egl_display,
     worker->egl_window_surface
-  ) == EGL_TRUE;
+  );
+  return swapped == EGL_TRUE;
 }
 #endif
 
@@ -1672,6 +1807,27 @@ void process_control(
       worker->width = control.width;
       worker->height = control.height;
       worker->surface_generation += 1;
+#if defined(MOUI_SKIA_NATIVE_GPU_WORKER_VULKAN)
+      // Rotation / size change invalidates the swapchain extent; recreate on
+      // the next present instead of wrapping stale images.
+      release_vulkan_swap_chain(worker);
+#endif
+#if defined(MOUI_SKIA_NATIVE_GPU_WORKER_EGL)
+      // Geometry changes require a fresh EGL window surface.
+      if (
+        worker->egl_display != EGL_NO_DISPLAY &&
+        worker->egl_window_surface != EGL_NO_SURFACE
+      ) {
+        (void)eglMakeCurrent(
+          worker->egl_display,
+          EGL_NO_SURFACE,
+          EGL_NO_SURFACE,
+          EGL_NO_CONTEXT
+        );
+        eglDestroySurface(worker->egl_display, worker->egl_window_surface);
+        worker->egl_window_surface = EGL_NO_SURFACE;
+      }
+#endif
       push_control_completion(worker, control);
       break;
     case NativeGpuControlKind::Detach:
@@ -1806,6 +1962,18 @@ void run_native_gpu_worker(MoonbitSkiaNativeGpuWorker* worker) {
       if (worker->attached_handle != 0 && worker->width > 0 && worker->height > 0) {
         attempted_present = true;
         presented = render_vulkan_picture(worker, frame.picture);
+#if defined(__ANDROID__)
+        __android_log_print(
+          ANDROID_LOG_INFO,
+          "MoUIMobile",
+          "gpu-worker vulkan present=%d seq=%lld size=%dx%d fails=%d",
+          presented ? 1 : 0,
+          static_cast<long long>(frame.sequence),
+          worker->width,
+          worker->height,
+          worker->consecutive_recovery_failures
+        );
+#endif
       }
 #endif
 #if defined(MOUI_SKIA_NATIVE_GPU_WORKER_EGL)
@@ -1817,6 +1985,18 @@ void run_native_gpu_worker(MoonbitSkiaNativeGpuWorker* worker) {
       ) {
         attempted_present = true;
         presented = render_egl_picture(worker, frame.picture);
+#if defined(__ANDROID__)
+        __android_log_print(
+          ANDROID_LOG_INFO,
+          "MoUIMobile",
+          "gpu-worker egl present=%d seq=%lld size=%dx%d fails=%d",
+          presented ? 1 : 0,
+          static_cast<long long>(frame.sequence),
+          worker->width,
+          worker->height,
+          worker->consecutive_recovery_failures
+        );
+#endif
       }
 #endif
     }
@@ -1839,7 +2019,10 @@ void run_native_gpu_worker(MoonbitSkiaNativeGpuWorker* worker) {
 #if defined(MOUI_SKIA_NATIVE_GPU_WORKER_EGL)
         release_egl_context(worker);
 #endif
-        if (worker->consecutive_recovery_failures >= 2) {
+        // Sticky after the first failed present. Waiting for a second failure
+        // left Android emulators black when only one or two frames were drawn
+        // before the UI went idle.
+        if (worker->consecutive_recovery_failures >= 1) {
           completion_status = NativeGpuCompletionStatus::FallbackToRaster;
         } else {
           completion_status = NativeGpuCompletionStatus::Dropped;

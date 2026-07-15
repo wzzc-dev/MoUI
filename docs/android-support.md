@@ -15,8 +15,8 @@ resize, pointer, IME, clipboard, and accessibility traffic into MoUI.
 | Skia provider | Scaffolded in `moui/backend/android/skia` | Provider/preflight checks prove wiring, not device pixels. |
 | Counter entrypoint | `examples/counter/android_skia` exports thin native hooks | Compile/check evidence only. |
 | APK shell | `examples/counter/android_app` plus `scripts/build-counter-android-apk.sh` | Packaging evidence; fallback APK is not runtime proof. |
-| First-frame runtime evidence | Non-fallback Component Gallery APK on HUAWEI SCM-W09 device; nonblank first-frame screenshot in `resource/screenshots/android-componentgallery.jpg` (2026-07-10) | First-frame pixels proven; full runtime smoke pending. |
-| Runtime support claim | Partial — first-frame proven, full smoke pending | Requires matching device/emulator smoke manifest for lifecycle, input, IME, clipboard, and accessibility observations. |
+| First-frame runtime evidence | Non-fallback Component Gallery APK on HUAWEI SCM-W09 device; nonblank first-frame screenshot in `resource/screenshots/android-componentgallery.jpg` (2026-07-10) | First-frame pixels proven. |
+| Runtime support claim | **L2 partial** on emulator/device with GPU route | See [Emulator Setup And Smoke](#emulator-setup-and-smoke) and `artifacts/mobile-runtime/android/component_gallery/`. Full `passed` still needs remaining service observations. |
 
 ## Ownership
 
@@ -101,17 +101,20 @@ Manual setup should install:
 - Android SDK Platform 35
 - Android SDK Build-Tools 35.0.0
 - Android SDK Platform-Tools
-- NDK 25.2.9519653 or a compatible side-by-side NDK
+- **NDK 28.2.13676358** (pinned by `moui/mobile/android/mobile-app.gradle` and
+  `moui/scripts/mobile/prepare-native-build.mjs`; override only with care)
 - CMake 3.22.1
+- For emulator smoke: `emulator` package + a system image matching host arch
 
 Example command-line setup:
 
 ```sh
-export ANDROID_HOME="$HOME/Android/Sdk"
+export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"   # macOS default
+# Linux default is often ~/Android/Sdk
 mkdir -p "$ANDROID_HOME/cmdline-tools"
 # Unzip the official commandlinetools package so that this path exists:
 #   "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmake/3.22.1/bin:$PATH"
+export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmake/3.22.1/bin:$PATH"
 
 sdkmanager --licenses
 sdkmanager --install \
@@ -119,12 +122,21 @@ sdkmanager --install \
   "platforms;android-35" \
   "build-tools;35.0.0" \
   "cmake;3.22.1" \
-  "ndk;25.2.9519653"
+  "ndk;28.2.13676358"
 ```
 
-The APK script auto-selects the latest NDK under `$ANDROID_HOME/ndk` when
-`ANDROID_NDK_HOME` is not set. Set `ANDROID_NDK_HOME` only when a specific NDK
-must be pinned.
+Pin the same NDK everywhere (Gradle `ndkVersion`, prepare script, and
+`ANDROID_NDK_HOME`):
+
+```sh
+export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/28.2.13676358"
+```
+
+**libc++ packaging:** MoUI packages the full NDK `libc++_shared.so` (`c++_shared`
+STL, `doNotStrip`). Mixing NDK A to compile with NDK B / a stripped minimal
+libc++ causes `UnsatisfiedLinkError` on `std::ostringstream` at `dlopen` and
+empty runtime streams. If native fails to load, reinstall NDK 28.2, clean
+`.cxx` / jniLibs / Gradle caches, and rebuild.
 
 ## Mobile APK Builds
 
@@ -162,11 +174,11 @@ scripts/build-mobile-android-apk.sh --app counter --renderer skia-raster
 For real Skia packages, `auto` and `skia-gpu` select GPU (`gpuPromoted: true`).
 Fallback-Skia builds and explicit `skia-raster` stay on the CPU presenter.
 
-When multiple side-by-side NDK versions are installed, pin the intended one:
+When multiple side-by-side NDK versions are installed, pin **28.2.13676358**:
 
 ```sh
 ANDROID_HOME=/path/to/Android/Sdk \
-ANDROID_NDK_HOME=/path/to/Android/Sdk/ndk/25.2.9519653 \
+ANDROID_NDK_HOME=/path/to/Android/Sdk/ndk/28.2.13676358 \
 scripts/build-mobile-android-apk.sh --app counter
 ```
 
@@ -212,10 +224,156 @@ the app workspace:
   --android-project "$PWD/android_app"
 ```
 
+## Emulator Setup And Smoke
+
+Three evidence layers stay separate: **product GPU default** (source/`auto`),
+**mobile runtime smoke (L2)**, and **seven-gate GPU promotion claim (L3)**.
+
+| Layer | Meaning | Android bar for “GPU feasible” |
+| --- | --- | --- |
+| L1 packaging | Non-fallback APK, `selected=skia-gpu`, `gpuPromoted=true` | Required |
+| L2 runtime | Process loads native + configure log: `skia-gpu-native`, `vulkan-gpu` or `egl-gpu`, **`gpuAvailable=true`**, attach + nonblank frame | **Required** |
+| L3 seven-gate claim | 600s perf/memory/context-loss, `claimed=true` | **Not required** for feasibility |
+
+`scripts/setup-android-sdk.sh` installs platform-tools, platforms, build-tools,
+CMake, and NDK — **not** the emulator or system images. Install those next.
+
+### Install emulator + system image + AVD
+
+Host arch: Apple Silicon / arm64 hosts use `arm64-v8a` images; x86_64 hosts use
+`x86_64`.
+
+```sh
+scripts/setup-android-sdk.sh --accept-licenses --ndk 28.2.13676358
+eval "$(scripts/setup-android-sdk.sh --print-env)"
+export ANDROID_NDK_HOME="${ANDROID_NDK_HOME:-$ANDROID_HOME/ndk/28.2.13676358}"
+export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+
+# Emulator binary + API 34 Google APIs image (adjust API/arch as needed)
+sdkmanager --install \
+  "emulator" \
+  "system-images;android-34;google_apis;arm64-v8a"
+
+# Create AVD once (name is local; use any stable name)
+echo no | avdmanager create avd \
+  -n moui_api34 \
+  -k "system-images;android-34;google_apis;arm64-v8a" \
+  -d pixel_6 \
+  --force
+
+avdmanager list avd
+```
+
+### Start the emulator
+
+```sh
+# Prefer GPU host acceleration when available
+emulator -avd moui_api34 -gpu host -no-snapshot-save &
+# Headless CI-style alternative:
+# emulator -avd moui_api34 -gpu swiftshader_indirect -no-window -no-audio -no-snapshot-save &
+
+adb wait-for-device
+adb devices -l
+# Wait until boot completed
+adb shell getprop sys.boot_completed   # expect 1
+```
+
+Do **not** run Android and HarmonyOS emulators at the same time on low-memory
+hosts.
+
+### Build non-fallback APK (L1)
+
+```sh
+scripts/build-mobile-android-apk.sh --app component_gallery --renderer auto
+# Optional packaging checks:
+# unzip -l artifacts/android/component_gallery/app-debug.apk | rg 'lib/.*/(libcomponent|libskia|libc\+\+_shared)'
+# python3 -c "import os; p='…/libc++_shared.so'; print(os.path.getsize(p))"  # expect multi-MB, not ~1MB stripped
+```
+
+Artifact: `artifacts/android/component_gallery/app-debug.apk`  
+Meta: `artifacts/android/component_gallery/native/mobile-build.json` →
+`selected=skia-gpu`, `gpuPromoted=true`, `fallbackSkia=false`.
+
+### Install + manual launch (without full recorder)
+
+```sh
+SERIAL="$(adb devices | awk '/\tdevice$/{print $1; exit}')"
+APK=artifacts/android/component_gallery/app-debug.apk
+
+adb -s "$SERIAL" install -r "$APK"
+adb -s "$SERIAL" logcat -c
+# Activity is the shared template class (not applicationId-relative).
+adb -s "$SERIAL" shell am start -n \
+  dev.wzzc.moui.componentgallery/dev.wzzc.moui.mobile.MobileActivity
+# If start fails: adb shell cmd package resolve-activity --brief dev.wzzc.moui.componentgallery
+
+# Continuous GPU configure evidence (do not use one-shot logcat dumps only)
+adb -s "$SERIAL" logcat -s MoUIMobile:V | tee /tmp/moui-android-cg.log
+# Expected line shape:
+# moui-mobile renderer configure … status={"platform":"android","selected":"skia-gpu-native",
+#   "surfaceRoute":"vulkan-gpu"|"egl-gpu","gpuAvailable":true,"gpuPromoted":true,…}
+
+# Optional screenshot
+adb -s "$SERIAL" exec-out screencap -p > /tmp/moui-android-cg.png
+```
+
+If the app crashes immediately with `UnsatisfiedLinkError` / missing
+`ostringstream` vtable, fix NDK/libc++ packaging (see [SDK And NDK Setup](#sdk-and-ndk-setup))
+before treating GPU as unavailable.
+
+### Record + validate smoke (L2)
+
+```sh
+SERIAL="$(adb devices | awk '/\tdevice$/{print $1; exit}')"
+
+scripts/build-mobile-android-apk.sh --app component_gallery --renderer auto
+node scripts/record-mobile-runtime-smoke.mjs \
+  --platform android --app component_gallery --device "$SERIAL"
+node scripts/validate-mobile-runtime-manifest.mjs \
+  artifacts/mobile-runtime/android/component_gallery/mobile-runtime-smoke.json
+# Full service gate only when observations are green:
+# node scripts/record-mobile-runtime-smoke.mjs \
+#   --platform android --app component_gallery --device "$SERIAL" --require-passed
+```
+
+Evidence directory: `artifacts/mobile-runtime/android/component_gallery/`
+
+```sh
+rg -n 'renderer configure|surfaceRoute|gpuAvailable|UnsatisfiedLinkError' \
+  artifacts/mobile-runtime/android/component_gallery/runtime-stream.log \
+  artifacts/mobile-runtime/android/component_gallery/runtime.log
+```
+
+**L2 GPU pass conditions:**
+
+| Check | Expect |
+| --- | --- |
+| Native load | No `UnsatisfiedLinkError` |
+| configure | `selected=skia-gpu-native` |
+| route | `vulkan-gpu` (preferred API 24+) or `egl-gpu` |
+| | **`gpuAvailable":true`** |
+| Frame | nonblank first frame + attach |
+| Better | IME/clipboard/a11y/async-image → `status=passed` |
+
+Packaging-only (`gpuAvailable=false`, empty stream, fallback-Skia APK) is **not**
+GPU-feasible L2.
+
+### GPU feasibility snapshot (local, 2026-07-15)
+
+Component Gallery smoke under `artifacts/mobile-runtime/android/component_gallery/`:
+
+- `status`: **partial**
+- `renderer.selected`: `SkiaGpuNative`
+- `surfaceRoute`: **`vulkan-gpu`**
+- `gpuAvailable` / `gpuPromoted`: **true**
+- Observations: attach, nonblank first frame, representative input, scroll,
+  accessibility tree/focus/action, async-image **yes**; detach/resize/IME/
+  clipboard/realDeviceSigning still incomplete for full `passed`
+
 ## Runtime Evidence Required
 
-A passed Android runtime claim requires a non-fallback APK plus matching
-device/emulator evidence for at least:
+A **full `passed`** Android runtime claim requires a non-fallback APK plus
+matching device/emulator evidence for at least:
 
 - Activity/Surface lifecycle creating and disposing an `AndroidRuntimeSession`.
 - `ANativeWindow` presentation with nonblank first-frame pixels.
@@ -224,15 +382,19 @@ device/emulator evidence for at least:
 - Clipboard, accessibility, async image, and packaging observations or explicit
   pending status.
 
-Until those observations exist, describe Android as an experimental embedded
-scaffold, not as a passed platform.
+**GPU feasibility (L1+L2)** can be claimed earlier when configure proves the GPU
+route and first-frame is nonblank (see table above). L3 seven-gate claim remains
+separate (`gpuPromotionEvidence.claimed=false` on normal smoke).
 
-The checked smoke catalog now contains release/manual Android mobile runtime
-suites. After a non-fallback build, record and validate evidence with:
+The checked smoke catalog contains release/manual Android mobile runtime suites.
+After a non-fallback build, record and validate with:
 
 ```sh
-node scripts/record-mobile-runtime-smoke.mjs --platform android --app counter --require-passed
-node scripts/record-mobile-runtime-smoke.mjs --platform android --app component_gallery --require-passed
+node scripts/record-mobile-runtime-smoke.mjs --platform android --app counter --device <serial>
+node scripts/record-mobile-runtime-smoke.mjs --platform android --app component_gallery --device <serial>
+# release bar only when complete:
+node scripts/record-mobile-runtime-smoke.mjs \
+  --platform android --app component_gallery --device <serial> --require-passed
 ```
 
 Component Gallery opens `Mobile Service Probe` directly. The recorder locates
@@ -244,7 +406,5 @@ already installed and enabled. A passed run requires two distinct logged
 surface sizes plus accessibility tree, focus, and targeted action receipts;
 ordinary coordinate taps do not substitute for TalkBack actions.
 
-No Android target is currently connected on the development host, so this
-change provides the probe and recorder but does not claim a new Android
-real-device pass. Device acceptance must also manually round-trip a PNG through
-another app before the image clipboard capability can be promoted.
+Device acceptance must still manually round-trip a PNG through another app
+before image clipboard support can be promoted.

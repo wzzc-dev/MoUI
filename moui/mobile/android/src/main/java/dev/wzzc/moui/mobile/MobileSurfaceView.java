@@ -35,6 +35,7 @@ import java.util.Map;
 
 final class MobileSurfaceView extends SurfaceView {
     private static final String LOG_TAG = "MoUIMobile";
+    private static boolean a11ySmokeFired = false;
     private final SpannableStringBuilder editable = new SpannableStringBuilder();
     private final Map<Integer, SemanticsNode> semantics = new HashMap<>();
     private final MobileAccessibilityProvider accessibilityProvider = new MobileAccessibilityProvider();
@@ -218,6 +219,42 @@ final class MobileSurfaceView extends SurfaceView {
         accessibilityProvider.resetFocusIfMissing();
         sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED);
         Log.i(LOG_TAG, "moui-mobile service accessibility tree nodes=" + nodes.length());
+        maybeFireAccessibilitySmoke();
+    }
+
+    // Simulator/emulator smoke can request a deterministic focus/activate pair
+    // without a live TalkBack gesture stream. Runs once per process when the
+    // host sets MOUI_MOBILE_A11Y_SMOKE=1, mirroring the iOS once-fire path.
+    private void maybeFireAccessibilitySmoke() {
+        if (a11ySmokeFired || semantics.isEmpty()) return;
+        if (!MobileActivity.a11ySmokeRequested) {
+            String env = System.getenv("MOUI_MOBILE_A11Y_SMOKE");
+            boolean enabled = env != null &&
+                    (env.equals("1") || env.equalsIgnoreCase("true") || env.equalsIgnoreCase("yes"));
+            if (!enabled) return;
+        }
+        SemanticsNode target = null;
+        for (SemanticsNode node : semantics.values()) {
+            if (node.label != null && (node.label.equals("Activate service probe") ||
+                    node.label.contains("Activate service probe"))) {
+                target = node;
+                break;
+            }
+        }
+        if (target == null) {
+            for (SemanticsNode node : semantics.values()) {
+                if ("Button".equals(node.role)) {
+                    target = node;
+                    break;
+                }
+            }
+        }
+        if (target == null) return;
+        a11ySmokeFired = true;
+        Log.i(LOG_TAG, "moui-mobile service accessibility focus id=" + target.id);
+        MobileActivity.nativeDispatchAccessibility(target.id, 1, "");
+        Log.i(LOG_TAG, "moui-mobile service accessibility action=activate id=" + target.id);
+        MobileActivity.nativeDispatchAccessibility(target.id, 0, "");
     }
 
     @Override

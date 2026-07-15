@@ -554,7 +554,9 @@ fn ShapedTextRun::from_handle(handle : ShapedTextRunHandle) -> ShapedTextRun? {
 pub fn Font::shape_text_utf8(
   self : Font,
   text : Bytes,
-  width? : Float = 1000000000.0,
+  // Unconstrained wrap width for single-line runs. Keep finite and moderate so
+  // native shapers never allocate pathological run buffers.
+  width? : Float = 1000000.0,
   left_to_right? : Bool = true,
 ) -> ShapedTextRun? {
   if text.is_empty() || !native_font_positive_scalar_is_valid(width) {

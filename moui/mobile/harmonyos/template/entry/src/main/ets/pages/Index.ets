@@ -1,4 +1,5 @@
 import mouiDemo from 'libmoui_mobile_harmonyos.so';
+import display from '@ohos.display';
 import displaySync from '@ohos.graphics.displaySync';
 import pasteboard from '@ohos.pasteboard';
 import hilog from '@ohos.hilog';
@@ -35,6 +36,9 @@ interface HostUpdate {
   payload: ImePayload | SemanticsPayload | ClipboardPayload | string;
 }
 
+// Process-level once-fire guard for the deterministic accessibility smoke.
+let a11ySmokeFired: boolean = false;
+
 @Entry
 @Component
 struct Index {
@@ -61,6 +65,33 @@ struct Index {
     this.frameSync.start();
   }
 
+  private displayDensity(): number {
+    try {
+      const d = display.getDefaultDisplaySync();
+      return d.densityPixels > 0 ? d.densityPixels : 1;
+    } catch (_err) {
+      return 1;
+    }
+  }
+
+  // Area is in vp; native XComponent size is physical px. Report logical area so
+  // attach/resize can compute scale = physical/logical (~2 on MateBook Pro HVD).
+  private syncSurfaceMetrics(areaWidth: number, areaHeight: number): void {
+    if (areaWidth <= 0 || areaHeight <= 0) {
+      return;
+    }
+    const density = this.displayDensity();
+    hilog.info(
+      0x4D4F,
+      'MoUIHarmony',
+      'surface metrics logical=%{public}fx%{public}f density=%{public}f',
+      areaWidth,
+      areaHeight,
+      density
+    );
+    mouiDemo.resize(areaWidth, areaHeight, density);
+  }
+
   aboutToDisappear(): void {
     this.frameSync.stop();
     this.frameSync.off('frame', this.frameCallback);
@@ -75,6 +106,9 @@ struct Index {
       })
         .width('100%')
         .height('100%')
+        .onAreaChange((_oldValue: Area, newValue: Area) => {
+          this.syncSurfaceMetrics(newValue.width, newValue.height);
+        })
 
       TextInput({ text: this.imeText })
         .id('moui-ime-proxy')
@@ -168,12 +202,45 @@ struct Index {
       } else if (update.kind === 'semantics') {
         this.semanticsNodes = (update.payload as SemanticsPayload).nodes;
         hilog.info(0x4D4F, 'MoUIHarmony', 'moui-mobile service accessibility tree nodes=%{public}d', this.semanticsNodes.length);
+        this.maybeFireAccessibilitySmoke();
       } else if (update.kind === 'clipboard' && update.id !== undefined) {
         this.applyClipboard(update.id, update.payload as ClipboardPayload);
       } else if (update.kind === 'diagnostic') {
         hilog.info(0x4D4F, 'MoUIHarmony', '%{public}s', update.payload as string);
       }
     });
+  }
+
+  // Emulator smoke can request a deterministic focus/activate pair without a
+  // live screen-reader gesture stream. Runs once per process when the host
+  // sets MOUI_MOBILE_A11Y_SMOKE=1, mirroring the iOS once-fire path.
+  private maybeFireAccessibilitySmoke(): void {
+    if (a11ySmokeFired || this.semanticsNodes.length === 0) return;
+    if (!mouiDemo.a11ySmokeEnabled()) return;
+    let targetId: number = -1;
+    for (let i = 0; i < this.semanticsNodes.length; i++) {
+      const node = this.semanticsNodes[i];
+      if (node.label === 'Activate service probe' ||
+          node.label.indexOf('Activate service probe') >= 0) {
+        targetId = node.element_id;
+        break;
+      }
+    }
+    if (targetId < 0) {
+      for (let i = 0; i < this.semanticsNodes.length; i++) {
+        const node = this.semanticsNodes[i];
+        if (node.role === 'Button') {
+          targetId = node.element_id;
+          break;
+        }
+      }
+    }
+    if (targetId < 0) return;
+    a11ySmokeFired = true;
+    hilog.info(0x4D4F, 'MoUIHarmony', 'moui-mobile service accessibility focus id=%{public}d', targetId);
+    mouiDemo.dispatchAccessibility(targetId, 1, '');
+    hilog.info(0x4D4F, 'MoUIHarmony', 'moui-mobile service accessibility action=activate id=%{public}d', targetId);
+    mouiDemo.dispatchAccessibility(targetId, 0, '');
   }
 
   private applyIme(payload: ImePayload): void {

@@ -38,10 +38,12 @@
   Recorder acceptance requires system text clipboard write/read, two distinct
   physical resize dimensions, accessibility tree/focus/action, and async-image
   loading/ready logs. PNG clipboard remains a separate cross-app device check.
-- Runtime evidence (2026-07-14): iOS Simulator Component Gallery is **`passed`**
-  at `artifacts/mobile-runtime/ios/component_gallery/` (`--require-passed` ok;
-  Metal GPU configure; seven-gate claim still pending). HarmonyOS had no `hdc`
-  target (packaging + first-frame screenshot only).
+- Runtime evidence (2026-07-15): iOS Simulator CG **`passed`** (Metal).
+  HarmonyOS MateBook Pro HVD CG **`partial`** but **L2 GPU feasible**:
+  `egl-gpu` + `gpuAvailable=true` under
+  `artifacts/mobile-runtime/harmonyos/component_gallery/`. Android L1
+  packaging fixed (full NDK28 libc++); L2 smoke after HarmonyOS (don't run
+  both emulators together).
 - Xcode 26.3 `simctl io` has no rotate operation. iOS Simulator rotation uses
   Simulator menu UI scripting and therefore needs macOS Accessibility
   permission; VoiceOver preference writes alone are not focus/action evidence.
