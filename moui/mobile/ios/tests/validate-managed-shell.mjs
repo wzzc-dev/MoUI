@@ -28,6 +28,7 @@ const appPath = "moui/mobile/ios/template/Sources/MoUIMobileApp.swift";
 const packagePath = "moui/mobile/ios/Package.swift";
 const resolverPath = "moui/mobile/ios/resolve-managed-shell.mjs";
 const builderPath = "moui/scripts/mobile/build-ios-app.sh";
+const repositoryBuilderPath = "scripts/build-mobile-ios-app.sh";
 const coreBuilderPath = "moui/scripts/mobile/build-ios-app-core.sh";
 const legacyPath = "moui/mobile/ios/legacy/moui_mobile_app.mm";
 
@@ -41,6 +42,7 @@ const app = read(appPath);
 const packageManifest = read(packagePath);
 const resolver = read(resolverPath);
 const builder = read(builderPath);
+const repositoryBuilder = read(repositoryBuilderPath);
 const coreBuilder = read(coreBuilderPath);
 
 contains(app, "@main", appPath);
@@ -117,6 +119,11 @@ contains(builder, 'shell_mode="managed"', builderPath);
 contains(builder, '--ejected-shell) shell_mode="ejected"', builderPath);
 contains(builder, '--legacy-uikit-shell) shell_mode="legacy-uikit"', builderPath);
 contains(builder, "--ejected-shell requires --xcode-project", builderPath);
+contains(builder, "--ejected-shell requires a versioned .moui-shell.json", builderPath);
+contains(builder, "--xcode-project requires --ejected-shell or --legacy-uikit-shell", builderPath);
+contains(builder, "--legacy-uikit-shell requires an explicit schema v1 --app-config", builderPath);
+contains(builder, "MOUI_MOBILE_ALLOW_LEGACY_CONFIG=1", builderPath);
+contains(builder, '"code": "ios-uikit-shell"', builderPath);
 contains(builder, 'scheme="$(basename "$xcode_project" .xcodeproj)"', builderPath);
 contains(builder, "requires Xcode 15.4 or newer", builderPath);
 contains(builder, 'MOUI_MOBILE_IOS_SHELL="$shell_mode"', builderPath);
@@ -126,6 +133,11 @@ contains(builder, '.moui-managed-ios-stage', builderPath);
 contains(builder, "Refusing to replace an unowned iOS project", builderPath);
 contains(builder, "Staged canonical iOS shell", builderPath);
 excludes(builder, 'xcode_project="$workspace_root/ios_app', builderPath);
+contains(repositoryBuilder, 'legacy_uikit_shell=0', repositoryBuilderPath);
+contains(repositoryBuilder, 'if [ "$legacy_uikit_shell" -eq 1 ]', repositoryBuilderPath);
+contains(repositoryBuilder,
+  '--app-config "$repo_root/moui/mobile/legacy/fixtures/$app.mobile.json"',
+  repositoryBuilderPath);
 contains(coreBuilder, "-swift-version 5", coreBuilderPath);
 contains(coreBuilder, "requires deployment target 15.0 or newer", coreBuilderPath);
 contains(coreBuilder, "mobile/ios/legacy/moui_mobile_app.mm", coreBuilderPath);

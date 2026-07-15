@@ -11,6 +11,7 @@ USAGE
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 app=""
+legacy_java_shell=0
 
 args=("$@")
 index=0
@@ -25,6 +26,10 @@ while [ "$index" -lt "${#args[@]}" ]; do
       "$repo_root/moui/scripts/mobile/build-android-apk.sh" --help
       exit 0
       ;;
+    --legacy-java-shell)
+      legacy_java_shell=1
+      index=$((index + 1))
+      ;;
     *)
       index=$((index + 1))
       ;;
@@ -38,18 +43,24 @@ if [ -z "$app" ]; then
 fi
 
 case "$app" in
-  counter|component_gallery)
-    android_project="$repo_root/examples/$app/android_app"
-    ;;
+  counter|component_gallery) ;;
   *)
     echo "unknown repository mobile app: $app" >&2
     exit 2
     ;;
 esac
 
+project_args=()
+if [ "$legacy_java_shell" -eq 1 ]; then
+  project_args=(
+    --android-project "$repo_root/examples/$app/android_app"
+    --app-config "$repo_root/moui/mobile/legacy/fixtures/$app.mobile.json"
+  )
+fi
+
 exec "$repo_root/moui/scripts/mobile/build-android-apk.sh" \
   --workspace-root "$repo_root" \
   --moui-root "$repo_root/moui" \
   --skia-root "$repo_root/moui_skia" \
-  --android-project "$android_project" \
+  "${project_args[@]}" \
   "$@"

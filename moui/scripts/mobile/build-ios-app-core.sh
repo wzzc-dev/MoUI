@@ -92,6 +92,25 @@ case "$shell_mode" in
   managed|ejected|legacy-uikit) ;;
   *) echo "unsupported iOS shell mode: $shell_mode" >&2; exit 2 ;;
 esac
+if [ "$shell_mode" = "legacy-uikit" ]; then
+  if [ -z "$app_config" ]; then
+    echo "legacy-uikit shell requires MOUI_MOBILE_APP_CONFIG with schemaVersion 1" >&2
+    exit 2
+  fi
+  case "$app_config" in /*) legacy_config_path="$app_config" ;; *) legacy_config_path="$workspace_root/$app_config" ;; esac
+  node -e '
+const fs = require("fs");
+const path = process.argv[1];
+const config = JSON.parse(fs.readFileSync(path, "utf8"));
+if (config.schemaVersion !== 1) {
+  console.error(`legacy-uikit shell requires schemaVersion 1: ${path}`);
+  process.exit(1);
+}
+' "$legacy_config_path"
+  export MOUI_MOBILE_ALLOW_LEGACY_CONFIG=1
+else
+  unset MOUI_MOBILE_ALLOW_LEGACY_CONFIG
+fi
 if ! awk -v value="$deployment_target" 'BEGIN {
   split(value, actual, ".");
   exit !((actual[1] + 0) >= 15);

@@ -11,6 +11,7 @@ USAGE
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 app=""
+legacy_uikit_shell=0
 
 args=("$@")
 index=0
@@ -24,6 +25,10 @@ while [ "$index" -lt "${#args[@]}" ]; do
       usage
       "$repo_root/moui/scripts/mobile/build-ios-app.sh" --help
       exit 0
+      ;;
+    --legacy-uikit-shell)
+      legacy_uikit_shell=1
+      index=$((index + 1))
       ;;
     *)
       index=$((index + 1))
@@ -54,11 +59,19 @@ case "$app" in
     ;;
 esac
 
+project_args=()
+if [ "$legacy_uikit_shell" -eq 1 ]; then
+  project_args=(
+    --xcode-project "$xcode_project"
+    --scheme "$scheme"
+    --product-name "$product_name"
+    --app-config "$repo_root/moui/mobile/legacy/fixtures/$app.mobile.json"
+  )
+fi
+
 exec "$repo_root/moui/scripts/mobile/build-ios-app.sh" \
   --workspace-root "$repo_root" \
   --moui-root "$repo_root/moui" \
   --skia-root "$repo_root/moui_skia" \
-  --xcode-project "$xcode_project" \
-  --scheme "$scheme" \
-  --product-name "$product_name" \
+  "${project_args[@]}" \
   "$@"

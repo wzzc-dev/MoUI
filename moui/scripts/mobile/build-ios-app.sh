@@ -88,13 +88,15 @@ if [ "$ejected_shell" -eq 1 ] && [ "$legacy_uikit_shell" -eq 1 ]; then
   exit 2
 fi
 
-xcode_version="$(xcodebuild -version | awk 'NR == 1 { print $2 }')"
-if [ -z "$xcode_version" ] || ! awk -v value="$xcode_version" 'BEGIN {
-  split(value, actual, ".");
-  exit !((actual[1] + 0) > 15 || ((actual[1] + 0) == 15 && (actual[2] + 0) >= 4));
-}'; then
-  echo "MoUI managed iOS shell requires Xcode 15.4 or newer; found ${xcode_version:-unknown}" >&2
-  exit 1
+if [ "$shell_mode" != "legacy-uikit" ]; then
+  xcode_version="$(xcodebuild -version | awk 'NR == 1 { print $2 }')"
+  if [ -z "$xcode_version" ] || ! awk -v value="$xcode_version" 'BEGIN {
+    split(value, actual, ".");
+    exit !((actual[1] + 0) > 15 || ((actual[1] + 0) == 15 && (actual[2] + 0) >= 4));
+  }'; then
+    echo "MoUI managed iOS shell requires Xcode 15.4 or newer; found ${xcode_version:-unknown}" >&2
+    exit 1
+  fi
 fi
 
 case "$workspace_root" in /*) ;; *) workspace_root="$(pwd)/$workspace_root" ;; esac
@@ -107,12 +109,32 @@ if [ -z "$build_dir" ]; then
 elif [ "${build_dir#/}" = "$build_dir" ]; then
   build_dir="$workspace_root/$build_dir"
 fi
+deprecation_path="$build_dir/mobile-deprecation.json"
 if [ -n "$output_app" ] && [ "${output_app#/}" = "$output_app" ]; then
   output_app="$workspace_root/$output_app"
 fi
 if [ "$shell_mode" = "legacy-uikit" ] && { [ -z "$xcode_project" ] || [ -z "$scheme" ]; }; then
   echo "--legacy-uikit-shell requires --xcode-project and --scheme" >&2
   exit 2
+fi
+if [ "$shell_mode" = "legacy-uikit" ]; then
+  if [ -z "$app_config" ]; then
+    echo "--legacy-uikit-shell requires an explicit schema v1 --app-config" >&2
+    exit 2
+  fi
+  case "$app_config" in /*) legacy_config_path="$app_config" ;; *) legacy_config_path="$workspace_root/$app_config" ;; esac
+  node -e '
+const fs = require("fs");
+const path = process.argv[1];
+const config = JSON.parse(fs.readFileSync(path, "utf8"));
+if (config.schemaVersion !== 1) {
+  console.error(`--legacy-uikit-shell requires schemaVersion 1: ${path}`);
+  process.exit(1);
+}
+' "$legacy_config_path"
+  export MOUI_MOBILE_ALLOW_LEGACY_CONFIG=1
+else
+  unset MOUI_MOBILE_ALLOW_LEGACY_CONFIG
 fi
 if [ "$shell_mode" = "ejected" ] && [ -z "$xcode_project" ]; then
   echo "--ejected-shell requires --xcode-project" >&2
@@ -127,6 +149,36 @@ else
     xcode_project="$workspace_root/$xcode_project"
   fi
 fi
+if [ "$shell_mode" = "managed" ] && [ "$stage_ios_project" -eq 0 ]; then
+  echo "--xcode-project requires --ejected-shell or --legacy-uikit-shell" >&2
+  exit 2
+fi
+if [ "$shell_mode" = "ejected" ]; then
+  shell_lock="$(dirname "$xcode_project")/.moui-shell.json"
+  if [ ! -f "$shell_lock" ]; then
+    echo "--ejected-shell requires a versioned .moui-shell.json: $shell_lock" >&2
+    exit 1
+  fi
+  node -e '
+const fs = require("fs");
+const path = process.argv[1];
+const lock = JSON.parse(fs.readFileSync(path, "utf8"));
+const expected = {
+  schemaVersion: 1,
+  mode: "ejected",
+  platform: "ios",
+  shellApiVersion: 1,
+  runtimeAbiVersion: 1,
+};
+for (const [field, value] of Object.entries(expected)) {
+  if (lock[field] !== value) {
+    console.error(`${path}: ${field} must be ${JSON.stringify(value)}`);
+    process.exit(1);
+  }
+}
+' "$shell_lock"
+  echo "[moui-mobile-ios] Using versioned ejected shell at $(dirname "$xcode_project")"
+fi
 if [ -z "$scheme" ] && [ "$shell_mode" = "ejected" ]; then
   scheme="$(basename "$xcode_project" .xcodeproj)"
 fi
@@ -140,8 +192,25 @@ prepare_args=(--platform ios --app "$app" --workspace-root "$workspace_root" --m
 if [ "$fallback_skia" -eq 1 ]; then
   prepare_args+=(--fallback-skia)
 fi
+update_deprecation_marker() {
+  if [ "$shell_mode" != "legacy-uikit" ]; then
+    rm -f "$deprecation_path"
+    return
+  fi
+  mkdir -p "$build_dir"
+  cat > "$deprecation_path" <<'JSON'
+{
+  "schemaVersion": 1,
+  "code": "ios-uikit-shell",
+  "deprecated": true,
+  "removal": "Release N+1",
+  "replacement": "schema v2 managed iOS shell"
+}
+JSON
+}
 if [ "$prepare_only" -eq 1 ]; then
   node "$moui_root/scripts/mobile/prepare-native-build.mjs" "${prepare_args[@]}"
+  update_deprecation_marker
   echo "[moui-mobile-ios] Prepared iOS build inputs in $build_dir"
   exit 0
 fi
@@ -194,6 +263,8 @@ MOUI_MOBILE_IOS_SHELL="$shell_mode" \
     IPHONEOS_DEPLOYMENT_TARGET="$deployment_target" \
     MOUI_MOBILE_IOS_SHELL="$shell_mode" \
     build
+
+update_deprecation_marker
 
 if [ -z "$output_app" ]; then
   product_name="$(node -e '
