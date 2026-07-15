@@ -81,6 +81,7 @@ pub(all) enum HostServiceRequest {
   OpenUrl(String)
   QuerySystemTheme
   ListDirectory(String)
+  PlatformChannel(PlatformChannelRequest)
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -100,6 +101,7 @@ pub(all) enum HostServiceResponse {
   UrlOpened
   SystemTheme(@core.ColorScheme)
   DirectoryListing(String, Array[HostDirectoryEntry])
+  PlatformChannel(PlatformChannelResponse)
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -112,6 +114,7 @@ pub(all) enum HostServiceKind {
   OpenUrlService
   SystemThemeService
   DirectoryListingService
+  PlatformChannelService
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -216,6 +219,15 @@ pub fn HostServiceBridge::dispatch(
   request : HostServiceRequest,
 ) -> HostServiceResponse {
   if self.can_handle(request) {
+    match request {
+      HostServiceRequest::PlatformChannel(channel_request) =>
+        if self.channels.can_dispatch(channel_request.channel) {
+          return HostServiceResponse::PlatformChannel(
+            self.channels.dispatch(channel_request),
+          )
+        }
+      _ => ()
+    }
     match self.dispatch_registered_service(request) {
       Some(response) => response
       None => (self.handle)(request)
@@ -260,6 +272,7 @@ pub fn HostServiceBridge::can_handle(
     OpenUrl(_) => self.capabilities.open_url
     QuerySystemTheme => self.capabilities.system_theme
     ListDirectory(_) => self.capabilities.file_access
+    PlatformChannel(_) => true
   }
 }
 
@@ -276,6 +289,8 @@ pub fn HostServiceRequest::unavailable_message(
     OpenUrl(_) => "open URL service is unavailable"
     QuerySystemTheme => "system theme service is unavailable"
     ListDirectory(_) => "directory listing service is unavailable"
+    PlatformChannel(request) =>
+      "platform channel is unavailable: " + request.channel
   }
 }
 
@@ -290,6 +305,7 @@ pub fn HostServiceRequest::kind(self : HostServiceRequest) -> HostServiceKind {
     OpenUrl(_) => OpenUrlService
     QuerySystemTheme => SystemThemeService
     ListDirectory(_) => DirectoryListingService
+    PlatformChannel(_) => PlatformChannelService
   }
 }
 

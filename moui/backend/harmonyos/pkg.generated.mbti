@@ -68,8 +68,10 @@ pub struct HarmonyOsRuntimeSession {
 pub fn HarmonyOsRuntimeSession::advance_time(Self, Double) -> Unit
 pub fn HarmonyOsRuntimeSession::dispatch(Self, @host.HostEvent) -> @host.HostEventResult
 pub fn HarmonyOsRuntimeSession::dispatch_host_response(Self, @host.MobileHostResponse) -> Bool
+pub fn HarmonyOsRuntimeSession::dispatch_host_response_envelope(Self, @host.MobileHostResponseEnvelope) -> Bool
 pub fn HarmonyOsRuntimeSession::dispose(Self) -> Unit
 pub fn HarmonyOsRuntimeSession::disposed(Self) -> Bool
+pub fn HarmonyOsRuntimeSession::drain_host_update_envelope_json(Self) -> String
 pub fn HarmonyOsRuntimeSession::drain_host_updates(Self) -> Array[@host.MobileHostUpdate]
 pub fn HarmonyOsRuntimeSession::drain_host_updates_json(Self) -> String
 pub fn HarmonyOsRuntimeSession::host_service_bridge(Self) -> @host.HostServiceBridge
@@ -79,6 +81,7 @@ pub fn HarmonyOsRuntimeSession::redraw_requested(Self) -> Bool
 pub fn HarmonyOsRuntimeSession::render_frame(Self) -> @render.RenderFrameResult
 pub fn HarmonyOsRuntimeSession::resize(Self, @host.HostSurfaceMetrics) -> @host.HostEventResult
 pub fn HarmonyOsRuntimeSession::runtime(Self) -> @runtime.AppRuntime
+pub fn HarmonyOsRuntimeSession::session_generation(Self) -> Int
 pub fn HarmonyOsRuntimeSession::surface(Self) -> HarmonyOsSurfaceHandle
 pub fn HarmonyOsRuntimeSession::sync_surface(Self, HarmonyOsRendererProvider) -> Unit
 pub fn HarmonyOsRuntimeSession::take_redraw_requested(Self) -> Bool

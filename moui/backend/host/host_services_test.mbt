@@ -160,6 +160,20 @@ test "host service bridge routes typed platform channels" {
     _ => fail("expected platform channel response")
   }
   match
+    bridge.dispatch(
+      HostServiceRequest::PlatformChannel(
+        PlatformChannelRequest::new(
+          channel="clipboard.extra",
+          operation="echo",
+          payload="through-service",
+        ),
+      ),
+    ) {
+    HostServiceResponse::PlatformChannel(PlatformChannelResponse::Ok(value)) =>
+      inspect(value, content="through-service")
+    _ => fail("expected generic host service platform channel response")
+  }
+  match
     bridge.dispatch_channel(
       PlatformChannelRequest::new(channel="missing", operation="echo"),
     ) {
