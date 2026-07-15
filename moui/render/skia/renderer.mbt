@@ -318,7 +318,9 @@ fn SkiaRasterRenderer::resolve_effective_damage(
   // click or other local invalidation (seen on HarmonyOS egl-gpu as "everything
   // outside the click area goes white until a later full redraw").
   if self.gpu_target is Some(_) {
-    return @core.DamageRegion::full("host-gpu drawable has no preserved backbuffer")
+    return @core.DamageRegion::full(
+      "host-gpu drawable has no preserved backbuffer",
+    )
   }
   match frame.damage {
     @core.DamageRegion::Empty =>

@@ -60,7 +60,12 @@ pub fn FontFaceCache::new() -> FontFaceCache {
 ///|
 /// Create an empty font-face cache with least-recently-used eviction.
 pub fn FontFaceCache::with_capacity(capacity : Int) -> FontFaceCache {
-  { faces: Map([]), access_order: [], capacity: capacity.max(1), is_bounded: true }
+  {
+    faces: Map([]),
+    access_order: [],
+    capacity: capacity.max(1),
+    is_bounded: true,
+  }
 }
 
 ///|

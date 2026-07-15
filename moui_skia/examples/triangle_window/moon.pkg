@@ -9,8 +9,9 @@ import {
 
 supported_targets = "native"
 
+pkgtype(kind: "executable")
+
 options(
-  "is-main": true,
   "native-stub": [ "win32_gdi_stub.c" ],
   targets: { "main.mbt": [ "native" ], "win32_present.mbt": [ "native" ] },
 )

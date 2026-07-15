@@ -438,16 +438,8 @@ fn MacosApp::advance_promotion_lifecycle(
           self.promotion_surface_cycles_target {
           let base = platform_slot.window.surface_size()
           let odd = self.promotion_surface_cycles_done % 2 == 0
-          let width = if odd {
-            base.width() + 16
-          } else {
-            base.width() - 16
-          }
-          let height = if odd {
-            base.height() + 12
-          } else {
-            base.height() - 12
-          }
+          let width = if odd { base.width() + 16 } else { base.width() - 16 }
+          let height = if odd { base.height() + 12 } else { base.height() - 12 }
           ignore(
             platform_slot.window.request_inner_size(
               @dpi.Size::Physical(
@@ -477,7 +469,8 @@ fn MacosApp::advance_promotion_lifecycle(
           // Hide then show to approximate background/foreground transitions.
           platform_slot.window.set_visible(false)
           platform_slot.window.set_visible(true)
-          self.promotion_fg_bg_cycles_done = self.promotion_fg_bg_cycles_done + 1
+          self.promotion_fg_bg_cycles_done = self.promotion_fg_bg_cycles_done +
+            1
           if self.promotion_fg_bg_cycles_done % 20 == 0 {
             println(
               "macOS GPU promotion fg/bg \{self.promotion_fg_bg_cycles_done}/\{self.promotion_fg_bg_cycles_target}",
@@ -524,8 +517,7 @@ fn MacosApp::advance_promotion_lifecycle(
         }
         // Wait a few presents for recovery evidence, then finish.
         if self.promotion_wait_presents < 6 &&
-          self.promotion_context_loss_done <
-          self.promotion_context_loss_target &&
+          self.promotion_context_loss_done < self.promotion_context_loss_target &&
           !self.promotion_automatic_fallback {
           self.request_platform_redraw(window_id)
           return false

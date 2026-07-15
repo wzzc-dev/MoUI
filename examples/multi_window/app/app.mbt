@@ -35,12 +35,11 @@ pub fn Model::new(scene : Scene, windows : @host.HostWindowActions) -> Model {
 }
 
 ///|
-pub fn program(scene : Scene, windows : @host.HostWindowActions) -> @moui.Program[Model, Msg] {
-  @moui.Program::simple(
-    init=Model::new(scene, windows),
-    update=update,
-    view=view,
-  )
+pub fn program(
+  scene : Scene,
+  windows : @host.HostWindowActions,
+) -> @moui.Program[Model, Msg] {
+  @moui.Program::simple(init=Model::new(scene, windows), update~, view~)
 }
 
 ///|

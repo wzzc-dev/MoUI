@@ -438,7 +438,12 @@ pub fn GlyphMaskCache::new() -> GlyphMaskCache {
 ///|
 /// Create an empty glyph mask cache with least-recently-used eviction.
 pub fn GlyphMaskCache::with_capacity(capacity : Int) -> GlyphMaskCache {
-  { masks: Map([]), access_order: [], capacity: capacity.max(1), is_bounded: true }
+  {
+    masks: Map([]),
+    access_order: [],
+    capacity: capacity.max(1),
+    is_bounded: true,
+  }
 }
 
 ///|
@@ -732,7 +737,12 @@ pub fn TextMaskCache::new() -> TextMaskCache {
 ///|
 /// Create an empty text mask cache with least-recently-used eviction.
 pub fn TextMaskCache::with_capacity(capacity : Int) -> TextMaskCache {
-  { masks: Map([]), access_order: [], capacity: capacity.max(1), is_bounded: true }
+  {
+    masks: Map([]),
+    access_order: [],
+    capacity: capacity.max(1),
+    is_bounded: true,
+  }
 }
 
 ///|

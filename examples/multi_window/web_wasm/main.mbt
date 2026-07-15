@@ -11,7 +11,8 @@ fn main {
             runtime=runtime_for(scene, windows, request.metrics.logical_size),
           ),
         )
-      None => @host.HostWindowSceneResolution::SceneRejected("unknown sample scene")
+      None =>
+        @host.HostWindowSceneResolution::SceneRejected("unknown sample scene")
     }
   })
   @web.run_app_with_options(

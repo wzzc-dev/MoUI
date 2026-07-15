@@ -7,8 +7,9 @@ import {
 
 supported_targets = "native"
 
+pkgtype(kind: "executable")
+
 options(
-  "is-main": true,
   "native-stub": [ "bench_clock.c" ],
   link: { "native": { "cc-link-flags": "" } },
   targets: { "main.mbt": [ "native" ] },

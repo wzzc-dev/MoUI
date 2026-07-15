@@ -34,7 +34,8 @@ test "native gpu worker runs on an independent thread and acknowledges detach" {
   guard skia_available() else { return () }
   let worker = match NativeGpuRenderWorker::new() {
     Some(worker) => worker
-    None => fail("skia_available() but NativeGpuRenderWorker::new() returned None")
+    None =>
+      fail("skia_available() but NativeGpuRenderWorker::new() returned None")
   }
   let sequence = match PictureRecorder::new() {
     Some(recorder) => {
@@ -75,9 +76,7 @@ test "native gpu worker runs on an independent thread and acknowledges detach" {
   assert_true(detach > 0L)
   assert_true(worker.wait_completion(timeout_ms=1000))
   let controls = worker.drain_completions()
-  assert_true(
-    controls.any(completion => completion.control_token == detach),
-  )
+  assert_true(controls.any(completion => completion.control_token == detach))
   let diagnostics = worker.diagnostics()
   assert_true(diagnostics.worker_thread_id != 0L)
   assert_eq(diagnostics.readback_count, 0L)

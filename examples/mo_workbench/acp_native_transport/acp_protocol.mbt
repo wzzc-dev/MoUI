@@ -61,7 +61,12 @@ pub fn acp_initialize_request_line(id : String) -> String {
         "clientInfo": { "name": "Mo Workbench", "version": "0.1.0" },
         "clientCapabilities": {
           "fs": { "readTextFile": false, "writeTextFile": false },
-          "session": { "configOptions": { "boolean": Json::empty_object(), "select": Json::empty_object() } },
+          "session": {
+            "configOptions": {
+              "boolean": Json::empty_object(),
+              "select": Json::empty_object(),
+            },
+          },
           "terminal": false,
         },
       } : Json),

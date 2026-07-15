@@ -11,7 +11,8 @@ fn main {
             runtime=runtime_for(scene, windows, request.metrics.logical_size),
           ),
         )
-      None => @host.HostWindowSceneResolution::SceneRejected("unknown sample scene")
+      None =>
+        @host.HostWindowSceneResolution::SceneRejected("unknown sample scene")
     }
   })
   @macos_skia_backend.run_app_with_options(
@@ -21,7 +22,9 @@ fn main {
       windows,
       @geometry.Size::new(width=640.0, height=420.0),
     ),
-    options=@macos_skia_backend.MacosSkiaAppOptions::new(scene_resolver=resolver),
+    options=@macos_skia_backend.MacosSkiaAppOptions::new(
+      scene_resolver=resolver,
+    ),
     window_requests=queue,
   )
 }
