@@ -9,6 +9,12 @@ app="${MOUI_MOBILE_APP:-component_gallery}"
 device="${MOUI_IOS_DEVICE:-}"
 renderer="${MOUI_SKIA_RENDERER:-auto}"
 manifest="${MOUI_MOBILE_MANIFEST:-artifacts/mobile-runtime/ios/${app}/mobile-runtime-smoke.json}"
+probe_config="$repo_root/examples/$app/.mobile-runtime-test-probe-$$.json"
+
+cleanup() {
+  rm -f "$probe_config"
+}
+trap cleanup EXIT
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -39,7 +45,10 @@ if [ -z "$device" ]; then
 fi
 
 echo "iOS mobile runtime evidence app=$app device=$device renderer=$renderer"
-scripts/build-mobile-ios-app.sh --app "$app" --renderer "$renderer"
+node moui/mobile/test-probe/tests/create-mobile-shell-fixture.mjs \
+  --kind plugin-config --app "$app" --repo-root "$repo_root" --output "$probe_config"
+scripts/build-mobile-ios-app.sh \
+  --app "$app" --app-config "$probe_config" --renderer "$renderer"
 node scripts/record-mobile-runtime-smoke.mjs \
   --platform ios \
   --app "$app" \

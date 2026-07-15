@@ -20,9 +20,82 @@ export const mobileResizeDimensions = logs => {
 export const hasMobileResizeTransition = logs =>
   mobileResizeDimensions(logs).length >= 2;
 
+const hasAcceptedClipboardCompletion = (logs, operation) =>
+  logs.split(/\r?\n/g).some(line =>
+    line.includes(`moui-mobile service clipboard complete operation=${operation}`)
+    && (!line.includes("accepted=") || /accepted=(?:1|true)(?:\s|$)/.test(line)));
+
 export const hasMobileTextClipboardRoundTrip = logs =>
-  logs.includes("moui-mobile service clipboard complete operation=write-text")
-  && logs.includes("moui-mobile service clipboard complete operation=read-text");
+  hasAcceptedClipboardCompletion(logs, "write-text")
+  && hasAcceptedClipboardCompletion(logs, "read-text");
+
+const mobileTestProbeCounters = [
+  "platformViewCreate",
+  "platformViewResize",
+  "platformViewClip",
+  "platformViewEvent",
+  "platformViewDispose",
+  "hostChannelSuccess",
+  "hostChannelError",
+  "hostChannelCancel",
+  "hostChannelExactlyOnce",
+  "hostChannelLateAfterDispose",
+  "serviceSmokeFired",
+  "serviceSmokeCompleted",
+];
+const mobileTestProbeObservationFields = mobileTestProbeCounters.filter(
+  counter => !counter.startsWith("serviceSmoke"),
+);
+const mobileCapabilityObservationFields = [
+  ...mobileTestProbeObservationFields,
+  "gpuRecovery",
+  "stress",
+];
+
+///|
+/// Parse the latest complete, well-formed test-probe counter snapshot. A
+/// counter is evidence only when the repo-only plugin logged the runtime
+/// transition; API presence or plugin staging never creates observations.
+export const parseMobileTestProbeSnapshot = logs => {
+  if (typeof logs !== "string") return null;
+  let latest = null;
+  for (const match of logs.matchAll(
+    /moui-mobile test-probe snapshot=(\{[^\r\n]*\})/g,
+  )) {
+    try {
+      const parsed = JSON.parse(match[1]);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) continue;
+      const snapshot = {};
+      let valid = true;
+      for (const counter of mobileTestProbeCounters) {
+        const value = parsed[counter];
+        if (!Number.isSafeInteger(value) || value < 0) {
+          valid = false;
+          break;
+        }
+        snapshot[counter] = value;
+      }
+      if (valid) latest = snapshot;
+    } catch {
+      // Keep the last complete snapshot when a later line is truncated.
+    }
+  }
+  return latest;
+};
+
+export const mobileTestProbeObservations = logs => {
+  const snapshot = parseMobileTestProbeSnapshot(logs);
+  if (!snapshot) return {};
+  return Object.fromEntries(
+    mobileTestProbeObservationFields
+      .filter(counter => snapshot[counter] > 0)
+      .map(counter => [counter, "yes"]),
+  );
+};
+
+export const pendingMobileCapabilityObservations = () => Object.fromEntries(
+  mobileCapabilityObservationFields.map(field => [field, "pending"]),
+);
 
 ///|
 /// Parse the latest `moui-mobile service probe plan textField=x,y action=x,y`
@@ -195,6 +268,7 @@ export const mobileRuntimeStatus = (observations, screenshot, supportsScroll) =>
     "clipboard",
     "accessibility",
     "asyncImage",
+    ...mobileCapabilityObservationFields,
   ];
   if (supportsScroll) required.push("scrollInput");
   const screenshotPassed = screenshot.width > 0
