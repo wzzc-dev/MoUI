@@ -287,7 +287,8 @@ if [ "$stage_ios_project" -eq 1 ]; then
   if [ "$shell_mode" = "managed" ]; then
     node "$moui_root/mobile/ios/apply-managed-info-plist.mjs" \
       --manifest "$managed_preflight_manifest" \
-      --plist "$staged_root/Info.plist"
+      --plist "$staged_root/Info.plist" \
+      --deployment-target "$deployment_target"
   fi
   echo "[moui-mobile-ios] Staged canonical iOS shell in $staged_root"
 fi

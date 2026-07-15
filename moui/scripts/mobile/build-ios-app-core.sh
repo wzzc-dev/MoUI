@@ -468,7 +468,8 @@ fi
 if [ "$shell_mode" = "managed" ]; then
   node "$moui_root/mobile/ios/apply-managed-info-plist.mjs" \
     --manifest "$managed_manifest" \
-    --plist "$app_bundle/Info.plist"
+    --plist "$app_bundle/Info.plist" \
+    --deployment-target "$deployment_target"
 fi
 printf 'APPL????' > "$app_bundle/PkgInfo"
 

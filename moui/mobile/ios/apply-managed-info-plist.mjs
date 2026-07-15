@@ -39,6 +39,16 @@ export const validateDeploymentTarget = (value, label = "managed shell manifest"
   return value;
 };
 
+const compareDottedVersions = (left, right) => {
+  const leftParts = left.split(".").map(Number);
+  const rightParts = right.split(".").map(Number);
+  for (let index = 0; index < Math.max(leftParts.length, rightParts.length); index += 1) {
+    const difference = (leftParts[index] || 0) - (rightParts[index] || 0);
+    if (difference !== 0) return difference;
+  }
+  return 0;
+};
+
 const updatePlistString = (plistPath, key, value) => {
   let result = spawnSync("plutil", ["-replace", key, "-string", value, plistPath], {
     encoding: "utf8",
@@ -53,14 +63,23 @@ const updatePlistString = (plistPath, key, value) => {
   }
 };
 
-export const applyManagedInfoPlist = ({ manifestPath, plistPath }) => {
+export const applyManagedInfoPlist = ({ manifestPath, plistPath, deploymentTarget = "" }) => {
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-  const deploymentTarget = validateDeploymentTarget(manifest.deploymentTarget, manifestPath);
+  const configuredTarget = validateDeploymentTarget(manifest.deploymentTarget, manifestPath);
+  const effectiveTarget = validateDeploymentTarget(
+    deploymentTarget || configuredTarget,
+    "effective iOS deployment target",
+  );
+  if (compareDottedVersions(effectiveTarget, configuredTarget) < 0) {
+    throw new Error(
+      `effective iOS deployment target ${effectiveTarget} is below managed config floor ${configuredTarget}`,
+    );
+  }
   const entries = validatePermissionUsageDescriptions(
     manifest.permissionUsageDescriptions,
     manifestPath,
   );
-  updatePlistString(plistPath, "MinimumOSVersion", deploymentTarget);
+  updatePlistString(plistPath, "MinimumOSVersion", effectiveTarget);
   for (const entry of entries) {
     updatePlistString(plistPath, entry.plistKey, entry.description);
   }
@@ -68,7 +87,7 @@ export const applyManagedInfoPlist = ({ manifestPath, plistPath }) => {
 
 const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
-  const options = { manifestPath: "", plistPath: "" };
+  const options = { manifestPath: "", plistPath: "", deploymentTarget: "" };
   for (let index = 2; index < process.argv.length; index += 1) {
     const key = process.argv[index];
     const value = process.argv[index + 1];
@@ -76,6 +95,7 @@ if (isMain) {
     index += 1;
     if (key === "--manifest") options.manifestPath = resolve(value);
     else if (key === "--plist") options.plistPath = resolve(value);
+    else if (key === "--deployment-target") options.deploymentTarget = value;
     else throw new Error(`unknown option: ${key}`);
   }
   if (!options.manifestPath || !options.plistPath) {
