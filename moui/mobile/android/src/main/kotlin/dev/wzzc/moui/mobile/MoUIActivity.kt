@@ -44,6 +44,7 @@ class MoUIActivity : ComponentActivity(), SurfaceHolder.Callback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         loadNativeLibraryFromManifest()
+        MoUIGeneratedPluginRegistry.install(this)
         Log.i(LOG_TAG, "moui-mobile renderer status=${MoUINativeBridge.rendererStatusJson()}")
         fullscreen = manifestBoolean(META_FULLSCREEN, false)
         configureWindow()

@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 
-console.log(`[debug-top] ANDROID_HOME=${process.env.ANDROID_HOME}`);
-
 import {
   copyFileSync,
   existsSync,
@@ -14,6 +12,7 @@ import {
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { defaultMouiRoot, defaultSkiaRoot, defaultWorkspaceRoot, readMobileApp } from "./app-config.mjs";
+import { prepareAndroidPlugins } from "../../mobile/android/prepare-plugins.mjs";
 
 const usage = `Usage: moui/scripts/mobile/prepare-native-build.mjs --platform android|ios|harmonyos --app <id> --build-dir <dir> [options]
 
@@ -478,9 +477,14 @@ const selectRenderer = (requested, fallbackSkia) => {
   };
 };
 
-const prepareAndroid = ({ app, config, buildDir, abi, androidShell, renderer, fallbackSkia, workspaceRoot, mouiRoot, skiaRoot }) => {
+const prepareAndroid = ({ app, config, plugins, buildDir, abi, androidShell, renderer, fallbackSkia, workspaceRoot, mouiRoot, skiaRoot }) => {
   if (!androidAbiToSkiaArch.has(abi)) throw new Error(`unsupported Android ABI: ${abi}`);
   if (androidShell === "legacy") validateAndroidLegacyExports(config);
+  const androidPlugins = prepareAndroidPlugins({
+    plugins,
+    buildDir,
+    shellMode: androidShell,
+  });
   generateMoonbitC({ workspaceRoot, moonPackage: config.moonPackage, generatedC: config.generatedC, buildDir });
   const moonbitC = moonbitCPath(buildDir, config.moonPackage, config.generatedC);
   if (!existsSync(moonbitC)) throw new Error(`MoonBit generated C was not found: ${moonbitC}`);
@@ -521,6 +525,7 @@ const prepareAndroid = ({ app, config, buildDir, abi, androidShell, renderer, fa
     fallbackSkia,
     renderer: rendererSelection,
     androidShell,
+    androidPlugins,
   });
 };
 
@@ -662,6 +667,7 @@ try {
     prepareAndroid({
       app: options.app,
       config: platformConfig,
+      plugins: appConfig.plugins,
       buildDir,
       abi: options.abi,
       androidShell: options.androidShell,

@@ -123,6 +123,11 @@ def androidActivityClass = managedAndroidShell
 def androidClipboardProviderClass = managedAndroidShell
     ? "dev.wzzc.moui.mobile.MoUIClipboardProvider"
     : "dev.wzzc.moui.mobile.MobileClipboardProvider"
+def androidPluginRoot = file("${generatedRoot}/android/plugins")
+def androidPluginGeneratedKotlin = file("${androidPluginRoot}/generated/kotlin")
+def androidPluginKotlin = file("${androidPluginRoot}/sources/kotlin")
+def androidPluginJava = file("${androidPluginRoot}/sources/java")
+def androidPluginResources = file("${androidPluginRoot}/res")
 
 def prepareMouiMobileNative = tasks.register("prepareMouiMobileNative", Exec) {
     workingDir workspaceRoot
@@ -193,7 +198,13 @@ android {
     sourceSets {
         main {
             if (managedAndroidShell) {
-                kotlin.srcDirs += [androidShellSourceRoot]
+                kotlin.srcDirs += [
+                    androidShellSourceRoot,
+                    androidPluginGeneratedKotlin,
+                    androidPluginKotlin,
+                ]
+                java.srcDirs += [androidPluginJava]
+                res.srcDirs += [androidPluginResources]
             } else {
                 java.srcDirs += [androidShellSourceRoot]
             }
