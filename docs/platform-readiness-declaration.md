@@ -289,27 +289,29 @@ bash window/scripts/capture_moui_runtime_evidence.sh linux \
 | Linux 完整平台服务观测 | 剪贴板图片、目录列表、字体回退 | 目录列表、剪贴板图片已实现并测试；首帧渲染已验证 | ✅ 已完成（代码级） |
 | Linux 全证据清单更新 | 将完整服务/IME 结果写入 `platform-runtime-evidence.json` linux 条目 | IME 交互式输入运行时观测完成 | 1 次 PR |
 
-### 6.3 Android / iOS / HarmonyOS — 嵌入式主线（首帧截图已有，完整证据待补）
+### 6.3 Android / iOS / HarmonyOS — 嵌入式主线（服务 smoke 已部分 `passed`）
 
 Android、iOS 和 HarmonyOS 均已通过非 fallback Skia 构建在匹配设备上完成
 首帧渲染验证（截图见 `resource/screenshots/{android,ios,harmonyos}-componentgallery`，
 2026-07-09/10）。`mobile-build.json` 确认 `fallbackSkia: false`。
 
-但完整的运行时 smoke manifest（生命周期回调、输入交互、IME、剪贴板、辅助功能、
-async image 观测）尚未通过 `scripts/record-mobile-runtime-smoke.mjs` 记录和验证。
-在匹配设备/模拟器的完整 smoke manifest 生成并通过验证之前，不能声明移动平台
-运行时完全通过。
+完整 mobile-runtime smoke（`--require-passed`）现状（2026-07-15）：
 
-本轮源码已接入三端 VSync、统一 `MobileHostChannel`、IME、文本/图片剪贴板和
-无障碍动作路由，并修复 HarmonyOS ArkTS/native 重复触摸源与滚动仲裁。它们是
-实现和包级证据，不等于实机通过。新 recorder 必须同时看到输入前后像素变化与
-应用接收日志；detach 只接受应用回调；无障碍必须分别记录树、焦点和动作。
+| 平台 | status | 路径 |
+|------|--------|------|
+| iOS Simulator Component Gallery | **`passed`** | `artifacts/mobile-runtime/ios/component_gallery/` |
+| Android emulator Component Gallery | **`passed`** | `artifacts/mobile-runtime/android/component_gallery/` |
+| HarmonyOS commercial/device | **pending signing + install** | 需 `MOUI_HARMONYOS_SIGNING_CONFIG(_FILE)` + `scripts/harmonyos-mobile-runtime-evidence.sh` |
 
-`SkiaGpuNative` 已是全部 native Skia 平台的产品 `auto` 默认（`gpu_promoted=true`）。
-Metal/Vulkan/EGL/D3D 的 context、surface/swapchain、同步与 present 由 worker 持有。
-iOS 模拟器 GPU 首帧、Android minSdk 23 GPU APK、HarmonyOS native/HAP 构建已通过；
-macOS 有 matching-host claim。物理设备/Windows/Linux 的七门证据可能仍不完整，
-但不再阻塞产品默认；`skia-raster` 与恢复回退仍保留。
+编排脚本：`scripts/ios-mobile-runtime-evidence.sh`、
+`scripts/android-mobile-runtime-evidence.sh`、
+`scripts/harmonyos-mobile-runtime-evidence.sh`。  
+CI：`moui-ios-mobile-runtime-evidence.yml`、
+`moui-android-mobile-runtime-evidence.yml`（self-hosted android）、
+`moui-harmonyos-mobile-runtime-evidence.yml`（self-hosted harmonyos + 签名材料）。
+
+GPU seven-gate（`gpuPromotionEvidence.claimed=true`）仍是独立 L3 质量声明，
+本轮不 claim。
 
 ## 七、核验操作指引
 

@@ -36,8 +36,9 @@ interface HostUpdate {
   payload: ImePayload | SemanticsPayload | ClipboardPayload | string;
 }
 
-// Process-level once-fire guard for the deterministic accessibility smoke.
+// Process-level once-fire guards for deterministic matching-host smoke.
 let a11ySmokeFired: boolean = false;
+let serviceSmokeFired: boolean = false;
 
 @Entry
 @Component
@@ -202,7 +203,9 @@ struct Index {
       } else if (update.kind === 'semantics') {
         this.semanticsNodes = (update.payload as SemanticsPayload).nodes;
         hilog.info(0x4D4F, 'MoUIHarmony', 'moui-mobile service accessibility tree nodes=%{public}d', this.semanticsNodes.length);
+        this.logServiceProbePlan();
         this.maybeFireAccessibilitySmoke();
+        this.maybeFireServiceSmoke();
       } else if (update.kind === 'clipboard' && update.id !== undefined) {
         this.applyClipboard(update.id, update.payload as ClipboardPayload);
       } else if (update.kind === 'diagnostic') {
@@ -211,36 +214,106 @@ struct Index {
     });
   }
 
+  // Emit Service Probe coordinates from MoUI semantics so the recorder can
+  // drive taps when uitest cannot see XComponent virtual overlays.
+  private logServiceProbePlan(): void {
+    const textField = this.findSemanticsLabel('Service probe text', 'TextField');
+    const action = this.findSemanticsLabel('Activate service probe', 'Button');
+    if (textField === undefined || action === undefined) return;
+    const density = this.displayDensity();
+    const textX = Math.round((textField.frame.origin.x + textField.frame.size.width / 2) * density);
+    const textY = Math.round((textField.frame.origin.y + textField.frame.size.height / 2) * density);
+    const actionX = Math.round((action.frame.origin.x + action.frame.size.width / 2) * density);
+    const actionY = Math.round((action.frame.origin.y + action.frame.size.height / 2) * density);
+    hilog.info(
+      0x4D4F,
+      'MoUIHarmony',
+      'moui-mobile service probe plan textField=%{public}d,%{public}d action=%{public}d,%{public}d textFieldId=%{public}d actionId=%{public}d density=%{public}f',
+      textX,
+      textY,
+      actionX,
+      actionY,
+      textField.element_id,
+      action.element_id,
+      density
+    );
+  }
+
+  private findSemanticsLabel(label: string, preferredRole: string): SemanticsNodePayload | undefined {
+    let preferred: SemanticsNodePayload | undefined = undefined;
+    let any: SemanticsNodePayload | undefined = undefined;
+    for (let i = 0; i < this.semanticsNodes.length; i++) {
+      const node = this.semanticsNodes[i];
+      if (node.label !== label && node.label.indexOf(label) < 0) continue;
+      any = node;
+      if (node.role === preferredRole) {
+        preferred = node;
+        break;
+      }
+    }
+    return preferred !== undefined ? preferred : any;
+  }
+
   // Emulator smoke can request a deterministic focus/activate pair without a
   // live screen-reader gesture stream. Runs once per process when the host
   // sets MOUI_MOBILE_A11Y_SMOKE=1, mirroring the iOS once-fire path.
   private maybeFireAccessibilitySmoke(): void {
     if (a11ySmokeFired || this.semanticsNodes.length === 0) return;
     if (!mouiDemo.a11ySmokeEnabled()) return;
-    let targetId: number = -1;
-    for (let i = 0; i < this.semanticsNodes.length; i++) {
-      const node = this.semanticsNodes[i];
-      if (node.label === 'Activate service probe' ||
-          node.label.indexOf('Activate service probe') >= 0) {
-        targetId = node.element_id;
-        break;
-      }
-    }
-    if (targetId < 0) {
+    let target = this.findSemanticsLabel('Activate service probe', 'Button');
+    if (target === undefined) {
       for (let i = 0; i < this.semanticsNodes.length; i++) {
         const node = this.semanticsNodes[i];
         if (node.role === 'Button') {
-          targetId = node.element_id;
+          target = node;
           break;
         }
       }
     }
-    if (targetId < 0) return;
+    if (target === undefined) return;
     a11ySmokeFired = true;
-    hilog.info(0x4D4F, 'MoUIHarmony', 'moui-mobile service accessibility focus id=%{public}d', targetId);
-    mouiDemo.dispatchAccessibility(targetId, 1, '');
-    hilog.info(0x4D4F, 'MoUIHarmony', 'moui-mobile service accessibility action=activate id=%{public}d', targetId);
-    mouiDemo.dispatchAccessibility(targetId, 0, '');
+    hilog.info(0x4D4F, 'MoUIHarmony', 'moui-mobile service accessibility focus id=%{public}d', target.element_id);
+    mouiDemo.dispatchAccessibility(target.element_id, 1, '');
+    hilog.info(0x4D4F, 'MoUIHarmony', 'moui-mobile service accessibility action=activate id=%{public}d', target.element_id);
+    mouiDemo.dispatchAccessibility(target.element_id, 0, '');
+  }
+
+  // Matching-host service smoke: drive IME + clipboard through the host channel
+  // once semantics expose the Service Probe controls (uitest-independent).
+  private maybeFireServiceSmoke(): void {
+    if (serviceSmokeFired || this.semanticsNodes.length === 0) return;
+    if (!mouiDemo.a11ySmokeEnabled()) return;
+    const textField = this.findSemanticsLabel('Service probe text', 'TextField');
+    const action = this.findSemanticsLabel('Activate service probe', 'Button');
+    if (textField === undefined || action === undefined) return;
+    serviceSmokeFired = true;
+    hilog.info(
+      0x4D4F,
+      'MoUIHarmony',
+      'moui-mobile service smoke begin textFieldId=%{public}d actionId=%{public}d',
+      textField.element_id,
+      action.element_id
+    );
+    mouiDemo.dispatchAccessibility(textField.element_id, 1, '');
+    mouiDemo.dispatchAccessibility(textField.element_id, 2, 'ime-mobile-probe');
+    mouiDemo.dispatchTextInput(1, 'ime-mobile-probe', 0, 0);
+    hilog.info(0x4D4F, 'MoUIHarmony', 'moui-mobile service ime edit kind=commit smoke=1');
+    mouiDemo.dispatchTextInput(2, '', 0, 'ime-mobile-probe'.length);
+    mouiDemo.dispatchCommand(0);
+    hilog.info(0x4D4F, 'MoUIHarmony', 'moui-mobile service smoke copy');
+    try {
+      const board = pasteboard.getSystemPasteboard();
+      board.setDataSync(pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, 'clipboard-service-probe'));
+    } catch (_err) {
+      hilog.warn(0x4D4F, 'MoUIHarmony', 'moui-mobile service smoke seed clipboard failed');
+    }
+    mouiDemo.dispatchCommand(2);
+    hilog.info(0x4D4F, 'MoUIHarmony', 'moui-mobile service smoke paste');
+    mouiDemo.dispatchCommand(1);
+    hilog.info(0x4D4F, 'MoUIHarmony', 'moui-mobile service smoke cut');
+    mouiDemo.dispatchAccessibility(action.element_id, 1, '');
+    mouiDemo.dispatchAccessibility(action.element_id, 0, '');
+    hilog.info(0x4D4F, 'MoUIHarmony', 'moui-mobile service smoke end');
   }
 
   private applyIme(payload: ImePayload): void {
