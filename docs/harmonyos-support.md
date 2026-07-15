@@ -222,7 +222,7 @@ Three evidence layers stay separate: **product GPU default** (source/`auto`),
 | Product GPU default | `auto` → `SkiaGpuNative` / `egl-gpu` when available | Source `gpu_promoted=true`; rebuild HAP with `--renderer auto` |
 | Packaging (L1) | Non-fallback CG HAP with GPU flags | `artifacts/harmonyos/component_gallery/mobile-build.json` → `selected=skia-gpu`, `gpuPromoted=true` |
 | First-frame pixels | Historical device + **emulator smoke screenshots** | `resource/screenshots/harmonyos-componentgallery.png`; smoke PNGs under `artifacts/mobile-runtime/harmonyos/component_gallery/` |
-| Mobile runtime smoke (L2) | Component Gallery **`status=partial`** with **runtime GPU route + host-gpu direct present** | `artifacts/mobile-runtime/harmonyos/component_gallery/` — configure `SkiaGpuNative` / `egl-gpu` / `gpuAvailable=true`; hilog **`egl present ok=1`** (no CPU `present flushed`); attach + nonblank first frame; services incomplete |
+| Mobile runtime smoke (L2) | Component Gallery **install blocked on commercial host** until Huawei/DevEco signing material is injected | Service-smoke + attach/resize log paths are in tree (`Index.ets`, NAPI attach markers, `record-mobile-runtime-smoke.mjs`). Commercial MateBook-class installs reject unsigned / OpenHarmony-community HAPs (`9568320` / `9568257`). Set `MOUI_HARMONYOS_SIGNING_CONFIG(_FILE)` and run `scripts/harmonyos-mobile-runtime-evidence.sh` for `--require-passed`. |
 | GPU promotion claim (L3) | Scaffold only | `artifacts/gpu-promotion/harmonyos/scaffold-latest/` (`gpuPromoted=false`, not a claim) |
 
 ### GPU feasibility proof (L1 + L2, emulator 2026-07-15)
@@ -261,7 +261,11 @@ egl present ok=1 swap=1 w=… h=…
 async-image ready, clean process survival, **EGL GPU selected**, and
 **`egl present ok=1` host-gpu direct present** (no sticky raster / no
 `present flushed` on the success path).  
-**Still pending for full `passed`:** detach, resize, representative input/scroll, clipboard round-trip, a11y focus/action, `realDeviceSigning`.
+**Still pending for full `passed`:** commercial/device install with Huawei
+signing material, then detach, resize, representative input/scroll, clipboard
+round-trip, a11y focus/action, `realDeviceSigning`. Shell-side service-smoke and
+attach/resize log markers are already in tree; the current commercial-host
+blocker is HAP signature trust (`9568320` unsigned / `9568257` community PKCS7).
 
 Note: `snapshot_display` on current images requires **`.jpeg`** remote paths; the recorder converts to PNG for `decodePng8`.
 
@@ -274,19 +278,22 @@ emulator run also records the following:
 - Resize and lifecycle events produce a new frame without crashing.
 
 The source route now includes transparent `TextInput` composition/selection,
-text and ArrayBuffer image pasteboard handling, and API 20 accessibility
-virtual overlays. These remain runtime-evidence pending. A passed manifest must
-record IME state/edit, clipboard completion, accessibility tree/focus/action,
-async image, application detach, and before/after pixels:
+text and ArrayBuffer image pasteboard handling, API 20 accessibility virtual
+overlays, and Component Gallery shell-side service smoke. Runtime install on
+commercial hosts still requires a Huawei/DevEco signing material for this
+bundle. A passed manifest must record IME state/edit, clipboard completion,
+accessibility tree/focus/action, async image, application detach, and
+before/after pixels:
 
 ```sh
-scripts/build-mobile-harmonyos-hap.sh --app component_gallery --renderer auto
+# Provide DevEco debug/release material for this bundle (commercial hosts):
+# export MOUI_HARMONYOS_SIGNING_CONFIG_FILE=/path/to/signingConfigs.json
+export HARMONYOS_SDK_HOME="${HARMONYOS_SDK_HOME:-/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony}"
+export PATH="$HARMONYOS_SDK_HOME/toolchains:$PATH"
 hdc list targets
-node scripts/record-mobile-runtime-smoke.mjs --platform harmonyos --app harmonyos_demo --device <hdc-target>
-node scripts/record-mobile-runtime-smoke.mjs --platform harmonyos --app component_gallery --device <hdc-target>
-node scripts/validate-mobile-runtime-manifest.mjs \
-  artifacts/mobile-runtime/harmonyos/component_gallery/mobile-runtime-smoke.json
-# release bar only when complete:
+scripts/harmonyos-mobile-runtime-evidence.sh
+# or the lower-level pair:
+scripts/build-mobile-harmonyos-hap.sh --app component_gallery --renderer auto
 node scripts/record-mobile-runtime-smoke.mjs --platform harmonyos --app component_gallery --device <hdc-target> --require-passed
 ```
 

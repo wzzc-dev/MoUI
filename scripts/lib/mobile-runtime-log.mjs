@@ -24,6 +24,23 @@ export const hasMobileTextClipboardRoundTrip = logs =>
   logs.includes("moui-mobile service clipboard complete operation=write-text")
   && logs.includes("moui-mobile service clipboard complete operation=read-text");
 
+///|
+/// Parse the latest `moui-mobile service probe plan textField=x,y action=x,y`
+/// line emitted by Android/HarmonyOS shells from MoUI semantics. Returns null
+/// when no plan is present. Used when uiautomator/uitest cannot see Canvas nodes.
+export const parseMobileServiceProbePlan = logs => {
+  let plan = null;
+  for (const match of logs.matchAll(
+    /moui-mobile service probe plan[^\r\n]*?textField=(\d+),(\d+)[^\r\n]*?action=(\d+),(\d+)/g,
+  )) {
+    plan = {
+      textField: { x: Number(match[1]), y: Number(match[2]) },
+      action: { x: Number(match[3]), y: Number(match[4]) },
+    };
+  }
+  return plan;
+};
+
 const normalizeRendererSelected = value => {
   if (value === "SkiaGpuNative" || value === "skia-gpu-native" || value === "skia-gpu") {
     return "SkiaGpuNative";

@@ -297,7 +297,21 @@ bool attach_or_resize(uint64_t surface_handle, int32_t width, int32_t height, do
   }
   const bool attached = MOUI_MOBILE_ATTACH_SURFACE(surface_handle, width, height, scale) != 0;
   log_info("HarmonyOS runtime attach result=%{public}d", attached ? 1 : 0);
-  log_info("moui-mobile lifecycle attach result=%{public}d", attached ? 1 : 0);
+  // Recorder requires the attach line to include width/height so lifecycleAttach
+  // and multi-size resize transitions can be observed from hilog.
+  log_info(
+    "moui-mobile lifecycle attach width=%{public}d height=%{public}d attached=%{public}d",
+    width,
+    height,
+    attached ? 1 : 0
+  );
+  log_info(
+    "moui-mobile attach app=%{public}s ok=%{public}d width=%{public}d height=%{public}d",
+    MOUI_MOBILE_APP_ID,
+    attached ? 1 : 0,
+    width,
+    height
+  );
   return attached;
 }
 

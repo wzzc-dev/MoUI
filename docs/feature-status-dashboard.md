@@ -103,9 +103,20 @@ proof status:
 
 Android, iOS, and HarmonyOS have source-level VSync and mobile service bridges.
 HarmonyOS also has native-only XComponent pointer/lifecycle ownership and
-touch-slop scroll arbitration. Full mobile runtime status remains pending
-because no new matching-device manifest in this change proves IME, clipboard,
-accessibility tree/focus/action, async image, input pixel change, and detach.
+touch-slop scroll arbitration.
+
+Local Component Gallery `mobile-runtime-smoke` evidence (validator
+`--require-passed`):
+
+| Platform | Status | Artifact | Notes |
+| --- | --- | --- | --- |
+| iOS Simulator | **`passed`** | `artifacts/mobile-runtime/ios/component_gallery/` | Full service set (IME/clipboard/a11y/async-image/detach/resize/input/scroll). Metal GPU route. |
+| Android emulator | **`passed`** | `artifacts/mobile-runtime/android/component_gallery/` | Full service set. Vulkan GPU route. Shell-side service smoke + semantics probe plan. |
+| HarmonyOS device | **pending install** | rebuild + signed HAP required | Service-smoke code path is in tree; commercial MateBook-class hosts reject unsigned/OpenHarmony-community HAPs (`9568320` / `9568257`). Provide `MOUI_HARMONYOS_SIGNING_CONFIG(_FILE)` and re-run `scripts/harmonyos-mobile-runtime-evidence.sh`. |
+
+CI entrypoints: `moui-ios-mobile-runtime-evidence.yml`,
+`moui-android-mobile-runtime-evidence.yml` (self-hosted android),
+`moui-harmonyos-mobile-runtime-evidence.yml` (self-hosted harmonyos + signing).
 
 `SkiaGpuNative` carries unpromoted window-surface source paths per Phase 1 of
 the GPU readback elimination plan (iOS/macOS Metal, Android Vulkan/GLES,

@@ -202,6 +202,77 @@ stage_harmonyos_project() {
   cp -R "$source_project/entry/src" "$target_project/entry/"
 }
 
+# Inject DevEco debug/release signingConfigs into the staged build-profile when
+# MOUI_HARMONYOS_SIGNING_CONFIG is set to a JSON object/array string, or
+# MOUI_HARMONYOS_SIGNING_CONFIG_FILE points at a JSON/JSON5 fragment.
+# Commercial HarmonyOS devices reject unsigned and OpenHarmony-community debug
+# HAPs; matching-device smoke needs a Huawei/DevEco material for this bundle.
+inject_harmonyos_signing_config() {
+  local project_dir="$1"
+  local profile="$project_dir/build-profile.json5"
+  local fragment="${MOUI_HARMONYOS_SIGNING_CONFIG:-}"
+  local fragment_file="${MOUI_HARMONYOS_SIGNING_CONFIG_FILE:-}"
+  if [ -n "$fragment_file" ]; then
+    if [ ! -f "$fragment_file" ]; then
+      echo "MOUI_HARMONYOS_SIGNING_CONFIG_FILE not found: $fragment_file" >&2
+      return 1
+    fi
+    fragment="$(cat "$fragment_file")"
+  fi
+  if [ -z "$fragment" ]; then
+    return 0
+  fi
+  log "Injecting HarmonyOS signingConfigs into staged build-profile"
+  node - "$profile" "$fragment" <<'NODE'
+const fs = require("fs");
+const profilePath = process.argv[2];
+const fragmentRaw = process.argv[3];
+const text = fs.readFileSync(profilePath, "utf8");
+// Minimal JSON5-ish strip: remove // comments and trailing commas for parse.
+const stripped = text
+  .replace(/\/\*[\s\S]*?\*\//g, "")
+  .replace(/(^|[^:])\/\/.*$/gm, "$1")
+  .replace(/,\s*([}\]])/g, "$1");
+const profile = JSON.parse(stripped);
+let fragment;
+try {
+  fragment = JSON.parse(fragmentRaw);
+} catch (error) {
+  // Allow a raw signingConfigs array or single material object.
+  const strippedFragment = fragmentRaw
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/(^|[^:])\/\/.*$/gm, "$1")
+    .replace(/,\s*([}\]])/g, "$1");
+  fragment = JSON.parse(strippedFragment);
+}
+let configs;
+if (Array.isArray(fragment)) {
+  configs = fragment;
+} else if (fragment && Array.isArray(fragment.signingConfigs)) {
+  configs = fragment.signingConfigs;
+} else if (fragment && fragment.material) {
+  configs = [{ name: fragment.name || "default", type: fragment.type || "HarmonyOS", material: fragment.material }];
+} else if (fragment && fragment.storeFile) {
+  configs = [{
+    name: "default",
+    type: "HarmonyOS",
+    material: fragment,
+  }];
+} else {
+  throw new Error("MOUI_HARMONYOS_SIGNING_CONFIG must be a signingConfigs array, material object, or {signingConfigs:[...]}");
+}
+if (!profile.app) profile.app = {};
+profile.app.signingConfigs = configs;
+if (Array.isArray(profile.app.products)) {
+  for (const product of profile.app.products) {
+    if (!product.signingConfig) product.signingConfig = configs[0]?.name || "default";
+  }
+}
+// Write compact JSON that JSON5 parsers still accept.
+fs.writeFileSync(profilePath, `${JSON.stringify(profile, null, 2)}\n`);
+NODE
+}
+
 require_cmd moon
 require_cmd node
 require_cmd cmake
@@ -308,6 +379,7 @@ if [ "$fallback_skia" -eq 0 ]; then
   hvigor_project_dir="$build_dir/hvigor-project"
   log "Preparing temporary Hvigor project at $hvigor_project_dir"
   stage_harmonyos_project "$harmonyos_project" "$hvigor_project_dir"
+  inject_harmonyos_signing_config "$hvigor_project_dir"
   rm -rf \
     "$hvigor_project_dir/.hvigor" \
     "$hvigor_project_dir/build" \

@@ -307,6 +307,8 @@ void ensure_moonbit_runtime() {
   self.imeProxy.spellCheckingType = UITextSpellCheckingTypeDefault;
   self.imeProxy.accessibilityElementsHidden = YES;
   [self.view addSubview:self.imeProxy];
+  // Observe both UIScene and UIApplication background transitions. Simulator
+  // smoke uses HOME / background; some hosts only deliver one of the pair.
   [NSNotificationCenter.defaultCenter
       addObserver:self
          selector:@selector(handleDidEnterBackgroundNotification:)
@@ -314,8 +316,23 @@ void ensure_moonbit_runtime() {
            object:nil];
   [NSNotificationCenter.defaultCenter
       addObserver:self
+         selector:@selector(handleDidEnterBackgroundNotification:)
+             name:UIApplicationDidEnterBackgroundNotification
+           object:nil];
+  [NSNotificationCenter.defaultCenter
+      addObserver:self
+         selector:@selector(handleDidEnterBackgroundNotification:)
+             name:UIApplicationWillResignActiveNotification
+           object:nil];
+  [NSNotificationCenter.defaultCenter
+      addObserver:self
          selector:@selector(handleWillEnterForegroundNotification:)
              name:UISceneWillEnterForegroundNotification
+           object:nil];
+  [NSNotificationCenter.defaultCenter
+      addObserver:self
+         selector:@selector(handleWillEnterForegroundNotification:)
+             name:UIApplicationWillEnterForegroundNotification
            object:nil];
 }
 
@@ -583,11 +600,17 @@ void ensure_moonbit_runtime() {
   // live VoiceOver gesture stream. This only runs once when the host process
   // sets MOUI_MOBILE_A11Y_SMOKE=1 (SIMCTL_CHILD_ prefix for simctl).
   static BOOL a11ySmokeFired = NO;
+  static BOOL serviceSmokeFired = NO;
   NSString *a11ySmoke = NSProcessInfo.processInfo.environment[@"MOUI_MOBILE_A11Y_SMOKE"];
   BOOL a11ySmokeEnabled = a11ySmoke != nil &&
       ([a11ySmoke isEqualToString:@"1"] ||
        [a11ySmoke.lowercaseString isEqualToString:@"true"] ||
        [a11ySmoke.lowercaseString isEqualToString:@"yes"]);
+  NSString *serviceSmoke = NSProcessInfo.processInfo.environment[@"MOUI_MOBILE_SERVICE_SMOKE"];
+  BOOL serviceSmokeEnabled = a11ySmokeEnabled || (serviceSmoke != nil &&
+      ([serviceSmoke isEqualToString:@"1"] ||
+       [serviceSmoke.lowercaseString isEqualToString:@"true"] ||
+       [serviceSmoke.lowercaseString isEqualToString:@"yes"]));
   if (a11ySmokeEnabled && !a11ySmokeFired && elements.count > 0) {
     MOUIMobileAccessibilityElement *target = nil;
     for (MOUIMobileAccessibilityElement *candidate in elements) {
@@ -610,6 +633,53 @@ void ensure_moonbit_runtime() {
       a11ySmokeFired = YES;
       [target accessibilityElementDidBecomeFocused];
       (void)[target accessibilityActivate];
+    }
+  }
+  // Matching-host service smoke: drive IME + clipboard through the host channel
+  // without relying on the system edit menu (which is flaky under idb).
+  if (serviceSmokeEnabled && !serviceSmokeFired && elements.count > 0) {
+    int32_t textFieldId = -1;
+    int32_t actionId = -1;
+    for (NSDictionary *node in nodes) {
+      NSString *label = node[@"label"] ?: @"";
+      NSString *role = node[@"role"] ?: @"";
+      int32_t elementId = [node[@"element_id"] intValue];
+      if (textFieldId < 0 &&
+          ([label isEqualToString:@"Service probe text"] ||
+           [label containsString:@"Service probe text"] ||
+           [role isEqualToString:@"TextField"])) {
+        if ([label containsString:@"Service probe text"] ||
+            [label isEqualToString:@"Service probe text"]) {
+          textFieldId = elementId;
+        }
+      }
+      if (actionId < 0 &&
+          ([label isEqualToString:@"Activate service probe"] ||
+           [label containsString:@"Activate service probe"])) {
+        actionId = elementId;
+      }
+    }
+    if (textFieldId >= 0 && actionId >= 0) {
+      serviceSmokeFired = YES;
+      NSLog(@"moui-mobile service smoke begin textFieldId=%d actionId=%d",
+            textFieldId, actionId);
+      dispatch_mobile_accessibility(textFieldId, 1, @"");
+      dispatch_mobile_accessibility(textFieldId, 2, @"ime-mobile-probe");
+      NSString *probeText = @"ime-mobile-probe";
+      dispatch_mobile_text(1, probeText, 0, 0);
+      NSLog(@"moui-mobile service ime edit kind=commit smoke=1");
+      dispatch_mobile_text(2, @"", 0, (int32_t)probeText.length);
+      // Select-all then Copy so host channel issues write-text.
+      moui_mobile_dispatch_command(0);
+      NSLog(@"moui-mobile service smoke copy");
+      UIPasteboard.generalPasteboard.string = @"clipboard-service-probe";
+      moui_mobile_dispatch_command(2);
+      NSLog(@"moui-mobile service smoke paste");
+      moui_mobile_dispatch_command(1);
+      NSLog(@"moui-mobile service smoke cut");
+      dispatch_mobile_accessibility(actionId, 1, @"");
+      dispatch_mobile_accessibility(actionId, 0, @"");
+      NSLog(@"moui-mobile service smoke end");
     }
   }
 }
@@ -667,11 +737,16 @@ void ensure_moonbit_runtime() {
 }
 
 - (void)detachMobileRuntime {
+  // Emit detach whenever we transition from attached → detached so HOME /
+  // background smoke can observe the marker even if native detach is re-entrant.
+  const BOOL wasAttached = self.attached;
   [self.displayLink invalidate];
   self.displayLink = nil;
   if (self.attached) {
     MOUI_MOBILE_DETACH_VIEW();
     self.attached = NO;
+  }
+  if (wasAttached) {
     NSLog(@"moui-mobile lifecycle detach app=%s", MOUI_MOBILE_APP_ID);
   }
 }

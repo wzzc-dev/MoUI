@@ -16,7 +16,7 @@ resize, pointer, IME, clipboard, and accessibility traffic into MoUI.
 | Counter entrypoint | `examples/counter/android_skia` exports thin native hooks | Compile/check evidence only. |
 | APK shell | `examples/counter/android_app` plus `scripts/build-counter-android-apk.sh` | Packaging evidence; fallback APK is not runtime proof. |
 | First-frame runtime evidence | Non-fallback Component Gallery APK on HUAWEI SCM-W09 device; nonblank first-frame screenshot in `resource/screenshots/android-componentgallery.jpg` (2026-07-10) | First-frame pixels proven. |
-| Runtime support claim | **L2 partial** on emulator/device with GPU route | See [Emulator Setup And Smoke](#emulator-setup-and-smoke) and `artifacts/mobile-runtime/android/component_gallery/`. Full `passed` still needs remaining service observations. |
+| Runtime support claim | **L2 `passed`** on emulator (Component Gallery, 2026-07-15) | `artifacts/mobile-runtime/android/component_gallery/mobile-runtime-smoke.json` validates with `--require-passed`. Full service set: IME, clipboard write/read, a11y tree/focus/action, async-image, detach, resize, input/scroll. Vulkan GPU route. Re-run via `scripts/android-mobile-runtime-evidence.sh`. |
 
 ## Ownership
 
@@ -362,13 +362,15 @@ GPU-feasible L2.
 
 Component Gallery smoke under `artifacts/mobile-runtime/android/component_gallery/`:
 
-- `status`: **partial**
+- `status`: **`passed`** (`--require-passed` ok, 2026-07-15)
 - `renderer.selected`: `SkiaGpuNative`
 - `surfaceRoute`: **`vulkan-gpu`**
 - `gpuAvailable` / `gpuPromoted`: **true**
-- Observations: attach, nonblank first frame, representative input, scroll,
-  accessibility tree/focus/action, async-image **yes**; detach/resize/IME/
-  clipboard/realDeviceSigning still incomplete for full `passed`
+- Observations: attach, detach, nonblank first frame, resize, representative
+  input, scroll, IME, clipboard write/read, accessibility tree/focus/action,
+  async-image, clean shutdown all **yes**; `realDeviceSigning` remains pending
+  on emulator. Shell-side service smoke + semantics probe plan cover Canvas
+  virtual-node discovery that uiautomator cannot see.
 
 ## Runtime Evidence Required
 
