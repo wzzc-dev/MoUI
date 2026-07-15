@@ -14,6 +14,7 @@ const options = {
   appConfig: "",
   contracts: "",
   renderer: "auto",
+  shellMode: "managed",
   outputSwift: "",
   outputManifest: "",
 };
@@ -30,6 +31,7 @@ for (let index = 2; index < process.argv.length; index += 1) {
     case "--app-config": options.appConfig = value; break;
     case "--contracts": options.contracts = value; break;
     case "--renderer": options.renderer = value; break;
+    case "--shell-mode": options.shellMode = value; break;
     case "--output-swift": options.outputSwift = value; break;
     case "--output-manifest": options.outputManifest = value; break;
     default: throw new Error(`unknown option: ${key}`);
@@ -49,8 +51,13 @@ const app = readMobileApp(options.app, {
   contractsPath: options.contracts || undefined,
 });
 if (!app.ios) throw new Error(`app ${options.app} does not configure iOS`);
-if (app.ios.shellMode !== "managed") {
-  throw new Error(`app ${options.app} requests iOS shellMode=${app.ios.shellMode}; managed shell required`);
+if (!["managed", "ejected"].includes(options.shellMode)) {
+  throw new Error("--shell-mode must be managed or ejected");
+}
+if (app.ios.shellMode !== options.shellMode) {
+  throw new Error(
+    `app ${options.app} requests iOS shellMode=${app.ios.shellMode}; ${options.shellMode} shell required`,
+  );
 }
 
 const swiftType = /^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$/;

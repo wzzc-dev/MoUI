@@ -1,0 +1,14 @@
+import {
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/env",
+  "moonbitlang/x/sys",
+  "wzzc-dev/moui_cli" @cli,
+}
+
+supported_targets = "+native"
+
+pkgtype(kind: "executable")
+
+options(
+  "native-stub": [ "native_output.c" ],
+)
