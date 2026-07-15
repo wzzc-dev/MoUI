@@ -1,8 +1,25 @@
 {
   "schemaVersion": 1,
   "platform": "ios",
-  "sourceBuild": {"status": "partial", "evidence": "managed, clean-ejected, and plugin fixture builds pending"},
-  "rendererL2": {"status": "partial", "presenterRoute": "metal-direct"},
+  "sourceBuild": {
+    "status": "passed",
+    "managed": "passed",
+    "cleanEjected": "passed",
+    "pluginFixture": "passed",
+    "legacyFixture": "passed",
+    "verifiedOn": "2026-07-15",
+    "matrixCommand": "moui/mobile/test-probe/tests/run-mobile-shell-matrix.sh ios --fallback-skia",
+    "evidence": "managed, clean-ejected, plugin, and Release N fallback simulator app matrix passed"
+  },
+  "rendererL2": {
+    "status": "partial",
+    "presenterRoute": "metal-direct",
+    "presenterEvidence": {
+      "status": "unverified",
+      "kind": "none",
+      "reference": "fresh managed SwiftUI direct-present marker pending"
+    }
+  },
   "runtimeL3": {"status": "partial", "evidence": "SwiftUI matching-simulator suite pending"},
   "shellKind": "managed-swiftui",
   "shellApiVersion": 1,
@@ -11,4 +28,3 @@
   "toolchainFloor": "Xcode 15.4 / Swift 5",
   "actualPresenterRoute": "unverified"
 }
-

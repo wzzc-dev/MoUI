@@ -1,14 +1,30 @@
 {
   "schemaVersion": 1,
   "platform": "android",
-  "sourceBuild": {"status": "partial", "evidence": "managed, clean-ejected, and plugin fixture builds pending"},
-  "rendererL2": {"status": "partial", "presenterRoute": "vulkan-direct"},
+  "sourceBuild": {
+    "status": "passed",
+    "managed": "passed",
+    "cleanEjected": "passed",
+    "pluginFixture": "passed",
+    "legacyFixture": "passed",
+    "verifiedOn": "2026-07-15",
+    "matrixCommand": "moui/mobile/test-probe/tests/run-mobile-shell-matrix.sh android --fallback-skia",
+    "evidence": "managed, clean-ejected, plugin, and Release N fallback APK matrix passed"
+  },
+  "rendererL2": {
+    "status": "partial",
+    "presenterRoute": "vulkan-direct",
+    "presenterEvidence": {
+      "status": "unverified",
+      "kind": "none",
+      "reference": "fresh matching-device direct-present marker pending"
+    }
+  },
   "runtimeL3": {"status": "partial", "evidence": "modern-shell matching-device suite pending"},
   "shellKind": "managed-kotlin",
   "shellApiVersion": 1,
   "runtimeAbiVersion": 1,
   "deploymentFloor": "Android 23",
-  "toolchainFloor": "AGP 9.2.1 / Kotlin 2.2.10 / SDK 35 / NDK 28.2",
+  "toolchainFloor": "AGP 9.2.1 / Kotlin 2.2.10 / Gradle 9.6.1 / JVM 17 / compile SDK 36 / target SDK 35 / NDK 28.2 / CMake 3.22.1",
   "actualPresenterRoute": "unverified"
 }
-

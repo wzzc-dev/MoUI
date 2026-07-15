@@ -1,14 +1,31 @@
 {
   "schemaVersion": 1,
   "platform": "harmonyos",
-  "sourceBuild": {"status": "partial", "evidence": "managed, clean-ejected, and plugin fixture builds pending"},
-  "rendererL2": {"status": "partial", "presenterRoute": "egl-direct"},
+  "sourceBuild": {
+    "status": "passed",
+    "managed": "passed",
+    "cleanEjected": "passed",
+    "pluginFixture": "passed",
+    "legacyFixture": "passed",
+    "verifiedOn": "2026-07-15",
+    "matrixCommand": "moui/mobile/test-probe/tests/run-mobile-shell-matrix.sh harmonyos --fallback-skia",
+    "additionalEvidenceCommand": "moui/mobile/test-probe/tests/build-harmonyos-hvigor-fixture.sh",
+    "evidence": "managed, clean-ejected, plugin, and Release N fallback HAP matrix plus managed plugin Hvigor build passed"
+  },
+  "rendererL2": {
+    "status": "partial",
+    "presenterRoute": "egl-direct",
+    "presenterEvidence": {
+      "status": "unverified",
+      "kind": "none",
+      "reference": "fresh canonical XComponent direct-present marker pending"
+    }
+  },
   "runtimeL3": {"status": "partial", "evidence": "canonical XComponent matching-device suite pending"},
   "shellKind": "managed-arkts-xcomponent",
   "shellApiVersion": 1,
   "runtimeAbiVersion": 1,
   "deploymentFloor": "HarmonyOS API 20",
-  "toolchainFloor": "target 21 / model 6.0.1",
+  "toolchainFloor": "HarmonyOS SDK API 21 / target API 21 / model 6.0.1",
   "actualPresenterRoute": "unverified"
 }
-
