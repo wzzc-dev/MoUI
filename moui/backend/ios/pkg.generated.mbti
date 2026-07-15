@@ -68,8 +68,10 @@ pub struct IosRuntimeSession {
 pub fn IosRuntimeSession::advance_time(Self, Double) -> Unit
 pub fn IosRuntimeSession::dispatch(Self, @host.HostEvent) -> @host.HostEventResult
 pub fn IosRuntimeSession::dispatch_host_response(Self, @host.MobileHostResponse) -> Bool
+pub fn IosRuntimeSession::dispatch_host_response_envelope(Self, @host.MobileHostResponseEnvelope) -> Bool
 pub fn IosRuntimeSession::dispose(Self) -> Unit
 pub fn IosRuntimeSession::disposed(Self) -> Bool
+pub fn IosRuntimeSession::drain_host_update_envelope_json(Self) -> String
 pub fn IosRuntimeSession::drain_host_updates(Self) -> Array[@host.MobileHostUpdate]
 pub fn IosRuntimeSession::drain_host_updates_json(Self) -> String
 pub fn IosRuntimeSession::host_service_bridge(Self) -> @host.HostServiceBridge
@@ -79,6 +81,7 @@ pub fn IosRuntimeSession::redraw_requested(Self) -> Bool
 pub fn IosRuntimeSession::render_frame(Self) -> @render.RenderFrameResult
 pub fn IosRuntimeSession::resize(Self, @host.HostSurfaceMetrics) -> @host.HostEventResult
 pub fn IosRuntimeSession::runtime(Self) -> @runtime.AppRuntime
+pub fn IosRuntimeSession::session_generation(Self) -> Int
 pub fn IosRuntimeSession::sync_view(Self, IosRendererProvider) -> Unit
 pub fn IosRuntimeSession::take_redraw_requested(Self) -> Bool
 pub fn IosRuntimeSession::view(Self) -> IosViewHandle

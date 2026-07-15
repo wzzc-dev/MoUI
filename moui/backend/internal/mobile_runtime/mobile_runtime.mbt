@@ -4,6 +4,16 @@ priv struct MobileRedrawSignal {
 }
 
 ///|
+let mobile_session_generation_counter : Ref[Int] = Ref(1)
+
+///|
+fn next_mobile_session_generation() -> Int {
+  let generation = mobile_session_generation_counter.val
+  mobile_session_generation_counter.val = generation + 1
+  generation
+}
+
+///|
 /// Shared runtime state for embedded mobile hosts. Platform backends keep this
 /// type behind their public session wrappers and own native-handle syncing.
 pub struct MobileRuntimeSessionCore {
@@ -48,7 +58,9 @@ pub fn MobileRuntimeSessionCore::new(
   let driver = @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     redraw_signal.request()
   })
-  let host_channel = @host.MobileHostChannel::new()
+  let host_channel = @host.MobileHostChannel::new(
+    session_generation=next_mobile_session_generation(),
+  )
   let image_coordinator = @host.MobileImageCoordinator::new(
     renderer~,
     image_loader~,
@@ -93,6 +105,13 @@ pub fn MobileRuntimeSessionCore::disposed(
 }
 
 ///|
+pub fn MobileRuntimeSessionCore::session_generation(
+  self : MobileRuntimeSessionCore,
+) -> Int {
+  self.host_channel.session_generation()
+}
+
+///|
 pub fn MobileRuntimeSessionCore::dispatch(
   self : MobileRuntimeSessionCore,
   event : @host.HostEvent,
@@ -119,7 +138,9 @@ pub fn MobileRuntimeSessionCore::render_frame(
   self : MobileRuntimeSessionCore,
 ) -> @render.RenderFrameResult {
   self.driver.begin_redraw()
-  let result = self.renderer.render_frame(self.driver.draw_frame())
+  let frame = self.driver.draw_frame()
+  ignore(self.host_channel.sync_platform_views(frame.platform_views))
+  let result = self.renderer.render_frame(frame)
   ignore(self.renderer.drain_present_completions())
   self.driver.apply_render_frame_result(result)
   self.driver.finish_redraw()
@@ -185,11 +206,34 @@ pub fn MobileRuntimeSessionCore::drain_host_updates_json(
 }
 
 ///|
+pub fn MobileRuntimeSessionCore::drain_host_update_envelope_json(
+  self : MobileRuntimeSessionCore,
+) -> String {
+  ignore(self.host_channel.sync(self.runtime))
+  self.host_channel.drain_update_envelope_json()
+}
+
+///|
 pub fn MobileRuntimeSessionCore::dispatch_host_response(
   self : MobileRuntimeSessionCore,
   response : @host.MobileHostResponse,
 ) -> Bool {
   let handled = self.host_channel.dispatch_response(response, self.driver)
+  if handled {
+    ignore(self.host_channel.sync(self.runtime))
+  }
+  handled
+}
+
+///|
+pub fn MobileRuntimeSessionCore::dispatch_host_response_envelope(
+  self : MobileRuntimeSessionCore,
+  envelope : @host.MobileHostResponseEnvelope,
+) -> Bool {
+  let handled = self.host_channel.dispatch_response_envelope(
+    envelope,
+    self.driver,
+  )
   if handled {
     ignore(self.host_channel.sync(self.runtime))
   }

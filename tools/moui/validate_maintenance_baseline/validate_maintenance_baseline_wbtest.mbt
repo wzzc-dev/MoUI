@@ -71,7 +71,7 @@ test "pub all budgets lock current maintenance exposure" {
   inspect(labels.contains("moui/core"), content="true")
   inspect(labels.contains("moui/views"), content="true")
   inspect(labels.contains("moui/backend/host"), content="true")
-  inspect(pub_all_budget_by_label("moui/backend/host").max_count, content="70")
+  inspect(pub_all_budget_by_label("moui/backend/host").max_count, content="71")
   inspect(pub_all_budget_by_label("moui/render").max_count, content="46")
   inspect(labels.contains("examples/markdown_editor/app"), content="true")
   inspect(labels.contains("website/app"), content="true")
