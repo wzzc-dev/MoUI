@@ -148,7 +148,7 @@ const value = key.split(".").reduce((acc, part) => acc && acc[part], JSON.parse(
 if (Array.isArray(value)) process.stdout.write(value.join("\n"));
 else if (typeof value === "boolean") process.stdout.write(value ? "1" : "0");
 else if (value !== undefined && value !== null) process.stdout.write(String(value));
-' "$1" "$build_dir/mobile-build.json"
+' "$1" "${2:-$build_dir/mobile-build.json}"
 }
 
 json_lines() {
@@ -211,6 +211,55 @@ fi
 obj_dir="$build_dir/obj/$sdk-$arch-$configuration"
 rm -rf "$obj_dir"
 mkdir -p "$obj_dir"
+
+managed_config=""
+managed_manifest=""
+if [ "$shell_mode" != "legacy-uikit" ]; then
+  managed_config="$obj_dir/MOUIGeneratedConfiguration.swift"
+  managed_manifest="$obj_dir/managed-shell.json"
+  resolved_swift="${MOUI_MOBILE_IOS_RESOLVED_SWIFT:-}"
+  resolved_manifest="${MOUI_MOBILE_IOS_RESOLVED_MANIFEST:-}"
+  if [ -n "$resolved_swift" ] || [ -n "$resolved_manifest" ]; then
+    if [ ! -f "$resolved_swift" ] || [ ! -f "$resolved_manifest" ]; then
+      echo "managed iOS preflight must provide both generated Swift and manifest files" >&2
+      exit 1
+    fi
+    cp "$resolved_swift" "$managed_config"
+    cp "$resolved_manifest" "$managed_manifest"
+  else
+    resolver_args=(
+      --workspace-root "$workspace_root"
+      --moui-root "$moui_root"
+      --app "$app"
+      --renderer "$renderer_requested"
+      --shell-mode "$shell_mode"
+      --output-swift "$managed_config"
+      --output-manifest "$managed_manifest"
+    )
+    [ -z "$skia_root" ] || resolver_args+=(--skia-root "$skia_root")
+    [ -z "$app_config" ] || resolver_args+=(--app-config "$app_config")
+    [ -z "$contracts" ] || resolver_args+=(--contracts "$contracts")
+    node "$moui_root/mobile/ios/resolve-managed-shell.mjs" "${resolver_args[@]}"
+  fi
+
+  if [ "$shell_mode" = "managed" ]; then
+    configured_deployment_target="$(json_get deploymentTarget "$managed_manifest")"
+    if ! node -e '
+const version = /^\d+(?:\.\d+){0,2}$/;
+const [actual, floor] = process.argv.slice(1);
+if (!version.test(actual) || !version.test(floor)) process.exit(1);
+const left = actual.split(".").map(Number);
+const right = floor.split(".").map(Number);
+for (let index = 0; index < Math.max(left.length, right.length); index += 1) {
+  const difference = (left[index] || 0) - (right[index] || 0);
+  if (difference !== 0) process.exit(difference > 0 ? 0 : 1);
+}
+' "$deployment_target" "$configured_deployment_target"; then
+      echo "iOS deployment target $deployment_target is below managed config floor $configured_deployment_target" >&2
+      exit 2
+    fi
+  fi
+fi
 
 common_flags=(
   -arch "$arch"
@@ -294,7 +343,6 @@ compile_c "$moonbit_c" "$obj_dir/moonbit.o" -Dmain="$compiled_main_alias"
 compile_c "$moon_home/lib/runtime.c" "$obj_dir/runtime.o" -Dgetentropy=moui_ios_getentropy
 compile_c "$fs_native" "$obj_dir/fs_native.o"
 compile_c "$moui_root/mobile/ios/moui_ios_compat.c" "$obj_dir/moui_ios_compat.o"
-managed_manifest=""
 if [ "$shell_mode" = "legacy-uikit" ]; then
   log "Building frozen Release N UIKit compatibility shell"
   compile_objcxx "$moui_root/mobile/ios/legacy/moui_mobile_app.mm" "$obj_dir/moui_mobile_app.o" \
@@ -312,21 +360,6 @@ if [ "$shell_mode" = "legacy-uikit" ]; then
     -DMOUI_MOBILE_RENDER_FRAME="$render_frame" \
     -DMOUI_MOBILE_DETACH_VIEW="$detach_view"
 else
-  managed_config="$obj_dir/MOUIGeneratedConfiguration.swift"
-  managed_manifest="$obj_dir/managed-shell.json"
-  resolver_args=(
-    --workspace-root "$workspace_root"
-    --moui-root "$moui_root"
-    --app "$app"
-    --renderer "$renderer_requested"
-    --shell-mode "$shell_mode"
-    --output-swift "$managed_config"
-    --output-manifest "$managed_manifest"
-  )
-  [ -z "$app_config" ] || resolver_args+=(--app-config "$app_config")
-  [ -z "$contracts" ] || resolver_args+=(--contracts "$contracts")
-  node "$moui_root/mobile/ios/resolve-managed-shell.mjs" "${resolver_args[@]}"
-
   # Managed ABI v1 binds only the fixed moui_mobile_* exports. App-specific
   # symbol maps remain confined to the explicit Release N legacy branch.
   compile_cxx "$moui_root/mobile/runtime/moui_mobile_runtime_v1.cpp" "$obj_dir/moui_mobile_runtime_v1.o"
@@ -431,6 +464,11 @@ if [ -x /usr/libexec/PlistBuddy ]; then
   /usr/libexec/PlistBuddy -c "Add :UIApplicationSceneManifest dict" "$app_bundle/Info.plist" >/dev/null 2>&1 || true
   /usr/libexec/PlistBuddy -c "Add :UIApplicationSceneManifest:UIApplicationSupportsMultipleScenes bool false" "$app_bundle/Info.plist" >/dev/null 2>&1 || \
     /usr/libexec/PlistBuddy -c "Set :UIApplicationSceneManifest:UIApplicationSupportsMultipleScenes false" "$app_bundle/Info.plist" >/dev/null
+fi
+if [ "$shell_mode" = "managed" ]; then
+  node "$moui_root/mobile/ios/apply-managed-info-plist.mjs" \
+    --manifest "$managed_manifest" \
+    --plist "$app_bundle/Info.plist"
 fi
 printf 'APPL????' > "$app_bundle/PkgInfo"
 

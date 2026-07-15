@@ -19,7 +19,7 @@ Options:
   --skia-root <dir>         moui_skia package root.
   --sdk <sdk>               Apple SDK, iphonesimulator or iphoneos. Default iphonesimulator.
   --arch <arch>             Target arch, default arm64.
-  --deployment-target <ver> iOS deployment target. Default 15.0.
+  --deployment-target <ver> iOS deployment target. Managed builds default to mobile.json; others use 15.0.
   --renderer <mode>         auto, skia-gpu, or skia-raster. Default auto.
   --build-dir <dir>         Working directory, default artifacts/ios/<app>.
   --output <app>            App bundle output path.
@@ -42,7 +42,8 @@ app_config=""
 contracts=""
 sdk="iphonesimulator"
 arch="arm64"
-deployment_target="15.0"
+deployment_target=""
+deployment_target_explicit=0
 renderer="auto"
 build_dir=""
 output_app=""
@@ -65,7 +66,7 @@ while [ "$#" -gt 0 ]; do
     --skia-root) skia_root="${2:?missing dir after --skia-root}"; shift 2 ;;
     --sdk) sdk="${2:?missing SDK after --sdk}"; shift 2 ;;
     --arch) arch="${2:?missing arch after --arch}"; shift 2 ;;
-    --deployment-target) deployment_target="${2:?missing version after --deployment-target}"; shift 2 ;;
+    --deployment-target) deployment_target="${2:?missing version after --deployment-target}"; deployment_target_explicit=1; shift 2 ;;
     --renderer) renderer="${2:?missing mode after --renderer}"; shift 2 ;;
     --build-dir) build_dir="${2:?missing dir after --build-dir}"; shift 2 ;;
     --output) output_app="${2:?missing app path after --output}"; shift 2 ;;
@@ -185,6 +186,52 @@ fi
 [ -n "$scheme" ] || scheme="MoUIMobileApp"
 [ -n "$product_name" ] || product_name="$scheme"
 
+managed_preflight_swift=""
+managed_preflight_manifest=""
+if [ "$shell_mode" = "managed" ]; then
+  managed_preflight_dir="$build_dir/managed-shell-preflight"
+  managed_preflight_swift="$managed_preflight_dir/MOUIGeneratedConfiguration.swift"
+  managed_preflight_manifest="$managed_preflight_dir/managed-shell.json"
+  mkdir -p "$managed_preflight_dir"
+  resolver_args=(
+    --workspace-root "$workspace_root"
+    --moui-root "$moui_root"
+    --app "$app"
+    --renderer "$renderer"
+    --shell-mode managed
+    --output-swift "$managed_preflight_swift"
+    --output-manifest "$managed_preflight_manifest"
+  )
+  [ -z "$skia_root" ] || resolver_args+=(--skia-root "$skia_root")
+  [ -z "$app_config" ] || resolver_args+=(--app-config "$app_config")
+  [ -z "$contracts" ] || resolver_args+=(--contracts "$contracts")
+  node "$moui_root/mobile/ios/resolve-managed-shell.mjs" "${resolver_args[@]}"
+  configured_deployment_target="$(node -e '
+const fs = require("fs");
+const manifest = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+if (typeof manifest.deploymentTarget !== "string") process.exit(1);
+process.stdout.write(manifest.deploymentTarget);
+' "$managed_preflight_manifest")"
+  if [ "$deployment_target_explicit" -eq 0 ]; then
+    deployment_target="$configured_deployment_target"
+  elif ! node -e '
+const version = /^\d+(?:\.\d+){0,2}$/;
+const [actual, floor] = process.argv.slice(1);
+if (!version.test(actual) || !version.test(floor)) process.exit(1);
+const left = actual.split(".").map(Number);
+const right = floor.split(".").map(Number);
+for (let index = 0; index < Math.max(left.length, right.length); index += 1) {
+  const difference = (left[index] || 0) - (right[index] || 0);
+  if (difference !== 0) process.exit(difference > 0 ? 0 : 1);
+}
+' "$deployment_target" "$configured_deployment_target"; then
+    echo "--deployment-target $deployment_target is below mobile.json ios.deploymentTarget $configured_deployment_target" >&2
+    exit 2
+  fi
+elif [ -z "$deployment_target" ]; then
+  deployment_target="15.0"
+fi
+
 prepare_args=(--platform ios --app "$app" --workspace-root "$workspace_root" --moui-root "$moui_root" --sdk "$sdk" --arch "$arch" --renderer "$renderer" --build-dir "$build_dir")
 [ -z "$skia_root" ] || prepare_args+=(--skia-root "$skia_root")
 [ -z "$app_config" ] || prepare_args+=(--app-config "$app_config")
@@ -237,6 +284,11 @@ if [ "$stage_ios_project" -eq 1 ]; then
   mkdir -p "$staged_root"
   touch "$stage_marker"
   cp -R "$template_root/." "$staged_root/"
+  if [ "$shell_mode" = "managed" ]; then
+    node "$moui_root/mobile/ios/apply-managed-info-plist.mjs" \
+      --manifest "$managed_preflight_manifest" \
+      --plist "$staged_root/Info.plist"
+  fi
   echo "[moui-mobile-ios] Staged canonical iOS shell in $staged_root"
 fi
 
@@ -254,6 +306,8 @@ MOUI_MOBILE_SDK="$sdk" \
 MOUI_MOBILE_RENDERER="$renderer" \
 MOUI_MOBILE_FALLBACK_SKIA="$fallback_value" \
 MOUI_MOBILE_IOS_SHELL="$shell_mode" \
+MOUI_MOBILE_IOS_RESOLVED_SWIFT="$managed_preflight_swift" \
+MOUI_MOBILE_IOS_RESOLVED_MANIFEST="$managed_preflight_manifest" \
   xcodebuild \
     -project "$xcode_project" \
     -scheme "$scheme" \

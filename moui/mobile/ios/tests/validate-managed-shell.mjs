@@ -27,6 +27,7 @@ const bridgeHeaderPath = "moui/mobile/ios/bridge/include/MoUIMobileRuntimeBridge
 const appPath = "moui/mobile/ios/template/Sources/MoUIMobileApp.swift";
 const packagePath = "moui/mobile/ios/Package.swift";
 const resolverPath = "moui/mobile/ios/resolve-managed-shell.mjs";
+const plistWriterPath = "moui/mobile/ios/apply-managed-info-plist.mjs";
 const builderPath = "moui/scripts/mobile/build-ios-app.sh";
 const repositoryBuilderPath = "scripts/build-mobile-ios-app.sh";
 const coreBuilderPath = "moui/scripts/mobile/build-ios-app-core.sh";
@@ -41,6 +42,7 @@ const bridgeHeader = read(bridgeHeaderPath);
 const app = read(appPath);
 const packageManifest = read(packagePath);
 const resolver = read(resolverPath);
+const plistWriter = read(plistWriterPath);
 const builder = read(builderPath);
 const repositoryBuilder = read(repositoryBuilderPath);
 const coreBuilder = read(coreBuilderPath);
@@ -114,6 +116,13 @@ contains(resolver, "app.mobile.resources", resolverPath);
 contains(resolver, "fullscreen:", resolverPath);
 contains(resolver, "statusBar:", resolverPath);
 contains(resolver, "orientation:", resolverPath);
+contains(resolver, "app.ios.deploymentTarget", resolverPath);
+contains(resolver, "permissionUsageDescriptions", resolverPath);
+contains(resolver, "NSCameraUsageDescription", resolverPath);
+contains(resolver, "NSPhotoLibraryUsageDescription", resolverPath);
+contains(resolver, "eject the iOS shell", resolverPath);
+contains(plistWriter, "validatePermissionUsageDescriptions", plistWriterPath);
+contains(plistWriter, 'spawnSync("plutil"', plistWriterPath);
 
 contains(builder, 'shell_mode="managed"', builderPath);
 contains(builder, '--ejected-shell) shell_mode="ejected"', builderPath);
@@ -132,6 +141,8 @@ contains(builder, 'template_root="$moui_root/mobile/ios/template"', builderPath)
 contains(builder, '.moui-managed-ios-stage', builderPath);
 contains(builder, "Refusing to replace an unowned iOS project", builderPath);
 contains(builder, "Staged canonical iOS shell", builderPath);
+contains(builder, "configured_deployment_target", builderPath);
+contains(builder, "below mobile.json ios.deploymentTarget", builderPath);
 excludes(builder, 'xcode_project="$workspace_root/ios_app', builderPath);
 contains(repositoryBuilder, 'legacy_uikit_shell=0', repositoryBuilderPath);
 contains(repositoryBuilder, 'if [ "$legacy_uikit_shell" -eq 1 ]', repositoryBuilderPath);
@@ -146,6 +157,8 @@ contains(coreBuilder, 'xcode_product="$TARGET_BUILD_DIR/$FULL_PRODUCT_NAME"', co
 contains(coreBuilder, 'compiled_main_alias="moui_mobile_moonbit_generated_main"', coreBuilderPath);
 contains(coreBuilder, 'managed|ejected|legacy-uikit', coreBuilderPath);
 contains(coreBuilder, '--shell-mode "$shell_mode"', coreBuilderPath);
+contains(coreBuilder, "below managed config floor", coreBuilderPath);
+contains(coreBuilder, "apply-managed-info-plist.mjs", coreBuilderPath);
 excludes(coreBuilder, "-DMOUI_MOBILE_RUNTIME_ATTACH_SURFACE", coreBuilderPath);
 excludes(coreBuilder, "-DMOUI_MOBILE_RUNTIME_DESTROY_APPLICATION", coreBuilderPath);
 
