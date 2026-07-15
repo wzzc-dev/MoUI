@@ -212,6 +212,19 @@ public protocol MOUIMobileHostChannelHandler: AnyObject {
 public protocol MOUIMobilePlugin {
   static var identifier: String { get }
   static func install(in registry: MOUIMobilePluginRegistry)
+  static func install(
+    in registry: MOUIMobilePluginRegistry,
+    capabilities: MOUIMobilePluginCapabilities
+  )
+}
+
+extension MOUIMobilePlugin {
+  public static func install(
+    in registry: MOUIMobilePluginRegistry,
+    capabilities: MOUIMobilePluginCapabilities
+  ) {
+    install(in: registry)
+  }
 }
 
 public final class MOUIMobilePluginRegistry {
@@ -223,9 +236,12 @@ public final class MOUIMobilePluginRegistry {
 
   private init() {}
 
-  public func install(_ plugins: [MOUIMobilePlugin.Type]) {
+  public func install(
+    _ plugins: [MOUIMobilePlugin.Type],
+    capabilities: MOUIMobilePluginCapabilities = .shared
+  ) {
     for plugin in plugins where installedPluginIdentifiers.insert(plugin.identifier).inserted {
-      plugin.install(in: self)
+      plugin.install(in: self, capabilities: capabilities)
     }
   }
 

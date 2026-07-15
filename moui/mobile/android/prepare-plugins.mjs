@@ -104,16 +104,16 @@ const isolateValuesResource = (target, pluginDirectory) => {
 
 const generatedRegistry = plugins => {
   const installs = plugins.map(plugin =>
-    `        installPlugin(applicationContext, ${kotlinString(plugin.id)}, ${plugin.entry}())`);
+    `        installPlugin(applicationContext, ${kotlinString(plugin.id)}, ${plugin.entry}(), capabilities)`);
   const installBody = installs.length > 0 ? [
     "    @Synchronized",
-    "    fun install(context: Context) {",
+    "    fun install(context: Context, capabilities: MoUIMobilePluginCapabilities) {",
     "        val applicationContext = context.applicationContext",
     ...installs,
     "    }",
   ] : [
     "    @Suppress(\"UNUSED_PARAMETER\")",
-    "    fun install(context: Context) = Unit",
+    "    fun install(context: Context, capabilities: MoUIMobilePluginCapabilities) = Unit",
   ];
   return [
     "package dev.wzzc.moui.mobile",
@@ -129,12 +129,13 @@ const generatedRegistry = plugins => {
     "        applicationContext: Context,",
     "        expectedId: String,",
     "        plugin: MoUIMobilePlugin,",
+    "        capabilities: MoUIMobilePluginCapabilities,",
     "    ) {",
     "        require(plugin.id == expectedId) {",
     "            \"Android plugin id mismatch: manifest=$expectedId entry=${plugin.id}\"",
     "        }",
     "        if (!installedIds.add(expectedId)) return",
-    "        plugin.install(applicationContext)",
+    "        plugin.install(applicationContext, capabilities)",
     "    }",
     "}",
     "",

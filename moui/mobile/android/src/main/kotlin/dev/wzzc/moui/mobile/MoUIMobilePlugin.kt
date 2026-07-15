@@ -5,5 +5,9 @@ import android.content.Context
 interface MoUIMobilePlugin {
     val id: String
 
-    fun install(context: Context)
+    fun install(context: Context) = Unit
+
+    fun install(context: Context, capabilities: MoUIMobilePluginCapabilities) {
+        install(context)
+    }
 }

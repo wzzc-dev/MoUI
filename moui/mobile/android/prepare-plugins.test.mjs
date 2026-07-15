@@ -76,6 +76,8 @@ test("managed Android plugins stage Kotlin, Java, resources, and a direct regist
     assert.match(registry, /dev\.example\.SamplePlugin\(\)/);
     assert.match(registry, /plugin: MoUIMobilePlugin/);
     assert.match(registry, /context\.applicationContext/);
+    assert.match(registry, /capabilities: MoUIMobilePluginCapabilities/);
+    assert.match(registry, /plugin\.install\(applicationContext, capabilities\)/);
     assert.match(registry, /installedIds\.add\(expectedId\)/);
     assert.match(registry, /manifest=\$expectedId/);
   });

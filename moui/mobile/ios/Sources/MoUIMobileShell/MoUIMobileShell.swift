@@ -65,6 +65,7 @@ public final class MOUIMobileApplicationDelegate: NSObject, UIApplicationDelegat
   }
 
   public func applicationWillTerminate(_ application: UIApplication) {
+    MOUIMobilePluginCapabilities.shared.resetSession()
     _ = MOUIMobileRuntimeBridge.shared.destroyApplication()
   }
 }
@@ -202,6 +203,7 @@ public struct MOUIMobileSurfaceRepresentable: UIViewRepresentable {
     private let configuration: MOUIMobileConfiguration
     private let sceneIdentifier: String
     private let bridge = MOUIMobileRuntimeBridge.shared
+    private let pluginCapabilities = MOUIMobilePluginCapabilities.shared
     private weak var surface: MOUIMetalSurfaceView?
     private var hostAdapter: MOUIMobileHostAdapter?
     private var displayLink: CADisplayLink?
@@ -245,8 +247,15 @@ public struct MOUIMobileSurfaceRepresentable: UIViewRepresentable {
         return root
       }
       MOUIMobileSystemPolicy.shared.orientation = configuration.orientation
-      MOUIMobilePluginRegistry.shared.install(configuration.plugins)
-      hostAdapter = MOUIMobileHostAdapter(surface: surface, overlay: overlay)
+      MOUIMobilePluginRegistry.shared.install(
+        configuration.plugins,
+        capabilities: pluginCapabilities
+      )
+      hostAdapter = MOUIMobileHostAdapter(
+        surface: surface,
+        overlay: overlay,
+        pluginCapabilities: pluginCapabilities
+      )
       surface.layoutHandler = { [weak self] in self?.attachOrResize() }
       surface.pointerHandler = { [weak self] phase, point, timestamp in
         self?.dispatchPointer(phase: phase, point: point, timestamp: timestamp)

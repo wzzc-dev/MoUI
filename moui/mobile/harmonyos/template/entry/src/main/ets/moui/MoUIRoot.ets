@@ -9,7 +9,10 @@ import {
   MoUIHostedPlatformView,
   MoUIPlatformViewController,
   MoUIPlatformViewSnapshotPayload,
+  MoUIPluginRegistry,
   MoUIRect,
+  MoUIRuntimeInputBindings,
+  MoUISemanticsNodeSnapshot,
   PlatformChannelPayload
 } from './MoUIPlugins';
 
@@ -75,6 +78,20 @@ interface HostUpdateEnvelope {
   updates: HostUpdate[];
 }
 
+class MoUIRootRuntimeInputBindings implements MoUIRuntimeInputBindings {
+  dispatchAccessibility(elementId: number, action: number, value: string): boolean {
+    return mouiRuntime.dispatchAccessibility(elementId, action, value);
+  }
+
+  dispatchTextInput(kind: number, text: string, start: number, end: number): boolean {
+    return mouiRuntime.dispatchTextInput(kind, text, start, end);
+  }
+
+  dispatchCommand(kind: number): boolean {
+    return mouiRuntime.dispatchCommand(kind);
+  }
+}
+
 @Component
 export struct MoUIRoot {
   private readonly xcomponentId: string = 'moui_mobile_harmonyos_surface';
@@ -85,6 +102,7 @@ export struct MoUIRoot {
   private readonly hostServices: MoUIHostServices = new MoUIHostServices(
     (encoded: string): boolean => mouiRuntime.dispatchHostResponseEnvelope(encoded)
   );
+  private readonly pluginRuntimeInput: MoUIRuntimeInputBindings = new MoUIRootRuntimeInputBindings();
   private applyingIme: boolean = false;
   private imeComposing: boolean = false;
   private imePreviousText: string = '';
@@ -241,6 +259,7 @@ export struct MoUIRoot {
         this.clearHostState();
       }
       this.sessionGeneration = envelope.sessionGeneration;
+      MoUIPluginRegistry.shared.activateSession(envelope.sessionGeneration, this.pluginRuntimeInput);
       envelope.updates.forEach((update: HostUpdate) => this.applyHostUpdate(update, envelope.sessionGeneration));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'invalid Host Wire envelope';
@@ -252,7 +271,7 @@ export struct MoUIRoot {
     if (update.kind === 'ime') {
       this.applyIme(update.payload as ImePayload);
     } else if (update.kind === 'semantics') {
-      this.applySemantics(update.payload as SemanticsPayload);
+      this.applySemantics(update.payload as SemanticsPayload, generation);
     } else if (update.kind === 'clipboard' && update.id !== undefined) {
       this.applyClipboard(generation, update.id, update.payload as ClipboardPayload);
     } else if (update.kind === 'platform-views') {
@@ -296,12 +315,16 @@ export struct MoUIRoot {
     }
   }
 
-  private applySemantics(payload: SemanticsPayload): void {
+  private applySemantics(payload: SemanticsPayload, generation: number): void {
     if (payload.revision <= this.semanticsRevision) {
       return;
     }
     this.semanticsRevision = payload.revision;
     this.semanticsNodes = payload.nodes;
+    const snapshotNodes = payload.nodes.map((node: SemanticsNodePayload): MoUISemanticsNodeSnapshot => {
+      return { elementId: node.element_id, role: node.role, label: node.label };
+    });
+    MoUIPluginRegistry.shared.publishSemantics(generation, payload.revision, snapshotNodes);
     hilog.info(DOMAIN, TAG, 'moui-mobile service accessibility tree nodes=%{public}d', payload.nodes.length);
   }
 
@@ -309,47 +332,51 @@ export struct MoUIRoot {
     const board = pasteboard.getSystemPasteboard();
     try {
       if (payload.operation === 'read-text') {
-        this.completeClipboard(generation, id, 1, board.getDataSync().getPrimaryText(), new ArrayBuffer(0));
+        this.completeClipboard(
+          generation, id, payload.operation, 1, board.getDataSync().getPrimaryText(), new ArrayBuffer(0));
       } else if (payload.operation === 'write-text') {
         board.setDataSync(pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, payload.text ?? ''));
-        this.completeClipboard(generation, id, 3, '', new ArrayBuffer(0));
+        this.completeClipboard(generation, id, payload.operation, 3, '', new ArrayBuffer(0));
       } else if (payload.operation === 'write-image') {
         const bytes = new Uint8Array(payload.bytes ?? []).buffer;
         board.setDataSync(pasteboard.createData(payload.mime ?? 'image/png', bytes));
-        this.completeClipboard(generation, id, 3, '', new ArrayBuffer(0));
+        this.completeClipboard(generation, id, payload.operation, 3, '', new ArrayBuffer(0));
       } else if (payload.operation === 'read-image') {
         const data = board.getDataSync();
         const mime = data.getPrimaryMimeType();
         data.getRecord(0).getData(mime).then((value: pasteboard.ValueType) => {
           if (value instanceof ArrayBuffer) {
-            this.completeClipboard(generation, id, 2, '', value);
+            this.completeClipboard(generation, id, payload.operation, 2, '', value);
           } else {
-            this.completeClipboard(generation, id, 0, 'clipboard image is unavailable', new ArrayBuffer(0));
+            this.completeClipboard(
+              generation, id, payload.operation, 0, 'clipboard image is unavailable', new ArrayBuffer(0));
           }
         }).catch((error: Error) => {
-          this.completeClipboard(generation, id, 0, error.message, new ArrayBuffer(0));
+          this.completeClipboard(generation, id, payload.operation, 0, error.message, new ArrayBuffer(0));
         });
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'clipboard operation failed';
-      this.completeClipboard(generation, id, 0, message, new ArrayBuffer(0));
+      this.completeClipboard(generation, id, payload.operation, 0, message, new ArrayBuffer(0));
     }
   }
 
   private completeClipboard(
     generation: number,
     id: number,
+    operation: string,
     kind: number,
     text: string,
     bytes: ArrayBuffer
   ): void {
     const accepted = mouiRuntime.completeClipboard(generation, id, kind, text, bytes);
     hilog.info(DOMAIN, TAG,
-      'moui-mobile service clipboard complete generation=%{public}d id=%{public}d kind=%{public}d accepted=%{public}d',
-      generation, id, kind, accepted ? 1 : 0);
+      'moui-mobile service clipboard complete operation=%{public}s generation=%{public}d id=%{public}d kind=%{public}d accepted=%{public}d',
+      operation, generation, id, kind, accepted ? 1 : 0);
   }
 
   private clearHostState(): void {
+    MoUIPluginRegistry.shared.resetSession();
     this.hostServices.reset();
     this.platformViews.clear();
     this.hostedPlatformViews = [];

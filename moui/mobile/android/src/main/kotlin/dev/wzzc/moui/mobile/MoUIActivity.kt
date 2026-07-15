@@ -18,6 +18,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 class MoUIActivity : ComponentActivity(), SurfaceHolder.Callback {
     private lateinit var surfaceView: MoUISurfaceView
     private lateinit var platformViewController: MoUIPlatformViewController
+    private lateinit var pluginCapabilities: MoUIMobilePluginCapabilities
     private var attached = false
     private var started = false
     private var fullscreen = false
@@ -44,13 +45,14 @@ class MoUIActivity : ComponentActivity(), SurfaceHolder.Callback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         loadNativeLibraryFromManifest()
-        MoUIGeneratedPluginRegistry.install(this)
+        pluginCapabilities = MoUIMobilePluginCapabilities.forIntent(intent)
+        MoUIGeneratedPluginRegistry.install(this, pluginCapabilities)
         Log.i(LOG_TAG, "moui-mobile renderer status=${MoUINativeBridge.rendererStatusJson()}")
         fullscreen = manifestBoolean(META_FULLSCREEN, false)
         configureWindow()
 
         val root = FrameLayout(this)
-        surfaceView = MoUISurfaceView(this)
+        surfaceView = MoUISurfaceView(this, pluginCapabilities)
         surfaceView.holder.addCallback(this)
         surfaceView.setOnTouchListener { _, event ->
             if (attached) dispatchMotionEventToRuntime(event)

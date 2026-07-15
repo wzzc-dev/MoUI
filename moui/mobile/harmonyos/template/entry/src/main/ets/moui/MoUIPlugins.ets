@@ -178,6 +178,214 @@ export interface MoUIHostServiceHandler {
   handle(request: MoUIHostServiceRequest, completion: MoUIHostServiceCompletion): MoUIHostServiceTask | undefined;
 }
 
+export class MoUILaunchOptions {
+  private readonly values: Map<string, string> = new Map<string, string>();
+
+  value(key: string): string | undefined {
+    return this.values.get(key);
+  }
+
+  isEnabled(key: string): boolean {
+    const value = this.value(key)?.trim().toLowerCase();
+    return value === '1' || value === 'true' || value === 'yes' || value === 'on';
+  }
+
+  setValue(key: string, value?: string): void {
+    if (key.length === 0) {
+      return;
+    }
+    if (value === undefined) {
+      this.values.delete(key);
+    } else {
+      this.values.set(key, value);
+    }
+  }
+
+  clear(): void {
+    this.values.clear();
+  }
+}
+
+export interface MoUISemanticsNodeSnapshot {
+  readonly elementId: number;
+  readonly role: string;
+  readonly label: string;
+}
+
+export interface MoUISemanticsSnapshot {
+  readonly sessionGeneration: number;
+  readonly revision: number;
+  readonly nodes: MoUISemanticsNodeSnapshot[];
+}
+
+export interface MoUISemanticsObserver {
+  onSemantics(snapshot: MoUISemanticsSnapshot, runtimeInput: MoUIRuntimeInputDispatcher): void;
+}
+
+export class MoUIPluginSubscription {
+  private disposeAction?: () => void;
+
+  constructor(disposeAction: () => void) {
+    this.disposeAction = disposeAction;
+  }
+
+  dispose(): void {
+    const action = this.disposeAction;
+    if (action === undefined) {
+      return;
+    }
+    this.disposeAction = undefined;
+    action();
+  }
+}
+
+export interface MoUIRuntimeInputBindings {
+  dispatchAccessibility(elementId: number, action: number, value: string): boolean;
+  dispatchTextInput(kind: number, text: string, start: number, end: number): boolean;
+  dispatchCommand(kind: number): boolean;
+}
+
+export class MoUIRuntimeInputDispatcher {
+  readonly sessionGeneration: number;
+  private readonly owner: MoUIMobilePluginCapabilities;
+  private readonly epoch: number;
+
+  constructor(owner: MoUIMobilePluginCapabilities, sessionGeneration: number, epoch: number) {
+    this.owner = owner;
+    this.sessionGeneration = sessionGeneration;
+    this.epoch = epoch;
+  }
+
+  get isActive(): boolean {
+    return this.owner.isCurrent(this.sessionGeneration, this.epoch);
+  }
+
+  dispatchAccessibility(elementId: number, action: number, value: string = ''): boolean {
+    return this.owner.dispatch(this.sessionGeneration, this.epoch, (bindings: MoUIRuntimeInputBindings): boolean => {
+      return bindings.dispatchAccessibility(elementId, action, value);
+    });
+  }
+
+  dispatchTextInput(kind: number, text: string, start: number, end: number): boolean {
+    return this.owner.dispatch(this.sessionGeneration, this.epoch, (bindings: MoUIRuntimeInputBindings): boolean => {
+      return bindings.dispatchTextInput(kind, text, start, end);
+    });
+  }
+
+  dispatchCommand(kind: number): boolean {
+    return this.owner.dispatch(this.sessionGeneration, this.epoch, (bindings: MoUIRuntimeInputBindings): boolean => {
+      return bindings.dispatchCommand(kind);
+    });
+  }
+}
+
+export class MoUISemanticsCapability {
+  private readonly owner: MoUIMobilePluginCapabilities;
+
+  constructor(owner: MoUIMobilePluginCapabilities) {
+    this.owner = owner;
+  }
+
+  observe(observer: MoUISemanticsObserver): MoUIPluginSubscription {
+    return this.owner.observe(observer);
+  }
+}
+
+export class MoUIMobilePluginCapabilities {
+  readonly launchOptions: MoUILaunchOptions = new MoUILaunchOptions();
+  readonly semantics: MoUISemanticsCapability = new MoUISemanticsCapability(this);
+  private readonly observers: Map<number, MoUISemanticsObserver> = new Map<number, MoUISemanticsObserver>();
+  private generation: number = 0;
+  private epoch: number = 0;
+  private semanticsRevision: number = -1;
+  private nextObserverToken: number = 1;
+  private bindings?: MoUIRuntimeInputBindings;
+
+  activateSession(nextGeneration: number, bindings: MoUIRuntimeInputBindings): void {
+    if (nextGeneration <= 0) {
+      this.resetSession();
+      return;
+    }
+    if (this.generation === nextGeneration) {
+      this.bindings = bindings;
+      return;
+    }
+    this.generation = nextGeneration;
+    this.epoch += 1;
+    this.semanticsRevision = -1;
+    this.bindings = bindings;
+  }
+
+  publishSemantics(
+    sessionGeneration: number,
+    revision: number,
+    nodes: MoUISemanticsNodeSnapshot[]
+  ): void {
+    if (this.generation !== sessionGeneration || revision <= this.semanticsRevision || this.bindings === undefined) {
+      return;
+    }
+    this.semanticsRevision = revision;
+    const snapshotNodes = nodes.map((node: MoUISemanticsNodeSnapshot): MoUISemanticsNodeSnapshot => {
+      return { elementId: node.elementId, role: node.role, label: node.label };
+    });
+    const snapshot: MoUISemanticsSnapshot = {
+      sessionGeneration: sessionGeneration,
+      revision: revision,
+      nodes: snapshotNodes
+    };
+    const dispatcher = new MoUIRuntimeInputDispatcher(this, sessionGeneration, this.epoch);
+    const observers: MoUISemanticsObserver[] = [];
+    this.observers.forEach((observer: MoUISemanticsObserver) => observers.push(observer));
+    for (let index = 0; index < observers.length; index += 1) {
+      if (!dispatcher.isActive) {
+        return;
+      }
+      try {
+        observers[index].onSemantics(snapshot, dispatcher);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'plugin semantics observer failed';
+        hilog.error(DOMAIN, TAG, 'plugin semantics observer failed: %{public}s', message);
+      }
+    }
+  }
+
+  resetSession(): void {
+    this.generation = 0;
+    this.epoch += 1;
+    this.semanticsRevision = -1;
+    this.bindings = undefined;
+  }
+
+  destroyApplication(): void {
+    this.resetSession();
+    this.observers.clear();
+    this.launchOptions.clear();
+  }
+
+  observe(observer: MoUISemanticsObserver): MoUIPluginSubscription {
+    const token = this.nextObserverToken++;
+    this.observers.set(token, observer);
+    return new MoUIPluginSubscription((): void => {
+      this.observers.delete(token);
+    });
+  }
+
+  isCurrent(sessionGeneration: number, dispatcherEpoch: number): boolean {
+    return this.generation === sessionGeneration && this.epoch === dispatcherEpoch && this.bindings !== undefined;
+  }
+
+  dispatch(
+    sessionGeneration: number,
+    dispatcherEpoch: number,
+    operation: (bindings: MoUIRuntimeInputBindings) => boolean
+  ): boolean {
+    if (!this.isCurrent(sessionGeneration, dispatcherEpoch) || this.bindings === undefined) {
+      return false;
+    }
+    return operation(this.bindings);
+  }
+}
+
 export interface MoUIPlugin {
   readonly id: string;
   install(registry: MoUIPluginRegistry): void;
@@ -185,13 +393,21 @@ export interface MoUIPlugin {
 
 export class MoUIPluginRegistry {
   static readonly shared: MoUIPluginRegistry = new MoUIPluginRegistry();
+  readonly capabilities: MoUIMobilePluginCapabilities = new MoUIMobilePluginCapabilities();
   private readonly installedPluginIds: Set<string> = new Set<string>();
   private readonly platformViewFactories: Map<string, MoUIPlatformViewFactory> =
     new Map<string, MoUIPlatformViewFactory>();
   private readonly hostServiceHandlers: Map<string, MoUIHostServiceHandler> =
     new Map<string, MoUIHostServiceHandler>();
+  private applicationDestroyed: boolean = false;
 
   install(plugins: MoUIPlugin[]): void {
+    if (this.applicationDestroyed) {
+      this.installedPluginIds.clear();
+      this.platformViewFactories.clear();
+      this.hostServiceHandlers.clear();
+      this.applicationDestroyed = false;
+    }
     plugins.forEach((plugin: MoUIPlugin) => {
       if (this.installedPluginIds.has(plugin.id)) {
         return;
@@ -230,6 +446,33 @@ export class MoUIPluginRegistry {
 
   hostServiceHandler(channel: string): MoUIHostServiceHandler | undefined {
     return this.hostServiceHandlers.get(channel);
+  }
+
+  launchOption(key: string): string | undefined {
+    return this.capabilities.launchOptions.value(key);
+  }
+
+  setLaunchOption(key: string, value?: string): void {
+    this.capabilities.launchOptions.setValue(key, value);
+  }
+
+  activateSession(generation: number, bindings: MoUIRuntimeInputBindings): void {
+    this.capabilities.activateSession(generation, bindings);
+  }
+
+  publishSemantics(generation: number, revision: number, nodes: MoUISemanticsNodeSnapshot[]): void {
+    this.capabilities.publishSemantics(generation, revision, nodes);
+  }
+
+  resetSession(): void {
+    this.capabilities.resetSession();
+  }
+
+  destroyApplication(): void {
+    this.capabilities.destroyApplication();
+    // Keep factories alive until the outgoing root disposes its hosted views.
+    // The next application install atomically replaces the registry contents.
+    this.applicationDestroyed = true;
   }
 }
 

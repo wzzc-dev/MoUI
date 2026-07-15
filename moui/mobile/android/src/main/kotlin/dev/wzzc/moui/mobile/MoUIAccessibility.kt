@@ -19,9 +19,9 @@ internal class MoUIAccessibilityBridge(
     private var accessibilityFocus = View.NO_ID
     private var revision = -1
 
-    fun update(payload: JSONObject) {
+    fun update(payload: JSONObject): MoUISemanticsUpdate? {
         val nextRevision = payload.optInt("revision", revision + 1)
-        if (nextRevision <= revision) return
+        if (nextRevision <= revision) return null
         revision = nextRevision
         nodes.clear()
         val encoded = payload.getJSONArray("nodes")
@@ -32,6 +32,7 @@ internal class MoUIAccessibilityBridge(
         if (!nodes.containsKey(accessibilityFocus)) accessibilityFocus = View.NO_ID
         host.sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)
         Log.i(LOG_TAG, "moui-mobile service accessibility tree nodes=${nodes.size}")
+        return MoUISemanticsUpdate(nextRevision, nodes.values.map(MoUISemanticsNode::snapshot))
     }
 
     fun clear() {
@@ -123,6 +124,11 @@ internal class MoUIAccessibilityBridge(
     }
 }
 
+internal data class MoUISemanticsUpdate(
+    val revision: Int,
+    val nodes: List<MoUISemanticsNodeSnapshot>,
+)
+
 private data class MoUISemanticsNode(
     val id: Int,
     val parentId: Int?,
@@ -142,6 +148,8 @@ private data class MoUISemanticsNode(
     val height: Double,
     val actions: JSONArray,
 ) {
+    fun snapshot(): MoUISemanticsNodeSnapshot = MoUISemanticsNodeSnapshot(id, role, label)
+
     fun bounds(density: Float): Rect = Rect(
         (x * density).toInt(),
         (y * density).toInt(),
