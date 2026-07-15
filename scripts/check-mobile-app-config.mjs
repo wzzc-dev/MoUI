@@ -33,6 +33,7 @@ const validateAndroidManagedShell = failures => {
     "MoUIAccessibility.kt",
     "MoUIPlatformViews.kt",
     "MoUIHostServices.kt",
+    "MoUIMobilePlugin.kt",
     "MoUINativeBridge.kt",
   ];
   for (const file of kotlinFiles) requirePath(failures, `managed Android ${file}`, `${kotlinDir}/${file}`);
@@ -42,6 +43,7 @@ const validateAndroidManagedShell = failures => {
   const activity = readRepoFile(`${kotlinDir}/MoUIActivity.kt`);
   requireTokens(failures, "managed Android Activity", activity, [
     "class MoUIActivity : ComponentActivity()",
+    "MoUIGeneratedPluginRegistry.install(this)",
     "root.addView(surfaceView",
     "root.addView(overlay",
     "Choreographer.FrameCallback",
@@ -53,6 +55,14 @@ const validateAndroidManagedShell = failures => {
   ]);
   if (activity.indexOf("root.addView(surfaceView") > activity.indexOf("root.addView(overlay")) {
     failures.push("managed Android Activity must place MoUISurfaceView below the PlatformView overlay");
+  }
+  if (activity.indexOf("loadNativeLibraryFromManifest()") >
+      activity.indexOf("MoUIGeneratedPluginRegistry.install(this)")) {
+    failures.push("managed Android plugins must install after the runtime native library is loaded");
+  }
+  if (activity.indexOf("MoUIGeneratedPluginRegistry.install(this)") >
+      activity.indexOf("MoUINativeBridge.rendererStatusJson()")) {
+    failures.push("managed Android plugins must install before the shell starts runtime host work");
   }
   if (activity.includes("supportsScroll") || activity.includes("META_SUPPORTS_SCROLL")) {
     failures.push("managed Android Activity must negotiate scroll through runtime ABI v1 instead of manifest metadata");
@@ -142,6 +152,12 @@ const validateAndroidManagedShell = failures => {
 
   const surfaceView = readRepoFile(`${kotlinDir}/MoUISurfaceView.kt`);
   const hostServices = readRepoFile(`${kotlinDir}/MoUIHostServices.kt`);
+  const mobilePlugin = readRepoFile(`${kotlinDir}/MoUIMobilePlugin.kt`);
+  requireTokens(failures, "managed Android plugin API", mobilePlugin, [
+    "interface MoUIMobilePlugin",
+    "val id: String",
+    "fun install(context: Context)",
+  ]);
   requireTokens(failures, "managed Android Host Service routing", surfaceView, [
     '"platform-channel" -> MoUIHostServices.dispatch(update, generation)',
   ]);
@@ -198,6 +214,15 @@ const validateAndroidManagedShell = failures => {
     "mouiAndroidShell",
     '"managed", "legacy"',
     "kotlin.srcDirs",
+    'file("${generatedRoot}/android/plugins")',
+    'file("${androidPluginRoot}/generated/kotlin")',
+    'file("${androidPluginRoot}/sources/kotlin")',
+    'file("${androidPluginRoot}/sources/java")',
+    'file("${androidPluginRoot}/res")',
+    "androidPluginGeneratedKotlin",
+    "androidPluginKotlin",
+    "java.srcDirs += [androidPluginJava]",
+    "res.srcDirs += [androidPluginResources]",
     "mouiActivityClass",
     "mouiClipboardProviderClass",
     "MOUI_MOBILE_ANDROID_GLUE_ROOT",
@@ -232,6 +257,7 @@ const validateAndroidManagedShell = failures => {
   }
   const prepareNative = readRepoFile("moui/scripts/mobile/prepare-native-build.mjs");
   requireTokens(failures, "Android native build preparation", prepareNative, [
+    'import { prepareAndroidPlugins } from "../../mobile/android/prepare-plugins.mjs"',
     "--android-shell <mode>",
     'androidShell: "managed"',
     "validateAndroidLegacyExports",
@@ -239,8 +265,57 @@ const validateAndroidManagedShell = failures => {
     "legacySymbolLines",
     "...legacySymbolLines",
     'if (androidShell === "legacy") validateAndroidLegacyExports(config)',
+    "prepareAndroidPlugins({",
+    "plugins,",
+    "shellMode: androidShell",
+    "androidPlugins,",
+    "plugins: appConfig.plugins",
     "androidShell,",
   ]);
+  if (prepareNative.includes("[debug-top]")) {
+    failures.push("Android native build preparation must not print temporary environment diagnostics");
+  }
+
+  const pluginPreparerPath = "moui/mobile/android/prepare-plugins.mjs";
+  const pluginTestPath = "moui/mobile/android/prepare-plugins.test.mjs";
+  const pluginFixtureRoot = "moui/mobile/android/tests/fixtures/plugin";
+  for (const path of [
+    pluginPreparerPath,
+    pluginTestPath,
+    `${pluginFixtureRoot}/moui.plugin.json`,
+    `${pluginFixtureRoot}/android/src/dev/fixture/android/FixturePlugin.kt`,
+    `${pluginFixtureRoot}/android/src/dev/fixture/android/FixturePluginHelper.java`,
+    `${pluginFixtureRoot}/android/res/values/strings.xml`,
+  ]) requirePath(failures, "managed Android plugin contract", path);
+  if (existsSync(resolve(repoRoot, pluginPreparerPath))) {
+    const pluginPreparer = readRepoFile(pluginPreparerPath);
+    requireTokens(failures, "managed Android plugin preparer", pluginPreparer, [
+      "export const validateAndroidPluginEntry",
+      "export const prepareAndroidPlugins",
+      'shellMode === "legacy"',
+      "rmSync(root, { recursive: true, force: true })",
+      'join(root, "generated", "kotlin")',
+      'join(root, "sources", "kotlin")',
+      'join(root, "sources", "java")',
+      'join(root, "res")',
+      "isolateValuesResource",
+      "plugin: MoUIMobilePlugin",
+      "context.applicationContext",
+      "plugin.id == expectedId",
+      "installedIds.add(expectedId)",
+      "Android plugin resource target conflict",
+    ]);
+  }
+  if (existsSync(resolve(repoRoot, pluginTestPath))) {
+    const pluginTest = readRepoFile(pluginTestPath);
+    requireTokens(failures, "managed Android plugin tests", pluginTest, [
+      "stage Kotlin, Java, resources, and a direct registry",
+      "legacy Android preparation removes and does not expose managed plugin inputs",
+      "safe fully qualified type names",
+      "rejecting true resource conflicts",
+      "flows from manifest parser into generated registry",
+    ]);
+  }
   const wrapper = readRepoFile("gradlew");
   if (!wrapper.includes('gradle_version="${MOUI_GRADLE_VERSION:-9.6.1}"')) {
     failures.push("Android build wrapper must default to Gradle 9.6.1");
