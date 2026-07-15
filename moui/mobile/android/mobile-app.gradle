@@ -9,21 +9,20 @@ def defaultSkiaRoot = [
     "${workspaceRoot}/.mooncakes/wzzc-dev/moui_skia",
 ].find { file(it).isDirectory() } ?: "${workspaceRoot}/moui_skia"
 def skiaRoot = file(project.findProperty("mouiSkiaRoot") ?: defaultSkiaRoot)
+def androidShell = (project.findProperty("mouiAndroidShell") ?: "managed").toString()
+if (!(androidShell in ["managed", "ejected", "legacy"])) {
+    throw new GradleException("mouiAndroidShell must be managed, ejected, or legacy, got ${androidShell}")
+}
+def managedAndroidShell = androidShell == "managed"
+def ejectedAndroidShell = androidShell == "ejected"
+def modernAndroidShell = managedAndroidShell || ejectedAndroidShell
+def generatedRoot = file(project.findProperty("mouiBuildDir") ?: "${workspaceRoot}/artifacts/android/${appId}")
 def defaultMetadataFile = file("${workspaceRoot}/examples/${appId}/mobile.json")
 if (!defaultMetadataFile.isFile()) {
     defaultMetadataFile = file("${workspaceRoot}/mobile.json")
 }
 def metadataFile = file(project.findProperty("mouiAppConfig") ?: defaultMetadataFile)
 def contractsFile = file(project.findProperty("mouiContracts") ?: "${mouiRoot}/mobile/build-contracts.json")
-if (!metadataFile.isFile()) {
-    throw new GradleException("MoUI mobile app metadata not found: ${metadataFile}")
-}
-def appConfig = new JsonSlurper().parse(metadataFile)
-def contracts = contractsFile.isFile() ? new JsonSlurper().parse(contractsFile).apps : [:]
-def contractConfig = contracts[appId] ?: [:]
-if (appConfig == null || appConfig.android == null || appConfig.mobile == null) {
-    throw new GradleException("Unknown MoUI Android app: ${appId}")
-}
 
 def mergePlatformConfig = { builtInConfig, appPlatformConfig ->
     def merged = [:]
@@ -52,44 +51,83 @@ def mergePlatformConfig = { builtInConfig, appPlatformConfig ->
     return merged
 }
 
-def androidShell = (project.findProperty("mouiAndroidShell") ?: "managed").toString()
-if (!(androidShell in ["managed", "legacy"])) {
-    throw new GradleException("mouiAndroidShell must be managed or legacy, got ${androidShell}")
-}
-def managedAndroidShell = androidShell == "managed"
-def legacyMobileConfig = appConfig.schemaVersion == 1
-def mobileFullscreen = legacyMobileConfig
-    ? appConfig.mobile.fullscreen
-    : appConfig.mobile.systemUi?.fullscreen
-if (!(mobileFullscreen instanceof Boolean)) {
-    throw new GradleException("MoUI Android app ${appId} has invalid mobile.systemUi.fullscreen")
-}
-def safeAppId = appId.replaceAll("[^A-Za-z0-9_]", "_")
-def androidConfig = legacyMobileConfig
-    ? mergePlatformConfig(contractConfig.android ?: [:], appConfig.android)
-    : [
-        applicationId: appConfig.android.applicationId,
-        nativeLibrary: "moui_${safeAppId}_android",
-    ]
-androidConfig.fullscreen = mobileFullscreen
-def legacyScrollExport = androidConfig.exports instanceof Map
-    ? androidConfig.exports.dispatchScroll
-    : null
-def legacySupportsScroll = !managedAndroidShell &&
-    (!legacyMobileConfig || (
-        legacyScrollExport instanceof String &&
-        !legacyScrollExport.trim().isEmpty()
-    ))
-[
-    "applicationId",
-    "nativeLibrary",
-].each { key ->
-    if (!androidConfig[key]) {
-        throw new GradleException("MoUI Android app ${appId} is missing ${key} in ${metadataFile} or ${contractsFile}")
+def androidConfig = [:]
+def displayName = ""
+def minSdkVersion = 0
+def legacySupportsScroll = false
+def androidManagedManifest = null
+def androidAppResources = []
+
+if (modernAndroidShell) {
+    def generatedShellRoot = file("${generatedRoot}/android/${androidShell}-shell").canonicalFile
+    def generatedShellConfigFile = file("${generatedShellRoot}/shell-config.json")
+    if (!generatedShellConfigFile.isFile()) {
+        throw new GradleException(
+            "MoUI ${androidShell} Android shell config was not prepared: ${generatedShellConfigFile}; " +
+                "run moui/scripts/mobile/prepare-native-build.mjs before Gradle",
+        )
     }
-}
-if (legacyMobileConfig) {
-    ["moonPackage", "generatedC", "appArg", "moonbitMainAlias"].each { key ->
+    def managedShellConfig = new JsonSlurper().parse(generatedShellConfigFile)
+    if (managedShellConfig.schemaVersion != 1 || managedShellConfig.platform != "android" ||
+        managedShellConfig.app != appId || managedShellConfig.shellMode != androidShell ||
+        managedShellConfig.shellApiVersion != 1 || managedShellConfig.runtimeAbiVersion != 1) {
+        throw new GradleException("Invalid generated MoUI ${androidShell} Android shell config: ${generatedShellConfigFile}")
+    }
+    if (project.hasProperty("mouiMinSdk")) {
+        throw new GradleException("mouiMinSdk is only supported by the explicit legacy Android shell")
+    }
+    if (!(managedShellConfig.minSdk instanceof Number) || managedShellConfig.minSdk.intValue() < 23) {
+        throw new GradleException("Generated MoUI managed Android minSdk must be at least 23")
+    }
+    def generatedPath = { value, label ->
+        def path = file(value).canonicalFile
+        def prefix = generatedShellRoot.path + File.separator
+        if (path.path != generatedShellRoot.path && !path.path.startsWith(prefix)) {
+            throw new GradleException("Generated MoUI Android ${label} escapes ${generatedShellRoot}: ${path}")
+        }
+        return path
+    }
+    if (managedAndroidShell) {
+        androidManagedManifest = generatedPath(managedShellConfig.manifestPath, "manifest")
+        if (!androidManagedManifest.isFile()) {
+            throw new GradleException("Generated MoUI managed Android manifest was not found: ${androidManagedManifest}")
+        }
+        androidAppResources = (managedShellConfig.resourceDirs ?: []).collect { value ->
+            def path = generatedPath(value, "resource directory")
+            if (!path.isDirectory()) {
+                throw new GradleException("Generated MoUI Android resource directory was not found: ${path}")
+            }
+            return path
+        }
+    } else if (managedShellConfig.manifestPath != null || !(managedShellConfig.resourceDirs ?: []).isEmpty()) {
+        throw new GradleException("Generated ejected Android config must not claim project-owned manifest or resources")
+    }
+    androidConfig = [
+        applicationId: managedShellConfig.applicationId,
+        nativeLibrary: managedShellConfig.nativeLibrary,
+        fullscreen: managedShellConfig.systemUi?.fullscreen,
+    ]
+    displayName = managedShellConfig.displayName
+    minSdkVersion = managedShellConfig.minSdk.intValue()
+} else {
+    if (!metadataFile.isFile()) {
+        throw new GradleException("MoUI legacy mobile app metadata not found: ${metadataFile}")
+    }
+    def appConfig = new JsonSlurper().parse(metadataFile)
+    if (appConfig == null || appConfig.schemaVersion != 1 || appConfig.android == null || appConfig.mobile == null) {
+        throw new GradleException("Legacy MoUI Android app ${appId} requires schemaVersion 1 metadata")
+    }
+    def contracts = contractsFile.isFile() ? new JsonSlurper().parse(contractsFile).apps : [:]
+    def contractConfig = contracts[appId] ?: [:]
+    androidConfig = mergePlatformConfig(contractConfig.android ?: [:], appConfig.android)
+    androidConfig.fullscreen = appConfig.mobile.fullscreen
+    displayName = appConfig.displayName
+    minSdkVersion = (project.findProperty("mouiMinSdk") ?: "23").toString().toInteger()
+    def legacyScrollExport = androidConfig.exports instanceof Map
+        ? androidConfig.exports.dispatchScroll
+        : null
+    legacySupportsScroll = legacyScrollExport instanceof String && !legacyScrollExport.trim().isEmpty()
+    ["applicationId", "nativeLibrary", "moonPackage", "generatedC", "appArg", "moonbitMainAlias"].each { key ->
         if (!androidConfig[key]) {
             throw new GradleException("MoUI legacy Android app ${appId} is missing ${key} in ${metadataFile} or ${contractsFile}")
         }
@@ -103,24 +141,31 @@ if (legacyMobileConfig) {
         throw new GradleException("MoUI legacy Android app ${appId} supports scroll but is missing exports.dispatchScroll")
     }
 }
+
+["applicationId", "nativeLibrary"].each { key ->
+    if (!androidConfig[key]) {
+        throw new GradleException("MoUI Android app ${appId} is missing generated ${key}")
+    }
+}
+if (!(androidConfig.fullscreen instanceof Boolean) || !displayName) {
+    throw new GradleException("MoUI Android app ${appId} has invalid generated identity or system UI config")
+}
 def abi = (project.findProperty("mouiAbi") ?: "arm64-v8a").toString()
-def minSdkVersion = (project.findProperty("mouiMinSdk") ?: "23").toString().toInteger()
 def compileSdkVersion = (project.findProperty("mouiCompileSdk") ?: "36").toString().toInteger()
 def targetSdkVersion = (project.findProperty("mouiTargetSdk") ?: "35").toString().toInteger()
-def generatedRoot = file(project.findProperty("mouiBuildDir") ?: "${workspaceRoot}/artifacts/android/${appId}")
 def fallbackSkia = (project.findProperty("mouiFallbackSkia") ?: "false").toString().toBoolean()
 def renderer = (project.findProperty("mouiRenderer") ?: "auto").toString()
-def androidShellSourceRoot = managedAndroidShell
+def androidShellSourceRoot = modernAndroidShell
     ? file("${mouiRoot}/mobile/android/src/main/kotlin")
     : file("${mouiRoot}/mobile/legacy/android/src/main/java")
-def androidGlueRoot = managedAndroidShell
+def androidGlueRoot = modernAndroidShell
     ? file("${mouiRoot}/mobile/android")
     : file("${mouiRoot}/mobile/legacy/android")
-def androidManagedShellCmake = managedAndroidShell ? "ON" : "OFF"
-def androidActivityClass = managedAndroidShell
+def androidManagedShellCmake = modernAndroidShell ? "ON" : "OFF"
+def androidActivityClass = modernAndroidShell
     ? "dev.wzzc.moui.mobile.MoUIActivity"
     : "dev.wzzc.moui.mobile.MobileActivity"
-def androidClipboardProviderClass = managedAndroidShell
+def androidClipboardProviderClass = modernAndroidShell
     ? "dev.wzzc.moui.mobile.MoUIClipboardProvider"
     : "dev.wzzc.moui.mobile.MobileClipboardProvider"
 def androidPluginRoot = file("${generatedRoot}/android/plugins")
@@ -169,11 +214,11 @@ android {
         versionName = "0.1.0"
 
         manifestPlaceholders = [
-            mouiAppLabel: appConfig.displayName,
+            mouiAppLabel: displayName,
             mouiActivityClass: androidActivityClass,
             mouiClipboardProviderClass: androidClipboardProviderClass,
             mouiNativeLibrary: androidConfig.nativeLibrary,
-            mouiSupportsScroll: legacySupportsScroll.toString(),
+            mouiSupportsScroll: (modernAndroidShell || legacySupportsScroll).toString(),
             mouiFullscreen: androidConfig.fullscreen.toString(),
         ]
 
@@ -198,8 +243,17 @@ android {
     sourceSets {
         main {
             if (managedAndroidShell) {
+                manifest.srcFile androidManagedManifest
                 kotlin.srcDirs += [
                     androidShellSourceRoot,
+                    androidPluginGeneratedKotlin,
+                    androidPluginKotlin,
+                ]
+                java.srcDirs += [androidPluginJava]
+                res.srcDirs += androidAppResources
+                res.srcDirs += [androidPluginResources]
+            } else if (ejectedAndroidShell) {
+                kotlin.srcDirs += [
                     androidPluginGeneratedKotlin,
                     androidPluginKotlin,
                 ]
@@ -244,7 +298,7 @@ android {
 }
 
 dependencies {
-    if (managedAndroidShell) {
+    if (modernAndroidShell) {
         implementation "androidx.activity:activity:1.13.0"
     }
 }
