@@ -158,7 +158,7 @@ test("permission usage declarations are written structurally to Info.plist", {
     }],
   }));
 
-  applyManagedInfoPlist({ manifestPath, plistPath });
+  applyManagedInfoPlist({ manifestPath, plistPath, deploymentTarget: "17.0" });
   const result = spawnSync("plutil", ["-extract", "NSCameraUsageDescription", "raw", "-o", "-", plistPath], {
     encoding: "utf8",
   });
@@ -168,7 +168,7 @@ test("permission usage declarations are written structurally to Info.plist", {
     encoding: "utf8",
   });
   assert.equal(target.status, 0, target.stderr);
-  assert.equal(target.stdout.trim(), "16.2");
+  assert.equal(target.stdout.trim(), "17.0");
 });
 
 const createFakeXcodebuild = root => {
@@ -232,4 +232,23 @@ test("managed build rejects an explicit deployment target below the configured f
   const result = runBuilder(fixture, bin, ["--deployment-target", "16.1"]);
   assert.equal(result.status, 2);
   assert.match(result.stderr, /below mobile\.json ios\.deploymentTarget 16\.2/);
+});
+
+test("managed build accepts an explicit deployment target above the configured floor", {
+  skip: process.platform !== "darwin" ? "managed iOS staging requires plutil" : false,
+}, t => {
+  const fixture = createFixture(t, { deploymentTarget: "16.2", permissions: [] });
+  const bin = createFakeXcodebuild(fixture.root);
+  const result = runBuilder(fixture, bin, ["--deployment-target", "17.0"]);
+  assert.equal(result.status, 42, result.stderr);
+  const argumentsText = readFileSync(join(fixture.root, "xcode-arguments.txt"), "utf8");
+  assert.match(argumentsText, /^IPHONEOS_DEPLOYMENT_TARGET=17\.0$/m);
+  const stagedPlist = join(fixture.root, "build/ios-project/Info.plist");
+  const plistTarget = spawnSync(
+    "plutil",
+    ["-extract", "MinimumOSVersion", "raw", "-o", "-", stagedPlist],
+    { encoding: "utf8" },
+  );
+  assert.equal(plistTarget.status, 0, plistTarget.stderr);
+  assert.equal(plistTarget.stdout.trim(), "17.0");
 });
