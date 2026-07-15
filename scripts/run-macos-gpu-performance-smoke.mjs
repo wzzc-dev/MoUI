@@ -175,8 +175,7 @@ const main = async () => {
 
   if (options.prepare) {
     process.stderr.write(
-      "note: --prepare is a no-op; moui_skia prebuild injects Skia/Metal link flags
-",
+      "note: --prepare is a no-op; moui_skia prebuild injects Skia/Metal link flags\n",
     );
   }
 
