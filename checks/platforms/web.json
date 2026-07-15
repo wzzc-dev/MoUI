@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "platform": "web",
+  "sourceBuild": {"status": "passed", "evidence": "Pages and Web CI"},
+  "rendererL2": {"status": "passed", "presenterRoute": "browser-webgpu"},
+  "runtimeL3": {"status": "passed", "evidence": "browser presentation manifest"},
+  "shellKind": "browser",
+  "shellApiVersion": 0,
+  "runtimeAbiVersion": 0,
+  "deploymentFloor": "WebAssembly GC browser",
+  "toolchainFloor": "MoonBit wasm-gc",
+  "actualPresenterRoute": "browser-webgpu"
+}
+

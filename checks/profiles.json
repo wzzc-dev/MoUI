@@ -36,6 +36,14 @@
           ]
         },
         {
+          "name": "generated repository facts",
+          "argv": [
+            "node",
+            "scripts/generate-repo-docs.mjs",
+            "--check"
+          ]
+        },
+        {
           "name": "window dependency",
           "argv": [
             "node",
@@ -47,6 +55,13 @@
           "argv": [
             "node",
             "scripts/validate-maintenance-baseline.mjs"
+          ]
+        },
+        {
+          "name": "source file policy",
+          "argv": [
+            "node",
+            "scripts/validate-source-file-policy.mjs"
           ]
         },
         {
@@ -246,6 +261,26 @@
           "argv": [
             "node",
             "scripts/test-validate-skia-entrypoints.mjs"
+          ]
+        },
+        {
+          "name": "generated repository facts tests",
+          "argv": [
+            "moon",
+            "test",
+            "tools/moui/generate_repo_docs",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "source file policy tests",
+          "argv": [
+            "moon",
+            "test",
+            "tools/moui/validate_source_file_policy",
+            "--target",
+            "native"
           ]
         },
         {

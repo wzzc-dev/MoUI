@@ -15,7 +15,8 @@ sh scripts/check.sh --profile daily
 
 The script runs local dependency guards, guidance consistency, maintenance
 baseline ratchets, API surface checks, renderer provider and native Skia
-entrypoint static checks, smoke gate catalog validation, `moon check`, generated
+entrypoint static checks, generated repository facts and source-file policy,
+smoke gate catalog validation, `moon check`, generated
 public-interface drift detection, core package tests, Web wasm-gc package tests,
 native Skia mainline package tests, `moui_tester` harness tests,
 `moui_devtools` snapshot/debug tests, Showcase and Markdown Editor app tests,
@@ -30,13 +31,17 @@ node scripts/lint-scripts.mjs --profile pr
 node scripts/validate-check-profiles.mjs
 node scripts/validate-guidance-consistency.mjs
 node scripts/validate-api-surface.mjs
+node scripts/generate-repo-docs.mjs --check
 node scripts/validate-window-dependency.mjs
 node scripts/validate-maintenance-baseline.mjs
+node scripts/validate-source-file-policy.mjs
 node scripts/check-website-docs.mjs
 node scripts/validate-renderer-provider-manifests.mjs
 node scripts/validate-skia-entrypoints.mjs
 node scripts/validate-gpu-promotion-manifest.mjs docs/gpu-promotion-manifest.example.json
 node scripts/test-validate-skia-entrypoints.mjs
+moon test tools/moui/generate_repo_docs --target native
+moon test tools/moui/validate_source_file_policy --target native
 node --check scripts/test-moui-prebuild.mjs
 node scripts/test-moui-prebuild.mjs
 node scripts/test-validate-conformance-capture-manifest.mjs
@@ -278,24 +283,30 @@ sh scripts/ci-web-runtime-presentation.sh
 
 For Android packaging changes, `scripts/build-counter-android-apk.sh
 --fallback-skia` is a fast build-system smoke that covers MoonBit C export,
-JNI/CMake, Java/resource packaging, and debug signing. It is not real Skia
+registered JNI/CMake, Kotlin/resource packaging, and debug signing. It is not real Skia
 renderer or platform runtime evidence. Android first-frame/input/lifecycle
 claims still require `scripts/build-counter-android-apk.sh` without fallback
 and a matching device or emulator run with recorded observations.
 The canonical Android build entrypoint is now
 `scripts/build-mobile-android-apk.sh --app <counter|component_gallery>`; the
-app-specific scripts are compatibility wrappers.
+app-specific scripts are compatibility wrappers. It uses the managed Kotlin
+shell by default. `--legacy-java-shell --compile-sdk 35` exists only to audit
+the frozen Release N compatibility fixture.
 
 For iOS packaging changes, `scripts/build-counter-ios-app.sh --fallback-skia`
-is a fast build-system smoke that covers MoonBit C export, UIKit shell
-compilation, iOS runtime compatibility, native-stub compilation, bundle layout,
-and ad-hoc simulator signing. It is not real Skia renderer or platform runtime
+is a fast build-system smoke that covers MoonBit C export, the canonical
+SwiftUI/UIKit host adapters, ABI bridge, iOS runtime compatibility, native-stub
+compilation, bundle layout, and ad-hoc simulator signing. It is not real Skia
+renderer or platform runtime
 evidence. iOS first-frame/input/lifecycle claims still require
 `scripts/build-counter-ios-app.sh` without fallback and a matching simulator or
 device run with recorded observations.
 The canonical iOS build entrypoint is now
 `scripts/build-mobile-ios-app.sh --app <counter|component_gallery>` through the
-checked-in Xcode project. Use `node scripts/record-mobile-runtime-smoke.mjs
+checked-in real `PBXNativeTarget`; `--legacy-uikit-shell` selects only the
+frozen Release N fixture. Run
+`sh moui/mobile/ios/tests/run-ios-managed-shell-tests.sh` for the focused shell
+contract audit. Use `node scripts/record-mobile-runtime-smoke.mjs
 --platform <android|ios|harmonyos> --app
 <counter|component_gallery|harmonyos_demo> --require-passed` to produce the
 checked mobile runtime manifest for release/manual claims. The recorder
@@ -352,7 +363,7 @@ quality claims remain separate.
 
 Local evidence snapshot (2026-07-15):
 
-- **iOS** Simulator Component Gallery: `artifacts/mobile-runtime/ios/component_gallery/` (**`passed`**, Metal `gpuAvailable=true`)
+- **iOS** Simulator Component Gallery under the Release N UIKit shell: `artifacts/mobile-runtime/ios/component_gallery/` (**`passed`**, Metal `gpuAvailable=true`); canonical SwiftUI managed-shell runtime evidence must be recollected
 - **HarmonyOS** DevEco MateBook Pro HVD: `artifacts/mobile-runtime/harmonyos/component_gallery/` (**`partial`**, **EGL** configure `egl-gpu` + `gpuAvailable=true`, nonblank first frame; services incomplete)
 - **Android** emulator/device CG: `artifacts/mobile-runtime/android/component_gallery/` (**`partial`**, **`vulkan-gpu`** + `gpuAvailable=true`, attach/nonblank/input/a11y/async-image; pin **NDK 28.2** full `libc++_shared.so`). Do not run Android + HarmonyOS emulators together on low-memory hosts.
 - GPU promotion scaffolds: `artifacts/gpu-promotion/{ios,harmonyos,android}/scaffold-latest/` (not L2 proof)

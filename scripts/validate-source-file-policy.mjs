@@ -2,8 +2,8 @@
 
 import { runMoonbitTool } from "./lib/moonbit-tool-runner.mjs";
 
-runMoonbitTool("tools/moui/validate_api_surface", [
+runMoonbitTool("tools/moui/validate_source_file_policy", [
   "--repo-root",
   process.cwd(),
-  ...process.argv.slice(2),
 ]);
+
