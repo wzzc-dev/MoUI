@@ -70,18 +70,47 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 
 ## Quick Start
 
-The fastest way to try MoUI is the standalone `moui_example` counter app, a
-small repo that pins a published MoUI crate and renders the same Model /
-Msg / update / view loop on both macOS Skia and Web wasm-gc.
+Choose the path that matches what you are trying to do.
+
+### Playground
+
+Open the [browser Playground](https://wzzc-dev.github.io/MoUI/playground/) to
+edit and run the guided examples without installing a native toolchain. This is
+the shortest route for learning the view/update model and checking Web behavior.
+
+### Independent Project
+
+Install the standalone CLI, then generate a project outside this repository:
 
 ```sh
-cd moui_example
+moon install wzzc-dev/moui_cli/cmd/moui
+moui new my_app
+cd my_app
 moon update
+moon check
 ```
 
-`moui_example` is an independent sub-repo on `wzzc-dev/moui@0.1.7`; it is not
-listed in this repository's `moon.work` and is not built by the repository
-daily check. It is the recommended starting template for new apps.
+`moui new` creates shared app logic plus Web and the current desktop entrypoint.
+Add Android, iOS, or HarmonyOS explicitly with `--platform`; mobile projects use
+the framework-managed canonical shell and do not copy native projects into the
+application repository.
+
+### This Repository
+
+Use this path when changing MoUI itself or running the full featured examples:
+
+```sh
+git clone --recurse-submodules https://github.com/wzzc-dev/MoUI.git
+cd MoUI
+sh scripts/ci-moon-update.sh
+sh scripts/check.sh --profile pr
+moon test examples/component_gallery/app --target native
+moon test examples/markdown_editor/app --target native
+```
+
+Component Gallery, Showcase, and Markdown Editor are the primary scanning and
+interaction examples. Their platform entrypoints are listed under
+[Running Examples](#running-examples).
 
 Framework setup details, including optional submodules and the `window/`
 local-source workflow, live in [Development](docs/development.md).

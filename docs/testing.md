@@ -93,6 +93,17 @@ one workspace-wide `moon info`, and fails only when generation creates new
 differences. This keeps the check useful in a dirty working tree while a clean
 CI checkout still rejects uncommitted public-interface drift.
 
+The `external-consumer.yml` workflow copies
+`checks/external-consumer` outside the checkout and runs a Linux/macOS/Windows
+matrix against both `wzzc-dev/moui@0.1.7` from the registry and the current
+`moon package` archive. Its `moon tree` and resolved `.mooncakes` path checks
+must report `monorepoSource=false`:
+
+```sh
+node scripts/external-consumer-ci.mjs --source registry
+node scripts/external-consumer-ci.mjs --source package
+```
+
 ## Focused
 
 Playground-focused checks should cover both MoonBit editor behavior and the
