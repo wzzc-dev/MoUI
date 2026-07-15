@@ -256,13 +256,19 @@ final class MOUIMobileHostAdapter {
   private let ime: MOUIMobileIMEAdapter
   private let accessibility: MOUIMobileAccessibilityAdapter
   private let platformViews: MOUIMobilePlatformViewOverlay
+  private let pluginCapabilities: MOUIMobilePluginCapabilities
   private var sessionGeneration: Int?
   private var pendingHostChannels: [HostChannelKey: PendingHostChannel] = [:]
 
-  init(surface: UIView, overlay: UIView) {
+  init(
+    surface: UIView,
+    overlay: UIView,
+    pluginCapabilities: MOUIMobilePluginCapabilities
+  ) {
     ime = MOUIMobileIMEAdapter(container: overlay)
     accessibility = MOUIMobileAccessibilityAdapter(container: surface)
     platformViews = MOUIMobilePlatformViewOverlay(container: overlay)
+    self.pluginCapabilities = pluginCapabilities
   }
 
   func drain() {
@@ -279,6 +285,7 @@ final class MOUIMobileHostAdapter {
     if sessionGeneration != generation {
       resetHostState()
       sessionGeneration = generation
+      pluginCapabilities.activateSession(generation: generation)
     }
     for update in updates {
       apply(update, sessionGeneration: generation)
@@ -299,6 +306,7 @@ final class MOUIMobileHostAdapter {
     ime.reset()
     accessibility.reset()
     platformViews.reset()
+    pluginCapabilities.resetSession()
   }
 
   private func apply(_ update: [String: Any], sessionGeneration: Int) {
@@ -308,7 +316,9 @@ final class MOUIMobileHostAdapter {
     case "ime": ime.apply(payload)
     case "clipboard":
       applyClipboard(update, payload: payload, generation: sessionGeneration)
-    case "semantics": accessibility.apply(payload)
+    case "semantics":
+      accessibility.apply(payload)
+      pluginCapabilities.publishSemantics(payload: payload, generation: sessionGeneration)
     case "diagnostic":
       NSLog("moui-mobile diagnostic %@", String(describing: update["payload"] ?? ""))
     case "platform-views":
@@ -326,47 +336,54 @@ final class MOUIMobileHostAdapter {
   ) {
     let requestId = (update["id"] as? NSNumber)?.int32Value ?? 0
     let pasteboard = UIPasteboard.general
-    switch payload["operation"] as? String {
+    let operation = payload["operation"] as? String ?? ""
+    var accepted = false
+    switch operation {
     case "read-text":
-      _ = bridge.completeClipboardSessionGeneration(
+      accepted = bridge.completeClipboardSessionGeneration(
         Int32(generation),
         request: requestId,
         kind: 1,
         text: pasteboard.string ?? "",
         bytes: Data()
-      )
+      ) > 0
     case "write-text":
       pasteboard.string = payload["text"] as? String ?? ""
-      _ = bridge.completeClipboardSessionGeneration(
-        Int32(generation), request: requestId, kind: 3, text: "", bytes: Data())
+      accepted = bridge.completeClipboardSessionGeneration(
+        Int32(generation), request: requestId, kind: 3, text: "", bytes: Data()) > 0
     case "read-image":
       let data =
         pasteboard.data(forPasteboardType: "public.png")
         ?? pasteboard.data(forPasteboardType: "public.jpeg")
-      _ = bridge.completeClipboardSessionGeneration(
+      accepted = bridge.completeClipboardSessionGeneration(
         Int32(generation),
         request: requestId,
         kind: data == nil ? 0 : 2,
         text: data == nil ? "clipboard image is unavailable" : "",
         bytes: data ?? Data()
-      )
+      ) > 0
     case "write-image":
       let values = payload["bytes"] as? [NSNumber] ?? []
       let data = Data(values.map(\.uint8Value))
       let mime = payload["mime"] as? String ?? "image/png"
       pasteboard.setData(
         data, forPasteboardType: mime.contains("jpeg") ? "public.jpeg" : "public.png")
-      _ = bridge.completeClipboardSessionGeneration(
-        Int32(generation), request: requestId, kind: 3, text: "", bytes: Data())
+      accepted = bridge.completeClipboardSessionGeneration(
+        Int32(generation), request: requestId, kind: 3, text: "", bytes: Data()) > 0
     default:
-      _ = bridge.completeClipboardSessionGeneration(
+      accepted = bridge.completeClipboardSessionGeneration(
         Int32(generation),
         request: requestId,
         kind: 0,
         text: "unsupported clipboard operation",
         bytes: Data()
-      )
+      ) > 0
     }
+    NSLog(
+      "moui-mobile service clipboard complete operation=%@ accepted=%d",
+      operation,
+      accepted ? 1 : 0
+    )
   }
 
   private func applyPlatformChannel(

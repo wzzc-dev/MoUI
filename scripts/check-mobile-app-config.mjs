@@ -34,6 +34,7 @@ const validateAndroidManagedShell = failures => {
     "MoUIPlatformViews.kt",
     "MoUIHostServices.kt",
     "MoUIMobilePlugin.kt",
+    "MoUIMobileCapabilities.kt",
     "MoUINativeBridge.kt",
   ];
   for (const file of kotlinFiles) requirePath(failures, `managed Android ${file}`, `${kotlinDir}/${file}`);
@@ -43,7 +44,7 @@ const validateAndroidManagedShell = failures => {
   const activity = readRepoFile(`${kotlinDir}/MoUIActivity.kt`);
   requireTokens(failures, "managed Android Activity", activity, [
     "class MoUIActivity : ComponentActivity()",
-    "MoUIGeneratedPluginRegistry.install(this)",
+    "MoUIGeneratedPluginRegistry.install(this, pluginCapabilities)",
     "root.addView(surfaceView",
     "root.addView(overlay",
     "Choreographer.FrameCallback",
@@ -57,10 +58,10 @@ const validateAndroidManagedShell = failures => {
     failures.push("managed Android Activity must place MoUISurfaceView below the PlatformView overlay");
   }
   if (activity.indexOf("loadNativeLibraryFromManifest()") >
-      activity.indexOf("MoUIGeneratedPluginRegistry.install(this)")) {
+      activity.indexOf("MoUIGeneratedPluginRegistry.install(this, pluginCapabilities)")) {
     failures.push("managed Android plugins must install after the runtime native library is loaded");
   }
-  if (activity.indexOf("MoUIGeneratedPluginRegistry.install(this)") >
+  if (activity.indexOf("MoUIGeneratedPluginRegistry.install(this, pluginCapabilities)") >
       activity.indexOf("MoUINativeBridge.rendererStatusJson()")) {
     failures.push("managed Android plugins must install before the shell starts runtime host work");
   }
