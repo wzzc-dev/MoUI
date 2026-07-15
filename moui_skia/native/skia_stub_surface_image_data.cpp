@@ -35,24 +35,6 @@
 #define MOUI_SKIA_HAS_GANESH_D3D_HEADERS 1
 #endif
 
-#if defined(MOUI_SKIA_HAS_SKIA) && \
-  __has_include("include/gpu/ganesh/GrDirectContext.h") && \
-  __has_include("include/gpu/ganesh/vk/GrVkDirectContext.h") && \
-  __has_include("include/gpu/ganesh/vk/GrVkTypes.h") && \
-  __has_include("include/gpu/ganesh/vk/GrVkBackendSurface.h") && \
-  __has_include("include/gpu/vk/VulkanBackendContext.h") && \
-  __has_include("include/android/vk/AndroidVulkanMemoryAllocator.h") && \
-  __has_include("include/gpu/ganesh/GrBackendSurface.h") && \
-  __has_include("include/gpu/ganesh/SkSurfaceGanesh.h") && \
-  __has_include(<vulkan/vulkan.h>)
-#if (defined(__ANDROID__) && __has_include(<vulkan/vulkan_android.h>) && \
-  __has_include(<android/native_window.h>)) || \
-  (defined(__linux__) && __has_include(<vulkan/vulkan_wayland.h>) && \
-  __has_include(<wayland-client.h>))
-#define MOUI_SKIA_HAS_GANESH_VULKAN_HEADERS 1
-#endif
-#endif
-
 #if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_ENABLE_GPU_EGL) && \
   (defined(__OHOS__) || defined(__ANDROID__))
 // Opt-in GPU-EGL builds already stage Skia + link -lEGL/-lGLESv*. Trust the
