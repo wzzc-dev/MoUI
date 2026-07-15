@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { dirname, isAbsolute, join, resolve } from "node:path";
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { validateMobileMetadataV2 } from "./mobile-config-schema.mjs";
 import { readMouiPluginManifests } from "./plugin-manifest.mjs";
@@ -207,6 +207,80 @@ const platformContract = ({ appId, platform, metadataPlatform, builtInContracts 
   };
 };
 
+const portableRelative = (root, path) => relative(root, path).split(sep).join("/");
+
+const managedMoonPackage = ({ workspaceRoot, metadataPath, platform }) => {
+  const appRoot = dirname(metadataPath);
+  const candidates = [
+    join(appRoot, `${platform}_skia`),
+    join(appRoot, platform),
+  ];
+  const selected = candidates.find(path => existsSync(join(path, "moon.pkg"))) || candidates[0];
+  return portableRelative(workspaceRoot, selected);
+};
+
+const managedPlatformContract = ({ appId, platform, metadataPath, workspaceRoot, mouiRoot }) => {
+  const moonPackage = managedMoonPackage({ workspaceRoot, metadataPath, platform });
+  const generatedC = `${basename(moonPackage)}.c`;
+  const safeId = appId.replace(/[^A-Za-z0-9_]/g, "_");
+  const appSlug = appId.replaceAll("_", "-");
+  const common = {
+    moonPackage,
+    generatedC,
+    appArg: `moui-${appSlug}-${platform}`,
+    moonbitMainAlias: "moui_mobile_moonbit_generated_main",
+  };
+  if (platform === "android") {
+    return {
+      ...common,
+      nativeLibrary: `moui_${safeId}_android`,
+      exports: {
+        attachSurface: "moui_mobile_attach_surface",
+        resize: "moui_mobile_resize",
+        dispatchPointer: "moui_mobile_dispatch_pointer",
+        dispatchScroll: "moui_mobile_dispatch_scroll",
+        frameTick: "moui_mobile_frame_tick",
+        renderFrame: "moui_mobile_render_frame",
+        detachSurface: "moui_mobile_detach_surface",
+        destroyApplication: "moui_mobile_destroy_application",
+        dispatchHostResponseEnvelope: "moui_mobile_dispatch_host_response_envelope_json",
+      },
+    };
+  }
+  if (platform === "ios") {
+    return {
+      ...common,
+      infoPlist: join(mouiRoot, "mobile/ios/template/Info.plist"),
+      exports: {
+        attachView: "moui_mobile_attach_surface",
+        resize: "moui_mobile_resize",
+        dispatchPointer: "moui_mobile_dispatch_pointer",
+        dispatchScroll: "moui_mobile_dispatch_scroll",
+        frameTick: "moui_mobile_frame_tick",
+        renderFrame: "moui_mobile_render_frame",
+        detachView: "moui_mobile_detach_surface",
+        destroyApplication: "moui_mobile_destroy_application",
+        dispatchHostResponseEnvelope: "moui_mobile_dispatch_host_response_envelope_json",
+      },
+    };
+  }
+  return {
+    ...common,
+    nativeLibrary: "moui_mobile_harmonyos",
+    exports: {
+      attachSurface: "moui_mobile_attach_surface",
+      resize: "moui_mobile_resize",
+      dispatchPointer: "moui_mobile_dispatch_pointer",
+      dispatchScroll: "moui_mobile_dispatch_scroll",
+      frameTick: "moui_mobile_frame_tick",
+      renderFrame: "moui_mobile_render_frame",
+      detachSurface: "moui_mobile_detach_surface",
+      destroyApplication: "moui_mobile_destroy_application",
+      dispatchHostResponseEnvelope: "moui_mobile_dispatch_host_response_envelope_json",
+    },
+  };
+};
+
 const readContracts = path => {
   if (!existsSync(path)) return {};
   const contracts = assertObject(readJson(path), path);
@@ -219,24 +293,27 @@ const readContracts = path => {
 const mergeApp = ({ appId, metadata, metadataPath, contractsFile, builtInContracts, workspaceRoot, mouiRoot, skiaRoot }) => {
   const mobile = metadata.mobile;
   const legacyConfig = metadata.schemaVersion === 1;
-  const androidContract = platformContract({
-    appId,
-    platform: "android",
-    metadataPlatform: metadata.android,
-    builtInContracts,
-  });
-  const iosContract = platformContract({
-    appId,
-    platform: "ios",
-    metadataPlatform: metadata.ios,
-    builtInContracts,
-  });
-  const harmonyosContract = platformContract({
-    appId,
-    platform: "harmonyos",
-    metadataPlatform: metadata.harmonyos,
-    builtInContracts,
-  });
+  const contractFor = (platform, metadataPlatform) => {
+    if (!metadataPlatform) return null;
+    if (!legacyConfig) {
+      return managedPlatformContract({
+        appId,
+        platform,
+        metadataPath,
+        workspaceRoot,
+        mouiRoot,
+      });
+    }
+    return platformContract({
+      appId,
+      platform,
+      metadataPlatform,
+      builtInContracts,
+    });
+  };
+  const androidContract = contractFor("android", metadata.android);
+  const iosContract = contractFor("ios", metadata.ios);
+  const harmonyosContract = contractFor("harmonyos", metadata.harmonyos);
   if (androidContract && legacyConfig) {
     validateAndroidContract(`${metadataPath}: android.native or ${contractsFile}: apps.${appId}.android`, androidContract, mobile.supportsScroll);
   }

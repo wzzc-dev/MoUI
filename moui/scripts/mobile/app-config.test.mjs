@@ -68,6 +68,78 @@ test("schema v1 requires an explicit Release N compatibility flag", () => {
   }
 });
 
+test("schema v2 derives fixed managed build contracts without legacy maps", () => {
+  const workspaceRoot = mkdtempSync(join(tmpdir(), "moui-mobile-managed-config-"));
+  try {
+    mkdirSync(join(workspaceRoot, "android_skia"), { recursive: true });
+    mkdirSync(join(workspaceRoot, "ios_skia"), { recursive: true });
+    writeFileSync(join(workspaceRoot, "android_skia/moon.pkg"), "options(\"is-main\": true)\n");
+    writeFileSync(join(workspaceRoot, "ios_skia/moon.pkg"), "options(\"is-main\": true)\n");
+    const config = {
+      schemaVersion: 2,
+      id: "managed_fixture",
+      displayName: "Managed Fixture",
+      artifactName: "managed_fixture",
+      appPackage: "app",
+      shellApiVersion: 1,
+      runtimeAbiVersion: 1,
+      mobile: {
+        renderer: "auto",
+        systemUi: { fullscreen: false, statusBar: "visible" },
+        orientation: "portrait",
+        resources: [],
+        permissions: [],
+        plugins: [],
+      },
+      android: {
+        applicationId: "dev.example.managedfixture",
+        shellMode: "managed",
+        minSdk: 23,
+      },
+      ios: {
+        bundleId: "dev.example.managedfixture",
+        productName: "ManagedFixture",
+        shellMode: "managed",
+        deploymentTarget: "15.0",
+      },
+    };
+    const configPath = join(workspaceRoot, "mobile.json");
+    const contractsPath = join(workspaceRoot, "contracts.json");
+    writeFileSync(configPath, `${JSON.stringify(config)}\n`);
+    writeFileSync(contractsPath, `${JSON.stringify({
+      schemaVersion: 1,
+      apps: {
+        managed_fixture: {
+          android: {
+            ...legacyContracts.apps.legacy_fixture.android,
+            exports: {
+              ...legacyContracts.apps.legacy_fixture.android.exports,
+              attachSurface: "must_not_be_used",
+            },
+          },
+        },
+      },
+    })}\n`);
+    const app = readMobileApp("managed_fixture", {
+      workspaceRoot,
+      mouiRoot: join(repoRoot, "moui"),
+      skiaRoot: join(repoRoot, "moui_skia"),
+      appConfigPath: configPath,
+      contractsPath,
+    });
+    assert.equal(app.android.moonPackage, "android_skia");
+    assert.equal(app.android.generatedC, "android_skia.c");
+    assert.equal(app.android.exports.attachSurface, "moui_mobile_attach_surface");
+    assert.equal(app.android.moonbitMainAlias, "moui_mobile_moonbit_generated_main");
+    assert.equal(app.ios.moonPackage, "ios_skia");
+    assert.equal(app.ios.exports.dispatchScroll, "moui_mobile_dispatch_scroll");
+    assert.equal(app.ios.appArg, "moui-managed-fixture-ios");
+    assert.equal(app.mobile.supportsScroll, true);
+  } finally {
+    rmSync(workspaceRoot, { recursive: true, force: true });
+  }
+});
+
 test("managed plugin permissions must be granted by mobile.json", () => {
   const workspaceRoot = mkdtempSync(join(tmpdir(), "moui-mobile-plugin-config-"));
   try {
