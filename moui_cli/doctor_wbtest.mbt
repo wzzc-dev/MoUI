@@ -9,8 +9,16 @@ test "doctor statuses use the stable machine-readable vocabulary" {
 ///|
 test "Android doctor versions match the managed shell toolchain floor" {
   inspect(android_compile_sdk, content="36")
+  inspect(android_target_sdk, content="35")
   inspect(android_build_tools_version, content="35.0.0")
   inspect(android_cmake_version, content="3.22.1")
+  inspect(android_ndk_version, content="28.2.13676358")
+  inspect(android_gradle_version, content="9.6.1")
+  inspect(xcode_minimum_version, content="15.4")
+  inspect(swift_minimum_version, content="5.0")
+  inspect(harmonyos_compatible_api, content="20")
+  inspect(harmonyos_target_api, content="21")
+  inspect(harmonyos_model_version, content="6.0.1")
 }
 
 ///|
