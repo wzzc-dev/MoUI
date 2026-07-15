@@ -23,12 +23,39 @@ fn component_gallery_android_metrics(
 }
 
 ///|
+fn component_gallery_android_selection() -> @render.NativeRendererSelection {
+  @host.mobile_renderer_selection(
+    @render.NativeGpuPlatform::Android,
+    gpu_available=@android_skia_backend.android_skia_gpu_available(),
+  )
+}
+
+///|
+fn component_gallery_android_session_runtime() -> @component_gallery_app.SessionRuntimeInfo {
+  let selection = component_gallery_android_selection()
+  @component_gallery_app.session_runtime_from_selection(
+    host="Android",
+    backend=selection.selected.label(),
+    surface_route=selection.surface_route.label(),
+    requested=selection.requested.label(),
+    gpu_available=selection.gpu_available,
+    gpu_promoted=selection.gpu_promoted,
+    note=match selection.fallback_reason {
+      Some(reason) => reason
+      None =>
+        "Mobile product default is Skia GPU when the host surface is available."
+    },
+  )
+}
+
+///|
 fn component_gallery_android_runtime(
   metrics : @host.HostSurfaceMetrics,
 ) -> @runtime.AppRuntime {
   @runtime.new_program(
     program=@component_gallery_app.program(
       active_platform=@component_gallery_app.PlatformId::Android,
+      session_runtime=component_gallery_android_session_runtime(),
     ),
     size=metrics.logical_size,
   )
@@ -36,10 +63,7 @@ fn component_gallery_android_runtime(
 
 ///|
 fn component_gallery_android_renderer_options() -> @android_skia_backend.AndroidSkiaAppOptions {
-  let selection = @host.mobile_renderer_selection(
-    @render.NativeGpuPlatform::Android,
-    gpu_available=@android_skia_backend.android_skia_gpu_available(),
-  )
+  let selection = component_gallery_android_selection()
   @android_skia_backend.AndroidSkiaAppOptions::new(
     surface_route=selection.surface_route,
   )
