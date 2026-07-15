@@ -5,7 +5,7 @@ usage() {
   cat <<'USAGE'
 Usage: moui/scripts/mobile/build-ios-app-core.sh --app <id>
 
-Internal builder used by Xcode legacy targets. Prefer
+Internal builder used by Xcode native targets. Prefer
 moui/scripts/mobile/build-ios-app.sh.
 USAGE
 }
@@ -82,9 +82,22 @@ deployment_target="${MOUI_MOBILE_DEPLOYMENT_TARGET:-${IPHONEOS_DEPLOYMENT_TARGET
 fallback_skia="${MOUI_MOBILE_FALLBACK_SKIA:-0}"
 renderer="${MOUI_MOBILE_RENDERER:-auto}"
 configuration="${CONFIGURATION:-Debug}"
+shell_mode="${MOUI_MOBILE_IOS_SHELL:-managed}"
 build_dir="${MOUI_MOBILE_BUILD_DIR:-$workspace_root/artifacts/ios/$app}"
 if [ "${build_dir#/}" = "$build_dir" ]; then
   build_dir="$workspace_root/$build_dir"
+fi
+
+case "$shell_mode" in
+  managed|legacy-uikit) ;;
+  *) echo "unsupported iOS shell mode: $shell_mode" >&2; exit 2 ;;
+esac
+if ! awk -v value="$deployment_target" 'BEGIN {
+  split(value, actual, ".");
+  exit !((actual[1] + 0) >= 15);
+}'; then
+  echo "MoUI iOS requires deployment target 15.0 or newer: $deployment_target" >&2
+  exit 2
 fi
 
 prepare_args=(
@@ -119,6 +132,14 @@ else if (value !== undefined && value !== null) process.stdout.write(String(valu
 ' "$1" "$build_dir/mobile-build.json"
 }
 
+json_lines() {
+  node -e '
+const fs = require("fs");
+const value = process.argv[1].split(".").reduce((acc, part) => acc && acc[part], JSON.parse(fs.readFileSync(process.argv[2], "utf8")));
+if (Array.isArray(value)) process.stdout.write(value.join("\n"));
+' "$1" "$2"
+}
+
 log() {
   printf '[moui-mobile-ios] %s\n' "$*"
 }
@@ -126,6 +147,7 @@ log() {
 sdk_path="$(xcrun --sdk "$sdk" --show-sdk-path)"
 cc="$(xcrun --sdk "$sdk" --find clang)"
 cxx="$(xcrun --sdk "$sdk" --find clang++)"
+swiftc="$(xcrun --sdk "$sdk" --find swiftc)"
 moon_home="${MOON_HOME:-$HOME/.moon}"
 fs_native="$workspace_root/.mooncakes/moonbitlang/x/fs/fs_native.c"
 
@@ -158,6 +180,7 @@ dispatch_scroll="$(json_get exports.dispatchScroll)"
 frame_tick="$(json_get exports.frameTick)"
 render_frame="$(json_get exports.renderFrame)"
 detach_view="$(json_get exports.detachView)"
+destroy_application="$(json_get exports.destroyApplication)"
 
 output_app="${MOUI_MOBILE_OUTPUT_APP:-}"
 if [ -z "$output_app" ]; then
@@ -175,8 +198,21 @@ common_flags=(
   -isysroot "$sdk_path"
   "-$min_version_flag_name=$deployment_target"
 )
+if [ "$sdk" = "iphonesimulator" ]; then
+  swift_target="$arch-apple-ios${deployment_target}-simulator"
+else
+  swift_target="$arch-apple-ios${deployment_target}"
+fi
+swift_flags=(
+  -swift-version 5
+  -target "$swift_target"
+  -sdk "$sdk_path"
+  -I "$moui_root/mobile/ios/bridge/include"
+)
 include_flags=(
+  -I "$moui_root/mobile/include"
   -I "$moui_root/mobile/ios/include"
+  -I "$moui_root/mobile/ios/bridge/include"
   -I "$moon_home/include"
   -I "$skia_root/native"
 )
@@ -216,24 +252,97 @@ compile_objcxx() {
   objects+=("$obj")
 }
 
-compile_c "$moonbit_c" "$obj_dir/moonbit.o" -Dmain="$main_alias"
+compile_swift_object() {
+  local module_name="$1"
+  local output="$2"
+  shift 2
+  log "Compiling Swift module $module_name"
+  "$swiftc" "${swift_flags[@]}" \
+    -parse-as-library \
+    -whole-module-optimization \
+    -module-name "$module_name" \
+    -emit-object \
+    "$@" \
+    -o "$output"
+  objects+=("$output")
+}
+
+compiled_main_alias="$main_alias"
+if [ "$shell_mode" = "managed" ]; then
+  compiled_main_alias="moui_mobile_moonbit_generated_main"
+fi
+compile_c "$moonbit_c" "$obj_dir/moonbit.o" -Dmain="$compiled_main_alias"
 compile_c "$moon_home/lib/runtime.c" "$obj_dir/runtime.o" -Dgetentropy=moui_ios_getentropy
 compile_c "$fs_native" "$obj_dir/fs_native.o"
 compile_c "$moui_root/mobile/ios/moui_ios_compat.c" "$obj_dir/moui_ios_compat.o"
-compile_objcxx "$moui_root/mobile/ios/moui_mobile_app.mm" "$obj_dir/moui_mobile_app.o" \
-  -DMOUI_MOBILE_APP_ARG="\"$app_arg\"" \
-  -DMOUI_MOBILE_APP_ID="\"$app\"" \
-  -DMOUI_MOBILE_RENDERER_REQUESTED="\"$renderer_requested\"" \
-  -DMOUI_MOBILE_RENDERER_SELECTED="\"$renderer_selected\"" \
-  -DMOUI_MOBILE_ENABLE_SCROLL="$supports_scroll" \
-  -DMOUI_MOBILE_FULLSCREEN="$fullscreen" \
-  -DMOUI_MOBILE_ATTACH_VIEW="$attach_view" \
-  -DMOUI_MOBILE_RESIZE="$resize_symbol" \
-  -DMOUI_MOBILE_DISPATCH_POINTER="$dispatch_pointer" \
-  -DMOUI_MOBILE_DISPATCH_SCROLL="${dispatch_scroll:-moui_mobile_no_scroll}" \
-  -DMOUI_MOBILE_FRAME_TICK="$frame_tick" \
-  -DMOUI_MOBILE_RENDER_FRAME="$render_frame" \
-  -DMOUI_MOBILE_DETACH_VIEW="$detach_view"
+managed_manifest=""
+if [ "$shell_mode" = "legacy-uikit" ]; then
+  log "Building frozen Release N UIKit compatibility shell"
+  compile_objcxx "$moui_root/mobile/ios/legacy/moui_mobile_app.mm" "$obj_dir/moui_mobile_app.o" \
+    -DMOUI_MOBILE_APP_ARG="\"$app_arg\"" \
+    -DMOUI_MOBILE_APP_ID="\"$app\"" \
+    -DMOUI_MOBILE_RENDERER_REQUESTED="\"$renderer_requested\"" \
+    -DMOUI_MOBILE_RENDERER_SELECTED="\"$renderer_selected\"" \
+    -DMOUI_MOBILE_ENABLE_SCROLL="$supports_scroll" \
+    -DMOUI_MOBILE_FULLSCREEN="$fullscreen" \
+    -DMOUI_MOBILE_ATTACH_VIEW="$attach_view" \
+    -DMOUI_MOBILE_RESIZE="$resize_symbol" \
+    -DMOUI_MOBILE_DISPATCH_POINTER="$dispatch_pointer" \
+    -DMOUI_MOBILE_DISPATCH_SCROLL="${dispatch_scroll:-moui_mobile_no_scroll}" \
+    -DMOUI_MOBILE_FRAME_TICK="$frame_tick" \
+    -DMOUI_MOBILE_RENDER_FRAME="$render_frame" \
+    -DMOUI_MOBILE_DETACH_VIEW="$detach_view"
+else
+  managed_config="$obj_dir/MOUIGeneratedConfiguration.swift"
+  managed_manifest="$obj_dir/managed-shell.json"
+  resolver_args=(
+    --workspace-root "$workspace_root"
+    --moui-root "$moui_root"
+    --app "$app"
+    --renderer "$renderer_requested"
+    --output-swift "$managed_config"
+    --output-manifest "$managed_manifest"
+  )
+  [ -z "$app_config" ] || resolver_args+=(--app-config "$app_config")
+  [ -z "$contracts" ] || resolver_args+=(--contracts "$contracts")
+  node "$moui_root/mobile/ios/resolve-managed-shell.mjs" "${resolver_args[@]}"
+
+  # Managed ABI v1 binds only the fixed moui_mobile_* exports. App-specific
+  # symbol maps remain confined to the explicit Release N legacy branch.
+  compile_cxx "$moui_root/mobile/runtime/moui_mobile_runtime_v1.cpp" "$obj_dir/moui_mobile_runtime_v1.o"
+  compile_objcxx "$moui_root/mobile/ios/bridge/MoUIMobileRuntimeBridge.mm" "$obj_dir/MoUIMobileRuntimeBridge.o"
+
+  plugin_objcxx_index=0
+  while IFS= read -r src || [ -n "$src" ]; do
+    [ -n "$src" ] || continue
+    plugin_objcxx_index=$((plugin_objcxx_index + 1))
+    compile_objcxx "$src" "$obj_dir/plugin-$plugin_objcxx_index.o"
+  done < <(json_lines objcxxSources "$managed_manifest")
+
+  shell_swift_sources=("$moui_root/mobile/ios/Sources/MoUIMobileShell/"*.swift)
+  log "Compiling Swift package module MoUIMobileShell"
+  "$swiftc" "${swift_flags[@]}" \
+    -parse-as-library \
+    -whole-module-optimization \
+    -module-name MoUIMobileShell \
+    -emit-module \
+    -emit-module-path "$obj_dir/MoUIMobileShell.swiftmodule" \
+    -emit-object \
+    "${shell_swift_sources[@]}" \
+    -o "$obj_dir/MoUIMobileShell.o"
+  objects+=("$obj_dir/MoUIMobileShell.o")
+
+  app_swift_sources=(
+    "$moui_root/mobile/ios/template/Sources/MoUIMobileApp.swift"
+    "$managed_config"
+  )
+  while IFS= read -r src || [ -n "$src" ]; do
+    [ -n "$src" ] || continue
+    app_swift_sources+=("$src")
+  done < <(json_lines swiftSources "$managed_manifest")
+  swift_flags+=( -I "$obj_dir" )
+  compile_swift_object MoUIMobileApp "$obj_dir/MoUIMobileApp.o" "${app_swift_sources[@]}"
+fi
 compile_objcxx "$moui_root/backend/ios/skia/ios_skia_presenter.mm" "$obj_dir/ios_skia_presenter.o"
 compile_objcxx "$moui_root/backend/ios/skia/ios_skia_view_glue.mm" "$obj_dir/ios_skia_view_glue.o"
 
@@ -258,9 +367,24 @@ ios_link_flags=(
   -framework Metal
   -lz
   -lobjc
+  -lc++
 )
+if [ "$shell_mode" = "managed" ]; then
+  ios_link_flags+=( -framework SwiftUI )
+fi
 log "Linking $product_name"
-if [ -s "$skia_link_rsp" ]; then
+if [ "$shell_mode" = "managed" ]; then
+  if [ -s "$skia_link_rsp" ]; then
+    "$swiftc" "${swift_flags[@]}" -o "$executable_path" \
+      "${objects[@]}" \
+      "@$skia_link_rsp" \
+      "${ios_link_flags[@]}"
+  else
+    "$swiftc" "${swift_flags[@]}" -o "$executable_path" \
+      "${objects[@]}" \
+      "${ios_link_flags[@]}"
+  fi
+elif [ -s "$skia_link_rsp" ]; then
   "$cxx" "${common_flags[@]}" -o "$executable_path" \
     "${objects[@]}" \
     "@$skia_link_rsp" \
@@ -272,10 +396,21 @@ else
 fi
 
 cp "$info_plist" "$app_bundle/Info.plist"
+if [ "$shell_mode" = "managed" ]; then
+  while IFS= read -r resource || [ -n "$resource" ]; do
+    [ -n "$resource" ] || continue
+    cp -R "$resource" "$app_bundle/"
+  done < <(json_lines resources "$managed_manifest")
+fi
 if [ -x /usr/libexec/PlistBuddy ]; then
   /usr/libexec/PlistBuddy -c "Set :CFBundleExecutable $product_name" "$app_bundle/Info.plist" >/dev/null
   /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $bundle_id" "$app_bundle/Info.plist" >/dev/null
   /usr/libexec/PlistBuddy -c "Set :MinimumOSVersion $deployment_target" "$app_bundle/Info.plist" >/dev/null
+  /usr/libexec/PlistBuddy -c "Add :MOUIShellMode string $shell_mode" "$app_bundle/Info.plist" >/dev/null 2>&1 || \
+    /usr/libexec/PlistBuddy -c "Set :MOUIShellMode $shell_mode" "$app_bundle/Info.plist" >/dev/null
+  /usr/libexec/PlistBuddy -c "Add :UIApplicationSceneManifest dict" "$app_bundle/Info.plist" >/dev/null 2>&1 || true
+  /usr/libexec/PlistBuddy -c "Add :UIApplicationSceneManifest:UIApplicationSupportsMultipleScenes bool false" "$app_bundle/Info.plist" >/dev/null 2>&1 || \
+    /usr/libexec/PlistBuddy -c "Set :UIApplicationSceneManifest:UIApplicationSupportsMultipleScenes false" "$app_bundle/Info.plist" >/dev/null
 fi
 printf 'APPL????' > "$app_bundle/PkgInfo"
 
@@ -289,6 +424,15 @@ fi
 
 if [ "$sdk" = "iphoneos" ]; then
   log "Built an unsigned iphoneos bundle; real-device install still requires provisioning/signing"
+fi
+
+if [ -n "${TARGET_BUILD_DIR:-}" ] && [ -n "${FULL_PRODUCT_NAME:-}" ]; then
+  xcode_product="$TARGET_BUILD_DIR/$FULL_PRODUCT_NAME"
+  if [ "$xcode_product" != "$app_bundle" ]; then
+    rm -rf "$xcode_product"
+    cp -R "$app_bundle" "$xcode_product"
+    log "Staged native target product at $xcode_product"
+  fi
 fi
 
 log "Wrote $app_bundle"

@@ -2,16 +2,24 @@
 {
   archiveVersion = 1;
   classes = {};
-  objectVersion = 56;
+  objectVersion = 60;
   objects = {
     100000000000000000000001 = {
       isa = PBXProject;
-      attributes = { LastUpgradeCheck = 1500; };
+      attributes = {
+        BuildIndependentTargetsInParallel = 1;
+        LastSwiftUpdateCheck = 1540;
+        LastUpgradeCheck = 1540;
+        TargetAttributes = { 100000000000000000000004 = { CreatedOnToolsVersion = 15.4; }; };
+      };
       buildConfigurationList = 100000000000000000000002;
-      compatibilityVersion = "Xcode 14.0";
+      compatibilityVersion = "Xcode 15.0";
       developmentRegion = en;
       hasScannedForEncodings = 0;
+      knownRegions = (en, Base);
       mainGroup = 100000000000000000000003;
+      packageReferences = (10000000000000000000000A);
+      productRefGroup = 10000000000000000000000B;
       projectDirPath = "";
       projectRoot = "";
       targets = (100000000000000000000004);
@@ -22,21 +30,21 @@
       defaultConfigurationIsVisible = 0;
       defaultConfigurationName = Debug;
     };
-    100000000000000000000003 = { isa = PBXGroup; children = (); sourceTree = "<group>"; };
+    100000000000000000000003 = { isa = PBXGroup; children = (10000000000000000000000B); sourceTree = "<group>"; };
     100000000000000000000004 = {
-      isa = PBXLegacyTarget;
-      buildArgumentsString = "moui/scripts/mobile/build-ios-app-core.sh --app counter";
+      isa = PBXNativeTarget;
       buildConfigurationList = 100000000000000000000007;
-      buildPhases = ();
-      buildToolPath = /bin/bash;
-      buildWorkingDirectory = ../../..;
+      buildPhases = (10000000000000000000000C);
+      buildRules = ();
       dependencies = ();
       name = MoUICounter;
-      passBuildSettingsInEnvironment = 1;
+      packageProductDependencies = ();
       productName = MoUICounter;
+      productReference = 10000000000000000000000D;
+      productType = "com.apple.product-type.application";
     };
-    100000000000000000000005 = { isa = XCBuildConfiguration; buildSettings = {}; name = Debug; };
-    100000000000000000000006 = { isa = XCBuildConfiguration; buildSettings = {}; name = Release; };
+    100000000000000000000005 = { isa = XCBuildConfiguration; buildSettings = { IPHONEOS_DEPLOYMENT_TARGET = 15.0; }; name = Debug; };
+    100000000000000000000006 = { isa = XCBuildConfiguration; buildSettings = { IPHONEOS_DEPLOYMENT_TARGET = 15.0; }; name = Release; };
     100000000000000000000007 = {
       isa = XCConfigurationList;
       buildConfigurations = (100000000000000000000008, 100000000000000000000009);
@@ -46,20 +54,59 @@
     100000000000000000000008 = {
       isa = XCBuildConfiguration;
       buildSettings = {
+        ALWAYS_SEARCH_USER_PATHS = NO;
+        GENERATE_INFOPLIST_FILE = NO;
+        INFOPLIST_FILE = Info.plist;
         IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+        PRODUCT_BUNDLE_IDENTIFIER = dev.wzzc.moui.counter;
         PRODUCT_NAME = MoUICounter;
         SDKROOT = iphonesimulator;
+        SWIFT_VERSION = 5.0;
+        TARGETED_DEVICE_FAMILY = "1,2";
       };
       name = Debug;
     };
     100000000000000000000009 = {
       isa = XCBuildConfiguration;
       buildSettings = {
+        ALWAYS_SEARCH_USER_PATHS = NO;
+        GENERATE_INFOPLIST_FILE = NO;
+        INFOPLIST_FILE = Info.plist;
         IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+        PRODUCT_BUNDLE_IDENTIFIER = dev.wzzc.moui.counter;
         PRODUCT_NAME = MoUICounter;
         SDKROOT = iphonesimulator;
+        SWIFT_VERSION = 5.0;
+        TARGETED_DEVICE_FAMILY = "1,2";
       };
       name = Release;
+    };
+    10000000000000000000000A = { isa = XCLocalSwiftPackageReference; relativePath = ../../../moui/mobile/ios; };
+    10000000000000000000000B = {
+      isa = PBXGroup;
+      children = (10000000000000000000000D);
+      name = Products;
+      sourceTree = "<group>";
+    };
+    10000000000000000000000C = {
+      isa = PBXShellScriptBuildPhase;
+      alwaysOutOfDate = 1;
+      buildActionMask = 2147483647;
+      files = ();
+      inputPaths = ();
+      name = "Build MoUI Managed Shell";
+      outputPaths = ();
+      runOnlyForDeploymentPostprocessing = 0;
+      shellPath = /bin/bash;
+      shellScript = "set -euo pipefail\n: \"${MOUI_PACKAGE_ROOT:?MOUI_PACKAGE_ROOT is required}\"\n\"$MOUI_PACKAGE_ROOT/scripts/mobile/build-ios-app-core.sh\" --app counter\n";
+      showEnvVarsInLog = 0;
+    };
+    10000000000000000000000D = {
+      isa = PBXFileReference;
+      explicitFileType = wrapper.application;
+      includeInIndex = 0;
+      path = MoUICounter.app;
+      sourceTree = BUILT_PRODUCTS_DIR;
     };
   };
   rootObject = 100000000000000000000001;

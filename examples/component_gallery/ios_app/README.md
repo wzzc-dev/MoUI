@@ -1,11 +1,13 @@
 # Component Gallery iOS Shell
 
-This directory contains the minimal Xcode project for the Component Gallery iOS
-route. The shared mobile iOS template owns the UIKit app shell and native
-compilation; this directory supplies app metadata through `Info.plist`, the
-Xcode project, and `examples/component_gallery/mobile.json`. Component
-Gallery's repository compatibility native symbol and MoonBit C details live in
-`moui/mobile/build-contracts.json`.
+This directory contains the repository-only Xcode fixture for the Component
+Gallery iOS route. The package-published `moui/mobile/ios` SwiftUI managed shell owns
+scene/view lifecycle, the `CAMetalLayer` surface, UIKit host adapters, ABI
+bridge, and native compilation. Managed builds stage the package-owned template
+and read identity from `examples/component_gallery/mobile.json`; this project
+exists for native target and explicit Release N compatibility validation.
+App-specific symbols in `moui/mobile/build-contracts.json` apply only to that
+legacy path.
 
 The current route is an experimental iOS Simulator scaffold. A fallback build
 proves packaging only; non-fallback first-frame, tap, resize, scroll, and
@@ -17,3 +19,6 @@ Build with:
 ```sh
 scripts/build-mobile-ios-app.sh --app component_gallery
 ```
+
+Use `--fallback-skia` for packaging-only validation. The frozen Release N
+UIKit fixture is available only through `--legacy-uikit-shell`.

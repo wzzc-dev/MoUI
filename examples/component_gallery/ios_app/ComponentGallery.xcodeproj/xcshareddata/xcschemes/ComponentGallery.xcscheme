@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Scheme LastUpgradeVersion="1500" version="1.7">
+<Scheme LastUpgradeVersion="1540" version="1.7">
   <BuildAction parallelizeBuildables="NO" buildImplicitDependencies="YES">
     <BuildActionEntries>
       <BuildActionEntry buildForTesting="YES" buildForRunning="YES" buildForProfiling="YES" buildForArchiving="YES" buildForAnalyzing="YES">
-        <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="200000000000000000000004" BuildableName="ComponentGallery" BlueprintName="ComponentGallery" ReferencedContainer="container:ComponentGallery.xcodeproj" />
+        <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="200000000000000000000004" BuildableName="ComponentGallery.app" BlueprintName="ComponentGallery" ReferencedContainer="container:ComponentGallery.xcodeproj" />
       </BuildActionEntry>
     </BuildActionEntries>
   </BuildAction>
