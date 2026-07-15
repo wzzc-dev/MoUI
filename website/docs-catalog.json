@@ -237,6 +237,14 @@
     },
     {
       "group": "platforms",
+      "slug": "gpu-promotion-runbook",
+      "title": "GPU Promotion Runbook",
+      "path": "docs/gpu-promotion-runbook.md",
+      "summary": "Matching-host GPU promotion evidence, performance gates, and claim validation workflow.",
+      "keywords": ["GPU", "promotion", "evidence", "performance"]
+    },
+    {
+      "group": "platforms",
       "slug": "renderer-capability-report",
       "title": "Renderer Capability Report",
       "path": "docs/renderer-capability-report.md",
