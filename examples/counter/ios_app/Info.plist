@@ -18,10 +18,17 @@
   <string>0.1.0</string>
   <key>CFBundleVersion</key>
   <string>1</string>
+  <key>MOUIShellMode</key>
+  <string>$(MOUI_MOBILE_IOS_SHELL)</string>
   <key>LSRequiresIPhoneOS</key>
   <true/>
   <key>UILaunchScreen</key>
   <dict/>
+  <key>UIApplicationSceneManifest</key>
+  <dict>
+    <key>UIApplicationSupportsMultipleScenes</key>
+    <false/>
+  </dict>
   <key>MinimumOSVersion</key>
   <string>15.0</string>
   <key>UIDeviceFamily</key>
