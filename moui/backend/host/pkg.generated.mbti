@@ -69,8 +69,6 @@ pub fn render_present_completions_have_presented(Array[@render.RenderPresentComp
 
 pub fn render_present_completions_have_terminal(Array[@render.RenderPresentCompletion]) -> Bool
 
-pub fn select_mobile_renderer(MobileRendererMode, gpu_available~ : Bool, gpu_promoted~ : Bool, surface_route~ : @render.SkiaSurfaceRoute) -> MobileRendererSelection
-
 pub fn semantics_action_label(@wzzc-dev/moui/core.SemanticsAction) -> String
 
 pub fn surface_metrics_from_physical(@dpi.PhysicalSize, scale_factor? : Double) -> HostSurfaceMetrics
@@ -463,6 +461,21 @@ pub fn HostPlatformWindowMap::new() -> Self
 pub fn HostPlatformWindowMap::remove_host(Self, HostWindowId) -> @wzzc-dev/window/core.WindowId?
 pub fn HostPlatformWindowMap::remove_platform(Self, @wzzc-dev/window/core.WindowId) -> HostWindowId?
 
+pub struct HostRendererGpuRecoveryCapability {
+  // private fields
+}
+pub fn HostRendererGpuRecoveryCapability::new(inject_context_loss? : () -> Unit, gpu_recovery_count? : () -> Int, gpu_fallback_active? : () -> Bool) -> Self
+
+pub struct HostRendererImageCapability {
+  // private fields
+}
+pub fn HostRendererImageCapability::new(image_resources? : () -> Array[@render.ImageResourceRecord], image_resource_snapshot? : (() -> @render.ImageResourceSnapshot)?, apply_image_resource_load_completion? : ((@render.ImageResourceLoadCompletion) -> @render.ImageResourceSnapshot)?, set_image_resource_change_callback? : (((@render.ImageResourceSnapshot) -> Unit)?) -> Unit) -> Self
+
+pub struct HostRendererPlatformViewCapability {
+  // private fields
+}
+pub fn HostRendererPlatformViewCapability::new(draw_platform_view_pixels? : (Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit, set_platform_view_draw_fn? : ((() -> Unit)?) -> Unit) -> Self
+
 pub(all) struct HostRouteEvent {
   location : HostRouteLocation
   source : String
@@ -781,7 +794,7 @@ pub fn HostWindowRenderer::gpu_recovery_count(Self) -> Int
 pub fn HostWindowRenderer::image_resource_snapshot(Self) -> @render.ImageResourceSnapshot
 pub fn HostWindowRenderer::image_resources(Self) -> Array[@render.ImageResourceRecord]
 pub fn HostWindowRenderer::inject_context_loss(Self) -> Unit
-pub fn HostWindowRenderer::new(resize~ : (HostSurfaceMetrics) -> Unit, render~ : (Array[@wzzc-dev/moui/core.DrawCommand]) -> Unit, render_frame? : ((@wzzc-dev/moui/core.DrawFrame) -> @render.RenderFrameResult)?, drain_present_completions? : (() -> Array[@render.RenderPresentCompletion])?, text_system~ : () -> @wzzc-dev/moui/core.TextSystem, image_resources? : () -> Array[@render.ImageResourceRecord], image_resource_snapshot? : (() -> @render.ImageResourceSnapshot)?, apply_image_resource_load_completion? : ((@render.ImageResourceLoadCompletion) -> @render.ImageResourceSnapshot)?, set_image_resource_change_callback? : (((@render.ImageResourceSnapshot) -> Unit)?) -> Unit, present_count? : () -> Int, dispose? : () -> Unit, draw_platform_view_pixels? : (Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit, set_platform_view_draw_fn? : ((() -> Unit)?) -> Unit, inject_context_loss? : () -> Unit, gpu_recovery_count? : () -> Int, gpu_fallback_active? : () -> Bool) -> Self
+pub fn HostWindowRenderer::new(resize~ : (HostSurfaceMetrics) -> Unit, render~ : (Array[@wzzc-dev/moui/core.DrawCommand]) -> Unit, render_frame? : ((@wzzc-dev/moui/core.DrawFrame) -> @render.RenderFrameResult)?, drain_present_completions? : (() -> Array[@render.RenderPresentCompletion])?, text_system~ : () -> @wzzc-dev/moui/core.TextSystem, present_count? : () -> Int, dispose? : () -> Unit, image? : HostRendererImageCapability, platform_view? : HostRendererPlatformViewCapability, gpu_recovery? : HostRendererGpuRecoveryCapability) -> Self
 pub fn HostWindowRenderer::present_count(Self) -> Int
 pub fn HostWindowRenderer::render(Self, Array[@wzzc-dev/moui/core.DrawCommand]) -> Unit
 pub fn HostWindowRenderer::render_frame(Self, @wzzc-dev/moui/core.DrawFrame) -> @render.RenderFrameResult
@@ -975,21 +988,6 @@ pub(all) struct MobileImeRequest {
   candidate_anchor : @wzzc-dev/moui/core.Rect
 } derive(Eq, ToJson, @debug.Debug)
 pub fn MobileImeRequest::from_state(revision~ : Int, @wzzc-dev/moui/core.TextInputState) -> Self
-
-pub(all) enum MobileRendererMode {
-  Auto
-  SkiaGpu
-  SkiaRaster
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct MobileRendererSelection {
-  requested : MobileRendererMode
-  selected : @render.RendererBackendKind
-  gpu_available : Bool
-  gpu_promoted : Bool
-  surface_route : @render.SkiaSurfaceRoute
-  fallback_reason : String?
-} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct MobileSemanticsNode {
   element_id : Int

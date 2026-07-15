@@ -1,12 +1,5 @@
 ///|
-pub struct HostWindowRenderer {
-  priv resize_fn : (HostSurfaceMetrics) -> Unit
-  priv render_fn : (Array[@core.DrawCommand]) -> Unit
-  priv render_frame_fn : (@core.DrawFrame) -> @render.RenderFrameResult
-  priv drain_present_completions_fn : () -> Array[
-    @render.RenderPresentCompletion,
-  ]
-  priv text_system_fn : () -> @core.TextSystem
+pub struct HostRendererImageCapability {
   priv image_resources_fn : () -> Array[@render.ImageResourceRecord]
   priv image_resource_snapshot_fn : () -> @render.ImageResourceSnapshot
   priv apply_image_resource_load_completion_fn : (
@@ -15,8 +8,10 @@ pub struct HostWindowRenderer {
   priv set_image_resource_change_callback_fn : (
     ((@render.ImageResourceSnapshot) -> Unit)?,
   ) -> Unit
-  priv present_count_fn : () -> Int
-  priv dispose_fn : () -> Unit
+}
+
+///|
+pub struct HostRendererPlatformViewCapability {
   priv draw_platform_view_pixels_fn : (
     Bytes,
     Int,
@@ -28,11 +23,89 @@ pub struct HostWindowRenderer {
     Double,
   ) -> Unit
   priv set_platform_view_draw_fn_fn : ((() -> Unit)?) -> Unit
-  /// Optional GPU promotion harness hooks (no-op for raster providers).
+}
+
+///|
+pub struct HostRendererGpuRecoveryCapability {
   priv inject_context_loss_fn : () -> Unit
   priv gpu_recovery_count_fn : () -> Int
   priv gpu_fallback_active_fn : () -> Bool
+}
+
+///|
+pub struct HostWindowRenderer {
+  priv resize_fn : (HostSurfaceMetrics) -> Unit
+  priv render_fn : (Array[@core.DrawCommand]) -> Unit
+  priv render_frame_fn : (@core.DrawFrame) -> @render.RenderFrameResult
+  priv drain_present_completions_fn : () -> Array[
+    @render.RenderPresentCompletion,
+  ]
+  priv text_system_fn : () -> @core.TextSystem
+  priv image : HostRendererImageCapability
+  priv present_count_fn : () -> Int
+  priv dispose_fn : () -> Unit
+  priv platform_view : HostRendererPlatformViewCapability
+  priv gpu_recovery : HostRendererGpuRecoveryCapability
   priv layer_cache : HostLayerCommandCache
+}
+
+///|
+pub fn HostRendererImageCapability::new(
+  image_resources? : () -> Array[@render.ImageResourceRecord] = () => [],
+  image_resource_snapshot? : (() -> @render.ImageResourceSnapshot)? = None,
+  apply_image_resource_load_completion? : ((@render.ImageResourceLoadCompletion) -> @render.ImageResourceSnapshot)? = None,
+  set_image_resource_change_callback? : (
+    ((@render.ImageResourceSnapshot) -> Unit)?,
+  ) -> Unit = _callback => (),
+) -> HostRendererImageCapability {
+  let image_resource_snapshot = match image_resource_snapshot {
+    Some(snapshot) => snapshot
+    None => () => @render.ImageResourceSnapshot::from_records(image_resources())
+  }
+  let apply_image_resource_load_completion = match
+    apply_image_resource_load_completion {
+    Some(apply) => apply
+    None => _completion => image_resource_snapshot()
+  }
+  {
+    image_resources_fn: image_resources,
+    image_resource_snapshot_fn: image_resource_snapshot,
+    apply_image_resource_load_completion_fn: apply_image_resource_load_completion,
+    set_image_resource_change_callback_fn: set_image_resource_change_callback,
+  }
+}
+
+///|
+pub fn HostRendererPlatformViewCapability::new(
+  draw_platform_view_pixels? : (
+    Bytes,
+    Int,
+    Int,
+    Int,
+    Double,
+    Double,
+    Double,
+    Double,
+  ) -> Unit = fn(_pixels, _w, _h, _s, _dx, _dy, _dw, _dh) {  },
+  set_platform_view_draw_fn? : ((() -> Unit)?) -> Unit = _fn => (),
+) -> HostRendererPlatformViewCapability {
+  {
+    draw_platform_view_pixels_fn: draw_platform_view_pixels,
+    set_platform_view_draw_fn_fn: set_platform_view_draw_fn,
+  }
+}
+
+///|
+pub fn HostRendererGpuRecoveryCapability::new(
+  inject_context_loss? : () -> Unit = () => (),
+  gpu_recovery_count? : () -> Int = () => 0,
+  gpu_fallback_active? : () -> Bool = () => false,
+) -> HostRendererGpuRecoveryCapability {
+  {
+    inject_context_loss_fn: inject_context_loss,
+    gpu_recovery_count_fn: gpu_recovery_count,
+    gpu_fallback_active_fn: gpu_fallback_active,
+  }
 }
 
 ///|
@@ -57,38 +130,12 @@ pub fn HostWindowRenderer::new(
   render_frame? : ((@core.DrawFrame) -> @render.RenderFrameResult)? = None,
   drain_present_completions? : (() -> Array[@render.RenderPresentCompletion])? = None,
   text_system~ : () -> @core.TextSystem,
-  image_resources? : () -> Array[@render.ImageResourceRecord] = () => [],
-  image_resource_snapshot? : (() -> @render.ImageResourceSnapshot)? = None,
-  apply_image_resource_load_completion? : ((@render.ImageResourceLoadCompletion) -> @render.ImageResourceSnapshot)? = None,
-  set_image_resource_change_callback? : (
-    ((@render.ImageResourceSnapshot) -> Unit)?,
-  ) -> Unit = _callback => (),
   present_count? : () -> Int = () => 0,
   dispose? : () -> Unit = () => (),
-  draw_platform_view_pixels? : (
-    Bytes,
-    Int,
-    Int,
-    Int,
-    Double,
-    Double,
-    Double,
-    Double,
-  ) -> Unit = fn(_pixels, _w, _h, _s, _dx, _dy, _dw, _dh) {  },
-  set_platform_view_draw_fn? : ((() -> Unit)?) -> Unit = _fn => (),
-  inject_context_loss? : () -> Unit = () => (),
-  gpu_recovery_count? : () -> Int = () => 0,
-  gpu_fallback_active? : () -> Bool = () => false,
+  image? : HostRendererImageCapability = HostRendererImageCapability::new(),
+  platform_view? : HostRendererPlatformViewCapability = HostRendererPlatformViewCapability::new(),
+  gpu_recovery? : HostRendererGpuRecoveryCapability = HostRendererGpuRecoveryCapability::new(),
 ) -> HostWindowRenderer {
-  let image_resource_snapshot = match image_resource_snapshot {
-    Some(snapshot) => snapshot
-    None => () => @render.ImageResourceSnapshot::from_records(image_resources())
-  }
-  let apply_image_resource_load_completion = match
-    apply_image_resource_load_completion {
-    Some(apply) => apply
-    None => _completion => image_resource_snapshot()
-  }
   let layer_cache = HostLayerCommandCache::new()
   let render_frame_fn = match render_frame {
     Some(render_frame) => render_frame
@@ -119,17 +166,11 @@ pub fn HostWindowRenderer::new(
     render_frame_fn,
     drain_present_completions_fn,
     text_system_fn: text_system,
-    image_resources_fn: image_resources,
-    image_resource_snapshot_fn: image_resource_snapshot,
-    apply_image_resource_load_completion_fn: apply_image_resource_load_completion,
-    set_image_resource_change_callback_fn: set_image_resource_change_callback,
+    image,
     present_count_fn: present_count,
     dispose_fn: dispose,
-    draw_platform_view_pixels_fn: draw_platform_view_pixels,
-    set_platform_view_draw_fn_fn: set_platform_view_draw_fn,
-    inject_context_loss_fn: inject_context_loss,
-    gpu_recovery_count_fn: gpu_recovery_count,
-    gpu_fallback_active_fn: gpu_fallback_active,
+    platform_view,
+    gpu_recovery,
     layer_cache,
   }
 }
@@ -211,14 +252,14 @@ pub fn HostWindowRenderer::text_system(
 pub fn HostWindowRenderer::image_resources(
   self : HostWindowRenderer,
 ) -> Array[@render.ImageResourceRecord] {
-  (self.image_resources_fn)()
+  (self.image.image_resources_fn)()
 }
 
 ///|
 pub fn HostWindowRenderer::image_resource_snapshot(
   self : HostWindowRenderer,
 ) -> @render.ImageResourceSnapshot {
-  (self.image_resource_snapshot_fn)()
+  (self.image.image_resource_snapshot_fn)()
 }
 
 ///|
@@ -226,7 +267,7 @@ pub fn HostWindowRenderer::apply_image_resource_load_completion(
   self : HostWindowRenderer,
   completion : @render.ImageResourceLoadCompletion,
 ) -> @render.ImageResourceSnapshot {
-  (self.apply_image_resource_load_completion_fn)(completion)
+  (self.image.apply_image_resource_load_completion_fn)(completion)
 }
 
 ///|
@@ -234,7 +275,7 @@ pub fn HostWindowRenderer::set_image_resource_change_callback(
   self : HostWindowRenderer,
   callback : ((@render.ImageResourceSnapshot) -> Unit)?,
 ) -> Unit {
-  (self.set_image_resource_change_callback_fn)(callback)
+  (self.image.set_image_resource_change_callback_fn)(callback)
 }
 
 ///|
@@ -247,19 +288,19 @@ pub fn HostWindowRenderer::present_count(self : HostWindowRenderer) -> Int {
 pub fn HostWindowRenderer::inject_context_loss(
   self : HostWindowRenderer,
 ) -> Unit {
-  (self.inject_context_loss_fn)()
+  (self.gpu_recovery.inject_context_loss_fn)()
 }
 
 ///|
 pub fn HostWindowRenderer::gpu_recovery_count(self : HostWindowRenderer) -> Int {
-  (self.gpu_recovery_count_fn)()
+  (self.gpu_recovery.gpu_recovery_count_fn)()
 }
 
 ///|
 pub fn HostWindowRenderer::gpu_fallback_active(
   self : HostWindowRenderer,
 ) -> Bool {
-  (self.gpu_fallback_active_fn)()
+  (self.gpu_recovery.gpu_fallback_active_fn)()
 }
 
 ///|
@@ -281,7 +322,7 @@ pub fn HostWindowRenderer::draw_platform_view_pixels(
   dst_width : Double,
   dst_height : Double,
 ) -> Unit {
-  (self.draw_platform_view_pixels_fn)(
+  (self.platform_view.draw_platform_view_pixels_fn)(
     pixels, src_width, src_height, src_stride, dst_x, dst_y, dst_width, dst_height,
   )
 }
@@ -294,7 +335,7 @@ pub fn HostWindowRenderer::set_platform_view_draw_fn(
   self : HostWindowRenderer,
   draw_fn : (() -> Unit)?,
 ) -> Unit {
-  (self.set_platform_view_draw_fn_fn)(draw_fn)
+  (self.platform_view.set_platform_view_draw_fn_fn)(draw_fn)
 }
 
 ///|

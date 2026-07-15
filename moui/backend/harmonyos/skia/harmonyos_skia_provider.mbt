@@ -384,33 +384,37 @@ fn host_renderer_from_skia(
       result
     }),
     text_system=() => active.val.text_system(),
-    image_resources=() => active.val.image_resources(),
-    image_resource_snapshot=Some(() => active.val.image_resource_snapshot()),
-    apply_image_resource_load_completion=Some(completion => {
-      active.val.apply_image_resource_load_completion(completion)
-    }),
-    set_image_resource_change_callback=callback => {
-      active.val.set_image_resource_change_callback(callback)
-    },
     present_count=() => active.val.present_count(),
     dispose=() => active.val.dispose(),
-    draw_platform_view_pixels=fn(
-      pixels,
-      src_width,
-      src_height,
-      src_stride,
-      dst_x,
-      dst_y,
-      dst_width,
-      dst_height,
-    ) {
-      active.val.draw_platform_view_pixels(
-        pixels, src_width, src_height, src_stride, dst_x, dst_y, dst_width, dst_height,
-      )
-    },
-    set_platform_view_draw_fn=draw_fn => {
-      active.val.set_platform_view_draw_fn(draw_fn)
-    },
+    image=@host.HostRendererImageCapability::new(
+      image_resources=() => active.val.image_resources(),
+      image_resource_snapshot=Some(() => active.val.image_resource_snapshot()),
+      apply_image_resource_load_completion=Some(completion => {
+        active.val.apply_image_resource_load_completion(completion)
+      }),
+      set_image_resource_change_callback=callback => {
+        active.val.set_image_resource_change_callback(callback)
+      },
+    ),
+    platform_view=@host.HostRendererPlatformViewCapability::new(
+      draw_platform_view_pixels=fn(
+        pixels,
+        src_width,
+        src_height,
+        src_stride,
+        dst_x,
+        dst_y,
+        dst_width,
+        dst_height,
+      ) {
+        active.val.draw_platform_view_pixels(
+          pixels, src_width, src_height, src_stride, dst_x, dst_y, dst_width, dst_height,
+        )
+      },
+      set_platform_view_draw_fn=draw_fn => {
+        active.val.set_platform_view_draw_fn(draw_fn)
+      },
+    ),
   )
 }
 

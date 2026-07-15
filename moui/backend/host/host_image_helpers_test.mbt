@@ -4,8 +4,10 @@ fn host_test_image_renderer(revision : Ref[Int]) -> HostWindowRenderer {
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image_resource_snapshot=Some(() => {
-      @render.ImageResourceSnapshot::new(revision=revision.val, records=[])
-    }),
+    image=HostRendererImageCapability::new(
+      image_resource_snapshot=Some(() => {
+        @render.ImageResourceSnapshot::new(revision=revision.val, records=[])
+      }),
+    ),
   )
 }

@@ -527,14 +527,6 @@ fn host_renderer_from_native_gpu_worker(
       completions
     }),
     text_system=() => renderer.text_system(),
-    image_resources=() => renderer.image_resources(),
-    image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
-    apply_image_resource_load_completion=Some(completion => {
-      renderer.apply_image_resource_load_completion(completion)
-    }),
-    set_image_resource_change_callback=callback => {
-      renderer.set_image_resource_change_callback(callback)
-    },
     present_count=() => presented_count.val + renderer.present_count(),
     dispose=() => {
       if !disposed.val {
@@ -548,6 +540,16 @@ fn host_renderer_from_native_gpu_worker(
         renderer.dispose()
       }
     },
+    image=@host.HostRendererImageCapability::new(
+      image_resources=() => renderer.image_resources(),
+      image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
+      apply_image_resource_load_completion=Some(completion => {
+        renderer.apply_image_resource_load_completion(completion)
+      }),
+      set_image_resource_change_callback=callback => {
+        renderer.set_image_resource_change_callback(callback)
+      },
+    ),
   )
 }
 
@@ -568,16 +570,18 @@ fn host_renderer_from_skia(
     },
     render_frame=Some(frame => renderer.render_frame(frame)),
     text_system=() => renderer.text_system(),
-    image_resources=() => renderer.image_resources(),
-    image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
-    apply_image_resource_load_completion=Some(completion => {
-      renderer.apply_image_resource_load_completion(completion)
-    }),
-    set_image_resource_change_callback=callback => {
-      renderer.set_image_resource_change_callback(callback)
-    },
     present_count=() => renderer.present_count(),
     dispose=() => renderer.dispose(),
+    image=@host.HostRendererImageCapability::new(
+      image_resources=() => renderer.image_resources(),
+      image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
+      apply_image_resource_load_completion=Some(completion => {
+        renderer.apply_image_resource_load_completion(completion)
+      }),
+      set_image_resource_change_callback=callback => {
+        renderer.set_image_resource_change_callback(callback)
+      },
+    ),
   )
 }
 

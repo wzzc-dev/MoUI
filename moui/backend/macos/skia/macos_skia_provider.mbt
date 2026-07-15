@@ -744,20 +744,6 @@ fn host_renderer_from_native_gpu_worker(
           )
       }
     },
-    inject_context_loss=() => {
-      if !fallback_to_raster.val {
-        ignore(
-          worker.submit_control(
-            @skia_native.GpuRenderWorkerControl::ContextLoss(
-              "promotion-harness",
-            ),
-          ),
-        )
-        ignore(collect_completions())
-      }
-    },
-    gpu_recovery_count=() => worker.diagnostics().recovery_count.to_int(),
-    gpu_fallback_active=() => fallback_to_raster.val,
     render_frame=Some(frame => {
       ignore(collect_completions())
       if fallback_to_raster.val {
@@ -787,14 +773,6 @@ fn host_renderer_from_native_gpu_worker(
       completions
     }),
     text_system=() => renderer.text_system(),
-    image_resources=() => renderer.image_resources(),
-    image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
-    apply_image_resource_load_completion=Some(completion => {
-      renderer.apply_image_resource_load_completion(completion)
-    }),
-    set_image_resource_change_callback=callback => {
-      renderer.set_image_resource_change_callback(callback)
-    },
     present_count=() => presented_count.val + renderer.present_count(),
     dispose=() => {
       if !disposed.val {
@@ -808,6 +786,32 @@ fn host_renderer_from_native_gpu_worker(
         renderer.dispose()
       }
     },
+    image=@host.HostRendererImageCapability::new(
+      image_resources=() => renderer.image_resources(),
+      image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
+      apply_image_resource_load_completion=Some(completion => {
+        renderer.apply_image_resource_load_completion(completion)
+      }),
+      set_image_resource_change_callback=callback => {
+        renderer.set_image_resource_change_callback(callback)
+      },
+    ),
+    gpu_recovery=@host.HostRendererGpuRecoveryCapability::new(
+      inject_context_loss=() => {
+        if !fallback_to_raster.val {
+          ignore(
+            worker.submit_control(
+              @skia_native.GpuRenderWorkerControl::ContextLoss(
+                "promotion-harness",
+              ),
+            ),
+          )
+          ignore(collect_completions())
+        }
+      },
+      gpu_recovery_count=() => worker.diagnostics().recovery_count.to_int(),
+      gpu_fallback_active=() => fallback_to_raster.val,
+    ),
   )
 }
 
@@ -839,16 +843,18 @@ fn host_renderer_from_skia(
       result
     }),
     text_system=() => renderer.text_system(),
-    image_resources=() => renderer.image_resources(),
-    image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
-    apply_image_resource_load_completion=Some(completion => {
-      renderer.apply_image_resource_load_completion(completion)
-    }),
-    set_image_resource_change_callback=callback => {
-      renderer.set_image_resource_change_callback(callback)
-    },
     present_count=() => renderer.present_count(),
     dispose=() => renderer.dispose(),
+    image=@host.HostRendererImageCapability::new(
+      image_resources=() => renderer.image_resources(),
+      image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
+      apply_image_resource_load_completion=Some(completion => {
+        renderer.apply_image_resource_load_completion(completion)
+      }),
+      set_image_resource_change_callback=callback => {
+        renderer.set_image_resource_change_callback(callback)
+      },
+    ),
   )
 }
 

@@ -113,15 +113,15 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/backend/host/host_image_test.mbt", max_lines: 110 },
     {
       path: "moui/backend/host/host_image_repaint_tracker_test.mbt",
-      max_lines: 305,
+      max_lines: 312,
     },
     {
       path: "moui/backend/host/host_image_completion_source_test.mbt",
-      max_lines: 210,
+      max_lines: 218,
     },
     {
       path: "moui/backend/host/host_async_image_loader_test.mbt",
-      max_lines: 500,
+      max_lines: 501,
     },
     { path: "moui/backend/host/host_text_input_test.mbt", max_lines: 310 },
     {
@@ -134,7 +134,6 @@ fn file_budgets() -> Array[FileBudget] {
     },
     { path: "moui/backend/host/host_text_input_ime_test.mbt", max_lines: 336 },
     { path: "moui/backend/host/mobile_host_channel.mbt", max_lines: 556 },
-    { path: "moui/backend/host/mobile_renderer_selection.mbt", max_lines: 101 },
     {
       path: "moui/backend/host/host_platform_contract_test.mbt",
       max_lines: 255,
@@ -355,7 +354,7 @@ fn file_budgets() -> Array[FileBudget] {
       max_lines: 205,
     },
     { path: "moui/render/skia/renderer_text.mbt", max_lines: 50 },
-    { path: "moui/tests/skia_renderer_smoke/native/main.mbt", max_lines: 1883 },
+    { path: "moui/tests/skia_renderer_smoke/native/main.mbt", max_lines: 1887 },
     { path: "moui/runtime/runtime.mbt", max_lines: 459 },
     { path: "moui/runtime/program_runtime_diagnostics.mbt", max_lines: 270 },
     { path: "moui/runtime/program_runtime_effect_tasks.mbt", max_lines: 130 },

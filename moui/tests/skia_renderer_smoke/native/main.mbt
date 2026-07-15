@@ -1265,16 +1265,18 @@ fn run_async_image_second_frame_smoke() -> Unit {
       }
     },
     text_system=() => renderer.text_system(),
-    image_resources=() => renderer.image_resources(),
-    image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
-    apply_image_resource_load_completion=Some(completion => {
-      renderer.apply_image_resource_load_completion(completion)
-    }),
-    set_image_resource_change_callback=callback => {
-      renderer.set_image_resource_change_callback(callback)
-    },
     present_count=() => renderer.present_count(),
     dispose=() => renderer.dispose(),
+    image=@host.HostRendererImageCapability::new(
+      image_resources=() => renderer.image_resources(),
+      image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
+      apply_image_resource_load_completion=Some(completion => {
+        renderer.apply_image_resource_load_completion(completion)
+      }),
+      set_image_resource_change_callback=callback => {
+        renderer.set_image_resource_change_callback(callback)
+      },
+    ),
   )
   let window_id = @host.HostWindowId::new(99)
   let tracker = @host.HostImageResourceRepaintTracker::new()
@@ -1442,16 +1444,18 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
       }
     },
     text_system=() => renderer.text_system(),
-    image_resources=() => renderer.image_resources(),
-    image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
-    apply_image_resource_load_completion=Some(completion => {
-      renderer.apply_image_resource_load_completion(completion)
-    }),
-    set_image_resource_change_callback=callback => {
-      renderer.set_image_resource_change_callback(callback)
-    },
     present_count=() => renderer.present_count(),
     dispose=() => renderer.dispose(),
+    image=@host.HostRendererImageCapability::new(
+      image_resources=() => renderer.image_resources(),
+      image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
+      apply_image_resource_load_completion=Some(completion => {
+        renderer.apply_image_resource_load_completion(completion)
+      }),
+      set_image_resource_change_callback=callback => {
+        renderer.set_image_resource_change_callback(callback)
+      },
+    ),
   )
   let window_id = @host.HostWindowId::new(100)
   let tracker = @host.HostImageResourceRepaintTracker::new()
