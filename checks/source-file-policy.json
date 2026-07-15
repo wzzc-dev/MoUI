@@ -55,7 +55,7 @@
     {"path":"examples/markdown_editor/app/document_io.mbt","maxLines":1418,"reason":"Existing Markdown document IO workflows."},
     {"path":"moui_sun/graphics/path_test.mbt","maxLines":1415,"reason":"Existing comprehensive path logic test."},
     {"path":"examples/mo_workbench/app/workbench_wbtest.mbt","maxLines":1396,"reason":"Existing workbench integration test."},
-    {"path":"moui/backend/windows/windows_backend.mbt","maxLines":1382,"reason":"Existing Win32 backend and host-service implementation."},
+    {"path":"moui/backend/windows/windows_backend.mbt","maxLines":1334,"reason":"Existing Win32 backend implementation after extracting the host-service bridge."},
     {"path":"moui/render/skia/skia_renderer_text_wbtest.mbt","maxLines":1379,"reason":"Existing Skia text integration test."},
     {"path":"moui_theme/audit/theme_runtime_alignment_test.mbt","maxLines":1362,"reason":"Existing cross-theme runtime alignment test."},
     {"path":"tools/moui/validate_web_runtime_presentation_manifest/main.mbt","maxLines":1359,"reason":"Existing structured Web runtime evidence validator."},
