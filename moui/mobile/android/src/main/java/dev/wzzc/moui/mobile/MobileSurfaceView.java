@@ -36,6 +36,7 @@ import java.util.Map;
 final class MobileSurfaceView extends SurfaceView {
     private static final String LOG_TAG = "MoUIMobile";
     private static boolean a11ySmokeFired = false;
+    private static boolean serviceSmokeFired = false;
     private final SpannableStringBuilder editable = new SpannableStringBuilder();
     private final Map<Integer, SemanticsNode> semantics = new HashMap<>();
     private final MobileAccessibilityProvider accessibilityProvider = new MobileAccessibilityProvider();
@@ -219,7 +220,46 @@ final class MobileSurfaceView extends SurfaceView {
         accessibilityProvider.resetFocusIfMissing();
         sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED);
         Log.i(LOG_TAG, "moui-mobile service accessibility tree nodes=" + nodes.length());
+        logServiceProbePlan();
         maybeFireAccessibilitySmoke();
+        maybeFireServiceSmoke();
+    }
+
+    // Emit probe coordinates from the MoUI semantics tree. uiautomator often
+    // cannot see Canvas virtual nodes, so the recorder can parse this line as a
+    // fallback when the accessibility dump lacks Service probe labels.
+    private void logServiceProbePlan() {
+        SemanticsNode textField = findSemanticsLabel("Service probe text", "TextField");
+        SemanticsNode action = findSemanticsLabel("Activate service probe", "Button");
+        if (textField == null || action == null) return;
+        int[] location = new int[2];
+        getLocationOnScreen(location);
+        float density = density();
+        int textX = location[0] + (int) ((textField.x + textField.width / 2.0) * density);
+        int textY = location[1] + (int) ((textField.y + textField.height / 2.0) * density);
+        int actionX = location[0] + (int) ((action.x + action.width / 2.0) * density);
+        int actionY = location[1] + (int) ((action.y + action.height / 2.0) * density);
+        Log.i(LOG_TAG, "moui-mobile service probe plan"
+                + " textField=" + textX + "," + textY
+                + " action=" + actionX + "," + actionY
+                + " textFieldId=" + textField.id
+                + " actionId=" + action.id
+                + " density=" + density);
+    }
+
+    private SemanticsNode findSemanticsLabel(String label, String preferredRole) {
+        SemanticsNode preferred = null;
+        SemanticsNode any = null;
+        for (SemanticsNode node : semantics.values()) {
+            if (node.label == null) continue;
+            if (!node.label.equals(label) && !node.label.contains(label)) continue;
+            any = node;
+            if (preferredRole == null || preferredRole.equals(node.role)) {
+                preferred = node;
+                break;
+            }
+        }
+        return preferred != null ? preferred : any;
     }
 
     // Simulator/emulator smoke can request a deterministic focus/activate pair
@@ -233,14 +273,7 @@ final class MobileSurfaceView extends SurfaceView {
                     (env.equals("1") || env.equalsIgnoreCase("true") || env.equalsIgnoreCase("yes"));
             if (!enabled) return;
         }
-        SemanticsNode target = null;
-        for (SemanticsNode node : semantics.values()) {
-            if (node.label != null && (node.label.equals("Activate service probe") ||
-                    node.label.contains("Activate service probe"))) {
-                target = node;
-                break;
-            }
-        }
+        SemanticsNode target = findSemanticsLabel("Activate service probe", "Button");
         if (target == null) {
             for (SemanticsNode node : semantics.values()) {
                 if ("Button".equals(node.role)) {
@@ -255,6 +288,64 @@ final class MobileSurfaceView extends SurfaceView {
         MobileActivity.nativeDispatchAccessibility(target.id, 1, "");
         Log.i(LOG_TAG, "moui-mobile service accessibility action=activate id=" + target.id);
         MobileActivity.nativeDispatchAccessibility(target.id, 0, "");
+    }
+
+    // Component Gallery matching-host smoke: drive IME + clipboard through the
+    // native host channel once semantics expose the Service Probe controls.
+    // This path does not depend on uiautomator seeing Canvas virtual nodes.
+    private void maybeFireServiceSmoke() {
+        if (serviceSmokeFired || semantics.isEmpty()) return;
+        if (!MobileActivity.a11ySmokeRequested && !envFlagEnabled("MOUI_MOBILE_SERVICE_SMOKE")) {
+            return;
+        }
+        SemanticsNode textField = findSemanticsLabel("Service probe text", "TextField");
+        SemanticsNode action = findSemanticsLabel("Activate service probe", "Button");
+        if (textField == null || action == null) return;
+        serviceSmokeFired = true;
+        post(() -> runServiceSmokeSequence(textField, action));
+    }
+
+    private void runServiceSmokeSequence(SemanticsNode textField, SemanticsNode action) {
+        Log.i(LOG_TAG, "moui-mobile service smoke begin textFieldId=" + textField.id
+                + " actionId=" + action.id);
+        // Focus + SetText through accessibility so runtime owns the text field
+        // session; then commit via the text-input bridge for IME edit markers.
+        MobileActivity.nativeDispatchAccessibility(textField.id, 1, "");
+        boolean setText = MobileActivity.nativeDispatchAccessibility(
+                textField.id, 2, "ime-mobile-probe");
+        Log.i(LOG_TAG, "moui-mobile service smoke set-text result=" + (setText ? 1 : 0));
+        boolean inserted = MobileActivity.nativeDispatchTextInput(1, "ime-mobile-probe", 0, 0);
+        Log.i(LOG_TAG, "moui-mobile service ime edit kind=commit smoke=1 result=" + (inserted ? 1 : 0));
+        // Select-all + Copy/Cut/Paste through command intents so the host channel
+        // issues write-text / read-text clipboard requests.
+        int end = "ime-mobile-probe".length();
+        MobileActivity.nativeDispatchTextInput(2, "", 0, end);
+        boolean copied = MobileActivity.nativeDispatchCommand(0);
+        Log.i(LOG_TAG, "moui-mobile service smoke copy result=" + (copied ? 1 : 0));
+        // Seed the system clipboard and Paste so read-text is requested.
+        try {
+            ClipboardManager manager = (ClipboardManager) getContext()
+                    .getSystemService(Context.CLIPBOARD_SERVICE);
+            if (manager != null) {
+                manager.setPrimaryClip(ClipData.newPlainText("MoUI", "clipboard-service-probe"));
+            }
+        } catch (Exception error) {
+            Log.w(LOG_TAG, "moui-mobile service smoke seed clipboard failed", error);
+        }
+        boolean pasted = MobileActivity.nativeDispatchCommand(2);
+        Log.i(LOG_TAG, "moui-mobile service smoke paste result=" + (pasted ? 1 : 0));
+        // Cut after paste still exercises write-text when selection remains.
+        boolean cut = MobileActivity.nativeDispatchCommand(1);
+        Log.i(LOG_TAG, "moui-mobile service smoke cut result=" + (cut ? 1 : 0));
+        MobileActivity.nativeDispatchAccessibility(action.id, 1, "");
+        MobileActivity.nativeDispatchAccessibility(action.id, 0, "");
+        Log.i(LOG_TAG, "moui-mobile service smoke end");
+    }
+
+    private static boolean envFlagEnabled(String name) {
+        String env = System.getenv(name);
+        return env != null
+                && (env.equals("1") || env.equalsIgnoreCase("true") || env.equalsIgnoreCase("yes"));
     }
 
     @Override

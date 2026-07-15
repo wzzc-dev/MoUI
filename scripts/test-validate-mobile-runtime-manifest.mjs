@@ -14,6 +14,7 @@ import {
   iosSimulatorLaunchPid,
   mobileRuntimeStatus,
   parseMobileRendererStatus,
+  parseMobileServiceProbePlan,
   rendererBlockFromMobileBuild,
 } from "./lib/mobile-runtime-log.mjs";
 
@@ -178,6 +179,22 @@ assert(
       "moui-mobile service clipboard complete operation=write-text",
     ),
   "mobile clipboard evidence should require system write and read completion",
+);
+const semanticsProbePlan = parseMobileServiceProbePlan([
+  "moui-mobile service accessibility tree nodes=12",
+  "moui-mobile service probe plan textField=120,240 action=180,300 textFieldId=7 actionId=9 density=2.75",
+  "moui-mobile service probe plan textField=130,250 action=190,310 textFieldId=7 actionId=9 density=2.75",
+].join("\n"));
+assert(
+  semanticsProbePlan?.textField.x === 130
+    && semanticsProbePlan?.textField.y === 250
+    && semanticsProbePlan?.action.x === 190
+    && semanticsProbePlan?.action.y === 310,
+  "semantics service probe plan should prefer the latest textField/action coordinates",
+);
+assert(
+  parseMobileServiceProbePlan("no probe plan") === null,
+  "missing semantics service probe plan should not invent coordinates",
 );
 
 const idbPlan = iosIdbInputPlan(JSON.stringify([

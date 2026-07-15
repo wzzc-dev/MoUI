@@ -69,6 +69,8 @@ public final class MobileActivity extends Activity implements SurfaceHolder.Call
         a11ySmokeRequested = isA11ySmokeRequested();
         supportsScroll = manifestBoolean(META_SUPPORTS_SCROLL, false);
         fullscreen = manifestBoolean(META_FULLSCREEN, false);
+        Log.i(LOG_TAG, "moui-mobile activity options supportsScroll="
+                + supportsScroll + " fullscreen=" + fullscreen);
         if (fullscreen) {
             configureFullscreenWindow();
         }
@@ -98,12 +100,41 @@ public final class MobileActivity extends Activity implements SurfaceHolder.Call
     }
 
     @Override
+    protected void onStop() {
+        // Log before process teardown so continuous logcat streams can observe
+        // detach when the smoke driver backgrounds the activity (HOME) before
+        // force-stop. force-stop alone may kill the process too quickly.
+        Log.i(LOG_TAG, "moui-mobile lifecycle detach reason=stop");
+        super.onStop();
+    }
+
+    @Override
     protected void onDestroy() {
         stopFrameLoop();
-        nativeDetachSurface();
-        attached = false;
+        if (attached) {
+            nativeDetachSurface();
+            attached = false;
+        }
         Log.i(LOG_TAG, "moui-mobile lifecycle detach reason=destroy");
         super.onDestroy();
+    }
+
+    @Override
+    public void onConfigurationChanged(android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        // configChanges keeps the Activity alive across orientation changes, so
+        // surfaceCreated does not re-fire. Force a layout pass and emit resize
+        // once the SurfaceView reports the new dimensions.
+        if (!attached || surfaceView == null) return;
+        surfaceView.requestLayout();
+        surfaceView.post(() -> {
+            if (!attached || surfaceView == null) return;
+            int width = Math.max(1, surfaceView.getWidth());
+            int height = Math.max(1, surfaceView.getHeight());
+            nativeResize(width, height, density());
+            Log.i(LOG_TAG, "moui-mobile resize width=" + width + " height=" + height
+                    + " orientation=" + newConfig.orientation);
+        });
     }
 
     @Override
@@ -129,8 +160,10 @@ public final class MobileActivity extends Activity implements SurfaceHolder.Call
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
         stopFrameLoop();
-        nativeDetachSurface();
-        attached = false;
+        if (attached) {
+            nativeDetachSurface();
+            attached = false;
+        }
         Log.i(LOG_TAG, "moui-mobile lifecycle detach reason=surface-destroyed");
     }
 

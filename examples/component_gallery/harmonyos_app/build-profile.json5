@@ -33,7 +33,9 @@
       "targets": [
         {
           "name": "default",
-          "applyToProducts": [ "default" ]
+          "applyToProducts": [
+            "default"
+          ]
         }
       ]
     }

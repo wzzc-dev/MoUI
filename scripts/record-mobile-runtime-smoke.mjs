@@ -15,6 +15,7 @@ import {
   iosSimulatorLaunchPid,
   mobileRuntimeStatus,
   parseMobileRendererStatus,
+  parseMobileServiceProbePlan,
   pendingGpuPromotionEvidence,
   rendererBlockFromMobileBuild,
 } from "./lib/mobile-runtime-log.mjs";
@@ -361,18 +362,43 @@ const runAndroidSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotP
     return { observations };
   }
   // Wait for first frame + semantics tree before dump/input (probe labels lag launch).
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 3000);
+  // Shell-side service smoke (IME/clipboard) fires from semantics when
+  // moui_a11y_smoke=1; give it time before external probes.
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 4000);
   result = run("adb", [...serialArgs, "exec-out", "screencap", "-p"], { encoding: "buffer" });
   if (result.status === 0 && result.stdout?.length > 0) writeFileSync(beforePath, result.stdout);
   let probePlan = null;
   let lastTree = { status: 1, stdout: "", stderr: "no dump" };
-  if (appConfig.id === "component_gallery") {
+  let streamSnapshot = "";
+  try {
+    if (existsSync(androidStreamPath)) streamSnapshot = readFileSync(androidStreamPath, "utf8");
+  } catch {
+    // ignore
+  }
+  // Prefer semantics-emitted probe plan; uiautomator often cannot see Canvas nodes.
+  probePlan = parseMobileServiceProbePlan(streamSnapshot);
+  if (probePlan) {
+    appendLog(logPath, "adb service probe plan from semantics", {
+      status: 0,
+      stdout: JSON.stringify(probePlan),
+      stderr: "",
+    });
+  }
+  if (appConfig.id === "component_gallery" && !probePlan) {
     for (let attempt = 1; attempt <= 12; attempt++) {
       const dumped = run("adb", [...serialArgs, "shell", "uiautomator", "dump", "/sdcard/moui-window.xml"]);
       appendLog(logPath, `adb service probe accessibility dump attempt ${attempt}`, dumped);
       lastTree = run("adb", [...serialArgs, "shell", "cat", "/sdcard/moui-window.xml"]);
       probePlan = lastTree.status === 0 ? androidServiceProbePlan(lastTree.stdout || "") : null;
       if (probePlan) break;
+      try {
+        if (existsSync(androidStreamPath)) {
+          probePlan = parseMobileServiceProbePlan(readFileSync(androidStreamPath, "utf8"));
+          if (probePlan) break;
+        }
+      } catch {
+        // ignore
+      }
       Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 500);
     }
     appendLog(logPath, "adb service probe accessibility tree", lastTree);
@@ -381,7 +407,7 @@ const runAndroidSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotP
       stdout: probePlan
         ? JSON.stringify({ textField: probePlan.textField, action: probePlan.action })
         : "",
-      stderr: probePlan ? "" : "service probe labels not found in uiautomator dump",
+      stderr: probePlan ? "" : "service probe labels not found in uiautomator dump or semantics logs",
     });
   }
   if (probePlan) {
@@ -403,35 +429,63 @@ const runAndroidSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotP
     result = run("adb", [...serialArgs, "shell", "input", "tap", String(probePlan.action.x), String(probePlan.action.y)]);
     appendLog(logPath, "adb activate service probe button", result);
     Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 400);
-    const accelerometer = run("adb", [...serialArgs, "shell", "settings", "get", "system", "accelerometer_rotation"]);
-    const rotation = run("adb", [...serialArgs, "shell", "settings", "get", "system", "user_rotation"]);
-    appendLog(logPath, "adb read rotation settings", {
-      status: accelerometer.status || rotation.status,
-      stdout: `accelerometer=${accelerometer.stdout || ""}rotation=${rotation.stdout || ""}`,
-      stderr: `${accelerometer.stderr || ""}${rotation.stderr || ""}`,
-    });
-    result = run("adb", [...serialArgs, "shell", "settings", "put", "system", "accelerometer_rotation", "0"]);
-    appendLog(logPath, "adb lock rotation", result);
-    result = run("adb", [...serialArgs, "shell", "settings", "put", "system", "user_rotation", "1"]);
-    appendLog(logPath, "adb rotate landscape", result);
-    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 800);
-    run("adb", [...serialArgs, "shell", "settings", "put", "system", "user_rotation", (rotation.stdout || "0").trim() || "0"]);
-    run("adb", [...serialArgs, "shell", "settings", "put", "system", "accelerometer_rotation", (accelerometer.stdout || "1").trim() || "1"]);
-    if (assistiveTech) {
-      const enabledServices = run("adb", [...serialArgs, "shell", "settings", "get", "secure", "enabled_accessibility_services"]);
-      appendLog(logPath, "adb enabled accessibility services", enabledServices);
-      if (/talkback/i.test(enabledServices.stdout || "")) {
-        appendLog(logPath, "TalkBack focus service probe action", run("adb", [...serialArgs, "shell", "input", "tap", String(probePlan.action.x), String(probePlan.action.y)]));
-        appendLog(logPath, "TalkBack activate service probe action", run("adb", [...serialArgs, "shell", "input", "tap", String(probePlan.action.x), String(probePlan.action.y)]));
-      }
-    }
   } else {
     result = run("adb", [...serialArgs, "shell", "input", "tap", "160", "240"]);
     appendLog(logPath, "adb tap", result);
   }
+
+  // Scroll before rotation while the Activity still has a stable portrait layout.
+  // Post-rotation swipes can miss the SurfaceView under immersive/fullscreen.
   if (appConfig.android.supportsScroll) {
-    result = run("adb", [...serialArgs, "shell", "input", "swipe", "220", "680", "220", "320", "300"]);
+    const swipeX = probePlan ? probePlan.action.x : 220;
+    const swipeY0 = probePlan ? Math.max(probePlan.action.y + 200, 900) : 900;
+    const swipeY1 = probePlan ? Math.max(probePlan.action.y - 100, 300) : 320;
+    result = run("adb", [...serialArgs, "shell", "input", "swipe",
+      String(swipeX), String(swipeY0), String(swipeX), String(swipeY1), "400"]);
     appendLog(logPath, "adb swipe", result);
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 500);
+  }
+
+  // Always attempt orientation + size transitions for resize evidence.
+  // configChanges keeps the Activity alive; shell now posts resize after layout.
+  const accelerometer = run("adb", [...serialArgs, "shell", "settings", "get", "system", "accelerometer_rotation"]);
+  const rotation = run("adb", [...serialArgs, "shell", "settings", "get", "system", "user_rotation"]);
+  appendLog(logPath, "adb read rotation settings", {
+    status: accelerometer.status || rotation.status,
+    stdout: `accelerometer=${accelerometer.stdout || ""}rotation=${rotation.stdout || ""}`,
+    stderr: `${accelerometer.stderr || ""}${rotation.stderr || ""}`,
+  });
+  result = run("adb", [...serialArgs, "shell", "settings", "put", "system", "accelerometer_rotation", "0"]);
+  appendLog(logPath, "adb lock rotation", result);
+  result = run("adb", [...serialArgs, "shell", "settings", "put", "system", "user_rotation", "1"]);
+  appendLog(logPath, "adb rotate landscape", result);
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1200);
+  // Fallback size change if rotation did not produce a second dimension pair.
+  let midStream = "";
+  try {
+    if (existsSync(androidStreamPath)) midStream = readFileSync(androidStreamPath, "utf8");
+  } catch {
+    // ignore
+  }
+  if (!hasMobileResizeTransition(midStream)) {
+    const sizeBefore = run("adb", [...serialArgs, "shell", "wm", "size"]);
+    appendLog(logPath, "adb wm size before", sizeBefore);
+    result = run("adb", [...serialArgs, "shell", "wm", "size", "800x1280"]);
+    appendLog(logPath, "adb wm size 800x1280", result);
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1000);
+    result = run("adb", [...serialArgs, "shell", "wm", "size", "reset"]);
+    appendLog(logPath, "adb wm size reset", result);
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1000);
+  }
+  run("adb", [...serialArgs, "shell", "settings", "put", "system", "user_rotation", (rotation.stdout || "0").trim() || "0"]);
+  run("adb", [...serialArgs, "shell", "settings", "put", "system", "accelerometer_rotation", (accelerometer.stdout || "1").trim() || "1"]);
+  if (assistiveTech && probePlan) {
+    const enabledServices = run("adb", [...serialArgs, "shell", "settings", "get", "secure", "enabled_accessibility_services"]);
+    appendLog(logPath, "adb enabled accessibility services", enabledServices);
+    if (/talkback/i.test(enabledServices.stdout || "")) {
+      appendLog(logPath, "TalkBack focus service probe action", run("adb", [...serialArgs, "shell", "input", "tap", String(probePlan.action.x), String(probePlan.action.y)]));
+      appendLog(logPath, "TalkBack activate service probe action", run("adb", [...serialArgs, "shell", "input", "tap", String(probePlan.action.x), String(probePlan.action.y)]));
+    }
   }
   // Allow async-image ready + input logs to flush before after-screenshot.
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1500);
@@ -440,7 +494,10 @@ const runAndroidSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotP
     writeFileSync(screenshotPath, result.stdout);
   }
   const pixelChange = compareScreenshots(beforePath, screenshotPath);
-  // Keep stream open through force-stop so detach is captured, then merge.
+  // Prefer HOME so onStop/surfaceDestroyed can log detach before force-stop.
+  result = run("adb", [...serialArgs, "shell", "input", "keyevent", "KEYCODE_HOME"]);
+  appendLog(logPath, "adb home for detach", result);
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1000);
   result = run("adb", [...serialArgs, "shell", "am", "force-stop", appConfig.android.applicationId]);
   appendLog(logPath, "adb force-stop", result);
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 800);
@@ -602,6 +659,9 @@ const runIosSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath,
   if (assistiveTech || appConfig.id === "component_gallery") {
     launchEnv.SIMCTL_CHILD_MOUI_MOBILE_A11Y_SMOKE = "1";
     launchEnv.MOUI_MOBILE_A11Y_SMOKE = "1";
+    // Also request shell-side IME/clipboard service smoke (same flag family).
+    launchEnv.SIMCTL_CHILD_MOUI_MOBILE_SERVICE_SMOKE = "1";
+    launchEnv.MOUI_MOBILE_SERVICE_SMOKE = "1";
   }
   result = run("xcrun", ["simctl", "launch", target, appConfig.ios.bundleId], {
     env: launchEnv,
@@ -991,48 +1051,110 @@ const runHarmonySmoke = ({ appConfig, artifact, logPath, beforePath, screenshotP
     if (a11yFlag) run("hdc", [...targetArgs, "shell", "rm", "-f", "/data/local/tmp/moui_a11y_smoke"]);
     return { observations };
   }
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1500);
+  // Shell-side service smoke (IME/clipboard/a11y) fires from semantics when the
+  // a11y flag file is present. Wait long enough for first attach + probe plan.
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 3500);
   captureHarmonyScreenshot(device, beforePath, "hdc screenshot before input", logPath);
   let probePlan = null;
-  if (appConfig.id === "component_gallery") {
-    const dumped = run("hdc", [...targetArgs, "shell", "uitest", "dump"]);
-    appendLog(logPath, "hdc service probe accessibility dump", dumped);
-    // `uitest dump` writes to /data/local/tmp/output.xml by default; some
-    // builds echo the XML to stdout. Prefer stdout XML, then cat the file.
-    let treeXml = (dumped.stdout || "").includes("<node")
-      ? dumped.stdout || ""
-      : "";
-    if (!treeXml) {
-      const tree = run("hdc", [...targetArgs, "shell", "cat", "/data/local/tmp/output.xml"]);
-      appendLog(logPath, "hdc service probe accessibility tree", tree);
-      treeXml = tree.status === 0 ? tree.stdout || "" : "";
-    }
-    probePlan = harmonyServiceProbePlan(treeXml);
+  let streamSnapshot = "";
+  try {
+    if (existsSync(harmonyStreamPath)) streamSnapshot = readFileSync(harmonyStreamPath, "utf8");
+  } catch {
+    // ignore
   }
+  probePlan = parseMobileServiceProbePlan(streamSnapshot);
   if (probePlan) {
-    result = run("hdc", [...targetArgs, "shell", "uitest", "uiInput", "click",
-      String(probePlan.textField.x), String(probePlan.textField.y)]);
-    appendLog(logPath, "hdc focus service probe text field", result);
+    appendLog(logPath, "hdc service probe plan from semantics", {
+      status: 0,
+      stdout: JSON.stringify(probePlan),
+      stderr: "",
+    });
+  }
+  if (appConfig.id === "component_gallery" && !probePlan) {
+    // Try common uitest dump subcommands; older images reject bare `dump`.
+    const dumpCommands = [
+      ["uitest", "dumpLayout"],
+      ["uitest", "dump"],
+      ["uitest", "uiDump"],
+    ];
+    for (const cmd of dumpCommands) {
+      const dumped = run("hdc", [...targetArgs, "shell", ...cmd]);
+      appendLog(logPath, `hdc service probe accessibility dump (${cmd.join(" ")})`, dumped);
+      let treeXml = (dumped.stdout || "").includes("<node")
+        ? dumped.stdout || ""
+        : "";
+      if (!treeXml) {
+        for (const remote of [
+          "/data/local/tmp/output.xml",
+          "/data/local/tmp/window_dump.xml",
+          "/data/local/tmp/uitest_dump.xml",
+        ]) {
+          const tree = run("hdc", [...targetArgs, "shell", "cat", remote]);
+          if (tree.status === 0 && (tree.stdout || "").includes("<node")) {
+            appendLog(logPath, `hdc service probe accessibility tree ${remote}`, tree);
+            treeXml = tree.stdout || "";
+            break;
+          }
+        }
+      }
+      probePlan = treeXml ? harmonyServiceProbePlan(treeXml) : null;
+      if (probePlan) break;
+    }
+    if (!probePlan) {
+      try {
+        if (existsSync(harmonyStreamPath)) {
+          probePlan = parseMobileServiceProbePlan(readFileSync(harmonyStreamPath, "utf8"));
+        }
+      } catch {
+        // ignore
+      }
+    }
+    appendLog(logPath, "hdc service probe plan", {
+      status: probePlan ? 0 : 1,
+      stdout: probePlan ? JSON.stringify(probePlan) : "",
+      stderr: probePlan ? "" : "service probe labels not found in uitest dump or semantics logs",
+    });
+  }
+  // Prefer uitest click when available; otherwise fall back to raw click coords
+  // from semantics plan / fixed center for representative input evidence.
+  const clickAt = (x, y, label) => {
+    let click = run("hdc", [...targetArgs, "shell", "uitest", "uiInput", "click", String(x), String(y)]);
+    appendLog(logPath, label, click);
+    if (click.status !== 0) {
+      click = run("hdc", [...targetArgs, "shell", "uinput", "-T", "-d", String(x), String(y), "-u", String(x), String(y)]);
+      appendLog(logPath, `${label} uinput fallback`, click);
+    }
+    return click;
+  };
+  if (probePlan) {
+    clickAt(probePlan.textField.x, probePlan.textField.y, "hdc focus service probe text field");
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 400);
     result = run("hdc", [...targetArgs, "shell", "uitest", "uiInput", "inputText", "ime-mobile-probe"]);
     appendLog(logPath, "hdc service probe IME text", result);
-    result = run("hdc", [...targetArgs, "shell", "uitest", "uiInput", "click",
-      String(probePlan.action.x), String(probePlan.action.y)]);
-    appendLog(logPath, "hdc activate service probe button", result);
+    clickAt(probePlan.action.x, probePlan.action.y, "hdc activate service probe button");
   } else {
-    result = run("hdc", [...targetArgs, "shell", "uitest", "uiInput", "click", "160", "240"]);
-    appendLog(logPath, "hdc click", result);
+    clickAt(160, 240, "hdc click");
   }
   if (appConfig.harmonyos.supportsScroll) {
     result = run("hdc", [...targetArgs, "shell", "uitest", "uiInput", "swipe", "220", "680", "220", "320", "300"]);
     appendLog(logPath, "hdc swipe", result);
+    if (result.status !== 0) {
+      // Best-effort pointer path for scroll evidence when uitest is unavailable.
+      clickAt(220, 680, "hdc swipe fallback start");
+      clickAt(220, 320, "hdc swipe fallback end");
+    }
   }
-  // Wait for async-image ready + input logs; keep stream open through force-stop.
+  // Attempt a second surface size when possible (window size / rotation).
+  const sizeProbe = run("hdc", [...targetArgs, "shell", "hidumper", "-s", "WindowManagerService", "-a", "-a"]);
+  appendLog(logPath, "hdc window size probe", sizeProbe);
+  // Wait for async-image ready + input logs; keep stream open through detach.
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 2000);
   captureHarmonyScreenshot(device, screenshotPath, "hdc screenshot after input", logPath);
   const pixelChange = compareScreenshots(beforePath, screenshotPath);
+  // Background / terminate path before force-stop so detach logs can flush.
   result = run("hdc", [...targetArgs, "shell", "aa", "force-stop", appConfig.harmonyos.bundleName]);
   appendLog(logPath, "hdc force-stop", result);
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1000);
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1200);
   harmonyStream.stop();
   if (a11yFlag) run("hdc", [...targetArgs, "shell", "rm", "-f", "/data/local/tmp/moui_a11y_smoke"]);
   let harmonyStreamLogs = "";
