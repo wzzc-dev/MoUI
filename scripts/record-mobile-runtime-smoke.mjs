@@ -13,9 +13,11 @@ import {
   iosIdbInputPlan,
   iosIdbServiceProbePlan,
   iosSimulatorLaunchPid,
+  mobileTestProbeObservations,
   mobileRuntimeStatus,
   parseMobileRendererStatus,
   parseMobileServiceProbePlan,
+  pendingMobileCapabilityObservations,
   pendingGpuPromotionEvidence,
   rendererBlockFromMobileBuild,
 } from "./lib/mobile-runtime-log.mjs";
@@ -193,6 +195,7 @@ const observeLogs = (observations, logs, supportsScroll, pixelChange) => {
       && logs.includes("moui-mobile service async-image phase=ready")) {
     observations.asyncImage = "yes";
   }
+  Object.assign(observations, mobileTestProbeObservations(logs));
 };
 
 const baseObservations = supportsScroll => ({
@@ -210,6 +213,7 @@ const baseObservations = supportsScroll => ({
   accessibilityFocus: "pending",
   accessibilityAction: "pending",
   asyncImage: "pending",
+  ...pendingMobileCapabilityObservations(),
   realDeviceSigning: "pending",
 });
 
@@ -351,6 +355,9 @@ const runAndroidSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotP
     ...serialArgs, "shell", "am", "start", "-n",
     `${appConfig.android.applicationId}/dev.wzzc.moui.mobile.MoUIActivity`,
   ];
+  if (appConfig.id === "component_gallery") {
+    launchArgs.push("--es", "moui.mobile.testProbe", "1");
+  }
   result = run("adb", launchArgs);
   appendLog(logPath, "adb launch", result);
   if (result.status !== 0) {
@@ -624,15 +631,10 @@ const runIosSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath,
   const launchEnv = {
     ...process.env,
   };
-  // Deterministic simulator a11y focus/activate evidence for service probe.
-  // Host ObjC only honors this under MOUI_MOBILE_A11Y_SMOKE; simctl requires
-  // the SIMCTL_CHILD_ prefix to forward env into the app process.
-  if (assistiveTech || appConfig.id === "component_gallery") {
-    launchEnv.SIMCTL_CHILD_MOUI_MOBILE_A11Y_SMOKE = "1";
-    launchEnv.MOUI_MOBILE_A11Y_SMOKE = "1";
-    // Also request shell-side IME/clipboard service smoke (same flag family).
-    launchEnv.SIMCTL_CHILD_MOUI_MOBILE_SERVICE_SMOKE = "1";
-    launchEnv.MOUI_MOBILE_SERVICE_SMOKE = "1";
+  // simctl removes SIMCTL_CHILD_ while forwarding the value into the app.
+  if (appConfig.id === "component_gallery") {
+    launchEnv.SIMCTL_CHILD_MOUI_MOBILE_TEST_PROBE = "1";
+    launchEnv.MOUI_MOBILE_TEST_PROBE = "1";
   }
   result = run("xcrun", ["simctl", "launch", target, appConfig.ios.bundleId], {
     env: launchEnv,
@@ -699,10 +701,7 @@ const runIosSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath,
   }
   result = run("xcrun", ["simctl", "io", target, "screenshot", beforePath]);
   appendLog(logPath, "simctl screenshot", result);
-  // Prefer MOUI_MOBILE_A11Y_SMOKE for deterministic focus/activate evidence.
-  // Live VoiceOver preference flips can scramble idb trees and edit menus on
-  // Simulator, so only use them as a secondary assistive-tech path.
-  const useVoiceOverAssist = assistiveTech && !launchEnv.SIMCTL_CHILD_MOUI_MOBILE_A11Y_SMOKE;
+  const useVoiceOverAssist = assistiveTech;
   let previousVoiceOver = null;
   if (useVoiceOverAssist && idbReady) {
     previousVoiceOver = run("idb", [
@@ -1003,27 +1002,22 @@ const runHarmonySmoke = ({ appConfig, artifact, logPath, beforePath, screenshotP
   appendLog(logPath, "hdc install", result);
   if (result.status !== 0) return { observations };
   run("hdc", [...targetArgs, "shell", "hilog", "-r"]);
-  // HarmonyOS ability processes are forked by appspawn and do not inherit hdc
-  // shell env, so write a flag file the NAPI a11ySmokeEnabled() reads. This is
-  // the reliable cross-boundary once-fire signal for component_gallery, mirroring
-  // the Android intent-extra and iOS SIMCTL_CHILD_ env paths.
-  const a11yFlag = appConfig.id === "component_gallery";
-  if (a11yFlag) {
-    // Quote the redirection so the remote shell (not the host shell) writes the
-    // flag file on the device.
-    run("hdc", [...targetArgs, "shell", "echo 1 > /data/local/tmp/moui_a11y_smoke"]);
-  }
   const harmonyStreamPath = join(dirname(logPath), "runtime-stream.log");
   const harmonyStream = startHarmonyLogStream({ device, outPath: harmonyStreamPath });
-  result = run("hdc", [...targetArgs, "shell", "aa", "start", "-a", "EntryAbility", "-b", appConfig.harmonyos.bundleName]);
+  const launchArgs = [
+    ...targetArgs,
+    "shell", "aa", "start", "-a", "EntryAbility", "-b", appConfig.harmonyos.bundleName,
+  ];
+  if (appConfig.id === "component_gallery") {
+    launchArgs.push("--ps", "moui.mobile.testProbe", "1");
+  }
+  result = run("hdc", launchArgs);
   appendLog(logPath, "hdc launch", result);
   if (result.status !== 0) {
     harmonyStream.stop();
-    if (a11yFlag) run("hdc", [...targetArgs, "shell", "rm", "-f", "/data/local/tmp/moui_a11y_smoke"]);
     return { observations };
   }
-  // Shell-side service smoke (IME/clipboard/a11y) fires from semantics when the
-  // a11y flag file is present. Wait long enough for first attach + probe plan.
+  // The repository-only plugin runs after the first semantics snapshot.
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 3500);
   captureHarmonyScreenshot(device, beforePath, "hdc screenshot before input", logPath);
   let probePlan = null;
@@ -1127,7 +1121,6 @@ const runHarmonySmoke = ({ appConfig, artifact, logPath, beforePath, screenshotP
   appendLog(logPath, "hdc force-stop", result);
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1200);
   harmonyStream.stop();
-  if (a11yFlag) run("hdc", [...targetArgs, "shell", "rm", "-f", "/data/local/tmp/moui_a11y_smoke"]);
   let harmonyStreamLogs = "";
   try {
     if (existsSync(harmonyStreamPath)) harmonyStreamLogs = readFileSync(harmonyStreamPath, "utf8");

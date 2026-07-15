@@ -122,7 +122,7 @@ test("managed resolver stages identity, resources, and generated plugin registry
   );
   try {
     const config = JSON.parse(readFileSync(sourceConfigPath, "utf8"));
-    config.mobile.plugins = ["moui/mobile/harmonyos/tests/fixtures/plugin/moui.plugin.json"];
+    config.mobile.plugins = ["moui/mobile/test-probe/moui.plugin.json"];
     writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
     const output = join(tempRoot, "shell");
     execFileSync("node", [
@@ -147,19 +147,23 @@ test("managed resolver stages identity, resources, and generated plugin registry
       join(output, "entry/src/main/ets/moui/MoUIGeneratedPlugins.ets"),
       "utf8",
     );
-    contains(generatedPlugins, "ProbePlugin as MoUIGeneratedPlugin0", "generated plugins");
+    contains(generatedPlugins, "MoUIMobileTestProbePlugin as MoUIGeneratedPlugin0", "generated plugins");
     contains(generatedPlugins, "new MoUIGeneratedPlugin0()", "generated plugins");
-    assert.ok(
-      readFileSync(
-        join(output, "entry/src/main/ets/plugins/0-dev_fixture_harmony_probe/ProbePlugin.ets"),
-        "utf8",
-      ).includes("dev.fixture.echo"),
-    );
     const managed = JSON.parse(readFileSync(join(output, ".moui-managed-shell.json"), "utf8"));
     assert.equal(managed.shellApiVersion, 1);
     assert.equal(managed.runtimeAbiVersion, 1);
     assert.equal(managed.targetSdkVersion, 21);
-    assert.deepEqual(managed.plugins.map(plugin => plugin.id), ["dev.fixture.harmony-probe"]);
+    assert.deepEqual(managed.plugins.map(plugin => plugin.id), ["dev.wzzc.moui.mobile.test-probe"]);
+    assert.equal(managed.plugins[0].sources.length, 1);
+    assert.ok(
+      readFileSync(join(output, managed.plugins[0].sources[0]), "utf8")
+        .includes("class MoUIMobileTestProbePlugin"),
+    );
+    assert.equal(managed.plugins[0].resources.length, 1);
+    assert.ok(
+      readFileSync(join(output, managed.plugins[0].resources[0], "test-probe.json"), "utf8")
+        .includes("MoUI test probe"),
+    );
   } finally {
     rmSync(configPath, { force: true });
     rmSync(tempRoot, { recursive: true, force: true });

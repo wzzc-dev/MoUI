@@ -45,6 +45,18 @@ fn valid_manifest() -> String {
     #|    "accessibilityFocus": "yes",
     #|    "accessibilityAction": "yes",
     #|    "asyncImage": "yes",
+    #|    "platformViewCreate": "yes",
+    #|    "platformViewResize": "yes",
+    #|    "platformViewClip": "yes",
+    #|    "platformViewEvent": "yes",
+    #|    "platformViewDispose": "yes",
+    #|    "hostChannelSuccess": "yes",
+    #|    "hostChannelError": "yes",
+    #|    "hostChannelCancel": "yes",
+    #|    "hostChannelExactlyOnce": "yes",
+    #|    "hostChannelLateAfterDispose": "yes",
+    #|    "gpuRecovery": "yes",
+    #|    "stress": "yes",
     #|    "realDeviceSigning": "pending"
     #|  },
     #|  "evidenceBoundary": "non-fallback matching-host smoke evidence; fallback builds are packaging only"
@@ -96,6 +108,44 @@ test "passed evidence requires platform service observations" {
   )
   let failures = validate_manifest_text(text, true)
   assert_true(failures.any(message => message.contains("observations.ime")))
+}
+
+///|
+test "passed evidence requires PlatformView and Host Channel observations" {
+  let platform_view = valid_manifest().replace(
+    old="\"platformViewCreate\": \"yes\"",
+    new="\"platformViewCreate\": \"pending\"",
+  )
+  let platform_failures = validate_manifest_text(platform_view, true)
+  assert_true(
+    platform_failures.any(message => {
+      message.contains("observations.platformViewCreate")
+    }),
+  )
+  let host_channel = valid_manifest().replace(
+    old="\"hostChannelExactlyOnce\": \"yes\"",
+    new="\"hostChannelExactlyOnce\": \"pending\"",
+  )
+  let host_failures = validate_manifest_text(host_channel, true)
+  assert_true(
+    host_failures.any(message => {
+      message.contains("observations.hostChannelExactlyOnce")
+    }),
+  )
+}
+
+///|
+test "passed evidence requires GPU recovery and stress observations" {
+  for field in ["gpuRecovery", "stress"] {
+    let text = valid_manifest().replace(
+      old="\"\{field}\": \"yes\"",
+      new="\"\{field}\": \"pending\"",
+    )
+    let failures = validate_manifest_text(text, true)
+    assert_true(
+      failures.any(message => message.contains("observations." + field)),
+    )
+  }
 }
 
 ///|

@@ -10,6 +10,12 @@ device="${MOUI_ANDROID_SERIAL:-}"
 renderer="${MOUI_SKIA_RENDERER:-auto}"
 manifest="${MOUI_MOBILE_MANIFEST:-artifacts/mobile-runtime/android/${app}/mobile-runtime-smoke.json}"
 avd="${MOUI_ANDROID_AVD:-moui_api34}"
+probe_config="$repo_root/examples/$app/.mobile-runtime-test-probe-$$.json"
+
+cleanup() {
+  rm -f "$probe_config"
+}
+trap cleanup EXIT
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -56,7 +62,10 @@ if [ -z "$device" ]; then
 fi
 
 echo "Android mobile runtime evidence app=$app device=$device renderer=$renderer"
-scripts/build-mobile-android-apk.sh --app "$app" --renderer "$renderer"
+node moui/mobile/test-probe/tests/create-mobile-shell-fixture.mjs \
+  --kind plugin-config --app "$app" --repo-root "$repo_root" --output "$probe_config"
+scripts/build-mobile-android-apk.sh \
+  --app "$app" --app-config "$probe_config" --renderer "$renderer"
 node scripts/record-mobile-runtime-smoke.mjs \
   --platform android \
   --app "$app" \

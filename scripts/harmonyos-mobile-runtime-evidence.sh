@@ -14,6 +14,12 @@ app="${MOUI_MOBILE_APP:-component_gallery}"
 device="${MOUI_HARMONYOS_DEVICE:-}"
 renderer="${MOUI_SKIA_RENDERER:-auto}"
 manifest="${MOUI_MOBILE_MANIFEST:-artifacts/mobile-runtime/harmonyos/${app}/mobile-runtime-smoke.json}"
+probe_config="$repo_root/examples/$app/.mobile-runtime-test-probe-$$.json"
+
+cleanup() {
+  rm -f "$probe_config"
+}
+trap cleanup EXIT
 
 export HARMONYOS_SDK_HOME="${HARMONYOS_SDK_HOME:-${OHOS_SDK_HOME:-}}"
 export OHOS_SDK_HOME="${OHOS_SDK_HOME:-$HARMONYOS_SDK_HOME}"
@@ -54,7 +60,10 @@ if [ -z "$HARMONYOS_SDK_HOME" ]; then
 fi
 
 echo "HarmonyOS mobile runtime evidence app=$app device=$device renderer=$renderer"
-scripts/build-mobile-harmonyos-hap.sh --app "$app" --renderer "$renderer"
+node moui/mobile/test-probe/tests/create-mobile-shell-fixture.mjs \
+  --kind plugin-config --app "$app" --repo-root "$repo_root" --output "$probe_config"
+scripts/build-mobile-harmonyos-hap.sh \
+  --app "$app" --app-config "$probe_config" --renderer "$renderer"
 node scripts/record-mobile-runtime-smoke.mjs \
   --platform harmonyos \
   --app "$app" \

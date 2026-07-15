@@ -541,6 +541,9 @@ fn validate_manifest_fields(
       "lifecycleAttach", "lifecycleDetach", "nonblankFirstFrame", "resize", "representativeInput",
       "scrollInput", "cleanShutdown", "ime", "clipboard", "accessibility", "asyncImage",
       "accessibilityTree", "accessibilityFocus", "accessibilityAction", "realDeviceSigning",
+      "platformViewCreate", "platformViewResize", "platformViewClip", "platformViewEvent",
+      "platformViewDispose", "hostChannelSuccess", "hostChannelError", "hostChannelCancel",
+      "hostChannelExactlyOnce", "hostChannelLateAfterDispose", "gpuRecovery", "stress",
     ] {
     assert_observation_present(observations, field, failures)
   }
@@ -585,7 +588,10 @@ fn validate_manifest_fields(
       field in [
         "lifecycleAttach", "lifecycleDetach", "nonblankFirstFrame", "resize", "representativeInput",
         "cleanShutdown", "ime", "clipboard", "accessibility", "asyncImage", "accessibilityTree",
-        "accessibilityFocus", "accessibilityAction",
+        "accessibilityFocus", "accessibilityAction", "platformViewCreate", "platformViewResize",
+        "platformViewClip", "platformViewEvent", "platformViewDispose", "hostChannelSuccess",
+        "hostChannelError", "hostChannelCancel", "hostChannelExactlyOnce", "hostChannelLateAfterDispose",
+        "gpuRecovery", "stress",
       ] {
       assert_yes(observations, field, failures)
     }

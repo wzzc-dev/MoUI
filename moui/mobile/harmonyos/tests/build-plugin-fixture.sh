@@ -13,7 +13,7 @@ const fs = require("fs");
 const source = process.argv[2];
 const output = process.argv[3];
 const config = JSON.parse(fs.readFileSync(source, "utf8"));
-config.mobile.plugins = ["moui/mobile/harmonyos/tests/fixtures/plugin/moui.plugin.json"];
+config.mobile.plugins = ["moui/mobile/test-probe/moui.plugin.json"];
 fs.writeFileSync(output, `${JSON.stringify(config, null, 2)}\n`);
 NODE
 

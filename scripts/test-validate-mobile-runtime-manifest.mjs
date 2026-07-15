@@ -15,6 +15,7 @@ import {
   mobileRuntimeStatus,
   parseMobileRendererStatus,
   parseMobileServiceProbePlan,
+  parseMobileTestProbeSnapshot,
   rendererBlockFromMobileBuild,
 } from "./lib/mobile-runtime-log.mjs";
 
@@ -65,6 +66,18 @@ const baseManifest = (overrides = {}) => ({
     accessibilityFocus: "yes",
     accessibilityAction: "yes",
     asyncImage: "yes",
+    platformViewCreate: "yes",
+    platformViewResize: "yes",
+    platformViewClip: "yes",
+    platformViewEvent: "yes",
+    platformViewDispose: "yes",
+    hostChannelSuccess: "yes",
+    hostChannelError: "yes",
+    hostChannelCancel: "yes",
+    hostChannelExactlyOnce: "yes",
+    hostChannelLateAfterDispose: "yes",
+    gpuRecovery: "yes",
+    stress: "yes",
     realDeviceSigning: "pending",
   },
   evidenceBoundary: "non-fallback matching-host smoke evidence; fallback builds are packaging only",
@@ -104,6 +117,24 @@ assert(result.status !== 0, "input injection without visible pixel change must n
 
 result = run(baseManifest({ observations: { ...baseManifest().observations, ime: "pending" } }), ["--require-passed"]);
 assert(result.status !== 0, "passed evidence must include IME observation");
+
+result = run(baseManifest({ observations: {
+  ...baseManifest().observations,
+  platformViewCreate: "pending",
+} }), ["--require-passed"]);
+assert(result.status !== 0, "passed evidence must include PlatformView observations");
+
+result = run(baseManifest({ observations: {
+  ...baseManifest().observations,
+  hostChannelExactlyOnce: "pending",
+} }), ["--require-passed"]);
+assert(result.status !== 0, "passed evidence must include Host Channel observations");
+
+result = run(baseManifest({ observations: {
+  ...baseManifest().observations,
+  gpuRecovery: "pending",
+} }), ["--require-passed"]);
+assert(result.status !== 0, "passed evidence must include GPU recovery observations");
 
 result = run(baseManifest({ status: "failed", screenshot: { width: 0, height: 0, totalPixels: 0, contentPixels: 0, distinctColorBuckets: 0 } }));
 assert(result.status === 0, "failed diagnostic manifest should validate without --require-passed");
@@ -172,13 +203,38 @@ assert(
 );
 assert(
   hasMobileTextClipboardRoundTrip([
-    "moui-mobile service clipboard complete operation=write-text",
-    "moui-mobile service clipboard complete operation=read-text",
+    "moui-mobile service clipboard complete operation=write-text accepted=1",
+    "moui-mobile service clipboard complete operation=read-text accepted=true",
   ].join("\n"))
     && !hasMobileTextClipboardRoundTrip(
       "moui-mobile service clipboard complete operation=write-text",
     ),
   "mobile clipboard evidence should require system write and read completion",
+);
+assert(
+  !hasMobileTextClipboardRoundTrip([
+    "moui-mobile service clipboard complete operation=write-text accepted=1",
+    "moui-mobile service clipboard complete operation=read-text accepted=0",
+  ].join("\n")),
+  "a stale-generation clipboard completion must not count as a round trip",
+);
+const probeSnapshot = parseMobileTestProbeSnapshot([
+  "moui-mobile test-probe snapshot={truncated",
+  'moui-mobile test-probe snapshot={"platformViewCreate":1,"platformViewResize":2,"platformViewClip":1,"platformViewEvent":2,"platformViewDispose":1,"hostChannelSuccess":1,"hostChannelError":1,"hostChannelCancel":1,"hostChannelExactlyOnce":1,"hostChannelLateAfterDispose":1,"serviceSmokeFired":1,"serviceSmokeCompleted":1}',
+  'moui-mobile test-probe snapshot={"platformViewCreate":2,"platformViewResize":3,"platformViewClip":2,"platformViewEvent":3,"platformViewDispose":1,"hostChannelSuccess":2,"hostChannelError":1,"hostChannelCancel":1,"hostChannelExactlyOnce":1,"hostChannelLateAfterDispose":1,"serviceSmokeFired":1,"serviceSmokeCompleted":1}',
+].join("\n"));
+assert(
+  probeSnapshot?.platformViewCreate === 2
+    && probeSnapshot?.platformViewResize === 3
+    && probeSnapshot?.hostChannelSuccess === 2
+    && probeSnapshot?.hostChannelExactlyOnce === 1,
+  "test-probe parser should use the latest complete normalized snapshot",
+);
+assert(
+  parseMobileTestProbeSnapshot(
+    'moui-mobile test-probe snapshot={"platformViewCreate":-1}',
+  ) === null,
+  "test-probe parser should reject incomplete or invalid counters",
 );
 const semanticsProbePlan = parseMobileServiceProbePlan([
   "moui-mobile service accessibility tree nodes=12",

@@ -63,7 +63,7 @@
     {"path":"moui_sun/renderer/render_pipeline_compare_image_helpers.mbt","maxLines":1325,"reason":"Existing renderer image comparison helpers."},
     {"path":"moui_richtext/editor_session.mbt","maxLines":1324,"reason":"Existing rich-text editor session state machine."},
     {"path":"scripts/record-web-runtime-presentation.mjs","maxLines":1323,"reason":"Existing browser presentation evidence orchestrator."},
-    {"path":"scripts/record-mobile-runtime-smoke.mjs","maxLines":1270,"reason":"Existing multi-platform device smoke orchestrator."},
+    {"path":"scripts/record-mobile-runtime-smoke.mjs","maxLines":1263,"reason":"Existing multi-platform device smoke orchestrator."},
     {"path":"examples/design_systems/app/app.mbt","maxLines":1296,"reason":"Existing design-system diagnostic application."},
     {"path":"examples/mo_workbench/app/update.mbt","maxLines":1295,"reason":"Existing workbench update state machine."},
     {"path":"moui/render/capabilities_test.mbt","maxLines":1289,"reason":"Existing renderer capability matrix test."},
