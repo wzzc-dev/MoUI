@@ -5,9 +5,7 @@ test "mobile renderer runtime auto selects gpu by default" {
     @render.NativeGpuPlatform::Android,
     gpu_available=true,
   )
-  assert_true(
-    selection.selected is @render.RendererBackendKind::SkiaGpuNative,
-  )
+  assert_true(selection.selected is @render.RendererBackendKind::SkiaGpuNative)
   assert_true(
     selection.surface_route is @render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute,
   )

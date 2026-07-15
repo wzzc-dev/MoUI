@@ -251,9 +251,7 @@ pub fn HostWindowRenderer::inject_context_loss(
 }
 
 ///|
-pub fn HostWindowRenderer::gpu_recovery_count(
-  self : HostWindowRenderer,
-) -> Int {
+pub fn HostWindowRenderer::gpu_recovery_count(self : HostWindowRenderer) -> Int {
   (self.gpu_recovery_count_fn)()
 }
 

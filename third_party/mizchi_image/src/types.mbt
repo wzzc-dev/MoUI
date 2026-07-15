@@ -46,7 +46,7 @@ pub(all) struct StreamImageInfo {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for ResizeMethod with output(self, logger) {
+pub impl Show for ResizeMethod with fn output(self, logger) {
   match self {
     Nearest => logger.write_string("Nearest")
     Bilinear => logger.write_string("Bilinear")
@@ -55,7 +55,7 @@ pub impl Show for ResizeMethod with output(self, logger) {
 }
 
 ///|
-pub impl Show for ImageData with output(self, logger) {
+pub impl Show for ImageData with fn output(self, logger) {
   logger.write_string(
     "ImageData{width: " +
     self.width.to_string() +
@@ -68,7 +68,7 @@ pub impl Show for ImageData with output(self, logger) {
 }
 
 ///|
-pub impl Show for ColorType with output(self, logger) {
+pub impl Show for ColorType with fn output(self, logger) {
   match self {
     Grayscale => logger.write_string("Grayscale")
     Rgb => logger.write_string("Rgb")
@@ -79,7 +79,7 @@ pub impl Show for ColorType with output(self, logger) {
 }
 
 ///|
-pub impl Show for IhdrData with output(self, logger) {
+pub impl Show for IhdrData with fn output(self, logger) {
   logger.write_string(
     "IhdrData{width: " +
     self.width.to_string() +
@@ -100,7 +100,7 @@ pub impl Show for IhdrData with output(self, logger) {
 }
 
 ///|
-pub impl Show for ImageFormat with output(self, logger) {
+pub impl Show for ImageFormat with fn output(self, logger) {
   match self {
     Png => logger.write_string("Png")
     Bmp => logger.write_string("Bmp")
@@ -108,7 +108,7 @@ pub impl Show for ImageFormat with output(self, logger) {
 }
 
 ///|
-pub impl Show for StreamImageInfo with output(self, logger) {
+pub impl Show for StreamImageInfo with fn output(self, logger) {
   logger.write_string(
     "StreamImageInfo{format: " +
     self.format.to_string() +
@@ -130,7 +130,7 @@ pub(all) suberror DecodeError {
 }
 
 ///|
-pub impl Show for DecodeError with output(self, logger) {
+pub impl Show for DecodeError with fn output(self, logger) {
   match self {
     InvalidSignature(s) => logger.write_string("InvalidSignature: " + s)
     InvalidChunkCrc(s) => logger.write_string("InvalidChunkCrc: " + s)
@@ -147,7 +147,7 @@ pub(all) suberror EncodeError {
 }
 
 ///|
-pub impl Show for EncodeError with output(self, logger) {
+pub impl Show for EncodeError with fn output(self, logger) {
   match self {
     InvalidDimensions(s) => logger.write_string("InvalidDimensions: " + s)
     InvalidData(s) => logger.write_string("InvalidData: " + s)

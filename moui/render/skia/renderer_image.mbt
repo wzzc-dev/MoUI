@@ -513,8 +513,7 @@ pub fn SkiaRasterRenderer::dispose(self : SkiaRasterRenderer) -> Unit {
   // placeholder so the old surface finalizer can destroy the EGL window before
   // sticky raster present reuses the same OHNativeWindow / ANativeWindow.
   if self.gpu_target is Some(_) {
-    match
-      @skia_native.Surface::raster_n32_premul(@moui_skia.ISize::new(1, 1)) {
+    match @skia_native.Surface::raster_n32_premul(@moui_skia.ISize::new(1, 1)) {
       Some(placeholder) => {
         self.surface = placeholder
         self.gpu_surface_attached = false
