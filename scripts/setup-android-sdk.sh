@@ -11,7 +11,7 @@ Counter Android APK.
 Options:
   --android-home <dir>    SDK root, default macOS ~/Library/Android/sdk,
                           Linux ~/Android/Sdk.
-  --compile-sdk <n>      Android platform level, default 35.
+  --compile-sdk <n>      Android compile platform, default 36.
   --build-tools <ver>    Android build-tools version, default 35.0.0.
   --cmake <ver>          Android SDK CMake version, default 3.22.1.
   --ndk <ver>            Android NDK version, default 28.2.13676358
@@ -39,7 +39,7 @@ case "$(uname -s 2>/dev/null || true)" in
 esac
 
 android_home="$default_android_home"
-compile_sdk="35"
+compile_sdk="36"
 build_tools_version="35.0.0"
 cmake_version="3.22.1"
 ndk_version="28.2.13676358"

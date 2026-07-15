@@ -4,12 +4,12 @@
         android:label="${mouiAppLabel}"
         android:theme="@style/AppTheme">
         <provider
-            android:name="dev.wzzc.moui.mobile.MobileClipboardProvider"
+            android:name="${mouiClipboardProviderClass}"
             android:authorities="${applicationId}.moui.clipboard"
             android:exported="false"
             android:grantUriPermissions="true" />
         <activity
-            android:name="dev.wzzc.moui.mobile.MobileActivity"
+            android:name="${mouiActivityClass}"
             android:configChanges="density|keyboard|keyboardHidden|orientation|screenSize"
             android:exported="true">
             <meta-data
