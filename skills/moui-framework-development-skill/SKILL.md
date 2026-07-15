@@ -163,7 +163,8 @@ owning-package boundaries clear.
   optional WebKitGTK platform-view sync, shared host event conversion, and
   explicit native menu/AT-SPI follow-up reporting.
 - `backend/android/`: experimental Android embedded native host scaffold. The
-  Activity/JNI layer owns lifecycle, `ANativeWindow` handle acquisition, and
+  canonical Kotlin/AndroidX `ComponentActivity` and registered-JNI layer own
+  lifecycle, PlatformView overlay composition, `ANativeWindow` acquisition, and
   Choreographer/IME/clipboard/accessibility forwarding into
   `AndroidRuntimeSession`; package checks are not runtime
   platform evidence.
@@ -176,23 +177,30 @@ owning-package boundaries clear.
   `MOUI_SKIA_PLATFORM=android` plus `MOUI_SKIA_ARCH=<arch>` for Android Skia
   cross-build checks.
 - `examples/counter/android_app` and `examples/component_gallery/android_app`:
-  experimental app-owned Gradle metadata projects over the shared
-  package-published `moui/mobile/android` Activity/JNI/CMake template. Use
+  repository-only Gradle metadata fixtures for the Release N matrix. Normal
+  builds stage the package-published `moui/mobile/android` managed
+  shell/JNI/CMake template. The
+  Java/name-mangled-JNI shell is frozen under `moui/mobile/legacy/android` as a
+  Release N fixture and requires `--legacy-java-shell`. Use
   `scripts/build-mobile-android-apk.sh --app <counter|component_gallery>
   --fallback-skia` for packaging/JNI/CMake smoke only; use the non-fallback path
   plus `record-mobile-runtime-smoke.mjs` matching device/emulator evidence before
   claiming Android runtime support.
-- `backend/ios/`: experimental iOS embedded native host scaffold. The UIKit
-  layer owns `UIApplicationDelegate` / `UIViewController` lifecycle, raw
-  `UIView` handle ownership, and touch forwarding into `IosRuntimeSession`;
-  package checks are not runtime platform evidence.
+- `backend/ios/`: experimental iOS embedded native host scaffold. The
+  package-owned SwiftUI shell owns the single-scene lifecycle, raw
+  `CAMetalLayer`-backed `UIView`, `CADisplayLink`, UIKit service adapters, and
+  touch forwarding into `IosRuntimeSession`; the Objective-C++ bridge only
+  negotiates and dispatches Mobile Runtime ABI v1. Package checks are not
+  runtime platform evidence.
 - `backend/ios/skia/`: iOS Skia provider over `render/skia`, with a UIKit
   `UIImageView` RGBA pixel presenter and preflight summary. Use
   `MOUI_SKIA_PLATFORM=iosSim` plus `MOUI_SKIA_ARCH=<arch>` for iOS Simulator
   Skia cross-build checks.
 - `examples/counter/ios_app` and `examples/component_gallery/ios_app`:
-  experimental app-owned Xcode metadata projects over the shared
-  package-published `moui/mobile/ios` UIKit/native build template. Use
+  repository-only Xcode fixtures for the Release N matrix. Normal builds stage
+  the package-published `moui/mobile/ios` SwiftUI managed shell. The frozen Release
+  N UIKit fixture lives under `moui/mobile/ios/legacy` and requires
+  `--legacy-uikit-shell`. Use
   `scripts/build-mobile-ios-app.sh --app <counter|component_gallery>
   --fallback-skia` for packaging/native-stub smoke only; use the non-fallback
   path plus `record-mobile-runtime-smoke.mjs` matching simulator/device evidence
@@ -209,19 +217,18 @@ owning-package boundaries clear.
   XComponent native-window RGBA pixel presenter and preflight summary. Use
   `MOUI_SKIA_PLATFORM=harmonyos`, `MOUI_SKIA_ARCH=arm64`, and
   `MOUI_SKIA_LINK_MODE=dynamic` for HarmonyOS Skia cross-build checks.
-- `mobile/harmonyos/`: package-published reusable HarmonyOS Stage
-  Ability/XComponent/NAPI/CMake template and native glue used by app-owned
-  HarmonyOS shells.
+- `mobile/harmonyos/`: package-published canonical ArkTS Stage
+  Ability/XComponent shell, plugin registry, fixed-ABI NAPI bridge, and CMake
+  template staged by managed builds.
 - `examples/harmonyos_demo`: standalone experimental HarmonyOS demo. It packages
-  shared app logic, a HarmonyOS Skia MoonBit export package, and an app-owned
-  Stage Ability/XComponent shell over `mobile/harmonyos`. Use
+  shared app logic and a HarmonyOS Skia MoonBit export package; managed builds
+  stage the canonical shell. Use
   `scripts/build-harmonyos-demo-app.sh --fallback-skia` for packaging/native-glue
   smoke only; use the non-fallback path plus matching device/emulator evidence
   before claiming HarmonyOS runtime support.
-- `examples/component_gallery/harmonyos` and
-  `examples/component_gallery/harmonyos_app`: Component Gallery's HarmonyOS
-  embedded-session entrypoint and app-owned Stage Ability/XComponent shell over
-  `mobile/harmonyos`.
+- `examples/component_gallery/harmonyos` is the managed Component Gallery
+  entrypoint; `examples/component_gallery/harmonyos_app` is the Release N
+  app-owned project fixture.
 - Component Gallery's mobile entrypoints open the shared `Mobile Service Probe`
   for matching-host IME, system text clipboard, accessibility action,
   rotation/resize, scroll, and async-image evidence. The mobile recorder only

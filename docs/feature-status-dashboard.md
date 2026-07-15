@@ -110,9 +110,9 @@ Local Component Gallery `mobile-runtime-smoke` evidence (validator
 
 | Platform | Status | Artifact | Notes |
 | --- | --- | --- | --- |
-| iOS Simulator | **`passed`** | `artifacts/mobile-runtime/ios/component_gallery/` | Full service set (IME/clipboard/a11y/async-image/detach/resize/input/scroll). Metal GPU route. |
-| Android emulator | **`passed`** | `artifacts/mobile-runtime/android/component_gallery/` | Full service set. Vulkan GPU route. Shell-side service smoke + semantics probe plan. |
-| HarmonyOS device | **pending install** | rebuild + signed HAP required | Service-smoke code path is in tree; commercial MateBook-class hosts reject unsigned/OpenHarmony-community HAPs (`9568320` / `9568257`). Provide `MOUI_HARMONYOS_SIGNING_CONFIG(_FILE)` and re-run `scripts/harmonyos-mobile-runtime-evidence.sh`. |
+| iOS Simulator | Release N UIKit shell **`passed`**; SwiftUI managed shell re-run pending | `artifacts/mobile-runtime/ios/component_gallery/` | Historical full-service/Metal evidence remains useful, but the canonical shell must be re-recorded through real system input and assistive technology without production-shell probes. |
+| Android emulator | Release N legacy shell **`passed`**; managed shell re-run pending | `artifacts/mobile-runtime/android/component_gallery/` | Historical full-service/Vulkan evidence remains useful, but the Kotlin canonical shell must be re-recorded through real system input and assistive technology without shell-side probes. |
+| HarmonyOS device | canonical ArkTS shell **`partial`** | rebuild + signed HAP required | The repository-only test-probe plugin must be installed by the evidence build; production `MoUIRoot` contains no automatic smoke behavior. Commercial MateBook-class hosts reject unsigned/OpenHarmony-community HAPs (`9568320` / `9568257`). Provide `MOUI_HARMONYOS_SIGNING_CONFIG(_FILE)` and re-run `scripts/harmonyos-mobile-runtime-evidence.sh`. |
 
 CI entrypoints: `moui-ios-mobile-runtime-evidence.yml`,
 `moui-android-mobile-runtime-evidence.yml` (self-hosted android),

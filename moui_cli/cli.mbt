@@ -43,7 +43,7 @@ fn root_usage() -> String {
     #|Commands:
     #|  new             Create an independent MoUI project.
     #|  doctor          Check the selected platform toolchains.
-    #|  mobile eject    Copy a managed mobile shell into the project.
+    #|  mobile eject    Materialize a versioned shell for application ownership.
     #|
     #|Options:
     #|  -h, --help      Show help.

@@ -98,9 +98,14 @@ window-indexed slots. Without a resolver, hosts reject `OpenWindow` with the
 shared unavailable-resolver message.
 
 `HostWindowRenderer` is the renderer-neutral runtime handle used by native host
-cores. It is a record of closures for resize, render, text-system access,
-image-resource diagnostics, present-count diagnostics, and disposal. The shared
-image repaint tracker consumes renderer-neutral image snapshots to route
+cores. Its stable constructor core contains resize, command/frame rendering,
+present-completion drain, text-system access, present-count diagnostics, and
+disposal. Optional behavior is grouped into opaque
+`HostRendererImageCapability`, `HostRendererPlatformViewCapability`, and
+`HostRendererGpuRecoveryCapability` records. Existing instance methods keep
+no-op/default semantics when a provider omits a capability, so hosts do not
+branch on renderer implementation details. The shared image repaint tracker
+consumes renderer-neutral image snapshots to route
 late-image redraws per open window and expose tracked-window revision plus
 loading/ready/failed/disposed status-count diagnostics, including
 previous/current counts on repaint results. Host cores depend only on

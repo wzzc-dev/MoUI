@@ -411,9 +411,10 @@ live assistive-technology session when focus/action logs are required.
 For HarmonyOS packaging changes, `scripts/build-harmonyos-demo-app.sh
 --fallback-skia` and `scripts/build-component-gallery-harmonyos-hap.sh
 --fallback-skia` are fast build-system smokes that cover MoonBit C exports,
-app-owned Stage Ability/XComponent shells over the `moui/mobile/harmonyos`
-NAPI/CMake template, native glue compilation, native-stub compilation, and
-staged HAP archives. They are not real Skia renderer or platform runtime
+the package-owned ArkTS Stage Ability/XComponent managed shell, fixed-ABI NAPI
+bridge, generated plugin registry, native glue compilation, native-stub
+compilation, and staged HAP archives. The checked-in app-owned projects are
+Release N fixtures. These builds are not real Skia renderer or platform runtime
 evidence. HarmonyOS first-frame/input/lifecycle claims still require a
 non-fallback HAP and a matching device or emulator run with recorded
 observations.
