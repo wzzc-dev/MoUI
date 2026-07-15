@@ -44,6 +44,13 @@ fn android_counter_renderer_options() -> @android_skia_backend.AndroidSkiaAppOpt
 }
 
 ///|
+fn android_counter_provider() -> @android_host.AndroidRendererProvider {
+  @android_skia_backend.renderer_provider(
+    options=android_counter_renderer_options(),
+  )
+}
+
+///|
 fn android_counter_pointer_phase(phase : Int) -> @core.PointerPhase? {
   match phase {
     0 => Some(@core.PointerPhase::Down)
@@ -62,19 +69,21 @@ pub fn android_counter_attach_surface(
   scale_factor : Double,
 ) -> Bool {
   let metrics = android_counter_metrics(width, height, scale_factor)
-  let runtime = android_counter_runtime(metrics)
-  match
-    @android_skia_backend.create_session(
-      runtime~,
-      surface=@android_host.AndroidSurfaceHandle::new(raw=surface_handle),
-      metrics~,
-      options=android_counter_renderer_options(),
-    ) {
-    Some(session) => {
-      android_counter_session.val = Some(session)
-      true
+  let surface = @android_host.AndroidSurfaceHandle::new(raw=surface_handle)
+  let provider = android_counter_provider()
+  match android_counter_session.val {
+    Some(session) => session.attach_surface(surface, metrics, provider)
+    None => {
+      let runtime = android_counter_runtime(metrics)
+      match
+        @android_host.create_session(runtime~, surface~, metrics~, provider~) {
+        Some(session) => {
+          android_counter_session.val = Some(session)
+          true
+        }
+        None => false
+      }
     }
-    None => false
   }
 }
 
@@ -142,6 +151,43 @@ pub fn android_counter_dispatch_pointer(
 }
 
 ///|
+pub fn android_counter_dispatch_scroll(
+  x : Double,
+  y : Double,
+  delta_x : Double,
+  delta_y : Double,
+  phase : Int,
+) -> Bool {
+  match android_counter_session.val {
+    Some(session) => {
+      let scale = session.metrics().scale_factor.max(1.0)
+      let scroll_phase = match phase {
+        0 => @host.HostScrollPhase::Started
+        1 => @host.HostScrollPhase::Moved
+        2 => @host.HostScrollPhase::Ended
+        3 => @host.HostScrollPhase::Cancelled
+        _ => @host.HostScrollPhase::Moved
+      }
+      ignore(
+        session.dispatch(
+          @host.HostEvent::Scroll(
+            @host.HostScrollEvent::new(
+              position=@core.Point::new(x=x / scale, y=y / scale),
+              delta=@host.HostScrollDelta::Pixels(
+                @core.Point::new(x=delta_x / scale, y=delta_y / scale),
+              ),
+              phase=scroll_phase,
+            ),
+          ),
+        ),
+      )
+      true
+    }
+    None => false
+  }
+}
+
+///|
 pub fn android_counter_render_frame() -> Bool {
   match android_counter_session.val {
     Some(session) => {
@@ -173,6 +219,22 @@ pub fn moui_mobile_take_host_updates_json() -> String {
   match android_counter_session.val {
     Some(session) => session.drain_host_updates_json()
     None => "[]"
+  }
+}
+
+///|
+pub fn moui_mobile_take_host_update_envelope_json() -> String {
+  match android_counter_session.val {
+    Some(session) => session.drain_host_update_envelope_json()
+    None => "{\"schemaVersion\":1,\"sessionGeneration\":0,\"updates\":[]}"
+  }
+}
+
+///|
+pub fn moui_mobile_dispatch_host_response_envelope_json(text : String) -> Bool {
+  match android_counter_session.val {
+    Some(session) => session.dispatch_host_response_envelope_json(text)
+    None => false
   }
 }
 
@@ -244,12 +306,95 @@ pub fn moui_mobile_complete_clipboard(
 }
 
 ///|
+pub fn moui_mobile_complete_clipboard_v1(
+  session_generation : Int,
+  id : Int,
+  kind : Int,
+  text : String,
+  bytes : Bytes,
+) -> Bool {
+  match android_counter_session.val {
+    Some(session) if session.session_generation() == session_generation =>
+      moui_mobile_complete_clipboard(id, kind, text, bytes)
+    _ => false
+  }
+}
+
+///|
 pub fn android_counter_detach_surface() -> Unit {
+  match android_counter_session.val {
+    Some(session) => ignore(session.detach_surface())
+    None => ()
+  }
+}
+
+///|
+pub fn android_counter_destroy_application() -> Unit {
   match android_counter_session.val {
     Some(session) => session.dispose()
     None => ()
   }
   android_counter_session.val = None
+}
+
+///|
+pub fn moui_mobile_attach_surface(
+  surface_handle : UInt64,
+  width : Int,
+  height : Int,
+  scale_factor : Double,
+) -> Bool {
+  android_counter_attach_surface(surface_handle, width, height, scale_factor)
+}
+
+///|
+pub fn moui_mobile_resize(
+  width : Int,
+  height : Int,
+  scale_factor : Double,
+) -> Bool {
+  android_counter_resize(width, height, scale_factor)
+}
+
+///|
+pub fn moui_mobile_dispatch_pointer(
+  phase : Int,
+  x : Double,
+  y : Double,
+  time_ms : Double,
+) -> Bool {
+  android_counter_dispatch_pointer(phase, x, y, time_ms)
+}
+
+///|
+pub fn moui_mobile_dispatch_scroll(
+  x : Double,
+  y : Double,
+  delta_x : Double,
+  delta_y : Double,
+  phase : Int,
+) -> Bool {
+  android_counter_dispatch_scroll(x, y, delta_x, delta_y, phase)
+}
+
+///|
+pub fn moui_mobile_frame_tick(time_ms : Double) -> Bool {
+  android_counter_frame_tick(time_ms)
+}
+
+///|
+pub fn moui_mobile_render_frame() -> Bool {
+  android_counter_render_frame()
+}
+
+///|
+pub fn moui_mobile_detach_surface() -> Unit {
+  android_counter_detach_surface()
+}
+
+///|
+pub fn moui_mobile_destroy_application() -> Unit {
+  android_counter_destroy_application()
 }
 
 ///|

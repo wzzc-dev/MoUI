@@ -45,7 +45,7 @@ pub struct AndroidRendererProvider {
 
 ///|
 pub struct AndroidRuntimeSession {
-  priv surface : AndroidSurfaceHandle
+  priv mut surface : AndroidSurfaceHandle
   priv core : @mobile_runtime.MobileRuntimeSessionCore
 }
 
@@ -239,10 +239,53 @@ pub fn AndroidRuntimeSession::disposed(self : AndroidRuntimeSession) -> Bool {
 }
 
 ///|
+pub fn AndroidRuntimeSession::surface_attached(
+  self : AndroidRuntimeSession,
+) -> Bool {
+  self.core.surface_attached()
+}
+
+///|
 pub fn AndroidRuntimeSession::session_generation(
   self : AndroidRuntimeSession,
 ) -> Int {
   self.core.session_generation()
+}
+
+///|
+pub fn AndroidRuntimeSession::attach_surface(
+  self : AndroidRuntimeSession,
+  surface : AndroidSurfaceHandle,
+  metrics : @host.HostSurfaceMetrics,
+  provider : AndroidRendererProvider,
+) -> Bool {
+  match provider.create(surface, metrics) {
+    Some(renderer) =>
+      if self.core.attach_surface(
+          renderer~,
+          metrics~,
+          image_loader=provider.image_loader,
+        ) {
+        self.surface = surface
+        provider.sync(surface, metrics)
+        true
+      } else {
+        false
+      }
+    None => false
+  }
+}
+
+///|
+pub fn AndroidRuntimeSession::detach_surface(
+  self : AndroidRuntimeSession,
+) -> Bool {
+  if self.core.detach_surface() {
+    self.surface = AndroidSurfaceHandle::none()
+    true
+  } else {
+    false
+  }
 }
 
 ///|
@@ -266,7 +309,9 @@ pub fn AndroidRuntimeSession::sync_surface(
   self : AndroidRuntimeSession,
   provider : AndroidRendererProvider,
 ) -> Unit {
-  provider.sync(self.surface, self.core.metrics())
+  if self.surface_attached() {
+    provider.sync(self.surface, self.core.metrics())
+  }
 }
 
 ///|
@@ -319,6 +364,14 @@ pub fn AndroidRuntimeSession::dispatch_host_response_envelope(
   envelope : @host.MobileHostResponseEnvelope,
 ) -> Bool {
   self.core.dispatch_host_response_envelope(envelope)
+}
+
+///|
+pub fn AndroidRuntimeSession::dispatch_host_response_envelope_json(
+  self : AndroidRuntimeSession,
+  text : String,
+) -> Bool {
+  self.core.dispatch_host_response_envelope_json(text)
 }
 
 ///|

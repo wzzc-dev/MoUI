@@ -70,6 +70,13 @@ fn component_gallery_android_renderer_options() -> @android_skia_backend.Android
 }
 
 ///|
+fn component_gallery_android_provider() -> @android_host.AndroidRendererProvider {
+  @android_skia_backend.renderer_provider(
+    options=component_gallery_android_renderer_options(),
+  )
+}
+
+///|
 fn component_gallery_android_pointer_phase(phase : Int) -> @core.PointerPhase? {
   match phase {
     0 => Some(@core.PointerPhase::Down)
@@ -88,19 +95,21 @@ pub fn component_gallery_android_attach_surface(
   scale_factor : Double,
 ) -> Bool {
   let metrics = component_gallery_android_metrics(width, height, scale_factor)
-  let runtime = component_gallery_android_runtime(metrics)
-  match
-    @android_skia_backend.create_session(
-      runtime~,
-      surface=@android_host.AndroidSurfaceHandle::new(raw=surface_handle),
-      metrics~,
-      options=component_gallery_android_renderer_options(),
-    ) {
-    Some(session) => {
-      component_gallery_android_session.val = Some(session)
-      true
+  let surface = @android_host.AndroidSurfaceHandle::new(raw=surface_handle)
+  let provider = component_gallery_android_provider()
+  match component_gallery_android_session.val {
+    Some(session) => session.attach_surface(surface, metrics, provider)
+    None => {
+      let runtime = component_gallery_android_runtime(metrics)
+      match
+        @android_host.create_session(runtime~, surface~, metrics~, provider~) {
+        Some(session) => {
+          component_gallery_android_session.val = Some(session)
+          true
+        }
+        None => false
+      }
     }
-    None => false
   }
 }
 
@@ -251,6 +260,22 @@ pub fn moui_mobile_take_host_updates_json() -> String {
 }
 
 ///|
+pub fn moui_mobile_take_host_update_envelope_json() -> String {
+  match component_gallery_android_session.val {
+    Some(session) => session.drain_host_update_envelope_json()
+    None => "{\"schemaVersion\":1,\"sessionGeneration\":0,\"updates\":[]}"
+  }
+}
+
+///|
+pub fn moui_mobile_dispatch_host_response_envelope_json(text : String) -> Bool {
+  match component_gallery_android_session.val {
+    Some(session) => session.dispatch_host_response_envelope_json(text)
+    None => false
+  }
+}
+
+///|
 pub fn moui_mobile_dispatch_text_input(
   kind : Int,
   text : String,
@@ -319,12 +344,97 @@ pub fn moui_mobile_complete_clipboard(
 }
 
 ///|
+pub fn moui_mobile_complete_clipboard_v1(
+  session_generation : Int,
+  id : Int,
+  kind : Int,
+  text : String,
+  bytes : Bytes,
+) -> Bool {
+  match component_gallery_android_session.val {
+    Some(session) if session.session_generation() == session_generation =>
+      moui_mobile_complete_clipboard(id, kind, text, bytes)
+    _ => false
+  }
+}
+
+///|
 pub fn component_gallery_android_detach_surface() -> Unit {
+  match component_gallery_android_session.val {
+    Some(session) => ignore(session.detach_surface())
+    None => ()
+  }
+}
+
+///|
+pub fn component_gallery_android_destroy_application() -> Unit {
   match component_gallery_android_session.val {
     Some(session) => session.dispose()
     None => ()
   }
   component_gallery_android_session.val = None
+}
+
+///|
+pub fn moui_mobile_attach_surface(
+  surface_handle : UInt64,
+  width : Int,
+  height : Int,
+  scale_factor : Double,
+) -> Bool {
+  component_gallery_android_attach_surface(
+    surface_handle, width, height, scale_factor,
+  )
+}
+
+///|
+pub fn moui_mobile_resize(
+  width : Int,
+  height : Int,
+  scale_factor : Double,
+) -> Bool {
+  component_gallery_android_resize(width, height, scale_factor)
+}
+
+///|
+pub fn moui_mobile_dispatch_pointer(
+  phase : Int,
+  x : Double,
+  y : Double,
+  time_ms : Double,
+) -> Bool {
+  component_gallery_android_dispatch_pointer(phase, x, y, time_ms)
+}
+
+///|
+pub fn moui_mobile_dispatch_scroll(
+  x : Double,
+  y : Double,
+  delta_x : Double,
+  delta_y : Double,
+  phase : Int,
+) -> Bool {
+  component_gallery_android_dispatch_scroll(x, y, delta_x, delta_y, phase)
+}
+
+///|
+pub fn moui_mobile_frame_tick(time_ms : Double) -> Bool {
+  component_gallery_android_frame_tick(time_ms)
+}
+
+///|
+pub fn moui_mobile_render_frame() -> Bool {
+  component_gallery_android_render_frame()
+}
+
+///|
+pub fn moui_mobile_detach_surface() -> Unit {
+  component_gallery_android_detach_surface()
+}
+
+///|
+pub fn moui_mobile_destroy_application() -> Unit {
+  component_gallery_android_destroy_application()
 }
 
 ///|

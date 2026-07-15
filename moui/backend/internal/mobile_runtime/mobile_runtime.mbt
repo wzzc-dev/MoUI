@@ -19,10 +19,10 @@ fn next_mobile_session_generation() -> Int {
 pub struct MobileRuntimeSessionCore {
   priv runtime : @runtime.AppRuntime
   priv driver : @host.HostRuntimeDriver
-  priv renderer : @host.HostWindowRenderer
+  priv mut renderer : @host.HostWindowRenderer?
   priv redraw_signal : MobileRedrawSignal
-  priv host_channel : @host.MobileHostChannel
-  priv image_coordinator : @host.MobileImageCoordinator
+  priv mut host_channel : @host.MobileHostChannel?
+  priv mut image_coordinator : @host.MobileImageCoordinator?
   priv mut metrics : @host.HostSurfaceMetrics
   priv mut disposed : Bool
   priv mut async_image_follow_up : Bool
@@ -58,29 +58,22 @@ pub fn MobileRuntimeSessionCore::new(
   let driver = @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     redraw_signal.request()
   })
-  let host_channel = @host.MobileHostChannel::new(
-    session_generation=next_mobile_session_generation(),
-  )
-  let image_coordinator = @host.MobileImageCoordinator::new(
-    renderer~,
-    image_loader~,
-    request_redraw=() => redraw_signal.request(),
-  )
-  driver.set_text_system(renderer.text_system())
-  ignore(driver.dispatch(@host.HostEvent::Resized(metrics)))
-  {
+  driver.set_text_system(@core.TextSystem::fallback())
+  let core : MobileRuntimeSessionCore = {
     runtime,
     driver,
-    renderer,
+    renderer: None,
     redraw_signal,
-    host_channel,
-    image_coordinator,
+    host_channel: None,
+    image_coordinator: None,
     metrics,
     disposed: false,
     async_image_follow_up: false,
     async_image_ready_logged: false,
     async_image_failed_logged: false,
   }
+  ignore(core.attach_surface(renderer~, metrics~, image_loader~))
+  core
 }
 
 ///|
@@ -105,10 +98,97 @@ pub fn MobileRuntimeSessionCore::disposed(
 }
 
 ///|
+pub fn MobileRuntimeSessionCore::surface_attached(
+  self : MobileRuntimeSessionCore,
+) -> Bool {
+  !self.disposed && self.renderer is Some(_)
+}
+
+///|
 pub fn MobileRuntimeSessionCore::session_generation(
   self : MobileRuntimeSessionCore,
 ) -> Int {
-  self.host_channel.session_generation()
+  match self.host_channel {
+    Some(channel) => channel.session_generation()
+    None => 0
+  }
+}
+
+///|
+pub fn MobileRuntimeSessionCore::attach_surface(
+  self : MobileRuntimeSessionCore,
+  renderer~ : @host.HostWindowRenderer,
+  metrics~ : @host.HostSurfaceMetrics,
+  image_loader? : @host.HostAsyncImageLoader? = None,
+) -> Bool {
+  if self.disposed {
+    renderer.dispose()
+    return false
+  }
+  ignore(self.detach_surface())
+  let host_channel = @host.MobileHostChannel::new(
+    session_generation=next_mobile_session_generation(),
+  )
+  let image_coordinator = @host.MobileImageCoordinator::new(
+    renderer~,
+    image_loader~,
+    request_redraw=() => self.redraw_signal.request(),
+  )
+  self.renderer = Some(renderer)
+  self.host_channel = Some(host_channel)
+  self.image_coordinator = Some(image_coordinator)
+  self.metrics = metrics
+  self.async_image_follow_up = false
+  self.async_image_ready_logged = false
+  self.async_image_failed_logged = false
+  self.driver.set_text_system(renderer.text_system())
+  ignore(self.driver.dispatch(@host.HostEvent::Resized(metrics)))
+  self.redraw_signal.request()
+  true
+}
+
+///|
+pub fn MobileRuntimeSessionCore::detach_surface(
+  self : MobileRuntimeSessionCore,
+) -> Bool {
+  if self.disposed || self.renderer is None {
+    return false
+  }
+  match self.host_channel {
+    Some(channel) =>
+      channel.dispose(
+        driver=self.driver,
+        reason="mobile surface epoch detached",
+      )
+    None => ()
+  }
+  match self.image_coordinator {
+    Some(coordinator) => coordinator.dispose()
+    None => ()
+  }
+  match self.renderer {
+    Some(renderer) => renderer.dispose()
+    None => ()
+  }
+  self.renderer = None
+  self.host_channel = None
+  self.image_coordinator = None
+  self.async_image_follow_up = false
+  self.async_image_ready_logged = false
+  self.async_image_failed_logged = false
+  ignore(self.redraw_signal.take())
+  self.driver.set_text_system(@core.TextSystem::fallback())
+  true
+}
+
+///|
+fn inactive_host_event_result() -> @host.HostEventResult {
+  {
+    close_requested: false,
+    needs_rebuild: false,
+    needs_redraw: false,
+    redraw_requested: false,
+  }
 }
 
 ///|
@@ -116,9 +196,14 @@ pub fn MobileRuntimeSessionCore::dispatch(
   self : MobileRuntimeSessionCore,
   event : @host.HostEvent,
 ) -> @host.HostEventResult {
-  let result = self.driver.dispatch(event)
-  ignore(self.host_channel.sync(self.runtime))
-  result
+  match self.host_channel {
+    Some(channel) if !self.disposed => {
+      let result = self.driver.dispatch(event)
+      ignore(channel.sync(self.runtime))
+      result
+    }
+    _ => inactive_host_event_result()
+  }
 }
 
 ///|
@@ -126,32 +211,42 @@ pub fn MobileRuntimeSessionCore::resize(
   self : MobileRuntimeSessionCore,
   metrics : @host.HostSurfaceMetrics,
 ) -> @host.HostEventResult {
-  self.metrics = metrics
-  self.renderer.resize(metrics)
-  let result = self.driver.dispatch(@host.HostEvent::Resized(metrics))
-  ignore(self.host_channel.sync(self.runtime))
-  result
+  match (self.renderer, self.host_channel) {
+    (Some(renderer), Some(channel)) if !self.disposed => {
+      self.metrics = metrics
+      renderer.resize(metrics)
+      let result = self.driver.dispatch(@host.HostEvent::Resized(metrics))
+      ignore(channel.sync(self.runtime))
+      result
+    }
+    _ => inactive_host_event_result()
+  }
 }
 
 ///|
 pub fn MobileRuntimeSessionCore::render_frame(
   self : MobileRuntimeSessionCore,
 ) -> @render.RenderFrameResult {
+  guard (self.renderer, self.host_channel, self.image_coordinator)
+    is (Some(renderer), Some(host_channel), Some(image_coordinator)) &&
+    !self.disposed else {
+    return @render.RenderFrameResult::new()
+  }
   self.driver.begin_redraw()
   let frame = self.driver.draw_frame()
-  ignore(self.host_channel.sync_platform_views(frame.platform_views))
-  let result = self.renderer.render_frame(frame)
-  ignore(self.renderer.drain_present_completions())
+  ignore(host_channel.sync_platform_views(frame.platform_views))
+  let result = renderer.render_frame(frame)
+  ignore(renderer.drain_present_completions())
   self.driver.apply_render_frame_result(result)
   self.driver.finish_redraw()
-  let image = self.image_coordinator.after_present(
-    present_count=self.renderer.present_count(),
+  let image = image_coordinator.after_present(
+    present_count=renderer.present_count(),
   )
   if image.scheduled_count > 0 {
     self.async_image_follow_up = true
     self.redraw_signal.request()
     ignore(
-      self.host_channel.push_diagnostic(
+      host_channel.push_diagnostic(
         "moui-mobile service async-image phase=loading scheduled=\{image.scheduled_count} present=\{image.present_count}",
       ),
     )
@@ -161,7 +256,7 @@ pub fn MobileRuntimeSessionCore::render_frame(
     !self.async_image_ready_logged {
     self.async_image_ready_logged = true
     ignore(
-      self.host_channel.push_diagnostic(
+      host_channel.push_diagnostic(
         "moui-mobile service async-image phase=ready ready=\{image.ready_count} present=\{image.present_count}",
       ),
     )
@@ -169,12 +264,12 @@ pub fn MobileRuntimeSessionCore::render_frame(
   if image.failed_count > 0 && !self.async_image_failed_logged {
     self.async_image_failed_logged = true
     ignore(
-      self.host_channel.push_diagnostic(
+      host_channel.push_diagnostic(
         "moui-mobile service async-image phase=failed failed=\{image.failed_count} present=\{image.present_count}",
       ),
     )
   }
-  ignore(self.host_channel.sync(self.runtime))
+  ignore(host_channel.sync(self.runtime))
   result
 }
 
@@ -183,9 +278,12 @@ pub fn MobileRuntimeSessionCore::advance_time(
   self : MobileRuntimeSessionCore,
   time_ms : Double,
 ) -> Unit {
-  if !self.disposed {
+  if self.surface_attached() {
     self.runtime.advance_time(time_ms)
-    ignore(self.host_channel.sync(self.runtime))
+    match self.host_channel {
+      Some(channel) => ignore(channel.sync(self.runtime))
+      None => ()
+    }
   }
 }
 
@@ -193,24 +291,45 @@ pub fn MobileRuntimeSessionCore::advance_time(
 pub fn MobileRuntimeSessionCore::drain_host_updates(
   self : MobileRuntimeSessionCore,
 ) -> Array[@host.MobileHostUpdate] {
-  ignore(self.host_channel.sync(self.runtime))
-  self.host_channel.drain_updates()
+  match self.host_channel {
+    Some(channel) if !self.disposed => {
+      ignore(channel.sync(self.runtime))
+      channel.drain_updates()
+    }
+    _ => []
+  }
 }
 
 ///|
 pub fn MobileRuntimeSessionCore::drain_host_updates_json(
   self : MobileRuntimeSessionCore,
 ) -> String {
-  ignore(self.host_channel.sync(self.runtime))
-  self.host_channel.drain_updates_json()
+  match self.host_channel {
+    Some(channel) if !self.disposed => {
+      ignore(channel.sync(self.runtime))
+      channel.drain_updates_json()
+    }
+    _ => "[]"
+  }
 }
 
 ///|
 pub fn MobileRuntimeSessionCore::drain_host_update_envelope_json(
   self : MobileRuntimeSessionCore,
 ) -> String {
-  ignore(self.host_channel.sync(self.runtime))
-  self.host_channel.drain_update_envelope_json()
+  match self.host_channel {
+    Some(channel) if !self.disposed => {
+      ignore(channel.sync(self.runtime))
+      channel.drain_update_envelope_json()
+    }
+    _ =>
+      (
+        {
+          "schemaVersion": 1,
+          "sessionGeneration": 0,
+          "updates": ([] : Array[Json]),
+        } : Json).stringify()
+  }
 }
 
 ///|
@@ -218,11 +337,16 @@ pub fn MobileRuntimeSessionCore::dispatch_host_response(
   self : MobileRuntimeSessionCore,
   response : @host.MobileHostResponse,
 ) -> Bool {
-  let handled = self.host_channel.dispatch_response(response, self.driver)
-  if handled {
-    ignore(self.host_channel.sync(self.runtime))
+  match self.host_channel {
+    Some(channel) if !self.disposed => {
+      let handled = channel.dispatch_response(response, self.driver)
+      if handled {
+        ignore(channel.sync(self.runtime))
+      }
+      handled
+    }
+    _ => false
   }
-  handled
 }
 
 ///|
@@ -230,28 +354,33 @@ pub fn MobileRuntimeSessionCore::dispatch_host_response_envelope(
   self : MobileRuntimeSessionCore,
   envelope : @host.MobileHostResponseEnvelope,
 ) -> Bool {
-  let handled = self.host_channel.dispatch_response_envelope(
-    envelope,
-    self.driver,
-  )
-  if handled {
-    ignore(self.host_channel.sync(self.runtime))
+  match self.host_channel {
+    Some(channel) if !self.disposed => {
+      let handled = channel.dispatch_response_envelope(envelope, self.driver)
+      if handled {
+        ignore(channel.sync(self.runtime))
+      }
+      handled
+    }
+    _ => false
   }
-  handled
 }
 
 ///|
 pub fn MobileRuntimeSessionCore::host_service_bridge(
   self : MobileRuntimeSessionCore,
 ) -> @host.HostServiceBridge {
-  self.host_channel.service_bridge()
+  match self.host_channel {
+    Some(channel) if !self.disposed => channel.service_bridge()
+    _ => @host.HostServiceBridge::unavailable()
+  }
 }
 
 ///|
 pub fn MobileRuntimeSessionCore::redraw_requested(
   self : MobileRuntimeSessionCore,
 ) -> Bool {
-  self.redraw_signal.requested
+  self.surface_attached() && self.redraw_signal.requested
 }
 
 ///|
@@ -259,7 +388,9 @@ pub fn MobileRuntimeSessionCore::take_redraw_requested(
   self : MobileRuntimeSessionCore,
 ) -> Bool {
   let requested = self.redraw_signal.take()
-  if self.async_image_follow_up {
+  if !self.surface_attached() {
+    false
+  } else if self.async_image_follow_up {
     self.async_image_follow_up = false
     true
   } else {
@@ -271,7 +402,10 @@ pub fn MobileRuntimeSessionCore::take_redraw_requested(
 pub fn MobileRuntimeSessionCore::present_count(
   self : MobileRuntimeSessionCore,
 ) -> Int {
-  self.renderer.present_count()
+  match self.renderer {
+    Some(renderer) if !self.disposed => renderer.present_count()
+    _ => 0
+  }
 }
 
 ///|
@@ -279,9 +413,7 @@ pub fn MobileRuntimeSessionCore::dispose(
   self : MobileRuntimeSessionCore,
 ) -> Unit {
   if !self.disposed {
-    self.host_channel.dispose()
-    self.image_coordinator.dispose()
-    self.renderer.dispose()
+    ignore(self.detach_surface())
     self.runtime.destroy()
     self.disposed = true
   }

@@ -151,7 +151,7 @@ typedef int32_t (*moui_mobile_render_frame_v1)(void);
 typedef int32_t (*moui_mobile_configure_renderer_v1)(
     moui_mobile_utf8_view_v1 mode);
 typedef moui_mobile_utf8_buffer_v1 (*moui_mobile_renderer_status_json_v1)(void);
-typedef moui_mobile_utf8_buffer_v1 (*moui_mobile_take_host_updates_json_v1)(void);
+typedef moui_mobile_utf8_buffer_v1 (*moui_mobile_take_host_update_envelope_json_v1)(void);
 typedef int32_t (*moui_mobile_dispatch_host_response_envelope_v1)(
     moui_mobile_utf8_view_v1 envelope_json);
 typedef int32_t (*moui_mobile_dispatch_text_input_v1)(
@@ -165,6 +165,7 @@ typedef int32_t (*moui_mobile_dispatch_accessibility_v1)(
     int32_t action,
     moui_mobile_utf8_view_v1 value);
 typedef int32_t (*moui_mobile_complete_clipboard_v1)(
+    int32_t session_generation,
     int32_t id,
     int32_t kind,
     moui_mobile_utf8_view_v1 text,
@@ -220,7 +221,9 @@ typedef struct moui_mobile_runtime_api_v1 {
   moui_mobile_renderer_status_json_v1 renderer_status_json;
 
   /* Host services. */
-  moui_mobile_take_host_updates_json_v1 take_host_updates_json;
+  /* Returns one Host Wire v1 update envelope with its surface generation. */
+  moui_mobile_take_host_update_envelope_json_v1
+      take_host_update_envelope_json;
   /*
    * Dispatches one length-driven Host Wire v1 UTF-8 response envelope. The
    * adapter preserves embedded NUL bytes; the MoonBit export owns JSON/schema
@@ -231,6 +234,7 @@ typedef struct moui_mobile_runtime_api_v1 {
   moui_mobile_dispatch_text_input_v1 dispatch_text_input;
   moui_mobile_dispatch_command_v1 dispatch_command;
   moui_mobile_dispatch_accessibility_v1 dispatch_accessibility;
+  /* session_generation rejects async completions from detached surfaces. */
   moui_mobile_complete_clipboard_v1 complete_clipboard;
 } moui_mobile_runtime_api_v1;
 
@@ -261,7 +265,7 @@ static inline int moui_mobile_runtime_api_v1_is_compatible(
       api->resize == NULL || api->dispatch_pointer == NULL ||
       api->frame_tick == NULL || api->render_frame == NULL ||
       api->configure_renderer == NULL || api->renderer_status_json == NULL ||
-      api->take_host_updates_json == NULL ||
+      api->take_host_update_envelope_json == NULL ||
       api->dispatch_host_response_envelope == NULL ||
       api->dispatch_text_input == NULL || api->dispatch_command == NULL ||
       api->dispatch_accessibility == NULL ||

@@ -55,7 +55,7 @@ pub(all) enum MobileHostResponse {
   Command(@core.CommandIntent)
   Clipboard(HostServiceRequestId, HostServiceResponse)
   Accessibility(NativeAccessibilityActionRequest)
-  PlatformView(String, String, @core.PlatformViewEvent)
+  PlatformView(Int, String, String, @core.PlatformViewEvent)
   PlatformChannel(HostServiceRequestId, PlatformChannelResponse)
 } derive(Eq, Debug, ToJson)
 
@@ -637,8 +637,9 @@ pub fn MobileHostChannel::dispatch_response(
         request.action,
         value=request.value,
       )
-    MobileHostResponse::PlatformView(kind, id, event) => {
-      if !self.last_platform_views.any(placement => {
+    MobileHostResponse::PlatformView(revision, kind, id, event) => {
+      if revision != self.platform_view_revision ||
+        !self.last_platform_views.any(placement => {
           placement.kind == kind && placement.id == id
         }) {
         return false
@@ -684,17 +685,5 @@ pub fn MobileHostChannel::dispatch_response_envelope(
     false
   } else {
     self.dispatch_response(envelope.response, driver)
-  }
-}
-
-///|
-pub fn MobileHostChannel::dispose(self : MobileHostChannel) -> Unit {
-  if !self.disposed {
-    self.disposed = true
-    self.updates = []
-    self.last_text_input = None
-    self.last_semantics_nodes = []
-    self.last_platform_views = []
-    ignore(self.service_queue.cancel_all())
   }
 }

@@ -66,6 +66,40 @@ common_cxx_flags=(
   -c "$runtime_source" \
   -o "$tmp_dir/runtime.o"
 
+"$cxx" \
+  "${common_cxx_flags[@]}" \
+  "${sanitize_flags[@]}" \
+  -c "$adapter_source" \
+  -o "$tmp_dir/adapter-default-symbols.o"
+
+nm -u "$tmp_dir/adapter-default-symbols.o" \
+  >"$tmp_dir/nm-adapter-default-symbols.txt"
+default_app_symbols=(
+  moui_mobile_attach_surface
+  moui_mobile_resize
+  moui_mobile_dispatch_pointer
+  moui_mobile_dispatch_scroll
+  moui_mobile_frame_tick
+  moui_mobile_render_frame
+  moui_mobile_detach_surface
+  moui_mobile_destroy_application
+  moui_mobile_renderer_configure
+  moui_mobile_renderer_status_json
+  moui_mobile_take_host_update_envelope_json
+  moui_mobile_dispatch_host_response_envelope_json
+  moui_mobile_dispatch_text_input
+  moui_mobile_dispatch_command
+  moui_mobile_dispatch_accessibility
+  moui_mobile_complete_clipboard_v1
+)
+for symbol in "${default_app_symbols[@]}"; do
+  if ! rg -q "(^|[[:space:]])_?${symbol}($|[[:space:]])" \
+      "$tmp_dir/nm-adapter-default-symbols.txt"; then
+    echo "default ABI adapter does not reference fixed app symbol: $symbol" >&2
+    exit 1
+  fi
+done
+
 adapter_defines=(
   -DMOUI_MOBILE_RUNTIME_INIT=mock_runtime_init
   -DMOUI_MOBILE_RUNTIME_APP_INIT=mock_app_init
@@ -78,7 +112,7 @@ adapter_defines=(
   -DMOUI_MOBILE_RUNTIME_DESTROY_APPLICATION=mock_destroy_application
   -DMOUI_MOBILE_RUNTIME_RENDERER_CONFIGURE=mock_renderer_configure
   -DMOUI_MOBILE_RUNTIME_RENDERER_STATUS_JSON=mock_renderer_status_json
-  -DMOUI_MOBILE_RUNTIME_TAKE_HOST_UPDATES_JSON=mock_take_host_updates_json
+  -DMOUI_MOBILE_RUNTIME_TAKE_HOST_UPDATE_ENVELOPE_JSON=mock_take_host_updates_json
   -DMOUI_MOBILE_RUNTIME_DISPATCH_HOST_RESPONSE_ENVELOPE=mock_dispatch_host_response_envelope
   -DMOUI_MOBILE_RUNTIME_DISPATCH_TEXT_INPUT=mock_dispatch_text_input
   -DMOUI_MOBILE_RUNTIME_DISPATCH_COMMAND=mock_dispatch_command

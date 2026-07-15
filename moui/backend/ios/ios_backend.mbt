@@ -45,7 +45,7 @@ pub struct IosRendererProvider {
 
 ///|
 pub struct IosRuntimeSession {
-  priv view : IosViewHandle
+  priv mut view : IosViewHandle
   priv core : @mobile_runtime.MobileRuntimeSessionCore
 }
 
@@ -237,8 +237,47 @@ pub fn IosRuntimeSession::disposed(self : IosRuntimeSession) -> Bool {
 }
 
 ///|
+pub fn IosRuntimeSession::surface_attached(self : IosRuntimeSession) -> Bool {
+  self.core.surface_attached()
+}
+
+///|
 pub fn IosRuntimeSession::session_generation(self : IosRuntimeSession) -> Int {
   self.core.session_generation()
+}
+
+///|
+pub fn IosRuntimeSession::attach_view(
+  self : IosRuntimeSession,
+  view : IosViewHandle,
+  metrics : @host.HostSurfaceMetrics,
+  provider : IosRendererProvider,
+) -> Bool {
+  match provider.create(view, metrics) {
+    Some(renderer) =>
+      if self.core.attach_surface(
+          renderer~,
+          metrics~,
+          image_loader=provider.image_loader,
+        ) {
+        self.view = view
+        provider.sync(view, metrics)
+        true
+      } else {
+        false
+      }
+    None => false
+  }
+}
+
+///|
+pub fn IosRuntimeSession::detach_view(self : IosRuntimeSession) -> Bool {
+  if self.core.detach_surface() {
+    self.view = IosViewHandle::none()
+    true
+  } else {
+    false
+  }
 }
 
 ///|
@@ -262,7 +301,9 @@ pub fn IosRuntimeSession::sync_view(
   self : IosRuntimeSession,
   provider : IosRendererProvider,
 ) -> Unit {
-  provider.sync(self.view, self.core.metrics())
+  if self.surface_attached() {
+    provider.sync(self.view, self.core.metrics())
+  }
 }
 
 ///|
@@ -315,6 +356,14 @@ pub fn IosRuntimeSession::dispatch_host_response_envelope(
   envelope : @host.MobileHostResponseEnvelope,
 ) -> Bool {
   self.core.dispatch_host_response_envelope(envelope)
+}
+
+///|
+pub fn IosRuntimeSession::dispatch_host_response_envelope_json(
+  self : IosRuntimeSession,
+  text : String,
+) -> Bool {
+  self.core.dispatch_host_response_envelope_json(text)
 }
 
 ///|
