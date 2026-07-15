@@ -2,6 +2,7 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+artifact_root="${MOUI_MOBILE_SHELL_CI_ROOT:-$repo_root/artifacts/mobile-shell-ci}"
 config="$repo_root/moui/mobile/legacy/fixtures/component_gallery.mobile.json"
 
 "$repo_root/moui/scripts/mobile/build-harmonyos-hap.sh" \
@@ -11,6 +12,7 @@ config="$repo_root/moui/mobile/legacy/fixtures/component_gallery.mobile.json"
   --app component_gallery \
   --app-config "$config" \
   --harmonyos-project "$repo_root/examples/component_gallery/harmonyos_app" \
-  --build-dir "$repo_root/artifacts/harmonyos/component-gallery-legacy-fixture" \
+  --build-dir "$artifact_root/harmonyos/legacy" \
+  --output "$artifact_root/harmonyos/legacy/ComponentGallery.hap" \
   --legacy-shell \
   "$@"
