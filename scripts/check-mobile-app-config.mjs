@@ -53,6 +53,11 @@ const validateAndroidManagedShell = failures => {
     "MoUINativeBridge.destroyApplication()",
     "moui-mobile application destroy result=",
     "dispatchScrollPhase(phase, x, y)",
+    "META_STATUS_BAR",
+    "STATUS_BAR_HIDDEN -> true",
+    "STATUS_BAR_VISIBLE -> false",
+    "WindowInsetsCompat.Type.navigationBars()",
+    "WindowInsetsCompat.Type.statusBars()",
   ]);
   if (activity.indexOf("root.addView(surfaceView") > activity.indexOf("root.addView(overlay")) {
     failures.push("managed Android Activity must place MoUISurfaceView below the PlatformView overlay");
@@ -213,7 +218,17 @@ const validateAndroidManagedShell = failures => {
   const gradle = readRepoFile("moui/mobile/android/mobile-app.gradle");
   requireTokens(failures, "managed Android Gradle glue", gradle, [
     "mouiAndroidShell",
-    '"managed", "legacy"',
+    '"managed", "ejected", "legacy"',
+    "modernAndroidShell",
+    "ejectedAndroidShell",
+    'file("${generatedRoot}/android/${androidShell}-shell")',
+    'file("${generatedShellRoot}/shell-config.json")',
+    "new JsonSlurper().parse(generatedShellConfigFile)",
+    "manifest.srcFile androidManagedManifest",
+    "res.srcDirs += androidAppResources",
+    "managedShellConfig.minSdk.intValue()",
+    "mouiMinSdk is only supported by the explicit legacy Android shell",
+    "Generated ejected Android config must not claim project-owned manifest or resources",
     "kotlin.srcDirs",
     'file("${generatedRoot}/android/plugins")',
     'file("${androidPluginRoot}/generated/kotlin")',
@@ -235,14 +250,15 @@ const validateAndroidManagedShell = failures => {
     "28.2.13676358",
     "JavaVersion.VERSION_17",
     'version = "3.22.1"',
-    'safeAppId = appId.replaceAll("[^A-Za-z0-9_]", "_")',
-    "androidConfig = legacyMobileConfig",
-    'nativeLibrary: "moui_${safeAppId}_android"',
     "legacySupportsScroll",
-    "if (legacyMobileConfig)",
+    "if (modernAndroidShell)",
+    "if (managedAndroidShell)",
     'throw new GradleException("MoUI legacy Android app ${appId} is missing exports.${key}',
     '"--android-shell", androidShell',
   ]);
+  if (gradle.indexOf("new JsonSlurper().parse(metadataFile)") < gradle.indexOf("if (modernAndroidShell)")) {
+    failures.push("managed/ejected Android Gradle must not parse raw mobile.json outside the legacy branch");
+  }
   const cmake = readRepoFile("moui/mobile/android/cmake/MoUIMobileAndroid.cmake");
   requireTokens(failures, "managed Android CMake glue", cmake, [
     "mobile/runtime/moui_mobile_runtime_v1.cpp",
@@ -259,16 +275,21 @@ const validateAndroidManagedShell = failures => {
   const prepareNative = readRepoFile("moui/scripts/mobile/prepare-native-build.mjs");
   requireTokens(failures, "Android native build preparation", prepareNative, [
     'import { prepareAndroidPlugins } from "../../mobile/android/prepare-plugins.mjs"',
+    'import { resolveAndroidManagedShell } from "../../mobile/android/resolve-managed-shell.mjs"',
     "--android-shell <mode>",
     'androidShell: "managed"',
+    '"managed", "ejected", "legacy"',
     "validateAndroidLegacyExports",
     'androidShell === "legacy"',
     "legacySymbolLines",
     "...legacySymbolLines",
     'if (androidShell === "legacy") validateAndroidLegacyExports(config)',
     "prepareAndroidPlugins({",
+    "resolveAndroidManagedShell({ app: appConfig, buildDir, workspaceRoot })",
+    "appConfig.android.shellMode !== androidShell",
     "plugins,",
     "shellMode: androidShell",
+    "androidShellConfig,",
     "androidPlugins,",
     "plugins: appConfig.plugins",
     "androidShell,",
@@ -279,10 +300,14 @@ const validateAndroidManagedShell = failures => {
 
   const pluginPreparerPath = "moui/mobile/android/prepare-plugins.mjs";
   const pluginTestPath = "moui/mobile/android/prepare-plugins.test.mjs";
+  const managedResolverPath = "moui/mobile/android/resolve-managed-shell.mjs";
+  const managedResolverTestPath = "moui/mobile/android/resolve-managed-shell.test.mjs";
   const pluginFixtureRoot = "moui/mobile/android/tests/fixtures/plugin";
   for (const path of [
     pluginPreparerPath,
     pluginTestPath,
+    managedResolverPath,
+    managedResolverTestPath,
     `${pluginFixtureRoot}/moui.plugin.json`,
     `${pluginFixtureRoot}/android/src/dev/fixture/android/FixturePlugin.kt`,
     `${pluginFixtureRoot}/android/src/dev/fixture/android/FixturePluginHelper.java`,
@@ -293,6 +318,7 @@ const validateAndroidManagedShell = failures => {
     requireTokens(failures, "managed Android plugin preparer", pluginPreparer, [
       "export const validateAndroidPluginEntry",
       "export const prepareAndroidPlugins",
+      '"managed", "ejected", "legacy"',
       'shellMode === "legacy"',
       "rmSync(root, { recursive: true, force: true })",
       'join(root, "generated", "kotlin")',
@@ -311,11 +337,32 @@ const validateAndroidManagedShell = failures => {
     const pluginTest = readRepoFile(pluginTestPath);
     requireTokens(failures, "managed Android plugin tests", pluginTest, [
       "stage Kotlin, Java, resources, and a direct registry",
-      "legacy Android preparation removes and does not expose managed plugin inputs",
+      "ejected Android stages app-owned plugin inputs while legacy remains isolated",
       "safe fully qualified type names",
       "rejecting true resource conflicts",
       "flows from manifest parser into generated registry",
     ]);
+  }
+  if (existsSync(resolve(repoRoot, managedResolverPath))) {
+    const managedResolver = readRepoFile(managedResolverPath);
+    requireTokens(failures, "managed Android shell resolver", managedResolver, [
+      "readMobileApp",
+      "resolveAndroidPermissionCapabilities",
+      '"camera"',
+      '"microphone"',
+      '"location"',
+      '"notifications"',
+      '"photos"',
+      '"clipboard"',
+      "stageAppResources",
+      'configurationOwnership: managed ? "framework-managed" : "project-owned"',
+      "manifestPath = managed ?",
+      "resourceDirs: appResources.resourceDirs",
+      "eject the Android shell",
+    ]);
+    if (managedResolver.includes("dev.wzzc.moui.SUPPORTS_SCROLL")) {
+      failures.push("managed Android generated Manifest must not restore removed supportsScroll metadata");
+    }
   }
   const wrapper = readRepoFile("gradlew");
   if (!wrapper.includes('gradle_version="${MOUI_GRADLE_VERSION:-9.6.1}"')) {
@@ -353,8 +400,12 @@ const validateAndroidManagedShell = failures => {
     'compile_sdk="36"',
     'target_sdk="35"',
     'mouiAndroidShell=legacy',
+    'mouiAndroidShell=ejected',
     'prepare_args+=("--android-shell" "managed")',
+    'prepare_args+=("--android-shell" "ejected")',
     'prepare_args+=("--android-shell" "legacy")',
+    'schema v2 android.minSdk owns managed builds',
+    'gradle_args+=("-PmouiMinSdk=$api_level")',
     'android_project="$build_dir/android-project"',
     "stage_android_project=1",
     'template_root="$moui_root/mobile/android/template"',

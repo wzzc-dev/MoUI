@@ -22,6 +22,7 @@ class MoUIActivity : ComponentActivity(), SurfaceHolder.Callback {
     private var attached = false
     private var started = false
     private var fullscreen = false
+    private var statusBar = STATUS_BAR_AUTO
     private var hasLastTouchPoint = false
     private var lastTouchX = 0f
     private var lastTouchY = 0f
@@ -49,6 +50,7 @@ class MoUIActivity : ComponentActivity(), SurfaceHolder.Callback {
         MoUIGeneratedPluginRegistry.install(this, pluginCapabilities)
         Log.i(LOG_TAG, "moui-mobile renderer status=${MoUINativeBridge.rendererStatusJson()}")
         fullscreen = manifestBoolean(META_FULLSCREEN, false)
+        statusBar = manifestStatusBar()
         configureWindow()
 
         val root = FrameLayout(this)
@@ -210,9 +212,19 @@ class MoUIActivity : ComponentActivity(), SurfaceHolder.Callback {
         if (fullscreen) {
             controller.systemBarsBehavior =
                 WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            controller.hide(WindowInsetsCompat.Type.systemBars())
+            controller.hide(WindowInsetsCompat.Type.navigationBars())
         } else {
-            controller.show(WindowInsetsCompat.Type.systemBars())
+            controller.show(WindowInsetsCompat.Type.navigationBars())
+        }
+        val hideStatusBar = when (statusBar) {
+            STATUS_BAR_HIDDEN -> true
+            STATUS_BAR_VISIBLE -> false
+            else -> fullscreen
+        }
+        if (hideStatusBar) {
+            controller.hide(WindowInsetsCompat.Type.statusBars())
+        } else {
+            controller.show(WindowInsetsCompat.Type.statusBars())
         }
     }
 
@@ -229,6 +241,13 @@ class MoUIActivity : ComponentActivity(), SurfaceHolder.Callback {
     private fun manifestBoolean(key: String, fallback: Boolean): Boolean =
         activityInfo().metaData?.getBoolean(key, fallback) ?: fallback
 
+    private fun manifestStatusBar(): String = when (val value = manifestString(META_STATUS_BAR)) {
+        null, STATUS_BAR_AUTO -> STATUS_BAR_AUTO
+        STATUS_BAR_VISIBLE -> STATUS_BAR_VISIBLE
+        STATUS_BAR_HIDDEN -> STATUS_BAR_HIDDEN
+        else -> error("invalid manifest metadata $META_STATUS_BAR=$value")
+    }
+
     private fun activityInfo(): ActivityInfo =
         try {
             packageManager.getActivityInfo(componentName, PackageManager.GET_META_DATA)
@@ -240,6 +259,10 @@ class MoUIActivity : ComponentActivity(), SurfaceHolder.Callback {
         private const val LOG_TAG = "MoUIMobile"
         private const val META_NATIVE_LIBRARY = "dev.wzzc.moui.NATIVE_LIBRARY"
         private const val META_FULLSCREEN = "dev.wzzc.moui.FULLSCREEN"
+        private const val META_STATUS_BAR = "dev.wzzc.moui.STATUS_BAR"
+        private const val STATUS_BAR_AUTO = "auto"
+        private const val STATUS_BAR_VISIBLE = "visible"
+        private const val STATUS_BAR_HIDDEN = "hidden"
 
         private fun pointerPhase(action: Int): Int = when (action) {
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> 0

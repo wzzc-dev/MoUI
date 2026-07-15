@@ -83,12 +83,16 @@ test("managed Android plugins stage Kotlin, Java, resources, and a direct regist
   });
 });
 
-test("legacy Android preparation removes and does not expose managed plugin inputs", () => {
+test("ejected Android stages app-owned plugin inputs while legacy remains isolated", () => {
   withWorkspace(workspace => {
     const buildDir = join(workspace, "build");
     const plugin = createPlugin(workspace, "sample");
     const managed = prepareAndroidPlugins({ plugins: [plugin], buildDir, shellMode: "managed" });
     assert.ok(existsSync(managed.root));
+    const ejected = prepareAndroidPlugins({ plugins: [plugin], buildDir, shellMode: "ejected" });
+    assert.equal(ejected.enabled, true);
+    assert.equal(ejected.plugins.length, 1);
+    assert.ok(existsSync(ejected.registryFile));
     const legacy = prepareAndroidPlugins({ plugins: [plugin], buildDir, shellMode: "legacy" });
     assert.equal(legacy.enabled, false);
     assert.equal(legacy.registryFile, "");

@@ -16,7 +16,7 @@ Options:
   --moui-root <dir>       MoUI package root. Default this script's package.
   --skia-root <dir>       moui_skia package root.
   --abi <abi>             Android ABI, default arm64-v8a.
-  --api <level>           Android min SDK, default 23.
+  --api <level>           Release N legacy-shell min SDK override, default 23.
   --compile-sdk <n>       Android compile SDK, default 36 (Activity 1.13 floor).
   --target-sdk <n>        Android target SDK, default 35.
   --renderer <mode>       auto, skia-gpu, or skia-raster. Default auto.
@@ -38,7 +38,7 @@ android_project=""
 app_config=""
 contracts=""
 abi="arm64-v8a"
-api_level="23"
+api_level=""
 compile_sdk="36"
 target_sdk="35"
 renderer="auto"
@@ -83,6 +83,13 @@ fi
 if [ "$ejected_shell" -eq 1 ] && [ "$legacy_java_shell" -eq 1 ]; then
   echo "--ejected-shell and --legacy-java-shell are mutually exclusive" >&2
   exit 2
+fi
+if [ "$legacy_java_shell" -eq 0 ] && [ -n "$api_level" ]; then
+  echo "--api is only supported with --legacy-java-shell; schema v2 android.minSdk owns managed builds" >&2
+  exit 2
+fi
+if [ "$legacy_java_shell" -eq 1 ] && [ -z "$api_level" ]; then
+  api_level="23"
 fi
 
 case "$workspace_root" in /*) ;; *) workspace_root="$(pwd)/$workspace_root" ;; esac
@@ -182,6 +189,8 @@ prepare_args=(
 )
 if [ "$legacy_java_shell" -eq 1 ]; then
   prepare_args+=("--android-shell" "legacy")
+elif [ "$ejected_shell" -eq 1 ]; then
+  prepare_args+=("--android-shell" "ejected")
 else
   prepare_args+=("--android-shell" "managed")
 fi
@@ -260,7 +269,6 @@ gradle_args=(
   :app:assembleDebug
   "-PmouiApp=$app"
   "-PmouiAbi=$abi"
-  "-PmouiMinSdk=$api_level"
   "-PmouiCompileSdk=$compile_sdk"
   "-PmouiTargetSdk=$target_sdk"
   "-PmouiRenderer=$renderer"
@@ -268,6 +276,7 @@ gradle_args=(
   "-PmouiWorkspaceRoot=$workspace_root"
   "-PmouiRoot=$moui_root"
 )
+[ "$legacy_java_shell" -eq 0 ] || gradle_args+=("-PmouiMinSdk=$api_level")
 [ -z "$skia_root" ] || gradle_args+=("-PmouiSkiaRoot=$skia_root")
 [ -z "$app_config" ] || gradle_args+=("-PmouiAppConfig=$app_config")
 [ -z "$contracts" ] || gradle_args+=("-PmouiContracts=$contracts")
@@ -276,6 +285,8 @@ if [ "$fallback_skia" -eq 1 ]; then
 fi
 if [ "$legacy_java_shell" -eq 1 ]; then
   gradle_args+=("-PmouiAndroidShell=legacy")
+elif [ "$ejected_shell" -eq 1 ]; then
+  gradle_args+=("-PmouiAndroidShell=ejected")
 fi
 
 "${gradle_cmd[@]}" "${gradle_args[@]}"
