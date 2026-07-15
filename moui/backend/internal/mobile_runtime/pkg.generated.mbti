@@ -1,0 +1,37 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/backend/internal/mobile_runtime"
+
+import {
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/runtime",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct MobileRuntimeSessionCore {
+  // private fields
+}
+pub fn MobileRuntimeSessionCore::advance_time(Self, Double) -> Unit
+pub fn MobileRuntimeSessionCore::dispatch(Self, @host.HostEvent) -> @host.HostEventResult
+pub fn MobileRuntimeSessionCore::dispatch_host_response(Self, @host.MobileHostResponse) -> Bool
+pub fn MobileRuntimeSessionCore::dispose(Self) -> Unit
+pub fn MobileRuntimeSessionCore::disposed(Self) -> Bool
+pub fn MobileRuntimeSessionCore::drain_host_updates(Self) -> Array[@host.MobileHostUpdate]
+pub fn MobileRuntimeSessionCore::drain_host_updates_json(Self) -> String
+pub fn MobileRuntimeSessionCore::host_service_bridge(Self) -> @host.HostServiceBridge
+pub fn MobileRuntimeSessionCore::metrics(Self) -> @host.HostSurfaceMetrics
+pub fn MobileRuntimeSessionCore::new(runtime~ : @runtime.AppRuntime, renderer~ : @host.HostWindowRenderer, metrics~ : @host.HostSurfaceMetrics, image_loader? : @host.HostAsyncImageLoader?) -> Self
+pub fn MobileRuntimeSessionCore::present_count(Self) -> Int
+pub fn MobileRuntimeSessionCore::redraw_requested(Self) -> Bool
+pub fn MobileRuntimeSessionCore::render_frame(Self) -> @render.RenderFrameResult
+pub fn MobileRuntimeSessionCore::resize(Self, @host.HostSurfaceMetrics) -> @host.HostEventResult
+pub fn MobileRuntimeSessionCore::runtime(Self) -> @runtime.AppRuntime
+pub fn MobileRuntimeSessionCore::take_redraw_requested(Self) -> Bool
+
+// Type aliases
+
+// Traits

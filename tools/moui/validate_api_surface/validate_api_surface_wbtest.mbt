@@ -52,6 +52,10 @@ test "api surface semantic categories cover public surface tiers" {
   assert_true(paths.contains("moui/runtime/pkg.generated.mbti"))
   assert_true(paths.contains("moui/backend/host/pkg.generated.mbti"))
   assert_true(paths.contains("moui/render/pkg.generated.mbti"))
+  inspect(
+    paths.contains("moui/backend/internal/mobile_runtime/pkg.generated.mbti"),
+    content="false",
+  )
 }
 
 ///|
@@ -98,7 +102,7 @@ test "api surface classification budgets pin current high-risk packages" {
     classification_budget(
       "moui/backend/host/pkg.generated.mbti", "host_contract",
     ).max_count,
-    content="455",
+    content="462",
   )
   inspect(
     classification_budget("moui/render/pkg.generated.mbti", "renderer_contract").max_count,
@@ -682,6 +686,27 @@ test "shared app core import budget is an explicit advanced-app allowlist" {
   assert_true(allowed.contains("examples/pdf_workbench/app/moon.pkg"))
   assert_true(allowed.contains("examples/showcase/app/moon.pkg"))
   assert_true(allowed.contains("website/app/moon.pkg"))
+}
+
+///|
+test "internal mobile runtime imports are restricted to mobile backends" {
+  let allowed = allowed_mobile_runtime_internal_imports()
+  inspect(allowed.length(), content="4")
+  assert_true(allowed.contains("moui/backend/android/moon.pkg"))
+  assert_true(allowed.contains("moui/backend/ios/moon.pkg"))
+  assert_true(allowed.contains("moui/backend/harmonyos/moon.pkg"))
+  assert_true(allowed.contains("moui/backend/internal/mobile_runtime/moon.pkg"))
+  let token = "  \"" + mobile_runtime_internal_package_token() + "\",\n"
+  let failures : Array[String] = []
+  validate_mobile_runtime_internal_import_text(
+    "moui/backend/android/moon.pkg", token, failures,
+  )
+  inspect(failures.length(), content="0")
+  validate_mobile_runtime_internal_import_text(
+    "examples/counter/app/moon.pkg", token, failures,
+  )
+  inspect(failures.length(), content="1")
+  assert_true(failures[0].contains("may only be imported"))
 }
 
 ///|

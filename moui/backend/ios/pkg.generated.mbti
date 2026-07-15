@@ -65,9 +65,14 @@ pub fn IosRendererProvider::new(create_renderer~ : (IosViewHandle, @host.HostSur
 pub struct IosRuntimeSession {
   // private fields
 }
+pub fn IosRuntimeSession::advance_time(Self, Double) -> Unit
 pub fn IosRuntimeSession::dispatch(Self, @host.HostEvent) -> @host.HostEventResult
+pub fn IosRuntimeSession::dispatch_host_response(Self, @host.MobileHostResponse) -> Bool
 pub fn IosRuntimeSession::dispose(Self) -> Unit
 pub fn IosRuntimeSession::disposed(Self) -> Bool
+pub fn IosRuntimeSession::drain_host_updates(Self) -> Array[@host.MobileHostUpdate]
+pub fn IosRuntimeSession::drain_host_updates_json(Self) -> String
+pub fn IosRuntimeSession::host_service_bridge(Self) -> @host.HostServiceBridge
 pub fn IosRuntimeSession::metrics(Self) -> @host.HostSurfaceMetrics
 pub fn IosRuntimeSession::present_count(Self) -> Int
 pub fn IosRuntimeSession::redraw_requested(Self) -> Bool
@@ -88,4 +93,3 @@ pub fn IosViewHandle::raw(Self) -> UInt64
 // Type aliases
 
 // Traits
-

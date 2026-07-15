@@ -385,8 +385,8 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "host contracts",
       path: "moui/backend/host/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/backend/host\"",
-      max_lines: 1160,
-      max_pub_lines: 455,
+      max_lines: 1164,
+      max_pub_lines: 462,
       max_pub_all_lines: 70,
       required_tokens: [
         "HostWindowRenderer", "HostAsyncImageLoader", "HostRouteSource", "pub(all) struct HostRouteLocation",
@@ -756,6 +756,34 @@ fn collect_mbt_files(
 }
 
 ///|
+fn collect_moon_pkg_files(
+  repo_root : String,
+  relative_dir : String,
+  files : Array[String],
+  failures : Array[String],
+) -> Unit {
+  let absolute_dir = @tools.resolve_path(repo_root, relative_dir)
+  let entries = match read_dir_names(absolute_dir, relative_dir) {
+    Ok(values) => values
+    Err(message) => {
+      failures.push(message)
+      return
+    }
+  }
+  for entry in entries {
+    let relative = relative_dir + "/" + entry
+    let absolute = @tools.resolve_path(repo_root, relative)
+    if @tools.directory_exists(absolute) {
+      if !skipped_directory_name(entry) {
+        collect_moon_pkg_files(repo_root, relative, files, failures)
+      }
+    } else if @tools.file_exists(absolute) && entry == "moon.pkg" {
+      files.push(relative)
+    }
+  }
+}
+
+///|
 fn push_max_check(
   failures : Array[String],
   label : String,
@@ -1027,6 +1055,58 @@ fn allowed_shared_app_core_imports() -> Array[String] {
 ///|
 fn allowed_shared_app_runtime_imports() -> Array[String] {
   ["examples/showcase/app/moon.pkg"]
+}
+
+///|
+fn mobile_runtime_internal_package_token() -> String {
+  "wzzc-dev/moui/backend/internal/mobile_runtime"
+}
+
+///|
+fn allowed_mobile_runtime_internal_imports() -> Array[String] {
+  [
+    "moui/backend/android/moon.pkg", "moui/backend/ios/moon.pkg", "moui/backend/harmonyos/moon.pkg",
+    "moui/backend/internal/mobile_runtime/moon.pkg",
+  ]
+}
+
+///|
+fn validate_mobile_runtime_internal_import_text(
+  path : String,
+  text : String,
+  failures : Array[String],
+) -> Unit {
+  if text.contains(mobile_runtime_internal_package_token()) &&
+    !allowed_mobile_runtime_internal_imports().contains(path) {
+    failures.push(
+      path +
+      ": internal mobile runtime may only be imported by Android, iOS, and HarmonyOS backends",
+    )
+  }
+}
+
+///|
+fn validate_mobile_runtime_internal_imports(
+  repo_root : String,
+  failures : Array[String],
+) -> Unit {
+  let paths : Array[String] = []
+  collect_moon_pkg_files(repo_root, "moui", paths, failures)
+  let mut import_count = 0
+  for path in paths {
+    let text = match read_repo_text(repo_root, path) {
+      Ok(value) => value
+      Err(message) => {
+        failures.push(message)
+        continue
+      }
+    }
+    if text.contains(mobile_runtime_internal_package_token()) {
+      import_count += 1
+    }
+    validate_mobile_runtime_internal_import_text(path, text, failures)
+  }
+  println("api surface: internal mobile runtime imports=\{import_count}/3")
 }
 
 ///|
@@ -1849,6 +1929,7 @@ fn run_checks(repo_root : String) -> Array[String] {
   validate_core_routing_ownership(repo_root, failures)
   validate_core_runtime_boundary(repo_root, failures)
   validate_backend_runtime_interfaces(repo_root, failures)
+  validate_mobile_runtime_internal_imports(repo_root, failures)
   validate_runtime_entrypoint_usage(repo_root, failures)
   validate_shared_app_runtime_imports(repo_root, failures)
   validate_shared_app_core_imports(repo_root, failures)

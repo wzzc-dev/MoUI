@@ -1,7 +1,6 @@
 import {
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/host",
-  "wzzc-dev/moui/backend/internal/mobile_runtime",
   "wzzc-dev/moui/render",
 }
 

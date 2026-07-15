@@ -44,24 +44,9 @@ pub struct IosRendererProvider {
 }
 
 ///|
-priv struct IosRedrawSignal {
-  mut requested : Bool
-}
-
-///|
 pub struct IosRuntimeSession {
   priv view : IosViewHandle
-  priv runtime : @runtime.AppRuntime
-  priv driver : @host.HostRuntimeDriver
-  priv renderer : @host.HostWindowRenderer
-  priv redraw_signal : IosRedrawSignal
-  priv host_channel : @host.MobileHostChannel
-  priv image_coordinator : @host.MobileImageCoordinator
-  priv mut metrics : @host.HostSurfaceMetrics
-  priv mut disposed : Bool
-  priv mut async_image_follow_up : Bool
-  priv mut async_image_ready_logged : Bool
-  priv mut async_image_failed_logged : Bool
+  priv core : @mobile_runtime.MobileRuntimeSessionCore
 }
 
 ///|
@@ -114,23 +99,6 @@ pub fn IosRendererProvider::has_async_image_loader(
   self : IosRendererProvider,
 ) -> Bool {
   self.image_loader is Some(_)
-}
-
-///|
-fn IosRedrawSignal::new() -> IosRedrawSignal {
-  { requested: false }
-}
-
-///|
-fn IosRedrawSignal::request(self : IosRedrawSignal) -> Unit {
-  self.requested = true
-}
-
-///|
-fn IosRedrawSignal::take(self : IosRedrawSignal) -> Bool {
-  let requested = self.requested
-  self.requested = false
-  requested
 }
 
 ///|
@@ -231,33 +199,14 @@ pub fn create_session(
 ) -> IosRuntimeSession? {
   match provider.create(view, metrics) {
     Some(renderer) => {
-      let redraw_signal = IosRedrawSignal::new()
-      let driver = @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
-        redraw_signal.request()
-      })
-      let host_channel = @host.MobileHostChannel::new()
-      let image_coordinator = @host.MobileImageCoordinator::new(
+      let core = @mobile_runtime.MobileRuntimeSessionCore::new(
+        runtime~,
         renderer~,
         image_loader=provider.image_loader,
-        request_redraw=() => redraw_signal.request(),
+        metrics~,
       )
-      driver.set_text_system(renderer.text_system())
-      ignore(driver.dispatch(@host.HostEvent::Resized(metrics)))
       provider.sync(view, metrics)
-      Some({
-        view,
-        runtime,
-        driver,
-        renderer,
-        redraw_signal,
-        host_channel,
-        image_coordinator,
-        metrics,
-        disposed: false,
-        async_image_follow_up: false,
-        async_image_ready_logged: false,
-        async_image_failed_logged: false,
-      })
+      Some({ view, core })
     }
     None => None
   }
@@ -267,7 +216,7 @@ pub fn create_session(
 pub fn IosRuntimeSession::metrics(
   self : IosRuntimeSession,
 ) -> @host.HostSurfaceMetrics {
-  self.metrics
+  self.core.metrics()
 }
 
 ///|
@@ -279,12 +228,12 @@ pub fn IosRuntimeSession::view(self : IosRuntimeSession) -> IosViewHandle {
 pub fn IosRuntimeSession::runtime(
   self : IosRuntimeSession,
 ) -> @runtime.AppRuntime {
-  self.runtime
+  self.core.runtime()
 }
 
 ///|
 pub fn IosRuntimeSession::disposed(self : IosRuntimeSession) -> Bool {
-  self.disposed
+  self.core.disposed()
 }
 
 ///|
@@ -292,9 +241,7 @@ pub fn IosRuntimeSession::dispatch(
   self : IosRuntimeSession,
   event : @host.HostEvent,
 ) -> @host.HostEventResult {
-  let result = self.driver.dispatch(event)
-  ignore(self.host_channel.sync(self.runtime))
-  result
+  self.core.dispatch(event)
 }
 
 ///|
@@ -302,11 +249,7 @@ pub fn IosRuntimeSession::resize(
   self : IosRuntimeSession,
   metrics : @host.HostSurfaceMetrics,
 ) -> @host.HostEventResult {
-  self.metrics = metrics
-  self.renderer.resize(metrics)
-  let result = self.driver.dispatch(@host.HostEvent::Resized(metrics))
-  ignore(self.host_channel.sync(self.runtime))
-  result
+  self.core.resize(metrics)
 }
 
 ///|
@@ -314,50 +257,14 @@ pub fn IosRuntimeSession::sync_view(
   self : IosRuntimeSession,
   provider : IosRendererProvider,
 ) -> Unit {
-  provider.sync(self.view, self.metrics)
+  provider.sync(self.view, self.core.metrics())
 }
 
 ///|
 pub fn IosRuntimeSession::render_frame(
   self : IosRuntimeSession,
 ) -> @render.RenderFrameResult {
-  self.driver.begin_redraw()
-  let result = self.renderer.render_frame(self.driver.draw_frame())
-  ignore(self.renderer.drain_present_completions())
-  self.driver.apply_render_frame_result(result)
-  self.driver.finish_redraw()
-  let image = self.image_coordinator.after_present(
-    present_count=self.renderer.present_count(),
-  )
-  if image.scheduled_count > 0 {
-    self.async_image_follow_up = true
-    self.redraw_signal.request()
-    ignore(
-      self.host_channel.push_diagnostic(
-        "moui-mobile service async-image phase=loading scheduled=\{image.scheduled_count} present=\{image.present_count}",
-      ),
-    )
-  }
-  if image.ready_count > 0 &&
-    image.present_count > 1 &&
-    !self.async_image_ready_logged {
-    self.async_image_ready_logged = true
-    ignore(
-      self.host_channel.push_diagnostic(
-        "moui-mobile service async-image phase=ready ready=\{image.ready_count} present=\{image.present_count}",
-      ),
-    )
-  }
-  if image.failed_count > 0 && !self.async_image_failed_logged {
-    self.async_image_failed_logged = true
-    ignore(
-      self.host_channel.push_diagnostic(
-        "moui-mobile service async-image phase=failed failed=\{image.failed_count} present=\{image.present_count}",
-      ),
-    )
-  }
-  ignore(self.host_channel.sync(self.runtime))
-  result
+  self.core.render_frame()
 }
 
 ///|
@@ -365,26 +272,21 @@ pub fn IosRuntimeSession::advance_time(
   self : IosRuntimeSession,
   time_ms : Double,
 ) -> Unit {
-  if !self.disposed {
-    self.runtime.advance_time(time_ms)
-    ignore(self.host_channel.sync(self.runtime))
-  }
+  self.core.advance_time(time_ms)
 }
 
 ///|
 pub fn IosRuntimeSession::drain_host_updates(
   self : IosRuntimeSession,
 ) -> Array[@host.MobileHostUpdate] {
-  ignore(self.host_channel.sync(self.runtime))
-  self.host_channel.drain_updates()
+  self.core.drain_host_updates()
 }
 
 ///|
 pub fn IosRuntimeSession::drain_host_updates_json(
   self : IosRuntimeSession,
 ) -> String {
-  ignore(self.host_channel.sync(self.runtime))
-  self.host_channel.drain_updates_json()
+  self.core.drain_host_updates_json()
 }
 
 ///|
@@ -392,50 +294,34 @@ pub fn IosRuntimeSession::dispatch_host_response(
   self : IosRuntimeSession,
   response : @host.MobileHostResponse,
 ) -> Bool {
-  let handled = self.host_channel.dispatch_response(response, self.driver)
-  if handled {
-    ignore(self.host_channel.sync(self.runtime))
-  }
-  handled
+  self.core.dispatch_host_response(response)
 }
 
 ///|
 pub fn IosRuntimeSession::host_service_bridge(
   self : IosRuntimeSession,
 ) -> @host.HostServiceBridge {
-  self.host_channel.service_bridge()
+  self.core.host_service_bridge()
 }
 
 ///|
 pub fn IosRuntimeSession::redraw_requested(self : IosRuntimeSession) -> Bool {
-  self.redraw_signal.requested
+  self.core.redraw_requested()
 }
 
 ///|
 pub fn IosRuntimeSession::take_redraw_requested(
   self : IosRuntimeSession,
 ) -> Bool {
-  let requested = self.redraw_signal.take()
-  if self.async_image_follow_up {
-    self.async_image_follow_up = false
-    true
-  } else {
-    requested
-  }
+  self.core.take_redraw_requested()
 }
 
 ///|
 pub fn IosRuntimeSession::present_count(self : IosRuntimeSession) -> Int {
-  self.renderer.present_count()
+  self.core.present_count()
 }
 
 ///|
 pub fn IosRuntimeSession::dispose(self : IosRuntimeSession) -> Unit {
-  if !self.disposed {
-    self.host_channel.dispose()
-    self.image_coordinator.dispose()
-    self.renderer.dispose()
-    self.runtime.destroy()
-    self.disposed = true
-  }
+  self.core.dispose()
 }
