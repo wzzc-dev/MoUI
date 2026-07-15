@@ -2,7 +2,7 @@
 
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -166,6 +166,210 @@ test("managed resolver stages identity, resources, and generated plugin registry
     );
   } finally {
     rmSync(configPath, { force: true });
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+});
+
+test("managed resolver maps permission capabilities to HarmonyOS declarations", () => {
+  const tempRoot = mkdtempSync(join(tmpdir(), "moui-harmonyos-permissions-"));
+  const config = JSON.parse(read("examples/component_gallery/mobile.json"));
+  config.mobile.permissions = [
+    "camera",
+    "microphone",
+    "location",
+    "photos",
+    "notifications",
+    "clipboard",
+  ];
+  const configPath = join(tempRoot, "mobile.json");
+  const output = join(tempRoot, "shell");
+  try {
+    writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
+    execFileSync("node", [
+      resolve(repoRoot, "moui/mobile/harmonyos/resolve-managed-shell.mjs"),
+      "--workspace-root", tempRoot,
+      "--moui-root", resolve(repoRoot, "moui"),
+      "--app", "component_gallery",
+      "--app-config", configPath,
+      "--renderer", "auto",
+      "--output", output,
+    ], { stdio: "pipe" });
+
+    const module = JSON.parse(readFileSync(join(output, "entry/src/main/module.json5"), "utf8"));
+    const permissions = module.module.requestPermissions;
+    assert.deepEqual(permissions.map(permission => permission.name), [
+      "ohos.permission.APPROXIMATELY_LOCATION",
+      "ohos.permission.CAMERA",
+      "ohos.permission.LOCATION",
+      "ohos.permission.MICROPHONE",
+      "ohos.permission.READ_IMAGEVIDEO",
+      "ohos.permission.READ_PASTEBOARD",
+    ]);
+    for (const capability of config.mobile.permissions) {
+      assert.ok(
+        !permissions.some(permission => permission.name === capability),
+        `managed module must not contain raw capability id ${capability}`,
+      );
+    }
+    for (const permission of permissions) {
+      assert.match(permission.reason, /^\$string:permission_/);
+      assert.deepEqual(permission.usedScene, {
+        abilities: ["EntryAbility"],
+        when: "inuse",
+      });
+    }
+    const canonicalModule = JSON.parse(read(
+      "moui/mobile/harmonyos/template/entry/src/main/module.json5",
+    ));
+    assert.deepEqual(
+      permissions.find(permission => permission.name === "ohos.permission.READ_PASTEBOARD"),
+      canonicalModule.module.requestPermissions.find(
+        permission => permission.name === "ohos.permission.READ_PASTEBOARD",
+      ),
+    );
+
+    const strings = JSON.parse(readFileSync(
+      join(output, "entry/src/main/resources/base/element/string.json"),
+      "utf8",
+    ));
+    const stringNames = new Set(strings.string.map(item => item.name));
+    for (const permission of permissions) {
+      assert.ok(stringNames.has(permission.reason.slice("$string:".length)));
+    }
+    assert.ok(!permissions.some(permission => permission.name.includes("NOTIFICATION")));
+  } finally {
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+});
+
+test("managed resolver rejects unsupported permission capabilities before staging", () => {
+  const tempRoot = mkdtempSync(join(tmpdir(), "moui-harmonyos-unknown-permission-"));
+  const config = JSON.parse(read("examples/component_gallery/mobile.json"));
+  config.mobile.permissions = ["bluetooth"];
+  const configPath = join(tempRoot, "mobile.json");
+  const output = join(tempRoot, "shell");
+  try {
+    writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
+    const result = spawnSync("node", [
+      resolve(repoRoot, "moui/mobile/harmonyos/resolve-managed-shell.mjs"),
+      "--workspace-root", tempRoot,
+      "--moui-root", resolve(repoRoot, "moui"),
+      "--app", "component_gallery",
+      "--app-config", configPath,
+      "--renderer", "auto",
+      "--output", output,
+    ], { encoding: "utf8" });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /does not support mobile\.permissions capability "bluetooth"/);
+    assert.match(result.stderr, /eject the HarmonyOS shell/);
+    assert.equal(readFileSync(configPath, "utf8"), `${JSON.stringify(config, null, 2)}\n`);
+    assert.equal(existsSync(output), false);
+  } finally {
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+});
+
+test("plugin permissions require an app grant and stage through the managed target", () => {
+  const tempRoot = mkdtempSync(join(tmpdir(), "moui-harmonyos-plugin-permission-"));
+  const pluginRoot = join(tempRoot, "plugin");
+  const pluginSource = join(pluginRoot, "CameraPlugin.ets");
+  const pluginManifest = {
+    schemaVersion: 1,
+    id: "dev.wzzc.camera-plugin",
+    shellApi: 1,
+    platforms: {
+      harmonyos: {
+        sources: ["CameraPlugin.ets"],
+        resources: [],
+        entry: "CameraPlugin",
+      },
+    },
+    platformViewKinds: [],
+    hostChannels: [],
+    permissions: ["camera"],
+  };
+  const config = JSON.parse(read("examples/component_gallery/mobile.json"));
+  config.mobile.plugins = ["plugin/moui.plugin.json"];
+  const configPath = join(tempRoot, "mobile.json");
+  const output = join(tempRoot, "shell");
+  try {
+    mkdirSync(pluginRoot, { recursive: true });
+    writeFileSync(pluginSource, "export class CameraPlugin {}\n");
+    writeFileSync(
+      join(pluginRoot, "moui.plugin.json"),
+      `${JSON.stringify(pluginManifest, null, 2)}\n`,
+    );
+
+    config.mobile.permissions = [];
+    writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
+    const denied = spawnSync("node", [
+      resolve(repoRoot, "moui/mobile/harmonyos/resolve-managed-shell.mjs"),
+      "--workspace-root", tempRoot,
+      "--moui-root", resolve(repoRoot, "moui"),
+      "--app", "component_gallery",
+      "--app-config", configPath,
+      "--renderer", "auto",
+      "--output", output,
+    ], { encoding: "utf8" });
+    assert.notEqual(denied.status, 0);
+    assert.match(denied.stderr, /requires undeclared permission "camera"/);
+
+    config.mobile.permissions = ["camera"];
+    writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
+    execFileSync("node", [
+      resolve(repoRoot, "moui/mobile/harmonyos/resolve-managed-shell.mjs"),
+      "--workspace-root", tempRoot,
+      "--moui-root", resolve(repoRoot, "moui"),
+      "--app", "component_gallery",
+      "--app-config", configPath,
+      "--renderer", "auto",
+      "--output", output,
+    ], { stdio: "pipe" });
+    const module = JSON.parse(readFileSync(join(output, "entry/src/main/module.json5"), "utf8"));
+    assert.ok(module.module.requestPermissions.some(
+      permission => permission.name === "ohos.permission.CAMERA",
+    ));
+    assert.match(
+      readFileSync(join(output, "entry/src/main/ets/plugins/0-dev_wzzc_camera_plugin/CameraPlugin.ets"), "utf8"),
+      /class CameraPlugin/,
+    );
+  } finally {
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
+});
+
+test("managed resolver leaves ejected permission declarations app-owned", () => {
+  const tempRoot = mkdtempSync(join(tmpdir(), "moui-harmonyos-ejected-permissions-"));
+  const config = JSON.parse(read("examples/component_gallery/mobile.json"));
+  config.harmonyos.shellMode = "ejected";
+  const configPath = join(tempRoot, "mobile.json");
+  const output = join(tempRoot, "ejected-shell");
+  const modulePath = join(output, "entry/src/main/module.json5");
+  const appOwnedModule = `${JSON.stringify({
+    module: {
+      requestPermissions: [{
+        name: "vendor.permission.CUSTOM",
+        reason: "$string:app_owned_reason",
+      }],
+    },
+  }, null, 2)}\n`;
+  try {
+    mkdirSync(dirname(modulePath), { recursive: true });
+    writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
+    writeFileSync(modulePath, appOwnedModule);
+    const result = spawnSync("node", [
+      resolve(repoRoot, "moui/mobile/harmonyos/resolve-managed-shell.mjs"),
+      "--workspace-root", tempRoot,
+      "--moui-root", resolve(repoRoot, "moui"),
+      "--app", "component_gallery",
+      "--app-config", configPath,
+      "--renderer", "auto",
+      "--output", output,
+    ], { encoding: "utf8" });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /shellMode=ejected; managed shell required/);
+    assert.equal(readFileSync(modulePath, "utf8"), appOwnedModule);
+  } finally {
     rmSync(tempRoot, { recursive: true, force: true });
   }
 });
