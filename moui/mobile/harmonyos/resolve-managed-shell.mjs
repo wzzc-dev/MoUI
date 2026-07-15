@@ -17,6 +17,76 @@ import { readMobileApp } from "../../scripts/mobile/app-config.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const defaultMouiRoot = resolve(scriptDir, "../..");
+const permissionCapabilities = new Map([
+  ["camera", [{
+    name: "ohos.permission.CAMERA",
+    reasonResource: "permission_camera",
+    purpose: "needs camera access for app features you choose to use.",
+  }]],
+  ["microphone", [{
+    name: "ohos.permission.MICROPHONE",
+    reasonResource: "permission_microphone",
+    purpose: "needs microphone access for app features you choose to use.",
+  }]],
+  ["location", [
+    {
+      name: "ohos.permission.APPROXIMATELY_LOCATION",
+      reasonResource: "permission_location",
+      purpose: "needs your precise or approximate location while you use the app.",
+    },
+    {
+      name: "ohos.permission.LOCATION",
+      reasonResource: "permission_location",
+      purpose: "needs your precise or approximate location while you use the app.",
+    },
+  ]],
+  ["photos", [{
+    name: "ohos.permission.READ_IMAGEVIDEO",
+    reasonResource: "permission_photos",
+    purpose: "needs read access to photos and videos you choose to use.",
+  }]],
+  // Notification permission is requested through notificationManager at runtime.
+  ["notifications", []],
+  ["clipboard", [{
+    name: "ohos.permission.READ_PASTEBOARD",
+    reasonResource: "permission_read_pasteboard",
+    purpose: "needs access to clipboard content you choose to paste.",
+  }]],
+]);
+
+const resolvePermissionCapabilities = (capabilities, displayName) => {
+  const permissions = [];
+  const seen = new Set();
+  for (const capability of capabilities) {
+    const mapped = permissionCapabilities.get(capability);
+    if (!mapped) {
+      throw new Error(
+        `managed HarmonyOS shell does not support mobile.permissions capability ` +
+          `${JSON.stringify(capability)}; use a supported capability or eject the HarmonyOS shell`,
+      );
+    }
+    for (const declaration of mapped) {
+      if (seen.has(declaration.name)) continue;
+      seen.add(declaration.name);
+      permissions.push({
+        permission: {
+          name: declaration.name,
+          reason: `$string:${declaration.reasonResource}`,
+          usedScene: {
+            abilities: ["EntryAbility"],
+            when: "inuse",
+          },
+        },
+        reasonResource: declaration.reasonResource,
+        reasonValue: `${displayName} ${declaration.purpose}`,
+      });
+    }
+  }
+  return permissions.sort((left, right) =>
+    left.permission.name.localeCompare(right.permission.name),
+  );
+};
+
 const options = {
   workspaceRoot: process.cwd(),
   mouiRoot: defaultMouiRoot,
@@ -71,6 +141,10 @@ if (app.harmonyos.compatibleSdkVersion < 20 || app.harmonyos.compatibleSdkVersio
 if (app.harmonyos.nativeLibrary !== "moui_mobile_harmonyos") {
   throw new Error("managed HarmonyOS shell requires fixed native library moui_mobile_harmonyos");
 }
+const resolvedPermissions = resolvePermissionCapabilities(
+  app.mobile.permissions || [],
+  app.displayName,
+);
 
 const templateRoot = resolve(mouiRoot, "mobile/harmonyos/template");
 const outputRoot = resolve(options.output);
@@ -98,6 +172,13 @@ const updateString = (path, name, value) => {
   const item = resource.string.find(entry => entry.name === name);
   if (!item) throw new Error(`${path}: missing string resource ${name}`);
   item.value = value;
+  writeJson(path, resource);
+};
+const upsertString = (path, name, value) => {
+  const resource = readJson(path);
+  const item = resource.string.find(entry => entry.name === name);
+  if (item) item.value = value;
+  else resource.string.push({ name, value });
   writeJson(path, resource);
 };
 
@@ -133,8 +214,12 @@ module.module.name = app.harmonyos.moduleName;
 const configuredPermissions = new Map(
   (module.module.requestPermissions || []).map(permission => [permission.name, permission]),
 );
-for (const name of app.mobile.permissions) {
-  if (!configuredPermissions.has(name)) configuredPermissions.set(name, { name });
+const generatedPermissionReasons = new Map();
+for (const resolvedPermission of resolvedPermissions) {
+  const { permission, reasonResource, reasonValue } = resolvedPermission;
+  if (configuredPermissions.has(permission.name)) continue;
+  configuredPermissions.set(permission.name, permission);
+  generatedPermissionReasons.set(reasonResource, reasonValue);
 }
 module.module.requestPermissions = [...configuredPermissions.values()].sort((left, right) =>
   left.name.localeCompare(right.name),
@@ -156,6 +241,9 @@ const entryStrings = resolve(outputRoot, "entry/src/main/resources/base/element/
 updateString(entryStrings, "app_name", app.harmonyos.appName);
 updateString(entryStrings, "module_desc", app.harmonyos.moduleDescription);
 updateString(entryStrings, "entry_desc", app.harmonyos.entryDescription);
+for (const [name, value] of generatedPermissionReasons) {
+  upsertString(entryStrings, name, value);
+}
 
 const generatedConfig = [
   "// Generated by moui/mobile/harmonyos/resolve-managed-shell.mjs.",
