@@ -22,6 +22,24 @@
 #include <utility>
 #include <vector>
 
+#if defined(MOUI_SKIA_HAS_SKIA) && \
+  __has_include("include/gpu/ganesh/GrDirectContext.h") && \
+  __has_include("include/gpu/ganesh/vk/GrVkDirectContext.h") && \
+  __has_include("include/gpu/ganesh/vk/GrVkTypes.h") && \
+  __has_include("include/gpu/ganesh/vk/GrVkBackendSurface.h") && \
+  __has_include("include/gpu/vk/VulkanBackendContext.h") && \
+  __has_include("include/android/vk/AndroidVulkanMemoryAllocator.h") && \
+  __has_include("include/gpu/ganesh/GrBackendSurface.h") && \
+  __has_include("include/gpu/ganesh/SkSurfaceGanesh.h") && \
+  __has_include(<vulkan/vulkan.h>)
+#if (defined(__ANDROID__) && __has_include(<vulkan/vulkan_android.h>) && \
+  __has_include(<android/native_window.h>)) || \
+  (defined(__linux__) && __has_include(<vulkan/vulkan_wayland.h>) && \
+  __has_include(<wayland-client.h>))
+#define MOUI_SKIA_HAS_GANESH_VULKAN_HEADERS 1
+#endif
+#endif
+
 #if defined(MOUI_SKIA_HAS_SKIA)
 #if defined(_WIN32) && !defined(SK_BUILD_FOR_WIN)
 #define SK_BUILD_FOR_WIN
@@ -210,16 +228,18 @@ void moonbit_skia_com_release(void* object);
 static inline void moonbit_skia_com_release(void* object) { (void)object; }
 #endif
 
-#if defined(__ANDROID__)
+#if defined(MOUI_SKIA_ENABLE_GPU_VULKAN) && \
+  defined(MOUI_SKIA_HAS_GANESH_VULKAN_HEADERS)
 /// Release a heap-allocated MoonbitSkiaVulkanContext stored as the `device`
-/// field of MoonbitSkiaGpuContext on Android. Safe to call with nullptr. On
-/// non-Android platforms this is a no-op stub. The definition lives in
+/// field of MoonbitSkiaGpuContext on Android or Linux. Safe to call with
+/// nullptr. When Vulkan support is unavailable this is an inline no-op. The
+/// definition lives in
 /// skia_stub_surface_image_data.cpp.
 void moonbit_skia_vulkan_release_context(void* object);
 /// Release a heap-allocated MoonbitSkiaVulkanSwapChain stored as
-/// host_present_handle on Android. Safe to call with nullptr. On non-Android
-/// platforms this is a no-op stub. The definition lives in
-/// skia_stub_surface_image_data.cpp.
+/// host_present_handle on Android or Linux. Safe to call with nullptr. When
+/// Vulkan support is unavailable this is an inline no-op. The definition
+/// lives in skia_stub_surface_image_data.cpp.
 void moonbit_skia_vulkan_release_swapchain(void* object);
 #else
 static inline void moonbit_skia_vulkan_release_context(void* object) {
