@@ -343,7 +343,13 @@ const validateAndroidManagedShell = failures => {
 
   const buildScript = readRepoFile("moui/scripts/mobile/build-android-apk.sh");
   requireTokens(failures, "Android APK builder", buildScript, [
+    '--ejected-shell',
     '--legacy-java-shell',
+    '--ejected-shell and --legacy-java-shell are mutually exclusive',
+    '--ejected-shell requires a versioned .moui-shell.json',
+    '--legacy-java-shell requires an explicit schema v1 --app-config',
+    'MOUI_MOBILE_ALLOW_LEGACY_CONFIG=1',
+    '"code": "android-java-shell"',
     'compile_sdk="36"',
     'target_sdk="35"',
     'mouiAndroidShell=legacy',
@@ -361,8 +367,10 @@ const validateAndroidManagedShell = failures => {
   }
   const repositoryBuildScript = readRepoFile("scripts/build-mobile-android-apk.sh");
   requireTokens(failures, "repository Android APK wrapper", repositoryBuildScript, [
-    'android_project="$repo_root/examples/$app/android_app"',
-    '--android-project "$android_project"',
+    'legacy_java_shell=0',
+    'if [ "$legacy_java_shell" -eq 1 ]',
+    '--android-project "$repo_root/examples/$app/android_app"',
+    '--app-config "$repo_root/moui/mobile/legacy/fixtures/$app.mobile.json"',
   ]);
   const recorder = readRepoFile("scripts/record-mobile-runtime-smoke.mjs");
   const androidStart = recorder.indexOf("const runAndroidSmoke");

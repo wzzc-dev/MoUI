@@ -11,20 +11,27 @@ USAGE
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 app=""
+legacy_shell=0
 
-while [ "$#" -gt 0 ]; do
-  case "$1" in
+args=("$@")
+index=0
+while [ "$index" -lt "${#args[@]}" ]; do
+  case "${args[$index]}" in
     --app)
-      app="${2:?missing app after --app}"
-      shift 2
+      app="${args[$((index + 1))]:-}"
+      index=$((index + 2))
       ;;
     -h|--help)
       usage
       "$repo_root/moui/scripts/mobile/build-harmonyos-hap.sh" --help
       exit 0
       ;;
+    --legacy-shell)
+      legacy_shell=1
+      index=$((index + 1))
+      ;;
     *)
-      break
+      index=$((index + 1))
       ;;
   esac
 done
@@ -38,7 +45,6 @@ fi
 case "$app" in
   harmonyos_demo|component_gallery)
     harmonyos_project="$repo_root/examples/$app/harmonyos_app"
-    app_config="$repo_root/examples/$app/mobile.json"
     ;;
   *)
     echo "unsupported HarmonyOS app: $app" >&2
@@ -47,11 +53,18 @@ case "$app" in
     ;;
 esac
 
+project_args=()
+if [ "$legacy_shell" -eq 1 ]; then
+  project_args=(
+    --harmonyos-project "$harmonyos_project"
+    --app-config "$repo_root/moui/mobile/legacy/fixtures/$app.mobile.json"
+  )
+fi
+
 exec "$repo_root/moui/scripts/mobile/build-harmonyos-hap.sh" \
   --workspace-root "$repo_root" \
   --moui-root "$repo_root/moui" \
   --skia-root "$repo_root/moui_skia" \
   --app "$app" \
-  --app-config "$app_config" \
-  --harmonyos-project "$harmonyos_project" \
+  "${project_args[@]}" \
   "$@"

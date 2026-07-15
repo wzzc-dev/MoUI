@@ -311,6 +311,7 @@ if [ -z "$build_dir" ]; then
 elif [ "${build_dir#/}" = "$build_dir" ]; then
   build_dir="$workspace_root/$build_dir"
 fi
+deprecation_path="$build_dir/mobile-deprecation.json"
 
 if [ "$ejected_shell" -eq 0 ] && [ "$legacy_shell" -eq 0 ] && [ -n "$harmonyos_project" ]; then
   echo "--harmonyos-project requires --ejected-shell or --legacy-shell" >&2
@@ -388,7 +389,22 @@ if [ "$legacy_shell" -eq 1 ]; then
   MOUI_MOBILE_ALLOW_LEGACY_CONFIG=1 \
     node "$moui_root/scripts/mobile/prepare-native-build.mjs" "${prepare_args[@]}"
 else
+  unset MOUI_MOBILE_ALLOW_LEGACY_CONFIG
   node "$moui_root/scripts/mobile/prepare-native-build.mjs" "${prepare_args[@]}"
+fi
+
+if [ "$legacy_shell" -eq 1 ]; then
+  cat > "$deprecation_path" <<'JSON'
+{
+  "schemaVersion": 1,
+  "code": "harmonyos-app-owned-shell",
+  "deprecated": true,
+  "removal": "Release N+1",
+  "replacement": "schema v2 managed HarmonyOS shell"
+}
+JSON
+else
+  rm -f "$deprecation_path"
 fi
 
 ohos_arch="$(json_get ohosArch)"
@@ -399,15 +415,6 @@ moon_home="${MOON_HOME:-$HOME/.moon}"
 
 if [ "$legacy_shell" -eq 1 ]; then
   source_project="$harmonyos_project"
-  cat > "$build_dir/mobile-deprecation.json" <<'JSON'
-{
-  "schemaVersion": 1,
-  "code": "harmonyos-app-owned-shell",
-  "deprecated": true,
-  "removal": "Release N+1",
-  "replacement": "schema v2 managed HarmonyOS shell"
-}
-JSON
 elif [ "$ejected_shell" -eq 1 ]; then
   source_project="$harmonyos_project"
 else

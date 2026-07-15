@@ -23,6 +23,7 @@ Options:
   --build-dir <dir>       Shared generated inputs, default artifacts/android/<app>.
   --output <apk>          Copy the Gradle APK to this path.
   --fallback-skia         Build packaging plumbing without real Skia.
+  --ejected-shell         Build a versioned ejected schema v2 shell project.
   --legacy-java-shell     Build the preserved Release N Java/JNI shell fixture.
   --prepare-only          Generate MoonBit/Skia/CMake inputs, then stop.
   -h, --help              Show this help.
@@ -44,6 +45,7 @@ renderer="auto"
 build_dir=""
 output_apk=""
 fallback_skia=0
+ejected_shell=0
 legacy_java_shell=0
 prepare_only=0
 stage_android_project=0
@@ -65,6 +67,7 @@ while [ "$#" -gt 0 ]; do
     --build-dir) build_dir="${2:?missing directory after --build-dir}"; shift 2 ;;
     --output) output_apk="${2:?missing APK path after --output}"; shift 2 ;;
     --fallback-skia) fallback_skia=1; shift ;;
+    --ejected-shell) ejected_shell=1; shift ;;
     --legacy-java-shell) legacy_java_shell=1; shift ;;
     --prepare-only) prepare_only=1; shift ;;
     -h|--help) usage; exit 0 ;;
@@ -75,6 +78,10 @@ done
 if [ -z "$app" ]; then
   echo "--app is required" >&2
   usage >&2
+  exit 2
+fi
+if [ "$ejected_shell" -eq 1 ] && [ "$legacy_java_shell" -eq 1 ]; then
+  echo "--ejected-shell and --legacy-java-shell are mutually exclusive" >&2
   exit 2
 fi
 
@@ -98,15 +105,65 @@ if [ -z "$build_dir" ]; then
 elif [ "${build_dir#/}" = "$build_dir" ]; then
   build_dir="$workspace_root/$build_dir"
 fi
+deprecation_path="$build_dir/mobile-deprecation.json"
 if [ -z "$android_project" ]; then
-  if [ "$legacy_java_shell" -eq 1 ]; then
-    echo "--legacy-java-shell requires an explicit --android-project fixture" >&2
+  if [ "$ejected_shell" -eq 1 ] || [ "$legacy_java_shell" -eq 1 ]; then
+    echo "--ejected-shell and --legacy-java-shell require an explicit --android-project" >&2
     exit 2
   fi
   android_project="$build_dir/android-project"
   stage_android_project=1
 elif [ "${android_project#/}" = "$android_project" ]; then
   android_project="$workspace_root/$android_project"
+fi
+if [ "$ejected_shell" -eq 0 ] && [ "$legacy_java_shell" -eq 0 ] && [ "$stage_android_project" -eq 0 ]; then
+  echo "--android-project requires --ejected-shell or --legacy-java-shell" >&2
+  exit 2
+fi
+if [ "$ejected_shell" -eq 1 ]; then
+  shell_lock="$android_project/.moui-shell.json"
+  if [ ! -f "$shell_lock" ]; then
+    echo "--ejected-shell requires a versioned .moui-shell.json: $shell_lock" >&2
+    exit 1
+  fi
+  node -e '
+const fs = require("fs");
+const path = process.argv[1];
+const lock = JSON.parse(fs.readFileSync(path, "utf8"));
+const expected = {
+  schemaVersion: 1,
+  mode: "ejected",
+  platform: "android",
+  shellApiVersion: 1,
+  runtimeAbiVersion: 1,
+};
+for (const [field, value] of Object.entries(expected)) {
+  if (lock[field] !== value) {
+    console.error(`${path}: ${field} must be ${JSON.stringify(value)}`);
+    process.exit(1);
+  }
+}
+' "$shell_lock"
+  echo "[moui-mobile-android] Using versioned ejected shell at $android_project"
+fi
+if [ "$legacy_java_shell" -eq 1 ]; then
+  if [ -z "$app_config" ]; then
+    echo "--legacy-java-shell requires an explicit schema v1 --app-config" >&2
+    exit 2
+  fi
+  case "$app_config" in /*) legacy_config_path="$app_config" ;; *) legacy_config_path="$workspace_root/$app_config" ;; esac
+  node -e '
+const fs = require("fs");
+const path = process.argv[1];
+const config = JSON.parse(fs.readFileSync(path, "utf8"));
+if (config.schemaVersion !== 1) {
+  console.error(`--legacy-java-shell requires schemaVersion 1: ${path}`);
+  process.exit(1);
+}
+' "$legacy_config_path"
+  export MOUI_MOBILE_ALLOW_LEGACY_CONFIG=1
+else
+  unset MOUI_MOBILE_ALLOW_LEGACY_CONFIG
 fi
 if [ -z "$output_apk" ]; then
   output_apk="$workspace_root/artifacts/android/$app/app-debug.apk"
@@ -136,6 +193,20 @@ if [ "$fallback_skia" -eq 1 ]; then
 fi
 
 node "$moui_root/scripts/mobile/prepare-native-build.mjs" "${prepare_args[@]}"
+
+if [ "$legacy_java_shell" -eq 1 ]; then
+  cat > "$deprecation_path" <<'JSON'
+{
+  "schemaVersion": 1,
+  "code": "android-java-shell",
+  "deprecated": true,
+  "removal": "Release N+1",
+  "replacement": "schema v2 managed Android shell"
+}
+JSON
+else
+  rm -f "$deprecation_path"
+fi
 
 if [ "$prepare_only" -eq 1 ]; then
   echo "[moui-mobile-android] Prepared Android build inputs in $build_dir"
