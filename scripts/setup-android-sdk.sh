@@ -14,7 +14,8 @@ Options:
   --compile-sdk <n>      Android platform level, default 35.
   --build-tools <ver>    Android build-tools version, default 35.0.0.
   --cmake <ver>          Android SDK CMake version, default 3.22.1.
-  --ndk <ver>            Android NDK version, default 25.2.9519653.
+  --ndk <ver>            Android NDK version, default 28.2.13676358
+                          (matches Gradle/prepare-native-build pin).
   --accept-licenses      Accept Android SDK licenses non-interactively.
   --skip-licenses        Do not run sdkmanager --licenses.
   --dry-run              Print the packages that would be installed.
@@ -41,7 +42,7 @@ android_home="$default_android_home"
 compile_sdk="35"
 build_tools_version="35.0.0"
 cmake_version="3.22.1"
-ndk_version="25.2.9519653"
+ndk_version="28.2.13676358"
 accept_licenses=0
 skip_licenses=0
 dry_run=0

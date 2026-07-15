@@ -21,6 +21,11 @@ public final class MobileActivity extends Activity implements SurfaceHolder.Call
     private static final String META_SUPPORTS_SCROLL = "dev.wzzc.moui.SUPPORTS_SCROLL";
     private static final String META_FULLSCREEN = "dev.wzzc.moui.FULLSCREEN";
 
+    // Set when the launching intent carries the "moui_a11y_smoke" extra or the
+    // process environment sets MOUI_MOBILE_A11Y_SMOKE, so the surface view can
+    // fire a deterministic once-fire focus/activate pair without TalkBack.
+    static boolean a11ySmokeRequested = false;
+
     private MobileSurfaceView surfaceView;
     private boolean attached;
     private boolean supportsScroll;
@@ -61,6 +66,7 @@ public final class MobileActivity extends Activity implements SurfaceHolder.Call
         super.onCreate(savedInstanceState);
         loadNativeLibraryFromManifest();
         Log.i(LOG_TAG, "moui-mobile renderer status=" + nativeRendererStatusJson());
+        a11ySmokeRequested = isA11ySmokeRequested();
         supportsScroll = manifestBoolean(META_SUPPORTS_SCROLL, false);
         fullscreen = manifestBoolean(META_FULLSCREEN, false);
         if (fullscreen) {
@@ -233,6 +239,19 @@ public final class MobileActivity extends Activity implements SurfaceHolder.Call
         } catch (PackageManager.NameNotFoundException error) {
             throw new IllegalStateException("activity metadata unavailable", error);
         }
+    }
+
+    // Android app processes do not inherit arbitrary shell env vars, so the
+    // recorder passes the "moui_a11y_smoke" intent extra via `am start --es`.
+    // The env var is also honored for parity with iOS when the process is
+    // launched with it set.
+    private boolean isA11ySmokeRequested() {
+        String extra = getIntent() == null ? null : getIntent().getStringExtra("moui_a11y_smoke");
+        if (extra != null && (extra.equals("1") || extra.equalsIgnoreCase("true") || extra.equalsIgnoreCase("yes"))) {
+            return true;
+        }
+        String env = System.getenv("MOUI_MOBILE_A11Y_SMOKE");
+        return env != null && (env.equals("1") || env.equalsIgnoreCase("true") || env.equalsIgnoreCase("yes"));
     }
 
     private void configureFullscreenWindow() {

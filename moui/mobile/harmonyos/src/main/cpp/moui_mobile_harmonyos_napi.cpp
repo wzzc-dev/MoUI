@@ -1,11 +1,17 @@
 #include <cstdint>
 #include <cstdarg>
+#include <cctype>
+#include <cstdlib>
 #include <chrono>
 #include <cmath>
 #include <cstring>
+#include <fstream>
 #include <mutex>
 #include <moonbit.h>
+#include <string>
 #include <vector>
+
+std::string std_string_from_moonbit(moonbit_string_t value);
 
 #ifndef MOUI_MOBILE_APP_ARG
 #define MOUI_MOBILE_APP_ARG "moui-mobile-harmonyos"
@@ -52,6 +58,13 @@
 #endif
 #endif
 
+#if defined(__has_include)
+#if __has_include(<window_manager/oh_display_manager.h>)
+#include <window_manager/oh_display_manager.h>
+#define MOUI_HARMONYOS_HAS_DISPLAY_MANAGER 1
+#endif
+#endif
+
 namespace {
 
 std::once_flag g_runtime_once;
@@ -61,6 +74,30 @@ int32_t g_height = 1;
 double g_scale = 1.0;
 double g_logical_width = 0.0;
 double g_logical_height = 0.0;
+
+// Display density (vp → px). XComponent size is physical; MoUI draws in logical
+// units and scales by this factor. Hardcoding 1.0 made UI ~2x too small on HVD.
+double display_density_scale() {
+#if defined(MOUI_HARMONYOS_HAS_DISPLAY_MANAGER)
+  float density = 0.0f;
+  if (
+    OH_NativeDisplayManager_GetDefaultDisplayDensityPixels(&density) ==
+      DISPLAY_MANAGER_OK &&
+    density > 0.0f
+  ) {
+    return static_cast<double>(density);
+  }
+  float virtual_pixels = 0.0f;
+  if (
+    OH_NativeDisplayManager_GetDefaultDisplayVirtualPixelRatio(&virtual_pixels) ==
+      DISPLAY_MANAGER_OK &&
+    virtual_pixels > 0.0f
+  ) {
+    return static_cast<double>(virtual_pixels);
+  }
+#endif
+  return 1.0;
+}
 
 constexpr unsigned int k_log_domain = 0x4D4F;
 constexpr const char *k_log_tag = "MoUIHarmony";
@@ -149,6 +186,34 @@ moonbit_string_t moonbit_string_from_ascii(const char *value) {
   return result;
 }
 
+// Converts a MoonBit string (length-prefixed UTF-16 units) to a UTF-8
+// std::string for logging. Renderer status JSON is ASCII, but the BMP->UTF-8
+// path keeps non-ASCII fallback reasons valid.
+std::string std_string_from_moonbit(moonbit_string_t value) {
+  if (value == nullptr) {
+    return {};
+  }
+  const int32_t length = Moonbit_array_length(value);
+  const auto *units = reinterpret_cast<const uint16_t *>(value);
+  std::string result;
+  result.reserve(static_cast<size_t>(length));
+  for (int32_t index = 0; index < length; ++index) {
+    const uint16_t unit = units[index];
+    if (unit < 0x80) {
+      result.push_back(static_cast<char>(unit));
+    } else if (unit < 0x800) {
+      result.push_back(static_cast<char>(0xC0 | (unit >> 6)));
+      result.push_back(static_cast<char>(0x80 | (unit & 0x3F)));
+    } else {
+      result.push_back(static_cast<char>(0xE0 | (unit >> 12)));
+      result.push_back(static_cast<char>(0x80 | ((unit >> 6) & 0x3F)));
+      result.push_back(static_cast<char>(0x80 | (unit & 0x3F)));
+    }
+  }
+  moonbit_decref(value);
+  return result;
+}
+
 void ensure_moonbit_runtime() {
   std::call_once(g_runtime_once, [] {
     static char app_name[] = MOUI_MOBILE_APP_ARG;
@@ -169,9 +234,10 @@ void ensure_moonbit_runtime() {
       MOUI_MOBILE_RENDERER_SELECTED
     );
     log_info(
-      "moui-mobile renderer configure requested=%{public}s ok=%{public}d",
+      "moui-mobile renderer configure requested=%{public}s ok=%{public}d status=%{public}s",
       MOUI_MOBILE_RENDERER_REQUESTED,
-      renderer_configured
+      renderer_configured,
+      std_string_from_moonbit(moui_mobile_renderer_status_json()).c_str()
     );
   });
 }
@@ -188,12 +254,22 @@ bool attach_or_resize(uint64_t surface_handle, int32_t width, int32_t height, do
     return false;
   }
   if (scale <= 0.0) {
-    scale = 1.0;
+    scale = display_density_scale();
   }
   if (g_logical_width > 0.0 && g_logical_height > 0.0) {
     const double x_scale = static_cast<double>(width) / g_logical_width;
     const double y_scale = static_cast<double>(height) / g_logical_height;
     scale = x_scale > y_scale ? x_scale : y_scale;
+  } else if (scale <= 1.0) {
+    // Prefer display density when ArkTS has not yet reported logical size.
+    // HVD MateBook Pro is typically densityPixels≈2; scale=1 made UI too small.
+    const double density = display_density_scale();
+    if (density > scale) {
+      scale = density;
+    }
+  }
+  if (scale <= 0.0) {
+    scale = 1.0;
   }
   const bool same_surface = g_surface_handle == surface_handle && g_surface_handle != 0;
   g_surface_handle = surface_handle;
@@ -267,16 +343,18 @@ void on_surface_created(OH_NativeXComponent *component, void *window) {
   uint64_t width = 1;
   uint64_t height = 1;
   OH_NativeXComponent_GetXComponentSize(component, window, &width, &height);
+  const double density = display_density_scale();
   const bool attached = attach_or_resize(
     reinterpret_cast<uint64_t>(window),
     static_cast<int32_t>(width > 0 ? width : 1),
     static_cast<int32_t>(height > 0 ? height : 1),
-    1.0
+    density
   );
   log_info(
-    "XComponent surface created width=%{public}llu height=%{public}llu attach=%{public}d",
+    "XComponent surface created width=%{public}llu height=%{public}llu density=%{public}f attach=%{public}d",
     static_cast<unsigned long long>(width),
     static_cast<unsigned long long>(height),
+    density,
     attached ? 1 : 0
   );
 }
@@ -289,16 +367,18 @@ void on_surface_changed(OH_NativeXComponent *component, void *window) {
   uint64_t width = 1;
   uint64_t height = 1;
   OH_NativeXComponent_GetXComponentSize(component, window, &width, &height);
+  const double density = display_density_scale();
   const bool resized = attach_or_resize(
     reinterpret_cast<uint64_t>(window),
     static_cast<int32_t>(width > 0 ? width : 1),
     static_cast<int32_t>(height > 0 ? height : 1),
-    1.0
+    density
   );
   log_info(
-    "XComponent surface changed width=%{public}llu height=%{public}llu resize=%{public}d",
+    "XComponent surface changed width=%{public}llu height=%{public}llu density=%{public}f resize=%{public}d",
     static_cast<unsigned long long>(width),
     static_cast<unsigned long long>(height),
+    density,
     resized ? 1 : 0
   );
 }
@@ -488,6 +568,42 @@ napi_value napi_renderer_status(napi_env env, napi_callback_info info) {
   (void)info;
   ensure_moonbit_runtime();
   return napi_moonbit_string_value(env, moui_mobile_renderer_status_json());
+}
+
+// Reads MOUI_MOBILE_A11Y_SMOKE from the process environment so the ArkTS
+// host-update handler can fire a deterministic once-fire focus/activate pair
+// without a live screen-reader gesture stream, mirroring the iOS path. HarmonyOS
+// ability processes are forked by appspawn and do NOT inherit `hdc shell` env,
+// so the recorder also writes a flag file at `/data/local/tmp/moui_a11y_smoke`
+// as the reliable cross-boundary signal; this function checks both.
+napi_value napi_a11y_smoke_enabled(napi_env env, napi_callback_info info) {
+  (void)info;
+  const char *env_value = std::getenv("MOUI_MOBILE_A11Y_SMOKE");
+  bool enabled = false;
+  if (env_value != nullptr) {
+    std::string lower(env_value);
+    for (char &c : lower) {
+      c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    }
+    enabled = lower == "1" || lower == "true" || lower == "yes";
+  }
+  if (!enabled) {
+    std::ifstream flag("/data/local/tmp/moui_a11y_smoke");
+    if (flag.is_open()) {
+      std::string value;
+      std::getline(flag, value);
+      for (char &c : value) {
+        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+      }
+      // trim whitespace
+      while (!value.empty() && (value.back() == '\r' || value.back() == '\n' ||
+             value.back() == ' ' || value.back() == '\t')) {
+        value.pop_back();
+      }
+      enabled = value == "1" || value == "true" || value == "yes";
+    }
+  }
+  return napi_bool(env, enabled);
 }
 
 napi_value napi_dispatch_text_input(napi_env env, napi_callback_info info) {
@@ -778,6 +894,7 @@ napi_value init(napi_env env, napi_value exports) {
     {"takeHostUpdates", nullptr, napi_take_host_updates, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"rendererConfigure", nullptr, napi_renderer_configure, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"rendererStatusJson", nullptr, napi_renderer_status, nullptr, nullptr, nullptr, napi_default, nullptr},
+    {"a11ySmokeEnabled", nullptr, napi_a11y_smoke_enabled, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"dispatchTextInput", nullptr, napi_dispatch_text_input, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"dispatchCommand", nullptr, napi_dispatch_command, nullptr, nullptr, nullptr, napi_default, nullptr},
     {"dispatchAccessibility", nullptr, napi_dispatch_accessibility, nullptr, nullptr, nullptr, napi_default, nullptr},

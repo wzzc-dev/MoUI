@@ -1,6 +1,16 @@
 #!/usr/bin/env node
 
-import { copyFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+console.log(`[debug-top] ANDROID_HOME=${process.env.ANDROID_HOME}`);
+
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { defaultMouiRoot, defaultSkiaRoot, defaultWorkspaceRoot, readMobileApp } from "./app-config.mjs";
@@ -186,9 +196,27 @@ const androidHome = () => {
 
 const androidNdkHome = sdkRoot => {
   if (process.env.ANDROID_NDK_HOME) return process.env.ANDROID_NDK_HOME;
+  // Keep prepare-native-build aligned with mobile-app.gradle ndkVersion pin.
+  const pinnedVersion = process.env.MOUI_ANDROID_NDK_VERSION || "28.2.13676358";
+  const pinned = join(sdkRoot, "ndk", pinnedVersion);
+  if (existsSync(pinned)) return pinned;
   const bundled = join(sdkRoot, "ndk-bundle");
   if (existsSync(bundled)) return bundled;
   return latestChildDir(join(sdkRoot, "ndk"));
+};
+
+const androidPrebuiltHost = ndkHome => {
+  const prebuiltRoot = join(ndkHome, "toolchains/llvm/prebuilt");
+  if (!existsSync(prebuiltRoot)) return "";
+  // Prefer the only/host prebuilt dir; avoid non-deterministic `find` order.
+  const hosts = readdirSync(prebuiltRoot).filter(name => {
+    try {
+      return statSync(join(prebuiltRoot, name)).isDirectory();
+    } catch {
+      return false;
+    }
+  }).sort();
+  return hosts[0] ? join(prebuiltRoot, hosts[0]) : "";
 };
 
 const copyAndroidSharedLibs = ({ abi, ndkHome, skiaLinkFlags, jniLibsDir }) => {
@@ -196,15 +224,30 @@ const copyAndroidSharedLibs = ({ abi, ndkHome, skiaLinkFlags, jniLibsDir }) => {
   rmSync(abiDir, { recursive: true, force: true });
   ensureDir(abiDir);
   const triple = androidAbiToTriple.get(abi);
-  const libcxxResult = spawnSync(
-    "find",
-    [join(ndkHome, "toolchains/llvm/prebuilt"), "-path", `*/sysroot/usr/lib/${triple}/libc++_shared.so`, "-type", "f"],
-    { encoding: "utf8" },
-  );
-  const libcxx = libcxxResult.status === 0
-    ? libcxxResult.stdout.trim().split("\n").filter(Boolean)[0]
+  const hostRoot = androidPrebuiltHost(ndkHome);
+  // Exact NDK sysroot path — never pick a stale/minimal libc++ from another NDK.
+  const libcxx = hostRoot && triple
+    ? join(hostRoot, "sysroot/usr/lib", triple, "libc++_shared.so")
     : "";
-  if (libcxx) copyFileSync(libcxx, join(abiDir, "libc++_shared.so"));
+  if (libcxx && existsSync(libcxx)) {
+    const dest = join(abiDir, "libc++_shared.so");
+    copyFileSync(libcxx, dest);
+    const size = statSync(dest).size;
+    // Full NDK libc++ is multi-MB; a ~1MB stripped/minimal copy is a known crash source
+    // (missing std::ostringstream vtable → UnsatisfiedLinkError at dlopen).
+    if (size < 2_000_000) {
+      throw new Error(
+        `Android libc++_shared.so from ${libcxx} is only ${size} bytes; expected a full NDK libc++ (≥2MB). ` +
+          `Pin ANDROID_NDK_HOME to a complete NDK and wipe artifacts/*/jniLibs before rebuild.`,
+      );
+    }
+    console.log(`[moui-mobile-android] packaged libc++_shared.so from ${libcxx} (${size} bytes)`);
+  } else {
+    console.warn(
+      `[moui-mobile-android] libc++_shared.so not found for abi=${abi} ndkHome=${ndkHome}; ` +
+        `AGP will supply STL from its ndkVersion — pin the same NDK everywhere.`,
+    );
+  }
   if (containsFlag(skiaLinkFlags, "-lskia")) {
     const skiaLibDir = firstLinkDir(skiaLinkFlags);
     const skiaSo = join(skiaLibDir, "libskia.so");
@@ -245,6 +288,7 @@ const moonBuildEnv = () => {
     ...process.env,
     MOUI_SKIA_DISABLE_PREBUILD_SKIA: "1",
     MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM: "1",
+    MOONBIT_NEW_NATIVE: "0",
   };
   for (const key of [
     "SDKROOT",
