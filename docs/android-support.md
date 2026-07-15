@@ -1,22 +1,25 @@
 # Android Support
 
 Android support is currently an experimental embedded native route. The shared
-mobile template owns `MobileActivity`/`MobileSurfaceView`, supplies an
-`ANativeWindow`, drives frames with `Choreographer`, and forwards lifecycle,
-resize, pointer, IME, clipboard, and accessibility traffic into MoUI.
+mobile template owns the canonical Kotlin `MoUIActivity`/`MoUISurfaceView`,
+supplies an `ANativeWindow`, drives frames with `Choreographer`, and forwards
+lifecycle, resize, pointer, IME, clipboard, accessibility, and revisioned
+PlatformView snapshots into MoUI. `MoUIActivity` extends AndroidX
+`ComponentActivity`; its `FrameLayout` keeps the MoUI surface below a native
+PlatformView overlay.
 
 ## Status
 
 | Area | Current state | Evidence boundary |
 | --- | --- | --- |
 | Host contract | Scaffolded in `moui/backend/android` | Package tests prove protocol behavior only. |
-| Platform services | `InputConnection`, text/image `ClipboardManager`, `FileProvider`, and virtual `AccessibilityNodeProvider` are wired through `MobileHostChannel` | Full IME, cross-app PNG, TalkBack tree/focus/action evidence pending. |
+| Platform services | `InputConnection`, text/image `ClipboardManager`, a private clipboard `ContentProvider`, virtual `AccessibilityNodeProvider`, and PlatformView overlay are wired through `MobileHostChannel` | Full IME, cross-app PNG, TalkBack tree/focus/action, and PlatformView device evidence pending on the managed shell. |
 | Frame pacing | Input/resize request redraw; presentation runs from `Choreographer` frame ticks | 60/120 Hz device pacing evidence pending. |
 | Skia provider | Scaffolded in `moui/backend/android/skia` | Provider/preflight checks prove wiring, not device pixels. |
 | Counter entrypoint | `examples/counter/android_skia` exports thin native hooks | Compile/check evidence only. |
-| APK shell | `examples/counter/android_app` plus `scripts/build-counter-android-apk.sh` | Packaging evidence; fallback APK is not runtime proof. |
+| APK shell | Package-owned Kotlin/AndroidX managed shell plus app-owned Gradle metadata under `examples/*/android_app` | Packaging evidence; fallback APK is not runtime proof. |
 | First-frame runtime evidence | Non-fallback Component Gallery APK on HUAWEI SCM-W09 device; nonblank first-frame screenshot in `resource/screenshots/android-componentgallery.jpg` (2026-07-10) | First-frame pixels proven. |
-| Runtime support claim | **L2 `passed`** on emulator (Component Gallery, 2026-07-15) | `artifacts/mobile-runtime/android/component_gallery/mobile-runtime-smoke.json` validates with `--require-passed`. Full service set: IME, clipboard write/read, a11y tree/focus/action, async-image, detach, resize, input/scroll. Vulkan GPU route. Re-run via `scripts/android-mobile-runtime-evidence.sh`. |
+| Runtime support claim | Release N Java shell reached **L2 `passed`** on an emulator (Component Gallery, 2026-07-15); the canonical managed shell needs a fresh matching-device run | Historical evidence does not automatically promote the replacement shell. Re-run `scripts/android-mobile-runtime-evidence.sh` without shell-side probes before claiming managed-shell runtime support. |
 
 ## Ownership
 
@@ -28,13 +31,20 @@ resize, pointer, IME, clipboard, and accessibility traffic into MoUI.
 - `examples/counter/android_skia` is the thin MoonBit entrypoint for JNI/CMake.
   Its attach/resize/pointer/render/detach exports stay small so the Android app
   can own the shell.
-- `examples/counter/android_app` owns the experimental Java `Activity`,
-  `MobileSurfaceView` lifecycle, touch/IME/clipboard/accessibility forwarding,
-  `Choreographer`, JNI `ANativeWindow` acquisition,
-  CMake wiring, MoonBit-generated C, MoonBit runtime, Android presenter, and
-  `moui_skia/native` stubs.
+- `moui/mobile/android` owns the canonical Kotlin `ComponentActivity`,
+  `MoUISurfaceView`, PlatformView overlay/factory API, clipboard provider,
+  virtual accessibility bridge, `Choreographer`, registered JNI adapter,
+  `ANativeWindow` acquisition, and reusable CMake wiring.
+- `examples/counter/android_app` and
+  `examples/component_gallery/android_app` own only app Gradle metadata,
+  manifest/resources, and their thin CMake include.
+- `moui/mobile/legacy/android` preserves the Release N Java shell and
+  name-mangled JNI adapter as a one-release compatibility fixture. It is never
+  selected implicitly.
 
-Android stays on minSdk 23. Product `auto` prefers Vulkan on API 24+ with GLES
+Android stays on minSdk 23 and targetSdk 35. The managed shell compiles against
+SDK 36 because AndroidX Activity 1.13.0 declares `minCompileSdk=36`; disabling
+the AAR metadata check is not supported. Product `auto` prefers Vulkan on API 24+ with GLES
 fallback (and GLES on API 23) when the host GPU surface is available.
 `SkiaRasterNative` remains the explicit mode and sticky recovery fallback and
 still copies full pixel frames on that path.
@@ -98,7 +108,7 @@ custom SDK root.
 
 Manual setup should install:
 
-- Android SDK Platform 35
+- Android SDK Platform 36 (compile SDK required by AndroidX Activity 1.13.0)
 - Android SDK Build-Tools 35.0.0
 - Android SDK Platform-Tools
 - **NDK 28.2.13676358** (pinned by `moui/mobile/android/mobile-app.gradle` and
@@ -119,7 +129,7 @@ export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
 sdkmanager --licenses
 sdkmanager --install \
   "platform-tools" \
-  "platforms;android-35" \
+  "platforms;android-36" \
   "build-tools;35.0.0" \
   "cmake;3.22.1" \
   "ndk;28.2.13676358"
@@ -144,8 +154,9 @@ Android APK builds now use the shared mobile Gradle route. The app-specific
 shells under `examples/counter/android_app` and
 `examples/component_gallery/android_app` consume app-facing metadata from
 `examples/<app>/mobile.json` plus package-published compatibility contracts
-from `moui/mobile/build-contracts.json`. The reusable Gradle plugin, Java
-Activity, JNI, CMake, and copyable project template live under `moui/mobile`
+from `moui/mobile/build-contracts.json`. The reusable Gradle script, Kotlin
+`ComponentActivity`, registered JNI bridge, CMake module, and copyable project
+template live under `moui/mobile`
 so external apps can use the same route from the published `wzzc-dev/moui`
 package. A Gradle pre-build task generates MoonBit C plus Skia flags, compiles
 the shared JNI/CMake template, and lets Gradle package/sign the debug APK.
@@ -185,7 +196,7 @@ scripts/build-mobile-android-apk.sh --app counter
 The default APK path resolves the locked Android Skia provider through
 `moui_skia/build.js`, uses the dynamic Android Skia artifact so native
 dependencies can be packaged, builds the app's native library, packages the
-shared Java `SurfaceView` glue, and writes:
+shared Kotlin `SurfaceView`/PlatformView-overlay glue, and writes:
 
 ```text
 artifacts/android/counter/app-debug.apk
@@ -204,11 +215,26 @@ scripts/build-component-gallery-android-apk.sh --fallback-skia
 ```
 
 `--fallback-skia` validates MoonBit C generation, JNI, CMake,
-Java/resource packaging, and debug signing. It reports native Skia unavailable
+Kotlin/resource packaging, and debug signing. It reports native Skia unavailable
 and must not be used as first-frame runtime evidence.
 
 The old app-specific build scripts remain compatibility wrappers over
 `scripts/build-mobile-android-apk.sh --app ...`.
+
+The default build always selects the managed shell. During the Release N
+compatibility window, maintainers can build the frozen Java fixture explicitly:
+
+```sh
+scripts/build-mobile-android-apk.sh \
+  --app counter \
+  --fallback-skia \
+  --legacy-java-shell \
+  --compile-sdk 35
+```
+
+This flag switches the Java/Kotlin source root, manifest Activity/provider,
+and CMake JNI glue root as one unit. It is a compatibility audit, not a second
+production mode.
 
 For an external app, copy `moui/mobile/android/template` to `android_app`, copy
 `moui/mobile/template.mobile.json` to `mobile.json`, fill in the app id and
@@ -304,7 +330,7 @@ adb -s "$SERIAL" install -r "$APK"
 adb -s "$SERIAL" logcat -c
 # Activity is the shared template class (not applicationId-relative).
 adb -s "$SERIAL" shell am start -n \
-  dev.wzzc.moui.componentgallery/dev.wzzc.moui.mobile.MobileActivity
+  dev.wzzc.moui.componentgallery/dev.wzzc.moui.mobile.MoUIActivity
 # If start fails: adb shell cmd package resolve-activity --brief dev.wzzc.moui.componentgallery
 
 # Continuous GPU configure evidence (do not use one-shot logcat dumps only)

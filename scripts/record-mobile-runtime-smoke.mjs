@@ -347,13 +347,9 @@ const runAndroidSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotP
   // short `logcat -d` window. Mirrors the iOS log stream contract.
   const androidStreamPath = join(dirname(logPath), "runtime-stream.log");
   const androidStream = startAndroidLogStream({ device, outPath: androidStreamPath });
-  // component_gallery requests a deterministic once-fire accessibility
-  // focus/activate pair via intent extra (app processes don't inherit shell
-  // env), aligning with the iOS component_gallery assistive-tech path.
   const launchArgs = [
     ...serialArgs, "shell", "am", "start", "-n",
-    `${appConfig.android.applicationId}/dev.wzzc.moui.mobile.MobileActivity`,
-    ...(appConfig.id === "component_gallery" ? ["--es", "moui_a11y_smoke", "1"] : []),
+    `${appConfig.android.applicationId}/dev.wzzc.moui.mobile.MoUIActivity`,
   ];
   result = run("adb", launchArgs);
   appendLog(logPath, "adb launch", result);
@@ -361,44 +357,19 @@ const runAndroidSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotP
     androidStream.stop();
     return { observations };
   }
-  // Wait for first frame + semantics tree before dump/input (probe labels lag launch).
-  // Shell-side service smoke (IME/clipboard) fires from semantics when
-  // moui_a11y_smoke=1; give it time before external probes.
+  // Wait for first frame and the native virtual accessibility tree before input.
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 4000);
   result = run("adb", [...serialArgs, "exec-out", "screencap", "-p"], { encoding: "buffer" });
   if (result.status === 0 && result.stdout?.length > 0) writeFileSync(beforePath, result.stdout);
   let probePlan = null;
   let lastTree = { status: 1, stdout: "", stderr: "no dump" };
-  let streamSnapshot = "";
-  try {
-    if (existsSync(androidStreamPath)) streamSnapshot = readFileSync(androidStreamPath, "utf8");
-  } catch {
-    // ignore
-  }
-  // Prefer semantics-emitted probe plan; uiautomator often cannot see Canvas nodes.
-  probePlan = parseMobileServiceProbePlan(streamSnapshot);
-  if (probePlan) {
-    appendLog(logPath, "adb service probe plan from semantics", {
-      status: 0,
-      stdout: JSON.stringify(probePlan),
-      stderr: "",
-    });
-  }
-  if (appConfig.id === "component_gallery" && !probePlan) {
+  if (appConfig.id === "component_gallery") {
     for (let attempt = 1; attempt <= 12; attempt++) {
       const dumped = run("adb", [...serialArgs, "shell", "uiautomator", "dump", "/sdcard/moui-window.xml"]);
       appendLog(logPath, `adb service probe accessibility dump attempt ${attempt}`, dumped);
       lastTree = run("adb", [...serialArgs, "shell", "cat", "/sdcard/moui-window.xml"]);
       probePlan = lastTree.status === 0 ? androidServiceProbePlan(lastTree.stdout || "") : null;
       if (probePlan) break;
-      try {
-        if (existsSync(androidStreamPath)) {
-          probePlan = parseMobileServiceProbePlan(readFileSync(androidStreamPath, "utf8"));
-          if (probePlan) break;
-        }
-      } catch {
-        // ignore
-      }
       Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 500);
     }
     appendLog(logPath, "adb service probe accessibility tree", lastTree);
@@ -407,7 +378,7 @@ const runAndroidSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotP
       stdout: probePlan
         ? JSON.stringify({ textField: probePlan.textField, action: probePlan.action })
         : "",
-      stderr: probePlan ? "" : "service probe labels not found in uiautomator dump or semantics logs",
+      stderr: probePlan ? "" : "service probe labels not found in uiautomator dump",
     });
   }
   if (probePlan) {
