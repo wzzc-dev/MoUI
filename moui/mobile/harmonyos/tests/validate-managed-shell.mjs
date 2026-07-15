@@ -92,6 +92,9 @@ test("canonical HarmonyOS shell owns ABI, XComponent, Host Wire, and plugin inva
   contains(cmake, "mobile/runtime/moui_mobile_runtime_v1.cpp", cmakePath);
   contains(cmake, '"${MOUI_ROOT}/mobile/include"', cmakePath);
   contains(build, "resolve-managed-shell.mjs", buildPath);
+  contains(build, "--ejected-shell", buildPath);
+  contains(build, "--ejected-shell and --legacy-shell are mutually exclusive", buildPath);
+  contains(build, "--ejected-shell requires a versioned .moui-shell.json", buildPath);
   contains(build, "--legacy-shell", buildPath);
   contains(build, "harmonyos-app-owned-shell", buildPath);
 
