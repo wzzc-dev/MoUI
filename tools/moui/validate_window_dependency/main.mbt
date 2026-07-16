@@ -30,6 +30,9 @@ fn usage() -> String {
     #|Checks that wzzc-dev/window resolves from mooncakes.io and that every
     #|known consumer pins the same published version.
     #|
+    #|Enforces docs/invariants.md R4 (no ./window in moon.work) and A6
+    #|(shared pin across moui, moui_skia, moui_webview, markdown_editor).
+    #|
     #|Options:
     #|  --repo-root PATH   Repository root used to resolve paths. Defaults to cwd.
     #|  -h, --help         Show this help.
@@ -162,8 +165,9 @@ fn validate_window_dependency_inputs(
         errors.push(
           "moon.work lists \"./window\" as a workspace member (\{member_count} occurrence(s)).\n" +
           "  This shadows the published wzzc-dev/window dependency for all workspace consumers.\n" +
-          "  Run `sh scripts/window-dev-mode.sh off` to restore mooncakes.io resolution.\n" +
-          "  Local window edits belong in a dev-mode worktree, not on the main branch.",
+          "  Fix: run `sh scripts/window-dev-mode.sh off` to restore mooncakes.io resolution.\n" +
+          "  Local window edits belong in a dev-mode worktree, not on the main branch.\n" +
+          "  See: docs/invariants.md#R4",
         )
       }
     }
@@ -177,8 +181,8 @@ fn validate_window_dependency_inputs(
           errors.push(
             consumer.path +
             ": expected a \"wzzc-dev/window@<version>\" declaration but found none.\n" +
-            "  If this module no longer depends on window, remove it from EXPECTED_WINDOW_CONSUMERS.\n" +
-            "  Otherwise restore the import.",
+            "  Fix: restore the import, or remove this path from expected_window_consumers() if it no longer depends on window.\n" +
+            "  See: docs/invariants.md#A6",
           )
         } else {
           versions_by_consumer.push({ path: consumer.path, versions })
@@ -190,7 +194,8 @@ fn validate_window_dependency_inputs(
               consumer.path +
               ": declares wzzc-dev/window at multiple versions: " +
               version_list(versions) +
-              ".\n  A single moon.mod must pin exactly one window version.",
+              ".\n  Fix: pin exactly one window version in this moon.mod.\n" +
+              "  See: docs/invariants.md#A6",
             )
           }
         }
@@ -203,8 +208,9 @@ fn validate_window_dependency_inputs(
     errors.push(
       "wzzc-dev/window version mismatch across consumers:\n" +
       mismatch_detail(versions_by_consumer) +
-      "\n  Align all moon.mod files to a single published version.\n" +
-      "  Use `moon -C <module> mod tidy` or edit the import block directly.",
+      "\n  Fix: align all four consumers to one published version, then run `moon update`.\n" +
+      "  Consumers: moui/, moui_skia/, moui_webview/, examples/markdown_editor/.\n" +
+      "  See: docs/invariants.md#A6",
     )
   }
   let pinned = if unique_versions.length() == 1 {

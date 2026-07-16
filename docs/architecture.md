@@ -1,5 +1,8 @@
 # Architecture
 
+One-page map (prefer for orientation): [`architecture-map.md`](architecture-map.md).
+Doc catalog: [`INDEX.md`](INDEX.md). Constraints: [`invariants.md`](invariants.md).
+
 MoUI is a multi-platform MoonBit GUI framework. The repository is organized
 around one rule: app logic stays platform-neutral, while host backends own
 windows, lifecycle, platform services, and renderer selection.
