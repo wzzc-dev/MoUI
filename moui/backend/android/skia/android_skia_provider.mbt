@@ -76,7 +76,7 @@ pub fn android_skia_provider_preflight_summary(
   let vulkan_runtime_available = @skia_native.Surface::vulkan_gpu_context_runtime_available()
   let egl_runtime_available = @skia_native.Surface::egl_gpu_context_runtime_available()
   let host_preflight = @android_host.android_capability_summary().preflight_fields()
-  "Android Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; surface_route=\{surface_route}; presenter=\{android_skia_presenter_description()}; gpu_presenter=\{android_skia_gpu_presenter_description()}; vulkan_runtime_available=\{vulkan_runtime_available}; egl_runtime_available=\{egl_runtime_available}; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=android-device-smoke-required; runtime_status=experimental-scaffold; unavailable=\"\{android_skia_unavailable_message()}\""
+  "Android Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; surface_route=\{surface_route}; presenter=\{android_skia_presenter_description()}; gpu_presenter=\{android_skia_gpu_presenter_description()}; vulkan_runtime_available=\{vulkan_runtime_available}; egl_runtime_available=\{egl_runtime_available}; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=android-device-smoke-required; runtime_status=runtime_partial; unavailable=\"\{android_skia_unavailable_message()}\""
 }
 
 ///|

@@ -12,6 +12,21 @@ The current mainline is native Skia raster plus the Web
 available as an experimental diagnostic route while the MoonBit WGPU ecosystem
 matures.
 
+### Supported platforms (product class)
+
+| Platform | Class | Meaning |
+| --- | --- | --- |
+| macOS | **committed** | Product mainline (L0–L3 evidence) |
+| Web | **committed** | Product mainline (wasm-gc + WebGPU) |
+| Windows | **committed_with_gaps** | Product L0–L2; full L3 runtime still partial |
+| Linux | **committed_with_gaps** | Product L0–L2; interactive L3 still partial |
+| Android | **runtime_partial** | Managed shell + host path usable for dev/demo; not product-complete |
+| iOS | **runtime_partial** | Same as Android |
+| HarmonyOS | **runtime_partial** | Same; signed-device full smoke still open |
+
+Mobile is **not** “unwired glue only,” and it is **not** fully promoted either.
+See [platform readiness declaration](docs/platform-readiness-declaration.md).
+
 The runtime pipeline is explicit:
 
 ```text

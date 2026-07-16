@@ -75,7 +75,7 @@ pub fn harmonyos_skia_provider_preflight_summary(
   let surface_route = options.surface_route.label()
   let gpu_runtime_available = @skia_native.Surface::egl_gpu_context_runtime_available()
   let host_preflight = @harmonyos_host.harmonyos_capability_summary().preflight_fields()
-  "HarmonyOS Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; surface_route=\{surface_route}; presenter=\{harmonyos_skia_presenter_description()}; gpu_presenter=\{harmonyos_skia_gpu_presenter_description()}; gpu_runtime_available=\{gpu_runtime_available}; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=harmonyos-device-smoke-required; runtime_status=experimental-scaffold; unavailable=\"\{harmonyos_skia_unavailable_message()}\""
+  "HarmonyOS Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; surface_route=\{surface_route}; presenter=\{harmonyos_skia_presenter_description()}; gpu_presenter=\{harmonyos_skia_gpu_presenter_description()}; gpu_runtime_available=\{gpu_runtime_available}; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=harmonyos-device-smoke-required; runtime_status=runtime_partial; unavailable=\"\{harmonyos_skia_unavailable_message()}\""
 }
 
 ///|

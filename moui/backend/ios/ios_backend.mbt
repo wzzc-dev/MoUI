@@ -20,8 +20,15 @@ pub(all) struct IosBackendCapabilities {
 } derive(Eq, Debug, ToJson)
 
 ///|
+/// `ready` means the managed-shell host path is usable for app development
+/// and demos (aligned with Linux host usability). It does **not** mean full
+/// L3 runtime promotion or GPU seven-gate claims.
+///
+/// `status` is a coarse evidence class: `runtime_partial` until managed
+/// SwiftUI matching-simulator smoke and presenter verification close gaps.
 pub(all) struct IosBackendReadiness {
   ready : Bool
+  status : String
   blocked_by : Array[String]
   next_steps : Array[String]
 } derive(Eq, Debug, ToJson)
@@ -103,7 +110,9 @@ pub fn IosRendererProvider::has_async_image_loader(
 
 ///|
 pub fn ios_service_capabilities() -> @host.HostServiceCapabilities {
-  @host.HostServiceCapabilities::none()
+  // Code-level host services wired through MobileHostChannel + Swift shell
+  // adapters. Matching-simulator evidence remains partial (see readiness.status).
+  @host.HostServiceCapabilities::new(clipboard=true)
 }
 
 ///|
@@ -114,8 +123,8 @@ pub fn ios_input_capabilities() -> @host.HostInputCapabilities {
     keyboard=true,
     focus=true,
     text_input=true,
-    ime=false,
-    clipboard=false,
+    ime=true,
+    clipboard=true,
     drag_drop=false,
   )
 }
@@ -130,25 +139,28 @@ pub fn ios_capability_matrix() -> IosBackendCapabilities {
     scroll: true,
     keyboard: true,
     text_input: true,
-    ime: false,
-    clipboard: false,
+    ime: true,
+    clipboard: true,
     system_theme: false,
-    accessibility: false,
-    async_image: false,
+    accessibility: true,
+    async_image: true,
   }
 }
 
 ///|
 pub fn ios_readiness() -> IosBackendReadiness {
   {
-    ready: false,
+    ready: true,
+    status: "runtime_partial",
     blocked_by: [
-      "UIKit UIViewController lifecycle glue has only an experimental Counter simulator shell",
-      "first-frame, tap input, resize/lifecycle, IME, clipboard, accessibility, and async image services still need matching-simulator evidence",
+      "managed SwiftUI shell matching-simulator smoke still needs re-recording with --require-passed",
+      "physical-device and real VoiceOver observations remain open",
+      "GPU seven-gate promotion is not claimed (gpuPromotionEvidence.claimed=false)",
     ],
     next_steps: [
-      "record a matching iOS Simulator first-frame Skia smoke before marking runtime support passed",
-      "add native UIKit service bridges for IME, clipboard, accessibility, and async image loading when evidence requirements are defined",
+      "re-run Component Gallery managed SwiftUI smoke on Simulator without shell probes",
+      "record actualPresenterRoute metal-direct evidence in checks/platforms/ios.json",
+      "land GPU seven-gate claim only after matching-host promotion manifests pass",
     ],
   }
 }
@@ -158,13 +170,13 @@ pub fn backend_info() -> IosBackendInfo {
   {
     host_info: @host.HostAppInfo::new(
       backend=@host.HostBackendKind::Native,
-      description="iOS embedded native host scaffold driven by UIKit UIView callbacks",
+      description="iOS embedded native host with managed SwiftUI shell, UIKit/Metal view callbacks, and MobileHostChannel services",
     ),
     capabilities: ios_capability_matrix(),
     services: ios_service_capabilities(),
     input: ios_input_capabilities(),
     readiness: ios_readiness(),
-    description: "iOS backend exposes an embedded-session contract: the platform owner supplies a UIKit UIView handle, forwards lifecycle/input callbacks, and selects a renderer provider. It is not a passed runtime platform until simulator or device smoke evidence is recorded.",
+    description: "iOS backend exposes an embedded-session contract: the managed shell supplies a view/Metal surface, forwards lifecycle/input callbacks, and selects a Skia renderer provider. Host path is usable for development (ready=true, status=runtime_partial). It is not product-complete until managed-shell matching-simulator L3 and presenter verification close remaining gaps.",
   }
 }
 
@@ -180,13 +192,13 @@ pub fn ios_capability_summary(
     window_lifecycle=true,
     multi_window=false,
     text_input_available=true,
-    ime_available=false,
+    ime_available=true,
     drag_drop_available=false,
-    async_services=false,
-    native_accessibility_available=false,
+    async_services=true,
+    native_accessibility_available=true,
     web_view_available=false,
-    web_view_description="iOS native WKWebView embedding is not wired in this scaffold.",
-    description="iOS embedded native host scaffold with external UIKit lifecycle and app-driven input forwarding.",
+    web_view_description="iOS native WKWebView embedding is not part of the current mobile host contract.",
+    description="iOS embedded native host with managed shell lifecycle, MobileHostChannel IME/clipboard/a11y bridges, and app-driven input forwarding. Runtime evidence remains partial.",
   )
 }
 

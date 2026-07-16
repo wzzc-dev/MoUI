@@ -1,10 +1,15 @@
 # HarmonyOS Support
 
-HarmonyOS support is currently an experimental embedded Skia route with
-first-frame runtime evidence. Native XComponent callbacks are the sole source
-of surface lifecycle, pointer, resize, and detach. ArkTS owns `displaySync`,
-the transparent IME proxy, pasteboard, accessibility overlays, and packaging;
-MoUI owns the runtime session and Skia renderer provider contracts.
+HarmonyOS is a **runtime_partial** embedded Skia route: the managed
+ArkTS/XComponent shell and host session are **usable for development and
+demos** (`backend` reports `ready=true`, `status=runtime_partial`), with
+first-frame and partial runtime evidence. It is **not** product-complete until
+signed-device full L3 smoke and presenter/GPU promotion close remaining gaps.
+
+Native XComponent callbacks are the sole source of surface lifecycle, pointer,
+resize, and detach. ArkTS owns `displaySync`, the transparent IME proxy,
+pasteboard, accessibility overlays, and packaging; MoUI owns the runtime
+session and Skia renderer provider contracts.
 
 ## Ownership
 

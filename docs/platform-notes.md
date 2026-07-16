@@ -183,12 +183,14 @@ For detailed platform-specific setup, requirements, and runtime evidence:
   auto-detection, and host architecture.
 - [Linux](platform-notes-linux.md) — Wayland host, runtime requirements, Skia provider,
   runtime evidence, and remaining gaps.
-- [Android](android-support.md) (experimental) — embedded Kotlin/AndroidX managed shell with registered JNI/CMake,
-  APK packaging, and first-frame pixels.
-- [iOS](ios-support.md) (experimental) — canonical SwiftUI/Xcode managed shell,
-  Simulator packaging, and historical Release N first-frame pixels.
-- [HarmonyOS](harmonyos-support.md) (experimental) — embedded Stage Ability scaffold,
-  HAP packaging, and first-frame pixels.
+- [Android](android-support.md) (**runtime_partial**) — managed Kotlin/AndroidX shell,
+  embedded session, APK packaging, historical runtime smoke; not product-complete.
+- [iOS](ios-support.md) (**runtime_partial**) — managed SwiftUI/Xcode shell,
+  Simulator packaging, historical UIKit smoke; managed re-proof pending.
+- [HarmonyOS](harmonyos-support.md) (**runtime_partial**) — managed ArkTS/XComponent shell,
+  HAP packaging, first-frame/partial smoke; signed full L3 pending.
+
+Product-class summary: [platform readiness declaration](platform-readiness-declaration.md).
 
 ## Platform Validation
 

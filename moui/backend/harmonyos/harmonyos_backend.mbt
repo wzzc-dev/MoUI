@@ -20,8 +20,15 @@ pub(all) struct HarmonyOsBackendCapabilities {
 } derive(Eq, Debug, ToJson)
 
 ///|
+/// `ready` means the managed-shell host path is usable for app development
+/// and demos (aligned with Linux host usability). It does **not** mean full
+/// L3 runtime promotion, commercial signing, or GPU seven-gate claims.
+///
+/// `status` is a coarse evidence class: `runtime_partial` until signed-device
+/// full smoke and presenter verification close remaining gaps.
 pub(all) struct HarmonyOsBackendReadiness {
   ready : Bool
+  status : String
   blocked_by : Array[String]
   next_steps : Array[String]
 } derive(Eq, Debug, ToJson)
@@ -103,7 +110,9 @@ pub fn HarmonyOsRendererProvider::has_async_image_loader(
 
 ///|
 pub fn harmonyos_service_capabilities() -> @host.HostServiceCapabilities {
-  @host.HostServiceCapabilities::none()
+  // Code-level host services wired through MobileHostChannel + ArkTS shell
+  // adapters. Matching-device evidence remains partial (see readiness.status).
+  @host.HostServiceCapabilities::new(clipboard=true)
 }
 
 ///|
@@ -114,8 +123,8 @@ pub fn harmonyos_input_capabilities() -> @host.HostInputCapabilities {
     keyboard=true,
     focus=true,
     text_input=true,
-    ime=false,
-    clipboard=false,
+    ime=true,
+    clipboard=true,
     drag_drop=false,
   )
 }
@@ -130,25 +139,28 @@ pub fn harmonyos_capability_matrix() -> HarmonyOsBackendCapabilities {
     scroll: true,
     keyboard: true,
     text_input: true,
-    ime: false,
-    clipboard: false,
+    ime: true,
+    clipboard: true,
     system_theme: false,
-    accessibility: false,
-    async_image: false,
+    accessibility: true,
+    async_image: true,
   }
 }
 
 ///|
 pub fn harmonyos_readiness() -> HarmonyOsBackendReadiness {
   {
-    ready: false,
+    ready: true,
+    status: "runtime_partial",
     blocked_by: [
-      "HarmonyOS ArkTS Stage Ability, XComponent, and NAPI lifecycle glue is experimental and not backed by device smoke yet",
-      "first-frame, tap input, resize/lifecycle, IME, clipboard, accessibility, and async image services still need matching-device evidence",
+      "commercial/signed-device full mobile-runtime smoke is not yet status=passed",
+      "checked-in smoke still lacks a complete attach/resize/input/IME/clipboard suite",
+      "actualPresenterRoute remains unverified; GPU seven-gate promotion is not claimed",
     ],
     next_steps: [
-      "connect HarmonyOsRuntimeSession to Stage Ability and XComponent callbacks through NAPI native glue",
-      "record a matching HarmonyOS device/emulator first-frame Skia smoke before marking runtime support passed",
+      "configure MOUI_HARMONYOS_SIGNING_CONFIG and record a full matching-device smoke",
+      "promote checks/platforms/harmonyos.json runtimeL3 only after --require-passed evidence",
+      "land GPU seven-gate claim only after matching-device promotion manifests pass",
     ],
   }
 }
@@ -158,13 +170,13 @@ pub fn backend_info() -> HarmonyOsBackendInfo {
   {
     host_info: @host.HostAppInfo::new(
       backend=@host.HostBackendKind::Native,
-      description="HarmonyOS embedded native host scaffold driven by Stage Ability/XComponent callbacks",
+      description="HarmonyOS embedded native host with managed ArkTS/XComponent shell and MobileHostChannel services",
     ),
     capabilities: harmonyos_capability_matrix(),
     services: harmonyos_service_capabilities(),
     input: harmonyos_input_capabilities(),
     readiness: harmonyos_readiness(),
-    description: "HarmonyOS backend exposes an embedded-session contract: the platform owner supplies a native XComponent surface handle, forwards lifecycle/input callbacks, and selects a renderer provider. It is not a passed runtime platform until device or emulator smoke evidence is recorded.",
+    description: "HarmonyOS backend exposes an embedded-session contract: the managed shell supplies an XComponent native-window handle, forwards lifecycle/input callbacks, and selects a Skia renderer provider. Host path is usable for development (ready=true, status=runtime_partial). It is not product-complete until signed-device full L3 smoke and presenter verification close remaining gaps.",
   }
 }
 
@@ -180,13 +192,13 @@ pub fn harmonyos_capability_summary(
     window_lifecycle=true,
     multi_window=false,
     text_input_available=true,
-    ime_available=false,
+    ime_available=true,
     drag_drop_available=false,
-    async_services=false,
-    native_accessibility_available=false,
+    async_services=true,
+    native_accessibility_available=true,
     web_view_available=false,
-    web_view_description="HarmonyOS native WebView embedding is not wired in this scaffold.",
-    description="HarmonyOS embedded native host scaffold with external Stage Ability/XComponent lifecycle and app-driven input forwarding.",
+    web_view_description="HarmonyOS native WebView embedding is not part of the current mobile host contract.",
+    description="HarmonyOS embedded native host with managed shell lifecycle, MobileHostChannel IME/clipboard/a11y bridges, and app-driven input forwarding. Runtime evidence remains partial.",
   )
 }
 

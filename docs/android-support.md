@@ -1,25 +1,31 @@
 # Android Support
 
-Android support is currently an experimental embedded native route. The shared
-mobile template owns the canonical Kotlin `MoUIActivity`/`MoUISurfaceView`,
-supplies an `ANativeWindow`, drives frames with `Choreographer`, and forwards
-lifecycle, resize, pointer, IME, clipboard, accessibility, and revisioned
-PlatformView snapshots into MoUI. `MoUIActivity` extends AndroidX
-`ComponentActivity`; its `FrameLayout` keeps the MoUI surface below a native
-PlatformView overlay.
+Android is a **runtime_partial** embedded native route: the managed shell and
+host session are **usable for development and demos** (`backend` reports
+`ready=true`, `status=runtime_partial`), but the platform is **not**
+product-complete until managed-shell matching-device L3 and presenter/GPU
+promotion close remaining gaps.
+
+The shared mobile template owns the canonical Kotlin
+`MoUIActivity`/`MoUISurfaceView`, supplies an `ANativeWindow`, drives frames
+with `Choreographer`, and forwards lifecycle, resize, pointer, IME, clipboard,
+accessibility, and revisioned PlatformView snapshots into MoUI.
+`MoUIActivity` extends AndroidX `ComponentActivity`; its `FrameLayout` keeps
+the MoUI surface below a native PlatformView overlay.
 
 ## Status
 
 | Area | Current state | Evidence boundary |
 | --- | --- | --- |
-| Host contract | Scaffolded in `moui/backend/android` | Package tests prove protocol behavior only. |
-| Platform services | `InputConnection`, text/image `ClipboardManager`, a private clipboard `ContentProvider`, virtual `AccessibilityNodeProvider`, and PlatformView overlay are wired through `MobileHostChannel` | Full IME, cross-app PNG, TalkBack tree/focus/action, and PlatformView device evidence pending on the managed shell. |
+| Product class | `runtime_partial` (see platform-readiness-declaration) | Not `committed`; not “unwired scaffold only.” |
+| Host contract | Usable embedded session in `moui/backend/android` (`ready=true`) | Package tests + managed shell wiring; L3 promotion separate. |
+| Platform services | `InputConnection`, clipboard, virtual a11y, PlatformView overlay wired through `MobileHostChannel` | Capability flags reflect **code wiring**; full managed-shell device evidence still pending. |
 | Frame pacing | Input/resize request redraw; presentation runs from `Choreographer` frame ticks | 60/120 Hz device pacing evidence pending. |
-| Skia provider | Scaffolded in `moui/backend/android/skia` | Provider/preflight checks prove wiring, not device pixels. |
+| Skia provider | `moui/backend/android/skia` preflight `runtime_status=runtime_partial` | Provider checks prove wiring; presenter route still unverified in checks JSON. |
 | Counter entrypoint | `examples/counter/android_skia` exports thin native hooks | Compile/check evidence only. |
-| APK shell | Package-owned Kotlin/AndroidX managed shell staged under `artifacts/`; `examples/*/android_app` is Release N compatibility metadata | Packaging evidence; fallback APK is not runtime proof. |
+| APK shell | Package-owned Kotlin/AndroidX managed shell staged under `artifacts/`; `examples/*/android_app` is Release N compatibility metadata | Packaging matrix passed; fallback APK is not runtime proof. |
 | First-frame runtime evidence | Non-fallback Component Gallery APK on HUAWEI SCM-W09 device; nonblank first-frame screenshot in `resource/screenshots/android-componentgallery.jpg` (2026-07-10) | First-frame pixels proven. |
-| Runtime support claim | Release N Java shell reached **L2 `passed`** on an emulator (Component Gallery, 2026-07-15); the canonical managed shell needs a fresh matching-device run | Historical evidence does not automatically promote the replacement shell. Re-run `scripts/android-mobile-runtime-evidence.sh` without shell-side probes before claiming managed-shell runtime support. |
+| Runtime support claim | Release N Java shell reached **`passed`** on an emulator (Component Gallery, 2026-07-15); the canonical managed shell needs a fresh matching-device run | Historical evidence does not automatically promote the managed shell. Re-run `scripts/android-mobile-runtime-evidence.sh` without shell-side probes before claiming managed-shell L3. |
 
 ## Ownership
 

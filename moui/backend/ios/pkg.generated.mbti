@@ -52,6 +52,7 @@ pub(all) struct IosBackendInfo {
 
 pub(all) struct IosBackendReadiness {
   ready : Bool
+  status : String
   blocked_by : Array[String]
   next_steps : Array[String]
 } derive(Eq, ToJson, @debug.Debug)

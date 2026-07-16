@@ -20,8 +20,15 @@ pub(all) struct AndroidBackendCapabilities {
 } derive(Eq, Debug, ToJson)
 
 ///|
+/// `ready` means the managed-shell host path is usable for app development
+/// and demos (aligned with Linux host usability). It does **not** mean full
+/// L3 runtime promotion or GPU seven-gate claims.
+///
+/// `status` is a coarse evidence class: `runtime_partial` until managed-shell
+/// matching-device smoke and presenter verification close the remaining gaps.
 pub(all) struct AndroidBackendReadiness {
   ready : Bool
+  status : String
   blocked_by : Array[String]
   next_steps : Array[String]
 } derive(Eq, Debug, ToJson)
@@ -103,7 +110,9 @@ pub fn AndroidRendererProvider::has_async_image_loader(
 
 ///|
 pub fn android_service_capabilities() -> @host.HostServiceCapabilities {
-  @host.HostServiceCapabilities::none()
+  // Code-level host services wired through MobileHostChannel + managed shell
+  // adapters. Matching-device evidence remains partial (see readiness.status).
+  @host.HostServiceCapabilities::new(clipboard=true)
 }
 
 ///|
@@ -114,8 +123,8 @@ pub fn android_input_capabilities() -> @host.HostInputCapabilities {
     keyboard=true,
     focus=true,
     text_input=true,
-    ime=false,
-    clipboard=false,
+    ime=true,
+    clipboard=true,
     drag_drop=false,
   )
 }
@@ -130,25 +139,28 @@ pub fn android_capability_matrix() -> AndroidBackendCapabilities {
     scroll: true,
     keyboard: true,
     text_input: true,
-    ime: false,
-    clipboard: false,
+    ime: true,
+    clipboard: true,
     system_theme: false,
-    accessibility: false,
-    async_image: false,
+    accessibility: true,
+    async_image: true,
   }
 }
 
 ///|
 pub fn android_readiness() -> AndroidBackendReadiness {
   {
-    ready: false,
+    ready: true,
+    status: "runtime_partial",
     blocked_by: [
-      "Android Activity/JNI lifecycle glue is not wired into a checked APK smoke yet",
-      "native IME, clipboard, accessibility, and async image services still need matching-device evidence",
+      "managed Kotlin shell matching-device smoke still needs re-recording without shell-side probes",
+      "real-device signing observation and verified direct presenter route remain open",
+      "GPU seven-gate promotion is not claimed (gpuPromotionEvidence.claimed=false)",
     ],
     next_steps: [
-      "connect AndroidRuntimeSession to Activity/Surface callbacks through JNI or CMake glue",
-      "record a matching Android device/emulator first-frame Skia smoke before marking runtime support passed",
+      "re-run Component Gallery managed-shell smoke with --require-passed on emulator/device",
+      "record actualPresenterRoute direct-present evidence in checks/platforms/android.json",
+      "land GPU seven-gate claim only after matching-device promotion manifests pass",
     ],
   }
 }
@@ -158,13 +170,13 @@ pub fn backend_info() -> AndroidBackendInfo {
   {
     host_info: @host.HostAppInfo::new(
       backend=@host.HostBackendKind::Native,
-      description="Android embedded native host scaffold driven by Activity/Surface callbacks",
+      description="Android embedded native host with managed Kotlin shell, Activity/Surface callbacks, and MobileHostChannel services",
     ),
     capabilities: android_capability_matrix(),
     services: android_service_capabilities(),
     input: android_input_capabilities(),
     readiness: android_readiness(),
-    description: "Android backend exposes an embedded-session contract: the platform owner supplies an Android native surface handle, forwards lifecycle/input callbacks, and selects a renderer provider. It is not a passed runtime platform until device smoke evidence is recorded.",
+    description: "Android backend exposes an embedded-session contract: the managed shell supplies an ANativeWindow surface, forwards lifecycle/input callbacks, and selects a Skia renderer provider. Host path is usable for development (ready=true, status=runtime_partial). It is not product-complete until managed-shell matching-device L3 and presenter verification close remaining gaps.",
   }
 }
 
@@ -180,13 +192,13 @@ pub fn android_capability_summary(
     window_lifecycle=true,
     multi_window=false,
     text_input_available=true,
-    ime_available=false,
+    ime_available=true,
     drag_drop_available=false,
-    async_services=false,
-    native_accessibility_available=false,
+    async_services=true,
+    native_accessibility_available=true,
     web_view_available=false,
-    web_view_description="Android native WebView embedding is not wired in this scaffold.",
-    description="Android embedded native host scaffold with external Activity/Surface lifecycle and app-driven input forwarding.",
+    web_view_description="Android native WebView embedding is not part of the current mobile host contract.",
+    description="Android embedded native host with managed shell lifecycle, MobileHostChannel IME/clipboard/a11y bridges, and app-driven input forwarding. Runtime evidence remains partial.",
   )
 }
 
