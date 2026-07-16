@@ -44,21 +44,25 @@ workflow for agents and maintainers.
 
 ## Recommended Agent Workflow
 
-1. Read `AGENTS.md` for repository rules.
-2. Read the relevant docs page before editing architecture, backend, renderer,
-   example, or testing behavior.
-3. Locate the package boundary by reading the relevant `moon.pkg`.
-4. Use `moon ide doc`, `moon ide outline`, `moon ide peek-def`, or
+1. Read `AGENTS.md` as a **map** (task router + hard-boundary summary only).
+2. Open `docs/INDEX.md`, then only the linked canonical pages for the task.
+   Prefer `docs/architecture-map.md` over the full architecture narrative until
+   needed. Standing constraints: `docs/invariants.md`. Validation: `docs/testing.md`.
+3. For multi-package or platform work, add or update `docs/plans/active/<id>.md`
+   before large coding loops.
+4. Locate the package boundary by reading the relevant `moon.pkg`.
+5. Use `moon ide doc`, `moon ide outline`, `moon ide peek-def`, or
    `moon ide find-references` for MoonBit API discovery when names are unclear.
-5. Edit package-locally and preserve `///|` top-level delimiters.
-6. Add or update focused tests in the package touched.
-7. Run the smallest useful validation command first.
-8. Run `moon fmt` before handoff.
-9. Run `moon info` after public API changes and review generated
-   `pkg.generated.mbti` diffs.
-10. Update docs when commands, platform behavior, public APIs, renderer
-    capabilities, or examples change.
-11. Check `AGENTS.md` and `skills/` when guidance would otherwise become stale.
+6. Edit package-locally and preserve `///|` top-level delimiters.
+7. Add or update focused tests in the package touched.
+8. Run the smallest useful validation command first (see the AGENTS task router).
+9. Run `moon fmt` before handoff.
+10. Run `moon info` after public API changes and review generated
+    `pkg.generated.mbti` diffs.
+11. Update docs when commands, platform behavior, public APIs, renderer
+    capabilities, or examples change. Do not fork invariant tables into skills;
+    link `docs/invariants.md`. Taste rules: `docs/golden-principles.md`.
+12. Check `AGENTS.md` and `skills/` when guidance would otherwise become stale.
     If no edits are needed, say they were checked and left unchanged.
 
 ## Prompt Templates
@@ -180,3 +184,7 @@ After a significant agent session:
 - Running broad native checks as the first validation step for a small package
   edit.
 - Creating compatibility shims for removed APIs unless explicitly requested.
+- Growing `AGENTS.md` into an encyclopedia instead of routing to `docs/`.
+- Restating full invariant tables in skills or session notes (link instead).
+- Leaving critical rules only in chat or session prose without promotion to
+  `memories/repo/`, ADR, plan, or a validator.

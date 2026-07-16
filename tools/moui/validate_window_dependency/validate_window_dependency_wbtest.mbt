@@ -59,6 +59,7 @@ test "rejects local window workspace member" {
     ),
   )
   assert_true(result.errors[0].contains("scripts/window-dev-mode.sh off"))
+  assert_true(result.errors[0].contains("docs/invariants.md#R4"))
 }
 
 ///|
@@ -70,8 +71,8 @@ test "reports missing expected consumer dependency" {
   inspect(
     result.errors[0],
     content="moui/moon.mod: expected a \"wzzc-dev/window@<version>\" declaration but found none.\n" +
-      "  If this module no longer depends on window, remove it from EXPECTED_WINDOW_CONSUMERS.\n" +
-      "  Otherwise restore the import.",
+      "  Fix: restore the import, or remove this path from expected_window_consumers() if it no longer depends on window.\n" +
+      "  See: docs/invariants.md#A6",
   )
 }
 
@@ -104,4 +105,6 @@ test "reports cross-consumer version mismatch" {
   inspect(result.errors.length(), content="1")
   assert_true(result.errors[0].contains("  - moui/moon.mod: 0.5.1-0.1.6"))
   assert_true(result.errors[0].contains("  - moui_skia/moon.mod: 0.5.1-0.1.7"))
+  assert_true(result.errors[0].contains("docs/invariants.md#A6"))
+  assert_true(result.errors[0].contains("Fix: align all four consumers"))
 }

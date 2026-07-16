@@ -39,3 +39,12 @@ sh scripts/check.sh --profile daily
 
 - [ ] Open tasks or known gaps.
 - [ ] Related ADRs or docs to update.
+
+## Promote (required checklist)
+
+Harness rule: if the next agent cannot discover it from the repo, it does not exist.
+
+- [ ] Short durable facts → `memories/repo/<topic>.md` (≤20 lines each)
+- [ ] Architectural choice → `docs/decisions/` ADR
+- [ ] Multi-session work remaining → `docs/plans/active/` or `docs/plans/debt/`
+- [ ] Stale guidance found → fix canonical doc (`invariants` / `testing` / `INDEX`), do not only note it here

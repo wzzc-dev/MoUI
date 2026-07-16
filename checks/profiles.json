@@ -51,6 +51,20 @@
           ]
         },
         {
+          "name": "harmonyos M5 shell contract",
+          "argv": [
+            "node",
+            "scripts/validate-harmonyos-m5-shell.mjs"
+          ]
+        },
+        {
+          "name": "harness batch1 invariants",
+          "argv": [
+            "node",
+            "scripts/validate-harness-batch1.mjs"
+          ]
+        },
+        {
           "name": "maintenance baseline",
           "argv": [
             "node",

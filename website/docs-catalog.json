@@ -2,13 +2,34 @@
   "schemaVersion": 1,
   "siteUrl": "https://wzzc-dev.github.io/MoUI/",
   "groups": [
-    { "id": "get-started", "title": "Get Started" },
-    { "id": "guides", "title": "Guides" },
-    { "id": "examples", "title": "Examples" },
-    { "id": "platforms", "title": "Platforms" },
-    { "id": "architecture-api", "title": "Architecture & API" },
-    { "id": "contributing", "title": "Contributing" },
-    { "id": "status-roadmap", "title": "Status & Roadmap" }
+    {
+      "id": "get-started",
+      "title": "Get Started"
+    },
+    {
+      "id": "guides",
+      "title": "Guides"
+    },
+    {
+      "id": "examples",
+      "title": "Examples"
+    },
+    {
+      "id": "platforms",
+      "title": "Platforms"
+    },
+    {
+      "id": "architecture-api",
+      "title": "Architecture & API"
+    },
+    {
+      "id": "contributing",
+      "title": "Contributing"
+    },
+    {
+      "id": "status-roadmap",
+      "title": "Status & Roadmap"
+    }
   ],
   "entries": [
     {
@@ -17,7 +38,12 @@
       "title": "MoUI README",
       "path": "docs/moui-readme.md",
       "summary": "Project overview, installation, platform evidence, and the fastest path to a first MoUI app.",
-      "keywords": ["MoUI", "MoonBit", "quick start", "installation"]
+      "keywords": [
+        "MoUI",
+        "MoonBit",
+        "quick start",
+        "installation"
+      ]
     },
     {
       "group": "get-started",
@@ -25,7 +51,13 @@
       "title": "Getting Started",
       "path": "docs/getting-started.md",
       "summary": "Create a first MoUI app with moui_cli, run desktop and Web targets, or learn in the browser Playground.",
-      "keywords": ["moui_cli", "quick start", "Playground", "desktop", "wasm-gc"]
+      "keywords": [
+        "moui_cli",
+        "quick start",
+        "Playground",
+        "desktop",
+        "wasm-gc"
+      ]
     },
     {
       "group": "get-started",
@@ -33,7 +65,12 @@
       "title": "App Package Boundary",
       "path": "docs/moui-app-package-boundary.md",
       "summary": "App-safe dependencies, package ownership, and the public facades used by ordinary MoUI applications.",
-      "keywords": ["packages", "dependencies", "facade", "application"]
+      "keywords": [
+        "packages",
+        "dependencies",
+        "facade",
+        "application"
+      ]
     },
     {
       "group": "get-started",
@@ -41,7 +78,13 @@
       "title": "TEA Program Model",
       "path": "docs/tea-program-model.md",
       "summary": "Model, message, update, view, effects, and subscriptions in MoUI's typed application loop.",
-      "keywords": ["TEA", "program", "model", "update", "effects"]
+      "keywords": [
+        "TEA",
+        "program",
+        "model",
+        "update",
+        "effects"
+      ]
     },
     {
       "group": "get-started",
@@ -49,7 +92,12 @@
       "title": "Tutorials",
       "path": "docs/tutorials.md",
       "summary": "Implementation skeletons for controls, renderers, backends, examples, tests, and docs.",
-      "keywords": ["tutorial", "control", "renderer", "backend"]
+      "keywords": [
+        "tutorial",
+        "control",
+        "renderer",
+        "backend"
+      ]
     },
     {
       "group": "guides",
@@ -57,7 +105,12 @@
       "title": "Views API Guide",
       "path": "docs/views-api-guide.md",
       "summary": "Practical reference for composing and styling public MoUI views.",
-      "keywords": ["views", "layout", "controls", "API"]
+      "keywords": [
+        "views",
+        "layout",
+        "controls",
+        "API"
+      ]
     },
     {
       "group": "guides",
@@ -65,7 +118,12 @@
       "title": "View Catalog",
       "path": "docs/view-catalog.md",
       "summary": "Catalog of current public constructors, controls, layout helpers, and component coverage.",
-      "keywords": ["views", "catalog", "components", "controls"]
+      "keywords": [
+        "views",
+        "catalog",
+        "components",
+        "controls"
+      ]
     },
     {
       "group": "guides",
@@ -73,7 +131,12 @@
       "title": "Button Styling Guide",
       "path": "docs/button-styling-guide.md",
       "summary": "Button palette, component-token, state-resolution, and app-level override strategies.",
-      "keywords": ["button", "style", "theme", "color"]
+      "keywords": [
+        "button",
+        "style",
+        "theme",
+        "color"
+      ]
     },
     {
       "group": "guides",
@@ -81,7 +144,12 @@
       "title": "Visual Theme System",
       "path": "docs/visual-theme-system.md",
       "summary": "Theme tokens, typography, component styles, and visual-system extension points.",
-      "keywords": ["theme", "tokens", "typography", "design system"]
+      "keywords": [
+        "theme",
+        "tokens",
+        "typography",
+        "design system"
+      ]
     },
     {
       "group": "guides",
@@ -89,7 +157,12 @@
       "title": "Text System",
       "path": "docs/text-system.md",
       "summary": "Text measurement, shaping, line breaking, editing, and provider boundaries.",
-      "keywords": ["text", "shaping", "layout", "editing"]
+      "keywords": [
+        "text",
+        "shaping",
+        "layout",
+        "editing"
+      ]
     },
     {
       "group": "guides",
@@ -97,7 +170,12 @@
       "title": "Non-Render Component Cookbook",
       "path": "docs/non-render-component-cookbook.md",
       "summary": "Reusable form, navigation, command, import, notification, and state patterns.",
-      "keywords": ["cookbook", "forms", "navigation", "state"]
+      "keywords": [
+        "cookbook",
+        "forms",
+        "navigation",
+        "state"
+      ]
     },
     {
       "group": "guides",
@@ -105,7 +183,12 @@
       "title": "Canvas and Custom Paint",
       "path": "docs/canvas-and-custom-paint.md",
       "summary": "Canvas input, custom drawing, animation, and renderer-safe paint recipes.",
-      "keywords": ["canvas", "paint", "drawing", "animation"]
+      "keywords": [
+        "canvas",
+        "paint",
+        "drawing",
+        "animation"
+      ]
     },
     {
       "group": "guides",
@@ -113,7 +196,12 @@
       "title": "App Templates",
       "path": "docs/app-templates.md",
       "summary": "Starter package shapes for shared apps, dashboards, editors, and host services.",
-      "keywords": ["template", "starter", "dashboard", "editor"]
+      "keywords": [
+        "template",
+        "starter",
+        "dashboard",
+        "editor"
+      ]
     },
     {
       "group": "guides",
@@ -121,7 +209,12 @@
       "title": "Package and Plugin Templates",
       "path": "docs/templates.md",
       "summary": "Reusable implementation checklists and prompts for packages, controls, renderers, and plugins.",
-      "keywords": ["templates", "packages", "plugins", "checklist"]
+      "keywords": [
+        "templates",
+        "packages",
+        "plugins",
+        "checklist"
+      ]
     },
     {
       "group": "examples",
@@ -129,7 +222,12 @@
       "title": "Examples",
       "path": "docs/examples.md",
       "summary": "Runnable example applications, platform entrypoints, and validation commands.",
-      "keywords": ["examples", "applications", "samples", "run"]
+      "keywords": [
+        "examples",
+        "applications",
+        "samples",
+        "run"
+      ]
     },
     {
       "group": "examples",
@@ -137,7 +235,12 @@
       "title": "Showcases",
       "path": "docs/showcases.md",
       "summary": "Featured applications built with MoUI, with screenshots and source links.",
-      "keywords": ["showcase", "applications", "source", "gallery"]
+      "keywords": [
+        "showcase",
+        "applications",
+        "source",
+        "gallery"
+      ]
     },
     {
       "group": "examples",
@@ -145,7 +248,12 @@
       "title": "Markdown Editor",
       "path": "docs/markdown-editor.md",
       "summary": "The Markdown editor's document model, WYSIWYG behavior, commands, and host integration.",
-      "keywords": ["Markdown", "editor", "rich text", "WYSIWYG"]
+      "keywords": [
+        "Markdown",
+        "editor",
+        "rich text",
+        "WYSIWYG"
+      ]
     },
     {
       "group": "examples",
@@ -153,7 +261,12 @@
       "title": "Mo Workbench",
       "path": "docs/mo-workbench.md",
       "summary": "Architecture and workflows of the MoUI-built agent desktop workbench.",
-      "keywords": ["workbench", "agent", "desktop", "dogfood"]
+      "keywords": [
+        "workbench",
+        "agent",
+        "desktop",
+        "dogfood"
+      ]
     },
     {
       "group": "platforms",
@@ -161,7 +274,12 @@
       "title": "Platform Notes",
       "path": "docs/platform-notes.md",
       "summary": "Current Web and native backend setup notes and platform-specific constraints.",
-      "keywords": ["platform", "web", "native", "backend"]
+      "keywords": [
+        "platform",
+        "web",
+        "native",
+        "backend"
+      ]
     },
     {
       "group": "platforms",
@@ -169,7 +287,12 @@
       "title": "Web Platform Notes",
       "path": "docs/platform-notes-web.md",
       "summary": "Web wasm-gc setup, browser runtime behavior, rendering paths, and validation commands.",
-      "keywords": ["Web", "wasm-gc", "browser", "WebGPU"]
+      "keywords": [
+        "Web",
+        "wasm-gc",
+        "browser",
+        "WebGPU"
+      ]
     },
     {
       "group": "platforms",
@@ -177,7 +300,12 @@
       "title": "macOS Platform Notes",
       "path": "docs/platform-notes-macos.md",
       "summary": "macOS AppKit host setup, native Skia rendering, services, and runtime evidence.",
-      "keywords": ["macOS", "AppKit", "Skia", "native"]
+      "keywords": [
+        "macOS",
+        "AppKit",
+        "Skia",
+        "native"
+      ]
     },
     {
       "group": "platforms",
@@ -185,7 +313,12 @@
       "title": "Windows Platform Notes",
       "path": "docs/platform-notes-windows.md",
       "summary": "Windows host setup, native Skia rendering, platform services, and validation workflow.",
-      "keywords": ["Windows", "Win32", "Skia", "native"]
+      "keywords": [
+        "Windows",
+        "Win32",
+        "Skia",
+        "native"
+      ]
     },
     {
       "group": "platforms",
@@ -193,7 +326,12 @@
       "title": "Linux Platform Notes",
       "path": "docs/platform-notes-linux.md",
       "summary": "Linux Wayland host setup, native Skia rendering, system dependencies, and validation workflow.",
-      "keywords": ["Linux", "Wayland", "Skia", "native"]
+      "keywords": [
+        "Linux",
+        "Wayland",
+        "Skia",
+        "native"
+      ]
     },
     {
       "group": "platforms",
@@ -201,7 +339,12 @@
       "title": "Platform Host Contract",
       "path": "docs/platform-host-contract.md",
       "summary": "Shared host runtime, window, input, service, rendering, and accessibility contracts.",
-      "keywords": ["host", "contract", "window", "services"]
+      "keywords": [
+        "host",
+        "contract",
+        "window",
+        "services"
+      ]
     },
     {
       "group": "platforms",
@@ -209,7 +352,12 @@
       "title": "Platform Readiness Declaration",
       "path": "docs/platform-readiness-declaration.md",
       "summary": "Auditable declaration of MoUI's cross-platform support and evidence levels.",
-      "keywords": ["platform", "readiness", "support", "evidence"]
+      "keywords": [
+        "platform",
+        "readiness",
+        "support",
+        "evidence"
+      ]
     },
     {
       "group": "platforms",
@@ -217,7 +365,12 @@
       "title": "Android Support",
       "path": "docs/android-support.md",
       "summary": "Android embedded-session architecture, packaging workflow, and runtime evidence requirements.",
-      "keywords": ["Android", "mobile", "Skia", "JNI"]
+      "keywords": [
+        "Android",
+        "mobile",
+        "Skia",
+        "JNI"
+      ]
     },
     {
       "group": "platforms",
@@ -225,7 +378,12 @@
       "title": "iOS Support",
       "path": "docs/ios-support.md",
       "summary": "iOS UIKit embedded-session architecture, Xcode packaging, and smoke evidence requirements.",
-      "keywords": ["iOS", "UIKit", "mobile", "Skia"]
+      "keywords": [
+        "iOS",
+        "UIKit",
+        "mobile",
+        "Skia"
+      ]
     },
     {
       "group": "platforms",
@@ -233,7 +391,12 @@
       "title": "HarmonyOS Support",
       "path": "docs/harmonyos-support.md",
       "summary": "HarmonyOS Stage Ability and XComponent integration, packaging, and runtime evidence requirements.",
-      "keywords": ["HarmonyOS", "XComponent", "NAPI", "mobile"]
+      "keywords": [
+        "HarmonyOS",
+        "XComponent",
+        "NAPI",
+        "mobile"
+      ]
     },
     {
       "group": "platforms",
@@ -241,7 +404,13 @@
       "title": "Mobile Mainline Roadmap",
       "path": "docs/mobile-mainline-roadmap.md",
       "summary": "Mobile embedded-session ownership, renderer selection, host services, and GPU promotion gates.",
-      "keywords": ["mobile", "Android", "iOS", "HarmonyOS", "GPU"]
+      "keywords": [
+        "mobile",
+        "Android",
+        "iOS",
+        "HarmonyOS",
+        "GPU"
+      ]
     },
     {
       "group": "platforms",
@@ -249,7 +418,12 @@
       "title": "GPU Promotion Runbook",
       "path": "docs/gpu-promotion-runbook.md",
       "summary": "Matching-host GPU promotion evidence, performance gates, and claim validation workflow.",
-      "keywords": ["GPU", "promotion", "evidence", "performance"]
+      "keywords": [
+        "GPU",
+        "promotion",
+        "evidence",
+        "performance"
+      ]
     },
     {
       "group": "platforms",
@@ -257,7 +431,12 @@
       "title": "Renderer Capability Report",
       "path": "docs/renderer-capability-report.md",
       "summary": "Renderer feature matrix, support tiers, tracked gaps, and verification commands.",
-      "keywords": ["renderer", "Skia", "WebGPU", "capabilities"]
+      "keywords": [
+        "renderer",
+        "Skia",
+        "WebGPU",
+        "capabilities"
+      ]
     },
     {
       "group": "architecture-api",
@@ -265,7 +444,25 @@
       "title": "Architecture",
       "path": "docs/architecture.md",
       "summary": "Package map and the View-to-renderer runtime pipeline across supported hosts.",
-      "keywords": ["architecture", "runtime", "renderer", "packages"]
+      "keywords": [
+        "architecture",
+        "runtime",
+        "renderer",
+        "packages"
+      ]
+    },
+    {
+      "group": "architecture-api",
+      "slug": "architecture-map",
+      "title": "Architecture Map",
+      "path": "docs/architecture-map.md",
+      "summary": "One-page package layers, dependency direction, and ownership cheat sheet for contributors and agents.",
+      "keywords": [
+        "architecture",
+        "packages",
+        "dependencies",
+        "map"
+      ]
     },
     {
       "group": "architecture-api",
@@ -273,7 +470,12 @@
       "title": "API Surface",
       "path": "docs/api-surface.md",
       "summary": "Public package contracts, facade policy, compatibility expectations, and API checks.",
-      "keywords": ["API", "public surface", "facade", "compatibility"]
+      "keywords": [
+        "API",
+        "public surface",
+        "facade",
+        "compatibility"
+      ]
     },
     {
       "group": "architecture-api",
@@ -281,7 +483,13 @@
       "title": "Mobile Runtime ABI v1",
       "path": "docs/mobile-runtime-abi-v1.md",
       "summary": "Versioned mobile function table, lifecycle, ownership, capability, and symbol contracts.",
-      "keywords": ["mobile", "ABI", "FFI", "lifecycle", "ownership"]
+      "keywords": [
+        "mobile",
+        "ABI",
+        "FFI",
+        "lifecycle",
+        "ownership"
+      ]
     },
     {
       "group": "architecture-api",
@@ -289,7 +497,12 @@
       "title": "MoUI Skia README",
       "path": "docs/moui-skia-readme.md",
       "summary": "Skia binding API, native ownership boundary, build setup, and smoke workflow.",
-      "keywords": ["Skia", "binding", "native", "renderer"]
+      "keywords": [
+        "Skia",
+        "binding",
+        "native",
+        "renderer"
+      ]
     },
     {
       "group": "contributing",
@@ -297,7 +510,12 @@
       "title": "Development",
       "path": "docs/development.md",
       "summary": "Workspace setup, dependency workflow, docs sync, and focused development loops.",
-      "keywords": ["development", "setup", "workspace", "workflow"]
+      "keywords": [
+        "development",
+        "setup",
+        "workspace",
+        "workflow"
+      ]
     },
     {
       "group": "contributing",
@@ -305,7 +523,12 @@
       "title": "Testing",
       "path": "docs/testing.md",
       "summary": "Focused tests, repository profiles, conformance checks, and manual smoke evidence.",
-      "keywords": ["testing", "CI", "smoke", "validation"]
+      "keywords": [
+        "testing",
+        "CI",
+        "smoke",
+        "validation"
+      ]
     },
     {
       "group": "contributing",
@@ -313,7 +536,12 @@
       "title": "Maintenance Mainline",
       "path": "docs/maintenance.md",
       "summary": "Maintenance ratchets, package health checks, and repository cleanup policy.",
-      "keywords": ["maintenance", "ratchet", "quality", "cleanup"]
+      "keywords": [
+        "maintenance",
+        "ratchet",
+        "quality",
+        "cleanup"
+      ]
     },
     {
       "group": "contributing",
@@ -321,7 +549,12 @@
       "title": "Release Readiness",
       "path": "docs/release-readiness.md",
       "summary": "Release gates, runtime smoke catalog, evidence policy, and artifact requirements.",
-      "keywords": ["release", "readiness", "gates", "artifacts"]
+      "keywords": [
+        "release",
+        "readiness",
+        "gates",
+        "artifacts"
+      ]
     },
     {
       "group": "contributing",
@@ -329,7 +562,12 @@
       "title": "AI Collaboration",
       "path": "docs/ai-collaboration.md",
       "summary": "Repository guidance for agent sessions, decisions, review, and durable records.",
-      "keywords": ["AI", "agents", "collaboration", "ADR"]
+      "keywords": [
+        "AI",
+        "agents",
+        "collaboration",
+        "ADR"
+      ]
     },
     {
       "group": "status-roadmap",
@@ -337,7 +575,13 @@
       "title": "Repository Facts",
       "path": "docs/repository-facts.md",
       "summary": "Generated API counts, workspace members and examples, platform protocol status, and documentation catalog totals.",
-      "keywords": ["generated", "API", "workspace", "platform status", "catalog"]
+      "keywords": [
+        "generated",
+        "API",
+        "workspace",
+        "platform status",
+        "catalog"
+      ]
     },
     {
       "group": "status-roadmap",
@@ -345,7 +589,12 @@
       "title": "Feature Proof Matrix",
       "path": "docs/feature-proof-matrix.md",
       "summary": "Feature-level implementation and test evidence across MoUI packages and platforms.",
-      "keywords": ["features", "proof", "coverage", "evidence"]
+      "keywords": [
+        "features",
+        "proof",
+        "coverage",
+        "evidence"
+      ]
     },
     {
       "group": "status-roadmap",
@@ -353,7 +602,12 @@
       "title": "Feature Status Dashboard",
       "path": "docs/feature-status-dashboard.md",
       "summary": "Current feature status, proof level, owner, gaps, and next verification actions.",
-      "keywords": ["status", "dashboard", "features", "gaps"]
+      "keywords": [
+        "status",
+        "dashboard",
+        "features",
+        "gaps"
+      ]
     },
     {
       "group": "status-roadmap",
@@ -361,7 +615,12 @@
       "title": "2026 Roadmap",
       "path": "docs/roadmap-2026.md",
       "summary": "Planned framework, renderer, backend, examples, and release-readiness milestones.",
-      "keywords": ["roadmap", "2026", "milestones", "planning"]
+      "keywords": [
+        "roadmap",
+        "2026",
+        "milestones",
+        "planning"
+      ]
     }
   ],
   "excluded": [
@@ -376,6 +635,14 @@
     {
       "path": "docs/invariants.md",
       "reason": "Repository invariants are contributor-agent guidance and are not part of the public website documentation set."
+    },
+    {
+      "path": "docs/INDEX.md",
+      "reason": "Docs catalog for progressive disclosure is contributor-agent guidance and is not part of the public website documentation set."
+    },
+    {
+      "path": "docs/golden-principles.md",
+      "reason": "Agent taste and residue-control principles are contributor-agent guidance and are not part of the public website documentation set."
     }
   ]
 }
