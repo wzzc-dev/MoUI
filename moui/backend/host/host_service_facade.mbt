@@ -205,6 +205,21 @@ pub fn HostAppServices::show_context_menu(
 }
 
 ///|
+/// Install a host application menu bar when the platform supports L2 menus.
+///
+/// This is separate from `show_context_menu` (L1 pop-up menus). On macOS the
+/// host installs native main-menu titles/items; Windows/Linux/Web currently
+/// return `Unavailable` until application-menu adapters land. Selection
+/// delivery still uses the platform action handler installed by the
+/// entrypoint (for example `@window_macos.set_system_menu_action_handler`).
+pub fn HostAppServices::set_application_menu(
+  self : HostAppServices,
+  menus : Array[HostApplicationMenu],
+) -> HostServiceResponse {
+  self.dispatch(HostServiceRequest::SetApplicationMenu(menus))
+}
+
+///|
 pub fn HostAppServices::has_async_queue(self : HostAppServices) -> Bool {
   self.async_queue is Some(_)
 }

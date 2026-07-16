@@ -3,6 +3,11 @@
 > 本文档描述 MoUI 应用的 TEA 模型（View、Program、Effect、Subscription）。
 > 概述见 [Architecture](../architecture.md)。
 
+**App-author recipes** (timer, clipboard, file open, window resize, shortcuts)
+live in [Non-render component cookbook](non-render-component-cookbook.md) and
+the runnable `examples/platform_lab` package. This page is the lifecycle and
+semantics reference, not a copy-paste cookbook.
+
 MoUI app code builds UI with opaque `@moui.View[Msg]` values. The standard
 shape is a typed TEA loop: `view : Model -> View[Msg]`, events carry typed
 messages, `update` handles those messages, and explicit `Effect[Msg]` values

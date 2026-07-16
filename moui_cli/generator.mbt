@@ -143,8 +143,60 @@ fn app_pkg_text() -> String {
 }
 
 ///|
-fn app_text(title : String) -> String {
+fn app_text(title : String, template_id~ : String = "counter") -> String {
   let title = moon_string(title)
+  if template_id == "hello" {
+    let template =
+      #|///|
+      #|using @views {button, card, center, column, text}
+      #|
+      #|///|
+      #|pub struct Model {
+      #|  greeted : Bool
+      #|}
+      #|
+      #|///|
+      #|pub(all) enum Msg {
+      #|  Greet
+      #|}
+      #|
+      #|///|
+      #|pub fn Model::new() -> Model {
+      #|  { greeted: false }
+      #|}
+      #|
+      #|///|
+      #|pub fn update(model : Model, msg : Msg) -> Model {
+      #|  match msg {
+      #|    Greet => { greeted: true }
+      #|  }
+      #|}
+      #|
+      #|///|
+      #|pub fn view(model : Model) -> @moui.View[Msg] {
+      #|  center(
+      #|    card(
+      #|      column([
+      #|        text("__TITLE__").title(),
+      #|        text(
+      #|          if model.greeted {
+      #|            "Hello from MoUI."
+      #|          } else {
+      #|            "Press the button."
+      #|          },
+      #|        ),
+      #|        button("Say hello", on_click=Greet),
+      #|      ]),
+      #|    ),
+      #|  )
+      #|}
+      #|
+      #|///|
+      #|pub fn program() -> @moui.Program[Model, Msg] {
+      #|  @moui.Program::simple(init=Model::new(), update~, view~)
+      #|}
+    return template.replace_all(old="__TITLE__", new=title)
+  }
   let template =
     #|///|
     #|using @views {button, card, center, column, row, text}
@@ -200,7 +252,17 @@ fn app_text(title : String) -> String {
 }
 
 ///|
-fn app_test_text() -> String {
+fn app_test_text(template_id~ : String = "counter") -> String {
+  if template_id == "hello" {
+    return (
+      #|///|
+      #|test "hello greet flips greeted" {
+      #|  let model = Model::new()
+      #|  inspect(model.greeted, content="false")
+      #|  inspect(update(model, Greet).greeted, content="true")
+      #|}
+    )
+  }
   let template =
     #|///|
     #|test "counter update is deterministic" {
@@ -411,7 +473,12 @@ fn readme_text(options : ProjectOptions) -> String {
     version +
     " for module `" +
     options.module_name +
-    "`.\n\n",
+    "` (template `" +
+    options.template +
+    "`).\n\n",
+  )
+  builder.write_string(
+    "This is a standalone MoUI app. Prefer this project over cloning the full MoUI monorepo unless you are changing the framework.\n\n",
   )
   builder.write_string("## Versions\n\n")
   builder.write_string("- CLI: `" + version + "`\n")
@@ -427,15 +494,32 @@ fn readme_text(options : ProjectOptions) -> String {
   for platform in options.platforms {
     builder.write_string("- `" + platform + "`\n")
   }
-  builder.write_string("\n## Next steps\n\n")
+  builder.write_string("\n## First run (~10 minutes)\n\n")
+  builder.write_string("```sh\n")
+  builder.write_string("moon update\n")
+  builder.write_string("moui doctor\n")
+  if options.platforms.contains("macos") {
+    builder.write_string("moon run macos_skia --target native\n")
+  }
+  if options.platforms.contains("windows") {
+    builder.write_string("moon run windows_skia --target native\n")
+  }
+  if options.platforms.contains("linux") {
+    builder.write_string("moon run linux_skia --target native\n")
+  }
+  if options.platforms.contains("web") {
+    builder.write_string("moon build web_wasm --target wasm-gc\n")
+    builder.write_string(
+      "# serve web_wasm/ (static HTTP) and open index.html in a WebGPU browser\n",
+    )
+  }
+  builder.write_string("```\n\n")
+  builder.write_string("## Next steps\n\n")
   builder.write_string("```sh\n")
   builder.write_string("moon update\n")
   builder.write_string("moui doctor\n")
   if options.platforms.contains("web") {
     builder.write_string("moon check web_wasm --target wasm-gc\n")
-    builder.write_string(
-      "# serve web_wasm/index.html after building web_wasm\n",
-    )
   }
   if options.platforms.contains("macos") {
     builder.write_string("moon run macos_skia --target native\n")
@@ -560,8 +644,11 @@ fn build_project_file_plan(
     text_file("moon.work", moon_work_text()),
     text_file("moui.project.json", manifest.to_json_text()),
     text_file("app/moon.pkg", app_pkg_text()),
-    text_file("app/app.mbt", app_text(options.title)),
-    text_file("app/app_test.mbt", app_test_text()),
+    text_file("app/app.mbt", app_text(options.title, template_id=options.template)),
+    text_file(
+      "app/app_test.mbt",
+      app_test_text(template_id=options.template),
+    ),
   ]
   if options.platforms.contains("web") {
     files.push(

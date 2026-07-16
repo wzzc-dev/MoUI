@@ -2,6 +2,7 @@
 fn test_project_options(
   platforms : Array[String],
   bundle_id? : String? = None,
+  template? : String = "counter",
 ) -> ProjectOptions {
   {
     target: "unused",
@@ -9,6 +10,7 @@ fn test_project_options(
     module_name: "example/sample_app",
     title: "Sample App",
     moui_version: default_moui_dependency_version,
+    template,
     platforms,
     bundle_id,
   }
@@ -63,6 +65,21 @@ test "explicit platforms are additive and normalized in canonical order" {
     Err(message) => fail(message)
   }
   inspect(normalize_platforms(Linux, ["plan9"]) is Err(_), content="true")
+}
+
+///|
+test "hello template emits greet app instead of counter" {
+  match build_project_file_plan(test_project_options(["web"], template="hello")) {
+    Ok(files) => {
+      let app = test_planned_text(files, "app/app.mbt")
+      assert_true(app.contains("Say hello"))
+      assert_true(app.contains("Greet"))
+      assert_true(!app.contains("Increment"))
+      let test_src = test_planned_text(files, "app/app_test.mbt")
+      assert_true(test_src.contains("hello greet flips greeted"))
+    }
+    Err(message) => fail(message)
+  }
 }
 
 ///|

@@ -25,6 +25,7 @@ members = [
   "./examples/settings",
   "./examples/data_table",
   "./examples/file_importer",
+  "./examples/platform_lab",
   "./examples/command_palette",
   "./examples/mo_workbench",
   "./examples/code_editor",

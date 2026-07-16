@@ -10,6 +10,19 @@ and keep platform entrypoints thin.
 
 ## Start Here
 
+### First 10 minutes (standalone app)
+
+```sh
+moon install wzzc-dev/moui_cli/cmd/moui
+moui new my_app                 # or: moui new my_app --template hello
+cd my_app && moon update
+moon run macos_skia --target native   # or windows_skia / linux_skia
+```
+
+See `docs/getting-started.md` section B. Do not clone the monorepo for ordinary
+app work. For host Effect/Subscription recipes, open `examples/platform_lab`
+and `docs/non-render-component-cookbook.md`.
+
 Read only the smallest useful set:
 
 - `docs/architecture.md` for package roles and target routes.
@@ -17,6 +30,7 @@ Read only the smallest useful set:
 - `docs/development.md` for local commands and preview loops.
 - `docs/testing.md` for focused app checks and manual smoke.
 - `docs/examples.md` when changing example coverage or commands.
+- `docs/canvas-and-custom-paint.md` for canvas / custom paint.
 
 Ordinary app and example work should use the published `wzzc-dev/window`
 dependency resolved from mooncakes.io. Do not add `./window` to `moon.work` for

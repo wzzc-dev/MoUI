@@ -14,6 +14,8 @@ priv struct ProjectOptions {
   module_name : String
   title : String
   moui_version : String
+  /// App skeleton id: `counter` (default) or `hello`.
+  template : String
   platforms : Array[String]
   bundle_id : String?
 }

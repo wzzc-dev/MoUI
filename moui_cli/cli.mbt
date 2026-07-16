@@ -88,6 +88,7 @@ fn new_usage() -> String {
     #|  --id ID                 Project identifier. Defaults to the target name.
     #|  --module OWNER/NAME     MoonBit module. Defaults to local/<id>.
     #|  --title TITLE           Display title. Defaults from the project id.
+    #|  --template NAME         App skeleton: counter (default) or hello.
     #|  --moui-version VERSION  MoUI dependency version written into moon.mod.
     #|                          Defaults to 0.1.7. Independent from CLI version.
     #|  --platform PLATFORM     Add a target platform; may be repeated.
@@ -262,6 +263,7 @@ fn parse_new_args(
   let module_name : Ref[String?] = Ref(None)
   let title : Ref[String?] = Ref(None)
   let moui_version : Ref[String?] = Ref(None)
+  let template : Ref[String?] = Ref(None)
   let bundle_id : Ref[String?] = Ref(None)
   let platforms : Array[String] = []
   let help = Ref(false)
@@ -274,6 +276,7 @@ fn parse_new_args(
       "--id"
       | "--module"
       | "--title"
+      | "--template"
       | "--moui-version"
       | "--platform"
       | "--bundle-id" => {
@@ -285,6 +288,7 @@ fn parse_new_args(
           "--id" => id.val = Some(value)
           "--module" => module_name.val = Some(value)
           "--title" => title.val = Some(value)
+          "--template" => template.val = Some(value)
           "--moui-version" => moui_version.val = Some(value)
           "--platform" => platforms.push(value)
           "--bundle-id" => bundle_id.val = Some(value)
@@ -331,12 +335,17 @@ fn parse_new_args(
     Ok(value) => value
     Err(message) => return Err(message)
   }
+  let template_name = template.val.unwrap_or("counter").to_lower()
+  if template_name != "counter" && template_name != "hello" {
+    return Err("unsupported template: " + template_name + " (expected counter|hello)")
+  }
   let options : ProjectOptions = {
     target: resolved_target,
     id: project_id,
     module_name: module_name.val.unwrap_or("local/" + project_id),
     title: title.val.unwrap_or_else(() => default_title(project_id)),
     moui_version: moui_version.val.unwrap_or(default_moui_dependency_version),
+    template: template_name,
     platforms: selected,
     bundle_id: bundle_id.val,
   }

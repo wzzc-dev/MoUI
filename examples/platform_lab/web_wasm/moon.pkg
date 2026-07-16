@@ -1,0 +1,25 @@
+import {
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/web",
+  "wzzc-dev/moui/runtime",
+  "examples/platform_lab/app" @platform_lab_app,
+}
+
+supported_targets = "wasm-gc"
+
+pkgtype(kind: "executable")
+
+options(
+  link: {
+    "wasm-gc": {
+      "exports": [
+        "web_dispatch_event",
+        "web_dispatch_semantics_action",
+        "web_dispatch_route",
+        "web_complete_async_clipboard_read",
+        "web_complete_async_file_dialog",
+      ],
+    },
+  },
+  targets: { "main.mbt": [ "wasm-gc" ] },
+)

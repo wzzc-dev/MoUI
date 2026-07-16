@@ -164,6 +164,8 @@ pub fn macos_service_bridge(
           binary_file(binary_file_request)
         @host.HostServiceRequest::ShowMenu(commands) =>
           menu_command_response(commands, menu(commands))
+        @host.HostServiceRequest::SetApplicationMenu(menus) =>
+          dispatch_macos_application_menu(menus)
         @host.HostServiceRequest::QuerySystemTheme =>
           @host.HostServiceResponse::SystemTheme(system_theme)
         @host.HostServiceRequest::ListDirectory(path) =>
@@ -173,6 +175,32 @@ pub fn macos_service_bridge(
       }
     },
   )
+}
+
+///|
+fn dispatch_macos_application_menu(
+  menus : Array[@host.HostApplicationMenu],
+) -> @host.HostServiceResponse {
+  let descriptors : Array[@window_macos.SystemMenuDescriptor] = []
+  for menu in menus {
+    let items : Array[@window_macos.SystemMenuItemDescriptor] = []
+    for item in menu.items {
+      items.push(
+        @window_macos.SystemMenuItemDescriptor::new(
+          title=item.title,
+          action_id=item.action_id,
+          key_equivalent=item.key_equivalent,
+          key_modifier_mask=item.key_modifier_mask,
+          separator=item.separator,
+        ),
+      )
+    }
+    descriptors.push(
+      @window_macos.SystemMenuDescriptor::new(title=menu.title, items~),
+    )
+  }
+  @window_macos.set_system_menus(descriptors)
+  @host.HostServiceResponse::ApplicationMenuInstalled
 }
 
 ///|

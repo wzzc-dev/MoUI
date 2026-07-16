@@ -75,6 +75,9 @@ pub struct HostBinaryFileDiagnostic {
 pub(all) enum HostServiceRequest {
   Clipboard(HostClipboardRequest)
   ShowMenu(Array[@core.ActionCommand])
+  /// Install a host application menu bar (L2). Context menus stay on
+  /// `ShowMenu`. Platforms without a native app menu return `Unavailable`.
+  SetApplicationMenu(Array[HostApplicationMenu])
   FileDialog(HostFileDialogOptions)
   TextFile(HostTextFileRequest)
   BinaryFile(HostBinaryFileRequest)
@@ -85,6 +88,61 @@ pub(all) enum HostServiceRequest {
 } derive(Eq, Debug, ToJson)
 
 ///|
+/// One top-level application menu (for example File or Edit).
+pub(all) struct HostApplicationMenu {
+  title : String
+  items : Array[HostApplicationMenuItem]
+} derive(Eq, Debug, ToJson)
+
+///|
+/// One item in a host application menu bar.
+///
+/// Use `separator=true` for dividers; other fields are ignored for separators.
+/// `action_id` is host-defined and is delivered to the platform action handler
+/// when the item is chosen. Keyboard accelerators use `key_equivalent` plus
+/// `key_modifier_mask` (platform bit masks; see platform notes).
+pub(all) struct HostApplicationMenuItem {
+  title : String
+  action_id : Int
+  key_equivalent : String
+  key_modifier_mask : Int
+  separator : Bool
+  enabled : Bool
+} derive(Eq, Debug, ToJson)
+
+///|
+pub fn HostApplicationMenu::new(
+  title~ : String,
+  items~ : Array[HostApplicationMenuItem],
+) -> HostApplicationMenu {
+  { title, items }
+}
+
+///|
+pub fn HostApplicationMenuItem::new(
+  title~ : String,
+  action_id~ : Int,
+  key_equivalent? : String = "",
+  key_modifier_mask? : Int = 0,
+  separator? : Bool = false,
+  enabled? : Bool = true,
+) -> HostApplicationMenuItem {
+  { title, action_id, key_equivalent, key_modifier_mask, separator, enabled }
+}
+
+///|
+pub fn HostApplicationMenuItem::separator() -> HostApplicationMenuItem {
+  HostApplicationMenuItem::new(
+    title="",
+    action_id=0,
+    key_equivalent="",
+    key_modifier_mask=-1,
+    separator=true,
+    enabled=false,
+  )
+}
+
+///|
 pub(all) enum HostServiceResponse {
   Unavailable(String)
   Pending(HostServiceRequestId)
@@ -93,6 +151,7 @@ pub(all) enum HostServiceResponse {
   ClipboardImage(Bytes)
   MenuAction(@core.ActionCommand)
   MenuCommand(@core.CommandIntent)
+  ApplicationMenuInstalled
   FileDialogSelection(Array[String])
   TextFileContent(String, String)
   TextFileWritten(String)
@@ -266,6 +325,7 @@ pub fn HostServiceBridge::can_handle(
   match request {
     Clipboard(_) => self.capabilities.clipboard
     ShowMenu(_) => self.capabilities.menus
+    SetApplicationMenu(_) => self.capabilities.menus
     FileDialog(_) => self.capabilities.file_dialogs
     TextFile(_) => self.capabilities.file_access
     BinaryFile(_) => self.capabilities.file_access
@@ -283,6 +343,7 @@ pub fn HostServiceRequest::unavailable_message(
   match self {
     Clipboard(_) => "clipboard service is unavailable"
     ShowMenu(_) => "menu service is unavailable"
+    SetApplicationMenu(_) => "application menu bar service is unavailable"
     FileDialog(_) => "file dialog service is unavailable"
     TextFile(_) => "text file service is unavailable"
     BinaryFile(_) => "binary file service is unavailable"
@@ -299,6 +360,7 @@ pub fn HostServiceRequest::kind(self : HostServiceRequest) -> HostServiceKind {
   match self {
     Clipboard(_) => ClipboardService
     ShowMenu(_) => MenuService
+    SetApplicationMenu(_) => MenuService
     FileDialog(_) => FileDialogService
     TextFile(_) => TextFileService
     BinaryFile(_) => BinaryFileService
