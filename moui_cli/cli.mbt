@@ -19,6 +19,7 @@ priv struct ParsedNew {
 priv struct ParsedDoctor {
   help : Bool
   json : Bool
+  fix : Bool
   options : DoctorOptions
 }
 
@@ -30,24 +31,51 @@ priv struct ParsedEject {
 }
 
 ///|
+priv struct ParsedAddPlatform {
+  help : Bool
+  json : Bool
+  options : AddPlatformOptions?
+}
+
+///|
+priv struct ParsedPluginNew {
+  help : Bool
+  json : Bool
+  options : PluginScaffoldOptions?
+}
+
+///|
+priv struct ParsedPackage {
+  help : Bool
+  json : Bool
+  options : PackageReportOptions
+}
+
+///|
 fn root_usage() -> String {
   (
     #|MoUI command-line tools
     #|
     #|Usage:
     #|  moui new <target> [options]
+    #|  moui add platform <platform> [options]
     #|  moui doctor [options]
+    #|  moui plugin new <id> [options]
+    #|  moui package [options]
     #|  moui mobile eject <platform> [options]
     #|  moui --version
     #|
     #|Commands:
     #|  new             Create an independent MoUI project.
+    #|  add platform    Add platforms to an existing project.
     #|  doctor          Check the selected platform toolchains.
+    #|  plugin new      Scaffold a managed mobile plugin package.
+    #|  package         Print project package inventory.
     #|  mobile eject    Materialize a versioned shell for application ownership.
     #|
     #|Options:
     #|  -h, --help      Show help.
-    #|  --version       Show the CLI version.
+    #|  --version       Show the CLI version and default MoUI dependency version.
   )
 }
 
@@ -60,7 +88,8 @@ fn new_usage() -> String {
     #|  --id ID                 Project identifier. Defaults to the target name.
     #|  --module OWNER/NAME     MoonBit module. Defaults to local/<id>.
     #|  --title TITLE           Display title. Defaults from the project id.
-    #|  --moui-version VERSION  MoUI dependency version. Defaults to 0.1.7.
+    #|  --moui-version VERSION  MoUI dependency version written into moon.mod.
+    #|                          Defaults to 0.1.7. Independent from CLI version.
     #|  --platform PLATFORM     Add a target platform; may be repeated.
     #|                          Values: web, macos, windows, linux, android,
     #|                          ios, harmonyos, or all.
@@ -79,6 +108,7 @@ fn doctor_usage() -> String {
     #|  --project-root PATH  Project root. Defaults to the current directory.
     #|  --platform PLATFORM  Check one platform; may be repeated.
     #|  --all                Check every supported platform.
+    #|  --fix                Apply safe local remediations (moon.work/README).
     #|  --json               Emit machine-readable output.
     #|  -h, --help           Show this help.
   )
@@ -102,6 +132,53 @@ fn eject_usage() -> String {
     #|  --project-root PATH  Project root. Defaults to the current directory.
     #|  --output PATH        Destination. Defaults to the platform shell path.
     #|  --moui-root PATH     Local MoUI package root containing shell templates.
+    #|  --json               Emit machine-readable output.
+    #|  -h, --help           Show this help.
+  )
+}
+
+///|
+fn add_usage() -> String {
+  (
+    #|Usage: moui add platform <platform> [options]
+    #|
+    #|Add one or more platforms to an existing MoUI project.
+    #|
+    #|Options:
+    #|  --project-root PATH  Project root. Defaults to the current directory.
+    #|  --platform PLATFORM  Additional platform; may be repeated.
+    #|  --bundle-id ID       Required when adding the first mobile platform.
+    #|  --json               Emit machine-readable output.
+    #|  -h, --help           Show this help.
+  )
+}
+
+///|
+fn plugin_usage() -> String {
+  (
+    #|Usage: moui plugin new <id> [options]
+    #|
+    #|Scaffold a managed plugin under plugins/<id> and register it in mobile.json
+    #|when present.
+    #|
+    #|Options:
+    #|  --project-root PATH  Project root. Defaults to the current directory.
+    #|  --platform PLATFORM  Mobile platform; may be repeated (android|ios|harmonyos|all).
+    #|  --json               Emit machine-readable output.
+    #|  -h, --help           Show this help.
+  )
+}
+
+///|
+fn package_usage() -> String {
+  (
+    #|Usage: moui package [options]
+    #|
+    #|Print package inventory for the selected project. This does not upload or
+    #|publish artifacts.
+    #|
+    #|Options:
+    #|  --project-root PATH  Project root. Defaults to the current directory.
     #|  --json               Emit machine-readable output.
     #|  -h, --help           Show this help.
   )
@@ -259,7 +336,7 @@ fn parse_new_args(
     id: project_id,
     module_name: module_name.val.unwrap_or("local/" + project_id),
     title: title.val.unwrap_or_else(() => default_title(project_id)),
-    moui_version: moui_version.val.unwrap_or("0.1.7"),
+    moui_version: moui_version.val.unwrap_or(default_moui_dependency_version),
     platforms: selected,
     bundle_id: bundle_id.val,
   }
@@ -279,6 +356,7 @@ fn parse_doctor_args(
   let all = Ref(false)
   let help = Ref(false)
   let json = Ref(false)
+  let fix = Ref(false)
   let mut index = 0
   while index < args.length() {
     let argument = args[index]
@@ -296,13 +374,14 @@ fn parse_doctor_args(
         }
         index = next
       }
-      "--all" | "--json" | "-h" | "--help" => {
+      "--all" | "--fix" | "--json" | "-h" | "--help" => {
         match flag_without_value(inline, name) {
           Ok(_) => ()
           Err(message) => return Err(message)
         }
         match name {
           "--all" => all.val = true
+          "--fix" => fix.val = true
           "--json" => json.val = true
           "-h" | "--help" => help.val = true
           _ => ()
@@ -315,7 +394,182 @@ fn parse_doctor_args(
   Ok({
     help: help.val,
     json: json.val,
+    fix: fix.val,
     options: { project_root: project_root.val, platforms, all: all.val },
+  })
+}
+
+///|
+fn parse_add_platform_args(
+  args : Array[String],
+  cwd : String,
+) -> Result[ParsedAddPlatform, String] {
+  let project_root = Ref(cwd)
+  let platforms : Array[String] = []
+  let bundle_id : Ref[String?] = Ref(None)
+  let help = Ref(false)
+  let json = Ref(false)
+  let mut index = 0
+  while index < args.length() {
+    let argument = args[index]
+    let (name, inline) = option_parts(argument)
+    match name {
+      "--project-root" | "--platform" | "--bundle-id" => {
+        let (value, next) = match option_value(args, index, inline, name) {
+          Ok(result) => result
+          Err(message) => return Err(message)
+        }
+        match name {
+          "--project-root" => project_root.val = resolve_path(cwd, value)
+          "--platform" => platforms.push(value)
+          "--bundle-id" => bundle_id.val = Some(value)
+          _ => ()
+        }
+        index = next
+      }
+      "--json" | "-h" | "--help" => {
+        match flag_without_value(inline, name) {
+          Ok(_) => ()
+          Err(message) => return Err(message)
+        }
+        if name == "--json" {
+          json.val = true
+        } else {
+          help.val = true
+        }
+        index += 1
+      }
+      _ if argument.has_prefix("-") =>
+        return Err("unknown option for moui add platform: " + name)
+      _ => {
+        platforms.push(argument)
+        index += 1
+      }
+    }
+  }
+  if help.val {
+    return Ok({ help: true, json: json.val, options: None })
+  }
+  if platforms.is_empty() {
+    return Err("moui add platform requires at least one platform")
+  }
+  Ok({
+    help: false,
+    json: json.val,
+    options: Some({
+      project_root: project_root.val,
+      platforms,
+      bundle_id: bundle_id.val,
+    }),
+  })
+}
+
+///|
+fn parse_plugin_new_args(
+  args : Array[String],
+  cwd : String,
+) -> Result[ParsedPluginNew, String] {
+  let project_root = Ref(cwd)
+  let id : Ref[String?] = Ref(None)
+  let platforms : Array[String] = []
+  let help = Ref(false)
+  let json = Ref(false)
+  let mut index = 0
+  while index < args.length() {
+    let argument = args[index]
+    let (name, inline) = option_parts(argument)
+    match name {
+      "--project-root" | "--platform" => {
+        let (value, next) = match option_value(args, index, inline, name) {
+          Ok(result) => result
+          Err(message) => return Err(message)
+        }
+        if name == "--project-root" {
+          project_root.val = resolve_path(cwd, value)
+        } else {
+          platforms.push(value)
+        }
+        index = next
+      }
+      "--json" | "-h" | "--help" => {
+        match flag_without_value(inline, name) {
+          Ok(_) => ()
+          Err(message) => return Err(message)
+        }
+        if name == "--json" {
+          json.val = true
+        } else {
+          help.val = true
+        }
+        index += 1
+      }
+      _ if argument.has_prefix("-") =>
+        return Err("unknown option for moui plugin new: " + name)
+      _ => {
+        match id.val {
+          None => id.val = Some(argument)
+          Some(_) => return Err("moui plugin new accepts exactly one plugin id")
+        }
+        index += 1
+      }
+    }
+  }
+  if help.val {
+    return Ok({ help: true, json: json.val, options: None })
+  }
+  guard id.val is Some(plugin_id) else {
+    return Err("missing plugin id for moui plugin new")
+  }
+  if platforms.is_empty() {
+    return Err("moui plugin new requires --platform")
+  }
+  Ok({
+    help: false,
+    json: json.val,
+    options: Some({ project_root: project_root.val, id: plugin_id, platforms }),
+  })
+}
+
+///|
+fn parse_package_args(
+  args : Array[String],
+  cwd : String,
+) -> Result[ParsedPackage, String] {
+  let project_root = Ref(cwd)
+  let help = Ref(false)
+  let json = Ref(false)
+  let mut index = 0
+  while index < args.length() {
+    let argument = args[index]
+    let (name, inline) = option_parts(argument)
+    match name {
+      "--project-root" => {
+        let (value, next) = match option_value(args, index, inline, name) {
+          Ok(result) => result
+          Err(message) => return Err(message)
+        }
+        project_root.val = resolve_path(cwd, value)
+        index = next
+      }
+      "--json" | "-h" | "--help" => {
+        match flag_without_value(inline, name) {
+          Ok(_) => ()
+          Err(message) => return Err(message)
+        }
+        if name == "--json" {
+          json.val = true
+        } else {
+          help.val = true
+        }
+        index += 1
+      }
+      _ => return Err("unknown option for moui package: " + name)
+    }
+  }
+  Ok({
+    help: help.val,
+    json: json.val,
+    options: { project_root: project_root.val },
   })
 }
 
@@ -439,16 +693,164 @@ fn run_doctor_command(args : Array[String], cwd : String) -> CliOutcome {
   if parsed.help {
     return stdout_outcome(doctor_usage())
   }
+  let fixes : Array[String] = if parsed.fix {
+    match apply_doctor_fixes(parsed.options) {
+      Ok(value) => value
+      Err(message) => return failed_outcome(message, parsed.json, "")
+    }
+  } else {
+    []
+  }
   match run_doctor(parsed.options) {
-    Ok(report) => doctor_report_outcome(report, parsed.json)
+    Ok(report) => doctor_report_outcome(report, parsed.json, fixes~)
     Err(message) => failed_outcome(message, parsed.json, "")
   }
 }
 
 ///|
-fn doctor_report_outcome(report : DoctorReport, json : Bool) -> CliOutcome {
-  let text = if json { report.to_json_text() } else { report.to_human_text() }
+fn doctor_report_outcome(
+  report : DoctorReport,
+  json : Bool,
+  fixes? : Array[String] = [],
+) -> CliOutcome {
+  let text = if json {
+    let root = @json.parse(report.to_json_text()) catch {
+      _ =>
+        return {
+          exit_code: if report.ok {
+            0
+          } else {
+            1
+          },
+          stdout: report.to_json_text(),
+          stderr: "",
+        }
+    }
+    guard root is Object(fields) else {
+      return {
+        exit_code: if report.ok {
+          0
+        } else {
+          1
+        },
+        stdout: report.to_json_text(),
+        stderr: "",
+      }
+    }
+    fields["fixes"] = fixes.to_json()
+    Json::object(fields).stringify(indent=2) + "\n"
+  } else {
+    let builder = StringBuilder::new()
+    builder.write_string(report.to_human_text())
+    if !fixes.is_empty() {
+      builder.write_string("Applied fixes:\n")
+      for action in fixes {
+        builder.write_string("- " + action + "\n")
+      }
+    }
+    builder.to_string()
+  }
   { exit_code: if report.ok { 0 } else { 1 }, stdout: text, stderr: "" }
+}
+
+///|
+fn run_add_platform(args : Array[String], cwd : String) -> CliOutcome {
+  let json = json_requested(args)
+  let parsed = match parse_add_platform_args(args, cwd) {
+    Ok(value) => value
+    Err(message) => return failed_outcome(message, json, add_usage())
+  }
+  if parsed.help {
+    return stdout_outcome(add_usage())
+  }
+  guard parsed.options is Some(options) else {
+    return failed_outcome(
+      "add platform options are unavailable",
+      parsed.json,
+      "",
+    )
+  }
+  match add_platforms_to_project(options) {
+    Ok((added, files)) =>
+      if parsed.json {
+        let value : Json = {
+          "schemaVersion": 1,
+          "ok": true,
+          "command": "add platform",
+          "projectRoot": options.project_root,
+          "addedPlatforms": added,
+          "files": files,
+        }
+        stdout_outcome(value.stringify(indent=2) + "\n")
+      } else {
+        stdout_outcome(
+          "Added platforms: " +
+          added.join(", ") +
+          "\nWrote \{files.length()} files under " +
+          options.project_root +
+          "\n",
+        )
+      }
+    Err(message) => failed_outcome(message, parsed.json, "")
+  }
+}
+
+///|
+fn run_plugin_new(args : Array[String], cwd : String) -> CliOutcome {
+  let json = json_requested(args)
+  let parsed = match parse_plugin_new_args(args, cwd) {
+    Ok(value) => value
+    Err(message) => return failed_outcome(message, json, plugin_usage())
+  }
+  if parsed.help {
+    return stdout_outcome(plugin_usage())
+  }
+  guard parsed.options is Some(options) else {
+    return failed_outcome("plugin new options are unavailable", parsed.json, "")
+  }
+  match scaffold_plugin(options) {
+    Ok(files) =>
+      if parsed.json {
+        let value : Json = {
+          "schemaVersion": 1,
+          "ok": true,
+          "command": "plugin new",
+          "id": options.id,
+          "files": files,
+        }
+        stdout_outcome(value.stringify(indent=2) + "\n")
+      } else {
+        stdout_outcome(
+          "Scaffolded plugin " +
+          options.id +
+          "\nWrote \{files.length()} files.\n",
+        )
+      }
+    Err(message) => failed_outcome(message, parsed.json, "")
+  }
+}
+
+///|
+fn run_package_command(args : Array[String], cwd : String) -> CliOutcome {
+  let json = json_requested(args)
+  let parsed = match parse_package_args(args, cwd) {
+    Ok(value) => value
+    Err(message) => return failed_outcome(message, json, package_usage())
+  }
+  if parsed.help {
+    return stdout_outcome(package_usage())
+  }
+  if parsed.json {
+    match package_report_json(parsed.options) {
+      Ok(text) => stdout_outcome(text)
+      Err(message) => failed_outcome(message, true, "")
+    }
+  } else {
+    match package_report_text(parsed.options) {
+      Ok(text) => stdout_outcome(text)
+      Err(message) => failed_outcome(message, false, "")
+    }
+  }
 }
 
 ///|
@@ -493,10 +895,18 @@ fn version_output(json : Bool) -> CliOutcome {
       "ok": true,
       "command": "version",
       "version": version,
+      "defaultMouiDependencyVersion": default_moui_dependency_version,
+      "note": "CLI version and default wzzc-dev/moui dependency version are independent.",
     }
     stdout_outcome(value.stringify(indent=2) + "\n")
   } else {
-    stdout_outcome("moui " + version + "\n")
+    stdout_outcome(
+      "moui " +
+      version +
+      "\ndefault moui dependency: wzzc-dev/moui@" +
+      default_moui_dependency_version +
+      "\n(CLI version and dependency version are independent)\n",
+    )
   }
 }
 
@@ -520,7 +930,34 @@ pub fn run_cli(args : Array[String], cwd : String) -> CliOutcome {
         )
       }
     "new" => run_new(args[1:].to_owned(), cwd)
+    "add" =>
+      if args.length() == 1 ||
+        (args.length() == 2 && (args[1] == "-h" || args[1] == "--help")) {
+        stdout_outcome(add_usage())
+      } else if args[1] == "platform" {
+        run_add_platform(args[2:].to_owned(), cwd)
+      } else {
+        failed_outcome(
+          "unknown moui add command: " + args[1],
+          json_requested(args),
+          add_usage(),
+        )
+      }
     "doctor" => run_doctor_command(args[1:].to_owned(), cwd)
+    "plugin" =>
+      if args.length() == 1 ||
+        (args.length() == 2 && (args[1] == "-h" || args[1] == "--help")) {
+        stdout_outcome(plugin_usage())
+      } else if args[1] == "new" {
+        run_plugin_new(args[2:].to_owned(), cwd)
+      } else {
+        failed_outcome(
+          "unknown moui plugin command: " + args[1],
+          json_requested(args),
+          plugin_usage(),
+        )
+      }
+    "package" => run_package_command(args[1:].to_owned(), cwd)
     "mobile" =>
       if args.length() == 1 ||
         (args.length() == 2 && (args[1] == "-h" || args[1] == "--help")) {

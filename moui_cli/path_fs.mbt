@@ -192,10 +192,6 @@ extern "C" fn path_is_executable_native(path : Bytes) -> Int = "moui_cli_path_is
 
 ///|
 #borrow(path)
-extern "C" fn remove_tree_native(path : Bytes) -> Int = "moui_cli_remove_tree"
-
-///|
-#borrow(path)
 extern "C" fn path_is_symlink_native(path : Bytes) -> Int = "moui_cli_path_is_symlink"
 
 ///|
@@ -233,7 +229,36 @@ fn rename_path(source : String, destination : String) -> Result[Unit, String] {
 
 ///|
 fn remove_tree(path : String) -> Unit {
-  ignore(remove_tree_native(nul_terminated(path)))
+  if !@fs.path_exists(path) {
+    return
+  }
+  if path_is_symlink(path) {
+    @fs.remove_file(path) catch {
+      _ => ()
+    }
+    return
+  }
+  let is_directory = @fs.is_dir(path) catch {
+    _ => false
+  }
+  if is_directory {
+    let entries = @fs.read_dir(path) catch {
+      _ => return
+    }
+    for entry in entries {
+      if entry == "." || entry == ".." {
+        continue
+      }
+      remove_tree(join_path(path, entry))
+    }
+    @fs.remove_dir(path) catch {
+      _ => ()
+    }
+  } else {
+    @fs.remove_file(path) catch {
+      _ => ()
+    }
+  }
 }
 
 ///|

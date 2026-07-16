@@ -14,7 +14,6 @@
 #include <windows.h>
 #include <wchar.h>
 #else
-#include <dirent.h>
 #include <fcntl.h>
 #include <spawn.h>
 #include <sys/stat.h>
@@ -75,70 +74,6 @@ static int32_t moui_cli_move_path_windows(
   return moved ? 0 : -1;
 }
 
-static int32_t moui_cli_remove_tree_windows(const wchar_t *path) {
-  DWORD attributes = GetFileAttributesW(path);
-  if (attributes == INVALID_FILE_ATTRIBUTES) {
-    return GetLastError() == ERROR_FILE_NOT_FOUND ||
-                   GetLastError() == ERROR_PATH_NOT_FOUND
-               ? 0
-               : -1;
-  }
-  if ((attributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
-    if ((attributes & FILE_ATTRIBUTE_READONLY) != 0) {
-      SetFileAttributesW(path, attributes & ~FILE_ATTRIBUTE_READONLY);
-    }
-    return DeleteFileW(path) ? 0 : -1;
-  }
-  if ((attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0) {
-    return RemoveDirectoryW(path) ? 0 : -1;
-  }
-
-  size_t length = wcslen(path);
-  wchar_t *pattern =
-      (wchar_t *)malloc((length + 3) * sizeof(wchar_t));
-  if (pattern == NULL) {
-    return -1;
-  }
-  memcpy(pattern, path, length * sizeof(wchar_t));
-  pattern[length] = L'\\';
-  pattern[length + 1] = L'*';
-  pattern[length + 2] = L'\0';
-  WIN32_FIND_DATAW entry;
-  HANDLE search = FindFirstFileW(pattern, &entry);
-  free(pattern);
-  if (search != INVALID_HANDLE_VALUE) {
-    do {
-      if (wcscmp(entry.cFileName, L".") == 0 ||
-          wcscmp(entry.cFileName, L"..") == 0) {
-        continue;
-      }
-      size_t name_length = wcslen(entry.cFileName);
-      wchar_t *child = (wchar_t *)malloc(
-          (length + name_length + 2) * sizeof(wchar_t));
-      if (child == NULL) {
-        FindClose(search);
-        return -1;
-      }
-      memcpy(child, path, length * sizeof(wchar_t));
-      child[length] = L'\\';
-      memcpy(
-          child + length + 1,
-          entry.cFileName,
-          (name_length + 1) * sizeof(wchar_t));
-      int32_t status = moui_cli_remove_tree_windows(child);
-      free(child);
-      if (status != 0) {
-        FindClose(search);
-        return status;
-      }
-    } while (FindNextFileW(search, &entry));
-    FindClose(search);
-  } else if (GetLastError() != ERROR_FILE_NOT_FOUND) {
-    return -1;
-  }
-  return RemoveDirectoryW(path) ? 0 : -1;
-}
-
 static wchar_t *moui_cli_final_path_windows(const wchar_t *path) {
   HANDLE handle = CreateFileW(
       path,
@@ -173,45 +108,6 @@ static wchar_t *moui_cli_final_path_windows(const wchar_t *path) {
     return NULL;
   }
   return result;
-}
-#else
-static int32_t moui_cli_remove_tree_posix(const char *path) {
-  struct stat status;
-  if (lstat(path, &status) != 0) {
-    return errno == ENOENT ? 0 : -1;
-  }
-  if (!S_ISDIR(status.st_mode) || S_ISLNK(status.st_mode)) {
-    return unlink(path) == 0 ? 0 : -1;
-  }
-  DIR *directory = opendir(path);
-  if (directory == NULL) {
-    return -1;
-  }
-  struct dirent *entry = NULL;
-  while ((entry = readdir(directory)) != NULL) {
-    if (strcmp(entry->d_name, ".") == 0 ||
-        strcmp(entry->d_name, "..") == 0) {
-      continue;
-    }
-    size_t path_length = strlen(path);
-    size_t name_length = strlen(entry->d_name);
-    char *child = (char *)malloc(path_length + name_length + 2);
-    if (child == NULL) {
-      closedir(directory);
-      return -1;
-    }
-    memcpy(child, path, path_length);
-    child[path_length] = '/';
-    memcpy(child + path_length + 1, entry->d_name, name_length + 1);
-    int32_t child_status = moui_cli_remove_tree_posix(child);
-    free(child);
-    if (child_status != 0) {
-      closedir(directory);
-      return child_status;
-    }
-  }
-  closedir(directory);
-  return rmdir(path) == 0 ? 0 : -1;
 }
 #endif
 
@@ -271,20 +167,6 @@ MOONBIT_FFI_EXPORT int32_t moui_cli_path_is_executable(
          (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
 #else
   return access((const char *)path, X_OK) == 0;
-#endif
-}
-
-MOONBIT_FFI_EXPORT int32_t moui_cli_remove_tree(moonbit_bytes_t path) {
-#ifdef _WIN32
-  wchar_t *path_wide = moui_cli_utf8_to_wide((const char *)path);
-  if (path_wide == NULL) {
-    return -1;
-  }
-  int32_t status = moui_cli_remove_tree_windows(path_wide);
-  free(path_wide);
-  return status;
-#else
-  return moui_cli_remove_tree_posix((const char *)path);
 #endif
 }
 
