@@ -106,10 +106,20 @@ test "default macOS project file plan is exact" {
       #|macos_skia/main.mbt
       #|macos_skia/moon.pkg
       #|moon.mod
+      #|moon.work
       #|moui.project.json
       #|web_wasm/index.html
       #|web_wasm/main.mbt
       #|web_wasm/moon.pkg
+    ),
+  )
+  inspect(
+    test_planned_text(files, "moon.work"),
+    content=(
+      #|members = [
+      #|  ".",
+      #|]
+      #|
     ),
   )
   inspect(
