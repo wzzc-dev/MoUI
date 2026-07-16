@@ -118,31 +118,27 @@ export function validateGpuWorkerNoReadback() {
 
 /** Heuristic only for Node-side short-smoke success checks. */
 export function interpretMacosGpuSmokeLog(logText) {
-  const text = logText || "";
-  const metalRoute =
-    /surface_route=metal-gpu/i.test(text) ||
-    /route=metal-gpu/i.test(text) ||
-    /MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu/i.test(text);
-  const surfaceGpu = /surface_gpu=true/i.test(text);
-  const gpuSmokePassed = /MoUI Skia GPU Metal renderer smoke passed/i.test(text);
-  const presentCountMatch = text.match(/present_count=(\d+)/i);
-  const presentCount = presentCountMatch
-    ? Number.parseInt(presentCountMatch[1], 10)
-    : 0;
-  const workerOwned =
-    /worker-owned/i.test(text) ||
-    /Picture worker/i.test(text) ||
-    /native worker/i.test(text) ||
-    gpuSmokePassed;
+  const result = runMoonbitTool(
+    "tools/moui/interpret_macos_gpu_smoke_log",
+    ["--log-text", logText || ""],
+    {
+      encoding: "utf8",
+      suppressSuccessStdout: true,
+      exitOnFailure: false,
+    },
+  );
+  if (result.status !== 0) {
+    throw new Error(
+      `interpret_macos_gpu_smoke_log failed: ${result.stderr || result.stdout || result.status}`,
+    );
+  }
+  const parsed = JSON.parse((result.stdout || "").trim() || "{}");
   return {
-    metalRoute,
-    surfaceGpu,
-    gpuSmokePassed,
-    presentCount: Number.isFinite(presentCount) ? presentCount : 0,
-    workerOwned,
-    shortPathOk: Boolean(
-      (metalRoute || gpuSmokePassed) &&
-        (surfaceGpu || presentCount > 0 || gpuSmokePassed),
-    ),
+    metalRoute: Boolean(parsed.metalRoute),
+    surfaceGpu: Boolean(parsed.surfaceGpu),
+    gpuSmokePassed: Boolean(parsed.gpuSmokePassed),
+    presentCount: Number(parsed.presentCount) || 0,
+    workerOwned: Boolean(parsed.workerOwned),
+    shortPathOk: Boolean(parsed.shortPathOk),
   };
 }

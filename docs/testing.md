@@ -33,8 +33,8 @@ node scripts/validate-guidance-consistency.mjs
 node scripts/validate-api-surface.mjs
 node scripts/generate-repo-docs.mjs --check
 node scripts/validate-window-dependency.mjs
-node scripts/validate-harmonyos-m5-shell.mjs
-node scripts/validate-harness-batch1.mjs
+node scripts/validate-harmonyos-shell.mjs
+node scripts/validate-harness-invariants.mjs
 node scripts/validate-maintenance-baseline.mjs
 node scripts/validate-source-file-policy.mjs
 node scripts/check-website-docs.mjs
