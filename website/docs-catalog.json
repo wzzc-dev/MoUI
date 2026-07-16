@@ -22,10 +22,10 @@
     {
       "group": "get-started",
       "slug": "getting-started",
-      "title": "Getting Started with Playground",
+      "title": "Getting Started",
       "path": "docs/getting-started.md",
-      "summary": "Build a first MoUI app with the MoonBit-native tutorial and browser Playground.",
-      "keywords": ["Playground", "tutorial", "editor", "wasm-gc"]
+      "summary": "Create a first MoUI app with moui_cli, run desktop and Web targets, or learn in the browser Playground.",
+      "keywords": ["moui_cli", "quick start", "Playground", "desktop", "wasm-gc"]
     },
     {
       "group": "get-started",
@@ -98,6 +98,14 @@
       "path": "docs/non-render-component-cookbook.md",
       "summary": "Reusable form, navigation, command, import, notification, and state patterns.",
       "keywords": ["cookbook", "forms", "navigation", "state"]
+    },
+    {
+      "group": "guides",
+      "slug": "canvas-and-custom-paint",
+      "title": "Canvas and Custom Paint",
+      "path": "docs/canvas-and-custom-paint.md",
+      "summary": "Canvas input, custom drawing, animation, and renderer-safe paint recipes.",
+      "keywords": ["canvas", "paint", "drawing", "animation"]
     },
     {
       "group": "guides",

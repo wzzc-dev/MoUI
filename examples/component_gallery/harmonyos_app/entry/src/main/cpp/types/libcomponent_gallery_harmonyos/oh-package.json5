@@ -1,6 +1,0 @@
-{
-  "name": "libcomponent_gallery_harmonyos.so",
-  "types": "./Index.d.ts",
-  "version": "1.0.0",
-  "description": "Component Gallery HarmonyOS native NAPI bridge"
-}

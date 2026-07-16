@@ -1,0 +1,23 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/showcase/harmonyos_skia"
+
+// Values
+pub fn showcase_harmonyos_attach_surface(UInt64, Int, Int, Double) -> Bool
+
+pub fn showcase_harmonyos_detach_surface() -> Unit
+
+pub fn showcase_harmonyos_dispatch_pointer(Int, Double, Double, Double) -> Bool
+
+pub fn showcase_harmonyos_dispatch_scroll(Double, Double, Double, Double, Int) -> Bool
+
+pub fn showcase_harmonyos_render_frame() -> Bool
+
+pub fn showcase_harmonyos_resize(Int, Int, Double) -> Bool
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

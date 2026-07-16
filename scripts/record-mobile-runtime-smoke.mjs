@@ -88,7 +88,7 @@ const parseArgs = argv => {
 const normalize = path => isAbsolute(path) ? path : resolve(repoRoot, path);
 
 const ensureDir = path => mkdirSync(path, { recursive: true });
-const requiresScrollEvidence = appConfig => appConfig.id === "component_gallery";
+const requiresScrollEvidence = appConfig => appConfig.id === "showcase";
 
 const run = (cmd, args, options = {}) => {
   const result = spawnSync(cmd, args, {
@@ -353,7 +353,7 @@ const runAndroidSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotP
     ...serialArgs, "shell", "am", "start", "-n",
     `${appConfig.android.applicationId}/dev.wzzc.moui.mobile.MoUIActivity`,
   ];
-  if (appConfig.id === "component_gallery") {
+  if (appConfig.id === "showcase") {
     launchArgs.push("--es", "moui.mobile.testProbe", "1");
   }
   result = run("adb", launchArgs);
@@ -368,7 +368,7 @@ const runAndroidSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotP
   if (result.status === 0 && result.stdout?.length > 0) writeFileSync(beforePath, result.stdout);
   let probePlan = null;
   let lastTree = { status: 1, stdout: "", stderr: "no dump" };
-  if (appConfig.id === "component_gallery") {
+  if (appConfig.id === "showcase") {
     for (let attempt = 1; attempt <= 12; attempt++) {
       const dumped = run("adb", [...serialArgs, "shell", "uiautomator", "dump", "/sdcard/moui-window.xml"]);
       appendLog(logPath, `adb service probe accessibility dump attempt ${attempt}`, dumped);
@@ -630,7 +630,7 @@ const runIosSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath,
     ...process.env,
   };
   // simctl removes SIMCTL_CHILD_ while forwarding the value into the app.
-  if (appConfig.id === "component_gallery") {
+  if (appConfig.id === "showcase") {
     launchEnv.SIMCTL_CHILD_MOUI_MOBILE_TEST_PROBE = "1";
     launchEnv.MOUI_MOBILE_TEST_PROBE = "1";
   }
@@ -654,9 +654,9 @@ const runIosSmoke = ({ appConfig, artifact, logPath, beforePath, screenshotPath,
     idbReady = connect.status === 0;
     let tree = { status: 1, stdout: "", stderr: "idb companion connection failed" };
     if (idbReady) {
-      // Prefer service-probe labels for component_gallery; keep polling until
+      // Prefer service-probe labels for showcase; keep polling until
       // the probe is visible so we do not fall back to a random catalog button.
-      if (appConfig.id === "component_gallery") {
+      if (appConfig.id === "showcase") {
         const foundProbe = pollIosIdbPlan(
           idbTarget,
           encoded => iosIdbServiceProbePlan(encoded),
@@ -1006,7 +1006,7 @@ const runHarmonySmoke = ({ appConfig, artifact, logPath, beforePath, screenshotP
     ...targetArgs,
     "shell", "aa", "start", "-a", "EntryAbility", "-b", appConfig.harmonyos.bundleName,
   ];
-  if (appConfig.id === "component_gallery") {
+  if (appConfig.id === "showcase") {
     launchArgs.push("--ps", "moui.mobile.testProbe", "1");
   }
   result = run("hdc", launchArgs);
@@ -1033,7 +1033,7 @@ const runHarmonySmoke = ({ appConfig, artifact, logPath, beforePath, screenshotP
       stderr: "",
     });
   }
-  if (appConfig.id === "component_gallery" && !probePlan) {
+  if (appConfig.id === "showcase" && !probePlan) {
     // Try common uitest dump subcommands; older images reject bare `dump`.
     const dumpCommands = [
       ["uitest", "dumpLayout"],

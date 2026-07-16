@@ -158,7 +158,7 @@ pub fn android_readiness() -> AndroidBackendReadiness {
       "GPU seven-gate promotion is not claimed (gpuPromotionEvidence.claimed=false)",
     ],
     next_steps: [
-      "re-run Component Gallery managed-shell smoke with --require-passed on emulator/device",
+      "re-run MoUI Showcase managed-shell smoke with --require-passed on emulator/device",
       "record actualPresenterRoute direct-present evidence in checks/platforms/android.json",
       "land GPU seven-gate claim only after matching-device promotion manifests pass",
     ],

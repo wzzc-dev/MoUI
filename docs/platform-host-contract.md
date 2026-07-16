@@ -240,7 +240,7 @@ Linux, and Web currently return `Unavailable`. Selection delivery still uses
 the platform action handler installed by the entrypoint (for example
 `@window_macos.set_system_menu_action_handler`). See
 [Non-render cookbook](non-render-component-cookbook.md) and
-`examples/platform_lab`.
+Showcase's Platform workspace (`examples/showcase/app/platform`).
 App-facing multi-window lifecycle requests go through `HostWindowActions`
 (`open`, `close`, `focus`, `set_primary`, `resize`, `minimize`, `show`) on the
 shared `HostWindowRequestQueue`. Each resolved scene remains an independent

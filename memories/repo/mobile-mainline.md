@@ -46,25 +46,26 @@
 - iOS Simulator smoke uses `idb` accessibility frames for tap/swipe and HOME
   lifecycle input, with logs filtered to the current `simctl launch` PID.
   Mobile Info.plists keep `UILaunchScreen` to avoid legacy `320x480` scaling.
-- Component Gallery mobile entrypoints expose the app workflow; automatic shell
-  smoke behavior lives only in the repo-only `moui.mobile.test-probe` plugin.
-  Recorder acceptance requires system text clipboard write/read, two distinct
-  physical resize dimensions, accessibility tree/focus/action, PlatformView and
-  Host Service completion, async-image loading/ready, GPU recovery, and stress
-  logs. PNG clipboard remains a separate cross-app device check.
+- Showcase is the only comprehensive mobile proof app (`dev.wzzc.moui.showcase`).
+  Mobile default route is `platform/mobile-service-probe`. Automatic shell smoke
+  behavior lives only in the repo-only `moui.mobile.test-probe` plugin. Recorder
+  acceptance requires system text clipboard write/read, two distinct physical
+  resize dimensions, accessibility tree/focus/action, PlatformView and Host
+  Service completion, async-image loading/ready, GPU recovery, and stress logs.
+  PNG clipboard remains a separate cross-app device check.
 - Runtime evidence (2026-07-15): the iOS `passed` and Android `passed` artifacts
-  belong to Release N UIKit/Java shells. Canonical SwiftUI/Kotlin shells need
-  fresh matching-device runs. HarmonyOS canonical ArkTS evidence is `partial`.
-  All three structured platform manifests remain `partial` and keep
-  `actualPresenterRoute=unverified` until modern-shell evidence is recollected.
+  under historical `component_gallery` paths belong to Release N UIKit/Java
+  shells and are **not** Showcase evidence. Canonical SwiftUI/Kotlin/ArkTS
+  Showcase shells still need fresh matching-device runs.
 - Xcode 26.3 `simctl io` has no rotate operation. iOS Simulator rotation uses
   Simulator menu UI scripting and therefore needs macOS Accessibility
   permission; VoiceOver preference writes alone are not focus/action evidence.
-- Runtime evidence (2026-07-14): iOS Simulator counter + component_gallery
-  mobile-runtime smokes are `partial` under `artifacts/mobile-runtime/ios/` with
-  product GPU configure/build metadata; seven-gate claims remain pending scaffolds
-  under `artifacts/gpu-promotion/{ios,harmonyos}/scaffold-latest/`. HarmonyOS had
-  no `hdc` target (packaging + first-frame screenshot only).
+- Runtime evidence (2026-07-14): iOS Simulator counter + historical
+  component_gallery mobile-runtime smokes are `partial` under
+  `artifacts/mobile-runtime/ios/` with product GPU configure/build metadata;
+  seven-gate claims remain pending scaffolds under
+  `artifacts/gpu-promotion/{ios,harmonyos}/scaffold-latest/`. HarmonyOS had no
+  `hdc` target (packaging + first-frame screenshot only).
 - Mobile smoke status is three-state: `passed` is complete, `partial` preserves
   useful evidence with missing observations, and `failed` means no usable
   runtime evidence. `--require-passed` accepts only `passed`.

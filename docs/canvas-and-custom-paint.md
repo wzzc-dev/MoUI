@@ -53,7 +53,7 @@ canvas(measure~, draw~)
   .on_drag(event => CanvasDrag(event.position))
 ```
 
-See `examples/platform_lab` for a runnable drag-to-draw card.
+See `examples/showcase/app/platform` for a runnable drag-to-draw card.
 
 ## Animation
 
@@ -63,7 +63,7 @@ MoUI animation for apps is mostly **app-sampled**:
   offset / scale / foreground modifiers.
 - `@moui/animation` re-exports easing and transition types.
 - `Subscription::animation_tick` is a descriptor kind only; there is no universal
-  host adapter yet. Drive frames with `HostTimerSource` (as Platform Lab does)
+  host adapter yet. Drive frames with `HostTimerSource` (as Showcase Platform does)
   or host animation callbacks when you own them.
 
 Reduced-motion should be respected when sampling transitions (see core
@@ -73,7 +73,7 @@ transition helpers and Showcase motion cards).
 
 | Example | What to look at |
 | --- | --- |
-| `examples/platform_lab` | Minimal canvas + timer-driven opacity |
+| Showcase Platform workspace | Minimal canvas + timer-driven opacity |
 | `examples/showcase` Advanced Rendering | Layers, blend, filter, shader, path, transform |
 | `examples/pdf_workbench` | `custom_layout` page bitmaps |
 | `examples/markdown_editor` | Editor surface paint |

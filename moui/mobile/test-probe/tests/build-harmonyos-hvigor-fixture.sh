@@ -6,7 +6,7 @@ artifact_root="${MOUI_MOBILE_SHELL_CI_ROOT:-$repo_root/artifacts/mobile-shell-ci
 fixture_root="$artifact_root/harmonyos/hvigor-plugin"
 fallback_root="$fixture_root/fallback-input"
 project_root="$fixture_root/hvigor-project"
-output_hap="$fixture_root/ComponentGallery.hap"
+output_hap="$fixture_root/MoUIShowcase.hap"
 
 sdk_home="${HARMONYOS_SDK_HOME:-${OHOS_SDK_HOME:-}}"
 deveco_sdk_home="${DEVECO_SDK_HOME:-}"

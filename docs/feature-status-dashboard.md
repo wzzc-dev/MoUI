@@ -109,14 +109,14 @@ Android, iOS, and HarmonyOS have source-level VSync and mobile service bridges.
 HarmonyOS also has native-only XComponent pointer/lifecycle ownership and
 touch-slop scroll arbitration.
 
-Local Component Gallery `mobile-runtime-smoke` evidence (validator
-`--require-passed`):
+Historical Component Gallery evidence is retained for audit, but does not
+promote the renamed Showcase managed shells:
 
 | Platform | Status | Artifact | Notes |
 | --- | --- | --- | --- |
-| iOS Simulator | Release N UIKit shell **`passed`**; SwiftUI managed shell re-run pending | `artifacts/mobile-runtime/ios/component_gallery/` | Historical full-service/Metal evidence remains useful, but the canonical shell must be re-recorded through real system input and assistive technology without production-shell probes. |
-| Android emulator | Release N legacy shell **`passed`**; managed shell re-run pending | `artifacts/mobile-runtime/android/component_gallery/` | Historical full-service/Vulkan evidence remains useful, but the Kotlin canonical shell must be re-recorded through real system input and assistive technology without shell-side probes. |
-| HarmonyOS device | canonical ArkTS shell **`partial`** | rebuild + signed HAP required | The repository-only test-probe plugin must be installed by the evidence build; production `MoUIRoot` contains no automatic smoke behavior. Commercial MateBook-class hosts reject unsigned/OpenHarmony-community HAPs (`9568320` / `9568257`). Provide `MOUI_HARMONYOS_SIGNING_CONFIG(_FILE)` and re-run `scripts/harmonyos-mobile-runtime-evidence.sh`. |
+| iOS historical artifact | Release N UIKit shell **`passed`** | `artifacts/mobile-runtime/ios/component_gallery/` | Not Showcase evidence. |
+| Android historical artifact | Release N legacy shell **`passed`** | `artifacts/mobile-runtime/android/component_gallery/` | Not Showcase evidence. |
+| Showcase managed shells | fresh Android/iOS/HarmonyOS evidence pending | `artifacts/mobile-runtime/<platform>/showcase/` | Re-run through real system input, assistive technology, and the repository test-probe plugin where required. |
 
 CI entrypoints: `moui-ios-mobile-runtime-evidence.yml`,
 `moui-android-mobile-runtime-evidence.yml` (self-hosted android),

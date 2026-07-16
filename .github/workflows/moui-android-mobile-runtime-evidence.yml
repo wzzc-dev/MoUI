@@ -6,10 +6,10 @@ on:
       app:
         description: Mobile app id to smoke
         required: false
-        default: component_gallery
+        default: showcase
         type: choice
         options:
-          - component_gallery
+          - showcase
           - counter
       renderer:
         description: Skia renderer selection
@@ -28,7 +28,7 @@ on:
 
 jobs:
   android-mobile-runtime-evidence:
-    name: Android Component Gallery runtime smoke
+    name: Android MoUI Showcase runtime smoke
     # Prefer self-hosted runners with a ready emulator/device and NDK 28.2.
     # GitHub-hosted images may lack the pinned NDK / GPU path.
     runs-on: [self-hosted, android]
@@ -47,7 +47,7 @@ jobs:
       - name: Run Android mobile runtime evidence
         shell: bash
         env:
-          MOUI_MOBILE_APP: ${{ inputs.app || 'component_gallery' }}
+          MOUI_MOBILE_APP: ${{ inputs.app || 'showcase' }}
           MOUI_SKIA_RENDERER: ${{ inputs.renderer || 'auto' }}
           MOUI_ANDROID_AVD: ${{ inputs.avd || 'moui_api34' }}
         run: |

@@ -1,0 +1,6 @@
+plugins {
+    id "com.android.application"
+}
+
+ext.mouiDefaultApp = "showcase"
+apply from: file("../../../../moui/mobile/android/mobile-app.gradle")

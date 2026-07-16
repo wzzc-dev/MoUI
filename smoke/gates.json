@@ -188,22 +188,22 @@
       ]
     },
     {
-      "id": "android.component-gallery-runtime",
+      "id": "android.showcase-runtime",
       "tier": "release",
       "kind": "mobile-runtime-smoke",
       "host": "android-device-or-emulator",
-      "purpose": "Record non-fallback Component Gallery Android runtime evidence including scroll input.",
+      "purpose": "Record non-fallback MoUI Showcase Android runtime evidence including scroll input.",
       "defaultDevCheck": false,
       "commands": [
         {
-          "argv": ["node", "scripts/record-mobile-runtime-smoke.mjs", "--platform", "android", "--app", "component_gallery", "--manifest", "artifacts/mobile-runtime/android/component_gallery/mobile-runtime-smoke.json", "--require-passed"],
+          "argv": ["node", "scripts/record-mobile-runtime-smoke.mjs", "--platform", "android", "--app", "showcase", "--manifest", "artifacts/mobile-runtime/android/showcase/mobile-runtime-smoke.json", "--require-passed"],
           "mode": "manual"
         }
       ],
       "result": {
         "type": "manifest",
-        "path": "artifacts/mobile-runtime/android/component_gallery/mobile-runtime-smoke.json",
-        "validator": ["node", "scripts/validate-mobile-runtime-manifest.mjs", "artifacts/mobile-runtime/android/component_gallery/mobile-runtime-smoke.json", "--require-passed"]
+        "path": "artifacts/mobile-runtime/android/showcase/mobile-runtime-smoke.json",
+        "validator": ["node", "scripts/validate-mobile-runtime-manifest.mjs", "artifacts/mobile-runtime/android/showcase/mobile-runtime-smoke.json", "--require-passed"]
       },
       "ci": {
         "workflow": ".github/workflows/moui-runtime-gates.yml",
@@ -211,29 +211,29 @@
       },
       "docs": ["docs/android-support.md", "docs/testing.md", "docs/release-readiness.md"],
       "artifacts": [
-        "artifacts/mobile-runtime/android/component_gallery/mobile-runtime-smoke.json",
-        "artifacts/mobile-runtime/android/component_gallery/screenshot-before.png",
-        "artifacts/mobile-runtime/android/component_gallery/screenshot.png",
-        "artifacts/mobile-runtime/android/component_gallery/runtime.log"
+        "artifacts/mobile-runtime/android/showcase/mobile-runtime-smoke.json",
+        "artifacts/mobile-runtime/android/showcase/screenshot-before.png",
+        "artifacts/mobile-runtime/android/showcase/screenshot.png",
+        "artifacts/mobile-runtime/android/showcase/runtime.log"
       ]
     },
     {
-      "id": "ios.component-gallery-runtime",
+      "id": "ios.showcase-runtime",
       "tier": "release",
       "kind": "mobile-runtime-smoke",
       "host": "macos-ios-simulator",
-      "purpose": "Record non-fallback Component Gallery iOS Simulator runtime evidence including scroll input.",
+      "purpose": "Record non-fallback MoUI Showcase iOS Simulator runtime evidence including scroll input.",
       "defaultDevCheck": false,
       "commands": [
         {
-          "argv": ["node", "scripts/record-mobile-runtime-smoke.mjs", "--platform", "ios", "--app", "component_gallery", "--manifest", "artifacts/mobile-runtime/ios/component_gallery/mobile-runtime-smoke.json", "--require-passed"],
+          "argv": ["node", "scripts/record-mobile-runtime-smoke.mjs", "--platform", "ios", "--app", "showcase", "--manifest", "artifacts/mobile-runtime/ios/showcase/mobile-runtime-smoke.json", "--require-passed"],
           "mode": "manual"
         }
       ],
       "result": {
         "type": "manifest",
-        "path": "artifacts/mobile-runtime/ios/component_gallery/mobile-runtime-smoke.json",
-        "validator": ["node", "scripts/validate-mobile-runtime-manifest.mjs", "artifacts/mobile-runtime/ios/component_gallery/mobile-runtime-smoke.json", "--require-passed"]
+        "path": "artifacts/mobile-runtime/ios/showcase/mobile-runtime-smoke.json",
+        "validator": ["node", "scripts/validate-mobile-runtime-manifest.mjs", "artifacts/mobile-runtime/ios/showcase/mobile-runtime-smoke.json", "--require-passed"]
       },
       "ci": {
         "workflow": ".github/workflows/moui-runtime-gates.yml",
@@ -241,10 +241,10 @@
       },
       "docs": ["docs/ios-support.md", "docs/testing.md", "docs/release-readiness.md"],
       "artifacts": [
-        "artifacts/mobile-runtime/ios/component_gallery/mobile-runtime-smoke.json",
-        "artifacts/mobile-runtime/ios/component_gallery/screenshot-before.png",
-        "artifacts/mobile-runtime/ios/component_gallery/screenshot.png",
-        "artifacts/mobile-runtime/ios/component_gallery/runtime.log"
+        "artifacts/mobile-runtime/ios/showcase/mobile-runtime-smoke.json",
+        "artifacts/mobile-runtime/ios/showcase/screenshot-before.png",
+        "artifacts/mobile-runtime/ios/showcase/screenshot.png",
+        "artifacts/mobile-runtime/ios/showcase/runtime.log"
       ]
     },
     {
@@ -278,22 +278,22 @@
       ]
     },
     {
-      "id": "harmonyos.component-gallery-runtime",
+      "id": "harmonyos.showcase-runtime",
       "tier": "release",
       "kind": "mobile-runtime-smoke",
       "host": "harmonyos-device-or-emulator",
-      "purpose": "Record non-fallback Component Gallery HarmonyOS input, scroll, lifecycle, and platform-service evidence.",
+      "purpose": "Record non-fallback MoUI Showcase HarmonyOS input, scroll, lifecycle, and platform-service evidence.",
       "defaultDevCheck": false,
       "commands": [
         {
-          "argv": ["node", "scripts/record-mobile-runtime-smoke.mjs", "--platform", "harmonyos", "--app", "component_gallery", "--manifest", "artifacts/mobile-runtime/harmonyos/component_gallery/mobile-runtime-smoke.json", "--require-passed"],
+          "argv": ["node", "scripts/record-mobile-runtime-smoke.mjs", "--platform", "harmonyos", "--app", "showcase", "--manifest", "artifacts/mobile-runtime/harmonyos/showcase/mobile-runtime-smoke.json", "--require-passed"],
           "mode": "manual"
         }
       ],
       "result": {
         "type": "manifest",
-        "path": "artifacts/mobile-runtime/harmonyos/component_gallery/mobile-runtime-smoke.json",
-        "validator": ["node", "scripts/validate-mobile-runtime-manifest.mjs", "artifacts/mobile-runtime/harmonyos/component_gallery/mobile-runtime-smoke.json", "--require-passed"]
+        "path": "artifacts/mobile-runtime/harmonyos/showcase/mobile-runtime-smoke.json",
+        "validator": ["node", "scripts/validate-mobile-runtime-manifest.mjs", "artifacts/mobile-runtime/harmonyos/showcase/mobile-runtime-smoke.json", "--require-passed"]
       },
       "ci": {
         "workflow": ".github/workflows/moui-runtime-gates.yml",
@@ -301,10 +301,10 @@
       },
       "docs": ["docs/harmonyos-support.md", "docs/testing.md", "docs/release-readiness.md"],
       "artifacts": [
-        "artifacts/mobile-runtime/harmonyos/component_gallery/mobile-runtime-smoke.json",
-        "artifacts/mobile-runtime/harmonyos/component_gallery/screenshot-before.png",
-        "artifacts/mobile-runtime/harmonyos/component_gallery/screenshot.png",
-        "artifacts/mobile-runtime/harmonyos/component_gallery/runtime.log"
+        "artifacts/mobile-runtime/harmonyos/showcase/mobile-runtime-smoke.json",
+        "artifacts/mobile-runtime/harmonyos/showcase/screenshot-before.png",
+        "artifacts/mobile-runtime/harmonyos/showcase/screenshot.png",
+        "artifacts/mobile-runtime/harmonyos/showcase/runtime.log"
       ]
     }
   ]

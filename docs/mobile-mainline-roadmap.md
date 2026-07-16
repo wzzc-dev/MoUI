@@ -124,7 +124,7 @@ observation is proven, `partial` means the run produced useful matching-host
 evidence but still has pending/no observations, and `failed` means the run did
 not produce usable runtime evidence. `--require-passed` accepts only `passed`.
 
-Component Gallery opens a dedicated `Mobile Service Probe` page on mobile. The
+Showcase opens its Platform workspace's `Mobile Service Probe` page on mobile. The
 page has stable text-field and action labels, visible edit/action counters,
 viewport dimensions, a deferred PNG, and scrollable tail content. The recorder
 uses those controls to exercise IME edits, a system text-clipboard write/read
