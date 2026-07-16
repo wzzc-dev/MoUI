@@ -1,7 +1,43 @@
 # MoUI 跨平台可核验申报书
 
-> 版本: 2026-07-11
+> 版本: 2026-07-16
 > 下文的每一项声明均可通过引用的 CI 工作流、运行记录、制品名称或测试文件独立核验。
+
+---
+
+## 产品承诺矩阵（product_class）
+
+本表是对外「能不能当产品主线用」的单一口径。它与 `docs/maintenance.md` 的
+mainline/diagnostic **工程门禁** 不同：后者描述日常 `check.sh` 范围，不描述
+OS 产品完成度。
+
+| 平台 | product_class | `ready` 语义（host API） | 证据摘要 | 尚未承诺 |
+|------|---------------|-------------------------|----------|----------|
+| **macOS** | **committed** | 产品主线可用 | L0–L2 PR 门禁 + L3 platform runtime passed（`checks/platforms/macos.json`） | — |
+| **Web** | **committed** | 产品主线可用 | Daily wasm-gc + browser WebGPU；`checks/platforms/web.json` runtimeL3=passed | — |
+| **Windows** | **committed_with_gaps** | 产品主线可用（L3 未满） | L0–L2 PR/real Skia；`runtimeL3=partial` | 完整 IME/服务 L3 |
+| **Linux** | **committed_with_gaps** | host `ready=true` = 代码路径可用，**≠** L3 全绿 | L0–L2 + 首帧 L3；交互 IME 等 partial | 完整交互 L3 |
+| **Android** | **runtime_partial** | `ready=true`：managed 壳 + session **可用于开发/演示**；`status=runtime_partial` | 打包矩阵 passed；历史 legacy shell CG smoke passed；managed 壳与 MobileHostChannel 已接线 | managed-shell 无 probe 重录 smoke；真机 signing；presenter verified；GPU seven-gate claimed |
+| **iOS** | **runtime_partial** | 同上 | 打包矩阵 passed；历史 UIKit shell CG smoke passed；managed SwiftUI 壳已接线 | managed SwiftUI `--require-passed` 重录；真机/VoiceOver；presenter/seven-gate |
+| **HarmonyOS** | **runtime_partial** | 同上 | 打包矩阵 passed；首帧/部分 HVD 观察；managed ArkTS/XComponent 已接线 | 商业签名下 full `passed` smoke；完整服务观察；presenter/seven-gate |
+
+### 禁止的两种错误表述
+
+1. **不要**写「六端均已产品就绪 / L3 全绿」。
+2. **不要**写「三移动端完全不行 / 生命周期 glue 未接线 / 只有 Counter 壳」——managed shell、session、IME/clipboard/a11y 通道已存在；缺口在 **证据闭环与 promotion**，不是空壳。
+
+### 三套状态不要混
+
+| 维度 | 含义 |
+|------|------|
+| Host 可用性 (`ready`) | 开发/演示能否走 managed shell + embedded session（对齐 Linux：代码完整可用） |
+| Runtime 证据 (`status` / smoke) | matching-host 观察：`passed` / `partial` / packaging-only |
+| 产品完整承诺 | L3 全绿 + `actualPresenterRoute` verified + GPU seven-gate claimed |
+
+结构化状态源：`checks/platforms/{macos,windows,linux,web,android,ios,harmonyos}.json`。  
+**无新证据时不得抬高** `runtimeL3` / `actualPresenterRoute`。
+
+GPU 产品默认（`NativeGpuPlatform::gpu_promoted=true`）与 seven-gate **质量 claim** 双轨；见 ADR 0006。
 
 ---
 
@@ -229,8 +265,8 @@ bash window/scripts/capture_moui_runtime_evidence.sh linux \
 | L0: 构建 | ✅ 通过 | `ci.yml → pr-profile` → Showcase/Markdown Editor Web wasm-gc 构建 | 每次 PR |
 | L1: Web 后端测试 | ✅ 通过 | `ci.yml → pr-profile` → `moon test moui/backend/web --target wasm-gc` | 每次 PR |
 | L1: WebGPU 适配器测试 | ✅ 通过 | `ci.yml → pr-profile` → `moon test moui/render/webgpu_adapter --target wasm-gc` | 每次 PR |
-| L2: Web 浏览器呈现 | ✅ 部分通过 | `feature-proof-summary.yml` 浏览器会话制品 | 需参考最新 feature-proof-summary 运行 |
-| L3: Web 运行时呈现清单 | ⏳ **待补** | `node scripts/record-web-runtime-presentation.mjs` 产生 Web 运行时证据清单 | — |
+| L2: Web 浏览器呈现 | ✅ 通过 | `checks/platforms/web.json` `rendererL2=passed`（`browser-webgpu`）；CI / Pages 浏览器会话 | 与 structured platform contract 对齐 |
+| L3: Web 运行时呈现清单 | ✅ 通过 | `checks/platforms/web.json` `runtimeL3=passed`（browser presentation manifest）；`scripts/ci-web-runtime-presentation.sh` / `record-web-runtime-presentation.mjs` | 与 structured contract 对齐；无新证据时勿降级 |
 
 ## 四、渲染器特性逐项证据链
 

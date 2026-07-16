@@ -1,12 +1,17 @@
 # iOS Support
 
-iOS support is currently an experimental embedded native route. The canonical
-shell is a package-owned SwiftUI `App` with a `UIViewRepresentable` host. Its
-render view explicitly uses `CAMetalLayer`, drives frames with `CADisplayLink`,
-and forwards lifecycle, resize, touch, IME, pasteboard, accessibility,
-PlatformView, and Host Service traffic into MoUI. A narrow Objective-C++ bridge
-only negotiates Mobile Runtime ABI v1, dispatches its function table, and owns
-copied boundary data.
+iOS is a **runtime_partial** embedded native route: the managed shell and host
+session are **usable for development and demos** (`backend` reports
+`ready=true`, `status=runtime_partial`), but the platform is **not**
+product-complete until managed SwiftUI matching-simulator L3 and
+presenter/GPU promotion close remaining gaps.
+
+The canonical shell is a package-owned SwiftUI `App` with a
+`UIViewRepresentable` host. Its render view explicitly uses `CAMetalLayer`,
+drives frames with `CADisplayLink`, and forwards lifecycle, resize, touch, IME,
+pasteboard, accessibility, PlatformView, and Host Service traffic into MoUI. A
+narrow Objective-C++ bridge only negotiates Mobile Runtime ABI v1, dispatches
+its function table, and owns copied boundary data.
 
 ## Status
 
@@ -16,10 +21,11 @@ promotion claim** (`gpuPromotionEvidence` / `artifacts/gpu-promotion/...`).
 
 | Area | Current state | Evidence boundary |
 | --- | --- | --- |
-| Host contract | Scaffolded in `moui/backend/ios` | Package tests prove protocol behavior only. |
-| Platform services | Swift adapters own the UIKit text proxy and candidate anchor, text/image `UIPasteboard`, `UIAccessibilityElement` container, PlatformView overlay, and plugin Host Service channels over `MobileHostChannel` | Full composition/candidate, cross-app PNG, plugin event, and VoiceOver tree/focus/action evidence pending on the managed shell. |
+| Product class | `runtime_partial` (see platform-readiness-declaration) | Not `committed`; not “Counter-only scaffold.” |
+| Host contract | Usable embedded session in `moui/backend/ios` (`ready=true`) | Package tests + managed shell wiring; L3 promotion separate. |
+| Platform services | Swift adapters own text proxy, pasteboard, a11y container, PlatformView, Host Service channels over `MobileHostChannel` | Capability flags reflect **code wiring**; full managed-shell VoiceOver/device evidence still pending. |
 | Frame pacing | Input/resize request redraw; presentation runs from `CADisplayLink` ticks | 60/120 Hz device pacing evidence pending. |
-| Skia provider | Scaffolded in `moui/backend/ios/skia` | Provider/preflight checks prove wiring, not simulator/device pixels. |
+| Skia provider | `moui/backend/ios/skia` preflight `runtime_status=runtime_partial` | Provider checks prove wiring; presenter route still unverified in checks JSON. |
 | Product GPU default | `auto` → `SkiaGpuNative` / `metal-gpu` when available (`gpu_promoted=true`) | Source + rebuild `mobile-build.json`; not a seven-gate claim. |
 | Canonical SwiftUI shell | `moui/mobile/ios` + real `PBXNativeTarget` in the framework-staged template | Managed fallback builds prove Swift/ObjC++/ABI/native packaging only; they are not runtime proof. |
 | First-frame runtime evidence | Nonblank screenshots and the simulator smoke below were collected against the Release N UIKit shell | Historical pixels remain valid for that artifact, not for the replacement managed shell. |

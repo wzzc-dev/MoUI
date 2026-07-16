@@ -101,6 +101,10 @@ proof status:
 
 ## Mobile Status
 
+**Product class: `runtime_partial`** for Android, iOS, and HarmonyOS (usable
+managed-shell host paths; not product-complete). See
+[platform-readiness-declaration.md](platform-readiness-declaration.md).
+
 Android, iOS, and HarmonyOS have source-level VSync and mobile service bridges.
 HarmonyOS also has native-only XComponent pointer/lifecycle ownership and
 touch-slop scroll arbitration.

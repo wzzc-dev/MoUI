@@ -4,6 +4,21 @@ This document is the implementation and promotion record for Android, iOS,
 and HarmonyOS. Native Skia is the mobile mainline. Native WGPU remains a
 diagnostic route.
 
+## Product class
+
+Android, iOS, and HarmonyOS are **`runtime_partial`**, not product-complete and
+not “unwired experimental glue only.”
+
+| Layer | Status |
+| --- | --- |
+| Managed shell + embedded session | Usable for development and demos (`backend` `ready=true`) |
+| Host services (IME/clipboard/a11y channel) | Wired in source via `MobileHostChannel` + shell adapters |
+| Runtime smoke | Historical full smoke often on **legacy** shells; managed re-proof pending; HarmonyOS partial + signing |
+| Product complete / GPU seven-gate claim | **Not** claimed |
+
+Canonical product-class table:
+[platform-readiness-declaration.md](platform-readiness-declaration.md).
+
 ## Current State
 
 | Area | Implemented in source | Runtime evidence |
