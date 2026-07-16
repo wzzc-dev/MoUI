@@ -62,9 +62,12 @@ MoUI animation for apps is mostly **app-sampled**:
 - `View::transition` / `View::presence` sample a `TransitionSpec` into opacity /
   offset / scale / foreground modifiers.
 - `@moui/animation` re-exports easing and transition types.
+- `@views.animated_canvas` is for looping canvas motion: the draw callback
+  receives `now_ms` from the runtime paint clock and the paint plan is marked
+  animating so the host keeps requesting frames without a `HostTimerSource`.
 - `Subscription::animation_tick` is a descriptor kind only; there is no universal
-  host adapter yet. Drive frames with `HostTimerSource` (as Showcase Platform does)
-  or host animation callbacks when you own them.
+  host adapter yet. Drive model-level ticks with `HostTimerSource` (as Showcase
+  Platform does) or host animation callbacks when you own them.
 
 Reduced-motion should be respected when sampling transitions (see core
 transition helpers and Showcase motion cards).
@@ -74,6 +77,7 @@ transition helpers and Showcase motion cards).
 | Example | What to look at |
 | --- | --- |
 | Showcase Platform workspace | Minimal canvas + timer-driven opacity |
+| Tutorial `06-animation` | `animated_canvas` orb driven by `now_ms` |
 | `examples/showcase` Advanced Rendering | Layers, blend, filter, shader, path, transform |
 | `examples/pdf_workbench` | `custom_layout` page bitmaps |
 | `examples/markdown_editor` | Editor surface paint |

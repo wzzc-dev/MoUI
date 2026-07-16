@@ -83,7 +83,7 @@ fn tutorial_intro_section(
         tutorial_wrapped_text(
           theme,
           summary_width,
-          "Six focused lessons covering layout, state, themes, component composition, diagnostics, and sharing.",
+          "Six focused lessons covering layout, state, themes, component composition, and motion transitions.",
           if metrics.compact {
             14.0
           } else {
@@ -358,12 +358,12 @@ fn tutorial_lessons(theme : @moui.Theme) -> Array[TutorialLesson] {
       accent: website_green(theme),
     },
     {
-      id: "06-debug-and-publish",
+      id: "06-animation",
       number: "06",
-      title_zh: "调试、运行与分享",
-      title_en: "Debug, run, and share",
-      summary: "理解诊断、预览和分享流程。 Work with diagnostics and sharing.",
-      concepts: ["Diagnostics", "Share"],
+      title_zh: "画布动画",
+      title_en: "Canvas animation",
+      summary: "用 animated_canvas 与 paint 时钟自动驱动小球。 Continuous orb motion from now_ms.",
+      concepts: ["Canvas", "now_ms"],
       accent: website_amber(theme),
     },
   ]

@@ -164,7 +164,7 @@ fn playground_example_picker(
       @views.picker_item("03-state-events", "03 State"),
       @views.picker_item("04-theme-styling", "04 Theme"),
       @views.picker_item("05-component-composition", "05 Components"),
-      @views.picker_item("06-debug-and-publish", "06 Debug"),
+      @views.picker_item("06-animation", "06 Motion"),
     ]
   } else {
     [
@@ -173,7 +173,7 @@ fn playground_example_picker(
       @views.picker_item("03-state-events", "03-state-events"),
       @views.picker_item("04-theme-styling", "04-theme-styling"),
       @views.picker_item("05-component-composition", "05-component-composition"),
-      @views.picker_item("06-debug-and-publish", "06-debug-and-publish"),
+      @views.picker_item("06-animation", "06-animation"),
     ]
   }
   let style = @views.PickerStyle::default(theme~)

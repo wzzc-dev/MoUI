@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "website/tutorial/lessons/06-debug-and-publish"
+package "website/tutorial/lessons/06-animation"
 
 import {
   "wzzc-dev/moui/core",
@@ -12,7 +12,7 @@ pub fn program() -> @core.Program[Model, Unit]
 
 // Types and methods
 pub struct Model {
-  ready : Bool
+  label : String
 }
 
 // Type aliases
