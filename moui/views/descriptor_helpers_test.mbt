@@ -59,3 +59,17 @@ test "command menu section helper preserves command groups" {
   assert_eq(section.title, "File")
   assert_eq(section.commands.length(), 1)
 }
+
+///|
+test "table column and choice helpers preserve constructor fields" {
+  let column = table_column(id="owner", label="Owner", width=112.0)
+  assert_eq(column.id, "owner")
+  assert_eq(column.label, "Owner")
+  inspect(column.width, content="112")
+  let choice = choice_item("native", "Native")
+  assert_eq(choice.id, "native")
+  assert_eq(choice.label, "Native")
+  let picker = picker_item("png", "PNG")
+  assert_eq(picker.id, "png")
+  assert_eq(picker.label, "PNG")
+}
