@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 2,
+  "id": "showcase",
+  "displayName": "MoUI Showcase",
+  "artifactName": "showcase",
+  "appPackage": "examples/showcase/app",
+  "shellApiVersion": 1,
+  "runtimeAbiVersion": 1,
+  "mobile": {
+    "renderer": "auto",
+    "systemUi": {
+      "fullscreen": true,
+      "statusBar": "hidden"
+    },
+    "orientation": "any",
+    "resources": [],
+    "permissions": [],
+    "plugins": []
+  },
+  "android": {
+    "applicationId": "dev.wzzc.moui.showcase",
+    "shellMode": "managed",
+    "minSdk": 23
+  },
+  "ios": {
+    "bundleId": "dev.wzzc.moui.showcase",
+    "productName": "MoUIShowcase",
+    "shellMode": "managed",
+    "deploymentTarget": "15.0"
+  },
+  "harmonyos": {
+    "bundleName": "dev.wzzc.moui.showcase",
+    "productName": "MoUIShowcase",
+    "appName": "MoUI Showcase",
+    "moduleName": "entry",
+    "moduleDescription": "MoUI Showcase HarmonyOS app",
+    "entryDescription": "MoUI Showcase HarmonyOS entry ability",
+    "shellMode": "managed",
+    "compatibleSdkVersion": 20
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "app_name",
+      "value": "MoUI Showcase"
+    },
+    {
+      "name": "module_desc",
+      "value": "MoUI Showcase HarmonyOS app"
+    },
+    {
+      "name": "entry_desc",
+      "value": "MoUI Showcase HarmonyOS app entry ability"
+    }
+  ]
+}

@@ -317,7 +317,7 @@ Recommended checks:
 moon test moui/backend/host --target native
 moon test moui/backend/web --target wasm-gc
 moon test examples/file_importer/app --target native
-moon test examples/platform_lab/app --target native
+moon test examples/showcase/app/platform --target native
 ```
 
 ## Timers
@@ -358,7 +358,7 @@ Recommended checks:
 
 ```sh
 moon test moui/backend/host --target native
-moon test examples/platform_lab/app --target native
+moon test examples/showcase/app/platform --target native
 moon test examples/markdown_editor/app --target native
 ```
 
@@ -387,7 +387,7 @@ Recommended checks:
 
 ```sh
 moon test moui/backend/host --target native
-moon test examples/platform_lab/app --target native
+moon test examples/showcase/app/platform --target native
 moon test examples/markdown_editor/app --target native
 ```
 
@@ -409,7 +409,7 @@ fn action_command_map() -> @views.ActionCommandMap {
         modifiers=@views.KeyModifiers::new(meta=true),
       ),
     ),
-    group="Platform Lab",
+    group="Showcase Platform",
   )
   @views.ActionCommandMap::new(
     bindings=[@views.CommandBinding::new(command~, handle=() => ())],
@@ -421,7 +421,7 @@ Recommended checks:
 
 ```sh
 moon test examples/command_palette/app --target native
-moon test examples/platform_lab/app --target native
+moon test examples/showcase/app/platform --target native
 ```
 
 ## Window Resize
@@ -456,7 +456,7 @@ Recommended checks:
 
 ```sh
 moon test moui/backend/host --target native
-moon test examples/platform_lab/app --target native
+moon test examples/showcase/app/platform --target native
 ```
 
 ## Effect Cheat Sheet
@@ -496,7 +496,7 @@ fn install_app_menu(services : @host.HostAppServices) -> Unit {
 ```
 
 On macOS, install after the primary window is ready (`on_ready`) so the default
-AppKit menu does not overwrite the custom bar. See `examples/platform_lab` and
+AppKit menu does not overwrite the custom bar. See Showcase's Platform workspace and
 `examples/markdown_editor/macos_skia`.
 
 ## Toast Queues

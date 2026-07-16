@@ -1,0 +1,23 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/showcase/android_skia"
+
+// Values
+pub fn showcase_android_attach_surface(UInt64, Int, Int, Double) -> Bool
+
+pub fn showcase_android_detach_surface() -> Unit
+
+pub fn showcase_android_dispatch_pointer(Int, Double, Double, Double) -> Bool
+
+pub fn showcase_android_dispatch_scroll(Double, Double, Double, Double, Int) -> Bool
+
+pub fn showcase_android_render_frame() -> Bool
+
+pub fn showcase_android_resize(Int, Int, Double) -> Bool
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

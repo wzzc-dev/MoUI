@@ -20,7 +20,7 @@ moon run macos_skia --target native   # or windows_skia / linux_skia
 ```
 
 See `docs/getting-started.md` section B. Do not clone the monorepo for ordinary
-app work. For host Effect/Subscription recipes, open `examples/platform_lab`
+app work. For host Effect/Subscription recipes, open `examples/showcase/app/platform`
 and `docs/non-render-component-cookbook.md`.
 
 Read only the smallest useful set:
@@ -64,10 +64,9 @@ examples/<name>/harmonyos_skia/ # experimental embedded-session route
 examples/<name>/harmonyos_app/  # repository-only Release N fixture when present
 ```
 
-`examples/component_gallery` is the documented exception for the default route
-names: it uses `web`, `macos`, `linux`, `windows`, `android`, `ios`, and
-`harmonyos` because Skia is the default native/mobile route for Component
-Gallery and the Web route is named plainly.
+Showcase uses the standard `web_wasm`, `<platform>_skia`, and explicit
+renderer-diagnostic entrypoint names. Its mobile entrypoints open the Platform
+workspace's Mobile Service Probe route.
 
 Default shared app imports:
 
@@ -195,7 +194,7 @@ current-host backend/provider coverage; the shared platform service checks stay
 separate from host-specific steps. Run platform smoke only when
 the change claims real platform/browser/renderer behavior.
 For Android, the canonical build command is
-`scripts/build-mobile-android-apk.sh --app <counter|component_gallery>`, with
+`scripts/build-mobile-android-apk.sh --app <counter|showcase>`, with
 app-specific scripts kept as compatibility wrappers. The default is the
 package-owned Kotlin/AndroidX managed shell with registered JNI and a native
 PlatformView overlay. The fallback APK command only validates packaging/JNI/CMake; a
@@ -215,7 +214,7 @@ AndroidX Activity 1.13.0; the product target remains SDK 35 and minSdk 23.
 `--legacy-java-shell --compile-sdk 35` validates only the frozen Release N
 compatibility fixture and is not an application template.
 For iOS, the canonical build command is
-`scripts/build-mobile-ios-app.sh --app <counter|component_gallery>` through a
+`scripts/build-mobile-ios-app.sh --app <counter|showcase>` through a
 staged canonical Xcode project. The fallback `.app` command only validates MoonBit C
 generation, canonical SwiftUI/UIKit adapter and ABI bridge compilation,
 native-stub compilation, bundle layout, and ad-hoc simulator signing; a
@@ -232,7 +231,7 @@ The iOS and HarmonyOS mobile build entrypoints use the same `--renderer`
 contract and evidence boundary.
 Repository example mobile metadata lives in `examples/<app>/mobile.json`.
 Reusable canonical shells and scripts live in the published `moui/mobile` and
-`moui/scripts/mobile` directories. Counter/Component Gallery app-specific
+`moui/scripts/mobile` directories. Counter/Showcase app-specific
 contracts in `moui/mobile/build-contracts.json` are Release N schema v1
 fixtures only; schema v2 applications use the fixed Runtime ABI and must not
 put native symbols or project paths in `mobile.json`. Run
@@ -250,7 +249,7 @@ Successful input injection is insufficient: the recorder requires app receipt,
 before/after pixel change, actual detach, IME state/edit, clipboard completion,
 accessibility tree/focus/action, and async image. HarmonyOS uses API 20 and
 native XComponent as the only input/lifecycle source.
-Use Component Gallery's dedicated `Mobile Service Probe` for mobile service
+Use Showcase Platform's dedicated `Mobile Service Probe` for mobile service
 acceptance. Clipboard evidence requires system text write and read completion;
 resize evidence requires two distinct physical sizes; async-image evidence
 requires loading and ready frames. Assistive-technology focus/action must come

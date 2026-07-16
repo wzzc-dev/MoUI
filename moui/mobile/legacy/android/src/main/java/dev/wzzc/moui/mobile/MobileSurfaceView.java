@@ -290,7 +290,7 @@ final class MobileSurfaceView extends SurfaceView {
         MobileActivity.nativeDispatchAccessibility(target.id, 0, "");
     }
 
-    // Component Gallery matching-host smoke: drive IME + clipboard through the
+    // MoUI Showcase matching-host smoke: drive IME + clipboard through the
     // native host channel once semantics expose the Service Probe controls.
     // This path does not depend on uiautomator seeing Canvas virtual nodes.
     private void maybeFireServiceSmoke() {

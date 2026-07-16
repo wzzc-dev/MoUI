@@ -1,0 +1,20 @@
+import {
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/views",
+  "wzzc-dev/moui_richtext",
+  "wzzc-dev/moui",
+  "wzzc-dev/moui/animation",
+  "wzzc-dev/moui/geometry",
+  "wzzc-dev/moui/graphics",
+  "wzzc-dev/moui/state",
+  "wzzc-dev/moui/text",
+}
+
+supported_targets = "+native+wasm-gc"
+
+options(
+  targets: { },
+)

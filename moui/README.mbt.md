@@ -195,15 +195,20 @@ browser-session artifact provenance. A failed browser manifest records
 failed Web platform evidence; a missing browser manifest keeps the Web
 platform entry pending.
 
-For a minimal starting template, clone the standalone `moui_example`
-counter repo (it is not a workspace member here and is not built by
-`check.sh --profile daily`):
+For a standalone application, install the CLI and generate a project outside
+this repository:
 
 ```sh
-git clone git@github.com:moui-mbt/moui_example.git
-cd moui_example
+moon install wzzc-dev/moui_cli/cmd/moui
+moui new my_app
+cd my_app
 moon update
+moon check
+moon run macos_skia --target native
 ```
+
+Use `windows_skia` or `linux_skia` for the matching desktop host. The generated
+project keeps shared app logic separate from its thin platform entrypoints.
 
 ## Mobile Packaging
 

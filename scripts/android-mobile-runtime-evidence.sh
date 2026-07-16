@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Build and record Android Component Gallery mobile-runtime smoke with --require-passed.
+# Build and record Android MoUI Showcase mobile-runtime smoke with --require-passed.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
-app="${MOUI_MOBILE_APP:-component_gallery}"
+app="${MOUI_MOBILE_APP:-showcase}"
 device="${MOUI_ANDROID_SERIAL:-}"
 renderer="${MOUI_SKIA_RENDERER:-auto}"
 manifest="${MOUI_MOBILE_MANIFEST:-artifacts/mobile-runtime/android/${app}/mobile-runtime-smoke.json}"

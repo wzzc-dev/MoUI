@@ -70,8 +70,8 @@ is separate and remains pending until each platform's release/manual
 manifest requires before/after pixels, app receipt, actual detach, IME,
 text/image clipboard, accessibility tree/focus/action, and async image.
 
-Registered suites cover Android and iOS Counter/Component Gallery plus
-HarmonyOS Demo/Component Gallery. GPU promotion is not part of current L1/L2
+Registered suites cover Android and iOS Counter/Showcase plus HarmonyOS
+Demo/Showcase. GPU promotion is not part of current L1/L2
 renderer proof; it needs the per-platform performance and recovery manifest in
 `mobile-mainline-roadmap.md`.
 

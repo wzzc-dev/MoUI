@@ -37,10 +37,9 @@ the pinned `@moonbit/moonc-worker` asset into the static Playground output.
 
 Shared app logic belongs in `examples/<name>/app`. Platform entrypoints should
 stay thin and live under names such as `web_wasm`, `macos_skia`,
-`windows_skia`, or `linux_skia`. `examples/component_gallery` intentionally uses
-`macos`, `linux`, `windows`, `android`, `ios`, `harmonyos`, and `web`; the
-Skia-backed entries omit `_skia` because Skia is the default renderer route for
-Component Gallery.
+`windows_skia`, or `linux_skia`. Showcase follows the same convention for
+desktop and mobile (`android_skia`, `ios_skia`, `harmonyos_skia`), while its
+WGPU and Sun directories remain explicit diagnostic renderer routes.
 
 Use the smallest useful loop:
 

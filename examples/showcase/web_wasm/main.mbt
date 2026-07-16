@@ -12,7 +12,9 @@ fn main {
     1 =>
       @showcase_app.ShowcaseModel::new()
       .with_host_summary(@web.web_capability_summary())
-      .update(@showcase_app.ShowcaseMsg::SelectSection("advanced-rendering"))
+      .update(
+        @showcase_app.ShowcaseMsg::Navigate("diagnostics/advanced-rendering"),
+      )
     _ =>
       @showcase_app.ShowcaseModel::new().with_host_summary(
         @web.web_capability_summary(),

@@ -66,10 +66,12 @@ Avoid direct dependencies from ordinary app packages to:
 - renderer provider packages
 - `moui_theme/*`, unless the app is a design-system preview or addon diagnostic
 
-`examples/showcase/app` is allowed to be broader because it demonstrates
-diagnostics and renderer capabilities. Treat it as a framework showcase, not as
-the default app dependency model. See `docs/moui-app-package-boundary.md` for
-the detailed policy.
+Only `examples/showcase/app/diagnostics` is allowed to be broader because it
+demonstrates runtime and renderer capabilities. Components and Patterns follow
+ordinary app dependencies; Platform may additionally import `backend/host`.
+Treat Diagnostics as a framework inspection package, not as the default app
+dependency model. See `docs/moui-app-package-boundary.md` for the detailed
+policy.
 
 ## Framework Boundary
 
@@ -292,12 +294,16 @@ examples/counter/windows_wgpu_cosmic/ Windows counter selecting Moon Cosmic text
 examples/harmonyos_demo/app/  standalone HarmonyOS demo app with viewport/tap feedback
 examples/harmonyos_demo/harmonyos_skia/ HarmonyOS demo embedded-session Skia entrypoint
 examples/harmonyos_demo/harmonyos_app/ HarmonyOS Release N app-owned project fixture
-examples/component_gallery/harmonyos/ Component Gallery HarmonyOS embedded-session Skia entrypoint
-examples/component_gallery/harmonyos_app/ Component Gallery HarmonyOS Release N project fixture
+examples/showcase/harmonyos_skia/ Showcase HarmonyOS embedded-session Skia entrypoint
+examples/showcase/harmonyos_app/ Showcase HarmonyOS Release N project fixture
 examples/agent_counter/       minimal agent-controllable runtime example (shared app at example root plus main/ and macos_skia/ entrypoints)
 examples/button_freeze_probe/app/ minimal native Skia button-freeze repro app
 examples/button_freeze_probe/{macos_skia,windows_skia,linux_skia}/ platform Button Freeze Probe entrypoints
-examples/showcase/app/        shared MoUI framework showcase app with Counter/Todo patterns, no moui_theme dependency
+examples/showcase/app/        root Showcase router/composition package
+examples/showcase/app/components/ focused reusable component catalog with app-safe dependencies
+examples/showcase/app/patterns/ Counter/Todo, forms, data, navigation, and workflow patterns
+examples/showcase/app/platform/ host Effect/Subscription, canvas, routes, and mobile service probe
+examples/showcase/app/diagnostics/ explicit runtime/renderer diagnostic exception
 examples/design_systems/app/  dedicated addon diagnostic source-mapped design-system preview/parity example using moui_theme
 examples/design_systems/{web_wasm,macos_skia,windows_skia,linux_skia}/ Design Systems addon diagnostic host entrypoints
 examples/showcase/macos_skia/ macOS showcase selecting native Skia raster

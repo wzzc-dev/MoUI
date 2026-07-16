@@ -4,83 +4,50 @@
   <img src="../../resource/screenshots/showcase.png" width="600px" alt="Showcase screenshot"/>
 </div>
 
-Showcase is the MoUI visual component catalog. It exercises layout, input,
-rendering, and platform smoke paths through a single shared app package
-(`examples/showcase/app`) and is the broadest proof of the public `@views`
-surface. It is run on every host entrypoint in CI to keep cross-platform
-behavior aligned.
+Showcase is MoUI's unified learning app with **one product shell** and four
+isolated feature packages:
 
-## Package Shape
+| Package | Role |
+|---|---|
+| `app/` | Single chrome: workspace switcher, catalog sidebar/list, route history |
+| `app/components/` | `@views` demos (body only when hosted) |
+| `app/patterns/` | Counter/Todo/forms/data/navigation/workflow patterns |
+| `app/platform/` | Host recipes, canvas, **Mobile Service Probe** |
+| `app/diagnostics/` | Runtime/renderer labs only (may import core/runtime/render) |
 
-- `app/` — shared app logic. `ShowcaseModel` is sectioned into focused panels
-  (`layout_section.mbt`, `controls_section.mbt`, `forms_section.mbt`,
-  `data_section.mbt`, `feedback_section.mbt`, `examples_section.mbt`,
-  `interaction_lab_section.mbt`, `diagnostics_section.mbt`,
-  `advanced_rendering_section.mbt`, `theme_renderer_section.mbt`,
-  `text_media_section.mbt`, `navigation_section.mbt`, `overview_section.mbt`)
-  plus a `navigation.mbt` shell, `formatting.mbt` helpers, `richtext_addon.mbt`
-  integration with `@moui_richtext`, and per-theme rendering diagnostics.
-- `web_wasm/`, `macos_skia/`, `macos_wgpu/`, `macos_wgpu_cosmic/`,
-  `linux_skia/`, `linux_wgpu/`, `linux_wgpu_cosmic/`, `linux_sun/`,
-  `windows_skia/`, `windows_wgpu/`, `windows_wgpu_cosmic/`, `windows_sun/`,
-  `macos_sun/` — thin platform entrypoints.
+## Shell (Story / classic Showcase)
 
-`moui_skia` and `moui_sun` provide the native Skia and experimental Sun raster
-providers picked per entrypoint. WGPU entrypoints are diagnostic-only and are
-not the mainline.
+Single app chrome, **left category rail + right detail** (same idea as
+gpui-component `crates/story` and the historical Showcase sidebar):
 
-## Dependencies
+| Category | Content |
+|---|---|
+| Start | Welcome pages |
+| Controls / Feedback / Display / Layout | Component demos |
+| Patterns | Counter, Todo, forms, workflows… |
+| Platform | Host services, canvas, mobile probe |
+| Runtime | Diagnostics / renderer labs only |
 
-```toml
-import {
-  "wzzc-dev/moui@0.1.7",
-  "wzzc-dev/moui_richtext@0.1.7",
-}
-```
+- **Desktop:** title bar + search · left grouped stories · detail body  
+- **Mobile:** searchable story list ↔ detail (“All stories”)  
+- Defaults: desktop `components/welcome`, mobile `platform/mobile-service-probe`  
+- Routes stay `components|patterns|platform|diagnostics/<id>` for package isolation  
 
-## Running
+Feature packages only export catalog rows + `view_body` (no second sidebar).
+
+## Entrypoints
+
+- Skia mainline: `macos_skia`, `linux_skia`, `windows_skia`
+- Diagnostic: `*_wgpu`, `*_sun`
+- Web: `web_wasm`
+- Mobile: `android_skia`, `ios_skia`, `harmonyos_skia` + managed shells
+
+Identity: `dev.wzzc.moui.showcase` / MoUI Showcase.
+
+## Run
 
 ```sh
-# Web (wasm-gc)
-moon build examples/showcase/web_wasm --target wasm-gc
-
-# macOS Skia (mainline)
 moon run examples/showcase/macos_skia --target native
-
-# Windows Skia (run msvc_env.ps1 first in PowerShell)
-.\scripts\windows\msvc_env.ps1
-moon run examples/showcase/windows_skia --target native
-
-# Linux Skia
-moon run examples/showcase/linux_skia --target native
+moon build examples/showcase/web_wasm --target wasm-gc
+scripts/build-showcase-android-apk.sh
 ```
-
-Diagnostic-only WGPU and Sun entrypoints exist on each host; the Skia raster
-path is the mainline renderer for this example.
-
-## Tests
-
-```sh
-moon test examples/showcase/app --target native
-```
-
-## Platform Coverage
-
-| Target               | Entrypoint            | Status               |
-| -------------------- | --------------------- | -------------------- |
-| Web wasm-gc          | `web_wasm`            | Wired                |
-| macOS Skia           | `macos_skia`          | Wired (mainline)     |
-| macOS Sun            | `macos_sun`           | Diagnostic           |
-| macOS WGPU           | `macos_wgpu`          | Diagnostic           |
-| macOS WGPU Cosmic    | `macos_wgpu_cosmic`   | Diagnostic           |
-| Windows Skia         | `windows_skia`        | Wired                |
-| Windows Sun          | `windows_sun`         | Diagnostic           |
-| Windows WGPU         | `windows_wgpu`        | Diagnostic           |
-| Windows WGPU Cosmic  | `windows_wgpu_cosmic` | Diagnostic           |
-| Linux Skia           | `linux_skia`          | Wired                |
-| Linux Sun            | `linux_sun`           | Diagnostic           |
-| Linux WGPU           | `linux_wgpu`          | Diagnostic           |
-| Linux WGPU Cosmic    | `linux_wgpu_cosmic`   | Diagnostic           |
-
-See [docs/examples.md](../../docs/examples.md) and
-[docs/showcases.md](../../docs/showcases.md) for cross-cutting notes.

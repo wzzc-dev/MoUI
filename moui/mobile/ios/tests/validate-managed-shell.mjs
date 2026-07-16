@@ -165,7 +165,7 @@ excludes(coreBuilder, "-DMOUI_MOBILE_RUNTIME_DESTROY_APPLICATION", coreBuilderPa
 const projects = [
   ["moui/mobile/ios/template/MoUIMobileApp.xcodeproj/project.pbxproj", false],
   ["examples/counter/ios_app/MoUICounter.xcodeproj/project.pbxproj", true],
-  ["examples/component_gallery/ios_app/ComponentGallery.xcodeproj/project.pbxproj", true],
+  ["examples/showcase/ios_app/MoUIShowcase.xcodeproj/project.pbxproj", true],
 ];
 for (const [projectPath, expectsLocalPackage] of projects) {
   const project = read(projectPath);
@@ -183,7 +183,7 @@ for (const [projectPath, expectsLocalPackage] of projects) {
 for (const schemePath of [
   "moui/mobile/ios/template/MoUIMobileApp.xcodeproj/xcshareddata/xcschemes/MoUIMobileApp.xcscheme",
   "examples/counter/ios_app/MoUICounter.xcodeproj/xcshareddata/xcschemes/MoUICounter.xcscheme",
-  "examples/component_gallery/ios_app/ComponentGallery.xcodeproj/xcshareddata/xcschemes/ComponentGallery.xcscheme",
+  "examples/showcase/ios_app/MoUIShowcase.xcodeproj/xcshareddata/xcschemes/MoUIShowcase.xcscheme",
 ]) {
   const scheme = read(schemePath);
   contains(scheme, 'LastUpgradeVersion="1540"', schemePath);
@@ -193,7 +193,7 @@ for (const schemePath of [
 for (const plistPath of [
   "moui/mobile/ios/template/Info.plist",
   "examples/counter/ios_app/Info.plist",
-  "examples/component_gallery/ios_app/Info.plist",
+  "examples/showcase/ios_app/Info.plist",
 ]) {
   const plist = read(plistPath);
   contains(plist, "UIApplicationSupportsMultipleScenes", plistPath);

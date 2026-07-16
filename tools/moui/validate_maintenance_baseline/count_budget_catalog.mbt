@@ -50,7 +50,8 @@ fn pub_all_budgets() -> Array[CountBudget] {
       kind: "pub(all)",
       label: "examples/showcase/app",
       path: "examples/showcase/app",
-      max_count: 4,
+      // Root shell + catalog metadata + four workspace packages.
+      max_count: 32,
     },
     {
       kind: "pub(all)",

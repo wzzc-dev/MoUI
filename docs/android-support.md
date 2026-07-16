@@ -41,8 +41,8 @@ the MoUI surface below a native PlatformView overlay.
   `MoUISurfaceView`, PlatformView overlay/factory API, clipboard provider,
   virtual accessibility bridge, `Choreographer`, registered JNI adapter,
   `ANativeWindow` acquisition, and reusable CMake wiring.
-- `examples/counter/android_app` and
-  `examples/component_gallery/android_app` are repository-only Release N
+- `examples/counter/android_app` and `examples/showcase/android_app` are
+  repository-only Release N
   Gradle metadata fixtures; managed applications do not store them.
 - `moui/mobile/legacy/android` preserves the Release N Java shell and
   name-mangled JNI adapter as a one-release compatibility fixture. It is never
@@ -172,11 +172,11 @@ ANDROID_HOME=/path/to/Android/Sdk \
 scripts/build-mobile-android-apk.sh --app counter
 ```
 
-Build Component Gallery with the same route:
+Build Showcase with the same route:
 
 ```sh
 ANDROID_HOME=/path/to/Android/Sdk \
-scripts/build-mobile-android-apk.sh --app component_gallery
+scripts/build-mobile-android-apk.sh --app showcase
 ```
 
 Renderer mode is explicit and auditable:
@@ -204,7 +204,7 @@ shared Kotlin `SurfaceView`/PlatformView-overlay glue, and writes:
 
 ```text
 artifacts/android/counter/app-debug.apk
-artifacts/android/component_gallery/app-debug.apk
+artifacts/android/showcase/app-debug.apk
 ```
 
 The default `arm64-v8a` APK includes `libmoui_counter_android.so`, `libskia.so`,
@@ -318,21 +318,21 @@ hosts.
 ### Build non-fallback APK (L1)
 
 ```sh
-scripts/build-mobile-android-apk.sh --app component_gallery --renderer auto
+scripts/build-mobile-android-apk.sh --app showcase --renderer auto
 # Optional packaging checks:
-# unzip -l artifacts/android/component_gallery/app-debug.apk | rg 'lib/.*/(libcomponent|libskia|libc\+\+_shared)'
+# unzip -l artifacts/android/showcase/app-debug.apk | rg 'lib/.*/(libshowcase|libskia|libc\+\+_shared)'
 # python3 -c "import os; p='…/libc++_shared.so'; print(os.path.getsize(p))"  # expect multi-MB, not ~1MB stripped
 ```
 
-Artifact: `artifacts/android/component_gallery/app-debug.apk`  
-Meta: `artifacts/android/component_gallery/native/mobile-build.json` →
+Artifact: `artifacts/android/showcase/app-debug.apk`  
+Meta: `artifacts/android/showcase/native/mobile-build.json` →
 `selected=skia-gpu`, `gpuPromoted=true`, `fallbackSkia=false`.
 
 ### Install + manual launch (without full recorder)
 
 ```sh
 SERIAL="$(adb devices | awk '/\tdevice$/{print $1; exit}')"
-APK=artifacts/android/component_gallery/app-debug.apk
+APK=artifacts/android/showcase/app-debug.apk
 
 adb -s "$SERIAL" install -r "$APK"
 adb -s "$SERIAL" logcat -c
@@ -360,22 +360,22 @@ before treating GPU as unavailable.
 ```sh
 SERIAL="$(adb devices | awk '/\tdevice$/{print $1; exit}')"
 
-scripts/build-mobile-android-apk.sh --app component_gallery --renderer auto
+scripts/build-mobile-android-apk.sh --app showcase --renderer auto
 node scripts/record-mobile-runtime-smoke.mjs \
-  --platform android --app component_gallery --device "$SERIAL"
+  --platform android --app showcase --device "$SERIAL"
 node scripts/validate-mobile-runtime-manifest.mjs \
-  artifacts/mobile-runtime/android/component_gallery/mobile-runtime-smoke.json
+  artifacts/mobile-runtime/android/showcase/mobile-runtime-smoke.json
 # Full service gate only when observations are green:
 # node scripts/record-mobile-runtime-smoke.mjs \
-#   --platform android --app component_gallery --device "$SERIAL" --require-passed
+#   --platform android --app showcase --device "$SERIAL" --require-passed
 ```
 
-Evidence directory: `artifacts/mobile-runtime/android/component_gallery/`
+Evidence directory: `artifacts/mobile-runtime/android/showcase/`
 
 ```sh
 rg -n 'renderer configure|surfaceRoute|gpuAvailable|UnsatisfiedLinkError' \
-  artifacts/mobile-runtime/android/component_gallery/runtime-stream.log \
-  artifacts/mobile-runtime/android/component_gallery/runtime.log
+  artifacts/mobile-runtime/android/showcase/runtime-stream.log \
+  artifacts/mobile-runtime/android/showcase/runtime.log
 ```
 
 **L2 GPU pass conditions:**
@@ -394,7 +394,8 @@ GPU-feasible L2.
 
 ### GPU feasibility snapshot (local, 2026-07-15)
 
-Component Gallery smoke under `artifacts/mobile-runtime/android/component_gallery/`:
+Historical Component Gallery smoke under
+`artifacts/mobile-runtime/android/component_gallery/`:
 
 - `status`: **`passed`** (`--require-passed` ok, 2026-07-15)
 - `renderer.selected`: `SkiaGpuNative`
@@ -427,13 +428,13 @@ After a non-fallback build, record and validate with:
 
 ```sh
 node scripts/record-mobile-runtime-smoke.mjs --platform android --app counter --device <serial>
-node scripts/record-mobile-runtime-smoke.mjs --platform android --app component_gallery --device <serial>
+node scripts/record-mobile-runtime-smoke.mjs --platform android --app showcase --device <serial>
 # release bar only when complete:
 node scripts/record-mobile-runtime-smoke.mjs \
-  --platform android --app component_gallery --device <serial> --require-passed
+  --platform android --app showcase --device <serial> --require-passed
 ```
 
-Component Gallery opens `Mobile Service Probe` directly. The recorder locates
+Showcase opens `platform/mobile-service-probe` directly on mobile. The recorder locates
 its text field and action in the Android accessibility tree, injects IME text,
 uses the native Copy/Cut/Paste key events, rotates and restores the device,
 scrolls, and requires async-image loading/ready logs. Pass `--device

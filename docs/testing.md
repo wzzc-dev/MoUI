@@ -166,8 +166,8 @@ scripts/build-counter-ios-app.sh --fallback-skia
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test examples/harmonyos_demo/app --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/harmonyos_demo/harmonyos_skia --target native
 scripts/build-harmonyos-demo-app.sh --fallback-skia
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/component_gallery/harmonyos --target native
-scripts/build-component-gallery-harmonyos-hap.sh --fallback-skia
+MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/showcase/harmonyos_skia --target native
+scripts/build-showcase-harmonyos-hap.sh --fallback-skia
 ```
 
 Use `moon test moui/render/wgpu --target native` only for the native WGPU
@@ -288,7 +288,7 @@ renderer or platform runtime evidence. Android first-frame/input/lifecycle
 claims still require `scripts/build-counter-android-apk.sh` without fallback
 and a matching device or emulator run with recorded observations.
 The canonical Android build entrypoint is now
-`scripts/build-mobile-android-apk.sh --app <counter|component_gallery>`; the
+`scripts/build-mobile-android-apk.sh --app <counter|showcase>`; the
 app-specific scripts are compatibility wrappers. It uses the managed Kotlin
 shell by default. `--legacy-java-shell --compile-sdk 35` exists only to audit
 the frozen Release N compatibility fixture.
@@ -302,13 +302,13 @@ evidence. iOS first-frame/input/lifecycle claims still require
 `scripts/build-counter-ios-app.sh` without fallback and a matching simulator or
 device run with recorded observations.
 The canonical iOS build entrypoint is now
-`scripts/build-mobile-ios-app.sh --app <counter|component_gallery>` through the
+`scripts/build-mobile-ios-app.sh --app <counter|showcase>` through the
 checked-in real `PBXNativeTarget`; `--legacy-uikit-shell` selects only the
 frozen Release N fixture. Run
 `sh moui/mobile/ios/tests/run-ios-managed-shell-tests.sh` for the focused shell
 contract audit. Use `node scripts/record-mobile-runtime-smoke.mjs
 --platform <android|ios|harmonyos> --app
-<counter|component_gallery|harmonyos_demo> --require-passed` to produce the
+<counter|showcase|harmonyos_demo> --require-passed` to produce the
 checked mobile runtime manifest for release/manual claims. The recorder
 requires before/after pixel changes plus application receipt logs; successful
 input injection or process termination is not evidence by itself.
@@ -317,24 +317,24 @@ not inject tap/swipe events. The recorder derives the tap from the current
 accessibility tree, filters unified logs by the PID returned from `simctl
 launch`, and uses an idb HOME event to exercise real background detach.
 
-Component Gallery is the service acceptance target. Its mobile entrypoints open
-the `Mobile Service Probe` directly. Run the non-fallback build and recorder on
+Showcase is the service acceptance target. Its mobile entrypoints open
+`platform/mobile-service-probe` directly. Run the non-fallback build and recorder on
 one target at a time:
 
 ```sh
-scripts/build-mobile-android-apk.sh --app component_gallery
+scripts/build-mobile-android-apk.sh --app showcase
 node scripts/record-mobile-runtime-smoke.mjs \
-  --platform android --app component_gallery --device <adb-serial> \
+  --platform android --app showcase --device <adb-serial> \
   --assistive-tech --require-passed
 
-scripts/build-mobile-ios-app.sh --app component_gallery
+scripts/build-mobile-ios-app.sh --app showcase
 node scripts/record-mobile-runtime-smoke.mjs \
-  --platform ios --app component_gallery --device <simulator-udid> \
+  --platform ios --app showcase --device <simulator-udid> \
   --assistive-tech --require-passed
 
 scripts/build-component-gallery-harmonyos-hap.sh
 node scripts/record-mobile-runtime-smoke.mjs \
-  --platform harmonyos --app component_gallery --device <hdc-target> \
+  --platform harmonyos --app showcase --device <hdc-target> \
   --require-passed
 ```
 
@@ -363,9 +363,10 @@ quality claims remain separate.
 
 Local evidence snapshot (2026-07-15):
 
-- **iOS** Simulator Component Gallery under the Release N UIKit shell: `artifacts/mobile-runtime/ios/component_gallery/` (**`passed`**, Metal `gpuAvailable=true`); canonical SwiftUI managed-shell runtime evidence must be recollected
-- **HarmonyOS** DevEco MateBook Pro HVD: `artifacts/mobile-runtime/harmonyos/component_gallery/` (**`partial`**, **EGL** configure `egl-gpu` + `gpuAvailable=true`, nonblank first frame; services incomplete)
-- **Android** emulator/device CG: `artifacts/mobile-runtime/android/component_gallery/` (**`partial`**, **`vulkan-gpu`** + `gpuAvailable=true`, attach/nonblank/input/a11y/async-image; pin **NDK 28.2** full `libc++_shared.so`). Do not run Android + HarmonyOS emulators together on low-memory hosts.
+- **Historical iOS Component Gallery** under the Release N UIKit shell: `artifacts/mobile-runtime/ios/component_gallery/` (**`passed`**, Metal `gpuAvailable=true`); this does not count as Showcase evidence
+- **Historical HarmonyOS Component Gallery**: `artifacts/mobile-runtime/harmonyos/component_gallery/` (**`partial`**, EGL first frame; services incomplete); this does not count as Showcase evidence
+- **Historical Android Component Gallery**: `artifacts/mobile-runtime/android/component_gallery/` (**`partial`**, Vulkan attach/nonblank/input/a11y/async-image); this does not count as Showcase evidence. Do not run Android + HarmonyOS emulators together on low-memory hosts.
+- **Showcase managed shells**: new evidence paths are `artifacts/mobile-runtime/<platform>/showcase/`; matching-device evidence is pending on all three mobile platforms.
 - GPU promotion scaffolds: `artifacts/gpu-promotion/{ios,harmonyos,android}/scaffold-latest/` (not L2 proof)
 
 **GPU feasibility (L2) grep:**
@@ -390,11 +391,11 @@ echo no | avdmanager create avd -n moui_api34 \
   -k "system-images;android-34;google_apis;arm64-v8a" -d pixel_6 --force
 emulator -avd moui_api34 -gpu host -no-snapshot-save &
 adb wait-for-device
-scripts/build-mobile-android-apk.sh --app component_gallery --renderer auto
+scripts/build-mobile-android-apk.sh --app showcase --renderer auto
 node scripts/record-mobile-runtime-smoke.mjs \
-  --platform android --app component_gallery --device "$(adb devices | awk '/\tdevice$/{print $1; exit}')"
+  --platform android --app showcase --device "$(adb devices | awk '/\tdevice$/{print $1; exit}')"
 rg -n 'renderer configure|surfaceRoute|gpuAvailable|UnsatisfiedLinkError' \
-  artifacts/mobile-runtime/android/component_gallery/runtime*.log
+  artifacts/mobile-runtime/android/showcase/runtime*.log
 ```
 
 Seven-gate GPU claim thresholds are **not** required for mobile runtime
@@ -423,7 +424,7 @@ HarmonyOS release/manual smoke uses the same recorder through `hdc`:
 
 ```sh
 node scripts/record-mobile-runtime-smoke.mjs --platform harmonyos --app harmonyos_demo --require-passed
-node scripts/record-mobile-runtime-smoke.mjs --platform harmonyos --app component_gallery --require-passed
+node scripts/record-mobile-runtime-smoke.mjs --platform harmonyos --app showcase --require-passed
 ```
 
 Passed mobile evidence requires actual lifecycle detach, IME state and edit,

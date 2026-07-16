@@ -130,12 +130,12 @@ test("legacy fixture honors the mobile shell CI artifact root", () => {
     contains(trace, `--build-dir ${legacyRoot}`, "legacy fixture trace");
     contains(
       trace,
-      `--output ${join(legacyRoot, "ComponentGallery.hap")}`,
+      `--output ${join(legacyRoot, "MoUIShowcase.hap")}`,
       "legacy fixture trace",
     );
     excludes(
       trace,
-      join(repoRoot, "artifacts/harmonyos/component-gallery-legacy-fixture"),
+      join(repoRoot, "artifacts/harmonyos/showcase-legacy-fixture"),
       "legacy fixture trace",
     );
   } finally {
@@ -145,10 +145,10 @@ test("legacy fixture honors the mobile shell CI artifact root", () => {
 
 test("managed resolver stages identity, resources, and generated plugin registry", () => {
   const tempRoot = mkdtempSync(join(tmpdir(), "moui-harmonyos-managed-"));
-  const sourceConfigPath = resolve(repoRoot, "examples/component_gallery/mobile.json");
+  const sourceConfigPath = resolve(repoRoot, "examples/showcase/mobile.json");
   const configPath = resolve(
     repoRoot,
-    `examples/component_gallery/.mobile-harmonyos-managed-test-${process.pid}.json`,
+    `examples/showcase/.mobile-harmonyos-managed-test-${process.pid}.json`,
   );
   try {
     const config = JSON.parse(readFileSync(sourceConfigPath, "utf8"));
@@ -159,14 +159,14 @@ test("managed resolver stages identity, resources, and generated plugin registry
       resolve(repoRoot, "moui/mobile/harmonyos/resolve-managed-shell.mjs"),
       "--workspace-root", repoRoot,
       "--moui-root", resolve(repoRoot, "moui"),
-      "--app", "component_gallery",
+      "--app", "showcase",
       "--app-config", configPath,
       "--renderer", "skia-gpu",
       "--output", output,
     ], { stdio: "pipe" });
 
     const appScope = JSON.parse(readFileSync(join(output, "AppScope/app.json5"), "utf8"));
-    assert.equal(appScope.app.bundleName, "dev.wzzc.moui.componentgallery");
+    assert.equal(appScope.app.bundleName, "dev.wzzc.moui.showcase");
     const generatedConfig = readFileSync(
       join(output, "entry/src/main/ets/moui/MoUIGeneratedConfig.ets"),
       "utf8",
@@ -202,7 +202,7 @@ test("managed resolver stages identity, resources, and generated plugin registry
 
 test("managed resolver maps permission capabilities to HarmonyOS declarations", () => {
   const tempRoot = mkdtempSync(join(tmpdir(), "moui-harmonyos-permissions-"));
-  const config = JSON.parse(read("examples/component_gallery/mobile.json"));
+  const config = JSON.parse(read("examples/showcase/mobile.json"));
   config.mobile.permissions = [
     "camera",
     "microphone",
@@ -219,7 +219,7 @@ test("managed resolver maps permission capabilities to HarmonyOS declarations", 
       resolve(repoRoot, "moui/mobile/harmonyos/resolve-managed-shell.mjs"),
       "--workspace-root", tempRoot,
       "--moui-root", resolve(repoRoot, "moui"),
-      "--app", "component_gallery",
+      "--app", "showcase",
       "--app-config", configPath,
       "--renderer", "auto",
       "--output", output,
@@ -274,7 +274,7 @@ test("managed resolver maps permission capabilities to HarmonyOS declarations", 
 
 test("managed resolver rejects unsupported permission capabilities before staging", () => {
   const tempRoot = mkdtempSync(join(tmpdir(), "moui-harmonyos-unknown-permission-"));
-  const config = JSON.parse(read("examples/component_gallery/mobile.json"));
+  const config = JSON.parse(read("examples/showcase/mobile.json"));
   config.mobile.permissions = ["bluetooth"];
   const configPath = join(tempRoot, "mobile.json");
   const output = join(tempRoot, "shell");
@@ -284,7 +284,7 @@ test("managed resolver rejects unsupported permission capabilities before stagin
       resolve(repoRoot, "moui/mobile/harmonyos/resolve-managed-shell.mjs"),
       "--workspace-root", tempRoot,
       "--moui-root", resolve(repoRoot, "moui"),
-      "--app", "component_gallery",
+      "--app", "showcase",
       "--app-config", configPath,
       "--renderer", "auto",
       "--output", output,
@@ -318,7 +318,7 @@ test("plugin permissions require an app grant and stage through the managed targ
     hostChannels: [],
     permissions: ["camera"],
   };
-  const config = JSON.parse(read("examples/component_gallery/mobile.json"));
+  const config = JSON.parse(read("examples/showcase/mobile.json"));
   config.mobile.plugins = ["plugin/moui.plugin.json"];
   const configPath = join(tempRoot, "mobile.json");
   const output = join(tempRoot, "shell");
@@ -336,7 +336,7 @@ test("plugin permissions require an app grant and stage through the managed targ
       resolve(repoRoot, "moui/mobile/harmonyos/resolve-managed-shell.mjs"),
       "--workspace-root", tempRoot,
       "--moui-root", resolve(repoRoot, "moui"),
-      "--app", "component_gallery",
+      "--app", "showcase",
       "--app-config", configPath,
       "--renderer", "auto",
       "--output", output,
@@ -350,7 +350,7 @@ test("plugin permissions require an app grant and stage through the managed targ
       resolve(repoRoot, "moui/mobile/harmonyos/resolve-managed-shell.mjs"),
       "--workspace-root", tempRoot,
       "--moui-root", resolve(repoRoot, "moui"),
-      "--app", "component_gallery",
+      "--app", "showcase",
       "--app-config", configPath,
       "--renderer", "auto",
       "--output", output,
@@ -370,7 +370,7 @@ test("plugin permissions require an app grant and stage through the managed targ
 
 test("managed resolver leaves ejected permission declarations app-owned", () => {
   const tempRoot = mkdtempSync(join(tmpdir(), "moui-harmonyos-ejected-permissions-"));
-  const config = JSON.parse(read("examples/component_gallery/mobile.json"));
+  const config = JSON.parse(read("examples/showcase/mobile.json"));
   config.harmonyos.shellMode = "ejected";
   const configPath = join(tempRoot, "mobile.json");
   const output = join(tempRoot, "ejected-shell");
@@ -391,7 +391,7 @@ test("managed resolver leaves ejected permission declarations app-owned", () => 
       resolve(repoRoot, "moui/mobile/harmonyos/resolve-managed-shell.mjs"),
       "--workspace-root", tempRoot,
       "--moui-root", resolve(repoRoot, "moui"),
-      "--app", "component_gallery",
+      "--app", "showcase",
       "--app-config", configPath,
       "--renderer", "auto",
       "--output", output,
@@ -406,10 +406,10 @@ test("managed resolver leaves ejected permission declarations app-owned", () => 
 
 test("managed resolver isolates plugin ids that normalize to the same directory", () => {
   const tempRoot = mkdtempSync(join(tmpdir(), "moui-harmonyos-plugin-collision-"));
-  const sourceConfigPath = resolve(repoRoot, "examples/component_gallery/mobile.json");
+  const sourceConfigPath = resolve(repoRoot, "examples/showcase/mobile.json");
   const configPath = resolve(
     repoRoot,
-    `examples/component_gallery/.mobile-harmonyos-plugin-collision-${process.pid}.json`,
+    `examples/showcase/.mobile-harmonyos-plugin-collision-${process.pid}.json`,
   );
   try {
     const config = JSON.parse(readFileSync(sourceConfigPath, "utf8"));
@@ -423,7 +423,7 @@ test("managed resolver isolates plugin ids that normalize to the same directory"
       resolve(repoRoot, "moui/mobile/harmonyos/resolve-managed-shell.mjs"),
       "--workspace-root", repoRoot,
       "--moui-root", resolve(repoRoot, "moui"),
-      "--app", "component_gallery",
+      "--app", "showcase",
       "--app-config", configPath,
       "--renderer", "auto",
       "--output", output,
@@ -479,8 +479,8 @@ test("managed resolver refuses to replace an unowned output directory", () => {
       resolve(repoRoot, "moui/mobile/harmonyos/resolve-managed-shell.mjs"),
       "--workspace-root", repoRoot,
       "--moui-root", resolve(repoRoot, "moui"),
-      "--app", "component_gallery",
-      "--app-config", resolve(repoRoot, "examples/component_gallery/mobile.json"),
+      "--app", "showcase",
+      "--app-config", resolve(repoRoot, "examples/showcase/mobile.json"),
       "--renderer", "auto",
       "--output", output,
     ], { encoding: "utf8" });

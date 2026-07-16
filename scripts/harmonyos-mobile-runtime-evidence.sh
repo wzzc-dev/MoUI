@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build and record HarmonyOS Component Gallery mobile-runtime smoke with --require-passed.
+# Build and record HarmonyOS MoUI Showcase mobile-runtime smoke with --require-passed.
 #
 # Commercial HarmonyOS devices require a Huawei/DevEco signing material for this
 # bundle. Provide one of:
@@ -10,7 +10,7 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
-app="${MOUI_MOBILE_APP:-component_gallery}"
+app="${MOUI_MOBILE_APP:-showcase}"
 device="${MOUI_HARMONYOS_DEVICE:-}"
 renderer="${MOUI_SKIA_RENDERER:-auto}"
 manifest="${MOUI_MOBILE_MANIFEST:-artifacts/mobile-runtime/harmonyos/${app}/mobile-runtime-smoke.json}"

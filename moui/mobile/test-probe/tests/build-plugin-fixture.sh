@@ -5,7 +5,7 @@ usage() {
   cat <<'USAGE'
 Usage: moui/mobile/test-probe/tests/build-plugin-fixture.sh <android|ios|harmonyos> [build options]
 
-Build Component Gallery through the managed canonical shell with the
+Build MoUI Showcase through the managed canonical shell with the
 repository-only mobile test-probe plugin. Additional options are forwarded to
 the platform build command; use --fallback-skia for packaging CI.
 USAGE
@@ -25,7 +25,7 @@ esac
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 artifact_root="${MOUI_MOBILE_SHELL_CI_ROOT:-$repo_root/artifacts/mobile-shell-ci}"
-config="$repo_root/examples/component_gallery/.mobile-test-probe-build-$$.json"
+config="$repo_root/examples/showcase/.mobile-test-probe-build-$$.json"
 
 cleanup() {
   rm -f "$config"
@@ -43,10 +43,10 @@ case "$platform" in
       --workspace-root "$repo_root" \
       --moui-root "$repo_root/moui" \
       --skia-root "$repo_root/moui_skia" \
-      --app component_gallery \
+      --app showcase \
       --app-config "$config" \
       --build-dir "$artifact_root/android/plugin" \
-      --output "$artifact_root/android/plugin/ComponentGallery.apk" \
+      --output "$artifact_root/android/plugin/MoUIShowcase.apk" \
       "$@"
     ;;
   ios)
@@ -55,10 +55,10 @@ case "$platform" in
       --workspace-root "$repo_root" \
       --moui-root "$repo_root/moui" \
       --skia-root "$repo_root/moui_skia" \
-      --app component_gallery \
+      --app showcase \
       --app-config "$config" \
       --build-dir "$artifact_root/ios/plugin" \
-      --output "$artifact_root/ios/plugin/ComponentGallery.app" \
+      --output "$artifact_root/ios/plugin/MoUIShowcase.app" \
       "$@"
     ;;
   harmonyos)
@@ -66,10 +66,10 @@ case "$platform" in
       --workspace-root "$repo_root" \
       --moui-root "$repo_root/moui" \
       --skia-root "$repo_root/moui_skia" \
-      --app component_gallery \
+      --app showcase \
       --app-config "$config" \
       --build-dir "$artifact_root/harmonyos/plugin" \
-      --output "$artifact_root/harmonyos/plugin/ComponentGallery.hap" \
+      --output "$artifact_root/harmonyos/plugin/MoUIShowcase.hap" \
       "$@"
     ;;
 esac

@@ -76,9 +76,9 @@ moon build web_wasm --target wasm-gc
 | `*_skia/` | Thin native Skia entrypoint for the host OS |
 
 Do **not** start by cloning the full MoUI monorepo unless you are changing the
-framework. For monorepo examples, see [Examples](examples.md) (`counter` is the
-multiplatform gold standard; `platform_lab` is the Effect/Subscription recipe
-lab).
+framework. For monorepo examples, see [Examples](examples.md): `counter` is the
+minimal multiplatform app, while Showcase's Platform workspace contains the
+Effect/Subscription and host-service recipes.
 
 More detail: [App templates](app-templates.md), [CLI README](../moui_cli/README.md),
 [Non-render cookbook](non-render-component-cookbook.md).

@@ -1,0 +1,11 @@
+{
+  "name": "entry",
+  "version": "1.0.0",
+  "description": "MoUI Showcase HarmonyOS app entry module",
+  "main": "",
+  "author": "wzzc-dev",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "libshowcase_harmonyos.so": "file:./src/main/cpp/types/libshowcase_harmonyos"
+  }
+}
