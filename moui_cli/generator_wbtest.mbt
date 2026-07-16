@@ -8,7 +8,7 @@ fn test_project_options(
     id: "sample_app",
     module_name: "example/sample_app",
     title: "Sample App",
-    moui_version: "0.1.7",
+    moui_version: default_moui_dependency_version,
     platforms,
     bundle_id,
   }
@@ -100,6 +100,7 @@ test "default macOS project file plan is exact" {
     files.map(file => file.path).join("\n"),
     content=(
       #|.gitignore
+      #|README.md
       #|app/app.mbt
       #|app/app_test.mbt
       #|app/moon.pkg

@@ -44,13 +44,14 @@ test "new parser requires a mobile bundle id" {
 ///|
 test "doctor parser accepts equals options and all" {
   let parsed = parse_doctor_args(
-    ["--project-root=demo", "--platform=android", "--all", "--json"],
+    ["--project-root=demo", "--platform=android", "--all", "--fix", "--json"],
     "/workspace",
   )
   guard parsed is Ok(parsed) else { fail("expected doctor arguments to parse") }
   inspect(parsed.options.project_root, content="/workspace/demo")
   inspect(parsed.options.platforms.join(","), content="android")
   inspect(parsed.options.all, content="true")
+  inspect(parsed.fix, content="true")
   inspect(parsed.json, content="true")
 }
 
@@ -103,9 +104,39 @@ test "help and version routes succeed" {
   let help = run_cli(["--help"], "/workspace")
   inspect(help.exit_code, content="0")
   inspect(help.stdout.has_prefix("MoUI command-line tools"), content="true")
+  inspect(help.stdout.contains("add platform"), content="true")
+  inspect(help.stdout.contains("plugin new"), content="true")
+  inspect(help.stdout.contains("package"), content="true")
   let version_result = run_cli(["--version", "--json"], "/workspace")
   inspect(version_result.exit_code, content="0")
   let parsed = @json.parse(version_result.stdout)
   guard parsed is Object(root) else { fail("expected version JSON") }
   inspect(root.get("version") == Some("0.1.0".to_json()), content="true")
+  inspect(
+    root.get("defaultMouiDependencyVersion") ==
+    Some(default_moui_dependency_version.to_json()),
+    content="true",
+  )
+}
+
+///|
+test "add platform parser accepts positional platforms" {
+  let parsed = parse_add_platform_args(
+    ["android", "--platform=ios", "--bundle-id=dev.example.demo"],
+    "/workspace",
+  )
+  guard parsed is Ok({ options: Some(options), .. }) else {
+    fail("expected add platform arguments to parse")
+  }
+  inspect(options.platforms.join(","), content="android,ios")
+  inspect(options.bundle_id.unwrap_or(""), content="dev.example.demo")
+}
+
+///|
+test "plugin new parser requires platforms" {
+  match parse_plugin_new_args(["sample.camera"], "/workspace") {
+    Err(message) =>
+      inspect(message, content="moui plugin new requires --platform")
+    Ok(_) => fail("expected plugin new without platforms to fail")
+  }
 }
