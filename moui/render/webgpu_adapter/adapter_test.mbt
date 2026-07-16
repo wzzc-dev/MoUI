@@ -817,6 +817,80 @@ test "wgpu web renderer keeps transform scope around shader effects" {
 }
 
 ///|
+/// Cached rich-text block layers keep stable keys while their paint frames move
+/// on scroll. The WebGPU command cache must re-place stored geometry at the
+/// DrawCachedLayer frame origin; replaying absolute capture coordinates leaves
+/// text outside the editor clip (blank lines) or stacked with a later paint.
+test "wgpu web cached layer draw repositions geometry for scroll moves" {
+  let last_calls : Array[WebGpuHostCall] = []
+  let renderer = create_renderer(
+    canvas_id="moui-web-wasm",
+    logical_size=@core.Size::new(width=320.0, height=200.0),
+    port=test_port(created=Ref(0), on_submit=calls => {
+      last_calls.clear()
+      for call in calls {
+        last_calls.push(call)
+      }
+    }),
+  )
+  let capture_frame = @core.Rect::new(x=8.0, y=120.0, width=200.0, height=20.0)
+  let replay_frame = @core.Rect::new(x=8.0, y=20.0, width=200.0, height=20.0)
+  let capture_spec = @core.CachedLayerSpec::new(
+    key="rich-text-block;line=3",
+    frame=capture_frame,
+    content_revision=1,
+  )
+  let replay_spec = @core.CachedLayerSpec::new(
+    key="rich-text-block;line=3",
+    frame=replay_frame,
+    content_revision=1,
+  )
+  // Warm the command cache at the capture origin. Layer expansion only runs on
+  // the DrawFrame path used by the web host / Playground.
+  ignore(
+    renderer.render_frame(
+      @core.DrawFrame::new(
+        commands=[
+          @core.DrawCommand::BeginCachedLayer(capture_spec),
+          @core.DrawCommand::DrawText(
+            @core.TextRun::new(
+              text="line three",
+              frame=capture_frame,
+              font=@core.FontSpec::new(size=13.0),
+              color=@core.Color::black(),
+            ),
+          ),
+          @core.DrawCommand::EndCachedLayer(capture_spec.key),
+        ],
+        damage=@core.DamageRegion::full("capture"),
+        clear_color=@core.Color::white(),
+      ),
+    ),
+  )
+  // Replay at a scrolled origin without re-capturing.
+  ignore(
+    renderer.render_frame(
+      @core.DrawFrame::new(
+        commands=[@core.DrawCommand::DrawCachedLayer(replay_spec)],
+        damage=@core.DamageRegion::full("replay"),
+        clear_color=@core.Color::white(),
+      ),
+    ),
+  )
+  let mut text_y : Double? = None
+  for call in last_calls {
+    match call {
+      WebGpuHostCall::DrawText(run) => text_y = Some(run.frame.origin.y)
+      _ => ()
+    }
+  }
+  guard text_y is Some(y) else {
+    fail("expected DrawText from cached layer replay")
+  }
+  inspect(y, content="20")
+}
+
+///|
 fn test_port(
   created~ : Ref[Int],
   capabilities? : WebGpuHostCapabilities = required_capabilities(),

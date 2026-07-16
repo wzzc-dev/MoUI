@@ -61,6 +61,11 @@ fn rich_text_editor_paint(
     )
   } else {
     let document = format(display_text)
+    // `document_content` is already shifted by `-scroll_y`, so blocks are in
+    // paint coordinates. Windowed culling must NOT add `scroll_y` again —
+    // that double-count made the visible band start near `clip.y + scroll_y`
+    // while blocks sat near `clip.y - scroll_y`, which culls the whole
+    // viewport (blank editor) and leaves stale/out-of-band layers (overlap).
     append_rich_text_document_layers(
       child_layers,
       document,
@@ -68,7 +73,7 @@ fn rich_text_editor_paint(
       font,
       foreground,
       text_system=ctx.text_system,
-      visible_scroll_y=scroll_y,
+      visible_scroll_y=0.0,
       visible_viewport_height~,
       visible_overscan~,
       clip_rect=Some(content),
@@ -146,10 +151,10 @@ fn append_rich_text_document_layers(
   visible_overscan? : Double = 320.0,
   clip_rect? : @core.Rect? = None,
 ) -> Unit {
-  // `content` sets the block positioning origin; `clip` sets the culling
-  // bounds. They are the same for the regular (non-session) rich text editor
-  // path, but the Markdown session path positions blocks inside an offset
-  // `window_content` rect while culling must respect the original viewport.
+  // `content` sets the block positioning origin (may already include -scroll_y
+  // or a window top_padding). `clip` is the untranslated viewport used for
+  // culling. When blocks are pre-positioned into paint space, pass
+  // `visible_scroll_y=0` so this band is just the clip plus overscan.
   let clip = match clip_rect {
     Some(r) => r
     None => content

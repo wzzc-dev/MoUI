@@ -60,6 +60,44 @@ test "rich text editor wheel event updates shared scroll state" {
 }
 
 ///|
+/// Playground-style path: content is already translated by -scroll_y before
+/// layering. Culling must use visible_scroll_y=0 against the untranslated clip,
+/// otherwise the visible band misses every block and the editor paints blank.
+test "rich text editor scrolled content culls against paint coordinates" {
+  let font = @core.FontSpec::new(size=14.0)
+  let text_system = @core.TextSystem::fallback()
+  let document = rich_text_scroll_test_document(rich_text_scroll_test_source())
+  let clip = @core.Rect::new(x=0.0, y=0.0, width=320.0, height=80.0)
+  let scroll_y = 120.0
+  let content = rich_text_scrolled_content_rect(
+    clip,
+    scroll_y~,
+    visible_viewport_height=80.0,
+  )
+  let layers : Array[@core.ViewPaintLayer] = []
+  append_rich_text_document_layers(
+    layers,
+    document,
+    content,
+    font,
+    @core.Color::black(),
+    text_system~,
+    visible_scroll_y=0.0,
+    visible_viewport_height=80.0,
+    visible_overscan=40.0,
+    clip_rect=Some(clip),
+  )
+  assert_true(layers.length() > 0)
+  assert_true(layers.length() < document.blocks.length())
+  for layer in layers {
+    // Every retained block must intersect the viewport (plus overscan bleed).
+    let bottom = layer.frame.origin.y + layer.frame.size.height
+    assert_true(bottom >= clip.origin.y - 40.0)
+    assert_true(layer.frame.origin.y <= clip.origin.y + clip.size.height + 40.0)
+  }
+}
+
+///|
 fn rich_text_scroll_test_source() -> String {
   let lines : Array[String] = []
   for index in 0..<24 {
