@@ -6,6 +6,6 @@
     {"id":"03-state-events","title":{"zh":"状态与事件","en":"State and events"},"summary":{"zh":"让界面响应消息并更新状态。","en":"Make the UI respond to messages."},"concepts":["model","msg","update"]},
     {"id":"04-theme-styling","title":{"zh":"主题与样式","en":"Themes and styling"},"summary":{"zh":"使用主题保持视觉一致。","en":"Keep visual decisions consistent with themes."},"concepts":["theme","surface","spacing"]},
     {"id":"05-component-composition","title":{"zh":"组件拆分","en":"Component composition"},"summary":{"zh":"把重复的界面提取为组件。","en":"Extract reusable UI components."},"concepts":["component","reuse"]},
-    {"id":"06-debug-and-publish","title":{"zh":"调试、运行与分享","en":"Debug, run, and share"},"summary":{"zh":"理解诊断、运行和分享链接。","en":"Use diagnostics, preview, and sharing."},"concepts":["diagnostics","preview","share"]}
+    {"id":"06-animation","title":{"zh":"画布动画","en":"Canvas animation"},"summary":{"zh":"用 animated_canvas 与 paint 时钟驱动自动运动的小球。","en":"Auto-drive a moving orb with animated_canvas and the paint clock."},"concepts":["animated_canvas","now_ms","canvas"]}
   ]
 }
