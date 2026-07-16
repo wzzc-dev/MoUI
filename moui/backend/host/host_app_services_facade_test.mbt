@@ -204,3 +204,32 @@ test "host app services facade exposes pending completions" {
   let completed = services.drain_completed()
   inspect(completed.length(), content="0")
 }
+
+///|
+test "set_application_menu dispatches SetApplicationMenu" {
+  let seen : Ref[Int] = Ref(0)
+  let services = HostAppServices::new(
+    bridge=HostServiceBridge::new(
+      capabilities=HostServiceCapabilities::new(menus=true),
+      handle=request =>
+        match request {
+          SetApplicationMenu(menus) => {
+            seen.val = menus.length()
+            HostServiceResponse::ApplicationMenuInstalled
+          }
+          _ => HostServiceResponse::Unavailable("unexpected")
+        },
+    ),
+  )
+  match
+    services.set_application_menu([
+      HostApplicationMenu::new(
+        title="File",
+        items=[HostApplicationMenuItem::new(title="Open", action_id=1)],
+      ),
+    ]) {
+    HostServiceResponse::ApplicationMenuInstalled => ()
+    _ => fail("expected ApplicationMenuInstalled")
+  }
+  inspect(seen.val, content="1")
+}

@@ -317,7 +317,187 @@ Recommended checks:
 moon test moui/backend/host --target native
 moon test moui/backend/web --target wasm-gc
 moon test examples/file_importer/app --target native
+moon test examples/platform_lab/app --target native
 ```
+
+## Timers
+
+Use `@host.HostTimerSource` from the platform entrypoint and pass it into the
+shared app as an optional dependency. Declare
+`source.subscription(interval_ms, key, map)` only while the model needs the
+tick (for example while a toast queue is non-empty or a stopwatch is running).
+Missing keys cancel automatically when `subscriptions` no longer returns them.
+
+```moonbit nocheck
+fn subscriptions(
+  model : LabModel,
+  timer_source : @host.HostTimerSource?,
+) -> @moui.Subscription[LabMsg] {
+  match timer_source {
+    Some(source) =>
+      if model.timer_running {
+        source.subscription(
+          interval_ms=500.0,
+          key="lab:timer",
+          label="Lab timer",
+          map=_ => TimerTick,
+        )
+      } else {
+        @moui.Subscription::none()
+      }
+    None => @moui.Subscription::none()
+  }
+}
+```
+
+Platform entrypoints own the concrete source, for example
+`@macos_host.macos_timer_source()` / `windows_timer_source` /
+`linux_timer_source`. Web does not yet expose a host timer adapter.
+
+Recommended checks:
+
+```sh
+moon test moui/backend/host --target native
+moon test examples/platform_lab/app --target native
+moon test examples/markdown_editor/app --target native
+```
+
+## Clipboard
+
+Clipboard is a host service, not a view. Write or read text through
+`HostAppServices`, return `Effect::host_service`, and subscribe to pending
+completions with `completion_subscription` the same way as file open.
+
+```moonbit nocheck
+fn write_clipboard(
+  services : @host.HostAppServices,
+  text : String,
+) -> @moui.Effect[LabMsg] {
+  @moui.Effect::host_service(
+    key="host:clipboard-write",
+    label="Write clipboard",
+    run=dispatch => {
+      dispatch(HostCompleted(services.write_clipboard_text(text)))
+    },
+  )
+}
+```
+
+Recommended checks:
+
+```sh
+moon test moui/backend/host --target native
+moon test examples/platform_lab/app --target native
+moon test examples/markdown_editor/app --target native
+```
+
+## Keyboard Commands
+
+Prefer `@core.ActionCommand` / `@views.ActionCommandMap` installed on the
+runtime (`AppRuntime::set_action_commands`) for discoverable shortcuts. Keep
+disabled commands visible. Filter `HostEvent::Keyboard` only when you need
+chords that are not part of the command map.
+
+```moonbit nocheck
+fn action_command_map() -> @views.ActionCommandMap {
+  let command = @views.ActionCommand::new(
+    intent=@views.CommandIntent::Activate,
+    label="Lab tick",
+    shortcut=Some(
+      @views.KeyboardShortcut::new(
+        key="t",
+        modifiers=@views.KeyModifiers::new(meta=true),
+      ),
+    ),
+    group="Platform Lab",
+  )
+  @views.ActionCommandMap::new(
+    bindings=[@views.CommandBinding::new(command~, handle=() => ())],
+  )
+}
+```
+
+Recommended checks:
+
+```sh
+moon test examples/command_palette/app --target native
+moon test examples/platform_lab/app --target native
+```
+
+## Window Resize
+
+Hosts already apply resize to the surface. Apps that need the logical size in
+the model should obtain `HostWindowEventSource` (usually via
+`HostPlatformEventSources`) from host options and map
+`HostEvent::Resized` into a message.
+
+```moonbit nocheck
+fn window_subscriptions(
+  source : @host.HostWindowEventSource,
+) -> @moui.Subscription[LabMsg] {
+  source.subscription(
+    key="lab:window",
+    label="Lab window events",
+    map=window_event =>
+      match window_event.event {
+        @host.HostEvent::Resized(metrics) =>
+          Some(WindowResized(metrics.logical_size.width, metrics.logical_size.height))
+        _ => None
+      },
+  )
+}
+```
+
+Desktop Skia entrypoints pass `event_sources` through
+`MacosSkiaAppOptions` / `WindowsSkiaAppOptions` / `LinuxSkiaAppOptions`.
+Web uses `WebAppOptions::event_sources`.
+
+Recommended checks:
+
+```sh
+moon test moui/backend/host --target native
+moon test examples/platform_lab/app --target native
+```
+
+## Effect Cheat Sheet
+
+| Helper | Use when |
+| --- | --- |
+| `Effect::none` | Pure model update |
+| `Effect::send` | Re-enter the message loop immediately |
+| `Effect::host_service` | One-shot host bridge with diagnostics |
+| `Effect::run` | Custom structured one-shot runner |
+| `Effect::task` / `service_task` | Cancellable one-shot async with runtime lifecycle |
+
+See [TEA program model](tea-program-model.md) for key/kind reuse rules and
+stale-dispatch behavior.
+
+## Application Menu Bar (L2 preview)
+
+Menu levels:
+
+| Level | API | Status |
+| --- | --- | --- |
+| L0 content menus | `menu_bar` / `command_menu` / `context_menu_region` | Ready (view overlays) |
+| L1 context menu | `HostAppServices::show_context_menu` | Ready on menu-capable hosts |
+| L2 application menu bar | `HostAppServices::set_application_menu` | macOS installs native menus; Windows/Linux/Web return `Unavailable` |
+
+```moonbit nocheck
+fn install_app_menu(services : @host.HostAppServices) -> Unit {
+  let menu = @host.HostApplicationMenu::new(
+    title="File",
+    items=[
+      @host.HostApplicationMenuItem::new(title="Open…", action_id=1),
+      @host.HostApplicationMenuItem::separator(),
+    ],
+  )
+  ignore(services.set_application_menu([menu]))
+}
+```
+
+On macOS, install after the primary window is ready (`on_ready`) so the default
+AppKit menu does not overwrite the custom bar. See `examples/platform_lab` and
+`examples/markdown_editor/macos_skia`.
 
 ## Toast Queues
 

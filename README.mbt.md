@@ -100,15 +100,17 @@ Install the standalone CLI, then generate a project outside this repository:
 ```sh
 moon install wzzc-dev/moui_cli/cmd/moui
 moui new my_app
+# Optional smaller skeleton: moui new my_app --template hello
 cd my_app
 moon update
 moon check
+moon run macos_skia --target native   # or windows_skia / linux_skia on that host
 ```
 
 `moui new` creates shared app logic plus Web and the current desktop entrypoint.
 Add Android, iOS, or HarmonyOS explicitly with `--platform`; mobile projects use
 the framework-managed canonical shell and do not copy native projects into the
-application repository.
+application repository. See [Getting started](docs/getting-started.md).
 
 ### This Repository
 

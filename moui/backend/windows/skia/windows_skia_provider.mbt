@@ -12,6 +12,7 @@ extern "C" fn windows_present_skia_pixels_to_hwnd(
 ///|
 pub struct WindowsSkiaAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
+  priv event_sources : @host.HostPlatformEventSources?
   priv font_resolution : @skia_renderer.SkiaFontResolution
   priv surface_route : @render.SkiaSurfaceRoute
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
@@ -25,11 +26,18 @@ pub struct WindowsSkiaSmokeOptions {
 ///|
 pub fn WindowsSkiaAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
+  event_sources? : @host.HostPlatformEventSources? = None,
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
   surface_route? : @render.SkiaSurfaceRoute = windows_surface_route_from_environment(),
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
 ) -> WindowsSkiaAppOptions {
-  { scene_resolver, font_resolution, surface_route, platform_view_plugins }
+  {
+    scene_resolver,
+    event_sources,
+    font_resolution,
+    surface_route,
+    platform_view_plugins,
+  }
 }
 
 ///|
@@ -114,6 +122,7 @@ pub fn run_app_with_options(
     provider=renderer_provider(options~),
     options=@windows_host.WindowsHostAppOptions::new(
       scene_resolver=options.scene_resolver,
+      event_sources=options.event_sources,
       platform_view_plugins=options.platform_view_plugins,
     ),
     window_requests~,
@@ -138,6 +147,7 @@ pub fn run_smoke_app_with_options(
     provider=renderer_provider(options~),
     options=@windows_host.WindowsHostAppOptions::new(
       scene_resolver=options.scene_resolver,
+      event_sources=options.event_sources,
       platform_view_plugins=options.platform_view_plugins,
     ),
     smoke_options=@windows_host.WindowsHostSmokeOptions::new(

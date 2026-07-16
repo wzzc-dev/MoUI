@@ -30,6 +30,7 @@ extern "C" fn macos_skia_configure_metal_layer(
 ///|
 pub struct MacosSkiaAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
+  priv event_sources : @host.HostPlatformEventSources?
   priv font_resolution : @skia_renderer.SkiaFontResolution
   priv surface_route : @render.SkiaSurfaceRoute
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
@@ -55,6 +56,7 @@ pub struct MacosSkiaSmokeOptions {
 ///|
 pub fn MacosSkiaAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
+  event_sources? : @host.HostPlatformEventSources? = None,
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
   surface_route? : @render.SkiaSurfaceRoute = macos_surface_route_from_environment(),
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
@@ -65,6 +67,7 @@ pub fn MacosSkiaAppOptions::new(
 ) -> MacosSkiaAppOptions {
   {
     scene_resolver,
+    event_sources,
     font_resolution,
     surface_route,
     platform_view_plugins,
@@ -229,6 +232,7 @@ pub fn run_app_with_options(
     provider=renderer_provider(options~),
     options=@macos_host.MacosHostAppOptions::new(
       scene_resolver=options.scene_resolver,
+      event_sources=options.event_sources,
       platform_view_plugins=options.platform_view_plugins,
       transparent_titlebar=options.transparent_titlebar,
       platform_attributes=options.platform_attributes,
@@ -257,6 +261,7 @@ pub fn run_smoke_app_with_options(
     provider=renderer_provider(options~),
     options=@macos_host.MacosHostAppOptions::new(
       scene_resolver=options.scene_resolver,
+      event_sources=options.event_sources,
       platform_view_plugins=options.platform_view_plugins,
       transparent_titlebar=options.transparent_titlebar,
       platform_attributes=options.platform_attributes,
@@ -296,6 +301,7 @@ pub async fn run_app_with_options_async_pump(
     provider=renderer_provider(options~),
     options=@macos_host.MacosHostAppOptions::new(
       scene_resolver=options.scene_resolver,
+      event_sources=options.event_sources,
       platform_view_plugins=options.platform_view_plugins,
       transparent_titlebar=options.transparent_titlebar,
       platform_attributes=options.platform_attributes,

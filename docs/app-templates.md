@@ -1,13 +1,39 @@
 # App Templates
 
-These docs-backed templates are intended for copying into a new
-`examples/<name>/app` package or a downstream app. They are deliberately plain
-MoonBit files instead of a generator: the project does not yet have a template
-CLI, and keeping the skeletons in docs avoids adding unsupported tooling.
+## Product path: `moui new`
 
-Each template keeps platform entrypoints separate. Start with a shared app
-package, add package-local tests, then add Web/native entrypoints only when the
-shared model is already covered.
+For a new independent multiplatform app, use the CLI (not hand-copied monorepo
+trees):
+
+```sh
+moon install wzzc-dev/moui_cli/cmd/moui
+moui new my_app
+# Optional minimal skeleton:
+# moui new my_app --template hello
+cd my_app
+moon update
+moon check
+moon run macos_skia --target native   # or windows_skia / linux_skia
+```
+
+`moui new` generates:
+
+```text
+app/                 # shared TEA app
+web_wasm/            # browser entrypoint
+macos_skia|windows_skia|linux_skia/   # host desktop
+# optional mobile with --platform + --bundle-id
+```
+
+See [Getting started](getting-started.md) section B and `moui_cli/README.md`.
+
+## Docs-backed skeletons
+
+The skeletons below remain useful when extending the monorepo
+`examples/<name>/app` packages or explaining TEA shape. Prefer the CLI for
+standalone projects. Each template keeps platform entrypoints separate: start
+with a shared app package, add package-local tests, then add Web/native
+entrypoints only when the shared model is already covered.
 
 ## Shared App Package
 
