@@ -6,7 +6,9 @@ import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-const defaultRepoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const scriptsDir = dirname(fileURLToPath(import.meta.url));
+const defaultRepoRoot = resolve(scriptsDir, "..");
+const syncScript = join(scriptsDir, "sync-website-docs.mjs");
 
 const usage = () => {
   console.error("Usage: node scripts/check-website-docs.mjs [--root <dir>]");
@@ -36,13 +38,12 @@ for (let index = 0; index < args.length; index += 1) {
 
 const tempRoot = mkdtempSync(join(tmpdir(), "moui-website-docs-check-"));
 const outDir = join(tempRoot, "docs");
-const syncScript = join(repoRoot, "scripts", "sync-website-docs.mjs");
 
 const run = extraArgs => {
   const result = spawnSync(
     process.execPath,
     [syncScript, "--root", repoRoot, "--out", outDir, ...extraArgs],
-    { cwd: repoRoot, encoding: "utf8" },
+    { cwd: defaultRepoRoot, encoding: "utf8" },
   );
   if (result.status !== 0 || result.error) {
     if (result.stdout) process.stdout.write(result.stdout);

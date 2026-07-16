@@ -54,14 +54,14 @@
           "name": "harmonyos M5 shell contract",
           "argv": [
             "node",
-            "scripts/validate-harmonyos-m5-shell.mjs"
+            "scripts/validate-harmonyos-shell.mjs"
           ]
         },
         {
           "name": "harness batch1 invariants",
           "argv": [
             "node",
-            "scripts/validate-harness-batch1.mjs"
+            "scripts/validate-harness-invariants.mjs"
           ]
         },
         {

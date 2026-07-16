@@ -1,19 +1,17 @@
 #!/usr/bin/env node
 
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import { spawnSync } from "node:child_process";
+
+const repoRoot = process.cwd();
 
 const fixture = () => {
   const root = mkdtempSync(join(tmpdir(), "moui-website-docs-"));
-  mkdirSync(join(root, "scripts/lib"), { recursive: true });
   mkdirSync(join(root, "website"), { recursive: true });
   mkdirSync(join(root, "docs"), { recursive: true });
   mkdirSync(join(root, "moui_skia"), { recursive: true });
-  cpSync("scripts/check-website-docs.mjs", join(root, "scripts/check-website-docs.mjs"));
-  cpSync("scripts/sync-website-docs.mjs", join(root, "scripts/sync-website-docs.mjs"));
-  cpSync("scripts/lib/website-docs-catalog.mjs", join(root, "scripts/lib/website-docs-catalog.mjs"));
   writeFileSync(join(root, "docs/guide.md"), "# Guide\n");
   writeFileSync(join(root, "docs/private.md"), "# Private\n");
   writeFileSync(join(root, "README.mbt.md"), "# README\n");
@@ -33,22 +31,34 @@ const fixture = () => {
   return { root, catalog };
 };
 
+// Use the repo-checked scripts + MoonBit tool (not copies of scripts alone).
 const run = (root, ...args) =>
-  spawnSync(process.execPath, [join(root, "scripts/sync-website-docs.mjs"), "--root", root, ...args], { encoding: "utf8" });
+  spawnSync(
+    process.execPath,
+    [join(repoRoot, "scripts/sync-website-docs.mjs"), "--root", root, ...args],
+    { encoding: "utf8", cwd: repoRoot },
+  );
 
 const runTemporaryCheck = root =>
-  spawnSync(process.execPath, [join(root, "scripts/check-website-docs.mjs"), "--root", root], { encoding: "utf8" });
+  spawnSync(
+    process.execPath,
+    [join(repoRoot, "scripts/check-website-docs.mjs"), "--root", root],
+    { encoding: "utf8", cwd: repoRoot },
+  );
+
+const combined = result => `${result.stdout || ""}${result.stderr || ""}`;
 
 const expectPass = (label, result) => {
   if (result.status !== 0) {
-    console.error(`${label}: expected pass\n${result.stderr}`);
+    console.error(`${label}: expected pass\n${combined(result)}`);
     process.exit(1);
   }
 };
 
 const expectFail = (label, result, message) => {
-  if (result.status === 0 || !result.stderr.includes(message)) {
-    console.error(`${label}: expected failure containing '${message}'\n${result.stderr}`);
+  const text = combined(result);
+  if (result.status === 0 || !text.includes(message)) {
+    console.error(`${label}: expected failure containing '${message}'\n${text}`);
     process.exit(1);
   }
 };
@@ -84,7 +94,9 @@ const updateCatalog = (root, mutate) => {
 }
 {
   const { root } = fixture();
-  updateCatalog(root, catalog => { catalog.entries[0].path = "docs/missing.md"; });
+  updateCatalog(root, catalog => {
+    catalog.entries[0].path = "docs/missing.md";
+  });
   expectFail("missing source", run(root), "published source is missing");
 }
 {
@@ -94,7 +106,9 @@ const updateCatalog = (root, mutate) => {
 }
 {
   const { root } = fixture();
-  updateCatalog(root, catalog => { catalog.entries[0].path = "docs/../README.mbt.md"; });
+  updateCatalog(root, catalog => {
+    catalog.entries[0].path = "docs/../README.mbt.md";
+  });
   expectFail("directory traversal", run(root), "directory traversal");
 }
 
