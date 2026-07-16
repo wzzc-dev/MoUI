@@ -233,6 +233,18 @@ platform backends skip ordinary pointer dispatch for those events, then native
 menu-capable hosts ask `HostServiceBridge::ShowMenu` to present the current
 runtime action commands and dispatch the selected intent back through
 `HostRuntimeDriver`.
+Application menu bars (L2) use `HostServiceRequest::SetApplicationMenu` /
+`HostAppServices::set_application_menu` with `HostApplicationMenu` descriptors.
+macOS installs native main-menu titles/items via the window package; Windows,
+Linux, and Web currently return `Unavailable`. Selection delivery still uses
+the platform action handler installed by the entrypoint (for example
+`@window_macos.set_system_menu_action_handler`). See
+[Non-render cookbook](non-render-component-cookbook.md) and
+`examples/platform_lab`.
+App-facing multi-window lifecycle requests go through `HostWindowActions`
+(`open`, `close`, `focus`, `set_primary`, `resize`, `minimize`, `show`) on the
+shared `HostWindowRequestQueue`. Each resolved scene remains an independent
+`AppRuntime`; shared state is app-owned. See `examples/multi_window`.
 File drop targets use the `View::on_file_drop` modifier; hosts normalize native
 file drag/drop positions and paths before the runtime dispatches typed messages
 to the hit view. `views.drop_zone` and `views.file_import_panel` are view-level

@@ -25,13 +25,17 @@ sampler outside the framework Showcase.
 
 Use the [Non-render component cookbook](non-render-component-cookbook.md) when
 you want to copy a pattern rather than inspect a full example package. It maps
-forms, tables, shells, menus, host services, and virtual lists to the examples
-that exercise them.
+forms, tables, shells, menus, host services, timers, clipboard, window events,
+and virtual lists to the examples that exercise them. For a single runnable
+surface that packs those host recipes plus canvas paint, start with
+`examples/platform_lab`.
 
 Use [App templates](app-templates.md) when starting a new shared app package.
-The templates cover counter, dashboard, and document-editor skeletons without
-introducing a generator. The root `website/` workspace uses the same app-first
-shape outside `examples/` so MoUI can render its own bilingual homepage.
+Standalone apps should use `moui new` (see [Getting started](getting-started.md));
+the docs skeletons cover counter, dashboard, and document-editor shapes for
+monorepo or hand-authored packages. The root `website/` workspace uses the same
+app-first shape outside `examples/` so MoUI can render its own bilingual
+homepage.
 
 Mobile packaging metadata is intentionally split by publish boundary.
 Application authors keep app-owned identity, capability metadata, and native
@@ -50,7 +54,8 @@ after changing repository example mobile metadata or contracts.
 | Playground | MoonBit-native browser tutorial and editor | `website/playground/app/`, `website/playground/web_wasm/` | Code editor built with `moui_richtext`, controlled `main.mbt`/`moon.pkg` files, app-safe import validation, pinned MoonBit compiler Worker bridge, sandbox preview host, local persistence, share URL protocol, and six bilingual lesson assets |
 | Agent Counter | Minimal agent-controllable runtime example | `examples/agent_counter/`, `examples/agent_counter/main/`, `examples/agent_counter/macos_skia/` | Counter app with semantics/command-intent flow for agent observation and control, plus a native macOS Skia entrypoint |
 | Counter | Minimal model/update/view app | `examples/counter/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages, Android/iOS embedded-session MoonBit entrypoints, and managed Kotlin/SwiftUI packaging; checked-in native projects are Release N fixtures |
-| Multi Window | Host-managed scene example | `examples/multi_window/app/` | Independent main and inspector runtimes through `HostWindowRequestQueue` and `HostWindowSceneResolver`, with native macOS/Windows/Linux windows and a multi-canvas Web route |
+| Multi Window | Host-managed scene example | `examples/multi_window/app/` | Independent main and inspector runtimes through `HostWindowActions` (`open` / `focus` / `close`) plus `HostWindowRequestQueue` and `HostWindowSceneResolver`, with native macOS/Windows/Linux windows and a multi-canvas Web route |
+| Platform Lab | Effect / Subscription / canvas recipe lab | `examples/platform_lab/app/` | Timer, window resize, clipboard, file open, action-command shortcuts, and `@views.canvas` paint with thin macOS/Windows/Linux Skia and Web entrypoints |
 | HarmonyOS Demo | Standalone experimental HarmonyOS embedded Skia demo | `examples/harmonyos_demo/app/`, `examples/harmonyos_demo/harmonyos_skia/` | Platform-neutral viewport/tap feedback demo, HarmonyOS Skia embedded-session MoonBit exports, package-owned ArkTS/XComponent managed shell staging, and fallback HAP packaging smoke via `scripts/build-harmonyos-demo-app.sh --fallback-skia`; the checked-in `harmonyos_app` is a Release N fixture and runtime support remains pending matching-device evidence |
 | Component Gallery | Seven-platform component catalog | `examples/component_gallery/app/` | Grouped catalog for reusable `moui/views` controls, searchable sidebar/index, focused component demos for button, text inputs, checkbox, toggle, radio, segmented control, picker, slider, chips, badge, progress, banner, callout, state panels, toast/snackbar, stat card, avatar, divider, toolbar/status bar, surfaces, row/column, responsive grid, scroll view, and platform routes, adaptive mobile/desktop layout, default Skia desktop entrypoints named `macos`, `linux`, and `windows`, Android/iOS/HarmonyOS embedded-session entrypoints named `android`, `ios`, and `harmonyos`, a Web wasm-gc entrypoint named `web`, and managed Kotlin/SwiftUI/ArkTS shell packaging with Release N fixtures kept separate |
 | Button Freeze Probe | Native Skia button freeze repro | `examples/button_freeze_probe/app/` | Minimal `data_filter_bar` filter chips, red primary accent, repeated click counter, direct primary/tonal button comparison, native Skia macOS/Windows/Linux entrypoints |
