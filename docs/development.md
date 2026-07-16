@@ -507,10 +507,20 @@ generates and validates an isolated temporary copy, so it does not require
 `website/web_wasm/docs/` to exist in a clean checkout.
 
 GitHub Pages packages `website/web_wasm` with
-`scripts/package-web-app.mjs website/web_wasm --out dist/pages`, then stages
-the same Markdown set with
-`node scripts/sync-website-docs.mjs --out dist/pages/docs`. Keep root docs free
-of machine-local paths and generated `artifacts/` evidence.
+`scripts/package-web-app.mjs website/web_wasm --out dist/pages`, nests the
+Playground with
+`node scripts/package-website-playground.mjs --out dist/pages/playground`,
+then stages docs with
+`node scripts/sync-website-docs.mjs --out dist/pages/docs`. Locally, the same
+layout is one command:
+
+```sh
+sh scripts/package-website-site.sh
+# optional: --out dist/pages --skip-docs --skip-playground --no-verify
+cd dist/pages && python3 -m http.server 8080 --bind 127.0.0.1
+```
+
+Keep root docs free of machine-local paths and generated `artifacts/` evidence.
 
 ## Daily Validation
 
