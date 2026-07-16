@@ -154,8 +154,7 @@ pub fn ios_readiness() -> IosBackendReadiness {
     status: "runtime_partial",
     blocked_by: [
       "managed SwiftUI shell matching-simulator smoke still needs re-recording with --require-passed",
-      "physical-device and real VoiceOver observations remain open",
-      "GPU seven-gate promotion is not claimed (gpuPromotionEvidence.claimed=false)",
+      "physical-device and real VoiceOver observations remain open", "GPU seven-gate promotion is not claimed (gpuPromotionEvidence.claimed=false)",
     ],
     next_steps: [
       "re-run Component Gallery managed SwiftUI smoke on Simulator without shell probes",
