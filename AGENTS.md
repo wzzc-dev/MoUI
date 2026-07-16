@@ -1,44 +1,68 @@
 # MoUI Agent Guide
 
-First stop for contributors and AI agents. For task-specific workflows:
+Short map only. Deep rules live in `docs/`; do not treat this file as an encyclopedia.
 
-- `skills/moui-app-development/SKILL.md` — shared app packages, examples, platform entrypoints.
-- `skills/moui-framework-development-skill/SKILL.md` — framework internals, public API, runtime/backend/renderer, maintenance ratchets, smoke gates.
+Task skills:
 
-## Read First (10 min)
+- `skills/moui-app-development/SKILL.md` — examples, app packages, thin platform entrypoints
+- `skills/moui-framework-development-skill/SKILL.md` — core/runtime/backend/render, gates, CI
 
-| Document | Read when |
-|----------|-----------|
-| `docs/architecture.md` | always — package map and runtime pipeline |
-| `docs/moui-app-package-boundary.md` | always — app-safe dependency rules |
-| `docs/invariants.md` | always — every structural constraint in one table |
-| `docs/development.md` | setup and workspace workflow |
-| `docs/testing.md` | validation commands and focused loops |
-| `docs/mobile-mainline-roadmap.md` | touching Android/iOS/HarmonyOS |
-| `docs/button-styling-guide.md` | changing button colors or styles |
-| `docs/decisions/` | architectural changes |
-| `docs/ai-sessions/` | past AI session summaries |
+Start at `docs/INDEX.md` for progressive disclosure.
 
-## Core Rules (summary — see `docs/invariants.md` for full table)
+## Hard boundaries (summary)
 
-- **App logic** → `examples/<name>/app`; platform entrypoints → thin wiring.
-- **New controls** → `moui/views` (use `@core.View::node`; no new core enum variants).
-- **Cross-runtime protocols** → `moui/core`. **Runtime lifecycle** → `moui/runtime`.
-- **Host contracts** → `moui/backend/host`. **Renderer code** → `moui/render/*`.
-- **App dependencies**: `@moui.*` + domain facades + `views` only. No direct deps on `runtime`, `render/*`, or platform backends.
-- **Mainline**: Native Skia. **Diagnostic**: Native WGPU. Do not reclassify without RFC.
-- **Mobile**: embedded-session routes; product class is `runtime_partial`
-  (usable managed shell + host path; not product-complete). Product `auto`
-  default is `SkiaGpuNative` when the host GPU surface is available;
-  `SkiaRasterNative` is explicit/recovery fallback. See
-  `docs/platform-readiness-declaration.md` and ADR 0011.
-- **Mobile shells**: managed builds stage package-owned Kotlin/AndroidX,
-  SwiftUI, or ArkTS/XComponent canonical shells. App-owned native projects are
-  versioned ejected shells or explicit Release N legacy fixtures only.
-- **API discovery**: `moon ide doc` / `outline` / `peek-def` / `find-references` before inventing names.
-- **`moon.work`**: no `./window` (use `window-dev-mode.sh on/off`), no `./openseek`.
+Full table: `docs/invariants.md`. Break only via RFC (`GOVERNANCE.md`).
 
-## Pre-push
+- App logic → `examples/<name>/app`; platform entrypoints stay thin wiring.
+- New controls → `moui/views` via `@core.View::node` (no new core view enum variants).
+- Protocols → `moui/core`. Lifecycle trees → `moui/runtime`. Host contracts → `moui/backend/host`. Renderers → `moui/render/*`.
+- App deps: `wzzc-dev/moui` + domain facades + `views` only (no `runtime` / `render/*` / platform backends).
+- Mainline: Native Skia. Diagnostic: Native WGPU. Reclassify only with RFC.
+- Mobile product class: `runtime_partial`; managed shells are canonical. Details: `docs/platform-readiness-declaration.md`, ADR 0011.
+- `moon.work`: no `./window` (use `window-dev-mode.sh on/off`), no `./openseek`.
+- Discover APIs with `moon ide doc` / `outline` / `peek-def` / `find-references` before inventing names.
+
+## Task router (read only what you need)
+
+| Change surface | Read | Skill | Minimal loop |
+|---|---|---|---|
+| `examples/*/app`, entrypoints | `docs/moui-app-package-boundary.md`, `docs/examples.md` | app | `moon test examples/<name>/app --target native` |
+| `moui/views`, controls, styles | `docs/view-catalog.md`, `docs/button-styling-guide.md` if buttons | framework | `moon test moui/views --target native` |
+| `moui/core` contracts | `docs/architecture-map.md`, `docs/invariants.md` | framework | `moon test moui/core --target native` + `moon info` if public API |
+| `moui/runtime` | `docs/architecture-map.md`, `docs/tea-program-model.md` | framework | `moon test moui/runtime --target native` |
+| `moui/backend/host` or platform host | `docs/platform-host-contract.md`, platform notes | framework | `moon test moui/backend/host --target native` + affected backend tests |
+| `moui/render/*`, `moui_skia` | `docs/renderer-capability-report.md`, `moui_skia/AGENTS.md` | framework | package tests + capability report if status changes |
+| Android / iOS / HarmonyOS | `docs/mobile-mainline-roadmap.md`, platform support doc | framework | path-triggered mobile evidence (not default daily) |
+| Theme / `moui_theme` / design systems | `docs/visual-theme-system.md` | framework | `sh scripts/check.sh --profile theme` |
+| Docs / guidance only | `docs/INDEX.md`, topic page | — | `node scripts/validate-guidance-consistency.mjs` |
+| Architecture / package graph | `docs/architecture-map.md` then `docs/architecture.md` | framework | + plan under `docs/plans/active/` if multi-package |
+
+Complex multi-package or platform work: write/update `docs/plans/active/<id>.md` before coding.
+
+## Repo map
+
+| Path | Role |
+|---|---|
+| `docs/INDEX.md` | Catalog + where to read next |
+| `docs/architecture-map.md` | One-page package/dependency map |
+| `docs/invariants.md` | Sole structural constraint source |
+| `docs/testing.md` | Sole validation policy source |
+| `docs/plans/` | Exec plans (`active` / `done` / `debt`) |
+| `docs/decisions/` | ADRs |
+| `docs/ai-sessions/` | Session logs (promote facts to `memories/repo/`) |
+| `checks/profiles.json` | Check profile catalog |
+| `smoke/gates.json` | Smoke suite catalog |
+| `scripts/check.sh` | Primary check facade (`pr` / `daily` / `platform` / `theme`) |
+| `skills/` | Task workflows |
+| `memories/repo/` | Short durable agent facts |
+
+Generated evidence stays out of git: do not commit `artifacts/`. Root `docs/` is source of truth; website sync via `node scripts/sync-website-docs.mjs`.
+
+## Validation facade
+
+Prefer the smallest loop from the router. Do not start small package edits with full daily/platform.
+
+Pre-push static trio (every commit that touches guidance, API, or package layout):
 
 ```sh
 node scripts/validate-maintenance-baseline.mjs
@@ -46,14 +70,28 @@ node scripts/validate-api-surface.mjs
 node scripts/validate-guidance-consistency.mjs
 ```
 
-For core/view/render/backend changes, also run `sh scripts/check.sh --profile daily`.
+Profiles (catalog: `checks/profiles.json`; policy: `docs/testing.md`):
 
-For platform behavior: `sh scripts/check.sh --profile platform`.
-For theme changes: `sh scripts/check.sh --profile theme`.
+```sh
+sh scripts/check.sh --profile pr
+sh scripts/check.sh --profile daily
+sh scripts/check.sh --profile platform
+sh scripts/check.sh --profile theme
+```
 
-Design Systems is addon diagnostic coverage; run the theme profile for it.
-The Windows check wrapper plan and shared platform service checks are tracked
-in `docs/testing.md` and `checks/profiles.json`.
+Design Systems is addon diagnostic coverage; use the theme profile for it.
+Windows check wrapper plan and shared platform service checks are tracked in
+`docs/testing.md` and `checks/profiles.json`.
+
+Manual / real presentation smoke (path-triggered, not default):
+
+```sh
+scripts/macos-skia-renderer-smoke.sh
+sh scripts/ci-web-runtime-presentation.sh
+scripts/run-window-package-smoke.sh <macos|web|windows|linux> --run
+```
+
+Smoke catalog: `node scripts/smoke-gate.mjs --tier nightly --dry-run --json`.
 
 ## Script Tooling Policy
 
@@ -65,16 +103,9 @@ dependency installation or smoke execution.
 Mobile sessions share `MobileHostChannel`. Native XComponent callbacks are the only
 surface/pointer/resize/detach source on HarmonyOS.
 
-## Manual Smoke (real platform/renderer evidence)
+## When the agent is stuck
 
-```sh
-scripts/macos-skia-renderer-smoke.sh
-sh scripts/ci-web-runtime-presentation.sh
-scripts/run-window-package-smoke.sh <macos|web|windows|linux> --run
-```
-
-## Docs & Artifacts
-
-- Root `docs/` is the source of truth. Sync website with `node scripts/sync-website-docs.mjs`.
-- Do not commit `artifacts/`. Cite CI runs or smoke logs in release notes instead.
-- After significant sessions, update `memories/repo/` (quick facts), `docs/decisions/` (ADRs), `docs/ai-sessions/` (session logs).
+Do not “try harder” with a longer prompt. Ask: what capability, invariant, tool,
+or doc is missing—and add that to the repo (plan → invariant/validator → skill
+pointer). After significant sessions: update `memories/repo/`, ADRs, and
+`docs/ai-sessions/` as appropriate.

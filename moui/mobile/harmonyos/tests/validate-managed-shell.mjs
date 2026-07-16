@@ -11,8 +11,16 @@ import test from "node:test";
 const testDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(testDir, "../../../..");
 const read = path => readFileSync(resolve(repoRoot, path), "utf8");
-const contains = (source, value, path) => assert.ok(source.includes(value), `${path} must contain ${value}`);
-const excludes = (source, value, path) => assert.ok(!source.includes(value), `${path} must not contain ${value}`);
+const contains = (source, value, path) =>
+  assert.ok(
+    source.includes(value),
+    `${path} must contain ${value}. See docs/invariants.md#M5`,
+  );
+const excludes = (source, value, path) =>
+  assert.ok(
+    !source.includes(value),
+    `${path} must not contain ${value}. Fix: use native XComponent callbacks only. See docs/invariants.md#M5`,
+  );
 const escapeRegExp = value => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const requiresRuntimeCallLock = (source, functionName, path) => {
   const pattern = new RegExp(
