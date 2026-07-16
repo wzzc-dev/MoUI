@@ -238,13 +238,9 @@ fn remove_tree(path : String) -> Unit {
     }
     return
   }
-  let is_directory = @fs.is_dir(path) catch {
-    _ => false
-  }
+  let is_directory = @fs.is_dir(path) catch { _ => false }
   if is_directory {
-    let entries = @fs.read_dir(path) catch {
-      _ => return
-    }
+    let entries = @fs.read_dir(path) catch { _ => return }
     for entry in entries {
       if entry == "." || entry == ".." {
         continue
