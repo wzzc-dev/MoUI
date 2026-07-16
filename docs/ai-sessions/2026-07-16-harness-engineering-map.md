@@ -37,8 +37,8 @@ were preserved.
 node scripts/validate-guidance-consistency.mjs
 moon test tools/moui/validate_window_dependency --target native
 node scripts/validate-window-dependency.mjs
-node scripts/validate-harmonyos-m5-shell.mjs
-node scripts/validate-harness-batch1.mjs
+node scripts/validate-harmonyos-shell.mjs
+node scripts/validate-harness-invariants.mjs
 node scripts/validate-check-profiles.mjs
 ```
 

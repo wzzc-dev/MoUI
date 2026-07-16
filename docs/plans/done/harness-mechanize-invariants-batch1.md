@@ -20,19 +20,19 @@ Batch 1 closed the largest agent-blind gaps where Detection was still
 - [x] `docs/golden-principles.md`
 - [x] Plans layout + session promote checklist + ai-collaboration router workflow
 - [x] **A6** window pin: `validate-window-dependency.mjs` (+ Fix/See anchors)
-- [x] **M5** Harmony shell: `validate-harmonyos-m5-shell.mjs` on pr profile
-- [x] **P1/P2/R3/G1/G2**: `scripts/validate-harness-batch1.mjs` on pr profile
+- [x] **M5** Harmony shell: `validate-harmonyos-shell.mjs` on pr profile
+- [x] **P1/P2/R3/G1/G2**: `scripts/validate-harness-invariants.mjs` on pr profile
 
 ## Batch 1 — status
 
 | ID | Status | Tool surface |
 |---|---|---|
-| **P1** | DONE | `validate-harness-batch1.mjs` — entry size/file count + no product `update`/`view`/`Model`/`Msg` in entrypoints; requires `app/` or root `app.mbt` |
-| **P2** | DONE | `validate-harness-batch1.mjs` — forbid `pub enum View` and control constructors in `moui/core` (mbti + sources) |
+| **P1** | DONE | `validate-harness-invariants.mjs` — entry size/file count + no product `update`/`view`/`Model`/`Msg` in entrypoints; requires `app/` or root `app.mbt` |
+| **P2** | DONE | `validate-harness-invariants.mjs` — forbid `pub enum View` and control constructors in `moui/core` (mbti + sources) |
 | **A6** | DONE | `validate-window-dependency.mjs` — four consumers share `wzzc-dev/window@…` |
-| **R3** | DONE | `validate-harness-batch1.mjs` — desktop providers read `MOUI_SKIA_RENDERER`; mobile entries expose configure/selection; `prepare-native-build --renderer` |
-| **M5** | DONE | `validate-harmonyos-m5-shell.mjs` (+ managed-shell node tests) |
-| **G1** | DONE | `validate-harness-batch1.mjs` — skills must not re-list ≥3 P-rows |
+| **R3** | DONE | `validate-harness-invariants.mjs` — desktop providers read `MOUI_SKIA_RENDERER`; mobile entries expose configure/selection; `prepare-native-build --renderer` |
+| **M5** | DONE | `validate-harmonyos-shell.mjs` (+ managed-shell node tests) |
+| **G1** | DONE | `validate-harness-invariants.mjs` — skills must not re-list ≥3 P-rows |
 | **G2** | DONE | `--json` on batch1 (+ M5 already supports `--json`) |
 
 ### Already mechanical (pre-batch1)
@@ -57,9 +57,9 @@ Batch 1 closed the largest agent-blind gaps where Detection was still
 
 ```sh
 node scripts/validate-window-dependency.mjs
-node scripts/validate-harmonyos-m5-shell.mjs
-node scripts/validate-harness-batch1.mjs
-node scripts/validate-harness-batch1.mjs --json
+node scripts/validate-harmonyos-shell.mjs
+node scripts/validate-harness-invariants.mjs
+node scripts/validate-harness-invariants.mjs --json
 node scripts/validate-check-profiles.mjs
 node scripts/validate-guidance-consistency.mjs
 ```
@@ -80,4 +80,4 @@ node scripts/validate-guidance-consistency.mjs
 |---|---|
 | 2026-07-16 | Harness map docs landed |
 | 2026-07-16 | A6 Fix anchors + M5 pr gate |
-| 2026-07-16 | P1/P2/R3/G1/G2 via `validate-harness-batch1.mjs`; plan complete |
+| 2026-07-16 | P1/P2/R3/G1/G2 via `validate-harness-invariants.mjs`; plan complete |

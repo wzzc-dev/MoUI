@@ -16,8 +16,14 @@
 // Output:
 //   JSON object with run_id, head_sha, date, successful_jobs, artifacts, and
 //   the markdown table row.
+//
+// Formal report assembly lives in tools/moui/refresh_evidence_table. This shell
+// only handles GitHub HTTP / gh CLI fetch orchestration.
 
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import { writeFileSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const DEFAULT_OWNER = "wzzc-dev";
 const DEFAULT_REPO = "MoUI";
@@ -50,8 +56,12 @@ async function ghCli(args) {
     });
     let stdout = "";
     let stderr = "";
-    child.stdout.on("data", (chunk) => { stdout += chunk; });
-    child.stderr.on("data", (chunk) => { stderr += chunk; });
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk;
+    });
     child.on("close", (code) => {
       if (code === 0) resolve({ stdout, stderr });
       else reject(new Error(`gh ${args.join(" ")} failed: ${stderr || code}`));
@@ -126,18 +136,28 @@ async function getRunJobsAndArtifacts(owner, repo, runId, token) {
   return { successfulJobs, artifacts };
 }
 
-function generateTableRow(run, details) {
-  const jobs = details.successfulJobs.join(", ");
-  const artifacts = details.artifacts.join(", ");
-  const boundary = `Proves CI run ${run.id} for head SHA \`${run.head_sha}\`.`;
-  return {
-    workflow: "MoUI CI",
-    run: `[${run.id}](${run.html_url})`,
-    key_successful_jobs: jobs,
-    uploaded_artifact_names: artifacts,
-    evidence_boundary: boundary,
-    markdown: `| MoUI CI | [${run.id}](${run.html_url}) | ${jobs} | ${artifacts} | ${boundary} |`,
-  };
+function runAssembler(toolArgs) {
+  // runMoonbitTool exits on failure; use spawnSync for status capture if needed.
+  const result = spawnSync(
+    "moon",
+    ["run", "tools/moui/refresh_evidence_table", "--target", "native", "--", ...toolArgs],
+    {
+      cwd: process.cwd(),
+      env: {
+        ...process.env,
+        MOUI_SKIA_DISABLE_PREBUILD_SKIA:
+          process.env.MOUI_SKIA_DISABLE_PREBUILD_SKIA || "1",
+      },
+      encoding: "utf8",
+    },
+  );
+  if (result.error) {
+    console.error(result.error.message);
+    process.exit(1);
+  }
+  if (result.stdout) process.stdout.write(result.stdout);
+  if (result.stderr) process.stderr.write(result.stderr);
+  if (result.status !== 0) process.exit(result.status ?? 1);
 }
 
 async function main() {
@@ -147,58 +167,51 @@ async function main() {
   const repo = DEFAULT_REPO;
 
   if (dryRun || (!token && !useGh)) {
-    console.log(
-      JSON.stringify(
-        {
-          mode: dryRun ? "dry-run" : "no-token",
-          message:
-            "Provide GITHUB_TOKEN, pass --token, or pass --gh to query the GitHub API. " +
-            "Without it, this script returns a template row.",
-          template: {
-            workflow: "MoUI CI",
-            run: "[<run-id>](<run-url>)",
-            key_successful_jobs: "<job-name-1>, <job-name-2>",
-            uploaded_artifact_names: "<artifact-1>, <artifact-2>",
-            evidence_boundary:
-              "Manual review required. Replace with current-head evidence.",
-          },
-        },
-        null,
-        2,
-      ),
-    );
+    runAssembler([dryRun ? "--dry-run" : "--no-token"]);
     return;
   }
 
-  let run, details;
+  let run;
+  let details;
+  let mode = "live";
   if (useGh) {
+    mode = "gh-cli";
     const ghRun = await getLatestCiRunViaGh();
     run = {
-      id: ghRun.databaseId,
+      id: String(ghRun.databaseId),
       head_sha: ghRun.headSha,
       created_at: ghRun.createdAt,
       html_url: ghRun.url,
     };
     details = await getRunJobsAndArtifactsViaGh(run.id);
   } else {
-    run = await getLatestCiRun(owner, repo, token);
-    details = await getRunJobsAndArtifacts(owner, repo, run.id, token);
+    const apiRun = await getLatestCiRun(owner, repo, token);
+    run = {
+      id: String(apiRun.id),
+      head_sha: apiRun.head_sha,
+      created_at: apiRun.created_at,
+      html_url: apiRun.html_url,
+    };
+    details = await getRunJobsAndArtifacts(owner, repo, apiRun.id, token);
   }
-  const row = generateTableRow(run, details);
 
-  console.log(
-    JSON.stringify(
-      {
-        mode: useGh ? "gh-cli" : "live",
-        run_id: run.id,
-        head_sha: run.head_sha,
-        date: run.created_at,
-        ...row,
-      },
-      null,
-      2,
-    ),
-  );
+  const payload = {
+    mode,
+    run_id: run.id,
+    head_sha: run.head_sha,
+    date: run.created_at,
+    html_url: run.html_url,
+    successful_jobs: details.successfulJobs,
+    artifacts: details.artifacts,
+  };
+  const tempRoot = mkdtempSync(join(tmpdir(), "moui-evidence-"));
+  const payloadPath = join(tempRoot, "payload.json");
+  try {
+    writeFileSync(payloadPath, JSON.stringify(payload));
+    runAssembler(["--mode", mode, "--payload-file", payloadPath]);
+  } finally {
+    rmSync(tempRoot, { recursive: true, force: true });
+  }
 }
 
 main().catch((err) => {

@@ -57,7 +57,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 
 | Plan | Summary |
 |------|---------|
-| _(none)_ | |
+| [moonbit-tooling-formalization](active/moonbit-tooling-formalization.md) | Move formalizable script rules/generators into `tools/moui`; keep host shells thin |
 
 ## Done (recent)
 

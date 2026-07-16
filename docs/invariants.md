@@ -12,8 +12,8 @@ Mechanization batch1 (done): `docs/plans/done/harness-mechanize-invariants-batch
 
 | # | Constraint | Detection | Exemption |
 |---|-----------|-----------|-----------|
-| P1 | App logic goes in `examples/<name>/app`; platform entrypoints are thin wiring | `validate-harness-batch1.mjs` (pr) | root `app.mbt` demos without `app/` package (e.g. agent_counter) |
-| P2 | New controls go in `moui/views`, using `@core.View::node`; do not add core enum variants | `validate-harness-batch1.mjs` (pr) | devtools-only controls |
+| P1 | App logic goes in `examples/<name>/app`; platform entrypoints are thin wiring | `validate-harness-invariants.mjs` (pr) | root `app.mbt` demos without `app/` package (e.g. agent_counter) |
+| P2 | New controls go in `moui/views`, using `@core.View::node`; do not add core enum variants | `validate-harness-invariants.mjs` (pr) | devtools-only controls |
 | P3 | Cross-runtime protocols + value types go in `moui/core` | code review | none |
 | P4 | Runtime lifecycle, element/layout/render tree execution go in `moui/runtime` | code review | none |
 | P5 | Host service contracts go in `moui/backend/host`; concrete platform behavior in platform backends | code review | none |
@@ -28,7 +28,7 @@ Mechanization batch1 (done): `docs/plans/done/harness-mechanize-invariants-batch
 |---|-----------|-----------|-----------|
 | R1 | Native Skia is the mainline; native WGPU is diagnostic | code review | RFC-required to reclassify |
 | R2 | `SkiaGpuNative` is the product `auto` default on all native Skia platforms when a host GPU surface is available; `SkiaRasterNative` remains the explicit mode and sticky recovery fallback | `validate-renderer-provider-manifests.mjs` | none |
-| R3 | Mobile/desktop entrypoints accept `--renderer auto\|skia-gpu\|skia-raster` (or `MOUI_SKIA_RENDERER`) and record requested/selected modes; `auto` and `skia-gpu` select GPU when available, while `skia-raster` forces the CPU path | `validate-harness-batch1.mjs` (providers + mobile configure + prepare-native-build) | none |
+| R3 | Mobile/desktop entrypoints accept `--renderer auto\|skia-gpu\|skia-raster` (or `MOUI_SKIA_RENDERER`) and record requested/selected modes; `auto` and `skia-gpu` select GPU when available, while `skia-raster` forces the CPU path | `validate-harness-invariants.mjs` (providers + mobile configure + prepare-native-build) | none |
 | R4 | `moon.work` must not list `./window`; use `sh scripts/window-dev-mode.sh on/off` | `validate-window-dependency.mjs` (daily CI) | local development only |
 | R5 | `moon.work` must not list `./openseek`; `examples/mo_workbench` uses registry pin | `validate-maintenance-baseline.mjs` | none |
 | R6 | Do not claim mobile runtime support as `passed` without matching-device smoke evidence (pixels changed, input received, detach, IME, clipboard, accessibility, async image) | `validate_mobile_runtime_manifest` | fallback APK builds are packaging evidence only |
@@ -41,7 +41,7 @@ Mechanization batch1 (done): `docs/plans/done/harness-mechanize-invariants-batch
 | M2 | Android frames paced by `Choreographer`; input/resize must request redraw, not present synchronously | code review | none |
 | M3 | iOS: embedded-session route; `backend/ios` owns host contracts, `backend/ios/skia` owns the UIKit presenter; `mobile/ios` owns the canonical SwiftUI/CAMetalLayer shell, ABI bridge, plugin registry, and Xcode template; `mobile/ios/legacy` is Release N compatibility only | code review | none |
 | M4 | iOS ABI v1 is single-scene; frames are paced by `CADisplayLink`; keep `UILaunchScreen` and `UIApplicationSupportsMultipleScenes=false` in Info.plists; simulator smoke uses `idb`/`idb-companion`, not `simctl` | code review | none |
-| M5 | HarmonyOS: `mobile/harmonyos` owns the canonical ArkTS managed shell at API 20; XComponent is the only pointer/surface/resize/detach source; do not restore `.onTouch` or duplicate lifecycle calls; ArkTS owns `displaySync` | `validate-harmonyos-m5-shell.mjs` (pr profile) + `moui/mobile/harmonyos/tests/validate-managed-shell.mjs` | none |
+| M5 | HarmonyOS: `mobile/harmonyos` owns the canonical ArkTS managed shell at API 20; XComponent is the only pointer/surface/resize/detach source; do not restore `.onTouch` or duplicate lifecycle calls; ArkTS owns `displaySync` | `validate-harmonyos-shell.mjs` (pr profile) + `moui/mobile/harmonyos/tests/validate-managed-shell.mjs` | none |
 | M6 | Mobile services cross `MobileHostChannel`; JNI/Obj-C++/NAPI adapters are thin wire translators only. The shared session core lives at `backend/internal/mobile_runtime`: MoonBit's internal visibility makes this package-private to all backend siblings, while `backend/host/internal` would incorrectly reject Android/iOS/HarmonyOS imports. | API import whitelist + code review | none |
 | M7 | Mobile runtime manifests: `passed` (complete evidence) / `partial` (useful run with missing observations) / `failed` (no usable evidence); `--require-passed` rejects both `partial` and `failed` | `validate_mobile_runtime_manifest` | none |
 | M8 | Mobile acceptance evidence requires clipboard write/read completion, two distinct surface sizes, accessibility tree/focus/action, async loading/ready logs | code review | none |
