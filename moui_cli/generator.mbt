@@ -391,6 +391,18 @@ fn gitignore_text() -> String {
 }
 
 ///|
+fn moon_work_text() -> String {
+  // Single-module workspace root. Local path deps later go through moon.work
+  // members (or moon.mod.json deps.path); moon.mod import stays registry-only.
+  (
+    #|members = [
+    #|  ".",
+    #|]
+    #|
+  )
+}
+
+///|
 fn managed_platform_json(fields : Array[(String, Json)]) -> Json {
   let values : Map[String, Json] = Map([("shellMode", "managed".to_json())])
   for field in fields {
@@ -469,6 +481,7 @@ fn build_project_file_plan(
   let files = [
     text_file(".gitignore", gitignore_text()),
     text_file("moon.mod", moon_mod_text(options)),
+    text_file("moon.work", moon_work_text()),
     text_file("moui.project.json", manifest.to_json_text()),
     text_file("app/moon.pkg", app_pkg_text()),
     text_file("app/app.mbt", app_text(options.title)),
