@@ -9,7 +9,8 @@ struct CountBudget {
 ///|
 fn pub_all_budgets() -> Array[CountBudget] {
   [
-    { kind: "pub(all)", label: "moui/core", path: "moui/core", max_count: 280 },
+    // Actual ~140 after API narrowing; keep a small buffer for legitimate core enums.
+    { kind: "pub(all)", label: "moui/core", path: "moui/core", max_count: 150 },
     { kind: "pub(all)", label: "moui/views", path: "moui/views", max_count: 19 },
     {
       kind: "pub(all)",
@@ -49,7 +50,7 @@ fn pub_all_budgets() -> Array[CountBudget] {
       kind: "pub(all)",
       label: "examples/showcase/app",
       path: "examples/showcase/app",
-      max_count: 8,
+      max_count: 4,
     },
     {
       kind: "pub(all)",
@@ -61,7 +62,7 @@ fn pub_all_budgets() -> Array[CountBudget] {
       kind: "pub(all)",
       label: "examples/pdf_workbench/app",
       path: "examples/pdf_workbench/app",
-      max_count: 20,
+      max_count: 12,
     },
     {
       kind: "pub(all)",
@@ -72,9 +73,8 @@ fn pub_all_budgets() -> Array[CountBudget] {
       // ChatMessage/WorkbenchMsg/CodeMsg/SettingsMsg/WriteMsg +
       // AgentBackendRuntime/AgentBackendFixture/AgentCommand/AgentEvent/
       // ModelChoice/ThinkingChoice/TurnStatus/SessionSummary. Budget leaves
-      // headroom for the reserved workspaces (ConnectPhone/ScheduledTasks/
-      // Plugins) to gain their own pub(all) types when implemented.
-      max_count: 20,
+      // one-slot headroom for the next reserved workspace type.
+      max_count: 18,
     },
     {
       kind: "pub(all)",
@@ -91,6 +91,7 @@ fn root_facade_forward_budget() -> CountBudget {
     kind: "root facade forwards",
     label: "moui/moui.mbt",
     path: "moui/moui.mbt",
-    max_count: 50,
+    // Domain facades absorbed root `pub type` forwards; keep a tiny buffer only.
+    max_count: 5,
   }
 }
