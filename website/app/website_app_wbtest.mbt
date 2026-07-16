@@ -25,9 +25,22 @@ test "website initial render includes bilingual homepage sections" {
   assert_true(has_text(commands, "Markdown Editor"))
   assert_true(has_text(commands, "Mo Workbench"))
   assert_true(has_text(commands, "Quick Start / 快速开始"))
-  assert_true(has_text(commands, "快速开始方式"))
+  assert_true(
+    has_text(
+      commands, "From zero to a running app in three steps. / 三步从零跑通应用。",
+    ),
+  )
+  assert_true(has_text(commands, "Install the CLI / 安装 CLI"))
+  assert_true(has_text(commands, "Create the app / 创建应用"))
+  assert_true(has_text(commands, "Run on the host / 在本机运行"))
   assert_true(has_text(commands, "moon install wzzc-dev/moui_cli/cmd/moui"))
   assert_true(has_text(commands, "moui new my_app"))
+  assert_true(has_text(commands, "cd my_app"))
+  assert_true(has_text(commands, "moon update"))
+  assert_true(has_text(commands, "moon check"))
+  assert_true(has_text(commands, "moon run macos_skia --target native"))
+  assert_true(has_text(commands, "Read the Docs"))
+  assert_true(has_text(commands, "Open Playground"))
   assert_false(
     has_text(commands, "git clone git@github.com:moui-mbt/moui_example.git"),
   )

@@ -18,7 +18,7 @@ pub struct Model {
   tutorial_scroll : @state.ScrollState
   route_history : @views.RouteHistoryState
   pending_anchor : String?
-  copy_feedback_active : Bool
+  copied_text : String?
 }
 
 ///|
@@ -97,48 +97,45 @@ fn Model::new() -> Model {
       source="website",
     ),
     pending_anchor: None,
-    copy_feedback_active: false,
+    copied_text: None,
   }
 }
 
 ///|
 fn Model::update(self : Model, message : Msg) -> Model {
   match message {
-    ToggleDark => { ..self, dark: !self.dark, copy_feedback_active: false }
+    ToggleDark => { ..self, dark: !self.dark, copied_text: None }
     CounterIncrement =>
-      { ..self, hero_count: self.hero_count + 1, copy_feedback_active: false }
-    CounterReset => { ..self, hero_count: 0, copy_feedback_active: false }
+      { ..self, hero_count: self.hero_count + 1, copied_text: None }
+    CounterReset => { ..self, hero_count: 0, copied_text: None }
     OpenRepository | OpenShowcaseSource(_) | OpenDocLink(_) =>
-      { ..self, copy_feedback_active: false }
-    CopyText(_) => { ..self, copy_feedback_active: true }
-    OpenHome => { ..self.with_route("home"), copy_feedback_active: false }
+      { ..self, copied_text: None }
+    CopyText(value) => { ..self, copied_text: Some(value) }
+    OpenHome => { ..self.with_route("home"), copied_text: None }
     OpenHomeAt(offset_y) => {
       self.home_scroll.scroll_to(x=0.0, y=max_website_double(0.0, offset_y))
-      { ..self.with_route("home"), copy_feedback_active: false }
+      { ..self.with_route("home"), copied_text: None }
     }
     OpenHomeAnchor(anchor) =>
       {
         ..self.with_route("home?anchor=" + anchor),
-        copy_feedback_active: false,
+        copied_text: None,
       }
-    OpenTutorial =>
-      { ..self.with_route("tutorial"), copy_feedback_active: false }
-    OpenPlayground => { ..self, copy_feedback_active: false }
-    OpenPlaygroundLesson(_) => { ..self, copy_feedback_active: false }
+    OpenTutorial => { ..self.with_route("tutorial"), copied_text: None }
+    OpenPlayground => { ..self, copied_text: None }
+    OpenPlaygroundLesson(_) => { ..self, copied_text: None }
     OpenDocs =>
       {
         ..self.with_route("docs/" + self.selected_doc_slug),
-        copy_feedback_active: false,
+        copied_text: None,
       }
-    OpenShowcases =>
-      { ..self.with_route("showcases"), copy_feedback_active: false }
+    OpenShowcases => { ..self.with_route("showcases"), copied_text: None }
     SelectDoc(slug) =>
-      { ..self.with_route("docs/" + slug), copy_feedback_active: false }
+      { ..self.with_route("docs/" + slug), copied_text: None }
     RetryCatalog =>
-      { ..self, catalog_state: CatalogNotLoaded, copy_feedback_active: false }
-    RetryDoc => { ..self, doc_state: DocNotLoaded, copy_feedback_active: false }
-    SearchDocs(value) =>
-      { ..self, docs_search: value, copy_feedback_active: false }
+      { ..self, catalog_state: CatalogNotLoaded, copied_text: None }
+    RetryDoc => { ..self, doc_state: DocNotLoaded, copied_text: None }
+    SearchDocs(value) => { ..self, docs_search: value, copied_text: None }
     ToggleMobileMenu => { ..self, mobile_menu_open: !self.mobile_menu_open }
     CloseMobileMenu => { ..self, mobile_menu_open: false }
     ToggleDocsDrawer => { ..self, docs_drawer_open: !self.docs_drawer_open }

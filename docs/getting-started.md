@@ -12,7 +12,19 @@ the website tutorial at `?section=tutorial`. Edit `main.mbt` and a controlled
 The visible editor is implemented with MoUI and `moui_richtext`. The browser
 host only provides the Worker, Wasm load, and preview iframe bridge.
 
-### Local Playground preview
+### Local website + Playground (one shot)
+
+Package the same layout as GitHub Pages (`dist/pages` + nested playground):
+
+```sh
+sh scripts/package-website-site.sh
+cd dist/pages && python3 -m http.server 8080 --bind 127.0.0.1
+```
+
+Then open `http://127.0.0.1:8080/` (home) and
+`http://127.0.0.1:8080/playground/` (Playground).
+
+### Local Playground-only preview
 
 ```sh
 moon build website/playground/web_wasm --target wasm-gc
