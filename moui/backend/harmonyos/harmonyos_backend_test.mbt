@@ -1,21 +1,26 @@
 ///|
-test "harmonyos backend reports embedded scaffold capabilities" {
+test "harmonyos backend reports usable runtime_partial capabilities" {
   let info = backend_info()
   assert_true(info.host_info.backend == @host.HostBackendKind::Native)
   inspect(info.capabilities.embedded_surface, content="true")
   inspect(info.capabilities.external_event_loop, content="true")
   inspect(info.capabilities.renderer_provider, content="true")
-  inspect(info.capabilities.ime, content="false")
-  inspect(info.services.clipboard, content="false")
-  inspect(info.readiness.ready, content="false")
+  inspect(info.capabilities.ime, content="true")
+  inspect(info.capabilities.clipboard, content="true")
+  inspect(info.capabilities.accessibility, content="true")
+  inspect(info.capabilities.async_image, content="true")
+  inspect(info.services.clipboard, content="true")
+  inspect(info.readiness.ready, content="true")
+  inspect(info.readiness.status, content="runtime_partial")
   assert_true(info.readiness.blocked_by.length() >= 1)
-  assert_true(info.readiness.blocked_by[0].contains("HarmonyOS"))
+  assert_true(info.readiness.blocked_by[0].contains("signed-device"))
   let summary = harmonyos_capability_summary()
   inspect(summary.label, content="HarmonyOS host")
   inspect(summary.window_lifecycle, content="true")
   inspect(summary.multi_window, content="false")
   inspect(summary.text_input_available, content="true")
-  inspect(summary.ime_available, content="false")
+  inspect(summary.ime_available, content="true")
+  inspect(summary.native_accessibility_available, content="true")
   assert_true(summary.has_required_app_basics())
 }
 
