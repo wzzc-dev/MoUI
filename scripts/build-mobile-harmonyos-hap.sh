@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-Usage: scripts/build-mobile-harmonyos-hap.sh --app <harmonyos_demo|component_gallery> [options]
+Usage: scripts/build-mobile-harmonyos-hap.sh --app <harmonyos_demo|showcase> [options]
 
 Repository example wrapper over moui/scripts/mobile/build-harmonyos-hap.sh.
 USAGE
@@ -43,7 +43,7 @@ if [ -z "$app" ]; then
 fi
 
 case "$app" in
-  harmonyos_demo|component_gallery)
+  harmonyos_demo|showcase)
     harmonyos_project="$repo_root/examples/$app/harmonyos_app"
     ;;
   *)

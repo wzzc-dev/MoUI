@@ -2,6 +2,10 @@
 package "examples/showcase/app"
 
 import {
+  "examples/showcase/app/components",
+  "examples/showcase/app/diagnostics",
+  "examples/showcase/app/patterns",
+  "examples/showcase/app/platform",
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
@@ -13,99 +17,81 @@ import {
 // Errors
 
 // Types and methods
+pub(all) struct CatalogGroup {
+  id : String
+  title : String
+} derive(Eq, @debug.Debug)
+pub fn CatalogGroup::new(id~ : String, title~ : String) -> Self
+
+pub(all) struct CatalogItem {
+  id : String
+  group_id : String
+  title : String
+  summary : String
+  badge : String
+} derive(Eq, @debug.Debug)
+pub fn CatalogItem::new(id~ : String, group_id~ : String, title~ : String, summary~ : String, badge? : String) -> Self
+
 pub struct ShowcaseApp {
   unit : Unit
 }
 pub fn ShowcaseApp::new() -> Self
 pub fn ShowcaseApp::program(Self) -> @core.Program[ShowcaseModel, ShowcaseMsg]
 pub fn ShowcaseApp::program_with_host_summary(Self, @host.HostCapabilitySummary) -> @core.Program[ShowcaseModel, ShowcaseMsg]
+pub fn ShowcaseApp::program_with_initial_route(Self, String) -> @core.Program[ShowcaseModel, ShowcaseMsg]
 
 pub(all) struct ShowcaseModel {
-  scheme : @core.ColorScheme
-  active : Bool
-  dialog_visible : Bool
-  sheet_visible : Bool
-  feature_enabled : Bool
-  secondary_enabled : Bool
-  draft : String
-  tab : String
-  selected_section : String
+  workspace : Workspace
+  route_id : String
   route_history : @views.RouteHistoryState
-  filter : String
-  data_filter_query : String
-  data_filter_active : Bool
-  data_filter_review : Bool
-  data_sort_column : String
-  data_sort_ascending : Bool
-  data_page : Int
-  data_visible_columns : Array[String]
-  feedback_dismissed_toasts : Array[String]
-  slider_value : Double
-  picker_value : String
-  date_value : @core.DateValue
-  detail_scroll_offset : @core.Point
-  sidebar_scroll_offset : @core.Point
-  detail_scroll : @core.ScrollState
-  sidebar_scroll : @core.ScrollState
-  list_scroll : @core.ScrollState
-  grid_scroll : @core.ScrollState
-  counter_count : Int
-  todo_items : Array[ShowcaseTodoItem]
-  todo_next_id : Int
-  todo_draft : String
-  last_drop_label : String
-  gesture_label : String
+  nav_query : String
+  mobile_showing_detail : Bool
   host_summary : @host.HostCapabilitySummary
+  components : @components.ComponentGalleryModel
+  patterns : @patterns.Model
+  platform : @platform.Model
+  diagnostics : @diagnostics.ShowcaseModel
 }
-pub fn ShowcaseModel::new() -> Self
+pub fn ShowcaseModel::catalog_groups(Self) -> Array[CatalogGroup]
+pub fn ShowcaseModel::catalog_items(Self) -> Array[CatalogItem]
+pub fn ShowcaseModel::current_catalog_item(Self) -> CatalogItem?
+pub fn ShowcaseModel::current_route(Self) -> ShowcaseRoute
+pub fn ShowcaseModel::current_route_string(Self) -> String
+pub fn ShowcaseModel::filtered_catalog_items(Self) -> Array[CatalogItem]
+pub fn ShowcaseModel::new(host_summary? : @host.HostCapabilitySummary, route? : String) -> Self
 pub fn ShowcaseModel::program(Self) -> @core.Program[Self, ShowcaseMsg]
 pub fn ShowcaseModel::program_with_route_host(Self, ShowcaseRouteHost) -> @core.Program[Self, ShowcaseMsg]
-pub fn ShowcaseModel::todo_count(Self) -> Int
+pub fn ShowcaseModel::subscriptions(Self, route_host? : ShowcaseRouteHost?) -> @core.Subscription[ShowcaseMsg]
 pub fn ShowcaseModel::update(Self, ShowcaseMsg) -> Self
+pub fn ShowcaseModel::update_with_effect(Self, ShowcaseMsg, route_host? : ShowcaseRouteHost?) -> (Self, @core.Effect[ShowcaseMsg])
 pub fn ShowcaseModel::view(Self, @core.ViewEnvironment) -> @core.View[ShowcaseMsg]
 pub fn ShowcaseModel::with_host_summary(Self, @host.HostCapabilitySummary) -> Self
 
 pub(all) enum ShowcaseMsg {
-  ToggleScheme
-  ToggleActive
-  ShowDialog
-  HideDialog
-  ShowSheet
-  HideSheet
-  SelectSection(String)
+  Navigate(String)
   RouteBack
   RouteForward
   OpenRouteLink(String)
   HostRouteChanged(@host.HostRouteEvent)
-  TabSelected(String)
-  ClearFilter
-  FilterChanged(String)
-  DataFilterQueryChanged(String)
-  DataActiveFilterChanged(Bool)
-  DataReviewFilterChanged(Bool)
-  ClearDataFilters
-  DataSortChanged(String)
-  DataPreviousPage
-  DataNextPage
-  DataColumnVisibilityChanged(String, Bool)
-  FeedbackToastDismissed(String)
-  DraftChanged(String)
-  SliderChanged(Double)
-  PickerSelected(String)
-  DateSelected(@core.DateValue)
-  FeatureEnabledChanged(Bool)
-  SecondaryEnabledChanged(Bool)
-  CounterIncrement
-  TodoDraftChanged(String)
-  TodoSubmitDraft
-  TodoToggled(Int, Bool)
-  TodoRemove(Int)
-  RecordFileDrop(Array[String])
-  RecordGesture(String)
-  ResizePanel(Double)
-  DetailScrollTo(Double)
-  SidebarScrollTo(Double)
+  SelectWorkspace(Workspace)
+  NavQueryChanged(String)
+  ShowMobileCatalog
+  ComponentsMsg(@components.ComponentGalleryMsg)
+  PatternsMsg(@patterns.Msg)
+  PlatformMsg(@platform.Msg)
+  DiagnosticsMsg(@diagnostics.ShowcaseMsg)
 }
+
+pub(all) struct ShowcaseRoute {
+  workspace : Workspace
+  id : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ShowcaseRoute::default() -> Self
+pub fn ShowcaseRoute::format(Self) -> String
+pub fn ShowcaseRoute::mobile_default() -> Self
+pub fn ShowcaseRoute::new(workspace~ : Workspace, id~ : String) -> Self
+pub fn ShowcaseRoute::parse(String) -> Self
+pub fn ShowcaseRoute::title(Self) -> String
 
 pub(all) enum ShowcaseRouteHistoryCommand {
   PushRoute(String)
@@ -120,12 +106,16 @@ pub struct ShowcaseRouteHost {
 }
 pub fn ShowcaseRouteHost::new(route_source~ : @host.HostRouteSource, dispatch_command~ : (ShowcaseRouteHistoryCommand) -> Unit) -> Self
 
-pub(all) struct ShowcaseTodoItem {
-  id : Int
-  text : String
-  completed : Bool
+pub(all) enum Workspace {
+  Components
+  Patterns
+  Platform
+  Diagnostics
 } derive(Eq, ToJson, @debug.Debug)
-pub fn ShowcaseTodoItem::new(id~ : Int, text~ : String) -> Self
+pub fn Workspace::default_id(Self) -> String
+pub fn Workspace::from_slug(String) -> Self?
+pub fn Workspace::slug(Self) -> String
+pub fn Workspace::title(Self) -> String
 
 // Type aliases
 

@@ -26,7 +26,9 @@ test "website initial render includes bilingual homepage sections" {
   assert_true(has_text(commands, "Mo Workbench"))
   assert_true(has_text(commands, "Quick Start / 快速开始"))
   assert_true(has_text(commands, "快速开始方式"))
-  assert_true(
+  assert_true(has_text(commands, "moon install wzzc-dev/moui_cli/cmd/moui"))
+  assert_true(has_text(commands, "moui new my_app"))
+  assert_false(
     has_text(commands, "git clone git@github.com:moui-mbt/moui_example.git"),
   )
   assert_false(has_text(commands, "Release Readiness / 发布准备"))
@@ -85,8 +87,8 @@ test "website showcases lazy grid renders visible screenshots only" {
     .test_runtime(width=1180.0, height=760.0)
     .draw_commands()
   let showcase_titles = [
-    "Showcase", "iOS Component Gallery", "HarmonyOS Component Gallery", "Markdown Editor",
-    "Mo Workbench", "Excel Viewer", "WebView Demo", "Android Component Gallery",
+    "Showcase", "iOS Showcase", "HarmonyOS Showcase", "Markdown Editor",
+    "Mo Workbench", "Excel Viewer", "WebView Demo", "Android Showcase",
   ]
   let visible_titles = showcase_titles.filter(title => has_text(commands, title))
   assert_true(visible_titles.length() > 0)

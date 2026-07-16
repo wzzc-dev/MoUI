@@ -83,7 +83,7 @@ const between = (source, start, end, label) => {
 };
 
 const withPluginConfig = callback => {
-  const exampleRoot = resolve(repoRoot, "examples/component_gallery");
+  const exampleRoot = resolve(repoRoot, "examples/showcase");
   const configPath = resolve(
     exampleRoot,
     `.mobile-test-probe-${process.pid}-${Math.random().toString(16).slice(2)}.json`,
@@ -374,7 +374,7 @@ test("runtime input dispatchers reject reset generations and epochs", () => {
 
 test("mobile app config resolves the fixture without production defaults", () => {
   withPluginConfig(configPath => {
-    const app = readMobileApp("component_gallery", {
+    const app = readMobileApp("showcase", {
       workspaceRoot: repoRoot,
       mouiRoot,
       appConfigPath: configPath,
@@ -397,7 +397,7 @@ test("iOS managed resolver compiles the fixture into the generated app module", 
         resolve(mouiRoot, "mobile/ios/resolve-managed-shell.mjs"),
         "--workspace-root", repoRoot,
         "--moui-root", mouiRoot,
-        "--app", "component_gallery",
+        "--app", "showcase",
         "--app-config", configPath,
         "--renderer", "auto",
         "--shell-mode", "managed",
@@ -419,7 +419,7 @@ test("iOS managed resolver compiles the fixture into the generated app module", 
 
 test("Android managed resolver stages source, resources, and generated registry", () => {
   withPluginConfig(configPath => {
-    const app = readMobileApp("component_gallery", {
+    const app = readMobileApp("showcase", {
       workspaceRoot: repoRoot,
       mouiRoot,
       appConfigPath: configPath,
@@ -457,7 +457,7 @@ test("HarmonyOS managed resolver stages source, resources, and generated registr
         resolve(mouiRoot, "mobile/harmonyos/resolve-managed-shell.mjs"),
         "--workspace-root", repoRoot,
         "--moui-root", mouiRoot,
-        "--app", "component_gallery",
+        "--app", "showcase",
         "--app-config", configPath,
         "--renderer", "auto",
         "--output", shell,

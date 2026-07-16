@@ -1,5 +1,6 @@
 import {
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/linux" @linux_backend,
   "wzzc-dev/moui/backend/linux/wgpu" @linux_wgpu_backend,
   "examples/showcase/app" @showcase_app,

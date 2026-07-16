@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-Usage: scripts/build-mobile-android-apk.sh --app <counter|component_gallery> [options]
+Usage: scripts/build-mobile-android-apk.sh --app <counter|showcase> [options]
 
 Repository example wrapper over moui/scripts/mobile/build-android-apk.sh.
 USAGE
@@ -43,7 +43,7 @@ if [ -z "$app" ]; then
 fi
 
 case "$app" in
-  counter|component_gallery) ;;
+  counter|showcase) ;;
   *)
     echo "unknown repository mobile app: $app" >&2
     exit 2

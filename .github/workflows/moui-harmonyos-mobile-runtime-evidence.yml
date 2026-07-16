@@ -6,10 +6,10 @@ on:
       app:
         description: Mobile app id to smoke
         required: false
-        default: component_gallery
+        default: showcase
         type: choice
         options:
-          - component_gallery
+          - showcase
           - harmonyos_demo
       renderer:
         description: Skia renderer selection
@@ -28,7 +28,7 @@ on:
 
 jobs:
   harmonyos-mobile-runtime-evidence:
-    name: HarmonyOS Component Gallery runtime smoke
+    name: HarmonyOS MoUI Showcase runtime smoke
     # Self-hosted only: DevEco SDK, hdc, and a signed commercial/HVD host.
     runs-on: [self-hosted, harmonyos]
     timeout-minutes: 120
@@ -54,7 +54,7 @@ jobs:
       - name: Run HarmonyOS mobile runtime evidence
         shell: bash
         env:
-          MOUI_MOBILE_APP: ${{ inputs.app || 'component_gallery' }}
+          MOUI_MOBILE_APP: ${{ inputs.app || 'showcase' }}
           MOUI_SKIA_RENDERER: ${{ inputs.renderer || 'auto' }}
           MOUI_HARMONYOS_DEVICE: ${{ inputs.device }}
         run: |

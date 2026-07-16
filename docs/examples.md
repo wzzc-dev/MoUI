@@ -27,8 +27,8 @@ Use the [Non-render component cookbook](non-render-component-cookbook.md) when
 you want to copy a pattern rather than inspect a full example package. It maps
 forms, tables, shells, menus, host services, timers, clipboard, window events,
 and virtual lists to the examples that exercise them. For a single runnable
-surface that packs those host recipes plus canvas paint, start with
-`examples/platform_lab`.
+surface that packs those host recipes plus canvas paint, open Showcase's
+Platform workspace.
 
 Use [App templates](app-templates.md) when starting a new shared app package.
 Standalone apps should use `moui new` (see [Getting started](getting-started.md));
@@ -41,7 +41,7 @@ Mobile packaging metadata is intentionally split by publish boundary.
 Application authors keep app-owned identity, capability metadata, and native
 export contracts in their app `mobile.json`. In this repository the examples
 use `examples/<app>/mobile.json` for identity metadata and
-`moui/mobile/build-contracts.json` for Counter/Component Gallery compatibility
+`moui/mobile/build-contracts.json` for Counter/Showcase compatibility
 defaults. The reusable Gradle, JNI, CMake, SwiftUI/UIKit, Xcode, and prepare scripts
 live under the package-published `moui/mobile` and `moui/scripts/mobile`
 directories, so ordinary UI code still lives in `examples/<app>/app` and does
@@ -55,11 +55,9 @@ after changing repository example mobile metadata or contracts.
 | Agent Counter | Minimal agent-controllable runtime example | `examples/agent_counter/`, `examples/agent_counter/main/`, `examples/agent_counter/macos_skia/` | Counter app with semantics/command-intent flow for agent observation and control, plus a native macOS Skia entrypoint |
 | Counter | Minimal model/update/view app | `examples/counter/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages, Android/iOS embedded-session MoonBit entrypoints, and managed Kotlin/SwiftUI packaging; checked-in native projects are Release N fixtures |
 | Multi Window | Host-managed scene example | `examples/multi_window/app/` | Independent main and inspector runtimes through `HostWindowActions` (`open` / `focus` / `close`) plus `HostWindowRequestQueue` and `HostWindowSceneResolver`, with native macOS/Windows/Linux windows and a multi-canvas Web route |
-| Platform Lab | Effect / Subscription / canvas recipe lab | `examples/platform_lab/app/` | Timer, window resize, clipboard, file open, action-command shortcuts, and `@views.canvas` paint with thin macOS/Windows/Linux Skia and Web entrypoints |
 | HarmonyOS Demo | Standalone experimental HarmonyOS embedded Skia demo | `examples/harmonyos_demo/app/`, `examples/harmonyos_demo/harmonyos_skia/` | Platform-neutral viewport/tap feedback demo, HarmonyOS Skia embedded-session MoonBit exports, package-owned ArkTS/XComponent managed shell staging, and fallback HAP packaging smoke via `scripts/build-harmonyos-demo-app.sh --fallback-skia`; the checked-in `harmonyos_app` is a Release N fixture and runtime support remains pending matching-device evidence |
-| Component Gallery | Seven-platform component catalog | `examples/component_gallery/app/` | Grouped catalog for reusable `moui/views` controls, searchable sidebar/index, focused component demos for button, text inputs, checkbox, toggle, radio, segmented control, picker, slider, chips, badge, progress, banner, callout, state panels, toast/snackbar, stat card, avatar, divider, toolbar/status bar, surfaces, row/column, responsive grid, scroll view, and platform routes, adaptive mobile/desktop layout, default Skia desktop entrypoints named `macos`, `linux`, and `windows`, Android/iOS/HarmonyOS embedded-session entrypoints named `android`, `ios`, and `harmonyos`, a Web wasm-gc entrypoint named `web`, and managed Kotlin/SwiftUI/ArkTS shell packaging with Release N fixtures kept separate |
 | Button Freeze Probe | Native Skia button freeze repro | `examples/button_freeze_probe/app/` | Minimal `data_filter_bar` filter chips, red primary accent, repeated click counter, direct primary/tonal button comparison, native Skia macOS/Windows/Linux entrypoints |
-| Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | TEA-first `Model / Msg / update / view` app, public `views` constructors, built-in Counter/Todo examples, validating form fields and workflow bars, `ToastQueue`-backed toast stack/progress/status surfaces with dismiss state, `status_badge` feedback chips, helper-backed table/selectable-list data views with app-owned sort/page/column visibility state, route header/section-nav/sidebar/breadcrumb shells with app-owned route/deep-link history and route focus restore state, custom dialog/alert/sheet/menu surfaces, light Markdown preview, neutral core theme toggling, presentation, renderer capability status, advanced rendering demos, text diagnostics, interaction wiring. Showcase intentionally has no `moui_theme` dependency and is not an official design-system compatibility claim. |
+| Showcase | Unified component, pattern, platform, and diagnostic catalog | `examples/showcase/app/` | A root TEA shell over four isolated packages: Components owns focused `moui/views` demos; Patterns owns Counter/Todo, forms, data, navigation, feedback, and text/media workflows; Platform owns timer/window/clipboard/file/canvas recipes, route/session facts, and Mobile Service Probe; Diagnostics alone imports runtime/render internals for inspector and advanced rendering. Web, desktop Skia/WGPU/Sun, and Android/iOS/HarmonyOS entrypoints all call the same root app. Showcase intentionally has no `moui_theme` dependency and is not an official design-system compatibility claim. |
 | Design Systems | Addon diagnostic source-mapped design-system preview and first-party theme sampler | `examples/design_systems/app/`, `examples/design_systems/{web_wasm,macos_skia,windows_skia,linux_skia}/` | Material, Carbon, Primer, and Fluent switching through the `moui_theme/material`, `moui_theme/carbon`, `moui_theme/primer`, and `moui_theme/fluent` entrypoints over shared `moui_theme/common` models, Sickle switching through `moui_theme/sickle` as a first-party theme addon, light/dark/high-contrast/system variants for official source-mapped presets, compact/standard/comfortable density, semantic palette roles, typography specimen, spacing/density grid, component-token matrix sampling, component style bundle usage, custom inheritance/override API, Web and native Skia host entrypoints, coverage/parity status labels, and explicit source-mapped preview wording rather than official-complete claims |
 | Settings | Settings shell pattern | `examples/settings/app/` | Form sections, sidebar navigation, segmented theme mode, toggle preferences, saveable state snapshot/restore |
 | Data Table | Operational data browser pattern | `examples/data_table/app/` | Search/filter toolbar pattern, status chips, `ColumnVisibilityState`, sortable table headers with `DataSortState`, app-owned column width/order state, row selection with `SelectionState`, selection toolbar actions, tree filters, loading/error/empty states, `PaginationState`, public `pagination` and `detail_panel`, model-level filtering and data slicing |
@@ -71,7 +69,6 @@ after changing repository example mobile metadata or contracts.
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
 | Code Editor | Native code editor shell and language-provider prototype | `examples/code_editor/app/` | Native `moui_richtext` editor shell with activity rail, file tab, line-number gutter, status bar, tokenizer-backed highlighting, bracket matching, auto indentation, multi-cursor edits, hidden find/replace overlay, runtime action-command shortcuts, completion overlay, diagnostics, hover, go-to-definition, main-editor Diff mode, and custom language/provider registration through app-owned callbacks |
 | Mo Workbench | Native-Skia-first desktop agent dogfood app | `examples/mo_workbench/app/` | DeepSeek-GUI-inspired multi-workspace shell with Code chat, starter cards, backend-aware OpenSeek/ACP controls, responsive left rail, optional right inspector, low-noise status bar, grouped Settings form, static Write/Connect Phone/Scheduled Tasks/Plugins surfaces, injected stub backend, OpenSeek native transport, generic ACP stdio native transport, macOS Skia native entrypoint |
-| MoUI Quick Example | Minimal MoUI counter for quick start exploration | `examples/moui_example/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages; macOS / Windows / Linux Skia and Web wasm-gc entrypoints (`readme.mbt.md`) |
 
 Focused Website checks:
 
@@ -191,79 +188,6 @@ The fallback HAP command validates MoonBit C/native glue/staged package shape
 only. Use `scripts/build-harmonyos-demo-app.sh` without `--fallback-skia` plus a
 matching device/emulator smoke before claiming HarmonyOS Skia first-frame
 runtime support.
-
-## Component Gallery
-
-Component Gallery is the seven-platform component catalog. It complements
-the older desktop-oriented framework Showcase with a grouped, searchable demo
-surface for reusable `moui/views` controls. Its shared package keeps the
-model/update/view logic in `examples/component_gallery/app`, while each platform
-entrypoint only creates the runtime, selects an active `PlatformId`, and calls
-the matching Skia backend, embedded session, or Web host.
-
-The shared app is split for reuse: `model.mbt` owns component selection and
-update logic, `catalog.mbt` owns grouped component metadata and search,
-`platforms.mbt` owns seven-host route metadata, `view.mbt` owns the responsive
-catalog shell, `component_views.mbt` dispatches the active component demo, and
-the focused demo content is split across `component_welcome.mbt`,
-`component_controls.mbt`, `component_inputs.mbt`, `component_choices.mbt`,
-`component_feedback.mbt`, `component_guidance.mbt`, `component_display.mbt`,
-`component_layout.mbt`, `component_platforms.mbt`, and shared helpers in
-`component_shared.mbt`.
-
-This example deliberately does not use `_skia` in its entrypoint directory
-names. In `examples/component_gallery`, `macos`, `linux`, `windows`, `android`,
-`ios`, and `harmonyos` mean the default Skia route. The Web wasm-gc entrypoint
-is named `web`. Future non-default renderer routes should spell out the
-renderer in the directory name, such as `macos_wgpu`.
-
-Focused Component Gallery checks:
-
-```sh
-moon test examples/component_gallery/app --target native
-moon check examples/component_gallery/macos --target native
-moon check examples/component_gallery/windows --target native
-moon check examples/component_gallery/linux --target native
-moon build examples/component_gallery/web --target wasm-gc
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/component_gallery/android --target native
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/component_gallery/ios --target native
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/component_gallery/harmonyos --target native
-bash -n scripts/build-component-gallery-android-apk.sh
-bash -n scripts/build-component-gallery-ios-app.sh
-bash -n scripts/build-component-gallery-harmonyos-hap.sh
-scripts/build-component-gallery-android-apk.sh --fallback-skia
-scripts/build-component-gallery-ios-app.sh --fallback-skia
-scripts/build-component-gallery-harmonyos-hap.sh --fallback-skia
-```
-
-The canonical mobile commands are
-`scripts/build-mobile-android-apk.sh --app component_gallery` and
-`scripts/build-mobile-ios-app.sh --app component_gallery`, plus
-`scripts/build-mobile-harmonyos-hap.sh --app component_gallery` for HarmonyOS;
-the app-specific scripts are compatibility wrappers. Component Gallery mobile
-runtime evidence must include scroll input in the mobile runtime manifest.
-
-Run desktop entrypoints from the repository root:
-
-```sh
-moon run examples/component_gallery/macos --target native
-moon run examples/component_gallery/linux --target native
-moon run examples/component_gallery/windows --target native
-```
-
-Build and serve the Web entrypoint from the repository root:
-
-```sh
-moon build examples/component_gallery/web --target wasm-gc
-python3 -m http.server 8080 --bind 127.0.0.1
-```
-
-Then open `http://127.0.0.1:8080/examples/component_gallery/web/`.
-
-The Android and iOS shells can be packaged as real app shells. Fallback APK and
-`.app` commands remain packaging evidence only; real mobile runtime support
-claims still require non-fallback builds plus matching device/simulator
-first-frame, input, and lifecycle smoke evidence.
 
 ## Button Freeze Probe
 
@@ -630,83 +554,6 @@ moon build examples/mo_workbench/macos_skia --target native
 ```
 
 See [Mo Workbench](mo-workbench.md) for the app architecture, current slice, connector boundary, and transport follow-up notes.
-
-## MoUI Quick Example
-
-MoUI Quick Example (`examples/moui_example`) is a minimal counter app for quick start exploration. It keeps the same `Model / Msg / update / view` pattern as the main Counter example but with a minimal footprint for developers who want to understand the MoUI basics in one file.
-
-The app logic lives in `examples/moui_example/app/` and the code closely mirrors the main Counter example:
-
-```moonbit
-using @views {button, card, center, column, row, text}
-
-pub struct Model {
-  count : Int
-}
-
-pub(all) enum Msg {
-  Increment
-  Decrement
-  Reset
-}
-
-pub fn Model::new() -> Model {
-  { count: 0 }
-}
-
-pub fn update(model : Model, msg : Msg) -> Model {
-  match msg {
-    Increment => { count: model.count + 1 }
-    Decrement => { count: model.count - 1 }
-    Reset => { count: 0 }
-  }
-}
-
-pub fn view(model : Model) -> @moui.View[Msg] {
-  center(
-    card(
-      column([
-        text("MoUI Quick Example").title(),
-        text("Count: \{model.count}").title(),
-        row([
-          button("-", on_click=Decrement),
-          button("Reset", on_click=Reset),
-          button("+", on_click=Increment),
-        ]),
-      ]),
-    ),
-  )
-}
-
-pub fn program() -> @moui.Program[Model, Msg] {
-  @moui.Program::simple(init=Model::new(), update~, view~)
-}
-```
-
-Run instructions and platform notes: `examples/moui_example/readme.mbt.md`.
-
-Focused MoUI Quick Example checks:
-
-```sh
-moon test examples/moui_example/app --target native
-moon build examples/moui_example/web_wasm --target wasm-gc
-moon check examples/moui_example/macos_skia --target native
-moon check examples/moui_example/windows_skia --target native
-moon check examples/moui_example/linux_skia --target native
-```
-
-Windows Skia run (after MSVC setup, same PowerShell session):
-
-```powershell
-. .\scripts\windows\msvc_env.ps1
-moon run examples/moui_example/windows_skia --target native
-```
-
-Linux Skia run:
-
-```sh
-moon run examples/moui_example/linux_skia --target native
-```
 
 ## Web Wasm-GC
 

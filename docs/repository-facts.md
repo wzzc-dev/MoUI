@@ -25,7 +25,6 @@ This file is generated from repository manifests and validator reports.
 | ./examples/counter |
 | ./examples/multi_window |
 | ./examples/harmonyos_demo |
-| ./examples/component_gallery |
 | ./examples/button_freeze_probe |
 | ./examples/showcase |
 | ./examples/design_systems |
@@ -71,7 +70,6 @@ This file is generated from repository manifests and validator reports.
 | Counter | examples/counter | no |
 | Multi Window | examples/multi_window | no |
 | HarmonyOS Demo | examples/harmonyos_demo | no |
-| Component Gallery | examples/component_gallery | yes |
 | Button Freeze Probe | examples/button_freeze_probe | no |
 | Showcase | examples/showcase | yes |
 | Design Systems | examples/design_systems | no |
@@ -99,12 +97,12 @@ This file is generated from repository manifests and validator reports.
 
 ## Documentation Catalog
 
-Published documents: 43.
+Published documents: 44.
 
 | Group | Documents |
 |---|---:|
 | Get Started (get-started) | 5 |
-| Guides (guides) | 8 |
+| Guides (guides) | 9 |
 | Examples (examples) | 4 |
 | Platforms (platforms) | 13 |
 | Architecture & API (architecture-api) | 4 |

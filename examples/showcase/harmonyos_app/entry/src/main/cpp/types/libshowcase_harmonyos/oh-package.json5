@@ -1,0 +1,6 @@
+{
+  "name": "libshowcase_harmonyos.so",
+  "types": "./Index.d.ts",
+  "version": "1.0.0",
+  "description": "MoUI Showcase HarmonyOS native NAPI bridge"
+}

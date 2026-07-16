@@ -157,7 +157,7 @@ pub fn ios_readiness() -> IosBackendReadiness {
       "physical-device and real VoiceOver observations remain open", "GPU seven-gate promotion is not claimed (gpuPromotionEvidence.claimed=false)",
     ],
     next_steps: [
-      "re-run Component Gallery managed SwiftUI smoke on Simulator without shell probes",
+      "re-run MoUI Showcase managed SwiftUI smoke on Simulator without shell probes",
       "record actualPresenterRoute metal-direct evidence in checks/platforms/ios.json",
       "land GPU seven-gate claim only after matching-host promotion manifests pass",
     ],

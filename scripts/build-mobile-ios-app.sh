@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-Usage: scripts/build-mobile-ios-app.sh --app <counter|component_gallery> [options]
+Usage: scripts/build-mobile-ios-app.sh --app <counter|showcase> [options]
 
 Repository example wrapper over moui/scripts/mobile/build-ios-app.sh.
 USAGE
@@ -48,10 +48,10 @@ case "$app" in
     scheme="MoUICounter"
     product_name="MoUICounter"
     ;;
-  component_gallery)
-    xcode_project="$repo_root/examples/component_gallery/ios_app/ComponentGallery.xcodeproj"
-    scheme="ComponentGallery"
-    product_name="ComponentGallery"
+  showcase)
+    xcode_project="$repo_root/examples/showcase/ios_app/MoUIShowcase.xcodeproj"
+    scheme="MoUIShowcase"
+    product_name="MoUIShowcase"
     ;;
   *)
     echo "unknown repository mobile app: $app" >&2

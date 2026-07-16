@@ -335,8 +335,9 @@ Android、iOS 和 HarmonyOS 均已通过非 fallback Skia 构建在匹配设备�
 
 | 平台 | status | 路径 |
 |------|--------|------|
-| iOS Simulator Component Gallery | Release N UIKit shell **`passed`**; SwiftUI managed shell re-run pending | `artifacts/mobile-runtime/ios/component_gallery/` |
-| Android emulator Component Gallery | Release N legacy shell **`passed`**; managed shell re-run pending | `artifacts/mobile-runtime/android/component_gallery/` |
+| Historical iOS Component Gallery | Release N UIKit shell **`passed`**; not Showcase evidence | `artifacts/mobile-runtime/ios/component_gallery/` |
+| Historical Android Component Gallery | Release N legacy shell **`passed`**; not Showcase evidence | `artifacts/mobile-runtime/android/component_gallery/` |
+| Showcase managed mobile shells | Android/iOS/HarmonyOS matching-device evidence pending | `artifacts/mobile-runtime/<platform>/showcase/` |
 | HarmonyOS commercial/device | canonical ArkTS shell **`partial`**; signed full-suite rerun pending | 需 `MOUI_HARMONYOS_SIGNING_CONFIG(_FILE)` + `scripts/harmonyos-mobile-runtime-evidence.sh` |
 
 编排脚本：`scripts/ios-mobile-runtime-evidence.sh`、

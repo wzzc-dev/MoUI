@@ -26,7 +26,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 artifact_root="${MOUI_MOBILE_SHELL_CI_ROOT:-$repo_root/artifacts/mobile-shell-ci}"
 project_root="$artifact_root/$platform/ejected/project"
 build_root="$artifact_root/$platform/ejected/build"
-config="$repo_root/examples/component_gallery/.mobile-ejected-build-$$.json"
+config="$repo_root/examples/showcase/.mobile-ejected-build-$$.json"
 
 cleanup() {
   rm -f "$config"
@@ -53,12 +53,12 @@ case "$platform" in
       --workspace-root "$repo_root" \
       --moui-root "$repo_root/moui" \
       --skia-root "$repo_root/moui_skia" \
-      --app component_gallery \
+      --app showcase \
       --app-config "$config" \
       --android-project "$shell_root" \
       --ejected-shell \
       --build-dir "$build_root" \
-      --output "$build_root/ComponentGallery.apk" \
+      --output "$build_root/MoUIShowcase.apk" \
       "$@"
     ;;
   ios)
@@ -67,14 +67,14 @@ case "$platform" in
       --workspace-root "$repo_root" \
       --moui-root "$repo_root/moui" \
       --skia-root "$repo_root/moui_skia" \
-      --app component_gallery \
+      --app showcase \
       --app-config "$config" \
-      --xcode-project "$shell_root/ComponentGallery.xcodeproj" \
-      --scheme ComponentGallery \
-      --product-name ComponentGallery \
+      --xcode-project "$shell_root/MoUIShowcase.xcodeproj" \
+      --scheme MoUIShowcase \
+      --product-name MoUIShowcase \
       --ejected-shell \
       --build-dir "$build_root" \
-      --output "$build_root/ComponentGallery.app" \
+      --output "$build_root/MoUIShowcase.app" \
       "$@"
     ;;
   harmonyos)
@@ -82,12 +82,12 @@ case "$platform" in
       --workspace-root "$repo_root" \
       --moui-root "$repo_root/moui" \
       --skia-root "$repo_root/moui_skia" \
-      --app component_gallery \
+      --app showcase \
       --app-config "$config" \
       --harmonyos-project "$shell_root" \
       --ejected-shell \
       --build-dir "$build_root" \
-      --output "$build_root/ComponentGallery.hap" \
+      --output "$build_root/MoUIShowcase.hap" \
       "$@"
     ;;
 esac

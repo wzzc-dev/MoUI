@@ -7,22 +7,30 @@ struct FileBudget {
 ///|
 fn file_budgets() -> Array[FileBudget] {
   [
-    { path: "examples/showcase/app/showcase_app_test.mbt", max_lines: 410 },
     {
-      path: "examples/showcase/app/showcase_examples_app_test.mbt",
-      max_lines: 105,
+      path: "examples/showcase/app/showcase_route_app_test.mbt",
+      max_lines: 80,
     },
     {
-      path: "examples/showcase/app/showcase_test_helpers_test.mbt",
-      max_lines: 350,
+      path: "examples/showcase/app/showcase_composition_app_test.mbt",
+      max_lines: 80,
     },
     {
-      path: "examples/showcase/app/showcase_diagnostics_app_test.mbt",
-      max_lines: 420,
+      path: "examples/showcase/app/showcase_lifecycle_app_test.mbt",
+      max_lines: 80,
     },
     {
-      path: "examples/showcase/app/showcase_navigation_app_test.mbt",
-      max_lines: 405,
+      path: "examples/showcase/app/components/components_app_test.mbt",
+      max_lines: 720,
+    },
+    { path: "examples/showcase/app/platform/app.mbt", max_lines: 720 },
+    {
+      path: "examples/showcase/app/diagnostics/app.mbt",
+      max_lines: 720,
+    },
+    {
+      path: "examples/showcase/app/diagnostics/components.mbt",
+      max_lines: 960,
     },
     {
       path: "examples/markdown_editor/app/editor_snapshot_wbtest.mbt",

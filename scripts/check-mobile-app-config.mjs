@@ -371,7 +371,7 @@ const validateAndroidManagedShell = failures => {
   for (const projectRoot of [
     "moui/mobile/android/template",
     "examples/counter/android_app",
-    "examples/component_gallery/android_app",
+    "examples/showcase/android_app",
   ]) {
     const build = readRepoFile(`${projectRoot}/build.gradle`);
     if (!build.includes('id "com.android.application" version "9.2.1"')) {
@@ -428,7 +428,7 @@ const validateAndroidManagedShell = failures => {
     failures.push("runtime recorder must derive scroll evidence from its smoke contract, not schema v2 supportsScroll");
   }
   requireTokens(failures, "mobile runtime scroll contract", recorder, [
-    'appConfig.id === "component_gallery"',
+    'appConfig.id === "showcase"',
     "!platformConfig.exports?.dispatchScroll",
   ]);
   const androidStart = recorder.indexOf("const runAndroidSmoke");

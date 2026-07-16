@@ -20,8 +20,10 @@ GitHub source: https://github.com/wzzc-dev/MoUI/tree/main/examples/markdown_edit
 
 ## Showcase
 
-Showcase is the MoUI visual component catalog. It covers layout, input,
-rendering, and platform smoke paths through a single shared app package.
+Showcase is MoUI's single learning and diagnostic application. Its shared app
+is split into four explicit workspaces: Components for focused reusable views,
+Patterns for application workflows, Platform for host services and mobile
+probes, and Diagnostics for runtime/renderer inspection.
 
 GitHub source: https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase
 
@@ -30,11 +32,3 @@ GitHub source: https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase
 Excel Viewer renders MoonBit Excel files with MoUI data table components.
 
 GitHub source: https://github.com/wzzc-dev/MoUI/tree/main/examples/excel
-
-## MoUI Quick Example
-
-A minimal counter app that demonstrates the core MoUI patterns in the smallest
-possible surface: Model, Msg, update, view, and Program::simple. This is a
-standalone repository at `moui-mbt/moui_example`.
-
-GitHub source: https://github.com/moui-mbt/moui_example

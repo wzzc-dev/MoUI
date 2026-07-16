@@ -176,13 +176,13 @@ owning-package boundaries clear.
   `ANativeWindow` RGBA pixel presenter and preflight summary. Use
   `MOUI_SKIA_PLATFORM=android` plus `MOUI_SKIA_ARCH=<arch>` for Android Skia
   cross-build checks.
-- `examples/counter/android_app` and `examples/component_gallery/android_app`:
+- `examples/counter/android_app` and `examples/showcase/android_app`:
   repository-only Gradle metadata fixtures for the Release N matrix. Normal
   builds stage the package-published `moui/mobile/android` managed
   shell/JNI/CMake template. The
   Java/name-mangled-JNI shell is frozen under `moui/mobile/legacy/android` as a
   Release N fixture and requires `--legacy-java-shell`. Use
-  `scripts/build-mobile-android-apk.sh --app <counter|component_gallery>
+  `scripts/build-mobile-android-apk.sh --app <counter|showcase>
   --fallback-skia` for packaging/JNI/CMake smoke only; use the non-fallback path
   plus `record-mobile-runtime-smoke.mjs` matching device/emulator evidence before
   claiming Android runtime support.
@@ -196,12 +196,12 @@ owning-package boundaries clear.
   `UIImageView` RGBA pixel presenter and preflight summary. Use
   `MOUI_SKIA_PLATFORM=iosSim` plus `MOUI_SKIA_ARCH=<arch>` for iOS Simulator
   Skia cross-build checks.
-- `examples/counter/ios_app` and `examples/component_gallery/ios_app`:
+- `examples/counter/ios_app` and `examples/showcase/ios_app`:
   repository-only Xcode fixtures for the Release N matrix. Normal builds stage
   the package-published `moui/mobile/ios` SwiftUI managed shell. The frozen Release
   N UIKit fixture lives under `moui/mobile/ios/legacy` and requires
   `--legacy-uikit-shell`. Use
-  `scripts/build-mobile-ios-app.sh --app <counter|component_gallery>
+  `scripts/build-mobile-ios-app.sh --app <counter|showcase>
   --fallback-skia` for packaging/native-stub smoke only; use the non-fallback
   path plus `record-mobile-runtime-smoke.mjs` matching simulator/device evidence
   before claiming iOS runtime support. Keep `UILaunchScreen` in Info.plists;
@@ -226,10 +226,10 @@ owning-package boundaries clear.
   `scripts/build-harmonyos-demo-app.sh --fallback-skia` for packaging/native-glue
   smoke only; use the non-fallback path plus matching device/emulator evidence
   before claiming HarmonyOS runtime support.
-- `examples/component_gallery/harmonyos` is the managed Component Gallery
-  entrypoint; `examples/component_gallery/harmonyos_app` is the Release N
+- `examples/showcase/harmonyos_skia` is the managed Showcase
+  entrypoint; `examples/showcase/harmonyos_app` is the Release N
   app-owned project fixture.
-- Component Gallery's mobile entrypoints open the shared `Mobile Service Probe`
+- Showcase's mobile entrypoints open the Platform workspace's `Mobile Service Probe`
   for matching-host IME, system text clipboard, accessibility action,
   rotation/resize, scroll, and async-image evidence. The mobile recorder only
   accepts clipboard write/read, two distinct surface sizes, accessibility

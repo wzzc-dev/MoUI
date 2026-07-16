@@ -247,15 +247,15 @@ fn website_showcase_entries() -> Array[WebsiteShowcaseEntry] {
     },
     {
       slug: "ios-componentgallery",
-      title: "iOS Component Gallery",
-      subtitle: "Reusable controls on iOS",
-      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/component_gallery",
+      title: "iOS Showcase",
+      subtitle: "Showcase mobile workspace on iOS",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase",
     },
     {
       slug: "harmonyos-componentgallery",
-      title: "HarmonyOS Component Gallery",
-      subtitle: "Reusable controls on HarmonyOS",
-      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/component_gallery",
+      title: "HarmonyOS Showcase",
+      subtitle: "Showcase mobile workspace on HarmonyOS",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase",
     },
     {
       slug: "markdown_editor",
@@ -283,9 +283,9 @@ fn website_showcase_entries() -> Array[WebsiteShowcaseEntry] {
     },
     {
       slug: "android-componentgallery",
-      title: "Android Component Gallery",
-      subtitle: "Reusable controls on Android",
-      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/component_gallery",
+      title: "Android Showcase",
+      subtitle: "Showcase mobile workspace on Android",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase",
     },
   ]
 }
@@ -1047,7 +1047,13 @@ fn Model::quick_start_placeholder(
   theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[Msg] {
-  let code_text = "git clone git@github.com:moui-mbt/moui_example.git"
+  let code_text =
+    #|moon install wzzc-dev/moui_cli/cmd/moui
+    #|moui new my_app
+    #|cd my_app
+    #|moon update
+    #|moon check
+    #|moon run macos_skia --target native
   let mono_font = @text.FontSpec::new(
     size=if width < 400.0 { 12.0 } else { 13.5 },
     weight=600,
@@ -1064,17 +1070,13 @@ fn Model::quick_start_placeholder(
           width=118.0,
         ),
         container(
-          row(
+          column(
             [
-              text(code_text, width=width - 84.0, height=34.0)
+              text(code_text, width=width - 72.0, height=118.0)
               .font(mono_font)
               .foreground(theme.palette.foreground),
               button(
-                if copied {
-                  "✓"
-                } else {
-                  "Copy"
-                },
+                if copied { "✓" } else { "Copy" },
                 on_click=CopyText(code_text),
                 variant=if copied {
                   @views.ButtonVariant::Primary
@@ -1087,10 +1089,10 @@ fn Model::quick_start_placeholder(
               ),
             ],
             spacing=6.0,
-            align=@views.CrossAlign::Center,
+            align=@views.CrossAlign::Start,
           ),
           width=width - 36.0,
-          height=40.0,
+          height=162.0,
           background=theme.palette.surface_variant.multiply_alpha(0.5),
           corner_radius=6.0,
           theme~,
@@ -1099,7 +1101,7 @@ fn Model::quick_start_placeholder(
         wrapped_caption(
           theme,
           width - 36.0,
-          "Clones the standalone `moui_example` counter repo (recommended starting template, pins `wzzc-dev/moui@0.1.7`).",
+          "Generates a standalone app with shared logic and thin Web/native entrypoints. Use windows_skia or linux_skia on those hosts.",
           12.0,
           20.0,
         ),
@@ -1108,7 +1110,7 @@ fn Model::quick_start_placeholder(
       align=@views.CrossAlign::Start,
     ),
     width~,
-    height=200.0,
+    height=322.0,
     background=soft_panel_background(theme),
     corner_radius=theme.radius_scale.lg,
     theme~,

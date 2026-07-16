@@ -40,7 +40,7 @@ promotion claim** (`gpuPromotionEvidence` / `artifacts/gpu-promotion/...`).
 - `moui/backend/ios/skia` wraps `moui/render/skia` in a `HostWindowRenderer`
   and presents copied RGBA frames to a UIKit `UIImageView` child when compiled
   for iOS or iOS Simulator.
-- `examples/counter/ios_skia` and `examples/component_gallery/ios` are thin
+- `examples/counter/ios_skia` and `examples/showcase/ios_skia` are thin
   MoonBit entrypoints. Schema v2 builds expose the fixed Mobile Runtime ABI v1
   symbols; app-specific symbol maps are confined to the Release N legacy path.
 - `moui/mobile/ios` owns the canonical Swift package, SwiftUI scene lifecycle,
@@ -66,10 +66,10 @@ Use fallback-safe checks for routine scaffold work:
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test moui/backend/ios --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test moui/backend/ios/skia --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/counter/ios_skia --target native
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/component_gallery/ios --target native
+MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/showcase/ios_skia --target native
 sh moui/mobile/ios/tests/run-ios-managed-shell-tests.sh
 scripts/build-mobile-ios-app.sh --app counter --fallback-skia
-scripts/build-mobile-ios-app.sh --app component_gallery --fallback-skia
+scripts/build-mobile-ios-app.sh --app showcase --fallback-skia
 scripts/build-mobile-ios-app.sh --app counter --fallback-skia --legacy-uikit-shell
 ```
 
@@ -131,17 +131,17 @@ Build the experimental Counter iOS Simulator app from the repository root:
 scripts/build-mobile-ios-app.sh --app counter
 ```
 
-Build Component Gallery with the same route:
+Build Showcase with the same route:
 
 ```sh
-scripts/build-mobile-ios-app.sh --app component_gallery
+scripts/build-mobile-ios-app.sh --app showcase
 ```
 
 The default output is:
 
 ```text
 artifacts/ios/counter/MoUICounter.app
-artifacts/ios/component_gallery/ComponentGallery.app
+artifacts/ios/showcase/MoUIShowcase.app
 ```
 
 Useful options:
@@ -239,7 +239,7 @@ catalog-backed recorder automates the local evidence shape:
 
 ```sh
 node scripts/record-mobile-runtime-smoke.mjs --platform ios --app counter --require-passed
-node scripts/record-mobile-runtime-smoke.mjs --platform ios --app component_gallery --require-passed
+node scripts/record-mobile-runtime-smoke.mjs --platform ios --app showcase --require-passed
 ```
 
 The iOS recorder uses Meta `idb` because stock Apple `simctl` has no tap or
@@ -257,7 +257,7 @@ selects the first enabled button with a valid frame, taps its center, and sends
 a real HOME event for lifecycle detach. Input passes only when the current
 launched PID logs pointer receipt and the before/after pixels change.
 
-Component Gallery opens `Mobile Service Probe` directly on iOS. The recorder
+Showcase opens `platform/mobile-service-probe` directly on iOS. The recorder
 finds `Service probe text` and `Activate service probe` by accessibility label,
 uses `idb ui text`, drives the native Select/Copy/Paste menu, seeds and reads the
 Simulator pasteboard with `simctl pbcopy`/`pbpaste`, scrolls the page, and waits
@@ -273,7 +273,8 @@ activate VoiceOver does not satisfy accessibility focus/action evidence.
 The 2026-07-14 local iPhone 17 Pro Simulator Component Gallery smoke for the
 Release N UIKit shell is schema-valid **`status=passed`** at
 `artifacts/mobile-runtime/ios/component_gallery/mobile-runtime-smoke.json`
-(validated with `--require-passed`).
+(validated with `--require-passed`). This is historical evidence; fresh
+Showcase managed-shell evidence remains pending.
 
 It records lifecycle attach/detach, nonblank first frame, resize, representative
 input + scroll, IME, clipboard write/read, accessibility tree/focus/action,
@@ -300,7 +301,7 @@ Build the device artifact first:
 
 ```sh
 scripts/build-mobile-ios-app.sh \
-  --app component_gallery --sdk iphoneos --arch arm64
+  --app showcase --sdk iphoneos --arch arm64
 ```
 
 The current builder intentionally emits an unsigned bundle. Provision and sign

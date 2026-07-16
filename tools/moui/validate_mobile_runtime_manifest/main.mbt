@@ -193,7 +193,7 @@ fn assert_observation_present(
 
 ///|
 fn valid_app(app : String) -> Bool {
-  app == "counter" || app == "component_gallery" || app == "harmonyos_demo"
+  app == "counter" || app == "showcase" || app == "harmonyos_demo"
 }
 
 ///|
@@ -481,7 +481,7 @@ fn validate_manifest_fields(
   }
   let app = require_string(manifest, "app", "app", failures)
   if app != "" && !valid_app(app) {
-    failures.push("app must be counter, component_gallery, or harmonyos_demo")
+    failures.push("app must be counter, showcase, or harmonyos_demo")
   }
   let status = require_string(manifest, "status", "status", failures)
   if status != "passed" && status != "partial" && status != "failed" {
@@ -595,7 +595,7 @@ fn validate_manifest_fields(
       ] {
       assert_yes(observations, field, failures)
     }
-    if app == "component_gallery" {
+    if app == "showcase" {
       assert_yes(observations, "scrollInput", failures)
     }
   }

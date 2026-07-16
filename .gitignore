@@ -31,4 +31,4 @@ examples/*/android_app/app/.cxx/
 examples/*/android_app/app/build/
 .playwright-cli/*
 output/*
-examples/component_gallery/harmonyos_app/entry/.cxx/*
+examples/showcase/harmonyos_app/entry/.cxx/*

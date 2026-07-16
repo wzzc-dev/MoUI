@@ -42,7 +42,7 @@ esac
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 artifact_root="${MOUI_MOBILE_SHELL_CI_ROOT:-$repo_root/artifacts/mobile-shell-ci}"
-legacy_config="$repo_root/moui/mobile/legacy/fixtures/component_gallery.mobile.json"
+legacy_config="$repo_root/moui/mobile/legacy/fixtures/showcase.mobile.json"
 
 run_static() {
   node --test "$repo_root/moui/scripts/mobile/plugin-manifest.test.mjs"
@@ -64,29 +64,29 @@ run_managed() {
     android)
       "$repo_root/moui/scripts/mobile/build-android-apk.sh" \
         --workspace-root "$repo_root" --moui-root "$repo_root/moui" \
-        --skia-root "$repo_root/moui_skia" --app component_gallery \
-        --app-config "$repo_root/examples/component_gallery/mobile.json" \
+        --skia-root "$repo_root/moui_skia" --app showcase \
+        --app-config "$repo_root/examples/showcase/mobile.json" \
         --build-dir "$artifact_root/android/managed" \
-        --output "$artifact_root/android/managed/ComponentGallery.apk" \
+        --output "$artifact_root/android/managed/MoUIShowcase.apk" \
         "${build_args[@]}"
       ;;
     ios)
       XCODE_XCCONFIG_FILE="${XCODE_XCCONFIG_FILE:-$repo_root/moui/mobile/test-probe/tests/NoCodeSign.xcconfig}" \
         "$repo_root/moui/scripts/mobile/build-ios-app.sh" \
         --workspace-root "$repo_root" --moui-root "$repo_root/moui" \
-        --skia-root "$repo_root/moui_skia" --app component_gallery \
-        --app-config "$repo_root/examples/component_gallery/mobile.json" \
+        --skia-root "$repo_root/moui_skia" --app showcase \
+        --app-config "$repo_root/examples/showcase/mobile.json" \
         --build-dir "$artifact_root/ios/managed" \
-        --output "$artifact_root/ios/managed/ComponentGallery.app" \
+        --output "$artifact_root/ios/managed/MoUIShowcase.app" \
         "${build_args[@]}"
       ;;
     harmonyos)
       "$repo_root/moui/scripts/mobile/build-harmonyos-hap.sh" \
         --workspace-root "$repo_root" --moui-root "$repo_root/moui" \
-        --skia-root "$repo_root/moui_skia" --app component_gallery \
-        --app-config "$repo_root/examples/component_gallery/mobile.json" \
+        --skia-root "$repo_root/moui_skia" --app showcase \
+        --app-config "$repo_root/examples/showcase/mobile.json" \
         --build-dir "$artifact_root/harmonyos/managed" \
-        --output "$artifact_root/harmonyos/managed/ComponentGallery.hap" \
+        --output "$artifact_root/harmonyos/managed/MoUIShowcase.hap" \
         "${build_args[@]}"
       ;;
   esac
@@ -107,25 +107,25 @@ run_legacy() {
     android)
       "$repo_root/moui/scripts/mobile/build-android-apk.sh" \
         --workspace-root "$repo_root" --moui-root "$repo_root/moui" \
-        --skia-root "$repo_root/moui_skia" --app component_gallery \
+        --skia-root "$repo_root/moui_skia" --app showcase \
         --app-config "$legacy_config" \
-        --android-project "$repo_root/examples/component_gallery/android_app" \
+        --android-project "$repo_root/examples/showcase/android_app" \
         --legacy-java-shell --compile-sdk 35 \
         --build-dir "$artifact_root/android/legacy" \
-        --output "$artifact_root/android/legacy/ComponentGallery.apk" \
+        --output "$artifact_root/android/legacy/MoUIShowcase.apk" \
         "${build_args[@]}"
       ;;
     ios)
       XCODE_XCCONFIG_FILE="${XCODE_XCCONFIG_FILE:-$repo_root/moui/mobile/test-probe/tests/NoCodeSign.xcconfig}" \
         "$repo_root/moui/scripts/mobile/build-ios-app.sh" \
         --workspace-root "$repo_root" --moui-root "$repo_root/moui" \
-        --skia-root "$repo_root/moui_skia" --app component_gallery \
+        --skia-root "$repo_root/moui_skia" --app showcase \
         --app-config "$legacy_config" \
-        --xcode-project "$repo_root/examples/component_gallery/ios_app/ComponentGallery.xcodeproj" \
-        --scheme ComponentGallery --product-name ComponentGallery \
+        --xcode-project "$repo_root/examples/showcase/ios_app/MoUIShowcase.xcodeproj" \
+        --scheme MoUIShowcase --product-name MoUIShowcase \
         --legacy-uikit-shell \
         --build-dir "$artifact_root/ios/legacy" \
-        --output "$artifact_root/ios/legacy/ComponentGallery.app" \
+        --output "$artifact_root/ios/legacy/MoUIShowcase.app" \
         "${build_args[@]}"
       ;;
     harmonyos)

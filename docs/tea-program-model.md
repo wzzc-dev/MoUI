@@ -5,7 +5,7 @@
 
 **App-author recipes** (timer, clipboard, file open, window resize, shortcuts)
 live in [Non-render component cookbook](non-render-component-cookbook.md) and
-the runnable `examples/platform_lab` package. This page is the lifecycle and
+the runnable Showcase Platform package. This page is the lifecycle and
 semantics reference, not a copy-paste cookbook.
 
 MoUI app code builds UI with opaque `@moui.View[Msg]` values. The standard

@@ -8,10 +8,10 @@ on:
       app:
         description: Mobile app id to smoke
         required: false
-        default: component_gallery
+        default: showcase
         type: choice
         options:
-          - component_gallery
+          - showcase
           - counter
       renderer:
         description: Skia renderer selection
@@ -25,7 +25,7 @@ on:
 
 jobs:
   ios-mobile-runtime-evidence:
-    name: iOS Component Gallery runtime smoke
+    name: iOS MoUI Showcase runtime smoke
     runs-on: macos-latest
     timeout-minutes: 90
     steps:
@@ -56,7 +56,7 @@ jobs:
       - name: Run iOS mobile runtime evidence
         shell: bash
         env:
-          MOUI_MOBILE_APP: ${{ inputs.app || 'component_gallery' }}
+          MOUI_MOBILE_APP: ${{ inputs.app || 'showcase' }}
           MOUI_SKIA_RENDERER: ${{ inputs.renderer || 'auto' }}
         run: |
           chmod +x scripts/ios-mobile-runtime-evidence.sh

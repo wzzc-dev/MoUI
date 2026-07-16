@@ -1,5 +1,6 @@
 import {
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/macos" @macos_backend,
   "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
   "examples/showcase/app",

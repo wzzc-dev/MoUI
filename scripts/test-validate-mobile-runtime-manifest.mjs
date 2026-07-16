@@ -28,17 +28,17 @@ const baseManifest = (overrides = {}) => ({
   mode: "mobile-runtime-smoke",
   generatedBy: "scripts/record-mobile-runtime-smoke.mjs",
   platform: "ios",
-  app: "component_gallery",
+  app: "showcase",
   status: "passed",
   build: {
     fallbackSkia: false,
-    artifact: "artifacts/ios/component_gallery/ComponentGallery.app",
-    command: "scripts/build-mobile-ios-app.sh --app component_gallery",
+    artifact: "artifacts/ios/showcase/MoUIShowcase.app",
+    command: "scripts/build-mobile-ios-app.sh --app showcase",
   },
   artifacts: {
-    screenshotBefore: "artifacts/mobile-runtime/ios/component_gallery/screenshot-before.png",
-    screenshot: "artifacts/mobile-runtime/ios/component_gallery/screenshot.png",
-    log: "artifacts/mobile-runtime/ios/component_gallery/runtime.log",
+    screenshotBefore: "artifacts/mobile-runtime/ios/showcase/screenshot-before.png",
+    screenshot: "artifacts/mobile-runtime/ios/showcase/screenshot.png",
+    log: "artifacts/mobile-runtime/ios/showcase/runtime.log",
   },
   screenshot: {
     width: 390,
@@ -122,7 +122,7 @@ result = run(baseManifest({ build: { fallbackSkia: true, artifact: "x", command:
 assert(result.status !== 0, "fallback manifest must not validate as passed");
 
 result = run(baseManifest({ observations: { ...baseManifest().observations, scrollInput: "pending" } }), ["--require-passed"]);
-assert(result.status !== 0, "component_gallery must require scrollInput when passed");
+assert(result.status !== 0, "showcase must require scrollInput when passed");
 
 result = run(baseManifest({ app: "counter", observations: { ...baseManifest().observations, scrollInput: "pending" } }), ["--require-passed"]);
 assert(result.status === 0, "counter may leave scrollInput pending");
@@ -130,12 +130,12 @@ assert(result.status === 0, "counter may leave scrollInput pending");
 result = run(baseManifest({ platform: "harmonyos", app: "harmonyos_demo", observations: { ...baseManifest().observations, scrollInput: "pending" } }), ["--require-passed"]);
 assert(result.status === 0, "HarmonyOS demo may provide passed matching-device evidence");
 
-const galleryRecording = recordWithoutArtifact("ios", "component_gallery");
+const showcaseRecording = recordWithoutArtifact("ios", "showcase");
 assert(
-  galleryRecording.result.status === 0
-    && galleryRecording.manifest?.status === "failed"
-    && galleryRecording.manifest?.observations.scrollInput === "no",
-  `Component Gallery recorder must require scroll evidence\n${galleryRecording.result.stdout}\n${galleryRecording.result.stderr}`,
+  showcaseRecording.result.status === 0
+    && showcaseRecording.manifest?.status === "failed"
+    && showcaseRecording.manifest?.observations.scrollInput === "no",
+  `MoUI Showcase recorder must require scroll evidence\n${showcaseRecording.result.stdout}\n${showcaseRecording.result.stderr}`,
 );
 const counterRecording = recordWithoutArtifact("ios", "counter");
 assert(
@@ -202,15 +202,15 @@ assert(
 assert(
   !hasIosApplicationLog(
     "log[12:0] args: eventMessage CONTAINS 'moui-mobile lifecycle detach'",
-    "ComponentGallery",
+    "MoUIShowcase",
     "moui-mobile lifecycle detach",
   ),
   "iOS log query command must not count as application detach evidence",
 );
 assert(
   hasIosApplicationLog(
-    "ComponentGallery[42:7] moui-mobile lifecycle detach app=component_gallery",
-    "ComponentGallery",
+    "MoUIShowcase[42:7] moui-mobile lifecycle detach app=showcase",
+    "MoUIShowcase",
     "moui-mobile lifecycle detach",
   ),
   "target iOS application lifecycle log should count as detach evidence",

@@ -5,7 +5,6 @@
     {"id": "counter", "path": "examples/counter", "title": "Counter", "featured": false},
     {"id": "multi_window", "path": "examples/multi_window", "title": "Multi Window", "featured": false},
     {"id": "harmonyos_demo", "path": "examples/harmonyos_demo", "title": "HarmonyOS Demo", "featured": false},
-    {"id": "component_gallery", "path": "examples/component_gallery", "title": "Component Gallery", "featured": true},
     {"id": "button_freeze_probe", "path": "examples/button_freeze_probe", "title": "Button Freeze Probe", "featured": false},
     {"id": "showcase", "path": "examples/showcase", "title": "Showcase", "featured": true},
     {"id": "design_systems", "path": "examples/design_systems", "title": "Design Systems", "featured": false},

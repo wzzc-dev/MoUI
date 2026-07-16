@@ -6,17 +6,17 @@ fn valid_manifest() -> String {
     #|  "mode": "mobile-runtime-smoke",
     #|  "generatedBy": "scripts/record-mobile-runtime-smoke.mjs",
     #|  "platform": "ios",
-    #|  "app": "component_gallery",
+    #|  "app": "showcase",
     #|  "status": "passed",
     #|  "build": {
     #|    "fallbackSkia": false,
-    #|    "artifact": "artifacts/ios/component_gallery/ComponentGallery.app",
-    #|    "command": "scripts/build-mobile-ios-app.sh --app component_gallery"
+    #|    "artifact": "artifacts/ios/showcase/MoUIShowcase.app",
+    #|    "command": "scripts/build-mobile-ios-app.sh --app showcase"
     #|  },
     #|  "artifacts": {
-    #|    "screenshotBefore": "artifacts/mobile-runtime/ios/component_gallery/screenshot-before.png",
-    #|    "screenshot": "artifacts/mobile-runtime/ios/component_gallery/screenshot.png",
-    #|    "log": "artifacts/mobile-runtime/ios/component_gallery/runtime.log"
+    #|    "screenshotBefore": "artifacts/mobile-runtime/ios/showcase/screenshot-before.png",
+    #|    "screenshot": "artifacts/mobile-runtime/ios/showcase/screenshot.png",
+    #|    "log": "artifacts/mobile-runtime/ios/showcase/runtime.log"
     #|  },
     #|  "screenshot": {
     #|    "width": 390,
@@ -81,7 +81,7 @@ test "fallback cannot pass" {
 }
 
 ///|
-test "component gallery requires scroll evidence" {
+test "showcase requires scroll evidence" {
   let text = valid_manifest().replace(
     old="\"scrollInput\": \"yes\"",
     new="\"scrollInput\": \"pending\"",

@@ -10,6 +10,7 @@ on:
       - "moui_cli/**"
       - "scripts/*-mobile-runtime-evidence.sh"
       - "scripts/build-mobile-*.sh"
+      - "scripts/build-showcase-*.sh"
       - "scripts/check-mobile-app-config.mjs"
       - "scripts/lib/mobile-runtime-log.mjs"
       - "scripts/record-mobile-runtime-smoke.mjs"
@@ -17,7 +18,7 @@ on:
       - "scripts/validate-mobile-runtime-manifest.mjs"
       - "scripts/setup-android-sdk.sh"
       - "tools/moui/validate_mobile_runtime_manifest/**"
-      - "examples/component_gallery/**"
+      - "examples/showcase/**"
   pull_request:
     branches: [main]
     paths:
@@ -27,6 +28,7 @@ on:
       - "moui_cli/**"
       - "scripts/*-mobile-runtime-evidence.sh"
       - "scripts/build-mobile-*.sh"
+      - "scripts/build-showcase-*.sh"
       - "scripts/check-mobile-app-config.mjs"
       - "scripts/lib/mobile-runtime-log.mjs"
       - "scripts/record-mobile-runtime-smoke.mjs"
@@ -34,7 +36,7 @@ on:
       - "scripts/validate-mobile-runtime-manifest.mjs"
       - "scripts/setup-android-sdk.sh"
       - "tools/moui/validate_mobile_runtime_manifest/**"
-      - "examples/component_gallery/**"
+      - "examples/showcase/**"
   workflow_dispatch:
     inputs:
       run_harmonyos_hvigor:
@@ -178,7 +180,7 @@ jobs:
           name: moui-harmonyos-shell-contracts
           path: |
             artifacts/mobile-shell-ci/harmonyos/**
-            artifacts/harmonyos/component-gallery-legacy-fixture/**
+            artifacts/harmonyos/showcase-legacy-fixture/**
           if-no-files-found: warn
 
   harmonyos-hvigor-plugin:

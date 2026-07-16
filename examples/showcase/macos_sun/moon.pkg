@@ -1,6 +1,7 @@
 import {
   "moonbitlang/core/env",
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/macos" @macos_backend,
   "wzzc-dev/moui/backend/macos/sun" @macos_sun_backend,
   "examples/showcase/app",

@@ -7,7 +7,7 @@ const options = {
   kind: "",
   output: "",
   platform: "",
-  app: "component_gallery",
+  app: "showcase",
   repoRoot: process.cwd(),
 };
 
@@ -55,12 +55,12 @@ if (options.kind === "plugin-config") {
   writeJson(resolve(output, "mobile.json"), sourceConfig);
   writeJson(resolve(output, "moui.project.json"), {
     schemaVersion: 1,
-    id: "component_gallery",
-    title: "Component Gallery",
-    module: "examples/component_gallery",
+    id: "showcase",
+    title: "MoUI Showcase",
+    module: "examples/showcase",
     mouiVersion: "0.1.7",
     platforms: [options.platform],
-    bundleId: "dev.wzzc.moui.componentgallery",
+    bundleId: "dev.wzzc.moui.showcase",
   });
 } else {
   throw new Error(`unknown fixture kind: ${options.kind}`);

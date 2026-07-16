@@ -113,9 +113,9 @@ MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test moui/backend/harmonyos --target nati
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test moui/backend/harmonyos/skia --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test examples/harmonyos_demo/app --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/harmonyos_demo/harmonyos_skia --target native
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/component_gallery/harmonyos --target native
+MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/showcase/harmonyos_skia --target native
 bash -n scripts/build-harmonyos-demo-app.sh
-bash -n scripts/build-component-gallery-harmonyos-hap.sh
+bash -n scripts/build-showcase-harmonyos-hap.sh
 scripts/build-harmonyos-demo-app.sh --fallback-skia
 scripts/build-component-gallery-harmonyos-hap.sh --fallback-skia
 ```
@@ -144,7 +144,7 @@ MOUI_SKIA_LINK_MODE=dynamic \
 scripts/build-harmonyos-demo-app.sh
 ```
 
-Build Component Gallery with the same route:
+Build Showcase with the same route:
 
 ```sh
 HARMONYOS_SDK_HOME=/path/to/HarmonyOS/Sdk \
@@ -230,9 +230,9 @@ Three evidence layers stay separate: **product GPU default** (source/`auto`),
 | Layer | Current state (2026-07-15) | Path / note |
 | --- | --- | --- |
 | Product GPU default | `auto` → `SkiaGpuNative` / `egl-gpu` when available | Source `gpu_promoted=true`; rebuild HAP with `--renderer auto` |
-| Packaging (L1) | Non-fallback CG HAP with GPU flags | `artifacts/harmonyos/component_gallery/mobile-build.json` → `selected=skia-gpu`, `gpuPromoted=true` |
-| First-frame pixels | Historical device + **emulator smoke screenshots** | `resource/screenshots/harmonyos-componentgallery.png`; smoke PNGs under `artifacts/mobile-runtime/harmonyos/component_gallery/` |
-| Mobile runtime smoke (L2) | Component Gallery **install blocked on commercial host** until Huawei/DevEco signing material is injected | Service-smoke + attach/resize log paths are in tree (`Index.ets`, NAPI attach markers, `record-mobile-runtime-smoke.mjs`). Commercial MateBook-class installs reject unsigned / OpenHarmony-community HAPs (`9568320` / `9568257`). Set `MOUI_HARMONYOS_SIGNING_CONFIG(_FILE)` and run `scripts/harmonyos-mobile-runtime-evidence.sh` for `--require-passed`. |
+| Packaging (L1) | Non-fallback Showcase HAP with GPU flags | `artifacts/harmonyos/showcase/mobile-build.json` → `selected=skia-gpu`, `gpuPromoted=true` |
+| First-frame pixels | Historical Component Gallery device + **emulator smoke screenshots** | `resource/screenshots/harmonyos-componentgallery.png`; old smoke PNGs under `artifacts/mobile-runtime/harmonyos/component_gallery/` are not Showcase evidence |
+| Mobile runtime smoke (L2) | Showcase managed-shell evidence pending; commercial hosts require Huawei/DevEco signing material | Service-smoke + attach/resize log paths are in tree (`Index.ets`, NAPI attach markers, `record-mobile-runtime-smoke.mjs`). Commercial MateBook-class installs reject unsigned / OpenHarmony-community HAPs (`9568320` / `9568257`). Set `MOUI_HARMONYOS_SIGNING_CONFIG(_FILE)` and run `scripts/harmonyos-mobile-runtime-evidence.sh` for `--require-passed`. |
 | GPU promotion claim (L3) | Scaffold only | `artifacts/gpu-promotion/harmonyos/scaffold-latest/` (`gpuPromoted=false`, not a claim) |
 
 ### GPU feasibility proof (L1 + L2, emulator 2026-07-15)
@@ -246,11 +246,11 @@ export PATH="$HARMONYOS_SDK_HOME/toolchains:$PATH"
 # Emulator -hvd "MateBook Pro" -path "$HOME/.Huawei/Emulator/deployed" -imageRoot "$HOME/Library/Huawei/Sdk"
 hdc list targets
 
-scripts/build-mobile-harmonyos-hap.sh --app component_gallery --renderer auto
+scripts/build-mobile-harmonyos-hap.sh --app showcase --renderer auto
 node scripts/record-mobile-runtime-smoke.mjs \
-  --platform harmonyos --app component_gallery --device 127.0.0.1:5557
+  --platform harmonyos --app showcase --device 127.0.0.1:5557
 node scripts/validate-mobile-runtime-manifest.mjs \
-  artifacts/mobile-runtime/harmonyos/component_gallery/mobile-runtime-smoke.json
+  artifacts/mobile-runtime/harmonyos/showcase/mobile-runtime-smoke.json
 ```
 
 **Required GPU log markers** (`hilog -T MoUIHarmony` / `runtime-stream.log`):
@@ -289,7 +289,7 @@ emulator run also records the following:
 
 The source route now includes transparent `TextInput` composition/selection,
 text and ArrayBuffer image pasteboard handling, API 20 accessibility virtual
-overlays, and Component Gallery shell-side service smoke. Runtime install on
+overlays, and Showcase service-probe smoke. Runtime install on
 commercial hosts still requires a Huawei/DevEco signing material for this
 bundle. A passed manifest must record IME state/edit, clipboard completion,
 accessibility tree/focus/action, async image, application detach, and
@@ -303,11 +303,11 @@ export PATH="$HARMONYOS_SDK_HOME/toolchains:$PATH"
 hdc list targets
 scripts/harmonyos-mobile-runtime-evidence.sh
 # or the lower-level pair:
-scripts/build-mobile-harmonyos-hap.sh --app component_gallery --renderer auto
-node scripts/record-mobile-runtime-smoke.mjs --platform harmonyos --app component_gallery --device <hdc-target> --require-passed
+scripts/build-mobile-harmonyos-hap.sh --app showcase --renderer auto
+node scripts/record-mobile-runtime-smoke.mjs --platform harmonyos --app showcase --device <hdc-target> --require-passed
 ```
 
-Component Gallery opens `Mobile Service Probe` directly. Use it for transparent
+Showcase opens `platform/mobile-service-probe` directly. Use it for transparent
 TextInput composition, system pasteboard, accessibility focus/activate,
 portrait-landscape-portrait resize, scrolling, and async-image loading/ready.
 The native bridge logs resize width and height so the recorder can reject a

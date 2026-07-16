@@ -87,7 +87,7 @@ discovers the nearest `moon.work` and reuses the workspace-owned framework,
 Skia package, and Gradle wrapper:
 
 ```sh
-moui doctor --project-root examples/component_gallery \
+moui doctor --project-root examples/showcase \
   --platform android --platform ios --platform harmonyos
 ```
 
