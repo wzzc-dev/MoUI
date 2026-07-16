@@ -1,4 +1,7 @@
 ///|
+let default_moui_dependency_version : String = "0.1.7"
+
+///|
 priv struct PlannedFile {
   path : String
   bytes : Bytes
@@ -43,6 +46,25 @@ priv struct EjectResult {
   plugin_digest : String
   content_digest : String
   file_count : Int
+}
+
+///|
+priv struct AddPlatformOptions {
+  project_root : String
+  platforms : Array[String]
+  bundle_id : String?
+}
+
+///|
+priv struct PluginScaffoldOptions {
+  project_root : String
+  id : String
+  platforms : Array[String]
+}
+
+///|
+priv struct PackageReportOptions {
+  project_root : String
 }
 
 ///|
