@@ -70,14 +70,28 @@ for (const name of ["compiler-worker.js", "playground-bridge.js", "preview-host.
   copy(join(repoRoot, "website/playground/host", name), join(outDir, "host", name));
 }
 
-const npmTemp = join(outDir, ".npm-tmp");
-mkdirSync(npmTemp, { recursive: true });
-execFileSync("npm", ["pack", `@moonbit/moonc-worker@${COMPILER_VERSION}`, "--pack-destination", npmTemp], { cwd: repoRoot, stdio: "ignore" });
-const tarball = join(npmTemp, readdirSync(npmTemp).find(name => name.endsWith(".tgz")));
-execFileSync("tar", ["-xzf", tarball, "-C", npmTemp], { cwd: repoRoot, stdio: "ignore" });
-copy(join(npmTemp, "package", "moonc-web.cjs"), join(outDir, "assets", "moonc-web.cjs"));
-copy(join(npmTemp, "package", "moonc-web.cjs"), join(outDir, "assets", "moonc-worker.js"));
-rmSync(npmTemp, { recursive: true, force: true });
+const localMooncCandidates = [
+  process.env.MOONBIT_PLAYGROUND_MOONC,
+  join(repoRoot, "dist/playground/assets/moonc-web.cjs"),
+  join(repoRoot, "dist/pages/playground/assets/moonc-web.cjs"),
+].filter(Boolean);
+const localMoonc = localMooncCandidates.find(path => existsSync(path));
+if (localMoonc) {
+  copy(localMoonc, join(outDir, "assets", "moonc-web.cjs"));
+  copy(localMoonc, join(outDir, "assets", "moonc-worker.js"));
+} else {
+  const npmTemp = join(outDir, ".npm-tmp");
+  mkdirSync(npmTemp, { recursive: true });
+  execFileSync("npm", ["pack", `@moonbit/moonc-worker@${COMPILER_VERSION}`, "--pack-destination", npmTemp], {
+    cwd: repoRoot,
+    stdio: "ignore",
+  });
+  const tarball = join(npmTemp, readdirSync(npmTemp).find(name => name.endsWith(".tgz")));
+  execFileSync("tar", ["-xzf", tarball, "-C", npmTemp], { cwd: repoRoot, stdio: "ignore" });
+  copy(join(npmTemp, "package", "moonc-web.cjs"), join(outDir, "assets", "moonc-web.cjs"));
+  copy(join(npmTemp, "package", "moonc-web.cjs"), join(outDir, "assets", "moonc-worker.js"));
+  rmSync(npmTemp, { recursive: true, force: true });
+}
 
 const lessonRoot = join(repoRoot, "website/tutorial/lessons");
 copy(join(lessonRoot, "catalog.json"), join(outDir, "lessons", "catalog.json"));

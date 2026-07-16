@@ -986,7 +986,7 @@ test "website tutorial cards wrap within the desktop content width" {
     fail("expected third tutorial card")
   }
   assert_true(third.origin.y > first.origin.y)
-  assert_true(text_within(commands, "06-debug-and-publish", size))
+  assert_true(text_within(commands, "06-animation", size))
   assert_true(has_text(commands, "MOUI TUTORIAL"))
   assert_true(has_text(commands, "Course map / 课程地图"))
   assert_true(has_text(commands, "LESSON 06"))
