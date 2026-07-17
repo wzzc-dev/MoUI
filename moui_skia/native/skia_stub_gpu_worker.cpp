@@ -960,6 +960,7 @@ bool ensure_vulkan_context(MoonbitSkiaNativeGpuWorker* worker) {
     }
     return vkGetInstanceProcAddr(instance, name);
   };
+  #if defined(__ANDROID__)
   backend_context.fMemoryAllocator = SkiaVMA::Make(
     backend_context,
     SkiaVMA::Options()
@@ -968,6 +969,7 @@ bool ensure_vulkan_context(MoonbitSkiaNativeGpuWorker* worker) {
     release_vulkan_context(worker);
     return false;
   }
+#endif
   sk_sp<GrDirectContext> context = GrDirectContexts::MakeVulkan(backend_context);
   if (!context) {
     release_vulkan_context(worker);

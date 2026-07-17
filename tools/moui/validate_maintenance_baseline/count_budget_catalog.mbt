@@ -28,7 +28,8 @@ fn pub_all_budgets() -> Array[CountBudget] {
       path: "moui/backend/host",
       // Host Wire v1 adds the versioned update/response envelopes and the
       // revisioned PlatformView snapshot as required native-shell protocol.
-      max_count: 71,
+      // Raised to 73 with multi-window / desktop host surface growth.
+      max_count: 73,
     },
     {
       kind: "pub(all)",
