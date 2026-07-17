@@ -34,6 +34,7 @@ This file is generated from repository manifests and validator reports.
 | ./examples/data_table |
 | ./examples/file_importer |
 | ./examples/command_palette |
+| ./examples/mo_desktop |
 | ./examples/mo_workbench |
 | ./examples/code_editor |
 | ./examples/webview_demo |
@@ -46,14 +47,14 @@ This file is generated from repository manifests and validator reports.
 | Package | Interface lines | Public | pub(all) |
 |---|---:|---:|---:|
 | root facade (app-loop sugar) (moui/pkg.generated.mbti) | 29 | 7 | 0 |
-| geometry sugar (moui/geometry/pkg.generated.mbti) | 29 | 7 | 0 |
+| geometry sugar (moui/geometry/pkg.generated.mbti) | 33 | 9 | 0 |
 | graphics sugar (moui/graphics/pkg.generated.mbti) | 47 | 16 | 0 |
 | animation sugar (moui/animation/pkg.generated.mbti) | 21 | 3 | 0 |
 | text sugar (moui/text/pkg.generated.mbti) | 27 | 6 | 0 |
 | state sugar (moui/state/pkg.generated.mbti) | 35 | 10 | 0 |
 | runtime facade (moui/runtime/pkg.generated.mbti) | 420 | 281 | 9 |
 | core (moui/core/pkg.generated.mbti) | 1830 | 505 | 139 |
-| views facade (moui/views/pkg.generated.mbti) | 1215 | 549 | 19 |
+| views facade (moui/views/pkg.generated.mbti) | 1213 | 548 | 19 |
 | host contracts (moui/backend/host/pkg.generated.mbti) | 1226 | 481 | 73 |
 | renderer facade (moui/render/pkg.generated.mbti) | 550 | 148 | 37 |
 | skia renderer (moui/render/skia/pkg.generated.mbti) | 161 | 93 | 3 |
@@ -79,6 +80,7 @@ This file is generated from repository manifests and validator reports.
 | Data Table | examples/data_table | no |
 | File Importer | examples/file_importer | no |
 | Command Palette | examples/command_palette | no |
+| Mo Desktop | examples/mo_desktop | yes |
 | Mo Workbench | examples/mo_workbench | yes |
 | Code Editor | examples/code_editor | no |
 | WebView Demo | examples/webview_demo | no |
@@ -97,7 +99,7 @@ This file is generated from repository manifests and validator reports.
 
 ## Documentation Catalog
 
-Published documents: 44.
+Published documents: 45.
 
 | Group | Documents |
 |---|---:|
@@ -105,6 +107,6 @@ Published documents: 44.
 | Guides (guides) | 9 |
 | Examples (examples) | 4 |
 | Platforms (platforms) | 13 |
-| Architecture & API (architecture-api) | 4 |
+| Architecture & API (architecture-api) | 5 |
 | Contributing (contributing) | 5 |
 | Status & Roadmap (status-roadmap) | 4 |
