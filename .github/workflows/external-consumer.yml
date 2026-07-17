@@ -23,6 +23,14 @@ jobs:
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
 
+      - name: Install native Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwayland-dev libwayland-bin wayland-protocols pkg-config unzip \
+            libfontconfig1-dev libfreetype-dev libharfbuzz-dev
+
       - name: Validate external consumer
         shell: bash
         run: node scripts/external-consumer-ci.mjs --source "${{ matrix.source }}"

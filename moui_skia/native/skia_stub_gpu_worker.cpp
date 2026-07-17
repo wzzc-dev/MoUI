@@ -1735,7 +1735,7 @@ void queue_completion(
   MoonbitSkiaNativeGpuWorker* worker,
   NativeGpuCompletion completion
 ) {
-  constexpr size_t kCompletionCapacity = 256;
+  static const size_t kCompletionCapacity = 256;
   if (worker->completions.size() >= kCompletionCapacity) {
     worker->completions.pop_front();
     worker->dropped += 1;

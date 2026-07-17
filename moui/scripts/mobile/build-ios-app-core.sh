@@ -300,12 +300,13 @@ compile_cxx() {
   local obj="$2"
   shift 2
   log "Compiling $(basename "$src")"
+  # Force C++ language mode so .cpp stubs never compile as C.
   if [ -s "$skia_cxx_rsp" ]; then
     "$cxx" "${common_flags[@]}" "${include_flags[@]}" "@$skia_cxx_rsp" \
-      -std=c++17 "$@" -c "$src" -o "$obj"
+      -x c++ -std=c++17 "$@" -c "$src" -o "$obj"
   else
     "$cxx" "${common_flags[@]}" "${include_flags[@]}" \
-      -std=c++17 "$@" -c "$src" -o "$obj"
+      -x c++ -std=c++17 "$@" -c "$src" -o "$obj"
   fi
   objects+=("$obj")
 }

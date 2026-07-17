@@ -1,0 +1,161 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/showcase/app/components"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn catalog_groups() -> Array[CatalogGroup]
+
+pub fn catalog_items() -> Array[CatalogItem]
+
+pub fn gallery_item_id_from_string(String) -> ComponentGalleryItemId?
+
+pub fn gallery_item_id_to_string(ComponentGalleryItemId) -> String
+
+pub fn platform_id_from_string(String) -> PlatformId?
+
+pub fn platform_id_to_string(PlatformId) -> String
+
+pub fn program(active_platform~ : PlatformId, session_runtime? : SessionRuntimeInfo, active_item? : ComponentGalleryItemId) -> @core.Program[ComponentGalleryModel, ComponentGalleryMsg]
+
+pub fn session_path_label(String, String) -> String
+
+pub fn session_runtime_from_selection(host~ : String, backend~ : String, surface_route~ : String, requested~ : String, gpu_available~ : Bool, gpu_promoted~ : Bool, note? : String) -> SessionRuntimeInfo
+
+pub fn subscriptions(ComponentGalleryModel) -> @core.Subscription[ComponentGalleryMsg]
+
+pub fn update(ComponentGalleryModel, ComponentGalleryMsg) -> ComponentGalleryModel
+
+pub fn view(ComponentGalleryModel, @core.ViewEnvironment) -> @core.View[ComponentGalleryMsg]
+
+pub fn view_body(ComponentGalleryModel, @core.ViewEnvironment, width? : Double) -> @core.View[ComponentGalleryMsg]
+
+// Errors
+
+// Types and methods
+pub(all) struct CatalogGroup {
+  id : String
+  title : String
+} derive(Eq, @debug.Debug)
+
+pub(all) struct CatalogItem {
+  id : String
+  group_id : String
+  title : String
+  summary : String
+  badge : String
+} derive(Eq, @debug.Debug)
+
+pub(all) enum ComponentGalleryItemId {
+  Welcome
+  Button
+  TextField
+  TextArea
+  ClearableTextField
+  PasswordField
+  NumberField
+  Stepper
+  Checkbox
+  Toggle
+  Radio
+  RadioGroup
+  CheckboxGroup
+  SegmentedControl
+  Picker
+  Slider
+  Chips
+  Badge
+  Progress
+  Banner
+  Callout
+  StatePanel
+  InlineError
+  Toast
+  Snackbar
+  StatCard
+  Avatar
+  Divider
+  Toolbar
+  StatusBar
+  Surface
+  RowColumn
+  ResponsiveGrid
+  ScrollView
+  PlatformRoutes
+  MobileServiceProbe
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ComponentGalleryModel {
+  active_platform : PlatformId
+  active_item : ComponentGalleryItemId
+  selected_platform : PlatformId
+  session_runtime : SessionRuntimeInfo
+  page_scroll : @core.ScrollState
+  sidebar_scroll : @core.ScrollState
+  content_scroll : @core.ScrollState
+  search_query : String
+  sample_text : String
+  sample_number : String
+  password_revealed : Bool
+  selected_mode : String
+  selected_density : String
+  feature_enabled : Bool
+  slider_value : Double
+  counter : Int
+  probe_text : String
+  probe_action_count : Int
+  probe_submit_count : Int
+}
+pub fn ComponentGalleryModel::new(active_platform~ : PlatformId, session_runtime? : SessionRuntimeInfo, active_item? : ComponentGalleryItemId) -> Self
+pub fn ComponentGalleryModel::open(Self, String) -> Self
+pub fn ComponentGalleryModel::route(Self) -> String
+
+pub(all) enum ComponentGalleryMsg {
+  SelectItem(String)
+  SearchChanged(String)
+  SelectPlatform(String)
+  SelectMode(String)
+  SelectDensity(String)
+  SampleTextChanged(String)
+  SampleNumberChanged(String)
+  TogglePasswordReveal
+  FeatureToggled(Bool)
+  SliderChanged(Double)
+  Increment
+  Decrement
+  Reset
+  ProbeTextChanged(String)
+  ProbeAction
+  ProbeSubmit
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum PlatformId {
+  MacOS
+  Linux
+  Windows
+  Android
+  IOS
+  HarmonyOs
+  Web
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct SessionRuntimeInfo {
+  host : String
+  path : String
+  backend : String
+  surface_route : String
+  requested : String
+  gpu_available : Bool
+  gpu_promoted : Bool
+  note : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SessionRuntimeInfo::for_platform(PlatformId) -> Self
+pub fn SessionRuntimeInfo::new(host~ : String, path~ : String, backend~ : String, surface_route~ : String, requested~ : String, gpu_available~ : Bool, gpu_promoted~ : Bool, note? : String) -> Self
+
+// Type aliases
+
+// Traits
+

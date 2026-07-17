@@ -1,0 +1,83 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/showcase/app/patterns"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn catalog_groups() -> Array[CatalogGroup]
+
+pub fn catalog_items() -> Array[CatalogItem]
+
+pub fn pattern_routes() -> Array[String]
+
+pub fn program(route? : String) -> @core.Program[Model, Msg]
+
+pub fn subscriptions(Model) -> @core.Subscription[Msg]
+
+pub fn update(Model, Msg) -> Model
+
+pub fn view(Model, @core.ViewEnvironment) -> @core.View[Msg]
+
+pub fn view_body(Model, @core.ViewEnvironment, width? : Double) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+pub(all) struct CatalogGroup {
+  id : String
+  title : String
+} derive(Eq, @debug.Debug)
+
+pub(all) struct CatalogItem {
+  id : String
+  group_id : String
+  title : String
+  summary : String
+  badge : String
+} derive(Eq, @debug.Debug)
+
+pub struct Model {
+  route : String
+  counter : Int
+  todo_items : Array[TodoItem]
+  todo_draft : String
+  next_todo_id : Int
+  profile_name : String
+  data_filter : String
+  workflow_step : Int
+  notice : String
+  scroll : @core.ScrollState
+}
+pub fn Model::new(route? : String) -> Self
+pub fn Model::open(Self, String) -> Self
+pub fn Model::route(Self) -> String
+
+pub(all) enum Msg {
+  Navigate(String)
+  Increment
+  Decrement
+  TodoDraftChanged(String)
+  TodoSubmit
+  TodoToggled(Int, Bool)
+  TodoRemoved(Int)
+  ProfileNameChanged(String)
+  SaveProfile
+  DataFilterChanged(String)
+  WorkflowBack
+  WorkflowNext
+  DismissNotice
+}
+
+pub(all) struct TodoItem {
+  id : Int
+  label : String
+  completed : Bool
+} derive(Eq, @debug.Debug)
+
+// Type aliases
+
+// Traits
+

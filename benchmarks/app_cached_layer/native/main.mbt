@@ -454,7 +454,7 @@ fn app_bench_showcase_runtime(
   height : Double,
 ) -> @runtime.AppRuntime {
   let model = @showcase.ShowcaseModel::new().update(
-    @showcase.ShowcaseMsg::SelectSection("runtime-renderer"),
+    @showcase.ShowcaseMsg::Navigate("diagnostics/advanced-rendering"),
   )
   @runtime.new_program_with_dimensions(program=model.program(), width~, height~)
 }

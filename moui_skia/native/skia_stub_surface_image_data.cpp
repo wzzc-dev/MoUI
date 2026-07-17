@@ -1797,7 +1797,7 @@ moonbit_skia_surface_gpu_n32_premul(
   if (!backend_supported) {
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
   }
-#if defined(MOUI_SKIA_HAS_GANESH_DIRECT_CONTEXT)
+#if defined(MOUI_SKIA_HAS_GANESH_SURFACE)
   SkImageInfo info = moonbit_skia_make_rgba8888_premul_info(width, height);
   sk_sp<SkSurface> surface = SkSurfaces::RenderTarget(
     context->context,

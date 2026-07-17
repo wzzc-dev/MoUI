@@ -7,7 +7,7 @@ import {
 }
 
 // Values
-pub fn program(Scene, @host.HostWindowActions) -> @core.Program[Model, Msg]
+pub fn program(Scene, @host.HostWindowActions, shared_count? : Int) -> @core.Program[Model, Msg]
 
 pub fn scene_from_host(@host.HostWindowScene) -> Scene?
 
@@ -21,13 +21,19 @@ pub fn view(Model) -> @core.View[Msg]
 pub struct Model {
   scene : Scene
   count : Int
+  shared_count : Int
   windows : @host.HostWindowActions
+  inspector_window_id : @host.HostWindowId?
+  status : String
 }
-pub fn Model::new(Scene, @host.HostWindowActions) -> Self
+pub fn Model::new(Scene, @host.HostWindowActions, shared_count? : Int) -> Self
 
 pub(all) enum Msg {
   OpenInspector
+  CloseInspector
+  FocusInspector
   Increment
+  IncrementShared
 }
 
 pub(all) enum Scene {
