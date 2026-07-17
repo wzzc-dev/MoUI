@@ -18,7 +18,11 @@ pub using @core {type Axis}
 
 pub using @core {type Constraints}
 
+pub using @core {type CrossAxisAlignment}
+
 pub using @core {type Insets}
+
+pub using @core {type MainAxisAlignment}
 
 pub using @core {type Point}
 
