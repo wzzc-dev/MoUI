@@ -90,6 +90,10 @@
 #if __has_include("include/gpu/ganesh/GrDirectContext.h")
 #include "include/gpu/ganesh/GrDirectContext.h"
 #define MOUI_SKIA_HAS_GANESH_DIRECT_CONTEXT 1
+#if __has_include("include/gpu/ganesh/SkSurfaceGanesh.h")
+#include "include/gpu/ganesh/SkSurfaceGanesh.h"
+#define MOUI_SKIA_HAS_GANESH_SURFACE 1
+#endif
 #else
 class GrDirectContext;
 #endif

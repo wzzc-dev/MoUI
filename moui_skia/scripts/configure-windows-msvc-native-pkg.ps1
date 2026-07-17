@@ -192,6 +192,7 @@ $systemLibs = @(
   "d2d1.lib",
   "dxgi.lib",
   "d3d12.lib",
+  "d3dcompiler.lib",
   "dxguid.lib",
   "advapi32.lib",
   "comdlg32.lib",

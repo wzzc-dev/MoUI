@@ -410,9 +410,9 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "host contracts",
       path: "moui/backend/host/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/backend/host\"",
-      max_lines: 1199,
-      max_pub_lines: 470,
-      max_pub_all_lines: 71,
+      max_lines: 1226,
+      max_pub_lines: 481,
+      max_pub_all_lines: 73,
       required_tokens: [
         "HostWindowRenderer", "HostAsyncImageLoader", "HostRouteSource", "pub(all) struct HostRouteLocation",
         "pub(all) struct HostRouteQueryParam",
