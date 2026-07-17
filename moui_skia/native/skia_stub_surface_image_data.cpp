@@ -834,6 +834,10 @@ static GrDirectContext* moonbit_skia_make_vulkan_direct_context(
     }
     return vkGetInstanceProcAddr(proc_instance, name);
   };
+  // AndroidVulkanMemoryAllocator (SkiaVMA) is packaged/linked for Android GPU
+// builds. Desktop Linux packages ship the header but not the object, so only
+// wire VMA on Android and let GrDirectContexts use its default allocator.
+#if defined(__ANDROID__)
   backend_context.fMemoryAllocator = SkiaVMA::Make(
     backend_context,
     SkiaVMA::Options()
@@ -843,6 +847,7 @@ static GrDirectContext* moonbit_skia_make_vulkan_direct_context(
     vkDestroyInstance(instance, nullptr);
     return nullptr;
   }
+#endif
 
   sk_sp<GrDirectContext> context = GrDirectContexts::MakeVulkan(
     backend_context
