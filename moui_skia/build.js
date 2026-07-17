@@ -677,7 +677,8 @@ function platformFlags(config, values) {
         stubCcFlags,
         "/DMOUI_SKIA_ENABLE_GPU_D3D /DMOUI_SKIA_ENABLE_GPU_D3D12",
       );
-      linkFlags = appendFlags(linkFlags, "d3d12.lib dxguid.lib");
+      // Ganesh D3D pipelines call D3DCompile from d3dcompiler.
+      linkFlags = appendFlags(linkFlags, "d3d12.lib d3dcompiler.lib dxguid.lib");
     }
     if (paragraphEnabled) {
       stubCcFlags = appendFlags(stubCcFlags, "/DMOUI_SKIA_HAS_SKPARAGRAPH /DMOUI_SKIA_HAS_SKSHAPER");

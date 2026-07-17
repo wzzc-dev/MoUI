@@ -1,7 +1,11 @@
 #ifndef MOUI_SKIA_STUB_COMMON_H
 #define MOUI_SKIA_STUB_COMMON_H
 
-#if defined(__cplusplus) && defined(__linux__)
+// moonbit.h may declare memcpy without a C++ exception specifier. Include the
+// system string.h first on Unix-like hosts (Linux/Android/HarmonyOS) so the
+// libc declaration wins before moonbit.h redeclares it.
+#if defined(__cplusplus) && \
+  (defined(__linux__) || defined(__ANDROID__) || defined(__OHOS__))
 #include <string.h>
 #define MOUI_SKIA_SKIP_MOONBIT_MEMCPY_DECL 1
 #define memcpy memcpy
