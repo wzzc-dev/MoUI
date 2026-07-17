@@ -270,10 +270,7 @@ static const int32_t MOONBIT_SKIA_GPU_BACKEND_D3D = 2;
 static const int32_t MOONBIT_SKIA_GPU_BACKEND_VULKAN = 3;
 static const int32_t MOONBIT_SKIA_GPU_BACKEND_EGL = 4;
 
-#if defined(MOUI_SKIA_HAS_GANESH_METAL_HEADERS) || \
-  defined(MOUI_SKIA_HAS_GANESH_D3D_HEADERS) || \
-  defined(MOUI_SKIA_HAS_GANESH_VULKAN_HEADERS) || \
-  defined(MOUI_SKIA_HAS_GANESH_EGL_HEADERS)
+#if defined(MOUI_SKIA_HAS_GANESH_DIRECT_CONTEXT)
 static GrSurfaceOrigin moonbit_skia_surface_origin(int32_t origin) {
   return origin == 1 ? kBottomLeft_GrSurfaceOrigin : kTopLeft_GrSurfaceOrigin;
 }
@@ -1797,7 +1794,13 @@ moonbit_skia_surface_gpu_n32_premul(
   if (!backend_supported) {
     return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
   }
-#if defined(MOUI_SKIA_HAS_GANESH_SURFACE)
+// Only call SkSurfaces::RenderTarget when a GPU backend is actually enabled
+// and linked. Headers alone are not enough: CPU-only Skia packages ship the
+// Ganesh headers without the RenderTarget symbol.
+#if defined(MOUI_SKIA_HAS_GANESH_SURFACE) && \
+  (defined(MOUI_SKIA_ENABLE_GPU_METAL) || defined(MOUI_SKIA_ENABLE_GPU_EGL) || \
+   defined(MOUI_SKIA_ENABLE_GPU_VULKAN) || defined(MOUI_SKIA_ENABLE_GPU_D3D) || \
+   defined(MOUI_SKIA_ENABLE_GPU_D3D12))
   SkImageInfo info = moonbit_skia_make_rgba8888_premul_info(width, height);
   sk_sp<SkSurface> surface = SkSurfaces::RenderTarget(
     context->context,

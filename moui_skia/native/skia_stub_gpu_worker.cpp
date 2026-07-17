@@ -129,20 +129,22 @@ extern "C" void* MTLCreateSystemDefaultDevice(void);
 
 namespace {
 
-enum class NativeGpuControlKind : int32_t {
-  Attach = 1,
-  Resize = 2,
-  Detach = 3,
-  ContextLoss = 4,
-  Shutdown = 5,
+// Use unscoped enums so switch cases stay portable under older Apple Clang
+// mobile toolchains and mixed ObjC++/C++ response-file flag sets.
+enum NativeGpuControlKind {
+  NativeGpuControlKind_Attach = 1,
+  NativeGpuControlKind_Resize = 2,
+  NativeGpuControlKind_Detach = 3,
+  NativeGpuControlKind_ContextLoss = 4,
+  NativeGpuControlKind_Shutdown = 5,
 };
 
-enum class NativeGpuCompletionStatus : int32_t {
-  PictureRecorded = 1,
-  Dropped = 2,
-  ControlAcknowledged = 3,
-  FallbackToRaster = 4,
-  Presented = 5,
+enum NativeGpuCompletionStatus {
+  NativeGpuCompletionStatus_PictureRecorded = 1,
+  NativeGpuCompletionStatus_Dropped = 2,
+  NativeGpuCompletionStatus_ControlAcknowledged = 3,
+  NativeGpuCompletionStatus_FallbackToRaster = 4,
+  NativeGpuCompletionStatus_Presented = 5,
 };
 
 struct NativeGpuFrame {
@@ -165,7 +167,7 @@ struct NativeGpuFrame {
 };
 
 struct NativeGpuControl {
-  NativeGpuControlKind kind = NativeGpuControlKind::Resize;
+  NativeGpuControlKind kind = NativeGpuControlKind_Resize;
   int64_t token = 0;
   uint64_t handle = 0;
   uint64_t auxiliary_handle = 0;
@@ -182,7 +184,7 @@ struct NativeGpuCompletion {
   double submitted_at_ms = 0.0;
   double gpu_completed_at_ms = 0.0;
   double presented_at_ms = 0.0;
-  NativeGpuCompletionStatus status = NativeGpuCompletionStatus::PictureRecorded;
+  NativeGpuCompletionStatus status = NativeGpuCompletionStatus_PictureRecorded;
 };
 
 double native_gpu_now_ms() {
@@ -1747,7 +1749,7 @@ void queue_completion(
 void push_control_completion(
   MoonbitSkiaNativeGpuWorker* worker,
   const NativeGpuControl& control,
-  NativeGpuCompletionStatus status = NativeGpuCompletionStatus::ControlAcknowledged
+  NativeGpuCompletionStatus status = NativeGpuCompletionStatus_ControlAcknowledged
 ) {
   queue_completion(worker, {
     0,
@@ -1767,7 +1769,7 @@ void process_control(
   const NativeGpuControl& control
 ) {
   switch (control.kind) {
-    case NativeGpuControlKind::Attach:
+    case NativeGpuControlKind_Attach:
 #if defined(MOUI_SKIA_NATIVE_GPU_WORKER_VULKAN)
       release_vulkan_attachment(worker);
 #endif
@@ -1803,7 +1805,7 @@ void process_control(
       worker->surface_generation += 1;
       push_control_completion(worker, control);
       break;
-    case NativeGpuControlKind::Resize:
+    case NativeGpuControlKind_Resize:
       worker->width = control.width;
       worker->height = control.height;
       worker->surface_generation += 1;
@@ -1830,7 +1832,7 @@ void process_control(
 #endif
       push_control_completion(worker, control);
       break;
-    case NativeGpuControlKind::Detach:
+    case NativeGpuControlKind_Detach:
       worker->attached_handle = 0;
       worker->attached_auxiliary_handle = 0;
       worker->width = 0;
@@ -1854,7 +1856,7 @@ void process_control(
       }
       push_control_completion(worker, control);
       break;
-    case NativeGpuControlKind::ContextLoss:
+    case NativeGpuControlKind_ContextLoss:
 #if defined(MOUI_SKIA_NATIVE_GPU_WORKER_METAL)
       release_metal_context(worker);
 #endif
@@ -1871,7 +1873,7 @@ void process_control(
       worker->recovery_count += 1;
       push_control_completion(worker, control);
       break;
-    case NativeGpuControlKind::Shutdown:
+    case NativeGpuControlKind_Shutdown:
       worker->shutdown_requested = true;
       if (worker->pending != nullptr) {
         worker->pending.reset();
@@ -1885,8 +1887,9 @@ void process_control(
 void run_native_gpu_worker(MoonbitSkiaNativeGpuWorker* worker) {
   {
     std::lock_guard<std::mutex> lock(worker->mutex);
+    const std::hash<std::thread::id> thread_hasher;
     worker->worker_thread_id = static_cast<int64_t>(
-      std::hash<std::thread::id>{}(std::this_thread::get_id())
+      thread_hasher(std::this_thread::get_id())
     );
   }
   for (;;) {
@@ -1932,7 +1935,7 @@ void run_native_gpu_worker(MoonbitSkiaNativeGpuWorker* worker) {
         frame.submitted_at_ms,
         native_gpu_now_ms(),
         native_gpu_now_ms(),
-        NativeGpuCompletionStatus::Dropped,
+        NativeGpuCompletionStatus_Dropped,
       });
       continue;
     }
@@ -1940,7 +1943,7 @@ void run_native_gpu_worker(MoonbitSkiaNativeGpuWorker* worker) {
     lock.unlock();
 
     NativeGpuCompletionStatus completion_status =
-      NativeGpuCompletionStatus::PictureRecorded;
+      NativeGpuCompletionStatus_PictureRecorded;
     bool attempted_present = false;
     bool presented = false;
 #if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_PICTURE)
@@ -2004,7 +2007,7 @@ void run_native_gpu_worker(MoonbitSkiaNativeGpuWorker* worker) {
     if (attempted_present) {
       if (presented) {
         worker->consecutive_recovery_failures = 0;
-        completion_status = NativeGpuCompletionStatus::Presented;
+        completion_status = NativeGpuCompletionStatus_Presented;
       } else {
         worker->consecutive_recovery_failures += 1;
 #if defined(MOUI_SKIA_NATIVE_GPU_WORKER_METAL)
@@ -2023,9 +2026,9 @@ void run_native_gpu_worker(MoonbitSkiaNativeGpuWorker* worker) {
         // left Android emulators black when only one or two frames were drawn
         // before the UI went idle.
         if (worker->consecutive_recovery_failures >= 1) {
-          completion_status = NativeGpuCompletionStatus::FallbackToRaster;
+          completion_status = NativeGpuCompletionStatus_FallbackToRaster;
         } else {
-          completion_status = NativeGpuCompletionStatus::Dropped;
+          completion_status = NativeGpuCompletionStatus_Dropped;
         }
       }
     }
