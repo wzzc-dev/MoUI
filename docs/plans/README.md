@@ -57,6 +57,7 @@ Historical topic pointers (pre-layout notes) remain useful:
 
 | Plan | Summary |
 |------|---------|
+| [mo-desktop-example](active/mo-desktop-example.md) | Add a responsive macOS-inspired MoUI desktop simulation with Web and macOS Skia entrypoints |
 | [moonbit-tooling-formalization](active/moonbit-tooling-formalization.md) | Move formalizable script rules/generators into `tools/moui`; keep host shells thin |
 | [core-component-theme-to-views](active/core-component-theme-to-views.md) | Component theme schema stays core (S1); control styles in views; Theme.components split is RFC |
 

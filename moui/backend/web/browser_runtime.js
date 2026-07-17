@@ -293,10 +293,14 @@ export function createWindowWebImports(options = {}) {
 
   const pointerPosition = (canvas, event) => {
     const rect = canvas.getBoundingClientRect();
-    const scale = devicePixelRatio();
+    // DOM events are in CSS pixels, while the Web window adapter accepts
+    // physical pixels and divides them by its current DPR before hit-testing.
+    // Map through the canvas backing store so CSS resizing remains correct.
+    const scaleX = rect.width > 0 ? canvas.width / rect.width : devicePixelRatio();
+    const scaleY = rect.height > 0 ? canvas.height / rect.height : devicePixelRatio();
     return {
-      x: Math.round((event.clientX - rect.left) * scale),
-      y: Math.round((event.clientY - rect.top) * scale),
+      x: Math.round((event.clientX - rect.left) * scaleX),
+      y: Math.round((event.clientY - rect.top) * scaleY),
     };
   };
 

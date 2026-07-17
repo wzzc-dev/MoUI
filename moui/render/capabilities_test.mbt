@@ -1074,6 +1074,36 @@ test "path tessellator lowers open line stroke into local quad" {
 }
 
 ///|
+test "path tessellator lowers curved stroke without remote triangles" {
+  let path = @core.PathSpec::new(
+    verbs=[
+      @core.PathVerb::MoveTo(@core.Point::new(x=100.0, y=100.0)),
+      @core.PathVerb::QuadTo(
+        @core.Point::new(x=108.0, y=92.0),
+        @core.Point::new(x=116.0, y=100.0),
+      ),
+      @core.PathVerb::MoveTo(@core.Point::new(x=118.0, y=102.0)),
+      @core.PathVerb::CubicTo(
+        @core.Point::new(x=122.0, y=102.0),
+        @core.Point::new(x=126.0, y=110.0),
+        @core.Point::new(x=130.0, y=106.0),
+      ),
+    ],
+    stroke=Some(@core.Brush::solid(@core.Color::black())),
+    stroke_width=2.0,
+  )
+  let mesh = @render.tessellate_path(path)
+  assert_true(mesh.vertices().length() > 36)
+  inspect(mesh.vertices().length() % 6, content="0")
+  inspect(mesh.diagnostics().length(), content="0")
+  for vertex in mesh.vertices() {
+    let components = vertex.components()
+    assert_true(components[0] >= 98.0 && components[0] <= 132.0)
+    assert_true(components[1] >= 90.0 && components[1] <= 112.0)
+  }
+}
+
+///|
 test "path tessellator uses zeno for cubic and degenerate paths" {
   let cubic = @core.PathSpec::new(
     verbs=[
