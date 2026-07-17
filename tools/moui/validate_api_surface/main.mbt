@@ -107,7 +107,10 @@ fn root_app_shape_tokens() -> Array[String] {
 ///|
 /// Types forwarded by the `moui/geometry` domain sugar package.
 fn sugar_geometry_tokens() -> Array[String] {
-  ["Point", "Size", "Rect", "Insets", "Constraints", "Axis", "Alignment"]
+  [
+    "Point", "Size", "Rect", "Insets", "Constraints", "Axis", "Alignment",
+    "MainAxisAlignment", "CrossAxisAlignment",
+  ]
 }
 
 ///|
@@ -164,7 +167,8 @@ fn sugar_cross_domain_forbidden_tokens(
 ) -> Array[String] {
   let all = [
     "View", "Program", "Effect", "Subscription", "Theme", "Environment", "ViewEnvironment",
-    "Point", "Size", "Rect", "Insets", "Constraints", "Axis", "Alignment", "Color",
+    "Point", "Size", "Rect", "Insets", "Constraints", "Axis", "Alignment",
+    "MainAxisAlignment", "CrossAxisAlignment", "Color",
     "Brush", "BorderStyle", "ShadowStyle", "RoundedRect", "PathSpec", "PathVerb",
     "ImageRun", "ImageFit", "BlendMode", "LayerSpec", "LayerMask", "FilterEffect",
     "ShadowSpec", "Transform2D", "ShaderEffectSpec", "Easing", "TransitionSpec",
@@ -187,8 +191,9 @@ fn sugar_cross_domain_forbidden_tokens(
 ///|
 fn views_facade_core_alias_tokens() -> Array[String] {
   [
-    "ActionCommand", "ActionCommandMap", "Color", "ColorScheme", "CommandBinding",
-    "CommandIntent", "KeyModifiers", "KeyboardShortcut",
+    // Control/command/theme workflow surface only — not domain value types.
+    "ActionCommand", "ActionCommandMap", "CommandBinding", "CommandIntent",
+    "KeyModifiers", "KeyboardShortcut", "ColorPalette", "TypographyScale",
   ]
 }
 
@@ -236,8 +241,8 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "geometry sugar",
       path: "moui/geometry/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/geometry\"",
-      max_lines: 30,
-      max_pub_lines: 8,
+      max_lines: 40,
+      max_pub_lines: 12,
       max_pub_all_lines: 0,
       required_tokens: sugar_required_tokens(sugar_geometry_tokens()),
       forbidden_tokens: sugar_cross_domain_forbidden_tokens(
@@ -386,6 +391,14 @@ fn package_budgets() -> Array[PackageBudget] {
       max_pub_all_lines: 19,
       required_tokens: views_facade_required_tokens(),
       forbidden_tokens: [
+        "pub using @core {type Color}",
+        "pub using @core {type ColorScheme}",
+        "pub using @core {type Point}",
+        "pub using @core {type Brush}",
+        "pub using @core {type FontSpec}",
+        "pub using @core {type State}",
+        "pub using @core {type Rect}",
+
         "ViewSpec", "ViewNode", "VirtualNode", "RuntimeState", "HostWindowRenderer",
         "SkiaRasterRenderer", "RichText", "rich_text_", "markdown_editor", "pub fn[Msg] raw_",
         "RawPickerOption", "RawDatePickerDisplayMode", "pub using @core {type ComponentContext}",
@@ -1941,6 +1954,68 @@ fn validate_core_runtime_boundary(
 }
 
 ///|
+/// Model B (ADR 0014): `core` owns domain value types; domain packages are
+/// facades over `core`. `core` must never import domain packages, and each
+/// domain package must import only `core` (no domain cross-imports).
+fn validate_domain_facade_dependency_direction(
+  repo_root : String,
+  failures : Array[String],
+) -> Unit {
+  let domain_packages = [
+    "geometry", "graphics", "animation", "text", "state",
+  ]
+  let core_pkg = "moui/core/moon.pkg"
+  let core_text = match read_repo_text(repo_root, core_pkg) {
+    Ok(value) => value
+    Err(message) => {
+      failures.push(message)
+      return
+    }
+  }
+  for domain in domain_packages {
+    let token = "\"wzzc-dev/moui/" + domain + "\""
+    if core_text.contains(token) {
+      failures.push(
+        core_pkg +
+        ": core must not import domain package " +
+        token +
+        " (ADR 0014 model B)",
+      )
+    }
+  }
+  for domain in domain_packages {
+    let path = "moui/" + domain + "/moon.pkg"
+    let text = match read_repo_text(repo_root, path) {
+      Ok(value) => value
+      Err(message) => {
+        failures.push(message)
+        continue
+      }
+    }
+    if !text.contains("\"wzzc-dev/moui/core\"") {
+      failures.push(
+        path + ": domain facade must import \"wzzc-dev/moui/core\" (ADR 0014)",
+      )
+    }
+    for other in domain_packages {
+      if other == domain {
+        continue
+      }
+      let token = "\"wzzc-dev/moui/" + other + "\""
+      if text.contains(token) {
+        failures.push(
+          path +
+          ": domain facade must not cross-import " +
+          token +
+          " (ADR 0014 model B)",
+        )
+      }
+    }
+  }
+  println("api surface: domain facade dependency direction checked")
+}
+
+///|
 fn run_checks(
   repo_root : String,
   reports : Array[ApiPackageReport],
@@ -1951,6 +2026,7 @@ fn run_checks(
   }
   validate_api_surface_classifications(repo_root, failures)
   validate_root_facade_shape(repo_root, failures)
+  validate_domain_facade_dependency_direction(repo_root, failures)
   validate_core_legacy_family_budgets(repo_root, failures)
   validate_views_return_types(repo_root, failures)
   validate_runtime_source_boundaries(repo_root, failures)

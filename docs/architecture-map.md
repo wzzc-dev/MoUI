@@ -30,6 +30,8 @@ thin wiring only                   ▼
                            moui/render/*  ──►  moui_skia / webgpu_adapter / wgpu
 ```
 
+**Domain facades (ADR 0003 / 0014):** `geometry`/`graphics`/`animation`/`text`/`state` re-export curated `@core` types only; `core` never imports them.
+
 **Allowed direction:** app and views depend inward on facades/core; platforms
 normalize into host contracts; renderers consume `DrawCommand` only.
 

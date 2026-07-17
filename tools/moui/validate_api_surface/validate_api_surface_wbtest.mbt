@@ -193,10 +193,32 @@ test "root facade budget forwards app-loop sugar only" {
 }
 
 ///|
+test "domain facade packages are required to re-export from core only" {
+  let geom = budget_by_label("geometry sugar")
+  assert_true(geom.required_tokens.contains("\"wzzc-dev/moui/core\""))
+  assert_true(geom.required_tokens.contains("pub using @core {type Point}"))
+  let gfx = budget_by_label("graphics sugar")
+  assert_true(gfx.required_tokens.contains("\"wzzc-dev/moui/core\""))
+  assert_true(gfx.required_tokens.contains("pub using @core {type Color}"))
+  let core = budget_by_label("core")
+  assert_false(core.required_tokens.contains("\"wzzc-dev/moui/geometry\""))
+  assert_false(core.required_tokens.contains("\"wzzc-dev/moui/graphics\""))
+  assert_false(core.required_tokens.contains("\"wzzc-dev/moui/animation\""))
+  assert_false(core.required_tokens.contains("\"wzzc-dev/moui/text\""))
+  assert_false(core.required_tokens.contains("\"wzzc-dev/moui/state\""))
+}
+
+///|
 test "domain sugar packages forward the curated per-domain type set" {
   let geom = budget_by_label("geometry sugar")
   assert_true(geom.required_tokens.contains("pub using @core {type Point}"))
   assert_true(geom.required_tokens.contains("pub using @core {type Alignment}"))
+  assert_true(
+    geom.required_tokens.contains("pub using @core {type MainAxisAlignment}"),
+  )
+  assert_true(
+    geom.required_tokens.contains("pub using @core {type CrossAxisAlignment}"),
+  )
   assert_true(geom.forbidden_tokens.contains("pub using @core {type View}"))
   assert_true(geom.forbidden_tokens.contains("pub using @core {type Color}"))
 
@@ -399,11 +421,13 @@ test "views facade exposes control-specific contracts" {
   assert_true(required.contains("pub using @core {type ActionCommand}"))
   assert_true(required.contains("pub using @core {type ActionCommandMap}"))
   assert_true(required.contains("pub using @core {type CommandBinding}"))
-  assert_true(required.contains("pub using @core {type Color}"))
-  assert_true(required.contains("pub using @core {type ColorScheme}"))
+  assert_true(required.contains("pub using @core {type ColorPalette}"))
+  assert_true(required.contains("pub using @core {type TypographyScale}"))
   assert_true(required.contains("pub using @core {type CommandIntent}"))
   assert_true(required.contains("pub using @core {type KeyModifiers}"))
   assert_true(required.contains("pub using @core {type KeyboardShortcut}"))
+  assert_true(views.forbidden_tokens.contains("pub using @core {type Color}"))
+  assert_true(views.forbidden_tokens.contains("pub using @core {type ColorScheme}"))
   assert_true(required.contains("pub struct ButtonStyle"))
   assert_true(required.contains("type FormFieldState"))
   assert_true(required.contains("pub(all) enum DatePickerMode"))

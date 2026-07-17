@@ -31,7 +31,7 @@ pub(all) enum DesignSystemChoice {
 ///|
 pub(all) struct DesignSystemsModel {
   preset : DesignSystemChoice
-  scheme : @views.ColorScheme
+  scheme : @state.ColorScheme
   variant : @common.DesignSchemeVariant
   density : @common.DesignDensity
   custom_enabled : Bool
@@ -59,7 +59,7 @@ pub fn DesignSystemsApp::new() -> DesignSystemsApp {
 pub fn DesignSystemsModel::new() -> DesignSystemsModel {
   {
     preset: DesignSystemChoice::Material,
-    scheme: @views.ColorScheme::Light,
+    scheme: @state.ColorScheme::Light,
     variant: @common.DesignSchemeVariant::SchemeLight,
     density: @common.DesignDensity::Standard,
     custom_enabled: false,
@@ -119,7 +119,7 @@ pub fn DesignSystemsModel::theme(self : DesignSystemsModel) -> @moui.Theme {
   if self.custom_enabled {
     let palette = {
       ..base.palette,
-      primary: @views.Color::rgba(r=0.82, g=0.18, b=0.42),
+      primary: @graphics.Color::rgba(r=0.82, g=0.18, b=0.42),
     }
     let spacing_scale = { ..base.spacing_scale, sm: 14.0 }
     let radius_scale = { ..base.radius_scale, md: 10.0 }
@@ -1043,7 +1043,7 @@ fn design_metric_row(
 fn design_swatch(
   theme : @moui.Theme,
   label : String,
-  color : @views.Color,
+  color : @graphics.Color,
 ) -> @moui.View[DesignSystemsMsg] {
   container(
     text(label, role=@views.TextRole::Caption, theme~, width=76.0, height=24.0).foreground(
@@ -1165,7 +1165,7 @@ fn required_source_mapped_preset(
 fn design_tokens_for(
   preset : DesignSystemChoice,
   variant~ : @common.DesignSchemeVariant,
-  system_scheme~ : @views.ColorScheme,
+  system_scheme~ : @state.ColorScheme,
   density~ : @common.DesignDensity,
 ) -> @common.DesignSystemTokens {
   required_source_mapped_preset(preset).tokens_for_variant(
@@ -1178,8 +1178,8 @@ fn design_tokens_for(
 ///|
 fn design_report_for(
   preset : DesignSystemChoice,
-  scheme~ : @views.ColorScheme,
-  system_scheme~ : @views.ColorScheme,
+  scheme~ : @state.ColorScheme,
+  system_scheme~ : @state.ColorScheme,
   density~ : @common.DesignDensity,
 ) -> @audit.DesignSystemReport {
   @audit.design_system_report(
@@ -1222,18 +1222,18 @@ fn design_customization_capability_gap_count(
 }
 
 ///|
-fn design_scheme_id(scheme : @views.ColorScheme) -> String {
+fn design_scheme_id(scheme : @state.ColorScheme) -> String {
   match scheme {
-    @views.ColorScheme::Light => "light"
-    @views.ColorScheme::Dark => "dark"
+    @state.ColorScheme::Light => "light"
+    @state.ColorScheme::Dark => "dark"
   }
 }
 
 ///|
-fn design_scheme_from_id(id : String) -> @views.ColorScheme {
+fn design_scheme_from_id(id : String) -> @state.ColorScheme {
   match id {
-    "dark" => @views.ColorScheme::Dark
-    _ => @views.ColorScheme::Light
+    "dark" => @state.ColorScheme::Dark
+    _ => @state.ColorScheme::Light
   }
 }
 

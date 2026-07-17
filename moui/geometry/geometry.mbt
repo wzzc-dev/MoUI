@@ -25,3 +25,9 @@ pub using @core {type Axis}
 
 ///|
 pub using @core {type Alignment}
+
+///|
+pub using @core {type MainAxisAlignment}
+
+///|
+pub using @core {type CrossAxisAlignment}

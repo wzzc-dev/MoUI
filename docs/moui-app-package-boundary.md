@@ -82,6 +82,12 @@ app-facing facade/extension over `core`，第一阶段主要通过
   `BorderStyle`、`ShadowStyle`、`Theme` token 这类基础值。picker 的低层
   option representation 是 `views` 包内私有实现细节；普通 app 使用
   `@views.PickerItem` / `@views.picker`。
+- **组件 theme schema 仍在 core（S1）**：`ComponentThemes` / `ButtonTheme` /
+  `ControlStateTokens` / `ControlStateStyle` 等挂在 `@core.Theme.components` 上，
+  供 resolver 与 `moui_theme` 投影使用。因 `core` 不能依赖 `views`，在拆分
+  `Theme`（去掉 `components` 字段）的 RFC 之前，这些类型的**定义**留在
+  `core`；app 侧控件外观仍优先 `@views.*Style` 与 `light_theme`/`theme`。
+  详见 `docs/plans/active/core-component-theme-to-views.md`。
 - **WebView ownership 已迁出**：`WebViewSpec`、`WebViewCommand`、
   `WebViewEvent`、`WebViewNavigationPolicy` 已归 `moui/backend/host` 拥有。
   `core` 只保留 renderer-neutral 的 `PlatformViewPlacement`、
@@ -254,6 +260,7 @@ View  Program  Effect  Subscription  Theme  Environment  ViewEnvironment
 **`moui/geometry`** (import `@core`)
 ```
 Point  Size  Rect  Insets  Constraints  Axis  Alignment
+MainAxisAlignment  CrossAxisAlignment
 ```
 
 **`moui/graphics`** (import `@core`)
@@ -281,20 +288,27 @@ ColorScheme  LayoutDirection  FocusScope  FocusScopeItem
 
 ### `@views` 转发（constructor / 控件 facade，不兜底 kernel）
 
-命令与菜单：`ActionCommand`、`ActionCommandMap`、`CommandBinding`、`CommandIntent`、
-`KeyModifiers`、`KeyboardShortcut`（`menu_commands.mbt`）。
+**允许**（控件工作流表面）：
 
-Date picker 数据 facade：`DateValue` 暂时保留为 `@views.DateValue`，因为
-datepicker 公共 API 已经直接暴露它；若未来迁移 owning package，应单独做破坏性变更。
+- 命令与菜单：`ActionCommand`、`ActionCommandMap`、`CommandBinding`、`CommandIntent`、
+  `KeyModifiers`、`KeyboardShortcut`（`menu_commands.mbt`）。
+- Date picker 数据：`DateValue` 暂留 `@views.DateValue`（datepicker 公共 API 已暴露；
+  无独立 domain facade）。
+- 主题构造辅助：`ColorPalette`、`TypographyScale`（`theme.mbt`）。
+- 控件样式桥：`ControlStateStyle`（`control_style.mbt`；真源在 `core`）。
 
-主题辅助：`ColorPalette`、`TypographyScale`（`theme.mbt`）。
+**禁止**（领域值类型，走 domain facade，不从 `@views` 再导出）：
 
-绘制/动画/focus/低层 runtime id 迁移路径：
+- `@graphics.Color` / paint 值类型 — **不要** `@views.Color`
+- `@state.ColorScheme` — **不要** `@views.ColorScheme`
+- geometry / animation / text / state 其它值类型 — 用对应 domain facade
 
-- 绘制与低层 paint 类型用 `@graphics.RoundedRect`、`@graphics.PathSpec`、
+绘制/动画/focus/低层 runtime id 路径：
+
+- 绘制与低层 paint 类型用 `@graphics.Color`、`@graphics.RoundedRect`、`@graphics.PathSpec`、
   `@graphics.ImageFit`、`@graphics.LayerSpec`、`@graphics.Transform2D` 等。
 - 动画类型用 `@animation.TransitionSpec`、`@animation.TransitionStyle`、`@animation.Easing`。
-- focus scope 类型用 `@state.FocusScope`、`@state.FocusScopeItem`。
+- focus / scheme 用 `@state.FocusScope`、`@state.FocusScopeItem`、`@state.ColorScheme`。
 - diagnostics/kernel-only 类型在需要时直连 `@core.ElementId`、`@core.SemanticsRole`、
   `@core.ComponentContext`，并限定在 showcase/diagnostics/custom kernel 或测试场景。
 
