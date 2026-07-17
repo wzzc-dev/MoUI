@@ -21,6 +21,10 @@ color change through these layers before editing:
 
 2. **Component tokens** — `@core.ComponentThemes.button : ButtonTheme`
    (`moui/core/theme_components.mbt`, `moui/core/theme_resolver.mbt`).
+   Ownership note (S1): these token structs stay on `@core.Theme.components`
+   so resolvers and `moui_theme` can project without `core → views`. App-facing
+   one-shot styles remain `@views.ButtonStyle` / variant helpers. See
+   `docs/plans/active/core-component-theme-to-views.md`.
    - `minimal_components()` builds the default `ButtonTheme` from the palette.
      Each variant (`primary`/`tonal`/`outline`/`ghost`/`subtle`/`subtle_brand`)
      is a `ControlStateTokens` (foreground/background/border/border_width/radius).

@@ -1,10 +1,7 @@
 ///|
-pub using @core {type Color}
-
-///|
-pub using @core {type ColorScheme}
-
-///|
+/// Theme token helpers re-exported for app theme construction.
+/// Value colors/schemes belong on domain facades: `@graphics.Color`,
+/// `@state.ColorScheme` (ADR 0014 model B).
 pub using @core {type ColorPalette}
 
 ///|
