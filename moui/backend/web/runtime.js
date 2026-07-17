@@ -595,6 +595,20 @@ export function createWebGpuImports(options = {}) {
     .map(part => Number(part.trim()))
     .filter(value => Number.isFinite(value));
 
+  const parseStrictDoubleList = value => {
+    const source = `${value ?? ""}`;
+    if (source.trim() === "") return [];
+    const result = [];
+    for (const part of source.split(",")) {
+      const trimmed = part.trim();
+      if (trimmed.length === 0) return undefined;
+      const number = Number(trimmed);
+      if (!Number.isFinite(number)) return undefined;
+      result.push(number);
+    }
+    return result;
+  };
+
   const maskClip = mask => {
     if (!mask || !mask.kind) return undefined;
     return {
@@ -1400,9 +1414,9 @@ export function createWebGpuImports(options = {}) {
   };
 
   const pushPathMesh = (renderer, payload) => {
-    const values = parseDoubleList(payload);
     const stride = 15;
-    if (values.length < stride * 3) return;
+    const values = parseStrictDoubleList(payload);
+    if (!values || values.length < stride * 3 || values.length % (stride * 3) !== 0) return;
     const scope = rendererScope(renderer);
     const startIndex = scope.visualVertices.length / VISUAL_STRIDE_FLOATS;
     const state = rendererState(renderer);

@@ -83,6 +83,7 @@ export function createSemanticsDomManager(options = {}) {
       const action = actionForActivation(node?.actions ?? []);
       if (action) {
         event.preventDefault();
+        event.stopPropagation?.();
         dispatchAction(state, node, action);
       }
     });
@@ -92,6 +93,7 @@ export function createSemanticsDomManager(options = {}) {
       const action = actionForActivation(node?.actions ?? []);
       if (action) {
         event.preventDefault();
+        event.stopPropagation?.();
         dispatchAction(state, node, action);
       }
     });
@@ -120,7 +122,13 @@ export function createSemanticsDomManager(options = {}) {
     element.style.border = "0";
     element.style.padding = "0";
     element.style.margin = "0";
-    element.style.pointerEvents = "none";
+    // Actionable semantic elements are an input fallback for canvas hosts.
+    // They must receive real pointer activation because CSS-pixel events can
+    // otherwise take a different path from the DPR-scaled canvas protocol.
+    // Structural nodes stay transparent so they do not mask canvas gestures.
+    element.style.pointerEvents = focusableActions(node.actions ?? [])
+      ? "auto"
+      : "none";
     setOptionalAttribute(element, "role", node.role === "presentation" ? "none" : node.role);
     setOptionalAttribute(element, "aria-label", node.label);
     setOptionalAttribute(element, "aria-description", node.description);
