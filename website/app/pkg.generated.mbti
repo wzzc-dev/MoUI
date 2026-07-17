@@ -36,7 +36,7 @@ pub struct Model {
   tutorial_scroll : @core.ScrollState
   route_history : @views.RouteHistoryState
   pending_anchor : String?
-  copy_feedback_active : Bool
+  copied_text : String?
 }
 
 pub enum Msg {

@@ -1,0 +1,93 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/showcase/app/platform"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn action_command_map() -> @core.ActionCommandMap
+
+pub fn catalog_groups() -> Array[CatalogGroup]
+
+pub fn catalog_items() -> Array[CatalogItem]
+
+pub fn normalize_platform_route(String) -> String
+
+pub fn platform_routes() -> Array[String]
+
+pub fn program(services? : @host.HostAppServices, timer_source? : @host.HostTimerSource?, window_events? : @host.HostWindowEventSource?, route? : String) -> @core.Program[Model, Msg]
+
+pub fn subscriptions(Model) -> @core.Subscription[Msg]
+
+pub fn update(Model, Msg) -> (Model, @core.Effect[Msg])
+
+pub fn view(Model) -> @core.View[Msg]
+
+pub fn view_body(Model, width? : Double) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+pub(all) struct CatalogGroup {
+  id : String
+  title : String
+} derive(Eq, @debug.Debug)
+
+pub(all) struct CatalogItem {
+  id : String
+  group_id : String
+  title : String
+  summary : String
+  badge : String
+} derive(Eq, @debug.Debug)
+
+pub struct Model {
+  route : String
+  timer_running : Bool
+  ticks : Int
+  window_width : Double
+  window_height : Double
+  clipboard_text : String
+  last_event : String
+  pending_service : @host.HostServiceRequestId?
+  stroke_points : Array[@core.Point]
+  anim_phase : Double
+  services : @host.HostAppServices
+  timer_source : @host.HostTimerSource?
+  window_events : @host.HostWindowEventSource?
+  probe_text : String
+  probe_action_count : Int
+  probe_submit_count : Int
+  host_label : String
+}
+pub fn Model::new(services? : @host.HostAppServices, timer_source? : @host.HostTimerSource?, window_events? : @host.HostWindowEventSource?, timer_running? : Bool, route? : String, host_label? : String) -> Self
+pub fn Model::open(Self, String) -> Self
+pub fn Model::route(Self) -> String
+pub fn Model::with_host_adapters(Self, services? : @host.HostAppServices, timer_source? : @host.HostTimerSource?, window_events? : @host.HostWindowEventSource?) -> Self
+pub fn Model::with_host_label(Self, String) -> Self
+
+pub(all) enum Msg {
+  Navigate(String)
+  ToggleTimer
+  TimerTick
+  WindowResized(Double, Double)
+  WriteClipboard
+  ReadClipboard
+  OpenFile
+  HostCompleted(@host.HostCompletedServiceResponse)
+  CanvasDrag(@core.Point)
+  ClearCanvas
+  AnimTick
+  ShortcutTick
+  ProbeTextChanged(String)
+  ProbeAction
+  ProbeSubmit
+}
+
+// Type aliases
+
+// Traits
+

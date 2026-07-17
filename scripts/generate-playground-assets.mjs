@@ -102,12 +102,27 @@ for (const lesson of readdirSync(lessonRoot).sort()) {
 }
 
 const releaseRoot = join(repoRoot, "_build/wasm-gc/release/build");
+const packageGraphPath = join(repoRoot, "_build/packages.json");
+if (!existsSync(packageGraphPath)) {
+  // `moon build --target wasm-gc --release` for the playground package may not
+  // materialize the workspace package graph on every CI image. Force a cheap
+  // check first so packages.json exists for dependency collection.
+  execFileSync("moon", ["check", "website/playground/web_wasm", "--target", "wasm-gc"], {
+    cwd: repoRoot,
+    stdio: "inherit",
+    env: {
+      ...process.env,
+      MOUI_SKIA_DISABLE_PREBUILD_SKIA:
+        process.env.MOUI_SKIA_DISABLE_PREBUILD_SKIA || "1",
+    },
+  });
+}
 const dependencyFiles = existsSync(releaseRoot)
   ? collectFiles(releaseRoot).filter(file => file.rel.endsWith(".mi") || file.rel.endsWith(".core"))
   : [];
 for (const file of dependencyFiles) copy(file.full, join(outDir, "assets/core", file.rel));
 
-const packageGraph = JSON.parse(readFileSync(join(repoRoot, "_build/packages.json"), "utf8"));
+const packageGraph = JSON.parse(readFileSync(packageGraphPath, "utf8"));
 const allPackages = {};
 for (const pkg of packageGraph.packages) {
   const id = pkg.rel ? `${pkg.root}/${pkg.rel}` : pkg.root;

@@ -54,7 +54,7 @@ This file is generated from repository manifests and validator reports.
 | runtime facade (moui/runtime/pkg.generated.mbti) | 420 | 281 | 9 |
 | core (moui/core/pkg.generated.mbti) | 1830 | 505 | 139 |
 | views facade (moui/views/pkg.generated.mbti) | 1215 | 549 | 19 |
-| host contracts (moui/backend/host/pkg.generated.mbti) | 1199 | 470 | 71 |
+| host contracts (moui/backend/host/pkg.generated.mbti) | 1226 | 481 | 73 |
 | renderer facade (moui/render/pkg.generated.mbti) | 550 | 148 | 37 |
 | skia renderer (moui/render/skia/pkg.generated.mbti) | 161 | 93 | 3 |
 | sun renderer (moui/render/sun/pkg.generated.mbti) | 230 | 138 | 1 |

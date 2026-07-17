@@ -98,12 +98,12 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
     {
       path: "moui/backend/host/pkg.generated.mbti",
       category: "host_contract",
-      max_count: 470,
+      max_count: 481,
     },
     {
       path: "moui/backend/host/pkg.generated.mbti",
       category: "required_protocol",
-      max_count: 71,
+      max_count: 73,
     },
     {
       path: "moui/backend/host/pkg.generated.mbti",

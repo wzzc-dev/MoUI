@@ -92,9 +92,11 @@ const extractPackage = (packageZip, destination) => {
       [
         "-NoProfile",
         "-Command",
-        "Expand-Archive -LiteralPath $args[0] -DestinationPath $args[1] -Force",
-        packageZip,
-        destination,
+        "Expand-Archive -LiteralPath '" +
+          packageZip.replaceAll("'", "''") +
+          "' -DestinationPath '" +
+          destination.replaceAll("'", "''") +
+          "' -Force",
       ],
       { cwd: repoRoot },
     );
