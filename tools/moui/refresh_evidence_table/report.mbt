@@ -34,7 +34,10 @@ fn generate_table_row(
 ) -> EvidenceTableRow {
   let jobs = join_comma(details.successful_jobs)
   let artifacts = join_comma(details.artifacts)
-  let boundary = "Proves CI run " + run.id + " for head SHA `" + run.head_sha +
+  let boundary = "Proves CI run " +
+    run.id +
+    " for head SHA `" +
+    run.head_sha +
     "`."
   let run_cell = "[" + run.id + "](" + run.html_url + ")"
   {
@@ -60,9 +63,7 @@ fn dry_run_template(mode : String) -> Json {
   let template : Map[String, Json] = Map([])
   template["workflow"] = Json::string("MoUI CI")
   template["run"] = Json::string("[<run-id>](<run-url>)")
-  template["key_successful_jobs"] = Json::string(
-    "<job-name-1>, <job-name-2>",
-  )
+  template["key_successful_jobs"] = Json::string("<job-name-1>, <job-name-2>")
   template["uploaded_artifact_names"] = Json::string(
     "<artifact-1>, <artifact-2>",
   )
@@ -79,7 +80,10 @@ fn dry_run_template(mode : String) -> Json {
 }
 
 ///|
-fn string_array_field(fields : Map[String, Json], key : String) -> Array[String] {
+fn string_array_field(
+  fields : Map[String, Json],
+  key : String,
+) -> Array[String] {
   match fields.get(key) {
     Some(Json::Array(values)) => {
       let result : Array[String] = []
@@ -108,7 +112,9 @@ fn json_string_field(
 }
 
 ///|
-fn parse_run_payload(text : String) -> Result[(EvidenceRun, EvidenceDetails, String), String] {
+fn parse_run_payload(
+  text : String,
+) -> Result[(EvidenceRun, EvidenceDetails, String), String] {
   let parsed = @json.parse(text) catch {
     _ => return Err("payload contains invalid JSON")
   }
@@ -146,12 +152,7 @@ fn parse_run_payload(text : String) -> Result[(EvidenceRun, EvidenceDetails, Str
   }
   let successful_jobs = string_array_field(root, "successful_jobs")
   let artifacts = string_array_field(root, "artifacts")
-  let run = {
-    id: run_id,
-    head_sha,
-    created_at,
-    html_url,
-  }
+  let run = { id: run_id, head_sha, created_at, html_url }
   let details = { successful_jobs, artifacts }
   Ok((run, details, mode))
 }

@@ -8,9 +8,7 @@ struct GraphemeSample {
 
 ///|
 fn is_hex_char(ch : Char) -> Bool {
-  ch.is_ascii_digit() ||
-  (ch >= 'A' && ch <= 'F') ||
-  (ch >= 'a' && ch <= 'f')
+  ch.is_ascii_digit() || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f')
 }
 
 ///|
@@ -53,7 +51,7 @@ fn parse_hex_int(token : String) -> Result[Int, String] {
 fn split_comment(line : String) -> (String, String) {
   match line.find("#") {
     None => (line, "")
-    Some(offset) => (line[:offset].to_owned(), line[offset + 1 :].to_owned())
+    Some(offset) => (line[:offset].to_owned(), line[offset + 1:].to_owned())
   }
 }
 
@@ -167,14 +165,12 @@ fn parse_fixture_line(
     )
   }
   Ok(
-    Some(
-      {
-        line_number,
-        codepoints,
-        boundaries,
-        comment: normalize_spaces(raw_comment.trim().to_owned()),
-      },
-    ),
+    Some({
+      line_number,
+      codepoints,
+      boundaries,
+      comment: normalize_spaces(raw_comment.trim().to_owned()),
+    }),
   )
 }
 
@@ -262,8 +258,7 @@ fn to_hex_upper(value : Int) -> String {
     return "0"
   }
   let hex_digits : Array[Char] = [
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
-    'F',
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
   ]
   let chars : Array[Char] = []
   let mut n = value

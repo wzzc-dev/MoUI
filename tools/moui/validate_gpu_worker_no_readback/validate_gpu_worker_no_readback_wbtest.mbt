@@ -1,8 +1,7 @@
 ///|
 test "rejects forbidden GPU worker readback tokens" {
   let failures = validate_worker_source(
-    "worker.cpp",
-    "void present() { read_pixels(surface); }\n",
+    "worker.cpp", "void present() { read_pixels(surface); }\n",
   )
   debug_inspect(
     failures,
@@ -32,12 +31,7 @@ test "accepts clean worker and android dynamic vulkan flags" {
     #|}
     #|
   let failures = validate_sources(
-    "worker.cpp",
-    worker,
-    "worker_api.mbt",
-    worker_api,
-    "build.js",
-    build,
+    "worker.cpp", worker, "worker_api.mbt", worker_api, "build.js", build,
   )
   debug_inspect(failures, content="[]")
 }
@@ -63,8 +57,7 @@ test "rejects android static vulkan link" {
 ///|
 test "requires zero readback diagnostics" {
   let failures = validate_worker_api(
-    "worker_api.mbt",
-    "struct Diagnostics { readback_count: 1L }",
+    "worker_api.mbt", "struct Diagnostics { readback_count: 1L }",
   )
   debug_inspect(
     failures,

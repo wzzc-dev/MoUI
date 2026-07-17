@@ -19,10 +19,7 @@ fn is_bundle_id_part_char(ch : Char) -> Bool {
 }
 
 ///|
-fn valid_segmented_id(
-  value : String,
-  part_ok : (Char) -> Bool,
-) -> Bool {
+fn valid_segmented_id(value : String, part_ok : (Char) -> Bool) -> Bool {
   if value == "" {
     return false
   }

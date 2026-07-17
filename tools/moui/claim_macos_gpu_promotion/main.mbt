@@ -117,13 +117,16 @@ fn evaluate_claim_gates(metrics : Json) -> Array[String] {
   if !(recovered > 0.0 && recovered <= 3.0) {
     failures.push("contextLoss.recoveredWithinVsyncs in 1..3")
   }
-  if !bool_or(json_bool(context_loss, "rasterFallbackPreservedAppRuntime"), false) {
+  if !bool_or(
+      json_bool(context_loss, "rasterFallbackPreservedAppRuntime"),
+      false,
+    ) {
     failures.push("contextLoss.rasterFallbackPreservedAppRuntime")
   }
   if !bool_or(
-    json_bool(raster_fallback, "automaticAfterRepeatedFailure"),
-    false,
-  ) {
+      json_bool(raster_fallback, "automaticAfterRepeatedFailure"),
+      false,
+    ) {
     failures.push("rasterFallback.automaticAfterRepeatedFailure")
   }
   let readback = number_or(json_number(diagnostics, "readbackCount"), 1.0)
@@ -138,11 +141,7 @@ fn evaluate_claim_gates(metrics : Json) -> Array[String] {
 
 ///|
 fn relative_to_root(repo_root : String, path : String) -> String {
-  let root = if repo_root.has_suffix("/") {
-    repo_root
-  } else {
-    repo_root + "/"
-  }
+  let root = if repo_root.has_suffix("/") { repo_root } else { repo_root + "/" }
   if path.has_prefix(root) {
     path[root.length():].to_owned()
   } else {
@@ -362,11 +361,12 @@ fn run(args : Array[String]) -> Int {
       let metrics_rel = relative_to_root(options.repo_root, metrics_path)
       let claim = build_claim(metrics, options.runner, artifact, metrics_rel)
       let claim_path = @tools.join_path(out_dir, "gpu-promotion-claim.json")
-      match @tools.write_text_file(
-        claim_path,
-        claim.stringify(indent=2) + "\n",
-        claim_path,
-      ) {
+      match
+        @tools.write_text_file(
+          claim_path,
+          claim.stringify(indent=2) + "\n",
+          claim_path,
+        ) {
         Ok(_) => {
           println("wrote " + claim_path)
           0

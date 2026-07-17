@@ -46,9 +46,7 @@ fn managed_moon_package(
 ) -> String {
   let preferred = "examples/" + app_id + "/" + platform + "_skia"
   let fallback = "examples/" + app_id + "/" + platform
-  if @tools.file_exists(
-    @tools.resolve_path(repo_root, preferred + "/moon.pkg"),
-  ) ||
+  if @tools.file_exists(@tools.resolve_path(repo_root, preferred + "/moon.pkg")) ||
     @tools.directory_exists(@tools.resolve_path(repo_root, preferred)) {
     preferred
   } else {
@@ -58,9 +56,7 @@ fn managed_moon_package(
 
 ///|
 fn parse_json_object(text : String) -> Result[Map[String, Json], String] {
-  let value = @json.parse(text) catch {
-    _ => return Err("invalid JSON")
-  }
+  let value = @json.parse(text) catch { _ => return Err("invalid JSON") }
   match value {
     Json::Object(fields) => Ok(fields)
     _ => Err("expected object")

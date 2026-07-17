@@ -1,8 +1,8 @@
 ///|
 fn sample_metrics(
-  duration~ : Double = 600.0,
-  p95~ : Double = 10.0,
-  readback~ : Double = 0.0,
+  duration? : Double = 600.0,
+  p95? : Double = 10.0,
+  readback? : Double = 0.0,
 ) -> Json {
   {
     "diagnostics": {
@@ -68,16 +68,14 @@ test "rejects nonzero readback" {
 
 ///|
 test "builds promoted claim payload" {
-  match build_claim(
-    sample_metrics(),
-    "runner",
-    "artifact",
-    "metrics.json",
-  ) {
+  match build_claim(sample_metrics(), "runner", "artifact", "metrics.json") {
     Json::Object(fields) => {
       debug_inspect(fields.get("gpuPromoted"), content="Some(True)")
       debug_inspect(fields.get("platform"), content="Some(String(\"macos\"))")
-      debug_inspect(fields.get("surfaceRoute"), content="Some(String(\"metal-gpu\"))")
+      debug_inspect(
+        fields.get("surfaceRoute"),
+        content="Some(String(\"metal-gpu\"))",
+      )
     }
     _ => fail("expected claim object")
   }

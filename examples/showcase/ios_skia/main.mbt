@@ -1,7 +1,5 @@
 ///|
-let showcase_ios_session : Ref[@ios_host.IosRuntimeSession?] = Ref(
-  None,
-)
+let showcase_ios_session : Ref[@ios_host.IosRuntimeSession?] = Ref(None)
 
 ///|
 fn showcase_ios_metrics(
@@ -52,9 +50,7 @@ fn showcase_ios_renderer_options() -> @ios_skia_backend.IosSkiaAppOptions {
 
 ///|
 fn showcase_ios_provider() -> @ios_host.IosRendererProvider {
-  @ios_skia_backend.renderer_provider(
-    options=showcase_ios_renderer_options(),
-  )
+  @ios_skia_backend.renderer_provider(options=showcase_ios_renderer_options())
 }
 
 ///|
@@ -114,11 +110,7 @@ pub fn showcase_ios_resize(
 ) -> Bool {
   match showcase_ios_session.val {
     Some(session) => {
-      ignore(
-        session.resize(
-          showcase_ios_metrics(width, height, scale_factor),
-        ),
-      )
+      ignore(session.resize(showcase_ios_metrics(width, height, scale_factor)))
       true
     }
     None => false
@@ -132,11 +124,7 @@ pub fn showcase_ios_dispatch_pointer(
   y : Double,
   time_ms : Double,
 ) -> Bool {
-  match
-    (
-      showcase_ios_session.val,
-      showcase_ios_pointer_phase(phase),
-    ) {
+  match (showcase_ios_session.val, showcase_ios_pointer_phase(phase)) {
     (Some(session), Some(pointer_phase)) => {
       let metrics = session.metrics()
       let scale = if metrics.scale_factor > 0.0 {
@@ -274,8 +262,7 @@ pub fn moui_mobile_dispatch_text_input(
 
 ///|
 pub fn moui_mobile_dispatch_command(kind : Int) -> Bool {
-  match
-    (showcase_ios_session.val, @host.mobile_command_response(kind)) {
+  match (showcase_ios_session.val, @host.mobile_command_response(kind)) {
     (Some(session), Some(response)) => session.dispatch_host_response(response)
     _ => false
   }

@@ -51,14 +51,29 @@ fn safari_toolbar(
   } else {
     (metrics.width - 236.0).max(320.0)
   }
-  let address = @views.text_field(
-    model.browser_query,
-    on_input=value => BrowserQueryChanged(value),
-    on_submit=Some(SubmitBrowserQuery),
-    placeholder="Search or enter website name",
-    theme~,
+  let address = @views.container(
+    @views.row(
+      [
+        desktop_icon(@views.IconName::Search, 13.0, palette.muted),
+        @views.text_field(
+          model.browser_query,
+          on_input=value => BrowserQueryChanged(value),
+          on_submit=Some(SubmitBrowserQuery),
+          placeholder="Search or enter website name",
+          theme~,
+          width=(address_width - 34.0).max(160.0),
+          height=26.0,
+        ),
+      ],
+      spacing=6.0,
+      align=@views.CrossAlign::Center,
+    ),
     width=address_width,
-    height=38.0,
+    height=34.0,
+    background=safari_address_surface(palette),
+    corner_radius=9.0,
+    border=Some(safari_control_border(palette)),
+    padding=4.0,
   )
   let navigation = if metrics.compact {
     @views.row(
@@ -77,7 +92,7 @@ fn safari_toolbar(
         ),
         toolbar_icon_button(
           @views.IconName::ArrowRight,
-          "Reload page",
+          "Go to address",
           SubmitBrowserQuery,
           palette,
         ),
@@ -93,56 +108,151 @@ fn safari_toolbar(
       align=@views.CrossAlign::Center,
     )
   }
-  @views.container(
-    @views.column(
-      [
-        @views.row(
-          [
-            @views.container(
-              @views.row(
-                [
-                  desktop_icon(@views.IconName::Link, 14.0, palette.accent),
-                  @views.text(
-                    match model.browser_page {
-                      StartPage => "Start Page"
-                      SearchResults(value) => value
-                    },
-                    role=@views.TextRole::Caption,
-                    theme~,
-                    width=if metrics.compact { 180.0 } else { 250.0 },
-                    height=24.0,
-                  ).foreground(palette.foreground),
-                ],
-                spacing=8.0,
-                align=@views.CrossAlign::Center,
+  @views.stack([
+    @views.container(
+      @views.column(
+        [
+          @views.row(
+            [
+              @views.container(
+                @views.row(
+                  [
+                    desktop_icon(@views.IconName::Link, 13.0, palette.accent),
+                    @views.text(
+                      match model.browser_page {
+                        StartPage => "Start Page"
+                        SearchResults(value) => value
+                      },
+                      role=@views.TextRole::Caption,
+                      theme~,
+                      width=if metrics.compact { 180.0 } else { 250.0 },
+                      height=24.0,
+                    ).foreground(palette.foreground),
+                  ],
+                  spacing=7.0,
+                  align=@views.CrossAlign::Center,
+                ),
+                width=if metrics.compact { 220.0 } else { 292.0 },
+                height=30.0,
+                background=safari_selected_tab_surface(palette),
+                corner_radius=8.0,
+                border=Some(safari_control_border(palette)),
+                padding=6.0,
               ),
-              width=if metrics.compact { 220.0 } else { 292.0 },
-              height=30.0,
-              background=palette.content,
-              corner_radius=9.0,
-              padding=6.0,
-            ),
-            @views.spacer(min_length=8.0),
-            toolbar_icon_button(
-              @views.IconName::Plus,
-              "New start page",
-              ShowBrowserStartPage,
-              palette,
-            ),
-          ],
-          spacing=6.0,
-          align=@views.CrossAlign::Center,
-        ),
-        navigation,
-      ],
-      spacing=8.0,
-      align=@views.CrossAlign::Stretch,
+              @views.spacer(min_length=8.0),
+              toolbar_icon_button(
+                @views.IconName::Plus,
+                "New start page",
+                ShowBrowserStartPage,
+                palette,
+              ),
+            ],
+            spacing=6.0,
+            align=@views.CrossAlign::Center,
+          ),
+          navigation,
+        ],
+        spacing=8.0,
+        align=@views.CrossAlign::Stretch,
+      ),
+      width=metrics.width,
+      height~,
+      background=safari_toolbar_surface(palette),
+      padding=8.0,
     ),
-    width=metrics.width,
-    height~,
-    background=palette.glass_strong,
-    padding=8.0,
+    @views.container(
+      @views.spacer(min_length=0.0, weight=0.0),
+      width=metrics.width,
+      height=1.0,
+      background=safari_chrome_divider(palette),
+      padding=0.0,
+    ).align(alignment=@geometry.Alignment::bottom_leading()),
+  ]).frame(width=metrics.width, height~)
+}
+
+///|
+fn safari_toolbar_surface(palette : DesktopPalette) -> @graphics.Color {
+  if palette.dark {
+    rgba8(31, 37, 48, a=0.90)
+  } else {
+    rgba8(246, 248, 251, a=0.86)
+  }
+}
+
+///|
+fn safari_chrome_divider(palette : DesktopPalette) -> @graphics.Color {
+  if palette.dark {
+    rgba8(255, 255, 255, a=0.14)
+  } else {
+    rgba8(185, 192, 201, a=0.64)
+  }
+}
+
+///|
+fn safari_control_border(palette : DesktopPalette) -> @graphics.BorderStyle {
+  @graphics.BorderStyle::new(
+    brush=@graphics.Brush::solid(
+      if palette.dark {
+        rgba8(255, 255, 255, a=0.14)
+      } else {
+        rgba8(178, 186, 197, a=0.58)
+      },
+    ),
+    width=1.0,
   )
+}
+
+///|
+fn safari_address_surface(palette : DesktopPalette) -> @graphics.Color {
+  if palette.dark {
+    rgba8(59, 66, 78, a=0.88)
+  } else {
+    rgba8(255, 255, 255, a=0.72)
+  }
+}
+
+///|
+fn safari_selected_tab_surface(palette : DesktopPalette) -> @graphics.Color {
+  if palette.dark {
+    rgba8(66, 73, 86, a=0.86)
+  } else {
+    rgba8(255, 255, 255, a=0.78)
+  }
+}
+
+///|
+fn safari_page_surface(palette : DesktopPalette) -> @graphics.Color {
+  if palette.dark {
+    rgba8(31, 38, 49)
+  } else {
+    rgba8(242, 245, 249)
+  }
+}
+
+///|
+fn safari_card_surface(palette : DesktopPalette) -> @graphics.Color {
+  if palette.dark {
+    rgba8(50, 57, 69, a=0.84)
+  } else {
+    rgba8(255, 255, 255, a=0.70)
+  }
+}
+
+///|
+fn safari_favorite_surface(
+  color : @graphics.Color,
+  palette : DesktopPalette,
+) -> @graphics.Color {
+  color.multiply_alpha(if palette.dark { 0.72 } else { 0.84 })
+}
+
+///|
+fn safari_result_url_color(palette : DesktopPalette) -> @graphics.Color {
+  if palette.dark {
+    rgba8(133, 205, 168)
+  } else {
+    rgba8(31, 122, 90)
+  }
 }
 
 ///|
@@ -163,11 +273,7 @@ fn safari_content(
     child,
     width~,
     height~,
-    background=if model.dark_mode {
-      rgba8(31, 39, 50)
-    } else {
-      rgba8(227, 240, 245)
-    },
+    background=safari_page_surface(palette),
     padding=if compact { 14.0 } else { 24.0 },
   )
 }
@@ -282,9 +388,9 @@ fn safari_start_page(
       .foreground(palette.foreground),
       @views.row(
         [
-          compact_site("m", "moui.dev", palette, theme),
-          compact_site("d", "docs", palette, theme),
-          compact_site("g", "github", palette, theme),
+          compact_site("m", "moui.dev", "moui.dev", palette, theme),
+          compact_site("d", "docs", "docs.moui.dev", palette, theme),
+          compact_site("g", "github", "github.com", palette, theme),
         ],
         spacing=12.0,
         align=@views.CrossAlign::Start,
@@ -312,9 +418,9 @@ fn favorite_card(
         desktop_icon(icon, 30.0, @graphics.Color::white()),
         width~,
         height=70.0,
-        background=color,
-        corner_radius=14.0,
-        border=Some(desktop_hairline(palette)),
+        background=safari_favorite_surface(color, palette),
+        corner_radius=12.0,
+        border=Some(safari_control_border(palette)),
         padding=18.0,
       ),
       @views.text(
@@ -337,6 +443,7 @@ fn favorite_card(
 fn compact_site(
   initial : String,
   label : String,
+  query : String,
   palette : DesktopPalette,
   theme : @moui.Theme,
 ) -> @moui.View[Msg] {
@@ -353,8 +460,9 @@ fn compact_site(
         ).foreground(palette.foreground),
         width=52.0,
         height=48.0,
-        background=palette.glass_strong,
-        corner_radius=11.0,
+        background=safari_card_surface(palette),
+        corner_radius=10.0,
+        border=Some(safari_control_border(palette)),
         padding=5.0,
       ),
       @views.text(
@@ -369,6 +477,8 @@ fn compact_site(
     spacing=4.0,
     align=@views.CrossAlign::Center,
   )
+  .on_tap(OpenFavorite(query))
+  .accessibility_label("Open " + label)
 }
 
 ///|
@@ -411,7 +521,8 @@ fn browser_report_card(
     width,
     94.0,
     palette,
-    radius=14.0,
+    background=safari_card_surface(palette),
+    radius=12.0,
     padding=14.0,
   )
 }
@@ -510,7 +621,7 @@ fn browser_result(
           theme~,
           width=width - 32.0,
           height=20.0,
-        ).foreground(rgba8(25, 150, 94)),
+        ).foreground(safari_result_url_color(palette)),
         @views.text(
           detail,
           role=@views.TextRole::Body,
@@ -525,6 +636,7 @@ fn browser_result(
     width,
     98.0,
     palette,
+    background=safari_card_surface(palette),
     radius=12.0,
     padding=14.0,
   )

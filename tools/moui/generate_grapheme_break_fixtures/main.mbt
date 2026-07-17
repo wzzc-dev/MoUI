@@ -75,17 +75,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
       value => return Err("Unknown argument: " + value)
     }
   }
-  Ok(
-    {
-      input,
-      output,
-      helper_name,
-      test_name,
-      actual_kind,
-      check,
-      help,
-    },
-  )
+  Ok({ input, output, helper_name, test_name, actual_kind, check, help })
 }
 
 ///|
@@ -112,8 +102,7 @@ fn run(args : Array[String]) -> Int {
         println("invalid MoonBit helper name '" + options.helper_name + "'")
         return 1
       }
-      let text = match
-        @tools.read_required_text(options.input, options.input) {
+      let text = match @tools.read_required_text(options.input, options.input) {
         Ok(value) => value
         Err(message) => {
           println(message)
@@ -127,13 +116,14 @@ fn run(args : Array[String]) -> Int {
           return 1
         }
       }
-      let generated = match generate_fixture(
-        options.actual_kind,
-        options.input,
-        options.helper_name,
-        options.test_name,
-        samples,
-      ) {
+      let generated = match
+        generate_fixture(
+          options.actual_kind,
+          options.input,
+          options.helper_name,
+          options.test_name,
+          samples,
+        ) {
         Ok(value) => value
         Err(message) => {
           println(message)
@@ -159,7 +149,8 @@ fn run(args : Array[String]) -> Int {
           }
         }
       } else {
-        match @tools.write_text_file(options.output, generated, options.output) {
+        match
+          @tools.write_text_file(options.output, generated, options.output) {
           Ok(_) => {
             println("wrote " + options.output)
             0

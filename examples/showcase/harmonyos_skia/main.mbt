@@ -1,7 +1,7 @@
 ///|
-let showcase_harmonyos_session : Ref[
-  @harmonyos_host.HarmonyOsRuntimeSession?,
-] = Ref(None)
+let showcase_harmonyos_session : Ref[@harmonyos_host.HarmonyOsRuntimeSession?] = Ref(
+  None,
+)
 
 ///|
 fn showcase_harmonyos_safe_scale(scale_factor : Double) -> Double {
@@ -68,9 +68,7 @@ fn showcase_harmonyos_provider() -> @harmonyos_host.HarmonyOsRendererProvider {
 }
 
 ///|
-fn showcase_harmonyos_pointer_phase(
-  phase : Int,
-) -> @core.PointerPhase? {
+fn showcase_harmonyos_pointer_phase(phase : Int) -> @core.PointerPhase? {
   match phase {
     0 => Some(@core.PointerPhase::Down)
     1 => Some(@core.PointerPhase::Move)
@@ -128,9 +126,7 @@ pub fn showcase_harmonyos_resize(
   match showcase_harmonyos_session.val {
     Some(session) => {
       ignore(
-        session.resize(
-          showcase_harmonyos_metrics(width, height, scale_factor),
-        ),
+        session.resize(showcase_harmonyos_metrics(width, height, scale_factor)),
       )
       true
     }
@@ -146,10 +142,7 @@ pub fn showcase_harmonyos_dispatch_pointer(
   time_ms : Double,
 ) -> Bool {
   match
-    (
-      showcase_harmonyos_session.val,
-      showcase_harmonyos_pointer_phase(phase),
-    ) {
+    (showcase_harmonyos_session.val, showcase_harmonyos_pointer_phase(phase)) {
     (Some(session), Some(pointer_phase)) => {
       let metrics = session.metrics()
       let scale = showcase_harmonyos_safe_scale(metrics.scale_factor)
@@ -279,11 +272,7 @@ pub fn moui_mobile_dispatch_text_input(
 
 ///|
 pub fn moui_mobile_dispatch_command(kind : Int) -> Bool {
-  match
-    (
-      showcase_harmonyos_session.val,
-      @host.mobile_command_response(kind),
-    ) {
+  match (showcase_harmonyos_session.val, @host.mobile_command_response(kind)) {
     (Some(session), Some(response)) => session.dispatch_host_response(response)
     _ => false
   }
@@ -370,9 +359,7 @@ pub fn moui_mobile_attach_surface(
   height : Int,
   scale_factor : Double,
 ) -> Bool {
-  showcase_harmonyos_attach_surface(
-    surface_handle, width, height, scale_factor,
-  )
+  showcase_harmonyos_attach_surface(surface_handle, width, height, scale_factor)
 }
 
 ///|

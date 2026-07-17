@@ -61,13 +61,14 @@ test "clipboard write effect is host_service shaped" {
   let services = @host.HostAppServices::new(
     bridge=@host.HostServiceBridge::new(
       capabilities=@host.HostServiceCapabilities::new(clipboard=true),
-      handle=request =>
+      handle=request => {
         match request {
           @host.HostServiceRequest::Clipboard(
-            @host.HostClipboardRequest::WriteText(_),
+            @host.HostClipboardRequest::WriteText(_)
           ) => @host.HostServiceResponse::ClipboardWritten
           _ => @host.HostServiceResponse::Unavailable("unexpected")
-        },
+        }
+      },
     ),
   )
   let model = Model::new(services~)
