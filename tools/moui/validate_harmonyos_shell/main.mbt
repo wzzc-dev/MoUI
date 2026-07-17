@@ -57,8 +57,7 @@ fn required_in_bridge() -> Array[String] {
 ///|
 fn forbidden_in_bridge() -> Array[String] {
   [
-    "napi_attach_surface", "napi_dispatch_pointer", "napi_resize",
-    "MOUI_MOBILE_ATTACH_SURFACE",
+    "napi_attach_surface", "napi_dispatch_pointer", "napi_resize", "MOUI_MOBILE_ATTACH_SURFACE",
   ]
 }
 
@@ -91,8 +90,7 @@ fn collect_ets_files(
       _ => {
         failures.push(
           failure(
-            relative_path,
-            "directory could not be read. Fix: restore managed shell template. See docs/invariants.md#M5",
+            relative_path, "directory could not be read. Fix: restore managed shell template. See docs/invariants.md#M5",
           ),
         )
         return
@@ -184,10 +182,11 @@ fn validate_bridge_text(path : String, bridge : String) -> Array[M5Finding] {
 fn validate_repo(repo_root : String) -> M5Result {
   let findings : Array[M5Finding] = []
   let root_path = root_ets_rel()
-  match @tools.read_required_text(
-    @tools.resolve_path(repo_root, root_path),
-    root_path,
-  ) {
+  match
+    @tools.read_required_text(
+      @tools.resolve_path(repo_root, root_path),
+      root_path,
+    ) {
     Ok(root) =>
       for item in validate_root_text(root_path, root) {
         findings.push(item)
@@ -213,22 +212,22 @@ fn validate_repo(repo_root : String) -> M5Result {
     )
   }
   for path in ets_files {
-    match @tools.read_required_text(@tools.resolve_path(repo_root, path), path) {
+    match
+      @tools.read_required_text(@tools.resolve_path(repo_root, path), path) {
       Ok(text) =>
         for item in validate_template_text(path, text) {
           findings.push(item)
         }
       Err(message) =>
-        findings.push(
-          failure(path, "could not read template file: " + message),
-        )
+        findings.push(failure(path, "could not read template file: " + message))
     }
   }
   let bridge_path = bridge_rel()
-  match @tools.read_required_text(
-    @tools.resolve_path(repo_root, bridge_path),
-    bridge_path,
-  ) {
+  match
+    @tools.read_required_text(
+      @tools.resolve_path(repo_root, bridge_path),
+      bridge_path,
+    ) {
     Ok(bridge) =>
       for item in validate_bridge_text(bridge_path, bridge) {
         findings.push(item)
@@ -257,14 +256,7 @@ fn finding_to_json(finding : M5Finding) -> Json {
 ///|
 fn result_to_json(result : M5Result) -> Json {
   let report = if result.findings.is_empty() {
-    [
-      {
-        rule: "M5",
-        ok: true,
-        path: "moui/mobile/harmonyos",
-        hint: "",
-      },
-    ]
+    [{ rule: "M5", ok: true, path: "moui/mobile/harmonyos", hint: "" }]
   } else {
     result.findings
   }

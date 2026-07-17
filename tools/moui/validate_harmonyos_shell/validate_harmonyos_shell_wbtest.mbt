@@ -1,8 +1,7 @@
 ///|
 test "root requires XComponent managed shell tokens" {
   let findings = validate_root_text(
-    "MoUIRoot.ets",
-    "export struct Root { libraryname: 'other' }",
+    "MoUIRoot.ets", "export struct Root { libraryname: 'other' }",
   )
   debug_inspect(findings.length() >= 2, content="true")
   debug_inspect(
@@ -14,8 +13,7 @@ test "root requires XComponent managed shell tokens" {
 ///|
 test "template rejects ArkTS surface/pointer paths" {
   let findings = validate_template_text(
-    "Index.ets",
-    "this.controller.onTouch(() => {})",
+    "Index.ets", "this.controller.onTouch(() => {})",
   )
   debug_inspect(findings.length(), content="1")
   debug_inspect(findings[0].path, content="\"Index.ets\"")
@@ -54,9 +52,9 @@ test "clean root and bridge produce no findings" {
     #|// source=native-xcomponent for diagnostics
     #|
   debug_inspect(validate_root_text("root.ets", root).length(), content="0")
-  debug_inspect(validate_bridge_text("bridge.cpp", bridge).length(), content="0")
   debug_inspect(
-    validate_template_text("root.ets", root).length(),
+    validate_bridge_text("bridge.cpp", bridge).length(),
     content="0",
   )
+  debug_inspect(validate_template_text("root.ets", root).length(), content="0")
 }

@@ -124,7 +124,7 @@ pub fn Model::with_host_adapters(
   timer_source? : @host.HostTimerSource? = None,
   window_events? : @host.HostWindowEventSource? = None,
 ) -> Model {
-  { ..self, services, timer_source, window_events, }
+  { ..self, services, timer_source, window_events }
 }
 
 ///|
@@ -215,10 +215,9 @@ pub fn update(model : Model, msg : Msg) -> (Model, @moui.Effect[Msg]) {
             dispatch(
               HostCompleted(
                 completion_for(
-                  model.services.open_file(
-                    title="Showcase Platform open",
-                    filters=["txt", "md", "json"],
-                  ),
+                  model.services.open_file(title="Showcase Platform open", filters=[
+                    "txt", "md", "json",
+                  ]),
                   @host.HostServiceRequest::FileDialog(
                     @host.HostFileDialogOptions::new(
                       kind=@host.HostFileDialogKind::OpenFile,
@@ -302,13 +301,7 @@ fn host_services_page(model : Model) -> @moui.View[Msg] {
       card(
         column([
           text("Timer ticks: \{model.ticks}"),
-          text(
-            if model.timer_running {
-              "Running"
-            } else {
-              "Stopped"
-            },
-          ),
+          text(if model.timer_running { "Running" } else { "Stopped" }),
           row([
             button(
               if model.timer_running {
@@ -343,7 +336,9 @@ fn host_services_page(model : Model) -> @moui.View[Msg] {
           ]),
         ]),
       ),
-      text("Keyboard: entrypoint installs ActionCommandMap (meta/ctrl+T → Activate)."),
+      text(
+        "Keyboard: entrypoint installs ActionCommandMap (meta/ctrl+T → Activate).",
+      ),
     ],
     spacing=12.0,
   )
@@ -429,37 +424,40 @@ fn mobile_service_probe_page(model : Model) -> @moui.View[Msg] {
       text("IME, action, image, and viewport checks for mobile host sessions."),
       text("Last: \{model.last_event}"),
       card(
-        column([
-          text("Host: \{model.host_label}"),
-          @views.text_field(
-            model.probe_text,
-            on_input=value => ProbeTextChanged(value),
-            on_submit=Some(ProbeSubmit),
-            placeholder="Service probe text",
-            variant=@views.TextFieldVariant::Outline,
-          ),
-          text("IME value: " + model.probe_text).accessibility_label(
-            "Service probe value " + model.probe_text,
-          ),
-          button("Activate service probe", on_click=ProbeAction),
-          text("Action count: \{model.probe_action_count}").accessibility_label(
-            "Service probe action count \{model.probe_action_count}",
-          ),
-          text("Submit count: \{model.probe_submit_count}"),
-          text(
-            "Viewport: \{model.window_width.to_int()} x \{model.window_height.to_int()}",
-          ).accessibility_label(
-            "Service probe viewport \{model.window_width.to_int()} by \{model.window_height.to_int()}",
-          ),
-          @views.image(
-            mobile_service_probe_image_source(),
-            width=160.0,
-            height=240.0,
-            corner_radius=6.0,
-            fit=@graphics.ImageFit::Contain,
-          ).accessibility_label("Service probe async image"),
-          text("Service probe end"),
-        ], spacing=8.0),
+        column(
+          [
+            text("Host: \{model.host_label}"),
+            @views.text_field(
+              model.probe_text,
+              on_input=value => ProbeTextChanged(value),
+              on_submit=Some(ProbeSubmit),
+              placeholder="Service probe text",
+              variant=@views.TextFieldVariant::Outline,
+            ),
+            text("IME value: " + model.probe_text).accessibility_label(
+              "Service probe value " + model.probe_text,
+            ),
+            button("Activate service probe", on_click=ProbeAction),
+            text("Action count: \{model.probe_action_count}").accessibility_label(
+              "Service probe action count \{model.probe_action_count}",
+            ),
+            text("Submit count: \{model.probe_submit_count}"),
+            text(
+              "Viewport: \{model.window_width.to_int()} x \{model.window_height.to_int()}",
+            ).accessibility_label(
+              "Service probe viewport \{model.window_width.to_int()} by \{model.window_height.to_int()}",
+            ),
+            @views.image(
+              mobile_service_probe_image_source(),
+              width=160.0,
+              height=240.0,
+              corner_radius=6.0,
+              fit=@graphics.ImageFit::Contain,
+            ).accessibility_label("Service probe async image"),
+            text("Service probe end"),
+          ],
+          spacing=8.0,
+        ),
       ),
     ],
     spacing=12.0,
@@ -473,13 +471,16 @@ fn route_session_page(model : Model) -> @moui.View[Msg] {
       text("Route & session").title(),
       text("Current platform workspace route and host session labels."),
       card(
-        column([
-          text("Route: platform/\{model.route}"),
-          text("Host label: \{model.host_label}"),
-          text("Timer running: \{model.timer_running}"),
-          text("Pending service: \{to_repr(model.pending_service)}"),
-          text("Last event: \{model.last_event}"),
-        ], spacing=8.0),
+        column(
+          [
+            text("Route: platform/\{model.route}"),
+            text("Host label: \{model.host_label}"),
+            text("Timer running: \{model.timer_running}"),
+            text("Pending service: \{to_repr(model.pending_service)}"),
+            text("Last event: \{model.last_event}"),
+          ],
+          spacing=8.0,
+        ),
       ),
     ],
     spacing=12.0,
@@ -487,6 +488,7 @@ fn route_session_page(model : Model) -> @moui.View[Msg] {
 }
 
 ///|
+
 ///|
 /// Hosted body for the unified Showcase shell (no local chrome).
 pub fn view_body(model : Model, width? : Double = 0.0) -> @moui.View[Msg] {
@@ -552,7 +554,7 @@ pub fn subscriptions(model : Model) -> @moui.Subscription[Msg] {
         source.subscription(
           key="showcase-platform:window",
           label="Showcase platform window events",
-          map=window_event =>
+          map=window_event => {
             match window_event.event {
               @host.HostEvent::Resized(metrics) =>
                 Some(
@@ -562,7 +564,8 @@ pub fn subscriptions(model : Model) -> @moui.Subscription[Msg] {
                   ),
                 )
               _ => None
-            },
+            }
+          },
         ),
       )
     None => ()
@@ -602,9 +605,9 @@ pub fn action_command_map() -> @views.ActionCommandMap {
     group="Showcase Platform",
     description="Demo shortcut installed on the host action-command map",
   )
-  @views.ActionCommandMap::new(
-    bindings=[@views.CommandBinding::new(command~, handle=() => ())],
-  )
+  @views.ActionCommandMap::new(bindings=[
+    @views.CommandBinding::new(command~, handle=() => ()),
+  ])
 }
 
 ///|
@@ -641,19 +644,12 @@ fn apply_host_completion(
         last_event: "Clipboard read",
       }
     @host.HostServiceResponse::FileDialogSelection(paths) => {
-      let summary = if paths.length() == 0 {
-        "(no files)"
-      } else {
-        paths[0]
-      }
+      let summary = if paths.length() == 0 { "(no files)" } else { paths[0] }
       { ..model, pending_service: None, last_event: "Opened \{summary}" }
     }
     @host.HostServiceResponse::Unavailable(reason) =>
-      {
-        ..model,
-        pending_service: None,
-        last_event: "Unavailable: \{reason}",
-      }
-    _ => { ..model, pending_service: None, last_event: "Host service completed" }
+      { ..model, pending_service: None, last_event: "Unavailable: \{reason}" }
+    _ =>
+      { ..model, pending_service: None, last_event: "Host service completed" }
   }
 }

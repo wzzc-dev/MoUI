@@ -83,28 +83,20 @@ fn welcome_demo(
         responsive_grid(
           [
             component_tile(
-              "Controls",
-              "Button, text inputs, checkbox, toggle, radio, chips, picker, slider.",
-              theme,
-              group_width,
+              "Controls", "Button, text inputs, checkbox, toggle, radio, chips, picker, slider.",
+              theme, group_width,
             ),
             component_tile(
-              "Feedback",
-              "Badge, progress, banner, callout, state panels, toast, snackbar.",
-              theme,
-              group_width,
+              "Feedback", "Badge, progress, banner, callout, state panels, toast, snackbar.",
+              theme, group_width,
             ),
             component_tile(
-              "Display & Layout",
-              "Stat cards, avatars, dividers, toolbars, surfaces, grids, scroll view.",
-              theme,
-              group_width,
+              "Display & Layout", "Stat cards, avatars, dividers, toolbars, surfaces, grids, scroll view.",
+              theme, group_width,
             ),
             component_tile(
-              "Runtime",
-              "Host routes and platform proof stay available from Platform / Runtime stories.",
-              theme,
-              group_width,
+              "Runtime", "Host routes and platform proof stay available from Platform / Runtime stories.",
+              theme, group_width,
             ),
           ],
           width=inner,
@@ -160,8 +152,6 @@ fn welcome_cell_width(
   column_spacing : Double,
 ) -> Double {
   let columns = columns.max(1)
-  (
-    (available - (columns - 1).to_double() * column_spacing) /
-    columns.to_double()
-  ).max(1.0)
+  ((available - (columns - 1).to_double() * column_spacing) /
+  columns.to_double()).max(1.0)
 }

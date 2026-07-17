@@ -8,9 +8,12 @@ test "extracts unique window versions" {
     #|}
     #|
   let versions = unique_strings(extract_window_versions(text))
-  debug_inspect(versions, content=(
-    #|["0.1.2"]
-  ))
+  debug_inspect(
+    versions,
+    content=(
+      #|["0.1.2"]
+    ),
+  )
 }
 
 ///|

@@ -427,7 +427,9 @@ test "views facade exposes control-specific contracts" {
   assert_true(required.contains("pub using @core {type KeyModifiers}"))
   assert_true(required.contains("pub using @core {type KeyboardShortcut}"))
   assert_true(views.forbidden_tokens.contains("pub using @core {type Color}"))
-  assert_true(views.forbidden_tokens.contains("pub using @core {type ColorScheme}"))
+  assert_true(
+    views.forbidden_tokens.contains("pub using @core {type ColorScheme}"),
+  )
   assert_true(required.contains("pub struct ButtonStyle"))
   assert_true(required.contains("type FormFieldState"))
   assert_true(required.contains("pub(all) enum DatePickerMode"))

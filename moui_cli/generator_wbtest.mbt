@@ -69,7 +69,8 @@ test "explicit platforms are additive and normalized in canonical order" {
 
 ///|
 test "hello template emits greet app instead of counter" {
-  match build_project_file_plan(test_project_options(["web"], template="hello")) {
+  match
+    build_project_file_plan(test_project_options(["web"], template="hello")) {
     Ok(files) => {
       let app = test_planned_text(files, "app/app.mbt")
       assert_true(app.contains("Say hello"))

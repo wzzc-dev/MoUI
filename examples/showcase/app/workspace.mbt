@@ -55,7 +55,10 @@ pub fn Workspace::title(self : Workspace) -> String {
 }
 
 ///|
-pub fn ShowcaseRoute::new(workspace~ : Workspace, id~ : String) -> ShowcaseRoute {
+pub fn ShowcaseRoute::new(
+  workspace~ : Workspace,
+  id~ : String,
+) -> ShowcaseRoute {
   { workspace, id: normalize_workspace_id(workspace, id) }
 }
 
@@ -86,10 +89,7 @@ pub fn ShowcaseRoute::parse(raw : String) -> ShowcaseRoute {
   if path == "" {
     return ShowcaseRoute::default()
   }
-  let parts = path
-    .split("/")
-    .to_array()
-    .map(part => part.to_owned())
+  let parts = path.split("/").to_array().map(part => part.to_owned())
   if parts.length() >= 2 {
     match Workspace::from_slug(parts[0]) {
       Some(workspace) => {
@@ -122,8 +122,13 @@ fn legacy_showcase_route(path : String) -> ShowcaseRoute? {
     "examples" => Some(ShowcaseRoute::new(workspace=Patterns, id="counter"))
     "feedback" | "layout" =>
       Some(ShowcaseRoute::new(workspace=Patterns, id="workflow"))
-    "forms" | "data" | "navigation" | "text-media" | "counter" | "todo" | "workflow" =>
-      Some(ShowcaseRoute::new(workspace=Patterns, id=path))
+    "forms"
+    | "data"
+    | "navigation"
+    | "text-media"
+    | "counter"
+    | "todo"
+    | "workflow" => Some(ShowcaseRoute::new(workspace=Patterns, id=path))
     "overview" => Some(ShowcaseRoute::new(workspace=Components, id="welcome"))
     "controls" => Some(ShowcaseRoute::new(workspace=Components, id="button"))
     "welcome" | "button" | "platform-routes" | "mobile-service-probe" =>

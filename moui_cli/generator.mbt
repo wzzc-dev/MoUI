@@ -143,7 +143,7 @@ fn app_pkg_text() -> String {
 }
 
 ///|
-fn app_text(title : String, template_id~ : String = "counter") -> String {
+fn app_text(title : String, template_id? : String = "counter") -> String {
   let title = moon_string(title)
   if template_id == "hello" {
     let template =
@@ -252,7 +252,7 @@ fn app_text(title : String, template_id~ : String = "counter") -> String {
 }
 
 ///|
-fn app_test_text(template_id~ : String = "counter") -> String {
+fn app_test_text(template_id? : String = "counter") -> String {
   if template_id == "hello" {
     return (
       #|///|
@@ -644,11 +644,11 @@ fn build_project_file_plan(
     text_file("moon.work", moon_work_text()),
     text_file("moui.project.json", manifest.to_json_text()),
     text_file("app/moon.pkg", app_pkg_text()),
-    text_file("app/app.mbt", app_text(options.title, template_id=options.template)),
     text_file(
-      "app/app_test.mbt",
-      app_test_text(template_id=options.template),
+      "app/app.mbt",
+      app_text(options.title, template_id=options.template),
     ),
+    text_file("app/app_test.mbt", app_test_text(template_id=options.template)),
   ]
   if options.platforms.contains("web") {
     files.push(

@@ -95,10 +95,8 @@ fn run(args : Array[String]) -> Int {
           return 1
         }
       }
-      let validated = match validate_catalog_against_repo(
-        options.repo_root,
-        catalog,
-      ) {
+      let validated = match
+        validate_catalog_against_repo(options.repo_root, catalog) {
         Ok(value) => value
         Err(message) => {
           println("website docs catalog invalid: " + message)
@@ -106,7 +104,8 @@ fn run(args : Array[String]) -> Int {
         }
       }
       let out_dir = resolve_out_dir(options.repo_root, options.out_dir)
-      match sync_or_check(options.repo_root, out_dir, validated, options.check) {
+      match
+        sync_or_check(options.repo_root, out_dir, validated, options.check) {
         Ok(_) => {
           if options.check {
             println(

@@ -5,7 +5,7 @@ import {
   "wzzc-dev/moui/backend/android" @android_host,
   "wzzc-dev/moui/backend/android/skia" @android_skia_backend,
   "wzzc-dev/moui/render",
-  "examples/showcase/app" @app,
+  "examples/showcase/app",
 }
 
 supported_targets = "native"

@@ -87,7 +87,8 @@ fn run(args : Array[String]) -> Int {
         return 0
       }
       let payload_text = if options.payload_file != "" {
-        match @tools.read_required_text(options.payload_file, options.payload_file) {
+        match
+          @tools.read_required_text(options.payload_file, options.payload_file) {
           Ok(text) => text
           Err(message) => {
             println(message)
@@ -116,9 +117,7 @@ fn run(args : Array[String]) -> Int {
           } else {
             "live"
           }
-          println(
-            live_report_json(mode, run, details).stringify(indent=2),
-          )
+          println(live_report_json(mode, run, details).stringify(indent=2))
           0
         }
       }

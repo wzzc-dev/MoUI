@@ -31,7 +31,7 @@ pub fn view(model : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
   let height = env.viewport_size().height.max(320.0)
   @views.container(
     @views.scroll_view(
-      view_body(model, env, width=width),
+      view_body(model, env, width~),
       width~,
       height=(height - 32.0).max(288.0),
       state=Some(model.scroll),
@@ -77,53 +77,29 @@ fn welcome_pattern(theme : @moui.Theme, width : Double) -> @moui.View[Msg] {
       @views.column(
         [
           pattern_jump_row(
-            "Counter",
-            "Tiny TEA loop with increment / decrement.",
-            "counter",
-            theme,
+            "Counter", "Tiny TEA loop with increment / decrement.", "counter", theme,
             card_width,
           ),
           pattern_jump_row(
-            "Todo",
-            "Draft field, list toggle, and remove.",
-            "todo",
-            theme,
+            "Todo", "Draft field, list toggle, and remove.", "todo", theme, card_width,
+          ),
+          pattern_jump_row(
+            "Forms", "Profile fields with simple validation.", "forms", theme, card_width,
+          ),
+          pattern_jump_row(
+            "Data", "Filter a small in-memory collection.", "data", theme, card_width,
+          ),
+          pattern_jump_row(
+            "Navigation", "Feature-owned routes inside one workspace.", "navigation",
+            theme, card_width,
+          ),
+          pattern_jump_row(
+            "Workflow", "Multi-step progress with back / next.", "workflow", theme,
             card_width,
           ),
           pattern_jump_row(
-            "Forms",
-            "Profile fields with simple validation.",
-            "forms",
-            theme,
-            card_width,
-          ),
-          pattern_jump_row(
-            "Data",
-            "Filter a small in-memory collection.",
-            "data",
-            theme,
-            card_width,
-          ),
-          pattern_jump_row(
-            "Navigation",
-            "Feature-owned routes inside one workspace.",
-            "navigation",
-            theme,
-            card_width,
-          ),
-          pattern_jump_row(
-            "Workflow",
-            "Multi-step progress with back / next.",
-            "workflow",
-            theme,
-            card_width,
-          ),
-          pattern_jump_row(
-            "Text & Media",
-            "Markdown-style content via app-safe views.",
-            "text-media",
-            theme,
-            card_width,
+            "Text & Media", "Markdown-style content via app-safe views.", "text-media",
+            theme, card_width,
           ),
         ],
         spacing=theme.spacing_scale.sm,
@@ -175,11 +151,23 @@ fn pattern_jump_row(
 fn counter_pattern(model : Model, theme : @moui.Theme) -> @moui.View[Msg] {
   @views.column(
     [
-      @views.text("Counter: \{model.counter}", role=@views.TextRole::Headline, theme~),
-      @views.row([
-        @views.button("-", on_click=Decrement, variant=@views.ButtonVariant::Outline, theme~),
-        @views.button("+", on_click=Increment, theme~),
-      ], spacing=theme.spacing_scale.sm),
+      @views.text(
+        "Counter: \{model.counter}",
+        role=@views.TextRole::Headline,
+        theme~,
+      ),
+      @views.row(
+        [
+          @views.button(
+            "-",
+            on_click=Decrement,
+            variant=@views.ButtonVariant::Outline,
+            theme~,
+          ),
+          @views.button("+", on_click=Increment, theme~),
+        ],
+        spacing=theme.spacing_scale.sm,
+      ),
     ],
     spacing=theme.spacing_scale.md,
   )
@@ -218,13 +206,22 @@ fn todo_pattern(
             on_change=value => TodoToggled(item.id, value),
             theme~,
           ),
-          @views.button("Remove", on_click=TodoRemoved(item.id), variant=@views.ButtonVariant::Ghost, theme~),
+          @views.button(
+            "Remove",
+            on_click=TodoRemoved(item.id),
+            variant=@views.ButtonVariant::Ghost,
+            theme~,
+          ),
         ],
         spacing=theme.spacing_scale.sm,
       ),
     )
   }
-  @views.column(rows, spacing=theme.spacing_scale.sm, align=@views.CrossAlign::Stretch)
+  @views.column(
+    rows,
+    spacing=theme.spacing_scale.sm,
+    align=@views.CrossAlign::Stretch,
+  )
 }
 
 ///|
@@ -244,12 +241,24 @@ fn form_pattern(
         width~,
         theme~,
       ),
-      @views.text(if valid { "Ready to save" } else { "Display name must be at least 2 characters" }),
+      @views.text(
+        if valid {
+          "Ready to save"
+        } else {
+          "Display name must be at least 2 characters"
+        },
+      ),
       @views.button("Save profile", on_click=SaveProfile, theme~),
       if model.notice == "" {
         @views.text("")
       } else {
-        @views.banner("Saved", model.notice, tone=@views.FeedbackTone::Success, width~, theme~)
+        @views.banner(
+          "Saved",
+          model.notice,
+          tone=@views.FeedbackTone::Success,
+          width~,
+          theme~,
+        )
       },
     ],
     spacing=theme.spacing_scale.sm,
@@ -263,8 +272,12 @@ fn data_pattern(
   theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[Msg] {
-  let records = ["Project Atlas", "Design System", "Mobile Runtime", "Web Presentation"]
-  let visible = records.filter(record => model.data_filter == "" || record.contains(model.data_filter))
+  let records = [
+    "Project Atlas", "Design System", "Mobile Runtime", "Web Presentation",
+  ]
+  let visible = records.filter(record => {
+    model.data_filter == "" || record.contains(model.data_filter)
+  })
   @views.column(
     [
       @views.text("Data collection", role=@views.TextRole::Headline, theme~),
@@ -275,8 +288,17 @@ fn data_pattern(
         width~,
         theme~,
       ),
-      @views.stat_card("Visible rows", visible.length().to_string(), caption="State-derived filtering", width~, theme~),
-      @views.column(visible.map(record => @views.text(record)), spacing=theme.spacing_scale.xs),
+      @views.stat_card(
+        "Visible rows",
+        visible.length().to_string(),
+        caption="State-derived filtering",
+        width~,
+        theme~,
+      ),
+      @views.column(
+        visible.map(record => @views.text(record)),
+        spacing=theme.spacing_scale.xs,
+      ),
     ],
     spacing=theme.spacing_scale.sm,
     align=@views.CrossAlign::Stretch,
@@ -291,7 +313,11 @@ fn navigation_pattern(
 ) -> @moui.View[Msg] {
   @views.column(
     [
-      @views.text("Feature-owned navigation", role=@views.TextRole::Headline, theme~),
+      @views.text(
+        "Feature-owned navigation",
+        role=@views.TextRole::Headline,
+        theme~,
+      ),
       @views.callout(
         "Current child route",
         "patterns/\{model.route}",
@@ -299,7 +325,9 @@ fn navigation_pattern(
         width~,
         theme~,
       ),
-      @views.text("The root router selects a workspace; this package owns navigation inside the workspace."),
+      @views.text(
+        "The root router selects a workspace; this package owns navigation inside the workspace.",
+      ),
     ],
     spacing=theme.spacing_scale.sm,
   )
@@ -324,10 +352,18 @@ fn workflow_pattern(
         width~,
         theme~,
       ),
-      @views.row([
-        @views.button("Back", on_click=WorkflowBack, variant=@views.ButtonVariant::Outline, theme~),
-        @views.button("Next", on_click=WorkflowNext, theme~),
-      ], spacing=theme.spacing_scale.sm),
+      @views.row(
+        [
+          @views.button(
+            "Back",
+            on_click=WorkflowBack,
+            variant=@views.ButtonVariant::Outline,
+            theme~,
+          ),
+          @views.button("Next", on_click=WorkflowNext, theme~),
+        ],
+        spacing=theme.spacing_scale.sm,
+      ),
     ],
     spacing=theme.spacing_scale.md,
   )
@@ -338,7 +374,9 @@ fn text_media_pattern(theme : @moui.Theme, width : Double) -> @moui.View[Msg] {
   @views.column(
     [
       @views.text("Text & Media", role=@views.TextRole::Headline, theme~),
-      @views.text("# Local Markdown\n\nA **bold** word and an image belong behind app-safe view APIs."),
+      @views.text(
+        "# Local Markdown\n\nA **bold** word and an image belong behind app-safe view APIs.",
+      ),
       @views.callout(
         "Addon boundary",
         "Rich text can be added by this package without changing the root app or platform entrypoints.",

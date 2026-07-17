@@ -117,21 +117,14 @@ fn Model::update(self : Model, message : Msg) -> Model {
       { ..self.with_route("home"), copied_text: None }
     }
     OpenHomeAnchor(anchor) =>
-      {
-        ..self.with_route("home?anchor=" + anchor),
-        copied_text: None,
-      }
+      { ..self.with_route("home?anchor=" + anchor), copied_text: None }
     OpenTutorial => { ..self.with_route("tutorial"), copied_text: None }
     OpenPlayground => { ..self, copied_text: None }
     OpenPlaygroundLesson(_) => { ..self, copied_text: None }
     OpenDocs =>
-      {
-        ..self.with_route("docs/" + self.selected_doc_slug),
-        copied_text: None,
-      }
+      { ..self.with_route("docs/" + self.selected_doc_slug), copied_text: None }
     OpenShowcases => { ..self.with_route("showcases"), copied_text: None }
-    SelectDoc(slug) =>
-      { ..self.with_route("docs/" + slug), copied_text: None }
+    SelectDoc(slug) => { ..self.with_route("docs/" + slug), copied_text: None }
     RetryCatalog =>
       { ..self, catalog_state: CatalogNotLoaded, copied_text: None }
     RetryDoc => { ..self, doc_state: DocNotLoaded, copied_text: None }

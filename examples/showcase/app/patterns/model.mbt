@@ -42,8 +42,16 @@ pub fn Model::new(route? : String = "welcome") -> Model {
     route: normalize_pattern_route(route),
     counter: 0,
     todo_items: [
-      { id: 0, label: "Keep domain state in the feature package", completed: true },
-      { id: 1, label: "Lift only feature messages at the app root", completed: false },
+      {
+        id: 0,
+        label: "Keep domain state in the feature package",
+        completed: true,
+      },
+      {
+        id: 1,
+        label: "Lift only feature messages at the app root",
+        completed: false,
+      },
     ],
     todo_draft: "",
     next_todo_id: 2,
@@ -76,7 +84,7 @@ pub fn update(model : Model, message : Msg) -> Model {
     Increment => { ..model, counter: model.counter + 1 }
     Decrement => { ..model, counter: model.counter - 1 }
     TodoDraftChanged(value) => { ..model, todo_draft: value }
-    TodoSubmit => {
+    TodoSubmit =>
       if model.todo_draft == "" {
         model
       } else {
@@ -93,14 +101,15 @@ pub fn update(model : Model, message : Msg) -> Model {
           next_todo_id: model.next_todo_id + 1,
         }
       }
-    }
     TodoToggled(id, completed) =>
       {
         ..model,
-        todo_items: model.todo_items.map(item => if item.id == id {
-          { ..item, completed, }
-        } else {
-          item
+        todo_items: model.todo_items.map(item => {
+          if item.id == id {
+            { ..item, completed, }
+          } else {
+            item
+          }
         }),
       }
     TodoRemoved(id) =>
@@ -117,14 +126,7 @@ pub fn update(model : Model, message : Msg) -> Model {
 ///|
 pub fn pattern_routes() -> Array[String] {
   [
-    "welcome",
-    "counter",
-    "todo",
-    "forms",
-    "data",
-    "navigation",
-    "workflow",
-    "text-media",
+    "welcome", "counter", "todo", "forms", "data", "navigation", "workflow", "text-media",
   ]
 }
 

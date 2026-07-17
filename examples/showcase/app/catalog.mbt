@@ -123,7 +123,9 @@ pub fn ShowcaseModel::catalog_groups(
 }
 
 ///|
-pub fn ShowcaseModel::catalog_items(_self : ShowcaseModel) -> Array[CatalogItem] {
+pub fn ShowcaseModel::catalog_items(
+  _self : ShowcaseModel,
+) -> Array[CatalogItem] {
   global_catalog_items()
 }
 
@@ -135,14 +137,16 @@ pub fn ShowcaseModel::filtered_catalog_items(
   if query == "" {
     self.catalog_items()
   } else {
-    self.catalog_items().filter(item =>
+    self
+    .catalog_items()
+    .filter(item => {
       item.title.to_lower().contains(query) ||
       item.summary.to_lower().contains(query) ||
       item.id.to_lower().contains(query) ||
       item.group_id.to_lower().contains(query) ||
       item.workspace.to_lower().contains(query) ||
       item.badge.to_lower().contains(query)
-    )
+    })
   }
 }
 

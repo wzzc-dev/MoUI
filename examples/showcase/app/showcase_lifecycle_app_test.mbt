@@ -8,10 +8,7 @@ test "platform timer subscription survives hidden workspace" {
     timer_running=true,
     route="host-services",
   )
-  let model = {
-    ..ShowcaseModel::new(route="components/welcome"),
-    platform,
-  }
+  let model = { ..ShowcaseModel::new(route="components/welcome"), platform, }
   let plan = @runtime.subscription_plan_summary(model.subscriptions())
   assert_true(plan.source_count() >= 1)
 }
@@ -38,13 +35,14 @@ test "platform effect maps through root" {
   let services = @host.HostAppServices::new(
     bridge=@host.HostServiceBridge::new(
       capabilities=@host.HostServiceCapabilities::new(clipboard=true),
-      handle=request =>
+      handle=request => {
         match request {
           @host.HostServiceRequest::Clipboard(
-            @host.HostClipboardRequest::WriteText(_),
+            @host.HostClipboardRequest::WriteText(_)
           ) => @host.HostServiceResponse::ClipboardWritten
           _ => @host.HostServiceResponse::Unavailable("unexpected")
-        },
+        }
+      },
     ),
   )
   let model = {

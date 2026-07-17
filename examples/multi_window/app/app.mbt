@@ -109,7 +109,10 @@ pub fn update(model : Model, msg : Msg) -> Model {
       match model.inspector_window_id {
         Some(id) => {
           model.windows.focus(id)
-          { ..model, status: "Focus inspector requested for window \{id.value}" }
+          {
+            ..model,
+            status: "Focus inspector requested for window \{id.value}",
+          }
         }
         None => {
           model.windows.focus(@host.HostWindowId::new(2))
@@ -120,11 +123,12 @@ pub fn update(model : Model, msg : Msg) -> Model {
         }
       }
     Increment => { ..model, count: model.count + 1 }
-    IncrementShared => {
-      ..model,
-      shared_count: model.shared_count + 1,
-      status: "Shared counter is app-owned; reopen inspector to snapshot a new payload",
-    }
+    IncrementShared =>
+      {
+        ..model,
+        shared_count: model.shared_count + 1,
+        status: "Shared counter is app-owned; reopen inspector to snapshot a new payload",
+      }
   }
 }
 
@@ -142,7 +146,9 @@ fn main_view(model : Model) -> @moui.View[Msg] {
     card(
       column([
         text("MoUI Multi-Window").title(),
-        text("Each scene is an independent AppRuntime. Shared state is app-owned."),
+        text(
+          "Each scene is an independent AppRuntime. Shared state is app-owned.",
+        ),
         text("Local counter: \{model.count}"),
         text("Shared counter snapshot: \{model.shared_count}"),
         text(model.status),

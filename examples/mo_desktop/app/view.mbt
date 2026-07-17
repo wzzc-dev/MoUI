@@ -34,7 +34,8 @@ pub fn view(
       width,
       height,
       if model.phase == Locked {
-        rgba8(0, 28, 40, a=0.34)
+        // Deeper cool wash so the lock screen reads like a blurred login field.
+        rgba8(4, 30, 48, a=0.46)
       } else if model.dark_mode {
         rgba8(0, 8, 18, a=0.22)
       } else {
@@ -70,92 +71,155 @@ fn lock_screen(
   _model : DesktopModel,
   width : Double,
   height : Double,
-  palette : DesktopPalette,
+  _palette : DesktopPalette,
   theme : @moui.Theme,
 ) -> @moui.View[Msg] {
+  // macOS login: large thin clock high on the field, single avatar user below.
+  // Keep the "Enter Mo Desktop" label for runtime unlock tests and keyboard.
   let compact = width < 620.0
-  let clock_size = if compact { 58.0 } else { 88.0 }
-  let identity = @views.column(
-    [
-      @views.container(
-        @views.text(
-          "M",
-          role=@views.TextRole::Display,
-          theme~,
-          width=72.0,
-          height=60.0,
-          align=@text.TextAlign::TextCenter,
-        )
-        .font(@text.FontSpec::new(size=42.0, weight=620))
-        .foreground(@graphics.Color::white()),
-        width=76.0,
-        height=76.0,
-        background=palette.accent,
-        corner_radius=38.0,
-        border=Some(desktop_hairline(palette)),
-        padding=6.0,
-      ),
-      @views.text(
-        "mo",
-        role=@views.TextRole::Title,
-        theme~,
-        width=160.0,
-        height=26.0,
-        align=@text.TextAlign::TextCenter,
-      ).foreground(@graphics.Color::white()),
-      @views.button(
-        "Enter Mo Desktop",
-        on_click=UnlockDesktop,
-        variant=@views.ButtonVariant::Tonal,
-        theme~,
-        width=156.0,
-        height=36.0,
-      ).keyboard_shortcut(@views.KeyboardShortcut::new(key="Enter")),
-    ],
-    spacing=10.0,
-    align=@views.CrossAlign::Center,
-  )
+  let clock_size = if compact { 64.0 } else { 96.0 }
+  let avatar_size = if compact { 68.0 } else { 78.0 }
   let clock = @views.column(
     [
       @views.text(
         "Friday, July 17",
         role=@views.TextRole::Title,
         theme~,
-        width=300.0,
-        height=36.0,
+        width=320.0,
+        height=30.0,
         align=@text.TextAlign::TextCenter,
       )
-      .font(@text.FontSpec::new(size=22.0, weight=560))
+      .font(
+        @text.FontSpec::new(size=if compact { 18.0 } else { 22.0 }, weight=500),
+      )
       .foreground(@graphics.Color::white()),
       @views.text(
         "09:41",
         role=@views.TextRole::Display,
         theme~,
-        width=420.0,
-        height=clock_size + 16.0,
+        width=460.0,
+        height=clock_size + 10.0,
         align=@text.TextAlign::TextCenter,
       )
-      .font(@text.FontSpec::new(size=clock_size, weight=220))
+      .font(@text.FontSpec::new(size=clock_size, weight=180))
       .foreground(@graphics.Color::white()),
     ],
-    spacing=0.0,
+    spacing=2.0,
     align=@views.CrossAlign::Center,
   )
-  @views.container(
-    @views.column(
-      [
-        clock,
-        @views.spacer(min_length=(height * 0.30).max(84.0), weight=0.0),
-        identity,
-      ],
-      spacing=0.0,
-      align=@views.CrossAlign::Center,
+  let avatar = @views.container(
+    @views.text(
+      "M",
+      role=@views.TextRole::Display,
+      theme~,
+      width=avatar_size - 8.0,
+      height=avatar_size - 14.0,
+      align=@text.TextAlign::TextCenter,
+    )
+    .font(@text.FontSpec::new(size=avatar_size * 0.48, weight=560))
+    .foreground(@graphics.Color::white()),
+    width=avatar_size,
+    height=avatar_size,
+    background=rgba8(52, 148, 246),
+    corner_radius=avatar_size * 0.5,
+    border=Some(
+      @graphics.BorderStyle::new(
+        brush=@graphics.Brush::solid(rgba8(255, 255, 255, a=0.35)),
+        width=1.0,
+      ),
     ),
-    width~,
-    height~,
-    background=rgba8(0, 0, 0, a=0.0),
-    padding=0.0,
+    padding=avatar_size * 0.08,
+  ).shadow(
+    @graphics.ShadowStyle::new(
+      color=rgba8(0, 0, 0, a=0.28),
+      offset=@geometry.Point::new(x=0.0, y=6.0),
+      blur_radius=16.0,
+      spread=0.0,
+    ),
   )
+  let entry_border = @graphics.BorderStyle::new(
+    brush=@graphics.Brush::solid(rgba8(255, 255, 255, a=0.46)),
+    width=1.0,
+  )
+  let entry_normal = @views.new_control_state_style(
+    foreground=rgba8(255, 255, 255, a=0.96),
+    background=@graphics.Brush::solid(rgba8(255, 255, 255, a=0.16)),
+    border=entry_border,
+    radius=14.0,
+    shadow=@graphics.ShadowStyle::new(
+      color=rgba8(0, 0, 0, a=0.22),
+      offset=@geometry.Point::new(x=0.0, y=4.0),
+      blur_radius=10.0,
+      spread=0.0,
+    ),
+  )
+  let entry_hovered = @views.new_control_state_style(
+    foreground=rgba8(255, 255, 255, a=1.0),
+    background=@graphics.Brush::solid(rgba8(255, 255, 255, a=0.28)),
+    border=@graphics.BorderStyle::new(
+      brush=@graphics.Brush::solid(rgba8(255, 255, 255, a=0.66)),
+      width=1.0,
+    ),
+    radius=14.0,
+    shadow=@graphics.ShadowStyle::new(
+      color=rgba8(0, 0, 0, a=0.28),
+      offset=@geometry.Point::new(x=0.0, y=5.0),
+      blur_radius=12.0,
+      spread=0.0,
+    ),
+  )
+  let entry_pressed = @views.new_control_state_style(
+    foreground=rgba8(255, 255, 255, a=1.0),
+    background=@graphics.Brush::solid(rgba8(255, 255, 255, a=0.36)),
+    border=entry_border,
+    radius=14.0,
+  )
+  let entry_style = @views.ButtonStyle::new(
+    normal=entry_normal,
+    hovered=entry_hovered,
+    pressed=entry_pressed,
+    disabled=entry_normal,
+  )
+  let identity = @views.column(
+    [
+      avatar,
+      @views.text(
+        "mo",
+        role=@views.TextRole::Title,
+        theme~,
+        width=160.0,
+        height=24.0,
+        align=@text.TextAlign::TextCenter,
+      )
+      .font(@text.FontSpec::new(size=16.0, weight=500))
+      .foreground(@graphics.Color::white()),
+      // A visible glass button makes the unlock route immediately discoverable.
+      @views.button(
+        "Enter Mo Desktop",
+        on_click=UnlockDesktop,
+        variant=@views.ButtonVariant::Ghost,
+        theme~,
+        style=entry_style,
+        width=184.0,
+        height=38.0,
+      )
+      .keyboard_shortcut(@views.KeyboardShortcut::new(key="Enter"))
+      .on_tap(UnlockDesktop),
+    ],
+    spacing=8.0,
+    align=@views.CrossAlign::Center,
+  )
+  // Stack clock near the top third and identity near the lower third.
+  @views.stack([
+    clock
+    .align(alignment=@geometry.Alignment::top_leading())
+    .offset(dx=(width - 460.0) / 2.0, dy=height * 0.16)
+    .frame(width~, height~),
+    identity
+    .align(alignment=@geometry.Alignment::top_leading())
+    .offset(dx=(width - 184.0) / 2.0, dy=height * 0.62)
+    .frame(width~, height~),
+  ]).frame(width~, height~)
 }
 
 ///|

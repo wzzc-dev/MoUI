@@ -1045,26 +1045,17 @@ fn Model::quick_start_steps(
     (
       "1",
       "Install the CLI / 安装 CLI",
-      [
-        "moon install wzzc-dev/moui_cli/cmd/moui",
-      ],
+      ["moon install wzzc-dev/moui_cli/cmd/moui"],
     ),
     (
       "2",
       "Create the app / 创建应用",
-      [
-        "moui new my_app",
-        "cd my_app",
-        "moon update",
-        "moon check",
-      ],
+      ["moui new my_app", "cd my_app", "moon update", "moon check"],
     ),
     (
       "3",
       "Run on the host / 在本机运行",
-      [
-        "moon run macos_skia --target native",
-      ],
+      ["moon run macos_skia --target native"],
     ),
   ]
   let rows : Array[@moui.View[Msg]] = []
@@ -1116,14 +1107,17 @@ fn Model::quick_start_step(
   }
   row(
     [
-      column(
-        rail_children,
-        spacing=8.0,
-        align=@views.CrossAlign::Center,
-      ).frame(width=rail_width),
+      column(rail_children, spacing=8.0, align=@views.CrossAlign::Center).frame(
+        width=rail_width,
+      ),
       column(
         [
-          text(title, width=content_width, height=28.0, align=@text.TextAlign::TextStart)
+          text(
+            title,
+            width=content_width,
+            height=28.0,
+            align=@text.TextAlign::TextStart,
+          )
           .font(@text.FontSpec::new(size=17.0, weight=700))
           .foreground(theme.palette.foreground),
           self.quick_start_code_block(theme, content_width, lines),
@@ -1159,7 +1153,7 @@ fn quick_start_step_badge(
         ctx,
         @text.TextRun::new(
           text=number,
-          frame=frame,
+          frame~,
           font~,
           color=@graphics.Color::white(),
           align=@text.TextAlign::TextCenter,
@@ -1226,7 +1220,11 @@ fn Model::quick_start_code_block(
           height=code_height,
         ),
         button(
-          if copied { "Copied" } else { "Copy" },
+          if copied {
+            "Copied"
+          } else {
+            "Copy"
+          },
           on_click=CopyText(copy_text),
           style=quick_start_copy_button_style(theme, copied),
           theme~,

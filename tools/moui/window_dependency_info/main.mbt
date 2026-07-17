@@ -95,9 +95,7 @@ fn window_dependency_cache_zip(
 }
 
 ///|
-fn parse_cli(
-  args : Array[String],
-) -> Result[(String, String, String), String] {
+fn parse_cli(args : Array[String]) -> Result[(String, String, String), String] {
   let mut mode = ""
   let mut repo_root = @env.current_dir().unwrap_or("")
   let mut home = @env.get_env_var("HOME").unwrap_or("")

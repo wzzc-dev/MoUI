@@ -12,7 +12,9 @@ test "component gallery update changes model" {
   )
   let searched = update(selected, SearchChanged("button"))
   inspect(searched.search_query, content="button")
-  assert_true(searched.active_item == @components.ComponentGalleryItemId::Button)
+  assert_true(
+    searched.active_item == @components.ComponentGalleryItemId::Button,
+  )
   let edited = update(searched, SampleTextChanged("Reusable controls"))
   inspect(edited.sample_text, content="Reusable controls")
   let toggled = update(edited, FeatureToggled(false))
@@ -36,17 +38,15 @@ test "component body renders welcome and button demos" {
     height=720.0,
   )
   let commands = runtime.draw_commands()
-  assert_true(has_text(commands, "Welcome") || has_text_containing(commands, "component"))
+  assert_true(
+    has_text(commands, "Welcome") || has_text_containing(commands, "component"),
+  )
   let button = update(
     ComponentGalleryModel::new(active_platform=PlatformId::Linux),
     SelectItem("button"),
   )
   let button_runtime = @runtime.new_program_with_dimensions(
-    program=@moui.Program::simple_with_environment(
-      init=button,
-      update~,
-      view~,
-    ),
+    program=@moui.Program::simple_with_environment(init=button, update~, view~),
     width=1040.0,
     height=720.0,
   )
@@ -84,7 +84,12 @@ test "component gallery platform routes show session runtime" {
     height=720.0,
   )
   let commands = selected_runtime.draw_commands()
-  assert_true(has_text(commands, "Session Runtime") || has_text_containing(commands, "skia-raster-native") || has_text(commands, "CPU") || true)
+  assert_true(
+    has_text(commands, "Session Runtime") ||
+    has_text_containing(commands, "skia-raster-native") ||
+    has_text(commands, "CPU") ||
+    true,
+  )
 }
 
 ///|
@@ -94,7 +99,9 @@ test "component gallery selecting component preserves sidebar scroll" {
   model.content_scroll.scroll_to(x=0.0, y=420.0)
   model.page_scroll.scroll_to(x=0.0, y=180.0)
   let selected = update(model, SelectItem("slider"))
-  assert_true(selected.active_item == @components.ComponentGalleryItemId::Slider)
+  assert_true(
+    selected.active_item == @components.ComponentGalleryItemId::Slider,
+  )
   assert_true(selected.sidebar_scroll.offset().y == 260.0)
   assert_true(selected.content_scroll.offset().y == 0.0)
   assert_true(selected.page_scroll.offset().y == 0.0)
@@ -104,7 +111,10 @@ test "component gallery selecting component preserves sidebar scroll" {
 test "component gallery ids roundtrip" {
   for item in catalog_items() {
     assert_true(gallery_item_id_from_string(item.id) is Some(_))
-    assert_true(gallery_item_id_to_string(gallery_item_id_from_string(item.id).unwrap()) == item.id)
+    assert_true(
+      gallery_item_id_to_string(gallery_item_id_from_string(item.id).unwrap()) ==
+      item.id,
+    )
   }
   assert_true(catalog_items().all(item => item.id != "mobile-service-probe"))
 }

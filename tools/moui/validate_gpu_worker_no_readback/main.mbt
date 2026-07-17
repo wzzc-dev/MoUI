@@ -17,18 +17,12 @@ fn usage() -> String {
 ///|
 fn forbidden_patterns() -> Array[ForbiddenPattern] {
   [
-    {
-      label: "Skia readback",
-      needles: ["read_pixels", "readPixels"],
-    },
+    { label: "Skia readback", needles: ["read_pixels", "readPixels"] },
     {
       label: "CPU pixel presenter",
       needles: ["present_skia_pixels", "present_rgba_pixels"],
     },
-    {
-      label: "renderer read-frame path",
-      needles: ["read_frame("],
-    },
+    { label: "renderer read-frame path", needles: ["read_frame("] },
     {
       label: "platform CPU presenter",
       needles: ["CGImage", "UIImage", "StretchDIBits", "wl_shm"],
@@ -58,7 +52,10 @@ fn first_match_offset(text : String, needle : String) -> Int? {
 }
 
 ///|
-fn validate_worker_source(worker_path : String, worker : String) -> Array[String] {
+fn validate_worker_source(
+  worker_path : String,
+  worker : String,
+) -> Array[String] {
   let failures : Array[String] = []
   for pattern in forbidden_patterns() {
     for needle in pattern.needles {
@@ -82,7 +79,10 @@ fn validate_worker_source(worker_path : String, worker : String) -> Array[String
 }
 
 ///|
-fn validate_worker_api(worker_api_path : String, worker_api : String) -> Array[String] {
+fn validate_worker_api(
+  worker_api_path : String,
+  worker_api : String,
+) -> Array[String] {
   if worker_api.contains("readback_count: 0L") ||
     worker_api.contains("readback_count:0L") {
     []
@@ -210,12 +210,7 @@ fn run(args : Array[String]) -> Int {
         }
       }
       let failures = validate_sources(
-        worker_path,
-        worker,
-        worker_api_path,
-        worker_api,
-        build_path,
-        build,
+        worker_path, worker, worker_api_path, worker_api, build_path, build,
       )
       if failures.is_empty() {
         println("GPU worker no-readback guard: ok")

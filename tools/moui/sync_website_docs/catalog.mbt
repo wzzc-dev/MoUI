@@ -69,7 +69,7 @@ fn basename(path : String) -> String {
   if slash < 0 {
     path
   } else {
-    path[slash + 1 :].to_owned()
+    path[slash + 1:].to_owned()
   }
 }
 
@@ -102,9 +102,7 @@ fn validate_repo_path(path : String, label : String) -> Result[Unit, String] {
     return Err(label + " must be a non-empty string")
   }
   if path.has_prefix("/") || path.contains("\\") {
-    return Err(
-      label + " must be a repository-relative POSIX path: " + path,
-    )
+    return Err(label + " must be a repository-relative POSIX path: " + path)
   }
   if path.contains("/../") ||
     path.has_prefix("../") ||
@@ -131,7 +129,10 @@ fn json_string(value : Json?, label : String) -> Result[String, String] {
 }
 
 ///|
-fn json_object(value : Json?, label : String) -> Result[Map[String, Json], String] {
+fn json_object(
+  value : Json?,
+  label : String,
+) -> Result[Map[String, Json], String] {
   match value {
     Some(Json::Object(fields)) => Ok(fields)
     _ => Err(label + " must be an object")
@@ -163,7 +164,8 @@ fn parse_catalog(text : String) -> Result[WebsiteDocsCatalog, String] {
     Json::Object(fields) => fields
     _ => return Err("docs catalog must be an object")
   }
-  let schema_version = match json_int(root.get("schemaVersion"), "schemaVersion") {
+  let schema_version = match
+    json_int(root.get("schemaVersion"), "schemaVersion") {
     Ok(value) => value
     Err(message) => return Err(message)
   }
@@ -180,38 +182,44 @@ fn parse_catalog(text : String) -> Result[WebsiteDocsCatalog, String] {
   if !site_url.has_suffix("/") {
     return Err("siteUrl must end with '/'")
   }
-  let groups_json = match json_array(root.get("groups"), "docs catalog groups") {
+  let groups_json = match
+    json_array(root.get("groups"), "docs catalog groups") {
     Ok(values) => values
     Err(_) => return Err("docs catalog groups must be a non-empty array")
   }
   if groups_json.is_empty() {
     return Err("docs catalog groups must be a non-empty array")
   }
-  let entries_json = match json_array(root.get("entries"), "docs catalog entries") {
+  let entries_json = match
+    json_array(root.get("entries"), "docs catalog entries") {
     Ok(values) => values
     Err(_) => return Err("docs catalog entries must be a non-empty array")
   }
   if entries_json.is_empty() {
     return Err("docs catalog entries must be a non-empty array")
   }
-  let excluded_json = match json_array(root.get("excluded"), "docs catalog excluded") {
+  let excluded_json = match
+    json_array(root.get("excluded"), "docs catalog excluded") {
     Ok(values) => values
     Err(_) => return Err("docs catalog excluded must be an array")
   }
   let groups : Array[CatalogGroup] = []
   for index, group_value in groups_json {
-    let fields = match json_object(Some(group_value), "groups[" + index.to_string() + "]") {
+    let fields = match
+      json_object(Some(group_value), "groups[" + index.to_string() + "]") {
       Ok(value) => value
       Err(message) => return Err(message)
     }
-    let id = match json_string(fields.get("id"), "groups[" + index.to_string() + "].id") {
+    let id = match
+      json_string(fields.get("id"), "groups[" + index.to_string() + "].id") {
       Ok(value) => value
       Err(message) => return Err(message)
     }
-    let title = match json_string(
-      fields.get("title"),
-      "groups[" + index.to_string() + "].title",
-    ) {
+    let title = match
+      json_string(
+        fields.get("title"),
+        "groups[" + index.to_string() + "].title",
+      ) {
       Ok(value) => value
       Err(message) => return Err(message)
     }
@@ -219,53 +227,56 @@ fn parse_catalog(text : String) -> Result[WebsiteDocsCatalog, String] {
   }
   let entries : Array[CatalogEntry] = []
   for index, entry_value in entries_json {
-    let fields = match json_object(Some(entry_value), "entries[" + index.to_string() + "]") {
+    let fields = match
+      json_object(Some(entry_value), "entries[" + index.to_string() + "]") {
       Ok(value) => value
       Err(message) => return Err(message)
     }
-    let group = match json_string(
-      fields.get("group"),
-      "entries[" + index.to_string() + "].group",
-    ) {
+    let group = match
+      json_string(
+        fields.get("group"),
+        "entries[" + index.to_string() + "].group",
+      ) {
       Ok(value) => value
       Err(message) => return Err(message)
     }
-    let slug = match json_string(
-      fields.get("slug"),
-      "entries[" + index.to_string() + "].slug",
-    ) {
+    let slug = match
+      json_string(fields.get("slug"), "entries[" + index.to_string() + "].slug") {
       Ok(value) => value
       Err(message) => return Err(message)
     }
-    let title = match json_string(
-      fields.get("title"),
-      "entries[" + index.to_string() + "].title",
-    ) {
+    let title = match
+      json_string(
+        fields.get("title"),
+        "entries[" + index.to_string() + "].title",
+      ) {
       Ok(value) => value
       Err(message) => return Err(message)
     }
-    let path = match json_string(
-      fields.get("path"),
-      "entries[" + index.to_string() + "].path",
-    ) {
+    let path = match
+      json_string(fields.get("path"), "entries[" + index.to_string() + "].path") {
       Ok(value) => value
       Err(message) => return Err(message)
     }
-    let summary = match json_string(
-      fields.get("summary"),
-      "entries[" + index.to_string() + "].summary",
-    ) {
+    let summary = match
+      json_string(
+        fields.get("summary"),
+        "entries[" + index.to_string() + "].summary",
+      ) {
       Ok(value) => value
       Err(message) => return Err(message)
     }
-    let keywords_json = match json_array(
-      fields.get("keywords"),
-      "entries[" + index.to_string() + "].keywords",
-    ) {
+    let keywords_json = match
+      json_array(
+        fields.get("keywords"),
+        "entries[" + index.to_string() + "].keywords",
+      ) {
       Ok(values) => values
       Err(_) =>
         return Err(
-          "entries[" + index.to_string() + "].keywords must be a non-empty array",
+          "entries[" +
+          index.to_string() +
+          "].keywords must be a non-empty array",
         )
     }
     if keywords_json.is_empty() {
@@ -276,7 +287,8 @@ fn parse_catalog(text : String) -> Result[WebsiteDocsCatalog, String] {
     let keywords : Array[String] = []
     for keyword_index, keyword_value in keywords_json {
       match keyword_value {
-        Json::String(text) if text.trim().to_owned() != "" => keywords.push(text)
+        Json::String(text) if text.trim().to_owned() != "" =>
+          keywords.push(text)
         _ =>
           return Err(
             "entries[" +
@@ -291,38 +303,30 @@ fn parse_catalog(text : String) -> Result[WebsiteDocsCatalog, String] {
   }
   let excluded : Array[CatalogExcluded] = []
   for index, excluded_value in excluded_json {
-    let fields = match json_object(
-      Some(excluded_value),
-      "excluded[" + index.to_string() + "]",
-    ) {
+    let fields = match
+      json_object(Some(excluded_value), "excluded[" + index.to_string() + "]") {
       Ok(value) => value
       Err(message) => return Err(message)
     }
-    let path = match json_string(
-      fields.get("path"),
-      "excluded[" + index.to_string() + "].path",
-    ) {
+    let path = match
+      json_string(
+        fields.get("path"),
+        "excluded[" + index.to_string() + "].path",
+      ) {
       Ok(value) => value
       Err(message) => return Err(message)
     }
-    let reason = match json_string(
-      fields.get("reason"),
-      "excluded[" + index.to_string() + "].reason",
-    ) {
+    let reason = match
+      json_string(
+        fields.get("reason"),
+        "excluded[" + index.to_string() + "].reason",
+      ) {
       Ok(value) => value
       Err(message) => return Err(message)
     }
     excluded.push({ path, reason })
   }
-  Ok(
-    {
-      schema_version,
-      site_url,
-      groups,
-      entries,
-      excluded,
-    },
-  )
+  Ok({ schema_version, site_url, groups, entries, excluded })
 }
 
 ///|
@@ -381,7 +385,8 @@ fn validate_catalog_against_repo(
     }
     output_paths.push(entry.path)
     let source_path = readme_source_for(entry.path)
-    match validate_repo_path(source_path, "source path for '" + entry.slug + "'") {
+    match
+      validate_repo_path(source_path, "source path for '" + entry.slug + "'") {
       Ok(_) => ()
       Err(message) => return Err(message)
     }
@@ -389,18 +394,16 @@ fn validate_catalog_against_repo(
     if !@tools.file_exists(@tools.resolve_path(repo_root, source_path)) {
       return Err("published source is missing: " + source_path)
     }
-    validated_entries.push(
-      {
-        group: entry.group,
-        slug: entry.slug,
-        title: entry.title,
-        path: entry.path,
-        summary: entry.summary,
-        keywords: entry.keywords,
-        source_path,
-        output_name: basename(entry.path),
-      },
-    )
+    validated_entries.push({
+      group: entry.group,
+      slug: entry.slug,
+      title: entry.title,
+      path: entry.path,
+      summary: entry.summary,
+      keywords: entry.keywords,
+      source_path,
+      output_name: basename(entry.path),
+    })
   }
   for excluded in catalog.excluded {
     match validate_repo_path(excluded.path, "excluded path") {
@@ -445,9 +448,7 @@ fn validate_catalog_against_repo(
     }
   }
   if !unclassified.is_empty() {
-    return Err(
-      "unclassified Markdown sources: " + unclassified.join(", "),
-    )
+    return Err("unclassified Markdown sources: " + unclassified.join(", "))
   }
   let unexpected : Array[String] = []
   for path in classified_sources {

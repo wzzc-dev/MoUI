@@ -73,23 +73,21 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
       value => return Err("Unknown argument: " + value)
     }
   }
-  Ok(
-    {
-      grapheme_property,
-      emoji_data,
-      derived_core_properties,
-      output,
-      check,
-      help,
-    },
-  )
+  Ok({
+    grapheme_property,
+    emoji_data,
+    derived_core_properties,
+    output,
+    check,
+    help,
+  })
 }
 
 ///|
 fn grapheme_property_names() -> Array[String] {
   [
-    "CR", "LF", "Control", "Prepend", "Extend", "SpacingMark",
-    "Regional_Indicator", "ZWJ",
+    "CR", "LF", "Control", "Prepend", "Extend", "SpacingMark", "Regional_Indicator",
+    "ZWJ",
   ]
 }
 
@@ -102,19 +100,17 @@ fn generate_from_sources(
   derived_text : String,
   derived_source : String,
 ) -> Result[String, String] {
-  let grapheme_ranges = match parse_property_ranges(
-    grapheme_text,
-    grapheme_source,
-    grapheme_property_names(),
-  ) {
+  let grapheme_ranges = match
+    parse_property_ranges(
+      grapheme_text,
+      grapheme_source,
+      grapheme_property_names(),
+    ) {
     Ok(value) => value
     Err(message) => return Err(message)
   }
-  let emoji_ranges = match parse_property_ranges(
-    emoji_text,
-    emoji_source,
-    ["Extended_Pictographic"],
-  ) {
+  let emoji_ranges = match
+    parse_property_ranges(emoji_text, emoji_source, ["Extended_Pictographic"]) {
     Ok(value) => value
     Err(message) => return Err(message)
   }
@@ -231,14 +227,15 @@ fn run(args : Array[String]) -> Int {
           return 1
         }
       }
-      let generated = match generate_from_sources(
-        grapheme_text,
-        options.grapheme_property,
-        emoji_text,
-        options.emoji_data,
-        derived_text,
-        options.derived_core_properties,
-      ) {
+      let generated = match
+        generate_from_sources(
+          grapheme_text,
+          options.grapheme_property,
+          emoji_text,
+          options.emoji_data,
+          derived_text,
+          options.derived_core_properties,
+        ) {
         Ok(value) => value
         Err(message) => {
           println(message)
@@ -264,7 +261,8 @@ fn run(args : Array[String]) -> Int {
           }
         }
       } else {
-        match @tools.write_text_file(options.output, generated, options.output) {
+        match
+          @tools.write_text_file(options.output, generated, options.output) {
           Ok(_) => {
             println("wrote " + options.output)
             0

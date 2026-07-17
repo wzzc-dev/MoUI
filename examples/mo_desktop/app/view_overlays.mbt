@@ -248,27 +248,37 @@ fn control_center(
   viewport_width : Double,
   viewport_height : Double,
 ) -> @moui.View[Msg] {
+  // macOS Control Center is a compact frosted stack of nested cards under the
+  // menu-bar status cluster — not a titled settings form with full-width CTAs.
   let compact = viewport_width < 520.0
-  let width = if compact { (viewport_width - 20.0).max(272.0) } else { 390.0 }
-  let height = (viewport_height - 70.0).min(548.0).max(480.0)
-  let inner_width = width - 28.0
-  let connectivity = if compact {
+  let width = if compact { (viewport_width - 20.0).max(272.0) } else { 320.0 }
+  let height = if compact {
+    (viewport_height - 70.0).min(520.0).max(430.0)
+  } else {
+    470.0
+  }
+  let inner_width = width - 24.0
+  let tile_w = (inner_width - 8.0) / 2.0
+  let connectivity_height = if compact { 136.0 } else { 64.0 }
+  let connectivity_content = if compact {
     @views.column(
       [
-        connectivity_toggle(
+        connectivity_tile(
           "Wi-Fi",
           "HomeNet-5G",
+          @views.IconName::Link,
           model.wifi_enabled,
-          value => WifiChanged(value),
+          WifiChanged(!model.wifi_enabled),
           inner_width,
           palette,
           theme,
         ),
-        connectivity_toggle(
+        connectivity_tile(
           "Bluetooth",
           "On",
+          @views.IconName::Focus,
           model.bluetooth_enabled,
-          value => BluetoothChanged(value),
+          BluetoothChanged(!model.bluetooth_enabled),
           inner_width,
           palette,
           theme,
@@ -280,21 +290,23 @@ fn control_center(
   } else {
     @views.row(
       [
-        connectivity_toggle(
+        connectivity_tile(
           "Wi-Fi",
           "HomeNet-5G",
+          @views.IconName::Link,
           model.wifi_enabled,
-          value => WifiChanged(value),
-          (inner_width - 8.0) / 2.0,
+          WifiChanged(!model.wifi_enabled),
+          tile_w,
           palette,
           theme,
         ),
-        connectivity_toggle(
+        connectivity_tile(
           "Bluetooth",
           "On",
+          @views.IconName::Focus,
           model.bluetooth_enabled,
-          value => BluetoothChanged(value),
-          (inner_width - 8.0) / 2.0,
+          BluetoothChanged(!model.bluetooth_enabled),
+          tile_w,
           palette,
           theme,
         ),
@@ -303,114 +315,115 @@ fn control_center(
       align=@views.CrossAlign::Stretch,
     )
   }
-  let panel = glass_panel(
-    @views.column(
+  let connectivity = overlay_group(
+    connectivity_content,
+    inner_width,
+    connectivity_height,
+    palette,
+    padding=0.0,
+  )
+  let appearance = overlay_group(
+    @views.row(
       [
-        overlay_header(
-          "Control Center",
-          DismissOverlay,
-          inner_width,
-          palette,
-          theme,
-        ),
-        connectivity,
-        control_slider_section(
-          "Display",
-          model.brightness,
-          value => BrightnessChanged(value),
-          inner_width,
-          palette,
-          theme,
-        ),
-        @views.button(
+        control_action_tile(
           if model.dark_mode {
-            "Use Light Mode"
+            "Light Mode"
           } else {
-            "Use Dark Mode"
+            "Dark Mode"
           },
-          on_click=ToggleDarkMode,
-          variant=@views.ButtonVariant::Tonal,
-          theme~,
-          width=inner_width,
-          height=38.0,
-        ),
-        control_slider_section(
-          "Sound",
-          model.volume,
-          value => VolumeChanged(value),
-          inner_width,
+          @views.IconName::Eye,
+          model.dark_mode,
+          ToggleDarkMode,
+          tile_w,
           palette,
           theme,
         ),
-        solid_panel(
-          @views.row(
-            [
-              @views.column(
-                [
-                  @views.text(
-                    "86% Battery",
-                    role=@views.TextRole::Label,
-                    theme~,
-                    width=(inner_width - 132.0).max(110.0),
-                    height=22.0,
-                  ).foreground(palette.foreground),
-                  @views.text(
-                    "MacBook Pro",
-                    role=@views.TextRole::Caption,
-                    theme~,
-                    width=(inner_width - 132.0).max(110.0),
-                    height=18.0,
-                  ).foreground(palette.muted),
-                ],
-                spacing=1.0,
-                align=@views.CrossAlign::Start,
-              ),
-              @views.spacer(min_length=8.0),
-              @views.toggle(
-                "Low Power",
-                model.low_power_mode,
-                on_change=value => LowPowerModeChanged(value),
-                theme~,
-              ),
-            ],
-            spacing=8.0,
-            align=@views.CrossAlign::Center,
-          ),
-          inner_width,
-          70.0,
+        control_action_tile(
+          "Low Power",
+          @views.IconName::Settings,
+          model.low_power_mode,
+          LowPowerModeChanged(!model.low_power_mode),
+          tile_w,
           palette,
-          radius=14.0,
-          padding=12.0,
-        ),
-        @views.button(
-          "Lock Screen",
-          on_click=LockDesktop,
-          variant=@views.ButtonVariant::Outline,
-          theme~,
-          width=inner_width,
-          height=38.0,
+          theme,
         ),
       ],
-      spacing=10.0,
+      spacing=8.0,
       align=@views.CrossAlign::Stretch,
     ),
-    width,
-    height,
+    inner_width,
+    78.0,
     palette,
-    radius=20.0,
-    padding=14.0,
+    padding=0.0,
+  )
+  let body = @views.column(
+    [
+      connectivity,
+      control_slider_section(
+        "Display",
+        model.brightness,
+        value => BrightnessChanged(value),
+        inner_width,
+        palette,
+        theme,
+      ),
+      appearance,
+      control_slider_section(
+        "Sound",
+        model.volume,
+        value => VolumeChanged(value),
+        inner_width,
+        palette,
+        theme,
+      ),
+      control_battery_card(inner_width, palette, theme),
+      @views.container(
+        @views.text(
+          "Lock Screen",
+          role=@views.TextRole::Caption,
+          theme~,
+          width=inner_width - 16.0,
+          height=18.0,
+          align=@text.TextAlign::TextCenter,
+        ).foreground(palette.muted),
+        width=inner_width,
+        height=28.0,
+        background=rgba8(0, 0, 0, a=0.0),
+        padding=4.0,
+      )
+      .on_tap(LockDesktop)
+      .accessibility_label("Lock Screen"),
+    ],
+    spacing=10.0,
+    align=@views.CrossAlign::Stretch,
+  )
+  let panel = @views.container(
+    body,
+    width~,
+    height~,
+    background=overlay_panel_background(palette),
+    corner_radius=22.0,
+    border=Some(desktop_hairline(palette)),
+    padding=12.0,
+  ).shadow(
+    @graphics.ShadowStyle::new(
+      color=rgba8(0, 0, 0, a=0.28),
+      offset=@geometry.Point::new(x=0.0, y=16.0),
+      blur_radius=36.0,
+      spread=0.0,
+    ),
   )
   let aligned = if compact {
     panel
     .align(alignment=@geometry.Alignment::top_leading())
-    .offset(dx=10.0, dy=42.0)
+    .offset(dx=10.0, dy=38.0)
   } else {
     panel
     .align(alignment=@geometry.Alignment::top_trailing())
-    .offset(dx=-12.0, dy=42.0)
+    .offset(dx=-14.0, dy=38.0)
   }
   @views.stack([
-    color_layer(viewport_width, viewport_height, rgba8(0, 0, 0, a=0.02)).on_tap(
+    color_layer(viewport_width, viewport_height, rgba8(0, 0, 0, a=0.0)).on_tap(
       DismissOverlay,
     ),
     aligned.frame(width=viewport_width, height=viewport_height),
@@ -418,39 +431,214 @@ fn control_center(
 }
 
 ///|
-fn connectivity_toggle(
+fn overlay_group(
+  child : @moui.View[Msg],
+  width : Double,
+  height : Double,
+  palette : DesktopPalette,
+  padding? : Double = 8.0,
+) -> @moui.View[Msg] {
+  @views.container(
+    child,
+    width~,
+    height~,
+    background=overlay_group_background(palette),
+    corner_radius=18.0,
+    padding~,
+  )
+}
+
+///|
+fn control_card_background(palette : DesktopPalette) -> @graphics.Color {
+  overlay_card_background(palette)
+}
+
+///|
+fn connectivity_tile(
   label : String,
   detail : String,
+  icon : @views.IconName,
   enabled : Bool,
-  on_change : (Bool) -> Msg,
+  message : Msg,
   width : Double,
   palette : DesktopPalette,
   theme : @moui.Theme,
 ) -> @moui.View[Msg] {
-  solid_panel(
+  let glyph_bg = if enabled { palette.accent } else { rgba8(150, 158, 170) }
+  @views.container(
+    @views.row(
+      [
+        @views.container(
+          desktop_icon(icon, 16.0, @graphics.Color::white()),
+          width=34.0,
+          height=34.0,
+          background=glyph_bg,
+          corner_radius=17.0,
+          padding=9.0,
+        ),
+        @views.column(
+          [
+            @views.text(
+              label,
+              role=@views.TextRole::Label,
+              theme~,
+              width=(width - 58.0).max(70.0),
+              height=18.0,
+            )
+            .font(@text.FontSpec::new(size=13.0, weight=600))
+            .foreground(palette.foreground),
+            @views.text(
+              if enabled {
+                detail
+              } else {
+                "Off"
+              },
+              role=@views.TextRole::Caption,
+              theme~,
+              width=(width - 58.0).max(70.0),
+              height=16.0,
+            ).foreground(palette.muted),
+          ],
+          spacing=1.0,
+          align=@views.CrossAlign::Start,
+        ),
+      ],
+      spacing=10.0,
+      align=@views.CrossAlign::Center,
+    ),
+    width~,
+    height=64.0,
+    background=control_card_background(palette),
+    corner_radius=16.0,
+    border=Some(overlay_card_outline(palette)),
+    padding=12.0,
+  )
+  .on_tap(message)
+  .accessibility_label(label)
+}
+
+///|
+fn control_action_tile(
+  label : String,
+  icon : @views.IconName,
+  active : Bool,
+  message : Msg,
+  width : Double,
+  palette : DesktopPalette,
+  theme : @moui.Theme,
+) -> @moui.View[Msg] {
+  @views.container(
     @views.column(
       [
-        @views.toggle(label, enabled, on_change~, theme~),
-        @views.text(
-          if enabled {
-            detail
+        @views.container(
+          desktop_icon(
+            icon,
+            15.0,
+            if active {
+              @graphics.Color::white()
+            } else {
+              palette.foreground
+            },
+          ),
+          width=30.0,
+          height=30.0,
+          background=if active {
+            palette.accent
           } else {
-            "Off"
+            overlay_neutral_icon_background(palette)
           },
+          corner_radius=15.0,
+          padding=7.0,
+        ),
+        @views.text(
+          label,
           role=@views.TextRole::Caption,
           theme~,
-          width=width - 24.0,
+          width=width - 20.0,
           height=18.0,
-        ).foreground(palette.muted),
+          align=@text.TextAlign::TextCenter,
+        )
+        .font(@text.FontSpec::new(size=12.0, weight=560))
+        .foreground(palette.foreground),
       ],
-      spacing=2.0,
-      align=@views.CrossAlign::Start,
+      spacing=8.0,
+      align=@views.CrossAlign::Center,
     ),
-    width,
-    70.0,
-    palette,
-    radius=14.0,
-    padding=10.0,
+    width~,
+    height=78.0,
+    background=control_card_background(palette),
+    corner_radius=16.0,
+    border=Some(overlay_card_outline(palette)),
+    padding=12.0,
+  )
+  .on_tap(message)
+  .accessibility_label(label)
+}
+
+///|
+fn control_battery_card(
+  width : Double,
+  palette : DesktopPalette,
+  theme : @moui.Theme,
+) -> @moui.View[Msg] {
+  @views.container(
+    @views.row(
+      [
+        @views.container(
+          @views.text(
+            "86%",
+            role=@views.TextRole::Caption,
+            theme~,
+            width=34.0,
+            height=16.0,
+            align=@text.TextAlign::TextCenter,
+          )
+          .font(@text.FontSpec::new(size=10.0, weight=700))
+          .foreground(palette.foreground),
+          width=40.0,
+          height=40.0,
+          background=rgba8(210, 236, 220),
+          corner_radius=20.0,
+          border=Some(
+            @graphics.BorderStyle::new(
+              brush=@graphics.Brush::solid(rgba8(52, 199, 89, a=0.70)),
+              width=2.0,
+            ),
+          ),
+          padding=10.0,
+        ),
+        @views.column(
+          [
+            @views.text(
+              "Battery",
+              role=@views.TextRole::Label,
+              theme~,
+              width=(width - 70.0).max(100.0),
+              height=18.0,
+            )
+            .font(@text.FontSpec::new(size=13.0, weight=600))
+            .foreground(palette.foreground),
+            @views.text(
+              "MacBook Pro · 86%",
+              role=@views.TextRole::Caption,
+              theme~,
+              width=(width - 70.0).max(100.0),
+              height=16.0,
+            ).foreground(palette.muted),
+          ],
+          spacing=1.0,
+          align=@views.CrossAlign::Start,
+        ),
+      ],
+      spacing=12.0,
+      align=@views.CrossAlign::Center,
+    ),
+    width~,
+    height=68.0,
+    background=control_card_background(palette),
+    corner_radius=16.0,
+    border=Some(overlay_card_outline(palette)),
+    padding=12.0,
   )
 }
 
@@ -463,7 +651,7 @@ fn control_slider_section(
   palette : DesktopPalette,
   theme : @moui.Theme,
 ) -> @moui.View[Msg] {
-  solid_panel(
+  @views.container(
     @views.column(
       [
         @views.row(
@@ -472,15 +660,17 @@ fn control_slider_section(
               label,
               role=@views.TextRole::Label,
               theme~,
-              width=width - 92.0,
-              height=22.0,
-            ).foreground(palette.foreground),
+              width=width - 86.0,
+              height=20.0,
+            )
+            .font(@text.FontSpec::new(size=12.5, weight=600))
+            .foreground(palette.foreground),
             @views.text(
               "\{(value * 100.0).to_int()}%",
               role=@views.TextRole::Caption,
               theme~,
-              width=48.0,
-              height=22.0,
+              width=44.0,
+              height=20.0,
               align=@text.TextAlign::TextEnd,
             ).foreground(palette.muted),
           ],
@@ -500,11 +690,12 @@ fn control_slider_section(
       spacing=8.0,
       align=@views.CrossAlign::Stretch,
     ),
-    width,
-    78.0,
-    palette,
-    radius=14.0,
-    padding=10.0,
+    width~,
+    height=72.0,
+    background=control_card_background(palette),
+    corner_radius=16.0,
+    border=Some(overlay_card_outline(palette)),
+    padding=12.0,
   )
 }
 
@@ -516,133 +707,142 @@ fn notification_center(
   viewport_width : Double,
   viewport_height : Double,
 ) -> @moui.View[Msg] {
+  // Notification Center is a trailing frosted stack of cards, not a titled
+  // panel with close chrome and heavy badges.
   let compact = viewport_width < 520.0
-  let width = if compact { (viewport_width - 20.0).max(272.0) } else { 380.0 }
-  let height = (viewport_height - 72.0).min(520.0).max(440.0)
-  let inner_width = width - 28.0
-  let panel = glass_panel(
-    @views.column(
-      [
-        @views.row(
-          [
+  let width = if compact { (viewport_width - 20.0).max(272.0) } else { 340.0 }
+  let height = if compact {
+    (viewport_height - 72.0).min(520.0).max(420.0)
+  } else {
+    460.0
+  }
+  let inner_width = width - 24.0
+  let body = @views.column(
+    [
+      @views.row(
+        [
+          @views.text(
+            "Notification Center",
+            role=@views.TextRole::Caption,
+            theme~,
+            width=(inner_width - 90.0).max(140.0),
+            height=18.0,
+          )
+          .font(@text.FontSpec::new(size=12.0, weight=600))
+          .foreground(palette.muted),
+          @views.spacer(min_length=6.0, weight=1.0),
+          @views.container(
             @views.text(
-              "Notifications",
-              role=@views.TextRole::Title,
-              theme~,
-              width=(inner_width - 154.0).max(120.0),
-              height=30.0,
-            )
-            .font(@text.FontSpec::new(size=18.0, weight=650))
-            .foreground(palette.foreground),
-            @views.spacer(min_length=6.0),
-            @views.button(
               if model.notifications_read {
                 "Read"
               } else {
                 "Mark Read"
               },
-              on_click=MarkNotificationsRead,
-              variant=@views.ButtonVariant::Ghost,
+              role=@views.TextRole::Caption,
               theme~,
-              width=92.0,
-              height=32.0,
-            ),
-            @views.button(
-              "x",
-              on_click=DismissOverlay,
-              variant=@views.ButtonVariant::Ghost,
-              theme~,
-              width=32.0,
-              height=32.0,
-            ).accessibility_label("Close Notification Center"),
-          ],
-          spacing=5.0,
-          align=@views.CrossAlign::Center,
-        ),
-        notification_card(
-          "Design Review",
-          "Maya left feedback on the desktop polish pass.",
-          "8m",
-          !model.notifications_read,
-          inner_width,
-          palette,
-          theme,
-        ),
-        notification_card(
-          "Calendar",
-          "Sprint planning starts tomorrow at 9:30 AM.",
-          "1h",
-          !model.notifications_read,
-          inner_width,
-          palette,
-          theme,
-        ),
-        @views.row(
-          [
-            @views.text(
-              "Today",
-              role=@views.TextRole::Label,
-              theme~,
-              width=120.0,
-              height=24.0,
-            ).foreground(palette.foreground),
-            @views.spacer(min_length=8.0),
-            @views.badge(
-              "\{model.remaining_tasks()} remaining",
-              tone=@views.BadgeTone::Accent,
-              theme~,
-              width=92.0,
-              height=24.0,
-            ),
-          ],
-          spacing=6.0,
-          align=@views.CrossAlign::Center,
-        ),
-        notification_task(
-          "Review desktop polish",
-          model.first_task_done,
-          0,
-          inner_width,
-          palette,
-          theme,
-        ),
-        notification_task(
-          "Reply to Maya",
-          model.second_task_done,
-          1,
-          inner_width,
-          palette,
-          theme,
-        ),
-        notification_task(
-          "Plan Tahoe photos",
-          model.third_task_done,
-          2,
-          inner_width,
-          palette,
-          theme,
-        ),
-      ],
-      spacing=9.0,
-      align=@views.CrossAlign::Stretch,
+              width=72.0,
+              height=16.0,
+              align=@text.TextAlign::TextEnd,
+            )
+            .font(@text.FontSpec::new(size=12.0, weight=520))
+            .foreground(palette.accent),
+            width=78.0,
+            height=20.0,
+            background=rgba8(0, 0, 0, a=0.0),
+            padding=0.0,
+          )
+          .on_tap(MarkNotificationsRead)
+          .accessibility_label("Mark Read"),
+        ],
+        spacing=4.0,
+        align=@views.CrossAlign::Center,
+      ),
+      notification_card(
+        "Messages",
+        "Design Review",
+        "Maya left feedback on the desktop polish pass.",
+        "8m",
+        !model.notifications_read,
+        inner_width,
+        rgba8(52, 148, 246),
+        palette,
+        theme,
+      ),
+      notification_card(
+        "Calendar",
+        "Sprint Planning",
+        "Sprint planning starts tomorrow at 9:30 AM.",
+        "1h",
+        !model.notifications_read,
+        inner_width,
+        rgba8(255, 149, 0),
+        palette,
+        theme,
+      ),
+      @views.text(
+        "Today · \{model.remaining_tasks()} remaining",
+        role=@views.TextRole::Caption,
+        theme~,
+        width=inner_width,
+        height=18.0,
+      )
+      .font(@text.FontSpec::new(size=12.0, weight=600))
+      .foreground(palette.muted),
+      notification_task(
+        "Review desktop polish",
+        model.first_task_done,
+        0,
+        inner_width,
+        palette,
+        theme,
+      ),
+      notification_task(
+        "Reply to Maya",
+        model.second_task_done,
+        1,
+        inner_width,
+        palette,
+        theme,
+      ),
+      notification_task(
+        "Plan Tahoe photos",
+        model.third_task_done,
+        2,
+        inner_width,
+        palette,
+        theme,
+      ),
+    ],
+    spacing=10.0,
+    align=@views.CrossAlign::Stretch,
+  )
+  let panel = @views.container(
+    body,
+    width~,
+    height~,
+    background=overlay_panel_background(palette),
+    corner_radius=22.0,
+    border=Some(desktop_hairline(palette)),
+    padding=12.0,
+  ).shadow(
+    @graphics.ShadowStyle::new(
+      color=rgba8(0, 0, 0, a=0.26),
+      offset=@geometry.Point::new(x=0.0, y=16.0),
+      blur_radius=34.0,
+      spread=0.0,
     ),
-    width,
-    height,
-    palette,
-    radius=20.0,
-    padding=14.0,
   )
   let aligned = if compact {
     panel
     .align(alignment=@geometry.Alignment::top_leading())
-    .offset(dx=10.0, dy=42.0)
+    .offset(dx=10.0, dy=38.0)
   } else {
     panel
     .align(alignment=@geometry.Alignment::top_trailing())
-    .offset(dx=-12.0, dy=42.0)
+    .offset(dx=-14.0, dy=38.0)
   }
   @views.stack([
-    color_layer(viewport_width, viewport_height, rgba8(0, 0, 0, a=0.02)).on_tap(
+    color_layer(viewport_width, viewport_height, rgba8(0, 0, 0, a=0.0)).on_tap(
       DismissOverlay,
     ),
     aligned.frame(width=viewport_width, height=viewport_height),
@@ -685,64 +885,81 @@ fn overlay_header(
 
 ///|
 fn notification_card(
+  app : String,
   title : String,
   detail : String,
   time : String,
   unread : Bool,
   width : Double,
+  accent : @graphics.Color,
   palette : DesktopPalette,
   theme : @moui.Theme,
 ) -> @moui.View[Msg] {
-  solid_panel(
-    @views.row(
+  @views.container(
+    @views.column(
       [
-        @views.container(
-          desktop_icon(@views.IconName::Info, 18.0, @graphics.Color::white()),
-          width=38.0,
-          height=38.0,
-          background=if unread { palette.accent } else { palette.muted },
-          corner_radius=10.0,
-          padding=10.0,
-        ),
-        @views.column(
+        @views.row(
           [
+            @views.container(
+              desktop_icon(
+                @views.IconName::Info,
+                14.0,
+                @graphics.Color::white(),
+              ),
+              width=28.0,
+              height=28.0,
+              background=if unread { accent } else { palette.muted },
+              corner_radius=7.0,
+              padding=7.0,
+            ),
             @views.text(
-              title,
-              role=@views.TextRole::Label,
-              theme~,
-              width=(width - 102.0).max(120.0),
-              height=22.0,
-            ).foreground(palette.foreground),
-            @views.text(
-              detail,
+              app,
               role=@views.TextRole::Caption,
               theme~,
-              width=(width - 102.0).max(120.0),
-              height=36.0,
+              width=(width - 96.0).max(80.0),
+              height=18.0,
+            )
+            .font(@text.FontSpec::new(size=12.0, weight=600))
+            .foreground(palette.muted),
+            @views.spacer(min_length=4.0, weight=1.0),
+            @views.text(
+              time,
+              role=@views.TextRole::Caption,
+              theme~,
+              width=28.0,
+              height=18.0,
+              align=@text.TextAlign::TextEnd,
             ).foreground(palette.muted),
           ],
-          spacing=1.0,
-          align=@views.CrossAlign::Start,
+          spacing=8.0,
+          align=@views.CrossAlign::Center,
         ),
-        @views.spacer(min_length=4.0),
         @views.text(
-          time,
+          title,
+          role=@views.TextRole::Label,
+          theme~,
+          width=width - 24.0,
+          height=20.0,
+        )
+        .font(@text.FontSpec::new(size=13.5, weight=620))
+        .foreground(palette.foreground),
+        @views.text(
+          detail,
           role=@views.TextRole::Caption,
           theme~,
-          width=28.0,
-          height=20.0,
-          align=@text.TextAlign::TextEnd,
+          width=width - 24.0,
+          height=32.0,
         ).foreground(palette.muted),
       ],
-      spacing=9.0,
+      spacing=4.0,
       align=@views.CrossAlign::Start,
     ),
-    width,
-    76.0,
-    palette,
-    background=if unread { palette.glass_strong } else { palette.sidebar },
-    radius=14.0,
-    padding=10.0,
+    width~,
+    height=98.0,
+    background=overlay_card_background(palette),
+    corner_radius=16.0,
+    border=Some(overlay_card_outline(palette)),
+    padding=12.0,
   )
 }
 
@@ -755,43 +972,56 @@ fn notification_task(
   palette : DesktopPalette,
   theme : @moui.Theme,
 ) -> @moui.View[Msg] {
-  solid_panel(
+  let check = @views.container(
+    if done {
+      desktop_icon(@views.IconName::Check, 12.0, @graphics.Color::white())
+    } else {
+      @views.spacer(min_length=0.0, weight=0.0)
+    },
+    width=22.0,
+    height=22.0,
+    background=if done { rgba8(40, 200, 64) } else { rgba8(0, 0, 0, a=0.0) },
+    corner_radius=11.0,
+    border=Some(
+      @graphics.BorderStyle::new(
+        brush=@graphics.Brush::solid(
+          if done {
+            rgba8(40, 200, 64)
+          } else {
+            rgba8(160, 168, 180)
+          },
+        ),
+        width=1.5,
+      ),
+    ),
+    padding=4.0,
+  )
+  @views.container(
     @views.row(
       [
+        check,
         @views.text(
           label,
           role=@views.TextRole::Body,
           theme~,
-          width=(width - 100.0).max(130.0),
-          height=28.0,
-        ).foreground(if done { palette.muted } else { palette.foreground }),
-        @views.spacer(min_length=6.0),
-        if done {
-          @views.badge(
-            "Done",
-            tone=@views.BadgeTone::Success,
-            theme~,
-            width=58.0,
-            height=26.0,
-          )
-        } else {
-          @views.button(
-            "Done",
-            on_click=CompleteTask(index),
-            variant=@views.ButtonVariant::Tonal,
-            theme~,
-            width=68.0,
-            height=30.0,
-          )
-        },
+          width=(width - 54.0).max(140.0),
+          height=22.0,
+        )
+        .font(
+          @text.FontSpec::new(size=13.0, weight=if done { 430 } else { 520 }),
+        )
+        .foreground(if done { palette.muted } else { palette.foreground }),
       ],
-      spacing=6.0,
+      spacing=10.0,
       align=@views.CrossAlign::Center,
     ),
-    width,
-    44.0,
-    palette,
-    radius=10.0,
-    padding=7.0,
+    width~,
+    height=40.0,
+    background=overlay_card_background(palette),
+    corner_radius=12.0,
+    border=Some(overlay_card_outline(palette)),
+    padding=8.0,
   )
+  .on_tap(if done { MarkNotificationsRead } else { CompleteTask(index) })
+  .accessibility_label(if done { "Done " + label } else { "Complete " + label })
 }

@@ -42,8 +42,14 @@ test "P2 rejects core control constructors and public View enum" {
     #|pub fn button() -> View
     #|
   let findings = check_p2_texts("moui/core/pkg.generated.mbti", Some(mbti), [])
-  debug_inspect(findings.any(item => item.hint.contains("enum View")), content="true")
-  debug_inspect(findings.any(item => item.hint.contains("pub fn button")), content="true")
+  debug_inspect(
+    findings.any(item => item.hint.contains("enum View")),
+    content="true",
+  )
+  debug_inspect(
+    findings.any(item => item.hint.contains("pub fn button")),
+    content="true",
+  )
 }
 
 ///|
@@ -52,7 +58,9 @@ test "R3 requires env-driven renderer selection" {
   debug_inspect(bad.ok, content="false")
   let good = check_r3_provider_text(
     "provider.mbt",
-    Some("let mode = NativeRendererMode::parse(@env.get(\"MOUI_SKIA_RENDERER\"))"),
+    Some(
+      "let mode = NativeRendererMode::parse(@env.get(\"MOUI_SKIA_RENDERER\"))",
+    ),
   )
   debug_inspect(good.ok, content="true")
 }
@@ -71,10 +79,12 @@ test "G1 rejects skill tables that re-list P-rows" {
   debug_inspect(count_p_rows(text), content="3")
 }
 
-
 ///|
 test "P2 does not treat View* enums as View enum" {
-  debug_inspect(is_view_enum_decl("pub(all) enum ViewDirtyHint {"), content="false")
+  debug_inspect(
+    is_view_enum_decl("pub(all) enum ViewDirtyHint {"),
+    content="false",
+  )
   debug_inspect(is_view_enum_decl("pub enum View {"), content="true")
   debug_inspect(is_view_enum_decl("enum View["), content="true")
 }

@@ -6,9 +6,7 @@ struct CodeRange {
 
 ///|
 fn is_hex_char(ch : Char) -> Bool {
-  ch.is_ascii_digit() ||
-  (ch >= 'A' && ch <= 'F') ||
-  (ch >= 'a' && ch <= 'f')
+  ch.is_ascii_digit() || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f')
 }
 
 ///|
@@ -91,7 +89,7 @@ fn parse_range(
       }
     Some(offset) => {
       let start_text = value[:offset].trim().to_owned()
-      let end_text = value[offset + 2 :].trim().to_owned()
+      let end_text = value[offset + 2:].trim().to_owned()
       match parse_codepoint(start_text, source, line_number) {
         Err(message) => Err(message)
         Ok(start) =>
@@ -262,8 +260,7 @@ fn merge_ranges(ranges : Array[CodeRange]) -> Array[CodeRange] {
 ///|
 fn moon_hex(value : Int) -> String {
   let hex_digits : Array[Char] = [
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
-    'F',
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
   ]
   let chars : Array[Char] = []
   let mut n = value
@@ -297,11 +294,7 @@ fn expression_for_ranges(ranges : Array[CodeRange]) -> Array[String] {
   }
   let lines : Array[String] = []
   for index, range in ranges {
-    let suffix = if index == ranges.length() - 1 {
-      ""
-    } else {
-      " ||"
-    }
+    let suffix = if index == ranges.length() - 1 { "" } else { " ||" }
     if range.start == range.end {
       lines.push("  codepoint == " + moon_hex(range.start) + suffix)
     } else {
@@ -350,11 +343,7 @@ fn function_for_ranges(name : String, ranges : Array[CodeRange]) -> String {
   }
   let dispatch_lines : Array[String] = []
   for index, _ in chunks {
-    let suffix = if index == chunks.length() - 1 {
-      ""
-    } else {
-      " ||"
-    }
+    let suffix = if index == chunks.length() - 1 { "" } else { " ||" }
     dispatch_lines.push(
       "  " + name + "_chunk_" + index.to_string() + "(codepoint)" + suffix,
     )

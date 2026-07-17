@@ -1,4 +1,5 @@
 ///|
+
 ///|
 /// Host keyboard shortcut map from the Platform workspace (meta/ctrl+T demo).
 pub fn action_command_map() -> @views.ActionCommandMap {
@@ -70,10 +71,9 @@ fn ShowcaseModel::program_with_optional_route_host(
 ) -> @moui.Program[ShowcaseModel, ShowcaseMsg] {
   @moui.Program::new_with_environment(
     init=() => (self, @moui.Effect::none()),
-    update=(model, message) =>
-      model.update_with_effect(message, route_host=route_host),
+    update=(model, message) => model.update_with_effect(message, route_host~),
     view=(model, env) => model.view(env),
-    subscriptions=model => model.subscriptions(route_host=route_host),
+    subscriptions=model => model.subscriptions(route_host~),
   )
 }
 

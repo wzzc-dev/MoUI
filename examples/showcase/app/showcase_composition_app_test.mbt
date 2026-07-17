@@ -8,8 +8,14 @@ test "workspace switches keep child state" {
   let after_platform = after_components.update(
     Navigate("platform/host-services"),
   )
-  inspect(after_platform.current_route_string(), content="platform/host-services")
-  let (running, _) = @platform.update(after_platform.platform, @platform.Msg::ToggleTimer)
+  inspect(
+    after_platform.current_route_string(),
+    content="platform/host-services",
+  )
+  let (running, _) = @platform.update(
+    after_platform.platform,
+    @platform.Msg::ToggleTimer,
+  )
   let with_timer = { ..after_platform, platform: running }
   let back = with_timer.update(Navigate("components/welcome"))
   inspect(back.components.counter, content="1")

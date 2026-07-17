@@ -76,30 +76,23 @@ pub fn ShowcaseModel::new(
   let parsed = ShowcaseRoute::parse(route)
   let components = @components.ComponentGalleryModel::new(
     active_platform=platform_id_from_host(host_summary),
-    active_item=match @components.gallery_item_id_from_string(
-      if parsed.workspace == Components {
-        parsed.id
-      } else {
-        "welcome"
-      },
-    ) {
+    active_item=match
+      @components.gallery_item_id_from_string(
+        if parsed.workspace == Components {
+          parsed.id
+        } else {
+          "welcome"
+        },
+      ) {
       Some(id) => id
       None => @components.ComponentGalleryItemId::Welcome
     },
   )
   let patterns = @patterns.Model::new(
-    route=if parsed.workspace == Patterns {
-      parsed.id
-    } else {
-      "welcome"
-    },
+    route=if parsed.workspace == Patterns { parsed.id } else { "welcome" },
   )
   let platform = @platform.Model::new(
-    route=if parsed.workspace == Platform {
-      parsed.id
-    } else {
-      "host-services"
-    },
+    route=if parsed.workspace == Platform { parsed.id } else { "host-services" },
     host_label=host_summary.label,
   )
   let diagnostics = {

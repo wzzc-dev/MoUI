@@ -37,7 +37,10 @@ test "legacy bare routes map into workspaces" {
     ShowcaseRoute::parse("mobile-service-probe").format(),
     content="platform/mobile-service-probe",
   )
-  inspect(ShowcaseRoute::parse("overview").format(), content="components/welcome")
+  inspect(
+    ShowcaseRoute::parse("overview").format(),
+    content="components/welcome",
+  )
 }
 
 ///|
@@ -52,8 +55,7 @@ test "default routes" {
     content="components/welcome",
   )
   inspect(
-    ShowcaseModel::new(route="platform/mobile-service-probe")
-    .current_route_string(),
+    ShowcaseModel::new(route="platform/mobile-service-probe").current_route_string(),
     content="platform/mobile-service-probe",
   )
 }

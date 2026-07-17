@@ -1,5 +1,6 @@
 ///|
 priv struct DesktopPalette {
+  dark : Bool
   foreground : @graphics.Color
   muted : @graphics.Color
   glass : @graphics.Color
@@ -28,6 +29,7 @@ fn rgba8(r : Int, g : Int, b : Int, a? : Double = 1.0) -> @graphics.Color {
 fn desktop_palette(dark : Bool) -> DesktopPalette {
   if dark {
     {
+      dark: true,
       foreground: rgba8(241, 245, 249),
       muted: rgba8(174, 184, 197),
       glass: rgba8(26, 32, 43, a=0.82),
@@ -38,11 +40,13 @@ fn desktop_palette(dark : Bool) -> DesktopPalette {
       shadow: rgba8(0, 0, 0, a=0.48),
       accent: rgba8(57, 151, 255),
       accent_soft: rgba8(42, 91, 142, a=0.72),
-      dock: rgba8(22, 28, 36, a=0.78),
+      // Lighter, more translucent dock glass so wallpaper shows through like macOS.
+      dock: rgba8(30, 36, 46, a=0.52),
       scrim: rgba8(4, 10, 18, a=0.28),
     }
   } else {
     {
+      dark: false,
       foreground: rgba8(28, 34, 42),
       muted: rgba8(100, 109, 120),
       glass: rgba8(245, 248, 252, a=0.82),
@@ -55,10 +59,31 @@ fn desktop_palette(dark : Bool) -> DesktopPalette {
       shadow: rgba8(18, 31, 48, a=0.30),
       accent: rgba8(22, 130, 246),
       accent_soft: rgba8(180, 216, 255, a=0.92),
-      dock: rgba8(244, 248, 252, a=0.70),
+      // Frosted dock plate: pale and translucent rather than chalky opaque.
+      dock: rgba8(255, 255, 255, a=0.42),
       scrim: rgba8(3, 20, 36, a=0.16),
     }
   }
+}
+
+///|
+fn dock_shadow(palette : DesktopPalette) -> @graphics.ShadowStyle {
+  @graphics.ShadowStyle::new(
+    color=palette.shadow.multiply_alpha(0.85),
+    offset=@geometry.Point::new(x=0.0, y=10.0),
+    blur_radius=28.0,
+    spread=0.0,
+  )
+}
+
+///|
+fn dock_tile_shadow(palette : DesktopPalette) -> @graphics.ShadowStyle {
+  @graphics.ShadowStyle::new(
+    color=palette.shadow.multiply_alpha(0.55),
+    offset=@geometry.Point::new(x=0.0, y=3.0),
+    blur_radius=8.0,
+    spread=0.0,
+  )
 }
 
 ///|
@@ -97,6 +122,56 @@ fn desktop_shadow(palette : DesktopPalette) -> @graphics.ShadowStyle {
     blur_radius=34.0,
     spread=0.0,
   )
+}
+
+///|
+fn overlay_panel_background(palette : DesktopPalette) -> @graphics.Color {
+  if palette.dark {
+    rgba8(31, 37, 48, a=0.88)
+  } else {
+    rgba8(245, 248, 252, a=0.72)
+  }
+}
+
+///|
+fn overlay_card_background(palette : DesktopPalette) -> @graphics.Color {
+  if palette.dark {
+    rgba8(255, 255, 255, a=0.10)
+  } else {
+    rgba8(255, 255, 255, a=0.58)
+  }
+}
+
+///|
+fn overlay_group_background(palette : DesktopPalette) -> @graphics.Color {
+  if palette.dark {
+    rgba8(255, 255, 255, a=0.06)
+  } else {
+    rgba8(255, 255, 255, a=0.30)
+  }
+}
+
+///|
+fn overlay_card_outline(palette : DesktopPalette) -> @graphics.BorderStyle {
+  @graphics.BorderStyle::new(
+    brush=@graphics.Brush::solid(
+      if palette.dark {
+        rgba8(255, 255, 255, a=0.15)
+      } else {
+        rgba8(255, 255, 255, a=0.50)
+      },
+    ),
+    width=1.0,
+  )
+}
+
+///|
+fn overlay_neutral_icon_background(palette : DesktopPalette) -> @graphics.Color {
+  if palette.dark {
+    rgba8(255, 255, 255, a=0.14)
+  } else {
+    rgba8(210, 216, 226)
+  }
 }
 
 ///|

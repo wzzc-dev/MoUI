@@ -81,33 +81,26 @@ fn screenshot(name : String, viewport : String, path : String) -> Json {
 fn build_manifest(mode : String) -> Json {
   let counters = [
     "command_count", "text_count", "image_count", "clip_depth", "open_clip_depth",
-    "layer_depth", "open_layer_depth", "filter_depth", "open_filter_depth",
-    "path_count", "shader_count", "unbalanced_pop_count",
+    "layer_depth", "open_layer_depth", "filter_depth", "open_filter_depth", "path_count",
+    "shader_count", "unbalanced_pop_count",
   ].map(name => Json::string(name))
   let screenshots = [
     screenshot(
-      "desktop",
-      "1440x900",
-      "artifacts/golden/showcase-web-wasm/desktop.png",
+      "desktop", "1440x900", "artifacts/golden/showcase-web-wasm/desktop.png",
     ),
     screenshot(
-      "tablet",
-      "1024x768",
-      "artifacts/golden/showcase-web-wasm/tablet.png",
+      "tablet", "1024x768", "artifacts/golden/showcase-web-wasm/tablet.png",
     ),
     screenshot(
-      "mobile",
-      "390x844",
-      "artifacts/golden/showcase-web-wasm/mobile.png",
+      "mobile", "390x844", "artifacts/golden/showcase-web-wasm/mobile.png",
     ),
   ]
   let metrics = [
-    "startup_ms", "frame_time_ms", "dirty_count", "draw_command_count",
-    "memory_bytes", "render_inspector_counters",
+    "startup_ms", "frame_time_ms", "dirty_count", "draw_command_count", "memory_bytes",
+    "render_inspector_counters",
   ].map(name => Json::string(name))
   let notes = [
-    "This manifest connects the build scaffold to manual capture artifacts.",
-    "It does not contain captured measurements or screenshots by itself.",
+    "This manifest connects the build scaffold to manual capture artifacts.", "It does not contain captured measurements or screenshots by itself.",
   ].map(note => Json::string(note))
   let object : Map[String, Json] = Map([])
   object["schemaVersion"] = Json::number(1.0, repr="1")
@@ -142,9 +135,10 @@ fn build_manifest(mode : String) -> Json {
     target2["metricsPath"] = Json::string(
       "artifacts/benchmarks/markdown-editor-web-wasm.json",
     )
-    object["benchmarkTargets"] = Json::array(
-      [Json::object(target1), Json::object(target2)],
-    )
+    object["benchmarkTargets"] = Json::array([
+      Json::object(target1),
+      Json::object(target2),
+    ])
   }
   Json::object(object)
 }
