@@ -68,6 +68,7 @@ after changing repository example mobile metadata or contracts.
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback, `program_with_services`, and `HostAppServices::show_context_menu` native menu preview |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
 | Code Editor | Native code editor shell and language-provider prototype | `examples/code_editor/app/` | Native `moui_richtext` editor shell with activity rail, file tab, line-number gutter, status bar, tokenizer-backed highlighting, bracket matching, auto indentation, multi-cursor edits, hidden find/replace overlay, runtime action-command shortcuts, completion overlay, diagnostics, hover, go-to-definition, main-editor Diff mode, and custom language/provider registration through app-owned callbacks |
+| Mo Desktop | macOS-inspired responsive desktop simulation | `examples/mo_desktop/app/` | Lock/unlock session, image wallpaper, menu bar, live dock, calendar/weather/task widgets, responsive Finder with navigation/search/icon-list modes/selection, Safari start page and search results, searchable Apps/Actions launcher, notifications, Control Center toggles/sliders, global light/dark appearance, Web wasm-gc and macOS Skia entrypoints |
 | Mo Workbench | Native-Skia-first desktop agent dogfood app | `examples/mo_workbench/app/` | DeepSeek-GUI-inspired multi-workspace shell with Code chat, starter cards, backend-aware OpenSeek/ACP controls, responsive left rail, optional right inspector, low-noise status bar, grouped Settings form, static Write/Connect Phone/Scheduled Tasks/Plugins surfaces, injected stub backend, OpenSeek native transport, generic ACP stdio native transport, macOS Skia native entrypoint |
 
 Focused Website checks:
@@ -529,6 +530,32 @@ command bindings. Its effect-capable `program_with_services` path demonstrates
 command back through the same typed message loop while preserving the view-level
 fallback context menu for hosts without native menu support.
 
+## Mo Desktop
+
+Mo Desktop is a platform-neutral desktop simulation inspired by the macOS 27
+reference. It starts on a full-screen lock surface and unlocks into a layered
+desktop with persistent menu and dock chrome. Finder is the primary workspace;
+Safari, the app launcher, Control Center, and Notification Center share the
+same typed model and update path. Narrow viewports hide decorative widgets,
+collapse Finder's sidebar into location tabs, and keep the dock and overlays
+inside the available canvas.
+
+The example intentionally implements a smaller set of working apps and system
+surfaces instead of rendering inactive dock placeholders. Finder navigation,
+search, view modes, and selection are controlled; Safari supports a start page
+and query results; Control Center owns appearance, connectivity, brightness,
+volume, and battery preferences; Notification Center owns read state and task
+completion.
+
+Focused checks:
+
+```sh
+moon test examples/mo_desktop/app --target native
+moon test examples/mo_desktop/app --target wasm-gc
+moon build examples/mo_desktop/web_wasm --target wasm-gc
+moon build examples/mo_desktop/macos_skia --target native
+```
+
 ## Mo Workbench
 
 Mo Workbench is the native-Skia-first desktop agent dogfood app. The current shared app package is a platform-neutral multi-workspace shell inspired by DeepSeek-GUI: a left workspace rail, center work surface, topbar controls, optional right inspector, and low-noise status bar. Code is the only interactive agent workspace today; it uses an injected `AgentBackendRuntime` stub by default, while the macOS Skia entrypoint can select either the OpenSeek backend or a generic ACP stdio subprocess backend from settings.
@@ -564,6 +591,7 @@ local static server:
 moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
+moon build examples/mo_desktop/web_wasm --target wasm-gc
 moon build website/web_wasm --target wasm-gc
 python3 -m http.server 8080 --bind 127.0.0.1
 ```
@@ -602,6 +630,7 @@ moon build examples/markdown_editor/macos_skia --target native
 moon build examples/pdf_workbench/macos_skia --target native
 moon build examples/pdf_workbench/windows_skia --target native
 moon build examples/pdf_workbench/linux_skia --target native
+moon build examples/mo_desktop/macos_skia --target native
 moon build examples/mo_workbench/macos_skia --target native
 ```
 
@@ -782,10 +811,12 @@ moon test examples/pdf_workbench/pdflite_adapter --target native
 moon test examples/pdf_workbench/pdfium_adapter --target native
 moon test examples/command_palette/app --target native
 moon test examples/markdown_editor/app --target native
+moon test examples/mo_desktop/app --target native
 moon test website/app --target native
 moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
+moon build examples/mo_desktop/web_wasm --target wasm-gc
 moon build website/web_wasm --target wasm-gc
 node scripts/web-bundle-size.mjs examples/counter/web_wasm --json
 ```

@@ -1,0 +1,288 @@
+///|
+pub(all) enum SessionPhase {
+  Locked
+  Unlocked
+} derive(Eq, Debug)
+
+///|
+pub(all) enum DesktopWindow {
+  NoWindow
+  Finder
+  Safari
+} derive(Eq, Debug)
+
+///|
+pub(all) enum DesktopOverlay {
+  OverlayNone
+  Launcher
+  ControlCenter
+  NotificationCenter
+} derive(Eq, Debug)
+
+///|
+pub(all) enum FinderLocation {
+  Documents
+  Applications
+  Downloads
+} derive(Eq, Debug)
+
+///|
+pub(all) enum FinderViewMode {
+  IconView
+  ListView
+} derive(Eq, Debug)
+
+///|
+pub(all) enum BrowserPage {
+  StartPage
+  SearchResults(String)
+} derive(Eq, Debug)
+
+///|
+pub(all) struct DesktopModel {
+  wallpaper_source : String
+  phase : SessionPhase
+  active_window : DesktopWindow
+  overlay : DesktopOverlay
+  dark_mode : Bool
+  window_maximized : Bool
+  finder_location : FinderLocation
+  finder_view_mode : FinderViewMode
+  finder_query : String
+  selected_file : String
+  launcher_query : String
+  launcher_tab : String
+  browser_query : String
+  browser_page : BrowserPage
+  wifi_enabled : Bool
+  bluetooth_enabled : Bool
+  low_power_mode : Bool
+  brightness : Double
+  volume : Double
+  notifications_read : Bool
+  first_task_done : Bool
+  second_task_done : Bool
+  third_task_done : Bool
+}
+
+///|
+pub(all) enum Msg {
+  UnlockDesktop
+  LockDesktop
+  OpenFinder
+  OpenSafari
+  CloseWindow
+  MinimizeWindow
+  ToggleMaximize
+  ToggleLauncher
+  ToggleControlCenter
+  ToggleNotificationCenter
+  DismissOverlay
+  SelectFinderLocation(FinderLocation)
+  SelectFinderView(String)
+  FinderQueryChanged(String)
+  SelectFinderItem(String)
+  LauncherQueryChanged(String)
+  LauncherTabSelected(String)
+  BrowserQueryChanged(String)
+  SubmitBrowserQuery
+  ShowBrowserStartPage
+  OpenFavorite(String)
+  ToggleDarkMode
+  WifiChanged(Bool)
+  BluetoothChanged(Bool)
+  LowPowerModeChanged(Bool)
+  BrightnessChanged(Double)
+  VolumeChanged(Double)
+  MarkNotificationsRead
+  CompleteTask(Int)
+}
+
+///|
+pub fn DesktopModel::new(
+  wallpaper_source? : String = "examples/mo_desktop/web_wasm/assets/tahoe-day.jpg",
+) -> DesktopModel {
+  {
+    wallpaper_source,
+    phase: Locked,
+    active_window: Finder,
+    overlay: OverlayNone,
+    dark_mode: false,
+    window_maximized: false,
+    finder_location: Documents,
+    finder_view_mode: IconView,
+    finder_query: "",
+    selected_file: "",
+    launcher_query: "",
+    launcher_tab: "apps",
+    browser_query: "",
+    browser_page: StartPage,
+    wifi_enabled: true,
+    bluetooth_enabled: true,
+    low_power_mode: false,
+    brightness: 0.82,
+    volume: 0.68,
+    notifications_read: false,
+    first_task_done: false,
+    second_task_done: false,
+    third_task_done: false,
+  }
+}
+
+///|
+pub fn update(model : DesktopModel, message : Msg) -> DesktopModel {
+  model.update(message)
+}
+
+///|
+pub fn DesktopModel::update(self : DesktopModel, message : Msg) -> DesktopModel {
+  match message {
+    UnlockDesktop =>
+      { ..self, phase: Unlocked, active_window: Finder, overlay: OverlayNone }
+    LockDesktop =>
+      { ..self, phase: Locked, overlay: OverlayNone, window_maximized: false }
+    OpenFinder =>
+      {
+        ..self,
+        active_window: Finder,
+        overlay: OverlayNone,
+        window_maximized: false,
+      }
+    OpenSafari =>
+      {
+        ..self,
+        active_window: Safari,
+        overlay: OverlayNone,
+        window_maximized: false,
+      }
+    CloseWindow | MinimizeWindow =>
+      { ..self, active_window: NoWindow, window_maximized: false }
+    ToggleMaximize => { ..self, window_maximized: !self.window_maximized }
+    ToggleLauncher =>
+      {
+        ..self,
+        overlay: if self.overlay == Launcher {
+          OverlayNone
+        } else {
+          Launcher
+        },
+      }
+    ToggleControlCenter =>
+      {
+        ..self,
+        overlay: if self.overlay == ControlCenter {
+          OverlayNone
+        } else {
+          ControlCenter
+        },
+      }
+    ToggleNotificationCenter =>
+      {
+        ..self,
+        overlay: if self.overlay == NotificationCenter {
+          OverlayNone
+        } else {
+          NotificationCenter
+        },
+      }
+    DismissOverlay => { ..self, overlay: OverlayNone }
+    SelectFinderLocation(location) =>
+      {
+        ..self,
+        active_window: Finder,
+        overlay: OverlayNone,
+        finder_location: location,
+        finder_query: "",
+        selected_file: "",
+      }
+    SelectFinderView(value) =>
+      {
+        ..self,
+        finder_view_mode: if value == "list" {
+          ListView
+        } else {
+          IconView
+        },
+      }
+    FinderQueryChanged(value) => { ..self, finder_query: value }
+    SelectFinderItem(value) => { ..self, selected_file: value }
+    LauncherQueryChanged(value) => { ..self, launcher_query: value }
+    LauncherTabSelected(value) => { ..self, launcher_tab: value }
+    BrowserQueryChanged(value) => { ..self, browser_query: value }
+    SubmitBrowserQuery =>
+      {
+        ..self,
+        browser_page: if self.browser_query == "" {
+          StartPage
+        } else {
+          SearchResults(self.browser_query)
+        },
+      }
+    ShowBrowserStartPage =>
+      { ..self, browser_query: "", browser_page: StartPage }
+    OpenFavorite(value) =>
+      {
+        ..self,
+        active_window: Safari,
+        overlay: OverlayNone,
+        browser_query: value,
+        browser_page: SearchResults(value),
+      }
+    ToggleDarkMode => { ..self, dark_mode: !self.dark_mode }
+    WifiChanged(value) => { ..self, wifi_enabled: value }
+    BluetoothChanged(value) => { ..self, bluetooth_enabled: value }
+    LowPowerModeChanged(value) => { ..self, low_power_mode: value }
+    BrightnessChanged(value) => { ..self, brightness: value }
+    VolumeChanged(value) => { ..self, volume: value }
+    MarkNotificationsRead => { ..self, notifications_read: true }
+    CompleteTask(index) =>
+      match index {
+        0 => { ..self, first_task_done: true }
+        1 => { ..self, second_task_done: true }
+        _ => { ..self, third_task_done: true }
+      }
+  }
+}
+
+///|
+pub fn DesktopModel::remaining_tasks(self : DesktopModel) -> Int {
+  let first = if self.first_task_done { 0 } else { 1 }
+  let second = if self.second_task_done { 0 } else { 1 }
+  let third = if self.third_task_done { 0 } else { 1 }
+  first + second + third
+}
+
+///|
+fn FinderLocation::id(self : FinderLocation) -> String {
+  match self {
+    Documents => "documents"
+    Applications => "applications"
+    Downloads => "downloads"
+  }
+}
+
+///|
+fn FinderLocation::label(self : FinderLocation) -> String {
+  match self {
+    Documents => "Documents"
+    Applications => "Applications"
+    Downloads => "Downloads"
+  }
+}
+
+///|
+fn FinderViewMode::id(self : FinderViewMode) -> String {
+  match self {
+    IconView => "icons"
+    ListView => "list"
+  }
+}
+
+///|
+fn DesktopModel::active_app_label(self : DesktopModel) -> String {
+  match self.active_window {
+    NoWindow => "Desktop"
+    Finder => "Finder"
+    Safari => "Safari"
+  }
+}

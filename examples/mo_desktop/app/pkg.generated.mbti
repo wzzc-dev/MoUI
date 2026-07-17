@@ -1,0 +1,117 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/mo_desktop/app"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn program(wallpaper_source? : String) -> @core.Program[DesktopModel, Msg]
+
+pub fn update(DesktopModel, Msg) -> DesktopModel
+
+pub fn view(DesktopModel, @core.ViewEnvironment) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+pub(all) enum BrowserPage {
+  StartPage
+  SearchResults(String)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct DesktopModel {
+  wallpaper_source : String
+  phase : SessionPhase
+  active_window : DesktopWindow
+  overlay : DesktopOverlay
+  dark_mode : Bool
+  window_maximized : Bool
+  finder_location : FinderLocation
+  finder_view_mode : FinderViewMode
+  finder_query : String
+  selected_file : String
+  launcher_query : String
+  launcher_tab : String
+  browser_query : String
+  browser_page : BrowserPage
+  wifi_enabled : Bool
+  bluetooth_enabled : Bool
+  low_power_mode : Bool
+  brightness : Double
+  volume : Double
+  notifications_read : Bool
+  first_task_done : Bool
+  second_task_done : Bool
+  third_task_done : Bool
+}
+pub fn DesktopModel::new(wallpaper_source? : String) -> Self
+pub fn DesktopModel::remaining_tasks(Self) -> Int
+pub fn DesktopModel::update(Self, Msg) -> Self
+
+pub(all) enum DesktopOverlay {
+  OverlayNone
+  Launcher
+  ControlCenter
+  NotificationCenter
+} derive(Eq, @debug.Debug)
+
+pub(all) enum DesktopWindow {
+  NoWindow
+  Finder
+  Safari
+} derive(Eq, @debug.Debug)
+
+pub(all) enum FinderLocation {
+  Documents
+  Applications
+  Downloads
+} derive(Eq, @debug.Debug)
+
+pub(all) enum FinderViewMode {
+  IconView
+  ListView
+} derive(Eq, @debug.Debug)
+
+pub(all) enum Msg {
+  UnlockDesktop
+  LockDesktop
+  OpenFinder
+  OpenSafari
+  CloseWindow
+  MinimizeWindow
+  ToggleMaximize
+  ToggleLauncher
+  ToggleControlCenter
+  ToggleNotificationCenter
+  DismissOverlay
+  SelectFinderLocation(FinderLocation)
+  SelectFinderView(String)
+  FinderQueryChanged(String)
+  SelectFinderItem(String)
+  LauncherQueryChanged(String)
+  LauncherTabSelected(String)
+  BrowserQueryChanged(String)
+  SubmitBrowserQuery
+  ShowBrowserStartPage
+  OpenFavorite(String)
+  ToggleDarkMode
+  WifiChanged(Bool)
+  BluetoothChanged(Bool)
+  LowPowerModeChanged(Bool)
+  BrightnessChanged(Double)
+  VolumeChanged(Double)
+  MarkNotificationsRead
+  CompleteTask(Int)
+}
+
+pub(all) enum SessionPhase {
+  Locked
+  Unlocked
+} derive(Eq, @debug.Debug)
+
+// Type aliases
+
+// Traits
+

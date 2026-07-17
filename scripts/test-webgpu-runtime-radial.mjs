@@ -294,6 +294,40 @@ assertNear(pathVisual[19], 0, "path edge green");
 assertNear(pathVisual[20], 1, "path edge blue");
 
 uploadedBuffers.length = 0;
+assert(imports.begin_frame(renderer, 100, 60) === 0, "begin_frame for malformed path failed");
+const malformedPathValues = radialPathPayload.split(",");
+malformedPathValues[17] = "NaN";
+assert(
+  imports.draw_path_mesh(renderer, stringHandle(malformedPathValues.join(","))) === 0,
+  "draw_path_mesh malformed payload should be ignored without failing",
+);
+assert(imports.present(renderer) === 0, "present malformed path failed");
+assert(
+  !uploadedBuffers.some(buffer => buffer.length === 3 * 22),
+  "malformed path payload must not upload misaligned path vertices",
+);
+
+uploadedBuffers.length = 0;
+assert(imports.begin_frame(renderer, 100, 60) === 0, "begin_frame for partial triangle path failed");
+assert(
+  imports.draw_path_mesh(
+    renderer,
+    stringHandle([
+      radialPathPayload,
+      [
+        42, 42, 1, 20, 20, 16, 0, 1, 0, 0, 1, 0, 0, 1, 1,
+      ].join(","),
+    ].join(",")),
+  ) === 0,
+  "draw_path_mesh partial triangle payload should be ignored without failing",
+);
+assert(imports.present(renderer) === 0, "present partial triangle path failed");
+assert(
+  !uploadedBuffers.some(buffer => buffer.length === 4 * 22),
+  "partial triangle path payload must not upload non-triangle vertices",
+);
+
+uploadedBuffers.length = 0;
 bindGroupEntryCounts.length = 0;
 assert(imports.begin_frame(renderer, 100, 60) === 0, "begin_frame for clipped filter failed");
 assert(imports.push_clip(renderer, 4, 6, 80, 42) === 0, "push_clip failed");

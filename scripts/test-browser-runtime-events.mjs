@@ -12,6 +12,7 @@ class FakeElement {
     this.style = {};
     this.listeners = new Map();
     this.attributes = new Map();
+    this.dataset = {};
     this.id = "";
     this.width = 400;
     this.height = 300;
@@ -289,6 +290,26 @@ withMockClock(() => {
       events,
       [23, 24],
     );
+  });
+});
+
+withMockClock(() => {
+  withPointerEventSupport(true, () => {
+    const previousDpr = fakeWindow.devicePixelRatio;
+    fakeWindow.devicePixelRatio = 2;
+    try {
+      const { canvas, events } = createRuntime();
+      canvas.dispatch("pointerdown", { clientX: 120, clientY: 220 });
+      canvas.dispatch("pointerup", { clientX: 120, clientY: 220 });
+      expectKinds("high-DPI pointer activation", events, [23, 24]);
+      if (events[0].arg0 !== 240 || events[0].arg1 !== 440) {
+        console.error("high-DPI pointer coordinates must be emitted in physical canvas pixels");
+        console.error(JSON.stringify(events, null, 2));
+        process.exit(1);
+      }
+    } finally {
+      fakeWindow.devicePixelRatio = previousDpr;
+    }
   });
 });
 

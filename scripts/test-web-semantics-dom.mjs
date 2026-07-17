@@ -47,6 +47,7 @@ class FakeElement {
       key: "",
       currentTarget: this,
       preventDefault() {},
+      stopPropagation() {},
       ...extra,
     };
     for (const handler of this.listeners.get(name) ?? []) handler(event);
@@ -130,9 +131,11 @@ const link = main.children[1];
 assert(heading.tagName === "H2", "heading level should select h2");
 assert(heading.style.left === "20px" && heading.style.top === "30px", "child frame should be parent-relative");
 assert(link.tagName === "A" && link.getAttribute("href") === "https://example.test/android", "link url should map to href");
-assert(link.style.pointerEvents === "none", "semantics elements must not intercept pointer events");
+assert(link.style.pointerEvents === "auto", "actionable semantics elements must receive pointer input");
+link.dispatch("click");
+assert(actions.length === 1 && actions[0][0] === 11 && actions[0][1] === 3 && actions[0][2] === 0, "link click should dispatch activate");
 link.dispatch("keydown", { key: "Enter" });
-assert(actions.length === 1 && actions[0][0] === 11 && actions[0][1] === 3 && actions[0][2] === 0, "link Enter should dispatch activate");
+assert(actions.length === 2 && actions[1][0] === 11 && actions[1][1] === 3 && actions[1][2] === 0, "link Enter should dispatch activate");
 
 const updated = node(1, "main", [0, 0, 400, 300], [
   node(2, "heading", [24, 36, 220, 40], [], { label: "Guides", level: 2, focused: true }),

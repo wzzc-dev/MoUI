@@ -132,9 +132,7 @@ pub fn tessellate_path(spec : @core.PathSpec) -> PathMesh {
   let mesh = PathMesh::{ vertices: [], diagnostics: [] }
   let path = zeno_path_from_spec(spec, mesh)
   append_zeno_fill_mesh(mesh, path, spec.fill)
-  if !append_line_only_stroke_mesh(mesh, spec) {
-    append_zeno_stroke_mesh(mesh, path, spec.stroke, spec.stroke_width)
-  }
+  ignore(append_flattened_stroke_mesh(mesh, spec))
   mesh
 }
 
@@ -209,38 +207,21 @@ fn append_zeno_fill_mesh(
 }
 
 ///|
-fn append_zeno_stroke_mesh(
-  mesh : PathMesh,
-  path : Array[@zeno.Command],
-  stroke : @core.Brush?,
-  stroke_width : Double,
-) -> Unit {
-  match stroke {
-    Some(brush) =>
-      if stroke_width > 0.0 {
-        append_zeno_vertices(
-          mesh.vertices,
-          path,
-          @zeno.Style::Stroke(@zeno.Stroke::Stroke(stroke_width)),
-          brush_to_path_payload(brush),
-        )
-      }
-    None => ()
-  }
-}
-
-///|
-fn append_line_only_stroke_mesh(mesh : PathMesh, spec : @core.PathSpec) -> Bool {
+fn append_flattened_stroke_mesh(mesh : PathMesh, spec : @core.PathSpec) -> Bool {
   match spec.stroke {
     Some(brush) =>
       if spec.stroke_width > 0.0 {
         let payload = brush_to_path_payload(brush)
         let vertices : Array[PathVertex] = []
         let mut current : @core.Point? = None
+        let mut subpath_start : @core.Point? = None
         let mut emitted = false
         for verb in spec.verbs {
           match verb {
-            @core.PathVerb::MoveTo(point) => current = Some(point)
+            @core.PathVerb::MoveTo(point) => {
+              current = Some(point)
+              subpath_start = Some(point)
+            }
             @core.PathVerb::LineTo(point) => {
               match current {
                 Some(start) =>
@@ -253,13 +234,62 @@ fn append_line_only_stroke_mesh(mesh : PathMesh, spec : @core.PathSpec) -> Bool 
                     ) {
                     emitted = true
                   }
-                None => return false
+                None => ()
               }
               current = Some(point)
             }
-            @core.PathVerb::QuadTo(_, _)
-            | @core.PathVerb::CubicTo(_, _, _)
-            | @core.PathVerb::Close => return false
+            @core.PathVerb::QuadTo(control, point) => {
+              match current {
+                Some(start) =>
+                  if append_quadratic_stroke_vertices(
+                      vertices,
+                      start,
+                      control,
+                      point,
+                      spec.stroke_width,
+                      payload,
+                    ) {
+                    emitted = true
+                  }
+                None => ()
+              }
+              current = Some(point)
+            }
+            @core.PathVerb::CubicTo(c1, c2, point) => {
+              match current {
+                Some(start) =>
+                  if append_cubic_stroke_vertices(
+                      vertices,
+                      start,
+                      c1,
+                      c2,
+                      point,
+                      spec.stroke_width,
+                      payload,
+                    ) {
+                    emitted = true
+                  }
+                None => ()
+              }
+              current = Some(point)
+            }
+            @core.PathVerb::Close => {
+              match (current, subpath_start) {
+                (Some(start), Some(point)) =>
+                  if append_line_stroke_vertices(
+                      vertices,
+                      start,
+                      point,
+                      spec.stroke_width,
+                      payload,
+                    ) {
+                    emitted = true
+                  }
+                _ => ()
+              }
+              current = None
+              subpath_start = None
+            }
           }
         }
         if emitted {
@@ -273,6 +303,94 @@ fn append_line_only_stroke_mesh(mesh : PathMesh, spec : @core.PathSpec) -> Bool 
       }
     None => false
   }
+}
+
+///|
+fn append_quadratic_stroke_vertices(
+  vertices : Array[PathVertex],
+  start : @core.Point,
+  control : @core.Point,
+  end : @core.Point,
+  stroke_width : Double,
+  payload : PathBrushPayload,
+) -> Bool {
+  let segments = 12
+  let mut previous = start
+  let mut emitted = false
+  for step in 1..<=segments {
+    let t = step.to_double() / segments.to_double()
+    let point = quadratic_point(start, control, end, t)
+    if append_line_stroke_vertices(
+        vertices, previous, point, stroke_width, payload,
+      ) {
+      emitted = true
+    }
+    previous = point
+  }
+  emitted
+}
+
+///|
+fn append_cubic_stroke_vertices(
+  vertices : Array[PathVertex],
+  start : @core.Point,
+  c1 : @core.Point,
+  c2 : @core.Point,
+  end : @core.Point,
+  stroke_width : Double,
+  payload : PathBrushPayload,
+) -> Bool {
+  let segments = 16
+  let mut previous = start
+  let mut emitted = false
+  for step in 1..<=segments {
+    let t = step.to_double() / segments.to_double()
+    let point = cubic_point(start, c1, c2, end, t)
+    if append_line_stroke_vertices(
+        vertices, previous, point, stroke_width, payload,
+      ) {
+      emitted = true
+    }
+    previous = point
+  }
+  emitted
+}
+
+///|
+fn quadratic_point(
+  start : @core.Point,
+  control : @core.Point,
+  end : @core.Point,
+  t : Double,
+) -> @core.Point {
+  let mt = 1.0 - t
+  @core.Point::new(
+    x=mt * mt * start.x + 2.0 * mt * t * control.x + t * t * end.x,
+    y=mt * mt * start.y + 2.0 * mt * t * control.y + t * t * end.y,
+  )
+}
+
+///|
+fn cubic_point(
+  start : @core.Point,
+  c1 : @core.Point,
+  c2 : @core.Point,
+  end : @core.Point,
+  t : Double,
+) -> @core.Point {
+  let mt = 1.0 - t
+  let mt2 = mt * mt
+  let t2 = t * t
+  @core.Point::new(
+    x=mt2 * mt * start.x +
+      3.0 * mt2 * t * c1.x +
+      3.0 * mt * t2 * c2.x +
+      t2 * t * end.x,
+    y=mt2 * mt * start.y +
+      3.0 * mt2 * t * c1.y +
+      3.0 * mt * t2 * c2.y +
+      t2 * t * end.y,
+  )
 }
 
 ///|
