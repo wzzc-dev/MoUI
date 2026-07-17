@@ -37,22 +37,16 @@ test "dry-run template includes manual review boundary" {
 
 ///|
 test "filters successful jobs and artifact names" {
-  let jobs =
-    (
-      {
-        "jobs": [
-          { "name": "pr-profile", "conclusion": "success" },
-          { "name": "failed-job", "conclusion": "failure" },
-          { "name": "api-surface", "conclusion": "success" },
-        ],
-      } : Json
-    )
-  let artifacts =
-    (
-      {
-        "artifacts": [{ "name": "renderer-proof" }, { "name": "logs" }],
-      } : Json
-    )
+  let jobs = (
+    {
+      "jobs": [
+        { "name": "pr-profile", "conclusion": "success" },
+        { "name": "failed-job", "conclusion": "failure" },
+        { "name": "api-surface", "conclusion": "success" },
+      ],
+    } : Json)
+  let artifacts = (
+    { "artifacts": [{ "name": "renderer-proof" }, { "name": "logs" }] } : Json)
   let expected_jobs =
     #|["pr-profile", "api-surface"]
   let expected_artifacts =

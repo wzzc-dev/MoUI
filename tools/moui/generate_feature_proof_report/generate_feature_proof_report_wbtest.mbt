@@ -12,9 +12,7 @@ test "all-success status proves L1 and L2 features" {
     "windows-real-skia": "success",
   }
   let report = build_report(
-    status,
-    "https://example.test/run/1",
-    "2026-07-16T00:00:00.000Z",
+    status, "https://example.test/run/1", "2026-07-16T00:00:00.000Z",
   )
   debug_inspect(report.proven, content="29")
   debug_inspect(report.gap, content="0")

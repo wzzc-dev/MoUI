@@ -10,13 +10,17 @@ test "global catalog merges packages into categories" {
   let items = model.catalog_items()
   assert_true(items.any(item => item.route() == "components/button"))
   assert_true(items.any(item => item.route() == "patterns/todo"))
-  assert_true(items.any(item => item.route() == "platform/mobile-service-probe"))
-  assert_true(items.any(item => item.route() == "diagnostics/advanced-rendering"))
+  assert_true(
+    items.any(item => item.route() == "platform/mobile-service-probe"),
+  )
+  assert_true(
+    items.any(item => item.route() == "diagnostics/advanced-rendering"),
+  )
   // Probe only under Platform, not Components.
   assert_false(
-    items.any(item =>
+    items.any(item => {
       item.workspace == "components" && item.id == "mobile-service-probe"
-    ),
+    }),
   )
   inspect(
     items.filter(item => item.group_id == "runtime").length(),

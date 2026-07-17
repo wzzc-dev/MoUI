@@ -100,8 +100,8 @@ test "website showcases lazy grid renders visible screenshots only" {
     .test_runtime(width=1180.0, height=760.0)
     .draw_commands()
   let showcase_titles = [
-    "Showcase", "iOS Showcase", "HarmonyOS Showcase", "Markdown Editor",
-    "Mo Workbench", "Excel Viewer", "WebView Demo", "Android Showcase",
+    "Showcase", "iOS Showcase", "HarmonyOS Showcase", "Markdown Editor", "Mo Workbench",
+    "Excel Viewer", "WebView Demo", "Android Showcase",
   ]
   let visible_titles = showcase_titles.filter(title => has_text(commands, title))
   assert_true(visible_titles.length() > 0)

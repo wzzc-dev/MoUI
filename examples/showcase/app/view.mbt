@@ -57,10 +57,7 @@ pub fn ShowcaseModel::view(
 
 ///|
 /// Available height for the split body after outer padding, top bar, and column gap.
-fn shell_body_height(
-  total_height : Double,
-  theme : @moui.Theme,
-) -> Double {
+fn shell_body_height(total_height : Double, theme : @moui.Theme) -> Double {
   let pad = theme.spacing_scale.md
   // pad top + pad bottom + gap under top bar + top bar budget
   (total_height - pad * 2.0 - theme.spacing_scale.md - shell_top_budget).max(
@@ -137,11 +134,7 @@ fn shell_top_bar(
     [
       text("MoUI Showcase", role=@views.TextRole::Title, theme~),
       @views.spacer(weight=1.0),
-      text(
-        model.current_route_string(),
-        role=@views.TextRole::Caption,
-        theme~,
-      ),
+      text(model.current_route_string(), role=@views.TextRole::Caption, theme~),
       button(
         "Back",
         on_click=RouteBack,
@@ -228,10 +221,7 @@ fn shell_sidebar(
   // Trailing inset so the last story is not clipped by the scroll clip edge.
   list_rows.push(spacer(min_length=shell_scroll_end_inset))
   // Stories title (~32) + search field (~40) + two column gaps + safety.
-  let header_block = 32.0 +
-    40.0 +
-    theme.spacing_scale.sm * 2.0 +
-    12.0
+  let header_block = 32.0 + 40.0 + theme.spacing_scale.sm * 2.0 + 12.0
   let list_height = (height - header_block).max(120.0)
   column(
     [
@@ -263,8 +253,7 @@ fn shell_sidebar(
     ],
     spacing=theme.spacing_scale.sm,
     align=@views.CrossAlign::Stretch,
-  )
-  .frame(width~, height~)
+  ).frame(width~, height~)
 }
 
 ///|
@@ -310,8 +299,7 @@ fn shell_detail(
     height~,
     state=Some(model.detail_scroll),
     shows_indicator=true,
-  )
-  .frame(width~, height~)
+  ).frame(width~, height~)
 }
 
 ///|
@@ -391,8 +379,7 @@ fn mobile_catalog_list(
     ],
     spacing=theme.spacing_scale.sm,
     align=@views.CrossAlign::Stretch,
-  )
-  .frame(width~, height~)
+  ).frame(width~, height~)
 }
 
 ///|
@@ -429,8 +416,7 @@ fn mobile_detail(
     height~,
     state=Some(model.detail_scroll),
     shows_indicator=true,
-  )
-  .frame(width~, height~)
+  ).frame(width~, height~)
 }
 
 ///|
@@ -441,11 +427,13 @@ fn feature_body(
 ) -> @moui.View[ShowcaseMsg] {
   match model.workspace {
     Components =>
-      @components.view_body(model.components, env, width~).map(msg =>
+      @components.view_body(model.components, env, width~).map(msg => {
         ComponentsMsg(msg)
-      )
+      })
     Patterns =>
-      @patterns.view_body(model.patterns, env, width~).map(msg => PatternsMsg(msg))
+      @patterns.view_body(model.patterns, env, width~).map(msg => {
+        PatternsMsg(msg)
+      })
     Platform =>
       @platform.view_body(model.platform, width~).map(msg => PlatformMsg(msg))
     Diagnostics =>

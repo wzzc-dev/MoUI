@@ -108,8 +108,8 @@ fn root_app_shape_tokens() -> Array[String] {
 /// Types forwarded by the `moui/geometry` domain sugar package.
 fn sugar_geometry_tokens() -> Array[String] {
   [
-    "Point", "Size", "Rect", "Insets", "Constraints", "Axis", "Alignment",
-    "MainAxisAlignment", "CrossAxisAlignment",
+    "Point", "Size", "Rect", "Insets", "Constraints", "Axis", "Alignment", "MainAxisAlignment",
+    "CrossAxisAlignment",
   ]
 }
 
@@ -167,11 +167,10 @@ fn sugar_cross_domain_forbidden_tokens(
 ) -> Array[String] {
   let all = [
     "View", "Program", "Effect", "Subscription", "Theme", "Environment", "ViewEnvironment",
-    "Point", "Size", "Rect", "Insets", "Constraints", "Axis", "Alignment",
-    "MainAxisAlignment", "CrossAxisAlignment", "Color",
-    "Brush", "BorderStyle", "ShadowStyle", "RoundedRect", "PathSpec", "PathVerb",
-    "ImageRun", "ImageFit", "BlendMode", "LayerSpec", "LayerMask", "FilterEffect",
-    "ShadowSpec", "Transform2D", "ShaderEffectSpec", "Easing", "TransitionSpec",
+    "Point", "Size", "Rect", "Insets", "Constraints", "Axis", "Alignment", "MainAxisAlignment",
+    "CrossAxisAlignment", "Color", "Brush", "BorderStyle", "ShadowStyle", "RoundedRect",
+    "PathSpec", "PathVerb", "ImageRun", "ImageFit", "BlendMode", "LayerSpec", "LayerMask",
+    "FilterEffect", "ShadowSpec", "Transform2D", "ShaderEffectSpec", "Easing", "TransitionSpec",
     "TransitionStyle", "FontSpec", "FontFamily", "TextRange", "TextAlign", "State",
     "Binding", "DerivedState", "ScrollState", "FocusState", "NavigationState", "ColorScheme",
     "LayoutDirection", "FocusScope", "FocusScopeItem", "CommandIntent", "KeyboardShortcut",
@@ -192,8 +191,8 @@ fn sugar_cross_domain_forbidden_tokens(
 fn views_facade_core_alias_tokens() -> Array[String] {
   [
     // Control/command/theme workflow surface only — not domain value types.
-    "ActionCommand", "ActionCommandMap", "CommandBinding", "CommandIntent",
-    "KeyModifiers", "KeyboardShortcut", "ColorPalette", "TypographyScale",
+    "ActionCommand", "ActionCommandMap", "CommandBinding", "CommandIntent", "KeyModifiers",
+    "KeyboardShortcut", "ColorPalette", "TypographyScale",
   ]
 }
 
@@ -391,17 +390,11 @@ fn package_budgets() -> Array[PackageBudget] {
       max_pub_all_lines: 19,
       required_tokens: views_facade_required_tokens(),
       forbidden_tokens: [
-        "pub using @core {type Color}",
-        "pub using @core {type ColorScheme}",
-        "pub using @core {type Point}",
-        "pub using @core {type Brush}",
-        "pub using @core {type FontSpec}",
-        "pub using @core {type State}",
-        "pub using @core {type Rect}",
-
-        "ViewSpec", "ViewNode", "VirtualNode", "RuntimeState", "HostWindowRenderer",
-        "SkiaRasterRenderer", "RichText", "rich_text_", "markdown_editor", "pub fn[Msg] raw_",
-        "RawPickerOption", "RawDatePickerDisplayMode", "pub using @core {type ComponentContext}",
+        "pub using @core {type Color}", "pub using @core {type ColorScheme}", "pub using @core {type Point}",
+        "pub using @core {type Brush}", "pub using @core {type FontSpec}", "pub using @core {type State}",
+        "pub using @core {type Rect}", "ViewSpec", "ViewNode", "VirtualNode", "RuntimeState",
+        "HostWindowRenderer", "SkiaRasterRenderer", "RichText", "rich_text_", "markdown_editor",
+        "pub fn[Msg] raw_", "RawPickerOption", "RawDatePickerDisplayMode", "pub using @core {type ComponentContext}",
         "pub using @core {type FocusScope}", "pub using @core {type FocusScopeItem}",
         "pub using @core {type FontFamilyStack}", "pub using @core {type ImageFit}",
         "pub using @core {type ImageRun}", "pub using @core {type TextRun}", "pub using @core {type BlendMode}",
@@ -1961,9 +1954,7 @@ fn validate_domain_facade_dependency_direction(
   repo_root : String,
   failures : Array[String],
 ) -> Unit {
-  let domain_packages = [
-    "geometry", "graphics", "animation", "text", "state",
-  ]
+  let domain_packages = ["geometry", "graphics", "animation", "text", "state"]
   let core_pkg = "moui/core/moon.pkg"
   let core_text = match read_repo_text(repo_root, core_pkg) {
     Ok(value) => value

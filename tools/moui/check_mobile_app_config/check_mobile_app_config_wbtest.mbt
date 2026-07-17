@@ -1,6 +1,9 @@
 ///|
 test "accepts valid android application ids and bundle ids" {
-  debug_inspect(valid_android_application_id("dev.wzzc.moui.counter"), content="true")
+  debug_inspect(
+    valid_android_application_id("dev.wzzc.moui.counter"),
+    content="true",
+  )
   debug_inspect(valid_android_application_id("1bad.id"), content="false")
   debug_inspect(valid_android_application_id("single"), content="false")
   debug_inspect(valid_bundle_id("dev.wzzc.moui.counter"), content="true")
@@ -38,9 +41,9 @@ test "managed minSdk and deployment floors are enforced" {
     content="true",
   )
   debug_inspect(
-    failures.any(item =>
+    failures.any(item => {
       item.contains("ios.deploymentTarget must be at least 15.0")
-    ),
+    }),
     content="true",
   )
 }
@@ -63,9 +66,11 @@ test "rejects invalid application id" {
     #|
   let failures = validate_mobile_app_json(".", "demo", text)
   debug_inspect(
-    failures.any(item =>
-      item.contains("android.applicationId is not a valid Android application id")
-    ),
+    failures.any(item => {
+      item.contains(
+        "android.applicationId is not a valid Android application id",
+      )
+    }),
     content="true",
   )
 }

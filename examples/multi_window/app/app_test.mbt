@@ -19,18 +19,8 @@ test "close and focus enqueue lifecycle requests" {
   let windows = @host.HostWindowActions::new(queue~)
   // Use provisional ids (same path as the UI when the host has not reported
   // a window id back into the model).
-  ignore(
-    update(
-      Model::new(Main, windows),
-      FocusInspector,
-    ),
-  )
-  ignore(
-    update(
-      Model::new(Main, windows),
-      CloseInspector,
-    ),
-  )
+  ignore(update(Model::new(Main, windows), FocusInspector))
+  ignore(update(Model::new(Main, windows), CloseInspector))
   let drained = queue.drain()
   inspect(drained.length(), content="2")
   match drained[0] {

@@ -16,7 +16,10 @@ test "validates slugs and repo paths" {
 
 ///|
 test "readme source mapping" {
-  debug_inspect(readme_source_for("docs/moui-readme.md"), content="\"README.mbt.md\"")
+  debug_inspect(
+    readme_source_for("docs/moui-readme.md"),
+    content="\"README.mbt.md\"",
+  )
   debug_inspect(
     readme_source_for("docs/moui-skia-readme.md"),
     content="\"moui_skia/README.mbt.md\"",
@@ -44,7 +47,10 @@ test "generates robots and sitemap from catalog" {
   }
   let robots = website_robots(catalog)
   debug_inspect(robots.contains("User-agent: *"), content="true")
-  debug_inspect(robots.contains("Sitemap: https://example.test/moui/sitemap.xml"), content="true")
+  debug_inspect(
+    robots.contains("Sitemap: https://example.test/moui/sitemap.xml"),
+    content="true",
+  )
   let sitemap = website_sitemap(catalog)
   debug_inspect(sitemap.contains("?section=showcases"), content="true")
   debug_inspect(sitemap.contains("docs%2Fguide"), content="true")
@@ -76,7 +82,10 @@ test "parses catalog json and rejects bad schema" {
     }
     Err(message) => fail(message)
   }
-  match parse_catalog("{\"schemaVersion\":2,\"siteUrl\":\"https://x/\",\"groups\":[],\"entries\":[],\"excluded\":[]}") {
+  match
+    parse_catalog(
+      "{\"schemaVersion\":2,\"siteUrl\":\"https://x/\",\"groups\":[],\"entries\":[],\"excluded\":[]}",
+    ) {
     Ok(_) => fail("expected schema error")
     Err(message) =>
       debug_inspect(message.contains("schemaVersion must be 1"), content="true")

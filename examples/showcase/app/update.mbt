@@ -23,17 +23,22 @@ fn ShowcaseModel::update_with_route_host(
       )
       ({ ..next, nav_query: "", mobile_showing_detail: false }, effect)
     }
-    NavQueryChanged(query) => ({ ..self, nav_query: query }, @moui.Effect::none())
+    NavQueryChanged(query) =>
+      ({ ..self, nav_query: query }, @moui.Effect::none())
     ShowMobileCatalog =>
       ({ ..self, mobile_showing_detail: false }, @moui.Effect::none())
     RouteBack => {
       let history = self.route_history.back()
-      let next = self.with_route_history(history).apply_current_route_to_children()
+      let next = self
+        .with_route_history(history)
+        .apply_current_route_to_children()
       (next, ShowcaseRouteHistoryCommand::BackRoute.effect(route_host))
     }
     RouteForward => {
       let history = self.route_history.forward()
-      let next = self.with_route_history(history).apply_current_route_to_children()
+      let next = self
+        .with_route_history(history)
+        .apply_current_route_to_children()
       (next, ShowcaseRouteHistoryCommand::ForwardRoute.effect(route_host))
     }
     HostRouteChanged(event) =>
@@ -148,13 +153,12 @@ fn ShowcaseModel::navigate(
     self.detail_scroll.scroll_to(x=0.0, y=0.0)
   }
   let next = {
-      ..self,
-      workspace: parsed.workspace,
-      route_id: parsed.id,
-      route_history: history,
-      mobile_showing_detail: true,
-    }
-    .apply_route_to_children(parsed)
+    ..self,
+    workspace: parsed.workspace,
+    route_id: parsed.id,
+    route_history: history,
+    mobile_showing_detail: true,
+  }.apply_route_to_children(parsed)
   let command = if push {
     if self.route_history.current_route() == formatted {
       ShowcaseRouteHistoryCommand::ReplaceRoute(formatted)
@@ -188,7 +192,9 @@ fn ShowcaseModel::apply_current_route_to_children(
 }
 
 ///|
-fn ShowcaseModel::sync_history_to_current(self : ShowcaseModel) -> ShowcaseModel {
+fn ShowcaseModel::sync_history_to_current(
+  self : ShowcaseModel,
+) -> ShowcaseModel {
   let route = self.current_route()
   let formatted = route.format()
   if self.route_history.current_route() == formatted {
@@ -211,12 +217,7 @@ fn ShowcaseModel::with_route_history(
   route_history : @views.RouteHistoryState,
 ) -> ShowcaseModel {
   let parsed = ShowcaseRoute::parse(route_history.current().path)
-  {
-    ..self,
-    route_history,
-    workspace: parsed.workspace,
-    route_id: parsed.id,
-  }
+  { ..self, route_history, workspace: parsed.workspace, route_id: parsed.id }
 }
 
 ///|
@@ -232,12 +233,11 @@ fn ShowcaseModel::with_host_route_event(
     source=event.source,
   )
   {
-      ..self,
-      workspace: parsed.workspace,
-      route_id: parsed.id,
-      route_history: history,
-    }
-    .apply_route_to_children(parsed)
+    ..self,
+    workspace: parsed.workspace,
+    route_id: parsed.id,
+    route_history: history,
+  }.apply_route_to_children(parsed)
 }
 
 ///|

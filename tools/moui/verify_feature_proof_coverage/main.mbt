@@ -78,17 +78,15 @@ fn evaluate_feature(
         None => "missing"
       }
       Ok(
-        Some(
-          {
-            feature,
-            level,
-            reason: "L1 job \"" +
-            proof_job +
-            "\" did not pass (status: " +
-            status +
-            ")",
-          },
-        ),
+        Some({
+          feature,
+          level,
+          reason: "L1 job \"" +
+          proof_job +
+          "\" did not pass (status: " +
+          status +
+          ")",
+        }),
       )
     }
   } else if level == "L2" {
@@ -108,13 +106,11 @@ fn evaluate_feature(
         None => Json::string("missing")
       }
       Ok(
-        Some(
-          {
-            feature,
-            level,
-            reason: "L2 jobs failed: " + failed_platform_summary(status),
-          },
-        ),
+        Some({
+          feature,
+          level,
+          reason: "L2 jobs failed: " + failed_platform_summary(status),
+        }),
       )
     }
   } else {

@@ -51,8 +51,7 @@ fn encode_uri_component(value : String) -> String {
 ///|
 fn to_hex2(value : Int) -> String {
   let digits : Array[Char] = [
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
-    'F',
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
   ]
   String::from_array([digits[value / 16], digits[value % 16]])
 }
@@ -119,15 +118,11 @@ fn website_sitemap(catalog : WebsiteDocsCatalog) -> String {
   for entry in catalog.entries {
     let section = "docs/" + entry.slug
     urls.push(
-      join_url(
-        catalog.site_url,
-        "?section=" + encode_uri_component(section),
-      ),
+      join_url(catalog.site_url, "?section=" + encode_uri_component(section)),
     )
   }
   let lines : Array[String] = [
-    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
-    "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">",
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>", "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">",
   ]
   for url in urls {
     lines.push("  <url><loc>" + escape_xml(url) + "</loc></url>")
@@ -204,11 +199,7 @@ fn write_text(path : String, text : String) -> Result[Unit, String] {
 
 ///|
 fn relative_to_repo(repo_root : String, path : String) -> String {
-  let root = if repo_root.has_suffix("/") {
-    repo_root
-  } else {
-    repo_root + "/"
-  }
+  let root = if repo_root.has_suffix("/") { repo_root } else { repo_root + "/" }
   if path.has_prefix(root) {
     path[root.length():].to_owned()
   } else if path == repo_root {
@@ -232,50 +223,42 @@ fn build_generated_files(
 ) -> Result[Array[GeneratedFile], String] {
   let files : Array[GeneratedFile] = []
   for entry in validated.entries {
-    match @tools.read_required_text(
-      @tools.resolve_path(repo_root, entry.source_path),
-      entry.source_path,
-    ) {
+    match
+      @tools.read_required_text(
+        @tools.resolve_path(repo_root, entry.source_path),
+        entry.source_path,
+      ) {
       Ok(content) =>
-        files.push(
-          {
-            path: @tools.join_path(out_dir, entry.output_name),
-            content,
-          },
-        )
+        files.push({
+          path: @tools.join_path(out_dir, entry.output_name),
+          content,
+        })
       Err(message) => return Err(message)
     }
   }
-  files.push(
-    {
-      path: @tools.join_path(out_dir, "catalog.json"),
-      content: generated_website_catalog_json(validated.catalog),
-    },
-  )
+  files.push({
+    path: @tools.join_path(out_dir, "catalog.json"),
+    content: generated_website_catalog_json(validated.catalog),
+  })
   let site_out_dir = parent_dir(out_dir)
-  files.push(
-    {
-      path: @tools.join_path(site_out_dir, "robots.txt"),
-      content: website_robots(validated.catalog),
-    },
-  )
-  files.push(
-    {
-      path: @tools.join_path(site_out_dir, "sitemap.xml"),
-      content: website_sitemap(validated.catalog),
-    },
-  )
+  files.push({
+    path: @tools.join_path(site_out_dir, "robots.txt"),
+    content: website_robots(validated.catalog),
+  })
+  files.push({
+    path: @tools.join_path(site_out_dir, "sitemap.xml"),
+    content: website_sitemap(validated.catalog),
+  })
   Ok(files)
 }
 
 ///|
-fn expected_md_names(files : Array[GeneratedFile], out_dir : String) -> Array[String] {
+fn expected_md_names(
+  files : Array[GeneratedFile],
+  out_dir : String,
+) -> Array[String] {
   let names : Array[String] = []
-  let prefix = if out_dir.has_suffix("/") {
-    out_dir
-  } else {
-    out_dir + "/"
-  }
+  let prefix = if out_dir.has_suffix("/") { out_dir } else { out_dir + "/" }
   for file in files {
     if file.path.has_prefix(prefix) {
       let name = file.path[prefix.length():].to_owned()

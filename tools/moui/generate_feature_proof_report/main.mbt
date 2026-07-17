@@ -57,9 +57,9 @@ fn l1_features() -> Array[L1Feature] {
 ///|
 fn l2_feature_names() -> Array[String] {
   [
-    "Rect", "RoundedRect", "Gradient", "Shadow", "Text", "Image", "Clip",
-    "Transform", "Opacity", "LayerCompositing", "BlendMode", "FilterEffect",
-    "PathVector", "ShaderEffect", "TextShaping", "EmojiText", "AsyncImage",
+    "Rect", "RoundedRect", "Gradient", "Shadow", "Text", "Image", "Clip", "Transform",
+    "Opacity", "LayerCompositing", "BlendMode", "FilterEffect", "PathVector", "ShaderEffect",
+    "TextShaping", "EmojiText", "AsyncImage",
   ]
 }
 
@@ -104,18 +104,16 @@ fn build_report(
   let features : Array[FeatureEntry] = []
   for item in l1_features() {
     let status = lookup_job_status(statuses, item.job)
-    features.push(
-      {
-        feature: item.feature,
-        level: "L1",
-        proof_job: item.job,
-        proof_jobs: [],
-        status_text: status,
-        status_map: Map([]),
-        proven: status == "success",
-        category_status: "",
-      },
-    )
+    features.push({
+      feature: item.feature,
+      level: "L1",
+      proof_job: item.job,
+      proof_jobs: [],
+      status_text: status,
+      status_map: Map([]),
+      proven: status == "success",
+      category_status: "",
+    })
   }
   let jobs = l2_jobs()
   for feature in l2_feature_names() {
@@ -135,9 +133,9 @@ fn build_report(
         any_missing = true
       }
     }
-    let l2_all_missing = jobs.all(job =>
+    let l2_all_missing = jobs.all(job => {
       lookup_job_status(statuses, job) == "missing"
-    )
+    })
     let mut category_status = ""
     let mut proven = false
     if l2_all_missing {
@@ -159,18 +157,16 @@ fn build_report(
       }
       proven = all_passed
     }
-    features.push(
-      {
-        feature,
-        level: "L2",
-        proof_job: "",
-        proof_jobs: jobs,
-        status_text: "",
-        status_map: per_platform,
-        proven,
-        category_status,
-      },
-    )
+    features.push({
+      feature,
+      level: "L2",
+      proof_job: "",
+      proof_jobs: jobs,
+      status_text: "",
+      status_map: per_platform,
+      proven,
+      category_status,
+    })
   }
   let mut proven = 0
   let mut gap = 0
@@ -184,14 +180,7 @@ fn build_report(
       gap += 1
     }
   }
-  {
-    ci_run_url: run_url,
-    timestamp,
-    features,
-    proven,
-    gap,
-    skipped,
-  }
+  { ci_run_url: run_url, timestamp, features, proven, gap, skipped }
 }
 
 ///|
@@ -285,15 +274,11 @@ fn report_to_markdown(report : ProofReport) -> String {
   let ci = if report.ci_run_url == "" { "N/A" } else { report.ci_run_url }
   lines.push("- **CI Run**: " + ci)
   lines.push("- **Timestamp**: " + report.timestamp)
-  lines.push(
-    "- **Total features**: " + report.features.length().to_string(),
-  )
+  lines.push("- **Total features**: " + report.features.length().to_string())
   lines.push("- **Proven**: " + report.proven.to_string())
   lines.push("- **Gap**: " + report.gap.to_string())
   if report.skipped > 0 {
-    lines.push(
-      "- **Skipped** (no PR context): " + report.skipped.to_string(),
-    )
+    lines.push("- **Skipped** (no PR context): " + report.skipped.to_string())
   }
   lines.push("")
   lines.push("## L1 Features")
@@ -483,15 +468,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
       value => return Err("Unknown argument: " + value)
     }
   }
-  Ok(
-    {
-      status_json,
-      run_url,
-      output,
-      timestamp,
-      help,
-    },
-  )
+  Ok({ status_json, run_url, output, timestamp, help })
 }
 
 ///|

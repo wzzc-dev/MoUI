@@ -337,7 +337,9 @@ fn parse_new_args(
   }
   let template_name = template.val.unwrap_or("counter").to_lower()
   if template_name != "counter" && template_name != "hello" {
-    return Err("unsupported template: " + template_name + " (expected counter|hello)")
+    return Err(
+      "unsupported template: " + template_name + " (expected counter|hello)",
+    )
   }
   let options : ProjectOptions = {
     target: resolved_target,

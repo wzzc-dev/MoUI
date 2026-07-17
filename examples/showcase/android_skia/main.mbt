@@ -1,7 +1,7 @@
 ///|
-let showcase_android_session : Ref[
-  @android_host.AndroidRuntimeSession?,
-] = Ref(None)
+let showcase_android_session : Ref[@android_host.AndroidRuntimeSession?] = Ref(
+  None,
+)
 
 ///|
 fn showcase_android_metrics(
@@ -116,9 +116,7 @@ pub fn showcase_android_resize(
   match showcase_android_session.val {
     Some(session) => {
       ignore(
-        session.resize(
-          showcase_android_metrics(width, height, scale_factor),
-        ),
+        session.resize(showcase_android_metrics(width, height, scale_factor)),
       )
       true
     }
@@ -133,11 +131,7 @@ pub fn showcase_android_dispatch_pointer(
   y : Double,
   time_ms : Double,
 ) -> Bool {
-  match
-    (
-      showcase_android_session.val,
-      showcase_android_pointer_phase(phase),
-    ) {
+  match (showcase_android_session.val, showcase_android_pointer_phase(phase)) {
     (Some(session), Some(pointer_phase)) => {
       let metrics = session.metrics()
       let scale = if metrics.scale_factor > 0.0 {
@@ -275,8 +269,7 @@ pub fn moui_mobile_dispatch_text_input(
 
 ///|
 pub fn moui_mobile_dispatch_command(kind : Int) -> Bool {
-  match
-    (showcase_android_session.val, @host.mobile_command_response(kind)) {
+  match (showcase_android_session.val, @host.mobile_command_response(kind)) {
     (Some(session), Some(response)) => session.dispatch_host_response(response)
     _ => false
   }
@@ -363,9 +356,7 @@ pub fn moui_mobile_attach_surface(
   height : Int,
   scale_factor : Double,
 ) -> Bool {
-  showcase_android_attach_surface(
-    surface_handle, width, height, scale_factor,
-  )
+  showcase_android_attach_surface(surface_handle, width, height, scale_factor)
 }
 
 ///|

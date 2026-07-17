@@ -59,8 +59,7 @@ fn interpret_macos_gpu_smoke_log(log_text : String) -> SmokeInterpretation {
     contains_ci(text, "MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu")
   let surface_gpu = contains_ci(text, "surface_gpu=true")
   let gpu_smoke_passed = contains_ci(
-    text,
-    "MoUI Skia GPU Metal renderer smoke passed",
+    text, "MoUI Skia GPU Metal renderer smoke passed",
   )
   let present_count = parse_present_count(text)
   let worker_owned = contains_ci(text, "worker-owned") ||

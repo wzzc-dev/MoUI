@@ -195,7 +195,10 @@ pub fn ShowcaseModel::with_host_summary(
 /// Open a diagnostics section id (no workspace prefix). Used by the Showcase
 /// root composition shell; this package is a diagnostics exception and is not
 /// an ordinary app dependency example.
-pub fn ShowcaseModel::open(self : ShowcaseModel, route : String) -> ShowcaseModel {
+pub fn ShowcaseModel::open(
+  self : ShowcaseModel,
+  route : String,
+) -> ShowcaseModel {
   self.update(SelectSection(normalize_diagnostics_route(route)))
 }
 
@@ -218,19 +221,14 @@ pub fn normalize_diagnostics_route(route : String) -> String {
 ///|
 pub fn diagnostics_routes() -> Array[String] {
   [
-    "diagnostics",
-    "runtime-renderer",
-    "advanced-rendering",
-    "text-diagnostics",
+    "diagnostics", "runtime-renderer", "advanced-rendering", "text-diagnostics",
     "interaction-lab",
   ]
 }
 
 ///|
 /// Package-local subscriptions. Host route bridging lives on the Showcase root.
-pub fn subscriptions(
-  _model : ShowcaseModel,
-) -> @moui.Subscription[ShowcaseMsg] {
+pub fn subscriptions(_model : ShowcaseModel) -> @moui.Subscription[ShowcaseMsg] {
   @moui.Subscription::none()
 }
 

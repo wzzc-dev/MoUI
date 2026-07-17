@@ -26,8 +26,8 @@ fn usage() -> String {
 ///|
 fn entry_suffixes() -> Array[String] {
   [
-    "web_wasm", "macos_skia", "windows_skia", "linux_skia", "android_skia",
-    "ios_skia", "harmonyos_skia",
+    "web_wasm", "macos_skia", "windows_skia", "linux_skia", "android_skia", "ios_skia",
+    "harmonyos_skia",
   ]
 }
 
@@ -64,8 +64,7 @@ fn core_control_fns() -> Array[String] {
 ///|
 fn desktop_skia_providers() -> Array[String] {
   [
-    "moui/backend/macos/skia/macos_skia_provider.mbt",
-    "moui/backend/windows/skia/windows_skia_provider.mbt",
+    "moui/backend/macos/skia/macos_skia_provider.mbt", "moui/backend/windows/skia/windows_skia_provider.mbt",
     "moui/backend/linux/skia/linux_skia_provider.mbt",
   ]
 }
@@ -176,13 +175,7 @@ fn list_example_entrypoints(repo_root : String) -> Array[Entrypoint] {
     for suffix in entry_suffixes() {
       let path = "examples/" + name + "/" + suffix
       if @tools.directory_exists(@tools.resolve_path(repo_root, path)) {
-        found.push(
-          {
-            example: name,
-            path,
-            mobile: is_mobile_suffix(suffix),
-          },
-        )
+        found.push({ example: name, path, mobile: is_mobile_suffix(suffix) })
       }
     }
   }
@@ -190,7 +183,11 @@ fn list_example_entrypoints(repo_root : String) -> Array[Entrypoint] {
 }
 
 ///|
-fn push_ok(results : Array[HarnessFinding], rule : String, path : String) -> Unit {
+fn push_ok(
+  results : Array[HarnessFinding],
+  rule : String,
+  path : String,
+) -> Unit {
   results.push({ rule, ok: true, path, hint: "" })
 }
 
@@ -380,20 +377,14 @@ fn check_p2_texts(
   match mbti_text {
     None => {
       push_fail(
-        results,
-        "P2",
-        mbti_path,
-        "missing generated interface. Fix: run moon info for moui/core. See docs/invariants.md#P2",
+        results, "P2", mbti_path, "missing generated interface. Fix: run moon info for moui/core. See docs/invariants.md#P2",
       )
       return results
     }
     Some(mbti) => {
       if has_public_enum_view(mbti) {
         push_fail(
-          results,
-          "P2",
-          mbti_path,
-          "public enum View in core is forbidden for app controls. Fix: keep opaque View + View::node; put controls in moui/views. See docs/invariants.md#P2",
+          results, "P2", mbti_path, "public enum View in core is forbidden for app controls. Fix: keep opaque View + View::node; put controls in moui/views. See docs/invariants.md#P2",
         )
       }
       for name in core_control_fns() {
@@ -414,10 +405,7 @@ fn check_p2_texts(
     let (file, text) = pair
     if has_public_enum_view(text) {
       push_fail(
-        results,
-        "P2",
-        file,
-        "pub enum View in core source. Fix: controls belong in moui/views. See docs/invariants.md#P2",
+        results, "P2", file, "pub enum View in core source. Fix: controls belong in moui/views. See docs/invariants.md#P2",
       )
     }
     for name in core_control_fns() {
@@ -548,14 +536,12 @@ fn count_p_rows(text : String) -> Int {
 ///|
 fn check_g1_skill_text(path : String, text : String) -> HarnessFinding? {
   if count_p_rows(text) >= 3 {
-    Some(
-      {
-        rule: "G1",
-        ok: false,
-        path,
-        hint: "skill re-lists invariant P-rows. Fix: link docs/invariants.md instead of copying the table. See docs/golden-principles.md",
-      },
-    )
+    Some({
+      rule: "G1",
+      ok: false,
+      path,
+      hint: "skill re-lists invariant P-rows. Fix: link docs/invariants.md instead of copying the table. See docs/golden-principles.md",
+    })
   } else {
     None
   }
@@ -575,10 +561,7 @@ fn validate_repo(repo_root : String) -> Array[HarnessFinding] {
   let entries = list_example_entrypoints(repo_root)
   if entries.is_empty() {
     push_fail(
-      results,
-      "P1",
-      "examples",
-      "no platform entry packages found. Fix: restore examples/*/app + thin entrypoints. See docs/invariants.md#P1",
+      results, "P1", "examples", "no platform entry packages found. Fix: restore examples/*/app + thin entrypoints. See docs/invariants.md#P1",
     )
   }
   for entry in entries {
@@ -589,12 +572,7 @@ fn validate_repo(repo_root : String) -> Array[HarnessFinding] {
       @tools.resolve_path(repo_root, "examples/" + entry.example + "/app.mbt"),
     )
     let mbt_files : Array[String] = []
-    collect_files_with_suffix(
-      repo_root,
-      entry.path,
-      is_non_test_mbt,
-      mbt_files,
-    )
+    collect_files_with_suffix(repo_root, entry.path, is_non_test_mbt, mbt_files)
     let file_texts : Map[String, String] = Map([])
     for file in mbt_files {
       match read_optional_text(repo_root, file) {
@@ -602,20 +580,19 @@ fn validate_repo(repo_root : String) -> Array[HarnessFinding] {
         None => ()
       }
     }
-    for item in check_p1_entry_texts(
-      entry,
-      has_app_package,
-      has_root_app,
-      mbt_files,
-      file_texts,
-    ) {
+    for
+      item in check_p1_entry_texts(
+        entry, has_app_package, has_root_app, mbt_files, file_texts,
+      ) {
       results.push(item)
     }
   }
 
   let core_mbti = "moui/core/pkg.generated.mbti"
   let core_files_paths : Array[String] = []
-  collect_files_with_suffix(repo_root, "moui/core", is_non_test_mbt, core_files_paths)
+  collect_files_with_suffix(
+    repo_root, "moui/core", is_non_test_mbt, core_files_paths,
+  )
   let core_files : Array[(String, String)] = []
   for file in core_files_paths {
     match read_optional_text(repo_root, file) {
@@ -623,27 +600,35 @@ fn validate_repo(repo_root : String) -> Array[HarnessFinding] {
       None => ()
     }
   }
-  for item in check_p2_texts(
-    core_mbti,
-    read_optional_text(repo_root, core_mbti),
-    core_files,
-  ) {
+  for
+    item in check_p2_texts(
+      core_mbti,
+      read_optional_text(repo_root, core_mbti),
+      core_files,
+    ) {
     results.push(item)
   }
 
   for path in desktop_skia_providers() {
-    results.push(check_r3_provider_text(path, read_optional_text(repo_root, path)))
+    results.push(
+      check_r3_provider_text(path, read_optional_text(repo_root, path)),
+    )
   }
   for entry in entries {
     if entry.mobile {
       let main_path = entry.path + "/main.mbt"
       results.push(
-        check_r3_mobile_main(main_path, read_optional_text(repo_root, main_path)),
+        check_r3_mobile_main(
+          main_path,
+          read_optional_text(repo_root, main_path),
+        ),
       )
     }
   }
   let prepare = "moui/scripts/mobile/prepare-native-build.mjs"
-  results.push(check_r3_prepare(prepare, read_optional_text(repo_root, prepare)))
+  results.push(
+    check_r3_prepare(prepare, read_optional_text(repo_root, prepare)),
+  )
 
   let skill_files : Array[String] = []
   for root in ["skills", ".agents/skills"] {
@@ -671,14 +656,14 @@ fn validate_repo(repo_root : String) -> Array[HarnessFinding] {
     }
   }
   if g1_bad == 0 {
-    results.push(
-      {
-        rule: "G1",
-        ok: true,
-        path: "skills/",
-        hint: "scanned " + skill_files.length().to_string() + " skill markdown file(s)",
-      },
-    )
+    results.push({
+      rule: "G1",
+      ok: true,
+      path: "skills/",
+      hint: "scanned " +
+      skill_files.length().to_string() +
+      " skill markdown file(s)",
+    })
   }
   results
 }
