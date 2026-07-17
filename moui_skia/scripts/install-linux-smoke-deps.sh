@@ -35,6 +35,7 @@ packages=(
   libwayland-dev
   libwayland-bin
   wayland-protocols
+  libvulkan-dev
 )
 
 check_only=0

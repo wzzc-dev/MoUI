@@ -14,6 +14,7 @@
     {"id": "data_table", "path": "examples/data_table", "title": "Data Table", "featured": false},
     {"id": "file_importer", "path": "examples/file_importer", "title": "File Importer", "featured": false},
     {"id": "command_palette", "path": "examples/command_palette", "title": "Command Palette", "featured": false},
+    {"id": "mo_desktop", "path": "examples/mo_desktop", "title": "Mo Desktop", "featured": true},
     {"id": "mo_workbench", "path": "examples/mo_workbench", "title": "Mo Workbench", "featured": true},
     {"id": "code_editor", "path": "examples/code_editor", "title": "Code Editor", "featured": false},
     {"id": "webview_demo", "path": "examples/webview_demo", "title": "WebView Demo", "featured": false},

@@ -28,8 +28,18 @@ test "windows skia provider preflight records package observation boundary" {
     preflight.contains("skia_available=\{@skia_renderer.skia_available()}"),
   )
   assert_true(preflight.contains("font=system-font-mgr"))
-  assert_true(preflight.contains("surface_route=raster"))
-  assert_true(preflight.contains("Windows GDI Skia pixel presenter"))
+  // Default route follows GPU availability/promotion. Assert the label field
+  // rather than a fixed raster route so GPU-enabled CI hosts stay green.
+  assert_true(preflight.contains("surface_route="))
+  assert_true(
+    preflight.contains("surface_route=raster") ||
+    preflight.contains("surface_route=direct3d-gpu") ||
+    preflight.contains("surface_route=d3d12-gpu"),
+  )
+  assert_true(
+    preflight.contains("Windows GDI Skia pixel presenter") ||
+    preflight.contains("gpu_presenter="),
+  )
   assert_true(preflight.contains("renderer_bridge=HostWindowRenderer"))
   assert_true(
     preflight.contains("renderer_text_system=SkiaRasterRenderer.text_system"),
