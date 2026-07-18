@@ -2,10 +2,11 @@
 #include <android/native_window.h>
 #include <android/native_window_jni.h>
 #include <jni.h>
-#include <moonbit.h>
-
 #include <cstdint>
 #include <cstring>
+#include <string.h>
+#include <moonbit.h>
+
 #include <mutex>
 #include <string>
 

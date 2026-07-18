@@ -62,6 +62,10 @@ case "$platform" in
       "$@"
     ;;
   ios)
+    # moui mobile eject renames the template product from MoUIMobileApp using
+    # product_name(manifest.id). For showcase that is "Showcase", not the
+    # managed-shell product name MoUIShowcase from mobile.json.
+    ios_product="Showcase"
     XCODE_XCCONFIG_FILE="${XCODE_XCCONFIG_FILE:-$repo_root/moui/mobile/test-probe/tests/NoCodeSign.xcconfig}" \
       "$repo_root/moui/scripts/mobile/build-ios-app.sh" \
       --workspace-root "$repo_root" \
@@ -69,12 +73,12 @@ case "$platform" in
       --skia-root "$repo_root/moui_skia" \
       --app showcase \
       --app-config "$config" \
-      --xcode-project "$shell_root/MoUIShowcase.xcodeproj" \
-      --scheme MoUIShowcase \
-      --product-name MoUIShowcase \
+      --xcode-project "$shell_root/${ios_product}.xcodeproj" \
+      --scheme "$ios_product" \
+      --product-name "$ios_product" \
       --ejected-shell \
       --build-dir "$build_root" \
-      --output "$build_root/MoUIShowcase.app" \
+      --output "$build_root/${ios_product}.app" \
       "$@"
     ;;
   harmonyos)

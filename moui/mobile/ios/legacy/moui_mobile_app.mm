@@ -1,9 +1,10 @@
 #import <UIKit/UIKit.h>
+#include <cstring>
+#include <string.h>
 #include <moonbit.h>
 
 #include <math.h>
 #include <stdint.h>
-#include <cstring>
 #include <mutex>
 
 #ifndef MOUI_MOBILE_APP_ARG
