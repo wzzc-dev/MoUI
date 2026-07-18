@@ -159,10 +159,10 @@ test "website showcases lazy grid renders visible screenshots only" {
   assert_true(visible_titles.length() > 0)
   assert_true(visible_titles.length() < showcase_titles.length())
   let screenshot_sources = [
-    "assets/screenshots/showcase.png", "assets/screenshots/ios-componentgallery.png",
-    "assets/screenshots/harmonyos-componentgallery.png", "assets/screenshots/markdown_editor.png",
-    "assets/screenshots/mo_workbench.png", "assets/screenshots/excel.png", "assets/screenshots/webview.png",
-    "assets/screenshots/android-componentgallery.jpg",
+    "assets/screenshots/showcase.webp", "assets/screenshots/ios-componentgallery.webp",
+    "assets/screenshots/harmonyos-componentgallery.webp", "assets/screenshots/markdown_editor.webp",
+    "assets/screenshots/mo_workbench.webp", "assets/screenshots/excel.webp", "assets/screenshots/webview.webp",
+    "assets/screenshots/android-componentgallery.webp",
   ]
   let visible_sources = screenshot_sources.filter(source => {
     has_image_source(commands, source)

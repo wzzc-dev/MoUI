@@ -213,7 +213,6 @@ export function createWebGpuImports(options = {}) {
   const dispatchCanvasSyntheticWheel = (canvas, event) => {
     preventDefaultIfCancelable(event);
     const snapshot = eventSnapshot(event);
-    dispatchCanvasSyntheticMove(canvas, snapshot);
     if (typeof globalThis.WheelEvent === "function") {
       canvas.dispatchEvent(new WheelEvent("wheel", {
         bubbles: true,
@@ -359,7 +358,7 @@ export function createWebGpuImports(options = {}) {
       contain: "layout style paint",
     });
     host.appendChild(layer);
-    const state = { canvas, layer, runs: [], pendingClick: null };
+    const state = { canvas, layer, runs: [], nodes: [], pendingClick: null };
     installTextSelectionLayerEvents(state);
     syncTextSelectionLayerGeometry(state);
     return state;
@@ -368,6 +367,7 @@ export function createWebGpuImports(options = {}) {
   const disposeTextSelectionLayer = state => {
     if (!state) return;
     state.runs = [];
+    state.nodes = [];
     state.pendingClick = null;
     state.layer?.remove?.();
   };
@@ -577,19 +577,56 @@ export function createWebGpuImports(options = {}) {
     span.style.webkitClipPath = clipPath;
   };
 
+  const selectableRunSignature = run => [
+    run.text,
+    run.frame.x,
+    run.frame.y,
+    run.frame.width,
+    run.frame.height,
+    run.visible.x,
+    run.visible.y,
+    run.visible.width,
+    run.visible.height,
+    run.font.family,
+    run.font.style,
+    run.font.size,
+    run.font.weight,
+    run.align,
+  ].join("\u0000");
+
+  const updateSelectableTextSpan = (record, run) => {
+    const signature = selectableRunSignature(run);
+    if (record.signature === signature && !record.hidden) return;
+    if (record.span.textContent !== run.text) record.span.textContent = run.text;
+    applySelectableTextStyle(record.span, run);
+    record.signature = signature;
+    record.hidden = false;
+  };
+
   const syncTextSelectionLayer = renderer => {
     const selection = renderer.textSelection;
     if (!selection || typeof document === "undefined") return;
     syncTextSelectionLayerGeometry(selection);
-    const fragment = document.createDocumentFragment();
-    for (const run of selection.runs ?? []) {
-      const span = document.createElement("span");
-      span.textContent = run.text;
-      span.draggable = false;
-      applySelectableTextStyle(span, run);
-      fragment.appendChild(span);
+    const runs = selection.runs ?? [];
+    const common = Math.min(selection.nodes.length, runs.length);
+    for (let index = 0; index < common; index += 1) {
+      updateSelectableTextSpan(selection.nodes[index], runs[index]);
     }
-    selection.layer.replaceChildren(fragment);
+    for (let index = common; index < runs.length; index += 1) {
+      const span = document.createElement("span");
+      span.draggable = false;
+      const record = { span, signature: "", hidden: false };
+      updateSelectableTextSpan(record, runs[index]);
+      selection.layer.appendChild(span);
+      selection.nodes.push(record);
+    }
+    for (let index = runs.length; index < selection.nodes.length; index += 1) {
+      const record = selection.nodes[index];
+      if (!record.hidden) {
+        record.span.style.display = "none";
+        record.hidden = true;
+      }
+    }
   };
 
   const parseDoubleList = value => `${value ?? ""}`

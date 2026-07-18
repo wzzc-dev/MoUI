@@ -10,11 +10,52 @@ globalThis.GPUTextureUsage = {
   COPY_DST: 8,
 };
 
+class FakeDomElement {
+  constructor(tagName) {
+    this.tagName = tagName.toUpperCase();
+    this.className = "";
+    this.style = {};
+    this.dataset = {};
+    this.children = [];
+    this.parentElement = null;
+    this.listeners = new Map();
+    this.textContent = "";
+  }
+
+  appendChild(child) {
+    child.remove?.();
+    this.children.push(child);
+    child.parentElement = this;
+    return child;
+  }
+
+  remove() {
+    if (!this.parentElement) return;
+    this.parentElement.children = this.parentElement.children.filter(child => child !== this);
+    this.parentElement = null;
+  }
+
+  setAttribute() {}
+
+  addEventListener(name, handler) {
+    const handlers = this.listeners.get(name) ?? [];
+    handlers.push(handler);
+    this.listeners.set(name, handlers);
+  }
+
+  dispatchEvent(event) {
+    for (const handler of this.listeners.get(event.type) ?? []) handler(event);
+    return true;
+  }
+}
+
 class FakeCanvas {
   constructor() {
     this.width = 100;
     this.height = 60;
     this.style = {};
+    this.parentElement = null;
+    this.listeners = new Map();
   }
 
   getContext(kind) {
@@ -55,6 +96,17 @@ class FakeCanvas {
     return {
       ...context,
     };
+  }
+
+  addEventListener(name, handler) {
+    const handlers = this.listeners.get(name) ?? [];
+    handlers.push(handler);
+    this.listeners.set(name, handlers);
+  }
+
+  dispatchEvent(event) {
+    for (const handler of this.listeners.get(event.type) ?? []) handler(event);
+    return true;
   }
 }
 
@@ -133,16 +185,25 @@ const fakeDevice = {
 };
 
 const canvas = new FakeCanvas();
+const canvasHost = new FakeDomElement("div");
+canvasHost.appendChild(canvas);
 globalThis.HTMLCanvasElement = FakeCanvas;
 globalThis.document = {
   createElement(tag) {
-    return tag === "canvas" ? new FakeCanvas() : {};
+    return tag === "canvas" ? new FakeCanvas() : new FakeDomElement(tag);
   },
   getElementById(id) {
     return id === "radial-canvas" ? canvas : null;
   },
+  body: new FakeDomElement("body"),
 };
 globalThis.window = { devicePixelRatio: 1 };
+globalThis.WheelEvent = class {
+  constructor(type, options) {
+    this.type = type;
+    Object.assign(this, options);
+  }
+};
 
 const assert = (condition, message) => {
   if (!condition) {
@@ -168,6 +229,7 @@ globalThis.__mouiWebRuntimeObservation = {
 const imports = createWebGpuImports({
   device: fakeDevice,
   format: "rgba8unorm",
+  textSelection: { enabled: true },
 });
 
 const stringHandle = value => {
@@ -469,6 +531,55 @@ assert(
 assert(
   uploadedBuffers.some(buffer => buffer.some(value => value < -0.5)),
   "text vertices must include the color-glyph RGBA atlas sentinel",
+);
+
+const textSelectionLayer = canvasHost.children.find(child =>
+  child.className === "moui-text-selection-layer"
+);
+assert(textSelectionLayer, "enabled text selection should create a DOM layer");
+const initialSelectionSpans = [...textSelectionLayer.children];
+assert(initialSelectionSpans.length > 0, "drawn text should create selectable spans");
+assert(imports.begin_frame(renderer, 100, 60) === 0, "begin_frame for selection reuse failed");
+assert(
+  imports.draw_text(
+    renderer,
+    stringHandle("👩‍💻"),
+    2,
+    2,
+    40,
+    24,
+    stringHandle("system-ui"),
+    stringHandle("normal"),
+    18,
+    500,
+    0,
+    0,
+    0,
+    1,
+    0,
+  ) === 0,
+  "draw_text for selection reuse failed",
+);
+assert(imports.present(renderer) === 0, "present for selection reuse failed");
+assert(
+  textSelectionLayer.children[0] === initialSelectionSpans[0],
+  "selection reconciliation must reuse matching spans rather than replacing the layer",
+);
+const forwardedInput = { pointermove: 0, wheel: 0 };
+canvas.addEventListener("pointermove", () => forwardedInput.pointermove += 1);
+canvas.addEventListener("wheel", () => forwardedInput.wheel += 1);
+textSelectionLayer.dispatchEvent({
+  type: "wheel",
+  cancelable: true,
+  clientX: 10,
+  clientY: 10,
+  deltaX: 0,
+  deltaY: 20,
+  preventDefault() {},
+});
+assert(
+  forwardedInput.pointermove === 0 && forwardedInput.wheel === 1,
+  "selection-layer wheel forwarding must not inject a redundant pointer move",
 );
 
 console.log("webgpu runtime radial brush tests: ok");
