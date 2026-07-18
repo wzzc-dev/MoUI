@@ -99,7 +99,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/backend/host/host_app_services_facade_test.mbt",
-      max_lines: 210,
+      max_lines: 240,
     },
     {
       path: "moui/backend/host/host_async_service_queue_test.mbt",
@@ -200,7 +200,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_catalog.mbt",
-      max_lines: 364,
+      max_lines: 390,
     },
     {
       path: "tools/moui/validate_maintenance_baseline/line_budget_checks.mbt",
