@@ -82,7 +82,6 @@
         ["runtime", "runtime.js"],
         ["browser", "browser_runtime.js"],
         ["canvas2d", "canvas2d_runtime.js"],
-        ["semantics", "semantics_dom.js"],
       ].map(async ([name, path]) => [name, await fetch(`./${path}`).then(response => {
         if (!response.ok) throw new Error(`Failed to load preview runtime asset ${path}`);
         return response.text();

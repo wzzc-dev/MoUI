@@ -74,12 +74,6 @@ export function createWebGpuImports(options = {}) {
   const textSelectionEnabled = textSelectionOptions.enabled === true;
   const textSelectionClassName =
     `${textSelectionOptions.className || "moui-text-selection-layer"}`;
-  const textSelectionClickSlop = Math.max(
-    0,
-    Number.isFinite(Number(textSelectionOptions.clickSlop))
-      ? Number(textSelectionOptions.clickSlop)
-      : 4,
-  );
   const createStringHandle = value => {
     const handle = nextStringHandle++;
     strings.set(handle, { value: `${value ?? ""}` });
@@ -126,111 +120,6 @@ export function createWebGpuImports(options = {}) {
     canvas.style.height = `${Math.max(1, Number(height))}px`;
   };
 
-  const preventDefaultIfCancelable = event => {
-    if (event?.cancelable) event.preventDefault();
-  };
-
-  const eventSnapshot = event => ({
-    clientX: Number(event?.clientX) || 0,
-    clientY: Number(event?.clientY) || 0,
-    button: Number(event?.button) || 0,
-    buttons: Number(event?.buttons) || 0,
-    ctrlKey: !!event?.ctrlKey,
-    shiftKey: !!event?.shiftKey,
-    altKey: !!event?.altKey,
-    metaKey: !!event?.metaKey,
-    pointerId: Number(event?.pointerId) || 1,
-    pointerType: event?.pointerType || "mouse",
-    deltaX: Number(event?.deltaX) || 0,
-    deltaY: Number(event?.deltaY) || 0,
-    deltaZ: Number(event?.deltaZ) || 0,
-    deltaMode: Number(event?.deltaMode) || 0,
-  });
-
-  const currentSelectionText = () => {
-    try {
-      return `${globalThis.getSelection?.()?.toString?.() ?? ""}`;
-    } catch {
-      return "";
-    }
-  };
-
-  const dispatchCanvasSyntheticActivation = (canvas, snapshot) => {
-    const common = {
-      bubbles: true,
-      cancelable: true,
-      clientX: snapshot.clientX,
-      clientY: snapshot.clientY,
-      button: snapshot.button,
-      ctrlKey: snapshot.ctrlKey,
-      shiftKey: snapshot.shiftKey,
-      altKey: snapshot.altKey,
-      metaKey: snapshot.metaKey,
-    };
-    if (typeof globalThis.PointerEvent === "function") {
-      const pointer = {
-        ...common,
-        pointerId: snapshot.pointerId,
-        pointerType: snapshot.pointerType,
-        isPrimary: true,
-      };
-      canvas.dispatchEvent(new PointerEvent("pointerdown", { ...pointer, buttons: 1 }));
-      canvas.dispatchEvent(new PointerEvent("pointerup", { ...pointer, buttons: 0 }));
-    } else if (typeof globalThis.MouseEvent === "function") {
-      canvas.dispatchEvent(new MouseEvent("mousedown", { ...common, buttons: 1 }));
-      canvas.dispatchEvent(new MouseEvent("mouseup", { ...common, buttons: 0 }));
-    }
-    if (typeof globalThis.MouseEvent === "function") {
-      canvas.dispatchEvent(new MouseEvent("click", { ...common, buttons: 0 }));
-    }
-  };
-
-  const dispatchCanvasSyntheticMove = (canvas, snapshot) => {
-    const common = {
-      bubbles: true,
-      cancelable: true,
-      clientX: snapshot.clientX,
-      clientY: snapshot.clientY,
-      button: snapshot.button,
-      buttons: snapshot.buttons,
-      ctrlKey: snapshot.ctrlKey,
-      shiftKey: snapshot.shiftKey,
-      altKey: snapshot.altKey,
-      metaKey: snapshot.metaKey,
-    };
-    if (typeof globalThis.PointerEvent === "function") {
-      canvas.dispatchEvent(new PointerEvent("pointermove", {
-        ...common,
-        pointerId: snapshot.pointerId,
-        pointerType: snapshot.pointerType,
-        isPrimary: true,
-      }));
-    } else if (typeof globalThis.MouseEvent === "function") {
-      canvas.dispatchEvent(new MouseEvent("mousemove", common));
-    }
-  };
-
-  const dispatchCanvasSyntheticWheel = (canvas, event) => {
-    preventDefaultIfCancelable(event);
-    const snapshot = eventSnapshot(event);
-    if (typeof globalThis.WheelEvent === "function") {
-      canvas.dispatchEvent(new WheelEvent("wheel", {
-        bubbles: true,
-        cancelable: true,
-        clientX: snapshot.clientX,
-        clientY: snapshot.clientY,
-        deltaX: snapshot.deltaX,
-        deltaY: snapshot.deltaY,
-        deltaZ: snapshot.deltaZ,
-        deltaMode: snapshot.deltaMode,
-        ctrlKey: snapshot.ctrlKey,
-        shiftKey: snapshot.shiftKey,
-        altKey: snapshot.altKey,
-        metaKey: snapshot.metaKey,
-      }));
-    }
-  };
-
   const syncTextSelectionLayerGeometry = state => {
     const canvas = state?.canvas;
     const layer = state?.layer;
@@ -265,68 +154,6 @@ export function createWebGpuImports(options = {}) {
     state.layer.style.cursor = canvasCursorValue(state.canvas);
   };
 
-  const installTextSelectionLayerEvents = state => {
-    const begin = event => {
-      if ((event.button ?? 0) !== 0) return;
-      const snapshot = eventSnapshot(event);
-      state.pendingClick = {
-        ...snapshot,
-        startX: snapshot.clientX,
-        startY: snapshot.clientY,
-        moved: false,
-        selection: currentSelectionText(),
-      };
-    };
-    const move = event => {
-      const snapshot = eventSnapshot(event);
-      const pending = state.pendingClick;
-      if (pending && (
-        Math.abs(snapshot.clientX - pending.startX) > textSelectionClickSlop ||
-        Math.abs(snapshot.clientY - pending.startY) > textSelectionClickSlop
-      )) {
-        pending.moved = true;
-      }
-      dispatchCanvasSyntheticMove(state.canvas, snapshot);
-      syncTextSelectionLayerCursor(state);
-    };
-    const end = event => {
-      const pending = state.pendingClick;
-      state.pendingClick = null;
-      // Short clicks (no drag past slop) must always reach the canvas so
-      // interactive overlay text (picker/datepicker rows, buttons) can activate.
-      // Browser selection text often changes on a plain click over a span; that
-      // must not suppress synthetic activation. Only drag-select (moved) skips.
-      if (!pending || pending.moved) return;
-      const snapshot = eventSnapshot(event);
-      setTimeout(() => {
-        dispatchCanvasSyntheticActivation(state.canvas, {
-          ...pending,
-          clientX: snapshot.clientX,
-          clientY: snapshot.clientY,
-          button: snapshot.button,
-          buttons: snapshot.buttons,
-        });
-      }, 0);
-    };
-    const hasPointerEvents = typeof globalThis.PointerEvent === "function";
-    state.layer.addEventListener("wheel", event => {
-      dispatchCanvasSyntheticWheel(state.canvas, event);
-      syncTextSelectionLayerCursor(state);
-    }, { passive: false });
-    state.layer.addEventListener("pointerdown", begin, { passive: true });
-    state.layer.addEventListener("pointermove", move, { passive: true });
-    state.layer.addEventListener("pointerup", end, { passive: true });
-    state.layer.addEventListener("mousedown", event => {
-      if (!hasPointerEvents) begin(event);
-    }, { passive: true });
-    state.layer.addEventListener("mousemove", event => {
-      if (!hasPointerEvents) move(event);
-    }, { passive: true });
-    state.layer.addEventListener("mouseup", event => {
-      if (!hasPointerEvents) end(event);
-    }, { passive: true });
-  };
-
   const createTextSelectionLayer = canvas => {
     if (!textSelectionEnabled || typeof document === "undefined" || !canvas) {
       return null;
@@ -343,6 +170,7 @@ export function createWebGpuImports(options = {}) {
     const layer = document.createElement("div");
     layer.className = textSelectionClassName;
     layer.setAttribute("aria-hidden", "true");
+    layer.dataset.mouiCanvasId = canvas.id;
     Object.assign(layer.style, {
       position: "absolute",
       left: "0px",
@@ -358,8 +186,9 @@ export function createWebGpuImports(options = {}) {
       contain: "layout style paint",
     });
     host.appendChild(layer);
-    const state = { canvas, layer, runs: [], nodes: [], pendingClick: null };
-    installTextSelectionLayerEvents(state);
+    // Input stays with canvas-host's capture-phase router. This layer only
+    // exposes selectable text; it never redispatches synthetic canvas events.
+    const state = { canvas, layer, runs: [], nodes: [] };
     syncTextSelectionLayerGeometry(state);
     return state;
   };
@@ -368,7 +197,6 @@ export function createWebGpuImports(options = {}) {
     if (!state) return;
     state.runs = [];
     state.nodes = [];
-    state.pendingClick = null;
     state.layer?.remove?.();
   };
 

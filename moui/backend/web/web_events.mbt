@@ -152,21 +152,6 @@ fn web_pointer_modifiers(bits : Int) -> @core.KeyModifiers {
 }
 
 ///|
-fn web_pointer_dispatch_flags(result : @runtime.InputDispatchResult) -> Int {
-  let mut flags = 0
-  if result.handled {
-    flags = flags | 1
-  }
-  if result.capture_pointer {
-    flags = flags | 2
-  }
-  if result.release_pointer {
-    flags = flags | 4
-  }
-  flags
-}
-
-///|
 fn WebApp::dispatch_web_pointer_input(
   self : WebApp,
   window_id : @host.HostWindowId,
@@ -199,7 +184,11 @@ fn WebApp::dispatch_web_pointer_input(
       )
       match self.runtime_slots.lookup(window_id) {
         Some(slot) => {
-          let result = slot.driver.dispatch_pointer_input(pointer)
+          // The browser ABI needs a synchronous consumption result. Keep the
+          // shared host driver responsible for redraw scheduling, but bypass
+          // its ordinary fire-and-forget event result for this one path.
+          let result = slot.driver.runtime.dispatch_pointer_input(pointer)
+          slot.driver.request_redraw_if_needed()
           ignore(
             self.publish_subscription_event(
               window_id,
@@ -208,7 +197,7 @@ fn WebApp::dispatch_web_pointer_input(
           )
           self.drain_async_host_services()
           self.sync_text_input_session()
-          web_pointer_dispatch_flags(result)
+          result.host_flags()
         }
         None => 0
       }
@@ -325,14 +314,8 @@ pub fn web_dispatch_pointer_input(
   delta_x_px : Double,
   delta_y_px : Double,
   button : Int,
-  buttons : Int,
-  pointer_id : Int,
-  pointer_kind : Int,
   modifiers : Int,
 ) -> Int {
-  let _ = buttons
-  let _ = pointer_id
-  let _ = pointer_kind
   match web_active_app.val {
     Some(app) =>
       match

@@ -13,7 +13,6 @@ const required = [
   "runtime.js",
   "browser_runtime.js",
   "canvas2d_runtime.js",
-  "semantics_dom.js",
   "host/compiler-worker.js",
   "host/playground-bridge.js",
   "host/preview-host.js",

@@ -16,7 +16,6 @@ export const runtimeAssetPaths = [
   "moui/backend/web/runtime.js",
   "moui/backend/web/browser_runtime.js",
   "moui/backend/web/canvas2d_runtime.js",
-  "moui/backend/web/semantics_dom.js",
 ];
 
 export function usageAndExit(message, usage) {

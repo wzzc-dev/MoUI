@@ -242,6 +242,11 @@ fn RuntimeState::dispatch_pointer_event(
   event : PointerEvent,
 ) -> InputDispatchResult {
   self.ensure_render_tree()
+  let release_pointer = match self.active_pointer_capture {
+    Some(_) =>
+      event.phase == PointerPhase::Up || event.phase == PointerPhase::Cancel
+    None => false
+  }
   if event.phase == PointerPhase::Down {
     let previous_focus = self.focused_element
     let candidate_focus = self.element_tree.root.find_focusable_at(
@@ -305,7 +310,8 @@ fn RuntimeState::dispatch_pointer_event(
     self.active_pointer_capture = self.element_tree.root.active_pointer_capture_id(
       PointerPhase::Move,
     )
-  } else if event.phase == PointerPhase::Up || event.phase == PointerPhase::Cancel {
+  } else if event.phase == PointerPhase::Up ||
+    event.phase == PointerPhase::Cancel {
     self.active_pointer_capture = None
   }
   // Views can claim focus from the pointer handler (e.g. picker popup
@@ -329,10 +335,17 @@ fn RuntimeState::dispatch_pointer_event(
     self.request_activation_rebuild()
   }
   {
-    handled: result.captured,
+    // A wheel event is consumed only when a scroll target actually moved. In
+    // particular, this keeps the browser default available at a scroll edge.
+    // Pointer capture is a separate host concern and must not stand in for
+    // consumption on every input phase.
+    handled: if event.wheel_delta.x != 0.0 || event.wheel_delta.y != 0.0 {
+      result.changed
+    } else {
+      result.captured || result.changed || result.activated
+    },
     capture_pointer: event.phase == PointerPhase::Down && result.captured,
-    release_pointer: event.phase == PointerPhase::Up ||
-      event.phase == PointerPhase::Cancel,
+    release_pointer,
   }
 }
 
