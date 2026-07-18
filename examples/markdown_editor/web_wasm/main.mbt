@@ -24,8 +24,19 @@ pub fn web_dispatch_event(
 }
 
 ///|
-pub fn web_dispatch_pointer_input(raw_id : Int, kind : Int, x_px : Double, y_px : Double, delta_x_px : Double, delta_y_px : Double, button : Int, buttons : Int, pointer_id : Int, pointer_kind : Int, modifiers : Int) -> Int {
-  @web.web_dispatch_pointer_input(raw_id, kind, x_px, y_px, delta_x_px, delta_y_px, button, buttons, pointer_id, pointer_kind, modifiers)
+pub fn web_dispatch_pointer_input(
+  raw_id : Int,
+  kind : Int,
+  x_px : Double,
+  y_px : Double,
+  delta_x_px : Double,
+  delta_y_px : Double,
+  button : Int,
+  modifiers : Int,
+) -> Int {
+  @web.web_dispatch_pointer_input(
+    raw_id, kind, x_px, y_px, delta_x_px, delta_y_px, button, modifiers,
+  )
 }
 
 ///|
