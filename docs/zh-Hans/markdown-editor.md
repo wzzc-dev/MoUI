@@ -1,0 +1,178 @@
+# Markdown 编辑器
+
+Markdown 编辑器是 MoUI 的实用编辑演示。它把 Markdown 源码作为保存值，同时把格式化编辑表面作为主屏幕呈现。该示例刻意与 Showcase 分开，因为它覆盖更大的文档状态、富文本输入、源码到视觉内容的映射、键盘与上下文命令，以及编辑工作流。
+
+## 包形态
+
+- `examples/markdown_editor/app/`：共享应用状态，以及包内编辑器模型、源码/视觉映射、命令行为、输入转换、Markdown 解析适配器、富文本文档映射和聚焦白盒测试。
+- `examples/markdown_editor/web_wasm/`：Web wasm-gc 入口点。
+- `examples/markdown_editor/macos_wgpu/`：macOS 原生入口点。
+- `examples/markdown_editor/macos_skia/`：使用 Skia 渲染器提供者的 macOS 原生入口点。
+- `examples/markdown_editor/windows_wgpu/`：Windows 原生入口点。
+- `examples/markdown_editor/windows_skia/`：使用 Skia 渲染器提供者的 Windows 原生入口点。
+- `examples/markdown_editor/linux_skia/`：使用 Skia 渲染器提供者的 Linux 原生入口点。
+- `moui_richtext/facade.mbt`：该示例使用的公共富文本编辑器包装器（`markdown_editor`、`controlled_markdown_session_editor`）。
+- `moui_richtext/rich_text_document.mbt` 加 `moui_richtext/rich_text_editor.mbt`：富文本文档模型、绘制、几何、选择和编辑逻辑。
+- `moui/core/text_editing.mbt` 加 `moui/core/text_layout.mbt`：平台中立的文本编辑原语、`TextSystem`，以及纯文本控件和富文本插件共享的段落布局契约。
+
+平台包应保持轻薄。共享编辑器行为应放在应用包中，或放在拥有可复用能力的框架包中。
+
+共享应用公开 `MarkdownEditorApp::program` 和 `MarkdownEditorApp::program_with_services`；平台入口点和 wbtest 辅助代码通过 `moui/runtime` 构造实际运行时。编辑器输入、工具栏动作、快捷键、目标字段编辑、选择变化、任务切换和滚动更新都通过类型化的 `MarkdownEditorMsg` 值进入。该包仍在应用边界保留一个小型内部 `@views.component` 适配器，使演示/测试用的 `MarkdownEditorApp` 句柄可以公开可变文档和目标状态辅助方法，同时已挂载运行时从同一批状态单元重建。普通应用代码应把这视为富编辑器集成细节，而不是默认应用形态。
+
+## 编辑模型
+
+编辑器把规范 Markdown 源码存储在 `MarkdownDocumentSession` 中。会话是格式化模式、源码模式、命令、查找/替换、大纲、元数据和导出辅助方法的长生命周期文档引擎。它拥有当前源码字符串，以及稳定块 id、块修订、源码/内容范围、缓存的大纲/元数据/状态字段、源码长度缓存和虚拟滚动使用的块高度索引。
+
+`MarkdownEditorSnapshot` 仍可用于测试、导出辅助方法，以及明确需要完整富文本文档的兼容代码。主应用路径不得从 `root`、`layout`、`paint`、滚动处理或普通选择更新中把源码解析成完整快照，也不得构建完整 `RichTextDocument`。
+
+核心富文本块可以携带源码范围和内容范围。这让编辑器能够：
+
+- 渲染格式化视觉文本，同时隐藏 Markdown 定界符；
+- 把指针命中测试从格式化位置映射回 Markdown 源码偏移；
+- 在可见格式化范围上绘制选择，而不高亮隐藏标记；
+- 从格式化视觉位置请求 IME 和光标几何；
+- 复制和剪切不含 Markdown 定界符的格式化视觉文本。
+
+## 会话渲染与滚动
+
+大文档使用会话驱动的可变高度虚拟视口：
+
+- `MarkdownDocumentSession::estimated_content_height` 读取缓存的块高度索引，而不是遍历每个已解析块。
+- `MarkdownDocumentSession::source_offset_y` 使用同一索引，把大纲跳转、查找结果和打字机模式锚点从源码偏移映射到近似滚动位置。
+- `MarkdownDocumentSession::rich_text_window` 根据当前 `ScrollState`、视口高度和 overscan 定位可见块窗口，然后只为该块范围构建富文本。
+- `controlled_markdown_session_editor` 是主应用路径。它接收会话、选择、视口尺寸和实时 `ScrollState`；它直接处理滚轮事件，并且在普通滚动时只标记绘制为 dirty。
+- 主编辑器视图按视口高度定尺寸。它不得被包装在通用 `scroll_view` 中，且该 `scroll_view` 的子节点高度也不得是整个文档高度，因为那会让滚轮事件使布局失效，并破坏块虚拟化。
+
+这条路径避免滚动时重新解析 Markdown、重建完整富文本文档，或通过 `RichTextFormatter = (String) -> RichTextDocument` 中转。旧的基于 formatter 的富文本编辑器仍作为兼容辅助工具保留，但 Markdown 编辑器应使用会话事务作为事实来源。
+
+聚焦文本输入状态也位于窗口化路径上。普通焦点和宿主 IME 轮询会返回规范源码、会话光标/选择，以及来自当前可见富文本窗口的光标矩形，而不为整个文档构造字素边界。完整字素归一化仍属于实际文本编辑、选择转换和组合输入处理。
+
+## 当前行为
+
+编辑器支持常见块结构和行内结构的格式化编辑：
+
+- 行内命令支持粗体、斜体、代码、删除线、链接和图片。输入粗体标记时同时支持 `**` 和 `__` 形式；选中文本可以用 `*` 或 `_` 斜体标记包裹。在当前格式化 span 内重新应用行内格式命令会移除该 span 的 Markdown 标记，符合预期的可视化编辑切换行为。
+- 上下文编辑支持链接 URL、自动链接目标、图片来源、引用定义、脚注、原始 HTML 块和表格。链接和图片目标控件可从选中的可见文本激活，也可从格式化 span 内的光标激活；在该光标处重新应用链接/图片命令会解包当前 Markdown 引用。当前活动链接或图片目标也可通过目标栏中的宿主服务打开，或用 `Cmd+Shift+O` / `Ctrl+Shift+O` 打开。
+- 标题、段落、列表、任务列表、有序列表、引用和代码块命令带有键盘快捷键。对多行选择应用列表、任务列表或有序列表命令时，空白分隔行保持空白，嵌套缩进保持附着在被转换的行上，有序编号只在同一缩进层级的非空选中行上递增。在块引用内，同样的当前行或选中行列表命令会保留活动的 `> ` 或 `> > ` 引用上下文，并且只替换内部块标记，因此被引用的正文可变为被引用的项目符号列表、任务列表或有序列表，而不会离开引用块。当前行标题命令使用相同的分层标记替换，因此 `> Title` 可以变为 `> ## Title`，同级标题命令会切回被引用的正文。段落命令遵循同样的分层规则：普通被引用段落仍可退出引用，而被引用列表项或标题会通过只移除内部标记变为普通被引用段落。在被引用列表、任务、标题或有序列表内容的内部标记边缘按 Backspace/Delete 时也遵循同一规则：先移除内部标记，同时保持引用前缀活动。在普通标题、引用、列表、任务列表或有序列表标记开头按 Delete，会移除整个块标记，而不是暴露部分 Markdown 定界符。
+- 有序列表会在结构编辑后自动重新编号，包括在嵌套有序子列表之前插入内容；嵌套列表编号保留自己的起始值，父列表在子块之后继续编号。同一重新编号流程会穿过块引用前缀，因此被引用和嵌套引用的有序列表在 Enter、Backspace 和 Delete 编辑后仍保持本地编号。
+- 当光标位于当前任务项内时，可用 `Cmd+Enter` 或 `Ctrl+Enter` 从键盘切换任务列表复选框，匹配可视化 Markdown 编辑器的快速写作流程。
+- 类似 Typora 的块编辑命令可以用 `Cmd+Shift+D` 或 `Ctrl+Shift+D` 复制活动非空块或选中的非空块范围，并用 `Alt+ArrowUp` 或 `Alt+ArrowDown` 将其跨相邻非空块移动，同时保留空行分隔符、光标/选择位置和撤销/重做历史。
+- 行内、链接和标题命令支持既有应用快捷键，也支持常见 Windows 写作快捷键，例如 `Ctrl+B`、`Ctrl+I`、`Ctrl+E`、`Ctrl+K`、`Ctrl+Shift+I`、`Ctrl+Shift+K`、`Ctrl+Shift+X`，以及 `Ctrl+1` 到 `Ctrl+6`。
+- 安静写作外壳提供轻量活动块/状态条、词数/行数、估计阅读时间、当前文档标题、已保存/未保存状态、感知光标的当前章节、当前行内格式/引用反馈，以及可从界面框架或 `Cmd+/`/`Ctrl+/` 使用的最小源码切换，同时保持格式化页面作为主表面。
+- 类似 Typora 的源代码模式可从 `Raw` 界面按钮、`Cmd+Shift+/` / `Ctrl+Shift+/` 或 `Quick Format` 打开。它保持同一份规范 Markdown 文档活动，但把主编辑器渲染为可见标记的原始等宽 Markdown；既有 `Src` 源码预览仍是独立侧边检查器。
+- 类似 Typora 的专注和打字机写作模式可从界面框架打开，也可通过 `Cmd+Shift+F` / `Ctrl+Shift+F` 和 `Cmd+Shift+T` / `Ctrl+Shift+T` 打开。专注模式调暗非活动富文本块，同时保留活动块的正常编辑呈现。打字机模式在启用时把当前光标居中，并在文档输入或普通选择变化时让内容接近写作视口中央。状态条报告活动写作模式，使默认表面保持安静。
+- 可从界面框架、`Cmd+Alt+Z` / `Ctrl+Alt+Z` 或 `Quick Format` 打开无干扰 `Zen` 模式。进入 Zen 会关闭辅助面板并隐藏界面框架，使主编辑器独立保持可编辑；`Escape` 先退出 Zen，再回退到普通面板/选择取消逻辑。
+- `Quick Format` 命令面板可从界面框架打开，也可用 `Cmd+Shift+P` / `Ctrl+Shift+P` 打开。它过滤常见行内、块、表格、文档结构和写作模式命令，然后通过与工具栏按钮和快捷键相同的共享编辑器动作路径分派。提交过滤条件会运行第一个匹配命令，且命令参与普通撤销/重做和应用状态更新。
+- 写作外观配置可从 `Look` 界面按钮、`Cmd+Alt+L` / `Ctrl+Alt+L` 和直接 `Quick Format` 命令使用。`Paper` 保持默认洁净页面，`Warm` 使用稍大的暖色阅读字体和纸张色调收窄页面，`Wide` 使用更紧凑的审阅字体和更冷的背景拓宽页面。非默认外观会在状态条中报告。
+- 可选 `Nav` 大纲侧栏由解析出的标题构建。它以紧凑缩进行展示标题层级，可以位于格式化编辑器旁而不打开源码检查器；点击标题会移动光标并滚动编辑器到该块。`Cmd+Alt+O` / `Ctrl+Alt+O` 切换侧栏，`Cmd+Alt+ArrowDown` / `Ctrl+Alt+ArrowDown` 和 `Cmd+Alt+ArrowUp` / `Ctrl+Alt+ArrowUp` 以回绕方式跳到下一个/上一个标题。
+- 文档结构 `Table of Contents` 命令可从 `Quick Format` 和 `Cmd+Alt+T` / `Ctrl+Alt+T` 使用。它读取当前标题大纲，并在当前光标或选择处插入可编辑的 Markdown TOC 块，其中包含嵌套链接和稳定标题 slug，同时参与普通撤销/重做。
+- 识别文档顶部的 YAML front matter，并将其渲染为独立元数据块，而不是水平线加段落。`Quick Format` 和 `Cmd+Alt+Y` / `Ctrl+Alt+Y` 会在没有 front matter 的文档顶部插入默认 front matter 块；如果该块已存在，则选择现有元数据内容。
+- 可选 `Files` 侧栏可从界面框架或用 `Cmd+Alt+P` / `Ctrl+Alt+P` 打开。Typora 风格文件面板显示当前文档、已保存/未保存状态、Open 动作、会话最近打开或保存的 Markdown 路径，以及可选的已选工作文件夹。工作文件夹中的目录项渲染为可展开树行，先显示文件夹，再按名称大小写不敏感升序排序，并在用户打开子目录时惰性列出内容。点击树中的 Markdown 文件会通过普通 Open 流程使用的同一共享宿主文本文件服务重新打开它。本地 `Filter files` 字段按文件名或文件夹名缩小已加载树和最近列表；`Refresh folder` 在编辑器外部文件系统变化时重新加载已选文件夹。它仍不是完整项目浏览器：创建、重命名、删除、全文搜索和文件系统监听都刻意不在范围内。
+- 可选 `Info` 文档面板可从界面框架、`Quick Format` 或用 `Cmd+Alt+D` / `Ctrl+Alt+D` 打开。它从编辑器使用的同一已解析 Markdown 快照中显示词数、字符数、行数、阅读时间、标题、非空段落、列表/任务进度、引用、代码块、表格、链接、图片和脚注引用/定义，让 Typora 风格文档洞察靠近写作表面。
+- 文档级查找/替换栏可从界面框架切换，也可由 `Cmd+F`/`Ctrl+F` 打开，`Cmd+Alt+F`/`Ctrl+H` 会打开可立即替换的栏。键盘打开会保持栏可见，而不是把它切换关闭。该栏搜索规范 Markdown 源码位置，同时让格式化编辑器保持为活动表面。匹配忽略 ASCII 字母大小写，同时保留原始源码范围用于选择和替换。从非空单行选择打开 Find 会用该选中的源码文本填充查询；没有可用选择时，如果从 ASCII 单词内或刚过单词的位置打开，会填充并选择该单词。在查询字段输入会在格式化编辑器中选择实时匹配，并在细化查询时保持该匹配活动。清空查询或输入没有匹配的查询会折叠活动查找选择，同时把光标保持在匹配端点。状态读数区分空查询就绪状态、无匹配和活动匹配数量。`Cmd+G`/`Ctrl+G` 和 `Cmd+Shift+G`/`Ctrl+Shift+G` 以回绕方式在匹配间移动；`Escape` 关闭栏，然后关闭源码/大纲辅助面板，然后在没有辅助 UI 时折叠活动选择；当前替换在仍有剩余匹配时以回绕方式前进到下一个；替换保留已保存 Markdown 源码模型；当前/全部替换参与结构化撤销/重做历史。
+- 文档会话状态跟踪当前路径、已保存 Markdown 基线、dirty 状态、干净新文档重置，以及当前文档有路径时的 `Save`/`Cmd+S` 或 `Ctrl+S` 文本文件写入。对未命名文档，同一 `Save` 命令会先打开保存位置流程再写入，匹配普通编辑器首次保存行为。`Open`/`Cmd+O` 或 `Ctrl+O` 请求宿主文件对话框服务提供 Markdown 文件路径，并通过共享宿主文本文件服务读取其文本。`Save As`/`Cmd+Shift+S` 或 `Ctrl+Shift+S` 请求宿主文件对话框服务提供 Markdown 保存位置，通过宿主文本文件服务写入规范 Markdown 源码，记录所选路径，并更新已保存基线，使文档身份遵循普通编辑器工作流，同时平台入口点保持轻薄。New、Open 和 Import 会关闭 Find 栏、清空查询/替换文本并丢弃先前传输状态，以清理陈旧文档会话 UI，然后再报告新的传输结果。
+- 基于剪贴板的 Markdown Import/Export 可通过共享应用的宿主服务运行时路径使用。`Import`/`Cmd+Alt+I` 或 `Ctrl+Alt+I` 从宿主剪贴板读取 Markdown 文本作为干净文档，而 `Export`/`Cmd+Alt+S` 或 `Ctrl+Alt+S` 把规范 Markdown 源码写入剪贴板。`HTML`/`Cmd+Alt+E` 或 `Ctrl+Alt+E` 会复制从同一已解析 Markdown 快照生成的完整 HTML 文档，包含标题、段落、列表和任务项、表格、代码块、链接、图片、原始 HTML 块/行内内容、脚注，以及已转义文本/属性。应用公开 `MarkdownEditorApp::program_with_services` 供注入 `HostAppServices` 的宿主/测试使用。macOS 和 Windows 原生入口点传入其平台服务桥，因此文件对话框、文本文件、剪贴板和目标打开传输能在这些宿主中工作；Web wasm-gc 入口点注入 `web_app_services`，让浏览器异步剪贴板/文件对话框传输使用后端拥有的 Web 宿主服务队列。打开目标命令在目标字段活动时使用已编辑的链接或图片目标，否则先解析当前选择或光标下的链接或图片，再请求宿主打开。Web `Open` 通过共享文本文件读取契约导入所选 Markdown 文件由浏览器提供的 `File.text()` 内容。浏览器暴露 File System Access 句柄时，Web `Save As` 和后续 `Save` 会通过同一文本文件服务写入；Linux 文本文件内容访问目前报告为不可用。
+- 格式化表面在非活动 span 中保持 Markdown 标记隐藏，然后当光标或选择位于粗体、斜体、代码、删除线、链接、图片或自动链接文本内时，临时显示活动行内 span 的标记。
+- 活动块也会临时显示自己的 Markdown 前缀，包括标题标记、列表和任务标记、有序列表数字，以及块引用标记，而非活动块保持更干净的视觉呈现。围栏代码块会显示完整源码，包括开始和结束围栏，因此语言信息和围栏文本可直接在代码区域编辑。
+- 支持 Setext 标题处理，包括段落文本下方 `===` 或 `---` 下划线的 Space/Enter 补全、Enter 时继续列表和引用列表、Enter 时退出空标题标记，包括块引用前缀内的情形、有序列表重新编号、Tab/Shift-Tab 加 `Cmd`/`Ctrl` 方括号缩进当前行或选择、行内标记配对/跳过，以及从块、行内、自动链接、脚注和引用风格标记边缘执行的标记感知 Backspace/Delete。
+- 空白 Markdown 源码行会作为可见的可编辑段落行保留，因此在标题或段落后按 Enter 会立即为光标创建空白行，然后才输入进一步文本。
+- 普通 `Shift+Enter` 会在当前段落、引用或列表项内写入规范的两个空格换行标记，并把适当的引用或列表续行前缀带到下一源码行，从而插入 Markdown 硬换行。
+- 围栏代码编辑支持反引号和波浪线围栏，包括对带可选语言信息的 `~~~`/`~~~~` 开始围栏执行 Enter 补全。代码内容保留有意的前导和尾随空行，因此在非空代码行内按 Enter 会立即创建可见空代码行。在结束围栏前一个空内容行上按 Enter 会退出代码块，并把光标放在后续写作行上。同样的 Enter 流程在块引用内输入围栏时也有效：生成的内容和结束围栏保留引用前缀，代码行 Enter 和多行粘贴保留被引用代码缩进，空的被引用代码行会退出回被引用写作行。在块引用内应用代码块命令，会通过给开始围栏、内容行和结束围栏添加相同引用标记，把围栏保留在活动引用上下文中，而不是把代码块移出引用。在该被引用围栏块内再次应用命令，会把它解包回被引用写作行，同时保留选择。
+- 输入空格触发的块快捷方式识别常见 Markdown 标记变体，包括 `+ ` 项目符号和 `1) ` 有序列表标记，并将它们归一化为编辑器的规范 Markdown 源码。自然任务列表标记形式如 `- [ ] `、`* [x] ` 和 `+ [ ] ` 也会被接受。连续引用标记如 `>> ` 会展开成嵌套块引用前缀，在块引用前缀后输入的标题/列表/任务/有序快捷方式会原地归一化，例如 `> * ` 变为 `> - `。空续行标记会在 Enter、Backspace 或 Delete 时一次退出一个写作层级，因此 `> > - ` 会退出列表但保持 `> > ` 活动，空的 `> > ` 行会退回到 `> `。多行粘贴保留活动列表或引用上下文，并且即使在嵌套块引用内也递增有序列表编号；粘贴的空白分隔行保持空白，而不是变成空列表项。在块引用内，这些粘贴的空白行保留 `> ` 引用前缀，但不添加嵌套列表标记。粘贴的嵌套列表行保留自身缩进和标记形态，因此子项保持嵌套，而不会被拍平成活动父列表。块边界处的 Backspace/Delete 也理解嵌套块引用前缀，因此合并 `> > ` 引用行或被引用列表项会连接写作文本，而不会把引用、列表、任务或有序标记泄漏进段落正文。水平线标记如 `--- `、`*** ` 和 `___ ` 会在 Space 或 Enter 时立即补全。
+- 输入或粘贴裸 HTTP(S) URL 和邮箱地址，会在代码块外自动补全为 Markdown 自动链接，包括用 Space 或 Enter 结束已输入目标时。常见句末标点以及包围用的 `()`、`[]` 或 `{}` 会保留在生成的自动链接外，Enter 会保持当前列表或引用续行活动。在选中文本上粘贴 URL、邮箱地址或图片来源，会把该选择变成链接或图片。在选中文本上粘贴完整 Markdown 链接或图片，会复用粘贴的目标，同时保留当前选中的链接文本或图片 alt 文本。引用风格 Markdown 链接和图片，如 `[text][label]`、`[text]` 和 `![alt][label]`，会保留选中的可见文本并带入粘贴的引用标签。粘贴引用定义行如 `[label]: https://example.com` 会把当前选择或活动链接变成引用风格链接，并在定义尚不存在时追加该定义。粘贴脚注定义行如 `[^note]: text` 会通过在选中正文后添加脚注引用来保留正文；如果光标已位于脚注引用内，则更新当前脚注定义。当光标位于现有引用内时，粘贴链接、图片目标或引用风格 Markdown 引用会更新该引用，而不替换其可见文本。粘贴单个原始 HTML 块如 `<section>Note</section>` 会把它作为独立块插入；如果光标已位于 HTML 块内，则替换当前 HTML 块，而行内 HTML 标签继续走普通文本输入路径。
+- 类似 Typora 的成对定界符输入支持方括号、圆括号、大括号、引号和反引号，包括选择包裹，以及空对的 Backspace/Delete 清理。空行内标记对，如粗体、代码或删除线标记，也可从内部或任一边缘用 Backspace/Delete 清理。
+- 表格预览带有源码映射单元格，支持行/列插入和删除、通过表格工具或 `Cmd+Shift+L/E/R/0` / `Ctrl+Shift+L/E/R/0` 更改对齐、在 `Cmd+Shift` 和 `Ctrl+Shift` 上使用行/列结构快捷键、Tab/Shift+Tab 单元格导航、Enter 插入行，以及从管道分隔表头行按 Enter 创建表格。从最后一个表格单元格按 Tab 会追加新的空行并移动到其第一个单元格，因此可继续通过 Tab 输入表格，而不必使用行命令。从表头单元格按 Enter 或执行插入行命令，会在分隔线后插入第一条数据行，并保持 Markdown 表格形态。从表头单元格执行删除行命令会清空表头单元格，而不是移除必需的 Markdown 表头行。从第一个表格单元格按 Shift+Tab 会退出到表格前的写作行，并在需要时插入该空白行。在尾随空数据行中按 Enter 会退出表格到后续写作行；如果表格已有真实数据行，则移除额外的空尾随行。行/列命令是上下文相关的，在表格单元格外为 no-op，因此创建新表格仍是显式 `Table` 命令。在该额外空尾随行中按 Backspace/Delete 会移除它，并把光标返回上一行。显式管道包裹的表头可以包含空占位单元格，因此 `| Name | |` 仍会展开为两列表格。在表格单元格内粘贴会拍平粘贴的换行，并转义字面管道字符，使 `A | B` 这样的正文留在当前单元格中，而不是静默改变表格形态。把制表符分隔的电子表格文本粘贴到表格中，会从光标位置开始填充相邻单元格，并在粘贴网格大于当前表格时添加行或列。把 Markdown 表格粘贴到现有表格中，会走同样的结构化单元格填充路径，同时保留已转义字面管道，并把粘贴的分隔线对齐带入受影响列。把制表符分隔的电子表格文本粘贴到现有表格外，会创建 Markdown 表格块，使用粘贴的第一行作为表头，并保留单元格文本中 Markdown 安全的已转义管道。把完整 Markdown 表格粘贴到现有表格外，会把它作为独立表格块插入，并保持粘贴的分隔线对齐行不变。
+- 结构化快捷方式/上下文命令历史允许 Markdown 转换与原始文本输入分开撤销。
+
+源码预览仍可从顶部界面框架打开以供检查，但格式化表面是主要用户流程。
+
+编辑器外壳在安静工作区中居中放置白色写作页面，让富文本编辑器成为直接指针目标，同时由视觉表面提供纸张、边框和阴影。源码预览仍是可选项，并作为全高侧边检查器打开，使默认屏幕专注于格式化写作。
+
+完整文件系统内容导入/导出已通过共享宿主文本文件服务在 macOS 和 Windows 原生服务桥中实现。Web 通过读取所选浏览器 `File.text()` 到同一文本文件读取流程来支持 Open。带 File System Access API 的浏览器会保留来自 `showOpenFilePicker` 或 `showSaveFilePicker` 的句柄，因此 `Save As` 会写入所选文件，后续 `Save` 可再次写入当前文档路径；没有可写句柄的浏览器仍报告 Web 文本文件写入不可用。Linux 仍是明确的服务缺口。当宿主无法提供文件内容时，剪贴板传输仍是兜底内容路径。
+
+原生和 Web 入口点共享同一会话视口模型：编辑器页面保持视口尺寸，滚轮输入更新应用拥有的 `ScrollState`，绘制只构建可见块窗口加 overscan。在声明真实渲染器/浏览器滚动体验之前，仍需要平台特定运行时 smoke，但包测试会断言普通 Markdown 编辑器滚动不再重新解析会话，也不再标记布局 dirty。
+
+## 平台命令
+
+Web wasm-gc：
+
+```sh
+moon build examples/markdown_editor/web_wasm --target wasm-gc
+python3 -m http.server 8080 --bind 127.0.0.1
+```
+
+打开：
+
+```text
+http://127.0.0.1:8080/examples/markdown_editor/web_wasm/index.html
+```
+
+macOS 原生 Skia 主线：
+
+```sh
+moon build examples/markdown_editor/macos_skia --target native
+./_build/native/debug/build/examples/markdown_editor/macos_skia/macos_skia.exe
+```
+
+`macos_wgpu` 入口点仍可用于显式 WGPU 诊断：
+
+```sh
+moon build examples/markdown_editor/macos_wgpu --target native
+./_build/native/debug/build/examples/markdown_editor/macos_wgpu/macos_wgpu.exe
+```
+
+Skia 入口点需要与 `examples/showcase/macos_skia` 使用的真实原生 Skia 链接配置相同；`scripts/macos-skia-renderer-smoke.sh` 可以在运行 Skia smoke 检查时临时配置这些标志。当你需要 macOS 上的渲染器像素 smoke 加测试者拥有的首帧 Skia smoke 日志时，使用 `scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke`。
+
+Windows 原生使用共享的渲染器感知 MSVC 辅助脚本。主线 Markdown 编辑器路径使用 `windows_skia` 包：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup_msvc_deps.ps1 -InstallZlib
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
+  -Package examples/markdown_editor/windows_skia `
+  -BuildOnly
+powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }"
+```
+
+`windows_wgpu` 包仍可用于显式原生 WGPU 诊断：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
+  -Package examples/markdown_editor/windows_wgpu `
+  -BuildOnly
+powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows_wgpu --target native }"
+```
+
+普通 `windows_skia` 入口点是交互式应用入口点。匹配宿主的首帧 smoke 应保留在测试者/后端 smoke runner 中，而不是向应用包添加自动退出标志。
+
+Linux 原生 Skia 使用 Linux Skia 提供者包，应在匹配的 Wayland 宿主上配置真实 Skia 链接标志后运行，再声明运行时像素：
+
+```sh
+moon build examples/markdown_editor/linux_skia --target native
+moon run examples/markdown_editor/linux_skia --target native
+```
+
+普通 Linux Skia 入口点同样是交互式。匹配宿主首帧日志应使用专门的测试者/后端 smoke runner。
+
+## 验证
+
+聚焦检查：
+
+```sh
+moon test examples/markdown_editor/app --target native
+moon build examples/markdown_editor/web_wasm --target wasm-gc
+moon build examples/markdown_editor/macos_skia --target native
+moon check examples/markdown_editor/windows_skia --target native
+moon check examples/markdown_editor/linux_skia --target native
+scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke
+```
+
+对于不需要真实 Skia 链接的应用层测试，设置 `MOUI_SKIA_DISABLE_PREBUILD_SKIA=1`，让仓库本地 Skia 绑定保持在 fallback 安全路径，并避免下载真实 Skia release artifact。
+
+当编辑器工作更改公共视图包装器时，还要运行：
+
+```sh
+moon test moui/views --target native
+moon info
+```
+
+当平台入口点变化时，包含受影响的后端测试和当前平台示例构建。

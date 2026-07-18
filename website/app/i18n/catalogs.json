@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "catalogs": [
+    "en-US.json",
+    "zh-Hans.json"
+  ]
+}

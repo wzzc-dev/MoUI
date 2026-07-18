@@ -13,7 +13,10 @@ fn usage() -> String {
     #|
     #|Validates website/docs-catalog.json, copies only cataloged public Markdown into
     #|the website docs directory, removes stale Markdown, and generates catalog.json,
-    #|robots.txt, and sitemap.xml.
+    #|robots.txt, and sitemap.xml. Legacy catalogs without locales preserve the existing
+    #|output. Each locales.<tag> catalog emits localized metadata and Markdown below
+    #|<out>/<tag>/; localized entries default to docs/<tag>/<canonical filename>.md
+    #|when localizedPath is omitted, and sitemap routes include &lang=<tag>.
     #|
   )
 }

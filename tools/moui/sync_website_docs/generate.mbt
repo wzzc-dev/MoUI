@@ -104,6 +104,44 @@ fn generated_website_catalog_json(catalog : WebsiteDocsCatalog) -> String {
 }
 
 ///|
+fn generated_localized_website_catalog_json(
+  catalog : WebsiteDocsCatalog,
+  locale : ValidatedLocale,
+) -> String {
+  let groups : Array[Json] = []
+  for group in locale.groups {
+    let object : Map[String, Json] = Map([])
+    object["id"] = Json::string(group.id)
+    object["title"] = Json::string(group.title)
+    groups.push(Json::object(object))
+  }
+  let entries : Array[Json] = []
+  for entry in locale.entries {
+    let object : Map[String, Json] = Map([])
+    object["group"] = Json::string(entry.group)
+    object["slug"] = Json::string(entry.slug)
+    object["title"] = Json::string(entry.title)
+    object["path"] = Json::string(
+      "docs/" + locale.tag + "/" + entry.output_name,
+    )
+    object["summary"] = Json::string(entry.summary)
+    object["keywords"] = Json::array(
+      entry.keywords.map(keyword => Json::string(keyword)),
+    )
+    entries.push(Json::object(object))
+  }
+  let object : Map[String, Json] = Map([])
+  object["schemaVersion"] = Json::number(
+    catalog.schema_version.to_double(),
+    repr=catalog.schema_version.to_string(),
+  )
+  object["siteUrl"] = Json::string(catalog.site_url)
+  object["groups"] = Json::array(groups)
+  object["entries"] = Json::array(entries)
+  Json::object(object).stringify(indent=2) + "\n"
+}
+
+///|
 fn website_robots(catalog : WebsiteDocsCatalog) -> String {
   let sitemap = join_url(catalog.site_url, "sitemap.xml")
   "User-agent: *\nAllow: /\nSitemap: " + sitemap + "\n"
@@ -120,6 +158,25 @@ fn website_sitemap(catalog : WebsiteDocsCatalog) -> String {
     urls.push(
       join_url(catalog.site_url, "?section=" + encode_uri_component(section)),
     )
+  }
+  for locale in catalog.locales {
+    let locale_parameter = "&lang=" + encode_uri_component(locale.tag)
+    urls.push(join_url(catalog.site_url, "?section=home" + locale_parameter))
+    urls.push(
+      join_url(catalog.site_url, "?section=showcases" + locale_parameter),
+    )
+    for entry in locale.entries {
+      let section = "docs/" + entry.slug
+      urls.push(
+        join_url(
+          catalog.site_url,
+          "?section=" +
+          encode_uri_component(section) +
+          "&lang=" +
+          encode_uri_component(locale.tag),
+        ),
+      )
+    }
   }
   let lines : Array[String] = [
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>", "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">",
@@ -240,6 +297,30 @@ fn build_generated_files(
     path: @tools.join_path(out_dir, "catalog.json"),
     content: generated_website_catalog_json(validated.catalog),
   })
+  for locale in validated.locales {
+    let locale_out_dir = @tools.join_path(out_dir, locale.tag)
+    for entry in locale.entries {
+      match
+        @tools.read_required_text(
+          @tools.resolve_path(repo_root, entry.source_path),
+          entry.source_path,
+        ) {
+        Ok(content) =>
+          files.push({
+            path: @tools.join_path(locale_out_dir, entry.output_name),
+            content,
+          })
+        Err(message) => return Err(message)
+      }
+    }
+    files.push({
+      path: @tools.join_path(locale_out_dir, "catalog.json"),
+      content: generated_localized_website_catalog_json(
+        validated.catalog,
+        locale,
+      ),
+    })
+  }
   let site_out_dir = parent_dir(out_dir)
   files.push({
     path: @tools.join_path(site_out_dir, "robots.txt"),
@@ -268,6 +349,72 @@ fn expected_md_names(
     }
   }
   names
+}
+
+///|
+fn expected_locale_names(
+  files : Array[GeneratedFile],
+  out_dir : String,
+) -> Array[String] {
+  let names : Array[String] = []
+  let prefix = if out_dir.has_suffix("/") { out_dir } else { out_dir + "/" }
+  for file in files {
+    if file.path.has_prefix(prefix) {
+      let name = file.path[prefix.length():].to_owned()
+      if !name.contains("/") &&
+        (name.has_suffix(".md") || name == "catalog.json") {
+        names.push(name)
+      }
+    }
+  }
+  names
+}
+
+///|
+fn sync_locale_dir(
+  repo_root : String,
+  locale_dir : String,
+  expected : Array[String],
+  check : Bool,
+  failures : Array[String],
+) -> Unit {
+  if @tools.directory_exists(locale_dir) {
+    let names : Array[String] = @fs.read_dir(locale_dir) catch {
+      _ => {
+        if check {
+          failures.push(
+            "website docs locale output directory unreadable: " +
+            relative_to_repo(repo_root, locale_dir),
+          )
+        }
+        []
+      }
+    }
+    for name in names {
+      if (name.has_suffix(".md") || name == "catalog.json") &&
+        !array_contains(expected, name) {
+        let target = @tools.join_path(locale_dir, name)
+        if check {
+          failures.push(
+            "website docs stale localized output: " +
+            relative_to_repo(repo_root, target),
+          )
+        } else {
+          @fs.remove_file(target) catch {
+            _ =>
+              failures.push(
+                "could not remove stale localized output: " + target,
+              )
+          }
+        }
+      }
+    }
+  } else if check {
+    failures.push(
+      "website docs locale output directory missing: " +
+      relative_to_repo(repo_root, locale_dir),
+    )
+  }
 }
 
 ///|
@@ -312,6 +459,10 @@ fn sync_or_check(
     }
   }
   let expected = expected_md_names(files, out_dir)
+  let locale_names : Array[String] = []
+  for locale in validated.locales {
+    locale_names.push(locale.tag)
+  }
   if @tools.directory_exists(out_dir) {
     let entries : Array[String] = @fs.read_dir(out_dir) catch {
       _ => {
@@ -337,12 +488,52 @@ fn sync_or_check(
           }
         }
       }
+      if !validated.locales.is_empty() &&
+        is_valid_locale_tag(name) &&
+        @tools.directory_exists(@tools.join_path(out_dir, name)) &&
+        !array_contains(locale_names, name) {
+        let target = @tools.join_path(out_dir, name)
+        if check {
+          failures.push(
+            "website docs stale locale output: " +
+            relative_to_repo(repo_root, target),
+          )
+        } else {
+          let stale_names : Array[String] = @fs.read_dir(target) catch {
+            _ => []
+          }
+          let mut removable = true
+          for stale_name in stale_names {
+            let stale_path = @tools.join_path(target, stale_name)
+            if @tools.directory_exists(stale_path) {
+              removable = false
+            } else {
+              @fs.remove_file(stale_path) catch {
+                _ => removable = false
+              }
+            }
+          }
+          if removable {
+            @fs.remove_dir(target) catch {
+              _ =>
+                failures.push("could not remove stale locale output: " + target)
+            }
+          } else {
+            failures.push("could not remove stale locale output: " + target)
+          }
+        }
+      }
     }
   } else if check {
     failures.push(
       "website docs output directory missing: " +
       relative_to_repo(repo_root, out_dir),
     )
+  }
+  for locale in validated.locales {
+    let locale_dir = @tools.join_path(out_dir, locale.tag)
+    let expected = expected_locale_names(files, locale_dir)
+    sync_locale_dir(repo_root, locale_dir, expected, check, failures)
   }
   if failures.is_empty() {
     Ok(())

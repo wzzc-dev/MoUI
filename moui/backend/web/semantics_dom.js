@@ -206,6 +206,11 @@ export function createSemanticsDomManager(options = {}) {
 export function updateDocumentMetadata(metadata, documentRef = globalThis.document) {
   if (!documentRef || !metadata) return;
   if (metadata.title) documentRef.title = metadata.title;
+  const documentElement = documentRef.documentElement;
+  if (documentElement?.setAttribute) {
+    if (metadata.locale) documentElement.setAttribute("lang", `${metadata.locale}`);
+    if (metadata.direction) documentElement.setAttribute("dir", `${metadata.direction}`);
+  }
   const upsert = (selector, create, value) => {
     let element = documentRef.head?.querySelector?.(selector);
     if (!element && value) {

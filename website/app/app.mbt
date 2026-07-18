@@ -1,6 +1,7 @@
 ///|
 pub struct Model {
   dark : Bool
+  locale : String
   hero_count : Int
   page : WebsitePage
   selected_doc_slug : String
@@ -24,6 +25,7 @@ pub struct Model {
 ///|
 pub enum Msg {
   ToggleDark
+  SelectLocale(String)
   CounterIncrement
   CounterReset
   OpenRepository
@@ -76,6 +78,7 @@ priv struct Metrics {
 fn Model::new() -> Model {
   {
     dark: false,
+    locale: "en-US",
     hero_count: 0,
     page: WebsiteHome,
     selected_doc_slug: "moui-readme",
@@ -105,6 +108,14 @@ fn Model::new() -> Model {
 fn Model::update(self : Model, message : Msg) -> Model {
   match message {
     ToggleDark => { ..self, dark: !self.dark, copied_text: None }
+    SelectLocale(locale) =>
+      {
+        ..self,
+        locale: website_supported_locale(locale),
+        catalog_state: CatalogNotLoaded,
+        doc_state: DocNotLoaded,
+        copied_text: None,
+      }
     CounterIncrement =>
       { ..self, hero_count: self.hero_count + 1, copied_text: None }
     CounterReset => { ..self, hero_count: 0, copied_text: None }
@@ -153,7 +164,11 @@ fn Model::current_body_scroll(self : Model) -> @state.ScrollState {
 
 ///|
 fn Model::with_route(self : Model, route : String) -> Model {
-  let location = @views.RouteLocation::parse(website_normalize_route(route))
+  let localized_route = website_route_with_locale(route, self.locale)
+  let location = @views.RouteLocation::parse(
+    website_normalize_route(localized_route),
+  )
+  let locale = website_locale_from_route(location.to_route())
   let page = website_page_from_location(location)
   let selected_doc_slug = website_doc_slug_from_location(location).unwrap_or(
     self.selected_doc_slug,
@@ -175,19 +190,20 @@ fn Model::with_route(self : Model, route : String) -> Model {
   let history = if self.route_history.current_route() == location.to_route() {
     self.route_history.replace(
       location,
-      title=website_route_title(location),
+      title=self.website_route_title(location),
       source="website",
     )
   } else {
     self.route_history.push(
       location,
-      title=website_route_title(location),
+      title=self.website_route_title(location),
       source="website",
     )
   }
   {
     ..self,
     page,
+    locale,
     selected_doc_slug,
     doc_state: if selected_doc_slug != self.selected_doc_slug {
       DocNotLoaded
@@ -204,13 +220,14 @@ fn Model::with_route(self : Model, route : String) -> Model {
 ///|
 fn Model::with_host_route(self : Model, event : @host.HostRouteEvent) -> Model {
   let normalized = website_normalize_route(event.location.to_route())
-  let location = @views.RouteLocation::parse(normalized)
-  let next = self.with_route(normalized)
+  let locale = website_locale_from_route(normalized)
+  let next = { ..self, locale, }.with_route(normalized)
+  let location = @views.RouteLocation::parse(next.route_history.current_route())
   {
     ..next,
     route_history: self.route_history.replace(
       location,
-      title=website_route_title(location),
+      title=self.website_route_title(location),
       source=event.source,
     ),
   }
@@ -220,11 +237,48 @@ fn Model::with_host_route(self : Model, event : @host.HostRouteEvent) -> Model {
 fn website_normalize_route(route : String) -> String {
   let location = @views.RouteLocation::parse(route)
   let path = location.path()
-  if path == "" || path == "/" || path == "overview" {
+  let page = if path == "" || path == "/" || path == "overview" {
     "home"
   } else {
-    location.to_route()
+    path
   }
+  let query : Array[@views.RouteQueryParam] = []
+  for parameter in location.query() {
+    if parameter.key() != "lang" ||
+      website_supported_locale(parameter.value()) != "en-US" {
+      query.push(parameter)
+    }
+  }
+  @views.RouteLocation::new(path=page, query~).to_route()
+}
+
+///|
+fn website_supported_locale(locale : String) -> String {
+  match @i18n.Locale::parse(locale) {
+    Some(parsed) if parsed.canonical() == "zh-Hans" => "zh-Hans"
+    _ => "en-US"
+  }
+}
+
+///|
+fn website_route_with_locale(route : String, locale : String) -> String {
+  let location = @views.RouteLocation::parse(route)
+  let query : Array[@views.RouteQueryParam] = []
+  for parameter in location.query() {
+    if parameter.key() != "lang" {
+      query.push(parameter)
+    }
+  }
+  if website_supported_locale(locale) == "zh-Hans" {
+    query.push(@views.RouteQueryParam::new(key="lang", value="zh-Hans"))
+  }
+  @views.RouteLocation::new(path=location.path(), query~).to_route()
+}
+
+///|
+fn website_locale_from_route(route : String) -> String {
+  let location = @views.RouteLocation::parse(route)
+  website_supported_locale(location.query_value("lang").unwrap_or("en-US"))
 }
 
 ///|
@@ -252,16 +306,19 @@ fn website_doc_slug_from_location(location : @views.RouteLocation) -> String? {
 }
 
 ///|
-fn website_route_title(location : @views.RouteLocation) -> String {
+fn Model::website_route_title(
+  self : Model,
+  location : @views.RouteLocation,
+) -> String {
   let path = location.path()
   if path == "showcases" {
-    "Showcases"
+    website_message(self.locale, "route.showcases")
   } else if path == "tutorial" {
-    "Tutorial"
+    website_message(self.locale, "route.tutorial")
   } else if path.has_prefix("docs/") {
-    "Docs"
+    website_message(self.locale, "route.docs")
   } else {
-    "MoUI"
+    website_message(self.locale, "route.home")
   }
 }
 
@@ -273,13 +330,39 @@ fn Model::update_with_services(
   route_host : WebsiteRouteHost?,
 ) -> (Model, @moui.Effect[Msg]) {
   match message {
+    SelectLocale(_) => {
+      let selected = self.update(message)
+      let next = selected.with_route(selected.route_history.current_route())
+      let route = website_route_with_locale(
+        next.route_history.current_route(),
+        next.locale,
+      )
+      let locale_effect = match route_host {
+        Some(host) =>
+          @moui.Effect::host_service(
+            key="website:apply-locale",
+            label=website_message(next.locale, "a11y.apply_locale"),
+            run=_dispatch => (host.apply_locale)(next.locale),
+          )
+        None => @moui.Effect::none()
+      }
+      let route_effect = WebsiteRouteCommand::PushRoute(route).effect(
+        route_host,
+        next.locale,
+      )
+      let (prepared, catalog_effect) = next.request_catalog(services)
+      (
+        prepared.with_metadata_updated(route_host),
+        @moui.Effect::batch([locale_effect, route_effect, catalog_effect]),
+      )
+    }
     OpenRepository =>
       (
         self,
         website_open_url_effect(
           services,
           moui_repository_url(),
-          "Open MoUI repository",
+          website_message(self.locale, "a11y.open_repository"),
         ),
       )
     OpenPlayground =>
@@ -288,7 +371,7 @@ fn Model::update_with_services(
         website_open_url_effect(
           services,
           website_playground_url(),
-          "Open MoUI Playground",
+          website_message(self.locale, "a11y.open_playground"),
         ),
       )
     OpenPlaygroundLesson(id) =>
@@ -297,18 +380,25 @@ fn Model::update_with_services(
         website_open_url_effect(
           services,
           website_playground_url(example=id),
-          "Open lesson in MoUI Playground",
+          website_message(self.locale, "a11y.open_lesson"),
         ),
       )
     OpenShowcaseSource(url) =>
-      (self, website_open_url_effect(services, url, "Open showcase source"))
+      (
+        self,
+        website_open_url_effect(
+          services,
+          url,
+          website_message(self.locale, "a11y.open_showcase_source"),
+        ),
+      )
     OpenDocLink(target) => self.open_doc_link(target, services, route_host)
     CopyText(value) =>
       (
         self.update(message),
         @moui.Effect::host_service(
           key="website:copy",
-          label="Copy website text",
+          label=website_message(self.locale, "a11y.copy_text"),
           run=_dispatch => ignore(services.write_clipboard_text(value)),
         ),
       )
@@ -320,7 +410,7 @@ fn Model::update_with_services(
         WebsiteRouteCommand::ScrollToKey(
           "docs-nav-" + next.selected_doc_slug,
           @core.ScrollAlignment::Center,
-        ).effect(route_host)
+        ).effect(route_host, next.locale)
       } else {
         @moui.Effect::none()
       }
@@ -350,13 +440,14 @@ fn Model::update_with_services(
       let route = next.route_history.current_route()
       let route_effect = WebsiteRouteCommand::PushRoute(route).effect(
         route_host,
+        next.locale,
       )
       let anchor_effect = match next.pending_anchor {
         Some(anchor) =>
           WebsiteRouteCommand::ScrollToKey(
             website_anchor_key(anchor),
             @core.ScrollAlignment::Start,
-          ).effect(route_host)
+          ).effect(route_host, next.locale)
         None => @moui.Effect::none()
       }
       let (prepared, doc_effect) = if next.page is WebsiteDocs &&
@@ -383,12 +474,21 @@ fn Model::update_with_services(
           WebsiteRouteCommand::ScrollToKey(
             website_anchor_key(anchor),
             @core.ScrollAlignment::Start,
-          ).effect(route_host)
+          ).effect(route_host, next.locale)
+        None => @moui.Effect::none()
+      }
+      let locale_effect = match route_host {
+        Some(host) =>
+          @moui.Effect::host_service(
+            key="website:apply-locale",
+            label=website_message(next.locale, "a11y.apply_locale"),
+            run=_dispatch => (host.apply_locale)(next.locale),
+          )
         None => @moui.Effect::none()
       }
       (
         prepared.with_metadata_updated(route_host),
-        @moui.Effect::batch([doc_effect, anchor_effect]),
+        @moui.Effect::batch([locale_effect, doc_effect, anchor_effect]),
       )
     }
     _ => (self.update(message), @moui.Effect::none())
@@ -399,12 +499,13 @@ fn Model::update_with_services(
 fn WebsiteRouteCommand::effect(
   self : WebsiteRouteCommand,
   route_host : WebsiteRouteHost?,
+  locale : String,
 ) -> @moui.Effect[Msg] {
   match route_host {
     Some(host) =>
       @moui.Effect::host_service(
         key="website:route-command",
-        label="Website route command",
+        label=website_message(locale, "a11y.route_command"),
         run=_dispatch => {
           match self {
             PushRoute(route) => (host.push_route)(route)
@@ -424,7 +525,7 @@ fn Model::with_metadata_updated(
   match route_host {
     Some(host) => {
       let (title, description, canonical) = self.document_metadata()
-      (host.update_metadata)(title, description, canonical)
+      (host.update_metadata)(title, description, canonical, self.locale, "ltr")
     }
     None => ()
   }
@@ -437,37 +538,47 @@ fn Model::document_metadata(self : Model) -> (String, String, String) {
     Some(catalog) => catalog.siteUrl
     None => "https://wzzc-dev.github.io/MoUI/"
   }
+  let message = key => website_message(self.locale, key)
+  let canonical = route => {
+    let locale_suffix = if self.locale == "zh-Hans" {
+      "&lang=zh-Hans"
+    } else {
+      ""
+    }
+    site_url + "?section=" + route + locale_suffix
+  }
   match self.page {
     WebsiteHome =>
       (
-        "MoUI - MoonBit GUI Framework", "Typed, declarative MoonBit UI for Web and native hosts.",
-        site_url,
+        message("meta.home.title"),
+        message("meta.home.description"),
+        canonical("home"),
       )
     WebsiteTutorial =>
       (
-        "Tutorial - MoUI",
-        "A bilingual MoonBit-native introduction to Model, View, and Program.",
-        site_url + "?section=tutorial",
+        message("meta.tutorial.title"),
+        message("meta.tutorial.description"),
+        canonical("tutorial"),
       )
     WebsiteShowcases =>
       (
-        "Showcases - MoUI",
-        "Applications and platform surfaces built with MoUI.",
-        site_url + "?section=showcases",
+        message("meta.showcases.title"),
+        message("meta.showcases.description"),
+        canonical("showcases"),
       )
     WebsiteDocs =>
       match self.website_doc_selected_entry() {
         Some(entry) =>
           (
-            entry.title + " - MoUI Docs",
+            entry.title + message("meta.docs.suffix"),
             entry.summary,
-            site_url + "?section=docs/" + entry.slug,
+            canonical("docs/" + entry.slug),
           )
         None =>
           (
-            "Not Found - MoUI Docs",
-            "The requested MoUI documentation page was not found.",
-            site_url + "?section=docs/" + self.selected_doc_slug,
+            message("meta.not_found.title"),
+            message("meta.not_found.description"),
+            canonical("docs/" + self.selected_doc_slug),
           )
       }
   }
@@ -505,7 +616,11 @@ fn Model::open_doc_link(
   if target.has_prefix("https://") || target.has_prefix("http://") {
     return (
       self,
-      website_open_url_effect(services, target, "Open documentation link"),
+      website_open_url_effect(
+        services,
+        target,
+        website_message(self.locale, "a11y.open_doc_link"),
+      ),
     )
   }
   if target.has_prefix("#") {
@@ -515,11 +630,14 @@ fn Model::open_doc_link(
     return (
       next,
       @moui.Effect::batch([
-        WebsiteRouteCommand::PushRoute(route).effect(route_host),
+        WebsiteRouteCommand::PushRoute(next.route_history.current_route()).effect(
+          route_host,
+          next.locale,
+        ),
         WebsiteRouteCommand::ScrollToKey(
           website_anchor_key(anchor),
           @core.ScrollAlignment::Start,
-        ).effect(route_host),
+        ).effect(route_host, next.locale),
       ]),
     )
   }
@@ -558,7 +676,10 @@ fn Model::open_doc_link(
       (
         next,
         @moui.Effect::batch([
-          WebsiteRouteCommand::PushRoute(route).effect(route_host),
+          WebsiteRouteCommand::PushRoute(next.route_history.current_route()).effect(
+            route_host,
+            next.locale,
+          ),
           load,
         ]),
       )
@@ -569,22 +690,24 @@ fn Model::open_doc_link(
 
 ///|
 fn Model::view(self : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
-  let theme = website_theme(self.dark)
+  let locale = website_supported_locale(env.environment().locale)
+  let localized = if locale == self.locale { self } else { { ..self, locale, } }
+  let theme = website_theme(localized.dark)
   let metrics = website_metrics(env.viewport_size())
-  let content = match self.page {
-    WebsiteHome => self.home_content(theme, metrics)
-    WebsiteTutorial => self.tutorial_content(theme, metrics)
-    WebsiteDocs => self.docs_content(theme, metrics)
-    WebsiteShowcases => self.showcases_content(theme, metrics)
+  let content = match localized.page {
+    WebsiteHome => localized.home_content(theme, metrics)
+    WebsiteTutorial => localized.tutorial_content(theme, metrics)
+    WebsiteDocs => localized.docs_content(theme, metrics)
+    WebsiteShowcases => localized.showcases_content(theme, metrics)
   }
-  let body = if self.page is WebsiteDocs {
+  let body = if localized.page is WebsiteDocs {
     frame(content, width=metrics.body_scroll_width, height=metrics.body_height).semantics_role(
       @core.SemanticsRole::Main,
     )
   } else {
     scroll_view(
       content,
-      state=Some(self.current_body_scroll()),
+      state=Some(localized.current_body_scroll()),
       width=metrics.body_scroll_width,
       height=metrics.body_height,
       shows_indicator=true,
@@ -592,7 +715,7 @@ fn Model::view(self : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
   }
   let shell = container(
     column(
-      [self.top_bar(theme, metrics), body],
+      [localized.top_bar(theme, metrics), body],
       spacing=0.0,
       align=@views.CrossAlign::Start,
     ),
@@ -602,7 +725,7 @@ fn Model::view(self : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
     theme~,
     padding=0.0,
   )
-  self.website_overlay_hosts(shell, theme, metrics)
+  localized.website_overlay_hosts(shell, theme, metrics)
 }
 
 ///|
@@ -665,7 +788,7 @@ fn Model::subscriptions(
             id,
             map=completion => HostCatalogCompleted(completion),
             key="website:catalog:" + id.value.to_string(),
-            label="Website docs catalog completion",
+            label=website_message(self.locale, "a11y.catalog_completion"),
           ),
         )
       }
@@ -679,7 +802,7 @@ fn Model::subscriptions(
             id,
             map=completion => HostDocsCompleted(completion),
             key="website:docs:" + id.value.to_string(),
-            label="Website docs markdown completion",
+            label=website_message(self.locale, "a11y.docs_completion"),
           ),
         )
       }
@@ -690,7 +813,7 @@ fn Model::subscriptions(
       subscriptions.push(
         host.route_source.subscription(
           key="website:host-route",
-          label="Website host route",
+          label=website_message(self.locale, "a11y.host_route"),
           map=event => Some(HostRouteChanged(event)),
         ),
       )
@@ -700,25 +823,31 @@ fn Model::subscriptions(
 }
 
 ///|
+fn Model::website_catalog_path(self : Model) -> String {
+  if self.locale == "zh-Hans" {
+    "docs/zh-Hans/catalog.json"
+  } else {
+    "docs/catalog.json"
+  }
+}
+
+///|
 fn Model::request_catalog(
   self : Model,
   services : @host.HostAppServices,
 ) -> (Model, @moui.Effect[Msg]) {
+  let path = self.website_catalog_path()
   (
     {
       ..self,
       catalog_state: CatalogLoading(@host.HostServiceRequestId::new(0)),
     },
     @moui.Effect::host_service(
-      key="website:load-docs-catalog",
-      label="Load website docs catalog",
+      key="website:load-docs-catalog:" + self.locale,
+      label=website_message(self.locale, "a11y.load_catalog"),
       run=dispatch => {
-        let response = services.read_text_file("docs/catalog.json")
-        dispatch(
-          HostCatalogCompleted(
-            website_file_completion("docs/catalog.json", response),
-          ),
-        )
+        let response = services.read_text_file(path)
+        dispatch(HostCatalogCompleted(website_file_completion(path, response)))
       },
     ),
   )
@@ -739,7 +868,7 @@ fn Model::request_selected_doc(
         },
         @moui.Effect::host_service(
           key="website:load-doc:" + entry.slug,
-          label="Load website Markdown document",
+          label=website_message(self.locale, "a11y.load_doc"),
           run=dispatch => {
             let response = services.read_text_file(entry.path)
             dispatch(
@@ -777,7 +906,9 @@ fn Model::apply_catalog_completion(
         None =>
           {
             ..self,
-            catalog_state: CatalogFailed("The generated catalog is invalid."),
+            catalog_state: CatalogFailed(
+              website_message(self.locale, "docs.catalog_invalid"),
+            ),
           }
       }
     @host.HostServiceResponse::Unavailable(reason) =>
@@ -785,7 +916,9 @@ fn Model::apply_catalog_completion(
     _ =>
       {
         ..self,
-        catalog_state: CatalogFailed("Unexpected catalog host response."),
+        catalog_state: CatalogFailed(
+          website_message(self.locale, "docs.catalog_unexpected"),
+        ),
       }
   }
 }
@@ -834,7 +967,10 @@ fn Model::apply_docs_completion(
     _ =>
       {
         ..self,
-        doc_state: DocFailed(path, "Unexpected document host response."),
+        doc_state: DocFailed(
+          path,
+          website_message(self.locale, "docs.document_unexpected"),
+        ),
       }
   }
 }

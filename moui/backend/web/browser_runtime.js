@@ -10,6 +10,67 @@ import {
   updateDocumentMetadata,
 } from "./semantics_dom.js";
 
+export function normalizeWebRouteString(route) {
+  const value = `${route ?? ""}`.trim();
+  if (!value || value === "/" || value === ".") {
+    return "overview";
+  }
+  const withoutHash = value.startsWith("#") ? value.slice(1) : value;
+  return withoutHash.replace(/^\/+/, "").replace(/\/+$/, "") || "overview";
+}
+
+export function browserRouteFromLocation(location = globalThis.window?.location) {
+  if (!location) {
+    return "overview";
+  }
+  const params = new URLSearchParams(location.search || "");
+  const explicitRoute = params.get("route");
+  if (explicitRoute) {
+    return normalizeWebRouteString(explicitRoute);
+  }
+  const section = params.get("section");
+  if (section) {
+    const query = new URLSearchParams();
+    for (const [key, value] of params) {
+      if (key !== "section" && key !== "debug") {
+        query.append(key, value);
+      }
+    }
+    const suffix = query.toString();
+    return normalizeWebRouteString(`${section}${suffix ? `?${suffix}` : ""}`);
+  }
+  const hash = `${location.hash || ""}`.replace(/^#/, "");
+  if (hash) {
+    return normalizeWebRouteString(decodeURIComponent(hash));
+  }
+  return "overview";
+}
+
+export function browserRouteUrl(
+  route,
+  location = globalThis.window?.location,
+) {
+  const url = new URL(location?.href || "http://localhost/");
+  const params = new URLSearchParams();
+  const current = new URLSearchParams(url.search || "");
+  if (current.get("debug") === "1") {
+    params.set("debug", "1");
+  }
+  const normalized = normalizeWebRouteString(route);
+  const question = normalized.indexOf("?");
+  const section = question >= 0 ? normalized.slice(0, question) : normalized;
+  const routeQuery = question >= 0 ? normalized.slice(question + 1) : "";
+  params.set("section", section);
+  for (const [key, value] of new URLSearchParams(routeQuery)) {
+    if (key !== "section" && key !== "route" && key !== "debug") {
+      params.append(key, value);
+    }
+  }
+  url.search = params.toString();
+  url.hash = "";
+  return url;
+}
+
 export function createWindowWebImports(options = {}) {
   const canvases = new Map();
   const listeners = new Map();
@@ -95,54 +156,11 @@ export function createWindowWebImports(options = {}) {
     }
   };
 
-  const normalizeRouteString = route => {
-    const value = `${route ?? ""}`.trim();
-    if (!value || value === "/" || value === ".") {
-      return "overview";
-    }
-    const withoutHash = value.startsWith("#") ? value.slice(1) : value;
-    return withoutHash.replace(/^\/+/, "").replace(/\/+$/, "") || "overview";
-  };
+  const normalizeRouteString = normalizeWebRouteString;
 
-  const currentBrowserRoute = () => {
-    const location = globalThis.window?.location;
-    if (!location) {
-      return "overview";
-    }
-    const params = new URLSearchParams(location.search || "");
-    const explicitRoute = params.get("route");
-    if (explicitRoute) {
-      return normalizeRouteString(explicitRoute);
-    }
-    const section = params.get("section");
-    if (section) {
-      return normalizeRouteString(section);
-    }
-    const hash = `${location.hash || ""}`.replace(/^#/, "");
-    if (hash) {
-      return normalizeRouteString(decodeURIComponent(hash));
-    }
-    return "overview";
-  };
+  const currentBrowserRoute = () => browserRouteFromLocation();
 
-  const routeUrl = route => {
-    const location = globalThis.window?.location;
-    const url = new URL(location?.href || "http://localhost/");
-    const params = new URLSearchParams();
-    const current = new URLSearchParams(url.search || "");
-    if (current.get("debug") === "1") {
-      params.set("debug", "1");
-    }
-    const normalized = normalizeRouteString(route);
-    if (normalized.includes("?")) {
-      params.set("route", normalized);
-    } else {
-      params.set("section", normalized);
-    }
-    url.search = params.toString();
-    url.hash = "";
-    return url;
-  };
+  const routeUrl = route => browserRouteUrl(route);
 
   const resolveCanvasHost = () => {
     const host = options.canvasHost;

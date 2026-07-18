@@ -10,6 +10,8 @@ import {
 }
 
 // Values
+pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog]
+
 pub fn program() -> @core.Program[Model, Msg]
 
 pub fn program_with_services(@host.HostAppServices, route_host? : WebsiteRouteHost?) -> @core.Program[Model, Msg]
@@ -17,8 +19,19 @@ pub fn program_with_services(@host.HostAppServices, route_host? : WebsiteRouteHo
 // Errors
 
 // Types and methods
+pub(all) struct GeneratedI18nCatalog {
+  locale : String
+  messages : Array[(String, GeneratedI18nMessage)]
+}
+
+pub(all) enum GeneratedI18nMessage {
+  Text(String)
+  Plural(one~ : String, other~ : String)
+}
+
 pub struct Model {
   dark : Bool
+  locale : String
   hero_count : Int
   page : WebsitePage
   selected_doc_slug : String
@@ -41,6 +54,7 @@ pub struct Model {
 
 pub enum Msg {
   ToggleDark
+  SelectLocale(String)
   CounterIncrement
   CounterReset
   OpenRepository
@@ -121,9 +135,10 @@ pub struct WebsiteRouteHost {
   route_source : @host.HostRouteSource
   push_route : (String) -> Unit
   scroll_to_key : (String, @core.ScrollAlignment) -> Unit
-  update_metadata : (String, String, String) -> Unit
+  apply_locale : (String) -> Unit
+  update_metadata : (String, String, String, String, String) -> Unit
 }
-pub fn WebsiteRouteHost::new(route_source~ : @host.HostRouteSource, push_route? : (String) -> Unit, scroll_to_key? : (String, @core.ScrollAlignment) -> Unit, update_metadata? : (String, String, String) -> Unit) -> Self
+pub fn WebsiteRouteHost::new(route_source~ : @host.HostRouteSource, push_route? : (String) -> Unit, scroll_to_key? : (String, @core.ScrollAlignment) -> Unit, apply_locale? : (String) -> Unit, update_metadata? : (String, String, String, String, String) -> Unit) -> Self
 
 // Type aliases
 

@@ -643,6 +643,586 @@
     {
       "path": "docs/golden-principles.md",
       "reason": "Agent taste and residue-control principles are contributor-agent guidance and are not part of the public website documentation set."
+    },
+    {
+      "path": "docs/internationalization.md",
+      "reason": "Maintainer-facing localization workflow guidance; linked from the documentation index but not rendered in the public website catalog during the initial bilingual rollout."
     }
-  ]
+  ],
+  "locales": {
+    "zh-Hans": {
+      "groups": [
+        {
+          "id": "get-started",
+          "title": "入门"
+        },
+        {
+          "id": "guides",
+          "title": "指南"
+        },
+        {
+          "id": "examples",
+          "title": "示例"
+        },
+        {
+          "id": "platforms",
+          "title": "平台"
+        },
+        {
+          "id": "architecture-api",
+          "title": "架构与 API"
+        },
+        {
+          "id": "contributing",
+          "title": "参与贡献"
+        },
+        {
+          "id": "status-roadmap",
+          "title": "状态与路线图"
+        }
+      ],
+      "entries": [
+        {
+          "group": "get-started",
+          "slug": "moui-readme",
+          "title": "MoUI README",
+          "summary": "MoUI MoUI README的公开文档。",
+          "keywords": [
+            "MoUI README",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/moui-readme.md"
+        },
+        {
+          "group": "get-started",
+          "slug": "getting-started",
+          "title": "快速开始",
+          "summary": "MoUI 快速开始的公开文档。",
+          "keywords": [
+            "快速开始",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/getting-started.md"
+        },
+        {
+          "group": "get-started",
+          "slug": "moui-app-package-boundary",
+          "title": "应用包边界",
+          "summary": "MoUI 应用包边界的公开文档。",
+          "keywords": [
+            "应用包边界",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/moui-app-package-boundary.md"
+        },
+        {
+          "group": "get-started",
+          "slug": "tea-program-model",
+          "title": "TEA 程序模型",
+          "summary": "MoUI TEA 程序模型的公开文档。",
+          "keywords": [
+            "TEA 程序模型",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/tea-program-model.md"
+        },
+        {
+          "group": "get-started",
+          "slug": "tutorials",
+          "title": "教程",
+          "summary": "MoUI 教程的公开文档。",
+          "keywords": [
+            "教程",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/tutorials.md"
+        },
+        {
+          "group": "guides",
+          "slug": "views-api-guide",
+          "title": "Views API 指南",
+          "summary": "MoUI Views API 指南的公开文档。",
+          "keywords": [
+            "Views API 指南",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/views-api-guide.md"
+        },
+        {
+          "group": "guides",
+          "slug": "view-catalog",
+          "title": "视图目录",
+          "summary": "MoUI 视图目录的公开文档。",
+          "keywords": [
+            "视图目录",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/view-catalog.md"
+        },
+        {
+          "group": "guides",
+          "slug": "button-styling-guide",
+          "title": "按钮样式指南",
+          "summary": "MoUI 按钮样式指南的公开文档。",
+          "keywords": [
+            "按钮样式指南",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/button-styling-guide.md"
+        },
+        {
+          "group": "guides",
+          "slug": "visual-theme-system",
+          "title": "视觉主题系统",
+          "summary": "MoUI 视觉主题系统的公开文档。",
+          "keywords": [
+            "视觉主题系统",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/visual-theme-system.md"
+        },
+        {
+          "group": "guides",
+          "slug": "text-system",
+          "title": "文本系统",
+          "summary": "MoUI 文本系统的公开文档。",
+          "keywords": [
+            "文本系统",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/text-system.md"
+        },
+        {
+          "group": "guides",
+          "slug": "non-render-component-cookbook",
+          "title": "非渲染组件手册",
+          "summary": "MoUI 非渲染组件手册的公开文档。",
+          "keywords": [
+            "非渲染组件手册",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/non-render-component-cookbook.md"
+        },
+        {
+          "group": "guides",
+          "slug": "canvas-and-custom-paint",
+          "title": "画布与自定义绘制",
+          "summary": "MoUI 画布与自定义绘制的公开文档。",
+          "keywords": [
+            "画布与自定义绘制",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/canvas-and-custom-paint.md"
+        },
+        {
+          "group": "guides",
+          "slug": "app-templates",
+          "title": "应用模板",
+          "summary": "MoUI 应用模板的公开文档。",
+          "keywords": [
+            "应用模板",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/app-templates.md"
+        },
+        {
+          "group": "guides",
+          "slug": "templates",
+          "title": "包与插件模板",
+          "summary": "MoUI 包与插件模板的公开文档。",
+          "keywords": [
+            "包与插件模板",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/templates.md"
+        },
+        {
+          "group": "examples",
+          "slug": "examples",
+          "title": "示例",
+          "summary": "MoUI 示例的公开文档。",
+          "keywords": [
+            "示例",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/examples.md"
+        },
+        {
+          "group": "examples",
+          "slug": "showcases",
+          "title": "案例展示",
+          "summary": "MoUI 案例展示的公开文档。",
+          "keywords": [
+            "案例展示",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/showcases.md"
+        },
+        {
+          "group": "examples",
+          "slug": "markdown-editor",
+          "title": "Markdown 编辑器",
+          "summary": "MoUI Markdown 编辑器的公开文档。",
+          "keywords": [
+            "Markdown 编辑器",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/markdown-editor.md"
+        },
+        {
+          "group": "examples",
+          "slug": "mo-workbench",
+          "title": "Mo Workbench",
+          "summary": "MoUI Mo Workbench的公开文档。",
+          "keywords": [
+            "Mo Workbench",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/mo-workbench.md"
+        },
+        {
+          "group": "platforms",
+          "slug": "platform-notes",
+          "title": "平台说明",
+          "summary": "MoUI 平台说明的公开文档。",
+          "keywords": [
+            "平台说明",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/platform-notes.md"
+        },
+        {
+          "group": "platforms",
+          "slug": "platform-notes-web",
+          "title": "Web 平台说明",
+          "summary": "MoUI Web 平台说明的公开文档。",
+          "keywords": [
+            "Web 平台说明",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/platform-notes-web.md"
+        },
+        {
+          "group": "platforms",
+          "slug": "platform-notes-macos",
+          "title": "macOS 平台说明",
+          "summary": "MoUI macOS 平台说明的公开文档。",
+          "keywords": [
+            "macOS 平台说明",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/platform-notes-macos.md"
+        },
+        {
+          "group": "platforms",
+          "slug": "platform-notes-windows",
+          "title": "Windows 平台说明",
+          "summary": "MoUI Windows 平台说明的公开文档。",
+          "keywords": [
+            "Windows 平台说明",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/platform-notes-windows.md"
+        },
+        {
+          "group": "platforms",
+          "slug": "platform-notes-linux",
+          "title": "Linux 平台说明",
+          "summary": "MoUI Linux 平台说明的公开文档。",
+          "keywords": [
+            "Linux 平台说明",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/platform-notes-linux.md"
+        },
+        {
+          "group": "platforms",
+          "slug": "platform-host-contract",
+          "title": "平台宿主契约",
+          "summary": "MoUI 平台宿主契约的公开文档。",
+          "keywords": [
+            "平台宿主契约",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/platform-host-contract.md"
+        },
+        {
+          "group": "platforms",
+          "slug": "platform-readiness-declaration",
+          "title": "平台就绪度声明",
+          "summary": "MoUI 平台就绪度声明的公开文档。",
+          "keywords": [
+            "平台就绪度声明",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/platform-readiness-declaration.md"
+        },
+        {
+          "group": "platforms",
+          "slug": "android-support",
+          "title": "Android 支持",
+          "summary": "MoUI Android 支持的公开文档。",
+          "keywords": [
+            "Android 支持",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/android-support.md"
+        },
+        {
+          "group": "platforms",
+          "slug": "ios-support",
+          "title": "iOS 支持",
+          "summary": "MoUI iOS 支持的公开文档。",
+          "keywords": [
+            "iOS 支持",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/ios-support.md"
+        },
+        {
+          "group": "platforms",
+          "slug": "harmonyos-support",
+          "title": "HarmonyOS 支持",
+          "summary": "MoUI HarmonyOS 支持的公开文档。",
+          "keywords": [
+            "HarmonyOS 支持",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/harmonyos-support.md"
+        },
+        {
+          "group": "platforms",
+          "slug": "mobile-mainline-roadmap",
+          "title": "移动端主线路线图",
+          "summary": "MoUI 移动端主线路线图的公开文档。",
+          "keywords": [
+            "移动端主线路线图",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/mobile-mainline-roadmap.md"
+        },
+        {
+          "group": "platforms",
+          "slug": "gpu-promotion-runbook",
+          "title": "GPU 推进运行手册",
+          "summary": "MoUI GPU 推进运行手册的公开文档。",
+          "keywords": [
+            "GPU 推进运行手册",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/gpu-promotion-runbook.md"
+        },
+        {
+          "group": "platforms",
+          "slug": "renderer-capability-report",
+          "title": "渲染器能力报告",
+          "summary": "MoUI 渲染器能力报告的公开文档。",
+          "keywords": [
+            "渲染器能力报告",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/renderer-capability-report.md"
+        },
+        {
+          "group": "architecture-api",
+          "slug": "architecture",
+          "title": "架构",
+          "summary": "MoUI 架构的公开文档。",
+          "keywords": [
+            "架构",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/architecture.md"
+        },
+        {
+          "group": "architecture-api",
+          "slug": "architecture-map",
+          "title": "架构地图",
+          "summary": "MoUI 架构地图的公开文档。",
+          "keywords": [
+            "架构地图",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/architecture-map.md"
+        },
+        {
+          "group": "architecture-api",
+          "slug": "api-surface",
+          "title": "API 表面",
+          "summary": "MoUI API 表面的公开文档。",
+          "keywords": [
+            "API 表面",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/api-surface.md"
+        },
+        {
+          "group": "architecture-api",
+          "slug": "mobile-runtime-abi-v1",
+          "title": "移动运行时 ABI v1",
+          "summary": "MoUI 移动运行时 ABI v1的公开文档。",
+          "keywords": [
+            "移动运行时 ABI v1",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/mobile-runtime-abi-v1.md"
+        },
+        {
+          "group": "architecture-api",
+          "slug": "moui-skia-readme",
+          "title": "moui_skia README",
+          "summary": "MoUI moui_skia README的公开文档。",
+          "keywords": [
+            "moui_skia README",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/moui-skia-readme.md"
+        },
+        {
+          "group": "contributing",
+          "slug": "development",
+          "title": "开发",
+          "summary": "MoUI 开发的公开文档。",
+          "keywords": [
+            "开发",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/development.md"
+        },
+        {
+          "group": "contributing",
+          "slug": "testing",
+          "title": "测试",
+          "summary": "MoUI 测试的公开文档。",
+          "keywords": [
+            "测试",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/testing.md"
+        },
+        {
+          "group": "contributing",
+          "slug": "maintenance",
+          "title": "维护",
+          "summary": "MoUI 维护的公开文档。",
+          "keywords": [
+            "维护",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/maintenance.md"
+        },
+        {
+          "group": "contributing",
+          "slug": "release-readiness",
+          "title": "发布就绪度",
+          "summary": "MoUI 发布就绪度的公开文档。",
+          "keywords": [
+            "发布就绪度",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/release-readiness.md"
+        },
+        {
+          "group": "contributing",
+          "slug": "ai-collaboration",
+          "title": "AI 协作",
+          "summary": "MoUI AI 协作的公开文档。",
+          "keywords": [
+            "AI 协作",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/ai-collaboration.md"
+        },
+        {
+          "group": "status-roadmap",
+          "slug": "repository-facts",
+          "title": "仓库事实",
+          "summary": "MoUI 仓库事实的公开文档。",
+          "keywords": [
+            "仓库事实",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/repository-facts.md"
+        },
+        {
+          "group": "status-roadmap",
+          "slug": "feature-proof-matrix",
+          "title": "功能证明矩阵",
+          "summary": "MoUI 功能证明矩阵的公开文档。",
+          "keywords": [
+            "功能证明矩阵",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/feature-proof-matrix.md"
+        },
+        {
+          "group": "status-roadmap",
+          "slug": "feature-status-dashboard",
+          "title": "功能状态面板",
+          "summary": "MoUI 功能状态面板的公开文档。",
+          "keywords": [
+            "功能状态面板",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/feature-status-dashboard.md"
+        },
+        {
+          "group": "status-roadmap",
+          "slug": "roadmap-2026",
+          "title": "2026 路线图",
+          "summary": "MoUI 2026 路线图的公开文档。",
+          "keywords": [
+            "2026 路线图",
+            "MoUI",
+            "MoonBit"
+          ],
+          "localizedPath": "docs/zh-Hans/roadmap-2026.md"
+        }
+      ]
+    }
+  }
 }

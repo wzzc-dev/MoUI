@@ -44,6 +44,7 @@ test "generates robots and sitemap from catalog" {
       },
     ],
     excluded: [],
+    locales: [],
   }
   let robots = website_robots(catalog)
   debug_inspect(robots.contains("User-agent: *"), content="true")
@@ -74,7 +75,6 @@ test "parses catalog json and rejects bad schema" {
     #|  }],
     #|  "excluded": []
     #|}
-    #|
   match parse_catalog(text) {
     Ok(catalog) => {
       debug_inspect(catalog.entries.length(), content="1")
@@ -90,4 +90,54 @@ test "parses catalog json and rejects bad schema" {
     Err(message) =>
       debug_inspect(message.contains("schemaVersion must be 1"), content="true")
   }
+}
+
+///|
+test "parses localized catalog metadata and sitemap routes" {
+  let text =
+    #|{
+    #|  "schemaVersion": 1,
+    #|  "siteUrl": "https://example.test/moui/",
+    #|  "groups": [{"id": "guides", "title": "Guides"}],
+    #|  "entries": [{
+    #|    "group": "guides",
+    #|    "slug": "guide",
+    #|    "title": "Guide",
+    #|    "path": "docs/guide.md",
+    #|    "summary": "Guide summary",
+    #|    "keywords": ["guide"]
+    #|  }],
+    #|  "excluded": [],
+    #|  "locales": {
+    #|    "zh-Hans": {
+    #|      "groups": [{"id": "guides", "title": "指南"}],
+    #|      "entries": [{
+    #|        "group": "guides",
+    #|        "slug": "guide",
+    #|        "title": "指南",
+    #|        "summary": "指南摘要",
+    #|        "keywords": ["指南"],
+    #|        "localizedPath": "docs/zh-Hans/guide.md"
+    #|      }]
+    #|    }
+    #|  }
+    #|}
+  match parse_catalog(text) {
+    Ok(catalog) => {
+      debug_inspect(catalog.locales.length(), content="1")
+      debug_inspect(catalog.locales[0].tag, content="\"zh-Hans\"")
+      debug_inspect(
+        website_sitemap(catalog).contains("docs%2Fguide&amp;lang=zh-Hans"),
+        content="true",
+      )
+    }
+    Err(message) => fail(message)
+  }
+}
+
+///|
+test "rejects invalid locale tags" {
+  debug_inspect(is_valid_locale_tag("zh-Hans"), content="true")
+  debug_inspect(is_valid_locale_tag("zh_Hans"), content="false")
+  debug_inspect(is_valid_locale_tag("-zh"), content="false")
 }

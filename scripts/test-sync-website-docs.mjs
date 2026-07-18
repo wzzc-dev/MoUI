@@ -7,7 +7,7 @@ import { spawnSync } from "node:child_process";
 
 const repoRoot = process.cwd();
 
-const fixture = () => {
+const fixture = ({ locales = false } = {}) => {
   const root = mkdtempSync(join(tmpdir(), "moui-website-docs-"));
   mkdirSync(join(root, "website"), { recursive: true });
   mkdirSync(join(root, "docs"), { recursive: true });
@@ -27,6 +27,22 @@ const fixture = () => {
     ],
     excluded: [{ path: "docs/private.md", reason: "Private fixture" }],
   };
+  if (locales) {
+    mkdirSync(join(root, "docs/zh-Hans"), { recursive: true });
+    writeFileSync(join(root, "docs/zh-Hans/guide.md"), "# 指南\n");
+    writeFileSync(join(root, "docs/zh-Hans/moui-readme.md"), "# 中文 README\n");
+    writeFileSync(join(root, "docs/zh-Hans/moui-skia-readme.md"), "# 中文 Skia\n");
+    catalog.locales = {
+      "zh-Hans": {
+        groups: [{ id: "guides", title: "指南" }],
+        entries: [
+          { group: "guides", slug: "guide", title: "指南", summary: "指南摘要", keywords: ["指南"] },
+          { group: "guides", slug: "moui-readme", title: "README", summary: "README 摘要", keywords: ["README"], localizedPath: "docs/zh-Hans/moui-readme.md" },
+          { group: "guides", slug: "moui-skia-readme", title: "Skia", summary: "Skia 摘要", keywords: ["Skia"] },
+        ],
+      },
+    };
+  }
   writeFileSync(join(root, "website/docs-catalog.json"), `${JSON.stringify(catalog, null, 2)}\n`);
   return { root, catalog };
 };
@@ -110,6 +126,48 @@ const updateCatalog = (root, mutate) => {
     catalog.entries[0].path = "docs/../README.mbt.md";
   });
   expectFail("directory traversal", run(root), "directory traversal");
+}
+
+{
+  const { root } = fixture({ locales: true });
+  expectPass("localized catalog", run(root));
+  expectPass("localized generated output check", run(root, "--check"));
+  const localeOut = join(root, "website/web_wasm/docs/zh-Hans");
+  if (readFileSync(join(localeOut, "guide.md"), "utf8") !== "# 指南\n") {
+    console.error("localized Markdown was not copied");
+    process.exit(1);
+  }
+  const localizedCatalog = JSON.parse(readFileSync(join(localeOut, "catalog.json"), "utf8"));
+  if (localizedCatalog.entries[0].path !== "docs/zh-Hans/guide.md" || localizedCatalog.groups[0].title !== "指南") {
+    console.error("localized catalog metadata was not generated");
+    process.exit(1);
+  }
+  const sitemap = readFileSync(join(root, "website/web_wasm/sitemap.xml"), "utf8");
+  if (!sitemap.includes("?section=docs%2Fguide&amp;lang=zh-Hans")) {
+    console.error("localized sitemap route was not generated");
+    process.exit(1);
+  }
+}
+{
+  const { root } = fixture({ locales: true });
+  updateCatalog(root, catalog => {
+    catalog.locales["zh-Hans"].entries.pop();
+  });
+  expectFail("localized entry parity", run(root), "localized entries missing stable slug");
+}
+{
+  const { root } = fixture({ locales: true });
+  updateCatalog(root, catalog => {
+    catalog.locales["zh-Hans"].groups[0].id = "other";
+  });
+  expectFail("localized group parity", run(root), "localized groups missing stable id");
+}
+{
+  const { root } = fixture({ locales: true });
+  updateCatalog(root, catalog => {
+    catalog.locales["zh-Hans"].entries[0].localizedPath = "docs/zh-Hans/missing.md";
+  });
+  expectFail("missing localized source", run(root), "localized source is missing");
 }
 
 console.log("website docs catalog tests: ok");

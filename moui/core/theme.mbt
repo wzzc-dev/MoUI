@@ -698,7 +698,7 @@ pub fn Theme::revision_fingerprint(self : Theme) -> String {
 /// fields that change paint output so a state-layer or reduced-motion change
 /// is not swallowed by reconcile.
 pub fn Environment::revision_fingerprint(self : Environment) -> String {
-  "env:\{self.theme.revision_fingerprint()}:sys:\{scheme_label(self.system_scheme)}:ct:\{contrast_label(self.accessibility_contrast)}:rm:\{self.reduced_motion}:en:\{self.enabled}:ts:\{self.text_scale}:sf:\{self.scale_factor}"
+  "env:\{self.theme.revision_fingerprint()}:sys:\{scheme_label(self.system_scheme)}:lc:\{self.locale}:ld:\{layout_direction_label(self.layout_direction)}:ct:\{contrast_label(self.accessibility_contrast)}:rm:\{self.reduced_motion}:en:\{self.enabled}:ts:\{self.text_scale}:sf:\{self.scale_factor}"
 }
 
 ///|
@@ -706,6 +706,14 @@ fn scheme_label(scheme : ColorScheme) -> String {
   match scheme {
     Light => "light"
     Dark => "dark"
+  }
+}
+
+///|
+fn layout_direction_label(direction : LayoutDirection) -> String {
+  match direction {
+    LeftToRight => "ltr"
+    RightToLeft => "rtl"
   }
 }
 

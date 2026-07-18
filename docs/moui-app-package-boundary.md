@@ -1,258 +1,342 @@
-# MoUI 应用包边界规范
+# MoUI Application Package Boundary Specification
 
-本文档规定 MoUI 应用开发时可以依赖哪些包、`wzzc-dev/moui/core`
-作为基础协议层 / 抽象 UI kernel 的边界、根 facade `wzzc-dev/moui`（app-loop 糖）
-与领域 facade（`moui/geometry`、`moui/graphics`、`moui/animation`、
-`moui/text`、`moui/state`）如何按领域承接 app-facing kernel 类型，以及
-`wzzc-dev/moui/views` 如何承接普通 view constructor、控件语义和低层控件实现。
+This document defines the packages on which MoUI applications may depend; the
+boundary of `wzzc-dev/moui/core` as the foundational protocol layer / abstract UI
+kernel; how the root facade, `wzzc-dev/moui` (app-loop convenience API), and
+domain facades (`moui/geometry`, `moui/graphics`, `moui/animation`,
+`moui/text`, and `moui/state`) expose app-facing kernel types by domain; and how
+`wzzc-dev/moui/views` owns standard view constructors, control semantics, and
+low-level control implementations.
 
-## Core 定位
+## Core Role
 
-`wzzc-dev/moui/core` 的定位是**基础协议层 / 抽象 UI kernel**。
-它定义跨 runtime、跨 backend、跨 renderer 都稳定成立的 UI 协议和值类型，
-让 app、views、runtime、backend、renderer 可以在同一套抽象上协作。
+`wzzc-dev/moui/core` is the **foundational protocol layer / abstract UI kernel**.
+It defines UI protocols and value types that remain stable across runtimes,
+backends, and renderers, enabling apps, views, runtimes, backends, and renderers
+to interoperate over a shared abstraction.
 
-`core` 应该包含：
+`core` should contain:
 
-- 基础值类型：geometry、color、brush、font、event、keyboard、text range 等。
-- 抽象 UI 协议：`View`、layout/paint/event/semantics/focus/text input contract。
-- App loop contract：`Program`、`Effect`、`Subscription` 这类平台中立执行协议。
-- Renderer-neutral draw/text/accessibility contract：绘制命令、文本测量协议、语义树协议。
-- Theme 的中立 token surface：不绑定具体设计系统品牌、不含平台或 renderer 实现。
+- Foundational value types: geometry, color, brush, font, event, keyboard, text
+  range, and similar types.
+- Abstract UI protocols: `View` and layout/paint/event/semantics/focus/text-input
+  contracts.
+- App-loop contracts: platform-neutral execution protocols such as `Program`,
+  `Effect`, and `Subscription`.
+- Renderer-neutral drawing, text, and accessibility contracts: drawing commands,
+  text-measurement protocols, and semantics-tree protocols.
+- The neutral token surface for themes: it is not coupled to a specific design
+  system brand and contains no platform or renderer implementation.
 
-`core` 不应该成为：
+`core` must not become:
 
-- 控件 catalog：按钮、表单、选择器、富文本编辑器等具体控件 API 应属于
-  `moui/views`，而不是塞进 kernel。
-- Runtime implementation：element tree、dirty state、runtime lifecycle、component
-  storage、任务/订阅实际调度应属于 `moui/runtime`。
-- Platform service layer：WebView、文件对话框、剪贴板、窗口服务、平台 channel
-  应属于 `moui/backend/host` 或具体 backend。
-- Renderer implementation：Skia/WGPU/browser WebGPU 细节应属于 `moui/render/*`。
-- Design-system addon：Material、Fluent、Carbon、Primer 及其 component token
-  应属于 `moui_theme/*` 或 `moui/views` 的 app-facing style facade。
+- A control catalog: concrete control APIs for buttons, forms, pickers, rich-text
+  editors, and similar controls belong in `moui/views`, not in the kernel.
+- A runtime implementation: the element tree, dirty state, runtime lifecycle,
+  component storage, and actual task/subscription scheduling belong in
+  `moui/runtime`.
+- A platform-service layer: WebView, file dialogs, clipboard, window services,
+  and platform channels belong in `moui/backend/host` or a concrete backend.
+- A renderer implementation: Skia, WGPU, and browser WebGPU details belong in
+  `moui/render/*`.
+- A design-system addon: Material, Fluent, Carbon, Primer, and their component
+  tokens belong in `moui_theme/*` or an app-facing style facade in `moui/views`.
 
-依赖方向采用 Iced 风格的单向分层：`core` 是 foundation，领域 facade、`views`、
-`runtime`、`backend`、`render` 可以依赖并扩展它；`core` 永远不依赖
-`geometry`、`graphics`、`animation`、`text`、`state`、`views`、`runtime`、
-`backend`、`render` 或 addon 包。
+Dependencies follow Iced-style one-way layering: `core` is the foundation, and
+domain facades, `views`, `runtime`, `backend`, and `render` may depend on and
+extend it. `core` must never depend on `geometry`, `graphics`, `animation`,
+`text`, `state`, `views`, `runtime`, `backend`, `render`, or addon packages.
 
-## 少包策略
+## Minimal-Package Strategy
 
-MoUI 的包边界优先保持少而清晰，不按每个功能名拆出一组顶层 public package。
-除非现有层无法自然承接，否则不要新增 `moui/style`、`moui/forms`、
-`moui/rich_text`、`moui/routing`、`moui/platform`、`moui/diagnostics`
-这类细碎包。
+MoUI package boundaries should remain few and clear. Do not split every feature
+name into a separate top-level public package. Unless an existing layer cannot
+naturally own the responsibility, do not add fragmented packages such as
+`moui/style`, `moui/forms`, `moui/rich_text`, `moui/routing`, `moui/platform`, or
+`moui/diagnostics`.
 
-**根 `wzzc-dev/moui`** 只转发 app-loop 高频类型（`View`、`Program`、`Effect` 等），
-写作 `@moui.*`，避免与 `examples/*/app` 包默认别名 `@app` 冲突。
+**The root `wzzc-dev/moui` package** re-exports only frequently used app-loop
+types (`View`, `Program`, `Effect`, and so on). Use them as `@moui.*` to avoid a
+collision with the default `@app` alias of `examples/*/app` packages.
 
-**领域 facade**（见下方“领域 facade 暴露规则”）：`moui/geometry`、
-`moui/graphics`、`moui/animation`、`moui/text`、`moui/state`。它们是
-app-facing facade/extension over `core`，第一阶段主要通过
-`pub using @core {type X}` 暴露高频类型；后续可以承接不适合放进 `core`
-的轻量领域 helper，但不能反向依赖 `views`、`runtime`、`backend`、`render`
-或其它领域 facade，也不能让 `core` 依赖它们。新增领域 facade 须说明转发集合、
-扩展职责及为何根 facade 与其它领域 facade 无法承接。
+**Domain facades** (see “Domain Facade Exposure Rules” below) are
+`moui/geometry`, `moui/graphics`, `moui/animation`, `moui/text`, and
+`moui/state`. They are app-facing facades/extensions over `core`. Initially,
+they primarily expose frequently used types through `pub using @core {type X}`.
+Later, they may own lightweight domain helpers that do not belong in `core`, but
+they must not depend on `views`, `runtime`, `backend`, `render`, or another
+domain facade, and `core` must not depend on them. A new domain facade must state
+its re-export set, extension responsibility, and why neither the root facade nor
+an existing domain facade can own it.
 
-当前目标落点是：
+The current target placement is:
 
-- app-facing 能力和具体控件行为进入 `moui/views`：控件样式、form helper、
-  routing/history、picker item、WebView constructor、普通 app 需要看到的 rich text
-  facade，以及 button/text field/picker 等低层 custom view 实现。
-- runtime/diagnostics 进入 `moui/runtime`：runtime inspector、program lifecycle
-  snapshot、view/render diagnostics snapshot、`ComponentContext` runtime 构造细节。
-- 平台服务进入 `moui/backend/host`：WebView command/event/policy/spec、host
-  capability、host service contract。
-- renderer/backend 实现仍在 `moui/render/*` 和 `moui/backend/*`。
+- App-facing capabilities and concrete control behavior belong in `moui/views`:
+  control styles, form helpers, routing/history, picker items, WebView
+  constructors, the rich-text facade that ordinary apps need to see, and
+  low-level custom-view implementations for buttons, text fields, pickers, and
+  similar controls.
+- Runtime and diagnostics belong in `moui/runtime`: runtime inspector,
+  program-lifecycle snapshots, view/render-diagnostic snapshots, and
+  `ComponentContext` runtime-construction details.
+- Platform services belong in `moui/backend/host`: WebView commands, events,
+  policies, and specs; host capabilities; and host-service contracts.
+- Renderer and backend implementations remain in `moui/render/*` and
+  `moui/backend/*`.
 
-只有当一个能力无法由上述层自然承接，且会被多个包稳定复用时，才考虑新增 addon
-或更专门的 package。新增 package 必须先说明它为什么不是 `views`、
-`runtime` 或 `backend/host` 的职责。
+Consider a new addon or more specialized package only when the preceding layers
+cannot naturally own a capability and it will be stably reused by multiple
+packages. A new package must first explain why the responsibility does not
+belong in `views`, `runtime`, or `backend/host`.
 
-## 当前 Core 收敛状态
+## Current Core Convergence Status
 
-按“基础协议层 / 抽象 UI kernel”来衡量，`moui/core` 已经完成以下厚能力迁出。
-这些迁移是后续新增 API 的默认边界，不应被回填到 `core`。
+Measured against its role as the “foundational protocol layer / abstract UI
+kernel,” `moui/core` has already moved out the following substantial
+capabilities. These migrations are the default boundary for future APIs and
+must not be reversed by moving them back into `core`.
 
-- **控件样式和 picker model ownership 已迁出**：`ButtonStyle`、
-  `TextFieldStyle`、`ChoiceControlStyle`、`ProgressStyle`、`SliderStyle`、
-  `PickerStyle`、`FeedbackStyle`、`BadgeStyle`、`FormValidationStyle`、
-  `PickerItem` 已由 `moui/views` 拥有。`core` 只保留 `Color`、`Brush`、
-  `BorderStyle`、`ShadowStyle`、`Theme` token 这类基础值。picker 的低层
-  option representation 是 `views` 包内私有实现细节；普通 app 使用
-  `@views.PickerItem` / `@views.picker`。
-- **组件 theme schema 仍在 core（S1）**：`ComponentThemes` / `ButtonTheme` /
-  `ControlStateTokens` / `ControlStateStyle` 等挂在 `@core.Theme.components` 上，
-  供 resolver 与 `moui_theme` 投影使用。因 `core` 不能依赖 `views`，在拆分
-  `Theme`（去掉 `components` 字段）的 RFC 之前，这些类型的**定义**留在
-  `core`；app 侧控件外观仍优先 `@views.*Style` 与 `light_theme`/`theme`。
-  详见 `docs/plans/active/core-component-theme-to-views.md`。
-- **WebView ownership 已迁出**：`WebViewSpec`、`WebViewCommand`、
-  `WebViewEvent`、`WebViewNavigationPolicy` 已归 `moui/backend/host` 拥有。
-  `core` 只保留 renderer-neutral 的 `PlatformViewPlacement`、
-  `PlatformViewProperty`、`PlatformViewEvent` 和 `AppEvent::PlatformView`。
-  普通 app 使用 `moui/views.web_view` 以及 `@views.WebViewEvent` /
-  `@views.WebViewNavigationPolicy` facade；平台入口和 backend 使用
-  `@host.WebView*`。
-- **表单模型 ownership 已迁出**：`FormFieldState`、`FormValidationRule`、
-  `FormController`、`validate_form`、`required_field` 已由 `moui/views` 的 form
-  支持层拥有。`core` 不再承载具体表单工作流。
-- **Rich text ownership 已迁出**：`RichTextDocument`、table/image/source range、
-  rich text geometry/paint/selection helper 由 `moui_richtext` addon 拥有，普通
-  app 通过 `@moui_richtext.RichTextDocument`、`@moui_richtext.RichTextInputTransform`、
-  `@moui_richtext.rich_text_document_height`、`@moui_richtext.markdown_editor`、
-  `@moui_richtext.controlled_markdown_session_editor` 等 facade 使用。`core` 只保留
-  `TextRange`、grapheme boundary、`TextSystem`、paragraph layout contract、基础
-  text input state。`moui/views` 只保留 `text`/`text_field`/`text_area` 纯文本控件。
-- **`ComponentContext` runtime 构造入口已收口**：`ComponentContext` 仍作为
-  component-facing kernel 类型保留在 `core`，因为 `View::node` /
-  `views.component` 的签名需要它且 `core` 不能反向依赖 `runtime`。runtime 使用
-  `ComponentContext::from_runtime(ComponentRuntimeContextInput)` 构造执行上下文；
-  普通 component API 不暴露散落的 runtime storage 参数，领域 facade 也不转发该
-  构造入口。
-- **Date picker 控件语义已迁出**：`DateValue` 是中立数据模型，继续属于
-  `core`；`DatePickerMode` 是具体控件语义，属于 `moui/views`。低层 display
-  mode representation 是 `views` 包内私有实现细节，转换由普通 constructor 完成。
-- **Sheet 控件语义已迁出**：`SheetPresentationMode` 是 sheet 控件语义，属于
-  `moui/views`。`core` 不导出它，sheet / sheet_host constructor 直接使用
-  `@views.SheetPresentationMode`。
-- **Theme schema 和默认审美已拆分**：`core.Theme` / `core.Environment` 保留
-  token schema 和 `neutral()` fallback/testing 值；`default_theme()`、
-  `light_theme()`、`dark_theme()` 等 app-facing 默认审美属于 `moui/views`。
-- **诊断/Inspector 结构偏 runtime/devtools**：`RuntimeInspectorSnapshot`、
-  `ProgramRuntimeSnapshot`、`ViewTreeInspectorSnapshot`、`RenderInspectorSnapshot`
-  等是很有价值的诊断 API，但不是 UI kernel 的基础协议。`EffectPlanSummary`、
-  `SubscriptionPlanSummary` 和 runtime snapshots 由 `moui/runtime` 拥有；`core`
-  不再导出 diagnostics summary 或 runtime op 列表，也不能作为新增 diagnostics
-  API 的 owning package。领域 facade 不转发它们，devtools/overlay 应基于
-  `@runtime.*` diagnostics 类型构建视图。
-- **Routing/history ownership 已迁出**：`RouteLocation`、`RouteDescriptor`、
-  `RouterSnapshot`、`RouteHistoryState`、`RouteFocusStore`、`RouterState` 和
-  `resolve_route` 已归 `moui/views` navigation 支持层拥有。`core` 只保留
-  `NavigationState` 这类基础 state holder。Host route 事件使用
-  `@host.HostRouteLocation`，普通 app 在接入 navigation history 时转换为
-  `@views.RouteLocation`。
+- **Control-style and picker-model ownership has moved out**: `ButtonStyle`,
+  `TextFieldStyle`, `ChoiceControlStyle`, `ProgressStyle`, `SliderStyle`,
+  `PickerStyle`, `FeedbackStyle`, `BadgeStyle`, `FormValidationStyle`, and
+  `PickerItem` are owned by `moui/views`. `core` retains only foundational
+  values such as `Color`, `Brush`, `BorderStyle`, `ShadowStyle`, and `Theme`
+  tokens. The picker’s low-level option representation is private implementation
+  detail of the `views` package; ordinary apps use `@views.PickerItem` /
+  `@views.picker`.
+- **The component theme schema remains in core (S1)**: `ComponentThemes` /
+  `ButtonTheme` / `ControlStateTokens` / `ControlStateStyle` and related types
+  are attached to `@core.Theme.components` for resolver and `moui_theme`
+  projection use. Because `core` cannot depend on `views`, their **definitions**
+  remain in `core` until the RFC that splits `Theme` by removing its `components`
+  field. App-side control appearance should still preferentially use
+  `@views.*Style` and `light_theme`/`theme`. See
+  `docs/plans/active/core-component-theme-to-views.md`.
+- **WebView ownership has moved out**: `WebViewSpec`, `WebViewCommand`,
+  `WebViewEvent`, and `WebViewNavigationPolicy` are owned by
+  `moui/backend/host`. `core` retains only renderer-neutral
+  `PlatformViewPlacement`, `PlatformViewProperty`, `PlatformViewEvent`, and
+  `AppEvent::PlatformView`. Ordinary apps use the `moui/views.web_view` and
+  `@views.WebViewEvent` / `@views.WebViewNavigationPolicy` facades; platform
+  entrypoints and backends use `@host.WebView*`.
+- **Form-model ownership has moved out**: `FormFieldState`,
+  `FormValidationRule`, `FormController`, `validate_form`, and `required_field`
+  are owned by the form-support layer in `moui/views`. `core` no longer carries
+  concrete form workflows.
+- **Rich-text ownership has moved out**: `RichTextDocument`, tables, images,
+  source ranges, and rich-text geometry/paint/selection helpers are owned by the
+  `moui_richtext` addon. Ordinary apps use facades such as
+  `@moui_richtext.RichTextDocument`, `@moui_richtext.RichTextInputTransform`,
+  `@moui_richtext.rich_text_document_height`, `@moui_richtext.markdown_editor`,
+  and `@moui_richtext.controlled_markdown_session_editor`. `core` retains only
+  `TextRange`, grapheme boundaries, `TextSystem`, the paragraph-layout contract,
+  and foundational text-input state. `moui/views` retains only the plain-text
+  `text`/`text_field`/`text_area` controls.
+- **The `ComponentContext` runtime-construction entrypoint has been narrowed**:
+  `ComponentContext` remains a component-facing kernel type in `core` because
+  the signatures of `View::node` / `views.component` require it and `core`
+  cannot depend on `runtime`. The runtime constructs an execution context with
+  `ComponentContext::from_runtime(ComponentRuntimeContextInput)`; ordinary
+  component APIs do not expose scattered runtime-storage parameters, and domain
+  facades do not re-export this construction entrypoint.
+- **Date-picker control semantics have moved out**: `DateValue` is a neutral
+  data model and remains in `core`; `DatePickerMode` is concrete control
+  semantics and belongs in `moui/views`. The low-level display-mode
+  representation is private implementation detail of `views`; the ordinary
+  constructor performs the conversion.
+- **Sheet control semantics have moved out**: `SheetPresentationMode` is sheet
+  control semantics and belongs in `moui/views`. `core` does not export it;
+  sheet / sheet_host constructors use `@views.SheetPresentationMode` directly.
+- **The theme schema and default aesthetics are separated**: `core.Theme` /
+  `core.Environment` retain the token schema and `neutral()` fallback/testing
+  values; app-facing default aesthetics such as `default_theme()`,
+  `light_theme()`, and `dark_theme()` belong in `moui/views`.
+- **Diagnostics/Inspector structures are runtime/devtools-oriented**:
+  `RuntimeInspectorSnapshot`, `ProgramRuntimeSnapshot`,
+  `ViewTreeInspectorSnapshot`, `RenderInspectorSnapshot`, and related APIs are
+  valuable diagnostic APIs, but not foundational UI-kernel protocols.
+  `EffectPlanSummary`, `SubscriptionPlanSummary`, and runtime snapshots are
+  owned by `moui/runtime`; `core` no longer exports diagnostics summaries or
+  runtime operation lists and must not own new diagnostics APIs. Domain facades
+  do not re-export them; devtools/overlays should build views from
+  `@runtime.*` diagnostic types.
+- **Routing/history ownership has moved out**: `RouteLocation`,
+  `RouteDescriptor`, `RouterSnapshot`, `RouteHistoryState`, `RouteFocusStore`,
+  `RouterState`, and `resolve_route` are owned by navigation support in
+  `moui/views`. `core` retains only foundational state holders such as
+  `NavigationState`. Host route events use `@host.HostRouteLocation`; ordinary
+  apps convert them to `@views.RouteLocation` when integrating navigation
+  history.
 
-新增 API 默认放在更具体的 owning package；只有确认它是跨 runtime 的抽象协议或
-基础值类型时，才进入 `core`。
+New APIs default to the more specific owning package. Add an API to `core` only
+after confirming that it is a cross-runtime abstract protocol or foundational
+value type.
 
-## 目标边界声明
+## Target Boundary Declaration
 
-本规范描述的是当前 API 的目标边界。新增依赖或公开 API 时，按 owning package
-直接落位，不保留兼容别名或 deprecated 过渡入口。
+This specification describes the target boundary of the current API. Place new
+dependencies or public APIs directly in their owning packages; do not retain
+compatibility aliases or deprecated transition entrypoints.
 
-- app-facing 控件、控件语义、默认主题、form/routing/WebView/rich text facade、
-  以及具体 custom view 控件行为进入 `moui/views`。
-- runtime lifecycle、component runtime input、effect/subscription diagnostics
-  summary、inspector snapshot 进入 `moui/runtime`。
-- host/platform service 协议进入 `moui/backend/host` 或具体 backend。
-- `core` 只保留跨 runtime/backend/renderer/views 稳定成立的协议和值类型。
+- App-facing controls, control semantics, default themes, form/routing/WebView/
+  rich-text facades, and concrete custom-view control behavior belong in
+  `moui/views`.
+- Runtime lifecycle, component-runtime input, effect/subscription diagnostic
+  summaries, and inspector snapshots belong in `moui/runtime`.
+- Host/platform-service protocols belong in `moui/backend/host` or a concrete
+  backend.
+- `core` retains only protocols and value types that remain stable across
+  runtimes, backends, renderers, and views.
 
-`showcase/app` 可以作为 diagnostics 示例直接依赖 `@runtime`，也可以为了 renderer
-capability 展示依赖 `@render`；普通 app 不应把这两个示例用途当作默认依赖模式。
-测试目标下的 `for "test"` / `for "wbtest"` 额外 import 不计入运行时边界。
+`showcase/app` may depend directly on `@runtime` for diagnostics examples and on
+`@render` to demonstrate renderer capabilities; ordinary apps must not treat
+these example uses as the default dependency pattern. Extra imports under test
+targets (`for "test"` / `for "wbtest"`) do not count toward the runtime
+boundary.
 
-## 普通共享 App 包
+## Ordinary Shared App Packages
 
-普通共享 app 包指 `examples/*/app` 这类平台无关的业务逻辑包，以及同形态的
-`website/app` 和把共享 app 放在示例根目录的 `examples/agent_counter`。它们应该默认依赖:
+An ordinary shared app package is a platform-neutral business-logic package such
+as `examples/*/app`, as well as similarly structured `website/app` and
+`examples/agent_counter`, which places its shared app at the example root. They
+should depend by default on:
 
-- `wzzc-dev/moui` —— app-loop 糖（`@moui.View`、`@moui.Program`、`@moui.Effect`、
-  `Subscription`、`Theme`、`Environment`、`ViewEnvironment`）。与共享 app 包别名
-  `@app`（业务模块）分离。
+- `wzzc-dev/moui` — app-loop convenience API (`@moui.View`,
+  `@moui.Program`, `@moui.Effect`, `Subscription`, `Theme`, `Environment`, and
+  `ViewEnvironment`). This stays distinct from the `@app` alias for the shared
+  app package’s business module.
 
-- `wzzc-dev/moui/<领域>` —— 其余高频领域 facade，按需 import:
+- `wzzc-dev/moui/<领域>` — other frequently used domain facades, imported as
+  needed:
 
-  - `wzzc-dev/moui/geometry`:`Point`、`Size`、`Rect`、`Insets`、`Constraints`、`Axis`、`Alignment`。
-  - `wzzc-dev/moui/graphics`:`Color`、`Brush`、`BorderStyle`、`ShadowStyle`、
-    `RoundedRect`、`PathSpec`、`PathVerb`、`ImageRun`、`ImageFit`、`BlendMode`、
-    `LayerSpec`、`LayerMask`、`FilterEffect`、`ShadowSpec`、`Transform2D`、
-    `ShaderEffectSpec`。
-  - `wzzc-dev/moui/animation`:`Easing`、`TransitionSpec`、`TransitionStyle`。
-  - `wzzc-dev/moui/text`:`FontSpec`、`FontFamily`、`TextRange`、`TextAlign`、
-    `FontFamilyStack`、`TextRun`（后两者为示例/绘制辅助高频项）。
-  - `wzzc-dev/moui/state`:`State`、`Binding`、`DerivedState`、`ScrollState`、
-    `FocusState`、`NavigationState`、`ColorScheme`、`LayoutDirection`、
-    `FocusScope`、`FocusScopeItem`。
+  - `wzzc-dev/moui/geometry`: `Point`, `Size`, `Rect`, `Insets`, `Constraints`, `Axis`, `Alignment`.
+  - `wzzc-dev/moui/graphics`: `Color`, `Brush`, `BorderStyle`, `ShadowStyle`,
+    `RoundedRect`, `PathSpec`, `PathVerb`, `ImageRun`, `ImageFit`, `BlendMode`,
+    `LayerSpec`, `LayerMask`, `FilterEffect`, `ShadowSpec`, `Transform2D`,
+    `ShaderEffectSpec`.
+  - `wzzc-dev/moui/animation`: `Easing`, `TransitionSpec`, `TransitionStyle`.
+  - `wzzc-dev/moui/text`: `FontSpec`, `FontFamily`, `TextRange`, `TextAlign`,
+    `FontFamilyStack`, `TextRun` (the latter two are frequently used in examples
+    and drawing helpers).
+  - `wzzc-dev/moui/state`: `State`, `Binding`, `DerivedState`, `ScrollState`,
+    `FocusState`, `NavigationState`, `ColorScheme`, `LayoutDirection`,
+    `FocusScope`, `FocusScopeItem`.
 
-  领域 facade 当前只依赖 `core`，主要以 `pub using @core {type X}` 转发；
-  领域前缀与 `@core.X` 为同一类型。app 在单文件内应统一一种前缀，避免同文件
-  同类型双前缀（参见 showcase 早期的 `@moui.View` + `@core.Point` 并存问题）。
-  跨示例包引用业务 API 仍用 `@app.ShowcaseModel` 等。
+  Domain facades currently depend only on `core` and primarily forward types
+  through `pub using @core {type X}`; a domain-prefixed type and `@core.X` are
+  the same type. An app should use one prefix consistently in each source file
+  and avoid two prefixes for the same type in that file (see the former Showcase
+  issue where `@moui.View` and `@core.Point` coexisted). References to business
+  APIs across example packages remain `@app.ShowcaseModel` and similar paths.
 
-- `wzzc-dev/moui/views` —— app-facing UI 构造器入口。应用层组合按钮、文本、布局、表单、列表、弹窗、WebView wrapper、主题 helper 等，应该优先使用这里的函数。
-  另通过 facade 转发命令/菜单类型（`ActionCommand`、`CommandIntent`、
-  `KeyboardShortcut` 等）、默认主题 helper、控件 style、form/navigation/data helper。
-  `DateValue` 因 datepicker 公共 API 已暴露而暂留 `@views.DateValue` facade；
-  绘制、动画、focus scope 和低层 runtime/semantics id 不再经 `@views` 兜底。
+- `wzzc-dev/moui/views` — the entrypoint for app-facing UI constructors. The
+  application layer should preferentially use its functions to compose buttons,
+  text, layouts, forms, lists, dialogs, WebView wrappers, theme helpers, and so
+  on. It also forwards command/menu types (`ActionCommand`, `CommandIntent`,
+  `KeyboardShortcut`, and others), default-theme helpers, control styles, and
+  form/navigation/data helpers through its facade. `DateValue` temporarily
+  remains available through the `@views.DateValue` facade because the date-picker
+  public API is already exposed; drawing, animation, focus-scope, and low-level
+  runtime/semantics IDs are no longer catch-all exports from `@views`.
 
-- `wzzc-dev/moui/core` —— **类型真源**。共享 app **运行时**宜优先 `@moui` / 领域糖 /
-  `@views`，使 `moon.pkg` 默认 **不** import `core`（`validate_api_surface` 对 shared
-  app 有 core import budget）。低频 kernel、自定义 `View::node`、或 **测试** 模拟
-  `AppEvent` / `DrawCommand` 时，在 `for "test"` / `for "wbtest"` 中 import
-  `wzzc-dev/moui/core`（及按需 `runtime`），测试目标不计入默认运行时边界。
+- `wzzc-dev/moui_i18n` — an **optional localization addon**. It provides locale
+  normalization, static catalog lookup, fallback, named interpolation, and
+  limited count-message rules; the app still owns its product catalog and locale
+  selection. It is not re-exported by the root facade or `views`, and it does
+  not add JSON, resource loading, or platform-locale detection to `core`. See
+  `docs/internationalization.md` for the complete workflow.
 
-`wzzc-dev/moui` 根包**只**转发 app-loop 糖；geometry/graphics/animation/text/state
-仍走对应领域 facade。其余低频 kernel 类型直连 `@core`。
+- `wzzc-dev/moui/core` — the **source of truth for types**. At **runtime**, a
+  shared app should preferentially use `@moui` / domain convenience APIs /
+  `@views`, so its default `moon.pkg` **does not** import `core`
+  (`validate_api_surface` enforces a core-import budget for shared apps). Import
+  `wzzc-dev/moui/core` (and `runtime` as needed) under `for "test"` /
+  `for "wbtest"` for infrequent kernel use, custom `View::node`, or **tests**
+  that simulate `AppEvent` / `DrawCommand`; test targets do not count toward the
+  default runtime boundary.
 
-普通 app 可以按需直接依赖:
+The `wzzc-dev/moui` root package re-exports **only** app-loop convenience APIs;
+geometry, graphics, animation, text, and state remain available through their
+corresponding domain facades. Other infrequently used kernel types are used
+directly through `@core`.
 
-- `wzzc-dev/moui/backend/host`:仅当 app 需要 host service / 平台服务协议时使用,例如文件对话框、异步图片、剪贴板、WebView command queue 或 host service 交互。普通 app 处理 WebView 事件时优先使用 `@views.WebViewEvent`。
+Ordinary apps may directly depend on:
 
-普通 app 不应该直接依赖:
+- `wzzc-dev/moui/backend/host`: only when the app needs host-service / platform-
+  service contracts, such as file dialogs, async images, clipboard, a WebView
+  command queue, or host-service interaction. An ordinary app handling WebView
+  events should preferentially use `@views.WebViewEvent`.
+
+Ordinary apps must not directly depend on:
 
 - `wzzc-dev/moui/runtime`
 - `wzzc-dev/moui/render/*`
 - `wzzc-dev/moui/backend/{web,macos,windows,linux}`
 - `wzzc-dev/moui/backend/{macos,windows,linux,android}/skia`
 - `wzzc-dev/moui/backend/{macos,windows,linux}/wgpu`
-- `moui_theme/*`,除非该 app 本身是设计系统 addon 或 preview app。
+- `moui_theme/*`, unless the app itself is a design-system addon or preview app.
 
-已知例外见上方“目标边界声明”:`showcase/app` 暂时依赖 `@render` 用于 capability 报告,
-并依赖 `@runtime` 用于 diagnostics snapshot 示例。前者应在 capability 报告收敛为
-app-facing API 后移除;后者仅限 diagnostics 示例,不代表普通 app 默认可依赖 runtime。
+The known exceptions appear in “Target Boundary Declaration” above:
+`showcase/app` currently depends on `@render` for capability reporting and on
+`@runtime` for diagnostic-snapshot examples. The former should be removed after
+capability reporting converges on an app-facing API; the latter is restricted to
+diagnostics examples and does not mean ordinary apps may depend on runtime by
+default.
 
-## App 私有子包
+## App-Private Subpackages
 
-某些 app 在共享 app 包之外，还会带有自己的私有支持包，例如
-`examples/pdf_workbench` 的 `pdfium_adapter`、`pdflite_adapter`、
-`pdflite_service_*` 等。这类包既不是普通共享 app 包，也不是平台入口包，
-而是某个 app 专用的适配层 / 服务实现 / 进程间协议。
+In addition to a shared app package, some apps include their own private support
+packages, such as `pdfium_adapter`, `pdflite_adapter`, and `pdflite_service_*`
+in `examples/pdf_workbench`. These packages are neither ordinary shared app
+packages nor platform entrypoint packages; they are adapters, service
+implementations, or interprocess protocols specific to one app.
 
-定位规则：
+Placement rules:
 
-- 它们只服务于宿主 app，不应被其他 app 或框架层依赖。
-- 它们可以依赖 `@core`、`@backend/host`、`@views` 以及 app 自身的共享 app 包，
-  视具体职责而定，但不应该被普通共享 app 包反向依赖。
-- 它们不进入领域 facade，也不向 `@core` / `@views` 注入 app 特定类型。
-- 评审时把它们视作 app 的实现细节，而不是框架 API 表面的一部分。
+- They serve only their host app and must not be depended on by another app or a
+  framework layer.
+- They may depend on `@core`, `@backend/host`, `@views`, and the app’s own shared
+  app package according to their specific responsibility, but an ordinary shared
+  app package must not depend on them in the reverse direction.
+- They do not participate in domain facades and do not add app-specific types to
+  `@core` / `@views`.
+- During review, treat them as implementation details of the app, not as part of
+  the framework API surface.
 
-如果某个 app 私有子包的抽象逐渐被多个 app 复用，应考虑上提到
-`moui/views`、`moui/core` 或独立的 addon 包，而不是继续作为某个 app 的私有子包存在。
+If an abstraction in an app-private subpackage gradually becomes reused by
+multiple apps, consider promoting it to `moui/views`, `moui/core`, or an
+independent addon package instead of retaining it as a private subpackage of one
+app.
 
-## 领域 facade 暴露规则
+## Domain Facade Exposure Rules
 
-`wzzc-dev/moui/core` 的平台中立基础类型，由根 `wzzc-dev/moui`（app-loop）与领域
-facade 做 curated re-export，让普通 app 减少 `@core` 前缀的样板。领域 facade
-遵循以下原则:
+Platform-neutral foundational types in `wzzc-dev/moui/core` are selectively
+re-exported by the root `wzzc-dev/moui` package (app loop) and domain facades so
+ordinary apps need less `@core` prefix boilerplate. Domain facades follow these
+principles:
 
-- **`core` 真源，领域 facade 承接 app-facing 前缀**。领域 facade 的第一职责是为
-  高频类型省前缀；它**不追求完整覆盖** `core` 公开面。`@core.X` 与
-  `@<domain>.X` 是同一类型。后续若新增领域 helper，它必须是轻量 app-facing
-  extension over `core`，不能让 `core` 反向依赖领域包。
-- **每个类型只属一个领域 facade**。跨越 layout 与 state 等集合边界的归属判断以语义为准
-  (例如 `ColorScheme` 用于 theme 解析属 `state`,不归 `graphics`),不按 app 出现频次
-  把同一类型塞进多个领域 facade。
-- **依赖单向，不互 import**。领域 facade 只 import `wzzc-dev/moui/core`，不互相依赖，
-  不 re-export 其他领域 facade 或 `views`/`runtime`/`backend`/`render`/`host` 的类型。
-- **只转 app-safe neutral 类型**。不转发 runtime tree、renderer、backend、inspector、
-  debug payload、private view implementation details、控件 mode/style/default theme、
-  form helper、WebView command/event、routing/history controller、rich text document。
+- **`core` is the source of truth; domain facades own app-facing prefixes**. A
+  domain facade’s primary responsibility is to shorten frequently used type
+  prefixes; it **does not seek complete coverage** of the `core` public surface.
+  `@core.X` and `@<domain>.X` are the same type. A future domain helper must be a
+  lightweight app-facing extension over `core` and must not cause `core` to
+  depend back on the domain package.
+- **Each type belongs to exactly one domain facade**. Assign types crossing
+  collection boundaries such as layout and state by semantics (for example,
+  `ColorScheme` belongs to `state` because it participates in theme resolution,
+  not to `graphics`), rather than placing the same type in multiple domain
+  facades based on how often apps use it.
+- **Dependencies are one-way; facades do not import one another**. A domain
+  facade imports only `wzzc-dev/moui/core`; it does not depend on another domain
+  facade or re-export types from `views`/`runtime`/`backend`/`render`/`host`.
+- **Forward only app-safe neutral types**. Do not forward runtime trees,
+  renderers, backends, inspectors, debug payloads, private view-implementation
+  details, control modes/styles/default themes, form helpers, WebView
+  commands/events, routing/history controllers, or rich-text documents.
 
-### 领域 facade 清单
+### Domain Facade Inventory
 
-**`wzzc-dev/moui`（根 facade，`moui/moui.mbt`）** — `@moui.*`
+**`wzzc-dev/moui` (root facade, `moui/moui.mbt`)** — `@moui.*`
 ```
 View  Program  Effect  Subscription  Theme  Environment  ViewEnvironment
 ```
@@ -286,131 +370,159 @@ State  Binding  DerivedState  ScrollState  FocusState  NavigationState
 ColorScheme  LayoutDirection  FocusScope  FocusScopeItem
 ```
 
-### `@views` 转发（constructor / 控件 facade，不兜底 kernel）
+### `@views` Forwarding (constructor / control facade; not a kernel catch-all)
 
-**允许**（控件工作流表面）：
+**Allowed** (control-workflow surface):
 
-- 命令与菜单：`ActionCommand`、`ActionCommandMap`、`CommandBinding`、`CommandIntent`、
-  `KeyModifiers`、`KeyboardShortcut`（`menu_commands.mbt`）。
-- Date picker 数据：`DateValue` 暂留 `@views.DateValue`（datepicker 公共 API 已暴露；
-  无独立 domain facade）。
-- 主题构造辅助：`ColorPalette`、`TypographyScale`（`theme.mbt`）。
-- 控件样式桥：`ControlStateStyle`（`control_style.mbt`；真源在 `core`）。
+- Commands and menus: `ActionCommand`, `ActionCommandMap`, `CommandBinding`,
+  `CommandIntent`, `KeyModifiers`, `KeyboardShortcut` (`menu_commands.mbt`).
+- Date-picker data: `DateValue` temporarily remains `@views.DateValue` (the
+  date-picker public API is already exposed; no independent domain facade
+  exists).
+- Theme-construction helpers: `ColorPalette`, `TypographyScale` (`theme.mbt`).
+- Control-style bridge: `ControlStateStyle` (`control_style.mbt`; the source of
+  truth is `core`).
 
-**禁止**（领域值类型，走 domain facade，不从 `@views` 再导出）：
+**Disallowed** (domain value types; use a domain facade rather than re-exporting
+from `@views`):
 
-- `@graphics.Color` / paint 值类型 — **不要** `@views.Color`
-- `@state.ColorScheme` — **不要** `@views.ColorScheme`
-- geometry / animation / text / state 其它值类型 — 用对应 domain facade
+- `@graphics.Color` / paint value types — **do not** use `@views.Color`
+- `@state.ColorScheme` — **do not** use `@views.ColorScheme`
+- Other geometry, animation, text, and state value types — use their
+  corresponding domain facade
 
-绘制/动画/focus/低层 runtime id 路径：
+Drawing, animation, focus, and low-level runtime-ID paths:
 
-- 绘制与低层 paint 类型用 `@graphics.Color`、`@graphics.RoundedRect`、`@graphics.PathSpec`、
-  `@graphics.ImageFit`、`@graphics.LayerSpec`、`@graphics.Transform2D` 等。
-- 动画类型用 `@animation.TransitionSpec`、`@animation.TransitionStyle`、`@animation.Easing`。
-- focus / scheme 用 `@state.FocusScope`、`@state.FocusScopeItem`、`@state.ColorScheme`。
-- diagnostics/kernel-only 类型在需要时直连 `@core.ElementId`、`@core.SemanticsRole`、
-  `@core.ComponentContext`，并限定在 showcase/diagnostics/custom kernel 或测试场景。
+- Use `@graphics.Color`, `@graphics.RoundedRect`, `@graphics.PathSpec`,
+  `@graphics.ImageFit`, `@graphics.LayerSpec`, `@graphics.Transform2D`, and so
+  on for drawing and low-level paint types.
+- Use `@animation.TransitionSpec`, `@animation.TransitionStyle`, and
+  `@animation.Easing` for animation types.
+- Use `@state.FocusScope`, `@state.FocusScopeItem`, and `@state.ColorScheme`
+  for focus / scheme types.
+- When required, use diagnostics/kernel-only types directly through
+  `@core.ElementId`, `@core.SemanticsRole`, and `@core.ComponentContext`, and
+  restrict this to Showcase/diagnostics/custom-kernel or test contexts.
 
-### 不设糖 / 仅测试或框架直连 `@core`
+### No Convenience API / Test-Only or Framework Direct `@core`
 
-以下仍属 kernel，**不设领域 facade**；共享 app 主代码应避免 `@core` 前缀，测试在
-`for "test"` / `for "wbtest"` 中 import `core` 后使用：
+The following remain kernel types and have **no domain facade**. Shared-app main
+code should avoid an `@core` prefix; tests may import `core` under `for "test"` /
+`for "wbtest"` and use it there:
 
-`AccessibilityContrast`、`ContentSizeCategory`；
-`AppEvent`、`KeyboardEvent`、`PointerEvent`、`DrawCommand`、`CompositionUpdate` 等
-事件与绘制协议（runtime 测试、能力展示）。
+`AccessibilityContrast`, `ContentSizeCategory`;
+`AppEvent`, `KeyboardEvent`, `PointerEvent`, `DrawCommand`, `CompositionUpdate`,
+and other event and drawing protocols (runtime tests and capability
+presentations).
 
-历史计划曾将 `CommandIntent` 等列为“仅 `@core`”；现以 **`@views` re-export** 为准。
+Historical plans listed `CommandIntent` and similar types as “`@core` only”; the
+current rule is the **`@views` re-export**.
 
-### 别名语法规范
+### Alias Syntax Rule
 
-领域 facade 暴露 `core` 类型**统一使用新式 `pub using @core {type X}`**:
+Domain facades must uniformly expose `core` types with the modern
+`pub using @core {type X}` syntax:
 
 ```moonbit
 pub using @core {type View}
 ```
 
-**禁用旧式 `pub type X = @core.X`**。MoonBit 工具链两套语法在 `moon info` 重新生成
-`pkg.generated.mbti` 时会归一到 `pub using @core {type X}`,所以新式语法由 review 与
-API surface guard 的 `required_tokens` 共同维护;旧式手写别名不属于本规范的合法形态。
+**The legacy `pub type X = @core.X` syntax is prohibited.** When MoonBit tools
+regenerate `pkg.generated.mbti` with `moon info`, both forms normalize to
+`pub using @core {type X}`. The modern syntax is therefore jointly maintained by
+review and the API-surface guard’s `required_tokens`; handwritten legacy aliases
+are not valid under this specification.
 
-Diagnostics 类型的 owning package 是 `wzzc-dev/moui/runtime`。`core` 不再导出
-`EffectPlanSummary`、`SubscriptionPlanSummary`、`EffectRuntimeOp`、
-`InspectorSnapshot`、`ProgramRuntimeSnapshot` 或 `RenderInspectorSnapshot` 这类
-diagnostics/runtime 类型，领域 facade 也不转发。
+The owning package for diagnostics types is `wzzc-dev/moui/runtime`. `core` no
+longer exports diagnostics/runtime types such as `EffectPlanSummary`,
+`SubscriptionPlanSummary`, `EffectRuntimeOp`, `InspectorSnapshot`,
+`ProgramRuntimeSnapshot`, or `RenderInspectorSnapshot`, and domain facades do
+not re-export them.
 
-WebView 类型的 owning package 是 `wzzc-dev/moui/backend/host`。`core` 不再导出
-`WebViewSpec`、`WebViewCommand`、`WebViewEvent` 或
-`WebViewNavigationPolicy`，也不提供 `PlatformViewPlacement::web_view` 这类
-WebView 专有 helper；领域 facade 也不转发。
+The owning package for WebView types is `wzzc-dev/moui/backend/host`. `core` no
+longer exports `WebViewSpec`, `WebViewCommand`, `WebViewEvent`, or
+`WebViewNavigationPolicy`, nor does it provide WebView-specific helpers such as
+`PlatformViewPlacement::web_view`; domain facades do not re-export them.
 
-### 扩展领域 facade
+### Extending a Domain Facade
 
-扩展领域 facade（新增类型到现有领域 facade，或新增一个领域 facade）必须同步:
+Extending domain facades (adding a type to an existing domain facade or adding a
+new domain facade) must also:
 
-- 更新 `pkg.generated.mbti`(运行 `moon info <pkg>`)。
-- 更新 `tools/moui/validate_api_surface/main.mbt` 中对应领域 facade 的
-  `sugar_<domain>_tokens()` 与 budget。
-- 用 review 确认新增类型是平台中立、app-safe、高频的 kernel 类型，
-  或是该领域可自然承接的轻量 extension，且不与现有领域 facade 或“不设糖”清单重叠。
+- Update `pkg.generated.mbti` (run `moon info <pkg>`).
+- Update the corresponding domain facade’s `sugar_<domain>_tokens()` and budget
+  in `tools/moui/validate_api_surface/main.mbt`.
+- Confirm in review that the new type is a platform-neutral, app-safe,
+  frequently used kernel type, or a lightweight extension naturally owned by
+  that domain; and that it does not overlap an existing domain facade or the
+  “No Convenience API” list.
 
-`@core` 公开面扩展不需要领域 facade 同步；领域 facade 负责的是“app-facing 高频前缀”
-集合，新加的 kernel 类型默认走 `@core` 直连，直到被显式纳入领域 facade 清单。
+Expanding the public surface of `@core` does not require a simultaneous domain-
+facade update. Domain facades own only the collection of “frequently used
+app-facing prefixes”; a new kernel type defaults to direct `@core` use until it
+is explicitly added to a domain-facade inventory.
 
-## `moui/views` 低层 custom view 规则
+## `moui/views` Low-Level Custom-View Rules
 
-`wzzc-dev/moui/views` 同时面向普通 app 和 MoUI 内置控件实现者。普通 app 使用
-`button`、`text_field`、`picker` 这类 app-facing constructor；框架和控件实现可以在
-`views` 包内使用私有 `*_control` / `*_layout` / `*_surface` helper 对接
-`@core.View::node`。
+`wzzc-dev/moui/views` serves both ordinary apps and MoUI built-in control
+implementers. Ordinary apps use app-facing constructors such as `button`,
+`text_field`, and `picker`; framework and control implementations may use
+private `*_control` / `*_layout` / `*_surface` helpers within the `views` package
+to integrate with `@core.View::node`.
 
-只有在需要实现新的 reusable control，并且必须自定义以下行为时，才新增低层
-helper：
+Add a low-level helper only when implementing a new reusable control that must
+customize one of the following behaviors:
 
 - layout
 - paint
 - event handling
-- text input state / text command
+- text-input state / text commands
 - semantics
 - focus
 
-如果只是组合已有控件，例如按钮、表单、列表、布局、弹窗、菜单、
-WebView wrapper，应用层应使用 `wzzc-dev/moui/views` 的 app-facing constructor。
+If merely composing existing controls such as buttons, forms, lists, layouts,
+dialogs, menus, or WebView wrappers, the application layer should use the
+app-facing constructors in `wzzc-dev/moui/views`.
 
-新增控件时遵循这个落点：
+Place a new control as follows:
 
-- 公共 app-facing constructor 放在 `moui/views`。
-- 具体 custom view behavior 实现也放在 `moui/views`，helper 名应描述行为，
-  例如 `button_control`、`text_field_control`、`scroll_container`。
-- 底层协议通过 `@core.View::node` 以及 `ViewLayoutContext`、`ViewPaintContext`、
-  `ViewEventContext` 等回调类型对接。
-- 普通 app 只看到 `@views.some_control(...) -> View[Msg]`。
+- Put public app-facing constructors in `moui/views`.
+- Put the concrete custom-view behavior implementation in `moui/views` as well;
+  helper names should describe behavior, such as `button_control`,
+  `text_field_control`, or `scroll_container`.
+- Integrate with the low-level protocol through `@core.View::node` and callback
+  types such as `ViewLayoutContext`, `ViewPaintContext`, and `ViewEventContext`.
+- Ordinary apps see only `@views.some_control(...) -> View[Msg]`.
 
-换句话说，Iced 的控件层同时是内置控件和自定义控件入口；
-MoUI 当前把两类入口统一在 `moui/views`：普通 app 使用高层 constructor，
-控件作者复用同包内私有 control/layout helper。这不改变普通 app 默认依赖
-`moui/<领域>`（按需）与 `moui/views` 的规则；低层 public 入口只有 `@core.View::node(...)`。
+In other words, Iced’s control layer is both the built-in-control and
+custom-control entrypoint. MoUI currently unifies those entrypoints in
+`moui/views`: ordinary apps use high-level constructors, while control authors
+reuse private control/layout helpers in the same package. This does not alter the
+ordinary-app default-dependency rule of `moui/<领域>` (as needed) and
+`moui/views`; the only low-level public entrypoint is `@core.View::node(...)`.
 
-## 平台入口包
+## Platform Entrypoint Packages
 
-平台入口包指 `examples/*/{web_wasm,macos_skia,windows_skia,linux_skia}`
-这类 `is-main` package。它们负责创建 runtime、连接平台 backend、选择 renderer。
-Android 例外地拆成 `examples/*/android_skia` MoonBit embedded-session 入口和
-package-owned Kotlin managed shell；构建时从已解析的 MoUI package staging，
-`examples/*/android_app` 只保留为 Release N legacy fixture。
-iOS 同样走 embedded-session 入口：`examples/*/ios_skia` 暴露 MoonBit C exports，
-构建时 staging 的 `moui/mobile/ios` canonical SwiftUI shell 负责单 scene 生命周期、
-`CAMetalLayer` surface、`CADisplayLink`、UIKit service adapter 与触摸转发；
-Objective-C++ 仅保留 Mobile Runtime ABI v1 翻译和数据所有权；
-`examples/*/ios_app` 只保留为 Release N fixture。
-HarmonyOS 同样走 embedded-session 入口：`examples/*/harmonyos_skia` 暴露
-MoonBit C exports；`moui/mobile/harmonyos` 的 canonical ArkTS
-Stage Ability/XComponent shell 由构建器 staging，native XComponent callback
-独占 surface/input/resize/detach。`examples/*/harmonyos_app` 仅为 Release N
-fixture。
+Platform entrypoint packages are `is-main` packages such as
+`examples/*/{web_wasm,macos_skia,windows_skia,linux_skia}`. They create the
+runtime, connect a platform backend, and select a renderer.
+Android is an exception: it is split into an `examples/*/android_skia` MoonBit
+embedded-session entrypoint and a package-owned Kotlin managed shell. At build
+time, it is staged from the resolved MoUI package; `examples/*/android_app` is
+retained only as a Release N legacy fixture.
+iOS likewise uses an embedded-session entrypoint: `examples/*/ios_skia` exposes
+MoonBit C exports. At build time, the canonical SwiftUI shell in staged
+`moui/mobile/ios` owns the single-scene lifecycle, `CAMetalLayer` surface,
+`CADisplayLink`, UIKit service adapter, and touch forwarding; Objective-C++ is
+retained only for Mobile Runtime ABI v1 translation and data ownership.
+`examples/*/ios_app` is retained only as a Release N fixture.
+HarmonyOS likewise uses an embedded-session entrypoint:
+`examples/*/harmonyos_skia` exposes MoonBit C exports. The canonical ArkTS
+Stage Ability/XComponent shell in `moui/mobile/harmonyos` is staged by the
+builder; the native XComponent callback exclusively owns surface/input/resize/
+detach. `examples/*/harmonyos_app` is retained only as a Release N fixture.
 
-平台入口包可以依赖：
+Platform entrypoint packages may depend on:
 
 - `wzzc-dev/moui/runtime`
 - `wzzc-dev/moui/backend/web`
@@ -418,53 +530,81 @@ fixture。
 - `wzzc-dev/moui/backend/{macos,windows,linux,android,ios,harmonyos}`
 - `wzzc-dev/moui/backend/{macos,windows,linux,android,ios,harmonyos}/skia`
 - `wzzc-dev/moui/render/skia`
-- 对应的 shared app package，例如 `examples/showcase/app`
+- The corresponding shared app package, such as `examples/showcase/app`
 
-WGPU 相关 backend/render 包只作为实验或诊断入口使用，不是普通 app 或默认平台入口的推荐依赖。
+WGPU-related backend/render packages are for experimental or diagnostic
+entrypoints only; they are not recommended dependencies for ordinary apps or
+default platform entrypoints.
 
-平台入口包不应该承载业务 UI。业务 view/model/update 应留在共享 app 包，平台入口只负责 runtime + backend + renderer wiring。
+A platform entrypoint package must not contain business UI. Business views,
+models, and updates remain in the shared app package; the platform entrypoint is
+responsible only for runtime + backend + renderer wiring.
 
-## 框架和控件实现包
+## Framework and Control Implementation Packages
 
-框架内部、控件实现、renderer/backend 集成可以使用更低层的包。
+Framework internals, control implementations, and renderer/backend integrations
+may use lower-level packages.
 
-- `moui/core`：基础协议层 / 抽象 UI kernel，包含平台中立协议和值类型，
-  例如 `View`、event、layout、paint、semantics、text contract 等。
-- `moui/views`：app-facing constructor 与具体 custom view 控件行为实现。
-- `moui/runtime`：runtime state、element tree、layout/paint/event dispatch、program execution。
-- `moui/backend/host`：host service、window/event/service 协议。
-- `moui/backend/*`：平台 backend。
-- `moui/render/*`：renderer facade 和具体 renderer 实现。
-- `moui_richtext`：富文本/Markdown 文档、编辑、命令、输入、粘贴、表格与源码映射逻辑
-  addon，供 rich editing app（如 `examples/markdown_editor`、`examples/mo_workbench`、
-  `examples/showcase`）按需直接依赖；不进入 `core`、`views` 或领域 facade 默认依赖。
-- `moui_agent` / `moui_agent_mcp`：agent 协议、schema、host runtime 与 MCP router
-  support addon，供 agent-controllable app（如 `examples/agent_counter`）按需直接依赖；
-  不进入 `core`、`views` 或领域 facade 默认依赖。
-- `moui_theme/*`：设计系统 addon，不进入 `core`、`views` 或领域 facade 默认依赖。
+- `moui/core`: the foundational protocol layer / abstract UI kernel, containing
+  platform-neutral protocols and value types such as `View`, event, layout,
+  paint, semantics, and text contracts.
+- `moui/views`: app-facing constructors and concrete custom-view control-behavior
+  implementations.
+- `moui/runtime`: runtime state, element tree, layout/paint/event dispatch, and
+  program execution.
+- `moui/backend/host`: host services and window/event/service protocols.
+- `moui/backend/*`: platform backends.
+- `moui/render/*`: renderer facades and concrete renderer implementations.
+- `moui_richtext`: an addon for rich-text/Markdown documents, editing, commands,
+  input, paste, tables, and source mapping. Rich-editing apps such as
+  `examples/markdown_editor`, `examples/mo_workbench`, and `examples/showcase`
+  may depend on it directly as needed; it is not a default dependency of
+  `core`, `views`, or domain facades.
+- `moui_agent` / `moui_agent_mcp`: addons for agent protocols, schemas, host
+  runtimes, and MCP router support. Agent-controllable apps such as
+  `examples/agent_counter` may depend on them directly as needed; they are not
+  default dependencies of `core`, `views`, or domain facades.
+- `moui_theme/*`: design-system addons; they are not default dependencies of
+  `core`, `views`, or domain facades.
 
-普通 app 默认依赖 `moui/<领域>`（按需）与 `moui/views`；直接依赖 `moui_richtext`、
-`moui_agent*`、`moui_theme/*` 等 addon 仅在 app 明确需要该能力时才允许。直接依赖
-`moui/core`、`moui/backend/host` 的普通 app 由 API surface guard 的 advanced-app
-白名单约束（当前覆盖 `examples/markdown_editor/app`、`examples/mo_workbench/app`、
-`examples/pdf_workbench/app`、`examples/showcase/app`、`website/app` 中的 core 导入，
-以及 `examples/showcase/app` 的 runtime 导入）。
+Ordinary apps depend by default on `moui/<domain>` (as needed) and
+`moui/views`. Direct dependencies on addons such as `moui_richtext`,
+`moui_agent*`, and `moui_theme/*` are allowed only when an app explicitly needs
+that capability. Ordinary apps that directly depend on `moui/core` or
+`moui/backend/host` are constrained by the API-surface guard’s advanced-app
+allowlist (currently covering core imports in `examples/markdown_editor/app`,
+`examples/mo_workbench/app`, `examples/pdf_workbench/app`,
+`examples/showcase/app`, and `website/app`, plus the `runtime` import in
+`examples/showcase/app`).
 
 ## Review Checklist
 
-新增依赖或公开 API 前，先回答这些问题：
+Before adding a dependency or public API, answer these questions:
 
-- 这个 package 是普通共享 app、平台入口、测试，还是框架/控件实现？
-- 普通共享 app 是否依赖 `wzzc-dev/moui`、`wzzc-dev/moui/<领域>`（按需）与 `wzzc-dev/moui/views`？
-- 如果普通 app 直接 import `wzzc-dev/moui/core`，是否确实需要领域 facade 未覆盖的 kernel 类型（一等用法）？
-- 如果普通 app import `wzzc-dev/moui/backend/host`，是否确实需要 host service 协议？
-- 普通 app 是否错误依赖了 `runtime`、`render/*` 或平台 backend？
-- 新增领域 facade alias 是否是平台中立、app-safe、高频使用的类型，且已更新 API surface guard？
-- 新增低层 custom view helper 是否同时提供了 `moui/views` app-facing constructor？
-- 新增控件是否避免向 `core` 添加具体控件 enum variant、primitive constructor 或 runtime lowering 分支？
-- 新增 `core` API 是否真的是跨 runtime 的基础协议 / 抽象 UI kernel 能力？
-- 新增 style、form、webview、routing、rich text editor、diagnostics API 是否更适合
-  放在 `views`、`runtime`、`backend/host`、`moui_devtools` 或 addon？
-- `moui_theme/*` 是否仍然只是 addon/preview 依赖，没有进入普通 app 默认依赖？
+- Is this package an ordinary shared app, a platform entrypoint, a test, or a
+  framework/control implementation?
+- Does an ordinary shared app depend on `wzzc-dev/moui`,
+  `wzzc-dev/moui/<domain>` (as needed), and `wzzc-dev/moui/views`?
+- If an ordinary app imports `wzzc-dev/moui/core`, does it truly need a kernel
+  type that a domain facade does not cover (a first-class use case)?
+- If an ordinary app imports `wzzc-dev/moui/backend/host`, does it truly need a
+  host-service protocol?
+- Does an ordinary app incorrectly depend on `runtime`, `render/*`, or a
+  platform backend?
+- Is a new domain-facade alias a platform-neutral, app-safe, frequently used
+  type, and has the API-surface guard been updated?
+- Does a new low-level custom-view helper also provide an app-facing constructor
+  in `moui/views`?
+- Does a new control avoid adding a concrete control enum variant, primitive
+  constructor, or runtime-lowering branch to `core`?
+- Is a new `core` API truly a cross-runtime foundational protocol / abstract UI
+  kernel capability?
+- Would a new style, form, WebView, routing, rich-text editor, or diagnostics
+  API fit better in `views`, `runtime`, `backend/host`, `moui_devtools`, or an
+  addon?
+- Does `moui_theme/*` remain an addon/preview dependency rather than a default
+  dependency of ordinary apps?
 
-如果一个改动需要突破上述规则，必须在同一个变更中写明理由，并说明为什么它不是更适合放在 `views`、`runtime`、`backend` 或 `render` 的职责。
+If a change must break these rules, it must state its rationale in the same
+change and explain why the responsibility does not fit better in `views`,
+`runtime`, `backend`, or `render`.

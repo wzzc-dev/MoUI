@@ -36,6 +36,7 @@ Statuses are editorial signals for agents (not CI evidence grades).
 | [non-render-component-cookbook.md](non-render-component-cookbook.md) | `canonical` | Host services from app code |
 | [button-styling-guide.md](button-styling-guide.md) | `canonical` | Button colors / styles pipeline |
 | [text-system.md](text-system.md) | `deep` | Text architecture |
+| [internationalization.md](internationalization.md) | `canonical` | Message catalogs, locale selection, and bilingual docs workflow |
 | [visual-theme-system.md](visual-theme-system.md) | `deep` | Theme system |
 | [markdown-editor.md](markdown-editor.md) | `deep` | Markdown editor product behavior |
 

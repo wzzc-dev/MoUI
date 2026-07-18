@@ -1,0 +1,45 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_i18n"
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct Catalog {
+  messages : Map[String, Map[String, String]]
+}
+pub fn Catalog::from_entries(ArrayView[Message]) -> Self
+
+pub struct Locale {
+  language : String
+  script : String?
+  region : String?
+}
+pub fn Locale::canonical(Self) -> String
+pub fn Locale::fallback_candidates(Self) -> Array[String]
+pub fn Locale::language(Self) -> String
+pub fn Locale::parse(String) -> Self?
+pub fn Locale::region(Self) -> String?
+pub fn Locale::script(Self) -> String?
+
+pub(all) struct Message {
+  locale : String
+  key : String
+  value : String
+}
+pub fn Message::new(locale~ : String, key~ : String, value~ : String) -> Self
+
+pub struct Translator {
+  catalog : Catalog
+  locale : Locale
+  default_locale : Locale
+}
+pub fn Translator::new(catalog~ : Catalog, locale~ : Locale, default_locale~ : Locale) -> Self
+pub fn Translator::translate(Self, String, values? : ArrayView[(String, String)]) -> String
+pub fn Translator::translate_count(Self, String, Int, values? : ArrayView[(String, String)]) -> String
+
+// Type aliases
+
+// Traits
+

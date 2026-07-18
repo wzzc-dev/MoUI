@@ -4,6 +4,7 @@ fn Model::docs_content(
   theme : @moui.Theme,
   metrics : Metrics,
 ) -> @moui.View[Msg] {
+  let message = key => website_message(self.locale, key)
   let doc_width = if metrics.docs_compact {
     metrics.content_width
   } else {
@@ -11,7 +12,7 @@ fn Model::docs_content(
   }
   let content = if metrics.docs_compact {
     let summary_height = website_doc_wrap_lines(
-        docs_header_summary(),
+        docs_header_summary(self.locale),
         metrics.content_width,
         13.0,
       )
@@ -24,9 +25,9 @@ fn Model::docs_content(
     )
     column(
       [
-        docs_header(theme, metrics.content_width),
+        docs_header(theme, metrics.content_width, self.locale),
         button(
-          "Search & Contents",
+          message("docs.button"),
           on_click=ToggleDocsDrawer,
           variant=@views.ButtonVariant::Outline,
           theme~,
@@ -50,7 +51,7 @@ fn Model::docs_content(
     )
     column(
       [
-        docs_header(theme, metrics.content_width),
+        docs_header(theme, metrics.content_width, self.locale),
         row(
           [
             self.docs_sidebar(
@@ -84,12 +85,22 @@ fn Model::docs_content(
 }
 
 ///|
-fn docs_header(theme : @moui.Theme, width : Double) -> @moui.View[Msg] {
+fn docs_header(
+  theme : @moui.Theme,
+  width : Double,
+  locale : String,
+) -> @moui.View[Msg] {
+  let message = key => website_message(locale, key)
   column(
     [
-      badge("Runtime docs", tone=@views.BadgeTone::Accent, theme~, width=112.0),
+      badge(
+        message("docs.badge"),
+        tone=@views.BadgeTone::Accent,
+        theme~,
+        width=112.0,
+      ),
       docs_start_text(
-        "MoUI Documentation",
+        message("docs.title"),
         width~,
         height=38.0,
         font=@text.FontSpec::new(size=30.0, weight=820),
@@ -99,7 +110,7 @@ fn docs_header(theme : @moui.Theme, width : Double) -> @moui.View[Msg] {
       .semantics_level(1),
       docs_wrapped_text(
         theme,
-        docs_header_summary(),
+        docs_header_summary(locale),
         width,
         13.0,
         20.0,
@@ -112,8 +123,8 @@ fn docs_header(theme : @moui.Theme, width : Double) -> @moui.View[Msg] {
 }
 
 ///|
-fn docs_header_summary() -> String {
-  "Framework guides, platform support, architecture, contributor workflow, and evidence."
+fn docs_header_summary(locale : String) -> String {
+  website_message(locale, "docs.summary")
 }
 
 ///|
@@ -123,6 +134,7 @@ fn Model::docs_sidebar(
   width : Double,
   max_height : Double,
 ) -> @moui.View[Msg] {
+  let message = key => website_message(self.locale, key)
   let content_width = width - 28.0
   let groups : Array[@moui.View[Msg]] = []
   match self.website_catalog() {
@@ -157,7 +169,11 @@ fn Model::docs_sidebar(
                 height=36.0,
               )
               .on_tap(SelectDoc(entry.slug))
-              .accessibility_label("Open " + entry.title)
+              .accessibility_label(
+                website_message_with(self.locale, "docs.open", [
+                  ("title", entry.title),
+                ]),
+              )
               .semantics_role(@core.SemanticsRole::Link)
               .semantics_url("docs/" + entry.slug)
               .key("docs-nav-" + entry.slug),
@@ -188,7 +204,7 @@ fn Model::docs_sidebar(
       if groups.is_empty() {
         groups.push(
           docs_start_text(
-            "No documents match your search.",
+            message("docs.no_results"),
             width=content_width,
             height=24.0,
             font=theme.typography.caption,
@@ -211,12 +227,12 @@ fn Model::docs_sidebar(
         text_field(
           self.docs_search,
           on_input=value => SearchDocs(value),
-          placeholder="Search docs",
+          placeholder=message("docs.search"),
           variant=@views.TextFieldVariant::Outline,
           theme~,
           width=content_width,
           height=40.0,
-        ).accessibility_label("Search documentation"),
+        ).accessibility_label(message("docs.search_a11y")),
         scroll_view(
           catalog_content,
           state=Some(self.docs_body_scroll),
@@ -237,7 +253,7 @@ fn Model::docs_sidebar(
   )
   .border(website_border(theme))
   .semantics_role(@core.SemanticsRole::Navigation)
-  .accessibility_label("Documentation navigation")
+  .accessibility_label(message("docs.navigation"))
 }
 
 ///|
@@ -253,23 +269,29 @@ fn Model::docs_document_panel(
       docs_status_panel(
         theme,
         width,
-        "Loading documentation",
-        "Reading docs/catalog.json",
+        website_message(self.locale, "docs.loading_catalog"),
+        website_message(self.locale, "docs.reading_catalog"),
         RetryCatalog,
-        "Retry",
+        website_message(self.locale, "action.retry"),
       )
     CatalogFailed(reason) =>
       docs_status_panel(
         theme,
         width,
-        "Could not load documentation",
+        website_message(self.locale, "docs.catalog_failed"),
         reason,
         RetryCatalog,
-        "Retry",
+        website_message(self.locale, "action.retry"),
       )
     CatalogLoaded(catalog) =>
       match catalog.entry_by_slug(self.selected_doc_slug) {
-        None => docs_not_found_panel(theme, width, self.selected_doc_slug)
+        None =>
+          docs_not_found_panel(
+            theme,
+            width,
+            self.selected_doc_slug,
+            self.locale,
+          )
         Some(entry) =>
           match self.doc_state {
             DocLoaded(_, document) => {
@@ -342,29 +364,30 @@ fn Model::docs_document_panel(
               docs_status_panel(
                 theme,
                 width,
-                "Loading Markdown",
+                website_message(self.locale, "docs.loading_markdown"),
                 path,
                 RetryDoc,
-                "Retry",
+                website_message(self.locale, "action.retry"),
               )
             DocFailed(path, reason) =>
               docs_status_panel(
                 theme,
                 width,
-                "Could not load Markdown",
+                website_message(self.locale, "docs.markdown_failed"),
                 path + "\n" + reason,
                 RetryDoc,
-                "Retry",
+                website_message(self.locale, "action.retry"),
               )
-            DocNotFound(slug) => docs_not_found_panel(theme, width, slug)
+            DocNotFound(slug) =>
+              docs_not_found_panel(theme, width, slug, self.locale)
             DocNotLoaded =>
               docs_status_panel(
                 theme,
                 width,
-                "Preparing document",
+                website_message(self.locale, "docs.preparing"),
                 entry.path,
                 RetryDoc,
-                "Load",
+                website_message(self.locale, "action.load"),
               )
           }
       }
@@ -376,12 +399,14 @@ fn docs_not_found_panel(
   theme : @moui.Theme,
   width : Double,
   slug : String,
+  locale : String,
 ) -> @moui.View[Msg] {
+  let message = key => website_message(locale, key)
   container(
     column(
       [
         docs_start_text(
-          "Document not found",
+          message("docs.not_found"),
           width=width - 40.0,
           height=34.0,
           font=@text.FontSpec::new(size=22.0, weight=780),
@@ -391,14 +416,14 @@ fn docs_not_found_panel(
         .semantics_level(1),
         docs_wrapped_text(
           theme,
-          "No public documentation entry matches '" + slug + "'.",
+          website_message_with(locale, "docs.not_found_detail", [("slug", slug)]),
           width - 40.0,
           14.0,
           22.0,
           muted=true,
         ),
         button(
-          "Open Docs",
+          message("action.open_docs"),
           on_click=SelectDoc("moui-readme"),
           variant=@views.ButtonVariant::Outline,
           theme~,

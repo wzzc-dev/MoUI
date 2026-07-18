@@ -1,5 +1,5 @@
 ///|
-test "website initial render includes bilingual homepage sections" {
+test "website initial render includes localized English homepage sections" {
   let runtime = test_program_runtime(width=1180.0, height=760.0)
   let commands = runtime.draw_commands()
   assert_true(has_text(commands, "MoUI"))
@@ -14,7 +14,7 @@ test "website initial render includes bilingual homepage sections" {
   )
   assert_true(
     has_text(
-      commands, "用 MoonBit 写一次应用逻辑，让 Web 与原生宿主共享同一套界面模型。",
+      commands, "Write application logic once in MoonBit and share one UI model across Web and native hosts.",
     ),
   )
   assert_true(has_text(commands, "Source"))
@@ -24,15 +24,11 @@ test "website initial render includes bilingual homepage sections" {
   assert_true(has_text(commands, "Built with MoUI"))
   assert_true(has_text(commands, "Markdown Editor"))
   assert_true(has_text(commands, "Mo Workbench"))
-  assert_true(has_text(commands, "Quick Start / 快速开始"))
-  assert_true(
-    has_text(
-      commands, "From zero to a running app in three steps. / 三步从零跑通应用。",
-    ),
-  )
-  assert_true(has_text(commands, "Install the CLI / 安装 CLI"))
-  assert_true(has_text(commands, "Create the app / 创建应用"))
-  assert_true(has_text(commands, "Run on the host / 在本机运行"))
+  assert_true(has_text(commands, "Quick Start"))
+  assert_true(has_text(commands, "From zero to a running app in three steps."))
+  assert_true(has_text(commands, "Install the CLI"))
+  assert_true(has_text(commands, "Create the app"))
+  assert_true(has_text(commands, "Run on the host"))
   assert_true(has_text(commands, "moon install wzzc-dev/moui_cli/cmd/moui"))
   assert_true(has_text(commands, "moui new my_app"))
   assert_true(has_text(commands, "cd my_app"))
@@ -48,6 +44,63 @@ test "website initial render includes bilingual homepage sections" {
   assert_false(
     has_text(commands, "$ moon build website/web_wasm --target wasm-gc"),
   )
+}
+
+///|
+test "website renders Simplified Chinese from environment locale" {
+  let environment = @moui.Environment::neutral().with_locale("zh-Hans")
+  let runtime = @runtime.new_program_with_dimensions(
+    program=program(),
+    width=1180.0,
+    height=760.0,
+    environment~,
+  )
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "MoonBit GUI 框架"))
+  assert_true(has_text(commands, "强类型声明式 UI"))
+  assert_true(has_text(commands, "快速开始"))
+  assert_true(has_text(commands, "阅读文档"))
+}
+
+///|
+test "website selects Simplified Chinese route and catalog" {
+  let requested_paths : Array[String] = []
+  let applied_locales : Array[String] = []
+  let pushed_routes : Array[String] = []
+  let bridge = @host.HostServiceBridge::new(
+    capabilities=@host.HostServiceCapabilities::new(file_access=true),
+    handle=request => {
+      match request {
+        @host.HostServiceRequest::TextFile(
+          @host.HostTextFileRequest::ReadText(path)
+        ) => {
+          requested_paths.push(path)
+          @host.HostServiceResponse::TextFileContent(
+            path,
+            website_test_catalog().to_json().stringify(),
+          )
+        }
+        _ => @host.HostServiceResponse::Unavailable("unexpected request")
+      }
+    },
+  )
+  let route_host = WebsiteRouteHost::new(
+    route_source=@host.HostRouteSource::new(),
+    apply_locale=locale => applied_locales.push(locale),
+    push_route=route => pushed_routes.push(route),
+  )
+  let runtime = test_runtime(
+    Model::new().program_with_services(
+      @host.HostAppServices::new(bridge~),
+      route_host=Some(route_host),
+    ),
+    width=1180.0,
+    height=760.0,
+  )
+  click_text(runtime, "中")
+  inspect(requested_paths.last().unwrap(), content="docs/zh-Hans/catalog.json")
+  inspect(applied_locales.last().unwrap(), content="zh-Hans")
+  inspect(pushed_routes.last().unwrap(), content="home?lang=zh-Hans")
 }
 
 ///|
@@ -84,8 +137,7 @@ test "website Get Started navigates and GitHub opens repository URL" {
     runtime
     .draw_commands()
     .any(command => {
-      command
-      is @core.DrawCommand::DrawText({ text: "Quick Start / 快速开始", .. })
+      command is @core.DrawCommand::DrawText({ text: "Quick Start", .. })
     }),
   )
   click_text(runtime, "GitHub")
@@ -613,17 +665,19 @@ test "website route host receives deep-link and anchor commands" {
     width=1180.0,
     height=760.0,
   )
-  click_text(runtime, "Quick Start")
-  assert_true(
-    commands.any(command => {
-      command is WebsiteRouteCommand::PushRoute("home?anchor=quick-start")
-    }),
-  )
-  assert_true(
-    commands.any(command => {
-      command is WebsiteRouteCommand::ScrollToKey("home-quick-start", _)
-    }),
-  )
+  guard text_frame(runtime.draw_commands(), "Quick Start") is Some(frame) else {
+    fail("expected Quick Start")
+  }
+  click_frame(runtime, frame)
+  inspect(commands.length(), content="2")
+  match commands[0] {
+    PushRoute(route) => inspect(route, content="home?anchor=quick-start")
+    _ => fail("expected route push")
+  }
+  match commands[1] {
+    ScrollToKey(key, _) => inspect(key, content="home-quick-start")
+    _ => fail("expected anchor scroll")
+  }
 }
 
 ///|
@@ -631,7 +685,9 @@ test "website docs metadata refreshes after deep-link catalog load" {
   let titles : Array[String] = []
   let route_host = WebsiteRouteHost::new(
     route_source=@host.HostRouteSource::new(),
-    update_metadata=(title, _description, _canonical) => titles.push(title),
+    update_metadata=(title, _description, _canonical, _locale, _direction) => {
+      titles.push(title)
+    },
   )
   let model = {
     ..Model::new(),
@@ -988,7 +1044,7 @@ test "website tutorial cards wrap within the desktop content width" {
   assert_true(third.origin.y > first.origin.y)
   assert_true(text_within(commands, "06-animation", size))
   assert_true(has_text(commands, "MOUI TUTORIAL"))
-  assert_true(has_text(commands, "Course map / 课程地图"))
+  assert_true(has_text(commands, "Course map"))
   assert_true(has_text(commands, "LESSON 06"))
   assert_true(has_text(commands, "Open lesson"))
 }

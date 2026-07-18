@@ -2,24 +2,24 @@
 priv struct TutorialLesson {
   id : String
   number : String
-  title_zh : String
-  title_en : String
-  summary : String
-  concepts : Array[String]
+  title_key : String
+  subtitle_key : String
+  summary_key : String
+  concept_keys : Array[String]
   accent : @graphics.Color
 }
 
 ///|
 fn Model::tutorial_content(
-  _self : Model,
+  self : Model,
   theme : @moui.Theme,
   metrics : Metrics,
 ) -> @moui.View[Msg] {
   column(
     [
-      tutorial_intro_section(theme, metrics),
-      tutorial_course_section(theme, metrics),
-      tutorial_action_section(theme, metrics),
+      tutorial_intro_section(self.locale, theme, metrics),
+      tutorial_course_section(self.locale, theme, metrics),
+      tutorial_action_section(self.locale, theme, metrics),
     ],
     spacing=0.0,
     align=@views.CrossAlign::Start,
@@ -28,6 +28,7 @@ fn Model::tutorial_content(
 
 ///|
 fn tutorial_intro_section(
+  locale : String,
   theme : @moui.Theme,
   metrics : Metrics,
 ) -> @moui.View[Msg] {
@@ -51,14 +52,14 @@ fn tutorial_intro_section(
           padding=0.0,
         ),
         badge(
-          "MOUI TUTORIAL",
+          website_message(locale, "tutorial.badge"),
           tone=@views.BadgeTone::Accent,
           theme~,
           width=116.0,
           height=26.0,
         ),
         text(
-          "MoUI Tutorial",
+          website_message(locale, "tutorial.title"),
           theme~,
           width=metrics.content_width,
           height=if metrics.compact { 46.0 } else { 54.0 },
@@ -72,7 +73,7 @@ fn tutorial_intro_section(
         )
         .foreground(theme.palette.foreground),
         text(
-          "从第一行 MoonBit 到可分享的界面",
+          website_message(locale, "tutorial.subtitle"),
           theme~,
           width=metrics.content_width,
           height=32.0,
@@ -83,7 +84,7 @@ fn tutorial_intro_section(
         tutorial_wrapped_text(
           theme,
           summary_width,
-          "Six focused lessons covering layout, state, themes, component composition, and motion transitions.",
+          website_message(locale, "tutorial.summary"),
           if metrics.compact {
             14.0
           } else {
@@ -93,8 +94,20 @@ fn tutorial_intro_section(
         ),
         row(
           [
-            badge("6 LESSONS", theme~, width=92.0, height=24.0),
-            badge("MOONBIT", theme~, width=84.0, height=24.0),
+            badge(
+              website_message_with(locale, "tutorial.lesson_count", [
+                ("count", "6"),
+              ]),
+              theme~,
+              width=92.0,
+              height=24.0,
+            ),
+            badge(
+              website_message(locale, "tutorial.moonbit_badge"),
+              theme~,
+              width=84.0,
+              height=24.0,
+            ),
           ],
           spacing=8.0,
           align=@views.CrossAlign::Center,
@@ -111,6 +124,7 @@ fn tutorial_intro_section(
 
 ///|
 fn tutorial_course_section(
+  locale : String,
   theme : @moui.Theme,
   metrics : Metrics,
 ) -> @moui.View[Msg] {
@@ -123,7 +137,9 @@ fn tutorial_course_section(
     lesson_columns.to_double()
   let cards : Array[@moui.View[Msg]] = []
   for lesson in lessons {
-    cards.push(tutorial_lesson_card(lesson, theme, card_width, metrics.compact))
+    cards.push(
+      tutorial_lesson_card(lesson, locale, theme, card_width, metrics.compact),
+    )
   }
   section_shell(
     theme,
@@ -133,7 +149,7 @@ fn tutorial_course_section(
         column(
           [
             text(
-              "Course map / 课程地图",
+              website_message(locale, "tutorial.course_map.title"),
               theme~,
               width=metrics.content_width,
               height=40.0,
@@ -144,7 +160,7 @@ fn tutorial_course_section(
             tutorial_wrapped_text(
               theme,
               metrics.content_width,
-              "Follow the sequence or jump directly to the concept you need.",
+              website_message(locale, "tutorial.course_map.summary"),
               14.0,
               22.0,
             ),
@@ -166,6 +182,7 @@ fn tutorial_course_section(
 ///|
 fn tutorial_lesson_card(
   lesson : TutorialLesson,
+  locale : String,
   theme : @moui.Theme,
   width : Double,
   compact : Bool,
@@ -173,8 +190,10 @@ fn tutorial_lesson_card(
   let inner_width = max_website_double(220.0, width - 36.0)
   let id_width = max_website_double(80.0, inner_width - 112.0)
   let tags : Array[@moui.View[Msg]] = []
-  for concept in lesson.concepts {
-    tags.push(tag(concept, theme~, width=96.0, height=24.0))
+  for concept_key in lesson.concept_keys {
+    tags.push(
+      tag(website_message(locale, concept_key), theme~, width=96.0, height=24.0),
+    )
   }
   container(
     column(
@@ -191,7 +210,9 @@ fn tutorial_lesson_card(
         row(
           [
             badge(
-              "LESSON " + lesson.number,
+              website_message_with(locale, "tutorial.lesson.badge", [
+                ("number", lesson.number),
+              ]),
               tone=@views.BadgeTone::Accent,
               theme~,
               width=96.0,
@@ -211,7 +232,7 @@ fn tutorial_lesson_card(
           align=@views.CrossAlign::Center,
         ).frame(width=inner_width),
         text(
-          lesson.title_zh,
+          website_message(locale, lesson.title_key),
           theme~,
           width=inner_width,
           height=28.0,
@@ -220,7 +241,7 @@ fn tutorial_lesson_card(
         .font(@text.FontSpec::new(size=20.0, weight=800))
         .foreground(theme.palette.foreground),
         text(
-          lesson.title_en,
+          website_message(locale, lesson.subtitle_key),
           theme~,
           width=inner_width,
           height=22.0,
@@ -228,10 +249,16 @@ fn tutorial_lesson_card(
         )
         .font(@text.FontSpec::new(size=14.0, weight=650))
         .foreground(lesson.accent),
-        tutorial_wrapped_text(theme, inner_width, lesson.summary, 13.0, 20.0),
+        tutorial_wrapped_text(
+          theme,
+          inner_width,
+          website_message(locale, lesson.summary_key),
+          13.0,
+          20.0,
+        ),
         row(tags, spacing=8.0, align=@views.CrossAlign::Center),
         button(
-          "Open lesson",
+          website_message(locale, "action.open_lesson"),
           on_click=OpenPlaygroundLesson(lesson.id),
           variant=@views.ButtonVariant::Tonal,
           icon=Some(@views.IconName::ArrowRight),
@@ -254,6 +281,7 @@ fn tutorial_lesson_card(
 
 ///|
 fn tutorial_action_section(
+  locale : String,
   theme : @moui.Theme,
   metrics : Metrics,
 ) -> @moui.View[Msg] {
@@ -265,7 +293,7 @@ fn tutorial_action_section(
   let copy = column(
     [
       text(
-        "Continue in Playground",
+        website_message(locale, "tutorial.continue.title"),
         theme~,
         width=copy_width,
         height=34.0,
@@ -274,7 +302,10 @@ fn tutorial_action_section(
       .font(@text.FontSpec::new(size=24.0, weight=820))
       .foreground(theme.palette.foreground),
       tutorial_wrapped_text(
-        theme, copy_width, "把课程代码变成你自己的 MoUI 界面。", 14.0,
+        theme,
+        copy_width,
+        website_message(locale, "tutorial.continue.summary"),
+        14.0,
         22.0,
       ),
     ],
@@ -282,7 +313,7 @@ fn tutorial_action_section(
     align=@views.CrossAlign::Start,
   ).frame(width=copy_width)
   let action = button(
-    "Open Playground",
+    website_message(locale, "action.open_playground"),
     on_click=OpenPlayground,
     variant=@views.ButtonVariant::Primary,
     icon=Some(@views.IconName::ArrowRight),
@@ -315,55 +346,55 @@ fn tutorial_lessons(theme : @moui.Theme) -> Array[TutorialLesson] {
     {
       id: "01-hello-world",
       number: "01",
-      title_zh: "第一个 MoUI 程序",
-      title_en: "Your first MoUI program",
-      summary: "认识 Program、Model 和 View。 Meet Program, Model, and View.",
-      concepts: ["Program", "View"],
+      title_key: "tutorial.lesson.01.title",
+      subtitle_key: "tutorial.lesson.01.subtitle",
+      summary_key: "tutorial.lesson.01.summary",
+      concept_keys: ["tutorial.concept.program", "tutorial.concept.view"],
       accent: website_blue(theme),
     },
     {
       id: "02-layout",
       number: "02",
-      title_zh: "布局",
-      title_en: "Layout",
-      summary: "用 Row 和 Column 组织清晰的界面结构。 Compose with rows and columns.",
-      concepts: ["Row", "Column"],
+      title_key: "tutorial.lesson.02.title",
+      subtitle_key: "tutorial.lesson.02.subtitle",
+      summary_key: "tutorial.lesson.02.summary",
+      concept_keys: ["tutorial.concept.row", "tutorial.concept.column"],
       accent: website_green(theme),
     },
     {
       id: "03-state-events",
       number: "03",
-      title_zh: "状态与事件",
-      title_en: "State and events",
-      summary: "通过 Msg 与 update 响应交互。 Make state changes explicit.",
-      concepts: ["Model", "Msg"],
+      title_key: "tutorial.lesson.03.title",
+      subtitle_key: "tutorial.lesson.03.subtitle",
+      summary_key: "tutorial.lesson.03.summary",
+      concept_keys: ["tutorial.concept.model", "tutorial.concept.msg"],
       accent: website_amber(theme),
     },
     {
       id: "04-theme-styling",
       number: "04",
-      title_zh: "主题与样式",
-      title_en: "Themes and styling",
-      summary: "使用主题 token 统一颜色、文字和间距。 Style with theme tokens.",
-      concepts: ["Theme", "Tokens"],
+      title_key: "tutorial.lesson.04.title",
+      subtitle_key: "tutorial.lesson.04.subtitle",
+      summary_key: "tutorial.lesson.04.summary",
+      concept_keys: ["tutorial.concept.theme", "tutorial.concept.tokens"],
       accent: website_blue(theme),
     },
     {
       id: "05-component-composition",
       number: "05",
-      title_zh: "组件拆分",
-      title_en: "Component composition",
-      summary: "把重复界面提取成可复用组件。 Extract reusable components.",
-      concepts: ["Component", "Reuse"],
+      title_key: "tutorial.lesson.05.title",
+      subtitle_key: "tutorial.lesson.05.subtitle",
+      summary_key: "tutorial.lesson.05.summary",
+      concept_keys: ["tutorial.concept.component", "tutorial.concept.reuse"],
       accent: website_green(theme),
     },
     {
       id: "06-animation",
       number: "06",
-      title_zh: "画布动画",
-      title_en: "Canvas animation",
-      summary: "用 animated_canvas 与 paint 时钟自动驱动小球。 Continuous orb motion from now_ms.",
-      concepts: ["Canvas", "now_ms"],
+      title_key: "tutorial.lesson.06.title",
+      subtitle_key: "tutorial.lesson.06.subtitle",
+      summary_key: "tutorial.lesson.06.summary",
+      concept_keys: ["tutorial.concept.canvas", "tutorial.concept.now_ms"],
       accent: website_amber(theme),
     },
   ]

@@ -1,7 +1,7 @@
 # TEA Program Model
 
-> 本文档描述 MoUI 应用的 TEA 模型（View、Program、Effect、Subscription）。
-> 概述见 [Architecture](../architecture.md)。
+> This document describes the TEA model for MoUI applications (`View`, `Program`, `Effect`, and `Subscription`).
+> For an overview, see [Architecture](architecture.md).
 
 **App-author recipes** (timer, clipboard, file open, window resize, shortcuts)
 live in [Non-render component cookbook](non-render-component-cookbook.md) and

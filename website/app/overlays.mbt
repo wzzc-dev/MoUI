@@ -33,92 +33,117 @@ fn Model::mobile_menu_sheet(
 ) -> @moui.View[Msg] {
   let width = metrics.viewport.width
   let item_width = width - 40.0
+  let message = key => website_message(self.locale, key)
   @views.sheet(
     content=container(
-      column(
-        [
-          docs_start_text(
-            "Navigate",
-            width=item_width,
-            height=30.0,
-            font=@text.FontSpec::new(size=20.0, weight=780),
-            color=theme.palette.foreground,
-          )
-          .semantics_role(@core.SemanticsRole::Heading)
-          .semantics_level(2),
-          button(
-            "Home",
-            on_click=OpenHome,
-            variant=@views.ButtonVariant::Ghost,
-            theme~,
-            width=item_width,
-            height=40.0,
-          ),
-          button(
-            "Tutorial",
-            on_click=OpenTutorial,
-            variant=@views.ButtonVariant::Ghost,
-            theme~,
-            width=item_width,
-            height=40.0,
-          ),
-          button(
-            "Quick Start",
-            on_click=OpenHomeAnchor("quick-start"),
-            variant=@views.ButtonVariant::Ghost,
-            theme~,
-            width=item_width,
-            height=40.0,
-          ),
-          button(
-            "Showcases",
-            on_click=OpenShowcases,
-            variant=@views.ButtonVariant::Ghost,
-            theme~,
-            width=item_width,
-            height=40.0,
-          ),
-          button(
-            "Docs",
-            on_click=OpenDocs,
-            variant=@views.ButtonVariant::Ghost,
-            theme~,
-            width=item_width,
-            height=40.0,
-          ),
-          button(
-            "GitHub",
-            on_click=OpenRepository,
-            variant=@views.ButtonVariant::Ghost,
-            theme~,
-            width=item_width,
-            height=40.0,
-          )
-          .semantics_role(@core.SemanticsRole::Link)
-          .semantics_url(moui_repository_url()),
-          button(
-            if self.dark {
-              "Light theme"
-            } else {
-              "Dark theme"
-            },
-            on_click=ToggleDark,
-            variant=@views.ButtonVariant::Outline,
-            theme~,
-            width=item_width,
-            height=40.0,
-          ),
-        ],
-        spacing=4.0,
-        align=@views.CrossAlign::Start,
-      ),
-      width~,
-      height=390.0,
-      background=theme.palette.surface,
-      corner_radius=8.0,
-      theme~,
-      padding=20.0,
-    ).semantics_role(@core.SemanticsRole::Navigation),
+        column(
+          [
+            docs_start_text(
+              message("nav.navigate"),
+              width=item_width,
+              height=30.0,
+              font=@text.FontSpec::new(size=20.0, weight=780),
+              color=theme.palette.foreground,
+            )
+            .semantics_role(@core.SemanticsRole::Heading)
+            .semantics_level(2),
+            button(
+              message("nav.home"),
+              on_click=OpenHome,
+              variant=@views.ButtonVariant::Ghost,
+              theme~,
+              width=item_width,
+              height=40.0,
+            ),
+            button(
+              message("nav.tutorial"),
+              on_click=OpenTutorial,
+              variant=@views.ButtonVariant::Ghost,
+              theme~,
+              width=item_width,
+              height=40.0,
+            ),
+            button(
+              message("nav.quick_start"),
+              on_click=OpenHomeAnchor("quick-start"),
+              variant=@views.ButtonVariant::Ghost,
+              theme~,
+              width=item_width,
+              height=40.0,
+            ),
+            button(
+              message("nav.showcases"),
+              on_click=OpenShowcases,
+              variant=@views.ButtonVariant::Ghost,
+              theme~,
+              width=item_width,
+              height=40.0,
+            ),
+            button(
+              message("nav.docs"),
+              on_click=OpenDocs,
+              variant=@views.ButtonVariant::Ghost,
+              theme~,
+              width=item_width,
+              height=40.0,
+            ),
+            button(
+              message("nav.github"),
+              on_click=OpenRepository,
+              variant=@views.ButtonVariant::Ghost,
+              theme~,
+              width=item_width,
+              height=40.0,
+            )
+            .semantics_role(@core.SemanticsRole::Link)
+            .semantics_url(moui_repository_url()),
+            button(
+              if self.dark {
+                message("theme.light")
+              } else {
+                message("theme.dark")
+              },
+              on_click=ToggleDark,
+              variant=@views.ButtonVariant::Outline,
+              theme~,
+              width=item_width,
+              height=40.0,
+            ),
+            row(
+              [
+                button(
+                  message("site.english"),
+                  on_click=SelectLocale("en-US"),
+                  variant=@views.ButtonVariant::Ghost,
+                  theme~,
+                  width=(item_width - 8.0) / 2.0,
+                  height=40.0,
+                ).accessibility_label(message("site.english")),
+                button(
+                  message("site.chinese"),
+                  on_click=SelectLocale("zh-Hans"),
+                  variant=@views.ButtonVariant::Ghost,
+                  theme~,
+                  width=(item_width - 8.0) / 2.0,
+                  height=40.0,
+                ).accessibility_label(message("site.chinese")),
+              ],
+              spacing=8.0,
+              align=@views.CrossAlign::Center,
+            ),
+          ],
+          spacing=4.0,
+          align=@views.CrossAlign::Start,
+        ),
+        width~,
+        height=434.0,
+        background=theme.palette.surface,
+        corner_radius=8.0,
+        theme~,
+        padding=20.0,
+      )
+      .semantics_role(@core.SemanticsRole::Navigation)
+      .accessibility_label(message("site.navigation")),
     presentation_mode=@views.SheetPresentationMode::BottomSheet,
     theme~,
     on_dismiss=Some(CloseMobileMenu),

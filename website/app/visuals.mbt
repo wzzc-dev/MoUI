@@ -5,6 +5,7 @@ fn hero_demo_panel(
   height : Double,
   compact : Bool,
   count : Int,
+  locale : String,
 ) -> @moui.View[Msg] {
   let padding = if compact { 8.0 } else { 10.0 }
   let gap = if compact { 6.0 } else { 12.0 }
@@ -15,8 +16,10 @@ fn hero_demo_panel(
   container(
     row(
       [
-        hero_source_panel(theme, source_width, inner_height, compact),
-        hero_counter_panel(theme, counter_width, inner_height, compact, count),
+        hero_source_panel(theme, source_width, inner_height, compact, locale),
+        hero_counter_panel(
+          theme, counter_width, inner_height, compact, count, locale,
+        ),
       ],
       spacing=gap,
       align=@views.CrossAlign::Center,
@@ -36,12 +39,19 @@ fn hero_source_panel(
   width : Double,
   height : Double,
   compact : Bool,
+  locale : String,
 ) -> @moui.View[Msg] {
   let header_height = if compact { 34.0 } else { 36.0 }
   container(
     column(
       [
-        hero_demo_header(theme, "Source", "View[Msg]", width, header_height),
+        hero_demo_header(
+          theme,
+          website_message(locale, "hero.source"),
+          "View[Msg]",
+          width,
+          header_height,
+        ),
         hero_source_code(theme, width, height - header_height, compact),
       ],
       spacing=0.0,
@@ -63,13 +73,27 @@ fn hero_counter_panel(
   height : Double,
   compact : Bool,
   count : Int,
+  locale : String,
 ) -> @moui.View[Msg] {
   let header_height = if compact { 34.0 } else { 36.0 }
   container(
     column(
       [
-        hero_demo_header(theme, "Counter", "TEA", width, header_height),
-        hero_counter_demo(theme, width, height - header_height, compact, count),
+        hero_demo_header(
+          theme,
+          website_message(locale, "hero.counter"),
+          "TEA",
+          width,
+          header_height,
+        ),
+        hero_counter_demo(
+          theme,
+          width,
+          height - header_height,
+          compact,
+          count,
+          locale,
+        ),
       ],
       spacing=0.0,
       align=@views.CrossAlign::Start,
@@ -198,6 +222,7 @@ fn hero_counter_demo(
   height : Double,
   compact : Bool,
   count : Int,
+  locale : String,
 ) -> @moui.View[Msg] {
   let narrow = width < 220.0
   let padding = if narrow { 10.0 } else if compact { 16.0 } else { 24.0 }
@@ -221,12 +246,20 @@ fn hero_counter_demo(
     column(
       [
         spacer(min_length=0.0, weight=1.0),
-        text("Live Counter", width=inner_width, height=32.0)
+        text(
+          website_message(locale, "hero.live_counter"),
+          width=inner_width,
+          height=32.0,
+        )
         .font(
           @text.FontSpec::new(size=if narrow { 17.0 } else { 22.0 }, weight=820),
         )
         .foreground(theme.palette.foreground),
-        text("Model -> update -> view", width=inner_width, height=24.0)
+        text(
+          website_message(locale, "hero.runtime_caption"),
+          width=inner_width,
+          height=24.0,
+        )
         .font(
           code_snippet_font(
             if narrow {
@@ -261,7 +294,7 @@ fn hero_counter_demo(
               height=if narrow { 30.0 } else if compact { 34.0 } else { 38.0 },
             ),
             button(
-              "Reset",
+              website_message(locale, "hero.reset"),
               on_click=CounterReset,
               variant=@views.ButtonVariant::Outline,
               theme~,
