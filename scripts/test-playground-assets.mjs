@@ -32,6 +32,11 @@ assert.match(index, /playground\.wasm\?v=[0-9a-f]{16}/, "Playground Wasm URL is 
 assert.ok(index.includes("grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)"), "desktop split layout is missing");
 assert.ok(index.includes("begin_example_request"), "example selector host import is missing");
 assert.ok(index.includes("finish_example_request"), "example selector host completion is missing");
+assert.match(
+  index,
+  /\[role="menu"\]\[aria-expanded="true"\][\s\S]*height: 248px !important;[\s\S]*cursor: default;[\s\S]*z-index: 1;/,
+  "expanded picker options do not own their cursor hit area",
+);
 const previewHost = readFileSync(join(root, "host/preview-host.js"), "utf8");
 assert.ok(previewHost.includes('.moui-semantics-layer [role="button"]'), "preview buttons are not directly interactive");
 assert.ok(previewHost.includes("pointer-events:auto!important"), "preview button pointer events are disabled");
