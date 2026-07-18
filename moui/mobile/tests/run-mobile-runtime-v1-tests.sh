@@ -93,7 +93,7 @@ default_app_symbols=(
   moui_mobile_complete_clipboard_v1
 )
 for symbol in "${default_app_symbols[@]}"; do
-  if ! rg -q "(^|[[:space:]])_?${symbol}($|[[:space:]])" \
+  if ! grep -Eq "(^|[[:space:]])_?${symbol}($|[[:space:]])" \
       "$tmp_dir/nm-adapter-default-symbols.txt"; then
     echo "default ABI adapter does not reference fixed app symbol: $symbol" >&2
     exit 1
@@ -159,7 +159,7 @@ run_variant() {
     -o "$executable"
 
   nm -g "$adapter_object" >"$tmp_dir/nm-adapter-$variant.txt"
-  if ! rg -q '[[:space:]][Tt][[:space:]]_?moui_mobile_get_runtime_api_v1$' \
+  if ! grep -Eq '[[:space:]][Tt][[:space:]]_?moui_mobile_get_runtime_api_v1$' \
       "$tmp_dir/nm-adapter-$variant.txt"; then
     echo "ABI getter is not a defined global symbol for $variant." >&2
     sed -n '1,120p' "$tmp_dir/nm-adapter-$variant.txt" >&2
@@ -173,7 +173,7 @@ run_variant() {
   fi
 }
 
-if rg -q 'moonbit_(string|bytes)_t' \
+if grep -Eq 'moonbit_(string|bytes)_t' \
     "$header_dir/moui_mobile_runtime_v1.h"; then
   echo "Published ABI header leaks MoonBit object types." >&2
   exit 1
