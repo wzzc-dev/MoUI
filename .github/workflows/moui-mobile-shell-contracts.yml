@@ -60,6 +60,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Install native Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwayland-dev libwayland-bin wayland-protocols pkg-config \
+            clang cmake ninja-build
+
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
 
