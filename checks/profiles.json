@@ -482,10 +482,25 @@
           ]
         },
         {
+          "name": "website showcase asset generation check",
+          "argv": [
+            "node",
+            "scripts/gen-website-showcase-assets.mjs",
+            "--check"
+          ]
+        },
+        {
           "name": "Web semantics DOM tests",
           "argv": [
             "node",
             "scripts/test-web-semantics-dom.mjs"
+          ]
+        },
+        {
+          "name": "WebGPU runtime shader and text-selection tests",
+          "argv": [
+            "node",
+            "scripts/test-webgpu-runtime-radial.mjs"
           ]
         },
         {

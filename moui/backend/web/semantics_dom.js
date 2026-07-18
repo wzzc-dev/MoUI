@@ -26,10 +26,15 @@ const semanticTag = node => {
 
 const setOptionalAttribute = (element, name, value) => {
   if (value === undefined || value === null || value === "") {
-    element.removeAttribute(name);
-  } else {
-    element.setAttribute(name, `${value}`);
+    if (element.getAttribute(name) !== null) element.removeAttribute(name);
+    return;
   }
+  const next = `${value}`;
+  if (element.getAttribute(name) !== next) element.setAttribute(name, next);
+};
+
+const setStyle = (element, name, value) => {
+  if (element.style[name] !== value) element.style[name] = value;
 };
 
 const focusableActions = actions =>
@@ -151,41 +156,70 @@ export function createSemanticsDomManager(options = {}) {
     const frame = node.frame ?? {};
     const origin = frame.origin ?? {};
     const size = frame.size ?? {};
-    element.style.position = "absolute";
-    element.style.left = `${(Number(origin.x) || 0) - (Number(parentFrame?.x) || 0)}px`;
-    element.style.top = `${(Number(origin.y) || 0) - (Number(parentFrame?.y) || 0)}px`;
-    element.style.width = `${Math.max(0, Number(size.width) || 0)}px`;
-    element.style.height = `${Math.max(0, Number(size.height) || 0)}px`;
-    element.style.opacity = "0.001";
-    element.style.color = "transparent";
-    element.style.background = "transparent";
-    element.style.border = "0";
-    element.style.padding = "0";
-    element.style.margin = "0";
+    const left = `${(Number(origin.x) || 0) - (Number(parentFrame?.x) || 0)}px`;
+    const top = `${(Number(origin.y) || 0) - (Number(parentFrame?.y) || 0)}px`;
+    const width = `${Math.max(0, Number(size.width) || 0)}px`;
+    const height = `${Math.max(0, Number(size.height) || 0)}px`;
+    const geometryKey = `${left}\u0000${top}\u0000${width}\u0000${height}`;
+    if (record.geometryKey !== geometryKey) {
+      setStyle(element, "position", "absolute");
+      setStyle(element, "left", left);
+      setStyle(element, "top", top);
+      setStyle(element, "width", width);
+      setStyle(element, "height", height);
+      record.geometryKey = geometryKey;
+    }
     // Actionable semantic elements are an input fallback for canvas hosts.
     // They must receive real pointer activation because CSS-pixel events can
     // otherwise take a different path from the DPR-scaled canvas protocol.
     // Structural nodes stay transparent so they do not mask canvas gestures.
-    element.style.pointerEvents = focusableActions(node.actions ?? [])
+    const pointerEvents = focusableActions(node.actions ?? [])
       ? "auto"
       : "none";
-    setOptionalAttribute(element, "role", node.role === "presentation" ? "none" : node.role);
-    setOptionalAttribute(element, "aria-label", node.label);
-    setOptionalAttribute(element, "aria-description", node.description);
-    setOptionalAttribute(element, "aria-level", node.role === "heading" ? node.level : undefined);
-    setOptionalAttribute(element, "href", node.role === "link" ? node.url : undefined);
-    setOptionalAttribute(element, "aria-checked", node.checked);
-    for (const name of BOOLEAN_ARIA) {
-      const value = node[name];
-      setOptionalAttribute(element, name === "disabled" ? "aria-disabled" : `aria-${name}`, value ? "true" : undefined);
-    }
     const tabIndex = node.disabled ? -1 : (focusableActions(node.actions ?? []) ? 0 : -1);
-    element.tabIndex = tabIndex;
-    if (node.role === "textbox") {
-      element.value = node.value ?? "";
-      element.setAttribute("autocomplete", "off");
-    } else {
-      element.textContent = node.label || node.value || "";
+    const textValue = node.label || node.value || "";
+    const presentationKey = [
+      pointerEvents,
+      node.role,
+      node.level,
+      node.url,
+      node.label,
+      node.value,
+      node.description,
+      node.checked,
+      node.selected,
+      node.expanded,
+      node.invalid,
+      node.required,
+      node.disabled,
+      (node.actions ?? []).join("\u0000"),
+    ].join("\u0000");
+    if (record.presentationKey !== presentationKey) {
+      setStyle(element, "opacity", "0.001");
+      setStyle(element, "color", "transparent");
+      setStyle(element, "background", "transparent");
+      setStyle(element, "border", "0");
+      setStyle(element, "padding", "0");
+      setStyle(element, "margin", "0");
+      setStyle(element, "pointerEvents", pointerEvents);
+      setOptionalAttribute(element, "role", node.role === "presentation" ? "none" : node.role);
+      setOptionalAttribute(element, "aria-label", node.label);
+      setOptionalAttribute(element, "aria-description", node.description);
+      setOptionalAttribute(element, "aria-level", node.role === "heading" ? node.level : undefined);
+      setOptionalAttribute(element, "href", node.role === "link" ? node.url : undefined);
+      setOptionalAttribute(element, "aria-checked", node.checked);
+      for (const name of BOOLEAN_ARIA) {
+        const value = node[name];
+        setOptionalAttribute(element, name === "disabled" ? "aria-disabled" : `aria-${name}`, value ? "true" : undefined);
+      }
+      if (element.tabIndex !== tabIndex) element.tabIndex = tabIndex;
+      if (node.role === "textbox") {
+        if (element.value !== `${node.value ?? ""}`) element.value = node.value ?? "";
+        setOptionalAttribute(element, "autocomplete", "off");
+      } else if (element.textContent !== textValue) {
+        element.textContent = textValue;
+      }
+      record.presentationKey = presentationKey;
     }
     const hostTextInputFocused =
       documentRef.activeElement?.dataset?.mouiTextInput === "true";
@@ -203,7 +237,7 @@ export function createSemanticsDomManager(options = {}) {
       record?.element.remove();
       const element = documentRef.createElement(tag);
       element.dataset.mouiElementId = id;
-      record = { element, node };
+      record = { element, node, geometryKey: "", presentationKey: "" };
       state.elements.set(id, record);
       installHandlers(state, record);
     }
