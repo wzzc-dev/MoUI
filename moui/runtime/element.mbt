@@ -2,6 +2,7 @@
 priv struct ElementEventResult {
   changed : Bool
   activated : Bool
+  captured : Bool
   focused : ElementId?
 }
 

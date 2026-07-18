@@ -97,96 +97,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
       self.mark_build_dirty(self.element_tree.id())
     }
     Redraw(_) => self.needs_redraw = false
-    Pointer(event) => {
-      self.ensure_render_tree()
-      if event.phase == PointerPhase::Down {
-        let previous_focus = self.focused_element
-        let candidate_focus = self.element_tree.root.find_focusable_at(
-          event.position,
-          self.render_tree.root,
-        )
-        self.focused_element = self.element_tree.root.constrained_focus_target(
-          candidate_focus,
-          current=previous_focus,
-        )
-        if previous_focus != self.focused_element {
-          self.mark_dirty(self.element_tree.id())
-        }
-      }
-      let result = match self.active_pointer_capture {
-        Some(target) =>
-          if event.phase == PointerPhase::Down {
-            self.element_tree.root.dispatch_pointer(
-              event,
-              self.render_tree.root,
-              environment=self.environment,
-              text_system=self.text_system,
-              capture_lookup=false,
-              now_ms=self.now_ms,
-            )
-          } else {
-            match
-              self.element_tree.root.dispatch_pointer_to_target(
-                target,
-                event,
-                self.render_tree.root,
-                environment=self.environment,
-                text_system=self.text_system,
-                now_ms=self.now_ms,
-              ) {
-              Some(result) => result
-              None => {
-                self.active_pointer_capture = None
-                self.element_tree.root.dispatch_pointer(
-                  event,
-                  self.render_tree.root,
-                  environment=self.environment,
-                  text_system=self.text_system,
-                  capture_lookup=false,
-                  now_ms=self.now_ms,
-                )
-              }
-            }
-          }
-        None =>
-          self.element_tree.root.dispatch_pointer(
-            event,
-            self.render_tree.root,
-            environment=self.environment,
-            text_system=self.text_system,
-            capture_lookup=false,
-            now_ms=self.now_ms,
-          )
-      }
-      if event.phase == PointerPhase::Down {
-        self.active_pointer_capture = self.element_tree.root.active_pointer_capture_id(
-          PointerPhase::Move,
-        )
-      } else if event.phase == PointerPhase::Up ||
-        event.phase == PointerPhase::Cancel {
-        self.active_pointer_capture = None
-      }
-      // Views can claim focus from the pointer handler (e.g. picker popup
-      // interaction). Prefer that claim over the geometry-only hit from
-      // `find_focusable_at` so focus tracks the control that handled the event.
-      match result.focused {
-        Some(target) =>
-          if self.focused_element != Some(target) {
-            self.focused_element = Some(target)
-            self.mark_dirty(self.element_tree.id())
-          }
-        None => ()
-      }
-      self.needs_redraw = self.needs_redraw || result.changed
-      self.needs_rebuild = self.needs_rebuild || result.activated
-      self.needs_paint = self.needs_paint || result.changed
-      if result.changed || result.activated {
-        self.mark_current_dirty_elements()
-      }
-      if result.activated {
-        self.request_activation_rebuild()
-      }
-    }
+    Pointer(event) => ignore(self.dispatch_pointer_event(event))
     Keyboard(event) => {
       let shortcut = self.element_tree.root.dispatch_keyboard_shortcut(
         event,
@@ -319,6 +230,109 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
         self.request_activation_rebuild()
       }
     CloseRequested => ()
+  }
+}
+
+///|
+/// Dispatches one pointer event and reports whether the runtime consumed it.
+/// This is intentionally separate from `dispatch_event`: browser hosts need
+/// this result synchronously, while ordinary hosts can continue to ignore it.
+fn RuntimeState::dispatch_pointer_event(
+  self : RuntimeState,
+  event : PointerEvent,
+) -> InputDispatchResult {
+  self.ensure_render_tree()
+  if event.phase == PointerPhase::Down {
+    let previous_focus = self.focused_element
+    let candidate_focus = self.element_tree.root.find_focusable_at(
+      event.position,
+      self.render_tree.root,
+    )
+    self.focused_element = self.element_tree.root.constrained_focus_target(
+      candidate_focus,
+      current=previous_focus,
+    )
+    if previous_focus != self.focused_element {
+      self.mark_dirty(self.element_tree.id())
+    }
+  }
+  let result = match self.active_pointer_capture {
+    Some(target) =>
+      if event.phase == PointerPhase::Down {
+        self.element_tree.root.dispatch_pointer(
+          event,
+          self.render_tree.root,
+          environment=self.environment,
+          text_system=self.text_system,
+          capture_lookup=false,
+          now_ms=self.now_ms,
+        )
+      } else {
+        match
+          self.element_tree.root.dispatch_pointer_to_target(
+            target,
+            event,
+            self.render_tree.root,
+            environment=self.environment,
+            text_system=self.text_system,
+            now_ms=self.now_ms,
+          ) {
+          Some(result) => result
+          None => {
+            self.active_pointer_capture = None
+            self.element_tree.root.dispatch_pointer(
+              event,
+              self.render_tree.root,
+              environment=self.environment,
+              text_system=self.text_system,
+              capture_lookup=false,
+              now_ms=self.now_ms,
+            )
+          }
+        }
+      }
+    None =>
+      self.element_tree.root.dispatch_pointer(
+        event,
+        self.render_tree.root,
+        environment=self.environment,
+        text_system=self.text_system,
+        capture_lookup=false,
+        now_ms=self.now_ms,
+      )
+  }
+  if event.phase == PointerPhase::Down {
+    self.active_pointer_capture = self.element_tree.root.active_pointer_capture_id(
+      PointerPhase::Move,
+    )
+  } else if event.phase == PointerPhase::Up || event.phase == PointerPhase::Cancel {
+    self.active_pointer_capture = None
+  }
+  // Views can claim focus from the pointer handler (e.g. picker popup
+  // interaction). Prefer that claim over the geometry-only hit from
+  // `find_focusable_at` so focus tracks the control that handled the event.
+  match result.focused {
+    Some(target) =>
+      if self.focused_element != Some(target) {
+        self.focused_element = Some(target)
+        self.mark_dirty(self.element_tree.id())
+      }
+    None => ()
+  }
+  self.needs_redraw = self.needs_redraw || result.changed
+  self.needs_rebuild = self.needs_rebuild || result.activated
+  self.needs_paint = self.needs_paint || result.changed
+  if result.changed || result.activated {
+    self.mark_current_dirty_elements()
+  }
+  if result.activated {
+    self.request_activation_rebuild()
+  }
+  {
+    handled: result.captured,
+    capture_pointer: event.phase == PointerPhase::Down && result.captured,
+    release_pointer: event.phase == PointerPhase::Up ||
+      event.phase == PointerPhase::Cancel,
   }
 }
 

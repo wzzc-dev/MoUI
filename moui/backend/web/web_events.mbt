@@ -129,6 +129,95 @@ fn WebApp::dispatch_pointer_or_context_menu(
 }
 
 ///|
+fn web_pointer_phase(kind : Int) -> @core.PointerPhase? {
+  match kind {
+    20 | 21 => Some(Move)
+    22 => Some(Exit)
+    23 => Some(Down)
+    24 => Some(Up)
+    25 => Some(Cancel)
+    30 => Some(Move)
+    _ => None
+  }
+}
+
+///|
+fn web_pointer_modifiers(bits : Int) -> @core.KeyModifiers {
+  @core.KeyModifiers::new(
+    shift=(bits & 1) != 0,
+    control=(bits & 2) != 0,
+    alt=(bits & 4) != 0,
+    meta=(bits & 8) != 0,
+  )
+}
+
+///|
+fn web_pointer_dispatch_flags(result : @runtime.InputDispatchResult) -> Int {
+  let mut flags = 0
+  if result.handled {
+    flags = flags | 1
+  }
+  if result.capture_pointer {
+    flags = flags | 2
+  }
+  if result.release_pointer {
+    flags = flags | 4
+  }
+  flags
+}
+
+///|
+fn WebApp::dispatch_web_pointer_input(
+  self : WebApp,
+  window_id : @host.HostWindowId,
+  kind : Int,
+  x_px : Double,
+  y_px : Double,
+  delta_x_px : Double,
+  delta_y_px : Double,
+  button : Int,
+  modifier_bits : Int,
+) -> Int {
+  match web_pointer_phase(kind) {
+    Some(phase) => {
+      let scale_factor = self.current_scale_factor(window_id)
+      let position = @host.physical_position_to_core(
+        @dpi.PhysicalPositionF64(x_px, y_px),
+        scale_factor~,
+      )
+      self.last_pointer = position
+      self.modifiers = web_pointer_modifiers(modifier_bits)
+      let pointer = @core.PointerEvent::new(
+        position~,
+        phase~,
+        button~,
+        wheel_delta=@host.physical_position_to_core(
+          @dpi.PhysicalPositionF64(delta_x_px, delta_y_px),
+          scale_factor~,
+        ),
+        modifiers=self.modifiers,
+      )
+      match self.runtime_slots.lookup(window_id) {
+        Some(slot) => {
+          let result = slot.driver.dispatch_pointer_input(pointer)
+          ignore(
+            self.publish_subscription_event(
+              window_id,
+              @host.HostEvent::Pointer(pointer),
+            ),
+          )
+          self.drain_async_host_services()
+          self.sync_text_input_session()
+          web_pointer_dispatch_flags(result)
+        }
+        None => 0
+      }
+    }
+    None => 0
+  }
+}
+
+///|
 fn WebApp::publish_subscription_event(
   self : WebApp,
   window_id : @host.HostWindowId,
@@ -225,4 +314,37 @@ pub fn web_dispatch_event(
   text_id : Int,
 ) -> Unit {
   @window_web.web_dispatch_event_by_id(kind, raw_id, arg0, arg1, argd, text_id)
+}
+
+///|
+pub fn web_dispatch_pointer_input(
+  raw_id : Int,
+  kind : Int,
+  x_px : Double,
+  y_px : Double,
+  delta_x_px : Double,
+  delta_y_px : Double,
+  button : Int,
+  buttons : Int,
+  pointer_id : Int,
+  pointer_kind : Int,
+  modifiers : Int,
+) -> Int {
+  let _ = buttons
+  let _ = pointer_id
+  let _ = pointer_kind
+  match web_active_app.val {
+    Some(app) =>
+      match
+        app.platform_windows.lookup_host(
+          @window_core.WindowId::from_raw(raw_id),
+        ) {
+        Some(window_id) =>
+          app.dispatch_web_pointer_input(
+            window_id, kind, x_px, y_px, delta_x_px, delta_y_px, button, modifiers,
+          )
+        None => 0
+      }
+    None => 0
+  }
 }
