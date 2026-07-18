@@ -244,6 +244,17 @@ pub fn AppRuntime::dispatch_event(
 }
 
 ///|
+/// Dispatches a pointer event and returns host-facing consumption metadata.
+/// Browser backends use this to retain native default behavior at scroll edges.
+pub fn AppRuntime::dispatch_pointer_input(
+  self : AppRuntime,
+  event : @core.PointerEvent,
+) -> InputDispatchResult {
+  (self.state.event_observer)(@core.AppEvent::Pointer(event))
+  self.state.dispatch_pointer_event(event)
+}
+
+///|
 pub fn AppRuntime::environment(self : AppRuntime) -> @core.Environment {
   self.state.environment()
 }

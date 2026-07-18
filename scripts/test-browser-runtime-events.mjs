@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 
-import { createWindowWebImports } from "../moui/backend/web/browser_runtime.js";
+import {
+  connectWindowWeb,
+  createWindowWebImports,
+} from "../moui/backend/web/browser_runtime.js";
 
 const elementsById = new Map();
 
@@ -45,6 +48,10 @@ class FakeElement {
     this.attributes.set(name, `${value}`);
   }
 
+  getAttribute(name) {
+    return this.attributes.get(name) ?? null;
+  }
+
   addEventListener(type, handler, options) {
     const handlers = this.listeners.get(type) ?? [];
     handlers.push({ handler, options });
@@ -72,8 +79,20 @@ class FakeElement {
       },
       ...init,
     };
-    for (const { handler } of this.listeners.get(type) ?? []) {
-      handler(event);
+    if (!event.target) event.target = this;
+    const path = [];
+    for (let current = this; current; current = current.parentElement) {
+      path.push(current);
+    }
+    for (const current of [...path].reverse()) {
+      for (const { handler, options } of current.listeners.get(type) ?? []) {
+        if (options?.capture) handler(event);
+      }
+    }
+    for (const current of path) {
+      for (const { handler, options } of current.listeners.get(type) ?? []) {
+        if (!options?.capture) handler(event);
+      }
     }
     return event;
   }
@@ -83,6 +102,14 @@ class FakeElement {
   }
 
   select() {}
+
+  setPointerCapture(pointerId) {
+    this.capturedPointerId = pointerId;
+  }
+
+  releasePointerCapture(pointerId) {
+    this.releasedPointerId = pointerId;
+  }
 
   getBoundingClientRect() {
     return {
@@ -243,11 +270,39 @@ const withPointerEventSupport = (supported, callback) => {
   }
 };
 
-const createRuntime = () => {
+const createRuntime = ({ pointerFlags = 1 } = {}) => {
   const imports = createWindowWebImports();
   const events = [];
   imports.set_dispatch_event((kind, rawId, arg0, arg1, argd) => {
     events.push({ kind, rawId, arg0, arg1, argd });
+  });
+  imports.set_dispatch_pointer_input((
+    rawId,
+    kind,
+    x,
+    y,
+    deltaX,
+    deltaY,
+    button,
+    buttons,
+    pointerId,
+    pointerKind,
+    modifiers,
+  ) => {
+    events.push({
+      kind,
+      rawId,
+      arg0: kind === 30 ? deltaX : x,
+      arg1: kind === 30 ? deltaY : y,
+      argd: button,
+      buttons,
+      pointerId,
+      pointerKind,
+      modifiers,
+    });
+    return typeof pointerFlags === "function"
+      ? pointerFlags({ kind, rawId, x, y, deltaX, deltaY, button, buttons, pointerId, pointerKind, modifiers })
+      : pointerFlags;
   });
   const canvas = imports.create_canvas("", 400, 300);
   imports.install_canvas_events(7, canvas);
@@ -265,6 +320,31 @@ const expectKinds = (label, events, expected) => {
 
 withMockClock(() => {
   withPointerEventSupport(true, () => {
+    const imports = createWindowWebImports();
+    let legacyCalls = 0;
+    let pointerCalls = 0;
+    connectWindowWeb({
+      exports: {
+        web_dispatch_event() {
+          legacyCalls += 1;
+        },
+        web_dispatch_pointer_input() {
+          pointerCalls += 1;
+          return 1;
+        },
+      },
+    }, imports);
+    const canvas = imports.create_canvas("", 400, 300);
+    imports.install_canvas_events(9, canvas);
+    canvas.dispatch("pointerdown", { clientX: 6, clientY: 7 });
+    if (pointerCalls !== 1 || legacyCalls !== 0) {
+      throw new Error("connectWindowWeb must install the direct pointer ABI");
+    }
+  });
+});
+
+withMockClock(() => {
+  withPointerEventSupport(true, () => {
     const { canvas, events } = createRuntime();
     canvas.dispatch("mousedown", { clientX: 12, clientY: 18 });
     canvas.dispatch("mouseup", { clientX: 12, clientY: 18 });
@@ -274,6 +354,18 @@ withMockClock(() => {
       events,
       [],
     );
+  });
+});
+
+withMockClock(() => {
+  withPointerEventSupport(true, () => {
+    const { canvas, events } = createRuntime({ pointerFlags: 5 });
+    canvas.dispatch("pointerdown", { clientX: 9, clientY: 10, pointerId: 7 });
+    const cancel = canvas.dispatch("pointercancel", { clientX: 9, clientY: 10, pointerId: 7 });
+    if (!cancel.defaultPrevented || canvas.releasedPointerId !== 7) {
+      throw new Error("handled pointer cancellation must prevent default and release capture");
+    }
+    expectKinds("pointer cancellation uses the direct pointer ABI", events, [23, 25]);
   });
 });
 
@@ -439,6 +531,94 @@ withMockClock(() => {
     events,
     [23, 24],
   );
+});
+
+withMockClock(() => {
+  withPointerEventSupport(true, () => {
+    const { canvas, events } = createRuntime({
+      pointerFlags: event => event.kind === 24 ? 5 : 3,
+    });
+    const down = canvas.dispatch("pointerdown", {
+      clientX: 12.5,
+      clientY: 18.25,
+      button: 2,
+      buttons: 2,
+      pointerId: 42,
+      pointerType: "pen",
+      ctrlKey: true,
+      altKey: true,
+    });
+    const up = canvas.dispatch("pointerup", {
+      clientX: 12.5,
+      clientY: 18.25,
+      button: 2,
+      pointerId: 42,
+      pointerType: "pen",
+    });
+    if (!down.defaultPrevented || !up.defaultPrevented) {
+      throw new Error("handled pointer events must prevent browser defaults");
+    }
+    if (canvas.capturedPointerId !== 42 || canvas.releasedPointerId !== 42) {
+      throw new Error("wasm pointer capture flags must control native capture");
+    }
+    const pointer = events[0];
+    if (
+      pointer.arg0 !== 12.5 || pointer.arg1 !== 18.25 || pointer.argd !== 2 ||
+      pointer.buttons !== 2 ||
+      pointer.pointerId !== 42 || pointer.pointerKind !== 2 || pointer.modifiers !== 6
+    ) {
+      throw new Error(`pointer ABI lost physical coordinates or metadata: ${JSON.stringify(pointer)}`);
+    }
+  });
+});
+
+withMockClock(() => {
+  withPointerEventSupport(true, () => {
+    const { canvas, events } = createRuntime({ pointerFlags: 0 });
+    const down = canvas.dispatch("pointerdown", { clientX: 20, clientY: 30 });
+    const wheel = canvas.dispatch("wheel", { deltaX: 3, deltaY: -4 });
+    const zoom = canvas.dispatch("wheel", { deltaX: 3, deltaY: -4, ctrlKey: true });
+    if (down.defaultPrevented || wheel.defaultPrevented) {
+      throw new Error("unhandled canvas input must retain native browser behavior");
+    }
+    if (events.length !== 2 || zoom.defaultPrevented) {
+      throw new Error("Ctrl/Meta wheel must remain available to browser zoom");
+    }
+  });
+});
+
+withMockClock(() => {
+  withPointerEventSupport(true, () => {
+    const previousDpr = fakeWindow.devicePixelRatio;
+    fakeWindow.devicePixelRatio = 2;
+    try {
+      const { canvas, events } = createRuntime();
+      canvas.dispatch("wheel", { deltaX: 2, deltaY: -3, deltaMode: 1 });
+      canvas.dispatch("wheel", { deltaX: 0, deltaY: -1, deltaMode: 2 });
+      if (
+        events[0].arg0 !== 64 || events[0].arg1 !== 96 ||
+        events[1].arg0 !== 0 || events[1].arg1 !== 600
+      ) {
+        throw new Error(`line wheel deltas must be normalized and scaled: ${JSON.stringify(events[0])}`);
+      }
+    } finally {
+      fakeWindow.devicePixelRatio = previousDpr;
+    }
+  });
+});
+
+withMockClock(() => {
+  withPointerEventSupport(true, () => {
+    const { canvas, events } = createRuntime();
+    const nativeInput = new FakeTextAreaElement();
+    nativeInput.setAttribute("data-moui-native-input", "true");
+    canvas.parentElement.appendChild(nativeInput);
+    nativeInput.dispatch("pointerdown", { clientX: 8, clientY: 9 });
+    nativeInput.dispatch("wheel", { deltaX: 1, deltaY: 1 });
+    if (events.length !== 0) {
+      throw new Error("native input descendants must bypass the canvas input router");
+    }
+  });
 });
 
 const readEventString = (imports, id) => {

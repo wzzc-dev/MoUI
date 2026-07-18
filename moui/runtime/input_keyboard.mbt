@@ -38,7 +38,7 @@ fn ElementNode::dispatch_keyboard(
     if changed {
       self.dirty.mark_paint()
     }
-    { changed, activated, focused: None }
+    { changed, activated, captured: false, focused: None }
   }
 }
 
@@ -77,7 +77,7 @@ fn ElementNode::dispatch_keyboard_shortcut(
     } else if child_result.changed {
       child_result
     } else {
-      { changed: false, activated: false, focused: None }
+      { changed: false, activated: false, captured: false, focused: None }
     }
   } else {
     child_result
@@ -112,7 +112,7 @@ fn ElementNode::dispatch_keyboard_shortcut_to_children(
   if changed {
     self.dirty.mark_paint()
   }
-  { changed, activated, focused: None }
+  { changed, activated, captured: false, focused: None }
 }
 
 ///|
@@ -160,5 +160,5 @@ fn ElementNode::activate_first_child(
       return result
     }
   }
-  { changed: false, activated: false, focused: None }
+  { changed: false, activated: false, captured: false, focused: None }
 }

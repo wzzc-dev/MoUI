@@ -84,6 +84,19 @@ pub fn HostRuntimeDriver::dispatch(
 }
 
 ///|
+/// Dispatches raw pointer input while preserving whether the runtime consumed
+/// it. Browser hosts use this result for default-action and pointer-capture
+/// policy; other host event paths continue through `dispatch`.
+pub fn HostRuntimeDriver::dispatch_pointer_input(
+  self : HostRuntimeDriver,
+  event : @core.PointerEvent,
+) -> @runtime.InputDispatchResult {
+  let result = self.runtime.dispatch_pointer_input(event)
+  self.request_redraw_if_needed()
+  result
+}
+
+///|
 /// Dispatch a platform view event directly to the runtime tree.
 /// Used by the `PlatformViewPlugin` infrastructure to route decoded native
 /// platform-view events without going through `HostEvent` (which no longer
