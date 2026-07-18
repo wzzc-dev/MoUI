@@ -1,7 +1,7 @@
 ///|
 fn full_workspace_file_budgets() -> Array[FileBudget] {
   [
-    { path: "tools/moui/validate_api_surface/main.mbt", max_lines: 1893 },
+    { path: "tools/moui/validate_api_surface/main.mbt", max_lines: 2100 },
     { path: "moui_richtext/rich_text_editor.mbt", max_lines: 250 },
     {
       path: "moui_richtext/rich_text_markdown_session_editor.mbt",

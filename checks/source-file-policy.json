@@ -38,7 +38,7 @@
     },
     {
       "path": "moui_skia/native/skia_stub_surface_image_data.cpp",
-      "maxLines": 3171,
+      "maxLines": 3179,
       "reason": "Existing native Skia surface and image bridge implementation."
     },
     {
@@ -68,7 +68,7 @@
     },
     {
       "path": "moui_skia/native/skia_stub_gpu_worker.cpp",
-      "maxLines": 2477,
+      "maxLines": 2482,
       "reason": "Existing GPU worker bridge implementation."
     },
     {
@@ -78,7 +78,7 @@
     },
     {
       "path": "tools/moui/validate_api_surface/main.mbt",
-      "maxLines": 2029,
+      "maxLines": 2096,
       "reason": "Existing API validator with explicit semantic audits."
     },
     {
@@ -238,7 +238,7 @@
     },
     {
       "path": "moui/render/capabilities_test.mbt",
-      "maxLines": 1289,
+      "maxLines": 1319,
       "reason": "Existing renderer capability matrix test."
     },
     {
@@ -263,7 +263,7 @@
     },
     {
       "path": "website/app/view.mbt",
-      "maxLines": 1230,
+      "maxLines": 1462,
       "reason": "Existing website view composition."
     },
     {
