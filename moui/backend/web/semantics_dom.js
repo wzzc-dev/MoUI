@@ -42,6 +42,33 @@ const actionForActivation = actions => {
   return undefined;
 };
 
+const dispatchCanvasPointerActivation = (canvas, event) => {
+  if (!canvas?.dispatchEvent) return;
+  const clientX = Number(event.clientX) || 0;
+  const clientY = Number(event.clientY) || 0;
+  const button = Number(event.button) || 0;
+  const pointer = {
+    bubbles: true,
+    cancelable: true,
+    clientX,
+    clientY,
+    button,
+    pointerId: Number(event.pointerId) || 1,
+    pointerType: event.pointerType || "mouse",
+    isPrimary: true,
+  };
+  if (typeof globalThis.PointerEvent === "function") {
+    canvas.dispatchEvent(new PointerEvent("pointerdown", { ...pointer, buttons: 1 }));
+    canvas.dispatchEvent(new PointerEvent("pointerup", { ...pointer, buttons: 0 }));
+  } else if (typeof globalThis.MouseEvent === "function") {
+    canvas.dispatchEvent(new MouseEvent("mousedown", { ...pointer, buttons: 1 }));
+    canvas.dispatchEvent(new MouseEvent("mouseup", { ...pointer, buttons: 0 }));
+  } else {
+    canvas.dispatchEvent({ type: "mousedown", ...pointer, buttons: 1 });
+    canvas.dispatchEvent({ type: "mouseup", ...pointer, buttons: 0 });
+  }
+};
+
 export function createSemanticsDomManager(options = {}) {
   const documentRef = options.document ?? globalThis.document;
   const layers = new Map();
@@ -78,10 +105,23 @@ export function createSemanticsDomManager(options = {}) {
       const node = record.node;
       if (node?.actions?.includes("focus")) dispatchAction(state, node, "focus");
     });
+    element.addEventListener("pointerdown", event => {
+      // Semantic DOM nodes are above the canvas. Prevent browser-native focus
+      // and caret placement here; the following click is forwarded to the
+      // canvas so its overlay hit testing remains authoritative.
+      if (focusableActions(record.node?.actions ?? [])) {
+        event.preventDefault();
+        event.stopPropagation?.();
+      }
+    });
     element.addEventListener("click", event => {
       const node = record.node;
       const action = actionForActivation(node?.actions ?? []);
-      if (action) {
+      if (event.detail > 0 && focusableActions(node?.actions ?? [])) {
+        event.preventDefault();
+        event.stopPropagation?.();
+        dispatchCanvasPointerActivation(state.canvas, event);
+      } else if (action) {
         event.preventDefault();
         event.stopPropagation?.();
         dispatchAction(state, node, action);
