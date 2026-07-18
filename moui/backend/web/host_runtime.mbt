@@ -28,6 +28,13 @@ struct WebApp {
 }
 
 ///|
+/// The wasm export boundary is synchronous, while `window/web` owns a
+/// callback-oriented event loop. Keep the active app reachable so pointer
+/// inputs can return consumption flags without turning browser input into a
+/// deferred synthetic window event.
+let web_active_app : Ref[WebApp?] = Ref(None)
+
+///|
 pub(all) struct WebAppOptions {
   scene_resolver : @host.HostWindowSceneResolver
   event_sources : @host.HostPlatformEventSources?
@@ -133,6 +140,7 @@ pub fn run_app_with_options(
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
   }
+  web_active_app.val = Some(app)
   app.driver.set_redraw_scheduler(() => app.request_redraw())
   event_loop.spawn_app(app)
 }

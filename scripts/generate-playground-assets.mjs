@@ -54,6 +54,9 @@ buildWebPackage("website/playground/web_wasm");
 const wasmPath = wasmArtifactPath("website/playground/web_wasm");
 copy(wasmPath, join(outDir, "playground.wasm"));
 const wasmRevision = hashFile(wasmPath).slice("sha256-".length, "sha256-".length + 16);
+const compilerWorkerRevision = hashFile(
+  join(repoRoot, "website/playground/host/compiler-worker.js"),
+).slice("sha256-".length, "sha256-".length + 16);
 
 let index = readFileSync(join(repoRoot, "website/playground/web_wasm/index.html"), "utf8");
 index = index
@@ -62,7 +65,11 @@ index = index
     "../../../_build/wasm-gc/debug/build/website/playground/web_wasm/web_wasm.wasm",
     `./playground.wasm?v=${wasmRevision}`,
   )
-  .replaceAll("../host/", "./host/");
+  .replaceAll("../host/", "./host/")
+  .replaceAll(
+    "./host/compiler-worker.js",
+    `./host/compiler-worker.js?v=${compilerWorkerRevision}`,
+  );
 writeFileSync(join(outDir, "index.html"), index);
 
 for (const asset of runtimeAssetPaths) copy(join(repoRoot, asset), join(outDir, basename(asset)));

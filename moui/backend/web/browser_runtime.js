@@ -10,6 +10,110 @@ import {
   updateDocumentMetadata,
 } from "./semantics_dom.js";
 
+export const WEB_INPUT_FLAGS = Object.freeze({
+  handled: 1,
+  capturePointer: 2,
+  releasePointer: 4,
+});
+
+export function normalizeCanvasWheelDelta(event, options = {}) {
+  const deltaMode = Number(event?.deltaMode) || 0;
+  const rawX = Number(event?.deltaX) || 0;
+  const rawY = Number(event?.deltaY) || 0;
+  const lineHeight = Math.max(1, Number(options.lineHeight) || 16);
+  const pageHeight = Math.max(1, Number(options.pageHeight) || 1);
+  const multiplier = deltaMode === 1 ? lineHeight : deltaMode === 2 ? pageHeight : 1;
+  return { x: rawX * multiplier, y: -rawY * multiplier };
+}
+
+/// A single trusted DOM-to-wasm input boundary for one canvas host.
+/// It deliberately routes the original browser event instead of dispatching a
+/// synthetic `PointerEvent`/`WheelEvent` at the canvas.
+export class CanvasInputRouter {
+  constructor(options) {
+    this.canvas = options.canvas;
+    this.host = options.host ?? options.canvas;
+    this.position = options.position;
+    this.dispatchPointer = options.dispatchPointer;
+    this.lineHeight = options.lineHeight ?? (() => 16);
+    this.pageHeight = options.pageHeight ?? (() => this.host?.clientHeight || 1);
+    this.scaleDelta = options.scaleDelta ?? ((_event, delta) => delta);
+  }
+
+  isNativeInputTarget(target) {
+    for (let current = target; current; current = current.parentElement) {
+      if (current.dataset?.mouiNativeInput === "true") return true;
+      if (current.getAttribute?.("data-moui-native-input") != null) return true;
+      if (current === this.host) break;
+    }
+    return false;
+  }
+
+  isCanvasEventTarget(target) {
+    return target === this.canvas;
+  }
+
+  modifiers(event) {
+    return (event?.shiftKey ? 1 : 0)
+      | (event?.ctrlKey ? 2 : 0)
+      | (event?.altKey ? 4 : 0)
+      | (event?.metaKey ? 8 : 0);
+  }
+
+  pointerKind(event) {
+    switch (`${event?.pointerType || "mouse"}`) {
+      case "mouse": return 0;
+      case "touch": return 1;
+      case "pen": return 2;
+      default: return 3;
+    }
+  }
+
+  dispatch(kind, event, delta = { x: 0, y: 0 }) {
+    const point = this.position(this.canvas, event);
+    const pointerId = Number(event?.pointerId) || 1;
+    const flags = Number(this.dispatchPointer(
+      kind,
+      point.x,
+      point.y,
+      Number(delta.x) || 0,
+      Number(delta.y) || 0,
+      Number(event?.button) || 0,
+      Number(event?.buttons) || 0,
+      pointerId,
+      this.pointerKind(event),
+      this.modifiers(event),
+    )) || 0;
+    if ((flags & WEB_INPUT_FLAGS.capturePointer) !== 0) {
+      try {
+        this.canvas?.setPointerCapture?.(pointerId);
+      } catch {
+        // Browsers reject capture for inactive pointers; input dispatch stays valid.
+      }
+    }
+    if ((flags & WEB_INPUT_FLAGS.releasePointer) !== 0) {
+      try {
+        this.canvas?.releasePointerCapture?.(pointerId);
+      } catch {
+        // Releasing an already-lost capture is harmless.
+      }
+    }
+    return flags;
+  }
+
+  wheel(event) {
+    const delta = normalizeCanvasWheelDelta(event, {
+      lineHeight: this.lineHeight(),
+      pageHeight: this.pageHeight(),
+    });
+    return this.dispatch(
+      30,
+      event,
+      this.scaleDelta(event, delta),
+    );
+  }
+}
+
 export function normalizeWebRouteString(route) {
   const value = `${route ?? ""}`.trim();
   if (!value || value === "/" || value === ".") {
@@ -82,6 +186,7 @@ export function createWindowWebImports(options = {}) {
   let nextStringHandle = 1;
   let nextEventTextId = 1;
   let dispatchEvent = null;
+  let dispatchPointerInput = null;
   let dispatchRoute = null;
   let wasmExports = null;
   let routeListenerInstalled = false;
@@ -112,6 +217,7 @@ export function createWindowWebImports(options = {}) {
       case 22: return "pointer_leave";
       case 23: return "pointer_down";
       case 24: return "pointer_up";
+      case 25: return "pointer_cancel";
       case 30: return "wheel";
       case 40: return "key_down";
       case 41: return "key_up";
@@ -193,6 +299,52 @@ export function createWindowWebImports(options = {}) {
         eventTexts.delete(textId);
       }
     }
+  };
+
+  const emitPointerInput = (
+    rawId,
+    kind,
+    xPx,
+    yPx,
+    deltaXPx,
+    deltaYPx,
+    button,
+    buttons,
+    pointerId,
+    pointerKind,
+    modifiers,
+  ) => {
+    if (!dispatchPointerInput) return 0;
+    const flags = Number(dispatchPointerInput(
+      rawId,
+      kind,
+      xPx,
+      yPx,
+      deltaXPx,
+      deltaYPx,
+      button,
+      buttons,
+      pointerId,
+      pointerKind,
+      modifiers,
+    )) || 0;
+    observeEvent({
+      kind: kind | 0,
+      name: eventName(kind),
+      rawId: rawId | 0,
+      x: Number(xPx) || 0,
+      y: Number(yPx) || 0,
+      deltaX: Number(deltaXPx) || 0,
+      deltaY: Number(deltaYPx) || 0,
+      button: button | 0,
+      buttons: buttons | 0,
+      pointerId: pointerId | 0,
+      pointerKind: pointerKind | 0,
+      modifiers: modifiers | 0,
+      flags,
+      at: Number(globalThis.performance?.now?.() ?? Date.now()),
+    });
+    return flags;
   };
 
   const emitRoute = (source, route = currentBrowserRoute()) => {
@@ -317,8 +469,8 @@ export function createWindowWebImports(options = {}) {
     const scaleX = rect.width > 0 ? canvas.width / rect.width : devicePixelRatio();
     const scaleY = rect.height > 0 ? canvas.height / rect.height : devicePixelRatio();
     return {
-      x: Math.round((event.clientX - rect.left) * scaleX),
-      y: Math.round((event.clientY - rect.top) * scaleY),
+      x: ((Number(event.clientX) || 0) - rect.left) * scaleX,
+      y: ((Number(event.clientY) || 0) - rect.top) * scaleY,
     };
   };
 
@@ -395,6 +547,8 @@ export function createWindowWebImports(options = {}) {
     const input = document.createElement("textarea");
     input.setAttribute("aria-label", "Text input");
     input.dataset.mouiTextInput = "true";
+    input.dataset.mouiNativeInput = "true";
+    input.setAttribute("data-moui-native-input", "true");
     input.autocomplete = "off";
     input.autocapitalize = "off";
     input.spellcheck = false;
@@ -1034,6 +1188,9 @@ export function createWindowWebImports(options = {}) {
     set_dispatch_event(fn) {
       dispatchEvent = fn;
     },
+    set_dispatch_pointer_input(fn) {
+      dispatchPointerInput = typeof fn === "function" ? fn : null;
+    },
     set_route_dispatch(fn) {
       dispatchRoute = typeof fn === "function" ? fn : null;
       if (dispatchRoute) {
@@ -1178,7 +1335,7 @@ export function createWindowWebImports(options = {}) {
       const emitFileDrag = (kind, event, includeFiles = false) => {
         acceptFileDrag(event);
         const p = pointerPosition(canvas, event);
-        emit(kind, rawId, p.x, p.y, 0, includeFiles ? draggedFileNames(event) : "");
+        emit(kind, rawId, Math.round(p.x), Math.round(p.y), 0, includeFiles ? draggedFileNames(event) : "");
       };
       const firstTouch = list => Array.from(list ?? [])[0] ?? null;
       const touchByIdentifier = (list, identifier) =>
@@ -1197,12 +1354,29 @@ export function createWindowWebImports(options = {}) {
         clientX: Number(touch?.clientX) || 0,
         clientY: Number(touch?.clientY) || 0,
       });
-      const emitTouchPointer = (kind, touch, pointerType = "") => {
-        if (pointerType) {
-          markPointerEvent({ type: pointerType });
-        }
-        const p = pointerPosition(canvas, touch);
-        emit(kind, rawId, p.x, p.y, 0);
+      const emitTouchPointer = (kind, touch, event) => {
+        const pointerEventType = {
+          20: "pointerenter",
+          21: "pointermove",
+          22: "pointerleave",
+          23: "pointerdown",
+          24: "pointerup",
+          25: "pointercancel",
+        }[kind];
+        if (pointerEventType) markPointerEvent({ type: pointerEventType });
+        const pointer = {
+          ...touch,
+          target: event?.target,
+          button: 0,
+          buttons: kind === 23 ? 1 : 0,
+          pointerId: (Number(touch?.identifier) || 0) + 1,
+          pointerType: "touch",
+          shiftKey: !!event?.shiftKey,
+          ctrlKey: !!event?.ctrlKey,
+          altKey: !!event?.altKey,
+          metaKey: !!event?.metaKey,
+        };
+        return inputRouter.dispatch(kind, pointer);
       };
       const blurTargetIsHost = event =>
         event.relatedTarget === canvas || event.relatedTarget === textInput;
@@ -1221,133 +1395,214 @@ export function createWindowWebImports(options = {}) {
           focusWithoutScroll(canvas);
         }
       };
-      add(canvas, "pointerenter", event => {
-        markPointerEvent(event);
-        const p = pointerPosition(canvas, event);
-        emit(20, rawId, p.x, p.y);
+      const inputTarget = canvas.parentElement ?? canvas;
+      const inputRouter = new CanvasInputRouter({
+        canvas,
+        host: inputTarget,
+        position: pointerPosition,
+        dispatchPointer: (
+          kind,
+          xPx,
+          yPx,
+          deltaXPx,
+          deltaYPx,
+          button,
+          buttons,
+          pointerId,
+          pointerKind,
+          modifiers,
+        ) => emitPointerInput(
+          rawId,
+          kind,
+          xPx,
+          yPx,
+          deltaXPx,
+          deltaYPx,
+          button,
+          buttons,
+          pointerId,
+          pointerKind,
+          modifiers,
+        ),
+        lineHeight: () => {
+          const lineHeight = Number.parseFloat(
+            globalThis.getComputedStyle?.(inputTarget)?.lineHeight ?? "",
+          );
+          return Number.isFinite(lineHeight) ? lineHeight : 16;
+        },
+        pageHeight: () => inputTarget.getBoundingClientRect?.().height || inputTarget.clientHeight || 1,
+        scaleDelta: (_event, delta) => {
+          const rect = canvas.getBoundingClientRect();
+          return {
+            x: delta.x * (rect.width > 0 ? canvas.width / rect.width : devicePixelRatio()),
+            y: delta.y * (rect.height > 0 ? canvas.height / rect.height : devicePixelRatio()),
+          };
+        },
       });
-      add(canvas, "pointermove", event => {
+      const addInput = (type, handler, options = {}) => {
+        add(inputTarget, type, handler, { ...options, capture: true });
+      };
+      const handled = flags => (flags & WEB_INPUT_FLAGS.handled) !== 0;
+      const shouldRouteInput = event =>
+        inputRouter.isCanvasEventTarget(event.target) &&
+        !inputRouter.isNativeInputTarget(event.target);
+      const dispatchPointer = (kind, event) => {
+        if (!shouldRouteInput(event)) return 0;
+        return inputRouter.dispatch(kind, event);
+      };
+      addInput("pointerenter", event => {
         markPointerEvent(event);
-        const p = pointerPosition(canvas, event);
-        emit(21, rawId, p.x, p.y);
+        dispatchPointer(20, event);
       });
-      add(canvas, "pointerleave", event => {
+      addInput("pointermove", event => {
         markPointerEvent(event);
-        const p = pointerPosition(canvas, event);
-        emit(22, rawId, p.x, p.y);
+        dispatchPointer(21, event);
       });
-      add(canvas, "pointerdown", event => {
+      addInput("pointerleave", event => {
+        markPointerEvent(event);
+        dispatchPointer(22, event);
+      });
+      addInput("pointerdown", event => {
         markPointerEvent(event);
         markButtonEvent(event);
-        preventDefaultIfCancelable(event);
-        focusInputTarget();
-        const p = pointerPosition(canvas, event);
-        emit(23, rawId, p.x, p.y, event.button);
+        const flags = dispatchPointer(23, event);
+        if (handled(flags)) {
+          preventDefaultIfCancelable(event);
+          focusInputTarget();
+        }
       });
-      add(canvas, "pointerup", event => {
+      addInput("pointerup", event => {
         markPointerEvent(event);
         markButtonEvent(event);
-        const p = pointerPosition(canvas, event);
-        emit(24, rawId, p.x, p.y, event.button);
-        focusInputTarget();
+        const flags = dispatchPointer(24, event);
+        if (handled(flags)) {
+          preventDefaultIfCancelable(event);
+          focusInputTarget();
+        }
       });
-      add(canvas, "mouseenter", event => {
+      addInput("pointercancel", event => {
+        markPointerEvent(event);
+        const flags = dispatchPointer(25, event);
+        if (handled(flags)) preventDefaultIfCancelable(event);
+      });
+      addInput("mouseenter", event => {
         if (pointerEventsSupported) return;
         if (!shouldUseMouseFallback(event)) return;
-        const p = pointerPosition(canvas, event);
-        emit(20, rawId, p.x, p.y);
+        dispatchPointer(20, event);
       });
-      add(canvas, "mousemove", event => {
+      addInput("mousemove", event => {
         if (pointerEventsSupported) return;
         if (!shouldUseMouseFallback(event)) return;
-        const p = pointerPosition(canvas, event);
-        emit(21, rawId, p.x, p.y);
+        dispatchPointer(21, event);
       });
-      add(canvas, "mouseleave", event => {
+      addInput("mouseleave", event => {
         if (pointerEventsSupported) return;
         if (!shouldUseMouseFallback(event)) return;
-        const p = pointerPosition(canvas, event);
-        emit(22, rawId, p.x, p.y);
+        dispatchPointer(22, event);
       });
-      add(canvas, "mousedown", event => {
-        preventDefaultIfCancelable(event);
-        if (pointerEventsSupported) return;
-        if (!shouldUseMouseFallback(event)) return;
-        markButtonEvent(event);
-        focusInputTarget();
-        const p = pointerPosition(canvas, event);
-        emit(23, rawId, p.x, p.y, event.button);
-      });
-      add(canvas, "mouseup", event => {
+      addInput("mousedown", event => {
         if (pointerEventsSupported) return;
         if (!shouldUseMouseFallback(event)) return;
         markButtonEvent(event);
-        const p = pointerPosition(canvas, event);
-        emit(24, rawId, p.x, p.y, event.button);
-        focusInputTarget();
+        const flags = dispatchPointer(23, event);
+        if (handled(flags)) {
+          preventDefaultIfCancelable(event);
+          focusInputTarget();
+        }
       });
-      add(canvas, "click", event => {
-        preventDefaultIfCancelable(event);
-        focusInputTarget();
+      addInput("mouseup", event => {
+        if (pointerEventsSupported) return;
+        if (!shouldUseMouseFallback(event)) return;
+        markButtonEvent(event);
+        const flags = dispatchPointer(24, event);
+        if (handled(flags)) {
+          preventDefaultIfCancelable(event);
+          focusInputTarget();
+        }
+      });
+      addInput("click", event => {
         if (pointerEventsSupported) return;
         if (!shouldUseClickFallback(event)) return;
         markButtonEvent(event);
-        const p = pointerPosition(canvas, event);
-        emit(23, rawId, p.x, p.y, event.button);
-        emit(24, rawId, p.x, p.y, event.button);
+        const downFlags = dispatchPointer(23, event);
+        const upFlags = dispatchPointer(24, event);
+        if (handled(downFlags) || handled(upFlags)) {
+          preventDefaultIfCancelable(event);
+          focusInputTarget();
+        }
       });
-      add(canvas, "wheel", event => {
-        event.preventDefault();
-        emit(30, rawId, Math.round(event.deltaX), -Math.round(event.deltaY));
+      addInput("wheel", event => {
+        if (!shouldRouteInput(event)) return;
+        // Ctrl/Meta wheel belongs to browser zoom, even when a canvas view
+        // would otherwise consume the delta.
+        if (event.ctrlKey || event.metaKey) return;
+        if (handled(inputRouter.wheel(event))) preventDefaultIfCancelable(event);
       }, { passive: false });
-      add(canvas, "touchstart", event => {
+      addInput("touchstart", event => {
+        if (!shouldRouteInput(event)) return;
         const touch = firstTouch(event.changedTouches) ?? firstTouch(event.touches);
         if (!touch) return;
-        preventDefaultIfCancelable(event);
         activeScrollTouch = touchSignature(touch);
-        focusInputTarget();
         if (!pointerEventsSupported) {
           markButtonEvent({ type: "pointerdown" });
-          emitTouchPointer(23, touch, "pointerdown");
+          if (handled(emitTouchPointer(23, touch, event))) {
+            preventDefaultIfCancelable(event);
+            focusInputTarget();
+          }
         }
       }, { passive: false });
-      add(canvas, "touchmove", event => {
+      addInput("touchmove", event => {
+        if (!shouldRouteInput(event)) return;
         const touch = eventTouch(event);
         if (!touch || !activeScrollTouch) return;
-        preventDefaultIfCancelable(event);
+        let inputHandled = false;
         if (!pointerEventsSupported || pointerEventIsStale()) {
-          emitTouchPointer(21, touch, "pointermove");
+          inputHandled = handled(emitTouchPointer(21, touch, event));
         }
-        const dx = activeScrollTouch.clientX - Number(touch.clientX || 0);
-        const dy = activeScrollTouch.clientY - Number(touch.clientY || 0);
+        const previousPoint = pointerPosition(canvas, activeScrollTouch);
+        const point = pointerPosition(canvas, touch);
+        const dx = previousPoint.x - point.x;
+        const dy = previousPoint.y - point.y;
         activeScrollTouch = touchSignature(touch);
-        const roundedX = Math.round(dx);
-        const roundedY = Math.round(dy);
-        if (roundedX !== 0 || roundedY !== 0) {
-          emit(30, rawId, roundedX, roundedY);
+        if (dx !== 0 || dy !== 0) {
+          inputHandled = handled(inputRouter.dispatch(30, {
+            ...touch,
+            target: event.target,
+            pointerId: (Number(touch.identifier) || 0) + 1,
+            pointerType: "touch",
+            shiftKey: !!event.shiftKey,
+            ctrlKey: !!event.ctrlKey,
+            altKey: !!event.altKey,
+            metaKey: !!event.metaKey,
+          }, { x: dx, y: dy })) || inputHandled;
         }
+        if (inputHandled) preventDefaultIfCancelable(event);
       }, { passive: false });
-      add(canvas, "touchend", event => {
+      addInput("touchend", event => {
+        if (!shouldRouteInput(event)) return;
         const touch = eventTouch(event);
         if (!touch) return;
-        preventDefaultIfCancelable(event);
         if (!pointerEventsSupported) {
           markButtonEvent({ type: "pointerup" });
-          emitTouchPointer(24, touch, "pointerup");
+          if (handled(emitTouchPointer(24, touch, event))) {
+            preventDefaultIfCancelable(event);
+            focusInputTarget();
+          }
         }
         activeScrollTouch = null;
       }, { passive: false });
-      add(canvas, "touchcancel", event => {
+      addInput("touchcancel", event => {
+        if (!shouldRouteInput(event)) return;
         const touch = eventTouch(event);
-        if (touch) {
+        if (touch && !pointerEventsSupported && handled(emitTouchPointer(25, touch, event))) {
           preventDefaultIfCancelable(event);
         }
         activeScrollTouch = null;
       }, { passive: false });
-      add(canvas, "dragenter", event => emitFileDrag(60, event, true));
-      add(canvas, "dragover", event => emitFileDrag(61, event));
-      add(canvas, "drop", event => emitFileDrag(62, event, true));
-      add(canvas, "dragleave", event => emitFileDrag(63, event));
+      addInput("dragenter", event => emitFileDrag(60, event, true));
+      addInput("dragover", event => emitFileDrag(61, event));
+      addInput("drop", event => emitFileDrag(62, event, true));
+      addInput("dragleave", event => emitFileDrag(63, event));
       add(canvas, "focus", () => emit(11, rawId));
       add(canvas, "blur", emitBlurIfOutsideHost);
       add(canvas, "keydown", event => {
@@ -1555,6 +1810,11 @@ export function connectWindowWeb(instance, imports) {
     throw new Error("MoonBit wasm module must export web_dispatch_event");
   }
   imports.set_dispatch_event(dispatch);
+  const dispatchPointerInput = instance?.exports?.web_dispatch_pointer_input;
+  if (typeof dispatchPointerInput !== "function") {
+    throw new Error("MoonBit wasm module must export web_dispatch_pointer_input");
+  }
+  imports.set_dispatch_pointer_input?.(dispatchPointerInput);
   const routeDispatch = instance?.exports?.web_dispatch_route;
   if (typeof routeDispatch === "function") {
     imports.set_route_dispatch?.(routeDispatch);

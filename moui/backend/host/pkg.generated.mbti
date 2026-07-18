@@ -538,6 +538,7 @@ pub fn HostRuntimeDriver::dispatch_action_command_with_services(Self, @wzzc-dev/
 pub fn HostRuntimeDriver::dispatch_command_with_services(Self, @wzzc-dev/moui/core.CommandIntent, HostServiceBridge) -> HostEventResult
 pub fn HostRuntimeDriver::dispatch_keyboard_with_services(Self, @wzzc-dev/moui/core.KeyboardEvent, HostServiceBridge) -> HostEventResult
 pub fn HostRuntimeDriver::dispatch_platform_view(Self, String, @wzzc-dev/moui/core.PlatformViewEvent) -> Unit
+pub fn HostRuntimeDriver::dispatch_pointer_input(Self, @wzzc-dev/moui/core.PointerEvent) -> @runtime.InputDispatchResult
 pub fn HostRuntimeDriver::dispatch_semantics_action(Self, @wzzc-dev/moui/core.ElementId, @wzzc-dev/moui/core.SemanticsAction, value? : String?) -> Bool
 pub fn HostRuntimeDriver::dispatch_service_completion(Self, HostCompletedServiceResponse, HostServiceBridge) -> HostEventResult
 pub fn HostRuntimeDriver::draw_commands(Self) -> Array[@wzzc-dev/moui/core.DrawCommand]
