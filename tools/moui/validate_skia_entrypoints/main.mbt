@@ -291,7 +291,15 @@ fn validate_entry_texts(
     main, "@runtime.new_program_with_dimensions", main_path, failures,
   )
   if entry.host_summary_call != "" {
-    assert_contains(main, "program_with_host_summary", main_path, failures)
+    // Prefer the host-capability program constructors; both the legacy
+    // program_with_host_summary and newer program_with_host forms are valid.
+    if !main.contains("program_with_host_summary") &&
+      !main.contains("program_with_host(") {
+      failures.push(
+        main_path +
+        ": missing 'program_with_host' or 'program_with_host_summary'",
+      )
+    }
     assert_contains(main, entry.host_summary_call, main_path, failures)
   }
   assert_not_contains(main, legacy_first_frame_env_token(), main_path, failures)
