@@ -35,6 +35,17 @@
       }
       .moui-text-selection-layer { overflow: hidden; pointer-events: none; user-select: text; }
       .moui-text-selection-layer span { pointer-events: auto; color: transparent; white-space: pre; user-select: text; }
+      /* The picker popup overlays the editor. Extend its semantic hit target
+         over the menu rows so the editor's transparent textarea cannot turn
+         the pointer into an I-beam. */
+      #canvas-host .moui-semantics-layer [role="menu"][aria-expanded="true"] {
+        height: 248px !important;
+        cursor: default;
+        z-index: 1;
+      }
+      #canvas-host .moui-semantics-layer :has([role="menu"][aria-expanded="true"]) {
+        z-index: 1;
+      }
       #preview-frame {
         display: block;
         position: relative;
