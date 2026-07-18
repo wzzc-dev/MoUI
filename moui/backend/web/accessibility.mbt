@@ -49,7 +49,16 @@ priv struct WebSemanticsRuntimeBinding {
 }
 
 ///|
+priv struct WebSemanticsSnapshot {
+  raw_id : Int
+  json : String
+}
+
+///|
 let web_semantics_runtime_bindings : Array[WebSemanticsRuntimeBinding] = []
+
+///|
+let web_semantics_snapshots : Array[WebSemanticsSnapshot] = []
 
 ///|
 fn register_web_semantics_runtime(
@@ -70,7 +79,44 @@ fn unregister_web_semantics_runtime(raw_id : Int) -> Unit {
   }
   web_semantics_runtime_bindings.clear()
   web_semantics_runtime_bindings.append(retained)
+  let retained_snapshots : Array[WebSemanticsSnapshot] = []
+  for snapshot in web_semantics_snapshots {
+    if snapshot.raw_id != raw_id {
+      retained_snapshots.push(snapshot)
+    }
+  }
+  web_semantics_snapshots.clear()
+  web_semantics_snapshots.append(retained_snapshots)
   web_remove_semantics_host(raw_id)
+}
+
+///|
+fn web_semantics_snapshot_matches(raw_id : Int, json : String) -> Bool {
+  for snapshot in web_semantics_snapshots {
+    if snapshot.raw_id == raw_id {
+      return snapshot.json == json
+    }
+  }
+  false
+}
+
+///|
+fn web_cache_semantics_snapshot(raw_id : Int, json : String) -> Unit {
+  let next : Array[WebSemanticsSnapshot] = []
+  let mut replaced = false
+  for snapshot in web_semantics_snapshots {
+    if snapshot.raw_id == raw_id {
+      next.push({ raw_id, json })
+      replaced = true
+    } else {
+      next.push(snapshot)
+    }
+  }
+  if !replaced {
+    next.push({ raw_id, json })
+  }
+  web_semantics_snapshots.clear()
+  web_semantics_snapshots.append(next)
 }
 
 ///|
@@ -80,11 +126,14 @@ fn sync_web_semantics(
   semantics : @core.SemanticsNode,
 ) -> Unit {
   let json = (semantics_to_aria(semantics).to_json() : Json).stringify()
-  web_sync_semantics_host(
-    raw_id,
-    web_host_string(canvas_id),
-    web_host_string(json),
-  )
+  if !web_semantics_snapshot_matches(raw_id, json) {
+    web_sync_semantics_host(
+      raw_id,
+      web_host_string(canvas_id),
+      web_host_string(json),
+    )
+    web_cache_semantics_snapshot(raw_id, json)
+  }
 }
 
 ///|

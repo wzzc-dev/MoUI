@@ -13,13 +13,28 @@ class FakeElement {
   constructor(tagName, ownerDocument) {
     this.tagName = tagName.toUpperCase();
     this.ownerDocument = ownerDocument;
-    this.style = {};
+    this.styleWrites = 0;
+    this.style = new Proxy({}, {
+      set: (target, name, value) => {
+        this.styleWrites += 1;
+        target[name] = value;
+        return true;
+      },
+    });
     this.dataset = {};
     this.attributes = new Map();
     this.children = [];
     this.parentElement = null;
     this.listeners = new Map();
-    this.textContent = "";
+    this.textWrites = 0;
+    let textContent = "";
+    Object.defineProperty(this, "textContent", {
+      get: () => textContent,
+      set: value => {
+        this.textWrites += 1;
+        textContent = `${value ?? ""}`;
+      },
+    });
     this.value = "";
     this.tabIndex = -1;
   }
@@ -158,6 +173,11 @@ manager.sync(11, canvasOne, updated);
 assert(main.children.length === 1, "removed semantic nodes should leave the DOM");
 assert(main.children[0] === heading, "keyed semantic node should be reused");
 assert(heading.textContent === "Guides" && heading.style.left === "24px", "reused nodes should update attributes and geometry");
+const styleWritesBeforeStableSync = heading.styleWrites;
+const textWritesBeforeStableSync = heading.textWrites;
+manager.sync(11, canvasOne, updated);
+assert(heading.styleWrites === styleWritesBeforeStableSync, "unchanged semantics must not rewrite inline styles");
+assert(heading.textWrites === textWritesBeforeStableSync, "unchanged semantics must not rewrite text content");
 
 const hiddenTextInput = documentRef.createElement("textarea");
 hiddenTextInput.dataset.mouiTextInput = "true";
