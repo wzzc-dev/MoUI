@@ -1,4 +1,7 @@
 ///|
+let eject_test_temp_counter : Ref[Int] = { val: 0 }
+
+///|
 fn eject_test_temp_path(label : String) -> String {
   let root = match @env.get_env_var("TMPDIR") {
     Some(value) => value
@@ -8,7 +11,18 @@ fn eject_test_temp_path(label : String) -> String {
         None => @env.get_env_var("TMP").unwrap_or(".")
       }
   }
-  join_path(root, "moui-cli-eject-" + label + "-" + @env.now().to_string())
+  // Parallel whitebox tests can share the same millisecond timestamp; include a
+  // process-local counter so fixture roots never collide.
+  eject_test_temp_counter.val = eject_test_temp_counter.val + 1
+  join_path(
+    root,
+    "moui-cli-eject-" +
+    label +
+    "-" +
+    @env.now().to_string() +
+    "-" +
+    eject_test_temp_counter.val.to_string(),
+  )
 }
 
 ///|
