@@ -74,6 +74,61 @@ const dispatchCanvasPointerActivation = (canvas, event) => {
   }
 };
 
+const dispatchCanvasPointerMove = (canvas, event) => {
+  if (!canvas?.dispatchEvent) return;
+  const pointer = {
+    bubbles: true,
+    cancelable: true,
+    clientX: Number(event.clientX) || 0,
+    clientY: Number(event.clientY) || 0,
+    button: Number(event.button) || 0,
+    buttons: Number(event.buttons) || 0,
+    pointerId: Number(event.pointerId) || 1,
+    pointerType: event.pointerType || "mouse",
+    isPrimary: true,
+    ctrlKey: !!event.ctrlKey,
+    shiftKey: !!event.shiftKey,
+    altKey: !!event.altKey,
+    metaKey: !!event.metaKey,
+  };
+  if (typeof globalThis.PointerEvent === "function") {
+    canvas.dispatchEvent(new PointerEvent("pointermove", pointer));
+  } else if (typeof globalThis.MouseEvent === "function") {
+    canvas.dispatchEvent(new MouseEvent("mousemove", pointer));
+  } else {
+    canvas.dispatchEvent({ type: "mousemove", ...pointer });
+  }
+};
+
+const dispatchCanvasWheel = (canvas, event) => {
+  if (!canvas?.dispatchEvent) return;
+  event.preventDefault?.();
+  event.stopPropagation?.();
+  // The browser host resolves a wheel target from the latest pointer position.
+  // Semantic DOM nodes sit above the canvas, so their pointer moves do not reach
+  // it natively. Refresh the canvas position before forwarding this wheel event.
+  dispatchCanvasPointerMove(canvas, event);
+  const wheel = {
+    bubbles: true,
+    cancelable: true,
+    clientX: Number(event.clientX) || 0,
+    clientY: Number(event.clientY) || 0,
+    deltaX: Number(event.deltaX) || 0,
+    deltaY: Number(event.deltaY) || 0,
+    deltaZ: Number(event.deltaZ) || 0,
+    deltaMode: Number(event.deltaMode) || 0,
+    ctrlKey: !!event.ctrlKey,
+    shiftKey: !!event.shiftKey,
+    altKey: !!event.altKey,
+    metaKey: !!event.metaKey,
+  };
+  if (typeof globalThis.WheelEvent === "function") {
+    canvas.dispatchEvent(new WheelEvent("wheel", wheel));
+  } else {
+    canvas.dispatchEvent({ type: "wheel", ...wheel });
+  }
+};
+
 export function createSemanticsDomManager(options = {}) {
   const documentRef = options.document ?? globalThis.document;
   const layers = new Map();
@@ -94,6 +149,20 @@ export function createSemanticsDomManager(options = {}) {
     }
     host.appendChild(layer);
     const state = { rawId, canvas, layer, elements: new Map() };
+    // Actionable semantic elements (links, buttons, and text fields) sit above
+    // the canvas for accessibility. Forward pointer movement so hover state and
+    // wheel hit testing keep following the painted surface beneath them.
+    layer.addEventListener("pointermove", event => {
+      dispatchCanvasPointerMove(canvas, event);
+    }, { passive: true });
+    if (typeof globalThis.PointerEvent !== "function") {
+      layer.addEventListener("mousemove", event => {
+        dispatchCanvasPointerMove(canvas, event);
+      }, { passive: true });
+    }
+    layer.addEventListener("wheel", event => {
+      dispatchCanvasWheel(canvas, event);
+    }, { passive: false });
     layers.set(rawId, state);
     return state;
   };
