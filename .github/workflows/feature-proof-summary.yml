@@ -21,6 +21,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
+      - name: Set up MoonBit
+        uses: ./.github/actions/setup-moonbit
+
+      - name: Install MoonBit dependencies
+        run: sh scripts/ci-moon-update.sh
+
       - name: Collect CI workflow statuses
         id: collect
         uses: actions/github-script@v7
