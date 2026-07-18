@@ -5,11 +5,6 @@
 // `wzzc-dev/window/web` package without exposing registry cache paths to the
 // browser.
 
-import {
-  createSemanticsDomManager,
-  updateDocumentMetadata,
-} from "./semantics_dom.js";
-
 export const WEB_INPUT_FLAGS = Object.freeze({
   handled: 1,
   capturePointer: 2,
@@ -33,11 +28,13 @@ export class CanvasInputRouter {
   constructor(options) {
     this.canvas = options.canvas;
     this.host = options.host ?? options.canvas;
+    this.rawId = options.rawId;
     this.position = options.position;
     this.dispatchPointer = options.dispatchPointer;
     this.lineHeight = options.lineHeight ?? (() => 16);
     this.pageHeight = options.pageHeight ?? (() => this.host?.clientHeight || 1);
     this.scaleDelta = options.scaleDelta ?? ((_event, delta) => delta);
+    this.touchPoints = new Map();
   }
 
   isNativeInputTarget(target) {
@@ -49,8 +46,25 @@ export class CanvasInputRouter {
     return false;
   }
 
-  isCanvasEventTarget(target) {
-    return target === this.canvas;
+  isWithinHost(target) {
+    for (let current = target; current; current = current.parentElement) {
+      if (current === this.host) return true;
+    }
+    return false;
+  }
+
+  isOwnedTarget(target) {
+    if (target === this.canvas) return true;
+    for (let current = target; current; current = current.parentElement) {
+      if (current.dataset?.mouiWindowId === `${this.rawId}`) return true;
+      if (current.dataset?.mouiCanvasId === `${this.canvas.id}`) return true;
+      if (current === this.host) break;
+    }
+    return false;
+  }
+
+  shouldRoute(event) {
+    return this.isOwnedTarget(event?.target) && !this.isNativeInputTarget(event.target);
   }
 
   modifiers(event) {
@@ -60,17 +74,7 @@ export class CanvasInputRouter {
       | (event?.metaKey ? 8 : 0);
   }
 
-  pointerKind(event) {
-    switch (`${event?.pointerType || "mouse"}`) {
-      case "mouse": return 0;
-      case "touch": return 1;
-      case "pen": return 2;
-      default: return 3;
-    }
-  }
-
-  dispatch(kind, event, delta = { x: 0, y: 0 }) {
-    const point = this.position(this.canvas, event);
+  dispatch(kind, event, delta = { x: 0, y: 0 }, point = this.position(this.canvas, event)) {
     const pointerId = Number(event?.pointerId) || 1;
     const flags = Number(this.dispatchPointer(
       kind,
@@ -79,9 +83,6 @@ export class CanvasInputRouter {
       Number(delta.x) || 0,
       Number(delta.y) || 0,
       Number(event?.button) || 0,
-      Number(event?.buttons) || 0,
-      pointerId,
-      this.pointerKind(event),
       this.modifiers(event),
     )) || 0;
     if ((flags & WEB_INPUT_FLAGS.capturePointer) !== 0) {
@@ -101,6 +102,42 @@ export class CanvasInputRouter {
     return flags;
   }
 
+  pointerDown(event) {
+    if (!this.shouldRoute(event)) return 0;
+    const point = this.position(this.canvas, event);
+    if (event?.pointerType === "touch") {
+      this.touchPoints.set(Number(event.pointerId) || 1, point);
+    }
+    return this.dispatch(23, event, undefined, point);
+  }
+
+  pointerMove(event) {
+    if (!this.shouldRoute(event)) return 0;
+    const point = this.position(this.canvas, event);
+    const pointerId = Number(event?.pointerId) || 1;
+    if (event?.pointerType === "touch") {
+      const previous = this.touchPoints.get(pointerId);
+      this.touchPoints.set(pointerId, point);
+      if (!previous) return 0;
+      const delta = { x: previous.x - point.x, y: previous.y - point.y };
+      if (delta.x === 0 && delta.y === 0) return 0;
+      return this.dispatch(30, event, delta, point);
+    }
+    return this.dispatch(21, event, undefined, point);
+  }
+
+  pointerUp(event, cancelled = false) {
+    if (!this.shouldRoute(event)) return 0;
+    const pointerId = Number(event?.pointerId) || 1;
+    this.touchPoints.delete(pointerId);
+    return this.dispatch(cancelled ? 25 : 24, event);
+  }
+
+  pointerExit(event) {
+    if (!this.shouldRoute(event) || this.isOwnedTarget(event?.relatedTarget)) return 0;
+    return this.dispatch(22, event);
+  }
+
   wheel(event) {
     const delta = normalizeCanvasWheelDelta(event, {
       lineHeight: this.lineHeight(),
@@ -112,6 +149,279 @@ export class CanvasInputRouter {
       this.scaleDelta(event, delta),
     );
   }
+}
+
+const SEMANTICS_ACTION_CODES = new Map([
+  ["activate", 0],
+  ["focus", 1],
+  ["set-text", 2],
+  ["submit", 3],
+  ["scroll", 4],
+  ["select", 5],
+  ["expand", 6],
+  ["collapse", 7],
+  ["dismiss", 8],
+]);
+
+const semanticsTag = node => {
+  switch (node.role) {
+    case "link": return "a";
+    case "heading": return `h${Math.min(6, Math.max(1, Number(node.level) || 1))}`;
+    case "navigation": return "nav";
+    case "main": return "main";
+    case "button": return "button";
+    case "textbox": return `${node.value ?? ""}`.includes("\n") ? "textarea" : "input";
+    default: return "div";
+  }
+};
+
+const setOptionalAttribute = (element, name, value) => {
+  if (value === undefined || value === null || value === "") {
+    if (element.getAttribute(name) !== null) element.removeAttribute(name);
+    return;
+  }
+  const next = `${value}`;
+  if (element.getAttribute(name) !== next) element.setAttribute(name, next);
+};
+
+const setElementStyle = (element, name, value) => {
+  if (element.style[name] !== value) element.style[name] = value;
+};
+
+const semanticsFocusable = actions =>
+  actions.includes("focus") || actions.includes("activate") || actions.includes("set-text");
+
+const semanticsActivation = actions => {
+  for (const action of ["activate", "submit", "select", "expand", "collapse", "dismiss"]) {
+    if (actions.includes(action)) return action;
+  }
+  return undefined;
+};
+
+// Semantics is deliberately a DOM description, not a second input transport.
+// Pointer and wheel events bubble through canvas-host and are handled by the
+// CanvasInputRouter above; these handlers only support keyboard/AT actions.
+export function createSemanticsDomManager(options = {}) {
+  const documentRef = options.document ?? globalThis.document;
+  const layers = new Map();
+  let dispatch = typeof options.dispatch === "function" ? options.dispatch : () => {};
+
+  const createLayer = (rawId, canvas) => {
+    const layer = documentRef.createElement("div");
+    layer.className = "moui-semantics-layer";
+    layer.dataset.mouiWindowId = `${rawId}`;
+    Object.assign(layer.style, {
+      position: "absolute",
+      inset: "0",
+      pointerEvents: "none",
+      overflow: "hidden",
+      zIndex: "2",
+    });
+    const host = canvas.parentElement ?? documentRef.body;
+    if (globalThis.getComputedStyle?.(host)?.position === "static") {
+      host.style.position = "relative";
+    }
+    host.appendChild(layer);
+    const state = { rawId, layer, elements: new Map() };
+    layers.set(rawId, state);
+    return state;
+  };
+
+  const dispatchAction = (state, node, action, value = "") => {
+    const code = SEMANTICS_ACTION_CODES.get(action);
+    if (code !== undefined) {
+      dispatch(state.rawId, Number(node.element_id?.value ?? node.element_id ?? 0), code, `${value ?? ""}`);
+    }
+  };
+
+  const installHandlers = (state, record) => {
+    const { element } = record;
+    element.addEventListener("focus", () => {
+      const node = record.node;
+      if (node?.actions?.includes("focus")) dispatchAction(state, node, "focus");
+    });
+    element.addEventListener("click", event => {
+      // Pointer activation has already travelled through the trusted host
+      // router. detail=0 is the browser/assistive-technology activation path.
+      if (Number(event.detail) > 0) {
+        event.preventDefault();
+        return;
+      }
+      const node = record.node;
+      const action = semanticsActivation(node?.actions ?? []);
+      if (action) {
+        event.preventDefault();
+        dispatchAction(state, node, action);
+      }
+    });
+    element.addEventListener("keydown", event => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      const node = record.node;
+      const action = semanticsActivation(node?.actions ?? []);
+      if (action) {
+        event.preventDefault();
+        dispatchAction(state, node, action);
+      }
+    });
+    element.addEventListener("input", event => {
+      const node = record.node;
+      if (node?.actions?.includes("set-text")) {
+        dispatchAction(state, node, "set-text", event.currentTarget?.value ?? "");
+      }
+    });
+  };
+
+  const updateElement = (state, record, node, parentFrame) => {
+    record.node = node;
+    const { element } = record;
+    const origin = node.frame?.origin ?? {};
+    const size = node.frame?.size ?? {};
+    const left = `${(Number(origin.x) || 0) - (Number(parentFrame?.x) || 0)}px`;
+    const top = `${(Number(origin.y) || 0) - (Number(parentFrame?.y) || 0)}px`;
+    const width = `${Math.max(0, Number(size.width) || 0)}px`;
+    const height = `${Math.max(0, Number(size.height) || 0)}px`;
+    const geometryKey = `${left}\u0000${top}\u0000${width}\u0000${height}`;
+    if (record.geometryKey !== geometryKey) {
+      setElementStyle(element, "position", "absolute");
+      setElementStyle(element, "left", left);
+      setElementStyle(element, "top", top);
+      setElementStyle(element, "width", width);
+      setElementStyle(element, "height", height);
+      record.geometryKey = geometryKey;
+    }
+    const actions = node.actions ?? [];
+    const pointerEvents = semanticsFocusable(actions) ? "auto" : "none";
+    const tabIndex = node.disabled ? -1 : (semanticsFocusable(actions) ? 0 : -1);
+    const textValue = node.label || node.value || "";
+    const presentationKey = [
+      pointerEvents, node.role, node.level, node.url, node.label, node.value,
+      node.description, node.checked, node.selected, node.expanded, node.invalid,
+      node.required, node.disabled, actions.join("\u0000"),
+    ].join("\u0000");
+    if (record.presentationKey !== presentationKey) {
+      Object.assign(element.style, {
+        opacity: "0.001",
+        color: "transparent",
+        background: "transparent",
+        border: "0",
+        padding: "0",
+        margin: "0",
+        pointerEvents,
+      });
+      setOptionalAttribute(element, "role", node.role === "presentation" ? "none" : node.role);
+      setOptionalAttribute(element, "aria-label", node.label);
+      setOptionalAttribute(element, "aria-description", node.description);
+      setOptionalAttribute(element, "aria-level", node.role === "heading" ? node.level : undefined);
+      setOptionalAttribute(element, "href", node.role === "link" ? node.url : undefined);
+      setOptionalAttribute(element, "aria-checked", node.checked);
+      for (const name of ["selected", "expanded", "invalid", "required", "disabled"]) {
+        const value = node[name];
+        setOptionalAttribute(element, name === "disabled" ? "aria-disabled" : `aria-${name}`, value ? "true" : undefined);
+      }
+      if (element.tabIndex !== tabIndex) element.tabIndex = tabIndex;
+      if (node.role === "textbox") {
+        if (element.value !== `${node.value ?? ""}`) element.value = node.value ?? "";
+        setOptionalAttribute(element, "autocomplete", "off");
+      } else if (element.textContent !== textValue) {
+        element.textContent = textValue;
+      }
+      record.presentationKey = presentationKey;
+    }
+    const hostTextInputFocused =
+      documentRef.activeElement?.dataset?.mouiTextInput === "true";
+    if (node.focused && documentRef.activeElement !== element && !hostTextInputFocused) {
+      element.focus({ preventScroll: true });
+    }
+  };
+
+  const visit = (state, node, parent, parentFrame, seen) => {
+    const id = `${node.element_id?.value ?? node.element_id ?? 0}`;
+    seen.add(id);
+    let record = state.elements.get(id);
+    const tag = semanticsTag(node);
+    if (!record || record.element.tagName.toLowerCase() !== tag) {
+      record?.element.remove();
+      const element = documentRef.createElement(tag);
+      element.dataset.mouiElementId = id;
+      record = { element, node, geometryKey: "", presentationKey: "" };
+      state.elements.set(id, record);
+      installHandlers(state, record);
+    }
+    if (record.element.parentElement !== parent) parent.appendChild(record.element);
+    updateElement(state, record, node, parentFrame);
+    const origin = node.frame?.origin ?? {};
+    const frame = { x: Number(origin.x) || 0, y: Number(origin.y) || 0 };
+    for (const child of node.children ?? []) visit(state, child, record.element, frame, seen);
+  };
+
+  return {
+    setDispatch(next) {
+      dispatch = typeof next === "function" ? next : () => {};
+    },
+    sync(rawId, canvas, root) {
+      if (!documentRef || !canvas || !root) return;
+      const state = layers.get(rawId) ?? createLayer(rawId, canvas);
+      const seen = new Set();
+      visit(state, root, state.layer, { x: 0, y: 0 }, seen);
+      for (const [id, record] of state.elements) {
+        if (!seen.has(id)) {
+          record.element.remove();
+          state.elements.delete(id);
+        }
+      }
+    },
+    remove(rawId) {
+      const state = layers.get(rawId);
+      state?.layer.remove();
+      layers.delete(rawId);
+    },
+    layer(rawId) {
+      return layers.get(rawId)?.layer;
+    },
+  };
+}
+
+export function updateDocumentMetadata(metadata, documentRef = globalThis.document) {
+  if (!documentRef || !metadata) return;
+  if (metadata.title) documentRef.title = metadata.title;
+  const documentElement = documentRef.documentElement;
+  if (documentElement?.setAttribute) {
+    if (metadata.locale) documentElement.setAttribute("lang", `${metadata.locale}`);
+    if (metadata.direction) documentElement.setAttribute("dir", `${metadata.direction}`);
+  }
+  const upsert = (selector, create, value) => {
+    let element = documentRef.head?.querySelector?.(selector);
+    if (!element && value) {
+      element = create();
+      documentRef.head?.appendChild?.(element);
+    }
+    if (element && value) element.setAttribute("content", value);
+  };
+  const meta = (name, value, property = false) => upsert(
+    `meta[${property ? "property" : "name"}="${name}"]`,
+    () => {
+      const element = documentRef.createElement("meta");
+      element.setAttribute(property ? "property" : "name", name);
+      return element;
+    },
+    value,
+  );
+  meta("description", metadata.description);
+  meta("og:title", metadata.title, true);
+  meta("og:description", metadata.description, true);
+  meta("og:url", metadata.canonical, true);
+  meta("og:image", metadata.image, true);
+  meta("twitter:card", metadata.image ? "summary_large_image" : "summary");
+  meta("twitter:title", metadata.title);
+  meta("twitter:description", metadata.description);
+  meta("twitter:image", metadata.image);
+  let canonical = documentRef.head?.querySelector?.('link[rel="canonical"]');
+  if (!canonical && metadata.canonical) {
+    canonical = documentRef.createElement("link");
+    canonical.setAttribute("rel", "canonical");
+    documentRef.head?.appendChild?.(canonical);
+  }
+  if (canonical && metadata.canonical) canonical.setAttribute("href", metadata.canonical);
 }
 
 export function normalizeWebRouteString(route) {
@@ -309,9 +619,6 @@ export function createWindowWebImports(options = {}) {
     deltaXPx,
     deltaYPx,
     button,
-    buttons,
-    pointerId,
-    pointerKind,
     modifiers,
   ) => {
     if (!dispatchPointerInput) return 0;
@@ -323,9 +630,6 @@ export function createWindowWebImports(options = {}) {
       deltaXPx,
       deltaYPx,
       button,
-      buttons,
-      pointerId,
-      pointerKind,
       modifiers,
     )) || 0;
     observeEvent({
@@ -337,9 +641,6 @@ export function createWindowWebImports(options = {}) {
       deltaX: Number(deltaXPx) || 0,
       deltaY: Number(deltaYPx) || 0,
       button: button | 0,
-      buttons: buttons | 0,
-      pointerId: pointerId | 0,
-      pointerKind: pointerKind | 0,
       modifiers: modifiers | 0,
       flags,
       at: Number(globalThis.performance?.now?.() ?? Date.now()),
@@ -1270,61 +1571,10 @@ export function createWindowWebImports(options = {}) {
       let compositionText = "";
       let suppressNextInputText = "";
       let suppressNextInputUntil = 0;
-      let lastPointerEventAt = 0;
-      let lastButtonEventAt = 0;
-      let suppressMouseFallback = null;
-      let suppressClickFallback = null;
-      let activeScrollTouch = null;
-      const fallbackDedupWindowMs = 250;
-      const pointerEventsSupported = typeof globalThis.PointerEvent === "function";
       const add = (target, type, handler, options) => {
         target.addEventListener(type, handler, options);
         handlers.push([target, type, handler, options]);
       };
-      const sameEventType = (event, signature) =>
-        !!signature && event.type === signature.type;
-      const compatibilityMouseType = type => {
-        switch (type) {
-          case "pointerenter": return "mouseenter";
-          case "pointermove": return "mousemove";
-          case "pointerleave": return "mouseleave";
-          case "pointerdown": return "mousedown";
-          case "pointerup": return "mouseup";
-          default: return "";
-        }
-      };
-      const markPointerEvent = event => {
-        lastPointerEventAt = Date.now();
-        const mouseType = compatibilityMouseType(event.type);
-        suppressMouseFallback = mouseType
-          ? { type: mouseType }
-          : null;
-      };
-      const markButtonEvent = event => {
-        lastButtonEventAt = Date.now();
-        if (event.type === "pointerup" || event.type === "mouseup") {
-          suppressClickFallback = { type: "click" };
-        } else if (event.type === "pointerdown" || event.type === "mousedown") {
-          suppressClickFallback = null;
-        }
-      };
-      const shouldUseMouseFallback = event => {
-        if (sameEventType(event, suppressMouseFallback)) {
-          suppressMouseFallback = null;
-          return false;
-        }
-        return Date.now() - lastPointerEventAt > fallbackDedupWindowMs;
-      };
-      const shouldUseClickFallback = event => {
-        if (sameEventType(event, suppressClickFallback)) {
-          suppressClickFallback = null;
-          return false;
-        }
-        suppressClickFallback = null;
-        return Date.now() - lastButtonEventAt > fallbackDedupWindowMs;
-      };
-      const pointerEventIsStale = () =>
-        Date.now() - lastPointerEventAt > fallbackDedupWindowMs;
       const hostHasFocus = () => textInputHostHasFocus(textState);
       const acceptFileDrag = event => {
         preventDefaultIfCancelable(event);
@@ -1336,47 +1586,6 @@ export function createWindowWebImports(options = {}) {
         acceptFileDrag(event);
         const p = pointerPosition(canvas, event);
         emit(kind, rawId, Math.round(p.x), Math.round(p.y), 0, includeFiles ? draggedFileNames(event) : "");
-      };
-      const firstTouch = list => Array.from(list ?? [])[0] ?? null;
-      const touchByIdentifier = (list, identifier) =>
-        Array.from(list ?? []).find(touch => touch.identifier === identifier) ?? null;
-      const eventTouch = event => {
-        if (activeScrollTouch) {
-          return (
-            touchByIdentifier(event.touches, activeScrollTouch.identifier) ??
-            touchByIdentifier(event.changedTouches, activeScrollTouch.identifier)
-          );
-        }
-        return firstTouch(event.touches) ?? firstTouch(event.changedTouches);
-      };
-      const touchSignature = touch => ({
-        identifier: touch?.identifier ?? 0,
-        clientX: Number(touch?.clientX) || 0,
-        clientY: Number(touch?.clientY) || 0,
-      });
-      const emitTouchPointer = (kind, touch, event) => {
-        const pointerEventType = {
-          20: "pointerenter",
-          21: "pointermove",
-          22: "pointerleave",
-          23: "pointerdown",
-          24: "pointerup",
-          25: "pointercancel",
-        }[kind];
-        if (pointerEventType) markPointerEvent({ type: pointerEventType });
-        const pointer = {
-          ...touch,
-          target: event?.target,
-          button: 0,
-          buttons: kind === 23 ? 1 : 0,
-          pointerId: (Number(touch?.identifier) || 0) + 1,
-          pointerType: "touch",
-          shiftKey: !!event?.shiftKey,
-          ctrlKey: !!event?.ctrlKey,
-          altKey: !!event?.altKey,
-          metaKey: !!event?.metaKey,
-        };
-        return inputRouter.dispatch(kind, pointer);
       };
       const blurTargetIsHost = event =>
         event.relatedTarget === canvas || event.relatedTarget === textInput;
@@ -1399,6 +1608,7 @@ export function createWindowWebImports(options = {}) {
       const inputRouter = new CanvasInputRouter({
         canvas,
         host: inputTarget,
+        rawId,
         position: pointerPosition,
         dispatchPointer: (
           kind,
@@ -1407,9 +1617,6 @@ export function createWindowWebImports(options = {}) {
           deltaXPx,
           deltaYPx,
           button,
-          buttons,
-          pointerId,
-          pointerKind,
           modifiers,
         ) => emitPointerInput(
           rawId,
@@ -1419,9 +1626,6 @@ export function createWindowWebImports(options = {}) {
           deltaXPx,
           deltaYPx,
           button,
-          buttons,
-          pointerId,
-          pointerKind,
           modifiers,
         ),
         lineHeight: () => {
@@ -1443,161 +1647,39 @@ export function createWindowWebImports(options = {}) {
         add(inputTarget, type, handler, { ...options, capture: true });
       };
       const handled = flags => (flags & WEB_INPUT_FLAGS.handled) !== 0;
-      const shouldRouteInput = event =>
-        inputRouter.isCanvasEventTarget(event.target) &&
-        !inputRouter.isNativeInputTarget(event.target);
-      const dispatchPointer = (kind, event) => {
-        if (!shouldRouteInput(event)) return 0;
-        return inputRouter.dispatch(kind, event);
-      };
-      addInput("pointerenter", event => {
-        markPointerEvent(event);
-        dispatchPointer(20, event);
-      });
       addInput("pointermove", event => {
-        markPointerEvent(event);
-        dispatchPointer(21, event);
-      });
-      addInput("pointerleave", event => {
-        markPointerEvent(event);
-        dispatchPointer(22, event);
+        const flags = inputRouter.pointerMove(event);
+        if (event.pointerType === "touch" && handled(flags)) {
+          preventDefaultIfCancelable(event);
+        }
       });
       addInput("pointerdown", event => {
-        markPointerEvent(event);
-        markButtonEvent(event);
-        const flags = dispatchPointer(23, event);
+        const flags = inputRouter.pointerDown(event);
         if (handled(flags)) {
           preventDefaultIfCancelable(event);
           focusInputTarget();
         }
       });
       addInput("pointerup", event => {
-        markPointerEvent(event);
-        markButtonEvent(event);
-        const flags = dispatchPointer(24, event);
+        const flags = inputRouter.pointerUp(event);
         if (handled(flags)) {
           preventDefaultIfCancelable(event);
           focusInputTarget();
         }
       });
       addInput("pointercancel", event => {
-        markPointerEvent(event);
-        const flags = dispatchPointer(25, event);
+        const flags = inputRouter.pointerUp(event, true);
         if (handled(flags)) preventDefaultIfCancelable(event);
       });
-      addInput("mouseenter", event => {
-        if (pointerEventsSupported) return;
-        if (!shouldUseMouseFallback(event)) return;
-        dispatchPointer(20, event);
-      });
-      addInput("mousemove", event => {
-        if (pointerEventsSupported) return;
-        if (!shouldUseMouseFallback(event)) return;
-        dispatchPointer(21, event);
-      });
-      addInput("mouseleave", event => {
-        if (pointerEventsSupported) return;
-        if (!shouldUseMouseFallback(event)) return;
-        dispatchPointer(22, event);
-      });
-      addInput("mousedown", event => {
-        if (pointerEventsSupported) return;
-        if (!shouldUseMouseFallback(event)) return;
-        markButtonEvent(event);
-        const flags = dispatchPointer(23, event);
-        if (handled(flags)) {
-          preventDefaultIfCancelable(event);
-          focusInputTarget();
-        }
-      });
-      addInput("mouseup", event => {
-        if (pointerEventsSupported) return;
-        if (!shouldUseMouseFallback(event)) return;
-        markButtonEvent(event);
-        const flags = dispatchPointer(24, event);
-        if (handled(flags)) {
-          preventDefaultIfCancelable(event);
-          focusInputTarget();
-        }
-      });
-      addInput("click", event => {
-        if (pointerEventsSupported) return;
-        if (!shouldUseClickFallback(event)) return;
-        markButtonEvent(event);
-        const downFlags = dispatchPointer(23, event);
-        const upFlags = dispatchPointer(24, event);
-        if (handled(downFlags) || handled(upFlags)) {
-          preventDefaultIfCancelable(event);
-          focusInputTarget();
-        }
+      addInput("pointerout", event => {
+        inputRouter.pointerExit(event);
       });
       addInput("wheel", event => {
-        if (!shouldRouteInput(event)) return;
+        if (!inputRouter.shouldRoute(event)) return;
         // Ctrl/Meta wheel belongs to browser zoom, even when a canvas view
         // would otherwise consume the delta.
         if (event.ctrlKey || event.metaKey) return;
         if (handled(inputRouter.wheel(event))) preventDefaultIfCancelable(event);
-      }, { passive: false });
-      addInput("touchstart", event => {
-        if (!shouldRouteInput(event)) return;
-        const touch = firstTouch(event.changedTouches) ?? firstTouch(event.touches);
-        if (!touch) return;
-        activeScrollTouch = touchSignature(touch);
-        if (!pointerEventsSupported) {
-          markButtonEvent({ type: "pointerdown" });
-          if (handled(emitTouchPointer(23, touch, event))) {
-            preventDefaultIfCancelable(event);
-            focusInputTarget();
-          }
-        }
-      }, { passive: false });
-      addInput("touchmove", event => {
-        if (!shouldRouteInput(event)) return;
-        const touch = eventTouch(event);
-        if (!touch || !activeScrollTouch) return;
-        let inputHandled = false;
-        if (!pointerEventsSupported || pointerEventIsStale()) {
-          inputHandled = handled(emitTouchPointer(21, touch, event));
-        }
-        const previousPoint = pointerPosition(canvas, activeScrollTouch);
-        const point = pointerPosition(canvas, touch);
-        const dx = previousPoint.x - point.x;
-        const dy = previousPoint.y - point.y;
-        activeScrollTouch = touchSignature(touch);
-        if (dx !== 0 || dy !== 0) {
-          inputHandled = handled(inputRouter.dispatch(30, {
-            ...touch,
-            target: event.target,
-            pointerId: (Number(touch.identifier) || 0) + 1,
-            pointerType: "touch",
-            shiftKey: !!event.shiftKey,
-            ctrlKey: !!event.ctrlKey,
-            altKey: !!event.altKey,
-            metaKey: !!event.metaKey,
-          }, { x: dx, y: dy })) || inputHandled;
-        }
-        if (inputHandled) preventDefaultIfCancelable(event);
-      }, { passive: false });
-      addInput("touchend", event => {
-        if (!shouldRouteInput(event)) return;
-        const touch = eventTouch(event);
-        if (!touch) return;
-        if (!pointerEventsSupported) {
-          markButtonEvent({ type: "pointerup" });
-          if (handled(emitTouchPointer(24, touch, event))) {
-            preventDefaultIfCancelable(event);
-            focusInputTarget();
-          }
-        }
-        activeScrollTouch = null;
-      }, { passive: false });
-      addInput("touchcancel", event => {
-        if (!shouldRouteInput(event)) return;
-        const touch = eventTouch(event);
-        if (touch && !pointerEventsSupported && handled(emitTouchPointer(25, touch, event))) {
-          preventDefaultIfCancelable(event);
-        }
-        activeScrollTouch = null;
       }, { passive: false });
       addInput("dragenter", event => emitFileDrag(60, event, true));
       addInput("dragover", event => emitFileDrag(61, event));

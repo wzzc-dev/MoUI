@@ -109,12 +109,12 @@ pub(all) enum EffectTaskLifecycleStatus {
   EffectTaskCancelled
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct InputDispatchResult {
+pub struct InputDispatchResult {
   handled : Bool
   capture_pointer : Bool
   release_pointer : Bool
 } derive(Eq, ToJson, @debug.Debug)
-pub fn InputDispatchResult::ignored() -> Self
+pub fn InputDispatchResult::host_flags(Self) -> Int
 
 pub struct InspectorSnapshot {
   // private fields

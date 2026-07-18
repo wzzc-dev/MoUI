@@ -3,7 +3,7 @@
 import {
   createSemanticsDomManager,
   updateDocumentMetadata,
-} from "../moui/backend/web/semantics_dom.js";
+} from "../moui/backend/web/browser_runtime.js";
 
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
@@ -151,47 +151,12 @@ assert(heading.tagName === "H2", "heading level should select h2");
 assert(heading.style.left === "20px" && heading.style.top === "30px", "child frame should be parent-relative");
 assert(link.tagName === "A" && link.getAttribute("href") === "https://example.test/android", "link url should map to href");
 assert(link.style.pointerEvents === "auto", "actionable semantics elements must receive pointer input");
-const forwarded = [];
-canvasOne.addEventListener("mousedown", event => forwarded.push([event.type, event.clientX, event.clientY]));
-canvasOne.addEventListener("mouseup", event => forwarded.push([event.type, event.clientX, event.clientY]));
-canvasOne.addEventListener("mousemove", event => forwarded.push([event.type, event.clientX, event.clientY]));
-canvasOne.addEventListener("wheel", event => forwarded.push([event.type, event.clientX, event.clientY, event.deltaX, event.deltaY]));
 link.dispatch("pointerdown", { detail: 1, clientX: 42, clientY: 96 });
 link.dispatch("click", { detail: 1, clientX: 42, clientY: 96 });
 assert(actions.length === 0, "pointer clicks must not bypass canvas hit testing");
 assert(
-  JSON.stringify(forwarded) === JSON.stringify([["mousedown", 42, 96], ["mouseup", 42, 96]]),
-  "semantic pointer clicks should forward a matching canvas activation",
-);
-layerOne.dispatch("mousemove", { clientX: 42, clientY: 96 });
-assert(
-  JSON.stringify(forwarded) === JSON.stringify([
-    ["mousedown", 42, 96],
-    ["mouseup", 42, 96],
-    ["mousemove", 42, 96],
-  ]),
-  "semantic pointer movement should reach the canvas for hover state",
-);
-let wheelPrevented = false;
-let wheelStopped = false;
-layerOne.dispatch("wheel", {
-  clientX: 42,
-  clientY: 96,
-  deltaX: 3,
-  deltaY: 40,
-  preventDefault() { wheelPrevented = true; },
-  stopPropagation() { wheelStopped = true; },
-});
-assert(wheelPrevented && wheelStopped, "semantic wheel events should stay inside the canvas host");
-assert(
-  JSON.stringify(forwarded) === JSON.stringify([
-    ["mousedown", 42, 96],
-    ["mouseup", 42, 96],
-    ["mousemove", 42, 96],
-    ["mousemove", 42, 96],
-    ["wheel", 42, 96, 3, 40],
-  ]),
-  "semantic wheel events should refresh their hit-test position and forward their deltas",
+  !layerOne.listeners.has("pointermove") && !layerOne.listeners.has("wheel"),
+  "semantic layers must not install a second pointer or wheel transport",
 );
 link.dispatch("click");
 assert(actions.length === 1 && actions[0][0] === 11 && actions[0][1] === 3 && actions[0][2] === 0, "link click should dispatch activate");
@@ -224,12 +189,11 @@ const multiline = manager.layer(11).children[0];
 assert(multiline.tagName === "TEXTAREA", "multiline textboxes should preserve newlines");
 assert(multiline.value === "line one\nline two", "multiline textbox value should retain line breaks");
 assert(documentRef.activeElement === hiddenTextInput, "semantics sync must not steal focus from the canvas text input");
-forwarded.length = 0;
 multiline.dispatch("pointerdown", { detail: 1, clientX: 42, clientY: 96 });
 multiline.dispatch("click", { detail: 1, clientX: 42, clientY: 96 });
 assert(
-  JSON.stringify(forwarded) === JSON.stringify([["mousedown", 42, 96], ["mouseup", 42, 96]]),
-  "pointer clicks on semantic textboxes should not bypass floating canvas overlays",
+  actions.length === 2,
+  "pointer clicks on semantic textboxes must not bypass the canvas hit tree",
 );
 
 manager.sync(22, canvasTwo, node(9, "navigation", [0, 0, 200, 50]));
