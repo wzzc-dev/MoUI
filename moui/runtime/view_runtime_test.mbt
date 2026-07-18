@@ -421,6 +421,106 @@ test "picker overlay receives pointer events before covered siblings" {
 }
 
 ///|
+test "picker overlay keeps focus off covered text field on pointer down" {
+  // Reproduces playground: expanded picker popup paints over a later sibling
+  // text field. Pointer Down must not focus the covered field (which would move
+  // its caret), and selection Up must still hit the picker overlay.
+  let received : Array[String] = []
+  let mut field_value = "line one\nline two\nline three"
+  let runtime = AppRuntime::new_view(
+    root=@views.column(
+      [
+        @views.frame(
+          @views.picker(
+            [@views.picker_item("one", "One"), @views.picker_item("two", "Two")],
+            selected="one",
+            on_select=id => id,
+            placeholder="Pick",
+            max_height=160.0,
+          ),
+          width=200.0,
+          height=40.0,
+        ),
+        @views.text_field(
+          field_value,
+          on_input=value => {
+            field_value = value
+            "field"
+          },
+          placeholder="Covered field",
+          width=200.0,
+          height=120.0,
+        ),
+      ],
+      spacing=0.0,
+    ),
+    size=@core.Size::new(width=200.0, height=160.0),
+    on_message=Some(message => received.push(message)),
+  )
+  ignore(runtime.draw_frame())
+  // Focus the text field first (click inside it while picker is closed).
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=12.0, y=100.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=12.0, y=100.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  if !runtime.focused_text_input().focused {
+    fail("expected text field to take focus before opening picker")
+  }
+  let caret_before = runtime.focused_text_input().caret
+  // Open picker.
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=12.0, y=12.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  ignore(runtime.draw_frame())
+  // Down on the popup (over the covered field). Focus must leave the field so
+  // caret placement under the popup cannot run.
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=12.0, y=84.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  if runtime.focused_text_input().focused {
+    fail("expected picker overlay Down to steal focus from covered text field")
+  }
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=12.0, y=84.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  if received != ["two"] {
+    fail("expected picker overlay selection while covering a text field")
+  }
+  // Covered field must not have been edited by the popup click.
+  if field_value != "line one\nline two\nline three" {
+    fail("expected covered text field value to stay unchanged")
+  }
+  ignore(caret_before)
+}
+
+///|
 test "virtual node datepicker dispatches overlay selection without core primitive" {
   let received : Array[@core.DateValue] = []
   let runtime = AppRuntime::new_view(

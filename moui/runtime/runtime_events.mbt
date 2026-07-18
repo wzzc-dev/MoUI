@@ -166,6 +166,17 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
         event.phase == PointerPhase::Cancel {
         self.active_pointer_capture = None
       }
+      // Views can claim focus from the pointer handler (e.g. picker popup
+      // interaction). Prefer that claim over the geometry-only hit from
+      // `find_focusable_at` so focus tracks the control that handled the event.
+      match result.focused {
+        Some(target) =>
+          if self.focused_element != Some(target) {
+            self.focused_element = Some(target)
+            self.mark_dirty(self.element_tree.id())
+          }
+        None => ()
+      }
       self.needs_redraw = self.needs_redraw || result.changed
       self.needs_rebuild = self.needs_rebuild || result.activated
       self.needs_paint = self.needs_paint || result.changed
