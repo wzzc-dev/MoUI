@@ -216,8 +216,8 @@ writeFileSync(
   badShowcaseMain,
   replaceRequired(
     readFileSync(badShowcaseMain, "utf8"),
-    "program_with_host_summary",
-    "program",
+    "program_with_host(",
+    "program(",
   ),
 );
 expectFail(

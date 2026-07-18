@@ -1,7 +1,7 @@
 # Platform Host Contract
 
-> 本文档描述 `moui/backend/host` 的共享边界契约。概述见
-> [Architecture](../architecture.md)。
+> This document describes the shared boundary contract of `moui/backend/host`. For an overview,
+> see [Architecture](architecture.md).
 
 `backend/host` is the shared boundary between platform packages and the
 platform-neutral runtime. It defines `HostSurfaceMetrics`, input capabilities,

@@ -4,6 +4,8 @@ pub(all) struct WebDocumentMetadata {
   description : String
   canonical : String
   image : String
+  locale : String
+  direction : String
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -12,8 +14,10 @@ pub fn WebDocumentMetadata::new(
   description? : String = "",
   canonical? : String = "",
   image? : String = "",
+  locale? : String = "",
+  direction? : String = "",
 ) -> WebDocumentMetadata {
-  { title, description, canonical, image }
+  { title, description, canonical, image, locale, direction }
 }
 
 ///|

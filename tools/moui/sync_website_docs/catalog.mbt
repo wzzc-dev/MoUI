@@ -15,6 +15,23 @@ struct CatalogEntry {
 }
 
 ///|
+struct CatalogLocalizedEntry {
+  group : String
+  slug : String
+  title : String
+  summary : String
+  keywords : Array[String]
+  localized_path : String?
+}
+
+///|
+struct CatalogLocale {
+  tag : String
+  groups : Array[CatalogGroup]
+  entries : Array[CatalogLocalizedEntry]
+}
+
+///|
 struct CatalogExcluded {
   path : String
   reason : String
@@ -27,6 +44,7 @@ struct WebsiteDocsCatalog {
   groups : Array[CatalogGroup]
   entries : Array[CatalogEntry]
   excluded : Array[CatalogExcluded]
+  locales : Array[CatalogLocale]
 }
 
 ///|
@@ -42,9 +60,28 @@ struct ValidatedEntry {
 }
 
 ///|
+struct ValidatedLocaleEntry {
+  group : String
+  slug : String
+  title : String
+  summary : String
+  keywords : Array[String]
+  source_path : String
+  output_name : String
+}
+
+///|
+struct ValidatedLocale {
+  tag : String
+  groups : Array[CatalogGroup]
+  entries : Array[ValidatedLocaleEntry]
+}
+
+///|
 struct ValidatedCatalog {
   catalog : WebsiteDocsCatalog
   entries : Array[ValidatedEntry]
+  locales : Array[ValidatedLocale]
 }
 
 ///|
@@ -156,6 +193,229 @@ fn json_int(value : Json?, label : String) -> Result[Int, String] {
 }
 
 ///|
+fn parse_keywords(
+  fields : Map[String, Json],
+  label : String,
+) -> Result[Array[String], String] {
+  let keywords_json = match
+    json_array(fields.get("keywords"), label + ".keywords") {
+    Ok(values) => values
+    Err(_) => return Err(label + ".keywords must be a non-empty array")
+  }
+  if keywords_json.is_empty() {
+    return Err(label + ".keywords must be a non-empty array")
+  }
+  let keywords : Array[String] = []
+  for keyword_index, keyword_value in keywords_json {
+    match keyword_value {
+      Json::String(text) if text.trim().to_owned() != "" => keywords.push(text)
+      _ =>
+        return Err(
+          label +
+          ".keywords[" +
+          keyword_index.to_string() +
+          "] must be a non-empty string",
+        )
+    }
+  }
+  Ok(keywords)
+}
+
+///|
+fn parse_groups(
+  values : Array[Json],
+  label : String,
+) -> Result[Array[CatalogGroup], String] {
+  if values.is_empty() {
+    return Err(label + " must be a non-empty array")
+  }
+  let groups : Array[CatalogGroup] = []
+  for index, group_value in values {
+    let item_label = label + "[" + index.to_string() + "]"
+    let fields = match json_object(Some(group_value), item_label) {
+      Ok(value) => value
+      Err(message) => return Err(message)
+    }
+    let id = match json_string(fields.get("id"), item_label + ".id") {
+      Ok(value) => value
+      Err(message) => return Err(message)
+    }
+    let title = match json_string(fields.get("title"), item_label + ".title") {
+      Ok(value) => value
+      Err(message) => return Err(message)
+    }
+    groups.push({ id, title })
+  }
+  Ok(groups)
+}
+
+///|
+fn parse_entries(
+  values : Array[Json],
+  label : String,
+) -> Result[Array[CatalogEntry], String] {
+  if values.is_empty() {
+    return Err(label + " must be a non-empty array")
+  }
+  let entries : Array[CatalogEntry] = []
+  for index, entry_value in values {
+    let item_label = label + "[" + index.to_string() + "]"
+    let fields = match json_object(Some(entry_value), item_label) {
+      Ok(value) => value
+      Err(message) => return Err(message)
+    }
+    let group = match json_string(fields.get("group"), item_label + ".group") {
+      Ok(value) => value
+      Err(message) => return Err(message)
+    }
+    let slug = match json_string(fields.get("slug"), item_label + ".slug") {
+      Ok(value) => value
+      Err(message) => return Err(message)
+    }
+    let title = match json_string(fields.get("title"), item_label + ".title") {
+      Ok(value) => value
+      Err(message) => return Err(message)
+    }
+    let path = match json_string(fields.get("path"), item_label + ".path") {
+      Ok(value) => value
+      Err(message) => return Err(message)
+    }
+    let summary = match
+      json_string(fields.get("summary"), item_label + ".summary") {
+      Ok(value) => value
+      Err(message) => return Err(message)
+    }
+    let keywords = match parse_keywords(fields, item_label) {
+      Ok(value) => value
+      Err(message) => return Err(message)
+    }
+    entries.push({ group, slug, title, path, summary, keywords })
+  }
+  Ok(entries)
+}
+
+///|
+fn parse_localized_entries(
+  values : Array[Json],
+  label : String,
+) -> Result[Array[CatalogLocalizedEntry], String] {
+  if values.is_empty() {
+    return Err(label + " must be a non-empty array")
+  }
+  let entries : Array[CatalogLocalizedEntry] = []
+  for index, entry_value in values {
+    let item_label = label + "[" + index.to_string() + "]"
+    let fields = match json_object(Some(entry_value), item_label) {
+      Ok(value) => value
+      Err(message) => return Err(message)
+    }
+    let group = match json_string(fields.get("group"), item_label + ".group") {
+      Ok(value) => value
+      Err(message) => return Err(message)
+    }
+    let slug = match json_string(fields.get("slug"), item_label + ".slug") {
+      Ok(value) => value
+      Err(message) => return Err(message)
+    }
+    let title = match json_string(fields.get("title"), item_label + ".title") {
+      Ok(value) => value
+      Err(message) => return Err(message)
+    }
+    let summary = match
+      json_string(fields.get("summary"), item_label + ".summary") {
+      Ok(value) => value
+      Err(message) => return Err(message)
+    }
+    let keywords = match parse_keywords(fields, item_label) {
+      Ok(value) => value
+      Err(message) => return Err(message)
+    }
+    let localized_path = match fields.get("localizedPath") {
+      None => None
+      Some(Json::String(path)) if path.trim().to_owned() != "" => Some(path)
+      _ => return Err(item_label + ".localizedPath must be a non-empty string")
+    }
+    entries.push({ group, slug, title, summary, keywords, localized_path })
+  }
+  Ok(entries)
+}
+
+///|
+fn is_ascii_letter(ch : Char) -> Bool {
+  (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
+}
+
+///|
+fn is_ascii_digit(ch : Char) -> Bool {
+  ch >= '0' && ch <= '9'
+}
+
+///|
+fn is_valid_locale_tag(tag : String) -> Bool {
+  let mut part_length = 0
+  let mut part_index = 0
+  for ch in tag {
+    if ch == '-' {
+      if part_length == 0 ||
+        part_length > 8 ||
+        (part_index == 0 && part_length < 2) {
+        return false
+      }
+      part_index = part_index + 1
+      part_length = 0
+    } else if is_ascii_letter(ch) || is_ascii_digit(ch) {
+      part_length = part_length + 1
+    } else {
+      return false
+    }
+  }
+  part_length > 0 && part_length <= 8 && !(part_index == 0 && part_length < 2)
+}
+
+///|
+fn parse_locales(
+  root : Map[String, Json],
+) -> Result[Array[CatalogLocale], String] {
+  let fields = match root.get("locales") {
+    None => return Ok([])
+    Some(Json::Object(value)) => value
+    _ => return Err("locales must be an object")
+  }
+  let locales : Array[CatalogLocale] = []
+  for tag, locale_value in fields {
+    if !is_valid_locale_tag(tag) {
+      return Err("invalid locale tag: " + tag)
+    }
+    let label = "locales." + tag
+    let locale = match json_object(Some(locale_value), label) {
+      Ok(value) => value
+      Err(message) => return Err(message)
+    }
+    let groups_json = match
+      json_array(locale.get("groups"), label + ".groups") {
+      Ok(value) => value
+      Err(_) => return Err(label + ".groups must be a non-empty array")
+    }
+    let groups = match parse_groups(groups_json, label + ".groups") {
+      Ok(value) => value
+      Err(message) => return Err(message)
+    }
+    let entries_json = match
+      json_array(locale.get("entries"), label + ".entries") {
+      Ok(value) => value
+      Err(_) => return Err(label + ".entries must be a non-empty array")
+    }
+    let entries = match
+      parse_localized_entries(entries_json, label + ".entries") {
+      Ok(value) => value
+      Err(message) => return Err(message)
+    }
+    locales.push({ tag, groups, entries })
+  }
+  Ok(locales)
+}
+
+///|
 fn parse_catalog(text : String) -> Result[WebsiteDocsCatalog, String] {
   let root_json = @json.parse(text) catch {
     _ => return Err("unable to parse docs catalog JSON")
@@ -187,119 +447,23 @@ fn parse_catalog(text : String) -> Result[WebsiteDocsCatalog, String] {
     Ok(values) => values
     Err(_) => return Err("docs catalog groups must be a non-empty array")
   }
-  if groups_json.is_empty() {
-    return Err("docs catalog groups must be a non-empty array")
+  let groups = match parse_groups(groups_json, "groups") {
+    Ok(value) => value
+    Err(message) => return Err(message)
   }
   let entries_json = match
     json_array(root.get("entries"), "docs catalog entries") {
     Ok(values) => values
     Err(_) => return Err("docs catalog entries must be a non-empty array")
   }
-  if entries_json.is_empty() {
-    return Err("docs catalog entries must be a non-empty array")
+  let entries = match parse_entries(entries_json, "entries") {
+    Ok(value) => value
+    Err(message) => return Err(message)
   }
   let excluded_json = match
     json_array(root.get("excluded"), "docs catalog excluded") {
     Ok(values) => values
     Err(_) => return Err("docs catalog excluded must be an array")
-  }
-  let groups : Array[CatalogGroup] = []
-  for index, group_value in groups_json {
-    let fields = match
-      json_object(Some(group_value), "groups[" + index.to_string() + "]") {
-      Ok(value) => value
-      Err(message) => return Err(message)
-    }
-    let id = match
-      json_string(fields.get("id"), "groups[" + index.to_string() + "].id") {
-      Ok(value) => value
-      Err(message) => return Err(message)
-    }
-    let title = match
-      json_string(
-        fields.get("title"),
-        "groups[" + index.to_string() + "].title",
-      ) {
-      Ok(value) => value
-      Err(message) => return Err(message)
-    }
-    groups.push({ id, title })
-  }
-  let entries : Array[CatalogEntry] = []
-  for index, entry_value in entries_json {
-    let fields = match
-      json_object(Some(entry_value), "entries[" + index.to_string() + "]") {
-      Ok(value) => value
-      Err(message) => return Err(message)
-    }
-    let group = match
-      json_string(
-        fields.get("group"),
-        "entries[" + index.to_string() + "].group",
-      ) {
-      Ok(value) => value
-      Err(message) => return Err(message)
-    }
-    let slug = match
-      json_string(fields.get("slug"), "entries[" + index.to_string() + "].slug") {
-      Ok(value) => value
-      Err(message) => return Err(message)
-    }
-    let title = match
-      json_string(
-        fields.get("title"),
-        "entries[" + index.to_string() + "].title",
-      ) {
-      Ok(value) => value
-      Err(message) => return Err(message)
-    }
-    let path = match
-      json_string(fields.get("path"), "entries[" + index.to_string() + "].path") {
-      Ok(value) => value
-      Err(message) => return Err(message)
-    }
-    let summary = match
-      json_string(
-        fields.get("summary"),
-        "entries[" + index.to_string() + "].summary",
-      ) {
-      Ok(value) => value
-      Err(message) => return Err(message)
-    }
-    let keywords_json = match
-      json_array(
-        fields.get("keywords"),
-        "entries[" + index.to_string() + "].keywords",
-      ) {
-      Ok(values) => values
-      Err(_) =>
-        return Err(
-          "entries[" +
-          index.to_string() +
-          "].keywords must be a non-empty array",
-        )
-    }
-    if keywords_json.is_empty() {
-      return Err(
-        "entries[" + index.to_string() + "].keywords must be a non-empty array",
-      )
-    }
-    let keywords : Array[String] = []
-    for keyword_index, keyword_value in keywords_json {
-      match keyword_value {
-        Json::String(text) if text.trim().to_owned() != "" =>
-          keywords.push(text)
-        _ =>
-          return Err(
-            "entries[" +
-            index.to_string() +
-            "].keywords[" +
-            keyword_index.to_string() +
-            "] must be a non-empty string",
-          )
-      }
-    }
-    entries.push({ group, slug, title, path, summary, keywords })
   }
   let excluded : Array[CatalogExcluded] = []
   for index, excluded_value in excluded_json {
@@ -326,7 +490,11 @@ fn parse_catalog(text : String) -> Result[WebsiteDocsCatalog, String] {
     }
     excluded.push({ path, reason })
   }
-  Ok({ schema_version, site_url, groups, entries, excluded })
+  let locales = match parse_locales(root) {
+    Ok(value) => value
+    Err(message) => return Err(message)
+  }
+  Ok({ schema_version, site_url, groups, entries, excluded, locales })
 }
 
 ///|
@@ -337,6 +505,19 @@ fn array_contains(values : Array[String], needle : String) -> Bool {
     }
   }
   false
+}
+
+///|
+fn canonical_entry_for(
+  entries : Array[CatalogEntry],
+  slug : String,
+) -> CatalogEntry? {
+  for entry in entries {
+    if entry.slug == slug {
+      return Some(entry)
+    }
+  }
+  None
 }
 
 ///|
@@ -466,6 +647,157 @@ fn validate_catalog_against_repo(
   for item in catalog.excluded {
     reason_chars = reason_chars + item.reason.length()
   }
+  let locale_tags : Array[String] = []
+  let validated_locales : Array[ValidatedLocale] = []
+  for locale in catalog.locales {
+    if array_contains(locale_tags, locale.tag) {
+      return Err("duplicate locale tag: " + locale.tag)
+    }
+    locale_tags.push(locale.tag)
+    let localized_group_ids : Array[String] = []
+    for group in locale.groups {
+      if array_contains(localized_group_ids, group.id) {
+        return Err(
+          "duplicate localized group id for locale '" +
+          locale.tag +
+          "': " +
+          group.id,
+        )
+      }
+      localized_group_ids.push(group.id)
+    }
+    for group_id in group_ids {
+      if !array_contains(localized_group_ids, group_id) {
+        return Err(
+          "localized groups missing stable id for locale '" +
+          locale.tag +
+          "': " +
+          group_id,
+        )
+      }
+    }
+    for group_id in localized_group_ids {
+      if !array_contains(group_ids, group_id) {
+        return Err(
+          "localized groups contain unknown stable id for locale '" +
+          locale.tag +
+          "': " +
+          group_id,
+        )
+      }
+    }
+    let localized_slugs : Array[String] = []
+    let localized_outputs : Array[String] = []
+    let validated_locale_entries : Array[ValidatedLocaleEntry] = []
+    for entry in locale.entries {
+      if !array_contains(group_ids, entry.group) {
+        return Err(
+          "unknown localized group '" +
+          entry.group +
+          "' for slug '" +
+          entry.slug +
+          "' in locale '" +
+          locale.tag +
+          "'",
+        )
+      }
+      if !array_contains(slugs, entry.slug) {
+        return Err(
+          "localized entries contain unknown stable slug for locale '" +
+          locale.tag +
+          "': " +
+          entry.slug,
+        )
+      }
+      if array_contains(localized_slugs, entry.slug) {
+        return Err(
+          "duplicate localized slug for locale '" +
+          locale.tag +
+          "': " +
+          entry.slug,
+        )
+      }
+      localized_slugs.push(entry.slug)
+      let canonical = match canonical_entry_for(catalog.entries, entry.slug) {
+        Some(value) => value
+        None =>
+          return Err("localized entry parity lookup failed: " + entry.slug)
+      }
+      if canonical.group != entry.group {
+        return Err(
+          "localized entry group differs from stable group for locale '" +
+          locale.tag +
+          "' slug '" +
+          entry.slug +
+          "'",
+        )
+      }
+      let source_path = match entry.localized_path {
+        Some(path) => path
+        None => "docs/" + locale.tag + "/" + basename(canonical.path)
+      }
+      match
+        validate_repo_path(
+          source_path,
+          "localizedPath for locale '" +
+          locale.tag +
+          "' slug '" +
+          entry.slug +
+          "'",
+        ) {
+        Ok(_) => ()
+        Err(message) => return Err(message)
+      }
+      let locale_prefix = "docs/" + locale.tag + "/"
+      if !source_path.has_prefix(locale_prefix) ||
+        !source_path.has_suffix(".md") ||
+        basename(source_path) == "catalog.json" {
+        return Err(
+          "localizedPath must be a Markdown file below " +
+          locale_prefix +
+          ": " +
+          source_path,
+        )
+      }
+      let output_name = basename(source_path)
+      if array_contains(localized_outputs, output_name) {
+        return Err(
+          "duplicate localized output for locale '" +
+          locale.tag +
+          "': " +
+          output_name,
+        )
+      }
+      localized_outputs.push(output_name)
+      if !@tools.file_exists(@tools.resolve_path(repo_root, source_path)) {
+        return Err("localized source is missing: " + source_path)
+      }
+      validated_locale_entries.push({
+        group: entry.group,
+        slug: entry.slug,
+        title: entry.title,
+        summary: entry.summary,
+        keywords: entry.keywords,
+        source_path,
+        output_name,
+      })
+    }
+    for slug in slugs {
+      if !array_contains(localized_slugs, slug) {
+        return Err(
+          "localized entries missing stable slug for locale '" +
+          locale.tag +
+          "': " +
+          slug,
+        )
+      }
+    }
+    validated_locales.push({
+      tag: locale.tag,
+      groups: locale.groups,
+      entries: validated_locale_entries,
+    })
+  }
   // keep validated entry metadata available for future SEO emitters
   for item in validated_entries {
     ignore(item.group)
@@ -476,5 +808,5 @@ fn validate_catalog_against_repo(
     ignore(item.keywords)
   }
   ignore(reason_chars)
-  Ok({ catalog, entries: validated_entries })
+  Ok({ catalog, entries: validated_entries, locales: validated_locales })
 }

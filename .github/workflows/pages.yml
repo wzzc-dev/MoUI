@@ -65,6 +65,8 @@ jobs:
           test -f dist/pages/docs/moui-readme.md
           test -f dist/pages/docs/moui-skia-readme.md
           test -f dist/pages/docs/catalog.json
+          test -f dist/pages/docs/zh-Hans/catalog.json
+          test -f dist/pages/docs/zh-Hans/architecture.md
           test -f dist/pages/docs/android-support.md
           test -f dist/pages/docs/ios-support.md
           test -f dist/pages/docs/harmonyos-support.md

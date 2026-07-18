@@ -9,6 +9,7 @@ This file is generated from repository manifests and validator reports.
 | Member |
 |---|
 | ./moui |
+| ./moui_i18n |
 | ./moui_richtext |
 | ./moui_tester |
 | ./moui_webview |

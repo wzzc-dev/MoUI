@@ -15,7 +15,8 @@ usage() {
   printf 'One-shot local/GitHub Pages layout for the MoUI website:\n'
   printf '  <out>/                 packaged website/web_wasm\n'
   printf '  <out>/playground/      packaged website playground (unless --skip-playground)\n'
-  printf '  <out>/docs/            synced docs catalog (unless --skip-docs)\n'
+  printf '%s\n' '  <out>/docs/            synced English docs catalog (unless --skip-docs)'
+  printf '%s\n' '  <out>/docs/zh-Hans/    synced Simplified Chinese docs catalog (unless --skip-docs)'
   printf '\n'
   printf 'Default --out: dist/pages (same shape as .github/workflows/pages.yml).\n'
   printf '\n'
@@ -85,6 +86,8 @@ if "$VERIFY"; then
   if ! "$SKIP_DOCS"; then
     test -f "$OUT_DIR/docs/catalog.json"
     test -f "$OUT_DIR/docs/architecture.md"
+    test -f "$OUT_DIR/docs/zh-Hans/catalog.json"
+    test -f "$OUT_DIR/docs/zh-Hans/architecture.md"
   fi
   if ! "$SKIP_PLAYGROUND"; then
     test -f "$OUT_DIR/playground/index.html"

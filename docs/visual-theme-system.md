@@ -1,7 +1,9 @@
 # Visual Theme System
 
-> 本文档描述 ThemeSpec → Theme 管道、ColorPalette、组件主题和环境主题解析。
-> 概述见 [Architecture](../architecture.md)。控件样式细节见 [Button Styling Guide](button-styling-guide.md)。
+> This document describes the `ThemeSpec` → `Theme` pipeline, `ColorPalette`,
+> component themes, and environment-theme resolution. For an overview, see
+> [Architecture](architecture.md). For control-style details, see the
+> [Button Styling Guide](button-styling-guide.md).
 
 The visual system is a `ThemeSpec -> resolve_theme -> Theme` pipeline. `core`
 owns the neutral schema and resolver; branded design systems are addon

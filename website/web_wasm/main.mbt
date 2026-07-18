@@ -11,9 +11,22 @@ fn main {
         None => ()
       }
     },
-    update_metadata=(title, description, canonical) => {
+    apply_locale=locale => {
+      match runtime_ref.val {
+        Some(runtime) =>
+          runtime.set_environment(runtime.environment().with_locale(locale))
+        None => ()
+      }
+    },
+    update_metadata=(title, description, canonical, locale, direction) => {
       @web.web_update_document_metadata(
-        @web.WebDocumentMetadata::new(title~, description~, canonical~),
+        @web.WebDocumentMetadata::new(
+          title~,
+          description~,
+          canonical~,
+          locale~,
+          direction~,
+        ),
       )
     },
   )

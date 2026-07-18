@@ -64,7 +64,8 @@ pub struct WebsiteRouteHost {
   route_source : @host.HostRouteSource
   push_route : (String) -> Unit
   scroll_to_key : (String, @core.ScrollAlignment) -> Unit
-  update_metadata : (String, String, String) -> Unit
+  apply_locale : (String) -> Unit
+  update_metadata : (String, String, String, String, String) -> Unit
 }
 
 ///|
@@ -74,13 +75,16 @@ pub fn WebsiteRouteHost::new(
   scroll_to_key? : (String, @core.ScrollAlignment) -> Unit = (_key, _alignment) => {
     ()
   },
-  update_metadata? : (String, String, String) -> Unit = (
+  apply_locale? : (String) -> Unit = _locale => (),
+  update_metadata? : (String, String, String, String, String) -> Unit = (
     _title,
     _description,
     _canonical,
+    _locale,
+    _direction,
   ) => (),
 ) -> WebsiteRouteHost {
-  { route_source, push_route, scroll_to_key, update_metadata }
+  { route_source, push_route, scroll_to_key, apply_locale, update_metadata }
 }
 
 ///|
@@ -235,7 +239,12 @@ fn website_doc_wrap_lines(
   let limit = max_website_int(8, (width / (font_size * 0.56)).to_int())
   let lines : Array[String] = []
   for source_line in value.split("\n") {
-    let words = source_line.to_owned().split(" ").to_array()
+    let source = source_line.to_owned()
+    if !source.contains(" ") {
+      lines.append(website_doc_wrap_unbroken_line(source, limit))
+      continue
+    }
+    let words = source.split(" ").to_array()
     let current : Array[String] = []
     let mut current_length = 0
     for word_view in words {
@@ -255,5 +264,30 @@ fn website_doc_wrap_lines(
     [""]
   } else {
     lines
+  }
+}
+
+///|
+fn website_doc_wrap_unbroken_line(value : String, limit : Int) -> Array[String] {
+  let chars = value.to_array()
+  if chars.is_empty() {
+    return [""]
+  }
+  let lines : Array[String] = []
+  let mut start = 0
+  while start < chars.length() {
+    let end = min_website_int(chars.length(), start + limit)
+    lines.push(String::from_array(chars[start:end]))
+    start = end
+  }
+  lines
+}
+
+///|
+fn min_website_int(a : Int, b : Int) -> Int {
+  if a < b {
+    a
+  } else {
+    b
   }
 }
