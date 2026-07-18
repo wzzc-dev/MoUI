@@ -82,7 +82,9 @@ fn pub_all_budgets() -> Array[CountBudget] {
       kind: "pub(all)",
       label: "website/app",
       path: "website/app",
-      max_count: 0,
+      // Generated catalog model types are internal to the Website package but
+      // need package-wide visibility across its generated and adapter sources.
+      max_count: 2,
     },
   ]
 }

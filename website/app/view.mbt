@@ -4,37 +4,77 @@ fn Model::top_bar(
   theme : @moui.Theme,
   metrics : Metrics,
 ) -> @moui.View[Msg] {
+  let message = key => website_message(self.locale, key)
   let action_label = if self.dark { "☀" } else { "☾" }
   let action_accessibility_label = if self.dark {
-    "Switch to light theme"
+    message("theme.switch_light")
   } else {
-    "Switch to dark theme"
+    message("theme.switch_dark")
   }
-  let items : Array[@moui.View[Msg]] = [brand_mark(theme)]
+  let items : Array[@moui.View[Msg]] = [brand_mark(theme, self.locale)]
   if !metrics.nav_compact {
     items.push(
-      nav_button(theme, "Home", self.page is WebsiteHome, OpenHomeAt(0.0)),
-    )
-    items.push(
-      nav_button(theme, "Tutorial", self.page is WebsiteTutorial, OpenTutorial),
-    )
-    items.push(
-      nav_button(theme, "Quick Start", false, OpenHomeAnchor("quick-start")),
+      nav_button(
+        theme,
+        message("nav.home"),
+        self.page is WebsiteHome,
+        OpenHomeAt(0.0),
+      ),
     )
     items.push(
       nav_button(
         theme,
-        "Showcases",
-        self.page is WebsiteShowcases,
-        OpenShowcases,
+        message("nav.tutorial"),
+        self.page is WebsiteTutorial,
+        OpenTutorial,
       ),
     )
-    items.push(nav_button(theme, "Docs", self.page is WebsiteDocs, OpenDocs))
-    items.push(nav_button(theme, "GitHub", false, OpenRepository))
+    items.push(
+      nav_button(
+        theme,
+        message("nav.quick_start"),
+        false,
+        OpenHomeAnchor("quick-start"),
+        width=102.0,
+      ),
+    )
+    items.push(
+      nav_button(
+        theme,
+        message("nav.showcases"),
+        self.page is WebsiteShowcases,
+        OpenShowcases,
+        width=92.0,
+      ),
+    )
+    items.push(
+      nav_button(theme, message("nav.docs"), self.page is WebsiteDocs, OpenDocs),
+    )
+    items.push(nav_button(theme, message("nav.github"), false, OpenRepository))
+    items.push(
+      button(
+        "EN",
+        on_click=SelectLocale("en-US"),
+        variant=@views.ButtonVariant::Ghost,
+        theme~,
+        width=40.0,
+        height=34.0,
+      ).accessibility_label(message("site.english")),
+    )
+    items.push(
+      button(
+        "中",
+        on_click=SelectLocale("zh-Hans"),
+        variant=@views.ButtonVariant::Ghost,
+        theme~,
+        width=40.0,
+        height=34.0,
+      ).accessibility_label(message("site.chinese")),
+    )
   } else {
     items.push(
       button(
-        "Menu",
+        website_message(self.locale, "nav.menu"),
         on_click=ToggleMobileMenu,
         variant=@views.ButtonVariant::Outline,
         theme~,
@@ -88,17 +128,17 @@ fn Model::top_bar(
   )
   .border(website_border(theme))
   .semantics_role(@core.SemanticsRole::Navigation)
-  .accessibility_label("Website navigation")
+  .accessibility_label(message("site.navigation"))
 }
 
 ///|
-fn brand_mark(theme : @moui.Theme) -> @moui.View[Msg] {
+fn brand_mark(theme : @moui.Theme, locale : String) -> @moui.View[Msg] {
   row(
     [
       text("MoUI", width=72.0, height=26.0)
       .font(@text.FontSpec::new(size=19.0, weight=820))
       .foreground(theme.palette.foreground),
-      text("MoonBit UI", width=88.0, height=20.0)
+      text(website_message(locale, "brand.subtitle"), width=88.0, height=20.0)
       .font(theme.typography.caption)
       .foreground(theme.palette.muted),
     ],
@@ -113,6 +153,7 @@ fn Model::showcases_content(
   theme : @moui.Theme,
   metrics : Metrics,
 ) -> @moui.View[Msg] {
+  let message = key => website_message(self.locale, key)
   let card_width = if metrics.compact {
     metrics.content_width
   } else {
@@ -137,15 +178,17 @@ fn Model::showcases_content(
       [
         section_header(
           theme,
-          "Showcases",
-          "MoUI 示例截图展示",
-          "Click any screenshot to open its source on GitHub.",
+          message("showcases.title"),
+          message("showcases.summary"),
+          message("showcases.description"),
           metrics.content_width,
         ),
         lazy_grid(
           entries,
           entry => entry.slug,
-          entry => showcase_card(theme, entry, card_width, thumb_height),
+          entry => {
+            showcase_card(theme, entry, card_width, thumb_height, self.locale)
+          },
           state=self.showcase_grid_scroll,
           columns~,
           item_height=card_height,
@@ -170,11 +213,12 @@ fn showcase_card(
   entry : WebsiteShowcaseEntry,
   width : Double,
   thumb_height : Double,
+  locale : String,
 ) -> @moui.View[Msg] {
   let source_url = entry.source_url
   let slug = entry.slug
-  let title = entry.title
-  let subtitle = entry.subtitle
+  let title = website_message(locale, entry.title_key)
+  let subtitle = website_message(locale, entry.subtitle_key)
   container(
     column(
       [
@@ -188,7 +232,11 @@ fn showcase_card(
           .on_tap(OpenShowcaseSource(source_url))
           .semantics_role(@core.SemanticsRole::Link)
           .semantics_url(source_url)
-          .accessibility_label("Open source for " + title),
+          .accessibility_label(
+            website_message_with(locale, "action.open_source_for", [
+              ("title", title),
+            ]),
+          ),
           width~,
           height=thumb_height,
           corner_radius=8.0,
@@ -208,7 +256,7 @@ fn showcase_card(
           align=@views.CrossAlign::Start,
         ),
         button(
-          "Open Source",
+          website_message(locale, "action.open_source"),
           on_click=OpenShowcaseSource(source_url),
           variant=@views.ButtonVariant::Outline,
           theme~,
@@ -231,8 +279,8 @@ fn showcase_card(
 ///|
 priv struct WebsiteShowcaseEntry {
   slug : String
-  title : String
-  subtitle : String
+  title_key : String
+  subtitle_key : String
   source_url : String
 }
 
@@ -241,50 +289,50 @@ fn website_showcase_entries() -> Array[WebsiteShowcaseEntry] {
   [
     {
       slug: "showcase",
-      title: "Showcase",
-      subtitle: "Visual component catalog",
+      title_key: "showcase.showcase.title",
+      subtitle_key: "showcase.showcase.subtitle",
       source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase",
     },
     {
       slug: "ios-componentgallery",
-      title: "iOS Showcase",
-      subtitle: "Showcase mobile workspace on iOS",
+      title_key: "showcase.ios.title",
+      subtitle_key: "showcase.ios.subtitle",
       source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase",
     },
     {
       slug: "harmonyos-componentgallery",
-      title: "HarmonyOS Showcase",
-      subtitle: "Showcase mobile workspace on HarmonyOS",
+      title_key: "showcase.harmonyos.title",
+      subtitle_key: "showcase.harmonyos.subtitle",
       source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase",
     },
     {
       slug: "markdown_editor",
-      title: "Markdown Editor",
-      subtitle: "WYSIWYG Markdown editing",
+      title_key: "showcase.markdown.title",
+      subtitle_key: "showcase.markdown.subtitle",
       source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/markdown_editor",
     },
     {
       slug: "mo_workbench",
-      title: "Mo Workbench",
-      subtitle: "Desktop agent workspace",
+      title_key: "showcase.workbench.title",
+      subtitle_key: "showcase.workbench.subtitle",
       source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/mo_workbench",
     },
     {
       slug: "excel",
-      title: "Excel Viewer",
-      subtitle: "MoonBit Excel file renderer",
+      title_key: "showcase.excel.title",
+      subtitle_key: "showcase.excel.subtitle",
       source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/excel",
     },
     {
       slug: "webview",
-      title: "WebView Demo",
-      subtitle: "Native platform WebView shell",
+      title_key: "showcase.webview.title",
+      subtitle_key: "showcase.webview.subtitle",
       source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/webview_demo",
     },
     {
       slug: "android-componentgallery",
-      title: "Android Showcase",
-      subtitle: "Showcase mobile workspace on Android",
+      title_key: "showcase.android.title",
+      subtitle_key: "showcase.android.subtitle",
       source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase",
     },
   ]
@@ -296,6 +344,7 @@ fn nav_button(
   label : String,
   active : Bool,
   message : Msg,
+  width? : Double = 76.0,
 ) -> @moui.View[Msg] {
   button(
     label,
@@ -306,13 +355,7 @@ fn nav_button(
       @views.ButtonVariant::Ghost
     },
     theme~,
-    width=if label == "Quick Start" {
-      102.0
-    } else if label == "Showcases" {
-      92.0
-    } else {
-      76.0
-    },
+    width~,
     height=34.0,
   ).foreground(if active { theme.palette.primary } else { theme.palette.muted })
 }
@@ -323,10 +366,11 @@ fn Model::hero(
   theme : @moui.Theme,
   metrics : Metrics,
 ) -> @moui.View[Msg] {
+  let message = key => website_message(self.locale, key)
   let ctas = row(
     [
       button(
-        "Get Started",
+        message("action.get_started"),
         on_click=OpenHomeAnchor("quick-start"),
         variant=@views.ButtonVariant::Outline,
         theme~,
@@ -334,7 +378,7 @@ fn Model::hero(
         height=if metrics.compact { 40.0 } else { 46.0 },
       ).foreground(theme.palette.foreground),
       button(
-        "GitHub",
+        message("nav.github"),
         on_click=OpenRepository,
         variant=@views.ButtonVariant::Outline,
         theme~,
@@ -352,28 +396,28 @@ fn Model::hero(
         .font(hero_title_font(metrics))
         .foreground(theme.palette.primary),
         text(
-          "MoonBit GUI Framework",
+          message("hero.framework"),
           width=metrics.hero_copy_width,
           height=42.0,
         )
         .font(hero_statement_font(metrics))
         .foreground(theme.palette.foreground),
         text(
-          "Typed UI for web and native hosts.",
+          message("hero.typed_compact"),
           width=metrics.hero_copy_width,
           height=24.0,
         )
         .font(theme.typography.body)
         .foreground(theme.palette.muted),
         text(
-          "Model / Msg / update / view.",
+          message("hero.model_compact"),
           width=metrics.hero_copy_width,
           height=24.0,
         )
         .font(theme.typography.body)
         .foreground(theme.palette.muted),
         text(
-          "MoonBit 应用逻辑共享到 Web 与原生。",
+          message("hero.shared_compact"),
           width=metrics.hero_copy_width,
           height=28.0,
         )
@@ -391,31 +435,19 @@ fn Model::hero(
         .font(hero_title_font(metrics))
         .foreground(theme.palette.primary),
         text(
-          "MoonBit GUI Framework",
+          message("hero.framework"),
           width=metrics.hero_copy_width,
           height=54.0,
         )
         .font(hero_statement_font(metrics))
         .foreground(theme.palette.foreground),
-        text(
-          "Typed, declarative UI for web and native hosts.",
-          width=metrics.hero_copy_width,
-          height=26.0,
-        )
+        text(message("hero.typed"), width=metrics.hero_copy_width, height=26.0)
         .font(theme.typography.body)
         .foreground(theme.palette.muted),
-        text(
-          "Model, Msg, update, view. One app surface, several render routes.",
-          width=metrics.hero_copy_width,
-          height=26.0,
-        )
+        text(message("hero.model"), width=metrics.hero_copy_width, height=26.0)
         .font(theme.typography.body)
         .foreground(theme.palette.muted),
-        text(
-          "用 MoonBit 写一次应用逻辑，让 Web 与原生宿主共享同一套界面模型。",
-          width=metrics.hero_copy_width,
-          height=34.0,
-        )
+        text(message("hero.shared"), width=metrics.hero_copy_width, height=34.0)
         .font(theme.typography.caption)
         .foreground(theme.palette.muted),
         ctas,
@@ -427,8 +459,8 @@ fn Model::hero(
   let visual = if metrics.compact {
     let tab = segmented_control(
       [
-        @views.choice_item("source", "Source"),
-        @views.choice_item("counter", "Counter"),
+        @views.choice_item("source", message("hero.source")),
+        @views.choice_item("counter", message("hero.counter")),
       ],
       selected=self.compact_hero_tab,
       on_select=value => SelectCompactHeroTab(value),
@@ -442,6 +474,7 @@ fn Model::hero(
         metrics.hero_scene_height - 48.0,
         true,
         self.hero_count,
+        self.locale,
       )
     } else {
       hero_source_panel(
@@ -449,6 +482,7 @@ fn Model::hero(
         metrics.hero_scene_width,
         metrics.hero_scene_height - 48.0,
         true,
+        self.locale,
       )
     }
     column([tab, panel], spacing=8.0, align=@views.CrossAlign::Start)
@@ -459,6 +493,7 @@ fn Model::hero(
       metrics.hero_scene_height,
       false,
       self.hero_count,
+      self.locale,
     )
   }
   let hero_body = column(
@@ -484,7 +519,7 @@ fn Model::capability_strip(
   theme : @moui.Theme,
   metrics : Metrics,
 ) -> @moui.View[Msg] {
-  ignore(self)
+  let message = key => website_message(self.locale, key)
   let stat_width = if metrics.compact {
     metrics.content_width
   } else {
@@ -497,33 +532,33 @@ fn Model::capability_strip(
       [
         metric_card(
           theme,
-          "App surface",
+          message("metric.app_surface"),
           "View[Msg]",
-          caption="Opaque public API",
+          caption=message("metric.app_surface.caption"),
           width=stat_width,
           accent=website_blue(theme),
         ),
         metric_card(
           theme,
-          "Runtime model",
+          message("metric.runtime_model"),
           "TEA",
-          caption="Model -> update -> view",
+          caption=message("metric.runtime_model.caption"),
           width=stat_width,
           accent=website_green(theme),
         ),
         metric_card(
           theme,
-          "Render routes",
+          message("metric.render_routes"),
           "3",
-          caption="WGPU / Skia / WebGPU",
+          caption=message("metric.render_routes.caption"),
           width=stat_width,
           accent=website_amber(theme),
         ),
         metric_card(
           theme,
-          "Targets",
+          message("metric.targets"),
           "4",
-          caption="Web, macOS, Windows, Linux",
+          caption=message("metric.targets.caption"),
           width=stat_width,
           accent=theme.palette.muted,
         ),
@@ -544,7 +579,7 @@ fn Model::foundation_section(
   theme : @moui.Theme,
   metrics : Metrics,
 ) -> @moui.View[Msg] {
-  ignore(self)
+  let message = key => website_message(self.locale, key)
   section_shell(
     theme,
     metrics,
@@ -552,9 +587,9 @@ fn Model::foundation_section(
       [
         section_header(
           theme,
-          "Why use MoUI with MoonBit?",
-          "声明式、强类型、跨平台，保持应用逻辑清晰可测试。",
-          "A small public app surface sits above explicit runtime, host, and renderer contracts.",
+          message("foundation.title"),
+          message("foundation.summary"),
+          message("foundation.description"),
           metrics.content_width,
         ),
         responsive_grid(
@@ -562,36 +597,36 @@ fn Model::foundation_section(
             feature_card(
               theme,
               "1",
-              "Predictable",
-              "Model, Msg, update, view.",
-              "Typed messages drive one explicit update path.",
+              message("feature.predictable.title"),
+              message("feature.predictable.summary"),
+              message("feature.predictable.detail"),
               metrics.feature_card_width,
               theme.palette.primary,
             ),
             feature_card(
               theme,
               "T",
-              "Strict Types",
-              "Opaque View[Msg] public API.",
-              "No stringly UI protocol or Any sprawl.",
+              message("feature.strict_types.title"),
+              message("feature.strict_types.summary"),
+              message("feature.strict_types.detail"),
               metrics.feature_card_width,
               theme.palette.primary,
             ),
             feature_card(
               theme,
               "[]",
-              "Modular Hosts",
-              "Shared app, thin entrypoints.",
-              "Web and native hosts reuse the same model.",
+              message("feature.modular_hosts.title"),
+              message("feature.modular_hosts.summary"),
+              message("feature.modular_hosts.detail"),
               metrics.feature_card_width,
               theme.palette.primary,
             ),
             feature_card(
               theme,
               "{}",
-              "Renderer Neutral",
-              "WGPU, Skia, WebGPU.",
-              "Renderer capability stays out of app logic.",
+              message("feature.renderer_neutral.title"),
+              message("feature.renderer_neutral.summary"),
+              message("feature.renderer_neutral.detail"),
               metrics.feature_card_width,
               theme.palette.primary,
             ),
@@ -617,7 +652,7 @@ fn Model::platform_section(
   theme : @moui.Theme,
   metrics : Metrics,
 ) -> @moui.View[Msg] {
-  ignore(self)
+  let message = key => website_message(self.locale, key)
   section_shell(
     theme,
     metrics,
@@ -625,60 +660,72 @@ fn Model::platform_section(
       [
         section_header(
           theme,
-          "Built with MoUI",
-          "官网首页本身就是一个由 MoUI 渲染的 Web wasm-gc 应用。",
-          "Real app surfaces that exercise the same public View[Msg] model.",
+          message("platform.title"),
+          message("platform.summary"),
+          message("platform.description"),
           metrics.content_width,
         ),
         responsive_grid(
           [
             platform_card(
               theme,
-              "MoUI Website",
-              "Official homepage",
+              message("platform.website.title"),
+              message("platform.website.subtitle"),
               [
-                "This page: shared app logic", "in website/app and a thin", "Web entrypoint.",
+                message("platform.website.line1"),
+                message("platform.website.line2"),
+                message("platform.website.line3"),
               ],
               "MoUI",
               1.0,
               metrics.platform_card_width,
               theme.palette.primary,
+              self.locale,
             ),
             platform_card(
               theme,
-              "Showcase",
-              "Component gallery",
+              message("platform.showcase.title"),
+              message("platform.showcase.subtitle"),
               [
-                "Layout, input, drawing,", "renderer reporting, and", "platform smoke paths.",
+                message("platform.showcase.line1"),
+                message("platform.showcase.line2"),
+                message("platform.showcase.line3"),
               ],
               "01",
               0.76,
               metrics.platform_card_width,
               website_amber(theme),
+              self.locale,
             ),
             platform_card(
               theme,
-              "Markdown Editor",
-              "WYSIWYG editing",
+              message("platform.markdown.title"),
+              message("platform.markdown.subtitle"),
               [
-                "Source and visual editing", "share one typed Markdown", "application model.",
+                message("platform.markdown.line1"),
+                message("platform.markdown.line2"),
+                message("platform.markdown.line3"),
               ],
               "02",
               0.70,
               metrics.platform_card_width,
               website_blue(theme),
+              self.locale,
             ),
             platform_card(
               theme,
-              "Mo Workbench",
-              "Agent workspace",
+              message("platform.workbench.title"),
+              message("platform.workbench.subtitle"),
               [
-                "Native Skia dogfood surface", "for workflow, evidence, and", "session state.",
+                message("platform.workbench.line1"),
+                message("platform.workbench.line2"),
+                message("platform.workbench.line3"),
               ],
               "03",
               0.64,
               metrics.platform_card_width,
               website_green(theme),
+              self.locale,
             ),
           ],
           width=metrics.content_width,
@@ -712,9 +759,9 @@ fn Model::quick_start_section(
     metrics,
     column(
       [
-        quick_start_header(theme, panel_width),
+        quick_start_header(theme, panel_width, self.locale),
         self.quick_start_steps(theme, panel_width),
-        quick_start_actions(theme),
+        quick_start_actions(theme, self.locale),
       ],
       spacing=28.0,
       align=@views.CrossAlign::Center,
@@ -899,12 +946,13 @@ fn platform_card(
   value : Double,
   width : Double,
   accent : @graphics.Color,
+  locale : String,
 ) -> @moui.View[Msg] {
   ignore(value)
   container(
     column(
       [
-        showcase_thumb(theme, status, width - 2.0, accent),
+        showcase_thumb(theme, status, width - 2.0, accent, locale),
         column(
           [
             text(title, width=width - 32.0, height=28.0)
@@ -954,6 +1002,7 @@ fn showcase_thumb(
   label : String,
   width : Double,
   accent : @graphics.Color,
+  locale : String,
 ) -> @moui.View[Msg] {
   ignore(theme)
   let foreground = accent
@@ -1011,22 +1060,23 @@ fn showcase_thumb(
         ),
       )
     },
-    semantics_label="Showcase thumbnail",
+    semantics_label=website_message(locale, "showcase.thumbnail"),
   )
 }
 
 ///|
-fn quick_start_header(theme : @moui.Theme, width : Double) -> @moui.View[Msg] {
+fn quick_start_header(
+  theme : @moui.Theme,
+  width : Double,
+  locale : String,
+) -> @moui.View[Msg] {
+  let message = key => website_message(locale, key)
   column(
     [
-      text("Quick Start / 快速开始", width~, height=44.0)
+      text(message("quick.title"), width~, height=44.0)
       .font(@text.FontSpec::new(size=34.0, weight=820))
       .foreground(theme.palette.foreground),
-      text(
-        "From zero to a running app in three steps. / 三步从零跑通应用。",
-        width~,
-        height=28.0,
-      )
+      text(message("quick.summary"), width~, height=28.0)
       .font(@text.FontSpec::new(size=15.0, weight=480))
       .foreground(theme.palette.muted),
     ],
@@ -1044,17 +1094,17 @@ fn Model::quick_start_steps(
   let steps = [
     (
       "1",
-      "Install the CLI / 安装 CLI",
+      website_message(self.locale, "quick.install"),
       ["moon install wzzc-dev/moui_cli/cmd/moui"],
     ),
     (
       "2",
-      "Create the app / 创建应用",
+      website_message(self.locale, "quick.create"),
       ["moui new my_app", "cd my_app", "moon update", "moon check"],
     ),
     (
       "3",
-      "Run on the host / 在本机运行",
+      website_message(self.locale, "quick.run"),
       ["moon run macos_skia --target native"],
     ),
   ]
@@ -1090,7 +1140,12 @@ fn Model::quick_start_step(
   let rail_width = 36.0
   let content_width = max_website_double(180.0, width - rail_width - 12.0)
   let rail_children : Array[@moui.View[Msg]] = [
-    quick_start_step_badge(theme, number, badge_size),
+    quick_start_step_badge(
+      theme,
+      number,
+      badge_size,
+      website_message_with(self.locale, "step.label", [("number", number)]),
+    ),
   ]
   if show_connector {
     rail_children.push(
@@ -1136,6 +1191,7 @@ fn quick_start_step_badge(
   theme : @moui.Theme,
   number : String,
   size : Double,
+  semantics_label : String,
 ) -> @moui.View[Msg] {
   let fill = website_green(theme)
   let font = @text.FontSpec::new(size=13.0, weight=780)
@@ -1160,7 +1216,7 @@ fn quick_start_step_badge(
         ),
       )
     },
-    semantics_label="Step \{number}",
+    semantics_label~,
   )
 }
 
@@ -1221,9 +1277,9 @@ fn Model::quick_start_code_block(
         ),
         button(
           if copied {
-            "Copied"
+            website_message(self.locale, "action.copied")
           } else {
-            "Copy"
+            website_message(self.locale, "action.copy")
           },
           on_click=CopyText(copy_text),
           style=quick_start_copy_button_style(theme, copied),
@@ -1316,11 +1372,11 @@ fn quick_start_copy_button_style(
 }
 
 ///|
-fn quick_start_actions(theme : @moui.Theme) -> @moui.View[Msg] {
+fn quick_start_actions(theme : @moui.Theme, locale : String) -> @moui.View[Msg] {
   row(
     [
       button(
-        "Read the Docs",
+        website_message(locale, "action.read_docs"),
         on_click=OpenDocs,
         variant=@views.ButtonVariant::Primary,
         theme~,
@@ -1328,7 +1384,7 @@ fn quick_start_actions(theme : @moui.Theme) -> @moui.View[Msg] {
         height=42.0,
       ),
       button(
-        "Open Playground",
+        website_message(locale, "action.open_playground"),
         on_click=OpenPlayground,
         variant=@views.ButtonVariant::Outline,
         theme~,

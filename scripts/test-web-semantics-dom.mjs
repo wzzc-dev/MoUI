@@ -174,4 +174,13 @@ assert(documentRef.title === "MoUI Docs", "metadata should update document title
 assert(documentRef.head.querySelector('meta[name="description"]').getAttribute("content") === "MoonBit GUI documentation", "metadata should update description");
 assert(documentRef.head.querySelector('link[rel="canonical"]').getAttribute("href") === "https://example.test/docs", "metadata should update canonical link");
 
+documentRef.documentElement = documentRef.createElement("html");
+updateDocumentMetadata({
+  title: "MoUI 文档",
+  locale: "zh-Hans",
+  direction: "ltr",
+}, documentRef);
+assert(documentRef.documentElement.getAttribute("lang") === "zh-Hans", "metadata should update document language");
+assert(documentRef.documentElement.getAttribute("dir") === "ltr", "metadata should update document direction");
+
 console.log("web semantics DOM tests: ok");

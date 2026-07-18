@@ -139,8 +139,10 @@ pub(all) struct WebDocumentMetadata {
   description : String
   canonical : String
   image : String
+  locale : String
+  direction : String
 } derive(Eq, ToJson, @debug.Debug)
-pub fn WebDocumentMetadata::new(title~ : String, description? : String, canonical? : String, image? : String) -> Self
+pub fn WebDocumentMetadata::new(title~ : String, description? : String, canonical? : String, image? : String, locale? : String, direction? : String) -> Self
 
 pub(all) struct WebRenderer {
   renderer : @webgpu_adapter.WebGpuWasmRenderer

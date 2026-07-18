@@ -433,6 +433,48 @@
           ]
         },
         {
+          "name": "i18n addon native tests",
+          "argv": [
+            "moon",
+            "test",
+            "moui_i18n",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "i18n addon wasm-gc tests",
+          "argv": [
+            "moon",
+            "test",
+            "moui_i18n",
+            "--target",
+            "wasm-gc"
+          ]
+        },
+        {
+          "name": "i18n catalog generator tests",
+          "argv": [
+            "moon",
+            "test",
+            "tools/moui/generate_i18n_catalogs",
+            "--target",
+            "native"
+          ]
+        },
+        {
+          "name": "i18n catalog generation check",
+          "argv": [
+            "node",
+            "scripts/generate-i18n-catalogs.mjs",
+            "--input",
+            "website/app/i18n/catalogs.json",
+            "--out",
+            "website/app/i18n_catalog_generated.mbt",
+            "--check"
+          ]
+        },
+        {
           "name": "website docs catalog tests",
           "argv": [
             "node",
@@ -444,6 +486,13 @@
           "argv": [
             "node",
             "scripts/test-web-semantics-dom.mjs"
+          ]
+        },
+        {
+          "name": "Web browser route history tests",
+          "argv": [
+            "node",
+            "scripts/test-browser-route-history.mjs"
           ]
         },
         {

@@ -7,6 +7,7 @@ import {
   "wzzc-dev/moui/state",
   "wzzc-dev/moui/text",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui_i18n" @i18n,
   "wzzc-dev/moui_richtext",
   "moonbitlang/core/json",
 }
