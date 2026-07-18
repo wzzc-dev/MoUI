@@ -293,11 +293,13 @@ export function createWebGpuImports(options = {}) {
     const end = event => {
       const pending = state.pendingClick;
       state.pendingClick = null;
+      // Short clicks (no drag past slop) must always reach the canvas so
+      // interactive overlay text (picker/datepicker rows, buttons) can activate.
+      // Browser selection text often changes on a plain click over a span; that
+      // must not suppress synthetic activation. Only drag-select (moved) skips.
       if (!pending || pending.moved) return;
       const snapshot = eventSnapshot(event);
       setTimeout(() => {
-        const selected = currentSelectionText();
-        if (selected && selected !== pending.selection) return;
         dispatchCanvasSyntheticActivation(state.canvas, {
           ...pending,
           clientX: snapshot.clientX,

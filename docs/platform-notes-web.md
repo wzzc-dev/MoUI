@@ -11,6 +11,11 @@ WebGPU entrypoints may opt into `webgpu.textSelection.enabled` when a canvas
 page needs browser-native selection/copy for drawn static text. That creates a
 transparent DOM text layer from each presented frame's `DrawText` bounds while
 leaving rendering, wheel scrolling, and app interaction on the canvas path.
+Short clicks on that layer always re-dispatch synthetic canvas
+`pointerdown`/`pointerup` so interactive overlay text (picker/datepicker rows
+and other chrome) still activates; only a drag past the click slop is treated
+as a native text selection and suppresses activation. Browser selection text
+changing on a plain click must not abort the synthetic activation.
 The active Web runtime service bridge opens external URLs through the browser
 host import, which calls `window.open(..., "_blank", "noopener,noreferrer")`
 and reports failure when the browser blocks the popup or the API is unavailable.

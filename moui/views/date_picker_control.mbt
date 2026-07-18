@@ -192,9 +192,12 @@ fn append_datepicker_popup_commands(
     rect=panel_frame,
     radius=theme.radius_scale.lg,
   )
-  // Use the theme's large elevation shadow so the popup tracks the active
-  // scheme instead of a flat hard-coded black shadow that vanishes in dark.
-  let shadow = theme.shadow_scale.lg
+  // Align with popover/menu floating surfaces: prefer the component overlay
+  // shadow token, fall back to mid elevation (theme docs reserve `md` for
+  // picker-like mid layers).
+  let shadow = theme.components.surface.overlay_shadow.unwrap_or(
+    theme.shadow_scale.md,
+  )
   overlay_commands.push(
     @core.DrawCommand::DrawShadow(
       @core.ShadowSpec::new(
@@ -331,11 +334,15 @@ fn[Msg] handle_datepicker_pointer(
 ) -> @core.ViewEventResult[Msg] {
   let main_button_clicked = event.phase == @core.PointerPhase::Up &&
     frame.contains(event.position)
+  let panel_frame = datepicker_popup_frame(frame)
+  let inside_panel = state.expanded && panel_frame.contains(event.position)
+  let claim_focus = event.phase == @core.PointerPhase::Down &&
+    (frame.contains(event.position) || inside_panel)
   if state.expanded {
-    let panel_frame = datepicker_popup_frame(frame)
     if main_button_clicked && !panel_frame.contains(event.position) {
       view_event_result(
         changed=true,
+        focused=true,
         captured=true,
         state=Some(datepicker_state(state, expanded=false, selected.get())),
         dirty=@core.ViewDirtyHint::ViewPaintDirty,
@@ -360,17 +367,20 @@ fn[Msg] handle_datepicker_pointer(
       )
     } else if frame.contains(event.position) ||
       panel_frame.contains(event.position) {
-      view_event_result(changed=true, captured=true)
+      view_event_result(changed=true, focused=claim_focus, captured=true)
     } else {
       @core.ViewEventResult::ignored()
     }
   } else if main_button_clicked {
     view_event_result(
       changed=true,
+      focused=true,
       captured=true,
       state=Some(datepicker_state(state, expanded=true, selected.get())),
       dirty=@core.ViewDirtyHint::ViewPaintDirty,
     )
+  } else if claim_focus {
+    view_event_result(changed=true, focused=true, captured=true)
   } else {
     @core.ViewEventResult::ignored()
   }
@@ -391,6 +401,7 @@ fn[Msg] handle_datepicker_panel_pointer(
     let next_view = datepicker_previous_month(view_date)
     view_event_result(
       changed=true,
+      focused=true,
       captured=true,
       state=Some(datepicker_state(state, expanded=true, next_view)),
       dirty=@core.ViewDirtyHint::ViewPaintDirty,
@@ -399,6 +410,7 @@ fn[Msg] handle_datepicker_panel_pointer(
     let next_view = datepicker_next_month(view_date)
     view_event_result(
       changed=true,
+      focused=true,
       captured=true,
       state=Some(datepicker_state(state, expanded=true, next_view)),
       dirty=@core.ViewDirtyHint::ViewPaintDirty,
@@ -418,6 +430,7 @@ fn[Msg] handle_datepicker_panel_pointer(
           view_event_result(
             changed=true,
             activated=true,
+            focused=true,
             captured=true,
             state=Some(datepicker_state(state, expanded=false, next)),
             dirty=@core.ViewDirtyHint::ViewPaintDirty,
@@ -427,7 +440,7 @@ fn[Msg] handle_datepicker_panel_pointer(
           @core.ViewEventResult::ignored()
         }
       }
-      None => view_event_result(changed=true, captured=true)
+      None => view_event_result(changed=true, focused=true, captured=true)
     }
   }
 }

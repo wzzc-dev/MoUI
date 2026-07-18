@@ -207,8 +207,12 @@ fn append_picker_popup_commands(
     rect=list_frame,
     radius=corner_radius,
   )
-  // Use the theme's large elevation shadow so the popup reads in dark mode.
-  let shadow = theme.shadow_scale.lg
+  // Align with popover/menu floating surfaces: prefer the component overlay
+  // shadow token, fall back to mid elevation (theme docs reserve `md` for
+  // picker-like mid layers; `lg` reads as a heavy gray halo on Web).
+  let shadow = theme.components.surface.overlay_shadow.unwrap_or(
+    theme.shadow_scale.md,
+  )
   overlay_commands.push(
     @core.DrawCommand::DrawShadow(
       @core.ShadowSpec::new(
@@ -268,6 +272,10 @@ fn[Msg] handle_picker_pointer(
   let inside_button = frame.contains(event.position)
   let popup_frame = picker_popup_frame(items, frame, max_height)
   let inside_popup = popup_frame.contains(event.position)
+  // Claim focus on Down inside the field or expanded popup so keyboard routing
+  // and IME stay on the picker instead of a covered editor/sibling beneath.
+  let claim_focus = event.phase == @core.PointerPhase::Down &&
+    (inside_button || (state.expanded && inside_popup))
   if state.expanded {
     if event.phase == @core.PointerPhase::Up && inside_popup {
       match picker_item_id_at_position(items, popup_frame, event.position) {
@@ -276,6 +284,7 @@ fn[Msg] handle_picker_pointer(
           view_event_result(
             changed=true,
             activated=true,
+            focused=true,
             captured=true,
             state=Some({ ..state, expanded: false }),
             dirty=@core.ViewDirtyHint::ViewPaintDirty,
@@ -285,6 +294,7 @@ fn[Msg] handle_picker_pointer(
         None =>
           view_event_result(
             changed=true,
+            focused=true,
             captured=true,
             state=Some({ ..state, expanded: false }),
             dirty=@core.ViewDirtyHint::ViewPaintDirty,
@@ -293,6 +303,7 @@ fn[Msg] handle_picker_pointer(
     } else if event.phase == @core.PointerPhase::Up && inside_button {
       view_event_result(
         changed=true,
+        focused=true,
         captured=true,
         state=Some({ ..state, expanded: false }),
         dirty=@core.ViewDirtyHint::ViewPaintDirty,
@@ -305,17 +316,20 @@ fn[Msg] handle_picker_pointer(
         dirty=@core.ViewDirtyHint::ViewPaintDirty,
       )
     } else if inside_button || inside_popup {
-      view_event_result(changed=true, captured=true)
+      view_event_result(changed=true, focused=claim_focus, captured=true)
     } else {
       @core.ViewEventResult::ignored()
     }
   } else if event.phase == @core.PointerPhase::Up && inside_button {
     view_event_result(
       changed=true,
+      focused=true,
       captured=true,
       state=Some({ ..state, expanded: true }),
       dirty=@core.ViewDirtyHint::ViewPaintDirty,
     )
+  } else if claim_focus {
+    view_event_result(changed=true, focused=true, captured=true)
   } else {
     @core.ViewEventResult::ignored()
   }
