@@ -133,17 +133,39 @@ test "mobile eject commits updated config and matching lock digest" {
   let moui_root = join_path(root, "moui-package")
   remove_tree(root)
   eject_test_prepare_project(root, moui_root)
+  // Resolve against an absolute project root so package-root discovery does not
+  // depend on the process cwd (CI whitebox runners may change directories).
+  let abs_root = if path_is_absolute(root) {
+    root
+  } else {
+    join_path(@env.current_dir().unwrap_or("."), root)
+  }
+  let abs_moui_root = if path_is_absolute(moui_root) {
+    moui_root
+  } else {
+    join_path(@env.current_dir().unwrap_or("."), moui_root)
+  }
+  if !(path_is_dir(abs_moui_root) &&
+    path_is_dir(join_path(abs_moui_root, "mobile"))) {
+    fail(
+      "fixture moui root is missing after prepare: " +
+      abs_moui_root +
+      " (mobile=" +
+      join_path(abs_moui_root, "mobile") +
+      ")",
+    )
+  }
   let result = match
     eject_mobile_shell({
-      project_root: root,
+      project_root: abs_root,
       platform: "android",
       output: "",
-      moui_root: Some(moui_root),
+      moui_root: Some(abs_moui_root),
     }) {
     Ok(value) => value
     Err(message) => fail(message)
   }
-  let mobile_path = join_path(root, "mobile.json")
+  let mobile_path = join_path(abs_root, "mobile.json")
   let mobile_text = @fs.read_file_to_string(mobile_path) catch {
     _ => fail("could not read committed mobile.json")
   }
@@ -160,7 +182,8 @@ test "mobile eject commits updated config and matching lock digest" {
   let mobile_bytes = @fs.read_file_to_bytes(mobile_path) catch {
     _ => fail("could not read mobile config bytes")
   }
-  let config_bytes = match project_config_bytes(root, mobile_bytes, "android") {
+  let config_bytes = match
+    project_config_bytes(abs_root, mobile_bytes, "android") {
     Ok(value) => value
     Err(message) => fail(message)
   }

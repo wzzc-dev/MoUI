@@ -11,7 +11,9 @@ fn resolve_moui_root(options : EjectOptions) -> Result[String, String] {
   let candidates : Array[String] = []
   match options.moui_root {
     Some(value) =>
-      candidates.push(normalized_path(resolve_path(options.project_root, value)))
+      candidates.push(
+        normalized_path(resolve_path(options.project_root, value)),
+      )
     None => ()
   }
   match @env.get_env_var("MOUI_PACKAGE_ROOT") {
