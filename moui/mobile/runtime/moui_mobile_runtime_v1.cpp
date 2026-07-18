@@ -1,12 +1,15 @@
 #define MOUI_MOBILE_RUNTIME_IMPLEMENTATION 1
 #include "moui_mobile_runtime_v1.h"
 
+// Include libc string headers before moonbit.h so memcpy keeps the system
+// exception specifier; moonbit.h may redeclare memcpy without noexcept.
+#include <cstring>
+#include <string.h>
 #include <moonbit.h>
 
 #include <atomic>
 #include <cmath>
 #include <cstdlib>
-#include <cstring>
 #include <limits>
 #include <mutex>
 

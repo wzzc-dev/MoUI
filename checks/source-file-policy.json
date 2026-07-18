@@ -68,7 +68,7 @@
     },
     {
       "path": "moui_skia/native/skia_stub_gpu_worker.cpp",
-      "maxLines": 2482,
+      "maxLines": 2525,
       "reason": "Existing GPU worker bridge implementation."
     },
     {

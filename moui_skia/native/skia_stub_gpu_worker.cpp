@@ -1735,6 +1735,33 @@ int64_t native_gpu_resource_cache_bytes(
   return static_cast<int64_t>(total_bytes);
 }
 
+// NativeGpuCompletion has default member initializers, so it is not an
+// aggregate under C++17. Build completions with an explicit helper instead of
+// brace-init lists (Apple Clang on the mobile CI image rejects those).
+NativeGpuCompletion make_completion(
+  int64_t sequence,
+  int64_t control_token,
+  int32_t surface_generation,
+  int32_t context_generation,
+  int64_t image_resource_revision,
+  double submitted_at_ms,
+  double gpu_completed_at_ms,
+  double presented_at_ms,
+  NativeGpuCompletionStatus status
+) {
+  NativeGpuCompletion completion;
+  completion.sequence = sequence;
+  completion.control_token = control_token;
+  completion.surface_generation = surface_generation;
+  completion.context_generation = context_generation;
+  completion.image_resource_revision = image_resource_revision;
+  completion.submitted_at_ms = submitted_at_ms;
+  completion.gpu_completed_at_ms = gpu_completed_at_ms;
+  completion.presented_at_ms = presented_at_ms;
+  completion.status = status;
+  return completion;
+}
+
 void queue_completion(
   MoonbitSkiaNativeGpuWorker* worker,
   NativeGpuCompletion completion
@@ -1753,17 +1780,21 @@ void push_control_completion(
   const NativeGpuControl& control,
   NativeGpuCompletionStatus status = NativeGpuCompletionStatus_ControlAcknowledged
 ) {
-  queue_completion(worker, {
-    0,
-    control.token,
-    worker->surface_generation,
-    worker->context_generation,
-    0,
-    0.0,
-    native_gpu_now_ms(),
-    native_gpu_now_ms(),
-    status,
-  });
+  const double now_ms = native_gpu_now_ms();
+  queue_completion(
+    worker,
+    make_completion(
+      0,
+      control.token,
+      worker->surface_generation,
+      worker->context_generation,
+      0,
+      0.0,
+      now_ms,
+      now_ms,
+      status
+    )
+  );
 }
 
 void process_control(
@@ -1928,17 +1959,23 @@ void run_native_gpu_worker(MoonbitSkiaNativeGpuWorker* worker) {
     worker->pending.reset();
     if (frame.surface_generation != worker->surface_generation) {
       worker->dropped += 1;
-      queue_completion(worker, {
-        frame.sequence,
-        0,
-        frame.surface_generation,
-        worker->context_generation,
-        frame.image_resource_revision,
-        frame.submitted_at_ms,
-        native_gpu_now_ms(),
-        native_gpu_now_ms(),
-        NativeGpuCompletionStatus_Dropped,
-      });
+      {
+        const double now_ms = native_gpu_now_ms();
+        queue_completion(
+          worker,
+          make_completion(
+            frame.sequence,
+            0,
+            frame.surface_generation,
+            worker->context_generation,
+            frame.image_resource_revision,
+            frame.submitted_at_ms,
+            now_ms,
+            now_ms,
+            NativeGpuCompletionStatus_Dropped
+          )
+        );
+      }
       continue;
     }
 
@@ -2043,17 +2080,20 @@ void run_native_gpu_worker(MoonbitSkiaNativeGpuWorker* worker) {
     } else {
       worker->dropped += 1;
     }
-    queue_completion(worker, {
-      frame.sequence,
-      0,
-      frame.surface_generation,
-      worker->context_generation,
-      frame.image_resource_revision,
-      frame.submitted_at_ms,
-      completed_at_ms,
-      presented ? completed_at_ms : 0.0,
-      completion_status,
-    });
+    queue_completion(
+      worker,
+      make_completion(
+        frame.sequence,
+        0,
+        frame.surface_generation,
+        worker->context_generation,
+        frame.image_resource_revision,
+        frame.submitted_at_ms,
+        completed_at_ms,
+        presented ? completed_at_ms : 0.0,
+        completion_status
+      )
+    );
   }
 }
 
@@ -2086,7 +2126,10 @@ MoonbitSkiaNativeGpuWorker* make_native_gpu_worker_handle() {
     )
   );
   auto* worker = new (storage) MoonbitSkiaNativeGpuWorker();
-  worker->thread = std::thread(run_native_gpu_worker, worker);
+  worker->thread = std::thread(
+    static_cast<void (*)(MoonbitSkiaNativeGpuWorker*)>(run_native_gpu_worker),
+    worker
+  );
   return worker;
 }
 
