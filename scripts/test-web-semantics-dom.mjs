@@ -154,12 +154,44 @@ assert(link.style.pointerEvents === "auto", "actionable semantics elements must 
 const forwarded = [];
 canvasOne.addEventListener("mousedown", event => forwarded.push([event.type, event.clientX, event.clientY]));
 canvasOne.addEventListener("mouseup", event => forwarded.push([event.type, event.clientX, event.clientY]));
+canvasOne.addEventListener("mousemove", event => forwarded.push([event.type, event.clientX, event.clientY]));
+canvasOne.addEventListener("wheel", event => forwarded.push([event.type, event.clientX, event.clientY, event.deltaX, event.deltaY]));
 link.dispatch("pointerdown", { detail: 1, clientX: 42, clientY: 96 });
 link.dispatch("click", { detail: 1, clientX: 42, clientY: 96 });
 assert(actions.length === 0, "pointer clicks must not bypass canvas hit testing");
 assert(
   JSON.stringify(forwarded) === JSON.stringify([["mousedown", 42, 96], ["mouseup", 42, 96]]),
   "semantic pointer clicks should forward a matching canvas activation",
+);
+layerOne.dispatch("mousemove", { clientX: 42, clientY: 96 });
+assert(
+  JSON.stringify(forwarded) === JSON.stringify([
+    ["mousedown", 42, 96],
+    ["mouseup", 42, 96],
+    ["mousemove", 42, 96],
+  ]),
+  "semantic pointer movement should reach the canvas for hover state",
+);
+let wheelPrevented = false;
+let wheelStopped = false;
+layerOne.dispatch("wheel", {
+  clientX: 42,
+  clientY: 96,
+  deltaX: 3,
+  deltaY: 40,
+  preventDefault() { wheelPrevented = true; },
+  stopPropagation() { wheelStopped = true; },
+});
+assert(wheelPrevented && wheelStopped, "semantic wheel events should stay inside the canvas host");
+assert(
+  JSON.stringify(forwarded) === JSON.stringify([
+    ["mousedown", 42, 96],
+    ["mouseup", 42, 96],
+    ["mousemove", 42, 96],
+    ["mousemove", 42, 96],
+    ["wheel", 42, 96, 3, 40],
+  ]),
+  "semantic wheel events should refresh their hit-test position and forward their deltas",
 );
 link.dispatch("click");
 assert(actions.length === 1 && actions[0][0] === 11 && actions[0][1] === 3 && actions[0][2] === 0, "link click should dispatch activate");
