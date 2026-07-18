@@ -10,11 +10,12 @@ fn default_eject_directory(platform : String) -> String {
 fn resolve_moui_root(options : EjectOptions) -> Result[String, String] {
   let candidates : Array[String] = []
   match options.moui_root {
-    Some(value) => candidates.push(resolve_path(options.project_root, value))
+    Some(value) =>
+      candidates.push(normalized_path(resolve_path(options.project_root, value)))
     None => ()
   }
   match @env.get_env_var("MOUI_PACKAGE_ROOT") {
-    Some(value) => candidates.push(value)
+    Some(value) => candidates.push(normalized_path(value))
     None => ()
   }
   for root in project_search_roots(options.project_root) {
@@ -22,6 +23,9 @@ fn resolve_moui_root(options : EjectOptions) -> Result[String, String] {
     candidates.push(join_path(root, "moui"))
   }
   for candidate in candidates {
+    if candidate == "" {
+      continue
+    }
     if path_is_dir(candidate) && path_is_dir(join_path(candidate, "mobile")) {
       return Ok(candidate)
     }
