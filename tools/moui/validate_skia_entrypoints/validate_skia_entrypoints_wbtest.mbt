@@ -284,7 +284,7 @@ test "reports missing host summary" {
   )
   inspect(
     failures.contains(
-      "examples/showcase/macos_skia/main.mbt: missing 'program_with_host_summary'",
+      "examples/showcase/macos_skia/main.mbt: missing 'program_with_host' or 'program_with_host_summary'",
     ),
     content="true",
   )
