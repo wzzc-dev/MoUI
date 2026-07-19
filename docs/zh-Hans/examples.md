@@ -681,7 +681,7 @@ package 会写入 `dist\windows-msvc\MoUIShowcase`，并包含 schema version 1
 
 ## Linux 原生
 
-Linux 示例使用 `wzzc-dev/window@0.5.1-0.1.7` Wayland host core。推荐的原生入口使用
+Linux 示例使用 `wzzc-dev/window@0.5.1-0.1.7-2` Wayland host core。推荐的原生入口使用
 `backend/linux/skia`，并通过 Wayland `wl_shm` path 呈现 Skia CPU pixel frames。请在已配置
 Wayland compositor 和真实 Skia link flags 的 Linux host 上运行：
 

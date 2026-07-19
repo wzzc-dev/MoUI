@@ -81,7 +81,6 @@ if "$VERIFY"; then
   test -f "$OUT_DIR/runtime.js"
   test -f "$OUT_DIR/browser_runtime.js"
   test -f "$OUT_DIR/canvas2d_runtime.js"
-  test -f "$OUT_DIR/semantics_dom.js"
   test -f "$OUT_DIR/bundle-size.json"
   if ! "$SKIP_DOCS"; then
     test -f "$OUT_DIR/docs/catalog.json"

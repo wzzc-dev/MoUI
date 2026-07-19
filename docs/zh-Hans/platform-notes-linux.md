@@ -1,6 +1,6 @@
 # Linux 平台说明
 
-`backend/linux` 是最小原生 Wayland 宿主核心。它使用 `wzzc-dev/window@0.5.1-0.1.7` Linux 包处理 Wayland 事件循环和窗口句柄，通过共享 `HostEvent` 契约归一化窗口/输入事件，并让 Showcase 入口点通过与 macOS 和 Windows 相同的渲染器/运行时边界运行。具体渲染通过 `LinuxRendererProvider` 注入；`backend/linux/skia` 是原生主线，并复用 window 包的 `Window::present_rgba_pixels` presenter，而 `backend/linux/wgpu` 从 `wl_display` 和 `wl_surface` 创建原生 WGPU surface，用于诊断。
+`backend/linux` 是最小原生 Wayland 宿主核心。它使用 `wzzc-dev/window@0.5.1-0.1.7-2` Linux 包处理 Wayland 事件循环和窗口句柄，通过共享 `HostEvent` 契约归一化窗口/输入事件，并让 Showcase 入口点通过与 macOS 和 Windows 相同的渲染器/运行时边界运行。具体渲染通过 `LinuxRendererProvider` 注入；`backend/linux/skia` 是原生主线，并复用 window 包的 `Window::present_rgba_pixels` presenter，而 `backend/linux/wgpu` 从 `wl_display` 和 `wl_surface` 创建原生 WGPU surface，用于诊断。
 
 Wayland 窗口路径在 compositor 暴露 `xdg-decoration` 时请求服务端装饰。如果 compositor 回退到客户端装饰，`backend/linux` 会在 MoUI 内容上方保留一个小标题栏带，把窗口标题和基本控件绘制进渲染器命令流，并转换输入坐标，使应用视图仍接收以内容为原点的坐标空间。
 同一适配器消费 window 包的 Wayland key/modifier 映射和当前指针坐标：Linux 后端测试覆盖修饰键传播到共享键盘事件，以及使用窗口事件携带的位置而不是陈旧指针状态的按钮事件。该 fork 还向 MoUI 暴露 Wayland data-device 剪贴板 selection 和文件拖放事件；拖放路径在到达 `View::on_file_drop` 之前继续经过 `HostEvent::DragDrop`。
@@ -12,7 +12,7 @@ Linux 运行时要求有意保持原生：
 
 - Wayland compositor。要执行可重复的 headless 检查，使用 headless backend 运行 Weston，并把 `WAYLAND_DISPLAY` 指向其 socket。
 - 只有在运行 WGPU 诊断时才需要可用 Vulkan stack。当硬件 Vulkan 不可用时，headless 软件验证可以通过 `vulkan-swrast`/Lavapipe 使用 Mesa llvmpipe。
-- `wzzc-dev/window@0.5.1-0.1.7` 原生 stub 需要 Wayland 开发头文件和生成的 xdg-shell protocol source。
+- `wzzc-dev/window@0.5.1-0.1.7-2` 原生 stub 需要 Wayland 开发头文件和生成的 xdg-shell protocol source。
 - compositor 提供的 `wl_data_device_manager`，用于原生剪贴板 selection 和文件拖放运行时行为。
 - Linux 服务需要 XDG desktop 集成：OpenURI 在可用时通过 xdg-desktop-portal，否则回退到 desktop opener；文件对话框选择使用 xdg-desktop-portal，并以 `zenity` 作为 fallback 对话框 provider。如果 portal 不可用，请安装 `zenity`：
   ```sh
@@ -63,7 +63,7 @@ scripts/run-window-package-smoke.sh linux --run
 
 Showcase 和 Markdown Editor 日志必须包含宿主循环输出的 `Linux renderer presented first frame; exiting by request; title=...`，才能被引用为应用层运行时证据。window 包 smoke 仍是 Wayland 句柄、`present_rgba_pixels`、resize/redraw、IME request 状态和干净关闭的依赖层证据。
 
-window 包为该依赖表面携带 consumer 风格 Linux smoke。在匹配 Wayland 宿主上，运行 `scripts/run-window-package-smoke.sh linux --run` 来覆盖 surface 创建、公共 Wayland 句柄、`Window::present_rgba_pixels`、resize、redraw、IME request 状态和干净关闭。只有在观察到代表性指针/键盘输入时才添加 `--require-input` 或 `WINDOW_MOUI_LINUX_REQUIRE_INPUT=1`。Linux 剪贴板 selection、文件对话框、文本文件读写、desktop URL 打开、IME composition/cursor 几何和文件拖放都是已实现的宿主服务/输入路径，但它们仍是匹配宿主运行时证据边界：只引用实际覆盖了 desktop/compositor 服务的日志，而不是单独引用包预检 summary。从 `wzzc-dev/window@0.5.1-0.1.7` 包 smoke artifact 记录依赖层事实；把 MoUI Showcase `linux_skia` 和 Markdown Editor `linux_skia` 运行保持为独立主线应用层观察。当配置了 Vulkan/WGPU stack 时，把 `linux_wgpu` 和 `linux_wgpu_cosmic` 保持为 WGPU 诊断观察。
+window 包为该依赖表面携带 consumer 风格 Linux smoke。在匹配 Wayland 宿主上，运行 `scripts/run-window-package-smoke.sh linux --run` 来覆盖 surface 创建、公共 Wayland 句柄、`Window::present_rgba_pixels`、resize、redraw、IME request 状态和干净关闭。只有在观察到代表性指针/键盘输入时才添加 `--require-input` 或 `WINDOW_MOUI_LINUX_REQUIRE_INPUT=1`。Linux 剪贴板 selection、文件对话框、文本文件读写、desktop URL 打开、IME composition/cursor 几何和文件拖放都是已实现的宿主服务/输入路径，但它们仍是匹配宿主运行时证据边界：只引用实际覆盖了 desktop/compositor 服务的日志，而不是单独引用包预检 summary。从 `wzzc-dev/window@0.5.1-0.1.7-2` 包 smoke artifact 记录依赖层事实；把 MoUI Showcase `linux_skia` 和 Markdown Editor `linux_skia` 运行保持为独立主线应用层观察。当配置了 Vulkan/WGPU stack 时，把 `linux_wgpu` 和 `linux_wgpu_cosmic` 保持为 WGPU 诊断观察。
 
 对于已安装 WebKitGTK 的配置宿主上的 Linux WebView 运行时证据，构建或运行 demo，并把 smoke 日志与 Skia 首帧证据分开引用：
 
