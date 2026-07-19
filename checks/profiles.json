@@ -74,8 +74,11 @@
         {
           "name": "source file policy",
           "argv": [
-            "node",
-            "scripts/validate-source-file-policy.mjs"
+            "moon",
+            "run",
+            "tools/moui/validate_source_file_policy",
+            "--target",
+            "native"
           ]
         },
         {
