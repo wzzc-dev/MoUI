@@ -707,62 +707,53 @@ fn notification_center(
   viewport_width : Double,
   viewport_height : Double,
 ) -> @moui.View[Msg] {
-  // Notification Center is a trailing frosted stack of cards, not a titled
-  // panel with close chrome and heavy badges.
+  // Keep the notification center as a quiet, narrow glanceable surface. Its
+  // only close affordance is the surrounding desktop, just like macOS.
   let compact = viewport_width < 520.0
-  let width = if compact { (viewport_width - 20.0).max(272.0) } else { 340.0 }
+  let width = if compact { (viewport_width - 20.0).max(272.0) } else { 336.0 }
   let height = if compact {
-    (viewport_height - 72.0).min(520.0).max(420.0)
+    (viewport_height - 72.0).min(474.0).max(412.0)
   } else {
-    460.0
+    430.0
   }
-  let inner_width = width - 24.0
+  let inner_width = width - 32.0
   let body = @views.column(
     [
       @views.row(
         [
           @views.text(
-            "Notification Center",
-            role=@views.TextRole::Caption,
+            "Today",
+            role=@views.TextRole::Title,
             theme~,
-            width=(inner_width - 90.0).max(140.0),
-            height=18.0,
+            width=(inner_width - 24.0).max(140.0),
+            height=28.0,
           )
-          .font(@text.FontSpec::new(size=12.0, weight=600))
-          .foreground(palette.muted),
+          .font(@text.FontSpec::new(size=20.0, weight=680))
+          .foreground(palette.foreground),
           @views.spacer(min_length=6.0, weight=1.0),
           @views.container(
-            @views.text(
+            @views.spacer(min_length=0.0, weight=0.0),
+            width=8.0,
+            height=8.0,
+            background=palette.accent.multiply_alpha(
               if model.notifications_read {
-                "Read"
+                0.55
               } else {
-                "Mark Read"
+                1.0
               },
-              role=@views.TextRole::Caption,
-              theme~,
-              width=72.0,
-              height=16.0,
-              align=@text.TextAlign::TextEnd,
-            )
-            .font(@text.FontSpec::new(size=12.0, weight=520))
-            .foreground(palette.accent),
-            width=78.0,
-            height=20.0,
-            background=rgba8(0, 0, 0, a=0.0),
+            ),
+            corner_radius=4.0,
             padding=0.0,
-          )
-          .on_tap(MarkNotificationsRead)
-          .accessibility_label("Mark Read"),
+          ).accessibility_label("Unread notification status"),
         ],
-        spacing=4.0,
+        spacing=6.0,
         align=@views.CrossAlign::Center,
       ),
       notification_card(
         "Messages",
         "Design Review",
         "Maya left feedback on the desktop polish pass.",
-        "8m",
-        !model.notifications_read,
+        "8m ago",
         inner_width,
         rgba8(52, 148, 246),
         palette,
@@ -772,22 +763,43 @@ fn notification_center(
         "Calendar",
         "Sprint Planning",
         "Sprint planning starts tomorrow at 9:30 AM.",
-        "1h",
-        !model.notifications_read,
+        "1h ago",
         inner_width,
         rgba8(255, 149, 0),
         palette,
         theme,
       ),
-      @views.text(
-        "Today · \{model.remaining_tasks()} remaining",
-        role=@views.TextRole::Caption,
-        theme~,
-        width=inner_width,
-        height=18.0,
-      )
-      .font(@text.FontSpec::new(size=12.0, weight=600))
-      .foreground(palette.muted),
+      @views.divider(theme~, color=palette.outline.multiply_alpha(0.85)),
+      @views.row(
+        [
+          @views.text(
+            "Today's Tasks",
+            role=@views.TextRole::Label,
+            theme~,
+            width=(inner_width - 64.0).max(140.0),
+            height=20.0,
+          )
+          .font(@text.FontSpec::new(size=13.5, weight=640))
+          .foreground(palette.foreground),
+          @views.spacer(min_length=4.0, weight=1.0),
+          @views.text(
+            "View all",
+            role=@views.TextRole::Caption,
+            theme~,
+            width=48.0,
+            height=20.0,
+            align=@text.TextAlign::TextEnd,
+          )
+          .font(@text.FontSpec::new(size=12.0, weight=560))
+          .foreground(palette.accent)
+          // This retains the notification read action while giving it a
+          // lightweight, discoverable inline target instead of a button.
+          .on_tap(MarkNotificationsRead)
+          .accessibility_label("View all tasks"),
+        ],
+        spacing=4.0,
+        align=@views.CrossAlign::Center,
+      ),
       notification_task(
         "Review desktop polish",
         model.first_task_done,
@@ -823,12 +835,12 @@ fn notification_center(
     background=overlay_panel_background(palette),
     corner_radius=22.0,
     border=Some(desktop_hairline(palette)),
-    padding=12.0,
+    padding=16.0,
   ).shadow(
     @graphics.ShadowStyle::new(
-      color=rgba8(0, 0, 0, a=0.26),
-      offset=@geometry.Point::new(x=0.0, y=16.0),
-      blur_radius=34.0,
+      color=palette.shadow.multiply_alpha(0.68),
+      offset=@geometry.Point::new(x=0.0, y=12.0),
+      blur_radius=28.0,
       spread=0.0,
     ),
   )
@@ -889,7 +901,6 @@ fn notification_card(
   title : String,
   detail : String,
   time : String,
-  unread : Bool,
   width : Double,
   accent : @graphics.Color,
   palette : DesktopPalette,
@@ -903,33 +914,35 @@ fn notification_card(
             @views.container(
               desktop_icon(
                 @views.IconName::Info,
-                14.0,
+                13.0,
                 @graphics.Color::white(),
               ),
-              width=28.0,
-              height=28.0,
-              background=if unread { accent } else { palette.muted },
-              corner_radius=7.0,
-              padding=7.0,
+              width=30.0,
+              height=30.0,
+              background=accent,
+              corner_radius=8.0,
+              padding=8.5,
             ),
             @views.text(
               app,
               role=@views.TextRole::Caption,
               theme~,
-              width=(width - 96.0).max(80.0),
+              width=(width - 100.0).max(80.0),
               height=18.0,
             )
-            .font(@text.FontSpec::new(size=12.0, weight=600))
+            .font(@text.FontSpec::new(size=11.5, weight=620))
             .foreground(palette.muted),
             @views.spacer(min_length=4.0, weight=1.0),
             @views.text(
               time,
               role=@views.TextRole::Caption,
               theme~,
-              width=28.0,
+              width=42.0,
               height=18.0,
               align=@text.TextAlign::TextEnd,
-            ).foreground(palette.muted),
+            )
+            .font(@text.FontSpec::new(size=11.0, weight=460))
+            .foreground(palette.muted),
           ],
           spacing=8.0,
           align=@views.CrossAlign::Center,
@@ -941,26 +954,30 @@ fn notification_card(
           width=width - 24.0,
           height=20.0,
         )
-        .font(@text.FontSpec::new(size=13.5, weight=620))
+        .font(@text.FontSpec::new(size=14.0, weight=640))
         .foreground(palette.foreground),
         @views.text(
           detail,
           role=@views.TextRole::Caption,
           theme~,
           width=width - 24.0,
-          height=32.0,
-        ).foreground(palette.muted),
+          height=28.0,
+        )
+        .font(@text.FontSpec::new(size=12.0, weight=460))
+        .foreground(palette.muted),
       ],
-      spacing=4.0,
+      spacing=3.0,
       align=@views.CrossAlign::Start,
     ),
     width~,
-    height=98.0,
+    height=92.0,
     background=overlay_card_background(palette),
-    corner_radius=16.0,
+    corner_radius=14.0,
     border=Some(overlay_card_outline(palette)),
     padding=12.0,
   )
+  .on_tap(MarkNotificationsRead)
+  .accessibility_label("Read notification from " + app + ": " + title)
 }
 
 ///|
@@ -974,14 +991,14 @@ fn notification_task(
 ) -> @moui.View[Msg] {
   let check = @views.container(
     if done {
-      desktop_icon(@views.IconName::Check, 12.0, @graphics.Color::white())
+      desktop_icon(@views.IconName::Check, 10.0, @graphics.Color::white())
     } else {
       @views.spacer(min_length=0.0, weight=0.0)
     },
-    width=22.0,
-    height=22.0,
+    width=18.0,
+    height=18.0,
     background=if done { rgba8(40, 200, 64) } else { rgba8(0, 0, 0, a=0.0) },
-    corner_radius=11.0,
+    corner_radius=9.0,
     border=Some(
       @graphics.BorderStyle::new(
         brush=@graphics.Brush::solid(
@@ -1016,11 +1033,9 @@ fn notification_task(
       align=@views.CrossAlign::Center,
     ),
     width~,
-    height=40.0,
-    background=overlay_card_background(palette),
-    corner_radius=12.0,
-    border=Some(overlay_card_outline(palette)),
-    padding=8.0,
+    height=30.0,
+    background=rgba8(0, 0, 0, a=0.0),
+    padding=0.0,
   )
   .on_tap(if done { MarkNotificationsRead } else { CompleteTask(index) })
   .accessibility_label(if done { "Done " + label } else { "Complete " + label })
