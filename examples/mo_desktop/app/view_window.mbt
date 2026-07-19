@@ -45,6 +45,9 @@ fn app_window(
   viewport_height : Double,
 ) -> @moui.View[Msg] {
   let titlebar = window_titlebar(title, metrics.width, palette, theme)
+    .on_drag(event => MoveWindowBy(event.delta.x, event.delta.y))
+    // Double-clicking a macOS title bar zooms/restores the focused window.
+    .on_double_tap(ToggleMaximize)
   // Soft rim + deeper shadow so floating windows separate from wallpaper.
   let rim = @graphics.BorderStyle::new(
     brush=@graphics.Brush::solid(
@@ -81,7 +84,10 @@ fn app_window(
     .clip()
   window
   .align(alignment=@geometry.Alignment::center())
-  .offset(dy=if model.window_maximized { 8.0 } else { -2.0 })
+  .offset(
+    dx=if model.window_maximized { 0.0 } else { model.window_offset_x },
+    dy=if model.window_maximized { 8.0 } else { model.window_offset_y - 2.0 },
+  )
   .frame(width=viewport_width, height=viewport_height)
 }
 
@@ -133,7 +139,9 @@ fn window_titlebar(
     title_label
     .align(alignment=@geometry.Alignment::center())
     .frame(width~, height=40.0),
-  ]).frame(width~, height=40.0)
+  ])
+  .frame(width~, height=40.0)
+  .accessibility_label("Move or zoom " + title + " window")
 }
 
 ///|

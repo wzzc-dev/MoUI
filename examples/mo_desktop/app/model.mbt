@@ -14,9 +14,45 @@ pub(all) enum DesktopWindow {
 ///|
 pub(all) enum DesktopOverlay {
   OverlayNone
+  MenuBarMenu(DesktopMenu)
   Launcher
   ControlCenter
   NotificationCenter
+  AboutThisMac
+  SystemSettings
+  AppStore
+} derive(Eq, Debug)
+
+///|
+pub(all) enum DesktopMenu {
+  SystemMenu
+  AppMenu
+  FileMenu
+  EditMenu
+  ViewMenu
+  GoMenu
+  WindowMenu
+  HelpMenu
+} derive(Eq, Debug)
+
+///|
+pub(all) enum MenuCommand {
+  ToggleAppearance
+  ShowAboutThisMac
+  ShowSystemSettings
+  ShowAppStore
+  LockSession
+  OpenFinderWindow
+  OpenSafariWindow
+  OpenDocuments
+  OpenDownloads
+  OpenLauncher
+  OpenNotificationCenter
+  ShowFinderIconView
+  ShowFinderListView
+  CloseFocusedWindow
+  MinimizeFocusedWindow
+  ZoomFocusedWindow
 } derive(Eq, Debug)
 
 ///|
@@ -46,6 +82,8 @@ pub(all) struct DesktopModel {
   overlay : DesktopOverlay
   dark_mode : Bool
   window_maximized : Bool
+  window_offset_x : Double
+  window_offset_y : Double
   finder_location : FinderLocation
   finder_view_mode : FinderViewMode
   finder_query : String
@@ -63,6 +101,7 @@ pub(all) struct DesktopModel {
   first_task_done : Bool
   second_task_done : Bool
   third_task_done : Bool
+  last_diagnostic : String
 }
 
 ///|
@@ -74,6 +113,9 @@ pub(all) enum Msg {
   CloseWindow
   MinimizeWindow
   ToggleMaximize
+  MoveWindowBy(Double, Double)
+  ToggleMenu(DesktopMenu)
+  RunMenuCommand(MenuCommand)
   ToggleLauncher
   ToggleControlCenter
   ToggleNotificationCenter
@@ -109,6 +151,8 @@ pub fn DesktopModel::new(
     overlay: OverlayNone,
     dark_mode: false,
     window_maximized: false,
+    window_offset_x: 0.0,
+    window_offset_y: 0.0,
     finder_location: Documents,
     finder_view_mode: IconView,
     finder_query: "",
@@ -126,6 +170,7 @@ pub fn DesktopModel::new(
     first_task_done: false,
     second_task_done: false,
     third_task_done: false,
+    last_diagnostic: "Ready",
   }
 }
 
@@ -136,11 +181,32 @@ pub fn update(model : DesktopModel, message : Msg) -> DesktopModel {
 
 ///|
 pub fn DesktopModel::update(self : DesktopModel, message : Msg) -> DesktopModel {
+  let updated = self.apply(message)
+  let diagnostic = message.diagnostic()
+  { ..updated, last_diagnostic: diagnostic }
+}
+
+///|
+fn DesktopModel::apply(self : DesktopModel, message : Msg) -> DesktopModel {
   match message {
     UnlockDesktop =>
-      { ..self, phase: Unlocked, active_window: Finder, overlay: OverlayNone }
+      {
+        ..self,
+        phase: Unlocked,
+        active_window: Finder,
+        overlay: OverlayNone,
+        window_offset_x: 0.0,
+        window_offset_y: 0.0,
+      }
     LockDesktop =>
-      { ..self, phase: Locked, overlay: OverlayNone, window_maximized: false }
+      {
+        ..self,
+        phase: Locked,
+        overlay: OverlayNone,
+        window_maximized: false,
+        window_offset_x: 0.0,
+        window_offset_y: 0.0,
+      }
     OpenFinder =>
       {
         ..self,
@@ -158,6 +224,117 @@ pub fn DesktopModel::update(self : DesktopModel, message : Msg) -> DesktopModel 
     CloseWindow | MinimizeWindow =>
       { ..self, active_window: NoWindow, window_maximized: false }
     ToggleMaximize => { ..self, window_maximized: !self.window_maximized }
+    MoveWindowBy(dx, dy) =>
+      {
+        ..self
+        // A title-bar drag from a zoomed macOS window restores it before
+        // applying the gesture. Retaining the previous offset makes zoom /
+        // restore stable rather than snapping every window back to center.
+        ,
+        window_maximized: false,
+        // Keep the title bar in reach while allowing a deliberate, natural
+        // desktop-scale reposition instead of a rigid centered mock window.
+        window_offset_x: (self.window_offset_x + dx).max(-360.0).min(360.0),
+        window_offset_y: (self.window_offset_y + dy).max(-220.0).min(220.0),
+      }
+    ToggleMenu(menu) =>
+      {
+        ..self,
+        overlay: if self.overlay == MenuBarMenu(menu) {
+          OverlayNone
+        } else {
+          MenuBarMenu(menu)
+        },
+      }
+    RunMenuCommand(command) =>
+      match command {
+        ToggleAppearance =>
+          { ..self, dark_mode: !self.dark_mode, overlay: OverlayNone }
+        ShowAboutThisMac => { ..self, overlay: AboutThisMac }
+        ShowSystemSettings => { ..self, overlay: SystemSettings }
+        ShowAppStore => { ..self, overlay: AppStore }
+        LockSession =>
+          {
+            ..self,
+            phase: Locked,
+            overlay: OverlayNone,
+            window_maximized: false,
+            window_offset_x: 0.0,
+            window_offset_y: 0.0,
+          }
+        OpenFinderWindow =>
+          {
+            ..self,
+            active_window: Finder,
+            overlay: OverlayNone,
+            window_maximized: false,
+          }
+        OpenSafariWindow =>
+          {
+            ..self,
+            active_window: Safari,
+            overlay: OverlayNone,
+            window_maximized: false,
+          }
+        OpenDocuments =>
+          {
+            ..self,
+            active_window: Finder,
+            overlay: OverlayNone,
+            finder_location: Documents,
+            finder_query: "",
+            selected_file: "",
+          }
+        OpenDownloads =>
+          {
+            ..self,
+            active_window: Finder,
+            overlay: OverlayNone,
+            finder_location: Downloads,
+            finder_query: "",
+            selected_file: "",
+          }
+        OpenLauncher => { ..self, overlay: Launcher }
+        OpenNotificationCenter => { ..self, overlay: NotificationCenter }
+        ShowFinderIconView =>
+          {
+            ..self,
+            active_window: Finder,
+            overlay: OverlayNone,
+            finder_view_mode: IconView,
+          }
+        ShowFinderListView =>
+          {
+            ..self,
+            active_window: Finder,
+            overlay: OverlayNone,
+            finder_view_mode: ListView,
+          }
+        CloseFocusedWindow =>
+          {
+            ..self,
+            active_window: NoWindow,
+            overlay: OverlayNone,
+            window_maximized: false,
+          }
+        MinimizeFocusedWindow =>
+          {
+            ..self,
+            active_window: NoWindow,
+            overlay: OverlayNone,
+            window_maximized: false,
+          }
+        ZoomFocusedWindow =>
+          {
+            ..self,
+            overlay: OverlayNone,
+            window_maximized: if self.active_window == NoWindow {
+              false
+            } else {
+              !self.window_maximized
+            },
+          }
+      }
     ToggleLauncher =>
       {
         ..self,
@@ -253,6 +430,62 @@ pub fn DesktopModel::remaining_tasks(self : DesktopModel) -> Int {
 }
 
 ///|
+fn Msg::diagnostic(self : Msg) -> String {
+  match self {
+    UnlockDesktop => "Unlocked desktop"
+    LockDesktop => "Locked desktop"
+    OpenFinder => "Opened Finder"
+    OpenSafari => "Opened Safari"
+    CloseWindow => "Closed focused window"
+    MinimizeWindow => "Minimized focused window"
+    ToggleMaximize => "Toggled focused window zoom"
+    MoveWindowBy(_, _) => "Moved focused window"
+    ToggleMenu(_) => "Toggled menu bar menu"
+    RunMenuCommand(command) =>
+      match command {
+        ToggleAppearance => "Toggled appearance"
+        ShowAboutThisMac => "Opened About This Mac"
+        ShowSystemSettings => "Opened System Settings"
+        ShowAppStore => "Opened App Store"
+        LockSession => "Locked desktop session"
+        OpenFinderWindow => "Opened Finder window"
+        OpenSafariWindow => "Opened Safari window"
+        OpenDocuments => "Opened Documents"
+        OpenDownloads => "Opened Downloads"
+        OpenLauncher => "Opened app launcher"
+        OpenNotificationCenter => "Opened Notification Center"
+        ShowFinderIconView => "Changed Finder to icon view"
+        ShowFinderListView => "Changed Finder to list view"
+        CloseFocusedWindow => "Closed focused window"
+        MinimizeFocusedWindow => "Minimized focused window"
+        ZoomFocusedWindow => "Toggled focused window zoom"
+      }
+    ToggleLauncher => "Toggled app launcher"
+    ToggleControlCenter => "Toggled Control Center"
+    ToggleNotificationCenter => "Toggled Notification Center"
+    DismissOverlay => "Dismissed active overlay"
+    SelectFinderLocation(_) => "Changed Finder location"
+    SelectFinderView(_) => "Changed Finder view"
+    FinderQueryChanged(_) => "Changed Finder search"
+    SelectFinderItem(_) => "Selected Finder item"
+    LauncherQueryChanged(_) => "Changed launcher search"
+    LauncherTabSelected(_) => "Changed launcher tab"
+    BrowserQueryChanged(_) => "Changed browser search"
+    SubmitBrowserQuery => "Submitted browser search"
+    ShowBrowserStartPage => "Opened browser start page"
+    OpenFavorite(_) => "Opened browser favorite"
+    ToggleDarkMode => "Toggled dark mode"
+    WifiChanged(_) => "Changed Wi-Fi setting"
+    BluetoothChanged(_) => "Changed Bluetooth setting"
+    LowPowerModeChanged(_) => "Changed low power mode"
+    BrightnessChanged(_) => "Changed brightness"
+    VolumeChanged(_) => "Changed volume"
+    MarkNotificationsRead => "Marked notifications read"
+    CompleteTask(_) => "Completed task"
+  }
+}
+
+///|
 fn FinderLocation::id(self : FinderLocation) -> String {
   match self {
     Documents => "documents"
@@ -267,14 +500,6 @@ fn FinderLocation::label(self : FinderLocation) -> String {
     Documents => "Documents"
     Applications => "Applications"
     Downloads => "Downloads"
-  }
-}
-
-///|
-fn FinderViewMode::id(self : FinderViewMode) -> String {
-  match self {
-    IconView => "icons"
-    ListView => "list"
   }
 }
 

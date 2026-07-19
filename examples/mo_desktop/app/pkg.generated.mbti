@@ -21,6 +21,17 @@ pub(all) enum BrowserPage {
   SearchResults(String)
 } derive(Eq, @debug.Debug)
 
+pub(all) enum DesktopMenu {
+  SystemMenu
+  AppMenu
+  FileMenu
+  EditMenu
+  ViewMenu
+  GoMenu
+  WindowMenu
+  HelpMenu
+} derive(Eq, @debug.Debug)
+
 pub(all) struct DesktopModel {
   wallpaper_source : String
   phase : SessionPhase
@@ -28,6 +39,8 @@ pub(all) struct DesktopModel {
   overlay : DesktopOverlay
   dark_mode : Bool
   window_maximized : Bool
+  window_offset_x : Double
+  window_offset_y : Double
   finder_location : FinderLocation
   finder_view_mode : FinderViewMode
   finder_query : String
@@ -45,6 +58,7 @@ pub(all) struct DesktopModel {
   first_task_done : Bool
   second_task_done : Bool
   third_task_done : Bool
+  last_diagnostic : String
 }
 pub fn DesktopModel::new(wallpaper_source? : String) -> Self
 pub fn DesktopModel::remaining_tasks(Self) -> Int
@@ -52,9 +66,13 @@ pub fn DesktopModel::update(Self, Msg) -> Self
 
 pub(all) enum DesktopOverlay {
   OverlayNone
+  MenuBarMenu(DesktopMenu)
   Launcher
   ControlCenter
   NotificationCenter
+  AboutThisMac
+  SystemSettings
+  AppStore
 } derive(Eq, @debug.Debug)
 
 pub(all) enum DesktopWindow {
@@ -74,6 +92,25 @@ pub(all) enum FinderViewMode {
   ListView
 } derive(Eq, @debug.Debug)
 
+pub(all) enum MenuCommand {
+  ToggleAppearance
+  ShowAboutThisMac
+  ShowSystemSettings
+  ShowAppStore
+  LockSession
+  OpenFinderWindow
+  OpenSafariWindow
+  OpenDocuments
+  OpenDownloads
+  OpenLauncher
+  OpenNotificationCenter
+  ShowFinderIconView
+  ShowFinderListView
+  CloseFocusedWindow
+  MinimizeFocusedWindow
+  ZoomFocusedWindow
+} derive(Eq, @debug.Debug)
+
 pub(all) enum Msg {
   UnlockDesktop
   LockDesktop
@@ -82,6 +119,9 @@ pub(all) enum Msg {
   CloseWindow
   MinimizeWindow
   ToggleMaximize
+  MoveWindowBy(Double, Double)
+  ToggleMenu(DesktopMenu)
+  RunMenuCommand(MenuCommand)
   ToggleLauncher
   ToggleControlCenter
   ToggleNotificationCenter
