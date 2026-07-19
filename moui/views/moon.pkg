@@ -2,6 +2,10 @@ import {
   "wzzc-dev/moui/core",
 }
 
+import {
+  "wzzc-dev/moui/runtime",
+} for "wbtest"
+
 supported_targets = "+native+wasm-gc"
 
 options(

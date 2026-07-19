@@ -293,6 +293,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("platform.website.line3", GeneratedI18nMessage::Text("Web entrypoint.")),
       ("platform.website.title", GeneratedI18nMessage::Text("MoUI Website")),
       ("showcase.android.title", GeneratedI18nMessage::Text("Android Showcase")),
+      ("showcase.status.source", GeneratedI18nMessage::Text("Source preview")),
       ("showcase.webview.title", GeneratedI18nMessage::Text("WebView Demo")),
       ("tutorial.concept.model", GeneratedI18nMessage::Text("Model")),
       ("tutorial.concept.reuse", GeneratedI18nMessage::Text("Reuse")),
@@ -338,6 +339,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ),
       ("showcase.markdown.title", GeneratedI18nMessage::Text("Markdown Editor")),
       ("showcase.showcase.title", GeneratedI18nMessage::Text("Showcase")),
+      (
+        "showcase.status.pending",
+        GeneratedI18nMessage::Text("Evidence pending"),
+      ),
       ("tutorial.concept.canvas", GeneratedI18nMessage::Text("Canvas")),
       ("tutorial.concept.column", GeneratedI18nMessage::Text("Column")),
       ("tutorial.concept.now_ms", GeneratedI18nMessage::Text("now_ms")),
@@ -363,6 +368,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       (
         "showcase.harmonyos.title",
         GeneratedI18nMessage::Text("HarmonyOS Showcase"),
+      ),
+      (
+        "showcase.status.archived",
+        GeneratedI18nMessage::Text("Archived preview"),
       ),
       ("showcase.workbench.title", GeneratedI18nMessage::Text("Mo Workbench")),
       ("tutorial.concept.program", GeneratedI18nMessage::Text("Program")),
@@ -836,6 +845,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
       ("platform.website.line3", GeneratedI18nMessage::Text("Web 入口中。")),
       ("platform.website.title", GeneratedI18nMessage::Text("MoUI 官网")),
       ("showcase.android.title", GeneratedI18nMessage::Text("Android 案例")),
+      ("showcase.status.source", GeneratedI18nMessage::Text("源码预览")),
       ("showcase.webview.title", GeneratedI18nMessage::Text("WebView 演示")),
       ("tutorial.concept.model", GeneratedI18nMessage::Text("模型")),
       ("tutorial.concept.reuse", GeneratedI18nMessage::Text("复用")),
@@ -884,6 +894,10 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         GeneratedI18nMessage::Text("Markdown 编辑器"),
       ),
       ("showcase.showcase.title", GeneratedI18nMessage::Text("案例展示")),
+      (
+        "showcase.status.pending",
+        GeneratedI18nMessage::Text("运行证据待补齐"),
+      ),
       ("tutorial.concept.canvas", GeneratedI18nMessage::Text("画布")),
       ("tutorial.concept.column", GeneratedI18nMessage::Text("列")),
       ("tutorial.concept.now_ms", GeneratedI18nMessage::Text("now_ms")),
@@ -913,6 +927,7 @@ pub let generated_i18n_catalogs : Array[GeneratedI18nCatalog] = [
         "showcase.harmonyos.title",
         GeneratedI18nMessage::Text("HarmonyOS 案例"),
       ),
+      ("showcase.status.archived", GeneratedI18nMessage::Text("历史预览")),
       ("showcase.workbench.title", GeneratedI18nMessage::Text("Mo Workbench")),
       ("tutorial.concept.program", GeneratedI18nMessage::Text("程序")),
       (

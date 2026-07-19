@@ -162,26 +162,39 @@ fn Model::showcases_content(
   let thumb_height = card_width * 0.56
   let entries = website_showcase_entries()
   let columns = if metrics.compact { 1 } else { 2 }
-  let card_height = thumb_height + 110.0
-  let grid_height = min_website_double(
-    max_website_double(card_height + 20.0, metrics.body_height - 190.0),
-    if metrics.compact {
-      card_height * 2.0 + 20.0
-    } else {
-      card_height * 1.5
-    },
+  let card_height = thumb_height + 134.0
+  // The top navigation already identifies this route. Retain the concise
+  // explanatory copy, without duplicating that title above the grid.
+  let section_inset = if metrics.compact { 24.0 } else { 32.0 }
+  let intro_height = 64.0
+  let grid_height = max_website_double(
+    180.0,
+    metrics.body_height - section_inset * 2.0 - intro_height - 16.0,
   )
   section_shell(
     theme,
     metrics,
     column(
       [
-        section_header(
-          theme,
-          message("showcases.title"),
-          message("showcases.summary"),
-          message("showcases.description"),
-          metrics.content_width,
+        column(
+          [
+            text(
+              message("showcases.summary"),
+              width=metrics.content_width,
+              height=30.0,
+            )
+            .font(@text.FontSpec::new(size=15.0, weight=520))
+            .foreground(theme.palette.muted),
+            text(
+              message("showcases.description"),
+              width=metrics.content_width,
+              height=30.0,
+            )
+            .font(theme.typography.caption)
+            .foreground(theme.palette.muted),
+          ],
+          spacing=4.0,
+          align=@views.CrossAlign::Start,
         ),
         lazy_grid(
           entries,
@@ -196,13 +209,14 @@ fn Model::showcases_content(
           viewport_height=grid_height,
           row_spacing=20.0,
           column_spacing=16.0,
+          shows_indicator=true,
         ),
       ],
-      spacing=24.0,
+      spacing=16.0,
       align=@views.CrossAlign::Start,
     ),
-    top=metrics.section_top,
-    bottom=metrics.section_bottom,
+    top=section_inset,
+    bottom=section_inset,
     background=Some(showcase_section_background(theme)),
   )
 }
@@ -219,6 +233,7 @@ fn showcase_card(
   let slug = entry.slug
   let title = website_message(locale, entry.title_key)
   let subtitle = website_message(locale, entry.subtitle_key)
+  let status = website_message(locale, entry.status_key)
   container(
     column(
       [
@@ -251,6 +266,9 @@ fn showcase_card(
             text(subtitle, width=width - 32.0, height=22.0)
             .font(theme.typography.caption)
             .foreground(theme.palette.muted),
+            text(status, width=width - 32.0, height=18.0)
+            .font(theme.typography.caption)
+            .foreground(theme.palette.muted),
           ],
           spacing=4.0,
           align=@views.CrossAlign::Start,
@@ -262,13 +280,17 @@ fn showcase_card(
           theme~,
           width=width - 32.0,
           height=36.0,
+        ).accessibility_label(
+          website_message_with(locale, "action.open_source_for", [
+            ("title", title),
+          ]),
         ),
       ],
       spacing=10.0,
       align=@views.CrossAlign::Start,
     ),
     width~,
-    height=thumb_height + 110.0,
+    height=thumb_height + 134.0,
     background=theme.palette.background,
     corner_radius=8.0,
     theme~,
@@ -281,6 +303,7 @@ priv struct WebsiteShowcaseEntry {
   slug : String
   title_key : String
   subtitle_key : String
+  status_key : String
   source_url : String
 }
 
@@ -291,49 +314,57 @@ fn website_showcase_entries() -> Array[WebsiteShowcaseEntry] {
       slug: "showcase",
       title_key: "showcase.showcase.title",
       subtitle_key: "showcase.showcase.subtitle",
-      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase",
+      status_key: "showcase.status.archived",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase/app",
     },
     {
       slug: "ios-componentgallery",
       title_key: "showcase.ios.title",
       subtitle_key: "showcase.ios.subtitle",
-      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase",
+      status_key: "showcase.status.pending",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase/ios_skia",
     },
     {
       slug: "harmonyos-componentgallery",
       title_key: "showcase.harmonyos.title",
       subtitle_key: "showcase.harmonyos.subtitle",
-      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase",
+      status_key: "showcase.status.pending",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase/harmonyos_skia",
     },
     {
       slug: "markdown_editor",
       title_key: "showcase.markdown.title",
       subtitle_key: "showcase.markdown.subtitle",
-      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/markdown_editor",
+      status_key: "showcase.status.source",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/markdown_editor/app",
     },
     {
       slug: "mo_workbench",
       title_key: "showcase.workbench.title",
       subtitle_key: "showcase.workbench.subtitle",
-      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/mo_workbench",
+      status_key: "showcase.status.source",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/mo_workbench/app",
     },
     {
       slug: "excel",
       title_key: "showcase.excel.title",
       subtitle_key: "showcase.excel.subtitle",
-      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/excel",
+      status_key: "showcase.status.source",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/excel/app",
     },
     {
       slug: "webview",
       title_key: "showcase.webview.title",
       subtitle_key: "showcase.webview.subtitle",
-      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/webview_demo",
+      status_key: "showcase.status.source",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/webview_demo/app",
     },
     {
       slug: "android-componentgallery",
       title_key: "showcase.android.title",
       subtitle_key: "showcase.android.subtitle",
-      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase",
+      status_key: "showcase.status.pending",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase/android_skia",
     },
   ]
 }

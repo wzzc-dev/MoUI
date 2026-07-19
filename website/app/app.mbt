@@ -14,7 +14,6 @@ pub struct Model {
   home_scroll : @state.ScrollState
   docs_body_scroll : @state.ScrollState
   docs_scroll : @state.ScrollState
-  showcases_scroll : @state.ScrollState
   showcase_grid_scroll : @state.ScrollState
   tutorial_scroll : @state.ScrollState
   route_history : @views.RouteHistoryState
@@ -91,7 +90,6 @@ fn Model::new() -> Model {
     home_scroll: @state.ScrollState::new(),
     docs_body_scroll: @state.ScrollState::new(),
     docs_scroll: @state.ScrollState::new(),
-    showcases_scroll: @state.ScrollState::new(),
     showcase_grid_scroll: @state.ScrollState::new(),
     tutorial_scroll: @state.ScrollState::new(),
     route_history: @views.RouteHistoryState::new(
@@ -153,16 +151,6 @@ fn Model::update(self : Model, message : Msg) -> Model {
 }
 
 ///|
-fn Model::current_body_scroll(self : Model) -> @state.ScrollState {
-  match self.page {
-    WebsiteHome => self.home_scroll
-    WebsiteTutorial => self.tutorial_scroll
-    WebsiteDocs => self.docs_body_scroll
-    WebsiteShowcases => self.showcases_scroll
-  }
-}
-
-///|
 fn Model::with_route(self : Model, route : String) -> Model {
   let localized_route = website_route_with_locale(route, self.locale)
   let location = @views.RouteLocation::parse(
@@ -182,7 +170,7 @@ fn Model::with_route(self : Model, route : String) -> Model {
         self.docs_body_scroll.scroll_to(x=0.0, y=0.0)
         self.docs_scroll.scroll_to(x=0.0, y=0.0)
       }
-      WebsiteShowcases => self.showcases_scroll.scroll_to(x=0.0, y=0.0)
+      WebsiteShowcases => self.showcase_grid_scroll.scroll_to(x=0.0, y=0.0)
     }
   } else if page is WebsiteDocs && selected_doc_slug != self.selected_doc_slug {
     self.docs_scroll.scroll_to(x=0.0, y=0.0)
@@ -700,18 +688,29 @@ fn Model::view(self : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
     WebsiteDocs => localized.docs_content(theme, metrics)
     WebsiteShowcases => localized.showcases_content(theme, metrics)
   }
-  let body = if localized.page is WebsiteDocs {
-    frame(content, width=metrics.body_scroll_width, height=metrics.body_height).semantics_role(
-      @core.SemanticsRole::Main,
-    )
-  } else {
-    scroll_view(
-      content,
-      state=Some(localized.current_body_scroll()),
-      width=metrics.body_scroll_width,
-      height=metrics.body_height,
-      shows_indicator=true,
-    ).semantics_role(@core.SemanticsRole::Main)
+  let body = match localized.page {
+    WebsiteDocs | WebsiteShowcases =>
+      frame(
+        content,
+        width=metrics.body_scroll_width,
+        height=metrics.body_height,
+      ).semantics_role(@core.SemanticsRole::Main)
+    WebsiteHome =>
+      scroll_view(
+        content,
+        state=Some(localized.home_scroll),
+        width=metrics.body_scroll_width,
+        height=metrics.body_height,
+        shows_indicator=true,
+      ).semantics_role(@core.SemanticsRole::Main)
+    WebsiteTutorial =>
+      scroll_view(
+        content,
+        state=Some(localized.tutorial_scroll),
+        width=metrics.body_scroll_width,
+        height=metrics.body_height,
+        shows_indicator=true,
+      ).semantics_role(@core.SemanticsRole::Main)
   }
   let shell = container(
     column(
