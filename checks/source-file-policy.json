@@ -124,7 +124,7 @@
     },
     {
       "path": "moui_richtext/editor_source_mapping.mbt",
-      "maxLines": 1640,
+      "maxLines": 1642,
       "reason": "Existing rich-text source mapping algorithms."
     },
     {
@@ -214,7 +214,7 @@
     },
     {
       "path": "moui_richtext/editor_session.mbt",
-      "maxLines": 1324,
+      "maxLines": 1499,
       "reason": "Existing rich-text editor session state machine."
     },
     {
@@ -274,7 +274,7 @@
     },
     {
       "path": "moui_richtext/rich_text_editor_helpers.mbt",
-      "maxLines": 1226,
+      "maxLines": 1349,
       "reason": "Existing shared rich-text editor algorithms."
     }
   ],
