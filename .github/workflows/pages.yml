@@ -58,8 +58,6 @@ jobs:
           test -f dist/pages/browser_runtime.js.br
           test -f dist/pages/canvas2d_runtime.js
           test -f dist/pages/canvas2d_runtime.js.br
-          test -f dist/pages/semantics_dom.js
-          test -f dist/pages/semantics_dom.js.br
           test -f dist/pages/bundle-size.json
           test -f dist/pages/docs/architecture.md
           test -f dist/pages/docs/moui-readme.md
