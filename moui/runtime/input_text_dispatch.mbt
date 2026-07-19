@@ -38,6 +38,6 @@ fn ElementNode::dispatch_text_input(
     if changed {
       self.dirty.mark_paint()
     }
-    { changed, activated, captured: false, focused: None }
+    { changed, activated, captured: false, capture_target: None, focused: None }
   }
 }

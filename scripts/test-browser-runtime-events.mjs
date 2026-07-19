@@ -46,6 +46,11 @@ class FakeElement {
     this.parentElement = null;
   }
 
+  contains(target) {
+    if (target === this) return true;
+    return this.children.some(child => child.contains(target));
+  }
+
   setAttribute(name, value) { this.attributes.set(name, `${value}`); }
   removeAttribute(name) { this.attributes.delete(name); }
   getAttribute(name) { return this.attributes.get(name) ?? null; }
@@ -145,6 +150,7 @@ const fakeWindow = {
 
 globalThis.HTMLElement = FakeElement;
 globalThis.HTMLCanvasElement = FakeCanvasElement;
+globalThis.Node = FakeElement;
 globalThis.document = fakeDocument;
 globalThis.window = fakeWindow;
 
@@ -198,6 +204,42 @@ const createRuntime = ({ pointerFlags = 1 } = {}) => {
 }
 
 {
+  const imports = createWindowWebImports();
+  let canvas;
+  const pointerFocus = [];
+  imports.set_dispatch_event(() => {});
+  imports.set_dispatch_pointer_input((_rawId, kind) => {
+    pointerFocus.push({ kind, focused: fakeDocument.activeElement === canvas });
+    return 3;
+  });
+  canvas = imports.create_canvas("", 400, 300);
+  imports.install_canvas_events(8, canvas);
+  canvas.dispatch("pointerdown", { clientX: 10, clientY: 12 });
+  assert(
+    JSON.stringify(pointerFocus) === JSON.stringify([{ kind: 23, focused: true }]),
+    "pointer down must establish canvas-host focus before calling wasm",
+  );
+}
+
+{
+  const imports = createWindowWebImports();
+  const legacyEvents = [];
+  imports.set_dispatch_event(kind => legacyEvents.push(kind));
+  imports.set_dispatch_pointer_input(() => 3);
+  const canvas = imports.create_canvas("", 400, 300);
+  imports.install_canvas_events(10, canvas);
+  const semanticsTarget = new FakeElement("a");
+  canvas.parentElement.appendChild(semanticsTarget);
+  canvas.dispatch("pointerdown", { clientX: 10, clientY: 12 });
+  canvas.dispatch("blur", { relatedTarget: semanticsTarget });
+  await Promise.resolve();
+  assert(
+    !legacyEvents.includes(12),
+    "focus moving into the semantics layer must not cancel a canvas pointer",
+  );
+}
+
+{
   const previousDpr = fakeWindow.devicePixelRatio;
   fakeWindow.devicePixelRatio = 2;
   try {
@@ -206,6 +248,29 @@ const createRuntime = ({ pointerFlags = 1 } = {}) => {
     canvas.dispatch("wheel", { clientX: 120, clientY: 220, deltaX: 2, deltaY: -3, deltaMode: 1 });
     assert(events[0].x === 240 && events[0].y === 440, "coordinates must use physical canvas pixels");
     assert(events[1].deltaX === 64 && events[1].deltaY === 96, "wheel deltas must normalize and scale once");
+  } finally {
+    fakeWindow.devicePixelRatio = previousDpr;
+  }
+}
+
+{
+  const previousDpr = fakeWindow.devicePixelRatio;
+  fakeWindow.devicePixelRatio = 2;
+  try {
+    const { imports, canvas } = createRuntime();
+    const resizeEvents = [];
+    imports.set_dispatch_event((kind, rawId, width, height, scaleFactor) => {
+      resizeEvents.push({ kind, rawId, width, height, scaleFactor });
+    });
+    const resize = windowListeners.get("resize").at(-1);
+    resize?.();
+    assert(
+      JSON.stringify(resizeEvents) === JSON.stringify([
+        { kind: 10, rawId: 7, width: 800, height: 600, scaleFactor: 2 },
+      ]),
+      "resize events must provide the DPR used to map physical pointer coordinates",
+    );
+    assert(canvas.width === 800 && canvas.height === 600, "resize must preserve physical canvas dimensions");
   } finally {
     fakeWindow.devicePixelRatio = previousDpr;
   }

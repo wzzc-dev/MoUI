@@ -306,14 +306,6 @@ fn RuntimeState::dispatch_pointer_event(
         now_ms=self.now_ms,
       )
   }
-  if event.phase == PointerPhase::Down {
-    self.active_pointer_capture = self.element_tree.root.active_pointer_capture_id(
-      PointerPhase::Move,
-    )
-  } else if event.phase == PointerPhase::Up ||
-    event.phase == PointerPhase::Cancel {
-    self.active_pointer_capture = None
-  }
   // Views can claim focus from the pointer handler (e.g. picker popup
   // interaction). Prefer that claim over the geometry-only hit from
   // `find_focusable_at` so focus tracks the control that handled the event.
@@ -324,6 +316,28 @@ fn RuntimeState::dispatch_pointer_event(
         self.mark_dirty(self.element_tree.id())
       }
     None => ()
+  }
+  if event.phase == PointerPhase::Down {
+    // Standard controls report `captured` on a handled Down. Retain the
+    // focusable hit target so the matching Up reaches the same element even
+    // if browser focus/semantics updates repaint the tree between DOM events.
+    // A control with an explicit local capture keeps precedence.
+    self.active_pointer_capture = match
+      self.element_tree.root.active_pointer_capture_id(PointerPhase::Move) {
+      Some(target) => Some(target)
+      None =>
+        if result.captured {
+          match result.capture_target {
+            Some(target) => Some(target)
+            None => self.focused_element
+          }
+        } else {
+          None
+        }
+    }
+  } else if event.phase == PointerPhase::Up ||
+    event.phase == PointerPhase::Cancel {
+    self.active_pointer_capture = None
   }
   self.needs_redraw = self.needs_redraw || result.changed
   self.needs_rebuild = self.needs_rebuild || result.activated
