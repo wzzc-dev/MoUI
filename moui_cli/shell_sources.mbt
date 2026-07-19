@@ -260,6 +260,18 @@ fn patch_ejected_shell_text(
             old="${MOUI_SHELL_ROOT}/android/embedder",
             new="${CMAKE_CURRENT_LIST_DIR}",
           )
+          .replace_all(
+            old="${MOUI_EMBEDDING_SHARED_ANDROID_DIR}/src/main/cpp/moui_embedding_jni.cpp",
+            new="${MOUI_EMBEDDING_SHARED_ANDROID_DIR}/moui_embedding_jni.cpp",
+          )
+          .replace_all(
+            old="${MOUI_EMBEDDING_SHARED_ANDROID_DIR}/src/main/cpp/moui_android_compat.c",
+            new="${MOUI_EMBEDDING_SHARED_ANDROID_DIR}/moui_android_compat.c",
+          )
+          .replace_all(
+            old="${MOUI_EMBEDDING_SHARED_ANDROID_DIR}/src/main/cpp/moui_android_compat.h",
+            new="${MOUI_EMBEDDING_SHARED_ANDROID_DIR}/moui_android_compat.h",
+          )
         }
         _ => value
       }
@@ -324,6 +336,10 @@ fn patch_ejected_shell_text(
             new=(
               #|compile_cxx "$shell_root/moui_shell/embedding/native/moui_embedding_api_v1.cpp"
             ),
+          )
+          .replace_all(
+            old="$shell_root/embedding/native/moui_embedding_api_v1.cpp",
+            new="$shell_root/moui_shell/embedding/native/moui_embedding_api_v1.cpp",
           )
           .replace_all(
             old=(

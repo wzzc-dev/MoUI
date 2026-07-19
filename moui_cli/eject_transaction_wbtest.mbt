@@ -12,6 +12,30 @@ test "ejected source patch keeps Android CMake local to the ejected shell" {
 }
 
 ///|
+test "ejected Android CMake uses its copied JNI and compatibility sources" {
+  let source =
+    #|set(MOUI_EMBEDDING_SHARED_ANDROID_DIR "${MOUI_SHELL_ROOT}/android/embedder")
+    #|add_library(moui SHARED
+    #|  "${MOUI_EMBEDDING_SHARED_ANDROID_DIR}/src/main/cpp/moui_embedding_jni.cpp"
+    #|)
+    #|set_source_files_properties("${MOUI_EMBEDDING_MOONBIT_C}" PROPERTIES
+    #|  COMPILE_OPTIONS "-include;${MOUI_EMBEDDING_SHARED_ANDROID_DIR}/src/main/cpp/moui_android_compat.h"
+    #|)
+  let rendered = patch_ejected_shell_text(
+    "app/src/main/cpp/MoUIShellAndroid.cmake", source, "android",
+  )
+  inspect(
+    rendered.contains("${MOUI_EMBEDDING_SHARED_ANDROID_DIR}/moui_embedding_jni.cpp"),
+    content="true",
+  )
+  inspect(
+    rendered.contains("${MOUI_EMBEDDING_SHARED_ANDROID_DIR}/moui_android_compat.h"),
+    content="true",
+  )
+  inspect(rendered.contains("src/main/cpp/moui_embedding_jni.cpp"), content="false")
+}
+
+///|
 test "ejected source patch keeps the HarmonyOS provider in the shell snapshot" {
   let source =
     #|set(MOUI_EMBEDDING_SHARED_HARMONYOS_DIR "${MOUI_SHELL_ROOT}/harmonyos/embedder")
@@ -40,6 +64,21 @@ test "ejected source patch uses the copied iOS shell builder" {
   )
   inspect(
     rendered.contains("${PROJECT_DIR}/moui/build-ios-app-core.sh"),
+    content="true",
+  )
+}
+
+///|
+test "ejected iOS builder rewrites a multiline ABI compile source" {
+  let source =
+    #|compile_cxx
+    #|  "$shell_root/embedding/native/moui_embedding_api_v1.cpp"
+    #|  "$obj_dir/moui_embedding_api_v1.o"
+  let rendered = patch_ejected_shell_text(
+    "moui/build-ios-app-core.sh", source, "ios",
+  )
+  inspect(
+    rendered.contains("$shell_root/moui_shell/embedding/native/moui_embedding_api_v1.cpp"),
     content="true",
   )
 }
