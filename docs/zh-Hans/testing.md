@@ -24,7 +24,7 @@ node scripts/validate-window-dependency.mjs
 node scripts/validate-harmonyos-shell.mjs
 node scripts/validate-harness-invariants.mjs
 node scripts/validate-maintenance-baseline.mjs
-node scripts/validate-source-file-policy.mjs
+moon run tools/moui/validate_source_file_policy --target native
 node scripts/check-website-docs.mjs
 node scripts/validate-renderer-provider-manifests.mjs
 node scripts/validate-skia-entrypoints.mjs

@@ -148,11 +148,6 @@
       "reason": "Existing native text and font bridge implementation."
     },
     {
-      "path": "website/app/view.mbt",
-      "maxLines": 1518,
-      "reason": "Existing website view composition expanded for bilingual locale UI."
-    },
-    {
       "path": "moui_sun/graphics/canvas_image_test.mbt",
       "maxLines": 1502,
       "reason": "Existing comprehensive canvas image logic test."
