@@ -125,6 +125,10 @@ try {
   if (options.source === "registry") {
     run("moon", ["update"], { cwd: consumerRoot });
   } else {
+    // Packaging must resolve the monorepo package graph before each ZIP is
+    // produced. CI starts with no cached MoonBit registry, unlike a developer
+    // checkout that has already run a workspace build.
+    run("moon", ["update"], { cwd: repoRoot });
     const workspaceMembers = ["./consumer"];
     for (const packagedModule of packagedModules) {
       run("moon", ["-C", packagedModule.directory, "package"], { cwd: repoRoot });
