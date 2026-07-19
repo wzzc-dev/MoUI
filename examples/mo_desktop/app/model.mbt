@@ -458,18 +458,21 @@ fn DesktopModel::apply(self : DesktopModel, message : Msg) -> DesktopModel {
     ToggleDarkMode =>
       {
         ..self,
-        appearance: if self.dark_mode { LightAppearance } else { DarkAppearance },
+        appearance: if self.dark_mode {
+          LightAppearance
+        } else {
+          DarkAppearance
+        },
         dark_mode: !self.dark_mode,
       }
     UseSystemAppearance => { ..self, appearance: SystemAppearance }
     RequestFileImport => { ..self, last_diagnostic: "Opening file dialog…" }
     HostCompleted(completion) => self.apply_host_completion(completion)
-    ClockUpdated(clock) => { ..self, clock }
+    ClockUpdated(clock) => { ..self, clock, }
     WifiChanged(value) => { ..self, wifi_enabled: value }
     BluetoothChanged(value) => { ..self, bluetooth_enabled: value }
     LowPowerModeChanged(value) => { ..self, low_power_mode: value }
-    BrightnessChanged(value) =>
-      { ..self, brightness: value.max(0.0).min(1.0) }
+    BrightnessChanged(value) => { ..self, brightness: value.max(0.0).min(1.0) }
     VolumeChanged(value) => { ..self, volume: value.max(0.0).min(1.0) }
     MarkNotificationsRead => { ..self, notifications_read: true }
     CompleteTask(task) =>
@@ -546,7 +549,12 @@ fn DesktopModel::apply_host_completion(
       { ..self, pending_service: None, last_diagnostic: "Opened URL with host" }
     @host.HostServiceResponse::Unavailable(message) =>
       { ..self, pending_service: None, last_diagnostic: message }
-    _ => { ..self, pending_service: None, last_diagnostic: "Host service completed" }
+    _ =>
+      {
+        ..self,
+        pending_service: None,
+        last_diagnostic: "Host service completed",
+      }
   }
 }
 

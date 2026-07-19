@@ -93,9 +93,9 @@ fn app_launcher(
             @views.choice_item("actions", "Actions"),
           ],
           selected=model.launcher_tab.id(),
-          on_select=value => LauncherTabSelected(
-            if value == "actions" { Actions } else { Apps },
-          ),
+          on_select=value => {
+            LauncherTabSelected(if value == "actions" { Actions } else { Apps })
+          },
           theme~,
           width=inner_width,
         ),
