@@ -8,6 +8,7 @@ import {
   readFileSync,
   realpathSync,
   rmSync,
+  writeFileSync,
 } from "node:fs";
 import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
@@ -18,12 +19,19 @@ import { spawnSync } from "node:child_process";
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const fixtureRoot = join(repoRoot, "checks/external-consumer");
 const mouiVersion = "0.1.7";
+const packagedModules = [
+  { directory: "moui", packageName: "moui", version: mouiVersion },
+  { directory: "moui_shell", packageName: "moui_shell", version: mouiVersion },
+  { directory: "moui_skia", packageName: "moui_skia", version: mouiVersion },
+  { directory: "moui_sun", packageName: "moui_sun", version: mouiVersion },
+  { directory: "third_party/mizchi_image", packageName: "image", version: "0.4.2" },
+];
 
 const usage = [
   "Usage: node scripts/external-consumer-ci.mjs --source registry|package",
   "",
   "Validates an app copied outside the MoUI checkout. Package mode stages the",
-  "current moon package over the resolved external .mooncakes dependency.",
+  "current package closure in an isolated MoonBit workspace.",
 ].join("\n");
 
 const parseArgs = argv => {
@@ -70,16 +78,16 @@ const isInside = (root, candidate) => {
     (path !== ".." && !path.startsWith(".." + sep) && !isAbsolute(path));
 };
 
-const findResolvedMoui = consumerRoot => {
+const findResolvedPackage = (consumerRoot, packageName) => {
   const candidates = [
-    join(consumerRoot, ".mooncakes/wzzc-dev/moui"),
-    join(consumerRoot, ".mooncakes/wzzc-dev/moui", mouiVersion),
+    join(consumerRoot, ".mooncakes/wzzc-dev", packageName),
+    join(consumerRoot, ".mooncakes/wzzc-dev", packageName, mouiVersion),
   ];
   for (const candidate of candidates) {
     if (existsSync(candidate)) return realpathSync(candidate);
   }
   throw new Error(
-    "external consumer did not materialize .mooncakes/wzzc-dev/moui",
+    "external consumer did not materialize .mooncakes/wzzc-dev/" + packageName,
   );
 };
 
@@ -108,29 +116,46 @@ const extractPackage = (packageZip, destination) => {
 const options = parseArgs(process.argv.slice(2));
 const temporaryRoot = mkdtempSync(join(tmpdir(), "moui-external-consumer-"));
 const consumerRoot = join(temporaryRoot, "consumer");
-let packageSha256 = "";
+const stagedPackagesRoot = join(temporaryRoot, "packages");
+const packageSha256s = [];
 
 try {
   cpSync(fixtureRoot, consumerRoot, { recursive: true });
-  run("moon", ["update"], { cwd: consumerRoot });
 
-  if (options.source === "package") {
-    run("moon", ["-C", "moui", "package"], { cwd: repoRoot });
-    const packageZip = join(
-      repoRoot,
-      "_build/publish/wzzc-dev-moui-" + mouiVersion + ".zip",
-    );
-    if (!existsSync(packageZip)) {
-      throw new Error("moon package output is missing: " + packageZip);
+  if (options.source === "registry") {
+    run("moon", ["update"], { cwd: consumerRoot });
+  } else {
+    const workspaceMembers = ["./consumer"];
+    for (const packagedModule of packagedModules) {
+      run("moon", ["-C", packagedModule.directory, "package"], { cwd: repoRoot });
+      const packageZip = join(
+        repoRoot,
+        "_build/publish/" +
+          (packagedModule.directory === "third_party/mizchi_image"
+            ? "mizchi-"
+            : "wzzc-dev-") +
+          packagedModule.packageName + "-" + packagedModule.version + ".zip",
+      );
+      if (!existsSync(packageZip)) {
+        throw new Error("moon package output is missing: " + packageZip);
+      }
+      const archiveSha256 = createHash("sha256")
+        .update(readFileSync(packageZip))
+        .digest("hex");
+      extractPackage(
+        packageZip,
+        join(stagedPackagesRoot, packagedModule.packageName),
+      );
+      packageSha256s.push(packagedModule.packageName + "=" + archiveSha256);
+      workspaceMembers.push("./packages/" + packagedModule.packageName);
     }
-    packageSha256 = createHash("sha256")
-      .update(readFileSync(packageZip))
-      .digest("hex");
-    extractPackage(
-      packageZip,
-      join(consumerRoot, ".mooncakes/wzzc-dev/moui"),
+    writeFileSync(
+      join(temporaryRoot, "moon.work"),
+      "members = [\n" +
+        workspaceMembers.map(member => "  \"" + member + "\",").join("\n") +
+        "\n]\n",
     );
-    rmSync(join(consumerRoot, "_build"), { recursive: true, force: true });
+    run("moon", ["update"], { cwd: consumerRoot });
   }
 
   const tree = run("moon", ["tree"], { cwd: consumerRoot, capture: true });
@@ -148,7 +173,9 @@ try {
   run("moon", ["check", "--target", "wasm-gc"], { cwd: consumerRoot });
   run("moon", ["test", "app", "--target", "native"], { cwd: consumerRoot });
 
-  const resolvedMoui = findResolvedMoui(consumerRoot);
+  const resolvedMoui = options.source === "package"
+    ? realpathSync(join(stagedPackagesRoot, "moui"))
+    : findResolvedPackage(consumerRoot, "moui");
   if (isInside(repoRoot, resolvedMoui)) {
     throw new Error(
       "external consumer resolved MoUI from monorepo source: " + resolvedMoui,
@@ -163,10 +190,30 @@ try {
       "resolved MoUI manifest is not version " + mouiVersion,
     );
   }
+  if (options.source === "package") {
+    for (const packagedModule of packagedModules) {
+      const stagedPackage = realpathSync(
+        join(stagedPackagesRoot, packagedModule.packageName),
+      );
+      if (isInside(repoRoot, stagedPackage)) {
+        throw new Error(
+          "external consumer staged package from monorepo source: " +
+            stagedPackage,
+        );
+      }
+      const stagedManifest = readFileSync(join(stagedPackage, "moon.mod"), "utf8");
+      if (!stagedManifest.includes('version = "' + packagedModule.version + '"')) {
+        throw new Error(
+          "staged " + packagedModule.packageName + " manifest is not version " +
+            packagedModule.version,
+        );
+      }
+    }
+  }
   console.log(
     "[external-consumer] source=" + options.source +
       " resolved=" + resolvedMoui + " monorepoSource=false" +
-      (packageSha256 ? " packageSha256=" + packageSha256 : ""),
+      (packageSha256s.length ? " packageSha256s=" + packageSha256s.join(",") : ""),
   );
 } finally {
   rmSync(temporaryRoot, { recursive: true, force: true });
