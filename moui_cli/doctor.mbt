@@ -464,19 +464,28 @@ fn project_entrypoint_checks(
       let main_path = join_path(entrypoint_root, "main.mbt")
       let package_text = @fs.read_file_to_string(package_path) catch { _ => "" }
       let main_text = @fs.read_file_to_string(main_path) catch { _ => "" }
-      let common_markers = [
-        "moui_mobile_take_host_update_envelope_json", "moui_mobile_dispatch_host_response_envelope_json",
-        "moui_mobile_renderer_configure", "moui_mobile_renderer_status_json", "moui_mobile_dispatch_text_input",
-        "moui_mobile_dispatch_command", "moui_mobile_dispatch_accessibility", "moui_mobile_complete_clipboard_v1",
-        "moui_mobile_attach_surface", "moui_mobile_resize", "moui_mobile_dispatch_pointer",
-        "moui_mobile_dispatch_scroll", "moui_mobile_frame_tick", "moui_mobile_render_frame",
-        "moui_mobile_detach_surface", "moui_mobile_destroy_application",
+      let package_markers = [
+        "wzzc-dev/moui/backend/" + platform,
+        "@platform_host",
+      ]
+      let main_markers = [
+        "@platform_host.install_embedding", "shell_renderer_selection", "shell_renderer_configure",
+        "shell_renderer_status_json",
       ]
       let missing : Array[String] = []
-      for marker in common_markers {
-        if !package_text.contains(marker) || !main_text.contains(marker) {
+      for marker in package_markers {
+        if !package_text.contains(marker) {
           missing.push(marker)
         }
+      }
+      for marker in main_markers {
+        if !main_text.contains(marker) {
+          missing.push(marker)
+        }
+      }
+      if package_text.contains("moui_embedding_") ||
+        main_text.contains("moui_embedding_") {
+        missing.push("backend-owned Embedding API exports")
       }
       if path_is_nonempty_file(package_path) &&
         path_is_nonempty_file(main_path) &&

@@ -66,6 +66,100 @@ test "R3 requires env-driven renderer selection" {
 }
 
 ///|
+test "R3 keeps mobile ABI ownership in the framework and root shims mechanical" {
+  let missing_install = check_r3_mobile_main(
+    "main.mbt",
+    Some(
+      "@host.shell_renderer_selection\npub fn moui_embedding_attach_surface() {}",
+    ),
+  )
+  debug_inspect(missing_install.ok, content="false")
+  let thin = check_r3_mobile_main(
+    "main.mbt",
+    Some(
+      "@platform_host.install_embedding\n@host.shell_renderer_selection\n@host.shell_renderer_configure",
+    ),
+  )
+  debug_inspect(thin.ok, content="true")
+  let expected = ["moui_embedding_attach_surface"]
+  let executable_pkg_text =
+    #|import { "wzzc-dev/moui_shell/embedding" @shell_embedding }
+    #|options(link: { "native": { "exports": [ "moui_embedding_attach_surface" ] } })
+    #|
+  let executable_pkg = check_r3_mobile_pkg(
+    "moon.pkg",
+    Some(executable_pkg_text),
+    expected,
+  )
+  debug_inspect(executable_pkg.ok, content="true")
+  let missing_root_exports = check_r3_mobile_pkg(
+    "moon.pkg",
+    Some("import { \"wzzc-dev/moui_shell/embedding\" @shell_embedding }"),
+    expected,
+  )
+  debug_inspect(missing_root_exports.ok, content="false")
+  let shim_text =
+    #|///|
+    #|pub fn moui_embedding_attach_surface() -> Bool {
+    #|  @shell_embedding.moui_embedding_attach_surface()
+    #|}
+    #|
+  let shim = check_r3_mobile_export_shim(
+    "embedding_exports.mbt",
+    Some(shim_text),
+    expected,
+  )
+  debug_inspect(shim.ok, content="true")
+  let shim_with_logic_text =
+    #|pub fn moui_embedding_attach_surface() -> Bool {
+    #|  if true { @shell_embedding.moui_embedding_attach_surface() } else { false }
+    #|}
+    #|
+  let shim_with_logic = check_r3_mobile_export_shim(
+    "embedding_exports.mbt",
+    Some(shim_with_logic_text),
+    expected,
+  )
+  debug_inspect(shim_with_logic.ok, content="false")
+  let wrong_forward_text =
+    #|pub fn moui_embedding_attach_surface() -> Bool {
+    #|  @shell_embedding.moui_embedding_render_frame()
+    #|}
+    #|
+  let wrong_forward = check_r3_mobile_export_shim(
+    "embedding_exports.mbt",
+    Some(wrong_forward_text),
+    expected,
+  )
+  debug_inspect(wrong_forward.ok, content="false")
+  let owner_pkg_text =
+    #|options(link: { "native": { "exports": [ "moui_embedding_attach_surface" ] } })
+    #|
+  let owner_pkg = check_r3_shell_embedding_pkg(
+    "moui_shell/embedding/moon.pkg",
+    Some(owner_pkg_text),
+    expected,
+  )
+  debug_inspect(owner_pkg.ok, content="true")
+  let owner_impl_text =
+    #|let installed_embedding_runtime = Ref(None)
+    #|pub fn moui_embedding_attach_surface() -> Bool { false }
+    #|
+  let owner_impl = check_r3_shell_embedding_impl(
+    "moui_shell/embedding/runtime_callbacks.mbt",
+    Some(owner_impl_text),
+    expected,
+  )
+  debug_inspect(owner_impl.ok, content="true")
+  let owner_without_state = check_r3_shell_embedding_impl(
+    "moui_shell/embedding/runtime_callbacks.mbt",
+    Some("pub fn moui_embedding_attach_surface() -> Bool { false }"),
+    expected,
+  )
+  debug_inspect(owner_without_state.ok, content="false")
+}
+
+///|
 test "G1 rejects skill tables that re-list P-rows" {
   let text =
     #|| P1 | thin entry |

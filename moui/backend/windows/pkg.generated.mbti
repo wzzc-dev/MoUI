@@ -8,17 +8,9 @@ import {
 }
 
 // Values
-pub fn dispose_windows_platform_views(@wzzc-dev/window/windows.Window) -> Unit
-
-pub fn drain_windows_webview_commands(@wzzc-dev/window/windows.Window, @host.HostWebViewCommandQueue) -> Int
-
-pub fn install_windows_webview_event_dispatcher((UInt64, String, @wzzc-dev/moui/core.WebViewEvent) -> Unit) -> Unit
-
 pub fn run_app_with_renderer_provider(String, @runtime.AppRuntime, provider~ : WindowsRendererProvider, options? : WindowsHostAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
 
 pub fn run_app_with_renderer_provider_smoke(String, @runtime.AppRuntime, provider~ : WindowsRendererProvider, options? : WindowsHostAppOptions, smoke_options? : WindowsHostSmokeOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
-
-pub fn sync_windows_platform_views(@wzzc-dev/window/windows.Window, @wzzc-dev/moui/core.DrawFrame) -> Unit
 
 pub fn window_event_to_core(@wzzc-dev/window/core.WindowEvent, @wzzc-dev/moui/core.Point) -> @wzzc-dev/moui/core.AppEvent?
 
@@ -42,7 +34,7 @@ pub fn windows_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, c
 
 pub fn windows_system_theme() -> @wzzc-dev/moui/core.ColorScheme
 
-pub fn windows_webview_capabilities() -> @host.HostWebViewCapabilities
+pub fn windows_timer_source() -> @host.HostTimerSource
 
 // Errors
 
@@ -61,7 +53,7 @@ pub impl @wzzc-dev/window/windows.ApplicationHandler for WindowsApp
 pub struct WindowsHostAppOptions {
   // private fields
 }
-pub fn WindowsHostAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, event_sources? : @host.HostPlatformEventSources?, web_view_commands? : @host.HostWebViewCommandQueue?, web_view_events? : @host.HostWebViewEventSource?) -> Self
+pub fn WindowsHostAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, event_sources? : @host.HostPlatformEventSources?, platform_view_plugins? : Array[@host.PlatformViewPlugin]) -> Self
 
 pub struct WindowsHostSmokeOptions {
   // private fields

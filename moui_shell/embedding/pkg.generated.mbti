@@ -1,0 +1,206 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_shell/embedding"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn embedding_api_version() -> Int
+
+pub fn install_runtime(EmbeddingRuntimeCallbacks) -> Unit
+
+pub fn moui_embedding_attach_surface(UInt64, Int, Int, Double) -> Bool
+
+pub fn moui_embedding_complete_clipboard(Int, Int, String, Bytes) -> Bool
+
+pub fn moui_embedding_complete_clipboard_v1(Int, Int, Int, String, Bytes) -> Bool
+
+pub fn moui_embedding_destroy_application() -> Unit
+
+pub fn moui_embedding_detach_surface() -> Unit
+
+pub fn moui_embedding_dispatch_accessibility(Int, Int, String) -> Bool
+
+pub fn moui_embedding_dispatch_command(Int) -> Bool
+
+pub fn moui_embedding_dispatch_host_response_envelope_json(String) -> Bool
+
+pub fn moui_embedding_dispatch_pointer(Int, Double, Double, Double) -> Bool
+
+pub fn moui_embedding_dispatch_scroll(Double, Double, Double, Double, Int) -> Bool
+
+pub fn moui_embedding_dispatch_text_input(Int, String, Int, Int) -> Bool
+
+pub fn moui_embedding_frame_tick(Double) -> Bool
+
+pub fn moui_embedding_render_frame() -> Bool
+
+pub fn moui_embedding_renderer_configure(String) -> Bool
+
+pub fn moui_embedding_renderer_status_json() -> String
+
+pub fn moui_embedding_resize(Int, Int, Double) -> Bool
+
+pub fn moui_embedding_take_host_update_envelope_json() -> String
+
+pub fn moui_embedding_take_host_updates_json() -> String
+
+pub fn parse_wire_envelope_json(String) -> ShellWireEnvelope?
+
+pub fn runtime_installed() -> Bool
+
+pub fn shell_api_version() -> Int
+
+// Errors
+
+// Types and methods
+pub(all) struct EmbeddingRuntimeCallbacks {
+  renderer_configure : (String) -> Bool
+  renderer_status_json : () -> String
+  take_host_updates_json : () -> String
+  take_host_update_envelope_json : () -> String
+  dispatch_host_response_envelope_json : (String) -> Bool
+  dispatch_text_input : (Int, String, Int, Int) -> Bool
+  dispatch_command : (Int) -> Bool
+  dispatch_accessibility : (Int, Int, String) -> Bool
+  complete_clipboard : (Int, Int, String, Bytes) -> Bool
+  complete_clipboard_v1 : (Int, Int, Int, String, Bytes) -> Bool
+  attach_surface : (UInt64, Int, Int, Double) -> Bool
+  resize : (Int, Int, Double) -> Bool
+  dispatch_pointer : (Int, Double, Double, Double) -> Bool
+  dispatch_scroll : (Double, Double, Double, Double, Int) -> Bool
+  frame_tick : (Double) -> Bool
+  render_frame : () -> Bool
+  detach_surface : () -> Unit
+  destroy_application : () -> Unit
+}
+pub fn EmbeddingRuntimeCallbacks::new(renderer_configure~ : (String) -> Bool, renderer_status_json~ : () -> String, take_host_updates_json~ : () -> String, take_host_update_envelope_json~ : () -> String, dispatch_host_response_envelope_json~ : (String) -> Bool, dispatch_text_input~ : (Int, String, Int, Int) -> Bool, dispatch_command~ : (Int) -> Bool, dispatch_accessibility~ : (Int, Int, String) -> Bool, complete_clipboard~ : (Int, Int, String, Bytes) -> Bool, complete_clipboard_v1~ : (Int, Int, Int, String, Bytes) -> Bool, attach_surface~ : (UInt64, Int, Int, Double) -> Bool, resize~ : (Int, Int, Double) -> Bool, dispatch_pointer~ : (Int, Double, Double, Double) -> Bool, dispatch_scroll~ : (Double, Double, Double, Double, Int) -> Bool, frame_tick~ : (Double) -> Bool, render_frame~ : () -> Bool, detach_surface~ : () -> Unit, destroy_application~ : () -> Unit) -> Self
+
+pub(all) enum ShellCapability {
+  Surface
+  Pointer
+  Scroll
+  FrameScheduling
+  TextInput
+  Clipboard
+  Accessibility
+  PlatformViews
+  HostChannel
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct ShellChannel {
+  mut next_request_id : Int
+  mut pending : Array[ShellRequestId]
+  mut updates : Array[ShellWireUpdate]
+} derive(ToJson, @debug.Debug)
+pub fn ShellChannel::begin_request(Self) -> ShellRequestId
+pub fn ShellChannel::complete(Self, ShellRequestId) -> Bool
+pub fn ShellChannel::complete_request(Self, id~ : Int) -> Bool
+pub fn ShellChannel::drain_update_envelope(Self, ShellSession) -> ShellWireEnvelope
+pub fn ShellChannel::drain_updates(Self) -> Array[ShellWireUpdate]
+pub fn ShellChannel::enqueue_update(Self, kind~ : String, payload~ : Json, request_id? : ShellRequestId?) -> Bool
+pub fn ShellChannel::new() -> Self
+pub fn ShellChannel::pending_count(Self) -> Int
+pub fn ShellChannel::reset(Self) -> Unit
+pub fn ShellChannel::track_request(Self, id~ : Int) -> ShellRequestId?
+
+pub(all) enum ShellCompatibility {
+  Compatible
+  ShellApiMismatch
+  EmbeddingApiMismatch
+  CapabilityMissing(ShellCapability)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct ShellEmbeddingTransport {
+  session : ShellSession
+  scheduler : ShellFrameScheduler
+  channel : ShellChannel
+}
+pub fn ShellEmbeddingTransport::accepts_response_generation(Self, generation~ : Int) -> Bool
+pub fn ShellEmbeddingTransport::attach(Self) -> Bool
+pub fn ShellEmbeddingTransport::attached(Self) -> Bool
+pub fn ShellEmbeddingTransport::complete_request(Self, id~ : Int) -> Bool
+pub fn ShellEmbeddingTransport::destroy(Self) -> Bool
+pub fn ShellEmbeddingTransport::detach(Self) -> Bool
+pub fn ShellEmbeddingTransport::drain_update_envelope_json(Self) -> String
+pub fn ShellEmbeddingTransport::enqueue_tracked_update(Self, kind~ : String, payload~ : Json, request_id~ : Int) -> Bool
+pub fn ShellEmbeddingTransport::enqueue_update(Self, kind~ : String, payload~ : Json, request_id? : Int?) -> Bool
+pub fn ShellEmbeddingTransport::finish_frame(Self) -> Bool
+pub fn ShellEmbeddingTransport::frame_requested(Self) -> Bool
+pub fn ShellEmbeddingTransport::new(initial_generation~ : Int) -> Self
+pub fn ShellEmbeddingTransport::request_frame(Self) -> Unit
+pub fn ShellEmbeddingTransport::session_generation(Self) -> Int
+pub fn ShellEmbeddingTransport::surface_epoch(Self) -> Int
+pub fn ShellEmbeddingTransport::take_requested_frame(Self) -> Bool
+pub fn ShellEmbeddingTransport::track_request(Self, id~ : Int) -> Bool
+
+pub struct ShellFrameScheduler {
+  mut requested : Bool
+  mut in_frame : Bool
+  mut follow_up : Bool
+} derive(ToJson, @debug.Debug)
+pub fn ShellFrameScheduler::begin_frame(Self) -> Bool
+pub fn ShellFrameScheduler::finish_frame(Self) -> Bool
+pub fn ShellFrameScheduler::new() -> Self
+pub fn ShellFrameScheduler::request(Self) -> Unit
+pub fn ShellFrameScheduler::requested(Self) -> Bool
+pub fn ShellFrameScheduler::reset(Self) -> Unit
+
+pub(all) enum ShellPlatform {
+  Android
+  Ios
+  Harmonyos
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ShellPlatformDescriptor {
+  platform : ShellPlatform
+  shell_api_version : Int
+  embedding_api_version : Int
+  capabilities : Array[ShellCapability]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ShellPlatformDescriptor::compatible_with(Self, shell_api_version~ : Int, embedding_api_version~ : Int) -> Bool
+pub fn ShellPlatformDescriptor::negotiate(Self, shell_api_version~ : Int, embedding_api_version~ : Int, required_capabilities? : Array[ShellCapability]) -> ShellCompatibility
+
+pub(all) struct ShellRequestId {
+  value : Int
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ShellSession {
+  mut generation : Int
+  mut surface_epoch : Int
+  mut state : ShellSessionState
+} derive(ToJson, @debug.Debug)
+pub fn ShellSession::attach(Self) -> Bool
+pub fn ShellSession::destroy(Self) -> Bool
+pub fn ShellSession::detach(Self) -> Bool
+pub fn ShellSession::generation(Self) -> Int
+pub fn ShellSession::new(generation~ : Int) -> Self
+pub fn ShellSession::state(Self) -> ShellSessionState
+pub fn ShellSession::surface_epoch(Self) -> Int
+
+pub(all) enum ShellSessionState {
+  Detached
+  Attached
+  Destroyed
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ShellWireEnvelope {
+  schema_version : Int
+  session_generation : Int
+  surface_epoch : Int
+  updates : Array[ShellWireUpdate]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ShellWireEnvelope::new(session_generation~ : Int, surface_epoch~ : Int, updates~ : Array[ShellWireUpdate]) -> Self
+pub fn ShellWireEnvelope::to_json_string(Self) -> String
+
+pub(all) struct ShellWireUpdate {
+  kind : String
+  request_id : ShellRequestId?
+  payload : Json
+} derive(Eq, ToJson, @debug.Debug)
+
+// Type aliases
+
+// Traits
+

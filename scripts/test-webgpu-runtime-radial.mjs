@@ -565,21 +565,10 @@ assert(
   textSelectionLayer.children[0] === initialSelectionSpans[0],
   "selection reconciliation must reuse matching spans rather than replacing the layer",
 );
-const forwardedInput = { pointermove: 0, wheel: 0 };
-canvas.addEventListener("pointermove", () => forwardedInput.pointermove += 1);
-canvas.addEventListener("wheel", () => forwardedInput.wheel += 1);
-textSelectionLayer.dispatchEvent({
-  type: "wheel",
-  cancelable: true,
-  clientX: 10,
-  clientY: 10,
-  deltaX: 0,
-  deltaY: 20,
-  preventDefault() {},
-});
 assert(
-  forwardedInput.pointermove === 0 && forwardedInput.wheel === 1,
-  "selection-layer wheel forwarding must not inject a redundant pointer move",
+  !textSelectionLayer.listeners.has("pointermove") &&
+    !textSelectionLayer.listeners.has("wheel"),
+  "selection layer must leave pointer and wheel routing to the host capture router",
 );
 
 console.log("webgpu runtime radial brush tests: ok");

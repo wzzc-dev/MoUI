@@ -6,10 +6,9 @@
     "managed": "passed",
     "cleanEjected": "passed",
     "pluginFixture": "passed",
-    "legacyFixture": "passed",
     "verifiedOn": "2026-07-15",
-    "matrixCommand": "moui/mobile/test-probe/tests/run-mobile-shell-matrix.sh ios --fallback-skia",
-    "evidence": "managed, clean-ejected, plugin, and Release N fallback simulator app matrix passed"
+    "matrixCommand": "moui_shell/test_probe/tests/run-shell-matrix.sh ios --fallback-skia --prepare-only",
+    "evidence": "managed, clean-ejected, and plugin fallback simulator-app matrix passed"
   },
   "rendererL2": {
     "status": "partial",
@@ -23,7 +22,7 @@
   "runtimeL3": {"status": "partial", "evidence": "SwiftUI matching-simulator suite pending"},
   "shellKind": "managed-swiftui",
   "shellApiVersion": 1,
-  "runtimeAbiVersion": 1,
+  "embeddingApiVersion": 1,
   "deploymentFloor": "iOS 15.0",
   "toolchainFloor": "Xcode 15.4 / Swift 5",
   "actualPresenterRoute": "unverified"

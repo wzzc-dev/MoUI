@@ -18,7 +18,7 @@ OS product completeness.
 | **Web** | **committed** | Usable as a product mainline | Daily wasm-gc + browser WebGPU; `checks/platforms/web.json` `runtimeL3=passed` | — |
 | **Windows** | **committed_with_gaps** | Usable as a product mainline (L3 incomplete) | L0–L2 PR/real Skia; `runtimeL3=partial` | Complete IME/service L3 |
 | **Linux** | **committed_with_gaps** | host `ready=true` = implementation path available, **≠** all L3 checks green | L0–L2 + first-frame L3; interactive IME and similar checks are partial | Complete interactive L3 |
-| **Android** | **runtime_partial** | `ready=true`: the managed shell + session are **usable for development/demonstration**; `status=runtime_partial` | Packaging matrix passed; historical legacy-shell CG smoke passed; managed shell and `MobileHostChannel` are wired | Managed-shell probe-recorded smoke; device signing; presenter verified; GPU seven-gate claimed |
+| **Android** | **runtime_partial** | `ready=true`: the managed shell + session are **usable for development/demonstration**; `status=runtime_partial` | Packaging matrix passed; historical legacy-shell CG smoke passed; managed shell and `EmbedderHostChannel` are wired | Managed-shell probe-recorded smoke; device signing; presenter verified; GPU seven-gate claimed |
 | **iOS** | **runtime_partial** | Same as above | Packaging matrix passed; historical UIKit-shell CG smoke passed; managed SwiftUI shell is wired | Managed SwiftUI `--require-passed` recording; device/VoiceOver; presenter/seven-gate |
 | **HarmonyOS** | **runtime_partial** | Same as above | Packaging matrix passed; first-frame/partial HVD observation; managed ArkTS/XComponent is wired | Full `passed` smoke under commercial signing; complete service observation; presenter/seven-gate |
 
@@ -371,15 +371,15 @@ Current complete mobile-runtime smoke (`--require-passed`) status (2026-07-15):
 |------|--------|------|
 | Historical iOS Component Gallery | Release N UIKit shell **`passed`**; not Showcase evidence | `artifacts/mobile-runtime/ios/component_gallery/` |
 | Historical Android Component Gallery | Release N legacy shell **`passed`**; not Showcase evidence | `artifacts/mobile-runtime/android/component_gallery/` |
-| Showcase managed mobile shells | Android/iOS/HarmonyOS matching-device evidence pending | `artifacts/mobile-runtime/<platform>/showcase/` |
-| HarmonyOS commercial/device | Canonical ArkTS shell **`partial`**; signed full-suite rerun pending | Requires `MOUI_HARMONYOS_SIGNING_CONFIG(_FILE)` + `scripts/harmonyos-mobile-runtime-evidence.sh` |
+| Showcase managed mobile shells | Android/iOS/HarmonyOS matching-device evidence pending | `artifacts/shell-runtime/<platform>/showcase/` |
+| HarmonyOS commercial/device | Canonical ArkTS shell **`partial`**; signed full-suite rerun pending | Requires `MOUI_HARMONYOS_SIGNING_CONFIG(_FILE)` + `scripts/harmonyos-shell-runtime-evidence.sh` |
 
-Orchestration scripts: `scripts/ios-mobile-runtime-evidence.sh`,
-`scripts/android-mobile-runtime-evidence.sh`, and
-`scripts/harmonyos-mobile-runtime-evidence.sh`.
-CI: `moui-ios-mobile-runtime-evidence.yml`,
-`moui-android-mobile-runtime-evidence.yml` (self-hosted Android), and
-`moui-harmonyos-mobile-runtime-evidence.yml` (self-hosted HarmonyOS + signing
+Orchestration scripts: `scripts/ios-shell-runtime-evidence.sh`,
+`scripts/android-shell-runtime-evidence.sh`, and
+`scripts/harmonyos-shell-runtime-evidence.sh`.
+CI: `moui-ios-shell-runtime-evidence.yml`,
+`moui-android-shell-runtime-evidence.yml` (self-hosted Android), and
+`moui-harmonyos-shell-runtime-evidence.yml` (self-hosted HarmonyOS + signing
 materials).
 
 The GPU seven-gate (`gpuPromotionEvidence.claimed=true`) remains an independent

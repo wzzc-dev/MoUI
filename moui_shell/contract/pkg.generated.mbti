@@ -1,0 +1,32 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_shell/contract"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn embedding_api_version() -> EmbeddingApiVersion
+
+pub fn runner_api_version() -> RunnerApiVersion
+
+// Errors
+
+// Types and methods
+pub(all) struct EmbeddingApiVersion {
+  major : Int
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct RunnerApiVersion {
+  major : Int
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum ShellProfile {
+  Handheld
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ShellProfile::label(Self) -> String
+
+// Type aliases
+
+// Traits
+

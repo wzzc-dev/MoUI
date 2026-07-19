@@ -248,7 +248,7 @@
       "reason": "Existing comprehensive text parser test."
     },
     {
-      "path": "scripts/record-mobile-runtime-smoke.mjs",
+      "path": "scripts/record-shell-runtime-smoke.mjs",
       "maxLines": 1263,
       "reason": "Existing multi-platform device smoke orchestrator."
     },

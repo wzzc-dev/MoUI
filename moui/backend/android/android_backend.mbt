@@ -1,7 +1,40 @@
 ///|
-pub(all) struct AndroidSurfaceHandle {
-  raw : UInt64
-} derive(Eq, Debug, ToJson)
+pub type AndroidSurfaceHandle = @shell_android.AndroidNativeSurface
+
+///|
+pub fn android_shell_embedding_api_version() -> Int {
+  @shell_embedding.embedding_api_version()
+}
+
+///|
+/// Android keeps its `ANativeWindow` and Choreographer contract in the
+/// platform SDK instead of flattening it into the shared embedding package.
+pub fn android_shell_descriptor() -> @shell_embedding.ShellPlatformDescriptor {
+  @shell_android.android_descriptor()
+}
+
+///|
+pub fn android_shell_renderer_configure(mode : String) -> Bool {
+  @embedded_runtime_session.shell_renderer_configure(mode)
+}
+
+///|
+pub fn android_shell_renderer_selection(
+  gpu_available~ : Bool,
+) -> @render.NativeRendererSelection {
+  @embedded_runtime_session.shell_renderer_selection(
+    @render.NativeGpuPlatform::Android,
+    gpu_available~,
+  )
+}
+
+///|
+pub fn android_shell_renderer_status_json(gpu_available~ : Bool) -> String {
+  @embedded_runtime_session.shell_renderer_status_json(
+    @render.NativeGpuPlatform::Android,
+    gpu_available~,
+  )
+}
 
 ///|
 pub(all) struct AndroidBackendCapabilities {
@@ -53,22 +86,7 @@ pub struct AndroidRendererProvider {
 ///|
 pub struct AndroidRuntimeSession {
   priv mut surface : AndroidSurfaceHandle
-  priv core : @mobile_runtime.MobileRuntimeSessionCore
-}
-
-///|
-pub fn AndroidSurfaceHandle::new(raw~ : UInt64) -> AndroidSurfaceHandle {
-  { raw, }
-}
-
-///|
-pub fn AndroidSurfaceHandle::none() -> AndroidSurfaceHandle {
-  { raw: 0UL }
-}
-
-///|
-pub fn AndroidSurfaceHandle::raw(self : AndroidSurfaceHandle) -> UInt64 {
-  self.raw
+  priv core : @embedded_runtime_session.EmbeddedSessionCore
 }
 
 ///|
@@ -110,7 +128,7 @@ pub fn AndroidRendererProvider::has_async_image_loader(
 
 ///|
 pub fn android_service_capabilities() -> @host.HostServiceCapabilities {
-  // Code-level host services wired through MobileHostChannel + managed shell
+  // Code-level host services wired through EmbedderHostChannel + managed shell
   // adapters. Matching-device evidence remains partial (see readiness.status).
   @host.HostServiceCapabilities::new(clipboard=true)
 }
@@ -170,7 +188,7 @@ pub fn backend_info() -> AndroidBackendInfo {
   {
     host_info: @host.HostAppInfo::new(
       backend=@host.HostBackendKind::Native,
-      description="Android embedded native host with managed Kotlin shell, Activity/Surface callbacks, and MobileHostChannel services",
+      description="Android embedded native host with managed Kotlin shell, Activity/Surface callbacks, and EmbedderHostChannel services",
     ),
     capabilities: android_capability_matrix(),
     services: android_service_capabilities(),
@@ -197,8 +215,8 @@ pub fn android_capability_summary(
     async_services=true,
     native_accessibility_available=true,
     web_view_available=false,
-    web_view_description="Android native WebView embedding is not part of the current mobile host contract.",
-    description="Android embedded native host with managed shell lifecycle, MobileHostChannel IME/clipboard/a11y bridges, and app-driven input forwarding. Runtime evidence remains partial.",
+    web_view_description="Android native WebView embedding is not part of the current shell host contract.",
+    description="Android embedded native host with managed shell lifecycle, EmbedderHostChannel IME/clipboard/a11y bridges, and app-driven input forwarding. Runtime evidence remains partial.",
   )
 }
 
@@ -211,7 +229,7 @@ pub fn create_session(
 ) -> AndroidRuntimeSession? {
   match provider.create(surface, metrics) {
     Some(renderer) => {
-      let core = @mobile_runtime.MobileRuntimeSessionCore::new(
+      let core = @embedded_runtime_session.EmbeddedSessionCore::new(
         runtime~,
         renderer~,
         image_loader=provider.image_loader,
@@ -262,6 +280,13 @@ pub fn AndroidRuntimeSession::session_generation(
   self : AndroidRuntimeSession,
 ) -> Int {
   self.core.session_generation()
+}
+
+///|
+pub fn AndroidRuntimeSession::surface_epoch(
+  self : AndroidRuntimeSession,
+) -> Int {
+  self.core.surface_epoch()
 }
 
 ///|
@@ -344,7 +369,7 @@ pub fn AndroidRuntimeSession::advance_time(
 ///|
 pub fn AndroidRuntimeSession::drain_host_updates(
   self : AndroidRuntimeSession,
-) -> Array[@host.MobileHostUpdate] {
+) -> Array[@embedded_runtime_session.EmbeddingHostUpdate] {
   self.core.drain_host_updates()
 }
 
@@ -365,7 +390,7 @@ pub fn AndroidRuntimeSession::drain_host_update_envelope_json(
 ///|
 pub fn AndroidRuntimeSession::dispatch_host_response(
   self : AndroidRuntimeSession,
-  response : @host.MobileHostResponse,
+  response : @embedded_runtime_session.EmbeddingHostResponse,
 ) -> Bool {
   self.core.dispatch_host_response(response)
 }
@@ -373,7 +398,7 @@ pub fn AndroidRuntimeSession::dispatch_host_response(
 ///|
 pub fn AndroidRuntimeSession::dispatch_host_response_envelope(
   self : AndroidRuntimeSession,
-  envelope : @host.MobileHostResponseEnvelope,
+  envelope : @embedded_runtime_session.EmbeddingHostResponseEnvelope,
 ) -> Bool {
   self.core.dispatch_host_response_envelope(envelope)
 }

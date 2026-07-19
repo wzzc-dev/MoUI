@@ -1,0 +1,25 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_shell/ios"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui_shell/embedding",
+}
+
+// Values
+pub fn ios_descriptor() -> @embedding.ShellPlatformDescriptor
+
+// Errors
+
+// Types and methods
+pub(all) struct IosNativeView {
+  raw : UInt64
+} derive(Eq, ToJson, @debug.Debug)
+pub fn IosNativeView::new(raw~ : UInt64) -> Self
+pub fn IosNativeView::none() -> Self
+pub fn IosNativeView::raw(Self) -> UInt64
+
+// Type aliases
+
+// Traits
+

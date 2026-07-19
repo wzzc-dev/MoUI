@@ -66,14 +66,14 @@ assert pixel markers and acceptance markers.
 Mobile host-channel, IME replacement/selection, semantics action validation,
 renderer selection, and mailbox behavior have L1 package-test proof. Mobile L3
 is separate and remains pending until each platform's release/manual
-`mobile-runtime-smoke` manifest passes on a matching device or simulator. The
+`shell-runtime-smoke` manifest passes on a matching device or simulator. The
 manifest requires before/after pixels, app receipt, actual detach, IME,
 text/image clipboard, accessibility tree/focus/action, and async image.
 
 Registered suites cover Android and iOS Counter/Showcase plus HarmonyOS
 Demo/Showcase. GPU promotion is not part of current L1/L2
 renderer proof; it needs the per-platform performance and recovery manifest in
-`mobile-mainline-roadmap.md`.
+`shell-mainline-roadmap.md`.
 
 ## L2 GPU Direct Presentation Phase 1 Capability
 
@@ -102,7 +102,7 @@ The Phase 2 promotion gate scaffolding has L1 package-test proof:
 | Renderer mailbox control queue | `moui/render/render_frame_mailbox.mbt` | `moui/render` whitebox tests (capacity-two latest-wins; control messages never dropped) |
 | Native Picture handoff | `moui_skia/native/skia_stub_gpu_worker.cpp` | focused native worker tests (`SkPicture` retain, independent thread, detach acknowledgement, zero readback counter), macOS worker-owned Metal first-frame smoke, Android NDK GPU build, HarmonyOS native/HAP build, and iOS simulator GPU build |
 | Context-loss recovery state machine | `moui/runtime/renderer_recovery.mbt` | `moui/runtime` whitebox tests (Idle → Lost → Recovering → Recovered → Idle; terminal `FallbackToRaster`) |
-| Manifest schema + `gpuPromotionEvidence` | `tools/moui/validate_mobile_runtime_manifest` | `validate_mobile_runtime_manifest_wbtest` (9 new Phase 2.3 tests) |
+| Manifest schema + `gpuPromotionEvidence` | `tools/moui/validate_shell_runtime_manifest` | `validate_shell_runtime_manifest_wbtest` (9 new Phase 2.3 tests) |
 
 Phase 2 per-platform promotion may flip a platform's `gpu_promoted` value only
 after worker-owned presentation and its matching-hardware manifest pass

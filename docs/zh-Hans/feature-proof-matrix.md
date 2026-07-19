@@ -55,9 +55,9 @@
 
 ## L3 跨平台一致性
 
-Mobile host-channel、IME replacement/selection、semantics action validation、renderer selection 和 mailbox behavior 具有 L1 package-test 证明。Mobile L3 是独立的，并且在每个平台的发布/手动 `mobile-runtime-smoke` manifest 于匹配设备或模拟器上通过之前保持 pending。该 manifest 要求 before/after pixels、app receipt、actual detach、IME、text/image clipboard、accessibility tree/focus/action 和 async image。
+Mobile host-channel、IME replacement/selection、semantics action validation、renderer selection 和 mailbox behavior 具有 L1 package-test 证明。Mobile L3 是独立的，并且在每个平台的发布/手动 `shell-runtime-smoke` manifest 于匹配设备或模拟器上通过之前保持 pending。该 manifest 要求 before/after pixels、app receipt、actual detach、IME、text/image clipboard、accessibility tree/focus/action 和 async image。
 
-已注册 suite 覆盖 Android 和 iOS Counter/Showcase，以及 HarmonyOS Demo/Showcase。GPU promotion 不属于当前 L1/L2 渲染器证明；它需要 `../mobile-mainline-roadmap.md` 中的逐平台性能和恢复 manifest。
+已注册 suite 覆盖 Android 和 iOS Counter/Showcase，以及 HarmonyOS Demo/Showcase。GPU promotion 不属于当前 L1/L2 渲染器证明；它需要 `../shell-mainline-roadmap.md` 中的逐平台性能和恢复 manifest。
 
 ## L2 GPU Direct Presentation 第 1 阶段能力
 
@@ -80,7 +80,7 @@ GPU readback elimination plan 的第 1 阶段已落地 window-surface GPU source
 | Renderer mailbox control queue | `moui/render/render_frame_mailbox.mbt` | `moui/render` whitebox tests（capacity-two latest-wins；control messages never dropped） |
 | Native Picture handoff | `moui_skia/native/skia_stub_gpu_worker.cpp` | 聚焦 native worker tests（`SkPicture` retain、independent thread、detach acknowledgement、zero readback counter）、macOS worker-owned Metal first-frame smoke、Android NDK GPU build、HarmonyOS native/HAP build 和 iOS simulator GPU build |
 | Context-loss recovery state machine | `moui/runtime/renderer_recovery.mbt` | `moui/runtime` whitebox tests（Idle → Lost → Recovering → Recovered → Idle；terminal `FallbackToRaster`） |
-| Manifest schema + `gpuPromotionEvidence` | `tools/moui/validate_mobile_runtime_manifest` | `validate_mobile_runtime_manifest_wbtest`（9 个新的 Phase 2.3 测试） |
+| Manifest schema + `gpuPromotionEvidence` | `tools/moui/validate_shell_runtime_manifest` | `validate_shell_runtime_manifest_wbtest`（9 个新的 Phase 2.3 测试） |
 
 只有在 worker-owned presentation 和匹配硬件 manifest 通过 `--require-passed` 后，第 2 阶段逐平台 promotion 才可以翻转该平台的 `gpu_promoted` 值。
 

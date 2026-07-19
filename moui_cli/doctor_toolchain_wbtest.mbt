@@ -143,7 +143,7 @@ fn doctor_harmony_mobile_fixture(compatible : Int) -> String {
     {
       "harmonyos": {
         "compatibleSdkVersion": compatible,
-        "shellMode": "managed",
+        "runnerMode": "managed",
       },
     } : Json).stringify()
 }

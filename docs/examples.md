@@ -37,25 +37,23 @@ monorepo or hand-authored packages. The root `website/` workspace uses the same
 app-first shape outside `examples/` so MoUI can render its own bilingual
 homepage.
 
-Mobile packaging metadata is intentionally split by publish boundary.
-Application authors keep app-owned identity, capability metadata, and native
-export contracts in their app `mobile.json`. In this repository the examples
-use `examples/<app>/mobile.json` for identity metadata and
-`moui/mobile/build-contracts.json` for Counter/Showcase compatibility
-defaults. The reusable Gradle, JNI, CMake, SwiftUI/UIKit, Xcode, and prepare scripts
-live under the package-published `moui/mobile` and `moui/scripts/mobile`
+Shell packaging metadata is intentionally split by publish boundary.
+Application authors keep app-owned identity and capability metadata in
+`shell.json`; the embedding table replaces per-app native export contracts.
+The reusable Gradle, JNI, CMake, SwiftUI/UIKit, Xcode, and prepare scripts
+live under the package-published `moui_shell` and `moui_shell/scripts`
 directories, so ordinary UI code still lives in `examples/<app>/app` and does
-not depend on native shell details. Run `node scripts/check-mobile-app-config.mjs`
-after changing repository example mobile metadata or contracts.
+not depend on native shell details. Run `node scripts/check-shell-app-config.mjs`
+after changing repository example shell metadata.
 
 | Example | Purpose | Shared app package | Main coverage |
 | --- | --- | --- | --- |
 | Website | MoUI-built homepage workspace | `website/app/` | Bilingual product homepage, first-screen MoUI brand hero, compact Counter code snippet, interactive runtime preview, framework foundations, platform matrix, release-readiness cards, quick-start Web commands, runtime Docs portal that fetches packaged same-origin `docs/*.md` Markdown plus MoUI and `moui_skia` README copies, Web-only `website/web_wasm` entrypoint |
 | Playground | MoonBit-native browser tutorial and editor | `website/playground/app/`, `website/playground/web_wasm/` | Code editor built with `moui_richtext`, controlled `main.mbt`/`moon.pkg` files, app-safe import validation, pinned MoonBit compiler Worker bridge, sandbox preview host, local persistence, share URL protocol, and six bilingual lesson assets |
 | Agent Counter | Minimal agent-controllable runtime example | `examples/agent_counter/`, `examples/agent_counter/main/`, `examples/agent_counter/macos_skia/` | Counter app with semantics/command-intent flow for agent observation and control, plus a native macOS Skia entrypoint |
-| Counter | Minimal model/update/view app | `examples/counter/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages, Android/iOS embedded-session MoonBit entrypoints, and managed Kotlin/SwiftUI packaging; checked-in native projects are Release N fixtures |
+| Counter | Minimal model/update/view app | `examples/counter/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages, Android/iOS embedding entrypoints, and managed Kotlin/SwiftUI packaging |
 | Multi Window | Host-managed scene example | `examples/multi_window/app/` | Independent main and inspector runtimes through `HostWindowActions` (`open` / `focus` / `close`) plus `HostWindowRequestQueue` and `HostWindowSceneResolver`, with native macOS/Windows/Linux windows and a multi-canvas Web route |
-| HarmonyOS Demo | Standalone experimental HarmonyOS embedded Skia demo | `examples/harmonyos_demo/app/`, `examples/harmonyos_demo/harmonyos_skia/` | Platform-neutral viewport/tap feedback demo, HarmonyOS Skia embedded-session MoonBit exports, package-owned ArkTS/XComponent managed shell staging, and fallback HAP packaging smoke via `scripts/build-harmonyos-demo-app.sh --fallback-skia`; the checked-in `harmonyos_app` is a Release N fixture and runtime support remains pending matching-device evidence |
+| HarmonyOS Demo | Standalone experimental HarmonyOS embedded Skia demo | `examples/harmonyos_demo/app/`, `examples/harmonyos_demo/harmonyos_skia/` | Platform-neutral viewport/tap feedback demo, HarmonyOS Skia embedding entrypoint, package-owned ArkTS/XComponent managed shell staging, and fallback HAP packaging smoke via `scripts/build-shell-harmonyos-hap.sh --app harmonyos_demo --fallback-skia`; runtime support remains pending matching-device evidence |
 | Button Freeze Probe | Native Skia button freeze repro | `examples/button_freeze_probe/app/` | Minimal `data_filter_bar` filter chips, red primary accent, repeated click counter, direct primary/tonal button comparison, native Skia macOS/Windows/Linux entrypoints |
 | Showcase | Unified component, pattern, platform, and diagnostic catalog | `examples/showcase/app/` | A root TEA shell over four isolated packages: Components owns focused `moui/views` demos; Patterns owns Counter/Todo, forms, data, navigation, feedback, and text/media workflows; Platform owns timer/window/clipboard/file/canvas recipes, route/session facts, and Mobile Service Probe; Diagnostics alone imports runtime/render internals for inspector and advanced rendering. Web, desktop Skia/WGPU/Sun, and Android/iOS/HarmonyOS entrypoints all call the same root app. Showcase intentionally has no `moui_theme` dependency and is not an official design-system compatibility claim. |
 | Design Systems | Addon diagnostic source-mapped design-system preview and first-party theme sampler | `examples/design_systems/app/`, `examples/design_systems/{web_wasm,macos_skia,windows_skia,linux_skia}/` | Material, Carbon, Primer, and Fluent switching through the `moui_theme/material`, `moui_theme/carbon`, `moui_theme/primer`, and `moui_theme/fluent` entrypoints over shared `moui_theme/common` models, Sickle switching through `moui_theme/sickle` as a first-party theme addon, light/dark/high-contrast/system variants for official source-mapped presets, compact/standard/comfortable density, semantic palette roles, typography specimen, spacing/density grid, component-token matrix sampling, component style bundle usage, custom inheritance/override API, Web and native Skia host entrypoints, coverage/parity status labels, and explicit source-mapped preview wording rather than official-complete claims |
@@ -95,9 +93,7 @@ Counter is the smallest recommended app shape. It keeps user code in
 `Model / Msg / update / view`, then lets `Program::simple` connect that pure
 model loop to the runtime. It has Web, macOS, Windows, Linux, experimental
 Android and iOS Skia embedded-session entrypoints plus managed Kotlin/SwiftUI
-packaging. The checked-in `examples/counter/{android_app,ios_app}` projects are
-Release N fixtures,
-and `windows_wgpu_cosmic` entrypoints, so it is also the quickest way
+packaging and a `windows_wgpu_cosmic` entrypoint, so it is also the quickest way
 to verify a thin platform package without the full Showcase surface:
 
 ```moonbit
@@ -148,15 +144,15 @@ Focused Counter checks:
 moon test examples/counter/app --target native
 moon build examples/counter/web_wasm --target wasm-gc
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/counter/android_skia --target native
-scripts/build-counter-android-apk.sh --fallback-skia
+scripts/build-shell-android-apk.sh --app counter --fallback-skia
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/counter/ios_skia --target native
-scripts/build-counter-ios-app.sh --fallback-skia
+scripts/build-shell-ios-app.sh --app counter --fallback-skia
 ```
 
 The fallback APK and `.app` commands validate packaging paths only. Use
-`scripts/build-mobile-android-apk.sh --app counter` without `--fallback-skia` plus a
+`scripts/build-shell-android-apk.sh --app counter` without `--fallback-skia` plus a
 matching device/emulator smoke before claiming Android Skia first-frame runtime
-support; use `scripts/build-mobile-ios-app.sh --app counter` without `--fallback-skia` plus
+support; use `scripts/build-shell-ios-app.sh --app counter` without `--fallback-skia` plus
 a matching simulator/device smoke before claiming iOS Skia first-frame runtime
 support.
 
@@ -167,26 +163,33 @@ does not extend Counter: `examples/harmonyos_demo/app` owns the shared TEA UI
 with visible tap and viewport feedback, and
 `examples/harmonyos_demo/harmonyos_skia` exports the embedded-session native
 bridge functions. Normal builds stage the package-owned ArkTS/XComponent shell;
-`examples/harmonyos_demo/harmonyos_app` is only a Release N fixture.
+The HarmonyOS managed shell is staged from `moui_shell/harmonyos`; app source
+does not keep a native project fixture.
 
 Focused HarmonyOS Demo checks:
 
 ```sh
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test examples/harmonyos_demo/app --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/harmonyos_demo/harmonyos_skia --target native
-bash -n scripts/build-harmonyos-demo-app.sh
-scripts/build-harmonyos-demo-app.sh --fallback-skia
+bash -n scripts/build-shell-harmonyos-hap.sh
+scripts/build-shell-harmonyos-hap.sh --app harmonyos_demo --fallback-skia
 ```
 
 For real HarmonyOS Skia checks, use the locked HarmonyOS release artifact:
 
 ```sh
-MOUI_SKIA_PLATFORM=harmonyos MOUI_SKIA_ARCH=arm64 MOUI_SKIA_LINK_MODE=dynamic \
+MOUI_SKIA_PLATFORM=harmonyos MOUI_SKIA_ARCH=arm64 MOUI_SKIA_LINK_MODE=static \
   moon check examples/harmonyos_demo/harmonyos_skia --target native
 ```
 
+HarmonyOS `auto` / `skia-gpu` builds require the complete static provider. The
+locked shared `libskia.so` is usable for raster rendering, but hides Ganesh
+internal symbols referenced by `libskia_ganesh_ext.a`; use dynamic linking only
+with explicit `skia-raster`. Leaving `MOUI_SKIA_LINK_MODE` unset lets the shell
+builder choose static for GPU and dynamic for raster.
+
 The fallback HAP command validates MoonBit C/native glue/staged package shape
-only. Use `scripts/build-harmonyos-demo-app.sh` without `--fallback-skia` plus a
+only. Use `scripts/build-shell-harmonyos-hap.sh --app harmonyos_demo` without `--fallback-skia` plus a
 matching device/emulator smoke before claiming HarmonyOS Skia first-frame
 runtime support.
 
@@ -666,7 +669,9 @@ Direct local `moon run` commands use the `moui_skia` prebuild hook, so the
 checked-in packages do not need machine-local path rewrites. Set
 `MOUI_SKIA_LINK_MODE=dynamic|static|auto` before `moon run` to choose the Skia
 library mode. Helper smoke runs can still use `--link-mode dynamic|static|auto`
-to override the environment for that invocation.
+to override the environment for that invocation. HarmonyOS is stricter:
+`auto` / `skia-gpu` must resolve to static, while dynamic is supported only for
+explicit `skia-raster`.
 
 For a fuller local smoke, pass `--run-showcase-smoke`. The helper builds
 Showcase and then runs the `moui_tester` first-frame smoke. Add

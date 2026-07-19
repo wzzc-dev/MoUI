@@ -36,7 +36,7 @@ new shells pass fresh matching-device evidence.
 
 - Stabilize Runtime ABI v1 and Host Wire v1 before switching platform shell
   languages. See ADR 0010.
-- Keep `MobileRuntimeSessionCore` under `backend/internal/mobile_runtime`:
+- Keep `EmbeddedSessionCore` under `backend/internal/mobile_runtime`:
   moving it below `backend/host/internal` would block sibling backend imports
   under MoonBit internal visibility.
 - Keep `actualPresenterRoute=unverified` and mobile runtime/renderer status
@@ -47,10 +47,10 @@ new shells pass fresh matching-device evidence.
 ## Validation
 
 ```sh
-sh moui/mobile/tests/run-mobile-runtime-v1-tests.sh
-sh moui/mobile/ios/tests/run-ios-managed-shell-tests.sh
-sh moui/mobile/harmonyos/tests/run-harmonyos-managed-shell-tests.sh
-node --test moui/mobile/test-probe/tests/validate-test-probe.mjs
+sh moui_shell/tests/run-mobile-runtime-v1-tests.sh
+sh moui_shell/ios/tests/run-ios-managed-shell-tests.sh
+sh moui_shell/harmonyos/tests/run-harmonyos-managed-shell-tests.sh
+node --test moui_shell/test-probe/tests/validate-test-probe.mjs
 node scripts/check-mobile-app-config.mjs
 node scripts/generate-repo-docs.mjs --check
 node scripts/validate-source-file-policy.mjs

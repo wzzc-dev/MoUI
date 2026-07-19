@@ -28,6 +28,7 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 | `moui/views/` | Public view constructors, app-facing control APIs, default themes, form/navigation/data helpers, and concrete custom view behavior built with `@core.View::node`. |
 | `moui/runtime/` | AppRuntime construction, runtime state, element/layout/render tree generation, event dispatch, program queue drain, effects, subscriptions, diagnostics, and inspector snapshots. |
 | `moui/backend/host/` | Shared host contracts for windows, routes, timers, host services, WebView, async image loading, accessibility, input, redraw scheduling, and renderer handoff. |
+| `moui/backend/internal/embedded_runtime_session/` | Private MoUI runtime assembly for Android, iOS, and HarmonyOS embedded hosts; it composes `AppRuntime`, host contracts, and renderers behind callbacks installed into the neutral shell embedding API. |
 | `moui/backend/{macos,windows,linux,android,ios,harmonyos,web}/` | Concrete platform host implementations. Native platform packages normalize events into host contracts; Android, iOS, and HarmonyOS are currently embedded-session scaffolds driven by platform-owned callbacks; web is the canonical browser host. |
 | `moui/backend/{macos,windows,linux,android,ios,harmonyos}/skia/` | Native Skia renderer provider packages for the main native route. Android presents CPU pixel frames to an `ANativeWindow`; iOS presents CPU pixel frames to a UIKit `UIImageView` child; HarmonyOS presents CPU pixel frames to a supplied XComponent native-window handle. |
 | `moui/backend/{macos,windows,linux}/wgpu/` | Native WGPU diagnostic provider packages. |
@@ -108,7 +109,7 @@ workspace.
   `moui_skia`.
 - Android Skia route (experimental scaffold): shared app package ->
   `examples/<app>/android_skia`, using a build-staged package-published
-  `moui/mobile/android` Kotlin/AndroidX/registered-JNI/CMake managed shell ->
+  `moui_shell/android` Kotlin/AndroidX/registered-JNI/CMake managed shell ->
   `moui/backend/android` embedded session -> `moui/backend/android/skia` ->
   `moui/render/skia` -> `moui_skia`. The package-owned Android shell owns
   lifecycle, PlatformView overlay composition, `ANativeWindow` acquisition, `Choreographer` pacing,
@@ -116,17 +117,17 @@ workspace.
   checked APK/device smoke promotes the route.
 - iOS Skia route (experimental scaffold): shared app package ->
   `examples/<app>/ios_skia`, using a build-staged package-published
-  `moui/mobile/ios` SwiftUI/Swift-package/Xcode managed shell ->
+  `moui_shell/ios` SwiftUI/Swift-package/Xcode managed shell ->
   `moui/backend/ios` embedded session -> `moui/backend/ios/skia` ->
   `moui/render/skia` -> `moui_skia`. The package-owned Swift shell owns the
   single-scene lifecycle, `CAMetalLayer`-backed `UIView`, `CADisplayLink`
   pacing, UIKit text proxy, pasteboard, accessibility container, PlatformView
   overlay, Host Service plugins, and touch forwarding. Objective-C++ stays a
-  narrow Mobile Runtime ABI v1 bridge. A checked managed-shell simulator/device
+  narrow Embedding API v1 bridge. A checked managed-shell simulator/device
   smoke is still required before promotion.
 - HarmonyOS Skia route (experimental scaffold): shared app package ->
   `examples/<app>/harmonyos_skia`, using the build-staged package-published
-  `moui/mobile/harmonyos` ArkTS Stage Ability/XComponent/NAPI/CMake managed
+  `moui_shell/harmonyos` ArkTS Stage Ability/XComponent/NAPI/CMake managed
   shell ->
   `moui/backend/harmonyos` embedded session ->
   `moui/backend/harmonyos/skia` -> `moui/render/skia` -> `moui_skia`.
@@ -142,9 +143,9 @@ Platform entrypoints should stay thin: create the program/runtime, select the
 backend and renderer provider, and pass app-owned service adapters. Business
 model/update/view logic should remain in the shared app package.
 
-Mobile runtime sessions share `MobileHostChannel` for revisioned IME and
+Shell embedding sessions share `EmbedderHostChannel` for revisioned IME and
 semantics updates plus asynchronous clipboard/accessibility responses. See
-[Mobile Mainline And GPU Roadmap](mobile-mainline-roadmap.md), ADR 0005, and
+[Shell Mainline And GPU Roadmap](shell-mainline-roadmap.md), ADR 0005, and
 ADR 0006. Product default is now `SkiaGpuNative` for every native Skia platform
 when the host GPU surface is available (`NativeGpuPlatform::gpu_promoted` is
 `true` for macOS, Windows, Linux, Android, iOS, and HarmonyOS). Window-surface
@@ -263,16 +264,14 @@ moui/backend/linux/skia/      Linux Skia renderer provider mainline
 moui/backend/linux/wgpu/      Linux WGPU renderer provider diagnostic
 moui/backend/android/         Android embedded native host scaffold over shared host/runtime contracts
 moui/backend/android/skia/    Android Skia renderer provider over ANativeWindow pixel presentation
-moui/mobile/android/          canonical Kotlin/AndroidX managed shell, registered JNI, Gradle/CMake template
-moui/mobile/legacy/android/   frozen Release N Java/name-mangled-JNI compatibility fixture
+moui_shell/android/          canonical Kotlin/AndroidX managed shell, registered JNI, Gradle/CMake template
 moui/backend/ios/             iOS embedded native host scaffold over shared host/runtime contracts
 moui/backend/ios/skia/        iOS Skia renderer provider over UIKit UIImageView pixel presentation
-moui/mobile/ios/              canonical SwiftUI managed shell, ABI bridge, Swift package, Xcode template
-moui/mobile/ios/legacy/       frozen Release N UIKit/Objective-C++ compatibility fixture
+moui_shell/ios/              canonical SwiftUI managed shell, ABI bridge, Swift package, Xcode template
 moui/backend/harmonyos/       HarmonyOS embedded native host scaffold over shared host/runtime contracts
 moui/backend/harmonyos/skia/  HarmonyOS Skia renderer provider over XComponent native-window pixel presentation
-moui/mobile/harmonyos/        canonical ArkTS Stage Ability/XComponent managed shell, plugin registry, fixed-ABI NAPI/CMake glue
-moui/mobile/test-probe/       repository-only three-platform service/PlatformView contract plugin
+moui_shell/harmonyos/        canonical ArkTS Stage Ability/XComponent managed shell, plugin registry, fixed-ABI NAPI/CMake glue
+moui_shell/test_probe/       repository-only three-platform service/PlatformView contract plugin
 moui/backend/web/             canonical Web host on wasm-gc plus browser JS assets
 moui/render/                  renderer facade and shared draw helpers
 moui/render/skia/             native Skia raster renderer facade over moui_skia
@@ -291,14 +290,10 @@ moui/tests/skia_text_emoji_smoke/ opt-in real Skia text/emoji renderer smoke
 moui/tests/wgpu_renderer_smoke/ opt-in native WGPU renderer smoke
 examples/counter/app/         smallest shared app shape
 examples/counter/{macos_skia,web_wasm,android_skia,ios_skia,macos_wgpu,windows_wgpu,linux_wgpu}/ platform counter entrypoints
-examples/counter/android_app/ Counter Android Release N Gradle metadata fixture
-examples/counter/ios_app/     Counter iOS Release N Xcode metadata fixture
 examples/counter/windows_wgpu_cosmic/ Windows counter selecting Moon Cosmic text
 examples/harmonyos_demo/app/  standalone HarmonyOS demo app with viewport/tap feedback
 examples/harmonyos_demo/harmonyos_skia/ HarmonyOS demo embedded-session Skia entrypoint
-examples/harmonyos_demo/harmonyos_app/ HarmonyOS Release N app-owned project fixture
 examples/showcase/harmonyos_skia/ Showcase HarmonyOS embedded-session Skia entrypoint
-examples/showcase/harmonyos_app/ Showcase HarmonyOS Release N project fixture
 examples/agent_counter/       minimal agent-controllable runtime example (shared app at example root plus main/ and macos_skia/ entrypoints)
 examples/button_freeze_probe/app/ minimal native Skia button-freeze repro app
 examples/button_freeze_probe/{macos_skia,windows_skia,linux_skia}/ platform Button Freeze Probe entrypoints

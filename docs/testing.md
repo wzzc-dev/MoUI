@@ -162,14 +162,14 @@ moon test examples/pdf_workbench/pdflite_service_protocol --target native
 moon test examples/pdf_workbench/pdflite_service_native_transport --target native
 moon test examples/pdf_workbench/pdfium_adapter --target native
 moon check examples/counter/android_skia --target native
-scripts/build-counter-android-apk.sh --fallback-skia
+scripts/build-shell-android-apk.sh --app counter --fallback-skia
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/counter/ios_skia --target native
-scripts/build-counter-ios-app.sh --fallback-skia
+scripts/build-shell-ios-app.sh --app counter --fallback-skia
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test examples/harmonyos_demo/app --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/harmonyos_demo/harmonyos_skia --target native
-scripts/build-harmonyos-demo-app.sh --fallback-skia
+scripts/build-shell-harmonyos-hap.sh --app harmonyos_demo --fallback-skia
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/showcase/harmonyos_skia --target native
-scripts/build-showcase-harmonyos-hap.sh --fallback-skia
+scripts/build-shell-harmonyos-hap.sh --app showcase --fallback-skia
 ```
 
 Use `moon test moui/render/wgpu --target native` only for the native WGPU
@@ -283,35 +283,32 @@ scripts/macos-skia-renderer-smoke.sh --run-ime-smoke
 sh scripts/ci-web-runtime-presentation.sh
 ```
 
-For Android packaging changes, `scripts/build-counter-android-apk.sh
+For Android packaging changes, `scripts/build-shell-android-apk.sh --app counter
 --fallback-skia` is a fast build-system smoke that covers MoonBit C export,
 registered JNI/CMake, Kotlin/resource packaging, and debug signing. It is not real Skia
 renderer or platform runtime evidence. Android first-frame/input/lifecycle
-claims still require `scripts/build-counter-android-apk.sh` without fallback
+claims still require `scripts/build-shell-android-apk.sh --app counter` without fallback
 and a matching device or emulator run with recorded observations.
-The canonical Android build entrypoint is now
-`scripts/build-mobile-android-apk.sh --app <counter|showcase>`; the
-app-specific scripts are compatibility wrappers. It uses the managed Kotlin
-shell by default. `--legacy-java-shell --compile-sdk 35` exists only to audit
-the frozen Release N compatibility fixture.
+The canonical Android build entrypoint is
+`scripts/build-shell-android-apk.sh --app <counter|showcase>`. It uses the
+managed Kotlin shell; `moui shell eject android` creates an owned runner.
 
-For iOS packaging changes, `scripts/build-counter-ios-app.sh --fallback-skia`
+For iOS packaging changes, `scripts/build-shell-ios-app.sh --app counter --fallback-skia`
 is a fast build-system smoke that covers MoonBit C export, the canonical
 SwiftUI/UIKit host adapters, ABI bridge, iOS runtime compatibility, native-stub
 compilation, bundle layout, and ad-hoc simulator signing. It is not real Skia
 renderer or platform runtime
 evidence. iOS first-frame/input/lifecycle claims still require
-`scripts/build-counter-ios-app.sh` without fallback and a matching simulator or
+`scripts/build-shell-ios-app.sh --app counter` without fallback and a matching simulator or
 device run with recorded observations.
-The canonical iOS build entrypoint is now
-`scripts/build-mobile-ios-app.sh --app <counter|showcase>` through the
-checked-in real `PBXNativeTarget`; `--legacy-uikit-shell` selects only the
-frozen Release N fixture. Run
-`sh moui/mobile/ios/tests/run-ios-managed-shell-tests.sh` for the focused shell
-contract audit. Use `node scripts/record-mobile-runtime-smoke.mjs
+The canonical iOS build entrypoint is
+`scripts/build-shell-ios-app.sh --app <counter|showcase>` through the managed
+runner template. Run
+`sh moui_shell/ios/embedder/tests/run-ios-managed-shell-tests.sh` for the focused shell
+contract audit. Use `node scripts/record-shell-runtime-smoke.mjs
 --platform <android|ios|harmonyos> --app
 <counter|showcase|harmonyos_demo> --require-passed` to produce the
-checked mobile runtime manifest for release/manual claims. The recorder
+checked shell runtime manifest for release/manual claims. The recorder
 requires before/after pixel changes plus application receipt logs; successful
 input injection or process termination is not evidence by itself.
 The iOS route requires Meta `idb` plus `idb-companion`; stock `simctl ui` does
@@ -324,18 +321,18 @@ Showcase is the service acceptance target. Its mobile entrypoints open
 one target at a time:
 
 ```sh
-scripts/build-mobile-android-apk.sh --app showcase
-node scripts/record-mobile-runtime-smoke.mjs \
+scripts/build-shell-android-apk.sh --app showcase
+node scripts/record-shell-runtime-smoke.mjs \
   --platform android --app showcase --device <adb-serial> \
   --assistive-tech --require-passed
 
-scripts/build-mobile-ios-app.sh --app showcase
-node scripts/record-mobile-runtime-smoke.mjs \
+scripts/build-shell-ios-app.sh --app showcase
+node scripts/record-shell-runtime-smoke.mjs \
   --platform ios --app showcase --device <simulator-udid> \
   --assistive-tech --require-passed
 
-scripts/build-component-gallery-harmonyos-hap.sh
-node scripts/record-mobile-runtime-smoke.mjs \
+scripts/build-shell-harmonyos-hap.sh --app showcase
+node scripts/record-shell-runtime-smoke.mjs \
   --platform harmonyos --app showcase --device <hdc-target> \
   --require-passed
 ```
@@ -357,8 +354,8 @@ Release commands continue to use `--require-passed`, so `partial` cannot pass a
 release gate.
 
 The recorder also captures an optional `renderer` block from
-`moui-mobile renderer configure ... status={...}` (or falls back to
-`mobile-build.json`). When `renderer.gpuPromoted=true`, it attaches a **pending**
+`moui-shell renderer configure ... status={...}` (or falls back to
+`shell-build.json`). When `renderer.gpuPromoted=true`, it attaches a **pending**
 seven-gate `gpuPromotionEvidence` skeleton so schema validation succeeds without
 claiming performance/memory/context-loss gates. Product GPU default and seven-gate
 quality claims remain separate.
@@ -368,7 +365,7 @@ Local evidence snapshot (2026-07-15):
 - **Historical iOS Component Gallery** under the Release N UIKit shell: `artifacts/mobile-runtime/ios/component_gallery/` (**`passed`**, Metal `gpuAvailable=true`); this does not count as Showcase evidence
 - **Historical HarmonyOS Component Gallery**: `artifacts/mobile-runtime/harmonyos/component_gallery/` (**`partial`**, EGL first frame; services incomplete); this does not count as Showcase evidence
 - **Historical Android Component Gallery**: `artifacts/mobile-runtime/android/component_gallery/` (**`partial`**, Vulkan attach/nonblank/input/a11y/async-image); this does not count as Showcase evidence. Do not run Android + HarmonyOS emulators together on low-memory hosts.
-- **Showcase managed shells**: new evidence paths are `artifacts/mobile-runtime/<platform>/showcase/`; matching-device evidence is pending on all three mobile platforms.
+- **Showcase managed shells**: new evidence paths are `artifacts/shell-runtime/<platform>/showcase/`; matching-device evidence is pending on all three mobile platforms.
 - GPU promotion scaffolds: `artifacts/gpu-promotion/{ios,harmonyos,android}/scaffold-latest/` (not L2 proof)
 
 **GPU feasibility (L2) grep:**
@@ -393,11 +390,11 @@ echo no | avdmanager create avd -n moui_api34 \
   -k "system-images;android-34;google_apis;arm64-v8a" -d pixel_6 --force
 emulator -avd moui_api34 -gpu host -no-snapshot-save &
 adb wait-for-device
-scripts/build-mobile-android-apk.sh --app showcase --renderer auto
-node scripts/record-mobile-runtime-smoke.mjs \
+scripts/build-shell-android-apk.sh --app showcase --renderer auto
+node scripts/record-shell-runtime-smoke.mjs \
   --platform android --app showcase --device "$(adb devices | awk '/\tdevice$/{print $1; exit}')"
 rg -n 'renderer configure|surfaceRoute|gpuAvailable|UnsatisfiedLinkError' \
-  artifacts/mobile-runtime/android/showcase/runtime*.log
+  artifacts/shell-runtime/android/showcase/runtime*.log
 ```
 
 Seven-gate GPU claim thresholds are **not** required for mobile runtime
@@ -411,22 +408,21 @@ Accessibility permission to the terminal/automation process running
 VoiceOver preference alone is not action evidence. Use a physical device or a
 live assistive-technology session when focus/action logs are required.
 
-For HarmonyOS packaging changes, `scripts/build-harmonyos-demo-app.sh
---fallback-skia` and `scripts/build-component-gallery-harmonyos-hap.sh
+For HarmonyOS packaging changes, `scripts/build-shell-harmonyos-hap.sh --app harmonyos_demo
+--fallback-skia` and `scripts/build-shell-harmonyos-hap.sh --app showcase
 --fallback-skia` are fast build-system smokes that cover MoonBit C exports,
 the package-owned ArkTS Stage Ability/XComponent managed shell, fixed-ABI NAPI
 bridge, generated plugin registry, native glue compilation, native-stub
-compilation, and staged HAP archives. The checked-in app-owned projects are
-Release N fixtures. These builds are not real Skia renderer or platform runtime
-evidence. HarmonyOS first-frame/input/lifecycle claims still require a
+compilation, and staged HAP archives. These builds are not real Skia renderer
+or platform runtime evidence. HarmonyOS first-frame/input/lifecycle claims still require a
 non-fallback HAP and a matching device or emulator run with recorded
 observations.
 
 HarmonyOS release/manual smoke uses the same recorder through `hdc`:
 
 ```sh
-node scripts/record-mobile-runtime-smoke.mjs --platform harmonyos --app harmonyos_demo --require-passed
-node scripts/record-mobile-runtime-smoke.mjs --platform harmonyos --app showcase --require-passed
+node scripts/record-shell-runtime-smoke.mjs --platform harmonyos --app harmonyos_demo --require-passed
+node scripts/record-shell-runtime-smoke.mjs --platform harmonyos --app showcase --require-passed
 ```
 
 Passed mobile evidence requires actual lifecycle detach, IME state and edit,
@@ -445,7 +441,7 @@ without running platform smoke:
 node --check scripts/smoke-check.mjs
 node --check scripts/test-smoke-check.mjs
 node scripts/test-smoke-check.mjs
-node scripts/test-validate-mobile-runtime-manifest.mjs
+node scripts/test-validate-shell-runtime-manifest.mjs
 node scripts/smoke-check.mjs --check
 node scripts/smoke-check.mjs --tier nightly --list
 node scripts/smoke-check.mjs --tier release --json

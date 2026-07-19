@@ -54,9 +54,20 @@ must record `skia_provider=release`, `skia_link_mode`, `release_owner`,
 `release_repo`, `release_tag`, `release_url`, full `skia_commit`,
 `skia_package`, `skia_package_sha256`, include/lib paths, and final compile/link
 flags. `scripts/verify-real-skia-artifact.*` rejects logs whose release
-metadata, link mode, package, or SHA256 does not match the lock file. Use
-`MOUI_SKIA_LINK_MODE=dynamic` or `--link-mode dynamic` to select the dynamic
-asset explicitly.
+metadata, link mode, package, or SHA256 does not match the lock file. On routes
+that support it, use `MOUI_SKIA_LINK_MODE=dynamic` or `--link-mode dynamic` to
+select the dynamic asset explicitly.
+
+HarmonyOS GPU builds are the exception: `auto` / `skia-gpu` must use the
+complete static provider. The locked `libskia.so` hides Ganesh internal symbols
+referenced by the separate `libskia_ganesh_ext.a`, so the dynamic provider is
+valid only for explicit `skia-raster`. Use the static HarmonyOS asset directly,
+or leave `MOUI_SKIA_LINK_MODE` unset so the shell builder chooses static for GPU
+and dynamic for raster:
+
+```bash
+bash scripts/fetch-release-skia.sh --platform harmonyos --arch arm64 --link-mode static --print-env
+```
 
 Use `--skia-provider source` for source-built fallback and diagnostic runs, or
 `--skia-provider existing` with explicit include/lib paths for a prepared Skia

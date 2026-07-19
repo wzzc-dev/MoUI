@@ -32,7 +32,7 @@ Full table: `docs/invariants.md`. Break only via RFC (`GOVERNANCE.md`).
 | `moui/runtime` | `docs/architecture-map.md`, `docs/tea-program-model.md` | framework | `moon test moui/runtime --target native` |
 | `moui/backend/host` or platform host | `docs/platform-host-contract.md`, platform notes | framework | `moon test moui/backend/host --target native` + affected backend tests |
 | `moui/render/*`, `moui_skia` | `docs/renderer-capability-report.md`, `moui_skia/AGENTS.md` | framework | package tests + capability report if status changes |
-| Android / iOS / HarmonyOS | `docs/mobile-mainline-roadmap.md`, platform support doc | framework | path-triggered mobile evidence (not default daily) |
+| Android / iOS / HarmonyOS | `docs/shell-mainline-roadmap.md`, platform support doc | framework | path-triggered shell evidence (not default daily) |
 | Theme / `moui_theme` / design systems | `docs/visual-theme-system.md` | framework | `sh scripts/check.sh --profile theme` |
 | Docs / guidance only | `docs/INDEX.md`, topic page | — | `node scripts/validate-guidance-consistency.mjs` |
 | Architecture / package graph | `docs/architecture-map.md` then `docs/architecture.md` | framework | + plan under `docs/plans/active/` if multi-package |
@@ -100,7 +100,7 @@ Node for browser/CDP, Web smoke, HTTP, and artifact orchestration. The
 `rule`/`dev_build` helpers are only for deterministic package generation, not
 dependency installation or smoke execution.
 
-Mobile sessions share `MobileHostChannel`. Native XComponent callbacks are the only
+Mobile sessions share `EmbedderHostChannel`. Native XComponent callbacks are the only
 surface/pointer/resize/detach source on HarmonyOS.
 
 ## When the agent is stuck

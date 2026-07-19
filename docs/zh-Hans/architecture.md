@@ -24,6 +24,7 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 | `moui/views/` | Public view constructors、面向应用的 control APIs、default themes、form/navigation/data helpers，以及用 `@core.View::node` 构建的具体 custom view behavior。 |
 | `moui/runtime/` | AppRuntime construction、runtime state、element/layout/render tree generation、event dispatch、program queue drain、effects、subscriptions、diagnostics 和 inspector snapshots。 |
 | `moui/backend/host/` | 面向 windows、routes、timers、host services、WebView、async image loading、accessibility、input、redraw scheduling 和 renderer handoff 的共享 host contracts。 |
+| `moui/backend/internal/embedded_runtime_session/` | Android、iOS 和 HarmonyOS 嵌入式宿主的私有 MoUI runtime 装配层；组合 `AppRuntime`、host contracts 和 renderers，并将回调注册到中立 shell embedding API。 |
 | `moui/backend/{macos,windows,linux,android,ios,harmonyos,web}/` | 具体平台 host implementations。Native platform packages 将 events 归一化为 host contracts；Android、iOS 和 HarmonyOS 目前是由平台拥有的 callbacks 驱动的 embedded-session scaffolds；web 是 canonical browser host。 |
 | `moui/backend/{macos,windows,linux,android,ios,harmonyos}/skia/` | 主 native 路线的 Native Skia renderer provider packages。Android 将 CPU pixel frames 呈现到 `ANativeWindow`；iOS 将 CPU pixel frames 呈现到 UIKit `UIImageView` 子视图；HarmonyOS 将 CPU pixel frames 呈现到提供的 XComponent native-window handle。 |
 | `moui/backend/{macos,windows,linux}/wgpu/` | Native WGPU diagnostic provider packages。 |
@@ -88,17 +89,17 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
   `moui_skia`。
 - Android Skia route（实验性 scaffold）：shared app package ->
   `examples/<app>/android_skia`，使用 build-staged package-published
-  `moui/mobile/android` Kotlin/AndroidX/registered-JNI/CMake managed shell ->
+  `moui_shell/android` Kotlin/AndroidX/registered-JNI/CMake managed shell ->
   `moui/backend/android` embedded session -> `moui/backend/android/skia` ->
   `moui/render/skia` -> `moui_skia`。在经过已检查的 APK/device smoke 提升该路线之前，package-owned Android shell 拥有 lifecycle、PlatformView overlay composition、`ANativeWindow` acquisition、`Choreographer` pacing、`InputConnection`、clipboard、virtual accessibility nodes 和 input forwarding。
 - iOS Skia route（实验性 scaffold）：shared app package ->
   `examples/<app>/ios_skia`，使用 build-staged package-published
-  `moui/mobile/ios` SwiftUI/Swift-package/Xcode managed shell ->
+  `moui_shell/ios` SwiftUI/Swift-package/Xcode managed shell ->
   `moui/backend/ios` embedded session -> `moui/backend/ios/skia` ->
-  `moui/render/skia` -> `moui_skia`。package-owned Swift shell 拥有 single-scene lifecycle、`CAMetalLayer`-backed `UIView`、`CADisplayLink` pacing、UIKit text proxy、pasteboard、accessibility container、PlatformView overlay、Host Service plugins 和 touch forwarding。Objective-C++ 保持为窄 Mobile Runtime ABI v1 bridge。提升前仍需要已检查的 managed-shell simulator/device smoke。
+  `moui/render/skia` -> `moui_skia`。package-owned Swift shell 拥有 single-scene lifecycle、`CAMetalLayer`-backed `UIView`、`CADisplayLink` pacing、UIKit text proxy、pasteboard、accessibility container、PlatformView overlay、Host Service plugins 和 touch forwarding。Objective-C++ 保持为窄 Embedding API v1 bridge。提升前仍需要已检查的 managed-shell simulator/device smoke。
 - HarmonyOS Skia route（实验性 scaffold）：shared app package ->
   `examples/<app>/harmonyos_skia`，使用 build-staged package-published
-  `moui/mobile/harmonyos` ArkTS Stage Ability/XComponent/NAPI/CMake managed
+  `moui_shell/harmonyos` ArkTS Stage Ability/XComponent/NAPI/CMake managed
   shell ->
   `moui/backend/harmonyos` embedded session ->
   `moui/backend/harmonyos/skia` -> `moui/render/skia` -> `moui_skia`。
@@ -108,8 +109,8 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 
 平台入口应保持很薄：创建 program/runtime，选择 backend 和 renderer provider，并传入 app-owned service adapters。业务 model/update/view 逻辑应留在 shared app package。
 
-Mobile runtime sessions 共享 `MobileHostChannel`，用于带 revision 的 IME 和 semantics updates，以及异步 clipboard/accessibility responses。见
-[移动主线与 GPU 路线图](../mobile-mainline-roadmap.md)、ADR 0005 和
+Mobile runtime sessions 共享 `EmbedderHostChannel`，用于带 revision 的 IME 和 semantics updates，以及异步 clipboard/accessibility responses。见
+[原生 shell 主线与 GPU 路线图](../shell-mainline-roadmap.md)、ADR 0005 和
 ADR 0006。现在的产品默认值是在每个 native Skia platform 上，只要 host GPU surface 可用（macOS、Windows、Linux、Android、iOS 和 HarmonyOS 的 `NativeGpuPlatform::gpu_promoted` 均为 `true`），就使用 `SkiaGpuNative`。Window-surface 路径是 Metal（macOS/iOS）、带 EGL/GLES fallback 的 Vulkan（Android）、EGL/GLES（HarmonyOS）、D3D12（Windows）和 Wayland Vulkan（Linux）。`SkiaRasterNative` 仍是显式 `skia-raster` 模式，并且是 terminal GPU failure 后的 sticky recovery fallback。Matching-device seven-gate manifests 仍是有用证据，并且在非 macOS hosts 上可能仍不完整，但它们不再阻挡产品 `auto` 默认值。Native `SkPicture`/POD handoff 运行在独立 `std::thread` 上，带 latest-wins frame slot、ordered controls、detach acknowledgement 和 polling diagnostics。Platform branches 在该 worker 上拥有 Metal、D3D12、Vulkan WSI 或 EGL context/surface/swapchain/synchronization resources，并且只有在 platform present call 后才发出 `Presented`。Android 动态加载 Vulkan，因此 API 23 仍可加载并 fallback 到 EGL/GLES。Native hosts 独立于 frame submission 轮询 worker completions，只计数 `Presented`，并在 terminal GPU recovery 切换到 raster 时保留当前 `AppRuntime`。
 
 ## 扩展规则
@@ -184,16 +185,14 @@ moui/backend/linux/skia/      Linux Skia renderer provider mainline
 moui/backend/linux/wgpu/      Linux WGPU renderer provider diagnostic
 moui/backend/android/         Android embedded native host scaffold over shared host/runtime contracts
 moui/backend/android/skia/    Android Skia renderer provider over ANativeWindow pixel presentation
-moui/mobile/android/          canonical Kotlin/AndroidX managed shell, registered JNI, Gradle/CMake template
-moui/mobile/legacy/android/   frozen Release N Java/name-mangled-JNI compatibility fixture
+moui_shell/android/          canonical Kotlin/AndroidX managed shell, registered JNI, Gradle/CMake template
 moui/backend/ios/             iOS embedded native host scaffold over shared host/runtime contracts
 moui/backend/ios/skia/        iOS Skia renderer provider over UIKit UIImageView pixel presentation
-moui/mobile/ios/              canonical SwiftUI managed shell, ABI bridge, Swift package, Xcode template
-moui/mobile/ios/legacy/       frozen Release N UIKit/Objective-C++ compatibility fixture
+moui_shell/ios/              canonical SwiftUI managed shell, ABI bridge, Swift package, Xcode template
 moui/backend/harmonyos/       HarmonyOS embedded native host scaffold over shared host/runtime contracts
 moui/backend/harmonyos/skia/  HarmonyOS Skia renderer provider over XComponent native-window pixel presentation
-moui/mobile/harmonyos/        canonical ArkTS Stage Ability/XComponent managed shell, plugin registry, fixed-ABI NAPI/CMake glue
-moui/mobile/test-probe/       repository-only three-platform service/PlatformView contract plugin
+moui_shell/harmonyos/        canonical ArkTS Stage Ability/XComponent managed shell, plugin registry, fixed-ABI NAPI/CMake glue
+moui_shell/test_probe/       repository-only three-platform service/PlatformView contract plugin
 moui/backend/web/             canonical Web host on wasm-gc plus browser JS assets
 moui/render/                  renderer facade and shared draw helpers
 moui/render/skia/             native Skia raster renderer facade over moui_skia
@@ -212,14 +211,10 @@ moui/tests/skia_text_emoji_smoke/ opt-in real Skia text/emoji renderer smoke
 moui/tests/wgpu_renderer_smoke/ opt-in native WGPU renderer smoke
 examples/counter/app/         smallest shared app shape
 examples/counter/{macos_skia,web_wasm,android_skia,ios_skia,macos_wgpu,windows_wgpu,linux_wgpu}/ platform counter entrypoints
-examples/counter/android_app/ Counter Android Release N Gradle metadata fixture
-examples/counter/ios_app/     Counter iOS Release N Xcode metadata fixture
 examples/counter/windows_wgpu_cosmic/ Windows counter selecting Moon Cosmic text
 examples/harmonyos_demo/app/  standalone HarmonyOS demo app with viewport/tap feedback
 examples/harmonyos_demo/harmonyos_skia/ HarmonyOS demo embedded-session Skia entrypoint
-examples/harmonyos_demo/harmonyos_app/ HarmonyOS Release N app-owned project fixture
 examples/showcase/harmonyos_skia/ Showcase HarmonyOS embedded-session Skia entrypoint
-examples/showcase/harmonyos_app/ Showcase HarmonyOS Release N project fixture
 examples/agent_counter/       minimal agent-controllable runtime example (shared app at example root plus main/ and macos_skia/ entrypoints)
 examples/button_freeze_probe/app/ minimal native Skia button-freeze repro app
 examples/button_freeze_probe/{macos_skia,windows_skia,linux_skia}/ platform Button Freeze Probe entrypoints

@@ -4,7 +4,10 @@ package "wzzc-dev/moui/backend/macos/skia"
 import {
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/macos",
+  "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/window/core",
+  "wzzc-dev/window/dpi",
 }
 
 // Values
@@ -26,12 +29,12 @@ pub fn run_smoke_app_with_options(String, @runtime.AppRuntime, options~ : MacosS
 pub struct MacosSkiaAppOptions {
   // private fields
 }
-pub fn MacosSkiaAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, font_resolution? : @wzzc-dev/moui/render/skia.SkiaFontResolution, surface_route? : @wzzc-dev/moui/render/skia.SkiaSurfaceRoute, web_view_commands? : @host.HostWebViewCommandQueue?, web_view_events? : @host.HostWebViewEventSource?) -> Self
+pub fn MacosSkiaAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, event_sources? : @host.HostPlatformEventSources?, font_resolution? : @wzzc-dev/moui/render/skia.SkiaFontResolution, surface_route? : @render.SkiaSurfaceRoute, platform_view_plugins? : Array[@host.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @core.PlatformWindowAttributes, on_ready? : (() -> Unit)?, min_window_size? : @dpi.LogicalSize?) -> Self
 
 pub struct MacosSkiaSmokeOptions {
   // private fields
 }
-pub fn MacosSkiaSmokeOptions::new(first_frame_smoke_auto_exit? : Bool, native_ime_runtime_smoke? : Bool) -> Self
+pub fn MacosSkiaSmokeOptions::new(first_frame_smoke_auto_exit? : Bool, native_ime_runtime_smoke? : Bool, performance_smoke_duration_ms? : Int, performance_smoke_warm_up_presents? : Int, performance_smoke_refresh_hz? : Int, promotion_lifecycle_enabled? : Bool, promotion_surface_cycles? : Int, promotion_fg_bg_cycles? : Int, promotion_context_loss_count? : Int) -> Self
 
 // Type aliases
 

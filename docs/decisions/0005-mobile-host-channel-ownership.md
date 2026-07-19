@@ -12,7 +12,7 @@ dispose behavior diverge.
 
 ## Decision
 
-`moui/backend/host` owns `MobileHostChannel` and the platform-neutral mobile
+`moui/backend/host` owns `EmbedderHostChannel` and the platform-neutral mobile
 payloads. Runtime sessions synchronize IME state and revisioned flattened
 semantics snapshots into the channel. Platform shells drain updates and return
 typed responses through a stable C ABI.

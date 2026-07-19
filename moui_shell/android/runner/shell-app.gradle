@@ -1,0 +1,133 @@
+import groovy.json.JsonSlurper
+
+def workspaceRoot = file(project.findProperty("mouiWorkspaceRoot") ?: rootDir.parentFile.absolutePath)
+def mouiRoot = file(project.findProperty("mouiRoot") ?: new File(workspaceRoot, "moui"))
+def mouiShellRoot = file(project.findProperty("mouiShellRoot") ?: new File(workspaceRoot, "moui_shell"))
+def skiaRoot = file(project.findProperty("mouiSkiaRoot") ?: new File(workspaceRoot, "moui_skia"))
+def appId = (project.findProperty("mouiApp") ?: "showcase").toString()
+def runnerMode = (project.findProperty("mouiAndroidShell") ?: "managed").toString()
+if (!(runnerMode in ["managed", "ejected"])) {
+    throw new GradleException("mouiAndroidShell must be managed or ejected, got ${runnerMode}")
+}
+def generatedRoot = file(project.findProperty("mouiBuildDir") ?: new File(workspaceRoot, "artifacts/android/${appId}"))
+def metadataFile = project.hasProperty("mouiAppConfig")
+    ? file(project.property("mouiAppConfig"))
+    : file(new File(workspaceRoot, "examples/${appId}/shell.json"))
+def generatedPath = { String path, String label ->
+    def result = file(new File(generatedRoot, path))
+    if (!result.isFile() && !result.isDirectory()) {
+        throw new GradleException("Generated MoUI Android ${label} was not found: ${result}")
+    }
+    result
+}
+def shellConfigFile = generatedPath("android/${runnerMode}-shell/shell-config.json", "shell config")
+def shellConfig = new JsonSlurper().parse(shellConfigFile)
+if (shellConfig.schemaVersion != 1 || shellConfig.platform != "android" || shellConfig.runnerMode != runnerMode ||
+        shellConfig.shellApiVersion != 1 || shellConfig.embeddingApiVersion != 1) {
+    throw new GradleException("Generated Android shell config must use shell schema/API v1 and selected runner mode")
+}
+def nativeLibrary = shellConfig.nativeLibrary?.toString()
+def applicationIdValue = shellConfig.applicationId?.toString()
+if (!nativeLibrary || !applicationIdValue || !(shellConfig.systemUi?.fullscreen instanceof Boolean)) {
+    throw new GradleException("Generated Android shell config is missing identity or system UI data")
+}
+def managedShell = runnerMode == "managed"
+def generatedManifest = shellConfig.manifestPath ? file(shellConfig.manifestPath) : null
+if (managedShell && (generatedManifest == null || !generatedManifest.isFile())) {
+    throw new GradleException("Managed Android shell requires its generated manifest")
+}
+if (!managedShell && (shellConfig.manifestPath != null || !(shellConfig.resourceDirs ?: []).isEmpty())) {
+    throw new GradleException("Ejected Android shell must retain project-owned manifest and resources")
+}
+def generatedResources = (shellConfig.resourceDirs ?: []).collect { generatedPath(it.toString(), "resource directory") }
+def pluginRoot = file("${generatedRoot}/android/plugins")
+def pluginGeneratedKotlin = file("${pluginRoot}/generated/kotlin")
+def pluginKotlin = file("${pluginRoot}/sources/kotlin")
+def pluginJava = file("${pluginRoot}/sources/java")
+def pluginResources = file("${pluginRoot}/res")
+def shellKotlin = file("${mouiShellRoot}/android/embedder/src/main/kotlin")
+def shellGlue = file("${mouiShellRoot}/android/embedder")
+if (!shellKotlin.isDirectory() || !shellGlue.isDirectory()) {
+    throw new GradleException("moui_shell Android embedder is incomplete: ${mouiShellRoot}")
+}
+def abi = (project.findProperty("mouiAbi") ?: "arm64-v8a").toString()
+def compileSdkVersion = (project.findProperty("mouiCompileSdk") ?: "36").toString().toInteger()
+def targetSdkVersion = (project.findProperty("mouiTargetSdk") ?: "35").toString().toInteger()
+def fallbackSkia = (project.findProperty("mouiFallbackSkia") ?: "false").toString().toBoolean()
+def renderer = (project.findProperty("mouiRenderer") ?: "auto").toString()
+
+def prepareMouiShellNative = tasks.register("prepareMouiShellNative", Exec) {
+    workingDir workspaceRoot
+    commandLine "node", "${mouiShellRoot}/scripts/prepare-native-build.mjs",
+        "--platform", "android", "--app", appId,
+        "--workspace-root", workspaceRoot.absolutePath,
+        "--moui-root", mouiRoot.absolutePath,
+        "--skia-root", skiaRoot.absolutePath,
+        "--app-config", metadataFile.absolutePath,
+        "--abi", abi, "--android-shell", runnerMode,
+        "--renderer", renderer, "--build-dir", generatedRoot.absolutePath
+    if (fallbackSkia) args "--fallback-skia"
+}
+
+android {
+    namespace = applicationIdValue
+    compileSdk = compileSdkVersion
+    ndkVersion = (project.findProperty("mouiNdkVersion") ?: System.getenv("MOUI_ANDROID_NDK_VERSION") ?: "28.2.13676358").toString()
+    defaultConfig {
+        applicationId = applicationIdValue
+        minSdk = shellConfig.minSdk.intValue()
+        targetSdk = targetSdkVersion
+        versionCode = 1
+        versionName = "0.1.0"
+        manifestPlaceholders = [
+            mouiAppLabel: shellConfig.displayName,
+            mouiActivityClass: "dev.wzzc.moui.shell.MoUIActivity",
+            mouiClipboardProviderClass: "dev.wzzc.moui.shell.MoUIClipboardProvider",
+            mouiNativeLibrary: nativeLibrary,
+            mouiSupportsScroll: "true",
+            mouiFullscreen: shellConfig.systemUi.fullscreen.toString(),
+        ]
+        externalNativeBuild {
+            cmake {
+                arguments(
+                    "-DMOUI_ROOT=${mouiRoot.absolutePath}",
+                    "-DMOUI_SHELL_ROOT=${mouiShellRoot.absolutePath}",
+                    "-DMOUI_EMBEDDING_NATIVE_CONFIG=${generatedRoot.absolutePath}/native/moui-shell-native.cmake",
+                    "-DANDROID_STL=c++_shared",
+                )
+            }
+        }
+        ndk { abiFilters += abi }
+    }
+    sourceSets {
+        main {
+            if (managedShell) {
+                manifest.srcFile generatedManifest
+                kotlin.srcDirs += [shellKotlin, pluginGeneratedKotlin, pluginKotlin]
+                java.srcDirs += [pluginJava]
+                res.srcDirs += generatedResources
+            } else {
+                kotlin.srcDirs += [pluginGeneratedKotlin, pluginKotlin]
+                java.srcDirs += [pluginJava]
+            }
+            res.srcDirs += [pluginResources]
+            jniLibs.srcDirs += ["${generatedRoot}/jniLibs"]
+        }
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    packaging {
+        jniLibs { pickFirsts += ["**/libc++_shared.so"]; keepDebugSymbols += ["**/libc++_shared.so"] }
+    }
+    packagingOptions { doNotStrip "*/arm64-v8a/libc++_shared.so"; doNotStrip "*/x86_64/libc++_shared.so" }
+    externalNativeBuild { cmake { path = file("src/main/cpp/CMakeLists.txt"); version = "3.22.1" } }
+}
+
+dependencies { implementation "androidx.activity:activity:1.13.0" }
+tasks.configureEach { task ->
+    if (task.name == "preBuild" || task.name.startsWith("configureCMake") || task.name.startsWith("externalNativeBuild")) {
+        task.dependsOn prepareMouiShellNative
+    }
+}

@@ -43,7 +43,7 @@ test "bridge requires native XComponent callbacks and forbids JS attach" {
 ///|
 test "clean root and bridge produce no findings" {
   let root =
-    #|libraryname: 'moui_mobile_harmonyos'
+    #|libraryname: 'moui_embedding_harmonyos'
     #|XComponent({ id: 'moui' })
     #|displaySync(() => {})
     #|

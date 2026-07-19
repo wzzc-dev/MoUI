@@ -1,7 +1,39 @@
 ///|
-pub(all) struct IosViewHandle {
-  raw : UInt64
-} derive(Eq, Debug, ToJson)
+pub type IosViewHandle = @shell_ios.IosNativeView
+
+///|
+pub fn ios_shell_embedding_api_version() -> Int {
+  @shell_embedding.embedding_api_version()
+}
+
+///|
+/// iOS keeps its `UIView` and CADisplayLink contract in the platform SDK.
+pub fn ios_shell_descriptor() -> @shell_embedding.ShellPlatformDescriptor {
+  @shell_ios.ios_descriptor()
+}
+
+///|
+pub fn ios_shell_renderer_configure(mode : String) -> Bool {
+  @embedded_runtime_session.shell_renderer_configure(mode)
+}
+
+///|
+pub fn ios_shell_renderer_selection(
+  gpu_available~ : Bool,
+) -> @render.NativeRendererSelection {
+  @embedded_runtime_session.shell_renderer_selection(
+    @render.NativeGpuPlatform::Ios,
+    gpu_available~,
+  )
+}
+
+///|
+pub fn ios_shell_renderer_status_json(gpu_available~ : Bool) -> String {
+  @embedded_runtime_session.shell_renderer_status_json(
+    @render.NativeGpuPlatform::Ios,
+    gpu_available~,
+  )
+}
 
 ///|
 pub(all) struct IosBackendCapabilities {
@@ -53,22 +85,7 @@ pub struct IosRendererProvider {
 ///|
 pub struct IosRuntimeSession {
   priv mut view : IosViewHandle
-  priv core : @mobile_runtime.MobileRuntimeSessionCore
-}
-
-///|
-pub fn IosViewHandle::new(raw~ : UInt64) -> IosViewHandle {
-  { raw, }
-}
-
-///|
-pub fn IosViewHandle::none() -> IosViewHandle {
-  { raw: 0UL }
-}
-
-///|
-pub fn IosViewHandle::raw(self : IosViewHandle) -> UInt64 {
-  self.raw
+  priv core : @embedded_runtime_session.EmbeddedSessionCore
 }
 
 ///|
@@ -110,7 +127,7 @@ pub fn IosRendererProvider::has_async_image_loader(
 
 ///|
 pub fn ios_service_capabilities() -> @host.HostServiceCapabilities {
-  // Code-level host services wired through MobileHostChannel + Swift shell
+  // Code-level host services wired through EmbedderHostChannel + Swift shell
   // adapters. Matching-simulator evidence remains partial (see readiness.status).
   @host.HostServiceCapabilities::new(clipboard=true)
 }
@@ -169,7 +186,7 @@ pub fn backend_info() -> IosBackendInfo {
   {
     host_info: @host.HostAppInfo::new(
       backend=@host.HostBackendKind::Native,
-      description="iOS embedded native host with managed SwiftUI shell, UIKit/Metal view callbacks, and MobileHostChannel services",
+      description="iOS embedded native host with managed SwiftUI shell, UIKit/Metal view callbacks, and EmbedderHostChannel services",
     ),
     capabilities: ios_capability_matrix(),
     services: ios_service_capabilities(),
@@ -196,8 +213,8 @@ pub fn ios_capability_summary(
     async_services=true,
     native_accessibility_available=true,
     web_view_available=false,
-    web_view_description="iOS native WKWebView embedding is not part of the current mobile host contract.",
-    description="iOS embedded native host with managed shell lifecycle, MobileHostChannel IME/clipboard/a11y bridges, and app-driven input forwarding. Runtime evidence remains partial.",
+    web_view_description="iOS native WKWebView embedding is not part of the current shell host contract.",
+    description="iOS embedded native host with managed shell lifecycle, EmbedderHostChannel IME/clipboard/a11y bridges, and app-driven input forwarding. Runtime evidence remains partial.",
   )
 }
 
@@ -210,7 +227,7 @@ pub fn create_session(
 ) -> IosRuntimeSession? {
   match provider.create(view, metrics) {
     Some(renderer) => {
-      let core = @mobile_runtime.MobileRuntimeSessionCore::new(
+      let core = @embedded_runtime_session.EmbeddedSessionCore::new(
         runtime~,
         renderer~,
         image_loader=provider.image_loader,
@@ -255,6 +272,11 @@ pub fn IosRuntimeSession::surface_attached(self : IosRuntimeSession) -> Bool {
 ///|
 pub fn IosRuntimeSession::session_generation(self : IosRuntimeSession) -> Int {
   self.core.session_generation()
+}
+
+///|
+pub fn IosRuntimeSession::surface_epoch(self : IosRuntimeSession) -> Int {
+  self.core.surface_epoch()
 }
 
 ///|
@@ -335,7 +357,7 @@ pub fn IosRuntimeSession::advance_time(
 ///|
 pub fn IosRuntimeSession::drain_host_updates(
   self : IosRuntimeSession,
-) -> Array[@host.MobileHostUpdate] {
+) -> Array[@embedded_runtime_session.EmbeddingHostUpdate] {
   self.core.drain_host_updates()
 }
 
@@ -356,7 +378,7 @@ pub fn IosRuntimeSession::drain_host_update_envelope_json(
 ///|
 pub fn IosRuntimeSession::dispatch_host_response(
   self : IosRuntimeSession,
-  response : @host.MobileHostResponse,
+  response : @embedded_runtime_session.EmbeddingHostResponse,
 ) -> Bool {
   self.core.dispatch_host_response(response)
 }
@@ -364,7 +386,7 @@ pub fn IosRuntimeSession::dispatch_host_response(
 ///|
 pub fn IosRuntimeSession::dispatch_host_response_envelope(
   self : IosRuntimeSession,
-  envelope : @host.MobileHostResponseEnvelope,
+  envelope : @embedded_runtime_session.EmbeddingHostResponseEnvelope,
 ) -> Bool {
   self.core.dispatch_host_response_envelope(envelope)
 }

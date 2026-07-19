@@ -399,21 +399,26 @@ MoUI 当前把两类入口统一在 `moui/views`：普通 app 使用高层 const
 
 ## 平台入口包
 
-平台入口包指 `examples/*/{web_wasm,macos_skia,windows_skia,linux_skia}`
-这类 `is-main` package。它们负责创建 runtime、连接平台 backend、选择 renderer。
-Android 例外地拆成 `examples/*/android_skia` MoonBit embedded-session 入口和
-package-owned Kotlin managed shell；构建时从已解析的 MoUI package staging，
-`examples/*/android_app` 只保留为 Release N legacy fixture。
-iOS 同样走 embedded-session 入口：`examples/*/ios_skia` 暴露 MoonBit C exports，
-构建时 staging 的 `moui/mobile/ios` canonical SwiftUI shell 负责单 scene 生命周期、
-`CAMetalLayer` surface、`CADisplayLink`、UIKit service adapter 与触摸转发；
-Objective-C++ 仅保留 Mobile Runtime ABI v1 翻译和数据所有权；
-`examples/*/ios_app` 只保留为 Release N fixture。
-HarmonyOS 同样走 embedded-session 入口：`examples/*/harmonyos_skia` 暴露
-MoonBit C exports；`moui/mobile/harmonyos` 的 canonical ArkTS
-Stage Ability/XComponent shell 由构建器 staging，native XComponent callback
-独占 surface/input/resize/detach。`examples/*/harmonyos_app` 仅为 Release N
-fixture。
+平台入口包指
+`examples/*/{web_wasm,macos_skia,windows_skia,linux_skia,android_skia,ios_skia,harmonyos_skia}`
+这类 executable package。它们负责创建 runtime、连接平台 backend、选择 renderer。
+
+三个移动端路径都由 embedded-session 入口和从已解析 `moui_shell` package staging
+的 managed shell 组成。它们的 `main.mbt` 只安装应用 program 和 renderer 配置。
+框架包 `moui_shell/embedding` 拥有 callback state、固定 Embedding API 实现以及
+canonical native export 列表。当前 MoonBit native linker 不会把 dependency package
+的 export declaration 提升为最终 executable 的 C symbols，因此每个移动端 executable
+根包还必须包含相同的 `embedding_exports.mbt`，并在自身 `moon.pkg` 中镜像 canonical
+export 列表。这些根包声明只能是机械 link shim：每个函数直接转发到同名
+`@shell_embedding` 函数，不得拥有 adapter state、分支、runtime behavior 或 ABI
+semantics。
+
+Android staging package-owned Kotlin shell。staging 的 `moui_shell/ios` canonical
+SwiftUI shell 负责 single-scene lifecycle、`CAMetalLayer` surface、`CADisplayLink`、
+UIKit service adapter 与触摸转发；Objective-C++ 仅保留 Embedding API v1 翻译和
+data ownership。`moui_shell/harmonyos` 的 canonical ArkTS Stage
+Ability/XComponent shell 由构建器 staging，native XComponent callback 独占
+surface/input/resize/detach。
 
 平台入口包可以依赖：
 
@@ -423,11 +428,15 @@ fixture。
 - `wzzc-dev/moui/backend/{macos,windows,linux,android,ios,harmonyos}`
 - `wzzc-dev/moui/backend/{macos,windows,linux,android,ios,harmonyos}/skia`
 - `wzzc-dev/moui/render/skia`
+- `wzzc-dev/moui_shell/embedding`，仅允许移动端 executable 根包用它实现经过机械
+  校验的最终链接转发
 - 对应的 shared app package，例如 `examples/showcase/app`
 
 WGPU 相关 backend/render 包只作为实验或诊断入口使用，不是普通 app 或默认平台入口的推荐依赖。
 
-平台入口包不应该承载业务 UI。业务 view/model/update 应留在共享 app 包，平台入口只负责 runtime + backend + renderer wiring。
+平台入口包不应该承载业务 UI。业务 view/model/update 应留在共享 app 包，平台入口只负责
+runtime + backend + renderer wiring；移动端 native executable 还可包含上述经过机械
+校验的 final-link export shim。
 
 ## 框架和控件实现包
 

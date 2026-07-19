@@ -98,7 +98,7 @@ IME 同步和释放。没有解析器时，宿主用共享的解析器不可用�
 
 ## 移动宿主通道
 
-`MobileHostChannel` 是共享的 Android/iOS/HarmonyOS 服务边界。它合并 `MobileImeRequest` 更新，只在树变化时发出
+`EmbedderHostChannel` 是共享的 Android/iOS/HarmonyOS 服务边界。它合并 `EmbedderImeRequest` 更新，只在树变化时发出
 带版本号的扁平化语义快照，并承载异步文本/图片剪贴板请求与响应。已释放的通道会拒绝迟到响应。
 
 `TextInputEvent::ReplaceText` 和 `SetSelection` 保留任意原生 IME 替换和 UTF-16 选区更新。移动请求包含文本、

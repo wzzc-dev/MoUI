@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "wzzc-dev/moui/examples/counter/windows_wgpu_cosmic"
+package "examples/counter/windows_wgpu_cosmic"
 
 // Values
 
@@ -10,3 +10,4 @@ package "wzzc-dev/moui/examples/counter/windows_wgpu_cosmic"
 // Type aliases
 
 // Traits
+

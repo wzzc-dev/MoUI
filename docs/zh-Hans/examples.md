@@ -29,23 +29,23 @@ Design Systems 是附加包诊断覆盖，提供 Web wasm-gc 以及 macOS、Wind
 和 document-editor 形态，适用于 monorepo 或手写包。根目录的 `website/` 工作区在
 `examples/` 之外使用相同的 app-first 形态，因此 MoUI 可以渲染自己的双语主页。
 
-移动端打包元数据会按发布边界有意拆分。应用作者在自己的应用 `mobile.json` 中维护
+移动端打包元数据会按发布边界有意拆分。应用作者在自己的应用 `shell.json` 中维护
 应用拥有的身份、能力元数据和原生导出契约。在本仓库中，示例使用
-`examples/<app>/mobile.json` 存放身份元数据，并使用
-`moui/mobile/build-contracts.json` 存放 Counter/Showcase 兼容默认值。
+`examples/<app>/shell.json` 存放身份元数据，并使用
+`shell.json` 存放 Counter/Showcase 的 handheld shell 配置；不存在额外 contract registry。
 可复用的 Gradle、JNI、CMake、SwiftUI/UIKit、Xcode 和准备脚本位于按包发布的
-`moui/mobile` 与 `moui/scripts/mobile` 目录下，因此普通 UI 代码仍位于
+`moui_shell` 与 `moui_shell/scripts` 目录下，因此普通 UI 代码仍位于
 `examples/<app>/app`，并且不依赖 native shell 细节。修改仓库示例移动端元数据或
-contracts 后，请运行 `node scripts/check-mobile-app-config.mjs`。
+contracts 后，请运行 `node scripts/check-shell-app-config.mjs`。
 
 | 示例 | 用途 | 共享 app 包 | 主要覆盖 |
 | --- | --- | --- | --- |
 | Website | MoUI 构建的主页工作区 | `website/app/` | 双语产品主页、首屏 MoUI 品牌 hero、紧凑 Counter 代码片段、交互式运行时预览、框架基础、平台矩阵、release-readiness 卡片、Web 快速开始命令、运行时文档门户；该门户会获取打包后的同源 `docs/*.md` Markdown 以及 MoUI 和 `moui_skia` README 副本；还包含仅 Web 的 `website/web_wasm` 入口 |
 | Playground | MoonBit 原生浏览器教程和编辑器 | `website/playground/app/`, `website/playground/web_wasm/` | 使用 `moui_richtext` 构建的代码编辑器、受控 `main.mbt`/`moon.pkg` 文件、应用安全 import 验证、固定版本 MoonBit 编译器 Worker 桥接、沙盒预览宿主、本地持久化、分享 URL 协议，以及六份双语课程资产 |
 | Agent Counter | 最小 agent 可控制运行时示例 | `examples/agent_counter/`, `examples/agent_counter/main/`, `examples/agent_counter/macos_skia/` | 带有语义和命令意图流的 Counter 应用，用于 agent 观察和控制，另有原生 macOS Skia 入口 |
-| Counter | 最小 model/update/view 应用 | `examples/counter/app/` | 简单 `Program::simple` 流程、`center`/`card`、类型化按钮消息、Android/iOS embedded-session MoonBit 入口，以及托管 Kotlin/SwiftUI 打包；签入的 native projects 是 Release N fixtures |
+| Counter | 最小 model/update/view 应用 | `examples/counter/app/` | 简单 `Program::simple` 流程、`center`/`card`、类型化按钮消息、Android/iOS embedded-session MoonBit 入口，以及托管 Kotlin/SwiftUI 打包 |
 | Multi Window | 宿主管理的 scene 示例 | `examples/multi_window/app/` | 通过 `HostWindowActions`（`open` / `focus` / `close`）实现独立 main 和 inspector runtime，并配合 `HostWindowRequestQueue` 与 `HostWindowSceneResolver`，提供原生 macOS/Windows/Linux 窗口和 multi-canvas Web route |
-| HarmonyOS Demo | 独立实验性 HarmonyOS embedded Skia demo | `examples/harmonyos_demo/app/`, `examples/harmonyos_demo/harmonyos_skia/` | 平台中立的 viewport/tap feedback demo、HarmonyOS Skia embedded-session MoonBit 导出、包拥有的 ArkTS/XComponent managed shell staging，以及通过 `scripts/build-harmonyos-demo-app.sh --fallback-skia` 的 fallback HAP 打包 smoke；签入的 `harmonyos_app` 是 Release N fixture，运行时支持仍等待匹配设备证据 |
+| HarmonyOS Demo | 独立实验性 HarmonyOS embedded Skia demo | `examples/harmonyos_demo/app/`, `examples/harmonyos_demo/harmonyos_skia/` | 平台中立的 viewport/tap feedback demo、HarmonyOS Skia embedded-session MoonBit 导出、包拥有的 ArkTS/XComponent managed shell staging，以及通过 `scripts/build-harmonyos-demo-app.sh --fallback-skia` 的 fallback HAP 打包 smoke；运行时支持仍等待匹配设备证据 |
 | Button Freeze Probe | 原生 Skia button freeze 复现 | `examples/button_freeze_probe/app/` | 最小 `data_filter_bar` 过滤 chip、红色主强调色、重复点击计数器、直接的 primary/tonal 按钮对比，以及原生 Skia macOS/Windows/Linux 入口 |
 | Showcase | 统一的组件、模式、平台和诊断目录 | `examples/showcase/app/` | 位于四个隔离包之上的根 TEA shell：Components 拥有聚焦的 `moui/views` demo；Patterns 拥有 Counter/Todo、表单、数据、导航、反馈和文本/媒体工作流；Platform 拥有 timer/window/clipboard/file/canvas 配方、route/session facts 和 Mobile Service Probe；只有 Diagnostics 会 import runtime/render internals，用于 inspector 和 advanced rendering。Web、desktop Skia/WGPU/Sun 以及 Android/iOS/HarmonyOS 入口都调用同一个 root app。Showcase 有意不依赖 `moui_theme`，也不是官方 design-system compatibility claim。 |
 | Design Systems | 附加包诊断用 source-mapped design-system 预览和第一方主题采样器 | `examples/design_systems/app/`, `examples/design_systems/{web_wasm,macos_skia,windows_skia,linux_skia}/` | 通过 `moui_theme/material`、`moui_theme/carbon`、`moui_theme/primer` 和 `moui_theme/fluent` 入口，在共享 `moui_theme/common` model 之上切换 Material、Carbon、Primer 和 Fluent；通过 `moui_theme/sickle` 切换 Sickle 作为第一方主题附加包；还覆盖官方 source-mapped 预设的 light/dark/high-contrast/system 变体、compact/standard/comfortable density、语义调色板角色、字体样本、间距/密度网格、组件 token 矩阵采样、组件样式 bundle 用法、自定义继承/覆盖 API、Web 和 native Skia 宿主入口、coverage/parity 状态标签，并使用明确的 source-mapped preview 表述，而不是 official-complete claim |
@@ -83,9 +83,8 @@ Markdown 文件。进行本地预览时，运行 `node scripts/sync-website-docs
 Counter 是最小的推荐应用形态。它把用户代码保留在
 `Model / Msg / update / view` 中，然后让 `Program::simple` 将这个纯模型循环连接到
 runtime。它拥有 Web、macOS、Windows、Linux、实验性 Android 和 iOS Skia
-embedded-session 入口以及托管 Kotlin/SwiftUI 打包。签入的
-`examples/counter/{android_app,ios_app}` 项目是 Release N fixtures，
-并且有 `windows_wgpu_cosmic` 入口，因此它也是无需完整 Showcase 界面即可验证薄平台包的
+embedded-session 入口、托管 Kotlin/SwiftUI 打包以及 `windows_wgpu_cosmic`
+入口，因此它也是无需完整 Showcase 界面即可验证薄平台包的
 最快方式：
 
 ```moonbit
@@ -142,9 +141,9 @@ scripts/build-counter-ios-app.sh --fallback-skia
 ```
 
 fallback APK 和 `.app` 命令只验证打包路径。在声明 Android Skia 首帧运行时支持之前，
-请使用不带 `--fallback-skia` 的 `scripts/build-mobile-android-apk.sh --app counter`，
+请使用不带 `--fallback-skia` 的 `scripts/build-shell-android-apk.sh --app counter`，
 并配合匹配的 device/emulator smoke；在声明 iOS Skia 首帧运行时支持之前，请使用不带
-`--fallback-skia` 的 `scripts/build-mobile-ios-app.sh --app counter`，并配合匹配的
+`--fallback-skia` 的 `scripts/build-shell-ios-app.sh --app counter`，并配合匹配的
 simulator/device smoke。
 
 ## HarmonyOS Demo
@@ -153,7 +152,7 @@ HarmonyOS Demo 是独立的实验性 HarmonyOS 应用。它有意不扩展 Count
 `examples/harmonyos_demo/app` 拥有共享 TEA UI，提供可见的 tap 和 viewport 反馈，
 `examples/harmonyos_demo/harmonyos_skia` 导出 embedded-session native bridge
 functions。常规构建会 stage 包拥有的 ArkTS/XComponent shell；
-`examples/harmonyos_demo/harmonyos_app` 只是 Release N fixture。
+HarmonyOS managed shell 由 `moui_shell/harmonyos` 在构建目录中 staging；应用源代码不保留 native project fixture。
 
 聚焦 HarmonyOS Demo 检查：
 
@@ -167,9 +166,15 @@ scripts/build-harmonyos-demo-app.sh --fallback-skia
 真实 HarmonyOS Skia 检查请使用锁定的 HarmonyOS release artifact：
 
 ```sh
-MOUI_SKIA_PLATFORM=harmonyos MOUI_SKIA_ARCH=arm64 MOUI_SKIA_LINK_MODE=dynamic \
+MOUI_SKIA_PLATFORM=harmonyos MOUI_SKIA_ARCH=arm64 MOUI_SKIA_LINK_MODE=static \
   moon check examples/harmonyos_demo/harmonyos_skia --target native
 ```
+
+HarmonyOS `auto` / `skia-gpu` 构建必须使用完整的 static provider。锁定的共享
+`libskia.so` 可用于 raster rendering，但会隐藏 `libskia_ganesh_ext.a` 引用的
+Ganesh 内部符号；dynamic linking 只能配合显式 `skia-raster` 使用。不设置
+`MOUI_SKIA_LINK_MODE` 时，shell builder 会为 GPU 选择 static、为 raster 选择
+dynamic。
 
 fallback HAP 命令只验证 MoonBit C/native glue 和 staged package 形态。在声明
 HarmonyOS Skia 首帧运行时支持之前，请使用不带 `--fallback-skia` 的
@@ -597,6 +602,8 @@ scripts/macos-skia-renderer-smoke.sh
 直接本地 `moon run` 命令使用 `moui_skia` prebuild hook，因此签入的包不需要 machine-local path
 rewrites。在 `moon run` 前设置 `MOUI_SKIA_LINK_MODE=dynamic|static|auto`，以选择 Skia library
 mode。Helper smoke runs 仍可以用 `--link-mode dynamic|static|auto` 覆盖该次调用的环境。
+HarmonyOS 的约束更严格：`auto` / `skia-gpu` 必须解析为 static，dynamic 只支持显式
+`skia-raster`。
 
 如需更完整的本地 smoke，请传入 `--run-showcase-smoke`。helper 会构建 Showcase，然后运行
 `moui_tester` first-frame smoke。添加 `--run-markdown-smoke` 会构建 Markdown Editor，并运行同一个

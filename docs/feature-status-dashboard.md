@@ -116,11 +116,11 @@ promote the renamed Showcase managed shells:
 | --- | --- | --- | --- |
 | iOS historical artifact | Release N UIKit shell **`passed`** | `artifacts/mobile-runtime/ios/component_gallery/` | Not Showcase evidence. |
 | Android historical artifact | Release N legacy shell **`passed`** | `artifacts/mobile-runtime/android/component_gallery/` | Not Showcase evidence. |
-| Showcase managed shells | fresh Android/iOS/HarmonyOS evidence pending | `artifacts/mobile-runtime/<platform>/showcase/` | Re-run through real system input, assistive technology, and the repository test-probe plugin where required. |
+| Showcase managed shells | fresh Android/iOS/HarmonyOS evidence pending | `artifacts/shell-runtime/<platform>/showcase/` | Re-run through real system input, assistive technology, and the repository test-probe plugin where required. |
 
-CI entrypoints: `moui-ios-mobile-runtime-evidence.yml`,
-`moui-android-mobile-runtime-evidence.yml` (self-hosted android),
-`moui-harmonyos-mobile-runtime-evidence.yml` (self-hosted harmonyos + signing).
+CI entrypoints: `moui-ios-shell-runtime-evidence.yml`,
+`moui-android-shell-runtime-evidence.yml` (self-hosted android),
+`moui-harmonyos-shell-runtime-evidence.yml` (self-hosted harmonyos + signing).
 
 `SkiaGpuNative` carries unpromoted window-surface source paths per Phase 1 of
 the GPU readback elimination plan (iOS/macOS Metal, Android Vulkan/GLES,
@@ -136,12 +136,12 @@ has L1 package-test proof:
 | Renderer mailbox control queue (`moui/render/render_frame_mailbox.mbt`) | `moui/render` whitebox tests (capacity-two latest-wins; `RendererControlMessage` never dropped) |
 | Native Picture handoff (`moui_skia/native/skia_stub_gpu_worker.cpp`) | focused native tests (independent thread, retained picture, detach acknowledgement, zero readback counter) |
 | Context-loss recovery (`moui/runtime/renderer_recovery.mbt`) | `moui/runtime` whitebox tests (Idle → Lost → Recovering → Recovered → Idle; `FallbackToRaster` after 2 failures) |
-| Manifest schema + `gpuPromotionEvidence` (`tools/moui/validate_mobile_runtime_manifest`) | `validate_mobile_runtime_manifest_wbtest` (9 new Phase 2.3 tests) |
+| Manifest schema + `gpuPromotionEvidence` (`tools/moui/validate_shell_runtime_manifest`) | `validate_shell_runtime_manifest_wbtest` (9 new Phase 2.3 tests) |
 
 Product `auto` defaults to `SkiaGpuNative` on every native Skia platform when a
 host GPU surface is available (`gpu_promoted` is `true` everywhere). Raster
 remains the explicit/recovery path. Matching-device seven-gate manifests remain
-the quality evidence bar; see ADR 0006 and `mobile-mainline-roadmap.md`.
+the quality evidence bar; see ADR 0006 and `shell-mainline-roadmap.md`.
 
 ## Evidence Traceability
 

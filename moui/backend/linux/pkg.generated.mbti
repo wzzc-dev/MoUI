@@ -12,19 +12,13 @@ pub fn backend_info() -> LinuxBackendInfo
 
 pub fn capability_matrix() -> LinuxBackendCapabilities
 
-pub fn dispose_linux_platform_views(@wzzc-dev/window/linux.Window) -> Unit
-
-pub fn drain_linux_webview_commands(@wzzc-dev/window/linux.Window, @host.HostWebViewCommandQueue) -> Int
-
-pub fn install_linux_webview_event_dispatcher((UInt64, String, @wzzc-dev/moui/core.WebViewEvent) -> Unit) -> Unit
-
 pub fn linux_accessibility_bridge(root~ : @wzzc-dev/moui/core.SemanticsNode, dispatch~ : (@wzzc-dev/moui/core.ElementId, @wzzc-dev/moui/core.SemanticsAction, String?) -> Bool) -> @host.NativeAccessibilityBridge
 
 pub fn linux_accessibility_bridge_info() -> LinuxAccessibilityBridgeInfo
 
 pub fn linux_adjust_host_event_for_client_decorations(@host.HostEvent, LinuxClientDecorationState) -> @host.HostEvent?
 
-pub fn linux_capability_summary(services? : @host.HostServiceCapabilities) -> @host.HostCapabilitySummary
+pub fn linux_capability_summary(services? : @host.HostServiceCapabilities, web_view_available? : Bool, web_view_description? : String) -> @host.HostCapabilitySummary
 
 pub fn linux_client_decorated_commands(Array[@wzzc-dev/moui/core.DrawCommand], title~ : String, metrics~ : @host.HostSurfaceMetrics, decorations~ : LinuxClientDecorationState) -> Array[@wzzc-dev/moui/core.DrawCommand]
 
@@ -32,11 +26,11 @@ pub fn linux_content_metrics_for_surface(@host.HostSurfaceMetrics, LinuxClientDe
 
 pub fn linux_input_capabilities() -> @host.HostInputCapabilities
 
-pub fn linux_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@host.HostFileDialogOptions) -> Array[String], text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse, binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int) -> @host.HostServiceBridge
+pub fn linux_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@host.HostFileDialogOptions) -> Array[String], text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse, binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int, list_directory? : (String) -> @host.HostServiceResponse) -> @host.HostServiceBridge
 
 pub fn linux_surface_metrics_for_content(@host.HostSurfaceMetrics, LinuxClientDecorationState) -> @host.HostSurfaceMetrics
 
-pub fn linux_webview_capabilities() -> @host.HostWebViewCapabilities
+pub fn linux_timer_source() -> @host.HostTimerSource
 
 pub fn readiness() -> LinuxBackendReadiness
 
@@ -51,8 +45,6 @@ pub fn scaffold_service_bridge() -> @host.HostServiceBridge
 pub fn scaffold_surface_host(logical_width~ : Double, logical_height~ : Double, scale_factor? : Double) -> @host.SurfaceHostState
 
 pub fn service_capabilities() -> @host.HostServiceCapabilities
-
-pub fn sync_linux_platform_views(@wzzc-dev/window/linux.Window, @wzzc-dev/moui/core.DrawFrame, content_offset_y? : Double) -> Unit
 
 pub fn window_event_to_core(@wzzc-dev/window/core.WindowEvent, @wzzc-dev/moui/core.Point) -> @wzzc-dev/moui/core.AppEvent?
 
@@ -132,7 +124,7 @@ pub fn LinuxClientDecorationState::new(active~ : Bool, titlebar_height? : Double
 pub struct LinuxHostAppOptions {
   // private fields
 }
-pub fn LinuxHostAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, event_sources? : @host.HostPlatformEventSources?, web_view_commands? : @host.HostWebViewCommandQueue?, web_view_events? : @host.HostWebViewEventSource?) -> Self
+pub fn LinuxHostAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, event_sources? : @host.HostPlatformEventSources?, platform_view_plugins? : Array[@host.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes) -> Self
 
 pub struct LinuxHostSmokeOptions {
   // private fields

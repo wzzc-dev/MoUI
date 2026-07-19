@@ -217,28 +217,28 @@ scripts/macos-skia-renderer-smoke.sh --run-ime-smoke
 sh scripts/ci-web-runtime-presentation.sh
 ```
 
-对于 Android packaging 变更，`scripts/build-counter-android-apk.sh --fallback-skia` 是快速 build-system smoke，覆盖 MoonBit C export、registered JNI/CMake、Kotlin/resource packaging 和 debug signing。它不是真实 Skia renderer 或 platform runtime evidence。Android first-frame/input/lifecycle claim 仍要求不带 fallback 的 `scripts/build-counter-android-apk.sh`，并在匹配设备或模拟器上运行且记录观察结果。
-canonical Android build entrypoint 现在是 `scripts/build-mobile-android-apk.sh --app <counter|showcase>`；app-specific script 是兼容 wrapper。它默认使用 managed Kotlin shell。`--legacy-java-shell --compile-sdk 35` 只用于审计冻结的 Release N compatibility fixture。
+对于 Android packaging 变更，`scripts/build-shell-android-apk.sh --app counter --fallback-skia` 是快速 build-system smoke，覆盖 MoonBit C export、registered JNI/CMake、Kotlin/resource packaging 和 debug signing。它不是真实 Skia renderer 或 platform runtime evidence。Android first-frame/input/lifecycle claim 仍要求不带 fallback 的 `scripts/build-shell-android-apk.sh --app counter`，并在匹配设备或模拟器上运行且记录观察结果。
+canonical Android build entrypoint 现在是 `scripts/build-shell-android-apk.sh --app <counter|showcase>`；它默认使用 managed Kotlin shell。
 
-对于 iOS packaging 变更，`scripts/build-counter-ios-app.sh --fallback-skia` 是快速 build-system smoke，覆盖 MoonBit C export、canonical SwiftUI/UIKit host adapter、ABI bridge、iOS runtime compatibility、native-stub compilation、bundle layout 和 ad-hoc simulator signing。它不是真实 Skia renderer 或 platform runtime evidence。iOS first-frame/input/lifecycle claim 仍要求不带 fallback 的 `scripts/build-counter-ios-app.sh`，并在匹配模拟器或设备上运行且记录观察结果。
-canonical iOS build entrypoint 现在是 `scripts/build-mobile-ios-app.sh --app <counter|showcase>`，通过 checked-in 的真实 `PBXNativeTarget`；`--legacy-uikit-shell` 只选择冻结的 Release N fixture。运行 `sh moui/mobile/ios/tests/run-ios-managed-shell-tests.sh` 进行聚焦 shell contract audit。使用 `node scripts/record-mobile-runtime-smoke.mjs --platform <android|ios|harmonyos> --app <counter|showcase|harmonyos_demo> --require-passed` 生成用于 release/manual claim 的 checked mobile runtime manifest。recorder 要求 before/after pixel change 和 application receipt log；成功 input injection 或 process termination 本身不是证据。
+对于 iOS packaging 变更，`scripts/build-shell-ios-app.sh --app counter --fallback-skia` 是快速 build-system smoke，覆盖 MoonBit C export、canonical SwiftUI/UIKit host adapter、ABI bridge、iOS runtime compatibility、native-stub compilation、bundle layout 和 ad-hoc simulator signing。它不是真实 Skia renderer 或 platform runtime evidence。iOS first-frame/input/lifecycle claim 仍要求不带 fallback 的 `scripts/build-shell-ios-app.sh --app counter`，并在匹配模拟器或设备上运行且记录观察结果。
+canonical iOS build entrypoint 现在是 `scripts/build-shell-ios-app.sh --app <counter|showcase>`，通过 checked-in 的真实 `PBXNativeTarget`。运行 `sh moui_shell/ios/embedder/tests/run-ios-managed-shell-tests.sh` 进行聚焦 shell contract audit。使用 `node scripts/record-shell-runtime-smoke.mjs --platform <android|ios|harmonyos> --app <counter|showcase|harmonyos_demo> --require-passed` 生成用于 release/manual claim 的 checked shell runtime manifest。recorder 要求 before/after pixel change 和 application receipt log；成功 input injection 或 process termination 本身不是证据。
 iOS 路线要求 Meta `idb` 和 `idb-companion`；stock `simctl ui` 不会注入 tap/swipe event。recorder 从当前 accessibility tree 推导 tap，用 `simctl launch` 返回的 PID 过滤 unified log，并使用 idb HOME event 触发真实 background detach。
 
 Showcase 是 service acceptance target。它的 mobile entrypoint 会直接打开 `platform/mobile-service-probe`。一次只在一个 target 上运行 non-fallback build 和 recorder：
 
 ```sh
-scripts/build-mobile-android-apk.sh --app showcase
-node scripts/record-mobile-runtime-smoke.mjs \
+scripts/build-shell-android-apk.sh --app showcase
+node scripts/record-shell-runtime-smoke.mjs \
   --platform android --app showcase --device <adb-serial> \
   --assistive-tech --require-passed
 
-scripts/build-mobile-ios-app.sh --app showcase
-node scripts/record-mobile-runtime-smoke.mjs \
+scripts/build-shell-ios-app.sh --app showcase
+node scripts/record-shell-runtime-smoke.mjs \
   --platform ios --app showcase --device <simulator-udid> \
   --assistive-tech --require-passed
 
-scripts/build-component-gallery-harmonyos-hap.sh
-node scripts/record-mobile-runtime-smoke.mjs \
+scripts/build-shell-harmonyos-hap.sh --app showcase
+node scripts/record-shell-runtime-smoke.mjs \
   --platform harmonyos --app showcase --device <hdc-target> \
   --require-passed
 ```
@@ -247,14 +247,14 @@ probe 按以下顺序驱动：聚焦带 label 的 text field，注入 IME text�
 
 Mobile manifest 使用 `passed`、`partial` 和 `failed`。带有部分 verified observation 的 nonblank run 是 `partial`，不是 `failed`；这会保留已收集证据，同时准确显示仍缺哪些 observation。没有可用证据的 build/install/launch/capture run 仍是 `failed`。Release command 继续使用 `--require-passed`，因此 `partial` 不能通过 release gate。
 
-recorder 还会从 `moui-mobile renderer configure ... status={...}` 捕获可选 `renderer` block（或 fallback 到 `mobile-build.json`）。当 `renderer.gpuPromoted=true` 时，它会附加一个 **pending** seven-gate `gpuPromotionEvidence` skeleton，让 schema validation 通过而不声称 performance/memory/context-loss gate。产品 GPU default 和 seven-gate quality claim 仍然分开。
+recorder 还会从 `moui-shell renderer configure ... status={...}` 捕获可选 `renderer` block（或 fallback 到 `shell-build.json`）。当 `renderer.gpuPromoted=true` 时，它会附加一个 **pending** seven-gate `gpuPromotionEvidence` skeleton，让 schema validation 通过而不声称 performance/memory/context-loss gate。产品 GPU default 和 seven-gate quality claim 仍然分开。
 
 本地证据快照（2026-07-15）：
 
 - **Historical iOS Component Gallery** under the Release N UIKit shell：`artifacts/mobile-runtime/ios/component_gallery/`（**`passed`**，Metal `gpuAvailable=true`）；这不计作 Showcase evidence
 - **Historical HarmonyOS Component Gallery**：`artifacts/mobile-runtime/harmonyos/component_gallery/`（**`partial`**，EGL first frame；services incomplete）；这不计作 Showcase evidence
 - **Historical Android Component Gallery**：`artifacts/mobile-runtime/android/component_gallery/`（**`partial`**，Vulkan attach/nonblank/input/a11y/async-image）；这不计作 Showcase evidence。不要在低内存主机上同时运行 Android + HarmonyOS emulator。
-- **Showcase managed shells**：新证据路径为 `artifacts/mobile-runtime/<platform>/showcase/`；三大移动平台上的 matching-device evidence 都 pending。
+- **Showcase managed shells**：新证据路径为 `artifacts/shell-runtime/<platform>/showcase/`；三大移动平台上的 matching-device evidence 都 pending。
 - GPU promotion scaffolds：`artifacts/gpu-promotion/{ios,harmonyos,android}/scaffold-latest/`（不是 L2 proof）
 
 **GPU feasibility (L2) grep：**
@@ -278,24 +278,24 @@ echo no | avdmanager create avd -n moui_api34 \
   -k "system-images;android-34;google_apis;arm64-v8a" -d pixel_6 --force
 emulator -avd moui_api34 -gpu host -no-snapshot-save &
 adb wait-for-device
-scripts/build-mobile-android-apk.sh --app showcase --renderer auto
-node scripts/record-mobile-runtime-smoke.mjs \
+scripts/build-shell-android-apk.sh --app showcase --renderer auto
+node scripts/record-shell-runtime-smoke.mjs \
   --platform android --app showcase --device "$(adb devices | awk '/\tdevice$/{print $1; exit}')"
 rg -n 'renderer configure|surfaceRoute|gpuAvailable|UnsatisfiedLinkError' \
-  artifacts/mobile-runtime/android/showcase/runtime*.log
+  artifacts/shell-runtime/android/showcase/runtime*.log
 ```
 
 除非 manifest 断言 `gpuPromotionClaim=true` 或 `gpuPromotionEvidence.claimed=true`，否则 mobile runtime `--require-passed` 不要求 seven-gate GPU claim threshold。
 
 在 iOS Simulator 上，rotation 当前通过 macOS UI scripting 使用 Simulator 的 Device menu，因为 Xcode 26.3 `simctl io` 没有 rotate operation。请给运行 `osascript` 的 terminal/automation process 授予 Accessibility 权限；否则 resize 会有意保持 `no`。仅修改 simulator VoiceOver preference 不是 action evidence。需要 focus/action log 时，请使用物理设备或 live assistive-technology session。
 
-对于 HarmonyOS packaging 变更，`scripts/build-harmonyos-demo-app.sh --fallback-skia` 和 `scripts/build-component-gallery-harmonyos-hap.sh --fallback-skia` 是快速 build-system smoke，覆盖 MoonBit C export、package-owned ArkTS Stage Ability/XComponent managed shell、fixed-ABI NAPI bridge、generated plugin registry、native glue compilation、native-stub compilation 和 staged HAP archives。checked-in app-owned project 是 Release N fixture。这些构建不是真实 Skia renderer 或 platform runtime evidence。HarmonyOS first-frame/input/lifecycle claim 仍要求 non-fallback HAP，并在匹配设备或模拟器上运行且记录 observation。
+对于 HarmonyOS packaging 变更，`scripts/build-shell-harmonyos-hap.sh --app harmonyos_demo --fallback-skia` 和 `scripts/build-shell-harmonyos-hap.sh --app showcase --fallback-skia` 是快速 build-system smoke，覆盖 MoonBit C export、package-owned ArkTS Stage Ability/XComponent managed shell、fixed-ABI NAPI bridge、generated plugin registry、native glue compilation、native-stub compilation 和 staged HAP archives。这些构建不是真实 Skia renderer 或 platform runtime evidence。HarmonyOS first-frame/input/lifecycle claim 仍要求 non-fallback HAP，并在匹配设备或模拟器上运行且记录 observation。
 
 HarmonyOS release/manual smoke 通过 `hdc` 使用同一 recorder：
 
 ```sh
-node scripts/record-mobile-runtime-smoke.mjs --platform harmonyos --app harmonyos_demo --require-passed
-node scripts/record-mobile-runtime-smoke.mjs --platform harmonyos --app showcase --require-passed
+node scripts/record-shell-runtime-smoke.mjs --platform harmonyos --app harmonyos_demo --require-passed
+node scripts/record-shell-runtime-smoke.mjs --platform harmonyos --app showcase --require-passed
 ```
 
 通过的 mobile evidence 要求实际 lifecycle detach、IME state 和 edit、system text-clipboard write/read completion、accessibility tree/focus/action，以及 async-image loading/ready observation。PNG clipboard interoperability 是单独的手动 cross-app check，不得从 text probe 推断。缺失 observation 保持 pending/failed，而不是从 API presence 推断。
@@ -306,7 +306,7 @@ node scripts/record-mobile-runtime-smoke.mjs --platform harmonyos --app showcase
 node --check scripts/smoke-check.mjs
 node --check scripts/test-smoke-check.mjs
 node scripts/test-smoke-check.mjs
-node scripts/test-validate-mobile-runtime-manifest.mjs
+node scripts/test-validate-shell-runtime-manifest.mjs
 node scripts/smoke-check.mjs --check
 node scripts/smoke-check.mjs --tier nightly --list
 node scripts/smoke-check.mjs --tier release --json

@@ -3,8 +3,8 @@
 - **Date**: 2026-07-15
 - **Status**: Accepted
 - **Deciders**: Agent-assisted (Codex, GPT-5)
-- **Related**: ADR 0005, ADR 0006, `docs/mobile-runtime-abi-v1.md`,
-  `moui/mobile/template.mobile.json`
+- **Related**: ADR 0005, ADR 0006, `docs/embedding-api-v1.md`,
+  `moui_shell/template.shell.json`
 
 ## Context
 
@@ -22,15 +22,15 @@ could describe a requested renderer without proving the presenter that ran.
 
 1. Managed Android, iOS, and HarmonyOS builds stage a canonical shell from the
    resolved `wzzc-dev/moui` package. Application repositories own shared app
-   code, thin MoonBit mobile entrypoints, schema v2 `mobile.json`, resource
+   code, thin MoonBit mobile entrypoints, schema v2 `shell.json`, resource
    overlays, and optional local plugins, but no native project copy.
-2. All managed shells negotiate `moui_mobile_get_runtime_api_v1()` and call a
+2. All managed shells negotiate `moui_embedding_get_api_v1()` and call a
    versioned function table. Fixed-width input values and explicit-length UTF-8
    buffers cross the C boundary; MoonBit objects and strings do not.
 3. Host Wire v1 envelopes carry `schemaVersion`, `sessionGeneration`, and
    revision or request identifiers. Late responses from detached or destroyed
    generations are rejected.
-4. `MobileRuntimeSessionCore` owns the shared runtime, renderer, redraw, host
+4. `EmbeddedSessionCore` owns the shared runtime, renderer, redraw, host
    channel, image, generation, and disposal state. It lives under
    `backend/internal/mobile_runtime` so MoonBit internal visibility permits all
    backend siblings while keeping it out of the public catalog. Surface detach
@@ -104,8 +104,8 @@ could describe a requested renderer without proving the presenter that ran.
 
 ## References
 
-- `docs/mobile-runtime-abi-v1.md`
-- `docs/mobile-mainline-roadmap.md`
+- `docs/embedding-api-v1.md`
+- `docs/shell-mainline-roadmap.md`
 - `docs/android-support.md`
 - `docs/ios-support.md`
 - `docs/harmonyos-support.md`

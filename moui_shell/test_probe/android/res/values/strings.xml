@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="moui_embedding_test_probe_label">MoUI test probe</string>
+</resources>

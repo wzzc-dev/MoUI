@@ -76,7 +76,7 @@ The shortest path is:
 ```sh
 scripts/setup-android-sdk.sh --accept-licenses
 eval "$(scripts/setup-android-sdk.sh --print-env)"
-scripts/build-mobile-android-apk.sh --app counter
+scripts/build-shell-android-apk.sh --app counter
 ```
 
 If you already have an Android SDK installed, point `ANDROID_HOME` at that SDK
@@ -84,7 +84,7 @@ root and run:
 
 ```sh
 ANDROID_HOME=/path/to/Android/Sdk \
-scripts/build-mobile-android-apk.sh --app counter
+scripts/build-shell-android-apk.sh --app counter
 ```
 
 Set `ANDROID_NDK_HOME=/path/to/Android/Sdk/ndk/<version>` only when you need to
@@ -93,19 +93,17 @@ pin a specific side-by-side NDK; otherwise the script uses the required
 `$ANDROID_HOME/ndk` and ignores incompatible overrides.
 
 For a packaging-only smoke that avoids the Android Skia provider download, use
-`scripts/build-counter-android-apk.sh --fallback-skia`. That compatibility
-wrapper calls `scripts/build-mobile-android-apk.sh --app counter`. The APK proves the
+`scripts/build-counter-android-apk.sh --fallback-skia`. That wrapper calls
+`scripts/build-shell-android-apk.sh --app counter`. The APK proves the
 MoonBit C/JNI/CMake/SDK packaging path only; real Android runtime evidence still
 requires a device or emulator run with the default real-Skia path.
 
-Mobile app registration is split by publish boundary. Repository examples and
-external applications use strict schema v2 `mobile.json`; the fixed Runtime
-ABI derives generated C names and symbols, so application metadata contains no
-native export map or project path. `moui/mobile/build-contracts.json` is only
-for explicit Release N schema v1 fixtures. Canonical shells and build
-entrypoints live under `moui/mobile` and `moui/scripts/mobile` so managed builds
-can stage them from the published `wzzc-dev/moui` package. Run
-`node scripts/check-mobile-app-config.mjs` for a fast repository example
+Shell registration is split by publish boundary. Repository examples and
+external applications use strict schema v1 `shell.json`; the fixed embedding
+ABI has no app-specific export map or project path. Canonical shells and build
+entrypoints live under `moui_shell` so managed builds stage them from the
+published `wzzc-dev/moui_shell` package. Run
+`node scripts/check-shell-app-config.mjs` for a fast repository example
 registration consistency check before attempting a full APK, `.app`, or HAP
 build.
 
@@ -126,41 +124,45 @@ To build the experimental Counter iOS Simulator app, install/select Xcode and
 run:
 
 ```sh
-scripts/build-mobile-ios-app.sh --app counter
+scripts/build-shell-ios-app.sh --app counter
 ```
 
 The default output is `artifacts/ios/counter/MoUICounter.app`. Use
-`scripts/build-counter-ios-app.sh --fallback-skia` for a packaging-only smoke
+`scripts/build-shell-ios-app.sh --app counter --fallback-skia` for a packaging-only smoke
 that avoids the iOS Skia provider download. That `.app` proves the MoonBit
 C/canonical SwiftUI shell/ABI bridge/native-stub/bundle path only; real iOS
 runtime evidence still requires a simulator or device run with the default
 real-Skia path. Xcode 15.4+, Swift 5 language mode, and iOS 15+ are required.
-Use `--legacy-uikit-shell` only for the frozen Release N compatibility fixture.
 
 See [ios-support.md](ios-support.md) for the SwiftUI/UIKit ownership boundary,
-single-scene ABI v1 rule, plugin/eject contract, Xcode CLI setup, simulator
+single-scene embedding API v1 rule, plugin/eject contract, Xcode CLI setup, simulator
 install commands, and runtime-evidence requirements.
 
 HarmonyOS is also an embedded native scaffold. For HarmonyOS Skia cross-build
-checks, set `MOUI_SKIA_PLATFORM=harmonyos`, `MOUI_SKIA_ARCH=arm64`, and dynamic
-linking so the prebuild selects the locked HarmonyOS Skia release artifact:
+checks, set `MOUI_SKIA_PLATFORM=harmonyos`, `MOUI_SKIA_ARCH=arm64`, and static
+linking so the prebuild selects the complete locked HarmonyOS Skia provider:
 
 ```sh
-MOUI_SKIA_PLATFORM=harmonyos MOUI_SKIA_ARCH=arm64 MOUI_SKIA_LINK_MODE=dynamic \
+MOUI_SKIA_PLATFORM=harmonyos MOUI_SKIA_ARCH=arm64 MOUI_SKIA_LINK_MODE=static \
   moon check examples/harmonyos_demo/harmonyos_skia --target native
 ```
+
+The locked shared `libskia.so` remains usable for explicit `skia-raster`, but
+it hides Ganesh internal symbols required by `libskia_ganesh_ext.a`; therefore
+it cannot back HarmonyOS `auto` / `skia-gpu`. When the link-mode environment is
+unset, the shell builder selects static for GPU and dynamic for raster.
 
 The standalone demo lives at `examples/harmonyos_demo` rather than extending
 Counter. `examples/harmonyos_demo/app` owns the platform-neutral UI,
 and `examples/harmonyos_demo/harmonyos_skia` owns the MoonBit native exports.
-The build stages the package-owned `moui/mobile/harmonyos` ArkTS Stage
+The build stages the package-owned `moui_shell/harmonyos` ArkTS Stage
 Ability/XComponent shell, NAPI bridge, plugin registry, and CMake project;
-`examples/harmonyos_demo/harmonyos_app` is a Release N fixture. Use
-`scripts/build-harmonyos-demo-app.sh --fallback-skia`
+the package-owned HarmonyOS shell is staged for each build. Use
+`scripts/build-shell-harmonyos-hap.sh --app harmonyos_demo --fallback-skia`
 for a packaging-only smoke that avoids the HarmonyOS Skia download and validates
 MoonBit C generation, native glue compilation, and staged HAP layout. External
-apps use schema v2 `mobile.json` and the managed build, or explicitly eject a
-versioned shell with `moui mobile eject harmonyos`. Real HarmonyOS runtime evidence
+apps use schema v1 `shell.json` and the managed build, or explicitly eject a
+versioned shell with `moui shell eject harmonyos`. Real HarmonyOS runtime evidence
 still requires a non-fallback build plus matching device/emulator first-frame,
 input, resize, and lifecycle smoke.
 

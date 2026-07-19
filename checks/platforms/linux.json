@@ -6,9 +6,8 @@
   "runtimeL3": {"status": "partial", "evidence": "first-frame passed; interactive IME and services remain partial"},
   "shellKind": "native-wayland",
   "shellApiVersion": 0,
-  "runtimeAbiVersion": 0,
+  "embeddingApiVersion": 0,
   "deploymentFloor": "Wayland compositor",
   "toolchainFloor": "Clang/GCC with Wayland and Vulkan",
   "actualPresenterRoute": "vulkan-wayland-direct"
 }
-

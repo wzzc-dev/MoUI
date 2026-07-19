@@ -1,0 +1,25 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_shell/harmonyos"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui_shell/embedding",
+}
+
+// Values
+pub fn harmonyos_descriptor() -> @embedding.ShellPlatformDescriptor
+
+// Errors
+
+// Types and methods
+pub(all) struct HarmonyosNativeSurface {
+  raw : UInt64
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HarmonyosNativeSurface::new(raw~ : UInt64) -> Self
+pub fn HarmonyosNativeSurface::none() -> Self
+pub fn HarmonyosNativeSurface::raw(Self) -> UInt64
+
+// Type aliases
+
+// Traits
+

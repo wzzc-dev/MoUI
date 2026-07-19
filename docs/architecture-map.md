@@ -22,7 +22,7 @@ wzzc-dev/moui  +  geometry/graphics/animation/text/state  +  views
 platform entrypoints        moui/runtime     # trees, dispatch, effects
 (web_wasm, *_skia, …)              │
 thin wiring only                   ▼
-        │                   moui/backend/host   # HostEvent, services, MobileHostChannel
+        │                   moui/backend/host   # HostEvent, services, EmbedderHostChannel
         │                          │
         └────────────►     backend/<platform>  (+ /skia, /wgpu providers)
                                    │
@@ -57,8 +57,7 @@ normalize into host contracts; renderers consume `DrawCommand` only.
 | WGPU diagnostic providers | `moui/backend/<platform>/wgpu` |
 | Renderer facades | `moui/render`, `render/skia`, `render/webgpu_adapter`, `render/wgpu` |
 | Skia FFI / native capability | `moui_skia` |
-| Managed mobile shells | `moui/mobile/{android,ios,harmonyos}` |
-| Legacy mobile fixtures | `moui/mobile/legacy/*`, example `*_app` when marked Release N |
+| Managed/ejected native shells | `moui_shell/{android,ios,harmonyos}` (`embedder` + `runner`) |
 | Rich text domain | `moui_richtext` |
 | Design-system addons | `moui_theme` (not an app default dep) |
 | Repo validators | `tools/moui/*` via `scripts/*.mjs` shells |
@@ -86,5 +85,5 @@ normalize into host contracts; renderers consume `DrawCommand` only.
 | Full package narrative | `docs/architecture.md` |
 | Invariants table | `docs/invariants.md` |
 | Validation commands | `docs/testing.md` |
-| Mobile roadmap | `docs/mobile-mainline-roadmap.md` |
+| Native shell roadmap | `docs/shell-mainline-roadmap.md` |
 | Doc catalog | `docs/INDEX.md` |

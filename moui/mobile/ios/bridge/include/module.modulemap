@@ -1,4 +1,0 @@
-module MoUIMobileRuntimeBridge {
-  umbrella header "MoUIMobileRuntimeBridge.h"
-  export *
-}

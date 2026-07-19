@@ -67,16 +67,16 @@ a PlatformView overlay, and an `ANativeWindow` handle, while
 `backend/ios` exposes an embedded-session contract driven by the package-owned
 SwiftUI shell with a raw `CAMetalLayer`-backed `UIView` handle and a narrow ABI
 v1 Objective-C++ bridge. Repository wrappers stage those canonical projects by
-default. The checked-in `examples/counter/{android_app,ios_app}` projects are
-selected only by explicit Release N legacy flags. Fallback APK/`.app` builds
-are build-system evidence only; treat both routes as experimental until
-matching device/simulator runtime smoke evidence exists.
+default. App-owned native projects are explicit `moui shell eject` outputs, not
+checked-in example fixtures. Fallback APK/`.app` builds are build-system
+evidence only; treat both routes as experimental until matching
+device/simulator runtime smoke evidence exists.
 
 `backend/harmonyos` follows the same embedded-session shape through the
 package-owned ArkTS `MoUIRoot`. Native XComponent callbacks exclusively own
 surface/input/resize/detach, while ArkTS owns `displaySync` and platform
-services. The default repository wrapper stages the canonical shell; checked-in
-`examples/*/harmonyos_app` projects are Release N fixtures.
+services. The default repository wrapper stages the canonical shell; apps that
+need to own a HarmonyOS project use the explicit eject workflow.
 The Skia provider preflights `moui_skia/native` availability before handing
 control to the host app runner. Fallback builds therefore return with a clear
 diagnostic instead of opening a platform window that later fails to attach a

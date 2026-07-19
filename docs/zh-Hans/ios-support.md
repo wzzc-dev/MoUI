@@ -2,21 +2,21 @@
 
 iOS 是 **runtime_partial** 的嵌入式原生路由：managed shell 和 host session **可用于开发和演示**（`backend` 报告 `ready=true`、`status=runtime_partial`），但在 managed SwiftUI matching-simulator L3 与 presenter/GPU promotion 补齐剩余缺口之前，该平台**不是**产品完整状态。
 
-规范 shell 是 package-owned SwiftUI `App`，带 `UIViewRepresentable` host。其 render view 显式使用 `CAMetalLayer`，通过 `CADisplayLink` 驱动帧，并将 lifecycle、resize、touch、IME、pasteboard、accessibility、PlatformView 和 Host Service traffic 转发到 MoUI。狭窄的 Objective-C++ bridge 只协商 Mobile Runtime ABI v1、分发其 function table，并拥有复制后的边界数据。
+规范 shell 是 package-owned SwiftUI `App`，带 `UIViewRepresentable` host。其 render view 显式使用 `CAMetalLayer`，通过 `CADisplayLink` 驱动帧，并将 lifecycle、resize、touch、IME、pasteboard、accessibility、PlatformView 和 Host Service traffic 转发到 MoUI。狭窄的 Objective-C++ bridge 只协商 Embedding API v1、分发其 function table，并拥有复制后的边界数据。
 
 ## 状态
 
-三层证据保持分离：**product GPU default**（source/`auto`）、**mobile runtime smoke**（`artifacts/mobile-runtime/...`）与 **seven-gate GPU promotion claim**（`gpuPromotionEvidence` / `artifacts/gpu-promotion/...`）。
+三层证据保持分离：**product GPU default**（source/`auto`）、**shell runtime smoke**（`artifacts/shell-runtime/...`）与 **seven-gate GPU promotion claim**（`gpuPromotionEvidence` / `artifacts/gpu-promotion/...`）。
 
 | 区域 | 当前状态 | 证据边界 |
 | --- | --- | --- |
 | 产品类别 | `runtime_partial`（见 platform-readiness-declaration） | 不是 `committed`；也不是“Counter-only scaffold”。 |
 | Host contract | `moui/backend/ios` 中可用的 embedded session（`ready=true`） | Package tests + managed shell wiring；L3 promotion 单独处理。 |
-| Platform services | Swift adapters 通过 `MobileHostChannel` 拥有 text proxy、pasteboard、a11y container、PlatformView、Host Service channels | Capability flags 反映**代码接线**；完整 managed-shell VoiceOver/device evidence 仍待补。 |
+| Platform services | Swift adapters 通过 `EmbedderHostChannel` 拥有 text proxy、pasteboard、a11y container、PlatformView、Host Service channels | Capability flags 反映**代码接线**；完整 managed-shell VoiceOver/device evidence 仍待补。 |
 | Frame pacing | Input/resize request redraw；presentation 从 `CADisplayLink` ticks 运行 | 60/120 Hz device pacing evidence 待补。 |
 | Skia provider | `moui/backend/ios/skia` preflight `runtime_status=runtime_partial` | Provider checks 证明 wiring；checks JSON 中 presenter route 仍未 verified。 |
-| Product GPU default | `auto` -> `SkiaGpuNative` / `metal-gpu` when available（`gpu_promoted=true`） | Source + rebuild `mobile-build.json`；不是 seven-gate claim。 |
-| Canonical SwiftUI shell | `moui/mobile/ios` + framework-staged template 中真实的 `PBXNativeTarget` | Managed fallback builds 只证明 Swift/ObjC++/ABI/native packaging，不是 runtime proof。 |
+| Product GPU default | `auto` -> `SkiaGpuNative` / `metal-gpu` when available（`gpu_promoted=true`） | Source + rebuild `shell-build.json`；不是 seven-gate claim。 |
+| Canonical SwiftUI shell | `moui_shell/ios` + framework-staged template 中真实的 `PBXNativeTarget` | Managed fallback builds 只证明 Swift/ObjC++/ABI/native packaging，不是 runtime proof。 |
 | First-frame runtime evidence | 下面的非空 screenshots 与 simulator smoke 是针对 Release N UIKit shell 收集的 | 历史 pixels 对该 artifact 仍有效，但不适用于替换后的 managed shell。 |
 | Runtime smoke（simulator，2026-07-15 re-verify） | Component Gallery 在冻结 UIKit shell 下 **`status=passed`**，路径为 `artifacts/mobile-runtime/ios/component_gallery/` | Managed SwiftUI lifecycle、pixels、input、IME、clipboard、accessibility、PlatformView 和 async-image evidence 必须在无 production-shell smoke probe 的情况下重新收集。 |
 | GPU promotion claim | 仅 scaffold：`artifacts/gpu-promotion/ios/scaffold-latest/`（`gpuPromoted=false`） | 没有 matching-device seven-gate claim；product default 已开启。Runtime smoke pass ≠ seven-gate promotion claim。 |
@@ -26,10 +26,9 @@ iOS 是 **runtime_partial** 的嵌入式原生路由：managed shell 和 host se
 
 - `moui/backend/ios` 拥有 `IosViewHandle`、`IosRendererProvider`、readiness summaries 和 `IosRuntimeSession`。
 - `moui/backend/ios/skia` 将 `moui/render/skia` 包装为 `HostWindowRenderer`，并在编译为 iOS 或 iOS Simulator 时将复制的 RGBA frames present 到 UIKit `UIImageView` child。
-- `examples/counter/ios_skia` 和 `examples/showcase/ios_skia` 是薄 MoonBit entrypoints。Schema v2 builds 暴露固定 Mobile Runtime ABI v1 symbols；app-specific symbol maps 仅限 Release N legacy path。
-- `moui/mobile/ios` 拥有规范 Swift package、SwiftUI scene lifecycle、`CAMetalLayer` view、display link、UIKit host adapters、plugin registry、ABI bridge 和 canonical Xcode template。
-- `examples/*/ios_app` 是仅仓库使用的 native target fixtures。正常 managed applications 将 identity 保存在 `mobile.json`，并且不拥有 Xcode project。
-- `moui/mobile/ios/legacy/moui_mobile_app.mm` 是冻结的 Release N UIKit/Objective-C++ compatibility fixture，只会由 `--legacy-uikit-shell` 选择。
+- `examples/counter/ios_skia` 和 `examples/showcase/ios_skia` 是薄 MoonBit entrypoints。它们只安装 app program 和 renderer 配置；`backend/ios` 注册回调供 `moui_shell/embedding` 的固定 Embedding API v1 symbols 调用。
+- `moui_shell/ios` 拥有规范 Swift package、SwiftUI scene lifecycle、`CAMetalLayer` view、display link、UIKit host adapters、plugin registry、ABI bridge 和 canonical Xcode template。
+- 正常 managed applications 将 identity 保存在 `shell.json`，并且不拥有 Xcode project；需要原生项目所有权时使用 `moui shell eject ios`。
 
 iOS 15 仍是 deployment floor。Product `auto` 在可用时优先 Metal `CAMetalLayer` / worker-owned GPU path；raster compatibility path 仍通过 `NSData -> CGImage -> UIImage -> UIImageView` present，用于显式 `skia-raster` 与 sticky recovery fallback。
 
@@ -42,10 +41,9 @@ MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test moui/backend/ios --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test moui/backend/ios/skia --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/counter/ios_skia --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/showcase/ios_skia --target native
-sh moui/mobile/ios/tests/run-ios-managed-shell-tests.sh
-scripts/build-mobile-ios-app.sh --app counter --fallback-skia
-scripts/build-mobile-ios-app.sh --app showcase --fallback-skia
-scripts/build-mobile-ios-app.sh --app counter --fallback-skia --legacy-uikit-shell
+sh moui_shell/ios/tests/run-ios-managed-shell-tests.sh
+scripts/build-shell-ios-app.sh --app counter --fallback-skia
+scripts/build-shell-ios-app.sh --app showcase --fallback-skia
 ```
 
 这些检查在交付前有用，但都不能证明 iOS runtime presentation。
@@ -78,18 +76,18 @@ xcrun --sdk iphonesimulator --show-sdk-path
 ## Mobile Xcode Builds
 
 iOS builds 使用 package-owned minimal `PBXNativeTarget` 作为 primary entrypoint。Applications 不在 source tree 中保留 managed Xcode project。
-可复用 SwiftUI shell、native build script、canonical Xcode template 和 compatibility contracts 位于 package-published `moui/mobile` 与 `moui/scripts/mobile` 目录下。Builder 从仓库示例的 `examples/<app>/mobile.json` 或外部 app 自有的 `mobile.json` 读取 app-facing metadata，然后生成 MoonBit C 与 Skia response files，编译 ABI adapter、狭窄 Objective-C++ bridge、Swift package module、generated app configuration 和 plugin sources，最后写出 Simulator `.app` bundle。
+可复用 SwiftUI shell、native build script、canonical Xcode template 和 compatibility contracts 位于 package-published `moui_shell` 与 `moui_shell/scripts` 目录下。Builder 从仓库示例的 `examples/<app>/shell.json` 或外部 app 自有的 `shell.json` 读取 app-facing metadata，然后生成 MoonBit C 与 Skia response files，编译 ABI adapter、狭窄 Objective-C++ bridge、Swift package module、generated app configuration 和 plugin sources，最后写出 Simulator `.app` bundle。
 
 从仓库根目录构建实验性 Counter iOS Simulator app：
 
 ```sh
-scripts/build-mobile-ios-app.sh --app counter
+scripts/build-shell-ios-app.sh --app counter
 ```
 
 用同一路由构建 Showcase：
 
 ```sh
-scripts/build-mobile-ios-app.sh --app showcase
+scripts/build-shell-ios-app.sh --app showcase
 ```
 
 默认输出为：
@@ -102,10 +100,10 @@ artifacts/ios/showcase/MoUIShowcase.app
 有用选项：
 
 ```sh
-scripts/build-mobile-ios-app.sh --app counter --arch x86_64
-scripts/build-mobile-ios-app.sh --app counter --deployment-target 15.0
-scripts/build-mobile-ios-app.sh --app counter --sdk iphoneos --arch arm64
-scripts/build-mobile-ios-app.sh --app counter --renderer auto
+scripts/build-shell-ios-app.sh --app counter --arch x86_64
+scripts/build-shell-ios-app.sh --app counter --deployment-target 15.0
+scripts/build-shell-ios-app.sh --app counter --sdk iphoneos --arch arm64
+scripts/build-shell-ios-app.sh --app counter --renderer auto
 ```
 
 允许的 renderer modes 为 `auto`、`skia-gpu` 和 `skia-raster`。Generated build metadata 和 startup logs 会记录 requested 与 selected modes。对真实 Skia 包，`auto` 与 `skia-gpu` 选择 GPU；fallback-Skia builds 与显式 `skia-raster` 保持 CPU presenter。
@@ -121,31 +119,31 @@ scripts/build-component-gallery-ios-app.sh --fallback-skia
 
 `--fallback-skia` 验证 MoonBit C generation、SwiftUI/UIKit host-adapter 与 ABI bridge compilation、runtime compatibility、native-stub compilation、bundle layout 和 ad-hoc simulator signing。它会报告 native Skia unavailable，且不得用作 first-frame runtime evidence。
 
-managed SwiftUI shell 是默认值。仅使用 `--legacy-uikit-shell` 构建冻结的 Release N fixture。输出 bundle 会在 `MOUIShellMode` 中记录所选 route。
+managed SwiftUI shell 是默认值。输出 bundle 会在 `MOUIShellMode` 中记录所选 route。
 
-旧的 app-specific build scripts 仍作为 `scripts/build-mobile-ios-app.sh --app ...` 的 compatibility wrappers。
+应用可直接使用 `scripts/build-shell-ios-app.sh --app ...`；managed shell 不保留旧 runner 分支。
 
-外部 schema v2 app 在 application workspace 中只保留 `mobile.json`、resources、plugins 和 MoonBit mobile entrypoint。package-published script 会自动 staging canonical Xcode project：
+外部 schema v1 app 在 application workspace 中只保留 `shell.json`、resources、plugins 和 MoonBit shell entrypoint。package-published script 会自动 staging canonical Xcode project：
 
 ```sh
-.mooncakes/wzzc-dev/moui/scripts/mobile/build-ios-app.sh \
+.mooncakes/wzzc-dev/moui_shell/scripts/build-ios-app.sh \
   --workspace-root "$PWD" \
   --moui-root "$PWD/.mooncakes/wzzc-dev/moui" \
   --app my_app \
-  --app-config "$PWD/mobile.json"
+  --app-config "$PWD/shell.json"
 ```
 
-只有当 app 需要拥有并 version native project 时，才使用 `moui mobile eject ios --output <dir>`。`--xcode-project` 保留给 repository fixtures 和 ejected shells；managed path 不需要它。
+只有当 app 需要拥有并 version native project 时，才使用 `moui shell eject ios --output <dir>`。`--xcode-project` 保留给 ejected shells；managed path 不需要它。
 
 保留 template 的空 `UILaunchScreen` dictionary。没有现代 launch screen declaration 时，iOS 可能以 legacy `320x480` compatibility mode 运行 app，导致 presentation letterbox 并改变 touch-coordinate mapping。
 
 ## Scene 与 Extension Contract
 
-Mobile Runtime ABI v1 支持一个 active iOS scene。每个 managed `Info.plist` 都将 `UIApplicationSupportsMultipleScenes` 设为 false；如果仍然请求第二个并发 scene，Swift scene lease 会返回 `-1001`。Surface detach 会为 background/foreground 和 view recreation 保留 application session；`destroy_application` 是 process-terminal，并会单独调用。
+Embedding API v1 支持一个 active iOS scene。每个 managed `Info.plist` 都将 `UIApplicationSupportsMultipleScenes` 设为 false；如果仍然请求第二个并发 scene，Swift scene lease 会返回 `-1001`。Surface detach 会为 background/foreground 和 view recreation 保留 application session；`destroy_application` 是 process-terminal，并会单独调用。
 
-规范 shell 接受来自 `mobile.json` 和 source-based `moui.plugin.json` manifests 的 app-owned configuration。Shell API v1 plugins 可注册 native PlatformView factories 和 named Host Service channel handlers。Resolver 会编译声明的 Swift/Objective-C++ sources、复制声明的 resources、拒绝 reserved `moui.*` names，并让 package managers、build scripts、frameworks 和 prebuilt native libraries 留在 managed route 之外。
+规范 shell 接受来自 `shell.json` 和 source-based `moui.plugin.json` manifests 的 app-owned configuration。Shell API v1 plugins 可注册 native PlatformView factories 和 named Host Service channel handlers。Resolver 会编译声明的 Swift/Objective-C++ sources、复制声明的 resources、拒绝 reserved `moui.*` names，并让 package managers、build scripts、frameworks 和 prebuilt native libraries 留在 managed route 之外。
 
-需要 custom Xcode build phases、binary frameworks、managed manifest 之外的 entitlements，或不同 scene architecture 的 app，必须通过拥有自己的 native project 和 shell 来 eject。Eject 之后的稳定边界是 `moui_mobile_runtime_v1.h`；应用必须保持 ABI compatibility、length-driven data ownership、session-generation checks 和 detach/destroy separation。`--legacy-uikit-shell` 是 compatibility fixture，不是 eject workflow。
+需要 custom Xcode build phases、binary frameworks、managed manifest 之外的 entitlements，或不同 scene architecture 的 app，必须通过拥有自己的 native project 和 shell 来 eject。Eject 之后的稳定边界是 `moui_embedding_api_v1.h`；应用必须保持 ABI compatibility、length-driven data ownership、session-generation checks 和 detach/destroy separation。
 
 ## Simulator Smoke
 
@@ -159,8 +157,8 @@ xcrun simctl launch booted dev.wzzc.moui.counter
 在晋升任何 runtime claim 前记录 screenshot 和 log evidence。catalog-backed recorder 会自动化本地 evidence shape：
 
 ```sh
-node scripts/record-mobile-runtime-smoke.mjs --platform ios --app counter --require-passed
-node scripts/record-mobile-runtime-smoke.mjs --platform ios --app showcase --require-passed
+node scripts/record-shell-runtime-smoke.mjs --platform ios --app counter --require-passed
+node scripts/record-shell-runtime-smoke.mjs --platform ios --app showcase --require-passed
 ```
 
 iOS recorder 使用 Meta `idb`，因为 Apple 原生 `simctl` 没有 tap 或 swipe subcommand。运行 iOS smoke 前安装 client 与 companion：
@@ -195,7 +193,7 @@ Xcode 26.3 不通过 `simctl io` 暴露 rotation；recorder 通过 `osascript` �
 先构建设备 artifact：
 
 ```sh
-scripts/build-mobile-ios-app.sh \
+scripts/build-shell-ios-app.sh \
   --app showcase --sdk iphoneos --arch arm64
 ```
 

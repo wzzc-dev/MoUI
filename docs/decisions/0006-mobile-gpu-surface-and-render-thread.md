@@ -106,7 +106,7 @@ The shared Phase 2 scaffolding required before any platform can flip
   state is preserved across all transitions. Per-platform loss detectors feed
   `report_context_loss`; the renderer thread consults `should_recover` and
   `should_fallback_to_raster` each frame.
-- **Manifest schema extension** (`tools/moui/validate_mobile_runtime_manifest`):
+- **Manifest schema extension** (`tools/moui/validate_shell_runtime_manifest`):
   the validator now accepts an optional `renderer` block
   (`requested` / `selected` / `surfaceRoute` / `gpuAvailable` / `gpuPromoted` /
   `fallbackReason`) and, when `gpuPromoted=true`, requires the matching

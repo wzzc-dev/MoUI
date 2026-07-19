@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "id": "dev.wzzc.moui.shell.test-probe",
+  "shellApi": 1,
+  "platforms": {
+    "android": {
+      "sources": [
+        "android/src"
+      ],
+      "resources": [
+        "android/res"
+      ],
+      "entry": "dev.wzzc.moui.shell.testprobe.MoUIShellTestProbePlugin"
+    },
+    "ios": {
+      "sources": [
+        "ios/src"
+      ],
+      "resources": [
+        "ios/resources"
+      ],
+      "entry": "MoUIShellTestProbePlugin"
+    },
+    "harmonyos": {
+      "sources": [
+        "harmonyos/src"
+      ],
+      "resources": [
+        "harmonyos/resources"
+      ],
+      "entry": "MoUIShellTestProbePlugin"
+    }
+  },
+  "platformViewKinds": [
+    "dev.wzzc.moui.shell.test-probe.view"
+  ],
+  "hostChannels": [
+    "dev.wzzc.moui.shell.test-probe.channel"
+  ],
+  "permissions": []
+}

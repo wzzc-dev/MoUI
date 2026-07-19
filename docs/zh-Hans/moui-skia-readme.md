@@ -248,7 +248,7 @@ library directory 还包含 `libskshaper`、`libskunicode_core`、
 由 `skia-provider-lock.json` 锁定到 tag `dev-6d73578a36` 和 commit
 `6d73578a36506d10bc044e920cc71037982e481d`。fetch helpers 会把 package 缓存
 到 `.skia-cache/release` 下，并打印现有原生 package configurators 使用的
-include/lib/flag 值。默认 link mode 是 static；dynamic libraries 需通过
+include/lib/flag 值。默认 link mode 是 static；在支持 dynamic 的路由上，需通过
 `MOUI_SKIA_LINK_MODE=dynamic` 或 `--link-mode dynamic` 显式选择：
 
 ```bash
@@ -257,10 +257,12 @@ bash scripts/fetch-release-skia.sh --platform auto --arch auto --print-env
 
 HarmonyOS 使用 platform-specific 的 `harmonyos_release` provider entry，因为第一批
 被接受的 HarmonyOS assets 位于 release `dev-fcb9c18e54`，而不是默认 desktop/mobile
-provider release。用以下命令显式选择它：
+provider release。HarmonyOS `auto` / `skia-gpu` 必须使用完整的 static asset，
+因为锁定的 `libskia.so` 会隐藏 `libskia_ganesh_ext.a` 引用的 Ganesh 内部符号。
+dynamic 只对显式 `skia-raster` 有效。用以下命令选择支持 GPU 的 asset：
 
 ```bash
-bash scripts/fetch-release-skia.sh --platform harmonyos --arch arm64 --link-mode dynamic --print-env
+bash scripts/fetch-release-skia.sh --platform harmonyos --arch arm64 --link-mode static --print-env
 ```
 
 ```powershell
@@ -335,11 +337,12 @@ package prebuild hook 现在默认为 native builds 启用原生真实 Skia conf
 `MOUI_SKIA_EXTRA_CC_FLAGS`、`MOUI_SKIA_EXTRA_LINK_FLAGS` 和
 `MOUI_SKIA_LINK_MODE` 的环境值优先于 release provider 默认值。
 对于 cross-builds，设置 `MOUI_SKIA_PLATFORM`（`macos`、`linux`、`windows`、
-`android`、`ios`、`iosSim`、`tvos`、`tvosSim` 或 `wasm`）、
+`android`、`ios`、`iosSim`、`harmonyos`、`tvos`、`tvosSim` 或 `wasm`）、
 `MOUI_SKIA_ARCH`（`arm64`、`x64` 或 `riscv64`），并可选设置
 `MOUI_SKIA_CONFIG=Release|Debug`。Android builds 应显式设置
 `MOUI_SKIA_PLATFORM=android`，使 prebuild 使用锁定的 Android artifact，而不是当前
-desktop host platform。
+desktop host platform。HarmonyOS GPU cross-build 必须解析为 static；dynamic 只支持
+显式 `skia-raster`。
 
 要为 macOS 冒烟测试从源码构建一个小型 CPU-only Skia，运行：
 

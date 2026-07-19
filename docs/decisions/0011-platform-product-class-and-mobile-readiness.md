@@ -9,7 +9,7 @@
 
 Mobile backends reported `ready: false` with blockers such as “lifecycle glue
 is not wired” and Skia preflight `runtime_status=experimental-scaffold`, while
-managed shells, `MobileHostChannel` services, packaging matrices, and historical
+managed shells, `EmbedderHostChannel` services, packaging matrices, and historical
 runtime smokes already existed. That binary narrative was both too harsh
 (“completely broken”) and too easy to misread against Linux, where `ready: true`
 means host usability, not full L3 green.

@@ -400,10 +400,10 @@
     },
     {
       "group": "platforms",
-      "slug": "mobile-mainline-roadmap",
-      "title": "Mobile Mainline Roadmap",
-      "path": "docs/mobile-mainline-roadmap.md",
-      "summary": "Mobile embedded-session ownership, renderer selection, host services, and GPU promotion gates.",
+      "slug": "shell-mainline-roadmap",
+      "title": "Shell Mainline Roadmap",
+      "path": "docs/shell-mainline-roadmap.md",
+      "summary": "Native-shell embedding ownership, renderer selection, host services, and GPU promotion gates.",
       "keywords": [
         "mobile",
         "Android",
@@ -479,10 +479,10 @@
     },
     {
       "group": "architecture-api",
-      "slug": "mobile-runtime-abi-v1",
-      "title": "Mobile Runtime ABI v1",
-      "path": "docs/mobile-runtime-abi-v1.md",
-      "summary": "Versioned mobile function table, lifecycle, ownership, capability, and symbol contracts.",
+      "slug": "embedding-api-v1",
+      "title": "Embedding API v1",
+      "path": "docs/embedding-api-v1.md",
+      "summary": "Versioned embedding function table, lifecycle, ownership, capability, and symbol contracts.",
       "keywords": [
         "mobile",
         "ABI",
@@ -1020,15 +1020,15 @@
         },
         {
           "group": "platforms",
-          "slug": "mobile-mainline-roadmap",
-          "title": "移动端主线路线图",
-          "summary": "MoUI 移动端主线路线图的公开文档。",
+          "slug": "shell-mainline-roadmap",
+          "title": "原生壳主线路线图",
+          "summary": "MoUI 原生壳主线路线图的公开文档。",
           "keywords": [
-            "移动端主线路线图",
+            "原生壳主线路线图",
             "MoUI",
             "MoonBit"
           ],
-          "localizedPath": "docs/zh-Hans/mobile-mainline-roadmap.md"
+          "localizedPath": "docs/zh-Hans/shell-mainline-roadmap.md"
         },
         {
           "group": "platforms",
@@ -1092,15 +1092,15 @@
         },
         {
           "group": "architecture-api",
-          "slug": "mobile-runtime-abi-v1",
-          "title": "移动运行时 ABI v1",
-          "summary": "MoUI 移动运行时 ABI v1的公开文档。",
+          "slug": "embedding-api-v1",
+          "title": "嵌入 API v1",
+          "summary": "MoUI 嵌入 API v1的公开文档。",
           "keywords": [
-            "移动运行时 ABI v1",
+            "嵌入 API v1",
             "MoUI",
             "MoonBit"
           ],
-          "localizedPath": "docs/zh-Hans/mobile-runtime-abi-v1.md"
+          "localizedPath": "docs/zh-Hans/embedding-api-v1.md"
         },
         {
           "group": "architecture-api",

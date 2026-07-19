@@ -1,0 +1,10 @@
+plugins {
+    id "com.android.application"
+}
+
+def resolvedMouiShellRoot = project.findProperty("mouiShellRoot") ?:
+    System.getenv("MOUI_SHELL_PACKAGE_ROOT") ?:
+    "${rootProject.projectDir}/../.mooncakes/wzzc-dev/moui_shell"
+
+ext.mouiDefaultApp = "my_app"
+apply from: file("${resolvedMouiShellRoot}/android/runner/shell-app.gradle")
