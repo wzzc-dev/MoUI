@@ -147,7 +147,6 @@ fn brand_mark(theme : @moui.Theme, locale : String) -> @moui.View[Msg] {
   ).frame(width=164.0, height=44.0)
 }
 
-
 ///|
 fn nav_button(
   theme : @moui.Theme,
