@@ -99,7 +99,7 @@ fn safari_toolbar(
         address,
         toolbar_icon_button(
           @views.IconName::Columns,
-          "Show tabs",
+          "Open Apps",
           ToggleLauncher,
           palette,
         ),

@@ -1480,6 +1480,27 @@ export function createWindowWebImports(options = {}) {
     schedule_timeout(delayMs) {
       setTimeout(() => emit(2), Math.max(0, delayMs | 0));
     },
+    wall_clock_year() {
+      return new Date().getFullYear();
+    },
+    wall_clock_month() {
+      return new Date().getMonth() + 1;
+    },
+    wall_clock_day() {
+      return new Date().getDate();
+    },
+    wall_clock_weekday() {
+      return new Date().getDay();
+    },
+    wall_clock_hour() {
+      return new Date().getHours();
+    },
+    wall_clock_minute() {
+      return new Date().getMinutes();
+    },
+    wall_clock_second() {
+      return new Date().getSeconds();
+    },
     schedule_microtask() {
       const microtask =
         globalThis.queueMicrotask ??

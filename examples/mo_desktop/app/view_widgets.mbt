@@ -10,7 +10,7 @@ fn desktop_widgets(
     @views.column(
       [
         @views.text(
-          "July 2026",
+          desktop_month_year(model.clock),
           role=@views.TextRole::Title,
           theme~,
           width=222.0,
@@ -18,11 +18,21 @@ fn desktop_widgets(
         )
         .font(@text.FontSpec::new(size=18.0, weight=650))
         .foreground(rgba8(255, 69, 58)),
-        calendar_row(["S", "M", "T", "W", "T", "F", "S"], palette, theme),
-        calendar_row(["12", "13", "14", "15", "16", "17", "18"], palette, theme),
-        calendar_row(["19", "20", "21", "22", "23", "24", "25"], palette, theme),
+        calendar_row(["S", "M", "T", "W", "T", "F", "S"], None, palette, theme),
+        calendar_row(
+          desktop_calendar_window(model.clock.day, -5),
+          Some(model.clock.day),
+          palette,
+          theme,
+        ),
+        calendar_row(
+          desktop_calendar_window(model.clock.day, 2),
+          Some(model.clock.day),
+          palette,
+          theme,
+        ),
         @views.text(
-          "Today  |  Design review at 2:00 PM",
+          "Today  |  \{desktop_clock_lock_date(model.clock)}",
           role=@views.TextRole::Caption,
           theme~,
           width=222.0,
@@ -132,12 +142,16 @@ fn desktop_widgets(
 ///|
 fn calendar_row(
   labels : Array[String],
+  selected_day : Int?,
   palette : DesktopPalette,
   theme : @moui.Theme,
 ) -> @moui.View[Msg] {
   @views.row(
     labels.map(label => {
-      let today = label == "17"
+      let today = match selected_day {
+        Some(day) => label == day.to_string()
+        None => false
+      }
       if today {
         @views.container(
           @views.text(
@@ -172,6 +186,15 @@ fn calendar_row(
     spacing=7.0,
     align=@views.CrossAlign::Center,
   )
+}
+
+///|
+fn desktop_calendar_window(day : Int, offset : Int) -> Array[String] {
+  let labels : Array[String] = []
+  for index in 0..<7 {
+    labels.push((day + offset + index).max(1).to_string())
+  }
+  labels
 }
 
 ///|
