@@ -49,6 +49,14 @@
 
 ## Verification
 
+### CI postflight
+
+- [x] Keep the established maintenance-line budgets unchanged by moving the
+  runtime pointer-dispatch facade and Web pointer-ABI bridge into focused,
+  package-local files.
+- [x] Re-run the PR profile and the Website packaging check after the split.
+
+
 - `node scripts/test-browser-runtime-events.mjs`
 - `node scripts/test-web-semantics-dom.mjs`
 - `moon test moui/runtime --target native`
