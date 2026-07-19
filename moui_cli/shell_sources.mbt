@@ -366,9 +366,18 @@ fn patch_ejected_shell_text(
             ),
           )
         "bridge/MoUIMobileRuntimeBridge.mm" =>
-          value.replace_all(
+          value
+          .replace_all(
             old=(
               #|#include "../../include/moui_embedding_api_v1.h"
+            ),
+            new=(
+              #|#include "moui_embedding_api_v1.h"
+            ),
+          )
+          .replace_all(
+            old=(
+              #|#include "../../../include/moui_embedding_api_v1.h"
             ),
             new=(
               #|#include "moui_embedding_api_v1.h"
