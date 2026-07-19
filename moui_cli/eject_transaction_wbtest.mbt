@@ -25,14 +25,21 @@ test "ejected Android CMake uses its copied JNI and compatibility sources" {
     "app/src/main/cpp/MoUIShellAndroid.cmake", source, "android",
   )
   inspect(
-    rendered.contains("${MOUI_EMBEDDING_SHARED_ANDROID_DIR}/moui_embedding_jni.cpp"),
+    rendered.contains(
+      "${MOUI_EMBEDDING_SHARED_ANDROID_DIR}/moui_embedding_jni.cpp",
+    ),
     content="true",
   )
   inspect(
-    rendered.contains("${MOUI_EMBEDDING_SHARED_ANDROID_DIR}/moui_android_compat.h"),
+    rendered.contains(
+      "${MOUI_EMBEDDING_SHARED_ANDROID_DIR}/moui_android_compat.h",
+    ),
     content="true",
   )
-  inspect(rendered.contains("src/main/cpp/moui_embedding_jni.cpp"), content="false")
+  inspect(
+    rendered.contains("src/main/cpp/moui_embedding_jni.cpp"),
+    content="false",
+  )
 }
 
 ///|
@@ -78,7 +85,9 @@ test "ejected iOS builder rewrites a multiline ABI compile source" {
     "moui/build-ios-app-core.sh", source, "ios",
   )
   inspect(
-    rendered.contains("$shell_root/moui_shell/embedding/native/moui_embedding_api_v1.cpp"),
+    rendered.contains(
+      "$shell_root/moui_shell/embedding/native/moui_embedding_api_v1.cpp",
+    ),
     content="true",
   )
 }
