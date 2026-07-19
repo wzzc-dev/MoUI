@@ -27,6 +27,8 @@ pub fn macos_system_theme() -> @wzzc-dev/moui/core.ColorScheme
 
 pub fn macos_timer_source() -> @host.HostTimerSource
 
+pub fn macos_wall_clock() -> @host.HostWallClock
+
 pub fn run_app_with_renderer_provider(String, @runtime.AppRuntime, provider~ : MacosRendererProvider, options? : MacosHostAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
 
 pub async fn run_app_with_renderer_provider_async_pump(String, @runtime.AppRuntime, provider~ : MacosRendererProvider, options? : MacosHostAppOptions, window_requests? : @host.HostWindowRequestQueue, frame_interval_ms? : Int) -> Unit

@@ -3,11 +3,12 @@ package "examples/mo_desktop/app"
 
 import {
   "moonbitlang/core/debug",
+  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
 }
 
 // Values
-pub fn program(wallpaper_source? : String) -> @core.Program[DesktopModel, Msg]
+pub fn program(wallpaper_source? : String, services? : @host.HostAppServices, timer_source? : @host.HostTimerSource?, wall_clock? : () -> @host.HostWallClock) -> @core.Program[DesktopModel, Msg]
 
 pub fn update(DesktopModel, Msg) -> DesktopModel
 
@@ -16,6 +17,12 @@ pub fn view(DesktopModel, @core.ViewEnvironment) -> @core.View[Msg]
 // Errors
 
 // Types and methods
+pub(all) enum AppearanceMode {
+  SystemAppearance
+  LightAppearance
+  DarkAppearance
+} derive(Eq, @debug.Debug)
+
 pub(all) enum BrowserPage {
   StartPage
   SearchResults(String)
@@ -37,7 +44,9 @@ pub(all) struct DesktopModel {
   phase : SessionPhase
   active_window : DesktopWindow
   overlay : DesktopOverlay
+  appearance : AppearanceMode
   dark_mode : Bool
+  clock : @host.HostWallClock
   window_maximized : Bool
   window_offset_x : Double
   window_offset_y : Double
@@ -46,7 +55,7 @@ pub(all) struct DesktopModel {
   finder_query : String
   selected_file : String
   launcher_query : String
-  launcher_tab : String
+  launcher_tab : LauncherTab
   browser_query : String
   browser_page : BrowserPage
   wifi_enabled : Bool
@@ -58,10 +67,13 @@ pub(all) struct DesktopModel {
   first_task_done : Bool
   second_task_done : Bool
   third_task_done : Bool
+  imported_files : Array[String]
+  pending_service : @host.HostServiceRequestId?
   last_diagnostic : String
 }
-pub fn DesktopModel::new(wallpaper_source? : String) -> Self
+pub fn DesktopModel::new(wallpaper_source? : String, clock? : @host.HostWallClock) -> Self
 pub fn DesktopModel::remaining_tasks(Self) -> Int
+pub fn DesktopModel::task_done(Self, DesktopTask) -> Bool
 pub fn DesktopModel::update(Self, Msg) -> Self
 
 pub(all) enum DesktopOverlay {
@@ -73,6 +85,12 @@ pub(all) enum DesktopOverlay {
   AboutThisMac
   SystemSettings
   AppStore
+} derive(Eq, @debug.Debug)
+
+pub(all) enum DesktopTask {
+  ReviewDesktop
+  ReplyToMaya
+  PlanTahoePhotos
 } derive(Eq, @debug.Debug)
 
 pub(all) enum DesktopWindow {
@@ -90,6 +108,11 @@ pub(all) enum FinderLocation {
 pub(all) enum FinderViewMode {
   IconView
   ListView
+} derive(Eq, @debug.Debug)
+
+pub(all) enum LauncherTab {
+  Apps
+  Actions
 } derive(Eq, @debug.Debug)
 
 pub(all) enum MenuCommand {
@@ -127,23 +150,27 @@ pub(all) enum Msg {
   ToggleNotificationCenter
   DismissOverlay
   SelectFinderLocation(FinderLocation)
-  SelectFinderView(String)
+  SelectFinderView(FinderViewMode)
   FinderQueryChanged(String)
   SelectFinderItem(String)
   LauncherQueryChanged(String)
-  LauncherTabSelected(String)
+  LauncherTabSelected(LauncherTab)
   BrowserQueryChanged(String)
   SubmitBrowserQuery
   ShowBrowserStartPage
   OpenFavorite(String)
   ToggleDarkMode
+  UseSystemAppearance
+  RequestFileImport
+  HostCompleted(@host.HostCompletedServiceResponse)
+  ClockUpdated(@host.HostWallClock)
   WifiChanged(Bool)
   BluetoothChanged(Bool)
   LowPowerModeChanged(Bool)
   BrightnessChanged(Double)
   VolumeChanged(Double)
   MarkNotificationsRead
-  CompleteTask(Int)
+  CompleteTask(DesktopTask)
 }
 
 pub(all) enum SessionPhase {

@@ -20,7 +20,11 @@ fn desktop_month_year(clock : @host.HostWallClock) -> String {
 
 ///|
 fn clock_two_digits(value : Int) -> String {
-  if value < 10 { "0" + value.to_string() } else { value.to_string() }
+  if value < 10 {
+    "0" + value.to_string()
+  } else {
+    value.to_string()
+  }
 }
 
 ///|
