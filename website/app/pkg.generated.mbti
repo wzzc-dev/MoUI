@@ -44,7 +44,6 @@ pub struct Model {
   home_scroll : @core.ScrollState
   docs_body_scroll : @core.ScrollState
   docs_scroll : @core.ScrollState
-  showcases_scroll : @core.ScrollState
   showcase_grid_scroll : @core.ScrollState
   tutorial_scroll : @core.ScrollState
   route_history : @views.RouteHistoryState

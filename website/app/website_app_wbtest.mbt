@@ -169,6 +169,81 @@ test "website showcases lazy grid renders visible screenshots only" {
   })
   assert_true(visible_sources.length() > 0)
   assert_true(visible_sources.length() < screenshot_sources.length())
+  assert_true(has_text(commands, "Archived preview"))
+  assert_true(has_text(commands, "Evidence pending"))
+}
+
+///|
+test "website showcases scroll their virtual grid without a duplicate page heading" {
+  let model = Model::new().update(OpenShowcases)
+  let runtime = model.test_runtime(width=1180.0, height=760.0)
+  let commands = runtime.draw_commands()
+  assert_true(exact_text_count(commands, "Showcases") == 1)
+  assert_true(has_text(commands, "MoUI screenshot gallery"))
+  assert_true(
+    has_text(commands, "Click any screenshot to open its source on GitHub."),
+  )
+  let image = image_frame(commands, "assets/screenshots/showcase.webp").unwrap()
+  assert_false(
+    has_image_source(
+      commands, "assets/screenshots/android-componentgallery.webp",
+    ),
+  )
+  let result = runtime.dispatch_pointer_input(
+    @core.PointerEvent::new(
+      position=@geometry.Point::new(
+        x=image.origin.x + image.size.width / 2.0,
+        y=image.origin.y + image.size.height / 2.0,
+      ),
+      phase=@core.PointerPhase::Move,
+      wheel_delta=@geometry.Point::new(x=0.0, y=-2000.0),
+    ),
+  )
+  assert_true(result.host_flags() == 1)
+  assert_true(model.showcase_grid_scroll.offset().y > 0.0)
+  assert_true(
+    has_image_source(
+      runtime.draw_commands(),
+      "assets/screenshots/android-componentgallery.webp",
+    ),
+  )
+}
+
+///|
+test "website resets showcase grid scroll when returning to the route" {
+  let model = Model::new().update(OpenShowcases)
+  model.showcase_grid_scroll.scroll_to(x=0.0, y=180.0)
+  assert_true(model.showcase_grid_scroll.offset().y == 180.0)
+  let revisited = model.update(OpenHome).update(OpenShowcases)
+  assert_true(revisited.showcase_grid_scroll.offset().y == 0.0)
+}
+
+///|
+test "website showcase cards link to their owning source entrypoints" {
+  let entries = website_showcase_entries()
+  assert_true(
+    entries.any(entry => {
+      entry.slug == "showcase" &&
+      entry.source_url ==
+      "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase/app"
+    }),
+  )
+  assert_true(
+    entries.any(entry => {
+      entry.slug == "ios-componentgallery" &&
+      entry.source_url ==
+      "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase/ios_skia" &&
+      entry.status_key == "showcase.status.pending"
+    }),
+  )
+  assert_true(
+    entries.any(entry => {
+      entry.slug == "android-componentgallery" &&
+      entry.source_url ==
+      "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase/android_skia" &&
+      entry.status_key == "showcase.status.pending"
+    }),
+  )
 }
 
 ///|
@@ -873,6 +948,19 @@ fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
 }
 
 ///|
+fn exact_text_count(commands : Array[@core.DrawCommand], text : String) -> Int {
+  let mut count = 0
+  for command in commands {
+    match command {
+      @core.DrawCommand::DrawText({ text: value, .. }) if value == text =>
+        count += 1
+      _ => ()
+    }
+  }
+  count
+}
+
+///|
 /// Like `has_text`, but concatenates text runs that share the same line
 /// (y within 2.0px) before matching. Needed for syntax-highlighted code
 /// blocks where "fn main {}" is split into separate runs per token.
@@ -919,6 +1007,21 @@ fn has_image_source(
     command is @core.DrawCommand::DrawImage({ source: value, .. }) &&
     value == source
   })
+}
+
+///|
+fn image_frame(
+  commands : Array[@core.DrawCommand],
+  source : String,
+) -> @core.Rect? {
+  for command in commands {
+    match command {
+      @core.DrawCommand::DrawImage({ source: value, frame, .. }) if value ==
+        source => return Some(frame)
+      _ => ()
+    }
+  }
+  None
 }
 
 ///|

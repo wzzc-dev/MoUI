@@ -202,3 +202,99 @@ test "scroll indicator is opt-in and draggable" {
   })
   assert_true(hidden_paint.overlay_commands.is_empty())
 }
+
+///|
+test "lazy grid forwards its scroll indicator policy" {
+  let root : @core.View[Unit] = lazy_grid(
+    [0, 1, 2, 3, 4],
+    item => "item-\{item}",
+    _item => scroll_test_rect(width=100.0, height=100.0),
+    columns=1,
+    item_height=100.0,
+    viewport_width=100.0,
+    viewport_height=100.0,
+    shows_indicator=true,
+  )
+  let runtime = @runtime.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=100.0, height=100.0),
+  )
+  assert_true(
+    runtime
+    .draw_commands()
+    .any(command => command is @core.DrawCommand::FillRoundedRectBrush(_)),
+  )
+}
+
+///|
+test "lazy grid rebuilds its virtual window after scrolling" {
+  let state = @core.ScrollState::new()
+  let root : @core.View[Unit] = lazy_grid(
+    ["row-0", "row-1", "row-2", "row-3", "row-4"],
+    item => item,
+    item => text(item, width=100.0, height=100.0),
+    state~,
+    columns=1,
+    item_height=100.0,
+    viewport_width=100.0,
+    viewport_height=100.0,
+  )
+  let runtime = @runtime.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=100.0, height=100.0),
+  )
+  assert_false(scroll_test_has_text(runtime.draw_commands(), "row-4"))
+  state.scroll_to(x=0.0, y=300.0)
+  assert_true(scroll_test_has_text(runtime.draw_commands(), "row-4"))
+}
+
+///|
+test "lazy list rebuilds its virtual window after scrolling" {
+  let state = @core.ScrollState::new()
+  let root : @core.View[Unit] = lazy_list(
+    ["row-0", "row-1", "row-2", "row-3", "row-4"],
+    item => item,
+    item => text(item, width=100.0, height=100.0),
+    state~,
+    item_height=100.0,
+    viewport_height=100.0,
+  )
+  let runtime = @runtime.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=100.0, height=100.0),
+  )
+  assert_false(scroll_test_has_text(runtime.draw_commands(), "row-4"))
+  state.scroll_to(x=0.0, y=300.0)
+  assert_true(scroll_test_has_text(runtime.draw_commands(), "row-4"))
+}
+
+///|
+test "virtual list rebuilds its virtual window after scrolling" {
+  let state = @core.ScrollState::new()
+  let root : @core.View[Unit] = virtual_list(
+    ["row-0", "row-1", "row-2", "row-3", "row-4"],
+    item => item,
+    item => text(item, width=100.0, height=100.0),
+    state~,
+    item_height=100.0,
+    viewport_height=100.0,
+    overscan=0,
+  )
+  let runtime = @runtime.AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=100.0, height=100.0),
+  )
+  assert_false(scroll_test_has_text(runtime.draw_commands(), "row-4"))
+  state.scroll_to(x=0.0, y=300.0)
+  assert_true(scroll_test_has_text(runtime.draw_commands(), "row-4"))
+}
+
+///|
+fn scroll_test_has_text(
+  commands : Array[@core.DrawCommand],
+  value : String,
+) -> Bool {
+  commands.any(command => {
+    command is @core.DrawCommand::DrawText({ text, .. }) && text == value
+  })
+}
