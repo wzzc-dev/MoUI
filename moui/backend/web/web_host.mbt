@@ -154,34 +154,26 @@ pub fn web_service_bridge(
             @host.HostServiceResponse::Unavailable("clipboard write failed")
           }
         @host.HostServiceRequest::Clipboard(
-          @host.HostClipboardRequest::ReadText,
+          @host.HostClipboardRequest::ReadText
         ) =>
           async_dispatch(
-            async_queue,
-            request,
-            "clipboard read is unavailable on Web; paste is delivered by browser text input events",
+            async_queue, request, "clipboard read is unavailable on Web; paste is delivered by browser text input events",
           )
         @host.HostServiceRequest::Clipboard(
-          @host.HostClipboardRequest::ReadImage,
+          @host.HostClipboardRequest::ReadImage
         ) =>
           async_dispatch(
-            async_queue,
-            request,
-            "clipboard image read is unavailable on Web",
+            async_queue, request, "clipboard image read is unavailable on Web",
           )
         @host.HostServiceRequest::Clipboard(
-          @host.HostClipboardRequest::WriteImage(_, _),
+          @host.HostClipboardRequest::WriteImage(_, _)
         ) =>
           async_dispatch(
-            async_queue,
-            request,
-            "clipboard image write is unavailable on Web",
+            async_queue, request, "clipboard image write is unavailable on Web",
           )
         @host.HostServiceRequest::FileDialog(options) =>
           async_dispatch(
-            async_queue,
-            request,
-            "file dialog service is asynchronous on Web",
+            async_queue, request, "file dialog service is asynchronous on Web",
           )
         @host.HostServiceRequest::TextFile(
           @host.HostTextFileRequest::ReadText(path)
@@ -333,21 +325,47 @@ fn web_host_string_to_string(handle : WebHostString) -> String {
 
 ///|
 fn web_begin_create_string() -> Int = "window_web" "begin_create_string"
+
+///|
 fn web_string_append_char(handle : Int, code_point : Int) -> Unit = "window_web" "string_append_char"
+
+///|
 fn web_finish_create_string(handle : Int) -> WebHostString = "window_web" "finish_create_string"
+
+///|
 fn web_begin_read_string(id : Int) -> WebHostString = "window_web" "begin_read_string"
+
+///|
 fn web_string_read_char(handle : WebHostString) -> Int = "window_web" "string_read_char"
+
+///|
 fn web_finish_read_string(handle : WebHostString) -> Unit = "window_web" "finish_read_string"
+
+///|
 fn web_open_url(url : WebHostString) -> Bool = "window_web" "open_url"
+
+///|
 fn web_clipboard_write_text(text : WebHostString) -> Bool = "window_web" "clipboard_write_text"
 
 ///|
 extern "wasm" fn web_wall_clock_year() -> Int = "window_web" "wall_clock_year"
+
+///|
 extern "wasm" fn web_wall_clock_month() -> Int = "window_web" "wall_clock_month"
+
+///|
 extern "wasm" fn web_wall_clock_day() -> Int = "window_web" "wall_clock_day"
+
+///|
 extern "wasm" fn web_wall_clock_weekday() -> Int = "window_web" "wall_clock_weekday"
+
+///|
 extern "wasm" fn web_wall_clock_hour() -> Int = "window_web" "wall_clock_hour"
+
+///|
 extern "wasm" fn web_wall_clock_minute() -> Int = "window_web" "wall_clock_minute"
+
+///|
 extern "wasm" fn web_wall_clock_second() -> Int = "window_web" "wall_clock_second"
 
 ///|
