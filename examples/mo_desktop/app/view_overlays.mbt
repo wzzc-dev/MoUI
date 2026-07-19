@@ -92,8 +92,10 @@ fn app_launcher(
             @views.choice_item("apps", "Apps"),
             @views.choice_item("actions", "Actions"),
           ],
-          selected=model.launcher_tab,
-          on_select=value => LauncherTabSelected(value),
+          selected=model.launcher_tab.id(),
+          on_select=value => LauncherTabSelected(
+            if value == "actions" { Actions } else { Apps },
+          ),
           theme~,
           width=inner_width,
         ),
@@ -210,12 +212,20 @@ fn system_settings(
           width=width - 32.0,
           height=38.0,
         ),
+        @views.button(
+          "Use System Appearance",
+          on_click=UseSystemAppearance,
+          variant=@views.ButtonVariant::Ghost,
+          theme~,
+          width=width - 32.0,
+          height=34.0,
+        ),
       ],
       spacing=12.0,
       align=@views.CrossAlign::Stretch,
     ),
     width,
-    194.0,
+    242.0,
     palette,
     radius=18.0,
     padding=16.0,
@@ -297,7 +307,7 @@ fn desktop_modal(
 
 ///|
 fn launcher_entries(model : DesktopModel) -> Array[LauncherEntry] {
-  if model.launcher_tab == "actions" {
+  if model.launcher_tab == Actions {
     [
       {
         label: if model.dark_mode {
@@ -428,10 +438,11 @@ fn control_center(
   // menu-bar status cluster — not a titled settings form with full-width CTAs.
   let compact = viewport_width < 520.0
   let width = if compact { (viewport_width - 20.0).max(272.0) } else { 320.0 }
+  let available_height = (viewport_height - 48.0).max(300.0)
   let height = if compact {
-    (viewport_height - 70.0).min(520.0).max(430.0)
+    available_height.min(520.0)
   } else {
-    470.0
+    470.0.min(available_height)
   }
   let inner_width = width - 24.0
   let tile_w = (inner_width - 8.0) / 2.0
@@ -441,7 +452,7 @@ fn control_center(
       [
         connectivity_tile(
           "Wi-Fi",
-          "HomeNet-5G",
+          "Connected",
           @views.IconName::Link,
           model.wifi_enabled,
           WifiChanged(!model.wifi_enabled),
@@ -468,7 +479,7 @@ fn control_center(
       [
         connectivity_tile(
           "Wi-Fi",
-          "HomeNet-5G",
+          "Connected",
           @views.IconName::Link,
           model.wifi_enabled,
           WifiChanged(!model.wifi_enabled),
@@ -552,7 +563,7 @@ fn control_center(
         palette,
         theme,
       ),
-      control_battery_card(inner_width, palette, theme),
+      control_system_status(model, inner_width, palette, theme),
       @views.container(
         @views.text(
           "Lock Screen",
@@ -574,7 +585,12 @@ fn control_center(
     align=@views.CrossAlign::Stretch,
   )
   let panel = @views.container(
-    body,
+    @views.scroll_view(
+      body,
+      width=inner_width,
+      height=height - 24.0,
+      shows_indicator=true,
+    ),
     width~,
     height~,
     background=overlay_panel_background(palette),
@@ -752,7 +768,8 @@ fn control_action_tile(
 }
 
 ///|
-fn control_battery_card(
+fn control_system_status(
+  model : DesktopModel,
   width : Double,
   palette : DesktopPalette,
   theme : @moui.Theme,
@@ -762,22 +779,22 @@ fn control_battery_card(
       [
         @views.container(
           @views.text(
-            "86%",
+            desktop_clock_time(model.clock),
             role=@views.TextRole::Caption,
             theme~,
-            width=34.0,
+            width=50.0,
             height=16.0,
             align=@text.TextAlign::TextCenter,
           )
           .font(@text.FontSpec::new(size=10.0, weight=700))
           .foreground(palette.foreground),
-          width=40.0,
+          width=58.0,
           height=40.0,
-          background=rgba8(210, 236, 220),
+          background=palette.accent_soft,
           corner_radius=20.0,
           border=Some(
             @graphics.BorderStyle::new(
-              brush=@graphics.Brush::solid(rgba8(52, 199, 89, a=0.70)),
+              brush=@graphics.Brush::solid(palette.accent.multiply_alpha(0.70)),
               width=2.0,
             ),
           ),
@@ -786,19 +803,25 @@ fn control_battery_card(
         @views.column(
           [
             @views.text(
-              "Battery",
+              "System status",
               role=@views.TextRole::Label,
               theme~,
-              width=(width - 70.0).max(100.0),
+              width=(width - 88.0).max(100.0),
               height=18.0,
             )
             .font(@text.FontSpec::new(size=13.0, weight=600))
             .foreground(palette.foreground),
             @views.text(
-              "MacBook Pro · 86%",
+              if model.appearance == SystemAppearance {
+                "Following system appearance"
+              } else if model.dark_mode {
+                "Manual dark appearance"
+              } else {
+                "Manual light appearance"
+              },
               role=@views.TextRole::Caption,
               theme~,
-              width=(width - 70.0).max(100.0),
+              width=(width - 88.0).max(100.0),
               height=16.0,
             ).foreground(palette.muted),
           ],

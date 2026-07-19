@@ -239,6 +239,7 @@ pub impl @window_web.ApplicationHandler for WebApp with fn new_events(
   if event_loop.exiting() {
     return ()
   }
+  web_timer_dispatch_due()
   self.drain_async_host_services()
   self.redraw_dirty_windows()
 }

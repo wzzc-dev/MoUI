@@ -287,6 +287,22 @@ pub fn web_app_services(
 }
 
 ///|
+/// Read the browser's current local civil time. This is intentionally separate
+/// from `web_timer_source()`: the timer provides monotonic scheduling while the
+/// wall clock provides a user-visible local date and time snapshot.
+pub fn web_wall_clock() -> @host.HostWallClock {
+  @host.HostWallClock::new(
+    web_wall_clock_year(),
+    web_wall_clock_month(),
+    web_wall_clock_day(),
+    web_wall_clock_weekday(),
+    web_wall_clock_hour(),
+    web_wall_clock_minute(),
+    second=web_wall_clock_second(),
+  )
+}
+
+///|
 fn dispatch_web_open_url(url : String) -> Bool {
   web_open_url(web_host_string(url))
 }
@@ -347,6 +363,27 @@ fn web_open_url(url : WebHostString) -> Bool = "window_web" "open_url"
 
 ///|
 fn web_clipboard_write_text(text : WebHostString) -> Bool = "window_web" "clipboard_write_text"
+
+///|
+extern "wasm" fn web_wall_clock_year() -> Int = "window_web" "wall_clock_year"
+
+///|
+extern "wasm" fn web_wall_clock_month() -> Int = "window_web" "wall_clock_month"
+
+///|
+extern "wasm" fn web_wall_clock_day() -> Int = "window_web" "wall_clock_day"
+
+///|
+extern "wasm" fn web_wall_clock_weekday() -> Int = "window_web" "wall_clock_weekday"
+
+///|
+extern "wasm" fn web_wall_clock_hour() -> Int = "window_web" "wall_clock_hour"
+
+///|
+extern "wasm" fn web_wall_clock_minute() -> Int = "window_web" "wall_clock_minute"
+
+///|
+extern "wasm" fn web_wall_clock_second() -> Int = "window_web" "wall_clock_second"
 
 ///|
 fn web_async_clipboard_read_text(request_id : Int) -> Unit = "window_web" "clipboard_read_text_async"

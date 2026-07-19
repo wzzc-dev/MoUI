@@ -69,10 +69,35 @@ pub(all) enum FinderViewMode {
 } derive(Eq, Debug)
 
 ///|
+pub(all) enum LauncherTab {
+  Apps
+  Actions
+} derive(Eq, Debug)
+
+///|
+pub(all) enum DesktopTask {
+  ReviewDesktop
+  ReplyToMaya
+  PlanTahoePhotos
+} derive(Eq, Debug)
+
+///|
+pub(all) enum AppearanceMode {
+  SystemAppearance
+  LightAppearance
+  DarkAppearance
+} derive(Eq, Debug)
+
+///|
 pub(all) enum BrowserPage {
   StartPage
   SearchResults(String)
 } derive(Eq, Debug)
+
+///|
+fn default_desktop_clock() -> @host.HostWallClock {
+  @host.HostWallClock::new(2026, 7, 19, 0, 9, 41)
+}
 
 ///|
 pub(all) struct DesktopModel {
@@ -80,7 +105,9 @@ pub(all) struct DesktopModel {
   phase : SessionPhase
   active_window : DesktopWindow
   overlay : DesktopOverlay
+  appearance : AppearanceMode
   dark_mode : Bool
+  clock : @host.HostWallClock
   window_maximized : Bool
   window_offset_x : Double
   window_offset_y : Double
@@ -89,7 +116,7 @@ pub(all) struct DesktopModel {
   finder_query : String
   selected_file : String
   launcher_query : String
-  launcher_tab : String
+  launcher_tab : LauncherTab
   browser_query : String
   browser_page : BrowserPage
   wifi_enabled : Bool
@@ -101,6 +128,8 @@ pub(all) struct DesktopModel {
   first_task_done : Bool
   second_task_done : Bool
   third_task_done : Bool
+  imported_files : Array[String]
+  pending_service : @host.HostServiceRequestId?
   last_diagnostic : String
 }
 
@@ -121,35 +150,42 @@ pub(all) enum Msg {
   ToggleNotificationCenter
   DismissOverlay
   SelectFinderLocation(FinderLocation)
-  SelectFinderView(String)
+  SelectFinderView(FinderViewMode)
   FinderQueryChanged(String)
   SelectFinderItem(String)
   LauncherQueryChanged(String)
-  LauncherTabSelected(String)
+  LauncherTabSelected(LauncherTab)
   BrowserQueryChanged(String)
   SubmitBrowserQuery
   ShowBrowserStartPage
   OpenFavorite(String)
   ToggleDarkMode
+  UseSystemAppearance
+  RequestFileImport
+  HostCompleted(@host.HostCompletedServiceResponse)
+  ClockUpdated(@host.HostWallClock)
   WifiChanged(Bool)
   BluetoothChanged(Bool)
   LowPowerModeChanged(Bool)
   BrightnessChanged(Double)
   VolumeChanged(Double)
   MarkNotificationsRead
-  CompleteTask(Int)
+  CompleteTask(DesktopTask)
 }
 
 ///|
 pub fn DesktopModel::new(
   wallpaper_source? : String = "examples/mo_desktop/web_wasm/assets/tahoe-day.jpg",
+  clock? : @host.HostWallClock = default_desktop_clock(),
 ) -> DesktopModel {
   {
     wallpaper_source,
     phase: Locked,
     active_window: Finder,
     overlay: OverlayNone,
+    appearance: SystemAppearance,
     dark_mode: false,
+    clock,
     window_maximized: false,
     window_offset_x: 0.0,
     window_offset_y: 0.0,
@@ -158,7 +194,7 @@ pub fn DesktopModel::new(
     finder_query: "",
     selected_file: "",
     launcher_query: "",
-    launcher_tab: "apps",
+    launcher_tab: Apps,
     browser_query: "",
     browser_page: StartPage,
     wifi_enabled: true,
@@ -170,6 +206,8 @@ pub fn DesktopModel::new(
     first_task_done: false,
     second_task_done: false,
     third_task_done: false,
+    imported_files: [],
+    pending_service: None,
     last_diagnostic: "Ready",
   }
 }
@@ -182,8 +220,10 @@ pub fn update(model : DesktopModel, message : Msg) -> DesktopModel {
 ///|
 pub fn DesktopModel::update(self : DesktopModel, message : Msg) -> DesktopModel {
   let updated = self.apply(message)
-  let diagnostic = message.diagnostic()
-  { ..updated, last_diagnostic: diagnostic }
+  match message {
+    HostCompleted(_) | ClockUpdated(_) => updated
+    _ => { ..updated, last_diagnostic: message.diagnostic() }
+  }
 }
 
 ///|
@@ -223,19 +263,28 @@ fn DesktopModel::apply(self : DesktopModel, message : Msg) -> DesktopModel {
       }
     CloseWindow | MinimizeWindow =>
       { ..self, active_window: NoWindow, window_maximized: false }
-    ToggleMaximize => { ..self, window_maximized: !self.window_maximized }
+    ToggleMaximize =>
+      if self.active_window == NoWindow {
+        self
+      } else {
+        { ..self, window_maximized: !self.window_maximized }
+      }
     MoveWindowBy(dx, dy) =>
-      {
-        ..self
-        // A title-bar drag from a zoomed macOS window restores it before
-        // applying the gesture. Retaining the previous offset makes zoom /
-        // restore stable rather than snapping every window back to center.
-        ,
-        window_maximized: false,
-        // Keep the title bar in reach while allowing a deliberate, natural
-        // desktop-scale reposition instead of a rigid centered mock window.
-        window_offset_x: (self.window_offset_x + dx).max(-360.0).min(360.0),
-        window_offset_y: (self.window_offset_y + dy).max(-220.0).min(220.0),
+      if self.active_window == NoWindow {
+        self
+      } else {
+        {
+          ..self
+          // A title-bar drag from a zoomed macOS window restores it before
+          // applying the gesture. Retaining the previous offset makes zoom /
+          // restore stable rather than snapping every window back to center.
+          ,
+          window_maximized: false,
+          // Keep the title bar in reach while allowing a deliberate, natural
+          // desktop-scale reposition instead of a rigid centered mock window.
+          window_offset_x: (self.window_offset_x + dx).max(-360.0).min(360.0),
+          window_offset_y: (self.window_offset_y + dy).max(-220.0).min(220.0),
+        }
       }
     ToggleMenu(menu) =>
       {
@@ -249,7 +298,16 @@ fn DesktopModel::apply(self : DesktopModel, message : Msg) -> DesktopModel {
     RunMenuCommand(command) =>
       match command {
         ToggleAppearance =>
-          { ..self, dark_mode: !self.dark_mode, overlay: OverlayNone }
+          {
+            ..self,
+            appearance: if self.dark_mode {
+              LightAppearance
+            } else {
+              DarkAppearance
+            },
+            dark_mode: !self.dark_mode,
+            overlay: OverlayNone,
+          }
         ShowAboutThisMac => { ..self, overlay: AboutThisMac }
         ShowSystemSettings => { ..self, overlay: SystemSettings }
         ShowAppStore => { ..self, overlay: AppStore }
@@ -372,19 +430,11 @@ fn DesktopModel::apply(self : DesktopModel, message : Msg) -> DesktopModel {
         finder_query: "",
         selected_file: "",
       }
-    SelectFinderView(value) =>
-      {
-        ..self,
-        finder_view_mode: if value == "list" {
-          ListView
-        } else {
-          IconView
-        },
-      }
+    SelectFinderView(view_mode) => { ..self, finder_view_mode: view_mode }
     FinderQueryChanged(value) => { ..self, finder_query: value }
     SelectFinderItem(value) => { ..self, selected_file: value }
     LauncherQueryChanged(value) => { ..self, launcher_query: value }
-    LauncherTabSelected(value) => { ..self, launcher_tab: value }
+    LauncherTabSelected(tab) => { ..self, launcher_tab: tab }
     BrowserQueryChanged(value) => { ..self, browser_query: value }
     SubmitBrowserQuery =>
       {
@@ -405,18 +455,28 @@ fn DesktopModel::apply(self : DesktopModel, message : Msg) -> DesktopModel {
         browser_query: value,
         browser_page: SearchResults(value),
       }
-    ToggleDarkMode => { ..self, dark_mode: !self.dark_mode }
+    ToggleDarkMode =>
+      {
+        ..self,
+        appearance: if self.dark_mode { LightAppearance } else { DarkAppearance },
+        dark_mode: !self.dark_mode,
+      }
+    UseSystemAppearance => { ..self, appearance: SystemAppearance }
+    RequestFileImport => { ..self, last_diagnostic: "Opening file dialog…" }
+    HostCompleted(completion) => self.apply_host_completion(completion)
+    ClockUpdated(clock) => { ..self, clock }
     WifiChanged(value) => { ..self, wifi_enabled: value }
     BluetoothChanged(value) => { ..self, bluetooth_enabled: value }
     LowPowerModeChanged(value) => { ..self, low_power_mode: value }
-    BrightnessChanged(value) => { ..self, brightness: value }
-    VolumeChanged(value) => { ..self, volume: value }
+    BrightnessChanged(value) =>
+      { ..self, brightness: value.max(0.0).min(1.0) }
+    VolumeChanged(value) => { ..self, volume: value.max(0.0).min(1.0) }
     MarkNotificationsRead => { ..self, notifications_read: true }
-    CompleteTask(index) =>
-      match index {
-        0 => { ..self, first_task_done: true }
-        1 => { ..self, second_task_done: true }
-        _ => { ..self, third_task_done: true }
+    CompleteTask(task) =>
+      match task {
+        ReviewDesktop => { ..self, first_task_done: true }
+        ReplyToMaya => { ..self, second_task_done: true }
+        PlanTahoePhotos => { ..self, third_task_done: true }
       }
   }
 }
@@ -427,6 +487,67 @@ pub fn DesktopModel::remaining_tasks(self : DesktopModel) -> Int {
   let second = if self.second_task_done { 0 } else { 1 }
   let third = if self.third_task_done { 0 } else { 1 }
   first + second + third
+}
+
+///|
+pub fn DesktopModel::task_done(self : DesktopModel, task : DesktopTask) -> Bool {
+  match task {
+    ReviewDesktop => self.first_task_done
+    ReplyToMaya => self.second_task_done
+    PlanTahoePhotos => self.third_task_done
+  }
+}
+
+///|
+fn DesktopModel::apply_host_completion(
+  self : DesktopModel,
+  completion : @host.HostCompletedServiceResponse,
+) -> DesktopModel {
+  match completion.response {
+    @host.HostServiceResponse::Pending(id) =>
+      {
+        ..self,
+        pending_service: Some(id),
+        last_diagnostic: "Waiting for host service…",
+      }
+    @host.HostServiceResponse::SystemTheme(scheme) =>
+      {
+        ..self,
+        pending_service: None,
+        dark_mode: if self.appearance == SystemAppearance {
+          scheme == @state.ColorScheme::Dark
+        } else {
+          self.dark_mode
+        },
+        last_diagnostic: "Updated system appearance",
+      }
+    @host.HostServiceResponse::FileDialogSelection(paths) => {
+      let imported_files = self.imported_files.copy()
+      for path in paths {
+        if !imported_files.contains(path) {
+          imported_files.push(path)
+        }
+      }
+      {
+        ..self,
+        imported_files,
+        pending_service: None,
+        active_window: Finder,
+        overlay: OverlayNone,
+        finder_location: Documents,
+        last_diagnostic: if paths.is_empty() {
+          "File import cancelled"
+        } else {
+          "Imported \{paths.length()} file(s)"
+        },
+      }
+    }
+    @host.HostServiceResponse::UrlOpened =>
+      { ..self, pending_service: None, last_diagnostic: "Opened URL with host" }
+    @host.HostServiceResponse::Unavailable(message) =>
+      { ..self, pending_service: None, last_diagnostic: message }
+    _ => { ..self, pending_service: None, last_diagnostic: "Host service completed" }
+  }
 }
 
 ///|
@@ -475,6 +596,10 @@ fn Msg::diagnostic(self : Msg) -> String {
     ShowBrowserStartPage => "Opened browser start page"
     OpenFavorite(_) => "Opened browser favorite"
     ToggleDarkMode => "Toggled dark mode"
+    UseSystemAppearance => "Requested system appearance"
+    RequestFileImport => "Requested file import"
+    HostCompleted(_) => "Received host service completion"
+    ClockUpdated(_) => "Updated live clock"
     WifiChanged(_) => "Changed Wi-Fi setting"
     BluetoothChanged(_) => "Changed Bluetooth setting"
     LowPowerModeChanged(_) => "Changed low power mode"
@@ -500,6 +625,14 @@ fn FinderLocation::label(self : FinderLocation) -> String {
     Documents => "Documents"
     Applications => "Applications"
     Downloads => "Downloads"
+  }
+}
+
+///|
+fn LauncherTab::id(self : LauncherTab) -> String {
+  match self {
+    Apps => "apps"
+    Actions => "actions"
   }
 }
 

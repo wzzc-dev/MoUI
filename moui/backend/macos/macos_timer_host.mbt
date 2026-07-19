@@ -21,8 +21,12 @@ extern "C" fn macos_timer_cancel(handle : UInt64) -> Unit = "moui_macos_timer_ca
 /// releases the dispatch source and the captured MoonBit closure.
 pub fn macos_timer_source() -> @host.HostTimerSource {
   @host.HostTimerSource::new(start_timer=(interval_ms, dispatch) => {
+    let last_time_ms = Ref(macos_perf_now_ms())
     let tick = () => {
-      dispatch(@core.Frame::new(time_ms=0.0, delta_ms=interval_ms))
+      let now_ms = macos_perf_now_ms()
+      let delta_ms = (now_ms - last_time_ms.val).max(0.0)
+      last_time_ms.val = now_ms
+      dispatch(@core.Frame::new(time_ms=now_ms, delta_ms~))
     }
     let handle = macos_timer_start(
       fn(callback) { callback() },
