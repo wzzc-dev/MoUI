@@ -93,6 +93,20 @@ test "ejected iOS builder rewrites a multiline ABI compile source" {
 }
 
 ///|
+test "ejected iOS bridge includes the copied embedding header" {
+  let source =
+    #|#include "../../../include/moui_embedding_api_v1.h"
+  let rendered = patch_ejected_shell_text(
+    "bridge/MoUIMobileRuntimeBridge.mm", source, "ios",
+  )
+  inspect(
+    rendered.contains("#include \"moui_embedding_api_v1.h\""),
+    content="true",
+  )
+  inspect(rendered.contains("../../../include"), content="false")
+}
+
+///|
 fn eject_test_write_text(path : String, value : String) -> Unit raise {
   match mkdir_p(parent_dir(path)) {
     Ok(_) => ()
