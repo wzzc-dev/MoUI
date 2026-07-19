@@ -25,6 +25,7 @@ pub(all) struct RichTextRun {
   visual_text : String?
   image_source : String?
   image_size : @core.Size?
+  image_width_fraction : Double?
   image_fit : @core.ImageFit
   font : @core.FontSpec?
   color : @core.Color?
@@ -64,6 +65,7 @@ pub(all) struct RichTextBlock {
   line_height : Double?
   corner_radius : Double
   rule : Bool
+  line_align : @core.TextAlign?
   source_range : RichTextSourceRange?
   content_range : RichTextSourceRange?
 } derive(Eq, Debug, ToJson)
@@ -86,12 +88,14 @@ pub fn RichTextRun::new(
   background_radius? : Double = 4.0,
   decoration? : RichTextDecoration? = None,
   source_range? : RichTextSourceRange? = None,
+  image_width_fraction? : Double? = None,
 ) -> RichTextRun {
   {
     text,
     visual_text,
     image_source,
     image_size,
+    image_width_fraction,
     image_fit,
     font,
     color,
@@ -126,6 +130,7 @@ pub fn RichTextBlock::new(
   rule? : Bool = false,
   source_range? : RichTextSourceRange? = None,
   content_range? : RichTextSourceRange? = None,
+  line_align? : @core.TextAlign? = None,
 ) -> RichTextBlock {
   {
     runs,
@@ -139,6 +144,7 @@ pub fn RichTextBlock::new(
     line_height,
     corner_radius,
     rule,
+    line_align,
     source_range,
     content_range,
   }

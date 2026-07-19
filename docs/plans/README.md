@@ -68,5 +68,6 @@ Historical topic pointers (pre-layout notes) remain useful:
 |------|---------|
 | [harness-mechanize-invariants-batch1](done/harness-mechanize-invariants-batch1.md) | Map-style AGENTS/docs + P1/P2/A6/R3/M5/G1/G2 machine checks |
 | [website-scroll-performance](done/website-scroll-performance.md) | Remove Website scroll-path DOM churn and ship optimized showcase previews |
+| [markdown-html-image-gallery](done/markdown-html-image-gallery.md) | Render the safe HTML image-gallery subset in Markdown Editor |
 
 Move finished plans to `done/` in the same PR that closes the work.

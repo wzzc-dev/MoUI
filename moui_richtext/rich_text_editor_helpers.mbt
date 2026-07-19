@@ -504,10 +504,20 @@ fn rich_text_block_line_height(
   block : RichTextBlock,
   base_font : @core.FontSpec,
   text_system : @core.TextSystem,
+  block_width? : Double = 0.0,
 ) -> Double {
-  let text_height = rich_text_block_line_step(block, base_font, text_system)
-  let mut height = text_height *
-    rich_text_block_visual_line_count(block).to_double()
+  let available_width = if block_width > 0.0 {
+    max_double(0.0, block_width - block.inset.left - block.inset.right)
+  } else {
+    0.0
+  }
+  let mut height = 0.0
+  for
+    line_height in rich_text_block_line_heights(
+      block, base_font, text_system, available_width,
+    ) {
+    height = height + line_height
+  }
   match block.table {
     Some(table) =>
       height = max_double(
@@ -516,13 +526,87 @@ fn rich_text_block_line_height(
       )
     None => ()
   }
+  height
+}
+
+///|
+/// Return the height of each explicit visual line. Image galleries use this
+/// rather than a single fixed line height so percentage-sized images can grow
+/// with their content column without overlapping following rows.
+fn rich_text_block_line_heights(
+  block : RichTextBlock,
+  base_font : @core.FontSpec,
+  text_system : @core.TextSystem,
+  available_width : Double,
+) -> Array[Double] {
+  let line_step = rich_text_block_line_step(block, base_font, text_system)
+  let heights : Array[Double] = [line_step]
+  for _ in 0..<rich_text_text_newline_count(block.prefix) {
+    heights.push(line_step)
+  }
   for run in block.runs {
-    match run.image_size {
-      Some(size) => height = max_double(height, size.height)
+    let segment_count = rich_text_split_lines(rich_text_run_visual_text(run)).length()
+    for index in 0..<segment_count {
+      let line_index = heights.length() - 1
+      let segment_height = rich_text_run_segment_height(
+        run,
+        line_step,
+        available_width~,
+      )
+      heights[line_index] = max_double(heights[line_index], segment_height)
+      if index + 1 < segment_count {
+        heights.push(line_step)
+      }
+    }
+  }
+  heights
+}
+
+///|
+/// Return the drawn width of each explicit visual line. The result includes a
+/// list prefix when one is present, so line alignment remains correct for all
+/// block kinds even though galleries normally have no prefix.
+fn rich_text_block_line_widths(
+  block : RichTextBlock,
+  base_font : @core.FontSpec,
+  text_system : @core.TextSystem,
+  available_width : Double,
+) -> Array[Double] {
+  let block_font = rich_text_block_font(block, base_font)
+  let widths : Array[Double] = [
+    rich_text_width(block.prefix, block_font, text_system),
+  ]
+  for run in block.runs {
+    let font = run.font.unwrap_or(block_font)
+    let segments = rich_text_split_lines(rich_text_run_visual_text(run))
+    for index, segment in segments {
+      let line_index = widths.length() - 1
+      widths[line_index] = widths[line_index] +
+        rich_text_run_segment_width(
+          run,
+          segment,
+          font,
+          text_system,
+          available_width~,
+        )
+      if index + 1 < segments.length() {
+        widths.push(0.0)
+      }
+    }
+  }
+  widths
+}
+
+///|
+fn rich_text_line_offset(line_heights : Array[Double], line : Int) -> Double {
+  let mut offset = 0.0
+  for index in 0..<line {
+    match line_heights.get(index) {
+      Some(height) => offset = offset + height
       None => ()
     }
   }
-  height
+  offset
 }
 
 ///|
@@ -599,9 +683,10 @@ fn rich_text_run_segment_width(
   text : String,
   font : @core.FontSpec,
   text_system : @core.TextSystem,
+  available_width? : Double = 0.0,
 ) -> Double {
-  match run.image_size {
-    Some(size) => size.width
+  match rich_text_run_resolved_image_width(run, available_width) {
+    Some(width) => width
     None => rich_text_width(text, font, text_system)
   }
 }
@@ -610,10 +695,40 @@ fn rich_text_run_segment_width(
 fn rich_text_run_segment_height(
   run : RichTextRun,
   line_height : Double,
+  available_width? : Double = 0.0,
 ) -> Double {
   match run.image_size {
-    Some(size) => max_double(line_height, size.height)
+    Some(size) =>
+      match rich_text_run_resolved_image_width(run, available_width) {
+        Some(width) if size.width > 0.0 =>
+          max_double(line_height, width * size.height / size.width)
+        _ => max_double(line_height, size.height)
+      }
     None => line_height
+  }
+}
+
+///|
+fn rich_text_run_resolved_image_width(
+  run : RichTextRun,
+  available_width : Double,
+) -> Double? {
+  match run.image_size {
+    Some(size) =>
+      match run.image_width_fraction {
+        Some(fraction) if available_width > 0.0 =>
+          Some(
+            max_double(
+              0.0,
+              min_double(
+                available_width,
+                available_width * clamp_double(fraction, 0.0, 1.0),
+              ),
+            ),
+          )
+        _ => Some(size.width)
+      }
+    None => None
   }
 }
 
@@ -939,6 +1054,10 @@ fn rich_text_block_content_revision(
     hash,
     rich_text_double_optional_key(block.line_height),
   )
+  hash = rich_text_hash_mix_string(
+    hash,
+    rich_text_align_optional_key(block.line_align),
+  )
   hash = rich_text_hash_mix_string(hash, "\{block.corner_radius}")
   hash = rich_text_hash_mix_int(hash, if block.rule { 1 } else { 0 })
   hash = rich_text_hash_mix_string(
@@ -958,6 +1077,10 @@ fn rich_text_block_content_revision(
     hash = rich_text_hash_mix_string(
       hash,
       rich_text_size_optional_key(run.image_size),
+    )
+    hash = rich_text_hash_mix_string(
+      hash,
+      rich_text_double_optional_key(run.image_width_fraction),
     )
     hash = rich_text_hash_mix_string(
       hash,

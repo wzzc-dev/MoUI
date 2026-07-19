@@ -248,14 +248,14 @@ pub(all) struct MarkdownDocumentSession {
   layout_cache : MarkdownDocumentLayoutCache?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn MarkdownDocumentSession::apply(Self, MarkdownEditTransaction) -> Self
-pub fn MarkdownDocumentSession::estimated_content_height(Self, base? : @core.FontSpec, source_mode? : Bool) -> Double
+pub fn MarkdownDocumentSession::estimated_content_height(Self, base? : @core.FontSpec, source_mode? : Bool, content_width? : Double) -> Double
 pub fn MarkdownDocumentSession::new(String) -> Self
 pub fn MarkdownDocumentSession::replace_source(Self, String, reason? : MarkdownEditReason) -> Self
 pub fn MarkdownDocumentSession::rich_text(Self, MarkdownEditorSelection, base? : @core.FontSpec, source_mode? : Bool, focus_mode? : Bool, base_dir? : String?) -> RichTextDocument
-pub fn MarkdownDocumentSession::rich_text_window(Self, MarkdownEditorSelection, base? : @core.FontSpec, source_mode? : Bool, focus_mode? : Bool, base_dir? : String?, scroll_y? : Double, viewport_height? : Double, overscan? : Double) -> MarkdownDocumentRichTextWindow
+pub fn MarkdownDocumentSession::rich_text_window(Self, MarkdownEditorSelection, base? : @core.FontSpec, source_mode? : Bool, focus_mode? : Bool, base_dir? : String?, scroll_y? : Double, viewport_height? : Double, overscan? : Double, content_width? : Double) -> MarkdownDocumentRichTextWindow
 pub fn MarkdownDocumentSession::snapshot(Self, base? : @core.FontSpec, base_dir? : String?) -> MarkdownEditorSnapshot
 pub fn MarkdownDocumentSession::source(Self) -> String
-pub fn MarkdownDocumentSession::source_offset_y(Self, Int, base? : @core.FontSpec, source_mode? : Bool) -> Double
+pub fn MarkdownDocumentSession::source_offset_y(Self, Int, base? : @core.FontSpec, source_mode? : Bool, content_width? : Double) -> Double
 pub fn MarkdownDocumentSession::with_layout_cache(Self, RichTextDocument, @core.FontSpec, width~ : Double, scroll_y~ : Double, viewport_height~ : Double, overscan? : Double, text_system? : @core.TextSystem) -> Self
 
 pub(all) enum MarkdownEditReason {
@@ -594,10 +594,11 @@ pub(all) struct RichTextBlock {
   line_height : Double?
   corner_radius : Double
   rule : Bool
+  line_align : @core.TextAlign?
   source_range : RichTextSourceRange?
   content_range : RichTextSourceRange?
 } derive(Eq, ToJson, @debug.Debug)
-pub fn RichTextBlock::new(runs~ : Array[RichTextRun], table? : RichTextTable?, prefix? : String, font? : @core.FontSpec?, color? : @core.Color?, background? : @core.Brush?, border_left? : @core.BorderStyle?, inset? : @core.Insets, line_height? : Double?, corner_radius? : Double, rule? : Bool, source_range? : RichTextSourceRange?, content_range? : RichTextSourceRange?) -> Self
+pub fn RichTextBlock::new(runs~ : Array[RichTextRun], table? : RichTextTable?, prefix? : String, font? : @core.FontSpec?, color? : @core.Color?, background? : @core.Brush?, border_left? : @core.BorderStyle?, inset? : @core.Insets, line_height? : Double?, corner_radius? : Double, rule? : Bool, source_range? : RichTextSourceRange?, content_range? : RichTextSourceRange?, line_align? : @core.TextAlign?) -> Self
 
 pub(all) enum RichTextDecoration {
   Strikethrough
@@ -621,6 +622,7 @@ pub(all) struct RichTextRun {
   visual_text : String?
   image_source : String?
   image_size : @core.Size?
+  image_width_fraction : Double?
   image_fit : @core.ImageFit
   font : @core.FontSpec?
   color : @core.Color?
@@ -629,7 +631,7 @@ pub(all) struct RichTextRun {
   decoration : RichTextDecoration?
   source_range : RichTextSourceRange?
 } derive(Eq, ToJson, @debug.Debug)
-pub fn RichTextRun::new(text~ : String, visual_text? : String?, image_source? : String?, image_size? : @core.Size?, image_fit? : @core.ImageFit, font? : @core.FontSpec?, color? : @core.Color?, background? : @core.Brush?, background_radius? : Double, decoration? : RichTextDecoration?, source_range? : RichTextSourceRange?) -> Self
+pub fn RichTextRun::new(text~ : String, visual_text? : String?, image_source? : String?, image_size? : @core.Size?, image_fit? : @core.ImageFit, font? : @core.FontSpec?, color? : @core.Color?, background? : @core.Brush?, background_radius? : Double, decoration? : RichTextDecoration?, source_range? : RichTextSourceRange?, image_width_fraction? : Double?) -> Self
 
 pub(all) struct RichTextSourceRange {
   start : Int

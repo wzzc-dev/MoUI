@@ -16,11 +16,16 @@ fn markdown_session_clamped_scroll_y(
   source_mode~ : Bool,
   scroll_y : Double,
   viewport_height : Double,
+  content_width? : Double = 0.0,
 ) -> Double {
   if viewport_height <= 0.0 {
     return max_double(0.0, scroll_y)
   }
-  let content_height = session.estimated_content_height(base=font, source_mode~) +
+  let content_height = session.estimated_content_height(
+      base=font,
+      source_mode~,
+      content_width~,
+    ) +
     96.0
   let max_scroll = max_double(0.0, content_height - viewport_height)
   clamp_double(scroll_y, 0.0, max_scroll)
@@ -50,6 +55,7 @@ fn markdown_session_visible_window(
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
   visible_scroll_state~ : @core.ScrollState?,
+  content_width? : Double = 0.0,
 ) -> MarkdownDocumentRichTextWindow {
   let scroll_y = markdown_session_clamped_scroll_y(
     session,
@@ -57,6 +63,7 @@ fn markdown_session_visible_window(
     source_mode~,
     markdown_session_current_scroll_y(visible_scroll_y, visible_scroll_state),
     visible_viewport_height,
+    content_width~,
   )
   session.rich_text_window(
     selection,
@@ -67,6 +74,7 @@ fn markdown_session_visible_window(
     scroll_y~,
     viewport_height=visible_viewport_height,
     overscan=visible_overscan,
+    content_width~,
   )
 }
 
@@ -167,6 +175,7 @@ fn markdown_session_editor_paint(
       visible_viewport_height~,
       visible_overscan~,
       visible_scroll_state~,
+      content_width=content.size.width,
     )
     let window_content = window.content_rect(content)
     // Position blocks inside the offset `window_content`, but cull against
@@ -269,6 +278,7 @@ fn[Msg] markdown_session_editor_event(
           visible_viewport_height~,
           visible_overscan~,
           visible_scroll_state~,
+          content_width=rich_text_editor_content_rect(ctx.frame).size.width,
         )
         let content = window.content_rect(
           rich_text_editor_content_rect(ctx.frame),
@@ -339,6 +349,7 @@ fn[Msg] markdown_session_pointer_event(
   visible_scroll_state~ : @core.ScrollState?,
 ) -> @core.ViewEventResult[Msg] {
   let inside = ctx.frame.contains(event.position)
+  let content_width = rich_text_editor_content_rect(ctx.frame).size.width
   if inside && (event.wheel_delta.x != 0.0 || event.wheel_delta.y != 0.0) {
     return markdown_session_scroll_event(
       session,
@@ -347,6 +358,7 @@ fn[Msg] markdown_session_pointer_event(
       event~,
       visible_viewport_height~,
       visible_scroll_state~,
+      content_width~,
     )
   }
   match event.phase {
@@ -364,6 +376,7 @@ fn[Msg] markdown_session_pointer_event(
           visible_viewport_height~,
           visible_overscan~,
           visible_scroll_state~,
+          content_width~,
         )
         let content = window.content_rect(
           rich_text_editor_content_rect(ctx.frame),
@@ -447,6 +460,7 @@ fn[Msg] markdown_session_pointer_event(
             visible_viewport_height~,
             visible_overscan~,
             visible_scroll_state~,
+            content_width~,
           )
           let content = window.content_rect(
             rich_text_editor_content_rect(ctx.frame),
@@ -516,6 +530,7 @@ fn[Msg] markdown_session_scroll_event(
   event~ : @core.PointerEvent,
   visible_viewport_height~ : Double,
   visible_scroll_state~ : @core.ScrollState?,
+  content_width? : Double = 0.0,
 ) -> @core.ViewEventResult[Msg] {
   match visible_scroll_state {
     Some(state) => {
@@ -527,6 +542,7 @@ fn[Msg] markdown_session_scroll_event(
       let content_height = session.estimated_content_height(
           base=font,
           source_mode~,
+          content_width~,
         ) +
         96.0
       let max_scroll = max_double(0.0, content_height - viewport_height)
@@ -609,6 +625,7 @@ fn markdown_session_input_state(
     visible_viewport_height~,
     visible_overscan~,
     visible_scroll_state~,
+    content_width=rich_text_editor_content_rect(frame).size.width,
   )
   let base_content = rich_text_editor_content_rect(frame)
   let content = window.content_rect(base_content)

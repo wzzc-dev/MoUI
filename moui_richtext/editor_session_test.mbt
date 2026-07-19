@@ -282,6 +282,45 @@ test "markdown document session estimated_content_height returns positive value"
 }
 
 ///|
+test "markdown document session measures responsive html galleries by width" {
+  let source =
+    #|<div align="center">
+    #|
+    #|  <img src="a.png" width="48%" alt="A"/>
+    #|  <img src="b.png" width="48%" alt="B"/>
+    #|
+    #|  <br/><br/>
+    #|
+    #|  <img src="c.png" width="48%" alt="C"/>
+    #|  <img src="d.png" width="48%" alt="D"/>
+    #|
+    #|</div>
+    #|
+    #|Tail
+  let session = MarkdownDocumentSession::new(source)
+  let font = @core.FontSpec::new(size=16.0)
+  let narrow_height = session.estimated_content_height(
+    base=font,
+    content_width=320.0,
+  )
+  let wide_height = session.estimated_content_height(
+    base=font,
+    content_width=800.0,
+  )
+  assert_true(wide_height > narrow_height)
+  let window = session.rich_text_window(
+    { caret: 0, selection: None },
+    base=font,
+    scroll_y=0.0,
+    viewport_height=300.0,
+    overscan=32.0,
+    content_width=800.0,
+  )
+  assert_true(window.content_height >= wide_height - 0.01)
+  assert_true(window.rendered_block_count > 0)
+}
+
+///|
 test "markdown document session source_offset_y increases for later blocks" {
   let session = MarkdownDocumentSession::new(
     "# Heading\n\nFirst paragraph.\n\nSecond paragraph.",
