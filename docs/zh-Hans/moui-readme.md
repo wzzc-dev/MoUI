@@ -126,7 +126,7 @@ node scripts/conformance-capture-scaffold.mjs --mode benchmark
 
 重点示例 `showcase`、`markdown_editor`、`mo_workbench` 和 `excel` 在 `examples/<name>/app` 中共享 app 逻辑，并暴露很薄的平台入口。Showcase 使用 `web_wasm`、桌面 renderer 专用入口，以及 `android_skia`、`ios_skia` 和 `harmonyos_skia` mobile 入口。
 
-要在 mobile 平台试用 Showcase，请按平台专用的设置、构建和运行说明操作：[Android](../android-support.md)、[iOS](../ios-support.md) 或 [HarmonyOS](../harmonyos-support.md)。仓库中 `examples/*/*_app` 下签入的原生项目是 Release N fixture，不是应用模板。
+要在 mobile 平台试用 Showcase，请按平台专用的设置、构建和运行说明操作：[Android](../android-support.md)、[iOS](../ios-support.md) 或 [HarmonyOS](../harmonyos-support.md)。标准示例从 `moui_shell` staging 原生项目；只有应用必须拥有并版本化原生项目时才使用 `moui shell eject`。
 
 > **Windows 前置条件：** 构建或运行任何 Windows 原生 Skia 入口（`windows_skia`）之前，请在 PowerShell 会话中初始化 MSVC 工具链：
 >

@@ -74,9 +74,9 @@ Historical Component Gallery evidence 保留用于审计，但不会提升已重
 | --- | --- | --- | --- |
 | iOS historical artifact | Release N UIKit shell **`passed`** | `artifacts/mobile-runtime/ios/component_gallery/` | 不是 Showcase evidence。 |
 | Android historical artifact | Release N legacy shell **`passed`** | `artifacts/mobile-runtime/android/component_gallery/` | 不是 Showcase evidence。 |
-| Showcase managed shells | fresh Android/iOS/HarmonyOS evidence pending | `artifacts/mobile-runtime/<platform>/showcase/` | 需要通过真实系统输入、assistive technology 和必要的 repository test-probe plugin 重新运行。 |
+| Showcase managed shells | fresh Android/iOS/HarmonyOS evidence pending | `artifacts/shell-runtime/<platform>/showcase/` | 需要通过真实系统输入、assistive technology 和必要的 repository test-probe plugin 重新运行。 |
 
-CI 入口点：`moui-ios-mobile-runtime-evidence.yml`、`moui-android-mobile-runtime-evidence.yml`（self-hosted android）、`moui-harmonyos-mobile-runtime-evidence.yml`（self-hosted harmonyos + signing）。
+CI 入口点：`moui-ios-shell-runtime-evidence.yml`、`moui-android-shell-runtime-evidence.yml`（self-hosted android）、`moui-harmonyos-shell-runtime-evidence.yml`（self-hosted harmonyos + signing）。
 
 `SkiaGpuNative` 按 GPU readback elimination plan 第 1 阶段携带未 promoted 的 window-surface source 路径（iOS/macOS Metal、Android Vulkan/GLES、HarmonyOS EGL/GLES、Windows D3D12、Linux Wayland Vulkan）。native worker 在独立线程上证明安全的 `SkPicture`/POD handoff。它的 macOS 分支现在拥有 Ganesh/Metal context 和 drawable presentation，并在本地 first-frame smoke 后发出 `Presented`；剩余平台 worker ownership 和所有 promotion manifest 仍然 pending。第 2 阶段 promotion gate 脚手架具有 L1 package-test 证明：
 
@@ -85,9 +85,9 @@ CI 入口点：`moui-ios-mobile-runtime-evidence.yml`、`moui-android-mobile-run
 | Renderer mailbox control queue (`moui/render/render_frame_mailbox.mbt`) | `moui/render` whitebox tests（capacity-two latest-wins；`RendererControlMessage` never dropped） |
 | Native Picture handoff (`moui_skia/native/skia_stub_gpu_worker.cpp`) | 聚焦 native tests（independent thread、retained picture、detach acknowledgement、zero readback counter） |
 | Context-loss recovery (`moui/runtime/renderer_recovery.mbt`) | `moui/runtime` whitebox tests（Idle → Lost → Recovering → Recovered → Idle；`FallbackToRaster` after 2 failures） |
-| Manifest schema + `gpuPromotionEvidence` (`tools/moui/validate_mobile_runtime_manifest`) | `validate_mobile_runtime_manifest_wbtest`（9 个新的 Phase 2.3 测试） |
+| Manifest schema + `gpuPromotionEvidence` (`tools/moui/validate_shell_runtime_manifest`) | `validate_shell_runtime_manifest_wbtest`（9 个新的 Phase 2.3 测试） |
 
-当 host GPU surface 可用时，产品 `auto` 在每个 native Skia 平台默认使用 `SkiaGpuNative`（`gpu_promoted` 全部为 `true`）。Raster 仍然是显式/恢复路径。匹配设备 seven-gate manifest 仍然是质量证据门槛；参见 ADR 0006 和 `mobile-mainline-roadmap.md`。
+当 host GPU surface 可用时，产品 `auto` 在每个 native Skia 平台默认使用 `SkiaGpuNative`（`gpu_promoted` 全部为 `true`）。Raster 仍然是显式/恢复路径。匹配设备 seven-gate manifest 仍然是质量证据门槛；参见 ADR 0006 和 `shell-mainline-roadmap.md`。
 
 ## 证据可追溯性
 

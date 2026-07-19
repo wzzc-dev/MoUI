@@ -156,10 +156,10 @@ they describe static capability identity and matching, not native host runtime
 assembly. `View` still describes UI declaration trees only, and
 `Binding[T]` remains the TEA/control/state two-way binding term.
 
-## Mobile Host Channel
+## Shell Embedding Bridge
 
-`MobileHostChannel` is the shared Android/iOS/HarmonyOS service boundary. It
-coalesces `MobileImeRequest` updates, emits revisioned flattened semantics
+`EmbeddingHostBridge` is the private Android/iOS/HarmonyOS service boundary. It
+coalesces `EmbedderImeRequest` updates, emits revisioned flattened semantics
 snapshots only when the tree changes, and carries asynchronous text/image
 clipboard requests and responses. A disposed channel rejects late responses.
 

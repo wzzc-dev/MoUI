@@ -13,7 +13,7 @@ before resuming Android emulator work (memory: do not run both VMs together).
    and includes `GrGLDirectContext` / `GrGLInterface` / `GrGLBackendSurface` /
    `GrGLMakeEGLInterface`. Previously `egl_runtime_available` compiled as
    constant `return 0` → product `auto` always raster.
-2. **CMake** (`moui/mobile/harmonyos/cmake/MoUIMobileHarmonyOS.cmake`):
+2. **CMake** (`moui_shell/harmonyos/cmake/MoUIShellHarmonyOS.cmake`):
    explicit `__OHOS__=1` on the mobile library.
 3. **Screenshot** (`scripts/record-mobile-runtime-smoke.mjs`):
    `snapshot_display` requires `.jpeg`; recorder recv + `sips` → PNG.

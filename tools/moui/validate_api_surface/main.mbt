@@ -440,8 +440,8 @@ fn package_budgets() -> Array[PackageBudget] {
       path: "moui/render/skia/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/render/skia\"",
       max_lines: 220,
-      max_pub_lines: 93,
-      max_pub_all_lines: 3,
+      max_pub_lines: 108,
+      max_pub_all_lines: 4,
       required_tokens: [
         "SkiaRasterRenderer", "skia_available", "skia_image_load_completion",
       ],
@@ -1091,35 +1091,35 @@ fn allowed_shared_app_runtime_imports() -> Array[String] {
 }
 
 ///|
-fn mobile_runtime_internal_package_token() -> String {
-  "wzzc-dev/moui/backend/internal/mobile_runtime"
+fn embedded_runtime_session_internal_package_token() -> String {
+  "wzzc-dev/moui/backend/internal/embedded_runtime_session"
 }
 
 ///|
-fn allowed_mobile_runtime_internal_imports() -> Array[String] {
+fn allowed_embedded_runtime_session_internal_imports() -> Array[String] {
   [
     "moui/backend/android/moon.pkg", "moui/backend/ios/moon.pkg", "moui/backend/harmonyos/moon.pkg",
-    "moui/backend/internal/mobile_runtime/moon.pkg",
+    "moui/backend/internal/embedded_runtime_session/moon.pkg",
   ]
 }
 
 ///|
-fn validate_mobile_runtime_internal_import_text(
+fn validate_embedded_runtime_session_internal_import_text(
   path : String,
   text : String,
   failures : Array[String],
 ) -> Unit {
-  if text.contains(mobile_runtime_internal_package_token()) &&
-    !allowed_mobile_runtime_internal_imports().contains(path) {
+  if text.contains(embedded_runtime_session_internal_package_token()) &&
+    !allowed_embedded_runtime_session_internal_imports().contains(path) {
     failures.push(
       path +
-      ": internal mobile runtime may only be imported by Android, iOS, and HarmonyOS backends",
+      ": internal embedded runtime session may only be imported by Android, iOS, and HarmonyOS backends",
     )
   }
 }
 
 ///|
-fn validate_mobile_runtime_internal_imports(
+fn validate_embedded_runtime_session_internal_imports(
   repo_root : String,
   failures : Array[String],
 ) -> Unit {
@@ -1134,12 +1134,12 @@ fn validate_mobile_runtime_internal_imports(
         continue
       }
     }
-    if text.contains(mobile_runtime_internal_package_token()) {
+    if text.contains(embedded_runtime_session_internal_package_token()) {
       import_count += 1
     }
-    validate_mobile_runtime_internal_import_text(path, text, failures)
+    validate_embedded_runtime_session_internal_import_text(path, text, failures)
   }
-  println("api surface: internal mobile runtime imports=\{import_count}/3")
+  println("api surface: embedded runtime imports=\{import_count}/3")
 }
 
 ///|
@@ -2026,7 +2026,7 @@ fn run_checks(
   validate_core_routing_ownership(repo_root, failures)
   validate_core_runtime_boundary(repo_root, failures)
   validate_backend_runtime_interfaces(repo_root, failures)
-  validate_mobile_runtime_internal_imports(repo_root, failures)
+  validate_embedded_runtime_session_internal_imports(repo_root, failures)
   validate_runtime_entrypoint_usage(repo_root, failures)
   validate_shared_app_runtime_imports(repo_root, failures)
   validate_shared_app_core_imports(repo_root, failures)

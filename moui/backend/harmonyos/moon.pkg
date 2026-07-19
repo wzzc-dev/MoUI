@@ -1,8 +1,11 @@
 import {
+  "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/host",
-  "wzzc-dev/moui/backend/internal/mobile_runtime",
+  "wzzc-dev/moui/backend/internal/embedded_runtime_session",
   "wzzc-dev/moui/render",
+  "wzzc-dev/moui_shell/embedding" @shell_embedding,
+  "wzzc-dev/moui_shell/harmonyos" @shell_harmonyos,
 }
 
 import {

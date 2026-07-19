@@ -41,7 +41,7 @@
 - [x] Batch 3 migrated with tests:
   - [x] `validate_harness_invariants` (P1/P2/R3/G1)
 - [x] Batch 4 migrated with tests:
-  - [x] `check_mobile_app_config`
+- [x] `check_shell_app_config`
 - [x] Batch 5 migrated with tests:
   - [x] `generate_grapheme_property_data`
   - [x] `generate_grapheme_break_fixtures`
@@ -70,7 +70,7 @@ process runners) where only additional assertion kernels can still move:
 
 | Script | Notes |
 |---|---|
-| ~~`check-mobile-app-config.mjs`~~ | **Done** → `tools/moui/check_mobile_app_config` |
+| ~~`check-shell-app-config.mjs`~~ | **Done** → `tools/moui/check_shell_app_config` |
 | ~~`validate-harness-invariants.mjs`~~ | **Done** → `tools/moui/validate_harness_invariants` |
 | ~~`validate-harmonyos-shell.mjs`~~ | **Done** → `tools/moui/validate_harmonyos_shell` |
 | ~~`generate-grapheme-*.mjs`~~ | **Done** → `tools/moui/generate_grapheme_property_data` + `generate_grapheme_break_fixtures` |
@@ -95,7 +95,7 @@ process runners) where only additional assertion kernels can still move:
 | 2026-07-16 | Batch 1 landed: GPU no-readback + feature-proof generate/verify in `tools/moui`; wrappers thin; 11/11 package tests pass. |
 | 2026-07-16 | Batch 2 landed: HarmonyOS M5 shell static contract → `tools/moui/validate_harmonyos_shell` (4/4 tests; real template scan OK). |
 | 2026-07-16 | Batch 3 landed: harness P1/P2/R3/G1 → `tools/moui/validate_harness_invariants` (5/5 tests; real repo scan OK). |
-| 2026-07-16 | Batch 4 landed: mobile app config + Android managed shell static surface → `tools/moui/check_mobile_app_config`. |
+| 2026-07-16 | Batch 4 landed: shell app config + Android managed shell static surface → `tools/moui/check_shell_app_config`. |
 | 2026-07-16 | Batch 5 landed: grapheme property/fixture generators → MoonBit tools with thin JS wrappers. |
 | 2026-07-16 | Batch 6 landed: evidence table report assembly → `tools/moui/refresh_evidence_table`; Node retains GitHub/gh fetch shell. |
 | 2026-07-16 | Batch 7 landed: website docs catalog validation/sync → `tools/moui/sync_website_docs`; JS wrapper thin. |
@@ -114,7 +114,7 @@ Formalizable Bucket A work targeted by this plan is **complete** (through Batch 
 
 These are host/orchestration shells, not formal knowledge kernels:
 
-- CDP / browser / device smoke recorders (`record-web-runtime-presentation.mjs`, `record-mobile-runtime-smoke.mjs`, …)
+- CDP / browser / device smoke recorders (`record-web-runtime-presentation.mjs`, `record-shell-runtime-smoke.mjs`, …)
 - packaging / npm / wasm asset assembly (`generate-playground-assets.mjs`, `web-bundle-tools.mjs`)
 - process runners and CI glue (`claim-macos-gpu-promotion.mjs`, `external-consumer-ci.mjs`, `lint-scripts.mjs`)
 - JS integration tests (`test-*.mjs`) that exercise the thin shells

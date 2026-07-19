@@ -30,7 +30,7 @@ memories, framework skill updated to the GPU-by-default policy.
   skeleton when `gpuPromoted=true`, `claimed=false`) from configure logs /
   `mobile-build.json`.
 - Continuous iOS `log stream` capture; service-probe-first idb planning.
-- iOS shell once-fire a11y smoke via `MOUI_MOBILE_A11Y_SMOKE=1`.
+- iOS shell once-fire a11y smoke via `MOUI_EMBEDDING_A11Y_SMOKE=1`.
 - Runtime smoke `--require-passed` no longer requires seven-gate thresholds
   unless a promotion claim is asserted.
 - Rebuilt + recorded iOS Simulator Component Gallery:

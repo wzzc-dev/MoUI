@@ -19,34 +19,30 @@ the MoUI surface below a native PlatformView overlay.
 | --- | --- | --- |
 | Product class | `runtime_partial` (see platform-readiness-declaration) | Not `committed`; not “unwired scaffold only.” |
 | Host contract | Usable embedded session in `moui/backend/android` (`ready=true`) | Package tests + managed shell wiring; L3 promotion separate. |
-| Platform services | `InputConnection`, clipboard, virtual a11y, PlatformView overlay wired through `MobileHostChannel` | Capability flags reflect **code wiring**; full managed-shell device evidence still pending. |
+| Platform services | `InputConnection`, clipboard, virtual a11y, PlatformView overlay wired through `EmbedderHostChannel` | Capability flags reflect **code wiring**; full managed-shell device evidence still pending. |
 | Frame pacing | Input/resize request redraw; presentation runs from `Choreographer` frame ticks | 60/120 Hz device pacing evidence pending. |
 | Skia provider | `moui/backend/android/skia` preflight `runtime_status=runtime_partial` | Provider checks prove wiring; presenter route still unverified in checks JSON. |
-| Counter entrypoint | `examples/counter/android_skia` exports thin native hooks | Compile/check evidence only. |
-| APK shell | Package-owned Kotlin/AndroidX managed shell staged under `artifacts/`; `examples/*/android_app` is Release N compatibility metadata | Packaging matrix passed; fallback APK is not runtime proof. |
+| Counter entrypoint | `examples/counter/android_skia` installs its program and renderer configuration; `backend/android` installs shell runtime callbacks and `moui_shell/embedding` exports Embedding API v1 | Compile/check evidence only. |
+| APK shell | Package-owned Kotlin/AndroidX managed shell staged under `artifacts/` | Packaging matrix passed; fallback APK is not runtime proof. |
 | First-frame runtime evidence | Non-fallback Component Gallery APK on HUAWEI SCM-W09 device; nonblank first-frame screenshot in `resource/screenshots/android-componentgallery.jpg` (2026-07-10) | First-frame pixels proven. |
-| Runtime support claim | Release N Java shell reached **`passed`** on an emulator (Component Gallery, 2026-07-15); the canonical managed shell needs a fresh matching-device run | Historical evidence does not automatically promote the managed shell. Re-run `scripts/android-mobile-runtime-evidence.sh` without shell-side probes before claiming managed-shell L3. |
+| Runtime support claim | Historical Java-shell evidence reached **`passed`** on an emulator (Component Gallery, 2026-07-15); the canonical managed shell needs a fresh matching-device run | Historical evidence does not automatically promote the managed shell. Re-run `scripts/android-shell-runtime-evidence.sh` without shell-side probes before claiming managed-shell L3. |
 
 ## Ownership
 
 - `moui/backend/android` owns `AndroidSurfaceHandle`,
-  `AndroidRendererProvider`, readiness summaries, and `AndroidRuntimeSession`.
+  `AndroidRendererProvider`, readiness summaries, `AndroidRuntimeSession`, and
+  the installed embedding adapter, which it registers with the shell-owned
+  Embedding API v1 MoonBit exports.
 - `moui/backend/android/skia` wraps `moui/render/skia` in a
   `HostWindowRenderer` and presents copied RGBA frames to an `ANativeWindow`
   when compiled for Android.
 - `examples/counter/android_skia` is the thin MoonBit entrypoint for JNI/CMake.
-  Its attach/resize/pointer/render/detach exports stay small so the Android app
-  can own the shell.
-- `moui/mobile/android` owns the canonical Kotlin `ComponentActivity`,
+  It installs only the app program and renderer configuration, so the Android
+  backend and native shell own ABI and lifecycle forwarding.
+- `moui_shell/android` owns the canonical Kotlin `ComponentActivity`,
   `MoUISurfaceView`, PlatformView overlay/factory API, clipboard provider,
   virtual accessibility bridge, `Choreographer`, registered JNI adapter,
   `ANativeWindow` acquisition, and reusable CMake wiring.
-- `examples/counter/android_app` and `examples/showcase/android_app` are
-  repository-only Release N
-  Gradle metadata fixtures; managed applications do not store them.
-- `moui/mobile/legacy/android` preserves the Release N Java shell and
-  name-mangled JNI adapter as a one-release compatibility fixture. It is never
-  selected implicitly.
 
 Android stays on minSdk 23 and targetSdk 35. The managed shell compiles against
 SDK 36 because AndroidX Activity 1.13.0 declares `minCompileSdk=36`; disabling
@@ -117,8 +113,8 @@ Manual setup should install:
 - Android SDK Platform 36 (compile SDK required by AndroidX Activity 1.13.0)
 - Android SDK Build-Tools 35.0.0
 - Android SDK Platform-Tools
-- **NDK 28.2.13676358** (pinned by `moui/mobile/android/mobile-app.gradle` and
-  `moui/scripts/mobile/prepare-native-build.mjs`; override only with care)
+- **NDK 28.2.13676358** (pinned by `moui_shell/android/runner/shell-app.gradle` and
+  `moui_shell/scripts/prepare-native-build.mjs`; override only with care)
 - CMake 3.22.1
 - For emulator smoke: `emulator` package + a system image matching host arch
 
@@ -156,12 +152,11 @@ empty runtime streams. If native fails to load, reinstall NDK 28.2, clean
 
 ## Mobile APK Builds
 
-Android APK builds now use the shared mobile Gradle route. The build stages the
+Android APK builds use the shared shell Gradle route. The build stages the
 Kotlin `ComponentActivity`, registered JNI bridge, Gradle project, CMake
-module, and plugin registry from the resolved `wzzc-dev/moui` package.
-Repository examples provide only `examples/<app>/mobile.json` and the MoonBit
-entrypoint; `moui/mobile/build-contracts.json` is used only by the explicit
-Release N legacy matrix. A Gradle pre-build task generates MoonBit C plus Skia
+module, and plugin registry from the resolved `wzzc-dev/moui_shell` package.
+Repository examples provide only `examples/<app>/shell.json` and the MoonBit
+entrypoint. A Gradle pre-build task generates MoonBit C plus Skia
 flags, compiles the staged JNI/CMake project, and lets Gradle package/sign the
 debug APK.
 
@@ -169,21 +164,21 @@ Build the experimental Counter debug APK from the repository root:
 
 ```sh
 ANDROID_HOME=/path/to/Android/Sdk \
-scripts/build-mobile-android-apk.sh --app counter
+scripts/build-shell-android-apk.sh --app counter
 ```
 
 Build Showcase with the same route:
 
 ```sh
 ANDROID_HOME=/path/to/Android/Sdk \
-scripts/build-mobile-android-apk.sh --app showcase
+scripts/build-shell-android-apk.sh --app showcase
 ```
 
 Renderer mode is explicit and auditable:
 
 ```sh
-scripts/build-mobile-android-apk.sh --app counter --renderer auto
-scripts/build-mobile-android-apk.sh --app counter --renderer skia-raster
+scripts/build-shell-android-apk.sh --app counter --renderer auto
+scripts/build-shell-android-apk.sh --app counter --renderer skia-raster
 ```
 
 For real Skia packages, `auto` and `skia-gpu` select GPU (`gpuPromoted: true`).
@@ -194,7 +189,7 @@ When multiple side-by-side NDK versions are installed, pin **28.2.13676358**:
 ```sh
 ANDROID_HOME=/path/to/Android/Sdk \
 ANDROID_NDK_HOME=/path/to/Android/Sdk/ndk/28.2.13676358 \
-scripts/build-mobile-android-apk.sh --app counter
+scripts/build-shell-android-apk.sh --app counter
 ```
 
 The default APK path resolves the locked Android Skia provider through
@@ -222,38 +217,23 @@ scripts/build-component-gallery-android-apk.sh --fallback-skia
 Kotlin/resource packaging, and debug signing. It reports native Skia unavailable
 and must not be used as first-frame runtime evidence.
 
-The old app-specific build scripts remain compatibility wrappers over
-`scripts/build-mobile-android-apk.sh --app ...`.
-
-The default build always selects the managed shell. During the Release N
-compatibility window, maintainers can build the frozen Java fixture explicitly:
-
-```sh
-scripts/build-mobile-android-apk.sh \
-  --app counter \
-  --fallback-skia \
-  --legacy-java-shell \
-  --compile-sdk 35
-```
-
-This flag switches the Java/Kotlin source root, manifest Activity/provider,
-and CMake JNI glue root as one unit. It is a compatibility audit, not a second
-production mode.
+The default build selects the managed shell; `moui shell eject android` is the
+only supported route for application-owned native runner changes.
 
 For an external app, use `moui new --platform android` or add the Android block
-to schema v2 `mobile.json`. Managed builds derive the fixed runtime ABI and
+to schema v1 `shell.json`. Managed builds derive the fixed embedding ABI and
 stage the canonical project; there is no `android.native` export map or native
 project copy in the app repository:
 
 ```sh
-.mooncakes/wzzc-dev/moui/scripts/mobile/build-android-apk.sh \
+.mooncakes/wzzc-dev/moui_shell/scripts/build-android-apk.sh \
   --workspace-root "$PWD" \
   --moui-root "$PWD/.mooncakes/wzzc-dev/moui" \
   --app my_app \
-  --app-config "$PWD/mobile.json"
+  --app-config "$PWD/shell.json"
 ```
 
-Use `moui mobile eject android --output android_app` only when application
+Use `moui shell eject android --output android_app` only when application
 requirements exceed the managed plugin contract. Subsequent builds pass
 `--ejected-shell --android-project android_app`; MoUI validates the versioned
 lock but never overwrites that project.
@@ -318,14 +298,14 @@ hosts.
 ### Build non-fallback APK (L1)
 
 ```sh
-scripts/build-mobile-android-apk.sh --app showcase --renderer auto
+scripts/build-shell-android-apk.sh --app showcase --renderer auto
 # Optional packaging checks:
 # unzip -l artifacts/android/showcase/app-debug.apk | rg 'lib/.*/(libshowcase|libskia|libc\+\+_shared)'
 # python3 -c "import os; p='…/libc++_shared.so'; print(os.path.getsize(p))"  # expect multi-MB, not ~1MB stripped
 ```
 
 Artifact: `artifacts/android/showcase/app-debug.apk`  
-Meta: `artifacts/android/showcase/native/mobile-build.json` →
+Meta: `artifacts/android/showcase/native/shell-build.json` →
 `selected=skia-gpu`, `gpuPromoted=true`, `fallbackSkia=false`.
 
 ### Install + manual launch (without full recorder)
@@ -338,13 +318,13 @@ adb -s "$SERIAL" install -r "$APK"
 adb -s "$SERIAL" logcat -c
 # Activity is the shared template class (not applicationId-relative).
 adb -s "$SERIAL" shell am start -n \
-  dev.wzzc.moui.componentgallery/dev.wzzc.moui.mobile.MoUIActivity
+  dev.wzzc.moui.componentgallery/dev.wzzc.moui.shell.MoUIActivity
 # If start fails: adb shell cmd package resolve-activity --brief dev.wzzc.moui.componentgallery
 
 # Continuous GPU configure evidence (do not use one-shot logcat dumps only)
-adb -s "$SERIAL" logcat -s MoUIMobile:V | tee /tmp/moui-android-cg.log
+adb -s "$SERIAL" logcat -s MoUIShell:V | tee /tmp/moui-android-cg.log
 # Expected line shape:
-# moui-mobile renderer configure … status={"platform":"android","selected":"skia-gpu-native",
+# moui-shell renderer configure … status={"platform":"android","selected":"skia-gpu-native",
 #   "surfaceRoute":"vulkan-gpu"|"egl-gpu","gpuAvailable":true,"gpuPromoted":true,…}
 
 # Optional screenshot
@@ -360,22 +340,22 @@ before treating GPU as unavailable.
 ```sh
 SERIAL="$(adb devices | awk '/\tdevice$/{print $1; exit}')"
 
-scripts/build-mobile-android-apk.sh --app showcase --renderer auto
-node scripts/record-mobile-runtime-smoke.mjs \
+scripts/build-shell-android-apk.sh --app showcase --renderer auto
+node scripts/record-shell-runtime-smoke.mjs \
   --platform android --app showcase --device "$SERIAL"
-node scripts/validate-mobile-runtime-manifest.mjs \
-  artifacts/mobile-runtime/android/showcase/mobile-runtime-smoke.json
+node scripts/validate-shell-runtime-manifest.mjs \
+  artifacts/shell-runtime/android/showcase/shell-runtime-smoke.json
 # Full service gate only when observations are green:
-# node scripts/record-mobile-runtime-smoke.mjs \
+# node scripts/record-shell-runtime-smoke.mjs \
 #   --platform android --app showcase --device "$SERIAL" --require-passed
 ```
 
-Evidence directory: `artifacts/mobile-runtime/android/showcase/`
+Evidence directory: `artifacts/shell-runtime/android/showcase/`
 
 ```sh
 rg -n 'renderer configure|surfaceRoute|gpuAvailable|UnsatisfiedLinkError' \
-  artifacts/mobile-runtime/android/showcase/runtime-stream.log \
-  artifacts/mobile-runtime/android/showcase/runtime.log
+  artifacts/shell-runtime/android/showcase/runtime-stream.log \
+  artifacts/shell-runtime/android/showcase/runtime.log
 ```
 
 **L2 GPU pass conditions:**
@@ -427,10 +407,10 @@ The checked smoke catalog contains release/manual Android mobile runtime suites.
 After a non-fallback build, record and validate with:
 
 ```sh
-node scripts/record-mobile-runtime-smoke.mjs --platform android --app counter --device <serial>
-node scripts/record-mobile-runtime-smoke.mjs --platform android --app showcase --device <serial>
+node scripts/record-shell-runtime-smoke.mjs --platform android --app counter --device <serial>
+node scripts/record-shell-runtime-smoke.mjs --platform android --app showcase --device <serial>
 # release bar only when complete:
-node scripts/record-mobile-runtime-smoke.mjs \
+node scripts/record-shell-runtime-smoke.mjs \
   --platform android --app showcase --device <serial> --require-passed
 ```
 

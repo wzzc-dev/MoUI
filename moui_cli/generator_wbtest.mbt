@@ -167,7 +167,7 @@ test "default macOS project file plan is exact" {
 }
 
 ///|
-test "mobile schema v2 contains managed platform defaults" {
+test "shell schema v1 contains managed platform defaults" {
   let options = test_project_options(
     ["web", "android", "ios", "harmonyos"],
     bundle_id=Some("dev.example.sample"),
@@ -176,41 +176,44 @@ test "mobile schema v2 contains managed platform defaults" {
     Ok(files) => files
     Err(message) => fail(message)
   }
-  let mobile = test_planned_text(files, "mobile.json")
+  let shell = test_planned_text(files, "shell.json")
   for platform in ["android", "ios", "harmonyos"] {
     let package_text = test_planned_text(files, platform + "_skia/moon.pkg")
     let main_text = test_planned_text(files, platform + "_skia/main.mbt")
     for
       symbol in [
-        "moui_mobile_take_host_update_envelope_json", "moui_mobile_dispatch_host_response_envelope_json",
-        "moui_mobile_complete_clipboard_v1", "moui_mobile_attach_surface", "moui_mobile_dispatch_scroll",
-        "moui_mobile_detach_surface", "moui_mobile_destroy_application",
+        "moui_embedding_take_host_update_envelope_json", "moui_embedding_dispatch_host_response_envelope_json",
+        "moui_embedding_complete_clipboard_v1", "moui_embedding_attach_surface",
+        "moui_embedding_dispatch_scroll", "moui_embedding_detach_surface", "moui_embedding_destroy_application",
       ] {
-      inspect(package_text.contains(symbol), content="true")
-      inspect(main_text.contains(symbol), content="true")
+      inspect(package_text.contains(symbol), content="false")
+      inspect(main_text.contains(symbol), content="false")
     }
     inspect(
-      package_text.contains("moui_mobile_take_host_updates_json"),
+      package_text.contains("moui_embedding_take_host_updates_json"),
       content="false",
     )
     inspect(
-      package_text.contains("moui_mobile_complete_clipboard\""),
+      package_text.contains("moui_embedding_complete_clipboard\""),
       content="false",
     )
     inspect(
-      main_text.contains("Some(session) => ignore(session.detach_") &&
-      main_text.contains("Some(session) => session.dispose()"),
+      package_text.contains("@platform_host") &&
+      main_text.contains("@platform_host.install_embedding") &&
+      main_text.contains("@host.shell_renderer_selection") &&
+      main_text.contains("@host.shell_renderer_configure") &&
+      main_text.contains("@host.shell_renderer_status_json"),
       content="true",
     )
   }
-  let parsed = @json.parse(mobile) catch {
-    _ => fail("generated mobile.json must parse")
+  let parsed = @json.parse(shell) catch {
+    _ => fail("generated shell.json must parse")
   }
   guard parsed is Object(root) else {
-    fail("generated mobile.json must be an object")
+    fail("generated shell.json must be an object")
   }
   inspect(
-    root.get("schemaVersion") is Some(Number(2.0, repr=_)),
+    root.get("schemaVersion") is Some(Number(1.0, repr=_)),
     content="true",
   )
   inspect(
@@ -218,11 +221,11 @@ test "mobile schema v2 contains managed platform defaults" {
     content="true",
   )
   inspect(
-    root.get("runtimeAbiVersion") is Some(Number(1.0, repr=_)),
+    root.get("embeddingApiVersion") is Some(Number(1.0, repr=_)),
     content="true",
   )
-  guard root.get("mobile") is Some(Object(mobile_fields)) else {
-    fail("generated mobile config must contain mobile settings")
+  guard root.get("shell") is Some(Object(mobile_fields)) else {
+    fail("generated shell config must contain shell settings")
   }
   inspect(mobile_fields.get("renderer") is Some(String("auto")), content="true")
   inspect(
@@ -230,13 +233,13 @@ test "mobile schema v2 contains managed platform defaults" {
     content="true",
   )
   guard mobile_fields.get("systemUi") is Some(Object(system_ui)) else {
-    fail("generated mobile config must contain systemUi")
+    fail("generated shell config must contain systemUi")
   }
   inspect(system_ui.get("fullscreen") is Some(False), content="true")
   inspect(system_ui.get("statusBar") is Some(String("auto")), content="true")
   for field in ["resources", "permissions", "plugins"] {
     guard mobile_fields.get(field) is Some(Array(values)) else {
-      fail("generated mobile config must contain array: " + field)
+      fail("generated shell config must contain array: " + field)
     }
     inspect(values.is_empty(), content="true")
   }
@@ -245,7 +248,7 @@ test "mobile schema v2 contains managed platform defaults" {
       fail("missing generated platform config: " + platform)
     }
     inspect(
-      platform_fields.get("shellMode") is Some(String("managed")),
+      platform_fields.get("runnerMode") is Some(String("managed")),
       content="true",
     )
   }

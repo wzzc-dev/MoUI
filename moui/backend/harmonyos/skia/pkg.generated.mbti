@@ -2,17 +2,19 @@
 package "wzzc-dev/moui/backend/harmonyos/skia"
 
 import {
-  "wzzc-dev/moui/backend/harmonyos",
   "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
 }
 
 // Values
-pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : @harmonyos.HarmonyOsSurfaceHandle, metrics~ : @host.HostSurfaceMetrics, options? : HarmonyOsSkiaAppOptions) -> @harmonyos.HarmonyOsRuntimeSession?
+pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : @wzzc-dev/moui_shell/harmonyos.HarmonyosNativeSurface, metrics~ : @host.HostSurfaceMetrics, options? : HarmonyOsSkiaAppOptions) -> @wzzc-dev/moui/backend/harmonyos.HarmonyOsRuntimeSession?
+
+pub fn harmonyos_skia_gpu_available() -> Bool
 
 pub fn harmonyos_skia_provider_preflight_summary(options? : HarmonyOsSkiaAppOptions) -> String
 
-pub fn renderer_provider(options? : HarmonyOsSkiaAppOptions) -> @harmonyos.HarmonyOsRendererProvider
+pub fn renderer_provider(options? : HarmonyOsSkiaAppOptions) -> @wzzc-dev/moui/backend/harmonyos.HarmonyOsRendererProvider
 
 // Errors
 
@@ -20,8 +22,9 @@ pub fn renderer_provider(options? : HarmonyOsSkiaAppOptions) -> @harmonyos.Harmo
 pub struct HarmonyOsSkiaAppOptions {
   // private fields
 }
-pub fn HarmonyOsSkiaAppOptions::new(font_resolution? : @wzzc-dev/moui/render/skia.SkiaFontResolution) -> Self
+pub fn HarmonyOsSkiaAppOptions::new(font_resolution? : @wzzc-dev/moui/render/skia.SkiaFontResolution, surface_route? : @render.SkiaSurfaceRoute) -> Self
 
 // Type aliases
 
 // Traits
+

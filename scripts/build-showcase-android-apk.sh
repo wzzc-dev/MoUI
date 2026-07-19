@@ -2,4 +2,4 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-exec "$repo_root/scripts/build-mobile-android-apk.sh" --app showcase "$@"
+exec "$repo_root/scripts/build-shell-android-apk.sh" --app showcase "$@"

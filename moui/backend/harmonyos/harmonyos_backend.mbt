@@ -1,7 +1,40 @@
 ///|
-pub(all) struct HarmonyOsSurfaceHandle {
-  raw : UInt64
-} derive(Eq, Debug, ToJson)
+pub type HarmonyOsSurfaceHandle = @shell_harmonyos.HarmonyosNativeSurface
+
+///|
+pub fn harmonyos_shell_embedding_api_version() -> Int {
+  @shell_embedding.embedding_api_version()
+}
+
+///|
+/// HarmonyOS keeps its XComponent, displaySync, and NAPI metadata in the
+/// platform SDK.
+pub fn harmonyos_shell_descriptor() -> @shell_embedding.ShellPlatformDescriptor {
+  @shell_harmonyos.harmonyos_descriptor()
+}
+
+///|
+pub fn harmonyos_shell_renderer_configure(mode : String) -> Bool {
+  @embedded_runtime_session.shell_renderer_configure(mode)
+}
+
+///|
+pub fn harmonyos_shell_renderer_selection(
+  gpu_available~ : Bool,
+) -> @render.NativeRendererSelection {
+  @embedded_runtime_session.shell_renderer_selection(
+    @render.NativeGpuPlatform::HarmonyOs,
+    gpu_available~,
+  )
+}
+
+///|
+pub fn harmonyos_shell_renderer_status_json(gpu_available~ : Bool) -> String {
+  @embedded_runtime_session.shell_renderer_status_json(
+    @render.NativeGpuPlatform::HarmonyOs,
+    gpu_available~,
+  )
+}
 
 ///|
 pub(all) struct HarmonyOsBackendCapabilities {
@@ -53,22 +86,7 @@ pub struct HarmonyOsRendererProvider {
 ///|
 pub struct HarmonyOsRuntimeSession {
   priv mut surface : HarmonyOsSurfaceHandle
-  priv core : @mobile_runtime.MobileRuntimeSessionCore
-}
-
-///|
-pub fn HarmonyOsSurfaceHandle::new(raw~ : UInt64) -> HarmonyOsSurfaceHandle {
-  { raw, }
-}
-
-///|
-pub fn HarmonyOsSurfaceHandle::none() -> HarmonyOsSurfaceHandle {
-  { raw: 0UL }
-}
-
-///|
-pub fn HarmonyOsSurfaceHandle::raw(self : HarmonyOsSurfaceHandle) -> UInt64 {
-  self.raw
+  priv core : @embedded_runtime_session.EmbeddedSessionCore
 }
 
 ///|
@@ -110,7 +128,7 @@ pub fn HarmonyOsRendererProvider::has_async_image_loader(
 
 ///|
 pub fn harmonyos_service_capabilities() -> @host.HostServiceCapabilities {
-  // Code-level host services wired through MobileHostChannel + ArkTS shell
+  // Code-level host services wired through EmbedderHostChannel + ArkTS shell
   // adapters. Matching-device evidence remains partial (see readiness.status).
   @host.HostServiceCapabilities::new(clipboard=true)
 }
@@ -153,7 +171,7 @@ pub fn harmonyos_readiness() -> HarmonyOsBackendReadiness {
     ready: true,
     status: "runtime_partial",
     blocked_by: [
-      "commercial/signed-device full mobile-runtime smoke is not yet status=passed",
+      "commercial/signed-device full shell-runtime smoke is not yet status=passed",
       "checked-in smoke still lacks a complete attach/resize/input/IME/clipboard suite",
       "actualPresenterRoute remains unverified; GPU seven-gate promotion is not claimed",
     ],
@@ -170,7 +188,7 @@ pub fn backend_info() -> HarmonyOsBackendInfo {
   {
     host_info: @host.HostAppInfo::new(
       backend=@host.HostBackendKind::Native,
-      description="HarmonyOS embedded native host with managed ArkTS/XComponent shell and MobileHostChannel services",
+      description="HarmonyOS embedded native host with managed ArkTS/XComponent shell and EmbedderHostChannel services",
     ),
     capabilities: harmonyos_capability_matrix(),
     services: harmonyos_service_capabilities(),
@@ -197,8 +215,8 @@ pub fn harmonyos_capability_summary(
     async_services=true,
     native_accessibility_available=true,
     web_view_available=false,
-    web_view_description="HarmonyOS native WebView embedding is not part of the current mobile host contract.",
-    description="HarmonyOS embedded native host with managed shell lifecycle, MobileHostChannel IME/clipboard/a11y bridges, and app-driven input forwarding. Runtime evidence remains partial.",
+    web_view_description="HarmonyOS native WebView embedding is not part of the current shell host contract.",
+    description="HarmonyOS embedded native host with managed shell lifecycle, EmbedderHostChannel IME/clipboard/a11y bridges, and app-driven input forwarding. Runtime evidence remains partial.",
   )
 }
 
@@ -211,7 +229,7 @@ pub fn create_session(
 ) -> HarmonyOsRuntimeSession? {
   match provider.create(surface, metrics) {
     Some(renderer) => {
-      let core = @mobile_runtime.MobileRuntimeSessionCore::new(
+      let core = @embedded_runtime_session.EmbeddedSessionCore::new(
         runtime~,
         renderer~,
         image_loader=provider.image_loader,
@@ -264,6 +282,13 @@ pub fn HarmonyOsRuntimeSession::session_generation(
   self : HarmonyOsRuntimeSession,
 ) -> Int {
   self.core.session_generation()
+}
+
+///|
+pub fn HarmonyOsRuntimeSession::surface_epoch(
+  self : HarmonyOsRuntimeSession,
+) -> Int {
+  self.core.surface_epoch()
 }
 
 ///|
@@ -346,7 +371,7 @@ pub fn HarmonyOsRuntimeSession::advance_time(
 ///|
 pub fn HarmonyOsRuntimeSession::drain_host_updates(
   self : HarmonyOsRuntimeSession,
-) -> Array[@host.MobileHostUpdate] {
+) -> Array[@embedded_runtime_session.EmbeddingHostUpdate] {
   self.core.drain_host_updates()
 }
 
@@ -367,7 +392,7 @@ pub fn HarmonyOsRuntimeSession::drain_host_update_envelope_json(
 ///|
 pub fn HarmonyOsRuntimeSession::dispatch_host_response(
   self : HarmonyOsRuntimeSession,
-  response : @host.MobileHostResponse,
+  response : @embedded_runtime_session.EmbeddingHostResponse,
 ) -> Bool {
   self.core.dispatch_host_response(response)
 }
@@ -375,7 +400,7 @@ pub fn HarmonyOsRuntimeSession::dispatch_host_response(
 ///|
 pub fn HarmonyOsRuntimeSession::dispatch_host_response_envelope(
   self : HarmonyOsRuntimeSession,
-  envelope : @host.MobileHostResponseEnvelope,
+  envelope : @embedded_runtime_session.EmbeddingHostResponseEnvelope,
 ) -> Bool {
   self.core.dispatch_host_response_envelope(envelope)
 }

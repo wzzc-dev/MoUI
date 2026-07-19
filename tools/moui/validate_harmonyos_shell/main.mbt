@@ -24,17 +24,17 @@ fn usage() -> String {
 
 ///|
 fn template_root_rel() -> String {
-  "moui/mobile/harmonyos/template"
+  "moui_shell/harmonyos/runner/template"
 }
 
 ///|
 fn root_ets_rel() -> String {
-  "moui/mobile/harmonyos/template/entry/src/main/ets/moui/MoUIRoot.ets"
+  "moui_shell/harmonyos/runner/template/entry/src/main/ets/moui/MoUIRoot.ets"
 }
 
 ///|
 fn bridge_rel() -> String {
-  "moui/mobile/harmonyos/src/main/cpp/moui_mobile_harmonyos_napi.cpp"
+  "moui_shell/harmonyos/embedder/src/main/cpp/moui_embedding_harmonyos_napi.cpp"
 }
 
 ///|
@@ -46,7 +46,7 @@ fn forbidden_in_template_ets() -> Array[String] {
 
 ///|
 fn required_in_root() -> Array[String] {
-  ["libraryname: 'moui_mobile_harmonyos'", "XComponent", "displaySync"]
+  ["libraryname: 'moui_embedding_harmonyos'", "XComponent", "displaySync"]
 }
 
 ///|
@@ -57,7 +57,7 @@ fn required_in_bridge() -> Array[String] {
 ///|
 fn forbidden_in_bridge() -> Array[String] {
   [
-    "napi_attach_surface", "napi_dispatch_pointer", "napi_resize", "MOUI_MOBILE_ATTACH_SURFACE",
+    "napi_attach_surface", "napi_dispatch_pointer", "napi_resize", "MOUI_EMBEDDING_ATTACH_SURFACE",
   ]
 }
 
@@ -207,7 +207,7 @@ fn validate_repo(repo_root : String) -> M5Result {
     findings.push(
       failure(
         template_root_rel(),
-        "no .ets files under managed shell template. Fix: restore moui/mobile/harmonyos/template. See docs/invariants.md#M5",
+        "no .ets files under managed shell template. Fix: restore moui_shell/harmonyos/runner/template. See docs/invariants.md#M5",
       ),
     )
   }
@@ -256,7 +256,7 @@ fn finding_to_json(finding : M5Finding) -> Json {
 ///|
 fn result_to_json(result : M5Result) -> Json {
   let report = if result.findings.is_empty() {
-    [{ rule: "M5", ok: true, path: "moui/mobile/harmonyos", hint: "" }]
+    [{ rule: "M5", ok: true, path: "moui_shell/harmonyos", hint: "" }]
   } else {
     result.findings
   }

@@ -176,7 +176,7 @@ fn android_doctor_check(
       Fail,
       true,
       "Node.js is missing from PATH",
-      remediation="Install Node.js for the MoUI mobile build preparation step.",
+      remediation="Install Node.js for the MoUI shell build preparation step.",
     )
   }
   let (gradle, gradle_root) = android_gradle_command(project_root, host)

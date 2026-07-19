@@ -461,17 +461,17 @@ fn harmony_project_contract_text(
   profile_text : String,
   package_text : String,
 ) -> Result[String, String] {
-  let mobile = @json.parse(mobile_text) catch {
-    _ => return Err("mobile.json is not valid JSON")
+  let shell = @json.parse(mobile_text) catch {
+    _ => return Err("shell.json is not valid JSON")
   }
-  guard mobile is Object(mobile_root) else {
-    return Err("mobile.json must be an object")
+  guard shell is Object(mobile_root) else {
+    return Err("shell.json must be an object")
   }
   guard mobile_root.get("harmonyos") is Some(Object(harmony)) else {
-    return Err("mobile.json must declare HarmonyOS platform metadata")
+    return Err("shell.json must declare HarmonyOS platform metadata")
   }
   guard json_int(harmony.get("compatibleSdkVersion")) is Some(20) else {
-    return Err("mobile.json must declare HarmonyOS compatibleSdkVersion 20")
+    return Err("shell.json must declare HarmonyOS compatibleSdkVersion 20")
   }
   let profile = @json.parse(profile_text) catch {
     _ => return Err("HarmonyOS build-profile.json5 is not parseable JSON")
@@ -505,21 +505,21 @@ fn harmony_project_contract_text(
 
 ///|
 fn harmony_project_contract(project_root : String) -> Result[String, String] {
-  let mobile_path = join_path(project_root, "mobile.json")
+  let mobile_path = join_path(project_root, "shell.json")
   let mobile_text = @fs.read_file_to_string(mobile_path) catch {
     _ => return Err("HarmonyOS project metadata is missing: " + mobile_path)
   }
   let parsed = @json.parse(mobile_text) catch {
-    _ => return Err("mobile.json is not valid JSON")
+    _ => return Err("shell.json is not valid JSON")
   }
   guard parsed is Object(root) else {
-    return Err("mobile.json must be an object")
+    return Err("shell.json must be an object")
   }
   guard root.get("harmonyos") is Some(Object(harmony)) else {
-    return Err("mobile.json is missing HarmonyOS platform metadata")
+    return Err("shell.json is missing HarmonyOS platform metadata")
   }
-  guard harmony.get("shellMode") is Some(String(mode)) else {
-    return Err("mobile.json is missing HarmonyOS shell metadata")
+  guard harmony.get("runnerMode") is Some(String(mode)) else {
+    return Err("shell.json is missing HarmonyOS shell metadata")
   }
   let shell_root = match mode {
     "ejected" =>
@@ -535,7 +535,7 @@ fn harmony_project_contract(project_root : String) -> Result[String, String] {
           output: "",
           moui_root: None,
         }) {
-        Ok(value) => join_path(value, "mobile/harmonyos/template")
+        Ok(value) => join_path(value, "shell/harmonyos/template")
         Err(message) => return Err(message)
       }
     _ => return Err("unsupported HarmonyOS shell mode: " + mode)

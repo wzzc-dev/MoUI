@@ -4,6 +4,7 @@ package "wzzc-dev/moui/backend/windows/skia"
 import {
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/windows",
+  "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
 }
 
@@ -24,7 +25,7 @@ pub fn windows_skia_provider_preflight_summary(options? : WindowsSkiaAppOptions)
 pub struct WindowsSkiaAppOptions {
   // private fields
 }
-pub fn WindowsSkiaAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, font_resolution? : @wzzc-dev/moui/render/skia.SkiaFontResolution, surface_route? : @wzzc-dev/moui/render/skia.SkiaSurfaceRoute, platform_view_plugins? : Array[@host.PlatformViewPlugin]) -> Self
+pub fn WindowsSkiaAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, event_sources? : @host.HostPlatformEventSources?, font_resolution? : @wzzc-dev/moui/render/skia.SkiaFontResolution, surface_route? : @render.SkiaSurfaceRoute, platform_view_plugins? : Array[@host.PlatformViewPlugin]) -> Self
 
 pub struct WindowsSkiaSmokeOptions {
   // private fields

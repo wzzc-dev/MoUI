@@ -9,6 +9,7 @@ This file is generated from repository manifests and validator reports.
 | Member |
 |---|
 | ./moui |
+| ./moui_shell |
 | ./moui_i18n |
 | ./moui_richtext |
 | ./moui_tester |
@@ -56,9 +57,9 @@ This file is generated from repository manifests and validator reports.
 | runtime facade (moui/runtime/pkg.generated.mbti) | 428 | 284 | 9 |
 | core (moui/core/pkg.generated.mbti) | 1830 | 505 | 139 |
 | views facade (moui/views/pkg.generated.mbti) | 1213 | 548 | 19 |
-| host contracts (moui/backend/host/pkg.generated.mbti) | 1226 | 481 | 73 |
+| host contracts (moui/backend/host/pkg.generated.mbti) | 1095 | 453 | 64 |
 | renderer facade (moui/render/pkg.generated.mbti) | 550 | 148 | 37 |
-| skia renderer (moui/render/skia/pkg.generated.mbti) | 161 | 93 | 3 |
+| skia renderer (moui/render/skia/pkg.generated.mbti) | 189 | 108 | 4 |
 | sun renderer (moui/render/sun/pkg.generated.mbti) | 230 | 138 | 1 |
 | webgpu adapter (moui/render/webgpu_adapter/pkg.generated.mbti) | 143 | 60 | 2 |
 | native wgpu renderer (moui/render/wgpu/pkg.generated.mbti) | 136 | 65 | 2 |

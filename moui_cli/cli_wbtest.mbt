@@ -22,22 +22,22 @@ test "new parser treats explicit platforms as additive" {
     Linux,
   )
   guard parsed is Ok({ options: Some(options), .. }) else {
-    fail("expected mobile new arguments to parse")
+    fail("expected shell new arguments to parse")
   }
   inspect(options.platforms.join(","), content="web,linux,android,ios")
   inspect(options.bundle_id.unwrap_or(""), content="dev.example.demo")
 }
 
 ///|
-test "new parser requires a mobile bundle id" {
+test "new parser requires a shell bundle id" {
   match
     parse_new_args(["demo_app", "--platform", "android"], "/workspace", Linux) {
     Err(message) =>
       inspect(
         message,
-        content="--bundle-id is required when generating a mobile platform",
+        content="--bundle-id is required when generating a shell platform",
       )
-    Ok(_) => fail("expected mobile generation without a bundle id to fail")
+    Ok(_) => fail("expected shell generation without a bundle id to fail")
   }
 }
 

@@ -182,27 +182,15 @@ test "Skia doctor resolves the nearest repository workspace" {
 ///|
 fn doctor_mobile_entrypoint_contract_text() -> String {
   let text =
-    #|moui_mobile_take_host_update_envelope_json
-    #|moui_mobile_dispatch_host_response_envelope_json
-    #|moui_mobile_renderer_configure
-    #|moui_mobile_renderer_status_json
-    #|moui_mobile_dispatch_text_input
-    #|moui_mobile_dispatch_command
-    #|moui_mobile_dispatch_accessibility
-    #|moui_mobile_complete_clipboard_v1
-    #|moui_mobile_attach_surface
-    #|moui_mobile_resize
-    #|moui_mobile_dispatch_pointer
-    #|moui_mobile_dispatch_scroll
-    #|moui_mobile_frame_tick
-    #|moui_mobile_render_frame
-    #|moui_mobile_detach_surface
-    #|moui_mobile_destroy_application
+    #|@platform_host.install_embedding
+    #|shell_renderer_selection
+    #|shell_renderer_configure
+    #|shell_renderer_status_json
   text
 }
 
 ///|
-test "mobile entrypoint requires nonempty package and main files" {
+test "shell entrypoint requires nonempty package and main files" {
   let root = test_temp_path("doctor-entrypoint")
   remove_tree(root)
   let package_path = join_path(root, "android_skia/moon.pkg")
@@ -227,8 +215,7 @@ test "mobile entrypoint requires nonempty package and main files" {
     }
   }
   @fs.write_string_to_file(
-    package_path,
-    @fs.read_file_to_string(join_path(root, "android_skia/main.mbt")),
+    package_path, "wzzc-dev/moui/backend/android\n@platform_host\n",
   ) catch {
     _ => {
       remove_tree(root)
@@ -244,7 +231,7 @@ test "mobile entrypoint requires nonempty package and main files" {
 }
 
 ///|
-test "mobile entrypoint accepts the repository app layout" {
+test "shell entrypoint accepts the repository app layout" {
   let root = test_temp_path("doctor-repository-entrypoint")
   let package_path = join_path(root, "android/moon.pkg")
   let main_path = join_path(root, "android/main.mbt")
@@ -254,7 +241,9 @@ test "mobile entrypoint accepts the repository app layout" {
     Err(message) => fail(message)
   }
   let contract = doctor_mobile_entrypoint_contract_text()
-  @fs.write_string_to_file(package_path, contract) catch {
+  @fs.write_string_to_file(
+    package_path, "wzzc-dev/moui/backend/android\n@platform_host\n",
+  ) catch {
     _ => {
       remove_tree(root)
       fail("could not write repository entrypoint package fixture")
@@ -343,18 +332,18 @@ fn doctor_test_plugin_manifest() -> String {
 ///|
 fn doctor_test_mobile_with_plugin(permission : Bool) -> String raise {
   let parsed = @json.parse(eject_test_mobile_text())
-  guard parsed is Object(root) else { fail("mobile fixture must be an object") }
-  guard root.get("mobile") is Some(Object(mobile)) else {
-    fail("mobile fixture must contain mobile")
+  guard parsed is Object(root) else { fail("shell fixture must be an object") }
+  guard root.get("shell") is Some(Object(shell)) else {
+    fail("shell fixture must contain shell")
   }
-  mobile["plugins"] = ["plugins/camera/moui.plugin.json"].to_json()
+  shell["plugins"] = ["plugins/camera/moui.plugin.json"].to_json()
   let no_permissions : Array[String] = []
-  mobile["permissions"] = if permission {
+  shell["permissions"] = if permission {
     ["camera"].to_json()
   } else {
     no_permissions.to_json()
   }
-  root["mobile"] = Json::object(mobile)
+  root["shell"] = Json::object(shell)
   Json::object(root).stringify(indent=2) + "\n"
 }
 
@@ -363,7 +352,7 @@ test "doctor validates plugin schema, permissions, and content digest" {
   let root = test_temp_path("doctor-plugin")
   remove_tree(root)
   eject_test_write_text(
-    join_path(root, "mobile.json"),
+    join_path(root, "shell.json"),
     doctor_test_mobile_with_plugin(true),
   )
   eject_test_write_text(
@@ -378,7 +367,7 @@ test "doctor validates plugin schema, permissions, and content digest" {
     join_path(root, "plugins/camera/android/res/camera.txt"),
     "camera\n",
   )
-  let config = match read_mobile_doctor_config(root) {
+  let config = match read_shell_doctor_config(root) {
     Ok(value) => value
     Err(message) => fail(message)
   }
@@ -397,16 +386,16 @@ test "doctor validates plugin schema, permissions, and content digest" {
   }
   inspect(first_digest == doctor_plugins_digest(changed), content="false")
   eject_test_write_text(
-    join_path(root, "mobile.json"),
+    join_path(root, "shell.json"),
     doctor_test_mobile_with_plugin(false),
   )
-  let no_permission = match read_mobile_doctor_config(root) {
+  let no_permission = match read_shell_doctor_config(root) {
     Ok(value) => value
     Err(message) => fail(message)
   }
   inspect(read_doctor_plugins(root, no_permission) is Err(_), content="true")
   eject_test_write_text(
-    join_path(root, "mobile.json"),
+    join_path(root, "shell.json"),
     doctor_test_mobile_with_plugin(true),
   )
   eject_test_write_text(
@@ -421,17 +410,18 @@ test "doctor validates plugin schema, permissions, and content digest" {
 test "doctor stages managed canonical shell and reports ejected drift" {
   let root = test_temp_path("doctor-shell")
   let moui_root = join_path(root, "moui")
+  let shell_root = join_path(root, "moui_shell")
   remove_tree(root)
   eject_test_prepare_project(root, moui_root)
   let managed = mobile_project_doctor_checks(root, ["android"])
   inspect(
     managed.any(check => {
-      check.id == "mobile.android.managed-staging" && check.status == Pass
+      check.id == "shell.android.managed-staging" && check.status == Pass
     }),
     content="true",
   )
   let result = match
-    eject_mobile_shell({
+    eject_shell({
       project_root: root,
       platform: "android",
       output: "",
@@ -440,7 +430,7 @@ test "doctor stages managed canonical shell and reports ejected drift" {
     Ok(value) => value
     Err(message) => fail(message)
   }
-  let config = match read_mobile_doctor_config(root) {
+  let config = match read_shell_doctor_config(root) {
     Ok(value) => value
     Err(message) => fail(message)
   }
@@ -453,6 +443,7 @@ test "doctor stages managed canonical shell and reports ejected drift" {
     "android",
     plugins,
     Some(moui_root),
+    Some(shell_root),
   )
   inspect(clean.status == Pass, content="true")
   eject_test_write_text(join_path(result.output, "README.md"), "changed\n")
@@ -461,6 +452,7 @@ test "doctor stages managed canonical shell and reports ejected drift" {
     "android",
     plugins,
     Some(moui_root),
+    Some(shell_root),
   )
   inspect(drift.status == Warn, content="true")
   inspect(drift.detail.contains("modified:README.md"), content="true")
@@ -472,21 +464,21 @@ test "doctor keeps structural config and protocol compatibility separate" {
   let root = test_temp_path("doctor-protocol")
   remove_tree(root)
   let parsed = @json.parse(eject_test_mobile_text()) catch {
-    _ => fail("mobile fixture must parse")
+    _ => fail("shell fixture must parse")
   }
-  guard parsed is Object(fields) else { fail("mobile fixture must be object") }
-  fields["runtimeAbiVersion"] = (2 : Int).to_json()
+  guard parsed is Object(fields) else { fail("shell fixture must be object") }
+  fields["embeddingApiVersion"] = (2 : Int).to_json()
   eject_test_write_text(
-    join_path(root, "mobile.json"),
+    join_path(root, "shell.json"),
     Json::object(fields).stringify(indent=2) + "\n",
   )
   let checks = mobile_project_doctor_checks(root, ["android"])
   inspect(
-    checks.any(check => check.id == "mobile.config" && check.status == Pass),
+    checks.any(check => check.id == "shell.config" && check.status == Pass),
     content="true",
   )
   inspect(
-    checks.any(check => check.id == "mobile.protocol" && check.status == Fail),
+    checks.any(check => check.id == "shell.protocol" && check.status == Fail),
     content="true",
   )
   remove_tree(root)

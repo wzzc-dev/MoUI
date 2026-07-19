@@ -62,16 +62,16 @@ fn root_usage() -> String {
     #|  moui doctor [options]
     #|  moui plugin new <id> [options]
     #|  moui package [options]
-    #|  moui mobile eject <platform> [options]
+    #|  moui shell eject <platform> [options]
     #|  moui --version
     #|
     #|Commands:
     #|  new             Create an independent MoUI project.
     #|  add platform    Add platforms to an existing project.
     #|  doctor          Check the selected platform toolchains.
-    #|  plugin new      Scaffold a managed mobile plugin package.
+    #|  plugin new      Scaffold a managed shell plugin package.
     #|  package         Print project package inventory.
-    #|  mobile eject    Materialize a versioned shell for application ownership.
+    #|  shell eject    Materialize a versioned shell for application ownership.
     #|
     #|Options:
     #|  -h, --help      Show help.
@@ -94,7 +94,7 @@ fn new_usage() -> String {
     #|  --platform PLATFORM     Add a target platform; may be repeated.
     #|                          Values: web, macos, windows, linux, android,
     #|                          ios, harmonyos, or all.
-    #|  --bundle-id ID          Required when a mobile platform is selected.
+    #|  --bundle-id ID          Required when a shell platform is selected.
     #|  --json                  Emit machine-readable output.
     #|  -h, --help              Show this help.
   )
@@ -118,16 +118,16 @@ fn doctor_usage() -> String {
 ///|
 fn mobile_usage() -> String {
   (
-    #|Usage: moui mobile eject <android|ios|harmonyos> [options]
+    #|Usage: moui shell eject <android|ios|harmonyos> [options]
     #|
-    #|Run `moui mobile eject --help` for command options.
+    #|Run `moui shell eject --help` for command options.
   )
 }
 
 ///|
 fn eject_usage() -> String {
   (
-    #|Usage: moui mobile eject <android|ios|harmonyos> [options]
+    #|Usage: moui shell eject <android|ios|harmonyos> [options]
     #|
     #|Options:
     #|  --project-root PATH  Project root. Defaults to the current directory.
@@ -148,7 +148,7 @@ fn add_usage() -> String {
     #|Options:
     #|  --project-root PATH  Project root. Defaults to the current directory.
     #|  --platform PLATFORM  Additional platform; may be repeated.
-    #|  --bundle-id ID       Required when adding the first mobile platform.
+    #|  --bundle-id ID       Required when adding the first shell platform.
     #|  --json               Emit machine-readable output.
     #|  -h, --help           Show this help.
   )
@@ -159,12 +159,12 @@ fn plugin_usage() -> String {
   (
     #|Usage: moui plugin new <id> [options]
     #|
-    #|Scaffold a managed plugin under plugins/<id> and register it in mobile.json
+    #|Scaffold a managed plugin under plugins/<id> and register it in shell.json
     #|when present.
     #|
     #|Options:
     #|  --project-root PATH  Project root. Defaults to the current directory.
-    #|  --platform PLATFORM  Mobile platform; may be repeated (android|ios|harmonyos|all).
+    #|  --platform PLATFORM  Shell platform; may be repeated (android|ios|harmonyos|all).
     #|  --json               Emit machine-readable output.
     #|  -h, --help           Show this help.
   )
@@ -626,12 +626,11 @@ fn parse_eject_args(
         index += 1
       }
       _ if argument.has_prefix("-") =>
-        return Err("unknown option for moui mobile eject: " + name)
+        return Err("unknown option for moui shell eject: " + name)
       _ => {
         match platform.val {
           None => platform.val = Some(argument)
-          Some(_) =>
-            return Err("moui mobile eject accepts exactly one platform")
+          Some(_) => return Err("moui shell eject accepts exactly one platform")
         }
         index += 1
       }
@@ -641,7 +640,7 @@ fn parse_eject_args(
     return Ok({ help: true, json: json.val, options: None })
   }
   guard platform.val is Some(selected_platform) else {
-    return Err("missing platform for moui mobile eject")
+    return Err("missing platform for moui shell eject")
   }
   Ok({
     help: false,
@@ -881,7 +880,7 @@ fn run_eject(args : Array[String], cwd : String) -> CliOutcome {
       "",
     )
   }
-  match eject_mobile_shell(options) {
+  match eject_shell(options) {
     Ok(result) =>
       if parsed.json {
         stdout_outcome(result.to_json_text())
@@ -969,7 +968,7 @@ pub fn run_cli(args : Array[String], cwd : String) -> CliOutcome {
         )
       }
     "package" => run_package_command(args[1:].to_owned(), cwd)
-    "mobile" =>
+    "shell" =>
       if args.length() == 1 ||
         (args.length() == 2 && (args[1] == "-h" || args[1] == "--help")) {
         stdout_outcome(mobile_usage())
@@ -977,7 +976,7 @@ pub fn run_cli(args : Array[String], cwd : String) -> CliOutcome {
         run_eject(args[2:].to_owned(), cwd)
       } else {
         failed_outcome(
-          "unknown moui mobile command: " + args[1],
+          "unknown moui shell command: " + args[1],
           json_requested(args),
           mobile_usage(),
         )

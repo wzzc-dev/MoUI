@@ -10,24 +10,24 @@ The canonical shell is a package-owned SwiftUI `App` with a
 `UIViewRepresentable` host. Its render view explicitly uses `CAMetalLayer`,
 drives frames with `CADisplayLink`, and forwards lifecycle, resize, touch, IME,
 pasteboard, accessibility, PlatformView, and Host Service traffic into MoUI. A
-narrow Objective-C++ bridge only negotiates Mobile Runtime ABI v1, dispatches
+narrow Objective-C++ bridge only negotiates Embedding API v1, dispatches
 its function table, and owns copied boundary data.
 
 ## Status
 
 Three evidence layers stay separate: **product GPU default** (source/`auto`),
-**mobile runtime smoke** (`artifacts/mobile-runtime/...`), and **seven-gate GPU
+**shell runtime smoke** (`artifacts/shell-runtime/...`), and **seven-gate GPU
 promotion claim** (`gpuPromotionEvidence` / `artifacts/gpu-promotion/...`).
 
 | Area | Current state | Evidence boundary |
 | --- | --- | --- |
 | Product class | `runtime_partial` (see platform-readiness-declaration) | Not `committed`; not “Counter-only scaffold.” |
 | Host contract | Usable embedded session in `moui/backend/ios` (`ready=true`) | Package tests + managed shell wiring; L3 promotion separate. |
-| Platform services | Swift adapters own text proxy, pasteboard, a11y container, PlatformView, Host Service channels over `MobileHostChannel` | Capability flags reflect **code wiring**; full managed-shell VoiceOver/device evidence still pending. |
+| Platform services | Swift adapters own text proxy, pasteboard, a11y container, PlatformView, Host Service channels over `EmbedderHostChannel` | Capability flags reflect **code wiring**; full managed-shell VoiceOver/device evidence still pending. |
 | Frame pacing | Input/resize request redraw; presentation runs from `CADisplayLink` ticks | 60/120 Hz device pacing evidence pending. |
 | Skia provider | `moui/backend/ios/skia` preflight `runtime_status=runtime_partial` | Provider checks prove wiring; presenter route still unverified in checks JSON. |
-| Product GPU default | `auto` → `SkiaGpuNative` / `metal-gpu` when available (`gpu_promoted=true`) | Source + rebuild `mobile-build.json`; not a seven-gate claim. |
-| Canonical SwiftUI shell | `moui/mobile/ios` + real `PBXNativeTarget` in the framework-staged template | Managed fallback builds prove Swift/ObjC++/ABI/native packaging only; they are not runtime proof. |
+| Product GPU default | `auto` → `SkiaGpuNative` / `metal-gpu` when available (`gpu_promoted=true`) | Source + rebuild `shell-build.json`; not a seven-gate claim. |
+| Canonical SwiftUI shell | `moui_shell/ios` + real `PBXNativeTarget` in the framework-staged template | Managed fallback builds prove Swift/ObjC++/ABI/native packaging only; they are not runtime proof. |
 | First-frame runtime evidence | Nonblank screenshots and the simulator smoke below were collected against the Release N UIKit shell | Historical pixels remain valid for that artifact, not for the replacement managed shell. |
 | Runtime smoke (simulator, 2026-07-15 re-verify) | Component Gallery **`status=passed`** under the frozen UIKit shell at `artifacts/mobile-runtime/ios/component_gallery/` | Managed SwiftUI lifecycle, pixels, input, IME, clipboard, accessibility, PlatformView, and async-image evidence must be recollected without a production-shell smoke probe. |
 | GPU promotion claim | Scaffold only: `artifacts/gpu-promotion/ios/scaffold-latest/` (`gpuPromoted=false`) | No matching-device seven-gate claim; product default already on. Runtime smoke pass ≠ seven-gate promotion claim. |
@@ -36,22 +36,21 @@ promotion claim** (`gpuPromotionEvidence` / `artifacts/gpu-promotion/...`).
 ## Ownership
 
 - `moui/backend/ios` owns `IosViewHandle`, `IosRendererProvider`, readiness
-  summaries, and `IosRuntimeSession`.
+  summaries, `IosRuntimeSession`, and the installed embedding adapter, which
+  it registers with the shell-owned Embedding API v1 MoonBit exports.
 - `moui/backend/ios/skia` wraps `moui/render/skia` in a `HostWindowRenderer`
   and presents copied RGBA frames to a UIKit `UIImageView` child when compiled
   for iOS or iOS Simulator.
 - `examples/counter/ios_skia` and `examples/showcase/ios_skia` are thin
-  MoonBit entrypoints. Schema v2 builds expose the fixed Mobile Runtime ABI v1
-  symbols; app-specific symbol maps are confined to the Release N legacy path.
-- `moui/mobile/ios` owns the canonical Swift package, SwiftUI scene lifecycle,
+  MoonBit entrypoints. They install only app program and renderer
+  configuration; `backend/ios` registers callbacks for the shell-owned fixed
+  Embedding API v1 symbols.
+- `moui_shell/ios` owns the canonical Swift package, SwiftUI scene lifecycle,
   `CAMetalLayer` view, display link, UIKit host adapters, plugin registry, ABI
   bridge, and canonical Xcode template.
-- `examples/*/ios_app` are repository-only native target fixtures. Normal
-  managed applications keep identity in `mobile.json` and do not own an Xcode
-  project.
-- `moui/mobile/ios/legacy/moui_mobile_app.mm` is the frozen Release N
-  UIKit/Objective-C++ compatibility fixture and is selected only by
-  `--legacy-uikit-shell`.
+- `moui_shell/ios/{embedder,runner}` owns the reusable native implementation
+  and managed Xcode template. Applications keep identity in `shell.json` and
+  use `moui shell eject ios` when they need an owned Xcode project.
 
 iOS 15 remains the deployment floor. Product `auto` prefers the Metal
 `CAMetalLayer` / worker-owned GPU path when available; the raster compatibility
@@ -67,10 +66,9 @@ MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test moui/backend/ios --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test moui/backend/ios/skia --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/counter/ios_skia --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/showcase/ios_skia --target native
-sh moui/mobile/ios/tests/run-ios-managed-shell-tests.sh
-scripts/build-mobile-ios-app.sh --app counter --fallback-skia
-scripts/build-mobile-ios-app.sh --app showcase --fallback-skia
-scripts/build-mobile-ios-app.sh --app counter --fallback-skia --legacy-uikit-shell
+sh moui_shell/ios/embedder/tests/run-ios-managed-shell-tests.sh
+scripts/build-shell-ios-app.sh --app counter --fallback-skia
+scripts/build-shell-ios-app.sh --app showcase --fallback-skia
 ```
 
 These checks are useful before handoff, but none of them prove iOS runtime
@@ -117,10 +115,10 @@ iOS builds use a package-owned minimal `PBXNativeTarget` as the primary
 entrypoint. Applications do not keep a managed Xcode project in their source
 tree.
 The reusable SwiftUI shell, native build script, canonical Xcode template, and
-compatibility contracts live under the package-published `moui/mobile` and
-`moui/scripts/mobile` directories. The builder consumes app-facing metadata
-from `examples/<app>/mobile.json` for repository examples, or the external
-app's own `mobile.json`, then generates MoonBit C plus Skia response files,
+compatibility contracts live under the package-published `moui_shell` and
+`moui_shell/scripts` directories. The builder consumes app-facing metadata
+from `examples/<app>/shell.json` for repository examples, or the external
+app's own `shell.json`, then generates MoonBit C plus Skia response files,
 compiles the ABI adapter, narrow Objective-C++ bridge, Swift package module,
 generated app configuration, and plugin sources, then writes a Simulator
 `.app` bundle.
@@ -128,13 +126,13 @@ generated app configuration, and plugin sources, then writes a Simulator
 Build the experimental Counter iOS Simulator app from the repository root:
 
 ```sh
-scripts/build-mobile-ios-app.sh --app counter
+scripts/build-shell-ios-app.sh --app counter
 ```
 
 Build Showcase with the same route:
 
 ```sh
-scripts/build-mobile-ios-app.sh --app showcase
+scripts/build-shell-ios-app.sh --app showcase
 ```
 
 The default output is:
@@ -147,10 +145,10 @@ artifacts/ios/showcase/MoUIShowcase.app
 Useful options:
 
 ```sh
-scripts/build-mobile-ios-app.sh --app counter --arch x86_64
-scripts/build-mobile-ios-app.sh --app counter --deployment-target 15.0
-scripts/build-mobile-ios-app.sh --app counter --sdk iphoneos --arch arm64
-scripts/build-mobile-ios-app.sh --app counter --renderer auto
+scripts/build-shell-ios-app.sh --app counter --arch x86_64
+scripts/build-shell-ios-app.sh --app counter --deployment-target 15.0
+scripts/build-shell-ios-app.sh --app counter --sdk iphoneos --arch arm64
+scripts/build-shell-ios-app.sh --app counter --renderer auto
 ```
 
 The allowed renderer modes are `auto`, `skia-gpu`, and `skia-raster`.
@@ -165,8 +163,8 @@ scaffold.
 For packaging-only smoke, use:
 
 ```sh
-scripts/build-counter-ios-app.sh --fallback-skia
-scripts/build-component-gallery-ios-app.sh --fallback-skia
+scripts/build-shell-ios-app.sh --app counter --fallback-skia
+scripts/build-shell-ios-app.sh --app showcase --fallback-skia
 ```
 
 `--fallback-skia` validates MoonBit C generation, SwiftUI/UIKit host-adapter
@@ -174,26 +172,22 @@ and ABI bridge compilation, runtime compatibility, native-stub compilation,
 bundle layout, and ad-hoc simulator signing. It reports native Skia unavailable
 and must not be used as first-frame runtime evidence.
 
-The managed SwiftUI shell is the default. Use
-`--legacy-uikit-shell` only to build the frozen Release N fixture. The output
-bundle records the selected route in `MOUIShellMode`.
+The managed SwiftUI shell is the default; `moui shell eject ios` is the only
+supported route for application-owned native runner changes.
 
-The old app-specific build scripts remain compatibility wrappers over
-`scripts/build-mobile-ios-app.sh --app ...`.
-
-For an external schema v2 app, keep only `mobile.json`, resources, plugins, and
+For an external schema v1 app, keep only `shell.json`, resources, plugins, and
 the MoonBit mobile entrypoint in the application workspace. The
 package-published script stages the canonical Xcode project automatically:
 
 ```sh
-.mooncakes/wzzc-dev/moui/scripts/mobile/build-ios-app.sh \
+.mooncakes/wzzc-dev/moui_shell/scripts/build-ios-app.sh \
   --workspace-root "$PWD" \
   --moui-root "$PWD/.mooncakes/wzzc-dev/moui" \
   --app my_app \
-  --app-config "$PWD/mobile.json"
+  --app-config "$PWD/shell.json"
 ```
 
-Use `moui mobile eject ios --output <dir>` only when the app needs to own and
+Use `moui shell eject ios --output <dir>` only when the app needs to own and
 version the native project. `--xcode-project` is reserved for repository
 fixtures and ejected shells; it is not required by the managed path.
 
@@ -203,13 +197,13 @@ which letterboxes presentation and changes touch-coordinate mapping.
 
 ## Scene And Extension Contract
 
-Mobile Runtime ABI v1 supports one active iOS scene. Every managed `Info.plist`
+Embedding API v1 supports one active iOS scene. Every managed `Info.plist`
 sets `UIApplicationSupportsMultipleScenes` to false, and the Swift scene lease
 returns `-1001` if a second concurrent scene is nevertheless requested. Surface
 detach preserves the application session for background/foreground and view
 recreation; `destroy_application` is process-terminal and is called separately.
 
-The canonical shell accepts app-owned configuration through `mobile.json` and
+The canonical shell accepts app-owned configuration through `shell.json` and
 source-based `moui.plugin.json` manifests. Shell API v1 plugins may register
 native PlatformView factories and named Host Service channel handlers. The
 resolver compiles declared Swift/Objective-C++ sources, copies declared
@@ -219,10 +213,9 @@ scripts, frameworks, and prebuilt native libraries out of the managed route.
 An app that needs custom Xcode build phases, binary frameworks, entitlements
 outside the managed manifest, or a different scene architecture must eject by
 owning its native project and shell. The stable boundary after eject is
-`moui_mobile_runtime_v1.h`; the application must retain ABI compatibility,
+`moui_embedding_api_v1.h`; the application must retain ABI compatibility,
 length-driven data ownership, session-generation checks, and detach/destroy
-separation. `--legacy-uikit-shell` is a compatibility fixture, not an eject
-workflow.
+separation.
 
 ## Simulator Smoke
 
@@ -238,8 +231,8 @@ Record screenshot and log evidence before promoting any runtime claim. The
 catalog-backed recorder automates the local evidence shape:
 
 ```sh
-node scripts/record-mobile-runtime-smoke.mjs --platform ios --app counter --require-passed
-node scripts/record-mobile-runtime-smoke.mjs --platform ios --app showcase --require-passed
+node scripts/record-shell-runtime-smoke.mjs --platform ios --app counter --require-passed
+node scripts/record-shell-runtime-smoke.mjs --platform ios --app showcase --require-passed
 ```
 
 The iOS recorder uses Meta `idb` because stock Apple `simctl` has no tap or
@@ -300,7 +293,7 @@ Recorder behavior that remains relevant:
 Build the device artifact first:
 
 ```sh
-scripts/build-mobile-ios-app.sh \
+scripts/build-shell-ios-app.sh \
   --app showcase --sdk iphoneos --arch arm64
 ```
 

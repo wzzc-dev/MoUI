@@ -80,9 +80,9 @@ test "mobile platform validator rejects inferred presenter routes" {
     {
       platform: "android",
       source_status: "passed",
-      source_fact_statuses: ["passed", "passed", "passed", "passed"],
+      source_fact_statuses: ["passed", "passed", "passed"],
       source_verified_on: "2026-07-15",
-      source_matrix_command: "run-mobile-shell-matrix.sh android --fallback-skia",
+      source_matrix_command: "run-shell-matrix.sh android --fallback-skia",
       renderer_status: "partial",
       runtime_status: "partial",
       shell_kind: "managed-kotlin",
@@ -108,9 +108,9 @@ test "mobile source build status aggregates required fixtures" {
     {
       platform: "ios",
       source_status: "passed",
-      source_fact_statuses: ["passed", "passed", "partial", "passed"],
+      source_fact_statuses: ["passed", "passed", "partial"],
       source_verified_on: "2026-07-15",
-      source_matrix_command: "run-mobile-shell-matrix.sh ios --fallback-skia",
+      source_matrix_command: "run-shell-matrix.sh ios --fallback-skia",
       renderer_status: "partial",
       runtime_status: "partial",
       shell_kind: "managed-swiftui",

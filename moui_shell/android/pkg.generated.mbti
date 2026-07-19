@@ -1,0 +1,25 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_shell/android"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui_shell/embedding",
+}
+
+// Values
+pub fn android_descriptor() -> @embedding.ShellPlatformDescriptor
+
+// Errors
+
+// Types and methods
+pub(all) struct AndroidNativeSurface {
+  raw : UInt64
+} derive(Eq, ToJson, @debug.Debug)
+pub fn AndroidNativeSurface::new(raw~ : UInt64) -> Self
+pub fn AndroidNativeSurface::none() -> Self
+pub fn AndroidNativeSurface::raw(Self) -> UInt64
+
+// Type aliases
+
+// Traits
+

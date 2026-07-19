@@ -6,9 +6,8 @@
   "runtimeL3": {"status": "partial", "evidence": "full platform-service matching-host suite pending"},
   "shellKind": "native-window",
   "shellApiVersion": 0,
-  "runtimeAbiVersion": 0,
+  "embeddingApiVersion": 0,
   "deploymentFloor": "Windows 10",
   "toolchainFloor": "MSVC 2022",
   "actualPresenterRoute": "d3d12-direct"
 }
-

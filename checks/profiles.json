@@ -106,7 +106,7 @@
           "name": "mobile app config",
           "argv": [
             "node",
-            "scripts/check-mobile-app-config.mjs"
+            "scripts/check-shell-app-config.mjs"
           ]
         },
         {
@@ -374,10 +374,10 @@
           ]
         },
         {
-          "name": "mobile runtime manifest tests",
+          "name": "shell runtime manifest tests",
           "argv": [
             "node",
-            "scripts/test-validate-mobile-runtime-manifest.mjs"
+            "scripts/test-validate-shell-runtime-manifest.mjs"
           ]
         },
         {
