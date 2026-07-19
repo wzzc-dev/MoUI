@@ -130,7 +130,7 @@ test "desktop runtime unlocks into Finder at desktop size" {
   assert_true(has_text(commands, "Documents"))
   assert_true(has_text(commands, "Project Notes.txt"))
   assert_true(has_text(commands, "Finder"))
-  assert_true(has_text(commands, "Fri Jul 17  09:41"))
+  assert_true(has_text(commands, "Sun Jul 19  09:41"))
 }
 
 ///|

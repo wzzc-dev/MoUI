@@ -1,0 +1,14 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/tests/skia_text_emoji_smoke/native"
+
+// Values
+
+// Errors
+
+// Types and methods
+type SkiaParagraphSmokeLine
+
+// Type aliases
+
+// Traits
+

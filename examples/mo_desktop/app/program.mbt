@@ -10,7 +10,9 @@ pub fn program(
     init=() => (initial, request_system_appearance(services)),
     update=(model, message) => update_with_host(model, message, services),
     view~,
-    subscriptions=model => desktop_subscriptions(model, services, timer_source, wall_clock),
+    subscriptions=model => {
+      desktop_subscriptions(model, services, timer_source, wall_clock)
+    },
   )
 }
 
@@ -75,7 +77,10 @@ fn request_system_appearance(
       let response = services.request_system_theme()
       dispatch(
         HostCompleted(
-          host_completion_for(response, @host.HostServiceRequest::QuerySystemTheme),
+          host_completion_for(
+            response,
+            @host.HostServiceRequest::QuerySystemTheme,
+          ),
         ),
       )
     },
@@ -95,10 +100,9 @@ fn request_file_import(services : @host.HostAppServices) -> @moui.Effect[Msg] {
     key="mo-desktop:file-import",
     label="Import desktop file",
     run=dispatch => {
-      let response = services.open_file(
-        title="Import into Mo Desktop",
-        filters=["txt", "md", "pdf", "png", "jpg", "zip"],
-      )
+      let response = services.open_file(title="Import into Mo Desktop", filters=[
+        "txt", "md", "pdf", "png", "jpg", "zip",
+      ])
       dispatch(HostCompleted(host_completion_for(response, request)))
     },
   )

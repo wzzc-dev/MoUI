@@ -1,0 +1,41 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/backend/macos/sun"
+
+import {
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/macos",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/window/core",
+  "wzzc-dev/window/dpi",
+}
+
+// Values
+pub fn macos_sun_provider_preflight_summary(options? : MacosSunAppOptions, smoke_options? : MacosSunSmokeOptions) -> String
+
+pub fn renderer_provider(options? : MacosSunAppOptions) -> @macos.MacosRendererProvider
+
+pub fn run_app(String, @runtime.AppRuntime) -> Unit
+
+pub fn run_app_with_options(String, @runtime.AppRuntime, options~ : MacosSunAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
+
+pub async fn run_app_with_options_async_pump(String, @runtime.AppRuntime, options~ : MacosSunAppOptions, window_requests? : @host.HostWindowRequestQueue, frame_interval_ms? : Int) -> Unit
+
+pub fn run_smoke_app_with_options(String, @runtime.AppRuntime, options~ : MacosSunAppOptions, smoke_options? : MacosSunSmokeOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
+
+// Errors
+
+// Types and methods
+pub struct MacosSunAppOptions {
+  // private fields
+}
+pub fn MacosSunAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, platform_view_plugins? : Array[@host.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @core.PlatformWindowAttributes, on_ready? : (() -> Unit)?, min_window_size? : @dpi.LogicalSize?) -> Self
+
+pub struct MacosSunSmokeOptions {
+  // private fields
+}
+pub fn MacosSunSmokeOptions::new(first_frame_smoke_auto_exit? : Bool) -> Self
+
+// Type aliases
+
+// Traits
+
