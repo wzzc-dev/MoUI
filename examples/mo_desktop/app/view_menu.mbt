@@ -58,11 +58,7 @@ fn menu_bar_popup(
   // Click-away dismissal starts below the menu bar so another menu can be
   // selected directly instead of first requiring a separate dismissal tap.
   @views.stack([
-    color_layer(
-      viewport_width,
-      viewport_height - 32.0,
-      rgba8(0, 0, 0, a=0.0),
-    )
+    color_layer(viewport_width, viewport_height - 32.0, rgba8(0, 0, 0, a=0.0))
     .on_tap(DismissOverlay)
     .offset(dy=32.0),
     panel
