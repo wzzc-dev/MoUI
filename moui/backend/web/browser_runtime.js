@@ -1592,11 +1592,18 @@ export function createWindowWebImports(options = {}) {
       let compositionText = "";
       let suppressNextInputText = "";
       let suppressNextInputUntil = 0;
+      const inputTarget = canvas.parentElement ?? canvas;
+      const hostOwnsFocus = target =>
+        target === canvas ||
+        target === textInput ||
+        (typeof Node !== "undefined" &&
+          target instanceof Node &&
+          inputTarget.contains(target));
       const add = (target, type, handler, options) => {
         target.addEventListener(type, handler, options);
         handlers.push([target, type, handler, options]);
       };
-      const hostHasFocus = () => textInputHostHasFocus(textState);
+      const hostHasFocus = () => hostOwnsFocus(document.activeElement);
       const acceptFileDrag = event => {
         preventDefaultIfCancelable(event);
         if (event.dataTransfer) {
@@ -1608,8 +1615,7 @@ export function createWindowWebImports(options = {}) {
         const p = pointerPosition(canvas, event);
         emit(kind, rawId, Math.round(p.x), Math.round(p.y), 0, includeFiles ? draggedFileNames(event) : "");
       };
-      const blurTargetIsHost = event =>
-        event.relatedTarget === canvas || event.relatedTarget === textInput;
+      const blurTargetIsHost = event => hostOwnsFocus(event.relatedTarget);
       const emitBlurIfOutsideHost = event => {
         if (blurTargetIsHost(event)) return;
         queueMicrotask(() => {
@@ -1625,7 +1631,6 @@ export function createWindowWebImports(options = {}) {
           focusWithoutScroll(canvas);
         }
       };
-      const inputTarget = canvas.parentElement ?? canvas;
       const inputRouter = new CanvasInputRouter({
         canvas,
         host: inputTarget,
@@ -1675,10 +1680,14 @@ export function createWindowWebImports(options = {}) {
         }
       });
       addInput("pointerdown", event => {
+        // Establish host focus before Down. A browser may synchronously move
+        // focus into the semantics layer while handling the native click;
+        // that transition must not cancel the capture that Down creates.
+        if (!inputRouter.shouldRoute(event)) return;
+        focusInputTarget();
         const flags = inputRouter.pointerDown(event);
         if (handled(flags)) {
           preventDefaultIfCancelable(event);
-          focusInputTarget();
         }
       });
       addInput("pointerup", event => {
@@ -1829,7 +1838,13 @@ export function createWindowWebImports(options = {}) {
       });
       const emitResize = () => {
         resizeCanvasToHost(canvas);
-        emit(10, rawId, physicalCanvasWidth(canvas), physicalCanvasHeight(canvas));
+        emit(
+          10,
+          rawId,
+          physicalCanvasWidth(canvas),
+          physicalCanvasHeight(canvas),
+          devicePixelRatio(),
+        );
       };
       add(window, "resize", emitResize);
       const media = window.matchMedia?.("(prefers-color-scheme: dark)");

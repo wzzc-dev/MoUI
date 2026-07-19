@@ -8,7 +8,7 @@ import {
   "wzzc-dev/moui_shell@0.1.7",
   "wzzc-dev/moui_skia@0.1.7",
   "wzzc-dev/moui_sun@0.1.7",
-  "wzzc-dev/window@0.5.1-0.1.7-2",
+  "wzzc-dev/window@0.5.1-0.1.7-3",
   "Milky2018/moon_accesskit@0.3.0",
   "Milky2018/moon_cosmic@0.3.3",
   "Milky2018/moon_swash@0.1.10",

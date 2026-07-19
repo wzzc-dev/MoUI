@@ -19,6 +19,10 @@ fn ElementNode::dispatch_drag_drop(
       changed: child_result.changed || result.changed,
       activated: result.activated,
       captured: child_result.captured || result.captured,
+      capture_target: match child_result.capture_target {
+        Some(target) => Some(target)
+        None => result.capture_target
+      },
       focused: match result.focused {
         Some(value) => Some(value)
         None => child_result.focused
@@ -56,8 +60,21 @@ fn ElementNode::dispatch_drag_drop_to_children(
       if changed {
         self.dirty.mark_paint()
       }
-      { changed, activated, captured: false, focused: None }
+      {
+        changed,
+        activated,
+        captured: false,
+        capture_target: None,
+        focused: None,
+      }
     }
-    None => { changed: false, activated: false, captured: false, focused: None }
+    None =>
+      {
+        changed: false,
+        activated: false,
+        captured: false,
+        capture_target: None,
+        focused: None,
+      }
   }
 }
