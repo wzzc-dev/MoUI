@@ -251,12 +251,14 @@ fn markdown_html_tag_block_at(
   let html_lines : Array[String] = []
   let mut next = index
   while next < lines.length() {
-    if next > index && markdown_blank_line(lines[next]) {
+    if next > index &&
+      markdown_blank_line(lines[next]) &&
+      !markdown_html_block_tag_keeps_blank_lines(tag) {
       break
     }
     html_lines.push(lines[next])
     if markdown_html_block_line_closes_tag(lines[next], tag) ||
-      markdown_html_block_line_self_closes(lines[next]) {
+      (next == index && markdown_html_block_line_self_closes(lines[next])) {
       return markdown_html_block_result(html_lines, next)
     }
     next = next + 1
@@ -432,6 +434,14 @@ fn markdown_html_block_line_closes_tag(line : String, tag : String) -> Bool {
 ///|
 fn markdown_html_block_line_self_closes(line : String) -> Bool {
   markdown_html_block_trimmed_start(line).trim().to_owned().has_suffix("/>")
+}
+
+///|
+/// Gallery containers commonly use blank lines to separate image rows. Keep
+/// scanning these containers until their own closing tag instead of treating a
+/// formatting blank as the end of the HTML block.
+fn markdown_html_block_tag_keeps_blank_lines(tag : String) -> Bool {
+  tag == "div" || tag == "center"
 }
 
 ///|

@@ -728,6 +728,7 @@ test "markdown_viewer window keeps only wrapped blocks near the viewport" {
     wrapped,
     mv_font(),
     mv_text_system(),
+    180.0,
   )
   let (window, top_padding) = rich_text_document_view_window(
     prepared, 900.0, 240.0, 80.0,
@@ -868,4 +869,125 @@ test "markdown_viewer document height matches sum of block heights" {
       block.inset.bottom
   }
   assert_true((total_height - sum).abs() < 0.01)
+}
+
+///|
+test "markdown viewer renders centered responsive html image galleries" {
+  let gallery =
+    #|<div align="center">
+    #|
+    #|  <img src="resource/a.png" width="48%" alt="A"/>
+    #|  <img src="resource/b.png" width="48%" alt="B"/>
+    #|
+    #|  <br/><br/>
+    #|
+    #|  <img src="resource/c.png" width="48%" alt="C"/>
+    #|  <img src="resource/d.png" width="48%" alt="D"/>
+    #|
+    #|</div>
+  let blocks = parse_markdown(gallery)
+  inspect(blocks.length(), content="1")
+  let document = RichTextDocument::new(blocks=[
+    markdown_block_to_rich_text(
+      blocks[0],
+      mv_font(),
+      base_dir=Some("/tmp/docs"),
+    ),
+  ])
+  guard document.blocks[0] is { line_align: Some(TextCenter), runs, .. } else {
+    fail("expected a centered image-gallery block")
+  }
+  inspect(runs.length(), content="6")
+  guard runs[0]
+    is {
+      text: "<img src=\"resource/a.png\" width=\"48%\" alt=\"A\"/>",
+      image_source: Some("/tmp/docs/resource/a.png"),
+      image_width_fraction: Some(fraction),
+      ..,
+    } else {
+    fail("expected relative gallery image with a width fraction")
+  }
+  assert_true((fraction - 0.48).abs() < 0.001)
+
+  let content = @core.Rect::new(x=0.0, y=0.0, width=500.0, height=1200.0)
+  let layers : Array[@core.ViewPaintLayer] = []
+  append_rich_text_document_layers(
+    layers,
+    document,
+    content,
+    mv_font(),
+    @core.Color::black(),
+    text_system=mv_text_system(),
+    clip_rect=Some(content),
+  )
+  let image_frames : Array[@core.Rect] = []
+  let image_sources : Array[String] = []
+  for layer in layers {
+    for command in layer.commands {
+      match command {
+        @core.DrawCommand::DrawImage({ source, frame, .. }) => {
+          image_sources.push(source)
+          image_frames.push(frame)
+        }
+        _ => ()
+      }
+    }
+  }
+  inspect(image_frames.length(), content="4")
+  inspect(image_sources[3], content="/tmp/docs/resource/d.png")
+  // 48% of 500 is 240px. The two images use 480px, leaving a centered 10px
+  // margin on both sides.
+  assert_true((image_frames[0].size.width - 240.0).abs() < 0.01)
+  assert_true((image_frames[0].origin.x - 10.0).abs() < 0.01)
+  assert_true((image_frames[1].origin.x - 250.0).abs() < 0.01)
+  // Two <br> tags create a blank visual line between gallery rows.
+  assert_true(
+    image_frames[2].origin.y >
+    image_frames[0].origin.y + image_frames[0].size.height,
+  )
+}
+
+///|
+test "markdown viewer keeps fixed html image dimensions and raw html fallback" {
+  let fixed = markdown_document(
+    "<center><img src=\"fixed.png\" width=\"120\" height=\"60\" alt=\"Fixed\"/></center>",
+    base=mv_font(),
+  )
+  let content = @core.Rect::new(x=0.0, y=0.0, width=500.0, height=500.0)
+  let layers : Array[@core.ViewPaintLayer] = []
+  append_rich_text_document_layers(
+    layers,
+    fixed,
+    content,
+    mv_font(),
+    @core.Color::black(),
+    text_system=mv_text_system(),
+    clip_rect=Some(content),
+  )
+  let frames : Array[@core.Rect] = []
+  for layer in layers {
+    for command in layer.commands {
+      match command {
+        @core.DrawCommand::DrawImage({ frame, .. }) => frames.push(frame)
+        _ => ()
+      }
+    }
+  }
+  inspect(frames.length(), content="1")
+  assert_true((frames[0].size.width - 120.0).abs() < 0.01)
+  assert_true((frames[0].size.height - 60.0).abs() < 0.01)
+  assert_true((frames[0].origin.x - 190.0).abs() < 0.01)
+
+  let unsupported = markdown_document(
+    "<div align=\"center\"><img src=\"a.png\"/><span>caption</span></div>",
+    base=mv_font(),
+  )
+  guard unsupported.blocks[0]
+    is { runs: [{ image_source: None, text, .. }], .. } else {
+    fail("expected unsupported mixed html to remain raw")
+  }
+  inspect(
+    text,
+    content="<div align=\"center\"><img src=\"a.png\"/><span>caption</span></div>",
+  )
 }

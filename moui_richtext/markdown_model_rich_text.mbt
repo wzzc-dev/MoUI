@@ -119,25 +119,16 @@ pub fn markdown_block_to_rich_text(
         line_height=Some(base.size * 1.45),
       )
     HtmlBlock =>
-      RichTextBlock::new(
-        runs=[
-          RichTextRun::new(
-            text=block.text,
-            font=Some({
-              ..base,
-              families: @core.FontFamilyStack::monospace(),
-              size: base.size * 0.9,
-            }),
-            color=Some(@core.Color::black().multiply_alpha(0.7)),
-          ),
-        ],
-        background=Some(
-          @core.Brush::solid(@core.Color::rgba(r=0.12, g=0.12, b=0.12, a=0.06)),
-        ),
-        inset={ top: 4.0, right: 10.0, bottom: 4.0, left: 10.0 },
-        line_height=Some(base.size * 1.25),
-        corner_radius=6.0,
-      )
+      match markdown_html_image_gallery(block.text, base, base_dir) {
+        Some(gallery) =>
+          RichTextBlock::new(
+            runs=gallery.runs,
+            inset={ top: 4.0, right: 0.0, bottom: 4.0, left: 0.0 },
+            line_height=Some(base.size * 1.25),
+            line_align=Some(gallery.line_align),
+          )
+        None => markdown_html_raw_block_rich_text(block.text, base)
+      }
     FrontMatter =>
       RichTextBlock::new(
         runs=[
@@ -166,6 +157,35 @@ pub fn markdown_block_to_rich_text(
         inset={ top: 0.0, right: 0.0, bottom: base.size * 0.4, left: 0.0 },
       )
   }
+}
+
+///|
+/// Keep all HTML outside the explicit image-gallery subset visibly raw. This
+/// preserves the existing safe fallback instead of turning the rich-text view
+/// into a general HTML renderer.
+fn markdown_html_raw_block_rich_text(
+  html : String,
+  base : @core.FontSpec,
+) -> RichTextBlock {
+  RichTextBlock::new(
+    runs=[
+      RichTextRun::new(
+        text=html,
+        font=Some({
+          ..base,
+          families: @core.FontFamilyStack::monospace(),
+          size: base.size * 0.9,
+        }),
+        color=Some(@core.Color::black().multiply_alpha(0.7)),
+      ),
+    ],
+    background=Some(
+      @core.Brush::solid(@core.Color::rgba(r=0.12, g=0.12, b=0.12, a=0.06)),
+    ),
+    inset={ top: 4.0, right: 10.0, bottom: 4.0, left: 10.0 },
+    line_height=Some(base.size * 1.25),
+    corner_radius=6.0,
+  )
 }
 
 ///|

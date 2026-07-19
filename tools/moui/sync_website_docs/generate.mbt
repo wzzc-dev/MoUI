@@ -267,6 +267,57 @@ fn relative_to_repo(repo_root : String, path : String) -> String {
 }
 
 ///|
+/// The website README is served from a generated copy. Keep the repository
+/// README's original screenshots intact, but use the WebP assets published in
+/// this repository when rendering that copy on the website.
+fn website_readme_screenshot_url(asset : String) -> String {
+  "https://raw.githubusercontent.com/wzzc-dev/MoUI/refs/heads/main/website/web_wasm/assets/screenshots/" +
+  asset +
+  ".webp"
+}
+
+///|
+fn website_readme_markdown_content(content : String) -> String {
+  let mut rewritten = content
+  let screenshots = [
+    ("showcase.png", "showcase"),
+    ("markdown_editor.png", "markdown_editor"),
+    ("mo_workbench.png", "mo_workbench"),
+    ("excel.png", "excel"),
+    ("webview.png", "webview"),
+    ("ios-componentgallery.png", "ios-componentgallery"),
+    ("harmonyos-componentgallery.png", "harmonyos-componentgallery"),
+    ("android-componentgallery.jpg", "android-componentgallery"),
+  ]
+  for screenshot in screenshots {
+    let (source_name, asset) = screenshot
+    let source = "resource/screenshots/" + source_name
+    let replacement = "src=\"" + website_readme_screenshot_url(asset) + "\""
+    rewritten = rewritten.replace_all(
+      old="src=\"" + source + "\"",
+      new=replacement,
+    )
+    rewritten = rewritten.replace_all(
+      old="src=\"../../" + source + "\"",
+      new=replacement,
+    )
+  }
+  rewritten
+}
+
+///|
+fn website_generated_markdown_content(
+  slug : String,
+  content : String,
+) -> String {
+  if slug == "moui-readme" {
+    website_readme_markdown_content(content)
+  } else {
+    content
+  }
+}
+
+///|
 struct GeneratedFile {
   path : String
   content : String
@@ -288,7 +339,7 @@ fn build_generated_files(
       Ok(content) =>
         files.push({
           path: @tools.join_path(out_dir, entry.output_name),
-          content,
+          content: website_generated_markdown_content(entry.slug, content),
         })
       Err(message) => return Err(message)
     }
@@ -308,7 +359,7 @@ fn build_generated_files(
         Ok(content) =>
           files.push({
             path: @tools.join_path(locale_out_dir, entry.output_name),
-            content,
+            content: website_generated_markdown_content(entry.slug, content),
           })
         Err(message) => return Err(message)
       }

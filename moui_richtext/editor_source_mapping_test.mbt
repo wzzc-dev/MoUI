@@ -176,3 +176,85 @@ test "markdown_block_to_rich_text converts a heading block" {
   // Heading font should have weight 700.
   inspect(heading_font.weight, content="700")
 }
+
+///|
+test "markdown editor maps structured html gallery tags without changing source" {
+  let source =
+    #|<div align="center">
+    #|
+    #|  <img src="resource/a.png" width="48%" alt="A"/>
+    #|
+    #|  <br/><br/>
+    #|
+    #|  <img src="resource/b.png" width="48%" alt="B"/>
+    #|
+    #|</div>
+  let font = @core.FontSpec::new(size=16.0)
+  let snapshot = MarkdownEditorSnapshot::parse_with_font(
+    source,
+    font,
+    base_dir=Some("/tmp/docs"),
+  )
+  inspect(snapshot.blocks.length(), content="1")
+  guard snapshot.rich_text.blocks[0]
+    is {
+      line_align: Some(TextCenter),
+      runs: [first, first_break, second_break, second],
+      ..,
+    } else {
+    fail("expected structured gallery runs")
+  }
+  guard first
+    is {
+      image_source: Some("/tmp/docs/resource/a.png"),
+      source_range: Some(first_range),
+      ..,
+    } else {
+    fail("expected mapped first image")
+  }
+  inspect(
+    markdown_editor_substring(source, first_range.start, first_range.end),
+    content="<img src=\"resource/a.png\" width=\"48%\" alt=\"A\"/>",
+  )
+  guard first_break is { source_range: Some(first_break_range), .. } else {
+    fail("expected mapped first br")
+  }
+  inspect(
+    markdown_editor_substring(
+      source,
+      first_break_range.start,
+      first_break_range.end,
+    ),
+    content="<br/>",
+  )
+  guard second_break is { source_range: Some(second_break_range), .. } else {
+    fail("expected mapped second br")
+  }
+  inspect(
+    markdown_editor_substring(
+      source,
+      second_break_range.start,
+      second_break_range.end,
+    ),
+    content="<br/>",
+  )
+  guard second
+    is {
+      image_source: Some("/tmp/docs/resource/b.png"),
+      source_range: Some(second_range),
+      ..,
+    } else {
+    fail("expected mapped second image")
+  }
+  inspect(
+    markdown_editor_substring(source, second_range.start, second_range.end),
+    content="<img src=\"resource/b.png\" width=\"48%\" alt=\"B\"/>",
+  )
+
+  let source_mode = MarkdownDocumentSession::new(source).rich_text(
+    { caret: 0, selection: None },
+    base=font,
+    source_mode=true,
+  )
+  inspect(source_mode.blocks[0].runs[0].text, content=source)
+}

@@ -45,6 +45,24 @@ test "markdown editor html export renders document structure" {
 }
 
 ///|
+test "markdown editor html export preserves raw image galleries" {
+  let gallery =
+    #|<div align="center">
+    #|
+    #|  <img src="resource/a.png" width="48%" alt="A"/>
+    #|
+    #|  <br/><br/>
+    #|
+    #|  <img src="resource/b.png" width="48%" alt="B"/>
+    #|
+    #|</div>
+  let app = MarkdownEditorApp::new()
+  app.set_document(gallery)
+  let html = app.html_export_for_test()
+  assert_true(html.contains(gallery))
+}
+
+///|
 test "markdown editor html export writes clipboard html" {
   let written = Ref("")
   let app = MarkdownEditorApp::new()

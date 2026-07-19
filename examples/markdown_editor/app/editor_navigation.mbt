@@ -303,13 +303,23 @@ fn MarkdownEditorApp::scroll_to_source_with_anchor(
   let viewport_height = markdown_editor_viewport_height()
   let content_height = markdown_editor_max_double(
     viewport_height,
-    session.estimated_content_height(base=editor_font, source_mode~) + 96.0,
+    session.estimated_content_height(
+      base=editor_font,
+      source_mode~,
+      content_width=markdown_editor_max_double(0.0, editor_width - 28.0),
+    ) +
+    96.0,
   )
   let max_scroll = markdown_editor_max_double(
     0.0,
     content_height - viewport_height,
   )
-  let y = session.source_offset_y(source_start, base=editor_font, source_mode~)
+  let y = session.source_offset_y(
+    source_start,
+    base=editor_font,
+    source_mode~,
+    content_width=markdown_editor_max_double(0.0, editor_width - 28.0),
+  )
   let rect = @geometry.Rect::new(
     x=0.0,
     y~,

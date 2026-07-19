@@ -166,7 +166,12 @@ fn append_rich_text_document_layers(
     visible_viewport_height +
     visible_overscan * 2.0
   for index, block in document.blocks {
-    let line_height = rich_text_block_line_height(block, base_font, text_system)
+    let line_height = rich_text_block_line_height(
+      block,
+      base_font,
+      text_system,
+      block_width=content.size.width,
+    )
     let block_height = line_height + block.inset.top + block.inset.bottom
     let block_bottom = y + block_height
     if windowed && block_bottom < visible_top {
@@ -312,15 +317,27 @@ fn append_rich_text_block_runs(
   let block_font = rich_text_block_font(block, base_font)
   let block_color = rich_text_block_color(block, foreground)
   let line_step = rich_text_block_line_step(block, base_font, text_system)
-  let mut x = frame.origin.x
+  let line_heights = rich_text_block_line_heights(
+    block,
+    base_font,
+    text_system,
+    frame.size.width,
+  )
+  let line_widths = rich_text_block_line_widths(
+    block,
+    base_font,
+    text_system,
+    frame.size.width,
+  )
   let mut line = 0
+  let mut x = rich_text_block_line_start_x(block, frame, line_widths, line)
   if block.prefix != "" {
     let width = rich_text_width(block.prefix, block_font, text_system)
     let prefix_frame = rich_text_text_paint_frame(
       x~,
       y=frame.origin.y,
       width~,
-      height=frame.size.height,
+      height=line_heights.get(0).unwrap_or(line_step),
       line_right=frame.origin.x + frame.size.width,
       font=block_font,
     )
@@ -342,14 +359,24 @@ fn append_rich_text_block_runs(
     let color = run.color.unwrap_or(block_color)
     let segments = rich_text_split_lines(rich_text_run_visual_text(run))
     for index, segment in segments {
-      let width = rich_text_run_segment_width(run, segment, font, text_system)
-      let line_y = frame.origin.y + line.to_double() * line_step
+      let width = rich_text_run_segment_width(
+        run,
+        segment,
+        font,
+        text_system,
+        available_width=frame.size.width,
+      )
+      let line_y = frame.origin.y + rich_text_line_offset(line_heights, line)
       let run_frame = rich_text_run_segment_paint_frame(
         run,
         x~,
         y=line_y,
         width~,
-        height=rich_text_run_segment_height(run, line_step),
+        height=rich_text_run_segment_height(
+          run,
+          line_step,
+          available_width=frame.size.width,
+        ),
         line_right=frame.origin.x + frame.size.width,
         font~,
       )
@@ -360,11 +387,30 @@ fn append_rich_text_block_runs(
       }
       if index + 1 < segments.length() {
         line = line + 1
-        x = frame.origin.x
+        x = rich_text_block_line_start_x(block, frame, line_widths, line)
       } else {
         x = x + width
       }
     }
+  }
+}
+
+///|
+fn rich_text_block_line_start_x(
+  block : RichTextBlock,
+  frame : @core.Rect,
+  line_widths : Array[Double],
+  line : Int,
+) -> Double {
+  let width = min_double(
+    frame.size.width,
+    max_double(0.0, line_widths.get(line).unwrap_or(0.0)),
+  )
+  let remaining = max_double(0.0, frame.size.width - width)
+  match block.line_align.unwrap_or(TextStart) {
+    TextCenter => frame.origin.x + remaining / 2.0
+    TextEnd => frame.origin.x + remaining
+    TextStart => frame.origin.x
   }
 }
 

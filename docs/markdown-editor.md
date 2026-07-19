@@ -117,6 +117,13 @@ The editor supports formatted editing for common block and inline structures:
   the current Markdown reference. The active link or image target can also be
   opened through host services from the target bar or with `Cmd+Shift+O` /
   `Ctrl+Shift+O`.
+- Presentation-only HTML image galleries are rendered when a closed `<div>`
+  (including `align="center"`) or `<center>` contains only `<img>` and `<br>`
+  tags. The editor resolves `src`, `alt`, `width`, and `height`; percentage
+  widths follow the available editor width, while pixel dimensions remain
+  fixed. Original HTML remains canonical for source mode and HTML export.
+  Mixed or unsupported HTML stays in the existing monospaced raw-HTML fallback;
+  the editor does not execute or generally render HTML.
 - Heading, paragraph, list, task-list, ordered-list, quote, and code-block
   commands with keyboard shortcuts. When list, task-list, or ordered-list
   commands are applied to a multi-line selection, blank separator lines stay
