@@ -15,12 +15,18 @@ fn RichTextDocumentViewPrepared::new(
   document : RichTextDocument,
   base_font : @core.FontSpec,
   text_system : @core.TextSystem,
+  block_width : Double,
 ) -> RichTextDocumentViewPrepared {
   let block_tops : Array[Double] = []
   let block_heights : Array[Double] = []
   let mut content_height = 0.0
   for block in document.blocks {
-    let height = rich_text_block_line_height(block, base_font, text_system) +
+    let height = rich_text_block_line_height(
+        block,
+        base_font,
+        text_system,
+        block_width~,
+      ) +
       block.inset.top +
       block.inset.bottom
     block_tops.push(content_height)
@@ -80,7 +86,7 @@ fn RichTextDocumentViewCache::prepare(
     document, width, base_font, text_system,
   )
   let prepared = RichTextDocumentViewPrepared::new(
-    wrapped, base_font, text_system,
+    wrapped, base_font, text_system, width,
   )
   self.source = Some(source)
   self.width = width

@@ -367,6 +367,7 @@ fn markdown_editor_session_caret_rect(
     scroll_y=scroll_offset.y,
     viewport_height~,
     overscan=markdown_editor_visible_overscan(viewport_height),
+    content_width=@moui_richtext.rich_text_editor_content_rect(editor_frame).size.width,
   )
   let content = @moui_richtext.rich_text_editor_content_rect(editor_frame).offset(
     dx=0.0,
@@ -843,7 +844,12 @@ fn editor_source_layout(
   let source_mode = app.source_mode_enabled.get()
   let content_height = markdown_editor_max_double(
     viewport_height,
-    session.estimated_content_height(base=editor_font, source_mode~) + 96.0,
+    session.estimated_content_height(
+      base=editor_font,
+      source_mode~,
+      content_width=markdown_editor_max_double(0.0, editor_width - 28.0),
+    ) +
+    96.0,
   )
   let max_scroll = markdown_editor_max_double(
     0.0,

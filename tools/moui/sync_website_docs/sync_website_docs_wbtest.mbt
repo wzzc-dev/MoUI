@@ -28,6 +28,35 @@ test "readme source mapping" {
 }
 
 ///|
+test "website README screenshot rewrite uses GitHub WebP assets only" {
+  let content =
+    #|<img src="resource/screenshots/showcase.png"/>
+    #|<img src="resource/screenshots/markdown_editor.png"/>
+    #|<img src="resource/screenshots/mo_workbench.png"/>
+    #|<img src="resource/screenshots/excel.png"/>
+    #|<img src="resource/screenshots/webview.png"/>
+    #|<img src="resource/screenshots/ios-componentgallery.png"/>
+    #|<img src="resource/screenshots/harmonyos-componentgallery.png"/>
+    #|<img src="../../resource/screenshots/android-componentgallery.jpg"/>
+  let rewritten = website_generated_markdown_content("moui-readme", content)
+  for
+    asset in [
+      "showcase", "markdown_editor", "mo_workbench", "excel", "webview", "ios-componentgallery",
+      "harmonyos-componentgallery", "android-componentgallery",
+    ] {
+    debug_inspect(
+      rewritten.contains(website_readme_screenshot_url(asset)),
+      content="true",
+    )
+  }
+  debug_inspect(rewritten.contains("resource/screenshots/"), content="false")
+  debug_inspect(
+    website_generated_markdown_content("guide", content) == content,
+    content="true",
+  )
+}
+
+///|
 test "generates robots and sitemap from catalog" {
   let catalog = {
     schema_version: 1,

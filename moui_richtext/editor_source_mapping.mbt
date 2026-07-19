@@ -712,12 +712,14 @@ fn markdown_editor_html_tag_block_at(
   let html_lines : Array[String] = []
   let mut next = index
   while next < lines.length() {
-    if next > index && markdown_editor_blank_line(lines[next]) {
+    if next > index &&
+      markdown_editor_blank_line(lines[next]) &&
+      !markdown_html_block_tag_keeps_blank_lines(tag) {
       break
     }
     html_lines.push(lines[next].text)
     if markdown_html_block_line_closes_tag(lines[next].text, tag) ||
-      markdown_html_block_line_self_closes(lines[next].text) {
+      (next == index && markdown_html_block_line_self_closes(lines[next].text)) {
       return markdown_editor_html_block_result(lines, html_lines, index, next)
     }
     next = next + 1

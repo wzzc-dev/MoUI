@@ -367,6 +367,7 @@ pub fn MarkdownDocumentSession::rich_text_window(
   scroll_y? : Double = 0.0,
   viewport_height? : Double = 0.0,
   overscan? : Double = 320.0,
+  content_width? : Double = 0.0,
 ) -> MarkdownDocumentRichTextWindow {
   let range = markdown_document_window_range(
     self,
@@ -375,6 +376,7 @@ pub fn MarkdownDocumentSession::rich_text_window(
     scroll_y~,
     viewport_height~,
     overscan~,
+    content_width~,
   )
   let (source_chars, source_char_offset) = if source_mode &&
     range.visible_start >= 0 &&
@@ -447,11 +449,15 @@ pub fn MarkdownDocumentSession::estimated_content_height(
   self : MarkdownDocumentSession,
   base? : @core.FontSpec = @core.FontSpec::new(),
   source_mode? : Bool = false,
+  content_width? : Double = 0.0,
 ) -> Double {
   if source_mode {
     self.height_index.source_content_units * base.size
   } else {
-    self.height_index.visual_content_units * base.size
+    match markdown_document_gallery_block_heights(self, base, content_width) {
+      Some(heights) => markdown_document_sum_heights(heights)
+      None => self.height_index.visual_content_units * base.size
+    }
   }
 }
 
@@ -461,9 +467,19 @@ pub fn MarkdownDocumentSession::source_offset_y(
   source_offset : Int,
   base? : @core.FontSpec = @core.FontSpec::new(),
   source_mode? : Bool = false,
+  content_width? : Double = 0.0,
 ) -> Double {
   if self.editor_blocks.length() == 0 {
     return 0.0
+  }
+  if !source_mode {
+    match markdown_document_gallery_block_heights(self, base, content_width) {
+      Some(heights) =>
+        return markdown_document_gallery_source_offset_y(
+          self, source_offset, heights,
+        )
+      None => ()
+    }
   }
   markdown_document_height_index_source_offset_y(
     self.height_index,
@@ -573,7 +589,12 @@ pub fn MarkdownDocumentLayoutCache::new(
   let mut visible_start = -1
   let mut visible_end = -1
   for index, block in document.blocks {
-    let height = rich_text_block_total_height(block, base, text_system)
+    let height = rich_text_block_total_height(
+      block,
+      base,
+      text_system,
+      block_width=width,
+    )
     let bottom = top + height
     let session_block = if index < session.blocks.length() {
       session.blocks[index]
@@ -659,7 +680,21 @@ fn markdown_document_window_range(
   scroll_y~ : Double,
   viewport_height~ : Double,
   overscan~ : Double,
+  content_width~ : Double,
 ) -> MarkdownDocumentWindowRange {
+  if !source_mode {
+    match
+      markdown_document_gallery_block_heights(session, base, content_width) {
+      Some(heights) =>
+        return markdown_document_window_range_for_heights(
+          heights,
+          scroll_y~,
+          viewport_height~,
+          overscan~,
+        )
+      None => ()
+    }
+  }
   let index = session.height_index
   if index.blocks.length() == 0 {
     return {
@@ -703,6 +738,145 @@ fn markdown_document_window_range(
     ) *
     base.size
   { visible_start, visible_end, top_padding, content_height }
+}
+
+///|
+/// The height index is intentionally source-only for cheap scrolling. A
+/// responsive HTML gallery is the narrow exception: its height depends on the
+/// current content width, so calculate just those blocks from the rich-text
+/// model and retain indexed estimates for every other block.
+fn markdown_document_gallery_block_heights(
+  session : MarkdownDocumentSession,
+  base : @core.FontSpec,
+  content_width : Double,
+) -> Array[Double]? {
+  if content_width <= 0.0 {
+    return None
+  }
+  let heights : Array[Double] = []
+  let mut found_gallery = false
+  for index, editor_block in session.editor_blocks {
+    let estimated = if index < session.height_index.blocks.length() {
+      session.height_index.blocks[index].visual_height_units * base.size
+    } else {
+      base.size * 1.55
+    }
+    if editor_block.block.kind is HtmlBlock &&
+      markdown_html_image_gallery(editor_block.block.text, base, None)
+      is Some(_) {
+      let rich_block = markdown_block_to_rich_text(
+        editor_block.block,
+        base,
+        base_dir=None,
+      )
+      heights.push(
+        rich_text_block_total_height(
+          rich_block,
+          base,
+          @core.TextSystem::fallback(),
+          block_width=content_width,
+        ),
+      )
+      found_gallery = true
+    } else {
+      heights.push(estimated)
+    }
+  }
+  if found_gallery {
+    Some(heights)
+  } else {
+    None
+  }
+}
+
+///|
+fn markdown_document_sum_heights(heights : Array[Double]) -> Double {
+  let mut total = 0.0
+  for height in heights {
+    total = total + height
+  }
+  total
+}
+
+///|
+fn markdown_document_window_range_for_heights(
+  heights : Array[Double],
+  scroll_y~ : Double,
+  viewport_height~ : Double,
+  overscan~ : Double,
+) -> MarkdownDocumentWindowRange {
+  if heights.is_empty() {
+    return {
+      visible_start: -1,
+      visible_end: -1,
+      top_padding: 0.0,
+      content_height: 0.0,
+    }
+  }
+  let content_height = markdown_document_sum_heights(heights)
+  if viewport_height <= 0.0 {
+    return {
+      visible_start: 0,
+      visible_end: heights.length() - 1,
+      top_padding: 0.0,
+      content_height,
+    }
+  }
+  let visible_min = max_double(0.0, scroll_y - overscan)
+  let visible_max = min_double(
+    content_height,
+    scroll_y + viewport_height + overscan,
+  )
+  let mut y = 0.0
+  let mut visible_start = -1
+  let mut visible_end = -1
+  let mut top_padding = 0.0
+  for index, height in heights {
+    let bottom = y + height
+    if bottom >= visible_min && y <= visible_max {
+      if visible_start < 0 {
+        visible_start = index
+        top_padding = y
+      }
+      visible_end = index
+    } else if visible_end >= 0 && y > visible_max {
+      break
+    }
+    y = bottom
+  }
+  if visible_start < 0 {
+    let last = heights.length() - 1
+    let mut top = 0.0
+    for index in 0..<last {
+      top = top + heights[index]
+    }
+    return {
+      visible_start: last,
+      visible_end: last,
+      top_padding: top,
+      content_height,
+    }
+  }
+  { visible_start, visible_end, top_padding, content_height }
+}
+
+///|
+fn markdown_document_gallery_source_offset_y(
+  session : MarkdownDocumentSession,
+  source_offset : Int,
+  heights : Array[Double],
+) -> Double {
+  let mut top = 0.0
+  for index, block in session.editor_blocks {
+    if source_offset <= block.source_range.end {
+      return top
+    }
+    match heights.get(index) {
+      Some(height) => top = top + height
+      None => ()
+    }
+  }
+  top
 }
 
 ///|
@@ -1317,8 +1491,9 @@ fn rich_text_block_total_height(
   block : RichTextBlock,
   base_font : @core.FontSpec,
   text_system : @core.TextSystem,
+  block_width? : Double = 0.0,
 ) -> Double {
-  rich_text_block_line_height(block, base_font, text_system) +
+  rich_text_block_line_height(block, base_font, text_system, block_width~) +
   block.inset.top +
   block.inset.bottom
 }

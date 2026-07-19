@@ -6,6 +6,12 @@ import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 
 const repoRoot = process.cwd();
+const screenshotBase =
+  "https://raw.githubusercontent.com/wzzc-dev/MoUI/refs/heads/main/website/web_wasm/assets/screenshots";
+const canonicalReadme =
+  '# README\n\n<img src="resource/screenshots/showcase.png" alt="Showcase"/>\n';
+const localizedReadme =
+  '# 中文 README\n\n<img src="../../resource/screenshots/android-componentgallery.jpg" alt="Android"/>\n';
 
 const fixture = ({ locales = false } = {}) => {
   const root = mkdtempSync(join(tmpdir(), "moui-website-docs-"));
@@ -14,7 +20,7 @@ const fixture = ({ locales = false } = {}) => {
   mkdirSync(join(root, "moui_skia"), { recursive: true });
   writeFileSync(join(root, "docs/guide.md"), "# Guide\n");
   writeFileSync(join(root, "docs/private.md"), "# Private\n");
-  writeFileSync(join(root, "README.mbt.md"), "# README\n");
+  writeFileSync(join(root, "README.mbt.md"), canonicalReadme);
   writeFileSync(join(root, "moui_skia/README.mbt.md"), "# Skia\n");
   const catalog = {
     schemaVersion: 1,
@@ -30,7 +36,7 @@ const fixture = ({ locales = false } = {}) => {
   if (locales) {
     mkdirSync(join(root, "docs/zh-Hans"), { recursive: true });
     writeFileSync(join(root, "docs/zh-Hans/guide.md"), "# 指南\n");
-    writeFileSync(join(root, "docs/zh-Hans/moui-readme.md"), "# 中文 README\n");
+    writeFileSync(join(root, "docs/zh-Hans/moui-readme.md"), localizedReadme);
     writeFileSync(join(root, "docs/zh-Hans/moui-skia-readme.md"), "# 中文 Skia\n");
     catalog.locales = {
       "zh-Hans": {
@@ -99,6 +105,18 @@ const updateCatalog = (root, mutate) => {
   const { root } = fixture();
   expectPass("valid catalog", run(root));
   expectPass("generated output check", run(root, "--check"));
+  const generatedReadme = readFileSync(join(root, "website/web_wasm/docs/moui-readme.md"), "utf8");
+  if (
+    !generatedReadme.includes(`${screenshotBase}/showcase.webp`) ||
+    generatedReadme.includes("resource/screenshots/showcase.png")
+  ) {
+    console.error("website README screenshot was not rewritten to the GitHub WebP asset");
+    process.exit(1);
+  }
+  if (readFileSync(join(root, "README.mbt.md"), "utf8") !== canonicalReadme) {
+    console.error("canonical README source must remain unchanged");
+    process.exit(1);
+  }
   writeFileSync(join(root, "website/web_wasm/docs/stale.md"), "stale");
   expectFail("stale output check", run(root, "--check"), "stale output");
   expectPass("stale output cleanup", run(root));
@@ -135,6 +153,18 @@ const updateCatalog = (root, mutate) => {
   const localeOut = join(root, "website/web_wasm/docs/zh-Hans");
   if (readFileSync(join(localeOut, "guide.md"), "utf8") !== "# 指南\n") {
     console.error("localized Markdown was not copied");
+    process.exit(1);
+  }
+  const generatedLocalizedReadme = readFileSync(join(localeOut, "moui-readme.md"), "utf8");
+  if (
+    !generatedLocalizedReadme.includes(`${screenshotBase}/android-componentgallery.webp`) ||
+    generatedLocalizedReadme.includes("../../resource/screenshots/android-componentgallery.jpg")
+  ) {
+    console.error("localized website README screenshot was not rewritten to the GitHub WebP asset");
+    process.exit(1);
+  }
+  if (readFileSync(join(root, "docs/zh-Hans/moui-readme.md"), "utf8") !== localizedReadme) {
+    console.error("localized README source must remain unchanged");
     process.exit(1);
   }
   const localizedCatalog = JSON.parse(readFileSync(join(localeOut, "catalog.json"), "utf8"));
