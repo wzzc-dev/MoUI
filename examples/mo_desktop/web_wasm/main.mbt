@@ -1,9 +1,16 @@
 ///|
 fn main {
+  let services = @web.web_app_services()
+  let timer_source = @web.web_timer_source()
   @web.run_app(
     "Mo Desktop",
     @runtime.new_program_with_dimensions(
-      program=@mo_desktop_app.program(wallpaper_source="assets/tahoe-day.jpg"),
+      program=@mo_desktop_app.program(
+        wallpaper_source="assets/tahoe-day.jpg",
+        services~,
+        timer_source=Some(timer_source),
+        wall_clock=@web.web_wall_clock,
+      ),
       width=1280.0,
       height=800.0,
     ),

@@ -96,9 +96,9 @@ fn menu_bar(
       @views.container(
         @views.text(
           if compact {
-            "09:41"
+            desktop_clock_time(model.clock)
           } else {
-            "Fri Jul 17  09:41"
+            desktop_clock_menu_label(model.clock)
           },
           role=@views.TextRole::Label,
           theme~,

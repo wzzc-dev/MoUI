@@ -4,12 +4,36 @@
 - **Goal**: Advance `examples/mo_desktop` from a runnable desktop simulation to a product-quality macOS-inspired UI: coherent system chrome, window behavior, controlled Finder/Safari/system surfaces, and reproducible Web plus macOS Skia presentation evidence, while preserving the shared app and thin-entrypoint boundary.
 - **Non-goals**: Reimplement every reference app, add framework controls, or claim new renderer/platform capability.
 
+## Dynamic-host slice (2026-07-19)
+
+The desktop must no longer present fixed values as if they were live system
+state. The shared app will use `Program::new_with_environment`, typed
+`Effect`, and model-owned `Subscription` declarations. Web and macOS
+entrypoints will inject the same host-service/timer/clock capability shape;
+platform packages retain concrete browser/AppKit implementation details.
+
+- Add a reusable Web `HostTimerSource`, driven by the existing browser
+  event-loop clock, so Web can run the same long-lived subscription path as
+  macOS.
+- Give timer frames meaningful monotonic `time_ms`, and inject a wall-clock
+  snapshot at the platform edge for the visible menu/lock/widget time.
+- Use an initial Effect to query the real system appearance; use service
+  Effects for file import and external URL opening. Pending service completions
+  must remain in the app model and re-enter through a keyed subscription.
+- Replace string/index state with typed launcher/task messages, clamp control
+  values, and prevent impossible no-window zoom/drag states.
+- Make live clock/system status and real host-service outcomes visible in the
+  UI; unsupported host capabilities must be presented as unavailable rather
+  than as a fake successful system surface.
+
 ## Acceptance
 
 - [ ] The shared app provides a responsive lock screen and desktop shell.
 - [ ] Finder, Safari, the app launcher, notifications, and Control Center have meaningful typed interactions.
 - [ ] Light/dark appearance, Finder navigation/search/view mode, sliders, toggles, and window controls update through the model.
 - [ ] Web wasm-gc and macOS Skia entrypoints remain thin runtime wiring.
+- [ ] The live clock, system appearance, file import, and external-URL paths
+  use typed Effects/Subscriptions with matching Web and macOS host adapters.
 - [ ] Focused native tests, Web build, native entrypoint build, static validators, and browser screenshots pass.
 
 ## Product-quality expansion (2026-07-18)

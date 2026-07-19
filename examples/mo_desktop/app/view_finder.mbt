@@ -101,12 +101,12 @@ fn finder_toolbar(
     [
       toolbar_nav_button(
         @views.IconName::ChevronLeft,
-        "Back (unavailable)",
+        "Back history is unavailable",
         palette,
       ),
       toolbar_nav_button(
         @views.IconName::ChevronRight,
-        "Forward (unavailable)",
+        "Forward history is unavailable",
         palette,
       ),
     ],
@@ -132,6 +132,12 @@ fn finder_toolbar(
         nav,
         mode,
         @views.spacer(min_length=8.0, weight=1.0),
+        toolbar_icon_button(
+          @views.IconName::FileNew,
+          "Import files into Finder",
+          RequestFileImport,
+          palette,
+        ),
         toolbar_icon_button(
           @views.IconName::Settings,
           "Finder actions",
@@ -230,7 +236,7 @@ fn finder_view_mode_control(
           "Icons",
           @views.IconName::Columns,
           model.finder_view_mode == IconView,
-          SelectFinderView("icons"),
+          SelectFinderView(IconView),
           palette,
           theme,
           model.dark_mode,
@@ -239,7 +245,7 @@ fn finder_view_mode_control(
           "List",
           @views.IconName::ListBullet,
           model.finder_view_mode == ListView,
-          SelectFinderView("list"),
+          SelectFinderView(ListView),
           palette,
           theme,
           model.dark_mode,
@@ -630,7 +636,19 @@ fn finder_status(
 
 ///|
 fn visible_finder_entries(model : DesktopModel) -> Array[FileEntry] {
-  finder_entries(model.finder_location).filter(entry => {
+  let entries = finder_entries(model.finder_location)
+  if model.finder_location == Documents {
+    for path in model.imported_files {
+      entries.push({
+        name: path,
+        kind: "Imported from host",
+        size: "External",
+        icon: @views.IconName::FileNew,
+        color: rgba8(91, 143, 249),
+      })
+    }
+  }
+  entries.filter(entry => {
     model.finder_query == "" || entry.name.contains(model.finder_query)
   })
 }

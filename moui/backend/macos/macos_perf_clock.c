@@ -3,11 +3,10 @@
 #include <moonbit.h>
 
 #include <stdint.h>
+#include <time.h>
 
 #if defined(__APPLE__)
 #include <mach/mach_time.h>
-#else
-#include <time.h>
 #endif
 
 // Monotonic milliseconds for macOS GPU performance smoke present-to-present
@@ -27,4 +26,50 @@ double moui_macos_perf_now_ms(void) {
   clock_gettime(CLOCK_MONOTONIC, &ts);
   return (double)ts.tv_sec * 1000.0 + (double)ts.tv_nsec / 1000000.0;
 #endif
+}
+
+static struct tm moui_macos_local_time(void) {
+  time_t now = time(NULL);
+  struct tm local_time = {0};
+#if defined(_WIN32)
+  localtime_s(&local_time, &now);
+#else
+  localtime_r(&now, &local_time);
+#endif
+  return local_time;
+}
+
+MOONBIT_FFI_EXPORT
+int moui_macos_wall_clock_year(void) {
+  return moui_macos_local_time().tm_year + 1900;
+}
+
+MOONBIT_FFI_EXPORT
+int moui_macos_wall_clock_month(void) {
+  return moui_macos_local_time().tm_mon + 1;
+}
+
+MOONBIT_FFI_EXPORT
+int moui_macos_wall_clock_day(void) {
+  return moui_macos_local_time().tm_mday;
+}
+
+MOONBIT_FFI_EXPORT
+int moui_macos_wall_clock_weekday(void) {
+  return moui_macos_local_time().tm_wday;
+}
+
+MOONBIT_FFI_EXPORT
+int moui_macos_wall_clock_hour(void) {
+  return moui_macos_local_time().tm_hour;
+}
+
+MOONBIT_FFI_EXPORT
+int moui_macos_wall_clock_minute(void) {
+  return moui_macos_local_time().tm_min;
+}
+
+MOONBIT_FFI_EXPORT
+int moui_macos_wall_clock_second(void) {
+  return moui_macos_local_time().tm_sec;
 }

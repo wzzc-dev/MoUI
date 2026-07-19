@@ -68,7 +68,7 @@ fn color_layer(
 
 ///|
 fn lock_screen(
-  _model : DesktopModel,
+  model : DesktopModel,
   width : Double,
   height : Double,
   _palette : DesktopPalette,
@@ -82,7 +82,7 @@ fn lock_screen(
   let clock = @views.column(
     [
       @views.text(
-        "Friday, July 17",
+        desktop_clock_lock_date(model.clock),
         role=@views.TextRole::Title,
         theme~,
         width=320.0,
@@ -94,7 +94,7 @@ fn lock_screen(
       )
       .foreground(@graphics.Color::white()),
       @views.text(
-        "09:41",
+        desktop_clock_time(model.clock),
         role=@views.TextRole::Display,
         theme~,
         width=460.0,

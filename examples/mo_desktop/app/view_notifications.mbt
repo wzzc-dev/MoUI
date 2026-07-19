@@ -82,7 +82,7 @@ fn notification_center(
           .foreground(palette.foreground),
           @views.spacer(min_length=4.0, weight=1.0),
           @views.text(
-            "View all",
+            "Mark read",
             role=@views.TextRole::Caption,
             theme~,
             width=48.0,
@@ -94,7 +94,7 @@ fn notification_center(
           // This retains the notification read action while giving it a
           // lightweight, discoverable inline target instead of a button.
           .on_tap(MarkNotificationsRead)
-          .accessibility_label("View all tasks"),
+          .accessibility_label("Mark notifications read"),
         ],
         spacing=4.0,
         align=@views.CrossAlign::Center,
@@ -102,7 +102,7 @@ fn notification_center(
       notification_task(
         "Review desktop polish",
         model.first_task_done,
-        0,
+        ReviewDesktop,
         inner_width,
         palette,
         theme,
@@ -110,7 +110,7 @@ fn notification_center(
       notification_task(
         "Reply to Maya",
         model.second_task_done,
-        1,
+        ReplyToMaya,
         inner_width,
         palette,
         theme,
@@ -118,7 +118,7 @@ fn notification_center(
       notification_task(
         "Plan Tahoe photos",
         model.third_task_done,
-        2,
+        PlanTahoePhotos,
         inner_width,
         palette,
         theme,
@@ -283,7 +283,7 @@ fn notification_card(
 fn notification_task(
   label : String,
   done : Bool,
-  index : Int,
+  task : DesktopTask,
   width : Double,
   palette : DesktopPalette,
   theme : @moui.Theme,
@@ -336,6 +336,6 @@ fn notification_task(
     background=rgba8(0, 0, 0, a=0.0),
     padding=0.0,
   )
-  .on_tap(if done { MarkNotificationsRead } else { CompleteTask(index) })
+  .on_tap(if done { MarkNotificationsRead } else { CompleteTask(task) })
   .accessibility_label(if done { "Done " + label } else { "Complete " + label })
 }
