@@ -115,3 +115,47 @@ test "android runtime session renders through supplied provider" {
     None => fail("expected Android session")
   }
 }
+
+///|
+test "android embedding installs callbacks into the shell-owned ABI" {
+  @shell_embedding.moui_embedding_destroy_application()
+  inspect(
+    @shell_embedding.moui_embedding_take_host_updates_json(),
+    content="[]",
+  )
+  inspect(
+    @shell_embedding.moui_embedding_take_host_update_envelope_json(),
+    content="{\"schemaVersion\":1,\"sessionGeneration\":0,\"updates\":[]}",
+  )
+  assert_false(@shell_embedding.moui_embedding_renderer_configure("auto"))
+  inspect(@shell_embedding.moui_embedding_renderer_status_json(), content="{}")
+
+  let first_configure_calls = Ref(0)
+  install_embedding(
+    runtime_factory=_ => abort("runtime factory must not be called"),
+    provider_factory=() => abort("provider factory must not be called"),
+    renderer_configure=_ => {
+      first_configure_calls.val = first_configure_calls.val + 1
+      false
+    },
+    renderer_status_json=() => "{\"platform\":\"android-first\"}",
+  )
+  assert_false(
+    @shell_embedding.moui_embedding_renderer_configure("skia-raster"),
+  )
+  inspect(first_configure_calls.val, content="1")
+
+  install_embedding(
+    runtime_factory=_ => abort("runtime factory must not be called"),
+    provider_factory=() => abort("provider factory must not be called"),
+    renderer_configure=mode => mode == "auto",
+    renderer_status_json=() => "{\"platform\":\"android\"}",
+  )
+  assert_true(@shell_embedding.moui_embedding_renderer_configure("auto"))
+  inspect(
+    @shell_embedding.moui_embedding_renderer_status_json(),
+    content="{\"platform\":\"android\"}",
+  )
+  @shell_embedding.moui_embedding_destroy_application()
+  assert_false(@shell_embedding.moui_embedding_renderer_configure("auto"))
+}

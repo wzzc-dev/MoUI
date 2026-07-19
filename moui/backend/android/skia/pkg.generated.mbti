@@ -2,17 +2,19 @@
 package "wzzc-dev/moui/backend/android/skia"
 
 import {
-  "wzzc-dev/moui/backend/android",
   "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
 }
 
 // Values
+pub fn android_skia_gpu_available() -> Bool
+
 pub fn android_skia_provider_preflight_summary(options? : AndroidSkiaAppOptions) -> String
 
-pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : @android.AndroidSurfaceHandle, metrics~ : @host.HostSurfaceMetrics, options? : AndroidSkiaAppOptions) -> @android.AndroidRuntimeSession?
+pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : @wzzc-dev/moui_shell/android.AndroidNativeSurface, metrics~ : @host.HostSurfaceMetrics, options? : AndroidSkiaAppOptions) -> @wzzc-dev/moui/backend/android.AndroidRuntimeSession?
 
-pub fn renderer_provider(options? : AndroidSkiaAppOptions) -> @android.AndroidRendererProvider
+pub fn renderer_provider(options? : AndroidSkiaAppOptions) -> @wzzc-dev/moui/backend/android.AndroidRendererProvider
 
 // Errors
 
@@ -20,7 +22,7 @@ pub fn renderer_provider(options? : AndroidSkiaAppOptions) -> @android.AndroidRe
 pub struct AndroidSkiaAppOptions {
   // private fields
 }
-pub fn AndroidSkiaAppOptions::new(font_resolution? : @wzzc-dev/moui/render/skia.SkiaFontResolution) -> Self
+pub fn AndroidSkiaAppOptions::new(font_resolution? : @wzzc-dev/moui/render/skia.SkiaFontResolution, surface_route? : @render.SkiaSurfaceRoute) -> Self
 
 // Type aliases
 

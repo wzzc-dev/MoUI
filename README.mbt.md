@@ -167,8 +167,9 @@ To try Showcase on a mobile platform, follow the platform-specific
 setup, build, and run instructions for
 [Android](docs/android-support.md),
 [iOS](docs/ios-support.md), or
-[HarmonyOS](docs/harmonyos-support.md). The checked-in native projects under
-`examples/*/*_app` are Release N fixtures, not application templates.
+[HarmonyOS](docs/harmonyos-support.md). Standard examples stage their native
+projects from `moui_shell`; use `moui shell eject` only when an app must own and
+version a native project.
 
 > **Windows prerequisite:** before building or running any Windows native Skia
 > entrypoint (`windows_skia`), initialize the

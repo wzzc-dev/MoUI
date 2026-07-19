@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "wzzc-dev/moui/examples/showcase/windows_wgpu"
+package "examples/showcase/windows_wgpu"
 
 // Values
 

@@ -54,8 +54,8 @@ Statuses are editorial signals for agents (not CI evidence grades).
 | [android-support.md](android-support.md) | `deep` | Android host/shell |
 | [ios-support.md](ios-support.md) | `deep` | iOS host/shell |
 | [harmonyos-support.md](harmonyos-support.md) | `deep` | HarmonyOS host/shell |
-| [mobile-mainline-roadmap.md](mobile-mainline-roadmap.md) | `canonical` | Mobile mainline ownership & gaps |
-| [mobile-runtime-abi-v1.md](mobile-runtime-abi-v1.md) | `deep` | Mobile ABI v1 |
+| [shell-mainline-roadmap.md](shell-mainline-roadmap.md) | `canonical` | Native shell ownership & gaps |
+| [embedding-api-v1.md](embedding-api-v1.md) | `deep` | Embedding API v1 |
 | [renderer-capability-report.md](renderer-capability-report.md) | `canonical` | Renderer capability matrix |
 | [gpu-promotion-runbook.md](gpu-promotion-runbook.md) | `deep` | GPU promotion process |
 

@@ -456,6 +456,195 @@ fn check_r3_provider_text(path : String, text : String?) -> HarnessFinding {
 }
 
 ///|
+fn canonical_embedding_exports() -> Array[String] {
+  [
+    "moui_embedding_take_host_updates_json", "moui_embedding_take_host_update_envelope_json",
+    "moui_embedding_dispatch_host_response_envelope_json", "moui_embedding_renderer_configure",
+    "moui_embedding_renderer_status_json", "moui_embedding_dispatch_text_input",
+    "moui_embedding_dispatch_command", "moui_embedding_dispatch_accessibility", "moui_embedding_complete_clipboard",
+    "moui_embedding_complete_clipboard_v1", "moui_embedding_attach_surface", "moui_embedding_resize",
+    "moui_embedding_dispatch_pointer", "moui_embedding_dispatch_scroll", "moui_embedding_frame_tick",
+    "moui_embedding_render_frame", "moui_embedding_detach_surface", "moui_embedding_destroy_application",
+  ]
+}
+
+///|
+fn string_arrays_same_order(
+  left : Array[String],
+  right : Array[String],
+) -> Bool {
+  if left.length() != right.length() {
+    return false
+  }
+  for index in 0..<left.length() {
+    if left[index] != right[index] {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn string_arrays_same_members(
+  left : Array[String],
+  right : Array[String],
+) -> Bool {
+  if left.length() != right.length() {
+    return false
+  }
+  for value in left {
+    if !right.contains(value) {
+      return false
+    }
+  }
+  for value in right {
+    if !left.contains(value) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn count_token_occurrences(text : String, token : String) -> Int {
+  let mut count = 0
+  let mut start = 0
+  while start < text.length() {
+    match text[start:].find(token) {
+      Some(index) => {
+        count += 1
+        start += index + token.length()
+      }
+      None => break
+    }
+  }
+  count
+}
+
+///|
+fn quoted_embedding_export_names(text : String) -> Array[String] {
+  let names : Array[String] = []
+  for piece in text.split("\"") {
+    let value = piece.to_owned()
+    if value.has_prefix("moui_embedding_") {
+      names.push(value)
+    }
+  }
+  names
+}
+
+///|
+fn declared_embedding_exports(text : String) -> Array[String]? {
+  guard text.find("\"exports\"") is Some(exports_offset) else { return None }
+  let after_exports = text[exports_offset + "\"exports\"".length():].to_owned()
+  guard after_exports.find("[") is Some(open_offset) else { return None }
+  let list = after_exports[open_offset + 1:].to_owned()
+  guard list.find("]") is Some(close_offset) else { return None }
+  Some(quoted_embedding_export_names(list[:close_offset].to_owned()))
+}
+
+///|
+fn names_after_prefix(text : String, prefix : String) -> Array[String] {
+  let pieces = text.split(prefix).to_array()
+  let names : Array[String] = []
+  for index in 1..<pieces.length() {
+    let suffix = pieces[index].to_owned()
+    match suffix.find("(") {
+      Some(end) => names.push(suffix[:end].trim().to_owned())
+      None => ()
+    }
+  }
+  names
+}
+
+///|
+fn embedding_names_after_prefix(
+  text : String,
+  prefix : String,
+) -> Array[String] {
+  names_after_prefix(text, prefix).filter(name => {
+    name.has_prefix("moui_embedding_")
+  })
+}
+
+///|
+fn code_without_doc_comments(text : String) -> String {
+  let lines : Array[String] = []
+  for line in text.split("\n") {
+    let owned = line.to_owned()
+    if !owned.trim().has_prefix("///") {
+      lines.push(owned)
+    }
+  }
+  lines.join("\n")
+}
+
+///|
+fn check_r3_shell_embedding_pkg(
+  path : String,
+  text : String?,
+  expected : Array[String],
+) -> HarnessFinding {
+  match text {
+    None =>
+      {
+        rule: "R3",
+        ok: false,
+        path,
+        hint: "missing framework-owned Embedding API export configuration. See docs/invariants.md#R3",
+      }
+    Some(body) => {
+      let actual = declared_embedding_exports(body).unwrap_or([])
+      let ok = body.contains("link:") &&
+        body.contains("\"native\"") &&
+        string_arrays_same_order(actual, expected)
+      {
+        rule: "R3",
+        ok,
+        path,
+        hint: if ok {
+          ""
+        } else {
+          "moui_shell/embedding/moon.pkg must own the exact canonical Embedding API link.native.exports list. See docs/invariants.md#R3"
+        },
+      }
+    }
+  }
+}
+
+///|
+fn check_r3_shell_embedding_impl(
+  path : String,
+  text : String?,
+  expected : Array[String],
+) -> HarnessFinding {
+  match text {
+    None =>
+      {
+        rule: "R3",
+        ok: false,
+        path,
+        hint: "missing framework-owned Embedding API implementation. See docs/invariants.md#R3",
+      }
+    Some(body) => {
+      let implemented = embedding_names_after_prefix(body, "pub fn ")
+      let ok = body.contains("installed_embedding_runtime") &&
+        string_arrays_same_members(implemented, expected)
+      {
+        rule: "R3",
+        ok,
+        path,
+        hint: if ok {
+          ""
+        } else {
+          "moui_shell/embedding must own callback state and every canonical Embedding API implementation. See docs/invariants.md#R3"
+        },
+      }
+    }
+  }
+}
+
+///|
 fn check_r3_mobile_main(path : String, text : String?) -> HarnessFinding {
   match text {
     None =>
@@ -466,18 +655,107 @@ fn check_r3_mobile_main(path : String, text : String?) -> HarnessFinding {
         hint: "mobile entry missing main.mbt. See docs/invariants.md#R3",
       }
     Some(body) => {
-      let has_selection = body.contains("mobile_renderer_selection") ||
-        body.contains("mobile_renderer_configure")
-      let has_configure = body.contains("moui_mobile_renderer_configure")
-      if !has_selection || !has_configure {
+      let has_selection = body.contains("shell_renderer_selection") ||
+        body.contains("shell_renderer_configure")
+      let has_install = body.contains("install_embedding")
+      let has_abi_glue = body.contains("pub fn moui_embedding_") ||
+        body.contains("EmbeddingAdapter::new")
+      if !has_selection || !has_install || has_abi_glue {
         {
           rule: "R3",
           ok: false,
           path,
-          hint: "mobile entry must expose renderer selection/configure (auto|skia-gpu|skia-raster path). Fix: wire @host.mobile_renderer_selection / moui_mobile_renderer_configure. See docs/invariants.md#R3",
+          hint: "mobile main.mbt must install program/renderer configuration (auto|skia-gpu|skia-raster path) without ABI implementation or adapter construction. The final-link shim belongs only in embedding_exports.mbt. Fix: wire @platform_host.install_embedding with @host.shell_renderer_selection. See docs/invariants.md#R3",
         }
       } else {
         { rule: "R3", ok: true, path, hint: "" }
+      }
+    }
+  }
+}
+
+///|
+fn check_r3_mobile_pkg(
+  path : String,
+  text : String?,
+  expected : Array[String],
+) -> HarnessFinding {
+  match text {
+    None =>
+      {
+        rule: "R3",
+        ok: false,
+        path,
+        hint: "mobile entry missing moon.pkg. See docs/invariants.md#R3",
+      }
+    Some(body) => {
+      let actual = declared_embedding_exports(body).unwrap_or([])
+      let ok = body.contains(
+          "\"wzzc-dev/moui_shell/embedding\" @shell_embedding",
+        ) &&
+        string_arrays_same_order(actual, expected)
+      {
+        rule: "R3",
+        ok,
+        path,
+        hint: if ok {
+          ""
+        } else {
+          "final mobile executable moon.pkg must import @shell_embedding and mirror its exact canonical link.native.exports list; dependency exports are not promoted to final C symbols. See docs/invariants.md#R3"
+        },
+      }
+    }
+  }
+}
+
+///|
+fn check_r3_mobile_export_shim(
+  path : String,
+  text : String?,
+  expected : Array[String],
+) -> HarnessFinding {
+  match text {
+    None =>
+      {
+        rule: "R3",
+        ok: false,
+        path,
+        hint: "mobile executable is missing embedding_exports.mbt. The native linker requires root-package forwarders for the canonical Embedding API symbols. See docs/invariants.md#R3",
+      }
+    Some(body) => {
+      let code = code_without_doc_comments(body)
+      let declared = embedding_names_after_prefix(code, "pub fn ")
+      let forwarded = embedding_names_after_prefix(code, "@shell_embedding.")
+      let forbidden_tokens = [
+        "let ", "const ", "match ", "if ", "for ", "while ", "loop ", "raise ", "catch ",
+        "return ", "=>", "struct ", "enum ", "type ", "trait ", "impl ", "extern ",
+        "test ", "||", "&&", "==", "!=", "!@", ":=", ";",
+      ]
+      let has_forbidden = forbidden_tokens.any(token => code.contains(token))
+      let function_count = expected.length()
+      let exact_shape = count_token_occurrences(code, "pub fn ") ==
+        function_count &&
+        count_token_occurrences(code, "fn ") == function_count &&
+        count_token_occurrences(code, "@") == function_count &&
+        count_token_occurrences(code, "@shell_embedding.") == function_count &&
+        count_token_occurrences(code, "{") == function_count &&
+        count_token_occurrences(code, "}") == function_count &&
+        count_token_occurrences(code, "(") == function_count * 2 &&
+        count_token_occurrences(code, ")") == function_count * 2 &&
+        count_token_occurrences(code, "\"") == 0
+      let ok = !has_forbidden &&
+        exact_shape &&
+        string_arrays_same_order(declared, expected) &&
+        string_arrays_same_order(forwarded, expected)
+      {
+        rule: "R3",
+        ok,
+        path,
+        hint: if ok {
+          ""
+        } else {
+          "embedding_exports.mbt may contain only one same-name @shell_embedding forwarder for each canonical export, in canonical order; callback state, branching, extra calls, and adapter/runtime logic belong in the framework. See docs/invariants.md#R3"
+        },
       }
     }
   }
@@ -614,18 +892,51 @@ fn validate_repo(repo_root : String) -> Array[HarnessFinding] {
       check_r3_provider_text(path, read_optional_text(repo_root, path)),
     )
   }
+  let embedding_exports = canonical_embedding_exports()
+  let shell_embedding_pkg = "moui_shell/embedding/moon.pkg"
+  results.push(
+    check_r3_shell_embedding_pkg(
+      shell_embedding_pkg,
+      read_optional_text(repo_root, shell_embedding_pkg),
+      embedding_exports,
+    ),
+  )
+  let shell_embedding_impl = "moui_shell/embedding/runtime_callbacks.mbt"
+  results.push(
+    check_r3_shell_embedding_impl(
+      shell_embedding_impl,
+      read_optional_text(repo_root, shell_embedding_impl),
+      embedding_exports,
+    ),
+  )
   for entry in entries {
     if entry.mobile {
       let main_path = entry.path + "/main.mbt"
+      let pkg_path = entry.path + "/moon.pkg"
+      let shim_path = entry.path + "/embedding_exports.mbt"
       results.push(
         check_r3_mobile_main(
           main_path,
           read_optional_text(repo_root, main_path),
         ),
       )
+      results.push(
+        check_r3_mobile_pkg(
+          pkg_path,
+          read_optional_text(repo_root, pkg_path),
+          embedding_exports,
+        ),
+      )
+      results.push(
+        check_r3_mobile_export_shim(
+          shim_path,
+          read_optional_text(repo_root, shim_path),
+          embedding_exports,
+        ),
+      )
     }
   }
-  let prepare = "moui/scripts/mobile/prepare-native-build.mjs"
+  let prepare = "moui_shell/scripts/prepare-native-build.mjs"
   results.push(
     check_r3_prepare(prepare, read_optional_text(repo_root, prepare)),
   )

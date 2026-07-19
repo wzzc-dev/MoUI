@@ -4,6 +4,8 @@ priv struct EjectedShellLock {
   shell_api_version : Int
   runtime_abi_version : Int
   moui_version : String
+  moui_shell_version : String
+  capability_snapshot_digest : String
   source_digest : String
   config_digest : String
   plugin_digest : String
@@ -34,14 +36,16 @@ fn parse_ejected_shell_lock(text : String) -> Result[EjectedShellLock, String] {
     doctor_exact_object(
       parsed,
       [
-        "schemaVersion", "mode", "platform", "shellApiVersion", "runtimeAbiVersion",
-        "mouiVersion", "sourceTemplate", "sourceTemplateDigest", "configDigest",
-        "pluginDigest", "pluginManifests", "contentDigest", "files",
+        "schemaVersion", "mode", "platform", "shellApiVersion", "embeddingApiVersion",
+        "mouiVersion", "mouiShellVersion", "capabilitySnapshotDigest", "sourceTemplate",
+        "sourceTemplateDigest", "configDigest", "pluginDigest", "pluginManifests",
+        "contentDigest", "files",
       ],
       [
-        "schemaVersion", "mode", "platform", "shellApiVersion", "runtimeAbiVersion",
-        "mouiVersion", "sourceTemplate", "sourceTemplateDigest", "configDigest",
-        "pluginDigest", "pluginManifests", "contentDigest", "files",
+        "schemaVersion", "mode", "platform", "shellApiVersion", "embeddingApiVersion",
+        "mouiVersion", "mouiShellVersion", "capabilitySnapshotDigest", "sourceTemplate",
+        "sourceTemplateDigest", "configDigest", "pluginDigest", "pluginManifests",
+        "contentDigest", "files",
       ],
       ".moui-shell.json",
     ) {
@@ -77,7 +81,7 @@ fn parse_ejected_shell_lock(text : String) -> Result[EjectedShellLock, String] {
     Err(message) => return Err(message)
   }
   let runtime_abi_version = match
-    doctor_required_int(fields, "runtimeAbiVersion", ".moui-shell.json") {
+    doctor_required_int(fields, "embeddingApiVersion", ".moui-shell.json") {
     Ok(result) => result
     Err(message) => return Err(message)
   }
@@ -85,6 +89,21 @@ fn parse_ejected_shell_lock(text : String) -> Result[EjectedShellLock, String] {
     doctor_required_string(fields, "mouiVersion", ".moui-shell.json") {
     Ok(result) => result
     Err(message) => return Err(message)
+  }
+  let moui_shell_version = match
+    doctor_required_string(fields, "mouiShellVersion", ".moui-shell.json") {
+    Ok(result) => result
+    Err(message) => return Err(message)
+  }
+  let capability_snapshot_digest = match
+    fields.get("capabilitySnapshotDigest") {
+    Some(String(value)) =>
+      match sha256_value(value, ".moui-shell.json.capabilitySnapshotDigest") {
+        Ok(result) => result
+        Err(message) => return Err(message)
+      }
+    _ =>
+      return Err(".moui-shell.json.capabilitySnapshotDigest must be a string")
   }
   match doctor_required_string(fields, "sourceTemplate", ".moui-shell.json") {
     Ok(_) => ()
@@ -168,6 +187,8 @@ fn parse_ejected_shell_lock(text : String) -> Result[EjectedShellLock, String] {
     shell_api_version,
     runtime_abi_version,
     moui_version,
+    moui_shell_version,
+    capability_snapshot_digest,
     source_digest,
     config_digest,
     plugin_digest,
@@ -274,15 +295,15 @@ fn doctor_temp_target(label : String) -> String {
 
 ///|
 fn managed_shell_staging_check(
-  moui_root : String,
+  shell_root : String,
   platform : String,
   plugins : Array[DoctorPlugin],
 ) -> DoctorCheck {
-  let source_files = match canonical_shell_source_plan(moui_root, platform) {
+  let source_files = match canonical_shell_source_plan(shell_root, platform) {
     Ok(result) => result
     Err(message) =>
       return doctor_check(
-        "mobile." + platform + ".managed-staging",
+        "shell." + platform + ".managed-staging",
         Fail,
         true,
         "Managed canonical shell is incomplete",
@@ -297,7 +318,7 @@ fn managed_shell_staging_check(
   match validate_file_plan(files) {
     Err(message) =>
       return doctor_check(
-        "mobile." + platform + ".managed-staging",
+        "shell." + platform + ".managed-staging",
         Fail,
         true,
         "Managed shell staging plan is invalid",
@@ -310,7 +331,7 @@ fn managed_shell_staging_check(
     Ok(result) => result
     Err(message) =>
       return doctor_check(
-        "mobile." + platform + ".managed-staging",
+        "shell." + platform + ".managed-staging",
         Fail,
         true,
         "Managed shell could not be staged",
@@ -319,7 +340,7 @@ fn managed_shell_staging_check(
   }
   remove_tree(staged)
   doctor_check(
-    "mobile." + platform + ".managed-staging",
+    "shell." + platform + ".managed-staging",
     Pass,
     true,
     "Managed canonical shell can be staged",
@@ -336,8 +357,9 @@ fn ejected_shell_doctor_check(
   platform : String,
   plugins : Array[DoctorPlugin],
   moui_root : String?,
+  shell_root : String?,
 ) -> DoctorCheck {
-  let id = "mobile." + platform + ".ejected"
+  let id = "shell." + platform + ".ejected"
   let root = match find_ejected_shell_root(project_root, platform) {
     Ok(result) => result
     Err(message) =>
@@ -392,12 +414,14 @@ fn ejected_shell_doctor_check(
   if file_plan_digest(files) != lock.content_digest {
     drift.push("contentDigest")
   }
-  let mobile_bytes = @fs.read_file_to_bytes(
-    join_path(project_root, "mobile.json"),
+  let shell_bytes = @fs.read_file_to_bytes(
+    join_path(project_root, "shell.json"),
   ) catch {
     _ => b""
   }
-  let config_bytes = project_config_bytes(project_root, mobile_bytes, platform)
+  let config_bytes = project_shell_config_bytes(
+    project_root, shell_bytes, platform,
+  )
   match config_bytes {
     Ok(value) if sha256_hex(value) != lock.config_digest =>
       drift.push("configDigest")
@@ -407,15 +431,31 @@ fn ejected_shell_doctor_check(
   if doctor_plugins_digest(plugins) != lock.plugin_digest {
     drift.push("pluginDigest")
   }
-  match moui_root {
-    Some(root) =>
-      match canonical_shell_source_plan(root, platform) {
+  if lock.capability_snapshot_digest !=
+    shell_capability_snapshot_digest(platform) {
+    drift.push("capabilitySnapshotDigest")
+  }
+  match (moui_root, shell_root) {
+    (Some(moui_root), Some(shell_root)) => {
+      match package_version(moui_root, "moui") {
+        Ok(version) if version != lock.moui_version => drift.push("mouiVersion")
+        Err(message) => drift.push("moui-version-unreadable:" + message)
+        _ => ()
+      }
+      match package_version(shell_root, "moui_shell") {
+        Ok(version) if version != lock.moui_shell_version =>
+          drift.push("mouiShellVersion")
+        Err(message) => drift.push("moui-shell-version-unreadable:" + message)
+        _ => ()
+      }
+      match canonical_shell_source_plan(shell_root, platform) {
         Ok(files) if file_plan_digest(files) != lock.source_digest =>
           drift.push("upstreamTemplate")
         Err(message) => drift.push("upstream-unreadable:" + message)
         _ => ()
       }
-    None => drift.push("upstream-unavailable")
+    }
+    _ => drift.push("upstream-unavailable")
   }
   if drift.is_empty() {
     doctor_check(
@@ -423,7 +463,11 @@ fn ejected_shell_doctor_check(
       Pass,
       true,
       "Ejected shell is compatible and matches its recorded digests",
-      detail=root + " | moui=" + lock.moui_version,
+      detail=root +
+        " | moui=" +
+        lock.moui_version +
+        " moui_shell=" +
+        lock.moui_shell_version,
     )
   } else {
     doctor_check(
@@ -445,21 +489,21 @@ fn mobile_project_doctor_checks(
   let selected = platforms.filter(is_mobile_platform)
   if selected.is_empty() {
     return [
-      skipped_check("mobile.config", "No mobile platform is selected"),
-      skipped_check("mobile.protocol", "No mobile platform is selected"),
-      skipped_check("mobile.plugins", "No mobile platform is selected"),
+      skipped_check("shell.config", "No shell platform is selected"),
+      skipped_check("shell.protocol", "No shell platform is selected"),
+      skipped_check("shell.plugins", "No shell platform is selected"),
     ]
   }
   let checks : Array[DoctorCheck] = []
-  let config = match read_mobile_doctor_config(project_root) {
+  let config = match read_shell_doctor_config(project_root) {
     Ok(result) => {
       checks.push(
         doctor_check(
-          "mobile.config",
+          "shell.config",
           Pass,
           true,
-          "mobile.json schema v2 structure is valid",
-          detail=join_path(project_root, "mobile.json"),
+          "shell.json schema v1 structure is valid",
+          detail=join_path(project_root, "shell.json"),
         ),
       )
       result
@@ -467,28 +511,28 @@ fn mobile_project_doctor_checks(
     Err(message) => {
       checks.push(
         doctor_check(
-          "mobile.config",
+          "shell.config",
           Fail,
           true,
-          "mobile.json is invalid",
+          "shell.json is invalid",
           detail=message,
         ),
       )
       checks.push(
-        skipped_check("mobile.protocol", "mobile.json could not be parsed"),
+        skipped_check("shell.protocol", "shell.json could not be parsed"),
       )
       checks.push(
-        skipped_check("mobile.plugins", "mobile.json could not be parsed"),
+        skipped_check("shell.plugins", "shell.json could not be parsed"),
       )
       return checks
     }
   }
-  let protocol_ok = config.schema_version == 2 &&
+  let protocol_ok = config.schema_version == 1 &&
     config.shell_api_version == 1 &&
     config.runtime_abi_version == 1
   checks.push(
     doctor_check(
-      "mobile.protocol",
+      "shell.protocol",
       if protocol_ok {
         Pass
       } else {
@@ -496,9 +540,9 @@ fn mobile_project_doctor_checks(
       },
       true,
       if protocol_ok {
-        "Mobile schema, shell API, and runtime ABI are compatible"
+        "Shell schema, shell API, and runtime ABI are compatible"
       } else {
-        "Mobile schema, shell API, or runtime ABI is incompatible"
+        "Shell schema, shell API, or runtime ABI is incompatible"
       },
       detail="schema=" +
         config.schema_version.to_string() +
@@ -509,7 +553,7 @@ fn mobile_project_doctor_checks(
       remediation=if protocol_ok {
         ""
       } else {
-        "Use schemaVersion 2, shellApiVersion 1, and runtimeAbiVersion 1."
+        "Use schemaVersion 1, shell.profile=handheld, shellApiVersion 1, and embeddingApiVersion 1."
       },
     ),
   )
@@ -517,7 +561,7 @@ fn mobile_project_doctor_checks(
     Ok(result) => {
       checks.push(
         doctor_check(
-          "mobile.plugins",
+          "shell.plugins",
           Pass,
           true,
           "Managed plugin manifests and permissions are valid",
@@ -532,7 +576,7 @@ fn mobile_project_doctor_checks(
     Err(message) => {
       checks.push(
         doctor_check(
-          "mobile.plugins",
+          "shell.plugins",
           Fail,
           true,
           "Managed plugin manifest or permission validation failed",
@@ -552,32 +596,44 @@ fn mobile_project_doctor_checks(
     Ok(result) => Some(result)
     Err(_) => None
   }
+  let shell_root = match
+    resolve_shell_root({
+      project_root,
+      platform: "android",
+      output: "",
+      moui_root: None,
+    }) {
+    Ok(result) => Some(result)
+    Err(_) => None
+  }
   for platform in selected {
     match config.shell_modes.get(platform) {
       None =>
         checks.push(
           doctor_check(
-            "mobile." + platform + ".shell",
+            "shell." + platform + ".shell",
             Fail,
             true,
-            "Selected platform is missing from mobile.json",
+            "Selected platform is missing from shell.json",
           ),
         )
       Some("managed") =>
-        match moui_root {
-          Some(root) if protocol_ok =>
-            checks.push(managed_shell_staging_check(root, platform, plugins))
-          Some(_) =>
+        match (moui_root, shell_root) {
+          (Some(_), Some(shell_root)) if protocol_ok =>
+            checks.push(
+              managed_shell_staging_check(shell_root, platform, plugins),
+            )
+          (Some(_), Some(_)) =>
             checks.push(
               skipped_check(
-                "mobile." + platform + ".managed-staging",
-                "Managed staging requires a compatible mobile protocol",
+                "shell." + platform + ".managed-staging",
+                "Managed staging requires a compatible shell protocol",
               ),
             )
-          None =>
+          _ =>
             checks.push(
               doctor_check(
-                "mobile." + platform + ".managed-staging",
+                "shell." + platform + ".managed-staging",
                 Fail,
                 true,
                 "MoUI package root for managed staging was not found",
@@ -587,12 +643,14 @@ fn mobile_project_doctor_checks(
         }
       Some("ejected") =>
         checks.push(
-          ejected_shell_doctor_check(project_root, platform, plugins, moui_root),
+          ejected_shell_doctor_check(
+            project_root, platform, plugins, moui_root, shell_root,
+          ),
         )
       Some(mode) =>
         checks.push(
           doctor_check(
-            "mobile." + platform + ".shell",
+            "shell." + platform + ".shell",
             Fail,
             true,
             "Unsupported shell mode: " + mode,

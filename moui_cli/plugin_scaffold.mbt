@@ -142,36 +142,36 @@ fn scaffold_plugin(
     Ok(value) => value
     Err(message) => return Err(message)
   }
-  let mobile_path = join_path(options.project_root, "mobile.json")
+  let mobile_path = join_path(options.project_root, "shell.json")
   if @fs.path_exists(mobile_path) {
     let text = @fs.read_file_to_string(mobile_path) catch {
-      _ => return Err("could not read mobile.json while registering plugin")
+      _ => return Err("could not read shell.json while registering plugin")
     }
     let parsed = @json.parse(text) catch {
-      _ => return Err("mobile.json is invalid JSON")
+      _ => return Err("shell.json is invalid JSON")
     }
     guard parsed is Object(root) else {
-      return Err("mobile.json root must be an object")
+      return Err("shell.json root must be an object")
     }
-    guard root.get("mobile") is Some(Object(mobile)) else {
-      return Err("mobile.json is missing mobile settings")
+    guard root.get("shell") is Some(Object(shell)) else {
+      return Err("shell.json is missing shell settings")
     }
     let plugins : Array[String] = []
-    match mobile.get("plugins") {
+    match shell.get("plugins") {
       Some(Array(values)) =>
         for value in values {
           match value {
             String(path) => plugins.push(path)
-            _ => return Err("mobile.json.mobile.plugins must contain strings")
+            _ => return Err("shell.json.shell.plugins must contain strings")
           }
         }
-      Some(_) => return Err("mobile.json.mobile.plugins must be an array")
+      Some(_) => return Err("shell.json.shell.plugins must be an array")
       None => ()
     }
     if !plugins.contains(manifest_relative) {
       plugins.push(manifest_relative)
-      mobile["plugins"] = plugins.to_json()
-      root["mobile"] = Json::object(mobile)
+      shell["plugins"] = plugins.to_json()
+      root["shell"] = Json::object(shell)
       match
         replace_file_atomic(
           mobile_path,
@@ -193,7 +193,7 @@ fn normalize_plugin_platforms(
   requested : Array[String],
 ) -> Result[Array[String], String] {
   if requested.is_empty() {
-    return Err("plugin scaffold requires at least one mobile platform")
+    return Err("plugin scaffold requires at least one shell platform")
   }
   let selected : Map[String, Bool] = Map([])
   for requested_platform in requested {

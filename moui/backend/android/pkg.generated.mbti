@@ -4,8 +4,10 @@ package "wzzc-dev/moui/backend/android"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/internal/embedded_runtime_session",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui_shell/embedding",
 }
 
 // Values
@@ -19,9 +21,21 @@ pub fn android_readiness() -> AndroidBackendReadiness
 
 pub fn android_service_capabilities() -> @host.HostServiceCapabilities
 
+pub fn android_shell_descriptor() -> @embedding.ShellPlatformDescriptor
+
+pub fn android_shell_embedding_api_version() -> Int
+
+pub fn android_shell_renderer_configure(String) -> Bool
+
+pub fn android_shell_renderer_selection(gpu_available~ : Bool) -> @render.NativeRendererSelection
+
+pub fn android_shell_renderer_status_json(gpu_available~ : Bool) -> String
+
 pub fn backend_info() -> AndroidBackendInfo
 
-pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : AndroidSurfaceHandle, metrics~ : @host.HostSurfaceMetrics, provider~ : AndroidRendererProvider) -> AndroidRuntimeSession?
+pub fn create_session(runtime~ : @runtime.AppRuntime, surface~ : @wzzc-dev/moui_shell/android.AndroidNativeSurface, metrics~ : @host.HostSurfaceMetrics, provider~ : AndroidRendererProvider) -> AndroidRuntimeSession?
+
+pub fn install_embedding(runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime, provider_factory~ : () -> AndroidRendererProvider, renderer_configure~ : (String) -> Bool, renderer_status_json~ : () -> String) -> Unit
 
 // Errors
 
@@ -61,19 +75,22 @@ pub struct AndroidRendererProvider {
   // private fields
 }
 pub fn AndroidRendererProvider::has_async_image_loader(Self) -> Bool
-pub fn AndroidRendererProvider::new(create_renderer~ : (AndroidSurfaceHandle, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?, sync_surface? : (AndroidSurfaceHandle, @host.HostSurfaceMetrics) -> Unit, image_loader? : @host.HostAsyncImageLoader?) -> Self
+pub fn AndroidRendererProvider::new(create_renderer~ : (@wzzc-dev/moui_shell/android.AndroidNativeSurface, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?, sync_surface? : (@wzzc-dev/moui_shell/android.AndroidNativeSurface, @host.HostSurfaceMetrics) -> Unit, image_loader? : @host.HostAsyncImageLoader?) -> Self
 
 pub struct AndroidRuntimeSession {
   // private fields
 }
 pub fn AndroidRuntimeSession::advance_time(Self, Double) -> Unit
+pub fn AndroidRuntimeSession::attach_surface(Self, @wzzc-dev/moui_shell/android.AndroidNativeSurface, @host.HostSurfaceMetrics, AndroidRendererProvider) -> Bool
+pub fn AndroidRuntimeSession::detach_surface(Self) -> Bool
 pub fn AndroidRuntimeSession::dispatch(Self, @host.HostEvent) -> @host.HostEventResult
-pub fn AndroidRuntimeSession::dispatch_host_response(Self, @host.MobileHostResponse) -> Bool
-pub fn AndroidRuntimeSession::dispatch_host_response_envelope(Self, @host.MobileHostResponseEnvelope) -> Bool
+pub fn AndroidRuntimeSession::dispatch_host_response(Self, @embedded_runtime_session.EmbeddingHostResponse) -> Bool
+pub fn AndroidRuntimeSession::dispatch_host_response_envelope(Self, @embedded_runtime_session.EmbeddingHostResponseEnvelope) -> Bool
+pub fn AndroidRuntimeSession::dispatch_host_response_envelope_json(Self, String) -> Bool
 pub fn AndroidRuntimeSession::dispose(Self) -> Unit
 pub fn AndroidRuntimeSession::disposed(Self) -> Bool
 pub fn AndroidRuntimeSession::drain_host_update_envelope_json(Self) -> String
-pub fn AndroidRuntimeSession::drain_host_updates(Self) -> Array[@host.MobileHostUpdate]
+pub fn AndroidRuntimeSession::drain_host_updates(Self) -> Array[@embedded_runtime_session.EmbeddingHostUpdate]
 pub fn AndroidRuntimeSession::drain_host_updates_json(Self) -> String
 pub fn AndroidRuntimeSession::host_service_bridge(Self) -> @host.HostServiceBridge
 pub fn AndroidRuntimeSession::metrics(Self) -> @host.HostSurfaceMetrics
@@ -83,17 +100,14 @@ pub fn AndroidRuntimeSession::render_frame(Self) -> @render.RenderFrameResult
 pub fn AndroidRuntimeSession::resize(Self, @host.HostSurfaceMetrics) -> @host.HostEventResult
 pub fn AndroidRuntimeSession::runtime(Self) -> @runtime.AppRuntime
 pub fn AndroidRuntimeSession::session_generation(Self) -> Int
-pub fn AndroidRuntimeSession::surface(Self) -> AndroidSurfaceHandle
+pub fn AndroidRuntimeSession::surface(Self) -> @wzzc-dev/moui_shell/android.AndroidNativeSurface
+pub fn AndroidRuntimeSession::surface_attached(Self) -> Bool
+pub fn AndroidRuntimeSession::surface_epoch(Self) -> Int
 pub fn AndroidRuntimeSession::sync_surface(Self, AndroidRendererProvider) -> Unit
 pub fn AndroidRuntimeSession::take_redraw_requested(Self) -> Bool
 
-pub(all) struct AndroidSurfaceHandle {
-  raw : UInt64
-} derive(Eq, ToJson, @debug.Debug)
-pub fn AndroidSurfaceHandle::new(raw~ : UInt64) -> Self
-pub fn AndroidSurfaceHandle::none() -> Self
-pub fn AndroidSurfaceHandle::raw(Self) -> UInt64
-
 // Type aliases
+pub using @wzzc-dev/moui_shell/android {type AndroidNativeSurface as AndroidSurfaceHandle}
 
 // Traits
+

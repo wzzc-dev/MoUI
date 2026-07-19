@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "my_app",
+  "displayName": "My MoUI App",
+  "artifactName": "my_app",
+  "appPackage": "app",
+  "shellApiVersion": 1,
+  "embeddingApiVersion": 1,
+  "shell": {
+    "profile": "handheld",
+    "renderer": "auto",
+    "systemUi": {
+      "fullscreen": false,
+      "statusBar": "auto"
+    },
+    "orientation": "any",
+    "resources": [],
+    "permissions": [],
+    "plugins": []
+  },
+  "android": {
+    "applicationId": "dev.example.myapp",
+    "runnerMode": "managed",
+    "minSdk": 23
+  },
+  "ios": {
+    "bundleId": "dev.example.myapp",
+    "productName": "MyApp",
+    "runnerMode": "managed",
+    "deploymentTarget": "15.0"
+  },
+  "harmonyos": {
+    "bundleName": "dev.example.myapp",
+    "productName": "MyApp",
+    "appName": "My MoUI App",
+    "moduleName": "entry",
+    "runnerMode": "managed",
+    "compatibleSdkVersion": 20
+  }
+}

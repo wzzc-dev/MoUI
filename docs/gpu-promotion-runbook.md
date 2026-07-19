@@ -174,6 +174,6 @@ Keep working:
 ## Related
 
 - ADR: [`decisions/0006-mobile-gpu-surface-and-render-thread.md`](decisions/0006-mobile-gpu-surface-and-render-thread.md)
-- Roadmap: [`mobile-mainline-roadmap.md`](mobile-mainline-roadmap.md)
+- Roadmap: [`shell-mainline-roadmap.md`](shell-mainline-roadmap.md)
 - Capability notes: [`renderer-capability-report.md`](renderer-capability-report.md)
 - Session: [`ai-sessions/2026-07-13-all-platform-native-gpu-workers.md`](ai-sessions/2026-07-13-all-platform-native-gpu-workers.md)

@@ -28,13 +28,66 @@ fn resolve_moui_root(options : EjectOptions) -> Result[String, String] {
     if candidate == "" {
       continue
     }
-    if path_is_dir(candidate) && path_is_dir(join_path(candidate, "mobile")) {
+    if path_is_dir(candidate) &&
+      path_is_nonempty_file(join_path(candidate, "moon.mod")) {
       return Ok(candidate)
     }
   }
   Err(
     "could not resolve the MoUI package root; run moon update or pass --moui-root",
   )
+}
+
+///|
+fn resolve_shell_root(options : EjectOptions) -> Result[String, String] {
+  let candidates : Array[String] = []
+  match @env.get_env_var("MOUI_SHELL_PACKAGE_ROOT") {
+    Some(value) => candidates.push(normalized_path(value))
+    None => ()
+  }
+  for root in project_search_roots(options.project_root) {
+    candidates.push(join_path(root, ".mooncakes/wzzc-dev/moui_shell"))
+    candidates.push(join_path(root, "moui_shell"))
+  }
+  for candidate in candidates {
+    if path_is_dir(candidate) &&
+      path_is_nonempty_file(join_path(candidate, "moon.mod")) &&
+      path_is_dir(join_path(candidate, "embedding")) &&
+      path_is_dir(join_path(candidate, "android/runner")) {
+      return Ok(candidate)
+    }
+  }
+  Err(
+    "could not resolve the moui_shell package root; run moon update or set MOUI_SHELL_PACKAGE_ROOT",
+  )
+}
+
+///|
+fn package_version(
+  root : String,
+  package_name : String,
+) -> Result[String, String] {
+  let text = @fs.read_file_to_string(join_path(root, "moon.mod")) catch {
+    _ => return Err("could not read " + package_name + " moon.mod at " + root)
+  }
+  for line in text.split("\n") {
+    let line = line.trim()
+    if line.has_prefix("version = ") {
+      let pieces = line.split("\"").to_array()
+      if pieces.length() >= 2 && pieces[1] != "" {
+        return Ok(pieces[1].to_owned())
+      }
+    }
+  }
+  Err(package_name + " moon.mod does not declare a version")
+}
+
+///|
+fn shell_capability_snapshot_digest(platform : String) -> String {
+  let snapshot = "shellApi=1\nembeddingApi=1\nplatform=" +
+    platform +
+    "\ncapabilities=surface,pointer,scroll,frame-scheduling,text-input,clipboard,accessibility,platform-views,host-channel\n"
+  sha256_hex(@utf8.encode(snapshot[:], bom=false))
 }
 
 ///|
@@ -94,8 +147,8 @@ fn apply_product_identity(
 ) -> String {
   let product = product_name(manifest.id)
   match platform {
-    "android" => value.replace_all(old="MoUIMobileAndroid", new=product)
-    "ios" => value.replace_all(old="MoUIMobileApp", new=product)
+    "android" => value.replace_all(old="MoUIShellAndroid", new=product)
+    "ios" => value.replace_all(old="MoUIShellApp", new=product)
     _ => value
   }
 }
@@ -205,9 +258,9 @@ fn render_ejected_files(
 }
 
 ///|
-fn project_config_bytes(
+fn project_shell_config_bytes(
   project_root : String,
-  mobile_bytes : Bytes,
+  shell_bytes : Bytes,
   platform : String,
 ) -> Result[Bytes, String] {
   let project_path = join_path(project_root, "moui.project.json")
@@ -217,27 +270,27 @@ fn project_config_bytes(
         "could not read project manifest for ejection: " + project_path,
       )
   }
-  let mobile_text = @utf8.decode(mobile_bytes) catch {
-    _ => return Err("mobile.json is not valid UTF-8")
+  let shell_text = @utf8.decode(shell_bytes) catch {
+    _ => return Err("shell.json is not valid UTF-8")
   }
-  let parsed = @json.parse(mobile_text) catch {
-    _ => return Err("mobile.json is invalid JSON")
+  let parsed = @json.parse(shell_text) catch {
+    _ => return Err("shell.json is invalid JSON")
   }
   guard parsed is Object(root) else {
-    return Err("mobile.json root must be an object")
+    return Err("shell.json root must be an object")
   }
   guard root.get(platform) is Some(platform_config) else {
-    return Err("mobile.json does not configure platform: " + platform)
+    return Err("shell.json does not configure platform: " + platform)
   }
   let scoped : Map[String, Json] = Map([])
   for
     key in [
       "schemaVersion", "id", "displayName", "artifactName", "appPackage", "shellApiVersion",
-      "runtimeAbiVersion", "mobile",
+      "embeddingApiVersion", "shell",
     ] {
     match root.get(key) {
       Some(value) => scoped[key] = value
-      None => return Err("mobile.json is missing field: " + key)
+      None => return Err("shell.json is missing field: " + key)
     }
   }
   scoped[platform] = platform_config
@@ -246,41 +299,45 @@ fn project_config_bytes(
 }
 
 ///|
-fn updated_mobile_config_for_eject(
+fn updated_shell_config_for_eject(
   project_root : String,
   platform : String,
 ) -> Result[Bytes, String] {
-  let path = join_path(project_root, "mobile.json")
+  let path = join_path(project_root, "shell.json")
   let text = @fs.read_file_to_string(path) catch {
-    _ => return Err("mobile config not found: " + path)
+    _ => return Err("shell config not found: " + path)
   }
   let parsed = @json.parse(text) catch {
-    _ => return Err("mobile.json is invalid JSON")
+    _ => return Err("shell.json is invalid JSON")
   }
   guard parsed is Object(root) else {
-    return Err("mobile.json root must be an object")
+    return Err("shell.json root must be an object")
   }
-  guard root.get("schemaVersion") is Some(Number(2.0, repr=_)) else {
-    return Err("mobile eject requires mobile.json schemaVersion 2")
+  guard root.get("schemaVersion") is Some(Number(1.0, repr=_)) else {
+    return Err("shell eject requires shell.json schemaVersion 1")
   }
   guard root.get("shellApiVersion") is Some(Number(1.0, repr=_)) else {
-    return Err("mobile eject requires shellApiVersion 1")
+    return Err("shell eject requires shellApiVersion 1")
   }
-  guard root.get("runtimeAbiVersion") is Some(Number(1.0, repr=_)) else {
-    return Err("mobile eject requires runtimeAbiVersion 1")
+  guard root.get("embeddingApiVersion") is Some(Number(1.0, repr=_)) else {
+    return Err("shell eject requires embeddingApiVersion 1")
+  }
+  guard root.get("shell") is Some(Object(shell)) &&
+    shell.get("profile") is Some(String("handheld")) else {
+    return Err("shell eject requires shell.profile=handheld")
   }
   guard root.get(platform) is Some(Object(platform_config)) else {
-    return Err("mobile.json does not configure platform: " + platform)
+    return Err("shell.json does not configure platform: " + platform)
   }
-  guard platform_config.get("shellMode") is Some(String(mode)) else {
-    return Err("mobile.json platform is missing shellMode: " + platform)
+  guard platform_config.get("runnerMode") is Some(String(mode)) else {
+    return Err("shell.json platform is missing runnerMode: " + platform)
   }
   if mode != "managed" {
     return Err(
-      "mobile shell is not managed and cannot be ejected again: " + platform,
+      "shell platform is not managed and cannot be ejected again: " + platform,
     )
   }
-  platform_config["shellMode"] = "ejected".to_json()
+  platform_config["runnerMode"] = "ejected".to_json()
   root[platform] = Json::object(platform_config)
   let updated = Json::object(root).stringify(indent=2) + "\n"
   Ok(@utf8.encode(updated[:], bom=false))
@@ -290,6 +347,8 @@ fn updated_mobile_config_for_eject(
 fn ejection_lock_text(
   manifest : ProjectManifest,
   platform : String,
+  moui_shell_version : String,
+  capability_snapshot_digest : String,
   source_digest : String,
   config_digest : String,
   plugin_digest : String,
@@ -309,9 +368,11 @@ fn ejection_lock_text(
     "mode": "ejected",
     "platform": platform,
     "shellApiVersion": 1,
-    "runtimeAbiVersion": 1,
+    "embeddingApiVersion": 1,
     "mouiVersion": manifest.moui_version,
-    "sourceTemplate": "mobile/" + platform + "/template",
+    "mouiShellVersion": moui_shell_version,
+    "capabilitySnapshotDigest": "sha256:" + capability_snapshot_digest,
+    "sourceTemplate": platform + "/runner/template",
     "sourceTemplateDigest": "sha256:" + source_digest,
     "configDigest": "sha256:" + config_digest,
     "pluginDigest": "sha256:" + plugin_digest,
@@ -323,10 +384,10 @@ fn ejection_lock_text(
 }
 
 ///|
-fn eject_mobile_shell(options : EjectOptions) -> Result[EjectResult, String] {
+fn eject_shell(options : EjectOptions) -> Result[EjectResult, String] {
   let platform = options.platform.to_lower()
   if !eject_platforms.contains(platform) {
-    return Err("mobile eject platform must be android, ios, or harmonyos")
+    return Err("shell eject platform must be android, ios, or harmonyos")
   }
   let manifest = match read_project_manifest(options.project_root) {
     Ok(value) => value
@@ -336,17 +397,17 @@ fn eject_mobile_shell(options : EjectOptions) -> Result[EjectResult, String] {
     return Err("project manifest does not include platform: " + platform)
   }
   if manifest.bundle_id is None {
-    return Err("project manifest is missing bundleId for mobile shell ejection")
+    return Err("project manifest is missing bundleId for shell ejection")
   }
-  let config = match read_mobile_doctor_config(options.project_root) {
+  let config = match read_shell_doctor_config(options.project_root) {
     Ok(value) => value
     Err(message) => return Err(message)
   }
-  if config.schema_version != 2 ||
+  if config.schema_version != 1 ||
     config.shell_api_version != 1 ||
     config.runtime_abi_version != 1 {
     return Err(
-      "mobile eject requires schemaVersion=2, shellApiVersion=1, and runtimeAbiVersion=1",
+      "shell eject requires schemaVersion=1, shellApiVersion=1, and embeddingApiVersion=1",
     )
   }
   let plugins = match read_doctor_plugins(options.project_root, config) {
@@ -354,13 +415,13 @@ fn eject_mobile_shell(options : EjectOptions) -> Result[EjectResult, String] {
     Err(message) => return Err(message)
   }
   let plugin_digest = doctor_plugins_digest(plugins)
-  let updated_mobile = match
-    updated_mobile_config_for_eject(options.project_root, platform) {
+  let updated_shell = match
+    updated_shell_config_for_eject(options.project_root, platform) {
     Ok(value) => value
     Err(message) => return Err(message)
   }
   let config_bytes = match
-    project_config_bytes(options.project_root, updated_mobile, platform) {
+    project_shell_config_bytes(options.project_root, updated_shell, platform) {
     Ok(value) => value
     Err(message) => return Err(message)
   }
@@ -377,7 +438,30 @@ fn eject_mobile_shell(options : EjectOptions) -> Result[EjectResult, String] {
     Ok(value) => value
     Err(message) => return Err(message)
   }
-  let source_files = match canonical_shell_source_plan(moui_root, platform) {
+  let shell_root = match resolve_shell_root(options) {
+    Ok(value) => value
+    Err(message) => return Err(message)
+  }
+  let moui_version = match package_version(moui_root, "moui") {
+    Ok(value) => value
+    Err(message) => return Err(message)
+  }
+  let moui_shell_version = match package_version(shell_root, "moui_shell") {
+    Ok(value) => value
+    Err(message) => return Err(message)
+  }
+  if moui_version != manifest.moui_version ||
+    moui_shell_version != manifest.moui_version {
+    return Err(
+      "moui and moui_shell must match the app's pinned version: project=" +
+      manifest.moui_version +
+      " moui=" +
+      moui_version +
+      " moui_shell=" +
+      moui_shell_version,
+    )
+  }
+  let source_files = match canonical_shell_source_plan(shell_root, platform) {
     Ok(value) => value
     Err(message) => return Err(message)
   }
@@ -399,6 +483,8 @@ fn eject_mobile_shell(options : EjectOptions) -> Result[EjectResult, String] {
       ejection_lock_text(
         manifest,
         platform,
+        moui_shell_version,
+        shell_capability_snapshot_digest(platform),
         source_digest,
         config_digest,
         plugin_digest,
@@ -410,8 +496,8 @@ fn eject_mobile_shell(options : EjectOptions) -> Result[EjectResult, String] {
   )
   match write_file_plan_atomic(output, files) {
     Ok(_) => {
-      let mobile_path = join_path(options.project_root, "mobile.json")
-      match replace_file_atomic(mobile_path, updated_mobile) {
+      let shell_path = join_path(options.project_root, "shell.json")
+      match replace_file_atomic(shell_path, updated_shell) {
         Ok(_) =>
           Ok({
             platform,

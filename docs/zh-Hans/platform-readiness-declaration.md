@@ -17,7 +17,7 @@ OS 产品完成度。
 | **Web** | **committed** | 产品主线可用 | 每日 wasm-gc + browser WebGPU；`checks/platforms/web.json` runtimeL3=passed | — |
 | **Windows** | **committed_with_gaps** | 产品主线可用（L3 未满） | L0–L2 PR/real Skia；`runtimeL3=partial` | 完整 IME/服务 L3 |
 | **Linux** | **committed_with_gaps** | 宿主 `ready=true` = 代码路径可用，**≠** L3 全绿 | L0–L2 + 首帧 L3；交互 IME 等 partial | 完整交互 L3 |
-| **Android** | **runtime_partial** | `ready=true`：managed 壳 + session **可用于开发/演示**；`status=runtime_partial` | 打包矩阵为 passed；历史 legacy shell CG smoke 为 passed；managed 壳与 MobileHostChannel 已接线 | managed-shell 缺少 probe 重录 smoke；真机签名；presenter verified；GPU seven-gate claimed |
+| **Android** | **runtime_partial** | `ready=true`：managed 壳 + session **可用于开发/演示**；`status=runtime_partial` | 打包矩阵为 passed；历史 legacy shell CG smoke 为 passed；managed 壳与 EmbedderHostChannel 已接线 | managed-shell 缺少 probe 重录 smoke；真机签名；presenter verified；GPU seven-gate claimed |
 | **iOS** | **runtime_partial** | 同上 | 打包矩阵 passed；历史 UIKit shell CG smoke passed；managed SwiftUI 壳已接线 | managed SwiftUI `--require-passed` 重录；真机/VoiceOver；presenter/seven-gate |
 | **HarmonyOS** | **runtime_partial** | 同上 | 打包矩阵 passed；首帧/部分 HVD 观察；managed ArkTS/XComponent 已接线 | 商业签名下 full `passed` smoke；完整服务观察；presenter/seven-gate |
 
@@ -34,7 +34,7 @@ OS 产品完成度。
 | 运行时证据 (`status` / smoke) | 匹配宿主观察：`passed` / `partial` / packaging-only |
 | 产品完整承诺 | L3 全绿 + `actualPresenterRoute` verified + GPU seven-gate claimed |
 
-结构化状态源：`checks/platforms/{macos,windows,linux,web,android,ios,harmonyos}.json`。  
+结构化状态源：`checks/platforms/{macos,windows,linux,web,android,ios,harmonyos}.json`。
 **无新证据时不得抬高** `runtimeL3` / `actualPresenterRoute`。
 
 GPU 产品默认（`NativeGpuPlatform::gpu_promoted=true`）与 seven-gate **质量声明** 双轨；见 ADR 0006。
@@ -337,15 +337,15 @@ Android、iOS 和 HarmonyOS 均已通过非 fallback Skia 构建在匹配设备�
 |------|--------|------|
 | 历史 iOS Component Gallery | Release N UIKit shell **`passed`**；不是 Showcase 证据 | `artifacts/mobile-runtime/ios/component_gallery/` |
 | 历史 Android Component Gallery | Release N legacy shell **`passed`**；不是 Showcase 证据 | `artifacts/mobile-runtime/android/component_gallery/` |
-| Showcase managed 移动端 shell | Android/iOS/HarmonyOS 匹配设备证据待补 | `artifacts/mobile-runtime/<platform>/showcase/` |
-| HarmonyOS 商业签名/设备 | 规范 ArkTS shell **`partial`**；已签名 full-suite 重跑待补 | 需 `MOUI_HARMONYOS_SIGNING_CONFIG(_FILE)` + `scripts/harmonyos-mobile-runtime-evidence.sh` |
+| Showcase managed 移动端 shell | Android/iOS/HarmonyOS 匹配设备证据待补 | `artifacts/shell-runtime/<platform>/showcase/` |
+| HarmonyOS 商业签名/设备 | 规范 ArkTS shell **`partial`**；已签名 full-suite 重跑待补 | 需 `MOUI_HARMONYOS_SIGNING_CONFIG(_FILE)` + `scripts/harmonyos-shell-runtime-evidence.sh` |
 
-编排脚本：`scripts/ios-mobile-runtime-evidence.sh`、
-`scripts/android-mobile-runtime-evidence.sh`、
-`scripts/harmonyos-mobile-runtime-evidence.sh`。  
-CI：`moui-ios-mobile-runtime-evidence.yml`、
-`moui-android-mobile-runtime-evidence.yml`（self-hosted android）、
-`moui-harmonyos-mobile-runtime-evidence.yml`（self-hosted harmonyos + 签名材料）。
+编排脚本：`scripts/ios-shell-runtime-evidence.sh`、
+`scripts/android-shell-runtime-evidence.sh`、
+`scripts/harmonyos-shell-runtime-evidence.sh`。
+CI：`moui-ios-shell-runtime-evidence.yml`、
+`moui-android-shell-runtime-evidence.yml`（self-hosted android）、
+`moui-harmonyos-shell-runtime-evidence.yml`（self-hosted harmonyos + 签名材料）。
 
 GPU seven-gate（`gpuPromotionEvidence.claimed=true`）仍是独立 L3 质量声明，
 本轮不声明。

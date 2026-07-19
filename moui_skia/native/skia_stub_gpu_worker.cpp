@@ -1250,7 +1250,7 @@ bool render_vulkan_picture(
 ) {
   if (!picture) {
 #if defined(__ANDROID__)
-    __android_log_print(ANDROID_LOG_WARN, "MoUIMobile", "vulkan present fail=no-picture");
+    __android_log_print(ANDROID_LOG_WARN, "MoUIShell", "vulkan present fail=no-picture");
 #endif
     return false;
   }
@@ -1258,7 +1258,7 @@ bool render_vulkan_picture(
 #if defined(__ANDROID__)
     __android_log_print(
       ANDROID_LOG_WARN,
-      "MoUIMobile",
+      "MoUIShell",
       "vulkan present fail=swap-chain size=%dx%d attached=%llu",
       worker->width,
       worker->height,
@@ -1273,7 +1273,7 @@ bool render_vulkan_picture(
     release_vulkan_swap_chain(worker);
     if (!ensure_vulkan_swap_chain(worker)) {
 #if defined(__ANDROID__)
-      __android_log_print(ANDROID_LOG_WARN, "MoUIMobile", "vulkan present fail=swap-recreate");
+      __android_log_print(ANDROID_LOG_WARN, "MoUIShell", "vulkan present fail=swap-recreate");
 #endif
       return false;
     }
@@ -1286,7 +1286,7 @@ bool render_vulkan_picture(
 #if defined(__ANDROID__)
     __android_log_print(
       ANDROID_LOG_WARN,
-      "MoUIMobile",
+      "MoUIShell",
       "vulkan present fail=acquire result=%d index=%u images=%zu",
       static_cast<int>(acquire_result),
       image_index,
@@ -1320,7 +1320,7 @@ bool render_vulkan_picture(
 #if defined(__ANDROID__)
     __android_log_print(
       ANDROID_LOG_WARN,
-      "MoUIMobile",
+      "MoUIShell",
       "vulkan present fail=backend-rt format=%u",
       static_cast<unsigned>(worker->vulkan_format)
     );
@@ -1339,7 +1339,7 @@ bool render_vulkan_picture(
 #if defined(__ANDROID__)
     __android_log_print(
       ANDROID_LOG_WARN,
-      "MoUIMobile",
+      "MoUIShell",
       "vulkan present fail=wrap format=%u extent=%ux%u",
       static_cast<unsigned>(worker->vulkan_format),
       worker->vulkan_extent.width,
@@ -1364,14 +1364,14 @@ bool render_vulkan_picture(
   // landscape blank). Fence only the queue submit used for present ordering.
   if (!worker->vulkan_context->submit(GrSyncCpu::kNo)) {
 #if defined(__ANDROID__)
-    __android_log_print(ANDROID_LOG_WARN, "MoUIMobile", "vulkan present fail=submit");
+    __android_log_print(ANDROID_LOG_WARN, "MoUIShell", "vulkan present fail=submit");
 #endif
     return false;
   }
   VkFence image_fence = worker->vulkan_image_fences[image_index];
   if (vkResetFences(worker->vulkan_device, 1, &image_fence) != VK_SUCCESS) {
 #if defined(__ANDROID__)
-    __android_log_print(ANDROID_LOG_WARN, "MoUIMobile", "vulkan present fail=reset-fence");
+    __android_log_print(ANDROID_LOG_WARN, "MoUIShell", "vulkan present fail=reset-fence");
 #endif
     return false;
   }
@@ -1384,7 +1384,7 @@ bool render_vulkan_picture(
     image_fence
   ) != VK_SUCCESS) {
 #if defined(__ANDROID__)
-    __android_log_print(ANDROID_LOG_WARN, "MoUIMobile", "vulkan present fail=queue-submit");
+    __android_log_print(ANDROID_LOG_WARN, "MoUIShell", "vulkan present fail=queue-submit");
 #endif
     return false;
   }
@@ -1400,7 +1400,7 @@ bool render_vulkan_picture(
 #if defined(__ANDROID__)
     __android_log_print(
       ANDROID_LOG_WARN,
-      "MoUIMobile",
+      "MoUIShell",
       "vulkan present fail=fence-wait result=%d",
       static_cast<int>(fence_wait)
     );
@@ -2007,7 +2007,7 @@ void run_native_gpu_worker(MoonbitSkiaNativeGpuWorker* worker) {
 #if defined(__ANDROID__)
         __android_log_print(
           ANDROID_LOG_INFO,
-          "MoUIMobile",
+          "MoUIShell",
           "gpu-worker vulkan present=%d seq=%lld size=%dx%d fails=%d",
           presented ? 1 : 0,
           static_cast<long long>(frame.sequence),
@@ -2030,7 +2030,7 @@ void run_native_gpu_worker(MoonbitSkiaNativeGpuWorker* worker) {
 #if defined(__ANDROID__)
         __android_log_print(
           ANDROID_LOG_INFO,
-          "MoUIMobile",
+          "MoUIShell",
           "gpu-worker egl present=%d seq=%lld size=%dx%d fails=%d",
           presented ? 1 : 0,
           static_cast<long long>(frame.sequence),

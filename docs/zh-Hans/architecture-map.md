@@ -22,7 +22,7 @@ wzzc-dev/moui  +  geometry/graphics/animation/text/state  +  views
 platform entrypoints        moui/runtime     # trees, dispatch, effects
 (web_wasm, *_skia, …)              │
 thin wiring only                   ▼
-        │                   moui/backend/host   # HostEvent, services, MobileHostChannel
+        │                   moui/backend/host   # HostEvent, services, EmbedderHostChannel
         │                          │
         └────────────►     backend/<platform>  (+ /skia, /wgpu providers)
                                    │
@@ -56,8 +56,7 @@ thin wiring only                   ▼
 | WGPU 诊断 providers | `moui/backend/<platform>/wgpu` |
 | Renderer 门面 | `moui/render`, `render/skia`, `render/webgpu_adapter`, `render/wgpu` |
 | Skia FFI / native capability | `moui_skia` |
-| 托管移动 shells | `moui/mobile/{android,ios,harmonyos}` |
-| 旧版移动 fixtures | `moui/mobile/legacy/*`、标记为 Release N 的 example `*_app` |
+| 托管移动 shells | `moui_shell/{android,ios,harmonyos}` |
 | 富文本领域 | `moui_richtext` |
 | 设计系统 addons | `moui_theme`（不是 app 默认依赖） |
 | 仓库 validators | `tools/moui/*`，由 `scripts/*.mjs` shells 调用 |
@@ -85,5 +84,5 @@ thin wiring only                   ▼
 | 完整包叙述 | `docs/architecture.md` |
 | 不变量表 | `docs/invariants.md` |
 | 验证命令 | `docs/testing.md` |
-| 移动路线图 | `docs/mobile-mainline-roadmap.md` |
+| 原生 shell 路线图 | `docs/shell-mainline-roadmap.md` |
 | 文档目录 | `docs/INDEX.md` |

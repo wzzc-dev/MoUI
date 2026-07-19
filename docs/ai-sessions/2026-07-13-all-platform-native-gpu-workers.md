@@ -60,7 +60,7 @@ NO_PROXY=127.0.0.1,localhost no_proxy=127.0.0.1,localhost \
   sh scripts/ci-web-runtime-presentation.sh          # Chrome WebGPU presentation passed
 scripts/build-counter-ios-app.sh --renderer skia-gpu
 scripts/build-counter-android-apk.sh --renderer skia-gpu
-moui/scripts/mobile/build-harmonyos-hap.sh --app harmonyos_demo \
+moui_shell/scripts/build-harmonyos-hap.sh --app harmonyos_demo \
   --harmonyos-project examples/harmonyos_demo/harmonyos_app \
   --renderer skia-gpu                               # all three builds passed
 ```

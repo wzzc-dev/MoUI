@@ -431,10 +431,10 @@ fn validate_mobile_platform_contract(
       label + ": managed mobile shells require shell API 1 and runtime ABI 1",
     )
   }
-  if facts.source_fact_statuses.length() != 4 {
+  if facts.source_fact_statuses.length() != 3 {
     return Err(
       label +
-      ".sourceBuild must record four managed/ejected/plugin/legacy facts",
+      ".sourceBuild must record managed, clean-ejected, and plugin facts",
     )
   }
   let expected_source_status = if facts.source_fact_statuses.any(status => {
@@ -449,7 +449,7 @@ fn validate_mobile_platform_contract(
   if facts.source_status != expected_source_status {
     return Err(
       label +
-      ".sourceBuild.status must aggregate managed, cleanEjected, pluginFixture, and legacyFixture as " +
+      ".sourceBuild.status must aggregate managed, cleanEjected, and pluginFixture as " +
       expected_source_status,
     )
   }
@@ -457,7 +457,7 @@ fn validate_mobile_platform_contract(
     !facts.source_verified_on.contains("-") {
     return Err(label + ".sourceBuild.verifiedOn must be an ISO date")
   }
-  let expected_matrix_command = "run-mobile-shell-matrix.sh " + facts.platform
+  let expected_matrix_command = "run-shell-matrix.sh " + facts.platform
   if !facts.source_matrix_command.contains(expected_matrix_command) {
     return Err(
       label +
@@ -555,12 +555,12 @@ fn read_platform_rows(
         path + ".shellApiVersion",
       ).or_raise()
       let runtime_abi = json_int(
-        fields.get("runtimeAbiVersion"),
-        path + ".runtimeAbiVersion",
+        fields.get("embeddingApiVersion"),
+        path + ".embeddingApiVersion",
       ).or_raise()
       if shell_api < 0 || runtime_abi < 0 {
         return Err(
-          path + ": shellApiVersion and runtimeAbiVersion cannot be negative",
+          path + ": shellApiVersion and embeddingApiVersion cannot be negative",
         )
       }
       let actual_presenter_route = json_string(
@@ -582,7 +582,7 @@ fn read_platform_rows(
           None => return Err(path + ".sourceBuild is missing")
         }
         let source_fact_statuses : Array[String] = []
-        for key in ["managed", "cleanEjected", "pluginFixture", "legacyFixture"] {
+        for key in ["managed", "cleanEjected", "pluginFixture"] {
           source_fact_statuses.push(
             platform_fact_status(source.get(key), path + ".sourceBuild." + key).or_raise(),
           )

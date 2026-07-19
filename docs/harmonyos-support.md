@@ -14,13 +14,15 @@ session and Skia renderer provider contracts.
 ## Ownership
 
 - `moui/backend/harmonyos` exposes the platform-neutral embedded-session host
-  contract around `HarmonyOsRuntimeSession`.
+  contract around `HarmonyOsRuntimeSession`, owns the installed embedding
+  adapter, and registers it with the shell-owned fixed Embedding API v1
+  MoonBit symbols.
 - `moui/backend/harmonyos/skia` wraps `moui/render/skia` and presents copied
   RGBA frames to a HarmonyOS XComponent native-window handle.
 - `examples/harmonyos_demo/app` owns the platform-neutral TEA demo UI.
-- `examples/harmonyos_demo/harmonyos_skia` owns the MoonBit native exports used
-  by the HarmonyOS shell.
-- `moui/mobile/harmonyos` owns the canonical ArkTS Stage Ability/XComponent
+- `examples/harmonyos_demo/harmonyos_skia` installs the demo program and
+  renderer configuration used by the HarmonyOS shell.
+- `moui_shell/harmonyos` owns the canonical ArkTS Stage Ability/XComponent
   managed shell, generated plugin registry, fixed-ABI NAPI bridge, and CMake
   template published with the `wzzc-dev/moui` package.
 
@@ -28,22 +30,27 @@ The minimum compatible SDK is API 20. Touch movement below the native slop
 remains pointer input. Crossing slop sends one pointer Cancel followed by
 Scroll Begin/Move; Scroll End/Cancel suppresses Pointer Up. The removed ArkTS
 `.onTouch` path must not be reintroduced.
-- `examples/harmonyos_demo/harmonyos_app` is the explicit Release N app-owned
-  project fixture. Normal builds stage the canonical shell under `artifacts/`.
+- Normal builds stage the canonical shell under `artifacts/`; application source
+  does not keep an app-owned native project fixture.
 
 ## Skia Artifact
 
-The first HarmonyOS route uses the locked `wzzc-dev/skia` release asset:
+The HarmonyOS GPU route uses the locked static `wzzc-dev/skia` release asset:
 
 ```sh
 MOUI_SKIA_PLATFORM=harmonyos \
 MOUI_SKIA_ARCH=arm64 \
-MOUI_SKIA_LINK_MODE=dynamic
+MOUI_SKIA_LINK_MODE=static
 ```
 
-The pinned release tag is `dev-fcb9c18e54`; the Release arm64 dynamic package is
-`Skia-dev-fcb9c18e54-harmonyos-Release-arm64-shared.zip` with SHA256
-`55c050fec9da3468c56022b7188cb133ca476c4c90d9ce1aa67d31f22f374aa1`.
+The pinned release tag is `dev-fcb9c18e54`; the Release arm64 static package is
+`Skia-dev-fcb9c18e54-harmonyos-Release-arm64.zip` with SHA256
+`2819c8c11ca22a504d073c574d558539ef84d388d9c2a049b6a23272969afccb`.
+The dynamic package
+`Skia-dev-fcb9c18e54-harmonyos-Release-arm64-shared.zip` remains available for
+explicit `skia-raster`. It cannot back `auto` / `skia-gpu`: its `libskia.so`
+hides Ganesh internal symbols referenced by the separate
+`libskia_ganesh_ext.a`.
 
 If SDK, ohpm, or Skia release downloads fail on a restricted network, configure
 an appropriate system or shell proxy for that machine. The fetch helper honors
@@ -120,15 +127,15 @@ scripts/build-harmonyos-demo-app.sh --fallback-skia
 scripts/build-component-gallery-harmonyos-hap.sh --fallback-skia
 ```
 
-Managed external apps keep only `mobile.json` and the MoonBit entrypoint, then
+Managed external apps keep only `shell.json` and the MoonBit entrypoint, then
 invoke:
 
 ```sh
-moui/scripts/mobile/build-harmonyos-hap.sh --app <id> \
-  --app-config mobile.json
+moui_shell/scripts/build-harmonyos-hap.sh --app <id> \
+  --app-config shell.json
 ```
 
-Use `moui mobile eject harmonyos --output harmonyos_app` only when application
+Use `moui shell eject harmonyos --output harmonyos_app` only when application
 requirements exceed the managed plugin contract. Subsequent builds must pass
 `--ejected-shell --harmonyos-project harmonyos_app`; MoUI validates the lock
 versions but never overwrites that project.
@@ -140,7 +147,7 @@ uses `HARMONYOS_SDK_HOME` first and `OHOS_SDK_HOME` as a fallback:
 HARMONYOS_SDK_HOME=/path/to/HarmonyOS/Sdk \
 MOUI_SKIA_PLATFORM=harmonyos \
 MOUI_SKIA_ARCH=arm64 \
-MOUI_SKIA_LINK_MODE=dynamic \
+MOUI_SKIA_LINK_MODE=static \
 scripts/build-harmonyos-demo-app.sh
 ```
 
@@ -150,7 +157,7 @@ Build Showcase with the same route:
 HARMONYOS_SDK_HOME=/path/to/HarmonyOS/Sdk \
 MOUI_SKIA_PLATFORM=harmonyos \
 MOUI_SKIA_ARCH=arm64 \
-MOUI_SKIA_LINK_MODE=dynamic \
+MOUI_SKIA_LINK_MODE=static \
 scripts/build-component-gallery-harmonyos-hap.sh
 ```
 
@@ -160,7 +167,10 @@ staged HAP layout only. It does not prove renderer or platform runtime support.
 All HarmonyOS mobile build wrappers also accept
 `--renderer auto|skia-gpu|skia-raster`. For real Skia packages, `auto` and
 `skia-gpu` select GPU (`gpuPromoted: true`); fallback-Skia and explicit
-`skia-raster` stay on the CPU presenter.
+`skia-raster` stay on the CPU presenter. With `MOUI_SKIA_LINK_MODE` unset, the
+builder selects static for GPU and dynamic for raster. Forcing dynamic with
+`auto` / `skia-gpu` fails before the native build because the locked shared
+provider does not export the Ganesh symbols required by the GPU extension.
 
 ## Emulator Setup And Smoke
 
@@ -195,7 +205,7 @@ Build a non-fallback HAP with the real HarmonyOS Skia artifact:
 HARMONYOS_SDK_HOME=/path/to/DevEco/sdk/default/openharmony \
 MOUI_SKIA_PLATFORM=harmonyos \
 MOUI_SKIA_ARCH=arm64 \
-MOUI_SKIA_LINK_MODE=dynamic \
+MOUI_SKIA_LINK_MODE=static \
 scripts/build-harmonyos-demo-app.sh
 ```
 
@@ -230,9 +240,9 @@ Three evidence layers stay separate: **product GPU default** (source/`auto`),
 | Layer | Current state (2026-07-15) | Path / note |
 | --- | --- | --- |
 | Product GPU default | `auto` → `SkiaGpuNative` / `egl-gpu` when available | Source `gpu_promoted=true`; rebuild HAP with `--renderer auto` |
-| Packaging (L1) | Non-fallback Showcase HAP with GPU flags | `artifacts/harmonyos/showcase/mobile-build.json` → `selected=skia-gpu`, `gpuPromoted=true` |
+| Packaging (L1) | Non-fallback Showcase HAP with GPU flags | `artifacts/harmonyos/showcase/shell-build.json` → `selected=skia-gpu`, `gpuPromoted=true` |
 | First-frame pixels | Historical Component Gallery device + **emulator smoke screenshots** | `resource/screenshots/harmonyos-componentgallery.png`; old smoke PNGs under `artifacts/mobile-runtime/harmonyos/component_gallery/` are not Showcase evidence |
-| Mobile runtime smoke (L2) | Showcase managed-shell evidence pending; commercial hosts require Huawei/DevEco signing material | Service-smoke + attach/resize log paths are in tree (`Index.ets`, NAPI attach markers, `record-mobile-runtime-smoke.mjs`). Commercial MateBook-class installs reject unsigned / OpenHarmony-community HAPs (`9568320` / `9568257`). Set `MOUI_HARMONYOS_SIGNING_CONFIG(_FILE)` and run `scripts/harmonyos-mobile-runtime-evidence.sh` for `--require-passed`. |
+| Shell runtime smoke (L2) | Showcase managed-shell evidence pending; commercial hosts require Huawei/DevEco signing material | Service-smoke + attach/resize log paths are in tree (`Index.ets`, NAPI attach markers, `record-shell-runtime-smoke.mjs`). Commercial MateBook-class installs reject unsigned / OpenHarmony-community HAPs (`9568320` / `9568257`). Set `MOUI_HARMONYOS_SIGNING_CONFIG(_FILE)` and run `scripts/harmonyos-shell-runtime-evidence.sh` for `--require-passed`. |
 | GPU promotion claim (L3) | Scaffold only | `artifacts/gpu-promotion/harmonyos/scaffold-latest/` (`gpuPromoted=false`, not a claim) |
 
 ### GPU feasibility proof (L1 + L2, emulator 2026-07-15)
@@ -246,17 +256,17 @@ export PATH="$HARMONYOS_SDK_HOME/toolchains:$PATH"
 # Emulator -hvd "MateBook Pro" -path "$HOME/.Huawei/Emulator/deployed" -imageRoot "$HOME/Library/Huawei/Sdk"
 hdc list targets
 
-scripts/build-mobile-harmonyos-hap.sh --app showcase --renderer auto
-node scripts/record-mobile-runtime-smoke.mjs \
+scripts/build-shell-harmonyos-hap.sh --app showcase --renderer auto
+node scripts/record-shell-runtime-smoke.mjs \
   --platform harmonyos --app showcase --device 127.0.0.1:5557
-node scripts/validate-mobile-runtime-manifest.mjs \
-  artifacts/mobile-runtime/harmonyos/showcase/mobile-runtime-smoke.json
+node scripts/validate-shell-runtime-manifest.mjs \
+  artifacts/shell-runtime/harmonyos/showcase/shell-runtime-smoke.json
 ```
 
 **Required GPU log markers** (`hilog -T MoUIHarmony` / `runtime-stream.log`):
 
 ```text
-moui-mobile renderer configure requested=auto ok=1 status={
+moui-shell renderer configure requested=auto ok=1 status={
   "platform":"harmonyos","requested":"auto",
   "selected":"skia-gpu-native","surfaceRoute":"egl-gpu",
   "gpuAvailable":true,"gpuPromoted":true,"fallbackReason":null}
@@ -301,10 +311,10 @@ before/after pixels:
 export HARMONYOS_SDK_HOME="${HARMONYOS_SDK_HOME:-/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony}"
 export PATH="$HARMONYOS_SDK_HOME/toolchains:$PATH"
 hdc list targets
-scripts/harmonyos-mobile-runtime-evidence.sh
+scripts/harmonyos-shell-runtime-evidence.sh
 # or the lower-level pair:
-scripts/build-mobile-harmonyos-hap.sh --app showcase --renderer auto
-node scripts/record-mobile-runtime-smoke.mjs --platform harmonyos --app showcase --device <hdc-target> --require-passed
+scripts/build-shell-harmonyos-hap.sh --app showcase --renderer auto
+node scripts/record-shell-runtime-smoke.mjs --platform harmonyos --app showcase --device <hdc-target> --require-passed
 ```
 
 Showcase opens `platform/mobile-service-probe` directly. Use it for transparent
@@ -319,7 +329,8 @@ A physical-device pass must still round-trip a PNG through another app before
 promoting image clipboard support, and must complete the pending service
 observations above for `status=passed`.
 
-The product GPU path is EGL/GLES over `OHNativeWindow` (Ganesh GL) via
+The product GPU path requires the static Skia provider and uses EGL/GLES over
+`OHNativeWindow` (Ganesh GL) via
 main-thread `HostGpuPresentTarget` (`eglCreateWindowSurface` +
 `eglSwapBuffers`). Emulator L2 proves `surfaceRoute=egl-gpu`,
 `gpuAvailable=true`, and **`egl present ok=1` direct present**. The raster

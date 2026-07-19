@@ -45,7 +45,7 @@ test "add platform updates manifest and writes entrypoints" {
   }
   inspect(manifest.platforms.join(","), content="web,macos,android")
   inspect(manifest.bundle_id.unwrap_or(""), content="dev.example.sample")
-  inspect(@fs.path_exists(join_path(root, "mobile.json")), content="true")
+  inspect(@fs.path_exists(join_path(root, "shell.json")), content="true")
   inspect(
     @fs.path_exists(join_path(root, "android_skia/moon.pkg")),
     content="true",
@@ -61,10 +61,7 @@ test "plugin scaffold writes managed plugin layout" {
     Ok(_) => ()
     Err(message) => fail(message)
   }
-  eject_test_write_text(
-    join_path(root, "mobile.json"),
-    eject_test_mobile_text(),
-  )
+  eject_test_write_text(join_path(root, "shell.json"), eject_test_mobile_text())
   match
     scaffold_plugin({
       project_root: root,
@@ -81,10 +78,10 @@ test "plugin scaffold writes managed plugin layout" {
       fail(message)
     }
   }
-  let text = @fs.read_file_to_string(join_path(root, "mobile.json")) catch {
+  let text = @fs.read_file_to_string(join_path(root, "shell.json")) catch {
     _ => {
       remove_tree(root)
-      fail("could not reread mobile.json")
+      fail("could not reread shell.json")
     }
   }
   inspect(

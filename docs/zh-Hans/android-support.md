@@ -10,22 +10,20 @@ Android 是 **runtime_partial** 的嵌入式原生路由：managed shell 和 hos
 | --- | --- | --- |
 | 产品类别 | `runtime_partial`（见 platform-readiness-declaration） | 不是 `committed`；也不是“仅有未接线的 scaffold”。 |
 | Host contract | `moui/backend/android` 中可用的 embedded session（`ready=true`） | Package tests + managed shell wiring；L3 promotion 单独处理。 |
-| Platform services | `InputConnection`、clipboard、virtual a11y、PlatformView overlay 通过 `MobileHostChannel` 接线 | Capability flags 反映**代码接线**；完整 managed-shell device evidence 仍待补。 |
+| Platform services | `InputConnection`、clipboard、virtual a11y、PlatformView overlay 通过 `EmbedderHostChannel` 接线 | Capability flags 反映**代码接线**；完整 managed-shell device evidence 仍待补。 |
 | Frame pacing | Input/resize request redraw；presentation 从 `Choreographer` frame ticks 运行 | 60/120 Hz device pacing evidence 待补。 |
 | Skia provider | `moui/backend/android/skia` preflight `runtime_status=runtime_partial` | Provider checks 证明 wiring；checks JSON 中 presenter route 仍未 verified。 |
-| Counter entrypoint | `examples/counter/android_skia` 导出薄 native hooks | 仅 compile/check evidence。 |
-| APK shell | package-owned Kotlin/AndroidX managed shell staged under `artifacts/`；`examples/*/android_app` 是 Release N compatibility metadata | Packaging matrix passed；fallback APK 不是 runtime proof。 |
+| Counter entrypoint | `examples/counter/android_skia` 安装 app program 与 renderer 配置；`backend/android` 导出 Embedding API v1 | 仅 compile/check evidence。 |
+| APK shell | package-owned Kotlin/AndroidX managed shell staged under `artifacts/` | Packaging matrix passed；fallback APK 不是 runtime proof。 |
 | First-frame runtime evidence | HUAWEI SCM-W09 设备上的非 fallback Component Gallery APK；`resource/screenshots/android-componentgallery.jpg` 中有非空 first-frame screenshot（2026-07-10） | First-frame pixels 已证明。 |
-| Runtime support claim | Release N Java shell 在 emulator 上达到 **`passed`**（Component Gallery，2026-07-15）；canonical managed shell 需要新的 matching-device run | 历史证据不会自动晋升 managed shell。声明 managed-shell L3 前，需要在无 shell-side probes 的情况下重新运行 `scripts/android-mobile-runtime-evidence.sh`。 |
+| Runtime support claim | 历史 Java-shell evidence 在 emulator 上达到 **`passed`**（Component Gallery，2026-07-15）；canonical managed shell 需要新的 matching-device run | 历史证据不会自动晋升 managed shell。声明 managed-shell L3 前，需要在无 shell-side probes 的情况下重新运行 `scripts/android-shell-runtime-evidence.sh`。 |
 
 ## 所有权
 
 - `moui/backend/android` 拥有 `AndroidSurfaceHandle`、`AndroidRendererProvider`、readiness summaries 和 `AndroidRuntimeSession`。
 - `moui/backend/android/skia` 将 `moui/render/skia` 包装为 `HostWindowRenderer`，并在编译为 Android 时将复制的 RGBA frames present 到 `ANativeWindow`。
-- `examples/counter/android_skia` 是 JNI/CMake 的薄 MoonBit entrypoint。其 attach/resize/pointer/render/detach exports 保持小型，让 Android app 拥有 shell。
-- `moui/mobile/android` 拥有规范 Kotlin `ComponentActivity`、`MoUISurfaceView`、PlatformView overlay/factory API、clipboard provider、virtual accessibility bridge、`Choreographer`、registered JNI adapter、`ANativeWindow` acquisition 和可复用 CMake wiring。
-- `examples/counter/android_app` 和 `examples/showcase/android_app` 是仅仓库使用的 Release N Gradle metadata fixtures；managed applications 不保存它们。
-- `moui/mobile/legacy/android` 保留 Release N Java shell 与 name-mangled JNI adapter，作为一个 release 的 compatibility fixture。它不会被隐式选择。
+- `examples/counter/android_skia` 是 JNI/CMake 的薄 MoonBit entrypoint。它只安装 app program 和 renderer 配置，由 Android backend 与 native shell 负责 ABI 和生命周期转发。
+- `moui_shell/android` 拥有规范 Kotlin `ComponentActivity`、`MoUISurfaceView`、PlatformView overlay/factory API、clipboard provider、virtual accessibility bridge、`Choreographer`、registered JNI adapter、`ANativeWindow` acquisition 和可复用 CMake wiring。
 
 Android 保持 minSdk 23 与 targetSdk 35。managed shell 针对 SDK 36 编译，因为 AndroidX Activity 1.13.0 声明了 `minCompileSdk=36`；不支持禁用 AAR metadata check。当 host GPU surface 可用时，产品 `auto` 在 API 24+ 上优先 Vulkan 并 fallback 到 GLES（API 23 使用 GLES）。`SkiaRasterNative` 仍是显式模式和 sticky recovery fallback，并且在该路径上仍会复制完整 pixel frames。
 
@@ -37,7 +35,7 @@ Android 保持 minSdk 23 与 targetSdk 35。managed shell 针对 SDK 36 编译�
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test moui/backend/android --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test moui/backend/android/skia --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/counter/android_skia --target native
-scripts/build-counter-android-apk.sh --fallback-skia
+scripts/build-shell-android-apk.sh --app counter --fallback-skia
 ```
 
 这些检查在交付前有用，但都不能证明 Android runtime presentation。
@@ -73,7 +71,7 @@ eval "$(scripts/setup-android-sdk.sh --print-env)"
 - Android SDK Platform 36（AndroidX Activity 1.13.0 要求的 compile SDK）
 - Android SDK Build-Tools 35.0.0
 - Android SDK Platform-Tools
-- **NDK 28.2.13676358**（由 `moui/mobile/android/mobile-app.gradle` 与 `moui/scripts/mobile/prepare-native-build.mjs` 固定；覆盖时务必谨慎）
+- **NDK 28.2.13676358**（由 `moui_shell/android/runner/shell-app.gradle` 与 `moui_shell/scripts/prepare-native-build.mjs` 固定；覆盖时务必谨慎）
 - CMake 3.22.1
 - emulator smoke：`emulator` package + 与 host arch 匹配的 system image
 
@@ -106,27 +104,27 @@ export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/28.2.13676358"
 
 ## Mobile APK Builds
 
-Android APK builds 现在使用共享 mobile Gradle route。构建会从解析出的 `wzzc-dev/moui` 包 staging Kotlin `ComponentActivity`、registered JNI bridge、Gradle project、CMake module 和 plugin registry。仓库示例只提供 `examples/<app>/mobile.json` 与 MoonBit entrypoint；`moui/mobile/build-contracts.json` 仅由显式 Release N legacy matrix 使用。Gradle pre-build task 会生成 MoonBit C 与 Skia flags，编译 staged JNI/CMake project，并让 Gradle package/sign debug APK。
+Android APK builds 现在使用共享 shell Gradle route。构建会从解析出的 `wzzc-dev/moui_shell` 包 staging Kotlin `ComponentActivity`、registered JNI bridge、Gradle project、CMake module 和 plugin registry。仓库示例只提供 `examples/<app>/shell.json` 与 MoonBit entrypoint。Gradle pre-build task 会生成 MoonBit C 与 Skia flags，编译 staged JNI/CMake project，并让 Gradle package/sign debug APK。
 
 从仓库根目录构建实验性 Counter debug APK：
 
 ```sh
 ANDROID_HOME=/path/to/Android/Sdk \
-scripts/build-mobile-android-apk.sh --app counter
+scripts/build-shell-android-apk.sh --app counter
 ```
 
 用同一路由构建 Showcase：
 
 ```sh
 ANDROID_HOME=/path/to/Android/Sdk \
-scripts/build-mobile-android-apk.sh --app showcase
+scripts/build-shell-android-apk.sh --app showcase
 ```
 
 Renderer mode 是显式且可审计的：
 
 ```sh
-scripts/build-mobile-android-apk.sh --app counter --renderer auto
-scripts/build-mobile-android-apk.sh --app counter --renderer skia-raster
+scripts/build-shell-android-apk.sh --app counter --renderer auto
+scripts/build-shell-android-apk.sh --app counter --renderer skia-raster
 ```
 
 对真实 Skia 包，`auto` 和 `skia-gpu` 选择 GPU（`gpuPromoted: true`）。Fallback-Skia builds 与显式 `skia-raster` 保持 CPU presenter。
@@ -136,7 +134,7 @@ scripts/build-mobile-android-apk.sh --app counter --renderer skia-raster
 ```sh
 ANDROID_HOME=/path/to/Android/Sdk \
 ANDROID_NDK_HOME=/path/to/Android/Sdk/ndk/28.2.13676358 \
-scripts/build-mobile-android-apk.sh --app counter
+scripts/build-shell-android-apk.sh --app counter
 ```
 
 默认 APK 路径通过 `moui_skia/build.js` 解析 locked Android Skia provider，使用 dynamic Android Skia artifact 以便打包 native dependencies，构建 app 的 native library，打包共享 Kotlin `SurfaceView`/PlatformView-overlay glue，并写出：
@@ -151,37 +149,25 @@ artifacts/android/showcase/app-debug.apk
 packaging-only smoke 使用：
 
 ```sh
-scripts/build-counter-android-apk.sh --fallback-skia
-scripts/build-component-gallery-android-apk.sh --fallback-skia
+scripts/build-shell-android-apk.sh --app counter --fallback-skia
+scripts/build-shell-android-apk.sh --app showcase --fallback-skia
 ```
 
 `--fallback-skia` 验证 MoonBit C generation、JNI、CMake、Kotlin/resource packaging 和 debug signing。它会报告 native Skia unavailable，且不得用作 first-frame runtime evidence。
 
-旧的 app-specific build scripts 仍作为 `scripts/build-mobile-android-apk.sh --app ...` 的 compatibility wrappers。
+应用可直接使用 `scripts/build-shell-android-apk.sh --app ...`；managed shell 不保留旧 runner 分支。
 
-默认构建始终选择 managed shell。在 Release N compatibility window 中，维护者可以显式构建冻结的 Java fixture：
-
-```sh
-scripts/build-mobile-android-apk.sh \
-  --app counter \
-  --fallback-skia \
-  --legacy-java-shell \
-  --compile-sdk 35
-```
-
-该 flag 会以一个整体切换 Java/Kotlin source root、manifest Activity/provider 和 CMake JNI glue root。它是 compatibility audit，不是第二个 production mode。
-
-外部 app 应使用 `moui new --platform android`，或将 Android block 加入 schema v2 `mobile.json`。Managed builds 会派生固定 runtime ABI 并 stage canonical project；app 仓库中没有 `android.native` export map 或 native project copy：
+外部 app 应使用 `moui new --platform android`，或将 Android block 加入 schema v1 `shell.json`。Managed builds 会派生固定 Embedding API 并 stage canonical project；app 仓库中没有 `android.native` export map 或 native project copy：
 
 ```sh
-.mooncakes/wzzc-dev/moui/scripts/mobile/build-android-apk.sh \
+.mooncakes/wzzc-dev/moui_shell/scripts/build-android-apk.sh \
   --workspace-root "$PWD" \
   --moui-root "$PWD/.mooncakes/wzzc-dev/moui" \
   --app my_app \
-  --app-config "$PWD/mobile.json"
+  --app-config "$PWD/shell.json"
 ```
 
-仅当应用需求超出 managed plugin contract 时，才使用 `moui mobile eject android --output android_app`。后续构建传入 `--ejected-shell --android-project android_app`；MoUI 会验证 versioned lock，但绝不会覆盖该项目。
+仅当应用需求超出 managed plugin contract 时，才使用 `moui shell eject android --output android_app`。后续构建传入 `--ejected-shell --android-project android_app`；MoUI 会验证 versioned lock，但绝不会覆盖该项目。
 
 ## 模拟器设置与 Smoke
 
@@ -239,14 +225,14 @@ adb shell getprop sys.boot_completed   # expect 1
 ### 构建非 fallback APK (L1)
 
 ```sh
-scripts/build-mobile-android-apk.sh --app showcase --renderer auto
+scripts/build-shell-android-apk.sh --app showcase --renderer auto
 # Optional packaging checks:
 # unzip -l artifacts/android/showcase/app-debug.apk | rg 'lib/.*/(libshowcase|libskia|libc\+\+_shared)'
 # python3 -c "import os; p='…/libc++_shared.so'; print(os.path.getsize(p))"  # expect multi-MB, not ~1MB stripped
 ```
 
 Artifact：`artifacts/android/showcase/app-debug.apk`  
-Meta：`artifacts/android/showcase/native/mobile-build.json` ->
+Meta：`artifacts/android/showcase/native/shell-build.json` ->
 `selected=skia-gpu`、`gpuPromoted=true`、`fallbackSkia=false`。
 
 ### 安装 + 手动启动（不运行完整 recorder）
@@ -259,13 +245,13 @@ adb -s "$SERIAL" install -r "$APK"
 adb -s "$SERIAL" logcat -c
 # Activity is the shared template class (not applicationId-relative).
 adb -s "$SERIAL" shell am start -n \
-  dev.wzzc.moui.componentgallery/dev.wzzc.moui.mobile.MoUIActivity
+  dev.wzzc.moui.componentgallery/dev.wzzc.moui.shell.MoUIActivity
 # If start fails: adb shell cmd package resolve-activity --brief dev.wzzc.moui.componentgallery
 
 # Continuous GPU configure evidence (do not use one-shot logcat dumps only)
-adb -s "$SERIAL" logcat -s MoUIMobile:V | tee /tmp/moui-android-cg.log
+adb -s "$SERIAL" logcat -s MoUIShell:V | tee /tmp/moui-android-cg.log
 # Expected line shape:
-# moui-mobile renderer configure … status={"platform":"android","selected":"skia-gpu-native",
+# moui-shell renderer configure … status={"platform":"android","selected":"skia-gpu-native",
 #   "surfaceRoute":"vulkan-gpu"|"egl-gpu","gpuAvailable":true,"gpuPromoted":true,…}
 
 # Optional screenshot
@@ -279,22 +265,22 @@ adb -s "$SERIAL" exec-out screencap -p > /tmp/moui-android-cg.png
 ```sh
 SERIAL="$(adb devices | awk '/\tdevice$/{print $1; exit}')"
 
-scripts/build-mobile-android-apk.sh --app showcase --renderer auto
-node scripts/record-mobile-runtime-smoke.mjs \
+scripts/build-shell-android-apk.sh --app showcase --renderer auto
+node scripts/record-shell-runtime-smoke.mjs \
   --platform android --app showcase --device "$SERIAL"
-node scripts/validate-mobile-runtime-manifest.mjs \
-  artifacts/mobile-runtime/android/showcase/mobile-runtime-smoke.json
+node scripts/validate-shell-runtime-manifest.mjs \
+  artifacts/shell-runtime/android/showcase/shell-runtime-smoke.json
 # Full service gate only when observations are green:
-# node scripts/record-mobile-runtime-smoke.mjs \
+# node scripts/record-shell-runtime-smoke.mjs \
 #   --platform android --app showcase --device "$SERIAL" --require-passed
 ```
 
-Evidence directory：`artifacts/mobile-runtime/android/showcase/`
+Evidence directory：`artifacts/shell-runtime/android/showcase/`
 
 ```sh
 rg -n 'renderer configure|surfaceRoute|gpuAvailable|UnsatisfiedLinkError' \
-  artifacts/mobile-runtime/android/showcase/runtime-stream.log \
-  artifacts/mobile-runtime/android/showcase/runtime.log
+  artifacts/shell-runtime/android/showcase/runtime-stream.log \
+  artifacts/shell-runtime/android/showcase/runtime.log
 ```
 
 **L2 GPU 通过条件：**
@@ -335,10 +321,10 @@ Packaging-only（`gpuAvailable=false`、empty stream、fallback-Skia APK）**不
 已检查的 smoke catalog 包含 release/manual Android mobile runtime suites。非 fallback build 后，用以下命令记录和校验：
 
 ```sh
-node scripts/record-mobile-runtime-smoke.mjs --platform android --app counter --device <serial>
-node scripts/record-mobile-runtime-smoke.mjs --platform android --app showcase --device <serial>
+node scripts/record-shell-runtime-smoke.mjs --platform android --app counter --device <serial>
+node scripts/record-shell-runtime-smoke.mjs --platform android --app showcase --device <serial>
 # release bar only when complete:
-node scripts/record-mobile-runtime-smoke.mjs \
+node scripts/record-shell-runtime-smoke.mjs \
   --platform android --app showcase --device <serial> --require-passed
 ```
 

@@ -6,9 +6,8 @@
   "runtimeL3": {"status": "passed", "evidence": "browser presentation manifest"},
   "shellKind": "browser",
   "shellApiVersion": 0,
-  "runtimeAbiVersion": 0,
+  "embeddingApiVersion": 0,
   "deploymentFloor": "WebAssembly GC browser",
   "toolchainFloor": "MoonBit wasm-gc",
   "actualPresenterRoute": "browser-webgpu"
 }
-
