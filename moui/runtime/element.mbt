@@ -3,6 +3,7 @@ priv struct ElementEventResult {
   changed : Bool
   activated : Bool
   captured : Bool
+  capture_target : ElementId?
   focused : ElementId?
 }
 

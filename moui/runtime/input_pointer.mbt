@@ -34,6 +34,10 @@ fn ElementNode::dispatch_pointer(
       changed: child_result.changed || own.changed,
       activated: own.activated,
       captured: child_result.captured || own.captured,
+      capture_target: match child_result.capture_target {
+        Some(target) => Some(target)
+        None => own.capture_target
+      },
       focused: match own.focused {
         Some(value) => Some(value)
         None => child_result.focused
@@ -79,6 +83,11 @@ fn ElementNode::dispatch_view_event(
     changed: result.changed || result.captured,
     activated: result.activated,
     captured: result.captured,
+    capture_target: if result.captured {
+      Some(self.id)
+    } else {
+      None
+    },
     focused: if result.focused {
       Some(self.id)
     } else {
@@ -126,6 +135,7 @@ fn ElementNode::dispatch_pointer_to_children(
   let mut changed = false
   let mut activated = false
   let mut captured = false
+  let mut capture_target : ElementId? = None
   let mut focused : ElementId? = None
   let mut layout_changed = false
   let child_environment = (self.erased_view_node.child_environment)(environment)
@@ -198,6 +208,10 @@ fn ElementNode::dispatch_pointer_to_children(
         changed = changed || result.changed
         activated = activated || result.activated
         captured = captured || result.captured
+        match (capture_target, result.capture_target) {
+          (None, Some(target)) => capture_target = Some(target)
+          _ => ()
+        }
         layout_changed = layout_changed ||
           (result.changed && child.has_dirty_layout())
         match result.focused {
@@ -249,7 +263,7 @@ fn ElementNode::dispatch_pointer_to_children(
       self.mark_pointer_paint_dirty()
     }
   }
-  { changed, activated, captured, focused }
+  { changed, activated, captured, capture_target, focused }
 }
 
 ///|
