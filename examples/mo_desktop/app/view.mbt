@@ -232,6 +232,8 @@ fn desktop_screen(
 ) -> @moui.View[Msg] {
   let compact = width < 760.0
   let layers : Array[@moui.View[Msg]] = []
+  // `stack` paints and hit-tests later children on top. Keep desktop content
+  // beneath windows and chrome, then put transient overlays above everything.
   if !compact && !model.window_maximized {
     layers.push(desktop_widgets(model, palette, theme, width, height))
     layers.push(desktop_files(palette, theme, width))
@@ -241,15 +243,21 @@ fn desktop_screen(
     Finder => layers.push(finder_window(model, palette, theme, width, height))
     Safari => layers.push(safari_window(model, palette, theme, width, height))
   }
-  layers.push(menu_bar(model, palette, theme, width))
   layers.push(dock(model, palette, width, height))
+  layers.push(menu_bar(model, palette, theme, width))
   match model.overlay {
     OverlayNone => ()
+    MenuBarMenu(menu) =>
+      layers.push(menu_bar_popup(model, menu, palette, theme, width, height))
     Launcher => layers.push(app_launcher(model, palette, theme, width, height))
     ControlCenter =>
       layers.push(control_center(model, palette, theme, width, height))
     NotificationCenter =>
       layers.push(notification_center(model, palette, theme, width, height))
+    AboutThisMac => layers.push(about_this_mac(palette, theme, width, height))
+    SystemSettings =>
+      layers.push(system_settings(model, palette, theme, width, height))
+    AppStore => layers.push(app_store(palette, theme, width, height))
   }
   @views.stack(layers).frame(width~, height~)
 }

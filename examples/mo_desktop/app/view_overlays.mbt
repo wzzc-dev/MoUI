@@ -120,6 +120,182 @@ fn app_launcher(
 }
 
 ///|
+fn about_this_mac(
+  palette : DesktopPalette,
+  theme : @moui.Theme,
+  viewport_width : Double,
+  viewport_height : Double,
+) -> @moui.View[Msg] {
+  desktop_dialog(
+    "About This Mac",
+    "Mo Desktop",
+    "Version 1.0 · MoonBit UI demo",
+    @views.IconName::Info,
+    rgba8(48, 132, 255),
+    palette,
+    theme,
+    viewport_width,
+    viewport_height,
+  )
+}
+
+///|
+fn app_store(
+  palette : DesktopPalette,
+  theme : @moui.Theme,
+  viewport_width : Double,
+  viewport_height : Double,
+) -> @moui.View[Msg] {
+  desktop_dialog(
+    "App Store",
+    "Discover apps for Mo Desktop",
+    "The demo catalog is ready for you to explore.",
+    @views.IconName::Link,
+    rgba8(40, 172, 224),
+    palette,
+    theme,
+    viewport_width,
+    viewport_height,
+  )
+}
+
+///|
+fn system_settings(
+  model : DesktopModel,
+  palette : DesktopPalette,
+  theme : @moui.Theme,
+  viewport_width : Double,
+  viewport_height : Double,
+) -> @moui.View[Msg] {
+  let width = (viewport_width - 32.0).min(420.0).max(272.0)
+  let panel = glass_panel(
+    @views.column(
+      [
+        overlay_header(
+          "System Settings",
+          DismissOverlay,
+          width - 32.0,
+          palette,
+          theme,
+        ),
+        @views.text(
+          "Appearance",
+          role=@views.TextRole::Title,
+          theme~,
+          width=width - 32.0,
+          height=28.0,
+        )
+        .font(@text.FontSpec::new(size=17.0, weight=620))
+        .foreground(palette.foreground),
+        @views.text(
+          if model.dark_mode {
+            "Dark appearance is active."
+          } else {
+            "Light appearance is active."
+          },
+          role=@views.TextRole::Body,
+          theme~,
+          width=width - 32.0,
+          height=22.0,
+        ).foreground(palette.muted),
+        @views.button(
+          if model.dark_mode {
+            "Use Light Appearance"
+          } else {
+            "Use Dark Appearance"
+          },
+          on_click=ToggleDarkMode,
+          variant=@views.ButtonVariant::Tonal,
+          theme~,
+          width=width - 32.0,
+          height=38.0,
+        ),
+      ],
+      spacing=12.0,
+      align=@views.CrossAlign::Stretch,
+    ),
+    width,
+    194.0,
+    palette,
+    radius=18.0,
+    padding=16.0,
+  )
+  desktop_modal(panel, viewport_width, viewport_height)
+}
+
+///|
+fn desktop_dialog(
+  title : String,
+  heading : String,
+  detail : String,
+  icon : @views.IconName,
+  icon_color : @graphics.Color,
+  palette : DesktopPalette,
+  theme : @moui.Theme,
+  viewport_width : Double,
+  viewport_height : Double,
+) -> @moui.View[Msg] {
+  let width = (viewport_width - 32.0).min(420.0).max(272.0)
+  let panel = glass_panel(
+    @views.column(
+      [
+        overlay_header(title, DismissOverlay, width - 32.0, palette, theme),
+        @views.container(
+          desktop_icon(icon, 30.0, @graphics.Color::white()),
+          width=56.0,
+          height=56.0,
+          background=icon_color,
+          corner_radius=14.0,
+          padding=13.0,
+        ),
+        @views.text(
+          heading,
+          role=@views.TextRole::Title,
+          theme~,
+          width=width - 32.0,
+          height=28.0,
+          align=@text.TextAlign::TextCenter,
+        )
+        .font(@text.FontSpec::new(size=18.0, weight=650))
+        .foreground(palette.foreground),
+        @views.text(
+          detail,
+          role=@views.TextRole::Body,
+          theme~,
+          width=width - 32.0,
+          height=40.0,
+          align=@text.TextAlign::TextCenter,
+        ).foreground(palette.muted),
+      ],
+      spacing=10.0,
+      align=@views.CrossAlign::Center,
+    ),
+    width,
+    230.0,
+    palette,
+    radius=18.0,
+    padding=16.0,
+  )
+  desktop_modal(panel, viewport_width, viewport_height)
+}
+
+///|
+fn desktop_modal(
+  panel : @moui.View[Msg],
+  viewport_width : Double,
+  viewport_height : Double,
+) -> @moui.View[Msg] {
+  @views.stack([
+    color_layer(viewport_width, viewport_height, rgba8(0, 0, 0, a=0.24)).on_tap(
+      DismissOverlay,
+    ),
+    panel
+    .align(alignment=@geometry.Alignment::center())
+    .frame(width=viewport_width, height=viewport_height),
+  ])
+}
+
+///|
 fn launcher_entries(model : DesktopModel) -> Array[LauncherEntry] {
   if model.launcher_tab == "actions" {
     [

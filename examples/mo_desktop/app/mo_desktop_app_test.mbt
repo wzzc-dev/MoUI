@@ -59,6 +59,64 @@ test "control center values and notification tasks are model owned" {
 }
 
 ///|
+test "menu bar menus are exclusive and commands dismiss after acting" {
+  let model = DesktopModel::new().update(UnlockDesktop)
+  let file_menu = model.update(ToggleMenu(FileMenu))
+  debug_inspect(file_menu.overlay, content="MenuBarMenu(FileMenu)")
+  let window_menu = file_menu.update(ToggleMenu(WindowMenu))
+  debug_inspect(window_menu.overlay, content="MenuBarMenu(WindowMenu)")
+  let downloads = window_menu
+    .update(ToggleMenu(FileMenu))
+    .update(RunMenuCommand(OpenDownloads))
+  debug_inspect(downloads.finder_location, content="Downloads")
+  debug_inspect(downloads.overlay, content="OverlayNone")
+  let dark = downloads
+    .update(ToggleMenu(SystemMenu))
+    .update(RunMenuCommand(ToggleAppearance))
+  assert_true(dark.dark_mode)
+  debug_inspect(dark.overlay, content="OverlayNone")
+  let view_menu = dark.update(ToggleMenu(ViewMenu))
+  debug_inspect(view_menu.overlay, content="MenuBarMenu(ViewMenu)")
+  let list_view = view_menu.update(RunMenuCommand(ShowFinderListView))
+  debug_inspect(list_view.finder_view_mode, content="ListView")
+  debug_inspect(list_view.overlay, content="OverlayNone")
+  let help_menu = list_view.update(ToggleMenu(HelpMenu))
+  debug_inspect(help_menu.overlay, content="MenuBarMenu(HelpMenu)")
+  let notifications = help_menu.update(RunMenuCommand(OpenNotificationCenter))
+  debug_inspect(notifications.overlay, content="NotificationCenter")
+  let minimized = dark
+    .update(ToggleMenu(WindowMenu))
+    .update(RunMenuCommand(MinimizeFocusedWindow))
+  debug_inspect(minimized.active_window, content="NoWindow")
+  let locked = minimized
+    .update(ToggleMenu(SystemMenu))
+    .update(RunMenuCommand(LockSession))
+  debug_inspect(locked.phase, content="Locked")
+}
+
+///|
+test "window drag preserves a native-style restore position" {
+  let moved = DesktopModel::new()
+    .update(UnlockDesktop)
+    .update(MoveWindowBy(116.0, -44.0))
+  inspect(moved.window_offset_x, content="116")
+  inspect(moved.window_offset_y, content="-44")
+  let zoomed = moved.update(ToggleMaximize)
+  assert_true(zoomed.window_maximized)
+  let restored_by_drag = zoomed.update(MoveWindowBy(80.0, 60.0))
+  assert_false(restored_by_drag.window_maximized)
+  inspect(restored_by_drag.window_offset_x, content="196")
+  inspect(restored_by_drag.window_offset_y, content="16")
+  let restored = restored_by_drag.update(ToggleMaximize).update(ToggleMaximize)
+  assert_false(restored.window_maximized)
+  inspect(restored.window_offset_x, content="196")
+  inspect(restored.window_offset_y, content="16")
+  let relocked = restored.update(LockDesktop)
+  inspect(relocked.window_offset_x, content="0")
+  inspect(relocked.window_offset_y, content="0")
+}
+
+///|
 test "desktop runtime unlocks into Finder at desktop size" {
   let runtime = @runtime.new_program_with_dimensions(
     program=program(),

@@ -10,8 +10,15 @@ fn menu_bar(
   let left = if compact {
     @views.row(
       [
-        menu_text("Mo", 34.0, palette, theme, true),
-        menu_text(model.active_app_label(), 88.0, palette, theme, true),
+        menu_button("Mo", 34.0, SystemMenu, palette, theme, true),
+        menu_button(
+          model.active_app_label(),
+          88.0,
+          AppMenu,
+          palette,
+          theme,
+          true,
+        ),
       ],
       spacing=2.0,
       align=@views.CrossAlign::Center,
@@ -19,14 +26,21 @@ fn menu_bar(
   } else {
     @views.row(
       [
-        menu_text("Mo", 30.0, palette, theme, true),
-        menu_text(model.active_app_label(), 70.0, palette, theme, true),
-        menu_text("File", 36.0, palette, theme, false),
-        menu_text("Edit", 36.0, palette, theme, false),
-        menu_text("View", 40.0, palette, theme, false),
-        menu_text("Go", 30.0, palette, theme, false),
-        menu_text("Window", 60.0, palette, theme, false),
-        menu_text("Help", 40.0, palette, theme, false),
+        menu_button("Mo", 30.0, SystemMenu, palette, theme, true),
+        menu_button(
+          model.active_app_label(),
+          70.0,
+          AppMenu,
+          palette,
+          theme,
+          true,
+        ),
+        menu_button("File", 36.0, FileMenu, palette, theme, false),
+        menu_button("Edit", 36.0, EditMenu, palette, theme, false),
+        menu_button("View", 40.0, ViewMenu, palette, theme, false),
+        menu_button("Go", 30.0, GoMenu, palette, theme, false),
+        menu_button("Window", 60.0, WindowMenu, palette, theme, false),
+        menu_button("Help", 40.0, HelpMenu, palette, theme, false),
       ],
       spacing=0.0,
       align=@views.CrossAlign::Center,
@@ -161,6 +175,20 @@ fn menu_text(
   )
   .font(@text.FontSpec::new(size=13.0, weight=if strong { 620 } else { 430 }))
   .foreground(palette.foreground)
+}
+
+///|
+fn menu_button(
+  label : String,
+  width : Double,
+  menu : DesktopMenu,
+  palette : DesktopPalette,
+  theme : @moui.Theme,
+  strong : Bool,
+) -> @moui.View[Msg] {
+  menu_text(label, width, palette, theme, strong)
+  .on_tap(ToggleMenu(menu))
+  .accessibility_label("Open " + label + " menu")
 }
 
 ///|
