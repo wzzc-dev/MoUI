@@ -381,6 +381,307 @@ fn inject_harmonyos_signing_config(
 }
 
 ///|
+/// Write `value` as pretty-printed JSON to `path`.
+fn write_json_file(path : String, value : Json) -> Result[Unit, String] {
+  let text = value.stringify(indent=2) + "\n"
+  write_file_bytes_result(path, @utf8.encode(text[:], bom=false))
+}
+
+///|
+/// Read a JSON/JSON5 object file, stripping JSON5 comments/trailing commas.
+fn read_json5_object(path : String) -> Result[Map[String, Json], String] {
+  let text = match read_file_string_optional(path) {
+    Some(value) => value
+    None => return Err("could not read: " + path)
+  }
+  let json = @json.parse(strip_json5(text)) catch {
+    _ => return Err("invalid JSON/JSON5: " + path)
+  }
+  guard json is Object(fields) else {
+    return Err("expected object root: " + path)
+  }
+  Ok(fields)
+}
+
+///|
+/// Update a HarmonyOS string resource `{ "string": [ { "name", "value" } ] }`.
+fn update_json5_string_resource(
+  path : String,
+  name : String,
+  value : String,
+) -> Result[Unit, String] {
+  let root = match read_json5_object(path) {
+    Ok(fields) => fields
+    Err(message) => return Err(message)
+  }
+  let strings = match root.get("string") {
+    Some(Array(values)) => values
+    _ => return Err(path + ": missing string array")
+  }
+  let mut found = false
+  let updated : Array[Json] = []
+  for item in strings {
+    match item {
+      Object(fields) =>
+        match fields.get("name") {
+          Some(String(item_name)) if item_name == name => {
+            fields["value"] = Json::string(value)
+            updated.push(Json::object(fields))
+            found = true
+          }
+          _ => updated.push(item)
+        }
+      _ => updated.push(item)
+    }
+  }
+  if !found {
+    return Err(path + ": missing string resource " + name)
+  }
+  root["string"] = Json::array(updated)
+  write_json_file(path, Json::object(root))
+}
+
+///|
+/// Apply shell.json identity onto a staged managed HarmonyOS template.
+/// Mirrors `moui_shell/harmonyos/runner/resolve-shell.mjs` for the fields
+/// required for correct package install + `aa start`.
+fn apply_harmonyos_managed_identity(
+  project_root : String,
+  app : ShellApp,
+  renderer : String,
+) -> Result[Unit, String] {
+  let harmonyos = match app.harmonyos {
+    Some(value) => value
+    None => return Err("shell.json missing harmonyos section")
+  }
+  let bundle_name = harmonyos.bundle_name
+  let module_name = match harmonyos.module_name {
+    Some(value) => value
+    None => "entry"
+  }
+  let app_name = match harmonyos.app_name {
+    Some(value) => value
+    None => app.display_name
+  }
+  let module_description = match harmonyos.module_description {
+    Some(value) => value
+    None => app.display_name + " HarmonyOS app"
+  }
+  let entry_description = match harmonyos.entry_description {
+    Some(value) => value
+    None => app.display_name + " HarmonyOS entry ability"
+  }
+
+  // AppScope/app.json5 → app.bundleName
+  let app_scope_path = join_path(project_root, "AppScope/app.json5")
+  let app_scope = match read_json5_object(app_scope_path) {
+    Ok(fields) => fields
+    Err(message) => return Err(message)
+  }
+  let app_obj = match app_scope.get("app") {
+    Some(Object(fields)) => fields
+    _ => return Err(app_scope_path + ": missing app object")
+  }
+  app_obj["bundleName"] = Json::string(bundle_name)
+  app_scope["app"] = Json::object(app_obj)
+  match write_json_file(app_scope_path, Json::object(app_scope)) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+
+  // Root oh-package.json5 name/description.
+  let root_pkg_path = join_path(project_root, "oh-package.json5")
+  let root_pkg = match read_json5_object(root_pkg_path) {
+    Ok(fields) => fields
+    Err(message) => return Err(message)
+  }
+  root_pkg["name"] = Json::string(
+    app.id.replace_all(old="_", new="-") + "-harmonyos",
+  )
+  root_pkg["description"] = Json::string(
+    app.display_name + " managed HarmonyOS shell",
+  )
+  match write_json_file(root_pkg_path, Json::object(root_pkg)) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+
+  // build-profile.json5 module name + SDK versions.
+  let profile_path = join_path(project_root, "build-profile.json5")
+  let profile = match read_json5_object(profile_path) {
+    Ok(fields) => fields
+    Err(message) => return Err(message)
+  }
+  let modules = match profile.get("modules") {
+    Some(Array(values)) => values
+    _ => return Err(profile_path + ": missing modules array")
+  }
+  if modules.length() != 1 {
+    return Err(
+      profile_path + ": canonical shell must contain one entry module",
+    )
+  }
+  let module0 = match modules[0] {
+    Object(fields) => fields
+    _ => return Err(profile_path + ": modules[0] must be an object")
+  }
+  module0["name"] = Json::string(module_name)
+  profile["modules"] = Json::array([Json::object(module0)])
+  let compatible_sdk = if harmonyos.compatible_sdk_version == 20 {
+    "6.0.0(20)"
+  } else {
+    "6.0.1(21)"
+  }
+  match profile.get("app") {
+    Some(Object(app_fields)) =>
+      match app_fields.get("products") {
+        Some(Array(products)) => {
+          let updated_products : Array[Json] = []
+          for product in products {
+            match product {
+              Object(pfields) => {
+                pfields["targetSdkVersion"] = Json::string("6.0.1(21)")
+                pfields["compatibleSdkVersion"] = Json::string(compatible_sdk)
+                updated_products.push(Json::object(pfields))
+              }
+              _ => updated_products.push(product)
+            }
+          }
+          app_fields["products"] = Json::array(updated_products)
+          profile["app"] = Json::object(app_fields)
+        }
+        _ => ()
+      }
+    _ => ()
+  }
+  match write_json_file(profile_path, Json::object(profile)) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+
+  // entry/src/main/module.json5 module.name
+  let module_path = join_path(project_root, "entry/src/main/module.json5")
+  let module_root = match read_json5_object(module_path) {
+    Ok(fields) => fields
+    Err(message) => return Err(message)
+  }
+  let module_obj = match module_root.get("module") {
+    Some(Object(fields)) => fields
+    _ => return Err(module_path + ": missing module object")
+  }
+  module_obj["name"] = Json::string(module_name)
+  module_root["module"] = Json::object(module_obj)
+  match write_json_file(module_path, Json::object(module_root)) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+
+  // entry/oh-package.json5
+  let entry_pkg_path = join_path(project_root, "entry/oh-package.json5")
+  let entry_pkg = match read_json5_object(entry_pkg_path) {
+    Ok(fields) => fields
+    Err(message) => return Err(message)
+  }
+  entry_pkg["name"] = Json::string(module_name)
+  entry_pkg["description"] = Json::string(
+    app.display_name + " managed entry module",
+  )
+  match write_json_file(entry_pkg_path, Json::object(entry_pkg)) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+
+  // String resources (display name + descriptions).
+  match
+    update_json5_string_resource(
+      join_path(project_root, "AppScope/resources/base/element/string.json"),
+      "app_name",
+      app_name,
+    ) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+  let entry_strings = join_path(
+    project_root,
+    "entry/src/main/resources/base/element/string.json",
+  )
+  match update_json5_string_resource(entry_strings, "app_name", app_name) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+  match
+    update_json5_string_resource(
+      entry_strings,
+      "module_desc",
+      module_description,
+    ) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+  match
+    update_json5_string_resource(
+      entry_strings,
+      "entry_desc",
+      entry_description,
+    ) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+
+  // Generated ETS config consumed by EntryAbility.
+  let app_argument = "moui-" +
+    app.id.replace_all(old="_", new="-") +
+    "-harmonyos"
+  let fullscreen_lit = if app.shell.fullscreen { "true" } else { "false" }
+  let generated = StringBuilder::new()
+  generated.write_string(
+    "// Generated by moui_cli managed HarmonyOS staging.\n",
+  )
+  generated.write_string("export interface MoUIGeneratedConfiguration {\n")
+  generated.write_string("  appArgument: string;\n")
+  generated.write_string("  renderer: string;\n")
+  generated.write_string("  fullscreen: boolean;\n")
+  generated.write_string("  statusBar: string;\n")
+  generated.write_string("  orientation: string;\n")
+  generated.write_string("}\n\n")
+  generated.write_string(
+    "export const mouiGeneratedConfiguration: MoUIGeneratedConfiguration = {\n",
+  )
+  generated.write_string(
+    "  appArgument: \"" + moon_string(app_argument) + "\",\n",
+  )
+  generated.write_string("  renderer: \"" + moon_string(renderer) + "\",\n")
+  generated.write_string("  fullscreen: " + fullscreen_lit + ",\n")
+  generated.write_string(
+    "  statusBar: \"" + moon_string(app.shell.status_bar) + "\",\n",
+  )
+  generated.write_string(
+    "  orientation: \"" + moon_string(app.shell.orientation) + "\"\n",
+  )
+  generated.write_string("};\n")
+  let config_path = join_path(
+    project_root,
+    "entry/src/main/ets/moui/MoUIGeneratedConfig.ets",
+  )
+  match
+    write_file_bytes_result(
+      config_path,
+      @utf8.encode(generated.to_string()[:], bom=false),
+    ) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+
+  log_info(
+    "[moui-shell-harmonyos] Applied managed identity bundleName=" +
+    bundle_name +
+    " moduleName=" +
+    module_name,
+  )
+  Ok(())
+}
+
+///|
 /// Build the HarmonyOS HAP archive. Mirrors `build-harmonyos-hap.sh`.
 fn build_harmonyos(
   options : BuildHarmonyosOptions,
@@ -454,14 +755,58 @@ fn build_harmonyos(
     Ok(value) => value
     Err(message) => return Err(message)
   }
-  // 3. Resolve source_project.
+  // 3. Resolve source_project. For managed shell, stage the canonical
+  // HarmonyOS template into <build_dir>/managed-shell (mirrors iOS staging
+  // in build_ios.mbt). For ejected shell, use the caller-provided project.
   let source_project = if options.ejected_shell {
     harmonyos_project
   } else {
-    join_path(options.build_dir, "managed-shell")
-    // Note: the real .sh calls resolve-shell.mjs here to stage the canonical
-    // managed shell template. For now we expect the project to already be
-    // staged by the caller; full resolver migration is a future enhancement.
+    let staged_root = join_path(options.build_dir, "managed-shell")
+    let stage_marker = join_path(staged_root, ".moui-managed-harmonyos-stage")
+    let template_root = join_path(
+      join_path(options.moui_root, "../moui_shell"),
+      "harmonyos/runner/template",
+    )
+    if !path_is_file(
+        join_path(template_root, "entry/src/main/cpp/CMakeLists.txt"),
+      ) ||
+      !path_is_file(
+        join_path(template_root, "build-profile.json5"),
+      ) {
+      return Err("MoUI HarmonyOS template is incomplete: " + template_root)
+    }
+    if path_is_dir(staged_root) && !path_is_file(stage_marker) {
+      return Err(
+        "refusing to replace an unowned HarmonyOS project: " + staged_root,
+      )
+    }
+    remove_tree(staged_root)
+    match mkdir_p(staged_root) {
+      Ok(_) => ()
+      Err(message) => return Err(message)
+    }
+    match write_file_bytes_result(stage_marker, b"") {
+      Ok(_) => ()
+      Err(message) => return Err(message)
+    }
+    match copy_tree(template_root, staged_root) {
+      Ok(_) => ()
+      Err(message) => return Err(message)
+    }
+    match
+      apply_harmonyos_managed_identity(
+        staged_root,
+        options.app,
+        options.renderer,
+      ) {
+      Ok(_) => ()
+      Err(message) => return Err(message)
+    }
+    log_info(
+      "[moui-shell-harmonyos] Staged canonical HarmonyOS shell in " +
+      staged_root,
+    )
+    staged_root
   }
   if !path_is_dir(join_path(source_project, "entry/src/main/cpp")) {
     return Err(
@@ -591,18 +936,28 @@ fn build_harmonyos_hvigor(
   source_project : String,
   prepare_result : PrepareResult,
 ) -> Result[BuildResult, String] {
-  // 1. Resolve SDK home.
-  let sdk_home = match options.sdk_home {
+  // 1. Resolve SDK home. Prefer explicit option/env, but if the path has no
+  // OHOS CMake toolchain fall back to DevEco/OpenHarmony auto-discovery so a
+  // partial HARMONYOS_SDK_HOME (e.g. ~/Library/OpenHarmony/Sdk without native)
+  // does not hard-fail when DevEco's SDK is installed.
+  let requested_sdk_home = match options.sdk_home {
     Some(value) => value
     None =>
       match @env.get_env_var("HARMONYOS_SDK_HOME") {
         Some(value) => value
-        None =>
-          match @env.get_env_var("OHOS_SDK_HOME") {
-            Some(value) => value
-            None => find_harmonyos_sdk_home()
-          }
+        None => @env.get_env_var("OHOS_SDK_HOME").unwrap_or("")
       }
+  }
+  let sdk_home = if requested_sdk_home != "" &&
+    find_ohos_toolchain(requested_sdk_home) != "" {
+    requested_sdk_home
+  } else {
+    let discovered = find_harmonyos_sdk_home()
+    if discovered != "" {
+      discovered
+    } else {
+      requested_sdk_home
+    }
   }
   if sdk_home == "" {
     return Err(

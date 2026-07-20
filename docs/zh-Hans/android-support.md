@@ -71,7 +71,7 @@ eval "$(scripts/setup-android-sdk.sh --print-env)"
 - Android SDK Platform 36（AndroidX Activity 1.13.0 要求的 compile SDK）
 - Android SDK Build-Tools 35.0.0
 - Android SDK Platform-Tools
-- **NDK 28.2.13676358**（由 `moui_shell/android/runner/shell-app.gradle` 与 `moui_shell/scripts/prepare-native-build.mjs` 固定；覆盖时务必谨慎）
+- **NDK 28.2.13676358**（由 `moui_shell/android/runner/shell-app.gradle` 与 `moui_cli/prepare_native_build.mbt` 固定；覆盖时务必谨慎）
 - CMake 3.22.1
 - emulator smoke：`emulator` package + 与 host arch 匹配的 system image
 
@@ -160,10 +160,9 @@ scripts/build-shell-android-apk.sh --app showcase --fallback-skia
 外部 app 应使用 `moui new --platform android`，或将 Android block 加入 schema v1 `shell.json`。Managed builds 会派生固定 Embedding API 并 stage canonical project；app 仓库中没有 `android.native` export map 或 native project copy：
 
 ```sh
-.mooncakes/wzzc-dev/moui_shell/scripts/build-android-apk.sh \
+moui build android my_app \
   --workspace-root "$PWD" \
   --moui-root "$PWD/.mooncakes/wzzc-dev/moui" \
-  --app my_app \
   --app-config "$PWD/shell.json"
 ```
 

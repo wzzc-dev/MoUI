@@ -114,7 +114,7 @@ Manual setup should install:
 - Android SDK Build-Tools 35.0.0
 - Android SDK Platform-Tools
 - **NDK 28.2.13676358** (pinned by `moui_shell/android/runner/shell-app.gradle` and
-  `moui_shell/scripts/prepare-native-build.mjs`; override only with care)
+  `moui_cli/prepare_native_build.mbt`; override only with care)
 - CMake 3.22.1
 - For emulator smoke: `emulator` package + a system image matching host arch
 
@@ -226,10 +226,9 @@ stage the canonical project; there is no `android.native` export map or native
 project copy in the app repository:
 
 ```sh
-.mooncakes/wzzc-dev/moui_shell/scripts/build-android-apk.sh \
+moui build android my_app \
   --workspace-root "$PWD" \
   --moui-root "$PWD/.mooncakes/wzzc-dev/moui" \
-  --app my_app \
   --app-config "$PWD/shell.json"
 ```
 
