@@ -1013,17 +1013,29 @@ fn WorkbenchModel::update(
       )
     ShowAllTasks =>
       (
-        sync_task_tree({ ..self, task_filter: TaskFilter::AllTasks }),
+        sync_task_tree({
+          ..self,
+          active_tab: TopTab::Code,
+          task_filter: TaskFilter::AllTasks,
+        }),
         @moui.Effect::none(),
       )
     ShowRunningTasks =>
       (
-        sync_task_tree({ ..self, task_filter: TaskFilter::RunningTasks }),
+        sync_task_tree({
+          ..self,
+          active_tab: TopTab::Code,
+          task_filter: TaskFilter::RunningTasks,
+        }),
         @moui.Effect::none(),
       )
     ShowFailedTasks =>
       (
-        sync_task_tree({ ..self, task_filter: TaskFilter::FailedTasks }),
+        sync_task_tree({
+          ..self,
+          active_tab: TopTab::Code,
+          task_filter: TaskFilter::FailedTasks,
+        }),
         @moui.Effect::none(),
       )
     TaskSearchChanged(query) =>

@@ -713,6 +713,7 @@ fn sidebar_footer(
   theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[WorkbenchMsg] {
+  let appearance_width = (width - 68.0).max(108.0)
   @views.padding_xy(
     @views.column(
       [
@@ -729,19 +730,36 @@ fn sidebar_footer(
               height=28.0,
               padding=0.0,
             ).on_tap(WorkbenchMsg::ToggleSettings),
-            @views.text(
-              appearance_label(model.appearance),
-              role=@views.TextRole::Caption,
-              theme~,
-              width=width - 72.0,
+            @views.container(
+              @views.row(
+                [
+                  @views.text(
+                    appearance_label(model.appearance),
+                    role=@views.TextRole::Caption,
+                    theme~,
+                    width=(appearance_width - 42.0).max(64.0),
+                  ),
+                  @views.text(
+                    theme_label(theme),
+                    role=@views.TextRole::Caption,
+                    theme~,
+                    width=26.0,
+                    align=@text.TextAlign::TextCenter,
+                  ),
+                ],
+                spacing=4.0,
+                align=@views.CrossAlign::Center,
+              ),
+              width=appearance_width,
+              height=28.0,
+              background=workbench_subtle_background(theme),
+              corner_radius=6.0,
+              padding=4.0,
+            )
+            .on_tap(WorkbenchMsg::ToggleAppearance)
+            .accessibility_label(
+              "Cycle appearance: " + appearance_label(model.appearance),
             ),
-            @views.text(
-              theme_label(theme),
-              role=@views.TextRole::Caption,
-              theme~,
-              width=32.0,
-            ),
-            @views.spacer(),
           ],
           spacing=8.0,
           align=@views.CrossAlign::Center,

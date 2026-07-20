@@ -8,9 +8,9 @@ fn markdown_editor_find_matches(
   if query == "" {
     return matches
   }
-  // Regex mode is intentionally a thin shim: it matches the literal query as a
-  // substring but honors case-sensitivity, since a full regex engine is out of
-  // scope. The toggle still surfaces intent and is wired for a future engine.
+  if options.regex {
+    return markdown_editor_regex_find_matches(source, query, options)
+  }
   let query_chars = if options.case_sensitive {
     query.to_array()
   } else {
@@ -62,6 +62,79 @@ fn markdown_editor_find_matches(
     }
   }
   matches
+}
+
+///|
+fn markdown_editor_regex_find_matches(
+  source : String,
+  query : String,
+  options : MarkdownEditorFindOptions,
+) -> Array[@text.TextRange] {
+  let matches : Array[@text.TextRange] = []
+  match markdown_editor_compile_regex(query, options.case_sensitive) {
+    Some(regex) => {
+      let source_length = markdown_editor_text_length(source)
+      for found in regex.find(source) {
+        let start = found.before().char_length()
+        let end = start + found.content().char_length()
+        // Zero-width matches do not have a useful selection/replacement range
+        // in the current editor flow, so leave them out until that interaction
+        // has an explicit cursor policy.
+        if start == end {
+          continue
+        }
+        if !options.whole_word ||
+          markdown_editor_regex_whole_word_boundary(
+            source, source_length, start, end,
+          ) {
+          matches.push(@text.TextRange::new(start~, end~))
+        }
+      }
+    }
+    None => ()
+  }
+  matches
+}
+
+///|
+fn markdown_editor_compile_regex(
+  query : String,
+  case_sensitive : Bool,
+) -> Regex? {
+  let pattern = if case_sensitive { query } else { "(?i:" + query + ")" }
+  try Regex(pattern) catch {
+    _ => None
+  } noraise {
+    regex => Some(regex)
+  }
+}
+
+///|
+fn markdown_editor_regex_whole_word_boundary(
+  source : String,
+  source_length : Int,
+  start : Int,
+  end : Int,
+) -> Bool {
+  let before = if start <= 0 {
+    None
+  } else {
+    source.get_char(
+      markdown_editor_utf16_offset_for_char_index(
+        source,
+        source_length,
+        start - 1,
+      ),
+    )
+  }
+  let after = if end >= source_length {
+    None
+  } else {
+    source.get_char(
+      markdown_editor_utf16_offset_for_char_index(source, source_length, end),
+    )
+  }
+  markdown_editor_whole_word_boundary(before, after)
 }
 
 ///|
@@ -457,9 +530,13 @@ fn markdown_editor_find_status_label(
   query : String,
   matches : Array[@text.TextRange],
   selection : MarkdownEditorSelection,
+  options? : MarkdownEditorFindOptions = MarkdownEditorFindOptions::default(),
 ) -> String {
   if query == "" {
     "Ready"
+  } else if options.regex &&
+    markdown_editor_compile_regex(query, options.case_sensitive) is None {
+    "Invalid regex"
   } else if matches.length() == 0 {
     "No match"
   } else {

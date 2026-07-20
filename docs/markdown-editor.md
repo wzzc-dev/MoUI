@@ -243,8 +243,12 @@ The editor supports formatted editing for common block and inline structures:
   keeps that match active as the query is refined. Clearing the query or typing
   a query with no matches collapses the
   active find selection while keeping the caret at the match endpoint. The
-  status readout distinguishes the ready empty-query state, no matches, and the
-  active match count. `Cmd+G`/`Ctrl+G` and `Cmd+Shift+G`/`Ctrl+Shift+G` move
+  status readout distinguishes the ready empty-query state, no matches, an
+  invalid regex, and the active match count. Case-sensitive and whole-word
+  matching apply to both literal and Regex modes; Regex uses MoonBit's portable
+  pattern syntax, ignores zero-width results until cursor semantics are
+  defined, and keeps replacement text literal (no capture expansion). `Cmd+G`/
+  `Ctrl+G` and `Cmd+Shift+G`/`Ctrl+Shift+G` move
   through matches with wraparound, `Escape` closes the bar, then dismisses
   source/outline auxiliary panels, then collapses the active selection once no
   auxiliary UI remains, current replacement advances to the next remaining

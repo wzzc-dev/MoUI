@@ -640,4 +640,6 @@ fn browser_result(
     radius=12.0,
     padding=14.0,
   )
+  .on_tap(OpenFavorite(url))
+  .accessibility_label("Open " + title + " in Safari")
 }

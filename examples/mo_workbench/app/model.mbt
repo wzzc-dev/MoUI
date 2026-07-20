@@ -1,4 +1,4 @@
-// Shell Model + per-tab sub-models for the TRAE-style task workbench.
+// Shell Model + per-tab sub-models for the  task workbench.
 //
 // Architecture:
 //   WorkbenchModel (shell) holds `active_tab` (Work/Code/Design) + the code
