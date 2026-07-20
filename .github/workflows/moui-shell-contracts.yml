@@ -73,7 +73,7 @@ jobs:
 
       - name: Validate shell plugin and canonical contracts
         run: |
-          node --test moui_shell/scripts/plugin-manifest.test.mjs moui_shell/scripts/android-ndk.test.mjs moui_shell/scripts/shell-config-schema.test.mjs moui_shell/scripts/app-config.test.mjs
+          node --test moui_shell/scripts/plugin-manifest.test.mjs moui_shell/scripts/shell-config-schema.test.mjs moui_shell/scripts/app-config.test.mjs
           node --test moui_shell/android/embedder/prepare-plugins.test.mjs moui_shell/android/runner/resolve-shell.test.mjs moui_shell/ios/runner/resolve-shell.test.mjs moui_shell/harmonyos/runner/tests/validate-managed-shell.mjs
           node --test moui_shell/test_probe/tests/validate-test-probe.mjs
           bash moui_shell/tests/run-embedding-api-v1-tests.sh

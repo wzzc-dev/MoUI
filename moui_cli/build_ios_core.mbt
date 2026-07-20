@@ -239,6 +239,29 @@ fn plist_buddy(plist : String, command : String) -> Unit {
 }
 
 ///|
+/// Quote a Swift string literal: wrap in double quotes and escape `"` and `\`.
+/// Used when emitting the `MOUIShellConfiguration.generated` extension.
+fn swift_string_literal(value : String) -> String {
+  let buf = StringBuilder::new()
+  buf.write_char('"')
+  for ch in value {
+    match ch {
+      '"' => {
+        buf.write_char('\\')
+        buf.write_char('"')
+      }
+      '\\' => {
+        buf.write_char('\\')
+        buf.write_char('\\')
+      }
+      _ => buf.write_char(ch)
+    }
+  }
+  buf.write_char('"')
+  buf.to_string()
+}
+
+///|
 /// Ad-hoc sign the simulator app bundle with `codesign -f -s -`. Mirrors
 /// lines 434-440 of `build-ios-app-core.sh`.
 fn adhoc_sign_simulator_app(app_bundle : String) -> Unit {
@@ -364,7 +387,7 @@ fn build_ios_core(
     options.arch,
     "-isysroot",
     sdk_path,
-    "-" + min_version_flag + "=" + options.deployment_target,
+    min_version_flag + "=" + options.deployment_target,
   ]
   let include_flags = [
     "-I",
@@ -392,6 +415,10 @@ fn build_ios_core(
     sdk_path,
     "-I",
     join_path(shell_root, "ios/embedder/bridge/include"),
+    // Include the obj_dir so `MoUIShellApp.swift` can find the
+    // `MoUIShellShell.swiftmodule` emitted below.
+    "-I",
+    obj_dir,
   ]
   let objects : Array[String] = []
   let moonbit_c = prepare_result.moonbit_c
@@ -478,9 +505,33 @@ fn build_ios_core(
     Ok(_) => objects.push(join_path(obj_dir, "MoUIMobileRuntimeBridge.o"))
     Err(message) => return Err(message)
   }
-  // Skia stub sources (each .cpp).
-  let skia_stub_sources : Array[String] = []
-  for stub in skia_stub_sources {
+  // iOS Skia backend glue (ObjC++). Provides `_moui_ios_present_skia_pixels_to_view`,
+  // `_moui_ios_skia_configure_metal_layer`, `_moui_ios_skia_metal_layer_for_view`.
+  let ios_skia_backend_dir = join_path(options.moui_root, "backend/ios/skia")
+  let ios_skia_mm_sources = [
+    join_path(ios_skia_backend_dir, "ios_skia_presenter.mm"),
+    join_path(ios_skia_backend_dir, "ios_skia_view_glue.mm"),
+  ]
+  for mm in ios_skia_mm_sources {
+    if path_is_file(mm) {
+      let obj_name = basename(mm)
+      let obj_name_no_ext = obj_name.substring(end=obj_name.length() - 3).to_string()
+      let obj_path = join_path(obj_dir, obj_name_no_ext + ".o")
+      match
+        compile_objcxx_source(cxx, common_flags, include_flags, mm, obj_path) {
+        Ok(_) => objects.push(obj_path)
+        Err(message) => return Err(message)
+      }
+    }
+  }
+  // Skia stub sources (each .cpp). The stub list is shared with
+  // `prepare_native_build.mbt::prepare_ios` (which writes them into
+  // shell-build.json). Resolve each path against `skia_root` to match
+  // the absolute paths produced there.
+  let stub_sources = skia_stub_sources
+    .copy()
+    .map(path => join_path(options.skia_root, path))
+  for stub in stub_sources {
     let obj_name = basename(stub)
     let obj_name_no_ext = if obj_name.has_suffix(".cpp") {
       obj_name.substring(end=obj_name.length() - 4).to_string()
@@ -499,6 +550,123 @@ fn build_ios_core(
         [],
       ) {
       Ok(_) => objects.push(obj_path)
+      Err(message) => return Err(message)
+    }
+  }
+  // Swift shell library + app entry point. The staged Xcode project template
+  // has NO native compile phase; `build_ios_core` is responsible for every
+  // source file that ends up in the executable. The SwiftPM package at
+  // `moui_shell/ios/Package.swift` defines the `MoUIShellShell` library target
+  // (4 Swift files under `embedder/Sources/MoUIMobileShell/`). Compile them as
+  // a single Swift module first, then compile `MoUIMobileApp.swift` (which
+  // `import MoUIShellShell`) referencing that `.swiftmodule`.
+  let shell_swift_dir = join_path(
+    join_path(shell_root, "ios/embedder/Sources"),
+    "MoUIMobileShell",
+  )
+  let shell_swift_sources = [
+    join_path(shell_swift_dir, "MoUIMobileCapabilities.swift"),
+    join_path(shell_swift_dir, "MoUIMobileHostAdapters.swift"),
+    join_path(shell_swift_dir, "MoUIMobilePlugins.swift"),
+    join_path(shell_swift_dir, "MoUIMobileShell.swift"),
+  ]
+  let shell_module_path = join_path(obj_dir, "MoUIShellShell.swiftmodule")
+  let shell_obj_path = join_path(obj_dir, "MoUIShellShell.o")
+  match
+    compile_swift_module(
+      swiftc,
+      swift_flags,
+      "MoUIShellShell",
+      shell_module_path,
+      shell_obj_path,
+      shell_swift_sources,
+    ) {
+    Ok(_) => objects.push(shell_obj_path)
+    Err(message) => return Err(message)
+  }
+  // Generate the Swift configuration extension that `MoUIMobileApp.swift`
+  // references via `MOUIShellConfiguration.generated`. This replaces
+  // `moui_shell/ios/runner/resolve-shell.mjs` — the MoonBit
+  // `resolve_ios_shell` helper returns the same data; we serialize it to the
+  // Swift extension literal that the .mjs emitted.
+  let resolution = match
+    resolve_ios_shell(
+      options.app,
+      options.workspace_root,
+      options.moui_root,
+      options.renderer,
+      options.shell_mode,
+    ) {
+    Ok(value) => value
+    Err(message) => return Err(message)
+  }
+  let plugin_types_list = if resolution.plugin_types.is_empty() {
+    ""
+  } else {
+    let parts : Array[String] = []
+    for plugin_type in resolution.plugin_types {
+      parts.push(plugin_type + ".self")
+    }
+    parts.join(", ")
+  }
+  // Serialize the Swift configuration extension that `MoUIMobileApp.swift`
+  // references via `MOUIShellConfiguration.generated`. Replaces
+  // `moui_shell/ios/runner/resolve-shell.mjs`.
+  let app_arg_lit = swift_string_literal(resolution.entrypoint_arg)
+  let renderer_lit = swift_string_literal(options.renderer)
+  let status_bar_lit = swift_string_literal(resolution.status_bar)
+  let orientation_lit = swift_string_literal(resolution.orientation)
+  let fullscreen_lit = if resolution.fullscreen { "true" } else { "false" }
+  let swift_config = "import MoUIShellShell\n\n" +
+    "extension MOUIShellConfiguration {\n" +
+    "    public static let generated = MOUIShellConfiguration(\n" +
+    "        appArgument: " +
+    app_arg_lit +
+    ",\n" +
+    "        renderer: " +
+    renderer_lit +
+    ",\n" +
+    "        fullscreen: " +
+    fullscreen_lit +
+    ",\n" +
+    "        statusBar: MOUIShellStatusBarMode(rawValue: " +
+    status_bar_lit +
+    ") ?? .auto,\n" +
+    "        orientation: MOUIShellOrientation(rawValue: " +
+    orientation_lit +
+    ") ?? .any,\n" +
+    "        plugins: [" +
+    plugin_types_list +
+    "]\n" +
+    "    )\n" +
+    "}\n"
+  let swift_config_path = join_path(obj_dir, "MoUIShellConfig.swift")
+  // `String.to_bytes()` produces UTF-16 bytes on MoonBit; use
+  // `write_string_to_file` which correctly emits UTF-8 (required by swiftc).
+  @fs.write_string_to_file(swift_config_path, swift_config) catch {
+    _ => return Err("could not write file: " + swift_config_path)
+  }
+  // Swift app entry point. The staged Xcode project template ships
+  // `Sources/MoUIMobileApp.swift` (with `@main`) — compile it together with
+  // the generated `MoUIShellConfig.swift` as a single Swift module so the link
+  // step has `_main` and the `.generated` extension is in scope.
+  let swift_app_source = join_path(
+    join_path(options.build_dir, "ios-project"),
+    "Sources/MoUIMobileApp.swift",
+  )
+  if path_is_file(swift_app_source) {
+    let swift_module_path = join_path(obj_dir, "MoUIShellApp.swiftmodule")
+    let swift_obj_path = join_path(obj_dir, "MoUIShellApp.o")
+    match
+      compile_swift_module(
+        swiftc,
+        swift_flags,
+        "MoUIShellApp",
+        swift_module_path,
+        swift_obj_path,
+        [swift_app_source, swift_config_path],
+      ) {
+      Ok(_) => objects.push(swift_obj_path)
       Err(message) => return Err(message)
     }
   }
@@ -530,6 +698,14 @@ fn build_ios_core(
       "-framework", "CoreGraphics", "-framework", "CoreText", "-framework", "ImageIO",
       "-framework", "QuartzCore", "-framework", "Metal", "-framework", "SwiftUI",
       "-lz", "-lobjc", "-lc++",
+      // Swift runtime backport libraries. `libswiftCompatibility56.a`
+      // references `swift::VoucherManager` symbols that live in
+      // `libswift_Concurrency`. Xcode auto-injects these for Swift code with
+      // deployment target < concurrency baseline; direct `swiftc` invocation
+      // does not, so add them explicitly. `libswiftCompatibilityPolicies`
+      // is not present in the iPhoneSimulator SDK, so omit it.
+      "-lswift_Concurrency",
+      "-lswiftCompatibilityDynamicReplacements",
     ] {
     link_argv.push(flag)
   }
@@ -555,12 +731,28 @@ fn build_ios_core(
       None => return Err("could not read Info.plist: " + info_plist)
     }
     plist_buddy(plist_dest, "Set :CFBundleExecutable " + product_name)
-    plist_buddy(plist_dest, "Set :CFBundleIdentifier " + options.app.id)
+    // CFBundleIdentifier must come from `ios.bundle_id` in shell.json (e.g.
+    // "dev.wzzc.moui.showcase"), not from `app.id` ("showcase"). SpringBoard's
+    // FBSApplicationLibrary looks up installed bundles by bundle id; launching
+    // `xcrun simctl launch <udid> <bundle_id>` fails with
+    // `FBSOpenApplicationErrorDomain code=4 ("NotFound")` when the installed
+    // bundle's CFBundleIdentifier does not match the requested id.
+    let bundle_id = match options.app.ios {
+      Some(ios) => ios.bundle_id
+      None => options.app.id
+    }
+    plist_buddy(plist_dest, "Set :CFBundleIdentifier " + bundle_id)
     plist_buddy(
       plist_dest,
       "Set :MinimumOSVersion " + options.deployment_target,
     )
-    plist_buddy(plist_dest, "Add :MOUIShellMode string " + options.shell_mode)
+    // The Info.plist template already defines `MOUIShellMode` as
+    // `$(MOUI_EMBEDDING_IOS_SHELL)` so PlistBuddy's `Add` command would fail
+    // (the key already exists). Use `Set` which is idempotent: it updates the
+    // existing value without complaint. Without this, the unresolved Xcode
+    // build variable leaks into the final Info.plist and SpringBoard rejects
+    // the bundle during launch.
+    plist_buddy(plist_dest, "Set :MOUIShellMode " + options.shell_mode)
   }
   // Write PkgInfo.
   match write_file_bytes_result(join_path(app_bundle, "PkgInfo"), b"APPL????") {

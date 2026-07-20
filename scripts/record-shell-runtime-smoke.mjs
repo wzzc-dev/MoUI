@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync, openSync, closeSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, openSync, closeSync } from "node:fs";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn, spawnSync } from "node:child_process";
@@ -21,14 +21,64 @@ import {
   pendingGpuPromotionEvidence,
   rendererBlockFromMobileBuild,
 } from "./lib/shell-runtime-log.mjs";
-import { readShellApps } from "../moui_shell/scripts/app-config.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const apps = readShellApps({
-  workspaceRoot: repoRoot,
-  mouiRoot: join(repoRoot, "moui"),
-  skiaRoot: join(repoRoot, "moui_skia"),
+
+// Inlined minimal shell.json reader. The fixed v1 embedding contract always
+// exports `dispatchScroll: moui_embedding_dispatch_scroll` on every mobile
+// platform, so we attach that constant here without importing
+// `moui_shell/scripts/app-config.mjs` (which is being retired alongside the
+// shell build scripts).
+const EMBEDDING_EXPORTS = Object.freeze({
+  attachSurface: "moui_embedding_attach_surface",
+  resize: "moui_embedding_resize",
+  dispatchPointer: "moui_embedding_dispatch_pointer",
+  dispatchScroll: "moui_embedding_dispatch_scroll",
+  frameTick: "moui_embedding_frame_tick",
+  renderFrame: "moui_embedding_render_frame",
+  detachSurface: "moui_embedding_detach_surface",
+  destroyApplication: "moui_embedding_destroy_application",
+  dispatchHostResponseEnvelope: "moui_embedding_dispatch_host_response_envelope_json",
 });
+
+const readShellAppsInline = () => {
+  const examplesDir = join(repoRoot, "examples");
+  const apps = {};
+  if (!existsSync(examplesDir)) return apps;
+  for (const appId of readdirSync(examplesDir).sort()) {
+    const metadataPath = join(examplesDir, appId, "shell.json");
+    if (!existsSync(metadataPath)) continue;
+    const metadata = JSON.parse(readFileSync(metadataPath, "utf8"));
+    const app = {
+      id: metadata.id,
+      displayName: metadata.displayName,
+      artifactName: metadata.artifactName,
+      appPackage: metadata.appPackage,
+      schemaVersion: metadata.schemaVersion,
+      shellApiVersion: metadata.shellApiVersion,
+      embeddingApiVersion: metadata.embeddingApiVersion,
+      shell: {
+        ...metadata.shell,
+        fullscreen: metadata.shell?.systemUi?.fullscreen ?? false,
+        supportsScroll: true,
+      },
+    };
+    for (const platform of ["android", "ios", "harmonyos"]) {
+      const platformMetadata = metadata[platform];
+      if (!platformMetadata) continue;
+      app[platform] = {
+        ...platformMetadata,
+        fullscreen: metadata.shell?.systemUi?.fullscreen ?? false,
+        supportsScroll: true,
+        exports: EMBEDDING_EXPORTS,
+      };
+    }
+    apps[appId] = app;
+  }
+  return apps;
+};
+
+const apps = readShellAppsInline();
 
 const usage = `Usage: scripts/record-shell-runtime-smoke.mjs --platform android|ios|harmonyos --app <id> [options]
 

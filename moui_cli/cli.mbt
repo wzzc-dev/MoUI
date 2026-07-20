@@ -1,5 +1,5 @@
 ///|
-let version : String = "0.2.0"
+let version : String = "0.1.3"
 
 ///|
 pub(all) struct CliOutcome {
@@ -62,6 +62,7 @@ fn root_usage() -> String {
     #|  moui doctor [options]
     #|  moui plugin new <id> [options]
     #|  moui package [options]
+    #|  moui build <platform> <app> [options]
     #|  moui run <platform> <app> [options]
     #|  moui devices [options]
     #|  moui verify <platform> <app> [options]
@@ -75,6 +76,7 @@ fn root_usage() -> String {
     #|  doctor          Check the selected platform toolchains.
     #|  plugin new      Scaffold a managed shell plugin package.
     #|  package         Print project package inventory.
+    #|  build           Build a mobile app artifact (APK / .app / .hap) without installing.
     #|  run             Build, install, and launch a mobile app on a device or emulator.
     #|  devices         List connected mobile devices and emulators.
     #|  verify          Verify mobile app runtime evidence against the managed shell contract.
@@ -912,6 +914,18 @@ pub fn run_cli(args : Array[String], cwd : String) -> CliOutcome {
         )
       }
     "new" => run_new(args[1:].to_owned(), cwd)
+    "build" =>
+      match parse_build_args(args[1:].to_owned(), cwd, detect_host_platform()) {
+        Ok(parsed) => run_build(parsed, detect_host_platform())
+        Err(message) =>
+          failed_outcome(message, json_requested(args), build_usage())
+      }
+    "build-ios-core" =>
+      match parse_build_ios_core_args(args[1:].to_owned()) {
+        Ok(parsed) => run_build_ios_core(parsed, detect_host_platform())
+        Err(message) =>
+          failed_outcome(message, json_requested(args), build_ios_core_usage())
+      }
     "add" =>
       if args.length() == 1 ||
         (args.length() == 2 && (args[1] == "-h" || args[1] == "--help")) {
@@ -942,7 +956,7 @@ pub fn run_cli(args : Array[String], cwd : String) -> CliOutcome {
     "package" => run_package_command(args[1:].to_owned(), cwd)
     "run" =>
       match parse_run_args(args[1:].to_owned(), cwd, detect_host_platform()) {
-        Ok(parsed) => run_run(parsed, detect_host_platform())
+        Ok(parsed) => run_run(parsed, cwd, detect_host_platform())
         Err(message) =>
           failed_outcome(message, json_requested(args), run_usage())
       }

@@ -58,15 +58,18 @@ def renderer = (project.findProperty("mouiRenderer") ?: "auto").toString()
 
 def prepareMouiShellNative = tasks.register("prepareMouiShellNative", Exec) {
     workingDir workspaceRoot
-    commandLine "node", "${mouiShellRoot}/scripts/prepare-native-build.mjs",
-        "--platform", "android", "--app", appId,
+    commandLine "moon", "run", "moui_cli/cmd/moui", "--target", "native", "--",
+        "build", "android", appId,
         "--workspace-root", workspaceRoot.absolutePath,
         "--moui-root", mouiRoot.absolutePath,
         "--skia-root", skiaRoot.absolutePath,
         "--app-config", metadataFile.absolutePath,
-        "--abi", abi, "--android-shell", runnerMode,
-        "--renderer", renderer, "--build-dir", generatedRoot.absolutePath
+        "--abi", abi,
+        "--renderer", renderer,
+        "--build-dir", generatedRoot.absolutePath,
+        "--prepare-only"
     if (fallbackSkia) args "--fallback-skia"
+    if (runnerMode == "ejected") args "--ejected-shell"
 }
 
 android {

@@ -17,11 +17,10 @@ config.shell.plugins = ["moui_shell/test_probe/moui.plugin.json"];
 fs.writeFileSync(output, `${JSON.stringify(config, null, 2)}\n`);
 NODE
 
-"$repo_root/moui_shell/scripts/build-harmonyos-hap.sh" \
+moon run moui_cli/cmd/moui --target native -- build harmonyos showcase \
   --workspace-root "$repo_root" \
   --moui-root "$repo_root/moui" \
   --skia-root "$repo_root/moui_skia" \
-  --app showcase \
   --app-config "$config" \
   --build-dir "$repo_root/artifacts/harmonyos/showcase-plugin-fixture" \
   "$@"

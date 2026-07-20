@@ -18,11 +18,11 @@ fn validate_no_legacy_shell_sources(
   repo_root : String,
   failures : Array[String],
 ) -> Unit {
-  let paths = [
-    "moui_shell/scripts/build-android-apk.sh", "moui_shell/scripts/build-ios-app.sh",
-    "moui_shell/scripts/build-harmonyos-hap.sh", "moui_shell/scripts/prepare-native-build.mjs",
-    "moui_shell/android/embedder/prepare-plugins.mjs",
-  ]
+  // Phase 8 of moui-build-command-2026-07-20: build-{android-apk,ios-app,
+  // harmonyos-hap}.sh and prepare-native-build.mjs were deleted after their
+  // logic migrated into moui_cli. Only the embedder-owned prepare-plugins.mjs
+  // remains in source; ensure it has no legacy branch.
+  let paths = ["moui_shell/android/embedder/prepare-plugins.mjs"]
   for path in paths {
     match read_repo_text(repo_root, path) {
       Ok(source) =>

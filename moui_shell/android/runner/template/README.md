@@ -4,13 +4,12 @@ This template is published with the `wzzc-dev/moui_shell` package. The managed b
 script stages it into the selected build directory, so normal applications do
 not keep an `android_app` project in source control.
 
-Build through the published package script:
+Build through `moui build` (the wrapper lives in `wzzc-dev/moui_cli`):
 
 ```sh
-.mooncakes/wzzc-dev/moui_shell/scripts/build-android-apk.sh \
+moui build android my_app \
   --workspace-root "$PWD" \
   --moui-root "$PWD/.mooncakes/wzzc-dev/moui" \
-  --app my_app \
   --app-config "$PWD/shell.json"
 ```
 

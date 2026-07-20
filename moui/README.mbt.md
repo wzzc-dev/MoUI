@@ -213,10 +213,10 @@ project keeps shared app logic separate from its thin platform entrypoints.
 ## Mobile Packaging
 
 Android and iOS packaging support is published inside this package under
-`moui_shell` and `moui_shell/scripts`. An application project owns its own
-shared app package, mobile platform entrypoint packages, `shell.json`, Android
-Gradle project, and iOS Xcode project; the MoUI package supplies the reusable
-Gradle/JNI/CMake and UIKit/native build templates.
+`moui_shell`. An application project owns its own shared app package, mobile
+platform entrypoint packages, `shell.json`, Android Gradle project, and iOS
+Xcode project; the MoUI package supplies the reusable Gradle/JNI/CMake and
+UIKit/native build templates. Build invocations go through `moui build`.
 
 Start from the copyable files in:
 
@@ -229,10 +229,9 @@ Start from the copyable files in:
 Android debug APK from an app workspace:
 
 ```sh
-.mooncakes/wzzc-dev/moui_shell/scripts/build-android-apk.sh \
+moui build android my_app \
   --workspace-root "$PWD" \
   --moui-root "$PWD/.mooncakes/wzzc-dev/moui" \
-  --app my_app \
   --app-config "$PWD/shell.json" \
   --android-project "$PWD/android_app"
 ```
@@ -240,10 +239,9 @@ Android debug APK from an app workspace:
 iOS Simulator app from an app workspace:
 
 ```sh
-.mooncakes/wzzc-dev/moui_shell/scripts/build-ios-app.sh \
+moui build ios my_app \
   --workspace-root "$PWD" \
   --moui-root "$PWD/.mooncakes/wzzc-dev/moui" \
-  --app my_app \
   --app-config "$PWD/shell.json" \
   --xcode-project "$PWD/ios_app/MoUIShellApp.xcodeproj" \
   --scheme MoUIShellApp \

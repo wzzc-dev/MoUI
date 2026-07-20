@@ -131,7 +131,7 @@ Managed external apps keep only `shell.json` and the MoonBit entrypoint, then
 invoke:
 
 ```sh
-moui_shell/scripts/build-harmonyos-hap.sh --app <id> \
+moui build harmonyos <id> \
   --app-config shell.json
 ```
 

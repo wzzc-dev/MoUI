@@ -95,6 +95,10 @@ static void moui_cli_process_set_exit_code(
  *               inherits stdout (no redirection).
  *   stderr_path Nul-terminated path; if the first byte is '\0', the child
  *               inherits stderr (no redirection).
+ *
+ * stdin is always redirected to the null device so capture-mode children that
+ * optionally read configuration from stdin (e.g. moui_skia/build.js via
+ * fs.readFileSync(0)) do not hang waiting for a terminal that never closes.
  *   timeout_ms  Maximum runtime in milliseconds. 0 means no timeout.
  *   exit_code_buf
  *               MoonBit Bytes buffer of at least 4 bytes. When the return
@@ -282,13 +286,38 @@ MOONBIT_FFI_EXPORT int32_t moui_cli_process_exec(
     own_stderr = 1;
   }
 
+  /* Always feed children an immediate EOF on stdin. Captured spawns redirect
+   * stdout/stderr to files and otherwise inherit the parent's open stdin —
+   * tools like moui_skia/build.js then block forever on read(0). */
+  HANDLE stdin_handle = CreateFileW(
+      L"NUL",
+      GENERIC_READ,
+      FILE_SHARE_READ,
+      &security,
+      OPEN_EXISTING,
+      FILE_ATTRIBUTE_NORMAL,
+      NULL);
+  if (stdin_handle == INVALID_HANDLE_VALUE) {
+    if (own_stdout) {
+      CloseHandle(stdout_handle);
+    }
+    if (own_stderr) {
+      CloseHandle(stderr_handle);
+    }
+    free(cwd_wide);
+    free(env_block);
+    free(command_line);
+    free(executable_wide);
+    return 101;
+  }
+
   STARTUPINFOW startup;
   PROCESS_INFORMATION process;
   ZeroMemory(&startup, sizeof(startup));
   ZeroMemory(&process, sizeof(process));
   startup.cb = sizeof(startup);
   startup.dwFlags = STARTF_USESTDHANDLES;
-  startup.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+  startup.hStdInput = stdin_handle;
   startup.hStdOutput = stdout_handle;
   startup.hStdError = stderr_handle;
 
@@ -308,6 +337,7 @@ MOONBIT_FFI_EXPORT int32_t moui_cli_process_exec(
   free(executable_wide);
   free(env_block);
   free(cwd_wide);
+  CloseHandle(stdin_handle);
 
   if (!created) {
     if (own_stdout) {
@@ -363,12 +393,32 @@ MOONBIT_FFI_EXPORT int32_t moui_cli_process_exec(
   int own_stdout_fd = 0;
   int own_stderr_fd = 0;
 
+  /* Always give children an immediate EOF on stdin. Without this, capture-
+   * mode spawns keep the parent's open stdin (often a TTY), and tools that
+   * optionally parse JSON from fd 0 — notably moui_skia/build.js — hang after
+   * moon build finishes and the CLI looks "stuck".
+   *
+   * Keep stdin_fd open until after posix_spawnp: adddup2 stores the fd number
+   * and performs the dup at spawn time, so closing early makes spawn fail. */
+  int stdin_fd = open("/dev/null", O_RDONLY);
+  if (stdin_fd < 0) {
+    posix_spawn_file_actions_destroy(&actions);
+    return 101;
+  }
+  if (posix_spawn_file_actions_adddup2(
+          &actions, stdin_fd, STDIN_FILENO) != 0) {
+    close(stdin_fd);
+    posix_spawn_file_actions_destroy(&actions);
+    return 101;
+  }
+
   if (stdout_path != NULL && ((const char *)stdout_path)[0] != '\0') {
     stdout_fd = open(
         (const char *)stdout_path,
         O_WRONLY | O_CREAT | O_TRUNC,
         S_IRUSR | S_IWUSR);
     if (stdout_fd < 0) {
+      close(stdin_fd);
       posix_spawn_file_actions_destroy(&actions);
       return 101;
     }
@@ -376,6 +426,7 @@ MOONBIT_FFI_EXPORT int32_t moui_cli_process_exec(
     if (posix_spawn_file_actions_adddup2(
             &actions, stdout_fd, STDOUT_FILENO) != 0) {
       close(stdout_fd);
+      close(stdin_fd);
       posix_spawn_file_actions_destroy(&actions);
       return 101;
     }
@@ -390,6 +441,7 @@ MOONBIT_FFI_EXPORT int32_t moui_cli_process_exec(
       if (own_stdout_fd) {
         close(stdout_fd);
       }
+      close(stdin_fd);
       posix_spawn_file_actions_destroy(&actions);
       return 101;
     }
@@ -400,6 +452,7 @@ MOONBIT_FFI_EXPORT int32_t moui_cli_process_exec(
       if (own_stdout_fd) {
         close(stdout_fd);
       }
+      close(stdin_fd);
       posix_spawn_file_actions_destroy(&actions);
       return 101;
     }
@@ -413,6 +466,7 @@ MOONBIT_FFI_EXPORT int32_t moui_cli_process_exec(
       if (own_stdout_fd) {
         close(stdout_fd);
       }
+      close(stdin_fd);
       posix_spawn_file_actions_destroy(&actions);
       return 101;
     }
@@ -427,6 +481,7 @@ MOONBIT_FFI_EXPORT int32_t moui_cli_process_exec(
     if (own_stdout_fd) {
       close(stdout_fd);
     }
+    close(stdin_fd);
     posix_spawn_file_actions_destroy(&actions);
     return 101;
   }
@@ -448,6 +503,7 @@ MOONBIT_FFI_EXPORT int32_t moui_cli_process_exec(
       if (own_stdout_fd) {
         close(stdout_fd);
       }
+      close(stdin_fd);
       posix_spawn_file_actions_destroy(&actions);
       return 101;
     }
@@ -471,6 +527,7 @@ MOONBIT_FFI_EXPORT int32_t moui_cli_process_exec(
   if (own_stderr_fd) {
     close(stderr_fd);
   }
+  close(stdin_fd);
 
   if (spawn_status != 0) {
     return 102;

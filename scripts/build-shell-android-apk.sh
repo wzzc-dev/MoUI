@@ -5,7 +5,7 @@ usage() {
   cat <<'USAGE'
 Usage: scripts/build-shell-android-apk.sh --app <counter|showcase> [options]
 
-Repository example wrapper over moui_shell/scripts/build-android-apk.sh.
+Repository example wrapper over `moui build android`.
 USAGE
 }
 
@@ -14,6 +14,7 @@ app=""
 
 args=("$@")
 index=0
+forwarded=()
 while [ "$index" -lt "${#args[@]}" ]; do
   case "${args[$index]}" in
     --app)
@@ -22,10 +23,11 @@ while [ "$index" -lt "${#args[@]}" ]; do
       ;;
     -h|--help)
       usage
-      bash "$repo_root/moui_shell/scripts/build-android-apk.sh" --help
+      moon run moui_cli/cmd/moui --target native -- build android --help
       exit 0
       ;;
     *)
+      forwarded+=("${args[$index]}")
       index=$((index + 1))
       ;;
   esac
@@ -45,8 +47,9 @@ case "$app" in
     ;;
 esac
 
-exec bash "$repo_root/moui_shell/scripts/build-android-apk.sh" \
+cd "$repo_root"
+exec moon run moui_cli/cmd/moui --target native -- build android "$app" \
   --workspace-root "$repo_root" \
   --moui-root "$repo_root/moui" \
   --skia-root "$repo_root/moui_skia" \
-  "$@"
+  "${forwarded[@]+"${forwarded[@]}"}"
