@@ -9,5 +9,5 @@ import {
 supported_targets = "+native"
 
 options(
-  "native-stub": [ "native_fs.c" ],
+  "native-stub": [ "native_fs.c", "native_process.c" ],
 )
