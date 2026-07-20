@@ -223,6 +223,58 @@ fn apply_config_overrides_run(
 }
 
 ///|
+/// Convert `RunOptions` (from `moui run`) into `BuildCommandOptions` so
+/// `moui run`'s build step shares the same pipeline as `moui build`. Most
+/// platform-specific overrides stay `None` — they default inside
+/// `build_*_options_from_command` from `CliConfig`. `workspace_root` mirrors
+/// `parse_build_args`'s `cwd` default — it MUST be the actual cwd (absolute),
+/// not `"."`, because `managed_entrypoint_package` calls `path_relative_to`
+/// which only succeeds when `workspace_root` is the absolute prefix of the
+/// resolved entrypoint path. With `"."` the relative resolution fails and
+/// `entrypoint_package` falls back to an absolute path, which then causes
+/// `moonbit_c_path` to drop the `build_dir` prefix and look for the
+/// generated C at `<workspace_root>/<entrypoint_package>/<generated_c>`.
+///
+/// `sdk_override` lets `moui run` inject the iOS SDK (`iphonesimulator` vs
+/// `iphoneos`) based on the resolved target device. Without this, the
+/// `build_command.mbt` default (`iphoneos`) is used even when targeting the
+/// simulator, which causes `build_ios_core` to skip ad-hoc signing and the
+/// bundle fails to launch on the simulator with `SBMainWorkspace` denial.
+fn build_options_from_run_options(
+  options : RunOptions,
+  cwd : String,
+  sdk_override : String?,
+) -> BuildCommandOptions {
+  {
+    app_config_path: options.app_config_path,
+    workspace_root: cwd,
+    moui_root: "",
+    skia_root: "",
+    build_dir: "",
+    output: None,
+    renderer: options.renderer,
+    fallback_skia: options.fallback_skia,
+    ejected_shell: options.ejected_shell,
+    prepare_only: options.prepare_only,
+    android_project: None,
+    xcode_project: None,
+    scheme: None,
+    product_name: None,
+    harmonyos_project: None,
+    abi: None,
+    compile_sdk: None,
+    target_sdk: None,
+    sdk: sdk_override,
+    arch: None,
+    deployment_target: None,
+    sdk_home: None,
+    hvigorw: None,
+    ohpm: None,
+    signing_config_file: None,
+  }
+}
+
+///|
 /// Resolve the target device. If `--device` was supplied, use it; otherwise
 /// pick the first available device from `list_all_devices`. Returns an error
 /// when no device is available.
@@ -251,6 +303,52 @@ fn resolve_target_device(
       }
       Ok(matching[0])
     }
+  }
+}
+
+///|
+/// Detect whether an iOS device id corresponds to a simulator. iOS simulator
+/// UDIDs are UUIDs in the `8-4-4-4-12` hex format (e.g.
+/// `33E45CC1-A8C6-4245-B820-CAFBC9AB6E5C`); physical device UDIDs are 25 or
+/// 40 hex chars without dashes. Used by `moui run` to auto-select
+/// `iphonesimulator` vs `iphoneos` when the user did not pass `--sdk` or set
+/// `moui config ios.sdk`. Returns `true` iff the id contains at least one
+/// `-`, contains at least one hex char, and matches the UUID character class.
+fn is_ios_simulator_udid(id : String) -> Bool {
+  if !id.contains("-") {
+    return false
+  }
+  let mut has_hex = false
+  for ch in id {
+    if is_hex_char(ch) {
+      has_hex = true
+    } else if ch != '-' {
+      return false
+    }
+  }
+  has_hex
+}
+
+///|
+/// Returns `true` iff `ch` is `[0-9a-fA-F]`. MoonBit's `Char` does not expose
+/// `is_hex_digit`, so this is the inline equivalent.
+fn is_hex_char(ch : Char) -> Bool {
+  (ch >= '0' && ch <= '9') ||
+  (ch >= 'a' && ch <= 'f') ||
+  (ch >= 'A' && ch <= 'F')
+}
+
+///|
+/// Resolve the iOS SDK to use for `moui run`. When the target device is a
+/// simulator (UUID-format UDID), return `iphonesimulator`. Otherwise return
+/// `None` so `build_command.mbt` falls back to its default (`iphoneos`) or
+/// the user's `moui config ios.sdk` setting. Returns `None` for non-iOS
+/// platforms so `build_options_from_run_options` doesn't override anything.
+fn resolve_ios_sdk_override(platform : String, device : Device) -> String? {
+  if platform == "ios" && is_ios_simulator_udid(device.id) {
+    Some("iphonesimulator")
+  } else {
+    None
   }
 }
 
@@ -320,8 +418,19 @@ fn install_on_device(
           [hdc, "-t", device.id, "install", artifact],
           capture=true,
         ) {
-        Ok(result) if result.exit_code == 0 => Ok(())
-        Ok(result) => Err("hdc install failed: " + result.stderr)
+        Ok(result) if result.exit_code == 0 &&
+          !result.stdout.to_lower().contains("error") &&
+          !result.stderr.to_lower().contains("error") &&
+          !result.stdout.to_lower().contains("failed") &&
+          !result.stderr.to_lower().contains("failed") => Ok(())
+        Ok(result) => {
+          let detail = if result.stderr != "" {
+            result.stderr
+          } else {
+            result.stdout
+          }
+          Err("hdc install failed: " + detail)
+        }
         Err(message) => Err(message)
       }
     }
@@ -330,6 +439,30 @@ fn install_on_device(
 }
 
 ///|
+
+///|
+/// Launch an installed iOS app on a simulator via `xcrun simctl launch`.
+fn ios_simctl_launch(
+  xcrun : String,
+  device_id : String,
+  bundle_id : String,
+  custom_args : Array[String],
+) -> Result[Unit, String] {
+  let argv = [xcrun, "simctl", "launch", device_id, bundle_id] + custom_args
+  match process_exec_argv(argv, capture=true) {
+    Ok(result) if result.exit_code == 0 => Ok(())
+    Ok(result) => {
+      let detail = if result.stderr != "" {
+        result.stderr
+      } else {
+        result.stdout
+      }
+      Err("simctl launch failed: " + detail)
+    }
+    Err(message) => Err(message)
+  }
+}
+
 /// Launch the app on the target device. Returns the bundle id used for
 /// launching (used by the JSON output).
 fn launch_on_device(
@@ -358,12 +491,21 @@ fn launch_on_device(
         "start",
         "-W",
         "-n",
-        bundle_id + "/.MainActivity",
+        bundle_id + "/dev.wzzc.moui.shell.MoUIActivity",
       ]
       let full_argv = argv + custom_args
       match process_exec_argv(full_argv, capture=true) {
-        Ok(result) if result.exit_code == 0 => Ok(bundle_id)
-        Ok(result) => Err("am start failed: " + result.stderr)
+        Ok(result) if result.exit_code == 0 &&
+          !result.stdout.to_lower().contains("error") &&
+          !result.stderr.to_lower().contains("error") => Ok(bundle_id)
+        Ok(result) => {
+          let detail = if result.stderr != "" {
+            result.stderr
+          } else {
+            result.stdout
+          }
+          Err("am start failed: " + detail)
+        }
         Err(message) => Err(message)
       }
     }
@@ -376,14 +518,26 @@ fn launch_on_device(
         Some(path) => path
         None => return Err("xcrun not found on PATH")
       }
-      match
-        process_exec_argv(
-          [xcrun, "simctl", "launch", device.id, bundle_id],
-          capture=true,
-        ) {
-        Ok(result) if result.exit_code == 0 => Ok(bundle_id)
-        Ok(result) => Err("simctl launch failed: " + result.stderr)
-        Err(message) => Err(message)
+      // Best-effort: stop a previous instance so install/launch is not racing
+      // an already-running process after reinstall.
+      let _ = process_exec_argv(
+        [xcrun, "simctl", "terminate", device.id, bundle_id],
+        capture=true,
+      )
+      match ios_simctl_launch(xcrun, device.id, bundle_id, custom_args) {
+        Ok(_) => Ok(bundle_id)
+        Err(_) => {
+          // SpringBoard sometimes needs a beat after `simctl install` before
+          // the new bundle is registered. Retry once.
+          let _ = process_exec_argv(
+            ["/bin/sleep", "1"],
+            capture=true,
+          )
+          match ios_simctl_launch(xcrun, device.id, bundle_id, custom_args) {
+            Ok(_) => Ok(bundle_id)
+            Err(second) => Err(second)
+          }
+        }
       }
     }
     "harmonyos" => {
@@ -392,14 +546,30 @@ fn launch_on_device(
         None => return Err("shell.json missing harmonyos section")
       }
       let bundle_name = harmonyos.bundle_name
+      // Module name is the HAP module id (default "entry"); ability name is
+      // always EntryAbility in the managed template's mainElement.
       let module_name = match harmonyos.module_name {
         Some(value) => value
-        None => app.id
+        None => "entry"
       }
+      let ability_name = "EntryAbility"
       let hdc = match find_in_path("hdc", host) {
         Some(path) => path
         None => return Err("hdc not found on PATH")
       }
+      // Best-effort stop any previous instance so reinstall/launch is clean.
+      let _ = process_exec_argv(
+        [
+          hdc,
+          "-t",
+          device.id,
+          "shell",
+          "aa",
+          "force-stop",
+          bundle_name,
+        ],
+        capture=true,
+      )
       match
         process_exec_argv(
           [
@@ -410,14 +580,25 @@ fn launch_on_device(
             "aa",
             "start",
             "-a",
-            module_name,
+            ability_name,
             "-b",
             bundle_name,
+            "-m",
+            module_name,
           ],
           capture=true,
         ) {
-        Ok(result) if result.exit_code == 0 => Ok(bundle_name)
-        Ok(result) => Err("aa start failed: " + result.stderr)
+        Ok(result) if result.exit_code == 0 &&
+          !result.stdout.to_lower().contains("error") &&
+          !result.stderr.to_lower().contains("error") => Ok(bundle_name)
+        Ok(result) => {
+          let detail = if result.stderr != "" {
+            result.stderr
+          } else {
+            result.stdout
+          }
+          Err("aa start failed: " + detail)
+        }
         Err(message) => Err(message)
       }
     }
@@ -525,7 +706,7 @@ fn run_result_to_text(
 }
 
 ///|
-fn run_run(parsed : ParsedRun, host : HostPlatform) -> CliOutcome {
+fn run_run(parsed : ParsedRun, cwd : String, host : HostPlatform) -> CliOutcome {
   if parsed.help {
     return stdout_outcome(run_usage())
   }
@@ -542,13 +723,13 @@ fn run_run(parsed : ParsedRun, host : HostPlatform) -> CliOutcome {
     Err(message) => return failed_outcome(message, parsed.json, run_usage())
   }
   let options = apply_config_overrides_run(options, config)
-  // 2. Locate shell.json.
-  let app_config_path = match options.app_config_path {
-    Some(p) => p
-    None => "shell.json"
+  // 2. Locate shell.json. When --app-config is given, derive project_root
+  // from its dirname so `read_shell_app` can join it with `shell.json`.
+  // This lets `moui run` run from any cwd, not just the app directory.
+  let project_root = match options.app_config_path {
+    Some(p) => parent_dir(p)
+    None => "."
   }
-  let _ = app_config_path
-  let project_root = "."
   let app = match read_shell_app(project_root) {
     Ok(a) => a
     Err(message) =>
@@ -563,28 +744,36 @@ fn run_run(parsed : ParsedRun, host : HostPlatform) -> CliOutcome {
     Ok(d) => d
     Err(message) => return failed_outcome(message, parsed.json, run_usage())
   }
-  // 4. Build (unless --no-build).
-  let build_dir = join_path("artifacts", parsed.platform)
-  let artifact = find_build_artifact(parsed.platform, build_dir, app.id)
-  if not(options.no_build) {
-    // M6 build orchestration would go here. We currently rely on the
-    // shell-emit step having produced the artifact; a full build_* call
-    // requires resolving workspace_root / moui_root / skia_root, which is
-    // deferred to a follow-up to keep this command's surface minimal.
-    if not(path_is_file(artifact)) {
-      log_info(
-        "[run] artifact not found at " +
-        artifact +
-        "; skipping build (run `moui shell eject` first)",
-      )
+  // 4. Build (unless --no-build). Shares the same `build_*` pipeline as
+  // `moui build` so defaults stay in sync.
+  let predicted_artifact = find_build_artifact(
+    parsed.platform,
+    default_build_dir(parsed.platform, cwd),
+    app.id,
+  )
+  let artifact = if options.no_build {
+    predicted_artifact
+  } else {
+    let sdk_override = resolve_ios_sdk_override(parsed.platform, device)
+    let build_options = build_options_from_run_options(options, cwd, sdk_override)
+    match
+      run_build_internal(build_options, parsed.platform, host, app, config) {
+      Ok(result) => {
+        log_info("[run] build succeeded: " + result.output_artifact)
+        if result.output_artifact != "" {
+          result.output_artifact
+        } else {
+          predicted_artifact
+        }
+      }
+      Err(message) =>
+        return failed_outcome(
+          "build failed: " + message,
+          parsed.json,
+          run_usage(),
+        )
     }
   }
-  // Acknowledge options that influence the (deferred) build_* call so the
-  // compiler doesn't flag them as unused.
-  let _ = options.prepare_only
-  let _ = options.ejected_shell
-  let _ = options.fallback_skia
-  let _ = options.renderer
   if options.prepare_only {
     return stdout_outcome(
       run_result_to_text(
@@ -610,11 +799,20 @@ fn run_run(parsed : ParsedRun, host : HostPlatform) -> CliOutcome {
     )
   }
   // 5. Install (unless --no-install).
-  if not(options.no_install) && path_is_file(artifact) {
+  // iOS bundles are directories (`*.app`); Android APKs / HarmonyOS HAPs are
+  // files. Using only `path_is_file` silently skips iOS install and then
+  // `simctl launch` fails with FBSOpenApplicationServiceErrorDomain code=4.
+  if not(options.no_install) && (path_is_file(artifact) || path_is_dir(artifact)) {
     match install_on_device(parsed.platform, device, artifact, host) {
       Ok(_) => ()
       Err(message) => return failed_outcome(message, parsed.json, run_usage())
     }
+  } else if not(options.no_install) {
+    return failed_outcome(
+      "build artifact not found for install: " + artifact,
+      parsed.json,
+      run_usage(),
+    )
   }
   // 6. Launch (unless --no-launch).
   let (bundle_id, launch_status) = if options.no_launch {
@@ -631,7 +829,17 @@ fn run_run(parsed : ParsedRun, host : HostPlatform) -> CliOutcome {
     let result = match parsed.platform {
       "android" => probe_android(device, app.id, bundle_id, host, 30)
       "ios" => probe_ios(device, bundle_id, host, 30)
-      "harmonyos" => probe_harmonyos(device, bundle_id, app.id, host, 30)
+      "harmonyos" => {
+        let module_name = match app.harmonyos {
+          Some(h) =>
+            match h.module_name {
+              Some(value) => value
+              None => "entry"
+            }
+          None => "entry"
+        }
+        probe_harmonyos(device, bundle_id, module_name, host, 30)
+      }
       _ => { ok: false, observations: [] }
     }
     Some(result)

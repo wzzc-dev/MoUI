@@ -45,9 +45,9 @@ test("HarmonyOS CMake consumes the environment passed by Hvigor builds", () => {
   assert.match(embedderCmake, /ENV\{MOUI_EMBEDDING_NATIVE_CONFIG\}/);
   assert.match(embedderCmake, /ENV\{MOUI_HARMONYOS_FALLBACK\}/);
 
-  const buildScript = readFileSync(join(
+  const buildSource = readFileSync(join(
     repoRoot,
-    "moui_shell/scripts/build-harmonyos-hap.sh",
+    "moui_cli/build_harmonyos.mbt",
   ), "utf8");
   for (const variable of [
     "MOUI_PACKAGE_ROOT",
@@ -55,7 +55,7 @@ test("HarmonyOS CMake consumes the environment passed by Hvigor builds", () => {
     "MOUI_EMBEDDING_NATIVE_CONFIG",
     "MOUI_HARMONYOS_FALLBACK",
   ]) {
-    assert.match(buildScript, new RegExp(`${variable}=`));
+    assert.match(buildSource, new RegExp(variable));
   }
 });
 

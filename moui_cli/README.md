@@ -21,31 +21,103 @@ moon install wzzc-dev/moui_cli/cmd/moui
 | `moui doctor` | Diagnose toolchains and project contracts |
 | `moui plugin new` | Scaffold a managed shell plugin |
 | `moui package` | Print project package inventory |
+| `moui build` | Build a mobile app artifact (APK / .app / .hap) without installing |
 | `moui run` | Build, install, and launch a mobile app on a device or emulator |
 | `moui devices` | List connected Android / iOS / HarmonyOS devices and emulators |
 | `moui verify` | Verify mobile app runtime evidence against the managed shell contract |
 | `moui config` | Get/set MoUI CLI configuration values (XDG-backed) |
-| `moui shell eject` | Materialize an app-owned shell shell |
+| `moui shell eject` | Materialize an app-owned shell |
 
 `moui --version` prints the **CLI version** and the **default framework
 dependency version** written by `moui new`. Those two numbers are independent.
 
 ## Mobile development
 
-`moui run` orchestrates build → install → launch on Android / iOS / HarmonyOS.
-It relies on the platform toolchains (`adb` / `xcrun` / `hdc`) being on PATH
-and on the M6 `build_*` glue to produce the artifact under
-`artifacts/<platform>/<app>/`.
+`moui build` and `moui run` share the same `build_android` / `build_ios` /
+`build_harmonyos` pipeline. `moui build` stops after producing the artifact;
+`moui run` continues with install and launch. Both rely on the platform
+toolchains (`adb` / `xcrun` / `hdc` / Gradle / Xcode / hvigor) being on PATH
+and write outputs under `artifacts/<platform>/<app>/`.
 
 ```sh
 # List connected devices
 moui devices
 
+# Build the showcase APK without installing (run from the app directory)
+moui build android showcase
+
+# Build from the repository root by pointing at the app's shell.json
+# (always use absolute paths for --app-config when invoking through Gradle /
+# Xcode / hvigor — they cd into the staged project before re-invoking moui_cli)
+moui build android  showcase --app-config "$PWD/examples/showcase/shell.json"
+moui build ios       showcase --app-config "$PWD/examples/showcase/shell.json"
+moui build harmonyos showcase --app-config "$PWD/examples/showcase/shell.json"
+
+# iOS device build (defaults are iphonesimulator + arm64)
+moui build ios showcase \
+  --app-config "$PWD/examples/showcase/shell.json" \
+  --sdk iphoneos --arch arm64
+
+# Build only native inputs (MoonBit C / CMake / shell config), skip packaging.
+# Validates the full prepare pipeline (moon build / CMake config / shell
+# staging) without invoking Gradle / Xcode / hvigor.
+moui build harmonyos showcase --app-config "$PWD/examples/showcase/shell.json" --prepare-only
+
+# Build with a specific renderer and Skia fallback
+moui build android showcase --renderer skia-gpu --fallback-skia
+
+# Override the workspace / package roots (defaults come from `moui config`)
+moui build ios showcase \
+  --app-config "$PWD/examples/showcase/shell.json" \
+  --workspace-root "$PWD" \
+  --moui-root "$PWD/.mooncakes/wzzc-dev/moui" \
+  --skia-root "$PWD/.mooncakes/wzzc-dev/moui_skia"
+
+# Emit machine-readable build result JSON
+moui build android showcase --app-config "$PWD/examples/showcase/shell.json" --json
+```
+
+### Per-platform toolchain requirements
+
+| Platform | Toolchain | Required env / config | Default discovery |
+|----------|-----------|-----------------------|-------------------|
+| Android  | Gradle + Android SDK + NDK | `ANDROID_HOME` or `ANDROID_SDK_ROOT` | `~/Library/Android/sdk` (macOS), `~/Android/Sdk` (Linux) |
+| iOS      | Xcode + Swift toolchain | — | `xcrun --sdk iphonesimulator` |
+| HarmonyOS | DevEco-Studio + hvigorw + ohpm | `HARMONYOS_SDK_HOME` (or `OHOS_SDK_HOME`) | DevEco-Studio install path + `~/Library/OpenHarmony/Sdk/<ver>` |
+
+Notes from verified 0.1.3 builds of `examples/showcase`:
+
+- **Android**: requires JDK 17+ (`export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home`). Default `compileSdk` / `targetSdk` is 34, but newer `androidx.activity` requires 36 — pass `--compile-sdk 36 --target-sdk 36` if the build fails with a `Dependency 'androidx.activity:activity' requires compileSdk 36` error.
+- **iOS**: `build_ios_core` compiles all C / C++ / ObjC++ / Swift sources (the Xcode project template has NO native compile phase). When using `--ejected-shell`, pass `--xcode-project`, `--scheme`, and `--product-name` so the build can find the existing xcodeproj.
+- **HarmonyOS**: `hvigorw` and `ohpm` are auto-discovered from `/Applications/DevEco-Studio.app/Contents/tools/`. To override, pass `--hvigorw` / `--ohpm` or set `HVIGORW` / `OHPM` env vars. Builds produce unsigned HAPs unless a `signingConfigFile` is configured (via `--signing-config-file` or `moui config set harmonyos.signingConfigFile <path>`).
+
+### Build artifacts
+
+Successful builds write to:
+
+| Platform | Path | Format |
+|----------|------|--------|
+| Android  | `artifacts/android/<app-id>.apk` | APK |
+| iOS      | `artifacts/ios/<app-id>.app/`    | App bundle (directory) |
+| HarmonyOS | `artifacts/harmonyos/<app-id>.hap` | HAP (ZIP archive) |
+
+Use `--output PATH` to override the artifact path, or `--build-dir PATH` to
+change the parent directory for a single invocation.
+
+`moui run` orchestrates build → install → launch on Android / iOS / HarmonyOS
+and reuses the same `Build*Options` as `moui build` (any `--renderer`,
+`--fallback-skia`, `--ejected-shell`, `--prepare-only` flag is forwarded).
+
+```sh
 # Build, install, and launch the showcase app on the first Android device
 moui run android showcase
 
-# Build only (no install / launch)
+# Build only (no install / launch) — equivalent to `moui build` but kept
+# for compatibility with existing scripts
 moui run harmonyos showcase --build-only
+
+# Skip the build step and reuse an existing artifact
+moui run android showcase --no-build
 
 # Launch with a specific device and follow logs
 moui run ios showcase --device UUID-DEAD --debug
@@ -53,6 +125,12 @@ moui run ios showcase --device UUID-DEAD --debug
 # Run the runtime probe and write verify-manifest.json
 moui verify android showcase --require-passed
 ```
+
+`--build-only` and `moui build` produce the same artifact; prefer `moui build`
+when you do not need device install. Use `--prepare-only` to validate MoonBit C
+generation, JNI/CMake configuration, and shell staging without invoking Gradle
+/ Xcode / hvigor — this is what the Android Gradle `prepareMouiShellNative`
+task calls internally.
 
 ## Configuration (XDG-backed)
 

@@ -216,11 +216,20 @@ fn build_android(
     "-PmouiCompileSdk=" + options.compile_sdk.to_string(),
     "-PmouiTargetSdk=" + options.target_sdk.to_string(),
     "-PmouiRenderer=" + options.renderer,
-    "-PmouiBuildDir=" + options.build_dir,
+    // Gradle's shell-app.gradle expects `mouiBuildDir` to already include the
+    // app id (it reads `<mouiBuildDir>/android/<mode>-shell/shell-config.json`).
+    // prepare_native_build.mbt writes to `<build_dir>/<appId>/android/...`,
+    // so append the app id here.
+    "-PmouiBuildDir=" + join_path(options.build_dir, options.app.id),
     "-PmouiWorkspaceRoot=" + options.workspace_root,
     "-PmouiRoot=" + options.moui_root,
     "-PmouiShellRoot=" + join_path(options.moui_root, "../moui_shell"),
-    "-PmouiAppConfig=" + options.app_config,
+    // Gradle's `:app` subproject resolves `mouiAppConfig` via `file(...)`,
+    // which anchors on the subproject dir (`<android-project>/app`), not on
+    // the user's cwd. Pass an absolute path so `prepareMouiShellNative` (a
+    // Gradle Exec task that re-invokes `moon run moui_cli`) finds `shell.json`
+    // regardless of which subproject's working dir Gradle uses.
+    "-PmouiAppConfig=" + make_absolute(options.app_config, options.workspace_root),
     "-PmouiAndroidShell=" + runner_mode,
   ]
   let gradle_env = moon_build_env()

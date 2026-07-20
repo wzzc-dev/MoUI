@@ -247,16 +247,37 @@ fn build_ios(
   }
   // 5. Invoke xcodebuild with the MOUI_EMBEDDING_* env block.
   let shell_mode = if options.ejected_shell { "ejected" } else { "managed" }
+  // Resolve a usable `moui_cli` binary for the Xcode Run Script Phase.
+  // `build-ios-app-core.sh` does `exec "${MOUI_BUILD_IOS_CORE_BIN:-moui_cli}"`,
+  // but Xcode's PATH does not include `moui_cli` when the user invokes the
+  // build via `moon run moui_cli/cmd/moui`. Build (or reuse) the binary at a
+  // stable cache path and pass it through `MOUI_BUILD_IOS_CORE_BIN`.
+  let cli_bin = match
+    ensure_moui_cli_binary(options.workspace_root, options.build_dir) {
+    Ok(path) => path
+    Err(message) => return Err(message)
+  }
   let env = moon_build_env()
+  env.push(("MOUI_BUILD_IOS_CORE_BIN", cli_bin))
   env.push(("MOUI_EMBEDDING_APP", options.app.id))
   env.push(("MOUI_EMBEDDING_WORKSPACE_ROOT", options.workspace_root))
-  env.push(("MOUI_EMBEDDING_PROJECT_ROOT", options.project_root))
+  // Xcode Run Script Phases execute with cwd=<staged xcode project dir>, so
+  // any relative path would be resolved against that directory instead of the
+  // user's original cwd. Make `app_config` absolute (anchored to
+  // `workspace_root`), then derive `project_root` from its parent dir — this
+  // is what `read_shell_app(project_root)` expects: it looks for
+  // `<project_root>/shell.json`. Anchoring on `options.project_root` (which
+  // defaults to `.`) would point at the workspace root, not the directory
+  // containing `shell.json`.
+  let absolute_app_config = make_absolute(options.app_config, options.workspace_root)
+  let absolute_project_root = parent_dir(absolute_app_config)
+  env.push(("MOUI_EMBEDDING_PROJECT_ROOT", absolute_project_root))
   env.push(("MOUI_PACKAGE_ROOT", options.moui_root))
   env.push(
     ("MOUI_SHELL_PACKAGE_ROOT", join_path(options.moui_root, "../moui_shell")),
   )
   env.push(("MOUI_SKIA_ROOT", options.skia_root))
-  env.push(("MOUI_EMBEDDING_APP_CONFIG", options.app_config))
+  env.push(("MOUI_EMBEDDING_APP_CONFIG", absolute_app_config))
   env.push(("MOUI_EMBEDDING_BUILD_DIR", options.build_dir))
   env.push(("MOUI_EMBEDDING_OUTPUT_APP", options.output_app))
   env.push(("MOUI_EMBEDDING_ARCH", options.arch))

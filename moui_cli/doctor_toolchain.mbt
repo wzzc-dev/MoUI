@@ -522,13 +522,13 @@ fn harmony_project_contract(project_root : String) -> Result[String, String] {
       }
     "managed" =>
       match
-        resolve_moui_root({
+        resolve_shell_root({
           project_root,
           platform: "harmonyos",
           output: "",
           moui_root: None,
         }) {
-        Ok(value) => join_path(value, "shell/harmonyos/template")
+        Ok(value) => join_path(value, "harmonyos/runner/template")
         Err(message) => return Err(message)
       }
     _ => return Err("unsupported HarmonyOS shell mode: " + mode)

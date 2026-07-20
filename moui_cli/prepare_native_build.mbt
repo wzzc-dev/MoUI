@@ -453,6 +453,8 @@ fn generate_moonbit_c(
       "; continuing because generated C exists: " +
       moonbit_c,
     )
+  } else {
+    log_info("moon build finished; resolving Skia link flags")
   }
   Ok(moonbit_c)
 }
@@ -461,6 +463,51 @@ fn generate_moonbit_c(
 /// Resolve Skia link flags by invoking `node build.js` inside the moui_skia
 /// root. Replaces `resolveSkia`. Returns an empty `SkiaLink` when `fallback`
 /// is true (no real Skia package is available).
+
+///|
+fn options_fallback_allows_stub_link(
+  fallback : Bool,
+  stub_flags : String,
+  link_flags : String,
+) -> Bool {
+  if fallback {
+    return true
+  }
+  // Real Skia packages set HAS_SKIA in stub/compile flags or pull libskia into
+  // link flags. The DISABLE_PREBUILD path returns empty stub flags + "-lc++".
+  if stub_flags.contains("MOUI_SKIA_HAS_SKIA") {
+    return true
+  }
+  if link_flags.contains("libskia") || link_flags.contains("-lskia") {
+    return true
+  }
+  false
+}
+
+/// Environment for `node moui_skia/build.js` when resolving real Skia link
+/// flags. Unlike `moon_build_env()`, this must NOT set
+/// `MOUI_SKIA_DISABLE_PREBUILD_SKIA=1` — that flag forces the stub Skia path
+/// (`MOUI_SKIA_CC_LINK_FLAGS=-lc++` only), which links and runs but presents a
+/// black surface because `skia_available()` is false / can_render fails attach.
+fn skia_resolve_env() -> Array[(String, String)] {
+  let base = @env.get_env_vars()
+  let result : Array[(String, String)] = []
+  for key, value in base {
+    if moon_build_env_blocked_keys.contains(key) {
+      continue
+    }
+    // Parent shells / moon_build_env may have disabled prebuild for host
+    // `moon build`; strip it so Android/iOS/HarmonyOS package Skia correctly.
+    if key == "MOUI_SKIA_DISABLE_PREBUILD_SKIA" ||
+      key == "MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM" {
+      continue
+    }
+    result.push((key, value))
+  }
+  result
+}
+
+///|
 fn resolve_skia(
   skia_root : String,
   platform : String,
@@ -472,7 +519,7 @@ fn resolve_skia(
   if fallback {
     return Ok({ stub_flags: "", link_flags: "" })
   }
-  let env = moon_build_env()
+  let env = skia_resolve_env()
   env.push(("MOUI_SKIA_PLATFORM", platform))
   env.push(("MOUI_SKIA_ARCH", arch))
   env.push(("MOUI_SKIA_LINK_MODE", link_mode))
@@ -501,6 +548,25 @@ fn resolve_skia(
         Some(Json::String(value)) => value
         _ => ""
       }
+      // Catch the stub-only path early so black-screen builds fail at prepare
+      // instead of "launching" an empty SurfaceView.
+      if !options_fallback_allows_stub_link(fallback, stub_flags, link_flags) {
+        return Err(
+          "moui_skia resolved stub-only link flags (no real Skia). " +
+          "Unset MOUI_SKIA_DISABLE_PREBUILD_SKIA and ensure the Android/iOS/HarmonyOS " +
+          "Skia release is fetchable under moui_skia/.skia-cache. " +
+          "got MOUI_SKIA_CC_LINK_FLAGS=" +
+          link_flags,
+        )
+      }
+      log_info(
+        "resolved Skia link_mode=" +
+        link_mode +
+        " platform=" +
+        platform +
+        " flags_len=" +
+        link_flags.length().to_string(),
+      )
       Ok({ stub_flags, link_flags })
     }
     Ok(result) =>

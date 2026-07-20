@@ -50,11 +50,10 @@ cp "$project_root/shell.json" "$config"
 
 case "$platform" in
   android)
-    bash "$repo_root/moui_shell/scripts/build-android-apk.sh" \
+    moon run moui_cli/cmd/moui --target native -- build android showcase \
       --workspace-root "$repo_root" \
       --moui-root "$repo_root/moui" \
       --skia-root "$repo_root/moui_skia" \
-      --app showcase \
       --app-config "$config" \
       --android-project "$shell_root" \
       --ejected-shell \
@@ -68,11 +67,10 @@ case "$platform" in
     # managed-shell product name MoUIShowcase from shell.json.
     ios_product="Showcase"
     XCODE_XCCONFIG_FILE="${XCODE_XCCONFIG_FILE:-$repo_root/moui_shell/test_probe/tests/NoCodeSign.xcconfig}" \
-      bash "$repo_root/moui_shell/scripts/build-ios-app.sh" \
+      moon run moui_cli/cmd/moui --target native -- build ios showcase \
       --workspace-root "$repo_root" \
       --moui-root "$repo_root/moui" \
       --skia-root "$repo_root/moui_skia" \
-      --app showcase \
       --app-config "$config" \
       --xcode-project "$shell_root/${ios_product}.xcodeproj" \
       --scheme "$ios_product" \
@@ -83,11 +81,10 @@ case "$platform" in
       "$@"
     ;;
   harmonyos)
-    bash "$repo_root/moui_shell/scripts/build-harmonyos-hap.sh" \
+    moon run moui_cli/cmd/moui --target native -- build harmonyos showcase \
       --workspace-root "$repo_root" \
       --moui-root "$repo_root/moui" \
       --skia-root "$repo_root/moui_skia" \
-      --app showcase \
       --app-config "$config" \
       --harmonyos-project "$shell_root" \
       --ejected-shell \

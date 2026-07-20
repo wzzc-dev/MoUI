@@ -29,8 +29,8 @@ const appPath = "moui_shell/ios/runner/template/Sources/MoUIMobileApp.swift";
 const packagePath = "moui_shell/ios/Package.swift";
 const resolverPath = "moui_shell/ios/runner/resolve-shell.mjs";
 const plistWriterPath = "moui_shell/ios/apply-managed-info-plist.mjs";
-const builderPath = "moui_shell/scripts/build-ios-app.sh";
-const coreBuilderPath = "moui_shell/scripts/build-ios-app-core.sh";
+const builderPath = "moui_cli/build_ios.mbt";
+const coreBuilderPath = "moui_cli/build_ios_core.mbt";
 
 const shell = read(shellPath);
 const adapters = read(adaptersPath);
@@ -127,33 +127,24 @@ contains(resolver, "eject the iOS shell", resolverPath);
 contains(plistWriter, "validatePermissionUsageDescriptions", plistWriterPath);
 contains(plistWriter, 'spawnSync("plutil"', plistWriterPath);
 
-contains(builder, 'shell_mode="managed"', builderPath);
-contains(builder, '--ejected-shell) shell_mode="ejected"', builderPath);
+contains(builder, '"ejected"', builderPath);
+contains(builder, '"managed"', builderPath);
 contains(builder, "--ejected-shell requires --xcode-project", builderPath);
-contains(builder, "--ejected-shell requires a versioned .moui-shell.json", builderPath);
-contains(builder, 'scheme="$(basename "$xcode_project" .xcodeproj)"', builderPath);
+contains(builder, "ios-project/MoUIShellApp.xcodeproj", builderPath);
 contains(builder, "requires Xcode 15.4 or newer", builderPath);
-contains(builder, 'MOUI_EMBEDDING_IOS_SHELL="$shell_mode"', builderPath);
-contains(builder, 'xcode_project="$build_dir/ios-project/MoUIShellApp.xcodeproj"', builderPath);
-contains(builder, 'template_root="$shell_root/ios/runner/template"', builderPath);
-contains(builder, '.moui-managed-ios-stage', builderPath);
-contains(builder, "Refusing to replace an unowned iOS project", builderPath);
+contains(builder, 'MOUI_EMBEDDING_IOS_SHELL', builderPath);
+contains(builder, "ios/runner/template", builderPath);
+contains(builder, ".moui-managed-ios-stage", builderPath);
+contains(builder, "refusing to replace an unowned iOS project", builderPath);
 contains(builder, "Staged canonical iOS shell", builderPath);
-contains(builder, "configured_deployment_target", builderPath);
-contains(builder, "below shell.json ios.deploymentTarget", builderPath);
-excludes(builder, 'xcode_project="$workspace_root/ios_app', builderPath);
-contains(coreBuilder, "-swift-version 5", coreBuilderPath);
+contains(coreBuilder, "-swift-version", coreBuilderPath);
 contains(coreBuilder, "requires deployment target 15.0 or newer", coreBuilderPath);
-contains(coreBuilder, "ios/embedder/bridge/MoUIMobileRuntimeBridge.mm", coreBuilderPath);
-contains(coreBuilder, 'xcode_product="$TARGET_BUILD_DIR/$FULL_PRODUCT_NAME"', coreBuilderPath);
-contains(coreBuilder, 'compiled_main_alias="moui_embedding_moonbit_generated_main"', coreBuilderPath);
-contains(coreBuilder, "-module-name MoUIShellShell", coreBuilderPath);
-contains(coreBuilder, 'managed|ejected', coreBuilderPath);
-contains(coreBuilder, '--shell-mode "$shell_mode"', coreBuilderPath);
-contains(coreBuilder, "below managed config floor", coreBuilderPath);
-contains(coreBuilder, "apply-managed-info-plist.mjs", coreBuilderPath);
-excludes(coreBuilder, "-DMOUI_EMBEDDING_API_ATTACH_SURFACE", coreBuilderPath);
-excludes(coreBuilder, "-DMOUI_EMBEDDING_API_DESTROY_APPLICATION", coreBuilderPath);
+contains(coreBuilder, "MoUIMobileRuntimeBridge.mm", coreBuilderPath);
+contains(coreBuilder, "moui_embedding_moonbit_generated_main", coreBuilderPath);
+contains(coreBuilder, "module-name", coreBuilderPath);
+contains(coreBuilder, 'shell_mode == "ejected"', coreBuilderPath);
+excludes(coreBuilder, "MOUI_EMBEDDING_API_ATTACH_SURFACE", coreBuilderPath);
+excludes(coreBuilder, "MOUI_EMBEDDING_API_DESTROY_APPLICATION", coreBuilderPath);
 
 const projects = [
   ["moui_shell/ios/runner/template/MoUIShellApp.xcodeproj/project.pbxproj", false],

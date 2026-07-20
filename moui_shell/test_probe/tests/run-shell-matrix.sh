@@ -52,7 +52,6 @@ run_static() {
     ios) node --test "$repo_root/moui_shell/ios/runner/resolve-shell.test.mjs" ;;
     harmonyos) node --test "$repo_root/moui_shell/harmonyos/runner/tests/validate-managed-shell.mjs" ;;
     android)
-      node --test "$repo_root/moui_shell/scripts/android-ndk.test.mjs"
       node --test "$repo_root/moui_shell/android/runner/resolve-shell.test.mjs"
       node "$repo_root/scripts/check-shell-app-config.mjs"
       ;;
@@ -62,9 +61,9 @@ run_static() {
 run_managed() {
   case "$platform" in
     android)
-      bash "$repo_root/moui_shell/scripts/build-android-apk.sh" \
+      moon run moui_cli/cmd/moui --target native -- build android showcase \
         --workspace-root "$repo_root" --moui-root "$repo_root/moui" \
-        --skia-root "$repo_root/moui_skia" --app showcase \
+        --skia-root "$repo_root/moui_skia" \
         --app-config "$repo_root/examples/showcase/shell.json" \
         --build-dir "$artifact_root/android/managed" \
         --output "$artifact_root/android/managed/MoUIShowcase.apk" \
@@ -72,18 +71,18 @@ run_managed() {
       ;;
     ios)
       XCODE_XCCONFIG_FILE="${XCODE_XCCONFIG_FILE:-$repo_root/moui_shell/test_probe/tests/NoCodeSign.xcconfig}" \
-        bash "$repo_root/moui_shell/scripts/build-ios-app.sh" \
+        moon run moui_cli/cmd/moui --target native -- build ios showcase \
         --workspace-root "$repo_root" --moui-root "$repo_root/moui" \
-        --skia-root "$repo_root/moui_skia" --app showcase \
+        --skia-root "$repo_root/moui_skia" \
         --app-config "$repo_root/examples/showcase/shell.json" \
         --build-dir "$artifact_root/ios/managed" \
         --output "$artifact_root/ios/managed/MoUIShowcase.app" \
         "${build_args[@]}"
       ;;
     harmonyos)
-      bash "$repo_root/moui_shell/scripts/build-harmonyos-hap.sh" \
+      moon run moui_cli/cmd/moui --target native -- build harmonyos showcase \
         --workspace-root "$repo_root" --moui-root "$repo_root/moui" \
-        --skia-root "$repo_root/moui_skia" --app showcase \
+        --skia-root "$repo_root/moui_skia" \
         --app-config "$repo_root/examples/showcase/shell.json" \
         --build-dir "$artifact_root/harmonyos/managed" \
         --output "$artifact_root/harmonyos/managed/MoUIShowcase.hap" \

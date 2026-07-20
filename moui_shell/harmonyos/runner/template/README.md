@@ -2,15 +2,14 @@
 
 This directory is the framework-owned HarmonyOS shell for shell API v1 and
 Shell Runtime ABI v1. Applications do not copy it into their repositories.
-`build-harmonyos-hap.sh` resolves `shell.json`, stages this template into the
-build directory, writes identity/system UI/plugin configuration, and then runs
-Hvigor.
+`moui build harmonyos` resolves `shell.json`, stages this template into the
+build directory, writes identity/system UI/plugin configuration, and then
+runs Hvigor.
 
 ```sh
-.mooncakes/wzzc-dev/moui_shell/scripts/build-harmonyos-hap.sh \
+moui build harmonyos my_app \
   --workspace-root "$PWD" \
   --moui-root "$PWD/.mooncakes/wzzc-dev/moui" \
-  --app my_app \
   --app-config "$PWD/shell.json" \
   --renderer auto
 ```

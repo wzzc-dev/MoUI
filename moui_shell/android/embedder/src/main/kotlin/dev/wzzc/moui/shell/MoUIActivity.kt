@@ -3,12 +3,15 @@ package dev.wzzc.moui.shell
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Choreographer
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
 import androidx.core.view.WindowCompat
@@ -207,7 +210,19 @@ class MoUIActivity : ComponentActivity(), SurfaceHolder.Callback {
     }
 
     private fun configureWindow() {
+        // Edge-to-edge when fullscreen so content can occupy the whole window,
+        // including the display-cutout / punch-hole band. Without
+        // LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES Android leaves that band
+        // empty (typically black) even when the status bar is hidden.
         WindowCompat.setDecorFitsSystemWindows(window, !fullscreen)
+        enableDisplayCutoutDrawing()
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = Color.TRANSPARENT
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            window.isStatusBarContrastEnforced = false
+            window.isNavigationBarContrastEnforced = false
+        }
+
         val controller = WindowCompat.getInsetsController(window, window.decorView)
         if (fullscreen) {
             controller.systemBarsBehavior =
@@ -226,6 +241,27 @@ class MoUIActivity : ComponentActivity(), SurfaceHolder.Callback {
         } else {
             controller.show(WindowInsetsCompat.Type.statusBars())
         }
+    }
+
+    /**
+     * Allow the SurfaceView / content to draw into the short-edge display
+     * cutout (notch / punch-hole). Safe on all API levels: no-op below P.
+     */
+    private fun enableDisplayCutoutDrawing() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+            return
+        }
+        val attrs = window.attributes
+        attrs.layoutInDisplayCutoutMode = if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+        ) {
+            // ALWAYS draws into cutout on all edges; preferred for immersive
+            // shells that already hide system bars.
+            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+        } else {
+            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
+        window.attributes = attrs
     }
 
     private fun density(): Double = resources.displayMetrics.density.toDouble()

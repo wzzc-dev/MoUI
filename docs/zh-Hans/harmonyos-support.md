@@ -94,7 +94,7 @@ scripts/build-component-gallery-harmonyos-hap.sh --fallback-skia
 Managed external apps 只保留 `shell.json` 和 MoonBit entrypoint，然后调用：
 
 ```sh
-moui_shell/scripts/build-harmonyos-hap.sh --app <id> \
+moui build harmonyos <id> \
   --app-config shell.json
 ```
 

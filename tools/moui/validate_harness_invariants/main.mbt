@@ -769,7 +769,7 @@ fn check_r3_prepare(path : String, text : String?) -> HarnessFinding {
         rule: "R3",
         ok: false,
         path,
-        hint: "missing mobile prepare-native-build helper. See docs/invariants.md#R3",
+        hint: "missing mobile prepare-native-build MoonBit module. See docs/invariants.md#R3",
       }
     Some(body) => {
       let ok = body.contains("--renderer") &&
@@ -783,7 +783,7 @@ fn check_r3_prepare(path : String, text : String?) -> HarnessFinding {
         hint: if ok {
           ""
         } else {
-          "prepare-native-build must accept --renderer auto|skia-gpu|skia-raster. See docs/invariants.md#R3"
+          "moui_cli/prepare_native_build.mbt must accept --renderer auto|skia-gpu|skia-raster. See docs/invariants.md#R3"
         },
       }
     }
@@ -936,7 +936,10 @@ fn validate_repo(repo_root : String) -> Array[HarnessFinding] {
       )
     }
   }
-  let prepare = "moui_shell/scripts/prepare-native-build.mjs"
+  // Phase 8 of moui-build-command-2026-07-20: prepare-native-build was
+  // migrated into `moui_cli/prepare_native_build.mbt`. The same R3 token
+  // contract (--renderer auto|skia-gpu|skia-raster) still applies.
+  let prepare = "moui_cli/prepare_native_build.mbt"
   results.push(
     check_r3_prepare(prepare, read_optional_text(repo_root, prepare)),
   )

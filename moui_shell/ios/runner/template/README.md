@@ -14,15 +14,14 @@ Requirements:
 - iOS 15 or newer
 
 Do not copy or customize it for a managed application. Keep application
-identity and deployment policy in schema v1 `shell.json`; the published build
-script stages this template into the artifact directory and generates the
+identity and deployment policy in schema v1 `shell.json`; `moui build ios`
+stages this template into the artifact directory and generates the
 Swift configuration:
 
 ```sh
-.mooncakes/wzzc-dev/moui_shell/scripts/build-ios-app.sh \
+moui build ios my_app \
   --workspace-root "$PWD" \
   --moui-root "$PWD/.mooncakes/wzzc-dev/moui" \
-  --app my_app \
   --app-config "$PWD/shell.json"
 ```
 

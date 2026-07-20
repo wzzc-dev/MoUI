@@ -220,7 +220,7 @@ fn probe_android(
     "start",
     "-W",
     "-n",
-    bundle_id + "/.MainActivity",
+    bundle_id + "/dev.wzzc.moui.shell.MoUIActivity",
   ]
   match process_exec_argv(launch_argv, capture=true) {
     Ok(result) if result.exit_code == 0 => ()
@@ -367,7 +367,8 @@ fn probe_harmonyos(
         ],
       }
   }
-  // Launch the app via `aa start`.
+  // Launch the app via `aa start`. Ability is EntryAbility; module_name is
+  // the HAP module id (typically "entry").
   let launch_argv = [
     hdc,
     "-t",
@@ -376,12 +377,16 @@ fn probe_harmonyos(
     "aa",
     "start",
     "-a",
-    module_name,
+    "EntryAbility",
     "-b",
     bundle_name,
+    "-m",
+    module_name,
   ]
   match process_exec_argv(launch_argv, capture=true) {
-    Ok(result) if result.exit_code == 0 => ()
+    Ok(result) if result.exit_code == 0 &&
+      !result.stdout.to_lower().contains("error") &&
+      !result.stderr.to_lower().contains("error") => ()
     _ =>
       return {
         ok: false,

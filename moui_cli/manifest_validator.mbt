@@ -348,6 +348,9 @@ fn read_file_string_optional(path : String) -> String? {
 ///|
 /// Return the trailing path component of `path`.
 fn basename(path : String) -> String {
-  let parts = path.split("/")
-  parts.to_array()[parts.length() - 1].to_string()
+  let arr = path.split("/").to_array()
+  if arr.is_empty() {
+    return path
+  }
+  arr[arr.length() - 1].to_string()
 }

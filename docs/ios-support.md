@@ -176,14 +176,13 @@ The managed SwiftUI shell is the default; `moui shell eject ios` is the only
 supported route for application-owned native runner changes.
 
 For an external schema v1 app, keep only `shell.json`, resources, plugins, and
-the MoonBit mobile entrypoint in the application workspace. The
-package-published script stages the canonical Xcode project automatically:
+the MoonBit mobile entrypoint in the application workspace. `moui build ios`
+stages the canonical Xcode project automatically:
 
 ```sh
-.mooncakes/wzzc-dev/moui_shell/scripts/build-ios-app.sh \
+moui build ios my_app \
   --workspace-root "$PWD" \
   --moui-root "$PWD/.mooncakes/wzzc-dev/moui" \
-  --app my_app \
   --app-config "$PWD/shell.json"
 ```
 

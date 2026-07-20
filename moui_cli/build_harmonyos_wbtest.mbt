@@ -261,3 +261,129 @@ test "test_find_deveco_sdk_home_finds_candidate_with_default_openharmony" {
   assert_true(result == root)
   remove_tree(root)
 }
+
+
+///|
+test "test_apply_harmonyos_managed_identity_sets_bundle_name" {
+  let root = build_harmonyos_test_temp_path("identity")
+  remove_tree(root)
+  match mkdir_p(root) {
+    Ok(_) => ()
+    Err(message) => fail(message)
+  }
+  // Minimal staged tree for identity rewrite.
+  let paths = [
+    "AppScope",
+    "AppScope/resources/base/element",
+    "entry/src/main/resources/base/element",
+    "entry/src/main/ets/moui",
+    "entry",
+  ]
+  for rel in paths {
+    match mkdir_p(join_path(root, rel)) {
+      Ok(_) => ()
+      Err(message) => fail(message)
+    }
+  }
+  let writes = [
+    (
+      "AppScope/app.json5",
+      #|{"app":{"bundleName":"dev.example.mouiapp","vendor":"wzzc-dev","versionCode":1,"versionName":"0.1.0"}}
+      ,
+    ),
+    (
+      "oh-package.json5",
+      #|{"name":"my-app-harmonyos","version":"0.1.0","description":"shell"}
+      ,
+    ),
+    (
+      "build-profile.json5",
+      #|{"app":{"products":[{"name":"default","targetSdkVersion":"6.0.1(21)","compatibleSdkVersion":"6.0.0(20)"}]},"modules":[{"name":"entry","srcPath":"./entry"}]}
+      ,
+    ),
+    (
+      "entry/src/main/module.json5",
+      #|{"module":{"name":"entry","type":"entry","mainElement":"EntryAbility"}}
+      ,
+    ),
+    (
+      "entry/oh-package.json5",
+      #|{"name":"entry","version":"1.0.0","description":"entry"}
+      ,
+    ),
+    (
+      "AppScope/resources/base/element/string.json",
+      #|{"string":[{"name":"app_name","value":"My MoUI App"}]}
+      ,
+    ),
+    (
+      "entry/src/main/resources/base/element/string.json",
+      #|{"string":[{"name":"app_name","value":"My MoUI App"},{"name":"module_desc","value":"desc"},{"name":"entry_desc","value":"entry"}]}
+      ,
+    ),
+  ]
+  for item in writes {
+    let (rel, content) = item
+    match
+      write_file_bytes_result(
+        join_path(root, rel),
+        @utf8.encode(content[:], bom=false),
+      ) {
+      Ok(_) => ()
+      Err(message) => fail(message)
+    }
+  }
+  let app : ShellApp = {
+    id: "showcase",
+    display_name: "MoUI Showcase",
+    artifact_name: "showcase",
+    app_package: "examples/showcase/app",
+    schema_version: 1,
+    shell_api_version: 1,
+    embedding_api_version: 1,
+    shell: {
+      profile: "handheld",
+      renderer: "auto",
+      status_bar: "hidden",
+      orientation: "any",
+      resources: [],
+      permissions: [],
+      plugins: [],
+      fullscreen: true,
+      supports_scroll: true,
+    },
+    metadata_path: "",
+    plugins: [],
+    android: None,
+    ios: None,
+    harmonyos: Some({
+      bundle_name: "dev.wzzc.moui.showcase",
+      product_name: "MoUIShowcase",
+      app_name: Some("MoUI Showcase"),
+      module_name: Some("entry"),
+      module_description: Some("module"),
+      entry_description: Some("entry ability"),
+      runner_mode: "managed",
+      compatible_sdk_version: 20,
+    }),
+  }
+  match apply_harmonyos_managed_identity(root, app, "auto") {
+    Ok(_) => ()
+    Err(message) => fail(message)
+  }
+  let app_scope = match read_file_string_optional(join_path(root, "AppScope/app.json5")) {
+    Some(value) => value
+    None => fail("missing rewritten app.json5")
+  }
+  assert_true(app_scope.contains("dev.wzzc.moui.showcase"))
+  let generated = match
+    read_file_string_optional(
+      join_path(root, "entry/src/main/ets/moui/MoUIGeneratedConfig.ets"),
+    ) {
+    Some(value) => value
+    None => fail("missing generated config")
+  }
+  assert_true(generated.contains("moui-showcase-harmonyos"))
+  assert_true(generated.contains("fullscreen: true"))
+  remove_tree(root)
+}

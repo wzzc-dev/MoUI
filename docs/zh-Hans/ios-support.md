@@ -123,13 +123,12 @@ managed SwiftUI shell 是默认值。输出 bundle 会在 `MOUIShellMode` 中记
 
 应用可直接使用 `scripts/build-shell-ios-app.sh --app ...`；managed shell 不保留旧 runner 分支。
 
-外部 schema v1 app 在 application workspace 中只保留 `shell.json`、resources、plugins 和 MoonBit shell entrypoint。package-published script 会自动 staging canonical Xcode project：
+外部 schema v1 app 在 application workspace 中只保留 `shell.json`、resources、plugins 和 MoonBit shell entrypoint。`moui build ios` 会自动 staging canonical Xcode project：
 
 ```sh
-.mooncakes/wzzc-dev/moui_shell/scripts/build-ios-app.sh \
+moui build ios my_app \
   --workspace-root "$PWD" \
   --moui-root "$PWD/.mooncakes/wzzc-dev/moui" \
-  --app my_app \
   --app-config "$PWD/shell.json"
 ```
 
