@@ -370,6 +370,7 @@ fn MarkdownEditorApp::find_bar(
 ) -> @moui.View[MarkdownEditorMsg] {
   let query = self.find_query.get()
   let matches = self.find_matches.get()
+  let options = self.find_options.get()
   frame(
     row(
       [
@@ -403,26 +404,20 @@ fn MarkdownEditorApp::find_bar(
           "Aa",
           "Match case",
           ToggleFindCaseSensitive,
-          self.find_options.get().case_sensitive,
+          options.case_sensitive,
           theme,
         ),
         editor_find_toggle(
           "W",
           "Whole word",
           ToggleFindWholeWord,
-          self.find_options.get().whole_word,
+          options.whole_word,
           theme,
         ),
-        editor_find_toggle(
-          ".*",
-          "Regex",
-          ToggleFindRegex,
-          self.find_options.get().regex,
-          theme,
-        ),
+        editor_find_toggle(".*", "Regex", ToggleFindRegex, options.regex, theme),
         text(
-          markdown_editor_find_status_label(query, matches, selection),
-          width=72.0,
+          markdown_editor_find_status_label(query, matches, selection, options~),
+          width=88.0,
           height=34.0,
         )
         .font(theme.typography.caption)

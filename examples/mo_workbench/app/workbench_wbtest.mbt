@@ -591,13 +591,16 @@ test "task filter cycles all active running failed" {
 
 ///|
 test "task filter direct messages select concrete views" {
-  let model = test_model(script=_cmd => [])
+  let model = { ..test_model(script=_cmd => []), active_tab: TopTab::Work }
   let (model, _effect) = model.update(WorkbenchMsg::ShowRunningTasks)
   inspect(model.task_filter == TaskFilter::RunningTasks, content="true")
+  inspect(model.active_tab == TopTab::Code, content="true")
   let (model, _effect) = model.update(WorkbenchMsg::ShowFailedTasks)
   inspect(model.task_filter == TaskFilter::FailedTasks, content="true")
+  inspect(model.active_tab == TopTab::Code, content="true")
   let (model, _effect) = model.update(WorkbenchMsg::ShowAllTasks)
   inspect(model.task_filter == TaskFilter::AllTasks, content="true")
+  inspect(model.active_tab == TopTab::Code, content="true")
 }
 
 ///|

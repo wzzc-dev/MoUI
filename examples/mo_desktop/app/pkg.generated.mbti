@@ -51,6 +51,8 @@ pub(all) struct DesktopModel {
   window_offset_x : Double
   window_offset_y : Double
   finder_location : FinderLocation
+  finder_history : Array[FinderLocation]
+  finder_history_index : Int
   finder_view_mode : FinderViewMode
   finder_query : String
   selected_file : String
@@ -150,6 +152,8 @@ pub(all) enum Msg {
   ToggleNotificationCenter
   DismissOverlay
   SelectFinderLocation(FinderLocation)
+  GoFinderBack
+  GoFinderForward
   SelectFinderView(FinderViewMode)
   FinderQueryChanged(String)
   SelectFinderItem(String)

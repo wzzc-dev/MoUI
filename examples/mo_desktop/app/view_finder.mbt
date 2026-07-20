@@ -101,12 +101,16 @@ fn finder_toolbar(
     [
       toolbar_nav_button(
         @views.IconName::ChevronLeft,
-        "Back history is unavailable",
+        "Go back",
+        GoFinderBack,
+        model.can_go_finder_back(),
         palette,
       ),
       toolbar_nav_button(
         @views.IconName::ChevronRight,
-        "Forward history is unavailable",
+        "Go forward",
+        GoFinderForward,
+        model.can_go_finder_forward(),
         palette,
       ),
     ],
@@ -211,16 +215,29 @@ fn finder_control_border(dark : Bool) -> @graphics.Color {
 fn toolbar_nav_button(
   icon : @views.IconName,
   label : String,
+  message : Msg,
+  enabled : Bool,
   palette : DesktopPalette,
 ) -> @moui.View[Msg] {
   @views.container(
-    desktop_icon(icon, 13.0, palette.muted),
+    desktop_icon(
+      icon,
+      13.0,
+      if enabled {
+        palette.foreground
+      } else {
+        palette.muted.multiply_alpha(0.55)
+      },
+    ),
     width=26.0,
     height=26.0,
     background=rgba8(0, 0, 0, a=0.0),
     corner_radius=6.0,
     padding=6.0,
-  ).accessibility_label(label)
+  )
+  .on_tap(message)
+  .disabled(disabled=!enabled)
+  .accessibility_label(label)
 }
 
 ///|

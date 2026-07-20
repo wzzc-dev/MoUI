@@ -67,7 +67,7 @@ after changing repository example shell metadata.
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
 | Code Editor | Native code editor shell and language-provider prototype | `examples/code_editor/app/` | Native `moui_richtext` editor shell with activity rail, file tab, line-number gutter, status bar, tokenizer-backed highlighting, bracket matching, auto indentation, multi-cursor edits, hidden find/replace overlay, runtime action-command shortcuts, completion overlay, diagnostics, hover, go-to-definition, main-editor Diff mode, and custom language/provider registration through app-owned callbacks |
 | Mo Desktop | macOS-inspired responsive desktop simulation | `examples/mo_desktop/app/` | Lock/unlock session, image wallpaper, menu bar, live dock, calendar/weather/task widgets, responsive Finder with navigation/search/icon-list modes/selection, Safari start page and search results, searchable Apps/Actions launcher, notifications, Control Center toggles/sliders, global light/dark appearance, Web wasm-gc and macOS Skia entrypoints |
-| Mo Workbench | Native-Skia-first desktop agent dogfood app | `examples/mo_workbench/app/` | DeepSeek-GUI-inspired multi-workspace shell with Code chat, starter cards, backend-aware OpenSeek/ACP controls, responsive left rail, optional right inspector, low-noise status bar, grouped Settings form, static Write/Connect Phone/Scheduled Tasks/Plugins surfaces, injected stub backend, OpenSeek native transport, generic ACP stdio native transport, macOS Skia native entrypoint |
+| Mo Workbench | Native-Skia-first desktop agent dogfood app | `examples/mo_workbench/app/` | Work/Code/Design task shell with a session dashboard, interactive coding-agent chat, product-state/palette preview, responsive searchable task sidebar, settings overlay, backend-aware OpenSeek/ACP controls, injected stub backend, OpenSeek native transport, generic ACP stdio native transport, and a macOS Skia entrypoint |
 
 Focused Website checks:
 
@@ -561,16 +561,28 @@ moon build examples/mo_desktop/macos_skia --target native
 
 ## Mo Workbench
 
-Mo Workbench is the native-Skia-first desktop agent dogfood app. The current shared app package is a platform-neutral multi-workspace shell inspired by DeepSeek-GUI: a left workspace rail, center work surface, topbar controls, optional right inspector, and low-noise status bar. Code is the only interactive agent workspace today; it uses an injected `AgentBackendRuntime` stub by default, while the macOS Skia entrypoint can select either the OpenSeek backend or a generic ACP stdio subprocess backend from settings.
+Mo Workbench is the native-Skia-first desktop agent dogfood app. Its portable
+shared app package is a  `Work` / `Code` / `Design` task shell with a
+responsive task sidebar and injected `AgentBackendRuntime`; the macOS Skia
+entrypoint selects OpenSeek or a generic ACP stdio subprocess backend from
+settings.
 
-The current workspaces are:
+The current surfaces are:
 
-- **Code**: session history, message timeline, starter cards, model/thinking controls, prompt composer, steering while streaming, and fixed inspector cards for plan, todo, changes, and context.
-- **Write**: product-shaped static Markdown editor/assistant shell. It does not save files or call completion services yet.
-- **Connect Phone**: static channel/timeline setup shell for future IM and webhook automation.
-- **Scheduled Tasks**: static task cards and defaults panel for future scheduled prompts.
-- **Plugins**: static capability summary for future Skills/MCP/Web tool management.
-- **Settings**: runtime and permission preferences for backend selection, OpenAI-compatible provider settings, ACP command/args/cwd, working directory, approval policy, sandbox mode, and font size.
+- **Work**: session summary cards, next actions, and recent tasks. Review,
+  Running, and All task actions open the Code tab with the matching sidebar
+  filter.
+- **Code**: session history, message timeline, starter cards, model/thinking or
+  ACP controls, prompt composer, steering while streaming, and permission
+  responses.
+- **Design**: live task/model/settings/typography state plus control and palette
+  previews; it is not a design-document editor.
+- **Settings overlay**: API, Agent, and Editor preferences for backend/provider
+  configuration, ACP command/args/cwd, working directory, approval policy,
+  sandbox, appearance, and font size.
+
+The sidebar supports task search, status filters, expandable task groups,
+settings, and the appearance toggle.
 
 The ACP backend implements stdio JSON-RPC as an ACP client/control side. It supports baseline session creation, prompt turns, cancellation, session updates, mode/config updates, and permission requests. It intentionally advertises no client filesystem or terminal capability in this slice.
 

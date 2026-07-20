@@ -5,7 +5,7 @@
 </div>
 
 Mo Workbench is the native-Skia-first desktop agent dogfood app in the MoUI
-workspace. It is a TRAE-style task workbench shell with three top tabs
+workspace. It is a  task workbench shell with three top tabs
 (`Work` / `Code` / `Design`) and a side settings panel, wired over an
 `AgentBackendRuntime` so the same shell renders an empty state, a code chat
 surface, and a settings form from one shared

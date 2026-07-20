@@ -39,6 +39,71 @@ test "finder and browser interactions update controlled state" {
 }
 
 ///|
+test "finder history restores locations and drops the forward branch" {
+  let model = DesktopModel::new()
+    .update(UnlockDesktop)
+    .update(SelectFinderLocation(Downloads))
+    .update(SelectFinderLocation(Applications))
+  debug_inspect(
+    model.finder_history,
+    content="[Documents, Downloads, Applications]",
+  )
+  inspect(model.finder_history_index, content="2")
+  let back = model.update(GoFinderBack)
+  debug_inspect(back.finder_location, content="Downloads")
+  inspect(back.finder_history_index, content="1")
+  debug_inspect(
+    back.update(GoFinderForward).finder_location,
+    content="Applications",
+  )
+  let branch = back.update(SelectFinderLocation(Documents))
+  debug_inspect(
+    branch.finder_history,
+    content="[Documents, Downloads, Documents]",
+  )
+  inspect(branch.finder_history_index, content="2")
+  debug_inspect(
+    branch.update(GoFinderBack).finder_location,
+    content="Downloads",
+  )
+}
+
+///|
+test "host completions retain imported files and respect system appearance" {
+  let import_request = @host.HostServiceRequest::FileDialog(
+    @host.HostFileDialogOptions::new(kind=@host.HostFileDialogKind::OpenFile),
+  )
+  let pending = @host.HostServiceRequestId::new(42)
+  let waiting = DesktopModel::new().update(
+    HostCompleted({
+      id: pending,
+      request: import_request,
+      response: @host.HostServiceResponse::Pending(pending),
+    }),
+  )
+  debug_inspect(waiting.pending_service, content="Some({ value: 42 })")
+  let imported = waiting.update(
+    HostCompleted({
+      id: pending,
+      request: import_request,
+      response: @host.HostServiceResponse::FileDialogSelection([
+        "/tmp/notes.md", "/tmp/notes.md", "/tmp/tahoe.jpg",
+      ]),
+    }),
+  )
+  inspect(imported.imported_files.length(), content="2")
+  inspect(imported.last_diagnostic, content="Imported 3 file(s)")
+  let dark = imported.update(
+    HostCompleted({
+      id: @host.HostServiceRequestId::new(43),
+      request: @host.HostServiceRequest::QuerySystemTheme,
+      response: @host.HostServiceResponse::SystemTheme(@state.ColorScheme::Dark),
+    }),
+  )
+  assert_true(dark.dark_mode)
+}
+
+///|
 test "control center values and notification tasks are model owned" {
   let model = DesktopModel::new()
     .update(WifiChanged(false))

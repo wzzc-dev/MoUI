@@ -112,6 +112,8 @@ pub(all) struct DesktopModel {
   window_offset_x : Double
   window_offset_y : Double
   finder_location : FinderLocation
+  finder_history : Array[FinderLocation]
+  finder_history_index : Int
   finder_view_mode : FinderViewMode
   finder_query : String
   selected_file : String
@@ -150,6 +152,8 @@ pub(all) enum Msg {
   ToggleNotificationCenter
   DismissOverlay
   SelectFinderLocation(FinderLocation)
+  GoFinderBack
+  GoFinderForward
   SelectFinderView(FinderViewMode)
   FinderQueryChanged(String)
   SelectFinderItem(String)
@@ -190,6 +194,8 @@ pub fn DesktopModel::new(
     window_offset_x: 0.0,
     window_offset_y: 0.0,
     finder_location: Documents,
+    finder_history: [Documents],
+    finder_history_index: 0,
     finder_view_mode: IconView,
     finder_query: "",
     selected_file: "",
@@ -334,24 +340,8 @@ fn DesktopModel::apply(self : DesktopModel, message : Msg) -> DesktopModel {
             overlay: OverlayNone,
             window_maximized: false,
           }
-        OpenDocuments =>
-          {
-            ..self,
-            active_window: Finder,
-            overlay: OverlayNone,
-            finder_location: Documents,
-            finder_query: "",
-            selected_file: "",
-          }
-        OpenDownloads =>
-          {
-            ..self,
-            active_window: Finder,
-            overlay: OverlayNone,
-            finder_location: Downloads,
-            finder_query: "",
-            selected_file: "",
-          }
+        OpenDocuments => self.visit_finder_location(Documents)
+        OpenDownloads => self.visit_finder_location(Downloads)
         OpenLauncher => { ..self, overlay: Launcher }
         OpenNotificationCenter => { ..self, overlay: NotificationCenter }
         ShowFinderIconView =>
@@ -421,14 +411,18 @@ fn DesktopModel::apply(self : DesktopModel, message : Msg) -> DesktopModel {
         },
       }
     DismissOverlay => { ..self, overlay: OverlayNone }
-    SelectFinderLocation(location) =>
-      {
-        ..self,
-        active_window: Finder,
-        overlay: OverlayNone,
-        finder_location: location,
-        finder_query: "",
-        selected_file: "",
+    SelectFinderLocation(location) => self.visit_finder_location(location)
+    GoFinderBack =>
+      if self.can_go_finder_back() {
+        self.restore_finder_history(self.finder_history_index - 1)
+      } else {
+        self
+      }
+    GoFinderForward =>
+      if self.can_go_finder_forward() {
+        self.restore_finder_history(self.finder_history_index + 1)
+      } else {
+        self
       }
     SelectFinderView(view_mode) => { ..self, finder_view_mode: view_mode }
     FinderQueryChanged(value) => { ..self, finder_query: value }
@@ -531,13 +525,11 @@ fn DesktopModel::apply_host_completion(
           imported_files.push(path)
         }
       }
+      let navigated = self.visit_finder_location(Documents)
       {
-        ..self,
+        ..navigated,
         imported_files,
         pending_service: None,
-        active_window: Finder,
-        overlay: OverlayNone,
-        finder_location: Documents,
         last_diagnostic: if paths.is_empty() {
           "File import cancelled"
         } else {
@@ -556,6 +548,70 @@ fn DesktopModel::apply_host_completion(
         last_diagnostic: "Host service completed",
       }
   }
+}
+
+///|
+fn DesktopModel::visit_finder_location(
+  self : DesktopModel,
+  location : FinderLocation,
+) -> DesktopModel {
+  if self.finder_location == location {
+    return {
+      ..self,
+      active_window: Finder,
+      overlay: OverlayNone,
+      finder_query: "",
+      selected_file: "",
+    }
+  }
+  let history : Array[FinderLocation] = []
+  let keep_count = self.finder_history_index + 1
+  for index, visited in self.finder_history {
+    if index < keep_count {
+      history.push(visited)
+    }
+  }
+  history.push(location)
+  {
+    ..self,
+    active_window: Finder,
+    overlay: OverlayNone,
+    finder_location: location,
+    finder_history: history,
+    finder_history_index: history.length() - 1,
+    finder_query: "",
+    selected_file: "",
+  }
+}
+
+///|
+fn DesktopModel::restore_finder_history(
+  self : DesktopModel,
+  index : Int,
+) -> DesktopModel {
+  match self.finder_history.get(index) {
+    Some(location) =>
+      {
+        ..self,
+        active_window: Finder,
+        overlay: OverlayNone,
+        finder_location: location,
+        finder_history_index: index,
+        finder_query: "",
+        selected_file: "",
+      }
+    None => self
+  }
+}
+
+///|
+fn DesktopModel::can_go_finder_back(self : DesktopModel) -> Bool {
+  self.finder_history_index > 0
+}
+
+///|
+fn DesktopModel::can_go_finder_forward(self : DesktopModel) -> Bool {
+  self.finder_history_index + 1 < self.finder_history.length()
 }
 
 ///|
@@ -594,6 +650,8 @@ fn Msg::diagnostic(self : Msg) -> String {
     ToggleNotificationCenter => "Toggled Notification Center"
     DismissOverlay => "Dismissed active overlay"
     SelectFinderLocation(_) => "Changed Finder location"
+    GoFinderBack => "Navigated Finder back"
+    GoFinderForward => "Navigated Finder forward"
     SelectFinderView(_) => "Changed Finder view"
     FinderQueryChanged(_) => "Changed Finder search"
     SelectFinderItem(_) => "Selected Finder item"
