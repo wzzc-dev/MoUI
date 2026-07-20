@@ -21,10 +21,63 @@ moon install wzzc-dev/moui_cli/cmd/moui
 | `moui doctor` | Diagnose toolchains and project contracts |
 | `moui plugin new` | Scaffold a managed shell plugin |
 | `moui package` | Print project package inventory |
+| `moui run` | Build, install, and launch a mobile app on a device or emulator |
+| `moui devices` | List connected Android / iOS / HarmonyOS devices and emulators |
+| `moui verify` | Verify mobile app runtime evidence against the managed shell contract |
+| `moui config` | Get/set MoUI CLI configuration values (XDG-backed) |
 | `moui shell eject` | Materialize an app-owned shell shell |
 
 `moui --version` prints the **CLI version** and the **default framework
 dependency version** written by `moui new`. Those two numbers are independent.
+
+## Mobile development
+
+`moui run` orchestrates build → install → launch on Android / iOS / HarmonyOS.
+It relies on the platform toolchains (`adb` / `xcrun` / `hdc`) being on PATH
+and on the M6 `build_*` glue to produce the artifact under
+`artifacts/<platform>/<app>/`.
+
+```sh
+# List connected devices
+moui devices
+
+# Build, install, and launch the showcase app on the first Android device
+moui run android showcase
+
+# Build only (no install / launch)
+moui run harmonyos showcase --build-only
+
+# Launch with a specific device and follow logs
+moui run ios showcase --device UUID-DEAD --debug
+
+# Run the runtime probe and write verify-manifest.json
+moui verify android showcase --require-passed
+```
+
+## Configuration (XDG-backed)
+
+`moui config` stores user preferences at `$XDG_CONFIG_HOME/moui/config.json`
+(or `%APPDATA%\moui\config.json` on Windows). Every field is optional — a
+missing file degrades gracefully into `default_cli_config()`.
+
+```sh
+# Show the config file path
+moui config show-path
+
+# Get a single value
+moui config get harmonyos.sdkHome
+
+# Set a value (persisted)
+moui config set android.sdkHome /opt/android-sdk
+
+# List all set values
+moui config list
+```
+
+Supported sections: `harmonyos` (`sdkHome`, `hvigorw`, `ohpm`,
+`signingConfigFile`), `android` (`sdkHome`, `ndkHome`, `compileSdk`,
+`targetSdk`), `ios` (`sdk`, `arch`, `deploymentTarget`), `paths` (`moonHome`,
+`mouiRoot`, `skiaRoot`).
 
 ## Create a project
 

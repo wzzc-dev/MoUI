@@ -45,6 +45,8 @@ Mechanization batch1 (done): `docs/plans/done/harness-mechanize-invariants-batch
 | M6 | Shell services cross `EmbedderHostChannel`; JNI/Obj-C++/NAPI adapters are thin wire translators only. `moui_shell/embedding` owns the ABI provider, compatibility, and fixed native dispatch; Android/iOS/HarmonyOS backends register neutral MoonBit runtime callbacks around the package-private `backend/internal/embedded_runtime_session`. | API import whitelist + code review | none |
 | M7 | Shell runtime manifests: `passed` (complete evidence) / `partial` (useful run with missing observations) / `failed` (no usable evidence); `--require-passed` rejects both `partial` and `failed` | `validate_shell_runtime_manifest` | none |
 | M8 | Mobile acceptance evidence requires clipboard write/read completion, two distinct surface sizes, accessibility tree/focus/action, async loading/ready logs | code review | none |
+| M9 | `moui_cli` is the sole entry point for mobile build / run / verify; `moui_shell/scripts/build-*.sh` are not invoked externally — they delegate to `moui_cli build-*` commands | code review | none |
+| M10 | `build-ios-app-core.sh` must remain a thin launcher that forwards to `moui_cli build-ios-core` — it must not re-implement the build logic | code review | none |
 
 ## API and Code Discipline
 

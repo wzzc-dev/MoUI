@@ -55,6 +55,7 @@ test "doctor JSON preserves status, required, and ok fields" {
         remediation: "",
       },
     ],
+    evidence: Map([]),
   }
   let text = report.to_json_text()
   let parsed = @json.parse(text) catch { _ => fail("doctor JSON must parse") }
