@@ -157,7 +157,7 @@ owning-package boundaries clear.
   native WKWebView platform-view sync, and CAMetalLayer WGPU surface creation.
 - `backend/windows/`: Win32/window host, resolver-backed multi-window slots,
   optional WebView2 platform-view sync, and HWND WGPU surface creation.
-- `backend/linux/`: Wayland host over `wzzc-dev/window@0.5.1-0.1.7-2`, Linux
+- `backend/linux/`: Wayland host over `wzzc-dev/window@0.5.1-0.1.7-3`, Linux
   host-service bridge, text-input/IME request sync, drag/drop conversion, a
   native Skia mainline presenter path plus native WGPU diagnostic surface path,
   optional WebKitGTK platform-view sync, shared host event conversion, and
@@ -315,7 +315,7 @@ sh scripts/check.sh --profile daily
 
 The daily check runs `node scripts/validate-window-dependency.mjs`, which
 confirms that all known consumers pin the same published
-`wzzc-dev/window@0.5.1-0.1.7-2` version and that `moon.work` does not include a
+`wzzc-dev/window@0.5.1-0.1.7-3` version and that `moon.work` does not include a
 local window checkout.
 Keep the root README focused on reviewer/user quick paths; detailed `window/`
 submodule and local-source instructions belong in `docs/development.md` and this
@@ -426,7 +426,7 @@ Linux, and WebGPU wasm proof
 artifacts to validate as passed before mainline capability promotion; native
 WGPU diagnostic artifacts are uploaded separately but do not block the summary.
 The platform evidence manifest is schema v2 and records the
-`wzzc-dev/window@0.5.1-0.1.7-2` package monitor/cursor probe as
+`wzzc-dev/window@0.5.1-0.1.7-3` package monitor/cursor probe as
 `monitorCursor`; native passed entries must set it to
 `yes`, while Web browser-session evidence may leave it pending. Native passed
 entries must also set `imeCandidateAnchor`, `imeSurroundingText`,
@@ -480,7 +480,7 @@ first-frame line, respectively.
 Use `record-macos-platform-runtime-evidence.mjs` only for macOS platform
 promotion after macOS `skiaEvidence` is passed and every native IME observation
 has already been recorded by `record-native-ime-evidence.mjs`. The macOS helper
-validates the `wzzc-dev/window@0.5.1-0.1.7-2` package runtime smoke transcript
+validates the `wzzc-dev/window@0.5.1-0.1.7-3` package runtime smoke transcript
 through `--window-smoke-log` for window/open/resize/redraw/input/monitor/cursor/shutdown
 source observations, and validates a Showcase or Markdown Editor `macos_skia`
 first-frame source log through `--app-runtime-log` before delegating to the

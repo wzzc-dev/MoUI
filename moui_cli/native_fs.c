@@ -29,6 +29,20 @@
 extern char **environ;
 #endif
 
+/*
+ * moui_cli_write_stderr — write a UTF-8 message followed by a newline to the
+ * process's stderr stream. Used by the `cli_log.mbt` helpers. The text passed
+ * in must already include any desired trailing newline; this function adds
+ * one unconditionally to match `println` semantics.
+ */
+MOONBIT_FFI_EXPORT void moui_cli_write_stderr(moonbit_bytes_t text) {
+  if (text != NULL) {
+    fputs((const char *)text, stderr);
+  }
+  fputc('\n', stderr);
+  fflush(stderr);
+}
+
 #ifdef __linux__
 #include <fcntl.h>
 #include <sys/syscall.h>
@@ -233,195 +247,11 @@ MOONBIT_FFI_EXPORT int32_t moui_cli_path_resolves_within(
 #endif
 }
 
-static int32_t moui_cli_doctor_probe_arguments(
-    int32_t kind,
-    const char **arguments,
-    int32_t capacity) {
-  if (capacity < 5) {
-    return -1;
-  }
-  switch (kind) {
-    case 1:
-      arguments[0] = "-version";
-      return 1;
-    case 2:
-      arguments[0] = "--version";
-      return 1;
-    case 3:
-      arguments[0] = "swiftc";
-      arguments[1] = "--version";
-      return 2;
-    case 4:
-      arguments[0] = "--exists";
-      arguments[1] = "wayland-client";
-      arguments[2] = "wayland-cursor";
-      arguments[3] = "wayland-protocols";
-      return 4;
-    case 5:
-      arguments[0] = "-p";
-      return 1;
-    default:
-      return -1;
-  }
-}
-
-#ifdef _WIN32
-static wchar_t *moui_cli_doctor_probe_command(
-    const wchar_t *executable,
-    const char **arguments,
-    int32_t argument_count) {
-  size_t length = wcslen(executable) + 3;
-  for (int32_t index = 0; index < argument_count; ++index) {
-    length += strlen(arguments[index]) + 1;
-  }
-  wchar_t *command = (wchar_t *)calloc(length + 1, sizeof(wchar_t));
-  if (command == NULL) {
-    return NULL;
-  }
-  wcscat(command, L"\"");
-  wcscat(command, executable);
-  wcscat(command, L"\"");
-  for (int32_t index = 0; index < argument_count; ++index) {
-    size_t argument_length = strlen(arguments[index]);
-    wchar_t *wide = (wchar_t *)calloc(argument_length + 1, sizeof(wchar_t));
-    if (wide == NULL) {
-      free(command);
-      return NULL;
-    }
-    for (size_t unit = 0; unit < argument_length; ++unit) {
-      wide[unit] = (wchar_t)(unsigned char)arguments[index][unit];
-    }
-    wcscat(command, L" ");
-    wcscat(command, wide);
-    free(wide);
-  }
-  return command;
-}
-#endif
-
 /*
- * Runs one fixed, read-only doctor probe without a command shell. Returns 0
- * for success, 1 for a non-zero tool exit, and 101/102 for setup/spawn errors.
+ * The previous `moui_cli_run_doctor_probe` + `moui_cli_doctor_probe_arguments`
+ * + `moui_cli_doctor_probe_command` C helpers were removed in M10 — the probe
+ * is now implemented in MoonBit via `process_exec_argv` (see doctor_toolchain.mbt).
  */
-MOONBIT_FFI_EXPORT int32_t moui_cli_run_doctor_probe(
-    moonbit_bytes_t executable,
-    moonbit_bytes_t output_path,
-    int32_t kind) {
-  const char *arguments[5] = {NULL, NULL, NULL, NULL, NULL};
-  int32_t argument_count =
-      moui_cli_doctor_probe_arguments(kind, arguments, 5);
-  if (argument_count < 0) {
-    return 101;
-  }
-#ifdef _WIN32
-  wchar_t *executable_wide =
-      moui_cli_utf8_to_wide((const char *)executable);
-  wchar_t *output_wide = moui_cli_utf8_to_wide((const char *)output_path);
-  if (executable_wide == NULL || output_wide == NULL) {
-    free(executable_wide);
-    free(output_wide);
-    return 101;
-  }
-  SECURITY_ATTRIBUTES security;
-  ZeroMemory(&security, sizeof(security));
-  security.nLength = sizeof(security);
-  security.bInheritHandle = TRUE;
-  HANDLE output_handle = CreateFileW(
-      output_wide,
-      GENERIC_WRITE,
-      FILE_SHARE_READ,
-      &security,
-      CREATE_ALWAYS,
-      FILE_ATTRIBUTE_NORMAL,
-      NULL);
-  free(output_wide);
-  if (output_handle == INVALID_HANDLE_VALUE) {
-    free(executable_wide);
-    return 101;
-  }
-  wchar_t *command = moui_cli_doctor_probe_command(
-      executable_wide, arguments, argument_count);
-  if (command == NULL) {
-    CloseHandle(output_handle);
-    free(executable_wide);
-    return 101;
-  }
-  STARTUPINFOW startup;
-  PROCESS_INFORMATION process;
-  ZeroMemory(&startup, sizeof(startup));
-  ZeroMemory(&process, sizeof(process));
-  startup.cb = sizeof(startup);
-  startup.dwFlags = STARTF_USESTDHANDLES;
-  startup.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
-  startup.hStdOutput = output_handle;
-  startup.hStdError = output_handle;
-  BOOL created = CreateProcessW(
-      executable_wide,
-      command,
-      NULL,
-      NULL,
-      TRUE,
-      CREATE_NO_WINDOW,
-      NULL,
-      NULL,
-      &startup,
-      &process);
-  free(command);
-  free(executable_wide);
-  if (!created) {
-    CloseHandle(output_handle);
-    return 102;
-  }
-  WaitForSingleObject(process.hProcess, INFINITE);
-  DWORD exit_code = 1;
-  BOOL read_exit = GetExitCodeProcess(process.hProcess, &exit_code);
-  CloseHandle(process.hThread);
-  CloseHandle(process.hProcess);
-  CloseHandle(output_handle);
-  return read_exit && exit_code == 0 ? 0 : 1;
-#else
-  int output_fd = open(
-      (const char *)output_path,
-      O_WRONLY | O_CREAT | O_TRUNC,
-      S_IRUSR | S_IWUSR);
-  if (output_fd < 0) {
-    return 101;
-  }
-  posix_spawn_file_actions_t actions;
-  if (posix_spawn_file_actions_init(&actions) != 0) {
-    close(output_fd);
-    return 101;
-  }
-  if (posix_spawn_file_actions_adddup2(
-          &actions, output_fd, STDOUT_FILENO) != 0 ||
-      posix_spawn_file_actions_adddup2(
-          &actions, output_fd, STDERR_FILENO) != 0) {
-    posix_spawn_file_actions_destroy(&actions);
-    close(output_fd);
-    return 101;
-  }
-  char *argv[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
-  argv[0] = (char *)executable;
-  for (int32_t index = 0; index < argument_count; ++index) {
-    argv[index + 1] = (char *)arguments[index];
-  }
-  pid_t child = 0;
-  int spawn_status = posix_spawnp(
-      &child, (const char *)executable, &actions, NULL, argv, environ);
-  posix_spawn_file_actions_destroy(&actions);
-  close(output_fd);
-  if (spawn_status != 0) {
-    return 102;
-  }
-  int status = 0;
-  while (waitpid(child, &status, 0) < 0) {
-    if (errno != EINTR) {
-      return 102;
-    }
-  }
-  return WIFEXITED(status) && WEXITSTATUS(status) == 0 ? 0 : 1;
-#endif
-}
 
 #ifdef _WIN32
 static int32_t moui_cli_run_validation_command_windows(

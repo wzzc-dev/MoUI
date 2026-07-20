@@ -34,6 +34,7 @@ priv struct DoctorReport {
   project_root : String
   platforms : Array[String]
   checks : Array[DoctorCheck]
+  evidence : Map[String, EvidenceStatus]
 }
 
 ///|
@@ -75,16 +76,6 @@ fn path_is_dir(path : String) -> Bool {
 }
 
 ///|
-fn first_existing_file(paths : Array[String]) -> String? {
-  for path in paths {
-    if path != "" && path_is_file(path) {
-      return Some(path)
-    }
-  }
-  None
-}
-
-///|
 fn path_is_nonempty_file(path : String) -> Bool {
   if !path_is_file(path) {
     return false
@@ -94,73 +85,16 @@ fn path_is_nonempty_file(path : String) -> Bool {
 }
 
 ///|
-fn first_executable(paths : Array[String]) -> String? {
-  for path in paths {
-    if path != "" && path_is_nonempty_file(path) && path_is_executable(path) {
-      return Some(path)
-    }
-  }
-  None
-}
-
-///|
-fn path_entries(host : HostPlatform) -> Array[String] {
-  match @env.get_env_var("PATH") {
-    Some(value) => {
-      let separator = if host == Windows { ";" } else { ":" }
-      value.split(separator).map(part => part.to_owned()).to_array()
-    }
-    None => []
-  }
-}
-
-///|
-fn executable_names(name : String, host : HostPlatform) -> Array[String] {
-  if host == Windows {
-    if name.to_lower().has_suffix(".exe") {
-      [name]
-    } else {
-      [name + ".exe", name + ".cmd", name + ".bat", name]
-    }
-  } else {
-    [name]
-  }
-}
-
-///|
+/// Backward-compatible alias for `find_in_path` defined in `cli_path.mbt`.
+/// Existing doctor call sites continue to use the `find_executable` name.
 fn find_executable(name : String, host : HostPlatform) -> String? {
-  for directory in path_entries(host) {
-    let root = if directory == "" { "." } else { directory }
-    for candidate in executable_names(name, host) {
-      let path = join_path(root, candidate)
-      if path_is_nonempty_file(path) && path_is_executable(path) {
-        return Some(path)
-      }
-    }
-  }
-  None
+  find_in_path(name, host)
 }
 
 ///|
-fn find_executable_in_home(
-  name : String,
-  home : String?,
-  host : HostPlatform,
-) -> String? {
-  match home {
-    Some(root) => {
-      let candidates : Array[String] = []
-      for executable in executable_names(name, host) {
-        candidates.push(join_path(root, "bin/" + executable))
-      }
-      match first_executable(candidates) {
-        Some(path) => return Some(path)
-        None => ()
-      }
-    }
-    None => ()
-  }
-  find_executable(name, host)
+/// Backward-compatible alias for `first_existing` defined in `cli_path.mbt`.
+fn first_existing_file(paths : Array[String]) -> String? {
+  first_existing(paths)
 }
 
 ///|
@@ -571,6 +505,13 @@ fn run_doctor(options : DoctorOptions) -> Result[DoctorReport, String] {
     checks.push(check)
   }
   let ok = !checks.any(check => check.required && check.status == Fail)
+  // Scan `artifacts/<platform>/*/verify-manifest.json` so the doctor can flag
+  // missing runtime evidence alongside the toolchain checks.
+  let evidence = check_evidence_ready(
+    options.project_root,
+    platforms,
+    host_platform,
+  )
   Ok({
     schema_version: 1,
     ok,
@@ -578,6 +519,7 @@ fn run_doctor(options : DoctorOptions) -> Result[DoctorReport, String] {
     project_root: options.project_root,
     platforms,
     checks,
+    evidence,
   })
 }
 
@@ -597,6 +539,18 @@ fn doctor_check_json(check : DoctorCheck) -> Json {
 ///|
 fn DoctorReport::to_json_text(self : DoctorReport) -> String {
   let checks = self.checks.map(doctor_check_json)
+  let evidence_entries : Array[Json] = []
+  for key, status in self.evidence {
+    let entry : Json = {
+      "key": Json::string(key),
+      "platform": Json::string(status.platform),
+      "appId": Json::string(status.app_id),
+      "manifestPath": Json::string(status.manifest_path),
+      "passed": Json::boolean(status.passed),
+      "observationsSummary": Json::string(status.observations_summary),
+    }
+    evidence_entries.push(entry)
+  }
   let value : Json = {
     "schemaVersion": self.schema_version,
     "ok": self.ok,
@@ -604,6 +558,7 @@ fn DoctorReport::to_json_text(self : DoctorReport) -> String {
     "projectRoot": self.project_root,
     "platforms": self.platforms,
     "checks": checks,
+    "evidence": Json::array(evidence_entries),
   }
   value.stringify(indent=2) + "\n"
 }
@@ -622,6 +577,10 @@ fn DoctorReport::to_human_text(self : DoctorReport) -> String {
     if check.remediation != "" {
       builder.write_string("  Fix: " + check.remediation + "\n")
     }
+  }
+  if not(self.evidence.is_empty()) {
+    builder.write_string("Runtime evidence:\n")
+    builder.write_string(evidence_status_to_text(self.evidence))
   }
   builder.write_string(
     if self.ok {

@@ -90,41 +90,8 @@ fn shell_capability_snapshot_digest(platform : String) -> String {
   sha256_hex(@utf8.encode(snapshot[:], bom=false))
 }
 
-///|
-fn collect_template_files(
-  root : String,
-  relative? : String = "",
-) -> Result[Array[PlannedFile], String] {
-  let directory = if relative == "" { root } else { join_path(root, relative) }
-  let entries : Array[String] = @fs.read_dir(directory) catch {
-    _ => return Err("could not read shell template directory: " + directory)
-  }
-  entries.sort_by((left, right) => left.lexical_compare(right))
-  let files : Array[PlannedFile] = []
-  for name in entries {
-    let child_relative = if relative == "" {
-      name
-    } else {
-      relative + "/" + name
-    }
-    let child = join_path(root, child_relative)
-    if path_is_dir(child) {
-      match collect_template_files(root, relative=child_relative) {
-        Ok(children) =>
-          for file in children {
-            files.push(file)
-          }
-        Err(message) => return Err(message)
-      }
-    } else if path_is_file(child) {
-      let bytes = @fs.read_file_to_bytes(child) catch {
-        _ => return Err("could not read shell template file: " + child)
-      }
-      files.push({ path: child_relative, bytes })
-    }
-  }
-  Ok(files)
-}
+// `collect_template_files` has been extracted to `fsx_walk.mbt`. Call sites in
+// this file resolve the package-visible definition automatically.
 
 ///|
 fn apply_stable_identity_replacements(

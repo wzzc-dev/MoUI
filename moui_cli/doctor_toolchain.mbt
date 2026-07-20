@@ -25,38 +25,31 @@ priv struct DoctorProbeResult {
 }
 
 ///|
-#borrow(executable, output_path)
-extern "C" fn run_doctor_probe_native(
-  executable : Bytes,
-  output_path : Bytes,
-  kind : Int,
-) -> Int = "moui_cli_run_doctor_probe"
-
-///|
-fn doctor_probe_output_path() -> String {
-  let temp = @env.get_env_var("TMPDIR").unwrap_or_else(() => {
-    @env.get_env_var("TEMP").unwrap_or_else(() => {
-      @env.get_env_var("TMP").unwrap_or(".")
-    })
-  })
-  join_path(temp, "moui-doctor-probe-" + @env.now().to_string() + ".log")
-}
-
-///|
+/// Run a fixed, read-only doctor probe via `process_exec_argv`. Replaces the
+/// previous `moui_cli_run_doctor_probe` C FFI. The argv is built from the
+/// `DoctorProbeKind` so the probe semantics stay in MoonBit.
 fn run_doctor_probe(
   executable : String,
   kind : DoctorProbeKind,
 ) -> DoctorProbeResult {
-  let output_path = doctor_probe_output_path()
-  remove_tree(output_path)
-  let status = run_doctor_probe_native(
-    nul_terminated(executable),
-    nul_terminated(output_path),
-    kind.code(),
-  )
-  let output = @fs.read_file_to_string(output_path) catch { _ => "" }
-  remove_tree(output_path)
-  { status, output: output.trim().to_owned() }
+  let argv : Array[String] = match kind {
+    DashVersion => [executable, "-version"]
+    DoubleDashVersion => [executable, "--version"]
+    SwiftCompilerVersion => [executable, "swiftc", "--version"]
+    WaylandPackages =>
+      [
+        executable, "--exists", "wayland-client", "wayland-cursor", "wayland-protocols",
+      ]
+    XcodeDeveloperPath => [executable, "-p"]
+  }
+  match process_exec_argv(argv, capture=true, timeout_ms=30000) {
+    Ok(result) =>
+      {
+        status: result.exit_code,
+        output: (result.stdout + "\n" + result.stderr).trim().to_owned(),
+      }
+    Err(_message) => { status: 102, output: "" }
+  }
 }
 
 ///|

@@ -182,7 +182,7 @@ local workspace members from `moon.work`. The exact list is generated into
 
 ```moonbit
 import {
-  "wzzc-dev/window@0.5.1-0.1.7-2",
+  "wzzc-dev/window@0.5.1-0.1.7-3",
   "wzzc-dev/moui_skia@0.1.7",
 }
 ```
@@ -191,7 +191,7 @@ The MoonBit package ecosystem is still not as mature as older language
 ecosystems. A failing build can come from registry cache state, package
 publication mistakes, or dependency regressions as well as from MoUI code. When
 dependency-related failures appear, first run `moon update`, inspect the
-resolved package versions, and check whether `wzzc-dev/window@0.5.1-0.1.7-2` or
+resolved package versions, and check whether `wzzc-dev/window@0.5.1-0.1.7-3` or
 another package changed behavior.
 
 The `window` package still carries MoUI smoke helpers and evidence docs. Use
@@ -302,6 +302,90 @@ export OPENAI_API_KEY=...   # or DEEPSEEK=...
 export OPENAI_BASE_URL=...  # optional OpenAI-compatible API URL
 moon run examples/mo_workbench/macos_skia --target native
 ```
+
+## Mobile Development Workflow
+
+`moui_cli` is the canonical entry point for mobile build / run / verify. The
+legacy `moui_shell/scripts/build-*.sh` entrypoints are no longer invoked
+externally — `build-ios-app-core.sh` is kept as a thin launcher that forwards
+to `moui_cli build-ios-core` (invariant M9 / M10). Use the standalone CLI
+commands instead of calling those shell scripts directly.
+
+### One-time SDK configuration
+
+`moui config` writes to `$XDG_CONFIG_HOME/moui/config.json` (or
+`%APPDATA%\moui\config.json` on Windows). Missing fields degrade gracefully
+into `default_cli_config()`, so configure only what your environment needs:
+
+```sh
+moui config show-path
+moui config set harmonyos.sdkHome /path/to/commandline-tools
+moui config set android.sdkHome /opt/android-sdk
+moui config set android.ndkHome /opt/android-ndk
+moui config set ios.sdk iphoneos
+moui config list
+```
+
+### List connected devices
+
+```sh
+moui devices                  # all platforms, human-readable
+moui devices --json           # machine-readable
+moui devices --platform android
+```
+
+### Build, install, and launch
+
+`moui run` orchestrates `moui build-*` → install (`adb` / `xcrun simctl` /
+`hdc`) → launch (`am start` / `simctl launch` / `aa start`) → optional log
+follow (`logcat` / `log stream` / `hilog`). Build artifacts land under
+`artifacts/<platform>/<app>/`:
+
+```sh
+moui run android showcase
+moui run ios showcase
+moui run harmonyos showcase
+
+# Build only (no install / launch)
+moui run harmonyos showcase --build-only
+
+# Prepare only (no build / install / launch) — useful for inspecting generated C
+moui run android showcase --prepare-only
+
+# Pin a specific device and follow logs
+moui run ios showcase --device UUID-DEAD --debug
+
+# Pass through extra args after `--` to the launched app
+moui run android showcase -- --user-flag value
+```
+
+### Verify runtime evidence
+
+`moui verify` runs the runtime probe on the staged app, parses
+`[MOUI_PROBE] kind:name=ok|fail` markers from the device log stream, and
+writes `artifacts/<platform>/<app>/verify-manifest.json`. With
+`--require-passed`, the command exits non-zero when any of the 27 required
+observations is missing or fails (invariant M7 / M8):
+
+```sh
+moui verify android showcase
+moui verify android showcase --require-passed
+moui verify ios showcase --device UUID-DEAD
+```
+
+`moui doctor` reports `Runtime evidence:` per platform by scanning
+`artifacts/<platform>/*/verify-manifest.json`, so a failed `moui verify` shows
+up in the next doctor run.
+
+### Platform setup
+
+The platform setup, simulator/emulator installation, SDK environment
+variables, and runtime-evidence requirements still live on the dedicated
+platform pages:
+
+- [android-support.md](android-support.md) — Activity/Surface ownership, SDK/NDK setup
+- [ios-support.md](ios-support.md) — SwiftUI/UIKit ownership, Xcode CLI, simulator install
+- [harmonyos-support.md](harmonyos-support.md) — Stage Ability/XComponent, DevEco SDK
 
 ## Validation
 

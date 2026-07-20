@@ -91,6 +91,7 @@ test "doctor required failures use exit code one" {
     project_root: "/workspace",
     platforms: ["android"],
     checks: [],
+    evidence: Map([]),
   }
   let outcome = doctor_report_outcome(report, true)
   inspect(outcome.exit_code, content="1")
@@ -111,7 +112,7 @@ test "help and version routes succeed" {
   inspect(version_result.exit_code, content="0")
   let parsed = @json.parse(version_result.stdout)
   guard parsed is Object(root) else { fail("expected version JSON") }
-  inspect(root.get("version") == Some("0.1.0".to_json()), content="true")
+  inspect(root.get("version") == Some("0.2.0".to_json()), content="true")
   inspect(
     root.get("defaultMouiDependencyVersion") ==
     Some(default_moui_dependency_version.to_json()),

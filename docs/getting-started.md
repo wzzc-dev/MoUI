@@ -79,6 +79,30 @@ moon build web_wasm --target wasm-gc
 # WebGPU-capable browser.
 ```
 
+### Run mobile (Android / iOS / HarmonyOS)
+
+`moui run` orchestrates build → install → launch on a connected device or
+emulator. Set the SDK paths once via `moui config` (XDG-backed), then drive the
+loop with `moui run` / `moui devices` / `moui verify`.
+
+```sh
+# Configure SDK paths (one-time)
+moui config set harmonyos.sdkHome /path/to/commandline-tools
+moui config set android.sdkHome /opt/android-sdk
+moui config set android.ndkHome /opt/android-ndk
+
+# List connected devices
+moui devices
+
+# Build, install, and launch on the first matching device
+moui run harmonyos showcase
+moui run android showcase
+moui run ios showcase
+
+# Run the runtime probe and write verify-manifest.json
+moui verify android showcase --require-passed
+```
+
 ### What you get
 
 | Path | Role |

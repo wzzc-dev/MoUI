@@ -1,6 +1,6 @@
 name = "wzzc-dev/moui_cli"
 
-version = "0.1.0"
+version = "0.2.0"
 
 readme = "README.md"
 
@@ -14,6 +14,14 @@ repository = "https://github.com/wzzc-dev/MoUI.git"
 
 license = "Apache-2.0"
 
-keywords = [ "moui", "cli", "generator", "doctor" ]
+keywords = [
+  "moui",
+  "cli",
+  "generator",
+  "doctor",
+  "mobile-build",
+  "run",
+  "verify",
+]
 
 description = "Standalone project generator and environment doctor for MoUI"

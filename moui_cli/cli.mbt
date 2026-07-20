@@ -1,5 +1,5 @@
 ///|
-let version : String = "0.1.0"
+let version : String = "0.2.0"
 
 ///|
 pub(all) struct CliOutcome {
@@ -62,6 +62,10 @@ fn root_usage() -> String {
     #|  moui doctor [options]
     #|  moui plugin new <id> [options]
     #|  moui package [options]
+    #|  moui run <platform> <app> [options]
+    #|  moui devices [options]
+    #|  moui verify <platform> <app> [options]
+    #|  moui config <action> [args]
     #|  moui shell eject <platform> [options]
     #|  moui --version
     #|
@@ -71,6 +75,10 @@ fn root_usage() -> String {
     #|  doctor          Check the selected platform toolchains.
     #|  plugin new      Scaffold a managed shell plugin package.
     #|  package         Print project package inventory.
+    #|  run             Build, install, and launch a mobile app on a device or emulator.
+    #|  devices         List connected mobile devices and emulators.
+    #|  verify          Verify mobile app runtime evidence against the managed shell contract.
+    #|  config          Get/set MoUI CLI configuration values (XDG-backed).
     #|  shell eject    Materialize a versioned shell for application ownership.
     #|
     #|Options:
@@ -212,45 +220,9 @@ fn failed_outcome(
   { exit_code, stdout: "", stderr }
 }
 
-///|
-fn json_requested(args : Array[String]) -> Bool {
-  args.any(arg => arg == "--json" || arg.has_prefix("--json="))
-}
-
-///|
-fn option_parts(argument : String) -> (String, String?) {
-  if argument.has_prefix("--") {
-    match argument.split_once("=") {
-      Some((name, value)) => (name.to_owned(), Some(value.to_owned()))
-      None => (argument, None)
-    }
-  } else {
-    (argument, None)
-  }
-}
-
-///|
-fn option_value(
-  args : Array[String],
-  index : Int,
-  inline : String?,
-  name : String,
-) -> Result[(String, Int), String] {
-  match inline {
-    Some("") => Err("missing value for " + name)
-    Some(value) => Ok((value, index + 1))
-    None if index + 1 >= args.length() => Err("missing value for " + name)
-    None => Ok((args[index + 1], index + 2))
-  }
-}
-
-///|
-fn flag_without_value(inline : String?, name : String) -> Result[Unit, String] {
-  match inline {
-    Some(_) => Err(name + " does not take a value")
-    None => Ok(())
-  }
-}
+// CLI argument helpers (`json_requested`, `option_parts`, `option_value`,
+// `flag_without_value`, `parse_string_option`, `parse_string_list`) now live
+// in `cli_args.mbt`.
 
 ///|
 fn parse_new_args(
@@ -968,6 +940,31 @@ pub fn run_cli(args : Array[String], cwd : String) -> CliOutcome {
         )
       }
     "package" => run_package_command(args[1:].to_owned(), cwd)
+    "run" =>
+      match parse_run_args(args[1:].to_owned(), cwd, detect_host_platform()) {
+        Ok(parsed) => run_run(parsed, detect_host_platform())
+        Err(message) =>
+          failed_outcome(message, json_requested(args), run_usage())
+      }
+    "devices" =>
+      match parse_devices_args(args[1:].to_owned()) {
+        Ok(parsed) => run_devices(parsed, detect_host_platform())
+        Err(message) =>
+          failed_outcome(message, json_requested(args), devices_usage())
+      }
+    "verify" =>
+      match
+        parse_verify_args(args[1:].to_owned(), cwd, detect_host_platform()) {
+        Ok(parsed) => run_verify(parsed, detect_host_platform())
+        Err(message) =>
+          failed_outcome(message, json_requested(args), verify_usage())
+      }
+    "config" =>
+      match parse_config_args(args[1:].to_owned()) {
+        Ok(parsed) => run_config(parsed, detect_host_platform())
+        Err(message) =>
+          failed_outcome(message, json_requested(args), config_usage())
+      }
     "shell" =>
       if args.length() == 1 ||
         (args.length() == 2 && (args[1] == "-h" || args[1] == "--help")) {
