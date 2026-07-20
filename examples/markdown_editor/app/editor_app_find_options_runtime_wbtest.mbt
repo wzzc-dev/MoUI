@@ -57,6 +57,64 @@ test "markdown editor find matching preserves unicode ranges" {
 }
 
 ///|
+test "markdown editor regex find uses pattern semantics and stable source ranges" {
+  let options = { ..MarkdownEditorFindOptions::default(), regex: true }
+  let matches = markdown_editor_find_matches(
+    "a🤣foo-42 foo-7",
+    "foo-[[:digit:]]+",
+    options~,
+  )
+  inspect(matches.length(), content="2")
+  inspect(matches[0].start, content="2")
+  inspect(matches[0].end, content="8")
+  inspect(matches[1].start, content="9")
+  inspect(matches[1].end, content="14")
+
+  let insensitive = markdown_editor_find_matches("Cat cat", "cat", options~)
+  inspect(insensitive.length(), content="2")
+
+  let whole_word = { ..options, case_sensitive: true, whole_word: true }
+  let whole_matches = markdown_editor_find_matches(
+    "Cat catalog cat",
+    "cat",
+    options=whole_word,
+  )
+  inspect(whole_matches.length(), content="1")
+  inspect(whole_matches[0].start, content="12")
+  inspect(whole_matches[0].end, content="15")
+
+  let zero_width = markdown_editor_find_matches("foo", "^", options~)
+  inspect(zero_width.length(), content="0")
+}
+
+///|
+test "markdown editor regex find reports invalid syntax and replaces literal matches" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("task-12 task-34")
+  app.apply_action("find")
+  let _ = app.update(ToggleFindRegex)
+  app.update_find_query_for_test("[")
+  inspect(app.find_match_count(), content="0")
+  guard app.selection.get().selection is None else {
+    fail("expected invalid regex to clear the stale match selection")
+  }
+  let invalid_commands = app.runtime(width=1120.0, height=640.0).draw_commands()
+  assert_true(
+    invalid_commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Invalid regex", .. })
+    }),
+  )
+
+  app.update_find_query_for_test("task-([[:digit:]]+)")
+  inspect(app.find_match_count(), content="2")
+  app.set_replace_text("$1")
+  app.replace_all_find_matches_for_test()
+  inspect(app.document(), content="$1 $1")
+  assert_true(app.undo())
+  inspect(app.document(), content="task-12 task-34")
+}
+
+///|
 test "markdown editor settings round-trip through JSON" {
   let app = MarkdownEditorApp::new()
   app.dark_mode_enabled.set(true)

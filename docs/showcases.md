@@ -6,8 +6,9 @@ showcases with source links.
 ## Mo Workbench
 
 Mo Workbench is the native-Skia-first desktop agent dogfood app. It provides a
-multi-workspace shell inspired by DeepSeek-GUI with Code chat, model/thinking
-controls, responsive layout, and stub backend.
+ `Work` / `Code` / `Design` task shell with a session dashboard,
+interactive coding-agent chat, product-state/palette preview, responsive task
+sidebar, settings overlay, and an injected OpenSeek/ACP-capable backend.
 
 GitHub source: https://github.com/wzzc-dev/MoUI/tree/main/examples/mo_workbench
 
