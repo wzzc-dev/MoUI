@@ -4,14 +4,18 @@ import {
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/internal/embedded_runtime_session",
   "wzzc-dev/moui/render",
-  "wzzc-dev/moui_shell/embedding" @shell_embedding,
-  "wzzc-dev/moui_shell/android" @shell_android,
+  "wzzc-dev/window/core" @window_core,
+  "wzzc-dev/window/android" @window_android,
 }
 
 import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/views",
 } for "test"
+
+import {
+  "wzzc-dev/moui/views",
+} for "wbtest"
 
 supported_targets = "native"
 

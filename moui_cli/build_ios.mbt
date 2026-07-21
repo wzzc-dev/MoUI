@@ -1,10 +1,13 @@
-// iOS build glue. Migrates `moui_shell/scripts/build-ios-app.sh` (274 lines)
-// into MoonBit.
+// ADR 0015: managed moui_shell builds are retired.
+// iOS .app packaging now uses the window-hosted template at
+// `window/ios/template/` + `examples/<app>/ios_skia` entrypoint.
 //
-// `build_ios` enforces the Xcode 15.4 floor, prepares native inputs (M5),
-// stages the canonical iOS Xcode project (managed) or validates the ejected
-// shell lock (M9.1), and invokes `xcodebuild` with the
-// `MOUI_EMBEDDING_*` env vars consumed by `build-ios-app-core.sh`.
+// `build_ios` generates MoonBit C, stages the window-hosted UIKit template
+// (Sources/main.m + Sources/MBWHostedAppDelegate.{h,m} + Info.plist), applies
+// app identity (CFBundleIdentifier / CFBundleName / MinimumOSVersion), then
+// invokes `clang`/`clang++` via `xcrun --sdk iphonesimulator|iphoneos` to
+// compile and link the executable directly — no xcodebuild. Mirrors
+// `window/ios/scripts/build-hosted-sim-app.sh`.
 
 ///|
 priv struct BuildIosOptions {
@@ -104,7 +107,221 @@ fn version_at_least(actual : String, floor : String) -> Bool {
 }
 
 ///|
-/// Build the iOS app bundle. Mirrors `build-ios-app.sh`. On macOS only.
+/// Resolve `xcrun --sdk <sdk> --show-sdk-path` to the iOS SDK root. Returns
+/// an empty string when the lookup fails.
+fn ios_sdk_path(sdk : String) -> String {
+  match
+    process_exec_argv(["xcrun", "--sdk", sdk, "--show-sdk-path"], capture=true) {
+    Ok(result) if result.exit_code == 0 => result.stdout.trim().to_string()
+    _ => ""
+  }
+}
+
+///|
+/// Resolve `xcrun --sdk <sdk> --find <tool>` to a tool path. Returns an
+/// empty string when the lookup fails.
+fn ios_find_tool(sdk : String, tool : String) -> String {
+  match
+    process_exec_argv(["xcrun", "--sdk", sdk, "--find", tool], capture=true) {
+    Ok(result) if result.exit_code == 0 => result.stdout.trim().to_string()
+    _ => ""
+  }
+}
+
+///|
+/// Stage the window-hosted iOS template into `target_root` and write the
+/// `.moui-window-hosted-stage` marker so future runs can replace it safely.
+/// The template lives at `window/ios/template/` and ships `Sources/`,
+/// `Info.plist`, and `README.md`.
+fn stage_ios_window_hosted_project(
+  template_root : String,
+  target_root : String,
+) -> Result[Unit, String] {
+  let stage_marker = join_path(target_root, ".moui-window-hosted-stage")
+  if path_is_dir(target_root) && !path_is_file(stage_marker) {
+    return Err("refusing to replace an unowned iOS project: " + target_root)
+  }
+  remove_tree(target_root)
+  match mkdir_p(target_root) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+  match copy_tree(template_root, target_root) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+  match write_file_bytes_result(stage_marker, b"") {
+    Ok(_) => Ok(())
+    Err(message) => Err(message)
+  }
+}
+
+///|
+/// Patch `key` inside an XML plist body. Replaces the first
+/// `<key>key</key>` followed by a `<TYPE>old</TYPE>` sibling with the new
+/// value. When the key is absent the plist is returned unchanged.
+fn patch_plist_string_value(
+  text : String,
+  key : String,
+  new_value : String,
+) -> String {
+  let key_pattern = "<key>" + key + "</key>"
+  let key_pos = match text.find(key_pattern) {
+    Some(pos) => pos
+    None => return text
+  }
+  // After the key, find the next `<X>...</X>` sibling and rewrite it.
+  let search_from = key_pos + key_pattern.length()
+  let after = text.substring(start=search_from)
+  let open = match after.find("<") {
+    Some(pos) => pos
+    None => return text
+  }
+  let close = match after.substring(start=open).find(">") {
+    Some(pos) => pos
+    None => return text
+  }
+  // Tag name inside `<...>` (skipping attributes if any — Info.plist has none).
+  // `close` is the offset of `>` within `after.substring(start=open)`, so the
+  // tag name (relative to `after`) spans `[open + 1, open + close)`.
+  let tag_body = after.substring(start=open + 1, end=open + close)
+  let tag_name = tag_body.trim().to_string()
+  let value_open = open + close + 1
+  let value_close = match
+    after.substring(start=value_open).find("</" + tag_name + ">") {
+    Some(pos) => pos
+    None => return text
+  }
+  let prefix = text.substring(end=search_from + value_open)
+  let suffix = after.substring(start=value_open + value_close)
+  prefix + new_value + suffix
+}
+
+///|
+/// Apply shell.json identity onto a staged window-hosted iOS template.
+/// Patches `Info.plist`:
+///   - CFBundleExecutable -> product_name
+///   - CFBundleName -> product_name
+///   - CFBundleIdentifier -> bundle_id
+///   - MinimumOSVersion -> deployment_target
+fn apply_ios_window_hosted_identity(
+  project_root : String,
+  app : ShellApp,
+  product_name : String,
+  deployment_target : String,
+) -> Result[Unit, String] {
+  let ios = match app.ios {
+    Some(value) => value
+    None => return Err("shell.json missing ios section")
+  }
+  let bundle_id = ios.bundle_id
+  let plist_path = join_path(project_root, "Info.plist")
+  let plist_text = match read_file_string_optional(plist_path) {
+    Some(value) => value
+    None => return Err("could not read: " + plist_path)
+  }
+  let patched = patch_plist_string_value(
+    plist_text, "CFBundleExecutable", product_name,
+  )
+  let patched = patch_plist_string_value(patched, "CFBundleName", product_name)
+  let patched = patch_plist_string_value(
+    patched, "CFBundleIdentifier", bundle_id,
+  )
+  let patched = patch_plist_string_value(
+    patched, "MinimumOSVersion", deployment_target,
+  )
+  match
+    write_file_bytes_result(plist_path, @utf8.encode(patched[:], bom=false)) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+  log_info(
+    "[moui-window-hosted-ios] Applied identity CFBundleIdentifier=" +
+    bundle_id +
+    " CFBundleExecutable=" +
+    product_name +
+    " MinimumOSVersion=" +
+    deployment_target,
+  )
+  Ok(())
+}
+
+///|
+/// Build the common compile flags for an iOS window-hosted build. Mirrors
+/// the `COMMON_FLAGS` array in `window/ios/scripts/build-hosted-sim-app.sh`.
+/// `target_triple` already encodes the SDK (simulator vs device) and
+/// deployment target.
+fn ios_common_compile_flags(
+  sdk_path : String,
+  target_triple : String,
+  moon_home : String,
+  window_ios_root : String,
+  workspace_root : String,
+) -> Array[String] {
+  let flags : Array[String] = [
+    "-isysroot",
+    sdk_path,
+    "-target",
+    target_triple,
+    "-fobjc-arc",
+    "-O0",
+    "-g",
+    "-I" + moon_home + "/include",
+    "-I" + window_ios_root,
+    "-I" + window_ios_root + "/native/include",
+    "-I" + workspace_root + "/moui_skia/native",
+    "-D__APPLE__",
+    "-DTARGET_OS_IPHONE=1",
+    "-DMBW_IOS_MOONBIT_MAIN=mbw_ios_moonbit_main",
+  ]
+  flags
+}
+
+///|
+/// Compile a single source file to an object file. Returns `Err` when the
+/// compiler invocation fails. `lang` controls `-x objective-c` / `-x c++`
+/// injection when the source extension is ambiguous; pass an empty string to
+/// rely on the file extension.
+fn compile_ios_object(
+  compiler : String,
+  common_flags : Array[String],
+  source : String,
+  output : String,
+  lang : String,
+  extra_flags : Array[String],
+) -> Result[Unit, String] {
+  let argv : Array[String] = [compiler]
+  for flag in common_flags {
+    argv.push(flag)
+  }
+  if lang != "" {
+    argv.push("-x")
+    argv.push(lang)
+  }
+  for flag in extra_flags {
+    argv.push(flag)
+  }
+  argv.push("-c")
+  argv.push(source)
+  argv.push("-o")
+  argv.push(output)
+  log_command("compile_ios_object", argv)
+  match process_exec_argv(argv, capture=false) {
+    Ok(result) if result.exit_code == 0 => Ok(())
+    Ok(result) =>
+      Err(
+        "clang failed (exit " +
+        result.exit_code.to_string() +
+        ") compiling " +
+        source,
+      )
+    Err(message) => Err(message)
+  }
+}
+
+///|
+/// Build the iOS .app bundle. Mirrors
+/// `window/ios/scripts/build-hosted-sim-app.sh`. On macOS only.
 fn build_ios(
   options : BuildIosOptions,
   host : HostPlatform,
@@ -113,226 +330,440 @@ fn build_ios(
     Macos => ()
     _ => return Err("iOS builds require macOS with Xcode installed")
   }
-  // 1. Xcode version floor.
+  // 1. ADR 0015: ejected-shell mode is retired. Hard-fail when requested.
+  if options.ejected_shell || options.xcode_project is Some(_) {
+    return Err(
+      "ADR 0015: ejected-shell / --xcode-project is retired. Use the window-hosted template at window/ios/template/ (managed by `moui build ios`).",
+    )
+  }
+  // Make build_dir + workspace_root absolute so paths passed to clang and
+  // referenced in BuildResult stay valid regardless of the user's cwd.
+  let workspace_root_abs = make_absolute(
+    options.workspace_root,
+    @env.get_env_var("PWD").unwrap_or("."),
+  )
+  let build_dir_abs = make_absolute(options.build_dir, workspace_root_abs)
+  // 2. Xcode version floor (clang + iOS SDK must be present).
   let found = xcode_version_string()
   if !version_at_least(found, "15.4") {
     return Err(
-      "MoUI iOS shell requires Xcode 15.4 or newer; found " +
+      "MoUI iOS window-hosted build requires Xcode 15.4 or newer; found " +
       (if found == "" { "unknown" } else { found }),
     )
   }
-  // 2. Determine xcode_project + scheme + product_name.
-  let xcode_project = match options.xcode_project {
-    Some(value) =>
-      if path_is_absolute(value) {
-        value
-      } else {
-        join_path(options.workspace_root, value)
-      }
-    None =>
-      if options.ejected_shell {
-        return Err("--ejected-shell requires --xcode-project")
-      } else {
-        join_path(options.build_dir, "ios-project/MoUIShellApp.xcodeproj")
-      }
-  }
-  let scheme = match options.scheme {
-    Some(value) => value
-    None =>
-      if options.ejected_shell {
-        // basename($xcode_project) without .xcodeproj
-        let base = basename(xcode_project)
-        if base.has_suffix(".xcodeproj") {
-          base.substring(end=base.length() - ".xcodeproj".length()).to_string()
-        } else {
-          base
-        }
-      } else {
-        "MoUIShellApp"
-      }
-  }
-  let product_name = options.product_name.unwrap_or(scheme)
-  // 3. Validate ejected lock if applicable.
-  if options.ejected_shell {
-    let lock_path = join_path(
-      join_path(xcode_project, ".."),
-      ".moui-shell.json",
+  // 3. Resolve window_root + template_root + ios_package_root.
+  let window_root = join_path(workspace_root_abs, "window")
+  let template_root = join_path(window_root, "ios/template")
+  let ios_pkg_root = join_path(window_root, "ios")
+  if !path_is_file(join_path(template_root, "Info.plist")) ||
+    !path_is_file(join_path(template_root, "Sources/main.m")) ||
+    !path_is_file(join_path(template_root, "Sources/MBWHostedAppDelegate.m")) {
+    return Err(
+      "MoUI window-hosted iOS template is incomplete: " + template_root,
     )
-    match
-      validate_ejected_lock(
-        lock_path,
-        "ios",
-        options.moui_root,
-        join_path(options.moui_root, "../moui_shell"),
-        options.project_root,
-        options.app_config,
-      ) {
-      Ok(_) => ()
-      Err(message) => return Err(message)
-    }
-  } else {
-    // Stage the canonical iOS Xcode project template.
-    let staged_root = join_path(xcode_project, "..")
-    let stage_marker = join_path(staged_root, ".moui-managed-ios-stage")
-    let template_root = join_path(
-      join_path(options.moui_root, "../moui_shell"),
-      "ios/runner/template",
-    )
-    if !path_is_file(
-        join_path(template_root, "MoUIShellApp.xcodeproj/project.pbxproj"),
-      ) ||
-      !path_is_file(join_path(template_root, "Info.plist")) {
-      return Err("MoUI iOS template is incomplete: " + template_root)
-    }
-    if path_is_dir(staged_root) && !path_is_file(stage_marker) {
-      return Err("refusing to replace an unowned iOS project: " + staged_root)
-    }
-    remove_tree(staged_root)
-    match mkdir_p(staged_root) {
-      Ok(_) => ()
-      Err(message) => return Err(message)
-    }
-    match write_file_bytes_result(stage_marker, b"") {
-      Ok(_) => ()
-      Err(message) => return Err(message)
-    }
-    match copy_tree(template_root, staged_root) {
-      Ok(_) => ()
-      Err(message) => return Err(message)
-    }
-    log_info("[moui-shell-ios] Staged canonical iOS shell in " + staged_root)
   }
-  // 4. Prepare native build inputs.
-  let contract = match
-    managed_platform_contract(
-      options.app,
+  if !path_is_file(join_path(ios_pkg_root, "native_ios_host.c")) {
+    return Err(
+      "MoUI window-hosted iOS package sources missing: " +
+      join_path(ios_pkg_root, "native_ios_host.c"),
+    )
+  }
+  // 4. Generate MoonBit C from the entrypoint package.
+  let entrypoint_package = match
+    managed_entrypoint_package(
+      options.app.metadata_path,
       "ios",
-      options.workspace_root,
-      join_path(options.moui_root, "../moui_shell"),
+      workspace_root_abs,
     ) {
     Ok(value) => value
     Err(message) => return Err(message)
   }
-  let deployment_target = options.deployment_target.unwrap_or("15.0")
-  let prepare_options : PrepareOptions = {
-    app: options.app,
-    app_config_path: options.app_config,
-    workspace_root: options.workspace_root,
-    moui_root: options.moui_root,
-    skia_root: options.skia_root,
-    build_dir: options.build_dir,
-    abi: "",
-    android_shell: "",
-    sdk: options.sdk,
-    arch: options.arch,
-    renderer: options.renderer,
-    fallback_skia: options.fallback_skia,
-    shell_root: join_path(options.moui_root, "../moui_shell"),
-    contract,
-  }
-  let prepare_result = match prepare_native_build(prepare_options) {
+  let moonbit_c = match
+    generate_moonbit_c(
+      workspace_root_abs,
+      entrypoint_package,
+      base_name(entrypoint_package) + ".c",
+      build_dir_abs,
+    ) {
     Ok(value) => value
+    Err(message) => return Err(message)
+  }
+  if !path_is_file(moonbit_c) {
+    return Err("MoonBit generated C was not found: " + moonbit_c)
+  }
+  // Resolve real Skia link flags via `node moui_skia/build.js`. Mirrors the
+  // legacy `prepare_ios` path: when fallback_skia is false, build.js returns
+  // `-DMOUI_SKIA_HAS_SKIA ...` (stub_flags) + `libskia.a <frameworks> ...`
+  // (link_flags). When fallback_skia is true, returns empty SkiaLink and the
+  // stubs link without `MOUI_SKIA_HAS_SKIA`, so `skia_available()` returns
+  // false at runtime — the stub-only build-evidence path.
+  let skia_platform = match
+    lookup_static_map(ios_sdk_to_skia_platform, options.sdk) {
+    Some(value) => value
+    None => return Err("unsupported iOS SDK: " + options.sdk)
+  }
+  let skia_arch = match lookup_static_map(ios_arch_to_skia_arch, options.arch) {
+    Some(value) => value
+    None => return Err("unsupported iOS arch: " + options.arch)
+  }
+  let link_mode = @env.get_env_var("MOUI_SKIA_LINK_MODE").unwrap_or("static")
+  let renderer_selected = if options.fallback_skia {
+    "skia-raster"
+  } else if options.renderer == "skia-raster" {
+    "skia-raster"
+  } else {
+    "skia-gpu"
+  }
+  let gpu_env : Array[(String, String)] = if renderer_selected == "skia-gpu" {
+    [("MOUI_SKIA_ENABLE_GPU_METAL", "1")]
+  } else {
+    []
+  }
+  let skia_root_abs = make_absolute(
+    join_path(workspace_root_abs, "moui_skia"),
+    workspace_root_abs,
+  )
+  let skia_link = match
+    resolve_skia(
+      skia_root_abs,
+      skia_platform,
+      skia_arch,
+      link_mode,
+      options.fallback_skia,
+      gpu_env,
+    ) {
+    Ok(value) => value
+    Err(message) => return Err(message)
+  }
+  let prepare_result : PrepareResult = {
+    platform: "ios",
+    build_json_path: "",
+    cmake_config_path: None,
+    skia_cxx_rsp: None,
+    skia_link_rsp: None,
+    jni_libs_dir: None,
+    moonbit_c,
+    renderer: {
+      requested: options.renderer,
+      selected: renderer_selected,
+      gpu_promoted: renderer_selected == "skia-gpu",
+      fallback_reason: if options.fallback_skia {
+        Some("fallback Skia build cannot provide a native GPU route")
+      } else {
+        None
+      },
+    },
+    skia_link,
+    shared_libs: [],
+  }
+  // 5. Stage the window-hosted template into <build_dir>/ios-project.
+  let ios_project = join_path(build_dir_abs, "ios-project")
+  match stage_ios_window_hosted_project(template_root, ios_project) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+  // Resolve product_name + deployment_target first so the identity patch
+  // matches the eventual executable name.
+  let product_name = match options.product_name {
+    Some(value) => value
+    None =>
+      match options.app.ios {
+        Some(ios) => ios.product_name.to_string()
+        None => options.app.id.to_string()
+      }
+  }
+  let deployment_target = options.deployment_target.unwrap_or("15.0")
+  match
+    apply_ios_window_hosted_identity(
+      ios_project,
+      options.app,
+      product_name,
+      deployment_target,
+    ) {
+    Ok(_) => ()
     Err(message) => return Err(message)
   }
   if options.prepare_only {
     log_info(
-      "[moui-shell-ios] Prepared iOS build inputs in " + options.build_dir,
+      "[moui-window-hosted-ios] Prepared " +
+      build_dir_abs +
+      " (moonbit_c=" +
+      moonbit_c +
+      ")",
     )
     return Ok({
       platform: "ios",
-      build_dir: options.build_dir,
+      build_dir: build_dir_abs,
       output_artifact: "",
       prepare_result,
     })
   }
-  // 5. Invoke xcodebuild with the MOUI_EMBEDDING_* env block.
-  let shell_mode = if options.ejected_shell { "ejected" } else { "managed" }
-  // Resolve a usable `moui_cli` binary for the Xcode Run Script Phase.
-  // `build-ios-app-core.sh` does `exec "${MOUI_BUILD_IOS_CORE_BIN:-moui_cli}"`,
-  // but Xcode's PATH does not include `moui_cli` when the user invokes the
-  // build via `moon run moui_cli/cmd/moui`. Build (or reuse) the binary at a
-  // stable cache path and pass it through `MOUI_BUILD_IOS_CORE_BIN`.
-  let cli_bin = match
-    ensure_moui_cli_binary(options.workspace_root, options.build_dir) {
-    Ok(path) => path
+  // 6. Resolve iOS SDK + clang/clang++ via xcrun.
+  let sdk = options.sdk
+  let sdk_path = ios_sdk_path(sdk)
+  if sdk_path == "" {
+    return Err(
+      "xcrun --sdk " +
+      sdk +
+      " --show-sdk-path failed; install Xcode and run xcode-select",
+    )
+  }
+  let clang = ios_find_tool(sdk, "clang")
+  if clang == "" {
+    return Err("xcrun --sdk " + sdk + " --find clang failed")
+  }
+  let clangxx = ios_find_tool(sdk, "clang++")
+  if clangxx == "" {
+    return Err("xcrun --sdk " + sdk + " --find clang++ failed")
+  }
+  // 7. Build target triple + common compile flags.
+  //    iphonesimulator -> arm64-apple-ios{MIN}-simulator
+  //    iphoneos        -> arm64-apple-ios{MIN}
+  let target_triple = if sdk == "iphonesimulator" {
+    "arm64-apple-ios" + deployment_target + "-simulator"
+  } else {
+    "arm64-apple-ios" + deployment_target
+  }
+  let moon_home = make_absolute(
+    @env.get_env_var("MOON_HOME").unwrap_or_else(() => {
+      let home = @env.get_env_var("HOME").unwrap_or("")
+      join_path(home, ".moon")
+    }),
+    workspace_root_abs,
+  )
+  let common_flags = ios_common_compile_flags(
+    sdk_path, target_triple, moon_home, ios_pkg_root, workspace_root_abs,
+  )
+  // 8. Compile every source to <build_dir>/obj/*.o.
+  let obj_dir = join_path(build_dir_abs, "obj")
+  remove_tree(obj_dir)
+  match mkdir_p(obj_dir) {
+    Ok(_) => ()
     Err(message) => return Err(message)
   }
-  let env = moon_build_env()
-  env.push(("MOUI_BUILD_IOS_CORE_BIN", cli_bin))
-  env.push(("MOUI_EMBEDDING_APP", options.app.id))
-  env.push(("MOUI_EMBEDDING_WORKSPACE_ROOT", options.workspace_root))
-  // Xcode Run Script Phases execute with cwd=<staged xcode project dir>, so
-  // any relative path would be resolved against that directory instead of the
-  // user's original cwd. Make `app_config` absolute (anchored to
-  // `workspace_root`), then derive `project_root` from its parent dir — this
-  // is what `read_shell_app(project_root)` expects: it looks for
-  // `<project_root>/shell.json`. Anchoring on `options.project_root` (which
-  // defaults to `.`) would point at the workspace root, not the directory
-  // containing `shell.json`.
-  let absolute_app_config = make_absolute(options.app_config, options.workspace_root)
-  let absolute_project_root = parent_dir(absolute_app_config)
-  env.push(("MOUI_EMBEDDING_PROJECT_ROOT", absolute_project_root))
-  env.push(("MOUI_PACKAGE_ROOT", options.moui_root))
-  env.push(
-    ("MOUI_SHELL_PACKAGE_ROOT", join_path(options.moui_root, "../moui_shell")),
-  )
-  env.push(("MOUI_SKIA_ROOT", options.skia_root))
-  env.push(("MOUI_EMBEDDING_APP_CONFIG", absolute_app_config))
-  env.push(("MOUI_EMBEDDING_BUILD_DIR", options.build_dir))
-  env.push(("MOUI_EMBEDDING_OUTPUT_APP", options.output_app))
-  env.push(("MOUI_EMBEDDING_ARCH", options.arch))
-  env.push(("MOUI_EMBEDDING_DEPLOYMENT_TARGET", deployment_target))
-  env.push(("MOUI_EMBEDDING_SDK", options.sdk))
-  env.push(("MOUI_EMBEDDING_RENDERER", options.renderer))
-  env.push(
+  let objs : Array[String] = []
+  let mut ok = true
+  // MoonBit generated C — `main` is renamed to `mbw_ios_moonbit_main`.
+  let moonbit_o = join_path(obj_dir, "moonbit_entry.o")
+  let moonbit_extra : Array[String] = ["-Dmain=mbw_ios_moonbit_main"]
+  match
+    compile_ios_object(
+      clang, common_flags, moonbit_c, moonbit_o, "", moonbit_extra,
+    ) {
+    Ok(_) => objs.push(moonbit_o)
+    Err(message) => {
+      ok = false
+      return Err(message)
+    }
+  }
+  // Moon runtime.
+  let runtime_c = join_path(moon_home, "lib/runtime.c")
+  if path_is_file(runtime_c) {
+    let runtime_o = join_path(obj_dir, "runtime.o")
+    let runtime_extra : Array[String] = ["-Dgetentropy=mbw_ios_getentropy"]
+    match
+      compile_ios_object(
+        clang, common_flags, runtime_c, runtime_o, "", runtime_extra,
+      ) {
+      Ok(_) => objs.push(runtime_o)
+      Err(message) => {
+        ok = false
+        return Err(message)
+      }
+    }
+  } else {
+    log_warn("Moon runtime not found at " + runtime_c)
+  }
+  // Window iOS host glue (Objective-C).
+  let native_ios_host_c = join_path(ios_pkg_root, "native_ios_host.c")
+  if path_is_file(native_ios_host_c) {
+    let obj = join_path(obj_dir, "native_ios_host.o")
+    match
+      compile_ios_object(
+        clang,
+        common_flags,
+        native_ios_host_c,
+        obj,
+        "objective-c",
+        [],
+      ) {
+      Ok(_) => objs.push(obj)
+      Err(message) => {
+        ok = false
+        return Err(message)
+      }
+    }
+  }
+  // App entry / compat / fs_native / main / delegate.
+  // NOTE: window/ios/native/mbw_ios_main.m is intentionally NOT compiled —
+  // it is a deprecated duplicate of template/Sources/main.m. The shell
+  // reference (window/ios/scripts/build-hosted-sim-app.sh) only compiles
+  // template/Sources/main.m and template/Sources/MBWHostedAppDelegate.m.
+  let entry_pairs = [
     (
-      "MOUI_EMBEDDING_FALLBACK_SKIA",
-      if options.fallback_skia {
-        "1"
-      } else {
-        "0"
-      },
+      join_path(ios_pkg_root, "native/mbw_ios_app_entry.c"),
+      "mbw_ios_app_entry.o",
+      "",
     ),
-  )
-  env.push(("MOUI_EMBEDDING_IOS_SHELL", shell_mode))
-  let argv = [
-    "xcodebuild",
-    "-project",
-    xcode_project,
-    "-scheme",
-    scheme,
-    "-configuration",
-    "Debug",
-    "-sdk",
-    options.sdk,
-    "ARCHS=" + options.arch,
-    "IPHONEOS_DEPLOYMENT_TARGET=" + deployment_target,
-    "MOUI_EMBEDDING_IOS_SHELL=" + shell_mode,
-    "build",
+    (join_path(ios_pkg_root, "native/mbw_ios_compat.c"), "mbw_ios_compat.o", ""),
+    (join_path(ios_project, "Sources/main.m"), "mbw_ios_main.o", "objective-c"),
+    (
+      join_path(ios_project, "Sources/MBWHostedAppDelegate.m"),
+      "mbw_hosted_app_delegate.o",
+      "objective-c",
+    ),
   ]
-  log_command("xcodebuild", argv)
-  match process_exec_argv(argv, env~, capture=false) {
-    Ok(result) if result.exit_code == 0 => ()
-    Ok(result) =>
-      return Err(
-        "xcodebuild failed with exit code " + result.exit_code.to_string(),
-      )
-    Err(message) => return Err(message)
+  for entry in entry_pairs {
+    let (source, obj_name, lang) = entry
+    if path_is_file(source) {
+      let obj_path = join_path(obj_dir, obj_name)
+      match
+        compile_ios_object(clang, common_flags, source, obj_path, lang, []) {
+        Ok(_) => objs.push(obj_path)
+        Err(message) => {
+          ok = false
+          return Err(message)
+        }
+      }
+    }
   }
-  // 6. Resolve output_app.
-  let output_app = if options.output_app == "" {
-    join_path(options.build_dir, product_name + ".app")
+  // moonbitlang/x/fs fs_native.c (if vendored under .mooncakes).
+  let fs_native = join_path(
+    workspace_root_abs, ".mooncakes/moonbitlang/x/fs/fs_native.c",
+  )
+  if path_is_file(fs_native) {
+    let fs_o = join_path(obj_dir, "fs_native.o")
+    match compile_ios_object(clang, common_flags, fs_native, fs_o, "", []) {
+      Ok(_) => objs.push(fs_o)
+      Err(message) => {
+        ok = false
+        return Err(message)
+      }
+    }
+  }
+  // Skia stubs (.cpp) + iOS Skia glue (.mm). The stub_flags from `resolve_skia`
+  // carry `-DMOUI_SKIA_HAS_SKIA` (plus paragraph / GPU Metal defines and the
+  // Skia include path), which the stubs need to expose `moonbit_skia_available`
+  // returning 1 and to wire real Ganesh / paragraph entrypoints.
+  let skia_root = join_path(workspace_root_abs, "moui_skia/native")
+  let skia_stubs = [
+    "skia_stub.cpp", "skia_stub_common.cpp", "skia_stub_surface_image_data.cpp",
+    "skia_stub_canvas.cpp", "skia_stub_path.cpp", "skia_stub_text_font.cpp", "skia_stub_paragraph.cpp",
+    "skia_stub_shader_filter.cpp", "skia_stub_picture.cpp", "skia_stub_gpu_worker.cpp",
+  ]
+  let cxx_flags : Array[String] = [
+    "-std=c++17",
+    ..split_flags(skia_link.stub_flags),
+  ]
+  for stub in skia_stubs {
+    let source = join_path(skia_root, stub)
+    if path_is_file(source) {
+      let obj_name = stub.substring(end=stub.length() - ".cpp".length()) + ".o"
+      let obj_path = join_path(obj_dir, obj_name)
+      match
+        compile_ios_object(
+          clangxx, common_flags, source, obj_path, "", cxx_flags,
+        ) {
+        Ok(_) => objs.push(obj_path)
+        Err(message) => {
+          ok = false
+          return Err(message)
+        }
+      }
+    }
+  }
+  let mm_glue = [
+    join_path(workspace_root_abs, "moui/backend/ios/skia/ios_skia_view_glue.mm"),
+    join_path(workspace_root_abs, "moui/backend/ios/skia/ios_skia_presenter.mm"),
+  ]
+  for glue in mm_glue {
+    if path_is_file(glue) {
+      let base = basename(glue)
+      let stem = if base.has_suffix(".mm") {
+        base.substring(end=base.length() - ".mm".length()).to_string()
+      } else {
+        base
+      }
+      let obj_path = join_path(obj_dir, stem + ".o")
+      let mm_flags : Array[String] = ["-std=c++17", "-ObjC++"]
+      match
+        compile_ios_object(clangxx, common_flags, glue, obj_path, "", mm_flags) {
+        Ok(_) => objs.push(obj_path)
+        Err(message) => {
+          ok = false
+          return Err(message)
+        }
+      }
+    }
+  }
+  if !ok {
+    return Err("iOS window-hosted compile step failed")
+  }
+  // 9. Link the executable into <build_dir>/ios-project/<product_name>.app.
+  let app_dir = if options.output_app == "" {
+    join_path(ios_project, product_name + ".app")
   } else {
     options.output_app
   }
-  if !path_is_dir(output_app) {
-    return Err("iOS app bundle was not produced: " + output_app)
+  match mkdir_p(app_dir) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
   }
-  log_info("[moui-shell-ios] Wrote " + output_app)
+  let executable = join_path(app_dir, product_name)
+  let link_argv = [clangxx, ..common_flags]
+  link_argv.push("-o")
+  link_argv.push(executable)
+  for obj in objs {
+    link_argv.push(obj)
+  }
+  // Skia link flags from `resolve_skia`. When fallback_skia is false this
+  // carries the real `libskia.a` / `libskia_ganesh_ext.a` absolute paths,
+  // paragraph sub-libs, and the Metal/CoreGraphics/UIKit frameworks that
+  // Skia depends on. When fallback_skia is true this is empty.
+  for flag in split_flags(skia_link.link_flags) {
+    link_argv.push(flag)
+  }
+  // System frameworks / libs required by the window-hosted template itself.
+  link_argv.push("-framework")
+  link_argv.push("MetalKit")
+  link_argv.push("-lc++")
+  log_command("clang++ (link)", link_argv)
+  match process_exec_argv(link_argv, capture=false) {
+    Ok(result) if result.exit_code == 0 => ()
+    Ok(result) =>
+      return Err(
+        "clang++ link failed with exit code " + result.exit_code.to_string(),
+      )
+    Err(message) => return Err(message)
+  }
+  // 10. Copy patched Info.plist into the .app bundle.
+  let plist_dst = join_path(app_dir, "Info.plist")
+  match copy_file_atomic(join_path(ios_project, "Info.plist"), plist_dst) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+  // Ensure the executable has +x.
+  match process_exec_argv(["chmod", "+x", executable], capture=true) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+  // 11. Resolve output_app path (may differ from app_dir when --output set).
+  let final_output = if options.output_app == "" {
+    app_dir
+  } else {
+    options.output_app
+  }
+  if !path_is_dir(final_output) {
+    return Err("iOS .app bundle was not produced: " + final_output)
+  }
+  log_info("[moui-window-hosted-ios] Wrote " + final_output)
+  log_info(
+    "This is build/install evidence only until a simulator/device smoke proves first frame, input, resize, and lifecycle.",
+  )
   Ok({
     platform: "ios",
-    build_dir: options.build_dir,
-    output_artifact: output_app,
+    build_dir: build_dir_abs,
+    output_artifact: final_output,
     prepare_result,
   })
 }

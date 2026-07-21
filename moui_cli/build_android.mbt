@@ -1,9 +1,11 @@
-// Android build glue. Migrates `moui_shell/scripts/build-android-apk.sh`
-// (99 lines) into MoonBit.
+// ADR 0015: managed moui_shell builds are retired.
+// Android APK packaging now uses the window-hosted template at
+// `window/android/template/` + `examples/<app>/android_skia` entrypoint.
 //
-// `build_android` prepares the native build inputs (M5), stages the managed
-// Gradle template or validates the ejected shell lock (M9.1), invokes
-// Gradle via `process_exec_with_inherit`, and copies the produced APK.
+// `build_android` generates MoonBit C, stages the window-hosted Gradle
+// template, applies app identity (applicationId, namespace, label), and
+// invokes `gradle :app:assembleDebug` with the `MBW_*` project properties
+// consumed by the template's `app/src/main/cpp/CMakeLists.txt`.
 
 ///|
 priv struct BuildAndroidOptions {
@@ -31,37 +33,6 @@ priv struct BuildResult {
   build_dir : String
   output_artifact : String
   prepare_result : PrepareResult
-}
-
-///|
-/// Copy the managed Android Gradle template into `target_project` and write
-/// the `.moui-managed-shell` marker so future runs can replace it safely.
-/// Mirrors the `cp -R` block at lines 76-84 of `build-android-apk.sh`.
-fn stage_managed_android_project(
-  template_root : String,
-  target_project : String,
-) -> Result[Unit, String] {
-  let stage_marker = join_path(target_project, ".moui-managed-shell")
-  if path_is_dir(target_project) && !path_is_file(stage_marker) {
-    return Err(
-      "refusing to replace an unowned Android project: " + target_project,
-    )
-  }
-  remove_tree(target_project)
-  match mkdir_p(target_project) {
-    Ok(_) => ()
-    Err(message) => return Err(message)
-  }
-  // Recursively copy the template_root/* into target_project.
-  match copy_tree(template_root, target_project) {
-    Ok(_) => ()
-    Err(message) => return Err(message)
-  }
-  // Touch the stage marker.
-  match write_file_bytes_result(stage_marker, b"") {
-    Ok(_) => Ok(())
-    Err(message) => Err(message)
-  }
 }
 
 ///|
@@ -99,11 +70,21 @@ fn copy_tree(source : String, target : String) -> Result[Unit, String] {
 
 ///|
 /// Locate the Gradle wrapper at `<workspace>/gradlew` or fall back to a
-/// `gradle` on PATH. Mirrors the dispatch at line 91 of
-/// `build-android-apk.sh`.
+/// `gradle` on PATH. Mirrors the dispatch at lines 48-59 of
+/// `window/android/scripts/build-hosted-apk.sh`.
 fn resolve_gradle_command(
   workspace_root : String,
 ) -> Result[(String, Array[String]), String] {
+  // Prefer a previously staged Gradle wrapper inside an existing Android
+  // project (e.g. artifacts/android/<app>/android-project/gradlew). This
+  // mirrors the upstream script's first lookup.
+  let staged_gradlew = join_path(
+    join_path(workspace_root, "artifacts/android"),
+    "android-project/gradlew",
+  )
+  if path_is_executable(staged_gradlew) {
+    return Ok((staged_gradlew, []))
+  }
   let gradlew = join_path(workspace_root, "gradlew")
   if path_is_executable(gradlew) {
     return Ok((gradlew, []))
@@ -115,122 +96,437 @@ fn resolve_gradle_command(
 }
 
 ///|
-/// Build the Android APK by orchestrating M5 native preparation + Gradle.
-/// Mirrors `build-android-apk.sh`.
+/// Stage the window-hosted Android Gradle template into `target_project` and
+/// write the `.moui-window-hosted-stage` marker so future runs can replace
+/// it safely.
+fn stage_android_window_hosted_project(
+  template_root : String,
+  target_project : String,
+) -> Result[Unit, String] {
+  let stage_marker = join_path(target_project, ".moui-window-hosted-stage")
+  if path_is_dir(target_project) && !path_is_file(stage_marker) {
+    return Err(
+      "refusing to replace an unowned Android project: " + target_project,
+    )
+  }
+  remove_tree(target_project)
+  match mkdir_p(target_project) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+  match copy_tree(template_root, target_project) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+  match write_file_bytes_result(stage_marker, b"") {
+    Ok(_) => Ok(())
+    Err(message) => Err(message)
+  }
+}
+
+///|
+/// Apply shell.json identity onto a staged window-hosted Android template.
+/// Patches `app/build.gradle` (applicationId, namespace) and
+/// `app/src/main/AndroidManifest.xml` (android:label).
+fn apply_android_window_hosted_identity(
+  project_root : String,
+  app : ShellApp,
+  compile_sdk : Int,
+  target_sdk : Int,
+  _renderer : String,
+) -> Result[Unit, String] {
+  let android = match app.android {
+    Some(value) => value
+    None => return Err("shell.json missing android section")
+  }
+  let application_id = android.application_id
+  // Patch app/build.gradle: namespace, applicationId, compileSdk, targetSdk, minSdk.
+  let app_gradle_path = join_path(project_root, "app/build.gradle")
+  let app_gradle_text = match read_file_string_optional(app_gradle_path) {
+    Some(value) => value
+    None => return Err("could not read: " + app_gradle_path)
+  }
+  let patched_gradle = patch_android_build_gradle(
+    app_gradle_text,
+    application_id,
+    application_id,
+    compile_sdk,
+    target_sdk,
+    android.min_sdk,
+    app.display_name,
+  )
+  match
+    write_file_bytes_result(
+      app_gradle_path,
+      @utf8.encode(patched_gradle[:], bom=false),
+    ) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+  // Patch AndroidManifest.xml android:label.
+  let manifest_path = join_path(
+    project_root, "app/src/main/AndroidManifest.xml",
+  )
+  match read_file_string_optional(manifest_path) {
+    Some(manifest_text) => {
+      let patched = patch_android_manifest_label(
+        manifest_text,
+        app.display_name,
+      )
+      match
+        write_file_bytes_result(
+          manifest_path,
+          @utf8.encode(patched[:], bom=false),
+        ) {
+        Ok(_) => ()
+        Err(message) => return Err(message)
+      }
+    }
+    None => () // Tolerate missing manifest (template guarantees it).
+  }
+  log_info(
+    "[moui-window-hosted-android] Applied identity applicationId=" +
+    application_id,
+  )
+  Ok(())
+}
+
+///|
+/// Patch `namespace = "..."` and `applicationId = "..."` and SDK versions
+/// inside a window-hosted `app/build.gradle` template. Rewrites the lines
+/// in place; preserves all other Gradle content.
+fn patch_android_build_gradle(
+  text : String,
+  application_id : String,
+  namespace : String,
+  compile_sdk : Int,
+  target_sdk : Int,
+  min_sdk : Int,
+  app_label : String,
+) -> String {
+  let out : Array[String] = []
+  for line_view in text.split("\n") {
+    let line = line_view.to_string()
+    let trimmed = line.trim().to_string()
+    if trimmed.starts_with("namespace =") {
+      out.push("    namespace = \"" + namespace + "\"")
+    } else if trimmed.starts_with("applicationId =") {
+      out.push("        applicationId = \"" + application_id + "\"")
+    } else if trimmed.starts_with("compileSdk =") {
+      out.push("    compileSdk = " + compile_sdk.to_string())
+    } else if trimmed.starts_with("minSdk =") {
+      out.push("        minSdk = " + min_sdk.to_string())
+    } else if trimmed.starts_with("targetSdk =") {
+      out.push("        targetSdk = " + target_sdk.to_string())
+    } else if line.contains("android:label=") {
+      // Replace any `android:label="..."` literal on this line.
+      out.push(patch_android_label_inline(line, app_label))
+    } else {
+      out.push(line)
+    }
+  }
+  out.join("\n")
+}
+
+///|
+/// Replace `android:label="..."` substring within a single line, returning
+/// the patched line. Used as a non-regex fallback for
+/// `patch_android_build_gradle`.
+fn patch_android_label_inline(line : String, label : String) -> String {
+  let marker = "android:label=\""
+  let pos = line.find(marker)
+  match pos {
+    None => line
+    Some(start) => {
+      let after_start = start + marker.length()
+      let after = line.substring(start=after_start)
+      let end_rel = after.find("\"")
+      match end_rel {
+        None => line
+        Some(end) => {
+          // Reconstruct: <prefix up to and including opening quote> + label +
+          // <closing quote> + <remainder after original closing quote>.
+          let prefix = line.substring(end=after_start)
+          let suffix = after.substring(start=end + 1)
+          prefix + label + "\"" + suffix
+        }
+      }
+    }
+  }
+}
+
+///|
+/// Patch `android:label="..."` in an AndroidManifest.xml document. Falls
+/// back to inline line-by-line replacement when no label attribute is
+/// present.
+fn patch_android_manifest_label(text : String, label : String) -> String {
+  let lines : Array[String] = []
+  for line_view in text.split("\n") {
+    lines.push(line_view.to_string())
+  }
+  let out : Array[String] = []
+  let mut patched = false
+  for line in lines {
+    if line.contains("android:label=") {
+      out.push(patch_android_label_inline(line, label))
+      patched = true
+    } else {
+      out.push(line)
+    }
+  }
+  if !patched {
+    // Inject `android:label` on the first `<application` line we find.
+    let injected : Array[String] = []
+    let mut did_inject = false
+    for line in lines {
+      if !did_inject && line.contains("<application") {
+        // Insert attribute before the closing `>` of this line.
+        let idx = line.find(">")
+        match idx {
+          Some(pos) => {
+            injected.push(
+              line.substring(end=pos) +
+              " android:label=\"" +
+              label +
+              "\"" +
+              line.substring(start=pos),
+            )
+            did_inject = true
+          }
+          None => injected.push(line)
+        }
+      } else {
+        injected.push(line)
+      }
+    }
+    return injected.join("\n")
+  }
+  out.join("\n")
+}
+
+///|
+/// Build the Android APK by orchestrating MoonBit C generation + Gradle.
+/// Mirrors `window/android/scripts/build-hosted-apk.sh`.
 fn build_android(
   options : BuildAndroidOptions,
   host : HostPlatform,
 ) -> Result[BuildResult, String] {
-  let _ = host // Host is unused on Android; tools are cross-platform.
-  // 1. Determine runner_mode and validate ejected lock (if applicable).
-  let runner_mode = if options.ejected_shell { "ejected" } else { "managed" }
-  let android_project = match options.android_project {
-    Some(value) =>
-      if path_is_absolute(value) {
-        value
-      } else {
-        join_path(options.workspace_root, value)
-      }
-    None =>
-      if options.ejected_shell {
-        return Err("--ejected-shell requires --android-project")
-      } else {
-        join_path(options.build_dir, "android-project")
-      }
-  }
-  if options.ejected_shell {
-    let lock_path = join_path(android_project, ".moui-shell.json")
-    match
-      validate_ejected_lock(
-        lock_path,
-        "android",
-        options.moui_root,
-        join_path(options.moui_root, "../moui_shell"),
-        options.project_root,
-        options.app_config,
-      ) {
-      Ok(_) => ()
-      Err(message) => return Err(message)
-    }
-  } else {
-    let template_root = join_path(
-      join_path(options.moui_root, "../moui_shell"),
-      "android/runner/template",
+  let _ = host
+  // 1. ADR 0015: ejected-shell mode is retired. Hard-fail when requested.
+  if options.ejected_shell || options.android_project is Some(_) {
+    return Err(
+      "ADR 0015: ejected-shell / --android-project is retired. Use the window-hosted template at window/android/template/ (managed by `moui build android`).",
     )
-    match stage_managed_android_project(template_root, android_project) {
-      Ok(_) => ()
-      Err(message) => return Err(message)
-    }
   }
-  // 2. Build the PrepareOptions and call prepare_native_build.
-  let contract = match
-    managed_platform_contract(
-      options.app,
+  // Make build_dir + workspace_root absolute so MBW_* project properties
+  // passed to Gradle (which runs with cwd=android-project) resolve
+  // correctly regardless of the user's original cwd.
+  let workspace_root_abs = make_absolute(
+    options.workspace_root,
+    @env.get_env_var("PWD").unwrap_or("."),
+  )
+  let build_dir_abs = make_absolute(options.build_dir, workspace_root_abs)
+  // 2. Resolve window_root + template_root.
+  let window_root = join_path(workspace_root_abs, "window")
+  let template_root = join_path(window_root, "android/template")
+  if !path_is_file(join_path(template_root, "app/src/main/cpp/CMakeLists.txt")) ||
+    !path_is_file(join_path(template_root, "app/build.gradle")) ||
+    !path_is_file(join_path(template_root, "settings.gradle")) {
+    return Err(
+      "MoUI window-hosted Android template is incomplete: " + template_root,
+    )
+  }
+  // 3. Generate MoonBit C from the entrypoint package.
+  let entrypoint_package = match
+    managed_entrypoint_package(
+      options.app.metadata_path,
       "android",
-      options.workspace_root,
-      join_path(options.moui_root, "../moui_shell"),
+      workspace_root_abs,
     ) {
     Ok(value) => value
     Err(message) => return Err(message)
   }
-  let prepare_options : PrepareOptions = {
-    app: options.app,
-    app_config_path: options.app_config,
-    workspace_root: options.workspace_root,
-    moui_root: options.moui_root,
-    skia_root: options.skia_root,
-    build_dir: options.build_dir,
-    abi: options.abi,
-    android_shell: runner_mode,
-    sdk: "",
-    arch: "",
-    renderer: options.renderer,
-    fallback_skia: options.fallback_skia,
-    shell_root: join_path(options.moui_root, "../moui_shell"),
-    contract,
-  }
-  let prepare_result = match prepare_native_build(prepare_options) {
+  let moonbit_c = match
+    generate_moonbit_c(
+      workspace_root_abs,
+      entrypoint_package,
+      base_name(entrypoint_package) + ".c",
+      build_dir_abs,
+    ) {
     Ok(value) => value
     Err(message) => return Err(message)
   }
+  if !path_is_file(moonbit_c) {
+    return Err("MoonBit generated C was not found: " + moonbit_c)
+  }
+  // Resolve real Skia link flags via `node moui_skia/build.js`. Mirrors the
+  // iOS path in `build_ios.mbt`: when fallback_skia is false, build.js returns
+  // `-DMOUI_SKIA_HAS_SKIA ...` (stub_flags) + `libskia.a` or `-lskia` plus
+  // Android runtime libs (link_flags). When fallback_skia is true, returns an
+  // empty SkiaLink and the stubs link without `MOUI_SKIA_HAS_SKIA`, so
+  // `skia_available()` returns false at runtime — the stub-only build-evidence
+  // path that presents a black surface.
+  let skia_arch = match
+    lookup_static_map(android_abi_to_skia_arch, options.abi) {
+    Some(value) => value
+    None => return Err("unsupported Android ABI: " + options.abi)
+  }
+  let renderer_selected = if options.fallback_skia {
+    "skia-raster"
+  } else if options.renderer == "skia-raster" {
+    "skia-raster"
+  } else {
+    "skia-gpu"
+  }
+  let link_mode = @env.get_env_var("MOUI_SKIA_LINK_MODE").unwrap_or_else(() => {
+    if renderer_selected == "skia-gpu" {
+      "static"
+    } else {
+      "dynamic"
+    }
+  })
+  let gpu_env : Array[(String, String)] = if renderer_selected == "skia-gpu" {
+    [("MOUI_SKIA_ENABLE_GPU_VULKAN", "1"), ("MOUI_SKIA_ENABLE_GPU_EGL", "1")]
+  } else {
+    []
+  }
+  let skia_root_abs = make_absolute(options.skia_root, workspace_root_abs)
+  let skia_link = match
+    resolve_skia(
+      skia_root_abs,
+      "android",
+      skia_arch,
+      link_mode,
+      options.fallback_skia,
+      gpu_env,
+    ) {
+    Ok(value) => value
+    Err(message) => return Err(message)
+  }
+  // Write Skia flags into response files so the CMake template can read them
+  // via `file(READ ...)` + `separate_arguments`. Direct `-D` passing through
+  // Gradle `externalNativeBuild.cmake.arguments` would split on spaces and
+  // break `-I/path with spaces` and multi-flag stub strings.
+  let native_dir = join_path(build_dir_abs, "native")
+  let skia_cxx_rsp = join_path(native_dir, "skia-cxx-flags.rsp")
+  let skia_link_rsp = join_path(native_dir, "skia-link-flags.rsp")
+  match write_rsp(skia_cxx_rsp, skia_link.stub_flags) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+  match write_rsp(skia_link_rsp, skia_link.link_flags) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+  // When the dynamic Skia link mode is selected, `libskia.so` must be packaged
+  // into the APK's jniLibs/<abi>/ directory. The static link mode embeds Skia
+  // into libwindow_android_app.so and needs no extra packaging.
+  let jni_libs_dir : String? = if contains_flag(skia_link.link_flags, "-lskia") {
+    let dir = join_path(build_dir_abs, "jniLibs")
+    let sdk_root = android_sdk_home()
+    if sdk_root != "" {
+      let ndk_home = resolve_android_ndk_home(sdk_root)
+      if ndk_home != "" {
+        match
+          copy_android_shared_libs(
+            options.abi,
+            ndk_home,
+            skia_link.link_flags,
+            dir,
+          ) {
+          Ok(_) => ()
+          Err(message) => return Err(message)
+        }
+      }
+    }
+    Some(dir)
+  } else {
+    None
+  }
+  let prepare_result : PrepareResult = {
+    platform: "android",
+    build_json_path: "",
+    cmake_config_path: None,
+    skia_cxx_rsp: Some(skia_cxx_rsp),
+    skia_link_rsp: Some(skia_link_rsp),
+    jni_libs_dir,
+    moonbit_c,
+    renderer: {
+      requested: options.renderer,
+      selected: renderer_selected,
+      gpu_promoted: renderer_selected == "skia-gpu",
+      fallback_reason: if options.fallback_skia {
+        Some("fallback Skia build cannot provide a native GPU route")
+      } else {
+        None
+      },
+    },
+    skia_link,
+    shared_libs: [],
+  }
+  // 4. Stage the window-hosted template into <build_dir>/android-project.
+  let android_project = join_path(build_dir_abs, "android-project")
+  match stage_android_window_hosted_project(template_root, android_project) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+  match
+    apply_android_window_hosted_identity(
+      android_project,
+      options.app,
+      options.compile_sdk,
+      options.target_sdk,
+      options.renderer,
+    ) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
   if options.prepare_only {
-    log_info("[moui-shell-android] prepared " + options.build_dir)
+    log_info(
+      "[moui-window-hosted-android] Prepared " +
+      build_dir_abs +
+      " (moonbit_c=" +
+      moonbit_c +
+      ")",
+    )
     return Ok({
       platform: "android",
-      build_dir: options.build_dir,
+      build_dir: build_dir_abs,
       output_artifact: "",
       prepare_result,
     })
   }
-  // 3. Invoke Gradle with the MoUI project properties.
-  let (gradle_cmd, _) = match resolve_gradle_command(options.workspace_root) {
+  // 5. Resolve Gradle command.
+  let (gradle_cmd, _) = match resolve_gradle_command(workspace_root_abs) {
     Ok(value) => value
     Err(message) => return Err(message)
   }
+  // 6. Resolve MOON_HOME.
+  let moon_home = make_absolute(
+    @env.get_env_var("MOON_HOME").unwrap_or_else(() => {
+      let home = @env.get_env_var("HOME").unwrap_or("")
+      join_path(home, ".moon")
+    }),
+    workspace_root_abs,
+  )
+  // 7. Invoke `gradle :app:assembleDebug` with MBW_* project properties.
   let gradle_args = [
     "-p",
     android_project,
     ":app:assembleDebug",
-    "-PmouiApp=" + options.app.id,
-    "-PmouiAbi=" + options.abi,
-    "-PmouiCompileSdk=" + options.compile_sdk.to_string(),
-    "-PmouiTargetSdk=" + options.target_sdk.to_string(),
-    "-PmouiRenderer=" + options.renderer,
-    // Gradle's shell-app.gradle expects `mouiBuildDir` to already include the
-    // app id (it reads `<mouiBuildDir>/android/<mode>-shell/shell-config.json`).
-    // prepare_native_build.mbt writes to `<build_dir>/<appId>/android/...`,
-    // so append the app id here.
-    "-PmouiBuildDir=" + join_path(options.build_dir, options.app.id),
-    "-PmouiWorkspaceRoot=" + options.workspace_root,
-    "-PmouiRoot=" + options.moui_root,
-    "-PmouiShellRoot=" + join_path(options.moui_root, "../moui_shell"),
-    // Gradle's `:app` subproject resolves `mouiAppConfig` via `file(...)`,
-    // which anchors on the subproject dir (`<android-project>/app`), not on
-    // the user's cwd. Pass an absolute path so `prepareMouiShellNative` (a
-    // Gradle Exec task that re-invokes `moon run moui_cli`) finds `shell.json`
-    // regardless of which subproject's working dir Gradle uses.
-    "-PmouiAppConfig=" + make_absolute(options.app_config, options.workspace_root),
-    "-PmouiAndroidShell=" + runner_mode,
+    "-PmbwWorkspaceRoot=" + workspace_root_abs,
+    "-PmbwWindowRoot=" + window_root,
+    "-PmbwMoonHome=" + moon_home,
+    "-PmbwMoonbitC=" + moonbit_c,
+    "-PmbwAbi=" + options.abi,
+    "-PmbwSkiaCxxRsp=" + skia_cxx_rsp,
+    "-PmbwSkiaLinkRsp=" + skia_link_rsp,
+    "-PmbwJniLibsDir=" +
+    (match jni_libs_dir {
+      Some(dir) => dir
+      None => ""
+    }),
+    "--no-daemon",
   ]
   let gradle_env = moon_build_env()
   log_command("gradle", [gradle_cmd, ..gradle_args])
@@ -246,7 +542,7 @@ fn build_android(
       return Err("Gradle failed with exit code " + result.exit_code.to_string())
     Err(message) => return Err(message)
   }
-  // 4. Copy APK to output_apk.
+  // 8. Copy APK to output_apk.
   let apk_path = join_path(
     join_path(android_project, "app/build/outputs/apk/debug"),
     "app-debug.apk",
@@ -262,10 +558,10 @@ fn build_android(
     Ok(_) => ()
     Err(message) => return Err(message)
   }
-  log_info("[moui-shell-android] wrote " + options.output_apk)
+  log_info("[moui-window-hosted-android] Wrote " + options.output_apk)
   Ok({
     platform: "android",
-    build_dir: options.build_dir,
+    build_dir: build_dir_abs,
     output_artifact: options.output_apk,
     prepare_result,
   })

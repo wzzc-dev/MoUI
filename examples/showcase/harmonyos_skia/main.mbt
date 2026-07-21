@@ -1,37 +1,18 @@
 ///|
-/// Platform entrypoint: the Showcase program and renderer configuration only.
-/// The HarmonyOS backend installs runtime callbacks; `moui_shell/embedding`
-/// owns the ABI implementation, and `embedding_exports.mbt` is a linker shim.
-fn install_showcase_harmonyos_embedding() -> Unit {
-  @harmonyos_host.install_embedding(
+/// Window-hosted path only (ADR 0015). No Embedding API / moui_shell.
+fn main {
+  let app = @harmonyos_host.HarmonyOsWindowHostedApp::new(
+    title="MoUI Showcase (harmonyos window-hosted)",
     runtime_factory=metrics => {
       @runtime.new_program(
-        program=@app.ShowcaseApp::new().program_with_initial_route(
-          "platform/mobile-service-probe",
-        ),
+        program=@app.ShowcaseApp::new().program_with_initial_route("platform/mobile-service-probe"),
         size=metrics.logical_size,
       )
     },
-    provider_factory=() => {
-      @harmonyos_skia_backend.renderer_provider(
-        options=@harmonyos_skia_backend.HarmonyOsSkiaAppOptions::new(
-          surface_route=@harmonyos_host.harmonyos_shell_renderer_selection(
-              gpu_available=@harmonyos_skia_backend.harmonyos_skia_gpu_available(),
-            ).surface_route,
-        ),
-      )
-    },
-    renderer_configure=@harmonyos_host.harmonyos_shell_renderer_configure,
-    renderer_status_json=() => {
-      @harmonyos_host.harmonyos_shell_renderer_status_json(
-        gpu_available=@harmonyos_skia_backend.harmonyos_skia_gpu_available(),
-      )
-    },
+    provider_factory=() => @harmonyos_skia_backend.renderer_provider(),
+    auto_exit_after_frames=None,
   )
-}
-
-///|
-fn main {
-  install_showcase_harmonyos_embedding()
-  println(@harmonyos_skia_backend.harmonyos_skia_provider_preflight_summary())
+  println("moui-window-hosted harmonyos: waiting for HostCmd surface")
+  let event_loop = @window_harmonyos.EventLoop::new()
+  event_loop.run_app(app)
 }

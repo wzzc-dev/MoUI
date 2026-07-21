@@ -4,6 +4,11 @@ Standalone project generation, environment diagnostics, managed shell shell
 ejection, and light project maintenance for MoUI. The CLI does not depend on
 `wzzc-dev/moui`, so installing it does not resolve or prebuild Skia.
 
+> **ADR 0015**: `moui build {android,ios,harmonyos}` now uses the
+> window-hosted templates at `window/{android,ios,harmonyos}/template/`
+> and rejects the retired `--ejected-shell` / `--{android,ios,harmonyos}-project`
+> flags. The old `moui_shell/` managed-shell path is no longer produced.
+
 ```sh
 # Local checkout
 moon install ./moui_cli/cmd/moui
@@ -39,6 +44,13 @@ dependency version** written by `moui new`. Those two numbers are independent.
 toolchains (`adb` / `xcrun` / `hdc` / Gradle / Xcode / hvigor) being on PATH
 and write outputs under `artifacts/<platform>/<app>/`.
 
+All three platforms stage the window-hosted template from
+`window/{android,ios,harmonyos}/template/` into `<build_dir>/<platform>-project/`
+and pass `MBW_*` env vars / Gradle project properties so the template's
+CMakeLists.txt can locate the workspace, the window module root, the MoonBit
+runtime, and the generated MoonBit C. Stage markers
+(`.moui-window-hosted-stage`) protect unowned directories from overwrite.
+
 ```sh
 # List connected devices
 moui devices
@@ -58,9 +70,9 @@ moui build ios showcase \
   --app-config "$PWD/examples/showcase/shell.json" \
   --sdk iphoneos --arch arm64
 
-# Build only native inputs (MoonBit C / CMake / shell config), skip packaging.
-# Validates the full prepare pipeline (moon build / CMake config / shell
-# staging) without invoking Gradle / Xcode / hvigor.
+# Build only native inputs (MoonBit C / staged template / identity patch),
+# skip packaging. Validates the full prepare pipeline (moon build / template
+# staging / shell.json identity) without invoking Gradle / clang / hvigor.
 moui build harmonyos showcase --app-config "$PWD/examples/showcase/shell.json" --prepare-only
 
 # Build with a specific renderer and Skia fallback
@@ -82,14 +94,16 @@ moui build android showcase --app-config "$PWD/examples/showcase/shell.json" --j
 | Platform | Toolchain | Required env / config | Default discovery |
 |----------|-----------|-----------------------|-------------------|
 | Android  | Gradle + Android SDK + NDK | `ANDROID_HOME` or `ANDROID_SDK_ROOT` | `~/Library/Android/sdk` (macOS), `~/Android/Sdk` (Linux) |
-| iOS      | Xcode + Swift toolchain | — | `xcrun --sdk iphonesimulator` |
+| iOS      | Xcode 15.4+ (clang / clang++) | — | `xcrun --sdk iphonesimulator` |
 | HarmonyOS | DevEco-Studio + hvigorw + ohpm | `HARMONYOS_SDK_HOME` (or `OHOS_SDK_HOME`) | DevEco-Studio install path + `~/Library/OpenHarmony/Sdk/<ver>` |
 
-Notes from verified 0.1.3 builds of `examples/showcase`:
+Notes from verified 0.3.0 builds of `examples/showcase` (all three platforms
+now use the window-hosted template; `--ejected-shell` / `--{platform}-project`
+are rejected with an ADR 0015 error):
 
-- **Android**: requires JDK 17+ (`export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home`). Default `compileSdk` / `targetSdk` is 34, but newer `androidx.activity` requires 36 — pass `--compile-sdk 36 --target-sdk 36` if the build fails with a `Dependency 'androidx.activity:activity' requires compileSdk 36` error.
-- **iOS**: `build_ios_core` compiles all C / C++ / ObjC++ / Swift sources (the Xcode project template has NO native compile phase). When using `--ejected-shell`, pass `--xcode-project`, `--scheme`, and `--product-name` so the build can find the existing xcodeproj.
-- **HarmonyOS**: `hvigorw` and `ohpm` are auto-discovered from `/Applications/DevEco-Studio.app/Contents/tools/`. To override, pass `--hvigorw` / `--ohpm` or set `HVIGORW` / `OHPM` env vars. Builds produce unsigned HAPs unless a `signingConfigFile` is configured (via `--signing-config-file` or `moui config set harmonyos.signingConfigFile <path>`).
+- **Android**: requires JDK 17+ (`export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home`). Default `compileSdk` / `targetSdk` is 34, but newer `androidx.activity` requires 36 — pass `--compile-sdk 36 --target-sdk 36` if the build fails with a `Dependency 'androidx.activity:activity' requires compileSdk 36` error. Verified APK: `artifacts/window-hosted-android/showcase.apk` (14 MB).
+- **iOS**: `build_ios` invokes `clang` / `clang++` directly (no Xcode project) to compile MoonBit C, Moon runtime, window-hosted glue, Skia stubs, and `ios_skia_*_glue.mm`, then links with `-framework UIKit -framework Foundation -framework QuartzCore -framework CoreGraphics -framework Metal -framework MetalKit -lc++`. Verified `.app`: `artifacts/window-hosted-ios/showcase.app/` (5 MB executable + `Info.plist`).
+- **HarmonyOS**: `hvigorw` and `ohpm` are auto-discovered from `/Applications/DevEco-Studio.app/Contents/tools/`. To override, pass `--hvigorw` / `--ohpm` or set `HVIGORW` / `OHPM` env vars. Builds produce unsigned HAPs unless a `signingConfigFile` is configured (via `--signing-config-file` or `moui config set harmonyos.signingConfigFile <path>`). Verified HAP: `artifacts/window-hosted-harmonyos/showcase.hap` (16 MB).
 
 ### Build artifacts
 

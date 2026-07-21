@@ -123,6 +123,35 @@ static wchar_t *moui_cli_final_path_windows(const wchar_t *path) {
   }
   return result;
 }
+
+static moonbit_bytes_t moui_cli_wide_to_utf8_bytes(const wchar_t *value) {
+  int value_length = (int)wcslen(value);
+  int length = WideCharToMultiByte(
+      CP_UTF8,
+      WC_ERR_INVALID_CHARS,
+      value,
+      value_length,
+      NULL,
+      0,
+      NULL,
+      NULL);
+  if (length <= 0) {
+    return moonbit_make_bytes(0, 0);
+  }
+  moonbit_bytes_t result = moonbit_make_bytes(length, 0);
+  if (WideCharToMultiByte(
+          CP_UTF8,
+          WC_ERR_INVALID_CHARS,
+          value,
+          value_length,
+          (char *)result,
+          length,
+          NULL,
+          NULL) <= 0) {
+    return moonbit_make_bytes(0, 0);
+  }
+  return result;
+}
 #endif
 
 MOONBIT_FFI_EXPORT int32_t moui_cli_rename_path(
@@ -197,6 +226,34 @@ MOONBIT_FFI_EXPORT int32_t moui_cli_path_is_symlink(moonbit_bytes_t path) {
 #else
   struct stat status;
   return lstat((const char *)path, &status) == 0 && S_ISLNK(status.st_mode);
+#endif
+}
+
+MOONBIT_FFI_EXPORT moonbit_bytes_t moui_cli_canonical_path(
+    moonbit_bytes_t path) {
+#ifdef _WIN32
+  wchar_t *path_wide = moui_cli_utf8_to_wide((const char *)path);
+  if (path_wide == NULL) {
+    return moonbit_make_bytes(0, 0);
+  }
+  wchar_t *path_final = moui_cli_final_path_windows(path_wide);
+  free(path_wide);
+  if (path_final == NULL) {
+    return moonbit_make_bytes(0, 0);
+  }
+  moonbit_bytes_t result = moui_cli_wide_to_utf8_bytes(path_final);
+  free(path_final);
+  return result;
+#else
+  char *path_final = realpath((const char *)path, NULL);
+  if (path_final == NULL) {
+    return moonbit_make_bytes(0, 0);
+  }
+  size_t length = strlen(path_final);
+  moonbit_bytes_t result = moonbit_make_bytes((int32_t)length, 0);
+  memcpy(result, path_final, length);
+  free(path_final);
+  return result;
 #endif
 }
 

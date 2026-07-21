@@ -1,37 +1,18 @@
 ///|
-/// Platform entrypoint: the Showcase program and renderer configuration only.
-/// The Android backend installs runtime callbacks; `moui_shell/embedding` owns
-/// the ABI implementation, and `embedding_exports.mbt` is only a linker shim.
-fn install_showcase_android_embedding() -> Unit {
-  @android_host.install_embedding(
+/// Window-hosted path only (ADR 0015). No Embedding API / moui_shell.
+fn main {
+  let app = @android_host.AndroidWindowHostedApp::new(
+    title="MoUI Showcase (android window-hosted)",
     runtime_factory=metrics => {
       @runtime.new_program(
-        program=@app.ShowcaseApp::new().program_with_initial_route(
-          "platform/mobile-service-probe",
-        ),
+        program=@app.ShowcaseApp::new().program_with_initial_route("platform/mobile-service-probe"),
         size=metrics.logical_size,
       )
     },
-    provider_factory=() => {
-      @android_skia_backend.renderer_provider(
-        options=@android_skia_backend.AndroidSkiaAppOptions::new(
-          surface_route=@android_host.android_shell_renderer_selection(
-              gpu_available=@android_skia_backend.android_skia_gpu_available(),
-            ).surface_route,
-        ),
-      )
-    },
-    renderer_configure=@android_host.android_shell_renderer_configure,
-    renderer_status_json=() => {
-      @android_host.android_shell_renderer_status_json(
-        gpu_available=@android_skia_backend.android_skia_gpu_available(),
-      )
-    },
+    provider_factory=() => @android_skia_backend.renderer_provider(),
+    auto_exit_after_frames=None,
   )
-}
-
-///|
-fn main {
-  install_showcase_android_embedding()
-  println(@android_skia_backend.android_skia_provider_preflight_summary())
+  println("moui-window-hosted android: waiting for HostCmd surface")
+  let event_loop = @window_android.EventLoop::new()
+  event_loop.run_app(app)
 }

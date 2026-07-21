@@ -1,10 +1,12 @@
-// HarmonyOS build glue. Migrates `moui_shell/scripts/build-harmonyos-hap.sh`
-// (540 lines) into MoonBit.
+// ADR 0015: managed moui_shell builds are retired.
+// HarmonyOS HAP packaging now uses the window-hosted template at
+// `window/harmonyos/template/` + `examples/<app>/harmonyos_skia` entrypoint.
 //
-// `build_harmonyos` prepares the native build inputs (M5), stages the
-// managed hvigor project template or validates the ejected shell lock
-// (M9.1), injects signing configs, then either invokes `ohpm install` +
-// `hvigorw assembleHap` (non-fallback) or `cmake` + `zip` (fallback).
+// `build_harmonyos` generates MoonBit C, stages the window-hosted hvigor
+// project template, applies app identity (bundleName / moduleName / appName),
+// optionally injects a signing config, then invokes `ohpm install` +
+// `hvigorw assembleHap` with the `MBW_*` env vars consumed by the template's
+// `entry/src/main/cpp/CMakeLists.txt`.
 
 ///|
 priv struct BuildHarmonyosOptions {
@@ -34,8 +36,6 @@ priv struct BuildHarmonyosOptions {
 ///   - block comments `/* ... */`
 ///   - line comments `// ...` (but not `:` URLs like `https://...`)
 ///   - trailing commas before `}` or `]`
-/// Mirrors the inline Node helper at lines 234-250 of
-/// `build-harmonyos-hap.sh::inject_harmonyos_signing_config`.
 fn strip_json5(text : String) -> String {
   let result = StringBuilder::new()
   // `String::op_get` returns `UInt16` (UTF-16 code unit), but we need `Char`
@@ -220,78 +220,70 @@ fn find_deveco_sdk_home(sdk_home : String) -> String {
 }
 
 ///|
-/// Stage the HarmonyOS project tree by copying the canonical project layout
-/// (AppScope/build-profile.json5/hvigor/hvigorfile.ts/oh-package.json5/entry/*)
-/// from `source` to `target`. Mirrors `stage_harmonyos_project`.
-fn stage_harmonyos_project(
-  source : String,
-  target : String,
+/// Write `value` as pretty-printed JSON to `path`.
+fn write_json_file(path : String, value : Json) -> Result[Unit, String] {
+  let text = value.stringify(indent=2) + "\n"
+  write_file_bytes_result(path, @utf8.encode(text[:], bom=false))
+}
+
+///|
+/// Read a JSON/JSON5 object file, stripping JSON5 comments/trailing commas.
+fn read_json5_object(path : String) -> Result[Map[String, Json], String] {
+  let text = match read_file_string_optional(path) {
+    Some(value) => value
+    None => return Err("could not read: " + path)
+  }
+  let json = @json.parse(strip_json5(text)) catch {
+    _ => return Err("invalid JSON/JSON5: " + path)
+  }
+  guard json is Object(fields) else {
+    return Err("expected object root: " + path)
+  }
+  Ok(fields)
+}
+
+///|
+/// Update a HarmonyOS string resource `{ "string": [ { "name", "value" } ] }`.
+fn update_json5_string_resource(
+  path : String,
+  name : String,
+  value : String,
 ) -> Result[Unit, String] {
-  remove_tree(target)
-  match mkdir_p(join_path(target, "entry")) {
-    Ok(_) => ()
+  let root = match read_json5_object(path) {
+    Ok(fields) => fields
     Err(message) => return Err(message)
   }
-  let items = [
-    "AppScope", "build-profile.json5", "hvigor", "hvigorfile.ts", "oh-package.json5",
-  ]
-  for item in items {
-    let from = join_path(source, item)
-    let to = join_path(target, item)
-    if path_is_dir(from) {
-      match mkdir_p(to) {
-        Ok(_) => ()
-        Err(message) => return Err(message)
-      }
-      match copy_tree(from, to) {
-        Ok(_) => ()
-        Err(message) => return Err(message)
-      }
-    } else if path_is_file(from) {
-      match read_file_bytes_optional(from) {
-        Some(bytes) =>
-          match write_file_bytes_result(to, bytes) {
-            Ok(_) => ()
-            Err(message) => return Err(message)
+  let strings = match root.get("string") {
+    Some(Array(values)) => values
+    _ => return Err(path + ": missing string array")
+  }
+  let mut found = false
+  let updated : Array[Json] = []
+  for item in strings {
+    match item {
+      Object(fields) =>
+        match fields.get("name") {
+          Some(String(item_name)) if item_name == name => {
+            fields["value"] = Json::string(value)
+            updated.push(Json::object(fields))
+            found = true
           }
-        None => return Err("could not read file: " + from)
-      }
+          _ => updated.push(item)
+        }
+      _ => updated.push(item)
     }
   }
-  // entry/* items
-  let entry_items = [
-    "build-profile.json5", "hvigorfile.ts", "obfuscation-rules.txt", "oh-package.json5",
-    "src",
-  ]
-  for item in entry_items {
-    let from = join_path(join_path(source, "entry"), item)
-    let to = join_path(join_path(target, "entry"), item)
-    if path_is_dir(from) {
-      match mkdir_p(to) {
-        Ok(_) => ()
-        Err(message) => return Err(message)
-      }
-      match copy_tree(from, to) {
-        Ok(_) => ()
-        Err(message) => return Err(message)
-      }
-    } else if path_is_file(from) {
-      match read_file_bytes_optional(from) {
-        Some(bytes) =>
-          match write_file_bytes_result(to, bytes) {
-            Ok(_) => ()
-            Err(message) => return Err(message)
-          }
-        None => return Err("could not read file: " + from)
-      }
-    }
+  if !found {
+    return Err(path + ": missing string resource " + name)
   }
-  Ok(())
+  root["string"] = Json::array(updated)
+  write_json_file(path, Json::object(root))
 }
 
 ///|
 /// Inject DevEco signing configs into a staged `build-profile.json5` from a
-/// JSON fragment file. Mirrors `inject_harmonyos_signing_config`.
+/// JSON fragment file. Mirrors the previous managed-shell behavior; the
+/// window-hosted template ships with an empty `signingConfigs` array.
 fn inject_harmonyos_signing_config(
   project_dir : String,
   signing_config_file : String,
@@ -381,74 +373,14 @@ fn inject_harmonyos_signing_config(
 }
 
 ///|
-/// Write `value` as pretty-printed JSON to `path`.
-fn write_json_file(path : String, value : Json) -> Result[Unit, String] {
-  let text = value.stringify(indent=2) + "\n"
-  write_file_bytes_result(path, @utf8.encode(text[:], bom=false))
-}
-
-///|
-/// Read a JSON/JSON5 object file, stripping JSON5 comments/trailing commas.
-fn read_json5_object(path : String) -> Result[Map[String, Json], String] {
-  let text = match read_file_string_optional(path) {
-    Some(value) => value
-    None => return Err("could not read: " + path)
-  }
-  let json = @json.parse(strip_json5(text)) catch {
-    _ => return Err("invalid JSON/JSON5: " + path)
-  }
-  guard json is Object(fields) else {
-    return Err("expected object root: " + path)
-  }
-  Ok(fields)
-}
-
-///|
-/// Update a HarmonyOS string resource `{ "string": [ { "name", "value" } ] }`.
-fn update_json5_string_resource(
-  path : String,
-  name : String,
-  value : String,
-) -> Result[Unit, String] {
-  let root = match read_json5_object(path) {
-    Ok(fields) => fields
-    Err(message) => return Err(message)
-  }
-  let strings = match root.get("string") {
-    Some(Array(values)) => values
-    _ => return Err(path + ": missing string array")
-  }
-  let mut found = false
-  let updated : Array[Json] = []
-  for item in strings {
-    match item {
-      Object(fields) =>
-        match fields.get("name") {
-          Some(String(item_name)) if item_name == name => {
-            fields["value"] = Json::string(value)
-            updated.push(Json::object(fields))
-            found = true
-          }
-          _ => updated.push(item)
-        }
-      _ => updated.push(item)
-    }
-  }
-  if !found {
-    return Err(path + ": missing string resource " + name)
-  }
-  root["string"] = Json::array(updated)
-  write_json_file(path, Json::object(root))
-}
-
-///|
-/// Apply shell.json identity onto a staged managed HarmonyOS template.
-/// Mirrors `moui_shell/harmonyos/runner/resolve-shell.mjs` for the fields
-/// required for correct package install + `aa start`.
-fn apply_harmonyos_managed_identity(
+/// Apply shell.json identity onto a staged window-hosted HarmonyOS template.
+/// Updates bundleName, moduleName, app_name, module_desc, entry_desc and SDK
+/// versions. Mirrors the previous managed-shell identity step but targets
+/// the window-hosted template's file layout.
+fn apply_harmonyos_window_hosted_identity(
   project_root : String,
   app : ShellApp,
-  renderer : String,
+  _renderer : String,
 ) -> Result[Unit, String] {
   let harmonyos = match app.harmonyos {
     Some(value) => value
@@ -472,7 +404,7 @@ fn apply_harmonyos_managed_identity(
     None => app.display_name + " HarmonyOS entry ability"
   }
 
-  // AppScope/app.json5 → app.bundleName
+  // AppScope/app.json5 → app.bundleName + vendor + version.
   let app_scope_path = join_path(project_root, "AppScope/app.json5")
   let app_scope = match read_json5_object(app_scope_path) {
     Ok(fields) => fields
@@ -483,6 +415,9 @@ fn apply_harmonyos_managed_identity(
     _ => return Err(app_scope_path + ": missing app object")
   }
   app_obj["bundleName"] = Json::string(bundle_name)
+  app_obj["vendor"] = Json::string("wzzc-dev")
+  app_obj["versionCode"] = Json::number(1.0)
+  app_obj["versionName"] = Json::string("0.1.0")
   app_scope["app"] = Json::object(app_obj)
   match write_json_file(app_scope_path, Json::object(app_scope)) {
     Ok(_) => ()
@@ -493,13 +428,17 @@ fn apply_harmonyos_managed_identity(
   let root_pkg_path = join_path(project_root, "oh-package.json5")
   let root_pkg = match read_json5_object(root_pkg_path) {
     Ok(fields) => fields
-    Err(message) => return Err(message)
+    Err(_) => {
+      // Tolerate missing file: write a minimal stub.
+      let fields : Map[String, Json] = Map([])
+      fields
+    }
   }
   root_pkg["name"] = Json::string(
     app.id.replace_all(old="_", new="-") + "-harmonyos",
   )
   root_pkg["description"] = Json::string(
-    app.display_name + " managed HarmonyOS shell",
+    app.display_name + " window-hosted HarmonyOS app",
   )
   match write_json_file(root_pkg_path, Json::object(root_pkg)) {
     Ok(_) => ()
@@ -518,7 +457,7 @@ fn apply_harmonyos_managed_identity(
   }
   if modules.length() != 1 {
     return Err(
-      profile_path + ": canonical shell must contain one entry module",
+      profile_path + ": window-hosted template must contain one entry module",
     )
   }
   let module0 = match modules[0] {
@@ -580,11 +519,14 @@ fn apply_harmonyos_managed_identity(
   let entry_pkg_path = join_path(project_root, "entry/oh-package.json5")
   let entry_pkg = match read_json5_object(entry_pkg_path) {
     Ok(fields) => fields
-    Err(message) => return Err(message)
+    Err(_) => {
+      let fields : Map[String, Json] = Map([])
+      fields
+    }
   }
   entry_pkg["name"] = Json::string(module_name)
   entry_pkg["description"] = Json::string(
-    app.display_name + " managed entry module",
+    app.display_name + " window-hosted entry module",
   )
   match write_json_file(entry_pkg_path, Json::object(entry_pkg)) {
     Ok(_) => ()
@@ -602,8 +544,7 @@ fn apply_harmonyos_managed_identity(
     Err(message) => return Err(message)
   }
   let entry_strings = join_path(
-    project_root,
-    "entry/src/main/resources/base/element/string.json",
+    project_root, "entry/src/main/resources/base/element/string.json",
   )
   match update_json5_string_resource(entry_strings, "app_name", app_name) {
     Ok(_) => ()
@@ -611,69 +552,19 @@ fn apply_harmonyos_managed_identity(
   }
   match
     update_json5_string_resource(
-      entry_strings,
-      "module_desc",
-      module_description,
+      entry_strings, "module_desc", module_description,
     ) {
     Ok(_) => ()
     Err(message) => return Err(message)
   }
   match
-    update_json5_string_resource(
-      entry_strings,
-      "entry_desc",
-      entry_description,
-    ) {
-    Ok(_) => ()
-    Err(message) => return Err(message)
-  }
-
-  // Generated ETS config consumed by EntryAbility.
-  let app_argument = "moui-" +
-    app.id.replace_all(old="_", new="-") +
-    "-harmonyos"
-  let fullscreen_lit = if app.shell.fullscreen { "true" } else { "false" }
-  let generated = StringBuilder::new()
-  generated.write_string(
-    "// Generated by moui_cli managed HarmonyOS staging.\n",
-  )
-  generated.write_string("export interface MoUIGeneratedConfiguration {\n")
-  generated.write_string("  appArgument: string;\n")
-  generated.write_string("  renderer: string;\n")
-  generated.write_string("  fullscreen: boolean;\n")
-  generated.write_string("  statusBar: string;\n")
-  generated.write_string("  orientation: string;\n")
-  generated.write_string("}\n\n")
-  generated.write_string(
-    "export const mouiGeneratedConfiguration: MoUIGeneratedConfiguration = {\n",
-  )
-  generated.write_string(
-    "  appArgument: \"" + moon_string(app_argument) + "\",\n",
-  )
-  generated.write_string("  renderer: \"" + moon_string(renderer) + "\",\n")
-  generated.write_string("  fullscreen: " + fullscreen_lit + ",\n")
-  generated.write_string(
-    "  statusBar: \"" + moon_string(app.shell.status_bar) + "\",\n",
-  )
-  generated.write_string(
-    "  orientation: \"" + moon_string(app.shell.orientation) + "\"\n",
-  )
-  generated.write_string("};\n")
-  let config_path = join_path(
-    project_root,
-    "entry/src/main/ets/moui/MoUIGeneratedConfig.ets",
-  )
-  match
-    write_file_bytes_result(
-      config_path,
-      @utf8.encode(generated.to_string()[:], bom=false),
-    ) {
+    update_json5_string_resource(entry_strings, "entry_desc", entry_description) {
     Ok(_) => ()
     Err(message) => return Err(message)
   }
 
   log_info(
-    "[moui-shell-harmonyos] Applied managed identity bundleName=" +
+    "[moui-window-hosted-harmonyos] Applied identity bundleName=" +
     bundle_name +
     " moduleName=" +
     module_name,
@@ -682,264 +573,207 @@ fn apply_harmonyos_managed_identity(
 }
 
 ///|
-/// Build the HarmonyOS HAP archive. Mirrors `build-harmonyos-hap.sh`.
+/// Stage the window-hosted HarmonyOS template into `target_project` and
+/// write the `.moui-window-hosted-stage` marker so future runs can replace
+/// it safely.
+fn stage_harmonyos_window_hosted_project(
+  template_root : String,
+  target_project : String,
+) -> Result[Unit, String] {
+  let stage_marker = join_path(target_project, ".moui-window-hosted-stage")
+  if path_is_dir(target_project) && !path_is_file(stage_marker) {
+    return Err(
+      "refusing to replace an unowned HarmonyOS project: " + target_project,
+    )
+  }
+  remove_tree(target_project)
+  match mkdir_p(target_project) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+  match copy_tree(template_root, target_project) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+  match write_file_bytes_result(stage_marker, b"") {
+    Ok(_) => Ok(())
+    Err(message) => Err(message)
+  }
+}
+
+///|
+/// Build the HarmonyOS HAP archive using the window-hosted template.
 fn build_harmonyos(
   options : BuildHarmonyosOptions,
   host : HostPlatform,
 ) -> Result[BuildResult, String] {
   let _ = host
-  // 1. Validate ejected lock if applicable.
-  let harmonyos_project = match options.harmonyos_project {
-    Some(value) =>
-      if path_is_absolute(value) {
-        value
-      } else {
-        join_path(options.workspace_root, value)
-      }
-    None =>
-      if options.ejected_shell {
-        return Err("--ejected-shell requires --harmonyos-project")
-      } else {
-        ""
-      }
+  // 1. ADR 0015: ejected-shell mode is retired. Hard-fail when requested.
+  if options.ejected_shell || options.harmonyos_project is Some(_) {
+    return Err(
+      "ADR 0015: ejected-shell / --harmonyos-project is retired. Use the window-hosted template at window/harmonyos/template/ (managed by `moui build harmonyos`).",
+    )
   }
-  if options.ejected_shell {
-    if harmonyos_project == "" ||
-      !path_is_dir(join_path(harmonyos_project, "entry/src/main/cpp")) {
-      return Err(
-        "--ejected-shell requires --harmonyos-project with entry/src/main/cpp",
-      )
-    }
-    let lock_path = join_path(harmonyos_project, ".moui-shell.json")
-    match
-      validate_ejected_lock(
-        lock_path,
-        "harmonyos",
-        options.moui_root,
-        join_path(options.moui_root, "../moui_shell"),
-        options.project_root,
-        options.app_config,
-      ) {
-      Ok(_) => ()
-      Err(message) => return Err(message)
-    }
+  // Make build_dir + workspace_root absolute so MBW_* env vars consumed by
+  // CMake (which runs with cwd=<hvigor-project>) resolve correctly regardless
+  // of the user's original cwd. hvigorw spawns CMake in a child cwd, so any
+  // relative path passed via env vars would fail `EXISTS` checks.
+  let workspace_root_abs = make_absolute(
+    options.workspace_root,
+    @env.get_env_var("PWD").unwrap_or("."),
+  )
+  let build_dir_abs = make_absolute(options.build_dir, workspace_root_abs)
+  // 2. Resolve window_root + template_root.
+  let window_root = join_path(workspace_root_abs, "window")
+  let template_root = join_path(window_root, "harmonyos/template")
+  if !path_is_file(
+      join_path(template_root, "entry/src/main/cpp/CMakeLists.txt"),
+    ) ||
+    !path_is_file(join_path(template_root, "build-profile.json5")) ||
+    !path_is_file(join_path(template_root, "oh-package.json5")) {
+    return Err(
+      "MoUI window-hosted HarmonyOS template is incomplete: " + template_root,
+    )
   }
-  // 2. Call prepare_native_build.
-  let contract = match
-    managed_platform_contract(
-      options.app,
+  // 3. Generate MoonBit C from the entrypoint package.
+  let entrypoint_package = match
+    managed_entrypoint_package(
+      options.app.metadata_path,
       "harmonyos",
-      options.workspace_root,
-      join_path(options.moui_root, "../moui_shell"),
+      workspace_root_abs,
     ) {
     Ok(value) => value
     Err(message) => return Err(message)
   }
-  let prepare_options : PrepareOptions = {
-    app: options.app,
-    app_config_path: options.app_config,
-    workspace_root: options.workspace_root,
-    moui_root: options.moui_root,
-    skia_root: options.skia_root,
-    build_dir: options.build_dir,
-    abi: "",
-    android_shell: "",
-    sdk: "",
-    arch: options.arch,
-    renderer: options.renderer,
-    fallback_skia: options.fallback_skia,
-    shell_root: join_path(options.moui_root, "../moui_shell"),
-    contract,
-  }
-  let prepare_result = match prepare_native_build(prepare_options) {
+  let moonbit_c = match
+    generate_moonbit_c(
+      workspace_root_abs,
+      entrypoint_package,
+      base_name(entrypoint_package) + ".c",
+      build_dir_abs,
+    ) {
     Ok(value) => value
     Err(message) => return Err(message)
   }
-  // 3. Resolve source_project. For managed shell, stage the canonical
-  // HarmonyOS template into <build_dir>/managed-shell (mirrors iOS staging
-  // in build_ios.mbt). For ejected shell, use the caller-provided project.
-  let source_project = if options.ejected_shell {
-    harmonyos_project
-  } else {
-    let staged_root = join_path(options.build_dir, "managed-shell")
-    let stage_marker = join_path(staged_root, ".moui-managed-harmonyos-stage")
-    let template_root = join_path(
-      join_path(options.moui_root, "../moui_shell"),
-      "harmonyos/runner/template",
-    )
-    if !path_is_file(
-        join_path(template_root, "entry/src/main/cpp/CMakeLists.txt"),
-      ) ||
-      !path_is_file(
-        join_path(template_root, "build-profile.json5"),
-      ) {
-      return Err("MoUI HarmonyOS template is incomplete: " + template_root)
-    }
-    if path_is_dir(staged_root) && !path_is_file(stage_marker) {
-      return Err(
-        "refusing to replace an unowned HarmonyOS project: " + staged_root,
-      )
-    }
-    remove_tree(staged_root)
-    match mkdir_p(staged_root) {
-      Ok(_) => ()
-      Err(message) => return Err(message)
-    }
-    match write_file_bytes_result(stage_marker, b"") {
-      Ok(_) => ()
-      Err(message) => return Err(message)
-    }
-    match copy_tree(template_root, staged_root) {
-      Ok(_) => ()
-      Err(message) => return Err(message)
-    }
-    match
-      apply_harmonyos_managed_identity(
-        staged_root,
-        options.app,
-        options.renderer,
-      ) {
-      Ok(_) => ()
-      Err(message) => return Err(message)
-    }
-    log_info(
-      "[moui-shell-harmonyos] Staged canonical HarmonyOS shell in " +
-      staged_root,
-    )
-    staged_root
+  if !path_is_file(moonbit_c) {
+    return Err("MoonBit generated C was not found: " + moonbit_c)
   }
-  if !path_is_dir(join_path(source_project, "entry/src/main/cpp")) {
-    return Err(
-      "resolved HarmonyOS shell is missing entry/src/main/cpp: " +
-      source_project,
-    )
+  // Resolve real Skia (same contract as Android/iOS). Stub-only builds present
+  // a black XComponent because moonbit_skia_available() returns 0.
+  let renderer_selected = if options.fallback_skia {
+    "skia-raster"
+  } else if options.renderer == "skia-raster" {
+    "skia-raster"
+  } else {
+    "skia-gpu"
+  }
+  // HarmonyOS auto/skia-gpu must use static: locked libskia.so hides Ganesh
+  // symbols required by libskia_ganesh_ext.a (see docs/examples.md).
+  let link_mode = @env.get_env_var("MOUI_SKIA_LINK_MODE").unwrap_or_else(() => {
+    if renderer_selected == "skia-gpu" {
+      "static"
+    } else {
+      "dynamic"
+    }
+  })
+  let gpu_env : Array[(String, String)] = if renderer_selected == "skia-gpu" {
+    [("MOUI_SKIA_ENABLE_GPU_EGL", "1")]
+  } else {
+    []
+  }
+  let skia_root_abs = make_absolute(options.skia_root, workspace_root_abs)
+  let skia_link = match
+    resolve_skia(
+      skia_root_abs,
+      "harmonyos",
+      options.arch,
+      link_mode,
+      options.fallback_skia,
+      gpu_env,
+    ) {
+    Ok(value) => value
+    Err(message) => return Err(message)
+  }
+  let native_dir = join_path(build_dir_abs, "native")
+  let skia_cxx_rsp = join_path(native_dir, "skia-cxx-flags.rsp")
+  let skia_link_rsp = join_path(native_dir, "skia-link-flags.rsp")
+  match write_rsp(skia_cxx_rsp, skia_link.stub_flags) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+  match write_rsp(skia_link_rsp, skia_link.link_flags) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+  let prepare_result : PrepareResult = {
+    platform: "harmonyos",
+    build_json_path: "",
+    cmake_config_path: None,
+    skia_cxx_rsp: Some(skia_cxx_rsp),
+    skia_link_rsp: Some(skia_link_rsp),
+    jni_libs_dir: None,
+    moonbit_c,
+    renderer: {
+      requested: options.renderer,
+      selected: renderer_selected,
+      gpu_promoted: renderer_selected == "skia-gpu",
+      fallback_reason: if options.fallback_skia {
+        Some("fallback Skia build cannot provide a native GPU route")
+      } else {
+        None
+      },
+    },
+    skia_link,
+    shared_libs: [],
+  }
+  // 4. Stage the window-hosted template into <build_dir>/hvigor-project.
+  let hvigor_project_dir = join_path(build_dir_abs, "hvigor-project")
+  match
+    stage_harmonyos_window_hosted_project(template_root, hvigor_project_dir) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+  match
+    apply_harmonyos_window_hosted_identity(
+      hvigor_project_dir,
+      options.app,
+      options.renderer,
+    ) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+  match
+    inject_harmonyos_signing_config(
+      hvigor_project_dir,
+      options.signing_config_file.unwrap_or(""),
+    ) {
+    Ok(_) => ()
+    Err(message) => return Err(message)
+  }
+  // Clean stale Hvigor state.
+  for
+    stale in [
+      ".hvigor", "build", "entry/build", "oh_modules", "entry/oh_modules", "oh-package-lock.json5",
+      "entry/oh-package-lock.json5",
+    ] {
+    remove_tree(join_path(hvigor_project_dir, stale))
   }
   if options.prepare_only {
-    log_info("[moui-shell-harmonyos] Prepared " + options.build_dir)
+    log_info(
+      "[moui-window-hosted-harmonyos] Prepared " +
+      build_dir_abs +
+      " (moonbit_c=" +
+      moonbit_c +
+      ")",
+    )
     return Ok({
       platform: "harmonyos",
-      build_dir: options.build_dir,
+      build_dir: build_dir_abs,
       output_artifact: "",
       prepare_result,
     })
   }
-  // 4. Dispatch to fallback (cmake + zip) or real (ohpm + hvigorw) path.
-  if options.fallback_skia {
-    return build_harmonyos_fallback(options, source_project, prepare_result)
-  }
-  build_harmonyos_hvigor(options, source_project, prepare_result)
-}
-
-///|
-/// Fallback path: invoke `cmake` + `zip` to produce a minimal HAP archive
-/// for packaging smoke. Mirrors lines 488-540 of `build-harmonyos-hap.sh`.
-fn build_harmonyos_fallback(
-  options : BuildHarmonyosOptions,
-  source_project : String,
-  prepare_result : PrepareResult,
-) -> Result[BuildResult, String] {
-  let ohos_arch = match
-    lookup_static_map(harmonyos_arch_to_ohos_arch, options.arch) {
-    Some(value) => value
-    None => return Err("unsupported HarmonyOS arch: " + options.arch)
-  }
-  let cmake_build_dir = join_path(
-    options.build_dir,
-    "cmake/fallback/" + ohos_arch,
-  )
-  remove_tree(cmake_build_dir)
-  let cmake_config = prepare_result.cmake_config_path.unwrap_or("")
-  let shell_root = join_path(options.moui_root, "../moui_shell")
-  let mut cmake_args = [
-    "-S",
-    join_path(source_project, "entry/src/main/cpp"),
-    "-B",
-    cmake_build_dir,
-    "-DMOUI_ROOT=" + options.moui_root,
-    "-DMOUI_SHELL_ROOT=" + shell_root,
-    "-DMOUI_EMBEDDING_NATIVE_CONFIG=" + cmake_config,
-    "-DMOUI_HARMONYOS_FALLBACK=ON",
-  ]
-  // Prefer Ninja when available.
-  if find_in_path("ninja", detect_host_platform()) is Some(_) {
-    cmake_args = ["-G", "Ninja", ..cmake_args]
-  }
-  log_command("cmake", ["cmake", ..cmake_args])
-  match process_exec_argv(["cmake", ..cmake_args], capture=false) {
-    Ok(result) if result.exit_code == 0 => ()
-    Ok(result) =>
-      return Err(
-        "cmake configure failed (exit " + result.exit_code.to_string() + ")",
-      )
-    Err(message) => return Err(message)
-  }
-  log_info("[moui-shell-harmonyos] Building HarmonyOS native library")
-  match
-    process_exec_argv(["cmake", "--build", cmake_build_dir], capture=false) {
-    Ok(result) if result.exit_code == 0 => ()
-    Ok(result) =>
-      return Err(
-        "cmake build failed (exit " + result.exit_code.to_string() + ")",
-      )
-    Err(message) => return Err(message)
-  }
-  // Stage and zip the HAP.
-  let stage_dir = join_path(options.build_dir, "hap-stage")
-  match stage_harmonyos_project(source_project, stage_dir) {
-    Ok(_) => ()
-    Err(message) => return Err(message)
-  }
-  let libs_dir = join_path(stage_dir, "entry/libs/" + ohos_arch)
-  match mkdir_p(libs_dir) {
-    Ok(_) => ()
-    Err(message) => return Err(message)
-  }
-  // Copy shared libs.
-  for shared_lib in prepare_result.shared_libs {
-    let dest = join_path(libs_dir, basename(shared_lib))
-    match copy_file_atomic(shared_lib, dest) {
-      Ok(_) => ()
-      Err(message) => return Err(message)
-    }
-  }
-  match mkdir_p(parent_dir(options.output_hap)) {
-    Ok(_) => ()
-    Err(message) => return Err(message)
-  }
-  match
-    process_exec_argv(
-      ["zip", "-q", "-r", options.output_hap, "."],
-      cwd=stage_dir,
-      capture=false,
-    ) {
-    Ok(result) if result.exit_code == 0 => ()
-    Ok(result) =>
-      return Err("zip failed (exit " + result.exit_code.to_string() + ")")
-    Err(message) => return Err(message)
-  }
-  log_info(
-    "[moui-shell-harmonyos] Wrote staged HAP archive " + options.output_hap,
-  )
-  Ok({
-    platform: "harmonyos",
-    build_dir: options.build_dir,
-    output_artifact: options.output_hap,
-    prepare_result,
-  })
-}
-
-///|
-/// Real path: invoke `ohpm install` + `hvigorw assembleHap`. Mirrors lines
-/// 383-486 of `build-harmonyos-hap.sh`.
-fn build_harmonyos_hvigor(
-  options : BuildHarmonyosOptions,
-  source_project : String,
-  prepare_result : PrepareResult,
-) -> Result[BuildResult, String] {
-  // 1. Resolve SDK home. Prefer explicit option/env, but if the path has no
-  // OHOS CMake toolchain fall back to DevEco/OpenHarmony auto-discovery so a
-  // partial HARMONYOS_SDK_HOME (e.g. ~/Library/OpenHarmony/Sdk without native)
-  // does not hard-fail when DevEco's SDK is installed.
+  // 5. Resolve SDK home + hvigorw + ohpm.
   let requested_sdk_home = match options.sdk_home {
     Some(value) => value
     None =>
@@ -961,19 +795,18 @@ fn build_harmonyos_hvigor(
   }
   if sdk_home == "" {
     return Err(
-      "HARMONYOS_SDK_HOME or OHOS_SDK_HOME must point at a HarmonyOS/OpenHarmony SDK for non-fallback builds. Use --fallback-skia for a packaging-only smoke.",
+      "HARMONYOS_SDK_HOME or OHOS_SDK_HOME must point at a HarmonyOS/OpenHarmony SDK. Use --sdk-home to pass it explicitly.",
     )
   }
   if find_ohos_toolchain(sdk_home) == "" {
     return Err("HarmonyOS native CMake toolchain not found under " + sdk_home)
   }
-  // 2. Resolve hvigorw + ohpm.
   let hvigorw = match options.hvigorw {
     Some(value) =>
       if path_is_absolute(value) {
         value
       } else {
-        join_path(options.workspace_root, value)
+        join_path(workspace_root_abs, value)
       }
     None =>
       match @env.get_env_var("HVIGORW") {
@@ -983,7 +816,7 @@ fn build_harmonyos_hvigor(
   }
   if hvigorw == "" || !path_is_executable(hvigorw) {
     return Err(
-      "Hvigor wrapper not found. Pass --hvigorw or set HVIGORW for non-fallback builds.",
+      "Hvigor wrapper not found. Pass --hvigorw or set HVIGORW for HarmonyOS builds.",
     )
   }
   let ohpm = match options.ohpm {
@@ -991,7 +824,7 @@ fn build_harmonyos_hvigor(
       if path_is_absolute(value) {
         value
       } else {
-        join_path(options.workspace_root, value)
+        join_path(workspace_root_abs, value)
       }
     None =>
       match @env.get_env_var("OHPM") {
@@ -1001,7 +834,7 @@ fn build_harmonyos_hvigor(
   }
   if ohpm == "" || !path_is_executable(ohpm) {
     return Err(
-      "ohpm executable not found. Pass --ohpm or set OHPM for non-fallback builds.",
+      "ohpm executable not found. Pass --ohpm or set OHPM for HarmonyOS builds.",
     )
   }
   let deveco_sdk_home = find_deveco_sdk_home(sdk_home)
@@ -1012,69 +845,14 @@ fn build_harmonyos_hvigor(
       ". Set DEVECO_SDK_HOME or pass --sdk-home under DevEco Studio's sdk tree.",
     )
   }
-  // 3. Stage the hvigor project.
-  let ohos_arch = match
-    lookup_static_map(harmonyos_arch_to_ohos_arch, options.arch) {
-    Some(value) => value
-    None => return Err("unsupported HarmonyOS arch: " + options.arch)
-  }
-  let hvigor_project_dir = join_path(options.build_dir, "hvigor-project")
-  log_info(
-    "[moui-shell-harmonyos] Preparing temporary Hvigor project at " +
-    hvigor_project_dir,
-  )
-  match stage_harmonyos_project(source_project, hvigor_project_dir) {
-    Ok(_) => ()
-    Err(message) => return Err(message)
-  }
-  match
-    inject_harmonyos_signing_config(
-      hvigor_project_dir,
-      options.signing_config_file.unwrap_or(""),
-    ) {
-    Ok(_) => ()
-    Err(message) => return Err(message)
-  }
-  // Clean stale Hvigor state.
-  for
-    stale in [
-      ".hvigor", "build", "entry/build", "oh_modules", "entry/oh_modules", "oh-package-lock.json5",
-      "entry/oh-package-lock.json5",
-    ] {
-    remove_tree(join_path(hvigor_project_dir, stale))
-  }
-  match mkdir_p(join_path(hvigor_project_dir, "entry/libs/" + ohos_arch)) {
-    Ok(_) => ()
-    Err(message) => return Err(message)
-  }
-  match mkdir_p(join_path(hvigor_project_dir, "hnp")) {
-    Ok(_) => ()
-    Err(message) => return Err(message)
-  }
-  // Stage native shared libs.
-  for shared_lib in prepare_result.shared_libs {
-    let dest = join_path(
-      join_path(hvigor_project_dir, "entry/libs/" + ohos_arch),
-      basename(shared_lib),
-    )
-    log_info(
-      "[moui-shell-harmonyos] Staging native dependency " +
-      basename(shared_lib) +
-      " for Hvigor",
-    )
-    match copy_file_atomic(shared_lib, dest) {
-      Ok(_) => ()
-      Err(message) => return Err(message)
-    }
-  }
-  // 4. ohpm install.
+  // 6. ohpm install.
   let ohpm_env = moon_build_env()
   ohpm_env.push(("DEVECO_SDK_HOME", deveco_sdk_home))
   ohpm_env.push(("HARMONYOS_SDK_HOME", sdk_home))
   ohpm_env.push(("OHOS_SDK_HOME", sdk_home))
   ohpm_env.push(("OHOS_BASE_SDK_HOME", sdk_home))
   log_info(
-    "[moui-shell-harmonyos] Installing HarmonyOS project dependencies with ohpm",
+    "[moui-window-hosted-harmonyos] Installing project dependencies with ohpm",
   )
   match
     process_exec_argv(
@@ -1090,30 +868,34 @@ fn build_harmonyos_hvigor(
       )
     Err(message) => return Err(message)
   }
-  // 5. hvigorw assembleHap.
-  let moon_home = @env.get_env_var("MOON_HOME").unwrap_or_else(() => {
-    let home = @env.get_env_var("HOME").unwrap_or("")
-    join_path(home, ".moon")
-  })
-  let shell_root = join_path(options.moui_root, "../moui_shell")
+  // 7. hvigorw assembleHap with MBW_* env vars consumed by the template's
+  //    entry/src/main/cpp/CMakeLists.txt.
+  let moon_home = make_absolute(
+    @env.get_env_var("MOON_HOME").unwrap_or_else(() => {
+      let home = @env.get_env_var("HOME").unwrap_or("")
+      join_path(home, ".moon")
+    }),
+    workspace_root_abs,
+  )
   let hvigor_env = moon_build_env()
   hvigor_env.push(("DEVECO_SDK_HOME", deveco_sdk_home))
   hvigor_env.push(("HARMONYOS_SDK_HOME", sdk_home))
   hvigor_env.push(("OHOS_SDK_HOME", sdk_home))
   hvigor_env.push(("OHOS_BASE_SDK_HOME", sdk_home))
-  hvigor_env.push(("MOUI_PACKAGE_ROOT", options.moui_root))
-  hvigor_env.push(("MOUI_SHELL_PACKAGE_ROOT", shell_root))
-  hvigor_env.push(("MOUI_SKIA_ROOT", options.skia_root))
-  hvigor_env.push(("MOUI_MOON_HOME", moon_home))
-  hvigor_env.push(
-    (
-      "MOUI_EMBEDDING_NATIVE_CONFIG",
-      prepare_result.cmake_config_path.unwrap_or(""),
-    ),
-  )
-  hvigor_env.push(("MOUI_HARMONYOS_FALLBACK", "OFF"))
+  hvigor_env.push(("MBW_WORKSPACE_ROOT", workspace_root_abs))
+  hvigor_env.push(("MBW_WINDOW_ROOT", window_root))
+  hvigor_env.push(("MBW_MOON_HOME", moon_home))
+  hvigor_env.push(("MBW_MOONBIT_C", moonbit_c))
+  hvigor_env.push(("MBW_SKIA_CXX_RSP", skia_cxx_rsp))
+  hvigor_env.push(("MBW_SKIA_LINK_RSP", skia_link_rsp))
+  // Do not force MOUI_SKIA_DISABLE_PREBUILD_SKIA here: CMake already consumes
+  // resolved rsp flags. Stripping disable is handled inside resolve_skia.
   log_info(
-    "[moui-shell-harmonyos] Building installable HarmonyOS HAP with Hvigor",
+    "[moui-window-hosted-harmonyos] Building installable HAP with Hvigor (skia=" +
+    renderer_selected +
+    " link_mode=" +
+    link_mode +
+    ")",
   )
   match
     process_exec_argv(
@@ -1129,7 +911,7 @@ fn build_harmonyos_hvigor(
       )
     Err(message) => return Err(message)
   }
-  // 6. Locate the produced HAP.
+  // 8. Locate the produced HAP and copy it to options.output_hap.
   let hap_search_dir = join_path(hvigor_project_dir, "entry/build")
   let built_hap = find_first_file_with_suffix(hap_search_dir, "-signed.hap")
   let built_hap = if built_hap != "" {
@@ -1149,14 +931,14 @@ fn build_harmonyos_hvigor(
     Err(message) => return Err(message)
   }
   log_info(
-    "[moui-shell-harmonyos] Wrote Hvigor HAP archive " + options.output_hap,
+    "[moui-window-hosted-harmonyos] Wrote HAP archive " + options.output_hap,
   )
   log_info(
-    "This is build/install evidence only until a device or emulator smoke proves first frame, input, resize, lifecycle, and libskia.so loading.",
+    "This is build/install evidence only until a device or emulator smoke proves first frame, input, resize, lifecycle, and real Skia present.",
   )
   Ok({
     platform: "harmonyos",
-    build_dir: options.build_dir,
+    build_dir: build_dir_abs,
     output_artifact: options.output_hap,
     prepare_result,
   })

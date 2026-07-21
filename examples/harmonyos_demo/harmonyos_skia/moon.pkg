@@ -1,10 +1,9 @@
 import {
-  "wzzc-dev/moui_shell/embedding" @shell_embedding,
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/harmonyos" @harmonyos_host,
   "wzzc-dev/moui/backend/harmonyos/skia" @harmonyos_skia_backend,
-  "wzzc-dev/moui/render",
-  "examples/harmonyos_demo/app" @harmonyos_demo_app,
+  "wzzc-dev/window/harmonyos" @window_harmonyos,
+  "examples/harmonyos_demo/app" @demo_app,
 }
 
 supported_targets = "native"
@@ -12,29 +11,5 @@ supported_targets = "native"
 pkgtype(kind: "executable")
 
 options(
-  link: {
-    "native": {
-      "exports": [
-        "moui_embedding_take_host_updates_json",
-        "moui_embedding_take_host_update_envelope_json",
-        "moui_embedding_dispatch_host_response_envelope_json",
-        "moui_embedding_renderer_configure",
-        "moui_embedding_renderer_status_json",
-        "moui_embedding_dispatch_text_input",
-        "moui_embedding_dispatch_command",
-        "moui_embedding_dispatch_accessibility",
-        "moui_embedding_complete_clipboard",
-        "moui_embedding_complete_clipboard_v1",
-        "moui_embedding_attach_surface",
-        "moui_embedding_resize",
-        "moui_embedding_dispatch_pointer",
-        "moui_embedding_dispatch_scroll",
-        "moui_embedding_frame_tick",
-        "moui_embedding_render_frame",
-        "moui_embedding_detach_surface",
-        "moui_embedding_destroy_application",
-      ],
-    },
-  },
   targets: { "main.mbt": [ "native" ] },
 )

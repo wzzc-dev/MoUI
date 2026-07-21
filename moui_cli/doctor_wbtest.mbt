@@ -183,10 +183,9 @@ test "Skia doctor resolves the nearest repository workspace" {
 ///|
 fn doctor_mobile_entrypoint_contract_text() -> String {
   let text =
-    #|@platform_host.install_embedding
-    #|shell_renderer_selection
-    #|shell_renderer_configure
-    #|shell_renderer_status_json
+    #|let app = @android_host.AndroidWindowHostedApp::new(...)
+    #|let event_loop = @window_android.EventLoop::new()
+    #|event_loop.run_app(app)
   text
 }
 
@@ -194,7 +193,7 @@ fn doctor_mobile_entrypoint_contract_text() -> String {
 test "shell entrypoint requires nonempty package and main files" {
   let root = test_temp_path("doctor-entrypoint")
   remove_tree(root)
-  let package_path = join_path(root, "android_skia/moon.pkg")
+  let package_path = join_path(root, "android_window_hosted/moon.pkg")
   match mkdir_p(parent_dir(package_path)) {
     Ok(_) => ()
     Err(message) => fail(message)
@@ -207,7 +206,7 @@ test "shell entrypoint requires nonempty package and main files" {
   }
   let incomplete = project_entrypoint_checks(root, ["android"])
   @fs.write_string_to_file(
-    join_path(root, "android_skia/main.mbt"),
+    join_path(root, "android_window_hosted/main.mbt"),
     doctor_mobile_entrypoint_contract_text(),
   ) catch {
     _ => {
@@ -216,7 +215,7 @@ test "shell entrypoint requires nonempty package and main files" {
     }
   }
   @fs.write_string_to_file(
-    package_path, "wzzc-dev/moui/backend/android\n@platform_host\n",
+    package_path, "wzzc-dev/moui/backend/android\nwzzc-dev/window/android\n",
   ) catch {
     _ => {
       remove_tree(root)
@@ -243,7 +242,7 @@ test "shell entrypoint accepts the repository app layout" {
   }
   let contract = doctor_mobile_entrypoint_contract_text()
   @fs.write_string_to_file(
-    package_path, "wzzc-dev/moui/backend/android\n@platform_host\n",
+    package_path, "wzzc-dev/moui/backend/android\nwzzc-dev/window/android\n",
   ) catch {
     _ => {
       remove_tree(root)
