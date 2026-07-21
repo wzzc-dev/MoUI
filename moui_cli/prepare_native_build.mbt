@@ -356,16 +356,16 @@ fn xcrun_value(args : Array[String]) -> String {
 }
 
 ///|
-/// Build the environment array for a `moon build` spawn. Removes the SDK
-/// variables that Xcode injects so they do not leak into a host native build,
-/// pins the MoUI Skia/PDFium prebuild flags, and — on macOS — points `SDKROOT`
-/// and `CC`/`CXX` at the macOS SDK via `xcrun`. Replaces
-/// `prepare-native-build.mjs::moonBuildEnv`.
-fn moon_build_env() -> Array[(String, String)] {
-  let base = @env.get_env_vars()
+/// Normalize inherited variables for a `moon build` child environment.
+/// `MOONBIT_NEW_NATIVE=0` is required because mobile builders consume the
+/// legacy monolithic C output, so an inherited value must not leak through.
+fn normalize_moon_build_env(
+  base : Array[(String, String)],
+) -> Array[(String, String)] {
   let result : Array[(String, String)] = []
-  for key, value in base {
-    if moon_build_env_blocked_keys.contains(key) {
+  for entry in base {
+    let (key, value) = entry
+    if moon_build_env_blocked_keys.contains(key) || key == "MOONBIT_NEW_NATIVE" {
       continue
     }
     result.push((key, value))
@@ -373,6 +373,17 @@ fn moon_build_env() -> Array[(String, String)] {
   result.push(("MOUI_SKIA_DISABLE_PREBUILD_SKIA", "1"))
   result.push(("MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM", "1"))
   result.push(("MOONBIT_NEW_NATIVE", "0"))
+  result
+}
+
+///|
+/// Build the environment array for a `moon build` spawn. Removes the SDK
+/// variables that Xcode injects so they do not leak into a host native build,
+/// pins the MoUI Skia/PDFium prebuild flags, and — on macOS — points `SDKROOT`
+/// and `CC`/`CXX` at the macOS SDK via `xcrun`. Replaces
+/// `prepare-native-build.mjs::moonBuildEnv`.
+fn moon_build_env() -> Array[(String, String)] {
+  let result = normalize_moon_build_env(@env.get_env_vars().to_array())
   if detect_host_platform() is Macos {
     let macos_sdk = xcrun_value(["--sdk", "macosx", "--show-sdk-path"])
     if macos_sdk != "" {
@@ -484,6 +495,7 @@ fn options_fallback_allows_stub_link(
   false
 }
 
+///|
 /// Environment for `node moui_skia/build.js` when resolving real Skia link
 /// flags. Unlike `moon_build_env()`, this must NOT set
 /// `MOUI_SKIA_DISABLE_PREBUILD_SKIA=1` — that flag forces the stub Skia path

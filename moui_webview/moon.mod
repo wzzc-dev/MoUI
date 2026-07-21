@@ -10,7 +10,7 @@ license = "Apache-2.0"
 
 import {
   "wzzc-dev/moui@0.1.7",
-  "wzzc-dev/window@0.5.1-0.1.7-3",
+  "wzzc-dev/window@0.5.4-0.1.0",
 }
 
 options(

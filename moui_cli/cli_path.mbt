@@ -145,10 +145,7 @@ fn ensure_moui_cli_binary(
   // Moon writes the executable to:
   //   <target_dir>/native/debug/build/wzzc-dev/moui_cli/cmd/moui/<moui|moui.exe>
   let candidate_dir = join_path(
-    join_path(
-      join_path(join_path(target_dir, "native"), "debug"),
-      "build",
-    ),
+    join_path(join_path(join_path(target_dir, "native"), "debug"), "build"),
     "wzzc-dev/moui_cli/cmd/moui",
   )
   match find_executable_in_dir(candidate_dir) {
@@ -190,8 +187,7 @@ fn ensure_moui_cli_binary(
     Some(path) => Ok(path)
     None =>
       Err(
-        "moon build did not produce a moui_cli executable in " +
-        candidate_dir,
+        "moon build did not produce a moui_cli executable in " + candidate_dir,
       )
   }
 }
@@ -200,7 +196,10 @@ fn ensure_moui_cli_binary(
 /// Return `true` when any `.mbt` file under `<workspace_root>/moui_cli/` is
 /// newer than the file at `binary_path`. Used to detect stale cached CLI
 /// binaries.
-fn moui_cli_sources_newer_than(workspace_root : String, binary_path : String) -> Bool {
+fn moui_cli_sources_newer_than(
+  workspace_root : String,
+  binary_path : String,
+) -> Bool {
   let cli_root = join_path(workspace_root, "moui_cli")
   let binary_mtime = match file_mtime(binary_path) {
     Some(value) => value
@@ -212,10 +211,7 @@ fn moui_cli_sources_newer_than(workspace_root : String, binary_path : String) ->
 ///|
 /// Recursive scan: returns `true` when any `.mbt` file under `dir` has an
 /// mtime strictly greater than `threshold_mtime`.
-fn moui_cli_source_tree_has_newer(
-  dir : String,
-  threshold_mtime : Int,
-) -> Bool {
+fn moui_cli_source_tree_has_newer(dir : String, threshold_mtime : Int) -> Bool {
   let entries = @fs.read_dir(dir) catch { _ => return false }
   for entry in entries {
     let path = join_path(dir, entry)

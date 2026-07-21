@@ -2,8 +2,8 @@ import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/internal/host_session_transport" @host_session,
   "wzzc-dev/moui/render",
-  "wzzc-dev/moui_shell/embedding" @shell_embedding,
   "moonbitlang/core/json",
 }
 

@@ -1,6 +1,6 @@
 // Whitebox tests for `build_android.mbt`.
 //
-// Tests focus on the pure helpers (`stage_managed_android_project`,
+// Tests focus on the pure helpers (`stage_android_window_hosted_project`,
 // `copy_tree`, `copy_file_atomic`, `resolve_gradle_command`). End-to-end
 // Gradle invocation is exercised by integration tests with a real Android
 // SDK and is intentionally not covered here.
@@ -22,14 +22,14 @@ fn build_android_test_temp_path(label : String) -> String {
 }
 
 ///|
-test "test_stage_managed_android_project_refuses_unowned_target" {
+test "test_stage_android_window_hosted_project_refuses_unowned_target" {
   let root = build_android_test_temp_path("refuse-unowned")
   remove_tree(root)
   match mkdir_p(root) {
     Ok(_) => ()
     Err(message) => fail(message)
   }
-  // Pre-existing dir without `.moui-managed-shell` marker must be refused.
+  // Pre-existing dir without `.moui-window-hosted-stage` marker must be refused.
   let target = join_path(root, "android-project")
   match mkdir_p(target) {
     Ok(_) => ()
@@ -38,10 +38,12 @@ test "test_stage_managed_android_project_refuses_unowned_target" {
       fail(message)
     }
   }
-  match stage_managed_android_project("/nonexistent/template", target) {
+  match stage_android_window_hosted_project("/nonexistent/template", target) {
     Ok(_) => {
       remove_tree(root)
-      fail("expected stage_managed_android_project to refuse unowned target")
+      fail(
+        "expected stage_android_window_hosted_project to refuse unowned target",
+      )
     }
     Err(message) => {
       remove_tree(root)
@@ -51,7 +53,7 @@ test "test_stage_managed_android_project_refuses_unowned_target" {
 }
 
 ///|
-test "test_stage_managed_android_project_copies_template_and_writes_marker" {
+test "test_stage_android_window_hosted_project_copies_template_and_writes_marker" {
   let root = build_android_test_temp_path("stage-managed")
   remove_tree(root)
   match mkdir_p(root) {
@@ -90,7 +92,7 @@ test "test_stage_managed_android_project_copies_template_and_writes_marker" {
     }
   }
   let target = join_path(root, "android-project")
-  match stage_managed_android_project(template, target) {
+  match stage_android_window_hosted_project(template, target) {
     Ok(_) => ()
     Err(message) => {
       remove_tree(root)
@@ -100,7 +102,7 @@ test "test_stage_managed_android_project_copies_template_and_writes_marker" {
   // Verify files copied and marker written.
   assert_true(path_is_file(join_path(target, "settings.gradle")))
   assert_true(path_is_file(join_path(target, "app/build.gradle")))
-  assert_true(path_is_file(join_path(target, ".moui-managed-shell")))
+  assert_true(path_is_file(join_path(target, ".moui-window-hosted-stage")))
   remove_tree(root)
 }
 

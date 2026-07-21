@@ -80,6 +80,16 @@ test "test_fixed_embedding_exports" {
 }
 
 ///|
+test "path_relative_to canonicalizes mixed relative and absolute roots" {
+  let root = canonical_path(".").unwrap_or(".")
+  let target = join_path(root, "moon.pkg")
+  match path_relative_to(".", target) {
+    Ok(value) => inspect(value, content="moon.pkg")
+    Err(message) => fail(message)
+  }
+}
+
+///|
 fn shell_config_run_counter_read(
   root : String,
 ) -> Result[ShellApp, String] raise {

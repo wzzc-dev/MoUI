@@ -463,6 +463,10 @@ fn ios_simctl_launch(
   }
 }
 
+///|
+let android_window_hosted_activity = "dev.wzzc.window.template.HostedActivity"
+
+///|
 /// Launch the app on the target device. Returns the bundle id used for
 /// launching (used by the JSON output).
 fn launch_on_device(
@@ -491,7 +495,7 @@ fn launch_on_device(
         "start",
         "-W",
         "-n",
-        bundle_id + "/dev.wzzc.moui.shell.MoUIActivity",
+        bundle_id + "/" + android_window_hosted_activity,
       ]
       let full_argv = argv + custom_args
       match process_exec_argv(full_argv, capture=true) {
@@ -529,10 +533,7 @@ fn launch_on_device(
         Err(_) => {
           // SpringBoard sometimes needs a beat after `simctl install` before
           // the new bundle is registered. Retry once.
-          let _ = process_exec_argv(
-            ["/bin/sleep", "1"],
-            capture=true,
-          )
+          let _ = process_exec_argv(["/bin/sleep", "1"], capture=true)
           match ios_simctl_launch(xcrun, device.id, bundle_id, custom_args) {
             Ok(_) => Ok(bundle_id)
             Err(second) => Err(second)
@@ -559,15 +560,7 @@ fn launch_on_device(
       }
       // Best-effort stop any previous instance so reinstall/launch is clean.
       let _ = process_exec_argv(
-        [
-          hdc,
-          "-t",
-          device.id,
-          "shell",
-          "aa",
-          "force-stop",
-          bundle_name,
-        ],
+        [hdc, "-t", device.id, "shell", "aa", "force-stop", bundle_name],
         capture=true,
       )
       match
@@ -755,7 +748,9 @@ fn run_run(parsed : ParsedRun, cwd : String, host : HostPlatform) -> CliOutcome 
     predicted_artifact
   } else {
     let sdk_override = resolve_ios_sdk_override(parsed.platform, device)
-    let build_options = build_options_from_run_options(options, cwd, sdk_override)
+    let build_options = build_options_from_run_options(
+      options, cwd, sdk_override,
+    )
     match
       run_build_internal(build_options, parsed.platform, host, app, config) {
       Ok(result) => {
@@ -802,7 +797,8 @@ fn run_run(parsed : ParsedRun, cwd : String, host : HostPlatform) -> CliOutcome 
   // iOS bundles are directories (`*.app`); Android APKs / HarmonyOS HAPs are
   // files. Using only `path_is_file` silently skips iOS install and then
   // `simctl launch` fails with FBSOpenApplicationServiceErrorDomain code=4.
-  if not(options.no_install) && (path_is_file(artifact) || path_is_dir(artifact)) {
+  if not(options.no_install) &&
+    (path_is_file(artifact) || path_is_dir(artifact)) {
     match install_on_device(parsed.platform, device, artifact, host) {
       Ok(_) => ()
       Err(message) => return failed_outcome(message, parsed.json, run_usage())

@@ -17,7 +17,7 @@ pub struct EmbeddedSessionCore {
   priv runtime : @runtime.AppRuntime
   priv driver : @host.HostRuntimeDriver
   priv mut renderer : @host.HostWindowRenderer?
-  priv transport : @shell_embedding.ShellEmbeddingTransport
+  priv transport : @host_session.HostSessionTransport
   priv mut host_bridge : EmbeddingHostBridge?
   priv mut image_coordinator : EmbeddedImageCoordinator?
   priv mut metrics : @host.HostSurfaceMetrics
@@ -33,7 +33,7 @@ pub fn EmbeddedSessionCore::new(
   metrics~ : @host.HostSurfaceMetrics,
   image_loader? : @host.HostAsyncImageLoader? = None,
 ) -> EmbeddedSessionCore {
-  let transport = @shell_embedding.ShellEmbeddingTransport::new(
+  let transport = @host_session.HostSessionTransport::new(
     initial_generation=next_embedded_runtime_session_generation(),
   )
   let driver = @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {

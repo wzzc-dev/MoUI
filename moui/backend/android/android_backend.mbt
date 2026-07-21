@@ -1,16 +1,34 @@
 ///|
-pub type AndroidSurfaceHandle = @shell_android.AndroidNativeSurface
+/// Window-hosted native surface handle (no moui_shell).
+pub(all) struct AndroidSurfaceHandle {
+  raw : UInt64
+} derive(Eq, Debug, ToJson)
 
 ///|
-pub fn android_shell_embedding_api_version() -> Int {
-  @shell_embedding.embedding_api_version()
+pub fn AndroidSurfaceHandle::new(raw~ : UInt64) -> AndroidSurfaceHandle {
+  { raw, }
 }
 
 ///|
-/// Android keeps its `ANativeWindow` and Choreographer contract in the
-/// platform SDK instead of flattening it into the shared embedding package.
-pub fn android_shell_descriptor() -> @shell_embedding.ShellPlatformDescriptor {
-  @shell_android.android_descriptor()
+pub fn AndroidSurfaceHandle::none() -> AndroidSurfaceHandle {
+  { raw: 0UL }
+}
+
+///|
+pub fn AndroidSurfaceHandle::raw(self : AndroidSurfaceHandle) -> UInt64 {
+  self.raw
+}
+
+///|
+/// **Deprecated (ADR 0015):** Embedding API retired; returns 0.
+pub fn android_shell_embedding_api_version() -> Int {
+  0
+}
+
+///|
+/// **Deprecated (ADR 0015):** shell platform descriptors removed with moui_shell.
+pub fn android_shell_descriptor_retired() -> Unit {
+  ()
 }
 
 ///|
@@ -128,7 +146,7 @@ pub fn AndroidRendererProvider::has_async_image_loader(
 
 ///|
 pub fn android_service_capabilities() -> @host.HostServiceCapabilities {
-  // Code-level host services wired through EmbedderHostChannel + managed shell
+  // Host services: redesign as window host services (ADR 0015); Embedding channel is removal target
   // adapters. Matching-device evidence remains partial (see readiness.status).
   @host.HostServiceCapabilities::new(clipboard=true)
 }
@@ -188,7 +206,7 @@ pub fn backend_info() -> AndroidBackendInfo {
   {
     host_info: @host.HostAppInfo::new(
       backend=@host.HostBackendKind::Native,
-      description="Android embedded native host with managed Kotlin shell, Activity/Surface callbacks, and EmbedderHostChannel services",
+      description="Android window-hosted native host (HostCmd/ApplicationHandler); managed shell/Embedding are removal targets (ADR 0015)",
     ),
     capabilities: android_capability_matrix(),
     services: android_service_capabilities(),
@@ -216,7 +234,7 @@ pub fn android_capability_summary(
     native_accessibility_available=true,
     web_view_available=false,
     web_view_description="Android native WebView embedding is not part of the current shell host contract.",
-    description="Android embedded native host with managed shell lifecycle, EmbedderHostChannel IME/clipboard/a11y bridges, and app-driven input forwarding. Runtime evidence remains partial.",
+    description="Android embedded native host with window HostCmd lifecycle and ApplicationHandler session. IME/clipboard/a11y re-home off Embedding (ADR 0015). Runtime evidence remains partial.",
   )
 }
 

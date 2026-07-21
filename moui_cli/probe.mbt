@@ -220,7 +220,7 @@ fn probe_android(
     "start",
     "-W",
     "-n",
-    bundle_id + "/dev.wzzc.moui.shell.MoUIActivity",
+    bundle_id + "/" + android_window_hosted_activity,
   ]
   match process_exec_argv(launch_argv, capture=true) {
     Ok(result) if result.exit_code == 0 => ()

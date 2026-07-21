@@ -62,6 +62,18 @@ fn env_contains(pairs : Array[(String, String)], key : String) -> Bool {
 }
 
 ///|
+/// Return every value associated with `key` in an environment pair array.
+fn env_values(pairs : Array[(String, String)], key : String) -> Array[String] {
+  let values = []
+  for entry in pairs {
+    if entry.0 == key {
+      values.push(entry.1)
+    }
+  }
+  values
+}
+
+///|
 test "test_select_renderer" {
   // auto -> skia-gpu when no fallback requested
   match select_renderer("auto", false) {
@@ -174,6 +186,20 @@ test "test_moon_build_env_cleanup" {
   assert_true(env_contains(pairs, "MOUI_SKIA_DISABLE_PREBUILD_SKIA"))
   assert_true(env_contains(pairs, "MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM"))
   assert_true(env_contains(pairs, "MOONBIT_NEW_NATIVE"))
+}
+
+///|
+test "test_normalize_moon_build_env_forces_legacy_native_mode" {
+  let pairs = normalize_moon_build_env([
+    ("PATH", "/bin"),
+    ("MOONBIT_NEW_NATIVE", "1"),
+    ("SDKROOT", "/stale/sdk"),
+  ])
+  let native_modes = env_values(pairs, "MOONBIT_NEW_NATIVE")
+  assert_eq(native_modes.length(), 1)
+  assert_eq(native_modes[0], "0")
+  assert_false(env_contains(pairs, "SDKROOT"))
+  assert_true(env_contains(pairs, "PATH"))
 }
 
 ///|

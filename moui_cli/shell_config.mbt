@@ -717,15 +717,36 @@ fn resolve_ios_shell(
 }
 
 ///|
-/// Best-effort relative path computation (workspace_root may not be a prefix
-/// of target when called with mixed absolute/relative inputs). Falls back to
-/// the absolute target when computation fails.
+/// Best-effort relative path computation. When the lexical paths use different
+/// aliases for the same directory (for example a symlink and its real mount),
+/// retry with canonical filesystem paths before failing.
 fn path_relative_to(
   workspace_root : String,
   target : String,
 ) -> Result[String, String] {
-  let root = normalized_path(workspace_root)
-  let candidate = normalized_path(target)
+  match
+    relative_path_from_normalized(
+      normalized_path(workspace_root), normalized_path(target),
+    ) {
+    Ok(value) => return Ok(value)
+    Err(_) => ()
+  }
+  let root = match canonical_path(workspace_root) {
+    Some(value) => normalized_path(value)
+    None => return Err("target is not inside workspace root")
+  }
+  let candidate = match canonical_path(target) {
+    Some(value) => normalized_path(value)
+    None => return Err("target is not inside workspace root")
+  }
+  relative_path_from_normalized(root, candidate)
+}
+
+///|
+fn relative_path_from_normalized(
+  root : String,
+  candidate : String,
+) -> Result[String, String] {
   if !candidate.has_prefix(root) {
     return Err("target is not inside workspace root")
   }

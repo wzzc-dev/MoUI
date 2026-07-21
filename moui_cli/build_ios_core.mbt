@@ -515,7 +515,9 @@ fn build_ios_core(
   for mm in ios_skia_mm_sources {
     if path_is_file(mm) {
       let obj_name = basename(mm)
-      let obj_name_no_ext = obj_name.substring(end=obj_name.length() - 3).to_string()
+      let obj_name_no_ext = obj_name
+        .substring(end=obj_name.length() - 3)
+        .to_string()
       let obj_path = join_path(obj_dir, obj_name_no_ext + ".o")
       match
         compile_objcxx_source(cxx, common_flags, include_flags, mm, obj_path) {
@@ -574,12 +576,7 @@ fn build_ios_core(
   let shell_obj_path = join_path(obj_dir, "MoUIShellShell.o")
   match
     compile_swift_module(
-      swiftc,
-      swift_flags,
-      "MoUIShellShell",
-      shell_module_path,
-      shell_obj_path,
-      shell_swift_sources,
+      swiftc, swift_flags, "MoUIShellShell", shell_module_path, shell_obj_path, shell_swift_sources,
     ) {
     Ok(_) => objects.push(shell_obj_path)
     Err(message) => return Err(message)
@@ -704,8 +701,7 @@ fn build_ios_core(
       // deployment target < concurrency baseline; direct `swiftc` invocation
       // does not, so add them explicitly. `libswiftCompatibilityPolicies`
       // is not present in the iPhoneSimulator SDK, so omit it.
-      "-lswift_Concurrency",
-      "-lswiftCompatibilityDynamicReplacements",
+       "-lswift_Concurrency", "-lswiftCompatibilityDynamicReplacements",
     ] {
     link_argv.push(flag)
   }

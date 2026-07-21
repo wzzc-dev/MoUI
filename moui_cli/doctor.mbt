@@ -381,7 +381,7 @@ fn project_entrypoint_checks(
   let checks : Array[DoctorCheck] = []
   for platform in ["android", "ios", "harmonyos"] {
     if platforms.contains(platform) {
-      let generated_root = join_path(project_root, platform + "_skia")
+      let generated_root = join_path(project_root, platform + "_window_hosted")
       let repository_root = join_path(project_root, platform)
       let entrypoint_root = if @fs.path_exists(
           join_path(generated_root, "moon.pkg"),
@@ -400,12 +400,9 @@ fn project_entrypoint_checks(
       let main_text = @fs.read_file_to_string(main_path) catch { _ => "" }
       let package_markers = [
         "wzzc-dev/moui/backend/" + platform,
-        "@platform_host",
+        "wzzc-dev/window/" + platform,
       ]
-      let main_markers = [
-        "@platform_host.install_embedding", "shell_renderer_selection", "shell_renderer_configure",
-        "shell_renderer_status_json",
-      ]
+      let main_markers = ["WindowHostedApp", "EventLoop", "run_app"]
       let missing : Array[String] = []
       for marker in package_markers {
         if !package_text.contains(marker) {

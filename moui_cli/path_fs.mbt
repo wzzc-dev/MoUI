@@ -195,6 +195,10 @@ extern "C" fn path_is_executable_native(path : Bytes) -> Int = "moui_cli_path_is
 extern "C" fn path_is_symlink_native(path : Bytes) -> Int = "moui_cli_path_is_symlink"
 
 ///|
+#borrow(path)
+extern "C" fn canonical_path_native(path : Bytes) -> Bytes = "moui_cli_canonical_path"
+
+///|
 #borrow(root, candidate)
 extern "C" fn path_resolves_within_native(
   root : Bytes,
@@ -209,6 +213,16 @@ fn path_is_executable(path : String) -> Bool {
 ///|
 fn path_is_symlink(path : String) -> Bool {
   path_is_symlink_native(nul_terminated(path)) == 1
+}
+
+///|
+fn canonical_path(path : String) -> String? {
+  let bytes = canonical_path_native(nul_terminated(path))
+  if bytes.is_empty() {
+    None
+  } else {
+    Some(@utf8.decode_lossy(bytes))
+  }
 }
 
 ///|
@@ -391,4 +405,22 @@ fn file_plan_digest(files : Array[PlannedFile]) -> String {
     hasher.update(b"\x00")
   }
   @crypto.bytes_to_hex_string(hasher.finalize())
+}
+
+///|
+fn shell_package_missing_error(moui_root : String) -> String {
+  let shell = join_path(moui_root, "../moui_shell")
+  "ADR 0015: managed moui_shell builds are retired (missing " +
+  shell +
+  "). Use window-hosted packaging: scripts/build-window-hosted-android-apk.sh, scripts/build-window-hosted-ios-sim-app.sh, scripts/build-window-hosted-harmonyos-hap.sh."
+}
+
+///|
+fn require_shell_root_or_fail(moui_root : String) -> Result[String, String] {
+  let shell = join_path(moui_root, "../moui_shell")
+  if path_is_dir(shell) {
+    Ok(shell)
+  } else {
+    Err(shell_package_missing_error(moui_root))
+  }
 }

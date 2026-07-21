@@ -90,23 +90,36 @@ int32_t moui_ios_skia_configure_metal_layer(uint64_t raw_view_handle,
                                             uint64_t raw_layer_handle,
                                             int32_t width,
                                             int32_t height) {
-  if (raw_view_handle == 0 || raw_layer_handle == 0 ||
-      width <= 0 || height <= 0 || ![NSThread isMainThread]) {
+  if (raw_view_handle == 0 || raw_layer_handle == 0 || width <= 0 ||
+      height <= 0) {
     return 0;
   }
-  UIView *view = (__bridge UIView *)(void *)(uintptr_t)raw_view_handle;
-  CAMetalLayer *layer = (__bridge CAMetalLayer *)(void *)(uintptr_t)raw_layer_handle;
-  if (view == nil || layer == nil || view.layer != layer || layer.device == nil) {
-    return 0;
+  __block int32_t result = 0;
+  void (^configure)(void) = ^{
+    UIView *view = (__bridge UIView *)(void *)(uintptr_t)raw_view_handle;
+    CAMetalLayer *layer =
+        (__bridge CAMetalLayer *)(void *)(uintptr_t)raw_layer_handle;
+    if (view == nil || layer == nil || view.layer != layer ||
+        layer.device == nil) {
+      result = 0;
+      return;
+    }
+    layer.pixelFormat = MTLPixelFormatBGRA8Unorm;
+    layer.framebufferOnly = NO;
+    layer.frame = view.bounds;
+    layer.contentsScale = view.window.screen.scale > 0.0
+                              ? view.window.screen.scale
+                              : [UIScreen mainScreen].scale;
+    layer.drawableSize = CGSizeMake((CGFloat)width, (CGFloat)height);
+    result = 1;
+  };
+  if ([NSThread isMainThread]) {
+    configure();
+  } else {
+    // attach_session / create_renderer run on the EventLoop pthread.
+    dispatch_sync(dispatch_get_main_queue(), configure);
   }
-  layer.pixelFormat = MTLPixelFormatBGRA8Unorm;
-  layer.framebufferOnly = NO;
-  layer.frame = view.bounds;
-  layer.contentsScale = view.window.screen.scale > 0.0
-    ? view.window.screen.scale
-    : [UIScreen mainScreen].scale;
-  layer.drawableSize = CGSizeMake((CGFloat)width, (CGFloat)height);
-  return 1;
+  return result;
 }
 #else
 extern "C" MOONBIT_FFI_EXPORT

@@ -1,9 +1,0 @@
-import {
-  "wzzc-dev/moui_shell/embedding",
-}
-
-supported_targets = "native"
-
-options(
-  targets: { },
-)

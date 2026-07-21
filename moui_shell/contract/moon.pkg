@@ -1,5 +1,0 @@
-supported_targets = "native"
-
-options(
-  targets: { },
-)

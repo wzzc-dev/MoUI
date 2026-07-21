@@ -1,0 +1,28 @@
+///|
+/// Window-hosted Counter: lifecycle/surface/input from wzzc-dev/window/android.
+/// On Android the native Activity loads this shared library and starts `main`
+/// on a worker thread; HostCmd arrives via JNI into the window host queue.
+fn main {
+  let app = @android_host.AndroidWindowHostedApp::new(
+    title="MoUI Counter (window-hosted)",
+    runtime_factory=metrics => {
+      @runtime.new_program(
+        program=@counter_app.program(),
+        size=metrics.logical_size,
+      )
+    },
+    provider_factory=() => {
+      @android_skia_backend.renderer_provider(
+        options=@android_skia_backend.AndroidSkiaAppOptions::new(
+          surface_route=@android_host.android_shell_renderer_selection(
+              gpu_available=@android_skia_backend.android_skia_gpu_available(),
+            ).surface_route,
+        ),
+      )
+    },
+    auto_exit_after_frames=None,
+  )
+  println("moui-window-hosted android counter: EventLoop starting")
+  let event_loop = @window_android.EventLoop::new()
+  event_loop.run_app(app)
+}

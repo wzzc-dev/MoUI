@@ -1,4 +1,5 @@
 ///|
+/// ADR 0015: HarmonyOS product path is window HostCmd, not moui_shell.
 struct M5Finding {
   rule : String
   ok : Bool
@@ -7,265 +8,85 @@ struct M5Finding {
 }
 
 ///|
-struct M5Result {
-  findings : Array[M5Finding]
-  ets_file_count : Int
-}
-
-///|
 fn usage() -> String {
   (
     #|Usage: tools/moui/validate_harmonyos_shell [--repo-root PATH] [--json]
     #|
-    #|Validates the HarmonyOS managed shell M5 contract (XComponent-only surface/pointer).
+    #|Validates HarmonyOS window-hosted path (ADR 0015 / invariants M5).
     #|
   )
 }
 
 ///|
-fn template_root_rel() -> String {
-  "moui_shell/harmonyos/runner/template"
-}
-
-///|
-fn root_ets_rel() -> String {
-  "moui_shell/harmonyos/runner/template/entry/src/main/ets/moui/MoUIRoot.ets"
-}
-
-///|
-fn bridge_rel() -> String {
-  "moui_shell/harmonyos/embedder/src/main/cpp/moui_embedding_harmonyos_napi.cpp"
-}
-
-///|
-fn forbidden_in_template_ets() -> Array[String] {
+fn required_paths() -> Array[String] {
   [
-    ".onTouch", "onAreaChange", "attachSurface", "dispatchPointer", "detachSurface",
+    "window/harmonyos/native_harmonyos_host.c", "window/harmonyos/native_harmonyos_host.h",
+    "window/harmonyos/template/entry/src/main/cpp/window_hosted_napi.cpp", "moui/backend/harmonyos/window_hosted.mbt",
+    "examples/counter/harmonyos_window_hosted/main.mbt", "scripts/build-window-hosted-harmonyos-hap.sh",
   ]
 }
 
 ///|
-fn required_in_root() -> Array[String] {
-  ["libraryname: 'moui_embedding_harmonyos'", "XComponent", "displaySync"]
+fn forbidden_paths() -> Array[String] {
+  ["moui_shell"]
 }
 
 ///|
-fn required_in_bridge() -> Array[String] {
-  ["OH_NativeXComponent_RegisterCallback", "source=native-xcomponent"]
-}
-
-///|
-fn forbidden_in_bridge() -> Array[String] {
-  [
-    "napi_attach_surface", "napi_dispatch_pointer", "napi_resize", "MOUI_EMBEDDING_ATTACH_SURFACE",
-  ]
-}
-
-///|
-fn failure(path : String, hint : String) -> M5Finding {
-  { rule: "M5", ok: false, path, hint }
-}
-
-///|
-fn skipped_directory(name : String) -> Bool {
-  name == ".git" ||
-  name == "node_modules" ||
-  name == "_build" ||
-  name == "build" ||
-  name == "target" ||
-  name == ".hvigor" ||
-  name == "oh_modules"
-}
-
-///|
-fn collect_ets_files(
-  repo_root : String,
-  relative_path : String,
-  files : Array[String],
-  failures : Array[M5Finding],
-) -> Unit {
-  let absolute = @tools.resolve_path(repo_root, relative_path)
-  if @tools.directory_exists(absolute) {
-    let entries : Array[String] = @fs.read_dir(absolute) catch {
-      _ => {
-        failures.push(
-          failure(
-            relative_path, "directory could not be read. Fix: restore managed shell template. See docs/invariants.md#M5",
-          ),
-        )
-        return
-      }
-    }
-    entries.sort_by((left, right) => left.lexical_compare(right))
-    for entry in entries {
-      if !skipped_directory(entry) {
-        collect_ets_files(
-          repo_root,
-          relative_path + "/" + entry,
-          files,
-          failures,
-        )
-      }
-    }
-  } else if @tools.file_exists(absolute) && relative_path.has_suffix(".ets") {
-    files.push(relative_path)
-  }
-}
-
-///|
-fn validate_root_text(path : String, root : String) -> Array[M5Finding] {
+fn validate_repo(repo_root : String) -> Array[M5Finding] {
   let findings : Array[M5Finding] = []
-  for token in required_in_root() {
-    if !root.contains(token) {
-      findings.push(
-        failure(
-          path,
-          "missing required token " +
-          Json::string(token).stringify() +
-          ". Fix: keep XComponent + displaySync managed shell. See docs/invariants.md#M5",
-        ),
-      )
+  for path in required_paths() {
+    let absolute = @tools.resolve_path(repo_root, path)
+    if @tools.file_exists(absolute) || @tools.directory_exists(absolute) {
+      findings.push({ rule: "M5", ok: true, path, hint: "" })
+    } else {
+      findings.push({
+        rule: "M5",
+        ok: false,
+        path,
+        hint: "missing window-hosted HarmonyOS artifact. Fix: restore window HostCmd path. See docs/invariants.md#M5 and ADR 0015",
+      })
     }
   }
-  findings
-}
-
-///|
-fn validate_template_text(path : String, text : String) -> Array[M5Finding] {
-  let findings : Array[M5Finding] = []
-  for token in forbidden_in_template_ets() {
-    if text.contains(token) {
-      findings.push(
-        failure(
-          path,
-          "forbidden " +
-          Json::string(token).stringify() +
-          ". Fix: use native XComponent callbacks only for surface/pointer/resize/detach; do not restore ArkTS .onTouch paths. See docs/invariants.md#M5",
-        ),
-      )
+  for path in forbidden_paths() {
+    let absolute = @tools.resolve_path(repo_root, path)
+    if @tools.file_exists(absolute) || @tools.directory_exists(absolute) {
+      findings.push({
+        rule: "M5",
+        ok: false,
+        path,
+        hint: "moui_shell must not remain in tree (ADR 0015).",
+      })
+    } else {
+      findings.push({ rule: "M5", ok: true, path: path + " (absent)", hint: "" })
     }
   }
-  findings
-}
-
-///|
-fn validate_bridge_text(path : String, bridge : String) -> Array[M5Finding] {
-  let findings : Array[M5Finding] = []
-  for token in required_in_bridge() {
-    if !bridge.contains(token) {
-      findings.push(
-        failure(
-          path,
-          "missing required token " +
-          Json::string(token).stringify() +
-          ". Fix: register OH_NativeXComponent callbacks and log source=native-xcomponent. See docs/invariants.md#M5",
-        ),
-      )
-    }
-  }
-  for token in forbidden_in_bridge() {
-    if bridge.contains(token) {
-      findings.push(
-        failure(
-          path,
-          "forbidden " +
-          Json::string(token).stringify() +
-          ". Fix: do not reintroduce JS-driven attach/pointer/resize NAPI entrypoints. See docs/invariants.md#M5",
-        ),
-      )
-    }
-  }
-  findings
-}
-
-///|
-fn validate_repo(repo_root : String) -> M5Result {
-  let findings : Array[M5Finding] = []
-  let root_path = root_ets_rel()
+  let host_path = "window/harmonyos/native_harmonyos_host.c"
   match
     @tools.read_required_text(
-      @tools.resolve_path(repo_root, root_path),
-      root_path,
+      @tools.resolve_path(repo_root, host_path),
+      host_path,
     ) {
-    Ok(root) =>
-      for item in validate_root_text(root_path, root) {
-        findings.push(item)
+    Ok(body) =>
+      if body.contains("mbw_harmonyos_host_on_surface_init") &&
+        body.contains("mbw_harmonyos_host_on_pointer") {
+        findings.push({
+          rule: "M5",
+          ok: true,
+          path: host_path + " HostCmd",
+          hint: "",
+        })
+      } else {
+        findings.push({
+          rule: "M5",
+          ok: false,
+          path: host_path,
+          hint: "HostCmd surface/pointer hooks missing. See window/docs/mobile-hosted-backend.md",
+        })
       }
     Err(message) =>
-      findings.push(
-        failure(
-          root_path,
-          "missing canonical shell root: " +
-          message +
-          ". Fix: restore managed shell template. See docs/invariants.md#M5",
-        ),
-      )
+      findings.push({ rule: "M5", ok: false, path: host_path, hint: message })
   }
-  let ets_files : Array[String] = []
-  collect_ets_files(repo_root, template_root_rel(), ets_files, findings)
-  if ets_files.is_empty() {
-    findings.push(
-      failure(
-        template_root_rel(),
-        "no .ets files under managed shell template. Fix: restore moui_shell/harmonyos/runner/template. See docs/invariants.md#M5",
-      ),
-    )
-  }
-  for path in ets_files {
-    match
-      @tools.read_required_text(@tools.resolve_path(repo_root, path), path) {
-      Ok(text) =>
-        for item in validate_template_text(path, text) {
-          findings.push(item)
-        }
-      Err(message) =>
-        findings.push(failure(path, "could not read template file: " + message))
-    }
-  }
-  let bridge_path = bridge_rel()
-  match
-    @tools.read_required_text(
-      @tools.resolve_path(repo_root, bridge_path),
-      bridge_path,
-    ) {
-    Ok(bridge) =>
-      for item in validate_bridge_text(bridge_path, bridge) {
-        findings.push(item)
-      }
-    Err(message) =>
-      findings.push(
-        failure(
-          bridge_path,
-          "missing NAPI bridge: " + message + ". See docs/invariants.md#M5",
-        ),
-      )
-  }
-  { findings, ets_file_count: ets_files.length() }
-}
-
-///|
-fn finding_to_json(finding : M5Finding) -> Json {
-  let object : Map[String, Json] = Map([])
-  object["rule"] = Json::string(finding.rule)
-  object["ok"] = Json::boolean(finding.ok)
-  object["path"] = Json::string(finding.path)
-  object["hint"] = Json::string(finding.hint)
-  Json::object(object)
-}
-
-///|
-fn result_to_json(result : M5Result) -> Json {
-  let report = if result.findings.is_empty() {
-    [{ rule: "M5", ok: true, path: "moui_shell/harmonyos", hint: "" }]
-  } else {
-    result.findings
-  }
-  let failures = report.filter(item => !item.ok)
-  let object : Map[String, Json] = Map([])
-  object["schemaVersion"] = Json::number(1.0, repr="1")
-  object["failures"] = Json::array(failures.map(finding_to_json))
-  object["results"] = Json::array(report.map(finding_to_json))
-  Json::object(object)
+  findings
 }
 
 ///|
@@ -317,24 +138,25 @@ fn run(args : Array[String]) -> Int {
         println(usage())
         return 0
       }
-      let result = validate_repo(options.repo_root)
+      let results = validate_repo(options.repo_root)
+      let failures = results.filter(item => !item.ok)
       if options.json {
-        println(result_to_json(result).stringify(indent=2))
-      } else if result.findings.is_empty() {
+        println("{\"ok\":" + failures.is_empty().to_string() + "}")
+      } else if failures.is_empty() {
         println(
-          "validate-harmonyos-shell: OK (scanned " +
-          result.ets_file_count.to_string() +
-          " template .ets file(s); XComponent-only contract)",
+          "validate-harmonyos-shell: OK (window-hosted M5; ADR 0015; " +
+          results.length().to_string() +
+          " checks)",
         )
       } else {
         println("validate-harmonyos-shell: FAIL")
-        for item in result.findings {
+        for item in failures {
           println("")
           println("[" + item.rule + "] " + item.path)
           println("  " + item.hint)
         }
       }
-      if result.findings.is_empty() {
+      if failures.is_empty() {
         0
       } else {
         1

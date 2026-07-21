@@ -262,9 +262,8 @@ test "test_find_deveco_sdk_home_finds_candidate_with_default_openharmony" {
   remove_tree(root)
 }
 
-
 ///|
-test "test_apply_harmonyos_managed_identity_sets_bundle_name" {
+test "test_apply_harmonyos_window_hosted_identity_sets_bundle_name" {
   let root = build_harmonyos_test_temp_path("identity")
   remove_tree(root)
   match mkdir_p(root) {
@@ -273,11 +272,8 @@ test "test_apply_harmonyos_managed_identity_sets_bundle_name" {
   }
   // Minimal staged tree for identity rewrite.
   let paths = [
-    "AppScope",
-    "AppScope/resources/base/element",
-    "entry/src/main/resources/base/element",
-    "entry/src/main/ets/moui",
-    "entry",
+    "AppScope", "AppScope/resources/base/element", "entry/src/main/resources/base/element",
+    "entry/src/main/ets/moui", "entry",
   ]
   for rel in paths {
     match mkdir_p(join_path(root, rel)) {
@@ -288,38 +284,45 @@ test "test_apply_harmonyos_managed_identity_sets_bundle_name" {
   let writes = [
     (
       "AppScope/app.json5",
-      #|{"app":{"bundleName":"dev.example.mouiapp","vendor":"wzzc-dev","versionCode":1,"versionName":"0.1.0"}}
-      ,
+      (
+        #|{"app":{"bundleName":"dev.example.mouiapp","vendor":"wzzc-dev","versionCode":1,"versionName":"0.1.0"}}
+      ),
     ),
     (
       "oh-package.json5",
-      #|{"name":"my-app-harmonyos","version":"0.1.0","description":"shell"}
-      ,
+      (
+        #|{"name":"my-app-harmonyos","version":"0.1.0","description":"shell"}
+      ),
     ),
     (
       "build-profile.json5",
-      #|{"app":{"products":[{"name":"default","targetSdkVersion":"6.0.1(21)","compatibleSdkVersion":"6.0.0(20)"}]},"modules":[{"name":"entry","srcPath":"./entry"}]}
-      ,
+      (
+        #|{"app":{"products":[{"name":"default","targetSdkVersion":"6.0.1(21)","compatibleSdkVersion":"6.0.0(20)"}]},"modules":[{"name":"entry","srcPath":"./entry"}]}
+      ),
     ),
     (
       "entry/src/main/module.json5",
-      #|{"module":{"name":"entry","type":"entry","mainElement":"EntryAbility"}}
-      ,
+      (
+        #|{"module":{"name":"entry","type":"entry","mainElement":"EntryAbility"}}
+      ),
     ),
     (
       "entry/oh-package.json5",
-      #|{"name":"entry","version":"1.0.0","description":"entry"}
-      ,
+      (
+        #|{"name":"entry","version":"1.0.0","description":"entry"}
+      ),
     ),
     (
       "AppScope/resources/base/element/string.json",
-      #|{"string":[{"name":"app_name","value":"My MoUI App"}]}
-      ,
+      (
+        #|{"string":[{"name":"app_name","value":"My MoUI App"}]}
+      ),
     ),
     (
       "entry/src/main/resources/base/element/string.json",
-      #|{"string":[{"name":"app_name","value":"My MoUI App"},{"name":"module_desc","value":"desc"},{"name":"entry_desc","value":"entry"}]}
-      ,
+      (
+        #|{"string":[{"name":"app_name","value":"My MoUI App"},{"name":"module_desc","value":"desc"},{"name":"entry_desc","value":"entry"}]}
+      ),
     ),
   ]
   for item in writes {
@@ -367,23 +370,23 @@ test "test_apply_harmonyos_managed_identity_sets_bundle_name" {
       compatible_sdk_version: 20,
     }),
   }
-  match apply_harmonyos_managed_identity(root, app, "auto") {
+  match apply_harmonyos_window_hosted_identity(root, app, "auto") {
     Ok(_) => ()
     Err(message) => fail(message)
   }
-  let app_scope = match read_file_string_optional(join_path(root, "AppScope/app.json5")) {
+  let app_scope = match
+    read_file_string_optional(join_path(root, "AppScope/app.json5")) {
     Some(value) => value
     None => fail("missing rewritten app.json5")
   }
   assert_true(app_scope.contains("dev.wzzc.moui.showcase"))
-  let generated = match
-    read_file_string_optional(
-      join_path(root, "entry/src/main/ets/moui/MoUIGeneratedConfig.ets"),
-    ) {
+  // window-hosted template rewrites oh-package.json5 name/description;
+  // the old MoUIGeneratedConfig.ets is no longer emitted by the new path.
+  let root_pkg = match
+    read_file_string_optional(join_path(root, "oh-package.json5")) {
     Some(value) => value
-    None => fail("missing generated config")
+    None => fail("missing rewritten oh-package.json5")
   }
-  assert_true(generated.contains("moui-showcase-harmonyos"))
-  assert_true(generated.contains("fullscreen: true"))
+  assert_true(root_pkg.contains("showcase-harmonyos"))
   remove_tree(root)
 }

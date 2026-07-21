@@ -26,14 +26,16 @@ fn usage() -> String {
 ///|
 fn entry_suffixes() -> Array[String] {
   [
-    "web_wasm", "macos_skia", "windows_skia", "linux_skia", "android_skia", "ios_skia",
-    "harmonyos_skia",
+    "web_wasm", "macos_skia", "windows_skia", "linux_skia",
+    "android_window_hosted", "ios_window_hosted", "harmonyos_window_hosted",
   ]
 }
 
 ///|
 fn is_mobile_suffix(suffix : String) -> Bool {
-  suffix == "android_skia" || suffix == "ios_skia" || suffix == "harmonyos_skia"
+  suffix == "android_window_hosted" ||
+  suffix == "ios_window_hosted" ||
+  suffix == "harmonyos_window_hosted"
 }
 
 ///|
@@ -655,17 +657,19 @@ fn check_r3_mobile_main(path : String, text : String?) -> HarnessFinding {
         hint: "mobile entry missing main.mbt. See docs/invariants.md#R3",
       }
     Some(body) => {
-      let has_selection = body.contains("shell_renderer_selection") ||
-        body.contains("shell_renderer_configure")
-      let has_install = body.contains("install_embedding")
-      let has_abi_glue = body.contains("pub fn moui_embedding_") ||
+      // ADR 0015: window-hosted ApplicationHandler is the product mobile path.
+      let has_window_app = body.contains("WindowHostedApp") ||
+        body.contains("run_app") ||
+        body.contains("EventLoop::new")
+      let has_embedding = body.contains("install_embedding") ||
+        body.contains("pub fn moui_embedding_") ||
         body.contains("EmbeddingAdapter::new")
-      if !has_selection || !has_install || has_abi_glue {
+      if !has_window_app || has_embedding {
         {
           rule: "R3",
           ok: false,
           path,
-          hint: "mobile main.mbt must install program/renderer configuration (auto|skia-gpu|skia-raster path) without ABI implementation or adapter construction. The final-link shim belongs only in embedding_exports.mbt. Fix: wire @platform_host.install_embedding with @host.shell_renderer_selection. See docs/invariants.md#R3",
+          hint: "mobile main.mbt must use window HostCmd ApplicationHandler (*WindowHostedApp / EventLoop.run_app) and must not call install_embedding or define Embedding ABI. See docs/invariants.md#R3 and ADR 0015",
         }
       } else {
         { rule: "R3", ok: true, path, hint: "" }
@@ -680,6 +684,7 @@ fn check_r3_mobile_pkg(
   text : String?,
   expected : Array[String],
 ) -> HarnessFinding {
+  let _ = expected
   match text {
     None =>
       {
@@ -689,11 +694,9 @@ fn check_r3_mobile_pkg(
         hint: "mobile entry missing moon.pkg. See docs/invariants.md#R3",
       }
     Some(body) => {
-      let actual = declared_embedding_exports(body).unwrap_or([])
-      let ok = body.contains(
-          "\"wzzc-dev/moui_shell/embedding\" @shell_embedding",
-        ) &&
-        string_arrays_same_order(actual, expected)
+      let has_window = body.contains("wzzc-dev/window/")
+      let has_shell = body.contains("moui_shell") || body.contains("@shell_embedding")
+      let ok = has_window && !has_shell
       {
         rule: "R3",
         ok,
@@ -701,7 +704,7 @@ fn check_r3_mobile_pkg(
         hint: if ok {
           ""
         } else {
-          "final mobile executable moon.pkg must import @shell_embedding and mirror its exact canonical link.native.exports list; dependency exports are not promoted to final C symbols. See docs/invariants.md#R3"
+          "window-hosted mobile moon.pkg must import wzzc-dev/window/* and must not depend on moui_shell. See docs/invariants.md#R3 and ADR 0015"
         },
       }
     }
@@ -714,48 +717,16 @@ fn check_r3_mobile_export_shim(
   text : String?,
   expected : Array[String],
 ) -> HarnessFinding {
+  let _ = expected
+  // ADR 0015: window-hosted packages must not ship Embedding export shims.
   match text {
-    None =>
+    None => { rule: "R3", ok: true, path, hint: "" }
+    Some(_body) => {
       {
         rule: "R3",
         ok: false,
         path,
-        hint: "mobile executable is missing embedding_exports.mbt. The native linker requires root-package forwarders for the canonical Embedding API symbols. See docs/invariants.md#R3",
-      }
-    Some(body) => {
-      let code = code_without_doc_comments(body)
-      let declared = embedding_names_after_prefix(code, "pub fn ")
-      let forwarded = embedding_names_after_prefix(code, "@shell_embedding.")
-      let forbidden_tokens = [
-        "let ", "const ", "match ", "if ", "for ", "while ", "loop ", "raise ", "catch ",
-        "return ", "=>", "struct ", "enum ", "type ", "trait ", "impl ", "extern ",
-        "test ", "||", "&&", "==", "!=", "!@", ":=", ";",
-      ]
-      let has_forbidden = forbidden_tokens.any(token => code.contains(token))
-      let function_count = expected.length()
-      let exact_shape = count_token_occurrences(code, "pub fn ") ==
-        function_count &&
-        count_token_occurrences(code, "fn ") == function_count &&
-        count_token_occurrences(code, "@") == function_count &&
-        count_token_occurrences(code, "@shell_embedding.") == function_count &&
-        count_token_occurrences(code, "{") == function_count &&
-        count_token_occurrences(code, "}") == function_count &&
-        count_token_occurrences(code, "(") == function_count * 2 &&
-        count_token_occurrences(code, ")") == function_count * 2 &&
-        count_token_occurrences(code, "\"") == 0
-      let ok = !has_forbidden &&
-        exact_shape &&
-        string_arrays_same_order(declared, expected) &&
-        string_arrays_same_order(forwarded, expected)
-      {
-        rule: "R3",
-        ok,
-        path,
-        hint: if ok {
-          ""
-        } else {
-          "embedding_exports.mbt may contain only one same-name @shell_embedding forwarder for each canonical export, in canonical order; callback state, branching, extra calls, and adapter/runtime logic belong in the framework. See docs/invariants.md#R3"
-        },
+        hint: "window-hosted mobile entries must not include embedding_exports.mbt (Embedding API v1 is retired). See docs/invariants.md#R3 and ADR 0015",
       }
     }
   }
@@ -892,23 +863,15 @@ fn validate_repo(repo_root : String) -> Array[HarnessFinding] {
       check_r3_provider_text(path, read_optional_text(repo_root, path)),
     )
   }
+  // ADR 0015: Embedding shell ownership checks retired for product path.
   let embedding_exports = canonical_embedding_exports()
-  let shell_embedding_pkg = "moui_shell/embedding/moon.pkg"
-  results.push(
-    check_r3_shell_embedding_pkg(
-      shell_embedding_pkg,
-      read_optional_text(repo_root, shell_embedding_pkg),
-      embedding_exports,
-    ),
-  )
-  let shell_embedding_impl = "moui_shell/embedding/runtime_callbacks.mbt"
-  results.push(
-    check_r3_shell_embedding_impl(
-      shell_embedding_impl,
-      read_optional_text(repo_root, shell_embedding_impl),
-      embedding_exports,
-    ),
-  )
+  let _ = embedding_exports
+  results.push({
+    rule: "R3",
+    ok: true,
+    path: "moui_shell/embedding (retired product path)",
+    hint: "Embedding API v1 ownership checks disabled; window-hosted is canonical (ADR 0015)",
+  })
   for entry in entries {
     if entry.mobile {
       let main_path = entry.path + "/main.mbt"
