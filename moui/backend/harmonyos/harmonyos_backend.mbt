@@ -1,16 +1,34 @@
 ///|
-pub type HarmonyOsSurfaceHandle = @shell_harmonyos.HarmonyosNativeSurface
+/// Window-hosted native surface handle (no moui_shell).
+pub(all) struct HarmonyOsSurfaceHandle {
+  raw : UInt64
+} derive(Eq, Debug, ToJson)
 
 ///|
-pub fn harmonyos_shell_embedding_api_version() -> Int {
-  @shell_embedding.embedding_api_version()
+pub fn HarmonyOsSurfaceHandle::new(raw~ : UInt64) -> HarmonyOsSurfaceHandle {
+  { raw, }
 }
 
 ///|
-/// HarmonyOS keeps its XComponent, displaySync, and NAPI metadata in the
-/// platform SDK.
-pub fn harmonyos_shell_descriptor() -> @shell_embedding.ShellPlatformDescriptor {
-  @shell_harmonyos.harmonyos_descriptor()
+pub fn HarmonyOsSurfaceHandle::none() -> HarmonyOsSurfaceHandle {
+  { raw: 0UL }
+}
+
+///|
+pub fn HarmonyOsSurfaceHandle::raw(self : HarmonyOsSurfaceHandle) -> UInt64 {
+  self.raw
+}
+
+///|
+/// **Deprecated (ADR 0015):** Embedding API retired; returns 0.
+pub fn harmonyos_shell_embedding_api_version() -> Int {
+  0
+}
+
+///|
+/// **Deprecated (ADR 0015):** shell platform descriptors removed with moui_shell.
+pub fn harmonyos_shell_descriptor_retired() -> Unit {
+  ()
 }
 
 ///|
@@ -128,7 +146,7 @@ pub fn HarmonyOsRendererProvider::has_async_image_loader(
 
 ///|
 pub fn harmonyos_service_capabilities() -> @host.HostServiceCapabilities {
-  // Code-level host services wired through EmbedderHostChannel + ArkTS shell
+  // Host services: redesign as window host services (ADR 0015); Embedding channel is removal target
   // adapters. Matching-device evidence remains partial (see readiness.status).
   @host.HostServiceCapabilities::new(clipboard=true)
 }
@@ -188,7 +206,7 @@ pub fn backend_info() -> HarmonyOsBackendInfo {
   {
     host_info: @host.HostAppInfo::new(
       backend=@host.HostBackendKind::Native,
-      description="HarmonyOS embedded native host with managed ArkTS/XComponent shell and EmbedderHostChannel services",
+      description="HarmonyOS window-hosted native host (HostCmd/ApplicationHandler); managed shell/Embedding are removal targets (ADR 0015)",
     ),
     capabilities: harmonyos_capability_matrix(),
     services: harmonyos_service_capabilities(),
@@ -216,7 +234,7 @@ pub fn harmonyos_capability_summary(
     native_accessibility_available=true,
     web_view_available=false,
     web_view_description="HarmonyOS native WebView embedding is not part of the current shell host contract.",
-    description="HarmonyOS embedded native host with managed shell lifecycle, EmbedderHostChannel IME/clipboard/a11y bridges, and app-driven input forwarding. Runtime evidence remains partial.",
+    description="HarmonyOS embedded native host with window HostCmd lifecycle and ApplicationHandler session. IME/clipboard/a11y re-home off Embedding (ADR 0015). Runtime evidence remains partial.",
   )
 }
 

@@ -1,15 +1,34 @@
 ///|
-pub type IosViewHandle = @shell_ios.IosNativeView
+/// Window-hosted native surface handle (no moui_shell).
+pub(all) struct IosViewHandle {
+  raw : UInt64
+} derive(Eq, Debug, ToJson)
 
 ///|
-pub fn ios_shell_embedding_api_version() -> Int {
-  @shell_embedding.embedding_api_version()
+pub fn IosViewHandle::new(raw~ : UInt64) -> IosViewHandle {
+  { raw, }
 }
 
 ///|
-/// iOS keeps its `UIView` and CADisplayLink contract in the platform SDK.
-pub fn ios_shell_descriptor() -> @shell_embedding.ShellPlatformDescriptor {
-  @shell_ios.ios_descriptor()
+pub fn IosViewHandle::none() -> IosViewHandle {
+  { raw: 0UL }
+}
+
+///|
+pub fn IosViewHandle::raw(self : IosViewHandle) -> UInt64 {
+  self.raw
+}
+
+///|
+/// **Deprecated (ADR 0015):** Embedding API retired; returns 0.
+pub fn ios_shell_embedding_api_version() -> Int {
+  0
+}
+
+///|
+/// **Deprecated (ADR 0015):** shell platform descriptors removed with moui_shell.
+pub fn ios_shell_descriptor_retired() -> Unit {
+  ()
 }
 
 ///|
@@ -127,7 +146,7 @@ pub fn IosRendererProvider::has_async_image_loader(
 
 ///|
 pub fn ios_service_capabilities() -> @host.HostServiceCapabilities {
-  // Code-level host services wired through EmbedderHostChannel + Swift shell
+  // Host services: redesign as window host services (ADR 0015); Embedding channel is removal target
   // adapters. Matching-simulator evidence remains partial (see readiness.status).
   @host.HostServiceCapabilities::new(clipboard=true)
 }
@@ -186,7 +205,7 @@ pub fn backend_info() -> IosBackendInfo {
   {
     host_info: @host.HostAppInfo::new(
       backend=@host.HostBackendKind::Native,
-      description="iOS embedded native host with managed SwiftUI shell, UIKit/Metal view callbacks, and EmbedderHostChannel services",
+      description="iOS window-hosted native host (HostCmd/ApplicationHandler); managed shell/Embedding are removal targets (ADR 0015)",
     ),
     capabilities: ios_capability_matrix(),
     services: ios_service_capabilities(),
@@ -214,7 +233,7 @@ pub fn ios_capability_summary(
     native_accessibility_available=true,
     web_view_available=false,
     web_view_description="iOS native WKWebView embedding is not part of the current shell host contract.",
-    description="iOS embedded native host with managed shell lifecycle, EmbedderHostChannel IME/clipboard/a11y bridges, and app-driven input forwarding. Runtime evidence remains partial.",
+    description="iOS embedded native host with window HostCmd lifecycle and ApplicationHandler session. IME/clipboard/a11y re-home off Embedding (ADR 0015). Runtime evidence remains partial.",
   )
 }
 

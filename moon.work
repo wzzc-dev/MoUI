@@ -1,6 +1,6 @@
 members = [
+  "./window",
   "./moui",
-  "./moui_shell",
   "./moui_i18n",
   "./moui_richtext",
   "./moui_tester",

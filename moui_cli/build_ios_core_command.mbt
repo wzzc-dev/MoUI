@@ -99,7 +99,10 @@ fn run_build_ios_core(
   }
   let workspace_root = env_or("MOUI_EMBEDDING_WORKSPACE_ROOT", ".")
   let moui_root = env_or("MOUI_PACKAGE_ROOT", join_path(workspace_root, "moui"))
-  let skia_root = env_or("MOUI_SKIA_ROOT", join_path(workspace_root, "moui_skia"))
+  let skia_root = env_or(
+    "MOUI_SKIA_ROOT",
+    join_path(workspace_root, "moui_skia"),
+  )
   let app_config = env_or("MOUI_EMBEDDING_APP_CONFIG", "")
   let project_root = match @env.get_env_var("MOUI_EMBEDDING_PROJECT_ROOT") {
     Some(value) => value
@@ -118,11 +121,7 @@ fn run_build_ios_core(
   }
   if app.id != app_id {
     return failed_outcome(
-      "shell.json id (" +
-      app.id +
-      ") does not match --app (" +
-      app_id +
-      ")",
+      "shell.json id (" + app.id + ") does not match --app (" + app_id + ")",
       false,
       build_ios_core_usage(),
     )

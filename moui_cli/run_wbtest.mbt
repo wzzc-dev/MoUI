@@ -453,7 +453,9 @@ test "test_is_ios_simulator_udid_detects_uuid_format" {
   // Physical device UDIDs have no dashes (25 or 40 hex chars).
   assert_false(is_ios_simulator_udid("00008110-001E35880EE1003C-extra"))
   assert_false(is_ios_simulator_udid("abcd1234"))
-  assert_false(is_ios_simulator_udid("1234567890abcdef1234567890abcdef12345678"))
+  assert_false(
+    is_ios_simulator_udid("1234567890abcdef1234567890abcdef12345678"),
+  )
   // Empty / malformed inputs.
   assert_false(is_ios_simulator_udid(""))
   assert_false(is_ios_simulator_udid("---"))

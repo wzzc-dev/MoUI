@@ -1,0 +1,15 @@
+import {
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/harmonyos" @harmonyos_host,
+  "wzzc-dev/moui/backend/harmonyos/skia" @harmonyos_skia_backend,
+  "wzzc-dev/window/harmonyos" @window_harmonyos,
+  "examples/counter/app" @counter_app,
+}
+
+supported_targets = "native"
+
+pkgtype(kind: "executable")
+
+options(
+  targets: { "main.mbt": [ "native" ] },
+)

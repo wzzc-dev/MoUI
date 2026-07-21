@@ -619,7 +619,7 @@ fn embedding_host_update_json(update : EmbeddingHostUpdate) -> Json {
 /// Transfers pending MoUI updates into the shell-owned neutral transport.
 pub fn EmbeddingHostBridge::flush_updates_to_shell(
   self : EmbeddingHostBridge,
-  transport : @shell_embedding.ShellEmbeddingTransport,
+  transport : @host_session.HostSessionTransport,
 ) -> Int {
   let updates = self.drain_updates()
   for update in updates {
