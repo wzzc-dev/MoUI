@@ -1,2 +1,0 @@
-# Keep the native bridge import surface readable while the demo is experimental.
--disable-obfuscation
