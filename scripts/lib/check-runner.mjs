@@ -89,8 +89,9 @@ export const formatPlanList = plan => {
 };
 
 export const ensureWindowSubmodule = repoRoot => {
-  const windowMod = resolve(repoRoot, "window/moon.mod");
-  if (existsSync(windowMod)) return;
+  const windowMod = resolve(repoRoot, "window/modules/window/moon.mod");
+  const windowingMod = resolve(repoRoot, "window/modules/windowing/moon.mod");
+  if (existsSync(windowMod) && existsSync(windowingMod)) return;
   console.log("\n==> Initializing window submodule...");
   const result = spawnSync("git", ["submodule", "update", "--init", "window"], {
     cwd: repoRoot,

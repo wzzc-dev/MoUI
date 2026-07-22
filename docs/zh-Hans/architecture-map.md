@@ -74,7 +74,8 @@ thin wiring only                   ▼
 ## 工作区说明
 
 - 活跃成员：`moon.work`（见生成的 `docs/repository-facts.md`）。
-- 不要在 `moon.work` 中列出 `./window` 或 `./openseek`。
+- 默认不要在 `moon.work` 中列出本地 `./window/modules/window*` 成员或
+  `./openseek`。
 - 本地 window 源码：仅在有意编辑 window 时使用 `sh scripts/window-dev-mode.sh on/off`。
 
 ## 下一步去哪里

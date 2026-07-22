@@ -156,17 +156,17 @@ git submodule update --init --recursive
 
 根 README 有意不把此 workflow 放进 quick start。普通 MoUI builds 不需要本地 `window/` checkout。
 
-`window` submodule 默认**不是** `moon.work` workspace member。MoonBit 会从 mooncakes.io 解析 `wzzc-dev/window`（每个 consumer 的 `moon.mod` 中 pinned 的 published version）。`window/` submodule checkout 只用于开发者需要编辑 window source 并在发布前于 MoUI 内验证变更时切换到 local-source dev mode。
+`window` submodule 的两个模块默认**不是** `moon.work` workspace member。MoonBit 会从 mooncakes.io 解析 `wzzc-dev/window`（每个 consumer 的 `moon.mod` 中 pinned 的 published version）。`window/` submodule checkout 只用于开发者需要编辑 window source 并在发布前于 MoUI 内验证变更时切换到 local-source dev mode。
 
 要本地编辑 window source：
 
 ```sh
-sh scripts/window-dev-mode.sh on      # add ./window to moon.work (local override)
+sh scripts/window-dev-mode.sh on      # add both nested window modules (local override)
 # edit window/ source; moon test/run picks up changes immediately
 sh scripts/window-dev-mode.sh off     # remove ./window; resolve from mooncakes.io
 ```
 
-`scripts/validate-window-dependency.mjs`（由 `check.sh --profile daily` 和 CI 运行）会在主分支上 `moon.work` 列出 `./window` 时失败，因此默认状态保持使用 published dependency。不要只为修复 MoUI build 而把 `./window` 加入已提交的 workspace state。发布新 window 版本后，更新 `moui/moon.mod`、`moui_skia/moon.mod`、`moui_webview/moon.mod` 和 `examples/markdown_editor/moon.mod` 中的 pinned version，然后运行 `moon update` 刷新 registry cache。
+`scripts/validate-window-dependency.mjs`（由 `check.sh --profile daily` 和 CI 运行）会在主分支上 `moon.work` 列出任一嵌套 window 模块时失败，因此默认状态保持使用 published dependency。不要只为修复 MoUI build 而把本地 window 模块加入已提交的 workspace state。发布新 window 版本后，更新 `moui/moon.mod`、`moui_skia/moon.mod`、`moui_webview/moon.mod` 和 `examples/markdown_editor/moon.mod` 中的 pinned version，然后运行 `moon update` 刷新 registry cache。
 
 在 Windows 上，使用 repository update helper：
 

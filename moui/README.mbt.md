@@ -128,11 +128,12 @@ addon diagnostic coverage; run `sh scripts/check.sh --profile theme`
 when changing `moui_theme` or `examples/design_systems`.
 
 MoUI resolves `wzzc-dev/window` from the MoonBit registry as
-`wzzc-dev/window@0.5.1-0.1.7-3`; `moon.work` does not include a local window
-checkout. `scripts/validate-window-dependency.mjs` enforces that pin and the
-absence of a repo-local window workspace member. To edit window source
-locally, run `sh scripts/window-dev-mode.sh on` (adds `./window` to
-`moon.work`), then run `sh scripts/window-dev-mode.sh off` before committing.
+`wzzc-dev/window@0.5.4-0.1.0`; `moon.work` does not include local window
+modules by default. `scripts/validate-window-dependency.mjs` enforces that pin
+and the absence of repo-local window workspace members. To edit window source
+locally, run `sh scripts/window-dev-mode.sh on` (adds
+`./window/modules/window` and `./window/modules/windowing` to `moon.work`),
+then run `sh scripts/window-dev-mode.sh off` before committing.
 The `moui_skia` binding workspace's platform status and native capability
 contracts are validated by
 `moui_skia/scripts/verify-platform-status.sh` and
@@ -161,7 +162,7 @@ also recorded the macOS platform runtime evidence with `github-actions`
 provenance and uploaded the matching artifact bundle. Windows and Linux
 remain pending until their matching hosts record equivalent
 platform-runtime artifacts. Native passed entries include the
-`wzzc-dev/window@0.5.1-0.1.7-3` package smoke monitor/cursor probe as
+`wzzc-dev/window@0.5.4-0.1.0` package smoke monitor/cursor probe as
 `monitorCursor=yes`; Web browser-session evidence may leave that field
 pending because CDP does not prove native monitor/current-monitor or cursor
 behavior. A passed entry must carry provenance from either a non-skipped
@@ -469,7 +470,7 @@ macOS Skia and Linux Skia only.
 
 ## Linux Native
 
-Linux native examples use the `wzzc-dev/window@0.5.1-0.1.7-3` Wayland backend.
+Linux native examples use the `wzzc-dev/window@0.5.4-0.1.0` Wayland backend.
 The recommended mainline entrypoints select native Skia raster and present
 CPU pixel frames through Wayland `wl_shm`. Run them on a Linux host with a
 Wayland compositor and configured real Skia link flags:
