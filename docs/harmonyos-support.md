@@ -25,6 +25,40 @@ detach events. The hosted event loop forwards them to
 - Compatible API 20, target API 21, and model `6.0.1`
 - `hvigorw` and `ohpm` available from the SDK/toolchain setup
 
+## DevEco, SDK, And Device Setup
+
+Install DevEco Studio and use its SDK Manager to add an API 20-compatible
+OpenHarmony/HarmonyOS SDK with native development components. The build needs
+`native/build/cmake/ohos.toolchain.cmake`, `hdc`, `hvigorw`, and `ohpm`.
+
+```sh
+export HARMONYOS_SDK_HOME="${HARMONYOS_SDK_HOME:-/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony}"
+export HARMONYOS_HVIGOR_BIN=/Applications/DevEco-Studio.app/Contents/tools/hvigor/bin
+export HARMONYOS_OHPM_BIN=/Applications/DevEco-Studio.app/Contents/tools/ohpm/bin
+export PATH="$HARMONYOS_SDK_HOME/toolchains:$HARMONYOS_HVIGOR_BIN:$HARMONYOS_OHPM_BIN:$PATH"
+
+test -f "$HARMONYOS_SDK_HOME/native/build/cmake/ohos.toolchain.cmake" && echo ok
+hdc version
+hvigorw --version
+ohpm --version
+```
+
+Create and start an HVD through DevEco Studio Device Manager, or connect a
+signed physical device. Confirm that `hdc` can see it before invoking `moui`:
+
+```sh
+hdc list targets
+```
+
+
+```sh
+EMU="/Applications/DevEco-Studio.app/Contents/tools/emulator/Emulator"
+HVD="MateBook Pro"
+HVD_ROOT="$HOME/.Huawei/Emulator/deployed"
+IMAGE_ROOT="$HOME/Library/Huawei/Sdk"
+
+"$EMU" -hvd "$HVD" -path "$HVD_ROOT" -imageRoot "$IMAGE_ROOT"
+```
 Run `moui doctor --platform harmonyos` before a native build.
 
 ## Build And Run
