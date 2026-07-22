@@ -182,7 +182,7 @@ local workspace members from `moon.work`. The exact list is generated into
 
 ```moonbit
 import {
-  "wzzc-dev/window@0.5.1-0.1.7-3",
+  "wzzc-dev/window@0.5.4-0.1.0",
   "wzzc-dev/moui_skia@0.1.7",
 }
 ```
@@ -191,7 +191,7 @@ The MoonBit package ecosystem is still not as mature as older language
 ecosystems. A failing build can come from registry cache state, package
 publication mistakes, or dependency regressions as well as from MoUI code. When
 dependency-related failures appear, first run `moon update`, inspect the
-resolved package versions, and check whether `wzzc-dev/window@0.5.1-0.1.7-3` or
+resolved package versions, and check whether `wzzc-dev/window@0.5.4-0.1.0` or
 another package changed behavior.
 
 The `window` package still carries MoUI smoke helpers and evidence docs. Use
@@ -257,7 +257,7 @@ git submodule update --init --recursive
 The root README intentionally keeps this workflow out of the quick start.
 Ordinary MoUI builds do not need a local `window/` checkout.
 
-The `window` submodule is **not** a `moon.work` workspace member by default.
+The `window` submodule's two modules are **not** `moon.work` workspace members by default.
 MoonBit resolves `wzzc-dev/window` from mooncakes.io (the published version
 pinned in each consumer's `moon.mod`). The `window/` submodule checkout exists
 only so developers can switch to local-source dev mode when they need to edit
@@ -266,15 +266,15 @@ window source and validate changes inside MoUI before publishing.
 To edit window source locally:
 
 ```sh
-sh scripts/window-dev-mode.sh on      # add ./window to moon.work (local override)
+sh scripts/window-dev-mode.sh on      # add both nested window modules (local override)
 # edit window/ source; moon test/run picks up changes immediately
 sh scripts/window-dev-mode.sh off     # remove ./window; resolve from mooncakes.io
 ```
 
 `scripts/validate-window-dependency.mjs` (run by `check.sh --profile daily` and
-CI) fails if `moon.work` lists `./window` on the main branch, so the default
-state stays on the published dependency. Do not add `./window` to committed
-workspace state just to fix a MoUI build. After publishing a new window version,
+CI) fails if `moon.work` lists either nested window module on the main branch,
+so the default state stays on the published dependency. Do not add local window
+modules to committed workspace state just to fix a MoUI build. After publishing a new window version,
 update the pinned version in `moui/moon.mod`, `moui_skia/moon.mod`,
 `moui_webview/moon.mod`, and `examples/markdown_editor/moon.mod`, then run
 `moon update` to refresh the registry cache.
