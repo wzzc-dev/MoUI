@@ -18,7 +18,6 @@ priv struct RunOptions {
   device : String?
   renderer : String?
   fallback_skia : Bool
-  ejected_shell : Bool
   prepare_only : Bool
   build_only : Bool
   no_build : Bool
@@ -40,15 +39,13 @@ fn run_usage() -> String {
     #|
     #|Arguments:
     #|  platform     Target platform: android, ios, or harmonyos.
-    #|  app          Application id (matches shell.json `id`).
+    #|  app          Application id (matches moui.mobile.json `id`).
     #|
     #|Options:
-    #|  --app-config PATH       Path to shell.json. Defaults to ./shell.json.
+    #|  --mobile-config PATH    Path to moui.mobile.json. Defaults to ./moui.mobile.json.
     #|  --device ID             Target device id. Defaults to the first device.
     #|  --renderer NAME         Renderer override (auto / skia / wgpu).
     #|  --fallback-skia        Allow Skia fallback when primary renderer fails.
-    #|  --ejected-shell         Use an ejected (owned) shell; requires platform
-    #|                          project paths to be present.
     #|  --prepare-only          Stop after preparing native build inputs.
     #|  --build-only            Stop after producing the build artifact.
     #|  --no-build              Skip the build step (use existing artifact).
@@ -79,7 +76,6 @@ fn parse_run_args(
   let device : Ref[String?] = Ref(None)
   let renderer : Ref[String?] = Ref(None)
   let fallback_skia = Ref(false)
-  let ejected_shell = Ref(false)
   let prepare_only = Ref(false)
   let build_only = Ref(false)
   let no_build = Ref(false)
@@ -111,7 +107,6 @@ fn parse_run_args(
           Err(message) => return Err(message)
         }
       "--fallback-skia"
-      | "--ejected-shell"
       | "--prepare-only"
       | "--build-only"
       | "--no-build"
@@ -123,7 +118,6 @@ fn parse_run_args(
           Ok(_) =>
             match name {
               "--fallback-skia" => fallback_skia.val = true
-              "--ejected-shell" => ejected_shell.val = true
               "--prepare-only" => prepare_only.val = true
               "--build-only" => build_only.val = true
               "--no-build" => no_build.val = true
@@ -135,11 +129,11 @@ fn parse_run_args(
             }
           Err(message) => return Err(message)
         }
-      "--app-config" | "--device" | "--renderer" | "--filter" =>
+      "--mobile-config" | "--device" | "--renderer" | "--filter" =>
         match option_value(args, index, inline, name) {
           Ok((value, next)) => {
             match name {
-              "--app-config" => app_config.val = Some(value)
+              "--mobile-config" => app_config.val = Some(value)
               "--device" => device.val = Some(value)
               "--renderer" => renderer.val = Some(value)
               "--filter" => filter.val = Some(value)
@@ -191,7 +185,6 @@ fn parse_run_args(
       device: device.val,
       renderer: renderer.val,
       fallback_skia: fallback_skia.val,
-      ejected_shell: ejected_shell.val,
       prepare_only: prepare_only.val,
       build_only: build_only.val,
       no_build: no_build.val,
@@ -228,7 +221,7 @@ fn apply_config_overrides_run(
 /// platform-specific overrides stay `None` — they default inside
 /// `build_*_options_from_command` from `CliConfig`. `workspace_root` mirrors
 /// `parse_build_args`'s `cwd` default — it MUST be the actual cwd (absolute),
-/// not `"."`, because `managed_entrypoint_package` calls `path_relative_to`
+/// not `"."`, because `mobile_entrypoint_package` calls `path_relative_to`
 /// which only succeeds when `workspace_root` is the absolute prefix of the
 /// resolved entrypoint path. With `"."` the relative resolution fails and
 /// `entrypoint_package` falls back to an absolute path, which then causes
@@ -254,13 +247,8 @@ fn build_options_from_run_options(
     output: None,
     renderer: options.renderer,
     fallback_skia: options.fallback_skia,
-    ejected_shell: options.ejected_shell,
     prepare_only: options.prepare_only,
-    android_project: None,
-    xcode_project: None,
-    scheme: None,
     product_name: None,
-    harmonyos_project: None,
     abi: None,
     compile_sdk: None,
     target_sdk: None,
@@ -472,7 +460,7 @@ let android_window_hosted_activity = "dev.wzzc.window.template.HostedActivity"
 fn launch_on_device(
   platform : String,
   device : Device,
-  app : ShellApp,
+  app : MobileApp,
   host : HostPlatform,
   custom_args : Array[String],
 ) -> Result[String, String] {
@@ -480,7 +468,7 @@ fn launch_on_device(
     "android" => {
       let bundle_id = match app.android {
         Some(android) => android.application_id
-        None => return Err("shell.json missing android.application_id")
+        None => return Err("moui.mobile.json missing android.applicationId")
       }
       let adb = match find_in_path("adb", host) {
         Some(path) => path
@@ -516,7 +504,7 @@ fn launch_on_device(
     "ios" => {
       let bundle_id = match app.ios {
         Some(ios) => ios.bundle_id
-        None => return Err("shell.json missing ios.bundle_id")
+        None => return Err("moui.mobile.json missing ios.bundleId")
       }
       let xcrun = match find_in_path("xcrun", host) {
         Some(path) => path
@@ -544,7 +532,7 @@ fn launch_on_device(
     "harmonyos" => {
       let harmonyos = match app.harmonyos {
         Some(value) => value
-        None => return Err("shell.json missing harmonyos section")
+        None => return Err("moui.mobile.json missing harmonyos section")
       }
       let bundle_name = harmonyos.bundle_name
       // Module name is the HAP module id (default "entry"); ability name is
@@ -716,18 +704,16 @@ fn run_run(parsed : ParsedRun, cwd : String, host : HostPlatform) -> CliOutcome 
     Err(message) => return failed_outcome(message, parsed.json, run_usage())
   }
   let options = apply_config_overrides_run(options, config)
-  // 2. Locate shell.json. When --app-config is given, derive project_root
-  // from its dirname so `read_shell_app` can join it with `shell.json`.
-  // This lets `moui run` run from any cwd, not just the app directory.
-  let project_root = match options.app_config_path {
-    Some(p) => parent_dir(p)
-    None => "."
+  // 2. Locate the mobile configuration from the supplied path or cwd.
+  let app_result = match options.app_config_path {
+    Some(path) => read_mobile_app_at(path)
+    None => read_mobile_app(cwd)
   }
-  let app = match read_shell_app(project_root) {
+  let app = match app_result {
     Ok(a) => a
     Err(message) =>
       return failed_outcome(
-        "could not read shell.json: " + message,
+        "could not read moui.mobile.json: " + message,
         parsed.json,
         run_usage(),
       )

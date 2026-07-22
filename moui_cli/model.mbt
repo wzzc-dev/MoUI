@@ -32,36 +32,10 @@ priv struct ProjectManifest {
 }
 
 ///|
-priv struct EjectOptions {
-  project_root : String
-  platform : String
-  output : String
-  moui_root : String?
-}
-
-///|
-priv struct EjectResult {
-  platform : String
-  output : String
-  source_template_digest : String
-  config_digest : String
-  plugin_digest : String
-  content_digest : String
-  file_count : Int
-}
-
-///|
 priv struct AddPlatformOptions {
   project_root : String
   platforms : Array[String]
   bundle_id : String?
-}
-
-///|
-priv struct PluginScaffoldOptions {
-  project_root : String
-  id : String
-  platforms : Array[String]
 }
 
 ///|

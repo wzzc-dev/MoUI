@@ -5,10 +5,10 @@ import {
   "moonbitlang/core/debug",
   "moonbitlang/core/ref",
   "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/internal/host_session_transport",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui_shell/embedding",
 }
 
 // Values
@@ -19,14 +19,6 @@ pub fn embedding_command_response(Int) -> EmbeddingHostResponse?
 pub fn embedding_host_response_request_id(EmbeddingHostResponse) -> Int?
 
 pub fn embedding_text_input_response(Int, String, Int, Int) -> EmbeddingHostResponse?
-
-pub fn shell_renderer_configure(String) -> Bool
-
-pub fn shell_renderer_requested() -> @render.NativeRendererMode
-
-pub fn shell_renderer_selection(@render.NativeGpuPlatform, gpu_available~ : Bool) -> @render.NativeRendererSelection
-
-pub fn shell_renderer_status_json(@render.NativeGpuPlatform, gpu_available~ : Bool) -> String
 
 // Errors
 
@@ -99,7 +91,7 @@ pub fn EmbeddingHostBridge::drain_update_envelope(Self) -> EmbeddingHostUpdateEn
 pub fn EmbeddingHostBridge::drain_update_envelope_json(Self) -> String
 pub fn EmbeddingHostBridge::drain_updates(Self) -> Array[EmbeddingHostUpdate]
 pub fn EmbeddingHostBridge::drain_updates_json(Self) -> String
-pub fn EmbeddingHostBridge::flush_updates_to_shell(Self, @embedding.ShellEmbeddingTransport) -> Int
+pub fn EmbeddingHostBridge::flush_updates_to_shell(Self, @host_session_transport.HostSessionTransport) -> Int
 pub fn EmbeddingHostBridge::new(session_generation? : Int) -> Self
 pub fn EmbeddingHostBridge::push_diagnostic(Self, String) -> Bool
 pub fn EmbeddingHostBridge::service_bridge(Self) -> @host.HostServiceBridge

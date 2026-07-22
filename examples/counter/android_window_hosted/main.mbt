@@ -11,15 +11,7 @@ fn main {
         size=metrics.logical_size,
       )
     },
-    provider_factory=() => {
-      @android_skia_backend.renderer_provider(
-        options=@android_skia_backend.AndroidSkiaAppOptions::new(
-          surface_route=@android_host.android_shell_renderer_selection(
-              gpu_available=@android_skia_backend.android_skia_gpu_available(),
-            ).surface_route,
-        ),
-      )
-    },
+    provider_factory=() => @android_skia_backend.renderer_provider(),
     auto_exit_after_frames=None,
   )
   println("moui-window-hosted android counter: EventLoop starting")

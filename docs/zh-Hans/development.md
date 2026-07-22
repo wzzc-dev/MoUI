@@ -22,7 +22,7 @@ node scripts/generate-playground-assets.mjs --out dist/playground
 
 保持 `website/tutorial/lessons` 下的课程源码可 compile-check。asset generator 会把这些源码、app-safe dependency manifest 以及 pinned `@moonbit/moonc-worker` asset 复制到静态 Playground 输出中。
 
-共享应用逻辑属于 `examples/<name>/app`。平台入口应保持很薄，并放在 `web_wasm`、`macos_skia`、`windows_skia` 或 `linux_skia` 等名称下。Showcase 对桌面和移动端也遵循同一约定（`android_skia`、`ios_skia`、`harmonyos_skia`），而它的 WGPU 和 Sun 目录保持为显式 diagnostic renderer routes。
+共享应用逻辑属于 `examples/<name>/app`。平台入口应保持很薄，并放在 `web_wasm`、`macos_skia`、`windows_skia` 或 `linux_skia` 等名称下。Showcase 对桌面和移动端也遵循同一约定（`android_window_hosted`、`ios_window_hosted`、`harmonyos_window_hosted`），而它的 WGPU 和 Sun 目录保持为显式 diagnostic renderer routes。
 
 使用最小有用循环：
 
@@ -35,75 +35,34 @@ moon build examples/markdown_editor/web_wasm --target wasm-gc
 node scripts/web-bundle-size.mjs examples/counter/web_wasm --json
 ```
 
-Android 当前是 embedded native scaffold，而不是完整 app-owned event loop。对于 Android Skia cross-build checks，设置 `MOUI_SKIA_PLATFORM=android` 和显式 `MOUI_SKIA_ARCH`，让 prebuild 选择锁定的 Android Skia artifact，而不是 desktop host artifact：
+Android、iOS 和 HarmonyOS 使用 window-hosted 移动端路线。匹配的
+`wzzc-dev/window` template 负责 native lifecycle、surface creation 和 input；MoUI
+`*_window_hosted` 入口提供 program 和 Skia provider。不再有应用专用 native export
+table 或第二套 lifecycle bridge。
+
+在调用平台 toolchain 之前使用 host-sim 检查：
 
 ```sh
-MOUI_SKIA_PLATFORM=android MOUI_SKIA_ARCH=arm64 \
-  moon check examples/counter/android_skia --target native
+moon check examples/counter/android_window_hosted --target native
+moon check examples/counter/ios_window_hosted --target native
+moon check examples/counter/harmonyos_window_hosted --target native
+sh scripts/window-hosted-hostsim-smoke.sh
 ```
 
-要构建实验性 Counter Android debug APK，先通过 Android Studio 的 SDK Manager、官方 `sdkmanager` command-line tools 或仓库 helper 安装 Android SDK Platform 36、Build-Tools 35.0.0、Platform-Tools、NDK 和 CMake。完整 setup 流程见
-[android-support.md](../android-support.md#android-sdk-and-ndk)。先确保安装完整 JDK，使 `java`、`javac`、`jlink` 和 `keytool` 可用。managed shell 目标 SDK 35，但由于 AndroidX Activity 1.13.0 要求，会按 SDK 36 编译。Android Gradle Plugin 9.x 使用 Java 17 或更新版本；Java 21 是推荐本地默认值。最短路径是：
+通过 `moui_cli` 从应用元数据构建：
 
 ```sh
-scripts/setup-android-sdk.sh --accept-licenses
-eval "$(scripts/setup-android-sdk.sh --print-env)"
-scripts/build-shell-android-apk.sh --app counter
+moui build android showcase \
+  --mobile-config "$PWD/examples/showcase/moui.mobile.json"
+moui build ios showcase \
+  --mobile-config "$PWD/examples/showcase/moui.mobile.json"
+moui build harmonyos showcase \
+  --mobile-config "$PWD/examples/showcase/moui.mobile.json"
 ```
 
-如果已经安装 Android SDK，请将 `ANDROID_HOME` 指向该 SDK root，然后运行：
-
-```sh
-ANDROID_HOME=/path/to/Android/Sdk \
-scripts/build-shell-android-apk.sh --app counter
-```
-
-仅在需要固定某个 side-by-side NDK 时设置 `ANDROID_NDK_HOME=/path/to/Android/Sdk/ndk/<version>`；否则脚本使用 `$ANDROID_HOME/ndk` 下所需的 `MOUI_ANDROID_NDK_VERSION` 安装（默认 28.2.13676358），并忽略不兼容 overrides。
-
-如果需要避开 Android Skia provider download 的 packaging-only smoke，使用
-`scripts/build-shell-android-apk.sh --app counter --fallback-skia`。APK 只证明 MoonBit C/JNI/CMake/SDK packaging path；真实 Android runtime evidence 仍需要使用默认 real-Skia path 在 device 或 emulator 上运行。
-
-Shell app registration 按 publish boundary 拆分。仓库 examples 和外部应用使用 strict schema v1 `shell.json`；固定 Embedding API 会派生生成的 C names 和 symbols，因此 application metadata 不包含 native export map 或 project path。Canonical shells 和 build entrypoints 位于 `moui_shell` 和 `moui_shell/scripts` 下，使 managed builds 能从发布的 `wzzc-dev/moui` package stage 它们。在尝试完整 APK、`.app` 或 HAP build 前，运行 `node scripts/check-shell-app-config.mjs` 进行快速仓库 example registration consistency check。
-
-Activity/Surface ownership boundary 和 runtime-evidence requirements 见
-[android-support.md](../android-support.md)。
-
-iOS 也是 embedded native scaffold，而不是完整 app-owned event loop。对于 iOS Simulator Skia cross-build checks，设置 `MOUI_SKIA_PLATFORM=iosSim` 和显式 `MOUI_SKIA_ARCH`，让 prebuild 选择锁定的 simulator artifact，而不是 desktop host artifact：
-
-```sh
-MOUI_SKIA_PLATFORM=iosSim MOUI_SKIA_ARCH=arm64 \
-  moon check examples/counter/ios_skia --target native
-```
-
-要构建实验性 Counter iOS Simulator app，请安装/选择 Xcode 并运行：
-
-```sh
-scripts/build-shell-ios-app.sh --app counter
-```
-
-默认输出是 `artifacts/ios/counter/MoUICounter.app`。使用
-`scripts/build-shell-ios-app.sh --app counter --fallback-skia` 可执行避开 iOS Skia provider download 的 packaging-only smoke。该 `.app` 只证明 MoonBit C/canonical SwiftUI shell/ABI bridge/native-stub/bundle path；真实 iOS runtime evidence 仍需要使用默认 real-Skia path 在 simulator 或 device 上运行。需要 Xcode 15.4+、Swift 5 language mode 和 iOS 15+。
-
-SwiftUI/UIKit ownership boundary、single-scene ABI v1 rule、plugin/eject contract、Xcode CLI setup、simulator install commands 和 runtime-evidence requirements 见 [ios-support.md](../ios-support.md)。
-
-HarmonyOS 也是 embedded native scaffold。对于 HarmonyOS Skia cross-build checks，设置 `MOUI_SKIA_PLATFORM=harmonyos`、`MOUI_SKIA_ARCH=arm64` 和 static linking，使 prebuild 选择完整的锁定 HarmonyOS Skia provider：
-
-```sh
-MOUI_SKIA_PLATFORM=harmonyos MOUI_SKIA_ARCH=arm64 MOUI_SKIA_LINK_MODE=static \
-  moon check examples/harmonyos_demo/harmonyos_skia --target native
-```
-
-锁定的共享 `libskia.so` 仍可用于显式 `skia-raster`，但会隐藏
-`libskia_ganesh_ext.a` 所需的 Ganesh 内部符号，因此不能支持 HarmonyOS
-`auto` / `skia-gpu`。未设置 link-mode environment 时，shell builder 会为 GPU
-选择 static、为 raster 选择 dynamic。
-
-standalone demo 位于 `examples/harmonyos_demo`，而不是扩展 Counter。`examples/harmonyos_demo/app` 拥有 platform-neutral UI，`examples/harmonyos_demo/harmonyos_skia` 拥有 MoonBit native exports。build 会 stage package-owned `moui_shell/harmonyos` ArkTS Stage Ability/XComponent shell、NAPI bridge、plugin registry 和 CMake project。使用
-`scripts/build-harmonyos-demo-app.sh --fallback-skia`
-可执行避开 HarmonyOS Skia download 的 packaging-only smoke，并验证 MoonBit C generation、native glue compilation 和 staged HAP layout。外部应用使用 schema v1 `shell.json` 和 managed build，或用 `moui shell eject harmonyos` 显式 eject versioned shell。真实 HarmonyOS runtime evidence 仍需要 non-fallback build，加匹配 device/emulator 的 first-frame、input、resize 和 lifecycle smoke。
-
-Stage Ability/XComponent ownership boundary、SDK/toolchain installation、emulator setup、SDK environment variables 和 runtime evidence requirements 见
-[harmonyos-support.md](../harmonyos-support.md)。
+`--fallback-skia` 只能用于打包诊断；要提出运行时声明，仍需要匹配的设备或模拟器证据。
+平台专用 SDK 设置和证据边界见 [Android](../android-support.md)、
+[iOS](../ios-support.md) 和 [HarmonyOS](../harmonyos-support.md)。
 
 `moon update` 会刷新 registry packages，包括 `window` fork package。默认 `sh scripts/check.sh --profile daily` 路径守护 dependency shape 和 repo-local `moui_skia` acceptance surface。Skia binding 是主 checkout 的一部分，位于 `moui_skia`。
 

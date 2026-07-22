@@ -232,7 +232,7 @@ test "website showcase cards link to their owning source entrypoints" {
     entries.any(entry => {
       entry.slug == "ios-componentgallery" &&
       entry.source_url ==
-      "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase/ios_skia" &&
+      "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase/ios_window_hosted" &&
       entry.status_key == "showcase.status.pending"
     }),
   )
@@ -240,7 +240,7 @@ test "website showcase cards link to their owning source entrypoints" {
     entries.any(entry => {
       entry.slug == "android-componentgallery" &&
       entry.source_url ==
-      "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase/android_skia" &&
+      "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase/android_window_hosted" &&
       entry.status_key == "showcase.status.pending"
     }),
   )

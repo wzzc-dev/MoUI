@@ -22,22 +22,22 @@ test "new parser treats explicit platforms as additive" {
     Linux,
   )
   guard parsed is Ok({ options: Some(options), .. }) else {
-    fail("expected shell new arguments to parse")
+    fail("expected mobile new arguments to parse")
   }
   inspect(options.platforms.join(","), content="web,linux,android,ios")
   inspect(options.bundle_id.unwrap_or(""), content="dev.example.demo")
 }
 
 ///|
-test "new parser requires a shell bundle id" {
+test "new parser requires a mobile bundle id" {
   match
     parse_new_args(["demo_app", "--platform", "android"], "/workspace", Linux) {
     Err(message) =>
       inspect(
         message,
-        content="--bundle-id is required when generating a shell platform",
+        content="--bundle-id is required when generating a mobile platform",
       )
-    Ok(_) => fail("expected shell generation without a bundle id to fail")
+    Ok(_) => fail("expected mobile generation without a bundle id to fail")
   }
 }
 
@@ -53,23 +53,6 @@ test "doctor parser accepts equals options and all" {
   inspect(parsed.options.all, content="true")
   inspect(parsed.fix, content="true")
   inspect(parsed.json, content="true")
-}
-
-///|
-test "eject parser keeps output relative to the project" {
-  let parsed = parse_eject_args(
-    [
-      "android", "--project-root", "demo", "--output=native/android", "--moui-root=framework",
-    ],
-    "/workspace",
-  )
-  guard parsed is Ok({ options: Some(options), .. }) else {
-    fail("expected eject arguments to parse")
-  }
-  inspect(options.project_root, content="/workspace/demo")
-  inspect(options.platform, content="android")
-  inspect(options.output, content="native/android")
-  inspect(options.moui_root.unwrap_or(""), content="/workspace/framework")
 }
 
 ///|
@@ -106,7 +89,7 @@ test "help and version routes succeed" {
   inspect(help.exit_code, content="0")
   inspect(help.stdout.has_prefix("MoUI command-line tools"), content="true")
   inspect(help.stdout.contains("add platform"), content="true")
-  inspect(help.stdout.contains("plugin new"), content="true")
+  inspect(help.stdout.contains("plugin new"), content="false")
   inspect(help.stdout.contains("package"), content="true")
   let version_result = run_cli(["--version", "--json"], "/workspace")
   inspect(version_result.exit_code, content="0")
@@ -134,10 +117,28 @@ test "add platform parser accepts positional platforms" {
 }
 
 ///|
-test "plugin new parser requires platforms" {
-  match parse_plugin_new_args(["sample.camera"], "/workspace") {
-    Err(message) =>
-      inspect(message, content="moui plugin new requires --platform")
-    Ok(_) => fail("expected plugin new without platforms to fail")
-  }
+test "window-hosted paths use the nested upstream module layout" {
+  let workspace = "/workspace"
+  inspect(
+    window_package_root(workspace),
+    content="/workspace/window/modules/window",
+  )
+  inspect(
+    window_platform_root(workspace, "android"),
+    content="/workspace/window/modules/window/android",
+  )
+  inspect(
+    window_template_root(workspace, "android"),
+    content="/workspace/window/modules/window/android/template",
+  )
+  inspect(
+    window_template_root(workspace, "ios"),
+    content="/workspace/window/modules/window/ios/template",
+  )
+  inspect(
+    window_template_root(workspace, "harmonyos"),
+    content="/workspace/window/modules/window/harmonyos/template",
+  )
 }
+
+///|

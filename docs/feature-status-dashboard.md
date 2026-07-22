@@ -102,25 +102,14 @@ proof status:
 ## Mobile Status
 
 **Product class: `runtime_partial`** for Android, iOS, and HarmonyOS (usable
-managed-shell host paths; not product-complete). See
+window-hosted paths; not product-complete). See
 [platform-readiness-declaration.md](platform-readiness-declaration.md).
 
-Android, iOS, and HarmonyOS have source-level VSync and mobile service bridges.
-HarmonyOS also has native-only XComponent pointer/lifecycle ownership and
-touch-slop scroll arbitration.
-
-Historical Component Gallery evidence is retained for audit, but does not
-promote the renamed Showcase managed shells:
-
-| Platform | Status | Artifact | Notes |
-| --- | --- | --- | --- |
-| iOS historical artifact | Release N UIKit shell **`passed`** | `artifacts/mobile-runtime/ios/component_gallery/` | Not Showcase evidence. |
-| Android historical artifact | Release N legacy shell **`passed`** | `artifacts/mobile-runtime/android/component_gallery/` | Not Showcase evidence. |
-| Showcase managed shells | fresh Android/iOS/HarmonyOS evidence pending | `artifacts/shell-runtime/<platform>/showcase/` | Re-run through real system input, assistive technology, and the repository test-probe plugin where required. |
-
-CI entrypoints: `moui-ios-shell-runtime-evidence.yml`,
-`moui-android-shell-runtime-evidence.yml` (self-hosted android),
-`moui-harmonyos-shell-runtime-evidence.yml` (self-hosted harmonyos + signing).
+The window-hosted path uses `HostCmd` → `EventLoop` → `ApplicationHandler` →
+MoUI adapters. HarmonyOS XComponent callbacks exclusively own surface, pointer,
+resize, and detach. Host-sim coverage is available through
+`sh scripts/window-hosted-hostsim-smoke.sh`; matching-device evidence remains
+pending for all three platforms.
 
 `SkiaGpuNative` carries unpromoted window-surface source paths per Phase 1 of
 the GPU readback elimination plan (iOS/macOS Metal, Android Vulkan/GLES,
@@ -136,12 +125,12 @@ has L1 package-test proof:
 | Renderer mailbox control queue (`moui/render/render_frame_mailbox.mbt`) | `moui/render` whitebox tests (capacity-two latest-wins; `RendererControlMessage` never dropped) |
 | Native Picture handoff (`moui_skia/native/skia_stub_gpu_worker.cpp`) | focused native tests (independent thread, retained picture, detach acknowledgement, zero readback counter) |
 | Context-loss recovery (`moui/runtime/renderer_recovery.mbt`) | `moui/runtime` whitebox tests (Idle → Lost → Recovering → Recovered → Idle; `FallbackToRaster` after 2 failures) |
-| Manifest schema + `gpuPromotionEvidence` (`tools/moui/validate_shell_runtime_manifest`) | `validate_shell_runtime_manifest_wbtest` (9 new Phase 2.3 tests) |
+| Window-hosted verification manifest | `moui_cli/verify.mbt` and `moui_cli/verify_wbtest.mbt` |
 
 Product `auto` defaults to `SkiaGpuNative` on every native Skia platform when a
 host GPU surface is available (`gpu_promoted` is `true` everywhere). Raster
 remains the explicit/recovery path. Matching-device seven-gate manifests remain
-the quality evidence bar; see ADR 0006 and `shell-mainline-roadmap.md`.
+the quality evidence bar; see ADR 0006 and `window-hosted-moui.md`.
 
 ## Evidence Traceability
 

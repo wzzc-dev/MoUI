@@ -115,4 +115,3 @@ test "harmonyos runtime session renders through supplied provider" {
     None => fail("expected HarmonyOS session")
   }
 }
-

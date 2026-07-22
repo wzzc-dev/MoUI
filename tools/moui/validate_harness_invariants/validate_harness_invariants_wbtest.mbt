@@ -66,14 +66,12 @@ test "R3 requires env-driven renderer selection" {
 }
 
 ///|
-test "R3 requires window-hosted mobile mains (ADR 0015)" {
-  let bad_embedding = check_r3_mobile_main(
+test "R3 requires window-hosted mobile mains" {
+  let bad_main = check_r3_mobile_main(
     "main.mbt",
-    Some(
-      "@platform_host.install_embedding\n@host.shell_renderer_selection",
-    ),
+    Some("@platform_host.start()\n"),
   )
-  debug_inspect(bad_embedding.ok, content="false")
+  debug_inspect(bad_main.ok, content="false")
   let good = check_r3_mobile_main(
     "main.mbt",
     Some(
@@ -81,27 +79,16 @@ test "R3 requires window-hosted mobile mains (ADR 0015)" {
     ),
   )
   debug_inspect(good.ok, content="true")
-  let expected = ["unused"]
   let good_pkg = check_r3_mobile_pkg(
     "moon.pkg",
     Some("import { \"wzzc-dev/window/android\" @window_android }"),
-    expected,
   )
   debug_inspect(good_pkg.ok, content="true")
   let bad_pkg = check_r3_mobile_pkg(
     "moon.pkg",
-    Some("import { \"wzzc-dev/moui_shell/embedding\" @shell_embedding }"),
-    expected,
+    Some("import { \"wzzc-dev/moui/backend/android\" @android_host }"),
   )
   debug_inspect(bad_pkg.ok, content="false")
-  let no_shim = check_r3_mobile_export_shim("embedding_exports.mbt", None, expected)
-  debug_inspect(no_shim.ok, content="true")
-  let has_shim = check_r3_mobile_export_shim(
-    "embedding_exports.mbt",
-    Some("pub fn moui_embedding_attach_surface() -> Bool { true }"),
-    expected,
-  )
-  debug_inspect(has_shim.ok, content="false")
 }
 
 ///|

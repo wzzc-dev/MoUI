@@ -2,13 +2,11 @@
   "schemaVersion": 1,
   "platform": "android",
   "sourceBuild": {
-    "status": "passed",
-    "managed": "passed",
-    "cleanEjected": "passed",
-    "pluginFixture": "passed",
-    "verifiedOn": "2026-07-15",
-    "matrixCommand": "moui_shell/test_probe/tests/run-shell-matrix.sh android --fallback-skia --prepare-only",
-    "evidence": "managed, clean-ejected, and plugin fallback APK matrix passed"
+    "status": "partial",
+    "windowHosted": "partial",
+    "verifiedOn": "2026-07-22",
+    "matrixCommand": "moui build android showcase --mobile-config examples/showcase/moui.mobile.json --prepare-only",
+    "evidence": "window-hosted template and CLI migration are checked; installable APK evidence is pending"
   },
   "rendererL2": {
     "status": "partial",
@@ -19,10 +17,8 @@
       "reference": "fresh matching-device direct-present marker pending"
     }
   },
-  "runtimeL3": {"status": "partial", "evidence": "modern-shell matching-device suite pending"},
-  "shellKind": "managed-kotlin",
-  "shellApiVersion": 1,
-  "embeddingApiVersion": 1,
+  "runtimeL3": { "status": "partial", "evidence": "window-hosted matching-device suite pending" },
+  "hostKind": "window-hosted-android",
   "deploymentFloor": "Android 23",
   "toolchainFloor": "AGP 9.2.1 / Kotlin 2.2.10 / Gradle 9.6.1 / JVM 17 / compile SDK 36 / target SDK 35 / NDK 28.2 / CMake 3.22.1",
   "actualPresenterRoute": "unverified"

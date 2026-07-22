@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "counter",
+  "displayName": "MoUI Counter",
+  "artifactName": "counter",
+  "appPackage": "examples/counter/app",
+  "android": {
+    "applicationId": "dev.wzzc.moui.counter",
+    "minSdk": 23
+  },
+  "ios": {
+    "bundleId": "dev.wzzc.moui.counter",
+    "productName": "MoUICounter",
+    "deploymentTarget": "15.0"
+  }
+}

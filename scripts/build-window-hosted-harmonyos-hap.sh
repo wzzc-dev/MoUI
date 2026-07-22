@@ -3,4 +3,3 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 export MBW_WORKSPACE_ROOT="${MBW_WORKSPACE_ROOT:-$ROOT}"
-exec bash "$ROOT/window/harmonyos/scripts/build-hosted-hap.sh" "$@"

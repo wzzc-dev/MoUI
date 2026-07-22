@@ -213,48 +213,21 @@ project keeps shared app logic separate from its thin platform entrypoints.
 
 ## Mobile Packaging
 
-Android and iOS packaging support is published inside this package under
-`moui_shell`. An application project owns its own shared app package, mobile
-platform entrypoint packages, `shell.json`, Android Gradle project, and iOS
-Xcode project; the MoUI package supplies the reusable Gradle/JNI/CMake and
-UIKit/native build templates. Build invocations go through `moui build`.
-
-Start from the copyable files in:
-
-```text
-.mooncakes/wzzc-dev/moui_shell/template.shell.json
-.mooncakes/wzzc-dev/moui_shell/android/runner/template/
-.mooncakes/wzzc-dev/moui_shell/ios/runner/template/
-```
-
-Android debug APK from an app workspace:
+Android, iOS, and HarmonyOS use the matching `wzzc-dev/window` template and
+thin `*_window_hosted` MoonBit entrypoint. Each app keeps a
+`moui.mobile.json` with its identifiers and platform floors; `moui build`
+stages the template, generates native inputs, and invokes the platform
+toolchain.
 
 ```sh
-moui build android my_app \
-  --workspace-root "$PWD" \
-  --moui-root "$PWD/.mooncakes/wzzc-dev/moui" \
-  --app-config "$PWD/shell.json" \
-  --android-project "$PWD/android_app"
+moui build android my_app --mobile-config "$PWD/moui.mobile.json"
+moui build ios my_app --mobile-config "$PWD/moui.mobile.json"
+moui build harmonyos my_app --mobile-config "$PWD/moui.mobile.json"
 ```
 
-iOS Simulator app from an app workspace:
-
-```sh
-moui build ios my_app \
-  --workspace-root "$PWD" \
-  --moui-root "$PWD/.mooncakes/wzzc-dev/moui" \
-  --app-config "$PWD/shell.json" \
-  --xcode-project "$PWD/ios_app/MoUIShellApp.xcodeproj" \
-  --scheme MoUIShellApp \
-  --product-name MoUIShellApp
-```
-
-`shell.json` must include the app id, package paths, bundle/application ids,
-and the native export contract under `android.native` and `ios.native` unless
-the app is one of this repository's built-in examples. Fallback Skia builds
-(`--fallback-skia`) prove packaging only; passed Android/iOS runtime claims
-still require a non-fallback build plus matching emulator/simulator or device
-smoke evidence.
+`--fallback-skia` proves packaging only. A passed mobile runtime claim still
+requires a non-fallback build and matching emulator, simulator, or device
+evidence.
 
 ## Web Wasm-GC
 

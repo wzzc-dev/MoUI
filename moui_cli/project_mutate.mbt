@@ -2,6 +2,8 @@
 fn platform_entrypoint_directory(platform : String) -> String {
   if platform == "web" {
     "web_wasm"
+  } else if is_mobile_platform(platform) {
+    platform + "_window_hosted"
   } else {
     platform + "_skia"
   }
@@ -101,16 +103,16 @@ fn merge_mobile_config_for_platforms(
     None | Some("") => Ok(mobile_config_text(options))
     Some(text) => {
       let parsed = @json.parse(text) catch {
-        _ => return Err("shell.json is invalid JSON")
+        _ => return Err("moui.mobile.json is invalid JSON")
       }
       guard parsed is Object(root) else {
-        return Err("shell.json root must be an object")
+        return Err("moui.mobile.json root must be an object")
       }
       let generated = @json.parse(mobile_config_text(options)) catch {
-        _ => return Err("could not build shell platform defaults")
+        _ => return Err("could not build mobile platform defaults")
       }
       guard generated is Object(generated_root) else {
-        return Err("generated shell config must be an object")
+        return Err("generated mobile config must be an object")
       }
       for platform in ["android", "ios", "harmonyos"] {
         if options.platforms.contains(platform) && !root.contains(platform) {
@@ -121,13 +123,7 @@ fn merge_mobile_config_for_platforms(
         }
       }
       if !root.contains("schemaVersion") {
-        root["schemaVersion"] = (2 : Int).to_json()
-      }
-      if !root.contains("shellApiVersion") {
-        root["shellApiVersion"] = (1 : Int).to_json()
-      }
-      if !root.contains("embeddingApiVersion") {
-        root["embeddingApiVersion"] = (1 : Int).to_json()
+        root["schemaVersion"] = (1 : Int).to_json()
       }
       Ok(Json::object(root).stringify(indent=2) + "\n")
     }
@@ -223,10 +219,10 @@ fn add_platforms_to_project(
     Err(message) => return Err(message)
   }
   if merged.any(is_mobile_platform) {
-    let mobile_path = join_path(options.project_root, "shell.json")
+    let mobile_path = join_path(options.project_root, "moui.mobile.json")
     let existing = if @fs.path_exists(mobile_path) {
       let text = @fs.read_file_to_string(mobile_path) catch {
-        _ => return Err("could not read shell.json: " + mobile_path)
+        _ => return Err("could not read moui.mobile.json: " + mobile_path)
       }
       Some(text)
     } else {

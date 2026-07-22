@@ -616,7 +616,7 @@ fn embedding_host_update_json(update : EmbeddingHostUpdate) -> Json {
 }
 
 ///|
-/// Transfers pending MoUI updates into the shell-owned neutral transport.
+/// Transfers pending MoUI updates into the host-owned neutral transport.
 pub fn EmbeddingHostBridge::flush_updates_to_shell(
   self : EmbeddingHostBridge,
   transport : @host_session.HostSessionTransport,

@@ -1,5 +1,5 @@
 ///|
-/// Window-hosted native surface handle (no moui_shell).
+/// Window-hosted native surface handle.
 pub(all) struct HarmonyOsSurfaceHandle {
   raw : UInt64
 } derive(Eq, Debug, ToJson)
@@ -20,41 +20,6 @@ pub fn HarmonyOsSurfaceHandle::raw(self : HarmonyOsSurfaceHandle) -> UInt64 {
 }
 
 ///|
-/// **Deprecated (ADR 0015):** Embedding API retired; returns 0.
-pub fn harmonyos_shell_embedding_api_version() -> Int {
-  0
-}
-
-///|
-/// **Deprecated (ADR 0015):** shell platform descriptors removed with moui_shell.
-pub fn harmonyos_shell_descriptor_retired() -> Unit {
-  ()
-}
-
-///|
-pub fn harmonyos_shell_renderer_configure(mode : String) -> Bool {
-  @embedded_runtime_session.shell_renderer_configure(mode)
-}
-
-///|
-pub fn harmonyos_shell_renderer_selection(
-  gpu_available~ : Bool,
-) -> @render.NativeRendererSelection {
-  @embedded_runtime_session.shell_renderer_selection(
-    @render.NativeGpuPlatform::HarmonyOs,
-    gpu_available~,
-  )
-}
-
-///|
-pub fn harmonyos_shell_renderer_status_json(gpu_available~ : Bool) -> String {
-  @embedded_runtime_session.shell_renderer_status_json(
-    @render.NativeGpuPlatform::HarmonyOs,
-    gpu_available~,
-  )
-}
-
-///|
 pub(all) struct HarmonyOsBackendCapabilities {
   embedded_surface : Bool
   external_event_loop : Bool
@@ -71,7 +36,7 @@ pub(all) struct HarmonyOsBackendCapabilities {
 } derive(Eq, Debug, ToJson)
 
 ///|
-/// `ready` means the managed-shell host path is usable for app development
+/// `ready` means the window-hosted path is usable for app development
 /// and demos (aligned with Linux host usability). It does **not** mean full
 /// L3 runtime promotion, commercial signing, or GPU seven-gate claims.
 ///
@@ -146,8 +111,8 @@ pub fn HarmonyOsRendererProvider::has_async_image_loader(
 
 ///|
 pub fn harmonyos_service_capabilities() -> @host.HostServiceCapabilities {
-  // Host services: redesign as window host services (ADR 0015); Embedding channel is removal target
-  // adapters. Matching-device evidence remains partial (see readiness.status).
+  // Platform callbacks supply window-hosted services. Matching-device evidence
+  // remains partial (see readiness.status).
   @host.HostServiceCapabilities::new(clipboard=true)
 }
 
@@ -189,8 +154,7 @@ pub fn harmonyos_readiness() -> HarmonyOsBackendReadiness {
     ready: true,
     status: "runtime_partial",
     blocked_by: [
-      "commercial/signed-device full shell-runtime smoke is not yet status=passed",
-      "checked-in smoke still lacks a complete attach/resize/input/IME/clipboard suite",
+      "commercial/signed-device window-hosted smoke is not yet status=passed", "checked-in smoke still lacks a complete attach/resize/input/IME/clipboard suite",
       "actualPresenterRoute remains unverified; GPU seven-gate promotion is not claimed",
     ],
     next_steps: [
@@ -206,13 +170,13 @@ pub fn backend_info() -> HarmonyOsBackendInfo {
   {
     host_info: @host.HostAppInfo::new(
       backend=@host.HostBackendKind::Native,
-      description="HarmonyOS window-hosted native host (HostCmd/ApplicationHandler); managed shell/Embedding are removal targets (ADR 0015)",
+      description="HarmonyOS window-hosted native host (HostCmd/ApplicationHandler)",
     ),
     capabilities: harmonyos_capability_matrix(),
     services: harmonyos_service_capabilities(),
     input: harmonyos_input_capabilities(),
     readiness: harmonyos_readiness(),
-    description: "HarmonyOS backend exposes an embedded-session contract: the managed shell supplies an XComponent native-window handle, forwards lifecycle/input callbacks, and selects a Skia renderer provider. Host path is usable for development (ready=true, status=runtime_partial). It is not product-complete until signed-device full L3 smoke and presenter verification close remaining gaps.",
+    description: "HarmonyOS backend exposes a native-session contract: wzzc-dev/window/harmonyos supplies an XComponent native-window handle and lifecycle/input callbacks, while the backend selects a Skia renderer provider. The host path is usable for development (ready=true, status=runtime_partial). It is not product-complete until signed-device full L3 smoke and presenter verification close remaining gaps.",
   }
 }
 
@@ -233,8 +197,8 @@ pub fn harmonyos_capability_summary(
     async_services=true,
     native_accessibility_available=true,
     web_view_available=false,
-    web_view_description="HarmonyOS native WebView embedding is not part of the current shell host contract.",
-    description="HarmonyOS embedded native host with window HostCmd lifecycle and ApplicationHandler session. IME/clipboard/a11y re-home off Embedding (ADR 0015). Runtime evidence remains partial.",
+    web_view_description="HarmonyOS native WebView is not part of the current mobile host contract.",
+    description="HarmonyOS native host with window HostCmd lifecycle and an ApplicationHandler session. The window host owns lifecycle, surface, input, IME, clipboard, and accessibility adaptation. Runtime evidence remains partial.",
   )
 }
 

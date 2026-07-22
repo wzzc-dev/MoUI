@@ -28,25 +28,24 @@ Mechanization batch1 (done): `docs/plans/done/harness-mechanize-invariants-batch
 |---|-----------|-----------|-----------|
 | R1 | Native Skia is the mainline; native WGPU is diagnostic | code review | RFC-required to reclassify |
 | R2 | `SkiaGpuNative` is the product `auto` default on all native Skia platforms when a host GPU surface is available; `SkiaRasterNative` remains the explicit mode and sticky recovery fallback | `validate-renderer-provider-manifests.mjs` | none |
-| R3 | Mobile/desktop entrypoints accept `--renderer auto\|skia-gpu\|skia-raster` (or `MOUI_SKIA_RENDERER`) and record requested/selected modes; `auto` and `skia-gpu` select GPU when available, while `skia-raster` forces the CPU path. Mobile `main.mbt` files install program/renderer configuration only; platform backends install shell-declared runtime callbacks, while `moui_shell/embedding` owns callback state, every fixed Embedding API implementation, and the canonical `link.native.exports` list. Because MoonBit native dependency exports are not promoted to final executable C symbols, each mobile executable root must mirror that exact list and may contain only same-name mechanical `embedding_exports.mbt` forwarders to `@shell_embedding`—never callback state, branching, adapter construction, or runtime logic. | `validate-harness-invariants.mjs` (providers + mobile installation + framework ABI ownership + exact root export mirrors/forwarders + prepare-native-build) | none |
+| R3 | Desktop entrypoints honor `--renderer auto\|skia-gpu\|skia-raster` (or `MOUI_SKIA_RENDERER`). Mobile entrypoints use `*_window_hosted`, import `wzzc-dev/window/<platform>`, construct `*WindowHostedApp`, and call `EventLoop.run_app`; the platform event loop is the only lifecycle, surface, and input path. | `validate-harness-invariants.mjs` (provider + window-hosted entrypoint + prepare support) | none |
 | R4 | `moon.work` must not list `./window/modules/window` or `./window/modules/windowing` by default; use `sh scripts/window-dev-mode.sh on/off` | `validate-window-dependency.mjs` (daily CI) | local development only |
 | R5 | `moon.work` must not list `./openseek`; `examples/mo_workbench` uses registry pin | `validate-maintenance-baseline.mjs` | none |
-| R6 | Do not claim mobile runtime support as `passed` without matching-device smoke evidence (pixels changed, input received, detach, IME, clipboard, accessibility, async image) | `validate_shell_runtime_manifest` | fallback APK builds are packaging evidence only |
+| R6 | Do not claim mobile runtime support as `passed` without matching-device evidence (pixels changed, input received, detach, IME, clipboard, accessibility, async image) recorded in `checks/platforms/*.json`. | code review + platform-status schema validation | fallback APK builds are packaging evidence only |
 
 ## Mobile-Specific
 
 | # | Constraint | Detection | Exemption |
 |---|-----------|-----------|-----------|
-| M1 | Android: embedded-session route; `backend/android` owns the typed adapter and contracts, `backend/android/skia` owns the `ANativeWindow` Skia presenter; `moui_shell/android/embedder` owns Kotlin/JNI/CMake and `moui_shell/android/runner` owns the Gradle template | code review | none |
+| M1 | Android: `window/android` owns Activity/JNI/CMake/Gradle template lifecycle and `HostCmd`; `backend/android` owns the typed adapter and contracts, and `backend/android/skia` owns the `ANativeWindow` Skia presenter. | code review | none |
 | M2 | Android frames paced by `Choreographer`; input/resize must request redraw, not present synchronously | code review | none |
-| M3 | iOS: embedded-session route; `backend/ios` owns the typed adapter and contracts, `backend/ios/skia` owns the UIKit presenter; `moui_shell/ios/embedder` owns the SwiftUI/CAMetalLayer bridge and `moui_shell/ios/runner` owns the Xcode template | code review | none |
-| M4 | Embedding API v1 is single-scene; frames are paced by `CADisplayLink`; keep `UILaunchScreen` and `UIApplicationSupportsMultipleScenes=false` in Info.plists; simulator smoke uses `idb`/`idb-companion`, not `simctl` | code review | none |
-| M5 | HarmonyOS: `moui_shell/harmonyos/embedder` owns the canonical ArkTS/XComponent/NAPI shell and `moui_shell/harmonyos/runner` owns its template at API 20; XComponent is the only pointer/surface/resize/detach source; ArkTS owns `displaySync` | `validate-harmonyos-shell.mjs` (pr profile) + `moui_shell/harmonyos/runner/tests/validate-managed-shell.mjs` | none |
-| M6 | Shell services cross `EmbedderHostChannel`; JNI/Obj-C++/NAPI adapters are thin wire translators only. `moui_shell/embedding` owns the ABI provider, compatibility, and fixed native dispatch; Android/iOS/HarmonyOS backends register neutral MoonBit runtime callbacks around the package-private `backend/internal/embedded_runtime_session`. | API import whitelist + code review | none |
-| M7 | Shell runtime manifests: `passed` (complete evidence) / `partial` (useful run with missing observations) / `failed` (no usable evidence); `--require-passed` rejects both `partial` and `failed` | `validate_shell_runtime_manifest` | none |
+| M3 | iOS: `window/ios` owns UIKit lifecycle and template glue; `backend/ios` owns the typed adapter and contracts, while `backend/ios/skia` owns the UIKit presenter. | code review | none |
+| M4 | iOS frames are paced by the platform event loop; keep `UILaunchScreen` and `UIApplicationSupportsMultipleScenes=false` in template Info.plists. | code review | none |
+| M5 | HarmonyOS: `window/harmonyos` owns the ArkTS Stage Ability/XComponent/NAPI template at API 20; XComponent is the only pointer/surface/resize/detach source and ArkTS owns `displaySync`. | code review | none |
+| M6 | Platform adapters translate native callbacks into `HostCmd`/`HostEvent` and host-service contracts only; Android/iOS/HarmonyOS backends keep runtime-session assembly package-private. | API import whitelist + code review | none |
+| M7 | Platform status uses `passed` (complete evidence), `partial` (useful but incomplete), or `failed` (no usable evidence). | platform-status schema validation | none |
 | M8 | Mobile acceptance evidence requires clipboard write/read completion, two distinct surface sizes, accessibility tree/focus/action, async loading/ready logs | code review | none |
-| M9 | `moui_cli` is the sole entry point for mobile build / run / verify; `moui_shell/scripts/build-*.sh` are not invoked externally — they delegate to `moui_cli build-*` commands | code review | none |
-| M10 | `build-ios-app-core.sh` must remain a thin launcher that forwards to `moui_cli build-ios-core` — it must not re-implement the build logic | code review | none |
+| M9 | `moui_cli` is the sole entry point for mobile build / run / verify; it stages and builds the matching `wzzc-dev/window` template. | code review | none |
 
 ## API and Code Discipline
 

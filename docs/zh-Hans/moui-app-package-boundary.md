@@ -400,25 +400,19 @@ MoUI 当前把两类入口统一在 `moui/views`：普通 app 使用高层 const
 ## 平台入口包
 
 平台入口包指
-`examples/*/{web_wasm,macos_skia,windows_skia,linux_skia,android_skia,ios_skia,harmonyos_skia}`
+`examples/*/{web_wasm,macos_skia,windows_skia,linux_skia,android_window_hosted,ios_window_hosted,harmonyos_window_hosted}`
 这类 executable package。它们负责创建 runtime、连接平台 backend、选择 renderer。
 
-三个移动端路径都由 embedded-session 入口和从已解析 `moui_shell` package staging
-的 managed shell 组成。它们的 `main.mbt` 只安装应用 program 和 renderer 配置。
-框架包 `moui_shell/embedding` 拥有 callback state、固定 Embedding API 实现以及
-canonical native export 列表。当前 MoonBit native linker 不会把 dependency package
-的 export declaration 提升为最终 executable 的 C symbols，因此每个移动端 executable
-根包还必须包含相同的 `embedding_exports.mbt`，并在自身 `moon.pkg` 中镜像 canonical
-export 列表。这些根包声明只能是机械 link shim：每个函数直接转发到同名
-`@shell_embedding` 函数，不得拥有 adapter state、分支、runtime behavior 或 ABI
-semantics。
+三个移动端路径使用匹配的 `wzzc-dev/window` template 和 `*_window_hosted` 入口。
+它们的 `main.mbt` 创建 program、选择 renderer provider，并把
+`*WindowHostedApp` 传给平台 `EventLoop`。`HostCmd` 和 `ApplicationHandler` 是
+lifecycle、surface 和 input callbacks 的唯一通路；移动端 executable 根包不再导出或
+转发第二套 embedding ABI。
 
-Android staging package-owned Kotlin shell。staging 的 `moui_shell/ios` canonical
-SwiftUI shell 负责 single-scene lifecycle、`CAMetalLayer` surface、`CADisplayLink`、
-UIKit service adapter 与触摸转发；Objective-C++ 仅保留 Embedding API v1 翻译和
-data ownership。`moui_shell/harmonyos` 的 canonical ArkTS Stage
-Ability/XComponent shell 由构建器 staging，native XComponent callback 独占
-surface/input/resize/detach。
+Android、iOS 和 HarmonyOS template 拥有各自的 native lifecycle 与 surface bridge。
+`AndroidWindowHostedApp`、`IosWindowHostedApp` 和 `HarmonyOsWindowHostedApp`
+会在 window event loop 创建 surface 后装配 MoUI runtime session。HarmonyOS
+XComponent callbacks 仍是 surface、pointer、resize 和 detach events 的唯一来源。
 
 平台入口包可以依赖：
 
@@ -428,15 +422,13 @@ surface/input/resize/detach。
 - `wzzc-dev/moui/backend/{macos,windows,linux,android,ios,harmonyos}`
 - `wzzc-dev/moui/backend/{macos,windows,linux,android,ios,harmonyos}/skia`
 - `wzzc-dev/moui/render/skia`
-- `wzzc-dev/moui_shell/embedding`，仅允许移动端 executable 根包用它实现经过机械
-  校验的最终链接转发
+- 匹配的移动端入口可使用 `wzzc-dev/window/{android,ios,harmonyos}`
 - 对应的 shared app package，例如 `examples/showcase/app`
 
 WGPU 相关 backend/render 包只作为实验或诊断入口使用，不是普通 app 或默认平台入口的推荐依赖。
 
 平台入口包不应该承载业务 UI。业务 view/model/update 应留在共享 app 包，平台入口只负责
-runtime + backend + renderer wiring；移动端 native executable 还可包含上述经过机械
-校验的 final-link export shim。
+runtime + backend + renderer wiring。
 
 ## 框架和控件实现包
 

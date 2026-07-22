@@ -7,15 +7,12 @@ import {
   "wzzc-dev/moui/backend/internal/embedded_runtime_session",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui_shell/embedding",
 }
 
 // Values
 pub fn backend_info() -> IosBackendInfo
 
-pub fn create_session(runtime~ : @runtime.AppRuntime, view~ : @wzzc-dev/moui_shell/ios.IosNativeView, metrics~ : @host.HostSurfaceMetrics, provider~ : IosRendererProvider) -> IosRuntimeSession?
-
-pub fn install_embedding(runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime, provider_factory~ : () -> IosRendererProvider, renderer_configure~ : (String) -> Bool, renderer_status_json~ : () -> String) -> Unit
+pub fn create_session(runtime~ : @runtime.AppRuntime, view~ : IosViewHandle, metrics~ : @host.HostSurfaceMetrics, provider~ : IosRendererProvider) -> IosRuntimeSession?
 
 pub fn ios_capability_matrix() -> IosBackendCapabilities
 
@@ -27,15 +24,7 @@ pub fn ios_readiness() -> IosBackendReadiness
 
 pub fn ios_service_capabilities() -> @host.HostServiceCapabilities
 
-pub fn ios_shell_descriptor() -> @embedding.ShellPlatformDescriptor
-
-pub fn ios_shell_embedding_api_version() -> Int
-
-pub fn ios_shell_renderer_configure(String) -> Bool
-
-pub fn ios_shell_renderer_selection(gpu_available~ : Bool) -> @render.NativeRendererSelection
-
-pub fn ios_shell_renderer_status_json(gpu_available~ : Bool) -> String
+pub fn ios_window_hosted_pump_host_sim(IosWindowHostedApp, surface_handle? : UInt64, width? : Int, height? : Int, scale? : Double) -> Unit
 
 // Errors
 
@@ -71,17 +60,23 @@ pub(all) struct IosBackendReadiness {
   next_steps : Array[String]
 } derive(Eq, ToJson, @debug.Debug)
 
+pub struct IosImeSink {
+  // private fields
+}
+pub fn IosImeSink::apply(Self, @wzzc-dev/moui/core.TextInputState) -> Unit
+pub fn IosImeSink::new() -> Self
+
 pub struct IosRendererProvider {
   // private fields
 }
 pub fn IosRendererProvider::has_async_image_loader(Self) -> Bool
-pub fn IosRendererProvider::new(create_renderer~ : (@wzzc-dev/moui_shell/ios.IosNativeView, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?, sync_view? : (@wzzc-dev/moui_shell/ios.IosNativeView, @host.HostSurfaceMetrics) -> Unit, image_loader? : @host.HostAsyncImageLoader?) -> Self
+pub fn IosRendererProvider::new(create_renderer~ : (IosViewHandle, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?, sync_view? : (IosViewHandle, @host.HostSurfaceMetrics) -> Unit, image_loader? : @host.HostAsyncImageLoader?) -> Self
 
 pub struct IosRuntimeSession {
   // private fields
 }
 pub fn IosRuntimeSession::advance_time(Self, Double) -> Unit
-pub fn IosRuntimeSession::attach_view(Self, @wzzc-dev/moui_shell/ios.IosNativeView, @host.HostSurfaceMetrics, IosRendererProvider) -> Bool
+pub fn IosRuntimeSession::attach_view(Self, IosViewHandle, @host.HostSurfaceMetrics, IosRendererProvider) -> Bool
 pub fn IosRuntimeSession::detach_view(Self) -> Bool
 pub fn IosRuntimeSession::dispatch(Self, @host.HostEvent) -> @host.HostEventResult
 pub fn IosRuntimeSession::dispatch_host_response(Self, @embedded_runtime_session.EmbeddingHostResponse) -> Bool
@@ -104,10 +99,38 @@ pub fn IosRuntimeSession::surface_attached(Self) -> Bool
 pub fn IosRuntimeSession::surface_epoch(Self) -> Int
 pub fn IosRuntimeSession::sync_view(Self, IosRendererProvider) -> Unit
 pub fn IosRuntimeSession::take_redraw_requested(Self) -> Bool
-pub fn IosRuntimeSession::view(Self) -> @wzzc-dev/moui_shell/ios.IosNativeView
+pub fn IosRuntimeSession::view(Self) -> IosViewHandle
+
+pub(all) struct IosViewHandle {
+  raw : UInt64
+} derive(Eq, ToJson, @debug.Debug)
+pub fn IosViewHandle::new(raw~ : UInt64) -> Self
+pub fn IosViewHandle::none() -> Self
+pub fn IosViewHandle::raw(Self) -> UInt64
+
+pub struct IosWindowHostedApp {
+  title : String
+  runtime_factory : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime
+  provider_factory : () -> IosRendererProvider
+  mut runtime : @runtime.AppRuntime?
+  mut session : IosRuntimeSession?
+  mut window : @wzzc-dev/window/ios.Window?
+  mut provider : IosRendererProvider?
+  mut last_pointer : @wzzc-dev/moui/core.Point
+  modifiers : @wzzc-dev/moui/core.KeyModifiers
+  mut last_generation : Int
+  mut frames_presented : Int
+  auto_exit_after_frames : Int?
+  ime_sink : IosImeSink
+}
+pub fn IosWindowHostedApp::frames_presented(Self) -> Int
+pub fn IosWindowHostedApp::has_session(Self) -> Bool
+pub fn IosWindowHostedApp::new(title? : String, runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime, provider_factory~ : () -> IosRendererProvider, auto_exit_after_frames? : Int?) -> Self
+pub fn IosWindowHostedApp::session_attached(Self) -> Bool
+pub fn IosWindowHostedApp::surface_generation(Self) -> Int
+pub impl @wzzc-dev/window/ios.ApplicationHandler for IosWindowHostedApp
 
 // Type aliases
-pub using @wzzc-dev/moui_shell/ios {type IosNativeView as IosViewHandle}
 
 // Traits
 

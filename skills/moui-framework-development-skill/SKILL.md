@@ -17,7 +17,7 @@ Read only what the task needs:
 - `docs/development.md` for setup and focused package commands.
 - `docs/testing.md` for Daily check, focused checks, and Manual smoke.
 - `docs/release-readiness.md` for release gates and smoke catalog policy.
-- `docs/shell-mainline-roadmap.md` for native-shell service, VSync, input, GPU, and
+- `docs/window-hosted-moui.md` for mobile lifecycle, surface, input, and
   promotion ownership.
 - `moui_skia/AGENTS.md` before changing `moui_skia` native/fallback binding
   ownership.
@@ -162,48 +162,25 @@ owning-package boundaries clear.
   native Skia mainline presenter path plus native WGPU diagnostic surface path,
   optional WebKitGTK platform-view sync, shared host event conversion, and
   explicit native menu/AT-SPI follow-up reporting.
-- `backend/android/`: experimental Android embedded native host scaffold. The
-  canonical Kotlin/AndroidX `ComponentActivity` and registered-JNI layer own
-  lifecycle, PlatformView overlay composition, `ANativeWindow` acquisition, and
-  Choreographer/IME/clipboard/accessibility forwarding into
-  `AndroidRuntimeSession`; package checks are not runtime
-  platform evidence.
-  Mobile build entrypoints accept `--renderer auto|skia-gpu|skia-raster` and
-  record requested/selected modes. Product `auto`/`skia-gpu` select GPU when a
-  real Skia package is linked; explicit `skia-raster` and sticky recovery keep
-  the CPU path.
+- `backend/android/`: Android runtime-session adapter. `window/android` owns
+  the Kotlin/AndroidX template, native event queue, lifecycle, surface, and
+  input; the backend translates window events and supplies the renderer
+  provider. Package checks are not runtime platform evidence.
 - `backend/android/skia/`: Android Skia provider over `render/skia`, with an
   `ANativeWindow` RGBA pixel presenter and preflight summary. Use
   `MOUI_SKIA_PLATFORM=android` plus `MOUI_SKIA_ARCH=<arch>` for Android Skia
   cross-build checks.
-- `moui_shell/android/{embedder,runner}`: package-published Kotlin/JNI/CMake
-  embedder and Gradle runner template. Use
-  `scripts/build-shell-android-apk.sh --app <counter|showcase>
-  --fallback-skia` for packaging/JNI/CMake smoke only; use the non-fallback path
-  plus `record-shell-runtime-smoke.mjs` matching device/emulator evidence before
-  claiming Android runtime support.
-- `backend/ios/`: experimental iOS embedded native host scaffold. The
-  package-owned SwiftUI shell owns the single-scene lifecycle, raw
-  `CAMetalLayer`-backed `UIView`, `CADisplayLink`, UIKit service adapters, and
-  touch forwarding into `IosRuntimeSession`; the Objective-C++ bridge only
-  negotiates and dispatches Embedding API v1. Package checks are not
-  runtime platform evidence.
+- `backend/ios/`: iOS runtime-session adapter. `window/ios` owns the UIKit
+  template and event-loop callbacks; the backend translates them and supplies
+  the renderer provider. Package checks are not runtime platform evidence.
 - `backend/ios/skia/`: iOS Skia provider over `render/skia`, with a UIKit
   `UIImageView` RGBA pixel presenter and preflight summary. Use
   `MOUI_SKIA_PLATFORM=iosSim` plus `MOUI_SKIA_ARCH=<arch>` for iOS Simulator
   Skia cross-build checks.
-- `moui_shell/ios/{embedder,runner}`: package-published SwiftUI/Objective-C++
-  embedder and Xcode runner template. Use
-  `scripts/build-shell-ios-app.sh --app <counter|showcase>
-  --fallback-skia` for packaging/native-stub smoke only; use the non-fallback
-  path plus `record-shell-runtime-smoke.mjs` matching simulator/device evidence
-  before claiming iOS runtime support. Keep `UILaunchScreen` in Info.plists;
-  iOS Simulator input smoke uses `idb` accessibility frames and current-PID
-  application logs because stock `simctl` cannot inject tap/swipe events.
-- `backend/harmonyos/`: experimental HarmonyOS embedded native host scaffold.
-  The Stage Ability/XComponent/NAPI layer owns lifecycle, native surface handle
-  acquisition, and input forwarding into `HarmonyOsRuntimeSession`; package
-  checks are not runtime platform evidence.
+- `backend/harmonyos/`: HarmonyOS runtime-session adapter. `window/harmonyos`
+  owns Stage Ability/XComponent/NAPI lifecycle, native surface acquisition, and
+  input callbacks; the backend translates them and supplies the renderer
+  provider. Package checks are not runtime platform evidence.
   API 20 is the compatibility floor. Native XComponent callbacks exclusively
   own surface/pointer/resize/detach; ArkTS owns displaySync and platform services.
 - `backend/harmonyos/skia/`: HarmonyOS Skia provider over `render/skia`, with an
@@ -213,24 +190,18 @@ owning-package boundaries clear.
   `libskia.so` hides Ganesh internal symbols required by the separate
   `libskia_ganesh_ext.a`; dynamic linking remains supported only for explicit
   `skia-raster` builds.
-- `moui_shell/harmonyos/{embedder,runner}`: package-published ArkTS
-  Stage Ability/XComponent/NAPI embedder plus runner template staged by managed builds.
-- `examples/harmonyos_demo`: standalone experimental HarmonyOS demo. It packages
-  shared app logic and a HarmonyOS Skia MoonBit export package; managed builds
-  stage the canonical shell. Use
-  `scripts/build-shell-harmonyos-hap.sh --app harmonyos_demo --fallback-skia` for packaging/native-glue
-  smoke only; use the non-fallback path plus matching device/emulator evidence
-  before claiming HarmonyOS runtime support.
-- `examples/showcase/harmonyos_skia` is the managed Showcase entrypoint.
+- `examples/harmonyos_demo`: standalone experimental HarmonyOS demo with a
+  window-hosted entrypoint. Use `moui build harmonyos harmonyos_demo` for the
+  template-driven build; matching device or emulator evidence is still required
+  before claiming runtime support.
+- `examples/showcase/harmonyos_window_hosted` is the Showcase mobile entrypoint.
 - Showcase's mobile entrypoints open the Platform workspace's `Mobile Service Probe`
   for matching-host IME, system text clipboard, accessibility action,
   rotation/resize, scroll, and async-image evidence. The mobile recorder only
   accepts clipboard write/read, two distinct surface sizes, accessibility
   tree/focus/action, and async loading/ready application logs.
-- Shell runtime manifest status is `passed`, `partial`, or `failed`. Use
-  `partial` when useful runtime evidence exists but required observations are
-  missing; keep `failed` for runs with no usable evidence, and keep
-  `--require-passed` strict.
+- Platform status is `passed`, `partial`, or `failed`. Use `partial` when
+  useful runtime evidence exists but required observations are missing.
 - `render/`: renderer facade, shared draw helpers, and capability report API.
 - `render/skia/`: native Skia raster mainline renderer over the local
   `moui_skia` binding, including renderer-local command/reason diagnostics for
@@ -516,13 +487,11 @@ moon test moui/render/skia --target native
 moon test moui/backend/host --target native
 moon test moui/backend/android --target native
 moon test moui/backend/android/skia --target native
-scripts/build-shell-android-apk.sh --app counter --fallback-skia
 moon test moui/backend/ios --target native
 moon test moui/backend/ios/skia --target native
-scripts/build-shell-ios-app.sh --app counter --fallback-skia
 moon test moui/backend/harmonyos --target native
 moon test moui/backend/harmonyos/skia --target native
-scripts/build-shell-harmonyos-hap.sh --app harmonyos_demo --fallback-skia
+sh scripts/window-hosted-hostsim-smoke.sh
 moon test moui/backend/web --target wasm-gc
 moon test moui_tester --target native
 moon test moui_devtools --target native

@@ -22,7 +22,6 @@ test "test_parse_run_args_basic" {
       }
       inspect(options.app, content="showcase")
       assert_false(options.fallback_skia)
-      assert_false(options.ejected_shell)
       assert_false(options.no_build)
       assert_false(options.no_install)
       assert_false(options.no_launch)
@@ -77,9 +76,9 @@ test "test_parse_run_args_no_install" {
 test "test_parse_run_args_options" {
   let parsed = parse_run_args(
     [
-      "android", "showcase", "--app-config", "/tmp/shell.json", "--device", "emulator-5554",
-      "--renderer", "skia", "--fallback-skia", "--filter", "MoUI:V", "--verify",
-      "--json",
+      "android", "showcase", "--mobile-config", "/tmp/moui.mobile.json", "--device",
+      "emulator-5554", "--renderer", "skia", "--fallback-skia", "--filter", "MoUI:V",
+      "--verify", "--json",
     ],
     "/tmp",
     detect_host_platform(),
@@ -91,7 +90,7 @@ test "test_parse_run_args_options" {
         fail("expected options")
         return
       }
-      inspect(options.app_config_path, content="Some(/tmp/shell.json)")
+      inspect(options.app_config_path, content="Some(/tmp/moui.mobile.json)")
       inspect(options.device, content="Some(emulator-5554)")
       inspect(options.renderer, content="Some(skia)")
       inspect(options.filter, content="Some(MoUI:V)")
@@ -186,11 +185,10 @@ test "test_parse_run_args_rejects_unknown_option" {
 test "test_apply_config_overrides_run_preserves_cli_values" {
   let options : RunOptions = {
     app: "demo",
-    app_config_path: Some("/cli/shell.json"),
+    app_config_path: Some("/cli/moui.mobile.json"),
     device: Some("emulator-5554"),
     renderer: Some("skia"),
     fallback_skia: true,
-    ejected_shell: false,
     prepare_only: false,
     build_only: false,
     no_build: false,
@@ -205,7 +203,7 @@ test "test_apply_config_overrides_run_preserves_cli_values" {
   let overridden = apply_config_overrides_run(options, config)
   inspect(overridden.device, content="Some(emulator-5554)")
   inspect(overridden.renderer, content="Some(skia)")
-  inspect(overridden.app_config_path, content="Some(/cli/shell.json)")
+  inspect(overridden.app_config_path, content="Some(/cli/moui.mobile.json)")
 }
 
 ///|
@@ -216,7 +214,6 @@ test "test_apply_config_overrides_run_fills_none_with_defaults" {
     device: None,
     renderer: None,
     fallback_skia: false,
-    ejected_shell: false,
     prepare_only: false,
     build_only: false,
     no_build: false,
@@ -269,7 +266,6 @@ test "test_resolve_target_device_uses_supplied_id" {
     device: Some("emulator-5554"),
     renderer: None,
     fallback_skia: false,
-    ejected_shell: false,
     prepare_only: false,
     build_only: false,
     no_build: false,
@@ -344,11 +340,10 @@ test "test_run_result_to_json_emits_schema" {
 test "test_build_options_from_run_options_preserves_cli_overrides" {
   let options : RunOptions = {
     app: "demo",
-    app_config_path: Some("/cli/shell.json"),
+    app_config_path: Some("/cli/moui.mobile.json"),
     device: Some("emulator-5554"),
     renderer: Some("skia"),
     fallback_skia: true,
-    ejected_shell: true,
     prepare_only: true,
     build_only: false,
     no_build: false,
@@ -360,7 +355,7 @@ test "test_build_options_from_run_options_preserves_cli_overrides" {
     custom_args: [],
   }
   let build_options = build_options_from_run_options(options, ".", None)
-  inspect(build_options.app_config_path, content="Some(/cli/shell.json)")
+  inspect(build_options.app_config_path, content="Some(/cli/moui.mobile.json)")
   inspect(build_options.workspace_root, content=".")
   inspect(build_options.moui_root, content="")
   inspect(build_options.skia_root, content="")
@@ -368,13 +363,8 @@ test "test_build_options_from_run_options_preserves_cli_overrides" {
   assert_true(build_options.output.is_none())
   inspect(build_options.renderer, content="Some(skia)")
   assert_true(build_options.fallback_skia)
-  assert_true(build_options.ejected_shell)
   assert_true(build_options.prepare_only)
-  assert_true(build_options.android_project.is_none())
-  assert_true(build_options.xcode_project.is_none())
-  assert_true(build_options.scheme.is_none())
   assert_true(build_options.product_name.is_none())
-  assert_true(build_options.harmonyos_project.is_none())
   assert_true(build_options.abi.is_none())
   assert_true(build_options.compile_sdk.is_none())
   assert_true(build_options.target_sdk.is_none())
@@ -395,7 +385,6 @@ test "test_build_options_from_run_options_uses_defaults_when_none" {
     device: None,
     renderer: None,
     fallback_skia: false,
-    ejected_shell: false,
     prepare_only: false,
     build_only: false,
     no_build: false,
@@ -410,7 +399,6 @@ test "test_build_options_from_run_options_uses_defaults_when_none" {
   assert_true(build_options.app_config_path.is_none())
   assert_true(build_options.renderer.is_none())
   assert_false(build_options.fallback_skia)
-  assert_false(build_options.ejected_shell)
   assert_false(build_options.prepare_only)
   inspect(build_options.workspace_root, content=".")
 }
@@ -423,7 +411,6 @@ test "test_build_options_from_run_options_passes_sdk_override" {
     device: None,
     renderer: None,
     fallback_skia: false,
-    ejected_shell: false,
     prepare_only: false,
     build_only: false,
     no_build: false,

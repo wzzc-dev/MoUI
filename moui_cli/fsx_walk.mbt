@@ -9,7 +9,7 @@ fn collect_template_files(
 ) -> Result[Array[PlannedFile], String] {
   let directory = if relative == "" { root } else { join_path(root, relative) }
   let entries : Array[String] = @fs.read_dir(directory) catch {
-    _ => return Err("could not read shell template directory: " + directory)
+    _ => return Err("could not read mobile template directory: " + directory)
   }
   entries.sort_by((left, right) => left.lexical_compare(right))
   let files : Array[PlannedFile] = []
@@ -30,7 +30,7 @@ fn collect_template_files(
       }
     } else if path_is_file(child) {
       let bytes = @fs.read_file_to_bytes(child) catch {
-        _ => return Err("could not read shell template file: " + child)
+        _ => return Err("could not read mobile template file: " + child)
       }
       files.push({ path: child_relative, bytes })
     }

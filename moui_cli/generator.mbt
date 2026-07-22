@@ -103,7 +103,7 @@ fn validate_project_options(options : ProjectOptions) -> Result[Unit, String] {
   let requires_bundle = options.platforms.any(is_mobile_platform)
   match (requires_bundle, options.bundle_id) {
     (true, None) =>
-      return Err("--bundle-id is required when generating a shell platform")
+      return Err("--bundle-id is required when generating a mobile platform")
     (_, Some(value)) if !valid_bundle_id(value) =>
       return Err("bundle id is invalid: " + value)
     _ => ()
@@ -121,19 +121,6 @@ fn moon_mod_text(options : ProjectOptions) -> String {
     #|import {
     #|  "wzzc-dev/moui@__MOUI_VERSION__",
     #|}
-  let template = if options.platforms.any(is_mobile_platform) {
-    template.replace_all(
-      old=(
-        #|  "wzzc-dev/moui@__MOUI_VERSION__",
-      ),
-      new=(
-        #|  "wzzc-dev/moui@__MOUI_VERSION__",
-        #|  "wzzc-dev/moui_shell@__MOUI_VERSION__",
-      ),
-    )
-  } else {
-    template
-  }
   template
   .replace_all(old="__MODULE__", new=options.module_name)
   .replace_all(old="__MOUI_VERSION__", new=options.moui_version)
@@ -543,29 +530,10 @@ fn readme_text(options : ProjectOptions) -> String {
   if options.platforms.contains("linux") {
     builder.write_string("moon run linux_skia --target native\n")
   }
-  if options.platforms.any(is_mobile_platform) {
-    builder.write_string(
-      "# managed shell shells are staged by the MoUI package; eject only when you need app ownership:\n",
-    )
-    if options.platforms.contains("android") {
-      builder.write_string("moui shell eject android --output android_app\n")
-    }
-    if options.platforms.contains("ios") {
-      builder.write_string("moui shell eject ios --output ios_app\n")
-    }
-    if options.platforms.contains("harmonyos") {
-      builder.write_string(
-        "moui shell eject harmonyos --output harmonyos_app\n",
-      )
-    }
-  }
   builder.write_string("```\n\n")
   builder.write_string("## Project maintenance\n\n")
   builder.write_string(
     "- Add a platform later: `moui add platform <name> [--bundle-id ID]`\n",
-  )
-  builder.write_string(
-    "- Scaffold a managed plugin: `moui plugin new <id> --platform android`\n",
   )
   builder.write_string(
     "- Package inventory: `moui package` / `moui package --json`\n",
@@ -575,8 +543,8 @@ fn readme_text(options : ProjectOptions) -> String {
 }
 
 ///|
-fn managed_platform_json(fields : Array[(String, Json)]) -> Json {
-  let values : Map[String, Json] = Map([("runnerMode", "managed".to_json())])
+fn mobile_platform_json(fields : Array[(String, Json)]) -> Json {
+  let values : Map[String, Json] = Map([])
   for field in fields {
     let (key, value) = field
     values[key] = value
@@ -586,42 +554,29 @@ fn managed_platform_json(fields : Array[(String, Json)]) -> Json {
 
 ///|
 fn mobile_config_text(options : ProjectOptions) -> String {
-  let empty_strings : Array[String] = []
-  let shell : Json = {
-    "profile": "handheld",
-    "renderer": "auto",
-    "systemUi": { "fullscreen": false, "statusBar": "auto" },
-    "orientation": "any",
-    "resources": empty_strings,
-    "permissions": empty_strings,
-    "plugins": empty_strings,
-  }
   let root : Map[String, Json] = Map([
     ("schemaVersion", (1 : Int).to_json()),
     ("id", options.id.to_json()),
     ("displayName", options.title.to_json()),
     ("artifactName", options.id.to_json()),
     ("appPackage", "app".to_json()),
-    ("shellApiVersion", (1 : Int).to_json()),
-    ("embeddingApiVersion", (1 : Int).to_json()),
-    ("shell", shell),
   ])
   let bundle_id = options.bundle_id.unwrap_or("")
   if options.platforms.contains("android") {
-    root["android"] = managed_platform_json([
+    root["android"] = mobile_platform_json([
       ("applicationId", bundle_id.to_json()),
       ("minSdk", (23 : Int).to_json()),
     ])
   }
   if options.platforms.contains("ios") {
-    root["ios"] = managed_platform_json([
+    root["ios"] = mobile_platform_json([
       ("bundleId", bundle_id.to_json()),
       ("productName", product_name(options.id).to_json()),
       ("deploymentTarget", "15.0".to_json()),
     ])
   }
   if options.platforms.contains("harmonyos") {
-    root["harmonyos"] = managed_platform_json([
+    root["harmonyos"] = mobile_platform_json([
       ("bundleName", bundle_id.to_json()),
       ("productName", product_name(options.id).to_json()),
       ("appName", options.title.to_json()),
@@ -686,10 +641,10 @@ fn build_project_file_plan(
     }
   }
   if options.platforms.any(is_mobile_platform) {
-    files.push(text_file("shell.json", mobile_config_text(options)))
+    files.push(text_file("moui.mobile.json", mobile_config_text(options)))
     for platform in ["android", "ios", "harmonyos"] {
       if options.platforms.contains(platform) {
-        let directory = platform + "_skia"
+        let directory = platform + "_window_hosted"
         files.push(
           text_file(
             directory + "/moon.pkg",
@@ -736,9 +691,9 @@ fn generate_project(options : ProjectOptions) -> Result[Array[String], String] {
       Err(
         "the resolved wzzc-dev/moui@" +
         options.moui_version +
-        " package is incompatible with managed shell shell API 1/runtime ABI 1. " +
-        "Registry 0.1.7 predates this contract; validate against a current `moon package` artifact " +
-        "or set MOUI_PACKAGE_ROOT to a current package root. The target directory was rolled back.\n" +
+        " package is incompatible with the window-hosted mobile entrypoint. " +
+        "Validate against a current `moon package` artifact or set MOUI_PACKAGE_ROOT " +
+        "to a current package root. The target directory was rolled back.\n" +
         message,
       )
     Err(message) => Err(message)

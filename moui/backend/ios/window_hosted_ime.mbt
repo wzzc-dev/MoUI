@@ -39,18 +39,13 @@ fn encode_utf8(s : String) -> Bytes {
 pub struct IosImeSink {
   priv mut last_enabled : Bool
   priv mut last_text : String
-  priv mut last_selection : (@core.TextRange?)
-  priv mut last_rect : (@core.Rect?)
+  priv mut last_selection : @core.TextRange?
+  priv mut last_rect : @core.Rect?
 }
 
 ///|
 pub fn IosImeSink::new() -> IosImeSink {
-  {
-    last_enabled: false,
-    last_text: "",
-    last_selection: None,
-    last_rect: None,
-  }
+  { last_enabled: false, last_text: "", last_selection: None, last_rect: None }
 }
 
 ///|
@@ -73,7 +68,7 @@ pub fn IosImeSink::apply(
   let text = state.text
   let selection : @core.TextRange? = state.selection
   let caret : @core.Rect = if state.caret_rect.size.width > 0.0 ||
-  state.caret_rect.size.height > 0.0 {
+    state.caret_rect.size.height > 0.0 {
     state.caret_rect
   } else {
     state.frame

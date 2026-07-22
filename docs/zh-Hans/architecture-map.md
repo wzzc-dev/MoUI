@@ -56,7 +56,7 @@ thin wiring only                   ▼
 | WGPU 诊断 providers | `moui/backend/<platform>/wgpu` |
 | Renderer 门面 | `moui/render`, `render/skia`, `render/webgpu_adapter`, `render/wgpu` |
 | Skia FFI / native capability | `moui_skia` |
-| 托管移动 shells | `moui_shell/{android,ios,harmonyos}` |
+| 移动模板与事件循环 | `wzzc-dev/window/{android,ios,harmonyos}` |
 | 富文本领域 | `moui_richtext` |
 | 设计系统 addons | `moui_theme`（不是 app 默认依赖） |
 | 仓库 validators | `tools/moui/*`，由 `scripts/*.mjs` shells 调用 |
@@ -68,7 +68,7 @@ thin wiring only                   ▼
 | Native Skia | **主线** |
 | Native WGPU | **诊断** |
 | Web `wasm-gc` + browser WebGPU imports | Web 主路径 |
-| Mobile embedded session | `runtime_partial` — 可用的托管 shell，尚非产品完整 |
+| Mobile window-hosted session | `runtime_partial` — 可用于开发，尚非产品完整 |
 | Product `auto` renderer | 宿主 GPU surface 存在时优先 `SkiaGpuNative`；`SkiaRasterNative` 用于显式选择/恢复 |
 
 ## 工作区说明
@@ -85,5 +85,5 @@ thin wiring only                   ▼
 | 完整包叙述 | `docs/architecture.md` |
 | 不变量表 | `docs/invariants.md` |
 | 验证命令 | `docs/testing.md` |
-| 原生 shell 路线图 | `docs/shell-mainline-roadmap.md` |
+| 移动 host 路线 | `docs/window-hosted-moui.md` |
 | 文档目录 | `docs/INDEX.md` |

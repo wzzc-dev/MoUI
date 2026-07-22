@@ -3,24 +3,25 @@ test "harmonyos window-hosted host-sim creates session and presents" {
   let render_count = Ref(0)
   let dispose_count = Ref(0)
   let pointer_count = Ref(0)
-  let provider = HarmonyOsRendererProvider::new(
-    create_renderer=(_surface, _metrics) => {
-      Some(
-        @host.HostWindowRenderer::new(
-          resize=_ => (),
-          render=_ => (),
-          render_frame=Some(_frame => {
-            render_count.val = render_count.val + 1
-            @render.RenderFrameResult::new(presented=true)
-          }),
-          drain_present_completions=Some(() => []),
-          text_system=() => @core.TextSystem::fallback(),
-          present_count=() => render_count.val,
-          dispose=() => dispose_count.val = dispose_count.val + 1,
-        ),
-      )
-    },
-  )
+  let provider = HarmonyOsRendererProvider::new(create_renderer=(
+    _surface,
+    _metrics,
+  ) => {
+    Some(
+      @host.HostWindowRenderer::new(
+        resize=_ => (),
+        render=_ => (),
+        render_frame=Some(_frame => {
+          render_count.val = render_count.val + 1
+          @render.RenderFrameResult::new(presented=true)
+        }),
+        drain_present_completions=Some(() => []),
+        text_system=() => @core.TextSystem::fallback(),
+        present_count=() => render_count.val,
+        dispose=() => dispose_count.val = dispose_count.val + 1,
+      ),
+    )
+  })
   let app = HarmonyOsWindowHostedApp::new(
     title="window-hosted-test",
     runtime_factory=metrics => {
@@ -28,12 +29,13 @@ test "harmonyos window-hosted host-sim creates session and presents" {
         root=(@views.empty() : @core.View[Unit]),
         size=metrics.logical_size,
       )
-      runtime.set_event_observer(event =>
+      runtime.set_event_observer(event => {
         match event {
-          @core.AppEvent::Pointer(_) => pointer_count.val = pointer_count.val + 1
+          @core.AppEvent::Pointer(_) =>
+            pointer_count.val = pointer_count.val + 1
           _ => ()
         }
-      )
+      })
       runtime
     },
     provider_factory=() => provider,

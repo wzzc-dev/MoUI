@@ -16,7 +16,7 @@
    `lazy_grid` owns the available body height and the only scroll state.
 3. Add per-card status text, context-specific accessible source actions, and
    platform-specific source paths. Mark retained historical mobile captures as
-   such rather than presenting them as current managed-shell evidence.
+   such rather than presenting them as current window-hosted evidence.
 4. Keep the existing WebP assets until a reproducible capture run can replace
    them; validate package tests, Website wasm build, and release packaging.
 5. Make lazy virtual lists observe their `ScrollState`, so scrolling rebuilds
