@@ -27,6 +27,43 @@ bridge beside the window event loop.
 - Gradle `9.6.1` or compatible wrapper
 - Application minimum SDK 23
 
+## SDK, NDK, And Emulator Setup
+
+Use a full JDK installation. Set the SDK root to the location chosen on the
+local machine; the repository does not require a machine-specific path.
+
+```sh
+export JAVA_HOME=/path/to/full-jdk
+export PATH="$JAVA_HOME/bin:$PATH"
+export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
+export ANDROID_SDK_ROOT="$ANDROID_HOME"
+export PATH="$ANDROID_HOME/platform-tools:$PATH"
+
+scripts/setup-android-sdk.sh --accept-licenses --ndk 28.2.13676358
+eval "$(scripts/setup-android-sdk.sh --print-env)"
+export ANDROID_NDK_HOME="${ANDROID_NDK_HOME:-$ANDROID_HOME/ndk/28.2.13676358}"
+export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+```
+
+The helper installs platform tools, API 36, Build-Tools 35.0.0, CMake 3.22.1,
+and the pinned NDK. It does not install an emulator image. On Apple Silicon use
+an `arm64-v8a` image; on x86_64 hosts use the matching `x86_64` image.
+
+```sh
+sdkmanager --install \
+  "emulator" \
+  "system-images;android-34;google_apis;arm64-v8a"
+echo no | avdmanager create avd \
+  -n moui_api34 \
+  -k "system-images;android-34;google_apis;arm64-v8a" \
+  -d pixel_6 \
+  --force
+
+emulator -avd moui_api34 -gpu host -no-snapshot-save &
+adb wait-for-device
+adb shell getprop sys.boot_completed
+```
+
 Run `moui doctor --platform android` before a native build.
 
 ## Build And Run

@@ -27,6 +27,27 @@ events through this path only.
 - `UILaunchScreen` and `UIApplicationSupportsMultipleScenes=false` remain in
   the template Info.plist
 
+## Xcode And Simulator Setup
+
+Install Xcode from Apple, select the active developer directory, and verify the
+Simulator SDK before building:
+
+```sh
+sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+xcodebuild -version
+xcrun --sdk iphonesimulator --show-sdk-path
+```
+
+Create or select a simulator in Xcode's Devices and Simulators window, then
+boot it before running an app. Use its UDID rather than assuming a device name.
+
+```sh
+xcrun simctl list devices available
+xcrun simctl boot <simulator-udid>
+xcrun simctl bootstatus <simulator-udid> -b
+open -a Simulator
+```
+
 Run `moui doctor --platform ios` before a native build.
 
 ## Build And Run
