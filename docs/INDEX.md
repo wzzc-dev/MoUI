@@ -54,6 +54,7 @@ Statuses are editorial signals for agents (not CI evidence grades).
 | [android-support.md](android-support.md) | `deep` | Android host/shell |
 | [ios-support.md](ios-support.md) | `deep` | iOS host/shell |
 | [harmonyos-support.md](harmonyos-support.md) | `deep` | HarmonyOS host/shell |
+| [wechat-support.md](wechat-support.md) | `deep` | WeChat Mini Program (微信小程序) Skyline Canvas 2D + wasm-gc host |
 | [shell-mainline-roadmap.md](shell-mainline-roadmap.md) | `canonical` | Native shell ownership & gaps |
 | [embedding-api-v1.md](embedding-api-v1.md) | `deep` | Embedding API v1 |
 | [renderer-capability-report.md](renderer-capability-report.md) | `canonical` | Renderer capability matrix |

@@ -189,6 +189,8 @@ For detailed platform-specific setup, requirements, and runtime evidence:
   Simulator packaging, historical UIKit smoke; managed re-proof pending.
 - [HarmonyOS](harmonyos-support.md) (**runtime_partial**) — managed ArkTS/XComponent shell,
   HAP packaging, first-frame/partial smoke; signed full L3 pending.
+- [WeChat Mini Program](wechat-support.md) (**runtime_partial**) — Skyline Canvas 2D + wasm-gc,
+  window-hosted app, touch events, WeChat Mini Program project template.
 
 Product-class summary: [platform readiness declaration](platform-readiness-declaration.md).
 

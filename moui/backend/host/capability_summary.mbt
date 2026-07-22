@@ -165,6 +165,7 @@ pub fn HostBackendKind::label(self : HostBackendKind) -> String {
   match self {
     Native => "Native"
     Web => "Web"
+    Wechat => "WeChat"
     Test => "Test"
   }
 }

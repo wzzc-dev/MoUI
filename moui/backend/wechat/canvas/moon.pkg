@@ -1,0 +1,25 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/backend/host" @host,
+  "wzzc-dev/moui/backend/wechat" @wechat,
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/canvas2d" @canvas2d,
+}
+
+supported_targets = "wasm-gc+wasm"
+
+options(
+  link: {
+    "wasm-gc": {
+      "exports": [
+        "wechat_canvas_create_renderer",
+      ],
+    },
+    "wasm": {
+      "exports": [
+        "wechat_canvas_create_renderer",
+      ],
+    },
+  },
+  targets: { },
+)

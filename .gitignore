@@ -32,3 +32,4 @@ examples/*/android_app/app/build/
 .playwright-cli/*
 output/*
 examples/showcase/harmonyos_app/entry/.cxx/*
+build/wechat/*
