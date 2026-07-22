@@ -1,0 +1,48 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+}
+
+supported_targets = "wasm-gc+wasm"
+
+options(
+  link: {
+    "wasm-gc": {
+      "exports": [
+        "canvas2d_descriptor",
+        "canvas2d_preflight",
+        "canvas2d_create_renderer",
+        "canvas2d_render_frame",
+        "canvas2d_resize",
+        "canvas2d_dispose",
+        "canvas2d_drain_present",
+        "canvas2d_image_load_completion",
+        "canvas2d_image_load_completion_from_bytes",
+        "canvas2d_apply_image_resource_load_completion",
+        "canvas2d_image_resource_records",
+        "canvas2d_image_resource_revisioned_snapshots",
+        "canvas2d_set_image_resource_change_callback",
+        "canvas2d_cached_layer_summary",
+      ],
+    },
+    "wasm": {
+      "exports": [
+        "canvas2d_descriptor",
+        "canvas2d_preflight",
+        "canvas2d_create_renderer",
+        "canvas2d_render_frame",
+        "canvas2d_resize",
+        "canvas2d_dispose",
+        "canvas2d_drain_present",
+        "canvas2d_image_load_completion",
+        "canvas2d_image_load_completion_from_bytes",
+        "canvas2d_apply_image_resource_load_completion",
+        "canvas2d_image_resource_records",
+        "canvas2d_image_resource_revisioned_snapshots",
+        "canvas2d_set_image_resource_change_callback",
+        "canvas2d_cached_layer_summary",
+      ],
+    },
+  },
+  targets: { },
+)

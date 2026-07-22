@@ -23,6 +23,7 @@ pub(all) struct HostCoordinatePolicy {
 pub(all) enum HostBackendKind {
   Native
   Web
+  Wechat
   Test
 } derive(Eq, Debug, ToJson)
 
