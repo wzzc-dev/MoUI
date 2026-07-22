@@ -26,6 +26,26 @@ UIKit 生命周期、Surface 与触摸事件只能通过这条路径进入应用
 - 模板 Info.plist 保留 `UILaunchScreen` 与
   `UIApplicationSupportsMultipleScenes=false`
 
+## Xcode 与模拟器设置
+
+从 Apple 安装 Xcode，选择当前 developer directory，并在构建前确认 Simulator SDK：
+
+```sh
+sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+xcodebuild -version
+xcrun --sdk iphonesimulator --show-sdk-path
+```
+
+通过 Xcode 的 Devices and Simulators 创建或选择模拟器，再在运行应用前启动它。使用
+UDID，不要假定某个设备名称一定存在：
+
+```sh
+xcrun simctl list devices available
+xcrun simctl boot <simulator-udid>
+xcrun simctl bootstatus <simulator-udid> -b
+open -a Simulator
+```
+
 构建前运行 `moui doctor --platform ios`。
 
 ## 构建与运行

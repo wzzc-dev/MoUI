@@ -26,6 +26,42 @@ Android 使用 **window-hosted** 移动端路径，目前状态为 `runtime_part
 - Gradle `9.6.1` 或兼容的 wrapper
 - application minSdk 23
 
+## SDK、NDK 与模拟器设置
+
+使用完整 JDK，并把 SDK 根目录设置为本机实际安装位置；仓库不要求固定的机器本地路径。
+
+```sh
+export JAVA_HOME=/path/to/full-jdk
+export PATH="$JAVA_HOME/bin:$PATH"
+export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
+export ANDROID_SDK_ROOT="$ANDROID_HOME"
+export PATH="$ANDROID_HOME/platform-tools:$PATH"
+
+scripts/setup-android-sdk.sh --accept-licenses --ndk 28.2.13676358
+eval "$(scripts/setup-android-sdk.sh --print-env)"
+export ANDROID_NDK_HOME="${ANDROID_NDK_HOME:-$ANDROID_HOME/ndk/28.2.13676358}"
+export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+```
+
+该 helper 安装 platform-tools、API 36、Build-Tools 35.0.0、CMake 3.22.1 和锁定的
+NDK；不会安装模拟器镜像。Apple Silicon 使用 `arm64-v8a` 镜像，x86_64 主机使用对应的
+`x86_64` 镜像。
+
+```sh
+sdkmanager --install \
+  "emulator" \
+  "system-images;android-34;google_apis;arm64-v8a"
+echo no | avdmanager create avd \
+  -n moui_api34 \
+  -k "system-images;android-34;google_apis;arm64-v8a" \
+  -d pixel_6 \
+  --force
+
+emulator -avd moui_api34 -gpu host -no-snapshot-save &
+adb wait-for-device
+adb shell getprop sys.boot_completed
+```
+
 构建前运行 `moui doctor --platform android`。
 
 ## 构建与运行
