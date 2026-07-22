@@ -1,19 +1,18 @@
-// ADR 0015: managed moui_shell builds are retired.
+// Window-hosted iOS packaging.
 // iOS .app packaging now uses the window-hosted template at
-// `window/ios/template/` + `examples/<app>/ios_skia` entrypoint.
+// `window/modules/window/ios/template/` +
+// `examples/<app>/ios_window_hosted` entrypoint.
 //
 // `build_ios` generates MoonBit C, stages the window-hosted UIKit template
 // (Sources/main.m + Sources/MBWHostedAppDelegate.{h,m} + Info.plist), applies
 // app identity (CFBundleIdentifier / CFBundleName / MinimumOSVersion), then
 // invokes `clang`/`clang++` via `xcrun --sdk iphonesimulator|iphoneos` to
 // compile and link the executable directly — no xcodebuild. Mirrors
-// `window/ios/scripts/build-hosted-sim-app.sh`.
+// `window/modules/window/ios/scripts/build-hosted-sim-app.sh`.
 
 ///|
 priv struct BuildIosOptions {
-  app : ShellApp
-  xcode_project : String?
-  scheme : String?
+  app : MobileApp
   product_name : String?
   app_config : String
   workspace_root : String
@@ -27,7 +26,6 @@ priv struct BuildIosOptions {
   build_dir : String
   output_app : String
   fallback_skia : Bool
-  ejected_shell : Bool
   prepare_only : Bool
 }
 
@@ -131,7 +129,7 @@ fn ios_find_tool(sdk : String, tool : String) -> String {
 ///|
 /// Stage the window-hosted iOS template into `target_root` and write the
 /// `.moui-window-hosted-stage` marker so future runs can replace it safely.
-/// The template lives at `window/ios/template/` and ships `Sources/`,
+/// The template lives at `window/modules/window/ios/template/` and ships `Sources/`,
 /// `Info.plist`, and `README.md`.
 fn stage_ios_window_hosted_project(
   template_root : String,
@@ -198,7 +196,7 @@ fn patch_plist_string_value(
 }
 
 ///|
-/// Apply shell.json identity onto a staged window-hosted iOS template.
+/// Apply mobile app identity onto a staged window-hosted iOS template.
 /// Patches `Info.plist`:
 ///   - CFBundleExecutable -> product_name
 ///   - CFBundleName -> product_name
@@ -206,13 +204,13 @@ fn patch_plist_string_value(
 ///   - MinimumOSVersion -> deployment_target
 fn apply_ios_window_hosted_identity(
   project_root : String,
-  app : ShellApp,
+  app : MobileApp,
   product_name : String,
   deployment_target : String,
 ) -> Result[Unit, String] {
   let ios = match app.ios {
     Some(value) => value
-    None => return Err("shell.json missing ios section")
+    None => return Err("moui.mobile.json missing ios section")
   }
   let bundle_id = ios.bundle_id
   let plist_path = join_path(project_root, "Info.plist")
@@ -248,7 +246,8 @@ fn apply_ios_window_hosted_identity(
 
 ///|
 /// Build the common compile flags for an iOS window-hosted build. Mirrors
-/// the `COMMON_FLAGS` array in `window/ios/scripts/build-hosted-sim-app.sh`.
+/// the `COMMON_FLAGS` array in
+/// `window/modules/window/ios/scripts/build-hosted-sim-app.sh`.
 /// `target_triple` already encodes the SDK (simulator vs device) and
 /// deployment target.
 fn ios_common_compile_flags(
@@ -321,7 +320,7 @@ fn compile_ios_object(
 
 ///|
 /// Build the iOS .app bundle. Mirrors
-/// `window/ios/scripts/build-hosted-sim-app.sh`. On macOS only.
+/// `window/modules/window/ios/scripts/build-hosted-sim-app.sh`. On macOS only.
 fn build_ios(
   options : BuildIosOptions,
   host : HostPlatform,
@@ -329,12 +328,6 @@ fn build_ios(
   match host {
     Macos => ()
     _ => return Err("iOS builds require macOS with Xcode installed")
-  }
-  // 1. ADR 0015: ejected-shell mode is retired. Hard-fail when requested.
-  if options.ejected_shell || options.xcode_project is Some(_) {
-    return Err(
-      "ADR 0015: ejected-shell / --xcode-project is retired. Use the window-hosted template at window/ios/template/ (managed by `moui build ios`).",
-    )
   }
   // Make build_dir + workspace_root absolute so paths passed to clang and
   // referenced in BuildResult stay valid regardless of the user's cwd.
@@ -351,10 +344,9 @@ fn build_ios(
       (if found == "" { "unknown" } else { found }),
     )
   }
-  // 3. Resolve window_root + template_root + ios_package_root.
-  let window_root = join_path(workspace_root_abs, "window")
-  let template_root = join_path(window_root, "ios/template")
-  let ios_pkg_root = join_path(window_root, "ios")
+  // 3. Resolve the upstream window package template and native glue.
+  let template_root = window_template_root(workspace_root_abs, "ios")
+  let ios_pkg_root = window_platform_root(workspace_root_abs, "ios")
   if !path_is_file(join_path(template_root, "Info.plist")) ||
     !path_is_file(join_path(template_root, "Sources/main.m")) ||
     !path_is_file(join_path(template_root, "Sources/MBWHostedAppDelegate.m")) {
@@ -370,7 +362,7 @@ fn build_ios(
   }
   // 4. Generate MoonBit C from the entrypoint package.
   let entrypoint_package = match
-    managed_entrypoint_package(
+    mobile_entrypoint_package(
       options.app.metadata_path,
       "ios",
       workspace_root_abs,
@@ -435,27 +427,6 @@ fn build_ios(
     Ok(value) => value
     Err(message) => return Err(message)
   }
-  let prepare_result : PrepareResult = {
-    platform: "ios",
-    build_json_path: "",
-    cmake_config_path: None,
-    skia_cxx_rsp: None,
-    skia_link_rsp: None,
-    jni_libs_dir: None,
-    moonbit_c,
-    renderer: {
-      requested: options.renderer,
-      selected: renderer_selected,
-      gpu_promoted: renderer_selected == "skia-gpu",
-      fallback_reason: if options.fallback_skia {
-        Some("fallback Skia build cannot provide a native GPU route")
-      } else {
-        None
-      },
-    },
-    skia_link,
-    shared_libs: [],
-  }
   // 5. Stage the window-hosted template into <build_dir>/ios-project.
   let ios_project = join_path(build_dir_abs, "ios-project")
   match stage_ios_window_hosted_project(template_root, ios_project) {
@@ -491,12 +462,7 @@ fn build_ios(
       moonbit_c +
       ")",
     )
-    return Ok({
-      platform: "ios",
-      build_dir: build_dir_abs,
-      output_artifact: "",
-      prepare_result,
-    })
+    return Ok({ platform: "ios", build_dir: build_dir_abs, output_artifact: "" })
   }
   // 6. Resolve iOS SDK + clang/clang++ via xcrun.
   let sdk = options.sdk
@@ -595,9 +561,9 @@ fn build_ios(
     }
   }
   // App entry / compat / fs_native / main / delegate.
-  // NOTE: window/ios/native/mbw_ios_main.m is intentionally NOT compiled —
-  // it is a deprecated duplicate of template/Sources/main.m. The shell
-  // reference (window/ios/scripts/build-hosted-sim-app.sh) only compiles
+  // NOTE: window/modules/window/ios/native/mbw_ios_main.m is intentionally NOT compiled —
+  // it is a deprecated duplicate of template/Sources/main.m. The reference
+  // build script (window/modules/window/ios/scripts/build-hosted-sim-app.sh) only compiles
   // template/Sources/main.m and template/Sources/MBWHostedAppDelegate.m.
   let entry_pairs = [
     (
@@ -764,6 +730,5 @@ fn build_ios(
     platform: "ios",
     build_dir: build_dir_abs,
     output_artifact: final_output,
-    prepare_result,
   })
 }

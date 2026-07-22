@@ -25,7 +25,7 @@ Options:
 Examples:
   scripts/setup-android-sdk.sh --accept-licenses
   eval "$(scripts/setup-android-sdk.sh --print-env)"
-  scripts/build-counter-android-apk.sh
+  moui build android counter --mobile-config "$PWD/examples/counter/moui.mobile.json"
 USAGE
 }
 
@@ -304,5 +304,5 @@ $(print_exports)
 
 Then build the Counter APK:
 
-scripts/build-counter-android-apk.sh
+moui build android counter --mobile-config "$PWD/examples/counter/moui.mobile.json"
 EOF

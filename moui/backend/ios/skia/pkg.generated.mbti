@@ -3,22 +3,23 @@ package "wzzc-dev/moui/backend/ios/skia"
 
 import {
   "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/ios",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
 }
 
 // Values
-pub fn create_session(runtime~ : @runtime.AppRuntime, view~ : @wzzc-dev/moui_shell/ios.IosNativeView, metrics~ : @host.HostSurfaceMetrics, options? : IosSkiaAppOptions) -> @wzzc-dev/moui/backend/ios.IosRuntimeSession?
+pub fn create_session(runtime~ : @runtime.AppRuntime, view~ : @ios.IosViewHandle, metrics~ : @host.HostSurfaceMetrics, options? : IosSkiaAppOptions) -> @ios.IosRuntimeSession?
 
-pub fn ios_skia_create_metal_view_handle(Double, Double, Double, Double) -> @wzzc-dev/moui_shell/ios.IosNativeView?
+pub fn ios_skia_create_metal_view_handle(Double, Double, Double, Double) -> @ios.IosViewHandle?
 
 pub fn ios_skia_gpu_available() -> Bool
 
 pub fn ios_skia_provider_preflight_summary(options? : IosSkiaAppOptions) -> String
 
-pub fn ios_skia_release_metal_view_handle(@wzzc-dev/moui_shell/ios.IosNativeView) -> Unit
+pub fn ios_skia_release_metal_view_handle(@ios.IosViewHandle) -> Unit
 
-pub fn renderer_provider(options? : IosSkiaAppOptions) -> @wzzc-dev/moui/backend/ios.IosRendererProvider
+pub fn renderer_provider(options? : IosSkiaAppOptions) -> @ios.IosRendererProvider
 
 // Errors
 

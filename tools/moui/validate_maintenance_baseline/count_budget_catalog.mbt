@@ -35,7 +35,7 @@ fn pub_all_budgets() -> Array[CountBudget] {
       kind: "pub(all)",
       label: "moui/render",
       path: "moui/render",
-      // 46 = 38 (prior baseline) + 8 for the unified native renderer
+      // 47 = 38 (prior baseline) + 8 for the unified native renderer
       // selection, completion, worker, and recovery diagnostics contracts.
       // The integration API is intentionally budgeted here rather than
       // leaking these types into the app facade.
@@ -44,8 +44,9 @@ fn pub_all_budgets() -> Array[CountBudget] {
       // HostGpuPresentOutcome (the present-gpu outcome struct), both
       // introduced by Phase 1.1 of the readback-elimination plan (ADR 0006),
       // + 1 for RendererControlMessage (Phase 2.1 renderer-thread mailbox
-      // control message enum, ADR 0006 § Renderer-thread ownership).
-      max_count: 46,
+      // control message enum, ADR 0006 § Renderer-thread ownership) + 1 for
+      // the Canvas 2D renderer capability used by the WeChat host route.
+      max_count: 47,
     },
     {
       kind: "pub(all)",

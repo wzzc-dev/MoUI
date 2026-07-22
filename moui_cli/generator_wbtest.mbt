@@ -167,7 +167,7 @@ test "default macOS project file plan is exact" {
 }
 
 ///|
-test "shell schema v1 contains managed platform defaults" {
+test "mobile config contains window-hosted platform defaults" {
   let options = test_project_options(
     ["web", "android", "ios", "harmonyos"],
     bundle_id=Some("dev.example.sample"),
@@ -176,82 +176,39 @@ test "shell schema v1 contains managed platform defaults" {
     Ok(files) => files
     Err(message) => fail(message)
   }
-  let shell = test_planned_text(files, "shell.json")
+  let mobile = test_planned_text(files, "moui.mobile.json")
   for platform in ["android", "ios", "harmonyos"] {
-    let package_text = test_planned_text(files, platform + "_skia/moon.pkg")
-    let main_text = test_planned_text(files, platform + "_skia/main.mbt")
-    for
-      symbol in [
-        "moui_embedding_take_host_update_envelope_json", "moui_embedding_dispatch_host_response_envelope_json",
-        "moui_embedding_complete_clipboard_v1", "moui_embedding_attach_surface",
-        "moui_embedding_dispatch_scroll", "moui_embedding_detach_surface", "moui_embedding_destroy_application",
-      ] {
-      inspect(package_text.contains(symbol), content="false")
-      inspect(main_text.contains(symbol), content="false")
-    }
-    inspect(
-      package_text.contains("moui_embedding_take_host_updates_json"),
-      content="false",
+    let package_text = test_planned_text(
+      files,
+      platform + "_window_hosted/moon.pkg",
+    )
+    let main_text = test_planned_text(
+      files,
+      platform + "_window_hosted/main.mbt",
     )
     inspect(
-      package_text.contains("moui_embedding_complete_clipboard\""),
-      content="false",
-    )
-    inspect(
-      package_text.contains("@platform_host") &&
-      main_text.contains("@platform_host.install_embedding") &&
-      main_text.contains("@host.shell_renderer_selection") &&
-      main_text.contains("@host.shell_renderer_configure") &&
-      main_text.contains("@host.shell_renderer_status_json"),
+      package_text.contains("wzzc-dev/window/" + platform),
       content="true",
     )
+    inspect(
+      package_text.contains("wzzc-dev/moui/backend/" + platform),
+      content="true",
+    )
+    inspect(main_text.contains("WindowHostedApp"), content="true")
+    inspect(main_text.contains("EventLoop::new"), content="true")
+    inspect(main_text.contains("run_app(app)"), content="true")
   }
-  let parsed = @json.parse(shell) catch {
-    _ => fail("generated shell.json must parse")
+  let parsed = @json.parse(mobile) catch {
+    _ => fail("generated moui.mobile.json must parse")
   }
   guard parsed is Object(root) else {
-    fail("generated shell.json must be an object")
+    fail("generated moui.mobile.json must be an object")
   }
   inspect(
     root.get("schemaVersion") is Some(Number(1.0, repr=_)),
     content="true",
   )
-  inspect(
-    root.get("shellApiVersion") is Some(Number(1.0, repr=_)),
-    content="true",
-  )
-  inspect(
-    root.get("embeddingApiVersion") is Some(Number(1.0, repr=_)),
-    content="true",
-  )
-  guard root.get("shell") is Some(Object(mobile_fields)) else {
-    fail("generated shell config must contain shell settings")
-  }
-  inspect(mobile_fields.get("renderer") is Some(String("auto")), content="true")
-  inspect(
-    mobile_fields.get("orientation") is Some(String("any")),
-    content="true",
-  )
-  guard mobile_fields.get("systemUi") is Some(Object(system_ui)) else {
-    fail("generated shell config must contain systemUi")
-  }
-  inspect(system_ui.get("fullscreen") is Some(False), content="true")
-  inspect(system_ui.get("statusBar") is Some(String("auto")), content="true")
-  for field in ["resources", "permissions", "plugins"] {
-    guard mobile_fields.get(field) is Some(Array(values)) else {
-      fail("generated shell config must contain array: " + field)
-    }
-    inspect(values.is_empty(), content="true")
-  }
-  for platform in ["android", "ios", "harmonyos"] {
-    guard root.get(platform) is Some(Object(platform_fields)) else {
-      fail("missing generated platform config: " + platform)
-    }
-    inspect(
-      platform_fields.get("runnerMode") is Some(String("managed")),
-      content="true",
-    )
-  }
+  inspect(root.get("appPackage") is Some(String("app")), content="true")
   guard root.get("android") is Some(Object(android)) else {
     fail("missing Android defaults")
   }

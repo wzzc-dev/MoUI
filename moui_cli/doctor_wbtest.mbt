@@ -7,7 +7,7 @@ test "doctor statuses use the stable machine-readable vocabulary" {
 }
 
 ///|
-test "Android doctor versions match the managed shell toolchain floor" {
+test "Android doctor versions match the window-hosted toolchain floor" {
   inspect(android_compile_sdk, content="36")
   inspect(android_target_sdk, content="35")
   inspect(android_build_tools_version, content="35.0.0")
@@ -190,7 +190,7 @@ fn doctor_mobile_entrypoint_contract_text() -> String {
 }
 
 ///|
-test "shell entrypoint requires nonempty package and main files" {
+test "mobile entrypoint requires nonempty package and main files" {
   let root = test_temp_path("doctor-entrypoint")
   remove_tree(root)
   let package_path = join_path(root, "android_window_hosted/moon.pkg")
@@ -231,7 +231,7 @@ test "shell entrypoint requires nonempty package and main files" {
 }
 
 ///|
-test "shell entrypoint accepts the repository app layout" {
+test "mobile entrypoint accepts the repository app layout" {
   let root = test_temp_path("doctor-repository-entrypoint")
   let package_path = join_path(root, "android/moon.pkg")
   let main_path = join_path(root, "android/main.mbt")
@@ -307,179 +307,4 @@ test "invalid manifest is a CLI contract error with valid JSON" {
   inspect(outcome.exit_code, content="2")
   inspect(outcome.stdout, content="")
   inspect(@json.parse(outcome.stderr) is Object(_), content="true")
-}
-
-///|
-fn doctor_test_plugin_manifest() -> String {
-  let value : Json = {
-    "schemaVersion": 1,
-    "id": "sample.camera",
-    "shellApi": 1,
-    "platforms": {
-      "android": {
-        "sources": ["android/src/Camera.kt"],
-        "resources": ["android/res/camera.txt"],
-        "entry": "dev.example.SampleCameraPlugin",
-      },
-    },
-    "platformViewKinds": ["sample.camera.preview"],
-    "hostChannels": ["sample.camera.control"],
-    "permissions": ["camera"],
-  }
-  value.stringify(indent=2) + "\n"
-}
-
-///|
-fn doctor_test_mobile_with_plugin(permission : Bool) -> String raise {
-  let parsed = @json.parse(eject_test_mobile_text())
-  guard parsed is Object(root) else { fail("shell fixture must be an object") }
-  guard root.get("shell") is Some(Object(shell)) else {
-    fail("shell fixture must contain shell")
-  }
-  shell["plugins"] = ["plugins/camera/moui.plugin.json"].to_json()
-  let no_permissions : Array[String] = []
-  shell["permissions"] = if permission {
-    ["camera"].to_json()
-  } else {
-    no_permissions.to_json()
-  }
-  root["shell"] = Json::object(shell)
-  Json::object(root).stringify(indent=2) + "\n"
-}
-
-///|
-test "doctor validates plugin schema, permissions, and content digest" {
-  let root = test_temp_path("doctor-plugin")
-  remove_tree(root)
-  eject_test_write_text(
-    join_path(root, "shell.json"),
-    doctor_test_mobile_with_plugin(true),
-  )
-  eject_test_write_text(
-    join_path(root, "plugins/camera/moui.plugin.json"),
-    doctor_test_plugin_manifest(),
-  )
-  eject_test_write_text(
-    join_path(root, "plugins/camera/android/src/Camera.kt"),
-    "class SampleCameraPlugin\n",
-  )
-  eject_test_write_text(
-    join_path(root, "plugins/camera/android/res/camera.txt"),
-    "camera\n",
-  )
-  let config = match read_shell_doctor_config(root) {
-    Ok(value) => value
-    Err(message) => fail(message)
-  }
-  let plugins = match read_doctor_plugins(root, config) {
-    Ok(value) => value
-    Err(message) => fail(message)
-  }
-  let first_digest = doctor_plugins_digest(plugins)
-  eject_test_write_text(
-    join_path(root, "plugins/camera/android/src/Camera.kt"),
-    "class ChangedCameraPlugin\n",
-  )
-  let changed = match read_doctor_plugins(root, config) {
-    Ok(value) => value
-    Err(message) => fail(message)
-  }
-  inspect(first_digest == doctor_plugins_digest(changed), content="false")
-  eject_test_write_text(
-    join_path(root, "shell.json"),
-    doctor_test_mobile_with_plugin(false),
-  )
-  let no_permission = match read_shell_doctor_config(root) {
-    Ok(value) => value
-    Err(message) => fail(message)
-  }
-  inspect(read_doctor_plugins(root, no_permission) is Err(_), content="true")
-  eject_test_write_text(
-    join_path(root, "shell.json"),
-    doctor_test_mobile_with_plugin(true),
-  )
-  eject_test_write_text(
-    join_path(root, "plugins/camera/build.gradle"),
-    "dependencies {}\n",
-  )
-  inspect(read_doctor_plugins(root, config) is Err(_), content="true")
-  remove_tree(root)
-}
-
-///|
-test "doctor stages managed canonical shell and reports ejected drift" {
-  let root = test_temp_path("doctor-shell")
-  let moui_root = join_path(root, "moui")
-  let shell_root = join_path(root, "moui_shell")
-  remove_tree(root)
-  eject_test_prepare_project(root, moui_root)
-  let managed = mobile_project_doctor_checks(root, ["android"])
-  inspect(
-    managed.any(check => {
-      check.id == "shell.android.managed-staging" && check.status == Pass
-    }),
-    content="true",
-  )
-  let result = match
-    eject_shell({
-      project_root: root,
-      platform: "android",
-      output: "",
-      moui_root: Some(moui_root),
-    }) {
-    Ok(value) => value
-    Err(message) => fail(message)
-  }
-  let config = match read_shell_doctor_config(root) {
-    Ok(value) => value
-    Err(message) => fail(message)
-  }
-  let plugins = match read_doctor_plugins(root, config) {
-    Ok(value) => value
-    Err(message) => fail(message)
-  }
-  let clean = ejected_shell_doctor_check(
-    root,
-    "android",
-    plugins,
-    Some(moui_root),
-    Some(shell_root),
-  )
-  inspect(clean.status == Pass, content="true")
-  eject_test_write_text(join_path(result.output, "README.md"), "changed\n")
-  let drift = ejected_shell_doctor_check(
-    root,
-    "android",
-    plugins,
-    Some(moui_root),
-    Some(shell_root),
-  )
-  inspect(drift.status == Warn, content="true")
-  inspect(drift.detail.contains("modified:README.md"), content="true")
-  remove_tree(root)
-}
-
-///|
-test "doctor keeps structural config and protocol compatibility separate" {
-  let root = test_temp_path("doctor-protocol")
-  remove_tree(root)
-  let parsed = @json.parse(eject_test_mobile_text()) catch {
-    _ => fail("shell fixture must parse")
-  }
-  guard parsed is Object(fields) else { fail("shell fixture must be object") }
-  fields["embeddingApiVersion"] = (2 : Int).to_json()
-  eject_test_write_text(
-    join_path(root, "shell.json"),
-    Json::object(fields).stringify(indent=2) + "\n",
-  )
-  let checks = mobile_project_doctor_checks(root, ["android"])
-  inspect(
-    checks.any(check => check.id == "shell.config" && check.status == Pass),
-    content="true",
-  )
-  inspect(
-    checks.any(check => check.id == "shell.protocol" && check.status == Fail),
-    content="true",
-  )
-  remove_tree(root)
 }

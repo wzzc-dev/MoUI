@@ -1,7 +1,7 @@
 ///|
 /// Window-hosted MoUI path (winit-style): surface/input come only from
-/// `wzzc-dev/window/ios` HostCmd → ApplicationHandler. No Embedding
-/// attach_surface inject dual-stack.
+/// `wzzc-dev/window/ios` HostCmd → ApplicationHandler. Surface attachment is
+/// driven only by the platform event loop.
 pub struct IosWindowHostedApp {
   title : String
   runtime_factory : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime
@@ -20,7 +20,7 @@ pub struct IosWindowHostedApp {
 
 ///|
 pub fn IosWindowHostedApp::new(
-  title~ : String = "MoUI",
+  title? : String = "MoUI",
   runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime,
   provider_factory~ : () -> IosRendererProvider,
   auto_exit_after_frames? : Int? = None,
@@ -43,23 +43,17 @@ pub fn IosWindowHostedApp::new(
 }
 
 ///|
-pub fn IosWindowHostedApp::frames_presented(
-  self : IosWindowHostedApp,
-) -> Int {
+pub fn IosWindowHostedApp::frames_presented(self : IosWindowHostedApp) -> Int {
   self.frames_presented
 }
 
 ///|
-pub fn IosWindowHostedApp::surface_generation(
-  self : IosWindowHostedApp,
-) -> Int {
+pub fn IosWindowHostedApp::surface_generation(self : IosWindowHostedApp) -> Int {
   self.last_generation
 }
 
 ///|
-pub fn IosWindowHostedApp::session_attached(
-  self : IosWindowHostedApp,
-) -> Bool {
+pub fn IosWindowHostedApp::session_attached(self : IosWindowHostedApp) -> Bool {
   match self.session {
     Some(session) => session.surface_attached()
     None => false
@@ -107,7 +101,7 @@ fn IosWindowHostedApp::attach_session(
       self.last_generation = session.session_generation()
     }
     None =>
-      match create_session(runtime~, view=view, metrics~, provider~) {
+      match create_session(runtime~, view~, metrics~, provider~) {
         Some(session) => {
           self.session = Some(session)
           self.last_generation = session.session_generation()
@@ -218,9 +212,7 @@ pub impl @window_ios.ApplicationHandler for IosWindowHostedApp with fn can_creat
     return
   }
   let attrs = @window_core.WindowAttributes::default().with_title(self.title)
-  let created : @window_ios.Window? = Some(
-    event_loop.try_create_window(attrs),
-  ) catch {
+  let created : @window_ios.Window? = Some(event_loop.try_create_window(attrs)) catch {
     _ => None
   }
   match created {
@@ -264,10 +256,7 @@ pub impl @window_ios.ApplicationHandler for IosWindowHostedApp with fn window_ev
     @window_core.WindowEvent::RedrawRequested => {
       self.dispatch_window_event(event)
       match self.auto_exit_after_frames {
-        Some(limit) =>
-          if self.frames_presented >= limit {
-            event_loop.exit()
-          }
+        Some(limit) => if self.frames_presented >= limit { event_loop.exit() }
         None => ()
       }
     }
@@ -297,10 +286,10 @@ pub impl @window_ios.ApplicationHandler for IosWindowHostedApp with fn about_to_
 /// Pump one host-sim cycle for tests / offline validation.
 pub fn ios_window_hosted_pump_host_sim(
   app : IosWindowHostedApp,
-  surface_handle~ : UInt64 = 0xABCUL,
-  width~ : Int = 320,
-  height~ : Int = 640,
-  scale~ : Double = 2.0,
+  surface_handle? : UInt64 = 0xABCUL,
+  width? : Int = 320,
+  height? : Int = 640,
+  scale? : Double = 2.0,
 ) -> Unit {
   @window_ios.host_reset_for_test()
   let event_loop = @window_ios.EventLoop::new()

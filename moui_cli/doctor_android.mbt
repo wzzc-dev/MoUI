@@ -176,7 +176,7 @@ fn android_doctor_check(
       Fail,
       true,
       "Node.js is missing from PATH",
-      remediation="Install Node.js for the MoUI shell build preparation step.",
+      remediation="Install Node.js for the MoUI Android build preparation step.",
     )
   }
   let (gradle, gradle_root) = android_gradle_command(project_root, host)
@@ -196,7 +196,7 @@ fn android_doctor_check(
         "android",
         Fail,
         true,
-        "Gradle is below the managed shell floor",
+        "Gradle is below the window-hosted build floor",
         detail=message,
         remediation="Install Gradle " +
           android_gradle_version +
@@ -290,7 +290,7 @@ fn android_doctor_check(
         "android",
         Fail,
         true,
-        "Android CMake is below the managed shell floor",
+        "Android CMake is below the window-hosted build floor",
         detail=message,
         remediation="Install Android SDK CMake " +
           android_cmake_version +
@@ -338,7 +338,7 @@ fn android_doctor_check(
       "android",
       Pass,
       true,
-      "Android SDK and managed shell toolchain floors are satisfied",
+      "Android SDK and window-hosted toolchain floors are satisfied",
       detail~,
     )
   } else {

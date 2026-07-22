@@ -454,17 +454,19 @@ fn harmony_project_contract_text(
   profile_text : String,
   package_text : String,
 ) -> Result[String, String] {
-  let shell = @json.parse(mobile_text) catch {
-    _ => return Err("shell.json is not valid JSON")
+  let mobile = @json.parse(mobile_text) catch {
+    _ => return Err("moui.mobile.json is not valid JSON")
   }
-  guard shell is Object(mobile_root) else {
-    return Err("shell.json must be an object")
+  guard mobile is Object(mobile_root) else {
+    return Err("moui.mobile.json must be an object")
   }
   guard mobile_root.get("harmonyos") is Some(Object(harmony)) else {
-    return Err("shell.json must declare HarmonyOS platform metadata")
+    return Err("moui.mobile.json must declare HarmonyOS platform metadata")
   }
   guard json_int(harmony.get("compatibleSdkVersion")) is Some(20) else {
-    return Err("shell.json must declare HarmonyOS compatibleSdkVersion 20")
+    return Err(
+      "moui.mobile.json must declare HarmonyOS compatibleSdkVersion 20",
+    )
   }
   let profile = @json.parse(profile_text) catch {
     _ => return Err("HarmonyOS build-profile.json5 is not parseable JSON")
@@ -498,43 +500,13 @@ fn harmony_project_contract_text(
 
 ///|
 fn harmony_project_contract(project_root : String) -> Result[String, String] {
-  let mobile_path = join_path(project_root, "shell.json")
+  let mobile_path = join_path(project_root, "moui.mobile.json")
   let mobile_text = @fs.read_file_to_string(mobile_path) catch {
     _ => return Err("HarmonyOS project metadata is missing: " + mobile_path)
   }
-  let parsed = @json.parse(mobile_text) catch {
-    _ => return Err("shell.json is not valid JSON")
-  }
-  guard parsed is Object(root) else {
-    return Err("shell.json must be an object")
-  }
-  guard root.get("harmonyos") is Some(Object(harmony)) else {
-    return Err("shell.json is missing HarmonyOS platform metadata")
-  }
-  guard harmony.get("runnerMode") is Some(String(mode)) else {
-    return Err("shell.json is missing HarmonyOS shell metadata")
-  }
-  let shell_root = match mode {
-    "ejected" =>
-      match find_ejected_shell_root(project_root, "harmonyos") {
-        Ok(value) => value
-        Err(message) => return Err(message)
-      }
-    "managed" =>
-      match
-        resolve_shell_root({
-          project_root,
-          platform: "harmonyos",
-          output: "",
-          moui_root: None,
-        }) {
-        Ok(value) => join_path(value, "harmonyos/runner/template")
-        Err(message) => return Err(message)
-      }
-    _ => return Err("unsupported HarmonyOS shell mode: " + mode)
-  }
-  let profile_path = join_path(shell_root, "build-profile.json5")
-  let package_path = join_path(shell_root, "oh-package.json5")
+  let template_root = window_template_root(project_root, "harmonyos")
+  let profile_path = join_path(template_root, "build-profile.json5")
+  let package_path = join_path(template_root, "oh-package.json5")
   let profile_text = @fs.read_file_to_string(profile_path) catch {
     _ => return Err("HarmonyOS build profile is missing: " + profile_path)
   }

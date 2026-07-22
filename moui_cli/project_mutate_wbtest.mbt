@@ -29,7 +29,7 @@ test "add platform updates manifest and writes entrypoints" {
     }) {
     Ok((added, files)) => {
       inspect(added.join(","), content="android")
-      inspect(files.contains("android_skia/main.mbt"), content="true")
+      inspect(files.contains("android_window_hosted/main.mbt"), content="true")
     }
     Err(message) => {
       remove_tree(root)
@@ -45,51 +45,15 @@ test "add platform updates manifest and writes entrypoints" {
   }
   inspect(manifest.platforms.join(","), content="web,macos,android")
   inspect(manifest.bundle_id.unwrap_or(""), content="dev.example.sample")
-  inspect(@fs.path_exists(join_path(root, "shell.json")), content="true")
+  inspect(@fs.path_exists(join_path(root, "moui.mobile.json")), content="true")
   inspect(
-    @fs.path_exists(join_path(root, "android_skia/moon.pkg")),
+    @fs.path_exists(join_path(root, "android_window_hosted/moon.pkg")),
     content="true",
   )
   remove_tree(root)
 }
 
 ///|
-test "plugin scaffold writes managed plugin layout" {
-  let root = test_temp_path("plugin-scaffold")
-  remove_tree(root)
-  match mkdir_p(root) {
-    Ok(_) => ()
-    Err(message) => fail(message)
-  }
-  eject_test_write_text(join_path(root, "shell.json"), eject_test_mobile_text())
-  match
-    scaffold_plugin({
-      project_root: root,
-      id: "sample.camera",
-      platforms: ["android"],
-    }) {
-    Ok(files) =>
-      inspect(
-        files.contains("plugins/sample_camera/moui.plugin.json"),
-        content="true",
-      )
-    Err(message) => {
-      remove_tree(root)
-      fail(message)
-    }
-  }
-  let text = @fs.read_file_to_string(join_path(root, "shell.json")) catch {
-    _ => {
-      remove_tree(root)
-      fail("could not reread shell.json")
-    }
-  }
-  inspect(
-    text.contains("plugins/sample_camera/moui.plugin.json"),
-    content="true",
-  )
-  remove_tree(root)
-}
 
 ///|
 test "doctor fix creates missing moon.work and README" {

@@ -38,8 +38,9 @@ the pinned `@moonbit/moonc-worker` asset into the static Playground output.
 Shared app logic belongs in `examples/<name>/app`. Platform entrypoints should
 stay thin and live under names such as `web_wasm`, `macos_skia`,
 `windows_skia`, or `linux_skia`. Showcase follows the same convention for
-desktop and mobile (`android_skia`, `ios_skia`, `harmonyos_skia`), while its
-WGPU and Sun directories remain explicit diagnostic renderer routes.
+desktop and mobile (`android_window_hosted`, `ios_window_hosted`,
+`harmonyos_window_hosted`), while its WGPU and Sun directories remain explicit
+diagnostic renderer routes.
 
 Use the smallest useful loop:
 
@@ -52,123 +53,35 @@ moon build examples/markdown_editor/web_wasm --target wasm-gc
 node scripts/web-bundle-size.mjs examples/counter/web_wasm --json
 ```
 
-Android is currently an embedded native scaffold rather than a full app-owned
-event loop. For Android Skia cross-build checks, set
-`MOUI_SKIA_PLATFORM=android` and an explicit `MOUI_SKIA_ARCH` so the prebuild
-selects the locked Android Skia artifact instead of the desktop host artifact:
+Android, iOS, and HarmonyOS use the window-hosted mobile route. The matching
+`wzzc-dev/window` template owns native lifecycle, surface creation, and input;
+the MoUI `*_window_hosted` entrypoint supplies the program and Skia provider.
+There is no app-specific native export table or second lifecycle bridge.
+
+Use host-sim checks before invoking platform toolchains:
 
 ```sh
-MOUI_SKIA_PLATFORM=android MOUI_SKIA_ARCH=arm64 \
-  moon check examples/counter/android_skia --target native
+moon check examples/counter/android_window_hosted --target native
+moon check examples/counter/ios_window_hosted --target native
+moon check examples/counter/harmonyos_window_hosted --target native
+sh scripts/window-hosted-hostsim-smoke.sh
 ```
 
-To build the experimental Counter Android debug APK, first install Android SDK
-Platform 36, Build-Tools 35.0.0, Platform-Tools, NDK, and CMake through Android
-Studio's SDK Manager, the official `sdkmanager` command-line tools, or the
-repository helper. See
-[android-support.md](android-support.md#android-sdk-and-ndk) for the full setup
-flow. Make sure a complete JDK is installed first so `java`, `javac`, `jlink`,
-and `keytool` are available. The managed shell targets SDK 35 but compiles
-against SDK 36 because AndroidX Activity 1.13.0 requires it. Use Java 17 or
-newer for Android Gradle Plugin 9.x; Java 21 is the recommended local default.
-The shortest path is:
+Build from application metadata with `moui_cli`:
 
 ```sh
-scripts/setup-android-sdk.sh --accept-licenses
-eval "$(scripts/setup-android-sdk.sh --print-env)"
-scripts/build-shell-android-apk.sh --app counter
+moui build android showcase \
+  --mobile-config "$PWD/examples/showcase/moui.mobile.json"
+moui build ios showcase \
+  --mobile-config "$PWD/examples/showcase/moui.mobile.json"
+moui build harmonyos showcase \
+  --mobile-config "$PWD/examples/showcase/moui.mobile.json"
 ```
 
-If you already have an Android SDK installed, point `ANDROID_HOME` at that SDK
-root and run:
-
-```sh
-ANDROID_HOME=/path/to/Android/Sdk \
-scripts/build-shell-android-apk.sh --app counter
-```
-
-Set `ANDROID_NDK_HOME=/path/to/Android/Sdk/ndk/<version>` only when you need to
-pin a specific side-by-side NDK; otherwise the script uses the required
-`MOUI_ANDROID_NDK_VERSION` installation (28.2.13676358 by default) under
-`$ANDROID_HOME/ndk` and ignores incompatible overrides.
-
-For a packaging-only smoke that avoids the Android Skia provider download, use
-`scripts/build-counter-android-apk.sh --fallback-skia`. That wrapper calls
-`scripts/build-shell-android-apk.sh --app counter`. The APK proves the
-MoonBit C/JNI/CMake/SDK packaging path only; real Android runtime evidence still
-requires a device or emulator run with the default real-Skia path.
-
-Shell registration is split by publish boundary. Repository examples and
-external applications use strict schema v1 `shell.json`; the fixed embedding
-ABI has no app-specific export map or project path. Canonical shells and build
-entrypoints live under `moui_shell` so managed builds stage them from the
-published `wzzc-dev/moui_shell` package. Run
-`node scripts/check-shell-app-config.mjs` for a fast repository example
-registration consistency check before attempting a full APK, `.app`, or HAP
-build.
-
-See [android-support.md](android-support.md) for the Activity/Surface ownership
-boundary and runtime-evidence requirements.
-
-iOS is also an embedded native scaffold rather than a full app-owned event
-loop. For iOS Simulator Skia cross-build checks, set `MOUI_SKIA_PLATFORM=iosSim`
-and an explicit `MOUI_SKIA_ARCH` so the prebuild selects the locked simulator
-artifact instead of the desktop host artifact:
-
-```sh
-MOUI_SKIA_PLATFORM=iosSim MOUI_SKIA_ARCH=arm64 \
-  moon check examples/counter/ios_skia --target native
-```
-
-To build the experimental Counter iOS Simulator app, install/select Xcode and
-run:
-
-```sh
-scripts/build-shell-ios-app.sh --app counter
-```
-
-The default output is `artifacts/ios/counter/MoUICounter.app`. Use
-`scripts/build-shell-ios-app.sh --app counter --fallback-skia` for a packaging-only smoke
-that avoids the iOS Skia provider download. That `.app` proves the MoonBit
-C/canonical SwiftUI shell/ABI bridge/native-stub/bundle path only; real iOS
-runtime evidence still requires a simulator or device run with the default
-real-Skia path. Xcode 15.4+, Swift 5 language mode, and iOS 15+ are required.
-
-See [ios-support.md](ios-support.md) for the SwiftUI/UIKit ownership boundary,
-single-scene embedding API v1 rule, plugin/eject contract, Xcode CLI setup, simulator
-install commands, and runtime-evidence requirements.
-
-HarmonyOS is also an embedded native scaffold. For HarmonyOS Skia cross-build
-checks, set `MOUI_SKIA_PLATFORM=harmonyos`, `MOUI_SKIA_ARCH=arm64`, and static
-linking so the prebuild selects the complete locked HarmonyOS Skia provider:
-
-```sh
-MOUI_SKIA_PLATFORM=harmonyos MOUI_SKIA_ARCH=arm64 MOUI_SKIA_LINK_MODE=static \
-  moon check examples/harmonyos_demo/harmonyos_skia --target native
-```
-
-The locked shared `libskia.so` remains usable for explicit `skia-raster`, but
-it hides Ganesh internal symbols required by `libskia_ganesh_ext.a`; therefore
-it cannot back HarmonyOS `auto` / `skia-gpu`. When the link-mode environment is
-unset, the shell builder selects static for GPU and dynamic for raster.
-
-The standalone demo lives at `examples/harmonyos_demo` rather than extending
-Counter. `examples/harmonyos_demo/app` owns the platform-neutral UI,
-and `examples/harmonyos_demo/harmonyos_skia` owns the MoonBit native exports.
-The build stages the package-owned `moui_shell/harmonyos` ArkTS Stage
-Ability/XComponent shell, NAPI bridge, plugin registry, and CMake project;
-the package-owned HarmonyOS shell is staged for each build. Use
-`scripts/build-shell-harmonyos-hap.sh --app harmonyos_demo --fallback-skia`
-for a packaging-only smoke that avoids the HarmonyOS Skia download and validates
-MoonBit C generation, native glue compilation, and staged HAP layout. External
-apps use schema v1 `shell.json` and the managed build, or explicitly eject a
-versioned shell with `moui shell eject harmonyos`. Real HarmonyOS runtime evidence
-still requires a non-fallback build plus matching device/emulator first-frame,
-input, resize, and lifecycle smoke.
-
-See [harmonyos-support.md](harmonyos-support.md) for the Stage
-Ability/XComponent ownership boundary, SDK/toolchain installation, emulator
-setup, SDK environment variables, and runtime evidence requirements.
+Use `--fallback-skia` only for packaging diagnostics; matching device or
+simulator evidence is still required for a runtime claim. Platform-specific
+SDK setup and evidence boundaries are documented in [Android](android-support.md),
+[iOS](ios-support.md), and [HarmonyOS](harmonyos-support.md).
 
 `moon update` refreshes registry packages, including the `window` fork package.
 The default `sh scripts/check.sh --profile daily` path guards dependency shape and the
@@ -306,10 +219,9 @@ moon run examples/mo_workbench/macos_skia --target native
 ## Mobile Development Workflow
 
 `moui_cli` is the canonical entry point for mobile build / run / verify. The
-legacy `moui_shell/scripts/build-*.sh` entrypoints are no longer invoked
-externally — `build-ios-app-core.sh` is kept as a thin launcher that forwards
-to `moui_cli build-ios-core` (invariant M9 / M10). Use the standalone CLI
-commands instead of calling those shell scripts directly.
+CLI stages the matching `wzzc-dev/window` template and uses the
+`*_window_hosted` entrypoint; it does not create a separate mobile runtime
+layer.
 
 ### One-time SDK configuration
 
@@ -342,30 +254,28 @@ follow (`logcat` / `log stream` / `hilog`). Build artifacts land under
 `artifacts/<platform>/<app>/`:
 
 ```sh
-moui run android showcase
-moui run ios showcase
-moui run harmonyos showcase
+moui run android showcase --mobile-config "$PWD/examples/showcase/moui.mobile.json"
+moui run ios showcase --mobile-config "$PWD/examples/showcase/moui.mobile.json"
+moui run harmonyos showcase --mobile-config "$PWD/examples/showcase/moui.mobile.json"
 
 # Build only (no install / launch)
-moui run harmonyos showcase --build-only
+moui run harmonyos showcase --mobile-config "$PWD/examples/showcase/moui.mobile.json" --build-only
 
 # Prepare only (no build / install / launch) — useful for inspecting generated C
-moui run android showcase --prepare-only
+moui run android showcase --mobile-config "$PWD/examples/showcase/moui.mobile.json" --prepare-only
 
 # Pin a specific device and follow logs
-moui run ios showcase --device UUID-DEAD --debug
+moui run ios showcase --mobile-config "$PWD/examples/showcase/moui.mobile.json" --device UUID-DEAD --debug
 
 # Pass through extra args after `--` to the launched app
-moui run android showcase -- --user-flag value
+moui run android showcase --mobile-config "$PWD/examples/showcase/moui.mobile.json" -- --user-flag value
 ```
 
 ### Verify runtime evidence
 
-`moui verify` runs the runtime probe on the staged app, parses
-`[MOUI_PROBE] kind:name=ok|fail` markers from the device log stream, and
-writes `artifacts/<platform>/<app>/verify-manifest.json`. With
-`--require-passed`, the command exits non-zero when any of the 27 required
-observations is missing or fails (invariant M7 / M8):
+`moui verify` records a window-hosted matching-device probe and writes
+`artifacts/<platform>/<app>/verify-manifest.json`. With `--require-passed`,
+the command exits non-zero when an observation fails:
 
 ```sh
 moui verify android showcase

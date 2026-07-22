@@ -1,6 +1,4 @@
-// Generic JSON helpers extracted from `shell_contracts.mbt`. The original
-// `doctor_*` names are kept as aliases in `shell_contracts.mbt` for backward
-// compatibility. New modules should use the `json_*` names directly.
+// Generic JSON helpers for CLI metadata validation.
 
 ///|
 fn json_exact_object(
@@ -93,6 +91,3 @@ fn json_identifier(value : String, label : String) -> Result[Unit, String] {
 }
 
 ///|
-fn json_plugins_digest(plugins : Array[DoctorPlugin]) -> String {
-  file_plan_digest(plugin_digest_plan(plugins))
-}

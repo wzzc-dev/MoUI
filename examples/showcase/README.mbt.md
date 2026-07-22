@@ -40,7 +40,7 @@ Feature packages only export catalog rows + `view_body` (no second sidebar).
 - Skia mainline: `macos_skia`, `linux_skia`, `windows_skia`
 - Diagnostic: `*_wgpu`, `*_sun`
 - Web: `web_wasm`
-- Mobile: `android_skia`, `ios_skia`, `harmonyos_skia` + managed shells
+- Mobile: `android_window_hosted`, `ios_window_hosted`, `harmonyos_window_hosted`
 
 Identity: `dev.wzzc.moui.showcase` / MoUI Showcase.
 
@@ -49,5 +49,5 @@ Identity: `dev.wzzc.moui.showcase` / MoUI Showcase.
 ```sh
 moon run examples/showcase/macos_skia --target native
 moon build examples/showcase/web_wasm --target wasm-gc
-scripts/build-showcase-android-apk.sh
+moui build android showcase --mobile-config "$PWD/examples/showcase/moui.mobile.json"
 ```

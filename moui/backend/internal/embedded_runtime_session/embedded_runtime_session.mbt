@@ -11,7 +11,7 @@ fn next_embedded_runtime_session_generation() -> Int {
 }
 
 ///|
-/// Shared runtime state for embedded shell hosts. Platform backends keep this
+/// Shared runtime state for window-hosted mobile apps. Platform backends keep this
 /// type behind their public session wrappers and own native-handle syncing.
 pub struct EmbeddedSessionCore {
   priv runtime : @runtime.AppRuntime
@@ -141,7 +141,10 @@ pub fn EmbeddedSessionCore::detach_surface(self : EmbeddedSessionCore) -> Bool {
   }
   match self.host_bridge {
     Some(channel) =>
-      channel.dispose(driver=self.driver, reason="shell surface epoch detached")
+      channel.dispose(
+        driver=self.driver,
+        reason="mobile surface epoch detached",
+      )
     None => ()
   }
   match self.image_coordinator {
@@ -227,7 +230,7 @@ pub fn EmbeddedSessionCore::render_frame(
     self.transport.request_frame()
     ignore(
       host_bridge.push_diagnostic(
-        "moui-shell service async-image phase=loading scheduled=\{image.scheduled_count} present=\{image.present_count}",
+        "moui-window service async-image phase=loading scheduled=\{image.scheduled_count} present=\{image.present_count}",
       ),
     )
   }
@@ -237,7 +240,7 @@ pub fn EmbeddedSessionCore::render_frame(
     self.async_image_ready_logged = true
     ignore(
       host_bridge.push_diagnostic(
-        "moui-shell service async-image phase=ready ready=\{image.ready_count} present=\{image.present_count}",
+        "moui-window service async-image phase=ready ready=\{image.ready_count} present=\{image.present_count}",
       ),
     )
   }
@@ -245,7 +248,7 @@ pub fn EmbeddedSessionCore::render_frame(
     self.async_image_failed_logged = true
     ignore(
       host_bridge.push_diagnostic(
-        "moui-shell service async-image phase=failed failed=\{image.failed_count} present=\{image.present_count}",
+        "moui-window service async-image phase=failed failed=\{image.failed_count} present=\{image.present_count}",
       ),
     )
   }

@@ -1,7 +1,5 @@
-// `moui verify` command — verify mobile app runtime evidence against the
-// managed shell contract. Generates a `verify-manifest.json` that mirrors
-// the schema produced by `scripts/record-shell-runtime-smoke.mjs` so the
-// existing validation tooling accepts either generator.
+// `moui verify` command — verify window-hosted mobile app runtime evidence.
+// It generates the canonical `verify-manifest.json`.
 
 ///|
 priv struct ParsedVerify {
@@ -22,27 +20,21 @@ priv struct VerifyOptions {
 }
 
 ///|
-/// Producers of `verify-manifest.json` that the validation tooling accepts.
-/// The legacy producer is `scripts/record-shell-runtime-smoke.mjs`; the new
-/// producer is `moui_cli`. Both are considered authoritative.
+/// Canonical producer of `verify-manifest.json`.
 let verify_manifest_generated_by_canonical : String = "moui_cli"
-
-///|
-let verify_manifest_generated_by_legacy : String = "scripts/record-shell-runtime-smoke.mjs"
 
 ///|
 fn verify_usage() -> String {
   (
     #|Usage: moui verify <platform> <app> [options]
     #|
-    #|Verify mobile app runtime evidence against the managed shell contract.
+    #|Verify mobile app runtime evidence for the window-hosted path.
     #|Build artifacts must exist under artifacts/<platform>/<app>/ and the
-    #|device must be connected. The produced `verify-manifest.json` mirrors
-    #|the schema from `scripts/record-shell-runtime-smoke.mjs`.
+    #|device must be connected. The command writes `verify-manifest.json`.
     #|
     #|Arguments:
     #|  platform     Target platform: android, ios, or harmonyos.
-    #|  app          Application id (matches shell.json `id`).
+    #|  app          Application id (matches moui.mobile.json `id`).
     #|
     #|Options:
     #|  --device ID             Target device id. Defaults to the first device.
@@ -158,9 +150,7 @@ fn find_verify_artifact(
 }
 
 ///|
-/// Render the verify manifest as JSON. The schema mirrors the one produced
-/// by `scripts/record-shell-runtime-smoke.mjs` for compatibility with the
-/// existing `validate-shell-runtime-manifest.mjs` validator.
+/// Render the canonical window-hosted verify manifest as JSON.
 fn verify_manifest_to_json(
   platform : String,
   app_id : String,
@@ -170,7 +160,7 @@ fn verify_manifest_to_json(
 ) -> Json {
   let fields : Map[String, Json] = Map([])
   fields["schemaVersion"] = Json::number(1.0)
-  fields["mode"] = Json::string("shell-runtime-smoke")
+  fields["mode"] = Json::string("window-hosted-runtime-verify")
   fields["generatedBy"] = Json::string(verify_manifest_generated_by_canonical)
   fields["platform"] = Json::string(platform)
   fields["app"] = Json::string(app_id)
@@ -200,12 +190,9 @@ fn verify_manifest_to_json(
 }
 
 ///|
-/// Check whether a `generatedBy` value is one of the accepted producers.
-/// Both `"moui_cli"` and `"scripts/record-shell-runtime-smoke.mjs"` are
-/// considered authoritative for `verify-manifest.json`.
+/// Check whether a `generatedBy` value is the canonical producer.
 fn is_accepted_generated_by(value : String) -> Bool {
-  value == verify_manifest_generated_by_canonical ||
-  value == verify_manifest_generated_by_legacy
+  value == verify_manifest_generated_by_canonical
 }
 
 ///|
@@ -280,13 +267,12 @@ fn run_verify(parsed : ParsedVerify, host : HostPlatform) -> CliOutcome {
       verify_usage(),
     )
   }
-  // 1. Read shell.json for the app.
-  let project_root = "."
-  let app = match read_shell_app(project_root) {
+  // 1. Read mobile metadata for the app.
+  let app = match read_mobile_app(".") {
     Ok(a) => a
     Err(message) =>
       return failed_outcome(
-        "could not read shell.json: " + message,
+        "could not read moui.mobile.json: " + message,
         parsed.json,
         verify_usage(),
       )

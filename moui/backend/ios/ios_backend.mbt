@@ -1,5 +1,5 @@
 ///|
-/// Window-hosted native surface handle (no moui_shell).
+/// Window-hosted native surface handle.
 pub(all) struct IosViewHandle {
   raw : UInt64
 } derive(Eq, Debug, ToJson)
@@ -20,41 +20,6 @@ pub fn IosViewHandle::raw(self : IosViewHandle) -> UInt64 {
 }
 
 ///|
-/// **Deprecated (ADR 0015):** Embedding API retired; returns 0.
-pub fn ios_shell_embedding_api_version() -> Int {
-  0
-}
-
-///|
-/// **Deprecated (ADR 0015):** shell platform descriptors removed with moui_shell.
-pub fn ios_shell_descriptor_retired() -> Unit {
-  ()
-}
-
-///|
-pub fn ios_shell_renderer_configure(mode : String) -> Bool {
-  @embedded_runtime_session.shell_renderer_configure(mode)
-}
-
-///|
-pub fn ios_shell_renderer_selection(
-  gpu_available~ : Bool,
-) -> @render.NativeRendererSelection {
-  @embedded_runtime_session.shell_renderer_selection(
-    @render.NativeGpuPlatform::Ios,
-    gpu_available~,
-  )
-}
-
-///|
-pub fn ios_shell_renderer_status_json(gpu_available~ : Bool) -> String {
-  @embedded_runtime_session.shell_renderer_status_json(
-    @render.NativeGpuPlatform::Ios,
-    gpu_available~,
-  )
-}
-
-///|
 pub(all) struct IosBackendCapabilities {
   embedded_view : Bool
   external_event_loop : Bool
@@ -71,12 +36,12 @@ pub(all) struct IosBackendCapabilities {
 } derive(Eq, Debug, ToJson)
 
 ///|
-/// `ready` means the managed-shell host path is usable for app development
+/// `ready` means the window-hosted path is usable for app development
 /// and demos (aligned with Linux host usability). It does **not** mean full
 /// L3 runtime promotion or GPU seven-gate claims.
 ///
-/// `status` is a coarse evidence class: `runtime_partial` until managed
-/// SwiftUI matching-simulator smoke and presenter verification close gaps.
+/// `status` is a coarse evidence class: `runtime_partial` until window-hosted
+/// matching-simulator smoke and presenter verification close gaps.
 pub(all) struct IosBackendReadiness {
   ready : Bool
   status : String
@@ -146,8 +111,8 @@ pub fn IosRendererProvider::has_async_image_loader(
 
 ///|
 pub fn ios_service_capabilities() -> @host.HostServiceCapabilities {
-  // Host services: redesign as window host services (ADR 0015); Embedding channel is removal target
-  // adapters. Matching-simulator evidence remains partial (see readiness.status).
+  // Platform callbacks supply window-hosted services. Matching-simulator
+  // evidence remains partial (see readiness.status).
   @host.HostServiceCapabilities::new(clipboard=true)
 }
 
@@ -189,12 +154,11 @@ pub fn ios_readiness() -> IosBackendReadiness {
     ready: true,
     status: "runtime_partial",
     blocked_by: [
-      "managed SwiftUI shell matching-simulator smoke still needs re-recording with --require-passed",
+      "window-hosted iOS matching-simulator smoke still needs re-recording with --require-passed",
       "physical-device and real VoiceOver observations remain open", "GPU seven-gate promotion is not claimed (gpuPromotionEvidence.claimed=false)",
     ],
     next_steps: [
-      "re-run MoUI Showcase managed SwiftUI smoke on Simulator without shell probes",
-      "record actualPresenterRoute metal-direct evidence in checks/platforms/ios.json",
+      "re-run MoUI Showcase window-hosted smoke on Simulator", "record actualPresenterRoute metal-direct evidence in checks/platforms/ios.json",
       "land GPU seven-gate claim only after matching-host promotion manifests pass",
     ],
   }
@@ -205,13 +169,13 @@ pub fn backend_info() -> IosBackendInfo {
   {
     host_info: @host.HostAppInfo::new(
       backend=@host.HostBackendKind::Native,
-      description="iOS window-hosted native host (HostCmd/ApplicationHandler); managed shell/Embedding are removal targets (ADR 0015)",
+      description="iOS window-hosted native host (HostCmd/ApplicationHandler)",
     ),
     capabilities: ios_capability_matrix(),
     services: ios_service_capabilities(),
     input: ios_input_capabilities(),
     readiness: ios_readiness(),
-    description: "iOS backend exposes an embedded-session contract: the managed shell supplies a view/Metal surface, forwards lifecycle/input callbacks, and selects a Skia renderer provider. Host path is usable for development (ready=true, status=runtime_partial). It is not product-complete until managed-shell matching-simulator L3 and presenter verification close remaining gaps.",
+    description: "iOS backend exposes a native-session contract: wzzc-dev/window/ios supplies a view/Metal surface and lifecycle/input callbacks, while the backend selects a Skia renderer provider. The host path is usable for development (ready=true, status=runtime_partial). It is not product-complete until window-hosted matching-simulator L3 and presenter verification close remaining gaps.",
   }
 }
 
@@ -232,8 +196,8 @@ pub fn ios_capability_summary(
     async_services=true,
     native_accessibility_available=true,
     web_view_available=false,
-    web_view_description="iOS native WKWebView embedding is not part of the current shell host contract.",
-    description="iOS embedded native host with window HostCmd lifecycle and ApplicationHandler session. IME/clipboard/a11y re-home off Embedding (ADR 0015). Runtime evidence remains partial.",
+    web_view_description="iOS native WKWebView is not part of the current mobile host contract.",
+    description="iOS native host with window HostCmd lifecycle and an ApplicationHandler session. The window host owns lifecycle, surface, input, IME, clipboard, and accessibility adaptation. Runtime evidence remains partial.",
   )
 }
 

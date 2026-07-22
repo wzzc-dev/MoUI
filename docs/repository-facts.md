@@ -9,7 +9,6 @@ This file is generated from repository manifests and validator reports.
 | Member |
 |---|
 | ./moui |
-| ./moui_shell |
 | ./moui_i18n |
 | ./moui_richtext |
 | ./moui_tester |
@@ -17,6 +16,8 @@ This file is generated from repository manifests and validator reports.
 | ./moui_devtools |
 | ./moui_agent |
 | ./moui_agent_mcp |
+| ./window/modules/window |
+| ./window/modules/windowing |
 | ./examples/agent_counter |
 | ./tools |
 | ./moui_cli |
@@ -57,8 +58,8 @@ This file is generated from repository manifests and validator reports.
 | runtime facade (moui/runtime/pkg.generated.mbti) | 428 | 284 | 9 |
 | core (moui/core/pkg.generated.mbti) | 1830 | 505 | 139 |
 | views facade (moui/views/pkg.generated.mbti) | 1213 | 548 | 19 |
-| host contracts (moui/backend/host/pkg.generated.mbti) | 1106 | 454 | 65 |
-| renderer facade (moui/render/pkg.generated.mbti) | 550 | 148 | 37 |
+| host contracts (moui/backend/host/pkg.generated.mbti) | 1107 | 454 | 65 |
+| renderer facade (moui/render/pkg.generated.mbti) | 552 | 148 | 37 |
 | skia renderer (moui/render/skia/pkg.generated.mbti) | 189 | 108 | 4 |
 | sun renderer (moui/render/sun/pkg.generated.mbti) | 230 | 138 | 1 |
 | webgpu adapter (moui/render/webgpu_adapter/pkg.generated.mbti) | 143 | 60 | 2 |
@@ -89,26 +90,27 @@ This file is generated from repository manifests and validator reports.
 
 ## Platform Status
 
-| Platform | Build/source | Renderer L2 | Runtime L3 | Shell | API/ABI | Deployment floor | Toolchain floor | Declared presenter | Actual presenter |
-|---|---|---|---|---|---|---|---|---|---|
-| android | passed | partial | partial | managed-kotlin | 1/1 | Android 23 | AGP 9.2.1 / Kotlin 2.2.10 / Gradle 9.6.1 / JVM 17 / compile SDK 36 / target SDK 35 / NDK 28.2 / CMake 3.22.1 | vulkan-direct | unverified |
-| harmonyos | passed | partial | partial | managed-arkts-xcomponent | 1/1 | HarmonyOS API 20 | HarmonyOS SDK API 21 / target API 21 / model 6.0.1 | egl-direct | unverified |
-| ios | passed | partial | partial | managed-swiftui | 1/1 | iOS 15.0 | Xcode 15.4 / Swift 5 | metal-direct | unverified |
-| linux | passed | passed | partial | native-wayland | 0/0 | Wayland compositor | Clang/GCC with Wayland and Vulkan | vulkan-wayland-direct | vulkan-wayland-direct |
-| macos | passed | passed | passed | native-window | 0/0 | current supported macOS runner | Apple Clang with Metal | metal-direct | metal-direct |
-| web | passed | passed | passed | browser | 0/0 | WebAssembly GC browser | MoonBit wasm-gc | browser-webgpu | browser-webgpu |
-| windows | passed | passed | partial | native-window | 0/0 | Windows 10 | MSVC 2022 | d3d12-direct | d3d12-direct |
+| Platform | Build/source | Renderer L2 | Runtime L3 | Host | Deployment floor | Toolchain floor | Declared presenter | Actual presenter |
+|---|---|---|---|---|---|---|---|---|
+| android | partial | partial | partial | window-hosted-android | Android 23 | AGP 9.2.1 / Kotlin 2.2.10 / Gradle 9.6.1 / JVM 17 / compile SDK 36 / target SDK 35 / NDK 28.2 / CMake 3.22.1 | vulkan-direct | unverified |
+| harmonyos | partial | partial | partial | window-hosted-harmonyos | HarmonyOS API 20 | HarmonyOS SDK API 21 / target API 21 / model 6.0.1 | egl-direct | unverified |
+| ios | partial | partial | partial | window-hosted-ios | iOS 15.0 | Xcode 15.4 / Swift 5 | metal-direct | unverified |
+| linux | passed | passed | partial | native-wayland | Wayland compositor | Clang/GCC with Wayland and Vulkan | vulkan-wayland-direct | vulkan-wayland-direct |
+| macos | passed | passed | passed | native-window | current supported macOS runner | Apple Clang with Metal | metal-direct | metal-direct |
+| web | passed | passed | passed | browser | WebAssembly GC browser | MoonBit wasm-gc | browser-webgpu | browser-webgpu |
+| wechat | partial | partial | partial | wechat-mini-program | WeChat Mini Program Skyline Canvas 2D | MoonBit wasm-gc / WeChat Developer Tools | canvas2d-wasm | unverified |
+| windows | passed | passed | partial | native-window | Windows 10 | MSVC 2022 | d3d12-direct | d3d12-direct |
 
 ## Documentation Catalog
 
-Published documents: 45.
+Published documents: 46.
 
 | Group | Documents |
 |---|---:|
 | Get Started (get-started) | 5 |
 | Guides (guides) | 9 |
 | Examples (examples) | 4 |
-| Platforms (platforms) | 13 |
-| Architecture & API (architecture-api) | 5 |
+| Platforms (platforms) | 15 |
+| Architecture & API (architecture-api) | 4 |
 | Contributing (contributing) | 5 |
 | Status & Roadmap (status-roadmap) | 4 |

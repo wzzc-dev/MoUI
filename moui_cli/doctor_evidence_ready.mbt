@@ -1,7 +1,6 @@
 // `moui doctor` evidence scanning. Looks for `verify-manifest.json` under
 // `artifacts/<platform>/<app>/` and summarizes whether runtime evidence is
-// ready per platform. Replaces the legacy `scripts/record-shell-runtime-smoke.mjs`
-// status checks with a pure MoonBit scan.
+// ready per platform with a pure MoonBit scan.
 
 ///|
 priv struct EvidenceStatus {

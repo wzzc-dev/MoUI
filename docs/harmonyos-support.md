@@ -1,338 +1,59 @@
 # HarmonyOS Support
 
-HarmonyOS is a **runtime_partial** embedded Skia route: the managed
-ArkTS/XComponent shell and host session are **usable for development and
-demos** (`backend` reports `ready=true`, `status=runtime_partial`), with
-first-frame and partial runtime evidence. It is **not** product-complete until
-signed-device full L3 smoke and presenter/GPU promotion close remaining gaps.
+HarmonyOS uses the **window-hosted** mobile route and is currently
+`runtime_partial`. `wzzc-dev/window/harmonyos` owns the Stage Ability,
+XComponent surface, lifecycle, and input queue; `moui/backend/harmonyos`
+adapts those callbacks into the MoUI runtime session.
 
-Native XComponent callbacks are the sole source of surface lifecycle, pointer,
-resize, and detach. ArkTS owns `displaySync`, the transparent IME proxy,
-pasteboard, accessibility overlays, and packaging; MoUI owns the runtime
-session and Skia renderer provider contracts.
+## Entry Points
 
-## Ownership
+| Piece | Location |
+|---|---|
+| App logic | `examples/<app>/app` |
+| Mobile metadata | `examples/<app>/moui.mobile.json` |
+| MoonBit entrypoint | `examples/<app>/harmonyos_window_hosted` |
+| HarmonyOS host template | `wzzc-dev/window/harmonyos/template` |
+| MoUI adapter | `moui/backend/harmonyos/window_hosted.mbt` |
 
-- `moui/backend/harmonyos` exposes the platform-neutral embedded-session host
-  contract around `HarmonyOsRuntimeSession`, owns the installed embedding
-  adapter, and registers it with the shell-owned fixed Embedding API v1
-  MoonBit symbols.
-- `moui/backend/harmonyos/skia` wraps `moui/render/skia` and presents copied
-  RGBA frames to a HarmonyOS XComponent native-window handle.
-- `examples/harmonyos_demo/app` owns the platform-neutral TEA demo UI.
-- `examples/harmonyos_demo/harmonyos_skia` installs the demo program and
-  renderer configuration used by the HarmonyOS shell.
-- `moui_shell/harmonyos` owns the canonical ArkTS Stage Ability/XComponent
-  managed shell, generated plugin registry, fixed-ABI NAPI bridge, and CMake
-  template published with the `wzzc-dev/moui` package.
+XComponent callbacks are the sole source for surface, pointer, resize, and
+detach events. The hosted event loop forwards them to
+`HarmonyOsWindowHostedApp`; do not inject a second surface or input route.
 
-The minimum compatible SDK is API 20. Touch movement below the native slop
-remains pointer input. Crossing slop sends one pointer Cancel followed by
-Scroll Begin/Move; Scroll End/Cancel suppresses Pointer Up. The removed ArkTS
-`.onTouch` path must not be reintroduced.
-- Normal builds stage the canonical shell under `artifacts/`; application source
-  does not keep an app-owned native project fixture.
+## Toolchain
 
-## Skia Artifact
+- `HARMONYOS_SDK_HOME` points to the DevEco/OpenHarmony SDK
+- Compatible API 20, target API 21, and model `6.0.1`
+- `hvigorw` and `ohpm` available from the SDK/toolchain setup
 
-The HarmonyOS GPU route uses the locked static `wzzc-dev/skia` release asset:
+Run `moui doctor --platform harmonyos` before a native build.
+
+## Build And Run
 
 ```sh
-MOUI_SKIA_PLATFORM=harmonyos \
-MOUI_SKIA_ARCH=arm64 \
-MOUI_SKIA_LINK_MODE=static
+moon check examples/harmonyos_demo/harmonyos_window_hosted --target native
+moui build harmonyos harmonyos_demo \
+  --mobile-config "$PWD/examples/harmonyos_demo/moui.mobile.json"
+moui run harmonyos harmonyos_demo \
+  --mobile-config "$PWD/examples/harmonyos_demo/moui.mobile.json"
 ```
 
-The pinned release tag is `dev-fcb9c18e54`; the Release arm64 static package is
-`Skia-dev-fcb9c18e54-harmonyos-Release-arm64.zip` with SHA256
-`2819c8c11ca22a504d073c574d558539ef84d388d9c2a049b6a23272969afccb`.
-The dynamic package
-`Skia-dev-fcb9c18e54-harmonyos-Release-arm64-shared.zip` remains available for
-explicit `skia-raster`. It cannot back `auto` / `skia-gpu`: its `libskia.so`
-hides Ganesh internal symbols referenced by the separate
-`libskia_ganesh_ext.a`.
+`--prepare-only` stops before hvigor. `--fallback-skia` is packaging-only
+diagnostic coverage and cannot promote runtime readiness.
 
-If SDK, ohpm, or Skia release downloads fail on a restricted network, configure
-an appropriate system or shell proxy for that machine. The fetch helper honors
-standard `https_proxy`, `http_proxy`, and `all_proxy` environment variables.
-Do not commit machine-local proxy addresses to repository docs or scripts.
-
-## Toolchain Setup
-
-Install the HarmonyOS/OpenHarmony tools with the official DevEco Studio
-distribution. This repository does not install or vendor the SDK, emulator,
-Hvigor, or ohpm.
-
-1. Install DevEco Studio from Huawei Developer downloads.
-2. Open DevEco Studio and install the HarmonyOS/OpenHarmony SDK with SDK
-   Manager. Install an API level compatible with the target emulator or device.
-3. Ensure the SDK includes the native development components. The non-fallback
-   build must be able to find `native/build/cmake/ohos.toolchain.cmake` under
-   the SDK root.
-4. Ensure DevEco command-line tools are installed:
-   - `hdc` under the SDK `toolchains` directory for install, launch, screenshot,
-     and file transfer.
-   - `hvigorw` under DevEco Studio's `tools/hvigor/bin` directory for real HAP
-     packaging.
-   - `ohpm` under DevEco Studio's `tools/ohpm/bin` directory for project
-     dependency installation.
-5. Install repository-level prerequisites available on `PATH`: `moon`, `node`,
-   `cmake`, and `zip`. `ninja` is optional; the build helper uses it when
-   available.
-6. Ensure `MOON_HOME` points at a MoonBit installation containing
-   `lib/runtime.c` and `include/moonbit.h`. The default is `$HOME/.moon`.
-
-Use `HARMONYOS_SDK_HOME` as the canonical SDK environment variable. Set
-`OHOS_SDK_HOME` only as a fallback for existing local setups:
+## Validation And Evidence
 
 ```sh
-export HARMONYOS_SDK_HOME="/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony"
-export PATH="$HARMONYOS_SDK_HOME/toolchains:$PATH"
-
-# export HARMONYOS_SDK_HOME=/path/to/DevEco/sdk/default/openharmony
-# export PATH="$HARMONYOS_SDK_HOME/toolchains:$PATH"
-
-test -f "$HARMONYOS_SDK_HOME/native/build/cmake/ohos.toolchain.cmake" && echo ok
-hdc version
-cmake --version
-moon version
-node --version
+sh scripts/window-hosted-hostsim-smoke.sh
+moon test moui/backend/harmonyos --target native
 ```
 
-For non-standard DevEco layouts, pass paths explicitly:
+A device or HVD claim requires first frame, input, surface detach/recreate,
+IME, clipboard, accessibility, and async-image observations. Signed-device
+evidence is required before treating `checks/platforms/harmonyos.json` as more
+than `partial`.
 
-```sh
-scripts/build-harmonyos-demo-app.sh \
-  --sdk-home /path/to/openharmony-sdk \
-  --hvigorw /path/to/hvigorw \
-  --ohpm /path/to/ohpm
-```
+## Status
 
-The script auto-detects common macOS DevEco Studio locations, but those paths
-are conveniences only. They are not project requirements.
-
-## Local Commands
-
-Use fallback checks for ordinary package and shell validation:
-
-```sh
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test moui/backend/harmonyos --target native
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test moui/backend/harmonyos/skia --target native
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test examples/harmonyos_demo/app --target native
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/harmonyos_demo/harmonyos_skia --target native
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/showcase/harmonyos_skia --target native
-bash -n scripts/build-harmonyos-demo-app.sh
-bash -n scripts/build-showcase-harmonyos-hap.sh
-scripts/build-harmonyos-demo-app.sh --fallback-skia
-scripts/build-component-gallery-harmonyos-hap.sh --fallback-skia
-```
-
-Managed external apps keep only `shell.json` and the MoonBit entrypoint, then
-invoke:
-
-```sh
-moui build harmonyos <id> \
-  --app-config shell.json
-```
-
-Use `moui shell eject harmonyos --output harmonyos_app` only when application
-requirements exceed the managed plugin contract. Subsequent builds must pass
-`--ejected-shell --harmonyos-project harmonyos_app`; MoUI validates the lock
-versions but never overwrites that project.
-
-Use a HarmonyOS/OpenHarmony SDK for non-fallback native builds. The build helper
-uses `HARMONYOS_SDK_HOME` first and `OHOS_SDK_HOME` as a fallback:
-
-```sh
-HARMONYOS_SDK_HOME=/path/to/HarmonyOS/Sdk \
-MOUI_SKIA_PLATFORM=harmonyos \
-MOUI_SKIA_ARCH=arm64 \
-MOUI_SKIA_LINK_MODE=static \
-scripts/build-harmonyos-demo-app.sh
-```
-
-Build Showcase with the same route:
-
-```sh
-HARMONYOS_SDK_HOME=/path/to/HarmonyOS/Sdk \
-MOUI_SKIA_PLATFORM=harmonyos \
-MOUI_SKIA_ARCH=arm64 \
-MOUI_SKIA_LINK_MODE=static \
-scripts/build-component-gallery-harmonyos-hap.sh
-```
-
-`--fallback-skia` validates MoonBit C generation, native glue compilation, and
-staged HAP layout only. It does not prove renderer or platform runtime support.
-
-All HarmonyOS mobile build wrappers also accept
-`--renderer auto|skia-gpu|skia-raster`. For real Skia packages, `auto` and
-`skia-gpu` select GPU (`gpuPromoted: true`); fallback-Skia and explicit
-`skia-raster` stay on the CPU presenter. With `MOUI_SKIA_LINK_MODE` unset, the
-builder selects static for GPU and dynamic for raster. Forcing dynamic with
-`auto` / `skia-gpu` fails before the native build because the locked shared
-provider does not export the Ganesh symbols required by the GPU extension.
-
-## Emulator Setup And Smoke
-
-Install the emulator through DevEco Studio rather than this repository:
-
-1. Open DevEco Studio's Device Manager.
-2. Download the required emulator runtime/image and create a virtual device
-   matching the SDK API level used for the build.
-3. Start the emulator from Device Manager.
-4. Confirm the command-line bridge can see it:
-
-```sh
-HDC="$HARMONYOS_SDK_HOME/toolchains/hdc"
-"$HDC" list targets
-```
-
-If using the DevEco emulator CLI directly on macOS, pass `-path` as the parent
-directory containing the named device folder, not the device folder itself:
-
-```sh
-EMU="/Applications/DevEco-Studio.app/Contents/tools/emulator/Emulator"
-HVD="MateBook Pro"
-HVD_ROOT="$HOME/.Huawei/Emulator/deployed"
-IMAGE_ROOT="$HOME/Library/Huawei/Sdk"
-
-"$EMU" -hvd "$HVD" -path "$HVD_ROOT" -imageRoot "$IMAGE_ROOT"
-```
-
-Build a non-fallback HAP with the real HarmonyOS Skia artifact:
-
-```sh
-HARMONYOS_SDK_HOME=/path/to/DevEco/sdk/default/openharmony \
-MOUI_SKIA_PLATFORM=harmonyos \
-MOUI_SKIA_ARCH=arm64 \
-MOUI_SKIA_LINK_MODE=static \
-scripts/build-harmonyos-demo-app.sh
-```
-
-Install, launch, and capture a screenshot:
-
-```sh
-export HARMONYOS_SDK_HOME=/path/to/DevEco/sdk/default/openharmony
-# export HARMONYOS_SDK_HOME="/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony"
-export PATH="$HARMONYOS_SDK_HOME/toolchains:$PATH"
-
-HDC="$HARMONYOS_SDK_HOME/toolchains/hdc"
-HAP=artifacts/harmonyos/harmonyos_demo/MoUIHarmonyOSDemo.hap
-
-hdc version
-"$HDC" install -r "$HAP"
-"$HDC" shell aa start -a EntryAbility -b dev.wzzc.moui.harmonyosdemo -m entry
-"$HDC" shell snapshot_display -f /data/local/tmp/moui-harmonyos-demo.jpeg
-"$HDC" file recv \
-  /data/local/tmp/moui-harmonyos-demo.jpeg \
-  artifacts/harmonyos/harmonyos_demo/moui-harmonyos-demo.jpeg
-```
-
-Stop the emulator from Device Manager after collecting evidence. If using the
-DevEco emulator CLI directly, use the virtual device name and deployed/image
-roots configured on that machine.
-
-## Runtime Evidence Boundary
-
-Three evidence layers stay separate: **product GPU default** (source/`auto`),
-**mobile runtime smoke**, and **seven-gate GPU promotion claim**.
-
-| Layer | Current state (2026-07-15) | Path / note |
-| --- | --- | --- |
-| Product GPU default | `auto` → `SkiaGpuNative` / `egl-gpu` when available | Source `gpu_promoted=true`; rebuild HAP with `--renderer auto` |
-| Packaging (L1) | Non-fallback Showcase HAP with GPU flags | `artifacts/harmonyos/showcase/shell-build.json` → `selected=skia-gpu`, `gpuPromoted=true` |
-| First-frame pixels | Historical Component Gallery device + **emulator smoke screenshots** | `resource/screenshots/harmonyos-componentgallery.png`; old smoke PNGs under `artifacts/mobile-runtime/harmonyos/component_gallery/` are not Showcase evidence |
-| Shell runtime smoke (L2) | Showcase managed-shell evidence pending; commercial hosts require Huawei/DevEco signing material | Service-smoke + attach/resize log paths are in tree (`Index.ets`, NAPI attach markers, `record-shell-runtime-smoke.mjs`). Commercial MateBook-class installs reject unsigned / OpenHarmony-community HAPs (`9568320` / `9568257`). Set `MOUI_HARMONYOS_SIGNING_CONFIG(_FILE)` and run `scripts/harmonyos-shell-runtime-evidence.sh` for `--require-passed`. |
-| GPU promotion claim (L3) | Scaffold only | `artifacts/gpu-promotion/harmonyos/scaffold-latest/` (`gpuPromoted=false`, not a claim) |
-
-### GPU feasibility proof (L1 + L2, emulator 2026-07-15)
-
-DevEco **MateBook Pro** HVD (`hdc` target `127.0.0.1:5557`). Rebuild + smoke:
-
-```sh
-export HARMONYOS_SDK_HOME="${HARMONYOS_SDK_HOME:-/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony}"
-export PATH="$HARMONYOS_SDK_HOME/toolchains:$PATH"
-# Start HVD via Device Manager or:
-# Emulator -hvd "MateBook Pro" -path "$HOME/.Huawei/Emulator/deployed" -imageRoot "$HOME/Library/Huawei/Sdk"
-hdc list targets
-
-scripts/build-shell-harmonyos-hap.sh --app showcase --renderer auto
-node scripts/record-shell-runtime-smoke.mjs \
-  --platform harmonyos --app showcase --device 127.0.0.1:5557
-node scripts/validate-shell-runtime-manifest.mjs \
-  artifacts/shell-runtime/harmonyos/showcase/shell-runtime-smoke.json
-```
-
-**Required GPU log markers** (`hilog -T MoUIHarmony` / `runtime-stream.log`):
-
-```text
-moui-shell renderer configure requested=auto ok=1 status={
-  "platform":"harmonyos","requested":"auto",
-  "selected":"skia-gpu-native","surfaceRoute":"egl-gpu",
-  "gpuAvailable":true,"gpuPromoted":true,"fallbackReason":null}
-egl present ok=1 swap=1 w=… h=…
-```
-
-**True GPU direct present** = configure GPU **and** `egl present ok=1` from
-`eglSwapBuffers` (HostGpuPresentTarget). That is **not** the CPU path
-`present flushed native window` (sticky raster recovery only).
-
-**Proven on HVD (2026-07-15):** lifecycle attach, nonblank UI, a11y tree,
-async-image ready, clean process survival, **EGL GPU selected**, and
-**`egl present ok=1` host-gpu direct present** (no sticky raster / no
-`present flushed` on the success path).  
-**Still pending for full `passed`:** commercial/device install with Huawei
-signing material, then detach, resize, representative input/scroll, clipboard
-round-trip, a11y focus/action, `realDeviceSigning`. Shell-side service-smoke and
-attach/resize log markers are already in tree; the current commercial-host
-blocker is HAP signature trust (`9568320` unsigned / `9568257` community PKCS7).
-
-Note: `snapshot_display` on current images requires **`.jpeg`** remote paths; the recorder converts to PNG for `decodePng8`.
-
-Do not mark HarmonyOS support as fully passed until a matching device or
-emulator run also records the following:
-
-- Stage Ability and XComponent lifecycle create, resize, render, and dispose the
-  `HarmonyOsRuntimeSession` (verified via runtime log).
-- Pointer/tap input reaches the standalone demo and changes UI state.
-- Resize and lifecycle events produce a new frame without crashing.
-
-The source route now includes transparent `TextInput` composition/selection,
-text and ArrayBuffer image pasteboard handling, API 20 accessibility virtual
-overlays, and Showcase service-probe smoke. Runtime install on
-commercial hosts still requires a Huawei/DevEco signing material for this
-bundle. A passed manifest must record IME state/edit, clipboard completion,
-accessibility tree/focus/action, async image, application detach, and
-before/after pixels:
-
-```sh
-# Provide DevEco debug/release material for this bundle (commercial hosts):
-# export MOUI_HARMONYOS_SIGNING_CONFIG_FILE=/path/to/signingConfigs.json
-export HARMONYOS_SDK_HOME="${HARMONYOS_SDK_HOME:-/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony}"
-export PATH="$HARMONYOS_SDK_HOME/toolchains:$PATH"
-hdc list targets
-scripts/harmonyos-shell-runtime-evidence.sh
-# or the lower-level pair:
-scripts/build-shell-harmonyos-hap.sh --app showcase --renderer auto
-node scripts/record-shell-runtime-smoke.mjs --platform harmonyos --app showcase --device <hdc-target> --require-passed
-```
-
-Showcase opens `platform/mobile-service-probe` directly. Use it for transparent
-TextInput composition, system pasteboard, accessibility focus/activate,
-portrait-landscape-portrait resize, scrolling, and async-image loading/ready.
-The native bridge logs resize width and height so the recorder can reject a
-duplicate initial XComponent callback. Run with `--device <hdc-target>` and
-keep screen reader interaction manual when the installed `uitest` tool cannot
-drive the platform accessibility focus model.
-
-A physical-device pass must still round-trip a PNG through another app before
-promoting image clipboard support, and must complete the pending service
-observations above for `status=passed`.
-
-The product GPU path requires the static Skia provider and uses EGL/GLES over
-`OHNativeWindow` (Ganesh GL) via
-main-thread `HostGpuPresentTarget` (`eglCreateWindowSurface` +
-`eglSwapBuffers`). Emulator L2 proves `surfaceRoute=egl-gpu`,
-`gpuAvailable=true`, and **`egl present ok=1` direct present**. The raster
-presenter remains for explicit `skia-raster` and sticky recovery after
-present/surface failures only.
+The source path and host-sim route are available, while actual presentation and
+full service evidence are pending. See `docs/platform-readiness-declaration.md`
+and `docs/window-hosted-moui.md` for the readiness boundary.

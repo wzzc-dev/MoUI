@@ -425,7 +425,7 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "renderer facade",
       path: "moui/render/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/render\"",
-      max_lines: 550,
+      max_lines: 552,
       max_pub_lines: 150,
       max_pub_all_lines: 40,
       required_tokens: [

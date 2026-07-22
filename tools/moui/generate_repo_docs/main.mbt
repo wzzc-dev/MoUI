@@ -42,9 +42,7 @@ struct PlatformRow {
   source_status : String
   renderer_status : String
   runtime_status : String
-  shell_kind : String
-  shell_api : Int
-  runtime_abi : Int
+  host_kind : String
   deployment_floor : String
   toolchain_floor : String
   declared_presenter_route : String
@@ -60,9 +58,7 @@ struct MobilePlatformContractFacts {
   source_matrix_command : String
   renderer_status : String
   runtime_status : String
-  shell_kind : String
-  shell_api : Int
-  runtime_abi : Int
+  host_kind : String
   declared_presenter_route : String
   actual_presenter_route : String
   presenter_evidence_status : String
@@ -399,11 +395,11 @@ fn platform_fact_status(
 }
 
 ///|
-fn mobile_shell_kind(platform : String) -> String? {
+fn mobile_host_kind(platform : String) -> String? {
   match platform {
-    "android" => Some("managed-kotlin")
-    "ios" => Some("managed-swiftui")
-    "harmonyos" => Some("managed-arkts-xcomponent")
+    "android" => Some("window-hosted-android")
+    "ios" => Some("window-hosted-ios")
+    "harmonyos" => Some("window-hosted-harmonyos")
     _ => None
   }
 }
@@ -413,29 +409,21 @@ fn validate_mobile_platform_contract(
   facts : MobilePlatformContractFacts,
   label : String,
 ) -> Result[Unit, String] {
-  let expected_shell_kind = match mobile_shell_kind(facts.platform) {
+  let expected_host_kind = match mobile_host_kind(facts.platform) {
     Some(value) => value
     None => return Ok(())
   }
-  if facts.shell_kind != expected_shell_kind {
+  if facts.host_kind != expected_host_kind {
     return Err(
       label +
-      ".shellKind must be " +
-      expected_shell_kind +
+      ".hostKind must be " +
+      expected_host_kind +
       " for " +
       facts.platform,
     )
   }
-  if facts.shell_api != 1 || facts.runtime_abi != 1 {
-    return Err(
-      label + ": managed mobile shells require shell API 1 and runtime ABI 1",
-    )
-  }
-  if facts.source_fact_statuses.length() != 3 {
-    return Err(
-      label +
-      ".sourceBuild must record managed, clean-ejected, and plugin facts",
-    )
+  if facts.source_fact_statuses.length() != 1 {
+    return Err(label + ".sourceBuild must record the windowHosted fact")
   }
   let expected_source_status = if facts.source_fact_statuses.any(status => {
       status == "failed"
@@ -449,7 +437,7 @@ fn validate_mobile_platform_contract(
   if facts.source_status != expected_source_status {
     return Err(
       label +
-      ".sourceBuild.status must aggregate managed, cleanEjected, and pluginFixture as " +
+      ".sourceBuild.status must aggregate windowHosted as " +
       expected_source_status,
     )
   }
@@ -457,13 +445,13 @@ fn validate_mobile_platform_contract(
     !facts.source_verified_on.contains("-") {
     return Err(label + ".sourceBuild.verifiedOn must be an ISO date")
   }
-  let expected_matrix_command = "run-shell-matrix.sh " + facts.platform
+  let expected_matrix_command = "moui build " + facts.platform
   if !facts.source_matrix_command.contains(expected_matrix_command) {
     return Err(
       label +
-      ".sourceBuild.matrixCommand must run the " +
+      ".sourceBuild.matrixCommand must build the " +
       facts.platform +
-      " shell matrix",
+      " window-hosted template",
     )
   }
   if facts.actual_presenter_route == "unverified" {
@@ -550,24 +538,11 @@ fn read_platform_rows(
       let declared_presenter_route = nested_string(
         fields, "rendererL2", "presenterRoute", path,
       ).or_raise()
-      let shell_api = json_int(
-        fields.get("shellApiVersion"),
-        path + ".shellApiVersion",
-      ).or_raise()
-      let runtime_abi = json_int(
-        fields.get("embeddingApiVersion"),
-        path + ".embeddingApiVersion",
-      ).or_raise()
-      if shell_api < 0 || runtime_abi < 0 {
-        return Err(
-          path + ": shellApiVersion and embeddingApiVersion cannot be negative",
-        )
-      }
       let actual_presenter_route = json_string(
         fields.get("actualPresenterRoute"),
         path + ".actualPresenterRoute",
       ).or_raise()
-      let shell_kind = json_string(fields.get("shellKind"), path + ".shellKind").or_raise()
+      let host_kind = json_string(fields.get("hostKind"), path + ".hostKind").or_raise()
       let deployment_floor = json_string(
         fields.get("deploymentFloor"),
         path + ".deploymentFloor",
@@ -576,13 +551,13 @@ fn read_platform_rows(
         fields.get("toolchainFloor"),
         path + ".toolchainFloor",
       ).or_raise()
-      if mobile_shell_kind(platform) is Some(_) {
+      if mobile_host_kind(platform) is Some(_) {
         let source = match fields.get("sourceBuild") {
           Some(value) => json_object(value, path + ".sourceBuild").or_raise()
           None => return Err(path + ".sourceBuild is missing")
         }
         let source_fact_statuses : Array[String] = []
-        for key in ["managed", "cleanEjected", "pluginFixture"] {
+        for key in ["windowHosted"] {
           source_fact_statuses.push(
             platform_fact_status(source.get(key), path + ".sourceBuild." + key).or_raise(),
           )
@@ -607,9 +582,7 @@ fn read_platform_rows(
             ).or_raise(),
             renderer_status,
             runtime_status,
-            shell_kind,
-            shell_api,
-            runtime_abi,
+            host_kind,
             declared_presenter_route,
             actual_presenter_route,
             presenter_evidence_status: json_string(
@@ -639,9 +612,7 @@ fn read_platform_rows(
         source_status,
         renderer_status,
         runtime_status,
-        shell_kind,
-        shell_api,
-        runtime_abi,
+        host_kind,
         deployment_floor,
         toolchain_floor,
         declared_presenter_route,
@@ -763,9 +734,9 @@ fn render_repository_facts(
   markdown_line(builder, "## Platform Status")
   markdown_line(builder, "")
   markdown_line(
-    builder, "| Platform | Build/source | Renderer L2 | Runtime L3 | Shell | API/ABI | Deployment floor | Toolchain floor | Declared presenter | Actual presenter |",
+    builder, "| Platform | Build/source | Renderer L2 | Runtime L3 | Host | Deployment floor | Toolchain floor | Declared presenter | Actual presenter |",
   )
-  markdown_line(builder, "|---|---|---|---|---|---|---|---|---|---|")
+  markdown_line(builder, "|---|---|---|---|---|---|---|---|---|")
   for platform in platforms {
     markdown_line(
       builder,
@@ -778,8 +749,8 @@ fn render_repository_facts(
       " | " +
       platform.runtime_status +
       " | " +
-      markdown_cell(platform.shell_kind) +
-      " | \{platform.shell_api}/\{platform.runtime_abi} | " +
+      markdown_cell(platform.host_kind) +
+      " | " +
       markdown_cell(platform.deployment_floor) +
       " | " +
       markdown_cell(platform.toolchain_floor) +

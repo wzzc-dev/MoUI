@@ -2,7 +2,7 @@
 
 MoUI can run on Android / iOS / HarmonyOS using **`wzzc-dev/window`** as the
 winit-style host: `HostCmd` → `EventLoop` → `ApplicationHandler`. Surface and
-input **do not** go through Embedding API v1 `attach_surface` inject.
+input do not go through a second attach/inject bridge.
 
 ## Architecture
 
@@ -15,9 +15,8 @@ window/<platform>/template / native Activity|UIApp|Ability
         → Skia HostWindowRenderer
 ```
 
-`moui_shell` and Embedding API v1 are **removed from the main tree** (ADR 0015); do not reintroduce (see `docs/plans/active/window-only-mobile-no-shell-embedding.md`); do not use them for new mobile work
-(`examples/counter/android_skia`, etc.). The two paths must not drive the same
-surface (no dual-stack).
+The window-hosted route is the only supported mobile path. Do not add a second
+lifecycle, surface, or input bridge beside `HostCmd` and `ApplicationHandler`.
 
 ## Packages
 
@@ -28,7 +27,7 @@ surface (no dual-stack).
 | HarmonyOS bridge | `moui/backend/harmonyos/window_hosted.mbt` (`HarmonyOsWindowHostedApp`) |
 | Counter entries | `examples/counter/{android,ios,harmonyos}_window_hosted` |
 | window contract | `window/docs/mobile-hosted-backend.md` |
-| plan | `docs/plans/active/window-only-mobile-no-shell-embedding.md` |
+| mobile status | `checks/platforms/{android,ios,harmonyos}.json` |
 
 ## Validation
 
@@ -53,9 +52,9 @@ WINDOW_HOSTED_HARMONYOS_HVD=1 sh scripts/window-hosted-vm-smoke.sh
 Window package only:
 
 ```sh
-bash window/scripts/check_android_hosted_smoke.sh
-bash window/scripts/check_ios_hosted_smoke.sh
-bash window/scripts/check_harmonyos_hosted_smoke.sh
+moon test window/modules/window/android --target native
+moon test window/modules/window/ios --target native
+moon test window/modules/window/harmonyos --target native
 ```
 
 ## Status
@@ -66,7 +65,7 @@ bash window/scripts/check_harmonyos_hosted_smoke.sh
 | MoUI window-hosted host-sim | backend tests pass (2026-07-21) |
 | Counter package check | android/ios/harmonyos_window_hosted check pass |
 | Android AVD install + launch | **passed** 2026-07-21 (`moui_api34`, package `dev.wzzc.window.hosted.counter`; native lib + EventLoop started; screenshot under `artifacts/window-hosted-android/`) |
-| iOS Simulator install + launch | **passed** 2026-07-21 after the UIKit host moved into `window/ios/template/Sources` (iPhone 17 sim; `WindowHostedCounter.app`) |
+| iOS Simulator install + launch | **passed** 2026-07-21 after the UIKit host moved into `window/modules/window/ios/template/Sources` (iPhone 17 sim; `WindowHostedCounter.app`) |
 | HarmonyOS HAP build | **passed** 2026-07-21: package-local Stage/XComponent/NAPI template builds `WindowHostedCounter.hap` (unsigned) |
 | HarmonyOS HVD | no target online (`hdc` empty); no device-runtime claim |
 | Showcase Android APK real Skia | **fixed** 2026-07-21: CMake plain/PRIVATE mix + CXX-only Skia flags; `moonbit_skia_available` returns 1 in `artifacts/android/showcase.apk` |
@@ -85,7 +84,7 @@ If the app launches but the surface stays black while iOS shows UI:
 
 ## Non-goals
 
-- Replacing managed shell Embedding services (IME/clipboard/PlatformView product) in one step
+- Claiming unverified IME, clipboard, accessibility, or platform-view support
 - Claiming product_class promotion without matching-host screenshots
 
 

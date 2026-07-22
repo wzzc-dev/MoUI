@@ -9,8 +9,8 @@
 
 Mobile backends reported `ready: false` with blockers such as “lifecycle glue
 is not wired” and Skia preflight `runtime_status=experimental-scaffold`, while
-managed shells, `EmbedderHostChannel` services, packaging matrices, and historical
-runtime smokes already existed. That binary narrative was both too harsh
+window-hosted adapters, `EmbedderHostChannel` services, and host-sim coverage
+already existed. That binary narrative was both too harsh
 (“completely broken”) and too easy to misread against Linux, where `ready: true`
 means host usability, not full L3 green.
 
@@ -23,7 +23,7 @@ runtime evidence, and product promotion.
    - macOS / Web: `committed`
    - Windows / Linux: `committed_with_gaps`
    - Android / iOS / HarmonyOS: `runtime_partial`
-2. Redefine mobile `ready: true` as **managed-shell host path usable for
+2. Redefine mobile `ready: true` as **window-hosted path usable for
    development and demos**, aligned with Linux host usability.
 3. Add mobile `readiness.status = "runtime_partial"` for evidence class.
 4. Set capability/service flags from **code wiring**, not only from complete
@@ -48,7 +48,7 @@ runtime evidence, and product promotion.
 ### Option C: Flip mobile to product-complete
 
 - Pros: simplest marketing story
-- Cons: contradicts managed re-smoke gaps, signing, presenter verification
+- Cons: contradicts matching-device evidence gaps, signing, presenter verification
 
 ## Rationale
 
@@ -60,5 +60,5 @@ truth stays in checks JSON, smoke manifests, and product_class docs.
 
 - Callers must not treat `ready=true` as “L3 passed / seven-gate claimed.”
 - Guidance, README, Gallery, and support docs share one product_class table.
-- Follow-up: managed-shell re-smokes and signed HarmonyOS full suite before any
+- Follow-up: matching-device re-smokes and signed HarmonyOS full suite before any
   product_class promotion.
