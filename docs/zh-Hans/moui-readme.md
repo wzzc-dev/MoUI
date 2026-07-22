@@ -14,7 +14,7 @@ MoUI 是一个多平台 MoonBit GUI 框架，用于构建声明式 UI 应用，�
 | Web | **committed** | 产品主线（wasm-gc + WebGPU） |
 | Windows | **committed_with_gaps** | 产品 L0-L2；完整 L3 runtime 仍不完整 |
 | Linux | **committed_with_gaps** | 产品 L0-L2；交互式 L3 仍不完整 |
-| Android | **runtime_partial** | managed shell + host 路径可用于开发/演示；尚未达到产品完整 |
+| Android | **runtime_partial** | window-hosted 路径可用于开发/演示；尚未达到产品完整 |
 | iOS | **runtime_partial** | 同 Android |
 | HarmonyOS | **runtime_partial** | 同上；签名设备完整 smoke 仍待完成 |
 
@@ -85,7 +85,7 @@ moon check
 moon run macos_skia --target native   # or windows_skia / linux_skia on that host
 ```
 
-`moui new` 会创建共享 app 逻辑、Web 入口以及当前桌面入口。Android、iOS 或 HarmonyOS 需要用 `--platform` 显式添加；mobile 项目使用框架管理的 canonical shell，不会把原生项目复制进应用仓库。参见[入门指南](getting-started.md)。
+`moui new` 会创建共享 app 逻辑、Web 入口以及当前桌面入口。Android、iOS 或 HarmonyOS 需要用 `--platform` 显式添加；mobile 项目使用 `wzzc-dev/window` template 和 `*_window_hosted` 入口，不会把原生项目复制进应用仓库。参见[入门指南](getting-started.md)。
 
 ### 本仓库
 
@@ -124,9 +124,9 @@ node scripts/conformance-capture-scaffold.mjs --mode benchmark
 <a id="running-examples"></a>
 ## 运行示例
 
-重点示例 `showcase`、`markdown_editor`、`mo_workbench` 和 `excel` 在 `examples/<name>/app` 中共享 app 逻辑，并暴露很薄的平台入口。Showcase 使用 `web_wasm`、桌面 renderer 专用入口，以及 `android_skia`、`ios_skia` 和 `harmonyos_skia` mobile 入口。
+重点示例 `showcase`、`markdown_editor`、`mo_workbench` 和 `excel` 在 `examples/<name>/app` 中共享 app 逻辑，并暴露很薄的平台入口。Showcase 使用 `web_wasm`、桌面 renderer 专用入口，以及 `android_window_hosted`、`ios_window_hosted` 和 `harmonyos_window_hosted` mobile 入口。
 
-要在 mobile 平台试用 Showcase，请按平台专用的设置、构建和运行说明操作：[Android](../android-support.md)、[iOS](../ios-support.md) 或 [HarmonyOS](../harmonyos-support.md)。标准示例从 `moui_shell` staging 原生项目；只有应用必须拥有并版本化原生项目时才使用 `moui shell eject`。
+要在 mobile 平台试用 Showcase，请按平台专用的设置、构建和运行说明操作：[Android](../android-support.md)、[iOS](../ios-support.md) 或 [HarmonyOS](../harmonyos-support.md)。标准示例使用 `wzzc-dev/window` template 和 `*_window_hosted` 入口；应用代码不需要维护原生项目副本。
 
 > **Windows 前置条件：** 构建或运行任何 Windows 原生 Skia 入口（`windows_skia`）之前，请在 PowerShell 会话中初始化 MSVC 工具链：
 >

@@ -18,21 +18,21 @@ OS product completeness.
 | **Web** | **committed** | Usable as a product mainline | Daily wasm-gc + browser WebGPU; `checks/platforms/web.json` `runtimeL3=passed` | — |
 | **Windows** | **committed_with_gaps** | Usable as a product mainline (L3 incomplete) | L0–L2 PR/real Skia; `runtimeL3=partial` | Complete IME/service L3 |
 | **Linux** | **committed_with_gaps** | host `ready=true` = implementation path available, **≠** all L3 checks green | L0–L2 + first-frame L3; interactive IME and similar checks are partial | Complete interactive L3 |
-| **Android** | **runtime_partial** | `ready=true`: the managed shell + session are **usable for development/demonstration**; `status=runtime_partial` | Packaging matrix passed; historical legacy-shell CG smoke passed; managed shell and `EmbedderHostChannel` are wired | Managed-shell probe-recorded smoke; device signing; presenter verified; GPU seven-gate claimed |
-| **iOS** | **runtime_partial** | Same as above | Packaging matrix passed; historical UIKit-shell CG smoke passed; managed SwiftUI shell is wired | Managed SwiftUI `--require-passed` recording; device/VoiceOver; presenter/seven-gate |
-| **HarmonyOS** | **runtime_partial** | Same as above | Packaging matrix passed; first-frame/partial HVD observation; managed ArkTS/XComponent is wired | Full `passed` smoke under commercial signing; complete service observation; presenter/seven-gate |
+| **Android** | **runtime_partial** | `ready=true`: the window-hosted template + session are **usable for development/demonstration**; `status=runtime_partial` | `HostCmd` host-sim and MoUI adapter tests pass | Matching-device presenter/service evidence; GPU seven-gate claim |
+| **iOS** | **runtime_partial** | Same as above | `HostCmd` host-sim and MoUI adapter tests pass | Matching simulator/device presenter and VoiceOver evidence; GPU seven-gate claim |
+| **HarmonyOS** | **runtime_partial** | Same as above | `HostCmd` host-sim and MoUI adapter tests pass | Signed-device presenter/service evidence; GPU seven-gate claim |
 | **WeChat Mini Program** | **runtime_partial** | `ready=true`: the window-hosted Canvas 2D session is **usable for development/demonstration**; `status=runtime_partial` | Canvas 2D renderer and wasm-gc build pipeline compile; Skyline project template is staged | Real Mini Program pixel smoke; touch event verification; wx API service integrations |
 
 ### Two Prohibited Misstatements
 
 1. **Do not** state “all six platforms are product-ready / all L3 checks are green.”
-2. **Do not** state “the three mobile platforms are entirely nonfunctional / lifecycle glue is unwired / only a Counter shell exists.” The managed shells, sessions, and IME/clipboard/a11y channels exist; the gap is in the **evidence loop and promotion**, not empty shells.
+2. **Do not** state “the three mobile platforms are entirely nonfunctional / lifecycle glue is unwired / only a Counter app exists.” The window-hosted adapters and IME/clipboard/a11y channels exist; the gap is in the **evidence loop and promotion**, not an absent host path.
 
 ### Do Not Conflate the Three Status Sets
 
 | Dimension | Meaning |
 |------|------|
-| Host availability (`ready`) | Whether development/demonstration can use the managed shell + embedded session (aligned with Linux: implementation complete and usable) |
+| Host availability (`ready`) | Whether development/demonstration can use the window-hosted template + MoUI session (aligned with Linux: implementation complete and usable) |
 | Runtime evidence (`status` / smoke) | Matching-host observation: `passed` / `partial` / packaging-only |
 | Product-completeness commitment | All L3 checks green + `actualPresenterRoute` verified + GPU seven-gate claimed |
 
@@ -359,29 +359,26 @@ SHA `91f596e80d5a5f80d30fa94a8510e5ce4653189e`.
 | Complete Linux platform-service observations | Clipboard images, directory listing, font fallback | Directory listing and clipboard images implemented and tested; first-frame rendering verified | ✅ Completed (code level) |
 | Linux full evidence-manifest update | Write the complete service/IME results to the Linux entry in `platform-runtime-evidence.json` | Complete interactive-input IME runtime observation | One PR |
 
-### 6.3 Android / iOS / HarmonyOS — Embedded Mainline (Service Smoke Partially `passed`)
+### 6.3 Android / iOS / HarmonyOS — Window-hosted Mainline
 
-Android, iOS, and HarmonyOS have all completed first-frame rendering verification
-on matching devices with non-fallback Skia builds (screenshots in
-`resource/screenshots/{android,ios,harmonyos}-componentgallery`, 2026-07-09/10).
-`mobile-build.json` confirms `fallbackSkia: false`.
+The only mobile route is `wzzc-dev/window` `HostCmd` → `EventLoop` →
+`ApplicationHandler` → MoUI `*WindowHostedApp`. Host-sim coverage verifies the
+template callback path, backend adapters, and Counter entrypoints without an
+emulator:
 
-Current complete mobile-runtime smoke (`--require-passed`) status (2026-07-15):
+```sh
+sh scripts/window-hosted-hostsim-smoke.sh
+```
 
-| Platform | Status | Path |
+| Platform | Current evidence | Remaining work |
 |------|--------|------|
-| Historical iOS Component Gallery | Release N UIKit shell **`passed`**; not Showcase evidence | `artifacts/mobile-runtime/ios/component_gallery/` |
-| Historical Android Component Gallery | Release N legacy shell **`passed`**; not Showcase evidence | `artifacts/mobile-runtime/android/component_gallery/` |
-| Showcase managed mobile shells | Android/iOS/HarmonyOS matching-device evidence pending | `artifacts/shell-runtime/<platform>/showcase/` |
-| HarmonyOS commercial/device | Canonical ArkTS shell **`partial`**; signed full-suite rerun pending | Requires `MOUI_HARMONYOS_SIGNING_CONFIG(_FILE)` + `scripts/harmonyos-shell-runtime-evidence.sh` |
+| Android | host-sim and package checks | matching-device presentation, input, lifecycle, and service evidence |
+| iOS | host-sim and package checks | matching simulator/device presentation, input, lifecycle, and service evidence |
+| HarmonyOS | host-sim and package checks | signed-device presentation, input, lifecycle, and service evidence |
 
-Orchestration scripts: `scripts/ios-shell-runtime-evidence.sh`,
-`scripts/android-shell-runtime-evidence.sh`, and
-`scripts/harmonyos-shell-runtime-evidence.sh`.
-CI: `moui-ios-shell-runtime-evidence.yml`,
-`moui-android-shell-runtime-evidence.yml` (self-hosted Android), and
-`moui-harmonyos-shell-runtime-evidence.yml` (self-hosted HarmonyOS + signing
-materials).
+Use `scripts/window-hosted-vm-smoke.sh` with one of
+`WINDOW_HOSTED_ANDROID_AVD=1`, `WINDOW_HOSTED_IOS_SIM=1`, or
+`WINDOW_HOSTED_HARMONYOS_HVD=1` when the corresponding target is available.
 
 The GPU seven-gate (`gpuPromotionEvidence.claimed=true`) remains an independent
 L3 quality declaration and is not claimed in this round.

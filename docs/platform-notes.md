@@ -60,27 +60,13 @@ response.
 Native renderer choice is package selection, not a field on host-core app
 options. Use `backend/<platform>/skia` for the native Skia raster mainline.
 Use `backend/<platform>/wgpu` only for native WGPU experimental diagnostics.
-Android and iOS are exceptions to the desktop event-loop shape:
-`backend/android` currently exposes an embedded-session contract that must be
-driven by the package-owned Kotlin/AndroidX managed shell with registered JNI,
-a PlatformView overlay, and an `ANativeWindow` handle, while
-`backend/ios` exposes an embedded-session contract driven by the package-owned
-SwiftUI shell with a raw `CAMetalLayer`-backed `UIView` handle and a narrow ABI
-v1 Objective-C++ bridge. Repository wrappers stage those canonical projects by
-default. App-owned native projects are explicit `moui shell eject` outputs, not
-checked-in example fixtures. Fallback APK/`.app` builds are build-system
-evidence only; treat both routes as experimental until matching
-device/simulator runtime smoke evidence exists.
-
-`backend/harmonyos` follows the same embedded-session shape through the
-package-owned ArkTS `MoUIRoot`. Native XComponent callbacks exclusively own
-surface/input/resize/detach, while ArkTS owns `displaySync` and platform
-services. The default repository wrapper stages the canonical shell; apps that
-need to own a HarmonyOS project use the explicit eject workflow.
-The Skia provider preflights `moui_skia/native` availability before handing
-control to the host app runner. Fallback builds therefore return with a clear
-diagnostic instead of opening a platform window that later fails to attach a
-renderer.
+Android, iOS, and HarmonyOS use `wzzc-dev/window` rather than a separate MoUI
+mobile host. The template sends `HostCmd` through its `EventLoop` to the
+matching `*WindowHostedApp`, which assembles the MoUI runtime session and
+renderer. Lifecycle, surface, and input must not bypass this route. HarmonyOS
+XComponent callbacks are the sole source for surface, pointer, resize, and
+detach. Fallback builds are build-system evidence only; matching-device or
+simulator smoke is still required for a runtime claim.
 
 Current-platform provider tests are included by
 `sh scripts/check.sh --profile platform`. Run provider packages
@@ -183,12 +169,12 @@ For detailed platform-specific setup, requirements, and runtime evidence:
   auto-detection, and host architecture.
 - [Linux](platform-notes-linux.md) — Wayland host, runtime requirements, Skia provider,
   runtime evidence, and remaining gaps.
-- [Android](android-support.md) (**runtime_partial**) — managed Kotlin/AndroidX shell,
-  embedded session, APK packaging, historical runtime smoke; not product-complete.
-- [iOS](ios-support.md) (**runtime_partial**) — managed SwiftUI/Xcode shell,
-  Simulator packaging, historical UIKit smoke; managed re-proof pending.
-- [HarmonyOS](harmonyos-support.md) (**runtime_partial**) — managed ArkTS/XComponent shell,
-  HAP packaging, first-frame/partial smoke; signed full L3 pending.
+- [Android](android-support.md) (**runtime_partial**) — window-hosted Activity,
+  APK packaging, and matching-device evidence requirements.
+- [iOS](ios-support.md) (**runtime_partial**) — window-hosted UIKit template,
+  simulator packaging, and matching-device evidence requirements.
+- [HarmonyOS](harmonyos-support.md) (**runtime_partial**) — window-hosted
+  Stage Ability/XComponent template, HAP packaging, and signed-device evidence requirements.
 - [WeChat Mini Program](wechat-support.md) (**runtime_partial**) — Skyline Canvas 2D + wasm-gc,
   window-hosted app, touch events, WeChat Mini Program project template.
 

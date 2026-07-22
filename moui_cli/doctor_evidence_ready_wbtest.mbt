@@ -70,8 +70,5 @@ test "test_read_evidence_manifest_rejects_unknown_generator" {
   // A verify-manifest.json produced by an unknown generator is ignored.
   // We rely on the is_accepted_generated_by helper for the canonical check.
   assert_true(is_accepted_generated_by("moui_cli"))
-  assert_true(
-    is_accepted_generated_by("scripts/record-shell-runtime-smoke.mjs"),
-  )
   assert_false(is_accepted_generated_by("random-tool"))
 }

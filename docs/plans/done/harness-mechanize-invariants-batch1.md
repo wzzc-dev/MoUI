@@ -31,7 +31,7 @@ Batch 1 closed the largest agent-blind gaps where Detection was still
 | **P2** | DONE | `validate-harness-invariants.mjs` — forbid `pub enum View` and control constructors in `moui/core` (mbti + sources) |
 | **A6** | DONE | `validate-window-dependency.mjs` — four consumers share `wzzc-dev/window@…` |
 | **R3** | DONE | `validate-harness-invariants.mjs` — desktop providers read `MOUI_SKIA_RENDERER`; mobile entries expose configure/selection; `prepare-native-build --renderer` |
-| **M5** | DONE | `validate-harmonyos-shell.mjs` (+ managed-shell node tests) |
+| **M5** | DONE | `validate-harness-invariants.mjs` window-hosted host-contract tests |
 | **G1** | DONE | `validate-harness-invariants.mjs` — skills must not re-list ≥3 P-rows |
 | **G2** | DONE | `--json` on batch1 (+ M5 already supports `--json`) |
 

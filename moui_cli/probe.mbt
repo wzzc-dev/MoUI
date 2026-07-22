@@ -1,9 +1,6 @@
 // `moui verify` runtime probe — launches the app on a device and parses
-// logcat / hilog / oslog output for known MoUI embedding markers.
-//
-// Migrated from `moui_shell/harmonyos/runner/tests/validate-managed-shell.mjs`
-// + `moui_shell/ios/embedder/tests/validate-managed-shell.mjs` plus the
-// runtime probe design laid out in the M9.2 spec. The 27 observations span
+// logcat / hilog / oslog output for known MoUI mobile-host markers. The 27
+// observations span
 // five categories: lifecycle, service, platformView, hostChannel, stability.
 
 ///|
@@ -21,7 +18,7 @@ priv struct ProbeResult {
 }
 
 ///|
-/// The canonical set of 27 observation names emitted by MoUI's embedding
+/// The canonical set of 27 observation names emitted by MoUI mobile-host
 /// probes. Log lines look like `[MOUI_PROBE] <kind>:<name>=<value>` where
 /// `value` is `ok` or `fail`.
 let probe_observation_names : ReadOnlyArray[String] = [
@@ -128,7 +125,7 @@ fn parse_log_lines(output : String) -> Array[Observation] {
 
 ///|
 /// Deduplicate observations by `kind:name`, keeping the last occurrence.
-/// The MoUI embedding emits each marker at most once per session, but log
+/// The mobile host emits each marker at most once per session, but log
 /// buffers may rotate and replay fragments; dedupe keeps the final verdict.
 fn dedupe_observations(observations : Array[Observation]) -> Array[Observation] {
   let result : Array[Observation] = []

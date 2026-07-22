@@ -1,5 +1,5 @@
 ///|
-test "shell runtime core owns shared render resize and dispose lifecycle" {
+test "hosted runtime core owns shared render resize and dispose lifecycle" {
   let render_count = Ref(0)
   let resize_count = Ref(0)
   let completion_drain_count = Ref(0)

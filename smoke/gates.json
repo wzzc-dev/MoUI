@@ -128,184 +128,50 @@
       "artifacts": ["artifacts/window-package-smoke/<platform>.log"]
     },
     {
-      "id": "android.counter-runtime",
-      "tier": "release",
-      "kind": "shell-runtime-smoke",
-      "host": "android-device-or-emulator",
-      "purpose": "Record non-fallback Counter Android Activity, ANativeWindow, first-frame, input, resize, and shutdown evidence.",
+      "id": "mobile.window-hosted-hostsim",
+      "tier": "nightly",
+      "kind": "window-hosted-hostsim",
+      "host": "any",
+      "purpose": "Validate the Android, iOS, and HarmonyOS HostCmd/EventLoop adapters without requiring an emulator.",
       "defaultDevCheck": false,
       "commands": [
         {
-          "argv": ["node", "scripts/record-shell-runtime-smoke.mjs", "--platform", "android", "--app", "counter", "--manifest", "artifacts/shell-runtime/android/counter/shell-runtime-smoke.json", "--require-passed"],
-          "mode": "manual"
+          "argv": ["sh", "scripts/window-hosted-hostsim-smoke.sh"],
+          "mode": "run"
         }
       ],
       "result": {
-        "type": "manifest",
-        "path": "artifacts/shell-runtime/android/counter/shell-runtime-smoke.json",
-        "validator": ["node", "scripts/validate-shell-runtime-manifest.mjs", "artifacts/shell-runtime/android/counter/shell-runtime-smoke.json", "--require-passed"]
+        "type": "exit-code"
       },
       "ci": {
         "workflow": ".github/workflows/moui-runtime-gates.yml",
-        "gate": "release-manual"
+        "gate": "nightly"
       },
-      "docs": ["docs/android-support.md", "docs/testing.md", "docs/release-readiness.md"],
-      "artifacts": [
-        "artifacts/shell-runtime/android/counter/shell-runtime-smoke.json",
-        "artifacts/shell-runtime/android/counter/screenshot-before.png",
-        "artifacts/shell-runtime/android/counter/screenshot.png",
-        "artifacts/shell-runtime/android/counter/runtime.log"
-      ]
+      "docs": ["docs/window-hosted-moui.md", "docs/testing.md", "docs/release-readiness.md"],
+      "artifacts": []
     },
     {
-      "id": "ios.counter-runtime",
+      "id": "mobile.window-hosted-vm",
       "tier": "release",
-      "kind": "shell-runtime-smoke",
-      "host": "macos-ios-simulator",
-      "purpose": "Record non-fallback Counter iOS Simulator UIKit, UIView, first-frame, touch, resize, and shutdown evidence.",
+      "kind": "window-hosted-vm-smoke",
+      "host": "matching-mobile-host",
+      "purpose": "Run host-sim and one explicitly enabled Android, iOS, or HarmonyOS VM/device leg for the window-hosted route.",
       "defaultDevCheck": false,
       "commands": [
         {
-          "argv": ["node", "scripts/record-shell-runtime-smoke.mjs", "--platform", "ios", "--app", "counter", "--manifest", "artifacts/shell-runtime/ios/counter/shell-runtime-smoke.json", "--require-passed"],
+          "argv": ["sh", "scripts/window-hosted-vm-smoke.sh"],
           "mode": "manual"
         }
       ],
       "result": {
-        "type": "manifest",
-        "path": "artifacts/shell-runtime/ios/counter/shell-runtime-smoke.json",
-        "validator": ["node", "scripts/validate-shell-runtime-manifest.mjs", "artifacts/shell-runtime/ios/counter/shell-runtime-smoke.json", "--require-passed"]
+        "type": "exit-code"
       },
       "ci": {
         "workflow": ".github/workflows/moui-runtime-gates.yml",
         "gate": "release-manual"
       },
-      "docs": ["docs/ios-support.md", "docs/testing.md", "docs/release-readiness.md"],
-      "artifacts": [
-        "artifacts/shell-runtime/ios/counter/shell-runtime-smoke.json",
-        "artifacts/shell-runtime/ios/counter/screenshot-before.png",
-        "artifacts/shell-runtime/ios/counter/screenshot.png",
-        "artifacts/shell-runtime/ios/counter/runtime.log"
-      ]
-    },
-    {
-      "id": "android.showcase-runtime",
-      "tier": "release",
-      "kind": "shell-runtime-smoke",
-      "host": "android-device-or-emulator",
-      "purpose": "Record non-fallback MoUI Showcase Android runtime evidence including scroll input.",
-      "defaultDevCheck": false,
-      "commands": [
-        {
-          "argv": ["node", "scripts/record-shell-runtime-smoke.mjs", "--platform", "android", "--app", "showcase", "--manifest", "artifacts/shell-runtime/android/showcase/shell-runtime-smoke.json", "--require-passed"],
-          "mode": "manual"
-        }
-      ],
-      "result": {
-        "type": "manifest",
-        "path": "artifacts/shell-runtime/android/showcase/shell-runtime-smoke.json",
-        "validator": ["node", "scripts/validate-shell-runtime-manifest.mjs", "artifacts/shell-runtime/android/showcase/shell-runtime-smoke.json", "--require-passed"]
-      },
-      "ci": {
-        "workflow": ".github/workflows/moui-runtime-gates.yml",
-        "gate": "release-manual"
-      },
-      "docs": ["docs/android-support.md", "docs/testing.md", "docs/release-readiness.md"],
-      "artifacts": [
-        "artifacts/shell-runtime/android/showcase/shell-runtime-smoke.json",
-        "artifacts/shell-runtime/android/showcase/screenshot-before.png",
-        "artifacts/shell-runtime/android/showcase/screenshot.png",
-        "artifacts/shell-runtime/android/showcase/runtime.log"
-      ]
-    },
-    {
-      "id": "ios.showcase-runtime",
-      "tier": "release",
-      "kind": "shell-runtime-smoke",
-      "host": "macos-ios-simulator",
-      "purpose": "Record non-fallback MoUI Showcase iOS Simulator runtime evidence including scroll input.",
-      "defaultDevCheck": false,
-      "commands": [
-        {
-          "argv": ["node", "scripts/record-shell-runtime-smoke.mjs", "--platform", "ios", "--app", "showcase", "--manifest", "artifacts/shell-runtime/ios/showcase/shell-runtime-smoke.json", "--require-passed"],
-          "mode": "manual"
-        }
-      ],
-      "result": {
-        "type": "manifest",
-        "path": "artifacts/shell-runtime/ios/showcase/shell-runtime-smoke.json",
-        "validator": ["node", "scripts/validate-shell-runtime-manifest.mjs", "artifacts/shell-runtime/ios/showcase/shell-runtime-smoke.json", "--require-passed"]
-      },
-      "ci": {
-        "workflow": ".github/workflows/moui-runtime-gates.yml",
-        "gate": "release-manual"
-      },
-      "docs": ["docs/ios-support.md", "docs/testing.md", "docs/release-readiness.md"],
-      "artifacts": [
-        "artifacts/shell-runtime/ios/showcase/shell-runtime-smoke.json",
-        "artifacts/shell-runtime/ios/showcase/screenshot-before.png",
-        "artifacts/shell-runtime/ios/showcase/screenshot.png",
-        "artifacts/shell-runtime/ios/showcase/runtime.log"
-      ]
-    },
-    {
-      "id": "harmonyos.demo-runtime",
-      "tier": "release",
-      "kind": "shell-runtime-smoke",
-      "host": "harmonyos-device-or-emulator",
-      "purpose": "Record non-fallback HarmonyOS demo Stage Ability/XComponent first-frame, single-touch, lifecycle, and platform-service evidence.",
-      "defaultDevCheck": false,
-      "commands": [
-        {
-          "argv": ["node", "scripts/record-shell-runtime-smoke.mjs", "--platform", "harmonyos", "--app", "harmonyos_demo", "--manifest", "artifacts/shell-runtime/harmonyos/harmonyos_demo/shell-runtime-smoke.json", "--require-passed"],
-          "mode": "manual"
-        }
-      ],
-      "result": {
-        "type": "manifest",
-        "path": "artifacts/shell-runtime/harmonyos/harmonyos_demo/shell-runtime-smoke.json",
-        "validator": ["node", "scripts/validate-shell-runtime-manifest.mjs", "artifacts/shell-runtime/harmonyos/harmonyos_demo/shell-runtime-smoke.json", "--require-passed"]
-      },
-      "ci": {
-        "workflow": ".github/workflows/moui-runtime-gates.yml",
-        "gate": "release-manual"
-      },
-      "docs": ["docs/harmonyos-support.md", "docs/testing.md", "docs/release-readiness.md"],
-      "artifacts": [
-        "artifacts/shell-runtime/harmonyos/harmonyos_demo/shell-runtime-smoke.json",
-        "artifacts/shell-runtime/harmonyos/harmonyos_demo/screenshot-before.png",
-        "artifacts/shell-runtime/harmonyos/harmonyos_demo/screenshot.png",
-        "artifacts/shell-runtime/harmonyos/harmonyos_demo/runtime.log"
-      ]
-    },
-    {
-      "id": "harmonyos.showcase-runtime",
-      "tier": "release",
-      "kind": "shell-runtime-smoke",
-      "host": "harmonyos-device-or-emulator",
-      "purpose": "Record non-fallback MoUI Showcase HarmonyOS input, scroll, lifecycle, and platform-service evidence.",
-      "defaultDevCheck": false,
-      "commands": [
-        {
-          "argv": ["node", "scripts/record-shell-runtime-smoke.mjs", "--platform", "harmonyos", "--app", "showcase", "--manifest", "artifacts/shell-runtime/harmonyos/showcase/shell-runtime-smoke.json", "--require-passed"],
-          "mode": "manual"
-        }
-      ],
-      "result": {
-        "type": "manifest",
-        "path": "artifacts/shell-runtime/harmonyos/showcase/shell-runtime-smoke.json",
-        "validator": ["node", "scripts/validate-shell-runtime-manifest.mjs", "artifacts/shell-runtime/harmonyos/showcase/shell-runtime-smoke.json", "--require-passed"]
-      },
-      "ci": {
-        "workflow": ".github/workflows/moui-runtime-gates.yml",
-        "gate": "release-manual"
-      },
-      "docs": ["docs/harmonyos-support.md", "docs/testing.md", "docs/release-readiness.md"],
-      "artifacts": [
-        "artifacts/shell-runtime/harmonyos/showcase/shell-runtime-smoke.json",
-        "artifacts/shell-runtime/harmonyos/showcase/screenshot-before.png",
-        "artifacts/shell-runtime/harmonyos/showcase/screenshot.png",
-        "artifacts/shell-runtime/harmonyos/showcase/runtime.log"
-      ]
+      "docs": ["docs/window-hosted-moui.md", "docs/testing.md", "docs/release-readiness.md"],
+      "artifacts": []
     }
   ]
 }

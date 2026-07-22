@@ -13,7 +13,7 @@ test "android backend reports usable runtime_partial capabilities" {
   inspect(info.readiness.ready, content="true")
   inspect(info.readiness.status, content="runtime_partial")
   assert_true(info.readiness.blocked_by.length() >= 1)
-  assert_true(info.readiness.blocked_by[0].contains("managed Kotlin"))
+  assert_true(info.readiness.blocked_by[0].contains("window-hosted Android"))
   let summary = android_capability_summary()
   inspect(summary.label, content="Android host")
   inspect(summary.window_lifecycle, content="true")
@@ -115,4 +115,3 @@ test "android runtime session renders through supplied provider" {
     None => fail("expected Android session")
   }
 }
-

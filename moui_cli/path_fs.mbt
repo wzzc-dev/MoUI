@@ -61,6 +61,17 @@ fn base_name(path : String) -> String {
 }
 
 ///|
+fn basename(path : String) -> String {
+  base_name(path)
+}
+
+///|
+fn read_file_string_optional(path : String) -> String? {
+  let text = @fs.read_file_to_string(path) catch { _ => return None }
+  Some(text)
+}
+
+///|
 fn resolve_path(root : String, path : String) -> String {
   if path_is_absolute(path) {
     path
@@ -408,19 +419,3 @@ fn file_plan_digest(files : Array[PlannedFile]) -> String {
 }
 
 ///|
-fn shell_package_missing_error(moui_root : String) -> String {
-  let shell = join_path(moui_root, "../moui_shell")
-  "ADR 0015: managed moui_shell builds are retired (missing " +
-  shell +
-  "). Use window-hosted packaging: scripts/build-window-hosted-android-apk.sh, scripts/build-window-hosted-ios-sim-app.sh, scripts/build-window-hosted-harmonyos-hap.sh."
-}
-
-///|
-fn require_shell_root_or_fail(moui_root : String) -> Result[String, String] {
-  let shell = join_path(moui_root, "../moui_shell")
-  if path_is_dir(shell) {
-    Ok(shell)
-  } else {
-    Err(shell_package_missing_error(moui_root))
-  }
-}

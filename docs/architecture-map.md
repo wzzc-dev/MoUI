@@ -57,7 +57,7 @@ normalize into host contracts; renderers consume `DrawCommand` only.
 | WGPU diagnostic providers | `moui/backend/<platform>/wgpu` |
 | Renderer facades | `moui/render`, `render/skia`, `render/webgpu_adapter`, `render/wgpu` |
 | Skia FFI / native capability | `moui_skia` |
-| Managed/ejected native shells | `moui_shell/{android,ios,harmonyos}` (`embedder` + `runner`) |
+| Mobile templates and event loops | `wzzc-dev/window/{android,ios,harmonyos}` |
 | Rich text domain | `moui_richtext` |
 | Design-system addons | `moui_theme` (not an app default dep) |
 | Repo validators | `tools/moui/*` via `scripts/*.mjs` shells |
@@ -69,7 +69,7 @@ normalize into host contracts; renderers consume `DrawCommand` only.
 | Native Skia | **Mainline** |
 | Native WGPU | **Diagnostic** |
 | Web `wasm-gc` + browser WebGPU imports | Main web path |
-| Mobile embedded session | `runtime_partial` — usable managed shell, not product-complete |
+| Mobile window-hosted session | `runtime_partial` — usable for development, not product-complete |
 | Product `auto` renderer | Prefer `SkiaGpuNative` when host GPU surface exists; `SkiaRasterNative` explicit/recovery |
 
 ## Workspace note
@@ -86,5 +86,5 @@ normalize into host contracts; renderers consume `DrawCommand` only.
 | Full package narrative | `docs/architecture.md` |
 | Invariants table | `docs/invariants.md` |
 | Validation commands | `docs/testing.md` |
-| Native shell roadmap | `docs/shell-mainline-roadmap.md` |
+| Mobile host route | `docs/window-hosted-moui.md` |
 | Doc catalog | `docs/INDEX.md` |

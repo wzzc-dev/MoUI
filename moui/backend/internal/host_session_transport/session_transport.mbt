@@ -1,7 +1,6 @@
 ///|
-/// Generation-scoped host session transport for window-hosted (and transitional)
-/// mobile runtimes. Ported from former moui_shell embedding transport (ADR 0015);
-/// no Embedding C ABI, no moui_shell dependency.
+/// Generation-scoped host session transport for window-hosted mobile runtimes.
+/// It has no C ABI and no dependency on retired mobile packages.
 
 ///|
 
@@ -181,7 +180,7 @@ pub fn HostChannel::complete(self : HostChannel, id : HostRequestId) -> Bool {
 }
 
 ///|
-/// Registers a request id allocated by the embedding runtime. The shell owns
+/// Registers a request id allocated by the runtime. The platform host owns
 /// correlation and stale-response rejection without importing the runtime's
 /// request type.
 pub fn HostChannel::track_request(
@@ -220,7 +219,7 @@ pub fn HostChannel::pending_count(self : HostChannel) -> Int {
 }
 
 ///|
-/// A neutral outbound shell update. `payload` stays JSON so this SDK owns
+/// A neutral outbound host update. `payload` stays JSON so this SDK owns
 /// transport semantics without importing MoUI host or runtime types.
 pub(all) struct HostWireUpdate {
   kind : String
@@ -379,7 +378,7 @@ pub fn parse_host_wire_envelope_json(text : String) -> HostWireEnvelope? {
 }
 
 ///|
-/// The one shell-owned transport state for one embedded runtime. It keeps
+/// The one platform-owned transport state for one mobile runtime. It keeps
 /// native lifecycle safety independent from MoUI host/runtime semantics.
 pub struct HostSessionTransport {
   session : HostSession

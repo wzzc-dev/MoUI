@@ -1,56 +1,20 @@
 {
   "schemaVersion": 1,
   "platform": "wechat",
-  "label": "WeChat Mini Program",
-  "productClass": "runtime_partial",
-  "lastUpdated": "2026-07-21",
-  "evidence": {
-    "renderer": {
-      "backend": "canvas2d-wasm",
-      "family": "canvas2d",
-      "status": "partial",
-      "notes": "Canvas 2D renderer compiles to wasm-gc; real Mini Program pixel smoke is pending."
-    },
-    "host": {
-      "kind": "wechat",
-      "lifecycle": true,
-      "multiWindow": false,
-      "notes": "Window-hosted app with canvas surface; supports resume/suspend lifecycle."
-    },
-    "input": {
-      "pointer": true,
-      "scroll": true,
-      "keyboard": false,
-      "textInput": false,
-      "ime": false,
-      "dragDrop": false,
-      "notes": "Touch events are supported; keyboard and IME are not available in Mini Program canvas."
-    },
-    "services": {
-      "clipboard": false,
-      "fileDialogs": false,
-      "fileAccess": false,
-      "openUrl": false,
-      "systemTheme": false,
-      "notes": "Service capabilities are pending; wx API integration is planned."
-    },
-    "build": {
-      "target": "wasm-gc",
-      "template": "window/wechat/template",
-      "script": "scripts/build-wechat-demo.sh",
-      "notes": "Build pipeline compiles to wasm-gc and stages Mini Program project structure."
-    }
+  "sourceBuild": {
+    "status": "partial",
+    "evidence": "wasm-gc entrypoint and Mini Program staging template compile; Developer Tools verification is pending"
   },
-  "blockedBy": [
-    "real-miniprogram-pixel-smoke",
-    "touch-event-verification",
-    "wx-api-service-integration"
-  ],
-  "nextSteps": [
-    "Build and run counter demo in WeChat Developer Tools with Skyline",
-    "Verify canvas rendering produces correct pixels",
-    "Verify touch events dispatch correctly",
-    "Implement wx API service integrations (clipboard, system theme)",
-    "Record runtime evidence for promotion to committed_with_gaps"
-  ]
+  "rendererL2": {
+    "status": "partial",
+    "presenterRoute": "canvas2d-wasm"
+  },
+  "runtimeL3": {
+    "status": "partial",
+    "evidence": "real Mini Program pixel, touch, and wx service evidence is pending"
+  },
+  "hostKind": "wechat-mini-program",
+  "deploymentFloor": "WeChat Mini Program Skyline Canvas 2D",
+  "toolchainFloor": "MoonBit wasm-gc / WeChat Developer Tools",
+  "actualPresenterRoute": "unverified"
 }

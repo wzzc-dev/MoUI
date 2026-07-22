@@ -1,5 +1,5 @@
 ///|
-/// Window-hosted native surface handle (no moui_shell).
+/// Window-hosted native surface handle.
 pub(all) struct AndroidSurfaceHandle {
   raw : UInt64
 } derive(Eq, Debug, ToJson)
@@ -20,41 +20,6 @@ pub fn AndroidSurfaceHandle::raw(self : AndroidSurfaceHandle) -> UInt64 {
 }
 
 ///|
-/// **Deprecated (ADR 0015):** Embedding API retired; returns 0.
-pub fn android_shell_embedding_api_version() -> Int {
-  0
-}
-
-///|
-/// **Deprecated (ADR 0015):** shell platform descriptors removed with moui_shell.
-pub fn android_shell_descriptor_retired() -> Unit {
-  ()
-}
-
-///|
-pub fn android_shell_renderer_configure(mode : String) -> Bool {
-  @embedded_runtime_session.shell_renderer_configure(mode)
-}
-
-///|
-pub fn android_shell_renderer_selection(
-  gpu_available~ : Bool,
-) -> @render.NativeRendererSelection {
-  @embedded_runtime_session.shell_renderer_selection(
-    @render.NativeGpuPlatform::Android,
-    gpu_available~,
-  )
-}
-
-///|
-pub fn android_shell_renderer_status_json(gpu_available~ : Bool) -> String {
-  @embedded_runtime_session.shell_renderer_status_json(
-    @render.NativeGpuPlatform::Android,
-    gpu_available~,
-  )
-}
-
-///|
 pub(all) struct AndroidBackendCapabilities {
   embedded_surface : Bool
   external_event_loop : Bool
@@ -71,11 +36,11 @@ pub(all) struct AndroidBackendCapabilities {
 } derive(Eq, Debug, ToJson)
 
 ///|
-/// `ready` means the managed-shell host path is usable for app development
+/// `ready` means the window-hosted path is usable for app development
 /// and demos (aligned with Linux host usability). It does **not** mean full
 /// L3 runtime promotion or GPU seven-gate claims.
 ///
-/// `status` is a coarse evidence class: `runtime_partial` until managed-shell
+/// `status` is a coarse evidence class: `runtime_partial` until window-hosted
 /// matching-device smoke and presenter verification close the remaining gaps.
 pub(all) struct AndroidBackendReadiness {
   ready : Bool
@@ -146,8 +111,8 @@ pub fn AndroidRendererProvider::has_async_image_loader(
 
 ///|
 pub fn android_service_capabilities() -> @host.HostServiceCapabilities {
-  // Host services: redesign as window host services (ADR 0015); Embedding channel is removal target
-  // adapters. Matching-device evidence remains partial (see readiness.status).
+  // Platform callbacks supply window-hosted services. Matching-device evidence
+  // remains partial (see readiness.status).
   @host.HostServiceCapabilities::new(clipboard=true)
 }
 
@@ -189,12 +154,11 @@ pub fn android_readiness() -> AndroidBackendReadiness {
     ready: true,
     status: "runtime_partial",
     blocked_by: [
-      "managed Kotlin shell matching-device smoke still needs re-recording without shell-side probes",
-      "real-device signing observation and verified direct presenter route remain open",
+      "window-hosted Android matching-device smoke still needs re-recording", "real-device signing observation and verified direct presenter route remain open",
       "GPU seven-gate promotion is not claimed (gpuPromotionEvidence.claimed=false)",
     ],
     next_steps: [
-      "re-run MoUI Showcase managed-shell smoke with --require-passed on emulator/device",
+      "re-run MoUI Showcase window-hosted smoke with --require-passed on emulator/device",
       "record actualPresenterRoute direct-present evidence in checks/platforms/android.json",
       "land GPU seven-gate claim only after matching-device promotion manifests pass",
     ],
@@ -206,13 +170,13 @@ pub fn backend_info() -> AndroidBackendInfo {
   {
     host_info: @host.HostAppInfo::new(
       backend=@host.HostBackendKind::Native,
-      description="Android window-hosted native host (HostCmd/ApplicationHandler); managed shell/Embedding are removal targets (ADR 0015)",
+      description="Android window-hosted native host (HostCmd/ApplicationHandler)",
     ),
     capabilities: android_capability_matrix(),
     services: android_service_capabilities(),
     input: android_input_capabilities(),
     readiness: android_readiness(),
-    description: "Android backend exposes an embedded-session contract: the managed shell supplies an ANativeWindow surface, forwards lifecycle/input callbacks, and selects a Skia renderer provider. Host path is usable for development (ready=true, status=runtime_partial). It is not product-complete until managed-shell matching-device L3 and presenter verification close remaining gaps.",
+    description: "Android backend exposes a native-session contract: wzzc-dev/window/android supplies an ANativeWindow surface and lifecycle/input callbacks, while the backend selects a Skia renderer provider. The host path is usable for development (ready=true, status=runtime_partial). It is not product-complete until window-hosted matching-device L3 and presenter verification close remaining gaps.",
   }
 }
 
@@ -233,8 +197,8 @@ pub fn android_capability_summary(
     async_services=true,
     native_accessibility_available=true,
     web_view_available=false,
-    web_view_description="Android native WebView embedding is not part of the current shell host contract.",
-    description="Android embedded native host with window HostCmd lifecycle and ApplicationHandler session. IME/clipboard/a11y re-home off Embedding (ADR 0015). Runtime evidence remains partial.",
+    web_view_description="Android native WebView is not part of the current mobile host contract.",
+    description="Android native host with window HostCmd lifecycle and an ApplicationHandler session. The window host owns lifecycle, surface, input, IME, clipboard, and accessibility adaptation. Runtime evidence remains partial.",
   )
 }
 

@@ -15,8 +15,7 @@ priv struct ParsedBuild {
 ///|
 priv struct BuildCommandOptions {
   // `app` (positional arg) is not stored here because the platform
-  // `Build*Options` carry `app : ShellApp` directly; the id from the
-  // command line is consumed by `run_build` when it reads `shell.json`.
+  // `Build*Options` carry the parsed mobile configuration directly.
   app_config_path : String?
   workspace_root : String
   moui_root : String
@@ -25,14 +24,9 @@ priv struct BuildCommandOptions {
   output : String?
   renderer : String?
   fallback_skia : Bool
-  ejected_shell : Bool
   prepare_only : Bool
-  // Platform-specific project / product overrides.
-  android_project : String?
-  xcode_project : String?
-  scheme : String?
+  // Platform-specific product override.
   product_name : String?
-  harmonyos_project : String?
   abi : String?
   compile_sdk : Int?
   target_sdk : Int?
@@ -56,10 +50,10 @@ fn build_usage() -> String {
     #|
     #|Arguments:
     #|  platform     Target platform: android, ios, or harmonyos.
-    #|  app          Application id (matches shell.json `id`).
+    #|  app          Application id (matches moui.mobile.json `id`).
     #|
     #|Options:
-    #|  --app-config PATH           Path to shell.json. Defaults to ./shell.json.
+    #|  --mobile-config PATH        Path to moui.mobile.json. Defaults to ./moui.mobile.json.
     #|  --workspace-root PATH       Workspace root. Defaults to the current directory.
     #|  --moui-root PATH            MoUI package root. Defaults from `moui config`.
     #|  --skia-root PATH            Skia package root. Defaults from `moui config`.
@@ -67,14 +61,8 @@ fn build_usage() -> String {
     #|  --output PATH                Output artifact path. Defaults to <build-dir>/<app-id>.<ext>.
     #|  --renderer NAME             Renderer override (auto / skia / wgpu).
     #|  --fallback-skia             Allow Skia fallback when primary renderer fails.
-    #|  --ejected-shell              Use an ejected (owned) shell; requires platform
-    #|                               project paths to be present.
     #|  --prepare-only               Stop after preparing native build inputs.
-    #|  --android-project PATH      Android project root (ejected-shell only).
-    #|  --xcode-project PATH        Xcode project path (ejected-shell only, iOS).
-    #|  --scheme NAME               Xcode scheme (ejected-shell only, iOS).
-    #|  --product-name NAME         Xcode product name (ejected-shell only, iOS).
-    #|  --harmonyos-project PATH    HarmonyOS project root (ejected-shell only).
+    #|  --product-name NAME         iOS product name override.
     #|  --abi ABI                   Android ABI (e.g. arm64-v8a). Defaults from `moui config`.
     #|  --compile-sdk VERSION       Android compileSdk. Defaults from `moui config`.
     #|  --target-sdk VERSION        Android targetSdk. Defaults from `moui config`.
@@ -108,13 +96,8 @@ fn parse_build_args(
   let output : Ref[String?] = Ref(None)
   let renderer : Ref[String?] = Ref(None)
   let fallback_skia = Ref(false)
-  let ejected_shell = Ref(false)
   let prepare_only = Ref(false)
-  let android_project : Ref[String?] = Ref(None)
-  let xcode_project : Ref[String?] = Ref(None)
-  let scheme : Ref[String?] = Ref(None)
   let product_name : Ref[String?] = Ref(None)
-  let harmonyos_project : Ref[String?] = Ref(None)
   let abi : Ref[String?] = Ref(None)
   let compile_sdk : Ref[Int?] = Ref(None)
   let target_sdk : Ref[Int?] = Ref(None)
@@ -140,29 +123,24 @@ fn parse_build_args(
           Ok(_) => help.val = true
           Err(message) => return Err(message)
         }
-      "--fallback-skia" | "--ejected-shell" | "--prepare-only" =>
+      "--fallback-skia" | "--prepare-only" =>
         match flag_without_value(inline, name) {
           Ok(_) =>
             match name {
               "--fallback-skia" => fallback_skia.val = true
-              "--ejected-shell" => ejected_shell.val = true
               "--prepare-only" => prepare_only.val = true
               _ => ()
             }
           Err(message) => return Err(message)
         }
-      "--app-config"
+      "--mobile-config"
       | "--workspace-root"
       | "--moui-root"
       | "--skia-root"
       | "--build-dir"
       | "--output"
       | "--renderer"
-      | "--android-project"
-      | "--xcode-project"
-      | "--scheme"
       | "--product-name"
-      | "--harmonyos-project"
       | "--abi"
       | "--sdk"
       | "--arch"
@@ -174,18 +152,14 @@ fn parse_build_args(
         match option_value(args, index, inline, name) {
           Ok((value, next)) => {
             match name {
-              "--app-config" => app_config.val = Some(value)
+              "--mobile-config" => app_config.val = Some(value)
               "--workspace-root" => workspace_root.val = Some(value)
               "--moui-root" => moui_root.val = Some(value)
               "--skia-root" => skia_root.val = Some(value)
               "--build-dir" => build_dir.val = Some(value)
               "--output" => output.val = Some(value)
               "--renderer" => renderer.val = Some(value)
-              "--android-project" => android_project.val = Some(value)
-              "--xcode-project" => xcode_project.val = Some(value)
-              "--scheme" => scheme.val = Some(value)
               "--product-name" => product_name.val = Some(value)
-              "--harmonyos-project" => harmonyos_project.val = Some(value)
               "--abi" => abi.val = Some(value)
               "--sdk" => sdk.val = Some(value)
               "--arch" => arch.val = Some(value)
@@ -245,7 +219,7 @@ fn parse_build_args(
       )
   }
   // `app` positional arg is validated but not stored; the platform
-  // build functions carry `app : ShellApp` (read from shell.json).
+  // build functions carry the parsed mobile configuration.
   let _ = app
   Ok({
     help: false,
@@ -260,13 +234,8 @@ fn parse_build_args(
       output: output.val,
       renderer: renderer.val,
       fallback_skia: fallback_skia.val,
-      ejected_shell: ejected_shell.val,
       prepare_only: prepare_only.val,
-      android_project: android_project.val,
-      xcode_project: xcode_project.val,
-      scheme: scheme.val,
       product_name: product_name.val,
-      harmonyos_project: harmonyos_project.val,
       abi: abi.val,
       compile_sdk: compile_sdk.val,
       target_sdk: target_sdk.val,
@@ -336,7 +305,7 @@ fn default_build_dir(platform : String, workspace_root : String) -> String {
 /// and `CliConfig`. Caller ensures `platform == "android"`.
 fn build_android_options_from_command(
   options : BuildCommandOptions,
-  app : ShellApp,
+  app : MobileApp,
   config : CliConfig,
 ) -> BuildAndroidOptions {
   let (moui_root, skia_root) = resolve_build_roots(options, config)
@@ -380,10 +349,9 @@ fn build_android_options_from_command(
   }
   {
     app,
-    android_project: options.android_project,
     app_config: match options.app_config_path {
       Some(p) => p
-      None => "shell.json"
+      None => "moui.mobile.json"
     },
     workspace_root: options.workspace_root,
     project_root: ".",
@@ -396,7 +364,6 @@ fn build_android_options_from_command(
     build_dir,
     output_apk,
     fallback_skia: options.fallback_skia,
-    ejected_shell: options.ejected_shell,
     prepare_only: options.prepare_only,
   }
 }
@@ -406,7 +373,7 @@ fn build_android_options_from_command(
 /// and `CliConfig`. Caller ensures `platform == "ios"`.
 fn build_ios_options_from_command(
   options : BuildCommandOptions,
-  app : ShellApp,
+  app : MobileApp,
   config : CliConfig,
 ) -> BuildIosOptions {
   let (moui_root, skia_root) = resolve_build_roots(options, config)
@@ -449,12 +416,10 @@ fn build_ios_options_from_command(
   }
   {
     app,
-    xcode_project: options.xcode_project,
-    scheme: options.scheme,
     product_name: options.product_name,
     app_config: match options.app_config_path {
       Some(p) => p
-      None => "shell.json"
+      None => "moui.mobile.json"
     },
     workspace_root: options.workspace_root,
     project_root: ".",
@@ -467,7 +432,6 @@ fn build_ios_options_from_command(
     build_dir,
     output_app,
     fallback_skia: options.fallback_skia,
-    ejected_shell: options.ejected_shell,
     prepare_only: options.prepare_only,
   }
 }
@@ -477,7 +441,7 @@ fn build_ios_options_from_command(
 /// and `CliConfig`. Caller ensures `platform == "harmonyos"`.
 fn build_harmonyos_options_from_command(
   options : BuildCommandOptions,
-  app : ShellApp,
+  app : MobileApp,
   config : CliConfig,
 ) -> BuildHarmonyosOptions {
   let (moui_root, skia_root) = resolve_build_roots(options, config)
@@ -516,10 +480,9 @@ fn build_harmonyos_options_from_command(
   }
   {
     app,
-    harmonyos_project: options.harmonyos_project,
     app_config: match options.app_config_path {
       Some(p) => p
-      None => "shell.json"
+      None => "moui.mobile.json"
     },
     workspace_root: options.workspace_root,
     project_root: ".",
@@ -533,7 +496,6 @@ fn build_harmonyos_options_from_command(
     hvigorw,
     ohpm,
     fallback_skia: options.fallback_skia,
-    ejected_shell: options.ejected_shell,
     prepare_only: options.prepare_only,
     signing_config_file,
   }
@@ -546,7 +508,7 @@ fn run_build_internal(
   options : BuildCommandOptions,
   platform : String,
   host : HostPlatform,
-  app : ShellApp,
+  app : MobileApp,
   config : CliConfig,
 ) -> Result[BuildResult, String] {
   match platform {
@@ -611,18 +573,16 @@ fn run_build(parsed : ParsedBuild, host : HostPlatform) -> CliOutcome {
       build_usage(),
     )
   }
-  // 1. Read shell.json. When --app-config is given, derive project_root from
-  // its dirname so `read_shell_app` can join it with `shell.json`. This lets
-  // `moui build` run from any cwd, not just the app directory.
-  let project_root = match options.app_config_path {
-    Some(p) => parent_dir(p)
-    None => "."
+  // 1. Read mobile metadata from the supplied path or workspace root.
+  let app_result = match options.app_config_path {
+    Some(path) => read_mobile_app_at(path)
+    None => read_mobile_app(options.workspace_root)
   }
-  let app = match read_shell_app(project_root) {
+  let app = match app_result {
     Ok(a) => a
     Err(message) =>
       return failed_outcome(
-        "could not read shell.json: " + message,
+        "could not read moui.mobile.json: " + message,
         parsed.json,
         build_usage(),
       )

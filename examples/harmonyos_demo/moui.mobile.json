@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "harmonyos_demo",
+  "displayName": "MoUI HarmonyOS Demo",
+  "artifactName": "harmonyos_demo",
+  "appPackage": "examples/harmonyos_demo/app",
+  "harmonyos": {
+    "bundleName": "dev.wzzc.moui.harmonyosdemo",
+    "productName": "MoUIHarmonyOSDemo",
+    "appName": "MoUI HarmonyOS Demo",
+    "moduleName": "entry",
+    "moduleDescription": "MoUI HarmonyOS window-hosted Skia demo",
+    "entryDescription": "MoUI HarmonyOS demo entry ability",
+    "compatibleSdkVersion": 20
+  }
+}

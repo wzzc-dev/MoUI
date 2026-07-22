@@ -1,7 +1,7 @@
 ///|
 /// Window-hosted MoUI path (winit-style): surface/input come only from
-/// `wzzc-dev/window/android` HostCmd → ApplicationHandler. No Embedding
-/// attach_surface inject dual-stack.
+/// `wzzc-dev/window/android` HostCmd → ApplicationHandler. Surface attachment
+/// is driven only by the platform event loop.
 pub struct AndroidWindowHostedApp {
   title : String
   runtime_factory : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime
@@ -19,7 +19,7 @@ pub struct AndroidWindowHostedApp {
 
 ///|
 pub fn AndroidWindowHostedApp::new(
-  title~ : String = "MoUI",
+  title? : String = "MoUI",
   runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime,
   provider_factory~ : () -> AndroidRendererProvider,
   auto_exit_after_frames? : Int? = None,
@@ -65,7 +65,9 @@ pub fn AndroidWindowHostedApp::session_attached(
 }
 
 ///|
-pub fn AndroidWindowHostedApp::has_session(self : AndroidWindowHostedApp) -> Bool {
+pub fn AndroidWindowHostedApp::has_session(
+  self : AndroidWindowHostedApp,
+) -> Bool {
   self.session is Some(_)
 }
 
@@ -116,7 +118,9 @@ fn AndroidWindowHostedApp::attach_session(
 }
 
 ///|
-fn AndroidWindowHostedApp::detach_session(self : AndroidWindowHostedApp) -> Unit {
+fn AndroidWindowHostedApp::detach_session(
+  self : AndroidWindowHostedApp,
+) -> Unit {
   match self.session {
     Some(session) => ignore(session.detach_surface())
     None => ()
@@ -250,10 +254,7 @@ pub impl @window_android.ApplicationHandler for AndroidWindowHostedApp with fn w
     @window_core.WindowEvent::RedrawRequested => {
       self.dispatch_window_event(event)
       match self.auto_exit_after_frames {
-        Some(limit) =>
-          if self.frames_presented >= limit {
-            event_loop.exit()
-          }
+        Some(limit) => if self.frames_presented >= limit { event_loop.exit() }
         None => ()
       }
     }
@@ -282,17 +283,19 @@ pub impl @window_android.ApplicationHandler for AndroidWindowHostedApp with fn a
 /// Pump one host-sim cycle for tests / offline validation.
 pub fn android_window_hosted_pump_host_sim(
   app : AndroidWindowHostedApp,
-  surface_handle~ : UInt64 = 0xABCUL,
-  width~ : Int = 320,
-  height~ : Int = 640,
-  scale~ : Double = 2.0,
+  surface_handle? : UInt64 = 0xABCUL,
+  width? : Int = 320,
+  height? : Int = 640,
+  scale? : Double = 2.0,
 ) -> Unit {
   @window_android.host_reset_for_test()
   let event_loop = @window_android.EventLoop::new()
   @window_android.host_push(@window_android.HostCmd::Start)
   @window_android.host_push(@window_android.HostCmd::Resume)
   @window_android.host_push(
-    @window_android.HostCmd::SurfaceInit(surface_handle, 0UL, width, height, scale),
+    @window_android.HostCmd::SurfaceInit(
+      surface_handle, 0UL, width, height, scale,
+    ),
   )
   ignore(event_loop.pump_app_events(None, app))
   match app.window {
@@ -300,8 +303,12 @@ pub fn android_window_hosted_pump_host_sim(
     None => ()
   }
   ignore(event_loop.pump_app_events(None, app))
-  @window_android.host_push(@window_android.HostCmd::PointerButton(true, 10.0, 20.0))
-  @window_android.host_push(@window_android.HostCmd::PointerButton(false, 10.0, 20.0))
+  @window_android.host_push(
+    @window_android.HostCmd::PointerButton(true, 10.0, 20.0),
+  )
+  @window_android.host_push(
+    @window_android.HostCmd::PointerButton(false, 10.0, 20.0),
+  )
   ignore(event_loop.pump_app_events(None, app))
   @window_android.host_push(@window_android.HostCmd::SurfaceTerm)
   @window_android.host_push(@window_android.HostCmd::Stop)

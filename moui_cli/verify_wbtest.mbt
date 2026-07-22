@@ -108,13 +108,6 @@ test "test_is_accepted_generated_by_recognizes_canonical" {
 }
 
 ///|
-test "test_is_accepted_generated_by_recognizes_legacy" {
-  assert_true(
-    is_accepted_generated_by("scripts/record-shell-runtime-smoke.mjs"),
-  )
-}
-
-///|
 test "test_is_accepted_generated_by_rejects_unknown" {
   assert_false(is_accepted_generated_by("unknown-tool"))
   assert_false(is_accepted_generated_by(""))
@@ -151,7 +144,7 @@ test "test_verify_manifest_to_json_emits_schema_and_generated_by" {
   )
   let text = json.stringify(indent=2)
   assert_true(text.contains("\"schemaVersion\": 1"))
-  assert_true(text.contains("\"mode\": \"shell-runtime-smoke\""))
+  assert_true(text.contains("\"mode\": \"window-hosted-runtime-verify\""))
   assert_true(text.contains("\"generatedBy\": \"moui_cli\""))
   assert_true(text.contains("\"platform\": \"android\""))
   assert_true(text.contains("\"app\": \"demo\""))

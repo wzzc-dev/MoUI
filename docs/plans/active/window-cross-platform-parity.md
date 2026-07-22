@@ -23,7 +23,7 @@
 - 完整 winit 功能全集（DnD 产品化、exclusive fullscreen 产品化、多窗口移动端等）。
 - X11 后端（除非后续 RFC）。
 - 把 macOS 独有 API（`content_view_handle`、系统菜单产品、tabbing）强推到其它平台。
-- 在 `window` 内重做 `moui_shell` Embedding ABI / PlatformView 产品（shell 只作只读参考，见 `window/docs/mobile-hosted-backend.md` 端口表）。
+- 在 `window` 内重做第二套 MoUI 专用 ABI 或 PlatformView 产品。
 - 把 `./window` 加入根 `moon.work`。
 - 把未经验证的 matching-host 日志记为 `passed`。
 
@@ -111,7 +111,7 @@ winit 对齐要点（实现时对照，不照搬 Rust）：
 - [ ] M2：`ANativeWindow*` 从 Activity/SurfaceView/NativeActivity 进入 C queue → MoonBit handle；`__ANDROID__` 路径与 host-sim 分清。
 - [ ] M3：`ANativeWindow_lock` soft present 设备验证 **或** 文档声明 GPU 由消费者持有且本库只交付 handle。
 - [ ] 线程：Activity/looper；debug assert。
-- [ ] 证据：`check_android_hosted_smoke.sh` + 设备/模拟器 present 记录进 `platform-gaps.md` / mobile changelog。
+- [ ] 证据：`moon test window/modules/window/android --target native` + 设备/模拟器 present 记录进 `platform-gaps.md` / mobile changelog。
 
 **iOS**
 
@@ -122,7 +122,7 @@ winit 对齐要点（实现时对照，不照搬 Rust）：
 **HarmonyOS**
 
 - [ ] M2/M3：XComponent NAPI → C host queue；**唯一** surface/pointer/resize/detach 源。
-- [ ] 与 MoUI shell 的边界：window 只做窗口/lifecycle；embedding 仍归 shell/backend。
+- [ ] 与 MoUI 后端的边界：window 只做窗口/lifecycle；MoUI 后端负责运行时和服务适配。
 - [ ] HVD/设备证据单独记账，允许 M3 略滞后但语义机与 host-sim 不得降级。
 
 ### WS5 — 文档、证据与 MoUI 衔接
@@ -157,7 +157,7 @@ WS0 基线
 | Windows | `WINDOW_CI_HOST=windows bash window/scripts/check_ci.sh` + `check_moui_windows_smoke.sh --run` |
 | Linux | `WINDOW_CI_HOST=linux bash window/scripts/check_ci.sh` + `check_moui_linux_smoke.sh --run` |
 | Web | `window/scripts/check_moui_web_smoke.sh` |
-| Mobile hosted | `check_android_hosted_smoke.sh` / `check_ios_hosted_smoke.sh` / `check_harmonyos_hosted_smoke.sh` |
+| Mobile hosted | `moon test window/modules/window/<android|ios|harmonyos> --target native` |
 | 证据记录 | `record_moui_evidence.sh` + 人工粘贴 `platform-gaps.md` |
 | MoUI 根（触及 guidance） | 根目录 static trio + 相关 backend tests；**勿**默认跑 full daily |
 
@@ -181,5 +181,5 @@ WS0 基线
 
 - `window/AGENTS.md`, `window/README.mbt.md`
 - `window/docs/platform-gaps.md`, `moui-ready-matrix.md`, `mobile-hosted-backend.md`, `moui-integration-smoke.md`, `upstream.md`
-- MoUI: `docs/platform-readiness-declaration.md`, `docs/android-support.md`, `docs/ios-support.md`, `docs/harmonyos-support.md`, `docs/shell-mainline-roadmap.md`
+- MoUI: `docs/platform-readiness-declaration.md`, `docs/android-support.md`, `docs/ios-support.md`, `docs/harmonyos-support.md`, `docs/window-hosted-moui.md`
 - winit: https://github.com/rust-windowing/winit （android/ios 后端与 application lifecycle）

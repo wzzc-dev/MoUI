@@ -17,20 +17,20 @@ OS 产品完成度。
 | **Web** | **committed** | 产品主线可用 | 每日 wasm-gc + browser WebGPU；`checks/platforms/web.json` runtimeL3=passed | — |
 | **Windows** | **committed_with_gaps** | 产品主线可用（L3 未满） | L0–L2 PR/real Skia；`runtimeL3=partial` | 完整 IME/服务 L3 |
 | **Linux** | **committed_with_gaps** | 宿主 `ready=true` = 代码路径可用，**≠** L3 全绿 | L0–L2 + 首帧 L3；交互 IME 等 partial | 完整交互 L3 |
-| **Android** | **runtime_partial** | `ready=true`：managed 壳 + session **可用于开发/演示**；`status=runtime_partial` | 打包矩阵为 passed；历史 legacy shell CG smoke 为 passed；managed 壳与 EmbedderHostChannel 已接线 | managed-shell 缺少 probe 重录 smoke；真机签名；presenter verified；GPU seven-gate claimed |
-| **iOS** | **runtime_partial** | 同上 | 打包矩阵 passed；历史 UIKit shell CG smoke passed；managed SwiftUI 壳已接线 | managed SwiftUI `--require-passed` 重录；真机/VoiceOver；presenter/seven-gate |
-| **HarmonyOS** | **runtime_partial** | 同上 | 打包矩阵 passed；首帧/部分 HVD 观察；managed ArkTS/XComponent 已接线 | 商业签名下 full `passed` smoke；完整服务观察；presenter/seven-gate |
+| **Android** | **runtime_partial** | `ready=true`：window-hosted template + session **可用于开发/演示**；`status=runtime_partial` | `HostCmd` host-sim 和 MoUI adapter tests 通过 | matching-device presenter/service evidence；GPU seven-gate claim |
+| **iOS** | **runtime_partial** | 同上 | `HostCmd` host-sim 和 MoUI adapter tests 通过 | matching simulator/device presenter 和 VoiceOver evidence；GPU seven-gate claim |
+| **HarmonyOS** | **runtime_partial** | 同上 | `HostCmd` host-sim 和 MoUI adapter tests 通过 | signed-device presenter/service evidence；GPU seven-gate claim |
 
 ### 禁止的两种错误表述
 
 1. **不要**写「六端均已产品就绪 / L3 全绿」。
-2. **不要**写「三移动端完全不行 / 生命周期胶水代码未接线 / 只有 Counter 壳」——managed shell、session、IME/clipboard/a11y 通道已存在；缺口在 **证据闭环与晋升**，不是空壳。
+2. **不要**写「三移动端完全不行 / 生命周期胶水代码未接线 / 只有 Counter 应用」——window-hosted adapter、IME/clipboard/a11y 通道已存在；缺口在 **证据闭环与晋升**，不是没有宿主路线。
 
 ### 三套状态不要混
 
 | 维度 | 含义 |
 |------|------|
-| 宿主可用性 (`ready`) | 开发/演示能否走 managed shell + embedded session（对齐 Linux：代码完整可用） |
+| 宿主可用性 (`ready`) | 开发/演示能否走 window-hosted template + MoUI session（对齐 Linux：代码完整可用） |
 | 运行时证据 (`status` / smoke) | 匹配宿主观察：`passed` / `partial` / packaging-only |
 | 产品完整承诺 | L3 全绿 + `actualPresenterRoute` verified + GPU seven-gate claimed |
 
@@ -325,27 +325,25 @@ bash window/scripts/capture_moui_runtime_evidence.sh linux \
 | Linux 完整平台服务观测 | 剪贴板图片、目录列表、字体回退 | 目录列表、剪贴板图片已实现并测试；首帧渲染已验证 | ✅ 已完成（代码级） |
 | Linux 全证据清单更新 | 将完整服务/IME 结果写入 `platform-runtime-evidence.json` linux 条目 | IME 交互式输入运行时观测完成 | 1 次 PR |
 
-### 6.3 Android / iOS / HarmonyOS — 嵌入式主线（服务 smoke 已部分 `passed`）
+### 6.3 Android / iOS / HarmonyOS — Window-hosted 主线
 
-Android、iOS 和 HarmonyOS 均已通过非 fallback Skia 构建在匹配设备上完成
-首帧渲染验证（截图见 `resource/screenshots/{android,ios,harmonyos}-componentgallery`，
-2026-07-09/10）。`mobile-build.json` 确认 `fallbackSkia: false`。
+唯一的移动端路线是 `wzzc-dev/window` `HostCmd` → `EventLoop` →
+`ApplicationHandler` → MoUI `*WindowHostedApp`。host-sim 覆盖无需 emulator，验证
+template callback path、backend adapters 和 Counter entrypoints：
 
-完整 mobile-runtime smoke（`--require-passed`）现状（2026-07-15）：
+```sh
+sh scripts/window-hosted-hostsim-smoke.sh
+```
 
-| 平台 | status | 路径 |
+| 平台 | 当前证据 | 剩余工作 |
 |------|--------|------|
-| 历史 iOS Component Gallery | Release N UIKit shell **`passed`**；不是 Showcase 证据 | `artifacts/mobile-runtime/ios/component_gallery/` |
-| 历史 Android Component Gallery | Release N legacy shell **`passed`**；不是 Showcase 证据 | `artifacts/mobile-runtime/android/component_gallery/` |
-| Showcase managed 移动端 shell | Android/iOS/HarmonyOS 匹配设备证据待补 | `artifacts/shell-runtime/<platform>/showcase/` |
-| HarmonyOS 商业签名/设备 | 规范 ArkTS shell **`partial`**；已签名 full-suite 重跑待补 | 需 `MOUI_HARMONYOS_SIGNING_CONFIG(_FILE)` + `scripts/harmonyos-shell-runtime-evidence.sh` |
+| Android | host-sim 和 package checks | matching-device presentation、input、lifecycle 和 service evidence |
+| iOS | host-sim 和 package checks | matching simulator/device presentation、input、lifecycle 和 service evidence |
+| HarmonyOS | host-sim 和 package checks | signed-device presentation、input、lifecycle 和 service evidence |
 
-编排脚本：`scripts/ios-shell-runtime-evidence.sh`、
-`scripts/android-shell-runtime-evidence.sh`、
-`scripts/harmonyos-shell-runtime-evidence.sh`。
-CI：`moui-ios-shell-runtime-evidence.yml`、
-`moui-android-shell-runtime-evidence.yml`（self-hosted android）、
-`moui-harmonyos-shell-runtime-evidence.yml`（self-hosted harmonyos + 签名材料）。
+对应 target 可用时，在 `scripts/window-hosted-vm-smoke.sh` 上设置一个
+`WINDOW_HOSTED_ANDROID_AVD=1`、`WINDOW_HOSTED_IOS_SIM=1` 或
+`WINDOW_HOSTED_HARMONYOS_HVD=1`。
 
 GPU seven-gate（`gpuPromotionEvidence.claimed=true`）仍是独立 L3 质量声明，
 本轮不声明。

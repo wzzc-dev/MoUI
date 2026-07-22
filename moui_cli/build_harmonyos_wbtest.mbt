@@ -336,27 +336,13 @@ test "test_apply_harmonyos_window_hosted_identity_sets_bundle_name" {
       Err(message) => fail(message)
     }
   }
-  let app : ShellApp = {
+  let app : MobileApp = {
     id: "showcase",
     display_name: "MoUI Showcase",
     artifact_name: "showcase",
     app_package: "examples/showcase/app",
     schema_version: 1,
-    shell_api_version: 1,
-    embedding_api_version: 1,
-    shell: {
-      profile: "handheld",
-      renderer: "auto",
-      status_bar: "hidden",
-      orientation: "any",
-      resources: [],
-      permissions: [],
-      plugins: [],
-      fullscreen: true,
-      supports_scroll: true,
-    },
     metadata_path: "",
-    plugins: [],
     android: None,
     ios: None,
     harmonyos: Some({
@@ -366,7 +352,6 @@ test "test_apply_harmonyos_window_hosted_identity_sets_bundle_name" {
       module_name: Some("entry"),
       module_description: Some("module"),
       entry_description: Some("entry ability"),
-      runner_mode: "managed",
       compatible_sdk_version: 20,
     }),
   }

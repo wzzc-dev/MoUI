@@ -4,9 +4,7 @@
   "sourceBuild": {"status": "passed", "evidence": "Ubuntu Wayland CI"},
   "rendererL2": {"status": "passed", "presenterRoute": "vulkan-wayland-direct"},
   "runtimeL3": {"status": "partial", "evidence": "first-frame passed; interactive IME and services remain partial"},
-  "shellKind": "native-wayland",
-  "shellApiVersion": 0,
-  "embeddingApiVersion": 0,
+  "hostKind": "native-wayland",
   "deploymentFloor": "Wayland compositor",
   "toolchainFloor": "Clang/GCC with Wayland and Vulkan",
   "actualPresenterRoute": "vulkan-wayland-direct"

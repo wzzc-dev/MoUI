@@ -43,7 +43,7 @@ moon test examples/showcase/app/components --target native
 moon test examples/showcase/app/platform --target native
 moon test examples/showcase/app/patterns --target native
 moon check examples/showcase/macos_skia --target native
-moon check examples/showcase/android_skia --target native
+moon check examples/showcase/android_window_hosted --target native
 moon run tools/moui/generate_repo_docs --target native -- --write
 ```
 

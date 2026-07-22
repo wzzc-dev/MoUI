@@ -8,13 +8,13 @@ cd "$ROOT"
 export MOUI_SKIA_DISABLE_PREBUILD_SKIA="${MOUI_SKIA_DISABLE_PREBUILD_SKIA:-1}"
 
 echo "== window android hosted smoke =="
-bash window/scripts/check_android_hosted_smoke.sh
+moon test window/modules/window/android --target native
 
 echo "== window ios hosted smoke =="
-bash window/scripts/check_ios_hosted_smoke.sh
+moon test window/modules/window/ios --target native
 
 echo "== window harmonyos hosted smoke =="
-bash window/scripts/check_harmonyos_hosted_smoke.sh
+moon test window/modules/window/harmonyos --target native
 
 echo "== moui backend window-hosted tests =="
 moon test moui/backend/android --target native

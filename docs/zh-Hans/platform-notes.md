@@ -10,10 +10,7 @@ MoUI 从 MoonBit registry 解析修改后的窗口宿主为 `wzzc-dev/window@0.5
 活动平台入口点通过带 options 的 runner 接收共享队列，并在平台边缘 drain 聚焦、关闭、调整大小、最小化、显示和 set-primary 请求。每个已 drain 请求都会在同一队列上记录有序 completion，因此测试和更高层宿主代码可以观察已接受操作和显式拒绝。活动后端使用共享队列 drain 辅助方法执行该 drain-and-record 循环，使请求 completion 跟踪保持由宿主拥有。平台一旦报告窗口已关闭，排队给该窗口的命令会被拒绝，而不是重放到陈旧运行时 slot 上；这些拒绝会作为普通请求 completion 记录。
 Web 通过同一 registry/slot 路径创建主窗口，并通过 `run_app_with_options` 和 `WebAppOptions` 支持 resolver-backed `OpenWindow` 请求。原生宿主核心通过同一 registry/slot 路径创建平台窗口，但不自行选择具体渲染器族。相反，公共原生入口点位于 `backend/<platform>/wgpu` 和 `backend/<platform>/skia`；这些包使用平台本地 `RendererProvider` 调用 `backend/<platform>.run_app_with_renderer_provider`。已解析的原生窗口向该 provider 请求渲染器中立的 `HostWindowRenderer`，随后注册 `HostRuntimeDriver`、平台绑定和平台 slot，并按 `HostWindowId` 路由重绘、事件、上下文菜单、宿主服务 completion、IME 同步和释放。如果没有 scene resolver，宿主会用共享 unavailable-resolver 响应拒绝 `OpenWindow`。
 
-原生渲染器选择是包选择，不是 host-core 应用 options 上的字段。原生 Skia 光栅主线使用 `backend/<platform>/skia`。原生 WGPU 实验诊断只使用 `backend/<platform>/wgpu`。Android 和 iOS 是桌面事件循环形态的例外：`backend/android` 目前暴露嵌入式会话契约，必须由包拥有的 Kotlin/AndroidX 托管外壳驱动，该外壳包含已注册 JNI、PlatformView overlay 和 `ANativeWindow` 句柄；`backend/ios` 暴露嵌入式会话契约，由包拥有的 SwiftUI 外壳驱动，该外壳包含原始 `CAMetalLayer` 支持的 `UIView` 句柄和狭窄 ABI v1 Objective-C++ 桥。仓库包装器默认 staging 这些规范项目。应用拥有的原生项目只通过显式 `moui shell eject` 生成。fallback APK/`.app` 构建只是构建系统证据；在存在匹配设备/模拟器运行时 smoke 证据之前，两条路径都应视为实验性。
-
-`backend/harmonyos` 通过包拥有的 ArkTS `MoUIRoot` 遵循同一嵌入式会话形态。原生 XComponent 回调独占 surface/input/resize/detach，而 ArkTS 拥有 `displaySync` 和平台服务。默认仓库包装器 staging 规范外壳；需要拥有 HarmonyOS 项目的应用使用显式 eject 工作流。
-Skia provider 会在把控制权交给宿主应用 runner 之前预检 `moui_skia/native` 可用性。因此 fallback 构建会带着明确诊断返回，而不是打开稍后无法附加渲染器的平台窗口。
+原生渲染器选择是包选择，不是 host-core 应用 options 上的字段。原生 Skia 光栅主线使用 `backend/<platform>/skia`。原生 WGPU 实验诊断只使用 `backend/<platform>/wgpu`。Android、iOS 和 HarmonyOS 使用 `wzzc-dev/window`，而不是单独的 MoUI 移动端宿主。template 通过 `EventLoop` 将 `HostCmd` 交给匹配的 `*WindowHostedApp`，后者装配 MoUI runtime session 和 renderer。lifecycle、surface 和 input 不得绕过该路线。HarmonyOS XComponent callbacks 是 surface、pointer、resize 和 detach 的唯一来源。fallback 构建只是 build-system 证据；要提出 runtime claim，仍需要匹配的设备或模拟器 smoke。
 
 当前平台 provider 测试包含在 `sh scripts/check.sh --profile platform` 中。只有在你已经位于匹配宿主和工具链上时，才直接运行 provider 包。
 
@@ -51,9 +48,9 @@ platform window event -> HostEvent -> AppRuntime -> DrawCommand -> renderer
 - [macOS](platform-notes-macos.md) — AppKit 宿主、Skia/WGPU 诊断、链接标志和服务桥细节。
 - [Windows](platform-notes-windows.md) — MSVC 工具链、Skia/WGPU 设置、WebView2 自动检测和宿主架构。
 - [Linux](platform-notes-linux.md) — Wayland 宿主、运行时要求、Skia provider、运行时证据和剩余缺口。
-- [Android](../android-support.md)（**runtime_partial**）— 托管 Kotlin/AndroidX 外壳、嵌入式会话、APK 打包、历史运行时 smoke；不是产品完整状态。
-- [iOS](../ios-support.md)（**runtime_partial**）— 托管 SwiftUI/Xcode 外壳、Simulator 打包、历史 UIKit smoke；托管重新证明待办。
-- [HarmonyOS](../harmonyos-support.md)（**runtime_partial**）— 托管 ArkTS/XComponent 外壳、HAP 打包、首帧/partial smoke；签名 full L3 待办。
+- [Android](../android-support.md)（**runtime_partial**）— window-hosted Activity、APK 打包和 matching-device evidence requirements。
+- [iOS](../ios-support.md)（**runtime_partial**）— window-hosted UIKit template、Simulator 打包和 matching-device evidence requirements。
+- [HarmonyOS](../harmonyos-support.md)（**runtime_partial**）— window-hosted Stage Ability/XComponent template、HAP 打包和 signed-device evidence requirements。
 
 产品类别摘要：[平台就绪声明](../platform-readiness-declaration.md)。
 

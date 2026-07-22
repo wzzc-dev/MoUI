@@ -21,7 +21,6 @@ const fixtureRoot = join(repoRoot, "checks/external-consumer");
 const mouiVersion = "0.1.7";
 const packagedModules = [
   { directory: "moui", packageName: "moui", version: mouiVersion },
-  { directory: "moui_shell", packageName: "moui_shell", version: mouiVersion },
   { directory: "moui_skia", packageName: "moui_skia", version: mouiVersion },
   { directory: "moui_sun", packageName: "moui_sun", version: mouiVersion },
   { directory: "third_party/mizchi_image", packageName: "image", version: "0.4.2" },

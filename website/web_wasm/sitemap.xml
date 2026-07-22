@@ -25,18 +25,19 @@
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fplatform-notes-macos</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fplatform-notes-windows</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fplatform-notes-linux</loc></url>
+  <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fplatform-notes-wechat</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fplatform-host-contract</loc></url>
+  <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fwindow-hosted-moui</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fplatform-readiness-declaration</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fandroid-support</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fios-support</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fharmonyos-support</loc></url>
-  <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fshell-mainline-roadmap</loc></url>
+  <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fwechat-support</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fgpu-promotion-runbook</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Frenderer-capability-report</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Farchitecture</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Farchitecture-map</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fapi-surface</loc></url>
-  <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fembedding-api-v1</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fmoui-skia-readme</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fdevelopment</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Ftesting</loc></url>
@@ -72,18 +73,19 @@
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fplatform-notes-macos&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fplatform-notes-windows&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fplatform-notes-linux&amp;lang=zh-Hans</loc></url>
+  <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fplatform-notes-wechat&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fplatform-host-contract&amp;lang=zh-Hans</loc></url>
+  <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fwindow-hosted-moui&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fplatform-readiness-declaration&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fandroid-support&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fios-support&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fharmonyos-support&amp;lang=zh-Hans</loc></url>
-  <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fshell-mainline-roadmap&amp;lang=zh-Hans</loc></url>
+  <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fwechat-support&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fgpu-promotion-runbook&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Frenderer-capability-report&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Farchitecture&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Farchitecture-map&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fapi-surface&amp;lang=zh-Hans</loc></url>
-  <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fembedding-api-v1&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fmoui-skia-readme&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Fdevelopment&amp;lang=zh-Hans</loc></url>
   <url><loc>https://wzzc-dev.github.io/MoUI/?section=docs%2Ftesting&amp;lang=zh-Hans</loc></url>

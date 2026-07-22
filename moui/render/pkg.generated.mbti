@@ -371,6 +371,7 @@ pub(all) enum RendererBackendKind {
   SkiaRasterWeb
   SkiaGpuNative
   SunRasterNative
+  Canvas2DWasm
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RendererBackendKind::family(Self) -> RendererFamily
 pub fn RendererBackendKind::label(Self) -> String
@@ -427,6 +428,7 @@ pub(all) enum RendererFamily {
   WebGpu
   Skia
   Sun
+  Canvas2D
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RendererFamily::label(Self) -> String
 

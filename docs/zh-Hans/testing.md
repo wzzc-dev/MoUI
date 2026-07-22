@@ -134,15 +134,12 @@ moon test examples/pdf_workbench/pdflite_adapter --target native
 moon test examples/pdf_workbench/pdflite_service_protocol --target native
 moon test examples/pdf_workbench/pdflite_service_native_transport --target native
 moon test examples/pdf_workbench/pdfium_adapter --target native
-moon check examples/counter/android_skia --target native
-scripts/build-counter-android-apk.sh --fallback-skia
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/counter/ios_skia --target native
-scripts/build-counter-ios-app.sh --fallback-skia
+moon check examples/counter/android_window_hosted --target native
+moon check examples/counter/ios_window_hosted --target native
 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test examples/harmonyos_demo/app --target native
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/harmonyos_demo/harmonyos_skia --target native
-scripts/build-harmonyos-demo-app.sh --fallback-skia
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/showcase/harmonyos_skia --target native
-scripts/build-showcase-harmonyos-hap.sh --fallback-skia
+MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/harmonyos_demo/harmonyos_window_hosted --target native
+MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/showcase/harmonyos_window_hosted --target native
+sh scripts/window-hosted-hostsim-smoke.sh
 ```
 
 仅对 native WGPU 诊断路线使用 `moon test moui/render/wgpu --target native`。交接前使用 `moon fmt`。公开 API 变更后运行 `moon info` 并审查 `pkg.generated.mbti` diff。
@@ -217,88 +214,40 @@ scripts/macos-skia-renderer-smoke.sh --run-ime-smoke
 sh scripts/ci-web-runtime-presentation.sh
 ```
 
-对于 Android packaging 变更，`scripts/build-shell-android-apk.sh --app counter --fallback-skia` 是快速 build-system smoke，覆盖 MoonBit C export、registered JNI/CMake、Kotlin/resource packaging 和 debug signing。它不是真实 Skia renderer 或 platform runtime evidence。Android first-frame/input/lifecycle claim 仍要求不带 fallback 的 `scripts/build-shell-android-apk.sh --app counter`，并在匹配设备或模拟器上运行且记录观察结果。
-canonical Android build entrypoint 现在是 `scripts/build-shell-android-apk.sh --app <counter|showcase>`；它默认使用 managed Kotlin shell。
+### Window-hosted 移动端宿主
 
-对于 iOS packaging 变更，`scripts/build-shell-ios-app.sh --app counter --fallback-skia` 是快速 build-system smoke，覆盖 MoonBit C export、canonical SwiftUI/UIKit host adapter、ABI bridge、iOS runtime compatibility、native-stub compilation、bundle layout 和 ad-hoc simulator signing。它不是真实 Skia renderer 或 platform runtime evidence。iOS first-frame/input/lifecycle claim 仍要求不带 fallback 的 `scripts/build-shell-ios-app.sh --app counter`，并在匹配模拟器或设备上运行且记录观察结果。
-canonical iOS build entrypoint 现在是 `scripts/build-shell-ios-app.sh --app <counter|showcase>`，通过 checked-in 的真实 `PBXNativeTarget`。运行 `sh moui_shell/ios/embedder/tests/run-ios-managed-shell-tests.sh` 进行聚焦 shell contract audit。使用 `node scripts/record-shell-runtime-smoke.mjs --platform <android|ios|harmonyos> --app <counter|showcase|harmonyos_demo> --require-passed` 生成用于 release/manual claim 的 checked shell runtime manifest。recorder 要求 before/after pixel change 和 application receipt log；成功 input injection 或 process termination 本身不是证据。
-iOS 路线要求 Meta `idb` 和 `idb-companion`；stock `simctl ui` 不会注入 tap/swipe event。recorder 从当前 accessibility tree 推导 tap，用 `simctl launch` 返回的 PID 过滤 unified log，并使用 idb HOME event 触发真实 background detach。
-
-Showcase 是 service acceptance target。它的 mobile entrypoint 会直接打开 `platform/mobile-service-probe`。一次只在一个 target 上运行 non-fallback build 和 recorder：
+Android、iOS 和 HarmonyOS 都使用 `wzzc-dev/window` `HostCmd` → `EventLoop` →
+`ApplicationHandler` → MoUI `*WindowHostedApp`。更改移动端 template、entrypoint 或
+backend adapter 后，运行可移植的 host-sim gate：
 
 ```sh
-scripts/build-shell-android-apk.sh --app showcase
-node scripts/record-shell-runtime-smoke.mjs \
-  --platform android --app showcase --device <adb-serial> \
-  --assistive-tech --require-passed
-
-scripts/build-shell-ios-app.sh --app showcase
-node scripts/record-shell-runtime-smoke.mjs \
-  --platform ios --app showcase --device <simulator-udid> \
-  --assistive-tech --require-passed
-
-scripts/build-shell-harmonyos-hap.sh --app showcase
-node scripts/record-shell-runtime-smoke.mjs \
-  --platform harmonyos --app showcase --device <hdc-target> \
-  --require-passed
+sh scripts/window-hosted-hostsim-smoke.sh
 ```
 
-probe 按以下顺序驱动：聚焦带 label 的 text field，注入 IME text，通过 native edit command 复制，seed/read system pasteboard 并粘贴回来，激活带 label 的 action，旋转并恢复 target，滚动，然后检查 app log 中 deferred image 的 loading 和 ready frame。clipboard pass 要求 text write 和 read 都完成；resize pass 要求两个不同的 logged physical size。只有真实 TalkBack、VoiceOver 或 HarmonyOS screen-reader session 发出 tree、focus 和 targeted action log 时，accessibility 才通过。
+它覆盖三个 window host simulator、MoUI backend packages 和 Counter mobile
+entrypoints。`--fallback-skia` 构建只是 packaging-only diagnostic，不能建立
+presenter 或 runtime claim。
 
-Mobile manifest 使用 `passed`、`partial` 和 `failed`。带有部分 verified observation 的 nonblank run 是 `partial`，不是 `failed`；这会保留已收集证据，同时准确显示仍缺哪些 observation。没有可用证据的 build/install/launch/capture run 仍是 `failed`。Release command 继续使用 `--require-passed`，因此 `partial` 不能通过 release gate。
-
-recorder 还会从 `moui-shell renderer configure ... status={...}` 捕获可选 `renderer` block（或 fallback 到 `shell-build.json`）。当 `renderer.gpuPromoted=true` 时，它会附加一个 **pending** seven-gate `gpuPromotionEvidence` skeleton，让 schema validation 通过而不声称 performance/memory/context-loss gate。产品 GPU default 和 seven-gate quality claim 仍然分开。
-
-本地证据快照（2026-07-15）：
-
-- **Historical iOS Component Gallery** under the Release N UIKit shell：`artifacts/mobile-runtime/ios/component_gallery/`（**`passed`**，Metal `gpuAvailable=true`）；这不计作 Showcase evidence
-- **Historical HarmonyOS Component Gallery**：`artifacts/mobile-runtime/harmonyos/component_gallery/`（**`partial`**，EGL first frame；services incomplete）；这不计作 Showcase evidence
-- **Historical Android Component Gallery**：`artifacts/mobile-runtime/android/component_gallery/`（**`partial`**，Vulkan attach/nonblank/input/a11y/async-image）；这不计作 Showcase evidence。不要在低内存主机上同时运行 Android + HarmonyOS emulator。
-- **Showcase managed shells**：新证据路径为 `artifacts/shell-runtime/<platform>/showcase/`；三大移动平台上的 matching-device evidence 都 pending。
-- GPU promotion scaffolds：`artifacts/gpu-promotion/{ios,harmonyos,android}/scaffold-latest/`（不是 L2 proof）
-
-**GPU feasibility (L2) grep：**
+对于已连接的 matching target，一次 build/run 一个平台，然后记录生成的
+window-hosted verification manifest：
 
 ```sh
-rg -n 'renderer configure|surfaceRoute|gpuAvailable' \
-  artifacts/mobile-runtime/ios/component_gallery/runtime-stream.log \
-  artifacts/mobile-runtime/android/component_gallery/runtime-stream.log \
-  artifacts/mobile-runtime/harmonyos/component_gallery/runtime-stream.log
+moui run android showcase \
+  --mobile-config "$PWD/examples/showcase/moui.mobile.json" --device <adb-serial>
+moui verify android showcase --device <adb-serial> --require-passed
 ```
 
-**Android emulator install → APK → verify（copy block）：** 完整步骤在 [android-support.md - Emulator Setup And Smoke](../android-support.md#emulator-setup-and-smoke)。
+iOS 或 HarmonyOS target 使用相应命令。通过的 claim 需要观察到 presentation、input、
+surface detach/recreate、IME、clipboard、accessibility 和 async-image behavior。GPU
+seven-gate quality claim 仍与 runtime readiness 分开。
+
+VM facade 总会先运行 host-sim。只启用一个可选 device leg：
 
 ```sh
-scripts/setup-android-sdk.sh --accept-licenses --ndk 28.2.13676358
-eval "$(scripts/setup-android-sdk.sh --print-env)"
-export ANDROID_NDK_HOME="${ANDROID_NDK_HOME:-$ANDROID_HOME/ndk/28.2.13676358}"
-export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
-sdkmanager --install "emulator" "system-images;android-34;google_apis;arm64-v8a"
-echo no | avdmanager create avd -n moui_api34 \
-  -k "system-images;android-34;google_apis;arm64-v8a" -d pixel_6 --force
-emulator -avd moui_api34 -gpu host -no-snapshot-save &
-adb wait-for-device
-scripts/build-shell-android-apk.sh --app showcase --renderer auto
-node scripts/record-shell-runtime-smoke.mjs \
-  --platform android --app showcase --device "$(adb devices | awk '/\tdevice$/{print $1; exit}')"
-rg -n 'renderer configure|surfaceRoute|gpuAvailable|UnsatisfiedLinkError' \
-  artifacts/shell-runtime/android/showcase/runtime*.log
+WINDOW_HOSTED_ANDROID_AVD=1 sh scripts/window-hosted-vm-smoke.sh
+WINDOW_HOSTED_IOS_SIM=1 sh scripts/window-hosted-vm-smoke.sh
+WINDOW_HOSTED_HARMONYOS_HVD=1 sh scripts/window-hosted-vm-smoke.sh
 ```
-
-除非 manifest 断言 `gpuPromotionClaim=true` 或 `gpuPromotionEvidence.claimed=true`，否则 mobile runtime `--require-passed` 不要求 seven-gate GPU claim threshold。
-
-在 iOS Simulator 上，rotation 当前通过 macOS UI scripting 使用 Simulator 的 Device menu，因为 Xcode 26.3 `simctl io` 没有 rotate operation。请给运行 `osascript` 的 terminal/automation process 授予 Accessibility 权限；否则 resize 会有意保持 `no`。仅修改 simulator VoiceOver preference 不是 action evidence。需要 focus/action log 时，请使用物理设备或 live assistive-technology session。
-
-对于 HarmonyOS packaging 变更，`scripts/build-shell-harmonyos-hap.sh --app harmonyos_demo --fallback-skia` 和 `scripts/build-shell-harmonyos-hap.sh --app showcase --fallback-skia` 是快速 build-system smoke，覆盖 MoonBit C export、package-owned ArkTS Stage Ability/XComponent managed shell、fixed-ABI NAPI bridge、generated plugin registry、native glue compilation、native-stub compilation 和 staged HAP archives。这些构建不是真实 Skia renderer 或 platform runtime evidence。HarmonyOS first-frame/input/lifecycle claim 仍要求 non-fallback HAP，并在匹配设备或模拟器上运行且记录 observation。
-
-HarmonyOS release/manual smoke 通过 `hdc` 使用同一 recorder：
-
-```sh
-node scripts/record-shell-runtime-smoke.mjs --platform harmonyos --app harmonyos_demo --require-passed
-node scripts/record-shell-runtime-smoke.mjs --platform harmonyos --app showcase --require-passed
-```
-
-通过的 mobile evidence 要求实际 lifecycle detach、IME state 和 edit、system text-clipboard write/read completion、accessibility tree/focus/action，以及 async-image loading/ready observation。PNG clipboard interoperability 是单独的手动 cross-app check，不得从 text probe 推断。缺失 observation 保持 pending/failed，而不是从 API presence 推断。
 
 `smoke/gates.json` 是 checked-in smoke gate catalog。它描述 daily、nightly 和 release smoke tier、每个 suite command、结构化 result shape、owning workflow，以及解释门禁的文档。无需运行 platform smoke 即可验证它：
 
@@ -306,7 +255,6 @@ node scripts/record-shell-runtime-smoke.mjs --platform harmonyos --app showcase 
 node --check scripts/smoke-check.mjs
 node --check scripts/test-smoke-check.mjs
 node scripts/test-smoke-check.mjs
-node scripts/test-validate-shell-runtime-manifest.mjs
 node scripts/smoke-check.mjs --check
 node scripts/smoke-check.mjs --tier nightly --list
 node scripts/smoke-check.mjs --tier release --json

@@ -141,9 +141,15 @@ test "doctor parses HarmonyOS SDK metadata from the DevEco envelope" {
 fn doctor_harmony_mobile_fixture(compatible : Int) -> String {
   (
     {
+      "schemaVersion": 1,
+      "id": "fixture",
+      "displayName": "Fixture",
+      "artifactName": "fixture",
+      "appPackage": "app",
       "harmonyos": {
         "compatibleSdkVersion": compatible,
-        "runnerMode": "managed",
+        "bundleName": "dev.example.fixture",
+        "productName": "Fixture",
       },
     } : Json).stringify()
 }

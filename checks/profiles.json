@@ -103,13 +103,6 @@
           ]
         },
         {
-          "name": "mobile app config",
-          "argv": [
-            "node",
-            "scripts/check-shell-app-config.mjs"
-          ]
-        },
-        {
           "name": "GPU promotion manifest example",
           "argv": [
             "node",
@@ -371,13 +364,6 @@
           "argv": [
             "node",
             "scripts/test-validate-web-runtime-presentation-manifest.mjs"
-          ]
-        },
-        {
-          "name": "shell runtime manifest tests",
-          "argv": [
-            "node",
-            "scripts/test-validate-shell-runtime-manifest.mjs"
           ]
         },
         {

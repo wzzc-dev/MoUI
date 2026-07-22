@@ -13,7 +13,7 @@ test "ios backend reports usable runtime_partial capabilities" {
   inspect(info.readiness.ready, content="true")
   inspect(info.readiness.status, content="runtime_partial")
   assert_true(info.readiness.blocked_by.length() >= 1)
-  assert_true(info.readiness.blocked_by[0].contains("managed SwiftUI"))
+  assert_true(info.readiness.blocked_by[0].contains("window-hosted iOS"))
   let summary = ios_capability_summary()
   inspect(summary.label, content="iOS host")
   inspect(summary.window_lifecycle, content="true")
@@ -111,4 +111,3 @@ test "ios runtime session renders through supplied provider" {
     None => fail("expected iOS session")
   }
 }
-

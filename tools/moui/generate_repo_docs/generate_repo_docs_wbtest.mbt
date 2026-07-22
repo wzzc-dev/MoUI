@@ -42,28 +42,26 @@ test "mobile platform manifests keep build and runtime evidence separated" {
   })
   assert_eq(mobile_rows.length(), 3)
   for row in mobile_rows {
-    assert_eq(row.source_status, "passed")
+    assert_eq(row.source_status, "partial")
     assert_eq(row.renderer_status, "partial")
     assert_eq(row.runtime_status, "partial")
-    assert_eq(row.shell_api, 1)
-    assert_eq(row.runtime_abi, 1)
     assert_eq(row.actual_presenter_route, "unverified")
     match row.platform {
       "android" => {
-        assert_eq(row.shell_kind, "managed-kotlin")
+        assert_eq(row.host_kind, "window-hosted-android")
         assert_eq(row.deployment_floor, "Android 23")
         assert_true(row.toolchain_floor.contains("compile SDK 36"))
         assert_true(row.toolchain_floor.contains("target SDK 35"))
         assert_eq(row.declared_presenter_route, "vulkan-direct")
       }
       "ios" => {
-        assert_eq(row.shell_kind, "managed-swiftui")
+        assert_eq(row.host_kind, "window-hosted-ios")
         assert_eq(row.deployment_floor, "iOS 15.0")
         assert_eq(row.toolchain_floor, "Xcode 15.4 / Swift 5")
         assert_eq(row.declared_presenter_route, "metal-direct")
       }
       "harmonyos" => {
-        assert_eq(row.shell_kind, "managed-arkts-xcomponent")
+        assert_eq(row.host_kind, "window-hosted-harmonyos")
         assert_eq(row.deployment_floor, "HarmonyOS API 20")
         assert_true(row.toolchain_floor.contains("target API 21"))
         assert_true(row.toolchain_floor.contains("model 6.0.1"))
@@ -80,14 +78,12 @@ test "mobile platform validator rejects inferred presenter routes" {
     {
       platform: "android",
       source_status: "passed",
-      source_fact_statuses: ["passed", "passed", "passed"],
-      source_verified_on: "2026-07-15",
-      source_matrix_command: "run-shell-matrix.sh android --fallback-skia",
+      source_fact_statuses: ["passed"],
+      source_verified_on: "2026-07-22",
+      source_matrix_command: "moui build android showcase --prepare-only",
       renderer_status: "partial",
       runtime_status: "partial",
-      shell_kind: "managed-kotlin",
-      shell_api: 1,
-      runtime_abi: 1,
+      host_kind: "window-hosted-android",
       declared_presenter_route: "vulkan-direct",
       actual_presenter_route: "vulkan-direct",
       presenter_evidence_status: "unverified",
@@ -108,14 +104,12 @@ test "mobile source build status aggregates required fixtures" {
     {
       platform: "ios",
       source_status: "passed",
-      source_fact_statuses: ["passed", "passed", "partial"],
-      source_verified_on: "2026-07-15",
-      source_matrix_command: "run-shell-matrix.sh ios --fallback-skia",
+      source_fact_statuses: ["partial"],
+      source_verified_on: "2026-07-22",
+      source_matrix_command: "moui build ios showcase --prepare-only",
       renderer_status: "partial",
       runtime_status: "partial",
-      shell_kind: "managed-swiftui",
-      shell_api: 1,
-      runtime_abi: 1,
+      host_kind: "window-hosted-ios",
       declared_presenter_route: "metal-direct",
       actual_presenter_route: "unverified",
       presenter_evidence_status: "unverified",
@@ -157,9 +151,7 @@ test "generated repository facts has stable source sections" {
         source_status: "passed",
         renderer_status: "passed",
         runtime_status: "passed",
-        shell_kind: "browser",
-        shell_api: 0,
-        runtime_abi: 0,
+        host_kind: "browser",
         deployment_floor: "wasm-gc",
         toolchain_floor: "MoonBit",
         declared_presenter_route: "browser-webgpu",

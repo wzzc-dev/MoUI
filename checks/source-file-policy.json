@@ -43,11 +43,6 @@
       "reason": "Existing native Skia surface and image bridge implementation."
     },
     {
-      "path": "moui_cli/prepare_native_build.mbt",
-      "maxLines": 1278,
-      "reason": "Migrated from moui_shell/scripts/prepare-native-build.mjs (670 lines JS) into MoonBit; combines prepare_android/ios/harmonyos + skia link resolution + cmake/rsp/json writers in one module."
-    },
-    {
       "path": "moui_sun/graphics/render_frame_test.mbt",
       "maxLines": 3129,
       "reason": "Existing comprehensive render-frame logic test."
@@ -251,11 +246,6 @@
       "path": "moui_sun/text/parser_test.mbt",
       "maxLines": 1273,
       "reason": "Existing comprehensive text parser test."
-    },
-    {
-      "path": "scripts/record-shell-runtime-smoke.mjs",
-      "maxLines": 1263,
-      "reason": "Existing multi-platform device smoke orchestrator."
     },
     {
       "path": "moui/render/wgpu/native_smoke.mbt",

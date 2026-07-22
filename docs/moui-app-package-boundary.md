@@ -504,29 +504,21 @@ ordinary-app default-dependency rule of `moui/<领域>` (as needed) and
 ## Platform Entrypoint Packages
 
 Platform entrypoint packages are executable packages such as
-`examples/*/{web_wasm,macos_skia,windows_skia,linux_skia,android_skia,ios_skia,harmonyos_skia}`.
+`examples/*/{web_wasm,macos_skia,windows_skia,linux_skia,android_window_hosted,ios_window_hosted,harmonyos_window_hosted}`.
 They create the runtime, connect a platform backend, and select a renderer.
 
-The three mobile routes use an embedded-session entrypoint plus a managed shell
-staged from the resolved `moui_shell` package. Their `main.mbt` files only
-install the application program and renderer configuration. The framework
-package `moui_shell/embedding` owns callback state, the fixed Embedding API
-implementations, and the canonical native export list. The current MoonBit
-native linker does not promote a dependency package's export declarations into
-the final executable's C symbols, so each mobile executable root also carries
-an identical `embedding_exports.mbt` and mirrors the canonical export list in
-its own `moon.pkg`. Those root declarations are mechanical link shims only:
-each function must forward directly to the same-named `@shell_embedding`
-function and must not own adapter state, branching, runtime behavior, or ABI
-semantics.
+The three mobile routes use the matching `wzzc-dev/window` template and a
+`*_window_hosted` entrypoint. Their `main.mbt` files construct the program,
+select the renderer provider, and pass the resulting `*WindowHostedApp` to the
+platform `EventLoop`. `HostCmd` and `ApplicationHandler` are the only path for
+lifecycle, surface, and input callbacks; mobile executable roots do not export
+or forward a second embedding ABI.
 
-Android stages the package-owned Kotlin shell. The canonical SwiftUI shell in
-staged `moui_shell/ios` owns the single-scene lifecycle, `CAMetalLayer` surface,
-`CADisplayLink`, UIKit service adapter, and touch forwarding; Objective-C++ is
-retained only for Embedding API v1 translation and data ownership. The
-canonical ArkTS Stage Ability/XComponent shell in `moui_shell/harmonyos` is
-staged by the builder; the native XComponent callback exclusively owns
-surface/input/resize/detach.
+Android, iOS, and HarmonyOS templates own their native lifecycle and surface
+bridges. `AndroidWindowHostedApp`, `IosWindowHostedApp`, and
+`HarmonyOsWindowHostedApp` assemble the MoUI runtime session after the window
+event loop creates a surface. HarmonyOS XComponent callbacks remain the sole
+source for surface, pointer, resize, and detach events.
 
 Platform entrypoint packages may depend on:
 
@@ -536,8 +528,7 @@ Platform entrypoint packages may depend on:
 - `wzzc-dev/moui/backend/{macos,windows,linux,android,ios,harmonyos}`
 - `wzzc-dev/moui/backend/{macos,windows,linux,android,ios,harmonyos}/skia`
 - `wzzc-dev/moui/render/skia`
-- `wzzc-dev/moui_shell/embedding` only in mobile executable roots for the
-  mechanically validated final-link forwarders
+- `wzzc-dev/window/{android,ios,harmonyos}` in the matching mobile entrypoint
 - The corresponding shared app package, such as `examples/showcase/app`
 
 WGPU-related backend/render packages are for experimental or diagnostic
@@ -546,8 +537,7 @@ default platform entrypoints.
 
 A platform entrypoint package must not contain business UI. Business views,
 models, and updates remain in the shared app package; the platform entrypoint is
-responsible only for runtime + backend + renderer wiring plus, for mobile native
-executables, the mechanically validated final-link export shim described above.
+responsible only for runtime + backend + renderer wiring.
 
 ## Framework and Control Implementation Packages
 

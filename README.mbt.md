@@ -20,7 +20,7 @@ matures.
 | Web | **committed** | Product mainline (wasm-gc + WebGPU) |
 | Windows | **committed_with_gaps** | Product L0–L2; full L3 runtime still partial |
 | Linux | **committed_with_gaps** | Product L0–L2; interactive L3 still partial |
-| Android | **runtime_partial** | Managed shell + host path usable for dev/demo; not product-complete |
+| Android | **runtime_partial** | Window-hosted path usable for dev/demo; not product-complete |
 | iOS | **runtime_partial** | Same as Android |
 | HarmonyOS | **runtime_partial** | Same; signed-device full smoke still open |
 
@@ -108,9 +108,9 @@ moon run macos_skia --target native   # or windows_skia / linux_skia on that hos
 ```
 
 `moui new` creates shared app logic plus Web and the current desktop entrypoint.
-Add Android, iOS, or HarmonyOS explicitly with `--platform`; mobile projects use
-the framework-managed canonical shell and do not copy native projects into the
-application repository. See [Getting started](docs/getting-started.md).
+Add Android, iOS, or HarmonyOS explicitly with `--platform`; mobile projects
+use `wzzc-dev/window` templates and keep lifecycle, surface, and input in the
+platform event loop. See [Getting started](docs/getting-started.md).
 
 ### This Repository
 
@@ -161,15 +161,15 @@ instead of committing generated artifacts.
 The featured examples — `showcase`, `markdown_editor`, `mo_workbench`, and
 `excel` — share app logic in `examples/<name>/app` and expose thin platform
 entrypoints. Showcase uses `web_wasm`, desktop renderer-specific entrypoints,
-and `android_skia`, `ios_skia`, and `harmonyos_skia` mobile entrypoints.
+and `android_window_hosted`, `ios_window_hosted`, and
+`harmonyos_window_hosted` mobile entrypoints.
 
 To try Showcase on a mobile platform, follow the platform-specific
 setup, build, and run instructions for
 [Android](docs/android-support.md),
 [iOS](docs/ios-support.md), or
-[HarmonyOS](docs/harmonyos-support.md). Standard examples stage their native
-projects from `moui_shell`; use `moui shell eject` only when an app must own and
-version a native project.
+[HarmonyOS](docs/harmonyos-support.md). Standard examples use the matching
+`wzzc-dev/window` platform template through `moui build`.
 
 > **Windows prerequisite:** before building or running any Windows native Skia
 > entrypoint (`windows_skia`), initialize the

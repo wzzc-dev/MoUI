@@ -24,24 +24,10 @@ priv struct ParsedDoctor {
 }
 
 ///|
-priv struct ParsedEject {
-  help : Bool
-  json : Bool
-  options : EjectOptions?
-}
-
-///|
 priv struct ParsedAddPlatform {
   help : Bool
   json : Bool
   options : AddPlatformOptions?
-}
-
-///|
-priv struct ParsedPluginNew {
-  help : Bool
-  json : Bool
-  options : PluginScaffoldOptions?
 }
 
 ///|
@@ -60,28 +46,24 @@ fn root_usage() -> String {
     #|  moui new <target> [options]
     #|  moui add platform <platform> [options]
     #|  moui doctor [options]
-    #|  moui plugin new <id> [options]
     #|  moui package [options]
     #|  moui build <platform> <app> [options]
     #|  moui run <platform> <app> [options]
     #|  moui devices [options]
     #|  moui verify <platform> <app> [options]
     #|  moui config <action> [args]
-    #|  moui shell eject <platform> [options]
     #|  moui --version
     #|
     #|Commands:
     #|  new             Create an independent MoUI project.
     #|  add platform    Add platforms to an existing project.
     #|  doctor          Check the selected platform toolchains.
-    #|  plugin new      Scaffold a managed shell plugin package.
     #|  package         Print project package inventory.
     #|  build           Build a mobile app artifact (APK / .app / .hap) without installing.
     #|  run             Build, install, and launch a mobile app on a device or emulator.
     #|  devices         List connected mobile devices and emulators.
-    #|  verify          Verify mobile app runtime evidence against the managed shell contract.
+    #|  verify          Verify window-hosted mobile runtime evidence.
     #|  config          Get/set MoUI CLI configuration values (XDG-backed).
-    #|  shell eject    Materialize a versioned shell for application ownership.
     #|
     #|Options:
     #|  -h, --help      Show help.
@@ -104,7 +86,7 @@ fn new_usage() -> String {
     #|  --platform PLATFORM     Add a target platform; may be repeated.
     #|                          Values: web, macos, windows, linux, android,
     #|                          ios, harmonyos, or all.
-    #|  --bundle-id ID          Required when a shell platform is selected.
+    #|  --bundle-id ID          Required when a mobile platform is selected.
     #|  --json                  Emit machine-readable output.
     #|  -h, --help              Show this help.
   )
@@ -126,29 +108,6 @@ fn doctor_usage() -> String {
 }
 
 ///|
-fn mobile_usage() -> String {
-  (
-    #|Usage: moui shell eject <android|ios|harmonyos> [options]
-    #|
-    #|Run `moui shell eject --help` for command options.
-  )
-}
-
-///|
-fn eject_usage() -> String {
-  (
-    #|Usage: moui shell eject <android|ios|harmonyos> [options]
-    #|
-    #|Options:
-    #|  --project-root PATH  Project root. Defaults to the current directory.
-    #|  --output PATH        Destination. Defaults to the platform shell path.
-    #|  --moui-root PATH     Local MoUI package root containing shell templates.
-    #|  --json               Emit machine-readable output.
-    #|  -h, --help           Show this help.
-  )
-}
-
-///|
 fn add_usage() -> String {
   (
     #|Usage: moui add platform <platform> [options]
@@ -158,23 +117,7 @@ fn add_usage() -> String {
     #|Options:
     #|  --project-root PATH  Project root. Defaults to the current directory.
     #|  --platform PLATFORM  Additional platform; may be repeated.
-    #|  --bundle-id ID       Required when adding the first shell platform.
-    #|  --json               Emit machine-readable output.
-    #|  -h, --help           Show this help.
-  )
-}
-
-///|
-fn plugin_usage() -> String {
-  (
-    #|Usage: moui plugin new <id> [options]
-    #|
-    #|Scaffold a managed plugin under plugins/<id> and register it in shell.json
-    #|when present.
-    #|
-    #|Options:
-    #|  --project-root PATH  Project root. Defaults to the current directory.
-    #|  --platform PLATFORM  Shell platform; may be repeated (android|ios|harmonyos|all).
+    #|  --bundle-id ID       Required when adding the first mobile platform.
     #|  --json               Emit machine-readable output.
     #|  -h, --help           Show this help.
   )
@@ -450,72 +393,6 @@ fn parse_add_platform_args(
 }
 
 ///|
-fn parse_plugin_new_args(
-  args : Array[String],
-  cwd : String,
-) -> Result[ParsedPluginNew, String] {
-  let project_root = Ref(cwd)
-  let id : Ref[String?] = Ref(None)
-  let platforms : Array[String] = []
-  let help = Ref(false)
-  let json = Ref(false)
-  let mut index = 0
-  while index < args.length() {
-    let argument = args[index]
-    let (name, inline) = option_parts(argument)
-    match name {
-      "--project-root" | "--platform" => {
-        let (value, next) = match option_value(args, index, inline, name) {
-          Ok(result) => result
-          Err(message) => return Err(message)
-        }
-        if name == "--project-root" {
-          project_root.val = resolve_path(cwd, value)
-        } else {
-          platforms.push(value)
-        }
-        index = next
-      }
-      "--json" | "-h" | "--help" => {
-        match flag_without_value(inline, name) {
-          Ok(_) => ()
-          Err(message) => return Err(message)
-        }
-        if name == "--json" {
-          json.val = true
-        } else {
-          help.val = true
-        }
-        index += 1
-      }
-      _ if argument.has_prefix("-") =>
-        return Err("unknown option for moui plugin new: " + name)
-      _ => {
-        match id.val {
-          None => id.val = Some(argument)
-          Some(_) => return Err("moui plugin new accepts exactly one plugin id")
-        }
-        index += 1
-      }
-    }
-  }
-  if help.val {
-    return Ok({ help: true, json: json.val, options: None })
-  }
-  guard id.val is Some(plugin_id) else {
-    return Err("missing plugin id for moui plugin new")
-  }
-  if platforms.is_empty() {
-    return Err("moui plugin new requires --platform")
-  }
-  Ok({
-    help: false,
-    json: json.val,
-    options: Some({ project_root: project_root.val, id: plugin_id, platforms }),
-  })
-}
-
-///|
 fn parse_package_args(
   args : Array[String],
   cwd : String,
@@ -555,76 +432,6 @@ fn parse_package_args(
     help: help.val,
     json: json.val,
     options: { project_root: project_root.val },
-  })
-}
-
-///|
-fn parse_eject_args(
-  args : Array[String],
-  cwd : String,
-) -> Result[ParsedEject, String] {
-  let platform : Ref[String?] = Ref(None)
-  let project_root = Ref(cwd)
-  let output = Ref("")
-  let moui_root : Ref[String?] = Ref(None)
-  let help = Ref(false)
-  let json = Ref(false)
-  let mut index = 0
-  while index < args.length() {
-    let argument = args[index]
-    let (name, inline) = option_parts(argument)
-    match name {
-      "--project-root" | "--output" | "--moui-root" => {
-        let (value, next) = match option_value(args, index, inline, name) {
-          Ok(result) => result
-          Err(message) => return Err(message)
-        }
-        match name {
-          "--project-root" => project_root.val = resolve_path(cwd, value)
-          "--output" => output.val = value
-          "--moui-root" => moui_root.val = Some(resolve_path(cwd, value))
-          _ => ()
-        }
-        index = next
-      }
-      "--json" | "-h" | "--help" => {
-        match flag_without_value(inline, name) {
-          Ok(_) => ()
-          Err(message) => return Err(message)
-        }
-        if name == "--json" {
-          json.val = true
-        } else {
-          help.val = true
-        }
-        index += 1
-      }
-      _ if argument.has_prefix("-") =>
-        return Err("unknown option for moui shell eject: " + name)
-      _ => {
-        match platform.val {
-          None => platform.val = Some(argument)
-          Some(_) => return Err("moui shell eject accepts exactly one platform")
-        }
-        index += 1
-      }
-    }
-  }
-  if help.val {
-    return Ok({ help: true, json: json.val, options: None })
-  }
-  guard platform.val is Some(selected_platform) else {
-    return Err("missing platform for moui shell eject")
-  }
-  Ok({
-    help: false,
-    json: json.val,
-    options: Some({
-      project_root: project_root.val,
-      platform: selected_platform,
-      output: output.val,
-      moui_root: moui_root.val,
-    }),
   })
 }
 
@@ -780,41 +587,6 @@ fn run_add_platform(args : Array[String], cwd : String) -> CliOutcome {
 }
 
 ///|
-fn run_plugin_new(args : Array[String], cwd : String) -> CliOutcome {
-  let json = json_requested(args)
-  let parsed = match parse_plugin_new_args(args, cwd) {
-    Ok(value) => value
-    Err(message) => return failed_outcome(message, json, plugin_usage())
-  }
-  if parsed.help {
-    return stdout_outcome(plugin_usage())
-  }
-  guard parsed.options is Some(options) else {
-    return failed_outcome("plugin new options are unavailable", parsed.json, "")
-  }
-  match scaffold_plugin(options) {
-    Ok(files) =>
-      if parsed.json {
-        let value : Json = {
-          "schemaVersion": 1,
-          "ok": true,
-          "command": "plugin new",
-          "id": options.id,
-          "files": files,
-        }
-        stdout_outcome(value.stringify(indent=2) + "\n")
-      } else {
-        stdout_outcome(
-          "Scaffolded plugin " +
-          options.id +
-          "\nWrote \{files.length()} files.\n",
-        )
-      }
-    Err(message) => failed_outcome(message, parsed.json, "")
-  }
-}
-
-///|
 fn run_package_command(args : Array[String], cwd : String) -> CliOutcome {
   let json = json_requested(args)
   let parsed = match parse_package_args(args, cwd) {
@@ -834,40 +606,6 @@ fn run_package_command(args : Array[String], cwd : String) -> CliOutcome {
       Ok(text) => stdout_outcome(text)
       Err(message) => failed_outcome(message, false, "")
     }
-  }
-}
-
-///|
-fn run_eject(args : Array[String], cwd : String) -> CliOutcome {
-  let json = json_requested(args)
-  let parsed = match parse_eject_args(args, cwd) {
-    Ok(value) => value
-    Err(message) => return failed_outcome(message, json, eject_usage())
-  }
-  if parsed.help {
-    return stdout_outcome(eject_usage())
-  }
-  guard parsed.options is Some(options) else {
-    return failed_outcome(
-      "eject command options are unavailable",
-      parsed.json,
-      "",
-    )
-  }
-  match eject_shell(options) {
-    Ok(result) =>
-      if parsed.json {
-        stdout_outcome(result.to_json_text())
-      } else {
-        stdout_outcome(
-          "Ejected " +
-          result.platform +
-          " shell to " +
-          result.output +
-          "\nWrote \{result.file_count} template files.\n",
-        )
-      }
-    Err(message) => failed_outcome(message, parsed.json, "")
   }
 }
 
@@ -920,12 +658,6 @@ pub fn run_cli(args : Array[String], cwd : String) -> CliOutcome {
         Err(message) =>
           failed_outcome(message, json_requested(args), build_usage())
       }
-    "build-ios-core" =>
-      match parse_build_ios_core_args(args[1:].to_owned()) {
-        Ok(parsed) => run_build_ios_core(parsed, detect_host_platform())
-        Err(message) =>
-          failed_outcome(message, json_requested(args), build_ios_core_usage())
-      }
     "add" =>
       if args.length() == 1 ||
         (args.length() == 2 && (args[1] == "-h" || args[1] == "--help")) {
@@ -940,19 +672,6 @@ pub fn run_cli(args : Array[String], cwd : String) -> CliOutcome {
         )
       }
     "doctor" => run_doctor_command(args[1:].to_owned(), cwd)
-    "plugin" =>
-      if args.length() == 1 ||
-        (args.length() == 2 && (args[1] == "-h" || args[1] == "--help")) {
-        stdout_outcome(plugin_usage())
-      } else if args[1] == "new" {
-        run_plugin_new(args[2:].to_owned(), cwd)
-      } else {
-        failed_outcome(
-          "unknown moui plugin command: " + args[1],
-          json_requested(args),
-          plugin_usage(),
-        )
-      }
     "package" => run_package_command(args[1:].to_owned(), cwd)
     "run" =>
       match parse_run_args(args[1:].to_owned(), cwd, detect_host_platform()) {
@@ -978,19 +697,6 @@ pub fn run_cli(args : Array[String], cwd : String) -> CliOutcome {
         Ok(parsed) => run_config(parsed, detect_host_platform())
         Err(message) =>
           failed_outcome(message, json_requested(args), config_usage())
-      }
-    "shell" =>
-      if args.length() == 1 ||
-        (args.length() == 2 && (args[1] == "-h" || args[1] == "--help")) {
-        stdout_outcome(mobile_usage())
-      } else if args[1] == "eject" {
-        run_eject(args[2:].to_owned(), cwd)
-      } else {
-        failed_outcome(
-          "unknown moui shell command: " + args[1],
-          json_requested(args),
-          mobile_usage(),
-        )
       }
     command =>
       failed_outcome(

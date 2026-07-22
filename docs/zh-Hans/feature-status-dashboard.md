@@ -64,19 +64,12 @@
 
 ## 移动端状态
 
-Android、iOS 和 HarmonyOS 的**产品分类：`runtime_partial`**（可用的 managed-shell host 路径；不是 product-complete）。请见 [platform-readiness-declaration.md](../platform-readiness-declaration.md)。
+Android、iOS 和 HarmonyOS 的**产品分类：`runtime_partial`**（可用的 window-hosted 路径；不是 product-complete）。请见 [platform-readiness-declaration.md](../platform-readiness-declaration.md)。
 
-Android、iOS 和 HarmonyOS 具有源码级 VSync 和 mobile service bridge。HarmonyOS 还拥有 native-only XComponent pointer/lifecycle ownership 和 touch-slop scroll arbitration。
-
-Historical Component Gallery evidence 保留用于审计，但不会提升已重命名的 Showcase managed shell：
-
-| 平台 | 状态 | Artifact | 备注 |
-| --- | --- | --- | --- |
-| iOS historical artifact | Release N UIKit shell **`passed`** | `artifacts/mobile-runtime/ios/component_gallery/` | 不是 Showcase evidence。 |
-| Android historical artifact | Release N legacy shell **`passed`** | `artifacts/mobile-runtime/android/component_gallery/` | 不是 Showcase evidence。 |
-| Showcase managed shells | fresh Android/iOS/HarmonyOS evidence pending | `artifacts/shell-runtime/<platform>/showcase/` | 需要通过真实系统输入、assistive technology 和必要的 repository test-probe plugin 重新运行。 |
-
-CI 入口点：`moui-ios-shell-runtime-evidence.yml`、`moui-android-shell-runtime-evidence.yml`（self-hosted android）、`moui-harmonyos-shell-runtime-evidence.yml`（self-hosted harmonyos + signing）。
+window-hosted 路径使用 `HostCmd` → `EventLoop` → `ApplicationHandler` → MoUI
+adapters。HarmonyOS XComponent callbacks 独占 surface、pointer、resize 和 detach。
+通过 `sh scripts/window-hosted-hostsim-smoke.sh` 提供 host-sim 覆盖；三个平台的
+matching-device evidence 仍 pending。
 
 `SkiaGpuNative` 按 GPU readback elimination plan 第 1 阶段携带未 promoted 的 window-surface source 路径（iOS/macOS Metal、Android Vulkan/GLES、HarmonyOS EGL/GLES、Windows D3D12、Linux Wayland Vulkan）。native worker 在独立线程上证明安全的 `SkPicture`/POD handoff。它的 macOS 分支现在拥有 Ganesh/Metal context 和 drawable presentation，并在本地 first-frame smoke 后发出 `Presented`；剩余平台 worker ownership 和所有 promotion manifest 仍然 pending。第 2 阶段 promotion gate 脚手架具有 L1 package-test 证明：
 
@@ -85,9 +78,9 @@ CI 入口点：`moui-ios-shell-runtime-evidence.yml`、`moui-android-shell-runti
 | Renderer mailbox control queue (`moui/render/render_frame_mailbox.mbt`) | `moui/render` whitebox tests（capacity-two latest-wins；`RendererControlMessage` never dropped） |
 | Native Picture handoff (`moui_skia/native/skia_stub_gpu_worker.cpp`) | 聚焦 native tests（independent thread、retained picture、detach acknowledgement、zero readback counter） |
 | Context-loss recovery (`moui/runtime/renderer_recovery.mbt`) | `moui/runtime` whitebox tests（Idle → Lost → Recovering → Recovered → Idle；`FallbackToRaster` after 2 failures） |
-| Manifest schema + `gpuPromotionEvidence` (`tools/moui/validate_shell_runtime_manifest`) | `validate_shell_runtime_manifest_wbtest`（9 个新的 Phase 2.3 测试） |
+| Window-hosted verification manifest | `moui_cli/verify.mbt` 和 `moui_cli/verify_wbtest.mbt` |
 
-当 host GPU surface 可用时，产品 `auto` 在每个 native Skia 平台默认使用 `SkiaGpuNative`（`gpu_promoted` 全部为 `true`）。Raster 仍然是显式/恢复路径。匹配设备 seven-gate manifest 仍然是质量证据门槛；参见 ADR 0006 和 `shell-mainline-roadmap.md`。
+当 host GPU surface 可用时，产品 `auto` 在每个 native Skia 平台默认使用 `SkiaGpuNative`（`gpu_promoted` 全部为 `true`）。Raster 仍然是显式/恢复路径。匹配设备 seven-gate manifest 仍然是质量证据门槛；参见 ADR 0006 和 `window-hosted-moui.md`。
 
 ## 证据可追溯性
 

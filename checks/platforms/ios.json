@@ -2,13 +2,11 @@
   "schemaVersion": 1,
   "platform": "ios",
   "sourceBuild": {
-    "status": "passed",
-    "managed": "passed",
-    "cleanEjected": "passed",
-    "pluginFixture": "passed",
-    "verifiedOn": "2026-07-15",
-    "matrixCommand": "moui_shell/test_probe/tests/run-shell-matrix.sh ios --fallback-skia --prepare-only",
-    "evidence": "managed, clean-ejected, and plugin fallback simulator-app matrix passed"
+    "status": "partial",
+    "windowHosted": "partial",
+    "verifiedOn": "2026-07-22",
+    "matrixCommand": "moui build ios showcase --mobile-config examples/showcase/moui.mobile.json --prepare-only",
+    "evidence": "window-hosted template and CLI migration are checked; installable app evidence is pending"
   },
   "rendererL2": {
     "status": "partial",
@@ -16,13 +14,11 @@
     "presenterEvidence": {
       "status": "unverified",
       "kind": "none",
-      "reference": "fresh managed SwiftUI direct-present marker pending"
+      "reference": "fresh matching-simulator direct-present marker pending"
     }
   },
-  "runtimeL3": {"status": "partial", "evidence": "SwiftUI matching-simulator suite pending"},
-  "shellKind": "managed-swiftui",
-  "shellApiVersion": 1,
-  "embeddingApiVersion": 1,
+  "runtimeL3": { "status": "partial", "evidence": "window-hosted matching-simulator suite pending" },
+  "hostKind": "window-hosted-ios",
   "deploymentFloor": "iOS 15.0",
   "toolchainFloor": "Xcode 15.4 / Swift 5",
   "actualPresenterRoute": "unverified"

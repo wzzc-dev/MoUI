@@ -18,44 +18,26 @@ fn package_report_text(
     Some(value) => builder.write_string("bundleId: " + value + "\n")
     None => builder.write_string("bundleId: (none)\n")
   }
-  let mobile_path = join_path(options.project_root, "shell.json")
+  let mobile_path = join_path(options.project_root, "moui.mobile.json")
   if @fs.path_exists(mobile_path) {
     let text = @fs.read_file_to_string(mobile_path) catch {
-      _ => return Err("could not read shell.json: " + mobile_path)
+      _ => return Err("could not read moui.mobile.json: " + mobile_path)
     }
     let parsed = @json.parse(text) catch {
-      _ => return Err("shell.json is invalid JSON")
+      _ => return Err("moui.mobile.json is invalid JSON")
     }
     guard parsed is Object(root) else {
-      return Err("shell.json root must be an object")
+      return Err("moui.mobile.json root must be an object")
     }
-    match root.get("shellApiVersion") {
+    match root.get("schemaVersion") {
       Some(Number(value, repr=_)) =>
         builder.write_string(
-          "shellApiVersion: " + value.to_int().to_string() + "\n",
+          "mobileConfigSchemaVersion: " + value.to_int().to_string() + "\n",
         )
-      _ => builder.write_string("shellApiVersion: (missing)\n")
-    }
-    match root.get("embeddingApiVersion") {
-      Some(Number(value, repr=_)) =>
-        builder.write_string(
-          "embeddingApiVersion: " + value.to_int().to_string() + "\n",
-        )
-      _ => builder.write_string("embeddingApiVersion: (missing)\n")
-    }
-    match root.get("shell") {
-      Some(Object(shell)) =>
-        match shell.get("plugins") {
-          Some(Array(values)) =>
-            builder.write_string(
-              "plugins: " + values.length().to_string() + "\n",
-            )
-          _ => builder.write_string("plugins: 0\n")
-        }
-      _ => builder.write_string("plugins: 0\n")
+      _ => builder.write_string("mobileConfigSchemaVersion: (missing)\n")
     }
   } else {
-    builder.write_string("shell.json: (absent)\n")
+    builder.write_string("moui.mobile.json: (absent)\n")
   }
   Ok(builder.to_string())
 }
@@ -83,15 +65,15 @@ fn package_report_json(
     Some(value) => root["bundleId"] = value.to_json()
     None => ()
   }
-  let mobile_path = join_path(options.project_root, "shell.json")
+  let mobile_path = join_path(options.project_root, "moui.mobile.json")
   if @fs.path_exists(mobile_path) {
     let text = @fs.read_file_to_string(mobile_path) catch {
-      _ => return Err("could not read shell.json: " + mobile_path)
+      _ => return Err("could not read moui.mobile.json: " + mobile_path)
     }
     let parsed = @json.parse(text) catch {
-      _ => return Err("shell.json is invalid JSON")
+      _ => return Err("moui.mobile.json is invalid JSON")
     }
-    root["shell"] = parsed
+    root["mobile"] = parsed
   }
   Ok(Json::object(root).stringify(indent=2) + "\n")
 }

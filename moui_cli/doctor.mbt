@@ -414,10 +414,6 @@ fn project_entrypoint_checks(
           missing.push(marker)
         }
       }
-      if package_text.contains("moui_embedding_") ||
-        main_text.contains("moui_embedding_") {
-        missing.push("backend-owned Embedding API exports")
-      }
       if path_is_nonempty_file(package_path) &&
         path_is_nonempty_file(main_path) &&
         missing.is_empty() {
@@ -437,13 +433,13 @@ fn project_entrypoint_checks(
             Warn,
             true,
             platform +
-            " shell metadata is present but its MoonBit entrypoint contract is incomplete",
+            " mobile metadata is present but its MoonBit entrypoint contract is incomplete",
             detail=if missing.is_empty() {
               "expected nonempty " + package_path + " and " + main_path
             } else {
               "missing markers: " + missing.join(", ")
             },
-            remediation="Generate or add the platform entrypoint before building the native shell.",
+            remediation="Generate or add the platform entrypoint before building the native app.",
           ),
         )
       }
@@ -496,9 +492,6 @@ fn run_doctor(options : DoctorOptions) -> Result[DoctorReport, String] {
     ),
   ]
   for check in project_entrypoint_checks(options.project_root, platforms) {
-    checks.push(check)
-  }
-  for check in mobile_project_doctor_checks(options.project_root, platforms) {
     checks.push(check)
   }
   let ok = !checks.any(check => check.required && check.status == Fail)

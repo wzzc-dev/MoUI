@@ -175,6 +175,7 @@ pub fn HostAsyncImageLoaderDiagnostics::scheduled_count(Self) -> Int
 pub(all) enum HostBackendKind {
   Native
   Web
+  Wechat
   Test
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostBackendKind::label(Self) -> String

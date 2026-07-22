@@ -4,9 +4,7 @@
   "sourceBuild": {"status": "passed", "evidence": "Pages and Web CI"},
   "rendererL2": {"status": "passed", "presenterRoute": "browser-webgpu"},
   "runtimeL3": {"status": "passed", "evidence": "browser presentation manifest"},
-  "shellKind": "browser",
-  "shellApiVersion": 0,
-  "embeddingApiVersion": 0,
+  "hostKind": "browser",
   "deploymentFloor": "WebAssembly GC browser",
   "toolchainFloor": "MoonBit wasm-gc",
   "actualPresenterRoute": "browser-webgpu"

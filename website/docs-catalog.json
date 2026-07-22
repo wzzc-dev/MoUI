@@ -335,6 +335,19 @@
     },
     {
       "group": "platforms",
+      "slug": "platform-notes-wechat",
+      "title": "WeChat Mini Program Platform Notes",
+      "path": "docs/platform-notes-wechat.md",
+      "summary": "WeChat Mini Program Skyline, Canvas 2D, wasm-gc, and platform-specific integration notes.",
+      "keywords": [
+        "WeChat",
+        "Mini Program",
+        "Skyline",
+        "Canvas 2D"
+      ]
+    },
+    {
+      "group": "platforms",
       "slug": "platform-host-contract",
       "title": "Platform Host Contract",
       "path": "docs/platform-host-contract.md",
@@ -344,6 +357,20 @@
         "contract",
         "window",
         "services"
+      ]
+    },
+    {
+      "group": "platforms",
+      "slug": "window-hosted-moui",
+      "title": "Window-hosted MoUI",
+      "path": "docs/window-hosted-moui.md",
+      "summary": "The window-hosted Android, iOS, and HarmonyOS lifecycle, surface, input, and validation route.",
+      "keywords": [
+        "mobile",
+        "window",
+        "Android",
+        "iOS",
+        "HarmonyOS"
       ]
     },
     {
@@ -364,7 +391,7 @@
       "slug": "android-support",
       "title": "Android Support",
       "path": "docs/android-support.md",
-      "summary": "Android embedded-session architecture, packaging workflow, and runtime evidence requirements.",
+      "summary": "Android window-hosted architecture, packaging workflow, and runtime evidence requirements.",
       "keywords": [
         "Android",
         "mobile",
@@ -377,7 +404,7 @@
       "slug": "ios-support",
       "title": "iOS Support",
       "path": "docs/ios-support.md",
-      "summary": "iOS UIKit embedded-session architecture, Xcode packaging, and smoke evidence requirements.",
+      "summary": "iOS window-hosted UIKit architecture, Xcode packaging, and smoke evidence requirements.",
       "keywords": [
         "iOS",
         "UIKit",
@@ -390,7 +417,7 @@
       "slug": "harmonyos-support",
       "title": "HarmonyOS Support",
       "path": "docs/harmonyos-support.md",
-      "summary": "HarmonyOS Stage Ability and XComponent integration, packaging, and runtime evidence requirements.",
+      "summary": "HarmonyOS window-hosted Stage Ability and XComponent integration, packaging, and runtime evidence requirements.",
       "keywords": [
         "HarmonyOS",
         "XComponent",
@@ -400,16 +427,15 @@
     },
     {
       "group": "platforms",
-      "slug": "shell-mainline-roadmap",
-      "title": "Shell Mainline Roadmap",
-      "path": "docs/shell-mainline-roadmap.md",
-      "summary": "Native-shell embedding ownership, renderer selection, host services, and GPU promotion gates.",
+      "slug": "wechat-support",
+      "title": "WeChat Mini Program Support",
+      "path": "docs/wechat-support.md",
+      "summary": "WeChat Mini Program Canvas 2D wasm-gc support, current scope, and remaining runtime evidence.",
       "keywords": [
-        "mobile",
-        "Android",
-        "iOS",
-        "HarmonyOS",
-        "GPU"
+        "WeChat",
+        "Mini Program",
+        "Canvas 2D",
+        "wasm-gc"
       ]
     },
     {
@@ -475,20 +501,6 @@
         "public surface",
         "facade",
         "compatibility"
-      ]
-    },
-    {
-      "group": "architecture-api",
-      "slug": "embedding-api-v1",
-      "title": "Embedding API v1",
-      "path": "docs/embedding-api-v1.md",
-      "summary": "Versioned embedding function table, lifecycle, ownership, capability, and symbol contracts.",
-      "keywords": [
-        "mobile",
-        "ABI",
-        "FFI",
-        "lifecycle",
-        "ownership"
       ]
     },
     {
@@ -960,6 +972,19 @@
         },
         {
           "group": "platforms",
+          "slug": "platform-notes-wechat",
+          "title": "微信小程序平台说明",
+          "summary": "微信小程序 Skyline、Canvas 2D、WebAssembly 与平台集成说明。",
+          "keywords": [
+            "微信小程序",
+            "Skyline",
+            "Canvas 2D",
+            "WebAssembly"
+          ],
+          "localizedPath": "docs/zh-Hans/platform-notes-wechat.md"
+        },
+        {
+          "group": "platforms",
           "slug": "platform-host-contract",
           "title": "平台宿主契约",
           "summary": "MoUI 平台宿主契约的公开文档。",
@@ -969,6 +994,20 @@
             "MoonBit"
           ],
           "localizedPath": "docs/zh-Hans/platform-host-contract.md"
+        },
+        {
+          "group": "platforms",
+          "slug": "window-hosted-moui",
+          "title": "Window 托管的 MoUI",
+          "summary": "Android、iOS 和 HarmonyOS 的 window-hosted 生命周期、Surface、输入与验证路径。",
+          "keywords": [
+            "移动端",
+            "window",
+            "Android",
+            "iOS",
+            "HarmonyOS"
+          ],
+          "localizedPath": "docs/zh-Hans/window-hosted-moui.md"
         },
         {
           "group": "platforms",
@@ -1020,15 +1059,16 @@
         },
         {
           "group": "platforms",
-          "slug": "shell-mainline-roadmap",
-          "title": "原生壳主线路线图",
-          "summary": "MoUI 原生壳主线路线图的公开文档。",
+          "slug": "wechat-support",
+          "title": "微信小程序支持",
+          "summary": "微信小程序 Canvas 2D WebAssembly 支持范围、当前状态和待补齐的运行时证据。",
           "keywords": [
-            "原生壳主线路线图",
-            "MoUI",
-            "MoonBit"
+            "微信小程序",
+            "Canvas 2D",
+            "WebAssembly",
+            "运行时"
           ],
-          "localizedPath": "docs/zh-Hans/shell-mainline-roadmap.md"
+          "localizedPath": "docs/zh-Hans/wechat-support.md"
         },
         {
           "group": "platforms",
@@ -1089,18 +1129,6 @@
             "MoonBit"
           ],
           "localizedPath": "docs/zh-Hans/api-surface.md"
-        },
-        {
-          "group": "architecture-api",
-          "slug": "embedding-api-v1",
-          "title": "嵌入 API v1",
-          "summary": "MoUI 嵌入 API v1的公开文档。",
-          "keywords": [
-            "嵌入 API v1",
-            "MoUI",
-            "MoonBit"
-          ],
-          "localizedPath": "docs/zh-Hans/embedding-api-v1.md"
         },
         {
           "group": "architecture-api",

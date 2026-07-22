@@ -1,30 +1,29 @@
 # WeChat Mini Program Support
 
-WeChat Mini Program support is a **runtime_partial** Canvas 2D wasm-gc route:
-the window-hosted canvas surface and host session are **usable for development
-and demos** (`backend` reports `ready=true`, `status=runtime_partial`), with
-first-frame and partial runtime evidence. It is **not** product-complete until
-real Mini Program pixel smoke, touch event verification, and wx API service
-integrations close remaining gaps.
+WeChat Mini Program support is a **runtime_partial** Canvas 2D WebAssembly
+route. Unlike Android, iOS, and HarmonyOS, it does not use the native mobile
+`window` event loop: the Mini Program template calls the canvas host callbacks
+directly. It is usable for development and demos, but is **not**
+product-complete until real Mini Program pixel smoke, touch-event verification,
+and wx API service integrations close remaining gaps.
 
 The Skyline rendering engine provides enhanced Canvas 2D performance in the
-Mini Program environment. MoonBit compiles to wasm-gc and runs in the Mini
-Program's JavaScript runtime, with rendering dispatched through the
-CanvasRenderingContext2D API.
+Mini Program environment. MoonBit packages support `wasm` and `wasm-gc`; the
+repository build helper currently targets `wasm` for WXWebAssembly and lowers
+unsupported features before staging the template. Rendering is dispatched
+through the CanvasRenderingContext2D API.
 
 ## Ownership
 
-- `moui/backend/wechat` exposes the window-hosted host contract around
-  `WechatWindowHostedApp`, owns the canvas surface host, and provides the
-  `run_app` entry point for Mini Program applications.
+- `moui/backend/wechat` exposes the canvas host callbacks, owns the canvas
+  surface host, and provides the `run_app` entry point for Mini Program
+  applications.
 - `moui/backend/wechat/canvas` wraps `moui/render/canvas2d` and creates
   `HostWindowRenderer` instances backed by the Canvas 2D API.
 - `moui/render/canvas2d` implements the Canvas 2D renderer producing
   `HostWindowRenderer` closures with wasm-gc FFI imports to the JS runtime.
-- `window/wechat` owns the Mini Program window abstraction, event loop,
-  touch event types, and the Mini Program project template.
-- `moui_cli/build_wechat.mbt` provides the build command for compiling
-  and staging Mini Program projects.
+- `window/wechat/template` owns the Mini Program project template and its JS
+  bridge to the exported MoonBit callbacks.
 - `scripts/build-wechat-demo.sh` is the canonical build script for demo
   applications.
 
@@ -42,14 +41,14 @@ CanvasRenderingContext2D API.
 │        │  (touch events)                │       │
 │        │                                │       │
 │  ┌─────▼────────────────────────────────▼─────┐ │
-│  │         MoonBit wasm-gc Module              │ │
+│  │         MoonBit WebAssembly Module          │ │
 │  │  ┌──────────────────────────────────────┐  │ │
 │  │  │  moui/render/canvas2d                │  │ │
 │  │  │  DrawCommand → Canvas2D API          │  │ │
 │  │  └──────────────────────────────────────┘  │ │
 │  │  ┌──────────────────────────────────────┐  │ │
 │  │  │  moui/backend/wechat                 │  │ │
-│  │  │  WindowHostedApp + HostRuntime       │  │ │
+│  │  │  run_app + HostRuntimeDriver         │  │ │
 │  │  └──────────────────────────────────────┘  │ │
 │  └────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────┘
@@ -61,7 +60,8 @@ The Canvas 2D renderer uses the following approach:
 
 - **Backend**: `canvas2d-wasm` (RendererBackendKind::Canvas2DWasm)
 - **Family**: `canvas2d` (RendererFamily::Canvas2D)
-- **Target**: `wasm-gc`
+- **Target**: `wasm` in the template build; package support also includes
+  `wasm-gc`
 - **Presentation**: WebCanvas (CanvasRenderingContext2D API)
 
 DrawCommands are mapped to Canvas 2D API calls:
@@ -90,7 +90,9 @@ Keyboard and IME are not available in the Mini Program canvas environment.
 
 ## Lifecycle
 
-The Mini Program app lifecycle maps to MoUI runtime events:
+The Mini Program template owns the App and Page lifecycle. The backend exports
+surface and lifecycle callback slots; they remain partial until device evidence
+proves the complete lifecycle contract:
 - `App.onLaunch` → runtime initialization
 - `App.onShow` → `handle_resumed()`
 - `App.onHide` → `handle_suspended()`
@@ -106,7 +108,7 @@ sh scripts/build-wechat-demo.sh counter
 sh scripts/build-wechat-demo.sh showcase
 ```
 
-Build output is placed in `build/wechat/<app>/` and is ready to be imported
+Build output is placed in `_build/wechat/<app>/` and is ready to be imported
 into WeChat Developer Tools.
 
 ## Prerequisites

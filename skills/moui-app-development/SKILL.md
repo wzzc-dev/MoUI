@@ -1,6 +1,6 @@
 ---
 name: moui-app-development
-description: Build and maintain MoUI application packages and examples. Use when working in examples/*/app, app-specific service packages, platform entrypoints such as web_wasm/macos_skia/windows_skia/linux_skia/android_skia/ios_skia/harmonyos_skia, app views built with wzzc-dev/moui/views, model/update/view logic, host-service integration from app code, or app-focused tests and smoke runs.
+description: Build and maintain MoUI application packages and examples. Use when working in examples/*/app, app-specific service packages, platform entrypoints such as web_wasm/macos_skia/windows_skia/linux_skia/android_window_hosted/ios_window_hosted/harmonyos_window_hosted, app views built with wzzc-dev/moui/views, model/update/view logic, host-service integration from app code, or app-focused tests and smoke runs.
 ---
 
 # MoUI App Development
@@ -57,18 +57,17 @@ examples/<name>/web_wasm/
 examples/<name>/macos_skia/
 examples/<name>/windows_skia/
 examples/<name>/linux_skia/
-examples/<name>/android_skia/   # experimental embedded-session route
-examples/<name>/ios_skia/       # experimental embedded-session route
-examples/<name>/harmonyos_skia/ # experimental embedded-session route
+examples/<name>/android_window_hosted/
+examples/<name>/ios_window_hosted/
+examples/<name>/harmonyos_window_hosted/
 ```
 
-Standard examples stage managed native projects from `moui_shell`. App-owned
-native projects are explicit `moui shell eject` outputs rather than checked-in
-example fixtures.
+Mobile entrypoints use `wzzc-dev/window`; its platform template owns lifecycle,
+surface, and input callbacks. App code remains in `examples/<name>/app`.
 
 Showcase uses the standard `web_wasm`, `<platform>_skia`, and explicit
-renderer-diagnostic entrypoint names. Its mobile entrypoints open the Platform
-workspace's Mobile Service Probe route.
+renderer-diagnostic entrypoint names. Its mobile routes use the matching
+`*_window_hosted` entrypoint.
 
 Default shared app imports:
 
@@ -169,13 +168,10 @@ Common examples:
 
 ```sh
 moon test examples/counter/app --target native
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/counter/android_skia --target native
-scripts/build-shell-android-apk.sh --app counter --fallback-skia
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/counter/ios_skia --target native
-scripts/build-shell-ios-app.sh --app counter --fallback-skia
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon test examples/harmonyos_demo/app --target native
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon check examples/harmonyos_demo/harmonyos_skia --target native
-scripts/build-shell-harmonyos-hap.sh --app harmonyos_demo --fallback-skia
+moon check examples/counter/android_window_hosted --target native
+moon check examples/counter/ios_window_hosted --target native
+moon test examples/harmonyos_demo/app --target native
+moon check examples/harmonyos_demo/harmonyos_window_hosted --target native
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
 moon test examples/pdf_workbench/app --target native
@@ -195,64 +191,14 @@ Run `sh scripts/check.sh --profile theme` for `moui_theme` or
 current-host backend/provider coverage; the shared platform service checks stay
 separate from host-specific steps. Run platform smoke only when
 the change claims real platform/browser/renderer behavior.
-For Android, the canonical build command is
-`scripts/build-shell-android-apk.sh --app <counter|showcase>`. The default is the
-package-owned Kotlin/AndroidX managed shell with registered JNI and a native
-PlatformView overlay. The fallback APK command only validates packaging/JNI/CMake; a
-non-fallback APK plus matching device/emulator smoke is still required for
-first-frame or input/lifecycle runtime claims. Use
-`--renderer auto|skia-gpu|skia-raster` to record the requested and selected
-mobile renderer. Real Skia packages use the GPU route for `auto` and
-`skia-gpu`; fallback-Skia builds, explicit `skia-raster`, and sticky terminal
-recovery use the raster route. Use
-`scripts/setup-android-sdk.sh --accept-licenses` followed by
-`eval "$(scripts/setup-android-sdk.sh --print-env)"` to install and expose the
-official SDK/NDK/CMake toolchain when the local machine does not already have
-one. The setup helper requires a JDK on `PATH`; the APK builder also uses
-`javac`, `jlink`, and `keytool`. Use Java 17 or newer for Android Gradle Plugin
-9.x; Java 21 is the recommended local default. Install compile SDK 36 for
-AndroidX Activity 1.13.0; the product target remains SDK 35 and minSdk 23.
-For iOS, the canonical build command is
-`scripts/build-shell-ios-app.sh --app <counter|showcase>` through a
-staged canonical Xcode project. The fallback `.app` command only validates MoonBit C
-generation, canonical SwiftUI/UIKit adapter and ABI bridge compilation,
-native-stub compilation, bundle layout, and ad-hoc simulator signing; a
-non-fallback `.app` plus matching
-simulator/device smoke is still required for first-frame or input/lifecycle
-runtime claims.
-The managed route requires Xcode 15.4+, Swift 5, iOS 15+, and one active scene.
-Keep the iOS template's `UILaunchScreen` entry to avoid legacy `320x480`
-compatibility mode. iOS Simulator smoke requires `idb`/`idb-companion`; stock
-`simctl` does not inject tap/swipe events. The recorder chooses a control from
-the accessibility tree and filters receipt logs by the current launch PID.
-The iOS and HarmonyOS mobile build entrypoints use the same `--renderer`
-contract and evidence boundary.
-Repository example mobile metadata lives in `examples/<app>/shell.json`.
-Reusable canonical shells and scripts live in the published `moui_shell`
-directories. Applications use schema v1 `shell.json` with the fixed Embedding
-API v1 and must not put native symbols or project paths in configuration. Run
-`node scripts/check-shell-app-config.mjs` after changing repository example
-shell metadata.
-For HarmonyOS, the fallback HAP command only validates MoonBit C generation,
-the package-owned ArkTS Stage Ability/XComponent managed shell, native glue
-compilation, native-stub compilation, and staged package layout; a
-non-fallback HAP plus matching device/emulator smoke is still required for
-first-frame or input/lifecycle runtime claims. Use `HARMONYOS_SDK_HOME` as the
-canonical SDK environment variable, with `OHOS_SDK_HOME` accepted as fallback.
-Use `node scripts/record-shell-runtime-smoke.mjs --platform
-<android|ios|harmonyos> --app <id> --require-passed` for release evidence.
-Successful input injection is insufficient: the recorder requires app receipt,
-before/after pixel change, actual detach, IME state/edit, clipboard completion,
-accessibility tree/focus/action, and async image. HarmonyOS uses API 20 and
-native XComponent as the only input/lifecycle source.
-Use Showcase Platform's dedicated `Mobile Service Probe` for mobile service
-acceptance. Clipboard evidence requires system text write and read completion;
-resize evidence requires two distinct physical sizes; async-image evidence
-requires loading and ready frames. Assistive-technology focus/action must come
-from a live TalkBack, VoiceOver, or HarmonyOS screen-reader session.
-Shell runtime manifests use `passed`, `partial`, and `failed`: incomplete but
-useful matching-host evidence is `partial`, while `--require-passed` accepts
-only complete `passed` evidence.
+Mobile apps use `moui.mobile.json` and one `*_window_hosted` package per target.
+Build through `moui build <android|ios|harmonyos> <app> --mobile-config <path>`;
+the matching `wzzc-dev/window` template is the only lifecycle, surface, and
+input owner. `--fallback-skia` proves packaging only. Record matching-device
+before/after pixel change, input, detach, IME, clipboard, accessibility, and
+async-image evidence before changing the corresponding `checks/platforms/*.json`
+status. See
+`docs/window-hosted-moui.md` and the platform support page for toolchain setup.
 
 ## Docs
 

@@ -12,6 +12,25 @@ fn make_absolute(path : String, base : String) -> String {
 }
 
 ///|
+/// Return the local upstream `window` package root used by mobile templates
+/// and native glue.
+fn window_package_root(workspace_root : String) -> String {
+  join_path(workspace_root, "window/modules/window")
+}
+
+///|
+/// Return the local upstream `window` package root for `platform`.
+fn window_platform_root(workspace_root : String, platform : String) -> String {
+  join_path(window_package_root(workspace_root), platform)
+}
+
+///|
+/// Return the local upstream `window` build template for `platform`.
+fn window_template_root(workspace_root : String, platform : String) -> String {
+  join_path(window_platform_root(workspace_root, platform), "template")
+}
+
+///|
 /// Return the first existing path among `paths`. Empty strings are skipped.
 fn first_existing(paths : Array[String]) -> String? {
   for path in paths {
@@ -122,8 +141,8 @@ fn find_executable_in_dir(dir : String) -> String? {
 ///|
 /// Resolve a usable `moui_cli` binary path for tools that need to invoke
 /// `moui_cli` as a subprocess (e.g. iOS Xcode Run Script Phase via
-/// `moui_shell/scripts/build-ios-app-core.sh`, which `exec`s
-/// `${MOUI_BUILD_IOS_CORE_BIN:-moui_cli}`). Fast path: `moui_cli` is on PATH
+/// the window-hosted iOS build template, which invokes `moui_cli`. Fast path:
+/// `moui_cli` is on PATH
 /// (user installed it). Slow path: build `moui_cli/cmd/moui` to a stable cache
 /// dir under `<build_dir>/moui-cli-bin` and return the resulting binary path.
 /// Moon's incremental cache makes the slow path near-instant on subsequent

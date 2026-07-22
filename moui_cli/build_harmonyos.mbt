@@ -1,6 +1,7 @@
-// ADR 0015: managed moui_shell builds are retired.
+// Window-hosted HarmonyOS packaging.
 // HarmonyOS HAP packaging now uses the window-hosted template at
-// `window/harmonyos/template/` + `examples/<app>/harmonyos_skia` entrypoint.
+// `window/modules/window/harmonyos/template/` +
+// `examples/<app>/harmonyos_window_hosted` entrypoint.
 //
 // `build_harmonyos` generates MoonBit C, stages the window-hosted hvigor
 // project template, applies app identity (bundleName / moduleName / appName),
@@ -10,8 +11,7 @@
 
 ///|
 priv struct BuildHarmonyosOptions {
-  app : ShellApp
-  harmonyos_project : String?
+  app : MobileApp
   app_config : String
   workspace_root : String
   project_root : String
@@ -25,7 +25,6 @@ priv struct BuildHarmonyosOptions {
   hvigorw : String?
   ohpm : String?
   fallback_skia : Bool
-  ejected_shell : Bool
   prepare_only : Bool
   signing_config_file : String?
 }
@@ -282,7 +281,7 @@ fn update_json5_string_resource(
 
 ///|
 /// Inject DevEco signing configs into a staged `build-profile.json5` from a
-/// JSON fragment file. Mirrors the previous managed-shell behavior; the
+/// JSON fragment file. The
 /// window-hosted template ships with an empty `signingConfigs` array.
 fn inject_harmonyos_signing_config(
   project_dir : String,
@@ -373,18 +372,18 @@ fn inject_harmonyos_signing_config(
 }
 
 ///|
-/// Apply shell.json identity onto a staged window-hosted HarmonyOS template.
+/// Apply mobile app identity onto a staged window-hosted HarmonyOS template.
 /// Updates bundleName, moduleName, app_name, module_desc, entry_desc and SDK
-/// versions. Mirrors the previous managed-shell identity step but targets
+/// versions. Targets
 /// the window-hosted template's file layout.
 fn apply_harmonyos_window_hosted_identity(
   project_root : String,
-  app : ShellApp,
+  app : MobileApp,
   _renderer : String,
 ) -> Result[Unit, String] {
   let harmonyos = match app.harmonyos {
     Some(value) => value
-    None => return Err("shell.json missing harmonyos section")
+    None => return Err("moui.mobile.json missing harmonyos section")
   }
   let bundle_name = harmonyos.bundle_name
   let module_name = match harmonyos.module_name {
@@ -608,12 +607,6 @@ fn build_harmonyos(
   host : HostPlatform,
 ) -> Result[BuildResult, String] {
   let _ = host
-  // 1. ADR 0015: ejected-shell mode is retired. Hard-fail when requested.
-  if options.ejected_shell || options.harmonyos_project is Some(_) {
-    return Err(
-      "ADR 0015: ejected-shell / --harmonyos-project is retired. Use the window-hosted template at window/harmonyos/template/ (managed by `moui build harmonyos`).",
-    )
-  }
   // Make build_dir + workspace_root absolute so MBW_* env vars consumed by
   // CMake (which runs with cwd=<hvigor-project>) resolve correctly regardless
   // of the user's original cwd. hvigorw spawns CMake in a child cwd, so any
@@ -623,9 +616,9 @@ fn build_harmonyos(
     @env.get_env_var("PWD").unwrap_or("."),
   )
   let build_dir_abs = make_absolute(options.build_dir, workspace_root_abs)
-  // 2. Resolve window_root + template_root.
-  let window_root = join_path(workspace_root_abs, "window")
-  let template_root = join_path(window_root, "harmonyos/template")
+  // 2. Resolve the upstream window package root and template.
+  let window_root = window_package_root(workspace_root_abs)
+  let template_root = window_template_root(workspace_root_abs, "harmonyos")
   if !path_is_file(
       join_path(template_root, "entry/src/main/cpp/CMakeLists.txt"),
     ) ||
@@ -637,7 +630,7 @@ fn build_harmonyos(
   }
   // 3. Generate MoonBit C from the entrypoint package.
   let entrypoint_package = match
-    managed_entrypoint_package(
+    mobile_entrypoint_package(
       options.app.metadata_path,
       "harmonyos",
       workspace_root_abs,
@@ -705,27 +698,6 @@ fn build_harmonyos(
     Ok(_) => ()
     Err(message) => return Err(message)
   }
-  let prepare_result : PrepareResult = {
-    platform: "harmonyos",
-    build_json_path: "",
-    cmake_config_path: None,
-    skia_cxx_rsp: Some(skia_cxx_rsp),
-    skia_link_rsp: Some(skia_link_rsp),
-    jni_libs_dir: None,
-    moonbit_c,
-    renderer: {
-      requested: options.renderer,
-      selected: renderer_selected,
-      gpu_promoted: renderer_selected == "skia-gpu",
-      fallback_reason: if options.fallback_skia {
-        Some("fallback Skia build cannot provide a native GPU route")
-      } else {
-        None
-      },
-    },
-    skia_link,
-    shared_libs: [],
-  }
   // 4. Stage the window-hosted template into <build_dir>/hvigor-project.
   let hvigor_project_dir = join_path(build_dir_abs, "hvigor-project")
   match
@@ -770,7 +742,6 @@ fn build_harmonyos(
       platform: "harmonyos",
       build_dir: build_dir_abs,
       output_artifact: "",
-      prepare_result,
     })
   }
   // 5. Resolve SDK home + hvigorw + ohpm.
@@ -940,7 +911,6 @@ fn build_harmonyos(
     platform: "harmonyos",
     build_dir: build_dir_abs,
     output_artifact: options.output_hap,
-    prepare_result,
   })
 }
 

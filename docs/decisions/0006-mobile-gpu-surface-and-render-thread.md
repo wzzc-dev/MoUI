@@ -106,17 +106,15 @@ The shared Phase 2 scaffolding required before any platform can flip
   state is preserved across all transitions. Per-platform loss detectors feed
   `report_context_loss`; the renderer thread consults `should_recover` and
   `should_fallback_to_raster` each frame.
-- **Manifest schema extension** (`tools/moui/validate_shell_runtime_manifest`):
-  the validator now accepts an optional `renderer` block
-  (`requested` / `selected` / `surfaceRoute` / `gpuAvailable` / `gpuPromoted` /
-  `fallbackReason`) and, when `gpuPromoted=true`, requires the matching
-  `gpuPromotionEvidence` block with the seven ADR 0006 gates:
+- **Promotion evidence** (`docs/gpu-promotion-runbook.md`): a future
+  `gpuPromoted=true` claim must include matching-host evidence for the seven
+  ADR 0006 gates:
   `readbackEliminated`, `rendererThread`, `mailboxOk`, `performance`
   (p95 ≤ 16.7 ms, dropped < 1 %, input-to-present ≤ 2 VSyncs), `memory`
   (bounded, ≥ 100 surface recreation + fg/bg cycles), `contextLoss`
   (recovered within 3 VSyncs, raster fallback preserves AppRuntime), and
-  `rasterFallback` (automatic after repeated failure). Under `--require-passed`
-  every gate must be satisfied.
+  `rasterFallback` (automatic after repeated failure). No window-hosted mobile
+  route currently makes this promotion claim.
 
 ### Phase 2 — Worker-owned GPU presentation (source implemented; promotion pending)
 

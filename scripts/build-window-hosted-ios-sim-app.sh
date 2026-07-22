@@ -3,4 +3,4 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 export MBW_WORKSPACE_ROOT="${MBW_WORKSPACE_ROOT:-$ROOT}"
-exec bash "$ROOT/window/ios/scripts/build-hosted-sim-app.sh" "$@"
+exec bash "$ROOT/window/modules/window/ios/scripts/build-hosted-sim-app.sh" "$@"

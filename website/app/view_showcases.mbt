@@ -22,14 +22,14 @@ fn website_showcase_entries() -> Array[WebsiteShowcaseEntry] {
       title_key: "showcase.ios.title",
       subtitle_key: "showcase.ios.subtitle",
       status_key: "showcase.status.pending",
-      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase/ios_skia",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase/ios_window_hosted",
     },
     {
       slug: "harmonyos-componentgallery",
       title_key: "showcase.harmonyos.title",
       subtitle_key: "showcase.harmonyos.subtitle",
       status_key: "showcase.status.pending",
-      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase/harmonyos_skia",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase/harmonyos_window_hosted",
     },
     {
       slug: "markdown_editor",
@@ -64,7 +64,7 @@ fn website_showcase_entries() -> Array[WebsiteShowcaseEntry] {
       title_key: "showcase.android.title",
       subtitle_key: "showcase.android.subtitle",
       status_key: "showcase.status.pending",
-      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase/android_skia",
+      source_url: "https://github.com/wzzc-dev/MoUI/tree/main/examples/showcase/android_window_hosted",
     },
   ]
 }

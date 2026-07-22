@@ -1,7 +1,7 @@
 ///|
 /// Window-hosted MoUI path (winit-style): surface/input come only from
-/// `wzzc-dev/window/harmonyos` HostCmd → ApplicationHandler. No Embedding
-/// attach_surface inject dual-stack.
+/// `wzzc-dev/window/harmonyos` HostCmd → ApplicationHandler. Surface
+/// attachment is driven only by the platform event loop.
 pub struct HarmonyOsWindowHostedApp {
   title : String
   runtime_factory : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime
@@ -19,7 +19,7 @@ pub struct HarmonyOsWindowHostedApp {
 
 ///|
 pub fn HarmonyOsWindowHostedApp::new(
-  title~ : String = "MoUI",
+  title? : String = "MoUI",
   runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime,
   provider_factory~ : () -> HarmonyOsRendererProvider,
   auto_exit_after_frames? : Int? = None,
@@ -65,7 +65,9 @@ pub fn HarmonyOsWindowHostedApp::session_attached(
 }
 
 ///|
-pub fn HarmonyOsWindowHostedApp::has_session(self : HarmonyOsWindowHostedApp) -> Bool {
+pub fn HarmonyOsWindowHostedApp::has_session(
+  self : HarmonyOsWindowHostedApp,
+) -> Bool {
   self.session is Some(_)
 }
 
@@ -98,7 +100,9 @@ fn HarmonyOsWindowHostedApp::attach_session(
   }
   let provider = (self.provider_factory)()
   self.provider = Some(provider)
-  let surface = HarmonyOsSurfaceHandle::new(raw=window.xcomponent_window_handle())
+  let surface = HarmonyOsSurfaceHandle::new(
+    raw=window.xcomponent_window_handle(),
+  )
   match self.session {
     Some(session) => {
       ignore(session.attach_surface(surface, metrics, provider))
@@ -116,7 +120,9 @@ fn HarmonyOsWindowHostedApp::attach_session(
 }
 
 ///|
-fn HarmonyOsWindowHostedApp::detach_session(self : HarmonyOsWindowHostedApp) -> Unit {
+fn HarmonyOsWindowHostedApp::detach_session(
+  self : HarmonyOsWindowHostedApp,
+) -> Unit {
   match self.session {
     Some(session) => ignore(session.detach_surface())
     None => ()
@@ -250,10 +256,7 @@ pub impl @window_harmonyos.ApplicationHandler for HarmonyOsWindowHostedApp with 
     @window_core.WindowEvent::RedrawRequested => {
       self.dispatch_window_event(event)
       match self.auto_exit_after_frames {
-        Some(limit) =>
-          if self.frames_presented >= limit {
-            event_loop.exit()
-          }
+        Some(limit) => if self.frames_presented >= limit { event_loop.exit() }
         None => ()
       }
     }
@@ -282,17 +285,19 @@ pub impl @window_harmonyos.ApplicationHandler for HarmonyOsWindowHostedApp with 
 /// Pump one host-sim cycle for tests / offline validation.
 pub fn harmonyos_window_hosted_pump_host_sim(
   app : HarmonyOsWindowHostedApp,
-  surface_handle~ : UInt64 = 0xABCUL,
-  width~ : Int = 320,
-  height~ : Int = 640,
-  scale~ : Double = 2.0,
+  surface_handle? : UInt64 = 0xABCUL,
+  width? : Int = 320,
+  height? : Int = 640,
+  scale? : Double = 2.0,
 ) -> Unit {
   @window_harmonyos.host_reset_for_test()
   let event_loop = @window_harmonyos.EventLoop::new()
   @window_harmonyos.host_push(@window_harmonyos.HostCmd::Start)
   @window_harmonyos.host_push(@window_harmonyos.HostCmd::Resume)
   @window_harmonyos.host_push(
-    @window_harmonyos.HostCmd::SurfaceInit(surface_handle, 0UL, width, height, scale),
+    @window_harmonyos.HostCmd::SurfaceInit(
+      surface_handle, 0UL, width, height, scale,
+    ),
   )
   ignore(event_loop.pump_app_events(None, app))
   match app.window {
@@ -300,8 +305,12 @@ pub fn harmonyos_window_hosted_pump_host_sim(
     None => ()
   }
   ignore(event_loop.pump_app_events(None, app))
-  @window_harmonyos.host_push(@window_harmonyos.HostCmd::PointerButton(true, 10.0, 20.0))
-  @window_harmonyos.host_push(@window_harmonyos.HostCmd::PointerButton(false, 10.0, 20.0))
+  @window_harmonyos.host_push(
+    @window_harmonyos.HostCmd::PointerButton(true, 10.0, 20.0),
+  )
+  @window_harmonyos.host_push(
+    @window_harmonyos.HostCmd::PointerButton(false, 10.0, 20.0),
+  )
   ignore(event_loop.pump_app_events(None, app))
   @window_harmonyos.host_push(@window_harmonyos.HostCmd::SurfaceTerm)
   @window_harmonyos.host_push(@window_harmonyos.HostCmd::Stop)
