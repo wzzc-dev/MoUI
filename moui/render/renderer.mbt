@@ -6,6 +6,7 @@ pub(all) enum RendererBackendKind {
   SkiaRasterWeb
   SkiaGpuNative
   SunRasterNative
+  Canvas2DWasm
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -20,6 +21,7 @@ pub(all) enum RendererFamily {
   WebGpu
   Skia
   Sun
+  Canvas2D
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -175,6 +177,7 @@ pub fn RendererBackendKind::label(self : RendererBackendKind) -> String {
     SkiaRasterWeb => "skia-raster-web"
     SkiaGpuNative => "skia-gpu-native"
     SunRasterNative => "sun-raster-native"
+    Canvas2DWasm => "canvas2d-wasm"
   }
 }
 
@@ -187,6 +190,7 @@ pub fn RendererBackendKind::short_label(self : RendererBackendKind) -> String {
     SkiaRasterWeb => "skia-web"
     SkiaGpuNative => "skia-gpu"
     SunRasterNative => "sun"
+    Canvas2DWasm => "canvas2d"
   }
 }
 
@@ -197,6 +201,7 @@ pub fn RendererFamily::label(self : RendererFamily) -> String {
     WebGpu => "webgpu"
     Skia => "skia"
     Sun => "sun"
+    Canvas2D => "canvas2d"
   }
 }
 
@@ -243,6 +248,7 @@ pub fn RendererBackendKind::family(
     WebGpuWasm => RendererFamily::WebGpu
     SkiaRasterNative | SkiaRasterWeb | SkiaGpuNative => RendererFamily::Skia
     SunRasterNative => RendererFamily::Sun
+    Canvas2DWasm => RendererFamily::Canvas2D
   }
 }
 

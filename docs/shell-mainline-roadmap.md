@@ -1,8 +1,8 @@
 # Shell Mainline And GPU Roadmap
 
 This document is the implementation and promotion record for Android, iOS,
-and HarmonyOS. Native Skia is the mobile mainline. Native WGPU remains a
-diagnostic route.
+HarmonyOS, and WeChat Mini Program. Native Skia is the mobile mainline.
+Native WGPU remains a diagnostic route.
 
 ## Product class
 

@@ -6,6 +6,7 @@ pub fn renderer_capability_backends() -> Array[RendererBackendKind] {
     RendererBackendKind::WebGpuWasm,
     RendererBackendKind::NativeWgpu,
     RendererBackendKind::SunRasterNative,
+    RendererBackendKind::Canvas2DWasm,
   ]
 }
 
@@ -28,6 +29,8 @@ fn renderer_feature_capability_entry(
   skia_note : String,
   web_status : RendererFeatureStatus,
   web_note : String,
+  canvas2d_status : RendererFeatureStatus,
+  canvas2d_note : String,
 ) -> RendererFeatureCapability {
   RendererFeatureCapability::new(feature~, backends=[
     renderer_backend_feature(
@@ -60,6 +63,12 @@ fn renderer_feature_capability_entry(
       RendererBackendKind::SunRasterNative,
       sun_feature_status(feature),
       sun_feature_note(feature),
+    ),
+    renderer_backend_feature(
+      feature,
+      RendererBackendKind::Canvas2DWasm,
+      canvas2d_status,
+      canvas2d_note,
     ),
   ])
 }

@@ -79,7 +79,7 @@ fn desktop_shell(
   let detail_width = (width - shell_sidebar_width - pad * 3.0).max(360.0)
   column(
     [
-      shell_top_bar(model, theme, (width - pad * 2.0).max(280.0)),
+      shell_top_bar(model, theme, (width - pad * 2.0).max(280.0), compact=false),
       split_view(
         primary=shell_sidebar(model, theme, shell_sidebar_width, body_height),
         detail=shell_detail(model, theme, detail_width, body_height, env),
@@ -109,7 +109,7 @@ fn mobile_shell(
   let body_height = shell_body_height(height, theme)
   column(
     [
-      shell_top_bar(model, theme, inner),
+      shell_top_bar(model, theme, inner, compact=true),
       if model.mobile_showing_detail {
         mobile_detail(model, theme, inner, body_height, env)
       } else {
@@ -128,29 +128,38 @@ fn shell_top_bar(
   model : ShowcaseModel,
   theme : @moui.Theme,
   width : Double,
+  compact~ : Bool,
 ) -> @moui.View[ShowcaseMsg] {
-  ignore(width)
   row(
     [
       text("MoUI Showcase", role=@views.TextRole::Title, theme~),
       @views.spacer(weight=1.0),
-      text(model.current_route_string(), role=@views.TextRole::Caption, theme~),
+      if !compact {
+        text(model.current_route_string(), role=@views.TextRole::Caption, theme~)
+      } else {
+        @views.spacer(min_length=0.0)
+      },
       button(
         "Back",
         on_click=RouteBack,
         variant=@views.ButtonVariant::Ghost,
         theme~,
       ),
-      button(
-        "Forward",
-        on_click=RouteForward,
-        variant=@views.ButtonVariant::Ghost,
-        theme~,
-      ),
+      if !compact {
+        button(
+          "Forward",
+          on_click=RouteForward,
+          variant=@views.ButtonVariant::Ghost,
+          theme~,
+        )
+      } else {
+        @views.spacer(min_length=0.0)
+      },
     ],
     spacing=theme.spacing_scale.sm,
     align=@views.CrossAlign::Center,
   )
+  .frame(width~)
 }
 
 ///|

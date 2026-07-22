@@ -1,0 +1,38 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/host" @host,
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/canvas2d" @canvas2d,
+  "wzzc-dev/window/dpi",
+}
+
+supported_targets = "wasm-gc+wasm"
+
+options(
+  link: {
+    "wasm-gc": {
+      "exports": [
+        "wechat_dispatch_event",
+        "wechat_dispatch_pointer_input",
+        "wechat_render_frame",
+        "wechat_surface_created",
+        "wechat_surface_destroyed",
+        "wechat_app_show",
+        "wechat_app_hide",
+      ],
+    },
+    "wasm": {
+      "exports": [
+        "wechat_dispatch_event",
+        "wechat_dispatch_pointer_input",
+        "wechat_render_frame",
+        "wechat_surface_created",
+        "wechat_surface_destroyed",
+        "wechat_app_show",
+        "wechat_app_hide",
+      ],
+    },
+  },
+  targets: { },
+)

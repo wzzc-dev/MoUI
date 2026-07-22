@@ -21,6 +21,7 @@ OS product completeness.
 | **Android** | **runtime_partial** | `ready=true`: the managed shell + session are **usable for development/demonstration**; `status=runtime_partial` | Packaging matrix passed; historical legacy-shell CG smoke passed; managed shell and `EmbedderHostChannel` are wired | Managed-shell probe-recorded smoke; device signing; presenter verified; GPU seven-gate claimed |
 | **iOS** | **runtime_partial** | Same as above | Packaging matrix passed; historical UIKit-shell CG smoke passed; managed SwiftUI shell is wired | Managed SwiftUI `--require-passed` recording; device/VoiceOver; presenter/seven-gate |
 | **HarmonyOS** | **runtime_partial** | Same as above | Packaging matrix passed; first-frame/partial HVD observation; managed ArkTS/XComponent is wired | Full `passed` smoke under commercial signing; complete service observation; presenter/seven-gate |
+| **WeChat Mini Program** | **runtime_partial** | `ready=true`: the window-hosted Canvas 2D session is **usable for development/demonstration**; `status=runtime_partial` | Canvas 2D renderer and wasm-gc build pipeline compile; Skyline project template is staged | Real Mini Program pixel smoke; touch event verification; wx API service integrations |
 
 ### Two Prohibited Misstatements
 
