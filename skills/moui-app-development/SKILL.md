@@ -33,7 +33,8 @@ Read only the smallest useful set:
 - `docs/canvas-and-custom-paint.md` for canvas / custom paint.
 
 Ordinary app and example work should use the published `wzzc-dev/window`
-dependency resolved from mooncakes.io. Do not add `./window` to `moon.work` for
+dependency resolved from mooncakes.io. Do not add local `./window/modules/window*`
+members to `moon.work` for
 app fixes; if a task truly requires editing window source locally, switch to the
 framework skill and follow the `window` local-source workflow in
 `docs/development.md`.

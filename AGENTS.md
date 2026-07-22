@@ -19,7 +19,8 @@ Full table: `docs/invariants.md`. Break only via RFC (`GOVERNANCE.md`).
 - App deps: `wzzc-dev/moui` + domain facades + `views` only (no `runtime` / `render/*` / platform backends).
 - Mainline: Native Skia. Diagnostic: Native WGPU. Reclassify only with RFC.
 - Mobile product class: `runtime_partial`; managed shells are canonical. Details: `docs/platform-readiness-declaration.md`, ADR 0011.
-- `moon.work`: no `./window` (use `window-dev-mode.sh on/off`), no `./openseek`.
+- `moon.work`: no local `./window/modules/window*` members by default (use
+  `window-dev-mode.sh on/off`), no `./openseek`.
 - Discover APIs with `moon ide doc` / `outline` / `peek-def` / `find-references` before inventing names.
 
 ## Task router (read only what you need)

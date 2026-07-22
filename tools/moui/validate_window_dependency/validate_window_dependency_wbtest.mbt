@@ -4,13 +4,19 @@ fn consumer(path : String, text : String) -> ConsumerText {
 }
 
 ///|
-test "counts only committed ./window workspace member lines" {
+test "counts local window workspace member lines" {
   inspect(
     count_window_workspace_members("members = [\n  \"./window\",\n]\n"),
     content="1",
   )
   inspect(
     count_window_workspace_members("  \"./window\",  \n\"./window\",\n"),
+    content="2",
+  )
+  inspect(
+    count_window_workspace_members(
+      "  \"./window/modules/window\",\n  \"./window/modules/windowing\",\n",
+    ),
     content="2",
   )
   inspect(
@@ -55,7 +61,7 @@ test "rejects local window workspace member" {
   inspect(result.errors.length(), content="1")
   assert_true(
     result.errors[0].contains(
-      "moon.work lists \"./window\" as a workspace member (1 occurrence(s)).",
+      "moon.work lists local window workspace member(s) (1 occurrence(s)).",
     ),
   )
   assert_true(result.errors[0].contains("scripts/window-dev-mode.sh off"))

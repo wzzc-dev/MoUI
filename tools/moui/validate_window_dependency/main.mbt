@@ -30,7 +30,7 @@ fn usage() -> String {
     #|Checks that wzzc-dev/window resolves from mooncakes.io and that every
     #|known consumer pins the same published version.
     #|
-    #|Enforces docs/invariants.md R4 (no ./window in moon.work) and A6
+    #|Enforces docs/invariants.md R4 (no local window modules in moon.work) and A6
     #|(shared pin across moui, moui_skia, moui_webview, markdown_editor).
     #|
     #|Options:
@@ -75,7 +75,10 @@ fn expected_window_consumers() -> Array[String] {
 fn count_window_workspace_members(work : String) -> Int {
   let mut count = 0
   for line in work.split("\n") {
-    if line.trim().to_owned() == "\"./window\"," {
+    let workspace_entry = line.trim().to_owned()
+    if workspace_entry == "\"./window\"," ||
+      workspace_entry == "\"./window/modules/window\"," ||
+      workspace_entry == "\"./window/modules/windowing\"," {
       count += 1
     }
   }
@@ -163,7 +166,7 @@ fn validate_window_dependency_inputs(
       let member_count = count_window_workspace_members(work)
       if member_count > 0 {
         errors.push(
-          "moon.work lists \"./window\" as a workspace member (\{member_count} occurrence(s)).\n" +
+          "moon.work lists local window workspace member(s) (\{member_count} occurrence(s)).\n" +
           "  This shadows the published wzzc-dev/window dependency for all workspace consumers.\n" +
           "  Fix: run `sh scripts/window-dev-mode.sh off` to restore mooncakes.io resolution.\n" +
           "  Local window edits belong in a dev-mode worktree, not on the main branch.\n" +

@@ -75,7 +75,8 @@ normalize into host contracts; renderers consume `DrawCommand` only.
 ## Workspace note
 
 - Active members: `moon.work` (see generated `docs/repository-facts.md`).
-- Do not list `./window` or `./openseek` in `moon.work`.
+- Do not list local `./window/modules/window*` members or `./openseek` in
+  `moon.work` by default.
 - Local window source: `sh scripts/window-dev-mode.sh on/off` only when intentionally editing window.
 
 ## Where to go next
