@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">MoUI brand board</title>
+  <desc id="desc">MoUI logo, mascot, color palette, and design rationale.</desc>
+  <rect width="1600" height="1000" fill="#F4F7F5"/>
+  <rect width="1600" height="316" fill="#101820"/>
+  <image x="64" y="32" width="780" height="228" href="moui-logo-reversed.svg" xlink:href="moui-logo-reversed.svg"/>
+  <text x="78" y="292" fill="#B8C1C6" font-family="Inter, ui-sans-serif, sans-serif" font-size="26" letter-spacing="0">Cross-platform UI for MoonBit</text>
+
+  <image x="975" y="260" width="570" height="570" href="moonbud-mascot.svg" xlink:href="moonbud-mascot.svg"/>
+
+  <text x="78" y="405" fill="#101820" font-family="Inter, ui-sans-serif, sans-serif" font-size="48" font-weight="700" letter-spacing="0">Moon + interface</text>
+  <text x="78" y="458" fill="#4D5B63" font-family="Inter, ui-sans-serif, sans-serif" font-size="25" letter-spacing="0">The crescent carries MoonBit; the window makes the product category explicit.</text>
+  <text x="78" y="494" fill="#4D5B63" font-family="Inter, ui-sans-serif, sans-serif" font-size="25" letter-spacing="0">Rounded geometry keeps the system approachable without losing engineering clarity.</text>
+
+  <text x="78" y="590" fill="#101820" font-family="Inter, ui-sans-serif, sans-serif" font-size="26" font-weight="700" letter-spacing="0">Core palette</text>
+  <g font-family="Inter, ui-sans-serif, sans-serif" font-size="19" letter-spacing="0">
+    <rect x="78" y="624" width="190" height="120" rx="8" fill="#101820"/>
+    <text x="94" y="712" fill="#F7F8F3">Orbit Ink</text>
+    <text x="94" y="735" fill="#B8C1C6">#101820</text>
+    <rect x="286" y="624" width="190" height="120" rx="8" fill="#70E0BC"/>
+    <text x="302" y="712" fill="#101820">Moon Mint</text>
+    <text x="302" y="735" fill="#335D52">#70E0BC</text>
+    <rect x="494" y="624" width="190" height="120" rx="8" fill="#F3B64C"/>
+    <text x="510" y="712" fill="#101820">Signal Amber</text>
+    <text x="510" y="735" fill="#68460E">#F3B64C</text>
+    <rect x="702" y="624" width="190" height="120" rx="8" fill="#F06C5B"/>
+    <text x="718" y="712" fill="#101820">Action Coral</text>
+    <text x="718" y="735" fill="#6A2B23">#F06C5B</text>
+  </g>
+
+  <text x="78" y="828" fill="#101820" font-family="Inter, ui-sans-serif, sans-serif" font-size="26" font-weight="700" letter-spacing="0">Mascot</text>
+  <text x="78" y="878" fill="#101820" font-family="Inter, ui-sans-serif, sans-serif" font-size="40" font-weight="700" letter-spacing="0">Moonbud</text>
+  <text x="78" y="919" fill="#4D5B63" font-family="Inter, ui-sans-serif, sans-serif" font-size="24" letter-spacing="0">A small interface companion grown from a crescent seed.</text>
+  <text x="78" y="953" fill="#4D5B63" font-family="Inter, ui-sans-serif, sans-serif" font-size="24" letter-spacing="0">Use it for onboarding, empty states, release notes, and community events.</text>
+</svg>
