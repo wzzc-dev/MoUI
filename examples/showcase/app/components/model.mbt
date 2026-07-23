@@ -85,6 +85,7 @@ pub(all) struct ComponentGalleryModel {
   probe_text : String
   probe_action_count : Int
   probe_submit_count : Int
+  checkbox_group_selection : Array[String]
 }
 
 ///|
@@ -105,6 +106,7 @@ pub(all) enum ComponentGalleryMsg {
   ProbeTextChanged(String)
   ProbeAction
   ProbeSubmit
+  ToggleCheckboxGroupItem(String)
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -244,6 +246,7 @@ pub fn ComponentGalleryModel::new(
     probe_text: "mobile-service-probe",
     probe_action_count: 0,
     probe_submit_count: 0,
+    checkbox_group_selection: ["desktop", "mobile"],
   }
 }
 
@@ -321,6 +324,18 @@ pub fn update(
     ProbeTextChanged(value) => { ..model, probe_text: value }
     ProbeAction => { ..model, probe_action_count: model.probe_action_count + 1 }
     ProbeSubmit => { ..model, probe_submit_count: model.probe_submit_count + 1 }
+    ToggleCheckboxGroupItem(id) => {
+      let next : Array[String] = []
+      for item in model.checkbox_group_selection {
+        if item != id {
+          next.push(item)
+        }
+      }
+      if !model.checkbox_group_selection.contains(id) {
+        next.push(id)
+      }
+      { ..model, checkbox_group_selection: next }
+    }
     Reset =>
       {
         ..model,
@@ -335,6 +350,7 @@ pub fn update(
         probe_text: "mobile-service-probe",
         probe_action_count: 0,
         probe_submit_count: 0,
+        checkbox_group_selection: ["desktop", "mobile"],
       }
   }
 }

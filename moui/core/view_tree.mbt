@@ -532,16 +532,93 @@ fn[Msg] handle_double_tap_modifier(
 }
 
 ///|
+/// Restore a persisted `DragGestureState` from `scratch`, or return a fresh
+/// idle state when no drag state has been recorded yet.
+fn drag_gesture_state_from_scratch(scratch : String) -> DragGestureState {
+  if scratch.has_prefix("dg:") {
+    let parts = scratch.split(":").to_array()
+    if parts.length() >= 7 {
+      let phase_val : Int = @string.from_str(parts[1]) catch { _ => 0 }
+      let phase = match phase_val {
+        0 => DragGesturePhase::Idle
+        1 => DragGesturePhase::Pending
+        2 => DragGesturePhase::Started
+        3 => DragGesturePhase::Changed
+        4 => DragGesturePhase::Ended
+        5 => DragGesturePhase::Cancelled
+        _ => DragGesturePhase::Idle
+      }
+      let ox : Double = @string.from_str(parts[2]) catch { _ => 0.0 }
+      let oy : Double = @string.from_str(parts[3]) catch { _ => 0.0 }
+      let lx : Double = @string.from_str(parts[4]) catch { _ => 0.0 }
+      let ly : Double = @string.from_str(parts[5]) catch { _ => 0.0 }
+      let md : Double = @string.from_str(parts[6]) catch { _ => 3.0 }
+      let state = DragGestureState::new(min_distance=md)
+      if phase != DragGesturePhase::Idle {
+        let origin = Point::new(x=ox, y=oy)
+        let last = Point::new(x=lx, y=ly)
+        {
+          ..state,
+          phase,
+          origin: Some(origin),
+          last_position: Some(last),
+        }
+      } else {
+        state
+      }
+    } else {
+      DragGestureState::new()
+    }
+  } else {
+    DragGestureState::new()
+  }
+}
+
+///|
+/// Encode a `DragGestureState` into the `scratch` string so it survives
+/// across event dispatches.
+fn drag_gesture_state_to_scratch(state : DragGestureState) -> String {
+  let phase_int = match state.phase {
+    DragGesturePhase::Idle => 0
+    DragGesturePhase::Pending => 1
+    DragGesturePhase::Started => 2
+    DragGesturePhase::Changed => 3
+    DragGesturePhase::Ended => 4
+    DragGesturePhase::Cancelled => 5
+  }
+  let ox = match state.origin {
+    Some(p) => p.x.to_string()
+    None => "0"
+  }
+  let oy = match state.origin {
+    Some(p) => p.y.to_string()
+    None => "0"
+  }
+  let lx = match state.last_position {
+    Some(p) => p.x.to_string()
+    None => "0"
+  }
+  let ly = match state.last_position {
+    Some(p) => p.y.to_string()
+    None => "0"
+  }
+  "dg:\{phase_int}:\{ox}:\{oy}:\{lx}:\{ly}:\{state.min_distance.to_string()}"
+}
+
+///|
 fn[Msg] handle_drag_modifier(
   ctx : ViewEventContext,
   handler~ : (DragGestureEvent, Rect) -> Msg,
 ) -> ViewEventResult[Msg] {
   match ctx.event {
     Pointer(event) => {
-      let result = DragGestureState::new().update(
+      let gesture = drag_gesture_state_from_scratch(ctx.state.scratch)
+      let result = gesture.update(
         event,
         inside=ctx.frame.contains(event.position),
       )
+      let next_scratch = drag_gesture_state_to_scratch(result.state)
+      let active = result.state.phase != DragGesturePhase::Idle
       match result.event {
         Some(drag_event) => {
           let frame = match ctx.child_frames {
@@ -553,13 +630,31 @@ fn[Msg] handle_drag_modifier(
             activated: true,
             focused: false,
             captured: true,
-            state: None,
+            state: Some({ ..ctx.state, scratch: next_scratch }),
             text_control: None,
             dirty: ViewDirtyHint::ViewPaintDirty,
             messages: [handler(drag_event, frame)],
           }
         }
-        None => ViewEventResult::ignored()
+        None =>
+          if active {
+            {
+              changed: next_scratch != ctx.state.scratch,
+              activated: false,
+              focused: false,
+              captured: true,
+              state: Some({ ..ctx.state, scratch: next_scratch }),
+              text_control: None,
+              dirty: if next_scratch != ctx.state.scratch {
+                ViewDirtyHint::ViewPaintDirty
+              } else {
+                ViewDirtyHint::ViewClean
+              },
+              messages: [],
+            }
+          } else {
+            ViewEventResult::ignored()
+          }
       }
     }
     _ => ViewEventResult::ignored()

@@ -308,14 +308,17 @@ fn[Msg] scroll_container(
     },
     paint=ctx => {
       let viewport_size = viewport.unwrap_or(ctx.frame.size)
+      // Clip to the actually rendered frame. Using `viewport_size` here
+      // would misalign the clip when the frame is smaller than the requested
+      // viewport, letting scrolled children render on top of siblings above.
       {
         commands: [
           @core.DrawCommand::PushClip(
             @core.Rect::new(
               x=ctx.frame.origin.x,
               y=ctx.frame.origin.y,
-              width=viewport_size.width,
-              height=viewport_size.height,
+              width=ctx.frame.size.width,
+              height=ctx.frame.size.height,
             ),
           ),
         ],

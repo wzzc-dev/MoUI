@@ -1,4 +1,12 @@
 ///|
+using @views {
+  animated_canvas,
+  fill_rounded_rect,
+  pop_opacity,
+  push_opacity,
+}
+
+///|
 fn welcome_demo(
   model : ComponentGalleryModel,
   theme : @moui.Theme,
@@ -108,6 +116,13 @@ fn welcome_demo(
         width,
       ),
       component_demo_section(
+        "Live Canvas",
+        "A bouncing orb on an animated_canvas. The paint clock drives motion; no host timer is required.",
+        welcome_bouncing_ball_canvas(theme, inner),
+        theme,
+        width,
+      ),
+      component_demo_section(
         "Runtime Hosts",
         "The same component gallery adapts to each runtime route.",
         platform_badge_grid(model, theme, inner, compact),
@@ -117,6 +132,76 @@ fn welcome_demo(
     ],
     spacing=theme.spacing_scale.md,
     align=@views.CrossAlign::Stretch,
+  )
+}
+
+///|
+/// Bouncing-ball canvas used on the Welcome page. The ball reflects off the
+/// canvas edges; motion is driven by the `animated_canvas` paint clock
+/// (`now_ms`), so it loops without a `HostTimerSource` subscription.
+fn welcome_bouncing_ball_canvas(
+  theme : @moui.Theme,
+  width : Double,
+) -> @moui.View[ComponentGalleryMsg] {
+  let canvas_height = 160.0
+  let radius = 18.0
+  let speed_x = 110.0
+  let speed_y = 78.0
+  animated_canvas(
+    measure=constraints => {
+      constraints.constrain(@geometry.Size::new(width~, height=canvas_height))
+    },
+    draw=(ctx, frame, now_ms) => {
+      // Background panel.
+      fill_rounded_rect(
+        ctx,
+        @graphics.RoundedRect::new(rect=frame, radius=12.0),
+        @graphics.Brush::solid(
+          @graphics.Color::rgba(r=0.93, g=0.95, b=0.98),
+        ),
+      )
+      // Bouncing ball position from the paint clock.
+      let travel_x = (frame.size.width - 2.0 * radius).max(1.0)
+      let travel_y = (frame.size.height - 2.0 * radius).max(1.0)
+      let period_x = travel_x / speed_x
+      let period_y = travel_y / speed_y
+      let tx = (now_ms / 1000.0) % period_x
+      let ty = (now_ms / 1000.0) % period_y
+      let phase_x = tx / period_x
+      let phase_y = ty / period_y
+      // Triangle wave: 0 -> 1 -> 0 within one period.
+      let norm_x = if phase_x < 0.5 { phase_x * 2.0 } else { 2.0 - phase_x * 2.0 }
+      let norm_y = if phase_y < 0.5 { phase_y * 2.0 } else { 2.0 - phase_y * 2.0 }
+      let ball_x = frame.origin.x + radius + norm_x * travel_x
+      let ball_y = frame.origin.y + radius + norm_y * travel_y
+      let ball = @geometry.Rect::new(
+        x=ball_x - radius,
+        y=ball_y - radius,
+        width=2.0 * radius,
+        height=2.0 * radius,
+      )
+      // Soft trailing shadow under the ball.
+      push_opacity(ctx, 0.18)
+      let shadow = @geometry.Rect::new(
+        x=ball_x - radius * 0.9,
+        y=frame.origin.y + frame.size.height - radius * 0.6,
+        width=radius * 1.8,
+        height=radius * 0.5,
+      )
+      fill_rounded_rect(
+        ctx,
+        @graphics.RoundedRect::new(rect=shadow, radius=radius * 0.25),
+        @graphics.Brush::solid(@graphics.Color::rgba(r=0.1, g=0.1, b=0.15)),
+      )
+      pop_opacity(ctx)
+      // The orb itself, using the theme primary color.
+      fill_rounded_rect(
+        ctx,
+        @graphics.RoundedRect::new(rect=ball, radius=radius),
+        @graphics.Brush::solid(theme.palette.primary),
+      )
+    },
+    semantics_label="Welcome bouncing ball canvas",
   )
 }
 

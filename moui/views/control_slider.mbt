@@ -128,7 +128,11 @@ pub fn[Msg] slider(
   match on_change {
     Some(handler) =>
       base.on_drag_with_frame((event, frame) => {
-        let track_width = max_view_double(1.0, width)
+        // Map the pointer to the *actually rendered* frame, not the `width`
+        // measure parameter. Layout constraints may shrink or stretch the
+        // view; dividing by `width` instead of `frame.size.width` either
+        // clamps the drag short or lets the thumb overshoot the track.
+        let track_width = max_view_double(1.0, frame.size.width)
         let local_x = clamp_view_double(
           event.position.x - frame.origin.x,
           0.0,
