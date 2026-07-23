@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">MoUI brand mark</title>
+  <desc id="desc">A moon crescent cradling a small user interface window.</desc>
+  <defs>
+    <mask id="crescent-mask">
+      <rect width="512" height="512" fill="black"/>
+      <circle cx="220" cy="256" r="154" fill="white"/>
+      <circle cx="292" cy="196" r="124" fill="black"/>
+    </mask>
+  </defs>
+  <rect x="20" y="20" width="472" height="472" rx="112" fill="#101820"/>
+  <circle cx="220" cy="256" r="154" fill="#70E0BC" mask="url(#crescent-mask)"/>
+  <rect x="246" y="176" width="174" height="150" rx="34" fill="#F7F8F3" stroke="#101820" stroke-width="14"/>
+  <circle cx="281" cy="214" r="10" fill="#F3B64C"/>
+  <circle cx="315" cy="214" r="10" fill="#F06C5B"/>
+  <path d="M279 258h106M279 288h72" fill="none" stroke="#101820" stroke-width="16" stroke-linecap="round"/>
+</svg>

@@ -33,7 +33,7 @@ fn component_gallery_items() -> Array[ComponentGalleryItemInfo] {
       id: ComponentGalleryItemId::Welcome,
       group: "getting-started",
       name: "Welcome",
-      description: "A compact component catalog for reusable MoUI views.",
+      description: "Catalog overview with a live bouncing-ball canvas driven by the animated_canvas paint clock.",
       badge: "intro",
       tone: @views.BadgeTone::Accent,
     },

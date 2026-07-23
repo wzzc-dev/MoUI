@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 720" role="img" aria-labelledby="title desc">
+  <title id="title">Moonbud, the MoUI mascot</title>
+  <desc id="desc">A minimal moon crescent with the MoUI window as a friendly face.</desc>
+  <defs>
+    <mask id="mascot-crescent-mask">
+      <rect width="720" height="720" fill="black"/>
+      <circle cx="300" cy="360" r="250" fill="white"/>
+      <circle cx="405" cy="270" r="202" fill="black"/>
+    </mask>
+  </defs>
+
+  <ellipse cx="350" cy="650" rx="145" ry="18" fill="#101820" opacity=".10"/>
+
+  <!-- One simple leaf keeps Moonbud recognizable without competing with the logo. -->
+  <path d="M300 112c-2-35 12-61 35-81" fill="none" stroke="#101820" stroke-width="14" stroke-linecap="round"/>
+  <path d="M324 52c18-29 50-37 75-24-8 30-37 48-72 41z" fill="#70E0BC" stroke="#101820" stroke-width="12" stroke-linejoin="round"/>
+
+  <circle cx="300" cy="360" r="250" fill="#70E0BC" stroke="#101820" stroke-width="14" mask="url(#mascot-crescent-mask)"/>
+
+  <!-- The window is the same construction as the primary MoUI mark. -->
+  <rect x="324" y="242" width="210" height="174" rx="38" fill="#F7F8F3" stroke="#101820" stroke-width="14"/>
+  <circle cx="362" cy="278" r="10" fill="#F3B64C"/>
+  <circle cx="395" cy="278" r="10" fill="#F06C5B"/>
+  <ellipse cx="386" cy="331" rx="12" ry="17" fill="#101820"/>
+  <ellipse cx="472" cy="331" rx="12" ry="17" fill="#101820"/>
+  <path d="M413 365c13 14 33 14 46 0" fill="none" stroke="#70E0BC" stroke-width="10" stroke-linecap="round"/>
+  <path d="M381 390h96" fill="none" stroke="#101820" stroke-width="11" stroke-linecap="round"/>
+
+  <path d="M234 598l-10 39M405 598l12 39" fill="none" stroke="#101820" stroke-width="20" stroke-linecap="round"/>
+  <path d="M184 641c7-23 38-31 61-15 10 7 7 21-5 24l-42 7c-10 2-17-7-14-16z" fill="#70E0BC" stroke="#101820" stroke-width="12"/>
+  <path d="M390 641c8-23 39-29 61-13 9 7 6 21-6 23l-42 6c-10 2-16-7-13-16z" fill="#F3B64C" stroke="#101820" stroke-width="12"/>
+</svg>

@@ -104,11 +104,6 @@ fn checkbox_group_demo(
   theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[ComponentGalleryMsg] {
-  let selected = if model.feature_enabled {
-    ["desktop", "mobile"]
-  } else {
-    ["desktop"]
-  }
   component_demo_section(
     "Checkbox Group",
     "Checkbox groups model multiple independent selections.",
@@ -118,8 +113,8 @@ fn checkbox_group_demo(
         choice_item("mobile", "Mobile"),
         choice_item("web", "Web"),
       ],
-      selected~,
-      on_change=(_id, value) => FeatureToggled(value),
+      selected=model.checkbox_group_selection,
+      on_change=(id, _value) => ToggleCheckboxGroupItem(id),
       theme~,
     ),
     theme,
