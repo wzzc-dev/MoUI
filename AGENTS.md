@@ -45,6 +45,7 @@ Complex multi-package or platform work: write/update `docs/plans/active/<id>.md`
 | Path | Role |
 |---|---|
 | `docs/INDEX.md` | Catalog + where to read next |
+| `docs/moonbitlang` | MoonBit language documentation index |
 | `docs/architecture-map.md` | One-page package/dependency map |
 | `docs/invariants.md` | Sole structural constraint source |
 | `docs/testing.md` | Sole validation policy source |
