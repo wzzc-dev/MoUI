@@ -1276,3 +1276,112 @@ test "runtime clears hover on a button nested in an overlay" {
     )
   }
 }
+
+///|
+/// Regression for the showcase sidebar: a `text_field` placed above a
+/// `scroll_view` becomes un-clickable after the list scrolls, because the
+/// scroll container's child `paint_bounds` spills over the field and wins
+/// hit-test. The fix clips each child's `paint_bounds` to a leading
+/// `PushClip`/`PushRoundedClip` rect, so the scroll viewport only claims the
+/// region it actually paints.
+test "scroll_view child paint_bounds does not spill over earlier siblings" {
+  let mut field_value = ""
+  let state = @core.ScrollState::new()
+  // Sidebar: search field on top, scrollable story list below. The list is
+  // much taller than the viewport so scrolling pushes its paint region up.
+  let stories : Array[@core.View[String]] = []
+  for i = 0; i < 20; i = i + 1 {
+    stories.push(
+      @views.button(
+        "Story \{i}",
+        on_click="story-\{i}",
+        width=180.0,
+        height=34.0,
+      ),
+    )
+  }
+  let sidebar : @core.View[String] = @views.column(
+    [
+      @views.text_field(
+        field_value,
+        on_input=value => {
+          field_value = value
+          "search"
+        },
+        placeholder="Search stories…",
+        width=180.0,
+      ),
+      @views.scroll_view(
+        @views.column(stories, spacing=4.0),
+        width=180.0,
+        height=200.0,
+        state=Some(state),
+      ),
+    ],
+    spacing=8.0,
+  )
+  let runtime = AppRuntime::new_view(
+    root=sidebar,
+    size=@core.Size::new(width=200.0, height=280.0),
+  )
+  ignore(runtime.draw_frame())
+  // Before scrolling, clicking the search field focuses it.
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=20.0, y=20.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=20.0, y=20.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  if !runtime.focused_text_input().focused {
+    fail("expected search field to take focus before scrolling")
+  }
+  // Move focus off the field.
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=20.0, y=120.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  if runtime.focused_text_input().focused {
+    fail("expected focus to leave the search field")
+  }
+  // Scroll the list down so its child paint_bounds would historically grow up
+  // over the search field.
+  state.scroll_to(x=0.0, y=300.0)
+  ignore(runtime.draw_frame())
+  // Click the search field again. Without the fix, the scroll list's
+  // paint_bounds covers the field and the click lands on a story button.
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=20.0, y=20.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=20.0, y=20.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  if !runtime.focused_text_input().focused {
+    fail(
+      "expected search field to remain clickable after the list scrolls (scroll_view child paint_bounds spilled over an earlier sibling)",
+    )
+  }
+}

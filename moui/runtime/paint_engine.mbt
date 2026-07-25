@@ -42,16 +42,33 @@ fn ElementNode::render_with_environment(
   post_commands.append(plan.post_commands)
   overlay_commands.append(plan.overlay_commands)
   platform_views.append(plan.platform_views)
+  // A scroll/clip container wraps its children in a pushed clip rect (see
+  // `ScrollContainerView::paint` and `ClipModifier`). The clip only constrains
+  // drawn pixels, not `RenderNode::paint_bounds`, so a long column inside a
+  // short scroll viewport reports a `paint_bounds` that spills over earlier
+  // siblings — the showcase sidebar search field becomes un-clickable after
+  // the story list scrolls, because the list's `paint_bounds` grows up over
+  // the field and wins hit-test. Detect a leading `PushClip`/`PushRoundedClip`
+  // in this node's own commands and clip each child's `paint_bounds` to that
+  // rect before union. Picker/date-picker popups paint through
+  // `overlay_commands` (not children) and stay unaffected.
+  let child_clip : @core.Rect? = paint_plan_child_clip(plan.commands)
   let child_environment = environment.with_child_context(self.erased_view_node)
   for index, child in self.children {
     if index < placed.children.length() {
-      children.push(
-        child.render_with_environment(
-          placed.children[index],
-          focused,
-          child_environment,
-        ),
+      let rendered = child.render_with_environment(
+        placed.children[index],
+        focused,
+        child_environment,
       )
+      match child_clip {
+        Some(clip) =>
+          match clip.intersection(rendered.paint_bounds) {
+            Some(clipped) => children.push({ ..rendered, paint_bounds: clipped })
+            None => children.push({ ..rendered, paint_bounds: clip })
+          }
+        None => children.push(rendered)
+      }
     }
   }
   self.dirty.clear()
@@ -121,6 +138,34 @@ fn view_paint_layer_render_node(
     cached_overlay_draw_commands: Some(layer.overlay_commands),
     animating: false,
   }
+}
+
+///|
+/// Returns the rect this node's own commands clip children into, if any.
+///
+/// A leading `PushClip(Rect)` or `PushRoundedClip(RoundedRect)` (as emitted by
+/// `ScrollContainerView::paint` and the `ClipModifier` view) wraps the node's
+/// children in a clip. The clip constrains drawn pixels but not
+/// `RenderNode::paint_bounds`, so without this hint a long column inside a
+/// short scroll viewport reports a `paint_bounds` that spills over earlier
+/// siblings — the showcase sidebar search field becomes un-clickable after
+/// the story list scrolls, because the list's `paint_bounds` grows up over
+/// the field and wins hit-test.
+///
+/// Only the first clip command is consulted: that is the one `ScrollContainer`
+/// and `ClipModifier` emit before any children, and matches the painting order
+/// (children paint between the push and its matching pop). Picker and
+/// date-picker popups paint through `overlay_commands` rather than children,
+/// so they remain unaffected by this clip.
+fn paint_plan_child_clip(commands : Array[@core.DrawCommand]) -> @core.Rect? {
+  for command in commands {
+    match command {
+      @core.DrawCommand::PushClip(rect) => return Some(rect)
+      @core.DrawCommand::PushRoundedClip(rounded) => return Some(rounded.rect)
+      _ => ()
+    }
+  }
+  None
 }
 
 ///|
