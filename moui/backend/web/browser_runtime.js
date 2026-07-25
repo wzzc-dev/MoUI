@@ -1915,6 +1915,31 @@ export function createWindowWebImports(options = {}) {
         at: Number(globalThis.performance?.now?.() ?? Date.now()),
       });
     },
+    focus_canvas(rawId) {
+      const state = textInputs.get(rawId);
+      const canvas = state?.canvas ?? null;
+      if (canvas && typeof canvas.focus === "function") {
+        try {
+          canvas.focus({ preventScroll: true });
+        } catch (_) {
+          canvas.focus();
+        }
+      }
+    },
+    set_canvas_fullscreen(rawId, fullscreen) {
+      const state = textInputs.get(rawId);
+      const canvas = state?.canvas ?? null;
+      if (!canvas) return;
+      if (fullscreen) {
+        if (document.fullscreenElement !== canvas && canvas.requestFullscreen) {
+          const promise = canvas.requestFullscreen();
+          if (promise && typeof promise.catch === "function") promise.catch(() => {});
+        }
+      } else if (document.fullscreenElement && document.exitFullscreen) {
+        const promise = document.exitFullscreen();
+        if (promise && typeof promise.catch === "function") promise.catch(() => {});
+      }
+    },
     system_theme() {
       return globalThis.window?.matchMedia?.("(prefers-color-scheme: dark)")
         .matches ? 1 : 0;
