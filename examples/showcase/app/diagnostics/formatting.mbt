@@ -1,22 +1,4 @@
 ///|
-fn showcase_format_rich_text(value : String) -> @moui_richtext.RichTextDocument {
-  @moui_richtext.RichTextDocument::new(blocks=[
-    @moui_richtext.RichTextBlock::new(runs=[
-      @moui_richtext.RichTextRun::new(text=value),
-    ]),
-  ])
-}
-
-///|
-fn string_contains(value : String, needle : String) -> Bool {
-  if needle == "" {
-    true
-  } else {
-    value.contains(needle)
-  }
-}
-
-///|
 fn clamp_double(value : Double, min : Double, max : Double) -> Double {
   if value < min {
     min
@@ -24,15 +6,6 @@ fn clamp_double(value : Double, min : Double, max : Double) -> Double {
     max
   } else {
     value
-  }
-}
-
-///|
-fn min_showcase_double(a : Double, b : Double) -> Double {
-  if a < b {
-    a
-  } else {
-    b
   }
 }
 
@@ -64,6 +37,21 @@ fn min_showcase_int(a : Int, b : Int) -> Int {
 }
 
 ///|
+fn showcase_string_array_set(
+  values : Array[String],
+  target : String,
+  selected : Bool,
+) -> Array[String] {
+  let next = values.filter(value => value != target)
+  if selected {
+    next.push(target)
+  }
+  next
+}
+
+///|
+/// Membership probe used by selection-style diagnostics to demonstrate
+/// Array[String] lookup patterns (chip/filter review).
 fn showcase_string_array_contains(
   values : Array[String],
   target : String,
@@ -77,16 +65,10 @@ fn showcase_string_array_contains(
 }
 
 ///|
-fn showcase_string_array_set(
-  values : Array[String],
-  target : String,
-  selected : Bool,
-) -> Array[String] {
-  let next = values.filter(value => value != target)
-  if selected {
-    next.push(target)
-  }
-  next
+/// Static gallery identifier list used by Text Diagnostics to render a
+/// chip/filter membership preview against `showcase_string_array_contains`.
+fn gallery_items() -> Array[String] {
+  ["atlas", "blueprint", "catalog", "diagram", "expectation", "feedback"]
 }
 
 ///|
@@ -124,43 +106,23 @@ fn showcase_metrics(
   viewport : @geometry.Size,
   theme : @moui.Theme,
 ) -> ShowcaseMetrics {
-  let viewport = @geometry.Size::new(
-    width=max_showcase_double(1.0, viewport.width),
-    height=max_showcase_double(1.0, viewport.height),
-  )
   let outer_padding = theme.spacing_scale.md * 2.0
   let shell_width = max_showcase_double(560.0, viewport.width - outer_padding)
-  let sidebar_width = if shell_width < 760.0 { 220.0 } else { 244.0 }
   let detail_width = max_showcase_double(
     420.0,
-    shell_width - sidebar_width - theme.spacing_scale.lg,
+    shell_width - 244.0 - theme.spacing_scale.lg,
   )
   let panel_height = max_showcase_double(280.0, viewport.height - 108.0)
   let panel_padding = theme.spacing_scale.md * 2.0
   let body_width = max_showcase_double(220.0, detail_width - panel_padding)
   let body_height = max_showcase_double(120.0, panel_height - 96.0)
-  let action_width = clamp_double(shell_width - 288.0, 240.0, 420.0)
   {
-    viewport,
-    shell_width,
-    sidebar_width,
-    detail_width,
     panel_width: detail_width,
     panel_height,
     body_width,
     body_height,
-    action_width,
     compact: body_width < 620.0,
   }
-}
-
-///|
-fn ShowcaseModel::gallery_items(self : ShowcaseModel) -> Array[String] {
-  ignore(self)
-  [
-    "State holders", "Modifier order", "Lazy list rows", "Keyboard shortcut", "Dialog host",
-    "Accessible controls", "Grid cell", "Intrinsic size",
-  ]
 }
 
 ///|

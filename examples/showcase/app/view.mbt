@@ -166,6 +166,72 @@ fn shell_top_bar(
 }
 
 ///|
+/// Shared group→item story list used by both the desktop sidebar and the
+/// mobile catalog. Visual differences (selected variant, group title role,
+/// whether rows carry a `.key`) are parameters; the loop body is written once.
+fn catalog_list_rows(
+  model : ShowcaseModel,
+  theme : @moui.Theme,
+  list_width : Double,
+  row_height : Double,
+  selected_variant~ : @views.ButtonVariant,
+  unselected_variant~ : @views.ButtonVariant,
+  group_role~ : @views.TextRole,
+  key_rows~ : Bool,
+) -> Array[@moui.View[ShowcaseMsg]] {
+  let items = model.filtered_catalog_items()
+  let groups = model.catalog_groups()
+  let selected = match model.current_catalog_item() {
+    Some(item) => item.route()
+    None => model.current_route_string()
+  }
+  let rows : Array[@moui.View[ShowcaseMsg]] = []
+  for group in groups {
+    let group_items = items.filter(item => item.group_id == group.id)
+    if group_items.length() == 0 {
+      continue
+    }
+    rows.push(
+      text(group.title, role=group_role, theme~, width=list_width),
+    )
+    for item in group_items {
+      let is_selected = item.route() == selected
+      let btn = button(
+        item.title,
+        on_click=Navigate(item.route()),
+        variant=if is_selected {
+          selected_variant
+        } else {
+          unselected_variant
+        },
+        theme~,
+        width=list_width,
+        height=row_height,
+      )
+      let btn = btn.semantics_selected(selected=is_selected)
+      rows.push(if key_rows {
+        btn.key("story-" + item.route())
+      } else {
+        btn
+      })
+    }
+  }
+  if items.length() == 0 {
+    rows.push(
+      text(
+        "No matching stories",
+        role=@views.TextRole::Caption,
+        theme~,
+        width=list_width,
+      ),
+    )
+  }
+  // Trailing inset so the last story is not clipped by the scroll clip edge.
+  rows.push(spacer(min_length=shell_scroll_end_inset))
+  rows
+}
+
+///|
 fn shell_sidebar(
   model : ShowcaseModel,
   theme : @moui.Theme,
@@ -176,62 +242,19 @@ fn shell_sidebar(
   // List rows leave a right gutter so the overlay scroll thumb does not cover
   // labels/buttons; the scroll_view itself keeps full rail width for the track.
   let list_width = (rail_width - shell_scroll_indicator_gutter).max(140.0)
-  let items = model.filtered_catalog_items()
-  let groups = model.catalog_groups()
-  let selected = match model.current_catalog_item() {
-    Some(item) => item.route()
-    None => model.current_route_string()
-  }
   // Search stays fixed above the scrollable story list (left rail).
   // Do NOT use @views.sidebar per group: it defaults height=320 and leaves
   // large empty gaps under short sections like Start.
-  let list_rows : Array[@moui.View[ShowcaseMsg]] = []
-  for group in groups {
-    let group_items = items.filter(item => item.group_id == group.id)
-    if group_items.length() == 0 {
-      continue
-    }
-    list_rows.push(
-      text(
-        group.title,
-        role=@views.TextRole::Caption,
-        theme~,
-        width=list_width,
-        height=22.0,
-      ),
-    )
-    for item in group_items {
-      let is_selected = item.route() == selected
-      list_rows.push(
-        button(
-          item.title,
-          on_click=Navigate(item.route()),
-          variant=if is_selected {
-            @views.ButtonVariant::Primary
-          } else {
-            @views.ButtonVariant::Ghost
-          },
-          theme~,
-          width=list_width,
-          height=34.0,
-        )
-        .semantics_selected(selected=is_selected)
-        .key("story-" + item.route()),
-      )
-    }
-  }
-  if items.length() == 0 {
-    list_rows.push(
-      text(
-        "No matching stories",
-        role=@views.TextRole::Caption,
-        theme~,
-        width=list_width,
-      ),
-    )
-  }
-  // Trailing inset so the last story is not clipped by the scroll clip edge.
-  list_rows.push(spacer(min_length=shell_scroll_end_inset))
+  let list_rows = catalog_list_rows(
+    model,
+    theme,
+    list_width,
+    34.0,
+    selected_variant=@views.ButtonVariant::Primary,
+    unselected_variant=@views.ButtonVariant::Ghost,
+    group_role=@views.TextRole::Caption,
+    key_rows=true,
+  )
   // Stories title (~32) + search field (~40) + two column gaps + safety.
   let header_block = 32.0 + 40.0 + theme.spacing_scale.sm * 2.0 + 12.0
   let list_height = (height - header_block).max(120.0)
@@ -322,49 +345,16 @@ fn mobile_catalog_list(
   height : Double,
 ) -> @moui.View[ShowcaseMsg] {
   let list_width = (width - shell_scroll_indicator_gutter).max(200.0)
-  let items = model.filtered_catalog_items()
-  let groups = model.catalog_groups()
-  let list_rows : Array[@moui.View[ShowcaseMsg]] = []
-  for group in groups {
-    let group_items = items.filter(item => item.group_id == group.id)
-    if group_items.length() == 0 {
-      continue
-    }
-    list_rows.push(
-      text(
-        group.title,
-        role=@views.TextRole::Subtitle,
-        theme~,
-        width=list_width,
-      ),
-    )
-    for item in group_items {
-      list_rows.push(
-        button(
-          item.title,
-          on_click=Navigate(item.route()),
-          variant=if item.route() == model.current_route_string() {
-            @views.ButtonVariant::Primary
-          } else {
-            @views.ButtonVariant::Outline
-          },
-          theme~,
-          width=list_width,
-        ),
-      )
-    }
-  }
-  if items.length() == 0 {
-    list_rows.push(
-      text(
-        "No matching stories",
-        role=@views.TextRole::Caption,
-        theme~,
-        width=list_width,
-      ),
-    )
-  }
-  list_rows.push(spacer(min_length=shell_scroll_end_inset))
+  let list_rows = catalog_list_rows(
+    model,
+    theme,
+    list_width,
+    40.0,
+    selected_variant=@views.ButtonVariant::Primary,
+    unselected_variant=@views.ButtonVariant::Outline,
+    group_role=@views.TextRole::Subtitle,
+    key_rows=false,
+  )
   // Search field + gap + safety (mobile list has no Stories subtitle row).
   let header_block = 40.0 + theme.spacing_scale.sm + 12.0
   let list_height = (height - header_block).max(120.0)
