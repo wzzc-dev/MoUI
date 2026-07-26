@@ -1,5 +1,5 @@
 ///|
-priv struct TextAreaViewNode {
+priv struct TextArea {
   value : @core.Binding[String]
   placeholder : String
   size : @core.Size
@@ -14,22 +14,22 @@ priv struct TextAreaViewNode {
 }
 
 ///|
-impl @core.ViewNode for TextAreaViewNode with fn identity(self) {
+impl @core.ViewNode for TextArea with fn identity(self) {
   @core.ViewIdentity::new(kind="TextArea", key=self.key)
 }
 
 ///|
-impl @core.ViewNode for TextAreaViewNode with fn revision(self) {
+impl @core.ViewNode for TextArea with fn revision(self) {
   "textarea:\{self.value.get()}:\{self.placeholder}:\{view_size_revision(self.size)}:\{self.variant_label}:\{self.theme_revision}:\{self.lines}:\{self.line_height}"
 }
 
 ///|
-impl @core.ViewNode for TextAreaViewNode with fn layout(self, ctx) {
+impl @core.ViewNode for TextArea with fn layout(self, ctx) {
   @core.ViewLayoutResult::new(size=ctx.constraints.constrain(self.size))
 }
 
 ///|
-impl @core.ViewNode for TextAreaViewNode with fn paint(self, ctx) {
+impl @core.ViewNode for TextArea with fn paint(self, ctx) {
   let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
   let resolved_style = match self.style {
     Some(value) => value
@@ -72,7 +72,7 @@ impl @core.ViewNode for TextAreaViewNode with fn paint(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for TextAreaViewNode with fn text_input_state(self, ctx) {
+impl @core.ViewNode for TextArea with fn text_input_state(self, ctx) {
   let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
   let resolved_style = match self.style {
     Some(value) => value
@@ -92,7 +92,7 @@ impl @core.ViewNode for TextAreaViewNode with fn text_input_state(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for TextAreaViewNode with fn semantics(self) {
+impl @core.ViewNode for TextArea with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
     role=@core.SemanticsRole::TextField,
     label=self.placeholder,
@@ -102,6 +102,6 @@ impl @core.ViewNode for TextAreaViewNode with fn semantics(self) {
 }
 
 ///|
-impl @core.ViewNode for TextAreaViewNode with fn focusable(_self) {
+impl @core.ViewNode for TextArea with fn focusable(_self) {
   true
 }

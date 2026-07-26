@@ -8,7 +8,7 @@ pub fn[Msg] avatar(
   let resolved_theme = views_ambient_theme(theme)
   match image {
     Some(source) =>
-      @core.View::from_node(AvatarImageViewNode::{ source, size })
+      @core.View::from_node(AvatarImage::{ source, size })
       .corner_radius(size / 2.0)
       .clip()
       .accessibility_label(label)

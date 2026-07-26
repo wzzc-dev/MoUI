@@ -36,29 +36,29 @@ pub fn[Msg] rounded_clip(
   radius? : Double = 0.0,
 ) -> @core.View[Msg] {
   @core.View::from_node(
-    RoundedClipNode::{ radius, child_revision: child.revision() },
+    RoundedClip::{ radius, child_revision: child.revision() },
     children=_node => [child],
   )
 }
 
 ///|
-priv struct RoundedClipNode {
+priv struct RoundedClip {
   radius : Double
   child_revision : String
 }
 
 ///|
-impl @core.ViewNode for RoundedClipNode with fn identity(_self) {
+impl @core.ViewNode for RoundedClip with fn identity(_self) {
   @core.ViewIdentity::new(kind="RoundedClip")
 }
 
 ///|
-impl @core.ViewNode for RoundedClipNode with fn revision(self) {
+impl @core.ViewNode for RoundedClip with fn revision(self) {
   "rounded-clip:\{self.radius}:\{self.child_revision}"
 }
 
 ///|
-impl @core.ViewNode for RoundedClipNode with fn child_constraints(
+impl @core.ViewNode for RoundedClip with fn child_constraints(
   _self,
   constraints,
 ) {
@@ -66,7 +66,7 @@ impl @core.ViewNode for RoundedClipNode with fn child_constraints(
 }
 
 ///|
-impl @core.ViewNode for RoundedClipNode with fn layout(_self, ctx) {
+impl @core.ViewNode for RoundedClip with fn layout(_self, ctx) {
   let child_size = if ctx.child_sizes.is_empty() {
     ctx.constraints.constrain(@core.Size::new(width=0.0, height=0.0))
   } else {
@@ -83,7 +83,7 @@ impl @core.ViewNode for RoundedClipNode with fn layout(_self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for RoundedClipNode with fn paint(self, ctx) {
+impl @core.ViewNode for RoundedClip with fn paint(self, ctx) {
   let rounded = @core.RoundedRect::new(rect=ctx.frame, radius=self.radius)
   {
     commands: [@core.DrawCommand::PushRoundedClip(rounded)],
@@ -97,7 +97,7 @@ impl @core.ViewNode for RoundedClipNode with fn paint(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for RoundedClipNode with fn semantics(_self) {
+impl @core.ViewNode for RoundedClip with fn semantics(_self) {
   @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
 }
 
@@ -120,7 +120,7 @@ pub fn[Msg] intrinsic_height(child : @core.View[Msg]) -> @core.View[Msg] {
 }
 
 ///|
-priv struct CustomLayoutNode {
+priv struct CustomLayout {
   measure : (@core.Constraints) -> @core.Size
   paint : (PaintContext, @core.Rect) -> Unit
   semantics_role : @core.SemanticsRole
@@ -128,12 +128,12 @@ priv struct CustomLayoutNode {
 }
 
 ///|
-impl @core.ViewNode for CustomLayoutNode with fn identity(_self) {
+impl @core.ViewNode for CustomLayout with fn identity(_self) {
   @core.ViewIdentity::new(kind="CustomLayout")
 }
 
 ///|
-impl @core.ViewNode for CustomLayoutNode with fn revision(_self) {
+impl @core.ViewNode for CustomLayout with fn revision(_self) {
   // Custom layout paint output is fully driven by the `paint` closure. Keep
   // the revision empty so the runtime reconciles via re-running layout/paint
   // instead of comparing against a stub.
@@ -141,19 +141,19 @@ impl @core.ViewNode for CustomLayoutNode with fn revision(_self) {
 }
 
 ///|
-impl @core.ViewNode for CustomLayoutNode with fn layout(self, ctx) {
+impl @core.ViewNode for CustomLayout with fn layout(self, ctx) {
   @core.ViewLayoutResult::new(size=(self.measure)(ctx.constraints))
 }
 
 ///|
-impl @core.ViewNode for CustomLayoutNode with fn paint(self, ctx) {
+impl @core.ViewNode for CustomLayout with fn paint(self, ctx) {
   let pctx = PaintContext::new()
   (self.paint)(pctx, ctx.frame)
   @core.ViewPaintPlan::commands(PaintContext::finish(pctx))
 }
 
 ///|
-impl @core.ViewNode for CustomLayoutNode with fn semantics(self) {
+impl @core.ViewNode for CustomLayout with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
     role=self.semantics_role,
     label=self.semantics_label,
@@ -169,7 +169,7 @@ pub fn[Msg] custom_layout(
   semantics_label? : String = "",
 ) -> @core.View[Msg] {
   @core.View::from_node(
-    CustomLayoutNode::{ measure, paint, semantics_role, semantics_label },
+    CustomLayout::{ measure, paint, semantics_role, semantics_label },
   )
 }
 

@@ -11,27 +11,27 @@
 ///|
 /// A leaf view that reports a fixed intrinsic size and paints nothing.
 fn center_test_rect(width~ : Double, height~ : Double) -> @core.View[Unit] {
-  @core.View::from_node(CenterTestRectNode::{ width, height })
+  @core.View::from_node(CenterTestRect::{ width, height })
 }
 
 ///|
-priv struct CenterTestRectNode {
+priv struct CenterTestRect {
   width : Double
   height : Double
 }
 
 ///|
-impl @core.ViewNode for CenterTestRectNode with fn identity(_self) {
+impl @core.ViewNode for CenterTestRect with fn identity(_self) {
   @core.ViewIdentity::new(kind="CenterTestRect")
 }
 
 ///|
-impl @core.ViewNode for CenterTestRectNode with fn revision(self) {
+impl @core.ViewNode for CenterTestRect with fn revision(self) {
   "center-test-rect:\{self.width}:\{self.height}"
 }
 
 ///|
-impl @core.ViewNode for CenterTestRectNode with fn layout(self, ctx) {
+impl @core.ViewNode for CenterTestRect with fn layout(self, ctx) {
   @core.ViewLayoutResult::new(
     size=ctx.constraints.constrain(
       @core.Size::new(width=self.width, height=self.height),

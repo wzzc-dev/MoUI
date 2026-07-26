@@ -4,31 +4,31 @@ fn[Msg] stack_layout(
   kind? : String = "Stack",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  let child_views : (StackLayoutNode) -> Array[@core.View[Msg]] = _node => {
+  let child_views : (StackLayout) -> Array[@core.View[Msg]] = _node => {
     let captured_children = children
     captured_children
   }
-  @core.View::from_node(StackLayoutNode::{ kind, key }, children=child_views)
+  @core.View::from_node(StackLayout::{ kind, key }, children=child_views)
 }
 
 ///|
-priv struct StackLayoutNode {
+priv struct StackLayout {
   kind : String
   key : String?
 }
 
 ///|
-impl @core.ViewNode for StackLayoutNode with fn identity(self) {
+impl @core.ViewNode for StackLayout with fn identity(self) {
   @core.ViewIdentity::new(kind=self.kind, key=self.key)
 }
 
 ///|
-impl @core.ViewNode for StackLayoutNode with fn revision(_self) {
+impl @core.ViewNode for StackLayout with fn revision(_self) {
   "stack"
 }
 
 ///|
-impl @core.ViewNode for StackLayoutNode with fn layout(_self, ctx) {
+impl @core.ViewNode for StackLayout with fn layout(_self, ctx) {
   let mut width = 0.0
   let mut height = 0.0
   let frames : Array[@core.Rect] = []
@@ -46,7 +46,7 @@ impl @core.ViewNode for StackLayoutNode with fn layout(_self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for StackLayoutNode with fn semantics(_self) {
+impl @core.ViewNode for StackLayout with fn semantics(_self) {
   @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
 }
 
@@ -57,30 +57,30 @@ fn[Msg] padding_layout(
   kind? : String = "Padding",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::from_node(PaddingLayoutNode::{ insets, kind, key }, children=_node => {
+  @core.View::from_node(PaddingLayout::{ insets, kind, key }, children=_node => {
     [child]
   })
 }
 
 ///|
-priv struct PaddingLayoutNode {
+priv struct PaddingLayout {
   insets : @core.Insets
   kind : String
   key : String?
 }
 
 ///|
-impl @core.ViewNode for PaddingLayoutNode with fn identity(self) {
+impl @core.ViewNode for PaddingLayout with fn identity(self) {
   @core.ViewIdentity::new(kind=self.kind, key=self.key)
 }
 
 ///|
-impl @core.ViewNode for PaddingLayoutNode with fn revision(self) {
+impl @core.ViewNode for PaddingLayout with fn revision(self) {
   "padding:\{self.insets.top}:\{self.insets.right}:\{self.insets.bottom}:\{self.insets.left}"
 }
 
 ///|
-impl @core.ViewNode for PaddingLayoutNode with fn child_constraints(
+impl @core.ViewNode for PaddingLayout with fn child_constraints(
   self,
   constraints,
 ) {
@@ -88,7 +88,7 @@ impl @core.ViewNode for PaddingLayoutNode with fn child_constraints(
 }
 
 ///|
-impl @core.ViewNode for PaddingLayoutNode with fn layout(self, ctx) {
+impl @core.ViewNode for PaddingLayout with fn layout(self, ctx) {
   let child_size = first_child_size(ctx.child_sizes)
   let size = ctx.constraints.constrain(child_size.inflate(self.insets))
   // Clamp the child frame to the deflated available area so a greedy child
@@ -112,7 +112,7 @@ impl @core.ViewNode for PaddingLayoutNode with fn layout(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for PaddingLayoutNode with fn semantics(_self) {
+impl @core.ViewNode for PaddingLayout with fn semantics(_self) {
   @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
 }
 
@@ -129,7 +129,7 @@ fn[Msg] frame_layout(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::from_node(
-    FrameLayoutNode::{
+    FrameLayout::{
       width,
       height,
       min_width,
@@ -144,7 +144,7 @@ fn[Msg] frame_layout(
 }
 
 ///|
-priv struct FrameLayoutNode {
+priv struct FrameLayout {
   width : Double?
   height : Double?
   min_width : Double?
@@ -156,17 +156,17 @@ priv struct FrameLayoutNode {
 }
 
 ///|
-impl @core.ViewNode for FrameLayoutNode with fn identity(self) {
+impl @core.ViewNode for FrameLayout with fn identity(self) {
   @core.ViewIdentity::new(kind=self.kind, key=self.key)
 }
 
 ///|
-impl @core.ViewNode for FrameLayoutNode with fn revision(self) {
+impl @core.ViewNode for FrameLayout with fn revision(self) {
   "frame:\{view_double_option_revision(self.width)}:\{view_double_option_revision(self.height)}:\{view_double_option_revision(self.min_width)}:\{view_double_option_revision(self.min_height)}:\{view_double_option_revision(self.max_width)}:\{view_double_option_revision(self.max_height)}"
 }
 
 ///|
-impl @core.ViewNode for FrameLayoutNode with fn child_constraints(
+impl @core.ViewNode for FrameLayout with fn child_constraints(
   self,
   constraints,
 ) {
@@ -178,7 +178,7 @@ impl @core.ViewNode for FrameLayoutNode with fn child_constraints(
 }
 
 ///|
-impl @core.ViewNode for FrameLayoutNode with fn layout(self, ctx) {
+impl @core.ViewNode for FrameLayout with fn layout(self, ctx) {
   let size = ctx.constraints.constrain(
     resolve_frame_size(
       first_child_size(ctx.child_sizes),
@@ -196,7 +196,7 @@ impl @core.ViewNode for FrameLayoutNode with fn layout(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for FrameLayoutNode with fn semantics(_self) {
+impl @core.ViewNode for FrameLayout with fn semantics(_self) {
   @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
 }
 
@@ -212,7 +212,7 @@ fn[Msg] container_box(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::from_node(
-    ContainerBoxNode::{
+    ContainerBox::{
       size,
       background,
       border,
@@ -231,7 +231,7 @@ fn[Msg] container_box(
 }
 
 ///|
-priv struct ContainerBoxNode {
+priv struct ContainerBox {
   size : @core.Size?
   background : @core.Brush?
   border : @core.BorderStyle?
@@ -242,17 +242,17 @@ priv struct ContainerBoxNode {
 }
 
 ///|
-impl @core.ViewNode for ContainerBoxNode with fn identity(self) {
+impl @core.ViewNode for ContainerBox with fn identity(self) {
   @core.ViewIdentity::new(kind=self.kind, key=self.key)
 }
 
 ///|
-impl @core.ViewNode for ContainerBoxNode with fn revision(self) {
+impl @core.ViewNode for ContainerBox with fn revision(self) {
   "container:\{view_size_option_revision(self.size)}:\{view_brush_option_revision(self.background)}:\{view_border_option_revision(self.border)}:\{self.corner_radius}:\{view_shadow_option_revision(self.shadow)}"
 }
 
 ///|
-impl @core.ViewNode for ContainerBoxNode with fn layout(self, ctx) {
+impl @core.ViewNode for ContainerBox with fn layout(self, ctx) {
   let measured = match self.size {
     Some(value) => value
     None => first_child_size(ctx.child_sizes)
@@ -270,7 +270,7 @@ impl @core.ViewNode for ContainerBoxNode with fn layout(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for ContainerBoxNode with fn paint(self, ctx) {
+impl @core.ViewNode for ContainerBox with fn paint(self, ctx) {
   container_paint(
     ctx.frame,
     background=self.background,
@@ -282,7 +282,7 @@ impl @core.ViewNode for ContainerBoxNode with fn paint(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for ContainerBoxNode with fn semantics(_self) {
+impl @core.ViewNode for ContainerBox with fn semantics(_self) {
   @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
 }
 
@@ -296,13 +296,13 @@ fn[Msg] grid_layout(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::from_node(
-    GridLayoutNode::{ columns, row_spacing, column_spacing, kind, key },
+    GridLayout::{ columns, row_spacing, column_spacing, kind, key },
     children=_node => children,
   )
 }
 
 ///|
-priv struct GridLayoutNode {
+priv struct GridLayout {
   columns : Int
   row_spacing : Double
   column_spacing : Double
@@ -311,17 +311,17 @@ priv struct GridLayoutNode {
 }
 
 ///|
-impl @core.ViewNode for GridLayoutNode with fn identity(self) {
+impl @core.ViewNode for GridLayout with fn identity(self) {
   @core.ViewIdentity::new(kind=self.kind, key=self.key)
 }
 
 ///|
-impl @core.ViewNode for GridLayoutNode with fn revision(self) {
+impl @core.ViewNode for GridLayout with fn revision(self) {
   "grid:\{self.columns}:\{self.row_spacing}:\{self.column_spacing}"
 }
 
 ///|
-impl @core.ViewNode for GridLayoutNode with fn layout(self, ctx) {
+impl @core.ViewNode for GridLayout with fn layout(self, ctx) {
   let columns = view_max_int(1, self.columns)
   let count = ctx.child_sizes.length()
   let rows = grid_row_count(count, columns)
@@ -356,7 +356,7 @@ impl @core.ViewNode for GridLayoutNode with fn layout(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for GridLayoutNode with fn semantics(_self) {
+impl @core.ViewNode for GridLayout with fn semantics(_self) {
   @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
 }
 
@@ -367,35 +367,35 @@ fn[Msg] list_layout(
   kind? : String = "List",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  let child_views : (ListLayoutNode) -> Array[@core.View[Msg]] = _node => {
+  let child_views : (ListLayout) -> Array[@core.View[Msg]] = _node => {
     let captured_children = children
     captured_children
   }
   @core.View::from_node(
-    ListLayoutNode::{ spacing, kind, key },
+    ListLayout::{ spacing, kind, key },
     children=child_views,
   )
 }
 
 ///|
-priv struct ListLayoutNode {
+priv struct ListLayout {
   spacing : Double
   kind : String
   key : String?
 }
 
 ///|
-impl @core.ViewNode for ListLayoutNode with fn identity(self) {
+impl @core.ViewNode for ListLayout with fn identity(self) {
   @core.ViewIdentity::new(kind=self.kind, key=self.key)
 }
 
 ///|
-impl @core.ViewNode for ListLayoutNode with fn revision(self) {
+impl @core.ViewNode for ListLayout with fn revision(self) {
   "list:\{self.spacing}"
 }
 
 ///|
-impl @core.ViewNode for ListLayoutNode with fn layout(self, ctx) {
+impl @core.ViewNode for ListLayout with fn layout(self, ctx) {
   let mut width = 0.0
   let mut height = 0.0
   let frames : Array[@core.Rect] = []
@@ -416,7 +416,7 @@ impl @core.ViewNode for ListLayoutNode with fn layout(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for ListLayoutNode with fn semantics(_self) {
+impl @core.ViewNode for ListLayout with fn semantics(_self) {
   @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
 }
 
@@ -432,7 +432,7 @@ fn[Msg] scroll_container(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::from_node(
-    ScrollContainerNode::{
+    ScrollContainer::{
       offset,
       viewport,
       state,
@@ -447,7 +447,7 @@ fn[Msg] scroll_container(
 }
 
 ///|
-priv struct ScrollContainerNode {
+priv struct ScrollContainer {
   offset : @core.Point
   viewport : @core.Size?
   state : @core.ScrollState?
@@ -458,18 +458,18 @@ priv struct ScrollContainerNode {
 }
 
 ///|
-impl @core.ViewNode for ScrollContainerNode with fn identity(self) {
+impl @core.ViewNode for ScrollContainer with fn identity(self) {
   @core.ViewIdentity::new(kind=self.kind, key=self.key)
 }
 
 ///|
-impl @core.ViewNode for ScrollContainerNode with fn revision(self) {
+impl @core.ViewNode for ScrollContainer with fn revision(self) {
   let current = scroll_offset(self.offset, self.state)
   "scroll:\{current.x}:\{current.y}:\{view_size_option_revision(self.viewport)}:\{self.state is Some(_)}:\{self.has_on_scroll}:\{self.shows_indicator}"
 }
 
 ///|
-impl @core.ViewNode for ScrollContainerNode with fn child_constraints(
+impl @core.ViewNode for ScrollContainer with fn child_constraints(
   _self,
   _constraints,
 ) {
@@ -477,7 +477,7 @@ impl @core.ViewNode for ScrollContainerNode with fn child_constraints(
 }
 
 ///|
-impl @core.ViewNode for ScrollContainerNode with fn layout(self, ctx) {
+impl @core.ViewNode for ScrollContainer with fn layout(self, ctx) {
   let viewport_size = self.viewport.unwrap_or(first_child_size(ctx.child_sizes))
   @core.ViewLayoutResult::new(size=ctx.constraints.constrain(viewport_size), child_frames=[
     scroll_child_frame(
@@ -495,7 +495,7 @@ impl @core.ViewNode for ScrollContainerNode with fn layout(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for ScrollContainerNode with fn paint(self, ctx) {
+impl @core.ViewNode for ScrollContainer with fn paint(self, ctx) {
   let viewport_size = self.viewport.unwrap_or(ctx.frame.size)
   // Clip to the actually rendered frame. Using `viewport_size` here would
   // misalign the clip when the frame is smaller than the requested viewport.
@@ -528,7 +528,7 @@ impl @core.ViewNode for ScrollContainerNode with fn paint(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for ScrollContainerNode with fn semantics(_self) {
+impl @core.ViewNode for ScrollContainer with fn semantics(_self) {
   @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::ScrollView, actions=[
     @core.SemanticsAction::Scroll,
   ])
@@ -536,7 +536,7 @@ impl @core.ViewNode for ScrollContainerNode with fn semantics(_self) {
 
 ///|
 fn[Msg] scroll_container_event(
-  node : ScrollContainerNode,
+  node : ScrollContainer,
   ctx : @core.ViewEventContext,
   on_scroll : ((@core.Point) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {

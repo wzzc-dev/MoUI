@@ -38,7 +38,7 @@ pub fn PresenceStatus::label(self : PresenceStatus) -> String {
 /// border color, and border width. The `revision` folds every paint-affecting
 /// field so reconcile does not reuse a stale RenderNode when only the status
 /// color changed.
-priv struct PresenceDotViewNode {
+priv struct PresenceDot {
   size : Double
   status_color : @core.Color
   border_color : @core.Color
@@ -46,12 +46,12 @@ priv struct PresenceDotViewNode {
 }
 
 ///|
-impl @core.ViewNode for PresenceDotViewNode with fn identity(_self) {
+impl @core.ViewNode for PresenceDot with fn identity(_self) {
   @core.ViewIdentity::new(kind="PresenceDot")
 }
 
 ///|
-impl @core.ViewNode for PresenceDotViewNode with fn revision(self) {
+impl @core.ViewNode for PresenceDot with fn revision(self) {
   let total = self.size + self.border_width * 2.0
   // Color does not implement Show; emit a stable RGBA fingerprint
   // (r,g,b,a rounded to 4 decimals) so reconcile detects color changes
@@ -62,7 +62,7 @@ impl @core.ViewNode for PresenceDotViewNode with fn revision(self) {
 }
 
 ///|
-impl @core.ViewNode for PresenceDotViewNode with fn layout(self, ctx) {
+impl @core.ViewNode for PresenceDot with fn layout(self, ctx) {
   let total = self.size + self.border_width * 2.0
   @core.ViewLayoutResult::new(
     size=ctx.constraints.constrain(@core.Size::new(width=total, height=total)),
@@ -70,7 +70,7 @@ impl @core.ViewNode for PresenceDotViewNode with fn layout(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for PresenceDotViewNode with fn paint(self, ctx) {
+impl @core.ViewNode for PresenceDot with fn paint(self, ctx) {
   let frame = ctx.frame
   let dot_rect = @core.Rect::new(
     x=frame.origin.x + (frame.size.width - self.size) / 2.0,
@@ -103,7 +103,7 @@ impl @core.ViewNode for PresenceDotViewNode with fn paint(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for PresenceDotViewNode with fn semantics(_self) {
+impl @core.ViewNode for PresenceDot with fn semantics(_self) {
   @core.ViewSemanticsInfo::new(
     role=@core.SemanticsRole::Group,
     label="PresenceDot",
@@ -123,7 +123,7 @@ pub fn[Msg] presence_dot(
   let border_color = on_surface.unwrap_or(resolved_theme.palette.background)
   let border_width = max_view_double(1.5, size * 0.15)
   @core.View::from_node(
-    PresenceDotViewNode::{ size, status_color, border_color, border_width },
+    PresenceDot::{ size, status_color, border_color, border_width },
   )
 }
 

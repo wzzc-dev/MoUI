@@ -5,7 +5,7 @@ fn[Msg] view_map_test_rect(
   color~ : @core.Color,
   on_tap? : Msg? = None,
 ) -> @core.View[Msg] {
-  @core.View::from_node(ViewMapTestRectNode::{ width, height, color }, event=(
+  @core.View::from_node(ViewMapTestRect::{ width, height, color }, event=(
     _node,
     ctx,
   ) => {
@@ -23,24 +23,24 @@ fn[Msg] view_map_test_rect(
 }
 
 ///|
-priv struct ViewMapTestRectNode {
+priv struct ViewMapTestRect {
   width : Double
   height : Double
   color : @core.Color
 }
 
 ///|
-impl @core.ViewNode for ViewMapTestRectNode with fn identity(_self) {
+impl @core.ViewNode for ViewMapTestRect with fn identity(_self) {
   @core.ViewIdentity::new(kind="Rect")
 }
 
 ///|
-impl @core.ViewNode for ViewMapTestRectNode with fn revision(self) {
+impl @core.ViewNode for ViewMapTestRect with fn revision(self) {
   "view-map-test-rect:\{self.width}:\{self.height}"
 }
 
 ///|
-impl @core.ViewNode for ViewMapTestRectNode with fn layout(self, ctx) {
+impl @core.ViewNode for ViewMapTestRect with fn layout(self, ctx) {
   @core.ViewLayoutResult::new(
     size=ctx.constraints.constrain(
       @core.Size::new(width=self.width, height=self.height),
@@ -49,7 +49,7 @@ impl @core.ViewNode for ViewMapTestRectNode with fn layout(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for ViewMapTestRectNode with fn paint(self, ctx) {
+impl @core.ViewNode for ViewMapTestRect with fn paint(self, ctx) {
   @core.ViewPaintPlan::commands([
     @core.DrawCommand::FillRect(ctx.frame, self.color),
   ])
@@ -59,24 +59,24 @@ impl @core.ViewNode for ViewMapTestRectNode with fn paint(self, ctx) {
 fn[Msg] view_map_test_stack(
   children~ : Array[@core.View[Msg]],
 ) -> @core.View[Msg] {
-  @core.View::from_node(ViewMapTestStackNode::{  }, children=_node => children)
+  @core.View::from_node(ViewMapTestStack::{  }, children=_node => children)
 }
 
 ///|
-priv struct ViewMapTestStackNode {}
+priv struct ViewMapTestStack {}
 
 ///|
-impl @core.ViewNode for ViewMapTestStackNode with fn identity(_self) {
+impl @core.ViewNode for ViewMapTestStack with fn identity(_self) {
   @core.ViewIdentity::new(kind="Stack")
 }
 
 ///|
-impl @core.ViewNode for ViewMapTestStackNode with fn revision(_self) {
+impl @core.ViewNode for ViewMapTestStack with fn revision(_self) {
   "view-map-test-stack"
 }
 
 ///|
-impl @core.ViewNode for ViewMapTestStackNode with fn layout(_self, ctx) {
+impl @core.ViewNode for ViewMapTestStack with fn layout(_self, ctx) {
   let mut width = 0.0
   let mut height = 0.0
   let frames : Array[@core.Rect] = []

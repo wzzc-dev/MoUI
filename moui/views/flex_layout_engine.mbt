@@ -9,7 +9,7 @@ fn[Msg] flex_layout(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::from_node(
-    FlexLayoutNode::{
+    FlexLayout::{
       axis,
       spacing,
       main_axis_alignment,
@@ -22,7 +22,7 @@ fn[Msg] flex_layout(
 }
 
 ///|
-priv struct FlexLayoutNode {
+priv struct FlexLayout {
   axis : @core.Axis
   spacing : Double
   main_axis_alignment : @core.MainAxisAlignment
@@ -32,17 +32,17 @@ priv struct FlexLayoutNode {
 }
 
 ///|
-impl @core.ViewNode for FlexLayoutNode with fn identity(self) {
+impl @core.ViewNode for FlexLayout with fn identity(self) {
   @core.ViewIdentity::new(kind=self.kind, key=self.key)
 }
 
 ///|
-impl @core.ViewNode for FlexLayoutNode with fn revision(self) {
+impl @core.ViewNode for FlexLayout with fn revision(self) {
   "flex:\{axis_revision(self.axis)}:\{self.spacing}:\{main_axis_revision(self.main_axis_alignment)}:\{cross_axis_revision(self.cross_axis_alignment)}"
 }
 
 ///|
-impl @core.ViewNode for FlexLayoutNode with fn layout(self, ctx) {
+impl @core.ViewNode for FlexLayout with fn layout(self, ctx) {
   let measured = flex_measured_size(
     self.axis,
     self.spacing,
@@ -65,7 +65,7 @@ impl @core.ViewNode for FlexLayoutNode with fn layout(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for FlexLayoutNode with fn semantics(_self) {
+impl @core.ViewNode for FlexLayout with fn semantics(_self) {
   @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
 }
 
