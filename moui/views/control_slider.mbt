@@ -233,8 +233,18 @@ pub fn[Msg] slider(
         match context.event {
           @core.AppEvent::Pointer(pointer) =>
             match pointer.phase {
-              @core.PointerPhase::Down
-              | @core.PointerPhase::Move => {
+              // Focus is claimed only on press (`Down`) inside the frame, not
+              // on hover (`Move`). Native slider semantics: the thumb follows
+              // the pointer while dragging, but simply moving the cursor over
+              // the track without pressing must not steal focus from whatever
+              // owned it (keyboard focus, a sibling field, etc.).
+              //
+              // `pressed` is written back into state on `Down` and carried
+              // through `Move` so the runtime surfaces it to subsequent events
+              // — the `Move` branch reads `context.state.pressed` to know the
+              // press is still held. `Up`/`Cancel`/`Exit` clear it so a later
+              // hover does not keep dragging.
+              @core.PointerPhase::Down => {
                 if context.frame.contains(pointer.position) {
                   let local_x = pointer.position.x - context.frame.origin.x
                   let next = slider_value_at(
@@ -247,12 +257,63 @@ pub fn[Msg] slider(
                     ..@core.ViewEventResult::message(handler(next)),
                     focused: true,
                     captured: true,
+                    state: Some({
+                      ..context.state,
+                      focused: true,
+                      pressed: true,
+                    }),
+                    dirty: @core.ViewDirtyHint::ViewPaintDirty,
                   }
                 } else {
                   @core.ViewEventResult::ignored()
                 }
               }
-              _ => @core.ViewEventResult::ignored()
+              // `Move` tracks the value while the press is still held
+              // (i.e. `pressed` was set by the prior `Down`). It must not
+              // claim focus on its own.
+              //
+              // While pressed the thumb follows the pointer even outside the
+              // frame — native slider semantics: drag starts on press, ends on
+              // release, and the user can drag past either end without losing
+              // the gesture. `slider_value_at` clamps the local x to the track
+              // so leaving the frame still produces a meaningful value at the
+              // near endpoint. When not pressed, `Move` is a hover and must
+              // not steer the value or claim focus.
+              @core.PointerPhase::Move => {
+                if context.state.pressed {
+                  let local_x = pointer.position.x - context.frame.origin.x
+                  let next = slider_value_at(
+                    context.frame,
+                    local_x,
+                    _node.min,
+                    _node.max,
+                  )
+                  {
+                    ..@core.ViewEventResult::message(handler(next)),
+                    captured: true,
+                    state: Some({ ..context.state, pressed: true }),
+                    dirty: @core.ViewDirtyHint::ViewPaintDirty,
+                  }
+                } else {
+                  @core.ViewEventResult::ignored()
+                }
+              }
+              // Release / cancel / leave: clear `pressed` so a subsequent hover
+              // does not keep dragging. Keep focus so keyboard users can still
+              // operate the slider after a press.
+              @core.PointerPhase::Up
+              | @core.PointerPhase::Cancel
+              | @core.PointerPhase::Exit => {
+                if context.state.pressed {
+                  {
+                    ..@core.ViewEventResult::ignored(),
+                    state: Some({ ..context.state, pressed: false }),
+                    dirty: @core.ViewDirtyHint::ViewPaintDirty,
+                  }
+                } else {
+                  @core.ViewEventResult::ignored()
+                }
+              }
             }
           _ => @core.ViewEventResult::ignored()
         }
