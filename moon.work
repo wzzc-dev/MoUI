@@ -33,4 +33,6 @@ members = [
   "./benchmarks/app_cached_layer",
   "./benchmarks/full_cycle",
   "./website",
+  "./window/modules/window",
+  "./window/modules/windowing",
 ]
