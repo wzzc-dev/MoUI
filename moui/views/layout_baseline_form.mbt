@@ -14,18 +14,22 @@ pub fn[Msg] baseline_form_rows(
   custom_children_layout(
     children~,
     measure=ctx => {
+      let sizes = ctx.children.map(child => child.size)
+      let baselines = ctx.children.map(child => child.first_baseline)
       baseline_form_measure(
-        ctx.child_sizes,
-        ctx.child_baselines,
+        sizes,
+        baselines,
         width,
         row_spacing,
         ctx.constraints,
       )
     },
     place=ctx => {
+      let sizes = ctx.children.map(child => child.size)
+      let baselines = ctx.children.map(child => child.first_baseline)
       baseline_form_place(
-        ctx.child_sizes,
-        ctx.child_baselines,
+        sizes,
+        baselines,
         ctx.frame,
         width,
         label_width,

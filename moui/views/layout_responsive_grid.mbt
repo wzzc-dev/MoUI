@@ -9,8 +9,9 @@ pub fn[Msg] responsive_grid(
   custom_children_layout(
     children~,
     measure=ctx => {
+      let sizes = ctx.children.map(child => child.size)
       responsive_grid_measure(
-        ctx.child_sizes,
+        sizes,
         width,
         min_column_width,
         row_spacing,
@@ -19,8 +20,9 @@ pub fn[Msg] responsive_grid(
       )
     },
     place=ctx => {
+      let sizes = ctx.children.map(child => child.size)
       responsive_grid_place(
-        ctx.child_sizes,
+        sizes,
         ctx.frame,
         width,
         min_column_width,

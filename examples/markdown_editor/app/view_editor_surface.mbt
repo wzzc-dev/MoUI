@@ -224,8 +224,8 @@ fn floating_target_palette(
     children=[editor, palette],
     measure=_ => @geometry.Size::new(width~, height~),
     place=ctx => {
-      let palette_size = if ctx.child_sizes.length() > 1 {
-        ctx.child_sizes[1]
+      let palette_size = if ctx.children.length() > 1 {
+        ctx.children[1].size
       } else {
         @geometry.Size::new(width=0.0, height=0.0)
       }

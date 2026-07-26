@@ -1,4 +1,64 @@
 ///|
+/// Concrete view node for the `flow` / `wrap` controls.
+///
+/// Lays out children left-to-right in rows, wrapping to a new row when the
+/// next child would overflow the configured `width`. The node carries only
+/// immutable declaration data (`width`, `spacing`, `row_spacing`). Children
+/// are attached through `View::from_node`'s typed children adapter, so the
+/// node itself stays message-independent.
+priv struct FlowViewNode {
+  width : Double
+  spacing : Double
+  row_spacing : Double
+}
+
+///|
+impl @core.ViewNode for FlowViewNode with fn identity(_self) {
+  @core.ViewIdentity::new(kind="Flow")
+}
+
+///|
+impl @core.ViewNode for FlowViewNode with fn revision(self) {
+  "flow:\{self.width}:\{self.spacing}:\{self.row_spacing}"
+}
+
+///|
+impl @core.ViewNode for FlowViewNode with fn layout(self, ctx) {
+  let sizes = ctx.child_sizes
+  let available = available_width(self.width, ctx.constraints)
+  let measured = flow_size(sizes, available, self.spacing, self.row_spacing)
+  let size = ctx.constraints.constrain(measured)
+  let rows = flow_rows(sizes, available, self.spacing, self.row_spacing)
+  let frames : Array[@core.Rect] = []
+  for item in rows {
+    let item_size = sizes[item.index]
+    let x = layout_mirror_x(
+      @core.Rect::new(x=0.0, y=0.0, width=size.width, height=size.height),
+      item.x,
+      item_size.width,
+      ctx.environment.layout_direction,
+    )
+    frames.push(
+      @core.Rect::new(
+        x~,
+        y=item.y,
+        width=item_size.width,
+        height=item_size.height,
+      ),
+    )
+  }
+  @core.ViewLayoutResult::new(size~, child_frames=frames)
+}
+
+///|
+impl @core.ViewNode for FlowViewNode with fn semantics(_self) {
+  @core.ViewSemanticsInfo::new(
+    role=@core.SemanticsRole::Group,
+    label="Flow layout",
+  )
+}
+
+///|
 pub fn[Msg] wrap(
   children : Array[@core.View[Msg]],
   width? : Double = 320.0,
@@ -15,80 +75,10 @@ pub fn[Msg] flow(
   spacing? : Double = 8.0,
   row_spacing? : Double = 8.0,
 ) -> @core.View[Msg] {
-  custom_children_layout(
-    children~,
-    measure=ctx => {
-      flow_measure(
-        ctx.child_sizes,
-        width,
-        spacing,
-        row_spacing,
-        ctx.constraints,
-      )
-    },
-    place=ctx => {
-      flow_place(
-        ctx.child_sizes,
-        ctx.frame,
-        width,
-        spacing,
-        row_spacing,
-        ctx.layout_direction,
-      )
-    },
-    semantics_label="Flow layout",
-    paint=(_ctx, _frame) => (),
+  @core.View::from_node(
+    FlowViewNode::{ width, spacing, row_spacing },
+    children=_node => children,
   )
-}
-
-///|
-fn flow_measure(
-  sizes : Array[@core.Size],
-  width : Double,
-  spacing : Double,
-  row_spacing : Double,
-  constraints : @core.Constraints,
-) -> @core.Size {
-  let measured = flow_size(
-    sizes,
-    available_width(width, constraints),
-    spacing,
-    row_spacing,
-  )
-  constraints.constrain(measured)
-}
-
-///|
-fn flow_place(
-  sizes : Array[@core.Size],
-  frame : @core.Rect,
-  width : Double,
-  spacing : Double,
-  row_spacing : Double,
-  direction : @core.LayoutDirection,
-) -> Array[@core.Rect] {
-  let available = placement_width(width, frame)
-  let rows = flow_rows(sizes, available, spacing, row_spacing)
-  let rects : Array[@core.Rect] = []
-  for item in rows {
-    let size = sizes[item.index]
-    rects.push(
-      @core.Rect::new(
-        x=layout_mirror_x(frame, item.x, size.width, direction),
-        y=frame.origin.y + item.y,
-        width=size.width,
-        height=size.height,
-      ),
-    )
-  }
-  rects
-}
-
-///|
-priv struct FlowItemPlacement {
-  index : Int
-  x : Double
-  y : Double
 }
 
 ///|
@@ -108,6 +98,13 @@ fn flow_size(
     }
     @core.Size::new(width~, height~)
   }
+}
+
+///|
+priv struct FlowItemPlacement {
+  index : Int
+  x : Double
+  y : Double
 }
 
 ///|

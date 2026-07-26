@@ -40,7 +40,7 @@ fn code_chat_pane_view(
         ctx.constraints.constrain(@geometry.Size::new(width~, height~))
       },
       place=ctx => {
-        let composer_h = ctx.child_sizes[1].height
+        let composer_h = ctx.children[1].size.height
         let list_h = (ctx.frame.size.height - composer_h).max(0.0)
         let w = ctx.frame.size.width
         [

@@ -70,49 +70,9 @@ pub fn[Msg] center(
   theme? : @core.Theme,
 ) -> @core.View[Msg] {
   let resolved_theme = views_ambient_theme(theme)
-  let centered = custom_children_layout(
-    children=[child],
-    measure=ctx => {
-      let child_size = ctx.child_sizes[0]
-      let measured_width = match width {
-        Some(width) => width
-        None =>
-          if ctx.constraints.max.width >= 1.0e9 {
-            child_size.width
-          } else {
-            ctx.constraints.max.width
-          }
-      }
-      let measured_height = match height {
-        Some(height) => height
-        None =>
-          if ctx.constraints.max.height >= 1.0e9 {
-            child_size.height
-          } else {
-            ctx.constraints.max.height
-          }
-      }
-      ctx.constraints.constrain(
-        @core.Size::new(width=measured_width, height=measured_height),
-      )
-    },
-    place=ctx => {
-      let child_size = ctx.child_sizes[0]
-      let x = ctx.frame.origin.x +
-        views_max_double(0.0, (ctx.frame.size.width - child_size.width) / 2.0)
-      let y = ctx.frame.origin.y +
-        views_max_double(0.0, (ctx.frame.size.height - child_size.height) / 2.0)
-      [
-        @core.Rect::new(
-          x~,
-          y~,
-          width=child_size.width,
-          height=child_size.height,
-        ),
-      ]
-    },
-    semantics_label="Centered content",
-    paint=(_ctx, _frame) => (),
+  let centered = @core.View::from_node(
+    CenterViewNode::{ width, height },
+    children=_node => [child],
   )
   match background {
     Some(color) =>
@@ -126,6 +86,90 @@ pub fn[Msg] center(
       )
     None => centered
   }
+}
+
+///|
+/// Concrete view node for the `center` control.
+///
+/// Centers a single child inside its own frame. The node carries only
+/// immutable declaration data: the optional explicit `width` / `height`. The
+/// child is wired through `View::from_node`'s typed children adapter, so the
+/// node itself stays message-independent.
+priv struct CenterViewNode {
+  width : Double?
+  height : Double?
+}
+
+///|
+impl @core.ViewNode for CenterViewNode with fn identity(_self) {
+  @core.ViewIdentity::new(kind="Center")
+}
+
+///|
+impl @core.ViewNode for CenterViewNode with fn revision(self) {
+  let width_token = match self.width {
+    Some(value) => "\{value}"
+    None => "auto"
+  }
+  let height_token = match self.height {
+    Some(value) => "\{value}"
+    None => "auto"
+  }
+  "center:\{width_token}:\{height_token}"
+}
+
+///|
+impl @core.ViewNode for CenterViewNode with fn layout(self, ctx) {
+  let child_size = if ctx.child_sizes.length() > 0 {
+    ctx.child_sizes[0]
+  } else {
+    @core.Size::new(width=0.0, height=0.0)
+  }
+  let measured_width = match self.width {
+    Some(width) => width
+    None =>
+      if ctx.constraints.max.width >= 1.0e9 {
+        child_size.width
+      } else {
+        ctx.constraints.max.width
+      }
+  }
+  let measured_height = match self.height {
+    Some(height) => height
+    None =>
+      if ctx.constraints.max.height >= 1.0e9 {
+        child_size.height
+      } else {
+        ctx.constraints.max.height
+      }
+  }
+  let size = ctx.constraints.constrain(
+    @core.Size::new(width=measured_width, height=measured_height),
+  )
+  // Center the child inside the measured frame. We clamp the offsets at zero
+  // so a child larger than the frame stays top-left aligned rather than
+  // painting at negative coordinates.
+  let x = views_max_double(0.0, (size.width - child_size.width) / 2.0)
+  let y = views_max_double(0.0, (size.height - child_size.height) / 2.0)
+  @core.ViewLayoutResult::new(
+    size~,
+    child_frames=[
+      @core.Rect::new(
+        x~,
+        y~,
+        width=child_size.width,
+        height=child_size.height,
+      ),
+    ],
+  )
+}
+
+///|
+impl @core.ViewNode for CenterViewNode with fn semantics(_self) {
+  @core.ViewSemanticsInfo::new(
+    role=@core.SemanticsRole::Group,
+    label="Centered content",
+  )
 }
 
 ///|
