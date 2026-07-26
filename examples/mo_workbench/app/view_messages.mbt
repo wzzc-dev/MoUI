@@ -34,18 +34,18 @@ fn aligned_message_bubble(
   @views.custom_children_layout(
     children=[bubble],
     measure=ctx => {
-      let height = if ctx.child_sizes.is_empty() {
+      let height = if ctx.children.is_empty() {
         0.0
       } else {
-        ctx.child_sizes[0].height
+        ctx.children[0].size.height
       }
       ctx.constraints.constrain(@geometry.Size::new(width~, height~))
     },
     place=ctx => {
-      let child_height = if ctx.child_sizes.is_empty() {
+      let child_height = if ctx.children.is_empty() {
         0.0
       } else {
-        ctx.child_sizes[0].height
+        ctx.children[0].size.height
       }
       let child_width = bubble_width.min(ctx.frame.size.width)
       let x = if align_right {
