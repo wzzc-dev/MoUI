@@ -12,7 +12,7 @@ pub fn[Msg] text(
     Some(value) => text_theme_revision(value)
     None => "context"
   }
-  @core.View::from_node(TextViewNode::{
+  @core.View::from_node(Text::{
     text,
     role,
     theme,
@@ -23,7 +23,7 @@ pub fn[Msg] text(
 }
 
 ///|
-priv struct TextViewNode {
+priv struct Text {
   text : String
   role : TextRole
   theme : @core.Theme?
@@ -33,22 +33,22 @@ priv struct TextViewNode {
 }
 
 ///|
-impl @core.ViewNode for TextViewNode with fn identity(_self) {
+impl @core.ViewNode for Text with fn identity(_self) {
   @core.ViewIdentity::new(kind="Text")
 }
 
 ///|
-impl @core.ViewNode for TextViewNode with fn revision(self) {
+impl @core.ViewNode for Text with fn revision(self) {
   "text:\{self.text}:\{self.size.width}:\{self.size.height}:\{text_role_revision(self.role)}:\{text_align_revision(self.align)}:\{self.theme_revision}"
 }
 
 ///|
-impl @core.ViewNode for TextViewNode with fn layout(self, context) {
+impl @core.ViewNode for Text with fn layout(self, context) {
   @core.ViewLayoutResult::new(size=context.constraints.constrain(self.size))
 }
 
 ///|
-impl @core.ViewNode for TextViewNode with fn paint(self, context) {
+impl @core.ViewNode for Text with fn paint(self, context) {
   let resolved_theme = self.theme.unwrap_or(context.environment.theme)
   let font = context.style.font.unwrap_or(self.role.font(resolved_theme))
   let color = if context.environment.enabled {
@@ -72,7 +72,7 @@ impl @core.ViewNode for TextViewNode with fn paint(self, context) {
 }
 
 ///|
-impl @core.ViewNode for TextViewNode with fn semantics(self) {
+impl @core.ViewNode for Text with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
     role=@core.SemanticsRole::Text,
     label=self.text,

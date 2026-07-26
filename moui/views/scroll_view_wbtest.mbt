@@ -1,26 +1,26 @@
 ///|
 fn scroll_test_rect(width~ : Double, height~ : Double) -> @core.View[Unit] {
-  @core.View::from_node(ScrollTestRectNode::{ width, height })
+  @core.View::from_node(ScrollTestRect::{ width, height })
 }
 
 ///|
-priv struct ScrollTestRectNode {
+priv struct ScrollTestRect {
   width : Double
   height : Double
 }
 
 ///|
-impl @core.ViewNode for ScrollTestRectNode with fn identity(_self) {
+impl @core.ViewNode for ScrollTestRect with fn identity(_self) {
   @core.ViewIdentity::new(kind="ScrollTestRect")
 }
 
 ///|
-impl @core.ViewNode for ScrollTestRectNode with fn revision(self) {
+impl @core.ViewNode for ScrollTestRect with fn revision(self) {
   "scroll-test-rect:\{self.width}:\{self.height}"
 }
 
 ///|
-impl @core.ViewNode for ScrollTestRectNode with fn layout(self, ctx) {
+impl @core.ViewNode for ScrollTestRect with fn layout(self, ctx) {
   @core.ViewLayoutResult::new(
     size=ctx.constraints.constrain(
       @core.Size::new(width=self.width, height=self.height),

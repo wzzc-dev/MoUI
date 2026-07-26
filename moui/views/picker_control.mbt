@@ -36,7 +36,7 @@ fn[Msg] picker_control(
     None => "context"
   }
   @core.View::from_node(
-    PickerViewNode::{
+    Picker::{
       items,
       selected,
       placeholder,
@@ -53,7 +53,7 @@ fn[Msg] picker_control(
 }
 
 ///|
-priv struct PickerViewNode {
+priv struct Picker {
   items : Array[PickerOption]
   selected : @core.Binding[String]
   placeholder : String
@@ -67,24 +67,24 @@ priv struct PickerViewNode {
 }
 
 ///|
-impl @core.ViewNode for PickerViewNode with fn identity(self) {
+impl @core.ViewNode for Picker with fn identity(self) {
   @core.ViewIdentity::new(kind=self.kind, key=self.key)
 }
 
 ///|
-impl @core.ViewNode for PickerViewNode with fn revision(self) {
+impl @core.ViewNode for Picker with fn revision(self) {
   "picker:\{picker_items_revision(self.items)}:\{self.selected.get()}:\{self.placeholder}:\{self.theme_revision}:\{self.max_height}:\{self.has_on_select}"
 }
 
 ///|
-impl @core.ViewNode for PickerViewNode with fn layout(_self, ctx) {
+impl @core.ViewNode for Picker with fn layout(_self, ctx) {
   @core.ViewLayoutResult::new(
     size=ctx.constraints.constrain(@core.Size::new(width=200.0, height=40.0)),
   )
 }
 
 ///|
-impl @core.ViewNode for PickerViewNode with fn paint(self, ctx) {
+impl @core.ViewNode for Picker with fn paint(self, ctx) {
   let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
   let resolved_style = match self.style {
     Some(value) => value
@@ -119,7 +119,7 @@ impl @core.ViewNode for PickerViewNode with fn paint(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for PickerViewNode with fn semantics(self) {
+impl @core.ViewNode for Picker with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
     role=@core.SemanticsRole::Menu,
     label=self.placeholder,
@@ -133,13 +133,13 @@ impl @core.ViewNode for PickerViewNode with fn semantics(self) {
 }
 
 ///|
-impl @core.ViewNode for PickerViewNode with fn focusable(_self) {
+impl @core.ViewNode for Picker with fn focusable(_self) {
   true
 }
 
 ///|
 fn[Msg] picker_event(
-  node : PickerViewNode,
+  node : Picker,
   ctx : @core.ViewEventContext,
   on_select : ((String) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {

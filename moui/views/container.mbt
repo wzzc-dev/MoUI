@@ -71,7 +71,7 @@ pub fn[Msg] center(
 ) -> @core.View[Msg] {
   let resolved_theme = views_ambient_theme(theme)
   let centered = @core.View::from_node(
-    CenterViewNode::{ width, height },
+    Center::{ width, height },
     children=_node => [child],
   )
   match background {
@@ -95,18 +95,18 @@ pub fn[Msg] center(
 /// immutable declaration data: the optional explicit `width` / `height`. The
 /// child is wired through `View::from_node`'s typed children adapter, so the
 /// node itself stays message-independent.
-priv struct CenterViewNode {
+priv struct Center {
   width : Double?
   height : Double?
 }
 
 ///|
-impl @core.ViewNode for CenterViewNode with fn identity(_self) {
+impl @core.ViewNode for Center with fn identity(_self) {
   @core.ViewIdentity::new(kind="Center")
 }
 
 ///|
-impl @core.ViewNode for CenterViewNode with fn revision(self) {
+impl @core.ViewNode for Center with fn revision(self) {
   let width_token = match self.width {
     Some(value) => "\{value}"
     None => "auto"
@@ -119,7 +119,7 @@ impl @core.ViewNode for CenterViewNode with fn revision(self) {
 }
 
 ///|
-impl @core.ViewNode for CenterViewNode with fn layout(self, ctx) {
+impl @core.ViewNode for Center with fn layout(self, ctx) {
   let child_size = if ctx.child_sizes.length() > 0 {
     ctx.child_sizes[0]
   } else {
@@ -165,7 +165,7 @@ impl @core.ViewNode for CenterViewNode with fn layout(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for CenterViewNode with fn semantics(_self) {
+impl @core.ViewNode for Center with fn semantics(_self) {
   @core.ViewSemanticsInfo::new(
     role=@core.SemanticsRole::Group,
     label="Centered content",
@@ -201,24 +201,24 @@ fn views_min_int(a : Int, b : Int) -> Int {
 
 ///|
 pub fn[Msg] empty() -> @core.View[Msg] {
-  @core.View::from_node(EmptyControlNode::{  })
+  @core.View::from_node(EmptyControl::{  })
 }
 
 ///|
-priv struct EmptyControlNode {}
+priv struct EmptyControl {}
 
 ///|
-impl @core.ViewNode for EmptyControlNode with fn identity(_self) {
+impl @core.ViewNode for EmptyControl with fn identity(_self) {
   @core.ViewIdentity::new(kind="Empty")
 }
 
 ///|
-impl @core.ViewNode for EmptyControlNode with fn revision(_self) {
+impl @core.ViewNode for EmptyControl with fn revision(_self) {
   "empty"
 }
 
 ///|
-impl @core.ViewNode for EmptyControlNode with fn layout(_self, ctx) {
+impl @core.ViewNode for EmptyControl with fn layout(_self, ctx) {
   @core.ViewLayoutResult::new(
     size=ctx.constraints.constrain(@core.Size::new(width=0.0, height=0.0)),
   )

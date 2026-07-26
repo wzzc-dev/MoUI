@@ -10,7 +10,7 @@
 /// Dividers use `outline_variant` (Fluent 2 colorNeutralStroke2, the subtle
 /// divider tier) rather than the stronger `outline` (colorNeutralStroke1) so
 /// hairlines stay calm against the surfaces.
-priv struct DividerViewNode {
+priv struct Divider {
   axis : @core.Axis
   thickness : Double
   color : @core.Color
@@ -18,12 +18,12 @@ priv struct DividerViewNode {
 }
 
 ///|
-impl @core.ViewNode for DividerViewNode with fn identity(_self) {
+impl @core.ViewNode for Divider with fn identity(_self) {
   @core.ViewIdentity::new(kind="Divider")
 }
 
 ///|
-impl @core.ViewNode for DividerViewNode with fn revision(self) {
+impl @core.ViewNode for Divider with fn revision(self) {
   // Capture every paint-affecting field (axis, thickness, color, inset) so
   // the runtime reconcile path does not reuse a stale RenderNode when only
   // the color or the inset changed.
@@ -39,7 +39,7 @@ impl @core.ViewNode for DividerViewNode with fn revision(self) {
 }
 
 ///|
-impl @core.ViewNode for DividerViewNode with fn layout(self, ctx) {
+impl @core.ViewNode for Divider with fn layout(self, ctx) {
   let line_thickness = max_view_double(1.0, self.thickness)
   let size = match self.axis {
     @core.Axis::Horizontal =>
@@ -65,7 +65,7 @@ impl @core.ViewNode for DividerViewNode with fn layout(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for DividerViewNode with fn paint(self, ctx) {
+impl @core.ViewNode for Divider with fn paint(self, ctx) {
   let frame = ctx.frame
   let rect = if self.inset > 0.0 {
     match self.axis {
@@ -93,7 +93,7 @@ impl @core.ViewNode for DividerViewNode with fn paint(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for DividerViewNode with fn semantics(_self) {
+impl @core.ViewNode for Divider with fn semantics(_self) {
   @core.ViewSemanticsInfo::new(
     role=@core.SemanticsRole::Group,
     label="Divider",
@@ -114,6 +114,6 @@ pub fn[Msg] divider(
     None => resolved_theme.palette.outline_variant
   }
   @core.View::from_node(
-    DividerViewNode::{ axis, thickness, color: line_color, inset },
+    Divider::{ axis, thickness, color: line_color, inset },
   )
 }

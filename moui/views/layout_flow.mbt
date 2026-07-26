@@ -6,24 +6,24 @@
 /// immutable declaration data (`width`, `spacing`, `row_spacing`). Children
 /// are attached through `View::from_node`'s typed children adapter, so the
 /// node itself stays message-independent.
-priv struct FlowViewNode {
+priv struct Flow {
   width : Double
   spacing : Double
   row_spacing : Double
 }
 
 ///|
-impl @core.ViewNode for FlowViewNode with fn identity(_self) {
+impl @core.ViewNode for Flow with fn identity(_self) {
   @core.ViewIdentity::new(kind="Flow")
 }
 
 ///|
-impl @core.ViewNode for FlowViewNode with fn revision(self) {
+impl @core.ViewNode for Flow with fn revision(self) {
   "flow:\{self.width}:\{self.spacing}:\{self.row_spacing}"
 }
 
 ///|
-impl @core.ViewNode for FlowViewNode with fn layout(self, ctx) {
+impl @core.ViewNode for Flow with fn layout(self, ctx) {
   let sizes = ctx.child_sizes
   let available = available_width(self.width, ctx.constraints)
   let measured = flow_size(sizes, available, self.spacing, self.row_spacing)
@@ -51,7 +51,7 @@ impl @core.ViewNode for FlowViewNode with fn layout(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for FlowViewNode with fn semantics(_self) {
+impl @core.ViewNode for Flow with fn semantics(_self) {
   @core.ViewSemanticsInfo::new(
     role=@core.SemanticsRole::Group,
     label="Flow layout",
@@ -76,7 +76,7 @@ pub fn[Msg] flow(
   row_spacing? : Double = 8.0,
 ) -> @core.View[Msg] {
   @core.View::from_node(
-    FlowViewNode::{ width, spacing, row_spacing },
+    Flow::{ width, spacing, row_spacing },
     children=_node => children,
   )
 }

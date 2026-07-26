@@ -8,7 +8,7 @@
 /// change paint output (value, geometry, theme, style, colors) so the runtime
 /// reconcile path correctly detects "value-only" changes and does not reuse a
 /// stale `RenderNode` for a control whose colors changed but `value` did not.
-priv struct ProgressViewNode {
+priv struct Progress {
   value : Double
   width : Double
   height : Double
@@ -19,12 +19,12 @@ priv struct ProgressViewNode {
 }
 
 ///|
-impl @core.ViewNode for ProgressViewNode with fn identity(_self) {
+impl @core.ViewNode for Progress with fn identity(_self) {
   @core.ViewIdentity::new(kind="Progress")
 }
 
 ///|
-impl @core.ViewNode for ProgressViewNode with fn revision(self) {
+impl @core.ViewNode for Progress with fn revision(self) {
   // The previous revision only captured value/width/height/theme; style,
   // foreground, and background overrides were painted from closures but did
   // not flow into the revision. That meant the runtime could judge the node
@@ -50,7 +50,7 @@ impl @core.ViewNode for ProgressViewNode with fn revision(self) {
 }
 
 ///|
-impl @core.ViewNode for ProgressViewNode with fn layout(self, ctx) {
+impl @core.ViewNode for Progress with fn layout(self, ctx) {
   @core.ViewLayoutResult::new(
     size=ctx.constraints.constrain(
       @core.Size::new(width=self.width, height=self.height),
@@ -59,7 +59,7 @@ impl @core.ViewNode for ProgressViewNode with fn layout(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for ProgressViewNode with fn paint(self, ctx) {
+impl @core.ViewNode for Progress with fn paint(self, ctx) {
   // Resolve the progress style ambient-ly so the bar tracks dark-mode /
   // palette changes without the caller rebuilding the view tree.
   let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
@@ -98,7 +98,7 @@ impl @core.ViewNode for ProgressViewNode with fn paint(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for ProgressViewNode with fn semantics(self) {
+impl @core.ViewNode for Progress with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
     role=@core.SemanticsRole::Progress,
     label="Progress",
@@ -118,7 +118,7 @@ pub fn[Msg] progress(
 ) -> @core.View[Msg] {
   let value = clamp_view_double(value, 0.0, 1.0)
   @core.View::from_node(
-    ProgressViewNode::{
+    Progress::{
       value,
       width,
       height,

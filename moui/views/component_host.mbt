@@ -5,29 +5,29 @@ fn[Msg] component_host(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::from_node(
-    ComponentHostViewNode::{ kind, key },
+    ComponentHost::{ kind, key },
     build_child=Some((_node, context) => build(context)),
   )
 }
 
 ///|
-priv struct ComponentHostViewNode {
+priv struct ComponentHost {
   kind : String
   key : String?
 }
 
 ///|
-impl @core.ViewNode for ComponentHostViewNode with fn identity(self) {
+impl @core.ViewNode for ComponentHost with fn identity(self) {
   @core.ViewIdentity::new(kind=self.kind, key=self.key)
 }
 
 ///|
-impl @core.ViewNode for ComponentHostViewNode with fn revision(_self) {
+impl @core.ViewNode for ComponentHost with fn revision(_self) {
   "component"
 }
 
 ///|
-impl @core.ViewNode for ComponentHostViewNode with fn layout(_self, context) {
+impl @core.ViewNode for ComponentHost with fn layout(_self, context) {
   @core.ViewLayoutResult::new(
     size=context.constraints.constrain(first_child_size(context.child_sizes)),
     child_frames=if context.child_sizes.length() > 0 {

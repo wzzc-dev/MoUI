@@ -1,5 +1,5 @@
 ///|
-priv struct SingleLineTextInputNode {
+priv struct SingleLineTextInput {
   value : @core.Binding[String]
   placeholder : String
   size : @core.Size
@@ -16,12 +16,12 @@ priv struct SingleLineTextInputNode {
 }
 
 ///|
-impl @core.ViewNode for SingleLineTextInputNode with fn identity(self) {
+impl @core.ViewNode for SingleLineTextInput with fn identity(self) {
   @core.ViewIdentity::new(kind=self.kind, key=self.key)
 }
 
 ///|
-impl @core.ViewNode for SingleLineTextInputNode with fn revision(self) {
+impl @core.ViewNode for SingleLineTextInput with fn revision(self) {
   if self.search_bar {
     "searchbar:\{self.value.get()}:\{self.placeholder}:\{self.variant_label}:\{self.theme_revision}:\{self.has_on_submit}:\{self.has_on_clear}"
   } else {
@@ -30,12 +30,12 @@ impl @core.ViewNode for SingleLineTextInputNode with fn revision(self) {
 }
 
 ///|
-impl @core.ViewNode for SingleLineTextInputNode with fn layout(self, ctx) {
+impl @core.ViewNode for SingleLineTextInput with fn layout(self, ctx) {
   @core.ViewLayoutResult::new(size=ctx.constraints.constrain(self.size))
 }
 
 ///|
-impl @core.ViewNode for SingleLineTextInputNode with fn paint(self, ctx) {
+impl @core.ViewNode for SingleLineTextInput with fn paint(self, ctx) {
   let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
   let resolved_style = match self.style {
     Some(value) => value
@@ -105,7 +105,7 @@ impl @core.ViewNode for SingleLineTextInputNode with fn paint(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for SingleLineTextInputNode with fn text_input_state(
+impl @core.ViewNode for SingleLineTextInput with fn text_input_state(
   self,
   ctx,
 ) {
@@ -127,7 +127,7 @@ impl @core.ViewNode for SingleLineTextInputNode with fn text_input_state(
 }
 
 ///|
-impl @core.ViewNode for SingleLineTextInputNode with fn semantics(self) {
+impl @core.ViewNode for SingleLineTextInput with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
     role=@core.SemanticsRole::TextField,
     label=self.placeholder,
@@ -141,6 +141,6 @@ impl @core.ViewNode for SingleLineTextInputNode with fn semantics(self) {
 }
 
 ///|
-impl @core.ViewNode for SingleLineTextInputNode with fn focusable(_self) {
+impl @core.ViewNode for SingleLineTextInput with fn focusable(_self) {
   true
 }

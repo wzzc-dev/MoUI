@@ -3,7 +3,7 @@
 ///
 /// This is the dedicated callback entry for the `@views.custom_children_layout`
 /// API: callers supply `measure` / `place` / `paint` closures plus semantics
-/// metadata, and the framework wires them to a concrete `CustomChildrenLayoutNode`.
+/// metadata, and the framework wires them to a concrete `CustomChildrenLayout`.
 /// The closures capture only immutable declaration data; the node never carries
 /// runtime mutable state such as a layout cache (the previous `CustomLayoutCache`
 /// was a violation of `ViewNode`'s "immutable declaration data" contract).
@@ -18,7 +18,7 @@ fn[Msg] custom_children_layout_control(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::from_node(
-    CustomChildrenLayoutNode::{
+    CustomChildrenLayout::{
       measure,
       place,
       paint,
@@ -40,7 +40,7 @@ fn[Msg] custom_children_layout_control(
 /// callbacks plus semantics metadata) and never carries runtime mutable state
 /// such as a layout cache. The runtime assembles `ChildLayoutInfo` entries
 /// from measured/placed children and passes them via `CustomLayoutContext`.
-priv struct CustomChildrenLayoutNode {
+priv struct CustomChildrenLayout {
   measure : (@core.CustomLayoutContext) -> @core.Size
   place : (@core.CustomPlacementContext) -> Array[@core.Rect]
   paint : (PaintContext, @core.Rect) -> Unit
@@ -51,12 +51,12 @@ priv struct CustomChildrenLayoutNode {
 }
 
 ///|
-impl @core.ViewNode for CustomChildrenLayoutNode with fn identity(self) {
+impl @core.ViewNode for CustomChildrenLayout with fn identity(self) {
   @core.ViewIdentity::new(kind=self.kind, key=self.key)
 }
 
 ///|
-impl @core.ViewNode for CustomChildrenLayoutNode with fn revision(_self) {
+impl @core.ViewNode for CustomChildrenLayout with fn revision(_self) {
   // Children layout delegates are driven by their callbacks; the runtime
   // reconciles through layout/paint re-runs rather than this revision. Keep
   // the revision empty so reconcile compares layout output, not a stub.
@@ -64,7 +64,7 @@ impl @core.ViewNode for CustomChildrenLayoutNode with fn revision(_self) {
 }
 
 ///|
-impl @core.ViewNode for CustomChildrenLayoutNode with fn layout(self, ctx) {
+impl @core.ViewNode for CustomChildrenLayout with fn layout(self, ctx) {
   // The runtime's layout pass already measured every child, so we lift the
   // child sizes into typed ChildLayoutInfo entries. The previous code
   // hard-coded baseline = height * 0.8 and priority = 0 for every child,
@@ -114,14 +114,14 @@ impl @core.ViewNode for CustomChildrenLayoutNode with fn layout(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for CustomChildrenLayoutNode with fn paint(self, ctx) {
+impl @core.ViewNode for CustomChildrenLayout with fn paint(self, ctx) {
   let pctx = PaintContext::new()
   (self.paint)(pctx, ctx.frame)
   @core.ViewPaintPlan::commands(PaintContext::finish(pctx))
 }
 
 ///|
-impl @core.ViewNode for CustomChildrenLayoutNode with fn semantics(self) {
+impl @core.ViewNode for CustomChildrenLayout with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
     role=self.semantics_role,
     label=self.semantics_label,

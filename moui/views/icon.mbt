@@ -567,7 +567,7 @@ pub fn[Msg] icon(
     Some(value) => value
     None => default_theme().palette.foreground
   }
-  @core.View::from_node(IconViewNode::{
+  @core.View::from_node(Icon::{
     label,
     size,
     color: resolved_color,
@@ -577,7 +577,7 @@ pub fn[Msg] icon(
 }
 
 ///|
-priv struct IconViewNode {
+priv struct Icon {
   label : String
   size : Double
   color : @core.Color
@@ -586,17 +586,17 @@ priv struct IconViewNode {
 }
 
 ///|
-impl @core.ViewNode for IconViewNode with fn identity(_self) {
+impl @core.ViewNode for Icon with fn identity(_self) {
   @core.ViewIdentity::new(kind="Icon")
 }
 
 ///|
-impl @core.ViewNode for IconViewNode with fn revision(self) {
+impl @core.ViewNode for Icon with fn revision(self) {
   "icon:\{self.label}:\{self.size}:\{view_color_revision(self.color)}:\{self.weight}"
 }
 
 ///|
-impl @core.ViewNode for IconViewNode with fn layout(self, context) {
+impl @core.ViewNode for Icon with fn layout(self, context) {
   @core.ViewLayoutResult::new(
     size=context.constraints.constrain(
       @core.Size::new(width=self.size, height=self.size),
@@ -605,7 +605,7 @@ impl @core.ViewNode for IconViewNode with fn layout(self, context) {
 }
 
 ///|
-impl @core.ViewNode for IconViewNode with fn paint(self, context) {
+impl @core.ViewNode for Icon with fn paint(self, context) {
   // Center the 24x24 glyph in the frame and scale uniformly. Use the
   // smaller frame dimension so square icons stay square even if the parent
   // forced a non-square frame.
@@ -631,7 +631,7 @@ impl @core.ViewNode for IconViewNode with fn paint(self, context) {
 }
 
 ///|
-impl @core.ViewNode for IconViewNode with fn semantics(self) {
+impl @core.ViewNode for Icon with fn semantics(self) {
   @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Text, label=self.label)
 }
 

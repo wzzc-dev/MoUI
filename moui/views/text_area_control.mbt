@@ -22,7 +22,7 @@ fn[Msg] text_area_control(
     TextFieldVariant::Plain => "plain"
   }
   @core.View::from_node(
-    TextAreaViewNode::{
+    TextArea::{
       value,
       placeholder,
       size,
@@ -50,7 +50,7 @@ fn[Msg] text_area_control(
 
 ///|
 fn[Msg] text_area_event(
-  node : TextAreaViewNode,
+  node : TextArea,
   ctx : @core.ViewEventContext,
   on_input : ((String) -> Msg)?,
   on_submit : Msg?,
