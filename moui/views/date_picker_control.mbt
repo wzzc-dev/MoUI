@@ -23,7 +23,7 @@ fn[Msg] date_picker_control(
     None => "context"
   }
   @core.View::from_node(
-    DatePickerViewNode::{
+    DatePicker::{
       selected,
       mode,
       placeholder,
@@ -41,7 +41,7 @@ fn[Msg] date_picker_control(
 }
 
 ///|
-priv struct DatePickerViewNode {
+priv struct DatePicker {
   selected : @core.Binding[@core.DateValue]
   mode : DatePickerDisplayMode
   placeholder : String
@@ -56,24 +56,24 @@ priv struct DatePickerViewNode {
 }
 
 ///|
-impl @core.ViewNode for DatePickerViewNode with fn identity(self) {
+impl @core.ViewNode for DatePicker with fn identity(self) {
   @core.ViewIdentity::new(kind=self.kind, key=self.key)
 }
 
 ///|
-impl @core.ViewNode for DatePickerViewNode with fn revision(self) {
+impl @core.ViewNode for DatePicker with fn revision(self) {
   "datepicker:\{datepicker_display_value(self.selected.get(), self.mode)}:\{datepicker_mode_revision(self.mode)}:\{self.placeholder}:\{self.theme_revision}:\{datepicker_value_option_revision(self.min_date)}:\{datepicker_value_option_revision(self.max_date)}:\{self.has_on_select}"
 }
 
 ///|
-impl @core.ViewNode for DatePickerViewNode with fn layout(_self, ctx) {
+impl @core.ViewNode for DatePicker with fn layout(_self, ctx) {
   @core.ViewLayoutResult::new(
     size=ctx.constraints.constrain(@core.Size::new(width=200.0, height=40.0)),
   )
 }
 
 ///|
-impl @core.ViewNode for DatePickerViewNode with fn paint(self, ctx) {
+impl @core.ViewNode for DatePicker with fn paint(self, ctx) {
   let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
   let resolved_style = match self.style {
     Some(value) => value
@@ -110,7 +110,7 @@ impl @core.ViewNode for DatePickerViewNode with fn paint(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for DatePickerViewNode with fn semantics(self) {
+impl @core.ViewNode for DatePicker with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
     role=@core.SemanticsRole::Menu,
     label=self.placeholder,
@@ -120,13 +120,13 @@ impl @core.ViewNode for DatePickerViewNode with fn semantics(self) {
 }
 
 ///|
-impl @core.ViewNode for DatePickerViewNode with fn focusable(_self) {
+impl @core.ViewNode for DatePicker with fn focusable(_self) {
   true
 }
 
 ///|
 fn[Msg] date_picker_event(
-  node : DatePickerViewNode,
+  node : DatePicker,
   ctx : @core.ViewEventContext,
   on_select : ((@core.DateValue) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {

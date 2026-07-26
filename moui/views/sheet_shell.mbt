@@ -15,7 +15,7 @@ fn[Msg] sheet_shell(
     None => "context"
   }
   @core.View::from_node(
-    SheetShellNode::{
+    SheetShell::{
       presentation_mode,
       theme,
       background,
@@ -32,7 +32,7 @@ fn[Msg] sheet_shell(
 }
 
 ///|
-priv struct SheetShellNode {
+priv struct SheetShell {
   presentation_mode : SheetPresentationMode
   theme : @core.Theme?
   background : @core.Brush?
@@ -45,17 +45,17 @@ priv struct SheetShellNode {
 }
 
 ///|
-impl @core.ViewNode for SheetShellNode with fn identity(self) {
+impl @core.ViewNode for SheetShell with fn identity(self) {
   @core.ViewIdentity::new(kind=self.kind, key=self.key)
 }
 
 ///|
-impl @core.ViewNode for SheetShellNode with fn revision(self) {
+impl @core.ViewNode for SheetShell with fn revision(self) {
   "sheet:\{sheet_presentation_revision(self.presentation_mode)}:\{self.theme_revision}:\{self.shadow is Some(_)}:\{self.has_on_dismiss}"
 }
 
 ///|
-impl @core.ViewNode for SheetShellNode with fn child_constraints(
+impl @core.ViewNode for SheetShell with fn child_constraints(
   self,
   constraints,
 ) {
@@ -67,7 +67,7 @@ impl @core.ViewNode for SheetShellNode with fn child_constraints(
 }
 
 ///|
-impl @core.ViewNode for SheetShellNode with fn layout(self, ctx) {
+impl @core.ViewNode for SheetShell with fn layout(self, ctx) {
   let child_size = first_child_size(ctx.child_sizes)
   let measured = ctx.constraints.constrain(
     child_size.inflate(sheet_content_insets()),
@@ -87,7 +87,7 @@ impl @core.ViewNode for SheetShellNode with fn layout(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for SheetShellNode with fn paint(self, ctx) {
+impl @core.ViewNode for SheetShell with fn paint(self, ctx) {
   // Resolve the sheet surface ambient-ly so it tracks palette changes without
   // requiring the caller to rebuild the view tree.
   let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
@@ -112,7 +112,7 @@ impl @core.ViewNode for SheetShellNode with fn paint(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for SheetShellNode with fn semantics(_self) {
+impl @core.ViewNode for SheetShell with fn semantics(_self) {
   @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Dialog)
 }
 

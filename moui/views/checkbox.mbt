@@ -70,7 +70,7 @@ fn[Msg] checkbox_control(
     None => "context"
   }
   @core.View::from_node(
-    CheckboxViewNode::{
+    Checkbox::{
       label,
       checked,
       theme,
@@ -91,7 +91,7 @@ fn[Msg] checkbox_control(
 }
 
 ///|
-priv struct CheckboxViewNode {
+priv struct Checkbox {
   label : String
   checked : @core.Binding[Bool]
   theme : @core.Theme?
@@ -109,17 +109,17 @@ priv struct CheckboxViewNode {
 }
 
 ///|
-impl @core.ViewNode for CheckboxViewNode with fn identity(self) {
+impl @core.ViewNode for Checkbox with fn identity(self) {
   @core.ViewIdentity::new(kind=self.kind, key=self.key)
 }
 
 ///|
-impl @core.ViewNode for CheckboxViewNode with fn revision(self) {
+impl @core.ViewNode for Checkbox with fn revision(self) {
   "checkbox:\{self.label}:\{self.checked.get()}:\{self.theme_revision}:\{self.font is Some(_)}:\{self.foreground is Some(_)}:\{self.check_color is Some(_)}:\{self.box_size is Some(_)}:\{self.box_shape is Some(_)}:\{self.check_style is Some(_)}:\{self.has_on_change}"
 }
 
 ///|
-impl @core.ViewNode for CheckboxViewNode with fn layout(self, ctx) {
+impl @core.ViewNode for Checkbox with fn layout(self, ctx) {
   let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
   let style = ChoiceControlStyle::default(theme=resolved_theme)
   let resolved_font = resolve_choice_font(self.font, resolved_theme)
@@ -145,7 +145,7 @@ impl @core.ViewNode for CheckboxViewNode with fn layout(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for CheckboxViewNode with fn paint(self, ctx) {
+impl @core.ViewNode for Checkbox with fn paint(self, ctx) {
   let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
   let style = ChoiceControlStyle::default(theme=resolved_theme)
   let resolved_font = resolve_choice_font(self.font, resolved_theme)
@@ -181,7 +181,7 @@ impl @core.ViewNode for CheckboxViewNode with fn paint(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for CheckboxViewNode with fn semantics(self) {
+impl @core.ViewNode for Checkbox with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
     role=@core.SemanticsRole::Checkbox,
     label=self.label,
@@ -192,13 +192,13 @@ impl @core.ViewNode for CheckboxViewNode with fn semantics(self) {
 }
 
 ///|
-impl @core.ViewNode for CheckboxViewNode with fn focusable(_self) {
+impl @core.ViewNode for Checkbox with fn focusable(_self) {
   true
 }
 
 ///|
 fn[Msg] checkbox_event(
-  node : CheckboxViewNode,
+  node : Checkbox,
   ctx : @core.ViewEventContext,
   on_change : ((Bool) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {

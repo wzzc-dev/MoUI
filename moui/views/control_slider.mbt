@@ -16,7 +16,7 @@
 /// ownership of its own, and (2) the drag modifier also produced Button
 /// semantics. The slider node reports `Slider` semantics directly and is the
 /// sole owner of the pointer interaction.
-priv struct SliderViewNode {
+priv struct Slider {
   value : Double
   min : Double
   max : Double
@@ -29,12 +29,12 @@ priv struct SliderViewNode {
 }
 
 ///|
-impl @core.ViewNode for SliderViewNode with fn identity(_self) {
+impl @core.ViewNode for Slider with fn identity(_self) {
   @core.ViewIdentity::new(kind="Slider")
 }
 
 ///|
-impl @core.ViewNode for SliderViewNode with fn revision(self) {
+impl @core.ViewNode for Slider with fn revision(self) {
   // The previous revision only captured value/width/height/theme; range,
   // style, foreground, and background overrides were painted from closures
   // but did not flow into the revision. That meant the runtime could judge
@@ -62,7 +62,7 @@ impl @core.ViewNode for SliderViewNode with fn revision(self) {
 }
 
 ///|
-impl @core.ViewNode for SliderViewNode with fn layout(self, ctx) {
+impl @core.ViewNode for Slider with fn layout(self, ctx) {
   @core.ViewLayoutResult::new(
     size=ctx.constraints.constrain(
       @core.Size::new(width=self.width, height=self.height),
@@ -71,7 +71,7 @@ impl @core.ViewNode for SliderViewNode with fn layout(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for SliderViewNode with fn paint(self, ctx) {
+impl @core.ViewNode for Slider with fn paint(self, ctx) {
   // Resolve the slider style ambient-ly so the track/thumb track
   // dark-mode / palette / thumb-shape changes without a rebuild.
   let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
@@ -164,12 +164,12 @@ impl @core.ViewNode for SliderViewNode with fn paint(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for SliderViewNode with fn focusable(_self) {
+impl @core.ViewNode for Slider with fn focusable(_self) {
   true
 }
 
 ///|
-impl @core.ViewNode for SliderViewNode with fn semantics(self) {
+impl @core.ViewNode for Slider with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
     role=@core.SemanticsRole::Slider,
     label="Slider",
@@ -206,7 +206,7 @@ pub fn[Msg] slider(
   background? : @core.Color,
   on_change? : ((Double) -> Msg)? = None,
 ) -> @core.View[Msg] {
-  let node = SliderViewNode::{
+  let node = Slider::{
     value,
     min,
     max,
@@ -227,7 +227,7 @@ pub fn[Msg] slider(
   let event_adapter = match on_change {
     Some(handler) =>
       (
-        _node : SliderViewNode,
+        _node : Slider,
         context : @core.ViewEventContext,
       ) => {
         match context.event {
@@ -259,7 +259,7 @@ pub fn[Msg] slider(
       }
     None =>
       (
-        _node : SliderViewNode,
+        _node : Slider,
         _context : @core.ViewEventContext,
       ) => @core.ViewEventResult::ignored()
   }

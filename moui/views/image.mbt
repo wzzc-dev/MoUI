@@ -11,7 +11,7 @@ pub fn[Msg] image(
     (Some(width), Some(height)) => Some(@core.Size::new(width~, height~))
     _ => None
   }
-  @core.View::from_node(ImageViewNode::{
+  @core.View::from_node(Image::{
     source,
     size,
     opacity,
@@ -21,7 +21,7 @@ pub fn[Msg] image(
 }
 
 ///|
-priv struct ImageViewNode {
+priv struct Image {
   source : String
   size : @core.Size?
   opacity : Double
@@ -30,23 +30,23 @@ priv struct ImageViewNode {
 }
 
 ///|
-impl @core.ViewNode for ImageViewNode with fn identity(_self) {
+impl @core.ViewNode for Image with fn identity(_self) {
   @core.ViewIdentity::new(kind="Image")
 }
 
 ///|
-impl @core.ViewNode for ImageViewNode with fn revision(self) {
+impl @core.ViewNode for Image with fn revision(self) {
   "image:\{self.source}:\{size_revision(self.size)}:\{self.opacity}:\{self.corner_radius}:\{image_fit_revision(self.fit)}"
 }
 
 ///|
-impl @core.ViewNode for ImageViewNode with fn layout(self, context) {
+impl @core.ViewNode for Image with fn layout(self, context) {
   let measured = self.size.unwrap_or(@core.Size::new(width=0.0, height=0.0))
   @core.ViewLayoutResult::new(size=context.constraints.constrain(measured))
 }
 
 ///|
-impl @core.ViewNode for ImageViewNode with fn paint(self, context) {
+impl @core.ViewNode for Image with fn paint(self, context) {
   let frame = match self.size {
     Some(size) =>
       @core.Rect::new(

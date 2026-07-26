@@ -21,7 +21,7 @@ pub fn[T, Msg] sectioned_list(
         scroll_view(view, state=Some(state), width=0.0, height=viewport_height)
       None =>
         scroll_view(
-          @core.View::from_node(EmptyControlNode::{  }),
+          @core.View::from_node(EmptyControl::{  }),
           state=Some(state),
           width=0.0,
           height=viewport_height,

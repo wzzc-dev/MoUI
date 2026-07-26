@@ -21,7 +21,7 @@ fn[Msg] text_field_control(
     TextFieldVariant::Plain => "plain"
   }
   @core.View::from_node(
-    SingleLineTextInputNode::{
+    SingleLineTextInput::{
       value,
       placeholder,
       size,
@@ -53,7 +53,7 @@ fn[Msg] text_field_control(
 
 ///|
 fn[Msg] single_line_text_event(
-  node : SingleLineTextInputNode,
+  node : SingleLineTextInput,
   ctx : @core.ViewEventContext,
   on_input : ((String) -> Msg)?,
   on_submit : Msg?,
@@ -119,7 +119,7 @@ fn[Msg] search_bar_control(
     TextFieldVariant::Plain => "plain"
   }
   @core.View::from_node(
-    SingleLineTextInputNode::{
+    SingleLineTextInput::{
       value: query,
       placeholder,
       size: @core.Size::new(width=240.0, height=40.0),
