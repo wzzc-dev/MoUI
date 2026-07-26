@@ -176,31 +176,6 @@ pub(all) struct TextControlStateContext {
 } derive(Eq, Debug, ToJson)
 
 ///|
-priv struct ViewNode[Msg] {
-  identity_fn : () -> ViewIdentity
-  revision_fn : () -> String
-  // paint_revision 变化只触发 paint dirty（重算 paint + 清 render cache），
-  // 不触发 layout dirty（不清 layout cache、不重算 layout）。
-  // 用于滚动等"只影响 paint 不影响 layout"的场景。
-  paint_revision_fn : () -> String
-  children_fn : () -> Array[View[Msg]]
-  build_child_fn : ((ComponentContext) -> View[Msg])?
-  child_constraints_fn : (Constraints) -> Constraints
-  child_environment_fn : (Environment) -> Environment
-  child_style_fn : (ViewStyle) -> ViewStyle
-  layout_fn : (ViewLayoutContext) -> ViewLayoutResult
-  paint_fn : (ViewPaintContext) -> ViewPaintPlan
-  event_fn : (ViewEventContext) -> ViewEventResult[Msg]
-  text_input_state_fn : (ViewPaintContext) -> TextInputState?
-  text_command_fn : (ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[
-    Msg,
-  ]
-  semantics_fn : () -> ViewSemanticsInfo
-  focusable_fn : () -> Bool
-  flex_weight_fn : () -> Double
-}
-
-///|
 pub fn ViewIdentity::new(kind~ : String, key? : String? = None) -> ViewIdentity {
   {
     kind,
@@ -353,292 +328,72 @@ pub fn ViewSemanticsInfo::new(
 }
 
 ///|
-fn[Msg] ViewNode::new(
-  identity~ : () -> ViewIdentity,
-  revision? : () -> String = () => "",
-  paint_revision? : () -> String = () => "",
-  children? : () -> Array[View[Msg]] = () => [],
-  build_child? : ((ComponentContext) -> View[Msg])? = None,
-  child_constraints? : (Constraints) -> Constraints = constraints => {
-    constraints.loosen()
-  },
-  child_environment? : (Environment) -> Environment = environment => environment,
-  child_style? : (ViewStyle) -> ViewStyle = style => style,
-  layout~ : (ViewLayoutContext) -> ViewLayoutResult,
-  paint? : (ViewPaintContext) -> ViewPaintPlan = _ctx => ViewPaintPlan::empty(),
-  event? : (ViewEventContext) -> ViewEventResult[Msg] = _ctx => {
-    ViewEventResult::ignored()
-  },
-  text_input_state? : (ViewPaintContext) -> TextInputState? = _ctx => None,
-  text_command? : (ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[
-    Msg,
-  ] = (_ctx, _intent, _paste_text) => ViewTextCommandResult::ignored(),
-  semantics? : () -> ViewSemanticsInfo = () => ViewSemanticsInfo::new(),
-  focusable? : () -> Bool = () => false,
-  flex_weight? : () -> Double = () => 0.0,
-) -> ViewNode[Msg] {
-  {
-    identity_fn: identity,
-    revision_fn: revision,
-    paint_revision_fn: paint_revision,
-    children_fn: children,
-    build_child_fn: build_child,
-    child_constraints_fn: child_constraints,
-    child_environment_fn: child_environment,
-    child_style_fn: child_style,
-    layout_fn: layout,
-    paint_fn: paint,
-    event_fn: event,
-    text_input_state_fn: text_input_state,
-    text_command_fn: text_command,
-    semantics_fn: semantics,
-    focusable_fn: focusable,
-    flex_weight_fn: flex_weight,
-  }
-}
-
-///|
-fn[Msg] ViewNode::identity(self : ViewNode[Msg]) -> ViewIdentity {
-  (self.identity_fn)()
-}
-
-///|
-fn[Msg] ViewNode::revision(self : ViewNode[Msg]) -> String {
-  (self.revision_fn)()
-}
-
-///|
-fn[Msg] ViewNode::paint_revision(self : ViewNode[Msg]) -> String {
-  (self.paint_revision_fn)()
-}
-
-///|
-fn[Msg] ViewNode::children(self : ViewNode[Msg]) -> Array[View[Msg]] {
-  (self.children_fn)()
-}
-
-///|
-fn[Msg] ViewNode::build_child(
-  self : ViewNode[Msg],
-) -> ((ComponentContext) -> View[Msg])? {
-  self.build_child_fn
-}
-
-///|
-fn[Msg] ViewNode::child_constraints(
-  self : ViewNode[Msg],
-  constraints : Constraints,
-) -> Constraints {
-  (self.child_constraints_fn)(constraints)
-}
-
-///|
-fn[Msg] ViewNode::child_environment(
-  self : ViewNode[Msg],
-  environment : Environment,
-) -> Environment {
-  (self.child_environment_fn)(environment)
-}
-
-///|
-fn[Msg] ViewNode::child_style(
-  self : ViewNode[Msg],
-  style : ViewStyle,
-) -> ViewStyle {
-  (self.child_style_fn)(style)
-}
-
-///|
-fn[Msg] ViewNode::layout(
-  self : ViewNode[Msg],
-  context : ViewLayoutContext,
-) -> ViewLayoutResult {
-  (self.layout_fn)(context)
-}
-
-///|
-fn[Msg] ViewNode::paint(
-  self : ViewNode[Msg],
-  context : ViewPaintContext,
-) -> ViewPaintPlan {
-  (self.paint_fn)(context)
-}
-
-///|
-fn[Msg] ViewNode::event(
-  self : ViewNode[Msg],
-  context : ViewEventContext,
-) -> ViewEventResult[Msg] {
-  (self.event_fn)(context)
-}
-
-///|
-fn[Msg] ViewNode::text_input_state(
-  self : ViewNode[Msg],
-  context : ViewPaintContext,
-) -> TextInputState? {
-  (self.text_input_state_fn)(context)
-}
-
-///|
-fn[Msg] ViewNode::text_command(
-  self : ViewNode[Msg],
-  context : ViewEventContext,
-  intent : CommandIntent,
-  paste_text? : String? = None,
-) -> TextCommandResult {
-  (self.text_command_fn)(context, intent, paste_text).result
-}
-
-///|
-fn[Msg] ViewNode::text_command_result(
-  self : ViewNode[Msg],
-  context : ViewEventContext,
-  intent : CommandIntent,
-  paste_text? : String? = None,
-) -> ViewTextCommandResult[Msg] {
-  (self.text_command_fn)(context, intent, paste_text)
-}
-
-///|
-fn[Msg] ViewNode::semantics(self : ViewNode[Msg]) -> ViewSemanticsInfo {
-  (self.semantics_fn)()
-}
-
-///|
-fn[Msg] ViewNode::focusable(self : ViewNode[Msg]) -> Bool {
-  (self.focusable_fn)()
-}
-
-///|
-fn[Msg] ViewNode::flex_weight(self : ViewNode[Msg]) -> Double {
-  (self.flex_weight_fn)()
-}
-
-///|
-fn[Msg, NextMsg] ViewNode::map(
-  self : ViewNode[Msg],
-  map : (Msg) -> NextMsg,
-) -> ViewNode[NextMsg] {
-  ViewNode::new(
-    identity=() => self.identity(),
-    revision=() => self.revision(),
-    paint_revision=() => self.paint_revision(),
-    children=() => self.children().map(child => child.map(map)),
-    build_child=match self.build_child() {
-      Some(build) => Some(ctx => build(ctx).map(map))
-      None => None
-    },
-    child_constraints=constraints => self.child_constraints(constraints),
-    child_environment=environment => self.child_environment(environment),
-    child_style=style => self.child_style(style),
-    layout=context => self.layout(context),
-    paint=context => self.paint(context),
-    event=context => {
-      let result = self.event(context)
-      {
-        changed: result.changed,
-        activated: result.activated,
-        focused: result.focused,
-        captured: result.captured,
-        state: result.state,
-        text_control: result.text_control,
-        dirty: result.dirty,
-        messages: result.messages.map(message => map(message)),
-      }
-    },
-    text_input_state=context => self.text_input_state(context),
-    text_command=(context, intent, paste_text) => {
-      let result = self.text_command_result(context, intent, paste_text~)
-      {
-        result: result.result,
-        text_control: result.text_control,
-        messages: result.messages.map(message => map(message)),
-      }
-    },
-    semantics=() => self.semantics(),
-    focusable=() => self.focusable(),
-    flex_weight=() => self.flex_weight(),
-  )
-}
-
-///|
 pub struct View[Msg] {
-  priv node : ViewNode[Msg]
+  priv adapter : ViewAdapter[Msg]
 }
 
 ///|
-pub fn[Msg] View::node(
-  identity~ : () -> ViewIdentity,
-  revision? : () -> String = () => "",
-  paint_revision? : () -> String = () => "",
-  children? : () -> Array[View[Msg]] = () => [],
-  build_child? : ((ComponentContext) -> View[Msg])? = None,
-  child_constraints? : (Constraints) -> Constraints = constraints => {
-    constraints.loosen()
-  },
-  child_environment? : (Environment) -> Environment = environment => environment,
-  child_style? : (ViewStyle) -> ViewStyle = style => style,
-  layout~ : (ViewLayoutContext) -> ViewLayoutResult,
-  paint? : (ViewPaintContext) -> ViewPaintPlan = _ctx => ViewPaintPlan::empty(),
-  event? : (ViewEventContext) -> ViewEventResult[Msg] = _ctx => {
+/// Construct a typed view from a concrete message-independent node.
+///
+/// The node supplies layout, paint, semantics, focus, and reconciliation
+/// behavior through `ViewNode`. Optional adapters attach typed children,
+/// component building, events, and text commands without erasing `Msg` from the
+/// public view. `View::map` maps only these typed adapters and preserves the
+/// underlying node.
+pub fn[Node : ViewNode, Msg] View::from_node(
+  node : Node,
+  children? : (Node) -> Array[View[Msg]] = _node => [],
+  build_child? : ((Node, ComponentContext) -> View[Msg])? = None,
+  event? : (Node, ViewEventContext) -> ViewEventResult[Msg] = (_node, _context) => {
     ViewEventResult::ignored()
   },
-  text_input_state? : (ViewPaintContext) -> TextInputState? = _ctx => None,
-  text_command? : (ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[
+  text_command? : (Node, ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[
     Msg,
-  ] = (_ctx, _intent, _paste_text) => ViewTextCommandResult::ignored(),
-  semantics? : () -> ViewSemanticsInfo = () => ViewSemanticsInfo::new(),
-  focusable? : () -> Bool = () => false,
-  flex_weight? : () -> Double = () => 0.0,
+  ] = (_node, _context, _intent, _paste_text) => {
+    ViewTextCommandResult::ignored()
+  },
 ) -> View[Msg] {
   {
-    node: ViewNode::new(
-      identity~,
-      revision~,
-      paint_revision~,
-      children~,
-      build_child~,
-      child_constraints~,
-      child_environment~,
-      child_style~,
-      layout~,
-      paint~,
-      event~,
-      text_input_state~,
-      text_command~,
-      semantics~,
-      focusable~,
-      flex_weight~,
+    adapter: ViewAdapter::new(
+      node=node as &ViewNode,
+      children=() => children(node),
+      build_child=match build_child {
+        Some(build) => Some(context => build(node, context))
+        None => None
+      },
+      event=context => event(node, context),
+      text_command=(context, intent, paste_text) => {
+        text_command(node, context, intent, paste_text)
+      },
     ),
   }
 }
 
 ///|
 pub fn[Msg] View::identity(self : View[Msg]) -> ViewIdentity {
-  self.node.identity()
+  self.adapter.node.identity()
 }
 
 ///|
 pub fn[Msg] View::revision(self : View[Msg]) -> String {
-  self.node.revision()
+  self.adapter.node.revision()
 }
 
 ///|
 pub fn[Msg] View::paint_revision(self : View[Msg]) -> String {
-  self.node.paint_revision()
+  self.adapter.node.paint_revision()
 }
 
 ///|
 pub fn[Msg] View::children(self : View[Msg]) -> Array[View[Msg]] {
-  self.node.children()
+  self.adapter.children()
 }
 
 ///|
 pub fn[Msg] View::build_child(
   self : View[Msg],
 ) -> ((ComponentContext) -> View[Msg])? {
-  self.node.build_child()
+  self.adapter.build_child()
 }
 
 ///|
@@ -646,7 +401,7 @@ pub fn[Msg] View::child_constraints(
   self : View[Msg],
   constraints : Constraints,
 ) -> Constraints {
-  self.node.child_constraints(constraints)
+  self.adapter.node.child_constraints(constraints)
 }
 
 ///|
@@ -654,12 +409,12 @@ pub fn[Msg] View::child_environment(
   self : View[Msg],
   environment : Environment,
 ) -> Environment {
-  self.node.child_environment(environment)
+  self.adapter.node.child_environment(environment)
 }
 
 ///|
 pub fn[Msg] View::child_style(self : View[Msg], style : ViewStyle) -> ViewStyle {
-  self.node.child_style(style)
+  self.adapter.node.child_style(style)
 }
 
 ///|
@@ -667,7 +422,7 @@ pub fn[Msg] View::layout(
   self : View[Msg],
   context : ViewLayoutContext,
 ) -> ViewLayoutResult {
-  self.node.layout(context)
+  self.adapter.node.layout(context)
 }
 
 ///|
@@ -675,7 +430,7 @@ pub fn[Msg] View::paint(
   self : View[Msg],
   context : ViewPaintContext,
 ) -> ViewPaintPlan {
-  self.node.paint(context)
+  self.adapter.node.paint(context)
 }
 
 ///|
@@ -683,7 +438,7 @@ pub fn[Msg] View::event(
   self : View[Msg],
   context : ViewEventContext,
 ) -> ViewEventResult[Msg] {
-  self.node.event(context)
+  self.adapter.event(context)
 }
 
 ///|
@@ -691,7 +446,7 @@ pub fn[Msg] View::text_input_state(
   self : View[Msg],
   context : ViewPaintContext,
 ) -> TextInputState? {
-  self.node.text_input_state(context)
+  self.adapter.node.text_input_state(context)
 }
 
 ///|
@@ -701,7 +456,7 @@ pub fn[Msg] View::text_command(
   intent : CommandIntent,
   paste_text? : String? = None,
 ) -> TextCommandResult {
-  self.node.text_command(context, intent, paste_text~)
+  self.adapter.text_command_result(context, intent, paste_text~).result
 }
 
 ///|
@@ -711,20 +466,20 @@ pub fn[Msg] View::text_command_result(
   intent : CommandIntent,
   paste_text? : String? = None,
 ) -> ViewTextCommandResult[Msg] {
-  self.node.text_command_result(context, intent, paste_text~)
+  self.adapter.text_command_result(context, intent, paste_text~)
 }
 
 ///|
 pub fn[Msg] View::semantics(self : View[Msg]) -> ViewSemanticsInfo {
-  self.node.semantics()
+  self.adapter.node.semantics()
 }
 
 ///|
 pub fn[Msg] View::accepts_focus(self : View[Msg]) -> Bool {
-  self.node.focusable()
+  self.adapter.node.focusable()
 }
 
 ///|
 pub fn[Msg] View::flex_weight(self : View[Msg]) -> Double {
-  self.node.flex_weight()
+  self.adapter.node.flex_weight()
 }

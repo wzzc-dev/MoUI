@@ -13,14 +13,14 @@
 
 ## 项目不变量
 
-- 公开 view 构造器返回不透明 `@moui.View[Msg]`；具体行为通过 `@core.View::node` 放在 `moui/views`。
+- 公开 view 构造器返回不透明 `@moui.View[Msg]`；内置具体行为在 `moui/views` 中实现 `@core.ViewNode`，并通过 `@core.View::from_node` 构造。
 - runtime 管线保持为：
 
   ```text
   View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
   ```
 
-- `core/` 拥有平台无关 contract、不透明 view、event、geometry、draw/semantics/text/theme contract，以及由 `View[Msg]` 包裹的私有 custom view protocol；`moui/runtime` 拥有 `AppRuntime`、runtime state、tree/layout/paint、event dispatch、program message drain、effect task、subscription 和 runtime diagnostics。
+- `core/` 拥有平台无关 contract、不透明 view、event、geometry、draw/semantics/text/theme contract，以及由类型化 `View[Msg]` adapter 包裹的公开、与消息无关的 `ViewNode` 扩展协议；`moui/runtime` 拥有 `AppRuntime`、runtime state、tree/layout/paint、event dispatch、program message drain、effect task、subscription 和 runtime diagnostics。
 - `views/` 拥有公开构造 helper 和具体 custom view 行为，复用 binding、style 和 modifier，但不暴露 runtime internals。
 - `backend/host/` 拥有 `HostEvent`、surface metrics、input contract、file drag/drop normalization、text-input session state 和 redraw driver behavior。
 - 平台包把 native event 转换为 `HostEvent`；它们不直接修改 element tree。
@@ -49,7 +49,7 @@
 
 ```text
 Add a MoUI view constructor for <control>. Keep it in views/, return @moui.View[Msg],
-put reusable behavior in views/ with @core.View::node, reuse existing styles/modifiers where possible, add focused tests in
+implement reusable behavior in views/ as a concrete @core.ViewNode and construct it with @core.View::from_node, reuse existing styles/modifiers where possible, add focused tests in
 views/views_test.mbt, update docs/view-catalog.md if public coverage changes, and
 run moon test moui/views --target native plus moon info if the public API changes.
 ```

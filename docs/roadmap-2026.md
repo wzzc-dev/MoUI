@@ -30,8 +30,8 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 The package boundaries follow that pipeline:
 
 - `core/` owns platform-neutral contracts, opaque `View[Msg]`, typed events,
-  effects, subscriptions, layout/input/semantics/draw contracts, and the
-  private custom view protocol wrapped by `View[Msg]`.
+  effects, subscriptions, layout/input/semantics/draw contracts, and the public
+  message-independent `ViewNode` extension protocol wrapped by typed adapters.
 - `runtime/` owns opaque `AppRuntime`, runtime state, tree/layout/paint,
   event dispatch, program message drain, effect-task lifecycle, subscription
   lifecycle, and runtime diagnostics.

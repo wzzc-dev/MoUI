@@ -3,7 +3,7 @@ import {
   "wzzc-dev/moui/backend/ios" @ios_host,
   "wzzc-dev/moui/backend/ios/skia" @ios_skia_backend,
   "wzzc-dev/window/ios" @window_ios,
-  "examples/showcase/app" @app,
+  "examples/showcase/app",
 }
 
 supported_targets = "native"

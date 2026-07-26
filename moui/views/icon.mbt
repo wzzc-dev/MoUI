@@ -567,39 +567,72 @@ pub fn[Msg] icon(
     Some(value) => value
     None => default_theme().palette.foreground
   }
-  @core.View::node(
-    identity=() => @core.ViewIdentity::new(kind="Icon"),
-    revision=() => {
-      "icon:\{label}:\{size}:\{view_color_revision(resolved_color)}:\{weight}"
-    },
-    layout=ctx => {
-      @core.ViewLayoutResult::new(
-        size=ctx.constraints.constrain(@core.Size::new(width=size, height=size)),
-      )
-    },
-    paint=ctx => {
-      // Center the 24x24 glyph in the frame and scale uniformly. Use the
-      // smaller frame dimension so square icons stay square even if the parent
-      // forced a non-square frame.
-      let side = view_min_double(ctx.frame.size.width, ctx.frame.size.height)
-      let scale = side / 24.0
-      let origin_x = ctx.frame.origin.x + (ctx.frame.size.width - side) / 2.0
-      let origin_y = ctx.frame.origin.y + (ctx.frame.size.height - side) / 2.0
-      let scaled = icon_scale_verbs(verbs, origin_x, origin_y, scale)
-      @core.ViewPaintPlan::commands([
-        @core.DrawCommand::DrawPath(
-          @core.PathSpec::new(
-            verbs=scaled,
-            stroke=Some(@core.Brush::solid(resolved_color)),
-            stroke_width=weight,
-          ),
-        ),
-      ])
-    },
-    semantics=() => {
-      @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Text, label~)
-    },
+  @core.View::from_node(IconViewNode::{
+    label,
+    size,
+    color: resolved_color,
+    weight,
+    verbs,
+  })
+}
+
+///|
+priv struct IconViewNode {
+  label : String
+  size : Double
+  color : @core.Color
+  weight : Double
+  verbs : Array[@core.PathVerb]
+}
+
+///|
+impl @core.ViewNode for IconViewNode with fn identity(_self) {
+  @core.ViewIdentity::new(kind="Icon")
+}
+
+///|
+impl @core.ViewNode for IconViewNode with fn revision(self) {
+  "icon:\{self.label}:\{self.size}:\{view_color_revision(self.color)}:\{self.weight}"
+}
+
+///|
+impl @core.ViewNode for IconViewNode with fn layout(self, context) {
+  @core.ViewLayoutResult::new(
+    size=context.constraints.constrain(
+      @core.Size::new(width=self.size, height=self.size),
+    ),
   )
+}
+
+///|
+impl @core.ViewNode for IconViewNode with fn paint(self, context) {
+  // Center the 24x24 glyph in the frame and scale uniformly. Use the
+  // smaller frame dimension so square icons stay square even if the parent
+  // forced a non-square frame.
+  let side = view_min_double(
+    context.frame.size.width,
+    context.frame.size.height,
+  )
+  let scale = side / 24.0
+  let origin_x = context.frame.origin.x +
+    (context.frame.size.width - side) / 2.0
+  let origin_y = context.frame.origin.y +
+    (context.frame.size.height - side) / 2.0
+  let scaled = icon_scale_verbs(self.verbs, origin_x, origin_y, scale)
+  @core.ViewPaintPlan::commands([
+    @core.DrawCommand::DrawPath(
+      @core.PathSpec::new(
+        verbs=scaled,
+        stroke=Some(@core.Brush::solid(self.color)),
+        stroke_width=self.weight,
+      ),
+    ),
+  ])
+}
+
+///|
+impl @core.ViewNode for IconViewNode with fn semantics(self) {
+  @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Text, label=self.label)
 }
 
 ///|

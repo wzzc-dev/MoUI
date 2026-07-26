@@ -5,6 +5,7 @@ priv struct ElementEventResult {
   captured : Bool
   capture_target : ElementId?
   focused : ElementId?
+  deliveries : Array[() -> Unit]
 }
 
 ///|
@@ -16,41 +17,38 @@ fn ElementNode::rebuild_dirty_components(
   let mut next = next_id
   let mut dirty_kind = ReconcileDirtyKind::ReconcileClean
   if self.dirty.needs_build {
-    match self.erased_view_node.build_child {
-      Some(build) => {
-        let built = build_component_child(
-          build,
-          runtime,
-          self.id,
-          self.component.component_subscriptions,
-          self.component.component_effects,
+    if self.view_node.has_build_child() {
+      let built = build_component_child(
+        self.view_node,
+        runtime,
+        self.id,
+        self.component.component_subscriptions,
+        self.component.component_effects,
+      )
+      self.component.component_subscriptions = built.subscriptions
+      self.component.component_effects = built.effects
+      let result = if self.children.length() > 0 {
+        reconcile_element_for_runtime(
+          self.children[0],
+          built.child_view_node,
+          Some(runtime),
+          next,
         )
-        self.component.component_subscriptions = built.subscriptions
-        self.component.component_effects = built.effects
-        let result = if self.children.length() > 0 {
-          reconcile_element_for_runtime(
-            self.children[0],
-            built.child_erased_view_node,
-            Some(runtime),
-            next,
-          )
-        } else {
-          let mounted = mount_erased_view_node_for_runtime(
-            built.child_erased_view_node,
-            Some(runtime),
-            next,
-          )
-          {
-            node: mounted.node,
-            next_id: mounted.next_id,
-            dirty_kind: ReconcileDirtyKind::ReconcileLayout,
-          }
+      } else {
+        let mounted = mount_runtime_view_node_for_runtime(
+          built.child_view_node,
+          Some(runtime),
+          next,
+        )
+        {
+          node: mounted.node,
+          next_id: mounted.next_id,
+          dirty_kind: ReconcileDirtyKind::ReconcileLayout,
         }
-        self.children = [result.node]
-        next = result.next_id
-        dirty_kind = dirty_kind.combine(result.dirty_kind)
       }
-      None => ()
+      self.children = [result.node]
+      next = result.next_id
+      dirty_kind = dirty_kind.combine(result.dirty_kind)
     }
     self.dirty.needs_build = false
     self.apply_reconcile_dirty(dirty_kind)
@@ -100,7 +98,7 @@ fn ElementNode::view_tree_inspector_snapshot(
   let nodes : Array[ViewInspectorSummary] = []
   self.collect_view_summaries(nodes)
   {
-    root_kind: self.erased_view_node.inspector_kind_label(),
+    root_kind: runtime_view_node_inspector_kind_label(self.view_node),
     node_count: nodes.length(),
     component_count: self.inspector_component_count(),
     control_count: self.inspector_control_count(),
@@ -119,7 +117,7 @@ fn ElementNode::collect_view_summaries(
 ) -> Unit {
   nodes.push({
     element_id: self.id,
-    kind: self.erased_view_node.inspector_kind_label(),
+    kind: runtime_view_node_inspector_kind_label(self.view_node),
     key: match self.key {
       Some(key) => key.value()
       None => ""
@@ -136,11 +134,7 @@ fn ElementNode::collect_view_summaries(
 
 ///|
 fn ElementNode::inspector_component_count(self : ElementNode) -> Int {
-  let mut count = if self.erased_view_node.is_building_erased_view_node() {
-    1
-  } else {
-    0
-  }
+  let mut count = if self.view_node.has_build_child() { 1 } else { 0 }
   for child in self.children {
     count = count + child.inspector_component_count()
   }
@@ -149,7 +143,7 @@ fn ElementNode::inspector_component_count(self : ElementNode) -> Int {
 
 ///|
 fn ElementNode::inspector_control_count(self : ElementNode) -> Int {
-  let mut count = if self.erased_view_node.inspector_is_control() {
+  let mut count = if runtime_view_node_inspector_is_control(self.view_node) {
     1
   } else {
     0
@@ -162,7 +156,7 @@ fn ElementNode::inspector_control_count(self : ElementNode) -> Int {
 
 ///|
 fn ElementNode::inspector_modified_count(self : ElementNode) -> Int {
-  let mut count = if self.erased_view_node.identity.kind.has_prefix("Modified<") {
+  let mut count = if self.view_node.identity().kind.has_prefix("Modified<") {
     1
   } else {
     0
@@ -244,7 +238,7 @@ fn ElementNode::collect_dirty_element_ids_by_kind(
 
 ///|
 fn ElementNode::mark_root_component_build_dirty(self : ElementNode) -> Bool {
-  if self.erased_view_node.is_building_erased_view_node() {
+  if self.view_node.has_build_child() {
     self.dirty.mark_build()
     self.clear_cached_layout_and_paint()
     true
@@ -256,7 +250,7 @@ fn ElementNode::mark_root_component_build_dirty(self : ElementNode) -> Bool {
 ///|
 fn ElementNode::mark_component_tree_build_dirty(self : ElementNode) -> Bool {
   let mut found = false
-  if self.erased_view_node.is_building_erased_view_node() {
+  if self.view_node.has_build_child() {
     self.dirty.mark_build()
     self.clear_cached_layout_and_paint()
     found = true

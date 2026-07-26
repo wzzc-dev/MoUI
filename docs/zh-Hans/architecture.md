@@ -20,8 +20,8 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 | --- | --- |
 | `moui/` | 面向 app-loop 类型的根 public facade：`View`、`Program`、`Effect`、`Subscription`、`Theme`、`Environment` 和 `ViewEnvironment`。 |
 | `moui/{geometry,graphics,animation,text,state}/` | 面向应用的 geometry、paint/drawing、motion、text 和 state/focus value types 的 `moui/core` 领域门面。它们依赖 `core`；`core` 不依赖它们。 |
-| `moui/core/` | 平台无关的基础契约：不透明 `View`、typed events、`Program`、`Effect`、`Subscription`、geometry、draw commands、semantics、text editing、theme token surface 和 custom view protocol。 |
-| `moui/views/` | Public view constructors、面向应用的 control APIs、default themes、form/navigation/data helpers，以及用 `@core.View::node` 构建的具体 custom view behavior。 |
+| `moui/core/` | 平台无关的基础契约：不透明 `View`、typed events、`Program`、`Effect`、`Subscription`、geometry、draw commands、semantics、text editing、theme token surface 和公开、与消息无关的 `ViewNode` 扩展协议。 |
+| `moui/views/` | Public view constructors、面向应用的 control APIs、default themes、form/navigation/data helpers，以及通过 `@core.View::from_node` 构造的具体 `ViewNode` behavior。 |
 | `moui/runtime/` | AppRuntime construction、runtime state、element/layout/render tree generation、event dispatch、program queue drain、effects、subscriptions、diagnostics 和 inspector snapshots。 |
 | `moui/backend/host/` | 面向 windows、routes、timers、host services、WebView、async image loading、accessibility、input、redraw scheduling 和 renderer handoff 的共享 host contracts。 |
 | `moui/backend/internal/embedded_runtime_session/` | Android、iOS 和 HarmonyOS window-hosted adapter 的私有 MoUI runtime 装配层；在 `ApplicationHandler` callbacks 之后组合 `AppRuntime`、host contracts 和 renderers。 |
@@ -113,7 +113,7 @@ Window-hosted mobile runtime sessions 共享 `EmbedderHostChannel`，用于带 r
 
 ## 扩展规则
 
-- 新控件：在 `moui/views` 中添加面向应用的 constructors 和具体行为；使用 `@core.View::node` 实现 custom layout/paint/event/focus/text behavior；不要为普通控件添加新的 core primitive enum variants。
+- 新控件：在 `moui/views` 中添加面向应用的 constructors 和具体行为；用 `@core.ViewNode` 实现与消息无关的 layout/paint/focus/semantics behavior，并用 `@core.View::from_node` 连接类型化 children/event/text command；不要为普通控件添加新的 core primitive enum variants。
 - 新 app examples：先创建 `examples/<name>/app`，再添加一个或多个薄平台入口。
 - 新 renderer capability：更新 implementation、tests、capability model、`docs/renderer-capability-report.md`，并在 text behavior 变化时更新文本 docs。
 - 新 public API：更新或重新生成 `pkg.generated.mbti`，运行 API surface checks，并在 review 中说明归属包。
@@ -134,7 +134,7 @@ node scripts/validate-api-surface.mjs
 ## 范围
 
 - 平台无关的 `core` contracts、不透明 views、environment/event/geometry、
-  draw models，以及由 `View[Msg]` 包装的私有 custom view protocol。
+  draw models，以及由类型化 `View[Msg]` adapter 包装的公开、与消息无关的 `ViewNode` protocol。
   `core` 只应增长跨运行时协议和共享 value types；具体 control behavior 属于 `moui/views`，并与 public view facade 放在一起。新控件不得添加 core enum variants、primitive constructors 或 lowering arms。持久 runtime state、element/render trees、layout、paint、event dispatch 和 program execution 由 runtime 拥有，不从 `core` 暴露。
 - `moui/runtime` 是 app/host runtime entrypoint package。它暴露不透明
   `@runtime.AppRuntime` construction/query/dispatch methods，并拥有 program message drain、effect task、subscription lifecycle 和 runtime diagnostics。
@@ -327,7 +327,7 @@ Constraints down -> Size up -> parent places children
 `Constraints::tighten` 和 `Constraints::unbounded` 可在 `core` 中使用。
 `Padding` 会 deflate child constraints 并 inflate 自身 measured size。`Frame` 会 tighten child constraints。`Flex`、`Grid`、`List`、`Stack`、`Scroll` 和有序 layout modifiers 在 `moui/views` 中实现为具体 custom view behavior；runtime 测量 children，将 child sizes 传入 owning virtual node，并把返回的 child frames 存入 `PlacedNode`。Paint 会复用这些 placed child frames，而不会再次运行 layout。
 
-高级 layout authors 可以使用 `@views.custom_children_layout` 定义 child layout delegate，同时仍返回 `View[Msg]`。该 delegate 接收 measured child sizes，返回自身 size，并用显式 frames 放置 children。它的 context 也暴露 child baselines 和 layout priorities，使 custom layouts 能对齐文本并做出 priority-aware placement decisions；paint 和 semantics metadata 保留在同一个 `View::node` callback surface 上。
+高级 layout authors 可以使用 `@views.custom_children_layout` 定义 child layout delegate，同时仍返回 `View[Msg]`。该 delegate 接收 measured child sizes，返回自身 size，并用显式 frames 放置 children。它的 context 也暴露 child baselines 和 layout priorities，使 custom layouts 能对齐文本并做出 priority-aware placement decisions；paint 和 semantics metadata 保留在同一个 concrete `ViewNode` behavior surface 上。
 
 ## 修饰器与环境
 
@@ -354,7 +354,7 @@ public `views` 包包括 text、button、text field、checkbox、image、contain
 当前 public constructor matrix、test coverage 和 example coverage 见 [View catalog](../view-catalog.md)。
 更大的 WYSIWYG editing workflow 记录在 [Markdown Editor](../markdown-editor.md)。
 
-高级用户可以使用 `@views.custom_layout` 提供 measurement、paint 和 semantics callbacks，而无需暴露内部 runtime tree。内部实现使用与普通 `moui/views` raw constructors 相同的 `View::node` callback surface：
+高级用户可以使用 `@views.custom_layout` 提供 measurement、paint 和 semantics callbacks，而无需暴露内部 runtime tree。其 concrete node 与普通 `moui/views` 控件一样实现 `ViewNode`，并通过 `View::from_node` 构造：
 
 ```moonbit
 let swatch = @views.custom_layout(
@@ -383,7 +383,7 @@ let pair = @views.custom_children_layout(
 )
 ```
 
-添加可复用控件时，将其具体 custom view behavior 放入 `moui/views`，从 `moui/views` 暴露面向应用的 constructor，并围绕 custom view runtime behavior 添加 tests。不要暴露 `ViewNode`，不要添加 `@core.View::primitive_*_view` constructor、`ViewLoweringSink` 或新控件的 runtime lowering arm。
+添加可复用控件时，将其具体 custom view behavior 放入 `moui/views`，从 `moui/views` 暴露面向应用的 constructor，并围绕 custom view runtime behavior 添加 tests。不要从 app-facing facade 重导出 `ViewNode`，不要添加 `@core.View::primitive_*_view` constructor、`ViewLoweringSink` 或新控件的 runtime lowering arm。
 
 ## 平台 Host 契约
 

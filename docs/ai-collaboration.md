@@ -17,8 +17,9 @@ workflow for agents and maintainers.
 
 ## Project Invariants
 
-- Public view constructors return opaque `@moui.View[Msg]`; concrete behavior
-  lives in `moui/views` via `@core.View::node`.
+- Public view constructors return opaque `@moui.View[Msg]`; concrete built-in
+  behavior lives in `moui/views` as `@core.ViewNode` implementations constructed
+  with `@core.View::from_node`.
 - The runtime pipeline stays:
 
   ```text
@@ -26,7 +27,8 @@ workflow for agents and maintainers.
   ```
 
 - `core/` owns platform-neutral contracts, opaque views, events, geometry,
-  draw/semantics/text/theme contracts, and the private custom view protocol wrapped by `View[Msg]`;
+  draw/semantics/text/theme contracts, and the public message-independent
+  `ViewNode` extension protocol wrapped by typed `View[Msg]` adapters;
   `moui/runtime` owns `AppRuntime`, runtime state, tree/layout/paint, event
   dispatch, program message drain, effect tasks, subscriptions, and runtime
   diagnostics.
@@ -71,7 +73,7 @@ workflow for agents and maintainers.
 
 ```text
 Add a MoUI view constructor for <control>. Keep it in views/, return @moui.View[Msg],
-put reusable behavior in views/ with @core.View::node, reuse existing styles/modifiers where possible, add focused tests in
+implement reusable behavior in views/ as a concrete @core.ViewNode and construct it with @core.View::from_node, reuse existing styles/modifiers where possible, add focused tests in
 views/views_test.mbt, update docs/view-catalog.md if public coverage changes, and
 run moon test moui/views --target native plus moon info if the public API changes.
 ```

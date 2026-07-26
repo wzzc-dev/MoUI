@@ -24,7 +24,7 @@ fn[Msg] greedy_box(
 ) -> @core.View[Msg] {
   let requested_width = width
   let requested_height = height
-  @core.View::node(
+  runtime_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="Greedy"),
     revision=() => {
       let w = greedy_box_option_label(requested_width)

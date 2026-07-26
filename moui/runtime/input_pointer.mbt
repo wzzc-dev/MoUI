@@ -22,7 +22,7 @@ fn ElementNode::dispatch_pointer(
     child_result
   } else {
     let own = self.dispatch_view_event(
-      self.erased_view_node,
+      self.view_node,
       AppEvent::Pointer(event),
       render,
       text_system,
@@ -30,6 +30,8 @@ fn ElementNode::dispatch_pointer(
       style~,
       now_ms~,
     )
+    let deliveries = child_result.deliveries.copy()
+    deliveries.append(own.deliveries)
     {
       changed: child_result.changed || own.changed,
       activated: own.activated,
@@ -42,6 +44,7 @@ fn ElementNode::dispatch_pointer(
         Some(value) => Some(value)
         None => child_result.focused
       },
+      deliveries,
     }
   }
 }
@@ -49,7 +52,7 @@ fn ElementNode::dispatch_pointer(
 ///|
 fn ElementNode::dispatch_view_event(
   self : ElementNode,
-  data : ErasedViewNode,
+  data : &RuntimeViewNode,
   event : AppEvent,
   render : RenderNode,
   text_system : TextSystem,
@@ -58,12 +61,12 @@ fn ElementNode::dispatch_view_event(
   now_ms? : Double = 0.0,
   focused? : Bool = false,
 ) -> ElementEventResult {
-  let result = (data.event)({
+  let result = data.event({
     frame: render.frame,
     child_frames: render.children.map(child => child.frame),
     event,
     focused,
-    state: { ..data.state, focused, },
+    state: self.control.view_context(focused),
     text_control: self.control.text_context(),
     text_system,
     environment,
@@ -71,7 +74,7 @@ fn ElementNode::dispatch_view_event(
     now_ms,
   })
   match result.state {
-    Some(next_state) => self.erased_view_node = { ..data, state: next_state }
+    Some(next_state) => self.control.apply_view_context(next_state)
     None => ()
   }
   match result.text_control {
@@ -93,6 +96,7 @@ fn ElementNode::dispatch_view_event(
     } else {
       None
     },
+    deliveries: result.deliveries,
   }
 }
 
@@ -137,9 +141,10 @@ fn ElementNode::dispatch_pointer_to_children(
   let mut captured = false
   let mut capture_target : ElementId? = None
   let mut focused : ElementId? = None
+  let deliveries : Array[() -> Unit] = []
   let mut layout_changed = false
-  let child_environment = (self.erased_view_node.child_environment)(environment)
-  let child_style = (self.erased_view_node.child_style)(style)
+  let child_environment = self.view_node.child_environment(environment)
+  let child_style = self.view_node.child_style(style)
   // On a `Move`, the pointer can only be over one element, so only one child
   // receives the event. Any *other* child that still holds hover (from a prior
   // move) has been left behind and must get a synthetic `Exit` to clear it —
@@ -208,6 +213,7 @@ fn ElementNode::dispatch_pointer_to_children(
         changed = changed || result.changed
         activated = activated || result.activated
         captured = captured || result.captured
+        deliveries.append(result.deliveries)
         match (capture_target, result.capture_target) {
           (None, Some(target)) => capture_target = Some(target)
           _ => ()
@@ -249,6 +255,7 @@ fn ElementNode::dispatch_pointer_to_children(
         )
         changed = changed || exit_result.changed
         captured = captured || exit_result.captured
+        deliveries.append(exit_result.deliveries)
         if exit_result.changed && child.has_dirty_layout() {
           layout_changed = true
         }
@@ -263,7 +270,7 @@ fn ElementNode::dispatch_pointer_to_children(
       self.mark_pointer_paint_dirty()
     }
   }
-  { changed, activated, captured, capture_target, focused }
+  { changed, activated, captured, capture_target, focused, deliveries }
 }
 
 ///|
@@ -273,7 +280,7 @@ fn ElementNode::dispatch_pointer_to_children(
 /// elsewhere (Down on touch). A child without hover/press has nothing to clear,
 /// so it is skipped — this keeps the extra dispatch off the common case.
 fn ElementNode::has_hovered_descendant(self : ElementNode) -> Bool {
-  if self.erased_view_node.state.hovered || self.erased_view_node.state.pressed {
+  if self.control.view_state.hovered || self.control.view_state.pressed {
     return true
   }
   for child in self.children {
@@ -374,10 +381,8 @@ fn ElementNode::dispatch_pointer_to_target(
       ),
     )
   } else {
-    let child_environment = (self.erased_view_node.child_environment)(
-      environment,
-    )
-    let child_style = (self.erased_view_node.child_style)(style)
+    let child_environment = self.view_node.child_environment(environment)
+    let child_style = self.view_node.child_style(style)
     let mut index = 0
     while index < self.children.length() {
       if index < render.children.length() {

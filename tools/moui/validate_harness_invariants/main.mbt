@@ -386,7 +386,7 @@ fn check_p2_texts(
     Some(mbti) => {
       if has_public_enum_view(mbti) {
         push_fail(
-          results, "P2", mbti_path, "public enum View in core is forbidden for app controls. Fix: keep opaque View + View::node; put controls in moui/views. See docs/invariants.md#P2",
+          results, "P2", mbti_path, "public enum View in core is forbidden for app controls. Fix: keep opaque View plus the ViewNode trait; put controls in moui/views. See docs/invariants.md#P2",
         )
       }
       for name in core_control_fns() {
@@ -397,7 +397,7 @@ fn check_p2_texts(
             mbti_path,
             "core public control constructor pub fn " +
             name +
-            ". Fix: move control to moui/views via @core.View::node. See docs/invariants.md#P2",
+            ". Fix: move control to moui/views as a concrete @core.ViewNode constructed with @core.View::from_node. See docs/invariants.md#P2",
           )
         }
       }
@@ -418,7 +418,7 @@ fn check_p2_texts(
           file,
           "pub fn " +
           name +
-          " in core. Fix: implement in moui/views with @core.View::node. See docs/invariants.md#P2",
+          " in core. Fix: implement a concrete @core.ViewNode in moui/views and construct it with @core.View::from_node. See docs/invariants.md#P2",
         )
       }
     }

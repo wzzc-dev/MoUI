@@ -63,20 +63,20 @@ fn[Msg] RuntimeState::new_view(
     Some(handler) => handler
     None => _message => ()
   }
-  RuntimeState::new_erased_view_node(
-    root=erase_view_for_runtime(root, emit),
+  RuntimeState::new_runtime_view_node(
+    root=adapt_view_for_runtime(root, emit),
     size~,
     environment~,
   )
 }
 
 ///|
-fn RuntimeState::new_erased_view_node(
-  root~ : ErasedViewNode,
+fn RuntimeState::new_runtime_view_node(
+  root~ : &RuntimeViewNode,
   size~ : Size,
   environment? : Environment = Environment::neutral(),
 ) -> RuntimeState {
-  let initial = mount_erased_view_node_with_next(root, 1)
+  let initial = mount_runtime_view_node_with_next(root, 1)
   let state = {
     element_tree: ElementTree::new(initial.node),
     layout_tree: LayoutTree::empty(),
@@ -113,7 +113,7 @@ fn RuntimeState::new_erased_view_node(
     active_animations: false,
     pending_scroll_request: None,
   }
-  let mounted = mount_erased_view_node_for_runtime(root, Some(state), 1)
+  let mounted = mount_runtime_view_node_for_runtime(root, Some(state), 1)
   state.element_tree = ElementTree::new(mounted.node)
   state.next_element_id = mounted.next_id
   state.mark_dirty(state.element_tree.id())

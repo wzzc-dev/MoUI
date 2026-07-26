@@ -9,12 +9,14 @@ fn ElementNode::dispatch_drag_drop(
     child_result
   } else {
     let result = self.dispatch_view_event(
-      self.erased_view_node,
+      self.view_node,
       AppEvent::DragDrop(event),
       render,
       TextSystem::fallback(),
       environment=Environment::neutral(),
     )
+    let deliveries = child_result.deliveries.copy()
+    deliveries.append(result.deliveries)
     {
       changed: child_result.changed || result.changed,
       activated: result.activated,
@@ -27,6 +29,7 @@ fn ElementNode::dispatch_drag_drop(
         Some(value) => Some(value)
         None => child_result.focused
       },
+      deliveries,
     }
   }
 }
@@ -41,6 +44,7 @@ fn ElementNode::dispatch_drag_drop_to_children(
     Some(position) => {
       let mut changed = false
       let mut activated = false
+      let deliveries : Array[() -> Unit] = []
       let mut index = self.children.length() - 1
       while index >= 0 {
         if index < render.children.length() &&
@@ -51,6 +55,7 @@ fn ElementNode::dispatch_drag_drop_to_children(
           )
           changed = changed || result.changed
           activated = activated || result.activated
+          deliveries.append(result.deliveries)
           if result.changed || result.activated {
             break
           }
@@ -66,6 +71,7 @@ fn ElementNode::dispatch_drag_drop_to_children(
         captured: false,
         capture_target: None,
         focused: None,
+        deliveries,
       }
     }
     None =>
@@ -75,6 +81,7 @@ fn ElementNode::dispatch_drag_drop_to_children(
         captured: false,
         capture_target: None,
         focused: None,
+        deliveries: [],
       }
   }
 }

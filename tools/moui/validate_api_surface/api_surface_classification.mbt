@@ -28,7 +28,7 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
     {
       path: "moui/core/pkg.generated.mbti",
       category: "advanced_core_protocol",
-      max_count: 523,
+      max_count: 524,
     },
     {
       path: "moui/core/pkg.generated.mbti",
@@ -141,6 +141,7 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
 ///|
 fn api_surface_public_line(line : String) -> Bool {
   line.has_prefix("pub ") ||
+  line.has_prefix("pub(open)") ||
   line.has_prefix("pub(all)") ||
   line.has_prefix("pub type ") ||
   line.has_prefix("type ")

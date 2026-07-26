@@ -55,7 +55,7 @@ fn ElementNode::find_focusable_at(
       }
     }
   }
-  if (self.erased_view_node.focusable)() && render.hit_bounds().contains(point) {
+  if self.view_node.focusable() && render.hit_bounds().contains(point) {
     Some(self.id)
   } else {
     None
@@ -67,7 +67,7 @@ fn ElementNode::focusable_ids(
   self : ElementNode,
   ids : Array[ElementId],
 ) -> Unit {
-  if (self.erased_view_node.focusable)() {
+  if self.view_node.focusable() {
     ids.push(self.id)
   }
   for child in self.children {
@@ -124,7 +124,7 @@ fn ElementNode::contains_element_id(
 ///|
 fn ElementNode::is_focusable_id(self : ElementNode, target : ElementId) -> Bool {
   if self.id == target {
-    (self.erased_view_node.focusable)()
+    self.view_node.focusable()
   } else {
     for child in self.children {
       if child.is_focusable_id(target) {
@@ -151,7 +151,7 @@ fn ElementNode::accepts_tab_input(
   target : ElementId,
 ) -> Bool {
   if self.id == target {
-    self.view_accepts_text_input(self.erased_view_node)
+    self.view_accepts_text_input(self.view_node)
   } else {
     for child in self.children {
       if child.accepts_tab_input(target) {
@@ -168,7 +168,7 @@ fn ElementNode::is_text_input_target(
   target : ElementId,
 ) -> Bool {
   if self.id == target {
-    self.view_accepts_text_input(self.erased_view_node)
+    self.view_accepts_text_input(self.view_node)
   } else {
     for child in self.children {
       if child.is_text_input_target(target) {
@@ -182,13 +182,13 @@ fn ElementNode::is_text_input_target(
 ///|
 fn ElementNode::view_accepts_text_input(
   self : ElementNode,
-  data : ErasedViewNode,
+  data : &RuntimeViewNode,
 ) -> Bool {
-  (data.text_input_state)({
+  data.text_input_state({
     frame: Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
     child_frames: [],
     focused: true,
-    state: { ..data.state, focused: true },
+    state: self.control.view_context(true),
     text_control: self.control.text_context(),
     environment: Environment::neutral(),
     style: ViewStyle::empty(),

@@ -10,7 +10,7 @@
 4. 当 view 面向用户时，添加 Showcase 入口。
 5. 运行 `moon test moui/views --target native` 和 `moon info`。
 
-不要暴露 `ViewNode`，也不要为新控件添加 `@core.View::primitive_*_view` constructor、`ViewLoweringSink` 或 runtime lowering arm。这些路径是历史架构，并有 guard 防止回归。
+将可复用内置行为实现为 concrete `@core.ViewNode`，并用 `@core.View::from_node` 包装。不要从 app-facing facade 重导出 `ViewNode`，也不要为新控件添加 `@core.View::primitive_*_view` constructor、`ViewLoweringSink` 或 runtime lowering arm。
 
 ## 创建 Custom Layout
 

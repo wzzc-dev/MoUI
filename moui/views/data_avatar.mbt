@@ -8,30 +8,7 @@ pub fn[Msg] avatar(
   let resolved_theme = views_ambient_theme(theme)
   match image {
     Some(source) =>
-      @core.View::node(
-        identity=() => @core.ViewIdentity::new(kind="Image"),
-        revision=() => "avatar-image:\{source}:\{size}",
-        layout=ctx => {
-          @core.ViewLayoutResult::new(
-            size=ctx.constraints.constrain(
-              @core.Size::new(width=size, height=size),
-            ),
-          )
-        },
-        paint=ctx => {
-          @core.ViewPaintPlan::commands([
-            @core.DrawCommand::DrawImage({
-              source,
-              frame: ctx.frame,
-              opacity: 1.0,
-              fit: @core.ImageFit::Contain,
-            }),
-          ])
-        },
-        semantics=() => {
-          @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
-        },
-      )
+      @core.View::from_node(AvatarImageViewNode::{ source, size })
       .corner_radius(size / 2.0)
       .clip()
       .accessibility_label(label)

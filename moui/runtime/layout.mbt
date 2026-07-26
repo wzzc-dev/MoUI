@@ -38,9 +38,9 @@ fn ElementNode::measure_with_text_system(
       None => ()
     }
   }
-  let child_constraints = (self.erased_view_node.child_constraints)(constraints)
-  let child_environment = (self.erased_view_node.child_environment)(environment)
-  let child_style = (self.erased_view_node.child_style)(style)
+  let child_constraints = self.view_node.child_constraints(constraints)
+  let child_environment = self.view_node.child_environment(environment)
+  let child_style = self.view_node.child_style(style)
   let children : Array[MeasuredNode] = []
   for child in self.children {
     children.push(
@@ -52,7 +52,7 @@ fn ElementNode::measure_with_text_system(
       ),
     )
   }
-  let view_node_layout = (self.erased_view_node.layout)({
+  let view_node_layout = self.view_node.layout({
     constraints,
     child_sizes: children.map(child => child.size),
     child_flex_weights: children.map(child => child.flex_weight),
@@ -63,7 +63,7 @@ fn ElementNode::measure_with_text_system(
   let measured = {
     element_id: self.id,
     size: constraints.constrain(view_node_layout.size),
-    flex_weight: (self.erased_view_node.flex_weight)(),
+    flex_weight: self.view_node.flex_weight(),
     children,
   }
   self.layout_cache.cached_measure_constraints = Some(constraints)
@@ -124,7 +124,7 @@ fn ElementNode::place_measured_with_text_system(
   text_system~ : TextSystem,
   layout_direction~ : LayoutDirection,
 ) -> PlacedNode {
-  let result = (self.erased_view_node.layout)({
+  let result = self.view_node.layout({
     constraints: Constraints::tight(frame.size),
     child_sizes: self.children.map(child => child.intrinsic_size()),
     child_flex_weights: measured.children.map(child => child.flex_weight),
@@ -135,8 +135,8 @@ fn ElementNode::place_measured_with_text_system(
   let child_frames = result.child_frames.map(child_frame => {
     child_frame.offset(dx=frame.origin.x, dy=frame.origin.y)
   })
-  let child_environment = (self.erased_view_node.child_environment)(environment)
-  let child_style = (self.erased_view_node.child_style)(style)
+  let child_environment = self.view_node.child_environment(environment)
+  let child_style = self.view_node.child_style(style)
   let children : Array[PlacedNode] = []
   for index, child in self.children {
     if index < child_frames.length() && index < measured.children.length() {
@@ -167,11 +167,11 @@ fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
       None => ()
     }
   }
-  let size = (self.erased_view_node.layout)({
+  let size = self.view_node.layout({
       constraints: Constraints::unbounded(),
       child_sizes: self.children.map(child => child.intrinsic_size()),
       child_flex_weights: self.children.map(child => {
-        (child.erased_view_node.flex_weight)()
+        child.view_node.flex_weight()
       }),
       text_system: TextSystem::fallback(),
       environment: Environment::neutral(),

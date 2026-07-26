@@ -1,6 +1,6 @@
 # View Catalog
 
-`views` 包暴露面向用户的 constructor，用于构建 MoUI app。公开 constructor 返回不透明的 `@moui.View[Msg]`，因此 app 代码可以保持声明式，而 runtime 拥有 tree reconciliation、dirty state、layout、paint、input 和 semantics dispatch。新的具体控件在 `moui/views` 中用 `@core.View::node` 实现；`ViewSpec` 和公开 `ViewNode` 是历史实现名称，不能回到面向 app 的 API。
+`views` 包暴露面向用户的 constructor，用于构建 MoUI app。公开 constructor 返回不透明的 `@moui.View[Msg]`，因此 app 代码可以保持声明式，而 runtime 拥有 tree reconciliation、dirty state、layout、paint、input 和 semantics dispatch。新的内置具体控件在 `moui/views` 中实现 `@core.ViewNode`，并用 `@core.View::from_node` 构造类型化 view；`ViewSpec` 是历史名称，`ViewNode` 则是高级 core 扩展协议，不由面向 app 的 facade 重导出。
 
 请把本 catalog 当作当前 view API 的支持矩阵。源码级细节仍在 `views/*.mbt` 中，生成的公开 API 摘要位于 `views/pkg.generated.mbti`。
 
@@ -219,4 +219,4 @@ fn view(draft : String) -> @moui.View[Msg] {
 5. 如果 API、theme support、semantics 或 example coverage 变化，更新本 catalog。
 6. 公开 API 变化后运行 `moon info`，并审阅 `views/pkg.generated.mbti`。
 
-不要为新 widget 暴露 `ViewNode`、添加 `@core.View::primitive_*_view` constructor、`ViewLoweringSink` 或 runtime lowering arm。
+不要从 `moui` 或 `moui/views` 重导出 `ViewNode`，也不要为新 widget 添加 `@core.View::primitive_*_view` constructor、`ViewLoweringSink` 或 runtime lowering arm。

@@ -5,7 +5,7 @@ fn[Msg] runtime_test_rect(
   color~ : @core.Color,
   on_tap? : Msg? = None,
 ) -> @core.View[Msg] {
-  @core.View::node(
+  runtime_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="Rect"),
     revision=() => "test-rect:\{width}:\{height}",
     layout=ctx => {
@@ -39,7 +39,7 @@ fn[Msg] runtime_test_padding(
   insets~ : @core.Insets,
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::node(
+  runtime_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="Padding", key~),
     revision=() => {
       "test-padding:\{insets.top}:\{insets.right}:\{insets.bottom}:\{insets.left}"
@@ -838,7 +838,7 @@ fn[Msg] runtime_test_hover_tracker(
   height~ : Double,
   log~ : Array[Bool],
 ) -> @core.View[Msg] {
-  @core.View::node(
+  runtime_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="HoverTracker"),
     revision=() => "hover-tracker:\{width}:\{height}",
     layout=ctx => {
@@ -900,7 +900,7 @@ test "runtime delivers synthetic Exit to clear hover on pointer leave" {
   // [100,200) with no element; right tracker occupies [200,300). The parent
   // places children at fixed frames so hit-testing distinguishes them and the
   // gap resolves to the parent (not the left tracker).
-  let root : @core.View[Unit] = @core.View::node(
+  let root : @core.View[Unit] = runtime_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="HoverStage"),
     revision=() => "hover-stage",
     children=() => {
@@ -978,7 +978,7 @@ test "runtime delivers synthetic Exit to clear hover on pointer leave" {
 test "runtime clears hover when moving between sibling controls" {
   let left_log : Array[Bool] = []
   let right_log : Array[Bool] = []
-  let root : @core.View[Unit] = @core.View::node(
+  let root : @core.View[Unit] = runtime_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="SiblingHoverStage"),
     revision=() => "sibling-hover-stage",
     children=() => {
@@ -1054,7 +1054,7 @@ fn[Msg] runtime_test_hover_phase_tracker(
   log~ : Array[Bool],
   phases~ : Array[@core.PointerPhase],
 ) -> @core.View[Msg] {
-  @core.View::node(
+  runtime_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="HoverPhaseTracker"),
     revision=() => "hover-phase-tracker:\{width}:\{height}",
     layout=ctx => {
@@ -1118,7 +1118,7 @@ test "runtime Exit does not propagate to descendant being entered" {
     log=child_log,
     phases=child_phases,
   )
-  let root : @core.View[Unit] = @core.View::node(
+  let root : @core.View[Unit] = runtime_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="HoverParent"),
     revision=() => "hover-parent",
     children=() => [child],

@@ -55,10 +55,10 @@ fn RenderEnvironment::with_text_system(
 ///|
 fn RenderEnvironment::with_child_context(
   self : RenderEnvironment,
-  data : ErasedViewNode,
+  data : &RuntimeViewNode,
 ) -> RenderEnvironment {
-  let environment = (data.child_environment)(self.environment)
-  let style = (data.child_style)(self.style)
+  let environment = data.child_environment(self.environment)
+  let style = data.child_style(self.style)
   {
     ..self,
     environment,

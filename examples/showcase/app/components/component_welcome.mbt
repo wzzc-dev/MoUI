@@ -1,10 +1,5 @@
 ///|
-using @views {
-  animated_canvas,
-  fill_rounded_rect,
-  pop_opacity,
-  push_opacity,
-}
+using @views {animated_canvas, fill_rounded_rect, pop_opacity, push_opacity}
 
 ///|
 fn welcome_demo(
@@ -156,22 +151,28 @@ fn welcome_bouncing_ball_canvas(
       fill_rounded_rect(
         ctx,
         @graphics.RoundedRect::new(rect=frame, radius=12.0),
-        @graphics.Brush::solid(
-          @graphics.Color::rgba(r=0.93, g=0.95, b=0.98),
-        ),
+        @graphics.Brush::solid(@graphics.Color::rgba(r=0.93, g=0.95, b=0.98)),
       )
       // Bouncing ball position from the paint clock.
       let travel_x = (frame.size.width - 2.0 * radius).max(1.0)
       let travel_y = (frame.size.height - 2.0 * radius).max(1.0)
       let period_x = travel_x / speed_x
       let period_y = travel_y / speed_y
-      let tx = (now_ms / 1000.0) % period_x
-      let ty = (now_ms / 1000.0) % period_y
+      let tx = now_ms / 1000.0 % period_x
+      let ty = now_ms / 1000.0 % period_y
       let phase_x = tx / period_x
       let phase_y = ty / period_y
       // Triangle wave: 0 -> 1 -> 0 within one period.
-      let norm_x = if phase_x < 0.5 { phase_x * 2.0 } else { 2.0 - phase_x * 2.0 }
-      let norm_y = if phase_y < 0.5 { phase_y * 2.0 } else { 2.0 - phase_y * 2.0 }
+      let norm_x = if phase_x < 0.5 {
+        phase_x * 2.0
+      } else {
+        2.0 - phase_x * 2.0
+      }
+      let norm_y = if phase_y < 0.5 {
+        phase_y * 2.0
+      } else {
+        2.0 - phase_y * 2.0
+      }
       let ball_x = frame.origin.x + radius + norm_x * travel_x
       let ball_y = frame.origin.y + radius + norm_y * travel_y
       let ball = @geometry.Rect::new(
@@ -197,7 +198,7 @@ fn welcome_bouncing_ball_canvas(
       // The orb itself, using the theme primary color.
       fill_rounded_rect(
         ctx,
-        @graphics.RoundedRect::new(rect=ball, radius=radius),
+        @graphics.RoundedRect::new(rect=ball, radius~),
         @graphics.Brush::solid(theme.palette.primary),
       )
     },

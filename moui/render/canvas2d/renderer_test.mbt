@@ -7,18 +7,18 @@ test "canvas2d_renderer_create_and_resize" {
     scale_factor=3.0,
   )
   renderer.resize(metrics)
-  assert_eq!(renderer.logical_width, 375.0)
-  assert_eq!(renderer.logical_height, 812.0)
-  assert_eq!(renderer.scale_factor, 3.0)
-  assert_false!(renderer.disposed)
+  assert_eq(renderer.logical_width, 375.0)
+  assert_eq(renderer.logical_height, 812.0)
+  assert_eq(renderer.scale_factor, 3.0)
+  assert_false(renderer.disposed)
 }
 
 ///|
 test "canvas2d_renderer_dispose" {
   let renderer = Canvas2DRenderer::new(canvas_id="test-canvas")
-  assert_false!(renderer.disposed)
+  assert_false(renderer.disposed)
   renderer.dispose()
-  assert_true!(renderer.disposed)
+  assert_true(renderer.disposed)
 }
 
 ///|
@@ -30,7 +30,7 @@ test "canvas2d_renderer_render_frame_empty" {
     clear_color=@core.Color::white(),
   )
   let result = renderer.render_frame(frame)
-  assert_true!(result.presented)
+  assert_true(result.presented)
 }
 
 ///|
@@ -43,7 +43,7 @@ test "canvas2d_renderer_render_frame_after_dispose" {
     clear_color=@core.Color::white(),
   )
   let result = renderer.render_frame(frame)
-  assert_false!(result.presented)
+  assert_false(result.presented)
 }
 
 ///|
@@ -54,21 +54,21 @@ test "canvas2d_create_renderer_sets_metrics" {
     scale_factor=3.0,
   )
   let renderer = canvas2d_create_renderer(canvas_id="test-canvas", metrics~)
-  assert_eq!(renderer.logical_width, 390.0)
-  assert_eq!(renderer.logical_height, 844.0)
-  assert_eq!(renderer.scale_factor, 3.0)
+  assert_eq(renderer.logical_width, 390.0)
+  assert_eq(renderer.logical_height, 844.0)
+  assert_eq(renderer.scale_factor, 3.0)
 }
 
 ///|
 test "canvas2d_descriptor_has_wasm_gc_target" {
   let descriptor = canvas2d_descriptor()
-  assert_eq!(descriptor.supported_targets.length(), 1)
-  assert_eq!(descriptor.supported_targets[0], @render.RendererTarget::WasmGc)
+  assert_eq(descriptor.supported_targets.length(), 1)
+  assert_eq(descriptor.supported_targets[0], @render.RendererTarget::WasmGc)
 }
 
 ///|
 test "canvas2d_image_resources_empty" {
   let renderer = Canvas2DRenderer::new(canvas_id="test-canvas")
   let resources = renderer.image_resources()
-  assert_eq!(resources.length(), 0)
+  assert_eq(resources.length(), 0)
 }

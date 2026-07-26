@@ -3,7 +3,7 @@ pub fn[Msg, NextMsg] View::map(
   self : View[Msg],
   map : (Msg) -> NextMsg,
 ) -> View[NextMsg] {
-  { node: self.node.map(map) }
+  { adapter: self.adapter.map(map) }
 }
 
 ///|
@@ -117,11 +117,7 @@ pub fn[Msg] View::presence(
   if sample.present {
     self.apply_transition_style(sample.style)
   } else {
-    View::node(identity=() => ViewIdentity::new(kind="Empty"), layout=ctx => {
-      ViewLayoutResult::new(
-        size=ctx.constraints.constrain(Size::new(width=0.0, height=0.0)),
-      )
-    })
+    empty_view()
   }
 }
 

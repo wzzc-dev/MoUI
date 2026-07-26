@@ -10,17 +10,15 @@ fn ElementNode::focused_text_input(
   if self.id == target {
     view_text_input_state(
       self,
-      self.erased_view_node,
+      self.view_node,
       render,
       text_system,
       environment,
       style,
     )
   } else {
-    let child_environment = (self.erased_view_node.child_environment)(
-      environment,
-    )
-    let child_style = (self.erased_view_node.child_style)(style)
+    let child_environment = self.view_node.child_environment(environment)
+    let child_style = self.view_node.child_style(style)
     for index, child in self.children {
       if index < render.children.length() {
         match
@@ -43,17 +41,17 @@ fn ElementNode::focused_text_input(
 ///|
 fn view_text_input_state(
   element : ElementNode,
-  data : ErasedViewNode,
+  data : &RuntimeViewNode,
   render : RenderNode,
   text_system : TextSystem,
   environment : Environment,
   style : ViewStyle,
 ) -> TextInputState? {
-  (data.text_input_state)({
+  data.text_input_state({
     frame: render.frame,
     child_frames: render.children.map(child => child.frame),
     focused: true,
-    state: { ..data.state, focused: true },
+    state: element.control.view_context(true),
     text_control: element.control.text_context(),
     environment,
     style,

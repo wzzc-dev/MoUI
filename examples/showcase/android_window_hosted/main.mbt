@@ -5,7 +5,9 @@ fn main {
     title="MoUI Showcase (android window-hosted)",
     runtime_factory=metrics => {
       @runtime.new_program(
-        program=@app.ShowcaseApp::new().program_with_initial_route("platform/mobile-service-probe"),
+        program=@app.ShowcaseApp::new().program_with_initial_route(
+          "platform/mobile-service-probe",
+        ),
         size=metrics.logical_size,
       )
     },

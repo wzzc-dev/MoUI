@@ -135,7 +135,11 @@ fn shell_top_bar(
       text("MoUI Showcase", role=@views.TextRole::Title, theme~),
       @views.spacer(weight=1.0),
       if !compact {
-        text(model.current_route_string(), role=@views.TextRole::Caption, theme~)
+        text(
+          model.current_route_string(),
+          role=@views.TextRole::Caption,
+          theme~,
+        )
       } else {
         @views.spacer(min_length=0.0)
       },
@@ -158,8 +162,7 @@ fn shell_top_bar(
     ],
     spacing=theme.spacing_scale.sm,
     align=@views.CrossAlign::Center,
-  )
-  .frame(width~)
+  ).frame(width~)
 }
 
 ///|
