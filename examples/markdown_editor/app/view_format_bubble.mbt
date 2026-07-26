@@ -111,7 +111,7 @@ fn markdown_editor_format_bubble_overlay(
         )
       },
       place=ctx => {
-        let bubble_size = ctx.child_sizes[0]
+        let bubble_size = ctx.children[0].size
         let editor_frame = @geometry.Rect::new(
           x=ctx.frame.origin.x,
           y=ctx.frame.origin.y,

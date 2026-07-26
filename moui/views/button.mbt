@@ -97,7 +97,7 @@ fn[Msg] button_control(
     ButtonVariant::SubtleBrand => "subtle_brand"
   }
   @core.View::from_node(
-    ButtonViewNode::{
+    Button::{
       text,
       variant,
       min_size,
@@ -115,7 +115,7 @@ fn[Msg] button_control(
 }
 
 ///|
-priv struct ButtonViewNode {
+priv struct Button {
   text : String
   variant : ButtonVariant
   min_size : @core.Size
@@ -130,17 +130,17 @@ priv struct ButtonViewNode {
 }
 
 ///|
-impl @core.ViewNode for ButtonViewNode with fn identity(self) {
+impl @core.ViewNode for Button with fn identity(self) {
   @core.ViewIdentity::new(kind=self.kind, key=self.key)
 }
 
 ///|
-impl @core.ViewNode for ButtonViewNode with fn revision(self) {
+impl @core.ViewNode for Button with fn revision(self) {
   "button:\{self.text}:\{view_size_revision(self.min_size)}:\{self.variant_label}:\{self.theme_revision}:\{self.leading_icon is Some(_)}:\{self.has_on_click}"
 }
 
 ///|
-impl @core.ViewNode for ButtonViewNode with fn layout(self, ctx) {
+impl @core.ViewNode for Button with fn layout(self, ctx) {
   let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
   let font = resolved_theme.typography.control
   let padding_horizontal = resolved_theme.spacing_scale.lg
@@ -170,7 +170,7 @@ impl @core.ViewNode for ButtonViewNode with fn layout(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for ButtonViewNode with fn paint(self, ctx) {
+impl @core.ViewNode for Button with fn paint(self, ctx) {
   let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
   let resolved_style = match self.style {
     Some(value) => value
@@ -288,9 +288,9 @@ impl @core.ViewNode for ButtonViewNode with fn paint(self, ctx) {
     width=view_max_double(
       0.0,
       ctx.frame.size.width -
-        padding_horizontal -
-        icon_block_width -
-        padding_horizontal,
+      padding_horizontal -
+      icon_block_width -
+      padding_horizontal,
     ),
     height=ctx.frame.size.height,
   )
@@ -336,7 +336,7 @@ impl @core.ViewNode for ButtonViewNode with fn paint(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for ButtonViewNode with fn semantics(self) {
+impl @core.ViewNode for Button with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
     role=@core.SemanticsRole::Button,
     label=self.text,
@@ -345,7 +345,7 @@ impl @core.ViewNode for ButtonViewNode with fn semantics(self) {
 }
 
 ///|
-impl @core.ViewNode for ButtonViewNode with fn focusable(_self) {
+impl @core.ViewNode for Button with fn focusable(_self) {
   true
 }
 
