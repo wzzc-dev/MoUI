@@ -3,9 +3,10 @@
 The `views` package exposes user-facing constructors for building MoUI apps.
 Public constructors return opaque `@moui.View[Msg]`, so app code can stay
 declarative while runtime owns tree reconciliation, dirty state, layout, paint,
-input, and semantics dispatch. New concrete controls are implemented in
-`moui/views` with `@core.View::node`; `ViewSpec` and public `ViewNode` are
-historical implementation names and must not return to app-facing APIs.
+input, and semantics dispatch. New built-in controls define concrete
+`@core.ViewNode` implementations in `moui/views` and construct typed views with
+`@core.View::from_node`; `ViewSpec` is historical, while `ViewNode` remains an
+advanced core extension protocol and is not re-exported by app-facing facades.
 
 Use this catalog as a support matrix for current view APIs. Source-level details
 remain in `views/*.mbt` and the generated public API summary in
@@ -302,5 +303,6 @@ When adding or changing a public view constructor:
    changes.
 6. Run `moon info` after public API changes and review `views/pkg.generated.mbti`.
 
-Do not expose `ViewNode`, add `@core.View::primitive_*_view` constructors,
-`ViewLoweringSink`, or runtime lowering arms for new widgets.
+Do not re-export `ViewNode` from `moui` or `moui/views`, add
+`@core.View::primitive_*_view` constructors, `ViewLoweringSink`, or runtime
+lowering arms for new widgets.

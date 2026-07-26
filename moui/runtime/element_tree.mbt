@@ -2,7 +2,7 @@
 priv struct ElementNode {
   id : ElementId
   mut key : Key?
-  mut erased_view_node : ErasedViewNode
+  mut view_node : &RuntimeViewNode
   mut children : Array[ElementNode]
   dirty : DirtyFlags
   control : ElementControlState
@@ -23,6 +23,7 @@ priv struct LayoutTree {
 
 ///|
 priv struct ElementControlState {
+  mut view_state : @core.ViewStateContext
   mut caret : Int
   mut selection : TextRange?
   mut text_selection_anchor : Int?
@@ -30,6 +31,22 @@ priv struct ElementControlState {
   mut composition_cursor : TextRange?
   text_undo_stack : Array[@core.TextHistoryEntryContext]
   text_redo_stack : Array[@core.TextHistoryEntryContext]
+}
+
+///|
+fn ElementControlState::view_context(
+  self : ElementControlState,
+  focused : Bool,
+) -> @core.ViewStateContext {
+  { ..self.view_state, focused, }
+}
+
+///|
+fn ElementControlState::apply_view_context(
+  self : ElementControlState,
+  value : @core.ViewStateContext,
+) -> Unit {
+  self.view_state = value
 }
 
 ///|
@@ -156,7 +173,7 @@ fn ElementTree::new(root : ElementNode) -> ElementTree {
 
 ///|
 fn ElementTree::empty() -> ElementTree {
-  { root: mount_erased_view_node(empty_erased_view_node()) }
+  { root: mount_runtime_view_node(empty_runtime_view_node()) }
 }
 
 ///|
@@ -183,6 +200,16 @@ fn LayoutTree::empty() -> LayoutTree {
 ///|
 fn ElementControlState::new() -> ElementControlState {
   {
+    view_state: {
+      focused: false,
+      hovered: false,
+      pressed: false,
+      selected: false,
+      checked: false,
+      expanded: false,
+      disabled: false,
+      scratch: "",
+    },
     caret: 0,
     selection: None,
     text_selection_anchor: None,

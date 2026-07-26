@@ -1625,6 +1625,7 @@ pub fn[Msg] View::focusable(Self[Msg], focusable? : Bool) -> Self[Msg]
 pub fn[Msg] View::font(Self[Msg], FontSpec) -> Self[Msg]
 pub fn[Msg] View::foreground(Self[Msg], Color) -> Self[Msg]
 pub fn[Msg] View::frame(Self[Msg], width? : Double, height? : Double, min_width? : Double, min_height? : Double, max_width? : Double, max_height? : Double) -> Self[Msg]
+pub fn[Node : ViewNode, Msg] View::from_node(Node, children? : (Node) -> Array[Self[Msg]], build_child? : ((Node, ComponentContext) -> Self[Msg])?, event? : (Node, ViewEventContext) -> ViewEventResult[Msg], text_command? : (Node, ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[Msg]) -> Self[Msg]
 pub fn[Msg] View::identity(Self[Msg]) -> ViewIdentity
 pub fn[Msg] View::intrinsic_height(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::intrinsic_width(Self[Msg]) -> Self[Msg]
@@ -1635,7 +1636,6 @@ pub fn[Msg] View::layout_priority(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::main_axis_alignment(Self[Msg], MainAxisAlignment) -> Self[Msg]
 pub fn[Msg, NextMsg] View::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
 pub fn[Msg] View::mono(Self[Msg]) -> Self[Msg]
-pub fn[Msg] View::node(identity~ : () -> ViewIdentity, revision? : () -> String, paint_revision? : () -> String, children? : () -> Array[Self[Msg]], build_child? : ((ComponentContext) -> Self[Msg])?, child_constraints? : (Constraints) -> Constraints, child_environment? : (Environment) -> Environment, child_style? : (ViewStyle) -> ViewStyle, layout~ : (ViewLayoutContext) -> ViewLayoutResult, paint? : (ViewPaintContext) -> ViewPaintPlan, event? : (ViewEventContext) -> ViewEventResult[Msg], text_input_state? : (ViewPaintContext) -> TextInputState?, text_command? : (ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[Msg], semantics? : () -> ViewSemanticsInfo, focusable? : () -> Bool, flex_weight? : () -> Double) -> Self[Msg]
 pub fn[Msg] View::offset(Self[Msg], dx? : Double, dy? : Double) -> Self[Msg]
 pub fn[Msg] View::on_double_tap(Self[Msg], Msg) -> Self[Msg]
 pub fn[Msg] View::on_drag(Self[Msg], (DragGestureEvent) -> Msg) -> Self[Msg]
@@ -1828,4 +1828,18 @@ pub fn VisualStyle::empty() -> Self
 pub using @unicode {type TextGraphemeBoundaries}
 
 // Traits
+pub(open) trait ViewNode {
+  fn identity(Self) -> ViewIdentity
+  fn revision(Self) -> String = _
+  fn paint_revision(Self) -> String = _
+  fn child_constraints(Self, Constraints) -> Constraints = _
+  fn child_environment(Self, Environment) -> Environment = _
+  fn child_style(Self, ViewStyle) -> ViewStyle = _
+  fn layout(Self, ViewLayoutContext) -> ViewLayoutResult
+  fn paint(Self, ViewPaintContext) -> ViewPaintPlan = _
+  fn text_input_state(Self, ViewPaintContext) -> TextInputState? = _
+  fn semantics(Self) -> ViewSemanticsInfo = _
+  fn focusable(Self) -> Bool = _
+  fn flex_weight(Self) -> Double = _
+}
 

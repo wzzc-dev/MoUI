@@ -12,7 +12,7 @@ fn ElementNode::find_scroll_target(
   layout : PlacedNode,
   nearest_scroll : (ElementId, Rect)?,
 ) -> ScrollTarget? {
-  let nearest_scroll = if (self.erased_view_node.semantics)().role ==
+  let nearest_scroll = if self.view_node.semantics().role ==
     @core.SemanticsRole::ScrollView {
     Some((self.id, layout.frame))
   } else {
@@ -61,7 +61,7 @@ fn ElementNode::dispatch_event_to_target(
   if self.id == target {
     Some(
       self.dispatch_view_event(
-        self.erased_view_node,
+        self.view_node,
         event,
         layout.event_render_node(),
         text_system,
@@ -70,10 +70,8 @@ fn ElementNode::dispatch_event_to_target(
       ),
     )
   } else {
-    let child_environment = (self.erased_view_node.child_environment)(
-      environment,
-    )
-    let child_style = (self.erased_view_node.child_style)(style)
+    let child_environment = self.view_node.child_environment(environment)
+    let child_style = self.view_node.child_style(style)
     for index, child in self.children {
       if index < layout.children.length() {
         match

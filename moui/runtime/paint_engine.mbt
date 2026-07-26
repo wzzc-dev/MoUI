@@ -24,11 +24,11 @@ fn ElementNode::render_with_environment(
   let post_commands : Array[DrawCommand] = []
   let overlay_commands : Array[DrawCommand] = []
   let platform_views : Array[PlatformViewPlacement] = []
-  let plan = (self.erased_view_node.paint)({
+  let plan = self.view_node.paint({
     frame: bounds,
     child_frames: placed.children.map(child => child.frame),
     focused: focused == Some(self.id),
-    state: { ..self.erased_view_node.state, focused: focused == Some(self.id) },
+    state: self.control.view_context(focused == Some(self.id)),
     text_control: self.control.text_context(),
     environment: render_environment_to_view_environment(environment),
     style: environment.style,
@@ -53,7 +53,7 @@ fn ElementNode::render_with_environment(
   // rect before union. Picker/date-picker popups paint through
   // `overlay_commands` (not children) and stay unaffected.
   let child_clip : @core.Rect? = paint_plan_child_clip(plan.commands)
-  let child_environment = environment.with_child_context(self.erased_view_node)
+  let child_environment = environment.with_child_context(self.view_node)
   for index, child in self.children {
     if index < placed.children.length() {
       let rendered = child.render_with_environment(
@@ -64,7 +64,8 @@ fn ElementNode::render_with_environment(
       match child_clip {
         Some(clip) =>
           match clip.intersection(rendered.paint_bounds) {
-            Some(clipped) => children.push({ ..rendered, paint_bounds: clipped })
+            Some(clipped) =>
+              children.push({ ..rendered, paint_bounds: clipped })
             None => children.push({ ..rendered, paint_bounds: clip })
           }
         None => children.push(rendered)

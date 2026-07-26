@@ -8,37 +8,65 @@ fn[Msg] flex_layout(
   kind? : String = "Flex",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::node(
-    identity=() => @core.ViewIdentity::new(kind~, key~),
-    revision=() => {
-      "flex:\{axis_revision(axis)}:\{spacing}:\{main_axis_revision(main_axis_alignment)}:\{cross_axis_revision(cross_axis_alignment)}"
+  @core.View::from_node(
+    FlexLayoutNode::{
+      axis,
+      spacing,
+      main_axis_alignment,
+      cross_axis_alignment,
+      kind,
+      key,
     },
-    children=() => children,
-    layout=ctx => {
-      let measured = flex_measured_size(
-        axis,
-        spacing,
-        ctx.child_sizes,
-        ctx.child_flex_weights,
-      )
-      let size = ctx.constraints.constrain(measured)
-      @core.ViewLayoutResult::new(
-        size~,
-        child_frames=flex_child_frames(
-          axis,
-          spacing,
-          main_axis_alignment,
-          cross_axis_alignment,
-          ctx.child_sizes,
-          ctx.child_flex_weights,
-          size,
-        ),
-      )
-    },
-    semantics=() => {
-      @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
-    },
+    children=_node => children,
   )
+}
+
+///|
+priv struct FlexLayoutNode {
+  axis : @core.Axis
+  spacing : Double
+  main_axis_alignment : @core.MainAxisAlignment
+  cross_axis_alignment : @core.CrossAxisAlignment
+  kind : String
+  key : String?
+}
+
+///|
+impl @core.ViewNode for FlexLayoutNode with fn identity(self) {
+  @core.ViewIdentity::new(kind=self.kind, key=self.key)
+}
+
+///|
+impl @core.ViewNode for FlexLayoutNode with fn revision(self) {
+  "flex:\{axis_revision(self.axis)}:\{self.spacing}:\{main_axis_revision(self.main_axis_alignment)}:\{cross_axis_revision(self.cross_axis_alignment)}"
+}
+
+///|
+impl @core.ViewNode for FlexLayoutNode with fn layout(self, ctx) {
+  let measured = flex_measured_size(
+    self.axis,
+    self.spacing,
+    ctx.child_sizes,
+    ctx.child_flex_weights,
+  )
+  let size = ctx.constraints.constrain(measured)
+  @core.ViewLayoutResult::new(
+    size~,
+    child_frames=flex_child_frames(
+      self.axis,
+      self.spacing,
+      self.main_axis_alignment,
+      self.cross_axis_alignment,
+      ctx.child_sizes,
+      ctx.child_flex_weights,
+      size,
+    ),
+  )
+}
+
+///|
+impl @core.ViewNode for FlexLayoutNode with fn semantics(_self) {
+  @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
 }
 
 ///|

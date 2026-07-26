@@ -9,7 +9,7 @@ MoUI 仍是原型阶段，因此向后兼容还不是首要优先级。项目仍
   `moui/state`) 以及日常使用的 `moui/views` constructors。这是普通应用包应最先学习的公开面。`moui/views` 暴露返回不透明 `@moui.View[Msg]` 值的 constructor helpers，以及面向应用的控件专属契约，例如 command/menu descriptors、control styles、theme builders 和 `SheetPresentationMode`。
 - **高级 core API**：`moui/core`。它拥有 `View[Msg]`、`Program`、
   `Effect`、`Subscription`、layout、input、semantics、draw-command protocols、
-  renderer-neutral platform-view contracts，以及 `moui/views` 中具体控件使用的 `View::node` callback surface。新控件不应新增 core enum variants、`@core.View::primitive_*_view` constructors、`ViewLoweringSink` 或 runtime lowering arms。共享应用应尽量减少默认 `moui/core` 导入；guard 会跟踪 shared-app core import budget。
+  renderer-neutral platform-view contracts、公开 open `ViewNode` trait，以及把类型化 children 和消息 adapter 连接到无消息节点的 `View::from_node`。新控件不应新增 core enum variants、`@core.View::primitive_*_view` constructors、`ViewLoweringSink` 或 runtime lowering arms。共享应用应尽量减少默认 `moui/core` 导入；guard 会跟踪 shared-app core import budget。
 - **运行时 API**：`moui/runtime`。运行时消费者应通过
   `@runtime.AppRuntime`、`@runtime.new_view`、`@runtime.new_program` 或
   `@runtime.new_program_with_dimensions` 构造 runtime。Runtime 拥有 program execution、element/layout/render state、effect/subscription lifecycle、inspector snapshots 和 diagnostics；`core` 不再暴露 `AppRuntime`、`RuntimeKernel` 或 `RuntimeState`。
@@ -44,9 +44,7 @@ node scripts/validate-api-surface.mjs
   focus-scope、semantics、runtime-id 和 component-kernel；
 - `moui/runtime` 存在性、不透明 `AppRuntime` 及有界 runtime methods、
   runtime source 不包装 `@core.AppRuntime` 或 `@core.RuntimeKernel`，以及 app/host source 对 `@runtime.AppRuntime` 的使用；
-- 最终 core/runtime 边界 tokens：`RuntimeKernel`、`RuntimeState`、
-  public `ViewNode`、`ViewSpec`、`ElementNode`、`ElementTree`、`ViewLoweringSink`
-  和 `@core.View::primitive_*_view` 不得出现在 core 生成的 public API 中；
+- 最终 core/runtime 边界 tokens：public `ViewNode` 与 `View::from_node` 必须出现在 core；`RuntimeKernel`、`RuntimeState`、`ViewSpec`、`ElementNode`、`ElementTree`、`ViewLoweringSink`、`View::node` 和 `@core.View::primitive_*_view` 不得出现在 core 生成的 public API 中；
 - backend 生成接口暴露 `@runtime.AppRuntime` 而不是旧的 `@core.AppRuntime` 路径，并有一个零预算 guard 防止 shared app packages 默认导入 `moui/runtime`；
 - shared app package 默认 `moui/core` 导入预算以及显式 advanced-app allowlist，确保新的普通应用保持在 `moui + views`；
 - app、host、smoke 和 cross-package tests 使用 `moui/views` 进行 view construction 和 control-level helpers，而不是直接使用 `@moui.View::*` constructors；

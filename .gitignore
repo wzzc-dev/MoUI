@@ -33,3 +33,4 @@ examples/*/android_app/app/build/
 output/*
 examples/showcase/harmonyos_app/entry/.cxx/*
 build/wechat/*
+.agnes/*

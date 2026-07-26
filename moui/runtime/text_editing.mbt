@@ -6,10 +6,10 @@ fn ElementNode::dispatch_text_command(
   paste_text? : String? = None,
   environment? : Environment = Environment::neutral(),
   text_system? : TextSystem = TextSystem::fallback(),
-) -> TextCommandResult {
+) -> RuntimeTextCommandOutcome {
   if self.id == target {
     self.dispatch_view_text_command(
-      self.erased_view_node,
+      self.view_node,
       intent,
       paste_text~,
       environment~,
@@ -24,34 +24,34 @@ fn ElementNode::dispatch_text_command(
         environment~,
         text_system~,
       )
-      if result.handled {
-        if result.changed {
+      if result.result.handled {
+        if result.result.changed {
           self.dirty.mark_paint()
         }
         return result
       }
     }
-    TextCommandResult::ignored()
+    { result: TextCommandResult::ignored(), text_control: None, deliveries: [] }
   }
 }
 
 ///|
 fn ElementNode::dispatch_view_text_command(
   self : ElementNode,
-  data : ErasedViewNode,
+  data : &RuntimeViewNode,
   intent : CommandIntent,
   paste_text~ : String?,
   environment? : Environment = Environment::neutral(),
   style? : ViewStyle = ViewStyle::empty(),
   text_system? : TextSystem = TextSystem::fallback(),
-) -> TextCommandResult {
-  let result = (data.text_command)(
+) -> RuntimeTextCommandOutcome {
+  let result = data.text_command(
     {
       frame: Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
       child_frames: [],
       event: AppEvent::Keyboard(KeyboardEvent::new(key="", pressed=false)),
       focused: true,
-      state: { ..data.state, focused: true },
+      state: self.control.view_context(true),
       text_control: self.control.text_context(),
       text_system,
       environment,
@@ -65,5 +65,5 @@ fn ElementNode::dispatch_view_text_command(
     Some(next_control) => self.control.apply_text_context(next_control)
     None => ()
   }
-  result.result
+  result
 }

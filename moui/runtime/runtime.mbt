@@ -176,33 +176,6 @@ pub fn[Model, Msg] AppRuntime::new_program(
 }
 
 ///|
-fn[Msg] runtime_component_view(
-  build : (@core.ComponentContext) -> @core.View[Msg],
-) -> @core.View[Msg] {
-  @core.View::node(
-    identity=() => @core.ViewIdentity::new(kind="Component"),
-    revision=() => "component",
-    build_child=Some(build),
-    layout=ctx => {
-      let child_size = if ctx.child_sizes.length() > 0 {
-        ctx.child_sizes[0]
-      } else {
-        @core.Size::new(width=0.0, height=0.0)
-      }
-      let size = ctx.constraints.constrain(child_size)
-      @core.ViewLayoutResult::new(
-        size~,
-        child_frames=if ctx.child_sizes.length() > 0 {
-          [@core.Rect::new(x=0.0, y=0.0, width=size.width, height=size.height)]
-        } else {
-          []
-        },
-      )
-    },
-  )
-}
-
-///|
 pub fn[Msg] new_view(
   root~ : @core.View[Msg],
   size~ : @core.Size,

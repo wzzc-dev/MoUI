@@ -242,9 +242,7 @@ pub fn HostChannel::enqueue_update(
 }
 
 ///|
-pub fn HostChannel::drain_updates(
-  self : HostChannel,
-) -> Array[HostWireUpdate] {
+pub fn HostChannel::drain_updates(self : HostChannel) -> Array[HostWireUpdate] {
   let updates = self.updates
   self.updates = []
   updates
@@ -356,11 +354,8 @@ fn host_wire_update(value : Json) -> HostWireUpdate? {
 pub fn parse_host_wire_envelope_json(text : String) -> HostWireEnvelope? {
   let parsed = @json.parse(text) catch { _ => return None }
   guard host_wire_object(Some(parsed)) is Some(root) else { return None }
-  guard host_wire_int(root.get("schemaVersion")) is Some(1) else {
-    return None
-  }
-  guard host_wire_int(root.get("sessionGeneration"))
-    is Some(session_generation) &&
+  guard host_wire_int(root.get("schemaVersion")) is Some(1) else { return None }
+  guard host_wire_int(root.get("sessionGeneration")) is Some(session_generation) &&
     session_generation > 0 else {
     return None
   }
@@ -405,16 +400,12 @@ pub fn HostSessionTransport::session_generation(
 }
 
 ///|
-pub fn HostSessionTransport::surface_epoch(
-  self : HostSessionTransport,
-) -> Int {
+pub fn HostSessionTransport::surface_epoch(self : HostSessionTransport) -> Int {
   self.session.surface_epoch()
 }
 
 ///|
-pub fn HostSessionTransport::attached(
-  self : HostSessionTransport,
-) -> Bool {
+pub fn HostSessionTransport::attached(self : HostSessionTransport) -> Bool {
   self.session.state() is Attached
 }
 
@@ -446,9 +437,7 @@ pub fn HostSessionTransport::destroy(self : HostSessionTransport) -> Bool {
 }
 
 ///|
-pub fn HostSessionTransport::request_frame(
-  self : HostSessionTransport,
-) -> Unit {
+pub fn HostSessionTransport::request_frame(self : HostSessionTransport) -> Unit {
   if self.attached() {
     self.scheduler.request()
   }
@@ -462,9 +451,7 @@ pub fn HostSessionTransport::take_requested_frame(
 }
 
 ///|
-pub fn HostSessionTransport::finish_frame(
-  self : HostSessionTransport,
-) -> Bool {
+pub fn HostSessionTransport::finish_frame(self : HostSessionTransport) -> Bool {
   self.attached() && self.scheduler.finish_frame()
 }
 

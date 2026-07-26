@@ -13,7 +13,7 @@ Mechanization batch1 (done): `docs/plans/done/harness-mechanize-invariants-batch
 | # | Constraint | Detection | Exemption |
 |---|-----------|-----------|-----------|
 | P1 | App logic goes in `examples/<name>/app`; platform entrypoints are thin wiring | `validate-harness-invariants.mjs` (pr) | root `app.mbt` demos without `app/` package (e.g. agent_counter) |
-| P2 | New controls go in `moui/views`, using `@core.View::node`; do not add core enum variants | `validate-harness-invariants.mjs` (pr) | devtools-only controls |
+| P2 | New built-in controls go in `moui/views` as concrete `@core.ViewNode` implementations constructed with `@core.View::from_node`; do not add core enum variants | `validate-harness-invariants.mjs` (pr) | devtools-only controls |
 | P3 | Cross-runtime protocols + value types go in `moui/core` | code review | none |
 | P4 | Runtime lifecycle, element/layout/render tree execution go in `moui/runtime` | code review | none |
 | P5 | Host service contracts go in `moui/backend/host`; concrete platform behavior in platform backends | code review | none |

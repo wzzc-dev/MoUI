@@ -5,63 +5,96 @@ fn[Msg] view_map_test_rect(
   color~ : @core.Color,
   on_tap? : Msg? = None,
 ) -> @core.View[Msg] {
-  @core.View::node(
-    identity=() => @core.ViewIdentity::new(kind="Rect"),
-    revision=() => "view-map-test-rect:\{width}:\{height}",
-    layout=ctx => {
-      @core.ViewLayoutResult::new(
-        size=ctx.constraints.constrain(@core.Size::new(width~, height~)),
-      )
-    },
-    paint=ctx => {
-      @core.ViewPaintPlan::commands([
-        @core.DrawCommand::FillRect(ctx.frame, color),
-      ])
-    },
-    event=ctx => {
-      match (ctx.event, on_tap) {
-        (@core.AppEvent::Pointer(event), Some(message)) =>
-          if event.phase == @core.PointerPhase::Up &&
-            ctx.frame.contains(event.position) {
-            @core.ViewEventResult::message(message)
-          } else {
-            @core.ViewEventResult::ignored()
-          }
-        _ => @core.ViewEventResult::ignored()
-      }
-    },
+  @core.View::from_node(ViewMapTestRectNode::{ width, height, color }, event=(
+    _node,
+    ctx,
+  ) => {
+    match (ctx.event, on_tap) {
+      (@core.AppEvent::Pointer(event), Some(message)) =>
+        if event.phase == @core.PointerPhase::Up &&
+          ctx.frame.contains(event.position) {
+          @core.ViewEventResult::message(message)
+        } else {
+          @core.ViewEventResult::ignored()
+        }
+      _ => @core.ViewEventResult::ignored()
+    }
+  })
+}
+
+///|
+priv struct ViewMapTestRectNode {
+  width : Double
+  height : Double
+  color : @core.Color
+}
+
+///|
+impl @core.ViewNode for ViewMapTestRectNode with fn identity(_self) {
+  @core.ViewIdentity::new(kind="Rect")
+}
+
+///|
+impl @core.ViewNode for ViewMapTestRectNode with fn revision(self) {
+  "view-map-test-rect:\{self.width}:\{self.height}"
+}
+
+///|
+impl @core.ViewNode for ViewMapTestRectNode with fn layout(self, ctx) {
+  @core.ViewLayoutResult::new(
+    size=ctx.constraints.constrain(
+      @core.Size::new(width=self.width, height=self.height),
+    ),
   )
+}
+
+///|
+impl @core.ViewNode for ViewMapTestRectNode with fn paint(self, ctx) {
+  @core.ViewPaintPlan::commands([
+    @core.DrawCommand::FillRect(ctx.frame, self.color),
+  ])
 }
 
 ///|
 fn[Msg] view_map_test_stack(
   children~ : Array[@core.View[Msg]],
 ) -> @core.View[Msg] {
-  @core.View::node(
-    identity=() => @core.ViewIdentity::new(kind="Stack"),
-    revision=() => "view-map-test-stack",
-    children=() => children,
-    layout=ctx => {
-      let mut width = 0.0
-      let mut height = 0.0
-      let frames : Array[@core.Rect] = []
-      for size in ctx.child_sizes {
-        if size.width > width {
-          width = size.width
-        }
-        if size.height > height {
-          height = size.height
-        }
-      }
-      let size = ctx.constraints.constrain(@core.Size::new(width~, height~))
-      for _child in ctx.child_sizes {
-        frames.push(
-          @core.Rect::new(x=0.0, y=0.0, width=size.width, height=size.height),
-        )
-      }
-      @core.ViewLayoutResult::new(size~, child_frames=frames)
-    },
-  )
+  @core.View::from_node(ViewMapTestStackNode::{  }, children=_node => children)
+}
+
+///|
+priv struct ViewMapTestStackNode {}
+
+///|
+impl @core.ViewNode for ViewMapTestStackNode with fn identity(_self) {
+  @core.ViewIdentity::new(kind="Stack")
+}
+
+///|
+impl @core.ViewNode for ViewMapTestStackNode with fn revision(_self) {
+  "view-map-test-stack"
+}
+
+///|
+impl @core.ViewNode for ViewMapTestStackNode with fn layout(_self, ctx) {
+  let mut width = 0.0
+  let mut height = 0.0
+  let frames : Array[@core.Rect] = []
+  for size in ctx.child_sizes {
+    if size.width > width {
+      width = size.width
+    }
+    if size.height > height {
+      height = size.height
+    }
+  }
+  let size = ctx.constraints.constrain(@core.Size::new(width~, height~))
+  for _child in ctx.child_sizes {
+    frames.push(
+      @core.Rect::new(x=0.0, y=0.0, width=size.width, height=size.height),
+    )
+  }
+  @core.ViewLayoutResult::new(size~, child_frames=frames)
 }
 
 ///|

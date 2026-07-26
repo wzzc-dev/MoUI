@@ -75,7 +75,7 @@ short version:
   neutral theme token surface. Do **not** add concrete controls, runtime
   implementation, or design-system brand content here.
 - **`moui/views`** — public view constructors and concrete control behavior
-  via `@core.View::node`. New controls go here, including the app-facing
+  implemented as `@core.ViewNode` values and wrapped with `@core.View::from_node`. New built-in controls go here, including the app-facing
   constructor and any private `*_control`/`*_layout`/`*_surface` helper.
 - **`moui/runtime`** — runtime lifecycle, element/layout/render tree
   execution, effects, subscriptions, diagnostics.
@@ -91,8 +91,9 @@ short version:
 These are non-negotiable. Cross-reference
 [docs/ai-collaboration.md](docs/ai-collaboration.md) for the full list.
 
-- Public view constructors return opaque `@moui.View[Msg]`; concrete behavior
-  lives in `moui/views` via `@core.View::node`.
+- Public view constructors return opaque `@moui.View[Msg]`; concrete built-in
+  behavior lives in `moui/views` as `@core.ViewNode` implementations constructed
+  with `@core.View::from_node`.
 - The runtime pipeline stays `View[Msg] -> ElementTree -> LayoutTree ->
   RenderTree -> DrawCommand -> renderer`.
 - Do **not** add new `core` enum variants, primitive constructors, or runtime

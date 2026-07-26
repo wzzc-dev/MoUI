@@ -36,10 +36,11 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 ## Project Shape
 
 - `moui/core/` owns platform-neutral contracts, opaque `View`, typed events,
-  `Program`, `Effect`, `Subscription`, geometry, draw, semantics, and the
-  private custom view protocol wrapped by `View[Msg]`.
+  `Program`, `Effect`, `Subscription`, geometry, draw, semantics, and the public
+  message-independent `ViewNode` extension protocol wrapped by typed `View[Msg]`.
 - `moui/views/` owns public view constructors and concrete control behavior
-  implemented with `@core.View::node`, without adding new `core` enum variants.
+  implemented as `@core.ViewNode` values and constructed with
+  `@core.View::from_node`, without adding new `core` enum variants.
 - `moui/runtime/` exposes app/host `AppRuntime` construction entrypoints and
   owns runtime state, tree/layout/paint, event dispatch, program message drain,
   effect task, subscription lifecycle, and diagnostics.

@@ -107,10 +107,8 @@ pub fn wechat_readiness() -> WechatBackendReadiness {
     status: "runtime_partial",
     blocked_by: ["real-miniprogram-pixel-smoke", "touch-event-verification"],
     next_steps: [
-      "Build and run a counter demo in WeChat Developer Tools with Skyline",
-      "Verify canvas rendering produces correct pixels",
-      "Verify touch events dispatch correctly",
-      "Record runtime evidence for promotion",
+      "Build and run a counter demo in WeChat Developer Tools with Skyline", "Verify canvas rendering produces correct pixels",
+      "Verify touch events dispatch correctly", "Record runtime evidence for promotion",
     ],
   }
 }

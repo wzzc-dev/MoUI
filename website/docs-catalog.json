@@ -659,6 +659,10 @@
     {
       "path": "docs/internationalization.md",
       "reason": "Maintainer-facing localization workflow guidance; linked from the documentation index but not rendered in the public website catalog during the initial bilingual rollout."
+    },
+    {
+      "path": "docs/moonbitlang.md",
+      "reason": "Contributor-facing index of upstream MoonBit language references; it is not MoUI product documentation."
     }
   ],
   "locales": {

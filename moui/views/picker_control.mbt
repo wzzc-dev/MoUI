@@ -35,84 +35,135 @@ fn[Msg] picker_control(
     Some(t) => t.revision_fingerprint()
     None => "context"
   }
-  @core.View::node(
-    identity=() => @core.ViewIdentity::new(kind~, key~),
-    revision=() => {
-      "picker:\{picker_items_revision(items)}:\{selected.get()}:\{placeholder}:\{theme_revision}:\{max_height}:\{on_select is Some(_)}"
+  @core.View::from_node(
+    PickerViewNode::{
+      items,
+      selected,
+      placeholder,
+      theme,
+      style,
+      max_height,
+      theme_revision,
+      has_on_select: on_select is Some(_),
+      kind,
+      key,
     },
-    layout=ctx => {
-      @core.ViewLayoutResult::new(
-        size=ctx.constraints.constrain(
-          @core.Size::new(width=200.0, height=40.0),
-        ),
-      )
-    },
-    paint=ctx => {
-      let resolved_theme = theme.unwrap_or(ctx.environment.theme)
-      let resolved_style = match style {
-        Some(value) => value
-        None => PickerStyle::default(theme=resolved_theme)
-      }
-      let commands : Array[@core.DrawCommand] = []
-      let overlay_commands : Array[@core.DrawCommand] = []
-      append_picker_commands(
-        commands,
-        overlay_commands,
-        frame=ctx.frame,
-        items~,
-        selected_id=selected.get(),
-        placeholder~,
-        font=resolved_style.font,
-        foreground=resolved_style.foreground,
-        background=resolved_style.background,
-        corner_radius=resolved_style.radius,
-        max_height~,
-        expanded=ctx.state.expanded,
-        theme=resolved_theme,
-      )
-      {
-        commands,
-        child_layers: [],
-        post_commands: [],
-        overlay_commands,
-        platform_views: [],
-        repaint_boundary: false,
-        animating: false,
-      }
-    },
-    event=ctx => {
-      match ctx.event {
-        @core.AppEvent::Pointer(event) =>
-          handle_picker_pointer(
-            ctx.state,
-            event,
-            frame=ctx.frame,
-            items~,
-            selected~,
-            max_height~,
-            on_select~,
-          )
-        @core.AppEvent::Keyboard(event) =>
-          handle_picker_keyboard(
-            ctx.state,
-            event,
-            items~,
-            selected~,
-            on_select~,
-          )
-        _ => @core.ViewEventResult::ignored()
-      }
-    },
-    semantics=() => {
-      @core.ViewSemanticsInfo::new(
-        role=@core.SemanticsRole::Menu,
-        label=placeholder,
-        value=picker_selected_label(items, selected.get(), placeholder),
-        actions=[@core.SemanticsAction::Focus, @core.SemanticsAction::Activate],
-      )
-    },
-    focusable=() => true,
+    event=(node, ctx) => picker_event(node, ctx, on_select),
   )
+}
+
+///|
+priv struct PickerViewNode {
+  items : Array[PickerOption]
+  selected : @core.Binding[String]
+  placeholder : String
+  theme : @core.Theme?
+  style : PickerStyle?
+  max_height : Double
+  theme_revision : String
+  has_on_select : Bool
+  kind : String
+  key : String?
+}
+
+///|
+impl @core.ViewNode for PickerViewNode with fn identity(self) {
+  @core.ViewIdentity::new(kind=self.kind, key=self.key)
+}
+
+///|
+impl @core.ViewNode for PickerViewNode with fn revision(self) {
+  "picker:\{picker_items_revision(self.items)}:\{self.selected.get()}:\{self.placeholder}:\{self.theme_revision}:\{self.max_height}:\{self.has_on_select}"
+}
+
+///|
+impl @core.ViewNode for PickerViewNode with fn layout(_self, ctx) {
+  @core.ViewLayoutResult::new(
+    size=ctx.constraints.constrain(@core.Size::new(width=200.0, height=40.0)),
+  )
+}
+
+///|
+impl @core.ViewNode for PickerViewNode with fn paint(self, ctx) {
+  let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
+  let resolved_style = match self.style {
+    Some(value) => value
+    None => PickerStyle::default(theme=resolved_theme)
+  }
+  let commands : Array[@core.DrawCommand] = []
+  let overlay_commands : Array[@core.DrawCommand] = []
+  append_picker_commands(
+    commands,
+    overlay_commands,
+    frame=ctx.frame,
+    items=self.items,
+    selected_id=self.selected.get(),
+    placeholder=self.placeholder,
+    font=resolved_style.font,
+    foreground=resolved_style.foreground,
+    background=resolved_style.background,
+    corner_radius=resolved_style.radius,
+    max_height=self.max_height,
+    expanded=ctx.state.expanded,
+    theme=resolved_theme,
+  )
+  {
+    commands,
+    child_layers: [],
+    post_commands: [],
+    overlay_commands,
+    platform_views: [],
+    repaint_boundary: false,
+    animating: false,
+  }
+}
+
+///|
+impl @core.ViewNode for PickerViewNode with fn semantics(self) {
+  @core.ViewSemanticsInfo::new(
+    role=@core.SemanticsRole::Menu,
+    label=self.placeholder,
+    value=picker_selected_label(
+      self.items,
+      self.selected.get(),
+      self.placeholder,
+    ),
+    actions=[@core.SemanticsAction::Focus, @core.SemanticsAction::Activate],
+  )
+}
+
+///|
+impl @core.ViewNode for PickerViewNode with fn focusable(_self) {
+  true
+}
+
+///|
+fn[Msg] picker_event(
+  node : PickerViewNode,
+  ctx : @core.ViewEventContext,
+  on_select : ((String) -> Msg)?,
+) -> @core.ViewEventResult[Msg] {
+  match ctx.event {
+    @core.AppEvent::Pointer(event) =>
+      handle_picker_pointer(
+        ctx.state,
+        event,
+        frame=ctx.frame,
+        items=node.items,
+        selected=node.selected,
+        max_height=node.max_height,
+        on_select~,
+      )
+    @core.AppEvent::Keyboard(event) =>
+      handle_picker_keyboard(
+        ctx.state,
+        event,
+        items=node.items,
+        selected=node.selected,
+        on_select~,
+      )
+    _ => @core.ViewEventResult::ignored()
+  }
 }
 
 ///|

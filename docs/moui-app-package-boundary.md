@@ -134,7 +134,7 @@ must not be reversed by moving them back into `core`.
   `text`/`text_field`/`text_area` controls.
 - **The `ComponentContext` runtime-construction entrypoint has been narrowed**:
   `ComponentContext` remains a component-facing kernel type in `core` because
-  the signatures of `View::node` / `views.component` require it and `core`
+  the signatures of `View::from_node` / `views.component` require it and `core`
   cannot depend on `runtime`. The runtime constructs an execution context with
   `ComponentContext::from_runtime(ComponentRuntimeContextInput)`; ordinary
   component APIs do not expose scattered runtime-storage parameters, and domain
@@ -251,9 +251,9 @@ should depend by default on:
   `@views`, so its default `moon.pkg` **does not** import `core`
   (`validate_api_surface` enforces a core-import budget for shared apps). Import
   `wzzc-dev/moui/core` (and `runtime` as needed) under `for "test"` /
-  `for "wbtest"` for infrequent kernel use, custom `View::node`, or **tests**
-  that simulate `AppEvent` / `DrawCommand`; test targets do not count toward the
-  default runtime boundary.
+  `for "wbtest"` for infrequent kernel use, custom `ViewNode` implementations,
+  or **tests** that simulate `AppEvent` / `DrawCommand`; test targets do not
+  count toward the default runtime boundary.
 
 The `wzzc-dev/moui` root package re-exports **only** app-loop convenience APIs;
 geometry, graphics, animation, text, and state remain available through their
@@ -468,7 +468,8 @@ is explicitly added to a domain-facade inventory.
 implementers. Ordinary apps use app-facing constructors such as `button`,
 `text_field`, and `picker`; framework and control implementations may use
 private `*_control` / `*_layout` / `*_surface` helpers within the `views` package
-to integrate with `@core.View::node`.
+to implement `@core.ViewNode` and construct typed views with
+`@core.View::from_node`.
 
 Add a low-level helper only when implementing a new reusable control that must
 customize one of the following behaviors:
@@ -490,16 +491,25 @@ Place a new control as follows:
 - Put the concrete custom-view behavior implementation in `moui/views` as well;
   helper names should describe behavior, such as `button_control`,
   `text_field_control`, or `scroll_container`.
-- Integrate with the low-level protocol through `@core.View::node` and callback
-  types such as `ViewLayoutContext`, `ViewPaintContext`, and `ViewEventContext`.
+- Implement the message-independent `@core.ViewNode` protocol with types such as
+  `ViewLayoutContext` and `ViewPaintContext`, then attach typed children,
+  `ViewEventContext` handlers, and text commands through
+  `@core.View::from_node`.
 - Ordinary apps see only `@views.some_control(...) -> View[Msg]`.
+
+Third-party addon packages may import `wzzc-dev/moui/core`, implement the open
+`ViewNode` trait for their own concrete node types, and call `View::from_node`.
+They cannot implement methods for MoUI-owned node types, access runtime trees,
+or bypass typed `View[Msg]` message delivery.
 
 In other words, Iced’s control layer is both the built-in-control and
 custom-control entrypoint. MoUI currently unifies those entrypoints in
 `moui/views`: ordinary apps use high-level constructors, while control authors
 reuse private control/layout helpers in the same package. This does not alter the
 ordinary-app default-dependency rule of `moui/<领域>` (as needed) and
-`moui/views`; the only low-level public entrypoint is `@core.View::node(...)`.
+`moui/views`; the low-level extension surface is `@core.ViewNode` plus
+`@core.View::from_node(...)`, and it is intentionally not re-exported by the
+root `moui` facade.
 
 ## Platform Entrypoint Packages
 

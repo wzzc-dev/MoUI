@@ -22,7 +22,7 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 
 包边界遵循这条管线：
 
-- `core/` 拥有平台无关 contract、不透明 `View[Msg]`、typed event、effect、subscription、layout/input/semantics/draw contract，以及由 `View[Msg]` 包裹的私有 custom view protocol。
+- `core/` 拥有平台无关 contract、不透明 `View[Msg]`、typed event、effect、subscription、layout/input/semantics/draw contract，以及由类型化 adapter 包裹的公开、与消息无关的 `ViewNode` 扩展协议。
 - `runtime/` 拥有不透明 `AppRuntime`、runtime state、tree/layout/paint、event dispatch、program message drain、effect-task lifecycle、subscription lifecycle 和 runtime diagnostics。
 - `views/` 暴露返回 `@moui.View[Msg]` 的公开 facade 构造器。
 - `backend/host/` 定义共享 host contract。

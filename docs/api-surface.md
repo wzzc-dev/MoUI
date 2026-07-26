@@ -17,9 +17,10 @@ packages expose narrower contracts for platform and renderer integration.
   builders, and `SheetPresentationMode`.
 - **Advanced core API**: `moui/core`. This owns `View[Msg]`, `Program`,
   `Effect`, `Subscription`, layout, input, semantics, draw-command protocols,
-  renderer-neutral platform-view contracts, and the `View::node` callback
-  surface used by concrete controls in `moui/views`. New controls should not add
-  core enum variants, `@core.View::primitive_*_view` constructors,
+  renderer-neutral platform-view contracts, the public open `ViewNode` trait,
+  and `View::from_node`, which attaches typed children and message adapters to a
+  message-independent node. New controls should not add core enum variants,
+  `@core.View::primitive_*_view` constructors,
   `ViewLoweringSink`, or runtime lowering arms. Shared apps should minimize
   default `moui/core` imports; the guard tracks a shared-app core import budget.
 - **Runtime API**: `moui/runtime`. Runtime consumers should construct runtimes
@@ -76,9 +77,10 @@ entrypoint. It checks current generated interface files for:
 - `moui/runtime` existence, an opaque `AppRuntime` with bounded runtime methods,
   runtime source not wrapping `@core.AppRuntime` or `@core.RuntimeKernel`, and
   app/host source usage of `@runtime.AppRuntime`;
-- final core/runtime boundary tokens: `RuntimeKernel`, `RuntimeState`,
-  public `ViewNode`, `ViewSpec`, `ElementNode`, `ElementTree`, `ViewLoweringSink`,
-  and `@core.View::primitive_*_view` must not appear in the core generated public API;
+- final core/runtime boundary tokens: public `ViewNode` and `View::from_node`
+  must appear in core, while `RuntimeKernel`, `RuntimeState`, `ViewSpec`,
+  `ElementNode`, `ElementTree`, `ViewLoweringSink`, `View::node`, and
+  `@core.View::primitive_*_view` must not appear in the core generated public API;
 - backend generated interfaces exposing `@runtime.AppRuntime` rather than the
   old `@core.AppRuntime` path, plus a zero-budget guard that prevents shared
   app packages from default-importing `moui/runtime`;

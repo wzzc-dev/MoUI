@@ -1,13 +1,13 @@
 ///|
 priv struct ComponentBuildResult {
-  child_erased_view_node : ErasedViewNode
+  child_view_node : &RuntimeViewNode
   subscriptions : Array[StateSubscription]
   effects : Array[ComponentEffect]
 }
 
 ///|
 fn build_component_child(
-  build : (@core.ComponentContext) -> ErasedViewNode,
+  view_node : &RuntimeViewNode,
   runtime : RuntimeState,
   component_id : ElementId,
   old_subscriptions : Array[StateSubscription],
@@ -28,10 +28,13 @@ fn build_component_child(
     old_effects,
     environment: runtime.environment,
   })
-  let child_erased_view_node = build(context)
+  let child_view_node = match view_node.build_child(context) {
+    Some(child) => child
+    None => empty_runtime_view_node()
+  }
   ComponentEffect::finish_reuse(
     old_effects,
     reason=ComponentEffectCancelReason::EffectKeyChanged,
   )
-  { child_erased_view_node, subscriptions, effects }
+  { child_view_node, subscriptions, effects }
 }

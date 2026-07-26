@@ -2,7 +2,7 @@
 fn runtime_test_cached_layer_source(
   layer_index : @core.State[Int],
 ) -> @core.View[Unit] {
-  @core.View::node(
+  runtime_wb_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="RuntimeCachedLayerSource"),
     revision=() => "runtime-cached-layer-source",
     layout=ctx => {
@@ -51,7 +51,7 @@ fn runtime_test_cached_layer_source(
 fn runtime_test_stable_cached_layer_source(
   revision : @core.State[Int],
 ) -> @core.View[Unit] {
-  @core.View::node(
+  runtime_wb_fixture_view(
     identity=() => {
       @core.ViewIdentity::new(kind="RuntimeStableCachedLayerSource")
     },

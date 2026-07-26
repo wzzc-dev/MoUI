@@ -54,25 +54,25 @@ fn ReconcileDirtyKind::combine(
 ///|
 priv struct KeyedChildComposite {
   key : String
-  kind : Int
+  kind : String
 } derive(Eq, Hash)
 
 ///|
-fn mount_erased_view_node(spec : ErasedViewNode) -> ElementNode {
-  mount_erased_view_node_with_next(spec, 1).node
+fn mount_runtime_view_node(spec : &RuntimeViewNode) -> ElementNode {
+  mount_runtime_view_node_with_next(spec, 1).node
 }
 
 ///|
-fn mount_erased_view_node_with_next(
-  spec : ErasedViewNode,
+fn mount_runtime_view_node_with_next(
+  spec : &RuntimeViewNode,
   next_id : Int,
 ) -> MountResult {
-  mount_erased_view_node_for_runtime(spec, None, next_id)
+  mount_runtime_view_node_for_runtime(spec, None, next_id)
 }
 
 ///|
-fn mount_erased_view_node_for_runtime(
-  spec : ErasedViewNode,
+fn mount_runtime_view_node_for_runtime(
+  spec : &RuntimeViewNode,
   runtime : RuntimeState?,
   next_id : Int,
 ) -> MountResult {
@@ -81,13 +81,13 @@ fn mount_erased_view_node_for_runtime(
   let children : Array[ElementNode] = []
   let mut component_subscriptions : Array[StateSubscription] = []
   let mut component_effects : Array[ComponentEffect] = []
-  match (spec.build_child, runtime) {
-    (Some(build), Some(runtime)) => {
-      let built = build_component_child(build, runtime, id, [], [])
+  match (spec.has_build_child(), runtime) {
+    (true, Some(runtime)) => {
+      let built = build_component_child(spec, runtime, id, [], [])
       component_subscriptions = built.subscriptions
       component_effects = built.effects
-      let mounted = mount_erased_view_node_for_runtime(
-        built.child_erased_view_node,
+      let mounted = mount_runtime_view_node_for_runtime(
+        built.child_view_node,
         Some(runtime),
         next,
       )
@@ -96,9 +96,9 @@ fn mount_erased_view_node_for_runtime(
     }
     _ => ()
   }
-  for child_erased_view_node in (spec.children)() {
-    let mounted = mount_erased_view_node_for_runtime(
-      child_erased_view_node, runtime, next,
+  for child_view_node in spec.children() {
+    let mounted = mount_runtime_view_node_for_runtime(
+      child_view_node, runtime, next,
     )
     children.push(mounted.node)
     next = mounted.next_id
@@ -106,8 +106,8 @@ fn mount_erased_view_node_for_runtime(
   {
     node: {
       id,
-      key: spec.identity_key(),
-      erased_view_node: spec,
+      key: runtime_view_node_identity_key(spec),
+      view_node: spec,
       children,
       dirty: DirtyFlags::all(),
       control: ElementControlState::new(),
@@ -125,14 +125,14 @@ fn mount_erased_view_node_for_runtime(
 ///|
 fn reconcile_element_for_runtime(
   old : ElementNode,
-  next_erased_view_node : ErasedViewNode,
+  next_view_node : &RuntimeViewNode,
   runtime : RuntimeState?,
   next_id : Int,
 ) -> ReconcileResult {
-  if !old.erased_view_node.same_identity(next_erased_view_node) {
+  if !runtime_view_nodes_have_same_identity(old.view_node, next_view_node) {
     old.cancel_component_tree_subscriptions()
-    let mounted = mount_erased_view_node_for_runtime(
-      next_erased_view_node, runtime, next_id,
+    let mounted = mount_runtime_view_node_for_runtime(
+      next_view_node, runtime, next_id,
     )
     {
       node: mounted.node,
@@ -140,16 +140,13 @@ fn reconcile_element_for_runtime(
       dirty_kind: ReconcileLayout,
     }
   } else {
-    let own_dirty = old.erased_view_node.reconcile_dirty_kind(
-      next_erased_view_node,
+    let own_dirty = runtime_view_node_reconcile_dirty_kind(
+      old.view_node,
+      next_view_node,
     )
-    let next_erased_view_node = preserve_erased_view_node_runtime_state(
-      old.erased_view_node,
-      next_erased_view_node,
-    )
-    old.erased_view_node = next_erased_view_node
-    old.key = old.erased_view_node.identity_key()
-    let children_result = if old.erased_view_node.is_building_erased_view_node() {
+    old.view_node = next_view_node
+    old.key = runtime_view_node_identity_key(old.view_node)
+    let children_result = if old.view_node.has_build_child() {
       {
         children: old.children,
         next_id,
@@ -158,7 +155,7 @@ fn reconcile_element_for_runtime(
     } else {
       reconcile_children_for_runtime(
         old.children,
-        old.erased_view_node,
+        old.view_node,
         runtime,
         next_id,
       )
@@ -171,21 +168,13 @@ fn reconcile_element_for_runtime(
 }
 
 ///|
-fn preserve_erased_view_node_runtime_state(
-  old : ErasedViewNode,
-  next : ErasedViewNode,
-) -> ErasedViewNode {
-  { ..next, state: old.state }
-}
-
-///|
 fn reconcile_children_for_runtime(
   old_children : Array[ElementNode],
-  next_erased_view_node : ErasedViewNode,
+  next_view_node : &RuntimeViewNode,
   runtime : RuntimeState?,
   next_id : Int,
 ) -> ChildrenReconcileResult {
-  let next_erased_view_nodes = child_erased_view_nodes(next_erased_view_node)
+  let next_view_nodes = next_view_node.children()
   let children : Array[ElementNode] = []
   let used : Array[Bool] = []
   for _ in old_children {
@@ -201,16 +190,16 @@ fn reconcile_children_for_runtime(
   }
   let mut next = next_id
   let mut dirty = ReconcileDirtyKind::ReconcileClean
-  for index, child_erased_view_node in next_erased_view_nodes {
+  for index, child_view_node in next_view_nodes {
     let old_index = find_reusable_child(
-      old_children, used, key_index, child_erased_view_node, index,
+      old_children, used, key_index, child_view_node, index,
     )
     match old_index {
       Some(old_index) => {
         used[old_index] = true
         let result = reconcile_element_for_runtime(
           old_children[old_index],
-          child_erased_view_node,
+          child_view_node,
           runtime,
           next,
         )
@@ -219,8 +208,8 @@ fn reconcile_children_for_runtime(
         dirty = dirty.combine(result.dirty_kind)
       }
       None => {
-        let mounted = mount_erased_view_node_for_runtime(
-          child_erased_view_node, runtime, next,
+        let mounted = mount_runtime_view_node_for_runtime(
+          child_view_node, runtime, next,
         )
         children.push(mounted.node)
         next = mounted.next_id
@@ -277,7 +266,7 @@ fn build_keyed_child_index(
       Some(key) => {
         let composite = {
           key: key.value(),
-          kind: old_child.erased_view_node.kind(),
+          kind: runtime_view_node_kind(old_child.view_node),
         }
         match index.get(composite) {
           Some(arr) => arr.push(old_index)
@@ -295,16 +284,16 @@ fn find_reusable_child(
   old_children : Array[ElementNode],
   used : Array[Bool],
   key_index : Map[KeyedChildComposite, Array[Int]]?,
-  child_erased_view_node : ErasedViewNode,
+  child_view_node : &RuntimeViewNode,
   index : Int,
 ) -> Int? {
-  match child_erased_view_node.identity_key() {
+  match runtime_view_node_identity_key(child_view_node) {
     Some(key) =>
       match key_index {
         Some(idx) => {
           let composite = {
             key: key.value(),
-            kind: child_erased_view_node.kind(),
+            kind: runtime_view_node_kind(child_view_node),
           }
           match idx.get(composite) {
             Some(candidates) => {
@@ -325,7 +314,8 @@ fn find_reusable_child(
           for old_index, old_child in old_children {
             if !used[old_index] &&
               old_child.key == Some(key) &&
-              old_child.erased_view_node.kind() == child_erased_view_node.kind() {
+              runtime_view_node_kind(old_child.view_node) ==
+              runtime_view_node_kind(child_view_node) {
               return Some(old_index)
             }
           }
@@ -336,16 +326,11 @@ fn find_reusable_child(
       if index < old_children.length() &&
         !used[index] &&
         old_children[index].key is None &&
-        old_children[index].erased_view_node.kind() ==
-        child_erased_view_node.kind() {
+        runtime_view_node_kind(old_children[index].view_node) ==
+        runtime_view_node_kind(child_view_node) {
         Some(index)
       } else {
         None
       }
   }
-}
-
-///|
-fn child_erased_view_nodes(spec : ErasedViewNode) -> Array[ErasedViewNode] {
-  (spec.children)()
 }

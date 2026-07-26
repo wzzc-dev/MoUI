@@ -1,106 +1,153 @@
 ///|
 fn skia_hover_damage_cached_content() -> @core.View[Unit] {
-  @core.View::node(
-    identity=() => @core.ViewIdentity::new(kind="SkiaHoverCachedContent"),
-    revision=() => "skia-hover-cached-content",
-    layout=ctx => {
-      @core.ViewLayoutResult::new(
-        size=ctx.constraints.constrain(@core.Size::new(width=8.0, height=8.0)),
-      )
-    },
-    paint=ctx => {
-      let commands : Array[@core.DrawCommand] = [
-        @core.DrawCommand::FillRect(ctx.frame, @core.Color::black()),
-      ]
-      {
-        commands: [],
-        child_layers: [
-          @core.ViewPaintLayer::new(
-            frame=ctx.frame,
-            cache_key="skia-hover-cached-layer",
-            content_revision=1,
-            commands~,
-          ),
-        ],
-        post_commands: [],
-        overlay_commands: [],
-        platform_views: [],
-        repaint_boundary: false,
-        animating: false,
-      }
-    },
+  @core.View::from_node(SkiaHoverCachedContentNode::{  })
+}
+
+///|
+priv struct SkiaHoverCachedContentNode {}
+
+///|
+impl @core.ViewNode for SkiaHoverCachedContentNode with fn identity(_self) {
+  @core.ViewIdentity::new(kind="SkiaHoverCachedContent")
+}
+
+///|
+impl @core.ViewNode for SkiaHoverCachedContentNode with fn revision(_self) {
+  "skia-hover-cached-content"
+}
+
+///|
+impl @core.ViewNode for SkiaHoverCachedContentNode with fn layout(_self, ctx) {
+  @core.ViewLayoutResult::new(
+    size=ctx.constraints.constrain(@core.Size::new(width=8.0, height=8.0)),
   )
+}
+
+///|
+impl @core.ViewNode for SkiaHoverCachedContentNode with fn paint(_self, ctx) {
+  let commands : Array[@core.DrawCommand] = [
+    @core.DrawCommand::FillRect(ctx.frame, @core.Color::black()),
+  ]
+  {
+    commands: [],
+    child_layers: [
+      @core.ViewPaintLayer::new(
+        frame=ctx.frame,
+        cache_key="skia-hover-cached-layer",
+        content_revision=1,
+        commands~,
+      ),
+    ],
+    post_commands: [],
+    overlay_commands: [],
+    platform_views: [],
+    repaint_boundary: false,
+    animating: false,
+  }
 }
 
 ///|
 fn skia_hover_damage_control() -> @core.View[Unit] {
-  @core.View::node(
-    identity=() => @core.ViewIdentity::new(kind="SkiaHoverControl"),
-    revision=() => "skia-hover-control",
-    layout=ctx => {
-      @core.ViewLayoutResult::new(
-        size=ctx.constraints.constrain(@core.Size::new(width=8.0, height=8.0)),
-      )
-    },
-    paint=ctx => {
-      @core.ViewPaintPlan::commands([
-        @core.DrawCommand::FillRect(
-          ctx.frame,
-          if ctx.state.hovered {
-            @core.Color::black()
-          } else {
-            @core.Color::gray()
-          },
-        ),
-      ])
-    },
-    event=ctx => {
-      match ctx.event {
-        @core.AppEvent::Pointer(event) => {
-          let hovered = event.phase == @core.PointerPhase::Move &&
-            ctx.frame.contains(event.position)
-          if hovered != ctx.state.hovered {
-            {
-              ..@core.ViewEventResult::ignored(),
-              changed: true,
-              captured: true,
-              state: Some({ ..ctx.state, hovered, }),
-              dirty: @core.ViewDirtyHint::ViewPaintDirty,
-            }
-          } else {
-            @core.ViewEventResult::ignored()
+  @core.View::from_node(SkiaHoverControlNode::{  }, event=(_node, ctx) => {
+    match ctx.event {
+      @core.AppEvent::Pointer(event) => {
+        let hovered = event.phase == @core.PointerPhase::Move &&
+          ctx.frame.contains(event.position)
+        if hovered != ctx.state.hovered {
+          {
+            ..@core.ViewEventResult::ignored(),
+            changed: true,
+            captured: true,
+            state: Some({ ..ctx.state, hovered, }),
+            dirty: @core.ViewDirtyHint::ViewPaintDirty,
           }
+        } else {
+          @core.ViewEventResult::ignored()
         }
-        _ => @core.ViewEventResult::ignored()
       }
-    },
+      _ => @core.ViewEventResult::ignored()
+    }
+  })
+}
+
+///|
+priv struct SkiaHoverControlNode {}
+
+///|
+impl @core.ViewNode for SkiaHoverControlNode with fn identity(_self) {
+  @core.ViewIdentity::new(kind="SkiaHoverControl")
+}
+
+///|
+impl @core.ViewNode for SkiaHoverControlNode with fn revision(_self) {
+  "skia-hover-control"
+}
+
+///|
+impl @core.ViewNode for SkiaHoverControlNode with fn layout(_self, ctx) {
+  @core.ViewLayoutResult::new(
+    size=ctx.constraints.constrain(@core.Size::new(width=8.0, height=8.0)),
   )
 }
 
 ///|
+impl @core.ViewNode for SkiaHoverControlNode with fn paint(_self, ctx) {
+  @core.ViewPaintPlan::commands([
+    @core.DrawCommand::FillRect(
+      ctx.frame,
+      if ctx.state.hovered {
+        @core.Color::black()
+      } else {
+        @core.Color::gray()
+      },
+    ),
+  ])
+}
+
+///|
 fn skia_hover_damage_stage() -> @core.View[Unit] {
-  @core.View::node(
-    identity=() => @core.ViewIdentity::new(kind="SkiaHoverDamageStage"),
-    revision=() => "skia-hover-damage-stage",
-    children=() => {
-      [skia_hover_damage_cached_content(), skia_hover_damage_control()]
-    },
-    child_constraints=_constraints => @core.Constraints::unbounded(),
-    layout=ctx => {
-      @core.ViewLayoutResult::new(
-        size=ctx.constraints.constrain(@core.Size::new(width=24.0, height=8.0)),
-        child_frames=[
-          @core.Rect::new(x=0.0, y=0.0, width=8.0, height=8.0),
-          @core.Rect::new(x=16.0, y=0.0, width=8.0, height=8.0),
-        ],
-      )
-    },
-    paint=ctx => {
-      @core.ViewPaintPlan::commands([
-        @core.DrawCommand::FillRect(ctx.frame, @core.Color::white()),
-      ])
-    },
+  @core.View::from_node(SkiaHoverDamageStageNode::{  }, children=_node => {
+    [skia_hover_damage_cached_content(), skia_hover_damage_control()]
+  })
+}
+
+///|
+priv struct SkiaHoverDamageStageNode {}
+
+///|
+impl @core.ViewNode for SkiaHoverDamageStageNode with fn identity(_self) {
+  @core.ViewIdentity::new(kind="SkiaHoverDamageStage")
+}
+
+///|
+impl @core.ViewNode for SkiaHoverDamageStageNode with fn revision(_self) {
+  "skia-hover-damage-stage"
+}
+
+///|
+impl @core.ViewNode for SkiaHoverDamageStageNode with fn child_constraints(
+  _self,
+  _constraints,
+) {
+  @core.Constraints::unbounded()
+}
+
+///|
+impl @core.ViewNode for SkiaHoverDamageStageNode with fn layout(_self, ctx) {
+  @core.ViewLayoutResult::new(
+    size=ctx.constraints.constrain(@core.Size::new(width=24.0, height=8.0)),
+    child_frames=[
+      @core.Rect::new(x=0.0, y=0.0, width=8.0, height=8.0),
+      @core.Rect::new(x=16.0, y=0.0, width=8.0, height=8.0),
+    ],
   )
+}
+
+///|
+impl @core.ViewNode for SkiaHoverDamageStageNode with fn paint(_self, ctx) {
+  @core.ViewPaintPlan::commands([
+    @core.DrawCommand::FillRect(ctx.frame, @core.Color::white()),
+  ])
 }
 
 ///|

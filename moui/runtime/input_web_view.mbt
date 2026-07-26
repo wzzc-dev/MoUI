@@ -6,43 +6,39 @@ fn ElementNode::dispatch_web_view_event(
   environment? : @core.Environment = @core.Environment::neutral(),
   style? : @core.ViewStyle = @core.ViewStyle::empty(),
   text_system? : @core.TextSystem = @core.TextSystem::fallback(),
-) -> Bool {
-  let data = self.erased_view_node
-  let result = (data.event)({
-    frame: @core.Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
-    child_frames: [],
-    event: @core.AppEvent::PlatformView(id, event),
-    focused: false,
-    state: data.state,
-    text_control: self.control.text_context(),
+) -> ElementEventResult {
+  let result = self.dispatch_view_event(
+    self.view_node,
+    @core.AppEvent::PlatformView(id, event),
+    RenderNode::empty(),
     text_system,
-    environment,
-    style,
-    now_ms: 0.0,
-  })
-  match result.state {
-    Some(next_state) => self.erased_view_node = { ..data, state: next_state }
-    None => ()
-  }
-  match result.text_control {
-    Some(next_control) => self.control.apply_text_context(next_control)
-    None => ()
-  }
+    environment~,
+    style~,
+  )
   if result.activated || result.changed || result.captured {
-    true
+    result
   } else {
-    let child_environment = (self.erased_view_node.child_environment)(
-      environment,
-    )
-    let child_style = (self.erased_view_node.child_style)(style)
-    self.children.any(child => {
-      child.dispatch_web_view_event(
+    let child_environment = self.view_node.child_environment(environment)
+    let child_style = self.view_node.child_style(style)
+    for child in self.children {
+      let child_result = child.dispatch_web_view_event(
         id,
         event,
         environment=child_environment,
         style=child_style,
         text_system~,
       )
-    })
+      if child_result.activated || child_result.changed || child_result.captured {
+        return child_result
+      }
+    }
+    {
+      changed: false,
+      activated: false,
+      captured: false,
+      capture_target: None,
+      focused: None,
+      deliveries: [],
+    }
   }
 }

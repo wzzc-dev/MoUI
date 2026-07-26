@@ -21,100 +21,52 @@ fn[Msg] text_area_control(
     TextFieldVariant::Outline => "outline"
     TextFieldVariant::Plain => "plain"
   }
-  @core.View::node(
-    identity=() => @core.ViewIdentity::new(kind="TextArea", key~),
-    revision=() => {
-      "textarea:\{value.get()}:\{placeholder}:\{view_size_revision(size)}:\{variant_label}:\{theme_revision}:\{lines}:\{line_height}"
+  @core.View::from_node(
+    TextAreaViewNode::{
+      value,
+      placeholder,
+      size,
+      theme,
+      variant,
+      style,
+      lines,
+      line_height,
+      theme_revision,
+      variant_label,
+      key,
     },
-    layout=ctx => {
-      @core.ViewLayoutResult::new(size=ctx.constraints.constrain(size))
-    },
-    paint=ctx => {
-      let resolved_theme = theme.unwrap_or(ctx.environment.theme)
-      let resolved_style = match style {
-        Some(value) => value
-        None => variant.style(resolved_theme)
-      }
-      let normal = resolved_style.normal
-      let focused = resolved_style.focused
-      let commands : Array[@core.DrawCommand] = []
-      let overlay_commands : Array[@core.DrawCommand] = []
-      append_text_area_commands(
-        commands,
-        overlay_commands,
-        text=value.get(),
-        placeholder~,
-        font=resolved_style.font,
-        foreground=normal.foreground,
-        placeholder_color=resolved_style.placeholder_color,
-        background=normal.background,
-        border=normal.border,
-        focused_border=focused.border,
-        cursor_color=resolved_style.cursor_color,
-        corner_radius=normal.radius,
-        frame=ctx.frame,
-        focused=ctx.focused,
-        control=ctx.text_control,
-        text_system=ctx.text_system,
-        theme=resolved_theme,
-        visible_lines=lines,
-        line_height~,
-      )
-      {
-        commands,
-        child_layers: [],
-        post_commands: [],
-        overlay_commands,
-        platform_views: [],
-        repaint_boundary: false,
-        animating: false,
-      }
-    },
-    event=ctx => {
-      let resolved_theme = theme.unwrap_or(ctx.environment.theme)
-      let resolved_style = match style {
-        Some(value) => value
-        None => variant.style(resolved_theme)
-      }
-      handle_text_area_event(
+    event=(node, ctx) => text_area_event(node, ctx, on_input, on_submit),
+    text_command=(node, ctx, intent, paste_text) => {
+      handle_text_field_command(
         ctx,
-        value~,
+        value=node.value,
         on_input~,
-        on_submit~,
-        font=resolved_style.font,
-        line_height~,
+        intent,
+        paste_text~,
       )
     },
-    text_input_state=ctx => {
-      let resolved_theme = theme.unwrap_or(ctx.environment.theme)
-      let resolved_style = match style {
-        Some(value) => value
-        None => variant.style(resolved_theme)
-      }
-      Some(
-        text_input_state_for_multi_line(
-          text=value.get(),
-          frame=ctx.frame,
-          font=resolved_style.font,
-          control=ctx.text_control,
-          text_system=ctx.text_system,
-          line_height~,
-          visible_lines=lines,
-        ),
-      )
-    },
-    text_command=(ctx, intent, paste_text) => {
-      handle_text_field_command(ctx, value~, on_input~, intent, paste_text~)
-    },
-    semantics=() => {
-      @core.ViewSemanticsInfo::new(
-        role=@core.SemanticsRole::TextField,
-        label=placeholder,
-        value=value.get(),
-        actions=[@core.SemanticsAction::Focus, @core.SemanticsAction::SetText],
-      )
-    },
-    focusable=() => true,
+  )
+}
+
+///|
+fn[Msg] text_area_event(
+  node : TextAreaViewNode,
+  ctx : @core.ViewEventContext,
+  on_input : ((String) -> Msg)?,
+  on_submit : Msg?,
+) -> @core.ViewEventResult[Msg] {
+  let resolved_theme = node.theme.unwrap_or(ctx.environment.theme)
+  let resolved_style = match node.style {
+    Some(value) => value
+    None => node.variant.style(resolved_theme)
+  }
+  handle_text_area_event(
+    ctx,
+    value=node.value,
+    on_input~,
+    on_submit~,
+    font=resolved_style.font,
+    line_height=node.line_height,
   )
 }
 

@@ -22,80 +22,129 @@ fn[Msg] date_picker_control(
     Some(t) => t.revision_fingerprint()
     None => "context"
   }
-  @core.View::node(
-    identity=() => @core.ViewIdentity::new(kind~, key~),
-    revision=() => {
-      "datepicker:\{datepicker_display_value(selected.get(), mode)}:\{datepicker_mode_revision(mode)}:\{placeholder}:\{theme_revision}:\{datepicker_value_option_revision(min_date)}:\{datepicker_value_option_revision(max_date)}:\{on_select is Some(_)}"
+  @core.View::from_node(
+    DatePickerViewNode::{
+      selected,
+      mode,
+      placeholder,
+      theme,
+      style,
+      min_date,
+      max_date,
+      theme_revision,
+      has_on_select: on_select is Some(_),
+      kind,
+      key,
     },
-    layout=ctx => {
-      @core.ViewLayoutResult::new(
-        size=ctx.constraints.constrain(
-          @core.Size::new(width=200.0, height=40.0),
-        ),
-      )
-    },
-    paint=ctx => {
-      let resolved_theme = theme.unwrap_or(ctx.environment.theme)
-      let resolved_style = match style {
-        Some(value) => value
-        None => PickerStyle::default(theme=resolved_theme)
-      }
-      let commands : Array[@core.DrawCommand] = []
-      let overlay_commands : Array[@core.DrawCommand] = []
-      append_datepicker_commands(
-        commands,
-        overlay_commands,
-        frame=ctx.frame,
-        selected=selected.get(),
-        view_date=datepicker_view_date(ctx.state, selected.get()),
-        mode~,
-        placeholder~,
-        font=resolved_style.font,
-        foreground=resolved_style.foreground,
-        background=resolved_style.background,
-        corner_radius=resolved_style.radius,
-        min_date~,
-        max_date~,
-        expanded=ctx.state.expanded,
-        theme=resolved_theme,
-      )
-      {
-        commands,
-        child_layers: [],
-        post_commands: [],
-        overlay_commands,
-        platform_views: [],
-        repaint_boundary: false,
-        animating: false,
-      }
-    },
-    event=ctx => {
-      match ctx.event {
-        @core.AppEvent::Pointer(event) =>
-          handle_datepicker_pointer(
-            ctx.state,
-            event,
-            frame=ctx.frame,
-            selected~,
-            min_date~,
-            max_date~,
-            on_select~,
-          )
-        @core.AppEvent::Keyboard(event) =>
-          handle_datepicker_keyboard(ctx.state, event, selected~)
-        _ => @core.ViewEventResult::ignored()
-      }
-    },
-    semantics=() => {
-      @core.ViewSemanticsInfo::new(
-        role=@core.SemanticsRole::Menu,
-        label=placeholder,
-        value=datepicker_display_value(selected.get(), mode),
-        actions=[@core.SemanticsAction::Focus, @core.SemanticsAction::Activate],
-      )
-    },
-    focusable=() => true,
+    event=(node, ctx) => date_picker_event(node, ctx, on_select),
   )
+}
+
+///|
+priv struct DatePickerViewNode {
+  selected : @core.Binding[@core.DateValue]
+  mode : DatePickerDisplayMode
+  placeholder : String
+  theme : @core.Theme?
+  style : PickerStyle?
+  min_date : @core.DateValue?
+  max_date : @core.DateValue?
+  theme_revision : String
+  has_on_select : Bool
+  kind : String
+  key : String?
+}
+
+///|
+impl @core.ViewNode for DatePickerViewNode with fn identity(self) {
+  @core.ViewIdentity::new(kind=self.kind, key=self.key)
+}
+
+///|
+impl @core.ViewNode for DatePickerViewNode with fn revision(self) {
+  "datepicker:\{datepicker_display_value(self.selected.get(), self.mode)}:\{datepicker_mode_revision(self.mode)}:\{self.placeholder}:\{self.theme_revision}:\{datepicker_value_option_revision(self.min_date)}:\{datepicker_value_option_revision(self.max_date)}:\{self.has_on_select}"
+}
+
+///|
+impl @core.ViewNode for DatePickerViewNode with fn layout(_self, ctx) {
+  @core.ViewLayoutResult::new(
+    size=ctx.constraints.constrain(@core.Size::new(width=200.0, height=40.0)),
+  )
+}
+
+///|
+impl @core.ViewNode for DatePickerViewNode with fn paint(self, ctx) {
+  let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
+  let resolved_style = match self.style {
+    Some(value) => value
+    None => PickerStyle::default(theme=resolved_theme)
+  }
+  let commands : Array[@core.DrawCommand] = []
+  let overlay_commands : Array[@core.DrawCommand] = []
+  append_datepicker_commands(
+    commands,
+    overlay_commands,
+    frame=ctx.frame,
+    selected=self.selected.get(),
+    view_date=datepicker_view_date(ctx.state, self.selected.get()),
+    mode=self.mode,
+    placeholder=self.placeholder,
+    font=resolved_style.font,
+    foreground=resolved_style.foreground,
+    background=resolved_style.background,
+    corner_radius=resolved_style.radius,
+    min_date=self.min_date,
+    max_date=self.max_date,
+    expanded=ctx.state.expanded,
+    theme=resolved_theme,
+  )
+  {
+    commands,
+    child_layers: [],
+    post_commands: [],
+    overlay_commands,
+    platform_views: [],
+    repaint_boundary: false,
+    animating: false,
+  }
+}
+
+///|
+impl @core.ViewNode for DatePickerViewNode with fn semantics(self) {
+  @core.ViewSemanticsInfo::new(
+    role=@core.SemanticsRole::Menu,
+    label=self.placeholder,
+    value=datepicker_display_value(self.selected.get(), self.mode),
+    actions=[@core.SemanticsAction::Focus, @core.SemanticsAction::Activate],
+  )
+}
+
+///|
+impl @core.ViewNode for DatePickerViewNode with fn focusable(_self) {
+  true
+}
+
+///|
+fn[Msg] date_picker_event(
+  node : DatePickerViewNode,
+  ctx : @core.ViewEventContext,
+  on_select : ((@core.DateValue) -> Msg)?,
+) -> @core.ViewEventResult[Msg] {
+  match ctx.event {
+    @core.AppEvent::Pointer(event) =>
+      handle_datepicker_pointer(
+        ctx.state,
+        event,
+        frame=ctx.frame,
+        selected=node.selected,
+        min_date=node.min_date,
+        max_date=node.max_date,
+        on_select~,
+      )
+    @core.AppEvent::Keyboard(event) =>
+      handle_datepicker_keyboard(ctx.state, event, selected=node.selected)
+    _ => @core.ViewEventResult::ignored()
+  }
 }
 
 ///|

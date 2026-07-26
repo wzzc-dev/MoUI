@@ -15,7 +15,7 @@ fn ElementNode::build_semantics(
   focused : ElementId?,
   next_order : Ref[Int],
 ) -> SemanticsNode {
-  let info = (self.erased_view_node.semantics)()
+  let info = self.view_node.semantics()
   let actions = self.semantics_actions(info.actions)
   let focusable = actions.any(action => action == SemanticsAction::Focus)
   let focus_order = if focusable {
@@ -92,7 +92,7 @@ fn ElementNode::semantics_url(self : ElementNode, url : String) -> String {
 fn ElementNode::primary_semantics_role(
   self : ElementNode,
 ) -> @core.SemanticsRole {
-  let info = (self.erased_view_node.semantics)()
+  let info = self.view_node.semantics()
   if info.role != @core.SemanticsRole::Group {
     info.role
   } else if self.children.length() > 0 {
@@ -104,7 +104,7 @@ fn ElementNode::primary_semantics_role(
 
 ///|
 fn ElementNode::primary_semantics_level(self : ElementNode) -> Int? {
-  let info = (self.erased_view_node.semantics)()
+  let info = self.view_node.semantics()
   match info.level {
     Some(_) => info.level
     None =>
@@ -118,7 +118,7 @@ fn ElementNode::primary_semantics_level(self : ElementNode) -> Int? {
 
 ///|
 fn ElementNode::primary_semantics_url(self : ElementNode) -> String {
-  let info = (self.erased_view_node.semantics)()
+  let info = self.view_node.semantics()
   if info.url != "" {
     info.url
   } else if self.children.length() > 0 {
@@ -143,23 +143,23 @@ fn ElementNode::semantics_state(
     focused: focused == Some(self.id),
     disabled: option_bool(
       info.disabled,
-      self.erased_view_node.state.disabled || inherited.disabled,
+      self.control.view_state.disabled || inherited.disabled,
     ),
     selected: option_bool(
       info.selected,
-      self.erased_view_node.state.selected || inherited.selected,
+      self.control.view_state.selected || inherited.selected,
     ),
     pressed: option_bool(
       info.pressed,
-      self.erased_view_node.state.pressed || inherited.pressed,
+      self.control.view_state.pressed || inherited.pressed,
     ),
     checked: option_bool(
       info.checked,
-      self.erased_view_node.state.checked || inherited.checked,
+      self.control.view_state.checked || inherited.checked,
     ),
     expanded: option_bool(
       info.expanded,
-      self.erased_view_node.state.expanded || inherited.expanded,
+      self.control.view_state.expanded || inherited.expanded,
     ),
     invalid: option_bool(info.invalid, inherited.invalid),
     required: option_bool(info.required, inherited.required),
@@ -219,7 +219,7 @@ fn ElementNode::semantics_actions(
 
 ///|
 fn ElementNode::primary_semantics_label(self : ElementNode) -> String {
-  let info = (self.erased_view_node.semantics)()
+  let info = self.view_node.semantics()
   if info.label != "" {
     info.label
   } else if self.children.length() > 0 {
@@ -231,7 +231,7 @@ fn ElementNode::primary_semantics_label(self : ElementNode) -> String {
 
 ///|
 fn ElementNode::primary_semantics_value(self : ElementNode) -> String {
-  let info = (self.erased_view_node.semantics)()
+  let info = self.view_node.semantics()
   if info.value != "" {
     info.value
   } else if self.children.length() > 0 {
@@ -243,7 +243,7 @@ fn ElementNode::primary_semantics_value(self : ElementNode) -> String {
 
 ///|
 fn ElementNode::primary_semantics_description(self : ElementNode) -> String {
-  let info = (self.erased_view_node.semantics)()
+  let info = self.view_node.semantics()
   if info.description != "" {
     info.description
   } else if self.children.length() > 0 {
@@ -257,7 +257,7 @@ fn ElementNode::primary_semantics_description(self : ElementNode) -> String {
 fn ElementNode::primary_semantics_actions(
   self : ElementNode,
 ) -> Array[SemanticsAction] {
-  let info = (self.erased_view_node.semantics)()
+  let info = self.view_node.semantics()
   let actions = info.actions.copy()
   if self.children.length() > 0 {
     append_unique_semantics_actions(
@@ -303,6 +303,19 @@ fn RuntimeState::apply_semantics_event_result(
   self : RuntimeState,
   result : ElementEventResult,
 ) -> Unit {
+  match result.focused {
+    Some(target) => {
+      self.focused_element = Some(target)
+      self.mark_dirty(self.element_tree.id())
+    }
+    None => ()
+  }
+  if result.captured {
+    self.active_pointer_capture = match result.capture_target {
+      Some(target) => Some(target)
+      None => result.focused
+    }
+  }
   self.needs_redraw = self.needs_redraw || result.changed
   self.needs_rebuild = self.needs_rebuild || result.activated
   self.needs_paint = self.needs_paint || result.changed
@@ -312,6 +325,7 @@ fn RuntimeState::apply_semantics_event_result(
   if result.activated {
     self.request_activation_rebuild()
   }
+  deliver_runtime_messages(result.deliveries)
 }
 
 ///|

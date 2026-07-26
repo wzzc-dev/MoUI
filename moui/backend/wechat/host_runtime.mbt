@@ -2,6 +2,7 @@
 /// WeChat Mini Program host runtime.
 /// Provides the run_app entry point for WeChat Mini Program applications.
 
+///|
 /// Module-level state for FFI access.
 /// After run_app() initializes the runtime, the driver and renderer
 /// are stored here so that JS-to-wasm FFI calls can dispatch events
@@ -12,6 +13,7 @@ priv struct WechatState {
   mut needs_render : Bool
 }
 
+///|
 let state : WechatState = { driver: None, renderer: None, needs_render: false }
 
 ///|
@@ -30,9 +32,9 @@ pub fn run_app(
       width=logical_width * scale_factor,
       height=logical_height * scale_factor,
     ),
-    scale_factor=scale_factor,
+    scale_factor~,
   )
-  let r = @canvas2d.Canvas2DRenderer::new(canvas_id=canvas_id)
+  let r = @canvas2d.Canvas2DRenderer::new(canvas_id~)
   r.resize(renderer_metrics)
   d.set_text_system(r.text_system())
 
@@ -47,7 +49,6 @@ pub fn run_app(
 ///|
 /// WeChat FFI dispatch stubs — called from JS runtime.
 /// Maps Mini Program events to MoUI runtime events.
-
 pub fn wechat_dispatch_event(
   _kind : Int,
   _raw_id : Int,
@@ -56,6 +57,7 @@ pub fn wechat_dispatch_event(
   _argd : Double,
   _text_id : Int,
 ) -> Unit {
+
 }
 
 ///|
@@ -84,15 +86,19 @@ pub fn wechat_dispatch_pointer_input(
       }
       let event = @core.PointerEvent::new(
         position=@core.Point::new(x=x_px, y=y_px),
-        phase=phase,
-        button=button,
+        phase~,
+        button~,
         wheel_delta=@core.Point::new(x=delta_x_px, y=delta_y_px),
       )
       let result = d.dispatch(@host.HostEvent::Pointer(event))
       if result.needs_redraw {
         state.needs_render = true
       }
-      if result.close_requested { 1 } else { 0 }
+      if result.close_requested {
+        1
+      } else {
+        0
+      }
     }
     None => 0
   }
@@ -120,18 +126,26 @@ pub fn wechat_render_frame() -> Unit {
   }
 }
 
+///|
 pub fn wechat_surface_created(
   _width : Double,
   _height : Double,
   _scale_factor : Double,
 ) -> Unit {
+
 }
 
+///|
 pub fn wechat_surface_destroyed() -> Unit {
+
 }
 
+///|
 pub fn wechat_app_show() -> Unit {
+
 }
 
+///|
 pub fn wechat_app_hide() -> Unit {
+
 }

@@ -66,7 +66,7 @@ test "api surface classification budgets pin current high-risk packages" {
     classification_budget(
       "moui/core/pkg.generated.mbti", "advanced_core_protocol",
     ).max_count,
-    content="523",
+    content="524",
   )
   inspect(
     classification_budget("moui/core/pkg.generated.mbti", "required_protocol").max_count,
@@ -143,9 +143,7 @@ test "api surface classification assigns representative lines" {
     content="advanced_core_protocol",
   )
   inspect(
-    category(
-      "moui/core/pkg.generated.mbti", "pub fn View::node(identity~ : () -> ViewIdentity) -> View[Msg]",
-    ),
+    category("moui/core/pkg.generated.mbti", "pub(open) trait ViewNode {"),
     content="advanced_core_protocol",
   )
   inspect(
@@ -506,10 +504,12 @@ test "host and renderer public all budgets ratchet down" {
 ///|
 test "core descriptor payloads stay opaque" {
   let core = budget_by_label("core")
-  inspect(core.max_lines, content="1830")
-  inspect(core.max_pub_lines, content="520")
-  inspect(core.max_pub_all_lines, content="150")
-  assert_true(core.required_tokens.contains("View::node"))
+  inspect(core.max_lines, content="1844")
+  inspect(core.max_pub_lines, content="505")
+  inspect(core.max_pub_all_lines, content="139")
+  assert_true(core.required_tokens.contains("pub(open) trait ViewNode"))
+  assert_true(core.required_tokens.contains("View::from_node"))
+  assert_true(core.forbidden_tokens.contains("View::node("))
   assert_true(core.required_tokens.contains("View::identity"))
   assert_true(core.required_tokens.contains("View::children"))
   assert_true(core.required_tokens.contains("View::layout"))
@@ -788,7 +788,9 @@ test "app api hygiene guard keeps examples on domain sugar for app-facing core t
   )
   assert_false(app_api_hygiene_test_path("examples/counter/app/app.mbt"))
   assert_true(
-    app_api_hygiene_allowed_core_view_line("implemented via @core.View::node"),
+    app_api_hygiene_allowed_core_view_line(
+      "implemented via @core.View::from_node",
+    ),
   )
   assert_true(
     app_api_hygiene_allowed_core_view_line(

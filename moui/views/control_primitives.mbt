@@ -86,140 +86,126 @@ fn[Msg] button_control(
     ButtonVariant::Subtle => "subtle"
     ButtonVariant::SubtleBrand => "subtle_brand"
   }
-  @core.View::node(
-    identity=() => @core.ViewIdentity::new(kind~, key~),
-    revision=() => {
-      "button:\{text}:\{view_size_revision(min_size)}:\{variant_label}:\{theme_revision}:\{leading_icon is Some(_)}:\{on_click is Some(_)}"
+  @core.View::from_node(
+    ButtonViewNode::{
+      text,
+      variant,
+      min_size,
+      theme,
+      style,
+      leading_icon,
+      variant_label,
+      theme_revision,
+      has_on_click: on_click is Some(_),
+      kind,
+      key,
     },
-    layout=ctx => {
-      // Content-driven sizing: measure the label with the real text system,
-      // then pad it and floor it at the supplied minimum size. When a leading
-      // icon is present, reserve its square plus a small gap before the label.
-      // Constraints still clamp the result so parents can force a fixed frame.
-      let resolved_theme = theme.unwrap_or(ctx.environment.theme)
-      let font = resolved_theme.typography.control
-      let padding_horizontal = resolved_theme.spacing_scale.lg
-      let padding_vertical = resolved_theme.spacing_scale.sm
-      let icon_size = font.size
-      let icon_gap = padding_horizontal * 0.5
-      let icon_block_width = match leading_icon {
-        Some(_) => icon_size + icon_gap
-        None => 0.0
-      }
-      let measured = ctx.text_system.measure_text(
-        @core.TextLayoutInput::new(text~, font~),
-      )
-      let content_width = view_max_double(
-        min_size.width,
-        icon_block_width + measured.size.width + padding_horizontal * 2.0,
-      )
-      let content_height = view_max_double(
-        min_size.height,
-        measured.size.height + padding_vertical * 2.0,
-      )
-      @core.ViewLayoutResult::new(
-        size=ctx.constraints.constrain(
-          @core.Size::new(width=content_width, height=content_height),
-        ),
-      )
-    },
-    paint=ctx => {
-      let resolved_theme = theme.unwrap_or(ctx.environment.theme)
-      let resolved_style = match style {
-        Some(value) => value
-        None => variant.style(resolved_theme)
-      }
-      let normal = resolved_style.normal
-      let hovered = resolved_style.hovered
-      let pressed = resolved_style.pressed
-      let font = resolved_theme.typography.control
-      let foreground = normal.foreground
-      let padding_horizontal = resolved_theme.spacing_scale.lg
-      let icon_size = font.size
-      let icon_gap = padding_horizontal * 0.5
-      let icon_block_width = match leading_icon {
-        Some(_) => icon_size + icon_gap
-        None => 0.0
-      }
-      let transition_duration_ms = resolved_theme.motion.fast_ms
-      let transition_easing = resolved_theme.motion.easing
-      let current_state = if ctx.state.pressed {
-        @core.ButtonState::Pressed
-      } else if ctx.state.hovered {
-        @core.ButtonState::Hovered
+    event=(_node, ctx) => button_event(ctx, on_click),
+  )
+}
+
+///|
+priv struct ButtonViewNode {
+  text : String
+  variant : ButtonVariant
+  min_size : @core.Size
+  theme : @core.Theme?
+  style : ButtonStyle?
+  leading_icon : IconName?
+  variant_label : String
+  theme_revision : String
+  has_on_click : Bool
+  kind : String
+  key : String?
+}
+
+///|
+impl @core.ViewNode for ButtonViewNode with fn identity(self) {
+  @core.ViewIdentity::new(kind=self.kind, key=self.key)
+}
+
+///|
+impl @core.ViewNode for ButtonViewNode with fn revision(self) {
+  "button:\{self.text}:\{view_size_revision(self.min_size)}:\{self.variant_label}:\{self.theme_revision}:\{self.leading_icon is Some(_)}:\{self.has_on_click}"
+}
+
+///|
+impl @core.ViewNode for ButtonViewNode with fn layout(self, ctx) {
+  let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
+  let font = resolved_theme.typography.control
+  let padding_horizontal = resolved_theme.spacing_scale.lg
+  let padding_vertical = resolved_theme.spacing_scale.sm
+  let icon_size = font.size
+  let icon_gap = padding_horizontal * 0.5
+  let icon_block_width = match self.leading_icon {
+    Some(_) => icon_size + icon_gap
+    None => 0.0
+  }
+  let measured = ctx.text_system.measure_text(
+    @core.TextLayoutInput::new(text=self.text, font~),
+  )
+  let content_width = view_max_double(
+    self.min_size.width,
+    icon_block_width + measured.size.width + padding_horizontal * 2.0,
+  )
+  let content_height = view_max_double(
+    self.min_size.height,
+    measured.size.height + padding_vertical * 2.0,
+  )
+  @core.ViewLayoutResult::new(
+    size=ctx.constraints.constrain(
+      @core.Size::new(width=content_width, height=content_height),
+    ),
+  )
+}
+
+///|
+impl @core.ViewNode for ButtonViewNode with fn paint(self, ctx) {
+  let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
+  let resolved_style = match self.style {
+    Some(value) => value
+    None => self.variant.style(resolved_theme)
+  }
+  let normal = resolved_style.normal
+  let hovered = resolved_style.hovered
+  let pressed = resolved_style.pressed
+  let font = resolved_theme.typography.control
+  let foreground = normal.foreground
+  let padding_horizontal = resolved_theme.spacing_scale.lg
+  let icon_size = font.size
+  let icon_gap = padding_horizontal * 0.5
+  let icon_block_width = match self.leading_icon {
+    Some(_) => icon_size + icon_gap
+    None => 0.0
+  }
+  let transition_duration_ms = resolved_theme.motion.fast_ms
+  let transition_easing = resolved_theme.motion.easing
+  let current_state = if ctx.state.pressed {
+    @core.ButtonState::Pressed
+  } else if ctx.state.hovered {
+    @core.ButtonState::Hovered
+  } else {
+    @core.ButtonState::Normal
+  }
+  let transition = parse_button_transition(ctx.state.scratch)
+  let (background_brush, animating) = match transition {
+    Some((from_state, start_ms)) =>
+      if ctx.environment.reduced_motion ||
+        transition_duration_ms <= 0.0 ||
+        ctx.now_ms <= 0.0 {
+        (
+          button_state_brush(
+            current_state,
+            normal.background,
+            hovered.background,
+            pressed.background,
+          ),
+          false,
+        )
       } else {
-        @core.ButtonState::Normal
-      }
-      // Resolve the transition progress from the scratch-recorded start time
-      // and the current animation clock. When reduced motion is requested or
-      // the transition has completed, snap to the terminal color; otherwise
-      // interpolate the background color between the previous visual state and
-      // the current one so hover/press ease in instead of hard-cutting.
-      let transition = parse_button_transition(ctx.state.scratch)
-      let (background_brush, animating) = match transition {
-        Some((from_state, start_ms)) =>
-          if ctx.environment.reduced_motion ||
-            transition_duration_ms <= 0.0 ||
-            ctx.now_ms <= 0.0 {
-            (
-              button_state_brush(
-                current_state,
-                normal.background,
-                hovered.background,
-                pressed.background,
-              ),
-              false,
-            )
-          } else {
-            let start = start_ms.to_double()
-            let raw_progress = (ctx.now_ms - start) / transition_duration_ms
-            if raw_progress >= 1.0 {
-              (
-                button_state_brush(
-                  current_state,
-                  normal.background,
-                  hovered.background,
-                  pressed.background,
-                ),
-                false,
-              )
-            } else if raw_progress <= 0.0 {
-              (
-                button_state_brush(
-                  from_state,
-                  normal.background,
-                  hovered.background,
-                  pressed.background,
-                ),
-                true,
-              )
-            } else {
-              let from_color = button_state_color(
-                button_state_brush(
-                  from_state,
-                  normal.background,
-                  hovered.background,
-                  pressed.background,
-                ),
-              )
-              let to_color = button_state_color(
-                button_state_brush(
-                  current_state,
-                  normal.background,
-                  hovered.background,
-                  pressed.background,
-                ),
-              )
-              let blended = @core.animated_color(
-                from=from_color,
-                to=to_color,
-                progress=raw_progress,
-                easing=transition_easing,
-              )
-              (@core.Brush::solid(blended), true)
-            }
-          }
-        None =>
+        let start = start_ms.to_double()
+        let raw_progress = (ctx.now_ms - start) / transition_duration_ms
+        if raw_progress >= 1.0 {
           (
             button_state_brush(
               current_state,
@@ -229,169 +215,216 @@ fn[Msg] button_control(
             ),
             false,
           )
-      }
-      let commands : Array[@core.DrawCommand] = []
-      append_control_background(
-        ctx,
-        commands,
-        background_brush,
-        normal.border,
-        normal.shadow,
-        normal.radius,
-      )
-      // Lay out the leading icon (vertically centered) and offset the text
-      // frame to the right of it so the label stays centered in the remainder.
-      let text_origin_x = ctx.frame.origin.x +
-        padding_horizontal +
-        icon_block_width
-      let text_frame = @core.Rect::new(
-        x=text_origin_x,
-        y=ctx.frame.origin.y,
-        width=view_max_double(
-          0.0,
-          ctx.frame.size.width -
-          padding_horizontal -
-          icon_block_width -
-          padding_horizontal,
-        ),
-        height=ctx.frame.size.height,
-      )
-      match leading_icon {
-        Some(name) => {
-          let icon_origin_x = ctx.frame.origin.x + padding_horizontal
-          let icon_origin_y = ctx.frame.origin.y +
-            (ctx.frame.size.height - icon_size) / 2.0
-          let scale = icon_size / 24.0
-          let scaled = icon_scale_verbs(
-            icon_path(name),
-            icon_origin_x,
-            icon_origin_y,
-            scale,
+        } else if raw_progress <= 0.0 {
+          (
+            button_state_brush(
+              from_state,
+              normal.background,
+              hovered.background,
+              pressed.background,
+            ),
+            true,
           )
-          commands.push(
-            @core.DrawCommand::DrawPath(
-              @core.PathSpec::new(
-                verbs=scaled,
-                stroke=Some(@core.Brush::solid(foreground)),
-                stroke_width=1.6,
-              ),
+        } else {
+          let from_color = button_state_color(
+            button_state_brush(
+              from_state,
+              normal.background,
+              hovered.background,
+              pressed.background,
             ),
           )
+          let to_color = button_state_color(
+            button_state_brush(
+              current_state,
+              normal.background,
+              hovered.background,
+              pressed.background,
+            ),
+          )
+          let blended = @core.animated_color(
+            from=from_color,
+            to=to_color,
+            progress=raw_progress,
+            easing=transition_easing,
+          )
+          (@core.Brush::solid(blended), true)
         }
-        None => ()
       }
+    None =>
+      (
+        button_state_brush(
+          current_state,
+          normal.background,
+          hovered.background,
+          pressed.background,
+        ),
+        false,
+      )
+  }
+  let commands : Array[@core.DrawCommand] = []
+  append_control_background(
+    ctx,
+    commands,
+    background_brush,
+    normal.border,
+    normal.shadow,
+    normal.radius,
+  )
+  let text_origin_x = ctx.frame.origin.x + padding_horizontal + icon_block_width
+  let text_frame = @core.Rect::new(
+    x=text_origin_x,
+    y=ctx.frame.origin.y,
+    width=view_max_double(
+      0.0,
+      ctx.frame.size.width -
+      padding_horizontal -
+      icon_block_width -
+      padding_horizontal,
+    ),
+    height=ctx.frame.size.height,
+  )
+  match self.leading_icon {
+    Some(name) => {
+      let icon_origin_x = ctx.frame.origin.x + padding_horizontal
+      let icon_origin_y = ctx.frame.origin.y +
+        (ctx.frame.size.height - icon_size) / 2.0
+      let scale = icon_size / 24.0
+      let scaled = icon_scale_verbs(
+        icon_path(name),
+        icon_origin_x,
+        icon_origin_y,
+        scale,
+      )
       commands.push(
-        @core.DrawCommand::DrawText(
-          @core.TextRun::new(text~, frame=text_frame, font~, color=foreground),
+        @core.DrawCommand::DrawPath(
+          @core.PathSpec::new(
+            verbs=scaled,
+            stroke=Some(@core.Brush::solid(foreground)),
+            stroke_width=1.6,
+          ),
         ),
       )
-      if animating {
-        @core.ViewPaintPlan::animating_commands(commands)
-      } else {
-        @core.ViewPaintPlan::commands(commands)
-      }
-    },
-    event=ctx => {
-      match ctx.event {
-        @core.AppEvent::Pointer(event) => {
-          let inside = ctx.frame.contains(event.position)
-          let current = if ctx.state.pressed {
-            @core.ButtonState::Pressed
-          } else if ctx.state.hovered {
-            @core.ButtonState::Hovered
-          } else {
-            @core.ButtonState::Normal
-          }
-          let next = view_button_next_state(current, inside, event.phase)
-          let activated = event.phase == @core.PointerPhase::Up &&
-            inside &&
-            current == @core.ButtonState::Pressed
-          let changed = next != current || activated
-          // A synthetic `Exit` (pointer left the element) should clear hover
-          // immediately rather than animate a fade-out. The fade relies on the
-          // host ticking redraws from the same subtree, and inside overlays /
-          // cached repaint boundaries that follow-up can stall partway —
-          // leaving a faint hover tint stuck on screen. Snapping straight to
-          // the rest state (no `bt:` transition scratch) makes the clearance
-          // deterministic and stops the redraw loop as soon as the element
-          // repaints.
-          let is_instant_clear = event.phase == @core.PointerPhase::Exit &&
-            current != @core.ButtonState::Normal
-          let next_state = if is_instant_clear {
-            {
-              ..view_button_state_context(ctx.state, current, next, ctx.now_ms),
-              scratch: "",
-            }
-          } else if changed {
-            view_button_state_context(ctx.state, current, next, ctx.now_ms)
-          } else {
-            ctx.state
-          }
-          match (activated, on_click) {
-            (true, Some(message)) =>
-              view_event_result(
-                changed~,
-                activated=true,
-                captured=true,
-                state=Some(next_state),
-                dirty=@core.ViewDirtyHint::ViewPaintDirty,
-                messages=[message],
-              )
-            (true, None) =>
-              view_event_result(
-                changed~,
-                activated=false,
-                captured=true,
-                state=Some(next_state),
-                dirty=@core.ViewDirtyHint::ViewPaintDirty,
-              )
-            (false, _) =>
-              view_event_result(
-                changed~,
-                captured=inside || changed,
-                state=if changed { Some(next_state) } else { None },
-                dirty=if changed {
-                  @core.ViewDirtyHint::ViewPaintDirty
-                } else {
-                  @core.ViewDirtyHint::ViewClean
-                },
-              )
-          }
-        }
-        @core.AppEvent::Keyboard(event) =>
-          if event.pressed &&
-            (event.key == "Enter" || event.key == "Space" || event.key == " ") {
-            match on_click {
-              Some(message) =>
-                view_event_result(
-                  changed=true,
-                  activated=true,
-                  captured=true,
-                  dirty=@core.ViewDirtyHint::ViewPaintDirty,
-                  messages=[message],
-                )
-              None =>
-                view_event_result(
-                  changed=true,
-                  captured=true,
-                  dirty=@core.ViewDirtyHint::ViewPaintDirty,
-                )
-            }
-          } else {
-            @core.ViewEventResult::ignored()
-          }
-        _ => @core.ViewEventResult::ignored()
-      }
-    },
-    semantics=() => {
-      @core.ViewSemanticsInfo::new(
-        role=@core.SemanticsRole::Button,
-        label=text,
-        actions=[@core.SemanticsAction::Focus, @core.SemanticsAction::Activate],
-      )
-    },
-    focusable=() => true,
+    }
+    None => ()
+  }
+  commands.push(
+    @core.DrawCommand::DrawText(
+      @core.TextRun::new(
+        text=self.text,
+        frame=text_frame,
+        font~,
+        color=foreground,
+      ),
+    ),
   )
+  if animating {
+    @core.ViewPaintPlan::animating_commands(commands)
+  } else {
+    @core.ViewPaintPlan::commands(commands)
+  }
+}
+
+///|
+impl @core.ViewNode for ButtonViewNode with fn semantics(self) {
+  @core.ViewSemanticsInfo::new(
+    role=@core.SemanticsRole::Button,
+    label=self.text,
+    actions=[@core.SemanticsAction::Focus, @core.SemanticsAction::Activate],
+  )
+}
+
+///|
+impl @core.ViewNode for ButtonViewNode with fn focusable(_self) {
+  true
+}
+
+///|
+fn[Msg] button_event(
+  ctx : @core.ViewEventContext,
+  on_click : Msg?,
+) -> @core.ViewEventResult[Msg] {
+  match ctx.event {
+    @core.AppEvent::Pointer(event) => {
+      let inside = ctx.frame.contains(event.position)
+      let current = if ctx.state.pressed {
+        @core.ButtonState::Pressed
+      } else if ctx.state.hovered {
+        @core.ButtonState::Hovered
+      } else {
+        @core.ButtonState::Normal
+      }
+      let next = view_button_next_state(current, inside, event.phase)
+      let activated = event.phase == @core.PointerPhase::Up &&
+        inside &&
+        current == @core.ButtonState::Pressed
+      let changed = next != current || activated
+      let is_instant_clear = event.phase == @core.PointerPhase::Exit &&
+        current != @core.ButtonState::Normal
+      let next_state = if is_instant_clear {
+        {
+          ..view_button_state_context(ctx.state, current, next, ctx.now_ms),
+          scratch: "",
+        }
+      } else if changed {
+        view_button_state_context(ctx.state, current, next, ctx.now_ms)
+      } else {
+        ctx.state
+      }
+      match (activated, on_click) {
+        (true, Some(message)) =>
+          view_event_result(
+            changed~,
+            activated=true,
+            captured=true,
+            state=Some(next_state),
+            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+            messages=[message],
+          )
+        (true, None) =>
+          view_event_result(
+            changed~,
+            captured=true,
+            state=Some(next_state),
+            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+          )
+        (false, _) =>
+          view_event_result(
+            changed~,
+            captured=inside || changed,
+            state=if changed { Some(next_state) } else { None },
+            dirty=if changed {
+              @core.ViewDirtyHint::ViewPaintDirty
+            } else {
+              @core.ViewDirtyHint::ViewClean
+            },
+          )
+      }
+    }
+    @core.AppEvent::Keyboard(event) =>
+      if event.pressed &&
+        (event.key == "Enter" || event.key == "Space" || event.key == " ") {
+        match on_click {
+          Some(message) =>
+            view_event_result(
+              changed=true,
+              activated=true,
+              captured=true,
+              dirty=@core.ViewDirtyHint::ViewPaintDirty,
+              messages=[message],
+            )
+          None =>
+            view_event_result(
+              changed=true,
+              captured=true,
+              dirty=@core.ViewDirtyHint::ViewPaintDirty,
+            )
+        }
+      } else {
+        @core.ViewEventResult::ignored()
+      }
+    _ => @core.ViewEventResult::ignored()
+  }
 }
 
 ///|
@@ -438,120 +471,172 @@ fn[Msg] checkbox_control(
     Some(t) => t.revision_fingerprint()
     None => "context"
   }
-  @core.View::node(
-    identity=() => @core.ViewIdentity::new(kind~, key~),
-    revision=() => {
-      "checkbox:\{label}:\{checked.get()}:\{theme_revision}:\{font is Some(_)}:\{foreground is Some(_)}:\{check_color is Some(_)}:\{box_size is Some(_)}:\{box_shape is Some(_)}:\{check_style is Some(_)}:\{on_change is Some(_)}"
+  @core.View::from_node(
+    CheckboxViewNode::{
+      label,
+      checked,
+      theme,
+      font,
+      foreground,
+      check_color,
+      box_size,
+      box_shape,
+      check_style,
+      height,
+      theme_revision,
+      has_on_change: on_change is Some(_),
+      kind,
+      key,
     },
-    layout=ctx => {
-      // Resolve the choice-control style ambient-ly so the label measures
-      // against the real font (and tracks theme changes) instead of a
-      // construction-time baked value.
-      let resolved_theme = theme.unwrap_or(ctx.environment.theme)
-      let style = ChoiceControlStyle::default(theme=resolved_theme)
-      let resolved_font = resolve_choice_font(font, resolved_theme)
-      let resolved_box_size = resolve_control_double(
-        box_size,
-        style.control_size,
-      )
-      let box_width = resolved_box_size
-      let label_width = if label.length() == 0 {
-        0.0
-      } else {
-        let measured = ctx.text_system.measure_text(
-          @core.TextLayoutInput::new(text=label, font=resolved_font),
-        )
-        measured.size.width
-      }
-      let spacing = 8.0
-      let intrinsic_width = box_width + spacing + label_width
-      let intrinsic_height = view_max_double(height, resolved_font.size * 1.25)
-      @core.ViewLayoutResult::new(
-        size=ctx.constraints.constrain(
-          @core.Size::new(width=intrinsic_width, height=intrinsic_height),
-        ),
-      )
-    },
-    paint=ctx => {
-      let resolved_theme = theme.unwrap_or(ctx.environment.theme)
-      let style = ChoiceControlStyle::default(theme=resolved_theme)
-      let resolved_font = resolve_choice_font(font, resolved_theme)
-      let resolved_foreground = resolve_control_color(
-        foreground,
-        style.foreground,
-      )
-      let resolved_check_color = resolve_control_color(
-        check_color,
-        style.selected_color,
-      )
-      let resolved_box_size = resolve_control_double(
-        box_size,
-        style.control_size,
-      )
-      let cc = resolved_theme.components.choice_control
-      let commands : Array[@core.DrawCommand] = []
-      append_checkbox_commands(
-        commands,
-        label~,
-        checked=checked.get(),
-        font=resolved_font,
-        foreground=resolved_foreground,
-        check_color=resolved_check_color,
-        size=@core.Size::new(width=resolved_box_size, height=resolved_box_size),
-        box_shape=box_shape.unwrap_or(cc.box_shape),
-        check_style=check_style.unwrap_or(cc.check_style),
-        frame=ctx.frame,
-        theme=resolved_theme,
-        focused=ctx.focused,
-      )
-      @core.ViewPaintPlan::commands(commands)
-    },
-    event=ctx => {
-      match ctx.event {
-        @core.AppEvent::Pointer(event) =>
-          if event.phase == @core.PointerPhase::Up &&
-            ctx.frame.contains(event.position) {
-            let next = !checked.get()
-            checked.set(next)
-            view_event_result(
-              changed=true,
-              activated=true,
-              captured=true,
-              dirty=@core.ViewDirtyHint::ViewPaintDirty,
-              messages=checkbox_messages(on_change, next),
-            )
-          } else {
-            @core.ViewEventResult::ignored()
-          }
-        @core.AppEvent::Keyboard(event) =>
-          if event.pressed &&
-            (event.key == "Enter" || event.key == "Space" || event.key == " ") {
-            let next = !checked.get()
-            checked.set(next)
-            view_event_result(
-              changed=true,
-              activated=true,
-              captured=true,
-              dirty=@core.ViewDirtyHint::ViewPaintDirty,
-              messages=checkbox_messages(on_change, next),
-            )
-          } else {
-            @core.ViewEventResult::ignored()
-          }
-        _ => @core.ViewEventResult::ignored()
-      }
-    },
-    semantics=() => {
-      @core.ViewSemanticsInfo::new(
-        role=@core.SemanticsRole::Checkbox,
-        label~,
-        value=if checked.get() { "true" } else { "false" },
-        checked=checked.get(),
-        actions=[@core.SemanticsAction::Focus, @core.SemanticsAction::Activate],
-      )
-    },
-    focusable=() => true,
+    event=(node, ctx) => checkbox_event(node, ctx, on_change),
   )
+}
+
+///|
+priv struct CheckboxViewNode {
+  label : String
+  checked : @core.Binding[Bool]
+  theme : @core.Theme?
+  font : @core.FontSpec?
+  foreground : @core.Color?
+  check_color : @core.Color?
+  box_size : Double?
+  box_shape : @core.ChoiceControlShape?
+  check_style : @core.CheckMarkStyle?
+  height : Double
+  theme_revision : String
+  has_on_change : Bool
+  kind : String
+  key : String?
+}
+
+///|
+impl @core.ViewNode for CheckboxViewNode with fn identity(self) {
+  @core.ViewIdentity::new(kind=self.kind, key=self.key)
+}
+
+///|
+impl @core.ViewNode for CheckboxViewNode with fn revision(self) {
+  "checkbox:\{self.label}:\{self.checked.get()}:\{self.theme_revision}:\{self.font is Some(_)}:\{self.foreground is Some(_)}:\{self.check_color is Some(_)}:\{self.box_size is Some(_)}:\{self.box_shape is Some(_)}:\{self.check_style is Some(_)}:\{self.has_on_change}"
+}
+
+///|
+impl @core.ViewNode for CheckboxViewNode with fn layout(self, ctx) {
+  let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
+  let style = ChoiceControlStyle::default(theme=resolved_theme)
+  let resolved_font = resolve_choice_font(self.font, resolved_theme)
+  let resolved_box_size = resolve_control_double(
+    self.box_size,
+    style.control_size,
+  )
+  let label_width = if self.label.length() == 0 {
+    0.0
+  } else {
+    let measured = ctx.text_system.measure_text(
+      @core.TextLayoutInput::new(text=self.label, font=resolved_font),
+    )
+    measured.size.width
+  }
+  let intrinsic_width = resolved_box_size + 8.0 + label_width
+  let intrinsic_height = view_max_double(self.height, resolved_font.size * 1.25)
+  @core.ViewLayoutResult::new(
+    size=ctx.constraints.constrain(
+      @core.Size::new(width=intrinsic_width, height=intrinsic_height),
+    ),
+  )
+}
+
+///|
+impl @core.ViewNode for CheckboxViewNode with fn paint(self, ctx) {
+  let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
+  let style = ChoiceControlStyle::default(theme=resolved_theme)
+  let resolved_font = resolve_choice_font(self.font, resolved_theme)
+  let resolved_foreground = resolve_control_color(
+    self.foreground,
+    style.foreground,
+  )
+  let resolved_check_color = resolve_control_color(
+    self.check_color,
+    style.selected_color,
+  )
+  let resolved_box_size = resolve_control_double(
+    self.box_size,
+    style.control_size,
+  )
+  let cc = resolved_theme.components.choice_control
+  let commands : Array[@core.DrawCommand] = []
+  append_checkbox_commands(
+    commands,
+    label=self.label,
+    checked=self.checked.get(),
+    font=resolved_font,
+    foreground=resolved_foreground,
+    check_color=resolved_check_color,
+    size=@core.Size::new(width=resolved_box_size, height=resolved_box_size),
+    box_shape=self.box_shape.unwrap_or(cc.box_shape),
+    check_style=self.check_style.unwrap_or(cc.check_style),
+    frame=ctx.frame,
+    theme=resolved_theme,
+    focused=ctx.focused,
+  )
+  @core.ViewPaintPlan::commands(commands)
+}
+
+///|
+impl @core.ViewNode for CheckboxViewNode with fn semantics(self) {
+  @core.ViewSemanticsInfo::new(
+    role=@core.SemanticsRole::Checkbox,
+    label=self.label,
+    value=if self.checked.get() { "true" } else { "false" },
+    checked=self.checked.get(),
+    actions=[@core.SemanticsAction::Focus, @core.SemanticsAction::Activate],
+  )
+}
+
+///|
+impl @core.ViewNode for CheckboxViewNode with fn focusable(_self) {
+  true
+}
+
+///|
+fn[Msg] checkbox_event(
+  node : CheckboxViewNode,
+  ctx : @core.ViewEventContext,
+  on_change : ((Bool) -> Msg)?,
+) -> @core.ViewEventResult[Msg] {
+  match ctx.event {
+    @core.AppEvent::Pointer(event) =>
+      if event.phase == @core.PointerPhase::Up &&
+        ctx.frame.contains(event.position) {
+        let next = !node.checked.get()
+        node.checked.set(next)
+        view_event_result(
+          changed=true,
+          activated=true,
+          captured=true,
+          dirty=@core.ViewDirtyHint::ViewPaintDirty,
+          messages=checkbox_messages(on_change, next),
+        )
+      } else {
+        @core.ViewEventResult::ignored()
+      }
+    @core.AppEvent::Keyboard(event) =>
+      if event.pressed &&
+        (event.key == "Enter" || event.key == "Space" || event.key == " ") {
+        let next = !node.checked.get()
+        node.checked.set(next)
+        view_event_result(
+          changed=true,
+          activated=true,
+          captured=true,
+          dirty=@core.ViewDirtyHint::ViewPaintDirty,
+          messages=checkbox_messages(on_change, next),
+        )
+      } else {
+        @core.ViewEventResult::ignored()
+      }
+    _ => @core.ViewEventResult::ignored()
+  }
 }
 
 ///|

@@ -157,14 +157,26 @@ fn views_min_int(a : Int, b : Int) -> Int {
 
 ///|
 pub fn[Msg] empty() -> @core.View[Msg] {
-  @core.View::node(
-    identity=() => @core.ViewIdentity::new(kind="Empty"),
-    revision=() => "empty",
-    layout=ctx => {
-      @core.ViewLayoutResult::new(
-        size=ctx.constraints.constrain(@core.Size::new(width=0.0, height=0.0)),
-      )
-    },
+  @core.View::from_node(EmptyControlNode::{  })
+}
+
+///|
+priv struct EmptyControlNode {}
+
+///|
+impl @core.ViewNode for EmptyControlNode with fn identity(_self) {
+  @core.ViewIdentity::new(kind="Empty")
+}
+
+///|
+impl @core.ViewNode for EmptyControlNode with fn revision(_self) {
+  "empty"
+}
+
+///|
+impl @core.ViewNode for EmptyControlNode with fn layout(_self, ctx) {
+  @core.ViewLayoutResult::new(
+    size=ctx.constraints.constrain(@core.Size::new(width=0.0, height=0.0)),
   )
 }
 
@@ -180,17 +192,40 @@ pub fn[Msg] spacer(
   min_length? : Double = 0.0,
   weight? : Double = 1.0,
 ) -> @core.View[Msg] {
-  @core.View::node(
-    identity=() => @core.ViewIdentity::new(kind="Spacer"),
-    revision=() => "spacer:\{min_length}:\{weight}",
-    layout=ctx => {
-      let size = if weight > 0.0 {
-        @core.Size::new(width=0.0, height=0.0)
-      } else {
-        @core.Size::new(width=min_length, height=min_length)
-      }
-      @core.ViewLayoutResult::new(size=ctx.constraints.constrain(size))
-    },
-    flex_weight=() => if weight > 0.0 { weight } else { 0.0 },
-  )
+  @core.View::from_node(SpacerViewNode::{ min_length, weight })
+}
+
+///|
+priv struct SpacerViewNode {
+  min_length : Double
+  weight : Double
+}
+
+///|
+impl @core.ViewNode for SpacerViewNode with fn identity(_self) {
+  @core.ViewIdentity::new(kind="Spacer")
+}
+
+///|
+impl @core.ViewNode for SpacerViewNode with fn revision(self) {
+  "spacer:\{self.min_length}:\{self.weight}"
+}
+
+///|
+impl @core.ViewNode for SpacerViewNode with fn layout(self, ctx) {
+  let size = if self.weight > 0.0 {
+    @core.Size::new(width=0.0, height=0.0)
+  } else {
+    @core.Size::new(width=self.min_length, height=self.min_length)
+  }
+  @core.ViewLayoutResult::new(size=ctx.constraints.constrain(size))
+}
+
+///|
+impl @core.ViewNode for SpacerViewNode with fn flex_weight(self) {
+  if self.weight > 0.0 {
+    self.weight
+  } else {
+    0.0
+  }
 }

@@ -9,7 +9,7 @@ fn ElementNode::dispatch_keyboard(
 ) -> ElementEventResult {
   if self.id == target {
     self.dispatch_view_event(
-      self.erased_view_node,
+      self.view_node,
       AppEvent::Keyboard(event),
       RenderNode::empty(),
       text_system,
@@ -18,12 +18,11 @@ fn ElementNode::dispatch_keyboard(
       focused=true,
     )
   } else {
-    let child_environment = (self.erased_view_node.child_environment)(
-      environment,
-    )
-    let child_style = (self.erased_view_node.child_style)(style)
+    let child_environment = self.view_node.child_environment(environment)
+    let child_style = self.view_node.child_style(style)
     let mut changed = false
     let mut activated = false
+    let deliveries : Array[() -> Unit] = []
     for child in self.children {
       let result = child.dispatch_keyboard(
         target,
@@ -34,11 +33,19 @@ fn ElementNode::dispatch_keyboard(
       )
       changed = changed || result.changed
       activated = activated || result.activated
+      deliveries.append(result.deliveries)
     }
     if changed {
       self.dirty.mark_paint()
     }
-    { changed, activated, captured: false, capture_target: None, focused: None }
+    {
+      changed,
+      activated,
+      captured: false,
+      capture_target: None,
+      focused: None,
+      deliveries,
+    }
   }
 }
 
@@ -58,14 +65,14 @@ fn ElementNode::dispatch_keyboard_shortcut(
   )
   if child_result.activated {
     child_result
-  } else if self.erased_view_node.identity.kind.has_prefix(
+  } else if self.view_node.identity().kind.has_prefix(
       "Modified<KeyboardShortcut>",
     ) {
     // Give the modifier node itself a chance to handle the keyboard event
     // (so its `handle_keyboard_shortcut` runs). Only if the node reports a
     // change (meaning the shortcut matched) do we activate the first child.
     let own = self.dispatch_view_event(
-      self.erased_view_node,
+      self.view_node,
       AppEvent::Keyboard(event),
       RenderNode::empty(),
       text_system,
@@ -83,6 +90,7 @@ fn ElementNode::dispatch_keyboard_shortcut(
         captured: false,
         capture_target: None,
         focused: None,
+        deliveries: [],
       }
     }
   } else {
@@ -100,8 +108,9 @@ fn ElementNode::dispatch_keyboard_shortcut_to_children(
 ) -> ElementEventResult {
   let mut changed = false
   let mut activated = false
-  let child_environment = (self.erased_view_node.child_environment)(environment)
-  let child_style = (self.erased_view_node.child_style)(style)
+  let deliveries : Array[() -> Unit] = []
+  let child_environment = self.view_node.child_environment(environment)
+  let child_style = self.view_node.child_style(style)
   for child in self.children {
     let result = child.dispatch_keyboard_shortcut(
       event,
@@ -111,6 +120,7 @@ fn ElementNode::dispatch_keyboard_shortcut_to_children(
     )
     changed = changed || result.changed
     activated = activated || result.activated
+    deliveries.append(result.deliveries)
     if result.activated {
       break
     }
@@ -118,7 +128,14 @@ fn ElementNode::dispatch_keyboard_shortcut_to_children(
   if changed {
     self.dirty.mark_paint()
   }
-  { changed, activated, captured: false, capture_target: None, focused: None }
+  {
+    changed,
+    activated,
+    captured: false,
+    capture_target: None,
+    focused: None,
+    deliveries,
+  }
 }
 
 ///|
@@ -137,7 +154,7 @@ fn ElementNode::activate_primary(
     child_result
   } else {
     self.dispatch_view_event(
-      self.erased_view_node,
+      self.view_node,
       AppEvent::Keyboard(KeyboardEvent::new(key="Enter")),
       RenderNode::empty(),
       text_system,
@@ -154,8 +171,8 @@ fn ElementNode::activate_first_child(
   style? : ViewStyle = ViewStyle::empty(),
   text_system? : TextSystem = TextSystem::fallback(),
 ) -> ElementEventResult {
-  let child_environment = (self.erased_view_node.child_environment)(environment)
-  let child_style = (self.erased_view_node.child_style)(style)
+  let child_environment = self.view_node.child_environment(environment)
+  let child_style = self.view_node.child_style(style)
   for child in self.children {
     let result = child.activate_primary(
       environment=child_environment,
@@ -172,5 +189,6 @@ fn ElementNode::activate_first_child(
     captured: false,
     capture_target: None,
     focused: None,
+    deliveries: [],
   }
 }

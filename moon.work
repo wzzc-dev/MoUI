@@ -7,8 +7,6 @@ members = [
   "./moui_devtools",
   "./moui_agent",
   "./moui_agent_mcp",
-  "./window/modules/window",
-  "./window/modules/windowing",
   "./examples/agent_counter",
   "./tools",
   "./moui_cli",

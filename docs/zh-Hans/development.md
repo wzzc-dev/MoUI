@@ -455,7 +455,7 @@ PDF Workbench app-only 和 `pdflite_adapter` checks 默认不再下载 PDFium。
 
 MoUI 在使用 Mooncakes frontends 和 tooling 时保持 production runtime boundaries 显式：
 
-- Layout 保持平台无关，但具体 flex/grid/list/stack placement 现在通过 `View::node` 位于 `moui/views`；`core/` 不应为单个 controls 增长 layout-engine dependencies。
+- Layout 保持平台无关，但具体 flex/grid/list/stack placement 现在由 `moui/views` 中的 concrete `ViewNode` 实现，并通过 `View::from_node` 构造；`core/` 不应为单个 controls 增长 layout-engine dependencies。
 - `Milky2018/moon_accesskit` 是 `backend/host` 使用的 native accessibility tree representation；`@core.SemanticsNode` 保持平台无关，Web 继续使用其 ARIA adapter。
 - `Milky2018/moon_zeno` 驱动 renderer path tessellation，将 MoUI
   `DrawPath` / `PathSpec` values 转换为 triangle meshes。SVG parsing 仍是 importer frontend 的职责。

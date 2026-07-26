@@ -14,7 +14,7 @@ Start at `docs/INDEX.md` for progressive disclosure.
 Full table: `docs/invariants.md`. Break only via RFC (`GOVERNANCE.md`).
 
 - App logic → `examples/<name>/app`; platform entrypoints stay thin wiring.
-- New controls → `moui/views` via `@core.View::node` (no new core view enum variants).
+- New built-in controls → concrete `@core.ViewNode` implementations in `moui/views`, constructed with `@core.View::from_node` (no new core view enum variants).
 - Protocols → `moui/core`. Lifecycle trees → `moui/runtime`. Host contracts → `moui/backend/host`. Renderers → `moui/render/*`.
 - App deps: `wzzc-dev/moui` + domain facades + `views` only (no `runtime` / `render/*` / platform backends).
 - Mainline: Native Skia. Diagnostic: Native WGPU. Reclassify only with RFC.

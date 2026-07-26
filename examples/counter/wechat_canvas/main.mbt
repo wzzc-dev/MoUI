@@ -1,6 +1,10 @@
 ///|
 extern "wasm" fn wechat_screen_width() -> Double = "canvas2d" "screen_width"
+
+///|
 extern "wasm" fn wechat_screen_height() -> Double = "canvas2d" "screen_height"
+
+///|
 extern "wasm" fn wechat_pixel_ratio() -> Double = "canvas2d" "pixel_ratio"
 
 ///|

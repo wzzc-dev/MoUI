@@ -79,108 +79,6 @@ fn[Msg] View::apply_modifier(
 }
 
 ///|
-fn[Msg] modifier_view(
-  child : View[Msg],
-  modifier : ViewModifier[Msg],
-) -> View[Msg] {
-  View::node(
-    identity=() => modifier_identity(child, modifier),
-    revision=() => "modifier:\{modifier_revision(modifier)}:\{child.revision()}",
-    children=() => [child],
-    child_constraints=constraints => {
-      modifier_child_constraints(modifier, constraints)
-    },
-    child_environment=environment => {
-      modifier_child_environment(modifier, environment)
-    },
-    child_style=style => modifier_child_style(modifier, style),
-    layout=ctx => modifier_layout(modifier, ctx),
-    paint=ctx => modifier_paint(modifier, ctx),
-    event=ctx => modifier_event(modifier, ctx),
-    text_input_state=ctx => child.text_input_state(ctx),
-    text_command=(ctx, intent, paste_text) => {
-      child.text_command_result(ctx, intent, paste_text~)
-    },
-    semantics=() => modifier_semantics(modifier),
-    focusable=() => modifier_focusable(modifier),
-    flex_weight=() => modifier_flex_weight(modifier),
-  )
-}
-
-///|
-fn[Msg] modifier_identity(
-  child : View[Msg],
-  modifier : ViewModifier[Msg],
-) -> ViewIdentity {
-  match modifier {
-    KeyModifier(key) => {
-      let identity = child.identity()
-      { kind: identity.kind, key: Some(key) }
-    }
-    _ => {
-      let identity = child.identity()
-      {
-        kind: "Modified<\{modifier_kind(modifier)}>/\{identity.kind}",
-        key: identity.key,
-      }
-    }
-  }
-}
-
-///|
-fn[Msg] modifier_kind(modifier : ViewModifier[Msg]) -> String {
-  match modifier {
-    KeyModifier(_) => "Key"
-    PaddingModifier(_) => "Padding"
-    FrameModifier(_) => "Frame"
-    BackgroundModifier(_) => "Background"
-    ForegroundModifier(_) => "Foreground"
-    FontModifier(_) => "Font"
-    CornerRadiusModifier(_) => "CornerRadius"
-    OpacityModifier(_) => "Opacity"
-    ShadowModifier(_) => "Shadow"
-    BorderModifier(_) => "Border"
-    OffsetModifier(_, _) => "Offset"
-    ClipModifier => "Clip"
-    ScaleModifier(_, _) => "Scale"
-    DisabledModifier(_) => "Disabled"
-    AccessibilityLabelModifier(_) => "AccessibilityLabel"
-    SemanticsRoleModifier(_) => "SemanticsRole"
-    SemanticsLevelModifier(_) => "SemanticsLevel"
-    SemanticsUrlModifier(_) => "SemanticsUrl"
-    SemanticsSelectedModifier(_) => "SemanticsSelected"
-    SemanticsPressedModifier(_) => "SemanticsPressed"
-    SemanticsCheckedModifier(_) => "SemanticsChecked"
-    SemanticsExpandedModifier(_) => "SemanticsExpanded"
-    SemanticsInvalidModifier(_) => "SemanticsInvalid"
-    SemanticsRequiredModifier(_) => "SemanticsRequired"
-    SemanticsDescriptionModifier(_) => "SemanticsDescription"
-    SemanticsActionModifier(_) => "SemanticsAction"
-    FocusableModifier(_) => "Focusable"
-    FocusTrapModifier(_) => "FocusTrap"
-    OnTapMessageModifier(_) => "OnTap"
-    OnLongPressMessageModifier(_) => "OnLongPress"
-    OnDoubleTapMessageModifier(_) => "OnDoubleTap"
-    OnDragMessageModifier(_) => "OnDrag"
-    OnDragWithFrameMessageModifier(_) => "OnDragWithFrame"
-    OnFileDropMessageModifier(_) => "OnFileDrop"
-    KeyboardShortcutModifier(_) => "KeyboardShortcut"
-    FlexibleModifier(_) => "Flexible"
-    LayoutPriorityModifier(_) => "LayoutPriority"
-    AlignModifier(_) => "Align"
-    SpacingModifier(_) => "Spacing"
-    MainAxisAlignmentModifier(_) => "MainAxisAlignment"
-    CrossAxisAlignmentModifier(_) => "CrossAxisAlignment"
-    ThemeModifier(_) => "Theme"
-    EnvironmentModifier(_) => "Environment"
-    AspectRatioModifier(_) => "AspectRatio"
-    IntrinsicWidthModifier => "IntrinsicWidth"
-    IntrinsicHeightModifier => "IntrinsicHeight"
-    RepaintBoundaryModifier => "RepaintBoundary"
-  }
-}
-
-///|
 fn[Msg] modifier_revision(modifier : ViewModifier[Msg]) -> String {
   match modifier {
     KeyModifier(key) => "key:\{key.value}"
@@ -557,12 +455,7 @@ fn drag_gesture_state_from_scratch(scratch : String) -> DragGestureState {
       if phase != DragGesturePhase::Idle {
         let origin = Point::new(x=ox, y=oy)
         let last = Point::new(x=lx, y=ly)
-        {
-          ..state,
-          phase,
-          origin: Some(origin),
-          last_position: Some(last),
-        }
+        { ..state, phase, origin: Some(origin), last_position: Some(last) }
       } else {
         state
       }

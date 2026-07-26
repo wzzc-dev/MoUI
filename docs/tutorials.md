@@ -14,9 +14,10 @@ before expanding behavior.
 4. Add a Showcase entry when the view is user-facing.
 5. Run `moon test moui/views --target native` and `moon info`.
 
-Do not expose `ViewNode` or add `@core.View::primitive_*_view`
-constructor, `ViewLoweringSink`, or runtime lowering arm for a new control. Those
-paths are historical architecture and are guarded against returning.
+Implement reusable built-in behavior as a concrete `@core.ViewNode` and wrap it
+with `@core.View::from_node`. Do not re-export `ViewNode` from app-facing
+facades or add `@core.View::primitive_*_view`, `ViewLoweringSink`, or runtime
+lowering arms for a new control.
 
 ## Create A Custom Layout
 
