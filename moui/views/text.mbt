@@ -12,37 +12,71 @@ pub fn[Msg] text(
     Some(value) => text_theme_revision(value)
     None => "context"
   }
-  @core.View::node(
-    identity=() => @core.ViewIdentity::new(kind="Text"),
-    revision=() => {
-      "text:\{text}:\{size.width}:\{size.height}:\{text_role_revision(role)}:\{text_align_revision(align)}:\{theme_revision}"
-    },
-    layout=ctx => {
-      @core.ViewLayoutResult::new(size=ctx.constraints.constrain(size))
-    },
-    paint=ctx => {
-      let resolved_theme = theme.unwrap_or(ctx.environment.theme)
-      let font = ctx.style.font.unwrap_or(role.font(resolved_theme))
-      let color = if ctx.environment.enabled {
-        ctx.style.foreground.unwrap_or(role.color(resolved_theme))
-      } else {
-        ctx.style.foreground
-        .unwrap_or(role.color(resolved_theme))
-        .multiply_alpha(0.7)
-      }
-      @core.ViewPaintPlan::commands([
-        @core.DrawCommand::DrawText(
-          @core.TextRun::new(text~, frame=ctx.frame, font~, color~, align~),
-        ),
-      ])
-    },
-    semantics=() => {
-      @core.ViewSemanticsInfo::new(
-        role=@core.SemanticsRole::Text,
-        label=text,
-        value=text,
-      )
-    },
+  @core.View::from_node(TextViewNode::{
+    text,
+    role,
+    theme,
+    size,
+    align,
+    theme_revision,
+  })
+}
+
+///|
+priv struct TextViewNode {
+  text : String
+  role : TextRole
+  theme : @core.Theme?
+  size : @core.Size
+  align : @core.TextAlign
+  theme_revision : String
+}
+
+///|
+impl @core.ViewNode for TextViewNode with fn identity(_self) {
+  @core.ViewIdentity::new(kind="Text")
+}
+
+///|
+impl @core.ViewNode for TextViewNode with fn revision(self) {
+  "text:\{self.text}:\{self.size.width}:\{self.size.height}:\{text_role_revision(self.role)}:\{text_align_revision(self.align)}:\{self.theme_revision}"
+}
+
+///|
+impl @core.ViewNode for TextViewNode with fn layout(self, context) {
+  @core.ViewLayoutResult::new(size=context.constraints.constrain(self.size))
+}
+
+///|
+impl @core.ViewNode for TextViewNode with fn paint(self, context) {
+  let resolved_theme = self.theme.unwrap_or(context.environment.theme)
+  let font = context.style.font.unwrap_or(self.role.font(resolved_theme))
+  let color = if context.environment.enabled {
+    context.style.foreground.unwrap_or(self.role.color(resolved_theme))
+  } else {
+    context.style.foreground
+    .unwrap_or(self.role.color(resolved_theme))
+    .multiply_alpha(0.7)
+  }
+  @core.ViewPaintPlan::commands([
+    @core.DrawCommand::DrawText(
+      @core.TextRun::new(
+        text=self.text,
+        frame=context.frame,
+        font~,
+        color~,
+        align=self.align,
+      ),
+    ),
+  ])
+}
+
+///|
+impl @core.ViewNode for TextViewNode with fn semantics(self) {
+  @core.ViewSemanticsInfo::new(
+    role=@core.SemanticsRole::Text,
+    label=self.text,
+    value=self.text,
   )
 }
 

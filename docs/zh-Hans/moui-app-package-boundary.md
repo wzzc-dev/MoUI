@@ -106,7 +106,7 @@ app-facing facade/extension over `core`，第一阶段主要通过
   `TextRange`、grapheme boundary、`TextSystem`、paragraph layout contract、基础
   text input state。`moui/views` 只保留 `text`/`text_field`/`text_area` 纯文本控件。
 - **`ComponentContext` runtime 构造入口已收口**：`ComponentContext` 仍作为
-  component-facing kernel 类型保留在 `core`，因为 `View::node` /
+  component-facing kernel 类型保留在 `core`，因为 `View::from_node` /
   `views.component` 的签名需要它且 `core` 不能反向依赖 `runtime`。runtime 使用
   `ComponentContext::from_runtime(ComponentRuntimeContextInput)` 构造执行上下文；
   普通 component API 不暴露散落的 runtime storage 参数，领域 facade 也不转发该
@@ -194,7 +194,7 @@ capability 展示依赖 `@render`；普通 app 不应把这两个示例用途当
 
 - `wzzc-dev/moui/core` —— **类型真源**。共享 app **运行时**宜优先 `@moui` / 领域糖 /
   `@views`，使 `moon.pkg` 默认 **不** import `core`（`validate_api_surface` 对 shared
-  app 有 core import budget）。低频 kernel、自定义 `View::node`、或 **测试** 模拟
+  app 有 core import budget）。低频 kernel、自定义 `ViewNode` 实现、或 **测试** 模拟
   `AppEvent` / `DrawCommand` 时，在 `for "test"` / `for "wbtest"` 中 import
   `wzzc-dev/moui/core`（及按需 `runtime`），测试目标不计入默认运行时边界。
 
@@ -368,7 +368,7 @@ WebView 专有 helper；领域 facade 也不转发。
 `wzzc-dev/moui/views` 同时面向普通 app 和 MoUI 内置控件实现者。普通 app 使用
 `button`、`text_field`、`picker` 这类 app-facing constructor；框架和控件实现可以在
 `views` 包内使用私有 `*_control` / `*_layout` / `*_surface` helper 对接
-`@core.View::node`。
+`@core.ViewNode`，并通过 `@core.View::from_node` 构造类型化 view。
 
 只有在需要实现新的 reusable control，并且必须自定义以下行为时，才新增低层
 helper：
@@ -388,14 +388,20 @@ WebView wrapper，应用层应使用 `wzzc-dev/moui/views` 的 app-facing constr
 - 公共 app-facing constructor 放在 `moui/views`。
 - 具体 custom view behavior 实现也放在 `moui/views`，helper 名应描述行为，
   例如 `button_control`、`text_field_control`、`scroll_container`。
-- 底层协议通过 `@core.View::node` 以及 `ViewLayoutContext`、`ViewPaintContext`、
-  `ViewEventContext` 等回调类型对接。
+- 底层协议通过 `@core.ViewNode`、`ViewLayoutContext` 和 `ViewPaintContext`
+  实现与消息无关的行为，再通过 `@core.View::from_node` 连接类型化
+  `ViewEventContext` handler、children 和 text command。
 - 普通 app 只看到 `@views.some_control(...) -> View[Msg]`。
+
+第三方 addon 可以直接依赖 `wzzc-dev/moui/core`，为自己拥有的 concrete type
+实现 open `ViewNode` trait，并调用 `View::from_node`。它们不能为 MoUI 拥有的 node
+type 实现方法、访问 runtime tree，或绕过类型化 `View[Msg]` 消息传递。
 
 换句话说，Iced 的控件层同时是内置控件和自定义控件入口；
 MoUI 当前把两类入口统一在 `moui/views`：普通 app 使用高层 constructor，
 控件作者复用同包内私有 control/layout helper。这不改变普通 app 默认依赖
-`moui/<领域>`（按需）与 `moui/views` 的规则；低层 public 入口只有 `@core.View::node(...)`。
+`moui/<领域>`（按需）与 `moui/views` 的规则；低层扩展面由 `@core.ViewNode` 和
+`@core.View::from_node(...)` 组成，根 `moui` facade 不重导出它们。
 
 ## 平台入口包
 

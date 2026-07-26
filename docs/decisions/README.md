@@ -29,6 +29,7 @@ Copy `TEMPLATE.md` and fill in all sections. Keep it concise.
 
 | # | Title | Date | Status |
 |---|-------|------|--------|
+| 0015 | [Public object-safe ViewNode with typed View adapters](0015-public-view-node-trait.md) | 2026-07-26 | Accepted |
 | 0014 | [Core owns value types; domain packages are facades only](0014-core-owns-domain-facades.md) | 2026-07-16 | Accepted |
 | 0011 | [Platform product class and mobile readiness](0011-platform-product-class-and-mobile-readiness.md) | 2026-07-16 | Accepted |
 | 0009 | [DrawFrame clear ownership and Skia damage clipping](0009-draw-frame-clear-and-skia-damage-clip.md) | 2026-07-14 | Accepted |

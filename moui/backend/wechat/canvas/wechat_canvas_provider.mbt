@@ -18,8 +18,11 @@ pub fn WechatCanvasRendererProvider::new(
     physical_size=metrics.physical_size,
     scale_factor=metrics.scale_factor,
   )
-  let renderer = @canvas2d.canvas2d_create_renderer(canvas_id~, metrics=renderer_metrics)
-  { canvas_id, renderer, }
+  let renderer = @canvas2d.canvas2d_create_renderer(
+    canvas_id~,
+    metrics=renderer_metrics,
+  )
+  { canvas_id, renderer }
 }
 
 ///|
@@ -37,18 +40,12 @@ pub fn WechatCanvasRendererProvider::create_host_renderer(
         ),
       )
     },
-    render=fn(commands : Array[@core.DrawCommand]) {
-      renderer.render(commands)
-    },
+    render=fn(commands : Array[@core.DrawCommand]) { renderer.render(commands) },
     render_frame=Some(fn(frame : @core.DrawFrame) -> @render.RenderFrameResult {
       renderer.render_frame(frame)
     }),
-    text_system=fn() -> @core.TextSystem {
-      renderer.text_system()
-    },
-    dispose=fn() {
-      renderer.dispose()
-    },
+    text_system=fn() -> @core.TextSystem { renderer.text_system() },
+    dispose=fn() { renderer.dispose() },
     image=@host.HostRendererImageCapability::new(
       image_resources=fn() -> Array[@render.ImageResourceRecord] {
         renderer.image_resources()

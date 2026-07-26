@@ -29,7 +29,7 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 ## 项目结构
 
 - `moui/core/` 拥有平台中立 contract、不透明 `View`、类型化事件、`Program`、`Effect`、`Subscription`、geometry、draw、semantics，以及由 `View[Msg]` 包装的私有 custom view 协议。
-- `moui/views/` 拥有公开 view constructor 和具体控件行为；它们通过 `@core.View::node` 实现，不向 `core` 添加新的 enum variant。
+- `moui/views/` 拥有公开 view constructor 和具体控件行为；它们实现 `@core.ViewNode` 并通过 `@core.View::from_node` 构造，不向 `core` 添加新的 enum variant。
 - `moui/runtime/` 暴露 app/host `AppRuntime` 构造入口，并拥有 runtime state、tree/layout/paint、event dispatch、program message drain、effect task、subscription lifecycle 和 diagnostics。
 - `moui/views/` 为 app 代码返回面向应用的 `@moui.View[Msg]` 值。
 - `moui/backend/host/` 定义共享 host contract；平台 backend 将窗口和输入事件规范化为 `HostEvent`。

@@ -748,8 +748,9 @@ MoUI keeps production runtime boundaries explicit when using Mooncakes
 frontends and tooling:
 
 - Layout stays platform-neutral, but concrete flex/grid/list/stack placement now
-  lives in `moui/views` via `View::node`; `core/` should not grow layout-engine
-  dependencies for individual controls.
+  lives in concrete `ViewNode` implementations in `moui/views`, constructed via
+  `View::from_node`; `core/` should not grow layout-engine dependencies for
+  individual controls.
 - `Milky2018/moon_accesskit` is the native accessibility tree representation
   used by `backend/host`; `@core.SemanticsNode` remains platform-neutral, and
   Web continues to use its ARIA adapter.

@@ -15,9 +15,7 @@ pub(all) struct Canvas2DRenderer {
 }
 
 ///|
-pub fn Canvas2DRenderer::new(
-  canvas_id~ : String,
-) -> Canvas2DRenderer {
+pub fn Canvas2DRenderer::new(canvas_id~ : String) -> Canvas2DRenderer {
   {
     canvas_id,
     logical_width: 0.0,
@@ -74,7 +72,12 @@ pub fn Canvas2DRenderer::render(
   // Rendering is dispatched through the JS host bridge.
   // The actual CanvasRenderingContext2D calls are performed
   // in the canvas2d_runtime.js file.
-  canvas2d_render_commands(self.canvas_id, self.logical_width, self.logical_height, commands)
+  canvas2d_render_commands(
+    self.canvas_id,
+    self.logical_width,
+    self.logical_height,
+    commands,
+  )
 }
 
 ///|
@@ -85,7 +88,12 @@ pub fn Canvas2DRenderer::render_frame(
   if self.disposed {
     return @render.RenderFrameResult::new(presented=false)
   }
-  canvas2d_render_commands(self.canvas_id, self.logical_width, self.logical_height, frame.commands)
+  canvas2d_render_commands(
+    self.canvas_id,
+    self.logical_width,
+    self.logical_height,
+    frame.commands,
+  )
   @render.RenderFrameResult::new(presented=true)
 }
 
@@ -134,51 +142,107 @@ extern "wasm" fn canvas2d_restore() = "canvas2d" "restore"
 
 ///|
 extern "wasm" fn canvas2d_fill_rect(
-  x : Double, y : Double, w : Double, h : Double,
-  r : Double, g : Double, b : Double, a : Double,
+  x : Double,
+  y : Double,
+  w : Double,
+  h : Double,
+  r : Double,
+  g : Double,
+  b : Double,
+  a : Double,
 ) = "canvas2d" "fill_rect"
 
 ///|
 extern "wasm" fn canvas2d_fill_rounded_rect(
-  x : Double, y : Double, w : Double, h : Double,
+  x : Double,
+  y : Double,
+  w : Double,
+  h : Double,
   radius : Double,
-  r : Double, g : Double, b : Double, a : Double,
+  r : Double,
+  g : Double,
+  b : Double,
+  a : Double,
 ) = "canvas2d" "fill_rounded_rect"
 
 ///|
 extern "wasm" fn canvas2d_stroke_rounded_rect(
-  x : Double, y : Double, w : Double, h : Double,
-  radius : Double, stroke_width : Double,
-  r : Double, g : Double, b : Double, a : Double,
+  x : Double,
+  y : Double,
+  w : Double,
+  h : Double,
+  radius : Double,
+  stroke_width : Double,
+  r : Double,
+  g : Double,
+  b : Double,
+  a : Double,
 ) = "canvas2d" "stroke_rounded_rect"
 
 ///|
 extern "wasm" fn canvas2d_draw_text(
-  c0 : Int, c1 : Int, c2 : Int, c3 : Int, c4 : Int,
-  c5 : Int, c6 : Int, c7 : Int, c8 : Int, c9 : Int,
-  c10 : Int, c11 : Int, c12 : Int, c13 : Int, c14 : Int,
-  c15 : Int, c16 : Int, c17 : Int, c18 : Int, c19 : Int,
+  c0 : Int,
+  c1 : Int,
+  c2 : Int,
+  c3 : Int,
+  c4 : Int,
+  c5 : Int,
+  c6 : Int,
+  c7 : Int,
+  c8 : Int,
+  c9 : Int,
+  c10 : Int,
+  c11 : Int,
+  c12 : Int,
+  c13 : Int,
+  c14 : Int,
+  c15 : Int,
+  c16 : Int,
+  c17 : Int,
+  c18 : Int,
+  c19 : Int,
   len : Int,
-  x : Double, y : Double, w : Double, h : Double,
-  font_size : Double, font_weight : Int,
-  r : Double, g : Double, b : Double, a : Double,
+  x : Double,
+  y : Double,
+  w : Double,
+  h : Double,
+  font_size : Double,
+  font_weight : Int,
+  r : Double,
+  g : Double,
+  b : Double,
+  a : Double,
   align : Int,
 ) = "canvas2d" "draw_text"
 
 ///|
 extern "wasm" fn canvas2d_set_transform(
-  a : Double, b : Double, c : Double, d : Double, tx : Double, ty : Double,
+  a : Double,
+  b : Double,
+  c : Double,
+  d : Double,
+  tx : Double,
+  ty : Double,
 ) = "canvas2d" "set_transform"
 
 ///|
 extern "wasm" fn canvas2d_translate(x : Double, y : Double) = "canvas2d" "translate"
 
 ///|
-extern "wasm" fn canvas2d_clip_rect(x : Double, y : Double, w : Double, h : Double) = "canvas2d" "clip_rect"
+extern "wasm" fn canvas2d_clip_rect(
+  x : Double,
+  y : Double,
+  w : Double,
+  h : Double,
+) = "canvas2d" "clip_rect"
 
 ///|
 extern "wasm" fn canvas2d_clip_rounded_rect(
-  x : Double, y : Double, w : Double, h : Double, radius : Double,
+  x : Double,
+  y : Double,
+  w : Double,
+  h : Double,
+  radius : Double,
 ) = "canvas2d" "clip_rounded_rect"
 
 ///|
@@ -186,16 +250,30 @@ extern "wasm" fn canvas2d_set_global_alpha(alpha : Double) = "canvas2d" "set_glo
 
 ///|
 extern "wasm" fn canvas2d_stroke_rect(
-  x : Double, y : Double, w : Double, h : Double, stroke_width : Double,
-  r : Double, g : Double, b : Double, a : Double,
+  x : Double,
+  y : Double,
+  w : Double,
+  h : Double,
+  stroke_width : Double,
+  r : Double,
+  g : Double,
+  b : Double,
+  a : Double,
 ) = "canvas2d" "stroke_rect"
 
 ///|
 extern "wasm" fn canvas2d_draw_shadow(
-  x : Double, y : Double, w : Double, h : Double,
+  x : Double,
+  y : Double,
+  w : Double,
+  h : Double,
   radius : Double,
-  offset_x : Double, offset_y : Double,
-  r : Double, g : Double, b : Double, a : Double,
+  offset_x : Double,
+  offset_y : Double,
+  r : Double,
+  g : Double,
+  b : Double,
+  a : Double,
   blur : Double,
   clip : Int,
 ) = "canvas2d" "draw_shadow"
@@ -203,16 +281,38 @@ extern "wasm" fn canvas2d_draw_shadow(
 ///|
 extern "wasm" fn canvas2d_draw_path(
   op : Int,
-  x : Double, y : Double, w : Double, h : Double,
-  r : Double, g : Double, b : Double, a : Double,
+  x : Double,
+  y : Double,
+  w : Double,
+  h : Double,
+  r : Double,
+  g : Double,
+  b : Double,
+  a : Double,
 ) = "canvas2d" "draw_path"
 
 ///|
 extern "wasm" fn canvas2d_measure_text_width(
-  c0 : Int, c1 : Int, c2 : Int, c3 : Int, c4 : Int,
-  c5 : Int, c6 : Int, c7 : Int, c8 : Int, c9 : Int,
-  c10 : Int, c11 : Int, c12 : Int, c13 : Int, c14 : Int,
-  c15 : Int, c16 : Int, c17 : Int, c18 : Int, c19 : Int,
+  c0 : Int,
+  c1 : Int,
+  c2 : Int,
+  c3 : Int,
+  c4 : Int,
+  c5 : Int,
+  c6 : Int,
+  c7 : Int,
+  c8 : Int,
+  c9 : Int,
+  c10 : Int,
+  c11 : Int,
+  c12 : Int,
+  c13 : Int,
+  c14 : Int,
+  c15 : Int,
+  c16 : Int,
+  c17 : Int,
+  c18 : Int,
+  c19 : Int,
   len : Int,
   font_size : Double,
   font_weight : Int,
@@ -232,31 +332,53 @@ fn canvas2d_render_commands(
   canvas2d_begin_frame(width, height)
   for cmd in commands {
     match cmd {
-      Clear(color) => {
-        canvas2d_fill_rect(0.0, 0.0, width, height, color.r, color.g, color.b, color.a)
-      }
-      FillRect(rect, color) => {
+      Clear(color) =>
         canvas2d_fill_rect(
-          rect.origin.x, rect.origin.y, rect.size.width, rect.size.height,
-          color.r, color.g, color.b, color.a,
+          0.0,
+          0.0,
+          width,
+          height,
+          color.r,
+          color.g,
+          color.b,
+          color.a,
         )
-      }
-      FillRoundedRect(rr, color) => {
+      FillRect(rect, color) =>
+        canvas2d_fill_rect(
+          rect.origin.x,
+          rect.origin.y,
+          rect.size.width,
+          rect.size.height,
+          color.r,
+          color.g,
+          color.b,
+          color.a,
+        )
+      FillRoundedRect(rr, color) =>
         canvas2d_fill_rounded_rect(
-          rr.rect.origin.x, rr.rect.origin.y,
-          rr.rect.size.width, rr.rect.size.height,
+          rr.rect.origin.x,
+          rr.rect.origin.y,
+          rr.rect.size.width,
+          rr.rect.size.height,
           rr.radius,
-          color.r, color.g, color.b, color.a,
+          color.r,
+          color.g,
+          color.b,
+          color.a,
         )
-      }
-      StrokeRoundedRect(rr, color, stroke_width) => {
+      StrokeRoundedRect(rr, color, stroke_width) =>
         canvas2d_stroke_rounded_rect(
-          rr.rect.origin.x, rr.rect.origin.y,
-          rr.rect.size.width, rr.rect.size.height,
-          rr.radius, stroke_width,
-          color.r, color.g, color.b, color.a,
+          rr.rect.origin.x,
+          rr.rect.origin.y,
+          rr.rect.size.width,
+          rr.rect.size.height,
+          rr.radius,
+          stroke_width,
+          color.r,
+          color.g,
+          color.b,
+          color.a,
         )
-      }
       DrawText(text_run) => {
         let text = text_run.text
         let text_len = text.length()
@@ -270,15 +392,37 @@ fn canvas2d_render_commands(
           TextEnd => 2
         }
         canvas2d_draw_text(
-          chars[0], chars[1], chars[2], chars[3], chars[4],
-          chars[5], chars[6], chars[7], chars[8], chars[9],
-          chars[10], chars[11], chars[12], chars[13], chars[14],
-          chars[15], chars[16], chars[17], chars[18], chars[19],
+          chars[0],
+          chars[1],
+          chars[2],
+          chars[3],
+          chars[4],
+          chars[5],
+          chars[6],
+          chars[7],
+          chars[8],
+          chars[9],
+          chars[10],
+          chars[11],
+          chars[12],
+          chars[13],
+          chars[14],
+          chars[15],
+          chars[16],
+          chars[17],
+          chars[18],
+          chars[19],
           text_len,
-          text_run.frame.origin.x, text_run.frame.origin.y,
-          text_run.frame.size.width, text_run.frame.size.height,
-          text_run.font.size, text_run.font.weight,
-          text_run.color.r, text_run.color.g, text_run.color.b, text_run.color.a,
+          text_run.frame.origin.x,
+          text_run.frame.origin.y,
+          text_run.frame.size.width,
+          text_run.frame.size.height,
+          text_run.font.size,
+          text_run.font.weight,
+          text_run.color.r,
+          text_run.color.g,
+          text_run.color.b,
+          text_run.color.a,
           align_int,
         )
       }
@@ -286,71 +430,92 @@ fn canvas2d_render_commands(
         canvas2d_save()
         canvas2d_set_transform(t.a, t.b, t.c, t.d, t.tx, t.ty)
       }
-      PopTransform => {
-        canvas2d_restore()
-      }
+      PopTransform => canvas2d_restore()
       PushClip(rect) => {
         canvas2d_save()
-        canvas2d_clip_rect(rect.origin.x, rect.origin.y, rect.size.width, rect.size.height)
+        canvas2d_clip_rect(
+          rect.origin.x,
+          rect.origin.y,
+          rect.size.width,
+          rect.size.height,
+        )
       }
-      PopClip => {
-        canvas2d_restore()
-      }
+      PopClip => canvas2d_restore()
       PushRoundedClip(rr) => {
         canvas2d_save()
         canvas2d_clip_rounded_rect(
-          rr.rect.origin.x, rr.rect.origin.y,
-          rr.rect.size.width, rr.rect.size.height,
+          rr.rect.origin.x,
+          rr.rect.origin.y,
+          rr.rect.size.width,
+          rr.rect.size.height,
           rr.radius,
         )
       }
-      PopRoundedClip => {
-        canvas2d_restore()
-      }
+      PopRoundedClip => canvas2d_restore()
       PushOpacity(opacity) => {
         canvas2d_save()
         canvas2d_set_global_alpha(opacity)
       }
-      PopOpacity => {
-        canvas2d_restore()
-      }
+      PopOpacity => canvas2d_restore()
       FillRoundedRectBrush(rr, brush) => {
         let color = brush.fallback_color()
         canvas2d_fill_rounded_rect(
-          rr.rect.origin.x, rr.rect.origin.y,
-          rr.rect.size.width, rr.rect.size.height,
+          rr.rect.origin.x,
+          rr.rect.origin.y,
+          rr.rect.size.width,
+          rr.rect.size.height,
           rr.radius,
-          color.r, color.g, color.b, color.a,
+          color.r,
+          color.g,
+          color.b,
+          color.a,
         )
       }
       StrokeRoundedRectBrush(rr, brush, stroke_width) => {
         let color = brush.fallback_color()
         canvas2d_stroke_rounded_rect(
-          rr.rect.origin.x, rr.rect.origin.y,
-          rr.rect.size.width, rr.rect.size.height,
-          rr.radius, stroke_width,
-          color.r, color.g, color.b, color.a,
+          rr.rect.origin.x,
+          rr.rect.origin.y,
+          rr.rect.size.width,
+          rr.rect.size.height,
+          rr.radius,
+          stroke_width,
+          color.r,
+          color.g,
+          color.b,
+          color.a,
         )
       }
       DrawShadow(shadow) => {
         let color = shadow.color
         canvas2d_draw_shadow(
-          shadow.rect.rect.origin.x, shadow.rect.rect.origin.y,
-          shadow.rect.rect.size.width, shadow.rect.rect.size.height,
+          shadow.rect.rect.origin.x,
+          shadow.rect.rect.origin.y,
+          shadow.rect.rect.size.width,
+          shadow.rect.rect.size.height,
           shadow.rect.radius,
-          shadow.offset.x, shadow.offset.y,
-          color.r, color.g, color.b, color.a,
+          shadow.offset.x,
+          shadow.offset.y,
+          color.r,
+          color.g,
+          color.b,
+          color.a,
           shadow.blur_radius,
-          if shadow.rect.radius > 0.0 { 1 } else { 0 },
+          if shadow.rect.radius > 0.0 {
+            1
+          } else {
+            0
+          },
         )
       }
       DrawPath(path) => {
         let color = match path.fill {
           Some(b) => b.fallback_color()
-          None => match path.stroke {
-            Some(b) => b.fallback_color()
-            None => @core.Color::{ r: 0.0, g: 0.0, b: 0.0, a: 1.0 }
-          }
+          None =>
+            match path.stroke {
+              Some(b) => b.fallback_color()
+              None => @core.Color::{ r: 0.0, g: 0.0, b: 0.0, a: 1.0 }
+            }
         }
         // Simple path rendering: op=0 for fill, op=1 for stroke
         let op = match path.fill {
@@ -359,18 +524,28 @@ fn canvas2d_render_commands(
         }
         canvas2d_draw_path(
           op,
-          0.0, 0.0, 0.0, 0.0,
-          color.r, color.g, color.b, color.a,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          color.r,
+          color.g,
+          color.b,
+          color.a,
         )
       }
-      StrokeRect(rect, color, stroke_width) => {
+      StrokeRect(rect, color, stroke_width) =>
         canvas2d_stroke_rect(
-          rect.origin.x, rect.origin.y,
-          rect.size.width, rect.size.height,
+          rect.origin.x,
+          rect.origin.y,
+          rect.size.width,
+          rect.size.height,
           stroke_width,
-          color.r, color.g, color.b, color.a,
+          color.r,
+          color.g,
+          color.b,
+          color.a,
         )
-      }
       _ => ()
     }
   }
@@ -390,17 +565,33 @@ fn canvas2d_measure_text_impl(
     chars[i] = text[i].to_int()
   }
   let width = canvas2d_measure_text_width(
-    chars[0], chars[1], chars[2], chars[3], chars[4],
-    chars[5], chars[6], chars[7], chars[8], chars[9],
-    chars[10], chars[11], chars[12], chars[13], chars[14],
-    chars[15], chars[16], chars[17], chars[18], chars[19],
+    chars[0],
+    chars[1],
+    chars[2],
+    chars[3],
+    chars[4],
+    chars[5],
+    chars[6],
+    chars[7],
+    chars[8],
+    chars[9],
+    chars[10],
+    chars[11],
+    chars[12],
+    chars[13],
+    chars[14],
+    chars[15],
+    chars[16],
+    chars[17],
+    chars[18],
+    chars[19],
     text_len,
     input.font.size,
     input.font.weight,
   )
   let font_size = input.font.size
   @core.TextLayoutResult::{
-    size: @core.Size::new(width=width, height=font_size * 1.2),
+    size: @core.Size::new(width~, height=font_size * 1.2),
     baseline: font_size * 0.85,
     caret_positions: [],
   }
@@ -486,6 +677,7 @@ pub fn canvas2d_image_resource_revisioned_snapshots() -> @render.ImageResourceSn
 pub fn canvas2d_set_image_resource_change_callback(
   _callback : ((@render.ImageResourceSnapshot) -> Unit)?,
 ) -> Unit {
+
 }
 
 ///|

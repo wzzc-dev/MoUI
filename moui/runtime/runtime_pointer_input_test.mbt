@@ -83,7 +83,7 @@ test "direct pointer input keeps a button target across a redraw" {
 
 ///|
 fn[Msg] runtime_pointer_capture_probe(message : Msg) -> @core.View[Msg] {
-  @core.View::node(
+  runtime_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="PointerCaptureProbe"),
     revision=() => "pointer-capture-probe",
     layout=ctx => {

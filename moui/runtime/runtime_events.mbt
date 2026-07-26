@@ -48,13 +48,14 @@ fn RuntimeState::dispatch_focused_text_command(
 ) -> TextCommandResult {
   match self.focused_element {
     Some(target) => {
-      let result = self.element_tree.root.dispatch_text_command(
+      let outcome = self.element_tree.root.dispatch_text_command(
         target,
         intent,
         paste_text~,
         environment=self.environment,
         text_system=self.text_system,
       )
+      let result = outcome.result
       if result.changed {
         self.needs_redraw = true
         self.needs_rebuild = true
@@ -62,6 +63,7 @@ fn RuntimeState::dispatch_focused_text_command(
         self.mark_build_dirty(self.element_tree.id())
         self.rebuild_if_possible()
       }
+      deliver_runtime_messages(outcome.deliveries)
       result
     }
     None => TextCommandResult::ignored()
@@ -112,9 +114,12 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
         if shortcut.activated {
           self.request_activation_rebuild()
         }
+        deliver_runtime_messages(shortcut.deliveries)
       } else if self.action_commands.dispatch_shortcut(event) is Some(_) {
+        deliver_runtime_messages(shortcut.deliveries)
         self.request_activation_rebuild()
       } else if event.pressed && event.key == "Tab" {
+        deliver_runtime_messages(shortcut.deliveries)
         match self.focused_element {
           Some(target) => {
             let constrained_target = self.element_tree.root.constrained_focus_target(
@@ -142,6 +147,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
               if result.changed {
                 self.rebuild_if_possible()
               }
+              deliver_runtime_messages(result.deliveries)
             } else {
               ignore(self.move_focus(reverse=event.modifiers.shift))
             }
@@ -149,6 +155,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
           None => ignore(self.move_focus(reverse=event.modifiers.shift))
         }
       } else {
+        deliver_runtime_messages(shortcut.deliveries)
         match self.focused_element {
           Some(target) => {
             let is_text_input = self.element_tree.root.is_text_input_target(
@@ -172,6 +179,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
             if is_text_input && result.changed {
               self.rebuild_if_possible()
             }
+            deliver_runtime_messages(result.deliveries)
           }
           None => ()
         }
@@ -198,6 +206,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
           if result.changed {
             self.rebuild_if_possible()
           }
+          deliver_runtime_messages(result.deliveries)
         }
         None => ()
       }
@@ -215,20 +224,24 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
       if result.activated {
         self.request_activation_rebuild()
       }
+      deliver_runtime_messages(result.deliveries)
     }
-    AppEvent::PlatformView(id, event) =>
-      if self.element_tree.root.dispatch_web_view_event(
-          id,
-          event,
-          environment=self.environment,
-          text_system=self.text_system,
-        ) {
+    AppEvent::PlatformView(id, event) => {
+      let result = self.element_tree.root.dispatch_web_view_event(
+        id,
+        event,
+        environment=self.environment,
+        text_system=self.text_system,
+      )
+      if result.changed || result.activated || result.captured {
         self.needs_rebuild = true
         self.needs_redraw = true
         self.needs_paint = true
         self.mark_current_dirty_elements()
         self.request_activation_rebuild()
       }
+      deliver_runtime_messages(result.deliveries)
+    }
     CloseRequested => ()
   }
 }
@@ -348,7 +361,7 @@ fn RuntimeState::dispatch_pointer_event(
   if result.activated {
     self.request_activation_rebuild()
   }
-  {
+  let dispatch_result = {
     // A wheel event is consumed only when a scroll target actually moved. In
     // particular, this keeps the browser default available at a scroll edge.
     // Pointer capture is a separate host concern and must not stand in for
@@ -361,6 +374,8 @@ fn RuntimeState::dispatch_pointer_event(
     capture_pointer: event.phase == PointerPhase::Down && result.captured,
     release_pointer,
   }
+  deliver_runtime_messages(result.deliveries)
+  dispatch_result
 }
 
 ///|

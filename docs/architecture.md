@@ -24,8 +24,8 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 | --- | --- |
 | `moui/` | Root public facade for app-loop types: `View`, `Program`, `Effect`, `Subscription`, `Theme`, `Environment`, and `ViewEnvironment`. |
 | `moui/{geometry,graphics,animation,text,state}/` | Domain facades over `moui/core` for app-facing geometry, paint/drawing, motion, text, and state/focus value types. They depend on `core`; `core` does not depend on them. |
-| `moui/core/` | Platform-neutral foundation contracts: opaque `View`, typed events, `Program`, `Effect`, `Subscription`, geometry, draw commands, semantics, text editing, theme token surface, and custom view protocol. |
-| `moui/views/` | Public view constructors, app-facing control APIs, default themes, form/navigation/data helpers, and concrete custom view behavior built with `@core.View::node`. |
+| `moui/core/` | Platform-neutral foundation contracts: opaque `View`, typed events, `Program`, `Effect`, `Subscription`, geometry, draw commands, semantics, text editing, theme token surface, and the public message-independent `ViewNode` extension protocol. |
+| `moui/views/` | Public view constructors, app-facing control APIs, default themes, form/navigation/data helpers, and concrete `ViewNode` behavior constructed with `@core.View::from_node`. |
 | `moui/runtime/` | AppRuntime construction, runtime state, element/layout/render tree generation, event dispatch, program queue drain, effects, subscriptions, diagnostics, and inspector snapshots. |
 | `moui/backend/host/` | Shared host contracts for windows, routes, timers, host services, WebView, async image loading, accessibility, input, redraw scheduling, and renderer handoff. |
 | `moui/backend/internal/embedded_runtime_session/` | Private MoUI runtime assembly for Android, iOS, and HarmonyOS window-hosted adapters; it composes `AppRuntime`, host contracts, and renderers after `ApplicationHandler` callbacks. |
@@ -157,8 +157,9 @@ terminal GPU recovery switches to raster.
 ## Extension Rules
 
 - New controls: add app-facing constructors and concrete behavior in
-  `moui/views`; use `@core.View::node` for custom layout/paint/event/focus/text
-  behavior; do not add new core primitive enum variants for ordinary controls.
+  `moui/views`; implement `@core.ViewNode` for message-independent
+  layout/paint/focus/semantics behavior and use `@core.View::from_node` for typed
+  children/events/text commands; do not add new core primitive enum variants.
 - New app examples: create `examples/<name>/app` first, then add one or more
   thin platform entrypoints.
 - New renderer capability: update the implementation, tests, capability model,
@@ -187,7 +188,8 @@ manual smoke gates described in `docs/testing.md` and `docs/release-readiness.md
 ## Scope
 
 - Platform-neutral `core` contracts, opaque views, environment/event/geometry,
-  draw models, and the private custom view protocol wrapped by `View[Msg]`.
+  draw models, and the public message-independent `ViewNode` protocol wrapped
+  by typed `View[Msg]` adapters.
   `core` should grow only cross-runtime protocols and shared
   value types; concrete control behavior belongs in `moui/views`, alongside the
   public view facade. New controls must not add core enum variants, primitive
@@ -518,7 +520,7 @@ measured child sizes, returns its own
 size, and places children with explicit frames. Its context also exposes child
 baselines and layout priorities so custom layouts can align text and make
 priority-aware placement decisions; paint and semantics metadata are kept on
-the same `View::node` callback surface.
+the same concrete `ViewNode` behavior surface.
 
 ## Modifiers And Environment
 
@@ -567,9 +569,9 @@ The larger WYSIWYG editing workflow is documented in
 [Markdown Editor](markdown-editor.md).
 
 Advanced users can use `@views.custom_layout` to provide measurement, paint, and
-semantics callbacks without exposing the internal runtime tree. Internally this
-is implemented with the same `View::node` callback surface as ordinary `moui/views`
-raw constructors:
+semantics callbacks without exposing the internal runtime tree. Internally its
+concrete node implements `ViewNode` and is constructed through
+`View::from_node`, like ordinary `moui/views` controls:
 
 ```moonbit
 let swatch = @views.custom_layout(
@@ -600,9 +602,9 @@ let pair = @views.custom_children_layout(
 
 When adding a reusable control, put its concrete custom view behavior in
 `moui/views`, expose the app-facing constructor from `moui/views`, and add tests
-around custom view runtime behavior. Do not expose `ViewNode`, add a
-`@core.View::primitive_*_view` constructor, `ViewLoweringSink`, or runtime
-lowering arm for new controls.
+around custom view runtime behavior. Do not re-export `ViewNode` from app-facing
+facades, add a `@core.View::primitive_*_view` constructor, `ViewLoweringSink`,
+or runtime lowering arm for new controls.
 
 ## Platform Host Contract
 

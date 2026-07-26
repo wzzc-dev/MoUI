@@ -325,24 +325,24 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "core",
       path: "moui/core/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/core\"",
-      max_lines: 1830,
-      max_pub_lines: 520,
-      max_pub_all_lines: 150,
+      max_lines: 1844,
+      max_pub_lines: 505,
+      max_pub_all_lines: 139,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
         "pub(all) enum Effect", "type Subscription", "pub(all) struct DrawFrame",
-        "View::node", "View::identity", "View::children", "View::layout", "View::paint",
-        "View::event", "View::text_command_result", "View::accepts_focus", "pub(all) struct ViewIdentity",
-        "pub(all) struct ViewLayoutContext", "pub(all) struct ViewLayoutResult",
-        "pub(all) struct ViewPaintContext", "pub(all) struct ViewPaintPlan", "pub(all) struct ViewPaintLayer",
-        "pub(all) struct ViewEventContext", "pub(all) struct ViewEventResult", "pub(all) enum ViewDirtyHint",
-        "ViewClean", "ViewPaintDirty", "pub(all) struct ViewTextCommandResult", "pub(all) struct ViewSemanticsInfo",
-        "pub(all) struct ViewStateContext",
+        "pub(open) trait ViewNode", "View::from_node", "View::identity", "View::children",
+        "View::layout", "View::paint", "View::event", "View::text_command_result",
+        "View::accepts_focus", "pub(all) struct ViewIdentity", "pub(all) struct ViewLayoutContext",
+        "pub(all) struct ViewLayoutResult", "pub(all) struct ViewPaintContext", "pub(all) struct ViewPaintPlan",
+        "pub(all) struct ViewPaintLayer", "pub(all) struct ViewEventContext", "pub(all) struct ViewEventResult",
+        "pub(all) enum ViewDirtyHint", "ViewClean", "ViewPaintDirty", "pub(all) struct ViewTextCommandResult",
+        "pub(all) struct ViewSemanticsInfo", "pub(all) struct ViewStateContext",
       ],
       forbidden_tokens: [
         "\"wzzc-dev/moui_theme", "\"wzzc-dev/moui/render/skia\"", "SkiaRasterRenderer",
         "VirtualNode", "View::virtual_node", "View::view_node", "View::virtual_node_ops",
-        "View::view_node_ops", "View::ops", "View::custom", "pub struct ViewNode",
+        "View::view_node_ops", "View::ops", "View::custom", "View::node(", "pub struct ViewNode",
         "pub(all) struct ViewNode", "ViewNode::new", "type ViewNode[", "View::empty(",
         "View::text(", "View::button(", "View::image(", "View::web_view(", "View::flex(",
         "View::spacer(", "View::frame_node(", "View::stack(", "View::scroll(", "View::grid(",
@@ -1235,7 +1235,8 @@ fn app_api_hygiene_test_path(path : String) -> Bool {
 
 ///|
 fn app_api_hygiene_allowed_core_view_line(line : String) -> Bool {
-  line.contains("@core.View::node") || line.contains("@core.View::primitive_")
+  line.contains("@core.View::from_node") ||
+  line.contains("@core.View::primitive_")
 }
 
 ///|

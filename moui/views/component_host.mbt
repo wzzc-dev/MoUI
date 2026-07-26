@@ -4,23 +4,37 @@ fn[Msg] component_host(
   kind? : String = "Component",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::node(
-    identity=() => @core.ViewIdentity::new(kind~, key~),
-    revision=() => "component",
-    build_child=Some(build),
-    layout=ctx => {
-      @core.ViewLayoutResult::new(
-        size=ctx.constraints.constrain(first_child_size(ctx.child_sizes)),
-        child_frames=if ctx.child_sizes.length() > 0 {
-          let size = first_child_size(ctx.child_sizes)
-          [@core.Rect::new(x=0.0, y=0.0, width=size.width, height=size.height)]
-        } else {
-          []
-        },
-      )
-    },
-    semantics=() => {
-      @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
+  @core.View::from_node(
+    ComponentHostViewNode::{ kind, key },
+    build_child=Some((_node, context) => build(context)),
+  )
+}
+
+///|
+priv struct ComponentHostViewNode {
+  kind : String
+  key : String?
+}
+
+///|
+impl @core.ViewNode for ComponentHostViewNode with fn identity(self) {
+  @core.ViewIdentity::new(kind=self.kind, key=self.key)
+}
+
+///|
+impl @core.ViewNode for ComponentHostViewNode with fn revision(_self) {
+  "component"
+}
+
+///|
+impl @core.ViewNode for ComponentHostViewNode with fn layout(_self, context) {
+  @core.ViewLayoutResult::new(
+    size=context.constraints.constrain(first_child_size(context.child_sizes)),
+    child_frames=if context.child_sizes.length() > 0 {
+      let size = first_child_size(context.child_sizes)
+      [@core.Rect::new(x=0.0, y=0.0, width=size.width, height=size.height)]
+    } else {
+      []
     },
   )
 }

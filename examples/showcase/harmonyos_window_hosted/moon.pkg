@@ -3,7 +3,7 @@ import {
   "wzzc-dev/moui/backend/harmonyos" @harmonyos_host,
   "wzzc-dev/moui/backend/harmonyos/skia" @harmonyos_skia_backend,
   "wzzc-dev/window/harmonyos" @window_harmonyos,
-  "examples/showcase/app" @app,
+  "examples/showcase/app",
 }
 
 supported_targets = "native"

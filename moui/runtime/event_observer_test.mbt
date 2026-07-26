@@ -5,7 +5,7 @@ fn[Msg] event_observer_test_rect(
   color~ : @core.Color,
   on_tap? : Msg? = None,
 ) -> @core.View[Msg] {
-  @core.View::node(
+  runtime_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="Rect"),
     revision=() => "event-observer-test-rect:\{width}:\{height}",
     layout=ctx => {

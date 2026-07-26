@@ -9,7 +9,7 @@ fn ElementNode::dispatch_text_input(
 ) -> ElementEventResult {
   if self.id == target {
     self.dispatch_view_event(
-      self.erased_view_node,
+      self.view_node,
       AppEvent::TextInput(event),
       RenderNode::empty(),
       text_system,
@@ -18,12 +18,11 @@ fn ElementNode::dispatch_text_input(
       focused=true,
     )
   } else {
-    let child_environment = (self.erased_view_node.child_environment)(
-      environment,
-    )
-    let child_style = (self.erased_view_node.child_style)(style)
+    let child_environment = self.view_node.child_environment(environment)
+    let child_style = self.view_node.child_style(style)
     let mut changed = false
     let mut activated = false
+    let deliveries : Array[() -> Unit] = []
     for child in self.children {
       let result = child.dispatch_text_input(
         target,
@@ -34,10 +33,18 @@ fn ElementNode::dispatch_text_input(
       )
       changed = changed || result.changed
       activated = activated || result.activated
+      deliveries.append(result.deliveries)
     }
     if changed {
       self.dirty.mark_paint()
     }
-    { changed, activated, captured: false, capture_target: None, focused: None }
+    {
+      changed,
+      activated,
+      captured: false,
+      capture_target: None,
+      focused: None,
+      deliveries,
+    }
   }
 }

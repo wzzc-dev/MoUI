@@ -14,99 +14,142 @@ fn[Msg] sheet_shell(
     Some(t) => t.revision_fingerprint()
     None => "context"
   }
-  @core.View::node(
-    identity=() => @core.ViewIdentity::new(kind~, key~),
-    revision=() => {
-      "sheet:\{sheet_presentation_revision(presentation_mode)}:\{theme_revision}:\{shadow is Some(_)}:\{on_dismiss is Some(_)}"
+  @core.View::from_node(
+    SheetShellNode::{
+      presentation_mode,
+      theme,
+      background,
+      corner_radius,
+      shadow,
+      theme_revision,
+      has_on_dismiss: on_dismiss is Some(_),
+      kind,
+      key,
     },
-    children=() => [content],
-    child_constraints=constraints => {
-      let content_constraints = constraints.deflate(sheet_content_insets())
-      match presentation_mode {
-        SheetPresentationMode::Modal => content_constraints
-        SheetPresentationMode::BottomSheet => content_constraints.loosen()
-      }
-    },
-    layout=ctx => {
-      let child_size = first_child_size(ctx.child_sizes)
-      let measured = ctx.constraints.constrain(
-        child_size.inflate(sheet_content_insets()),
-      )
-      @core.ViewLayoutResult::new(size=measured, child_frames=[
-        sheet_content_frame(
-          presentation_mode,
-          @core.Rect::new(
-            x=0.0,
-            y=0.0,
-            width=measured.width,
-            height=measured.height,
-          ),
-          child_size,
-        ),
-      ])
-    },
-    paint=ctx => {
-      // Resolve the sheet surface ambient-ly so it tracks dark-mode / palette
-      // changes without the caller rebuilding the view tree.
-      let resolved_theme = theme.unwrap_or(ctx.environment.theme)
-      let resolved_background = background.unwrap_or(
-        @core.Brush::solid(resolved_theme.palette.surface),
-      )
-      let resolved_radius = corner_radius.unwrap_or(
-        resolved_theme.radius_scale.lg,
-      )
-      let commands : Array[@core.DrawCommand] = []
-      let rounded = @core.RoundedRect::new(
-        rect=ctx.frame,
-        radius=resolved_radius,
-      )
-      emit_elevation_shadow(
-        commands,
-        rounded,
-        shadow,
-        ctx.environment.color_scheme(),
-      )
-      commands.push(
-        @core.DrawCommand::FillRoundedRectBrush(rounded, resolved_background),
-      )
-      @core.ViewPaintPlan::commands(commands)
-    },
-    event=ctx => {
-      match (ctx.event, on_dismiss) {
-        (@core.AppEvent::Pointer(event), Some(message)) =>
-          if event.phase == @core.PointerPhase::Up &&
-            ctx.frame.contains(event.position) &&
-            sheet_point_outside_content(event.position, ctx.child_frames) {
-            view_event_result(
-              changed=true,
-              activated=true,
-              captured=true,
-              dirty=@core.ViewDirtyHint::ViewPaintDirty,
-              messages=[message],
-            )
-          } else if ctx.frame.contains(event.position) {
-            view_event_result(changed=true, captured=true)
-          } else {
-            @core.ViewEventResult::ignored()
-          }
-        (@core.AppEvent::Pointer(event), None) =>
-          if event.phase == @core.PointerPhase::Up &&
-            ctx.frame.contains(event.position) &&
-            sheet_point_outside_content(event.position, ctx.child_frames) {
-            view_event_result(changed=true, captured=true)
-          } else if ctx.frame.contains(event.position) {
-            view_event_result(changed=true, captured=true)
-          } else {
-            @core.ViewEventResult::ignored()
-          }
-        _ => @core.ViewEventResult::ignored()
-      }
-    },
-    semantics=() => {
-      @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Dialog)
-    },
-    focusable=() => false,
+    children=_node => [content],
+    event=(_node, ctx) => sheet_shell_event(ctx, on_dismiss),
   )
+}
+
+///|
+priv struct SheetShellNode {
+  presentation_mode : SheetPresentationMode
+  theme : @core.Theme?
+  background : @core.Brush?
+  corner_radius : Double?
+  shadow : @core.ShadowStyle?
+  theme_revision : String
+  has_on_dismiss : Bool
+  kind : String
+  key : String?
+}
+
+///|
+impl @core.ViewNode for SheetShellNode with fn identity(self) {
+  @core.ViewIdentity::new(kind=self.kind, key=self.key)
+}
+
+///|
+impl @core.ViewNode for SheetShellNode with fn revision(self) {
+  "sheet:\{sheet_presentation_revision(self.presentation_mode)}:\{self.theme_revision}:\{self.shadow is Some(_)}:\{self.has_on_dismiss}"
+}
+
+///|
+impl @core.ViewNode for SheetShellNode with fn child_constraints(
+  self,
+  constraints,
+) {
+  let content_constraints = constraints.deflate(sheet_content_insets())
+  match self.presentation_mode {
+    SheetPresentationMode::Modal => content_constraints
+    SheetPresentationMode::BottomSheet => content_constraints.loosen()
+  }
+}
+
+///|
+impl @core.ViewNode for SheetShellNode with fn layout(self, ctx) {
+  let child_size = first_child_size(ctx.child_sizes)
+  let measured = ctx.constraints.constrain(
+    child_size.inflate(sheet_content_insets()),
+  )
+  @core.ViewLayoutResult::new(size=measured, child_frames=[
+    sheet_content_frame(
+      self.presentation_mode,
+      @core.Rect::new(
+        x=0.0,
+        y=0.0,
+        width=measured.width,
+        height=measured.height,
+      ),
+      child_size,
+    ),
+  ])
+}
+
+///|
+impl @core.ViewNode for SheetShellNode with fn paint(self, ctx) {
+  // Resolve the sheet surface ambient-ly so it tracks palette changes without
+  // requiring the caller to rebuild the view tree.
+  let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
+  let resolved_background = self.background.unwrap_or(
+    @core.Brush::solid(resolved_theme.palette.surface),
+  )
+  let resolved_radius = self.corner_radius.unwrap_or(
+    resolved_theme.radius_scale.lg,
+  )
+  let commands : Array[@core.DrawCommand] = []
+  let rounded = @core.RoundedRect::new(rect=ctx.frame, radius=resolved_radius)
+  emit_elevation_shadow(
+    commands,
+    rounded,
+    self.shadow,
+    ctx.environment.color_scheme(),
+  )
+  commands.push(
+    @core.DrawCommand::FillRoundedRectBrush(rounded, resolved_background),
+  )
+  @core.ViewPaintPlan::commands(commands)
+}
+
+///|
+impl @core.ViewNode for SheetShellNode with fn semantics(_self) {
+  @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Dialog)
+}
+
+///|
+fn[Msg] sheet_shell_event(
+  ctx : @core.ViewEventContext,
+  on_dismiss : Msg?,
+) -> @core.ViewEventResult[Msg] {
+  match (ctx.event, on_dismiss) {
+    (@core.AppEvent::Pointer(event), Some(message)) =>
+      if event.phase == @core.PointerPhase::Up &&
+        ctx.frame.contains(event.position) &&
+        sheet_point_outside_content(event.position, ctx.child_frames) {
+        view_event_result(
+          changed=true,
+          activated=true,
+          captured=true,
+          dirty=@core.ViewDirtyHint::ViewPaintDirty,
+          messages=[message],
+        )
+      } else if ctx.frame.contains(event.position) {
+        view_event_result(changed=true, captured=true)
+      } else {
+        @core.ViewEventResult::ignored()
+      }
+    (@core.AppEvent::Pointer(event), None) =>
+      if event.phase == @core.PointerPhase::Up &&
+        ctx.frame.contains(event.position) &&
+        sheet_point_outside_content(event.position, ctx.child_frames) {
+        view_event_result(changed=true, captured=true)
+      } else if ctx.frame.contains(event.position) {
+        view_event_result(changed=true, captured=true)
+      } else {
+        @core.ViewEventResult::ignored()
+      }
+    _ => @core.ViewEventResult::ignored()
+  }
 }
 
 ///|

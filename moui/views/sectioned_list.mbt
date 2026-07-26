@@ -21,17 +21,7 @@ pub fn[T, Msg] sectioned_list(
         scroll_view(view, state=Some(state), width=0.0, height=viewport_height)
       None =>
         scroll_view(
-          @core.View::node(
-            identity=() => @core.ViewIdentity::new(kind="Empty"),
-            revision=() => "empty",
-            layout=ctx => {
-              @core.ViewLayoutResult::new(
-                size=ctx.constraints.constrain(
-                  @core.Size::new(width=0.0, height=0.0),
-                ),
-              )
-            },
-          ),
+          @core.View::from_node(EmptyControlNode::{  }),
           state=Some(state),
           width=0.0,
           height=viewport_height,
