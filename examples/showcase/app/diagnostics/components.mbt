@@ -155,161 +155,6 @@ fn showcase_soft_card(
 }
 
 ///|
-fn example_preview(
-  theme : @moui.Theme,
-  title : String,
-  child : @moui.View[ShowcaseMsg],
-  width? : Double = 500.0,
-) -> @moui.View[ShowcaseMsg] {
-  let inner_width = max_showcase_double(220.0, width - 30.0)
-  container(
-    column(
-      [
-        text(title, width=inner_width, height=26.0)
-        .font(theme.typography.caption)
-        .foreground(theme.palette.muted),
-        child.frame(width=inner_width, height=150.0),
-      ],
-      spacing=theme.spacing_scale.xs,
-      align=@views.CrossAlign::Start,
-    ),
-    width~,
-    height=190.0,
-    variant=@views.ContainerVariant::Raised,
-    theme~,
-  ).border(showcase_card_border(theme))
-}
-
-///|
-fn ShowcaseModel::layout_tile(
-  self : ShowcaseModel,
-  theme : @moui.Theme,
-  label : String,
-) -> @moui.View[ShowcaseMsg] {
-  self.layout_tile_sized(theme, label, 156.0, 40.0)
-}
-
-///|
-fn ShowcaseModel::layout_tile_sized(
-  self : ShowcaseModel,
-  theme : @moui.Theme,
-  label : String,
-  width : Double,
-  height : Double,
-) -> @moui.View[ShowcaseMsg] {
-  ignore(self)
-  container(
-    row(
-      [
-        layout_tile_marker(theme),
-        text(
-          label,
-          width=max_showcase_double(20.0, width - 34.0),
-          height=max_showcase_double(20.0, height - 12.0),
-        )
-        .font(theme.typography.caption)
-        .foreground(theme.palette.foreground),
-      ],
-      spacing=8.0,
-      align=@views.CrossAlign::Center,
-    ),
-    width~,
-    height~,
-    background=theme.palette.surface_variant.multiply_alpha(0.48),
-    corner_radius=theme.radius_scale.sm,
-    padding=6.0,
-  )
-}
-
-///|
-fn layout_tile_marker(theme : @moui.Theme) -> @moui.View[ShowcaseMsg] {
-  @views.custom_layout(
-    measure=constraints => {
-      constraints.constrain(@geometry.Size::new(width=4.0, height=22.0))
-    },
-    paint=(ctx, frame) => {
-      fill_rounded_rect(
-        ctx,
-        @graphics.RoundedRect::new(rect=frame, radius=2.0),
-        @graphics.Brush::solid(theme.palette.primary.multiply_alpha(0.72)),
-      )
-    },
-    semantics_label="",
-  )
-}
-
-///|
-fn ShowcaseModel::visual_card(
-  self : ShowcaseModel,
-  theme : @moui.Theme,
-  metrics : ShowcaseMetrics,
-  card_width : Double,
-  active : Bool,
-  offset : Double,
-  opacity : Double,
-) -> @moui.View[ShowcaseMsg] {
-  ignore(self)
-  let media_width = max_showcase_double(120.0, card_width - 36.0)
-  let media_height = if metrics.compact { 96.0 } else { 136.0 }
-  let card_height = if metrics.compact { 250.0 } else { 300.0 }
-  let gradient = @graphics.Brush::linear_gradient(
-    start=@geometry.Point::new(x=0.0, y=0.0),
-    end=@geometry.Point::new(x=260.0, y=160.0),
-    // Soft accent-tinted wash behind the hero image: a low-primary tint over
-    // the surface so the image stays the focal point and the tint reads as
-    // brand color rather than a heavy block.
-    start_color=theme.palette.surface.lerp(theme.palette.primary, 0.22),
-    end_color=theme.palette.surface,
-  )
-  showcase_soft_card(
-    theme,
-    column(
-      [
-        image(
-          showcase_image_source(),
-          width=media_width,
-          height=media_height,
-          opacity~,
-          corner_radius=theme.radius_scale.lg,
-          fit=@graphics.ImageFit::Cover,
-        )
-        .background_brush(gradient)
-        .corner_radius(theme.radius_scale.lg)
-        .clip()
-        .offset(dx=offset, dy=0.0),
-        text(
-          if active {
-            "Activated state visual"
-          } else {
-            "Layered card with image"
-          },
-          width=media_width,
-          height=28.0,
-        )
-        .font(theme.typography.control)
-        .foreground(theme.palette.foreground),
-        button(
-          if active {
-            "Settle"
-          } else {
-            "Activate"
-          },
-          on_click=ToggleActive,
-          variant=@views.ButtonVariant::Primary,
-          theme~,
-          width=140.0,
-        ),
-      ],
-      spacing=theme.spacing_scale.md,
-      align=@views.CrossAlign::Start,
-    ),
-    width=card_width,
-    height=card_height,
-    padding=theme.spacing_scale.md,
-  )
-}
-
-///|
 fn ShowcaseModel::capability_card(
   self : ShowcaseModel,
   theme : @moui.Theme,
@@ -596,46 +441,6 @@ fn ShowcaseModel::visual_correctness_card(
 }
 
 ///|
-fn ShowcaseModel::shortcut_preview(
-  self : ShowcaseModel,
-  theme : @moui.Theme,
-) -> @moui.View[ShowcaseMsg] {
-  ignore(self)
-  container(
-    text("Keyboard: Meta+K", width=190.0, height=28.0)
-    .font(theme.typography.caption)
-    .foreground(theme.palette.foreground),
-    width=220.0,
-    height=50.0,
-    variant=@views.ContainerVariant::Base,
-    theme~,
-    padding=theme.spacing_scale.md,
-  ).border(showcase_card_border(theme))
-}
-
-///|
-fn ShowcaseModel::progress_preview(
-  self : ShowcaseModel,
-  theme : @moui.Theme,
-  value : Double,
-  width~ : Double,
-) -> @moui.View[ShowcaseMsg] {
-  ignore(self)
-  container(
-    progress(
-      value,
-      width=max_showcase_double(80.0, width - 24.0),
-      foreground=theme.palette.primary,
-    ),
-    width~,
-    height=42.0,
-    variant=@views.ContainerVariant::Base,
-    theme~,
-    padding=12.0,
-  ).border(showcase_card_border(theme))
-}
-
-///|
 fn ShowcaseModel::theme_helpers(
   self : ShowcaseModel,
   theme : @moui.Theme,
@@ -746,121 +551,6 @@ fn ShowcaseModel::vector_path_card(
 }
 
 ///|
-fn ShowcaseModel::sparkline(
-  self : ShowcaseModel,
-  theme : @moui.Theme,
-  value : Double,
-) -> @moui.View[ShowcaseMsg] {
-  ignore(self)
-  @views.custom_layout(
-    measure=constraints => {
-      constraints.constrain(@geometry.Size::new(width=300.0, height=34.0))
-    },
-    paint=(ctx, frame) => {
-      let fill = @geometry.Rect::new(
-        x=frame.origin.x,
-        y=frame.origin.y + 10.0,
-        width=frame.size.width * clamp_double(value, 0.0, 1.0),
-        height=14.0,
-      )
-      fill_rounded_rect(
-        ctx,
-        @graphics.RoundedRect::new(rect=frame, radius=theme.radius_scale.sm),
-        @graphics.Brush::solid(theme.palette.surface_variant),
-      )
-      fill_rounded_rect(
-        ctx,
-        @graphics.RoundedRect::new(rect=fill, radius=7.0),
-        @graphics.Brush::solid(theme.palette.primary),
-      )
-    },
-    semantics_label="Custom layout sparkline",
-  )
-}
-
-///|
-fn ShowcaseModel::dialog(
-  self : ShowcaseModel,
-  theme : @moui.Theme,
-) -> @moui.View[ShowcaseMsg] {
-  ignore(self)
-  @views.dialog(
-    "Showcase dialog",
-    content=column(
-      [
-        text(
-          "Dialog hosts custom content, focus, and actions in one modal surface.",
-          width=392.0,
-          height=48.0,
-        ).foreground(theme.palette.foreground),
-        description_list(
-          [
-            description_item("Host", "view-level"),
-            description_item("Focus", "app-owned"),
-            description_item("Actions", "footer"),
-          ],
-          theme~,
-          width=392.0,
-          term_width=88.0,
-        ),
-      ],
-      spacing=theme.spacing_scale.sm,
-      align=@views.CrossAlign::Start,
-    ),
-    subtitle="Custom content shell",
-    primary_action=Some(
-      @views.StateViewAction::new(label="Close", message=HideDialog),
-    ),
-    secondary_action=Some(
-      @views.StateViewAction::new(label="Sheet", message=ShowSheet),
-    ),
-    dismiss_action=Some(
-      @views.StateViewAction::new(label="Dismiss", message=HideDialog),
-    ),
-    theme~,
-    width=440.0,
-    height=286.0,
-  )
-}
-
-///|
-fn ShowcaseModel::sheet(
-  self : ShowcaseModel,
-  theme : @moui.Theme,
-) -> @moui.View[ShowcaseMsg] {
-  ignore(self)
-  sheet(
-    content=column(
-      [
-        text("Showcase sheet", width=240.0, height=30.0)
-        .font(theme.typography.control)
-        .foreground(theme.palette.foreground),
-        text(
-          "Sheet content is built with the same presentation primitives.",
-          width=300.0,
-          height=48.0,
-        )
-        .font(theme.typography.caption)
-        .foreground(theme.palette.muted),
-        button(
-          "Done",
-          on_click=HideSheet,
-          variant=@views.ButtonVariant::Primary,
-          theme~,
-          width=120.0,
-        ),
-      ],
-      spacing=theme.spacing_scale.md,
-      align=@views.CrossAlign::Start,
-    ),
-    presentation_mode=@views.SheetPresentationMode::BottomSheet,
-    background=theme.palette.surface,
-    corner_radius=theme.radius_scale.lg,
-    shadow=Some(theme.shadow_scale.lg),
-  )
-}
-
-///|
 fn capability_row(
   entry : @render.RendererFeatureCapability,
   theme : @moui.Theme,
@@ -917,4 +607,90 @@ fn capability_status_color(
   } else {
     theme.palette.muted
   }
+}
+
+///|
+fn layout_tile_marker(theme : @moui.Theme) -> @moui.View[ShowcaseMsg] {
+  @views.custom_layout(
+    measure=constraints => {
+      constraints.constrain(@geometry.Size::new(width=4.0, height=22.0))
+    },
+    paint=(ctx, frame) => {
+      fill_rounded_rect(ctx,
+        @graphics.RoundedRect::new(rect=frame, radius=2.0),
+        @graphics.Brush::solid(theme.palette.primary.multiply_alpha(0.72)),
+      )
+    },
+    semantics_label="",
+  )
+}
+
+///|
+fn layout_tile(theme : @moui.Theme, label : String) -> @moui.View[ShowcaseMsg] {
+  container(
+    row([
+      layout_tile_marker(theme),
+      text(label, width=120.0, height=20.0)
+        .font(theme.typography.caption)
+        .foreground(theme.palette.foreground),
+    ], spacing=8.0, align=@views.CrossAlign::Center),
+    width=156.0, height=40.0,
+    background=theme.palette.surface_variant.multiply_alpha(0.48),
+    corner_radius=theme.radius_scale.sm, padding=6.0,
+  )
+}
+
+///|
+fn example_preview(theme : @moui.Theme, title : String,
+  child : @moui.View[ShowcaseMsg], width? : Double = 500.0,
+) -> @moui.View[ShowcaseMsg] {
+  let inner_width = max_showcase_double(220.0, width - 30.0)
+  container(
+    column([
+      text(title, width=inner_width, height=26.0)
+        .font(theme.typography.caption)
+        .foreground(theme.palette.muted),
+      child.frame(width=inner_width, height=150.0),
+    ], spacing=theme.spacing_scale.xs, align=@views.CrossAlign::Start),
+    width~, height=190.0,
+    variant=@views.ContainerVariant::Raised, theme~,
+  ).border(showcase_card_border(theme))
+}
+
+///|
+/// Visual card: a framed image with caption + corner badge, for image/avatar demos.
+fn visual_card(
+  theme : @moui.Theme,
+  image_source : String,
+  caption : String,
+  badge : String,
+  width? : Double = 240.0,
+) -> @moui.View[ShowcaseMsg] {
+  let inner_width = max_showcase_double(180.0, width - 24.0)
+  container(
+    column(
+      [
+        @views.image(image_source, width=inner_width, height=120.0),
+        row(
+          [
+            text(caption, width=inner_width - 60.0, height=22.0)
+              .font(theme.typography.caption)
+              .foreground(theme.palette.foreground),
+            text(badge, width=60.0, height=22.0)
+              .font(theme.typography.caption)
+              .foreground(theme.palette.primary),
+          ],
+          spacing=8.0,
+          justify=@views.MainAlign::Between,
+          align=@views.CrossAlign::Center,
+        ).frame(width=inner_width, height=22.0),
+      ],
+      spacing=theme.spacing_scale.xs,
+      align=@views.CrossAlign::Start,
+    ),
+    width~, height=164.0,
+    variant=@views.ContainerVariant::Raised,
+    theme~,
+    padding=12.0,
+  ).border(showcase_card_border(theme))
 }

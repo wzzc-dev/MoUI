@@ -43,12 +43,55 @@ fn ShowcaseModel::text_diagnostics_section(
                 variant=@views.TextFieldVariant::Outline,
                 theme~,
               ),
+              text(
+                "RichText doc spans: " + showcase_format_rich_text("sample").blocks.length().to_string(),
+                width=card_width - 32.0,
+                height=20.0,
+              )
+                .font(theme.typography.caption)
+                .foreground(theme.palette.muted),
             ],
             spacing=theme.spacing_scale.sm,
             align=@views.CrossAlign::Start,
           ),
           width=card_width,
           height=132.0,
+          padding=theme.spacing_scale.md,
+        ),
+        showcase_soft_card(
+          theme,
+          column(
+            [
+              text("Gallery membership", width=card_width - 32.0, height=24.0)
+              .font(theme.typography.caption)
+              .foreground(theme.palette.foreground),
+              row(
+                {
+                  let chips : Array[@moui.View[ShowcaseMsg]] = []
+                  for item in gallery_items() {
+                    let hit = showcase_string_array_contains(["atlas", "catalog"], item)
+                    let label = if hit { item + " ✓" } else { item + " ·" }
+                    chips.push(
+                      text(label, width=84.0, height=24.0)
+                        .font(theme.typography.caption)
+                        .foreground(if hit {
+                          theme.palette.primary
+                        } else {
+                          theme.palette.muted
+                        }),
+                    )
+                  }
+                  chips
+                },
+                spacing=theme.spacing_scale.xs,
+                align=@views.CrossAlign::Center,
+              ),
+            ],
+            spacing=theme.spacing_scale.sm,
+            align=@views.CrossAlign::Start,
+          ),
+          width=card_width,
+          height=88.0,
           padding=theme.spacing_scale.md,
         ),
       ],

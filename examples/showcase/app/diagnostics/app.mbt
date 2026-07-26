@@ -107,24 +107,11 @@ pub struct ShowcaseRouteHost {
 }
 
 ///|
-priv struct ShowcaseSection {
-  route : String
-  title : String
-  summary : String
-  group : String
-}
-
-///|
 priv struct ShowcaseMetrics {
-  viewport : @geometry.Size
-  shell_width : Double
-  sidebar_width : Double
-  detail_width : Double
   panel_width : Double
   panel_height : Double
   body_width : Double
   body_height : Double
-  action_width : Double
   compact : Bool
 }
 
@@ -208,10 +195,13 @@ pub fn ShowcaseModel::route(self : ShowcaseModel) -> String {
 }
 
 ///|
+/// `theme-renderer` alias normalization lives on the shell (`workspace.mbt`
+/// `legacy_showcase_route`), so by the time a route reaches Diagnostics it is
+/// already canonical. This helper only enforces the Diagnostics-private
+/// whitelist (including the hidden `theme` helper section) and falls back to
+/// the Inspector entry otherwise.
 pub fn normalize_diagnostics_route(route : String) -> String {
-  if route == "theme-renderer" {
-    "runtime-renderer"
-  } else if diagnostics_routes().contains(route) {
+  if route == "theme" || diagnostics_routes().contains(route) {
     route
   } else {
     "diagnostics"
@@ -557,21 +547,26 @@ fn ShowcaseModel::with_sidebar_scroll_to(
 }
 
 ///|
+/// Title for a diagnostics route, sourced from the catalog item so the
+/// sidebar label and the history entry agree without a second hand-maintained
+/// lookup table. Falls back to the raw route for the hidden `theme` helper
+/// section which is intentionally not a catalog item.
 fn showcase_route_title(route : String) -> String {
-  for section in showcase_sections() {
-    if section.route == route {
-      return section.title
+  for item in catalog_items() {
+    if item.id == route {
+      return item.title
     }
   }
-  match showcase_hidden_route_title(route) {
-    Some(title) => return title
-    None => ()
+  match route {
+    "theme" => "Theme"
+    _ => route
   }
-  route
 }
 
 ///|
-/// Hosted body for the unified Showcase shell (no local chrome/sidebar).
+/// Hosted body for the unified Showcase shell — detail panel only.
+/// The outer shell (app/view.mbt) renders the global left rail; feature
+/// packages must not add a second sidebar here.
 pub fn ShowcaseModel::view_body(
   self : ShowcaseModel,
   env : @moui.ViewEnvironment,
@@ -581,36 +576,32 @@ pub fn ShowcaseModel::view_body(
     @state.ColorScheme::Light => @views.light_theme()
     @state.ColorScheme::Dark => @views.dark_theme()
   }
-  let metrics = showcase_metrics(
-    if width > 0.0 {
-      @geometry.Size::new(width~, height=env.viewport_size().height.max(320.0))
-    } else {
-      env.viewport_size()
-    },
-    theme,
-  )
+  let viewport = if width > 0.0 {
+    @geometry.Size::new(width~, height=env.viewport_size().height.max(320.0))
+  } else {
+    env.viewport_size()
+  }
+  let metrics = showcase_metrics(viewport, theme)
   let offset = if self.active { 18.0 } else { 0.0 }
   let opacity = if self.active { 1.0 } else { 0.68 }
-  self.current_destination(theme, metrics, offset, opacity)
-}
-
-///|
-pub fn ShowcaseModel::view(
-  self : ShowcaseModel,
-  env : @moui.ViewEnvironment,
-) -> @moui.View[ShowcaseMsg] {
-  let theme = match self.scheme {
-    @state.ColorScheme::Light => @views.light_theme()
-    @state.ColorScheme::Dark => @views.dark_theme()
+  let content = self.current_destination(theme, metrics, offset, opacity)
+  if self.dialog_visible {
+    @views.dialog_host(
+      content,
+      dialog=Some(
+        @views.dialog("Showcase dialog",
+          content=text("Custom modal content here", width=300.0, height=48.0),
+          primary_action=Some(@views.StateViewAction::new(
+            label="Close", message=HideDialog,
+          )),
+          theme~,
+        ),
+      ),
+      presented=true,
+    )
+  } else {
+    content
   }
-  let metrics = showcase_metrics(env.viewport_size(), theme)
-  container(
-    self.view_body(env),
-    width=metrics.viewport.width,
-    height=metrics.viewport.height,
-    variant=@views.ContainerVariant::Base,
-    theme~,
-  )
 }
 
 ///|
@@ -661,7 +652,7 @@ fn ShowcaseModel::program_with_optional_route_host(
   @moui.Program::new_with_environment(
     init=() => (self, @moui.Effect::none()),
     update=(model, message) => model.update_with_route_host(message, route_host),
-    view=(model, env) => model.view(env),
+    view=(model, env) => model.view_body(env),
     subscriptions=_model => showcase_route_subscription(route_host),
   )
 }
