@@ -30,7 +30,7 @@ fn downstream_event_context() -> @core.ViewEventContext {
       checked: false,
       expanded: false,
       disabled: false,
-      scratch: "",
+      slots: @core.ViewStateSlots::empty(),
     },
     text_control: {
       caret: 0,
@@ -70,8 +70,10 @@ test "ViewNode: downstream implementation uses trait defaults" {
     size: @core.Size::new(width=12.0, height=8.0),
   })
   inspect(view.identity().kind, content="downstream")
-  inspect(view.revision(), content="")
-  inspect(view.paint_revision(), content="")
+  inspect(
+    view.declaration() == @core.ViewDeclaration::uncacheable(),
+    content="true",
+  )
   inspect(view.accepts_focus(), content="false")
   inspect(view.flex_weight(), content="0")
   debug_inspect(
@@ -108,4 +110,155 @@ test "ViewNode: typed adapters map messages without replacing the node" {
     mapped_child.event(downstream_event_context()).messages[0],
     content="13",
   )
+}
+
+///|
+struct SnapshotProbeNode {
+  calls : @core.State[Array[Int]]
+}
+
+///|
+impl @core.ViewNode for SnapshotProbeNode with fn identity(self) {
+  self.calls.update(values => {
+    let next = values.copy()
+    next[0] = next[0] + 1
+    next
+  })
+  @core.ViewIdentity::new(kind="snapshot-probe")
+}
+
+///|
+impl @core.ViewNode for SnapshotProbeNode with fn declaration(self) {
+  self.calls.update(values => {
+    let next = values.copy()
+    next[1] = next[1] + 1
+    next
+  })
+  @core.ViewDeclaration::constant()
+}
+
+///|
+impl @core.ViewNode for SnapshotProbeNode with fn semantics(self) {
+  self.calls.update(values => {
+    let next = values.copy()
+    next[2] = next[2] + 1
+    next
+  })
+  @core.ViewSemanticsInfo::new(label="snapshot")
+}
+
+///|
+impl @core.ViewNode for SnapshotProbeNode with fn layout(_self, context) {
+  @core.ViewLayoutResult::new(size=context.constraints.min)
+}
+
+///|
+test "View::from_node freezes declarations semantics and static children" {
+  let calls = @core.State::new([0, 0, 0, 0, 0])
+  let view : @core.View[String] = @core.View::from_node(
+    SnapshotProbeNode::{ calls, },
+    children=node => {
+      node.calls.update(values => {
+        let next = values.copy()
+        next[3] = next[3] + 1
+        next
+      })
+      []
+    },
+    semantics_actions=node => {
+      node.calls.update(values => {
+        let next = values.copy()
+        next[4] = next[4] + 1
+        next
+      })
+      [
+        @core.ViewSemanticsActionHandler::activate(_context => {
+          @core.ViewSemanticsActionResult::message("activate")
+        }),
+      ]
+    },
+  )
+  debug_inspect(calls.get(), content="[1, 1, 1, 1, 1]")
+  ignore(view.identity())
+  ignore(view.declaration())
+  ignore(view.semantics())
+  ignore(view.children())
+  let mapped = view.map(message => message.length())
+  ignore(mapped.identity())
+  ignore(mapped.declaration())
+  ignore(mapped.semantics())
+  ignore(mapped.children())
+  inspect(
+    mapped.semantics_action_kinds() == [@core.SemanticsActionKind::Activate],
+    content="true",
+  )
+  let event_context = downstream_event_context()
+  let result = mapped.dispatch_semantics_action(
+    {
+      frame: event_context.frame,
+      child_frames: event_context.child_frames,
+      focused: event_context.focused,
+      state: event_context.state,
+      text_control: event_context.text_control,
+      text_system: event_context.text_system,
+      environment: event_context.environment,
+      style: event_context.style,
+    },
+    @core.SemanticsAction::Activate,
+  )
+  inspect(result.accepted, content="true")
+  debug_inspect(result.messages, content="[8]")
+  debug_inspect(calls.get(), content="[1, 1, 1, 1, 1]")
+}
+
+///|
+test "View::from_node snapshots producer-owned child and action arrays" {
+  let child : @core.View[String] = @core.View::from_node(DownstreamViewNode::{
+    kind: "aliased-child",
+    message: "child-message",
+    size: @core.Size::new(width=4.0, height=4.0),
+  })
+  let children = [child]
+  let handlers = [
+    @core.ViewSemanticsActionHandler::activate(_context => {
+      @core.ViewSemanticsActionResult::message("activate")
+    }),
+  ]
+  let view : @core.View[String] = @core.View::from_node(
+    DownstreamViewNode::{
+      kind: "alias-snapshot",
+      message: "parent-message",
+      size: @core.Size::new(width=8.0, height=8.0),
+    },
+    children=_node => children,
+    semantics_actions=_node => handlers,
+  )
+  children.clear()
+  handlers.clear()
+  assert_eq(view.children().length(), 1)
+  inspect(view.children()[0].identity().kind, content="aliased-child")
+  assert_true(
+    view.semantics_action_kinds() == [@core.SemanticsActionKind::Activate],
+  )
+  let mapped = view.map(message => message.length())
+  assert_eq(mapped.children().length(), 1)
+  assert_true(
+    mapped.semantics_action_kinds() == [@core.SemanticsActionKind::Activate],
+  )
+}
+
+///|
+test "semantic modifiers do not invalidate layout paint or platform" {
+  let base : @core.View[Unit] = @core.View::from_node(DownstreamViewNode::{
+    kind: "semantic-declaration",
+    message: "",
+    size: @core.Size::new(width=8.0, height=8.0),
+  })
+  let previous = base.accessibility_label("before").declaration()
+  let next = base.accessibility_label("after").declaration()
+  let changes = next.changes_from(previous)
+  assert_false(changes.layout())
+  assert_false(changes.paint())
+  assert_true(changes.semantics())
+  assert_false(changes.platform())
 }

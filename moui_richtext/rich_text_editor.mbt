@@ -28,9 +28,106 @@ pub fn[Msg] rich_text_editor(
   kind? : String = "RichTextEditor",
   key? : String? = None,
 ) -> @core.View[Msg] {
+  match visible_scroll_state {
+    Some(state) =>
+      rich_text_component("RichTextEditorComponent", key, context => {
+        rich_text_editor_snapshot(
+          value~,
+          placeholder~,
+          size~,
+          format~,
+          font~,
+          foreground~,
+          placeholder_color~,
+          background~,
+          border~,
+          focused_border~,
+          cursor_color~,
+          corner_radius~,
+          on_input~,
+          on_input_edit~,
+          on_selection_change~,
+          on_prefix_click~,
+          on_command_click~,
+          input_transform~,
+          accepts_tab_input~,
+          visible_scroll_y=context.watch_scroll(state).y,
+          visible_viewport_height~,
+          visible_overscan~,
+          visible_scroll_state=Some(state),
+          selection_caret~,
+          selection_range~,
+          kind~,
+          key~,
+        )
+      })
+    None =>
+      rich_text_editor_snapshot(
+        value~,
+        placeholder~,
+        size~,
+        format~,
+        font~,
+        foreground~,
+        placeholder_color~,
+        background~,
+        border~,
+        focused_border~,
+        cursor_color~,
+        corner_radius~,
+        on_input~,
+        on_input_edit~,
+        on_selection_change~,
+        on_prefix_click~,
+        on_command_click~,
+        input_transform~,
+        accepts_tab_input~,
+        visible_scroll_y~,
+        visible_viewport_height~,
+        visible_overscan~,
+        visible_scroll_state=None,
+        selection_caret~,
+        selection_range~,
+        kind~,
+        key~,
+      )
+  }
+}
+
+///|
+fn[Msg] rich_text_editor_snapshot(
+  value~ : @core.Binding[String],
+  placeholder~ : String,
+  size~ : @core.Size,
+  format~ : RichTextFormatter,
+  font~ : @core.FontSpec,
+  foreground~ : @core.Color,
+  placeholder_color~ : @core.Color,
+  background~ : @core.Brush,
+  border~ : @core.BorderStyle?,
+  focused_border~ : @core.BorderStyle?,
+  cursor_color~ : @core.Color,
+  corner_radius~ : Double,
+  on_input~ : ((String) -> Msg)?,
+  on_input_edit~ : ((String, Int, @core.TextRange?) -> Msg)?,
+  on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
+  on_prefix_click~ : ((Int) -> Msg)?,
+  on_command_click~ : ((Int) -> Msg)?,
+  input_transform~ : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?,
+  accepts_tab_input~ : Bool,
+  visible_scroll_y~ : Double,
+  visible_viewport_height~ : Double,
+  visible_overscan~ : Double,
+  visible_scroll_state~ : @core.ScrollState?,
+  selection_caret~ : Int,
+  selection_range~ : @core.TextRange?,
+  kind~ : String,
+  key~ : String?,
+) -> @core.View[Msg] {
+  let value_snapshot = value.get()
   @core.View::from_node(
     RichTextEditorViewNode::{
-      value,
+      value: value_snapshot,
       placeholder,
       size,
       format,
@@ -42,12 +139,10 @@ pub fn[Msg] rich_text_editor(
       focused_border,
       cursor_color,
       corner_radius,
-      input_transform,
       accepts_tab_input,
       visible_scroll_y,
       visible_viewport_height,
       visible_overscan,
-      visible_scroll_state,
       selection_caret,
       selection_range,
       kind,
@@ -56,7 +151,7 @@ pub fn[Msg] rich_text_editor(
     event=(node, ctx) => {
       rich_text_editor_event(
         ctx,
-        value=node.value,
+        value~,
         format=node.format,
         font=node.font,
         on_input~,
@@ -64,33 +159,63 @@ pub fn[Msg] rich_text_editor(
         on_selection_change~,
         on_prefix_click~,
         on_command_click~,
-        input_transform=node.input_transform,
+        input_transform~,
         accepts_tab_input=node.accepts_tab_input,
-        visible_scroll_y=node.visible_scroll_y,
+        visible_scroll_y~,
         visible_viewport_height=node.visible_viewport_height,
         visible_overscan=node.visible_overscan,
-        visible_scroll_state=node.visible_scroll_state,
+        visible_scroll_state~,
       )
     },
     text_command=(node, ctx, intent, paste_text) => {
       rich_text_editor_command(
         ctx,
-        value=node.value,
+        value~,
         format=node.format,
         on_input~,
         on_input_edit~,
         on_selection_change~,
-        input_transform=node.input_transform,
+        input_transform~,
         intent,
         paste_text~,
       )
+    },
+    semantics_actions=_node => {
+      [
+        @core.ViewSemanticsActionHandler::set_text((ctx, next_text) => {
+          let caret = text_length(next_text)
+          let next_control = {
+            ..ctx.text_control,
+            caret,
+            selection: None,
+            text_selection_anchor: None,
+            composition: None,
+            composition_cursor: None,
+          }
+          let messages : Array[Msg] = []
+          match on_input {
+            Some(handler) => messages.push(handler(next_text))
+            None => ()
+          }
+          match on_input_edit {
+            Some(handler) => messages.push(handler(next_text, caret, None))
+            None => ()
+          }
+          @core.ViewSemanticsActionResult::accepted(
+            text_control=Some(next_control),
+            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+            messages~,
+            commit=Some(() => value.set(next_text)),
+          )
+        }),
+      ]
     },
   )
 }
 
 ///|
 priv struct RichTextEditorViewNode {
-  value : @core.Binding[String]
+  value : String
   placeholder : String
   size : @core.Size
   format : RichTextFormatter
@@ -102,12 +227,10 @@ priv struct RichTextEditorViewNode {
   focused_border : @core.BorderStyle?
   cursor_color : @core.Color
   corner_radius : Double
-  input_transform : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?
   accepts_tab_input : Bool
   visible_scroll_y : Double
   visible_viewport_height : Double
   visible_overscan : Double
-  visible_scroll_state : @core.ScrollState?
   selection_caret : Int
   selection_range : @core.TextRange?
   kind : String
@@ -120,13 +243,17 @@ impl @core.ViewNode for RichTextEditorViewNode with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for RichTextEditorViewNode with fn revision(self) {
-  "rich-text-editor:\{self.value.get()}:\{self.placeholder}:\{view_size_revision(self.size)}:\{view_font_revision(self.font)}:\{view_color_revision(self.foreground)}:\{view_color_revision(self.placeholder_color)}:\{view_brush_revision(self.background)}:\{view_border_option_revision(self.border)}:\{view_border_option_revision(self.focused_border)}:\{view_color_revision(self.cursor_color)}:\{self.corner_radius}:\{self.accepts_tab_input}:\{self.selection_caret}:\{view_text_range_option_revision(self.selection_range)}"
-}
-
-///|
-impl @core.ViewNode for RichTextEditorViewNode with fn paint_revision(self) {
-  "rich-text-editor-scroll:\{markdown_session_current_scroll_y(self.visible_scroll_y, self.visible_scroll_state)}"
+impl @core.ViewNode for RichTextEditorViewNode with fn declaration(self) {
+  rich_text_declaration(
+    layout=rich_text_exact_channel(declaration_size_key(self.size)),
+    paint=@core.DeclarationChannel::Uncacheable,
+    semantics=rich_text_exact_channel(
+      rich_text_record_key("RichTextEditor.semantics", [
+        ("label", @core.DeclarationKey::string(self.placeholder)),
+        ("value", @core.DeclarationKey::string(self.value)),
+      ]),
+    ),
+  )
 }
 
 ///|
@@ -152,7 +279,6 @@ impl @core.ViewNode for RichTextEditorViewNode with fn paint(self, ctx) {
     visible_scroll_y=self.visible_scroll_y,
     visible_viewport_height=self.visible_viewport_height,
     visible_overscan=self.visible_overscan,
-    visible_scroll_state=self.visible_scroll_state,
   )
 }
 
@@ -163,7 +289,7 @@ impl @core.ViewNode for RichTextEditorViewNode with fn text_input_state(
 ) {
   Some(
     rich_text_input_state(
-      text=self.value.get(),
+      text=self.value,
       frame=ctx.frame,
       format=self.format,
       font=self.font,
@@ -173,7 +299,7 @@ impl @core.ViewNode for RichTextEditorViewNode with fn text_input_state(
       visible_scroll_y=self.visible_scroll_y,
       visible_viewport_height=self.visible_viewport_height,
       visible_overscan=self.visible_overscan,
-      visible_scroll_state=self.visible_scroll_state,
+      visible_scroll_state=None,
       text_system=ctx.text_system,
     ),
   )
@@ -182,14 +308,10 @@ impl @core.ViewNode for RichTextEditorViewNode with fn text_input_state(
 ///|
 impl @core.ViewNode for RichTextEditorViewNode with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Boundary,
     role=@core.SemanticsRole::TextField,
     label=self.placeholder,
-    value=self.value.get(),
-    actions=[
-      @core.SemanticsAction::Focus,
-      @core.SemanticsAction::SetText,
-      @core.SemanticsAction::Submit,
-    ],
+    value=self.value,
   )
 }
 

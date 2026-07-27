@@ -23,12 +23,14 @@ impl @core.ViewNode for Canvas with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for Canvas with fn revision(_self) {
-  // Canvas paint output is fully driven by the `draw` closure, which may
-  // sample ambient state (theme, env, time). We keep the revision empty so
-  // the runtime reconciles via re-running layout/paint instead of comparing
-  // against a stub.
-  ""
+impl @core.ViewNode for Canvas with fn declaration(self) {
+  view_declaration(
+    layout=@core.DeclarationChannel::Uncacheable,
+    paint=@core.DeclarationChannel::Uncacheable,
+    semantics=view_exact_channel(
+      @core.DeclarationKey::string(self.semantics_label),
+    ),
+  )
 }
 
 ///|
@@ -46,6 +48,11 @@ impl @core.ViewNode for Canvas with fn paint(self, ctx) {
 ///|
 impl @core.ViewNode for Canvas with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
+    composition=if self.semantics_label == "" {
+      @core.SemanticsComposition::Transparent
+    } else {
+      @core.SemanticsComposition::Boundary
+    },
     role=@core.SemanticsRole::Group,
     label=self.semantics_label,
     value=self.semantics_label,
@@ -72,10 +79,14 @@ impl @core.ViewNode for AnimatedCanvas with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for AnimatedCanvas with fn revision(_self) {
-  // Animated canvas paint output is driven by `now_ms` + the `draw` closure.
-  // Keep the revision empty so the runtime reconciles via re-running paint.
-  ""
+impl @core.ViewNode for AnimatedCanvas with fn declaration(self) {
+  view_declaration(
+    layout=@core.DeclarationChannel::Uncacheable,
+    paint=@core.DeclarationChannel::Uncacheable,
+    semantics=view_exact_channel(
+      @core.DeclarationKey::string(self.semantics_label),
+    ),
+  )
 }
 
 ///|
@@ -95,6 +106,11 @@ impl @core.ViewNode for AnimatedCanvas with fn paint(self, ctx) {
 ///|
 impl @core.ViewNode for AnimatedCanvas with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
+    composition=if self.semantics_label == "" {
+      @core.SemanticsComposition::Transparent
+    } else {
+      @core.SemanticsComposition::Boundary
+    },
     role=@core.SemanticsRole::Group,
     label=self.semantics_label,
     value=self.semantics_label,
@@ -107,9 +123,7 @@ pub fn[Msg] canvas(
   draw~ : (PaintContext, @core.Rect) -> Unit,
   semantics_label? : String = "",
 ) -> @core.View[Msg] {
-  @core.View::from_node(
-    Canvas::{ measure, draw, semantics_label },
-  )
+  @core.View::from_node(Canvas::{ measure, draw, semantics_label })
 }
 
 ///|
@@ -118,7 +132,5 @@ pub fn[Msg] animated_canvas(
   draw~ : (PaintContext, @core.Rect, Double) -> Unit,
   semantics_label? : String = "",
 ) -> @core.View[Msg] {
-  @core.View::from_node(
-    AnimatedCanvas::{ measure, draw, semantics_label },
-  )
+  @core.View::from_node(AnimatedCanvas::{ measure, draw, semantics_label })
 }

@@ -1,7 +1,7 @@
 ///|
 fn rich_text_editor_paint(
   ctx : @core.ViewPaintContext,
-  value~ : @core.Binding[String],
+  value~ : String,
   placeholder~ : String,
   format~ : RichTextFormatter,
   font~ : @core.FontSpec,
@@ -15,7 +15,6 @@ fn rich_text_editor_paint(
   visible_scroll_y~ : Double,
   visible_viewport_height~ : Double,
   visible_overscan~ : Double,
-  visible_scroll_state~ : @core.ScrollState?,
 ) -> @core.ViewPaintPlan {
   let commands : Array[@core.DrawCommand] = []
   let overlay_commands : Array[@core.DrawCommand] = []
@@ -30,16 +29,14 @@ fn rich_text_editor_paint(
       border
     },
   )
-  let text = value.get()
+  let text = value
   let display_text = rich_text_with_composition(
     text,
     ctx.text_control,
     focused=ctx.focused,
   )
   let content = rich_text_editor_content_rect(ctx.frame)
-  let scroll_y = markdown_session_current_scroll_y(
-    visible_scroll_y, visible_scroll_state,
-  )
+  let scroll_y = visible_scroll_y
   let document_content = rich_text_scrolled_content_rect(
     content,
     scroll_y~,
@@ -98,7 +95,6 @@ fn rich_text_editor_paint(
     child_layers,
     post_commands: [@core.DrawCommand::PopClip],
     overlay_commands,
-    platform_views: [],
     repaint_boundary: false,
     animating: false,
   }

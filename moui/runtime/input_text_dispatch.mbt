@@ -36,7 +36,8 @@ fn ElementNode::dispatch_text_input(
       deliveries.append(result.deliveries)
     }
     if changed {
-      self.dirty.mark_paint()
+      self.dirty.mark_paint_descendant()
+      self.render_cache.invalidate_composition()
     }
     {
       changed,

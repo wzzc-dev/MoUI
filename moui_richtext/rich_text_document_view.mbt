@@ -174,11 +174,9 @@ fn rich_text_document_session_view_paint(
     clip_rect=Some(content),
   )
   let overlay_commands : Array[@core.DrawCommand] = []
-  let platform_views : Array[@core.PlatformViewPlacement] = []
   for layer in child_layers {
     commands.append(layer.commands)
     overlay_commands.append(layer.overlay_commands)
-    platform_views.append(layer.platform_views)
   }
 
   {
@@ -186,7 +184,6 @@ fn rich_text_document_session_view_paint(
     child_layers: [],
     post_commands: [@core.DrawCommand::PopClip],
     overlay_commands,
-    platform_views,
     repaint_boundary: false,
     animating: false,
   }

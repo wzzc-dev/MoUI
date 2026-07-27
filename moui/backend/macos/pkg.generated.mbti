@@ -11,7 +11,7 @@ import {
 // Values
 pub fn backend_info() -> MacosBackendInfo
 
-pub fn macos_accessibility_bridge(root~ : @wzzc-dev/moui/core.SemanticsNode, dispatch~ : (@wzzc-dev/moui/core.ElementId, @wzzc-dev/moui/core.SemanticsAction, String?) -> Bool) -> @host.NativeAccessibilityBridge
+pub fn macos_accessibility_bridge(@runtime.AppRuntime) -> @host.NativeAccessibilityBridge
 
 pub fn macos_accessibility_bridge_info() -> MacosAccessibilityBridgeInfo
 

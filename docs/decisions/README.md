@@ -29,6 +29,7 @@ Copy `TEMPLATE.md` and fill in all sections. Keep it concise.
 
 | # | Title | Date | Status |
 |---|-------|------|--------|
+| 0016 | [Declaration invalidation and committed Agent semantics](0016-declaration-invalidation-and-committed-agent-semantics.md) | 2026-07-27 | Accepted |
 | 0015 | [Public object-safe ViewNode with typed View adapters](0015-public-view-node-trait.md) | 2026-07-26 | Accepted |
 | 0014 | [Core owns value types; domain packages are facades only](0014-core-owns-domain-facades.md) | 2026-07-16 | Accepted |
 | 0011 | [Platform product class and mobile readiness](0011-platform-product-class-and-mobile-readiness.md) | 2026-07-16 | Accepted |

@@ -11,6 +11,7 @@ fn[Msg] modifier_view(
     text_command=(node, context, intent, paste_text) => {
       node.child.text_command_result(context, intent, paste_text~)
     },
+    semantics_actions=node => modifier_semantics_actions(node.modifier),
   )
 }
 
@@ -26,8 +27,8 @@ impl[Msg] ViewNode for ModifierViewNode[Msg] with fn identity(self) {
 }
 
 ///|
-impl[Msg] ViewNode for ModifierViewNode[Msg] with fn revision(self) {
-  "modifier:\{modifier_revision(self.modifier)}:\{self.child.revision()}"
+impl[Msg] ViewNode for ModifierViewNode[Msg] with fn declaration(self) {
+  modifier_declaration(self.modifier)
 }
 
 ///|
@@ -122,6 +123,8 @@ fn[Msg] modifier_kind(modifier : ViewModifier[Msg]) -> String {
     ScaleModifier(_, _) => "Scale"
     DisabledModifier(_) => "Disabled"
     AccessibilityLabelModifier(_) => "AccessibilityLabel"
+    SemanticIdModifier(_) => "SemanticId"
+    SemanticsCompositionModifier(_) => "SemanticsComposition"
     SemanticsRoleModifier(_) => "SemanticsRole"
     SemanticsLevelModifier(_) => "SemanticsLevel"
     SemanticsUrlModifier(_) => "SemanticsUrl"
@@ -132,7 +135,6 @@ fn[Msg] modifier_kind(modifier : ViewModifier[Msg]) -> String {
     SemanticsInvalidModifier(_) => "SemanticsInvalid"
     SemanticsRequiredModifier(_) => "SemanticsRequired"
     SemanticsDescriptionModifier(_) => "SemanticsDescription"
-    SemanticsActionModifier(_) => "SemanticsAction"
     FocusableModifier(_) => "Focusable"
     FocusTrapModifier(_) => "FocusTrap"
     OnTapMessageModifier(_) => "OnTap"

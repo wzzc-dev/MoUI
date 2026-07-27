@@ -124,7 +124,7 @@ pub fn WebViewSpec::platform_view_placement(
     @core.PlatformViewProperty::new(key="title", value=self.title),
     @core.PlatformViewProperty::new(
       key="policy",
-      value=self.policy.revision_key(),
+      value=self.policy.wire_value(),
     ),
   ])
 }
@@ -143,7 +143,7 @@ pub fn WebViewCommand::evaluate_javascript(
 }
 
 ///|
-pub fn WebViewNavigationPolicy::revision_key(
+pub fn WebViewNavigationPolicy::wire_value(
   self : WebViewNavigationPolicy,
 ) -> String {
   match self {
@@ -154,7 +154,7 @@ pub fn WebViewNavigationPolicy::revision_key(
 }
 
 ///|
-pub fn WebViewNavigationPolicy::from_revision_key(
+pub fn WebViewNavigationPolicy::from_wire_value(
   value : String,
 ) -> WebViewNavigationPolicy {
   match value {

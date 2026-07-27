@@ -1,7 +1,7 @@
 ///|
 pub struct ComponentContext {
-  priv component_id : ElementId
-  priv request_component_rebuild : (ElementId) -> Unit
+  priv request_component_rebuild : () -> Unit
+  priv scope_saveable_key : (String) -> String
   priv viewport_size : Size
   priv saveable_state : SaveableStateStore
   priv subscriptions : Array[StateSubscription]
@@ -12,8 +12,8 @@ pub struct ComponentContext {
 
 ///|
 pub(all) struct ComponentRuntimeContextInput {
-  component_id : ElementId
-  request_component_rebuild : (ElementId) -> Unit
+  request_component_rebuild : () -> Unit
+  scope_saveable_key : (String) -> String
   viewport_size : Size
   saveable_state : SaveableStateStore
   subscriptions : Array[StateSubscription]
@@ -27,8 +27,8 @@ pub fn ComponentContext::from_runtime(
   input : ComponentRuntimeContextInput,
 ) -> ComponentContext {
   {
-    component_id: input.component_id,
     request_component_rebuild: input.request_component_rebuild,
+    scope_saveable_key: input.scope_saveable_key,
     viewport_size: input.viewport_size,
     saveable_state: input.saveable_state,
     subscriptions: input.subscriptions,
@@ -43,10 +43,7 @@ pub fn[T] ComponentContext::watch(
   self : ComponentContext,
   state : State[T],
 ) -> T {
-  let component_id = self.component_id
-  let subscription = state.subscribe(() => {
-    (self.request_component_rebuild)(component_id)
-  })
+  let subscription = state.subscribe(() => (self.request_component_rebuild)())
   self.subscriptions.push(subscription)
   state.get()
 }
@@ -56,11 +53,7 @@ pub fn[T] ComponentContext::watch_derived(
   self : ComponentContext,
   state : DerivedState[T],
 ) -> T {
-  let component_id = self.component_id
-  for
-    subscription in state.subscribe(() => {
-      (self.request_component_rebuild)(component_id)
-    }) {
+  for subscription in state.subscribe(() => (self.request_component_rebuild)()) {
     self.subscriptions.push(subscription)
   }
   state.get()
@@ -71,10 +64,7 @@ pub fn[T] ComponentContext::binding(
   self : ComponentContext,
   state : State[T],
 ) -> Binding[T] {
-  let component_id = self.component_id
-  let subscription = state.subscribe(() => {
-    (self.request_component_rebuild)(component_id)
-  })
+  let subscription = state.subscribe(() => (self.request_component_rebuild)())
   self.subscriptions.push(subscription)
   state.binding()
 }

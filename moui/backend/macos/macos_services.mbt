@@ -72,13 +72,11 @@ pub fn macos_accessibility_bridge_info() -> MacosAccessibilityBridgeInfo {
 
 ///|
 pub fn macos_accessibility_bridge(
-  root~ : @core.SemanticsNode,
-  dispatch~ : (@core.ElementId, @core.SemanticsAction, String?) -> Bool,
+  runtime : @runtime.AppRuntime,
 ) -> @host.NativeAccessibilityBridge {
-  @host.NativeAccessibilityBridge::semantics_action_bridge(
+  @host.NativeAccessibilityBridge::runtime(
     kind=@host.NativeAccessibilityBridgeKind::AppKit,
-    root~,
-    dispatch~,
+    runtime~,
   )
 }
 

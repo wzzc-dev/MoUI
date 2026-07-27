@@ -35,8 +35,25 @@ impl @core.ViewNode for ViewMapTestRect with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for ViewMapTestRect with fn revision(self) {
-  "view-map-test-rect:\{self.width}:\{self.height}"
+impl @core.ViewNode for ViewMapTestRect with fn declaration(self) {
+  @core.ViewDeclaration::channels(
+    layout=@core.DeclarationChannel::Exact(
+      @core.DeclarationKey::record(type_tag="ViewMapTestRect.layout", fields=[
+        ("width", @core.DeclarationKey::double(self.width)),
+        ("height", @core.DeclarationKey::double(self.height)),
+      ]),
+    ),
+    paint=@core.DeclarationChannel::Exact(
+      @core.DeclarationKey::record(type_tag="ViewMapTestRect.paint", fields=[
+        ("r", @core.DeclarationKey::double(self.color.r)),
+        ("g", @core.DeclarationKey::double(self.color.g)),
+        ("b", @core.DeclarationKey::double(self.color.b)),
+        ("a", @core.DeclarationKey::double(self.color.a)),
+      ]),
+    ),
+    semantics=@core.DeclarationChannel::Constant,
+    platform=@core.DeclarationChannel::Constant,
+  )
 }
 
 ///|
@@ -71,8 +88,8 @@ impl @core.ViewNode for ViewMapTestStack with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for ViewMapTestStack with fn revision(_self) {
-  "view-map-test-stack"
+impl @core.ViewNode for ViewMapTestStack with fn declaration(_self) {
+  @core.ViewDeclaration::constant()
 }
 
 ///|
@@ -173,7 +190,7 @@ fn view_test_state() -> @core.ViewStateContext {
     checked: false,
     expanded: false,
     disabled: false,
-    scratch: "",
+    slots: @core.ViewStateSlots::empty(),
   }
 }
 

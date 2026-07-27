@@ -191,29 +191,19 @@ fn catalog_list_rows(
     if group_items.length() == 0 {
       continue
     }
-    rows.push(
-      text(group.title, role=group_role, theme~, width=list_width),
-    )
+    rows.push(text(group.title, role=group_role, theme~, width=list_width))
     for item in group_items {
       let is_selected = item.route() == selected
       let btn = button(
         item.title,
         on_click=Navigate(item.route()),
-        variant=if is_selected {
-          selected_variant
-        } else {
-          unselected_variant
-        },
+        variant=if is_selected { selected_variant } else { unselected_variant },
         theme~,
         width=list_width,
         height=row_height,
       )
       let btn = btn.semantics_selected(selected=is_selected)
-      rows.push(if key_rows {
-        btn.key("story-" + item.route())
-      } else {
-        btn
-      })
+      rows.push(if key_rows { btn.key("story-" + item.route()) } else { btn })
     }
   }
   if items.length() == 0 {

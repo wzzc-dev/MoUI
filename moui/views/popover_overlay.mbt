@@ -30,9 +30,7 @@ pub fn[Msg] popover(
   } else {
     anchor
   }
-  view
-  .semantics_expanded(expanded~)
-  .semantics_action(popover_toggle_action(expanded))
+  view.semantics_expanded(expanded~)
 }
 
 ///|
@@ -42,14 +40,5 @@ fn popover_alignment(placement : PopoverPlacement) -> @core.Alignment {
     BottomEnd => @core.Alignment::new(x=1.0, y=1.0)
     TopStart => @core.Alignment::new(x=0.0, y=0.0)
     TopEnd => @core.Alignment::new(x=1.0, y=0.0)
-  }
-}
-
-///|
-fn popover_toggle_action(expanded : Bool) -> @core.SemanticsAction {
-  if expanded {
-    @core.SemanticsAction::Collapse
-  } else {
-    @core.SemanticsAction::Expand
   }
 }

@@ -157,6 +157,37 @@ pub fn[Msg] View::accessibility_label(
 }
 
 ///|
+pub fn[Msg] View::semantic_id(
+  self : View[Msg],
+  semantic_id : SemanticId,
+) -> View[Msg] {
+  self.apply_modifier(SemanticIdModifier(semantic_id))
+}
+
+///|
+pub fn[Msg] View::semantics_composition(
+  self : View[Msg],
+  composition : SemanticsComposition,
+) -> View[Msg] {
+  self.apply_modifier(SemanticsCompositionModifier(composition))
+}
+
+///|
+pub fn[Msg] View::semantics_boundary(self : View[Msg]) -> View[Msg] {
+  self.semantics_composition(SemanticsComposition::Boundary)
+}
+
+///|
+pub fn[Msg] View::merge_descendant_semantics(self : View[Msg]) -> View[Msg] {
+  self.semantics_composition(SemanticsComposition::MergeDescendants)
+}
+
+///|
+pub fn[Msg] View::hide_semantics(self : View[Msg]) -> View[Msg] {
+  self.semantics_composition(SemanticsComposition::Hidden)
+}
+
+///|
 pub fn[Msg] View::semantics_role(
   self : View[Msg],
   role : SemanticsRole,
@@ -228,19 +259,6 @@ pub fn[Msg] View::semantics_description(
   description : String,
 ) -> View[Msg] {
   self.apply_modifier(SemanticsDescriptionModifier(description))
-}
-
-///|
-pub fn[Msg] View::semantics_action(
-  self : View[Msg],
-  action : SemanticsAction,
-) -> View[Msg] {
-  self.apply_modifier(SemanticsActionModifier(action))
-}
-
-///|
-pub fn[Msg] View::semantics_dismiss_action(self : View[Msg]) -> View[Msg] {
-  self.semantics_action(SemanticsAction::Dismiss)
 }
 
 ///|

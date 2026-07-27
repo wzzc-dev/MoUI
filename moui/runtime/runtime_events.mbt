@@ -61,9 +61,8 @@ fn RuntimeState::dispatch_focused_text_command(
         self.needs_rebuild = true
         self.needs_paint = true
         self.mark_build_dirty(self.element_tree.id())
-        self.rebuild_if_possible()
       }
-      deliver_runtime_messages(outcome.deliveries)
+      self.deliver_messages(outcome.deliveries)
       result
     }
     None => TextCommandResult::ignored()
@@ -98,7 +97,10 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
       self.element_tree.root.mark_subtree_layout_dirty()
       self.mark_build_dirty(self.element_tree.id())
     }
-    Redraw(_) => self.needs_redraw = false
+    Redraw(_) => {
+      self.needs_redraw = false
+      self.rebuild_wakeup_redraw = false
+    }
     Pointer(event) => ignore(self.dispatch_pointer_event(event))
     Keyboard(event) => {
       let shortcut = self.element_tree.root.dispatch_keyboard_shortcut(
@@ -114,12 +116,12 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
         if shortcut.activated {
           self.request_activation_rebuild()
         }
-        deliver_runtime_messages(shortcut.deliveries)
+        self.deliver_messages(shortcut.deliveries)
       } else if self.action_commands.dispatch_shortcut(event) is Some(_) {
-        deliver_runtime_messages(shortcut.deliveries)
+        self.deliver_messages(shortcut.deliveries)
         self.request_activation_rebuild()
       } else if event.pressed && event.key == "Tab" {
-        deliver_runtime_messages(shortcut.deliveries)
+        self.deliver_messages(shortcut.deliveries)
         match self.focused_element {
           Some(target) => {
             let constrained_target = self.element_tree.root.constrained_focus_target(
@@ -144,10 +146,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
               if result.activated {
                 self.request_activation_rebuild()
               }
-              if result.changed {
-                self.rebuild_if_possible()
-              }
-              deliver_runtime_messages(result.deliveries)
+              self.deliver_messages(result.deliveries)
             } else {
               ignore(self.move_focus(reverse=event.modifiers.shift))
             }
@@ -155,12 +154,9 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
           None => ignore(self.move_focus(reverse=event.modifiers.shift))
         }
       } else {
-        deliver_runtime_messages(shortcut.deliveries)
+        self.deliver_messages(shortcut.deliveries)
         match self.focused_element {
           Some(target) => {
-            let is_text_input = self.element_tree.root.is_text_input_target(
-              target,
-            )
             let result = self.element_tree.root.dispatch_keyboard(
               target,
               event,
@@ -176,10 +172,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
             if result.activated {
               self.request_activation_rebuild()
             }
-            if is_text_input && result.changed {
-              self.rebuild_if_possible()
-            }
-            deliver_runtime_messages(result.deliveries)
+            self.deliver_messages(result.deliveries)
           }
           None => ()
         }
@@ -203,10 +196,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
           if result.activated {
             self.request_activation_rebuild()
           }
-          if result.changed {
-            self.rebuild_if_possible()
-          }
-          deliver_runtime_messages(result.deliveries)
+          self.deliver_messages(result.deliveries)
         }
         None => ()
       }
@@ -224,7 +214,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
       if result.activated {
         self.request_activation_rebuild()
       }
-      deliver_runtime_messages(result.deliveries)
+      self.deliver_messages(result.deliveries)
     }
     AppEvent::PlatformView(id, event) => {
       let result = self.element_tree.root.dispatch_web_view_event(
@@ -240,10 +230,34 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
         self.mark_current_dirty_elements()
         self.request_activation_rebuild()
       }
-      deliver_runtime_messages(result.deliveries)
+      self.deliver_messages(result.deliveries)
     }
     CloseRequested => ()
   }
+}
+
+///|
+fn RuntimeState::commit_focus(self : RuntimeState, next : ElementId?) -> Bool {
+  let previous = self.focused_element
+  if previous == next {
+    return false
+  }
+  self.focused_element = next
+  match previous {
+    Some(id) => {
+      self.mark_dirty(id)
+      self.mark_semantics_dirty(id)
+    }
+    None => ()
+  }
+  match next {
+    Some(id) => {
+      self.mark_dirty(id)
+      self.mark_semantics_dirty(id)
+    }
+    None => ()
+  }
+  true
 }
 
 ///|
@@ -266,13 +280,14 @@ fn RuntimeState::dispatch_pointer_event(
       event.position,
       self.render_tree.root,
     )
-    self.focused_element = self.element_tree.root.constrained_focus_target(
-      candidate_focus,
-      current=previous_focus,
+    ignore(
+      self.commit_focus(
+        self.element_tree.root.constrained_focus_target(
+          candidate_focus,
+          current=previous_focus,
+        ),
+      ),
     )
-    if previous_focus != self.focused_element {
-      self.mark_dirty(self.element_tree.id())
-    }
   }
   let result = match self.active_pointer_capture {
     Some(target) =>
@@ -323,11 +338,7 @@ fn RuntimeState::dispatch_pointer_event(
   // interaction). Prefer that claim over the geometry-only hit from
   // `find_focusable_at` so focus tracks the control that handled the event.
   match result.focused {
-    Some(target) =>
-      if self.focused_element != Some(target) {
-        self.focused_element = Some(target)
-        self.mark_dirty(self.element_tree.id())
-      }
+    Some(target) => ignore(self.commit_focus(Some(target)))
     None => ()
   }
   if event.phase == PointerPhase::Down {
@@ -374,7 +385,7 @@ fn RuntimeState::dispatch_pointer_event(
     capture_pointer: event.phase == PointerPhase::Down && result.captured,
     release_pointer,
   }
-  deliver_runtime_messages(result.deliveries)
+  self.deliver_messages(result.deliveries)
   dispatch_result
 }
 
@@ -385,16 +396,11 @@ fn RuntimeState::move_focus(
 ) -> Bool {
   self.ensure_render_tree()
   let previous_focus = self.focused_element
-  self.focused_element = self.element_tree.root.next_focus(
+  let next_focus = self.element_tree.root.next_focus(
     current=previous_focus,
     reverse~,
   )
-  if previous_focus != self.focused_element {
-    self.mark_dirty(self.element_tree.id())
-    true
-  } else {
-    false
-  }
+  self.commit_focus(next_focus)
 }
 
 ///|
@@ -408,10 +414,7 @@ fn RuntimeState::focus_key(self : RuntimeState, key : String) -> Bool {
         current=previous_focus,
       )
       if constrained == Some(target) {
-        self.focused_element = Some(target)
-        if previous_focus != self.focused_element {
-          self.mark_dirty(self.element_tree.id())
-        }
+        ignore(self.commit_focus(Some(target)))
         true
       } else {
         false
@@ -419,27 +422,6 @@ fn RuntimeState::focus_key(self : RuntimeState, key : String) -> Bool {
     }
     None => false
   }
-}
-
-///|
-fn RuntimeState::focus_element(self : RuntimeState, target : ElementId) -> Bool {
-  self.ensure_render_tree()
-  if !self.element_tree.root.is_focusable_id(target) {
-    return false
-  }
-  let previous_focus = self.focused_element
-  let constrained = self.element_tree.root.constrained_focus_target(
-    Some(target),
-    current=previous_focus,
-  )
-  if constrained != Some(target) {
-    return false
-  }
-  self.focused_element = Some(target)
-  if previous_focus != self.focused_element {
-    self.mark_dirty(self.element_tree.id())
-  }
-  true
 }
 
 ///|

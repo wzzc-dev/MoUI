@@ -589,11 +589,12 @@ pub fn ShowcaseModel::view_body(
     @views.dialog_host(
       content,
       dialog=Some(
-        @views.dialog("Showcase dialog",
+        @views.dialog(
+          "Showcase dialog",
           content=text("Custom modal content here", width=300.0, height=48.0),
-          primary_action=Some(@views.StateViewAction::new(
-            label="Close", message=HideDialog,
-          )),
+          primary_action=Some(
+            @views.StateViewAction::new(label="Close", message=HideDialog),
+          ),
           theme~,
         ),
       ),

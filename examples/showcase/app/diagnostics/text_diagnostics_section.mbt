@@ -44,12 +44,13 @@ fn ShowcaseModel::text_diagnostics_section(
                 theme~,
               ),
               text(
-                "RichText doc spans: " + showcase_format_rich_text("sample").blocks.length().to_string(),
+                "RichText doc spans: " +
+                showcase_format_rich_text("sample").blocks.length().to_string(),
                 width=card_width - 32.0,
                 height=20.0,
               )
-                .font(theme.typography.caption)
-                .foreground(theme.palette.muted),
+              .font(theme.typography.caption)
+              .foreground(theme.palette.muted),
             ],
             spacing=theme.spacing_scale.sm,
             align=@views.CrossAlign::Start,
@@ -69,16 +70,21 @@ fn ShowcaseModel::text_diagnostics_section(
                 {
                   let chips : Array[@moui.View[ShowcaseMsg]] = []
                   for item in gallery_items() {
-                    let hit = showcase_string_array_contains(["atlas", "catalog"], item)
+                    let hit = showcase_string_array_contains(
+                      ["atlas", "catalog"],
+                      item,
+                    )
                     let label = if hit { item + " ✓" } else { item + " ·" }
                     chips.push(
                       text(label, width=84.0, height=24.0)
-                        .font(theme.typography.caption)
-                        .foreground(if hit {
+                      .font(theme.typography.caption)
+                      .foreground(
+                        if hit {
                           theme.palette.primary
                         } else {
                           theme.palette.muted
-                        }),
+                        },
+                      ),
                     )
                   }
                   chips

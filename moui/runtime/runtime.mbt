@@ -78,6 +78,7 @@ pub fn[Model, Msg] AppRuntime::new_program(
   let pending_index = Ref(0)
   let dispatching = Ref(false)
   let syncing_subscriptions = Ref(false)
+  let message_batch_depth = Ref(0)
   let program_active = Ref(true)
   let process_ref : Ref[(() -> Unit)?] = Ref(None)
   let pending_count = () => pending_messages.length() - pending_index.val
@@ -85,7 +86,7 @@ pub fn[Model, Msg] AppRuntime::new_program(
     if program_active.val {
       pending_messages.push(message)
       program_runtime.record_message_enqueued(pending_count())
-      if !syncing_subscriptions.val {
+      if !syncing_subscriptions.val && message_batch_depth.val == 0 {
         match process_ref.val {
           Some(process) => process()
           None => ()
@@ -102,6 +103,18 @@ pub fn[Model, Msg] AppRuntime::new_program(
       dispatch,
     )
     syncing_subscriptions.val = false
+  }
+  let begin_message_batch = () => {
+    message_batch_depth.val = message_batch_depth.val + 1
+  }
+  let end_message_batch = () => {
+    message_batch_depth.val = message_batch_depth.val - 1
+    if message_batch_depth.val == 0 && !syncing_subscriptions.val {
+      match process_ref.val {
+        Some(process) => process()
+        None => ()
+      }
+    }
   }
   let process_messages = () => {
     if !dispatching.val && !syncing_subscriptions.val {
@@ -157,6 +170,8 @@ pub fn[Model, Msg] AppRuntime::new_program(
       size~,
       environment~,
       on_message=Some(dispatch),
+      begin_message_batch~,
+      end_message_batch~,
     ),
     program_runtime_snapshot_fn: () => program_runtime.snapshot(),
     destroy_program_runtime_fn: Ref(() => ()),
@@ -250,8 +265,7 @@ pub fn AppRuntime::advance_time(self : AppRuntime, time_ms : Double) -> Unit {
 
 ///|
 pub fn AppRuntime::destroy(self : AppRuntime) -> Unit {
-  (self.destroy_program_runtime_fn.val)()
-  self.state.destroy()
+  self.state.request_destroy(self.destroy_program_runtime_fn.val)
 }
 
 ///|
@@ -260,18 +274,30 @@ pub fn AppRuntime::layout(self : AppRuntime) -> @core.LayoutResult {
 }
 
 ///|
-pub fn AppRuntime::semantics(self : AppRuntime) -> @core.SemanticsNode {
-  self.state.semantics()
+pub fn AppRuntime::read_semantics(
+  self : AppRuntime,
+  since? : @core.SemanticsGeneration,
+) -> Result[SemanticsRead, SemanticsReadError] {
+  self.state.read_semantics(since)
 }
 
 ///|
-pub fn AppRuntime::dispatch_semantics_action(
+pub fn AppRuntime::perform_semantics_action(
   self : AppRuntime,
-  element_id : @core.ElementId,
-  action : @core.SemanticsAction,
-  value? : String? = None,
-) -> Bool {
-  self.state.dispatch_semantics_action(element_id, action, value)
+  request : PerformSemanticsActionRequest,
+) -> Result[SemanticsActionReceipt, SemanticsActionDispatchError] {
+  match self.state.perform_semantics_action(request) {
+    Ok(receipt) => {
+      let program = self.program_runtime_snapshot()
+      Ok({
+        ..receipt,
+        pending_work: receipt.pending_work ||
+        program.pending_message_count > 0 ||
+        program.active_effect_task_count > 0,
+      })
+    }
+    Err(error) => Err(error)
+  }
 }
 
 ///|
@@ -345,10 +371,8 @@ pub fn AppRuntime::dirty_count(self : AppRuntime) -> Int {
 }
 
 ///|
-pub fn AppRuntime::dirty_element_ids(
-  self : AppRuntime,
-) -> Array[@core.ElementId] {
-  self.state.dirty_element_ids()
+pub fn AppRuntime::dirty_element_ids(self : AppRuntime) -> Array[Int] {
+  self.state.dirty_element_ids().map(id => id.value())
 }
 
 ///|

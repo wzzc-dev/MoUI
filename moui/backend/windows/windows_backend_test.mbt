@@ -420,43 +420,32 @@ test "windows accessibility bridge reports UI Automation contract" {
 
 ///|
 test "windows accessibility bridge dispatches semantics actions" {
-  let invoked = Ref(0)
-  let node = @core.SemanticsNode::{
-    element_id: @core.ElementId::new(11),
-    role: @core.SemanticsRole::Checkbox,
-    level: None,
-    url: "",
-    label: "Enable",
-    value: "false",
-    description: "",
-    state: @core.SemanticsState::default(),
-    actions: [@core.SemanticsAction::Activate],
-    focus_order: Some(0),
-    frame: @core.Rect::new(x=0.0, y=0.0, width=120.0, height=32.0),
-    children: [],
+  let runtime = @runtime.AppRuntime::new_view(
+    root=(@views.button("Enable", on_click=()) : @core.View[Unit]),
+    size=@core.Size::new(width=140.0, height=60.0),
+  )
+  let snapshot = match runtime.read_semantics() {
+    Ok(@runtime.SemanticsRead::Full(snapshot)) => snapshot
+    _ => abort("expected full committed semantics")
   }
-  let bridge = windows_accessibility_bridge(root=node, dispatch=(
-    element_id,
-    action,
-    _value,
-  ) => {
-    if element_id == @core.ElementId::new(11) &&
-      action == @core.SemanticsAction::Activate {
-      invoked.val = invoked.val + 1
-      true
-    } else {
-      false
+  let mut target : @core.SemanticsNode? = None
+  for node in snapshot.nodes() {
+    if node.actions.any(action => action == @core.SemanticsActionKind::Activate) {
+      target = Some(node)
     }
-  })
+  }
+  let target = target.unwrap()
+  let bridge = windows_accessibility_bridge(runtime)
   match
     bridge.perform_action(
       @host.NativeAccessibilityActionRequest::new(
-        element_id=@core.ElementId::new(11),
+        node_id=target.node_id,
+        generation=snapshot.generation(),
         action=@core.SemanticsAction::Activate,
       ),
     ) {
-    @host.NativeAccessibilityActionResult::Handled => ()
+    @host.NativeAccessibilityActionResult::Handled(receipt) =>
+      assert_true(receipt.before == snapshot.generation())
     _ => fail("expected handled UIA accessibility action")
   }
-  inspect(invoked.val, content="1")
 }

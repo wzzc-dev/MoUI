@@ -98,15 +98,18 @@ IME 同步和释放。没有解析器时，宿主用共享的解析器不可用�
 
 ## 移动宿主通道
 
-`EmbedderHostChannel` 是共享的 Android/iOS/HarmonyOS 服务边界。它合并 `EmbedderImeRequest` 更新，只在树变化时发出
-带版本号的扁平化语义快照，并承载异步文本/图片剪贴板请求与响应。已释放的通道会拒绝迟到响应。
+`EmbeddingHostBridge` 是私有的 Android/iOS/HarmonyOS 服务边界。它合并 `EmbedderImeRequest` 更新，传输由运行时提交的
+完整/增量语义数据（使用 `SemanticsNodeId` 与 `SemanticsGeneration`），并承载异步文本/图片剪贴板请求与响应。
+它的 cursor 只用于抑制未变化的传输，不构成第二套 revision 权威；已释放的通道会拒绝迟到响应。
 
 `TextInputEvent::ReplaceText` 和 `SetSelection` 保留任意原生 IME 替换和 UTF-16 选区更新。移动请求包含文本、
 选区、组字、插入光标和候选矩形，而不改变桌面 `window_core.ImeRequest` 契约。
 
 无障碍动作通过
-`AppRuntime::dispatch_semantics_action(ElementId, SemanticsAction, String?)` 进入。
-运行时会验证当前节点声明了该动作，然后直接分派给该元素。原生适配器不得把无障碍动作转回屏幕坐标输入。
+`AppRuntime::perform_semantics_action(PerformSemanticsActionRequest)` 进入。请求携带 `SemanticsNodeId`、类型化
+`SemanticsAction` 与精确的运行时 generation。stale generation、已移除节点、enabled 状态、动作能力和 handler
+校验都由运行时负责；宿主适配器只传输请求与 receipt，不得重复校验或把动作转回屏幕坐标输入。
+Web 的纯语义提交独立于 redraw 同步。
 
 类型化宿主服务位于同一边界上。`HostServiceBridge` 暴露经过能力检查的分派，用于剪贴板、文件对话框、菜单、
 打开 URL 和系统主题请求。后端可以报告不可用服务，而不假装应用代码可以直接调用平台 API。

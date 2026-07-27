@@ -198,8 +198,8 @@ pub fn web_dispatch_route(source_code : Int, text_id : Int) -> Unit {
   @web.web_dispatch_route(source_code, text_id)
 }
 
-pub fn web_dispatch_semantics_action(raw_id : Int, element_id : Int, action_code : Int, value_id : Int) -> Unit {
-  @web.web_dispatch_semantics_action(raw_id, element_id, action_code, value_id)
+pub fn web_dispatch_semantics_action(raw_id : Int, node_id_text_id : Int, generation_text_id : Int, action_code : Int, value_id : Int, direction_code : Int) -> Unit {
+  @web.web_dispatch_semantics_action(raw_id, node_id_text_id, generation_text_id, action_code, value_id, direction_code)
 }
 
 pub fn web_complete_async_clipboard_read(id : Int, ok : Bool, text_id : Int) -> Unit {

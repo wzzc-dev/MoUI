@@ -242,13 +242,11 @@ pub fn windows_accessibility_bridge_info() -> WindowsAccessibilityBridgeInfo {
 
 ///|
 pub fn windows_accessibility_bridge(
-  root~ : @core.SemanticsNode,
-  dispatch~ : (@core.ElementId, @core.SemanticsAction, String?) -> Bool,
+  runtime : @runtime.AppRuntime,
 ) -> @host.NativeAccessibilityBridge {
-  @host.NativeAccessibilityBridge::semantics_action_bridge(
+  @host.NativeAccessibilityBridge::runtime(
     kind=@host.NativeAccessibilityBridgeKind::UIAutomation,
-    root~,
-    dispatch~,
+    runtime~,
   )
 }
 

@@ -222,6 +222,16 @@ pub(all) enum CheckMarkStyle {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn CheckMarkStyle::label(Self) -> String
 
+pub(all) struct ChildLayoutInfo {
+  size : Size
+  first_baseline : Double?
+  priority : Double
+  alignment_guides : AlignmentGuideSet
+  flex_weight : Double
+} derive(Eq, @debug.Debug)
+pub fn ChildLayoutInfo::baseline_or_estimate(Self) -> Double
+pub fn ChildLayoutInfo::new(size~ : Size, first_baseline? : Double?, priority? : Double, flex_weight? : Double) -> Self
+
 pub(all) enum ChoiceControlShape {
   Square
   Circle
@@ -380,8 +390,8 @@ pub(all) enum ComponentEffectCancelReason {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct ComponentRuntimeContextInput {
-  component_id : ElementId
-  request_component_rebuild : (ElementId) -> Unit
+  request_component_rebuild : () -> Unit
+  scope_saveable_key : (String) -> String
   viewport_size : Size
   saveable_state : SaveableStateStore
   subscriptions : Array[StateSubscription]
@@ -459,20 +469,9 @@ pub(all) enum CrossAxisAlignment {
   CrossStretch
 } derive(Eq, ToJson, @debug.Debug)
 
-type CustomLayoutCache
-pub fn CustomLayoutCache::clear(Self) -> Unit
-pub fn CustomLayoutCache::get(Self, String) -> String?
-pub fn CustomLayoutCache::new() -> Self
-pub fn CustomLayoutCache::set(Self, String, String) -> Unit
-
 pub(all) struct CustomLayoutContext {
   constraints : Constraints
-  child_sizes : Array[Size]
-  child_baselines : Array[Double?]
-  child_priorities : Array[Double]
-  child_alignment_guides : Array[AlignmentGuideSet]
-  cache : CustomLayoutCache
-  cache_key : String
+  children : Array[ChildLayoutInfo]
   layout_direction : LayoutDirection
   safe_area : Insets
   viewport : Size?
@@ -481,12 +480,7 @@ pub(all) struct CustomLayoutContext {
 pub(all) struct CustomPlacementContext {
   frame : Rect
   measured_size : Size
-  child_sizes : Array[Size]
-  child_baselines : Array[Double?]
-  child_priorities : Array[Double]
-  child_alignment_guides : Array[AlignmentGuideSet]
-  cache : CustomLayoutCache
-  cache_key : String
+  children : Array[ChildLayoutInfo]
   layout_direction : LayoutDirection
   safe_area : Insets
   viewport : Size?
@@ -517,6 +511,39 @@ pub fn DateValue::format_date(Self) -> String
 pub fn DateValue::format_date_time(Self) -> String
 pub fn DateValue::format_time(Self) -> String
 pub fn DateValue::new(year~ : Int, month~ : Int, day~ : Int, hour? : Int, minute? : Int, second? : Int) -> Self
+
+pub struct DeclarationChanges {
+  layout : Bool
+  paint : Bool
+  semantics : Bool
+  platform : Bool
+} derive(Eq, @debug.Debug)
+pub fn DeclarationChanges::is_clean(Self) -> Bool
+pub fn DeclarationChanges::layout(Self) -> Bool
+pub fn DeclarationChanges::paint(Self) -> Bool
+pub fn DeclarationChanges::platform(Self) -> Bool
+pub fn DeclarationChanges::semantics(Self) -> Bool
+
+pub(all) enum DeclarationChannel {
+  Constant
+  Exact(DeclarationKey)
+  Uncacheable
+} derive(Eq)
+
+pub struct DeclarationKey {
+  // private fields
+} derive(Eq, Hash, @debug.Debug)
+pub fn DeclarationKey::array(Array[Self]) -> Self
+pub fn DeclarationKey::bool(Bool) -> Self
+pub fn DeclarationKey::bytes(Bytes) -> Self
+pub fn DeclarationKey::double(Double) -> Self
+pub fn DeclarationKey::int(Int) -> Self
+pub fn DeclarationKey::int64(Int64) -> Self
+pub fn DeclarationKey::option(Self?) -> Self
+pub fn DeclarationKey::record(type_tag~ : String, fields~ : Array[(String, Self)]) -> Self
+pub fn DeclarationKey::string(String) -> Self
+pub fn DeclarationKey::uint(UInt) -> Self
+pub fn DeclarationKey::uint64(UInt64) -> Self
 
 pub struct DerivedState[T] {
   // private fields
@@ -632,10 +659,6 @@ pub fn EffectDescriptor::key(Self) -> String
 pub fn EffectDescriptor::kind(Self) -> String
 pub fn EffectDescriptor::label(Self) -> String
 
-type ElementId derive(Eq, ToJson, @debug.Debug)
-pub fn ElementId::new(Int) -> Self
-pub fn ElementId::value(Self) -> Int
-
 pub(all) struct Environment {
   theme_spec : ThemeSpec
   system_scheme : ColorScheme
@@ -651,7 +674,6 @@ pub(all) struct Environment {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Environment::color_scheme(Self) -> ColorScheme
 pub fn Environment::neutral() -> Self
-pub fn Environment::revision_fingerprint(Self) -> String
 pub fn Environment::with_accessibility_contrast(Self, AccessibilityContrast) -> Self
 pub fn Environment::with_content_size_category(Self, ContentSizeCategory) -> Self
 pub fn Environment::with_enabled(Self, Bool) -> Self
@@ -1071,7 +1093,27 @@ pub fn ScrollState::set_offset(Self, Point) -> Unit
 pub fn ScrollState::smooth_scroll_to(Self, x~ : Double, y~ : Double, duration_ms? : Double) -> Unit
 pub fn ScrollState::tick(Self, Double) -> Unit
 
+pub struct SemanticId {
+  // private fields
+} derive(Compare, Eq, Hash, @debug.Debug)
+pub fn SemanticId::parse(String) -> Self?
+pub fn SemanticId::value(Self) -> String
+pub impl ToJson for SemanticId
+
 pub(all) enum SemanticsAction {
+  Activate
+  Focus
+  SetText(String)
+  Submit
+  Scroll(SemanticsScrollDirection)
+  Select
+  Expand
+  Collapse
+  Dismiss
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticsAction::kind(Self) -> SemanticsActionKind
+
+pub(all) enum SemanticsActionKind {
   Activate
   Focus
   SetText
@@ -1083,8 +1125,24 @@ pub(all) enum SemanticsAction {
   Dismiss
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) enum SemanticsComposition {
+  Transparent
+  Boundary
+  MergeDescendants
+  Hidden
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct SemanticsGeneration {
+  // private fields
+} derive(Compare, Eq, Hash, @debug.Debug)
+pub fn SemanticsGeneration::new(UInt64) -> Self
+pub fn SemanticsGeneration::to_wire(Self) -> String
+pub fn SemanticsGeneration::value(Self) -> UInt64
+pub impl ToJson for SemanticsGeneration
+
 pub(all) struct SemanticsNode {
-  element_id : ElementId
+  node_id : SemanticsNodeId
+  semantic_id : SemanticId?
   role : SemanticsRole
   level : Int?
   url : String
@@ -1092,11 +1150,19 @@ pub(all) struct SemanticsNode {
   value : String
   description : String
   state : SemanticsState
-  actions : Array[SemanticsAction]
+  actions : Array[SemanticsActionKind]
   focus_order : Int?
   frame : Rect
-  children : Array[SemanticsNode]
+  children : Array[SemanticsNodeId]
 } derive(Eq, ToJson, @debug.Debug)
+
+pub struct SemanticsNodeId {
+  // private fields
+} derive(Compare, Eq, Hash, @debug.Debug)
+pub fn SemanticsNodeId::new(UInt64) -> Self
+pub fn SemanticsNodeId::to_wire(Self) -> String
+pub fn SemanticsNodeId::value(Self) -> UInt64
+pub impl ToJson for SemanticsNodeId
 
 pub(all) enum SemanticsRole {
   None
@@ -1129,6 +1195,15 @@ pub(all) enum SemanticsRole {
   WebView
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) enum SemanticsScrollDirection {
+  Forward
+  Backward
+  Up
+  Down
+  Left
+  Right
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct SemanticsState {
   focused : Bool
   disabled : Bool
@@ -1140,6 +1215,11 @@ pub(all) struct SemanticsState {
   required : Bool
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SemanticsState::default() -> Self
+
+pub(all) enum SemanticsTarget {
+  BySemanticId(SemanticId)
+  ByNodeId(SemanticsNodeId)
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct ShaderEffectSpec {
   name : String
@@ -1361,7 +1441,6 @@ pub(all) enum TextInputEvent {
 
 pub(all) struct TextInputState {
   focused : Bool
-  element_id : ElementId?
   text : String
   caret : Int
   selection : TextRange?
@@ -1478,7 +1557,6 @@ pub(all) struct Theme {
   components : ComponentThemes
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Theme::neutral() -> Self
-pub fn Theme::revision_fingerprint(Self) -> String
 pub fn Theme::surface_brush(Self, SurfaceLevel) -> Brush
 pub fn Theme::with_components(Self, ComponentThemes) -> Self
 pub fn Theme::with_motion(Self, MotionScale) -> Self
@@ -1614,7 +1692,9 @@ pub fn[Msg] View::children(Self[Msg]) -> Array[Self[Msg]]
 pub fn[Msg] View::clip(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::corner_radius(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::cross_axis_alignment(Self[Msg], CrossAxisAlignment) -> Self[Msg]
+pub fn[Msg] View::declaration(Self[Msg]) -> ViewDeclaration
 pub fn[Msg] View::disabled(Self[Msg], disabled? : Bool) -> Self[Msg]
+pub fn[Msg] View::dispatch_semantics_action(Self[Msg], ViewSemanticsActionContext, SemanticsAction) -> ViewSemanticsActionResult[Msg]
 pub fn[Msg] View::environment(Self[Msg], Environment) -> Self[Msg]
 pub fn[Msg] View::event(Self[Msg], ViewEventContext) -> ViewEventResult[Msg]
 pub fn[Msg] View::expanded(Self[Msg], weight? : Double) -> Self[Msg]
@@ -1625,7 +1705,8 @@ pub fn[Msg] View::focusable(Self[Msg], focusable? : Bool) -> Self[Msg]
 pub fn[Msg] View::font(Self[Msg], FontSpec) -> Self[Msg]
 pub fn[Msg] View::foreground(Self[Msg], Color) -> Self[Msg]
 pub fn[Msg] View::frame(Self[Msg], width? : Double, height? : Double, min_width? : Double, min_height? : Double, max_width? : Double, max_height? : Double) -> Self[Msg]
-pub fn[Node : ViewNode, Msg] View::from_node(Node, children? : (Node) -> Array[Self[Msg]], build_child? : ((Node, ComponentContext) -> Self[Msg])?, event? : (Node, ViewEventContext) -> ViewEventResult[Msg], text_command? : (Node, ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[Msg]) -> Self[Msg]
+pub fn[Node : ViewNode, Msg] View::from_node(Node, children? : (Node) -> Array[Self[Msg]], build_child? : ((Node, ComponentContext) -> Self[Msg])?, event? : (Node, ViewEventContext) -> ViewEventResult[Msg], text_command? : (Node, ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[Msg], semantics_actions? : (Node) -> Array[ViewSemanticsActionHandler[Msg]]) -> Self[Msg]
+pub fn[Msg] View::hide_semantics(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::identity(Self[Msg]) -> ViewIdentity
 pub fn[Msg] View::intrinsic_height(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::intrinsic_width(Self[Msg]) -> Self[Msg]
@@ -1635,6 +1716,7 @@ pub fn[Msg] View::layout(Self[Msg], ViewLayoutContext) -> ViewLayoutResult
 pub fn[Msg] View::layout_priority(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::main_axis_alignment(Self[Msg], MainAxisAlignment) -> Self[Msg]
 pub fn[Msg, NextMsg] View::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
+pub fn[Msg] View::merge_descendant_semantics(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::mono(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::offset(Self[Msg], dx? : Double, dy? : Double) -> Self[Msg]
 pub fn[Msg] View::on_double_tap(Self[Msg], Msg) -> Self[Msg]
@@ -1646,16 +1728,17 @@ pub fn[Msg] View::on_tap(Self[Msg], Msg) -> Self[Msg]
 pub fn[Msg] View::opacity(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::padding(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::paint(Self[Msg], ViewPaintContext) -> ViewPaintPlan
-pub fn[Msg] View::paint_revision(Self[Msg]) -> String
+pub fn[Msg] View::platform_views(Self[Msg], ViewPlatformContext) -> Array[PlatformViewPlacement]
 pub fn[Msg] View::presence(Self[Msg], present~ : Bool, spec? : TransitionSpec, progress? : Double, reduced_motion? : Bool) -> Self[Msg]
 pub fn[Msg] View::repaint_boundary(Self[Msg]) -> Self[Msg]
-pub fn[Msg] View::revision(Self[Msg]) -> String
 pub fn[Msg] View::scale(Self[Msg], sx? : Double, sy? : Double) -> Self[Msg]
+pub fn[Msg] View::semantic_id(Self[Msg], SemanticId) -> Self[Msg]
 pub fn[Msg] View::semantics(Self[Msg]) -> ViewSemanticsInfo
-pub fn[Msg] View::semantics_action(Self[Msg], SemanticsAction) -> Self[Msg]
+pub fn[Msg] View::semantics_action_kinds(Self[Msg]) -> Array[SemanticsActionKind]
+pub fn[Msg] View::semantics_boundary(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::semantics_checked(Self[Msg], checked? : Bool) -> Self[Msg]
+pub fn[Msg] View::semantics_composition(Self[Msg], SemanticsComposition) -> Self[Msg]
 pub fn[Msg] View::semantics_description(Self[Msg], String) -> Self[Msg]
-pub fn[Msg] View::semantics_dismiss_action(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::semantics_expanded(Self[Msg], expanded? : Bool) -> Self[Msg]
 pub fn[Msg] View::semantics_invalid(Self[Msg], invalid? : Bool) -> Self[Msg]
 pub fn[Msg] View::semantics_level(Self[Msg], Int) -> Self[Msg]
@@ -1672,6 +1755,21 @@ pub fn[Msg] View::text_input_state(Self[Msg], ViewPaintContext) -> TextInputStat
 pub fn[Msg] View::theme(Self[Msg], Theme) -> Self[Msg]
 pub fn[Msg] View::title(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::transition(Self[Msg], spec? : TransitionSpec, progress? : Double, reduced_motion? : Bool) -> Self[Msg]
+
+pub struct ViewDeclaration {
+  layout : DeclarationChannel
+  paint : DeclarationChannel
+  semantics : DeclarationChannel
+  platform : DeclarationChannel
+} derive(Eq)
+pub fn ViewDeclaration::changes_from(Self, Self) -> DeclarationChanges
+pub fn ViewDeclaration::channels(layout~ : DeclarationChannel, paint~ : DeclarationChannel, semantics~ : DeclarationChannel, platform~ : DeclarationChannel) -> Self
+pub fn ViewDeclaration::constant() -> Self
+pub fn ViewDeclaration::layout(Self) -> DeclarationChannel
+pub fn ViewDeclaration::paint(Self) -> DeclarationChannel
+pub fn ViewDeclaration::platform(Self) -> DeclarationChannel
+pub fn ViewDeclaration::semantics(Self) -> DeclarationChannel
+pub fn ViewDeclaration::uncacheable() -> Self
 
 pub(all) enum ViewDirtyHint {
   ViewClean
@@ -1750,16 +1848,14 @@ pub(all) struct ViewPaintLayer {
   content_revision : Int
   commands : Array[DrawCommand]
   overlay_commands : Array[DrawCommand]
-  platform_views : Array[PlatformViewPlacement]
 } derive(Eq, @debug.Debug)
-pub fn ViewPaintLayer::new(frame~ : Rect, cache_key~ : String, content_revision~ : Int, commands? : Array[DrawCommand], overlay_commands? : Array[DrawCommand], platform_views? : Array[PlatformViewPlacement]) -> Self
+pub fn ViewPaintLayer::new(frame~ : Rect, cache_key~ : String, content_revision~ : Int, commands? : Array[DrawCommand], overlay_commands? : Array[DrawCommand]) -> Self
 
 pub(all) struct ViewPaintPlan {
   commands : Array[DrawCommand]
   child_layers : Array[ViewPaintLayer]
   post_commands : Array[DrawCommand]
   overlay_commands : Array[DrawCommand]
-  platform_views : Array[PlatformViewPlacement]
   repaint_boundary : Bool
   animating : Bool
 } derive(Eq, @debug.Debug)
@@ -1767,14 +1863,59 @@ pub fn ViewPaintPlan::animating_commands(Array[DrawCommand]) -> Self
 pub fn ViewPaintPlan::commands(Array[DrawCommand]) -> Self
 pub fn ViewPaintPlan::empty() -> Self
 
+pub(all) struct ViewPlatformContext {
+  frame : Rect
+  child_frames : Array[Rect]
+  environment : Environment
+  style : ViewStyle
+}
+
+pub(all) struct ViewSemanticsActionContext {
+  frame : Rect
+  child_frames : Array[Rect]
+  focused : Bool
+  state : ViewStateContext
+  text_control : TextControlStateContext
+  text_system : TextSystem
+  environment : Environment
+  style : ViewStyle
+}
+
+pub struct ViewSemanticsActionHandler[Msg] {
+  kind : SemanticsActionKind
+  handle : (ViewSemanticsActionContext, SemanticsAction) -> ViewSemanticsActionResult[Msg]
+}
+pub fn[Msg] ViewSemanticsActionHandler::activate((ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg]) -> Self[Msg]
+pub fn[Msg] ViewSemanticsActionHandler::collapse((ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg]) -> Self[Msg]
+pub fn[Msg] ViewSemanticsActionHandler::dismiss((ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg]) -> Self[Msg]
+pub fn[Msg] ViewSemanticsActionHandler::expand((ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg]) -> Self[Msg]
+pub fn[Msg] ViewSemanticsActionHandler::kind(Self[Msg]) -> SemanticsActionKind
+pub fn[Msg] ViewSemanticsActionHandler::scroll((ViewSemanticsActionContext, SemanticsScrollDirection) -> ViewSemanticsActionResult[Msg]) -> Self[Msg]
+pub fn[Msg] ViewSemanticsActionHandler::select((ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg]) -> Self[Msg]
+pub fn[Msg] ViewSemanticsActionHandler::set_text((ViewSemanticsActionContext, String) -> ViewSemanticsActionResult[Msg]) -> Self[Msg]
+pub fn[Msg] ViewSemanticsActionHandler::submit((ViewSemanticsActionContext) -> ViewSemanticsActionResult[Msg]) -> Self[Msg]
+
+pub(all) struct ViewSemanticsActionResult[Msg] {
+  accepted : Bool
+  state : ViewStateContext?
+  text_control : TextControlStateContext?
+  dirty : ViewDirtyHint
+  messages : Array[Msg]
+  deferred_commits : Array[() -> Unit]
+}
+pub fn[Msg] ViewSemanticsActionResult::accepted(state? : ViewStateContext?, text_control? : TextControlStateContext?, dirty? : ViewDirtyHint, messages? : Array[Msg], commit? : (() -> Unit)?) -> Self[Msg]
+pub fn[Msg] ViewSemanticsActionResult::message(Msg) -> Self[Msg]
+pub fn[Msg] ViewSemanticsActionResult::rejected() -> Self[Msg]
+
 pub(all) struct ViewSemanticsInfo {
-  role : SemanticsRole
+  composition : SemanticsComposition
+  semantic_id : SemanticId?
+  role : SemanticsRole?
   level : Int?
-  url : String
-  label : String
-  value : String
-  description : String
-  actions : Array[SemanticsAction]
+  url : String?
+  label : String?
+  value : String?
+  description : String?
   disabled : Bool?
   selected : Bool?
   pressed : Bool?
@@ -1783,7 +1924,7 @@ pub(all) struct ViewSemanticsInfo {
   invalid : Bool?
   required : Bool?
 } derive(Eq, @debug.Debug)
-pub fn ViewSemanticsInfo::new(role? : SemanticsRole, level? : Int, url? : String, label? : String, value? : String, description? : String, actions? : Array[SemanticsAction], disabled? : Bool, selected? : Bool, pressed? : Bool, checked? : Bool, expanded? : Bool, invalid? : Bool, required? : Bool) -> Self
+pub fn ViewSemanticsInfo::new(composition? : SemanticsComposition, semantic_id? : SemanticId, role? : SemanticsRole, level? : Int, url? : String, label? : String, value? : String, description? : String, disabled? : Bool, selected? : Bool, pressed? : Bool, checked? : Bool, expanded? : Bool, invalid? : Bool, required? : Bool) -> Self
 
 pub(all) struct ViewStateContext {
   focused : Bool
@@ -1793,8 +1934,21 @@ pub(all) struct ViewStateContext {
   checked : Bool
   expanded : Bool
   disabled : Bool
-  scratch : String
+  slots : ViewStateSlots
 } derive(Eq, @debug.Debug)
+pub fn[T : ViewStateValue] ViewStateContext::read_slot(Self, ViewStateSlot[T]) -> T
+pub fn[T : ViewStateValue] ViewStateContext::with_slot(Self, ViewStateSlot[T], T) -> Self
+pub fn[T] ViewStateContext::without_slot(Self, ViewStateSlot[T]) -> Self
+
+pub struct ViewStateSlot[T] {
+  // private fields
+}
+pub fn[T : ViewStateValue] ViewStateSlot::new(key~ : DeclarationKey, initial~ : T) -> Self[T]
+
+pub struct ViewStateSlots {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn ViewStateSlots::empty() -> Self
 
 pub(all) struct ViewStyle {
   font : FontSpec?
@@ -1830,16 +1984,27 @@ pub using @unicode {type TextGraphemeBoundaries}
 // Traits
 pub(open) trait ViewNode {
   fn identity(Self) -> ViewIdentity
-  fn revision(Self) -> String = _
-  fn paint_revision(Self) -> String = _
+  fn declaration(Self) -> ViewDeclaration = _
   fn child_constraints(Self, Constraints) -> Constraints = _
   fn child_environment(Self, Environment) -> Environment = _
   fn child_style(Self, ViewStyle) -> ViewStyle = _
   fn layout(Self, ViewLayoutContext) -> ViewLayoutResult
   fn paint(Self, ViewPaintContext) -> ViewPaintPlan = _
+  fn platform_views(Self, ViewPlatformContext) -> Array[PlatformViewPlacement] = _
   fn text_input_state(Self, ViewPaintContext) -> TextInputState? = _
   fn semantics(Self) -> ViewSemanticsInfo = _
   fn focusable(Self) -> Bool = _
   fn flex_weight(Self) -> Double = _
 }
+
+pub(open) trait ViewStateValue {
+  fn view_state_type_key() -> DeclarationKey
+  fn encode_view_state(Self) -> Bytes
+  fn decode_view_state(Self, Bytes) -> Self?
+}
+pub impl ViewStateValue for Bool
+pub impl ViewStateValue for Int
+pub impl ViewStateValue for Double
+pub impl ViewStateValue for String
+pub impl ViewStateValue for Bytes
 

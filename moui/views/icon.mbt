@@ -591,8 +591,19 @@ impl @core.ViewNode for Icon with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for Icon with fn revision(self) {
-  "icon:\{self.label}:\{self.size}:\{view_color_revision(self.color)}:\{self.weight}"
+impl @core.ViewNode for Icon with fn declaration(self) {
+  view_declaration(
+    layout=view_exact_channel(@core.DeclarationKey::double(self.size)),
+    paint=view_exact_channel(
+      view_record_key("Icon.paint", [
+        ("label", @core.DeclarationKey::string(self.label)),
+        ("size", @core.DeclarationKey::double(self.size)),
+        ("color", view_color_key(self.color)),
+        ("weight", @core.DeclarationKey::double(self.weight)),
+      ]),
+    ),
+    semantics=view_exact_channel(@core.DeclarationKey::string(self.label)),
+  )
 }
 
 ///|
@@ -632,11 +643,15 @@ impl @core.ViewNode for Icon with fn paint(self, context) {
 
 ///|
 impl @core.ViewNode for Icon with fn semantics(self) {
-  @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Text, label=self.label)
+  @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Boundary,
+    role=@core.SemanticsRole::Text,
+    label=self.label,
+  )
 }
 
 ///|
-/// Human-readable label for an icon, used for semantics and revision keys.
+/// Human-readable label for an icon, used for semantics and declaration keys.
 fn icon_label(name : IconName) -> String {
   match name {
     Check => "Check"

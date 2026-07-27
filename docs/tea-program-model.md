@@ -47,6 +47,20 @@ Controls that require complex local state, such as rich text editing or
 virtualized resources, keep that state explicit through bindings, cells, or
 dedicated integration callbacks.
 
+Runtime-owned, node-scoped state remains compatible with TEA because it is not
+application model state. Hover, focus, pressed state, caret/selection, and
+scroll position may live in a transient runtime slot tied to one reconciled
+element lifetime. Semantic actions can update that transient state and enqueue
+typed messages, but only the application's `update` function changes the app
+model. Rebuilds re-declare the view from the resulting model; unmounting drops
+the runtime slot.
+
+Agent actions follow the same loop. Runtime commits the current semantics,
+validates a generation-tagged typed action, applies transient UI state, delivers
+typed messages FIFO, drains synchronous TEA work, and commits again. It never
+manufactures pointer or keyboard events for semantic activation. See
+[Committed Semantics And Agent Actions](agent-semantics.md).
+
 Custom-control entrypoints are app-facing in `moui/views`. App code,
 host tests, smoke checks, and example apps should use helpers such as
 `@views.text_field`, `@views.checkbox`, `@views.picker`, and

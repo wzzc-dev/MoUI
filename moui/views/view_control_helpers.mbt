@@ -8,49 +8,228 @@ fn views_ambient_theme(theme : @core.Theme?) -> @core.Theme {
 }
 
 ///|
-fn view_color_revision(color : @core.Color) -> String {
-  "\{color.r},\{color.g},\{color.b},\{color.a}"
+fn view_exact_channel(key : @core.DeclarationKey) -> @core.DeclarationChannel {
+  @core.DeclarationChannel::Exact(key)
 }
 
 ///|
-fn view_brush_revision(value : @core.Brush) -> String {
+fn view_declaration(
+  layout? : @core.DeclarationChannel = @core.DeclarationChannel::Constant,
+  paint? : @core.DeclarationChannel = @core.DeclarationChannel::Constant,
+  semantics? : @core.DeclarationChannel = @core.DeclarationChannel::Constant,
+  platform? : @core.DeclarationChannel = @core.DeclarationChannel::Constant,
+) -> @core.ViewDeclaration {
+  @core.ViewDeclaration::channels(layout~, paint~, semantics~, platform~)
+}
+
+///|
+fn view_layout_declaration(key : @core.DeclarationKey) -> @core.ViewDeclaration {
+  view_declaration(layout=view_exact_channel(key))
+}
+
+///|
+fn view_paint_declaration(key : @core.DeclarationKey) -> @core.ViewDeclaration {
+  view_declaration(paint=view_exact_channel(key))
+}
+
+///|
+fn view_semantics_declaration(
+  key : @core.DeclarationKey,
+) -> @core.ViewDeclaration {
+  view_declaration(semantics=view_exact_channel(key))
+}
+
+///|
+fn view_record_key(
+  type_tag : String,
+  fields : Array[(String, @core.DeclarationKey)],
+) -> @core.DeclarationKey {
+  @core.DeclarationKey::record(type_tag~, fields~)
+}
+
+///|
+fn view_double_option_key(value : Double?) -> @core.DeclarationKey {
+  @core.DeclarationKey::option(value.map(@core.DeclarationKey::double))
+}
+
+///|
+fn view_point_key(point : @core.Point) -> @core.DeclarationKey {
+  view_record_key("Point", [
+    ("x", @core.DeclarationKey::double(point.x)),
+    ("y", @core.DeclarationKey::double(point.y)),
+  ])
+}
+
+///|
+fn view_size_key(size : @core.Size) -> @core.DeclarationKey {
+  view_record_key("Size", [
+    ("width", @core.DeclarationKey::double(size.width)),
+    ("height", @core.DeclarationKey::double(size.height)),
+  ])
+}
+
+///|
+fn view_size_option_key(size : @core.Size?) -> @core.DeclarationKey {
+  @core.DeclarationKey::option(size.map(view_size_key))
+}
+
+///|
+fn view_insets_key(insets : @core.Insets) -> @core.DeclarationKey {
+  view_record_key("Insets", [
+    ("top", @core.DeclarationKey::double(insets.top)),
+    ("right", @core.DeclarationKey::double(insets.right)),
+    ("bottom", @core.DeclarationKey::double(insets.bottom)),
+    ("left", @core.DeclarationKey::double(insets.left)),
+  ])
+}
+
+///|
+fn view_color_key(color : @core.Color) -> @core.DeclarationKey {
+  view_record_key("Color", [
+    ("r", @core.DeclarationKey::double(color.r)),
+    ("g", @core.DeclarationKey::double(color.g)),
+    ("b", @core.DeclarationKey::double(color.b)),
+    ("a", @core.DeclarationKey::double(color.a)),
+  ])
+}
+
+///|
+fn view_font_family_key(family : @core.FontFamily) -> @core.DeclarationKey {
+  match family {
+    @core.FontFamily::Name(name) =>
+      view_record_key("FontFamily.Name", [
+        ("name", @core.DeclarationKey::string(name)),
+      ])
+    @core.FontFamily::SystemUi => @core.DeclarationKey::int(1)
+    @core.FontFamily::UiSansSerif => @core.DeclarationKey::int(2)
+    @core.FontFamily::UiSerif => @core.DeclarationKey::int(3)
+    @core.FontFamily::UiMonospace => @core.DeclarationKey::int(4)
+    @core.FontFamily::SansSerif => @core.DeclarationKey::int(5)
+    @core.FontFamily::Serif => @core.DeclarationKey::int(6)
+    @core.FontFamily::Monospace => @core.DeclarationKey::int(7)
+    @core.FontFamily::Emoji => @core.DeclarationKey::int(8)
+    @core.FontFamily::Math => @core.DeclarationKey::int(9)
+    @core.FontFamily::FangSong => @core.DeclarationKey::int(10)
+  }
+}
+
+///|
+fn view_font_key(font : @core.FontSpec) -> @core.DeclarationKey {
+  view_record_key("FontSpec", [
+    (
+      "families",
+      @core.DeclarationKey::array(
+        font.families.families.map(view_font_family_key),
+      ),
+    ),
+    ("size", @core.DeclarationKey::double(font.size)),
+    ("weight", @core.DeclarationKey::int(font.weight)),
+    (
+      "style",
+      @core.DeclarationKey::int(
+        match font.style {
+          @core.FontStyle::Normal => 0
+          @core.FontStyle::Italic => 1
+        },
+      ),
+    ),
+  ])
+}
+
+///|
+fn view_font_option_key(font : @core.FontSpec?) -> @core.DeclarationKey {
+  @core.DeclarationKey::option(font.map(view_font_key))
+}
+
+///|
+fn view_semantics_role_key(role : @core.SemanticsRole) -> @core.DeclarationKey {
+  @core.DeclarationKey::int(
+    match role {
+      @core.SemanticsRole::None => 0
+      @core.SemanticsRole::Text => 1
+      @core.SemanticsRole::Link => 2
+      @core.SemanticsRole::Heading => 3
+      @core.SemanticsRole::Navigation => 4
+      @core.SemanticsRole::Main => 5
+      @core.SemanticsRole::Button => 6
+      @core.SemanticsRole::Checkbox => 7
+      @core.SemanticsRole::TextField => 8
+      @core.SemanticsRole::List => 9
+      @core.SemanticsRole::ListItem => 10
+      @core.SemanticsRole::Grid => 11
+      @core.SemanticsRole::ScrollView => 12
+      @core.SemanticsRole::Switch => 13
+      @core.SemanticsRole::Radio => 14
+      @core.SemanticsRole::Slider => 15
+      @core.SemanticsRole::Progress => 16
+      @core.SemanticsRole::Tab => 17
+      @core.SemanticsRole::Dialog => 18
+      @core.SemanticsRole::Tooltip => 19
+      @core.SemanticsRole::Menu => 20
+      @core.SemanticsRole::ButtonGroup => 21
+      @core.SemanticsRole::Form => 22
+      @core.SemanticsRole::FormField => 23
+      @core.SemanticsRole::Tree => 24
+      @core.SemanticsRole::TreeItem => 25
+      @core.SemanticsRole::Group => 26
+      @core.SemanticsRole::WebView => 27
+    },
+  )
+}
+
+///|
+fn view_brush_key(value : @core.Brush) -> @core.DeclarationKey {
   match value {
-    @core.Brush::Solid(color) => "solid:\{view_color_revision(color)}"
+    @core.Brush::Solid(color) =>
+      view_record_key("Brush.Solid", [("color", view_color_key(color))])
     @core.Brush::LinearGradient(spec) =>
-      "linear:\{spec.start.x},\{spec.start.y},\{spec.end.x},\{spec.end.y},\{view_color_revision(spec.start_color)},\{view_color_revision(spec.end_color)}"
+      view_record_key("Brush.LinearGradient", [
+        ("start", view_point_key(spec.start)),
+        ("end", view_point_key(spec.end)),
+        ("start_color", view_color_key(spec.start_color)),
+        ("end_color", view_color_key(spec.end_color)),
+      ])
     @core.Brush::RadialGradient(spec) =>
-      "radial:\{spec.center.x},\{spec.center.y},\{spec.radius},\{view_color_revision(spec.center_color)},\{view_color_revision(spec.edge_color)}"
+      view_record_key("Brush.RadialGradient", [
+        ("center", view_point_key(spec.center)),
+        ("radius", @core.DeclarationKey::double(spec.radius)),
+        ("center_color", view_color_key(spec.center_color)),
+        ("edge_color", view_color_key(spec.edge_color)),
+      ])
   }
 }
 
 ///|
-fn view_brush_option_revision(value : @core.Brush?) -> String {
-  match value {
-    Some(brush) => view_brush_revision(brush)
-    None => "none"
-  }
+fn view_brush_option_key(value : @core.Brush?) -> @core.DeclarationKey {
+  @core.DeclarationKey::option(value.map(view_brush_key))
 }
 
 ///|
-fn view_border_option_revision(value : @core.BorderStyle?) -> String {
-  match value {
-    Some(value) => "\{view_brush_revision(value.brush)}:\{value.width}"
-    None => "none"
-  }
+fn view_border_key(value : @core.BorderStyle) -> @core.DeclarationKey {
+  view_record_key("BorderStyle", [
+    ("brush", view_brush_key(value.brush)),
+    ("width", @core.DeclarationKey::double(value.width)),
+  ])
 }
 
 ///|
-fn view_shadow_option_revision(value : @core.ShadowStyle?) -> String {
-  match value {
-    Some(value) =>
-      "\{view_color_revision(value.color)}:\{value.offset.x},\{value.offset.y}:\{value.blur_radius}:\{value.spread}"
-    None => "none"
-  }
+fn view_border_option_key(value : @core.BorderStyle?) -> @core.DeclarationKey {
+  @core.DeclarationKey::option(value.map(view_border_key))
 }
 
 ///|
-fn view_size_revision(size : @core.Size) -> String {
-  "\{size.width}x\{size.height}"
+fn view_shadow_key(value : @core.ShadowStyle) -> @core.DeclarationKey {
+  view_record_key("ShadowStyle", [
+    ("color", view_color_key(value.color)),
+    ("offset", view_point_key(value.offset)),
+    ("blur_radius", @core.DeclarationKey::double(value.blur_radius)),
+    ("spread", @core.DeclarationKey::double(value.spread)),
+  ])
+}
+
+///|
+fn view_shadow_option_key(value : @core.ShadowStyle?) -> @core.DeclarationKey {
+  @core.DeclarationKey::option(value.map(view_shadow_key))
 }
 
 ///|
@@ -116,39 +295,58 @@ fn view_button_next_state(
 }
 
 ///|
-/// Encode a button transition start into `ViewStateContext.scratch` so the
-/// next paint can interpolate from the previous visual state toward the new
-/// one. Format: `bt:<from_state>:<start_ms>` where `from_state` is 0=Normal,
-/// 1=Hovered, 2=Pressed and `start_ms` is the integer millisecond clock. The
-/// `bt:` prefix avoids clashing with other scratch users; a missing/empty
-/// scratch means "no transition in flight".
-fn button_transition_scratch(
-  from_state : @core.ButtonState,
-  start_ms : Double,
-) -> String {
-  let from_code = match from_state {
-    @core.ButtonState::Normal => 0
-    @core.ButtonState::Hovered => 1
-    @core.ButtonState::Pressed => 2
-  }
-  "bt:\{from_code}:\{start_ms.to_int()}"
+priv enum ButtonTransitionState {
+  Idle
+  Active(@core.ButtonState, Double)
 }
 
 ///|
-/// Parse a previously encoded transition start. Returns `(from_state, start_ms)`
-/// when the scratch carries a valid `bt:` marker, or `None` when no transition
-/// is recorded (e.g. first paint or non-button scratch content).
-fn parse_button_transition(scratch : String) -> (@core.ButtonState, Int)? {
-  let parts = scratch.split(":").to_array()
-  if parts.length() == 3 && parts[0] == "bt" {
-    let from_code = match parts[1] {
-      "0" => Some(@core.ButtonState::Normal)
-      "1" => Some(@core.ButtonState::Hovered)
-      "2" => Some(@core.ButtonState::Pressed)
+impl @core.ViewStateValue for ButtonTransitionState with fn view_state_type_key() {
+  @core.DeclarationKey::string("moui.views.ButtonTransitionState.v1")
+}
+
+///|
+impl @core.ViewStateValue for ButtonTransitionState with fn encode_view_state(
+  self,
+) {
+  match self {
+    Idle => b"\x00"
+    Active(from_state, start_ms) => {
+      let output = Buffer(size_hint=10)
+      output.write_byte(1)
+      output.write_byte(
+        match from_state {
+          @core.ButtonState::Normal => 0
+          @core.ButtonState::Hovered => 1
+          @core.ButtonState::Pressed => 2
+        },
+      )
+      output.write_double_be(start_ms)
+      output.to_bytes()
+    }
+  }
+}
+
+///|
+impl @core.ViewStateValue for ButtonTransitionState with fn decode_view_state(
+  _self,
+  bytes,
+) {
+  if bytes == b"\x00" {
+    Some(Idle)
+  } else if bytes.length() == 10 && bytes[0] == 1 {
+    let from_state = match bytes[1] {
+      0 => Some(@core.ButtonState::Normal)
+      1 => Some(@core.ButtonState::Hovered)
+      2 => Some(@core.ButtonState::Pressed)
       _ => None
     }
-    match (from_code, parse_simple_int(parts[2].to_owned())) {
-      (Some(state), Some(start_ms)) => Some((state, start_ms))
+    let start_ms = @core.ViewStateValue::decode_view_state(
+      0.0,
+      bytes[2:10].to_owned(),
+    )
+    match (from_state, start_ms) {
+      (Some(from_state), Some(start_ms)) => Some(Active(from_state, start_ms))
       _ => None
     }
   } else {
@@ -157,22 +355,21 @@ fn parse_button_transition(scratch : String) -> (@core.ButtonState, Int)? {
 }
 
 ///|
-/// Parse a non-negative ASCII-integer string. Avoids depending on a strconv
-/// mooncake for the one place (button transition scratch) that needs it; only
-/// digits are accepted, so negative or fractional input returns `None`.
-fn parse_simple_int(text : String) -> Int? {
-  if text.length() == 0 {
-    return None
+fn button_transition_slot() -> @core.ViewStateSlot[ButtonTransitionState] {
+  @core.ViewStateSlot::new(
+    key=@core.DeclarationKey::string("moui.views.button.transition"),
+    initial=ButtonTransitionState::Idle,
+  )
+}
+
+///|
+fn button_transition(
+  state : @core.ViewStateContext,
+) -> (@core.ButtonState, Double)? {
+  match state.read_slot(button_transition_slot()) {
+    Active(from_state, start_ms) => Some((from_state, start_ms))
+    Idle => None
   }
-  let mut value = 0
-  for ch in text {
-    if ch >= '0' && ch <= '9' {
-      value = value * 10 + (ch.to_int() - '0'.to_int())
-    } else {
-      return None
-    }
-  }
-  Some(value)
 }
 
 ///|

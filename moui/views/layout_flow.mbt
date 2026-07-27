@@ -18,8 +18,14 @@ impl @core.ViewNode for Flow with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for Flow with fn revision(self) {
-  "flow:\{self.width}:\{self.spacing}:\{self.row_spacing}"
+impl @core.ViewNode for Flow with fn declaration(self) {
+  view_layout_declaration(
+    view_record_key("Flow", [
+      ("width", @core.DeclarationKey::double(self.width)),
+      ("spacing", @core.DeclarationKey::double(self.spacing)),
+      ("row_spacing", @core.DeclarationKey::double(self.row_spacing)),
+    ]),
+  )
 }
 
 ///|
@@ -53,8 +59,7 @@ impl @core.ViewNode for Flow with fn layout(self, ctx) {
 ///|
 impl @core.ViewNode for Flow with fn semantics(_self) {
   @core.ViewSemanticsInfo::new(
-    role=@core.SemanticsRole::Group,
-    label="Flow layout",
+    composition=@core.SemanticsComposition::Transparent,
   )
 }
 
@@ -75,9 +80,10 @@ pub fn[Msg] flow(
   spacing? : Double = 8.0,
   row_spacing? : Double = 8.0,
 ) -> @core.View[Msg] {
+  let static_children = (_node : Flow) => children
   @core.View::from_node(
     Flow::{ width, spacing, row_spacing },
-    children=_node => children,
+    children=static_children,
   )
 }
 

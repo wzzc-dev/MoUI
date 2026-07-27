@@ -15,7 +15,7 @@ pub fn[Msg] dropdown(
     state.selected,
     placeholder,
   )
-  let anchor = button(
+  let anchor_view = button(
       label + ": " + selected_label,
       on_click=on_toggle,
       variant=ButtonVariant::Tonal,
@@ -24,8 +24,12 @@ pub fn[Msg] dropdown(
     )
     .semantics_role(@core.SemanticsRole::Menu)
     .semantics_expanded(expanded=state.expanded)
-    .semantics_action(popover_toggle_action(state.expanded))
     .accessibility_label(label + ": " + selected_label)
+  let anchor = semantic_toggle_action_control(
+    anchor_view,
+    state.expanded,
+    on_toggle,
+  )
   popover(
     anchor~,
     content=dropdown_menu(
@@ -56,7 +60,7 @@ pub fn[Msg] combobox(
   max_height? : Double = 180.0,
 ) -> @core.View[Msg] {
   let resolved_theme = views_ambient_theme(theme)
-  let anchor = row(
+  let anchor_view = row(
     [
       text_field(
         value,
@@ -74,7 +78,6 @@ pub fn[Msg] combobox(
         width=62.0,
       )
       .semantics_expanded(expanded~)
-      .semantics_action(popover_toggle_action(expanded))
       .accessibility_label(
         if expanded {
           "Close options"
@@ -86,6 +89,7 @@ pub fn[Msg] combobox(
     spacing=resolved_theme.spacing_scale.xs,
     align=CrossAlign::Center,
   ).frame(width~)
+  let anchor = semantic_toggle_action_control(anchor_view, expanded, on_toggle)
   popover(
     anchor~,
     content=dropdown_menu(
@@ -93,41 +97,6 @@ pub fn[Msg] combobox(
       theme=resolved_theme,
       width=width - resolved_theme.spacing_scale.sm * 2.0,
       max_height~,
-    ),
-    expanded~,
-    theme=resolved_theme,
-    width~,
-    height=max_height,
-  )
-}
-
-///|
-pub fn[Msg] autocomplete(
-  query : String,
-  on_input~ : (String) -> Msg,
-  suggestions : Array[MenuItem[Msg]],
-  expanded~ : Bool,
-  placeholder? : String = "Search",
-  theme? : @core.Theme,
-  width? : Double = 280.0,
-  max_height? : Double = 180.0,
-) -> @core.View[Msg] {
-  let resolved_theme = views_ambient_theme(theme)
-  popover(
-    anchor=text_field(
-      query,
-      on_input~,
-      placeholder~,
-      variant=TextFieldVariant::Outline,
-      theme=resolved_theme,
-      width~,
-    ),
-    content=dropdown_menu(
-      suggestions,
-      theme=resolved_theme,
-      width=width - resolved_theme.spacing_scale.sm * 2.0,
-      max_height~,
-      label="Autocomplete suggestions",
     ),
     expanded~,
     theme=resolved_theme,

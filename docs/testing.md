@@ -33,7 +33,6 @@ node scripts/validate-guidance-consistency.mjs
 node scripts/validate-api-surface.mjs
 node scripts/generate-repo-docs.mjs --check
 node scripts/validate-window-dependency.mjs
-node scripts/validate-harmonyos-shell.mjs
 node scripts/validate-harness-invariants.mjs
 node scripts/validate-maintenance-baseline.mjs
 moon run tools/moui/validate_source_file_policy --target native
@@ -67,6 +66,12 @@ moon check
 node scripts/check-generated-interfaces.mjs
 moon test moui/core --target native
 moon test moui/views --target native
+moon test moui/runtime --target native
+moon test moui_richtext --target native
+moon test moui_webview --target native
+moon test moui_agent --target native
+moon test moui_agent_mcp --target native
+moon test examples/agent_counter --target native
 moon test moui/render --target native
 moon test moui/render/skia --target native
 moon test moui/render/sun --target native
@@ -76,6 +81,12 @@ moon test moui_devtools --target native
 moon test moui_skia --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 moon test moui/backend/web --target wasm-gc
+moon check moui/runtime --target wasm-gc
+moon check moui_richtext --target wasm-gc
+moon check moui_webview --target wasm-gc
+moon test moui_agent --target wasm-gc
+moon test moui_agent_mcp --target wasm-gc
+moon test examples/agent_counter --target wasm-gc
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
 moon build examples/showcase/web_wasm --target wasm-gc
@@ -134,6 +145,11 @@ Use smaller package checks while editing implementation code:
 moon test moui/core --target native
 moon test moui/views --target native
 moon test moui/runtime --target native
+moon test moui_richtext --target native
+moon test moui_webview --target native
+moon test moui_agent --target native
+moon test moui_agent_mcp --target native
+moon test examples/agent_counter --target native
 moon test moui/render --target native
 moon test moui/render/skia --target native
 moon test moui/render/webgpu_adapter --target wasm-gc

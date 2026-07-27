@@ -12,8 +12,8 @@ impl @core.ViewNode for SkiaHoverCachedContentNode with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for SkiaHoverCachedContentNode with fn revision(_self) {
-  "skia-hover-cached-content"
+impl @core.ViewNode for SkiaHoverCachedContentNode with fn declaration(_self) {
+  @core.ViewDeclaration::constant()
 }
 
 ///|
@@ -40,7 +40,6 @@ impl @core.ViewNode for SkiaHoverCachedContentNode with fn paint(_self, ctx) {
     ],
     post_commands: [],
     overlay_commands: [],
-    platform_views: [],
     repaint_boundary: false,
     animating: false,
   }
@@ -79,8 +78,8 @@ impl @core.ViewNode for SkiaHoverControlNode with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for SkiaHoverControlNode with fn revision(_self) {
-  "skia-hover-control"
+impl @core.ViewNode for SkiaHoverControlNode with fn declaration(_self) {
+  @core.ViewDeclaration::constant()
 }
 
 ///|
@@ -120,8 +119,8 @@ impl @core.ViewNode for SkiaHoverDamageStageNode with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for SkiaHoverDamageStageNode with fn revision(_self) {
-  "skia-hover-damage-stage"
+impl @core.ViewNode for SkiaHoverDamageStageNode with fn declaration(_self) {
+  @core.ViewDeclaration::constant()
 }
 
 ///|

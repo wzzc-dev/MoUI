@@ -12,7 +12,7 @@ pub fn backend_info() -> LinuxBackendInfo
 
 pub fn capability_matrix() -> LinuxBackendCapabilities
 
-pub fn linux_accessibility_bridge(root~ : @wzzc-dev/moui/core.SemanticsNode, dispatch~ : (@wzzc-dev/moui/core.ElementId, @wzzc-dev/moui/core.SemanticsAction, String?) -> Bool) -> @host.NativeAccessibilityBridge
+pub fn linux_accessibility_bridge(@runtime.AppRuntime) -> @host.NativeAccessibilityBridge
 
 pub fn linux_accessibility_bridge_info() -> LinuxAccessibilityBridgeInfo
 
@@ -62,9 +62,9 @@ pub struct LinuxATSPIBinding {
 }
 pub fn LinuxATSPIBinding::diagnostics(Self) -> LinuxATSPIBindingDiagnostics
 pub fn LinuxATSPIBinding::dispose(Self) -> LinuxATSPIBindingDiagnostics
-pub fn LinuxATSPIBinding::new(root~ : @wzzc-dev/moui/core.SemanticsNode, dispatch~ : (@wzzc-dev/moui/core.ElementId, @wzzc-dev/moui/core.SemanticsAction, String?) -> Bool) -> Self
+pub fn LinuxATSPIBinding::new(dispatch~ : (@host.NativeAccessibilityActionRequest) -> @host.NativeAccessibilityActionResult) -> Self
 pub fn LinuxATSPIBinding::perform_action(Self, @host.NativeAccessibilityActionRequest) -> @host.NativeAccessibilityActionResult
-pub fn LinuxATSPIBinding::publish_semantics(Self, @wzzc-dev/moui/core.SemanticsNode) -> LinuxATSPIBindingDiagnostics
+pub fn LinuxATSPIBinding::publish_semantics(Self, @runtime.SemanticsRead) -> LinuxATSPIBindingDiagnostics
 
 pub(all) struct LinuxATSPIBindingDiagnostics {
   native_binding_ready : Bool

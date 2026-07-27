@@ -17,8 +17,8 @@ impl @core.ViewNode for RuntimeComponentViewNode with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for RuntimeComponentViewNode with fn revision(_self) {
-  "component"
+impl @core.ViewNode for RuntimeComponentViewNode with fn declaration(_self) {
+  @core.ViewDeclaration::constant()
 }
 
 ///|

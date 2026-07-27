@@ -215,7 +215,6 @@ fn markdown_session_editor_paint(
     child_layers,
     post_commands: [@core.DrawCommand::PopClip],
     overlay_commands,
-    platform_views: [],
     repaint_boundary: false,
     animating: false,
   }
@@ -588,7 +587,6 @@ fn markdown_session_input_state(
   if frame.size.width <= 0.0 || frame.size.height <= 0.0 {
     return {
       focused: true,
-      element_id: None,
       text,
       caret,
       selection: control.selection,
@@ -650,7 +648,6 @@ fn markdown_session_input_state(
   }
   {
     focused: true,
-    element_id: None,
     text,
     caret,
     selection: control.selection,

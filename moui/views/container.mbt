@@ -70,10 +70,9 @@ pub fn[Msg] center(
   theme? : @core.Theme,
 ) -> @core.View[Msg] {
   let resolved_theme = views_ambient_theme(theme)
-  let centered = @core.View::from_node(
-    Center::{ width, height },
-    children=_node => [child],
-  )
+  let centered = @core.View::from_node(Center::{ width, height }, children=_node => {
+    [child]
+  })
   match background {
     Some(color) =>
       container(
@@ -106,16 +105,13 @@ impl @core.ViewNode for Center with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for Center with fn revision(self) {
-  let width_token = match self.width {
-    Some(value) => "\{value}"
-    None => "auto"
-  }
-  let height_token = match self.height {
-    Some(value) => "\{value}"
-    None => "auto"
-  }
-  "center:\{width_token}:\{height_token}"
+impl @core.ViewNode for Center with fn declaration(self) {
+  view_layout_declaration(
+    view_record_key("Center", [
+      ("width", view_double_option_key(self.width)),
+      ("height", view_double_option_key(self.height)),
+    ]),
+  )
 }
 
 ///|
@@ -151,24 +147,15 @@ impl @core.ViewNode for Center with fn layout(self, ctx) {
   // painting at negative coordinates.
   let x = views_max_double(0.0, (size.width - child_size.width) / 2.0)
   let y = views_max_double(0.0, (size.height - child_size.height) / 2.0)
-  @core.ViewLayoutResult::new(
-    size~,
-    child_frames=[
-      @core.Rect::new(
-        x~,
-        y~,
-        width=child_size.width,
-        height=child_size.height,
-      ),
-    ],
-  )
+  @core.ViewLayoutResult::new(size~, child_frames=[
+    @core.Rect::new(x~, y~, width=child_size.width, height=child_size.height),
+  ])
 }
 
 ///|
 impl @core.ViewNode for Center with fn semantics(_self) {
   @core.ViewSemanticsInfo::new(
-    role=@core.SemanticsRole::Group,
-    label="Centered content",
+    composition=@core.SemanticsComposition::Transparent,
   )
 }
 
@@ -213,8 +200,8 @@ impl @core.ViewNode for EmptyControl with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for EmptyControl with fn revision(_self) {
-  "empty"
+impl @core.ViewNode for EmptyControl with fn declaration(_self) {
+  @core.ViewDeclaration::constant()
 }
 
 ///|
@@ -251,8 +238,13 @@ impl @core.ViewNode for SpacerViewNode with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for SpacerViewNode with fn revision(self) {
-  "spacer:\{self.min_length}:\{self.weight}"
+impl @core.ViewNode for SpacerViewNode with fn declaration(self) {
+  view_layout_declaration(
+    view_record_key("Spacer", [
+      ("min_length", @core.DeclarationKey::double(self.min_length)),
+      ("weight", @core.DeclarationKey::double(self.weight)),
+    ]),
+  )
 }
 
 ///|

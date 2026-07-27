@@ -63,7 +63,8 @@ fn ElementNode::dispatch_drag_drop_to_children(
         index = index - 1
       }
       if changed {
-        self.dirty.mark_paint()
+        self.dirty.mark_paint_descendant()
+        self.render_cache.invalidate_composition()
       }
       {
         changed,

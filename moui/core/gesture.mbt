@@ -91,6 +91,113 @@ priv struct DragGestureState {
 }
 
 ///|
+impl ViewStateValue for DragGestureState with fn view_state_type_key() {
+  DeclarationKey::string("moui.core.DragGestureState.v1")
+}
+
+///|
+impl ViewStateValue for DragGestureState with fn encode_view_state(self) {
+  let output = Buffer(size_hint=43)
+  output.write_byte(
+    match self.phase {
+      DragGesturePhase::Idle => 0
+      DragGesturePhase::Pending => 1
+      DragGesturePhase::Started => 2
+      DragGesturePhase::Changed => 3
+      DragGesturePhase::Ended => 4
+      DragGesturePhase::Cancelled => 5
+    },
+  )
+  match self.origin {
+    Some(point) => {
+      output.write_byte(1)
+      output.write_double_be(point.x)
+      output.write_double_be(point.y)
+    }
+    None => {
+      output.write_byte(0)
+      output.write_double_be(0.0)
+      output.write_double_be(0.0)
+    }
+  }
+  match self.last_position {
+    Some(point) => {
+      output.write_byte(1)
+      output.write_double_be(point.x)
+      output.write_double_be(point.y)
+    }
+    None => {
+      output.write_byte(0)
+      output.write_double_be(0.0)
+      output.write_double_be(0.0)
+    }
+  }
+  output.write_double_be(self.min_distance)
+  output.to_bytes()
+}
+
+///|
+impl ViewStateValue for DragGestureState with fn decode_view_state(_self, bytes) {
+  if bytes.length() != 43 {
+    return None
+  }
+  let phase = match bytes[0] {
+    0 => Some(DragGesturePhase::Idle)
+    1 => Some(DragGesturePhase::Pending)
+    2 => Some(DragGesturePhase::Started)
+    3 => Some(DragGesturePhase::Changed)
+    4 => Some(DragGesturePhase::Ended)
+    5 => Some(DragGesturePhase::Cancelled)
+    _ => None
+  }
+  let origin_x = ViewStateValue::decode_view_state(0.0, bytes[2:10].to_owned())
+  let origin_y = ViewStateValue::decode_view_state(0.0, bytes[10:18].to_owned())
+  let last_x = ViewStateValue::decode_view_state(0.0, bytes[19:27].to_owned())
+  let last_y = ViewStateValue::decode_view_state(0.0, bytes[27:35].to_owned())
+  let min_distance = ViewStateValue::decode_view_state(
+    0.0,
+    bytes[35:43].to_owned(),
+  )
+  match (phase, origin_x, origin_y, last_x, last_y, min_distance) {
+    (
+      Some(phase),
+      Some(origin_x),
+      Some(origin_y),
+      Some(last_x),
+      Some(last_y),
+      Some(min_distance),
+    ) =>
+      Some({
+        phase,
+        origin: if bytes[1] == 1 {
+          Some(Point::new(x=origin_x, y=origin_y))
+        } else if bytes[1] == 0 {
+          None
+        } else {
+          return None
+        },
+        last_position: if bytes[18] == 1 {
+          Some(Point::new(x=last_x, y=last_y))
+        } else if bytes[18] == 0 {
+          None
+        } else {
+          return None
+        },
+        min_distance,
+      })
+    _ => None
+  }
+}
+
+///|
+fn drag_gesture_view_state_slot() -> ViewStateSlot[DragGestureState] {
+  ViewStateSlot::new(
+    key=DeclarationKey::string("moui.core.drag-gesture"),
+    initial=DragGestureState::new(),
+  )
+}
+
+///|
 priv struct DragGestureResult {
   state : DragGestureState
   event : DragGestureEvent?

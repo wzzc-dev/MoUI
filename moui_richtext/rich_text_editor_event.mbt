@@ -789,7 +789,6 @@ fn rich_text_input_state(
   )
   {
     focused: true,
-    element_id: None,
     text,
     caret,
     selection: rich_text_input_grapheme_selection(boundaries, control.selection),

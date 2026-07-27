@@ -13,7 +13,7 @@ fn ElementNode::find_scroll_target(
   nearest_scroll : (ElementId, Rect)?,
 ) -> ScrollTarget? {
   let nearest_scroll = if self.view_node.semantics().role ==
-    @core.SemanticsRole::ScrollView {
+    Some(@core.SemanticsRole::ScrollView) {
     Some((self.id, layout.frame))
   } else {
     nearest_scroll
@@ -93,6 +93,34 @@ fn ElementNode::dispatch_event_to_target(
 }
 
 ///|
+fn RuntimeState::apply_targeted_event_result(
+  self : RuntimeState,
+  result : ElementEventResult,
+) -> Unit {
+  match result.focused {
+    Some(target) => ignore(self.commit_focus(Some(target)))
+    None => ()
+  }
+  if result.captured {
+    self.active_pointer_capture = match result.capture_target {
+      Some(target) => Some(target)
+      None => result.focused
+    }
+  }
+  self.needs_redraw = self.needs_redraw || result.changed
+  self.needs_rebuild = self.needs_rebuild || result.activated
+  self.needs_paint = self.needs_paint || result.changed
+  if result.changed || result.activated {
+    self.mark_current_dirty_elements()
+    self.mark_semantics_dirty(self.element_tree.id())
+  }
+  if result.activated {
+    self.request_activation_rebuild()
+  }
+  self.deliver_messages(result.deliveries)
+}
+
+///|
 fn scroll_axis_delta(
   start : Double,
   end : Double,
@@ -163,7 +191,7 @@ fn RuntimeState::try_pending_scroll_from_current_layout(
                 environment=self.environment,
                 text_system=self.text_system,
               ) {
-              Some(result) => ignore(self.apply_semantics_event_result(result))
+              Some(result) => self.apply_targeted_event_result(result)
               None => ()
             }
           }

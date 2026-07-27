@@ -23,19 +23,28 @@ impl @core.ViewNode for Divider with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for Divider with fn revision(self) {
-  // Capture every paint-affecting field (axis, thickness, color, inset) so
-  // the runtime reconcile path does not reuse a stale RenderNode when only
-  // the color or the inset changed.
-  // `Axis` and `Color` do not implement `Show`; emit stable fingerprint
-  // tokens (axis label + rounded RGBA) so reconcile detects axis/color
-  // changes without relying on a Show instance.
-  let axis_token = match self.axis {
-    @core.Axis::Horizontal => "h"
-    @core.Axis::Vertical => "v"
-  }
-  let color_token = "\{round4(self.color.r)},\{round4(self.color.g)},\{round4(self.color.b)},\{round4(self.color.a)}"
-  "divider:\{axis_token}:\{self.thickness}:\{color_token}:\{self.inset}"
+impl @core.ViewNode for Divider with fn declaration(self) {
+  let axis = @core.DeclarationKey::int(
+    match self.axis {
+      @core.Axis::Horizontal => 0
+      @core.Axis::Vertical => 1
+    },
+  )
+  view_declaration(
+    layout=view_exact_channel(
+      view_record_key("Divider.layout", [
+        ("axis", axis),
+        ("thickness", @core.DeclarationKey::double(self.thickness)),
+      ]),
+    ),
+    paint=view_exact_channel(
+      view_record_key("Divider.paint", [
+        ("axis", axis),
+        ("color", view_color_key(self.color)),
+        ("inset", @core.DeclarationKey::double(self.inset)),
+      ]),
+    ),
+  )
 }
 
 ///|
@@ -87,17 +96,12 @@ impl @core.ViewNode for Divider with fn paint(self, ctx) {
   } else {
     frame
   }
-  @core.ViewPaintPlan::commands([
-    @core.DrawCommand::FillRect(rect, self.color),
-  ])
+  @core.ViewPaintPlan::commands([@core.DrawCommand::FillRect(rect, self.color)])
 }
 
 ///|
 impl @core.ViewNode for Divider with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(
-    role=@core.SemanticsRole::Group,
-    label="Divider",
-  )
+  @core.ViewSemanticsInfo::new(composition=@core.SemanticsComposition::Hidden)
 }
 
 ///|
@@ -113,7 +117,5 @@ pub fn[Msg] divider(
     Some(value) => value
     None => resolved_theme.palette.outline_variant
   }
-  @core.View::from_node(
-    Divider::{ axis, thickness, color: line_color, inset },
-  )
+  @core.View::from_node(Divider::{ axis, thickness, color: line_color, inset })
 }

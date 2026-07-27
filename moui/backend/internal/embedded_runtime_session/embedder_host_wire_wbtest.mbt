@@ -59,6 +59,48 @@ test "shell Host Wire v1 parses PlatformChannel completion request ids" {
 }
 
 ///|
+test "shell Host Wire parses generation-checked typed accessibility actions" {
+  let text =
+    #|{"schemaVersion":1,"sessionGeneration":9,"response":{"kind":"accessibility","nodeId":"18446744073709551615","generation":"9007199254740993","action":{"kind":"set-text","value":"Luna"}}}
+  match parse_embedder_host_response_envelope_json(text) {
+    Some(
+      {
+        schema_version: 1,
+        session_generation: 9,
+        response: EmbeddingHostResponse::Accessibility(
+          {
+            node_id,
+            generation,
+            action: @core.SemanticsAction::SetText("Luna"),
+          }
+        ),
+      }
+    ) => {
+      assert_true(node_id.value() == 18446744073709551615UL)
+      assert_true(generation.value() == 9007199254740993UL)
+    }
+    _ => fail("expected a lossless typed accessibility response")
+  }
+}
+
+///|
+test "shell Host Wire rejects invalid accessibility identity and payload" {
+  for
+    text in [
+      "{\"schemaVersion\":1,\"sessionGeneration\":1,\"response\":{\"kind\":\"accessibility\",\"nodeId\":1,\"generation\":\"1\",\"action\":{\"kind\":\"focus\"}}}",
+      "{\"schemaVersion\":1,\"sessionGeneration\":1,\"response\":{\"kind\":\"accessibility\",\"nodeId\":\"0\",\"generation\":\"1\",\"action\":{\"kind\":\"focus\"}}}",
+      "{\"schemaVersion\":1,\"sessionGeneration\":1,\"response\":{\"kind\":\"accessibility\",\"nodeId\":\"18446744073709551616\",\"generation\":\"1\",\"action\":{\"kind\":\"focus\"}}}",
+      "{\"schemaVersion\":1,\"sessionGeneration\":1,\"response\":{\"kind\":\"accessibility\",\"nodeId\":\"1\",\"generation\":\"1\",\"action\":{\"kind\":\"set-text\"}}}",
+      "{\"schemaVersion\":1,\"sessionGeneration\":1,\"response\":{\"kind\":\"accessibility\",\"nodeId\":\"1\",\"generation\":\"1\",\"action\":{\"kind\":\"scroll\",\"direction\":\"diagonal\"}}}",
+      "{\"schemaVersion\":1,\"sessionGeneration\":1,\"response\":{\"kind\":\"accessibility\",\"nodeId\":\"1\",\"generation\":\"1\",\"action\":{\"kind\":\"focus\",\"value\":\"unexpected\"}}}",
+      "{\"schemaVersion\":1,\"sessionGeneration\":1,\"response\":{\"kind\":\"accessibility\",\"nodeId\":\"1\",\"generation\":\"1\",\"action\":{\"kind\":\"set-text\",\"value\":\"ok\",\"extra\":true}}}",
+      "{\"schemaVersion\":1,\"sessionGeneration\":1,\"response\":{\"kind\":\"accessibility\",\"nodeId\":\"1\",\"generation\":\"1\",\"action\":{\"kind\":\"focus\"},\"extra\":true}}",
+    ] {
+    assert_true(parse_embedder_host_response_envelope_json(text) is None)
+  }
+}
+
+///|
 test "shell Host Wire v1 fails closed on malformed control messages" {
   for
     text in [

@@ -23,25 +23,44 @@ fn ElementNode::render_with_environment(
   let commands : Array[DrawCommand] = []
   let post_commands : Array[DrawCommand] = []
   let overlay_commands : Array[DrawCommand] = []
-  let platform_views : Array[PlatformViewPlacement] = []
-  let plan = self.view_node.paint({
-    frame: bounds,
-    child_frames: placed.children.map(child => child.frame),
-    focused: focused == Some(self.id),
-    state: self.control.view_context(focused == Some(self.id)),
-    text_control: self.control.text_context(),
-    environment: render_environment_to_view_environment(environment),
-    style: environment.style,
-    text_system: environment.text_system,
-    now_ms: environment.now_ms,
-  })
+  let plan = if environment.matches_default_cache_key() &&
+    !self.dirty.needs_paint &&
+    self.render_cache.cached_render_frame == Some(bounds) &&
+    self.render_cache.cached_render_focused == focused {
+    match self.render_cache.cached_plan {
+      Some(plan) => plan
+      None =>
+        self.view_node.paint({
+          frame: bounds,
+          child_frames: placed.children.map(child => child.frame),
+          focused: focused == Some(self.id),
+          state: self.control.view_context(focused == Some(self.id)),
+          text_control: self.control.text_context(),
+          environment: render_environment_to_view_environment(environment),
+          style: environment.style,
+          text_system: environment.text_system,
+          now_ms: environment.now_ms,
+        })
+    }
+  } else {
+    self.view_node.paint({
+      frame: bounds,
+      child_frames: placed.children.map(child => child.frame),
+      focused: focused == Some(self.id),
+      state: self.control.view_context(focused == Some(self.id)),
+      text_control: self.control.text_context(),
+      environment: render_environment_to_view_environment(environment),
+      style: environment.style,
+      text_system: environment.text_system,
+      now_ms: environment.now_ms,
+    })
+  }
   commands.append(plan.commands)
   for layer in plan.child_layers {
     children.push(view_paint_layer_render_node(self.id, layer))
   }
   post_commands.append(plan.post_commands)
   overlay_commands.append(plan.overlay_commands)
-  platform_views.append(plan.platform_views)
   // A scroll/clip container wraps its children in a pushed clip rect (see
   // `ScrollContainerView::paint` and `ClipModifier`). The clip only constrains
   // drawn pixels, not `RenderNode::paint_bounds`, so a long column inside a
@@ -72,7 +91,8 @@ fn ElementNode::render_with_environment(
       }
     }
   }
-  self.dirty.clear()
+  self.dirty.needs_paint = false
+  self.refresh_descendant_dirty_flags()
   self.render_cache.content_revision = self.render_cache.content_revision + 1
   let paint_bounds = render_node_paint_bounds(
     bounds, commands, children, post_commands, overlay_commands,
@@ -93,7 +113,6 @@ fn ElementNode::render_with_environment(
     paint_commands: commands,
     post_paint_commands: post_commands,
     overlay_paint_commands: overlay_commands,
-    platform_views,
     cached_draw_commands: None,
     cached_overlay_draw_commands: None,
     animating,
@@ -106,6 +125,7 @@ fn ElementNode::render_with_environment(
   if environment.matches_default_cache_key() {
     self.render_cache.cached_render_frame = Some(bounds)
     self.render_cache.cached_render_focused = focused
+    self.render_cache.cached_plan = Some(plan)
     self.render_cache.cached_render = Some(render)
   }
   render
@@ -134,7 +154,6 @@ fn view_paint_layer_render_node(
     paint_commands: layer.commands,
     post_paint_commands: [],
     overlay_paint_commands: layer.overlay_commands,
-    platform_views: layer.platform_views,
     cached_draw_commands: Some(layer.commands),
     cached_overlay_draw_commands: Some(layer.overlay_commands),
     animating: false,

@@ -108,7 +108,7 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 
 平台入口应保持很薄：创建 program/runtime，选择 backend 和 renderer provider，并传入 app-owned service adapters。业务 model/update/view 逻辑应留在 shared app package。
 
-Window-hosted mobile runtime sessions 共享 `EmbedderHostChannel`，用于带 revision 的 IME 和 semantics updates，以及异步 clipboard/accessibility responses。见
+Window-hosted mobile runtime sessions 共享 `EmbedderHostChannel`，用于有序 IME 更新、带 generation 前置条件的已提交语义，以及异步 clipboard/accessibility responses。见
 [Window-hosted MoUI](../window-hosted-moui.md)、ADR 0005 和 ADR 0006。现在的产品默认值是在每个 native Skia platform 上，只要 host GPU surface 可用（macOS、Windows、Linux、Android、iOS 和 HarmonyOS 的 `NativeGpuPlatform::gpu_promoted` 均为 `true`），就使用 `SkiaGpuNative`。Window-surface 路径是 Metal（macOS/iOS）、带 EGL/GLES fallback 的 Vulkan（Android）、EGL/GLES（HarmonyOS）、D3D12（Windows）和 Wayland Vulkan（Linux）。`SkiaRasterNative` 仍是显式 `skia-raster` 模式，并且是 terminal GPU failure 后的 sticky recovery fallback。Matching-device seven-gate manifests 仍是有用证据，并且在非 macOS hosts 上可能仍不完整，但它们不再阻挡产品 `auto` 默认值。Native `SkPicture`/POD handoff 运行在独立 `std::thread` 上，带 latest-wins frame slot、ordered controls、detach acknowledgement 和 polling diagnostics。Platform branches 在该 worker 上拥有 Metal、D3D12、Vulkan WSI 或 EGL context/surface/swapchain/synchronization resources，并且只有在 platform present call 后才发出 `Presented`。Android 动态加载 Vulkan，因此 API 23 仍可加载并 fallback 到 EGL/GLES。Native hosts 独立于 frame submission 轮询 worker completions，只计数 `Presented`，并在 terminal GPU recovery 切换到 raster 时保留当前 `AppRuntime`。
 
 ## 扩展规则

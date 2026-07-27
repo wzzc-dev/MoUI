@@ -301,11 +301,10 @@ pub fn[T] ComponentContext::saveable(
   let state = State::new(restored)
   let store = self.saveable_state
   let request_rebuild = self.request_component_rebuild
-  let component_id = self.component_id
   self.subscriptions.push(
     state.subscribe(() => {
       store.set(scoped, state.get(), codec)
-      request_rebuild(component_id)
+      request_rebuild()
     }),
   )
   store.set(scoped, state.get(), codec)
@@ -344,5 +343,5 @@ fn ComponentContext::scoped_saveable_key(
   self : ComponentContext,
   key : String,
 ) -> String {
-  "\{self.component_id.value}:\{key}"
+  (self.scope_saveable_key)(key)
 }

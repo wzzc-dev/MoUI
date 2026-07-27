@@ -1,121 +1,154 @@
 ///|
-// JSON-RPC 2.0 router mapping MCP requests onto an AgentHost.
-//
-// The router is pure: it takes a parsed request (Json) + a host and returns a
-// response (Json). I/O (the stdio NDJSON loop) lives in main.mbt, so the
-// router is unit-testable with a mock host and no real stdin/stdout.
-//
-// MCP methods implemented (subset for MVP):
-//   - initialize            -> capabilities + protocol version
-//   - tools/list            -> the agent ops (get_semantics, get_state, ...)
-//   - tools/call            -> dispatch to the named tool
-// Unknown methods return a JSON-RPC error (-32601).
-
-///|
-/// JSON-RPC protocol version string we report in initialize results.
 let mcp_protocol_version : String = "2024-11-05"
 
 ///|
-/// MCP tool descriptor: name + description + a minimal input schema.
-fn tool_descriptor(name : String, description : String, schema : Json) -> Json {
-  ({ "name": name, "description": description, "inputSchema": schema } : Json)
+priv enum ToolInvocation {
+  ReadSemantics(@core.SemanticsGeneration?)
+  PerformAction(@agent.AgentActionRequest)
+  DiagnosticsReadState
+  DiagnosticsReadPaint
+  DiagnosticsDispatchEvent(@core.AppEvent)
+  DiagnosticsDispatchCommand(@core.CommandIntent)
 }
 
 ///|
-/// A reusable JSON null (built via ToJson since Json::Null is read-only).
+fn[Host : @agent.AgentHost] semantic_tool_registry(
+  _host : Host,
+) -> Array[ToolSpec[Host]] {
+  [
+    {
+      name: "read_semantics",
+      description: "Read an atomically committed semantics snapshot or delta.",
+      input: read_semantics_input_codec(),
+      output: {
+        schema: tool_output_schema(semantics_read_value_schema()),
+        dispatch: dispatch_read_semantics_tool,
+      },
+    },
+    {
+      name: "perform_action",
+      description: "Perform a typed action on a committed semantics target.",
+      input: perform_action_input_codec(),
+      output: {
+        schema: tool_output_schema(action_receipt_value_schema()),
+        dispatch: dispatch_perform_action_tool,
+      },
+    },
+  ]
+}
+
+///|
+fn[Host : @agent.AgentDiagnosticsHost] diagnostics_tool_registry(
+  _host : Host,
+) -> Array[ToolSpec[Host]] {
+  [
+    {
+      name: "diagnostics_read_state",
+      description: "Read aggregate runtime lifecycle counters.",
+      input: {
+        schema: object_schema(Json::empty_object()),
+        decode: decode_diagnostics_read_state_invocation,
+      },
+      output: {
+        schema: tool_output_schema(({ "type": "object" } : Json)),
+        dispatch: dispatch_diagnostics_read_state_tool,
+      },
+    },
+    {
+      name: "diagnostics_read_paint",
+      description: "Read the current paint command summary.",
+      input: {
+        schema: object_schema(Json::empty_object()),
+        decode: decode_diagnostics_read_paint_invocation,
+      },
+      output: {
+        schema: tool_output_schema(({ "type": "object" } : Json)),
+        dispatch: dispatch_diagnostics_read_paint_tool,
+      },
+    },
+    {
+      name: "diagnostics_dispatch_event",
+      description: "Inject a raw diagnostic input event.",
+      input: {
+        schema: object_schema(({ "event": { "type": "object" } } : Json), required=[
+          "event",
+        ]),
+        decode: decode_diagnostics_dispatch_event_invocation,
+      },
+      output: {
+        schema: tool_output_schema(({ "type": "object" } : Json)),
+        dispatch: dispatch_diagnostics_event_tool,
+      },
+    },
+    {
+      name: "diagnostics_dispatch_command",
+      description: "Dispatch a global diagnostic command intent.",
+      input: {
+        schema: object_schema(({ "intent": { "type": "string" } } : Json), required=[
+          "intent",
+        ]),
+        decode: decode_diagnostics_dispatch_command_invocation,
+      },
+      output: {
+        schema: tool_output_schema(({ "type": "object" } : Json)),
+        dispatch: dispatch_diagnostics_command_tool,
+      },
+    },
+  ]
+}
+
+///|
+fn[Host : @agent.AgentHost + @agent.AgentDiagnosticsHost] full_tool_registry(
+  host : Host,
+) -> Array[ToolSpec[Host]] {
+  let tools = semantic_tool_registry(host)
+  tools.append(diagnostics_tool_registry(host))
+  tools
+}
+
+///|
+fn[Host] ToolSpec::descriptor(self : ToolSpec[Host]) -> Json {
+  (
+    {
+      "name": self.name,
+      "description": self.description,
+      "inputSchema": self.input.schema,
+      "outputSchema": self.output.schema,
+    } : Json)
+}
+
+///|
+fn[Host] ToolSpec::invoke(
+  self : ToolSpec[Host],
+  host : Host,
+  id : Json,
+  arguments : Map[String, Json],
+) -> Json {
+  match (self.input.decode)(arguments) {
+    Err(message) => tool_failure(id, "invalid_arguments", message)
+    Ok(invocation) => (self.output.dispatch)(host, id, invocation)
+  }
+}
+
+///|
+fn[Host] find_tool(
+  name : String,
+  registry : Array[ToolSpec[Host]],
+) -> ToolSpec[Host]? {
+  for spec in registry {
+    if spec.name == name {
+      return Some(spec)
+    }
+  }
+  None
+}
+
+///|
 fn json_null() -> Json {
   (None : String?).to_json()
 }
 
 ///|
-/// The static list of MCP tools this server exposes (mirrors AgentHost::capabilities).
-fn mcp_tools() -> Json {
-  // Build via ToJson on an array of Json objects (Json::Array is read-only).
-  let tools : Array[Json] = [
-    tool_descriptor(
-      "get_semantics",
-      "Read the app's current semantics tree (its DOM).",
-      (
-        {
-          "type": "object",
-          "properties": {
-            "filter": {
-              "type": "object",
-              "optional": true,
-              "description": "Optional filter (role/id). Reserved for later.",
-            },
-          },
-        } : Json),
-    ),
-    tool_descriptor(
-      "get_state",
-      "Read runtime counters and dirty element ids.",
-      ({ "type": "object", "properties": Json::empty_object() } : Json),
-    ),
-    tool_descriptor(
-      "get_frame",
-      "Read what the compositor paints to the screen right now (the visible frame's text).",
-      ({ "type": "object", "properties": Json::empty_object() } : Json),
-    ),
-    tool_descriptor(
-      "get_capabilities",
-      "List the operations this host accepts.",
-      ({ "type": "object", "properties": Json::empty_object() } : Json),
-    ),
-    tool_descriptor(
-      "dispatch_command",
-      "Fire a command intent (Activate/Submit/Copy/Paste/...).",
-      (
-        {
-          "type": "object",
-          "properties": {
-            "intent": {
-              "type": "string",
-              "enum": [
-                "Activate", "Submit", "Cancel", "Copy", "Cut", "Paste", "Undo", "Redo",
-                "SelectAll", "OpenContextMenu",
-              ],
-            },
-          },
-          "required": ["intent"],
-        } : Json),
-    ),
-    tool_descriptor(
-      "dispatch_event",
-      "Inject an AppEvent as if from a user (pointer/keyboard/...).",
-      (
-        {
-          "type": "object",
-          "properties": {
-            "event": {
-              "type": "object",
-              "description": "An AppEvent JSON object (MVP: {kind:'Pointer',position:{x,y},phase:'Down'|'Up'}).",
-            },
-          },
-          "required": ["event"],
-        } : Json),
-    ),
-    tool_descriptor(
-      "subscribe_events",
-      "Stream AppEvents to the agent as notifications/events (FrameTick suppressed).",
-      (
-        {
-          "type": "object",
-          "properties": {
-            "types": {
-              "type": "array",
-              "optional": true,
-              "description": "Optional coarse category filter.",
-            },
-          },
-        } : Json),
-    ),
-  ]
-  tools.to_json()
-}
-
-///|
-/// Build a JSON-RPC error response.
 pub fn rpc_error(id : Json, code : Int, message : String) -> Json {
   (
     {
@@ -126,38 +159,33 @@ pub fn rpc_error(id : Json, code : Int, message : String) -> Json {
 }
 
 ///|
-/// Convenience: build an error response when the request id is unavailable
-/// (e.g. the request failed to parse). The id is emitted as JSON null.
 pub fn rpc_error_no_id(code : Int, message : String) -> Json {
   rpc_error(json_null(), code, message)
 }
 
 ///|
-/// Build a JSON-RPC success response.
 fn rpc_result(id : Json, result : Json) -> Json {
   ({ "jsonrpc": "2.0", "id": id, "result": result } : Json)
 }
 
 ///|
-/// Extract the request id from a JSON-RPC request (number, string, or null).
 fn rpc_id(request : Json) -> Json {
   match request {
-    Json::Object(fields) =>
-      match fields.get("id") {
-        Some(v) => v
-        None => json_null()
-      }
+    Json::Object(fields) => fields.get("id").unwrap_or(json_null())
     _ => json_null()
   }
 }
 
 ///|
-/// Extract the method name from a JSON-RPC request.
 fn rpc_method(request : Json) -> String? {
   match request {
     Json::Object(fields) =>
-      match fields.get("method") {
-        Some(Json::String(m)) => Some(m)
+      match fields.get("jsonrpc") {
+        Some(Json::String("2.0")) =>
+          match fields.get("method") {
+            Some(Json::String(method_name)) => Some(method_name)
+            _ => None
+          }
         _ => None
       }
     _ => None
@@ -165,138 +193,755 @@ fn rpc_method(request : Json) -> String? {
 }
 
 ///|
-/// Route a single parsed JSON-RPC request onto `host`. Returns the response
-/// (a Json object). Events are not streamed (no notification sink); use
-/// `route_notify` to receive event notifications from a subscribe_events call.
-pub fn[Host : @agent.AgentHost] route(host : Host, request : Json) -> Json {
-  route_notify(host, request, _notification => ())
+fn tool_envelope_success(value : Json) -> Json {
+  ({ "ok": true, "value": value } : Json)
 }
 
 ///|
-/// Like `route`, but `notify` receives one JSON-RPC notification object per
-/// observed event once the agent has called `subscribe_events`. Used by the
-/// stdio main loop to push `notifications/events` lines to the client.
-pub fn[Host : @agent.AgentHost] route_notify(
-  host : Host,
-  request : Json,
-  notify : (Json) -> Unit,
+fn tool_envelope_error(code : String, message : String, details : Json) -> Json {
+  (
+    {
+      "ok": false,
+      "error": { "code": code, "message": message, "details": details },
+    } : Json)
+}
+
+///|
+fn tool_response(id : Json, envelope : Json, is_error : Bool) -> Json {
+  let result : Json = {
+    "content": [{ "type": "text", "text": envelope.stringify() }],
+    "structuredContent": envelope,
+    "isError": is_error,
+  }
+  rpc_result(id, result)
+}
+
+///|
+fn tool_success(id : Json, value : Json) -> Json {
+  tool_response(id, tool_envelope_success(value), false)
+}
+
+///|
+fn tool_failure(
+  id : Json,
+  code : String,
+  message : String,
+  details? : Json = Json::empty_object(),
 ) -> Json {
-  let id = rpc_id(request)
-  match rpc_method(request) {
-    None => rpc_error(id, -32600, "Invalid Request: missing method")
-    Some("initialize") =>
-      rpc_result(
-        id,
-        (
-          {
-            "protocolVersion": mcp_protocol_version,
-            "capabilities": { "tools": Json::empty_object() },
-            "serverInfo": { "name": "moui-agent", "version": "0.1.0" },
-          } : Json),
-      )
-    Some("tools/list") => {
-      let result : Json = { "tools": mcp_tools() }
-      rpc_result(id, result)
-    }
-    Some("tools/call") => route_tool_call(host, id, request, notify)
-    Some(name) => rpc_error(id, -32601, "Method not found: \{name}")
+  tool_response(id, tool_envelope_error(code, message, details), true)
+}
+
+///|
+fn semantics_action_kind_code(kind : @core.SemanticsActionKind) -> String {
+  match kind {
+    @core.SemanticsActionKind::Activate => "activate"
+    @core.SemanticsActionKind::Focus => "focus"
+    @core.SemanticsActionKind::SetText => "set_text"
+    @core.SemanticsActionKind::Submit => "submit"
+    @core.SemanticsActionKind::Scroll => "scroll"
+    @core.SemanticsActionKind::Select => "select"
+    @core.SemanticsActionKind::Expand => "expand"
+    @core.SemanticsActionKind::Collapse => "collapse"
+    @core.SemanticsActionKind::Dismiss => "dismiss"
   }
 }
 
 ///|
-/// Handle a tools/call request: look up the tool by name and invoke it.
-fn[Host : @agent.AgentHost] route_tool_call(
+fn semantics_target_json(target : @core.SemanticsTarget) -> Json {
+  match target {
+    @core.SemanticsTarget::BySemanticId(id) =>
+      ({ "kind": "semantic_id", "id": id } : Json)
+    @core.SemanticsTarget::ByNodeId(id) =>
+      ({ "kind": "node_id", "id": id } : Json)
+  }
+}
+
+///|
+fn agent_action_error_details(error : @agent.AgentActionError) -> Json {
+  match error {
+    @agent.AgentActionError::HostClosed
+    | @agent.AgentActionError::ReentrantDispatch => Json::empty_object()
+    @agent.AgentActionError::StaleGeneration(expected, current) =>
+      ({ "expected": expected, "current": current } : Json)
+    @agent.AgentActionError::TargetNotFound(target)
+    | @agent.AgentActionError::TargetDisabled(target) =>
+      ({ "target": semantics_target_json(target) } : Json)
+    @agent.AgentActionError::TargetAmbiguous(id) =>
+      ({ "semantic_id": id } : Json)
+    @agent.AgentActionError::ActionUnavailable(target, kind)
+    | @agent.AgentActionError::HandlerRejected(target, kind) =>
+      (
+        {
+          "target": semantics_target_json(target),
+          "action": semantics_action_kind_code(kind),
+        } : Json)
+  }
+}
+
+///|
+fn initialize_result() -> Json {
+  (
+    {
+      "protocolVersion": mcp_protocol_version,
+      "capabilities": { "tools": Json::empty_object() },
+      "serverInfo": { "name": "moui-agent", "version": "0.2.0" },
+    } : Json)
+}
+
+///|
+fn[Host] list_tools(id : Json, registry : Array[ToolSpec[Host]]) -> Json {
+  let tools : Array[Json] = registry.map(spec => spec.descriptor())
+  rpc_result(id, ({ "tools": tools } : Json))
+}
+
+///|
+pub fn[Host : @agent.AgentHost] route(host : Host, request : Json) -> Json {
+  let id = rpc_id(request)
+  let registry = semantic_tool_registry(host)
+  match rpc_method(request) {
+    None => rpc_error(id, -32600, "Invalid Request: missing method")
+    Some("initialize") => rpc_result(id, initialize_result())
+    Some("tools/list") => list_tools(id, registry)
+    Some("tools/call") => route_tool_call(host, id, request, registry)
+    Some(method_name) =>
+      rpc_error(id, -32601, "Method not found: \{method_name}")
+  }
+}
+
+///|
+pub fn[Host : @agent.AgentHost + @agent.AgentDiagnosticsHost] route_with_diagnostics(
+  host : Host,
+  request : Json,
+) -> Json {
+  let id = rpc_id(request)
+  let registry = full_tool_registry(host)
+  match rpc_method(request) {
+    None => rpc_error(id, -32600, "Invalid Request: missing method")
+    Some("initialize") => rpc_result(id, initialize_result())
+    Some("tools/list") => list_tools(id, registry)
+    Some("tools/call") => route_tool_call(host, id, request, registry)
+    Some(method_name) =>
+      rpc_error(id, -32601, "Method not found: \{method_name}")
+  }
+}
+
+///|
+fn call_envelope(
+  id : Json,
+  request : Json,
+) -> Result[(String, Map[String, Json]), Json] {
+  guard request is Json::Object(fields) else {
+    return Err(rpc_error(id, -32600, "Invalid Request"))
+  }
+  guard fields.get("params") is Some(Json::Object(params)) else {
+    return Err(rpc_error(id, -32602, "Invalid tools/call params object"))
+  }
+  guard params.get("name") is Some(Json::String(name)) else {
+    return Err(rpc_error(id, -32602, "Invalid tools/call tool name"))
+  }
+  let arguments = match params.get("arguments") {
+    None => Map([])
+    Some(Json::Object(arguments)) => arguments
+    _ =>
+      return Err(rpc_error(id, -32602, "Invalid tools/call arguments object"))
+  }
+  Ok((name, arguments))
+}
+
+///|
+fn[Host] route_tool_call(
   host : Host,
   id : Json,
   request : Json,
-  notify : (Json) -> Unit,
+  registry : Array[ToolSpec[Host]],
 ) -> Json {
-  let params = match request {
-    Json::Object(fields) =>
-      match fields.get("params") {
-        Some(Json::Object(p)) => p
-        _ =>
-          return rpc_error(id, -32602, "Invalid params: missing params object")
+  match call_envelope(id, request) {
+    Err(response) => response
+    Ok((name, arguments)) =>
+      match find_tool(name, registry) {
+        None => tool_failure(id, "unknown_tool", "Unknown tool: \{name}")
+        Some(spec) => spec.invoke(host, id, arguments)
       }
-    _ => return rpc_error(id, -32602, "Invalid params")
   }
-  let name = match params.get("name") {
-    Some(Json::String(n)) => n
-    _ => return rpc_error(id, -32602, "Invalid params: missing tool name")
-  }
-  // MCP wraps tool results in a content array. MVP returns a single text block.
-  let text = match name {
-    "get_semantics" => (host.semantics().to_json() : Json).stringify()
-    "get_state" => (host.state().to_json() : Json).stringify()
-    "get_frame" =>
-      // The compositor's current rendered output — what the user SEES on screen.
-      (host.frame().to_json() : Json).stringify()
-    "get_capabilities" => {
-      let caps : Array[Json] = host.capabilities().map(c => c.to_json())
-      caps.to_json().stringify()
-    }
-    "dispatch_command" =>
-      match read_intent(params) {
-        Some(intent) =>
-          (host.dispatch_command(intent).to_json() : Json).stringify()
-        None =>
-          return rpc_error(
-            id, -32602, "Invalid params: missing or unknown 'intent'",
-          )
-      }
-    "dispatch_event" =>
-      // Decode the AppEvent payload and inject it through the host. The host
-      // routes it via runtime.dispatch_event — same path a real input takes.
-      match read_event(params) {
-        Some(event) => (host.dispatch_event(event).to_json() : Json).stringify()
-        None =>
-          return rpc_error(
-            id, -32602, "Invalid params: could not decode 'event' as an AppEvent (MVP supports Pointer)",
-          )
-      }
-    "subscribe_events" => {
-      // Register a host subscription that pushes each event to `notify` as a
-      // JSON-RPC notification. Returns the subscription token immediately.
-      let token = host.subscribe_events(@agent.EventFilter::All, event => {
-        let notification : Json = {
-          "jsonrpc": "2.0",
-          "method": "notifications/events",
-          "params": { "event": event.to_json() },
-        }
-        notify(notification)
-      })
-      return rpc_result(
-        id,
-        ({ "subscribed": true, "token": token.id() } : Json),
-      )
-    }
-    _ => return rpc_error(id, -32602, "Unknown tool: \{name}")
-  }
-  rpc_result(id, ({ "content": [{ "type": "text", "text": text }] } : Json))
 }
 
 ///|
-/// Read a CommandIntent from a tools/call params object's arguments.intent.
-fn read_intent(params : Map[String, Json]) -> @core.CommandIntent? {
-  match params.get("arguments") {
-    Some(Json::Object(args)) =>
-      match args.get("intent") {
-        Some(v) => @agent.command_intent_from_json(v)
-        None => None
+fn[Host : @agent.AgentHost] dispatch_read_semantics_tool(
+  host : Host,
+  id : Json,
+  invocation : ToolInvocation,
+) -> Json {
+  match invocation {
+    ReadSemantics(since) =>
+      match host.read_semantics(since) {
+        Ok(read) => tool_success(id, agent_semantics_read_json(read))
+        Err(error) =>
+          tool_failure(
+            id,
+            error.code(),
+            "Agent host could not read committed semantics.",
+          )
       }
+    _ => tool_registry_mismatch(id)
+  }
+}
+
+///|
+fn[Host : @agent.AgentHost] dispatch_perform_action_tool(
+  host : Host,
+  id : Json,
+  invocation : ToolInvocation,
+) -> Json {
+  match invocation {
+    PerformAction(action_request) =>
+      match host.perform_action(action_request) {
+        Ok(receipt) => tool_success(id, receipt.to_json())
+        Err(error) =>
+          tool_failure(
+            id,
+            error.code(),
+            "Semantic action was rejected.",
+            details=agent_action_error_details(error),
+          )
+      }
+    _ => tool_registry_mismatch(id)
+  }
+}
+
+///|
+fn[Host : @agent.AgentDiagnosticsHost] dispatch_diagnostics_read_state_tool(
+  host : Host,
+  id : Json,
+  invocation : ToolInvocation,
+) -> Json {
+  match invocation {
+    DiagnosticsReadState =>
+      match host.runtime_state() {
+        Ok(value) => tool_success(id, value.to_json())
+        Err(error) =>
+          tool_failure(id, error.code(), "Diagnostics host is closed.")
+      }
+    _ => tool_registry_mismatch(id)
+  }
+}
+
+///|
+fn[Host : @agent.AgentDiagnosticsHost] dispatch_diagnostics_read_paint_tool(
+  host : Host,
+  id : Json,
+  invocation : ToolInvocation,
+) -> Json {
+  match invocation {
+    DiagnosticsReadPaint =>
+      match host.paint_summary() {
+        Ok(value) => tool_success(id, value.to_json())
+        Err(error) =>
+          tool_failure(id, error.code(), "Diagnostics host is closed.")
+      }
+    _ => tool_registry_mismatch(id)
+  }
+}
+
+///|
+fn[Host : @agent.AgentDiagnosticsHost] dispatch_diagnostics_event_tool(
+  host : Host,
+  id : Json,
+  invocation : ToolInvocation,
+) -> Json {
+  match invocation {
+    DiagnosticsDispatchEvent(event) =>
+      match host.dispatch_event(event) {
+        Ok(value) => tool_success(id, value.to_json())
+        Err(error) =>
+          tool_failure(id, error.code(), "Diagnostics host is closed.")
+      }
+    _ => tool_registry_mismatch(id)
+  }
+}
+
+///|
+fn[Host : @agent.AgentDiagnosticsHost] dispatch_diagnostics_command_tool(
+  host : Host,
+  id : Json,
+  invocation : ToolInvocation,
+) -> Json {
+  match invocation {
+    DiagnosticsDispatchCommand(intent) =>
+      match host.dispatch_command(intent) {
+        Ok(value) => tool_success(id, value.to_json())
+        Err(error) =>
+          tool_failure(id, error.code(), "Diagnostics host is closed.")
+      }
+    _ => tool_registry_mismatch(id)
+  }
+}
+
+///|
+fn tool_registry_mismatch(id : Json) -> Json {
+  tool_failure(
+    id, "internal_tool_registry_error", "Tool registry decoder and dispatcher do not match.",
+  )
+}
+
+///|
+fn fields_are_exact(
+  fields : Map[String, Json],
+  allowed : Array[String],
+) -> Bool {
+  for name, _ in fields {
+    if !allowed.contains(name) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn decode_read_semantics_invocation_with_codec(
+  arguments : Map[String, Json],
+  generation : JsonCodec[UInt64],
+) -> Result[ToolInvocation, String] {
+  if !fields_are_exact(arguments, ["since"]) {
+    return Err("read_semantics contains unknown arguments.")
+  }
+  match decode_since_with_codec(arguments, generation) {
+    Ok(since) => Ok(ToolInvocation::ReadSemantics(since))
+    Err(message) => Err(message)
+  }
+}
+
+///|
+fn decode_action_request_with_codecs(
+  arguments : Map[String, Json],
+  target : JsonCodec[@core.SemanticsTarget],
+  action : JsonCodec[@core.SemanticsAction],
+  precondition : JsonCodec[@agent.AgentGenerationPrecondition],
+) -> Result[ToolInvocation, String] {
+  if !fields_are_exact(arguments, ["target", "action", "precondition"]) {
+    return Err("perform_action contains unknown arguments.")
+  }
+  guard arguments.get("target") is Some(target_json) else {
+    return Err("Missing tagged 'target' object.")
+  }
+  guard arguments.get("action") is Some(action_json) else {
+    return Err("Missing tagged 'action' object.")
+  }
+  guard arguments.get("precondition") is Some(precondition_json) else {
+    return Err("Missing tagged 'precondition' object.")
+  }
+  match
+    (
+      (target.decode)(target_json),
+      (action.decode)(action_json),
+      (precondition.decode)(precondition_json),
+    ) {
+    (Ok(target), Ok(action), Ok(precondition)) =>
+      Ok(ToolInvocation::PerformAction({ target, action, precondition }))
+    (Err(message), _, _) => Err(message)
+    (_, Err(message), _) => Err(message)
+    (_, _, Err(message)) => Err(message)
+  }
+}
+
+///|
+fn decode_diagnostics_read_state_invocation(
+  arguments : Map[String, Json],
+) -> Result[ToolInvocation, String] {
+  if arguments.length() == 0 {
+    Ok(ToolInvocation::DiagnosticsReadState)
+  } else {
+    Err("diagnostics_read_state does not accept arguments.")
+  }
+}
+
+///|
+fn decode_diagnostics_read_paint_invocation(
+  arguments : Map[String, Json],
+) -> Result[ToolInvocation, String] {
+  if arguments.length() == 0 {
+    Ok(ToolInvocation::DiagnosticsReadPaint)
+  } else {
+    Err("diagnostics_read_paint does not accept arguments.")
+  }
+}
+
+///|
+fn decode_diagnostics_dispatch_event_invocation(
+  arguments : Map[String, Json],
+) -> Result[ToolInvocation, String] {
+  if !fields_are_exact(arguments, ["event"]) {
+    return Err("diagnostics_dispatch_event contains unknown arguments.")
+  }
+  match decode_event_argument(arguments) {
+    Some(event) => Ok(ToolInvocation::DiagnosticsDispatchEvent(event))
+    None => Err("Invalid event payload.")
+  }
+}
+
+///|
+fn decode_diagnostics_dispatch_command_invocation(
+  arguments : Map[String, Json],
+) -> Result[ToolInvocation, String] {
+  if !fields_are_exact(arguments, ["intent"]) {
+    return Err("diagnostics_dispatch_command contains unknown arguments.")
+  }
+  match decode_command_argument(arguments) {
+    Some(intent) => Ok(ToolInvocation::DiagnosticsDispatchCommand(intent))
+    None => Err("Invalid command intent.")
+  }
+}
+
+///|
+fn decode_since_with_codec(
+  arguments : Map[String, Json],
+  generation : JsonCodec[UInt64],
+) -> Result[@core.SemanticsGeneration?, String] {
+  match arguments.get("since") {
+    None => Ok(None)
+    Some(value) =>
+      match (generation.decode)(value) {
+        Ok(generation) => Ok(Some(@core.SemanticsGeneration::new(generation)))
+        Err(_) => Err("'since' must be a canonical UInt64 decimal string.")
+      }
+  }
+}
+
+///|
+fn json_string_field(fields : Map[String, Json], name : String) -> String? {
+  match fields.get(name) {
+    Some(Json::String(value)) => Some(value)
     _ => None
   }
 }
 
 ///|
-/// Read an AppEvent from a tools/call params object's arguments.event.
-fn read_event(params : Map[String, Json]) -> @core.AppEvent? {
-  match params.get("arguments") {
-    Some(Json::Object(args)) =>
-      match args.get("event") {
-        Some(v) => @agent.app_event_from_json(v)
-        None => None
+fn decode_target_with_codecs(
+  fields : Map[String, Json],
+  semantic_id : JsonCodec[@core.SemanticId],
+  node_id : JsonCodec[UInt64],
+) -> Result[@core.SemanticsTarget, String] {
+  if !fields_are_exact(fields, ["kind", "id"]) {
+    return Err("Target contains unknown fields.")
+  }
+  guard json_string_field(fields, "kind") is Some(kind) else {
+    return Err("Target requires string 'kind'.")
+  }
+  guard fields.get("id") is Some(value) else {
+    return Err("Target requires 'id'.")
+  }
+  match kind {
+    "semantic_id" =>
+      match (semantic_id.decode)(value) {
+        Ok(id) => Ok(@core.SemanticsTarget::BySemanticId(id))
+        Err(message) => Err(message)
       }
+    "node_id" =>
+      match (node_id.decode)(value) {
+        Ok(id) =>
+          Ok(@core.SemanticsTarget::ByNodeId(@core.SemanticsNodeId::new(id)))
+        Err(_) => Err("Invalid node_id.")
+      }
+    _ => Err("Unknown target kind.")
+  }
+}
+
+///|
+fn decode_action(
+  fields : Map[String, Json],
+) -> Result[@core.SemanticsAction, String] {
+  guard json_string_field(fields, "kind") is Some(kind) else {
+    return Err("Action requires string 'kind'.")
+  }
+  match kind {
+    "activate" =>
+      if fields_are_exact(fields, ["kind"]) {
+        Ok(@core.SemanticsAction::Activate)
+      } else {
+        Err("activate contains unknown fields.")
+      }
+    "focus" =>
+      if fields_are_exact(fields, ["kind"]) {
+        Ok(@core.SemanticsAction::Focus)
+      } else {
+        Err("focus contains unknown fields.")
+      }
+    "set_text" =>
+      match
+        (
+          fields_are_exact(fields, ["kind", "value"]),
+          json_string_field(fields, "value"),
+        ) {
+        (false, _) => Err("set_text contains unknown fields.")
+        (true, Some(value)) => Ok(@core.SemanticsAction::SetText(value))
+        (true, None) => Err("set_text requires string 'value'.")
+      }
+    "submit" =>
+      if fields_are_exact(fields, ["kind"]) {
+        Ok(@core.SemanticsAction::Submit)
+      } else {
+        Err("submit contains unknown fields.")
+      }
+    "scroll" =>
+      match
+        (
+          fields_are_exact(fields, ["kind", "direction"]),
+          json_string_field(fields, "direction"),
+        ) {
+        (false, _) => Err("scroll contains unknown fields.")
+        (true, Some(direction)) =>
+          match decode_scroll_direction(direction) {
+            Some(value) => Ok(@core.SemanticsAction::Scroll(value))
+            None => Err("Invalid scroll direction.")
+          }
+        (true, None) => Err("scroll requires string 'direction'.")
+      }
+    "select" =>
+      if fields_are_exact(fields, ["kind"]) {
+        Ok(@core.SemanticsAction::Select)
+      } else {
+        Err("select contains unknown fields.")
+      }
+    "expand" =>
+      if fields_are_exact(fields, ["kind"]) {
+        Ok(@core.SemanticsAction::Expand)
+      } else {
+        Err("expand contains unknown fields.")
+      }
+    "collapse" =>
+      if fields_are_exact(fields, ["kind"]) {
+        Ok(@core.SemanticsAction::Collapse)
+      } else {
+        Err("collapse contains unknown fields.")
+      }
+    "dismiss" =>
+      if fields_are_exact(fields, ["kind"]) {
+        Ok(@core.SemanticsAction::Dismiss)
+      } else {
+        Err("dismiss contains unknown fields.")
+      }
+    _ => Err("Unknown action kind.")
+  }
+}
+
+///|
+fn decode_scroll_direction(value : String) -> @core.SemanticsScrollDirection? {
+  match value {
+    "forward" => Some(@core.SemanticsScrollDirection::Forward)
+    "backward" => Some(@core.SemanticsScrollDirection::Backward)
+    "up" => Some(@core.SemanticsScrollDirection::Up)
+    "down" => Some(@core.SemanticsScrollDirection::Down)
+    "left" => Some(@core.SemanticsScrollDirection::Left)
+    "right" => Some(@core.SemanticsScrollDirection::Right)
     _ => None
   }
+}
+
+///|
+fn decode_precondition_with_codec(
+  fields : Map[String, Json],
+  generation : JsonCodec[UInt64],
+) -> Result[@agent.AgentGenerationPrecondition, String] {
+  guard json_string_field(fields, "kind") is Some(kind) else {
+    return Err("Precondition requires string 'kind'.")
+  }
+  match kind {
+    "latest" =>
+      if fields_are_exact(fields, ["kind"]) {
+        Ok(@agent.AgentGenerationPrecondition::Latest)
+      } else {
+        Err("latest precondition contains unknown fields.")
+      }
+    "exact" =>
+      match
+        (
+          fields_are_exact(fields, ["kind", "generation"]),
+          fields.get("generation"),
+        ) {
+        (false, _) => Err("exact precondition contains unknown fields.")
+        (true, Some(value)) =>
+          match (generation.decode)(value) {
+            Ok(generation) =>
+              Ok(
+                @agent.AgentGenerationPrecondition::Exact(
+                  @core.SemanticsGeneration::new(generation),
+                ),
+              )
+            Err(_) => Err("Invalid exact generation.")
+          }
+        (true, None) => Err("exact precondition requires string 'generation'.")
+      }
+    _ => Err("Unknown precondition kind.")
+  }
+}
+
+///|
+fn agent_semantics_issue_json(issue : @agent.AgentSemanticsIssue) -> Json {
+  match issue {
+    @agent.AgentSemanticsIssue::DuplicateSemanticId(id, nodes) =>
+      (
+        { "kind": "duplicate_semantic_id", "semantic_id": id, "nodes": nodes } :
+        Json)
+  }
+}
+
+///|
+fn semantics_role_code(role : @core.SemanticsRole) -> String {
+  match role {
+    @core.SemanticsRole::None => "none"
+    @core.SemanticsRole::Text => "text"
+    @core.SemanticsRole::Link => "link"
+    @core.SemanticsRole::Heading => "heading"
+    @core.SemanticsRole::Navigation => "navigation"
+    @core.SemanticsRole::Main => "main"
+    @core.SemanticsRole::Button => "button"
+    @core.SemanticsRole::Checkbox => "checkbox"
+    @core.SemanticsRole::TextField => "text_field"
+    @core.SemanticsRole::List => "list"
+    @core.SemanticsRole::ListItem => "list_item"
+    @core.SemanticsRole::Grid => "grid"
+    @core.SemanticsRole::ScrollView => "scroll_view"
+    @core.SemanticsRole::Switch => "switch"
+    @core.SemanticsRole::Radio => "radio"
+    @core.SemanticsRole::Slider => "slider"
+    @core.SemanticsRole::Progress => "progress"
+    @core.SemanticsRole::Tab => "tab"
+    @core.SemanticsRole::Dialog => "dialog"
+    @core.SemanticsRole::Tooltip => "tooltip"
+    @core.SemanticsRole::Menu => "menu"
+    @core.SemanticsRole::ButtonGroup => "button_group"
+    @core.SemanticsRole::Form => "form"
+    @core.SemanticsRole::FormField => "form_field"
+    @core.SemanticsRole::Tree => "tree"
+    @core.SemanticsRole::TreeItem => "tree_item"
+    @core.SemanticsRole::Group => "group"
+    @core.SemanticsRole::WebView => "web_view"
+  }
+}
+
+///|
+fn optional_node_id_json(value : @core.SemanticsNodeId?) -> Json {
+  match value {
+    Some(node_id) => node_id.to_json()
+    None => json_null()
+  }
+}
+
+///|
+fn optional_semantic_id_json(value : @core.SemanticId?) -> Json {
+  match value {
+    Some(semantic_id) => semantic_id.to_json()
+    None => json_null()
+  }
+}
+
+///|
+fn optional_int_json(value : Int?) -> Json {
+  match value {
+    Some(number) => number.to_json()
+    None => json_null()
+  }
+}
+
+///|
+fn semantics_node_json(node : @core.SemanticsNode) -> Json {
+  (
+    {
+      "node_id": node.node_id,
+      "semantic_id": optional_semantic_id_json(node.semantic_id),
+      "role": semantics_role_code(node.role),
+      "level": optional_int_json(node.level),
+      "url": node.url,
+      "label": node.label,
+      "value": node.value,
+      "description": node.description,
+      "state": node.state,
+      "actions": node.actions.map(semantics_action_kind_code),
+      "focus_order": optional_int_json(node.focus_order),
+      "frame": node.frame,
+      "children": node.children,
+    } : Json)
+}
+
+///|
+fn agent_semantics_read_json(read : @agent.AgentSemanticsRead) -> Json {
+  match read {
+    @agent.AgentSemanticsRead::Full(snapshot) =>
+      (
+        {
+          "kind": "full",
+          "generation": snapshot.generation,
+          "root": optional_node_id_json(snapshot.root),
+          "focused": optional_node_id_json(snapshot.focused),
+          "nodes": snapshot.nodes.map(semantics_node_json),
+          "issues": snapshot.issues.map(agent_semantics_issue_json),
+        } : Json)
+    @agent.AgentSemanticsRead::Delta(delta) =>
+      (
+        {
+          "kind": "delta",
+          "from": delta.from,
+          "to": delta.to,
+          "root": optional_node_id_json(delta.root),
+          "focused": optional_node_id_json(delta.focused),
+          "upserted": delta.upserted.map(semantics_node_json),
+          "removed": delta.removed,
+          "issues": delta.issues.map(agent_semantics_issue_json),
+        } : Json)
+    @agent.AgentSemanticsRead::Unchanged(generation) =>
+      ({ "kind": "unchanged", "generation": generation } : Json)
+  }
+}
+
+///|
+fn decode_command_argument(
+  arguments : Map[String, Json],
+) -> @core.CommandIntent? {
+  guard json_string_field(arguments, "intent") is Some(intent) else {
+    return None
+  }
+  match intent {
+    "Activate" => Some(@core.CommandIntent::Activate)
+    "Submit" => Some(@core.CommandIntent::Submit)
+    "Cancel" => Some(@core.CommandIntent::Cancel)
+    "Copy" => Some(@core.CommandIntent::Copy)
+    "Cut" => Some(@core.CommandIntent::Cut)
+    "Paste" => Some(@core.CommandIntent::Paste)
+    "Undo" => Some(@core.CommandIntent::Undo)
+    "Redo" => Some(@core.CommandIntent::Redo)
+    "SelectAll" => Some(@core.CommandIntent::SelectAll)
+    "OpenContextMenu" => Some(@core.CommandIntent::OpenContextMenu)
+    _ => None
+  }
+}
+
+///|
+fn decode_event_argument(arguments : Map[String, Json]) -> @core.AppEvent? {
+  guard arguments.get("event") is Some(Json::Object(fields)) else {
+    return None
+  }
+  guard json_string_field(fields, "kind") is Some("Pointer") else {
+    return None
+  }
+  guard fields.get("position") is Some(Json::Object(position)) else {
+    return None
+  }
+  guard position.get("x") is Some(Json::Number(x, repr=_)) else { return None }
+  guard position.get("y") is Some(Json::Number(y, repr=_)) else { return None }
+  guard json_string_field(fields, "phase") is Some(phase) else { return None }
+  let pointer_phase = match phase {
+    "Down" => @core.PointerPhase::Down
+    "Up" => @core.PointerPhase::Up
+    "Move" => @core.PointerPhase::Move
+    "Cancel" => @core.PointerPhase::Cancel
+    "Exit" => @core.PointerPhase::Exit
+    _ => return None
+  }
+  Some(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x~, y~),
+        phase=pointer_phase,
+      ),
+    ),
+  )
 }

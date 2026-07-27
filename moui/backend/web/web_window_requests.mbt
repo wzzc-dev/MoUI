@@ -173,6 +173,7 @@ fn WebApp::attach_resolved_window(
       )
       register_web_semantics_runtime(
         window.id().into_raw(),
+        window_web_default_canvas_id(window.id().into_raw()),
         resolved.instance.runtime,
       )
       self.request_platform_redraw(resolved.id)

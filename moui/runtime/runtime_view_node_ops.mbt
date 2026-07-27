@@ -31,16 +31,13 @@ fn runtime_view_node_reconcile_dirty_kind(
   current : &RuntimeViewNode,
   next : &RuntimeViewNode,
 ) -> ReconcileDirtyKind {
-  let current_revision = current.revision()
-  let next_revision = next.revision()
-  let layout_clean = current_revision != "" && current_revision == next_revision
-  if !layout_clean {
-    return ReconcileLayout
+  let changes = next.declaration().changes_from(current.declaration())
+  {
+    layout: changes.layout(),
+    paint: changes.paint(),
+    semantics: changes.semantics() ||
+    current.semantics() != next.semantics() ||
+    current.semantics_action_kinds() != next.semantics_action_kinds(),
+    platform: changes.platform(),
   }
-  let current_paint_revision = current.paint_revision()
-  if current_paint_revision != "" &&
-    current_paint_revision != next.paint_revision() {
-    return ReconcilePaint
-  }
-  ReconcileClean
 }

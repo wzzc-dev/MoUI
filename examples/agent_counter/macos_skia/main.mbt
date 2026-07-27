@@ -4,7 +4,7 @@
 // Opens a real on-screen window AND serves MCP JSON-RPC over stdio
 // CONCURRENTLY (via @async.all), so an agent can drive the counter while the
 // user watches the count change on screen in real time. This is the live
-// "user sees the agent's actions" path: agent dispatch_event click ->
+// "user sees the agent's actions" path: typed semantic action ->
 // runtime.update -> repaint -> visible window update, all in one process.
 async fn main {
   let runtime = @runtime.new_program_with_dimensions(
@@ -13,7 +13,6 @@ async fn main {
     height=260.0,
   )
   let host = @agent.RuntimeAgentHost::new(runtime)
-  let pending : Array[Json] = []
   // Task 1: the on-screen window pump (renders the counter; runs until close).
   let window_task : async () -> Unit = async fn() -> Unit {
     @macos_skia_backend.run_app_with_options_async_pump(
@@ -24,7 +23,7 @@ async fn main {
     )
   }
   // Task 2: the MCP stdio server loop. Shares the host with the window, so an
-  // agent's dispatch_event repaints the live window the user is watching.
+  // typed actions repaint the live window the user is watching.
   let mcp_task : async () -> Unit = async fn() -> Unit {
     while true {
       match @stdio.stdin.read_until("\n") {
@@ -43,13 +42,7 @@ async fn main {
               continue
             }
           }
-          pending.clear()
-          let response = @mcp.route_notify(host, parsed, notification => {
-            pending.push(notification)
-          })
-          for notification in pending {
-            @stdio.stdout.write((notification : Json).stringify() + "\n")
-          }
+          let response = @mcp.route(host, parsed)
           @stdio.stdout.write((response : Json).stringify() + "\n")
         }
       }

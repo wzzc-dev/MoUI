@@ -114,3 +114,25 @@ test "P2 does not treat View* enums as View enum" {
   debug_inspect(is_view_enum_decl("pub enum View {"), content="true")
   debug_inspect(is_view_enum_decl("enum View["), content="true")
 }
+
+///|
+test "R3 mobile build pipeline accepts a split package implementation" {
+  let finding = check_r3_mobile_build_pipeline(
+    "moui_cli mobile build pipeline",
+    [Some("parse --renderer with auto"), Some("select skia-gpu or skia-raster")],
+  )
+  assert_true(finding.ok)
+}
+
+///|
+test "R3 mobile build pipeline rejects missing source or renderer modes" {
+  let missing = check_r3_mobile_build_pipeline("pipeline", [
+    Some("--renderer auto"),
+    None,
+  ])
+  assert_false(missing.ok)
+  let incomplete = check_r3_mobile_build_pipeline("pipeline", [
+    Some("--renderer auto skia-raster"),
+  ])
+  assert_false(incomplete.ok)
+}

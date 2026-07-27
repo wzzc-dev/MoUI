@@ -11,42 +11,43 @@ fn[Msg] text_field_control(
   kind? : String = "TextField",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  let theme_revision = match theme {
-    Some(t) => t.revision_fingerprint()
-    None => "context"
-  }
-  let variant_label = match variant {
-    TextFieldVariant::Filled => "filled"
-    TextFieldVariant::Outline => "outline"
-    TextFieldVariant::Plain => "plain"
-  }
+  let value_snapshot = value.get()
   @core.View::from_node(
     SingleLineTextInput::{
-      value,
+      value: value_snapshot,
       placeholder,
       size,
       theme,
       variant,
       style,
       search_bar: false,
-      theme_revision,
-      variant_label,
       has_on_submit: on_submit is Some(_),
       has_on_clear: false,
       kind,
       key,
     },
     event=(node, ctx) => {
-      single_line_text_event(node, ctx, on_input, on_submit, None)
+      single_line_text_event(node, ctx, value, on_input, on_submit, None)
     },
-    text_command=(node, ctx, intent, paste_text) => {
-      handle_text_field_command(
-        ctx,
-        value=node.value,
-        on_input~,
-        intent,
-        paste_text~,
-      )
+    text_command=(_node, ctx, intent, paste_text) => {
+      handle_text_field_command(ctx, value~, on_input~, intent, paste_text~)
+    },
+    semantics_actions=_node => {
+      let handlers : Array[@core.ViewSemanticsActionHandler[Msg]] = [
+        @core.ViewSemanticsActionHandler::set_text((ctx, next) => {
+          text_semantics_set_text(ctx, value, on_input, next)
+        }),
+      ]
+      match on_submit {
+        Some(message) =>
+          handlers.push(
+            @core.ViewSemanticsActionHandler::submit(_ctx => {
+              @core.ViewSemanticsActionResult::message(message)
+            }),
+          )
+        None => ()
+      }
+      handlers
     },
   )
 }
@@ -55,13 +56,14 @@ fn[Msg] text_field_control(
 fn[Msg] single_line_text_event(
   node : SingleLineTextInput,
   ctx : @core.ViewEventContext,
+  value : @core.Binding[String],
   on_input : ((String) -> Msg)?,
   on_submit : Msg?,
   on_clear : Msg?,
 ) -> @core.ViewEventResult[Msg] {
   handle_text_field_event(
     ctx,
-    value=node.value,
+    value~,
     on_input~,
     on_submit~,
     search_bar=node.search_bar,
@@ -109,42 +111,49 @@ fn[Msg] search_bar_control(
   kind? : String = "SearchBar",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  let theme_revision = match theme {
-    Some(t) => t.revision_fingerprint()
-    None => "context"
-  }
-  let variant_label = match variant {
-    TextFieldVariant::Filled => "filled"
-    TextFieldVariant::Outline => "outline"
-    TextFieldVariant::Plain => "plain"
-  }
+  let query_snapshot = query.get()
   @core.View::from_node(
     SingleLineTextInput::{
-      value: query,
+      value: query_snapshot,
       placeholder,
       size: @core.Size::new(width=240.0, height=40.0),
       theme,
       variant,
       style,
       search_bar: true,
-      theme_revision,
-      variant_label,
       has_on_submit: on_submit is Some(_),
       has_on_clear: on_clear is Some(_),
       kind,
       key,
     },
     event=(node, ctx) => {
-      single_line_text_event(node, ctx, on_input, on_submit, on_clear)
+      single_line_text_event(node, ctx, query, on_input, on_submit, on_clear)
     },
-    text_command=(node, ctx, intent, paste_text) => {
+    text_command=(_node, ctx, intent, paste_text) => {
       handle_text_field_command(
         ctx,
-        value=node.value,
+        value=query,
         on_input~,
         intent,
         paste_text~,
       )
+    },
+    semantics_actions=_node => {
+      let handlers : Array[@core.ViewSemanticsActionHandler[Msg]] = [
+        @core.ViewSemanticsActionHandler::set_text((ctx, next) => {
+          text_semantics_set_text(ctx, query, on_input, next)
+        }),
+      ]
+      match on_submit {
+        Some(message) =>
+          handlers.push(
+            @core.ViewSemanticsActionHandler::submit(_ctx => {
+              @core.ViewSemanticsActionResult::message(message)
+            }),
+          )
+        None => ()
+      }
+      handlers
     },
   )
 }

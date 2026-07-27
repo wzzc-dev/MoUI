@@ -2,13 +2,13 @@
 pub struct RuntimeInspectorSnapshot {
   priv size : @core.Size
   priv dirty_count : Int
-  priv dirty_element_ids : Array[@core.ElementId]
+  priv dirty_element_ids : Array[Int]
   priv dirty_build_count : Int
-  priv dirty_build_element_ids : Array[@core.ElementId]
+  priv dirty_build_element_ids : Array[Int]
   priv dirty_layout_count : Int
-  priv dirty_layout_element_ids : Array[@core.ElementId]
+  priv dirty_layout_element_ids : Array[Int]
   priv dirty_paint_count : Int
-  priv dirty_paint_element_ids : Array[@core.ElementId]
+  priv dirty_paint_element_ids : Array[Int]
   priv dirty_state : RuntimeDirtyStateSummary
   priv needs_rebuild : Bool
   priv needs_layout : Bool
@@ -64,13 +64,13 @@ pub struct RuntimeInspectorSnapshot {
 ///|
 pub struct RuntimeDirtyStateSummary {
   priv dirty_count : Int
-  priv dirty_element_ids : Array[@core.ElementId]
+  priv dirty_element_ids : Array[Int]
   priv dirty_build_count : Int
-  priv dirty_build_element_ids : Array[@core.ElementId]
+  priv dirty_build_element_ids : Array[Int]
   priv dirty_layout_count : Int
-  priv dirty_layout_element_ids : Array[@core.ElementId]
+  priv dirty_layout_element_ids : Array[Int]
   priv dirty_paint_count : Int
-  priv dirty_paint_element_ids : Array[@core.ElementId]
+  priv dirty_paint_element_ids : Array[Int]
   priv needs_rebuild : Bool
   priv needs_layout : Bool
   priv needs_paint : Bool
@@ -87,7 +87,7 @@ pub struct RuntimeDirtyStateSummary {
 
 ///|
 pub struct ViewInspectorSummary {
-  priv element_id : @core.ElementId
+  priv element_id : Int
   priv kind : String
   priv key : String
   priv child_count : Int
@@ -111,7 +111,7 @@ pub struct ViewTreeInspectorSnapshot {
 
 ///|
 pub struct LayoutBoundsInspectorEntry {
-  priv element_id : @core.ElementId
+  priv element_id : Int
   priv frame : @core.Rect
   priv depth : Int
   priv child_count : Int

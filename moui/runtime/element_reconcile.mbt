@@ -16,27 +16,25 @@ priv struct ChildrenReconcileResult {
   children : Array[ElementNode]
   next_id : Int
   dirty_kind : ReconcileDirtyKind
+  structure_changed : Bool
 }
 
 ///|
-priv enum ReconcileDirtyKind {
-  ReconcileClean
-  ReconcilePaint
-  ReconcileLayout
+priv struct ReconcileDirtyKind {
+  layout : Bool
+  paint : Bool
+  semantics : Bool
+  platform : Bool
 }
 
 ///|
-test {
-  ignore(ReconcileDirtyKind::ReconcilePaint)
+fn ReconcileDirtyKind::clean() -> ReconcileDirtyKind {
+  { layout: false, paint: false, semantics: false, platform: false }
 }
 
 ///|
-fn ReconcileDirtyKind::rank(self : ReconcileDirtyKind) -> Int {
-  match self {
-    ReconcileClean => 0
-    ReconcilePaint => 1
-    ReconcileLayout => 2
-  }
+fn ReconcileDirtyKind::layout() -> ReconcileDirtyKind {
+  { layout: true, paint: true, semantics: true, platform: true }
 }
 
 ///|
@@ -44,10 +42,11 @@ fn ReconcileDirtyKind::combine(
   self : ReconcileDirtyKind,
   other : ReconcileDirtyKind,
 ) -> ReconcileDirtyKind {
-  if self.rank() >= other.rank() {
-    self
-  } else {
-    other
+  {
+    layout: self.layout || other.layout,
+    paint: self.paint || other.paint,
+    semantics: self.semantics || other.semantics,
+    platform: self.platform || other.platform,
   }
 }
 
@@ -106,6 +105,7 @@ fn mount_runtime_view_node_for_runtime(
   {
     node: {
       id,
+      semantics_node_id: None,
       key: runtime_view_node_identity_key(spec),
       view_node: spec,
       children,
@@ -117,6 +117,8 @@ fn mount_runtime_view_node_for_runtime(
       ),
       layout_cache: ElementLayoutCache::empty(),
       render_cache: ElementRenderCache::empty(),
+      semantics_cache: ElementSemanticsCache::empty(),
+      platform_cache: ElementPlatformCache::empty(),
     },
     next_id: next,
   }
@@ -129,7 +131,10 @@ fn reconcile_element_for_runtime(
   runtime : RuntimeState?,
   next_id : Int,
 ) -> ReconcileResult {
-  if !runtime_view_nodes_have_same_identity(old.view_node, next_view_node) {
+  let current_builds_child = old.view_node.has_build_child()
+  let next_builds_child = next_view_node.has_build_child()
+  if !runtime_view_nodes_have_same_identity(old.view_node, next_view_node) ||
+    current_builds_child != next_builds_child {
     old.cancel_component_tree_subscriptions()
     let mounted = mount_runtime_view_node_for_runtime(
       next_view_node, runtime, next_id,
@@ -137,7 +142,7 @@ fn reconcile_element_for_runtime(
     {
       node: mounted.node,
       next_id: mounted.next_id,
-      dirty_kind: ReconcileLayout,
+      dirty_kind: ReconcileDirtyKind::layout(),
     }
   } else {
     let own_dirty = runtime_view_node_reconcile_dirty_kind(
@@ -146,11 +151,19 @@ fn reconcile_element_for_runtime(
     )
     old.view_node = next_view_node
     old.key = runtime_view_node_identity_key(old.view_node)
+    if next_builds_child {
+      // A component adapter is an opaque declaration producer. Replacing it
+      // must run the newly captured build closure even when all four output
+      // declaration channels are constant; the rebuilt child is then
+      // reconciled normally to determine downstream invalidation.
+      old.dirty.mark_build_only()
+    }
     let children_result = if old.view_node.has_build_child() {
       {
         children: old.children,
         next_id,
-        dirty_kind: ReconcileDirtyKind::ReconcileClean,
+        dirty_kind: ReconcileDirtyKind::clean(),
+        structure_changed: false,
       }
     } else {
       reconcile_children_for_runtime(
@@ -161,8 +174,15 @@ fn reconcile_element_for_runtime(
       )
     }
     old.children = children_result.children
-    let dirty_kind = own_dirty.combine(children_result.dirty_kind)
-    old.apply_reconcile_dirty(dirty_kind)
+    let effective_own_dirty = if children_result.structure_changed {
+      own_dirty.combine(ReconcileDirtyKind::layout())
+    } else {
+      own_dirty
+    }
+    old.apply_reconcile_dirty(effective_own_dirty)
+    old.refresh_descendant_dirty_flags()
+    old.apply_descendant_reconcile_dirty(children_result.dirty_kind)
+    let dirty_kind = effective_own_dirty.combine(children_result.dirty_kind)
     { node: old, next_id: children_result.next_id, dirty_kind }
   }
 }
@@ -189,13 +209,17 @@ fn reconcile_children_for_runtime(
     None
   }
   let mut next = next_id
-  let mut dirty = ReconcileDirtyKind::ReconcileClean
+  let mut dirty = ReconcileDirtyKind::clean()
+  let mut structure_changed = false
   for index, child_view_node in next_view_nodes {
     let old_index = find_reusable_child(
       old_children, used, key_index, child_view_node, index,
     )
     match old_index {
       Some(old_index) => {
+        if old_index != index {
+          structure_changed = true
+        }
         used[old_index] = true
         let result = reconcile_element_for_runtime(
           old_children[old_index],
@@ -208,22 +232,24 @@ fn reconcile_children_for_runtime(
         dirty = dirty.combine(result.dirty_kind)
       }
       None => {
+        structure_changed = true
         let mounted = mount_runtime_view_node_for_runtime(
           child_view_node, runtime, next,
         )
         children.push(mounted.node)
         next = mounted.next_id
-        dirty = dirty.combine(ReconcileDirtyKind::ReconcileLayout)
+        dirty = dirty.combine(ReconcileDirtyKind::layout())
       }
     }
   }
   for index, old_child in old_children {
     if !used[index] {
+      structure_changed = true
       old_child.cancel_component_tree_subscriptions()
-      dirty = dirty.combine(ReconcileDirtyKind::ReconcileLayout)
+      dirty = dirty.combine(ReconcileDirtyKind::layout())
     }
   }
-  { children, next_id: next, dirty_kind: dirty }
+  { children, next_id: next, dirty_kind: dirty, structure_changed }
 }
 
 ///|
@@ -231,15 +257,42 @@ fn ElementNode::apply_reconcile_dirty(
   self : ElementNode,
   dirty : ReconcileDirtyKind,
 ) -> Unit {
-  match dirty {
-    ReconcileClean => ()
-    ReconcilePaint => {
+  if dirty.layout {
+    self.dirty.mark_layout()
+    self.clear_cached_layout_and_paint()
+  } else {
+    if dirty.paint {
       self.dirty.mark_paint()
       self.render_cache.clear()
     }
-    ReconcileLayout => {
-      self.dirty.mark_layout()
-      self.clear_cached_layout_and_paint()
+    if dirty.semantics {
+      self.dirty.mark_semantics()
+    }
+    if dirty.platform {
+      self.dirty.mark_platform()
+    }
+  }
+}
+
+///|
+fn ElementNode::apply_descendant_reconcile_dirty(
+  self : ElementNode,
+  dirty : ReconcileDirtyKind,
+) -> Unit {
+  if dirty.layout {
+    self.dirty.mark_layout_descendant()
+    self.layout_cache.clear()
+    self.render_cache.clear()
+  } else {
+    if dirty.paint {
+      self.dirty.mark_paint_descendant()
+      self.render_cache.invalidate_composition()
+    }
+    if dirty.semantics {
+      self.dirty.mark_semantics_descendant()
+    }
+    if dirty.platform {
+      self.dirty.mark_platform_descendant()
     }
   }
 }

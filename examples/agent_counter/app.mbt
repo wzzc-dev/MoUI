@@ -1,7 +1,7 @@
 ///|
 // A minimal counter program demonstrating the agent-controllable runtime.
-// An agent reads its semantics tree, observes events, and fires command
-// intents that flow through update() — exactly like a user clicking.
+// An agent reads committed semantics and performs typed semantic actions that
+// emit the same messages consumed by TEA update.
 
 using @views {column, text, button}
 
@@ -39,9 +39,15 @@ pub fn view(model : Model) -> @moui.View[Msg] {
   column([
     text("Agent Counter"),
     text("Count: \{model.count}"),
-    button("Increment", on_click=Increment),
-    button("Decrement", on_click=Decrement),
-    button("Reset", on_click=Reset),
+    button("Increment", on_click=Increment).semantic_id(
+      @moui.SemanticId::parse("counter.increment").unwrap(),
+    ),
+    button("Decrement", on_click=Decrement).semantic_id(
+      @moui.SemanticId::parse("counter.decrement").unwrap(),
+    ),
+    button("Reset", on_click=Reset).semantic_id(
+      @moui.SemanticId::parse("counter.reset").unwrap(),
+    ),
   ])
 }
 

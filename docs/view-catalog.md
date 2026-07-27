@@ -49,6 +49,12 @@ catalog rows.
 - File drop targets use the `View::on_file_drop` modifier so apps can accept
   normalized platform file paths as typed messages without depending on
   backend-specific events.
+- Views intended for Agent or automation control attach a validated
+  `SemanticId` with `View::semantic_id`. Identity is independent from
+  `View::key`; explicit `Transparent`, `Boundary`, `MergeDescendants`, and
+  `Hidden` composition controls the logical semantics tree. Controls advertise
+  only action kinds backed by typed handlers, so `SetText` and `Scroll` cannot
+  omit their payload.
 - Platform-specific behavior should not be added in `views`; views preserve UI
   intent as `@moui.View[Msg]` and eventual `@core.DrawCommand` data.
 - View-level menus (`menu_bar`, `command_menu`, `context_menu_region`) are

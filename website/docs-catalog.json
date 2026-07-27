@@ -492,6 +492,19 @@
     },
     {
       "group": "architecture-api",
+      "slug": "agent-semantics",
+      "title": "Committed Semantics and Agent Actions",
+      "path": "docs/agent-semantics.md",
+      "summary": "Committed semantics snapshots, stable identity, generation-checked typed actions, and the default MCP boundary.",
+      "keywords": [
+        "semantics",
+        "Agent",
+        "MCP",
+        "generation"
+      ]
+    },
+    {
+      "group": "architecture-api",
       "slug": "api-surface",
       "title": "API Surface",
       "path": "docs/api-surface.md",
@@ -1121,6 +1134,19 @@
             "MoonBit"
           ],
           "localizedPath": "docs/zh-Hans/architecture-map.md"
+        },
+        {
+          "group": "architecture-api",
+          "slug": "agent-semantics",
+          "title": "已提交语义与 Agent 操作",
+          "summary": "已提交语义快照、稳定身份、generation 校验的 typed action 与默认 MCP 边界。",
+          "keywords": [
+            "语义",
+            "Agent",
+            "MCP",
+            "generation"
+          ],
+          "localizedPath": "docs/zh-Hans/agent-semantics.md"
         },
         {
           "group": "architecture-api",

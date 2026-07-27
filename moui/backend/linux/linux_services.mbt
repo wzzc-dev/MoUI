@@ -140,16 +140,20 @@ pub fn linux_accessibility_bridge_info() -> LinuxAccessibilityBridgeInfo {
 
 ///|
 pub fn linux_accessibility_bridge(
-  root~ : @core.SemanticsNode,
-  dispatch~ : (@core.ElementId, @core.SemanticsAction, String?) -> Bool,
+  runtime : @runtime.AppRuntime,
 ) -> @host.NativeAccessibilityBridge {
-  let binding = LinuxATSPIBinding::new(root~, dispatch~)
-  ignore(binding.publish_semantics(root))
+  let runtime_bridge = @host.NativeAccessibilityBridge::runtime(
+    kind=@host.NativeAccessibilityBridgeKind::ATSPI,
+    runtime~,
+  )
+  let binding = LinuxATSPIBinding::new(dispatch=request => {
+    runtime_bridge.perform_action(request)
+  })
   @host.NativeAccessibilityBridge::new(
     kind=@host.NativeAccessibilityBridgeKind::ATSPI,
-    snapshot=node => {
-      ignore(binding.publish_semantics(node))
-      @host.accesskit_tree_update_from_semantics(node)
+    publish=read => {
+      ignore(binding.publish_semantics(read))
+      @host.accesskit_update_from_semantics_read(read)
     },
     perform=request => binding.perform_action(request),
   )

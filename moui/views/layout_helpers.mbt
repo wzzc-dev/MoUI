@@ -35,16 +35,12 @@ pub fn[Msg] rounded_clip(
   child : @core.View[Msg],
   radius? : Double = 0.0,
 ) -> @core.View[Msg] {
-  @core.View::from_node(
-    RoundedClip::{ radius, child_revision: child.revision() },
-    children=_node => [child],
-  )
+  @core.View::from_node(RoundedClip::{ radius, }, children=_node => [child])
 }
 
 ///|
 priv struct RoundedClip {
   radius : Double
-  child_revision : String
 }
 
 ///|
@@ -53,8 +49,8 @@ impl @core.ViewNode for RoundedClip with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for RoundedClip with fn revision(self) {
-  "rounded-clip:\{self.radius}:\{self.child_revision}"
+impl @core.ViewNode for RoundedClip with fn declaration(self) {
+  view_paint_declaration(@core.DeclarationKey::double(self.radius))
 }
 
 ///|
@@ -90,7 +86,6 @@ impl @core.ViewNode for RoundedClip with fn paint(self, ctx) {
     child_layers: [],
     post_commands: [@core.DrawCommand::PopRoundedClip],
     overlay_commands: [],
-    platform_views: [],
     repaint_boundary: false,
     animating: false,
   }
@@ -98,7 +93,9 @@ impl @core.ViewNode for RoundedClip with fn paint(self, ctx) {
 
 ///|
 impl @core.ViewNode for RoundedClip with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
+  @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Transparent,
+  )
 }
 
 ///|
@@ -117,60 +114,6 @@ pub fn[Msg] intrinsic_width(child : @core.View[Msg]) -> @core.View[Msg] {
 ///|
 pub fn[Msg] intrinsic_height(child : @core.View[Msg]) -> @core.View[Msg] {
   child.intrinsic_height()
-}
-
-///|
-priv struct CustomLayout {
-  measure : (@core.Constraints) -> @core.Size
-  paint : (PaintContext, @core.Rect) -> Unit
-  semantics_role : @core.SemanticsRole
-  semantics_label : String
-}
-
-///|
-impl @core.ViewNode for CustomLayout with fn identity(_self) {
-  @core.ViewIdentity::new(kind="CustomLayout")
-}
-
-///|
-impl @core.ViewNode for CustomLayout with fn revision(_self) {
-  // Custom layout paint output is fully driven by the `paint` closure. Keep
-  // the revision empty so the runtime reconciles via re-running layout/paint
-  // instead of comparing against a stub.
-  ""
-}
-
-///|
-impl @core.ViewNode for CustomLayout with fn layout(self, ctx) {
-  @core.ViewLayoutResult::new(size=(self.measure)(ctx.constraints))
-}
-
-///|
-impl @core.ViewNode for CustomLayout with fn paint(self, ctx) {
-  let pctx = PaintContext::new()
-  (self.paint)(pctx, ctx.frame)
-  @core.ViewPaintPlan::commands(PaintContext::finish(pctx))
-}
-
-///|
-impl @core.ViewNode for CustomLayout with fn semantics(self) {
-  @core.ViewSemanticsInfo::new(
-    role=self.semantics_role,
-    label=self.semantics_label,
-    value=self.semantics_label,
-  )
-}
-
-///|
-pub fn[Msg] custom_layout(
-  measure~ : (@core.Constraints) -> @core.Size,
-  paint~ : (PaintContext, @core.Rect) -> Unit,
-  semantics_role? : @core.SemanticsRole = @core.SemanticsRole::Group,
-  semantics_label? : String = "",
-) -> @core.View[Msg] {
-  @core.View::from_node(
-    CustomLayout::{ measure, paint, semantics_role, semantics_label },
-  )
 }
 
 ///|

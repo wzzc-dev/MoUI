@@ -14,7 +14,7 @@ pub fn web_dispatch_pointer_input(Int, Int, Double, Double, Double, Double, Int,
 
 pub fn web_dispatch_route(Int, Int) -> Unit
 
-pub fn web_dispatch_semantics_action(Int, Int, Int, Int) -> Unit
+pub fn web_dispatch_semantics_action(Int, Int, Int, Int, Int, Int) -> Unit
 
 // Errors
 

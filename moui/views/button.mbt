@@ -84,18 +84,6 @@ fn[Msg] button_control(
   // environment, otherwise the runtime's `ctx.environment.theme` is read at
   // layout/paint time so the button tracks dark-mode/a11y/reduced-motion
   // changes without the caller rebuilding the view tree.
-  let theme_revision = match theme {
-    Some(t) => t.revision_fingerprint()
-    None => "context"
-  }
-  let variant_label = match variant {
-    ButtonVariant::Primary => "primary"
-    ButtonVariant::Tonal => "tonal"
-    ButtonVariant::Outline => "outline"
-    ButtonVariant::Ghost => "ghost"
-    ButtonVariant::Subtle => "subtle"
-    ButtonVariant::SubtleBrand => "subtle_brand"
-  }
   @core.View::from_node(
     Button::{
       text,
@@ -104,13 +92,22 @@ fn[Msg] button_control(
       theme,
       style,
       leading_icon,
-      variant_label,
-      theme_revision,
       has_on_click: on_click is Some(_),
       kind,
       key,
     },
     event=(_node, ctx) => button_event(ctx, on_click),
+    semantics_actions=_node => {
+      match on_click {
+        Some(message) =>
+          [
+            @core.ViewSemanticsActionHandler::activate(_ctx => {
+              @core.ViewSemanticsActionResult::message(message)
+            }),
+          ]
+        None => []
+      }
+    },
   )
 }
 
@@ -122,8 +119,6 @@ priv struct Button {
   theme : @core.Theme?
   style : ButtonStyle?
   leading_icon : IconName?
-  variant_label : String
-  theme_revision : String
   has_on_click : Bool
   kind : String
   key : String?
@@ -135,8 +130,60 @@ impl @core.ViewNode for Button with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for Button with fn revision(self) {
-  "button:\{self.text}:\{view_size_revision(self.min_size)}:\{self.variant_label}:\{self.theme_revision}:\{self.leading_icon is Some(_)}:\{self.has_on_click}"
+impl @core.ViewNode for Button with fn declaration(self) {
+  let layout_key = view_record_key("Button.layout", [
+    ("text", @core.DeclarationKey::string(self.text)),
+    ("min_size", view_size_key(self.min_size)),
+    (
+      "leading_icon",
+      @core.DeclarationKey::option(
+        self.leading_icon.map(name => {
+          @core.DeclarationKey::string(icon_label(name))
+        }),
+      ),
+    ),
+  ])
+  let paint_key = view_record_key("Button.paint", [
+    (
+      "variant",
+      @core.DeclarationKey::int(
+        match self.variant {
+          ButtonVariant::Primary => 0
+          ButtonVariant::Tonal => 1
+          ButtonVariant::Outline => 2
+          ButtonVariant::Ghost => 3
+          ButtonVariant::Subtle => 4
+          ButtonVariant::SubtleBrand => 5
+        },
+      ),
+    ),
+    (
+      "leading_icon",
+      @core.DeclarationKey::option(
+        self.leading_icon.map(name => {
+          @core.DeclarationKey::string(icon_label(name))
+        }),
+      ),
+    ),
+  ])
+  view_declaration(
+    layout=if self.theme is Some(_) {
+      @core.DeclarationChannel::Uncacheable
+    } else {
+      view_exact_channel(layout_key)
+    },
+    paint=if self.theme is Some(_) || self.style is Some(_) {
+      @core.DeclarationChannel::Uncacheable
+    } else {
+      view_exact_channel(paint_key)
+    },
+    semantics=view_exact_channel(
+      view_record_key("Button.semantics", [
+        ("label", @core.DeclarationKey::string(self.text)),
+        ("activate", @core.DeclarationKey::bool(self.has_on_click)),
+      ]),
+    ),
+  )
 }
 
 ///|
@@ -197,7 +244,7 @@ impl @core.ViewNode for Button with fn paint(self, ctx) {
   } else {
     @core.ButtonState::Normal
   }
-  let transition = parse_button_transition(ctx.state.scratch)
+  let transition = button_transition(ctx.state)
   let (background_brush, animating) = match transition {
     Some((from_state, start_ms)) =>
       if ctx.environment.reduced_motion ||
@@ -213,8 +260,7 @@ impl @core.ViewNode for Button with fn paint(self, ctx) {
           false,
         )
       } else {
-        let start = start_ms.to_double()
-        let raw_progress = (ctx.now_ms - start) / transition_duration_ms
+        let raw_progress = (ctx.now_ms - start_ms) / transition_duration_ms
         if raw_progress >= 1.0 {
           (
             button_state_brush(
@@ -338,9 +384,9 @@ impl @core.ViewNode for Button with fn paint(self, ctx) {
 ///|
 impl @core.ViewNode for Button with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Boundary,
     role=@core.SemanticsRole::Button,
     label=self.text,
-    actions=[@core.SemanticsAction::Focus, @core.SemanticsAction::Activate],
   )
 }
 
@@ -372,10 +418,9 @@ fn[Msg] button_event(
       let is_instant_clear = event.phase == @core.PointerPhase::Exit &&
         current != @core.ButtonState::Normal
       let next_state = if is_instant_clear {
-        {
-          ..view_button_state_context(ctx.state, current, next, ctx.now_ms),
-          scratch: "",
-        }
+        view_button_state_context(ctx.state, current, next, ctx.now_ms).without_slot(
+          button_transition_slot(),
+        )
       } else if changed {
         view_button_state_context(ctx.state, current, next, ctx.now_ms)
       } else {
@@ -445,19 +490,19 @@ fn view_button_state_context(
   next : @core.ButtonState,
   now_ms : Double,
 ) -> @core.ViewStateContext {
-  // Record the transition origin and start time in scratch so the next paint
-  // can interpolate the background from `from_state` toward `next`. When the
-  // state did not actually change (e.g. a no-op move), keep the prior scratch
-  // so an in-flight animation continues instead of restarting.
-  let scratch = if from_state == next {
-    current.scratch
-  } else {
-    button_transition_scratch(from_state, now_ms)
-  }
-  {
+  let interaction_state = {
     ..current,
     hovered: next == @core.ButtonState::Hovered,
     pressed: next == @core.ButtonState::Pressed,
-    scratch,
+  }
+  // Keep an in-flight transition when the visual state is unchanged; a real
+  // transition records its typed origin and exact runtime clock value.
+  if from_state == next {
+    interaction_state
+  } else {
+    interaction_state.with_slot(
+      button_transition_slot(),
+      ButtonTransitionState::Active(from_state, now_ms),
+    )
   }
 }

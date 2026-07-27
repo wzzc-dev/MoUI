@@ -15,7 +15,7 @@ fn ElementNode::rebuild_dirty_components(
   next_id : Int,
 ) -> ReconcileResult {
   let mut next = next_id
-  let mut dirty_kind = ReconcileDirtyKind::ReconcileClean
+  let mut dirty_kind = ReconcileDirtyKind::clean()
   if self.dirty.needs_build {
     if self.view_node.has_build_child() {
       let built = build_component_child(
@@ -43,7 +43,7 @@ fn ElementNode::rebuild_dirty_components(
         {
           node: mounted.node,
           next_id: mounted.next_id,
-          dirty_kind: ReconcileDirtyKind::ReconcileLayout,
+          dirty_kind: ReconcileDirtyKind::layout(),
         }
       }
       self.children = [result.node]
@@ -51,7 +51,6 @@ fn ElementNode::rebuild_dirty_components(
       dirty_kind = dirty_kind.combine(result.dirty_kind)
     }
     self.dirty.needs_build = false
-    self.apply_reconcile_dirty(dirty_kind)
   }
   let children : Array[ElementNode] = []
   for child in self.children {
@@ -61,34 +60,53 @@ fn ElementNode::rebuild_dirty_components(
     dirty_kind = dirty_kind.combine(result.dirty_kind)
   }
   self.children = children
+  self.refresh_descendant_dirty_flags()
+  self.apply_descendant_reconcile_dirty(dirty_kind)
   { node: self, next_id: next, dirty_kind }
 }
 
 ///|
 fn ElementNode::has_dirty_build(self : ElementNode) -> Bool {
-  if self.dirty.needs_build {
-    true
-  } else {
-    self.children.any(child => child.has_dirty_build())
-  }
+  self.dirty.has_build()
 }
 
 ///|
 fn ElementNode::has_dirty_layout(self : ElementNode) -> Bool {
-  if self.dirty.needs_layout {
-    true
-  } else {
-    self.children.any(child => child.has_dirty_layout())
-  }
+  self.dirty.has_layout()
 }
 
 ///|
 fn ElementNode::has_dirty_paint(self : ElementNode) -> Bool {
-  if self.dirty.needs_paint {
-    true
-  } else {
-    self.children.any(child => child.has_dirty_paint())
-  }
+  self.dirty.has_paint()
+}
+
+///|
+fn ElementNode::has_dirty_platform(self : ElementNode) -> Bool {
+  self.dirty.has_platform()
+}
+
+///|
+fn ElementNode::has_dirty_semantics(self : ElementNode) -> Bool {
+  self.dirty.has_semantics()
+}
+
+///|
+fn ElementNode::refresh_descendant_dirty_flags(self : ElementNode) -> Unit {
+  self.dirty.descendant_build = self.children.any(child => {
+    child.dirty.has_build()
+  })
+  self.dirty.descendant_layout = self.children.any(child => {
+    child.dirty.has_layout()
+  })
+  self.dirty.descendant_paint = self.children.any(child => {
+    child.dirty.has_paint()
+  })
+  self.dirty.descendant_semantics = self.children.any(child => {
+    child.dirty.has_semantics()
+  })
+  self.dirty.descendant_platform = self.children.any(child => {
+    child.dirty.has_platform()
+  })
 }
 
 ///|
@@ -116,7 +134,7 @@ fn ElementNode::collect_view_summaries(
   nodes : Array[ViewInspectorSummary],
 ) -> Unit {
   nodes.push({
-    element_id: self.id,
+    element_id: self.id.value(),
     kind: runtime_view_node_inspector_kind_label(self.view_node),
     key: match self.key {
       Some(key) => key.value()
@@ -173,14 +191,12 @@ fn ElementNode::mark_build_dirty_by_id(
   id : ElementId,
 ) -> Bool {
   if self.id == id {
-    self.dirty.mark_build()
-    self.clear_cached_layout_and_paint()
+    self.dirty.mark_build_only()
     true
   } else {
     for child in self.children {
       if child.mark_build_dirty_by_id(id) {
-        self.dirty.mark_layout()
-        self.clear_cached_layout_and_paint()
+        self.dirty.mark_build_descendant()
         return true
       }
     }
@@ -200,8 +216,58 @@ fn ElementNode::mark_paint_dirty_by_id(
   } else {
     for child in self.children {
       if child.mark_paint_dirty_by_id(id) {
-        self.dirty.mark_paint()
-        self.render_cache.clear()
+        self.dirty.mark_paint_descendant()
+        self.render_cache.invalidate_composition()
+        return true
+      }
+    }
+    false
+  }
+}
+
+///|
+fn ElementNode::mark_semantics_dirty_by_id(
+  self : ElementNode,
+  id : ElementId,
+) -> Bool {
+  if self.id == id {
+    self.dirty.mark_semantics()
+    true
+  } else {
+    for child in self.children {
+      if child.mark_semantics_dirty_by_id(id) {
+        self.dirty.mark_semantics_descendant()
+        return true
+      }
+    }
+    false
+  }
+}
+
+///|
+fn ElementNode::invalidate_uncommitted_semantics(self : ElementNode) -> Unit {
+  // Nodes omitted from the committed tree stay invalidated. That lets hidden
+  // and merged descendants rebuild their contribution when an ancestor needs
+  // it again without retaining an unreachable duplicate subtree.
+  self.dirty.needs_semantics = true
+  self.semantics_cache.clear()
+  for child in self.children {
+    child.invalidate_uncommitted_semantics()
+  }
+}
+
+///|
+fn ElementNode::mark_platform_dirty_by_id(
+  self : ElementNode,
+  id : ElementId,
+) -> Bool {
+  if self.id == id {
+    self.dirty.mark_platform()
+    true
+  } else {
+    for child in self.children {
+      if child.mark_platform_dirty_by_id(id) {
+        self.dirty.mark_platform_descendant()
         return true
       }
     }
@@ -216,8 +282,14 @@ fn ElementNode::collect_dirty_element_ids_by_kind(
   build_ids : Array[ElementId],
   layout_ids : Array[ElementId],
   paint_ids : Array[ElementId],
+  semantics_ids : Array[ElementId],
+  platform_ids : Array[ElementId],
 ) -> Unit {
-  if self.dirty.needs_build || self.dirty.needs_layout || self.dirty.needs_paint {
+  if self.dirty.needs_build ||
+    self.dirty.needs_layout ||
+    self.dirty.needs_paint ||
+    self.dirty.needs_semantics ||
+    self.dirty.needs_platform {
     push_unique_element_id(all_ids, self.id)
   }
   if self.dirty.needs_build {
@@ -229,9 +301,15 @@ fn ElementNode::collect_dirty_element_ids_by_kind(
   if self.dirty.needs_paint {
     push_unique_element_id(paint_ids, self.id)
   }
+  if self.dirty.needs_semantics {
+    push_unique_element_id(semantics_ids, self.id)
+  }
+  if self.dirty.needs_platform {
+    push_unique_element_id(platform_ids, self.id)
+  }
   for child in self.children {
     child.collect_dirty_element_ids_by_kind(
-      all_ids, build_ids, layout_ids, paint_ids,
+      all_ids, build_ids, layout_ids, paint_ids, semantics_ids, platform_ids,
     )
   }
 }
@@ -239,8 +317,7 @@ fn ElementNode::collect_dirty_element_ids_by_kind(
 ///|
 fn ElementNode::mark_root_component_build_dirty(self : ElementNode) -> Bool {
   if self.view_node.has_build_child() {
-    self.dirty.mark_build()
-    self.clear_cached_layout_and_paint()
+    self.dirty.mark_build_only()
     true
   } else {
     false

@@ -1,10 +1,4 @@
 ///|
-/// Round a double to 4 decimal places for stable revision fingerprints.
-fn round4(value : Double) -> Double {
-  (value * 10000.0).round() / 10000.0
-}
-
-///|
 /// Presence indicator status. Maps to Fluent 2 `PresenceBadge` statuses:
 /// Available (green), Away (yellow), Busy (red), Offline (gray).
 pub(all) enum PresenceStatus {
@@ -35,9 +29,7 @@ pub fn PresenceStatus::label(self : PresenceStatus) -> String {
 /// `avatar(...).overlay(alignment=BottomRight, presence_dot(...))`.
 ///
 /// The node carries only immutable declaration data: dot size, status color,
-/// border color, and border width. The `revision` folds every paint-affecting
-/// field so reconcile does not reuse a stale RenderNode when only the status
-/// color changed.
+/// border color, and border width.
 priv struct PresenceDot {
   size : Double
   status_color : @core.Color
@@ -51,14 +43,23 @@ impl @core.ViewNode for PresenceDot with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for PresenceDot with fn revision(self) {
-  let total = self.size + self.border_width * 2.0
-  // Color does not implement Show; emit a stable RGBA fingerprint
-  // (r,g,b,a rounded to 4 decimals) so reconcile detects color changes
-  // without relying on a Color -> String conversion.
-  let status_token = "\{round4(self.status_color.r)},\{round4(self.status_color.g)},\{round4(self.status_color.b)},\{round4(self.status_color.a)}"
-  let border_token = "\{round4(self.border_color.r)},\{round4(self.border_color.g)},\{round4(self.border_color.b)},\{round4(self.border_color.a)}"
-  "presence-dot:\{total}:\{self.size}:\{status_token}:\{border_token}:\{self.border_width}"
+impl @core.ViewNode for PresenceDot with fn declaration(self) {
+  view_declaration(
+    layout=view_exact_channel(
+      view_record_key("PresenceDot.layout", [
+        ("size", @core.DeclarationKey::double(self.size)),
+        ("border_width", @core.DeclarationKey::double(self.border_width)),
+      ]),
+    ),
+    paint=view_exact_channel(
+      view_record_key("PresenceDot.paint", [
+        ("size", @core.DeclarationKey::double(self.size)),
+        ("status_color", view_color_key(self.status_color)),
+        ("border_color", view_color_key(self.border_color)),
+        ("border_width", @core.DeclarationKey::double(self.border_width)),
+      ]),
+    ),
+  )
 }
 
 ///|
@@ -105,6 +106,7 @@ impl @core.ViewNode for PresenceDot with fn paint(self, ctx) {
 ///|
 impl @core.ViewNode for PresenceDot with fn semantics(_self) {
   @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Boundary,
     role=@core.SemanticsRole::Group,
     label="PresenceDot",
   )
@@ -122,9 +124,12 @@ pub fn[Msg] presence_dot(
   // The border separates the dot from the host surface (avatar background).
   let border_color = on_surface.unwrap_or(resolved_theme.palette.background)
   let border_width = max_view_double(1.5, size * 0.15)
-  @core.View::from_node(
-    PresenceDot::{ size, status_color, border_color, border_width },
-  )
+  @core.View::from_node(PresenceDot::{
+    size,
+    status_color,
+    border_color,
+    border_width,
+  })
 }
 
 ///|

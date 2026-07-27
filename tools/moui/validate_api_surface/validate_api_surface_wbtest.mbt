@@ -66,11 +66,11 @@ test "api surface classification budgets pin current high-risk packages" {
     classification_budget(
       "moui/core/pkg.generated.mbti", "advanced_core_protocol",
     ).max_count,
-    content="524",
+    content="589",
   )
   inspect(
     classification_budget("moui/core/pkg.generated.mbti", "required_protocol").max_count,
-    content="139",
+    content="148",
   )
   inspect(
     classification_budget("moui/views/pkg.generated.mbti", "app_constructor").max_count,
@@ -98,13 +98,13 @@ test "api surface classification budgets pin current high-risk packages" {
     classification_budget(
       "moui/runtime/pkg.generated.mbti", "runtime_diagnostic",
     ).max_count,
-    content="285",
+    content="298",
   )
   inspect(
     classification_budget(
       "moui/backend/host/pkg.generated.mbti", "host_contract",
     ).max_count,
-    content="481",
+    content="454",
   )
   inspect(
     classification_budget("moui/render/pkg.generated.mbti", "renderer_contract").max_count,
@@ -188,6 +188,9 @@ test "root facade budget forwards app-loop sugar only" {
   inspect(root.max_pub_all_lines, content="0")
   assert_true(root.required_tokens.contains("pub using @core {type View}"))
   assert_true(root.required_tokens.contains("pub using @core {type Program}"))
+  assert_true(
+    root.required_tokens.contains("pub using @core {type SemanticId}"),
+  )
   assert_true(root.forbidden_tokens.contains("pub using @core {type Point}"))
   assert_true(root.forbidden_tokens.contains("pub using @core {type State}"))
 }
@@ -281,9 +284,9 @@ test "domain sugar packages forward the curated per-domain type set" {
 ///|
 test "runtime facade budget pins the opaque runtime boundary" {
   let runtime = budget_by_label("runtime facade")
-  inspect(runtime.max_lines, content="430")
-  inspect(runtime.max_pub_lines, content="285")
-  inspect(runtime.max_pub_all_lines, content="9")
+  inspect(runtime.max_lines, content="490")
+  inspect(runtime.max_pub_lines, content="298")
+  inspect(runtime.max_pub_all_lines, content="16")
   assert_true(runtime.required_tokens.contains("pub struct AppRuntime"))
   assert_true(runtime.required_tokens.contains("pub fn[Msg] new_view("))
   assert_true(
@@ -482,7 +485,7 @@ test "views facade exposes control-specific contracts" {
 ///|
 test "host and renderer public all budgets ratchet down" {
   let host = budget_by_label("host contracts")
-  inspect(host.max_pub_all_lines, content="73")
+  inspect(host.max_pub_all_lines, content="64")
   let renderer = budget_by_label("renderer facade")
   inspect(renderer.max_pub_all_lines, content="40")
   let skia = budget_by_label("skia renderer")
@@ -504,9 +507,9 @@ test "host and renderer public all budgets ratchet down" {
 ///|
 test "core descriptor payloads stay opaque" {
   let core = budget_by_label("core")
-  inspect(core.max_lines, content="1844")
-  inspect(core.max_pub_lines, content="505")
-  inspect(core.max_pub_all_lines, content="139")
+  inspect(core.max_lines, content="2009")
+  inspect(core.max_pub_lines, content="571")
+  inspect(core.max_pub_all_lines, content="148")
   assert_true(core.required_tokens.contains("pub(open) trait ViewNode"))
   assert_true(core.required_tokens.contains("View::from_node"))
   assert_true(core.forbidden_tokens.contains("View::node("))

@@ -18,10 +18,19 @@ priv struct RuntimeTextCommandOutcome {
 }
 
 ///|
+priv struct RuntimeSemanticsActionOutcome {
+  accepted : Bool
+  state : @core.ViewStateContext?
+  text_control : @core.TextControlStateContext?
+  dirty : @core.ViewDirtyHint
+  deliveries : Array[() -> Unit]
+  deferred_commits : Array[() -> Unit]
+}
+
+///|
 priv trait RuntimeViewNode {
   fn identity(Self) -> @core.ViewIdentity
-  fn revision(Self) -> String
-  fn paint_revision(Self) -> String
+  fn declaration(Self) -> @core.ViewDeclaration
   fn children(Self) -> Array[&RuntimeViewNode]
   fn build_child(Self, @core.ComponentContext) -> &RuntimeViewNode?
   fn child_constraints(Self, Constraints) -> Constraints
@@ -29,10 +38,19 @@ priv trait RuntimeViewNode {
   fn child_style(Self, ViewStyle) -> ViewStyle
   fn layout(Self, @core.ViewLayoutContext) -> @core.ViewLayoutResult
   fn paint(Self, @core.ViewPaintContext) -> @core.ViewPaintPlan
+  fn platform_views(Self, @core.ViewPlatformContext) -> Array[
+    PlatformViewPlacement,
+  ]
   fn event(Self, @core.ViewEventContext) -> RuntimeEventOutcome
   fn text_input_state(Self, @core.ViewPaintContext) -> TextInputState?
   fn text_command(Self, @core.ViewEventContext, CommandIntent, String?) -> RuntimeTextCommandOutcome
   fn semantics(Self) -> @core.ViewSemanticsInfo
+  fn semantics_action_kinds(Self) -> Array[@core.SemanticsActionKind]
+  fn semantics_action(
+    Self,
+    @core.ViewSemanticsActionContext,
+    @core.SemanticsAction,
+  ) -> RuntimeSemanticsActionOutcome
   fn focusable(Self) -> Bool
   fn flex_weight(Self) -> Double
   fn has_build_child(Self) -> Bool
@@ -58,15 +76,8 @@ impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn identity(self) {
 }
 
 ///|
-impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn revision(self) {
-  self.view.revision()
-}
-
-///|
-impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn paint_revision(
-  self,
-) {
-  self.view.paint_revision()
+impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn declaration(self) {
+  self.view.declaration()
 }
 
 ///|
@@ -126,6 +137,14 @@ impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn paint(
 }
 
 ///|
+impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn platform_views(
+  self,
+  context,
+) {
+  self.view.platform_views(context)
+}
+
+///|
 impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn event(
   self,
   context,
@@ -172,6 +191,30 @@ impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn semantics(self) {
 }
 
 ///|
+impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn semantics_action_kinds(
+  self,
+) {
+  self.view.semantics_action_kinds()
+}
+
+///|
+impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn semantics_action(
+  self,
+  context,
+  action,
+) {
+  let result = self.view.dispatch_semantics_action(context, action)
+  {
+    accepted: result.accepted,
+    state: result.state,
+    text_control: result.text_control,
+    dirty: result.dirty,
+    deliveries: result.messages.map(message => () => (self.emit)(message)),
+    deferred_commits: result.deferred_commits,
+  }
+}
+
+///|
 impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn focusable(self) {
   self.view.accepts_focus()
 }
@@ -189,10 +232,18 @@ impl[Msg] RuntimeViewNode for RuntimeViewAdapter[Msg] with fn has_build_child(
 }
 
 ///|
-fn deliver_runtime_messages(deliveries : Array[() -> Unit]) -> Unit {
+fn RuntimeState::deliver_messages(
+  self : RuntimeState,
+  deliveries : Array[() -> Unit],
+) -> Unit {
+  (self.begin_message_batch)()
   for deliver in deliveries {
     deliver()
   }
+  (self.end_message_batch)()
+  // `end_message_batch` drains synchronous TEA messages. Reconcile only
+  // after that drain so immutable view snapshots observe the updated model.
+  self.rebuild_if_possible()
 }
 
 ///|
@@ -201,6 +252,11 @@ priv struct EmptyCoreViewNode {}
 ///|
 impl @core.ViewNode for EmptyCoreViewNode with fn identity(_self) {
   @core.ViewIdentity::new(kind="Empty")
+}
+
+///|
+impl @core.ViewNode for EmptyCoreViewNode with fn declaration(_self) {
+  @core.ViewDeclaration::constant()
 }
 
 ///|

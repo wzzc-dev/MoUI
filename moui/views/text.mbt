@@ -8,18 +8,7 @@ pub fn[Msg] text(
   align? : @core.TextAlign = @core.TextAlign::TextCenter,
 ) -> @core.View[Msg] {
   let size = @core.Size::new(width~, height~)
-  let theme_revision = match theme {
-    Some(value) => text_theme_revision(value)
-    None => "context"
-  }
-  @core.View::from_node(Text::{
-    text,
-    role,
-    theme,
-    size,
-    align,
-    theme_revision,
-  })
+  @core.View::from_node(Text::{ text, role, theme, size, align })
 }
 
 ///|
@@ -29,7 +18,6 @@ priv struct Text {
   theme : @core.Theme?
   size : @core.Size
   align : @core.TextAlign
-  theme_revision : String
 }
 
 ///|
@@ -38,8 +26,43 @@ impl @core.ViewNode for Text with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for Text with fn revision(self) {
-  "text:\{self.text}:\{self.size.width}:\{self.size.height}:\{text_role_revision(self.role)}:\{text_align_revision(self.align)}:\{self.theme_revision}"
+impl @core.ViewNode for Text with fn declaration(self) {
+  let role = @core.DeclarationKey::int(
+    match self.role {
+      Body => 0
+      Title => 1
+      Caption => 2
+      Control => 3
+      Mono => 4
+      Display => 5
+      Headline => 6
+      Subtitle => 7
+      Label => 8
+      Overline => 9
+    },
+  )
+  let align = @core.DeclarationKey::int(
+    match self.align {
+      @core.TextAlign::TextStart => 0
+      @core.TextAlign::TextCenter => 1
+      @core.TextAlign::TextEnd => 2
+    },
+  )
+  view_declaration(
+    layout=view_exact_channel(view_size_key(self.size)),
+    paint=if self.theme is Some(_) {
+      @core.DeclarationChannel::Uncacheable
+    } else {
+      view_exact_channel(
+        view_record_key("Text.paint", [
+          ("text", @core.DeclarationKey::string(self.text)),
+          ("role", role),
+          ("align", align),
+        ]),
+      )
+    },
+    semantics=view_exact_channel(@core.DeclarationKey::string(self.text)),
+  )
 }
 
 ///|
@@ -74,40 +97,11 @@ impl @core.ViewNode for Text with fn paint(self, context) {
 ///|
 impl @core.ViewNode for Text with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Boundary,
     role=@core.SemanticsRole::Text,
     label=self.text,
     value=self.text,
   )
-}
-
-///|
-fn text_align_revision(align : @core.TextAlign) -> String {
-  match align {
-    @core.TextAlign::TextStart => "start"
-    @core.TextAlign::TextCenter => "center"
-    @core.TextAlign::TextEnd => "end"
-  }
-}
-
-///|
-fn text_role_revision(role : TextRole) -> String {
-  match role {
-    Body => "body"
-    Title => "title"
-    Caption => "caption"
-    Control => "control"
-    Mono => "mono"
-    Display => "display"
-    Headline => "headline"
-    Subtitle => "subtitle"
-    Label => "label"
-    Overline => "overline"
-  }
-}
-
-///|
-fn text_theme_revision(theme : @core.Theme) -> String {
-  theme.revision_fingerprint()
 }
 
 ///|

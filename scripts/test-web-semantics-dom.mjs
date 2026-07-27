@@ -97,7 +97,7 @@ class FakeDocument {
 }
 
 const node = (id, role, frame, children = [], extra = {}) => ({
-  element_id: { value: id },
+  node_id: `${id}`,
   role,
   level: null,
   url: "",
@@ -115,6 +115,35 @@ const node = (id, role, frame, children = [], extra = {}) => ({
   frame: { origin: { x: frame[0], y: frame[1] }, size: { width: frame[2], height: frame[3] } },
   children,
   ...extra,
+});
+
+const flattenedNodes = root => {
+  const result = [];
+  const visit = current => {
+    const children = current.children ?? [];
+    result.push({ ...current, children: children.map(child => child.node_id) });
+    for (const child of children) visit(child);
+  };
+  visit(root);
+  return result;
+};
+
+const fullUpdate = (generation, root) => ({
+  kind: "full",
+  generation: `${generation}`,
+  root: root.node_id,
+  focused: null,
+  nodes: flattenedNodes(root),
+  removed: [],
+});
+
+const deltaUpdate = (generation, root, removed = []) => ({
+  kind: "delta",
+  generation: `${generation}`,
+  root: root.node_id,
+  focused: null,
+  nodes: flattenedNodes(root),
+  removed: removed.map(id => `${id}`),
 });
 
 const documentRef = new FakeDocument();
@@ -140,7 +169,7 @@ const first = node(1, "main", [0, 0, 400, 300], [
     actions: ["focus", "activate"],
   }),
 ]);
-manager.sync(11, canvasOne, first);
+manager.sync(11, canvasOne, fullUpdate(1, first));
 const layerOne = manager.layer(11);
 assert(layerOne.children.length === 1, "main root should be projected once");
 const main = layerOne.children[0];
@@ -159,32 +188,32 @@ assert(
   "semantic layers must not install a second pointer or wheel transport",
 );
 link.dispatch("click");
-assert(actions.length === 1 && actions[0][0] === 11 && actions[0][1] === 3 && actions[0][2] === 0, "link click should dispatch activate");
+assert(actions.length === 1 && actions[0][0] === 11 && actions[0][1] === "3" && actions[0][2] === "1" && actions[0][3] === 0, "link click should dispatch activate with node and generation");
 link.dispatch("keydown", { key: "Enter" });
-assert(actions.length === 2 && actions[1][0] === 11 && actions[1][1] === 3 && actions[1][2] === 0, "link Enter should dispatch activate");
+assert(actions.length === 2 && actions[1][0] === 11 && actions[1][1] === "3" && actions[1][2] === "1" && actions[1][3] === 0, "link Enter should dispatch activate with node and generation");
 
 const updated = node(1, "main", [0, 0, 400, 300], [
   node(2, "heading", [24, 36, 220, 40], [], { label: "Guides", level: 2, focused: true }),
 ]);
-manager.sync(11, canvasOne, updated);
+manager.sync(11, canvasOne, deltaUpdate(2, updated, [3]));
 assert(main.children.length === 1, "removed semantic nodes should leave the DOM");
 assert(main.children[0] === heading, "keyed semantic node should be reused");
 assert(heading.textContent === "Guides" && heading.style.left === "24px", "reused nodes should update attributes and geometry");
 const styleWritesBeforeStableSync = heading.styleWrites;
 const textWritesBeforeStableSync = heading.textWrites;
-manager.sync(11, canvasOne, updated);
+manager.sync(11, canvasOne, deltaUpdate(2, updated, [3]));
 assert(heading.styleWrites === styleWritesBeforeStableSync, "unchanged semantics must not rewrite inline styles");
 assert(heading.textWrites === textWritesBeforeStableSync, "unchanged semantics must not rewrite text content");
 
 const hiddenTextInput = documentRef.createElement("textarea");
 hiddenTextInput.dataset.mouiTextInput = "true";
 documentRef.activeElement = hiddenTextInput;
-manager.sync(11, canvasOne, node(4, "textbox", [20, 90, 260, 80], [], {
+manager.sync(11, canvasOne, fullUpdate(3, node(4, "textbox", [20, 90, 260, 80], [], {
   label: "Source",
   value: "line one\nline two",
   focused: true,
   actions: ["focus", "set-text"],
-}));
+})));
 const multiline = manager.layer(11).children[0];
 assert(multiline.tagName === "TEXTAREA", "multiline textboxes should preserve newlines");
 assert(multiline.value === "line one\nline two", "multiline textbox value should retain line breaks");
@@ -196,7 +225,7 @@ assert(
   "pointer clicks on semantic textboxes must not bypass the canvas hit tree",
 );
 
-manager.sync(22, canvasTwo, node(9, "navigation", [0, 0, 200, 50]));
+manager.sync(22, canvasTwo, fullUpdate(1, node(9, "navigation", [0, 0, 200, 50])));
 assert(manager.layer(22) !== layerOne, "each canvas should own an isolated semantics layer");
 manager.remove(11);
 assert(manager.layer(11) === undefined && manager.layer(22), "removing one window must preserve other layers");

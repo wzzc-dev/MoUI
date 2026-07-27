@@ -9,15 +9,7 @@ pub fn[Msg] web_view(
   on_event? : ((@host.WebViewEvent) -> Msg)? = None,
 ) -> @core.View[Msg] {
   @core.View::from_node(
-    WebViewNode::{
-      id,
-      url,
-      width,
-      height,
-      title,
-      policy,
-      has_on_event: on_event is Some(_),
-    },
+    WebViewNode::{ id, url, width, height, title, policy },
     event=(node, ctx) => {
       match (ctx.event, on_event) {
         (@core.AppEvent::PlatformView(event_id, event), Some(handler)) =>
@@ -44,7 +36,6 @@ priv struct WebViewNode {
   height : Double?
   title : String
   policy : @host.WebViewNavigationPolicy
-  has_on_event : Bool
 }
 
 ///|
@@ -53,8 +44,44 @@ impl @core.ViewNode for WebViewNode with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for WebViewNode with fn revision(self) {
-  "web-view:\{self.id}:\{self.url}:\{web_view_double_option_revision(self.width)}:\{web_view_double_option_revision(self.height)}:\{self.title}:\{self.policy.revision_key()}:\{self.has_on_event}"
+impl @core.ViewNode for WebViewNode with fn declaration(self) {
+  let size_key = @core.DeclarationKey::record(type_tag="WebView.layout", fields=[
+    (
+      "width",
+      @core.DeclarationKey::option(self.width.map(@core.DeclarationKey::double)),
+    ),
+    (
+      "height",
+      @core.DeclarationKey::option(
+        self.height.map(@core.DeclarationKey::double),
+      ),
+    ),
+  ])
+  let content_key = @core.DeclarationKey::record(type_tag="WebView.content", fields=[
+    ("url", @core.DeclarationKey::string(self.url)),
+    ("title", @core.DeclarationKey::string(self.title)),
+    (
+      "policy",
+      @core.DeclarationKey::int(
+        match self.policy {
+          @host.WebViewNavigationPolicy::AllowAll => 0
+          @host.WebViewNavigationPolicy::AllowHttpHttps => 1
+          @host.WebViewNavigationPolicy::AllowHttpHttpsFile => 2
+        },
+      ),
+    ),
+  ])
+  @core.ViewDeclaration::channels(
+    layout=@core.DeclarationChannel::Exact(size_key),
+    paint=@core.DeclarationChannel::Constant,
+    semantics=@core.DeclarationChannel::Exact(
+      @core.DeclarationKey::record(type_tag="WebView.semantics", fields=[
+        ("title", @core.DeclarationKey::string(self.title)),
+        ("url", @core.DeclarationKey::string(self.url)),
+      ]),
+    ),
+    platform=@core.DeclarationChannel::Exact(content_key),
+  )
 }
 
 ///|
@@ -70,9 +97,9 @@ impl @core.ViewNode for WebViewNode with fn layout(self, ctx) {
 }
 
 ///|
-impl @core.ViewNode for WebViewNode with fn paint(self, ctx) {
+impl @core.ViewNode for WebViewNode with fn platform_views(self, ctx) {
   if ctx.frame.is_empty() {
-    @core.ViewPaintPlan::empty()
+    []
   } else {
     let spec = @host.WebViewSpec::new(
       id=self.id,
@@ -82,31 +109,16 @@ impl @core.ViewNode for WebViewNode with fn paint(self, ctx) {
       title=self.title,
       policy=self.policy,
     )
-    {
-      commands: [],
-      child_layers: [],
-      post_commands: [],
-      overlay_commands: [],
-      platform_views: [spec.platform_view_placement(frame=ctx.frame)],
-      repaint_boundary: false,
-      animating: false,
-    }
+    [spec.platform_view_placement(frame=ctx.frame)]
   }
 }
 
 ///|
 impl @core.ViewNode for WebViewNode with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Boundary,
     role=@core.SemanticsRole::Group,
     label=self.title,
     value=self.url,
   )
-}
-
-///|
-fn web_view_double_option_revision(value : Double?) -> String {
-  match value {
-    Some(value) => "\{value}"
-    None => "none"
-  }
 }

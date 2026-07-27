@@ -400,9 +400,11 @@ Drawing, animation, focus, and low-level runtime-ID paths:
   `@animation.Easing` for animation types.
 - Use `@state.FocusScope`, `@state.FocusScopeItem`, and `@state.ColorScheme`
   for focus / scheme types.
-- When required, use diagnostics/kernel-only types directly through
-  `@core.ElementId`, `@core.SemanticsRole`, and `@core.ComponentContext`, and
-  restrict this to Showcase/diagnostics/custom-kernel or test contexts.
+- When required, use diagnostics/kernel-only types such as
+  `@core.SemanticsRole` and `@core.ComponentContext` directly, and restrict
+  this to Showcase/diagnostics/custom-kernel or test contexts. Element
+  identity is runtime-private; no app or diagnostic package receives an
+  `@core.ElementId`.
 
 ### No Convenience API / Test-Only or Framework Direct `@core`
 

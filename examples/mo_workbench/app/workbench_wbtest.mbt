@@ -75,7 +75,32 @@ test "code chat message list uses explicit scroll viewport" {
   )
   let children = list.children()
   guard children.get(0) is Some(scroll) else { fail("expected scroll child") }
-  inspect(scroll.revision().contains("584x390"), content="true")
+  let shorter = code_message_list(
+    { ..model.code, messages: [ChatMessage::User("hello")] },
+    theme,
+    640.0,
+    list_height - 20.0,
+  )
+  guard shorter.children().get(0) is Some(shorter_scroll) else {
+    fail("expected shorter scroll child")
+  }
+  guard scroll.build_child() is Some(build_scroll) else {
+    fail("expected scroll component")
+  }
+  guard shorter_scroll.build_child() is Some(build_shorter_scroll) else {
+    fail("expected shorter scroll component")
+  }
+  let viewport = @geometry.Size::new(width=640.0, height=520.0)
+  let inner_scroll = build_scroll(
+    workbench_component_test_context(viewport~, theme~),
+  )
+  let inner_shorter_scroll = build_shorter_scroll(
+    workbench_component_test_context(viewport~, theme~),
+  )
+  inspect(
+    inner_scroll.declaration() == inner_shorter_scroll.declaration(),
+    content="false",
+  )
 }
 
 ///|
@@ -101,6 +126,23 @@ test "code composer prompt grows from two lines with content" {
 }
 
 ///|
+fn workbench_component_test_context(
+  viewport~ : @geometry.Size,
+  theme~ : @moui.Theme,
+) -> @core.ComponentContext {
+  @core.ComponentContext::from_runtime({
+    request_component_rebuild: () => (),
+    scope_saveable_key: key => "workbench-test:\{key}",
+    viewport_size: viewport,
+    saveable_state: @core.SaveableStateStore::new(),
+    subscriptions: [],
+    effects: [],
+    old_effects: [],
+    environment: @core.Environment::neutral().with_theme(theme),
+  })
+}
+
+///|
 fn workbench_view_test_state() -> @core.ViewStateContext {
   {
     focused: false,
@@ -110,7 +152,7 @@ fn workbench_view_test_state() -> @core.ViewStateContext {
     checked: false,
     expanded: false,
     disabled: false,
-    scratch: "",
+    slots: @core.ViewStateSlots::empty(),
   }
 }
 

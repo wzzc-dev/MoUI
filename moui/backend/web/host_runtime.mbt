@@ -220,7 +220,11 @@ pub impl @window_web.ApplicationHandler for WebApp with fn can_create_surfaces(
               renderer,
             }),
           )
-          register_web_semantics_runtime(window.id().into_raw(), self.runtime)
+          register_web_semantics_runtime(
+            window.id().into_raw(),
+            window_web_default_canvas_id(window.id().into_raw()),
+            self.runtime,
+          )
           window.request_redraw()
         }
       }
@@ -241,6 +245,7 @@ pub impl @window_web.ApplicationHandler for WebApp with fn new_events(
   }
   web_timer_dispatch_due()
   self.drain_async_host_services()
+  sync_all_web_semantics()
   self.redraw_dirty_windows()
 }
 
@@ -258,11 +263,6 @@ fn WebApp::redraw_window(self : WebApp, window_id : @host.HostWindowId) -> Unit 
       )
       runtime_slot.driver.apply_render_frame_result(result)
       runtime_slot.driver.finish_redraw()
-      sync_web_semantics(
-        platform_slot.platform_id.into_raw(),
-        window_web_default_canvas_id(platform_slot.platform_id.into_raw()),
-        runtime_slot.driver.runtime.semantics(),
-      )
     }
     _ => ()
   }

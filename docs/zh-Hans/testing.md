@@ -21,7 +21,6 @@ node scripts/validate-guidance-consistency.mjs
 node scripts/validate-api-surface.mjs
 node scripts/generate-repo-docs.mjs --check
 node scripts/validate-window-dependency.mjs
-node scripts/validate-harmonyos-shell.mjs
 node scripts/validate-harness-invariants.mjs
 node scripts/validate-maintenance-baseline.mjs
 moon run tools/moui/validate_source_file_policy --target native

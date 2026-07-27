@@ -58,39 +58,6 @@ fn restore_text_history(
 }
 
 ///|
-fn[Msg] view_caret_move_result(
-  ctx : @core.ViewEventContext,
-  text : String,
-  direction : TextCaretDirection,
-  extend_selection : Bool,
-) -> @core.ViewEventResult[Msg] {
-  let caret_move = move_text_caret(
-    text,
-    ctx.text_control.caret,
-    ctx.text_control.selection,
-    direction,
-    extend_selection~,
-  )
-  let next_control = {
-    ..ctx.text_control,
-    caret: caret_move.caret,
-    selection: caret_move.selection,
-    composition: None,
-    composition_cursor: None,
-  }
-  let changed = next_control.caret != ctx.text_control.caret ||
-    next_control.selection != ctx.text_control.selection ||
-    ctx.text_control.composition is Some(_) ||
-    ctx.text_control.composition_cursor is Some(_)
-  view_event_result(
-    changed~,
-    captured=true,
-    text_control=Some(next_control),
-    dirty=@core.ViewDirtyHint::ViewPaintDirty,
-  )
-}
-
-///|
 fn[Msg] view_text_input_result(
   ctx : @core.ViewEventContext,
   value~ : @core.Binding[String],
@@ -107,7 +74,11 @@ fn[Msg] view_text_input_result(
     changed=result.changed,
     captured=result.changed,
     text_control=Some(result.control),
-    dirty=@core.ViewDirtyHint::ViewPaintDirty,
+    dirty=if result.text != text {
+      @core.ViewDirtyHint::ViewBuildDirty
+    } else {
+      @core.ViewDirtyHint::ViewPaintDirty
+    },
     messages=if result.changed {
       text_input_messages(on_input, result.text)
     } else {

@@ -86,7 +86,6 @@ pub fn ShowcaseModel::program_with_route_host(Self, ShowcaseRouteHost) -> @core.
 pub fn ShowcaseModel::route(Self) -> String
 pub fn ShowcaseModel::todo_count(Self) -> Int
 pub fn ShowcaseModel::update(Self, ShowcaseMsg) -> Self
-pub fn ShowcaseModel::view(Self, @core.ViewEnvironment) -> @core.View[ShowcaseMsg]
 pub fn ShowcaseModel::view_body(Self, @core.ViewEnvironment, width? : Double) -> @core.View[ShowcaseMsg]
 pub fn ShowcaseModel::with_host_summary(Self, @host.HostCapabilitySummary) -> Self
 

@@ -12,18 +12,10 @@ fn[Msg] text_area_control(
   line_height? : Double = 28.0,
   key? : String? = None,
 ) -> @core.View[Msg] {
-  let theme_revision = match theme {
-    Some(t) => t.revision_fingerprint()
-    None => "context"
-  }
-  let variant_label = match variant {
-    TextFieldVariant::Filled => "filled"
-    TextFieldVariant::Outline => "outline"
-    TextFieldVariant::Plain => "plain"
-  }
+  let value_snapshot = value.get()
   @core.View::from_node(
     TextArea::{
-      value,
+      value: value_snapshot,
       placeholder,
       size,
       theme,
@@ -31,19 +23,29 @@ fn[Msg] text_area_control(
       style,
       lines,
       line_height,
-      theme_revision,
-      variant_label,
+      has_on_submit: on_submit is Some(_),
       key,
     },
-    event=(node, ctx) => text_area_event(node, ctx, on_input, on_submit),
-    text_command=(node, ctx, intent, paste_text) => {
-      handle_text_field_command(
-        ctx,
-        value=node.value,
-        on_input~,
-        intent,
-        paste_text~,
-      )
+    event=(node, ctx) => text_area_event(node, ctx, value, on_input, on_submit),
+    text_command=(_node, ctx, intent, paste_text) => {
+      handle_text_field_command(ctx, value~, on_input~, intent, paste_text~)
+    },
+    semantics_actions=_node => {
+      let handlers : Array[@core.ViewSemanticsActionHandler[Msg]] = [
+        @core.ViewSemanticsActionHandler::set_text((ctx, next) => {
+          text_semantics_set_text(ctx, value, on_input, next)
+        }),
+      ]
+      match on_submit {
+        Some(message) =>
+          handlers.push(
+            @core.ViewSemanticsActionHandler::submit(_ctx => {
+              @core.ViewSemanticsActionResult::message(message)
+            }),
+          )
+        None => ()
+      }
+      handlers
     },
   )
 }
@@ -52,6 +54,7 @@ fn[Msg] text_area_control(
 fn[Msg] text_area_event(
   node : TextArea,
   ctx : @core.ViewEventContext,
+  value : @core.Binding[String],
   on_input : ((String) -> Msg)?,
   on_submit : Msg?,
 ) -> @core.ViewEventResult[Msg] {
@@ -62,7 +65,7 @@ fn[Msg] text_area_event(
   }
   handle_text_area_event(
     ctx,
-    value=node.value,
+    value~,
     on_input~,
     on_submit~,
     font=resolved_style.font,
@@ -145,7 +148,7 @@ fn[Msg] handle_text_area_keyboard(
       changed=result.changed,
       captured=true,
       text_control=Some(result.control),
-      dirty=@core.ViewDirtyHint::ViewPaintDirty,
+      dirty=@core.ViewDirtyHint::ViewBuildDirty,
       messages=text_input_messages(on_input, result.text),
     )
   }
@@ -156,7 +159,7 @@ fn[Msg] handle_text_area_keyboard(
       changed=result.changed,
       captured=true,
       text_control=Some(result.control),
-      dirty=@core.ViewDirtyHint::ViewPaintDirty,
+      dirty=@core.ViewDirtyHint::ViewBuildDirty,
       messages=text_input_messages(on_input, result.text),
     )
   }
@@ -459,7 +462,6 @@ fn text_input_state_for_multi_line(
   }
   {
     focused: true,
-    element_id: None,
     text,
     caret,
     selection: text_input_grapheme_selection(boundaries, control.selection),

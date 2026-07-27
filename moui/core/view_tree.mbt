@@ -36,6 +36,8 @@ priv enum ViewModifier[Msg] {
   ScaleModifier(Double, Double)
   DisabledModifier(Bool)
   AccessibilityLabelModifier(String)
+  SemanticIdModifier(SemanticId)
+  SemanticsCompositionModifier(SemanticsComposition)
   SemanticsRoleModifier(SemanticsRole)
   SemanticsLevelModifier(Int)
   SemanticsUrlModifier(String)
@@ -46,7 +48,6 @@ priv enum ViewModifier[Msg] {
   SemanticsInvalidModifier(Bool)
   SemanticsRequiredModifier(Bool)
   SemanticsDescriptionModifier(String)
-  SemanticsActionModifier(SemanticsAction)
   FocusableModifier(Bool)
   FocusTrapModifier(Bool)
   OnTapMessageModifier(Msg)
@@ -76,68 +77,6 @@ fn[Msg] View::apply_modifier(
   modifier : ViewModifier[Msg],
 ) -> View[Msg] {
   modifier_view(self, modifier)
-}
-
-///|
-fn[Msg] modifier_revision(modifier : ViewModifier[Msg]) -> String {
-  match modifier {
-    KeyModifier(key) => "key:\{key.value}"
-    PaddingModifier(insets) =>
-      "padding:\{insets.top}:\{insets.right}:\{insets.bottom}:\{insets.left}"
-    FrameModifier(data) =>
-      "frame:\{option_double_revision(data.width)}:\{option_double_revision(data.height)}:\{option_double_revision(data.min_width)}:\{option_double_revision(data.min_height)}:\{option_double_revision(data.max_width)}:\{option_double_revision(data.max_height)}"
-    BackgroundModifier(brush) => "background:\{brush_revision(brush)}"
-    ForegroundModifier(color) => "foreground:\{color_revision(color)}"
-    FontModifier(font) => "font:\{font.size}:\{font.weight}"
-    CornerRadiusModifier(radius) => "corner-radius:\{radius}"
-    OpacityModifier(opacity) => "opacity:\{opacity}"
-    ShadowModifier(style) =>
-      "shadow:\{color_revision(style.color)}:\{style.offset.x}:\{style.offset.y}:\{style.blur_radius}:\{style.spread}"
-    BorderModifier(style) =>
-      "border:\{brush_revision(style.brush)}:\{style.width}"
-    OffsetModifier(dx, dy) => "offset:\{dx}:\{dy}"
-    ClipModifier => "clip"
-    ScaleModifier(sx, sy) => "scale:\{sx}:\{sy}"
-    DisabledModifier(disabled) => "disabled:\{disabled}"
-    AccessibilityLabelModifier(label) => "accessibility-label:\{label}"
-    SemanticsRoleModifier(role) => "semantics-role:\{role_label(role)}"
-    SemanticsLevelModifier(level) => "semantics-level:\{level}"
-    SemanticsUrlModifier(url) => "semantics-url:\{url}"
-    SemanticsSelectedModifier(selected) => "semantics-selected:\{selected}"
-    SemanticsPressedModifier(pressed) => "semantics-pressed:\{pressed}"
-    SemanticsCheckedModifier(checked) => "semantics-checked:\{checked}"
-    SemanticsExpandedModifier(expanded) => "semantics-expanded:\{expanded}"
-    SemanticsInvalidModifier(invalid) => "semantics-invalid:\{invalid}"
-    SemanticsRequiredModifier(required) => "semantics-required:\{required}"
-    SemanticsDescriptionModifier(description) =>
-      "semantics-description:\{description}"
-    SemanticsActionModifier(action) =>
-      "semantics-action:\{action_label(action)}"
-    FocusableModifier(focusable) => "focusable:\{focusable}"
-    FocusTrapModifier(enabled) => "focus-trap:\{enabled}"
-    OnTapMessageModifier(_) => "on-tap"
-    OnLongPressMessageModifier(_) => "on-long-press"
-    OnDoubleTapMessageModifier(_) => "on-double-tap"
-    OnDragMessageModifier(_) => "on-drag"
-    OnDragWithFrameMessageModifier(_) => "on-drag-with-frame"
-    OnFileDropMessageModifier(_) => "on-file-drop"
-    KeyboardShortcutModifier(shortcut) =>
-      "keyboard-shortcut:\{shortcut.key}:\{shortcut.modifiers.meta}:\{shortcut.modifiers.control}:\{shortcut.modifiers.alt}:\{shortcut.modifiers.shift}"
-    FlexibleModifier(weight) => "flexible:\{weight}"
-    LayoutPriorityModifier(priority) => "layout-priority:\{priority}"
-    AlignModifier(alignment) => "align:\{alignment.x}:\{alignment.y}"
-    SpacingModifier(spacing) => "spacing:\{spacing}"
-    MainAxisAlignmentModifier(alignment) =>
-      "main-axis-alignment:\{main_axis_alignment_label(alignment)}"
-    CrossAxisAlignmentModifier(alignment) =>
-      "cross-axis-alignment:\{cross_axis_alignment_label(alignment)}"
-    ThemeModifier(theme) => theme.revision_fingerprint()
-    EnvironmentModifier(env) => env.revision_fingerprint()
-    AspectRatioModifier(ratio) => "aspect-ratio:\{ratio}"
-    IntrinsicWidthModifier => "intrinsic-width"
-    IntrinsicHeightModifier => "intrinsic-height"
-    RepaintBoundaryModifier => "repaint-boundary"
-  }
 }
 
 ///|
@@ -244,7 +183,6 @@ fn[Msg] modifier_paint(
         child_layers: [],
         post_commands: [DrawCommand::PopOpacity],
         overlay_commands: [],
-        platform_views: [],
         repaint_boundary: false,
         animating: false,
       }
@@ -282,7 +220,6 @@ fn[Msg] modifier_paint(
         child_layers: [],
         post_commands: [DrawCommand::PopClip],
         overlay_commands: [],
-        platform_views: [],
         repaint_boundary: false,
         animating: false,
       }
@@ -292,7 +229,6 @@ fn[Msg] modifier_paint(
         child_layers: [],
         post_commands: [DrawCommand::PopTransform],
         overlay_commands: [],
-        platform_views: [],
         repaint_boundary: false,
         animating: false,
       }
@@ -302,7 +238,6 @@ fn[Msg] modifier_paint(
         child_layers: [],
         post_commands: [DrawCommand::PopOpacity],
         overlay_commands: [],
-        platform_views: [],
         repaint_boundary: false,
         animating: false,
       }
@@ -430,88 +365,24 @@ fn[Msg] handle_double_tap_modifier(
 }
 
 ///|
-/// Restore a persisted `DragGestureState` from `scratch`, or return a fresh
-/// idle state when no drag state has been recorded yet.
-fn drag_gesture_state_from_scratch(scratch : String) -> DragGestureState {
-  if scratch.has_prefix("dg:") {
-    let parts = scratch.split(":").to_array()
-    if parts.length() >= 7 {
-      let phase_val : Int = @string.from_str(parts[1]) catch { _ => 0 }
-      let phase = match phase_val {
-        0 => DragGesturePhase::Idle
-        1 => DragGesturePhase::Pending
-        2 => DragGesturePhase::Started
-        3 => DragGesturePhase::Changed
-        4 => DragGesturePhase::Ended
-        5 => DragGesturePhase::Cancelled
-        _ => DragGesturePhase::Idle
-      }
-      let ox : Double = @string.from_str(parts[2]) catch { _ => 0.0 }
-      let oy : Double = @string.from_str(parts[3]) catch { _ => 0.0 }
-      let lx : Double = @string.from_str(parts[4]) catch { _ => 0.0 }
-      let ly : Double = @string.from_str(parts[5]) catch { _ => 0.0 }
-      let md : Double = @string.from_str(parts[6]) catch { _ => 3.0 }
-      let state = DragGestureState::new(min_distance=md)
-      if phase != DragGesturePhase::Idle {
-        let origin = Point::new(x=ox, y=oy)
-        let last = Point::new(x=lx, y=ly)
-        { ..state, phase, origin: Some(origin), last_position: Some(last) }
-      } else {
-        state
-      }
-    } else {
-      DragGestureState::new()
-    }
-  } else {
-    DragGestureState::new()
-  }
-}
-
-///|
-/// Encode a `DragGestureState` into the `scratch` string so it survives
-/// across event dispatches.
-fn drag_gesture_state_to_scratch(state : DragGestureState) -> String {
-  let phase_int = match state.phase {
-    DragGesturePhase::Idle => 0
-    DragGesturePhase::Pending => 1
-    DragGesturePhase::Started => 2
-    DragGesturePhase::Changed => 3
-    DragGesturePhase::Ended => 4
-    DragGesturePhase::Cancelled => 5
-  }
-  let ox = match state.origin {
-    Some(p) => p.x.to_string()
-    None => "0"
-  }
-  let oy = match state.origin {
-    Some(p) => p.y.to_string()
-    None => "0"
-  }
-  let lx = match state.last_position {
-    Some(p) => p.x.to_string()
-    None => "0"
-  }
-  let ly = match state.last_position {
-    Some(p) => p.y.to_string()
-    None => "0"
-  }
-  "dg:\{phase_int}:\{ox}:\{oy}:\{lx}:\{ly}:\{state.min_distance.to_string()}"
-}
-
-///|
 fn[Msg] handle_drag_modifier(
   ctx : ViewEventContext,
   handler~ : (DragGestureEvent, Rect) -> Msg,
 ) -> ViewEventResult[Msg] {
   match ctx.event {
     Pointer(event) => {
-      let gesture = drag_gesture_state_from_scratch(ctx.state.scratch)
+      let slot = drag_gesture_view_state_slot()
+      let gesture = ctx.state.read_slot(slot)
       let result = gesture.update(
         event,
         inside=ctx.frame.contains(event.position),
       )
-      let next_scratch = drag_gesture_state_to_scratch(result.state)
       let active = result.state.phase != DragGesturePhase::Idle
+      let next_state = if active {
+        ctx.state.with_slot(slot, result.state)
+      } else {
+        ctx.state.without_slot(slot)
+      }
       match result.event {
         Some(drag_event) => {
           let frame = match ctx.child_frames {
@@ -523,7 +394,7 @@ fn[Msg] handle_drag_modifier(
             activated: true,
             focused: false,
             captured: true,
-            state: Some({ ..ctx.state, scratch: next_scratch }),
+            state: Some(next_state),
             text_control: None,
             dirty: ViewDirtyHint::ViewPaintDirty,
             messages: [handler(drag_event, frame)],
@@ -532,13 +403,13 @@ fn[Msg] handle_drag_modifier(
         None =>
           if active {
             {
-              changed: next_scratch != ctx.state.scratch,
+              changed: next_state != ctx.state,
               activated: false,
               focused: false,
               captured: true,
-              state: Some({ ..ctx.state, scratch: next_scratch }),
+              state: Some(next_state),
               text_control: None,
-              dirty: if next_scratch != ctx.state.scratch {
+              dirty: if next_state != ctx.state {
                 ViewDirtyHint::ViewPaintDirty
               } else {
                 ViewDirtyHint::ViewClean
@@ -625,41 +496,45 @@ fn[Msg] modifier_semantics(modifier : ViewModifier[Msg]) -> ViewSemanticsInfo {
   match modifier {
     AccessibilityLabelModifier(label) =>
       ViewSemanticsInfo::new(label~, value=label)
+    SemanticIdModifier(semantic_id) => ViewSemanticsInfo::new(semantic_id~)
+    SemanticsCompositionModifier(composition) =>
+      ViewSemanticsInfo::new(composition~)
     SemanticsRoleModifier(role) => ViewSemanticsInfo::new(role~)
     SemanticsLevelModifier(level) => ViewSemanticsInfo::new(level~)
     SemanticsUrlModifier(url) => ViewSemanticsInfo::new(url~)
     DisabledModifier(disabled) => ViewSemanticsInfo::new(disabled~)
-    FocusableModifier(focusable) =>
-      ViewSemanticsInfo::new(actions=if focusable { [Focus] } else { [] })
+    FocusableModifier(_) => ViewSemanticsInfo::new()
     OnTapMessageModifier(_)
     | OnLongPressMessageModifier(_)
     | OnDoubleTapMessageModifier(_)
     | OnDragMessageModifier(_)
     | OnDragWithFrameMessageModifier(_)
     | KeyboardShortcutModifier(_) =>
-      ViewSemanticsInfo::new(role=SemanticsRole::Button, actions=[
-        Focus,
-        Activate,
-      ])
-    SemanticsSelectedModifier(selected) =>
-      ViewSemanticsInfo::new(selected~, actions=[SemanticsAction::Select])
+      ViewSemanticsInfo::new(role=SemanticsRole::Button)
+    SemanticsSelectedModifier(selected) => ViewSemanticsInfo::new(selected~)
     SemanticsPressedModifier(pressed) => ViewSemanticsInfo::new(pressed~)
     SemanticsCheckedModifier(checked) => ViewSemanticsInfo::new(checked~)
-    SemanticsExpandedModifier(expanded) =>
-      ViewSemanticsInfo::new(
-        expanded~,
-        actions=if expanded {
-          [SemanticsAction::Collapse]
-        } else {
-          [SemanticsAction::Expand]
-        },
-      )
+    SemanticsExpandedModifier(expanded) => ViewSemanticsInfo::new(expanded~)
     SemanticsInvalidModifier(invalid) => ViewSemanticsInfo::new(invalid~)
     SemanticsRequiredModifier(required) => ViewSemanticsInfo::new(required~)
     SemanticsDescriptionModifier(description) =>
       ViewSemanticsInfo::new(description~)
-    SemanticsActionModifier(action) => ViewSemanticsInfo::new(actions=[action])
     _ => ViewSemanticsInfo::new()
+  }
+}
+
+///|
+fn[Msg] modifier_semantics_actions(
+  modifier : ViewModifier[Msg],
+) -> Array[ViewSemanticsActionHandler[Msg]] {
+  match modifier {
+    OnTapMessageModifier(message) =>
+      [
+        ViewSemanticsActionHandler::activate(_context => {
+          ViewSemanticsActionResult::message(message)
+        }),
+      ]
+    _ => []
   }
 }
 

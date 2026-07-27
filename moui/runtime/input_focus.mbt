@@ -122,20 +122,6 @@ fn ElementNode::contains_element_id(
 }
 
 ///|
-fn ElementNode::is_focusable_id(self : ElementNode, target : ElementId) -> Bool {
-  if self.id == target {
-    self.view_node.focusable()
-  } else {
-    for child in self.children {
-      if child.is_focusable_id(target) {
-        return true
-      }
-    }
-    false
-  }
-}
-
-///|
 fn ElementNode::active_focus_trap(
   self : ElementNode,
   current~ : ElementId?,
@@ -155,23 +141,6 @@ fn ElementNode::accepts_tab_input(
   } else {
     for child in self.children {
       if child.accepts_tab_input(target) {
-        return true
-      }
-    }
-    false
-  }
-}
-
-///|
-fn ElementNode::is_text_input_target(
-  self : ElementNode,
-  target : ElementId,
-) -> Bool {
-  if self.id == target {
-    self.view_accepts_text_input(self.view_node)
-  } else {
-    for child in self.children {
-      if child.is_text_input_target(target) {
         return true
       }
     }

@@ -23,8 +23,8 @@ impl @core.ViewNode for StackLayout with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for StackLayout with fn revision(_self) {
-  "stack"
+impl @core.ViewNode for StackLayout with fn declaration(_self) {
+  @core.ViewDeclaration::constant()
 }
 
 ///|
@@ -47,7 +47,9 @@ impl @core.ViewNode for StackLayout with fn layout(_self, ctx) {
 
 ///|
 impl @core.ViewNode for StackLayout with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
+  @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Transparent,
+  )
 }
 
 ///|
@@ -75,8 +77,8 @@ impl @core.ViewNode for PaddingLayout with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for PaddingLayout with fn revision(self) {
-  "padding:\{self.insets.top}:\{self.insets.right}:\{self.insets.bottom}:\{self.insets.left}"
+impl @core.ViewNode for PaddingLayout with fn declaration(self) {
+  view_layout_declaration(view_insets_key(self.insets))
 }
 
 ///|
@@ -113,7 +115,9 @@ impl @core.ViewNode for PaddingLayout with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for PaddingLayout with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
+  @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Transparent,
+  )
 }
 
 ///|
@@ -161,15 +165,21 @@ impl @core.ViewNode for FrameLayout with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for FrameLayout with fn revision(self) {
-  "frame:\{view_double_option_revision(self.width)}:\{view_double_option_revision(self.height)}:\{view_double_option_revision(self.min_width)}:\{view_double_option_revision(self.min_height)}:\{view_double_option_revision(self.max_width)}:\{view_double_option_revision(self.max_height)}"
+impl @core.ViewNode for FrameLayout with fn declaration(self) {
+  view_layout_declaration(
+    view_record_key("FrameLayout", [
+      ("width", view_double_option_key(self.width)),
+      ("height", view_double_option_key(self.height)),
+      ("min_width", view_double_option_key(self.min_width)),
+      ("min_height", view_double_option_key(self.min_height)),
+      ("max_width", view_double_option_key(self.max_width)),
+      ("max_height", view_double_option_key(self.max_height)),
+    ]),
+  )
 }
 
 ///|
-impl @core.ViewNode for FrameLayout with fn child_constraints(
-  self,
-  constraints,
-) {
+impl @core.ViewNode for FrameLayout with fn child_constraints(self, constraints) {
   frame_constraints_for_measure(
     constraints,
     width=self.width,
@@ -197,7 +207,9 @@ impl @core.ViewNode for FrameLayout with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for FrameLayout with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
+  @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Transparent,
+  )
 }
 
 ///|
@@ -212,15 +224,7 @@ fn[Msg] container_box(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::from_node(
-    ContainerBox::{
-      size,
-      background,
-      border,
-      corner_radius,
-      shadow,
-      kind,
-      key,
-    },
+    ContainerBox::{ size, background, border, corner_radius, shadow, kind, key },
     children=_node => {
       match child {
         Some(value) => [value]
@@ -247,8 +251,18 @@ impl @core.ViewNode for ContainerBox with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for ContainerBox with fn revision(self) {
-  "container:\{view_size_option_revision(self.size)}:\{view_brush_option_revision(self.background)}:\{view_border_option_revision(self.border)}:\{self.corner_radius}:\{view_shadow_option_revision(self.shadow)}"
+impl @core.ViewNode for ContainerBox with fn declaration(self) {
+  view_declaration(
+    layout=view_exact_channel(view_size_option_key(self.size)),
+    paint=view_exact_channel(
+      view_record_key("ContainerBox.paint", [
+        ("background", view_brush_option_key(self.background)),
+        ("border", view_border_option_key(self.border)),
+        ("corner_radius", @core.DeclarationKey::double(self.corner_radius)),
+        ("shadow", view_shadow_option_key(self.shadow)),
+      ]),
+    ),
+  )
 }
 
 ///|
@@ -283,7 +297,9 @@ impl @core.ViewNode for ContainerBox with fn paint(self, ctx) {
 
 ///|
 impl @core.ViewNode for ContainerBox with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
+  @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Transparent,
+  )
 }
 
 ///|
@@ -316,8 +332,14 @@ impl @core.ViewNode for GridLayout with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for GridLayout with fn revision(self) {
-  "grid:\{self.columns}:\{self.row_spacing}:\{self.column_spacing}"
+impl @core.ViewNode for GridLayout with fn declaration(self) {
+  view_layout_declaration(
+    view_record_key("GridLayout", [
+      ("columns", @core.DeclarationKey::int(self.columns)),
+      ("row_spacing", @core.DeclarationKey::double(self.row_spacing)),
+      ("column_spacing", @core.DeclarationKey::double(self.column_spacing)),
+    ]),
+  )
 }
 
 ///|
@@ -357,7 +379,9 @@ impl @core.ViewNode for GridLayout with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for GridLayout with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
+  @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Transparent,
+  )
 }
 
 ///|
@@ -390,8 +414,8 @@ impl @core.ViewNode for ListLayout with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for ListLayout with fn revision(self) {
-  "list:\{self.spacing}"
+impl @core.ViewNode for ListLayout with fn declaration(self) {
+  view_layout_declaration(@core.DeclarationKey::double(self.spacing))
 }
 
 ///|
@@ -417,7 +441,9 @@ impl @core.ViewNode for ListLayout with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for ListLayout with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
+  @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Transparent,
+  )
 }
 
 ///|
@@ -431,18 +457,31 @@ fn[Msg] scroll_container(
   kind? : String = "Scroll",
   key? : String? = None,
 ) -> @core.View[Msg] {
+  let scrollable = state is Some(_) || on_scroll is Some(_)
   @core.View::from_node(
     ScrollContainer::{
       offset,
       viewport,
-      state,
       shows_indicator,
-      has_on_scroll: on_scroll is Some(_),
+      scrollable,
       kind,
       key,
     },
     children=_node => [child],
-    event=(node, ctx) => scroll_container_event(node, ctx, on_scroll),
+    event=(node, ctx) => scroll_container_event(node, ctx, state, on_scroll),
+    semantics_actions=node => {
+      if node.scrollable {
+        [
+          @core.ViewSemanticsActionHandler::scroll((ctx, direction) => {
+            scroll_container_semantics_action(
+              node, ctx, direction, state, on_scroll,
+            )
+          }),
+        ]
+      } else {
+        []
+      }
+    },
   )
 }
 
@@ -450,9 +489,8 @@ fn[Msg] scroll_container(
 priv struct ScrollContainer {
   offset : @core.Point
   viewport : @core.Size?
-  state : @core.ScrollState?
   shows_indicator : Bool
-  has_on_scroll : Bool
+  scrollable : Bool
   kind : String
   key : String?
 }
@@ -463,9 +501,17 @@ impl @core.ViewNode for ScrollContainer with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for ScrollContainer with fn revision(self) {
-  let current = scroll_offset(self.offset, self.state)
-  "scroll:\{current.x}:\{current.y}:\{view_size_option_revision(self.viewport)}:\{self.state is Some(_)}:\{self.has_on_scroll}:\{self.shows_indicator}"
+impl @core.ViewNode for ScrollContainer with fn declaration(self) {
+  view_declaration(
+    layout=view_exact_channel(
+      view_record_key("ScrollContainer.layout", [
+        ("offset", view_point_key(self.offset)),
+        ("viewport", view_size_option_key(self.viewport)),
+      ]),
+    ),
+    paint=view_exact_channel(@core.DeclarationKey::bool(self.shows_indicator)),
+    semantics=view_exact_channel(@core.DeclarationKey::bool(self.scrollable)),
+  )
 }
 
 ///|
@@ -487,7 +533,7 @@ impl @core.ViewNode for ScrollContainer with fn layout(self, ctx) {
         width=viewport_size.width,
         height=viewport_size.height,
       ),
-      offset=scroll_offset(self.offset, self.state),
+      offset=self.offset,
       viewport=viewport_size,
       child_size=first_child_size(ctx.child_sizes),
     ),
@@ -516,12 +562,11 @@ impl @core.ViewNode for ScrollContainer with fn paint(self, ctx) {
       scroll_indicator_commands(
         ctx.frame,
         first_child_frame_size(ctx.child_frames, viewport_size),
-        scroll_offset(self.offset, self.state),
+        self.offset,
       )
     } else {
       []
     },
-    platform_views: [],
     repaint_boundary: false,
     animating: false,
   }
@@ -529,15 +574,17 @@ impl @core.ViewNode for ScrollContainer with fn paint(self, ctx) {
 
 ///|
 impl @core.ViewNode for ScrollContainer with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::ScrollView, actions=[
-    @core.SemanticsAction::Scroll,
-  ])
+  @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Boundary,
+    role=@core.SemanticsRole::ScrollView,
+  )
 }
 
 ///|
 fn[Msg] scroll_container_event(
   node : ScrollContainer,
   ctx : @core.ViewEventContext,
+  state : @core.ScrollState?,
   on_scroll : ((@core.Point) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {
   match ctx.event {
@@ -548,12 +595,12 @@ fn[Msg] scroll_container_event(
           event,
           offset=node.offset,
           viewport=node.viewport,
-          state=node.state,
+          state~,
           on_scroll~,
         )
       } else if ctx.frame.contains(event.position) &&
         (event.wheel_delta.x != 0.0 || event.wheel_delta.y != 0.0) {
-        match (node.state, on_scroll) {
+        match (state, on_scroll) {
           (Some(state), Some(handler)) => {
             let viewport_size = node.viewport.unwrap_or(ctx.frame.size)
             let child_size = first_child_frame_size(
@@ -575,7 +622,7 @@ fn[Msg] scroll_container_event(
                 changed=true,
                 activated=true,
                 captured=true,
-                dirty=@core.ViewDirtyHint::ViewLayoutDirty,
+                dirty=@core.ViewDirtyHint::ViewBuildDirty,
                 messages=[handler(event.wheel_delta)],
               )
             }
@@ -600,7 +647,7 @@ fn[Msg] scroll_container_event(
               view_event_result(
                 changed=true,
                 captured=true,
-                dirty=@core.ViewDirtyHint::ViewLayoutDirty,
+                dirty=@core.ViewDirtyHint::ViewBuildDirty,
               )
             }
           }
@@ -618,6 +665,68 @@ fn[Msg] scroll_container_event(
         @core.ViewEventResult::ignored()
       }
     _ => @core.ViewEventResult::ignored()
+  }
+}
+
+///|
+fn semantics_scroll_wheel_delta(
+  direction : @core.SemanticsScrollDirection,
+  viewport : @core.Size,
+) -> @core.Point {
+  let horizontal_step = view_max_double(40.0, viewport.width * 0.8)
+  let vertical_step = view_max_double(40.0, viewport.height * 0.8)
+  match direction {
+    @core.SemanticsScrollDirection::Forward
+    | @core.SemanticsScrollDirection::Down =>
+      @core.Point::new(x=0.0, y=-vertical_step)
+    @core.SemanticsScrollDirection::Backward
+    | @core.SemanticsScrollDirection::Up =>
+      @core.Point::new(x=0.0, y=vertical_step)
+    @core.SemanticsScrollDirection::Left =>
+      @core.Point::new(x=horizontal_step, y=0.0)
+    @core.SemanticsScrollDirection::Right =>
+      @core.Point::new(x=-horizontal_step, y=0.0)
+  }
+}
+
+///|
+fn[Msg] scroll_container_semantics_action(
+  node : ScrollContainer,
+  ctx : @core.ViewSemanticsActionContext,
+  direction : @core.SemanticsScrollDirection,
+  state : @core.ScrollState?,
+  on_scroll : ((@core.Point) -> Msg)?,
+) -> @core.ViewSemanticsActionResult[Msg] {
+  if state is None && on_scroll is None {
+    return @core.ViewSemanticsActionResult::rejected()
+  }
+  let viewport = node.viewport.unwrap_or(ctx.frame.size)
+  let child_size = first_child_frame_size(ctx.child_frames, viewport)
+  let current = match state {
+    Some(scroll_state) => scroll_state.offset()
+    None => node.offset
+  }
+  let delta = semantics_scroll_wheel_delta(direction, viewport)
+  let next = scroll_offset_after_wheel(current, delta, viewport, child_size)
+  let messages = match on_scroll {
+    Some(handler) => [handler(delta)]
+    None => []
+  }
+  if next == current && messages.is_empty() {
+    return @core.ViewSemanticsActionResult::rejected()
+  }
+  match state {
+    Some(scroll_state) =>
+      @core.ViewSemanticsActionResult::accepted(
+        dirty=@core.ViewDirtyHint::ViewBuildDirty,
+        messages~,
+        commit=Some(() => scroll_state.set_offset(next)),
+      )
+    None =>
+      @core.ViewSemanticsActionResult::accepted(
+        dirty=@core.ViewDirtyHint::ViewBuildDirty,
+        messages~,
+      )
   }
 }
 
@@ -673,11 +782,19 @@ fn scroll_indicator_handles_event(
   ctx : @core.ViewEventContext,
   event : @core.PointerEvent,
 ) -> Bool {
-  ctx.state.scratch == "scroll-indicator-drag" ||
+  ctx.state.read_slot(scroll_indicator_drag_slot()) ||
   (
     ctx.frame.contains(event.position) &&
     event.position.x >= ctx.frame.origin.x + ctx.frame.size.width - 16.0 &&
     event.phase == @core.PointerPhase::Down
+  )
+}
+
+///|
+fn scroll_indicator_drag_slot() -> @core.ViewStateSlot[Bool] {
+  @core.ViewStateSlot::new(
+    key=@core.DeclarationKey::string("moui.views.scroll-indicator.drag"),
+    initial=false,
   )
 }
 
@@ -697,11 +814,12 @@ fn[Msg] scroll_indicator_event_result(
     viewport_size,
     child_size,
   )
-  let next_scratch = if event.phase == @core.PointerPhase::Down ||
-    event.phase == @core.PointerPhase::Move {
-    "scroll-indicator-drag"
+  let next_dragging = event.phase == @core.PointerPhase::Down ||
+    event.phase == @core.PointerPhase::Move
+  let next_state = if next_dragging {
+    ctx.state.with_slot(scroll_indicator_drag_slot(), true)
   } else {
-    ""
+    ctx.state.without_slot(scroll_indicator_drag_slot())
   }
   let should_move = event.phase == @core.PointerPhase::Down ||
     event.phase == @core.PointerPhase::Move
@@ -729,13 +847,17 @@ fn[Msg] scroll_indicator_event_result(
     None => ()
   }
   {
-    changed: should_move || next_scratch != ctx.state.scratch,
+    changed: should_move || next_state != ctx.state,
     activated: should_move && on_scroll is Some(_),
     focused: false,
     captured: true,
-    state: Some({ ..ctx.state, scratch: next_scratch }),
+    state: Some(next_state),
     text_control: None,
-    dirty: @core.ViewDirtyHint::ViewLayoutDirty,
+    dirty: if state is Some(_) {
+      @core.ViewDirtyHint::ViewBuildDirty
+    } else {
+      @core.ViewDirtyHint::ViewLayoutDirty
+    },
     messages: match on_scroll {
       Some(handler) =>
         if should_move {
@@ -902,20 +1024,4 @@ fn scroll_clamp_offset(
     x=view_min_double(max_x, view_max_double(0.0, offset.x)),
     y=view_min_double(max_y, view_max_double(0.0, offset.y)),
   )
-}
-
-///|
-fn view_double_option_revision(value : Double?) -> String {
-  match value {
-    Some(value) => "\{value}"
-    None => "none"
-  }
-}
-
-///|
-fn view_size_option_revision(value : @core.Size?) -> String {
-  match value {
-    Some(value) => "\{value.width}x\{value.height}"
-    None => "auto"
-  }
 }

@@ -8,15 +8,66 @@ fn RuntimeState::request_redraw(self : RuntimeState) -> Unit {
 }
 
 ///|
-fn RuntimeState::ensure_render_tree(self : RuntimeState) -> Unit {
-  if self.needs_rebuild || self.needs_layout || self.needs_paint {
-    self.render_current_tree()
+fn RuntimeState::request_rebuild_wakeup(self : RuntimeState) -> Unit {
+  if !self.needs_redraw {
+    self.rebuild_wakeup_redraw = true
+  }
+  self.request_redraw()
+}
+
+///|
+fn RuntimeState::mark_visual_work(self : RuntimeState) -> Unit {
+  self.rebuild_wakeup_redraw = false
+}
+
+///|
+fn RuntimeState::settle_rebuild_wakeup(self : RuntimeState) -> Unit {
+  if self.rebuild_wakeup_redraw &&
+    !self.needs_rebuild &&
+    !self.needs_layout &&
+    !self.needs_paint &&
+    !self.active_animations {
+    self.needs_redraw = false
+    self.rebuild_wakeup_redraw = false
   }
 }
 
 ///|
+fn RuntimeState::ensure_render_tree(self : RuntimeState) -> Unit {
+  self.rebuild_if_possible()
+  if self.needs_layout || self.needs_paint {
+    self.render_current_tree()
+  }
+  if self.needs_platform {
+    self.refresh_platform_tree()
+  }
+}
+
+///|
+fn RuntimeState::refresh_platform_tree(self : RuntimeState) -> Unit {
+  self.ensure_layout_tree()
+  self.platform_tree = {
+    root: self.element_tree.root.platform_with_environment(
+      self.layout_tree.root,
+      RenderEnvironment::from_environment(self.environment).with_text_system(
+        self.text_system,
+      ),
+    ),
+  }
+  self.needs_platform = false
+  self.dirty_platform_elements.clear()
+  self.refresh_dirty_element_queue()
+  self.settle_rebuild_wakeup()
+}
+
+///|
 fn RuntimeState::ensure_layout_tree(self : RuntimeState) -> Unit {
-  if self.needs_rebuild || self.needs_layout {
+  let mut passes = 0
+  while self.needs_rebuild || self.needs_layout {
+    if passes >= 64 {
+      abort("runtime layout did not stabilize after 64 passes")
+    }
+    passes = passes + 1
     self.layout_current_tree()
   }
 }
@@ -35,13 +86,15 @@ fn RuntimeState::layout_current_tree(self : RuntimeState) -> Unit {
   }
   self.needs_rebuild = false
   self.needs_layout = false
+  self.dirty_layout_elements.clear()
+  self.refresh_dirty_element_queue()
   ignore(self.try_pending_scroll_from_current_layout())
 }
 
 ///|
 fn RuntimeState::render_current_tree(self : RuntimeState) -> Unit {
   let previous_render = self.render_tree
-  let dirty_ids = self.dirty_elements.copy()
+  let dirty_ids = self.dirty_paint_elements.copy()
   let force_full_reason = if self.needs_rebuild {
     Some("rebuild requested")
   } else if previous_render.root.element_id.value() == 0 {
@@ -84,7 +137,11 @@ fn RuntimeState::render_current_tree(self : RuntimeState) -> Unit {
   self.needs_rebuild = false
   self.needs_layout = false
   self.needs_paint = false
-  self.clear_dirty_queue()
+  self.dirty_paint_elements.clear()
+  self.refresh_dirty_element_queue()
+  if self.needs_platform {
+    self.refresh_platform_tree()
+  }
 }
 
 ///|
@@ -253,29 +310,56 @@ fn RuntimeState::queue_paint_dirty(self : RuntimeState, id : ElementId) -> Unit 
 }
 
 ///|
+fn RuntimeState::queue_semantics_dirty(
+  self : RuntimeState,
+  id : ElementId,
+) -> Unit {
+  push_unique_element_id(self.dirty_semantics_elements, id)
+}
+
+///|
+fn RuntimeState::queue_platform_dirty(
+  self : RuntimeState,
+  id : ElementId,
+) -> Unit {
+  push_unique_element_id(self.dirty_platform_elements, id)
+}
+
+///|
 fn RuntimeState::mark_build_dirty(self : RuntimeState, id : ElementId) -> Unit {
+  self.mark_visual_work()
   self.queue_dirty_element(id)
   self.queue_build_dirty(id)
   self.queue_layout_dirty(id)
   self.queue_paint_dirty(id)
+  self.queue_semantics_dirty(id)
+  self.queue_platform_dirty(id)
   self.needs_rebuild = true
   self.needs_layout = true
   self.needs_paint = true
+  self.needs_semantics = true
+  self.needs_platform = true
   self.needs_redraw = true
 }
 
 ///|
 fn RuntimeState::mark_layout_dirty(self : RuntimeState, id : ElementId) -> Unit {
+  self.mark_visual_work()
   self.queue_dirty_element(id)
   self.queue_layout_dirty(id)
   self.queue_paint_dirty(id)
+  self.queue_semantics_dirty(id)
+  self.queue_platform_dirty(id)
   self.needs_layout = true
   self.needs_paint = true
+  self.needs_semantics = true
+  self.needs_platform = true
   self.needs_redraw = true
 }
 
 ///|
 fn RuntimeState::mark_dirty(self : RuntimeState, id : ElementId) -> Unit {
+  self.mark_visual_work()
   self.queue_dirty_element(id)
   self.queue_paint_dirty(id)
   ignore(self.element_tree.root.mark_paint_dirty_by_id(id))
@@ -284,13 +368,35 @@ fn RuntimeState::mark_dirty(self : RuntimeState, id : ElementId) -> Unit {
 }
 
 ///|
+fn RuntimeState::mark_semantics_dirty(
+  self : RuntimeState,
+  id : ElementId,
+) -> Unit {
+  self.queue_semantics_dirty(id)
+  ignore(self.element_tree.root.mark_semantics_dirty_by_id(id))
+  self.needs_semantics = true
+}
+
+///|
+fn RuntimeState::mark_platform_dirty(
+  self : RuntimeState,
+  id : ElementId,
+) -> Unit {
+  self.queue_platform_dirty(id)
+  ignore(self.element_tree.root.mark_platform_dirty_by_id(id))
+  self.needs_platform = true
+}
+
+///|
 fn RuntimeState::mark_current_dirty_elements(self : RuntimeState) -> Unit {
   let ids : Array[ElementId] = []
   let build_ids : Array[ElementId] = []
   let layout_ids : Array[ElementId] = []
   let paint_ids : Array[ElementId] = []
+  let semantics_ids : Array[ElementId] = []
+  let platform_ids : Array[ElementId] = []
   self.element_tree.root.collect_dirty_element_ids_by_kind(
-    ids, build_ids, layout_ids, paint_ids,
+    ids, build_ids, layout_ids, paint_ids, semantics_ids, platform_ids,
   )
   if ids.is_empty() {
     self.mark_dirty(self.element_tree.id())
@@ -305,6 +411,7 @@ fn RuntimeState::mark_current_dirty_elements(self : RuntimeState) -> Unit {
       self.needs_rebuild = true
     }
     if !layout_ids.is_empty() {
+      self.mark_visual_work()
       for id in layout_ids {
         push_unique_element_id(self.dirty_layout_elements, id)
       }
@@ -313,8 +420,20 @@ fn RuntimeState::mark_current_dirty_elements(self : RuntimeState) -> Unit {
     for id in paint_ids {
       push_unique_element_id(self.dirty_paint_elements, id)
     }
-    self.needs_paint = true
-    self.needs_redraw = true
+    for id in semantics_ids {
+      self.mark_semantics_dirty(id)
+    }
+    for id in platform_ids {
+      self.mark_platform_dirty(id)
+    }
+    if !paint_ids.is_empty() {
+      self.mark_visual_work()
+      self.needs_paint = true
+      self.needs_redraw = true
+    }
+    if !semantics_ids.is_empty() {
+      self.needs_semantics = true
+    }
   }
 }
 
@@ -329,9 +448,21 @@ fn RuntimeState::dirty_element_ids(self : RuntimeState) -> Array[ElementId] {
 }
 
 ///|
-fn RuntimeState::clear_dirty_queue(self : RuntimeState) -> Unit {
+fn RuntimeState::refresh_dirty_element_queue(self : RuntimeState) -> Unit {
   self.dirty_elements.clear()
-  self.dirty_build_elements.clear()
-  self.dirty_layout_elements.clear()
-  self.dirty_paint_elements.clear()
+  for id in self.dirty_build_elements {
+    push_unique_element_id(self.dirty_elements, id)
+  }
+  for id in self.dirty_layout_elements {
+    push_unique_element_id(self.dirty_elements, id)
+  }
+  for id in self.dirty_paint_elements {
+    push_unique_element_id(self.dirty_elements, id)
+  }
+  for id in self.dirty_semantics_elements {
+    push_unique_element_id(self.dirty_elements, id)
+  }
+  for id in self.dirty_platform_elements {
+    push_unique_element_id(self.dirty_elements, id)
+  }
 }
