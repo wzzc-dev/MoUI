@@ -49,16 +49,16 @@ This file is generated from repository manifests and validator reports.
 
 | Package | Interface lines | Public | pub(all) |
 |---|---:|---:|---:|
-| root facade (app-loop sugar) (moui/pkg.generated.mbti) | 29 | 7 | 0 |
+| root facade (app-loop sugar) (moui/pkg.generated.mbti) | 31 | 8 | 0 |
 | geometry sugar (moui/geometry/pkg.generated.mbti) | 33 | 9 | 0 |
 | graphics sugar (moui/graphics/pkg.generated.mbti) | 47 | 16 | 0 |
 | animation sugar (moui/animation/pkg.generated.mbti) | 21 | 3 | 0 |
 | text sugar (moui/text/pkg.generated.mbti) | 27 | 6 | 0 |
 | state sugar (moui/state/pkg.generated.mbti) | 35 | 10 | 0 |
-| runtime facade (moui/runtime/pkg.generated.mbti) | 428 | 284 | 9 |
-| core (moui/core/pkg.generated.mbti) | 1830 | 505 | 139 |
+| runtime facade (moui/runtime/pkg.generated.mbti) | 490 | 298 | 16 |
+| core (moui/core/pkg.generated.mbti) | 2009 | 571 | 148 |
 | views facade (moui/views/pkg.generated.mbti) | 1213 | 548 | 19 |
-| host contracts (moui/backend/host/pkg.generated.mbti) | 1107 | 454 | 65 |
+| host contracts (moui/backend/host/pkg.generated.mbti) | 1095 | 454 | 64 |
 | renderer facade (moui/render/pkg.generated.mbti) | 552 | 148 | 37 |
 | skia renderer (moui/render/skia/pkg.generated.mbti) | 189 | 108 | 4 |
 | sun renderer (moui/render/sun/pkg.generated.mbti) | 230 | 138 | 1 |
@@ -103,7 +103,7 @@ This file is generated from repository manifests and validator reports.
 
 ## Documentation Catalog
 
-Published documents: 46.
+Published documents: 47.
 
 | Group | Documents |
 |---|---:|
@@ -111,6 +111,6 @@ Published documents: 46.
 | Guides (guides) | 9 |
 | Examples (examples) | 4 |
 | Platforms (platforms) | 15 |
-| Architecture & API (architecture-api) | 4 |
+| Architecture & API (architecture-api) | 5 |
 | Contributing (contributing) | 5 |
 | Status & Roadmap (status-roadmap) | 4 |

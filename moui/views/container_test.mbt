@@ -26,8 +26,18 @@ impl @core.ViewNode for CenterTestRect with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for CenterTestRect with fn revision(self) {
-  "center-test-rect:\{self.width}:\{self.height}"
+impl @core.ViewNode for CenterTestRect with fn declaration(self) {
+  @core.ViewDeclaration::channels(
+    layout=@core.DeclarationChannel::Exact(
+      @core.DeclarationKey::record(type_tag="CenterTestRect", fields=[
+        ("width", @core.DeclarationKey::double(self.width)),
+        ("height", @core.DeclarationKey::double(self.height)),
+      ]),
+    ),
+    paint=@core.DeclarationChannel::Constant,
+    semantics=@core.DeclarationChannel::Constant,
+    platform=@core.DeclarationChannel::Constant,
+  )
 }
 
 ///|
@@ -67,7 +77,7 @@ fn center_test_state() -> @core.ViewStateContext {
     checked: false,
     expanded: false,
     disabled: false,
-    scratch: "",
+    slots: @core.ViewStateSlots::empty(),
   }
 }
 
@@ -189,11 +199,15 @@ test "center with background wraps the content in a container" {
   // The centered child is preserved inside the container wrapper.
   let children = view.children()
   assert_eq(children.length(), 1)
-  // The inner (grand)child keeps the centered-content semantics label added by
-  // `center` (the container wraps it through `padding_layout`).
+  // The inner center node remains semantics-transparent through the container
+  // and padding wrappers.
   let inner = children[0].children()
   assert_eq(inner.length(), 1)
-  assert_eq(inner[0].semantics().label, "Centered content")
+  assert_eq(
+    inner[0].semantics().composition,
+    @core.SemanticsComposition::Transparent,
+  )
+  assert_eq(inner[0].semantics().label, None)
   // Driving the wrapper layout with a pretend child size confirms the
   // container reports the child's measured size.
   let ctx = center_layout_context(
@@ -229,10 +243,14 @@ test "center applies explicit width and height together with a background" {
 }
 
 ///|
-test "center reports a centered-content semantics label" {
+test "center is semantics-transparent" {
   let child = center_test_rect(width=100.0, height=50.0)
   let view = center(child)
-  assert_eq(view.semantics().label, "Centered content")
+  assert_eq(
+    view.semantics().composition,
+    @core.SemanticsComposition::Transparent,
+  )
+  assert_eq(view.semantics().label, None)
 }
 
 ///|

@@ -56,11 +56,17 @@ impl @core.ViewNode for CustomChildrenLayout with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for CustomChildrenLayout with fn revision(_self) {
-  // Children layout delegates are driven by their callbacks; the runtime
-  // reconciles through layout/paint re-runs rather than this revision. Keep
-  // the revision empty so reconcile compares layout output, not a stub.
-  ""
+impl @core.ViewNode for CustomChildrenLayout with fn declaration(self) {
+  view_declaration(
+    layout=@core.DeclarationChannel::Uncacheable,
+    paint=@core.DeclarationChannel::Uncacheable,
+    semantics=view_exact_channel(
+      view_record_key("CustomChildrenLayout.semantics", [
+        ("role", view_semantics_role_key(self.semantics_role)),
+        ("label", @core.DeclarationKey::string(self.semantics_label)),
+      ]),
+    ),
+  )
 }
 
 ///|
@@ -123,6 +129,12 @@ impl @core.ViewNode for CustomChildrenLayout with fn paint(self, ctx) {
 ///|
 impl @core.ViewNode for CustomChildrenLayout with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
+    composition=if self.semantics_label == "" &&
+      self.semantics_role == @core.SemanticsRole::Group {
+      @core.SemanticsComposition::Transparent
+    } else {
+      @core.SemanticsComposition::Boundary
+    },
     role=self.semantics_role,
     label=self.semantics_label,
     value=self.semantics_label,

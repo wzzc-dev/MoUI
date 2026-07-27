@@ -70,7 +70,6 @@ test "text input session enables ime when surrounding text is too long" {
   let session = TextInputSession::new()
   let state = @core.TextInputState::{
     focused: true,
-    element_id: None,
     text: "a".repeat(@window_core.ImeSurroundingText::max_text_bytes() + 1),
     caret: 0,
     selection: None,
@@ -102,7 +101,6 @@ test "text input session enables ime when surrounding text is too long" {
 test "text input ime diagnostics normalize grapheme cursor and candidate anchor" {
   let state = @core.TextInputState::{
     focused: true,
-    element_id: None,
     text: "A👩‍💻B",
     caret: 2,
     selection: None,
@@ -148,7 +146,6 @@ test "text input session preserves selection anchor in ime surrounding text" {
   let session = TextInputSession::new()
   let state = @core.TextInputState::{
     focused: true,
-    element_id: None,
     text: "你ab好",
     caret: 3,
     selection: Some(@core.TextRange::new(start=1, end=3)),
@@ -184,7 +181,6 @@ test "text input session preserves reverse selection anchor in ime surrounding t
   let session = TextInputSession::new()
   let state = @core.TextInputState::{
     focused: true,
-    element_id: None,
     text: "你ab好",
     caret: 1,
     selection: Some(@core.TextRange::new(start=3, end=1)),

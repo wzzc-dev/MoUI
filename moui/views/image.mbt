@@ -11,13 +11,7 @@ pub fn[Msg] image(
     (Some(width), Some(height)) => Some(@core.Size::new(width~, height~))
     _ => None
   }
-  @core.View::from_node(Image::{
-    source,
-    size,
-    opacity,
-    corner_radius,
-    fit,
-  })
+  @core.View::from_node(Image::{ source, size, opacity, corner_radius, fit })
 }
 
 ///|
@@ -35,8 +29,29 @@ impl @core.ViewNode for Image with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for Image with fn revision(self) {
-  "image:\{self.source}:\{size_revision(self.size)}:\{self.opacity}:\{self.corner_radius}:\{image_fit_revision(self.fit)}"
+impl @core.ViewNode for Image with fn declaration(self) {
+  let fit = @core.DeclarationKey::int(
+    match self.fit {
+      @core.ImageFit::Contain => 0
+      @core.ImageFit::Cover => 1
+      @core.ImageFit::Stretch => 2
+      @core.ImageFit::ScaleDown => 3
+      @core.ImageFit::FitWidth => 4
+      @core.ImageFit::FitHeight => 5
+    },
+  )
+  view_declaration(
+    layout=view_exact_channel(view_size_option_key(self.size)),
+    paint=view_exact_channel(
+      view_record_key("Image.paint", [
+        ("source", @core.DeclarationKey::string(self.source)),
+        ("size", view_size_option_key(self.size)),
+        ("opacity", @core.DeclarationKey::double(self.opacity)),
+        ("corner_radius", @core.DeclarationKey::double(self.corner_radius)),
+        ("fit", fit),
+      ]),
+    ),
+  )
 }
 
 ///|
@@ -73,4 +88,11 @@ impl @core.ViewNode for Image with fn paint(self, context) {
     commands.push(@core.DrawCommand::PopClip)
   }
   @core.ViewPaintPlan::commands(commands)
+}
+
+///|
+impl @core.ViewNode for Image with fn semantics(_self) {
+  @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Transparent,
+  )
 }

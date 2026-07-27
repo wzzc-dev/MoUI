@@ -7,7 +7,12 @@ fn[Msg] event_observer_test_rect(
 ) -> @core.View[Msg] {
   runtime_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="Rect"),
-    revision=() => "event-observer-test-rect:\{width}:\{height}",
+    declaration=() => {
+      runtime_fixture_exact_declaration("EventObserverRect", [
+        ("width", @core.DeclarationKey::double(width)),
+        ("height", @core.DeclarationKey::double(height)),
+      ])
+    },
     layout=ctx => {
       @core.ViewLayoutResult::new(
         size=ctx.constraints.constrain(@core.Size::new(width~, height~)),

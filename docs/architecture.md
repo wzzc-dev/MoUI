@@ -15,7 +15,10 @@ the change intentionally updates the architecture.
 The runtime pipeline is explicit:
 
 ```text
-View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
+ViewDeclaration -> ElementTree
+                       |-> LayoutTree -> RenderTree -> DrawCommand -> renderer
+                       |-> SemanticsTree -> committed snapshot / Agent / accessibility
+                       `-> PlatformTree -> platform-view host
 ```
 
 ## Code Map
@@ -26,7 +29,7 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 | `moui/{geometry,graphics,animation,text,state}/` | Domain facades over `moui/core` for app-facing geometry, paint/drawing, motion, text, and state/focus value types. They depend on `core`; `core` does not depend on them. |
 | `moui/core/` | Platform-neutral foundation contracts: opaque `View`, typed events, `Program`, `Effect`, `Subscription`, geometry, draw commands, semantics, text editing, theme token surface, and the public message-independent `ViewNode` extension protocol. |
 | `moui/views/` | Public view constructors, app-facing control APIs, default themes, form/navigation/data helpers, and concrete `ViewNode` behavior constructed with `@core.View::from_node`. |
-| `moui/runtime/` | AppRuntime construction, runtime state, element/layout/render tree generation, event dispatch, program queue drain, effects, subscriptions, diagnostics, and inspector snapshots. |
+| `moui/runtime/` | AppRuntime construction, runtime state, element/layout/render/semantics/platform tree generation, committed semantics generations and indices, event/action dispatch, program queue drain, effects, subscriptions, diagnostics, and inspector snapshots. |
 | `moui/backend/host/` | Shared host contracts for windows, routes, timers, host services, WebView, async image loading, accessibility, input, redraw scheduling, and renderer handoff. |
 | `moui/backend/internal/embedded_runtime_session/` | Private MoUI runtime assembly for Android, iOS, and HarmonyOS window-hosted adapters; it composes `AppRuntime`, host contracts, and renderers after `ApplicationHandler` callbacks. |
 | `moui/backend/{macos,windows,linux,android,ios,harmonyos,web}/` | Concrete platform host implementations. Native platform packages normalize events into host contracts; Android, iOS, and HarmonyOS are window-hosted adapters driven by `wzzc-dev/window`; web is the canonical browser host. |
@@ -133,8 +136,9 @@ Platform entrypoints should stay thin: create the program/runtime, select the
 backend and renderer provider, and pass app-owned service adapters. Business
 model/update/view logic should remain in the shared app package.
 
-Window-hosted mobile sessions share `EmbedderHostChannel` for revisioned IME
-and semantics updates plus asynchronous clipboard/accessibility responses. See
+Window-hosted mobile sessions share `EmbedderHostChannel` for sequenced IME
+updates and generation-checked committed semantics plus asynchronous
+clipboard/accessibility responses. See
 [Window-hosted MoUI](window-hosted-moui.md), ADR 0005, and ADR 0006. Product
 default is now `SkiaGpuNative` for every native Skia platform
 when the host GPU surface is available (`NativeGpuPlatform::gpu_promoted` is
@@ -619,10 +623,16 @@ and validation commands.
 
 ## Accessibility
 
-`core/semantics.mbt` produces a platform-neutral semantics tree with roles,
-labels, hints, values, focus order, checked state, and live-region metadata.
-`backend/web` includes a semantics-to-ARIA adapter for the wasm-gc Web path.
-Native accessibility snapshots are exported from `backend/host` as
-`Milky2018/moon_accesskit` tree updates. Platform bridges stay behind backend
-boundaries and consume that AccessKit-shaped snapshot while `@core.SemanticsNode`
-remains the source of truth.
+`core/semantics.mbt` defines platform-neutral semantic identity, roles, state,
+explicit composition, and typed actions. `moui/runtime` is the sole committed
+semantics authority: it publishes immutable generation-tagged snapshots and
+deltas, maintains stable-ID and node-route indices, and dispatches actions
+directly into runtime state plus typed TEA messages. Semantics reads and
+semantics-only updates do not require paint.
+
+`backend/web` translates committed deltas to ARIA. `backend/host` translates
+the same runtime reads to `Milky2018/moon_accesskit` updates, and mobile hosts
+carry `SemanticsNodeId`, generation, and typed actions through the embedding
+channel. Platform adapters do not maintain a second revision, repeat runtime
+validation, or convert accessibility actions into coordinate input. Agent and
+MCP ownership is documented in [Committed Semantics And Agent Actions](agent-semantics.md).

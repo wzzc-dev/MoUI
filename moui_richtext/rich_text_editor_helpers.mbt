@@ -370,49 +370,153 @@ fn[Msg] text_input_edit_messages(
 }
 
 ///|
-fn view_color_revision(color : @core.Color) -> String {
-  "\{color.r},\{color.g},\{color.b},\{color.a}"
+fn rich_text_exact_channel(
+  key : @core.DeclarationKey,
+) -> @core.DeclarationChannel {
+  @core.DeclarationChannel::Exact(key)
 }
 
 ///|
-fn view_brush_revision(value : @core.Brush) -> String {
+fn rich_text_declaration(
+  layout? : @core.DeclarationChannel = @core.DeclarationChannel::Constant,
+  paint? : @core.DeclarationChannel = @core.DeclarationChannel::Constant,
+  semantics? : @core.DeclarationChannel = @core.DeclarationChannel::Constant,
+  platform? : @core.DeclarationChannel = @core.DeclarationChannel::Constant,
+) -> @core.ViewDeclaration {
+  @core.ViewDeclaration::channels(layout~, paint~, semantics~, platform~)
+}
+
+///|
+fn rich_text_record_key(
+  type_tag : String,
+  fields : Array[(String, @core.DeclarationKey)],
+) -> @core.DeclarationKey {
+  @core.DeclarationKey::record(type_tag~, fields~)
+}
+
+///|
+fn declaration_point_key(point : @core.Point) -> @core.DeclarationKey {
+  rich_text_record_key("Point", [
+    ("x", @core.DeclarationKey::double(point.x)),
+    ("y", @core.DeclarationKey::double(point.y)),
+  ])
+}
+
+///|
+fn declaration_size_key(size : @core.Size) -> @core.DeclarationKey {
+  rich_text_record_key("Size", [
+    ("width", @core.DeclarationKey::double(size.width)),
+    ("height", @core.DeclarationKey::double(size.height)),
+  ])
+}
+
+///|
+fn declaration_color_key(color : @core.Color) -> @core.DeclarationKey {
+  rich_text_record_key("Color", [
+    ("r", @core.DeclarationKey::double(color.r)),
+    ("g", @core.DeclarationKey::double(color.g)),
+    ("b", @core.DeclarationKey::double(color.b)),
+    ("a", @core.DeclarationKey::double(color.a)),
+  ])
+}
+
+///|
+fn declaration_brush_key(value : @core.Brush) -> @core.DeclarationKey {
   match value {
-    @core.Brush::Solid(color) => "solid:\{view_color_revision(color)}"
+    @core.Brush::Solid(color) =>
+      rich_text_record_key("Brush.Solid", [
+        ("color", declaration_color_key(color)),
+      ])
     @core.Brush::LinearGradient(spec) =>
-      "linear:\{spec.start.x},\{spec.start.y},\{spec.end.x},\{spec.end.y},\{view_color_revision(spec.start_color)},\{view_color_revision(spec.end_color)}"
+      rich_text_record_key("Brush.LinearGradient", [
+        ("start", declaration_point_key(spec.start)),
+        ("end", declaration_point_key(spec.end)),
+        ("start_color", declaration_color_key(spec.start_color)),
+        ("end_color", declaration_color_key(spec.end_color)),
+      ])
     @core.Brush::RadialGradient(spec) =>
-      "radial:\{spec.center.x},\{spec.center.y},\{spec.radius},\{view_color_revision(spec.center_color)},\{view_color_revision(spec.edge_color)}"
+      rich_text_record_key("Brush.RadialGradient", [
+        ("center", declaration_point_key(spec.center)),
+        ("radius", @core.DeclarationKey::double(spec.radius)),
+        ("center_color", declaration_color_key(spec.center_color)),
+        ("edge_color", declaration_color_key(spec.edge_color)),
+      ])
   }
 }
 
 ///|
-fn view_border_option_revision(value : @core.BorderStyle?) -> String {
-  match value {
-    Some(value) => "\{view_brush_revision(value.brush)}:\{value.width}"
-    None => "none"
+fn declaration_border_key(value : @core.BorderStyle) -> @core.DeclarationKey {
+  rich_text_record_key("BorderStyle", [
+    ("brush", declaration_brush_key(value.brush)),
+    ("width", @core.DeclarationKey::double(value.width)),
+  ])
+}
+
+///|
+fn declaration_border_option_key(
+  value : @core.BorderStyle?,
+) -> @core.DeclarationKey {
+  @core.DeclarationKey::option(value.map(declaration_border_key))
+}
+
+///|
+fn declaration_text_range_key(value : @core.TextRange) -> @core.DeclarationKey {
+  rich_text_record_key("TextRange", [
+    ("start", @core.DeclarationKey::int(value.start)),
+    ("end", @core.DeclarationKey::int(value.end)),
+  ])
+}
+
+///|
+fn declaration_text_range_option_key(
+  value : @core.TextRange?,
+) -> @core.DeclarationKey {
+  @core.DeclarationKey::option(value.map(declaration_text_range_key))
+}
+
+///|
+fn declaration_font_family_key(
+  family : @core.FontFamily,
+) -> @core.DeclarationKey {
+  match family {
+    @core.FontFamily::Name(name) =>
+      rich_text_record_key("FontFamily.Name", [
+        ("name", @core.DeclarationKey::string(name)),
+      ])
+    @core.FontFamily::SystemUi => @core.DeclarationKey::int(1)
+    @core.FontFamily::UiSansSerif => @core.DeclarationKey::int(2)
+    @core.FontFamily::UiSerif => @core.DeclarationKey::int(3)
+    @core.FontFamily::UiMonospace => @core.DeclarationKey::int(4)
+    @core.FontFamily::SansSerif => @core.DeclarationKey::int(5)
+    @core.FontFamily::Serif => @core.DeclarationKey::int(6)
+    @core.FontFamily::Monospace => @core.DeclarationKey::int(7)
+    @core.FontFamily::Emoji => @core.DeclarationKey::int(8)
+    @core.FontFamily::Math => @core.DeclarationKey::int(9)
+    @core.FontFamily::FangSong => @core.DeclarationKey::int(10)
   }
 }
 
 ///|
-fn view_text_range_option_revision(value : @core.TextRange?) -> String {
-  match value {
-    Some(value) => "\{value.start}:\{value.end}"
-    None => "none"
-  }
-}
-
-///|
-fn view_font_revision(font : @core.FontSpec) -> String {
-  let style = match font.style {
-    @core.FontStyle::Normal => "normal"
-    @core.FontStyle::Italic => "italic"
-  }
-  "\{font.size}:\{font.weight}:\{style}"
-}
-
-///|
-fn view_size_revision(size : @core.Size) -> String {
-  "\{size.width}x\{size.height}"
+fn declaration_font_key(font : @core.FontSpec) -> @core.DeclarationKey {
+  rich_text_record_key("FontSpec", [
+    (
+      "families",
+      @core.DeclarationKey::array(
+        font.families.families.map(declaration_font_family_key),
+      ),
+    ),
+    ("size", @core.DeclarationKey::double(font.size)),
+    ("weight", @core.DeclarationKey::int(font.weight)),
+    (
+      "style",
+      @core.DeclarationKey::int(
+        match font.style {
+          @core.FontStyle::Normal => 0
+          @core.FontStyle::Italic => 1
+        },
+      ),
+    ),
+  ])
 }
 
 ///|
@@ -1008,8 +1112,9 @@ fn rich_text_block_cache_key(
   // 渲染器在栅格化 cached layer 时会做 translate(-origin.x, -origin.y) 抵消，
   // pixmap 内容只依赖 block 自身 + frame.size，与 origin 无关。
   // origin 仅在 draw_cached_layer_pixmap 贴图阶段用于定位。
-  // 滚动时让节点重建拿到新 origin 是通过 facade.mbt revision 加入 scroll_y 实现，
-  // 那条路径不依赖 layer cache 失效，layer 仍可命中并以新 frame 贴图。
+  // 滚动时让节点重建拿到新 origin，是通过 facade.mbt 的 paint declaration
+  // key 精确编码 scroll_y 实现；该路径不依赖 layer cache 失效，layer 仍可
+  // 命中并以新 frame 贴图。
   // 把 origin 编码进 cache_key 反而会导致滚动时所有 block 缓存全 miss，触发
   // 重栅格化与缓存驱逐抖动，造成滚动后明显卡顿。
   "rich-text-block;range=\{rich_text_source_range_key(block.source_range)};index=\{index};w=\{frame.size.width};h=\{frame.size.height}"

@@ -22,8 +22,8 @@ impl @core.ViewNode for ComponentHost with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for ComponentHost with fn revision(_self) {
-  "component"
+impl @core.ViewNode for ComponentHost with fn declaration(_self) {
+  @core.ViewDeclaration::constant()
 }
 
 ///|

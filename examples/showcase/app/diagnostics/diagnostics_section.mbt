@@ -117,7 +117,10 @@ fn ShowcaseModel::diagnostics_section(
             layout_tile(theme, "Grid"),
             layout_tile(theme, "Split"),
             visual_card(
-              theme, showcase_image_source(), "Reference image", "img",
+              theme,
+              showcase_image_source(),
+              "Reference image",
+              "img",
               width=if card_columns >= 2 { 200.0 } else { metrics.body_width },
             ),
           ],
@@ -125,13 +128,17 @@ fn ShowcaseModel::diagnostics_section(
           row_spacing=theme.spacing_scale.sm,
           column_spacing=theme.spacing_scale.sm,
         ),
-        example_preview(theme, "Sample card",
+        example_preview(
+          theme,
+          "Sample card",
           container(
             text("Preview content", width=260.0, height=60.0)
-              .font(theme.typography.body)
-              .foreground(theme.palette.foreground),
-            width=280.0, height=100.0,
-            variant=@views.ContainerVariant::Base, theme~,
+            .font(theme.typography.body)
+            .foreground(theme.palette.foreground),
+            width=280.0,
+            height=100.0,
+            variant=@views.ContainerVariant::Base,
+            theme~,
             padding=theme.spacing_scale.sm,
           ).border(showcase_card_border(theme)),
           width=metrics.body_width,

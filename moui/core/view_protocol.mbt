@@ -59,12 +59,22 @@ pub(all) struct ViewPaintContext {
 }
 
 ///|
+/// Context for the platform-tree pass. Platform placements are produced
+/// independently from paint so native child views can update without creating
+/// draw commands or scheduling a renderer frame.
+pub(all) struct ViewPlatformContext {
+  frame : Rect
+  child_frames : Array[Rect]
+  environment : Environment
+  style : ViewStyle
+}
+
+///|
 pub(all) struct ViewPaintPlan {
   commands : Array[DrawCommand]
   child_layers : Array[ViewPaintLayer]
   post_commands : Array[DrawCommand]
   overlay_commands : Array[DrawCommand]
-  platform_views : Array[PlatformViewPlacement]
   repaint_boundary : Bool
   /// True when this paint pass is a mid-animation sample (progress < 1.0) and
   /// the runtime should keep requesting redraws until the animation settles.
@@ -80,7 +90,6 @@ pub(all) struct ViewPaintLayer {
   content_revision : Int
   commands : Array[DrawCommand]
   overlay_commands : Array[DrawCommand]
-  platform_views : Array[PlatformViewPlacement]
 } derive(Eq, Debug)
 
 ///|
@@ -129,13 +138,14 @@ pub(all) struct ViewTextCommandResult[Msg] {
 
 ///|
 pub(all) struct ViewSemanticsInfo {
-  role : SemanticsRole
+  composition : SemanticsComposition
+  semantic_id : SemanticId?
+  role : SemanticsRole?
   level : Int?
-  url : String
-  label : String
-  value : String
-  description : String
-  actions : Array[SemanticsAction]
+  url : String?
+  label : String?
+  value : String?
+  description : String?
   disabled : Bool?
   selected : Bool?
   pressed : Bool?
@@ -154,7 +164,7 @@ pub(all) struct ViewStateContext {
   checked : Bool
   expanded : Bool
   disabled : Bool
-  scratch : String
+  slots : ViewStateSlots
 } derive(Eq, Debug)
 
 ///|
@@ -201,7 +211,6 @@ pub fn ViewPaintPlan::empty() -> ViewPaintPlan {
     child_layers: [],
     post_commands: [],
     overlay_commands: [],
-    platform_views: [],
     repaint_boundary: false,
     animating: false,
   }
@@ -214,7 +223,6 @@ pub fn ViewPaintPlan::commands(commands : Array[DrawCommand]) -> ViewPaintPlan {
     child_layers: [],
     post_commands: [],
     overlay_commands: [],
-    platform_views: [],
     repaint_boundary: false,
     animating: false,
   }
@@ -238,16 +246,8 @@ pub fn ViewPaintLayer::new(
   content_revision~ : Int,
   commands? : Array[DrawCommand] = [],
   overlay_commands? : Array[DrawCommand] = [],
-  platform_views? : Array[PlatformViewPlacement] = [],
 ) -> ViewPaintLayer {
-  {
-    frame,
-    cache_key,
-    content_revision,
-    commands,
-    overlay_commands,
-    platform_views,
-  }
+  { frame, cache_key, content_revision, commands, overlay_commands }
 }
 
 ///|
@@ -294,13 +294,14 @@ pub fn[Msg] ViewTextCommandResult::new(
 
 ///|
 pub fn ViewSemanticsInfo::new(
-  role? : SemanticsRole = SemanticsRole::Group,
+  composition? : SemanticsComposition = SemanticsComposition::Transparent,
+  semantic_id? : SemanticId,
+  role? : SemanticsRole,
   level? : Int,
-  url? : String = "",
-  label? : String = "",
-  value? : String = "",
-  description? : String = "",
-  actions? : Array[SemanticsAction] = [],
+  url? : String,
+  label? : String,
+  value? : String,
+  description? : String,
   disabled? : Bool,
   selected? : Bool,
   pressed? : Bool,
@@ -310,13 +311,14 @@ pub fn ViewSemanticsInfo::new(
   required? : Bool,
 ) -> ViewSemanticsInfo {
   {
+    composition,
+    semantic_id,
     role,
     level,
     url,
     label,
     value,
     description,
-    actions,
     disabled,
     selected,
     pressed,
@@ -338,8 +340,9 @@ pub struct View[Msg] {
 /// The node supplies layout, paint, semantics, focus, and reconciliation
 /// behavior through `ViewNode`. Optional adapters attach typed children,
 /// component building, events, and text commands without erasing `Msg` from the
-/// public view. `View::map` maps only these typed adapters and preserves the
-/// underlying node.
+/// public view. Identity, declaration, semantics metadata, and static children
+/// are sampled exactly once here. `View::map` maps only typed adapters and
+/// preserves those frozen snapshots.
 pub fn[Node : ViewNode, Msg] View::from_node(
   node : Node,
   children? : (Node) -> Array[View[Msg]] = _node => [],
@@ -352,11 +355,25 @@ pub fn[Node : ViewNode, Msg] View::from_node(
   ] = (_node, _context, _intent, _paste_text) => {
     ViewTextCommandResult::ignored()
   },
+  semantics_actions? : (Node) -> Array[ViewSemanticsActionHandler[Msg]] = _node => {
+    []
+  },
 ) -> View[Msg] {
+  let identity_snapshot = node.identity()
+  let declaration_snapshot = node.declaration()
+  let semantics_snapshot = node.semantics()
+  let focusable_snapshot = node.focusable()
+  let semantics_action_handlers = semantics_actions(node)
+  let children_snapshot = children(node)
   {
     adapter: ViewAdapter::new(
       node=node as &ViewNode,
-      children=() => children(node),
+      identity=identity_snapshot,
+      declaration=declaration_snapshot,
+      semantics=semantics_snapshot,
+      focusable=focusable_snapshot,
+      semantics_action_handlers~,
+      children=children_snapshot,
       build_child=match build_child {
         Some(build) => Some(context => build(node, context))
         None => None
@@ -371,17 +388,12 @@ pub fn[Node : ViewNode, Msg] View::from_node(
 
 ///|
 pub fn[Msg] View::identity(self : View[Msg]) -> ViewIdentity {
-  self.adapter.node.identity()
+  self.adapter.identity_snapshot
 }
 
 ///|
-pub fn[Msg] View::revision(self : View[Msg]) -> String {
-  self.adapter.node.revision()
-}
-
-///|
-pub fn[Msg] View::paint_revision(self : View[Msg]) -> String {
-  self.adapter.node.paint_revision()
+pub fn[Msg] View::declaration(self : View[Msg]) -> ViewDeclaration {
+  self.adapter.declaration_snapshot
 }
 
 ///|
@@ -434,6 +446,14 @@ pub fn[Msg] View::paint(
 }
 
 ///|
+pub fn[Msg] View::platform_views(
+  self : View[Msg],
+  context : ViewPlatformContext,
+) -> Array[PlatformViewPlacement] {
+  self.adapter.node.platform_views(context)
+}
+
+///|
 pub fn[Msg] View::event(
   self : View[Msg],
   context : ViewEventContext,
@@ -471,12 +491,28 @@ pub fn[Msg] View::text_command_result(
 
 ///|
 pub fn[Msg] View::semantics(self : View[Msg]) -> ViewSemanticsInfo {
-  self.adapter.node.semantics()
+  self.adapter.semantics_snapshot
 }
 
 ///|
 pub fn[Msg] View::accepts_focus(self : View[Msg]) -> Bool {
-  self.adapter.node.focusable()
+  self.adapter.focusable_snapshot
+}
+
+///|
+pub fn[Msg] View::semantics_action_kinds(
+  self : View[Msg],
+) -> Array[SemanticsActionKind] {
+  self.adapter.semantics_action_kinds()
+}
+
+///|
+pub fn[Msg] View::dispatch_semantics_action(
+  self : View[Msg],
+  context : ViewSemanticsActionContext,
+  action : SemanticsAction,
+) -> ViewSemanticsActionResult[Msg] {
+  self.adapter.dispatch_semantics_action(context, action)
 }
 
 ///|

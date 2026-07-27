@@ -15,6 +15,11 @@ packages expose narrower contracts for platform and renderer integration.
   helpers returning opaque `@moui.View[Msg]` values plus control-specific
   app-facing contracts such as command/menu descriptors, control styles, theme
   builders, and `SheetPresentationMode`.
+- **Agent integration API**: `moui_agent` and `moui_agent_mcp`. The default
+  contract is the committed semantic surface (`read_semantics` and
+  `perform_action`) over runtime generations. Coordinate input, global
+  commands, runtime counters, and paint summaries are separate opt-in
+  diagnostics and are not inherited by `AgentHost`.
 - **Advanced core API**: `moui/core`. This owns `View[Msg]`, `Program`,
   `Effect`, `Subscription`, layout, input, semantics, draw-command protocols,
   renderer-neutral platform-view contracts, the public open `ViewNode` trait,

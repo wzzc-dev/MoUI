@@ -7,7 +7,16 @@ fn[Msg] runtime_test_rect(
 ) -> @core.View[Msg] {
   runtime_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="Rect"),
-    revision=() => "test-rect:\{width}:\{height}",
+    declaration=() => {
+      runtime_fixture_exact_declaration("Rect", [
+        ("width", @core.DeclarationKey::double(width)),
+        ("height", @core.DeclarationKey::double(height)),
+        ("red", @core.DeclarationKey::double(color.r)),
+        ("green", @core.DeclarationKey::double(color.g)),
+        ("blue", @core.DeclarationKey::double(color.b)),
+        ("alpha", @core.DeclarationKey::double(color.a)),
+      ])
+    },
     layout=ctx => {
       @core.ViewLayoutResult::new(
         size=ctx.constraints.constrain(@core.Size::new(width~, height~)),
@@ -41,8 +50,13 @@ fn[Msg] runtime_test_padding(
 ) -> @core.View[Msg] {
   runtime_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="Padding", key~),
-    revision=() => {
-      "test-padding:\{insets.top}:\{insets.right}:\{insets.bottom}:\{insets.left}"
+    declaration=() => {
+      runtime_fixture_exact_declaration("Padding", [
+        ("top", @core.DeclarationKey::double(insets.top)),
+        ("right", @core.DeclarationKey::double(insets.right)),
+        ("bottom", @core.DeclarationKey::double(insets.bottom)),
+        ("left", @core.DeclarationKey::double(insets.left)),
+      ])
     },
     children=() => [child],
     child_constraints=constraints => constraints.deflate(insets),
@@ -188,7 +202,7 @@ test "virtual node component watch rebuilds built child" {
 }
 
 ///|
-test "virtual node scroll updates state and marks layout dirty" {
+test "state-backed scroll rebuild is drained by a committed inspector snapshot" {
   let received : Array[@core.Point] = []
   let state = @core.ScrollState::new()
   let runtime = AppRuntime::new_view(
@@ -221,8 +235,8 @@ test "virtual node scroll updates state and marks layout dirty" {
   let snapshot = runtime.inspector_snapshot()
   match snapshot.view_tree().nodes().get(0) {
     Some(node) =>
-      if !node.needs_layout() {
-        fail("expected virtual node scroll to mark layout dirty")
+      if node.needs_build() {
+        fail("expected committed semantics to drain the queued rebuild")
       }
     None => fail("expected inspector root node")
   }
@@ -258,27 +272,41 @@ test "virtual node button dispatches click through runtime" {
 }
 
 ///|
-test "runtime dispatches declared accessibility activation by element id" {
+test "runtime dispatches declared accessibility activation by semantic node" {
   let received : Array[String] = []
   let runtime = AppRuntime::new_view(
     root=@views.button("Go", on_click="clicked", width=80.0, height=32.0),
     size=@core.Size::new(width=80.0, height=32.0),
     on_message=Some(message => received.push(message)),
   )
-  let semantics = runtime.semantics()
-  assert_true(
-    runtime.dispatch_semantics_action(
-      semantics.element_id,
+  let snapshot = runtime_expect_full_semantics(runtime)
+  let mut target : @core.SemanticsNodeId? = None
+  for node in snapshot.nodes() {
+    if node.actions.any(action => action == @core.SemanticsActionKind::Activate) {
+      target = Some(node.node_id)
+    }
+  }
+  guard target is Some(target) else {
+    fail("expected button semantics activation target")
+  }
+  ignore(
+    runtime_expect_semantics_action(
+      runtime,
+      @core.SemanticsTarget::ByNodeId(target),
       @core.SemanticsAction::Activate,
+      snapshot.generation(),
     ),
   )
-  assert_false(
-    runtime.dispatch_semantics_action(
-      semantics.element_id,
-      @core.SemanticsAction::SetText,
-      value=Some("nope"),
-    ),
-  )
+  assert_true(received == ["clicked"])
+  match
+    runtime.perform_semantics_action({
+      target: @core.SemanticsTarget::ByNodeId(target),
+      action: @core.SemanticsAction::SetText("nope"),
+      precondition: SemanticsGenerationPrecondition::Latest,
+    }) {
+    Err(ActionUnavailable(_, @core.SemanticsActionKind::SetText)) => ()
+    _ => fail("expected unavailable SetText action")
+  }
 }
 
 ///|
@@ -635,7 +663,8 @@ test "runtime semantics includes declared state modifiers" {
     root~,
     size=@core.Size::new(width=100.0, height=32.0),
   )
-  let semantics = runtime.semantics()
+  let snapshot = runtime_expect_full_semantics(runtime)
+  let semantics = snapshot.nodes()[0]
   assert_true(semantics.state.checked)
   assert_true(semantics.state.selected)
   assert_true(semantics.state.pressed)
@@ -651,17 +680,18 @@ test "runtime semantics preserves heading level and link url" {
     .semantics_role(@core.SemanticsRole::Heading)
     .semantics_level(2)
     .semantics_url("https://example.test/api")
-  let semantics = AppRuntime::new_view(
+  let runtime = AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=100.0, height=32.0),
-  ).semantics()
+  )
+  let semantics = runtime_expect_full_semantics(runtime).nodes()[0]
   assert_true(semantics.role == @core.SemanticsRole::Heading)
   assert_true(semantics.level == Some(2))
   assert_true(semantics.url == "https://example.test/api")
 }
 
 ///|
-test "runtime dispatches semantic activation through view event path" {
+test "runtime dispatches semantic activation through typed action route" {
   let received : Array[Int] = []
   let root = @views.text("Open", width=80.0, height=24.0)
     .on_tap(7)
@@ -672,11 +702,22 @@ test "runtime dispatches semantic activation through view event path" {
     size=@core.Size::new(width=100.0, height=32.0),
     on_message=Some(message => received.push(message)),
   )
-  let semantics = runtime.semantics()
-  assert_true(
-    runtime.dispatch_semantics_action(
-      semantics.element_id,
+  let snapshot = runtime_expect_full_semantics(runtime)
+  let mut target : @core.SemanticsNodeId? = None
+  for node in snapshot.nodes() {
+    if node.actions.any(action => action == @core.SemanticsActionKind::Activate) {
+      target = Some(node.node_id)
+    }
+  }
+  guard target is Some(target) else {
+    fail("expected tap modifier semantics activation target")
+  }
+  ignore(
+    runtime_expect_semantics_action(
+      runtime,
+      @core.SemanticsTarget::ByNodeId(target),
       @core.SemanticsAction::Activate,
+      snapshot.generation(),
     ),
   )
   assert_true(received == [7])
@@ -840,7 +881,12 @@ fn[Msg] runtime_test_hover_tracker(
 ) -> @core.View[Msg] {
   runtime_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="HoverTracker"),
-    revision=() => "hover-tracker:\{width}:\{height}",
+    declaration=() => {
+      runtime_fixture_exact_declaration("HoverTracker", [
+        ("width", @core.DeclarationKey::double(width)),
+        ("height", @core.DeclarationKey::double(height)),
+      ])
+    },
     layout=ctx => {
       @core.ViewLayoutResult::new(
         size=ctx.constraints.constrain(@core.Size::new(width~, height~)),
@@ -902,7 +948,6 @@ test "runtime delivers synthetic Exit to clear hover on pointer leave" {
   // gap resolves to the parent (not the left tracker).
   let root : @core.View[Unit] = runtime_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="HoverStage"),
-    revision=() => "hover-stage",
     children=() => {
       [
         runtime_test_hover_tracker(width=100.0, height=40.0, log~),
@@ -980,7 +1025,6 @@ test "runtime clears hover when moving between sibling controls" {
   let right_log : Array[Bool] = []
   let root : @core.View[Unit] = runtime_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="SiblingHoverStage"),
-    revision=() => "sibling-hover-stage",
     children=() => {
       [
         runtime_test_hover_tracker(width=100.0, height=40.0, log=left_log),
@@ -1056,7 +1100,12 @@ fn[Msg] runtime_test_hover_phase_tracker(
 ) -> @core.View[Msg] {
   runtime_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="HoverPhaseTracker"),
-    revision=() => "hover-phase-tracker:\{width}:\{height}",
+    declaration=() => {
+      runtime_fixture_exact_declaration("HoverPhaseTracker", [
+        ("width", @core.DeclarationKey::double(width)),
+        ("height", @core.DeclarationKey::double(height)),
+      ])
+    },
     layout=ctx => {
       @core.ViewLayoutResult::new(
         size=ctx.constraints.constrain(@core.Size::new(width~, height~)),
@@ -1120,7 +1169,6 @@ test "runtime Exit does not propagate to descendant being entered" {
   )
   let root : @core.View[Unit] = runtime_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="HoverParent"),
-    revision=() => "hover-parent",
     children=() => [child],
     child_constraints=_constraints => @core.Constraints::unbounded(),
     layout=ctx => {

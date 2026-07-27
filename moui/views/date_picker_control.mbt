@@ -6,6 +6,64 @@ priv enum DatePickerDisplayMode {
 }
 
 ///|
+priv enum DatePickerViewDateState {
+  FollowSelection
+  Month(Int, Int)
+}
+
+///|
+impl @core.ViewStateValue for DatePickerViewDateState with fn view_state_type_key() {
+  @core.DeclarationKey::string("moui.views.DatePickerViewDateState.v1")
+}
+
+///|
+impl @core.ViewStateValue for DatePickerViewDateState with fn encode_view_state(
+  self,
+) {
+  match self {
+    FollowSelection => b"\x00"
+    Month(year, month) => {
+      let output = Buffer(size_hint=9)
+      output.write_byte(1)
+      output.write_int_be(year)
+      output.write_int_be(month)
+      output.to_bytes()
+    }
+  }
+}
+
+///|
+impl @core.ViewStateValue for DatePickerViewDateState with fn decode_view_state(
+  _self,
+  bytes,
+) {
+  if bytes == b"\x00" {
+    Some(FollowSelection)
+  } else if bytes.length() == 9 && bytes[0] == 1 {
+    let year = @core.ViewStateValue::decode_view_state(0, bytes[1:5].to_owned())
+    let month = @core.ViewStateValue::decode_view_state(
+      0,
+      bytes[5:9].to_owned(),
+    )
+    match (year, month) {
+      (Some(year), Some(month)) if month >= 1 && month <= 12 =>
+        Some(Month(year, month))
+      _ => None
+    }
+  } else {
+    None
+  }
+}
+
+///|
+fn datepicker_view_date_slot() -> @core.ViewStateSlot[DatePickerViewDateState] {
+  @core.ViewStateSlot::new(
+    key=@core.DeclarationKey::string("moui.views.date-picker.view-date"),
+    initial=DatePickerViewDateState::FollowSelection,
+  )
+}
+
+///|
 fn[Msg] date_picker_control(
   selected~ : @core.Binding[@core.DateValue],
   mode~ : DatePickerDisplayMode,
@@ -18,39 +76,42 @@ fn[Msg] date_picker_control(
   kind? : String = "DatePicker",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  let theme_revision = match theme {
-    Some(t) => t.revision_fingerprint()
-    None => "context"
-  }
+  let selected_snapshot = selected.get()
   @core.View::from_node(
     DatePicker::{
-      selected,
+      selected: selected_snapshot,
       mode,
       placeholder,
       theme,
       style,
       min_date,
       max_date,
-      theme_revision,
-      has_on_select: on_select is Some(_),
       kind,
       key,
     },
-    event=(node, ctx) => date_picker_event(node, ctx, on_select),
+    event=(node, ctx) => date_picker_event(node, ctx, selected, on_select),
+    semantics_actions=_node => {
+      [
+        @core.ViewSemanticsActionHandler::activate(ctx => {
+          @core.ViewSemanticsActionResult::accepted(
+            state=Some({ ..ctx.state, expanded: !ctx.state.expanded }),
+            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+          )
+        }),
+      ]
+    },
   )
 }
 
 ///|
 priv struct DatePicker {
-  selected : @core.Binding[@core.DateValue]
+  selected : @core.DateValue
   mode : DatePickerDisplayMode
   placeholder : String
   theme : @core.Theme?
   style : PickerStyle?
   min_date : @core.DateValue?
   max_date : @core.DateValue?
-  theme_revision : String
-  has_on_select : Bool
   kind : String
   key : String?
 }
@@ -61,8 +122,28 @@ impl @core.ViewNode for DatePicker with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for DatePicker with fn revision(self) {
-  "datepicker:\{datepicker_display_value(self.selected.get(), self.mode)}:\{datepicker_mode_revision(self.mode)}:\{self.placeholder}:\{self.theme_revision}:\{datepicker_value_option_revision(self.min_date)}:\{datepicker_value_option_revision(self.max_date)}:\{self.has_on_select}"
+impl @core.ViewNode for DatePicker with fn declaration(self) {
+  let paint_key = view_record_key("DatePicker.paint", [
+    ("selected", datepicker_value_key(self.selected)),
+    ("mode", datepicker_mode_key(self.mode)),
+    ("placeholder", @core.DeclarationKey::string(self.placeholder)),
+    ("min_date", datepicker_value_option_key(self.min_date)),
+    ("max_date", datepicker_value_option_key(self.max_date)),
+  ])
+  view_declaration(
+    paint=if self.theme is Some(_) || self.style is Some(_) {
+      @core.DeclarationChannel::Uncacheable
+    } else {
+      view_exact_channel(paint_key)
+    },
+    semantics=view_exact_channel(
+      view_record_key("DatePicker.semantics", [
+        ("selected", datepicker_value_key(self.selected)),
+        ("mode", datepicker_mode_key(self.mode)),
+        ("placeholder", @core.DeclarationKey::string(self.placeholder)),
+      ]),
+    ),
+  )
 }
 
 ///|
@@ -85,8 +166,8 @@ impl @core.ViewNode for DatePicker with fn paint(self, ctx) {
     commands,
     overlay_commands,
     frame=ctx.frame,
-    selected=self.selected.get(),
-    view_date=datepicker_view_date(ctx.state, self.selected.get()),
+    selected=self.selected,
+    view_date=datepicker_view_date(ctx.state, self.selected),
     mode=self.mode,
     placeholder=self.placeholder,
     font=resolved_style.font,
@@ -103,7 +184,6 @@ impl @core.ViewNode for DatePicker with fn paint(self, ctx) {
     child_layers: [],
     post_commands: [],
     overlay_commands,
-    platform_views: [],
     repaint_boundary: false,
     animating: false,
   }
@@ -112,10 +192,10 @@ impl @core.ViewNode for DatePicker with fn paint(self, ctx) {
 ///|
 impl @core.ViewNode for DatePicker with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Boundary,
     role=@core.SemanticsRole::Menu,
     label=self.placeholder,
-    value=datepicker_display_value(self.selected.get(), self.mode),
-    actions=[@core.SemanticsAction::Focus, @core.SemanticsAction::Activate],
+    value=datepicker_display_value(self.selected, self.mode),
   )
 }
 
@@ -128,6 +208,7 @@ impl @core.ViewNode for DatePicker with fn focusable(_self) {
 fn[Msg] date_picker_event(
   node : DatePicker,
   ctx : @core.ViewEventContext,
+  selected : @core.Binding[@core.DateValue],
   on_select : ((@core.DateValue) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {
   match ctx.event {
@@ -136,13 +217,13 @@ fn[Msg] date_picker_event(
         ctx.state,
         event,
         frame=ctx.frame,
-        selected=node.selected,
+        selected~,
         min_date=node.min_date,
         max_date=node.max_date,
         on_select~,
       )
     @core.AppEvent::Keyboard(event) =>
-      handle_datepicker_keyboard(ctx.state, event, selected=node.selected)
+      handle_datepicker_keyboard(ctx.state, event, selected~)
     _ => @core.ViewEventResult::ignored()
   }
 }
@@ -482,7 +563,7 @@ fn[Msg] handle_datepicker_panel_pointer(
             focused=true,
             captured=true,
             state=Some(datepicker_state(state, expanded=false, next)),
-            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+            dirty=@core.ViewDirtyHint::ViewBuildDirty,
             messages=datepicker_messages(on_select, next),
           )
         } else {
@@ -540,7 +621,10 @@ fn datepicker_state(
   expanded~ : Bool,
   view_date : @core.DateValue,
 ) -> @core.ViewStateContext {
-  { ..state, expanded, scratch: datepicker_encode_view_date(view_date) }
+  { ..state, expanded, }.with_slot(
+    datepicker_view_date_slot(),
+    DatePickerViewDateState::Month(view_date.year, view_date.month),
+  )
 }
 
 ///|
@@ -548,88 +632,10 @@ fn datepicker_view_date(
   state : @core.ViewStateContext,
   selected : @core.DateValue,
 ) -> @core.DateValue {
-  match datepicker_decode_view_date(state.scratch, selected) {
-    Some(value) => value
-    None => selected
+  match state.read_slot(datepicker_view_date_slot()) {
+    Month(year, month) => { ..selected, year, month }
+    FollowSelection => selected
   }
-}
-
-///|
-fn datepicker_encode_view_date(value : @core.DateValue) -> String {
-  "\{value.year}:\{value.month}"
-}
-
-///|
-fn datepicker_decode_view_date(
-  value : String,
-  selected : @core.DateValue,
-) -> @core.DateValue? {
-  match datepicker_split_once(value, ':') {
-    Some((year, month)) =>
-      match (datepicker_parse_int(year), datepicker_parse_int(month)) {
-        (Some(year), Some(month)) =>
-          if month >= 1 && month <= 12 {
-            Some({ ..selected, year, month })
-          } else {
-            None
-          }
-        _ => None
-      }
-    None => None
-  }
-}
-
-///|
-fn datepicker_split_once(value : String, delimiter : Char) -> (String, String)? {
-  let chars = value.to_array()
-  for index, char in chars {
-    if char == delimiter {
-      return Some(
-        (
-          datepicker_chars_to_string(chars[:index]),
-          datepicker_chars_to_string(chars[index + 1:]),
-        ),
-      )
-    }
-  } nobreak {
-    None
-  }
-}
-
-///|
-fn datepicker_chars_to_string(chars : ArrayView[Char]) -> String {
-  let builder = StringBuilder()
-  for char in chars {
-    builder.write_char(char)
-  }
-  builder.to_string()
-}
-
-///|
-fn datepicker_parse_int(value : String) -> Int? {
-  let chars = value.to_array()
-  if chars.length() == 0 {
-    return None
-  }
-  let mut index = 0
-  let mut sign = 1
-  if chars[index] == '-' {
-    sign = -1
-    index = index + 1
-  }
-  if index >= chars.length() {
-    return None
-  }
-  let mut parsed = 0
-  while index < chars.length() {
-    let char = chars[index]
-    if !char.is_ascii_digit() {
-      return None
-    }
-    parsed = parsed * 10 + char.to_int() - '0'.to_int()
-    index = index + 1
-  }
-  Some(parsed * sign)
 }
 
 ///|
@@ -808,20 +814,33 @@ fn datepicker_days_in_month(year : Int, month : Int) -> Int {
 }
 
 ///|
-fn datepicker_mode_revision(mode : DatePickerDisplayMode) -> String {
-  match mode {
-    Date => "date"
-    DateAndTime => "datetime"
-    Time => "time"
-  }
+fn datepicker_mode_key(mode : DatePickerDisplayMode) -> @core.DeclarationKey {
+  @core.DeclarationKey::int(
+    match mode {
+      Date => 0
+      DateAndTime => 1
+      Time => 2
+    },
+  )
 }
 
 ///|
-fn datepicker_value_option_revision(value : @core.DateValue?) -> String {
-  match value {
-    Some(value) => value.format_date_time()
-    None => "none"
-  }
+fn datepicker_value_key(value : @core.DateValue) -> @core.DeclarationKey {
+  view_record_key("DateValue", [
+    ("year", @core.DeclarationKey::int(value.year)),
+    ("month", @core.DeclarationKey::int(value.month)),
+    ("day", @core.DeclarationKey::int(value.day)),
+    ("hour", @core.DeclarationKey::int(value.hour)),
+    ("minute", @core.DeclarationKey::int(value.minute)),
+    ("second", @core.DeclarationKey::int(value.second)),
+  ])
+}
+
+///|
+fn datepicker_value_option_key(
+  value : @core.DateValue?,
+) -> @core.DeclarationKey {
+  @core.DeclarationKey::option(value.map(datepicker_value_key))
 }
 
 ///|

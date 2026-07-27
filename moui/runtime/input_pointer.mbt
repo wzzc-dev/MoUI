@@ -81,6 +81,9 @@ fn ElementNode::dispatch_view_event(
     Some(next_control) => self.control.apply_text_context(next_control)
     None => ()
   }
+  if result.state is Some(_) || result.text_control is Some(_) {
+    self.dirty.mark_semantics()
+  }
   self.apply_view_dirty_hint(result.dirty)
   {
     changed: result.changed || result.captured,
@@ -112,10 +115,7 @@ fn ElementNode::apply_view_dirty_hint(
       self.dirty.mark_layout()
       self.clear_cached_layout_and_paint()
     }
-    ViewBuildDirty => {
-      self.dirty.mark_build()
-      self.clear_cached_layout_and_paint()
-    }
+    ViewBuildDirty => self.dirty.mark_build_only()
   }
 }
 
@@ -123,6 +123,12 @@ fn ElementNode::apply_view_dirty_hint(
 fn ElementNode::mark_pointer_paint_dirty(self : ElementNode) -> Unit {
   self.dirty.mark_paint()
   self.render_cache.clear()
+}
+
+///|
+fn ElementNode::mark_pointer_descendant_paint_dirty(self : ElementNode) -> Unit {
+  self.dirty.mark_paint_descendant()
+  self.render_cache.invalidate_composition()
 }
 
 ///|
@@ -264,10 +270,11 @@ fn ElementNode::dispatch_pointer_to_children(
   }
   if changed {
     if layout_changed {
-      self.dirty.mark_layout()
-      self.clear_cached_layout_and_paint()
+      self.dirty.mark_layout_descendant()
+      self.layout_cache.clear()
+      self.render_cache.clear()
     } else {
-      self.mark_pointer_paint_dirty()
+      self.mark_pointer_descendant_paint_dirty()
     }
   }
   { changed, activated, captured, capture_target, focused, deliveries }

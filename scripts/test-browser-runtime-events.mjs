@@ -287,8 +287,8 @@ const createRuntime = ({ pointerFlags = 1 } = {}) => {
 
 {
   const { imports, canvas, events } = createRuntime();
-  const semantics = {
-    element_id: { value: 12 },
+  const semanticsNode = {
+    node_id: "12",
     role: "link",
     label: "Docs",
     value: "",
@@ -305,6 +305,14 @@ const createRuntime = ({ pointerFlags = 1 } = {}) => {
     actions: ["focus", "activate"],
     frame: { origin: { x: 10, y: 10 }, size: { width: 100, height: 24 } },
     children: [],
+  };
+  const semantics = {
+    kind: "full",
+    generation: "1",
+    root: "12",
+    focused: null,
+    nodes: [semanticsNode],
+    removed: [],
   };
   imports.sync_semantics(7, imports.register_host_string(canvas.id), imports.register_host_string(JSON.stringify(semantics)));
   const layer = canvas.parentElement.children.find(child => child.className === "moui-semantics-layer");

@@ -37,8 +37,45 @@ impl @core.ViewNode for FlexLayout with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for FlexLayout with fn revision(self) {
-  "flex:\{axis_revision(self.axis)}:\{self.spacing}:\{main_axis_revision(self.main_axis_alignment)}:\{cross_axis_revision(self.cross_axis_alignment)}"
+impl @core.ViewNode for FlexLayout with fn declaration(self) {
+  view_layout_declaration(
+    view_record_key("FlexLayout", [
+      (
+        "axis",
+        @core.DeclarationKey::int(
+          match self.axis {
+            @core.Axis::Horizontal => 0
+            @core.Axis::Vertical => 1
+          },
+        ),
+      ),
+      ("spacing", @core.DeclarationKey::double(self.spacing)),
+      (
+        "main_axis_alignment",
+        @core.DeclarationKey::int(
+          match self.main_axis_alignment {
+            @core.MainAxisAlignment::MainStart => 0
+            @core.MainAxisAlignment::MainCenter => 1
+            @core.MainAxisAlignment::MainEnd => 2
+            @core.MainAxisAlignment::SpaceBetween => 3
+            @core.MainAxisAlignment::SpaceAround => 4
+            @core.MainAxisAlignment::SpaceEvenly => 5
+          },
+        ),
+      ),
+      (
+        "cross_axis_alignment",
+        @core.DeclarationKey::int(
+          match self.cross_axis_alignment {
+            @core.CrossAxisAlignment::CrossStart => 0
+            @core.CrossAxisAlignment::CrossCenter => 1
+            @core.CrossAxisAlignment::CrossEnd => 2
+            @core.CrossAxisAlignment::CrossStretch => 3
+          },
+        ),
+      ),
+    ]),
+  )
 }
 
 ///|
@@ -66,7 +103,9 @@ impl @core.ViewNode for FlexLayout with fn layout(self, ctx) {
 
 ///|
 impl @core.ViewNode for FlexLayout with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
+  @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Transparent,
+  )
 }
 
 ///|
@@ -317,55 +356,5 @@ fn cross_axis_offset(
     @core.CrossAxisAlignment::CrossEnd =>
       { offset: view_max_double(0.0, available - child), size: child }
     @core.CrossAxisAlignment::CrossStretch => { offset: 0.0, size: available }
-  }
-}
-
-///|
-fn size_revision(size : @core.Size?) -> String {
-  match size {
-    Some(size) => "\{size.width}x\{size.height}"
-    None => "auto"
-  }
-}
-
-///|
-fn image_fit_revision(fit : @core.ImageFit) -> String {
-  match fit {
-    @core.ImageFit::Contain => "contain"
-    @core.ImageFit::Cover => "cover"
-    @core.ImageFit::Stretch => "stretch"
-    @core.ImageFit::ScaleDown => "scale-down"
-    @core.ImageFit::FitWidth => "fit-width"
-    @core.ImageFit::FitHeight => "fit-height"
-  }
-}
-
-///|
-fn axis_revision(axis : @core.Axis) -> String {
-  match axis {
-    @core.Axis::Horizontal => "h"
-    @core.Axis::Vertical => "v"
-  }
-}
-
-///|
-fn main_axis_revision(alignment : @core.MainAxisAlignment) -> String {
-  match alignment {
-    @core.MainAxisAlignment::MainStart => "start"
-    @core.MainAxisAlignment::MainCenter => "center"
-    @core.MainAxisAlignment::MainEnd => "end"
-    @core.MainAxisAlignment::SpaceBetween => "between"
-    @core.MainAxisAlignment::SpaceAround => "around"
-    @core.MainAxisAlignment::SpaceEvenly => "evenly"
-  }
-}
-
-///|
-fn cross_axis_revision(alignment : @core.CrossAxisAlignment) -> String {
-  match alignment {
-    @core.CrossAxisAlignment::CrossStart => "start"
-    @core.CrossAxisAlignment::CrossCenter => "center"
-    @core.CrossAxisAlignment::CrossEnd => "end"
-    @core.CrossAxisAlignment::CrossStretch => "stretch"
   }
 }

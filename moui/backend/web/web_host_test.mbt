@@ -321,6 +321,16 @@ test "animation frame maps to redraw requested host event" {
 }
 
 ///|
+fn find_aria_node(nodes : Array[AriaNode], role : String) -> AriaNode? {
+  for node in nodes {
+    if node.role == role {
+      return Some(node)
+    }
+  }
+  None
+}
+
+///|
 test "web accessibility maps semantics to aria nodes" {
   let checked = @core.State::new(true)
   let runtime = @runtime.AppRuntime::new_view(
@@ -337,7 +347,18 @@ test "web accessibility maps semantics to aria nodes" {
       ) : @core.View[Unit]),
     size=@core.Size::new(width=120.0, height=40.0),
   )
-  let aria = semantics_to_aria(runtime.semantics())
+  let aria = match runtime.read_semantics() {
+    Ok(read) =>
+      match aria_update_from_semantics_read(read) {
+        Some(update) =>
+          match find_aria_node(update.nodes, "checkbox") {
+            Some(node) => node
+            None => abort("expected checkbox ARIA node")
+          }
+        None => abort("expected full ARIA update")
+      }
+    Err(_) => abort("expected committed semantics")
+  }
   inspect(aria.role, content="checkbox")
   inspect(aria.label, content="Done")
   assert_true(aria.checked == Some(true))
@@ -355,9 +376,20 @@ test "web accessibility maps landmarks heading level and link url" {
       .semantics_url("https://example.test/docs") : @core.View[Unit]),
     size=@core.Size::new(width=140.0, height=40.0),
   )
-  let aria = semantics_to_aria(runtime.semantics())
+  let aria = match runtime.read_semantics() {
+    Ok(read) =>
+      match aria_update_from_semantics_read(read) {
+        Some(update) =>
+          match find_aria_node(update.nodes, "heading") {
+            Some(node) => node
+            None => abort("expected heading ARIA node")
+          }
+        None => abort("expected full ARIA update")
+      }
+    Err(_) => abort("expected committed semantics")
+  }
   inspect(aria.role, content="heading")
   assert_true(aria.level == Some(2))
   inspect(aria.url, content="https://example.test/docs")
-  assert_true(aria.element_id.value() >= 0)
+  assert_true(aria.node_id.value() > 0UL)
 }

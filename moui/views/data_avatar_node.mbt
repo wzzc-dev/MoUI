@@ -10,8 +10,16 @@ impl @core.ViewNode for AvatarImage with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for AvatarImage with fn revision(self) {
-  "avatar-image:\{self.source}:\{self.size}"
+impl @core.ViewNode for AvatarImage with fn declaration(self) {
+  view_declaration(
+    layout=view_exact_channel(@core.DeclarationKey::double(self.size)),
+    paint=view_exact_channel(
+      view_record_key("AvatarImage.paint", [
+        ("source", @core.DeclarationKey::string(self.source)),
+        ("size", @core.DeclarationKey::double(self.size)),
+      ]),
+    ),
+  )
 }
 
 ///|
@@ -33,4 +41,11 @@ impl @core.ViewNode for AvatarImage with fn paint(self, context) {
       fit: @core.ImageFit::Contain,
     }),
   ])
+}
+
+///|
+impl @core.ViewNode for AvatarImage with fn semantics(_self) {
+  @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Transparent,
+  )
 }

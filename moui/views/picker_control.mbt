@@ -31,37 +31,41 @@ fn[Msg] picker_control(
   kind? : String = "Picker",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  let theme_revision = match theme {
-    Some(t) => t.revision_fingerprint()
-    None => "context"
-  }
+  let items_snapshot = items.copy()
+  let selected_snapshot = selected.get()
   @core.View::from_node(
     Picker::{
-      items,
-      selected,
+      items: items_snapshot,
+      selected: selected_snapshot,
       placeholder,
       theme,
       style,
       max_height,
-      theme_revision,
-      has_on_select: on_select is Some(_),
       kind,
       key,
     },
-    event=(node, ctx) => picker_event(node, ctx, on_select),
+    event=(node, ctx) => picker_event(node, ctx, selected, on_select),
+    semantics_actions=_node => {
+      [
+        @core.ViewSemanticsActionHandler::activate(ctx => {
+          @core.ViewSemanticsActionResult::accepted(
+            state=Some({ ..ctx.state, expanded: !ctx.state.expanded }),
+            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+          )
+        }),
+      ]
+    },
   )
 }
 
 ///|
 priv struct Picker {
   items : Array[PickerOption]
-  selected : @core.Binding[String]
+  selected : String
   placeholder : String
   theme : @core.Theme?
   style : PickerStyle?
   max_height : Double
-  theme_revision : String
-  has_on_select : Bool
   kind : String
   key : String?
 }
@@ -72,8 +76,27 @@ impl @core.ViewNode for Picker with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for Picker with fn revision(self) {
-  "picker:\{picker_items_revision(self.items)}:\{self.selected.get()}:\{self.placeholder}:\{self.theme_revision}:\{self.max_height}:\{self.has_on_select}"
+impl @core.ViewNode for Picker with fn declaration(self) {
+  let paint_key = view_record_key("Picker.paint", [
+    ("items", picker_items_key(self.items)),
+    ("selected", @core.DeclarationKey::string(self.selected)),
+    ("placeholder", @core.DeclarationKey::string(self.placeholder)),
+    ("max_height", @core.DeclarationKey::double(self.max_height)),
+  ])
+  view_declaration(
+    paint=if self.theme is Some(_) || self.style is Some(_) {
+      @core.DeclarationChannel::Uncacheable
+    } else {
+      view_exact_channel(paint_key)
+    },
+    semantics=view_exact_channel(
+      view_record_key("Picker.semantics", [
+        ("items", picker_items_key(self.items)),
+        ("selected", @core.DeclarationKey::string(self.selected)),
+        ("placeholder", @core.DeclarationKey::string(self.placeholder)),
+      ]),
+    ),
+  )
 }
 
 ///|
@@ -97,7 +120,7 @@ impl @core.ViewNode for Picker with fn paint(self, ctx) {
     overlay_commands,
     frame=ctx.frame,
     items=self.items,
-    selected_id=self.selected.get(),
+    selected_id=self.selected,
     placeholder=self.placeholder,
     font=resolved_style.font,
     foreground=resolved_style.foreground,
@@ -112,7 +135,6 @@ impl @core.ViewNode for Picker with fn paint(self, ctx) {
     child_layers: [],
     post_commands: [],
     overlay_commands,
-    platform_views: [],
     repaint_boundary: false,
     animating: false,
   }
@@ -121,14 +143,10 @@ impl @core.ViewNode for Picker with fn paint(self, ctx) {
 ///|
 impl @core.ViewNode for Picker with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Boundary,
     role=@core.SemanticsRole::Menu,
     label=self.placeholder,
-    value=picker_selected_label(
-      self.items,
-      self.selected.get(),
-      self.placeholder,
-    ),
-    actions=[@core.SemanticsAction::Focus, @core.SemanticsAction::Activate],
+    value=picker_selected_label(self.items, self.selected, self.placeholder),
   )
 }
 
@@ -141,6 +159,7 @@ impl @core.ViewNode for Picker with fn focusable(_self) {
 fn[Msg] picker_event(
   node : Picker,
   ctx : @core.ViewEventContext,
+  selected : @core.Binding[String],
   on_select : ((String) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {
   match ctx.event {
@@ -150,7 +169,7 @@ fn[Msg] picker_event(
         event,
         frame=ctx.frame,
         items=node.items,
-        selected=node.selected,
+        selected~,
         max_height=node.max_height,
         on_select~,
       )
@@ -159,7 +178,7 @@ fn[Msg] picker_event(
         ctx.state,
         event,
         items=node.items,
-        selected=node.selected,
+        selected~,
         on_select~,
       )
     _ => @core.ViewEventResult::ignored()
@@ -338,7 +357,7 @@ fn[Msg] handle_picker_pointer(
             focused=true,
             captured=true,
             state=Some({ ..state, expanded: false }),
-            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+            dirty=@core.ViewDirtyHint::ViewBuildDirty,
             messages=picker_messages(on_select, id),
           )
         }
@@ -413,7 +432,7 @@ fn[Msg] handle_picker_keyboard(
             activated=true,
             captured=true,
             state=Some({ ..state, expanded: false }),
-            dirty=@core.ViewDirtyHint::ViewPaintDirty,
+            dirty=@core.ViewDirtyHint::ViewBuildDirty,
             messages=picker_messages(on_select, id),
           )
         }
@@ -534,10 +553,13 @@ fn picker_item_height() -> Double {
 }
 
 ///|
-fn picker_items_revision(items : Array[PickerOption]) -> String {
-  let mut result = ""
-  for item in items {
-    result = "\{result}|\{item.id()}:\{item.label()}"
-  }
-  result
+fn picker_items_key(items : Array[PickerOption]) -> @core.DeclarationKey {
+  @core.DeclarationKey::array(
+    items.map(item => {
+      view_record_key("PickerOption", [
+        ("id", @core.DeclarationKey::string(item.id())),
+        ("label", @core.DeclarationKey::string(item.label())),
+      ])
+    }),
+  )
 }

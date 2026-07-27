@@ -616,7 +616,8 @@ fn layout_tile_marker(theme : @moui.Theme) -> @moui.View[ShowcaseMsg] {
       constraints.constrain(@geometry.Size::new(width=4.0, height=22.0))
     },
     paint=(ctx, frame) => {
-      fill_rounded_rect(ctx,
+      fill_rounded_rect(
+        ctx,
         @graphics.RoundedRect::new(rect=frame, radius=2.0),
         @graphics.Brush::solid(theme.palette.primary.multiply_alpha(0.72)),
       )
@@ -628,32 +629,47 @@ fn layout_tile_marker(theme : @moui.Theme) -> @moui.View[ShowcaseMsg] {
 ///|
 fn layout_tile(theme : @moui.Theme, label : String) -> @moui.View[ShowcaseMsg] {
   container(
-    row([
-      layout_tile_marker(theme),
-      text(label, width=120.0, height=20.0)
+    row(
+      [
+        layout_tile_marker(theme),
+        text(label, width=120.0, height=20.0)
         .font(theme.typography.caption)
         .foreground(theme.palette.foreground),
-    ], spacing=8.0, align=@views.CrossAlign::Center),
-    width=156.0, height=40.0,
+      ],
+      spacing=8.0,
+      align=@views.CrossAlign::Center,
+    ),
+    width=156.0,
+    height=40.0,
     background=theme.palette.surface_variant.multiply_alpha(0.48),
-    corner_radius=theme.radius_scale.sm, padding=6.0,
+    corner_radius=theme.radius_scale.sm,
+    padding=6.0,
   )
 }
 
 ///|
-fn example_preview(theme : @moui.Theme, title : String,
-  child : @moui.View[ShowcaseMsg], width? : Double = 500.0,
+fn example_preview(
+  theme : @moui.Theme,
+  title : String,
+  child : @moui.View[ShowcaseMsg],
+  width? : Double = 500.0,
 ) -> @moui.View[ShowcaseMsg] {
   let inner_width = max_showcase_double(220.0, width - 30.0)
   container(
-    column([
-      text(title, width=inner_width, height=26.0)
+    column(
+      [
+        text(title, width=inner_width, height=26.0)
         .font(theme.typography.caption)
         .foreground(theme.palette.muted),
-      child.frame(width=inner_width, height=150.0),
-    ], spacing=theme.spacing_scale.xs, align=@views.CrossAlign::Start),
-    width~, height=190.0,
-    variant=@views.ContainerVariant::Raised, theme~,
+        child.frame(width=inner_width, height=150.0),
+      ],
+      spacing=theme.spacing_scale.xs,
+      align=@views.CrossAlign::Start,
+    ),
+    width~,
+    height=190.0,
+    variant=@views.ContainerVariant::Raised,
+    theme~,
   ).border(showcase_card_border(theme))
 }
 
@@ -674,11 +690,11 @@ fn visual_card(
         row(
           [
             text(caption, width=inner_width - 60.0, height=22.0)
-              .font(theme.typography.caption)
-              .foreground(theme.palette.foreground),
+            .font(theme.typography.caption)
+            .foreground(theme.palette.foreground),
             text(badge, width=60.0, height=22.0)
-              .font(theme.typography.caption)
-              .foreground(theme.palette.primary),
+            .font(theme.typography.caption)
+            .foreground(theme.palette.primary),
           ],
           spacing=8.0,
           justify=@views.MainAlign::Between,
@@ -688,7 +704,8 @@ fn visual_card(
       spacing=theme.spacing_scale.xs,
       align=@views.CrossAlign::Start,
     ),
-    width~, height=164.0,
+    width~,
+    height=164.0,
     variant=@views.ContainerVariant::Raised,
     theme~,
     padding=12.0,

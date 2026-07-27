@@ -314,8 +314,10 @@ ColorScheme  LayoutDirection  FocusScope  FocusScopeItem
   `@graphics.ImageFit`、`@graphics.LayerSpec`、`@graphics.Transform2D` 等。
 - 动画类型用 `@animation.TransitionSpec`、`@animation.TransitionStyle`、`@animation.Easing`。
 - focus / scheme 用 `@state.FocusScope`、`@state.FocusScopeItem`、`@state.ColorScheme`。
-- diagnostics/kernel-only 类型在需要时直连 `@core.ElementId`、`@core.SemanticsRole`、
+- diagnostics/kernel-only 类型在需要时直连 `@core.SemanticsRole`、
   `@core.ComponentContext`，并限定在 showcase/diagnostics/custom kernel 或测试场景。
+  element identity 是 runtime 私有实现，app 与 diagnostics package 都不会获得
+  `@core.ElementId`。
 
 ### 不设糖 / 仅测试或框架直连 `@core`
 

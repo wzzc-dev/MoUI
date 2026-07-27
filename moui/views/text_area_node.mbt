@@ -1,6 +1,6 @@
 ///|
 priv struct TextArea {
-  value : @core.Binding[String]
+  value : String
   placeholder : String
   size : @core.Size
   theme : @core.Theme?
@@ -8,8 +8,7 @@ priv struct TextArea {
   style : TextFieldStyle?
   lines : Int
   line_height : Double
-  theme_revision : String
-  variant_label : String
+  has_on_submit : Bool
   key : String?
 }
 
@@ -19,8 +18,38 @@ impl @core.ViewNode for TextArea with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for TextArea with fn revision(self) {
-  "textarea:\{self.value.get()}:\{self.placeholder}:\{view_size_revision(self.size)}:\{self.variant_label}:\{self.theme_revision}:\{self.lines}:\{self.line_height}"
+impl @core.ViewNode for TextArea with fn declaration(self) {
+  let paint_key = view_record_key("TextArea.paint", [
+    ("value", @core.DeclarationKey::string(self.value)),
+    ("placeholder", @core.DeclarationKey::string(self.placeholder)),
+    (
+      "variant",
+      @core.DeclarationKey::int(
+        match self.variant {
+          TextFieldVariant::Filled => 0
+          TextFieldVariant::Outline => 1
+          TextFieldVariant::Plain => 2
+        },
+      ),
+    ),
+    ("lines", @core.DeclarationKey::int(self.lines)),
+    ("line_height", @core.DeclarationKey::double(self.line_height)),
+  ])
+  view_declaration(
+    layout=view_exact_channel(view_size_key(self.size)),
+    paint=if self.theme is Some(_) || self.style is Some(_) {
+      @core.DeclarationChannel::Uncacheable
+    } else {
+      view_exact_channel(paint_key)
+    },
+    semantics=view_exact_channel(
+      view_record_key("TextArea.semantics", [
+        ("value", @core.DeclarationKey::string(self.value)),
+        ("placeholder", @core.DeclarationKey::string(self.placeholder)),
+        ("submit", @core.DeclarationKey::bool(self.has_on_submit)),
+      ]),
+    ),
+  )
 }
 
 ///|
@@ -42,7 +71,7 @@ impl @core.ViewNode for TextArea with fn paint(self, ctx) {
   append_text_area_commands(
     commands,
     overlay_commands,
-    text=self.value.get(),
+    text=self.value,
     placeholder=self.placeholder,
     font=resolved_style.font,
     foreground=normal.foreground,
@@ -65,7 +94,6 @@ impl @core.ViewNode for TextArea with fn paint(self, ctx) {
     child_layers: [],
     post_commands: [],
     overlay_commands,
-    platform_views: [],
     repaint_boundary: false,
     animating: false,
   }
@@ -80,7 +108,7 @@ impl @core.ViewNode for TextArea with fn text_input_state(self, ctx) {
   }
   Some(
     text_input_state_for_multi_line(
-      text=self.value.get(),
+      text=self.value,
       frame=ctx.frame,
       font=resolved_style.font,
       control=ctx.text_control,
@@ -94,10 +122,10 @@ impl @core.ViewNode for TextArea with fn text_input_state(self, ctx) {
 ///|
 impl @core.ViewNode for TextArea with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Boundary,
     role=@core.SemanticsRole::TextField,
     label=self.placeholder,
-    value=self.value.get(),
-    actions=[@core.SemanticsAction::Focus, @core.SemanticsAction::SetText],
+    value=self.value,
   )
 }
 

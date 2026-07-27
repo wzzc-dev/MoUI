@@ -159,9 +159,11 @@ assembly. `View` still describes UI declaration trees only, and
 ## Shell Embedding Bridge
 
 `EmbeddingHostBridge` is the private Android/iOS/HarmonyOS service boundary. It
-coalesces `EmbedderImeRequest` updates, emits revisioned flattened semantics
-snapshots only when the tree changes, and carries asynchronous text/image
-clipboard requests and responses. A disposed channel rejects late responses.
+coalesces `EmbedderImeRequest` updates, transports runtime-owned full/delta
+semantics commits with `SemanticsNodeId` and `SemanticsGeneration`, and carries
+asynchronous text/image clipboard requests and responses. Its cursor suppresses
+unchanged transport without becoming a second revision authority. A disposed
+channel rejects late responses.
 
 `TextInputEvent::ReplaceText` and `SetSelection` preserve arbitrary native IME
 replacement and UTF-16 selection updates. Mobile requests include text,
@@ -169,10 +171,12 @@ selection, composition, caret, and candidate rectangle without changing the
 desktop `window_core.ImeRequest` contract.
 
 Accessibility actions enter through
-`AppRuntime::dispatch_semantics_action(ElementId, SemanticsAction, String?)`.
-The runtime verifies that the current node declares the action, then dispatches
-directly to that element. Native adapters must not convert an accessibility
-action back into screen-coordinate input.
+`AppRuntime::perform_semantics_action(PerformSemanticsActionRequest)`. Requests
+carry a `SemanticsNodeId`, typed `SemanticsAction`, and exact runtime generation.
+The runtime owns stale-generation, removed-node, enabled, capability, and
+handler validation. Host adapters only transport the request and receipt; they
+must not repeat validation or convert an action back into screen-coordinate
+input. Web semantics-only commits are synchronized independently of redraw.
 
 Typed host services live on the same boundary. `HostServiceBridge` exposes
 capability-checked dispatch for clipboard, file dialogs, menus, open-URL, and

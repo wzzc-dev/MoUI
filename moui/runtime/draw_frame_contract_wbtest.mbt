@@ -2,7 +2,6 @@
 test "runtime draw frame separates clear color from content commands" {
   let root : @core.View[Unit] = runtime_wb_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="DrawFrameContract"),
-    revision=() => "draw-frame-contract",
     layout=ctx => {
       @core.ViewLayoutResult::new(
         size=ctx.constraints.constrain(@core.Size::new(width=12.0, height=8.0)),

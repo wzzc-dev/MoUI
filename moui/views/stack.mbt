@@ -25,12 +25,27 @@ pub fn[Msg] scroll_view(
     (Some(width), Some(height)) => Some(@core.Size::new(width~, height~))
     _ => None
   }
-  scroll_container(
-    child~,
-    offset~,
-    viewport~,
-    state~,
-    on_scroll~,
-    shows_indicator~,
-  )
+  match state {
+    Some(scroll_state) =>
+      component(context => {
+        let current_offset = context.watch_scroll(scroll_state)
+        scroll_container(
+          child~,
+          offset=current_offset,
+          viewport~,
+          state=Some(scroll_state),
+          on_scroll~,
+          shows_indicator~,
+        )
+      })
+    None =>
+      scroll_container(
+        child~,
+        offset~,
+        viewport~,
+        state=None,
+        on_scroll~,
+        shows_indicator~,
+      )
+  }
 }

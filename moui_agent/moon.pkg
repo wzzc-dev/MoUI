@@ -5,10 +5,6 @@ import {
   "moonbitlang/core/ref",
 }
 
-import {
-  "wzzc-dev/moui/views",
-} for "test"
-
 supported_targets = "+native+wasm-gc"
 
 options(

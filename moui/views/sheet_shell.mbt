@@ -10,10 +10,6 @@ fn[Msg] sheet_shell(
   kind? : String = "Sheet",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  let theme_revision = match theme {
-    Some(t) => t.revision_fingerprint()
-    None => "context"
-  }
   @core.View::from_node(
     SheetShell::{
       presentation_mode,
@@ -21,13 +17,23 @@ fn[Msg] sheet_shell(
       background,
       corner_radius,
       shadow,
-      theme_revision,
       has_on_dismiss: on_dismiss is Some(_),
       kind,
       key,
     },
     children=_node => [content],
     event=(_node, ctx) => sheet_shell_event(ctx, on_dismiss),
+    semantics_actions=_node => {
+      match on_dismiss {
+        Some(message) =>
+          [
+            @core.ViewSemanticsActionHandler::dismiss(_ctx => {
+              @core.ViewSemanticsActionResult::message(message)
+            }),
+          ]
+        None => []
+      }
+    },
   )
 }
 
@@ -38,7 +44,6 @@ priv struct SheetShell {
   background : @core.Brush?
   corner_radius : Double?
   shadow : @core.ShadowStyle?
-  theme_revision : String
   has_on_dismiss : Bool
   kind : String
   key : String?
@@ -50,15 +55,33 @@ impl @core.ViewNode for SheetShell with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for SheetShell with fn revision(self) {
-  "sheet:\{sheet_presentation_revision(self.presentation_mode)}:\{self.theme_revision}:\{self.shadow is Some(_)}:\{self.has_on_dismiss}"
+impl @core.ViewNode for SheetShell with fn declaration(self) {
+  let mode = @core.DeclarationKey::int(
+    match self.presentation_mode {
+      SheetPresentationMode::Modal => 0
+      SheetPresentationMode::BottomSheet => 1
+    },
+  )
+  let paint_key = view_record_key("SheetShell.paint", [
+    ("background", view_brush_option_key(self.background)),
+    ("corner_radius", view_double_option_key(self.corner_radius)),
+    ("shadow", view_shadow_option_key(self.shadow)),
+  ])
+  view_declaration(
+    layout=view_exact_channel(mode),
+    paint=if self.theme is Some(_) {
+      @core.DeclarationChannel::Uncacheable
+    } else {
+      view_exact_channel(paint_key)
+    },
+    semantics=view_exact_channel(
+      @core.DeclarationKey::bool(self.has_on_dismiss),
+    ),
+  )
 }
 
 ///|
-impl @core.ViewNode for SheetShell with fn child_constraints(
-  self,
-  constraints,
-) {
+impl @core.ViewNode for SheetShell with fn child_constraints(self, constraints) {
   let content_constraints = constraints.deflate(sheet_content_insets())
   match self.presentation_mode {
     SheetPresentationMode::Modal => content_constraints
@@ -113,7 +136,10 @@ impl @core.ViewNode for SheetShell with fn paint(self, ctx) {
 
 ///|
 impl @core.ViewNode for SheetShell with fn semantics(_self) {
-  @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Dialog)
+  @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Boundary,
+    role=@core.SemanticsRole::Dialog,
+  )
 }
 
 ///|
@@ -186,14 +212,6 @@ fn sheet_point_outside_content(
   match child_frames {
     [content, ..] => !content.contains(point)
     [] => true
-  }
-}
-
-///|
-fn sheet_presentation_revision(mode : SheetPresentationMode) -> String {
-  match mode {
-    SheetPresentationMode::Modal => "modal"
-    SheetPresentationMode::BottomSheet => "bottom"
   }
 }
 

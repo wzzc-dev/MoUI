@@ -19,8 +19,10 @@ fn build_component_child(
   let subscriptions : Array[StateSubscription] = []
   let effects : Array[ComponentEffect] = []
   let context = @core.ComponentContext::from_runtime({
-    component_id,
-    request_component_rebuild: id => runtime.request_component_rebuild(id),
+    request_component_rebuild: () => {
+      runtime.request_component_rebuild(component_id)
+    },
+    scope_saveable_key: key => "\{component_id.value()}:\{key}",
     viewport_size: runtime.size,
     saveable_state: runtime.saveable_state,
     subscriptions,

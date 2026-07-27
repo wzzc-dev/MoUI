@@ -52,7 +52,6 @@ fn text_input_state_for_single_line(
   let caret_rect = text_editing_exact_cursor_rect(text_frame, cursor_x)
   {
     focused: true,
-    element_id: None,
     text,
     caret,
     selection: text_input_grapheme_selection(boundaries, control.selection),

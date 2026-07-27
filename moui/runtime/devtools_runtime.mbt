@@ -65,10 +65,12 @@ fn runtime_inspector_snapshot_from_state(
   program : ProgramRuntimeSnapshot,
 ) -> RuntimeInspectorSnapshot {
   let dirty_count = state.dirty_count()
-  let dirty_element_ids = state.dirty_element_ids()
-  let dirty_build_element_ids = state.dirty_build_elements.copy()
-  let dirty_layout_element_ids = state.dirty_layout_elements.copy()
-  let dirty_paint_element_ids = state.dirty_paint_elements.copy()
+  let dirty_element_ids = state.dirty_element_ids().map(id => id.value())
+  let dirty_build_element_ids = state.dirty_build_elements.map(id => id.value())
+  let dirty_layout_element_ids = state.dirty_layout_elements.map(id => {
+    id.value()
+  })
+  let dirty_paint_element_ids = state.dirty_paint_elements.map(id => id.value())
   let dirty_build_count = dirty_build_element_ids.length()
   let dirty_layout_count = dirty_layout_element_ids.length()
   let dirty_paint_count = dirty_paint_element_ids.length()
@@ -194,18 +196,68 @@ fn semantics_inspector_snapshot_from_state(
   state : RuntimeState,
 ) -> SemanticsInspectorSnapshot {
   let semantics = state.cached_semantics()
+  let nodes = semantics.nodes()
+  let mut root_role = SemanticsRole::None
+  match semantics.root() {
+    Some(root) =>
+      for node in nodes {
+        if node.node_id == root {
+          root_role = node.role
+          break
+        }
+      }
+    None => ()
+  }
+  let mut focusable_count = 0
+  let mut action_count = 0
+  let mut selected_count = 0
+  let mut checked_count = 0
+  let mut expanded_count = 0
+  let mut invalid_count = 0
+  let mut required_count = 0
+  let mut described_count = 0
+  let nodes_by_id : Map[SemanticsNodeId, SemanticsNode] = Map([])
+  for node in nodes {
+    nodes_by_id[node.node_id] = node
+    if node.focus_order is Some(_) {
+      focusable_count = focusable_count + 1
+    }
+    action_count = action_count + node.actions.length()
+    if node.state.selected {
+      selected_count = selected_count + 1
+    }
+    if node.state.checked {
+      checked_count = checked_count + 1
+    }
+    if node.state.expanded {
+      expanded_count = expanded_count + 1
+    }
+    if node.state.invalid {
+      invalid_count = invalid_count + 1
+    }
+    if node.state.required {
+      required_count = required_count + 1
+    }
+    if node.description != "" {
+      described_count = described_count + 1
+    }
+  }
+  let max_depth = match semantics.root() {
+    Some(root) => semantics_depth_from(root, nodes_by_id)
+    None => 0
+  }
   SemanticsInspectorSnapshot::{
-    root_role: semantics.role,
-    node_count: semantics_node_count(semantics),
-    focusable_count: semantics_focusable_count(semantics),
-    action_count: semantics_action_count(semantics),
-    max_depth: semantics_max_depth(semantics),
-    selected_count: semantics_selected_count(semantics),
-    checked_count: semantics_checked_count(semantics),
-    expanded_count: semantics_expanded_count(semantics),
-    invalid_count: semantics_invalid_count(semantics),
-    required_count: semantics_required_count(semantics),
-    described_count: semantics_described_count(semantics),
+    root_role,
+    node_count: nodes.length(),
+    focusable_count,
+    action_count,
+    max_depth,
+    selected_count,
+    checked_count,
+    expanded_count,
+    invalid_count,
+    required_count,
+    described_count,
   }
 }
 
@@ -247,7 +299,7 @@ fn layout_bounds_entries(
 ) -> Array[LayoutBoundsInspectorEntry] {
   let entries : Array[LayoutBoundsInspectorEntry] = [
     LayoutBoundsInspectorEntry::{
-      element_id: node.element_id,
+      element_id: node.element_id.value(),
       frame: node.frame,
       depth,
       child_count: node.children.length(),
@@ -333,93 +385,23 @@ fn render_inspector_from_commands(
 }
 
 ///|
-fn semantics_node_count(node : SemanticsNode) -> Int {
-  let mut count = 1
-  for child in node.children {
-    count = count + semantics_node_count(child)
+fn semantics_depth_from(
+  id : SemanticsNodeId,
+  nodes : Map[SemanticsNodeId, SemanticsNode],
+) -> Int {
+  match nodes.get(id) {
+    Some(node) => {
+      let mut depth = 1
+      for child in node.children {
+        depth = runtime_devtools_max_int(
+          depth,
+          1 + semantics_depth_from(child, nodes),
+        )
+      }
+      depth
+    }
+    None => 0
   }
-  count
-}
-
-///|
-fn semantics_focusable_count(node : SemanticsNode) -> Int {
-  let mut count = if node.focus_order is Some(_) { 1 } else { 0 }
-  for child in node.children {
-    count = count + semantics_focusable_count(child)
-  }
-  count
-}
-
-///|
-fn semantics_action_count(node : SemanticsNode) -> Int {
-  let mut count = node.actions.length()
-  for child in node.children {
-    count = count + semantics_action_count(child)
-  }
-  count
-}
-
-///|
-fn semantics_max_depth(node : SemanticsNode) -> Int {
-  let mut depth = 1
-  for child in node.children {
-    depth = runtime_devtools_max_int(depth, 1 + semantics_max_depth(child))
-  }
-  depth
-}
-
-///|
-fn semantics_selected_count(node : SemanticsNode) -> Int {
-  let mut count = if node.state.selected { 1 } else { 0 }
-  for child in node.children {
-    count = count + semantics_selected_count(child)
-  }
-  count
-}
-
-///|
-fn semantics_checked_count(node : SemanticsNode) -> Int {
-  let mut count = if node.state.checked { 1 } else { 0 }
-  for child in node.children {
-    count = count + semantics_checked_count(child)
-  }
-  count
-}
-
-///|
-fn semantics_expanded_count(node : SemanticsNode) -> Int {
-  let mut count = if node.state.expanded { 1 } else { 0 }
-  for child in node.children {
-    count = count + semantics_expanded_count(child)
-  }
-  count
-}
-
-///|
-fn semantics_invalid_count(node : SemanticsNode) -> Int {
-  let mut count = if node.state.invalid { 1 } else { 0 }
-  for child in node.children {
-    count = count + semantics_invalid_count(child)
-  }
-  count
-}
-
-///|
-fn semantics_required_count(node : SemanticsNode) -> Int {
-  let mut count = if node.state.required { 1 } else { 0 }
-  for child in node.children {
-    count = count + semantics_required_count(child)
-  }
-  count
-}
-
-///|
-fn semantics_described_count(node : SemanticsNode) -> Int {
-  let mut count = if node.description != "" { 1 } else { 0 }
-  for child in node.children {
-    count = count + semantics_described_count(child)
-  }
-  count
 }
 
 ///|

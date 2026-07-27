@@ -29,7 +29,7 @@ fn ElementNode::measure_with_text_system(
   style? : ViewStyle = ViewStyle::empty(),
   text_system~ : TextSystem,
 ) -> MeasuredNode {
-  if !self.dirty.needs_layout &&
+  if !self.has_dirty_layout() &&
     self.layout_cache.cached_measure_constraints == Some(constraints) &&
     self.layout_cache.cached_measure_environment == Some(environment) &&
     self.layout_cache.cached_measure_style == Some(style) {
@@ -71,6 +71,7 @@ fn ElementNode::measure_with_text_system(
   self.layout_cache.cached_measure_style = Some(style)
   self.layout_cache.cached_measured = Some(measured)
   self.dirty.needs_layout = false
+  self.refresh_descendant_dirty_flags()
   measured
 }
 
@@ -83,7 +84,7 @@ fn ElementNode::place_with_text_system(
   text_system~ : TextSystem,
   layout_direction? : LayoutDirection = LayoutDirection::LeftToRight,
 ) -> PlacedNode {
-  if !self.dirty.needs_layout &&
+  if !self.has_dirty_layout() &&
     self.layout_cache.cached_place_frame == Some(bounds) &&
     self.layout_cache.cached_place_environment == Some(environment) &&
     self.layout_cache.cached_place_style == Some(style) {
@@ -111,6 +112,7 @@ fn ElementNode::place_with_text_system(
   self.layout_cache.cached_place_environment = Some(environment)
   self.layout_cache.cached_place_style = Some(style)
   self.layout_cache.cached_placed = Some(placed)
+  self.refresh_descendant_dirty_flags()
   placed
 }
 
@@ -157,7 +159,7 @@ fn ElementNode::place_measured_with_text_system(
 
 ///|
 fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
-  if !self.dirty.needs_layout {
+  if !self.has_dirty_layout() {
     match self.layout_cache.cached_intrinsic_size {
       Some(size) => return size
       None => ()

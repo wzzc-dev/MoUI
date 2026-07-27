@@ -129,8 +129,12 @@ fn redraw_window(window : @macos.Window) -> Unit {
   match draw_scene(size.width(), size.height()) {
     Some(pixmap) => {
       window.pre_present_notify()
+      let raw_handle = try! window.window_handle().as_raw()
+      guard raw_handle is @windowing.RawWindowHandle::AppKit(appkit_handle) else {
+        abort("macOS presenter requires an AppKit window handle")
+      }
       let status = present_rgba_to_window(
-        window.window_handle(),
+        appkit_handle.ns_view(),
         pixmap.width(),
         pixmap.height(),
         pixmap.row_bytes(),

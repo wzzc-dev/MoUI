@@ -5,7 +5,7 @@ fn find_semantics_role(
   role : @core.SemanticsRole,
 ) -> @core.ViewSemanticsInfo? {
   let info = view.semantics()
-  if info.role == role {
+  if info.role == Some(role) {
     Some(info)
   } else {
     for child in view.children() {
@@ -22,17 +22,17 @@ fn find_semantics_role(
 /// Walk modifier wrappers until a node reports a non-empty description.
 fn find_semantics_description(view : @core.View[Unit]) -> String? {
   let info = view.semantics()
-  if info.description != "" {
-    Some(info.description)
-  } else {
-    for child in view.children() {
-      match find_semantics_description(child) {
-        Some(found) => return Some(found)
-        None => ()
-      }
-    }
-    None
+  match info.description {
+    Some(description) if description != "" => return Some(description)
+    _ => ()
   }
+  for child in view.children() {
+    match find_semantics_description(child) {
+      Some(found) => return Some(found)
+      None => ()
+    }
+  }
+  None
 }
 
 ///|
@@ -79,7 +79,7 @@ test "form field semantics mark required and invalid state" {
     is Some(role_info) else {
     fail("expected FormField semantics role wrapper")
   }
-  assert_true(role_info.role == @core.SemanticsRole::FormField)
+  assert_true(role_info.role == Some(@core.SemanticsRole::FormField))
   assert_true(find_semantics_required(field))
   assert_true(find_semantics_invalid(field))
   guard find_semantics_description(field) is Some(description) else {
@@ -90,7 +90,10 @@ test "form field semantics mark required and invalid state" {
     field.identity().kind.contains("AccessibilityLabel") ||
     field.identity().kind.contains("Modified"),
   )
-  assert_true(field.semantics().label.contains("Email"))
+  guard field.semantics().label is Some(field_label) else {
+    fail("expected form field accessibility label")
+  }
+  assert_true(field_label.contains("Email"))
 }
 
 ///|

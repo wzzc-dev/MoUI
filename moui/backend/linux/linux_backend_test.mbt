@@ -451,49 +451,38 @@ test "linux host options construct without renderer dependencies" {
 
 ///|
 test "linux accessibility bridge dispatches semantics actions" {
-  let invoked = Ref(0)
-  let node = @core.SemanticsNode::{
-    element_id: @core.ElementId::new(1),
-    role: @core.SemanticsRole::Button,
-    level: None,
-    url: "",
-    label: "Run",
-    value: "",
-    description: "",
-    state: @core.SemanticsState::default(),
-    actions: [@core.SemanticsAction::Activate],
-    focus_order: Some(0),
-    frame: @core.Rect::new(x=0.0, y=0.0, width=80.0, height=32.0),
-    children: [],
+  let runtime = @runtime.AppRuntime::new_view(
+    root=(@views.button("Run", on_click=()) : @core.View[Unit]),
+    size=@core.Size::new(width=120.0, height=60.0),
+  )
+  let snapshot = match runtime.read_semantics() {
+    Ok(@runtime.SemanticsRead::Full(snapshot)) => snapshot
+    _ => abort("expected full committed semantics")
   }
-  let bridge = linux_accessibility_bridge(root=node, dispatch=(
-    element_id,
-    action,
-    _value,
-  ) => {
-    if element_id == @core.ElementId::new(1) &&
-      action == @core.SemanticsAction::Activate {
-      invoked.val = invoked.val + 1
-      true
-    } else {
-      false
+  let mut target : @core.SemanticsNode? = None
+  for node in snapshot.nodes() {
+    if node.actions.any(action => action == @core.SemanticsActionKind::Activate) {
+      target = Some(node)
     }
-  })
+  }
+  let target = target.unwrap()
+  let bridge = linux_accessibility_bridge(runtime)
   inspect(bridge.kind.label(), content="at-spi")
   inspect(bridge.available, content="true")
-  match bridge.snapshot_semantics(node) {
+  match bridge.publish_semantics(@runtime.SemanticsRead::Full(snapshot)) {
     Some(_) => ()
-    None => fail("expected Linux AT-SPI semantics snapshot")
+    None => fail("expected Linux AT-SPI semantics update")
   }
   match
     bridge.perform_action(
       @host.NativeAccessibilityActionRequest::new(
-        element_id=@core.ElementId::new(1),
+        node_id=target.node_id,
+        generation=snapshot.generation(),
         action=@core.SemanticsAction::Activate,
       ),
     ) {
-    @host.NativeAccessibilityActionResult::Handled =>
-      inspect(invoked.val, content="1")
+    @host.NativeAccessibilityActionResult::Handled(receipt) =>
+      assert_true(receipt.before == snapshot.generation())
     _ => fail("expected Linux accessibility bridge action dispatch")
   }
 }

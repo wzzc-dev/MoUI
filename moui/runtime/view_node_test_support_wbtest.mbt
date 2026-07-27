@@ -1,17 +1,33 @@
 ///|
 priv struct RuntimeWhiteBoxFixtureNode {
   identity : () -> @core.ViewIdentity
-  revision : () -> String
-  paint_revision : () -> String
+  declaration : () -> @core.ViewDeclaration
   child_constraints : (@core.Constraints) -> @core.Constraints
   child_environment : (@core.Environment) -> @core.Environment
   child_style : (@core.ViewStyle) -> @core.ViewStyle
   layout : (@core.ViewLayoutContext) -> @core.ViewLayoutResult
   paint : (@core.ViewPaintContext) -> @core.ViewPaintPlan
+  platform_views : (@core.ViewPlatformContext) -> Array[
+    @core.PlatformViewPlacement,
+  ]
   text_input_state : (@core.ViewPaintContext) -> @core.TextInputState?
   semantics : () -> @core.ViewSemanticsInfo
   focusable : () -> Bool
   flex_weight : () -> Double
+}
+
+///|
+fn runtime_wb_fixture_exact_declaration(
+  type_tag : String,
+  fields : Array[(String, @core.DeclarationKey)],
+) -> @core.ViewDeclaration {
+  let key = @core.DeclarationKey::record(type_tag~, fields~)
+  @core.ViewDeclaration::channels(
+    layout=@core.DeclarationChannel::Exact(key),
+    paint=@core.DeclarationChannel::Exact(key),
+    semantics=@core.DeclarationChannel::Exact(key),
+    platform=@core.DeclarationChannel::Exact(key),
+  )
 }
 
 ///|
@@ -20,13 +36,8 @@ impl @core.ViewNode for RuntimeWhiteBoxFixtureNode with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for RuntimeWhiteBoxFixtureNode with fn revision(self) {
-  (self.revision)()
-}
-
-///|
-impl @core.ViewNode for RuntimeWhiteBoxFixtureNode with fn paint_revision(self) {
-  (self.paint_revision)()
+impl @core.ViewNode for RuntimeWhiteBoxFixtureNode with fn declaration(self) {
+  (self.declaration)()
 }
 
 ///|
@@ -64,6 +75,14 @@ impl @core.ViewNode for RuntimeWhiteBoxFixtureNode with fn paint(self, context) 
 }
 
 ///|
+impl @core.ViewNode for RuntimeWhiteBoxFixtureNode with fn platform_views(
+  self,
+  context,
+) {
+  (self.platform_views)(context)
+}
+
+///|
 impl @core.ViewNode for RuntimeWhiteBoxFixtureNode with fn text_input_state(
   self,
   context,
@@ -89,8 +108,9 @@ impl @core.ViewNode for RuntimeWhiteBoxFixtureNode with fn flex_weight(self) {
 ///|
 fn[Msg] runtime_wb_fixture_view(
   identity~ : () -> @core.ViewIdentity,
-  revision? : () -> String = () => "",
-  paint_revision? : () -> String = () => "",
+  declaration? : () -> @core.ViewDeclaration = () => {
+    @core.ViewDeclaration::constant()
+  },
   children? : () -> Array[@core.View[Msg]] = () => [],
   build_child? : ((@core.ComponentContext) -> @core.View[Msg])? = None,
   child_constraints? : (@core.Constraints) -> @core.Constraints = constraints => {
@@ -105,6 +125,9 @@ fn[Msg] runtime_wb_fixture_view(
   paint? : (@core.ViewPaintContext) -> @core.ViewPaintPlan = _context => {
     @core.ViewPaintPlan::empty()
   },
+  platform_views? : (@core.ViewPlatformContext) -> Array[
+    @core.PlatformViewPlacement,
+  ] = _context => [],
   event? : (@core.ViewEventContext) -> @core.ViewEventResult[Msg] = _context => {
     @core.ViewEventResult::ignored()
   },
@@ -117,19 +140,22 @@ fn[Msg] runtime_wb_fixture_view(
   semantics? : () -> @core.ViewSemanticsInfo = () => {
     @core.ViewSemanticsInfo::new()
   },
+  semantics_actions? : () -> Array[@core.ViewSemanticsActionHandler[Msg]] = () => {
+    []
+  },
   focusable? : () -> Bool = () => false,
   flex_weight? : () -> Double = () => 0.0,
 ) -> @core.View[Msg] {
   @core.View::from_node(
     RuntimeWhiteBoxFixtureNode::{
       identity,
-      revision,
-      paint_revision,
+      declaration,
       child_constraints,
       child_environment,
       child_style,
       layout,
       paint,
+      platform_views,
       text_input_state,
       semantics,
       focusable,
@@ -144,5 +170,6 @@ fn[Msg] runtime_wb_fixture_view(
     text_command=(_node, context, intent, paste_text) => {
       text_command(context, intent, paste_text)
     },
+    semantics_actions=_node => semantics_actions(),
   )
 }

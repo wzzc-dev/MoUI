@@ -12,7 +12,7 @@ import {
 }
 
 // Values
-pub fn embedding_accessibility_response(Int, Int, String) -> EmbeddingHostResponse?
+pub fn embedding_accessibility_response(@core.SemanticsNodeId, @core.SemanticsGeneration, @core.SemanticsAction) -> EmbeddingHostResponse
 
 pub fn embedding_command_response(Int) -> EmbeddingHostResponse?
 
@@ -77,8 +77,7 @@ pub struct EmbeddingHostBridge {
   mut updates : Array[EmbeddingHostUpdate]
   mut ime_revision : Int
   mut last_text_input : @core.TextInputState?
-  mut semantics_revision : Int
-  mut last_semantics_nodes : Array[EmbeddingSemanticsNode]
+  mut semantics_cursor : @core.SemanticsGeneration?
   mut platform_view_revision : Int
   mut last_platform_views : Array[@core.PlatformViewPlacement]
   mut disposed : Bool
@@ -118,7 +117,7 @@ pub fn EmbeddingHostResponseEnvelope::new(session_generation~ : Int, response~ :
 pub(all) enum EmbeddingHostUpdate {
   Ime(EmbeddingImeRequest)
   Clipboard(@host.HostPendingServiceRequest)
-  Semantics(EmbeddingSemanticsSnapshot)
+  Semantics(EmbeddingSemanticsUpdate)
   Diagnostic(String)
   PlatformViews(EmbeddingPlatformViewSnapshot)
   PlatformChannel(@host.HostPendingServiceRequest)
@@ -133,7 +132,6 @@ pub(all) struct EmbeddingHostUpdateEnvelope {
 pub(all) struct EmbeddingImeRequest {
   revision : Int
   enabled : Bool
-  element_id : Int?
   text : String
   caret : Int
   selection : @core.TextRange?
@@ -150,22 +148,29 @@ pub(all) struct EmbeddingPlatformViewSnapshot {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct EmbeddingSemanticsNode {
-  element_id : Int
-  parent_id : Int?
+  node_id : @core.SemanticsNodeId
+  semantic_id : @core.SemanticId?
   role : @core.SemanticsRole
+  level : Int?
+  url : String
   label : String
   value : String
   description : String
   state : @core.SemanticsState
-  actions : Array[@core.SemanticsAction]
+  actions : Array[@core.SemanticsActionKind]
   focus_order : Int?
   frame : @core.Rect
+  children : Array[@core.SemanticsNodeId]
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct EmbeddingSemanticsSnapshot {
-  revision : Int
-  root_id : Int
+pub(all) struct EmbeddingSemanticsUpdate {
+  kind : String
+  generation : @core.SemanticsGeneration
+  root : @core.SemanticsNodeId?
+  focused : @core.SemanticsNodeId?
   nodes : Array[EmbeddingSemanticsNode]
+  removed : Array[@core.SemanticsNodeId]
+  issues : Array[@runtime.SemanticsIssue]
 } derive(Eq, ToJson, @debug.Debug)
 
 // Type aliases

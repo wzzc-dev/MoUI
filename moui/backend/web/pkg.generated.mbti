@@ -10,6 +10,8 @@ import {
 }
 
 // Values
+pub fn aria_update_from_semantics_read(@runtime.SemanticsRead) -> AriaSemanticsUpdate?
+
 pub fn backend_info() -> WebBackendInfo
 
 pub fn canvas_host_constraints() -> CanvasHostConstraints
@@ -58,7 +60,7 @@ pub fn web_dispatch_pointer_input(Int, Int, Double, Double, Double, Double, Int,
 
 pub fn web_dispatch_route(Int, Int) -> Unit
 
-pub fn web_dispatch_semantics_action(Int, Int, Int, Int) -> Unit
+pub fn web_dispatch_semantics_action(Int, Int, Int, Int, Int, Int) -> Unit
 
 pub fn web_history_back() -> Unit
 
@@ -72,7 +74,11 @@ pub fn web_host_info() -> @host.HostAppInfo
 
 pub fn web_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, open_url? : (String) -> Bool, clipboard? : Bool, clipboard_read? : Bool, clipboard_write? : (String) -> Bool, file_dialog? : Bool, file_access? : Bool, async_queue? : @host.HostServiceAsyncQueue?) -> @host.HostServiceBridge
 
+pub fn web_timer_source() -> @host.HostTimerSource
+
 pub fn web_update_document_metadata(WebDocumentMetadata) -> Unit
+
+pub fn web_wall_clock() -> @host.HostWallClock
 
 pub fn webgpu_canvas_surface_contract() -> @render.WgpuSurfaceContract
 
@@ -86,7 +92,8 @@ pub fn window_event_to_host_with_modifiers(@wzzc-dev/window/core.WindowEvent, @w
 
 // Types and methods
 pub(all) struct AriaNode {
-  element_id : @wzzc-dev/moui/core.ElementId
+  node_id : @wzzc-dev/moui/core.SemanticsNodeId
+  semantic_id : String?
   role : String
   level : Int?
   url : String
@@ -102,7 +109,16 @@ pub(all) struct AriaNode {
   disabled : Bool
   actions : Array[String]
   frame : @wzzc-dev/moui/core.Rect
-  children : Array[AriaNode]
+  children : Array[@wzzc-dev/moui/core.SemanticsNodeId]
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct AriaSemanticsUpdate {
+  kind : String
+  generation : @wzzc-dev/moui/core.SemanticsGeneration
+  root : @wzzc-dev/moui/core.SemanticsNodeId?
+  focused : @wzzc-dev/moui/core.SemanticsNodeId?
+  nodes : Array[AriaNode]
+  removed : Array[@wzzc-dev/moui/core.SemanticsNodeId]
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct CanvasHostConstraints {

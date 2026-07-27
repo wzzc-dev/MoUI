@@ -7,41 +7,32 @@ pub(all) enum NativeAccessibilityBridgeKind {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct NativeAccessibilityNode {
-  element_id : @core.ElementId
-  role : @core.SemanticsRole
-  native_role : String
-  label : String
-  value : String
-  frame : @core.Rect
-  focused : Bool
-  disabled : Bool
-  selected : Bool
-  checked : Bool
-  actions : Array[@core.SemanticsAction]
-  children : Array[NativeAccessibilityNode]
-} derive(Eq, Debug, ToJson)
+/// Runtime-owned semantics update translated for AccessKit transport.
+pub struct NativeAccessibilityUpdate {
+  generation : @core.SemanticsGeneration
+  tree_update : @accesskit.TreeUpdate
+  removed : Array[@core.SemanticsNodeId]
+}
 
 ///|
 pub(all) struct NativeAccessibilityActionRequest {
-  element_id : @core.ElementId
+  node_id : @core.SemanticsNodeId
+  generation : @core.SemanticsGeneration
   action : @core.SemanticsAction
-  value : String?
 } derive(Eq, Debug, ToJson)
 
 ///|
 pub(all) enum NativeAccessibilityActionResult {
-  Handled
-  Unsupported(String)
-  ElementNotFound(@core.ElementId)
+  Handled(@runtime.SemanticsActionReceipt)
+  Rejected(@runtime.SemanticsActionDispatchError)
   BridgeUnavailable(String)
-} derive(Eq, Debug, ToJson)
+} derive(Eq, Debug)
 
 ///|
 pub(all) struct NativeAccessibilityBridge {
   kind : NativeAccessibilityBridgeKind
   available : Bool
-  snapshot : (@core.SemanticsNode) -> @accesskit.TreeUpdate
+  publish : (@runtime.SemanticsRead) -> NativeAccessibilityUpdate?
   perform : (NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult
 }
 
@@ -58,33 +49,31 @@ pub fn NativeAccessibilityBridgeKind::label(
 }
 
 ///|
-pub fn NativeAccessibilityNode::from_semantics(
-  node : @core.SemanticsNode,
-  native_role? : String = native_accessibility_role(node.role),
-) -> NativeAccessibilityNode {
-  {
-    element_id: node.element_id,
-    role: node.role,
-    native_role,
-    label: node.label,
-    value: node.value,
-    frame: node.frame,
-    focused: node.state.focused,
-    disabled: node.state.disabled,
-    selected: node.state.selected,
-    checked: node.state.checked,
-    actions: node.actions,
-    children: node.children.map(child => {
-      NativeAccessibilityNode::from_semantics(child)
-    }),
-  }
+pub fn NativeAccessibilityUpdate::generation(
+  self : NativeAccessibilityUpdate,
+) -> @core.SemanticsGeneration {
+  self.generation
 }
 
 ///|
-pub fn accesskit_node_id_for_element(
-  element_id : @core.ElementId,
+pub fn NativeAccessibilityUpdate::tree_update(
+  self : NativeAccessibilityUpdate,
+) -> @accesskit.TreeUpdate {
+  self.tree_update
+}
+
+///|
+pub fn NativeAccessibilityUpdate::removed(
+  self : NativeAccessibilityUpdate,
+) -> Array[@core.SemanticsNodeId] {
+  self.removed.copy()
+}
+
+///|
+pub fn accesskit_node_id_for_semantics(
+  node_id : @core.SemanticsNodeId,
 ) -> @accesskit.NodeId {
-  @accesskit.NodeId::from_u64(element_id.value().to_uint64())
+  @accesskit.NodeId::from_u64(node_id.value())
 }
 
 ///|
@@ -135,18 +124,18 @@ pub fn accesskit_role_from_semantics(
 
 ///|
 pub fn accesskit_action_from_semantics(
-  action : @core.SemanticsAction,
+  action : @core.SemanticsActionKind,
 ) -> @accesskit.Action {
   match action {
-    @core.SemanticsAction::Activate => @accesskit.Action::Click
-    @core.SemanticsAction::Focus => @accesskit.Action::Focus
-    @core.SemanticsAction::SetText => @accesskit.Action::SetValue
-    @core.SemanticsAction::Submit => @accesskit.Action::Click
-    @core.SemanticsAction::Scroll => @accesskit.Action::ScrollIntoView
-    @core.SemanticsAction::Select => @accesskit.Action::Click
-    @core.SemanticsAction::Expand => @accesskit.Action::Expand
-    @core.SemanticsAction::Collapse => @accesskit.Action::Collapse
-    @core.SemanticsAction::Dismiss => @accesskit.Action::HideTooltip
+    @core.SemanticsActionKind::Activate => @accesskit.Action::Click
+    @core.SemanticsActionKind::Focus => @accesskit.Action::Focus
+    @core.SemanticsActionKind::SetText => @accesskit.Action::SetValue
+    @core.SemanticsActionKind::Submit => @accesskit.Action::Click
+    @core.SemanticsActionKind::Scroll => @accesskit.Action::ScrollIntoView
+    @core.SemanticsActionKind::Select => @accesskit.Action::Click
+    @core.SemanticsActionKind::Expand => @accesskit.Action::Expand
+    @core.SemanticsActionKind::Collapse => @accesskit.Action::Collapse
+    @core.SemanticsActionKind::Dismiss => @accesskit.Action::HideTooltip
   }
 }
 
@@ -193,103 +182,102 @@ pub fn accesskit_node_from_semantics(
   for action in node.actions {
     access_node.add_action(accesskit_action_from_semantics(action))
   }
-  access_node.set_children(
-    node.children.map(child => accesskit_node_id_for_element(child.element_id)),
-  )
+  access_node.set_children(node.children.map(accesskit_node_id_for_semantics))
   access_node
 }
 
 ///|
-pub fn accesskit_tree_update_from_semantics(
-  node : @core.SemanticsNode,
-) -> @accesskit.TreeUpdate {
-  let root_id = accesskit_node_id_for_element(node.element_id)
-  let update = @accesskit.TreeUpdate(@accesskit.TreeId::root(), root_id)
-  update.set_tree(@accesskit.Tree(root_id))
-  push_accesskit_semantics_node(update, node)
-  update
+fn empty_accesskit_root() -> (@accesskit.NodeId, @accesskit.Node) {
+  let id = @accesskit.NodeId::from_u64(0UL)
+  (id, @accesskit.Node(@accesskit.Role::GenericContainer))
 }
 
 ///|
-fn push_accesskit_semantics_node(
-  update : @accesskit.TreeUpdate,
-  node : @core.SemanticsNode,
-) -> Unit {
-  update.push_node(
-    accesskit_node_id_for_element(node.element_id),
-    accesskit_node_from_semantics(node),
-  )
-  for child in node.children {
-    push_accesskit_semantics_node(update, child)
-  }
-}
-
-///|
-pub fn NativeAccessibilityNode::from_accesskit(
-  update : @accesskit.TreeUpdate,
-  element_id : @core.ElementId,
-  role : @core.SemanticsRole,
-) -> NativeAccessibilityNode {
-  let id = accesskit_node_id_for_element(element_id)
-  for node_update in update.nodes() {
-    if node_update.id() == id {
-      let node = node_update.node()
-      return {
-        element_id,
-        role,
-        native_role: node.role().to_string(),
-        label: node.label().unwrap_or(""),
-        value: node.value().unwrap_or(""),
-        frame: @core.Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
-        focused: false,
-        disabled: node.is_disabled(),
-        selected: node.is_selected().unwrap_or(false),
-        checked: node.toggled() == Some(@accesskit.Toggled::True),
-        actions: [],
-        children: [],
-      }
+fn build_accesskit_update(
+  generation : @core.SemanticsGeneration,
+  root : @core.SemanticsNodeId?,
+  focused : @core.SemanticsNodeId?,
+  nodes : Array[@core.SemanticsNode],
+  removed : Array[@core.SemanticsNodeId],
+) -> NativeAccessibilityUpdate {
+  let (root_id, empty_node) = match root {
+    Some(node_id) => (accesskit_node_id_for_semantics(node_id), None)
+    None => {
+      let (node_id, node) = empty_accesskit_root()
+      (node_id, Some(node))
     }
   }
-  NativeAccessibilityNode::from_semantics(@core.SemanticsNode::{
-    element_id,
-    role,
-    level: None,
-    url: "",
-    label: "",
-    value: "",
-    description: "",
-    state: @core.SemanticsState::default(),
-    actions: [],
-    focus_order: None,
-    frame: @core.Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
-    children: [],
-  })
+  let focus_id = match focused {
+    Some(node_id) => accesskit_node_id_for_semantics(node_id)
+    None => root_id
+  }
+  let update = @accesskit.TreeUpdate(@accesskit.TreeId::root(), focus_id)
+  update.set_tree(@accesskit.Tree(root_id))
+  match empty_node {
+    Some(node) => update.push_node(root_id, node)
+    None => ()
+  }
+  for node in nodes {
+    update.push_node(
+      accesskit_node_id_for_semantics(node.node_id),
+      accesskit_node_from_semantics(node),
+    )
+  }
+  { generation, tree_update: update, removed }
+}
+
+///|
+pub fn accesskit_update_from_semantics_read(
+  read : @runtime.SemanticsRead,
+) -> NativeAccessibilityUpdate? {
+  match read {
+    @runtime.SemanticsRead::Full(snapshot) =>
+      Some(
+        build_accesskit_update(
+          snapshot.generation(),
+          snapshot.root(),
+          snapshot.focused(),
+          snapshot.nodes(),
+          [],
+        ),
+      )
+    @runtime.SemanticsRead::Delta(delta) =>
+      Some(
+        build_accesskit_update(
+          delta.to(),
+          delta.root(),
+          delta.focused(),
+          delta.upserted(),
+          delta.removed(),
+        ),
+      )
+    @runtime.SemanticsRead::Unchanged(_) => None
+  }
 }
 
 ///|
 pub fn NativeAccessibilityActionRequest::new(
-  element_id~ : @core.ElementId,
+  node_id~ : @core.SemanticsNodeId,
+  generation~ : @core.SemanticsGeneration,
   action~ : @core.SemanticsAction,
-  value? : String? = None,
 ) -> NativeAccessibilityActionRequest {
-  { element_id, action, value }
+  { node_id, generation, action }
 }
 
 ///|
 pub fn NativeAccessibilityBridge::new(
   kind~ : NativeAccessibilityBridgeKind,
   available? : Bool = true,
-  snapshot? : (@core.SemanticsNode) -> @accesskit.TreeUpdate = node => {
-    accesskit_tree_update_from_semantics(node)
+  publish? : (@runtime.SemanticsRead) -> NativeAccessibilityUpdate? = read => {
+    accesskit_update_from_semantics_read(read)
   },
-  perform? : (NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult = request => {
-    NativeAccessibilityActionResult::Unsupported(
-      "native accessibility action is not handled: " +
-      semantics_action_label(request.action),
+  perform? : (NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult = _request => {
+    NativeAccessibilityActionResult::BridgeUnavailable(
+      "native accessibility action transport is not configured",
     )
   },
 ) -> NativeAccessibilityBridge {
-  { kind, available, snapshot, perform }
+  { kind, available, publish, perform }
 }
 
 ///|
@@ -303,24 +291,12 @@ pub fn NativeAccessibilityBridge::unavailable(
 }
 
 ///|
-pub fn NativeAccessibilityBridge::snapshot_semantics(
+pub fn NativeAccessibilityBridge::publish_semantics(
   self : NativeAccessibilityBridge,
-  node : @core.SemanticsNode,
-) -> @accesskit.TreeUpdate? {
+  read : @runtime.SemanticsRead,
+) -> NativeAccessibilityUpdate? {
   if self.available {
-    Some((self.snapshot)(node))
-  } else {
-    None
-  }
-}
-
-///|
-pub fn NativeAccessibilityBridge::snapshot_legacy_node(
-  self : NativeAccessibilityBridge,
-  node : @core.SemanticsNode,
-) -> NativeAccessibilityNode? {
-  if self.available {
-    Some(NativeAccessibilityNode::from_semantics(node))
+    (self.publish)(read)
   } else {
     None
   }
@@ -341,37 +317,23 @@ pub fn NativeAccessibilityBridge::perform_action(
 }
 
 ///|
-pub fn NativeAccessibilityBridge::semantics_action_bridge(
+pub fn NativeAccessibilityBridge::runtime(
   kind~ : NativeAccessibilityBridgeKind,
-  root~ : @core.SemanticsNode,
-  dispatch~ : (@core.ElementId, @core.SemanticsAction, String?) -> Bool,
+  runtime~ : @runtime.AppRuntime,
 ) -> NativeAccessibilityBridge {
-  NativeAccessibilityBridge::new(
-    kind~,
-    snapshot=node => accesskit_tree_update_from_semantics(node),
-    perform=request => {
-      match find_semantics_node(root, request.element_id) {
-        Some(node) =>
-          if node.actions.any(action => action == request.action) {
-            if dispatch(request.element_id, request.action, request.value) {
-              NativeAccessibilityActionResult::Handled
-            } else {
-              NativeAccessibilityActionResult::Unsupported(
-                "native accessibility action dispatch returned false: " +
-                semantics_action_label(request.action),
-              )
-            }
-          } else {
-            NativeAccessibilityActionResult::Unsupported(
-              "semantics node does not expose action: " +
-              semantics_action_label(request.action),
-            )
-          }
-        None =>
-          NativeAccessibilityActionResult::ElementNotFound(request.element_id)
-      }
-    },
-  )
+  NativeAccessibilityBridge::new(kind~, perform=request => {
+    match
+      runtime.perform_semantics_action({
+        target: @core.SemanticsTarget::ByNodeId(request.node_id),
+        action: request.action,
+        precondition: @runtime.SemanticsGenerationPrecondition::Exact(
+          request.generation,
+        ),
+      }) {
+      Ok(receipt) => NativeAccessibilityActionResult::Handled(receipt)
+      Err(error) => NativeAccessibilityActionResult::Rejected(error)
+    }
+  })
 }
 
 ///|
@@ -379,64 +341,12 @@ pub fn semantics_action_label(action : @core.SemanticsAction) -> String {
   match action {
     @core.SemanticsAction::Activate => "activate"
     @core.SemanticsAction::Focus => "focus"
-    @core.SemanticsAction::SetText => "set-text"
+    @core.SemanticsAction::SetText(_) => "set-text"
     @core.SemanticsAction::Submit => "submit"
-    @core.SemanticsAction::Scroll => "scroll"
+    @core.SemanticsAction::Scroll(_) => "scroll"
     @core.SemanticsAction::Select => "select"
     @core.SemanticsAction::Expand => "expand"
     @core.SemanticsAction::Collapse => "collapse"
     @core.SemanticsAction::Dismiss => "dismiss"
-  }
-}
-
-///|
-pub fn find_semantics_node(
-  node : @core.SemanticsNode,
-  element_id : @core.ElementId,
-) -> @core.SemanticsNode? {
-  if node.element_id == element_id {
-    Some(node)
-  } else {
-    for child in node.children {
-      match find_semantics_node(child, element_id) {
-        Some(found) => return Some(found)
-        None => ()
-      }
-    }
-    None
-  }
-}
-
-///|
-fn native_accessibility_role(role : @core.SemanticsRole) -> String {
-  match role {
-    @core.SemanticsRole::None => "ignored"
-    @core.SemanticsRole::Text => "staticText"
-    @core.SemanticsRole::Link => "link"
-    @core.SemanticsRole::Heading => "heading"
-    @core.SemanticsRole::Navigation => "navigation"
-    @core.SemanticsRole::Main => "main"
-    @core.SemanticsRole::Button => "button"
-    @core.SemanticsRole::Checkbox => "checkbox"
-    @core.SemanticsRole::TextField => "textField"
-    @core.SemanticsRole::List => "list"
-    @core.SemanticsRole::ListItem => "listItem"
-    @core.SemanticsRole::Grid => "grid"
-    @core.SemanticsRole::ScrollView => "scrollArea"
-    @core.SemanticsRole::Switch => "switch"
-    @core.SemanticsRole::Radio => "radioButton"
-    @core.SemanticsRole::Slider => "slider"
-    @core.SemanticsRole::Progress => "progressIndicator"
-    @core.SemanticsRole::Tab => "tab"
-    @core.SemanticsRole::Dialog => "dialog"
-    @core.SemanticsRole::Tooltip => "tooltip"
-    @core.SemanticsRole::Menu => "menu"
-    @core.SemanticsRole::WebView => "webView"
-    @core.SemanticsRole::ButtonGroup => "buttonGroup"
-    @core.SemanticsRole::Form => "form"
-    @core.SemanticsRole::FormField => "formField"
-    @core.SemanticsRole::Tree => "tree"
-    @core.SemanticsRole::TreeItem => "treeItem"
-    @core.SemanticsRole::Group => "group"
   }
 }

@@ -44,7 +44,7 @@ test "surface detach cancels pending host service exactly once" {
   assert_true(core.detach_surface())
   inspect(completion_count.val, content="1")
   assert_false(unexpected_completion.val)
-  inspect(cancellation_reason.val, content="shell surface epoch detached")
+  inspect(cancellation_reason.val, content="mobile surface epoch detached")
   assert_false(
     channel.service_queue.complete(
       id,
@@ -55,4 +55,142 @@ test "surface detach cancels pending host service exactly once" {
   )
   inspect(completion_count.val, content="1")
   core.dispose()
+}
+
+///|
+priv enum MobileSemanticsMsg {
+  Remove
+}
+
+///|
+priv struct MobileSemanticsNode {
+  visible : Bool
+}
+
+///|
+impl @core.ViewNode for MobileSemanticsNode with fn identity(_self) {
+  @core.ViewIdentity::new(kind="MobileSemanticsFixture")
+}
+
+///|
+impl @core.ViewNode for MobileSemanticsNode with fn declaration(_self) {
+  @core.ViewDeclaration::uncacheable()
+}
+
+///|
+impl @core.ViewNode for MobileSemanticsNode with fn layout(_self, context) {
+  @core.ViewLayoutResult::new(
+    size=context.constraints.constrain(@core.Size::new(width=80.0, height=32.0)),
+  )
+}
+
+///|
+impl @core.ViewNode for MobileSemanticsNode with fn semantics(self) {
+  if self.visible {
+    @core.ViewSemanticsInfo::new(
+      composition=@core.SemanticsComposition::Boundary,
+      semantic_id=@core.SemanticId::parse("mobile.remove").unwrap(),
+      role=@core.SemanticsRole::Button,
+      label="Remove",
+    )
+  } else {
+    @core.ViewSemanticsInfo::new(composition=@core.SemanticsComposition::Hidden)
+  }
+}
+
+///|
+fn mobile_semantics_view(visible : Bool) -> @core.View[MobileSemanticsMsg] {
+  @core.View::from_node(MobileSemanticsNode::{ visible, }, semantics_actions=_node => {
+    if visible {
+      [
+        @core.ViewSemanticsActionHandler::activate(_context => {
+          @core.ViewSemanticsActionResult::accepted(messages=[Remove])
+        }),
+      ]
+    } else {
+      []
+    }
+  })
+}
+
+///|
+test "mobile accessibility rejects stale session generation and removed node without messages" {
+  let runtime = @runtime.AppRuntime::new_program(
+    program=@core.Program::simple(
+      init=true,
+      update=(_visible, _message) => false,
+      view=mobile_semantics_view,
+    ),
+    size=@core.Size::new(width=120.0, height=80.0),
+  )
+  let driver = @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let bridge = EmbeddingHostBridge::new(session_generation=17)
+  let (node_id, initial_generation) = match runtime.read_semantics() {
+    Ok(@runtime.SemanticsRead::Full(snapshot)) => {
+      assert_eq(snapshot.nodes().length(), 1)
+      (snapshot.nodes()[0].node_id, snapshot.generation())
+    }
+    _ => fail("expected initial committed semantics")
+  }
+  ignore(bridge.sync(runtime))
+  let initial_wire = bridge.drain_update_envelope_json()
+  assert_true(initial_wire.contains("\"kind\":\"semantics\""))
+  assert_true(initial_wire.contains("\"generation\":\""))
+  assert_false(initial_wire.contains("element_id"))
+
+  let remove = embedding_accessibility_response(
+    node_id,
+    initial_generation,
+    @core.SemanticsAction::Activate,
+  )
+  assert_true(
+    bridge.dispatch_response_envelope(
+      EmbeddingHostResponseEnvelope::new(session_generation=17, response=remove),
+      driver,
+    ),
+  )
+  let after_generation = match runtime.read_semantics() {
+    Ok(@runtime.SemanticsRead::Full(snapshot)) => {
+      assert_eq(snapshot.nodes().length(), 0)
+      snapshot.generation()
+    }
+    _ => fail("expected semantics after removal")
+  }
+  let delivered = runtime.program_runtime_snapshot().update_count()
+  assert_eq(delivered, 1)
+
+  assert_false(
+    bridge.dispatch_response(
+      embedding_accessibility_response(
+        node_id,
+        initial_generation,
+        @core.SemanticsAction::Activate,
+      ),
+      driver,
+    ),
+  )
+  assert_false(
+    bridge.dispatch_response(
+      embedding_accessibility_response(
+        node_id,
+        after_generation,
+        @core.SemanticsAction::Activate,
+      ),
+      driver,
+    ),
+  )
+  assert_false(
+    bridge.dispatch_response_envelope(
+      EmbeddingHostResponseEnvelope::new(
+        session_generation=18,
+        response=embedding_accessibility_response(
+          node_id,
+          after_generation,
+          @core.SemanticsAction::Activate,
+        ),
+      ),
+      driver,
+    ),
+  )
+  assert_eq(runtime.program_runtime_snapshot().update_count(), delivered)
 }

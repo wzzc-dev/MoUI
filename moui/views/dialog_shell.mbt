@@ -145,14 +145,17 @@ fn[Msg] dialog_header(
       row(
         [
           title_block.frame(width=title_width, height~),
-          button(
-            action.label,
-            on_click=action.message,
-            variant=ButtonVariant::Ghost,
-            theme~,
-            width=dialog_dismiss_action_width(action.label),
-            height=32.0,
-          ).semantics_dismiss_action(),
+          semantic_dismiss_action_control(
+            button(
+              action.label,
+              on_click=action.message,
+              variant=ButtonVariant::Ghost,
+              theme~,
+              width=dialog_dismiss_action_width(action.label),
+              height=32.0,
+            ),
+            action.message,
+          ),
         ],
         spacing=theme.spacing_scale.md,
         align=CrossAlign::Start,
