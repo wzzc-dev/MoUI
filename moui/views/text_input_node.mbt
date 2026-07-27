@@ -1,14 +1,12 @@
 ///|
 priv struct SingleLineTextInput {
-  value : @core.Binding[String]
+  value : String
   placeholder : String
   size : @core.Size
   theme : @core.Theme?
   variant : TextFieldVariant
   style : TextFieldStyle?
   search_bar : Bool
-  theme_revision : String
-  variant_label : String
   has_on_submit : Bool
   has_on_clear : Bool
   kind : String
@@ -21,12 +19,36 @@ impl @core.ViewNode for SingleLineTextInput with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for SingleLineTextInput with fn revision(self) {
-  if self.search_bar {
-    "searchbar:\{self.value.get()}:\{self.placeholder}:\{self.variant_label}:\{self.theme_revision}:\{self.has_on_submit}:\{self.has_on_clear}"
-  } else {
-    "textfield:\{self.value.get()}:\{self.placeholder}:\{view_size_revision(self.size)}:\{self.variant_label}:\{self.theme_revision}:\{self.has_on_submit}"
-  }
+impl @core.ViewNode for SingleLineTextInput with fn declaration(self) {
+  let variant = @core.DeclarationKey::int(
+    match self.variant {
+      TextFieldVariant::Filled => 0
+      TextFieldVariant::Outline => 1
+      TextFieldVariant::Plain => 2
+    },
+  )
+  let paint_key = view_record_key("SingleLineTextInput.paint", [
+    ("value", @core.DeclarationKey::string(self.value)),
+    ("placeholder", @core.DeclarationKey::string(self.placeholder)),
+    ("variant", variant),
+    ("search_bar", @core.DeclarationKey::bool(self.search_bar)),
+    ("has_on_clear", @core.DeclarationKey::bool(self.has_on_clear)),
+  ])
+  view_declaration(
+    layout=view_exact_channel(view_size_key(self.size)),
+    paint=if self.theme is Some(_) || self.style is Some(_) {
+      @core.DeclarationChannel::Uncacheable
+    } else {
+      view_exact_channel(paint_key)
+    },
+    semantics=view_exact_channel(
+      view_record_key("SingleLineTextInput.semantics", [
+        ("value", @core.DeclarationKey::string(self.value)),
+        ("placeholder", @core.DeclarationKey::string(self.placeholder)),
+        ("submit", @core.DeclarationKey::bool(self.has_on_submit)),
+      ]),
+    ),
+  )
 }
 
 ///|
@@ -49,7 +71,7 @@ impl @core.ViewNode for SingleLineTextInput with fn paint(self, ctx) {
     append_searchbar_commands(
       commands,
       overlay_commands,
-      text=self.value.get(),
+      text=self.value,
       placeholder=self.placeholder,
       font=resolved_style.font,
       foreground=normal.foreground,
@@ -69,7 +91,7 @@ impl @core.ViewNode for SingleLineTextInput with fn paint(self, ctx) {
     append_text_field_commands(
       commands,
       overlay_commands,
-      text=self.value.get(),
+      text=self.value,
       placeholder=self.placeholder,
       size=self.size,
       font=resolved_style.font,
@@ -98,17 +120,13 @@ impl @core.ViewNode for SingleLineTextInput with fn paint(self, ctx) {
     child_layers: [],
     post_commands: [],
     overlay_commands,
-    platform_views: [],
     repaint_boundary: false,
     animating: false,
   }
 }
 
 ///|
-impl @core.ViewNode for SingleLineTextInput with fn text_input_state(
-  self,
-  ctx,
-) {
+impl @core.ViewNode for SingleLineTextInput with fn text_input_state(self, ctx) {
   let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
   let resolved_style = match self.style {
     Some(value) => value
@@ -116,7 +134,7 @@ impl @core.ViewNode for SingleLineTextInput with fn text_input_state(
   }
   Some(
     text_input_state_for_single_line(
-      text=self.value.get(),
+      text=self.value,
       frame=ctx.frame,
       font=resolved_style.font,
       control=ctx.text_control,
@@ -129,14 +147,10 @@ impl @core.ViewNode for SingleLineTextInput with fn text_input_state(
 ///|
 impl @core.ViewNode for SingleLineTextInput with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Boundary,
     role=@core.SemanticsRole::TextField,
     label=self.placeholder,
-    value=self.value.get(),
-    actions=[
-      @core.SemanticsAction::Focus,
-      @core.SemanticsAction::SetText,
-      @core.SemanticsAction::Submit,
-    ],
+    value=self.value,
   )
 }
 

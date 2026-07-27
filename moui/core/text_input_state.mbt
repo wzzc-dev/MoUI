@@ -1,7 +1,6 @@
 ///|
 pub(all) struct TextInputState {
   focused : Bool
-  element_id : ElementId?
   text : String
   caret : Int
   selection : TextRange?
@@ -15,7 +14,6 @@ pub(all) struct TextInputState {
 pub fn TextInputState::none() -> TextInputState {
   {
     focused: false,
-    element_id: None,
     text: "",
     caret: 0,
     selection: None,

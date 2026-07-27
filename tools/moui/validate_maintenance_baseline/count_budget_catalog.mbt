@@ -16,11 +16,9 @@ fn pub_all_budgets() -> Array[CountBudget] {
       kind: "pub(all)",
       label: "moui/runtime",
       path: "moui/runtime",
-      // 9 = 6 (prior baseline) + 3 for Phase 2.2 context-loss recovery
-      // scaffolding (RendererRecoveryState enum, RendererRecoveryBudget
-      // struct, RendererRecoverySnapshot struct), all introduced by ADR
-      // 0006 § Context-loss recovery.
-      max_count: 9,
+      // 16 = 9 (prior baseline) + 7 required committed-semantics protocol
+      // types: issue/read/read-error/precondition/request/receipt/action-error.
+      max_count: 16,
     },
     {
       kind: "pub(all)",

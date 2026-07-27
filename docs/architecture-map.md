@@ -6,7 +6,10 @@ Constraints: `docs/invariants.md`. App imports: `docs/moui-app-package-boundary.
 ## Runtime pipeline
 
 ```text
-View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
+ViewDeclaration -> ElementTree
+                       |-> LayoutTree -> RenderTree -> DrawCommand -> renderer
+                       |-> SemanticsTree -> committed snapshot / Agent / accessibility
+                       `-> PlatformTree -> platform-view host
 ```
 
 ## Package layers (dependency direction)

@@ -46,7 +46,7 @@ pub fn EmbeddingHostBridge::dispose(
     }
     self.updates = []
     self.last_text_input = None
-    self.last_semantics_nodes = []
+    self.semantics_cursor = None
     self.last_platform_views = []
     ignore(self.service_queue.cancel_all())
   }

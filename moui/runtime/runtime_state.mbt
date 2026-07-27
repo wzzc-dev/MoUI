@@ -3,14 +3,18 @@ priv struct RuntimeState {
   mut element_tree : ElementTree
   mut layout_tree : LayoutTree
   mut render_tree : RenderTree
+  mut platform_tree : PlatformTree
   mut size : Size
   mut needs_redraw : Bool
   mut needs_rebuild : Bool
   mut needs_layout : Bool
   mut needs_paint : Bool
+  mut needs_semantics : Bool
+  mut needs_platform : Bool
   mut rebuild_pass_count : Int
   mut layout_pass_count : Int
   mut paint_pass_count : Int
+  mut semantics_recompute_count : Int
   mut draw_command_build_count : Int
   mut last_command_count : Int
   mut cache_epoch : Int
@@ -22,12 +26,17 @@ priv struct RuntimeState {
   dirty_build_elements : Array[ElementId]
   dirty_layout_elements : Array[ElementId]
   dirty_paint_elements : Array[ElementId]
+  dirty_semantics_elements : Array[ElementId]
+  dirty_platform_elements : Array[ElementId]
   mut focused_element : ElementId?
   mut active_pointer_capture : ElementId?
   mut environment : Environment
   mut text_system : TextSystem
   mut redraw_callback : (() -> Unit)?
+  mut rebuild_wakeup_redraw : Bool
   mut action_commands : ActionCommandMap
+  begin_message_batch : () -> Unit
+  end_message_batch : () -> Unit
   /// Optional observer invoked with every `AppEvent` before it is processed.
   /// Defaults to a no-op, so the runtime behaves identically when unused.
   /// This is the additive hook consumed by the agent layer (`moui_agent`).
@@ -44,6 +53,17 @@ priv struct RuntimeState {
   /// until every in-flight animation settles.
   mut active_animations : Bool
   mut pending_scroll_request : ScrollRequest?
+  mut closed : Bool
+  mut semantics_tree : SemanticsTree
+  mut committed_semantics : SemanticsSnapshot
+  mut semantics_initialized : Bool
+  semantics_journal : Array[SemanticsDelta]
+  mut next_semantics_node_id : UInt64
+  semantic_id_index : Map[SemanticId, SemanticIdIndexEntry]
+  mut semantics_commit_in_progress : Bool
+  mut semantics_action_dispatching : Bool
+  mut semantics_destroy_requested : Bool
+  mut semantics_destroy_program : (() -> Unit)?
 }
 
 ///|
@@ -58,6 +78,8 @@ fn[Msg] RuntimeState::new_view(
   size~ : Size,
   environment? : Environment = Environment::neutral(),
   on_message? : ((Msg) -> Unit)? = None,
+  begin_message_batch? : () -> Unit = () => (),
+  end_message_batch? : () -> Unit = () => (),
 ) -> RuntimeState {
   let emit = match on_message {
     Some(handler) => handler
@@ -67,6 +89,8 @@ fn[Msg] RuntimeState::new_view(
     root=adapt_view_for_runtime(root, emit),
     size~,
     environment~,
+    begin_message_batch~,
+    end_message_batch~,
   )
 }
 
@@ -75,20 +99,26 @@ fn RuntimeState::new_runtime_view_node(
   root~ : &RuntimeViewNode,
   size~ : Size,
   environment? : Environment = Environment::neutral(),
+  begin_message_batch? : () -> Unit = () => (),
+  end_message_batch? : () -> Unit = () => (),
 ) -> RuntimeState {
   let initial = mount_runtime_view_node_with_next(root, 1)
   let state = {
     element_tree: ElementTree::new(initial.node),
     layout_tree: LayoutTree::empty(),
     render_tree: RenderTree::empty(),
+    platform_tree: PlatformTree::empty(),
     size,
     needs_redraw: true,
     needs_rebuild: false,
     needs_layout: true,
     needs_paint: true,
+    needs_semantics: true,
+    needs_platform: true,
     rebuild_pass_count: 0,
     layout_pass_count: 0,
     paint_pass_count: 0,
+    semantics_recompute_count: 0,
     draw_command_build_count: 0,
     last_command_count: 0,
     cache_epoch: 0,
@@ -100,18 +130,34 @@ fn RuntimeState::new_runtime_view_node(
     dirty_build_elements: [],
     dirty_layout_elements: [],
     dirty_paint_elements: [],
+    dirty_semantics_elements: [],
+    dirty_platform_elements: [],
     focused_element: None,
     active_pointer_capture: None,
     environment,
     text_system: TextSystem::fallback(),
     redraw_callback: None,
+    rebuild_wakeup_redraw: false,
     action_commands: ActionCommandMap::new(),
+    begin_message_batch,
+    end_message_batch,
     event_observer: _event => (),
     clock: Clock::new(),
     saveable_state: SaveableStateStore::new(),
     now_ms: 0.0,
     active_animations: false,
     pending_scroll_request: None,
+    closed: false,
+    semantics_tree: SemanticsTree::empty(),
+    committed_semantics: SemanticsSnapshot::empty(),
+    semantics_initialized: false,
+    semantics_journal: [],
+    next_semantics_node_id: 1UL,
+    semantic_id_index: Map([]),
+    semantics_commit_in_progress: false,
+    semantics_action_dispatching: false,
+    semantics_destroy_requested: false,
+    semantics_destroy_program: None,
   }
   let mounted = mount_runtime_view_node_for_runtime(root, Some(state), 1)
   state.element_tree = ElementTree::new(mounted.node)
@@ -175,33 +221,86 @@ fn RuntimeState::set_environment(
 }
 
 ///|
-fn RuntimeState::destroy(self : RuntimeState) -> Unit {
+fn RuntimeState::request_destroy(
+  self : RuntimeState,
+  destroy_program : () -> Unit,
+) -> Unit {
+  if self.semantics_action_dispatching {
+    self.semantics_destroy_requested = true
+    self.semantics_destroy_program = Some(destroy_program)
+  } else {
+    destroy_program()
+    self.destroy_now()
+  }
+}
+
+///|
+fn RuntimeState::discard_semantics_destroy_request(self : RuntimeState) -> Unit {
+  self.semantics_destroy_requested = false
+  self.semantics_destroy_program = None
+}
+
+///|
+fn RuntimeState::complete_semantics_destroy_request(
+  self : RuntimeState,
+) -> Bool {
+  if !self.semantics_destroy_requested {
+    return false
+  }
+  let destroy_program = self.semantics_destroy_program
+  self.discard_semantics_destroy_request()
+  match destroy_program {
+    Some(destroy) => destroy()
+    None => ()
+  }
+  self.destroy_now()
+  true
+}
+
+///|
+fn RuntimeState::destroy_now(self : RuntimeState) -> Unit {
   self.element_tree.root.cancel_component_tree_subscriptions(
     reason=ComponentEffectCancelReason::EffectRuntimeDestroyed,
   )
   self.element_tree = ElementTree::empty()
   self.layout_tree = LayoutTree::empty()
   self.render_tree = RenderTree::empty()
+  self.platform_tree = PlatformTree::empty()
   self.next_element_id = 1
   self.dirty_elements.clear()
   self.dirty_build_elements.clear()
   self.dirty_layout_elements.clear()
   self.dirty_paint_elements.clear()
+  self.dirty_semantics_elements.clear()
+  self.dirty_platform_elements.clear()
   self.focused_element = None
   self.active_pointer_capture = None
   self.pending_scroll_request = None
   self.needs_rebuild = false
   self.needs_layout = false
   self.needs_paint = false
+  self.needs_semantics = false
+  self.needs_platform = false
   self.needs_redraw = false
+  self.rebuild_wakeup_redraw = false
   self.rebuild_pass_count = 0
   self.layout_pass_count = 0
   self.paint_pass_count = 0
+  self.semantics_recompute_count = 0
   self.draw_command_build_count = 0
   self.cache_epoch = 0
   self.last_damage_region = DamageRegion::empty()
   self.known_layer_cache_keys.clear()
   self.cached_layer_admissions.clear()
+  self.closed = true
+  self.semantics_tree = SemanticsTree::empty()
+  self.committed_semantics = SemanticsSnapshot::empty()
+  self.semantics_initialized = false
+  self.semantics_journal.clear()
+  self.semantic_id_index.clear()
+  self.semantics_commit_in_progress = false
+  self.semantics_action_dispatching = false
+  self.discard_semantics_destroy_request()
 }
 
 ///|
@@ -236,11 +335,9 @@ fn RuntimeState::view_tree_inspector_snapshot(
 }
 
 ///|
-fn RuntimeState::cached_semantics(self : RuntimeState) -> SemanticsNode {
-  self.element_tree.root.semantics(
-    self.render_tree.root,
-    focused=self.focused_element,
-  )
+fn RuntimeState::cached_semantics(self : RuntimeState) -> SemanticsSnapshot {
+  self.commit_semantics()
+  self.committed_semantics
 }
 
 ///|
@@ -277,15 +374,6 @@ fn RuntimeState::inspector_dirty_reasons(self : RuntimeState) -> Array[String] {
     reasons.push("dirty elements: \{self.dirty_elements.length()}")
   }
   reasons
-}
-
-///|
-fn RuntimeState::semantics(self : RuntimeState) -> SemanticsNode {
-  self.ensure_render_tree()
-  self.element_tree.root.semantics(
-    self.render_tree.root,
-    focused=self.focused_element,
-  )
 }
 
 ///|
@@ -338,8 +426,7 @@ fn RuntimeState::build_draw_frame(self : RuntimeState) -> DrawFrame {
     next_known_layers,
     next_admissions,
   )
-  let platform_views : Array[PlatformViewPlacement] = []
-  self.render_tree.root.collect_platform_views(platform_views)
+  let platform_views = self.platform_tree.placements()
   self.record_cached_layer_frame(next_known_layers, next_admissions)
   self.last_command_count = commands.length()
   DrawFrame::new(
@@ -374,6 +461,11 @@ fn RuntimeState::rebuild_if_possible(self : RuntimeState) -> Unit {
       self.clear_stale_pointer_capture()
       self.mark_current_dirty_elements()
     }
+    self.needs_rebuild = self.element_tree.root.has_dirty_build()
+    if !self.needs_rebuild {
+      self.dirty_build_elements.clear()
+      self.refresh_dirty_element_queue()
+    }
   }
 }
 
@@ -382,22 +474,23 @@ fn RuntimeState::request_component_rebuild(
   self : RuntimeState,
   id : ElementId,
 ) -> Unit {
-  ignore(self.element_tree.root.mark_build_dirty_by_id(id))
-  self.needs_rebuild = true
-  self.needs_layout = true
-  self.needs_paint = true
-  self.mark_build_dirty(id)
-  self.request_redraw()
+  if self.element_tree.root.mark_build_dirty_by_id(id) {
+    self.queue_dirty_element(id)
+    self.queue_build_dirty(id)
+    self.needs_rebuild = true
+    self.request_rebuild_wakeup()
+  }
 }
 
 ///|
 fn RuntimeState::request_activation_rebuild(self : RuntimeState) -> Unit {
-  self.needs_rebuild = true
   if !self.element_tree.root.has_dirty_build() &&
     self.element_tree.root.mark_root_component_build_dirty() {
-    self.needs_layout = true
-    self.needs_paint = true
-    self.mark_build_dirty(self.element_tree.id())
+    self.queue_dirty_element(self.element_tree.id())
+    self.queue_build_dirty(self.element_tree.id())
   }
-  self.request_redraw()
+  self.needs_rebuild = self.element_tree.root.has_dirty_build()
+  if self.needs_rebuild {
+    self.request_rebuild_wakeup()
+  }
 }

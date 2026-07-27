@@ -1,8 +1,7 @@
 ///|
 pub struct LinuxATSPIBinding {
-  priv mut root : @core.SemanticsNode?
-  priv dispatch : (@core.ElementId, @core.SemanticsAction, String?) -> Bool
-  priv mut published_node_count : Int
+  priv published_nodes : Map[@core.SemanticsNodeId, Unit]
+  priv dispatch : (@host.NativeAccessibilityActionRequest) -> @host.NativeAccessibilityActionResult
   priv mut action_dispatch_count : Int
   priv mut disposed : Bool
 }
@@ -17,13 +16,11 @@ pub(all) struct LinuxATSPIBindingDiagnostics {
 
 ///|
 pub fn LinuxATSPIBinding::new(
-  root~ : @core.SemanticsNode,
-  dispatch~ : (@core.ElementId, @core.SemanticsAction, String?) -> Bool,
+  dispatch~ : (@host.NativeAccessibilityActionRequest) -> @host.NativeAccessibilityActionResult,
 ) -> LinuxATSPIBinding {
   {
-    root: Some(root),
+    published_nodes: Map([]),
     dispatch,
-    published_node_count: 0,
     action_dispatch_count: 0,
     disposed: false,
   }
@@ -32,12 +29,28 @@ pub fn LinuxATSPIBinding::new(
 ///|
 pub fn LinuxATSPIBinding::publish_semantics(
   self : LinuxATSPIBinding,
-  root : @core.SemanticsNode,
+  read : @runtime.SemanticsRead,
 ) -> LinuxATSPIBindingDiagnostics {
-  if !self.disposed {
-    self.root = Some(root)
-    let _ = @host.accesskit_tree_update_from_semantics(root)
-    self.published_node_count = linux_semantics_node_count(root)
+  if self.disposed {
+    return self.diagnostics()
+  }
+  ignore(@host.accesskit_update_from_semantics_read(read))
+  match read {
+    @runtime.SemanticsRead::Full(snapshot) => {
+      self.published_nodes.clear()
+      for node in snapshot.nodes() {
+        self.published_nodes[node.node_id] = ()
+      }
+    }
+    @runtime.SemanticsRead::Delta(delta) => {
+      for node_id in delta.removed() {
+        self.published_nodes.remove(node_id)
+      }
+      for node in delta.upserted() {
+        self.published_nodes[node.node_id] = ()
+      }
+    }
+    @runtime.SemanticsRead::Unchanged(_) => ()
   }
   self.diagnostics()
 }
@@ -52,48 +65,20 @@ pub fn LinuxATSPIBinding::perform_action(
       "Linux AT-SPI binding is disposed",
     )
   }
-  match self.root {
-    Some(root) =>
-      match @host.find_semantics_node(root, request.element_id) {
-        Some(node) =>
-          if node.actions.any(action => action == request.action) {
-            if (self.dispatch)(
-                request.element_id,
-                request.action,
-                request.value,
-              ) {
-              self.action_dispatch_count = self.action_dispatch_count + 1
-              @host.NativeAccessibilityActionResult::Handled
-            } else {
-              @host.NativeAccessibilityActionResult::Unsupported(
-                "AT-SPI action dispatch returned false: " +
-                @host.semantics_action_label(request.action),
-              )
-            }
-          } else {
-            @host.NativeAccessibilityActionResult::Unsupported(
-              "AT-SPI semantics node does not expose action: " +
-              @host.semantics_action_label(request.action),
-            )
-          }
-        None =>
-          @host.NativeAccessibilityActionResult::ElementNotFound(
-            request.element_id,
-          )
-      }
-    None =>
-      @host.NativeAccessibilityActionResult::BridgeUnavailable(
-        "Linux AT-SPI binding has no published semantics tree",
-      )
+  let result = (self.dispatch)(request)
+  match result {
+    @host.NativeAccessibilityActionResult::Handled(_) =>
+      self.action_dispatch_count = self.action_dispatch_count + 1
+    _ => ()
   }
+  result
 }
 
 ///|
 pub fn LinuxATSPIBinding::dispose(
   self : LinuxATSPIBinding,
 ) -> LinuxATSPIBindingDiagnostics {
-  self.root = None
-  self.published_node_count = 0
+  self.published_nodes.clear()
   self.disposed = true
   self.diagnostics()
 }
@@ -104,17 +89,8 @@ pub fn LinuxATSPIBinding::diagnostics(
 ) -> LinuxATSPIBindingDiagnostics {
   {
     native_binding_ready: true,
-    published_node_count: self.published_node_count,
+    published_node_count: self.published_nodes.length(),
     action_dispatch_count: self.action_dispatch_count,
     disposed: self.disposed,
   }
-}
-
-///|
-fn linux_semantics_node_count(node : @core.SemanticsNode) -> Int {
-  let mut count = 1
-  for child in node.children {
-    count = count + linux_semantics_node_count(child)
-  }
-  count
 }

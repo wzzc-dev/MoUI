@@ -26,7 +26,8 @@ fn ElementNode::dispatch_text_command(
       )
       if result.result.handled {
         if result.result.changed {
-          self.dirty.mark_paint()
+          self.dirty.mark_paint_descendant()
+          self.render_cache.invalidate_composition()
         }
         return result
       }

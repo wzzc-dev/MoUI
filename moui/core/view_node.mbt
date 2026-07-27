@@ -5,20 +5,21 @@
 /// controls. Typed children and messages are attached with `View::from_node`.
 /// `identity` controls element reuse: equal identities preserve transient
 /// runtime control state, while a changed kind or key remounts the element.
-/// A non-empty `revision` enables clean/layout reconciliation, and a changed
-/// non-empty `paint_revision` requests paint without invalidating layout.
-/// Implementations should contain immutable declaration data; application
-/// state belongs in the TEA model and transient interaction state belongs in
-/// `ViewEventContext.state` / `ViewEventResult.state`.
+/// `declaration` classifies immutable declaration data independently for
+/// layout, paint, semantics, and platform work. Its conservative default marks
+/// every channel uncacheable; performance-sensitive nodes opt into exact or
+/// constant channels explicitly. Application state belongs in the TEA model
+/// and transient interaction state belongs in runtime-owned element state
+/// exposed through the typed adapters.
 pub(open) trait ViewNode {
   fn identity(Self) -> ViewIdentity
-  fn revision(Self) -> String = _
-  fn paint_revision(Self) -> String = _
+  fn declaration(Self) -> ViewDeclaration = _
   fn child_constraints(Self, Constraints) -> Constraints = _
   fn child_environment(Self, Environment) -> Environment = _
   fn child_style(Self, ViewStyle) -> ViewStyle = _
   fn layout(Self, ViewLayoutContext) -> ViewLayoutResult
   fn paint(Self, ViewPaintContext) -> ViewPaintPlan = _
+  fn platform_views(Self, ViewPlatformContext) -> Array[PlatformViewPlacement] = _
   fn text_input_state(Self, ViewPaintContext) -> TextInputState? = _
   fn semantics(Self) -> ViewSemanticsInfo = _
   fn focusable(Self) -> Bool = _
@@ -26,13 +27,8 @@ pub(open) trait ViewNode {
 }
 
 ///|
-impl ViewNode with fn revision(_self) {
-  ""
-}
-
-///|
-impl ViewNode with fn paint_revision(_self) {
-  ""
+impl ViewNode with fn declaration(_self) {
+  ViewDeclaration::uncacheable()
 }
 
 ///|
@@ -53,6 +49,11 @@ impl ViewNode with fn child_style(_self, style) {
 ///|
 impl ViewNode with fn paint(_self, _context) {
   ViewPaintPlan::empty()
+}
+
+///|
+impl ViewNode with fn platform_views(_self, _context) {
+  []
 }
 
 ///|
@@ -84,8 +85,8 @@ impl ViewNode for EmptyViewNode with fn identity(_self) {
 }
 
 ///|
-impl ViewNode for EmptyViewNode with fn revision(_self) {
-  "empty"
+impl ViewNode for EmptyViewNode with fn declaration(_self) {
+  ViewDeclaration::constant()
 }
 
 ///|
@@ -103,7 +104,12 @@ fn[Msg] empty_view() -> View[Msg] {
 ///|
 priv struct ViewAdapter[Msg] {
   node : &ViewNode
-  children_fn : () -> Array[View[Msg]]
+  identity_snapshot : ViewIdentity
+  declaration_snapshot : ViewDeclaration
+  semantics_snapshot : ViewSemanticsInfo
+  focusable_snapshot : Bool
+  semantics_action_handlers : Array[ViewSemanticsActionHandler[Msg]]
+  children_snapshot : Array[View[Msg]]
   build_child_fn : ((ComponentContext) -> View[Msg])?
   event_fn : (ViewEventContext) -> ViewEventResult[Msg]
   text_command_fn : (ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[
@@ -114,7 +120,12 @@ priv struct ViewAdapter[Msg] {
 ///|
 fn[Msg] ViewAdapter::new(
   node~ : &ViewNode,
-  children~ : () -> Array[View[Msg]],
+  identity~ : ViewIdentity,
+  declaration~ : ViewDeclaration,
+  semantics~ : ViewSemanticsInfo,
+  focusable~ : Bool,
+  semantics_action_handlers~ : Array[ViewSemanticsActionHandler[Msg]],
+  children~ : Array[View[Msg]],
   build_child~ : ((ComponentContext) -> View[Msg])?,
   event~ : (ViewEventContext) -> ViewEventResult[Msg],
   text_command~ : (ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[
@@ -123,7 +134,12 @@ fn[Msg] ViewAdapter::new(
 ) -> ViewAdapter[Msg] {
   {
     node,
-    children_fn: children,
+    identity_snapshot: identity,
+    declaration_snapshot: declaration,
+    semantics_snapshot: semantics,
+    focusable_snapshot: focusable,
+    semantics_action_handlers: semantics_action_handlers.copy(),
+    children_snapshot: children.copy(),
     build_child_fn: build_child,
     event_fn: event,
     text_command_fn: text_command,
@@ -132,7 +148,7 @@ fn[Msg] ViewAdapter::new(
 
 ///|
 fn[Msg] ViewAdapter::children(self : ViewAdapter[Msg]) -> Array[View[Msg]] {
-  (self.children_fn)()
+  self.children_snapshot.copy()
 }
 
 ///|
@@ -167,7 +183,14 @@ fn[Msg, NextMsg] ViewAdapter::map(
 ) -> ViewAdapter[NextMsg] {
   ViewAdapter::new(
     node=self.node,
-    children=() => self.children().map(child => child.map(map)),
+    identity=self.identity_snapshot,
+    declaration=self.declaration_snapshot,
+    semantics=self.semantics_snapshot,
+    focusable=self.focusable_snapshot,
+    semantics_action_handlers=self.semantics_action_handlers.map(handler => {
+      handler.map(map)
+    }),
+    children=self.children_snapshot.map(child => child.map(map)),
     build_child=match self.build_child() {
       Some(build) => Some(ctx => build(ctx).map(map))
       None => None
@@ -194,4 +217,35 @@ fn[Msg, NextMsg] ViewAdapter::map(
       }
     },
   )
+}
+
+///|
+fn[Msg] ViewAdapter::semantics_action_kinds(
+  self : ViewAdapter[Msg],
+) -> Array[SemanticsActionKind] {
+  let kinds : Array[SemanticsActionKind] = []
+  if self.focusable_snapshot {
+    kinds.push(SemanticsActionKind::Focus)
+  }
+  for handler in self.semantics_action_handlers {
+    if !kinds.contains(handler.kind()) {
+      kinds.push(handler.kind())
+    }
+  }
+  kinds
+}
+
+///|
+fn[Msg] ViewAdapter::dispatch_semantics_action(
+  self : ViewAdapter[Msg],
+  context : ViewSemanticsActionContext,
+  action : SemanticsAction,
+) -> ViewSemanticsActionResult[Msg] {
+  let kind = action.kind()
+  for handler in self.semantics_action_handlers {
+    if handler.kind() == kind {
+      return handler.dispatch(context, action)
+    }
+  }
+  ViewSemanticsActionResult::rejected()
 }

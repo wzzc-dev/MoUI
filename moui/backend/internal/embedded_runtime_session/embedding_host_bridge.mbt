@@ -20,7 +20,6 @@ using @host {
 pub(all) struct EmbeddingImeRequest {
   revision : Int
   enabled : Bool
-  element_id : Int?
   text : String
   caret : Int
   selection : @core.TextRange?
@@ -32,23 +31,30 @@ pub(all) struct EmbeddingImeRequest {
 
 ///|
 pub(all) struct EmbeddingSemanticsNode {
-  element_id : Int
-  parent_id : Int?
+  node_id : @core.SemanticsNodeId
+  semantic_id : @core.SemanticId?
   role : @core.SemanticsRole
+  level : Int?
+  url : String
   label : String
   value : String
   description : String
   state : @core.SemanticsState
-  actions : Array[@core.SemanticsAction]
+  actions : Array[@core.SemanticsActionKind]
   focus_order : Int?
   frame : @core.Rect
+  children : Array[@core.SemanticsNodeId]
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct EmbeddingSemanticsSnapshot {
-  revision : Int
-  root_id : Int
+pub(all) struct EmbeddingSemanticsUpdate {
+  kind : String
+  generation : @core.SemanticsGeneration
+  root : @core.SemanticsNodeId?
+  focused : @core.SemanticsNodeId?
   nodes : Array[EmbeddingSemanticsNode]
+  removed : Array[@core.SemanticsNodeId]
+  issues : Array[@runtime.SemanticsIssue]
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -61,7 +67,7 @@ pub(all) struct EmbeddingPlatformViewSnapshot {
 pub(all) enum EmbeddingHostUpdate {
   Ime(EmbeddingImeRequest)
   Clipboard(HostPendingServiceRequest)
-  Semantics(EmbeddingSemanticsSnapshot)
+  Semantics(EmbeddingSemanticsUpdate)
   Diagnostic(String)
   PlatformViews(EmbeddingPlatformViewSnapshot)
   PlatformChannel(HostPendingServiceRequest)
@@ -163,30 +169,12 @@ pub fn embedding_command_response(kind : Int) -> EmbeddingHostResponse? {
 
 ///|
 pub fn embedding_accessibility_response(
-  element_id : Int,
-  action : Int,
-  value : String,
-) -> EmbeddingHostResponse? {
-  let action = match action {
-    0 => @core.SemanticsAction::Activate
-    1 => @core.SemanticsAction::Focus
-    2 => @core.SemanticsAction::SetText
-    3 => @core.SemanticsAction::Submit
-    4 => @core.SemanticsAction::Scroll
-    5 => @core.SemanticsAction::Select
-    6 => @core.SemanticsAction::Expand
-    7 => @core.SemanticsAction::Collapse
-    8 => @core.SemanticsAction::Dismiss
-    _ => return None
-  }
-  Some(
-    EmbeddingHostResponse::Accessibility(
-      NativeAccessibilityActionRequest::new(
-        element_id=@core.ElementId::new(element_id),
-        action~,
-        value=Some(value),
-      ),
-    ),
+  node_id : @core.SemanticsNodeId,
+  generation : @core.SemanticsGeneration,
+  action : @core.SemanticsAction,
+) -> EmbeddingHostResponse {
+  EmbeddingHostResponse::Accessibility(
+    NativeAccessibilityActionRequest::new(node_id~, generation~, action~),
   )
 }
 
@@ -197,8 +185,7 @@ pub struct EmbeddingHostBridge {
   mut updates : Array[EmbeddingHostUpdate]
   mut ime_revision : Int
   mut last_text_input : @core.TextInputState?
-  mut semantics_revision : Int
-  mut last_semantics_nodes : Array[EmbeddingSemanticsNode]
+  mut semantics_cursor : @core.SemanticsGeneration?
   mut platform_view_revision : Int
   mut last_platform_views : Array[@core.PlatformViewPlacement]
   mut disposed : Bool
@@ -223,10 +210,6 @@ pub fn EmbeddingImeRequest::from_state(
   {
     revision,
     enabled: state.focused,
-    element_id: match state.element_id {
-      Some(id) => Some(id.value())
-      None => None
-    },
     text: state.text,
     caret: mobile_char_index_to_utf16(state.text, diagnostics.cursor),
     selection,
@@ -364,8 +347,7 @@ pub fn EmbeddingHostBridge::new(
     updates: [],
     ime_revision: 0,
     last_text_input: None,
-    semantics_revision: 0,
-    last_semantics_nodes: [],
+    semantics_cursor: None,
     platform_view_revision: 0,
     last_platform_views: [],
     disposed: false,
@@ -418,7 +400,7 @@ pub fn EmbeddingHostBridge::sync(
   }
   let previous_count = self.updates.length()
   self.sync_text_input(runtime.focused_text_input())
-  self.sync_semantics(runtime.semantics())
+  self.sync_semantics(runtime)
   for pending in self.service_queue.drain_pending() {
     match pending.request {
       HostServiceRequest::Clipboard(_) =>
@@ -478,44 +460,22 @@ fn EmbeddingHostBridge::sync_text_input(
 ///|
 fn EmbeddingHostBridge::sync_semantics(
   self : EmbeddingHostBridge,
-  root : @core.SemanticsNode,
+  runtime : @runtime.AppRuntime,
 ) -> Unit {
-  let nodes : Array[EmbeddingSemanticsNode] = []
-  flatten_embedding_semantics(nodes, root, parent_id=None)
-  if nodes != self.last_semantics_nodes {
-    self.semantics_revision = self.semantics_revision + 1
-    self.last_semantics_nodes = nodes.copy()
-    self.updates.push(
-      EmbeddingHostUpdate::Semantics({
-        revision: self.semantics_revision,
-        root_id: root.element_id.value(),
-        nodes,
-      }),
-    )
+  let read = match self.semantics_cursor {
+    Some(cursor) => runtime.read_semantics(since=cursor)
+    None => runtime.read_semantics()
   }
-}
-
-///|
-fn flatten_embedding_semantics(
-  nodes : Array[EmbeddingSemanticsNode],
-  node : @core.SemanticsNode,
-  parent_id~ : Int?,
-) -> Unit {
-  let element_id = node.element_id.value()
-  nodes.push({
-    element_id,
-    parent_id,
-    role: node.role,
-    label: node.label,
-    value: node.value,
-    description: node.description,
-    state: node.state,
-    actions: node.actions.copy(),
-    focus_order: node.focus_order,
-    frame: node.frame,
-  })
-  for child in node.children {
-    flatten_embedding_semantics(nodes, child, parent_id=Some(element_id))
+  match read {
+    Ok(read) =>
+      match embedding_semantics_update(read) {
+        Some(update) => {
+          self.semantics_cursor = Some(update.generation)
+          self.updates.push(EmbeddingHostUpdate::Semantics(update))
+        }
+        None => ()
+      }
+    Err(_) => ()
   }
 }
 
@@ -720,11 +680,11 @@ pub fn EmbeddingHostBridge::dispatch_response(
     EmbeddingHostResponse::Clipboard(id, result) =>
       self.complete_service_response(id, result, driver)
     EmbeddingHostResponse::Accessibility(request) =>
-      driver.dispatch_semantics_action(
-        request.element_id,
-        request.action,
-        value=request.value,
-      )
+      match driver.perform_semantics_action(request) {
+        @host.NativeAccessibilityActionResult::Handled(_) => true
+        @host.NativeAccessibilityActionResult::Rejected(_)
+        | @host.NativeAccessibilityActionResult::BridgeUnavailable(_) => false
+      }
     EmbeddingHostResponse::PlatformView(revision, kind, id, event) => {
       if revision != self.platform_view_revision ||
         !self.last_platform_views.any(placement => {

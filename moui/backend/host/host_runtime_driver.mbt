@@ -98,21 +98,24 @@ pub fn HostRuntimeDriver::dispatch_platform_view(
 }
 
 ///|
-pub fn HostRuntimeDriver::dispatch_semantics_action(
+pub fn HostRuntimeDriver::perform_semantics_action(
   self : HostRuntimeDriver,
-  element_id : @core.ElementId,
-  action : @core.SemanticsAction,
-  value? : String? = None,
-) -> Bool {
-  let handled = self.runtime.dispatch_semantics_action(
-    element_id,
-    action,
-    value~,
-  )
-  if handled {
-    self.request_redraw_if_needed()
+  request : NativeAccessibilityActionRequest,
+) -> NativeAccessibilityActionResult {
+  match
+    self.runtime.perform_semantics_action({
+      target: @core.SemanticsTarget::ByNodeId(request.node_id),
+      action: request.action,
+      precondition: @runtime.SemanticsGenerationPrecondition::Exact(
+        request.generation,
+      ),
+    }) {
+    Ok(receipt) => {
+      self.request_redraw_if_needed()
+      NativeAccessibilityActionResult::Handled(receipt)
+    }
+    Err(error) => NativeAccessibilityActionResult::Rejected(error)
   }
-  handled
 }
 
 ///|

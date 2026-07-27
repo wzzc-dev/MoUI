@@ -513,31 +513,40 @@ fn check_r3_mobile_pkg(path : String, text : String?) -> HarnessFinding {
 }
 
 ///|
-fn check_r3_prepare(path : String, text : String?) -> HarnessFinding {
-  match text {
-    None =>
-      {
-        rule: "R3",
-        ok: false,
-        path,
-        hint: "missing mobile prepare-native-build MoonBit module. See docs/invariants.md#R3",
+fn check_r3_mobile_build_pipeline(
+  path : String,
+  texts : Array[String?],
+) -> HarnessFinding {
+  let body = StringBuilder::new()
+  for text in texts {
+    match text {
+      Some(value) => {
+        body.write_string(value)
+        body.write_char('\n')
       }
-    Some(body) => {
-      let ok = body.contains("--renderer") &&
-        body.contains("auto") &&
-        body.contains("skia-gpu") &&
-        body.contains("skia-raster")
-      {
-        rule: "R3",
-        ok,
-        path,
-        hint: if ok {
-          ""
-        } else {
-          "moui_cli/prepare_native_build.mbt must accept --renderer auto|skia-gpu|skia-raster. See docs/invariants.md#R3"
-        },
-      }
+      None =>
+        return {
+          rule: "R3",
+          ok: false,
+          path,
+          hint: "missing mobile build pipeline source. See docs/invariants.md#R3",
+        }
     }
+  }
+  let combined = body.to_string()
+  let ok = combined.contains("--renderer") &&
+    combined.contains("auto") &&
+    combined.contains("skia-gpu") &&
+    combined.contains("skia-raster")
+  {
+    rule: "R3",
+    ok,
+    path,
+    hint: if ok {
+      ""
+    } else {
+      "moui_cli mobile build pipeline must accept --renderer auto|skia-gpu|skia-raster. See docs/invariants.md#R3"
+    },
   }
 }
 
@@ -658,12 +667,19 @@ fn validate_repo(repo_root : String) -> Array[HarnessFinding] {
       )
     }
   }
-  // Phase 8 of moui-build-command-2026-07-20: prepare-native-build was
-  // migrated into `moui_cli/prepare_native_build.mbt`. The same R3 token
-  // contract (--renderer auto|skia-gpu|skia-raster) still applies.
-  let prepare = "moui_cli/prepare_native_build.mbt"
+  // MoonBit files do not define package boundaries. The mobile build contract
+  // is intentionally split between shared preparation, CLI parsing, and the
+  // three platform builders, so validate the owning package as one surface.
+  let build_pipeline_path = "moui_cli mobile build pipeline"
+  let build_pipeline_files = [
+    "moui_cli/prepare_native_build.mbt", "moui_cli/build_command.mbt", "moui_cli/build_android.mbt",
+    "moui_cli/build_ios.mbt", "moui_cli/build_harmonyos.mbt",
+  ]
   results.push(
-    check_r3_prepare(prepare, read_optional_text(repo_root, prepare)),
+    check_r3_mobile_build_pipeline(
+      build_pipeline_path,
+      build_pipeline_files.map(path => read_optional_text(repo_root, path)),
+    ),
   )
 
   let skill_files : Array[String] = []

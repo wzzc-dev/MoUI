@@ -27,13 +27,12 @@ pub fn AppRuntime::action_commands(Self) -> Array[@core.ActionCommand]
 pub fn AppRuntime::advance_time(Self, Double) -> Unit
 pub fn AppRuntime::destroy(Self) -> Unit
 pub fn AppRuntime::dirty_count(Self) -> Int
-pub fn AppRuntime::dirty_element_ids(Self) -> Array[@core.ElementId]
+pub fn AppRuntime::dirty_element_ids(Self) -> Array[Int]
 pub fn AppRuntime::dispatch_action_command(Self, @core.ActionCommand) -> Bool
 pub fn AppRuntime::dispatch_command(Self, @core.CommandIntent) -> Bool
 pub fn AppRuntime::dispatch_event(Self, @core.AppEvent) -> Unit
 pub fn AppRuntime::dispatch_focused_text_command(Self, @core.CommandIntent, paste_text? : String?) -> @core.TextCommandResult
 pub fn AppRuntime::dispatch_pointer_input(Self, @core.PointerEvent) -> InputDispatchResult
-pub fn AppRuntime::dispatch_semantics_action(Self, @core.ElementId, @core.SemanticsAction, value? : String?) -> Bool
 pub fn AppRuntime::draw_commands(Self) -> Array[@core.DrawCommand]
 pub fn AppRuntime::draw_frame(Self) -> @core.DrawFrame
 pub fn AppRuntime::environment(Self) -> @core.Environment
@@ -50,10 +49,11 @@ pub fn AppRuntime::needs_rebuild(Self) -> Bool
 pub fn AppRuntime::needs_redraw(Self) -> Bool
 pub fn[Model, Msg] AppRuntime::new_program(program~ : @core.Program[Model, Msg], size~ : @core.Size, environment? : @core.Environment) -> Self
 pub fn[Msg] AppRuntime::new_view(root~ : @core.View[Msg], size~ : @core.Size, environment? : @core.Environment, on_message? : ((Msg) -> Unit)?) -> Self
+pub fn AppRuntime::perform_semantics_action(Self, PerformSemanticsActionRequest) -> Result[SemanticsActionReceipt, SemanticsActionDispatchError]
 pub fn AppRuntime::program_runtime_snapshot(Self) -> ProgramRuntimeSnapshot
+pub fn AppRuntime::read_semantics(Self, since? : @core.SemanticsGeneration) -> Result[SemanticsRead, SemanticsReadError]
 pub fn AppRuntime::register_font_data(Self, @core.FontFamily, Bytes) -> Unit
 pub fn AppRuntime::scroll_to_key(Self, String, alignment? : @core.ScrollAlignment) -> Bool
-pub fn AppRuntime::semantics(Self) -> @core.SemanticsNode
 pub fn AppRuntime::set_action_commands(Self, @core.ActionCommandMap) -> Unit
 pub fn AppRuntime::set_environment(Self, @core.Environment) -> Unit
 pub fn AppRuntime::set_event_observer(Self, (@core.AppEvent) -> Unit) -> Unit
@@ -130,7 +130,7 @@ pub struct LayoutBoundsInspectorEntry {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn LayoutBoundsInspectorEntry::child_count(Self) -> Int
 pub fn LayoutBoundsInspectorEntry::depth(Self) -> Int
-pub fn LayoutBoundsInspectorEntry::element_id(Self) -> @core.ElementId
+pub fn LayoutBoundsInspectorEntry::element_id(Self) -> Int
 pub fn LayoutBoundsInspectorEntry::frame(Self) -> @core.Rect
 
 pub struct LayoutInspectorSnapshot {
@@ -141,6 +141,12 @@ pub fn LayoutInspectorSnapshot::leaf_count(Self) -> Int
 pub fn LayoutInspectorSnapshot::max_depth(Self) -> Int
 pub fn LayoutInspectorSnapshot::node_count(Self) -> Int
 pub fn LayoutInspectorSnapshot::root_frame(Self) -> @core.Rect
+
+pub(all) struct PerformSemanticsActionRequest {
+  target : @core.SemanticsTarget
+  action : @core.SemanticsAction
+  precondition : SemanticsGenerationPrecondition
+} derive(Eq, ToJson, @debug.Debug)
 
 pub struct ProgramRuntimeSnapshot {
   // private fields
@@ -261,13 +267,13 @@ pub fn RuntimeDirtyStateSummary::damage_full_reason(Self) -> String
 pub fn RuntimeDirtyStateSummary::damage_kind(Self) -> String
 pub fn RuntimeDirtyStateSummary::damage_rect_count(Self) -> Int
 pub fn RuntimeDirtyStateSummary::dirty_build_count(Self) -> Int
-pub fn RuntimeDirtyStateSummary::dirty_build_element_ids(Self) -> Array[@core.ElementId]
+pub fn RuntimeDirtyStateSummary::dirty_build_element_ids(Self) -> Array[Int]
 pub fn RuntimeDirtyStateSummary::dirty_count(Self) -> Int
-pub fn RuntimeDirtyStateSummary::dirty_element_ids(Self) -> Array[@core.ElementId]
+pub fn RuntimeDirtyStateSummary::dirty_element_ids(Self) -> Array[Int]
 pub fn RuntimeDirtyStateSummary::dirty_layout_count(Self) -> Int
-pub fn RuntimeDirtyStateSummary::dirty_layout_element_ids(Self) -> Array[@core.ElementId]
+pub fn RuntimeDirtyStateSummary::dirty_layout_element_ids(Self) -> Array[Int]
 pub fn RuntimeDirtyStateSummary::dirty_paint_count(Self) -> Int
-pub fn RuntimeDirtyStateSummary::dirty_paint_element_ids(Self) -> Array[@core.ElementId]
+pub fn RuntimeDirtyStateSummary::dirty_paint_element_ids(Self) -> Array[Int]
 pub fn RuntimeDirtyStateSummary::has_pending_work(Self) -> Bool
 pub fn RuntimeDirtyStateSummary::needs_layout(Self) -> Bool
 pub fn RuntimeDirtyStateSummary::needs_paint(Self) -> Bool
@@ -288,13 +294,13 @@ pub fn RuntimeInspectorSnapshot::cancelled_effect_task_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::cancelled_subscription_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::completed_effect_task_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::dirty_build_count(Self) -> Int
-pub fn RuntimeInspectorSnapshot::dirty_build_element_ids(Self) -> Array[@core.ElementId]
+pub fn RuntimeInspectorSnapshot::dirty_build_element_ids(Self) -> Array[Int]
 pub fn RuntimeInspectorSnapshot::dirty_count(Self) -> Int
-pub fn RuntimeInspectorSnapshot::dirty_element_ids(Self) -> Array[@core.ElementId]
+pub fn RuntimeInspectorSnapshot::dirty_element_ids(Self) -> Array[Int]
 pub fn RuntimeInspectorSnapshot::dirty_layout_count(Self) -> Int
-pub fn RuntimeInspectorSnapshot::dirty_layout_element_ids(Self) -> Array[@core.ElementId]
+pub fn RuntimeInspectorSnapshot::dirty_layout_element_ids(Self) -> Array[Int]
 pub fn RuntimeInspectorSnapshot::dirty_paint_count(Self) -> Int
-pub fn RuntimeInspectorSnapshot::dirty_paint_element_ids(Self) -> Array[@core.ElementId]
+pub fn RuntimeInspectorSnapshot::dirty_paint_element_ids(Self) -> Array[Int]
 pub fn RuntimeInspectorSnapshot::dirty_reasons(Self) -> Array[String]
 pub fn RuntimeInspectorSnapshot::dirty_state(Self) -> RuntimeDirtyStateSummary
 pub fn RuntimeInspectorSnapshot::draw_command_build_count(Self) -> Int
@@ -339,6 +345,39 @@ pub fn RuntimeInspectorSnapshot::started_effect_task_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::started_subscription_count(Self) -> Int
 pub fn RuntimeInspectorSnapshot::subscription_lifecycle(Self) -> Array[SubscriptionLifecycleSnapshot]
 
+pub(all) enum SemanticsActionDispatchError {
+  RuntimeClosed
+  StaleGeneration(@core.SemanticsGeneration, @core.SemanticsGeneration)
+  TargetNotFound(@core.SemanticsTarget)
+  TargetAmbiguous(@core.SemanticId)
+  TargetDisabled(@core.SemanticsTarget)
+  ActionUnavailable(@core.SemanticsTarget, @core.SemanticsActionKind)
+  HandlerRejected(@core.SemanticsTarget, @core.SemanticsActionKind)
+  ReentrantDispatch
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct SemanticsActionReceipt {
+  before : @core.SemanticsGeneration
+  after : @core.SemanticsGeneration
+  pending_work : Bool
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct SemanticsDelta {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn SemanticsDelta::focused(Self) -> @core.SemanticsNodeId?
+pub fn SemanticsDelta::from(Self) -> @core.SemanticsGeneration
+pub fn SemanticsDelta::issues(Self) -> Array[SemanticsIssue]
+pub fn SemanticsDelta::removed(Self) -> Array[@core.SemanticsNodeId]
+pub fn SemanticsDelta::root(Self) -> @core.SemanticsNodeId?
+pub fn SemanticsDelta::to(Self) -> @core.SemanticsGeneration
+pub fn SemanticsDelta::upserted(Self) -> Array[@core.SemanticsNode]
+
+pub(all) enum SemanticsGenerationPrecondition {
+  Exact(@core.SemanticsGeneration)
+  Latest
+} derive(Eq, ToJson, @debug.Debug)
+
 pub struct SemanticsInspectorSnapshot {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
@@ -353,6 +392,29 @@ pub fn SemanticsInspectorSnapshot::node_count(Self) -> Int
 pub fn SemanticsInspectorSnapshot::required_count(Self) -> Int
 pub fn SemanticsInspectorSnapshot::root_role(Self) -> @core.SemanticsRole
 pub fn SemanticsInspectorSnapshot::selected_count(Self) -> Int
+
+pub(all) enum SemanticsIssue {
+  DuplicateSemanticId(@core.SemanticId, Array[@core.SemanticsNodeId])
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum SemanticsRead {
+  Full(SemanticsSnapshot)
+  Delta(SemanticsDelta)
+  Unchanged(@core.SemanticsGeneration)
+} derive(Eq, @debug.Debug)
+
+pub(all) enum SemanticsReadError {
+  RuntimeClosed
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct SemanticsSnapshot {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn SemanticsSnapshot::focused(Self) -> @core.SemanticsNodeId?
+pub fn SemanticsSnapshot::generation(Self) -> @core.SemanticsGeneration
+pub fn SemanticsSnapshot::issues(Self) -> Array[SemanticsIssue]
+pub fn SemanticsSnapshot::nodes(Self) -> Array[@core.SemanticsNode]
+pub fn SemanticsSnapshot::root(Self) -> @core.SemanticsNodeId?
 
 pub(all) enum SubscriptionCancelReason {
   SubscriptionKeyChanged
@@ -403,7 +465,7 @@ pub struct ViewInspectorSummary {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ViewInspectorSummary::child_count(Self) -> Int
-pub fn ViewInspectorSummary::element_id(Self) -> @core.ElementId
+pub fn ViewInspectorSummary::element_id(Self) -> Int
 pub fn ViewInspectorSummary::key(Self) -> String
 pub fn ViewInspectorSummary::kind(Self) -> String
 pub fn ViewInspectorSummary::needs_build(Self) -> Bool

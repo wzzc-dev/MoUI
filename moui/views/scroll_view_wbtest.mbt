@@ -15,8 +15,13 @@ impl @core.ViewNode for ScrollTestRect with fn identity(_self) {
 }
 
 ///|
-impl @core.ViewNode for ScrollTestRect with fn revision(self) {
-  "scroll-test-rect:\{self.width}:\{self.height}"
+impl @core.ViewNode for ScrollTestRect with fn declaration(self) {
+  view_layout_declaration(
+    view_record_key("ScrollTestRect", [
+      ("width", @core.DeclarationKey::double(self.width)),
+      ("height", @core.DeclarationKey::double(self.height)),
+    ]),
+  )
 }
 
 ///|
@@ -54,7 +59,7 @@ fn scroll_test_state_context() -> @core.ViewStateContext {
     checked: false,
     expanded: false,
     disabled: false,
-    scratch: "",
+    slots: @core.ViewStateSlots::empty(),
   }
 }
 
@@ -72,13 +77,26 @@ fn scroll_test_text_control_context() -> @core.TextControlStateContext {
 }
 
 ///|
+fn scroll_test_container(
+  child : @core.View[Unit],
+  state : @core.ScrollState,
+  shows_indicator? : Bool = false,
+) -> @core.View[Unit] {
+  scroll_container(
+    child~,
+    offset=state.offset(),
+    viewport=Some(@core.Size::new(width=100.0, height=100.0)),
+    state=Some(state),
+    shows_indicator~,
+  )
+}
+
+///|
 test "scroll wheel starts from clamped visual offset after auto-scroll overshoots" {
   let state = @core.ScrollState::new(offset=@core.Point::new(x=0.0, y=999.0))
-  let view = scroll_view(
+  let view = scroll_test_container(
     scroll_test_rect(width=100.0, height=500.0),
-    state=Some(state),
-    width=100.0,
-    height=100.0,
+    state,
   )
   let layout = view.layout(
     scroll_test_layout_context(
@@ -114,11 +132,9 @@ test "scroll wheel starts from clamped visual offset after auto-scroll overshoot
 ///|
 test "scroll wheel at a clamped edge does not dirty or capture" {
   let state = @core.ScrollState::new(offset=@core.Point::new(x=0.0, y=400.0))
-  let view = scroll_view(
+  let view = scroll_test_container(
     scroll_test_rect(width=100.0, height=500.0),
-    state=Some(state),
-    width=100.0,
-    height=100.0,
+    state,
   )
   let layout = view.layout(
     scroll_test_layout_context(
@@ -152,11 +168,9 @@ test "scroll wheel at a clamped edge does not dirty or capture" {
 ///|
 test "scroll indicator is opt-in and draggable" {
   let state = @core.ScrollState::new()
-  let view = scroll_view(
+  let view = scroll_test_container(
     scroll_test_rect(width=100.0, height=500.0),
-    state=Some(state),
-    width=100.0,
-    height=100.0,
+    state,
     shows_indicator=true,
   )
   let layout = view.layout(
@@ -195,11 +209,9 @@ test "scroll indicator is opt-in and draggable" {
   })
   assert_true(result.captured)
   assert_true(state.offset().y > 0.0)
-  let hidden = scroll_view(
+  let hidden = scroll_test_container(
     scroll_test_rect(width=100.0, height=500.0),
-    state=Some(@core.ScrollState::new()),
-    width=100.0,
-    height=100.0,
+    @core.ScrollState::new(),
   )
   let hidden_layout = hidden.layout(
     scroll_test_layout_context(
@@ -218,6 +230,33 @@ test "scroll indicator is opt-in and draggable" {
     now_ms: 0.0,
   })
   assert_true(hidden_paint.overlay_commands.is_empty())
+}
+
+///|
+test "scroll view watches external scroll state and rebuilds its snapshot" {
+  let state = @core.ScrollState::new()
+  let runtime = @runtime.AppRuntime::new_view(
+    root=scroll_view(
+      scroll_test_rect(width=100.0, height=500.0),
+      state=Some(state),
+      width=100.0,
+      height=100.0,
+    ),
+    size=@core.Size::new(width=100.0, height=100.0),
+  )
+  let initial = runtime.layout()
+  guard initial.children.get(0) is Some(initial_scroll) &&
+    initial_scroll.children.get(0) is Some(initial_content) else {
+    fail("expected component, scroll container, and content layout nodes")
+  }
+  assert_eq(initial_content.frame.origin.y, 0.0)
+  state.scroll_to(x=0.0, y=240.0)
+  let updated = runtime.layout()
+  guard updated.children.get(0) is Some(updated_scroll) &&
+    updated_scroll.children.get(0) is Some(updated_content) else {
+    fail("expected rebuilt scroll container layout")
+  }
+  assert_eq(updated_content.frame.origin.y, -240.0)
 }
 
 ///|

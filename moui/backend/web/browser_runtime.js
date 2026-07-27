@@ -222,7 +222,14 @@ export function createSemanticsDomManager(options = {}) {
       host.style.position = "relative";
     }
     host.appendChild(layer);
-    const state = { rawId, layer, elements: new Map() };
+    const state = {
+      rawId,
+      layer,
+      elements: new Map(),
+      nodes: new Map(),
+      rootId: null,
+      generation: "0",
+    };
     layers.set(rawId, state);
     return state;
   };
@@ -230,7 +237,14 @@ export function createSemanticsDomManager(options = {}) {
   const dispatchAction = (state, node, action, value = "") => {
     const code = SEMANTICS_ACTION_CODES.get(action);
     if (code !== undefined) {
-      dispatch(state.rawId, Number(node.element_id?.value ?? node.element_id ?? 0), code, `${value ?? ""}`);
+      dispatch(
+        state.rawId,
+        `${node.node_id ?? ""}`,
+        state.generation,
+        code,
+        `${value ?? ""}`,
+        0,
+      );
     }
   };
 
@@ -334,15 +348,18 @@ export function createSemanticsDomManager(options = {}) {
     }
   };
 
-  const visit = (state, node, parent, parentFrame, seen) => {
-    const id = `${node.element_id?.value ?? node.element_id ?? 0}`;
+  const visit = (state, nodeId, parent, parentFrame, seen) => {
+    const id = `${nodeId ?? ""}`;
+    if (!id || seen.has(id)) return;
+    const node = state.nodes.get(id);
+    if (!node) return;
     seen.add(id);
     let record = state.elements.get(id);
     const tag = semanticsTag(node);
     if (!record || record.element.tagName.toLowerCase() !== tag) {
       record?.element.remove();
       const element = documentRef.createElement(tag);
-      element.dataset.mouiElementId = id;
+      element.dataset.mouiSemanticsNodeId = id;
       record = { element, node, geometryKey: "", presentationKey: "" };
       state.elements.set(id, record);
       installHandlers(state, record);
@@ -351,18 +368,32 @@ export function createSemanticsDomManager(options = {}) {
     updateElement(state, record, node, parentFrame);
     const origin = node.frame?.origin ?? {};
     const frame = { x: Number(origin.x) || 0, y: Number(origin.y) || 0 };
-    for (const child of node.children ?? []) visit(state, child, record.element, frame, seen);
+    for (const child of node.children ?? []) {
+      visit(state, child, record.element, frame, seen);
+    }
   };
 
   return {
     setDispatch(next) {
       dispatch = typeof next === "function" ? next : () => {};
     },
-    sync(rawId, canvas, root) {
-      if (!documentRef || !canvas || !root) return;
+    sync(rawId, canvas, update) {
+      if (!documentRef || !canvas || !update) return;
+      if (update.kind !== "full" && update.kind !== "delta") return;
       const state = layers.get(rawId) ?? createLayer(rawId, canvas);
+      if (update.kind === "full") state.nodes.clear();
+      for (const id of update.removed ?? []) state.nodes.delete(`${id}`);
+      for (const node of update.nodes ?? []) {
+        const id = `${node.node_id ?? ""}`;
+        if (id) state.nodes.set(id, node);
+      }
+      state.rootId = update.root == null ? null : `${update.root}`;
+      state.generation = `${update.generation ?? state.generation}`;
+      state.layer.dataset.mouiSemanticsGeneration = state.generation;
       const seen = new Set();
-      visit(state, root, state.layer, { x: 0, y: 0 }, seen);
+      if (state.rootId) {
+        visit(state, state.rootId, state.layer, { x: 0, y: 0 }, seen);
+      }
       for (const [id, record] of state.elements) {
         if (!seen.has(id)) {
           record.element.remove();
@@ -1521,14 +1552,27 @@ export function createWindowWebImports(options = {}) {
     },
     set_wasm_exports(exports) {
       wasmExports = exports;
-      semantics.setDispatch((rawId, elementId, actionCode, value) => {
+      semantics.setDispatch((rawId, nodeId, generation, actionCode, value, directionCode) => {
         const dispatch = wasmExports?.web_dispatch_semantics_action;
         if (typeof dispatch !== "function") return;
+        const nodeIdTextId = nextEventTextId++;
+        const generationTextId = nextEventTextId++;
         const valueId = value ? nextEventTextId++ : 0;
+        eventTexts.set(nodeIdTextId, `${nodeId}`);
+        eventTexts.set(generationTextId, `${generation}`);
         if (valueId) eventTexts.set(valueId, value);
         try {
-          dispatch(rawId, elementId, actionCode, valueId);
+          dispatch(
+            rawId,
+            nodeIdTextId,
+            generationTextId,
+            actionCode,
+            valueId,
+            directionCode | 0,
+          );
         } finally {
+          eventTexts.delete(nodeIdTextId);
+          eventTexts.delete(generationTextId);
           if (valueId) eventTexts.delete(valueId);
         }
       });

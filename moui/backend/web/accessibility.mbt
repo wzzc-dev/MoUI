@@ -1,6 +1,7 @@
 ///|
 pub(all) struct AriaNode {
-  element_id : @core.ElementId
+  node_id : @core.SemanticsNodeId
+  semantic_id : String?
   role : String
   level : Int?
   url : String
@@ -16,13 +17,27 @@ pub(all) struct AriaNode {
   disabled : Bool
   actions : Array[String]
   frame : @core.Rect
-  children : Array[AriaNode]
+  children : Array[@core.SemanticsNodeId]
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct AriaSemanticsUpdate {
+  kind : String
+  generation : @core.SemanticsGeneration
+  root : @core.SemanticsNodeId?
+  focused : @core.SemanticsNodeId?
+  nodes : Array[AriaNode]
+  removed : Array[@core.SemanticsNodeId]
 } derive(Eq, Debug, ToJson)
 
 ///|
 pub fn semantics_to_aria(node : @core.SemanticsNode) -> AriaNode {
   {
-    element_id: node.element_id,
+    node_id: node.node_id,
+    semantic_id: match node.semantic_id {
+      Some(id) => Some(id.value())
+      None => None
+    },
     role: aria_role(node.role),
     level: node.level,
     url: node.url,
@@ -36,37 +51,63 @@ pub fn semantics_to_aria(node : @core.SemanticsNode) -> AriaNode {
     required: node.state.required,
     focused: node.state.focused,
     disabled: node.state.disabled,
-    actions: node.actions.map(action => aria_action(action)),
+    actions: node.actions.map(aria_action),
     frame: node.frame,
-    children: node.children.map(child => semantics_to_aria(child)),
+    children: node.children.copy(),
+  }
+}
+
+///|
+pub fn aria_update_from_semantics_read(
+  read : @runtime.SemanticsRead,
+) -> AriaSemanticsUpdate? {
+  match read {
+    @runtime.SemanticsRead::Full(snapshot) =>
+      Some({
+        kind: "full",
+        generation: snapshot.generation(),
+        root: snapshot.root(),
+        focused: snapshot.focused(),
+        nodes: snapshot.nodes().map(semantics_to_aria),
+        removed: [],
+      })
+    @runtime.SemanticsRead::Delta(delta) =>
+      Some({
+        kind: "delta",
+        generation: delta.to(),
+        root: delta.root(),
+        focused: delta.focused(),
+        nodes: delta.upserted().map(semantics_to_aria),
+        removed: delta.removed(),
+      })
+    @runtime.SemanticsRead::Unchanged(_) => None
   }
 }
 
 ///|
 priv struct WebSemanticsRuntimeBinding {
   raw_id : Int
+  canvas_id : String
   runtime : @runtime.AppRuntime
-}
-
-///|
-priv struct WebSemanticsSnapshot {
-  raw_id : Int
-  json : String
+  mut cursor : @core.SemanticsGeneration?
 }
 
 ///|
 let web_semantics_runtime_bindings : Array[WebSemanticsRuntimeBinding] = []
 
 ///|
-let web_semantics_snapshots : Array[WebSemanticsSnapshot] = []
-
-///|
 fn register_web_semantics_runtime(
   raw_id : Int,
+  canvas_id : String,
   runtime : @runtime.AppRuntime,
 ) -> Unit {
   unregister_web_semantics_runtime(raw_id)
-  web_semantics_runtime_bindings.push({ raw_id, runtime })
+  web_semantics_runtime_bindings.push({
+    raw_id,
+    canvas_id,
+    runtime,
+    cursor: None,
+  })
 }
 
 ///|
@@ -79,105 +120,137 @@ fn unregister_web_semantics_runtime(raw_id : Int) -> Unit {
   }
   web_semantics_runtime_bindings.clear()
   web_semantics_runtime_bindings.append(retained)
-  let retained_snapshots : Array[WebSemanticsSnapshot] = []
-  for snapshot in web_semantics_snapshots {
-    if snapshot.raw_id != raw_id {
-      retained_snapshots.push(snapshot)
-    }
-  }
-  web_semantics_snapshots.clear()
-  web_semantics_snapshots.append(retained_snapshots)
   web_remove_semantics_host(raw_id)
 }
 
 ///|
-fn web_semantics_snapshot_matches(raw_id : Int, json : String) -> Bool {
-  for snapshot in web_semantics_snapshots {
-    if snapshot.raw_id == raw_id {
-      return snapshot.json == json
-    }
+fn sync_web_semantics_binding(binding : WebSemanticsRuntimeBinding) -> Unit {
+  let read = match binding.cursor {
+    Some(cursor) => binding.runtime.read_semantics(since=cursor)
+    None => binding.runtime.read_semantics()
   }
-  false
+  match read {
+    Ok(read) =>
+      match aria_update_from_semantics_read(read) {
+        Some(update) => {
+          web_sync_semantics_host(
+            binding.raw_id,
+            web_host_string(binding.canvas_id),
+            web_host_string((update.to_json() : Json).stringify()),
+          )
+          binding.cursor = Some(update.generation)
+        }
+        None => ()
+      }
+    Err(_) => ()
+  }
 }
 
 ///|
-fn web_cache_semantics_snapshot(raw_id : Int, json : String) -> Unit {
-  let next : Array[WebSemanticsSnapshot] = []
-  let mut replaced = false
-  for snapshot in web_semantics_snapshots {
-    if snapshot.raw_id == raw_id {
-      next.push({ raw_id, json })
-      replaced = true
-    } else {
-      next.push(snapshot)
-    }
-  }
-  if !replaced {
-    next.push({ raw_id, json })
-  }
-  web_semantics_snapshots.clear()
-  web_semantics_snapshots.append(next)
-}
-
-///|
-fn sync_web_semantics(
-  raw_id : Int,
-  canvas_id : String,
-  semantics : @core.SemanticsNode,
-) -> Unit {
-  let json = (semantics_to_aria(semantics).to_json() : Json).stringify()
-  if !web_semantics_snapshot_matches(raw_id, json) {
-    web_sync_semantics_host(
-      raw_id,
-      web_host_string(canvas_id),
-      web_host_string(json),
-    )
-    web_cache_semantics_snapshot(raw_id, json)
+fn sync_all_web_semantics() -> Unit {
+  for binding in web_semantics_runtime_bindings {
+    sync_web_semantics_binding(binding)
   }
 }
 
 ///|
 pub fn web_dispatch_semantics_action(
   raw_id : Int,
-  element_id : Int,
+  node_id_text_id : Int,
+  generation_text_id : Int,
   action_code : Int,
   value_id : Int,
+  direction_code : Int,
 ) -> Unit {
-  match web_semantics_action(action_code) {
-    Some(action) =>
-      for binding in web_semantics_runtime_bindings {
-        if binding.raw_id == raw_id {
-          let value = if value_id > 0 {
-            Some(web_host_string_from_id(value_id))
-          } else {
-            None
-          }
-          if binding.runtime.dispatch_semantics_action(
-              @core.ElementId::new(element_id),
-              action,
-              value~,
-            ) {
-            ()
-          }
-          return ()
-        }
-      }
-    None => ()
+  if node_id_text_id <= 0 || generation_text_id <= 0 {
+    return ()
+  }
+  guard parse_decimal_u64(web_host_string_from_id(node_id_text_id))
+    is Some(node_id) else {
+    return ()
+  }
+  guard parse_decimal_u64(web_host_string_from_id(generation_text_id))
+    is Some(generation) else {
+    return ()
+  }
+  let value = if value_id > 0 { web_host_string_from_id(value_id) } else { "" }
+  guard web_semantics_action(action_code, value, direction_code) is Some(action) else {
+    return ()
+  }
+  for binding in web_semantics_runtime_bindings {
+    if binding.raw_id == raw_id {
+      ignore(
+        binding.runtime.perform_semantics_action({
+          target: @core.SemanticsTarget::ByNodeId(
+            @core.SemanticsNodeId::new(node_id),
+          ),
+          action,
+          precondition: @runtime.SemanticsGenerationPrecondition::Exact(
+            @core.SemanticsGeneration::new(generation),
+          ),
+        }),
+      )
+      sync_web_semantics_binding(binding)
+      return ()
+    }
   }
 }
 
 ///|
-fn web_semantics_action(code : Int) -> @core.SemanticsAction? {
+fn parse_decimal_u64(value : String) -> UInt64? {
+  if value == "" {
+    return None
+  }
+  let mut parsed = 0UL
+  for character in value {
+    let code = character.to_int()
+    if code < '0' || code > '9' {
+      return None
+    }
+    let digit = (code - ('0' : Int)).to_uint64()
+    if parsed > (18446744073709551615UL - digit) / 10UL {
+      return None
+    }
+    parsed = parsed * 10UL + digit
+  }
+  Some(parsed)
+}
+
+///|
+fn web_semantics_action(
+  code : Int,
+  value : String,
+  direction_code : Int,
+) -> @core.SemanticsAction? {
   match code {
     0 => Some(@core.SemanticsAction::Activate)
     1 => Some(@core.SemanticsAction::Focus)
-    2 => Some(@core.SemanticsAction::SetText)
+    2 => Some(@core.SemanticsAction::SetText(value))
     3 => Some(@core.SemanticsAction::Submit)
-    4 => Some(@core.SemanticsAction::Scroll)
+    4 =>
+      match web_semantics_scroll_direction(direction_code) {
+        Some(direction) => Some(@core.SemanticsAction::Scroll(direction))
+        None => None
+      }
     5 => Some(@core.SemanticsAction::Select)
     6 => Some(@core.SemanticsAction::Expand)
     7 => Some(@core.SemanticsAction::Collapse)
     8 => Some(@core.SemanticsAction::Dismiss)
+    _ => None
+  }
+}
+
+///|
+fn web_semantics_scroll_direction(
+  code : Int,
+) -> @core.SemanticsScrollDirection? {
+  match code {
+    0 => Some(@core.SemanticsScrollDirection::Forward)
+    1 => Some(@core.SemanticsScrollDirection::Backward)
+    2 => Some(@core.SemanticsScrollDirection::Up)
+    3 => Some(@core.SemanticsScrollDirection::Down)
+    4 => Some(@core.SemanticsScrollDirection::Left)
+    5 => Some(@core.SemanticsScrollDirection::Right)
     _ => None
   }
 }
@@ -238,16 +311,16 @@ fn aria_checked(node : @core.SemanticsNode) -> Bool? {
 }
 
 ///|
-fn aria_action(action : @core.SemanticsAction) -> String {
+fn aria_action(action : @core.SemanticsActionKind) -> String {
   match action {
-    @core.SemanticsAction::Activate => "activate"
-    @core.SemanticsAction::Focus => "focus"
-    @core.SemanticsAction::SetText => "set-text"
-    @core.SemanticsAction::Submit => "submit"
-    @core.SemanticsAction::Scroll => "scroll"
-    @core.SemanticsAction::Select => "select"
-    @core.SemanticsAction::Expand => "expand"
-    @core.SemanticsAction::Collapse => "collapse"
-    @core.SemanticsAction::Dismiss => "dismiss"
+    @core.SemanticsActionKind::Activate => "activate"
+    @core.SemanticsActionKind::Focus => "focus"
+    @core.SemanticsActionKind::SetText => "set-text"
+    @core.SemanticsActionKind::Submit => "submit"
+    @core.SemanticsActionKind::Scroll => "scroll"
+    @core.SemanticsActionKind::Select => "select"
+    @core.SemanticsActionKind::Expand => "expand"
+    @core.SemanticsActionKind::Collapse => "collapse"
+    @core.SemanticsActionKind::Dismiss => "dismiss"
   }
 }

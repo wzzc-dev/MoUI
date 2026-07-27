@@ -1,6 +1,7 @@
 ///|
 priv struct ElementNode {
   id : ElementId
+  mut semantics_node_id : SemanticsNodeId?
   mut key : Key?
   mut view_node : &RuntimeViewNode
   mut children : Array[ElementNode]
@@ -9,6 +10,8 @@ priv struct ElementNode {
   component : ElementComponentState
   layout_cache : ElementLayoutCache
   render_cache : ElementRenderCache
+  semantics_cache : ElementSemanticsCache
+  platform_cache : ElementPlatformCache
 }
 
 ///|
@@ -72,8 +75,25 @@ priv struct ElementLayoutCache {
 priv struct ElementRenderCache {
   mut cached_render_frame : Rect?
   mut cached_render_focused : ElementId?
+  mut cached_plan : ViewPaintPlan?
   mut cached_render : RenderNode?
   mut content_revision : Int
+}
+
+///|
+priv struct ElementSemanticsCache {
+  mut frame : Rect?
+  mut environment : Environment?
+  mut style : ViewStyle?
+  roots : Array[SemanticsNodeId]
+}
+
+///|
+priv struct ElementPlatformCache {
+  mut frame : Rect?
+  mut environment : Environment?
+  mut style : ViewStyle?
+  mut node : PlatformNode?
 }
 
 ///|
@@ -119,7 +139,6 @@ priv struct RenderNode {
   paint_commands : Array[DrawCommand]
   post_paint_commands : Array[DrawCommand]
   overlay_paint_commands : Array[DrawCommand]
-  platform_views : Array[PlatformViewPlacement]
   cached_draw_commands : Array[DrawCommand]?
   cached_overlay_draw_commands : Array[DrawCommand]?
   /// True when this node or any descendant reported a mid-animation paint
@@ -147,6 +166,17 @@ priv struct RenderTree {
 }
 
 ///|
+priv struct PlatformNode {
+  placements : Array[PlatformViewPlacement]
+  children : Array[PlatformNode]
+}
+
+///|
+priv struct PlatformTree {
+  root : PlatformNode
+}
+
+///|
 fn RenderNode::empty() -> RenderNode {
   {
     element_id: ElementId::new(0),
@@ -159,7 +189,6 @@ fn RenderNode::empty() -> RenderNode {
     paint_commands: [],
     post_paint_commands: [],
     overlay_paint_commands: [],
-    platform_views: [],
     cached_draw_commands: None,
     cached_overlay_draw_commands: None,
     animating: false,
@@ -187,6 +216,16 @@ fn RenderTree::empty() -> RenderTree {
 }
 
 ///|
+fn PlatformNode::empty() -> PlatformNode {
+  { placements: [], children: [] }
+}
+
+///|
+fn PlatformTree::empty() -> PlatformTree {
+  { root: PlatformNode::empty() }
+}
+
+///|
 fn LayoutTree::empty() -> LayoutTree {
   {
     root: {
@@ -208,7 +247,7 @@ fn ElementControlState::new() -> ElementControlState {
       checked: false,
       expanded: false,
       disabled: false,
-      scratch: "",
+      slots: @core.ViewStateSlots::empty(),
     },
     caret: 0,
     selection: None,
@@ -261,6 +300,7 @@ fn ElementRenderCache::empty() -> ElementRenderCache {
   {
     cached_render_frame: None,
     cached_render_focused: None,
+    cached_plan: None,
     cached_render: None,
     content_revision: 0,
   }
@@ -270,5 +310,31 @@ fn ElementRenderCache::empty() -> ElementRenderCache {
 fn ElementRenderCache::clear(self : ElementRenderCache) -> Unit {
   self.cached_render_frame = None
   self.cached_render_focused = None
+  self.cached_plan = None
   self.cached_render = None
+}
+
+///|
+fn ElementRenderCache::invalidate_composition(
+  self : ElementRenderCache,
+) -> Unit {
+  self.cached_render = None
+}
+
+///|
+fn ElementSemanticsCache::empty() -> ElementSemanticsCache {
+  { frame: None, environment: None, style: None, roots: [] }
+}
+
+///|
+fn ElementSemanticsCache::clear(self : ElementSemanticsCache) -> Unit {
+  self.frame = None
+  self.environment = None
+  self.style = None
+  self.roots.clear()
+}
+
+///|
+fn ElementPlatformCache::empty() -> ElementPlatformCache {
+  { frame: None, environment: None, style: None, node: None }
 }

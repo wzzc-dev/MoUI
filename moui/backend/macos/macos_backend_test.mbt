@@ -33,45 +33,34 @@ test "macos backend host options are constructed through provider runner API" {
 
 ///|
 test "macos accessibility bridge dispatches semantics actions" {
-  let invoked = Ref(0)
-  let node = @core.SemanticsNode::{
-    element_id: @core.ElementId::new(9),
-    role: @core.SemanticsRole::Button,
-    level: None,
-    url: "",
-    label: "Run",
-    value: "",
-    description: "",
-    state: @core.SemanticsState::default(),
-    actions: [@core.SemanticsAction::Activate],
-    focus_order: Some(0),
-    frame: @core.Rect::new(x=0.0, y=0.0, width=80.0, height=32.0),
-    children: [],
+  let runtime = @runtime.AppRuntime::new_view(
+    root=(@views.button("Run", on_click=()) : @core.View[Unit]),
+    size=@core.Size::new(width=120.0, height=60.0),
+  )
+  let snapshot = match runtime.read_semantics() {
+    Ok(@runtime.SemanticsRead::Full(snapshot)) => snapshot
+    _ => abort("expected full committed semantics")
   }
-  let bridge = macos_accessibility_bridge(root=node, dispatch=(
-    element_id,
-    action,
-    _value,
-  ) => {
-    if element_id == @core.ElementId::new(9) &&
-      action == @core.SemanticsAction::Activate {
-      invoked.val = invoked.val + 1
-      true
-    } else {
-      false
+  let mut target : @core.SemanticsNode? = None
+  for node in snapshot.nodes() {
+    if node.actions.any(action => action == @core.SemanticsActionKind::Activate) {
+      target = Some(node)
     }
-  })
+  }
+  let target = target.unwrap()
+  let bridge = macos_accessibility_bridge(runtime)
   match
     bridge.perform_action(
       @host.NativeAccessibilityActionRequest::new(
-        element_id=@core.ElementId::new(9),
+        node_id=target.node_id,
+        generation=snapshot.generation(),
         action=@core.SemanticsAction::Activate,
       ),
     ) {
-    @host.NativeAccessibilityActionResult::Handled => ()
+    @host.NativeAccessibilityActionResult::Handled(receipt) =>
+      assert_true(receipt.before == snapshot.generation())
     _ => fail("expected handled AppKit accessibility action")
   }
-  inspect(invoked.val, content="1")
 }
 
 ///|

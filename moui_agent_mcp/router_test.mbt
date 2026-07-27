@@ -1,296 +1,655 @@
 ///|
-// Router tests: feed parsed JSON-RPC requests through `route` against a local
-// mock AgentHost, and assert the response shape. No real stdin/stdout.
-
-// —— A minimal recording host for routing tests. ——
-
-///|
 struct RecordingHost {
-  intents : Array[@core.CommandIntent]
-  mut next_sequence : Int
-  mut subscriptions : Array[RecordingSubscription]
+  mut last_since : @core.SemanticsGeneration?
+  mut last_action : @agent.AgentActionRequest?
+  mut last_diagnostic : String?
+  reject_action : Bool
+  closed : Bool
 }
 
 ///|
-struct RecordingSubscription {
-  token : Int
-  filter : @agent.EventFilter
-  sink : (@agent.AgentEvent) -> Unit
-}
-
-///|
-fn RecordingHost::new() -> RecordingHost {
-  { intents: [], next_sequence: 0, subscriptions: [] }
-}
-
-///|
-let test_semantics_root : @core.SemanticsNode = {
-  element_id: @core.ElementId::new(1),
-  role: @core.SemanticsRole::Button,
-  level: None,
-  url: "",
-  label: "click-me",
-  value: "",
-  description: "",
-  state: @core.SemanticsState::default(),
-  actions: [@core.SemanticsAction::Activate],
-  focus_order: None,
-  frame: @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
-  children: [],
-}
-
-///|
-pub impl @agent.AgentHost for RecordingHost with fn semantics(
-  _self : RecordingHost,
-) -> @agent.SemanticsSnapshot {
-  @agent.SemanticsSnapshot::{
-    root: test_semantics_root,
-    node_count: 1,
-    depth: 1,
+fn RecordingHost::new(
+  reject_action? : Bool = false,
+  closed? : Bool = false,
+) -> RecordingHost {
+  {
+    last_since: None,
+    last_action: None,
+    last_diagnostic: None,
+    reject_action,
+    closed,
   }
 }
 
 ///|
-pub impl @agent.AgentHost for RecordingHost with fn state(self : RecordingHost) -> @agent.RuntimeStateSnapshot {
-  @agent.RuntimeStateSnapshot::{
-    dispatched_count: self.intents.length(),
+pub impl @agent.AgentHost for RecordingHost with fn read_semantics(self, since) {
+  self.last_since = since
+  if self.closed {
+    Err(@agent.AgentReadError::HostClosed)
+  } else {
+    Ok(
+      @agent.AgentSemanticsRead::Full({
+        generation: @core.SemanticsGeneration::new(7UL),
+        root: None,
+        focused: None,
+        nodes: [],
+        issues: [],
+      }),
+    )
+  }
+}
+
+///|
+pub impl @agent.AgentHost for RecordingHost with fn perform_action(
+  self,
+  request,
+) {
+  self.last_action = Some(request)
+  if self.closed {
+    Err(@agent.AgentActionError::HostClosed)
+  } else if self.reject_action {
+    Err(
+      @agent.AgentActionError::StaleGeneration(
+        @core.SemanticsGeneration::new(6UL),
+        @core.SemanticsGeneration::new(7UL),
+      ),
+    )
+  } else {
+    Ok({
+      before: @core.SemanticsGeneration::new(7UL),
+      after: @core.SemanticsGeneration::new(8UL),
+      pending_work: false,
+    })
+  }
+}
+
+///|
+pub impl @agent.AgentDiagnosticsHost for RecordingHost with fn runtime_state(
+  self,
+) {
+  self.last_diagnostic = Some("read_state")
+  Ok({
+    dispatched_count: 0,
     update_count: 0,
     pending_message_count: 0,
     active_subscription_count: 0,
     active_effect_task_count: 0,
-    dirty_element_ids: [],
+  })
+}
+
+///|
+pub impl @agent.AgentDiagnosticsHost for RecordingHost with fn paint_summary(
+  self,
+) {
+  self.last_diagnostic = Some("read_paint")
+  Ok({ texts: [], draw_command_count: 0 })
+}
+
+///|
+pub impl @agent.AgentDiagnosticsHost for RecordingHost with fn dispatch_event(
+  self,
+  _event,
+) {
+  self.last_diagnostic = Some("dispatch_event")
+  Ok({ accepted: true, reason: None })
+}
+
+///|
+pub impl @agent.AgentDiagnosticsHost for RecordingHost with fn dispatch_command(
+  self,
+  _intent,
+) {
+  self.last_diagnostic = Some("dispatch_command")
+  Ok({ accepted: true, reason: None })
+}
+
+///|
+fn request(source : String) -> Json {
+  @json.parse(source) catch {
+    error => abort("invalid test request: \{error}")
   }
 }
 
 ///|
-pub impl @agent.AgentHost for RecordingHost with fn frame(_self : RecordingHost) -> @agent.FrameSnapshot {
-  @agent.FrameSnapshot::{ texts: [], draw_command_count: 0 }
+fn tool_call(name : String, arguments : Json) -> Json {
+  (
+    {
+      "jsonrpc": "2.0",
+      "id": 99,
+      "method": "tools/call",
+      "params": { "name": name, "arguments": arguments },
+    } : Json)
 }
 
 ///|
-pub impl @agent.AgentHost for RecordingHost with fn capabilities(
-  _self : RecordingHost,
-) -> Array[@agent.AgentCapability] {
-  [
-    @agent.AgentCapability::{
-      kind: "dispatch_command",
-      description: "Fire a command intent.",
-      schema: ({ "intent": "string" } : Json),
-    },
-  ]
-}
-
-///|
-pub impl @agent.AgentHost for RecordingHost with fn subscribe_events(
-  self : RecordingHost,
-  filter : @agent.EventFilter,
-  sink : (@agent.AgentEvent) -> Unit,
-) -> @agent.SubscriptionToken {
-  let id = self.subscriptions.length() + 1
-  self.subscriptions.push({ token: id, filter, sink })
-  @agent.SubscriptionToken::new(id)
-}
-
-///|
-pub impl @agent.AgentHost for RecordingHost with fn unsubscribe(
-  self : RecordingHost,
-  token : @agent.SubscriptionToken,
-) -> Unit {
-  let target = token.id()
-  self.subscriptions = self.subscriptions.filter(s => s.token != target)
-}
-
-///|
-pub impl @agent.AgentHost for RecordingHost with fn dispatch_event(
-  self : RecordingHost,
-  event : @core.AppEvent,
-) -> @agent.DispatchResult {
-  // Fan the event out to subscribers (same semantics as RuntimeAgentHost).
-  self.deliver(event)
-  @agent.DispatchResult::{ accepted: true, reason: None }
-}
-
-///|
-/// Deliver an observed AppEvent to matching subscribers (FrameTick suppressed).
-fn RecordingHost::deliver(self : RecordingHost, event : @core.AppEvent) -> Unit {
-  match event {
-    FrameTick(_) => return
-    _ => ()
+fn listed_tool_count(response : Json) -> Int {
+  guard response is Json::Object(root) &&
+    root.get("result") is Some(Json::Object(result)) &&
+    result.get("tools") is Some(Json::Array(tools)) else {
+    abort("invalid tools/list response")
   }
-  let category = @agent.event_category(event)
-  let seq = self.next_sequence
-  self.next_sequence = seq + 1
-  let agent_event = @agent.AgentEvent::{
-    sequence: seq,
-    source: @agent.EventSource::Agent,
-    event,
+  tools.length()
+}
+
+///|
+fn listed_tool_descriptor(response : Json, name : String) -> Json {
+  guard response is Json::Object(root) &&
+    root.get("result") is Some(Json::Object(result)) &&
+    result.get("tools") is Some(Json::Array(tools)) else {
+    abort("invalid tools/list response")
   }
-  for sub in self.subscriptions {
-    if @agent.EventFilter::accept(sub.filter, category) {
-      (sub.sink)(agent_event)
+  for tool in tools {
+    if tool is Json::Object(fields) &&
+      fields.get("name") is Some(Json::String(found_name)) &&
+      found_name == name {
+      return tool
     }
   }
+  abort("missing tool descriptor: \{name}")
 }
 
 ///|
-pub impl @agent.AgentHost for RecordingHost with fn dispatch_command(
-  self : RecordingHost,
-  intent : @core.CommandIntent,
-) -> @agent.DispatchResult {
-  self.intents.push(intent)
-  @agent.DispatchResult::{ accepted: true, reason: None }
+fn required_json_field(fields : Map[String, Json], name : String) -> Json {
+  fields.get(name).unwrap_or_else(() => abort("missing JSON field: \{name}"))
 }
 
-// —— Helpers. ——
+///|
+fn schema_property(schema : Json, name : String) -> Json {
+  guard schema is Json::Object(schema_fields) &&
+    schema_fields.get("properties") is Some(Json::Object(properties)) else {
+    abort("schema has no properties")
+  }
+  required_json_field(properties, name)
+}
 
 ///|
-/// Parse a JSON request string, aborting on failure (test inputs are literals).
-fn req(line : String) -> Json {
-  @json.parse(line) catch {
-    _ => abort("failed to parse test JSON: \{line}")
+fn schema_variants(schema : Json) -> Array[Json] {
+  guard schema is Json::Object(fields) &&
+    fields.get("oneOf") is Some(Json::Array(variants)) else {
+    abort("schema has no oneOf variants")
+  }
+  variants
+}
+
+///|
+fn tagged_schema_variant(schema : Json, kind : String) -> Json {
+  for variant in schema_variants(schema) {
+    let kind_schema = schema_property(variant, "kind")
+    if kind_schema is Json::Object(fields) &&
+      fields.get("const") is Some(Json::String(found_kind)) &&
+      found_kind == kind {
+      return variant
+    }
+  }
+  abort("missing tagged schema variant: \{kind}")
+}
+
+///|
+fn array_item_schema(schema : Json) -> Json {
+  guard schema is Json::Object(fields) else {
+    abort("array schema is not an object")
+  }
+  required_json_field(fields, "items")
+}
+
+///|
+fn semantic_action_arguments(target_kind : String, target_id : String) -> Json {
+  (
+    {
+      "target": { "kind": target_kind, "id": target_id },
+      "action": { "kind": "activate" },
+      "precondition": { "kind": "latest" },
+    } : Json)
+}
+
+///|
+fn tool_error_details(response : Json) -> Map[String, Json] {
+  guard response is Json::Object(root) &&
+    root.get("result") is Some(Json::Object(result)) &&
+    result.get("structuredContent") is Some(Json::Object(envelope)) &&
+    envelope.get("error") is Some(Json::Object(error)) &&
+    error.get("details") is Some(Json::Object(details)) else {
+    abort("invalid structured tool error response")
+  }
+  details
+}
+
+///|
+fn required_string_field(fields : Map[String, Json], name : String) -> String {
+  match fields.get(name) {
+    Some(Json::String(value)) => value
+    _ => abort("missing string field: \{name}")
   }
 }
 
 ///|
-/// Stringify a response for substring assertions.
-fn str_of(j : Json) -> String {
-  (j : Json).stringify()
-}
-
-// ---------------------------------------------------------------------------
-// Tests.
-// ---------------------------------------------------------------------------
-
-///|
-test "route: initialize returns protocolVersion and server info" {
+test "default tools list contains exactly the semantic surface" {
   let host = RecordingHost::new()
-  let request = req("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\"}")
-  let s = str_of(route(host, request))
-  if !s.contains("protocolVersion") {
-    fail("expected protocolVersion; got \{s}")
-  }
-  if !s.contains("moui-agent") {
-    fail("expected server name; got \{s}")
-  }
+  let response = route(
+    host,
+    request("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"),
+  ).stringify()
+  assert_eq(
+    listed_tool_count(
+      route(
+        host,
+        request("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"),
+      ),
+    ),
+    2,
+  )
+  assert_true(response.contains("read_semantics"))
+  assert_true(response.contains("perform_action"))
+  assert_true(response.contains("outputSchema"))
+  assert_false(response.contains("diagnostics_"))
+  assert_false(response.contains("dispatch_event"))
 }
 
 ///|
-test "route: tools/list advertises the agent tools" {
+test "diagnostics tools require the explicit diagnostics router" {
   let host = RecordingHost::new()
-  let request = req("{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/list\"}")
-  let s = str_of(route(host, request))
+  let response = route_with_diagnostics(
+    host,
+    request("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"),
+  ).stringify()
+  assert_eq(
+    listed_tool_count(
+      route_with_diagnostics(
+        host,
+        request("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"),
+      ),
+    ),
+    6,
+  )
+  assert_true(response.contains("read_semantics"))
+  assert_true(response.contains("diagnostics_read_state"))
+  assert_true(response.contains("diagnostics_dispatch_event"))
+}
+
+///|
+test "diagnostics registry entry owns decoding and dispatch" {
+  let host = RecordingHost::new()
+  let response = route_with_diagnostics(
+    host,
+    tool_call("diagnostics_dispatch_command", ({ "intent": "Activate" } : Json)),
+  ).stringify()
+  assert_true(response.contains("\"isError\":false"))
+  assert_true(host.last_diagnostic == Some("dispatch_command"))
+}
+
+///|
+test "read_semantics returns structured content and text fallback" {
+  let host = RecordingHost::new()
+  let response = route(
+    host,
+    request(
+      "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/call\",\"params\":{\"name\":\"read_semantics\",\"arguments\":{\"since\":\"5\"}}}",
+    ),
+  ).stringify()
+  assert_true(response.contains("structuredContent"))
+  assert_true(response.contains("\"isError\":false"))
+  assert_true(response.contains("\\\"kind\\\":\\\"full\\\""))
+  assert_true(host.last_since == Some(@core.SemanticsGeneration::new(5UL)))
+}
+
+///|
+test "perform_action decodes tagged typed action" {
+  let host = RecordingHost::new()
+  let response = route(
+    host,
+    request(
+      "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\",\"params\":{\"name\":\"perform_action\",\"arguments\":{\"target\":{\"kind\":\"semantic_id\",\"id\":\"counter.increment\"},\"action\":{\"kind\":\"activate\"},\"precondition\":{\"kind\":\"exact\",\"generation\":\"7\"}}}}",
+    ),
+  ).stringify()
+  assert_true(response.contains("\"isError\":false"))
+  guard host.last_action is Some(action) else {
+    fail("host did not receive action")
+  }
+  assert_true(action.action == @core.SemanticsAction::Activate)
+  assert_true(
+    action.precondition ==
+    @agent.AgentGenerationPrecondition::Exact(
+      @core.SemanticsGeneration::new(7UL),
+    ),
+  )
+}
+
+///|
+test "invalid action payload is a normal MCP tool error" {
+  let host = RecordingHost::new()
+  let response = route(
+    host,
+    request(
+      "{\"jsonrpc\":\"2.0\",\"id\":4,\"method\":\"tools/call\",\"params\":{\"name\":\"perform_action\",\"arguments\":{\"target\":{\"kind\":\"semantic_id\",\"id\":\"editor\"},\"action\":{\"kind\":\"set_text\"},\"precondition\":{\"kind\":\"latest\"}}}}",
+    ),
+  ).stringify()
+  assert_true(response.contains("\"isError\":true"))
+  assert_true(response.contains("invalid_arguments"))
+  assert_false(response.contains("\"code\":-32602"))
+  assert_true(host.last_action is None)
+}
+
+///|
+test "business rejection is a structured tool error" {
+  let host = RecordingHost::new(reject_action=true)
+  let routed = route(
+    host,
+    request(
+      "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"tools/call\",\"params\":{\"name\":\"perform_action\",\"arguments\":{\"target\":{\"kind\":\"node_id\",\"id\":\"12\"},\"action\":{\"kind\":\"scroll\",\"direction\":\"down\"},\"precondition\":{\"kind\":\"latest\"}}}}",
+    ),
+  )
+  let response = routed.stringify()
+  assert_true(response.contains("\"isError\":true"))
+  assert_true(response.contains("stale_generation"))
+  assert_false(response.contains("StaleGeneration"))
+  let details = tool_error_details(routed)
+  assert_eq(required_string_field(details, "expected"), "6")
+  assert_eq(required_string_field(details, "current"), "7")
+  guard host.last_action is Some(action) else {
+    fail("host did not receive action")
+  }
+  assert_true(
+    action.action ==
+    @core.SemanticsAction::Scroll(@core.SemanticsScrollDirection::Down),
+  )
+}
+
+///|
+test "malformed tools call envelope uses JSON-RPC invalid params" {
+  let host = RecordingHost::new()
+  let response = route(
+    host,
+    request(
+      "{\"jsonrpc\":\"2.0\",\"id\":6,\"method\":\"tools/call\",\"params\":{}}",
+    ),
+  ).stringify()
+  assert_true(response.contains("\"code\":-32602"))
+  assert_false(response.contains("structuredContent"))
+}
+
+///|
+test "malformed JSON-RPC version uses invalid request" {
+  let host = RecordingHost::new()
   for
-    tool in ["get_semantics", "get_state", "dispatch_command", "dispatch_event"] {
-    if !s.contains(tool) {
-      fail("expected tool \{tool} in tools/list; got \{s}")
+    source in [
+      "{\"id\":1,\"method\":\"tools/list\"}", "{\"jsonrpc\":\"1.0\",\"id\":1,\"method\":\"tools/list\"}",
+    ] {
+    let response = route(host, request(source)).stringify()
+    assert_true(response.contains("\"code\":-32600"))
+    assert_false(response.contains("structuredContent"))
+  }
+}
+
+///|
+test "typed registry rejects invalid targets actions payloads and generations" {
+  let host = RecordingHost::new()
+  let invalid_arguments : Array[Json] = [
+    request(
+      "{\"target\":{\"kind\":\"semantic_id\",\"id\":\"bad id\"},\"action\":{\"kind\":\"activate\"},\"precondition\":{\"kind\":\"latest\"}}",
+    ),
+    request(
+      "{\"target\":{\"kind\":\"semantic_id\",\"id\":\"counter\"},\"action\":{\"kind\":\"unknown\"},\"precondition\":{\"kind\":\"latest\"}}",
+    ),
+    request(
+      "{\"target\":{\"kind\":\"semantic_id\",\"id\":\"counter\"},\"action\":{\"kind\":\"set_text\"},\"precondition\":{\"kind\":\"latest\"}}",
+    ),
+    request(
+      "{\"target\":{\"kind\":\"semantic_id\",\"id\":\"counter\"},\"action\":{\"kind\":\"scroll\",\"direction\":\"diagonal\"},\"precondition\":{\"kind\":\"latest\"}}",
+    ),
+    request(
+      "{\"target\":{\"kind\":\"semantic_id\",\"id\":\"counter\"},\"action\":{\"kind\":\"activate\"},\"precondition\":{\"kind\":\"exact\",\"generation\":\"18446744073709551616\"}}",
+    ),
+    request(
+      "{\"target\":{\"kind\":\"semantic_id\",\"id\":\"counter\"},\"action\":{\"kind\":\"activate\"},\"precondition\":{\"kind\":\"exact\",\"generation\":\"01\"}}",
+    ),
+    request(
+      "{\"target\":{\"kind\":\"node_id\",\"id\":\"0\"},\"action\":{\"kind\":\"activate\"},\"precondition\":{\"kind\":\"latest\"}}",
+    ),
+    request(
+      "{\"target\":{\"kind\":\"semantic_id\",\"id\":\"counter\"},\"action\":{\"kind\":\"activate\",\"value\":\"unexpected\"},\"precondition\":{\"kind\":\"latest\"}}",
+    ),
+  ]
+  for arguments in invalid_arguments {
+    let response = route(host, tool_call("perform_action", arguments)).stringify()
+    assert_true(response.contains("\"isError\":true"))
+    assert_true(response.contains("invalid_arguments"))
+    assert_false(response.contains("\"code\":-32602"))
+  }
+  assert_true(host.last_action is None)
+}
+
+///|
+test "UInt64 codecs keep descriptor schemas and decoders canonical" {
+  let list_response = route(
+    RecordingHost::new(),
+    request("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"),
+  )
+  let read_descriptor = listed_tool_descriptor(list_response, "read_semantics")
+  guard read_descriptor is Json::Object(read_fields) else {
+    fail("read descriptor is not an object")
+  }
+  let since_schema = schema_property(
+    required_json_field(read_fields, "inputSchema"),
+    "since",
+  )
+  guard since_schema is Json::Object(since_fields) else {
+    fail("since schema is not an object")
+  }
+  assert_eq(required_string_field(since_fields, "type"), "string")
+  assert_true(
+    since_fields.get("maxLength") is Some(Json::Number(max_length, repr=_)) &&
+    max_length == 20.0,
+  )
+  assert_true(
+    required_string_field(since_fields, "pattern").contains(
+      "1844674407370955161[0-5]",
+    ),
+  )
+
+  let action_descriptor = listed_tool_descriptor(
+    list_response, "perform_action",
+  )
+  guard action_descriptor is Json::Object(action_fields) else {
+    fail("perform_action descriptor is not an object")
+  }
+  let action_input = required_json_field(action_fields, "inputSchema")
+  let node_target = tagged_schema_variant(
+    schema_property(action_input, "target"),
+    "node_id",
+  )
+  guard schema_property(node_target, "id") is Json::Object(node_id_fields) else {
+    fail("node id schema is not an object")
+  }
+  assert_true(
+    required_string_field(node_id_fields, "pattern").has_prefix("^([1-9]"),
+  )
+  assert_true(
+    node_id_fields.get("maxLength") is Some(Json::Number(max_length, repr=_)) &&
+    max_length == 20.0,
+  )
+  let exact_precondition = tagged_schema_variant(
+    schema_property(action_input, "precondition"),
+    "exact",
+  )
+  guard schema_property(exact_precondition, "generation")
+    is Json::Object(exact_generation_fields) else {
+    fail("exact generation schema is not an object")
+  }
+  assert_eq(
+    required_string_field(exact_generation_fields, "pattern"),
+    required_string_field(since_fields, "pattern"),
+  )
+
+  for value in ["0", "18446744073709551615"] {
+    let host = RecordingHost::new()
+    let response = route(
+      host,
+      tool_call("read_semantics", ({ "since": value } : Json)),
+    ).stringify()
+    assert_true(response.contains("\"isError\":false"))
+    assert_true(host.last_since is Some(_))
+  }
+  for value in ["", "00", "01", "-1", "18446744073709551616"] {
+    let host = RecordingHost::new()
+    let response = route(
+      host,
+      tool_call("read_semantics", ({ "since": value } : Json)),
+    ).stringify()
+    assert_true(response.contains("\"isError\":true"))
+    assert_true(response.contains("invalid_arguments"))
+    assert_true(host.last_since is None)
+  }
+
+  for value in ["1", "18446744073709551615"] {
+    let host = RecordingHost::new()
+    let response = route(
+      host,
+      tool_call("perform_action", semantic_action_arguments("node_id", value)),
+    ).stringify()
+    assert_true(response.contains("\"isError\":false"))
+    guard host.last_action is Some(action) else {
+      fail("valid node id was not dispatched")
     }
+    guard action.target is @core.SemanticsTarget::ByNodeId(node_id) else {
+      fail("valid node id decoded to the wrong target")
+    }
+    assert_eq(node_id.to_wire(), value)
+  }
+  for value in ["0", "00", "01", "18446744073709551616"] {
+    let host = RecordingHost::new()
+    let response = route(
+      host,
+      tool_call("perform_action", semantic_action_arguments("node_id", value)),
+    ).stringify()
+    assert_true(response.contains("\"isError\":true"))
+    assert_true(host.last_action is None)
   }
 }
 
 ///|
-test "route: tools/call dispatch_command invokes the host" {
-  let host = RecordingHost::new()
-  let request = req(
-    "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\",\"params\":{\"name\":\"dispatch_command\",\"arguments\":{\"intent\":\"Activate\"}}}",
+test "SemanticId codec exposes and enforces byte and whitespace constraints" {
+  let list_response = route(
+    RecordingHost::new(),
+    request("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"),
   )
-  let s = str_of(route(host, request))
-  if !s.contains("content") {
-    fail("expected content wrapper; got \{s}")
+  let descriptor = listed_tool_descriptor(list_response, "perform_action")
+  guard descriptor is Json::Object(descriptor_fields) else {
+    fail("perform_action descriptor is not an object")
   }
-  if host.intents.length() != 1 {
-    fail("expected one recorded intent; got \{host.intents.length()}")
-  }
-  match host.intents[0] {
-    @core.CommandIntent::Activate => ()
-    _ => fail("expected Activate intent")
-  }
-}
-
-///|
-test "route: tools/call get_semantics returns the tree" {
-  let host = RecordingHost::new()
-  let request = req(
-    "{\"jsonrpc\":\"2.0\",\"id\":4,\"method\":\"tools/call\",\"params\":{\"name\":\"get_semantics\",\"arguments\":{}}}",
+  let target_schema = schema_property(
+    required_json_field(descriptor_fields, "inputSchema"),
+    "target",
   )
-  let s = str_of(route(host, request))
-  if !s.contains("click-me") {
-    fail("expected semantics label in response; got \{s}")
+  let semantic_target = tagged_schema_variant(target_schema, "semantic_id")
+  let semantic_id_schema = schema_property(semantic_target, "id")
+  guard semantic_id_schema is Json::Object(id_fields) &&
+    id_fields.get("x-moui-utf8ByteLength") is Some(Json::Object(byte_length)) else {
+    fail("semantic id schema is missing its UTF-8 byte contract")
   }
-}
-
-///|
-test "route: unknown method returns -32601" {
-  let host = RecordingHost::new()
-  let request = req(
-    "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"no/such/method\"}",
+  assert_true(
+    byte_length.get("minimum") is Some(Json::Number(minimum, repr=_)) &&
+    minimum == 1.0,
   )
-  let s = str_of(route(host, request))
-  if !s.contains("-32601") {
-    fail("expected -32601; got \{s}")
-  }
-}
-
-///|
-test "route: unknown tool returns -32602" {
-  let host = RecordingHost::new()
-  let request = req(
-    "{\"jsonrpc\":\"2.0\",\"id\":6,\"method\":\"tools/call\",\"params\":{\"name\":\"bogus_tool\",\"arguments\":{}}}",
+  assert_true(
+    byte_length.get("maximum") is Some(Json::Number(maximum, repr=_)) &&
+    maximum == 255.0,
   )
-  let s = str_of(route(host, request))
-  if !s.contains("-32602") {
-    fail("expected -32602; got \{s}")
+  let pattern = required_string_field(id_fields, "pattern")
+  assert_true(pattern.contains("\\u0000-\\u0020"))
+  assert_true(pattern.contains("\\u3000"))
+
+  let valid = "\u{754C}".repeat(85)
+  let valid_host = RecordingHost::new()
+  let valid_response = route(
+    valid_host,
+    tool_call("perform_action", semantic_action_arguments("semantic_id", valid)),
+  ).stringify()
+  assert_true(valid_response.contains("\"isError\":false"))
+  assert_true(valid_host.last_action is Some(_))
+
+  for
+    value in [
+      "\u{754C}".repeat(86),
+      "bad id",
+      "bad\nvalue",
+      "bad\u{00A0}value",
+      "bad\u{3000}value",
+    ] {
+    let host = RecordingHost::new()
+    let response = route(
+      host,
+      tool_call(
+        "perform_action",
+        semantic_action_arguments("semantic_id", value),
+      ),
+    ).stringify()
+    assert_true(response.contains("\"isError\":true"))
+    assert_true(response.contains("invalid_arguments"))
+    assert_true(host.last_action is None)
   }
 }
 
 ///|
-test "route: dispatch_command with bad intent returns -32602" {
-  let host = RecordingHost::new()
-  let request = req(
-    "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"tools/call\",\"params\":{\"name\":\"dispatch_command\",\"arguments\":{\"intent\":\"NotARealIntent\"}}}",
+test "read_semantics output schema fully types node issue and delta arrays" {
+  let list_response = route(
+    RecordingHost::new(),
+    request("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"),
   )
-  let s = str_of(route(host, request))
-  if !s.contains("-32602") {
-    fail("expected -32602 for unknown intent; got \{s}")
+  let descriptor = listed_tool_descriptor(list_response, "read_semantics")
+  guard descriptor is Json::Object(descriptor_fields) else {
+    fail("read_semantics descriptor is not an object")
   }
-  if host.intents.length() != 0 {
-    fail(
-      "expected no recorded intent for bad input; got \{host.intents.length()}",
-    )
-  }
+  let output = required_json_field(descriptor_fields, "outputSchema")
+  let success_envelope = schema_variants(output)[0]
+  let value_schema = schema_property(success_envelope, "value")
+  let full = tagged_schema_variant(value_schema, "full")
+  let delta = tagged_schema_variant(value_schema, "delta")
+
+  let node = array_item_schema(schema_property(full, "nodes"))
+  ignore(schema_property(node, "node_id"))
+  ignore(schema_property(node, "semantic_id"))
+  ignore(schema_property(node, "state"))
+  ignore(schema_property(node, "frame"))
+  ignore(array_item_schema(schema_property(node, "actions")))
+  ignore(array_item_schema(schema_property(node, "children")))
+
+  let issue = array_item_schema(schema_property(full, "issues"))
+  ignore(schema_property(issue, "semantic_id"))
+  ignore(array_item_schema(schema_property(issue, "nodes")))
+
+  ignore(array_item_schema(schema_property(delta, "upserted")))
+  ignore(array_item_schema(schema_property(delta, "removed")))
+  ignore(array_item_schema(schema_property(delta, "issues")))
 }
 
 ///|
-/// subscribe_events registers a subscription via the router; subsequent
-/// dispatch_event calls push notifications through the notify sink.
-test "route_notify: subscribe_events streams events to the notify sink" {
-  let host = RecordingHost::new()
-  let notifications : Array[String] = []
-  // Subscribe — returns a token, no notification yet.
-  let sub_resp = route_notify(
+test "host closure is a normal structured tool error" {
+  let host = RecordingHost::new(closed=true)
+  let read_response = route(
     host,
-    req(
-      "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"subscribe_events\",\"arguments\":{}}}",
-    ),
-    n => notifications.push((n : Json).stringify()),
+    tool_call("read_semantics", Json::empty_object()),
+  ).stringify()
+  assert_true(read_response.contains("\"isError\":true"))
+  assert_true(read_response.contains("host_closed"))
+  assert_false(read_response.contains("\"code\":-32602"))
+  let action_arguments = request(
+    "{\"target\":{\"kind\":\"semantic_id\",\"id\":\"counter\"},\"action\":{\"kind\":\"activate\"},\"precondition\":{\"kind\":\"latest\"}}",
   )
-  let sub_str = (sub_resp : Json).stringify()
-  if !(sub_str.contains("subscribed") && sub_str.contains("token")) {
-    fail("expected subscribed+token in response; got \{sub_str}")
-  }
-  // Now dispatch an event; the host must fan it out and the router must notify.
-  let _ = route_notify(
+  let action_response = route(
     host,
-    req(
-      "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/call\",\"params\":{\"name\":\"dispatch_event\",\"arguments\":{\"event\":{\"kind\":\"Pointer\",\"position\":{\"x\":5,\"y\":5},\"phase\":\"Up\"}}}}",
-    ),
-    n => notifications.push((n : Json).stringify()),
-  )
-  if notifications.length() < 1 {
-    fail(
-      "expected at least one notification after dispatch_event; got \{notifications.length()}",
-    )
-  }
-  if !notifications[0].contains("notifications/events") {
-    fail("expected notifications/events method; got \{notifications[0]}")
-  }
+    tool_call("perform_action", action_arguments),
+  ).stringify()
+  assert_true(action_response.contains("\"isError\":true"))
+  assert_true(action_response.contains("host_closed"))
+}
+
+///|
+test "diagnostics tools stay unavailable on the default router" {
+  let host = RecordingHost::new()
+  let response = route(
+    host,
+    tool_call("diagnostics_read_state", Json::empty_object()),
+  ).stringify()
+  assert_true(response.contains("\"isError\":true"))
+  assert_true(response.contains("unknown_tool"))
 }

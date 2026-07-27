@@ -897,7 +897,7 @@ test "renderer command planner reports unclosed draw command scopes" {
 }
 
 ///|
-test "text emoji and async image capabilities are release ready" {
+test "text emoji and mainline async image capabilities are release ready" {
   for
     feature in [
       @render.RendererFeature::TextShaping,
@@ -907,12 +907,14 @@ test "text emoji and async image capabilities are release ready" {
     guard @render.renderer_feature_capability(feature) is Some(capability) else {
       fail("expected release-ready capability")
     }
-    assert_false(capability.needs_follow_up())
     for backend in @render.renderer_capability_backends() {
-      assert_true(
-        capability.status_for_backend(backend) ==
-        @render.RendererFeatureStatus::Supported,
-      )
+      let expected = if feature == @render.RendererFeature::AsyncImage &&
+        backend == @render.RendererBackendKind::Canvas2DWasm {
+        @render.RendererFeatureStatus::Gap
+      } else {
+        @render.RendererFeatureStatus::Supported
+      }
+      assert_true(capability.status_for_backend(backend) == expected)
     }
   }
 }
@@ -952,18 +954,19 @@ test "renderer capability follow ups stay focused on incomplete features" {
   assert_true(has_transform)
   assert_false(has_text_shaping)
   assert_false(has_emoji_text)
-  assert_false(has_async_image)
+  assert_true(has_async_image)
 }
 
 ///|
 test "renderer capability report exposes backend-driven entries" {
   let backends = @render.renderer_capability_backends()
-  inspect(backends.length(), content="5")
+  inspect(backends.length(), content="6")
   assert_true(backends[0] == @render.RendererBackendKind::SkiaRasterNative)
   assert_true(backends[1] == @render.RendererBackendKind::SkiaGpuNative)
   assert_true(backends[2] == @render.RendererBackendKind::WebGpuWasm)
   assert_true(backends[3] == @render.RendererBackendKind::NativeWgpu)
   assert_true(backends[4] == @render.RendererBackendKind::SunRasterNative)
+  assert_true(backends[5] == @render.RendererBackendKind::Canvas2DWasm)
   let wgpu = @render.renderer_backend_capabilities(
     @render.RendererBackendKind::NativeWgpu,
   )

@@ -1,7 +1,9 @@
 ///|
-test "native accessibility bridge snapshots semantics recursively" {
+test "native accessibility bridge maps flat runtime semantics nodes" {
+  let child_id = @core.SemanticsNodeId::new(2UL)
   let child = @core.SemanticsNode::{
-    element_id: @core.ElementId::new(2),
+    node_id: child_id,
+    semantic_id: @core.SemanticId::parse("document.save"),
     role: @core.SemanticsRole::Heading,
     level: Some(2),
     url: "https://example.test/save",
@@ -9,13 +11,17 @@ test "native accessibility bridge snapshots semantics recursively" {
     value: "",
     description: "Save current document",
     state: @core.SemanticsState::default(),
-    actions: [@core.SemanticsAction::Focus, @core.SemanticsAction::Activate],
+    actions: [
+      @core.SemanticsActionKind::Focus,
+      @core.SemanticsActionKind::Activate,
+    ],
     focus_order: Some(0),
     frame: @core.Rect::new(x=8.0, y=8.0, width=80.0, height=32.0),
     children: [],
   }
   let root = @core.SemanticsNode::{
-    element_id: @core.ElementId::new(1),
+    node_id: @core.SemanticsNodeId::new(1UL),
+    semantic_id: None,
     role: @core.SemanticsRole::Group,
     level: None,
     url: "",
@@ -26,103 +32,83 @@ test "native accessibility bridge snapshots semantics recursively" {
     actions: [],
     focus_order: None,
     frame: @core.Rect::new(x=0.0, y=0.0, width=100.0, height=100.0),
-    children: [child],
+    children: [child_id],
   }
-  let bridge = NativeAccessibilityBridge::new(
-    kind=NativeAccessibilityBridgeKind::TestBridge,
+  let root_node = accesskit_node_from_semantics(root)
+  let child_node = accesskit_node_from_semantics(child)
+  assert_true(
+    accesskit_node_id_for_semantics(child_id) ==
+    @accesskit.NodeId::from_u64(2UL),
   )
-  match bridge.snapshot_semantics(root) {
-    Some(snapshot) => {
-      inspect(snapshot.nodes().length(), content="2")
-      inspect(snapshot.tree() is Some(_), content="true")
-      inspect(snapshot.focus(), content="NodeId(1)")
-      let child_update = snapshot.nodes()[1]
-      inspect(child_update.node().role(), content="Heading")
-      assert_true(child_update.node().level() == Some(2))
-      assert_true(
-        child_update.node().url() == Some("https://example.test/save"),
-      )
-      match child_update.node().label() {
-        Some(label) => inspect(label, content="Save")
-        None => fail("expected child accessibility label")
-      }
-      match child_update.node().description() {
-        Some(description) =>
-          inspect(description, content="Save current document")
-        None => fail("expected child accessibility description")
-      }
-      inspect(
-        child_update.node().supports_action(@accesskit.Action::Click),
-        content="true",
-      )
-    }
-    None => fail("expected accessibility snapshot")
+  let root_children = root_node.children()
+  assert_eq(root_children.length(), 1)
+  assert_true(root_children[0] == @accesskit.NodeId::from_u64(2UL))
+  inspect(child_node.role(), content="Heading")
+  assert_true(child_node.level() == Some(2))
+  assert_true(child_node.url() == Some("https://example.test/save"))
+  match child_node.label() {
+    Some(label) => inspect(label, content="Save")
+    None => fail("expected child accessibility label")
   }
+  match child_node.description() {
+    Some(description) => inspect(description, content="Save current document")
+    None => fail("expected child accessibility description")
+  }
+  assert_true(child_node.supports_action(@accesskit.Action::Click))
 }
 
 ///|
-test "native accessibility bridge validates action roundtrip" {
+test "native accessibility bridge forwards generation checked typed actions" {
   let invoked = Ref(0)
-  let node = @core.SemanticsNode::{
-    element_id: @core.ElementId::new(42),
-    role: @core.SemanticsRole::TextField,
-    level: None,
-    url: "",
-    label: "Name",
-    value: "MoUI",
-    description: "Required profile name",
-    state: @core.SemanticsState::default(),
-    actions: [@core.SemanticsAction::Focus, @core.SemanticsAction::SetText],
-    focus_order: Some(0),
-    frame: @core.Rect::new(x=0.0, y=0.0, width=200.0, height=40.0),
-    children: [],
-  }
-  let bridge = NativeAccessibilityBridge::semantics_action_bridge(
+  let node_id = @core.SemanticsNodeId::new(42UL)
+  let generation = @core.SemanticsGeneration::new(7UL)
+  let bridge = NativeAccessibilityBridge::new(
     kind=NativeAccessibilityBridgeKind::TestBridge,
-    root=node,
-    dispatch=(element_id, action, value) => {
-      if element_id == @core.ElementId::new(42) &&
-        action == @core.SemanticsAction::SetText &&
-        value == Some("Luna") {
+    perform=request => {
+      if request.node_id == node_id &&
+        request.generation == generation &&
+        request.action == @core.SemanticsAction::SetText("Luna") {
         invoked.val = invoked.val + 1
-        true
+        NativeAccessibilityActionResult::Handled({
+          before: generation,
+          after: @core.SemanticsGeneration::new(8UL),
+          pending_work: false,
+        })
       } else {
-        false
+        NativeAccessibilityActionResult::Rejected(
+          @runtime.SemanticsActionDispatchError::TargetNotFound(
+            @core.SemanticsTarget::ByNodeId(request.node_id),
+          ),
+        )
       }
     },
   )
   match
     bridge.perform_action(
       NativeAccessibilityActionRequest::new(
-        element_id=@core.ElementId::new(42),
-        action=@core.SemanticsAction::SetText,
-        value=Some("Luna"),
+        node_id~,
+        generation~,
+        action=@core.SemanticsAction::SetText("Luna"),
       ),
     ) {
-    NativeAccessibilityActionResult::Handled => ()
+    NativeAccessibilityActionResult::Handled(receipt) =>
+      assert_true(receipt.after == @core.SemanticsGeneration::new(8UL))
     _ => fail("expected handled action")
   }
   inspect(invoked.val, content="1")
   match
     bridge.perform_action(
       NativeAccessibilityActionRequest::new(
-        element_id=@core.ElementId::new(42),
+        node_id=@core.SemanticsNodeId::new(7UL),
+        generation~,
         action=@core.SemanticsAction::Submit,
       ),
     ) {
-    NativeAccessibilityActionResult::Unsupported(message) =>
-      inspect(message, content="semantics node does not expose action: submit")
-    _ => fail("expected unsupported action")
-  }
-  match
-    bridge.perform_action(
-      NativeAccessibilityActionRequest::new(
-        element_id=@core.ElementId::new(7),
-        action=@core.SemanticsAction::Focus,
-      ),
-    ) {
-    NativeAccessibilityActionResult::ElementNotFound(id) =>
-      assert_true(id == @core.ElementId::new(7))
+    NativeAccessibilityActionResult::Rejected(
+      @runtime.SemanticsActionDispatchError::TargetNotFound(
+        @core.SemanticsTarget::ByNodeId(id)
+      )
+    ) => assert_true(id == @core.SemanticsNodeId::new(7UL))
     _ => fail("expected missing element result")
   }
 }

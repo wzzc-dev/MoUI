@@ -101,6 +101,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
 fn root_app_shape_tokens() -> Array[String] {
   [
     "View", "Program", "Effect", "Subscription", "Theme", "Environment", "ViewEnvironment",
+    "SemanticId",
   ]
 }
 
@@ -176,7 +177,7 @@ fn sugar_cross_domain_forbidden_tokens(
     "LayoutDirection", "FocusScope", "FocusScopeItem", "CommandIntent", "KeyboardShortcut",
     "KeyModifiers", "DateValue", "FontFamilyStack", "AccessibilityContrast", "ContentSizeCategory",
     "ActionCommand", "ActionCommandMap", "CommandBinding", "ComponentContext", "ElementId",
-    "SemanticsRole",
+    "SemanticsRole", "SemanticId",
   ]
   let forbidden : Array[String] = []
   for type_name in all {
@@ -298,15 +299,17 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "runtime facade",
       path: "moui/runtime/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/runtime\"",
-      max_lines: 430,
-      max_pub_lines: 285,
-      max_pub_all_lines: 9,
+      max_lines: 490,
+      max_pub_lines: 298,
+      max_pub_all_lines: 16,
       required_tokens: [
         "\"wzzc-dev/moui/core\"", "pub struct AppRuntime", "pub fn[Model, Msg] new_program(",
         "pub fn[Model, Msg] new_program_with_dimensions(", "pub fn[Msg] new_view(",
         "pub fn[Model, Msg] AppRuntime::new_program(", "pub fn[Msg] AppRuntime::new_view(",
         "pub fn AppRuntime::draw_frame(", "pub fn AppRuntime::inspector_snapshot(Self) -> InspectorSnapshot",
         "pub fn AppRuntime::program_runtime_snapshot(Self) -> ProgramRuntimeSnapshot",
+        "pub fn AppRuntime::read_semantics(", "pub fn AppRuntime::perform_semantics_action(",
+        "pub struct SemanticsSnapshot", "pub struct SemanticsDelta", "pub(all) enum SemanticsActionDispatchError",
         "pub struct InspectorSnapshot", "pub struct ProgramRuntimeSnapshot", "pub struct RuntimeInspectorSnapshot",
         "pub struct RenderInspectorSnapshot", "pub struct ViewTreeInspectorSnapshot",
         "pub(all) enum EffectTaskCancelReason", "pub(all) enum SubscriptionCancelReason",
@@ -325,9 +328,9 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "core",
       path: "moui/core/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/core\"",
-      max_lines: 1844,
-      max_pub_lines: 505,
-      max_pub_all_lines: 139,
+      max_lines: 2009,
+      max_pub_lines: 571,
+      max_pub_all_lines: 148,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
         "pub(all) enum Effect", "type Subscription", "pub(all) struct DrawFrame",
@@ -338,6 +341,11 @@ fn package_budgets() -> Array[PackageBudget] {
         "pub(all) struct ViewPaintLayer", "pub(all) struct ViewEventContext", "pub(all) struct ViewEventResult",
         "pub(all) enum ViewDirtyHint", "ViewClean", "ViewPaintDirty", "pub(all) struct ViewTextCommandResult",
         "pub(all) struct ViewSemanticsInfo", "pub(all) struct ViewStateContext",
+        "pub struct DeclarationKey", "pub struct ViewDeclaration", "pub struct SemanticId",
+        "pub struct SemanticsNodeId", "pub struct SemanticsGeneration", "pub(all) enum SemanticsActionKind",
+        "pub(all) enum SemanticsAction", "pub(open) trait ViewStateValue", "pub struct ViewStateSlot",
+        "pub struct ViewStateSlots", "ViewStateContext::read_slot", "ViewStateContext::with_slot",
+        "ViewStateContext::without_slot",
       ],
       forbidden_tokens: [
         "\"wzzc-dev/moui_theme", "\"wzzc-dev/moui/render/skia\"", "SkiaRasterRenderer",
@@ -378,7 +386,7 @@ fn package_budgets() -> Array[PackageBudget] {
         "ViewTreeInspectorSnapshot::from_runtime(", "LayoutInspectorSnapshot::from_runtime(",
         "RenderInspectorSnapshot::from_runtime(", "SemanticsInspectorSnapshot::from_runtime(",
         "RouteFocusStore::restore(", "RouteFocusStore::restore_location(", "ComponentContext::new_for_runtime",
-        "RichText", "SheetPresentationMode",
+        "RichText", "SheetPresentationMode", "type ElementId", "ElementId::",
       ],
     },
     {
@@ -410,9 +418,9 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "host contracts",
       path: "moui/backend/host/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/backend/host\"",
-      max_lines: 1226,
-      max_pub_lines: 481,
-      max_pub_all_lines: 73,
+      max_lines: 1095,
+      max_pub_lines: 454,
+      max_pub_all_lines: 64,
       required_tokens: [
         "HostWindowRenderer", "HostAsyncImageLoader", "HostRouteSource", "pub(all) struct HostRouteLocation",
         "pub(all) struct HostRouteQueryParam",

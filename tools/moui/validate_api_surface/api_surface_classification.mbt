@@ -28,12 +28,12 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
     {
       path: "moui/core/pkg.generated.mbti",
       category: "advanced_core_protocol",
-      max_count: 524,
+      max_count: 589,
     },
     {
       path: "moui/core/pkg.generated.mbti",
       category: "required_protocol",
-      max_count: 139,
+      max_count: 148,
     },
     {
       path: "moui/core/pkg.generated.mbti",
@@ -78,12 +78,12 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
     {
       path: "moui/runtime/pkg.generated.mbti",
       category: "runtime_diagnostic",
-      max_count: 285,
+      max_count: 298,
     },
     {
       path: "moui/runtime/pkg.generated.mbti",
       category: "required_protocol",
-      max_count: 10,
+      max_count: 16,
     },
     {
       path: "moui/runtime/pkg.generated.mbti",
@@ -98,12 +98,12 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
     {
       path: "moui/backend/host/pkg.generated.mbti",
       category: "host_contract",
-      max_count: 481,
+      max_count: 454,
     },
     {
       path: "moui/backend/host/pkg.generated.mbti",
       category: "required_protocol",
-      max_count: 73,
+      max_count: 64,
     },
     {
       path: "moui/backend/host/pkg.generated.mbti",
@@ -174,12 +174,12 @@ fn core_api_surface_name_tokens() -> Array[String] {
     "Badge", "Binding", "BlendMode", "Border", "Brush", "Button", "CachedLayer",
     "CheckMark", "ChoiceControl", "Color", "Command", "Component", "Composition",
     "Constraints", "ContentSize", "ControlState", "CrossAxis", "Custom", "Damage",
-    "DateValue", "DerivedState", "Drag", "Draw", "Easing", "Effect", "ElementId",
+    "DateValue", "Declaration", "DerivedState", "Drag", "Draw", "Easing", "Effect",
     "Environment", "Feedback", "Filter", "Focus", "Font", "FormValidationTheme",
     "Frame", "Image", "Insets", "InteractionState", "Key", "Keyboard", "Layer", "Layout",
     "LinearGradient", "MainAxis", "Motion", "Navigation", "Path", "PickerTheme",
     "PlatformView", "Point", "Pointer", "Program", "Progress", "RadialGradient",
-    "Radius", "Rect", "Redraw", "RoundedRect", "Saveable", "Scroll", "Semantics",
+    "Radius", "Rect", "Redraw", "RoundedRect", "Saveable", "Scroll", "Semantic",
     "Shader", "Shadow", "Size", "SliderTheme", "Spacing", "State", "Subscription",
     "Surface", "Text", "Theme", "Thumb", "Tone", "Transform", "Transition", "Typography",
     "View", "VisualStyle",

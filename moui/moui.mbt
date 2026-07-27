@@ -24,3 +24,6 @@ pub using @core {type Environment}
 
 ///|
 pub using @core {type ViewEnvironment}
+
+///|
+pub using @core {type SemanticId}

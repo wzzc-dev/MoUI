@@ -65,14 +65,11 @@ fn[Msg] checkbox_control(
   kind? : String = "Checkbox",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  let theme_revision = match theme {
-    Some(t) => t.revision_fingerprint()
-    None => "context"
-  }
+  let checked_snapshot = checked.get()
   @core.View::from_node(
     Checkbox::{
       label,
-      checked,
+      checked: checked_snapshot,
       theme,
       font,
       foreground,
@@ -81,19 +78,29 @@ fn[Msg] checkbox_control(
       box_shape,
       check_style,
       height,
-      theme_revision,
-      has_on_change: on_change is Some(_),
       kind,
       key,
     },
-    event=(node, ctx) => checkbox_event(node, ctx, on_change),
+    event=(node, ctx) => checkbox_event(node, ctx, checked, on_change),
+    semantics_actions=_node => {
+      [
+        @core.ViewSemanticsActionHandler::activate(_ctx => {
+          let next = !checked.get()
+          @core.ViewSemanticsActionResult::accepted(
+            dirty=@core.ViewDirtyHint::ViewBuildDirty,
+            messages=checkbox_messages(on_change, next),
+            commit=Some(() => checked.set(next)),
+          )
+        }),
+      ]
+    },
   )
 }
 
 ///|
 priv struct Checkbox {
   label : String
-  checked : @core.Binding[Bool]
+  checked : Bool
   theme : @core.Theme?
   font : @core.FontSpec?
   foreground : @core.Color?
@@ -102,8 +109,6 @@ priv struct Checkbox {
   box_shape : @core.ChoiceControlShape?
   check_style : @core.CheckMarkStyle?
   height : Double
-  theme_revision : String
-  has_on_change : Bool
   kind : String
   key : String?
 }
@@ -114,8 +119,68 @@ impl @core.ViewNode for Checkbox with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for Checkbox with fn revision(self) {
-  "checkbox:\{self.label}:\{self.checked.get()}:\{self.theme_revision}:\{self.font is Some(_)}:\{self.foreground is Some(_)}:\{self.check_color is Some(_)}:\{self.box_size is Some(_)}:\{self.box_shape is Some(_)}:\{self.check_style is Some(_)}:\{self.has_on_change}"
+impl @core.ViewNode for Checkbox with fn declaration(self) {
+  let layout_key = view_record_key("Checkbox.layout", [
+    ("label", @core.DeclarationKey::string(self.label)),
+    ("font", view_font_option_key(self.font)),
+    ("box_size", view_double_option_key(self.box_size)),
+    ("height", @core.DeclarationKey::double(self.height)),
+  ])
+  let paint_key = view_record_key("Checkbox.paint", [
+    ("checked", @core.DeclarationKey::bool(self.checked)),
+    (
+      "foreground",
+      @core.DeclarationKey::option(self.foreground.map(view_color_key)),
+    ),
+    (
+      "check_color",
+      @core.DeclarationKey::option(self.check_color.map(view_color_key)),
+    ),
+    (
+      "box_shape",
+      @core.DeclarationKey::option(
+        self.box_shape.map(value => {
+          @core.DeclarationKey::int(
+            match value {
+              @core.ChoiceControlShape::Square => 0
+              @core.ChoiceControlShape::Circle => 1
+            },
+          )
+        }),
+      ),
+    ),
+    (
+      "check_style",
+      @core.DeclarationKey::option(
+        self.check_style.map(value => {
+          @core.DeclarationKey::int(
+            match value {
+              @core.CheckMarkStyle::Checkmark => 0
+              @core.CheckMarkStyle::Dot => 1
+            },
+          )
+        }),
+      ),
+    ),
+  ])
+  view_declaration(
+    layout=if self.theme is Some(_) {
+      @core.DeclarationChannel::Uncacheable
+    } else {
+      view_exact_channel(layout_key)
+    },
+    paint=if self.theme is Some(_) {
+      @core.DeclarationChannel::Uncacheable
+    } else {
+      view_exact_channel(paint_key)
+    },
+    semantics=view_exact_channel(
+      view_record_key("Checkbox.semantics", [
+        ("label", @core.DeclarationKey::string(self.label)),
+        ("checked", @core.DeclarationKey::bool(self.checked)),
+      ]),
+    ),
+  )
 }
 
 ///|
@@ -166,7 +231,7 @@ impl @core.ViewNode for Checkbox with fn paint(self, ctx) {
   append_checkbox_commands(
     commands,
     label=self.label,
-    checked=self.checked.get(),
+    checked=self.checked,
     font=resolved_font,
     foreground=resolved_foreground,
     check_color=resolved_check_color,
@@ -183,11 +248,11 @@ impl @core.ViewNode for Checkbox with fn paint(self, ctx) {
 ///|
 impl @core.ViewNode for Checkbox with fn semantics(self) {
   @core.ViewSemanticsInfo::new(
+    composition=@core.SemanticsComposition::Boundary,
     role=@core.SemanticsRole::Checkbox,
     label=self.label,
-    value=if self.checked.get() { "true" } else { "false" },
-    checked=self.checked.get(),
-    actions=[@core.SemanticsAction::Focus, @core.SemanticsAction::Activate],
+    value=if self.checked { "true" } else { "false" },
+    checked=self.checked,
   )
 }
 
@@ -198,21 +263,22 @@ impl @core.ViewNode for Checkbox with fn focusable(_self) {
 
 ///|
 fn[Msg] checkbox_event(
-  node : Checkbox,
+  _node : Checkbox,
   ctx : @core.ViewEventContext,
+  checked : @core.Binding[Bool],
   on_change : ((Bool) -> Msg)?,
 ) -> @core.ViewEventResult[Msg] {
   match ctx.event {
     @core.AppEvent::Pointer(event) =>
       if event.phase == @core.PointerPhase::Up &&
         ctx.frame.contains(event.position) {
-        let next = !node.checked.get()
-        node.checked.set(next)
+        let next = !checked.get()
+        checked.set(next)
         view_event_result(
           changed=true,
           activated=true,
           captured=true,
-          dirty=@core.ViewDirtyHint::ViewPaintDirty,
+          dirty=@core.ViewDirtyHint::ViewBuildDirty,
           messages=checkbox_messages(on_change, next),
         )
       } else {
@@ -221,13 +287,13 @@ fn[Msg] checkbox_event(
     @core.AppEvent::Keyboard(event) =>
       if event.pressed &&
         (event.key == "Enter" || event.key == "Space" || event.key == " ") {
-        let next = !node.checked.get()
-        node.checked.set(next)
+        let next = !checked.get()
+        checked.set(next)
         view_event_result(
           changed=true,
           activated=true,
           captured=true,
-          dirty=@core.ViewDirtyHint::ViewPaintDirty,
+          dirty=@core.ViewDirtyHint::ViewBuildDirty,
           messages=checkbox_messages(on_change, next),
         )
       } else {

@@ -80,8 +80,8 @@ pub(all) enum WebViewNavigationPolicy {
   AllowHttpHttps
   AllowAll
 } derive(Eq, ToJson, @debug.Debug)
-pub fn WebViewNavigationPolicy::from_revision_key(String) -> Self
-pub fn WebViewNavigationPolicy::revision_key(Self) -> String
+pub fn WebViewNavigationPolicy::from_wire_value(String) -> Self
+pub fn WebViewNavigationPolicy::wire_value(Self) -> String
 
 pub(all) struct WebViewSpec {
   key : @core.Key?

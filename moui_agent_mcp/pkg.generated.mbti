@@ -8,7 +8,7 @@ import {
 // Values
 pub fn[Host : @moui_agent.AgentHost] route(Host, Json) -> Json
 
-pub fn[Host : @moui_agent.AgentHost] route_notify(Host, Json, (Json) -> Unit) -> Json
+pub fn[Host : @moui_agent.AgentHost + @moui_agent.AgentDiagnosticsHost] route_with_diagnostics(Host, Json) -> Json
 
 pub fn rpc_error(Json, Int, String) -> Json
 

@@ -29,19 +29,6 @@ fn RenderNode::collect_frame_commands(
 }
 
 ///|
-fn RenderNode::collect_platform_views(
-  self : RenderNode,
-  placements : Array[PlatformViewPlacement],
-) -> Unit {
-  for placement in self.platform_views {
-    placements.push(placement)
-  }
-  for child in self.children {
-    child.collect_platform_views(placements)
-  }
-}
-
-///|
 fn RenderNode::collect_frame_commands_with_overlays(
   self : RenderNode,
   commands : Array[DrawCommand],

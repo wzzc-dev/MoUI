@@ -1,7 +1,7 @@
 ///|
 priv struct RuntimeStateProbeNode {
   kind : String
-  revision : String
+  declaration : @core.ViewDeclaration
 }
 
 ///|
@@ -10,8 +10,8 @@ impl @core.ViewNode for RuntimeStateProbeNode with fn identity(self) {
 }
 
 ///|
-impl @core.ViewNode for RuntimeStateProbeNode with fn revision(self) {
-  self.revision
+impl @core.ViewNode for RuntimeStateProbeNode with fn declaration(self) {
+  self.declaration
 }
 
 ///|
@@ -24,25 +24,56 @@ impl @core.ViewNode for RuntimeStateProbeNode with fn layout(_self, context) {
 ///|
 fn runtime_state_probe_view(
   kind~ : String,
-  revision~ : String,
+  declaration_token~ : String,
 ) -> @core.View[Unit] {
-  @core.View::from_node(RuntimeStateProbeNode::{ kind, revision })
+  @core.View::from_node(RuntimeStateProbeNode::{
+    kind,
+    declaration: runtime_wb_fixture_exact_declaration("RuntimeStateProbe", [
+      ("value", @core.DeclarationKey::string(declaration_token)),
+    ]),
+  })
+}
+
+///|
+fn runtime_probe_state_slot() -> @core.ViewStateSlot[Int] {
+  @core.ViewStateSlot::new(
+    key=@core.DeclarationKey::string("moui.runtime.test.probe"),
+    initial=0,
+  )
+}
+
+///|
+test "RuntimeViewNode: mount leaves no pending build after eager child materialization" {
+  let build_count = Ref(0)
+  let runtime = RuntimeState::new_view(
+    root=runtime_component_view(_context => {
+      build_count.val = build_count.val + 1
+      runtime_state_probe_view(kind="mounted-child", declaration_token="one")
+    }),
+    size=@core.Size::new(width=40.0, height=20.0),
+  )
+  inspect(build_count.val, content="1")
+  assert_false(runtime.element_tree.root.has_dirty_build())
+  ignore(runtime.build_draw_frame())
+  assert_false(runtime.element_tree.root.has_dirty_build())
+  inspect(build_count.val, content="1")
 }
 
 ///|
 test "RuntimeViewNode: same identity preserves state and remount resets it" {
   let current = adapt_view_for_runtime(
-    runtime_state_probe_view(kind="probe", revision="one"),
+    runtime_state_probe_view(kind="probe", declaration_token="one"),
     _message => (),
   )
   let mounted = mount_runtime_view_node_with_next(current, 1)
-  mounted.node.control.apply_view_context({
-    ..mounted.node.control.view_state,
-    hovered: true,
-    scratch: "preserved",
-  })
+  mounted.node.control.apply_view_context(
+    { ..mounted.node.control.view_state, hovered: true }.with_slot(
+      runtime_probe_state_slot(),
+      7,
+    ),
+  )
   let same_identity = adapt_view_for_runtime(
-    runtime_state_probe_view(kind="probe", revision="two"),
+    runtime_state_probe_view(kind="probe", declaration_token="two"),
     _message => (),
   )
   let reconciled = reconcile_element_for_runtime(
@@ -51,53 +82,64 @@ test "RuntimeViewNode: same identity preserves state and remount resets it" {
     None,
     mounted.next_id,
   )
-  inspect(reconciled.node.control.view_state.scratch, content="preserved")
+  inspect(
+    reconciled.node.control.view_state.read_slot(runtime_probe_state_slot()),
+    content="7",
+  )
   inspect(reconciled.node.control.view_state.hovered, content="true")
   let remounted = reconcile_element_for_runtime(
     reconciled.node,
     adapt_view_for_runtime(
-      runtime_state_probe_view(kind="replacement", revision="one"),
+      runtime_state_probe_view(kind="replacement", declaration_token="one"),
       _message => (),
     ),
     None,
     reconciled.next_id,
   )
-  inspect(remounted.node.control.view_state.scratch, content="")
+  inspect(
+    remounted.node.control.view_state.read_slot(runtime_probe_state_slot()),
+    content="0",
+  )
   inspect(remounted.node.control.view_state.hovered, content="false")
 }
 
 ///|
 test "RuntimeViewNode: colliding legacy kind hashes do not reuse state" {
   let current = adapt_view_for_runtime(
-    runtime_state_probe_view(kind="Aa", revision="one"),
+    runtime_state_probe_view(kind="Aa", declaration_token="one"),
     _message => (),
   )
   let mounted = mount_runtime_view_node_with_next(current, 1)
-  mounted.node.control.apply_view_context({
-    ..mounted.node.control.view_state,
-    scratch: "must-reset",
-  })
+  mounted.node.control.apply_view_context(
+    mounted.node.control.view_state.with_slot(runtime_probe_state_slot(), 9),
+  )
   let remounted = reconcile_element_for_runtime(
     mounted.node,
     adapt_view_for_runtime(
-      runtime_state_probe_view(kind="BB", revision="one"),
+      runtime_state_probe_view(kind="BB", declaration_token="one"),
       _message => (),
     ),
     None,
     mounted.next_id,
   )
-  inspect(remounted.node.control.view_state.scratch, content="")
+  inspect(
+    remounted.node.control.view_state.read_slot(runtime_probe_state_slot()),
+    content="0",
+  )
 }
 
 ///|
 test "RuntimeViewNode: event state and routing commit before message delivery" {
   let runtime_slot : Ref[RuntimeState?] = Ref(None)
-  let observed_state = Ref("")
+  let observed_state = Ref(0)
   let observed_focus = Ref(false)
   let observed_capture = Ref(false)
   let observed_dirty = Ref(false)
   let view : @core.View[Unit] = @core.View::from_node(
-    RuntimeStateProbeNode::{ kind: "commit-order", revision: "one" },
+    RuntimeStateProbeNode::{
+      kind: "commit-order",
+      declaration: @core.ViewDeclaration::constant(),
+    },
     event=(_node, context) => {
       match context.event {
         @core.AppEvent::Pointer(event) =>
@@ -106,7 +148,9 @@ test "RuntimeViewNode: event state and routing commit before message delivery" {
               ..@core.ViewEventResult::message(()),
               focused: true,
               captured: true,
-              state: Some({ ..context.state, scratch: "committed" }),
+              state: Some(
+                context.state.with_slot(runtime_probe_state_slot(), 11),
+              ),
               dirty: @core.ViewDirtyHint::ViewPaintDirty,
             }
           } else {
@@ -122,7 +166,9 @@ test "RuntimeViewNode: event state and routing commit before message delivery" {
     on_message=Some(_message => {
       match runtime_slot.val {
         Some(state) => {
-          observed_state.val = state.element_tree.root.control.view_state.scratch
+          observed_state.val = state.element_tree.root.control.view_state.read_slot(
+            runtime_probe_state_slot(),
+          )
           observed_focus.val = state.focused_element ==
             Some(state.element_tree.id())
           observed_capture.val = state.active_pointer_capture ==
@@ -142,7 +188,7 @@ test "RuntimeViewNode: event state and routing commit before message delivery" {
       ),
     ),
   )
-  inspect(observed_state.val, content="committed")
+  inspect(observed_state.val, content="11")
   inspect(observed_focus.val, content="true")
   inspect(observed_capture.val, content="true")
   inspect(observed_dirty.val, content="true")

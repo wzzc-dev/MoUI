@@ -183,7 +183,7 @@ pub fn sync_linux_platform_views(
         @host.webview_encode_ffi_string(placement.property_or("url", "")),
         @host.webview_encode_ffi_string(placement.property_or("title", "")),
         @host.webview_native_policy_code(
-          @host.WebViewNavigationPolicy::from_revision_key(
+          @host.WebViewNavigationPolicy::from_wire_value(
             placement.property_or("policy", "http-https-file"),
           ),
         ),

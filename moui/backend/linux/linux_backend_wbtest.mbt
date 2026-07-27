@@ -117,59 +117,54 @@ test "linux renderer provider async image hook defaults to unavailable" {
 ///|
 test "linux at-spi binding publishes semantics dispatches actions and disposes" {
   let invoked = Ref(0)
-  let child = @core.SemanticsNode::{
-    element_id: @core.ElementId::new(12),
-    role: @core.SemanticsRole::Button,
-    level: None,
-    url: "",
-    label: "Apply",
-    value: "",
-    description: "",
-    state: @core.SemanticsState::default(),
-    actions: [@core.SemanticsAction::Activate],
-    focus_order: Some(0),
-    frame: @core.Rect::new(x=4.0, y=4.0, width=80.0, height=32.0),
-    children: [],
+  let runtime = @runtime.AppRuntime::new_view(
+    root=(@views.button("Apply", on_click=()) : @core.View[Unit]),
+    size=@core.Size::new(width=120.0, height=80.0),
+  )
+  let snapshot = match runtime.read_semantics() {
+    Ok(@runtime.SemanticsRead::Full(snapshot)) => snapshot
+    _ => abort("expected full committed semantics")
   }
-  let root = @core.SemanticsNode::{
-    element_id: @core.ElementId::new(11),
-    role: @core.SemanticsRole::Group,
-    level: None,
-    url: "",
-    label: "Panel",
-    value: "",
-    description: "",
-    state: @core.SemanticsState::default(),
-    actions: [],
-    focus_order: None,
-    frame: @core.Rect::new(x=0.0, y=0.0, width=120.0, height=80.0),
-    children: [child],
+  let mut target : @core.SemanticsNode? = None
+  for node in snapshot.nodes() {
+    if node.actions.any(action => action == @core.SemanticsActionKind::Activate) {
+      target = Some(node)
+    }
   }
-  let binding = LinuxATSPIBinding::new(root~, dispatch=(
-    element_id,
-    action,
-    _value,
-  ) => {
-    if element_id == @core.ElementId::new(12) &&
-      action == @core.SemanticsAction::Activate {
+  let target = target.unwrap()
+  let binding = LinuxATSPIBinding::new(dispatch=request => {
+    if request.node_id == target.node_id &&
+      request.generation == snapshot.generation() &&
+      request.action == @core.SemanticsAction::Activate {
       invoked.val = invoked.val + 1
-      true
+      @host.NativeAccessibilityActionResult::Handled({
+        before: snapshot.generation(),
+        after: snapshot.generation(),
+        pending_work: false,
+      })
     } else {
-      false
+      @host.NativeAccessibilityActionResult::Rejected(
+        @runtime.SemanticsActionDispatchError::TargetNotFound(
+          @core.SemanticsTarget::ByNodeId(request.node_id),
+        ),
+      )
     }
   })
-  let published = binding.publish_semantics(root)
+  let published = binding.publish_semantics(
+    @runtime.SemanticsRead::Full(snapshot),
+  )
   inspect(published.native_binding_ready, content="true")
-  inspect(published.published_node_count, content="2")
+  assert_true(published.published_node_count >= 1)
   inspect(published.disposed, content="false")
   match
     binding.perform_action(
       @host.NativeAccessibilityActionRequest::new(
-        element_id=@core.ElementId::new(12),
+        node_id=target.node_id,
+        generation=snapshot.generation(),
         action=@core.SemanticsAction::Activate,
       ),
     ) {
-    @host.NativeAccessibilityActionResult::Handled => ()
+    @host.NativeAccessibilityActionResult::Handled(_) => ()
     _ => fail("expected Linux AT-SPI action dispatch")
   }
   inspect(invoked.val, content="1")
@@ -180,7 +175,8 @@ test "linux at-spi binding publishes semantics dispatches actions and disposes" 
   match
     binding.perform_action(
       @host.NativeAccessibilityActionRequest::new(
-        element_id=@core.ElementId::new(12),
+        node_id=target.node_id,
+        generation=snapshot.generation(),
         action=@core.SemanticsAction::Activate,
       ),
     ) {

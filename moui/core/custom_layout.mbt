@@ -39,10 +39,7 @@ pub fn ChildLayoutInfo::new(
     first_baseline,
     priority,
     flex_weight,
-    alignment_guides: AlignmentGuideSet::from_size(
-      size,
-      first_baseline=first_baseline,
-    ),
+    alignment_guides: AlignmentGuideSet::from_size(size, first_baseline~),
   }
 }
 
@@ -52,9 +49,7 @@ pub fn ChildLayoutInfo::new(
 /// Keeping the fallback here lets custom layouts stop special-casing the
 /// "no baseline" branch while still preserving prior behavior for children
 /// that genuinely lack a baseline.
-pub fn ChildLayoutInfo::baseline_or_estimate(
-  self : ChildLayoutInfo,
-) -> Double {
+pub fn ChildLayoutInfo::baseline_or_estimate(self : ChildLayoutInfo) -> Double {
   self.first_baseline.unwrap_or(self.size.height * 0.8)
 }
 

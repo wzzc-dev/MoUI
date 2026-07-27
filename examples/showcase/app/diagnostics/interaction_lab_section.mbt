@@ -564,40 +564,52 @@ fn image_lifecycle_tile(
 
 ///|
 fn ShowcaseModel::dialog_demo_card(
-    self : ShowcaseModel,
-    theme : @moui.Theme,
-    width : Double,
-  ) -> @moui.View[ShowcaseMsg] {
-    ignore(self)
-    showcase_soft_card(theme,
-      column([
+  self : ShowcaseModel,
+  theme : @moui.Theme,
+  width : Double,
+) -> @moui.View[ShowcaseMsg] {
+  ignore(self)
+  showcase_soft_card(
+    theme,
+    column(
+      [
         text("Dialog", width=width - 32.0, height=24.0)
-          .font(theme.typography.caption)
-          .foreground(theme.palette.foreground),
-        @views.dialog("Showcase dialog",
+        .font(theme.typography.caption)
+        .foreground(theme.palette.foreground),
+        @views.dialog(
+          "Showcase dialog",
           content=text("Custom modal content here", width=300.0, height=48.0),
-          primary_action=Some(@views.StateViewAction::new(
-            label="Close", message=HideDialog,
-          )),
-          theme~, width=440.0, height=240.0,
+          primary_action=Some(
+            @views.StateViewAction::new(label="Close", message=HideDialog),
+          ),
+          theme~,
+          width=440.0,
+          height=240.0,
         ),
-      ], spacing=theme.spacing_scale.sm, align=@views.CrossAlign::Start),
-      width~, height=220.0, padding=theme.spacing_scale.md,
-    )
-  }
+      ],
+      spacing=theme.spacing_scale.sm,
+      align=@views.CrossAlign::Start,
+    ),
+    width~,
+    height=220.0,
+    padding=theme.spacing_scale.md,
+  )
+}
 
-  ///|
-  fn ShowcaseModel::sheet_demo_card(
-    self : ShowcaseModel,
-    theme : @moui.Theme,
-    width : Double,
-  ) -> @moui.View[ShowcaseMsg] {
-    ignore(self)
-    showcase_soft_card(theme,
-      column([
+///|
+fn ShowcaseModel::sheet_demo_card(
+  self : ShowcaseModel,
+  theme : @moui.Theme,
+  width : Double,
+) -> @moui.View[ShowcaseMsg] {
+  ignore(self)
+  showcase_soft_card(
+    theme,
+    column(
+      [
         text("Bottom Sheet", width=width - 32.0, height=24.0)
-          .font(theme.typography.caption)
-          .foreground(theme.palette.foreground),
+        .font(theme.typography.caption)
+        .foreground(theme.palette.foreground),
         sheet(
           content=text("Sheet content", width=240.0, height=30.0),
           presentation_mode=@views.SheetPresentationMode::BottomSheet,
@@ -605,7 +617,12 @@ fn ShowcaseModel::dialog_demo_card(
           corner_radius=theme.radius_scale.lg,
           shadow=Some(theme.shadow_scale.lg),
         ),
-      ], spacing=theme.spacing_scale.sm, align=@views.CrossAlign::Start),
-      width~, height=180.0, padding=theme.spacing_scale.md,
-    )
-  }
+      ],
+      spacing=theme.spacing_scale.sm,
+      align=@views.CrossAlign::Start,
+    ),
+    width~,
+    height=180.0,
+    padding=theme.spacing_scale.md,
+  )
+}

@@ -39,6 +39,117 @@ fn wire_bool(value : Json?) -> Bool? {
 }
 
 ///|
+fn wire_fields_are_exact(
+  fields : Map[String, Json],
+  allowed : Array[String],
+) -> Bool {
+  for name, _ in fields {
+    if !allowed.contains(name) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn wire_decimal_u64(value : Json?) -> UInt64? {
+  guard wire_string(value) is Some(text) else { return None }
+  let mut parsed = 0UL
+  for character in text {
+    let code = character.to_int()
+    if code < '0' || code > '9' {
+      return None
+    }
+    let digit = (code - ('0' : Int)).to_uint64()
+    if parsed > (18446744073709551615UL - digit) / 10UL {
+      return None
+    }
+    parsed = parsed * 10UL + digit
+  }
+  Some(parsed)
+}
+
+///|
+fn parse_semantics_scroll_direction(
+  value : Json?,
+) -> @core.SemanticsScrollDirection? {
+  match wire_string(value) {
+    Some("forward") => Some(@core.SemanticsScrollDirection::Forward)
+    Some("backward") => Some(@core.SemanticsScrollDirection::Backward)
+    Some("up") => Some(@core.SemanticsScrollDirection::Up)
+    Some("down") => Some(@core.SemanticsScrollDirection::Down)
+    Some("left") => Some(@core.SemanticsScrollDirection::Left)
+    Some("right") => Some(@core.SemanticsScrollDirection::Right)
+    _ => None
+  }
+}
+
+///|
+fn parse_semantics_action(value : Json?) -> @core.SemanticsAction? {
+  guard wire_object(value) is Some(fields) else { return None }
+  match wire_string(fields.get("kind")) {
+    Some("activate") if wire_fields_are_exact(fields, ["kind"]) =>
+      Some(@core.SemanticsAction::Activate)
+    Some("focus") if wire_fields_are_exact(fields, ["kind"]) =>
+      Some(@core.SemanticsAction::Focus)
+    Some("set-text") =>
+      if wire_fields_are_exact(fields, ["kind", "value"]) {
+        match wire_string(fields.get("value"), allow_empty=true) {
+          Some(value) => Some(@core.SemanticsAction::SetText(value))
+          None => None
+        }
+      } else {
+        None
+      }
+    Some("submit") if wire_fields_are_exact(fields, ["kind"]) =>
+      Some(@core.SemanticsAction::Submit)
+    Some("scroll") =>
+      if wire_fields_are_exact(fields, ["kind", "direction"]) {
+        match parse_semantics_scroll_direction(fields.get("direction")) {
+          Some(direction) => Some(@core.SemanticsAction::Scroll(direction))
+          None => None
+        }
+      } else {
+        None
+      }
+    Some("select") if wire_fields_are_exact(fields, ["kind"]) =>
+      Some(@core.SemanticsAction::Select)
+    Some("expand") if wire_fields_are_exact(fields, ["kind"]) =>
+      Some(@core.SemanticsAction::Expand)
+    Some("collapse") if wire_fields_are_exact(fields, ["kind"]) =>
+      Some(@core.SemanticsAction::Collapse)
+    Some("dismiss") if wire_fields_are_exact(fields, ["kind"]) =>
+      Some(@core.SemanticsAction::Dismiss)
+    _ => None
+  }
+}
+
+///|
+fn parse_accessibility_response(
+  fields : Map[String, Json],
+) -> EmbeddingHostResponse? {
+  guard wire_fields_are_exact(fields, ["kind", "nodeId", "generation", "action"]) else {
+    return None
+  }
+  guard wire_decimal_u64(fields.get("nodeId")) is Some(node_id) && node_id > 0UL else {
+    return None
+  }
+  guard wire_decimal_u64(fields.get("generation")) is Some(generation) else {
+    return None
+  }
+  guard parse_semantics_action(fields.get("action")) is Some(action) else {
+    return None
+  }
+  Some(
+    embedding_accessibility_response(
+      @core.SemanticsNodeId::new(node_id),
+      @core.SemanticsGeneration::new(generation),
+      action,
+    ),
+  )
+}
+
+///|
 fn parse_platform_view_response(
   fields : Map[String, Json],
 ) -> EmbeddingHostResponse? {
@@ -111,6 +222,7 @@ fn parse_embedder_host_response_envelope_json(
     return None
   }
   let response = match kind {
+    "accessibility" => parse_accessibility_response(response_fields)
     "platform-view" => parse_platform_view_response(response_fields)
     "platform-channel" => parse_platform_channel_response(response_fields)
     _ => None

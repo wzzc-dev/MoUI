@@ -169,13 +169,6 @@ pub fn[Msg] context_menu_region(
   .accessibility_label("Context menu region")
   .semantics_description("Context menu region")
   .semantics_expanded(expanded=visible)
-  .semantics_action(
-    if visible {
-      @core.SemanticsAction::Collapse
-    } else {
-      @core.SemanticsAction::Expand
-    },
-  )
 }
 
 ///|

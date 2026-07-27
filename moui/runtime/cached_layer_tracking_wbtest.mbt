@@ -4,7 +4,7 @@ fn runtime_test_cached_layer_source(
 ) -> @core.View[Unit] {
   runtime_wb_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="RuntimeCachedLayerSource"),
-    revision=() => "runtime-cached-layer-source",
+    declaration=() => @core.ViewDeclaration::uncacheable(),
     layout=ctx => {
       @core.ViewLayoutResult::new(
         size=ctx.constraints.constrain(@core.Size::new(width=12.0, height=12.0)),
@@ -27,7 +27,6 @@ fn runtime_test_cached_layer_source(
         ],
         post_commands: [],
         overlay_commands: [],
-        platform_views: [],
         repaint_boundary: false,
         animating: false,
       }
@@ -55,7 +54,7 @@ fn runtime_test_stable_cached_layer_source(
     identity=() => {
       @core.ViewIdentity::new(kind="RuntimeStableCachedLayerSource")
     },
-    revision=() => "runtime-stable-cached-layer-source",
+    declaration=() => @core.ViewDeclaration::uncacheable(),
     layout=ctx => {
       @core.ViewLayoutResult::new(
         size=ctx.constraints.constrain(@core.Size::new(width=12.0, height=12.0)),
@@ -77,7 +76,6 @@ fn runtime_test_stable_cached_layer_source(
         ],
         post_commands: [],
         overlay_commands: [],
-        platform_views: [],
         repaint_boundary: false,
         animating: false,
       }

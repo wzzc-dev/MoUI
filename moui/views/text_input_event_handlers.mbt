@@ -49,7 +49,7 @@ fn[Msg] handle_text_field_pointer(
         focused=true,
         captured=true,
         text_control=Some(next_control),
-        dirty=@core.ViewDirtyHint::ViewPaintDirty,
+        dirty=@core.ViewDirtyHint::ViewBuildDirty,
         messages~,
       )
     }
@@ -113,7 +113,7 @@ fn[Msg] handle_text_field_keyboard(
       changed=result.changed,
       captured=true,
       text_control=Some(result.control),
-      dirty=@core.ViewDirtyHint::ViewPaintDirty,
+      dirty=@core.ViewDirtyHint::ViewBuildDirty,
       messages=text_input_messages(on_input, result.text),
     )
   }
@@ -124,7 +124,7 @@ fn[Msg] handle_text_field_keyboard(
       changed=result.changed,
       captured=true,
       text_control=Some(result.control),
-      dirty=@core.ViewDirtyHint::ViewPaintDirty,
+      dirty=@core.ViewDirtyHint::ViewBuildDirty,
       messages=text_input_messages(on_input, result.text),
     )
   }

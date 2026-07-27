@@ -15,7 +15,7 @@ pub fn RuntimeInspectorSnapshot::dirty_count(
 ///|
 pub fn RuntimeInspectorSnapshot::dirty_element_ids(
   self : RuntimeInspectorSnapshot,
-) -> Array[@core.ElementId] {
+) -> Array[Int] {
   self.dirty_element_ids
 }
 
@@ -29,7 +29,7 @@ pub fn RuntimeInspectorSnapshot::dirty_build_count(
 ///|
 pub fn RuntimeInspectorSnapshot::dirty_build_element_ids(
   self : RuntimeInspectorSnapshot,
-) -> Array[@core.ElementId] {
+) -> Array[Int] {
   self.dirty_build_element_ids
 }
 
@@ -43,7 +43,7 @@ pub fn RuntimeInspectorSnapshot::dirty_layout_count(
 ///|
 pub fn RuntimeInspectorSnapshot::dirty_layout_element_ids(
   self : RuntimeInspectorSnapshot,
-) -> Array[@core.ElementId] {
+) -> Array[Int] {
   self.dirty_layout_element_ids
 }
 
@@ -57,7 +57,7 @@ pub fn RuntimeInspectorSnapshot::dirty_paint_count(
 ///|
 pub fn RuntimeInspectorSnapshot::dirty_paint_element_ids(
   self : RuntimeInspectorSnapshot,
-) -> Array[@core.ElementId] {
+) -> Array[Int] {
   self.dirty_paint_element_ids
 }
 
@@ -421,7 +421,7 @@ pub fn RuntimeDirtyStateSummary::dirty_count(
 ///|
 pub fn RuntimeDirtyStateSummary::dirty_element_ids(
   self : RuntimeDirtyStateSummary,
-) -> Array[@core.ElementId] {
+) -> Array[Int] {
   self.dirty_element_ids
 }
 
@@ -435,7 +435,7 @@ pub fn RuntimeDirtyStateSummary::dirty_build_count(
 ///|
 pub fn RuntimeDirtyStateSummary::dirty_build_element_ids(
   self : RuntimeDirtyStateSummary,
-) -> Array[@core.ElementId] {
+) -> Array[Int] {
   self.dirty_build_element_ids
 }
 
@@ -449,7 +449,7 @@ pub fn RuntimeDirtyStateSummary::dirty_layout_count(
 ///|
 pub fn RuntimeDirtyStateSummary::dirty_layout_element_ids(
   self : RuntimeDirtyStateSummary,
-) -> Array[@core.ElementId] {
+) -> Array[Int] {
   self.dirty_layout_element_ids
 }
 
@@ -463,7 +463,7 @@ pub fn RuntimeDirtyStateSummary::dirty_paint_count(
 ///|
 pub fn RuntimeDirtyStateSummary::dirty_paint_element_ids(
   self : RuntimeDirtyStateSummary,
-) -> Array[@core.ElementId] {
+) -> Array[Int] {
   self.dirty_paint_element_ids
 }
 
@@ -552,9 +552,7 @@ pub fn RuntimeDirtyStateSummary::cached_layer_count(
 }
 
 ///|
-pub fn ViewInspectorSummary::element_id(
-  self : ViewInspectorSummary,
-) -> @core.ElementId {
+pub fn ViewInspectorSummary::element_id(self : ViewInspectorSummary) -> Int {
   self.element_id
 }
 
@@ -654,7 +652,7 @@ pub fn ViewTreeInspectorSnapshot::nodes(
 ///|
 pub fn LayoutBoundsInspectorEntry::element_id(
   self : LayoutBoundsInspectorEntry,
-) -> @core.ElementId {
+) -> Int {
   self.element_id
 }
 

@@ -6,14 +6,6 @@
 /// and the greedy child's base was already the whole row width — so `slack` was
 /// 0, the sibling was pushed past the right edge, and the greedy child filled
 /// everything. These tests pin the Flutter `Expanded` semantics (flex-basis 0).
-fn greedy_box_option_label(value : Double?) -> String {
-  match value {
-    Some(v) => "fix-\{v}"
-    None => "greedy"
-  }
-}
-
-///|
 /// A child with no intrinsic size that greedily reports `constraints.max`,
 /// mirroring `moui_webview/views/web_view.mbt`'s
 /// `width.unwrap_or(max)` / `height.unwrap_or(max)` path. Pass `None` on the
@@ -26,10 +18,27 @@ fn[Msg] greedy_box(
   let requested_height = height
   runtime_fixture_view(
     identity=() => @core.ViewIdentity::new(kind="Greedy"),
-    revision=() => {
-      let w = greedy_box_option_label(requested_width)
-      let h = greedy_box_option_label(requested_height)
-      "greedy:\{w}:\{h}"
+    declaration=() => {
+      runtime_fixture_exact_declaration("Greedy", [
+        (
+          "width",
+          @core.DeclarationKey::option(
+            match requested_width {
+              Some(value) => Some(@core.DeclarationKey::double(value))
+              None => None
+            },
+          ),
+        ),
+        (
+          "height",
+          @core.DeclarationKey::option(
+            match requested_height {
+              Some(value) => Some(@core.DeclarationKey::double(value))
+              None => None
+            },
+          ),
+        ),
+      ])
     },
     layout=ctx => {
       let w = match requested_width {

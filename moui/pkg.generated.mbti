@@ -18,6 +18,8 @@ pub using @core {type Environment}
 
 pub using @core {type Program}
 
+pub using @core {type SemanticId}
+
 pub using @core {type Subscription}
 
 pub using @core {type Theme}

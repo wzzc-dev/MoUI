@@ -10,23 +10,21 @@ import {
 }
 
 // Values
-pub fn accesskit_action_from_semantics(@wzzc-dev/moui/core.SemanticsAction) -> @moon_accesskit.Action
+pub fn accesskit_action_from_semantics(@wzzc-dev/moui/core.SemanticsActionKind) -> @moon_accesskit.Action
 
 pub fn accesskit_node_from_semantics(@wzzc-dev/moui/core.SemanticsNode) -> @moon_accesskit.Node
 
-pub fn accesskit_node_id_for_element(@wzzc-dev/moui/core.ElementId) -> @moon_accesskit.NodeId
+pub fn accesskit_node_id_for_semantics(@wzzc-dev/moui/core.SemanticsNodeId) -> @moon_accesskit.NodeId
 
 pub fn accesskit_rect_from_core(@wzzc-dev/moui/core.Rect) -> @moon_accesskit.Rect
 
 pub fn accesskit_role_from_semantics(@wzzc-dev/moui/core.SemanticsRole) -> @moon_accesskit.Role
 
-pub fn accesskit_tree_update_from_semantics(@wzzc-dev/moui/core.SemanticsNode) -> @moon_accesskit.TreeUpdate
+pub fn accesskit_update_from_semantics_read(@runtime.SemanticsRead) -> NativeAccessibilityUpdate?
 
 pub fn element_state_pressed(@wzzc-dev/window/core.ElementState) -> Bool
 
 pub fn element_state_to_pointer_phase(@wzzc-dev/window/core.ElementState) -> @wzzc-dev/moui/core.PointerPhase
-
-pub fn find_semantics_node(@wzzc-dev/moui/core.SemanticsNode, @wzzc-dev/moui/core.ElementId) -> @wzzc-dev/moui/core.SemanticsNode?
 
 pub fn key_event_name(@wzzc-dev/window/core.KeyEvent) -> String
 
@@ -524,7 +522,6 @@ pub fn HostRuntimeDriver::dispatch_action_command_with_services(Self, @wzzc-dev/
 pub fn HostRuntimeDriver::dispatch_command_with_services(Self, @wzzc-dev/moui/core.CommandIntent, HostServiceBridge) -> HostEventResult
 pub fn HostRuntimeDriver::dispatch_keyboard_with_services(Self, @wzzc-dev/moui/core.KeyboardEvent, HostServiceBridge) -> HostEventResult
 pub fn HostRuntimeDriver::dispatch_platform_view(Self, String, @wzzc-dev/moui/core.PlatformViewEvent) -> Unit
-pub fn HostRuntimeDriver::dispatch_semantics_action(Self, @wzzc-dev/moui/core.ElementId, @wzzc-dev/moui/core.SemanticsAction, value? : String?) -> Bool
 pub fn HostRuntimeDriver::dispatch_service_completion(Self, HostCompletedServiceResponse, HostServiceBridge) -> HostEventResult
 pub fn HostRuntimeDriver::draw_commands(Self) -> Array[@wzzc-dev/moui/core.DrawCommand]
 pub fn HostRuntimeDriver::draw_frame(Self) -> @wzzc-dev/moui/core.DrawFrame
@@ -533,6 +530,7 @@ pub fn HostRuntimeDriver::event_result(Self) -> HostEventResult
 pub fn HostRuntimeDriver::finish_redraw(Self) -> Unit
 pub fn HostRuntimeDriver::focused_text_input(Self) -> @wzzc-dev/moui/core.TextInputState
 pub fn HostRuntimeDriver::new(runtime~ : @runtime.AppRuntime, schedule_redraw~ : () -> Unit) -> Self
+pub fn HostRuntimeDriver::perform_semantics_action(Self, NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult
 pub fn HostRuntimeDriver::request_redraw(Self) -> Unit
 pub fn HostRuntimeDriver::request_redraw_if_needed(Self) -> Unit
 pub fn HostRuntimeDriver::set_environment(Self, @wzzc-dev/moui/core.Environment) -> Unit
@@ -952,30 +950,28 @@ pub fn InputHostState::set_modifiers(Self, @wzzc-dev/moui/core.KeyModifiers) -> 
 pub fn InputHostState::text_event(Self, @wzzc-dev/moui/core.TextInputEvent) -> HostEvent?
 
 pub(all) struct NativeAccessibilityActionRequest {
-  element_id : @wzzc-dev/moui/core.ElementId
+  node_id : @wzzc-dev/moui/core.SemanticsNodeId
+  generation : @wzzc-dev/moui/core.SemanticsGeneration
   action : @wzzc-dev/moui/core.SemanticsAction
-  value : String?
 } derive(Eq, ToJson, @debug.Debug)
-pub fn NativeAccessibilityActionRequest::new(element_id~ : @wzzc-dev/moui/core.ElementId, action~ : @wzzc-dev/moui/core.SemanticsAction, value? : String?) -> Self
+pub fn NativeAccessibilityActionRequest::new(node_id~ : @wzzc-dev/moui/core.SemanticsNodeId, generation~ : @wzzc-dev/moui/core.SemanticsGeneration, action~ : @wzzc-dev/moui/core.SemanticsAction) -> Self
 
 pub(all) enum NativeAccessibilityActionResult {
-  Handled
-  Unsupported(String)
-  ElementNotFound(@wzzc-dev/moui/core.ElementId)
+  Handled(@runtime.SemanticsActionReceipt)
+  Rejected(@runtime.SemanticsActionDispatchError)
   BridgeUnavailable(String)
-} derive(Eq, ToJson, @debug.Debug)
+} derive(Eq, @debug.Debug)
 
 pub(all) struct NativeAccessibilityBridge {
   kind : NativeAccessibilityBridgeKind
   available : Bool
-  snapshot : (@wzzc-dev/moui/core.SemanticsNode) -> @moon_accesskit.TreeUpdate
+  publish : (@runtime.SemanticsRead) -> NativeAccessibilityUpdate?
   perform : (NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult
 }
-pub fn NativeAccessibilityBridge::new(kind~ : NativeAccessibilityBridgeKind, available? : Bool, snapshot? : (@wzzc-dev/moui/core.SemanticsNode) -> @moon_accesskit.TreeUpdate, perform? : (NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult) -> Self
+pub fn NativeAccessibilityBridge::new(kind~ : NativeAccessibilityBridgeKind, available? : Bool, publish? : (@runtime.SemanticsRead) -> NativeAccessibilityUpdate?, perform? : (NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult) -> Self
 pub fn NativeAccessibilityBridge::perform_action(Self, NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult
-pub fn NativeAccessibilityBridge::semantics_action_bridge(kind~ : NativeAccessibilityBridgeKind, root~ : @wzzc-dev/moui/core.SemanticsNode, dispatch~ : (@wzzc-dev/moui/core.ElementId, @wzzc-dev/moui/core.SemanticsAction, String?) -> Bool) -> Self
-pub fn NativeAccessibilityBridge::snapshot_legacy_node(Self, @wzzc-dev/moui/core.SemanticsNode) -> NativeAccessibilityNode?
-pub fn NativeAccessibilityBridge::snapshot_semantics(Self, @wzzc-dev/moui/core.SemanticsNode) -> @moon_accesskit.TreeUpdate?
+pub fn NativeAccessibilityBridge::publish_semantics(Self, @runtime.SemanticsRead) -> NativeAccessibilityUpdate?
+pub fn NativeAccessibilityBridge::runtime(kind~ : NativeAccessibilityBridgeKind, runtime~ : @runtime.AppRuntime) -> Self
 pub fn NativeAccessibilityBridge::unavailable(kind~ : NativeAccessibilityBridgeKind, reason? : String) -> Self
 
 pub(all) enum NativeAccessibilityBridgeKind {
@@ -986,22 +982,14 @@ pub(all) enum NativeAccessibilityBridgeKind {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn NativeAccessibilityBridgeKind::label(Self) -> String
 
-pub(all) struct NativeAccessibilityNode {
-  element_id : @wzzc-dev/moui/core.ElementId
-  role : @wzzc-dev/moui/core.SemanticsRole
-  native_role : String
-  label : String
-  value : String
-  frame : @wzzc-dev/moui/core.Rect
-  focused : Bool
-  disabled : Bool
-  selected : Bool
-  checked : Bool
-  actions : Array[@wzzc-dev/moui/core.SemanticsAction]
-  children : Array[NativeAccessibilityNode]
-} derive(Eq, ToJson, @debug.Debug)
-pub fn NativeAccessibilityNode::from_accesskit(@moon_accesskit.TreeUpdate, @wzzc-dev/moui/core.ElementId, @wzzc-dev/moui/core.SemanticsRole) -> Self
-pub fn NativeAccessibilityNode::from_semantics(@wzzc-dev/moui/core.SemanticsNode, native_role? : String) -> Self
+pub struct NativeAccessibilityUpdate {
+  generation : @wzzc-dev/moui/core.SemanticsGeneration
+  tree_update : @moon_accesskit.TreeUpdate
+  removed : Array[@wzzc-dev/moui/core.SemanticsNodeId]
+}
+pub fn NativeAccessibilityUpdate::generation(Self) -> @wzzc-dev/moui/core.SemanticsGeneration
+pub fn NativeAccessibilityUpdate::removed(Self) -> Array[@wzzc-dev/moui/core.SemanticsNodeId]
+pub fn NativeAccessibilityUpdate::tree_update(Self) -> @moon_accesskit.TreeUpdate
 
 pub struct PlatformChannelHandler {
   // private fields
