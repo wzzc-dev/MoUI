@@ -377,7 +377,7 @@ fn validate_provider_texts(
     )
     assert_contains(
       source,
-      "@render.select_native_renderer(",
+      "@render.resolve_surface_route(",
       contract.source_path,
       failures,
     )

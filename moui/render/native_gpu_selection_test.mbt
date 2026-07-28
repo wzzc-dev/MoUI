@@ -1,14 +1,12 @@
 ///|
-test "native renderer auto remains raster when promotion flag is false" {
-  let result = select_native_renderer(
+test "resolve_surface_route auto remains raster when promotion flag is false" {
+  let route = resolve_surface_route(
     NativeGpuPlatform::Windows,
     NativeRendererMode::Auto,
     gpu_available=true,
     gpu_promoted=false,
   )
-  assert_true(result.selected == RendererBackendKind::SkiaRasterNative)
-  assert_true(result.surface_route == SkiaSurfaceRoute::RasterSurfaceRoute)
-  assert_true(result.fallback_reason is Some(_))
+  assert_true(route == SkiaSurfaceRoute::RasterSurfaceRoute)
 }
 
 ///|
@@ -19,80 +17,70 @@ test "all native platforms promote gpu for auto by default" {
   assert_true(NativePlatformSurface::gpu_promoted(NativeGpuPlatform::Android))
   assert_true(NativePlatformSurface::gpu_promoted(NativeGpuPlatform::Ios))
   assert_true(NativePlatformSurface::gpu_promoted(NativeGpuPlatform::HarmonyOs))
-  let macos = select_native_renderer(
+  let macos = resolve_surface_route(
     NativeGpuPlatform::Macos,
     NativeRendererMode::Auto,
     gpu_available=true,
     gpu_promoted=NativePlatformSurface::gpu_promoted(NativeGpuPlatform::Macos),
   )
-  assert_true(macos.selected == RendererBackendKind::SkiaGpuNative)
-  assert_true(macos.surface_route == SkiaSurfaceRoute::MetalGpuSurfaceRoute)
-  let windows = select_native_renderer(
+  assert_true(macos == SkiaSurfaceRoute::MetalGpuSurfaceRoute)
+  let windows = resolve_surface_route(
     NativeGpuPlatform::Windows,
     NativeRendererMode::Auto,
     gpu_available=true,
     gpu_promoted=NativePlatformSurface::gpu_promoted(NativeGpuPlatform::Windows),
   )
-  assert_true(windows.selected == RendererBackendKind::SkiaGpuNative)
-  assert_true(
-    windows.surface_route == SkiaSurfaceRoute::Direct3DGpuSurfaceRoute,
-  )
-  let linux = select_native_renderer(
+  assert_true(windows == SkiaSurfaceRoute::Direct3DGpuSurfaceRoute)
+  let linux = resolve_surface_route(
     NativeGpuPlatform::Linux,
     NativeRendererMode::Auto,
     gpu_available=true,
     gpu_promoted=NativePlatformSurface::gpu_promoted(NativeGpuPlatform::Linux),
   )
-  assert_true(linux.selected == RendererBackendKind::SkiaGpuNative)
-  assert_true(linux.surface_route == SkiaSurfaceRoute::VulkanGpuSurfaceRoute)
-  let android = select_native_renderer(
+  assert_true(linux == SkiaSurfaceRoute::VulkanGpuSurfaceRoute)
+  let android = resolve_surface_route(
     NativeGpuPlatform::Android,
     NativeRendererMode::Auto,
     gpu_available=true,
     gpu_promoted=NativePlatformSurface::gpu_promoted(NativeGpuPlatform::Android),
   )
-  assert_true(android.selected == RendererBackendKind::SkiaGpuNative)
-  assert_true(android.surface_route == SkiaSurfaceRoute::VulkanGpuSurfaceRoute)
-  let ios = select_native_renderer(
+  assert_true(android == SkiaSurfaceRoute::VulkanGpuSurfaceRoute)
+  let ios = resolve_surface_route(
     NativeGpuPlatform::Ios,
     NativeRendererMode::Auto,
     gpu_available=true,
     gpu_promoted=NativePlatformSurface::gpu_promoted(NativeGpuPlatform::Ios),
   )
-  assert_true(ios.selected == RendererBackendKind::SkiaGpuNative)
-  assert_true(ios.surface_route == SkiaSurfaceRoute::MetalGpuSurfaceRoute)
-  let harmony = select_native_renderer(
+  assert_true(ios == SkiaSurfaceRoute::MetalGpuSurfaceRoute)
+  let harmony = resolve_surface_route(
     NativeGpuPlatform::HarmonyOs,
     NativeRendererMode::Auto,
     gpu_available=true,
     gpu_promoted=NativePlatformSurface::gpu_promoted(NativeGpuPlatform::HarmonyOs),
   )
-  assert_true(harmony.selected == RendererBackendKind::SkiaGpuNative)
-  assert_true(harmony.surface_route == SkiaSurfaceRoute::EglGpuSurfaceRoute)
+  assert_true(harmony == SkiaSurfaceRoute::EglGpuSurfaceRoute)
 }
 
 ///|
-test "native renderer explicit gpu resolves platform route" {
-  let result = select_native_renderer(
+test "resolve_surface_route explicit gpu resolves platform route" {
+  let route = resolve_surface_route(
     NativeGpuPlatform::Windows,
     NativeRendererMode::SkiaGpu,
     gpu_available=true,
     gpu_promoted=false,
   )
-  assert_true(result.selected == RendererBackendKind::SkiaGpuNative)
-  assert_true(result.surface_route == SkiaSurfaceRoute::Direct3DGpuSurfaceRoute)
+  assert_true(route == SkiaSurfaceRoute::Direct3DGpuSurfaceRoute)
 }
 
 ///|
-test "native renderer auto selects gpu after promotion" {
-  let result = select_native_renderer(
+test "resolve_surface_route auto selects gpu after promotion" {
+  let route = resolve_surface_route(
     NativeGpuPlatform::HarmonyOs,
     NativeRendererMode::Auto,
     gpu_available=true,
     gpu_promoted=true,
   )
-  assert_true(result.selected == RendererBackendKind::SkiaGpuNative)
-  assert_true(result.surface_route == SkiaSurfaceRoute::EglGpuSurfaceRoute)
+  assert_true(route == SkiaSurfaceRoute::EglGpuSurfaceRoute)
 }
 
 ///|

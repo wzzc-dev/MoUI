@@ -6,10 +6,9 @@
   renderer provider,完成 ADR 0019 的 Phase E。`RendererProvider` 本身保持
   struct + 函数字段(动态注册需求),不强行 trait 化。
 - **Decisions**: ADR 0019 (renderer provider),保留 `NativeGpuPlatform` enum +
-  trait impl(不拆 6 个 struct),保留 `select_native_renderer` 作 deprecated
+  trait impl(不拆 6 个 struct),`select_native_renderer` 已完全删除
   桥接,`NativePlatformSurface` trait 放在 `moui/render` 包。
-- **Non-goals**: `RendererProvider` trait 化(明确不做);完全删除
-  `select_native_renderer`(留待所有消费者迁移后);`PlatformCapabilities`
+- **Non-goals**: `RendererProvider` trait 化(明确不做);`PlatformCapabilities`
   trait 化(struct + capability booleans 已是正确设计)。
 
 ## 当前状态评估(2026-07-28)
@@ -23,8 +22,9 @@
 | Step 5 | ✅ 已完成 | `hybrid_renderer.mbt` 改用 `surface_route` 字段,不依赖 `NativeRendererSelection` |
 | Step 6 | ✅ 已完成 | sun provider capabilities 迁移到 `moui/render/sun/capabilities.mbt` |
 | Step 7 | ✅ 已完成 | `capabilities_backend_matrix.mbt` 已删除,内容合并到 `capabilities_report.mbt` |
-| Step 8 | ✅ 已完成 | validator 转 enforce,Check 4 验证 platform skia provider 迁移 |
+| Step 8 | ✅ 已完成 | validator 转 enforce,Check 4 全仓库禁止 `select_native_renderer` 引用 |
 | Step 9 | ✅ 已完成 | 测试更新:`native_gpu_selection_test.mbt` 覆盖 `resolve_surface_route` + trait dispatch |
+| Step 10 | ✅ 已完成 | `select_native_renderer` + `NativeRendererSelection` 完全删除,所有调用点迁移到 `resolve_surface_route` |
 
 **剩余工作**:
 - Provider-driven `renderer_feature_capability_report(providers)` 签名(从每个
@@ -39,7 +39,7 @@
 |---|---|---|
 | `moui/render/native_platform_surface.mbt` | trait 声明 + `resolve_surface_route` | 保留(权威位置) |
 | `moui/render/provider_contract.mbt:246-258` | 重复的 trait 声明 | 删除 |
-| `moui/render/native_gpu_selection.mbt` | enum + impl + deprecated `select_native_renderer` | 修改:内部改用 `resolve_surface_route` |
+| `moui/render/native_gpu_selection.mbt` | enum + impl + `resolve_surface_route` | `select_native_renderer` + `NativeRendererSelection` 已删除 |
 | `moui/backend/macos/skia/macos_skia_provider.mbt:82-104` | `macos_surface_route_from_environment` | 修改:改用 `resolve_surface_route` |
 | `moui/backend/windows/skia/windows_skia_provider.mbt:44-58` | `windows_surface_route_from_environment` | 修改:同上 |
 | `moui/backend/linux/skia/linux_skia_provider.mbt:33-47` | `linux_surface_route_from_environment` | 修改:同上 |
