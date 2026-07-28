@@ -12,8 +12,8 @@ pub(open) trait NativePlatformSurface {
 pub fn[P : NativePlatformSurface] resolve_surface_route(
   platform : P,
   requested : NativeRendererMode,
-  gpu_available : Bool,
-  gpu_promoted : Bool,
+  gpu_available~ : Bool,
+  gpu_promoted~ : Bool,
 ) -> SkiaSurfaceRoute {
   let gpu_route = platform.surface_route()
   let raster_route = SkiaSurfaceRoute::RasterSurfaceRoute

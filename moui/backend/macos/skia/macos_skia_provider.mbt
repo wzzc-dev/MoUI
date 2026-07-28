@@ -93,12 +93,13 @@ fn macos_surface_route_from_environment() -> @render.SkiaSurfaceRoute {
           )
         None => @render.NativeRendererMode::Auto
       }
-      @render.select_native_renderer(
-        @render.NativeGpuPlatform::Macos,
+      let platform = @render.NativeGpuPlatform::Macos
+      @render.resolve_surface_route(
+        platform,
         requested,
         gpu_available=@skia_native.Surface::metal_gpu_context_runtime_available(),
-        gpu_promoted=@render.NativeGpuPlatform::Macos.gpu_promoted(),
-      ).surface_route
+        gpu_promoted=@render.NativePlatformSurface::gpu_promoted(platform),
+      )
     }
   }
 }
