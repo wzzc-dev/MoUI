@@ -209,7 +209,7 @@ pub impl @window_linux.ApplicationHandler for LinuxApp with fn window_event(
           ignore(self.windows.resize(window_id, metrics))
           self.sync_runtime_slot(window_id)
           (self.renderer_provider.sync_surface)(slot.window, surface_metrics)
-          slot.renderer.resize(surface_metrics)
+          slot.renderer.resize(to_render_metrics(surface_metrics))
           slot.window.request_redraw()
           self.dispatch_host_event(window_id, @host.HostEvent::Resized(metrics))
           dispatched = true
@@ -233,7 +233,7 @@ pub impl @window_linux.ApplicationHandler for LinuxApp with fn window_event(
           ignore(self.windows.resize(window_id, metrics))
           self.sync_runtime_slot(window_id)
           (self.renderer_provider.sync_surface)(slot.window, surface_metrics)
-          slot.renderer.resize(surface_metrics)
+          slot.renderer.resize(to_render_metrics(surface_metrics))
           slot.window.request_redraw()
           self.dispatch_host_event(window_id, @host.HostEvent::Resized(metrics))
           dispatched = true
@@ -350,7 +350,7 @@ fn LinuxApp::redraw_window(
         if prior_presented {
           ignore(
             self.image_repaint_tracker.record_presented(
-              window_id,
+              to_render_id(window_id),
               platform_slot.renderer,
             ),
           )
@@ -448,7 +448,7 @@ fn LinuxApp::redraw_window(
         (present_completions.is_empty() && result.presented) {
         ignore(
           self.image_repaint_tracker.record_presented(
-            window_id,
+            to_render_id(window_id),
             platform_slot.renderer,
           ),
         )

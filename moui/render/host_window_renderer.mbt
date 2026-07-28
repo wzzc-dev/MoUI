@@ -34,7 +34,7 @@ pub struct HostRendererGpuRecoveryCapability {
 
 ///|
 pub struct HostWindowRenderer {
-  priv resize_fn : (@backend_host.HostSurfaceMetrics) -> Unit
+  priv resize_fn : (RendererSurfaceMetrics) -> Unit
   priv render_fn : (Array[@core.DrawCommand]) -> Unit
   priv render_frame_fn : (@core.DrawFrame) -> RenderFrameResult
   priv drain_present_completions_fn : () -> Array[
@@ -125,7 +125,7 @@ priv struct HostLayerCommandCache {
 
 ///|
 pub fn HostWindowRenderer::new(
-  resize~ : (@backend_host.HostSurfaceMetrics) -> Unit,
+  resize~ : (RendererSurfaceMetrics) -> Unit,
   render~ : (Array[@core.DrawCommand]) -> Unit,
   render_frame? : ((@core.DrawFrame) -> RenderFrameResult)? = None,
   drain_present_completions? : (() -> Array[RenderPresentCompletion])? = None,
@@ -178,7 +178,7 @@ pub fn HostWindowRenderer::new(
 ///|
 pub fn HostWindowRenderer::resize(
   self : HostWindowRenderer,
-  metrics : @backend_host.HostSurfaceMetrics,
+  metrics : RendererSurfaceMetrics,
 ) -> Unit {
   (self.resize_fn)(metrics)
 }

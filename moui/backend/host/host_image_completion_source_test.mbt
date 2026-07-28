@@ -1,7 +1,7 @@
 ///|
 test "host image completion source routes native loader completions" {
   let tracker = @render.HostImageResourceRepaintTracker::new()
-  let window_id = HostWindowId::new(8)
+  let window_id = @render.RenderWindowId::new(8)
   let revision = Ref(1)
   let records : Ref[Array[@render.ImageResourceRecord]] = Ref([
     @render.ImageResourceRecord::loading("late.png"),
@@ -22,7 +22,7 @@ test "host image completion source routes native loader completions" {
   let baseline = tracker.record_presented(window_id, renderer)
   inspect(baseline.current_revision(), content="1")
   inspect(baseline.current_status_counts().loading_count(), content="1")
-  let requested : Array[HostWindowId] = []
+  let requested : Array[@render.RenderWindowId] = []
   let source = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=id => id == window_id,
@@ -60,7 +60,7 @@ test "host image completion source routes native loader completions" {
 ///|
 test "host image completion source discards closed-window completions" {
   let tracker = @render.HostImageResourceRepaintTracker::new()
-  let window_id = HostWindowId::new(9)
+  let window_id = @render.RenderWindowId::new(9)
   let renderer = @render.HostWindowRenderer::new(
     resize=_ => (),
     render=_ => (),
@@ -108,7 +108,7 @@ test "host image completion source discards closed-window completions" {
 ///|
 test "host image completion source ignores stale completion revisions" {
   let tracker = @render.HostImageResourceRepaintTracker::new()
-  let window_id = HostWindowId::new(10)
+  let window_id = @render.RenderWindowId::new(10)
   let renderer = @render.HostWindowRenderer::new(
     resize=_ => (),
     render=_ => (),
@@ -163,7 +163,7 @@ test "host image completion source ignores stale completion revisions" {
 ///|
 test "host image completion source applies renderer load completions" {
   let tracker = @render.HostImageResourceRepaintTracker::new()
-  let window_id = HostWindowId::new(11)
+  let window_id = @render.RenderWindowId::new(11)
   let lifecycle = @render.ImageResourceLifecycle::new()
   ignore(lifecycle.mark_loading("async.png"))
   let applied_sources : Array[String] = []
@@ -182,7 +182,7 @@ test "host image completion source applies renderer load completions" {
   let baseline = tracker.record_presented(window_id, renderer)
   inspect(baseline.current_revision(), content="1")
   inspect(baseline.current_status_counts().loading_count(), content="1")
-  let requested : Array[HostWindowId] = []
+  let requested : Array[@render.RenderWindowId] = []
   let source = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=id => id == window_id,

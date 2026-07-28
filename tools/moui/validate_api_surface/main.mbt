@@ -1101,6 +1101,25 @@ fn allowed_shared_app_core_imports() -> Array[String] {
 /// packages from consuming the runtime facade; these apps wire the
 /// composition root (program construction + host service sources) which is
 /// the runtime facade's intended consumer surface.
+///
+/// Each entry includes the reason why the app requires direct runtime access
+/// rather than going through the `wzzc-dev/moui` root facade.
+///
+/// Allowed apps and their justifications:
+/// - `examples/showcase/app` — diagnostics inspector and host-contract
+///   section need direct access to `@runtime.AppRuntime` and
+///   `@runtime.InspectorSnapshot` for runtime inspection.
+/// - `examples/mo_desktop/app` — multi-window shell needs direct access
+///   to `@runtime.AppRuntime`, `@runtime.HostRuntimeDriver`, and
+///   `@host.HostAppServices` for program construction and host wiring.
+/// - `examples/markdown_editor/app` — editor runtime tests need
+///   `@runtime.new_program_with_dimensions` and `@runtime.AppRuntime`.
+///   Main code uses `@runtime.HostTimerSource` for debounced saves.
+/// - `website/app` — tutorial and documentation app needs
+///   `@runtime.HostRouteSource` for client-side routing,
+///   `@runtime.AppRuntime` for interactive lesson snapshots, and
+///   `@host.*` services (`HostAppServices`, `HostServiceBridge`) for
+///   file reading and in-browser compilation.
 fn allowed_shared_app_runtime_imports() -> Array[String] {
   [
     "examples/showcase/app/moon.pkg",

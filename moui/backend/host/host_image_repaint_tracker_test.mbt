@@ -1,8 +1,8 @@
 ///|
 test "host image repaint tracker routes revision changes per window" {
   let tracker = @render.HostImageResourceRepaintTracker::new()
-  let main_id = HostWindowId::new(1)
-  let inspector_id = HostWindowId::new(2)
+  let main_id = @render.RenderWindowId::new(1)
+  let inspector_id = @render.RenderWindowId::new(2)
   let main_revision = Ref(0)
   let inspector_revision = Ref(0)
   let main_renderer = host_test_image_renderer(main_revision)
@@ -30,7 +30,7 @@ test "host image repaint tracker routes revision changes per window" {
   )
   inspect(baseline_snapshot.tracked_windows()[1].revision(), content="0")
   inspector_revision.val = 1
-  let requested : Array[HostWindowId] = []
+  let requested : Array[@render.RenderWindowId] = []
   let inspector_result = tracker.request_redraw_if_changed(
     inspector_id,
     inspector_renderer,
@@ -85,7 +85,7 @@ test "host image repaint tracker routes revision changes per window" {
 ///|
 test "host image repaint tracker routes callback snapshots without renderer reads" {
   let tracker = @render.HostImageResourceRepaintTracker::new()
-  let window_id = HostWindowId::new(4)
+  let window_id = @render.RenderWindowId::new(4)
   let revision = Ref(1)
   let snapshot_reads = Ref(0)
   let renderer = @render.HostWindowRenderer::new(
@@ -102,7 +102,7 @@ test "host image repaint tracker routes callback snapshots without renderer read
   let baseline = tracker.record_presented(window_id, renderer)
   inspect(baseline.current_revision(), content="1")
   inspect(snapshot_reads.val, content="1")
-  let requested : Array[HostWindowId] = []
+  let requested : Array[@render.RenderWindowId] = []
   let result = tracker.request_redraw_for_snapshot_if_changed(
     window_id,
     @render.ImageResourceSnapshot::new(revision=2, records=[
@@ -125,7 +125,7 @@ test "host image repaint tracker routes callback snapshots without renderer read
 ///|
 test "host image repaint tracker snapshots lifecycle status counts" {
   let tracker = @render.HostImageResourceRepaintTracker::new()
-  let window_id = HostWindowId::new(5)
+  let window_id = @render.RenderWindowId::new(5)
   let revision = Ref(1)
   let records : Ref[Array[@render.ImageResourceRecord]] = Ref([
     @render.ImageResourceRecord::loading("loading.png"),
@@ -198,7 +198,7 @@ test "host image repaint tracker snapshots lifecycle status counts" {
 ///|
 test "host image repaint tracker ignores stale snapshot revisions" {
   let tracker = @render.HostImageResourceRepaintTracker::new()
-  let window_id = HostWindowId::new(6)
+  let window_id = @render.RenderWindowId::new(6)
   let revision = Ref(5)
   let records : Ref[Array[@render.ImageResourceRecord]] = Ref([
     @render.ImageResourceRecord::ready("ready.png", width=64, height=48),
@@ -259,7 +259,7 @@ test "host image repaint tracker ignores stale snapshot revisions" {
 ///|
 test "host image repaint tracker discards closed window changes" {
   let tracker = @render.HostImageResourceRepaintTracker::new()
-  let window_id = HostWindowId::new(7)
+  let window_id = @render.RenderWindowId::new(7)
   let revision = Ref(1)
   let records : Ref[Array[@render.ImageResourceRecord]] = Ref([
     @render.ImageResourceRecord::loading("late.png"),

@@ -244,7 +244,7 @@ fn host_renderer_from_wgpu(
   renderer : @wgpu_renderer.WgpuRenderer,
 ) -> @render.HostWindowRenderer {
   @render.HostWindowRenderer::new(
-    resize=metrics => renderer.resize(renderer_metrics_from_host(metrics)),
+    resize=metrics => renderer.resize(metrics),
     render=commands => renderer.render(commands),
     text_system=() => renderer.text_system(),
     present_count=() => renderer.present_count(),
