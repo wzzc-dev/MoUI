@@ -9,7 +9,7 @@ priv struct Observation {
   name : String
   value : String
   passed : Bool
-} derive(Eq, Show)
+} derive(Eq)
 
 ///|
 priv struct ProbeResult {
@@ -43,22 +43,22 @@ let probe_observation_names : ReadOnlyArray[String] = [
 /// Parse a single log line into an `Observation`. Returns `None` when the
 /// line is not a MoUI probe marker.
 fn parse_log_line(line : String) -> Observation? {
-  let trimmed = line.trim().to_string()
+  let trimmed = line.trim().to_owned()
   let marker = "[MOUI_PROBE] "
   match trimmed.find(marker) {
     Some(start) => {
-      let rest = trimmed.substring(start=start + marker.length()).to_string()
+      let rest = trimmed[(start + marker.length()):].to_owned()
       // rest looks like `kind:name=value` (may have leading/trailing whitespace
       // when the source log has extra spaces around the marker).
       match rest.split_once("=") {
         Some((key, value)) => {
-          let key_trimmed = key.trim().to_string()
+          let key_trimmed = key.trim().to_owned()
           match key_trimmed.split_once(":") {
             Some((kind, name)) => {
-              let kind_str = kind.trim().to_string()
-              let name_str = name.trim().to_string()
+              let kind_str = kind.trim().to_owned()
+              let name_str = name.trim().to_owned()
               if is_known_observation(kind_str + ":" + name_str) {
-                let value_str = value.trim().to_string()
+                let value_str = value.trim().to_owned()
                 let passed = value_str == "ok"
                 Some({
                   kind: kind_str,
@@ -115,7 +115,7 @@ fn parse_log_lines(output : String) -> Array[Observation] {
   let observations : Array[Observation] = []
   let lines = output.split("\n").to_array()
   for line in lines {
-    match parse_log_line(line.to_string()) {
+    match parse_log_line(line.to_owned()) {
       Some(obs) => observations.push(obs)
       None => ()
     }
@@ -152,12 +152,12 @@ fn build_probe_result(observations : Array[Observation]) -> ProbeResult {
     by_key[obs.kind + ":" + obs.name] = obs
   }
   let mut ok = true
-  let final : Array[Observation] = []
+  let final_obs : Array[Observation] = []
   for name in probe_observation_names {
     match by_key.get(name) {
       Some(obs) => {
-        final.push(obs)
-        if not(obs.passed) {
+        final_obs.push(obs)
+        if !(obs.passed) {
           ok = false
         }
       }
@@ -165,9 +165,9 @@ fn build_probe_result(observations : Array[Observation]) -> ProbeResult {
         // Missing observation -> fail with empty value.
         match name.split_once(":") {
           Some((kind, n)) =>
-            final.push({
-              kind: kind.to_string(),
-              name: n.to_string(),
+            final_obs.push({
+              kind: kind.to_owned(),
+              name: n.to_owned(),
               value: "",
               passed: false,
             })
@@ -177,7 +177,7 @@ fn build_probe_result(observations : Array[Observation]) -> ProbeResult {
       }
     }
   }
-  { ok, observations: final }
+  { ok, observations: final_obs }
 }
 
 ///|

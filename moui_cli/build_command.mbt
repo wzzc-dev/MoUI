@@ -10,7 +10,7 @@ priv struct ParsedBuild {
   json : Bool
   platform : String
   options : BuildCommandOptions?
-}
+} derive(Debug)
 
 ///|
 priv struct BuildCommandOptions {
@@ -37,7 +37,7 @@ priv struct BuildCommandOptions {
   hvigorw : String?
   ohpm : String?
   signing_config_file : String?
-}
+} derive(Debug)
 
 ///|
 fn build_usage() -> String {

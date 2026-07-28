@@ -12,7 +12,7 @@ priv struct Device {
   name : String
   state : String
   kind : String // emulator | physical | unknown
-} derive(Eq, Show)
+} derive(Debug, Eq)
 
 ///|
 priv struct ParsedDevices {
@@ -93,7 +93,7 @@ fn parse_adb_devices(output : String) -> Array[Device] {
   let lines = output.split("\n").to_array()
   let mut in_devices = false
   for line in lines {
-    let trimmed = line.trim().to_string()
+    let trimmed = line.trim().to_owned()
     if trimmed == "" ||
       trimmed.has_prefix("* daemon") ||
       trimmed.has_prefix("List of devices") {
@@ -110,8 +110,8 @@ fn parse_adb_devices(output : String) -> Array[Device] {
     if tokens.length() < 2 {
       continue
     }
-    let id = tokens[0].to_string()
-    let state = tokens[1].to_string()
+    let id = tokens[0].to_owned()
+    let state = tokens[1].to_owned()
     // Look for `device`/`model:`/`transport_id:` keys in remaining tokens.
     let mut name = id
     let mut is_emulator = false
@@ -121,7 +121,7 @@ fn parse_adb_devices(output : String) -> Array[Device] {
       match token.split_once(":") {
         Some((key, value)) =>
           if key == "model" {
-            name = value.to_string()
+            name = value.to_owned()
           } else if key == "device" {
             // `device:emulator-5554` heuristic
             if value.contains("emulator") {
@@ -157,7 +157,7 @@ fn parse_simctl_list(output : String) -> Array[Device] {
   let lines = output.split("\n").to_array()
   let mut in_devices_section = false
   for line in lines {
-    let trimmed = line.trim().to_string()
+    let trimmed = line.trim().to_owned()
     if trimmed == "" {
       continue
     }
@@ -177,11 +177,11 @@ fn parse_simctl_list(output : String) -> Array[Device] {
     match last_paren_pair(trimmed) {
       Some((state_open, state)) => {
         // head is `trimmed` with the trailing ` (state)` removed.
-        let head = trimmed.substring(end=state_open).trim().to_string()
+        let head = trimmed[:state_open].trim().to_owned()
         match last_paren_pair(head) {
           Some((uuid_open, uuid)) =>
             if head.has_suffix(")") {
-              let name = head.substring(end=uuid_open).trim().to_string()
+              let name = head[:uuid_open].trim().to_owned()
               let kind = if name.contains("Simulator") ||
                 state.contains("Booted") ||
                 state.contains("Shutdown") {
@@ -221,9 +221,7 @@ fn last_paren_pair(text : String) -> (Int, String)? {
     } else if chars[i] == '(' {
       depth -= 1
       if depth == 0 {
-        let value = text
-          .substring(start=i + 1, end=chars.length() - 1)
-          .to_string()
+        let value = text[(i + 1):(chars.length() - 1)].to_owned()
         return Some((i, value))
       }
     }
@@ -241,7 +239,7 @@ fn parse_hdc_targets(output : String) -> Array[Device] {
   let devices : Array[Device] = []
   let lines = output.split("\n").to_array()
   for line in lines {
-    let trimmed = line.trim().to_string()
+    let trimmed = line.trim().to_owned()
     if trimmed == "" ||
       trimmed.has_prefix("[Empty]") ||
       trimmed.has_prefix("No target") {
@@ -251,9 +249,9 @@ fn parse_hdc_targets(output : String) -> Array[Device] {
     if tokens.is_empty() {
       continue
     }
-    let id = tokens[0].to_string()
+    let id = tokens[0].to_owned()
     let state = if tokens.length() >= 2 {
-      tokens[1].to_string()
+      tokens[1].to_owned()
     } else {
       "connected"
     }

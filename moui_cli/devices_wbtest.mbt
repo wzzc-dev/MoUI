@@ -50,8 +50,8 @@ test "test_parse_adb_devices_ignores_daemon_messages" {
 
 ///|
 test "test_parse_adb_devices_empty_output" {
-  inspect(parse_adb_devices(""), content="[]")
-  inspect(parse_adb_devices("List of devices attached\n"), content="[]")
+  debug_inspect(parse_adb_devices(""), content="[]")
+  debug_inspect(parse_adb_devices("List of devices attached\n"), content="[]")
 }
 
 ///|
@@ -94,12 +94,12 @@ test "test_parse_simctl_list_skips_non_devices_section" {
     #|== Device Pairs ==
     #|    (pair) (Booted)
   let devices = parse_simctl_list(sample)
-  inspect(devices, content="[]")
+  debug_inspect(devices, content="[]")
 }
 
 ///|
 test "test_parse_simctl_list_empty_output" {
-  inspect(parse_simctl_list(""), content="[]")
+  debug_inspect(parse_simctl_list(""), content="[]")
 }
 
 ///|
@@ -126,9 +126,9 @@ test "test_parse_hdc_targets_single_column" {
 
 ///|
 test "test_parse_hdc_targets_empty_output" {
-  inspect(parse_hdc_targets(""), content="[]")
-  inspect(parse_hdc_targets("[Empty]"), content="[]")
-  inspect(parse_hdc_targets("No target found"), content="[]")
+  debug_inspect(parse_hdc_targets(""), content="[]")
+  debug_inspect(parse_hdc_targets("[Empty]"), content="[]")
+  debug_inspect(parse_hdc_targets("No target found"), content="[]")
 }
 
 ///|

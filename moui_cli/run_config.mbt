@@ -152,8 +152,8 @@ fn run_config(parsed : ParsedConfig, host : HostPlatform) -> CliOutcome {
               match line.split_once(" = ") {
                 Some((entry_key, entry_value)) =>
                   entries.push({
-                    "key": Json::string(entry_key.to_string()),
-                    "value": Json::string(entry_value.to_string()),
+                    "key": Json::string(entry_key.to_owned()),
+                    "value": Json::string(entry_value.to_owned()),
                   })
                 None => ()
               }

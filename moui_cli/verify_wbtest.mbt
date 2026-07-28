@@ -45,10 +45,10 @@ test "test_parse_verify_args_options" {
         fail("expected options")
         return
       }
-      inspect(options.device, content="Some(UUID-DEAD)")
-      inspect(options.build_dir, content="Some(/tmp/build)")
-      inspect(options.output_path, content="Some(/tmp/manifest.json)")
-      inspect(options.observation_filter, content="Some(MoUI:V)")
+      debug_inspect(options.device, content="Some(UUID-DEAD)")
+      debug_inspect(options.build_dir, content="Some(/tmp/build)")
+      debug_inspect(options.output_path, content="Some(/tmp/manifest.json)")
+      debug_inspect(options.observation_filter, content="Some(MoUI:V)")
       assert_true(options.require_passed)
     }
     Err(message) => fail("parse_verify_args failed: " + message)
@@ -61,7 +61,7 @@ test "test_parse_verify_args_help_flag" {
   match parsed {
     Ok(value) => {
       assert_true(value.help)
-      assert_true(value.options.is_none())
+      assert_true(value.options is None)
     }
     Err(message) => fail("parse_verify_args failed: " + message)
   }

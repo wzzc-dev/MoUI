@@ -47,7 +47,7 @@ test "default_cli_config has schema_version 1 and all None fields" {
 ///|
 test "validate_cli_config accepts schema_version 1" {
   let config = default_cli_config()
-  assert_true(validate_cli_config(config).is_ok())
+  assert_true(validate_cli_config(config) is Ok(_))
 }
 
 ///|

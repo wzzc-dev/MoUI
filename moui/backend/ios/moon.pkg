@@ -6,6 +6,7 @@ import {
   "wzzc-dev/moui/render",
   "wzzc-dev/window/core" @window_core,
   "wzzc-dev/window/ios" @window_ios,
+  "moonbitlang/core/encoding/utf8"
 }
 
 import {

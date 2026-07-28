@@ -90,10 +90,10 @@ test "test_parse_run_args_options" {
         fail("expected options")
         return
       }
-      inspect(options.app_config_path, content="Some(/tmp/moui.mobile.json)")
-      inspect(options.device, content="Some(emulator-5554)")
-      inspect(options.renderer, content="Some(skia)")
-      inspect(options.filter, content="Some(MoUI:V)")
+      debug_inspect(options.app_config_path, content="Some(/tmp/moui.mobile.json)")
+      debug_inspect(options.device, content="Some(emulator-5554)")
+      debug_inspect(options.renderer, content="Some(skia)")
+      debug_inspect(options.filter, content="Some(MoUI:V)")
       assert_true(options.fallback_skia)
       assert_true(options.verify)
     }
@@ -131,7 +131,7 @@ test "test_parse_run_args_help_flag" {
     Ok(value) => {
       assert_true(value.help)
       inspect(value.platform, content="")
-      assert_true(value.options.is_none())
+      assert_true(value.options is None)
     }
     Err(message) => fail("parse_run_args failed: " + message)
   }
@@ -201,9 +201,9 @@ test "test_apply_config_overrides_run_preserves_cli_values" {
   }
   let config = default_cli_config()
   let overridden = apply_config_overrides_run(options, config)
-  inspect(overridden.device, content="Some(emulator-5554)")
-  inspect(overridden.renderer, content="Some(skia)")
-  inspect(overridden.app_config_path, content="Some(/cli/moui.mobile.json)")
+  debug_inspect(overridden.device, content="Some(emulator-5554)")
+  debug_inspect(overridden.renderer, content="Some(skia)")
+  debug_inspect(overridden.app_config_path, content="Some(/cli/moui.mobile.json)")
 }
 
 ///|
@@ -226,9 +226,9 @@ test "test_apply_config_overrides_run_fills_none_with_defaults" {
   }
   let config = default_cli_config()
   let overridden = apply_config_overrides_run(options, config)
-  assert_true(overridden.device.is_none())
-  assert_true(overridden.renderer.is_none())
-  assert_true(overridden.app_config_path.is_none())
+  assert_true(overridden.device is None)
+  assert_true(overridden.renderer is None)
+  assert_true(overridden.app_config_path is None)
 }
 
 ///|
@@ -355,26 +355,26 @@ test "test_build_options_from_run_options_preserves_cli_overrides" {
     custom_args: [],
   }
   let build_options = build_options_from_run_options(options, ".", None)
-  inspect(build_options.app_config_path, content="Some(/cli/moui.mobile.json)")
+  debug_inspect(build_options.app_config_path, content="Some(/cli/moui.mobile.json)")
   inspect(build_options.workspace_root, content=".")
   inspect(build_options.moui_root, content="")
   inspect(build_options.skia_root, content="")
   inspect(build_options.build_dir, content="")
-  assert_true(build_options.output.is_none())
-  inspect(build_options.renderer, content="Some(skia)")
+  assert_true(build_options.output is None)
+  debug_inspect(build_options.renderer, content="Some(skia)")
   assert_true(build_options.fallback_skia)
   assert_true(build_options.prepare_only)
-  assert_true(build_options.product_name.is_none())
-  assert_true(build_options.abi.is_none())
-  assert_true(build_options.compile_sdk.is_none())
-  assert_true(build_options.target_sdk.is_none())
-  assert_true(build_options.sdk.is_none())
-  assert_true(build_options.arch.is_none())
-  assert_true(build_options.deployment_target.is_none())
-  assert_true(build_options.sdk_home.is_none())
-  assert_true(build_options.hvigorw.is_none())
-  assert_true(build_options.ohpm.is_none())
-  assert_true(build_options.signing_config_file.is_none())
+  assert_true(build_options.product_name is None)
+  assert_true(build_options.abi is None)
+  assert_true(build_options.compile_sdk is None)
+  assert_true(build_options.target_sdk is None)
+  assert_true(build_options.sdk is None)
+  assert_true(build_options.arch is None)
+  assert_true(build_options.deployment_target is None)
+  assert_true(build_options.sdk_home is None)
+  assert_true(build_options.hvigorw is None)
+  assert_true(build_options.ohpm is None)
+  assert_true(build_options.signing_config_file is None)
 }
 
 ///|
@@ -396,8 +396,8 @@ test "test_build_options_from_run_options_uses_defaults_when_none" {
     custom_args: [],
   }
   let build_options = build_options_from_run_options(options, ".", None)
-  assert_true(build_options.app_config_path.is_none())
-  assert_true(build_options.renderer.is_none())
+  assert_true(build_options.app_config_path is None)
+  assert_true(build_options.renderer is None)
   assert_false(build_options.fallback_skia)
   assert_false(build_options.prepare_only)
   inspect(build_options.workspace_root, content=".")
@@ -426,9 +426,9 @@ test "test_build_options_from_run_options_passes_sdk_override" {
     ".",
     Some("iphonesimulator"),
   )
-  inspect(with_override.sdk, content="Some(iphonesimulator)")
+  debug_inspect(with_override.sdk, content="Some(iphonesimulator)")
   let without_override = build_options_from_run_options(options, ".", None)
-  assert_true(without_override.sdk.is_none())
+  assert_true(without_override.sdk is None)
 }
 
 ///|
@@ -458,7 +458,7 @@ test "test_resolve_ios_sdk_override_returns_simulator_for_uuid" {
     state: "Booted",
     kind: "emulator",
   }
-  inspect(
+  debug_inspect(
     resolve_ios_sdk_override("ios", simulator_device),
     content="Some(iphonesimulator)",
   )
@@ -471,7 +471,7 @@ test "test_resolve_ios_sdk_override_returns_simulator_for_uuid" {
   }
   // Physical device: returns None so build_command.mbt applies its own
   // default (iphoneos) or the user's `moui config ios.sdk`.
-  assert_true(resolve_ios_sdk_override("ios", physical_device).is_none())
+  assert_true(resolve_ios_sdk_override("ios", physical_device) is None)
   // Non-iOS platforms: always None.
   let android_device : Device = {
     platform: "android",
@@ -480,5 +480,5 @@ test "test_resolve_ios_sdk_override_returns_simulator_for_uuid" {
     state: "device",
     kind: "emulator",
   }
-  assert_true(resolve_ios_sdk_override("android", android_device).is_none())
+  assert_true(resolve_ios_sdk_override("android", android_device) is None)
 }
