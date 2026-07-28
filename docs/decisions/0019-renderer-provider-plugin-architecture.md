@@ -139,6 +139,47 @@ branch on renderer identity, so ADR 0018's host-import baseline holds.
   `moui/core`, `moui/backend/host`, and `moui/runtime` (non-composition-root)
   do not branch on renderer identity.
 
+## Implementation Progress (Phase E, 2026-07-28)
+
+The closed matrix is being replaced incrementally. Current state:
+
+- **`NativePlatformSurface` trait** (`moui/render/native_platform_surface.mbt`):
+  platform surface knowledge is decentralized. Each `NativeGpuPlatform` variant
+  owns its `surface_route` / `gpu_promoted` / `platform_label` via
+  `pub impl NativePlatformSurface for NativeGpuPlatform`. The
+  `resolve_surface_route` generic function replaces the central
+  `select_native_renderer` branching for surface routing.
+- **`native_gpu_selection.mbt`** kept as a **deprecated bridge**:
+  `select_native_renderer` still exists for backwards compatibility but
+  internally delegates to `resolve_surface_route`. Platform skia providers
+  (`moui/backend/{macos,windows,linux}/skia/*_skia_provider.mbt`) now call
+  `resolve_surface_route` directly instead of `select_native_renderer`.
+- **`capabilities_backend_matrix.mbt` deleted**: `renderer_capability_backends`,
+  `renderer_feature_capability_entry`, and the Sun feature mirror
+  (`sun_feature_status` / `sun_feature_note`) merged into
+  `moui/render/capabilities_report.mbt`. The Sun mirror stays local to
+  `moui/render` because the package cannot depend on its `moui/render/sun`
+  subpackage; provider-driven aggregation will replace the mirror once each
+  provider's `capabilities()` field is wired into a registry.
+- **Sun feature capabilities** (`moui/render/sun/capabilities.mbt`): the Sun
+  provider owns its live `sun_feature_status` / `sun_feature_note` /
+  `sun_feature_capabilities` data. The central matrix mirror is a static
+  duplicate kept only until provider-driven aggregation lands.
+- **Validator enforce mode**: `scripts/validate-renderer-provider-open-extension.mjs`
+  now exits 1 on violations. Check 4 enforces that platform skia providers
+  call `resolve_surface_route` (not `select_native_renderer`). The
+  `CAPABILITY_ALLOWLIST_EXACT` permits `renderer_capability_backends` only in
+  `capabilities_report.mbt`, `capabilities_test.mbt`, and showcase diagnostics.
+
+Remaining migration work (tracked in
+`docs/plans/active/renderer-provider-trait-refactor.md`):
+
+- Provider-driven `renderer_feature_capability_report(providers)` signature
+  that aggregates from each provider's `capabilities()` field, removing the
+  static Sun mirror.
+- Runtime composition root that registers providers and replaces the
+  host-driver renderer switch.
+
 ## Agent Notes
 
 - **Session context**: MoUI core/views/host/renderer/platform architecture

@@ -3,7 +3,7 @@
 /**
  * validate-renderer-provider-open-extension.mjs
  *
- * Report-only validator for the renderer provider open-extension property
+ * Enforce validator for the renderer provider open-extension property
  * (ADR 0019). Checks that:
  *
  * 1. No renderer identity branching exists in moui/core, moui/backend/host,
@@ -14,14 +14,16 @@
  * 3. The central selection matrix (native_gpu_selection.mbt) and central
  *    capability matrix (capabilities_backend_matrix.mbt) have no NEW
  *    callers beyond the allowlist.
+ * 4. Platform skia providers (macos/windows/linux) use
+ *    `resolve_surface_route` instead of `select_native_renderer`
+ *    (ADR 0019 Phase E).
  *
- * Current mode: **report-only** — prints violations but does not exit
- * with an error. Switch to enforcement after Phase E migration completes.
+ * Current mode: **enforce** — exits with error 1 on violations.
  *
  * Usage:
  *   node scripts/validate-renderer-provider-open-extension.mjs
  *
- * Exit codes (future enforcement):
+ * Exit codes:
  *   0 = no violations
  *   1 = violations found
  */
@@ -92,7 +94,7 @@ const SELECTION_ALLOWLIST_EXACT = [
 // ---------------------------------------------------------------------------
 const CAPABILITY_ALLOWLIST_EXACT = [
   "moui/render/capabilities_test.mbt",
-  "moui/render/capabilities_backend_matrix.mbt",
+  "moui/render/capabilities_report.mbt",
   "examples/showcase/app/diagnostics/components.mbt",
 ];
 
@@ -192,15 +194,41 @@ function checkCentralMatrixCallers() {
 }
 
 // ---------------------------------------------------------------------------
+// Check 4: Platform skia providers migrated to resolve_surface_route
+// ---------------------------------------------------------------------------
+function checkPlatformSkiaProviderMigration() {
+  const violations = [];
+  const platformSkiaProviders = [
+    "moui/backend/macos/skia/macos_skia_provider.mbt",
+    "moui/backend/windows/skia/windows_skia_provider.mbt",
+    "moui/backend/linux/skia/linux_skia_provider.mbt",
+  ];
+
+  for (const relPath of platformSkiaProviders) {
+    const fullPath = join(REPO_ROOT, relPath);
+    if (!existsSync(fullPath)) continue;
+    const content = readFileSync(fullPath, "utf-8");
+    if (content.includes("select_native_renderer")) {
+      violations.push(
+        `  ${relPath}: still calls select_native_renderer (use resolve_surface_route)`
+      );
+    }
+  }
+
+  return violations;
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 function main() {
-  console.log("# validate-renderer-provider-open-extension.mjs (report-only)");
+  console.log("# validate-renderer-provider-open-extension.mjs (enforce)");
   console.log();
 
   const identityViolations = checkIdentityBranching();
   const factoryViolations = checkProviderFactoryExports();
   const matrixViolations = checkCentralMatrixCallers();
+  const migrationViolations = checkPlatformSkiaProviderMigration();
 
   let hasViolations = false;
 
@@ -234,9 +262,19 @@ function main() {
     console.log();
   }
 
+  if (migrationViolations.length > 0) {
+    console.log("## [4] Platform skia providers not migrated to resolve_surface_route:");
+    for (const v of migrationViolations) console.log(v);
+    console.log();
+    hasViolations = true;
+  } else {
+    console.log("✅ Platform skia providers use resolve_surface_route");
+    console.log();
+  }
+
   if (hasViolations) {
-    console.log("⚠️  Violations found (report-only mode — not enforcing).");
-    process.exit(0);
+    console.log("❌ Violations found (enforce mode).");
+    process.exit(1);
   } else {
     console.log("✅ All checks passed.");
     process.exit(0);
