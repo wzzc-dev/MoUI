@@ -13,7 +13,6 @@ import {
 
 import {
   "moonbitlang/core/encoding/base64",
-  "moonbitlang/x/fs",
   "wzzc-dev/moui/core",
 } for "wbtest"
 
