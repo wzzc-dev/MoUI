@@ -49,12 +49,13 @@ fn windows_surface_route_from_environment() -> @render.SkiaSurfaceRoute {
       )
     None => @render.NativeRendererMode::Auto
   }
-  @render.select_native_renderer(
-    @render.NativeGpuPlatform::Windows,
+  let platform = @render.NativeGpuPlatform::Windows
+  @render.resolve_surface_route(
+    platform,
     requested,
     gpu_available=@skia_native.Surface::direct3d_gpu_context_runtime_available(),
-    gpu_promoted=@render.NativeGpuPlatform::Windows.gpu_promoted(),
-  ).surface_route
+    gpu_promoted=@render.NativePlatformSurface::gpu_promoted(platform),
+  )
 }
 
 ///|
