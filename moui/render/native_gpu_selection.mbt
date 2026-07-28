@@ -193,72 +193,55 @@ pub fn NativeRendererSelection::new(
 }
 
 ///|
+/// [DEPRECATED] Resolve native renderer selection using the central matrix.
+///
+/// **Migration**: Use `resolve_surface_route` for route-only consumers, or
+/// `RendererProviderRegistry::select_native` for provider-based selection.
+/// This function is preserved for incremental migration and will be removed
+/// after all consumers migrate.
+///
+/// Internally delegates to `resolve_surface_route` + trait methods so the
+/// route calculation is no longer duplicated. The `selected` field is derived
+/// from `surface_route.is_gpu()`.
 pub fn select_native_renderer(
   platform : NativeGpuPlatform,
   requested : NativeRendererMode,
   gpu_available~ : Bool,
   gpu_promoted~ : Bool,
 ) -> NativeRendererSelection {
-  let gpu_route = NativePlatformSurface::surface_route(platform)
-  let raster_route = SkiaSurfaceRoute::RasterSurfaceRoute
-  match requested {
-    NativeRendererMode::SkiaRaster =>
-      NativeRendererSelection::new(
-        platform~,
-        requested~,
-        selected=RendererBackendKind::SkiaRasterNative,
-        gpu_available~,
-        gpu_promoted~,
-        surface_route=raster_route,
-        fallback_reason=None,
-      )
-    NativeRendererMode::SkiaGpu =>
-      if gpu_available {
-        NativeRendererSelection::new(
-          platform~,
-          requested~,
-          selected=RendererBackendKind::SkiaGpuNative,
-          gpu_available~,
-          gpu_promoted~,
-          surface_route=gpu_route,
-          fallback_reason=None,
-        )
-      } else {
-        NativeRendererSelection::new(
-          platform~,
-          requested~,
-          selected=RendererBackendKind::SkiaRasterNative,
-          gpu_available~,
-          gpu_promoted~,
-          surface_route=raster_route,
-          fallback_reason=Some("requested Skia GPU host surface is unavailable"),
-        )
-      }
-    NativeRendererMode::Auto =>
-      if gpu_available && gpu_promoted {
-        NativeRendererSelection::new(
-          platform~,
-          requested~,
-          selected=RendererBackendKind::SkiaGpuNative,
-          gpu_available~,
-          gpu_promoted~,
-          surface_route=gpu_route,
-          fallback_reason=None,
-        )
-      } else {
-        NativeRendererSelection::new(
-          platform~,
-          requested~,
-          selected=RendererBackendKind::SkiaRasterNative,
-          gpu_available~,
-          gpu_promoted~,
-          surface_route=raster_route,
-          fallback_reason=if !gpu_available {
-            Some("Skia GPU host surface is unavailable")
-          } else {
-            Some("Skia GPU route has not passed platform promotion gates")
-          },
-        )
-      }
+  let surface_route = resolve_surface_route(
+    platform,
+    requested,
+    gpu_available~,
+    gpu_promoted~,
+  )
+  let selected = if surface_route.is_gpu() {
+    RendererBackendKind::SkiaGpuNative
+  } else {
+    RendererBackendKind::SkiaRasterNative
   }
+  let fallback_reason : String? = if surface_route.is_gpu() {
+    None
+  } else {
+    match requested {
+      NativeRendererMode::SkiaRaster => None
+      NativeRendererMode::SkiaGpu =>
+        Some("requested Skia GPU host surface is unavailable")
+      NativeRendererMode::Auto =>
+        if !gpu_available {
+          Some("Skia GPU host surface is unavailable")
+        } else {
+          Some("Skia GPU route has not passed platform promotion gates")
+        }
+    }
+  }
+  NativeRendererSelection::new(
+    platform~,
+    requested~,
+    selected~,
+    gpu_available~,
+    gpu_promoted~,
+    surface_route~,
+    fallback_reason~,
+  )
 }
