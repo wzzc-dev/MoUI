@@ -1,12 +1,10 @@
 ///|
-using @host {
-  type HostWindowId,
-}
 using @render {
   type HostWindowRenderer,
   type HostImageResourceRepaintTracker,
   type HostImageResourceCompletionSource,
   type HostAsyncImageLoader,
+  type RenderWindowId,
 }
 
 ///|
@@ -20,7 +18,7 @@ pub(all) struct EmbeddedImageFrameObservation {
 
 ///|
 pub struct EmbeddedImageCoordinator {
-  window_id : HostWindowId
+  window_id : RenderWindowId
   renderer : HostWindowRenderer
   tracker : HostImageResourceRepaintTracker
   completion_source : HostImageResourceCompletionSource
@@ -34,7 +32,7 @@ pub fn EmbeddedImageCoordinator::new(
   image_loader~ : HostAsyncImageLoader?,
   request_redraw~ : () -> Unit,
 ) -> EmbeddedImageCoordinator {
-  let window_id = HostWindowId::new(1)
+  let window_id = RenderWindowId::new(1)
   let tracker = HostImageResourceRepaintTracker::new()
   let window_open = Ref(true)
   let completion_source = HostImageResourceCompletionSource::new(

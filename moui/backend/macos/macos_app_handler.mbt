@@ -128,7 +128,7 @@ pub impl @window_macos.ApplicationHandler for MacosApp with fn window_event(
             scale_factor=slot.window.scale_factor(),
           )
           (self.renderer_provider.sync_surface)(slot.window, metrics)
-          slot.renderer.resize(metrics)
+          slot.renderer.resize(to_render_metrics(metrics))
           slot.window.request_redraw()
         }
         None => ()
@@ -143,7 +143,7 @@ pub impl @window_macos.ApplicationHandler for MacosApp with fn window_event(
             scale_factor=slot.window.scale_factor(),
           )
           (self.renderer_provider.sync_surface)(slot.window, metrics)
-          slot.renderer.resize(metrics)
+          slot.renderer.resize(to_render_metrics(metrics))
           slot.window.request_redraw()
         }
         None => ()
@@ -239,7 +239,7 @@ fn MacosApp::redraw_window(
         if prior_presented {
           ignore(
             self.image_repaint_tracker.record_presented(
-              window_id,
+              to_render_id(window_id),
               platform_slot.renderer,
             ),
           )
@@ -285,7 +285,7 @@ fn MacosApp::redraw_window(
         (present_completions.is_empty() && result.presented) {
         ignore(
           self.image_repaint_tracker.record_presented(
-            window_id,
+            to_render_id(window_id),
             platform_slot.renderer,
           ),
         )

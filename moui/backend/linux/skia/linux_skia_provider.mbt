@@ -186,7 +186,7 @@ fn skia_async_image_loader() -> @render.HostAsyncImageLoader {
     spawn=(window_id, source) => {
       if source.has_prefix("data:") {
         let completion = @skia_renderer.skia_image_load_completion(source)
-        ignore(native_source.complete(window_id, completion))
+        ignore(native_source.complete(@render.RenderWindowId::new(window_id.value), completion))
       } else {
         let source_bytes = @utf8.encode(source[:], bom=false)
         moui_linux_async_image_spawn(
@@ -240,7 +240,7 @@ fn skia_async_image_loader() -> @render.HostAsyncImageLoader {
             background_io~,
           )
         }
-        ignore(native_source.complete(window_id, completion))
+        ignore(native_source.complete(@render.RenderWindowId::new(window_id.value), completion))
       }
     },
   )
@@ -463,12 +463,12 @@ fn host_renderer_from_native_gpu_worker(
   }
   @render.HostWindowRenderer::new(
     resize=metrics => {
-      renderer.resize(renderer_metrics_from_host(metrics)) catch {
+      renderer.resize(metrics) catch {
         err => println("error resizing Linux Skia producer: \{err.message()}")
       }
       if !fallback_to_raster.val {
         let dimensions = linux_skia_vulkan_surface_descriptor(
-          renderer_metrics_from_host(metrics),
+          metrics,
         ).dimensions()
         ignore(
           worker.submit_control(
@@ -584,7 +584,7 @@ fn host_renderer_from_skia(
 ) -> @render.HostWindowRenderer {
   @render.HostWindowRenderer::new(
     resize=metrics => {
-      renderer.resize(renderer_metrics_from_host(metrics)) catch {
+      renderer.resize(metrics) catch {
         err => println("error resizing Linux Skia renderer: \{err.message()}")
       }
     },

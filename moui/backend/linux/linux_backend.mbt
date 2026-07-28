@@ -150,11 +150,12 @@ fn LinuxRendererProvider::schedule_image_resource_loads(
   renderer : @render.HostWindowRenderer,
   completion_source : @render.HostImageResourceCompletionSource,
 ) -> @render.HostAsyncImageLoadScheduleResult? {
+  let render_id = to_render_id(window_id)
   match self.image_loader {
     Some(loader) =>
       Some(
         loader.schedule_loading_resources(
-          window_id, renderer, completion_source,
+          render_id, renderer, completion_source,
         ),
       )
     None => None
@@ -166,8 +167,9 @@ fn LinuxRendererProvider::cancel_image_resource_loads(
   self : LinuxRendererProvider,
   window_id : @host.HostWindowId,
 ) -> Int {
+  let render_id = to_render_id(window_id)
   match self.image_loader {
-    Some(loader) => loader.cancel_window(window_id)
+    Some(loader) => loader.cancel_window(render_id)
     None => 0
   }
 }

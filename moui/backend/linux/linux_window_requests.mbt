@@ -112,7 +112,7 @@ fn LinuxApp::apply_window_request(
             ignore(self.windows.resize(id, content_metrics))
             self.sync_runtime_slot(id)
             (self.renderer_provider.sync_surface)(window, surface_metrics)
-            slot.renderer.resize(surface_metrics)
+            slot.renderer.resize(to_render_metrics(surface_metrics))
           }
           None => {
             ignore(
@@ -405,12 +405,13 @@ fn LinuxApp::request_image_resource_redraw_if_changed(
       self.runtime_slots.lookup(window_id),
     ) {
     (Some(platform_slot), Some(runtime_slot)) => {
+      let render_id = to_render_id(window_id)
       let result = self.image_repaint_tracker.request_redraw_if_changed(
-        window_id,
+        render_id,
         platform_slot.renderer,
         window_open=runtime_slot.record.phase !=
           @host.HostWindowLifecyclePhase::WindowClosed,
-        request_redraw=id => self.request_platform_redraw(id),
+        request_redraw=id => self.request_platform_redraw(to_host_id(id)),
       )
       result.status() ==
       @render.HostImageResourceRepaintStatus::ImageRepaintRequested
@@ -418,7 +419,7 @@ fn LinuxApp::request_image_resource_redraw_if_changed(
     (Some(platform_slot), None) => {
       ignore(
         self.image_repaint_tracker.request_redraw_if_changed(
-          window_id,
+          to_render_id(window_id),
           platform_slot.renderer,
           window_open=false,
           request_redraw=_id => (),
@@ -438,7 +439,7 @@ fn LinuxApp::bind_renderer_image_resource_changes(
 ) -> Unit {
   renderer.set_image_resource_change_callback(
     Some(snapshot => {
-      match self.image_repaint_tracker.revision_for(window_id) {
+      match self.image_repaint_tracker.revision_for(to_render_id(window_id)) {
         Some(_) =>
           match
             (
@@ -448,17 +449,17 @@ fn LinuxApp::bind_renderer_image_resource_changes(
             (Some(_platform_slot), Some(runtime_slot)) =>
               ignore(
                 self.image_repaint_tracker.request_redraw_for_snapshot_if_changed(
-                  window_id,
+                  to_render_id(window_id),
                   snapshot,
                   window_open=runtime_slot.record.phase !=
                     @host.HostWindowLifecyclePhase::WindowClosed,
-                  request_redraw=id => self.request_platform_redraw(id),
+                  request_redraw=id => self.request_platform_redraw(to_host_id(id)),
                 ),
               )
             (Some(_platform_slot), None) =>
               ignore(
                 self.image_repaint_tracker.request_redraw_for_snapshot_if_changed(
-                  window_id,
+                  to_render_id(window_id),
                   snapshot,
                   window_open=false,
                   request_redraw=_id => (),
@@ -489,8 +490,14 @@ fn LinuxApp::image_resource_completion_source(
 ) -> @render.HostImageResourceCompletionSource {
   @render.HostImageResourceCompletionSource::new(
     tracker=self.image_repaint_tracker,
-    window_open=id => self.image_resource_window_open(id),
-    request_redraw=id => self.request_platform_redraw(id),
+    window_open=id => {
+      let host_id = to_host_id(id)
+      self.image_resource_window_open(host_id)
+    },
+    request_redraw=id => {
+      let host_id = to_host_id(id)
+      self.request_platform_redraw(host_id)
+    },
   )
 }
 
@@ -513,7 +520,7 @@ fn LinuxApp::dispose_window(
 ) -> Unit {
   ignore(self.windows.close(window_id))
   self.sync_runtime_slot(window_id)
-  ignore(self.image_repaint_tracker.remove_window(window_id))
+  ignore(self.image_repaint_tracker.remove_window(to_render_id(window_id)))
   ignore(self.renderer_provider.cancel_image_resource_loads(window_id))
   ignore(self.runtime_slots.remove(window_id))
   ignore(self.platform_windows.remove_host(window_id))
@@ -546,6 +553,25 @@ fn LinuxApp::rollback_window_record(
 ///|
 fn runtime_size_to_window_surface_size(size : @core.Size) -> @dpi.Size {
   @dpi.LogicalSize::LogicalSize(size.width, size.height).into_size()
+}
+
+///|
+fn to_host_id(id : @render.RenderWindowId) -> @host.HostWindowId {
+  @host.HostWindowId::new(id.value)
+}
+
+///|
+fn to_render_id(window_id : @host.HostWindowId) -> @render.RenderWindowId {
+  @render.RenderWindowId::new(window_id.value)
+}
+
+///|
+fn to_render_metrics(metrics : @host.HostSurfaceMetrics) -> @render.RendererSurfaceMetrics {
+  @render.RendererSurfaceMetrics::new(
+    logical_size=metrics.logical_size,
+    physical_size=metrics.physical_size,
+    scale_factor=metrics.scale_factor,
+  )
 }
 
 ///|

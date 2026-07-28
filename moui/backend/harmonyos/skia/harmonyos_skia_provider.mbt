@@ -343,17 +343,24 @@ fn host_renderer_from_skia(
       }
     }
   }
+  let host_metrics_from_renderer = (metrics : @render.RendererSurfaceMetrics) => {
+    @host.HostSurfaceMetrics::new(
+      logical_size=metrics.logical_size,
+      physical_size=metrics.physical_size,
+    )
+  }
   @render.HostWindowRenderer::new(
     resize=metrics => {
-      last_metrics.val = metrics
-      active.val.resize(renderer_metrics_from_host(metrics)) catch {
+      let host_metrics = host_metrics_from_renderer(metrics)
+      last_metrics.val = host_metrics
+      active.val.resize(metrics) catch {
         err => {
           println("error resizing HarmonyOS Skia renderer: \{err.message()}")
           if active.val.target_kind()
             is @skia_renderer.SkiaPresentKind::HostGpuSurface {
-            try_fallback(metrics, err.message())
+            try_fallback(host_metrics, err.message())
             if fallback_to_raster.val {
-              active.val.resize(renderer_metrics_from_host(metrics)) catch {
+              active.val.resize(metrics) catch {
                 resize_err =>
                   println(
                     "error resizing HarmonyOS raster fallback: \{resize_err.message()}",

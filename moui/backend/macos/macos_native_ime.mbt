@@ -365,7 +365,7 @@ fn MacosApp::finish_native_ime_runtime_smoke(
     scale_factor=platform_slot.window.scale_factor(),
   )
   ignore(runtime_slot.driver.dispatch(@host.HostEvent::Resized(metrics)))
-  platform_slot.renderer.resize(metrics)
+  platform_slot.renderer.resize(to_render_metrics(metrics))
   self.sync_text_input_session()
   let after_resize_input = runtime_slot.driver.focused_text_input()
   let resize_anchor_ok = self.native_ime_request_matches_window(

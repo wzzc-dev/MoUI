@@ -127,11 +127,12 @@ fn WindowsRendererProvider::schedule_image_resource_loads(
   renderer : @render.HostWindowRenderer,
   completion_source : @render.HostImageResourceCompletionSource,
 ) -> @render.HostAsyncImageLoadScheduleResult? {
+  let render_id = to_render_id(window_id)
   match self.image_loader {
     Some(loader) =>
       Some(
         loader.schedule_loading_resources(
-          window_id, renderer, completion_source,
+          render_id, renderer, completion_source,
         ),
       )
     None => None
@@ -143,8 +144,9 @@ fn WindowsRendererProvider::cancel_image_resource_loads(
   self : WindowsRendererProvider,
   window_id : @host.HostWindowId,
 ) -> Int {
+  let render_id = to_render_id(window_id)
   match self.image_loader {
-    Some(loader) => loader.cancel_window(window_id)
+    Some(loader) => loader.cancel_window(render_id)
     None => 0
   }
 }
@@ -623,7 +625,7 @@ pub impl @win.ApplicationHandler for WindowsApp with fn window_event(
             ),
           )
           (self.renderer_provider.sync_surface)(slot.window, metrics)
-          slot.renderer.resize(metrics)
+          slot.renderer.resize(to_render_metrics(metrics))
           slot.window.request_redraw()
         }
         None => ()
@@ -707,7 +709,7 @@ fn WindowsApp::redraw_window(
         if prior_presented {
           ignore(
             self.image_repaint_tracker.record_presented(
-              window_id,
+              to_render_id(window_id),
               platform_slot.renderer,
             ),
           )
@@ -756,7 +758,7 @@ fn WindowsApp::redraw_window(
         (present_completions.is_empty() && result.presented) {
         ignore(
           self.image_repaint_tracker.record_presented(
-            window_id,
+            to_render_id(window_id),
             platform_slot.renderer,
           ),
         )
@@ -918,7 +920,7 @@ fn WindowsApp::apply_window_request(
         ignore(window.request_surface_size(host_metrics_to_dpi_size(metrics)))
         (self.renderer_provider.sync_surface)(window, metrics)
         match self.platform_slots.lookup_host(id) {
-          Some(slot) => slot.renderer.resize(metrics)
+          Some(slot) => slot.renderer.resize(to_render_metrics(metrics))
           None => ()
         }
         window.request_redraw()
@@ -1176,12 +1178,13 @@ fn WindowsApp::request_image_resource_redraw_if_changed(
       self.runtime_slots.lookup(window_id),
     ) {
     (Some(platform_slot), Some(runtime_slot)) => {
+      let render_id = to_render_id(window_id)
       let result = self.image_repaint_tracker.request_redraw_if_changed(
-        window_id,
+        render_id,
         platform_slot.renderer,
         window_open=runtime_slot.record.phase !=
           @host.HostWindowLifecyclePhase::WindowClosed,
-        request_redraw=id => self.request_platform_redraw(id),
+        request_redraw=id => self.request_platform_redraw(to_host_id(id)),
       )
       result.status() ==
       @render.HostImageResourceRepaintStatus::ImageRepaintRequested
@@ -1189,7 +1192,7 @@ fn WindowsApp::request_image_resource_redraw_if_changed(
     (Some(platform_slot), None) => {
       ignore(
         self.image_repaint_tracker.request_redraw_if_changed(
-          window_id,
+          to_render_id(window_id),
           platform_slot.renderer,
           window_open=false,
           request_redraw=_id => (),
@@ -1209,7 +1212,7 @@ fn WindowsApp::bind_renderer_image_resource_changes(
 ) -> Unit {
   renderer.set_image_resource_change_callback(
     Some(snapshot => {
-      match self.image_repaint_tracker.revision_for(window_id) {
+      match self.image_repaint_tracker.revision_for(to_render_id(window_id)) {
         Some(_) =>
           match
             (
@@ -1219,17 +1222,17 @@ fn WindowsApp::bind_renderer_image_resource_changes(
             (Some(_platform_slot), Some(runtime_slot)) =>
               ignore(
                 self.image_repaint_tracker.request_redraw_for_snapshot_if_changed(
-                  window_id,
+                  to_render_id(window_id),
                   snapshot,
                   window_open=runtime_slot.record.phase !=
                     @host.HostWindowLifecyclePhase::WindowClosed,
-                  request_redraw=id => self.request_platform_redraw(id),
+                  request_redraw=id => self.request_platform_redraw(to_host_id(id)),
                 ),
               )
             (Some(_platform_slot), None) =>
               ignore(
                 self.image_repaint_tracker.request_redraw_for_snapshot_if_changed(
-                  window_id,
+                  to_render_id(window_id),
                   snapshot,
                   window_open=false,
                   request_redraw=_id => (),
@@ -1260,8 +1263,14 @@ fn WindowsApp::image_resource_completion_source(
 ) -> @render.HostImageResourceCompletionSource {
   @render.HostImageResourceCompletionSource::new(
     tracker=self.image_repaint_tracker,
-    window_open=id => self.image_resource_window_open(id),
-    request_redraw=id => self.request_platform_redraw(id),
+    window_open=id => {
+      let host_id = to_host_id(id)
+      self.image_resource_window_open(host_id)
+    },
+    request_redraw=id => {
+      let host_id = to_host_id(id)
+      self.request_platform_redraw(host_id)
+    },
   )
 }
 
@@ -1284,7 +1293,7 @@ fn WindowsApp::dispose_window(
 ) -> Unit {
   ignore(self.windows.close(window_id))
   self.sync_runtime_slot(window_id)
-  ignore(self.image_repaint_tracker.remove_window(window_id))
+  ignore(self.image_repaint_tracker.remove_window(to_render_id(window_id)))
   ignore(self.renderer_provider.cancel_image_resource_loads(window_id))
   ignore(self.runtime_slots.remove(window_id))
   ignore(self.platform_windows.remove_host(window_id))
@@ -1321,6 +1330,25 @@ fn size_dim_to_int(value : Double) -> Int {
   } else {
     value.to_int()
   }
+}
+
+///|
+fn to_host_id(id : @render.RenderWindowId) -> @host.HostWindowId {
+  @host.HostWindowId::new(id.value)
+}
+
+///|
+fn to_render_id(window_id : @host.HostWindowId) -> @render.RenderWindowId {
+  @render.RenderWindowId::new(window_id.value)
+}
+
+///|
+fn to_render_metrics(metrics : @host.HostSurfaceMetrics) -> @render.RendererSurfaceMetrics {
+  @render.RendererSurfaceMetrics::new(
+    logical_size=metrics.logical_size,
+    physical_size=metrics.physical_size,
+    scale_factor=metrics.scale_factor,
+  )
 }
 
 ///|

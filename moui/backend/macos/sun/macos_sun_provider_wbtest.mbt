@@ -173,7 +173,7 @@ fn sun_test_png_data_uri() -> String {
 ///|
 test "macOS Sun native image loader completes loading resources" {
   let loader = sun_native_image_loader()
-  let window_id = @host.HostWindowId::new(1)
+  let window_id = @render.RenderWindowId::new(1)
   let lifecycle = @render.ImageResourceLifecycle::new()
   let source = sun_test_png_data_uri()
   ignore(lifecycle.mark_loading(source))
@@ -190,7 +190,7 @@ test "macOS Sun native image loader completes loading resources" {
   )
   let tracker = @render.HostImageResourceRepaintTracker::new()
   ignore(tracker.record_presented(window_id, renderer))
-  let redraws : Array[@host.HostWindowId] = []
+  let redraws : Array[@render.RenderWindowId] = []
   let completion_source = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=id => id == window_id,
@@ -217,7 +217,7 @@ test "macOS Sun native image loader completes loading resources" {
 test "macOS Sun async image path records loading then second-frame completion" {
   let native_source = @render.HostNativeAsyncImageSource::new()
   let loader = native_source.loader()
-  let window_id = @host.HostWindowId::new(3)
+  let window_id = @render.RenderWindowId::new(3)
   let lifecycle = @render.ImageResourceLifecycle::new()
   let source = sun_test_png_data_uri()
   ignore(lifecycle.mark_loading(source))
@@ -240,7 +240,7 @@ test "macOS Sun async image path records loading then second-frame completion" {
   )
   inspect(first_frame.current_status_counts().loading_count(), content="1")
   inspect(first_frame.current_status_counts().ready_count(), content="0")
-  let redraws : Array[@host.HostWindowId] = []
+  let redraws : Array[@render.RenderWindowId] = []
   let completion_source = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=id => id == window_id,

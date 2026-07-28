@@ -15,7 +15,7 @@ pub fn run_renderer_smoke() -> Unit raise @wgpu_mbt.WgpuError {
 ///|
 fn assert_macos_wgpu_async_repaint_proof() -> Unit {
   let loader = wgpu_native_image_loader()
-  let window_id = @host.HostWindowId::new(710)
+  let window_id = @render.RenderWindowId::new(710)
   let lifecycle = @render.ImageResourceLifecycle::new()
   let source = macos_wgpu_proof_png_data_uri()
   ignore(lifecycle.mark_loading(source))
@@ -32,7 +32,7 @@ fn assert_macos_wgpu_async_repaint_proof() -> Unit {
   )
   let tracker = @render.HostImageResourceRepaintTracker::new()
   ignore(tracker.record_presented(window_id, renderer))
-  let redraws : Array[@host.HostWindowId] = []
+  let redraws : Array[@render.RenderWindowId] = []
   let completion_source = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=id => id == window_id,

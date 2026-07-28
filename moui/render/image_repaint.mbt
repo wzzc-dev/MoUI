@@ -8,7 +8,7 @@ pub(all) enum HostImageResourceRepaintStatus {
 
 ///|
 pub struct HostImageResourceRepaintResult {
-  priv window_id : @backend_host.HostWindowId
+  priv window_id : RenderWindowId
   priv previous_revision : Int
   priv current_revision : Int
   priv previous_status_counts : HostImageResourceStatusCounts
@@ -27,7 +27,7 @@ pub struct HostImageResourceStatusCounts {
 
 ///|
 pub struct HostImageResourceTrackedWindow {
-  priv window_id : @backend_host.HostWindowId
+  priv window_id : RenderWindowId
   priv revision : Int
   priv status_counts : HostImageResourceStatusCounts
 } derive(Eq, Debug, ToJson)
@@ -50,7 +50,7 @@ pub struct HostImageResourceCompletionSourceDiagnostics {
 
 ///|
 pub struct HostAsyncImageLoadScheduleResult {
-  priv window_id : @backend_host.HostWindowId
+  priv window_id : RenderWindowId
   priv snapshot_revision : Int
   priv loading_count : Int
   priv scheduled_count : Int
@@ -74,13 +74,13 @@ pub(all) enum HostNativeAsyncImageCompletionStatus {
 
 ///|
 pub struct HostNativeAsyncImageLoadRequest {
-  priv window_id : @backend_host.HostWindowId
+  priv window_id : RenderWindowId
   priv source : String
 } derive(Eq, Debug, ToJson)
 
 ///|
 pub struct HostNativeAsyncImageCompletionResult {
-  priv window_id : @backend_host.HostWindowId
+  priv window_id : RenderWindowId
   priv source : String
   priv status : HostNativeAsyncImageCompletionStatus
 } derive(Eq, Debug, ToJson)
@@ -97,7 +97,7 @@ pub struct HostNativeAsyncImageSourceDiagnostics {
 ///|
 pub fn HostImageResourceRepaintResult::window_id(
   self : HostImageResourceRepaintResult,
-) -> @backend_host.HostWindowId {
+) -> RenderWindowId {
   self.window_id
 }
 
@@ -174,7 +174,7 @@ pub fn HostImageResourceStatusCounts::disposed_count(
 ///|
 pub fn HostImageResourceTrackedWindow::window_id(
   self : HostImageResourceTrackedWindow,
-) -> @backend_host.HostWindowId {
+) -> RenderWindowId {
   self.window_id
 }
 
@@ -251,7 +251,7 @@ pub fn HostImageResourceCompletionSourceDiagnostics::tracked_window_count(
 ///|
 pub fn HostAsyncImageLoadScheduleResult::window_id(
   self : HostAsyncImageLoadScheduleResult,
-) -> @backend_host.HostWindowId {
+) -> RenderWindowId {
   self.window_id
 }
 
@@ -321,7 +321,7 @@ pub fn HostAsyncImageLoaderDiagnostics::in_flight_count(
 ///|
 pub fn HostNativeAsyncImageLoadRequest::window_id(
   self : HostNativeAsyncImageLoadRequest,
-) -> @backend_host.HostWindowId {
+) -> RenderWindowId {
   self.window_id
 }
 
@@ -335,7 +335,7 @@ pub fn HostNativeAsyncImageLoadRequest::source(
 ///|
 pub fn HostNativeAsyncImageCompletionResult::window_id(
   self : HostNativeAsyncImageCompletionResult,
-) -> @backend_host.HostWindowId {
+) -> RenderWindowId {
   self.window_id
 }
 
@@ -390,7 +390,7 @@ pub fn HostNativeAsyncImageSourceDiagnostics::pending_count(
 
 ///|
 pub struct HostImageResourceRepaintTracker {
-  priv mut window_ids : Array[@backend_host.HostWindowId]
+  priv mut window_ids : Array[RenderWindowId]
   priv mut revisions : Array[Int]
   priv mut status_counts : Array[HostImageResourceStatusCounts]
 }
@@ -398,8 +398,8 @@ pub struct HostImageResourceRepaintTracker {
 ///|
 pub struct HostImageResourceCompletionSource {
   priv tracker : HostImageResourceRepaintTracker
-  priv window_open_fn : (@backend_host.HostWindowId) -> Bool
-  priv request_redraw_fn : (@backend_host.HostWindowId) -> Unit
+  priv window_open_fn : (RenderWindowId) -> Bool
+  priv request_redraw_fn : (RenderWindowId) -> Unit
   priv mut publish_count : Int
   priv mut recorded_count : Int
   priv mut redraw_requested_count : Int
@@ -409,14 +409,14 @@ pub struct HostImageResourceCompletionSource {
 
 ///|
 priv struct HostAsyncImageLoadInFlight {
-  window_id : @backend_host.HostWindowId
+  window_id : RenderWindowId
   source : String
   cancel : (() -> Unit)?
 }
 
 ///|
 priv struct HostNativeAsyncImageLoadPending {
-  window_id : @backend_host.HostWindowId
+  window_id : RenderWindowId
   source : String
   complete : (ImageResourceLoadCompletion) -> Unit
 }
@@ -424,7 +424,7 @@ priv struct HostNativeAsyncImageLoadPending {
 ///|
 pub struct HostAsyncImageLoader {
   priv start_load_fn : (
-    @backend_host.HostWindowId,
+    RenderWindowId,
     String,
     (ImageResourceLoadCompletion) -> Unit,
   ) -> (() -> Unit)?
@@ -448,8 +448,8 @@ pub struct HostNativeAsyncImageSource {
 ///|
 pub fn HostImageResourceCompletionSource::new(
   tracker~ : HostImageResourceRepaintTracker,
-  window_open~ : (@backend_host.HostWindowId) -> Bool,
-  request_redraw~ : (@backend_host.HostWindowId) -> Unit,
+  window_open~ : (RenderWindowId) -> Bool,
+  request_redraw~ : (RenderWindowId) -> Unit,
 ) -> HostImageResourceCompletionSource {
   {
     tracker,
@@ -466,7 +466,7 @@ pub fn HostImageResourceCompletionSource::new(
 ///|
 pub fn HostAsyncImageLoader::new(
   start_load~ : (
-    @backend_host.HostWindowId,
+    RenderWindowId,
     String,
     (ImageResourceLoadCompletion) -> Unit,
   ) -> (() -> Unit)?,
@@ -485,7 +485,7 @@ pub fn HostAsyncImageLoader::new(
 ///|
 pub fn HostAsyncImageLoader::new_with_drain(
   start_load~ : (
-    @backend_host.HostWindowId,
+    RenderWindowId,
     String,
     (ImageResourceLoadCompletion) -> Unit,
   ) -> (() -> Unit)?,
@@ -526,7 +526,7 @@ pub fn HostNativeAsyncImageSource::loader(
 ///|
 pub fn HostNativeAsyncImageSource::loader_with_drain(
   self : HostNativeAsyncImageSource,
-  spawn~ : (@backend_host.HostWindowId, String) -> Unit,
+  spawn~ : (RenderWindowId, String) -> Unit,
   drain~ : () -> Unit,
 ) -> HostAsyncImageLoader {
   HostAsyncImageLoader::new_with_drain(
@@ -553,7 +553,7 @@ pub fn HostNativeAsyncImageSource::pending_requests(
 ///|
 pub fn HostNativeAsyncImageSource::complete(
   self : HostNativeAsyncImageSource,
-  window_id : @backend_host.HostWindowId,
+  window_id : RenderWindowId,
   completion : ImageResourceLoadCompletion,
 ) -> HostNativeAsyncImageCompletionResult {
   match self.remove_pending(window_id, completion.source) {
@@ -593,7 +593,7 @@ pub fn HostNativeAsyncImageSource::diagnostics(
 ///|
 pub fn HostImageResourceCompletionSource::publish(
   self : HostImageResourceCompletionSource,
-  window_id : @backend_host.HostWindowId,
+  window_id : RenderWindowId,
   snapshot : ImageResourceSnapshot,
 ) -> HostImageResourceRepaintResult {
   self.publish_count = self.publish_count + 1
@@ -610,7 +610,7 @@ pub fn HostImageResourceCompletionSource::publish(
 ///|
 pub fn HostImageResourceCompletionSource::complete(
   self : HostImageResourceCompletionSource,
-  window_id : @backend_host.HostWindowId,
+  window_id : RenderWindowId,
   renderer : HostWindowRenderer,
   completion : ImageResourceLoadCompletion,
 ) -> HostImageResourceRepaintResult {
@@ -621,7 +621,7 @@ pub fn HostImageResourceCompletionSource::complete(
 ///|
 pub fn HostAsyncImageLoader::schedule_loading_resources(
   self : HostAsyncImageLoader,
-  window_id : @backend_host.HostWindowId,
+  window_id : RenderWindowId,
   renderer : HostWindowRenderer,
   completion_source : HostImageResourceCompletionSource,
 ) -> HostAsyncImageLoadScheduleResult {
@@ -662,7 +662,7 @@ pub fn HostAsyncImageLoader::schedule_loading_resources(
 ///|
 pub fn HostAsyncImageLoader::cancel_window(
   self : HostAsyncImageLoader,
-  window_id : @backend_host.HostWindowId,
+  window_id : RenderWindowId,
 ) -> Int {
   let kept : Array[HostAsyncImageLoadInFlight] = []
   let cancelled_entries : Array[HostAsyncImageLoadInFlight] = []
@@ -732,7 +732,7 @@ pub fn HostImageResourceCompletionSource::diagnostics(
 ///|
 fn HostAsyncImageLoader::schedule_one(
   self : HostAsyncImageLoader,
-  window_id : @backend_host.HostWindowId,
+  window_id : RenderWindowId,
   source : String,
   renderer : HostWindowRenderer,
   completion_source : HostImageResourceCompletionSource,
@@ -751,7 +751,7 @@ fn HostAsyncImageLoader::schedule_one(
 ///|
 fn HostAsyncImageLoader::is_in_flight(
   self : HostAsyncImageLoader,
-  window_id : @backend_host.HostWindowId,
+  window_id : RenderWindowId,
   source : String,
 ) -> Bool {
   self.in_flight.any(entry => {
@@ -762,7 +762,7 @@ fn HostAsyncImageLoader::is_in_flight(
 ///|
 fn HostNativeAsyncImageSource::register(
   self : HostNativeAsyncImageSource,
-  window_id : @backend_host.HostWindowId,
+  window_id : RenderWindowId,
   source : String,
   complete : (ImageResourceLoadCompletion) -> Unit,
 ) -> Unit {
@@ -773,7 +773,7 @@ fn HostNativeAsyncImageSource::register(
 ///|
 fn HostNativeAsyncImageSource::cancel(
   self : HostNativeAsyncImageSource,
-  window_id : @backend_host.HostWindowId,
+  window_id : RenderWindowId,
   source : String,
 ) -> Bool {
   match self.remove_pending(window_id, source) {
@@ -788,7 +788,7 @@ fn HostNativeAsyncImageSource::cancel(
 ///|
 fn HostNativeAsyncImageSource::remove_pending(
   self : HostNativeAsyncImageSource,
-  window_id : @backend_host.HostWindowId,
+  window_id : RenderWindowId,
   source : String,
 ) -> HostNativeAsyncImageLoadPending? {
   let kept : Array[HostNativeAsyncImageLoadPending] = []
@@ -807,7 +807,7 @@ fn HostNativeAsyncImageSource::remove_pending(
 ///|
 fn HostAsyncImageLoader::set_cancel_handler(
   self : HostAsyncImageLoader,
-  window_id : @backend_host.HostWindowId,
+  window_id : RenderWindowId,
   source : String,
   cancel : (() -> Unit)?,
 ) -> Unit {
@@ -822,7 +822,7 @@ fn HostAsyncImageLoader::set_cancel_handler(
 ///|
 fn HostAsyncImageLoader::remove_in_flight(
   self : HostAsyncImageLoader,
-  window_id : @backend_host.HostWindowId,
+  window_id : RenderWindowId,
   source : String,
 ) -> Bool {
   let kept : Array[HostAsyncImageLoadInFlight] = []
@@ -890,7 +890,7 @@ pub fn HostImageResourceRepaintTracker::snapshot(
 ///|
 pub fn HostImageResourceRepaintTracker::revision_for(
   self : HostImageResourceRepaintTracker,
-  window_id : @backend_host.HostWindowId,
+  window_id : RenderWindowId,
 ) -> Int? {
   for index, id in self.window_ids {
     if id == window_id && index < self.revisions.length() {
@@ -903,7 +903,7 @@ pub fn HostImageResourceRepaintTracker::revision_for(
 ///|
 pub fn HostImageResourceRepaintTracker::record_presented(
   self : HostImageResourceRepaintTracker,
-  window_id : @backend_host.HostWindowId,
+  window_id : RenderWindowId,
   renderer : HostWindowRenderer,
 ) -> HostImageResourceRepaintResult {
   let snapshot = renderer.image_resource_snapshot()
@@ -913,10 +913,10 @@ pub fn HostImageResourceRepaintTracker::record_presented(
 ///|
 pub fn HostImageResourceRepaintTracker::request_redraw_if_changed(
   self : HostImageResourceRepaintTracker,
-  window_id : @backend_host.HostWindowId,
+  window_id : RenderWindowId,
   renderer : HostWindowRenderer,
   window_open~ : Bool,
-  request_redraw~ : (@backend_host.HostWindowId) -> Unit,
+  request_redraw~ : (RenderWindowId) -> Unit,
 ) -> HostImageResourceRepaintResult {
   if !window_open {
     return self.discard_closed_window_change(window_id)
@@ -933,10 +933,10 @@ pub fn HostImageResourceRepaintTracker::request_redraw_if_changed(
 ///|
 pub fn HostImageResourceRepaintTracker::request_redraw_for_snapshot_if_changed(
   self : HostImageResourceRepaintTracker,
-  window_id : @backend_host.HostWindowId,
+  window_id : RenderWindowId,
   snapshot : ImageResourceSnapshot,
   window_open~ : Bool,
-  request_redraw~ : (@backend_host.HostWindowId) -> Unit,
+  request_redraw~ : (RenderWindowId) -> Unit,
 ) -> HostImageResourceRepaintResult {
   if !window_open {
     return self.discard_closed_window_change(window_id)
@@ -989,7 +989,7 @@ pub fn HostImageResourceRepaintTracker::request_redraw_for_snapshot_if_changed(
 ///|
 fn HostImageResourceRepaintTracker::discard_closed_window_change(
   self : HostImageResourceRepaintTracker,
-  window_id : @backend_host.HostWindowId,
+  window_id : RenderWindowId,
 ) -> HostImageResourceRepaintResult {
   let previous_revision = self.previous_revision_or_zero(window_id)
   let previous_status_counts = self.status_counts_for_window(window_id)
@@ -1007,9 +1007,9 @@ fn HostImageResourceRepaintTracker::discard_closed_window_change(
 ///|
 pub fn HostImageResourceRepaintTracker::remove_window(
   self : HostImageResourceRepaintTracker,
-  window_id : @backend_host.HostWindowId,
+  window_id : RenderWindowId,
 ) -> Bool {
-  let kept_ids : Array[@backend_host.HostWindowId] = []
+  let kept_ids : Array[RenderWindowId] = []
   let kept_revisions : Array[Int] = []
   let kept_status_counts : Array[HostImageResourceStatusCounts] = []
   let mut removed = false
@@ -1031,7 +1031,7 @@ pub fn HostImageResourceRepaintTracker::remove_window(
 ///|
 fn HostImageResourceRepaintTracker::record_snapshot(
   self : HostImageResourceRepaintTracker,
-  window_id : @backend_host.HostWindowId,
+  window_id : RenderWindowId,
   snapshot : ImageResourceSnapshot,
 ) -> HostImageResourceRepaintResult {
   let previous_revision = self.previous_revision_or_zero(window_id)
@@ -1053,7 +1053,7 @@ fn HostImageResourceRepaintTracker::record_snapshot(
 ///|
 fn HostImageResourceRepaintTracker::previous_revision_or_zero(
   self : HostImageResourceRepaintTracker,
-  window_id : @backend_host.HostWindowId,
+  window_id : RenderWindowId,
 ) -> Int {
   match self.revision_for(window_id) {
     Some(revision) => revision
@@ -1064,7 +1064,7 @@ fn HostImageResourceRepaintTracker::previous_revision_or_zero(
 ///|
 fn HostImageResourceRepaintTracker::set_snapshot(
   self : HostImageResourceRepaintTracker,
-  window_id : @backend_host.HostWindowId,
+  window_id : RenderWindowId,
   snapshot : ImageResourceSnapshot,
 ) -> Unit {
   let counts = host_image_resource_status_counts(snapshot.records)
@@ -1097,7 +1097,7 @@ fn HostImageResourceRepaintTracker::status_counts_for_index(
 ///|
 fn HostImageResourceRepaintTracker::status_counts_for_window(
   self : HostImageResourceRepaintTracker,
-  window_id : @backend_host.HostWindowId,
+  window_id : RenderWindowId,
 ) -> HostImageResourceStatusCounts {
   for index, id in self.window_ids {
     if id == window_id {
