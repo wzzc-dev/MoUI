@@ -223,7 +223,7 @@ fn ShowcaseModel::with_route_history(
 ///|
 fn ShowcaseModel::with_host_route_event(
   self : ShowcaseModel,
-  event : @host.HostRouteEvent,
+  event : @runtime.HostRouteEvent,
 ) -> ShowcaseModel {
   let route = event.route()
   let parsed = ShowcaseRoute::parse(route)

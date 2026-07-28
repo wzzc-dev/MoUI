@@ -28,9 +28,9 @@ pub fn WechatCanvasRendererProvider::new(
 ///|
 pub fn WechatCanvasRendererProvider::create_host_renderer(
   self : WechatCanvasRendererProvider,
-) -> @host.HostWindowRenderer {
+) -> @render.HostWindowRenderer {
   let renderer = self.renderer
-  @host.HostWindowRenderer::new(
+  @render.HostWindowRenderer::new(
     resize=fn(metrics : @host.HostSurfaceMetrics) {
       renderer.resize(
         @render.RendererSurfaceMetrics::new(
@@ -46,7 +46,7 @@ pub fn WechatCanvasRendererProvider::create_host_renderer(
     }),
     text_system=fn() -> @core.TextSystem { renderer.text_system() },
     dispose=fn() { renderer.dispose() },
-    image=@host.HostRendererImageCapability::new(
+    image=@render.HostRendererImageCapability::new(
       image_resources=fn() -> Array[@render.ImageResourceRecord] {
         renderer.image_resources()
       },
@@ -54,8 +54,8 @@ pub fn WechatCanvasRendererProvider::create_host_renderer(
         renderer.image_resource_snapshot()
       }),
     ),
-    platform_view=@host.HostRendererPlatformViewCapability::new(),
-    gpu_recovery=@host.HostRendererGpuRecoveryCapability::new(),
+    platform_view=@render.HostRendererPlatformViewCapability::new(),
+    gpu_recovery=@render.HostRendererGpuRecoveryCapability::new(),
   )
 }
 
@@ -65,7 +65,7 @@ pub fn WechatCanvasRendererProvider::create_host_renderer(
 pub fn wechat_canvas_create_renderer(
   canvas_id~ : String,
   metrics~ : @host.HostSurfaceMetrics,
-) -> @host.HostWindowRenderer {
+) -> @render.HostWindowRenderer {
   let provider = WechatCanvasRendererProvider::new(canvas_id~, metrics~)
   provider.create_host_renderer()
 }

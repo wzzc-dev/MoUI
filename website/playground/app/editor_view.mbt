@@ -159,17 +159,18 @@ fn playground_example_picker(
 ) -> @moui.View[Msg] {
   // The playground toolbar is deliberately flat; the default popup elevation
   // reads as a distracting gray halo against the editor.
-  let flat_surface = {
-    ..theme.components.surface,
-    overlay_shadow: Some({
-      ..theme.shadow_scale.md,
-      color: theme.palette.surface.with_alpha(0.0),
-    }),
-  }
-  let picker_theme = theme.with_components({
-    ..theme.components,
-    surface: flat_surface,
-  })
+  let style = @views.PickerStyle::default(theme=theme)
+    .with_font(
+      font=@text.FontSpec::new(
+        families=@text.FontFamilyStack::monospace(),
+        size=if compact { 11.0 } else { 12.0 },
+        weight=560,
+      ),
+    )
+    .with_background(
+      background=@graphics.Brush::solid(playground_editor_background()),
+    )
+    .with_radius(radius=4.0)
   let items = if compact {
     [
       @views.picker_item("01-hello-world", "01 Hello"),
@@ -189,24 +190,12 @@ fn playground_example_picker(
       @views.picker_item("06-animation", "06-animation"),
     ]
   }
-  let style = @views.PickerStyle::default(theme=picker_theme)
-    .with_font(
-      font=@text.FontSpec::new(
-        families=@text.FontFamilyStack::monospace(),
-        size=if compact { 11.0 } else { 12.0 },
-        weight=560,
-      ),
-    )
-    .with_background(
-      background=@graphics.Brush::solid(playground_editor_background()),
-    )
-    .with_radius(radius=4.0)
   @views.picker(
     items,
     selected=model.lesson_id,
     on_select=id => SelectExample(id),
     placeholder="Examples",
-    theme=picker_theme,
+    theme~,
     style~,
     max_height=244.0,
   ).frame(width=if compact { 112.0 } else { 188.0 }, height=26.0)

@@ -29,6 +29,10 @@ Copy `TEMPLATE.md` and fill in all sections. Keep it concise.
 
 | # | Title | Date | Status |
 |---|-------|------|--------|
+| 0020 | [Platform adapter convergence and duplication budget](0020-platform-adapter-convergence-and-duplication-budget.md) | 2026-07-28 | Accepted |
+| 0019 | [Renderer provider plugin architecture](0019-renderer-provider-plugin-architecture.md) | 2026-07-28 | Accepted |
+| 0018 | [Host contract split — runtime/render ownership leaves backend/host](0018-host-contract-split-and-runtime-render-ownership.md) | 2026-07-28 | Accepted |
+| 0017 | [Theme layering and views-owned ControlThemeSet](0017-theme-layering-and-control-theme-set.md) | 2026-07-28 | Accepted |
 | 0016 | [Declaration invalidation and committed Agent semantics](0016-declaration-invalidation-and-committed-agent-semantics.md) | 2026-07-27 | Accepted |
 | 0015 | [Public object-safe ViewNode with typed View adapters](0015-public-view-node-trait.md) | 2026-07-26 | Accepted |
 | 0014 | [Core owns value types; domain packages are facades only](0014-core-owns-domain-facades.md) | 2026-07-16 | Accepted |

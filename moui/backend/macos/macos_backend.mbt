@@ -8,7 +8,7 @@ pub(all) struct MacosBackendInfo {
 
 ///|
 pub(all) struct MacosAccessibilityBridgeInfo {
-  kind : @host.NativeAccessibilityBridgeKind
+  kind : @runtime.NativeAccessibilityBridgeKind
   semantics_bridge_available : Bool
   native_platform_bridge_available : Bool
   action_dispatch_available : Bool
@@ -17,8 +17,8 @@ pub(all) struct MacosAccessibilityBridgeInfo {
 
 ///|
 pub struct MacosHostAppOptions {
-  priv scene_resolver : @host.HostWindowSceneResolver
-  priv event_sources : @host.HostPlatformEventSources?
+  priv scene_resolver : @runtime.HostWindowSceneResolver
+  priv event_sources : @runtime.HostPlatformEventSources?
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
   priv transparent_titlebar : Bool
   priv platform_attributes : @window_core.PlatformWindowAttributes
@@ -51,27 +51,27 @@ pub struct MacosHostSmokeOptions {
 
 ///|
 pub struct MacosRendererProvider {
-  priv create_renderer : (@window_macos.Window, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?
+  priv create_renderer : (@window_macos.Window, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
   priv sync_surface : (@window_macos.Window, @host.HostSurfaceMetrics) -> Unit
-  priv image_loader : @host.HostAsyncImageLoader?
+  priv image_loader : @render.HostAsyncImageLoader?
 }
 
 ///|
 struct MacosApp {
   title : String
   runtime : @runtime.AppRuntime
-  driver : @host.HostRuntimeDriver
+  driver : @runtime.HostRuntimeDriver
   text_input_session : @host.TextInputSession
   renderer_provider : MacosRendererProvider
   services : @host.HostServiceBridge
   window_requests : @host.HostWindowRequestQueue
-  scene_resolver : @host.HostWindowSceneResolver
+  scene_resolver : @runtime.HostWindowSceneResolver
   windows : @host.HostWindowRegistry
-  runtime_slots : @host.HostWindowRuntimeSlots
+  runtime_slots : @runtime.HostWindowRuntimeSlots
   platform_windows : @host.HostPlatformWindowMap
   platform_slots : MacosWindowPlatformSlots
-  image_repaint_tracker : @host.HostImageResourceRepaintTracker
-  event_sources : @host.HostPlatformEventSources?
+  image_repaint_tracker : @render.HostImageResourceRepaintTracker
+  event_sources : @runtime.HostPlatformEventSources?
   platform_view_plugins : Array[@host.PlatformViewPlugin]
   transparent_titlebar : Bool
   platform_attributes : @window_core.PlatformWindowAttributes
@@ -119,7 +119,7 @@ priv struct MacosWindowPlatformSlot {
   host_id : @host.HostWindowId
   platform_id : @window_core.WindowId
   window : @window_macos.Window
-  renderer : @host.HostWindowRenderer
+  renderer : @render.HostWindowRenderer
   mut frame_pending : Bool
 }
 
@@ -130,8 +130,8 @@ priv struct MacosWindowPlatformSlots {
 
 ///|
 pub fn MacosHostAppOptions::new(
-  scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
-  event_sources? : @host.HostPlatformEventSources? = None,
+  scene_resolver? : @runtime.HostWindowSceneResolver = @runtime.HostWindowSceneResolver::unavailable(),
+  event_sources? : @runtime.HostPlatformEventSources? = None,
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
   transparent_titlebar? : Bool = false,
   platform_attributes? : @window_core.PlatformWindowAttributes = @window_core.PlatformWindowAttributes::default(),
@@ -202,12 +202,12 @@ pub fn macos_native_view_handle(window : @window_macos.Window) -> UInt64? {
 
 ///|
 pub fn MacosRendererProvider::new(
-  create_renderer~ : (@window_macos.Window, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?,
+  create_renderer~ : (@window_macos.Window, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?,
   sync_surface? : (@window_macos.Window, @host.HostSurfaceMetrics) -> Unit = (
     _window,
     _metrics,
   ) => (),
-  image_loader? : @host.HostAsyncImageLoader? = None,
+  image_loader? : @render.HostAsyncImageLoader? = None,
 ) -> MacosRendererProvider {
   { create_renderer, sync_surface, image_loader }
 }

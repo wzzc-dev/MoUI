@@ -67,7 +67,7 @@ pub(all) struct MacosBackendInfo {
 pub struct MacosHostAppOptions {
   // private fields
 }
-pub fn MacosHostAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, event_sources? : @host.HostPlatformEventSources?, platform_view_plugins? : Array[@host.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes, on_ready? : (() -> Unit)?, min_window_size? : @dpi.LogicalSize?) -> Self
+pub fn MacosHostAppOptions::new(scene_resolver? : @runtime.HostWindowSceneResolver, event_sources? : @host.HostPlatformEventSources?, platform_view_plugins? : Array[@host.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes, on_ready? : (() -> Unit)?, min_window_size? : @dpi.LogicalSize?) -> Self
 pub fn MacosHostAppOptions::platform_view_plugins(Self) -> Array[@host.PlatformViewPlugin]
 
 pub struct MacosHostSmokeOptions {

@@ -273,8 +273,8 @@ pub fn web_app_services(
 /// Read the browser's current local civil time. This is intentionally separate
 /// from `web_timer_source()`: the timer provides monotonic scheduling while the
 /// wall clock provides a user-visible local date and time snapshot.
-pub fn web_wall_clock() -> @host.HostWallClock {
-  @host.HostWallClock::new(
+pub fn web_wall_clock() -> @runtime.HostWallClock {
+  @runtime.HostWallClock::new(
     web_wall_clock_year(),
     web_wall_clock_month(),
     web_wall_clock_day(),

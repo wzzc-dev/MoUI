@@ -29,8 +29,8 @@ pub fn ShowcaseApp::program_with_host(
   self : ShowcaseApp,
   host_summary : @host.HostCapabilitySummary,
   services? : @host.HostAppServices = @host.HostAppServices::unavailable(),
-  timer_source? : @host.HostTimerSource? = None,
-  window_events? : @host.HostWindowEventSource? = None,
+  timer_source? : @runtime.HostTimerSource? = None,
+  window_events? : @runtime.HostWindowEventSource? = None,
   route? : String = ShowcaseRoute::default().format(),
 ) -> @moui.Program[ShowcaseModel, ShowcaseMsg] {
   ignore(self)

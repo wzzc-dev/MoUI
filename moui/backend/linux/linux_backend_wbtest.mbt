@@ -8,14 +8,14 @@ test "linux host options carry optional scene resolver and smoke options stay se
     ),
   )
   match LinuxHostAppOptions::new().scene_resolver.resolve(request) {
-    @host.HostWindowSceneResolution::SceneRejected(message) =>
+    @runtime.HostWindowSceneResolution::SceneRejected(message) =>
       inspect(message, content="window scene resolver is unavailable")
     _ => fail("expected default Linux scene resolver rejection")
   }
   assert_false(LinuxHostSmokeOptions::new().first_frame_smoke_auto_exit)
-  let resolver = @host.HostWindowSceneResolver::new(resolve=request => {
-    @host.HostWindowSceneResolution::SceneResolved(
-      @host.HostWindowSceneInstance::new(
+  let resolver = @runtime.HostWindowSceneResolver::new(resolve=request => {
+    @runtime.HostWindowSceneResolution::SceneResolved(
+      @runtime.HostWindowSceneInstance::new(
         request~,
         runtime=@runtime.AppRuntime::new_view(
           root=(@views.empty() : @core.View[Unit]),
@@ -26,7 +26,7 @@ test "linux host options carry optional scene resolver and smoke options stay se
   })
   let options = LinuxHostAppOptions::new(
     scene_resolver=resolver,
-    event_sources=Some(@host.HostPlatformEventSources::new()),
+    event_sources=Some(@runtime.HostPlatformEventSources::new()),
   )
   let smoke_options = LinuxHostSmokeOptions::new(
     first_frame_smoke_auto_exit=true,
@@ -40,7 +40,7 @@ test "linux host options carry optional scene resolver and smoke options stay se
     None => fail("expected configured Linux platform event sources")
   }
   match options.scene_resolver.resolve(request) {
-    @host.HostWindowSceneResolution::SceneResolved({ runtime, .. }) =>
+    @runtime.HostWindowSceneResolution::SceneResolved({ runtime, .. }) =>
       assert_true(runtime.size() == @core.Size::new(width=320.0, height=240.0))
     _ => fail("expected configured Linux scene resolver")
   }
@@ -49,7 +49,7 @@ test "linux host options carry optional scene resolver and smoke options stay se
 ///|
 test "linux renderer provider exposes async image loader hook" {
   let loader_started = Ref(0)
-  let loader = @host.HostAsyncImageLoader::new(start_load=(
+  let loader = @render.HostAsyncImageLoader::new(start_load=(
     _id,
     _source,
     _complete,
@@ -61,11 +61,11 @@ test "linux renderer provider exposes async image loader hook" {
     create_renderer=(_window, _metrics) => None,
     image_loader=Some(loader),
   )
-  let renderer = @host.HostWindowRenderer::new(resize=_ => (), render=_ => (), text_system=() => {
+  let renderer = @render.HostWindowRenderer::new(resize=_ => (), render=_ => (), text_system=() => {
     @core.TextSystem::fallback()
   })
-  let tracker = @host.HostImageResourceRepaintTracker::new()
-  let source = @host.HostImageResourceCompletionSource::new(
+  let tracker = @render.HostImageResourceRepaintTracker::new()
+  let source = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=_id => true,
     request_redraw=_id => (),
@@ -94,11 +94,11 @@ test "linux renderer provider async image hook defaults to unavailable" {
   let provider = LinuxRendererProvider::new(create_renderer=(_window, _metrics) => {
     None
   })
-  let renderer = @host.HostWindowRenderer::new(resize=_ => (), render=_ => (), text_system=() => {
+  let renderer = @render.HostWindowRenderer::new(resize=_ => (), render=_ => (), text_system=() => {
     @core.TextSystem::fallback()
   })
-  let tracker = @host.HostImageResourceRepaintTracker::new()
-  let source = @host.HostImageResourceCompletionSource::new(
+  let tracker = @render.HostImageResourceRepaintTracker::new()
+  let source = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=_id => true,
     request_redraw=_id => (),
@@ -137,13 +137,13 @@ test "linux at-spi binding publishes semantics dispatches actions and disposes" 
       request.generation == snapshot.generation() &&
       request.action == @core.SemanticsAction::Activate {
       invoked.val = invoked.val + 1
-      @host.NativeAccessibilityActionResult::Handled({
+      @runtime.NativeAccessibilityActionResult::Handled({
         before: snapshot.generation(),
         after: snapshot.generation(),
         pending_work: false,
       })
     } else {
-      @host.NativeAccessibilityActionResult::Rejected(
+      @runtime.NativeAccessibilityActionResult::Rejected(
         @runtime.SemanticsActionDispatchError::TargetNotFound(
           @core.SemanticsTarget::ByNodeId(request.node_id),
         ),
@@ -158,13 +158,13 @@ test "linux at-spi binding publishes semantics dispatches actions and disposes" 
   inspect(published.disposed, content="false")
   match
     binding.perform_action(
-      @host.NativeAccessibilityActionRequest::new(
+      @runtime.NativeAccessibilityActionRequest::new(
         node_id=target.node_id,
         generation=snapshot.generation(),
         action=@core.SemanticsAction::Activate,
       ),
     ) {
-    @host.NativeAccessibilityActionResult::Handled(_) => ()
+    @runtime.NativeAccessibilityActionResult::Handled(_) => ()
     _ => fail("expected Linux AT-SPI action dispatch")
   }
   inspect(invoked.val, content="1")
@@ -174,13 +174,13 @@ test "linux at-spi binding publishes semantics dispatches actions and disposes" 
   inspect(disposed.disposed, content="true")
   match
     binding.perform_action(
-      @host.NativeAccessibilityActionRequest::new(
+      @runtime.NativeAccessibilityActionRequest::new(
         node_id=target.node_id,
         generation=snapshot.generation(),
         action=@core.SemanticsAction::Activate,
       ),
     ) {
-    @host.NativeAccessibilityActionResult::BridgeUnavailable(message) =>
+    @runtime.NativeAccessibilityActionResult::BridgeUnavailable(message) =>
       inspect(message, content="Linux AT-SPI binding is disposed")
     _ => fail("expected disposed Linux AT-SPI binding to reject actions")
   }

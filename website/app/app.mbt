@@ -48,7 +48,7 @@ pub enum Msg {
   ToggleDocsDrawer
   CloseDocsDrawer
   SelectCompactHeroTab(String)
-  HostRouteChanged(@host.HostRouteEvent)
+  HostRouteChanged(@runtime.HostRouteEvent)
   HostCatalogCompleted(@host.HostCompletedServiceResponse)
   HostDocsCompleted(@host.HostCompletedServiceResponse)
 }
@@ -206,7 +206,7 @@ fn Model::with_route(self : Model, route : String) -> Model {
 }
 
 ///|
-fn Model::with_host_route(self : Model, event : @host.HostRouteEvent) -> Model {
+fn Model::with_host_route(self : Model, event : @runtime.HostRouteEvent) -> Model {
   let normalized = website_normalize_route(event.location.to_route())
   let locale = website_locale_from_route(normalized)
   let next = { ..self, locale, }.with_route(normalized)

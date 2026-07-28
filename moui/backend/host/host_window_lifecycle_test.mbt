@@ -176,10 +176,10 @@ test "host platform window map routes platform window ids" {
 
 ///|
 test "host window scene resolver maps open requests to runtimes" {
-  let resolver = HostWindowSceneResolver::new(resolve=request => {
+  let resolver = @runtime.HostWindowSceneResolver::new(resolve=request => {
     if request.scene.scene_id == "inspector" {
-      HostWindowSceneResolution::SceneResolved(
-        HostWindowSceneInstance::new(
+      @runtime.HostWindowSceneResolution::SceneResolved(
+        @runtime.HostWindowSceneInstance::new(
           request~,
           runtime=host_test_runtime(
             root=@views.empty(),
@@ -188,7 +188,7 @@ test "host window scene resolver maps open requests to runtimes" {
         ),
       )
     } else {
-      HostWindowSceneResolution::SceneRejected(
+      @runtime.HostWindowSceneResolution::SceneRejected(
         "unknown window scene: " + request.scene.scene_id,
       )
     }
@@ -201,7 +201,7 @@ test "host window scene resolver maps open requests to runtimes" {
     ),
   )
   match resolver.resolve(request) {
-    HostWindowSceneResolution::SceneResolved({ request, runtime }) => {
+    @runtime.HostWindowSceneResolution::SceneResolved({ request, runtime }) => {
       inspect(request.title, content="Inspector")
       inspect(request.scene.payload, content="outline")
       assert_true(runtime.size() == @core.Size::new(width=360.0, height=480.0))
@@ -216,12 +216,12 @@ test "host window scene resolver maps open requests to runtimes" {
     ),
   )
   match resolver.resolve(unknown) {
-    HostWindowSceneResolution::SceneRejected(message) =>
+    @runtime.HostWindowSceneResolution::SceneRejected(message) =>
       inspect(message, content="unknown window scene: unknown")
     _ => fail("expected unknown scene rejection")
   }
-  match HostWindowSceneResolver::unavailable().resolve(request) {
-    HostWindowSceneResolution::SceneRejected(message) =>
+  match @runtime.HostWindowSceneResolver::unavailable().resolve(request) {
+    @runtime.HostWindowSceneResolution::SceneRejected(message) =>
       inspect(message, content="window scene resolver is unavailable")
     _ => fail("expected unavailable resolver rejection")
   }
@@ -230,10 +230,10 @@ test "host window scene resolver maps open requests to runtimes" {
 ///|
 test "host window registry resolves scenes before registering opened windows" {
   let registry = HostWindowRegistry::new()
-  let resolver = HostWindowSceneResolver::new(resolve=request => {
+  let resolver = @runtime.HostWindowSceneResolver::new(resolve=request => {
     if request.scene.scene_id == "inspector" {
-      HostWindowSceneResolution::SceneResolved(
-        HostWindowSceneInstance::new(
+      @runtime.HostWindowSceneResolution::SceneResolved(
+        @runtime.HostWindowSceneInstance::new(
           request~,
           runtime=host_test_runtime(
             root=@views.empty(),
@@ -242,7 +242,7 @@ test "host window registry resolves scenes before registering opened windows" {
         ),
       )
     } else {
-      HostWindowSceneResolution::SceneRejected(
+      @runtime.HostWindowSceneResolution::SceneRejected(
         "unknown window scene: " + request.scene.scene_id,
       )
     }
@@ -254,8 +254,8 @@ test "host window registry resolves scenes before registering opened windows" {
       size=@core.Size::new(width=320.0, height=240.0),
     ),
   )
-  match registry.resolve_open_request(rejected, resolver) {
-    HostWindowOpenResolution::OpenRejected(message) =>
+  match @runtime.resolve_open_request(registry, rejected, resolver) {
+    @runtime.HostWindowOpenResolution::OpenRejected(message) =>
       inspect(message, content="unknown window scene: unknown")
     _ => fail("expected rejected window scene")
   }
@@ -269,8 +269,8 @@ test "host window registry resolves scenes before registering opened windows" {
     ),
     primary=true,
   )
-  match registry.resolve_open_request(request, resolver) {
-    HostWindowOpenResolution::OpenResolved({ id, record, instance }) => {
+  match @runtime.resolve_open_request(registry, request, resolver) {
+    @runtime.HostWindowOpenResolution::OpenResolved({ id, record, instance }) => {
       assert_true(id == record.id)
       inspect(record.title, content="Inspector")
       inspect(record.scene.scene_id, content="inspector")
@@ -279,7 +279,7 @@ test "host window registry resolves scenes before registering opened windows" {
         instance.runtime.size() == @core.Size::new(width=360.0, height=480.0),
       )
       let redraws = Ref(0)
-      let slot = HostWindowRuntimeSlot::from_resolved_open(
+      let slot = @runtime.HostWindowRuntimeSlot::from_resolved_open(
         { id, record, instance },
         schedule_redraw=() => redraws.val = redraws.val + 1,
       )
@@ -290,7 +290,7 @@ test "host window registry resolves scenes before registering opened windows" {
       )
       slot.driver.request_redraw()
       inspect(redraws.val, content="1")
-      let driver_backed = HostWindowRuntimeSlot::from_driver(
+      let driver_backed = @runtime.HostWindowRuntimeSlot::from_driver(
         record~,
         driver=slot.driver,
       )

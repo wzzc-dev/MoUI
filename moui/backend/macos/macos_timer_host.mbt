@@ -19,8 +19,8 @@ extern "C" fn macos_timer_cancel(handle : UInt64) -> Unit = "moui_macos_timer_ca
 /// Each tick builds a `Frame` carrying the interval as `delta_ms` and dispatches
 /// the subscription's mapped message. The cancel closure returned to the runtime
 /// releases the dispatch source and the captured MoonBit closure.
-pub fn macos_timer_source() -> @host.HostTimerSource {
-  @host.HostTimerSource::new(start_timer=(interval_ms, dispatch) => {
+pub fn macos_timer_source() -> @runtime.HostTimerSource {
+  @runtime.HostTimerSource::new(start_timer=(interval_ms, dispatch) => {
     let last_time_ms = Ref(macos_perf_now_ms())
     let tick = () => {
       let now_ms = macos_perf_now_ms()

@@ -40,7 +40,6 @@ pub fn theme(
   .with_shadow_scale(sickle_shadow_scale(scheme, mode))
   .with_motion(sickle_motion(mode))
   .with_surfaces(sickle_surfaces(palette, scheme, mode))
-  .with_components(sickle_components(palette, scheme, mode))
 }
 
 ///|
@@ -83,6 +82,18 @@ pub fn palette(
   scheme? : @core.ColorScheme = @core.ColorScheme::Light,
 ) -> @core.ColorPalette {
   sickle_palette(scheme)
+}
+
+///|
+/// Resolve the sickle-branded `ControlThemeSet` for a scheme + mode. This is
+/// the views-owned component theme set (ADR 0017); it is no longer attached
+/// to `core.Theme` (which is now neutral). Apps that want sickle's branded
+/// control tokens resolve this alongside the neutral `theme()`.
+pub fn control_theme_set(
+  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
+  mode? : SickleStyleMode = SickleStyleMode::Hybrid,
+) -> @views.ControlThemeSet {
+  sickle_components(sickle_palette(scheme), scheme, mode)
 }
 
 ///|
@@ -295,7 +306,7 @@ fn sickle_components(
   palette : @core.ColorPalette,
   scheme : @core.ColorScheme,
   mode : SickleStyleMode,
-) -> @core.ComponentThemes {
+) -> @views.ControlThemeSet {
   let radius = sickle_radius(mode)
   let spacing = sickle_spacing(mode)
   let shadow = sickle_shadow_scale(scheme, mode)
@@ -415,7 +426,7 @@ fn sickle_components(
       placeholder: palette.muted,
       cursor: palette.primary,
       font: typography.body,
-      appearance: @core.TextFieldAppearance::Outline,
+      appearance: @views.TextFieldAppearance::Outline,
     },
     surface: {
       base_padding: spacing.md,
@@ -442,8 +453,8 @@ fn sickle_components(
       } else {
         20.0
       },
-      box_shape: @core.ChoiceControlShape::Square,
-      check_style: @core.CheckMarkStyle::Checkmark,
+      box_shape: @views.ChoiceControlShape::Square,
+      check_style: @views.CheckMarkStyle::Checkmark,
     },
     progress: {
       foreground: palette.primary,
@@ -469,7 +480,7 @@ fn sickle_components(
         22.0
       },
       radius: radius.pill,
-      thumb_shape: @core.ThumbShape::Circle,
+      thumb_shape: @views.ThumbShape::Circle,
     },
     picker: {
       font: typography.control,
@@ -495,7 +506,7 @@ fn feedback_theme(
   palette : @core.ColorPalette,
   radius : @core.RadiusScale,
   spacing : @core.SpacingScale,
-) -> @core.FeedbackTheme {
+) -> @views.FeedbackTheme {
   {
     neutral: tone(foreground=palette.muted, alpha=0.12),
     info: tone(foreground=palette.info, alpha=0.12),
@@ -511,7 +522,7 @@ fn feedback_theme(
 fn badge_theme(
   palette : @core.ColorPalette,
   radius : @core.RadiusScale,
-) -> @core.BadgeTheme {
+) -> @views.BadgeTheme {
   {
     neutral: {
       foreground: palette.foreground,
@@ -536,8 +547,8 @@ fn control_tokens(
   radius~ : Double,
   bottom_border_only? : Bool = false,
   inner_focus_border? : @core.Color? = None,
-) -> @core.ControlStateTokens {
-  @core.ControlStateTokens::new(
+) -> @views.ControlStateTokens {
+  @views.ControlStateTokens::new(
     foreground~,
     background~,
     border~,
@@ -549,7 +560,7 @@ fn control_tokens(
 }
 
 ///|
-fn tone(foreground~ : @core.Color, alpha~ : Double) -> @core.ToneTokens {
+fn tone(foreground~ : @core.Color, alpha~ : Double) -> @views.ToneTokens {
   {
     foreground,
     background: foreground.multiply_alpha(alpha),
@@ -558,7 +569,7 @@ fn tone(foreground~ : @core.Color, alpha~ : Double) -> @core.ToneTokens {
 }
 
 ///|
-fn filled_tone(color : @core.Color) -> @core.ToneTokens {
+fn filled_tone(color : @core.Color) -> @views.ToneTokens {
   { foreground: @core.Color::white(), background: color, border: color }
 }
 

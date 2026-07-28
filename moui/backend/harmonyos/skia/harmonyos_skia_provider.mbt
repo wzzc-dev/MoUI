@@ -36,8 +36,8 @@ pub fn renderer_provider(
 }
 
 ///|
-fn harmonyos_skia_async_image_loader() -> @host.HostAsyncImageLoader {
-  @host.HostAsyncImageLoader::new(start_load=(_window_id, source, complete) => {
+fn harmonyos_skia_async_image_loader() -> @render.HostAsyncImageLoader {
+  @render.HostAsyncImageLoader::new(start_load=(_window_id, source, complete) => {
     complete(@skia_renderer.skia_image_load_completion(source))
     None
   })
@@ -88,7 +88,7 @@ fn create_renderer(
   surface : @harmonyos_host.HarmonyOsSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
   options : HarmonyOsSkiaAppOptions,
-) -> @host.HostWindowRenderer? {
+) -> @render.HostWindowRenderer? {
   if !harmonyos_skia_provider_ready() {
     println(harmonyos_skia_unavailable_message())
     return None
@@ -158,7 +158,7 @@ fn create_raster_renderer(
   surface : @harmonyos_host.HarmonyOsSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
   options : HarmonyOsSkiaAppOptions,
-) -> @host.HostWindowRenderer? {
+) -> @render.HostWindowRenderer? {
   match create_raster_skia_renderer(surface, metrics, options) {
     None => None
     Some(renderer) =>
@@ -305,7 +305,7 @@ fn host_renderer_from_skia(
   surface : @harmonyos_host.HarmonyOsSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
   options : HarmonyOsSkiaAppOptions,
-) -> @host.HostWindowRenderer {
+) -> @render.HostWindowRenderer {
   // Sticky raster fallback only after HostGpu present/surface failures — not
   // incomplete draws — so a transient layer miss cannot permanently demote GPU.
   let fallback_to_raster = Ref(false)
@@ -343,7 +343,7 @@ fn host_renderer_from_skia(
       }
     }
   }
-  @host.HostWindowRenderer::new(
+  @render.HostWindowRenderer::new(
     resize=metrics => {
       last_metrics.val = metrics
       active.val.resize(renderer_metrics_from_host(metrics)) catch {
@@ -386,7 +386,7 @@ fn host_renderer_from_skia(
     text_system=() => active.val.text_system(),
     present_count=() => active.val.present_count(),
     dispose=() => active.val.dispose(),
-    image=@host.HostRendererImageCapability::new(
+    image=@render.HostRendererImageCapability::new(
       image_resources=() => active.val.image_resources(),
       image_resource_snapshot=Some(() => active.val.image_resource_snapshot()),
       apply_image_resource_load_completion=Some(completion => {
@@ -396,7 +396,7 @@ fn host_renderer_from_skia(
         active.val.set_image_resource_change_callback(callback)
       },
     ),
-    platform_view=@host.HostRendererPlatformViewCapability::new(
+    platform_view=@render.HostRendererPlatformViewCapability::new(
       draw_platform_view_pixels=fn(
         pixels,
         src_width,

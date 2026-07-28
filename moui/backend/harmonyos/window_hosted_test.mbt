@@ -8,7 +8,7 @@ test "harmonyos window-hosted host-sim creates session and presents" {
     _metrics,
   ) => {
     Some(
-      @host.HostWindowRenderer::new(
+      @render.HostWindowRenderer::new(
         resize=_ => (),
         render=_ => (),
         render_frame=Some(_frame => {

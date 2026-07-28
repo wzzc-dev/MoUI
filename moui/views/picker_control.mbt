@@ -280,7 +280,7 @@ fn append_picker_popup_commands(
   // Align with popover/menu floating surfaces: prefer the component overlay
   // shadow token, fall back to mid elevation (theme docs reserve `md` for
   // picker-like mid layers; `lg` reads as a heavy gray halo on Web).
-  let shadow = theme.components.surface.overlay_shadow.unwrap_or(
+  let shadow = views_ambient_control_theme(theme).surface.overlay_shadow.unwrap_or(
     theme.shadow_scale.md,
   )
   overlay_commands.push(

@@ -130,7 +130,7 @@ pub fn backend_info() -> LinuxBackendInfo {
 ///|
 pub fn linux_accessibility_bridge_info() -> LinuxAccessibilityBridgeInfo {
   {
-    kind: @host.NativeAccessibilityBridgeKind::ATSPI,
+    kind: @runtime.NativeAccessibilityBridgeKind::ATSPI,
     semantics_bridge_available: true,
     native_platform_bridge_available: true,
     action_dispatch_available: true,
@@ -141,19 +141,19 @@ pub fn linux_accessibility_bridge_info() -> LinuxAccessibilityBridgeInfo {
 ///|
 pub fn linux_accessibility_bridge(
   runtime : @runtime.AppRuntime,
-) -> @host.NativeAccessibilityBridge {
-  let runtime_bridge = @host.NativeAccessibilityBridge::runtime(
-    kind=@host.NativeAccessibilityBridgeKind::ATSPI,
+) -> @runtime.NativeAccessibilityBridge {
+  let runtime_bridge = @runtime.NativeAccessibilityBridge::runtime(
+    kind=@runtime.NativeAccessibilityBridgeKind::ATSPI,
     runtime~,
   )
   let binding = LinuxATSPIBinding::new(dispatch=request => {
     runtime_bridge.perform_action(request)
   })
-  @host.NativeAccessibilityBridge::new(
-    kind=@host.NativeAccessibilityBridgeKind::ATSPI,
+  @runtime.NativeAccessibilityBridge::new(
+    kind=@runtime.NativeAccessibilityBridgeKind::ATSPI,
     publish=read => {
       ignore(binding.publish_semantics(read))
-      @host.accesskit_update_from_semantics_read(read)
+      @runtime.accesskit_update_from_semantics_read(read)
     },
     perform=request => binding.perform_action(request),
   )

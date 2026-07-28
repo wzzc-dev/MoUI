@@ -1,11 +1,11 @@
 ///|
 test "host window runtime slots manage multiple window drivers" {
   let registry = HostWindowRegistry::new()
-  let slots = HostWindowRuntimeSlots::new()
+  let slots = @runtime.HostWindowRuntimeSlots::new()
   inspect(slots.is_empty(), content="true")
-  let resolver = HostWindowSceneResolver::new(resolve=request => {
-    HostWindowSceneResolution::SceneResolved(
-      HostWindowSceneInstance::new(
+  let resolver = @runtime.HostWindowSceneResolver::new(resolve=request => {
+    @runtime.HostWindowSceneResolution::SceneResolved(
+      @runtime.HostWindowSceneInstance::new(
         request~,
         runtime=host_test_runtime(
           root=@views.empty(),
@@ -23,9 +23,9 @@ test "host window runtime slots manage multiple window drivers" {
     primary=true,
   )
   let main_redraws = Ref(0)
-  let main_slot = match registry.resolve_open_request(main_request, resolver) {
-    HostWindowOpenResolution::OpenResolved(resolved) =>
-      HostWindowRuntimeSlot::from_resolved_open(resolved, schedule_redraw=() => {
+  let main_slot = match @runtime.resolve_open_request(registry, main_request, resolver) {
+    @runtime.HostWindowOpenResolution::OpenResolved(resolved) =>
+      @runtime.HostWindowRuntimeSlot::from_resolved_open(resolved, schedule_redraw=() => {
         main_redraws.val = main_redraws.val + 1
       })
     _ => fail("expected main runtime slot")
@@ -47,9 +47,9 @@ test "host window runtime slots manage multiple window drivers" {
   )
   let inspector_redraws = Ref(0)
   let inspector_slot = match
-    registry.resolve_open_request(inspector_request, resolver) {
-    HostWindowOpenResolution::OpenResolved(resolved) =>
-      HostWindowRuntimeSlot::from_resolved_open(resolved, schedule_redraw=() => {
+    @runtime.resolve_open_request(registry, inspector_request, resolver) {
+    @runtime.HostWindowOpenResolution::OpenResolved(resolved) =>
+      @runtime.HostWindowRuntimeSlot::from_resolved_open(resolved, schedule_redraw=() => {
         inspector_redraws.val = inspector_redraws.val + 1
       })
     _ => fail("expected inspector runtime slot")
@@ -175,7 +175,7 @@ test "host runtime driver exposes runtime state for platform slots" {
     root=@views.empty(),
     size=@core.Size::new(width=320.0, height=240.0),
   )
-  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
   let dark = runtime.environment().with_system_scheme(@core.ColorScheme::Dark)
   driver.set_environment(dark)
   assert_true(driver.environment().color_scheme() == @core.ColorScheme::Dark)

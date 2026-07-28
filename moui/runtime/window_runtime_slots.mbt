@@ -1,7 +1,7 @@
 ///|
 pub(all) struct HostWindowRuntimeSlot {
-  id : HostWindowId
-  record : HostWindowRecord
+  id : @backend_host.HostWindowId
+  record : @backend_host.HostWindowRecord
   driver : HostRuntimeDriver
 }
 
@@ -12,8 +12,8 @@ pub struct HostWindowRuntimeSlots {
 
 ///|
 pub fn HostWindowRuntimeSlot::new(
-  record~ : HostWindowRecord,
-  runtime~ : @runtime.AppRuntime,
+  record~ : @backend_host.HostWindowRecord,
+  runtime~ : AppRuntime,
   schedule_redraw~ : () -> Unit,
 ) -> HostWindowRuntimeSlot {
   {
@@ -25,7 +25,7 @@ pub fn HostWindowRuntimeSlot::new(
 
 ///|
 pub fn HostWindowRuntimeSlot::from_driver(
-  record~ : HostWindowRecord,
+  record~ : @backend_host.HostWindowRecord,
   driver~ : HostRuntimeDriver,
 ) -> HostWindowRuntimeSlot {
   { id: record.id, record, driver }
@@ -75,8 +75,8 @@ pub fn HostWindowRuntimeSlots::insert(
 ///|
 pub fn HostWindowRuntimeSlots::insert_from_registry(
   self : HostWindowRuntimeSlots,
-  registry : HostWindowRegistry,
-  id : HostWindowId,
+  registry : @backend_host.HostWindowRegistry,
+  id : @backend_host.HostWindowId,
   driver~ : HostRuntimeDriver,
 ) -> Bool {
   match registry.lookup(id) {
@@ -89,7 +89,7 @@ pub fn HostWindowRuntimeSlots::insert_from_registry(
 ///|
 pub fn HostWindowRuntimeSlots::lookup(
   self : HostWindowRuntimeSlots,
-  id : HostWindowId,
+  id : @backend_host.HostWindowId,
 ) -> HostWindowRuntimeSlot? {
   for slot in self.slots {
     if slot.id == id {
@@ -103,7 +103,7 @@ pub fn HostWindowRuntimeSlots::lookup(
 pub fn HostWindowRuntimeSlots::open_slots(
   self : HostWindowRuntimeSlots,
 ) -> Array[HostWindowRuntimeSlot] {
-  self.slots.filter(slot => slot.record.phase != WindowClosed)
+  self.slots.filter(slot => slot.record.phase != @backend_host.WindowClosed)
 }
 
 ///|
@@ -123,7 +123,7 @@ pub fn HostWindowRuntimeSlots::focused_slot(
   self : HostWindowRuntimeSlots,
 ) -> HostWindowRuntimeSlot? {
   for slot in self.open_slots() {
-    if slot.record.phase == WindowFocused {
+    if slot.record.phase == @backend_host.WindowFocused {
       return Some(slot)
     }
   }
@@ -133,7 +133,7 @@ pub fn HostWindowRuntimeSlots::focused_slot(
 ///|
 pub fn HostWindowRuntimeSlots::sync_record(
   self : HostWindowRuntimeSlots,
-  record : HostWindowRecord,
+  record : @backend_host.HostWindowRecord,
 ) -> Bool {
   let mut changed = false
   self.slots = self.slots.map(slot => {
@@ -150,8 +150,8 @@ pub fn HostWindowRuntimeSlots::sync_record(
 ///|
 pub fn HostWindowRuntimeSlots::sync_from_registry(
   self : HostWindowRuntimeSlots,
-  registry : HostWindowRegistry,
-  id : HostWindowId,
+  registry : @backend_host.HostWindowRegistry,
+  id : @backend_host.HostWindowId,
 ) -> Bool {
   match registry.lookup(id) {
     Some(record) => self.sync_record(record)
@@ -162,7 +162,7 @@ pub fn HostWindowRuntimeSlots::sync_from_registry(
 ///|
 pub fn HostWindowRuntimeSlots::sync_open_from_registry(
   self : HostWindowRuntimeSlots,
-  registry : HostWindowRegistry,
+  registry : @backend_host.HostWindowRegistry,
 ) -> Int {
   let mut synced = 0
   for record in registry.open_windows() {
@@ -176,9 +176,9 @@ pub fn HostWindowRuntimeSlots::sync_open_from_registry(
 ///|
 pub fn HostWindowRuntimeSlots::apply_host_event(
   self : HostWindowRuntimeSlots,
-  registry : HostWindowRegistry,
-  id : HostWindowId,
-  event : HostEvent,
+  registry : @backend_host.HostWindowRegistry,
+  id : @backend_host.HostWindowId,
+  event : @backend_host.HostEvent,
 ) -> Bool {
   if registry.apply_host_event(id, event) {
     ignore(self.sync_open_from_registry(registry))
@@ -191,15 +191,15 @@ pub fn HostWindowRuntimeSlots::apply_host_event(
 ///|
 pub fn HostWindowRuntimeSlots::apply_request(
   self : HostWindowRuntimeSlots,
-  registry : HostWindowRegistry,
-  request : HostWindowRequest,
-) -> HostWindowRequestResult {
+  registry : @backend_host.HostWindowRegistry,
+  request : @backend_host.HostWindowRequest,
+) -> @backend_host.HostWindowRequestResult {
   let result = registry.apply_request(request)
   match result {
-    HostWindowRequestResult::WindowOpened(_)
-    | HostWindowRequestResult::WindowUpdated(_) =>
+    @backend_host.HostWindowRequestResult::WindowOpened(_)
+    | @backend_host.HostWindowRequestResult::WindowUpdated(_) =>
       ignore(self.sync_open_from_registry(registry))
-    HostWindowRequestResult::WindowRejected(_) => ()
+    @backend_host.HostWindowRequestResult::WindowRejected(_) => ()
   }
   result
 }
@@ -207,7 +207,7 @@ pub fn HostWindowRuntimeSlots::apply_request(
 ///|
 pub fn HostWindowRuntimeSlots::remove(
   self : HostWindowRuntimeSlots,
-  id : HostWindowId,
+  id : @backend_host.HostWindowId,
 ) -> HostWindowRuntimeSlot? {
   let mut removed = None
   let kept = []
@@ -227,6 +227,19 @@ pub fn HostWindowRuntimeSlots::remove_closed(
   self : HostWindowRuntimeSlots,
 ) -> Int {
   let before = self.slots.length()
-  self.slots = self.slots.filter(slot => slot.record.phase != WindowClosed)
+  self.slots = self.slots.filter(slot => slot.record.phase != @backend_host.WindowClosed)
   before - self.slots.length()
+}
+
+///|
+pub fn drain_to_runtime_slots(
+  commands : @backend_host.HostWindowCommands,
+  registry : @backend_host.HostWindowRegistry,
+  slots : HostWindowRuntimeSlots,
+) -> Array[@backend_host.HostWindowRequestCompletion] {
+  let completions = commands.drain_to_registry(registry)
+  for _ in completions {
+    ignore(slots.sync_open_from_registry(registry))
+  }
+  completions
 }

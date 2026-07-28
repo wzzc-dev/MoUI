@@ -61,9 +61,9 @@ pub(all) struct HarmonyOsBackendInfo {
 
 ///|
 pub struct HarmonyOsRendererProvider {
-  priv create_renderer : (HarmonyOsSurfaceHandle, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?
+  priv create_renderer : (HarmonyOsSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
   priv sync_surface : (HarmonyOsSurfaceHandle, @host.HostSurfaceMetrics) -> Unit
-  priv image_loader : @host.HostAsyncImageLoader?
+  priv image_loader : @render.HostAsyncImageLoader?
 }
 
 ///|
@@ -74,12 +74,12 @@ pub struct HarmonyOsRuntimeSession {
 
 ///|
 pub fn HarmonyOsRendererProvider::new(
-  create_renderer~ : (HarmonyOsSurfaceHandle, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?,
+  create_renderer~ : (HarmonyOsSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?,
   sync_surface? : (HarmonyOsSurfaceHandle, @host.HostSurfaceMetrics) -> Unit = (
     _surface,
     _metrics,
   ) => (),
-  image_loader? : @host.HostAsyncImageLoader? = None,
+  image_loader? : @render.HostAsyncImageLoader? = None,
 ) -> HarmonyOsRendererProvider {
   { create_renderer, sync_surface, image_loader }
 }
@@ -89,7 +89,7 @@ fn HarmonyOsRendererProvider::create(
   self : HarmonyOsRendererProvider,
   surface : HarmonyOsSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
-) -> @host.HostWindowRenderer? {
+) -> @render.HostWindowRenderer? {
   (self.create_renderer)(surface, metrics)
 }
 

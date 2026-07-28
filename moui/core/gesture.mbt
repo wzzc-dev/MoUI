@@ -1,6 +1,6 @@
 ///|
 priv struct TapGestureResult {
-  next_state : ButtonState
+  next_state : PressableState
   activated : Bool
 }
 
@@ -247,29 +247,29 @@ struct ActionCommandMap {
 }
 
 ///|
-fn recognize_button_tap(
-  current : ButtonState,
+fn recognize_press_tap(
+  current : PressableState,
   inside : Bool,
   phase : PointerPhase,
 ) -> TapGestureResult {
   let next_state = match phase {
     Move =>
-      if current == ButtonState::Pressed && inside {
-        ButtonState::Pressed
+      if current == PressableState::Pressed && inside {
+        PressableState::Pressed
       } else if inside {
-        ButtonState::Hovered
+        PressableState::Hovered
       } else {
-        ButtonState::Normal
+        PressableState::Normal
       }
-    Down => if inside { ButtonState::Pressed } else { ButtonState::Normal }
-    Up => if inside { ButtonState::Hovered } else { ButtonState::Normal }
+    Down => if inside { PressableState::Pressed } else { PressableState::Normal }
+    Up => if inside { PressableState::Hovered } else { PressableState::Normal }
     // Synthetic runtime phase: the pointer left the element, so drop any hover
     // or press state and return to rest.
-    Exit | Cancel => ButtonState::Normal
+    Exit | Cancel => PressableState::Normal
   }
   {
     next_state,
-    activated: phase == Up && inside && current == ButtonState::Pressed,
+    activated: phase == Up && inside && current == PressableState::Pressed,
   }
 }
 

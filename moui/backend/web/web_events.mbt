@@ -133,7 +133,7 @@ fn WebApp::publish_subscription_event(
   self : WebApp,
   window_id : @host.HostWindowId,
   event : @host.HostEvent,
-) -> @host.HostPlatformEventPublishResult? {
+) -> @runtime.HostPlatformEventPublishResult? {
   match self.event_sources {
     Some(sources) => Some(sources.publish(window_id~, event~))
     None => None
