@@ -370,16 +370,6 @@ test "linux skia deferred native source completes through decode helper" {
 }
 
 ///|
-fn skia_provider_test_png_bytes() -> Bytes {
-  @base64.decode(
-    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==",
-    ignore_whitespace=true,
-  ) catch {
-    _ => Bytes::make(0, 0)
-  }
-}
-
-///|
 #cfg(platform="linux")
 test "linux skia async image background decode confirmed" {
   guard @skia_renderer.skia_available() else { return () }

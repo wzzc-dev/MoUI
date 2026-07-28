@@ -171,7 +171,7 @@ pub fn web_service_bridge(
           async_dispatch(
             async_queue, request, "clipboard image write is unavailable on Web",
           )
-        @host.HostServiceRequest::FileDialog(options) =>
+        @host.HostServiceRequest::FileDialog(_) =>
           async_dispatch(
             async_queue, request, "file dialog service is asynchronous on Web",
           )
