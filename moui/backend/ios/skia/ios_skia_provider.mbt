@@ -365,12 +365,12 @@ fn host_renderer_from_native_gpu_worker(
   }
   @render.HostWindowRenderer::new(
     resize=metrics => {
-      renderer.resize(renderer_metrics_from_host(metrics)) catch {
+      renderer.resize(metrics) catch {
         err => println("error resizing iOS Skia producer: \{err.message()}")
       }
       if !fallback_to_raster.val {
         let descriptor = ios_skia_metal_surface_descriptor(
-          renderer_metrics_from_host(metrics),
+          metrics,
         )
         let dimensions = descriptor.dimensions()
         if ios_skia_configure_metal_layer(
@@ -482,7 +482,7 @@ fn host_renderer_from_skia(
 ) -> @render.HostWindowRenderer {
   @render.HostWindowRenderer::new(
     resize=metrics => {
-      renderer.resize(renderer_metrics_from_host(metrics)) catch {
+      renderer.resize(metrics) catch {
         err => println("error resizing iOS Skia renderer: \{err.message()}")
       }
     },

@@ -46,7 +46,7 @@ test "host window renderer forwards lifecycle closures" {
     ),
   )
   renderer.resize(
-    HostSurfaceMetrics::from_logical(
+    @render.RendererSurfaceMetrics::from_logical(
       size=@core.Size::new(width=96.0, height=48.0),
       scale_factor=2.0,
     ),

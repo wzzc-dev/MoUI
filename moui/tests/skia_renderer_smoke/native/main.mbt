@@ -1278,14 +1278,14 @@ fn run_async_image_second_frame_smoke() -> Unit {
       },
     ),
   )
-  let window_id = @host.HostWindowId::new(99)
+  let window_id = @render.RenderWindowId::new(99)
   let tracker = @render.HostImageResourceRepaintTracker::new()
   let baseline = tracker.record_presented(window_id, host_renderer)
   if baseline.current_status_counts().loading_count() != 2 {
     remove_local_smoke_file(local_png_path)
     fail_smoke("Skia async image smoke did not baseline two loading images")
   }
-  let redraws : Array[@host.HostWindowId] = []
+  let redraws : Array[@render.RenderWindowId] = []
   let completion_source = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=id => id == window_id,
@@ -1457,7 +1457,7 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
       },
     ),
   )
-  let window_id = @host.HostWindowId::new(100)
+  let window_id = @render.RenderWindowId::new(100)
   let tracker = @render.HostImageResourceRepaintTracker::new()
   let baseline = tracker.record_presented(window_id, host_renderer)
   if baseline.current_status_counts().loading_count() != 2 {
@@ -1466,7 +1466,7 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
       "Skia async image deferred-completion smoke did not baseline two loading images",
     )
   }
-  let redraws : Array[@host.HostWindowId] = []
+  let redraws : Array[@render.RenderWindowId] = []
   let completion_source = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=id => id == window_id,

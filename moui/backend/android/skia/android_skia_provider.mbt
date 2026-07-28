@@ -287,12 +287,12 @@ fn host_renderer_from_native_gpu_worker(
   }
   @render.HostWindowRenderer::new(
     resize=metrics => {
-      renderer.resize(renderer_metrics_from_host(metrics)) catch {
+      renderer.resize(metrics) catch {
         err => println("error resizing Android Skia producer: \{err.message()}")
       }
       if !fallback_to_raster.val {
         let dimensions = android_skia_vulkan_surface_descriptor(
-          renderer_metrics_from_host(metrics),
+          metrics,
         ).dimensions()
         ignore(
           worker.submit_control(
@@ -423,7 +423,7 @@ fn host_renderer_from_skia(
 ) -> @render.HostWindowRenderer {
   @render.HostWindowRenderer::new(
     resize=metrics => {
-      renderer.resize(renderer_metrics_from_host(metrics)) catch {
+      renderer.resize(metrics) catch {
         err => println("error resizing Android Skia renderer: \{err.message()}")
       }
     },

@@ -126,7 +126,7 @@ fn skia_test_png_data_uri() -> String {
 ///|
 test "windows skia async image loader completes loading resources" {
   let loader = skia_async_image_loader()
-  let window_id = @host.HostWindowId::new(1)
+  let window_id = @render.RenderWindowId::new(1)
   let lifecycle = @render.ImageResourceLifecycle::new()
   let source = skia_test_png_data_uri()
   ignore(lifecycle.mark_loading(source))
@@ -143,7 +143,7 @@ test "windows skia async image loader completes loading resources" {
   )
   let tracker = @render.HostImageResourceRepaintTracker::new()
   ignore(tracker.record_presented(window_id, renderer))
-  let redraws : Array[@host.HostWindowId] = []
+  let redraws : Array[@render.RenderWindowId] = []
   let completion_source = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=id => id == window_id,
@@ -174,7 +174,7 @@ test "windows skia async image loader completes loading resources" {
 test "windows skia deferred native source completes through decode helper" {
   let native_source = @render.HostNativeAsyncImageSource::new()
   let loader = native_source.loader()
-  let window_id = @host.HostWindowId::new(2)
+  let window_id = @render.RenderWindowId::new(2)
   let lifecycle = @render.ImageResourceLifecycle::new()
   let source = skia_test_png_data_uri()
   ignore(lifecycle.mark_loading(source))
@@ -191,7 +191,7 @@ test "windows skia deferred native source completes through decode helper" {
   )
   let tracker = @render.HostImageResourceRepaintTracker::new()
   ignore(tracker.record_presented(window_id, renderer))
-  let redraws : Array[@host.HostWindowId] = []
+  let redraws : Array[@render.RenderWindowId] = []
   let completion_source = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=id => id == window_id,

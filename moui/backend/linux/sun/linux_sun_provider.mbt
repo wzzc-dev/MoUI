@@ -115,7 +115,7 @@ fn sun_native_image_loader() -> @render.HostAsyncImageLoader {
     spawn=(window_id, source) => {
       if source.has_prefix("data:") {
         let completion = @sun_renderer.sun_image_load_completion(source)
-        ignore(native_source.complete(window_id, completion))
+        ignore(native_source.complete(@render.RenderWindowId::new(window_id.value), completion))
       } else {
         let source_bytes = @utf8.encode(source[:], bom=false)
         moui_linux_sun_async_image_spawn(
@@ -160,7 +160,7 @@ fn sun_native_image_loader() -> @render.HostAsyncImageLoader {
             background_io~,
           )
         }
-        ignore(native_source.complete(window_id, completion))
+        ignore(native_source.complete(@render.RenderWindowId::new(window_id.value), completion))
       }
     },
   )
@@ -257,7 +257,7 @@ fn host_renderer_from_sun(
 ) -> @render.HostWindowRenderer {
   @render.HostWindowRenderer::new(
     resize=metrics => {
-      renderer.resize(renderer_metrics_from_host(metrics)) catch {
+      renderer.resize(metrics) catch {
         err => println("error resizing Linux Sun renderer: \{err.message()}")
       }
     },

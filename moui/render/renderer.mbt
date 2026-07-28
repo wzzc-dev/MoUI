@@ -74,6 +74,19 @@ pub(all) struct RendererSurfaceMetrics {
 } derive(Eq, Debug, ToJson)
 
 ///|
+/// Renderer-level window identifier. Mirror of `HostWindowId` in the host
+/// package — the host converts between the two at the API boundary so that
+/// `moui/render` never imports `moui/backend/host`.
+pub(all) struct RenderWindowId {
+  value : Int
+} derive(Eq, Debug, ToJson)
+
+///|
+pub fn RenderWindowId::new(value : Int) -> RenderWindowId {
+  { value: value }
+}
+
+///|
 pub(all) struct RendererBackendInfo {
   backend : RendererBackendKind
   status : RendererCapabilityStatus
