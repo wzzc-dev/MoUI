@@ -5,7 +5,8 @@
 pub struct SkiaHybridRenderer {
   priv renderer : SkiaRasterRenderer
   priv worker : @render.GpuRenderWorker
-  priv selection : @render.NativeRendererSelection
+  priv surface_route : @render.SkiaSurfaceRoute
+  priv requested : @render.NativeRendererMode
   priv mut fallback_to_raster : Bool
   priv pending_completions : Array[@render.RenderPresentCompletion]
 }
@@ -22,14 +23,13 @@ pub fn create_hybrid_renderer(
   font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
   async_image_loading? : Bool = false,
 ) -> SkiaHybridRenderer raise SkiaRendererError {
-  let selection = @render.select_native_renderer(
+  let surface_route = @render.resolve_surface_route(
     platform,
     requested,
     gpu_available~,
     gpu_promoted~,
   )
-  let gpu_target = if selection.selected
-    is @render.RendererBackendKind::SkiaGpuNative {
+  let gpu_target = if surface_route.is_gpu() {
     gpu_target
   } else {
     None
@@ -37,7 +37,7 @@ pub fn create_hybrid_renderer(
   let renderer = create_with_present_target_and_route(
     metrics,
     target,
-    surface_route=selection.surface_route,
+    surface_route~,
     gpu_target~,
     font_resolution~,
     async_image_loading~,
@@ -45,17 +45,25 @@ pub fn create_hybrid_renderer(
   {
     renderer,
     worker: @render.GpuRenderWorker::new(),
-    selection,
+    surface_route,
+    requested,
     fallback_to_raster: false,
     pending_completions: [],
   }
 }
 
 ///|
-pub fn SkiaHybridRenderer::selection(
+pub fn SkiaHybridRenderer::surface_route(
   self : SkiaHybridRenderer,
-) -> @render.NativeRendererSelection {
-  self.selection
+) -> @render.SkiaSurfaceRoute {
+  self.surface_route
+}
+
+///|
+pub fn SkiaHybridRenderer::requested_mode(
+  self : SkiaHybridRenderer,
+) -> @render.NativeRendererMode {
+  self.requested
 }
 
 ///|
@@ -63,8 +71,7 @@ pub fn SkiaHybridRenderer::render_frame(
   self : SkiaHybridRenderer,
   frame : @core.DrawFrame,
 ) -> @render.RenderFrameResult {
-  if self.fallback_to_raster ||
-    self.selection.selected is @render.RendererBackendKind::SkiaRasterNative {
+  if self.fallback_to_raster || not(self.surface_route.is_gpu()) {
     return self.renderer.render_frame(frame)
   }
   let input = @render.RenderFrameInput::new(
