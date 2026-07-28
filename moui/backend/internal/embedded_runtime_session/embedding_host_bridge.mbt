@@ -4,14 +4,12 @@ using @host {
   type HostCompletedServiceResponse,
   type HostServiceRequestId,
   type HostServiceResponse,
-  type NativeAccessibilityActionRequest,
   type PlatformChannelResponse,
   type HostServiceAsyncQueue,
   type HostServiceBridge,
   type HostServiceCapabilities,
   type HostServiceRequest,
   type HostClipboardRequest,
-  type HostRuntimeDriver,
   type HostEvent,
   text_input_ime_request_diagnostics,
 }
@@ -78,7 +76,7 @@ pub(all) enum EmbeddingHostResponse {
   TextInput(@core.TextInputEvent)
   Command(@core.CommandIntent)
   Clipboard(HostServiceRequestId, HostServiceResponse)
-  Accessibility(NativeAccessibilityActionRequest)
+  Accessibility(@runtime.NativeAccessibilityActionRequest)
   PlatformView(Int, String, String, @core.PlatformViewEvent)
   PlatformChannel(HostServiceRequestId, PlatformChannelResponse)
 } derive(Eq, Debug, ToJson)
@@ -174,7 +172,7 @@ pub fn embedding_accessibility_response(
   action : @core.SemanticsAction,
 ) -> EmbeddingHostResponse {
   EmbeddingHostResponse::Accessibility(
-    NativeAccessibilityActionRequest::new(node_id~, generation~, action~),
+    @runtime.NativeAccessibilityActionRequest::new(node_id~, generation~, action~),
   )
 }
 
@@ -657,7 +655,7 @@ fn mobile_clipboard_request_json(request : HostClipboardRequest) -> Json {
 pub fn EmbeddingHostBridge::dispatch_response(
   self : EmbeddingHostBridge,
   response : EmbeddingHostResponse,
-  driver : HostRuntimeDriver,
+  driver : @runtime.HostRuntimeDriver,
 ) -> Bool {
   if self.disposed {
     return false
@@ -681,9 +679,9 @@ pub fn EmbeddingHostBridge::dispatch_response(
       self.complete_service_response(id, result, driver)
     EmbeddingHostResponse::Accessibility(request) =>
       match driver.perform_semantics_action(request) {
-        @host.NativeAccessibilityActionResult::Handled(_) => true
-        @host.NativeAccessibilityActionResult::Rejected(_)
-        | @host.NativeAccessibilityActionResult::BridgeUnavailable(_) => false
+        @runtime.NativeAccessibilityActionResult::Handled(_) => true
+        @runtime.NativeAccessibilityActionResult::Rejected(_)
+        | @runtime.NativeAccessibilityActionResult::BridgeUnavailable(_) => false
       }
     EmbeddingHostResponse::PlatformView(revision, kind, id, event) => {
       if revision != self.platform_view_revision ||
@@ -709,7 +707,7 @@ fn EmbeddingHostBridge::complete_service_response(
   self : EmbeddingHostBridge,
   id : HostServiceRequestId,
   response : HostServiceResponse,
-  driver : HostRuntimeDriver,
+  driver : @runtime.HostRuntimeDriver,
 ) -> Bool {
   if !self.service_queue.complete(id, response) {
     return false
@@ -726,7 +724,7 @@ fn EmbeddingHostBridge::complete_service_response(
 pub fn EmbeddingHostBridge::dispatch_response_envelope(
   self : EmbeddingHostBridge,
   envelope : EmbeddingHostResponseEnvelope,
-  driver : HostRuntimeDriver,
+  driver : @runtime.HostRuntimeDriver,
 ) -> Bool {
   if envelope.schema_version != 1 ||
     envelope.session_generation != self.session_generation {

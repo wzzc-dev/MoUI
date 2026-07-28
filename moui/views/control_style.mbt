@@ -15,10 +15,10 @@ pub struct SurfaceStyle {
 } derive(Eq, Debug, ToJson)
 
 ///|
-/// Resolved per-state control style. This is an alias of
-/// `@core.ControlStateStyle`; the type lives in `core` so both the token
-/// resolver and the view-layer style structs share one definition.
-pub using @core {type ControlStateStyle}
+/// Resolved per-state control style. Lives in `moui/views`
+/// (`control_theme_tokens.mbt`, ADR 0017) alongside the token resolver and
+/// the view-layer style structs; `core` no longer carries control types.
+/// Same package, so no `using` alias is needed.
 
 ///|
 pub struct ButtonStyle {

@@ -1,12 +1,12 @@
 ///|
 pub struct HostRendererImageCapability {
-  priv image_resources_fn : () -> Array[@render.ImageResourceRecord]
-  priv image_resource_snapshot_fn : () -> @render.ImageResourceSnapshot
+  priv image_resources_fn : () -> Array[ImageResourceRecord]
+  priv image_resource_snapshot_fn : () -> ImageResourceSnapshot
   priv apply_image_resource_load_completion_fn : (
-    @render.ImageResourceLoadCompletion,
-  ) -> @render.ImageResourceSnapshot
+    ImageResourceLoadCompletion,
+  ) -> ImageResourceSnapshot
   priv set_image_resource_change_callback_fn : (
-    ((@render.ImageResourceSnapshot) -> Unit)?,
+    ((ImageResourceSnapshot) -> Unit)?,
   ) -> Unit
 }
 
@@ -34,11 +34,11 @@ pub struct HostRendererGpuRecoveryCapability {
 
 ///|
 pub struct HostWindowRenderer {
-  priv resize_fn : (HostSurfaceMetrics) -> Unit
+  priv resize_fn : (@backend_host.HostSurfaceMetrics) -> Unit
   priv render_fn : (Array[@core.DrawCommand]) -> Unit
-  priv render_frame_fn : (@core.DrawFrame) -> @render.RenderFrameResult
+  priv render_frame_fn : (@core.DrawFrame) -> RenderFrameResult
   priv drain_present_completions_fn : () -> Array[
-    @render.RenderPresentCompletion,
+    RenderPresentCompletion,
   ]
   priv text_system_fn : () -> @core.TextSystem
   priv image : HostRendererImageCapability
@@ -51,16 +51,16 @@ pub struct HostWindowRenderer {
 
 ///|
 pub fn HostRendererImageCapability::new(
-  image_resources? : () -> Array[@render.ImageResourceRecord] = () => [],
-  image_resource_snapshot? : (() -> @render.ImageResourceSnapshot)? = None,
-  apply_image_resource_load_completion? : ((@render.ImageResourceLoadCompletion) -> @render.ImageResourceSnapshot)? = None,
+  image_resources? : () -> Array[ImageResourceRecord] = () => [],
+  image_resource_snapshot? : (() -> ImageResourceSnapshot)? = None,
+  apply_image_resource_load_completion? : ((ImageResourceLoadCompletion) -> ImageResourceSnapshot)? = None,
   set_image_resource_change_callback? : (
-    ((@render.ImageResourceSnapshot) -> Unit)?,
+    ((ImageResourceSnapshot) -> Unit)?,
   ) -> Unit = _callback => (),
 ) -> HostRendererImageCapability {
   let image_resource_snapshot = match image_resource_snapshot {
     Some(snapshot) => snapshot
-    None => () => @render.ImageResourceSnapshot::from_records(image_resources())
+    None => () => ImageResourceSnapshot::from_records(image_resources())
   }
   let apply_image_resource_load_completion = match
     apply_image_resource_load_completion {
@@ -125,10 +125,10 @@ priv struct HostLayerCommandCache {
 
 ///|
 pub fn HostWindowRenderer::new(
-  resize~ : (HostSurfaceMetrics) -> Unit,
+  resize~ : (@backend_host.HostSurfaceMetrics) -> Unit,
   render~ : (Array[@core.DrawCommand]) -> Unit,
-  render_frame? : ((@core.DrawFrame) -> @render.RenderFrameResult)? = None,
-  drain_present_completions? : (() -> Array[@render.RenderPresentCompletion])? = None,
+  render_frame? : ((@core.DrawFrame) -> RenderFrameResult)? = None,
+  drain_present_completions? : (() -> Array[RenderPresentCompletion])? = None,
   text_system~ : () -> @core.TextSystem,
   present_count? : () -> Int = () => 0,
   dispose? : () -> Unit = () => (),
@@ -147,7 +147,7 @@ pub fn HostWindowRenderer::new(
         ]
         commands.append(expanded.commands)
         render(commands)
-        @render.RenderFrameResult::new(
+        RenderFrameResult::new(
           cache_hit_count=expanded.cache_hit_count,
           cache_miss_count=expanded.cache_miss_count,
           cache_update_count=expanded.cache_update_count,
@@ -178,7 +178,7 @@ pub fn HostWindowRenderer::new(
 ///|
 pub fn HostWindowRenderer::resize(
   self : HostWindowRenderer,
-  metrics : HostSurfaceMetrics,
+  metrics : @backend_host.HostSurfaceMetrics,
 ) -> Unit {
   (self.resize_fn)(metrics)
 }
@@ -195,7 +195,7 @@ pub fn HostWindowRenderer::render(
 pub fn HostWindowRenderer::render_frame(
   self : HostWindowRenderer,
   frame : @core.DrawFrame,
-) -> @render.RenderFrameResult {
+) -> RenderFrameResult {
   (self.render_frame_fn)(frame)
 }
 
@@ -205,22 +205,22 @@ pub fn HostWindowRenderer::render_frame(
 /// that reached present, was dropped, or triggered raster fallback.
 pub fn HostWindowRenderer::drain_present_completions(
   self : HostWindowRenderer,
-) -> Array[@render.RenderPresentCompletion] {
+) -> Array[RenderPresentCompletion] {
   (self.drain_present_completions_fn)()
 }
 
 ///|
 /// Report whether a renderer-worker completion proves a window present.
 pub fn render_present_completion_is_presented(
-  completion : @render.RenderPresentCompletion,
+  completion : RenderPresentCompletion,
 ) -> Bool {
-  completion.status() is @render.RenderPresentStatus::Presented
+  completion.status() is RenderPresentStatus::Presented
 }
 
 ///|
 /// Report whether any drained completion proves a window present.
 pub fn render_present_completions_have_presented(
-  completions : Array[@render.RenderPresentCompletion],
+  completions : Array[RenderPresentCompletion],
 ) -> Bool {
   completions.any(render_present_completion_is_presented)
 }
@@ -229,14 +229,14 @@ pub fn render_present_completions_have_presented(
 /// Report whether a queued frame reached any terminal outcome. `Recorded` is
 /// an internal handoff signal and does not complete a window presentation.
 pub fn render_present_completions_have_terminal(
-  completions : Array[@render.RenderPresentCompletion],
+  completions : Array[RenderPresentCompletion],
 ) -> Bool {
   completions.any(completion => {
     match completion.status() {
-      @render.RenderPresentStatus::Presented
-      | @render.RenderPresentStatus::Dropped
-      | @render.RenderPresentStatus::FallbackToRaster => true
-      @render.RenderPresentStatus::Recorded => false
+      RenderPresentStatus::Presented
+      | RenderPresentStatus::Dropped
+      | RenderPresentStatus::FallbackToRaster => true
+      RenderPresentStatus::Recorded => false
     }
   })
 }
@@ -251,29 +251,29 @@ pub fn HostWindowRenderer::text_system(
 ///|
 pub fn HostWindowRenderer::image_resources(
   self : HostWindowRenderer,
-) -> Array[@render.ImageResourceRecord] {
+) -> Array[ImageResourceRecord] {
   (self.image.image_resources_fn)()
 }
 
 ///|
 pub fn HostWindowRenderer::image_resource_snapshot(
   self : HostWindowRenderer,
-) -> @render.ImageResourceSnapshot {
+) -> ImageResourceSnapshot {
   (self.image.image_resource_snapshot_fn)()
 }
 
 ///|
 pub fn HostWindowRenderer::apply_image_resource_load_completion(
   self : HostWindowRenderer,
-  completion : @render.ImageResourceLoadCompletion,
-) -> @render.ImageResourceSnapshot {
+  completion : ImageResourceLoadCompletion,
+) -> ImageResourceSnapshot {
   (self.image.apply_image_resource_load_completion_fn)(completion)
 }
 
 ///|
 pub fn HostWindowRenderer::set_image_resource_change_callback(
   self : HostWindowRenderer,
-  callback : ((@render.ImageResourceSnapshot) -> Unit)?,
+  callback : ((ImageResourceSnapshot) -> Unit)?,
 ) -> Unit {
   (self.image.set_image_resource_change_callback_fn)(callback)
 }

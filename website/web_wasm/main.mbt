@@ -1,6 +1,6 @@
 ///|
 fn main {
-  let route_source = @host.HostRouteSource::new()
+  let route_source = @runtime.HostRouteSource::new()
   let runtime_ref : Ref[@runtime.AppRuntime?] = Ref(None)
   let route_host = @website_app.WebsiteRouteHost::new(
     route_source~,

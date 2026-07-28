@@ -475,13 +475,13 @@ test "linux accessibility bridge dispatches semantics actions" {
   }
   match
     bridge.perform_action(
-      @host.NativeAccessibilityActionRequest::new(
+      @runtime.NativeAccessibilityActionRequest::new(
         node_id=target.node_id,
         generation=snapshot.generation(),
         action=@core.SemanticsAction::Activate,
       ),
     ) {
-    @host.NativeAccessibilityActionResult::Handled(receipt) =>
+    @runtime.NativeAccessibilityActionResult::Handled(receipt) =>
       assert_true(receipt.before == snapshot.generation())
     _ => fail("expected Linux accessibility bridge action dispatch")
   }

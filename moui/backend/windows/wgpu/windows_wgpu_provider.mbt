@@ -9,13 +9,13 @@ extern "C" fn win32_surface_host_hwnd_from_u64(
 ///|
 pub struct WindowsWgpuAppOptions {
   priv text_engine : @wgpu_renderer.NativeTextEngineSetting
-  priv scene_resolver : @host.HostWindowSceneResolver
+  priv scene_resolver : @runtime.HostWindowSceneResolver
 }
 
 ///|
 pub fn WindowsWgpuAppOptions::new(
   text_engine? : @wgpu_renderer.NativeTextEngineSetting = @wgpu_renderer.NativeTextEngineSetting::PlatformDefault,
-  scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
+  scene_resolver? : @runtime.HostWindowSceneResolver = @runtime.HostWindowSceneResolver::unavailable(),
 ) -> WindowsWgpuAppOptions {
   { text_engine, scene_resolver }
 }
@@ -61,8 +61,8 @@ pub fn renderer_provider(
 }
 
 ///|
-fn wgpu_native_image_loader() -> @host.HostAsyncImageLoader {
-  @host.HostAsyncImageLoader::new(start_load=(_window_id, source, complete) => {
+fn wgpu_native_image_loader() -> @render.HostAsyncImageLoader {
+  @render.HostAsyncImageLoader::new(start_load=(_window_id, source, complete) => {
     complete(@wgpu_renderer.native_image_load_completion(source))
     None
   })
@@ -85,7 +85,7 @@ fn create_renderer(
   window : @win.Window,
   metrics : @host.HostSurfaceMetrics,
   options : WindowsWgpuAppOptions,
-) -> @host.HostWindowRenderer? {
+) -> @render.HostWindowRenderer? {
   Some(
     host_renderer_from_wgpu(
       @wgpu_renderer.create_with_host_surface_and_text_engine(
@@ -120,14 +120,14 @@ fn windows_text_engine(
 ///|
 fn host_renderer_from_wgpu(
   renderer : @wgpu_renderer.WgpuRenderer,
-) -> @host.HostWindowRenderer {
-  @host.HostWindowRenderer::new(
+) -> @render.HostWindowRenderer {
+  @render.HostWindowRenderer::new(
     resize=metrics => renderer.resize(renderer_metrics_from_host(metrics)),
     render=commands => renderer.render(commands),
     text_system=() => renderer.text_system(),
     present_count=() => renderer.present_count(),
     dispose=() => renderer.dispose(),
-    image=@host.HostRendererImageCapability::new(
+    image=@render.HostRendererImageCapability::new(
       image_resources=() => renderer.image_resources(),
       image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
       apply_image_resource_load_completion=Some(completion => {

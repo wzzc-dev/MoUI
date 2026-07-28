@@ -14,13 +14,13 @@ test "host window renderer forwards lifecycle closures" {
       diagnostic="decode failed",
     ),
   ]
-  let renderer = HostWindowRenderer::new(
+  let renderer = @render.HostWindowRenderer::new(
     resize=metrics => resized.val = metrics.logical_size,
     render=commands => rendered.val = commands.length(),
     text_system=() => @core.TextSystem::fallback(),
     present_count=() => presenter.val,
     dispose=() => disposed.val = disposed.val + 1,
-    image=HostRendererImageCapability::new(
+    image=@render.HostRendererImageCapability::new(
       image_resources=() => image_records,
       image_resource_snapshot=Some(() => {
         @render.ImageResourceSnapshot::new(revision=7, records=image_records)
@@ -87,7 +87,7 @@ test "host window renderer forwards lifecycle closures" {
 
 ///|
 test "host window renderer image resource diagnostics default empty" {
-  let renderer = HostWindowRenderer::new(resize=_ => (), render=_ => (), text_system=() => {
+  let renderer = @render.HostWindowRenderer::new(resize=_ => (), render=_ => (), text_system=() => {
     @core.TextSystem::fallback()
   })
   inspect(renderer.image_resources().length(), content="0")

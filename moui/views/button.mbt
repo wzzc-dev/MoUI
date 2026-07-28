@@ -221,7 +221,7 @@ impl @core.ViewNode for Button with fn paint(self, ctx) {
   let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
   let resolved_style = match self.style {
     Some(value) => value
-    None => self.variant.style(resolved_theme)
+    None => self.variant.style(views_ambient_control_theme(resolved_theme))
   }
   let normal = resolved_style.normal
   let hovered = resolved_style.hovered
@@ -238,11 +238,11 @@ impl @core.ViewNode for Button with fn paint(self, ctx) {
   let transition_duration_ms = resolved_theme.motion.fast_ms
   let transition_easing = resolved_theme.motion.easing
   let current_state = if ctx.state.pressed {
-    @core.ButtonState::Pressed
+    @core.PressableState::Pressed
   } else if ctx.state.hovered {
-    @core.ButtonState::Hovered
+    @core.PressableState::Hovered
   } else {
-    @core.ButtonState::Normal
+    @core.PressableState::Normal
   }
   let transition = button_transition(ctx.state)
   let (background_brush, animating) = match transition {
@@ -251,7 +251,7 @@ impl @core.ViewNode for Button with fn paint(self, ctx) {
         transition_duration_ms <= 0.0 ||
         ctx.now_ms <= 0.0 {
         (
-          button_state_brush(
+          pressable_state_brush(
             current_state,
             normal.background,
             hovered.background,
@@ -263,7 +263,7 @@ impl @core.ViewNode for Button with fn paint(self, ctx) {
         let raw_progress = (ctx.now_ms - start_ms) / transition_duration_ms
         if raw_progress >= 1.0 {
           (
-            button_state_brush(
+            pressable_state_brush(
               current_state,
               normal.background,
               hovered.background,
@@ -273,7 +273,7 @@ impl @core.ViewNode for Button with fn paint(self, ctx) {
           )
         } else if raw_progress <= 0.0 {
           (
-            button_state_brush(
+            pressable_state_brush(
               from_state,
               normal.background,
               hovered.background,
@@ -282,16 +282,16 @@ impl @core.ViewNode for Button with fn paint(self, ctx) {
             true,
           )
         } else {
-          let from_color = button_state_color(
-            button_state_brush(
+          let from_color = pressable_state_color(
+            pressable_state_brush(
               from_state,
               normal.background,
               hovered.background,
               pressed.background,
             ),
           )
-          let to_color = button_state_color(
-            button_state_brush(
+          let to_color = pressable_state_color(
+            pressable_state_brush(
               current_state,
               normal.background,
               hovered.background,
@@ -309,7 +309,7 @@ impl @core.ViewNode for Button with fn paint(self, ctx) {
       }
     None =>
       (
-        button_state_brush(
+        pressable_state_brush(
           current_state,
           normal.background,
           hovered.background,
@@ -404,25 +404,25 @@ fn[Msg] button_event(
     @core.AppEvent::Pointer(event) => {
       let inside = ctx.frame.contains(event.position)
       let current = if ctx.state.pressed {
-        @core.ButtonState::Pressed
+        @core.PressableState::Pressed
       } else if ctx.state.hovered {
-        @core.ButtonState::Hovered
+        @core.PressableState::Hovered
       } else {
-        @core.ButtonState::Normal
+        @core.PressableState::Normal
       }
       let next = view_button_next_state(current, inside, event.phase)
       let activated = event.phase == @core.PointerPhase::Up &&
         inside &&
-        current == @core.ButtonState::Pressed
+        current == @core.PressableState::Pressed
       let changed = next != current || activated
       let is_instant_clear = event.phase == @core.PointerPhase::Exit &&
-        current != @core.ButtonState::Normal
+        current != @core.PressableState::Normal
       let next_state = if is_instant_clear {
-        view_button_state_context(ctx.state, current, next, ctx.now_ms).without_slot(
+        view_pressable_state_context(ctx.state, current, next, ctx.now_ms).without_slot(
           button_transition_slot(),
         )
       } else if changed {
-        view_button_state_context(ctx.state, current, next, ctx.now_ms)
+        view_pressable_state_context(ctx.state, current, next, ctx.now_ms)
       } else {
         ctx.state
       }
@@ -484,16 +484,16 @@ fn[Msg] button_event(
 }
 
 ///|
-fn view_button_state_context(
+fn view_pressable_state_context(
   current : @core.ViewStateContext,
-  from_state : @core.ButtonState,
-  next : @core.ButtonState,
+  from_state : @core.PressableState,
+  next : @core.PressableState,
   now_ms : Double,
 ) -> @core.ViewStateContext {
   let interaction_state = {
     ..current,
-    hovered: next == @core.ButtonState::Hovered,
-    pressed: next == @core.ButtonState::Pressed,
+    hovered: next == @core.PressableState::Hovered,
+    pressed: next == @core.PressableState::Pressed,
   }
   // Keep an in-flight transition when the visual state is unchanged; a real
   // transition records its typed origin and exact runtime clock value.

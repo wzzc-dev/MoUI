@@ -1,6 +1,6 @@
 ///|
 test "platform timer subscription survives hidden workspace" {
-  let source = @host.HostTimerSource::new(start_timer=(_interval, _dispatch) => {
+  let source = @runtime.HostTimerSource::new(start_timer=(_interval, _dispatch) => {
     None
   })
   let platform = @platform.Model::new(
@@ -15,7 +15,7 @@ test "platform timer subscription survives hidden workspace" {
 
 ///|
 test "canvas route declares animation timer subscription" {
-  let source = @host.HostTimerSource::new(start_timer=(_interval, _dispatch) => {
+  let source = @runtime.HostTimerSource::new(start_timer=(_interval, _dispatch) => {
     None
   })
   let model = ShowcaseModel::new(route="platform/canvas").with_platform_host(

@@ -61,7 +61,7 @@ pub(all) enum ShowcaseMsg {
   RouteBack
   RouteForward
   OpenRouteLink(String)
-  HostRouteChanged(@host.HostRouteEvent)
+  HostRouteChanged(@runtime.HostRouteEvent)
   TabSelected(String)
   ClearFilter
   FilterChanged(String)
@@ -102,7 +102,7 @@ pub(all) enum ShowcaseRouteHistoryCommand {
 
 ///|
 pub struct ShowcaseRouteHost {
-  route_source : @host.HostRouteSource
+  route_source : @runtime.HostRouteSource
   dispatch_command : (ShowcaseRouteHistoryCommand) -> Unit
 }
 
@@ -229,7 +229,7 @@ pub fn ShowcaseTodoItem::new(id~ : Int, text~ : String) -> ShowcaseTodoItem {
 
 ///|
 pub fn ShowcaseRouteHost::new(
-  route_source~ : @host.HostRouteSource,
+  route_source~ : @runtime.HostRouteSource,
   dispatch_command~ : (ShowcaseRouteHistoryCommand) -> Unit,
 ) -> ShowcaseRouteHost {
   { route_source, dispatch_command }
@@ -470,7 +470,7 @@ fn ShowcaseModel::with_route_pushed(
 ///|
 fn ShowcaseModel::with_host_route_event(
   self : ShowcaseModel,
-  event : @host.HostRouteEvent,
+  event : @runtime.HostRouteEvent,
 ) -> ShowcaseModel {
   let route = event.location.to_route()
   let location = @views.RouteLocation::parse(route)

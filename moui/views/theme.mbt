@@ -9,8 +9,10 @@ pub using @core {type TypographyScale}
 
 ///|
 /// Minimal light theme. Resolved from a `ThemeSpec` so the full palette
-/// (on*/container matrix), scales, and default `ComponentThemes` are derived
-/// consistently with the resolver path used by host `ThemeChanged` events.
+/// (on*/container matrix) and scales are derived consistently with the
+/// resolver path used by host `ThemeChanged` events. Concrete control tokens
+/// are resolved views-side as a `ControlThemeSet` (ADR 0017); this builder
+/// returns the neutral `core.Theme` only.
 pub fn light_theme() -> @core.Theme {
   @core.resolve_minimal_theme(
     @core.ThemeSpec::minimal_light(),
@@ -33,9 +35,13 @@ pub fn default_theme() -> @core.Theme {
 }
 
 ///|
-/// Compose a theme by overriding individual token groups over an optional
-/// base. Semantic colors are no longer a separate group: they live on
-/// `ColorPalette` (success/danger/info/...), so override them via `palette?`.
+/// Compose a neutral theme by overriding individual token groups over an
+/// optional base. Semantic colors live on `ColorPalette`
+/// (success/danger/info/...), so override them via `palette?`. Concrete
+/// control tokens are not accepted here: `core.Theme` no longer carries a
+/// `components` field (ADR 0017). Apps that want a branded control theme set
+/// a `ControlThemeSet` via the ambient resolver; this builder composes the
+/// neutral base only.
 pub fn theme(
   base? : @core.Theme,
   scheme? : @core.ColorScheme = @core.ColorScheme::Light,
@@ -46,7 +52,6 @@ pub fn theme(
   shadow_scale? : @core.ShadowScale,
   motion? : @core.MotionScale,
   surfaces? : @core.SurfaceScale,
-  components? : @core.ComponentThemes,
 ) -> @core.Theme {
   let mut base_theme = match base {
     Some(value) => value
@@ -82,10 +87,6 @@ pub fn theme(
   }
   match surfaces {
     Some(value) => base_theme = base_theme.with_surfaces(value)
-    None => ()
-  }
-  match components {
-    Some(value) => base_theme = base_theme.with_components(value)
     None => ()
   }
   base_theme

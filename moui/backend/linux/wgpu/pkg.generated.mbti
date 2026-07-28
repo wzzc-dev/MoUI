@@ -23,7 +23,7 @@ pub fn run_renderer_smoke() -> Unit raise @wgpu_mbt.WgpuError
 pub struct LinuxWgpuAppOptions {
   // private fields
 }
-pub fn LinuxWgpuAppOptions::new(text_engine? : @wzzc-dev/moui/render/wgpu.NativeTextEngineSetting, scene_resolver? : @host.HostWindowSceneResolver) -> Self
+pub fn LinuxWgpuAppOptions::new(text_engine? : @wzzc-dev/moui/render/wgpu.NativeTextEngineSetting, scene_resolver? : @runtime.HostWindowSceneResolver) -> Self
 
 // Type aliases
 

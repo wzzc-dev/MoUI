@@ -65,6 +65,12 @@ pub fn DesignPreset::theme_for_variant(
 }
 
 ///|
+/// Compose a custom neutral theme by overriding individual token groups over
+/// an optional base. Concrete control tokens are not accepted here: `core.Theme`
+/// no longer carries a `components` field (ADR 0017). Branded design systems
+/// that want custom control tokens resolve a `@views.ControlThemeSet` and
+/// attach it via the ambient resolver; this builder composes the neutral base
+/// only.
 pub fn custom(
   scheme? : @core.ColorScheme = @core.ColorScheme::Light,
   base? : @core.Theme,
@@ -75,7 +81,6 @@ pub fn custom(
   shadow_scale? : @core.ShadowScale,
   motion? : @core.MotionScale,
   surfaces? : @core.SurfaceScale,
-  components? : @core.ComponentThemes,
 ) -> @core.Theme {
   let mut theme = match base {
     Some(value) => value
@@ -111,10 +116,6 @@ pub fn custom(
   }
   match surfaces {
     Some(value) => theme = theme.with_surfaces(value)
-    None => ()
-  }
-  match components {
-    Some(value) => theme = theme.with_components(value)
     None => ()
   }
   theme

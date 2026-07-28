@@ -261,43 +261,43 @@ fn view_max_int(left : Int, right : Int) -> Int {
 
 ///|
 fn view_button_next_state(
-  current : @core.ButtonState,
+  current : @core.PressableState,
   inside : Bool,
   phase : @core.PointerPhase,
-) -> @core.ButtonState {
+) -> @core.PressableState {
   match phase {
     @core.PointerPhase::Move =>
-      if current == @core.ButtonState::Pressed && inside {
-        @core.ButtonState::Pressed
+      if current == @core.PressableState::Pressed && inside {
+        @core.PressableState::Pressed
       } else if inside {
-        @core.ButtonState::Hovered
+        @core.PressableState::Hovered
       } else {
-        @core.ButtonState::Normal
+        @core.PressableState::Normal
       }
     @core.PointerPhase::Down =>
       if inside {
-        @core.ButtonState::Pressed
+        @core.PressableState::Pressed
       } else {
-        @core.ButtonState::Normal
+        @core.PressableState::Normal
       }
     @core.PointerPhase::Up =>
       if inside {
-        @core.ButtonState::Hovered
+        @core.PressableState::Hovered
       } else {
-        @core.ButtonState::Normal
+        @core.PressableState::Normal
       }
     // Synthetic runtime phase: the pointer left the element. Drop any hover or
     // press state and return to rest. (`inside` is always false for an `Exit`,
     // but the branch is unconditional so the intent is explicit.)
     @core.PointerPhase::Exit | @core.PointerPhase::Cancel =>
-      @core.ButtonState::Normal
+      @core.PressableState::Normal
   }
 }
 
 ///|
 priv enum ButtonTransitionState {
   Idle
-  Active(@core.ButtonState, Double)
+  Active(@core.PressableState, Double)
 }
 
 ///|
@@ -316,9 +316,9 @@ impl @core.ViewStateValue for ButtonTransitionState with fn encode_view_state(
       output.write_byte(1)
       output.write_byte(
         match from_state {
-          @core.ButtonState::Normal => 0
-          @core.ButtonState::Hovered => 1
-          @core.ButtonState::Pressed => 2
+          @core.PressableState::Normal => 0
+          @core.PressableState::Hovered => 1
+          @core.PressableState::Pressed => 2
         },
       )
       output.write_double_be(start_ms)
@@ -336,9 +336,9 @@ impl @core.ViewStateValue for ButtonTransitionState with fn decode_view_state(
     Some(Idle)
   } else if bytes.length() == 10 && bytes[0] == 1 {
     let from_state = match bytes[1] {
-      0 => Some(@core.ButtonState::Normal)
-      1 => Some(@core.ButtonState::Hovered)
-      2 => Some(@core.ButtonState::Pressed)
+      0 => Some(@core.PressableState::Normal)
+      1 => Some(@core.PressableState::Hovered)
+      2 => Some(@core.PressableState::Pressed)
       _ => None
     }
     let start_ms = @core.ViewStateValue::decode_view_state(
@@ -365,7 +365,7 @@ fn button_transition_slot() -> @core.ViewStateSlot[ButtonTransitionState] {
 ///|
 fn button_transition(
   state : @core.ViewStateContext,
-) -> (@core.ButtonState, Double)? {
+) -> (@core.PressableState, Double)? {
   match state.read_slot(button_transition_slot()) {
     Active(from_state, start_ms) => Some((from_state, start_ms))
     Idle => None
@@ -376,22 +376,22 @@ fn button_transition(
 /// Resolve the solid background color for a button state by reading the
 /// brush's fallback color. All built-in button styles use `Brush::solid`, so
 /// this is exact for them; gradient brushes degrade to their start color.
-fn button_state_color(brush : @core.Brush) -> @core.Color {
+fn pressable_state_color(brush : @core.Brush) -> @core.Color {
   brush.fallback_color()
 }
 
 ///|
 /// Map a button visual state to its background brush.
-fn button_state_brush(
-  state : @core.ButtonState,
+fn pressable_state_brush(
+  state : @core.PressableState,
   normal : @core.Brush,
   hovered : @core.Brush,
   pressed : @core.Brush,
 ) -> @core.Brush {
   match state {
-    @core.ButtonState::Normal => normal
-    @core.ButtonState::Hovered => hovered
-    @core.ButtonState::Pressed => pressed
+    @core.PressableState::Normal => normal
+    @core.PressableState::Hovered => hovered
+    @core.PressableState::Pressed => pressed
   }
 }
 

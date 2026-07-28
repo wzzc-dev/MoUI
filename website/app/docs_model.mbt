@@ -61,7 +61,7 @@ priv enum WebsiteRouteCommand {
 
 ///|
 pub struct WebsiteRouteHost {
-  route_source : @host.HostRouteSource
+  route_source : @runtime.HostRouteSource
   push_route : (String) -> Unit
   scroll_to_key : (String, @core.ScrollAlignment) -> Unit
   apply_locale : (String) -> Unit
@@ -70,7 +70,7 @@ pub struct WebsiteRouteHost {
 
 ///|
 pub fn WebsiteRouteHost::new(
-  route_source~ : @host.HostRouteSource,
+  route_source~ : @runtime.HostRouteSource,
   push_route? : (String) -> Unit = _route => (),
   scroll_to_key? : (String, @core.ScrollAlignment) -> Unit = (_key, _alignment) => {
     ()

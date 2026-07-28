@@ -36,8 +36,8 @@ pub fn renderer_provider(
 }
 
 ///|
-fn android_skia_async_image_loader() -> @host.HostAsyncImageLoader {
-  @host.HostAsyncImageLoader::new(start_load=(_window_id, source, complete) => {
+fn android_skia_async_image_loader() -> @render.HostAsyncImageLoader {
+  @render.HostAsyncImageLoader::new(start_load=(_window_id, source, complete) => {
     complete(@skia_renderer.skia_image_load_completion(source))
     None
   })
@@ -89,7 +89,7 @@ fn create_renderer(
   surface : @android_host.AndroidSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
   options : AndroidSkiaAppOptions,
-) -> @host.HostWindowRenderer? {
+) -> @render.HostWindowRenderer? {
   if !android_skia_provider_ready() {
     println(android_skia_unavailable_message())
     return None
@@ -110,7 +110,7 @@ fn create_gpu_worker_renderer(
   anw : UInt64,
   metrics : @host.HostSurfaceMetrics,
   options : AndroidSkiaAppOptions,
-) -> @host.HostWindowRenderer? {
+) -> @render.HostWindowRenderer? {
   try {
     let renderer = @skia_renderer.create_with_present_target(
       renderer_metrics_from_host(metrics),
@@ -160,7 +160,7 @@ fn create_raster_renderer(
   surface : @android_host.AndroidSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
   options : AndroidSkiaAppOptions,
-) -> @host.HostWindowRenderer? {
+) -> @render.HostWindowRenderer? {
   try {
     let renderer = @skia_renderer.create_with_present_target_and_route(
       renderer_metrics_from_host(metrics),
@@ -251,7 +251,7 @@ fn android_native_gpu_completion_to_render(
 fn host_renderer_from_native_gpu_worker(
   renderer : @skia_renderer.SkiaRasterRenderer,
   worker : @skia_native.NativeGpuRenderWorker,
-) -> @host.HostWindowRenderer {
+) -> @render.HostWindowRenderer {
   let pending_completions : Array[@render.RenderPresentCompletion] = []
   let presented_count = Ref(0)
   let fallback_to_raster = Ref(false)
@@ -285,7 +285,7 @@ fn host_renderer_from_native_gpu_worker(
       }
     }
   }
-  @host.HostWindowRenderer::new(
+  @render.HostWindowRenderer::new(
     resize=metrics => {
       renderer.resize(renderer_metrics_from_host(metrics)) catch {
         err => println("error resizing Android Skia producer: \{err.message()}")
@@ -364,7 +364,7 @@ fn host_renderer_from_native_gpu_worker(
         renderer.dispose()
       }
     },
-    image=@host.HostRendererImageCapability::new(
+    image=@render.HostRendererImageCapability::new(
       image_resources=() => renderer.image_resources(),
       image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
       apply_image_resource_load_completion=Some(completion => {
@@ -374,7 +374,7 @@ fn host_renderer_from_native_gpu_worker(
         renderer.set_image_resource_change_callback(callback)
       },
     ),
-    platform_view=@host.HostRendererPlatformViewCapability::new(
+    platform_view=@render.HostRendererPlatformViewCapability::new(
       draw_platform_view_pixels=fn(
         pixels,
         src_width,
@@ -420,8 +420,8 @@ fn android_skia_present_target(
 ///|
 fn host_renderer_from_skia(
   renderer : @skia_renderer.SkiaRasterRenderer,
-) -> @host.HostWindowRenderer {
-  @host.HostWindowRenderer::new(
+) -> @render.HostWindowRenderer {
+  @render.HostWindowRenderer::new(
     resize=metrics => {
       renderer.resize(renderer_metrics_from_host(metrics)) catch {
         err => println("error resizing Android Skia renderer: \{err.message()}")
@@ -436,7 +436,7 @@ fn host_renderer_from_skia(
     text_system=() => renderer.text_system(),
     present_count=() => renderer.present_count(),
     dispose=() => renderer.dispose(),
-    image=@host.HostRendererImageCapability::new(
+    image=@render.HostRendererImageCapability::new(
       image_resources=() => renderer.image_resources(),
       image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
       apply_image_resource_load_completion=Some(completion => {
@@ -446,7 +446,7 @@ fn host_renderer_from_skia(
         renderer.set_image_resource_change_callback(callback)
       },
     ),
-    platform_view=@host.HostRendererPlatformViewCapability::new(
+    platform_view=@render.HostRendererPlatformViewCapability::new(
       draw_platform_view_pixels=fn(
         pixels,
         src_width,

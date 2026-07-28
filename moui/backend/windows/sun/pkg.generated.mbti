@@ -24,7 +24,7 @@ pub fn windows_sun_provider_preflight_summary(options? : WindowsSunAppOptions, s
 pub struct WindowsSunAppOptions {
   // private fields
 }
-pub fn WindowsSunAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, platform_view_plugins? : Array[@host.PlatformViewPlugin]) -> Self
+pub fn WindowsSunAppOptions::new(scene_resolver? : @runtime.HostWindowSceneResolver, platform_view_plugins? : Array[@host.PlatformViewPlugin]) -> Self
 
 pub struct WindowsSunSmokeOptions {
   // private fields

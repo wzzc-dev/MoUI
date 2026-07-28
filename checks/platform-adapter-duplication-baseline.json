@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "description": "Platform adapter duplication budget baseline (ADR 0020). Lists duplicated patterns across platform backends that are allowed (consolidation deferred) and those that must be consolidated into moui/backend/shared_adapter.",
+  "generatedAt": "2026-07-28",
+  "budget": {
+    "allowlist": [
+      {
+        "pattern": "app_handler redraw loop",
+        "reason": "Each platform slot model differs (Android SurfaceView, iOS CAMetalLayer, macOS NSView, Linux X11/Wayland, Windows HWND). The loop structure is uniform but the slot interaction is platform-private. Deferred to shared_adapter pattern extraction.",
+        "allowUntil": "2026-10-01"
+      },
+      {
+        "pattern": "HostWindowSlot resize/detach routing",
+        "reason": "Per-platform resolution path (macOS windowDidResize, Linux configure event, Windows WM_SIZE) requires native handles. The routing contract is stable; duplication is structural.",
+        "allowUntil": "2026-10-01"
+      },
+      {
+        "pattern": "window_event_to_host_with_modifiers call sites",
+        "reason": "Each backend has a unique event loop (NSApplication, X11, Win32, Android Looper, HarmonyOS XComponent). The call pattern is identical but the dispatch harness is platform-private.",
+        "allowUntil": "2026-10-01"
+      },
+      {
+        "pattern": "RenderFrameResult apply/finish pattern",
+        "reason": "Platform variations exist in sync vs async frame application and platform-view composition (Linux offscreen webview, iOS vs Android surface flip). Shared adapter captures the uniform parts; platform-specific finish is allowed.",
+        "allowUntil": "2026-10-01"
+      },
+      {
+        "pattern": "Texture native surface creation (mtl_texture, vulkan_image, egl_surface)",
+        "reason": "Each platform uses a different GPU API to create render-target textures. This is inherently platform-specific and cannot be abstracted.",
+        "allowUntil": null
+      },
+      {
+        "pattern": "Discrete GPU enumeration and Metal/Vulkan/EGL device setup",
+        "reason": "Per-platform GPU backend selection (Metal device, Vulkan instance+device, EGL display) is inherently platform-specific.",
+        "allowUntil": null
+      }
+    ],
+    "initialExtraction": {
+      "shared_adapter_modules": [
+        "window_event_transformer.mbt",
+        "platform_capability.mbt"
+      ],
+      "sharedLogicLines": 95,
+      "estimatedDuplicationAvoidedLines": 900
+    },
+    "metrics": {
+      "totalPlatformBackendFiles": 28,
+      "sharedAdapterFiles": 2,
+      "currentSharedFraction": 0.071,
+      "projectedSharedFraction": 0.30
+    }
+  },
+  "remediation": {
+    "rules": [
+      "Platform backends MUST NOT reimplement make_surface_metrics or normalize_pointer_position — use shared_adapter versions.",
+      "New platform backends MUST import moui/backend/shared_adapter and use its transformers where applicable.",
+      "Platform-specific WindowEvent dispatch (pointer, keyboard, IME, drag) MUST remain in the platform backend — those carry platform-specific payloads that cannot be abstracted.",
+      "Render lifecycle helpers (drain prior present, resolve pending frame, record presented frame) belong in moui/runtime or moui/render, NOT shared_adapter — shared_adapter imports core + backend/host contracts only (ADR 0020)."
+    ]
+  }
+}

@@ -45,7 +45,7 @@ fn MacosApp::publish_subscription_event(
   self : MacosApp,
   window_id : @host.HostWindowId,
   event : @host.HostEvent,
-) -> @host.HostPlatformEventPublishResult? {
+) -> @runtime.HostPlatformEventPublishResult? {
   match self.event_sources {
     Some(sources) => Some(sources.publish(window_id~, event~))
     None => None
@@ -137,10 +137,10 @@ fn MacosApp::open_window(
   event_loop : @window_macos.ActiveEventLoop,
   request : @host.HostWindowOpenRequest,
 ) -> @host.HostWindowRequestResult {
-  match self.windows.resolve_open_request(request, self.scene_resolver) {
-    @host.HostWindowOpenResolution::OpenRejected(message) =>
+  match @runtime.resolve_open_request(self.windows, request, self.scene_resolver) {
+    @runtime.HostWindowOpenResolution::OpenRejected(message) =>
       @host.HostWindowRequestResult::WindowRejected(message)
-    @host.HostWindowOpenResolution::OpenResolved(resolved) =>
+    @runtime.HostWindowOpenResolution::OpenResolved(resolved) =>
       self.create_resolved_window(event_loop, resolved)
   }
 }
@@ -149,7 +149,7 @@ fn MacosApp::open_window(
 fn MacosApp::create_resolved_window(
   self : MacosApp,
   event_loop : @window_macos.ActiveEventLoop,
-  resolved : @host.HostWindowResolvedOpen,
+  resolved : @runtime.HostWindowResolvedOpen,
 ) -> @host.HostWindowRequestResult {
   let platform = @window_core.PlatformWindowAttributes::default()
     .with_fullsize_content_view(true)
@@ -182,7 +182,7 @@ fn MacosApp::create_resolved_window(
 fn MacosApp::attach_resolved_window(
   self : MacosApp,
   window : @window_macos.Window,
-  resolved : @host.HostWindowResolvedOpen,
+  resolved : @runtime.HostWindowResolvedOpen,
 ) -> @host.HostWindowRequestResult {
   let metrics = @host.surface_metrics_from_physical(
     window.surface_size(),
@@ -197,7 +197,7 @@ fn MacosApp::attach_resolved_window(
         Some(record) => record
         None => resolved.record
       }
-      let driver = @host.HostRuntimeDriver::new(
+      let driver = @runtime.HostRuntimeDriver::new(
         runtime=resolved.instance.runtime,
         schedule_redraw=() => (),
       )
@@ -211,7 +211,7 @@ fn MacosApp::attach_resolved_window(
       ignore(driver.dispatch(@host.HostEvent::Resized(metrics)))
       ignore(
         self.runtime_slots.insert(
-          @host.HostWindowRuntimeSlot::from_driver(record~, driver~),
+          @runtime.HostWindowRuntimeSlot::from_driver(record~, driver~),
         ),
       )
       ignore(
@@ -280,7 +280,7 @@ fn MacosApp::apply_window_lifecycle(
 ///|
 fn MacosApp::active_runtime_slot(
   self : MacosApp,
-) -> @host.HostWindowRuntimeSlot? {
+) -> @runtime.HostWindowRuntimeSlot? {
   match self.runtime_slots.focused_slot() {
     Some(slot) => Some(slot)
     None => self.runtime_slots.primary_slot()
@@ -323,7 +323,7 @@ fn MacosApp::current_scale_factor(
 }
 
 ///|
-fn runtime_slot_needs_redraw(slot : @host.HostWindowRuntimeSlot) -> Bool {
+fn runtime_slot_needs_redraw(slot : @runtime.HostWindowRuntimeSlot) -> Bool {
   let result = slot.driver.event_result()
   result.needs_redraw || result.redraw_requested
 }
@@ -373,7 +373,7 @@ fn MacosApp::request_image_resource_redraw_if_changed(
         request_redraw=id => self.request_platform_redraw(id),
       )
       result.status() ==
-      @host.HostImageResourceRepaintStatus::ImageRepaintRequested
+      @render.HostImageResourceRepaintStatus::ImageRepaintRequested
     }
     (Some(platform_slot), None) => {
       ignore(
@@ -394,7 +394,7 @@ fn MacosApp::request_image_resource_redraw_if_changed(
 fn MacosApp::bind_renderer_image_resource_changes(
   self : MacosApp,
   window_id : @host.HostWindowId,
-  renderer : @host.HostWindowRenderer,
+  renderer : @render.HostWindowRenderer,
 ) -> Unit {
   renderer.set_image_resource_change_callback(
     Some(snapshot => {
@@ -446,8 +446,8 @@ fn MacosApp::request_platform_redraw(
 ///|
 fn MacosApp::image_resource_completion_source(
   self : MacosApp,
-) -> @host.HostImageResourceCompletionSource {
-  @host.HostImageResourceCompletionSource::new(
+) -> @render.HostImageResourceCompletionSource {
+  @render.HostImageResourceCompletionSource::new(
     tracker=self.image_repaint_tracker,
     window_open=id => self.image_resource_window_open(id),
     request_redraw=id => self.request_platform_redraw(id),
@@ -470,9 +470,9 @@ fn MacosApp::image_resource_window_open(
 fn MacosRendererProvider::schedule_image_resource_loads(
   self : MacosRendererProvider,
   window_id : @host.HostWindowId,
-  renderer : @host.HostWindowRenderer,
-  completion_source : @host.HostImageResourceCompletionSource,
-) -> @host.HostAsyncImageLoadScheduleResult? {
+  renderer : @render.HostWindowRenderer,
+  completion_source : @render.HostImageResourceCompletionSource,
+) -> @render.HostAsyncImageLoadScheduleResult? {
   match self.image_loader {
     Some(loader) =>
       Some(

@@ -25,7 +25,7 @@ pub fn run_smoke_app_with_options(String, @runtime.AppRuntime, options~ : MacosW
 pub struct MacosWgpuAppOptions {
   // private fields
 }
-pub fn MacosWgpuAppOptions::new(text_engine? : @wzzc-dev/moui/render/wgpu.NativeTextEngineSetting, scene_resolver? : @host.HostWindowSceneResolver) -> Self
+pub fn MacosWgpuAppOptions::new(text_engine? : @wzzc-dev/moui/render/wgpu.NativeTextEngineSetting, scene_resolver? : @runtime.HostWindowSceneResolver) -> Self
 
 pub struct MacosWgpuSmokeOptions {
   // private fields

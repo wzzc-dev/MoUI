@@ -212,8 +212,8 @@ pub(all) struct DesignChoiceControlTokens {
   disabled_foreground : @core.Color
   disabled_selected_color : @core.Color
   control_size : Double
-  box_shape : @core.ChoiceControlShape
-  check_style : @core.CheckMarkStyle
+  box_shape : @views.ChoiceControlShape
+  check_style : @views.CheckMarkStyle
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -231,7 +231,7 @@ pub(all) struct DesignSliderTokens {
   track_height : Double
   thumb_size : Double
   radius : Double
-  thumb_shape : @core.ThumbShape
+  thumb_shape : @views.ThumbShape
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -516,14 +516,14 @@ pub fn DesignControlStateTokens::core_style(
 }
 
 ///|
-/// Project a design-system control-state token onto a `@core.ControlStateTokens`
-/// (the token layer stored on `Theme.components`). Drops `state_layer_alpha`
-/// because the state-layer model lives on the owning `ButtonTheme.state_layer`
-/// aggregate, not on individual state tokens.
+/// Project a design-system control-state token onto a `@views.ControlStateTokens`
+/// (the token layer stored on the views-owned `ControlThemeSet`). Drops
+/// `state_layer_alpha` because the state-layer model lives on the owning
+/// `ButtonTheme.state_layer` aggregate, not on individual state tokens.
 pub fn DesignControlStateTokens::core_tokens(
   self : DesignControlStateTokens,
-) -> @core.ControlStateTokens {
-  @core.ControlStateTokens::new(
+) -> @views.ControlStateTokens {
+  @views.ControlStateTokens::new(
     foreground=self.foreground,
     background=self.background,
     border=self.border,
@@ -538,7 +538,7 @@ pub fn DesignControlStateTokens::core_tokens(
 /// Convert a design-system state-layer token set into the core form.
 pub fn DesignStateLayerTokens::core_tokens(
   self : DesignStateLayerTokens,
-) -> @core.StateLayerTokens {
+) -> @views.StateLayerTokens {
   {
     color: self.color,
     hover_alpha: self.hover_alpha,
@@ -730,18 +730,19 @@ pub fn DesignFormValidationTokens::core_style(
 }
 
 ///|
-/// Project the design-system component tokens onto a `@core.ComponentThemes`
-/// (the first-class `Theme.components` field). This is the single projection
-/// that lets a branded design system set `components` once on the root theme
-/// instead of passing `style=` to every control. `scheme` is required so
-/// surface brushes and shadow fallbacks can be resolved without recursing
-/// into `to_theme()` (which itself calls this method).
+/// Project the design-system component tokens onto a `@views.ControlThemeSet`
+/// (the views-owned control theme aggregate, ADR 0017). This is the single
+/// projection that lets a branded design system set `ControlThemeSet` once
+/// on the root environment instead of passing `style=` to every control.
+/// `scheme` is required so surface brushes and shadow fallbacks can be
+/// resolved without recursing into `to_theme()` (which itself calls this
+/// method).
 pub fn DesignComponentTokens::core_themes(
   self : DesignComponentTokens,
   scheme : @core.ColorScheme,
-) -> @core.ComponentThemes {
+) -> @views.ControlThemeSet {
   let state_layer = self_button_state_layer(self)
-  let button : @core.ButtonTheme = {
+  let button : @views.ButtonTheme = {
     primary: self.button.primary.core_tokens(),
     tonal: self.button.tonal.core_tokens(),
     outline: self.button.outline.core_tokens(),
@@ -750,7 +751,7 @@ pub fn DesignComponentTokens::core_themes(
     subtle_brand: self.button.subtle_brand.core_tokens(),
     state_layer,
   }
-  let text_field : @core.TextFieldTheme = {
+  let text_field : @views.TextFieldTheme = {
     normal: self.text_field.normal.core_tokens(),
     focused: self.text_field.focused.core_tokens(),
     disabled: self.text_field.disabled.core_tokens(),
@@ -759,7 +760,7 @@ pub fn DesignComponentTokens::core_themes(
     font: self.text_field.font,
     appearance: core_text_field_appearance(self.text_field.appearance),
   }
-  let surface : @core.SurfaceTheme = {
+  let surface : @views.SurfaceTheme = {
     base_padding: self.surface.base_padding,
     raised_padding: self.surface.raised_padding,
     overlay_padding: self.surface.overlay_padding,
@@ -770,7 +771,7 @@ pub fn DesignComponentTokens::core_themes(
     raised_shadow: self.surface.raised_shadow,
     overlay_shadow: self.surface.overlay_shadow,
   }
-  let choice_control : @core.ChoiceControlTheme = {
+  let choice_control : @views.ChoiceControlTheme = {
     foreground: self.choice_control.foreground,
     selected_color: self.choice_control.selected_color,
     disabled_foreground: self.choice_control.disabled_foreground,
@@ -779,12 +780,12 @@ pub fn DesignComponentTokens::core_themes(
     box_shape: self.choice_control.box_shape,
     check_style: self.choice_control.check_style,
   }
-  let progress : @core.ProgressTheme = {
+  let progress : @views.ProgressTheme = {
     foreground: self.progress.foreground,
     background: self.progress.background,
     radius: self.progress.radius,
   }
-  let slider : @core.SliderTheme = {
+  let slider : @views.SliderTheme = {
     foreground: self.slider.foreground,
     background: self.slider.background,
     thumb_color: self.slider.thumb_color,
@@ -793,14 +794,14 @@ pub fn DesignComponentTokens::core_themes(
     radius: self.slider.radius,
     thumb_shape: self.slider.thumb_shape,
   }
-  let picker : @core.PickerTheme = {
+  let picker : @views.PickerTheme = {
     font: self.picker.font,
     foreground: self.picker.foreground,
     background: self.picker.background,
     radius: self.picker.radius,
     popup_max_height: self.picker.popup_max_height,
   }
-  let feedback : @core.FeedbackTheme = {
+  let feedback : @views.FeedbackTheme = {
     neutral: core_tone(self.feedback.neutral),
     info: core_tone(self.feedback.info),
     success: core_tone(self.feedback.success),
@@ -809,7 +810,7 @@ pub fn DesignComponentTokens::core_themes(
     radius: self.feedback.radius,
     padding: self.feedback.padding,
   }
-  let badge : @core.BadgeTheme = {
+  let badge : @views.BadgeTheme = {
     neutral: core_tone(self.badge.neutral),
     accent: core_tone(self.badge.accent),
     success: core_tone(self.badge.success),
@@ -818,7 +819,7 @@ pub fn DesignComponentTokens::core_themes(
     radius: self.badge.radius,
     padding: self.badge.padding,
   }
-  let form_validation : @core.FormValidationTheme = {
+  let form_validation : @views.FormValidationTheme = {
     foreground: self.form_validation.foreground,
     background: self.form_validation.background,
     border: self.form_validation.border,
@@ -843,7 +844,7 @@ pub fn DesignComponentTokens::core_themes(
 ///|
 fn self_button_state_layer(
   components : DesignComponentTokens,
-) -> @core.StateLayerTokens {
+) -> @views.StateLayerTokens {
   // The design-system button tokens do not carry their own state-layer; the
   // shared `DesignStateLayerTokens` lives on `DesignSystemTokens.state_layer`.
   // Callers pass it through `DesignSystemTokens::core_themes` instead. This
@@ -864,16 +865,16 @@ fn self_button_state_layer(
 ///|
 fn core_text_field_appearance(
   appearance : DesignTextFieldAppearance,
-) -> @core.TextFieldAppearance {
+) -> @views.TextFieldAppearance {
   match appearance {
-    Filled => @core.TextFieldAppearance::Filled
-    Outline => @core.TextFieldAppearance::Outline
-    Underline => @core.TextFieldAppearance::Underline
+    Filled => @views.TextFieldAppearance::Filled
+    Outline => @views.TextFieldAppearance::Outline
+    Underline => @views.TextFieldAppearance::Underline
   }
 }
 
 ///|
-fn core_tone(tokens : DesignToneTokens) -> @core.ToneTokens {
+fn core_tone(tokens : DesignToneTokens) -> @views.ToneTokens {
   {
     foreground: tokens.foreground,
     background: tokens.background,
@@ -883,11 +884,11 @@ fn core_tone(tokens : DesignToneTokens) -> @core.ToneTokens {
 
 ///|
 /// Project the full design-system tokens (including the shared state-layer)
-/// onto a `@core.ComponentThemes`. This is the entry point `to_theme()` uses
+/// onto a `@views.ControlThemeSet`. This is the entry point `to_theme()` uses
 /// so the resolved theme carries first-class component themes.
 pub fn DesignSystemTokens::core_themes(
   self : DesignSystemTokens,
-) -> @core.ComponentThemes {
+) -> @views.ControlThemeSet {
   let state_layer = self.state_layer.core_tokens()
   let base = self.components.core_themes(self.scheme)
   { ..base, button: { ..base.button, state_layer, } }
@@ -927,7 +928,9 @@ pub fn DesignSystemTokens::to_theme(self : DesignSystemTokens) -> @core.Theme {
   .with_shadow_scale(self.elevation.core_shadow_scale())
   .with_motion(self.motion.core_motion())
   .with_surfaces(self.surfaces.core_surfaces())
-  .with_components(self.components.core_themes(self.scheme))
+  // Concrete control tokens no longer attach to `core.Theme` (ADR 0017);
+  // `core_themes()` resolves a separate `@views.ControlThemeSet` for callers
+  // that need the branded component theme set.
 }
 
 ///|
@@ -1968,8 +1971,8 @@ fn component_tokens(
       disabled_foreground: palette.muted,
       disabled_selected_color: palette.primary.multiply_alpha(0.42),
       control_size: 20.0,
-      box_shape: @core.ChoiceControlShape::Square,
-      check_style: @core.CheckMarkStyle::Checkmark,
+      box_shape: @views.ChoiceControlShape::Square,
+      check_style: @views.CheckMarkStyle::Checkmark,
     },
     progress: {
       foreground: palette.primary,
@@ -1983,7 +1986,7 @@ fn component_tokens(
       track_height: 6.0,
       thumb_size: 20.0,
       radius: radius.pill,
-      thumb_shape: @core.ThumbShape::Circle,
+      thumb_shape: @views.ThumbShape::Circle,
     },
     picker: {
       font: typography.control,

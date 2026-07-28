@@ -29,8 +29,8 @@ extern "C" fn macos_skia_configure_metal_layer(
 
 ///|
 pub struct MacosSkiaAppOptions {
-  priv scene_resolver : @host.HostWindowSceneResolver
-  priv event_sources : @host.HostPlatformEventSources?
+  priv scene_resolver : @runtime.HostWindowSceneResolver
+  priv event_sources : @runtime.HostPlatformEventSources?
   priv font_resolution : @skia_renderer.SkiaFontResolution
   priv surface_route : @render.SkiaSurfaceRoute
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
@@ -55,8 +55,8 @@ pub struct MacosSkiaSmokeOptions {
 
 ///|
 pub fn MacosSkiaAppOptions::new(
-  scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
-  event_sources? : @host.HostPlatformEventSources? = None,
+  scene_resolver? : @runtime.HostWindowSceneResolver = @runtime.HostWindowSceneResolver::unavailable(),
+  event_sources? : @runtime.HostPlatformEventSources? = None,
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
   surface_route? : @render.SkiaSurfaceRoute = macos_surface_route_from_environment(),
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
@@ -345,9 +345,9 @@ fn async_image_read_i32_le(data : Bytes, offset : Int) -> Int {
 }
 
 ///|
-fn skia_async_image_loader() -> @host.HostAsyncImageLoader {
-  let native_source = @host.HostNativeAsyncImageSource::new()
-  @host.HostNativeAsyncImageSource::loader_with_drain(
+fn skia_async_image_loader() -> @render.HostAsyncImageLoader {
+  let native_source = @render.HostNativeAsyncImageSource::new()
+  @render.HostNativeAsyncImageSource::loader_with_drain(
     native_source,
     spawn=(window_id, source) => {
       if source.has_prefix("data:") {
@@ -442,7 +442,7 @@ fn create_renderer(
   window : @window_macos.Window,
   metrics : @host.HostSurfaceMetrics,
   options : MacosSkiaAppOptions,
-) -> @host.HostWindowRenderer? {
+) -> @render.HostWindowRenderer? {
   if !macos_skia_provider_ready() {
     println(macos_skia_unavailable_message())
     return None
@@ -499,7 +499,7 @@ fn create_raster_renderer(
   raw_content_view_handle : UInt64,
   metrics : @host.HostSurfaceMetrics,
   options : MacosSkiaAppOptions,
-) -> @host.HostWindowRenderer? {
+) -> @render.HostWindowRenderer? {
   try {
     let renderer = @skia_renderer.create_with_present_target_and_route(
       renderer_metrics_from_host(metrics),
@@ -523,7 +523,7 @@ fn create_gpu_worker_renderer(
   layer_ptr : UInt64,
   metrics : @host.HostSurfaceMetrics,
   options : MacosSkiaAppOptions,
-) -> @host.HostWindowRenderer? {
+) -> @render.HostWindowRenderer? {
   try {
     let renderer = @skia_renderer.create_with_present_target_and_route(
       renderer_metrics_from_host(metrics),
@@ -686,7 +686,7 @@ fn host_renderer_from_native_gpu_worker(
   worker : @skia_native.NativeGpuRenderWorker,
   raw_content_view_handle : UInt64,
   layer_ptr : UInt64,
-) -> @host.HostWindowRenderer {
+) -> @render.HostWindowRenderer {
   let pending_completions : Array[@render.RenderPresentCompletion] = []
   let presented_count = Ref(0)
   let fallback_to_raster = Ref(false)
@@ -711,7 +711,7 @@ fn host_renderer_from_native_gpu_worker(
     }
     presented.val
   }
-  @host.HostWindowRenderer::new(
+  @render.HostWindowRenderer::new(
     resize=metrics => {
       renderer.resize(renderer_metrics_from_host(metrics)) catch {
         err => println("error resizing macOS Skia producer: \{err.message()}")
@@ -792,7 +792,7 @@ fn host_renderer_from_native_gpu_worker(
         renderer.dispose()
       }
     },
-    image=@host.HostRendererImageCapability::new(
+    image=@render.HostRendererImageCapability::new(
       image_resources=() => renderer.image_resources(),
       image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
       apply_image_resource_load_completion=Some(completion => {
@@ -802,7 +802,7 @@ fn host_renderer_from_native_gpu_worker(
         renderer.set_image_resource_change_callback(callback)
       },
     ),
-    gpu_recovery=@host.HostRendererGpuRecoveryCapability::new(
+    gpu_recovery=@render.HostRendererGpuRecoveryCapability::new(
       inject_context_loss=() => {
         if !fallback_to_raster.val {
           ignore(
@@ -824,8 +824,8 @@ fn host_renderer_from_native_gpu_worker(
 ///|
 fn host_renderer_from_skia(
   renderer : @skia_renderer.SkiaRasterRenderer,
-) -> @host.HostWindowRenderer {
-  @host.HostWindowRenderer::new(
+) -> @render.HostWindowRenderer {
+  @render.HostWindowRenderer::new(
     resize=metrics => {
       renderer.resize(renderer_metrics_from_host(metrics)) catch {
         err => println("error resizing macOS Skia renderer: \{err.message()}")
@@ -851,7 +851,7 @@ fn host_renderer_from_skia(
     text_system=() => renderer.text_system(),
     present_count=() => renderer.present_count(),
     dispose=() => renderer.dispose(),
-    image=@host.HostRendererImageCapability::new(
+    image=@render.HostRendererImageCapability::new(
       image_resources=() => renderer.image_resources(),
       image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
       apply_image_resource_load_completion=Some(completion => {

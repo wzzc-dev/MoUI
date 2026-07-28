@@ -8,8 +8,8 @@ pub fn[Msg] checkbox(
   foreground? : @core.Color,
   check_color? : @core.Color,
   box_size? : Double,
-  box_shape? : @core.ChoiceControlShape,
-  check_style? : @core.CheckMarkStyle,
+  box_shape? : ChoiceControlShape,
+  check_style? : CheckMarkStyle,
   height? : Double = 32.0,
 ) -> @core.View[Msg] {
   // Style is resolved ambient-ly inside checkbox_control (an explicit theme?
@@ -58,8 +58,8 @@ fn[Msg] checkbox_control(
   foreground? : @core.Color,
   check_color? : @core.Color,
   box_size? : Double,
-  box_shape? : @core.ChoiceControlShape,
-  check_style? : @core.CheckMarkStyle,
+  box_shape? : ChoiceControlShape,
+  check_style? : CheckMarkStyle,
   height? : Double = 32.0,
   on_change? : ((Bool) -> Msg)? = None,
   kind? : String = "Checkbox",
@@ -106,8 +106,8 @@ priv struct Checkbox {
   foreground : @core.Color?
   check_color : @core.Color?
   box_size : Double?
-  box_shape : @core.ChoiceControlShape?
-  check_style : @core.CheckMarkStyle?
+  box_shape : ChoiceControlShape?
+  check_style : CheckMarkStyle?
   height : Double
   kind : String
   key : String?
@@ -142,8 +142,8 @@ impl @core.ViewNode for Checkbox with fn declaration(self) {
         self.box_shape.map(value => {
           @core.DeclarationKey::int(
             match value {
-              @core.ChoiceControlShape::Square => 0
-              @core.ChoiceControlShape::Circle => 1
+              ChoiceControlShape::Square => 0
+              ChoiceControlShape::Circle => 1
             },
           )
         }),
@@ -155,8 +155,8 @@ impl @core.ViewNode for Checkbox with fn declaration(self) {
         self.check_style.map(value => {
           @core.DeclarationKey::int(
             match value {
-              @core.CheckMarkStyle::Checkmark => 0
-              @core.CheckMarkStyle::Dot => 1
+              CheckMarkStyle::Checkmark => 0
+              CheckMarkStyle::Dot => 1
             },
           )
         }),
@@ -226,7 +226,7 @@ impl @core.ViewNode for Checkbox with fn paint(self, ctx) {
     self.box_size,
     style.control_size,
   )
-  let cc = resolved_theme.components.choice_control
+  let cc = views_ambient_control_theme(resolved_theme).choice_control
   let commands : Array[@core.DrawCommand] = []
   append_checkbox_commands(
     commands,
@@ -323,8 +323,8 @@ fn append_checkbox_commands(
   foreground~ : @core.Color,
   check_color~ : @core.Color,
   size~ : @core.Size,
-  box_shape~ : @core.ChoiceControlShape,
-  check_style~ : @core.CheckMarkStyle,
+  box_shape~ : ChoiceControlShape,
+  check_style~ : CheckMarkStyle,
   frame~ : @core.Rect,
   theme~ : @core.Theme,
   focused~ : Bool,
@@ -342,14 +342,14 @@ fn append_checkbox_commands(
   // use the theme's small radius so checkboxes stay consistent with the rest of
   // the control set.
   let box_radius = match box_shape {
-    @core.ChoiceControlShape::Circle => box_side / 2.0
-    @core.ChoiceControlShape::Square => theme.radius_scale.sm
+    ChoiceControlShape::Circle => box_side / 2.0
+    ChoiceControlShape::Square => theme.radius_scale.sm
   }
   let box = @core.RoundedRect::new(rect=box_rect, radius=box_radius)
   if checked {
     match check_style {
       // Checkbox: fill the box with the accent and draw a "✓" glyph on top.
-      @core.CheckMarkStyle::Checkmark => {
+      CheckMarkStyle::Checkmark => {
         commands.push(@core.DrawCommand::FillRoundedRect(box, check_color))
         commands.push(
           @core.DrawCommand::DrawText(
@@ -365,7 +365,7 @@ fn append_checkbox_commands(
       // Radio: draw an outer ring + a smaller filled inner circle. The ring
       // is the accent at rest; when selected the inner dot fills with the
       // accent. Unchecked radios draw only the ring (handled below).
-      @core.CheckMarkStyle::Dot => {
+      CheckMarkStyle::Dot => {
         commands.push(
           @core.DrawCommand::StrokeRoundedRect(box, check_color, 2.0),
         )

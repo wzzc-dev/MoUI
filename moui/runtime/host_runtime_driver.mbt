@@ -1,6 +1,8 @@
 ///|
+/// Runtime-owned HostRuntimeDriver (ADR 0018). Moved from backend/host so
+/// that backend/host carries platform-neutral host contracts only.
 pub(all) struct HostRuntimeDriver {
-  runtime : @runtime.AppRuntime
+  runtime : AppRuntime
   scheduler : RedrawScheduler
   mut close_requested : Bool
   mut frame_time_ms : Double
@@ -8,7 +10,7 @@ pub(all) struct HostRuntimeDriver {
 
 ///|
 pub fn HostRuntimeDriver::new(
-  runtime~ : @runtime.AppRuntime,
+  runtime~ : AppRuntime,
   schedule_redraw~ : () -> Unit,
 ) -> HostRuntimeDriver {
   let driver = {
@@ -24,8 +26,8 @@ pub fn HostRuntimeDriver::new(
 ///|
 pub fn HostRuntimeDriver::dispatch(
   self : HostRuntimeDriver,
-  event : HostEvent,
-) -> HostEventResult {
+  event : @backend_host.HostEvent,
+) -> @backend_host.HostEventResult {
   match event {
     Resized(metrics) => {
       self.runtime.dispatch_event(@core.AppEvent::Resize(metrics.logical_size))
@@ -106,7 +108,7 @@ pub fn HostRuntimeDriver::perform_semantics_action(
     self.runtime.perform_semantics_action({
       target: @core.SemanticsTarget::ByNodeId(request.node_id),
       action: request.action,
-      precondition: @runtime.SemanticsGenerationPrecondition::Exact(
+      precondition: SemanticsGenerationPrecondition::Exact(
         request.generation,
       ),
     }) {
@@ -122,8 +124,8 @@ pub fn HostRuntimeDriver::perform_semantics_action(
 pub fn HostRuntimeDriver::dispatch_command_with_services(
   self : HostRuntimeDriver,
   intent : @core.CommandIntent,
-  services : HostServiceBridge,
-) -> HostEventResult {
+  services : @backend_host.HostServiceBridge,
+) -> @backend_host.HostEventResult {
   match intent {
     @core.CommandIntent::Copy | @core.CommandIntent::Cut => {
       let result = self.runtime.dispatch_focused_text_command(intent)
@@ -132,8 +134,8 @@ pub fn HostRuntimeDriver::dispatch_command_with_services(
           Some(text) =>
             ignore(
               services.dispatch(
-                HostServiceRequest::Clipboard(
-                  HostClipboardRequest::WriteText(text),
+                @backend_host.HostServiceRequest::Clipboard(
+                  @backend_host.HostClipboardRequest::WriteText(text),
                 ),
               ),
             )
@@ -148,9 +150,11 @@ pub fn HostRuntimeDriver::dispatch_command_with_services(
       let mut handled = false
       match
         services.dispatch(
-          HostServiceRequest::Clipboard(HostClipboardRequest::ReadText),
+          @backend_host.HostServiceRequest::Clipboard(
+            @backend_host.HostClipboardRequest::ReadText,
+          ),
         ) {
-        HostServiceResponse::ClipboardText(text) => {
+        @backend_host.HostServiceResponse::ClipboardText(text) => {
           let result = self.runtime.dispatch_focused_text_command(
             intent,
             paste_text=Some(text),
@@ -160,7 +164,7 @@ pub fn HostRuntimeDriver::dispatch_command_with_services(
           }
           self.request_redraw_if_needed()
         }
-        HostServiceResponse::Pending(_) => handled = true
+        @backend_host.HostServiceResponse::Pending(_) => handled = true
         _ => ()
       }
       if !handled && self.runtime.dispatch_command(intent) {
@@ -179,8 +183,8 @@ pub fn HostRuntimeDriver::dispatch_command_with_services(
 pub fn HostRuntimeDriver::dispatch_action_command_with_services(
   self : HostRuntimeDriver,
   command : @core.ActionCommand,
-  services : HostServiceBridge,
-) -> HostEventResult {
+  services : @backend_host.HostServiceBridge,
+) -> @backend_host.HostEventResult {
   match command.intent {
     @core.CommandIntent::Copy
     | @core.CommandIntent::Cut
@@ -201,27 +205,27 @@ pub fn HostRuntimeDriver::dispatch_action_command_with_services(
 pub fn HostRuntimeDriver::dispatch_keyboard_with_services(
   self : HostRuntimeDriver,
   event : @core.KeyboardEvent,
-  services : HostServiceBridge,
-) -> HostEventResult {
+  services : @backend_host.HostServiceBridge,
+) -> @backend_host.HostEventResult {
   match keyboard_service_command_intent(event) {
     Some(intent) => self.dispatch_command_with_services(intent, services)
-    None => self.dispatch(HostEvent::Keyboard(event))
+    None => self.dispatch(@backend_host.HostEvent::Keyboard(event))
   }
 }
 
 ///|
 pub fn HostRuntimeDriver::show_context_menu(
   self : HostRuntimeDriver,
-  services : HostServiceBridge,
-) -> HostEventResult {
+  services : @backend_host.HostServiceBridge,
+) -> @backend_host.HostEventResult {
   let commands = self.context_menu_commands()
   if commands.length() == 0 {
     return self.event_result()
   }
-  match services.dispatch(HostServiceRequest::ShowMenu(commands)) {
-    HostServiceResponse::MenuAction(command) =>
+  match services.dispatch(@backend_host.HostServiceRequest::ShowMenu(commands)) {
+    @backend_host.HostServiceResponse::MenuAction(command) =>
       ignore(self.dispatch_action_command_with_services(command, services))
-    HostServiceResponse::MenuCommand(intent) =>
+    @backend_host.HostServiceResponse::MenuCommand(intent) =>
       ignore(self.dispatch_command_with_services(intent, services))
     _ => ()
   }
@@ -430,11 +434,60 @@ pub fn HostRuntimeDriver::size(self : HostRuntimeDriver) -> @core.Size {
 ///|
 pub fn HostRuntimeDriver::event_result(
   self : HostRuntimeDriver,
-) -> HostEventResult {
+) -> @backend_host.HostEventResult {
   {
     needs_rebuild: self.runtime.needs_rebuild(),
     needs_redraw: self.runtime.needs_redraw(),
     redraw_requested: self.scheduler.is_redraw_requested(),
     close_requested: self.close_requested,
   }
+}
+
+///|
+/// Dispatch a service completion through the runtime driver. Moved from
+/// backend/host per ADR 0018 so backend/host stays runtime-neutral.
+pub fn HostRuntimeDriver::dispatch_service_completion(
+  self : HostRuntimeDriver,
+  completion : @backend_host.HostCompletedServiceResponse,
+  services : @backend_host.HostServiceBridge,
+) -> @backend_host.HostEventResult {
+  match (completion.request, completion.response) {
+    (
+      @backend_host.HostServiceRequest::Clipboard(
+        @backend_host.HostClipboardRequest::ReadText,
+      ),
+      @backend_host.HostServiceResponse::ClipboardText(text),
+    ) => {
+      let result = self.runtime.dispatch_focused_text_command(
+        @core.CommandIntent::Paste,
+        paste_text=Some(text),
+      )
+      if result.handled {
+        self.request_redraw_if_needed()
+      } else if self.runtime.dispatch_command(@core.CommandIntent::Paste) {
+        self.request_redraw_if_needed()
+      }
+    }
+    (
+      @backend_host.HostServiceRequest::ShowMenu(_),
+      @backend_host.HostServiceResponse::MenuAction(command),
+    ) =>
+      ignore(self.dispatch_action_command_with_services(command, services))
+    (
+      @backend_host.HostServiceRequest::ShowMenu(_),
+      @backend_host.HostServiceResponse::MenuCommand(intent),
+    ) =>
+      ignore(self.dispatch_command_with_services(intent, services))
+    (
+      @backend_host.HostServiceRequest::QuerySystemTheme,
+      @backend_host.HostServiceResponse::SystemTheme(scheme),
+    ) => {
+      self.runtime.set_environment(
+        self.runtime.environment().with_system_scheme(scheme),
+      )
+      self.request_redraw_if_needed()
+    }
+    _ => ()
+  }
+  self.event_result()
 }

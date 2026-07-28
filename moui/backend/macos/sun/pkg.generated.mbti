@@ -28,7 +28,7 @@ pub fn run_smoke_app_with_options(String, @runtime.AppRuntime, options~ : MacosS
 pub struct MacosSunAppOptions {
   // private fields
 }
-pub fn MacosSunAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, platform_view_plugins? : Array[@host.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @core.PlatformWindowAttributes, on_ready? : (() -> Unit)?, min_window_size? : @dpi.LogicalSize?) -> Self
+pub fn MacosSunAppOptions::new(scene_resolver? : @runtime.HostWindowSceneResolver, platform_view_plugins? : Array[@host.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @core.PlatformWindowAttributes, on_ready? : (() -> Unit)?, min_window_size? : @dpi.LogicalSize?) -> Self
 
 pub struct MacosSunSmokeOptions {
   // private fields

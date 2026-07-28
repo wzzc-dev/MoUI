@@ -7,7 +7,7 @@ test "surface detach cancels pending host service exactly once" {
     root=(@views.empty() : @core.View[Unit]),
     size=metrics.logical_size,
   )
-  let renderer = @host.HostWindowRenderer::new(
+  let renderer = @render.HostWindowRenderer::new(
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
@@ -123,7 +123,7 @@ test "mobile accessibility rejects stale session generation and removed node wit
     ),
     size=@core.Size::new(width=120.0, height=80.0),
   )
-  let driver = @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
   let bridge = EmbeddingHostBridge::new(session_generation=17)
   let (node_id, initial_generation) = match runtime.read_semantics() {
     Ok(@runtime.SemanticsRead::Full(snapshot)) => {

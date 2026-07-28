@@ -53,7 +53,7 @@ pub impl @wzzc-dev/window/windows.ApplicationHandler for WindowsApp
 pub struct WindowsHostAppOptions {
   // private fields
 }
-pub fn WindowsHostAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, event_sources? : @host.HostPlatformEventSources?, platform_view_plugins? : Array[@host.PlatformViewPlugin]) -> Self
+pub fn WindowsHostAppOptions::new(scene_resolver? : @runtime.HostWindowSceneResolver, event_sources? : @host.HostPlatformEventSources?, platform_view_plugins? : Array[@host.PlatformViewPlugin]) -> Self
 
 pub struct WindowsHostSmokeOptions {
   // private fields

@@ -1,4 +1,24 @@
 ///|
+/// MoUI renderer facade. Core value types (`RendererBackendKind`,
+/// `RendererSurfaceMetrics`, `RenderFrameResult`, …) are defined in this
+/// file. The package also owns the renderer-surface bridge types
+/// (`SkiaSurfaceRoute`, `ImageResourceRecord`, …), capability reporting
+/// (`RendererFeature`, `RendererFeatureCapability`, …), and the
+/// **RendererProvider plugin system** (ADR 0019) in `provider_contract.mbt`.
+///
+/// ## RendererProvider plugin system
+///
+/// See `provider_contract.mbt` for:
+/// - `RendererProvider` — contract type for a renderer family
+/// - `RendererInstance` — live instance returned by a provider
+/// - `RendererProviderRegistry` — registry with `select`, `select_native`, etc.
+/// - `SurfaceDescriptor` / `BoundSurface` — surface negotiation types
+///
+/// Concrete providers live in sub-packages:
+/// - `moui/render/skia` — `create_skia_raster_provider`, `create_skia_hybrid_provider`
+/// - `moui/render/wgpu` — `create_wgpu_provider`
+/// - `moui/render/sun` — `create_sun_provider`
+/// - `moui/render/canvas2d` — `create_canvas2d_provider`
 pub(all) enum RendererBackendKind {
   NativeWgpu
   WebGpuWasm

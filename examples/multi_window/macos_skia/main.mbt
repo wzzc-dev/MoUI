@@ -2,17 +2,17 @@
 fn main {
   let queue = @host.HostWindowRequestQueue::new()
   let windows = @host.HostWindowActions::new(queue~)
-  let resolver = @host.HostWindowSceneResolver::new(resolve=request => {
+  let resolver = @runtime.HostWindowSceneResolver::new(resolve=request => {
     match @multi_window_app.scene_from_host(request.scene) {
       Some(scene) =>
-        @host.HostWindowSceneResolution::SceneResolved(
-          @host.HostWindowSceneInstance::new(
+        @runtime.HostWindowSceneResolution::SceneResolved(
+          @runtime.HostWindowSceneInstance::new(
             request~,
             runtime=runtime_for(scene, windows, request.metrics.logical_size),
           ),
         )
       None =>
-        @host.HostWindowSceneResolution::SceneRejected("unknown sample scene")
+        @runtime.HostWindowSceneResolution::SceneRejected("unknown sample scene")
     }
   })
   @macos_skia_backend.run_app_with_options(

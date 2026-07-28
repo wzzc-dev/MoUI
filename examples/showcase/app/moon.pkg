@@ -6,6 +6,7 @@ import {
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/state",
   "wzzc-dev/moui/views",
+  "wzzc-dev/moui/runtime",
   "wzzc-dev/moui",
 }
 

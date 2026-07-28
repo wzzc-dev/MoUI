@@ -15,8 +15,8 @@ extern "C" fn linux_timer_cancel(handle : UInt64) -> Unit = "moui_linux_timer_ca
 
 ///|
 /// Construct a `HostTimerSource` backed by the GLib main-loop timeout timer.
-pub fn linux_timer_source() -> @host.HostTimerSource {
-  @host.HostTimerSource::new(start_timer=(interval_ms, dispatch) => {
+pub fn linux_timer_source() -> @runtime.HostTimerSource {
+  @runtime.HostTimerSource::new(start_timer=(interval_ms, dispatch) => {
     let tick = () => {
       dispatch(@core.Frame::new(time_ms=0.0, delta_ms=interval_ms))
     }

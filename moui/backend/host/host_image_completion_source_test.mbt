@@ -1,16 +1,16 @@
 ///|
 test "host image completion source routes native loader completions" {
-  let tracker = HostImageResourceRepaintTracker::new()
+  let tracker = @render.HostImageResourceRepaintTracker::new()
   let window_id = HostWindowId::new(8)
   let revision = Ref(1)
   let records : Ref[Array[@render.ImageResourceRecord]] = Ref([
     @render.ImageResourceRecord::loading("late.png"),
   ])
-  let renderer = HostWindowRenderer::new(
+  let renderer = @render.HostWindowRenderer::new(
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image=HostRendererImageCapability::new(
+    image=@render.HostRendererImageCapability::new(
       image_resource_snapshot=Some(() => {
         @render.ImageResourceSnapshot::new(
           revision=revision.val,
@@ -23,7 +23,7 @@ test "host image completion source routes native loader completions" {
   inspect(baseline.current_revision(), content="1")
   inspect(baseline.current_status_counts().loading_count(), content="1")
   let requested : Array[HostWindowId] = []
-  let source = HostImageResourceCompletionSource::new(
+  let source = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=id => id == window_id,
     request_redraw=id => requested.push(id),
@@ -39,7 +39,7 @@ test "host image completion source routes native loader completions" {
     ]),
   )
   assert_true(
-    result.status() == HostImageResourceRepaintStatus::ImageRepaintRequested,
+    result.status() == @render.HostImageResourceRepaintStatus::ImageRepaintRequested,
   )
   inspect(result.previous_revision(), content="1")
   inspect(result.current_revision(), content="2")
@@ -59,13 +59,13 @@ test "host image completion source routes native loader completions" {
 
 ///|
 test "host image completion source discards closed-window completions" {
-  let tracker = HostImageResourceRepaintTracker::new()
+  let tracker = @render.HostImageResourceRepaintTracker::new()
   let window_id = HostWindowId::new(9)
-  let renderer = HostWindowRenderer::new(
+  let renderer = @render.HostWindowRenderer::new(
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image=HostRendererImageCapability::new(
+    image=@render.HostRendererImageCapability::new(
       image_resource_snapshot=Some(() => {
         @render.ImageResourceSnapshot::new(revision=3, records=[
           @render.ImageResourceRecord::loading("closed.png"),
@@ -77,7 +77,7 @@ test "host image completion source discards closed-window completions" {
   inspect(baseline.current_revision(), content="3")
   inspect(tracker.tracked_count(), content="1")
   let redraws = Ref(0)
-  let source = HostImageResourceCompletionSource::new(
+  let source = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=_id => false,
     request_redraw=_id => redraws.val = redraws.val + 1,
@@ -90,7 +90,7 @@ test "host image completion source discards closed-window completions" {
   )
   assert_true(
     result.status() ==
-    HostImageResourceRepaintStatus::ImageRepaintDiscardedClosed,
+    @render.HostImageResourceRepaintStatus::ImageRepaintDiscardedClosed,
   )
   inspect(result.previous_revision(), content="3")
   inspect(result.current_revision(), content="3")
@@ -107,13 +107,13 @@ test "host image completion source discards closed-window completions" {
 
 ///|
 test "host image completion source ignores stale completion revisions" {
-  let tracker = HostImageResourceRepaintTracker::new()
+  let tracker = @render.HostImageResourceRepaintTracker::new()
   let window_id = HostWindowId::new(10)
-  let renderer = HostWindowRenderer::new(
+  let renderer = @render.HostWindowRenderer::new(
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image=HostRendererImageCapability::new(
+    image=@render.HostRendererImageCapability::new(
       image_resource_snapshot=Some(() => {
         @render.ImageResourceSnapshot::new(revision=6, records=[
           @render.ImageResourceRecord::ready("fresh.png", width=64, height=40),
@@ -124,7 +124,7 @@ test "host image completion source ignores stale completion revisions" {
   let baseline = tracker.record_presented(window_id, renderer)
   inspect(baseline.current_revision(), content="6")
   let redraws = Ref(0)
-  let source = HostImageResourceCompletionSource::new(
+  let source = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=id => id == window_id,
     request_redraw=_id => redraws.val = redraws.val + 1,
@@ -139,7 +139,7 @@ test "host image completion source ignores stale completion revisions" {
     ]),
   )
   assert_true(
-    stale.status() == HostImageResourceRepaintStatus::ImageRepaintUnchanged,
+    stale.status() == @render.HostImageResourceRepaintStatus::ImageRepaintUnchanged,
   )
   inspect(stale.previous_revision(), content="6")
   inspect(stale.current_revision(), content="6")
@@ -162,16 +162,16 @@ test "host image completion source ignores stale completion revisions" {
 
 ///|
 test "host image completion source applies renderer load completions" {
-  let tracker = HostImageResourceRepaintTracker::new()
+  let tracker = @render.HostImageResourceRepaintTracker::new()
   let window_id = HostWindowId::new(11)
   let lifecycle = @render.ImageResourceLifecycle::new()
   ignore(lifecycle.mark_loading("async.png"))
   let applied_sources : Array[String] = []
-  let renderer = HostWindowRenderer::new(
+  let renderer = @render.HostWindowRenderer::new(
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image=HostRendererImageCapability::new(
+    image=@render.HostRendererImageCapability::new(
       image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
       apply_image_resource_load_completion=Some(completion => {
         applied_sources.push(completion.source)
@@ -183,7 +183,7 @@ test "host image completion source applies renderer load completions" {
   inspect(baseline.current_revision(), content="1")
   inspect(baseline.current_status_counts().loading_count(), content="1")
   let requested : Array[HostWindowId] = []
-  let source = HostImageResourceCompletionSource::new(
+  let source = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=id => id == window_id,
     request_redraw=id => requested.push(id),
@@ -194,7 +194,7 @@ test "host image completion source applies renderer load completions" {
     @render.ImageResourceLoadCompletion::ready("async.png", width=72, height=36),
   )
   assert_true(
-    result.status() == HostImageResourceRepaintStatus::ImageRepaintRequested,
+    result.status() == @render.HostImageResourceRepaintStatus::ImageRepaintRequested,
   )
   inspect(result.previous_revision(), content="1")
   inspect(result.current_revision(), content="2")

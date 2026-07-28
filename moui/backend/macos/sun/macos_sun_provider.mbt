@@ -1,6 +1,6 @@
 ///|
 pub struct MacosSunAppOptions {
-  priv scene_resolver : @host.HostWindowSceneResolver
+  priv scene_resolver : @runtime.HostWindowSceneResolver
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
   priv transparent_titlebar : Bool
   priv platform_attributes : @window_core.PlatformWindowAttributes
@@ -15,7 +15,7 @@ pub struct MacosSunSmokeOptions {
 
 ///|
 pub fn MacosSunAppOptions::new(
-  scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
+  scene_resolver? : @runtime.HostWindowSceneResolver = @runtime.HostWindowSceneResolver::unavailable(),
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
   transparent_titlebar? : Bool = false,
   platform_attributes? : @window_core.PlatformWindowAttributes = @window_core.PlatformWindowAttributes::default(),
@@ -156,9 +156,9 @@ fn async_image_read_i32_le(data : Bytes, offset : Int) -> Int {
 }
 
 ///|
-fn sun_native_image_loader() -> @host.HostAsyncImageLoader {
-  let native_source = @host.HostNativeAsyncImageSource::new()
-  @host.HostNativeAsyncImageSource::loader_with_drain(
+fn sun_native_image_loader() -> @render.HostAsyncImageLoader {
+  let native_source = @render.HostNativeAsyncImageSource::new()
+  @render.HostNativeAsyncImageSource::loader_with_drain(
     native_source,
     spawn=(window_id, source) => {
       if source.has_prefix("data:") {
@@ -250,7 +250,7 @@ fn create_renderer(
   window : @window_macos.Window,
   metrics : @host.HostSurfaceMetrics,
   _options : MacosSunAppOptions,
-) -> @host.HostWindowRenderer? {
+) -> @render.HostWindowRenderer? {
   if !macos_sun_provider_ready() {
     println(macos_sun_unavailable_message())
     return None
@@ -334,8 +334,8 @@ fn macos_sun_present_target(
 ///|
 fn host_renderer_from_sun(
   renderer : @sun_renderer.SunRasterRenderer,
-) -> @host.HostWindowRenderer {
-  @host.HostWindowRenderer::new(
+) -> @render.HostWindowRenderer {
+  @render.HostWindowRenderer::new(
     resize=metrics => {
       renderer.resize(renderer_metrics_from_host(metrics)) catch {
         err => println("error resizing macOS Sun renderer: \{err.message()}")
@@ -350,7 +350,7 @@ fn host_renderer_from_sun(
     text_system=() => renderer.text_system(),
     present_count=() => renderer.present_count(),
     dispose=() => renderer.dispose(),
-    image=@host.HostRendererImageCapability::new(
+    image=@render.HostRendererImageCapability::new(
       image_resources=() => renderer.image_resources(),
       image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
       apply_image_resource_load_completion=Some(completion => {
@@ -360,7 +360,7 @@ fn host_renderer_from_sun(
         renderer.set_image_resource_change_callback(callback)
       },
     ),
-    platform_view=@host.HostRendererPlatformViewCapability::new(
+    platform_view=@render.HostRendererPlatformViewCapability::new(
       draw_platform_view_pixels=fn(
         pixels,
         src_width,

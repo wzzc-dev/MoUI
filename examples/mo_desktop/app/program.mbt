@@ -2,8 +2,8 @@
 pub fn program(
   wallpaper_source? : String = "examples/mo_desktop/web_wasm/assets/tahoe-day.jpg",
   services? : @host.HostAppServices = @host.HostAppServices::unavailable(),
-  timer_source? : @host.HostTimerSource? = None,
-  wall_clock? : () -> @host.HostWallClock = default_desktop_clock,
+  timer_source? : @runtime.HostTimerSource? = None,
+  wall_clock? : () -> @runtime.HostWallClock = default_desktop_clock,
 ) -> @moui.Program[DesktopModel, Msg] {
   let initial = DesktopModel::new(wallpaper_source~, clock=wall_clock())
   @moui.Program::new_with_environment(
@@ -35,8 +35,8 @@ fn update_with_host(
 fn desktop_subscriptions(
   model : DesktopModel,
   services : @host.HostAppServices,
-  timer_source : @host.HostTimerSource?,
-  wall_clock : () -> @host.HostWallClock,
+  timer_source : @runtime.HostTimerSource?,
+  wall_clock : () -> @runtime.HostWallClock,
 ) -> @moui.Subscription[Msg] {
   let subscriptions : Array[@moui.Subscription[Msg]] = []
   match timer_source {

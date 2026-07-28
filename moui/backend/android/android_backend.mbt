@@ -61,9 +61,9 @@ pub(all) struct AndroidBackendInfo {
 
 ///|
 pub struct AndroidRendererProvider {
-  priv create_renderer : (AndroidSurfaceHandle, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?
+  priv create_renderer : (AndroidSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
   priv sync_surface : (AndroidSurfaceHandle, @host.HostSurfaceMetrics) -> Unit
-  priv image_loader : @host.HostAsyncImageLoader?
+  priv image_loader : @render.HostAsyncImageLoader?
 }
 
 ///|
@@ -74,12 +74,12 @@ pub struct AndroidRuntimeSession {
 
 ///|
 pub fn AndroidRendererProvider::new(
-  create_renderer~ : (AndroidSurfaceHandle, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?,
+  create_renderer~ : (AndroidSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?,
   sync_surface? : (AndroidSurfaceHandle, @host.HostSurfaceMetrics) -> Unit = (
     _surface,
     _metrics,
   ) => (),
-  image_loader? : @host.HostAsyncImageLoader? = None,
+  image_loader? : @render.HostAsyncImageLoader? = None,
 ) -> AndroidRendererProvider {
   { create_renderer, sync_surface, image_loader }
 }
@@ -89,7 +89,7 @@ fn AndroidRendererProvider::create(
   self : AndroidRendererProvider,
   surface : AndroidSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
-) -> @host.HostWindowRenderer? {
+) -> @render.HostWindowRenderer? {
   (self.create_renderer)(surface, metrics)
 }
 

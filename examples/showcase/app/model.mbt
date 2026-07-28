@@ -29,7 +29,7 @@ pub(all) enum ShowcaseMsg {
   RouteBack
   RouteForward
   OpenRouteLink(String)
-  HostRouteChanged(@host.HostRouteEvent)
+  HostRouteChanged(@runtime.HostRouteEvent)
   SelectWorkspace(Workspace)
   NavQueryChanged(String)
   ShowMobileCatalog
@@ -49,7 +49,7 @@ pub(all) enum ShowcaseRouteHistoryCommand {
 
 ///|
 pub struct ShowcaseRouteHost {
-  route_source : @host.HostRouteSource
+  route_source : @runtime.HostRouteSource
   dispatch_command : (ShowcaseRouteHistoryCommand) -> Unit
 }
 
@@ -60,7 +60,7 @@ pub fn ShowcaseApp::new() -> ShowcaseApp {
 
 ///|
 pub fn ShowcaseRouteHost::new(
-  route_source~ : @host.HostRouteSource,
+  route_source~ : @runtime.HostRouteSource,
   dispatch_command~ : (ShowcaseRouteHistoryCommand) -> Unit,
 ) -> ShowcaseRouteHost {
   { route_source, dispatch_command }
@@ -144,8 +144,8 @@ pub fn ShowcaseModel::with_host_summary(
 pub fn ShowcaseModel::with_platform_host(
   self : ShowcaseModel,
   services? : @host.HostAppServices = @host.HostAppServices::unavailable(),
-  timer_source? : @host.HostTimerSource? = None,
-  window_events? : @host.HostWindowEventSource? = None,
+  timer_source? : @runtime.HostTimerSource? = None,
+  window_events? : @runtime.HostWindowEventSource? = None,
 ) -> ShowcaseModel {
   {
     ..self,

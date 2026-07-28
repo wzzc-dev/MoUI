@@ -57,16 +57,18 @@ pub(all) enum CrossAlign {
 } derive(Eq, Debug, ToJson)
 
 ///|
-/// Resolve a button variant into a `ButtonStyle` from the theme's first-class
-/// `components.button` token set. This replaces the legacy hand-written
+/// Resolve a button variant into a `ButtonStyle` from the views-owned
+/// `ControlThemeSet`. This replaces the legacy hand-written
 /// `ButtonStyle::filled/tonal/outline/ghost` helpers so a branded design
-/// system that sets `Theme.components` once drives every button's appearance
-/// without per-control `style=` arguments.
+/// system that sets the ambient `ControlThemeSet` once drives every button's
+/// appearance without per-control `style=` arguments. `core.Theme` no longer
+/// carries control tokens (ADR 0017); callers resolve a `ControlThemeSet`
+/// views-side from the neutral theme.
 fn ButtonVariant::style(
   self : ButtonVariant,
-  theme : @core.Theme,
+  components : ControlThemeSet,
 ) -> ButtonStyle {
-  let bt = theme.components.button
+  let bt = components.button
   let v = self.to_token()
   {
     normal: bt.resolve(v, @core.InteractionState::Normal),
@@ -77,14 +79,14 @@ fn ButtonVariant::style(
 }
 
 ///|
-fn ButtonVariant::to_token(self : ButtonVariant) -> @core.ButtonVariantToken {
+fn ButtonVariant::to_token(self : ButtonVariant) -> ButtonVariantToken {
   match self {
-    Primary => @core.ButtonVariantToken::Primary
-    Tonal => @core.ButtonVariantToken::Tonal
-    Outline => @core.ButtonVariantToken::Outline
-    Ghost => @core.ButtonVariantToken::Ghost
-    Subtle => @core.ButtonVariantToken::Subtle
-    SubtleBrand => @core.ButtonVariantToken::SubtleBrand
+    Primary => ButtonVariantToken::Primary
+    Tonal => ButtonVariantToken::Tonal
+    Outline => ButtonVariantToken::Outline
+    Ghost => ButtonVariantToken::Ghost
+    Subtle => ButtonVariantToken::Subtle
+    SubtleBrand => ButtonVariantToken::SubtleBrand
   }
 }
 

@@ -1,7 +1,7 @@
 ///|
 pub(all) struct HostWindowSceneInstance {
-  request : HostWindowOpenRequest
-  runtime : @runtime.AppRuntime
+  request : @backend_host.HostWindowOpenRequest
+  runtime : AppRuntime
 }
 
 ///|
@@ -12,8 +12,8 @@ pub(all) enum HostWindowSceneResolution {
 
 ///|
 pub(all) struct HostWindowResolvedOpen {
-  id : HostWindowId
-  record : HostWindowRecord
+  id : @backend_host.HostWindowId
+  record : @backend_host.HostWindowRecord
   instance : HostWindowSceneInstance
 }
 
@@ -25,20 +25,20 @@ pub(all) enum HostWindowOpenResolution {
 
 ///|
 pub struct HostWindowSceneResolver {
-  resolve : (HostWindowOpenRequest) -> HostWindowSceneResolution
+  resolve : (@backend_host.HostWindowOpenRequest) -> HostWindowSceneResolution
 }
 
 ///|
 pub fn HostWindowSceneInstance::new(
-  request~ : HostWindowOpenRequest,
-  runtime~ : @runtime.AppRuntime,
+  request~ : @backend_host.HostWindowOpenRequest,
+  runtime~ : AppRuntime,
 ) -> HostWindowSceneInstance {
   { request, runtime }
 }
 
 ///|
 pub fn HostWindowSceneResolver::new(
-  resolve~ : (HostWindowOpenRequest) -> HostWindowSceneResolution,
+  resolve~ : (@backend_host.HostWindowOpenRequest) -> HostWindowSceneResolution,
 ) -> HostWindowSceneResolver {
   { resolve, }
 }
@@ -55,35 +55,35 @@ pub fn HostWindowSceneResolver::unavailable(
 ///|
 pub fn HostWindowSceneResolver::resolve(
   self : HostWindowSceneResolver,
-  request : HostWindowOpenRequest,
+  request : @backend_host.HostWindowOpenRequest,
 ) -> HostWindowSceneResolution {
   (self.resolve)(request)
 }
 
 ///|
 pub fn HostWindowResolvedOpen::new(
-  id~ : HostWindowId,
-  record~ : HostWindowRecord,
+  id~ : @backend_host.HostWindowId,
+  record~ : @backend_host.HostWindowRecord,
   instance~ : HostWindowSceneInstance,
 ) -> HostWindowResolvedOpen {
   { id, record, instance }
 }
 
 ///|
-pub fn HostWindowRegistry::resolve_open_request(
-  self : HostWindowRegistry,
-  request : HostWindowOpenRequest,
+pub fn resolve_open_request(
+  registry : @backend_host.HostWindowRegistry,
+  request : @backend_host.HostWindowOpenRequest,
   resolver : HostWindowSceneResolver,
 ) -> HostWindowOpenResolution {
   match resolver.resolve(request) {
     HostWindowSceneResolution::SceneResolved(instance) => {
-      let id = self.open(
+      let id = registry.open(
         title=request.title,
         scene=request.scene,
         metrics=request.metrics,
         primary=request.primary,
       )
-      match self.lookup(id) {
+      match registry.lookup(id) {
         Some(record) =>
           HostWindowOpenResolution::OpenResolved(
             HostWindowResolvedOpen::new(id~, record~, instance~),

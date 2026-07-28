@@ -29,7 +29,7 @@ pub(all) struct KeyboardShortcut {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) enum ButtonState {
+pub(all) enum PressableState {
   Normal
   Hovered
   Pressed

@@ -5,7 +5,7 @@ test "host driver maps focused text input through core text input event" {
     root=host_test_text_field(text, width=240.0, height=40.0, outlined=true),
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
   ignore(
     driver.dispatch(HostEvent::TextInput(@core.TextInputEvent::InsertText("a"))),
   )
@@ -35,7 +35,7 @@ test "host driver routes text clipboard commands through service bridge" {
     root=host_test_text_field(text, width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
   let bridge = HostServiceBridge::new(
     capabilities=HostServiceCapabilities::new(clipboard=true),
     handle=request => {
@@ -97,7 +97,7 @@ test "host driver routes clipboard keyboard shortcuts through service bridge" {
     root=host_test_text_field(text, width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
   let bridge = HostServiceBridge::new(
     capabilities=HostServiceCapabilities::new(clipboard=true),
     handle=request => {
@@ -176,7 +176,7 @@ test "host driver keyboard paste replaces selection with extended emoji" {
     root=host_test_text_field(text, width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
   let bridge = HostServiceBridge::new(
     capabilities=HostServiceCapabilities::new(clipboard=true),
     handle=request => {
@@ -239,7 +239,7 @@ test "host driver falls back clipboard shortcuts to action commands" {
       ),
     ]),
   )
-  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
   let bridge = HostServiceBridge::new(
     capabilities=HostServiceCapabilities::new(clipboard=true),
     handle=_request => HostServiceResponse::ClipboardWritten,
@@ -272,7 +272,7 @@ test "host driver defers paste action command while clipboard read is pending" {
       ),
     ]),
   )
-  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
   let bridge = HostServiceBridge::new(
     capabilities=HostServiceCapabilities::new(clipboard=true),
     handle=request => {

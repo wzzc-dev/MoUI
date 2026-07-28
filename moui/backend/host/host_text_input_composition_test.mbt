@@ -5,7 +5,7 @@ test "host driver dispatches ime composition text input events" {
     root=host_test_text_field(text, width=240.0, height=40.0, outlined=true),
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
   ignore(
     driver.dispatch(
       HostEvent::Pointer(
@@ -36,7 +36,7 @@ test "host driver keeps unicode composition update in focused text state" {
     root=host_test_text_field(text, width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
   ignore(
     driver.dispatch(
       HostEvent::Pointer(

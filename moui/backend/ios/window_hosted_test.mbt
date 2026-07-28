@@ -5,7 +5,7 @@ test "ios window-hosted host-sim creates session and presents" {
   let pointer_count = Ref(0)
   let provider = IosRendererProvider::new(create_renderer=(_view, _metrics) => {
     Some(
-      @host.HostWindowRenderer::new(
+      @render.HostWindowRenderer::new(
         resize=_ => (),
         render=_ => (),
         render_frame=Some(_frame => {

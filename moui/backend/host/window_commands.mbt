@@ -135,15 +135,6 @@ pub fn HostWindowCommands::drain_to_registry(
 }
 
 ///|
-pub fn HostWindowCommands::drain_to_runtime_slots(
-  self : HostWindowCommands,
-  registry : HostWindowRegistry,
-  slots : HostWindowRuntimeSlots,
-) -> Array[HostWindowRequestCompletion] {
-  self.drain_with_handler(request => slots.apply_request(registry, request))
-}
-
-///|
 pub fn HostWindowCommands::drain_completed(
   self : HostWindowCommands,
 ) -> Array[HostWindowRequestCompletion] {

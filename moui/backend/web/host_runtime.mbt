@@ -12,17 +12,17 @@ pub(all) struct WebBackendInfo {
 struct WebApp {
   title : String
   runtime : @runtime.AppRuntime
-  driver : @host.HostRuntimeDriver
+  driver : @runtime.HostRuntimeDriver
   text_input_session : @host.TextInputSession
   services : @host.HostServiceBridge
   async_services : @host.HostServiceAsyncQueue
   window_requests : @host.HostWindowRequestQueue
-  scene_resolver : @host.HostWindowSceneResolver
+  scene_resolver : @runtime.HostWindowSceneResolver
   windows : @host.HostWindowRegistry
-  runtime_slots : @host.HostWindowRuntimeSlots
+  runtime_slots : @runtime.HostWindowRuntimeSlots
   platform_windows : @host.HostPlatformWindowMap
   platform_slots : WebWindowPlatformSlots
-  event_sources : @host.HostPlatformEventSources?
+  event_sources : @runtime.HostPlatformEventSources?
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
 }
@@ -36,9 +36,9 @@ let web_active_app : Ref[WebApp?] = Ref(None)
 
 ///|
 pub(all) struct WebAppOptions {
-  scene_resolver : @host.HostWindowSceneResolver
-  event_sources : @host.HostPlatformEventSources?
-  route_source : @host.HostRouteSource?
+  scene_resolver : @runtime.HostWindowSceneResolver
+  event_sources : @runtime.HostPlatformEventSources?
+  route_source : @runtime.HostRouteSource?
 }
 
 ///|
@@ -126,14 +126,14 @@ pub fn run_app_with_options(
   let app = WebApp::{
     title,
     runtime,
-    driver: @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
+    driver: @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
     text_input_session: @host.TextInputSession::new(),
     services,
     async_services,
     window_requests,
     scene_resolver: options.scene_resolver,
     windows: @host.HostWindowRegistry::new(),
-    runtime_slots: @host.HostWindowRuntimeSlots::new(),
+    runtime_slots: @runtime.HostWindowRuntimeSlots::new(),
     platform_windows: @host.HostPlatformWindowMap::new(),
     platform_slots: WebWindowPlatformSlots::new(),
     event_sources: options.event_sources,
@@ -147,9 +147,9 @@ pub fn run_app_with_options(
 
 ///|
 pub fn WebAppOptions::new(
-  scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
-  event_sources? : @host.HostPlatformEventSources? = None,
-  route_source? : @host.HostRouteSource? = None,
+  scene_resolver? : @runtime.HostWindowSceneResolver = @runtime.HostWindowSceneResolver::unavailable(),
+  event_sources? : @runtime.HostPlatformEventSources? = None,
+  route_source? : @runtime.HostRouteSource? = None,
 ) -> WebAppOptions {
   { scene_resolver, event_sources, route_source }
 }
@@ -313,7 +313,7 @@ fn WebApp::sync_runtime_slots(self : WebApp) -> Unit {
 }
 
 ///|
-fn WebApp::active_runtime_slot(self : WebApp) -> @host.HostWindowRuntimeSlot? {
+fn WebApp::active_runtime_slot(self : WebApp) -> @runtime.HostWindowRuntimeSlot? {
   match self.runtime_slots.focused_slot() {
     Some(slot) => Some(slot)
     None => self.runtime_slots.primary_slot()
@@ -321,7 +321,7 @@ fn WebApp::active_runtime_slot(self : WebApp) -> @host.HostWindowRuntimeSlot? {
 }
 
 ///|
-fn runtime_slot_needs_redraw(slot : @host.HostWindowRuntimeSlot) -> Bool {
+fn runtime_slot_needs_redraw(slot : @runtime.HostWindowRuntimeSlot) -> Bool {
   let result = slot.driver.event_result()
   result.needs_redraw || result.redraw_requested
 }

@@ -297,41 +297,4 @@ pub fn HostServiceResponse::is_pending(self : HostServiceResponse) -> Bool {
   }
 }
 
-///|
-pub fn HostRuntimeDriver::dispatch_service_completion(
-  self : HostRuntimeDriver,
-  completion : HostCompletedServiceResponse,
-  services : HostServiceBridge,
-) -> HostEventResult {
-  match (completion.request, completion.response) {
-    (
-      HostServiceRequest::Clipboard(HostClipboardRequest::ReadText),
-      HostServiceResponse::ClipboardText(text),
-    ) => {
-      let result = self.runtime.dispatch_focused_text_command(
-        @core.CommandIntent::Paste,
-        paste_text=Some(text),
-      )
-      if result.handled {
-        self.request_redraw_if_needed()
-      } else if self.runtime.dispatch_command(@core.CommandIntent::Paste) {
-        self.request_redraw_if_needed()
-      }
-    }
-    (HostServiceRequest::ShowMenu(_), HostServiceResponse::MenuAction(command)) =>
-      ignore(self.dispatch_action_command_with_services(command, services))
-    (HostServiceRequest::ShowMenu(_), HostServiceResponse::MenuCommand(intent)) =>
-      ignore(self.dispatch_command_with_services(intent, services))
-    (
-      HostServiceRequest::QuerySystemTheme,
-      HostServiceResponse::SystemTheme(scheme),
-    ) => {
-      self.runtime.set_environment(
-        self.runtime.environment().with_system_scheme(scheme),
-      )
-      self.request_redraw_if_needed()
-    }
-    _ => ()
-  }
-  self.event_result()
-}
+

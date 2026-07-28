@@ -15,8 +15,8 @@ fn next_embedded_runtime_session_generation() -> Int {
 /// type behind their public session wrappers and own native-handle syncing.
 pub struct EmbeddedSessionCore {
   priv runtime : @runtime.AppRuntime
-  priv driver : @host.HostRuntimeDriver
-  priv mut renderer : @host.HostWindowRenderer?
+  priv driver : @runtime.HostRuntimeDriver
+  priv mut renderer : @render.HostWindowRenderer?
   priv transport : @host_session.HostSessionTransport
   priv mut host_bridge : EmbeddingHostBridge?
   priv mut image_coordinator : EmbeddedImageCoordinator?
@@ -29,14 +29,14 @@ pub struct EmbeddedSessionCore {
 ///|
 pub fn EmbeddedSessionCore::new(
   runtime~ : @runtime.AppRuntime,
-  renderer~ : @host.HostWindowRenderer,
+  renderer~ : @render.HostWindowRenderer,
   metrics~ : @host.HostSurfaceMetrics,
-  image_loader? : @host.HostAsyncImageLoader? = None,
+  image_loader? : @render.HostAsyncImageLoader? = None,
 ) -> EmbeddedSessionCore {
   let transport = @host_session.HostSessionTransport::new(
     initial_generation=next_embedded_runtime_session_generation(),
   )
-  let driver = @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     transport.request_frame()
   })
   driver.set_text_system(@core.TextSystem::fallback())
@@ -101,9 +101,9 @@ pub fn EmbeddedSessionCore::surface_epoch(self : EmbeddedSessionCore) -> Int {
 ///|
 pub fn EmbeddedSessionCore::attach_surface(
   self : EmbeddedSessionCore,
-  renderer~ : @host.HostWindowRenderer,
+  renderer~ : @render.HostWindowRenderer,
   metrics~ : @host.HostSurfaceMetrics,
-  image_loader? : @host.HostAsyncImageLoader? = None,
+  image_loader? : @render.HostAsyncImageLoader? = None,
 ) -> Bool {
   if self.disposed {
     renderer.dispose()

@@ -87,7 +87,7 @@ fn MacosApp::start_native_ime_runtime_smoke(
   self : MacosApp,
   window_id : @host.HostWindowId,
   platform_slot : MacosWindowPlatformSlot,
-  runtime_slot : @host.HostWindowRuntimeSlot,
+  runtime_slot : @runtime.HostWindowRuntimeSlot,
   title~ : String,
   prefix~ : String,
 ) -> Bool {
@@ -228,7 +228,7 @@ fn MacosApp::record_native_ime_composition_smoke(
   self : MacosApp,
   window_id : @host.HostWindowId,
   platform_slot : MacosWindowPlatformSlot,
-  runtime_slot : @host.HostWindowRuntimeSlot,
+  runtime_slot : @runtime.HostWindowRuntimeSlot,
   prefix~ : String,
 ) -> Bool {
   self.sync_text_input_session()
@@ -283,7 +283,7 @@ fn MacosApp::finish_native_ime_runtime_smoke(
   self : MacosApp,
   window_id : @host.HostWindowId,
   platform_slot : MacosWindowPlatformSlot,
-  runtime_slot : @host.HostWindowRuntimeSlot,
+  runtime_slot : @runtime.HostWindowRuntimeSlot,
   title~ : String,
   prefix~ : String,
 ) -> Bool {
@@ -578,7 +578,7 @@ fn MacosApp::native_ime_runtime_diagnostics(
 fn MacosApp::present_native_ime_smoke_frame(
   self : MacosApp,
   platform_slot : MacosWindowPlatformSlot,
-  runtime_slot : @host.HostWindowRuntimeSlot,
+  runtime_slot : @runtime.HostWindowRuntimeSlot,
 ) -> Bool {
   let before = platform_slot.renderer.present_count()
   platform_slot.window.pre_present_notify()

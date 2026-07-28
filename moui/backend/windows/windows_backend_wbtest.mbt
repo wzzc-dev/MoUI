@@ -24,14 +24,14 @@ test "windows host options carry optional scene resolver and smoke options stay 
     ),
   )
   match WindowsHostAppOptions::new().scene_resolver.resolve(request) {
-    @host.HostWindowSceneResolution::SceneRejected(message) =>
+    @runtime.HostWindowSceneResolution::SceneRejected(message) =>
       inspect(message, content="window scene resolver is unavailable")
     _ => fail("expected default Windows scene resolver rejection")
   }
   assert_false(WindowsHostSmokeOptions::new().first_frame_smoke_auto_exit)
-  let resolver = @host.HostWindowSceneResolver::new(resolve=request => {
-    @host.HostWindowSceneResolution::SceneResolved(
-      @host.HostWindowSceneInstance::new(
+  let resolver = @runtime.HostWindowSceneResolver::new(resolve=request => {
+    @runtime.HostWindowSceneResolution::SceneResolved(
+      @runtime.HostWindowSceneInstance::new(
         request~,
         runtime=@runtime.AppRuntime::new_view(
           root=(@views.empty() : @core.View[Unit]),
@@ -42,7 +42,7 @@ test "windows host options carry optional scene resolver and smoke options stay 
   })
   let options = WindowsHostAppOptions::new(
     scene_resolver=resolver,
-    event_sources=Some(@host.HostPlatformEventSources::new()),
+    event_sources=Some(@runtime.HostPlatformEventSources::new()),
   )
   let smoke_options = WindowsHostSmokeOptions::new(
     first_frame_smoke_auto_exit=true,
@@ -56,7 +56,7 @@ test "windows host options carry optional scene resolver and smoke options stay 
     None => fail("expected configured Windows platform event sources")
   }
   match options.scene_resolver.resolve(request) {
-    @host.HostWindowSceneResolution::SceneResolved({ runtime, .. }) =>
+    @runtime.HostWindowSceneResolution::SceneResolved({ runtime, .. }) =>
       assert_true(runtime.size() == @core.Size::new(width=320.0, height=240.0))
     _ => fail("expected configured Windows scene resolver")
   }
@@ -65,7 +65,7 @@ test "windows host options carry optional scene resolver and smoke options stay 
 ///|
 test "windows renderer provider exposes async image loader hook" {
   let loader_started = Ref(0)
-  let loader = @host.HostAsyncImageLoader::new(start_load=(
+  let loader = @render.HostAsyncImageLoader::new(start_load=(
     _id,
     _source,
     _complete,
@@ -77,11 +77,11 @@ test "windows renderer provider exposes async image loader hook" {
     create_renderer=(_window, _metrics) => None,
     image_loader=Some(loader),
   )
-  let renderer = @host.HostWindowRenderer::new(resize=_ => (), render=_ => (), text_system=() => {
+  let renderer = @render.HostWindowRenderer::new(resize=_ => (), render=_ => (), text_system=() => {
     @core.TextSystem::fallback()
   })
-  let tracker = @host.HostImageResourceRepaintTracker::new()
-  let source = @host.HostImageResourceCompletionSource::new(
+  let tracker = @render.HostImageResourceRepaintTracker::new()
+  let source = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=_id => true,
     request_redraw=_id => (),
@@ -111,11 +111,11 @@ test "windows renderer provider async image hook defaults to unavailable" {
     _window,
     _metrics,
   ) => None)
-  let renderer = @host.HostWindowRenderer::new(resize=_ => (), render=_ => (), text_system=() => {
+  let renderer = @render.HostWindowRenderer::new(resize=_ => (), render=_ => (), text_system=() => {
     @core.TextSystem::fallback()
   })
-  let tracker = @host.HostImageResourceRepaintTracker::new()
-  let source = @host.HostImageResourceCompletionSource::new(
+  let tracker = @render.HostImageResourceRepaintTracker::new()
+  let source = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=_id => true,
     request_redraw=_id => (),

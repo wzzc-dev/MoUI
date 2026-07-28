@@ -36,7 +36,7 @@ test "ios runtime session renders through supplied provider" {
     create_renderer=(_view, _metrics) => {
       create_count.val = create_count.val + 1
       Some(
-        @host.HostWindowRenderer::new(
+        @render.HostWindowRenderer::new(
           resize=_ => resize_count.val = resize_count.val + 1,
           render=_ => (),
           render_frame=Some(_frame => {

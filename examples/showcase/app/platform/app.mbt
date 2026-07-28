@@ -26,8 +26,8 @@ pub struct Model {
   stroke_points : Array[@geometry.Point]
   anim_phase : Double
   services : @host.HostAppServices
-  timer_source : @host.HostTimerSource?
-  window_events : @host.HostWindowEventSource?
+  timer_source : @runtime.HostTimerSource?
+  window_events : @runtime.HostWindowEventSource?
   probe_text : String
   probe_action_count : Int
   probe_submit_count : Int
@@ -72,8 +72,8 @@ pub fn normalize_platform_route(route : String) -> String {
 ///|
 pub fn Model::new(
   services? : @host.HostAppServices = @host.HostAppServices::unavailable(),
-  timer_source? : @host.HostTimerSource? = None,
-  window_events? : @host.HostWindowEventSource? = None,
+  timer_source? : @runtime.HostTimerSource? = None,
+  window_events? : @runtime.HostWindowEventSource? = None,
   timer_running? : Bool = false,
   route? : String = "host-services",
   host_label? : String = "Showcase platform host",
@@ -121,8 +121,8 @@ pub fn Model::with_host_label(self : Model, host_label : String) -> Model {
 pub fn Model::with_host_adapters(
   self : Model,
   services? : @host.HostAppServices = @host.HostAppServices::unavailable(),
-  timer_source? : @host.HostTimerSource? = None,
-  window_events? : @host.HostWindowEventSource? = None,
+  timer_source? : @runtime.HostTimerSource? = None,
+  window_events? : @runtime.HostWindowEventSource? = None,
 ) -> Model {
   { ..self, services, timer_source, window_events }
 }
@@ -576,8 +576,8 @@ pub fn subscriptions(model : Model) -> @moui.Subscription[Msg] {
 ///|
 pub fn program(
   services? : @host.HostAppServices = @host.HostAppServices::unavailable(),
-  timer_source? : @host.HostTimerSource? = None,
-  window_events? : @host.HostWindowEventSource? = None,
+  timer_source? : @runtime.HostTimerSource? = None,
+  window_events? : @runtime.HostWindowEventSource? = None,
   route? : String = "host-services",
 ) -> @moui.Program[Model, Msg] {
   let init = Model::new(services~, timer_source~, window_events~, route~)

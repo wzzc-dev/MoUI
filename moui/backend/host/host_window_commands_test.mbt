@@ -93,7 +93,7 @@ test "host window commands can drain through runtime slots" {
       size=@core.Size::new(width=320.0, height=240.0),
     ),
   )
-  let slots = HostWindowRuntimeSlots::new()
+  let slots = @runtime.HostWindowRuntimeSlots::new()
   let runtime = host_test_runtime(
     root=@views.empty(),
     size=@core.Size::new(width=320.0, height=240.0),
@@ -102,7 +102,7 @@ test "host window commands can drain through runtime slots" {
     slots.insert_from_registry(
       registry,
       opened,
-      driver=HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
+      driver=@runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
     ),
   )
   let commands = HostWindowCommands::new()
@@ -113,7 +113,7 @@ test "host window commands can drain through runtime slots" {
     ),
   )
   commands.close(HostWindowId::new(404))
-  let completions = commands.drain_to_runtime_slots(registry, slots)
+  let completions = @runtime.drain_to_runtime_slots(commands, registry, slots)
   inspect(completions.length(), content="2")
   match completions[0].result {
     HostWindowRequestResult::WindowUpdated(id) => assert_true(id == opened)

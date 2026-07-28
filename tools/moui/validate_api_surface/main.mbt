@@ -1075,7 +1075,7 @@ fn backend_runtime_interface_paths() -> Array[String] {
 
 ///|
 fn max_shared_app_runtime_imports() -> Int {
-  1
+  4
 }
 
 ///|
@@ -1094,8 +1094,20 @@ fn allowed_shared_app_core_imports() -> Array[String] {
 }
 
 ///|
+/// Shared-app packages that default-import `moui/runtime` to consume the
+/// app-facing runtime API (`AppRuntime`, `new_program_with_dimensions`,
+/// `HostTimerSource`, `HostWallClock`, `HostRouteSource`, …). ADR 0018
+/// restricts `backend/host` from importing runtime — it does NOT forbid app
+/// packages from consuming the runtime facade; these apps wire the
+/// composition root (program construction + host service sources) which is
+/// the runtime facade's intended consumer surface.
 fn allowed_shared_app_runtime_imports() -> Array[String] {
-  ["examples/showcase/app/moon.pkg"]
+  [
+    "examples/showcase/app/moon.pkg",
+    "examples/mo_desktop/app/moon.pkg",
+    "examples/markdown_editor/app/moon.pkg",
+    "website/app/moon.pkg",
+  ]
 }
 
 ///|

@@ -224,10 +224,10 @@ fn MacosApp::redraw_window(
     ) {
     (Some(platform_slot), Some(runtime_slot)) => {
       let prior_completions = platform_slot.renderer.drain_present_completions()
-      let prior_presented = @host.render_present_completions_have_presented(
+      let prior_presented = @render.render_present_completions_have_presented(
         prior_completions,
       )
-      let prior_terminal = @host.render_present_completions_have_terminal(
+      let prior_terminal = @render.render_present_completions_have_terminal(
         prior_completions,
       )
       if platform_slot.frame_pending {
@@ -274,10 +274,10 @@ fn MacosApp::redraw_window(
       }
       runtime_slot.driver.apply_render_frame_result(result)
       runtime_slot.driver.finish_redraw()
-      let completion_presented = @host.render_present_completions_have_presented(
+      let completion_presented = @render.render_present_completions_have_presented(
         present_completions,
       )
-      let completion_terminal = @host.render_present_completions_have_terminal(
+      let completion_terminal = @render.render_present_completions_have_terminal(
         present_completions,
       )
       platform_slot.frame_pending = result.queued && !completion_terminal
@@ -321,7 +321,7 @@ fn MacosApp::redraw_window(
 fn MacosApp::finish_presented_window(
   self : MacosApp,
   window_id : @host.HostWindowId,
-  runtime_slot : @host.HostWindowRuntimeSlot,
+  runtime_slot : @runtime.HostWindowRuntimeSlot,
 ) -> Bool {
   if self.record_native_ime_runtime_smoke(window_id) {
     true
@@ -347,7 +347,7 @@ extern "c" fn macos_perf_now_ms() -> Double = "moui_macos_perf_now_ms"
 fn MacosApp::record_performance_smoke_present(
   self : MacosApp,
   window_id : @host.HostWindowId,
-  runtime_slot : @host.HostWindowRuntimeSlot,
+  runtime_slot : @runtime.HostWindowRuntimeSlot,
 ) -> Bool {
   let now = macos_perf_now_ms()
   self.performance_smoke_presented = self.performance_smoke_presented + 1
@@ -423,7 +423,7 @@ fn MacosApp::record_performance_smoke_present(
 fn MacosApp::advance_promotion_lifecycle(
   self : MacosApp,
   window_id : @host.HostWindowId,
-  runtime_slot : @host.HostWindowRuntimeSlot,
+  runtime_slot : @runtime.HostWindowRuntimeSlot,
 ) -> Bool {
   let _ = runtime_slot
   match self.platform_slots.lookup_host(window_id) {

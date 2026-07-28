@@ -24,7 +24,7 @@ pub fn run_smoke_app_with_options(String, @runtime.AppRuntime, options~ : LinuxS
 pub struct LinuxSunAppOptions {
   // private fields
 }
-pub fn LinuxSunAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, platform_view_plugins? : Array[@host.PlatformViewPlugin]) -> Self
+pub fn LinuxSunAppOptions::new(scene_resolver? : @runtime.HostWindowSceneResolver, platform_view_plugins? : Array[@host.PlatformViewPlugin]) -> Self
 
 pub struct LinuxSunSmokeOptions {
   // private fields

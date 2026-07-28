@@ -1,4 +1,11 @@
 ///|
+/// [DEPRECATED] Central capability matrix that lists all renderer backends.
+///
+/// **Migration**: Each `RendererProvider` declares its own capabilities via the
+/// `capabilities` field (ADR 0019). Consumers iterate registered providers
+/// instead of this static list. The old function is preserved for incremental
+/// migration and will be removed after all consumers migrate.
+///
 pub fn renderer_capability_backends() -> Array[RendererBackendKind] {
   [
     RendererBackendKind::SkiaRasterNative,

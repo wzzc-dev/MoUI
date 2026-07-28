@@ -1,7 +1,7 @@
 ///|
 pub struct LinuxSkiaAppOptions {
-  priv scene_resolver : @host.HostWindowSceneResolver
-  priv event_sources : @host.HostPlatformEventSources?
+  priv scene_resolver : @runtime.HostWindowSceneResolver
+  priv event_sources : @runtime.HostPlatformEventSources?
   priv font_resolution : @skia_renderer.SkiaFontResolution
   priv surface_route : @render.SkiaSurfaceRoute
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
@@ -14,8 +14,8 @@ pub struct LinuxSkiaSmokeOptions {
 
 ///|
 pub fn LinuxSkiaAppOptions::new(
-  scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
-  event_sources? : @host.HostPlatformEventSources? = None,
+  scene_resolver? : @runtime.HostWindowSceneResolver = @runtime.HostWindowSceneResolver::unavailable(),
+  event_sources? : @runtime.HostPlatformEventSources? = None,
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
   surface_route? : @render.SkiaSurfaceRoute = linux_surface_route_from_environment(),
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
@@ -178,9 +178,9 @@ fn async_image_read_i32_le(data : Bytes, offset : Int) -> Int {
 }
 
 ///|
-fn skia_async_image_loader() -> @host.HostAsyncImageLoader {
-  let native_source = @host.HostNativeAsyncImageSource::new()
-  @host.HostNativeAsyncImageSource::loader_with_drain(
+fn skia_async_image_loader() -> @render.HostAsyncImageLoader {
+  let native_source = @render.HostNativeAsyncImageSource::new()
+  @render.HostNativeAsyncImageSource::loader_with_drain(
     native_source,
     spawn=(window_id, source) => {
       if source.has_prefix("data:") {
@@ -275,7 +275,7 @@ fn create_renderer(
   window : @window_linux.Window,
   metrics : @host.HostSurfaceMetrics,
   options : LinuxSkiaAppOptions,
-) -> @host.HostWindowRenderer? {
+) -> @render.HostWindowRenderer? {
   if !linux_skia_provider_ready() {
     println(linux_skia_unavailable_message())
     return None
@@ -301,7 +301,7 @@ fn create_gpu_worker_renderer(
   surface_ptr : UInt64,
   metrics : @host.HostSurfaceMetrics,
   options : LinuxSkiaAppOptions,
-) -> @host.HostWindowRenderer? {
+) -> @render.HostWindowRenderer? {
   try {
     let renderer = @skia_renderer.create_with_present_target(
       renderer_metrics_from_host(metrics),
@@ -353,7 +353,7 @@ fn create_raster_renderer(
   window : @window_linux.Window,
   metrics : @host.HostSurfaceMetrics,
   options : LinuxSkiaAppOptions,
-) -> @host.HostWindowRenderer? {
+) -> @render.HostWindowRenderer? {
   try {
     let renderer = @skia_renderer.create_with_present_target_and_route(
       renderer_metrics_from_host(metrics),
@@ -438,7 +438,7 @@ fn linux_native_gpu_completion_to_render(
 fn host_renderer_from_native_gpu_worker(
   renderer : @skia_renderer.SkiaRasterRenderer,
   worker : @skia_native.NativeGpuRenderWorker,
-) -> @host.HostWindowRenderer {
+) -> @render.HostWindowRenderer {
   let pending_completions : Array[@render.RenderPresentCompletion] = []
   let presented_count = Ref(0)
   let fallback_to_raster = Ref(false)
@@ -460,7 +460,7 @@ fn host_renderer_from_native_gpu_worker(
       }
     }
   }
-  @host.HostWindowRenderer::new(
+  @render.HostWindowRenderer::new(
     resize=metrics => {
       renderer.resize(renderer_metrics_from_host(metrics)) catch {
         err => println("error resizing Linux Skia producer: \{err.message()}")
@@ -526,7 +526,7 @@ fn host_renderer_from_native_gpu_worker(
         renderer.dispose()
       }
     },
-    image=@host.HostRendererImageCapability::new(
+    image=@render.HostRendererImageCapability::new(
       image_resources=() => renderer.image_resources(),
       image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
       apply_image_resource_load_completion=Some(completion => {
@@ -536,7 +536,7 @@ fn host_renderer_from_native_gpu_worker(
         renderer.set_image_resource_change_callback(callback)
       },
     ),
-    platform_view=@host.HostRendererPlatformViewCapability::new(
+    platform_view=@render.HostRendererPlatformViewCapability::new(
       draw_platform_view_pixels=fn(
         pixels,
         src_width,
@@ -580,8 +580,8 @@ fn linux_skia_present_target(
 ///|
 fn host_renderer_from_skia(
   renderer : @skia_renderer.SkiaRasterRenderer,
-) -> @host.HostWindowRenderer {
-  @host.HostWindowRenderer::new(
+) -> @render.HostWindowRenderer {
+  @render.HostWindowRenderer::new(
     resize=metrics => {
       renderer.resize(renderer_metrics_from_host(metrics)) catch {
         err => println("error resizing Linux Skia renderer: \{err.message()}")
@@ -596,7 +596,7 @@ fn host_renderer_from_skia(
     text_system=() => renderer.text_system(),
     present_count=() => renderer.present_count(),
     dispose=() => renderer.dispose(),
-    image=@host.HostRendererImageCapability::new(
+    image=@render.HostRendererImageCapability::new(
       image_resources=() => renderer.image_resources(),
       image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
       apply_image_resource_load_completion=Some(completion => {
@@ -606,7 +606,7 @@ fn host_renderer_from_skia(
         renderer.set_image_resource_change_callback(callback)
       },
     ),
-    platform_view=@host.HostRendererPlatformViewCapability::new(
+    platform_view=@render.HostRendererPlatformViewCapability::new(
       draw_platform_view_pixels=fn(
         pixels,
         src_width,

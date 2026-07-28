@@ -61,9 +61,9 @@ pub(all) struct IosBackendInfo {
 
 ///|
 pub struct IosRendererProvider {
-  priv create_renderer : (IosViewHandle, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?
+  priv create_renderer : (IosViewHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
   priv sync_view : (IosViewHandle, @host.HostSurfaceMetrics) -> Unit
-  priv image_loader : @host.HostAsyncImageLoader?
+  priv image_loader : @render.HostAsyncImageLoader?
 }
 
 ///|
@@ -74,12 +74,12 @@ pub struct IosRuntimeSession {
 
 ///|
 pub fn IosRendererProvider::new(
-  create_renderer~ : (IosViewHandle, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?,
+  create_renderer~ : (IosViewHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?,
   sync_view? : (IosViewHandle, @host.HostSurfaceMetrics) -> Unit = (
     _view,
     _metrics,
   ) => (),
-  image_loader? : @host.HostAsyncImageLoader? = None,
+  image_loader? : @render.HostAsyncImageLoader? = None,
 ) -> IosRendererProvider {
   { create_renderer, sync_view, image_loader }
 }
@@ -89,7 +89,7 @@ fn IosRendererProvider::create(
   self : IosRendererProvider,
   view : IosViewHandle,
   metrics : @host.HostSurfaceMetrics,
-) -> @host.HostWindowRenderer? {
+) -> @render.HostWindowRenderer? {
   (self.create_renderer)(view, metrics)
 }
 

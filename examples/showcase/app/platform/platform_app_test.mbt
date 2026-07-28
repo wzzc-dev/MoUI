@@ -44,7 +44,7 @@ test "subscriptions stay empty without host adapters" {
 
 ///|
 test "timer source is declared while running on another route" {
-  let source = @host.HostTimerSource::new(start_timer=(_interval, _dispatch) => {
+  let source = @runtime.HostTimerSource::new(start_timer=(_interval, _dispatch) => {
     None
   })
   let model = Model::new(

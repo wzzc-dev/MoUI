@@ -22,7 +22,7 @@ fn HostServiceAsyncQueue::cancel_outstanding_with_completions(
 /// remain blocked on the old generation.
 pub fn EmbeddingHostBridge::dispose(
   self : EmbeddingHostBridge,
-  driver? : HostRuntimeDriver,
+  driver? : @runtime.HostRuntimeDriver,
   reason? : String = "mobile host channel disposed",
 ) -> Unit {
   if !self.disposed {
