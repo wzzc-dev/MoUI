@@ -58,7 +58,7 @@ normalize into host contracts; renderers consume `DrawCommand` only.
 | Platform hosts | `moui/backend/{macos,windows,linux,web,android,ios,harmonyos}` |
 | Skia mainline providers | `moui/backend/<platform>/skia` |
 | WGPU diagnostic providers | `moui/backend/<platform>/wgpu` |
-| Renderer facades | `moui/render`, `render/skia`, `render/webgpu_adapter`, `render/wgpu` |
+| Renderer facades | `moui/render`, `render/skia`, `render/wgpu`, `render/webgpu_adapter`, `render/sun`, `render/canvas2d` |
 | Skia FFI / native capability | `moui_skia` |
 | Mobile templates and event loops | `wzzc-dev/window/{android,ios,harmonyos}` |
 | Rich text domain | `moui_richtext` |
@@ -78,9 +78,11 @@ normalize into host contracts; renderers consume `DrawCommand` only.
 ## Workspace note
 
 - Active members: `moon.work` (see generated `docs/repository-facts.md`).
-- Do not list local `./window/modules/window*` members or `./openseek` in
-  `moon.work` by default.
-- Local window source: `sh scripts/window-dev-mode.sh on/off` only when intentionally editing window.
+- Do not list `./openseek` in `moon.work` by default.
+- Local `./window/modules/window*` members: during the renderer-provider
+  trait refactor (ADR 0019 Phase E) the workspace tracks local window source
+  so `moui/moon.mod` resolves the in-tree module. Outside that window, run
+  `sh scripts/window-dev-mode.sh on/off` only when intentionally editing window.
 
 ## Where to go next
 
