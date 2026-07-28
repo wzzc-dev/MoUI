@@ -1,6 +1,6 @@
 ///|
 pub struct LinuxSunAppOptions {
-  priv scene_resolver : @host.HostWindowSceneResolver
+  priv scene_resolver : @runtime.HostWindowSceneResolver
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
 }
 
@@ -11,7 +11,7 @@ pub struct LinuxSunSmokeOptions {
 
 ///|
 pub fn LinuxSunAppOptions::new(
-  scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
+  scene_resolver? : @runtime.HostWindowSceneResolver = @runtime.HostWindowSceneResolver::unavailable(),
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
 ) -> LinuxSunAppOptions {
   { scene_resolver, platform_view_plugins }
@@ -108,9 +108,9 @@ fn async_image_read_i32_le(data : Bytes, offset : Int) -> Int {
 }
 
 ///|
-fn sun_native_image_loader() -> @host.HostAsyncImageLoader {
-  let native_source = @host.HostNativeAsyncImageSource::new()
-  @host.HostNativeAsyncImageSource::loader_with_drain(
+fn sun_native_image_loader() -> @render.HostAsyncImageLoader {
+  let native_source = @render.HostNativeAsyncImageSource::new()
+  @render.HostNativeAsyncImageSource::loader_with_drain(
     native_source,
     spawn=(window_id, source) => {
       if source.has_prefix("data:") {
@@ -197,7 +197,7 @@ fn create_renderer(
   window : @window_linux.Window,
   metrics : @host.HostSurfaceMetrics,
   _options : LinuxSunAppOptions,
-) -> @host.HostWindowRenderer? {
+) -> @render.HostWindowRenderer? {
   if !linux_sun_provider_ready() {
     println(linux_sun_unavailable_message())
     return None
@@ -254,8 +254,8 @@ fn linux_sun_present_target(
 ///|
 fn host_renderer_from_sun(
   renderer : @sun_renderer.SunRasterRenderer,
-) -> @host.HostWindowRenderer {
-  @host.HostWindowRenderer::new(
+) -> @render.HostWindowRenderer {
+  @render.HostWindowRenderer::new(
     resize=metrics => {
       renderer.resize(renderer_metrics_from_host(metrics)) catch {
         err => println("error resizing Linux Sun renderer: \{err.message()}")
@@ -270,7 +270,7 @@ fn host_renderer_from_sun(
     text_system=() => renderer.text_system(),
     present_count=() => renderer.present_count(),
     dispose=() => renderer.dispose(),
-    image=@host.HostRendererImageCapability::new(
+    image=@render.HostRendererImageCapability::new(
       image_resources=() => renderer.image_resources(),
       image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
       apply_image_resource_load_completion=Some(completion => {
@@ -280,7 +280,7 @@ fn host_renderer_from_sun(
         renderer.set_image_resource_change_callback(callback)
       },
     ),
-    platform_view=@host.HostRendererPlatformViewCapability::new(
+    platform_view=@render.HostRendererPlatformViewCapability::new(
       draw_platform_view_pixels=fn(
         pixels,
         src_width,

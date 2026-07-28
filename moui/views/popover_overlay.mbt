@@ -20,7 +20,7 @@ pub fn[Msg] popover(
         padding=resolved_theme.spacing_scale.sm,
       )
       .shadow(
-        resolved_theme.components.surface.overlay_shadow.unwrap_or(
+        views_ambient_control_theme(resolved_theme).surface.overlay_shadow.unwrap_or(
           resolved_theme.shadow_scale.md,
         ),
       )

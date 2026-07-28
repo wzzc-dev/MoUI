@@ -13,17 +13,17 @@ test "native renderer auto remains raster when promotion flag is false" {
 
 ///|
 test "all native platforms promote gpu for auto by default" {
-  assert_true(NativeGpuPlatform::Macos.gpu_promoted())
-  assert_true(NativeGpuPlatform::Windows.gpu_promoted())
-  assert_true(NativeGpuPlatform::Linux.gpu_promoted())
-  assert_true(NativeGpuPlatform::Android.gpu_promoted())
-  assert_true(NativeGpuPlatform::Ios.gpu_promoted())
-  assert_true(NativeGpuPlatform::HarmonyOs.gpu_promoted())
+  assert_true(NativePlatformSurface::gpu_promoted(NativeGpuPlatform::Macos))
+  assert_true(NativePlatformSurface::gpu_promoted(NativeGpuPlatform::Windows))
+  assert_true(NativePlatformSurface::gpu_promoted(NativeGpuPlatform::Linux))
+  assert_true(NativePlatformSurface::gpu_promoted(NativeGpuPlatform::Android))
+  assert_true(NativePlatformSurface::gpu_promoted(NativeGpuPlatform::Ios))
+  assert_true(NativePlatformSurface::gpu_promoted(NativeGpuPlatform::HarmonyOs))
   let macos = select_native_renderer(
     NativeGpuPlatform::Macos,
     NativeRendererMode::Auto,
     gpu_available=true,
-    gpu_promoted=NativeGpuPlatform::Macos.gpu_promoted(),
+    gpu_promoted=NativePlatformSurface::gpu_promoted(NativeGpuPlatform::Macos),
   )
   assert_true(macos.selected == RendererBackendKind::SkiaGpuNative)
   assert_true(macos.surface_route == SkiaSurfaceRoute::MetalGpuSurfaceRoute)
@@ -31,7 +31,7 @@ test "all native platforms promote gpu for auto by default" {
     NativeGpuPlatform::Windows,
     NativeRendererMode::Auto,
     gpu_available=true,
-    gpu_promoted=NativeGpuPlatform::Windows.gpu_promoted(),
+    gpu_promoted=NativePlatformSurface::gpu_promoted(NativeGpuPlatform::Windows),
   )
   assert_true(windows.selected == RendererBackendKind::SkiaGpuNative)
   assert_true(
@@ -41,7 +41,7 @@ test "all native platforms promote gpu for auto by default" {
     NativeGpuPlatform::Linux,
     NativeRendererMode::Auto,
     gpu_available=true,
-    gpu_promoted=NativeGpuPlatform::Linux.gpu_promoted(),
+    gpu_promoted=NativePlatformSurface::gpu_promoted(NativeGpuPlatform::Linux),
   )
   assert_true(linux.selected == RendererBackendKind::SkiaGpuNative)
   assert_true(linux.surface_route == SkiaSurfaceRoute::VulkanGpuSurfaceRoute)
@@ -49,7 +49,7 @@ test "all native platforms promote gpu for auto by default" {
     NativeGpuPlatform::Android,
     NativeRendererMode::Auto,
     gpu_available=true,
-    gpu_promoted=NativeGpuPlatform::Android.gpu_promoted(),
+    gpu_promoted=NativePlatformSurface::gpu_promoted(NativeGpuPlatform::Android),
   )
   assert_true(android.selected == RendererBackendKind::SkiaGpuNative)
   assert_true(android.surface_route == SkiaSurfaceRoute::VulkanGpuSurfaceRoute)
@@ -57,7 +57,7 @@ test "all native platforms promote gpu for auto by default" {
     NativeGpuPlatform::Ios,
     NativeRendererMode::Auto,
     gpu_available=true,
-    gpu_promoted=NativeGpuPlatform::Ios.gpu_promoted(),
+    gpu_promoted=NativePlatformSurface::gpu_promoted(NativeGpuPlatform::Ios),
   )
   assert_true(ios.selected == RendererBackendKind::SkiaGpuNative)
   assert_true(ios.surface_route == SkiaSurfaceRoute::MetalGpuSurfaceRoute)
@@ -65,7 +65,7 @@ test "all native platforms promote gpu for auto by default" {
     NativeGpuPlatform::HarmonyOs,
     NativeRendererMode::Auto,
     gpu_available=true,
-    gpu_promoted=NativeGpuPlatform::HarmonyOs.gpu_promoted(),
+    gpu_promoted=NativePlatformSurface::gpu_promoted(NativeGpuPlatform::HarmonyOs),
   )
   assert_true(harmony.selected == RendererBackendKind::SkiaGpuNative)
   assert_true(harmony.surface_route == SkiaSurfaceRoute::EglGpuSurfaceRoute)

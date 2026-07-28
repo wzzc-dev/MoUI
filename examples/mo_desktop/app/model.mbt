@@ -95,8 +95,8 @@ pub(all) enum BrowserPage {
 } derive(Eq, Debug)
 
 ///|
-fn default_desktop_clock() -> @host.HostWallClock {
-  @host.HostWallClock::new(2026, 7, 19, 0, 9, 41)
+fn default_desktop_clock() -> @runtime.HostWallClock {
+  @runtime.HostWallClock::new(2026, 7, 19, 0, 9, 41)
 }
 
 ///|
@@ -107,7 +107,7 @@ pub(all) struct DesktopModel {
   overlay : DesktopOverlay
   appearance : AppearanceMode
   dark_mode : Bool
-  clock : @host.HostWallClock
+  clock : @runtime.HostWallClock
   window_maximized : Bool
   window_offset_x : Double
   window_offset_y : Double
@@ -167,7 +167,7 @@ pub(all) enum Msg {
   UseSystemAppearance
   RequestFileImport
   HostCompleted(@host.HostCompletedServiceResponse)
-  ClockUpdated(@host.HostWallClock)
+  ClockUpdated(@runtime.HostWallClock)
   WifiChanged(Bool)
   BluetoothChanged(Bool)
   LowPowerModeChanged(Bool)
@@ -180,7 +180,7 @@ pub(all) enum Msg {
 ///|
 pub fn DesktopModel::new(
   wallpaper_source? : String = "examples/mo_desktop/web_wasm/assets/tahoe-day.jpg",
-  clock? : @host.HostWallClock = default_desktop_clock(),
+  clock? : @runtime.HostWallClock = default_desktop_clock(),
 ) -> DesktopModel {
   {
     wallpaper_source,

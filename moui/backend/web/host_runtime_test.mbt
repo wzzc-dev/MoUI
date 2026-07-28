@@ -38,13 +38,13 @@ test "web app options carry scene resolver and platform event sources" {
     ),
   )
   match WebAppOptions::new().scene_resolver.resolve(request) {
-    @host.HostWindowSceneResolution::SceneRejected(message) =>
+    @runtime.HostWindowSceneResolution::SceneRejected(message) =>
       inspect(message, content="window scene resolver is unavailable")
     _ => fail("expected default Web scene resolver rejection")
   }
-  let resolver = @host.HostWindowSceneResolver::new(resolve=request => {
-    @host.HostWindowSceneResolution::SceneResolved(
-      @host.HostWindowSceneInstance::new(
+  let resolver = @runtime.HostWindowSceneResolver::new(resolve=request => {
+    @runtime.HostWindowSceneResolution::SceneResolved(
+      @runtime.HostWindowSceneInstance::new(
         request~,
         runtime=@runtime.AppRuntime::new_view(
           root=(@views.empty() : @core.View[Unit]),
@@ -55,8 +55,8 @@ test "web app options carry scene resolver and platform event sources" {
   })
   let options = WebAppOptions::new(
     scene_resolver=resolver,
-    event_sources=Some(@host.HostPlatformEventSources::new()),
-    route_source=Some(@host.HostRouteSource::new()),
+    event_sources=Some(@runtime.HostPlatformEventSources::new()),
+    route_source=Some(@runtime.HostRouteSource::new()),
   )
   match options.event_sources {
     Some(sources) => {
@@ -70,7 +70,7 @@ test "web app options carry scene resolver and platform event sources" {
     None => fail("expected configured Web route source")
   }
   match options.scene_resolver.resolve(request) {
-    @host.HostWindowSceneResolution::SceneResolved({ runtime, .. }) =>
+    @runtime.HostWindowSceneResolution::SceneResolved({ runtime, .. }) =>
       assert_true(runtime.size() == @core.Size::new(width=320.0, height=240.0))
     _ => fail("expected configured Web scene resolver")
   }

@@ -585,7 +585,7 @@ fn MarkdownEditorApp::update_with_services(
 fn MarkdownEditorApp::subscriptions(
   self : MarkdownEditorApp,
   services : @host.HostAppServices,
-  timer_source? : @host.HostTimerSource? = None,
+  timer_source? : @runtime.HostTimerSource? = None,
 ) -> @moui.Subscription[MarkdownEditorMsg] {
   // The transfer completion subscription always wins while a host transfer is
   // pending, since it owns the lifecycle of that async work.
@@ -649,7 +649,7 @@ pub fn MarkdownEditorApp::program(
 pub fn MarkdownEditorApp::program_with_services(
   self : MarkdownEditorApp,
   services : @host.HostAppServices,
-  timer_source? : @host.HostTimerSource? = None,
+  timer_source? : @runtime.HostTimerSource? = None,
 ) -> @moui.Program[MarkdownEditorApp, MarkdownEditorMsg] {
   @moui.Program::new(
     init=() => (self, @moui.Effect::none()),

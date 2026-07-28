@@ -19,21 +19,21 @@ fn assert_windows_wgpu_async_repaint_proof() -> Unit {
   let lifecycle = @render.ImageResourceLifecycle::new()
   let source = windows_wgpu_proof_png_data_uri()
   ignore(lifecycle.mark_loading(source))
-  let renderer = @host.HostWindowRenderer::new(
+  let renderer = @render.HostWindowRenderer::new(
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image=@host.HostRendererImageCapability::new(
+    image=@render.HostRendererImageCapability::new(
       image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
       apply_image_resource_load_completion=Some(completion => {
         lifecycle.apply_load_completion(completion)
       }),
     ),
   )
-  let tracker = @host.HostImageResourceRepaintTracker::new()
+  let tracker = @render.HostImageResourceRepaintTracker::new()
   ignore(tracker.record_presented(window_id, renderer))
   let redraws : Array[@host.HostWindowId] = []
-  let completion_source = @host.HostImageResourceCompletionSource::new(
+  let completion_source = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=id => id == window_id,
     request_redraw=id => redraws.push(id),

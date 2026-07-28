@@ -23,8 +23,8 @@ pub(all) struct NativeAccessibilityActionRequest {
 
 ///|
 pub(all) enum NativeAccessibilityActionResult {
-  Handled(@runtime.SemanticsActionReceipt)
-  Rejected(@runtime.SemanticsActionDispatchError)
+  Handled(SemanticsActionReceipt)
+  Rejected(SemanticsActionDispatchError)
   BridgeUnavailable(String)
 } derive(Eq, Debug)
 
@@ -32,7 +32,7 @@ pub(all) enum NativeAccessibilityActionResult {
 pub(all) struct NativeAccessibilityBridge {
   kind : NativeAccessibilityBridgeKind
   available : Bool
-  publish : (@runtime.SemanticsRead) -> NativeAccessibilityUpdate?
+  publish : (SemanticsRead) -> NativeAccessibilityUpdate?
   perform : (NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult
 }
 
@@ -228,10 +228,10 @@ fn build_accesskit_update(
 
 ///|
 pub fn accesskit_update_from_semantics_read(
-  read : @runtime.SemanticsRead,
+  read : SemanticsRead,
 ) -> NativeAccessibilityUpdate? {
   match read {
-    @runtime.SemanticsRead::Full(snapshot) =>
+    SemanticsRead::Full(snapshot) =>
       Some(
         build_accesskit_update(
           snapshot.generation(),
@@ -241,7 +241,7 @@ pub fn accesskit_update_from_semantics_read(
           [],
         ),
       )
-    @runtime.SemanticsRead::Delta(delta) =>
+    SemanticsRead::Delta(delta) =>
       Some(
         build_accesskit_update(
           delta.to(),
@@ -251,7 +251,7 @@ pub fn accesskit_update_from_semantics_read(
           delta.removed(),
         ),
       )
-    @runtime.SemanticsRead::Unchanged(_) => None
+    SemanticsRead::Unchanged(_) => None
   }
 }
 
@@ -268,7 +268,7 @@ pub fn NativeAccessibilityActionRequest::new(
 pub fn NativeAccessibilityBridge::new(
   kind~ : NativeAccessibilityBridgeKind,
   available? : Bool = true,
-  publish? : (@runtime.SemanticsRead) -> NativeAccessibilityUpdate? = read => {
+  publish? : (SemanticsRead) -> NativeAccessibilityUpdate? = read => {
     accesskit_update_from_semantics_read(read)
   },
   perform? : (NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult = _request => {
@@ -293,7 +293,7 @@ pub fn NativeAccessibilityBridge::unavailable(
 ///|
 pub fn NativeAccessibilityBridge::publish_semantics(
   self : NativeAccessibilityBridge,
-  read : @runtime.SemanticsRead,
+  read : SemanticsRead,
 ) -> NativeAccessibilityUpdate? {
   if self.available {
     (self.publish)(read)
@@ -319,14 +319,14 @@ pub fn NativeAccessibilityBridge::perform_action(
 ///|
 pub fn NativeAccessibilityBridge::runtime(
   kind~ : NativeAccessibilityBridgeKind,
-  runtime~ : @runtime.AppRuntime,
+  runtime~ : AppRuntime,
 ) -> NativeAccessibilityBridge {
   NativeAccessibilityBridge::new(kind~, perform=request => {
     match
       runtime.perform_semantics_action({
         target: @core.SemanticsTarget::ByNodeId(request.node_id),
         action: request.action,
-        precondition: @runtime.SemanticsGenerationPrecondition::Exact(
+        precondition: SemanticsGenerationPrecondition::Exact(
           request.generation,
         ),
       }) {

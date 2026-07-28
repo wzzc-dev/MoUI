@@ -335,10 +335,10 @@ fn LinuxApp::redraw_window(
     ) {
     (Some(platform_slot), Some(runtime_slot)) => {
       let prior_completions = platform_slot.renderer.drain_present_completions()
-      let prior_presented = @host.render_present_completions_have_presented(
+      let prior_presented = @render.render_present_completions_have_presented(
         prior_completions,
       )
-      let prior_terminal = @host.render_present_completions_have_terminal(
+      let prior_terminal = @render.render_present_completions_have_terminal(
         prior_completions,
       )
       if platform_slot.frame_pending {
@@ -399,8 +399,11 @@ fn LinuxApp::redraw_window(
         for plugin in self.platform_view_plugins {
           match plugin.setup_platform_view_draw {
             Some(setup_fn) =>
-              platform_slot.renderer.set_platform_view_draw_fn(
-                Some(fn() { setup_fn(handle, renderer, f, offset_y) }),
+              setup_fn(
+                handle,
+                f,
+                offset_y,
+                draw_fn => renderer.set_platform_view_draw_fn(Some(draw_fn)),
               )
             None => ()
           }
@@ -434,10 +437,10 @@ fn LinuxApp::redraw_window(
       }
       runtime_slot.driver.apply_render_frame_result(result)
       runtime_slot.driver.finish_redraw()
-      let completion_presented = @host.render_present_completions_have_presented(
+      let completion_presented = @render.render_present_completions_have_presented(
         present_completions,
       )
-      let completion_terminal = @host.render_present_completions_have_terminal(
+      let completion_terminal = @render.render_present_completions_have_terminal(
         present_completions,
       )
       platform_slot.frame_pending = result.queued && !completion_terminal

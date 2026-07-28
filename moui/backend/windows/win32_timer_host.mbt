@@ -15,8 +15,8 @@ extern "C" fn windows_timer_cancel(handle : UInt64) -> Unit = "moui_windows_time
 
 ///|
 /// Construct a `HostTimerSource` backed by the Windows timer-queue timer.
-pub fn windows_timer_source() -> @host.HostTimerSource {
-  @host.HostTimerSource::new(start_timer=(interval_ms, dispatch) => {
+pub fn windows_timer_source() -> @runtime.HostTimerSource {
+  @runtime.HostTimerSource::new(start_timer=(interval_ms, dispatch) => {
     let tick = () => {
       dispatch(@core.Frame::new(time_ms=0.0, delta_ms=interval_ms))
     }

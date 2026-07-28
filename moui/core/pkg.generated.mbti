@@ -137,16 +137,6 @@ pub(all) enum Axis {
   Vertical
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct BadgeTheme {
-  neutral : ToneTokens
-  accent : ToneTokens
-  success : ToneTokens
-  warning : ToneTokens
-  danger : ToneTokens
-  radius : Double
-  padding : Double
-} derive(Eq, ToJson, @debug.Debug)
-
 pub struct Binding[T] {
   // private fields
 }
@@ -181,33 +171,6 @@ pub fn Brush::multiply_alpha(Self, Double) -> Self
 pub fn Brush::radial_gradient(center~ : Point, radius~ : Double, center_color~ : Color, edge_color~ : Color) -> Self
 pub fn Brush::solid(Color) -> Self
 
-pub(all) enum ButtonState {
-  Normal
-  Hovered
-  Pressed
-} derive(Eq, ToJson, @debug.Debug)
-pub fn ButtonState::to_interaction(Self) -> InteractionState
-
-pub(all) struct ButtonTheme {
-  primary : ControlStateTokens
-  tonal : ControlStateTokens
-  outline : ControlStateTokens
-  ghost : ControlStateTokens
-  subtle : ControlStateTokens
-  subtle_brand : ControlStateTokens
-  state_layer : StateLayerTokens
-} derive(Eq, ToJson, @debug.Debug)
-pub fn ButtonTheme::resolve(Self, ButtonVariantToken, InteractionState) -> ControlStateStyle
-
-pub(all) enum ButtonVariantToken {
-  Primary
-  Tonal
-  Outline
-  Ghost
-  Subtle
-  SubtleBrand
-} derive(Eq, ToJson, @debug.Debug)
-
 pub(all) struct CachedLayerSpec {
   key : String
   frame : Rect
@@ -215,12 +178,6 @@ pub(all) struct CachedLayerSpec {
   scale_factor : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn CachedLayerSpec::new(key~ : String, frame~ : Rect, content_revision~ : Int, scale_factor? : Double) -> Self
-
-pub(all) enum CheckMarkStyle {
-  Checkmark
-  Dot
-} derive(Eq, ToJson, @debug.Debug)
-pub fn CheckMarkStyle::label(Self) -> String
 
 pub(all) struct ChildLayoutInfo {
   size : Size
@@ -231,22 +188,6 @@ pub(all) struct ChildLayoutInfo {
 } derive(Eq, @debug.Debug)
 pub fn ChildLayoutInfo::baseline_or_estimate(Self) -> Double
 pub fn ChildLayoutInfo::new(size~ : Size, first_baseline? : Double?, priority? : Double, flex_weight? : Double) -> Self
-
-pub(all) enum ChoiceControlShape {
-  Square
-  Circle
-} derive(Eq, ToJson, @debug.Debug)
-pub fn ChoiceControlShape::label(Self) -> String
-
-pub(all) struct ChoiceControlTheme {
-  foreground : Color
-  selected_color : Color
-  disabled_foreground : Color
-  disabled_selected_color : Color
-  control_size : Double
-  box_shape : ChoiceControlShape
-  check_style : CheckMarkStyle
-} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct Color {
   r : Double
@@ -400,19 +341,6 @@ pub(all) struct ComponentRuntimeContextInput {
   environment : Environment
 }
 
-pub(all) struct ComponentThemes {
-  button : ButtonTheme
-  text_field : TextFieldTheme
-  surface : SurfaceTheme
-  choice_control : ChoiceControlTheme
-  progress : ProgressTheme
-  slider : SliderTheme
-  picker : PickerTheme
-  feedback : FeedbackTheme
-  badge : BadgeTheme
-  form_validation : FormValidationTheme
-} derive(Eq, ToJson, @debug.Debug)
-
 type CompositionUpdate derive(Eq, ToJson, @debug.Debug)
 pub fn CompositionUpdate::cursor(Self) -> TextRange?
 pub fn CompositionUpdate::new(text~ : String, cursor? : TextRange?) -> Self
@@ -439,28 +367,6 @@ pub(all) enum ContentSizeCategory {
   Accessibility
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ContentSizeCategory::text_scale(Self) -> Double
-
-pub(all) struct ControlStateStyle {
-  foreground : Color
-  background : Brush
-  border : BorderStyle?
-  radius : Double
-  shadow : ShadowStyle?
-  bottom_border_only : Bool
-  inner_focus_border : Color?
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct ControlStateTokens {
-  foreground : Color
-  background : Color
-  border : Color
-  border_width : Double
-  radius : Double
-  bottom_border_only : Bool
-  inner_focus_border : Color?
-} derive(Eq, ToJson, @debug.Debug)
-pub fn ControlStateTokens::new(foreground~ : Color, background~ : Color, border~ : Color, border_width~ : Double, radius~ : Double, bottom_border_only? : Bool, inner_focus_border? : Color?) -> Self
-pub fn ControlStateTokens::resolve(Self) -> ControlStateStyle
 
 pub(all) enum CrossAxisAlignment {
   CrossStart
@@ -686,16 +592,6 @@ pub fn Environment::with_text_scale(Self, Double) -> Self
 pub fn Environment::with_theme(Self, Theme) -> Self
 pub fn Environment::with_theme_spec(Self, ThemeSpec) -> Self
 
-pub(all) struct FeedbackTheme {
-  neutral : ToneTokens
-  info : ToneTokens
-  success : ToneTokens
-  warning : ToneTokens
-  danger : ToneTokens
-  radius : Double
-  padding : Double
-} derive(Eq, ToJson, @debug.Debug)
-
 pub(all) enum FilterEffect {
   Blur(Double)
   Saturate(Double)
@@ -773,14 +669,6 @@ pub fn FontSpec::new(families? : FontFamilyStack, size? : Double, weight? : Int,
 pub(all) enum FontStyle {
   Normal
   Italic
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct FormValidationTheme {
-  foreground : Color
-  background : Color
-  border : Color
-  radius : Double
-  padding : Double
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct Frame {
@@ -931,14 +819,6 @@ pub(all) enum PathVerb {
   Close
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct PickerTheme {
-  font : FontSpec
-  foreground : Color
-  background : Brush
-  radius : Double
-  popup_max_height : Double
-} derive(Eq, ToJson, @debug.Debug)
-
 pub(all) enum PlatformViewEvent {
   Named(name~ : String, value~ : String, detail~ : String, flag~ : Bool)
 } derive(Eq, ToJson, @debug.Debug)
@@ -984,6 +864,13 @@ pub(all) enum PointerPhase {
   Exit
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) enum PressableState {
+  Normal
+  Hovered
+  Pressed
+} derive(Eq, ToJson, @debug.Debug)
+pub fn PressableState::to_interaction(Self) -> InteractionState
+
 type Program[Model, Msg]
 pub fn[Model, Msg] Program::new(init~ : () -> (Model, Effect[Msg]), update~ : (Model, Msg) -> (Model, Effect[Msg]), view~ : (Model) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
 pub fn[Model, Msg] Program::new_with_environment(init~ : () -> (Model, Effect[Msg]), update~ : (Model, Msg) -> (Model, Effect[Msg]), view~ : (Model, ViewEnvironment) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
@@ -993,12 +880,6 @@ pub fn[Model, Msg] Program::runtime_update(Self[Model, Msg], Model, Msg) -> (Mod
 pub fn[Model, Msg] Program::runtime_view(Self[Model, Msg], Model, ViewEnvironment) -> View[Msg]
 pub fn[Model, Msg] Program::simple(init~ : Model, update~ : (Model, Msg) -> Model, view~ : (Model) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
 pub fn[Model, Msg] Program::simple_with_environment(init~ : Model, update~ : (Model, Msg) -> Model, view~ : (Model, ViewEnvironment) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
-
-pub(all) struct ProgressTheme {
-  foreground : Color
-  background : Color
-  radius : Double
-} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct RadialGradientSpec {
   center : Point
@@ -1261,16 +1142,6 @@ pub fn Size::clamp(Self, Constraints) -> Self
 pub fn Size::inflate(Self, Insets) -> Self
 pub fn Size::new(width~ : Double, height~ : Double) -> Self
 
-pub(all) struct SliderTheme {
-  foreground : Color
-  background : Color
-  thumb_color : Color
-  track_height : Double
-  thumb_size : Double
-  radius : Double
-  thumb_shape : ThumbShape
-} derive(Eq, ToJson, @debug.Debug)
-
 pub(all) struct SpacingScale {
   xs : Double
   sm : Double
@@ -1291,16 +1162,6 @@ pub fn[T] State::set(Self[T], T) -> Unit
 pub fn[T] State::subscribe(Self[T], () -> Unit) -> StateSubscription
 pub fn[T] State::update(Self[T], (T) -> T raise?) -> Unit raise?
 pub fn[T] State::version(Self[T]) -> Int
-
-pub(all) struct StateLayerTokens {
-  color : Color
-  hover_alpha : Double
-  focus_alpha : Double
-  pressed_alpha : Double
-  dragged_alpha : Double
-  selected_alpha : Double
-  disabled_alpha : Double
-} derive(Eq, ToJson, @debug.Debug)
 
 type StateListener
 
@@ -1357,18 +1218,6 @@ pub(all) struct SurfaceScale {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SurfaceScale::default(ColorPalette, ColorScheme) -> Self
 
-pub(all) struct SurfaceTheme {
-  base_padding : Double
-  raised_padding : Double
-  overlay_padding : Double
-  base_radius : Double
-  raised_radius : Double
-  overlay_radius : Double
-  base_shadow : ShadowStyle?
-  raised_shadow : ShadowStyle?
-  overlay_shadow : ShadowStyle?
-} derive(Eq, ToJson, @debug.Debug)
-
 pub(all) enum TextAlign {
   TextStart
   TextCenter
@@ -1404,23 +1253,6 @@ pub(all) struct TextControlStateContext {
   undo_stack : Array[TextHistoryEntryContext]
   redo_stack : Array[TextHistoryEntryContext]
 } derive(Eq, ToJson, @debug.Debug)
-
-pub(all) enum TextFieldAppearance {
-  Filled
-  Outline
-  Underline
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct TextFieldTheme {
-  normal : ControlStateTokens
-  focused : ControlStateTokens
-  disabled : ControlStateTokens
-  placeholder : Color
-  cursor : Color
-  font : FontSpec
-  appearance : TextFieldAppearance
-} derive(Eq, ToJson, @debug.Debug)
-pub fn TextFieldTheme::resolve(Self, InteractionState) -> ControlStateStyle
 
 pub(all) struct TextHistoryEntryContext {
   text : String
@@ -1554,11 +1386,9 @@ pub(all) struct Theme {
   shadow_scale : ShadowScale
   motion : MotionScale
   surfaces : SurfaceScale
-  components : ComponentThemes
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Theme::neutral() -> Self
 pub fn Theme::surface_brush(Self, SurfaceLevel) -> Brush
-pub fn Theme::with_components(Self, ComponentThemes) -> Self
 pub fn Theme::with_motion(Self, MotionScale) -> Self
 pub fn Theme::with_palette(Self, ColorPalette) -> Self
 pub fn Theme::with_radius_scale(Self, RadiusScale) -> Self
@@ -1601,18 +1431,6 @@ pub fn ThemeSpec::with_density(Self, ThemeDensity) -> Self
 pub fn ThemeSpec::with_preset(Self, ThemePreset) -> Self
 pub fn ThemeSpec::with_reduced_motion(Self, Bool) -> Self
 pub fn ThemeSpec::with_seed(Self, Color?) -> Self
-
-pub(all) enum ThumbShape {
-  Rounded
-  Circle
-} derive(Eq, ToJson, @debug.Debug)
-pub fn ThumbShape::label(Self) -> String
-
-pub(all) struct ToneTokens {
-  foreground : Color
-  background : Color
-  border : Color
-} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct Transform2D {
   a : Double

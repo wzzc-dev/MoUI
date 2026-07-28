@@ -34,10 +34,10 @@ test "native accessibility bridge maps flat runtime semantics nodes" {
     frame: @core.Rect::new(x=0.0, y=0.0, width=100.0, height=100.0),
     children: [child_id],
   }
-  let root_node = accesskit_node_from_semantics(root)
-  let child_node = accesskit_node_from_semantics(child)
+  let root_node = @runtime.accesskit_node_from_semantics(root)
+  let child_node = @runtime.accesskit_node_from_semantics(child)
   assert_true(
-    accesskit_node_id_for_semantics(child_id) ==
+    @runtime.accesskit_node_id_for_semantics(child_id) ==
     @accesskit.NodeId::from_u64(2UL),
   )
   let root_children = root_node.children()
@@ -62,20 +62,20 @@ test "native accessibility bridge forwards generation checked typed actions" {
   let invoked = Ref(0)
   let node_id = @core.SemanticsNodeId::new(42UL)
   let generation = @core.SemanticsGeneration::new(7UL)
-  let bridge = NativeAccessibilityBridge::new(
-    kind=NativeAccessibilityBridgeKind::TestBridge,
+  let bridge = @runtime.NativeAccessibilityBridge::new(
+    kind=@runtime.NativeAccessibilityBridgeKind::TestBridge,
     perform=request => {
       if request.node_id == node_id &&
         request.generation == generation &&
         request.action == @core.SemanticsAction::SetText("Luna") {
         invoked.val = invoked.val + 1
-        NativeAccessibilityActionResult::Handled({
+        @runtime.NativeAccessibilityActionResult::Handled({
           before: generation,
           after: @core.SemanticsGeneration::new(8UL),
           pending_work: false,
         })
       } else {
-        NativeAccessibilityActionResult::Rejected(
+        @runtime.NativeAccessibilityActionResult::Rejected(
           @runtime.SemanticsActionDispatchError::TargetNotFound(
             @core.SemanticsTarget::ByNodeId(request.node_id),
           ),
@@ -85,26 +85,26 @@ test "native accessibility bridge forwards generation checked typed actions" {
   )
   match
     bridge.perform_action(
-      NativeAccessibilityActionRequest::new(
+      @runtime.NativeAccessibilityActionRequest::new(
         node_id~,
         generation~,
         action=@core.SemanticsAction::SetText("Luna"),
       ),
     ) {
-    NativeAccessibilityActionResult::Handled(receipt) =>
+    @runtime.NativeAccessibilityActionResult::Handled(receipt) =>
       assert_true(receipt.after == @core.SemanticsGeneration::new(8UL))
     _ => fail("expected handled action")
   }
   inspect(invoked.val, content="1")
   match
     bridge.perform_action(
-      NativeAccessibilityActionRequest::new(
+      @runtime.NativeAccessibilityActionRequest::new(
         node_id=@core.SemanticsNodeId::new(7UL),
         generation~,
         action=@core.SemanticsAction::Submit,
       ),
     ) {
-    NativeAccessibilityActionResult::Rejected(
+    @runtime.NativeAccessibilityActionResult::Rejected(
       @runtime.SemanticsActionDispatchError::TargetNotFound(
         @core.SemanticsTarget::ByNodeId(id)
       )
@@ -200,17 +200,17 @@ test "present completion helpers distinguish terminal outcomes" {
     )
   }
   let recorded = [completion(@render.RenderPresentStatus::Recorded)]
-  assert_false(render_present_completions_have_terminal(recorded))
-  assert_false(render_present_completions_have_presented(recorded))
+  assert_false(@render.render_present_completions_have_terminal(recorded))
+  assert_false(@render.render_present_completions_have_presented(recorded))
   let dropped = [completion(@render.RenderPresentStatus::Dropped)]
-  assert_true(render_present_completions_have_terminal(dropped))
-  assert_false(render_present_completions_have_presented(dropped))
+  assert_true(@render.render_present_completions_have_terminal(dropped))
+  assert_false(@render.render_present_completions_have_presented(dropped))
   let fallback = [completion(@render.RenderPresentStatus::FallbackToRaster)]
-  assert_true(render_present_completions_have_terminal(fallback))
-  assert_false(render_present_completions_have_presented(fallback))
+  assert_true(@render.render_present_completions_have_terminal(fallback))
+  assert_false(@render.render_present_completions_have_presented(fallback))
   let presented = [completion(@render.RenderPresentStatus::Presented)]
-  assert_true(render_present_completions_have_terminal(presented))
-  assert_true(render_present_completions_have_presented(presented))
+  assert_true(@render.render_present_completions_have_terminal(presented))
+  assert_true(@render.render_present_completions_have_presented(presented))
 }
 
 ///|
@@ -220,7 +220,7 @@ test "host driver dispatches resize and deduplicates redraw requests" {
     root=@views.empty(),
     size=@core.Size::new(width=10.0, height=10.0),
   )
-  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     scheduled.val = scheduled.val + 1
   })
   let metrics = HostSurfaceMetrics::from_logical(
@@ -247,7 +247,7 @@ test "host driver coalesces dirty redraw while previous redraw is pending" {
     root=host_test_text_field(text, width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     scheduled.val = scheduled.val + 1
   })
   ignore(
@@ -280,7 +280,7 @@ test "host driver coalesces dirty redraw while previous redraw is pending" {
 ///|
 test "host renderer expands cached layer updates and replays cached hits" {
   let rendered : Array[Array[@core.DrawCommand]] = []
-  let renderer = HostWindowRenderer::new(
+  let renderer = @render.HostWindowRenderer::new(
     resize=_ => (),
     render=commands => rendered.push(commands.copy()),
     text_system=() => @core.TextSystem::fallback(),
@@ -333,14 +333,14 @@ test "host renderer capability records preserve optional callback behavior" {
   let platform_draws = Ref(0)
   let platform_callbacks = Ref(0)
   let context_losses = Ref(0)
-  let renderer = HostWindowRenderer::new(
+  let renderer = @render.HostWindowRenderer::new(
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
-    image=HostRendererImageCapability::new(image_resources=() => {
+    image=@render.HostRendererImageCapability::new(image_resources=() => {
       [@render.ImageResourceRecord::loading("pending.png")]
     }),
-    platform_view=HostRendererPlatformViewCapability::new(
+    platform_view=@render.HostRendererPlatformViewCapability::new(
       draw_platform_view_pixels=fn(
         _pixels,
         _src_width,
@@ -363,7 +363,7 @@ test "host renderer capability records preserve optional callback behavior" {
         }
       },
     ),
-    gpu_recovery=HostRendererGpuRecoveryCapability::new(
+    gpu_recovery=@render.HostRendererGpuRecoveryCapability::new(
       inject_context_loss=() => context_losses.val = context_losses.val + 1,
       gpu_recovery_count=() => 3,
       gpu_fallback_active=() => true,
@@ -386,7 +386,7 @@ test "host renderer capability records preserve optional callback behavior" {
 ///|
 test "host renderer absent capabilities keep no-op defaults" {
   let platform_draws = Ref(0)
-  let renderer = HostWindowRenderer::new(resize=_ => (), render=_ => (), text_system=() => {
+  let renderer = @render.HostWindowRenderer::new(resize=_ => (), render=_ => (), text_system=() => {
     @core.TextSystem::fallback()
   })
   inspect(renderer.image_resources().length(), content="0")
@@ -408,7 +408,7 @@ test "redraw scheduler schedules follow-up requested during frame" {
     root=@views.empty(),
     size=@core.Size::new(width=10.0, height=10.0),
   )
-  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     scheduled.val = scheduled.val + 1
   })
   driver.request_redraw()

@@ -1,6 +1,8 @@
 ///|
 using @host {
   type HostWindowId,
+}
+using @render {
   type HostWindowRenderer,
   type HostImageResourceRepaintTracker,
   type HostImageResourceCompletionSource,

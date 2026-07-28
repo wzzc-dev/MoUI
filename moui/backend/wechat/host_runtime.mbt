@@ -8,7 +8,7 @@
 /// are stored here so that JS-to-wasm FFI calls can dispatch events
 /// and trigger re-renders.
 priv struct WechatState {
-  mut driver : @host.HostRuntimeDriver?
+  mut driver : @runtime.HostRuntimeDriver?
   mut renderer : @canvas2d.Canvas2DRenderer?
   mut needs_render : Bool
 }
@@ -24,7 +24,7 @@ pub fn run_app(
   logical_height~ : Double,
   scale_factor? : Double = 2.0,
 ) -> Unit {
-  let d = @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let d = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
 
   let renderer_metrics = @render.RendererSurfaceMetrics::new(
     logical_size=@core.Size::new(width=logical_width, height=logical_height),

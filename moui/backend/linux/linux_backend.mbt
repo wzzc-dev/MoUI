@@ -34,7 +34,7 @@ pub(all) struct LinuxBackendReadiness {
 
 ///|
 pub(all) struct LinuxAccessibilityBridgeInfo {
-  kind : @host.NativeAccessibilityBridgeKind
+  kind : @runtime.NativeAccessibilityBridgeKind
   semantics_bridge_available : Bool
   native_platform_bridge_available : Bool
   action_dispatch_available : Bool
@@ -43,8 +43,8 @@ pub(all) struct LinuxAccessibilityBridgeInfo {
 
 ///|
 pub struct LinuxHostAppOptions {
-  priv scene_resolver : @host.HostWindowSceneResolver
-  priv event_sources : @host.HostPlatformEventSources?
+  priv scene_resolver : @runtime.HostWindowSceneResolver
+  priv event_sources : @runtime.HostPlatformEventSources?
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
   priv transparent_titlebar : Bool
   priv platform_attributes : @window_core.PlatformWindowAttributes
@@ -57,9 +57,9 @@ pub struct LinuxHostSmokeOptions {
 
 ///|
 pub struct LinuxRendererProvider {
-  priv create_renderer : (@window_linux.Window, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?
+  priv create_renderer : (@window_linux.Window, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
   priv sync_surface : (@window_linux.Window, @host.HostSurfaceMetrics) -> Unit
-  priv image_loader : @host.HostAsyncImageLoader?
+  priv image_loader : @render.HostAsyncImageLoader?
 }
 
 ///|
@@ -72,18 +72,18 @@ pub(all) struct LinuxClientDecorationState {
 struct LinuxApp {
   title : String
   runtime : @runtime.AppRuntime
-  driver : @host.HostRuntimeDriver
+  driver : @runtime.HostRuntimeDriver
   text_input_session : @host.TextInputSession
   renderer_provider : LinuxRendererProvider
   services : @host.HostServiceBridge
   window_requests : @host.HostWindowRequestQueue
-  scene_resolver : @host.HostWindowSceneResolver
+  scene_resolver : @runtime.HostWindowSceneResolver
   windows : @host.HostWindowRegistry
-  runtime_slots : @host.HostWindowRuntimeSlots
+  runtime_slots : @runtime.HostWindowRuntimeSlots
   platform_windows : @host.HostPlatformWindowMap
   platform_slots : LinuxWindowPlatformSlots
-  image_repaint_tracker : @host.HostImageResourceRepaintTracker
-  event_sources : @host.HostPlatformEventSources?
+  image_repaint_tracker : @render.HostImageResourceRepaintTracker
+  event_sources : @runtime.HostPlatformEventSources?
   platform_view_plugins : Array[@host.PlatformViewPlugin]
   transparent_titlebar : Bool
   platform_attributes : @window_core.PlatformWindowAttributes
@@ -97,7 +97,7 @@ priv struct LinuxWindowPlatformSlot {
   host_id : @host.HostWindowId
   platform_id : @window_core.WindowId
   window : @window_linux.Window
-  renderer : @host.HostWindowRenderer
+  renderer : @render.HostWindowRenderer
   mut decorations : LinuxClientDecorationState
   mut frame_pending : Bool
 }
@@ -109,8 +109,8 @@ priv struct LinuxWindowPlatformSlots {
 
 ///|
 pub fn LinuxHostAppOptions::new(
-  scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
-  event_sources? : @host.HostPlatformEventSources? = None,
+  scene_resolver? : @runtime.HostWindowSceneResolver = @runtime.HostWindowSceneResolver::unavailable(),
+  event_sources? : @runtime.HostPlatformEventSources? = None,
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
   transparent_titlebar? : Bool = false,
   platform_attributes? : @window_core.PlatformWindowAttributes = @window_core.PlatformWindowAttributes::default(),
@@ -133,12 +133,12 @@ pub fn LinuxHostSmokeOptions::new(
 
 ///|
 pub fn LinuxRendererProvider::new(
-  create_renderer~ : (@window_linux.Window, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?,
+  create_renderer~ : (@window_linux.Window, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?,
   sync_surface? : (@window_linux.Window, @host.HostSurfaceMetrics) -> Unit = (
     _window,
     _metrics,
   ) => (),
-  image_loader? : @host.HostAsyncImageLoader? = None,
+  image_loader? : @render.HostAsyncImageLoader? = None,
 ) -> LinuxRendererProvider {
   { create_renderer, sync_surface, image_loader }
 }
@@ -147,9 +147,9 @@ pub fn LinuxRendererProvider::new(
 fn LinuxRendererProvider::schedule_image_resource_loads(
   self : LinuxRendererProvider,
   window_id : @host.HostWindowId,
-  renderer : @host.HostWindowRenderer,
-  completion_source : @host.HostImageResourceCompletionSource,
-) -> @host.HostAsyncImageLoadScheduleResult? {
+  renderer : @render.HostWindowRenderer,
+  completion_source : @render.HostImageResourceCompletionSource,
+) -> @render.HostAsyncImageLoadScheduleResult? {
   match self.image_loader {
     Some(loader) =>
       Some(

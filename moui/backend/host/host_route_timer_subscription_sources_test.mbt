@@ -1,6 +1,6 @@
 ///|
 test "host route source subscription dispatches mapped route events" {
-  let source = HostRouteSource::new()
+  let source = @runtime.HostRouteSource::new()
   let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init="idle",
@@ -28,11 +28,11 @@ test "host route source subscription dispatches mapped route events" {
     content="Host route adapter",
   )
   inspect(
-    source.publish(HostRouteEvent::from_route(route="/ignored", source="app")),
+    source.publish(@runtime.HostRouteEvent::from_route(route="/ignored", source="app")),
     content="1",
   )
   inspect(runtime.program_runtime_snapshot().dispatched_count(), content="0")
-  let deep_link = HostRouteEvent::from_route(
+  let deep_link = @runtime.HostRouteEvent::from_route(
     route="/docs?tab=api",
     source="deep-link",
   )
@@ -51,8 +51,8 @@ test "host route source subscription dispatches mapped route events" {
 
 ///|
 test "host route event constructor preserves location and source" {
-  let event = HostRouteEvent::new(
-    location=HostRouteLocation::parse("/docs?tab=api&lang=moonbit"),
+  let event = @runtime.HostRouteEvent::new(
+    location=@runtime.HostRouteLocation::parse("/docs?tab=api&lang=moonbit"),
     source="browser",
   )
   inspect(event.location.path, content="/docs")
@@ -71,7 +71,7 @@ test "host route event constructor preserves location and source" {
 
 ///|
 test "host route source subscription cleanup removes late publishers" {
-  let source = HostRouteSource::new()
+  let source = @runtime.HostRouteSource::new()
   let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init="idle",
@@ -89,7 +89,7 @@ test "host route source subscription cleanup removes late publishers" {
   runtime.destroy()
   inspect(source.active_handler_count(), content="0")
   inspect(
-    source.publish(HostRouteEvent::from_route(route="/late")),
+    source.publish(@runtime.HostRouteEvent::from_route(route="/late")),
     content="0",
   )
   let destroyed = runtime.program_runtime_snapshot()
@@ -101,7 +101,7 @@ test "host route source subscription cleanup removes late publishers" {
 test "host timer source subscription starts timer and dispatches mapped frames" {
   let timer_dispatch : Ref[((@core.Frame) -> Unit)?] = Ref(None)
   let captured_interval = Ref(0.0)
-  let source = HostTimerSource::new(start_timer=(interval_ms, dispatch) => {
+  let source = @runtime.HostTimerSource::new(start_timer=(interval_ms, dispatch) => {
     captured_interval.val = interval_ms
     timer_dispatch.val = Some(dispatch)
     Some(() => ())
@@ -150,7 +150,7 @@ test "host timer source subscription starts timer and dispatches mapped frames" 
 test "host timer source subscription cleanup cancels timer" {
   let timer_dispatch : Ref[((@core.Frame) -> Unit)?] = Ref(None)
   let cleanup_count = Ref(0)
-  let source = HostTimerSource::new(start_timer=(_interval_ms, dispatch) => {
+  let source = @runtime.HostTimerSource::new(start_timer=(_interval_ms, dispatch) => {
     timer_dispatch.val = Some(dispatch)
     Some(() => cleanup_count.val = cleanup_count.val + 1)
   })

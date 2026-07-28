@@ -159,11 +159,14 @@ pub(all) enum ContentSizeCategory {
 } derive(Eq, Debug, ToJson)
 
 ///|
-/// Resolved, drawable theme. A `Theme` is the output of `resolve_theme(spec,
-/// system_scheme)`: it carries the full palette, all scale tiers, and a
-/// first-class `components` aggregate. Controls read
-/// `ctx.environment.theme.components.<control>` at paint time; `style?` on a
-/// control constructor is a one-shot override.
+/// Resolved, drawable neutral theme. A `Theme` is the output of
+/// `resolve_theme(spec, system_scheme)`: it carries the palette, all scale
+/// tiers, surfaces, and motion — the **neutral** theme base. Concrete
+/// control theme tokens (`ButtonTheme`, `TextFieldTheme`, …) are **not** on
+/// `Theme`; they live in `moui/views` as `ControlThemeSet` (ADR 0017) so
+/// `core` carries no control vocabulary. Controls read a `ControlThemeSet`
+/// resolved views-side from this neutral `Theme` at paint time; `style?` on
+/// a control constructor is a one-shot override.
 pub(all) struct Theme {
   scheme : ColorScheme
   palette : ColorPalette
@@ -173,7 +176,6 @@ pub(all) struct Theme {
   shadow_scale : ShadowScale
   motion : MotionScale
   surfaces : SurfaceScale
-  components : ComponentThemes
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -450,8 +452,8 @@ pub fn SurfaceScale::default(
 
 ///|
 /// Neutral fallback theme. Equivalent to resolving `ThemeSpec::default()` with
-/// a light system scheme. Carries default `ComponentThemes` derived from the
-/// minimal palette.
+/// a light system scheme. Carries the neutral palette + scales only; concrete
+/// control tokens are resolved views-side as a `ControlThemeSet` (ADR 0017).
 pub fn Theme::neutral() -> Theme {
   resolve_minimal_theme(ThemeSpec::minimal_light(), ColorScheme::Light)
 }

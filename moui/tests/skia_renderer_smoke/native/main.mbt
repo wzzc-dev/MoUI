@@ -1241,7 +1241,7 @@ fn run_async_image_second_frame_smoke() -> Unit {
     @render.ImageResourceStatus::ImageLoading,
   )
 
-  let host_renderer = @host.HostWindowRenderer::new(
+  let host_renderer = @render.HostWindowRenderer::new(
     resize=metrics => {
       renderer.resize(
         @render.RendererSurfaceMetrics::new(
@@ -1267,7 +1267,7 @@ fn run_async_image_second_frame_smoke() -> Unit {
     text_system=() => renderer.text_system(),
     present_count=() => renderer.present_count(),
     dispose=() => renderer.dispose(),
-    image=@host.HostRendererImageCapability::new(
+    image=@render.HostRendererImageCapability::new(
       image_resources=() => renderer.image_resources(),
       image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
       apply_image_resource_load_completion=Some(completion => {
@@ -1279,19 +1279,19 @@ fn run_async_image_second_frame_smoke() -> Unit {
     ),
   )
   let window_id = @host.HostWindowId::new(99)
-  let tracker = @host.HostImageResourceRepaintTracker::new()
+  let tracker = @render.HostImageResourceRepaintTracker::new()
   let baseline = tracker.record_presented(window_id, host_renderer)
   if baseline.current_status_counts().loading_count() != 2 {
     remove_local_smoke_file(local_png_path)
     fail_smoke("Skia async image smoke did not baseline two loading images")
   }
   let redraws : Array[@host.HostWindowId] = []
-  let completion_source = @host.HostImageResourceCompletionSource::new(
+  let completion_source = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=id => id == window_id,
     request_redraw=id => redraws.push(id),
   )
-  let loader = @host.HostAsyncImageLoader::new(start_load=(
+  let loader = @render.HostAsyncImageLoader::new(start_load=(
     _id,
     source,
     complete,
@@ -1420,7 +1420,7 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
     @render.ImageResourceStatus::ImageLoading,
   )
 
-  let host_renderer = @host.HostWindowRenderer::new(
+  let host_renderer = @render.HostWindowRenderer::new(
     resize=metrics => {
       renderer.resize(
         @render.RendererSurfaceMetrics::new(
@@ -1446,7 +1446,7 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
     text_system=() => renderer.text_system(),
     present_count=() => renderer.present_count(),
     dispose=() => renderer.dispose(),
-    image=@host.HostRendererImageCapability::new(
+    image=@render.HostRendererImageCapability::new(
       image_resources=() => renderer.image_resources(),
       image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
       apply_image_resource_load_completion=Some(completion => {
@@ -1458,7 +1458,7 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
     ),
   )
   let window_id = @host.HostWindowId::new(100)
-  let tracker = @host.HostImageResourceRepaintTracker::new()
+  let tracker = @render.HostImageResourceRepaintTracker::new()
   let baseline = tracker.record_presented(window_id, host_renderer)
   if baseline.current_status_counts().loading_count() != 2 {
     remove_local_smoke_file(local_png_path)
@@ -1467,14 +1467,14 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
     )
   }
   let redraws : Array[@host.HostWindowId] = []
-  let completion_source = @host.HostImageResourceCompletionSource::new(
+  let completion_source = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=id => id == window_id,
     request_redraw=id => redraws.push(id),
   )
   // 使用 HostNativeAsyncImageSource 创建 deferred loader。
   // start_load 回调只注册请求，不调用 complete —— 模拟异步加载尚未完成。
-  let native_source = @host.HostNativeAsyncImageSource::new()
+  let native_source = @render.HostNativeAsyncImageSource::new()
   let loader = native_source.loader()
   let scheduled = loader.schedule_loading_resources(
     window_id, host_renderer, completion_source,
@@ -1505,7 +1505,7 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
     @skia_renderer.skia_image_load_completion(one_pixel_red_png_data_uri()),
   )
   if completion1.status() !=
-    @host.HostNativeAsyncImageCompletionStatus::NativeAsyncImageCompletionDelivered {
+    @render.HostNativeAsyncImageCompletionStatus::NativeAsyncImageCompletionDelivered {
     remove_local_smoke_file(local_png_path)
     fail_smoke(
       "Skia async image deferred-completion smoke first completion was not delivered",
@@ -1516,7 +1516,7 @@ fn run_async_image_deferred_completion_smoke() -> Unit {
     @skia_renderer.skia_image_load_completion(local_png_path),
   )
   if completion2.status() !=
-    @host.HostNativeAsyncImageCompletionStatus::NativeAsyncImageCompletionDelivered {
+    @render.HostNativeAsyncImageCompletionStatus::NativeAsyncImageCompletionDelivered {
     remove_local_smoke_file(local_png_path)
     fail_smoke(
       "Skia async image deferred-completion smoke second completion was not delivered",

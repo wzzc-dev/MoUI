@@ -280,15 +280,15 @@ fn[Msg] handle_tap_modifier(
   match ctx.event {
     Pointer(event) => {
       let inside = ctx.frame.contains(event.position)
-      let current = view_state_to_button_state(ctx.state)
-      let tap = recognize_button_tap(current, inside, event.phase)
-      let next_state = button_state_to_view_state(ctx.state, tap.next_state)
+      let current = view_state_to_pressable_state(ctx.state)
+      let tap = recognize_press_tap(current, inside, event.phase)
+      let next_state = pressable_state_to_view_state(ctx.state, tap.next_state)
       let changed = next_state != ctx.state || tap.activated
       {
         changed,
         activated: tap.activated,
         focused: false,
-        captured: inside || current == ButtonState::Pressed,
+        captured: inside || current == PressableState::Pressed,
         state: Some(next_state),
         text_control: None,
         dirty: if changed {
@@ -653,24 +653,24 @@ fn aspect_ratio_rect(frame : Rect, ratio : Double) -> Rect {
 }
 
 ///|
-fn view_state_to_button_state(state : ViewStateContext) -> ButtonState {
+fn view_state_to_pressable_state(state : ViewStateContext) -> PressableState {
   if state.pressed {
-    ButtonState::Pressed
+    PressableState::Pressed
   } else if state.hovered {
-    ButtonState::Hovered
+    PressableState::Hovered
   } else {
-    ButtonState::Normal
+    PressableState::Normal
   }
 }
 
 ///|
-fn button_state_to_view_state(
+fn pressable_state_to_view_state(
   state : ViewStateContext,
-  button_state : ButtonState,
+  pressable_state : PressableState,
 ) -> ViewStateContext {
-  match button_state {
-    ButtonState::Normal => { ..state, hovered: false, pressed: false }
-    ButtonState::Hovered => { ..state, hovered: true, pressed: false }
-    ButtonState::Pressed => { ..state, hovered: true, pressed: true }
+  match pressable_state {
+    PressableState::Normal => { ..state, hovered: false, pressed: false }
+    PressableState::Hovered => { ..state, hovered: true, pressed: false }
+    PressableState::Pressed => { ..state, hovered: true, pressed: true }
   }
 }

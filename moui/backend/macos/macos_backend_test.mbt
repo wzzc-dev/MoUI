@@ -51,13 +51,13 @@ test "macos accessibility bridge dispatches semantics actions" {
   let bridge = macos_accessibility_bridge(runtime)
   match
     bridge.perform_action(
-      @host.NativeAccessibilityActionRequest::new(
+      @runtime.NativeAccessibilityActionRequest::new(
         node_id=target.node_id,
         generation=snapshot.generation(),
         action=@core.SemanticsAction::Activate,
       ),
     ) {
-    @host.NativeAccessibilityActionResult::Handled(receipt) =>
+    @runtime.NativeAccessibilityActionResult::Handled(receipt) =>
       assert_true(receipt.before == snapshot.generation())
     _ => fail("expected handled AppKit accessibility action")
   }
@@ -265,7 +265,7 @@ test "macos resize metrics update runtime driver logical size" {
     root=(@views.empty() : @core.View[Unit]),
     size=@core.Size::new(width=10.0, height=10.0),
   )
-  let driver = @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
   let event = window_event_to_host_with_modifiers(
     @window_core.WindowEvent::SurfaceResized(
       @dpi.PhysicalSize::PhysicalSize(1440, 900),

@@ -79,10 +79,10 @@ fn WebApp::open_window(
   event_loop : @window_web.ActiveEventLoop,
   request : @host.HostWindowOpenRequest,
 ) -> @host.HostWindowRequestResult {
-  match self.windows.resolve_open_request(request, self.scene_resolver) {
-    @host.HostWindowOpenResolution::OpenRejected(message) =>
+  match @runtime.resolve_open_request(self.windows, request, self.scene_resolver) {
+    @runtime.HostWindowOpenResolution::OpenRejected(message) =>
       @host.HostWindowRequestResult::WindowRejected(message)
-    @host.HostWindowOpenResolution::OpenResolved(resolved) =>
+    @runtime.HostWindowOpenResolution::OpenResolved(resolved) =>
       self.create_resolved_window(event_loop, resolved)
   }
 }
@@ -91,7 +91,7 @@ fn WebApp::open_window(
 fn WebApp::create_resolved_window(
   self : WebApp,
   event_loop : @window_web.ActiveEventLoop,
-  resolved : @host.HostWindowResolvedOpen,
+  resolved : @runtime.HostWindowResolvedOpen,
 ) -> @host.HostWindowRequestResult {
   let attributes = @window_core.WindowAttributes::default()
     .with_title(resolved.record.title)
@@ -116,7 +116,7 @@ fn WebApp::create_resolved_window(
 fn WebApp::attach_resolved_window(
   self : WebApp,
   window : @window_web.Window,
-  resolved : @host.HostWindowResolvedOpen,
+  resolved : @runtime.HostWindowResolvedOpen,
 ) -> @host.HostWindowRequestResult {
   let metrics = surface_metrics_from_physical(
     window.surface_size(),
@@ -143,7 +143,7 @@ fn WebApp::attach_resolved_window(
         Some(record) => record
         None => resolved.record
       }
-      let driver = @host.HostRuntimeDriver::new(
+      let driver = @runtime.HostRuntimeDriver::new(
         runtime=resolved.instance.runtime,
         schedule_redraw=() => (),
       )
@@ -157,7 +157,7 @@ fn WebApp::attach_resolved_window(
       ignore(driver.dispatch(@host.HostEvent::Resized(metrics)))
       ignore(
         self.runtime_slots.insert(
-          @host.HostWindowRuntimeSlot::from_driver(record~, driver~),
+          @runtime.HostWindowRuntimeSlot::from_driver(record~, driver~),
         ),
       )
       ignore(

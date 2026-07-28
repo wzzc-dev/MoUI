@@ -61,13 +61,13 @@ test "web app options carry optional scene resolver" {
     ),
   )
   match WebAppOptions::new().scene_resolver.resolve(request) {
-    @host.HostWindowSceneResolution::SceneRejected(message) =>
+    @runtime.HostWindowSceneResolution::SceneRejected(message) =>
       inspect(message, content="window scene resolver is unavailable")
     _ => fail("expected default Web scene resolver rejection")
   }
-  let resolver = @host.HostWindowSceneResolver::new(resolve=request => {
-    @host.HostWindowSceneResolution::SceneResolved(
-      @host.HostWindowSceneInstance::new(
+  let resolver = @runtime.HostWindowSceneResolver::new(resolve=request => {
+    @runtime.HostWindowSceneResolution::SceneResolved(
+      @runtime.HostWindowSceneInstance::new(
         request~,
         runtime=@runtime.AppRuntime::new_view(
           root=(@views.empty() : @core.View[Unit]),
@@ -78,7 +78,7 @@ test "web app options carry optional scene resolver" {
   })
   match
     WebAppOptions::new(scene_resolver=resolver).scene_resolver.resolve(request) {
-    @host.HostWindowSceneResolution::SceneResolved({ runtime, .. }) =>
+    @runtime.HostWindowSceneResolution::SceneResolved({ runtime, .. }) =>
       assert_true(runtime.size() == @core.Size::new(width=320.0, height=240.0))
     _ => fail("expected configured Web scene resolver")
   }
@@ -86,8 +86,8 @@ test "web app options carry optional scene resolver" {
 
 ///|
 test "web route dispatch publishes active route source events" {
-  let source = @host.HostRouteSource::new()
-  let observed : Array[@host.HostRouteEvent] = []
+  let source = @runtime.HostRouteSource::new()
+  let observed : Array[@runtime.HostRouteEvent] = []
   let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init=(),

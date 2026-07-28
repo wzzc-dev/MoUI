@@ -1,6 +1,6 @@
 ///|
 test "host event source subscription dispatches mapped host events" {
-  let source = HostEventSource::new()
+  let source = @runtime.HostEventSource::new()
   let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init="idle",
@@ -45,7 +45,7 @@ test "host event source subscription dispatches mapped host events" {
 
 ///|
 test "host event source subscription cleanup removes late publishers" {
-  let source = HostEventSource::new()
+  let source = @runtime.HostEventSource::new()
   let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init="idle",
@@ -76,7 +76,7 @@ test "host event source subscription cleanup removes late publishers" {
 
 ///|
 test "host platform event sources publish host and window subscriptions" {
-  let sources = HostPlatformEventSources::new()
+  let sources = @runtime.HostPlatformEventSources::new()
   let window_id = HostWindowId::new(9)
   let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
@@ -131,7 +131,7 @@ test "host platform event sources publish host and window subscriptions" {
 
 ///|
 test "host window event source subscription dispatches mapped window events" {
-  let source = HostWindowEventSource::new()
+  let source = @runtime.HostWindowEventSource::new()
   let target = HostWindowId::new(7)
   let other = HostWindowId::new(8)
   let runtime = @runtime.AppRuntime::new_program(
@@ -197,7 +197,7 @@ test "host window event source subscription dispatches mapped window events" {
 
 ///|
 test "host window event source subscription cleanup removes late publishers" {
-  let source = HostWindowEventSource::new()
+  let source = @runtime.HostWindowEventSource::new()
   let window_id = HostWindowId::new(1)
   let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(

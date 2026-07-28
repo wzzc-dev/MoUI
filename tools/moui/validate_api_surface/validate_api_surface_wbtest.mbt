@@ -357,7 +357,7 @@ test "backend runtime interface guard covers native providers" {
 
 ///|
 test "shared app runtime import guard ignores test-only imports" {
-  inspect(max_shared_app_runtime_imports(), content="1")
+  inspect(max_shared_app_runtime_imports(), content="4")
   assert_true(
     allowed_shared_app_runtime_imports().contains(
       "examples/showcase/app/moon.pkg",

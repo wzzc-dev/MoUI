@@ -85,7 +85,7 @@ test "website selects Simplified Chinese route and catalog" {
     },
   )
   let route_host = WebsiteRouteHost::new(
-    route_source=@host.HostRouteSource::new(),
+    route_source=@runtime.HostRouteSource::new(),
     apply_locale=locale => applied_locales.push(locale),
     push_route=route => pushed_routes.push(route),
   )
@@ -709,7 +709,7 @@ test "website unknown docs slug renders not found instead of README" {
 test "website route host receives deep-link and anchor commands" {
   let commands : Array[WebsiteRouteCommand] = []
   let route_host = WebsiteRouteHost::new(
-    route_source=@host.HostRouteSource::new(),
+    route_source=@runtime.HostRouteSource::new(),
     push_route=route => commands.push(PushRoute(route)),
     scroll_to_key=(key, alignment) => commands.push(ScrollToKey(key, alignment)),
   )
@@ -759,7 +759,7 @@ test "website route host receives deep-link and anchor commands" {
 test "website docs metadata refreshes after deep-link catalog load" {
   let titles : Array[String] = []
   let route_host = WebsiteRouteHost::new(
-    route_source=@host.HostRouteSource::new(),
+    route_source=@runtime.HostRouteSource::new(),
     update_metadata=(title, _description, _canonical, _locale, _direction) => {
       titles.push(title)
     },

@@ -11,14 +11,21 @@ fn pub_all_budgets() -> Array[CountBudget] {
   [
     // Actual ~140 after API narrowing; keep a small buffer for legitimate core enums.
     { kind: "pub(all)", label: "moui/core", path: "moui/core", max_count: 150 },
-    { kind: "pub(all)", label: "moui/views", path: "moui/views", max_count: 19 },
+    // 39 = 19 (prior baseline) + 20 for ADR 0017 control theme token structs
+    // migrated from core (ControlThemeSet, ButtonTheme, ControlStateTokens,
+    // ControlStateStyle, ComponentThemes, …) — control vocabulary now lives
+    // in views, so the pub(all) budget moved with it.
+    { kind: "pub(all)", label: "moui/views", path: "moui/views", max_count: 39 },
     {
       kind: "pub(all)",
       label: "moui/runtime",
       path: "moui/runtime",
-      // 16 = 9 (prior baseline) + 7 required committed-semantics protocol
-      // types: issue/read/read-error/precondition/request/receipt/action-error.
-      max_count: 16,
+      // 34 = 16 (prior baseline) + 18 for ADR 0018 host split: the host
+      // runtime driver, wall clock, redraw scheduler, window runtime slots,
+      // window scene resolver, and runtime-side subscription source adapters
+      // moved from backend/host to moui/runtime. These are the runtime
+      // orchestration types that host contracts no longer own.
+      max_count: 34,
     },
     {
       kind: "pub(all)",
@@ -33,18 +40,13 @@ fn pub_all_budgets() -> Array[CountBudget] {
       kind: "pub(all)",
       label: "moui/render",
       path: "moui/render",
-      // 47 = 38 (prior baseline) + 8 for the unified native renderer
-      // selection, completion, worker, and recovery diagnostics contracts.
-      // The integration API is intentionally budgeted here rather than
-      // leaking these types into the app facade.
-      // 38 = 35 (prior baseline) + 1 for SkiaPresentKind (the discriminator
-      // for the CpuPixelFrame vs HostGpuSurface present path) + 1 for
-      // HostGpuPresentOutcome (the present-gpu outcome struct), both
-      // introduced by Phase 1.1 of the readback-elimination plan (ADR 0006),
-      // + 1 for RendererControlMessage (Phase 2.1 renderer-thread mailbox
-      // control message enum, ADR 0006 § Renderer-thread ownership) + 1 for
-      // the Canvas 2D renderer capability used by the WeChat host route.
-      max_count: 47,
+      // 56 = 47 (prior baseline) + 9 for ADR 0019 RendererProvider plugin
+      // system: RendererProvider, RendererInstance, RendererProviderRegistry,
+      // SurfaceDescriptor, BoundSurface, SurfaceNegotiationResult,
+      // RendererRecoveryKind, RendererProviderDescriptor, and the provider
+      // factory aliases. The integration API is intentionally budgeted here
+      // rather than leaking these types into the app facade.
+      max_count: 56,
     },
     {
       kind: "pub(all)",

@@ -60,7 +60,7 @@ fn LinuxApp::publish_subscription_event(
   self : LinuxApp,
   window_id : @host.HostWindowId,
   event : @host.HostEvent,
-) -> @host.HostPlatformEventPublishResult? {
+) -> @runtime.HostPlatformEventPublishResult? {
   match self.event_sources {
     Some(sources) => Some(sources.publish(window_id~, event~))
     None => None
@@ -166,10 +166,10 @@ fn LinuxApp::open_window(
   event_loop : @window_linux.ActiveEventLoop,
   request : @host.HostWindowOpenRequest,
 ) -> @host.HostWindowRequestResult {
-  match self.windows.resolve_open_request(request, self.scene_resolver) {
-    @host.HostWindowOpenResolution::OpenRejected(message) =>
+  match @runtime.resolve_open_request(self.windows, request, self.scene_resolver) {
+    @runtime.HostWindowOpenResolution::OpenRejected(message) =>
       @host.HostWindowRequestResult::WindowRejected(message)
-    @host.HostWindowOpenResolution::OpenResolved(resolved) =>
+    @runtime.HostWindowOpenResolution::OpenResolved(resolved) =>
       self.create_resolved_window(event_loop, resolved)
   }
 }
@@ -178,7 +178,7 @@ fn LinuxApp::open_window(
 fn LinuxApp::create_resolved_window(
   self : LinuxApp,
   event_loop : @window_linux.ActiveEventLoop,
-  resolved : @host.HostWindowResolvedOpen,
+  resolved : @runtime.HostWindowResolvedOpen,
 ) -> @host.HostWindowRequestResult {
   let requested_surface_metrics = linux_surface_metrics_for_content(
     resolved.record.metrics,
@@ -215,7 +215,7 @@ fn LinuxApp::create_resolved_window(
 fn LinuxApp::attach_resolved_window(
   self : LinuxApp,
   window : @window_linux.Window,
-  resolved : @host.HostWindowResolvedOpen,
+  resolved : @runtime.HostWindowResolvedOpen,
 ) -> @host.HostWindowRequestResult {
   let initial_surface_metrics = linux_window_surface_metrics(window)
   let decorations = linux_client_decoration_state(window)
@@ -236,7 +236,7 @@ fn LinuxApp::attach_resolved_window(
         Some(record) => record
         None => resolved.record
       }
-      let driver = @host.HostRuntimeDriver::new(
+      let driver = @runtime.HostRuntimeDriver::new(
         runtime=resolved.instance.runtime,
         schedule_redraw=() => (),
       )
@@ -250,7 +250,7 @@ fn LinuxApp::attach_resolved_window(
       ignore(driver.dispatch(@host.HostEvent::Resized(metrics)))
       ignore(
         self.runtime_slots.insert(
-          @host.HostWindowRuntimeSlot::from_driver(record~, driver~),
+          @runtime.HostWindowRuntimeSlot::from_driver(record~, driver~),
         ),
       )
       ignore(
@@ -320,7 +320,7 @@ fn LinuxApp::apply_window_lifecycle(
 ///|
 fn LinuxApp::active_runtime_slot(
   self : LinuxApp,
-) -> @host.HostWindowRuntimeSlot? {
+) -> @runtime.HostWindowRuntimeSlot? {
   match self.runtime_slots.focused_slot() {
     Some(slot) => Some(slot)
     None => self.runtime_slots.primary_slot()
@@ -363,7 +363,7 @@ fn LinuxApp::current_scale_factor(
 }
 
 ///|
-fn runtime_slot_needs_redraw(slot : @host.HostWindowRuntimeSlot) -> Bool {
+fn runtime_slot_needs_redraw(slot : @runtime.HostWindowRuntimeSlot) -> Bool {
   let result = slot.driver.event_result()
   result.needs_redraw || result.redraw_requested
 }
@@ -413,7 +413,7 @@ fn LinuxApp::request_image_resource_redraw_if_changed(
         request_redraw=id => self.request_platform_redraw(id),
       )
       result.status() ==
-      @host.HostImageResourceRepaintStatus::ImageRepaintRequested
+      @render.HostImageResourceRepaintStatus::ImageRepaintRequested
     }
     (Some(platform_slot), None) => {
       ignore(
@@ -434,7 +434,7 @@ fn LinuxApp::request_image_resource_redraw_if_changed(
 fn LinuxApp::bind_renderer_image_resource_changes(
   self : LinuxApp,
   window_id : @host.HostWindowId,
-  renderer : @host.HostWindowRenderer,
+  renderer : @render.HostWindowRenderer,
 ) -> Unit {
   renderer.set_image_resource_change_callback(
     Some(snapshot => {
@@ -486,8 +486,8 @@ fn LinuxApp::request_platform_redraw(
 ///|
 fn LinuxApp::image_resource_completion_source(
   self : LinuxApp,
-) -> @host.HostImageResourceCompletionSource {
-  @host.HostImageResourceCompletionSource::new(
+) -> @render.HostImageResourceCompletionSource {
+  @render.HostImageResourceCompletionSource::new(
     tracker=self.image_repaint_tracker,
     window_open=id => self.image_resource_window_open(id),
     request_redraw=id => self.request_platform_redraw(id),

@@ -1,7 +1,7 @@
 ///|
 pub struct LinuxATSPIBinding {
   priv published_nodes : Map[@core.SemanticsNodeId, Unit]
-  priv dispatch : (@host.NativeAccessibilityActionRequest) -> @host.NativeAccessibilityActionResult
+  priv dispatch : (@runtime.NativeAccessibilityActionRequest) -> @runtime.NativeAccessibilityActionResult
   priv mut action_dispatch_count : Int
   priv mut disposed : Bool
 }
@@ -16,7 +16,7 @@ pub(all) struct LinuxATSPIBindingDiagnostics {
 
 ///|
 pub fn LinuxATSPIBinding::new(
-  dispatch~ : (@host.NativeAccessibilityActionRequest) -> @host.NativeAccessibilityActionResult,
+  dispatch~ : (@runtime.NativeAccessibilityActionRequest) -> @runtime.NativeAccessibilityActionResult,
 ) -> LinuxATSPIBinding {
   {
     published_nodes: Map([]),
@@ -34,7 +34,7 @@ pub fn LinuxATSPIBinding::publish_semantics(
   if self.disposed {
     return self.diagnostics()
   }
-  ignore(@host.accesskit_update_from_semantics_read(read))
+  ignore(@runtime.accesskit_update_from_semantics_read(read))
   match read {
     @runtime.SemanticsRead::Full(snapshot) => {
       self.published_nodes.clear()
@@ -58,16 +58,16 @@ pub fn LinuxATSPIBinding::publish_semantics(
 ///|
 pub fn LinuxATSPIBinding::perform_action(
   self : LinuxATSPIBinding,
-  request : @host.NativeAccessibilityActionRequest,
-) -> @host.NativeAccessibilityActionResult {
+  request : @runtime.NativeAccessibilityActionRequest,
+) -> @runtime.NativeAccessibilityActionResult {
   if self.disposed {
-    return @host.NativeAccessibilityActionResult::BridgeUnavailable(
+    return @runtime.NativeAccessibilityActionResult::BridgeUnavailable(
       "Linux AT-SPI binding is disposed",
     )
   }
   let result = (self.dispatch)(request)
   match result {
-    @host.NativeAccessibilityActionResult::Handled(_) =>
+    @runtime.NativeAccessibilityActionResult::Handled(_) =>
       self.action_dispatch_count = self.action_dispatch_count + 1
     _ => ()
   }

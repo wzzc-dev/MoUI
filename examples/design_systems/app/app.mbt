@@ -565,9 +565,9 @@ fn DesignSystemsModel::component_matrix_panel(
       max_height=160.0,
     ).frame(width=240.0, height=40.0),
     // Primary + tonal + outline + ghost button variants. The button resolves
-    // its style from `theme.components.button` via `variant=`, so a branded
-    // design system that sets `Theme.components` once drives every variant
-    // without per-control `style=` arguments.
+    // its style from the ambient `ControlThemeSet.button` via `variant=`, so
+    // a branded design system that sets `ControlThemeSet` once drives every
+    // variant without per-control `style=` arguments.
     row(
       [
         button(

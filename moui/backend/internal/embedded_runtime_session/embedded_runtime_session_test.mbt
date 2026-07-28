@@ -4,7 +4,7 @@ test "hosted runtime core owns shared render resize and dispose lifecycle" {
   let resize_count = Ref(0)
   let completion_drain_count = Ref(0)
   let dispose_count = Ref(0)
-  let renderer = @host.HostWindowRenderer::new(
+  let renderer = @render.HostWindowRenderer::new(
     resize=_ => resize_count.val = resize_count.val + 1,
     render=_ => (),
     render_frame=Some(_frame => {
@@ -70,7 +70,7 @@ test "hosted runtime core owns shared render resize and dispose lifecycle" {
   inspect(dispose_count.val, content="1")
   let detached_envelope = core.drain_host_update_envelope_json()
   assert_true(detached_envelope.contains("\"sessionGeneration\":0"))
-  let second_renderer = @host.HostWindowRenderer::new(
+  let second_renderer = @render.HostWindowRenderer::new(
     resize=_ => resize_count.val = resize_count.val + 1,
     render=_ => (),
     render_frame=Some(_frame => {

@@ -28,7 +28,7 @@ pub fn[Msg] radio(
     theme?,
     foreground?,
     check_color?,
-    box_shape=@core.ChoiceControlShape::Circle,
-    check_style=@core.CheckMarkStyle::Dot,
+    box_shape=ChoiceControlShape::Circle,
+    check_style=CheckMarkStyle::Dot,
   ).semantics_role(@core.SemanticsRole::Radio)
 }

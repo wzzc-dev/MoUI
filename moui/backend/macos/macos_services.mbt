@@ -62,7 +62,7 @@ pub fn backend_info() -> MacosBackendInfo {
 ///|
 pub fn macos_accessibility_bridge_info() -> MacosAccessibilityBridgeInfo {
   {
-    kind: @host.NativeAccessibilityBridgeKind::AppKit,
+    kind: @runtime.NativeAccessibilityBridgeKind::AppKit,
     semantics_bridge_available: true,
     native_platform_bridge_available: false,
     action_dispatch_available: true,
@@ -73,9 +73,9 @@ pub fn macos_accessibility_bridge_info() -> MacosAccessibilityBridgeInfo {
 ///|
 pub fn macos_accessibility_bridge(
   runtime : @runtime.AppRuntime,
-) -> @host.NativeAccessibilityBridge {
-  @host.NativeAccessibilityBridge::runtime(
-    kind=@host.NativeAccessibilityBridgeKind::AppKit,
+) -> @runtime.NativeAccessibilityBridge {
+  @runtime.NativeAccessibilityBridge::runtime(
+    kind=@runtime.NativeAccessibilityBridgeKind::AppKit,
     runtime~,
   )
 }

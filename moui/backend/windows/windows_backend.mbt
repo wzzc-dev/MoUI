@@ -30,7 +30,7 @@ extern "C" fn windows_show_menu_bytes(commands : Bytes) -> Int = "moui_windows_s
 
 ///|
 pub(all) struct WindowsAccessibilityBridgeInfo {
-  kind : @host.NativeAccessibilityBridgeKind
+  kind : @runtime.NativeAccessibilityBridgeKind
   semantics_bridge_available : Bool
   native_platform_bridge_available : Bool
   action_dispatch_available : Bool
@@ -39,8 +39,8 @@ pub(all) struct WindowsAccessibilityBridgeInfo {
 
 ///|
 pub struct WindowsHostAppOptions {
-  priv scene_resolver : @host.HostWindowSceneResolver
-  priv event_sources : @host.HostPlatformEventSources?
+  priv scene_resolver : @runtime.HostWindowSceneResolver
+  priv event_sources : @runtime.HostPlatformEventSources?
   priv platform_view_plugins : Array[@host.PlatformViewPlugin]
 }
 
@@ -51,27 +51,27 @@ pub struct WindowsHostSmokeOptions {
 
 ///|
 pub struct WindowsRendererProvider {
-  priv create_renderer : (@win.Window, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?
+  priv create_renderer : (@win.Window, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?
   priv sync_surface : (@win.Window, @host.HostSurfaceMetrics) -> Unit
-  priv image_loader : @host.HostAsyncImageLoader?
+  priv image_loader : @render.HostAsyncImageLoader?
 }
 
 ///|
 struct WindowsApp {
   title : String
   runtime : @runtime.AppRuntime
-  driver : @host.HostRuntimeDriver
+  driver : @runtime.HostRuntimeDriver
   text_input_session : @host.TextInputSession
   renderer_provider : WindowsRendererProvider
   services : @host.HostServiceBridge
   window_requests : @host.HostWindowRequestQueue
-  scene_resolver : @host.HostWindowSceneResolver
+  scene_resolver : @runtime.HostWindowSceneResolver
   windows : @host.HostWindowRegistry
-  runtime_slots : @host.HostWindowRuntimeSlots
+  runtime_slots : @runtime.HostWindowRuntimeSlots
   platform_windows : @host.HostPlatformWindowMap
   platform_slots : WindowsWindowPlatformSlots
-  image_repaint_tracker : @host.HostImageResourceRepaintTracker
-  event_sources : @host.HostPlatformEventSources?
+  image_repaint_tracker : @render.HostImageResourceRepaintTracker
+  event_sources : @runtime.HostPlatformEventSources?
   platform_view_plugins : Array[@host.PlatformViewPlugin]
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
@@ -83,7 +83,7 @@ priv struct WindowsWindowPlatformSlot {
   host_id : @host.HostWindowId
   platform_id : @window_core.WindowId
   window : @win.Window
-  renderer : @host.HostWindowRenderer
+  renderer : @render.HostWindowRenderer
   mut frame_pending : Bool
 }
 
@@ -94,8 +94,8 @@ priv struct WindowsWindowPlatformSlots {
 
 ///|
 pub fn WindowsHostAppOptions::new(
-  scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
-  event_sources? : @host.HostPlatformEventSources? = None,
+  scene_resolver? : @runtime.HostWindowSceneResolver = @runtime.HostWindowSceneResolver::unavailable(),
+  event_sources? : @runtime.HostPlatformEventSources? = None,
   platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
 ) -> WindowsHostAppOptions {
   { scene_resolver, event_sources, platform_view_plugins }
@@ -110,12 +110,12 @@ pub fn WindowsHostSmokeOptions::new(
 
 ///|
 pub fn WindowsRendererProvider::new(
-  create_renderer~ : (@win.Window, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?,
+  create_renderer~ : (@win.Window, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?,
   sync_surface? : (@win.Window, @host.HostSurfaceMetrics) -> Unit = (
     _window,
     _metrics,
   ) => (),
-  image_loader? : @host.HostAsyncImageLoader? = None,
+  image_loader? : @render.HostAsyncImageLoader? = None,
 ) -> WindowsRendererProvider {
   { create_renderer, sync_surface, image_loader }
 }
@@ -124,9 +124,9 @@ pub fn WindowsRendererProvider::new(
 fn WindowsRendererProvider::schedule_image_resource_loads(
   self : WindowsRendererProvider,
   window_id : @host.HostWindowId,
-  renderer : @host.HostWindowRenderer,
-  completion_source : @host.HostImageResourceCompletionSource,
-) -> @host.HostAsyncImageLoadScheduleResult? {
+  renderer : @render.HostWindowRenderer,
+  completion_source : @render.HostImageResourceCompletionSource,
+) -> @render.HostAsyncImageLoadScheduleResult? {
   match self.image_loader {
     Some(loader) =>
       Some(
@@ -203,17 +203,17 @@ fn run_app_with_renderer_provider_internal(
   let app = WindowsApp::{
     title,
     runtime,
-    driver: @host.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
+    driver: @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
     text_input_session: @host.TextInputSession::new(),
     renderer_provider: provider,
     services,
     window_requests,
     scene_resolver: options.scene_resolver,
     windows: @host.HostWindowRegistry::new(),
-    runtime_slots: @host.HostWindowRuntimeSlots::new(),
+    runtime_slots: @runtime.HostWindowRuntimeSlots::new(),
     platform_windows: @host.HostPlatformWindowMap::new(),
     platform_slots: WindowsWindowPlatformSlots::new(),
-    image_repaint_tracker: @host.HostImageResourceRepaintTracker::new(),
+    image_repaint_tracker: @render.HostImageResourceRepaintTracker::new(),
     event_sources: options.event_sources,
     platform_view_plugins: options.platform_view_plugins,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
@@ -232,7 +232,7 @@ fn run_app_with_renderer_provider_internal(
 ///|
 pub fn windows_accessibility_bridge_info() -> WindowsAccessibilityBridgeInfo {
   {
-    kind: @host.NativeAccessibilityBridgeKind::UIAutomation,
+    kind: @runtime.NativeAccessibilityBridgeKind::UIAutomation,
     semantics_bridge_available: true,
     native_platform_bridge_available: false,
     action_dispatch_available: true,
@@ -243,9 +243,9 @@ pub fn windows_accessibility_bridge_info() -> WindowsAccessibilityBridgeInfo {
 ///|
 pub fn windows_accessibility_bridge(
   runtime : @runtime.AppRuntime,
-) -> @host.NativeAccessibilityBridge {
-  @host.NativeAccessibilityBridge::runtime(
-    kind=@host.NativeAccessibilityBridgeKind::UIAutomation,
+) -> @runtime.NativeAccessibilityBridge {
+  @runtime.NativeAccessibilityBridge::runtime(
+    kind=@runtime.NativeAccessibilityBridgeKind::UIAutomation,
     runtime~,
   )
 }
@@ -692,10 +692,10 @@ fn WindowsApp::redraw_window(
     ) {
     (Some(platform_slot), Some(runtime_slot)) => {
       let prior_completions = platform_slot.renderer.drain_present_completions()
-      let prior_presented = @host.render_present_completions_have_presented(
+      let prior_presented = @render.render_present_completions_have_presented(
         prior_completions,
       )
-      let prior_terminal = @host.render_present_completions_have_terminal(
+      let prior_terminal = @render.render_present_completions_have_terminal(
         prior_completions,
       )
       if platform_slot.frame_pending {
@@ -745,10 +745,10 @@ fn WindowsApp::redraw_window(
       }
       runtime_slot.driver.apply_render_frame_result(result)
       runtime_slot.driver.finish_redraw()
-      let completion_presented = @host.render_present_completions_have_presented(
+      let completion_presented = @render.render_present_completions_have_presented(
         present_completions,
       )
-      let completion_terminal = @host.render_present_completions_have_terminal(
+      let completion_terminal = @render.render_present_completions_have_terminal(
         present_completions,
       )
       platform_slot.frame_pending = result.queued && !completion_terminal
@@ -874,7 +874,7 @@ fn WindowsApp::publish_subscription_event(
   self : WindowsApp,
   window_id : @host.HostWindowId,
   event : @host.HostEvent,
-) -> @host.HostPlatformEventPublishResult? {
+) -> @runtime.HostPlatformEventPublishResult? {
   match self.event_sources {
     Some(sources) => Some(sources.publish(window_id~, event~))
     None => None
@@ -966,10 +966,10 @@ fn WindowsApp::open_window(
   event_loop : @win.ActiveEventLoop,
   request : @host.HostWindowOpenRequest,
 ) -> @host.HostWindowRequestResult {
-  match self.windows.resolve_open_request(request, self.scene_resolver) {
-    @host.HostWindowOpenResolution::OpenRejected(message) =>
+  match @runtime.resolve_open_request(self.windows, request, self.scene_resolver) {
+    @runtime.HostWindowOpenResolution::OpenRejected(message) =>
       @host.HostWindowRequestResult::WindowRejected(message)
-    @host.HostWindowOpenResolution::OpenResolved(resolved) =>
+    @runtime.HostWindowOpenResolution::OpenResolved(resolved) =>
       self.create_resolved_window(event_loop, resolved)
   }
 }
@@ -978,7 +978,7 @@ fn WindowsApp::open_window(
 fn WindowsApp::create_resolved_window(
   self : WindowsApp,
   event_loop : @win.ActiveEventLoop,
-  resolved : @host.HostWindowResolvedOpen,
+  resolved : @runtime.HostWindowResolvedOpen,
 ) -> @host.HostWindowRequestResult {
   let attributes = @window_core.WindowAttributes::default()
     .with_title(resolved.record.title)
@@ -1004,7 +1004,7 @@ fn WindowsApp::create_resolved_window(
 fn WindowsApp::attach_resolved_window(
   self : WindowsApp,
   window : @win.Window,
-  resolved : @host.HostWindowResolvedOpen,
+  resolved : @runtime.HostWindowResolvedOpen,
 ) -> @host.HostWindowRequestResult {
   let metrics = @host.HostSurfaceMetrics::new(
     logical_size=@host.physical_size_to_core(window.surface_size()),
@@ -1019,7 +1019,7 @@ fn WindowsApp::attach_resolved_window(
         Some(record) => record
         None => resolved.record
       }
-      let driver = @host.HostRuntimeDriver::new(
+      let driver = @runtime.HostRuntimeDriver::new(
         runtime=resolved.instance.runtime,
         schedule_redraw=() => (),
       )
@@ -1033,7 +1033,7 @@ fn WindowsApp::attach_resolved_window(
       ignore(driver.dispatch(@host.HostEvent::Resized(metrics)))
       ignore(
         self.runtime_slots.insert(
-          @host.HostWindowRuntimeSlot::from_driver(record~, driver~),
+          @runtime.HostWindowRuntimeSlot::from_driver(record~, driver~),
         ),
       )
       ignore(
@@ -1102,7 +1102,7 @@ fn WindowsApp::apply_window_lifecycle(
 ///|
 fn WindowsApp::active_runtime_slot(
   self : WindowsApp,
-) -> @host.HostWindowRuntimeSlot? {
+) -> @runtime.HostWindowRuntimeSlot? {
   match self.runtime_slots.focused_slot() {
     Some(slot) => Some(slot)
     None => self.runtime_slots.primary_slot()
@@ -1134,7 +1134,7 @@ fn WindowsApp::sync_text_input_session(self : WindowsApp) -> Unit {
 }
 
 ///|
-fn runtime_slot_needs_redraw(slot : @host.HostWindowRuntimeSlot) -> Bool {
+fn runtime_slot_needs_redraw(slot : @runtime.HostWindowRuntimeSlot) -> Bool {
   let result = slot.driver.event_result()
   result.needs_redraw || result.redraw_requested
 }
@@ -1184,7 +1184,7 @@ fn WindowsApp::request_image_resource_redraw_if_changed(
         request_redraw=id => self.request_platform_redraw(id),
       )
       result.status() ==
-      @host.HostImageResourceRepaintStatus::ImageRepaintRequested
+      @render.HostImageResourceRepaintStatus::ImageRepaintRequested
     }
     (Some(platform_slot), None) => {
       ignore(
@@ -1205,7 +1205,7 @@ fn WindowsApp::request_image_resource_redraw_if_changed(
 fn WindowsApp::bind_renderer_image_resource_changes(
   self : WindowsApp,
   window_id : @host.HostWindowId,
-  renderer : @host.HostWindowRenderer,
+  renderer : @render.HostWindowRenderer,
 ) -> Unit {
   renderer.set_image_resource_change_callback(
     Some(snapshot => {
@@ -1257,8 +1257,8 @@ fn WindowsApp::request_platform_redraw(
 ///|
 fn WindowsApp::image_resource_completion_source(
   self : WindowsApp,
-) -> @host.HostImageResourceCompletionSource {
-  @host.HostImageResourceCompletionSource::new(
+) -> @render.HostImageResourceCompletionSource {
+  @render.HostImageResourceCompletionSource::new(
     tracker=self.image_repaint_tracker,
     window_open=id => self.image_resource_window_open(id),
     request_redraw=id => self.request_platform_redraw(id),

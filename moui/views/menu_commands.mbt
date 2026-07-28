@@ -126,7 +126,7 @@ pub fn[Msg] command_menu(
   // design system supplies one (Fluent flyout = shadow16), falling back to the
   // neutral large elevation shadow.
   .shadow(
-    resolved_theme.components.surface.overlay_shadow.unwrap_or(
+    views_ambient_control_theme(resolved_theme).surface.overlay_shadow.unwrap_or(
       resolved_theme.shadow_scale.lg,
     ),
   )
@@ -154,7 +154,7 @@ pub fn[Msg] context_menu_region(
       // Context menus float above their host, so lift them with the component
       // overlay shadow (Fluent flyout) or the neutral large elevation shadow.
       .shadow(
-        resolved_theme.components.surface.overlay_shadow.unwrap_or(
+        views_ambient_control_theme(resolved_theme).surface.overlay_shadow.unwrap_or(
           resolved_theme.shadow_scale.lg,
         ),
       )

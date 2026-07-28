@@ -3,7 +3,7 @@ fn showcase_initial_section_code() -> Int = "showcase" "initial_section"
 
 ///|
 fn main {
-  let route_source = @host.HostRouteSource::new()
+  let route_source = @runtime.HostRouteSource::new()
   let route_host = @showcase_app.ShowcaseRouteHost::new(
     route_source~,
     dispatch_command=dispatch_showcase_route_command,

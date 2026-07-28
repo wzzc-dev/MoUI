@@ -21,8 +21,8 @@ extern "C" fn macos_wall_clock_second() -> Int = "moui_macos_wall_clock_second"
 
 ///|
 /// Read the local civil time using the host's native clock.
-pub fn macos_wall_clock() -> @host.HostWallClock {
-  @host.HostWallClock::new(
+pub fn macos_wall_clock() -> @runtime.HostWallClock {
+  @runtime.HostWallClock::new(
     macos_wall_clock_year(),
     macos_wall_clock_month(),
     macos_wall_clock_day(),

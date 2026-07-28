@@ -438,13 +438,13 @@ test "windows accessibility bridge dispatches semantics actions" {
   let bridge = windows_accessibility_bridge(runtime)
   match
     bridge.perform_action(
-      @host.NativeAccessibilityActionRequest::new(
+      @runtime.NativeAccessibilityActionRequest::new(
         node_id=target.node_id,
         generation=snapshot.generation(),
         action=@core.SemanticsAction::Activate,
       ),
     ) {
-    @host.NativeAccessibilityActionResult::Handled(receipt) =>
+    @runtime.NativeAccessibilityActionResult::Handled(receipt) =>
       assert_true(receipt.before == snapshot.generation())
     _ => fail("expected handled UIA accessibility action")
   }
