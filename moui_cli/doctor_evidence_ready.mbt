@@ -24,7 +24,7 @@ fn check_evidence_ready(
   let result : Map[String, EvidenceStatus] = Map([])
   for platform in platforms {
     let platform_dir = join_path(join_path(project_root, "artifacts"), platform)
-    if not(path_is_dir(platform_dir)) {
+    if !(path_is_dir(platform_dir)) {
       continue
     }
     let entries = @fs.read_dir(platform_dir) catch { _ => continue }
@@ -34,7 +34,7 @@ fn check_evidence_ready(
         join_path(platform_dir, app_id),
         "verify-manifest.json",
       )
-      if not(path_is_file(manifest_path)) {
+      if !(path_is_file(manifest_path)) {
         continue
       }
       match read_evidence_manifest(manifest_path, platform, app_id) {
@@ -62,7 +62,7 @@ fn read_evidence_manifest(
     Some(Json::String(value)) => value
     _ => return None
   }
-  if not(is_accepted_generated_by(generated_by)) {
+  if !(is_accepted_generated_by(generated_by)) {
     return None
   }
   let status = match fields.get("status") {

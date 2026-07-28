@@ -35,15 +35,15 @@ test "test_parse_log_line_extracts_fail_observation" {
 
 ///|
 test "test_parse_log_line_ignores_non_marker_lines" {
-  assert_true(parse_log_line("random log line").is_none())
-  assert_true(parse_log_line("").is_none())
-  assert_true(parse_log_line("[MOUI] something else=ok").is_none())
+  assert_true(parse_log_line("random log line") is None)
+  assert_true(parse_log_line("") is None)
+  assert_true(parse_log_line("[MOUI] something else=ok") is None)
 }
 
 ///|
 test "test_parse_log_line_ignores_unknown_observation_names" {
   let line = "[MOUI_PROBE] unknown:marker=ok\n"
-  assert_true(parse_log_line(line).is_none())
+  assert_true(parse_log_line(line) is None)
 }
 
 ///|
@@ -100,8 +100,8 @@ test "test_build_probe_result_ok_when_all_observations_present" {
     match name.split_once(":") {
       Some((kind, n)) =>
         observations.push({
-          kind: kind.to_string(),
-          name: n.to_string(),
+          kind: kind.to_owned(),
+          name: n.to_owned(),
           value: "ok",
           passed: true,
         })
@@ -132,8 +132,8 @@ test "test_build_probe_result_fails_when_one_fails" {
     match name.split_once(":") {
       Some((kind, n)) =>
         observations.push({
-          kind: kind.to_string(),
-          name: n.to_string(),
+          kind: kind.to_owned(),
+          name: n.to_owned(),
           value: if name == "stability:crash_free" {
             "fail"
           } else {
@@ -156,15 +156,15 @@ test "test_probe_observation_names_count_is_27" {
 
 ///|
 test "test_probe_observation_names_covers_five_categories" {
-  let kinds = Set::new()
+  let kinds = Set([], capacity=4)
   for name in probe_observation_names {
     match name.split_once(":") {
-      Some((kind, _)) => kinds.add(kind.to_string())
+      Some((kind, _)) => kinds.add(kind.to_owned())
       None => ()
     }
   }
   // Five categories: lifecycle, service, platformView, hostChannel, stability.
-  inspect(kinds.size(), content="5")
+  inspect(kinds.length(), content="5")
   assert_true(kinds.contains("lifecycle"))
   assert_true(kinds.contains("service"))
   assert_true(kinds.contains("platformView"))

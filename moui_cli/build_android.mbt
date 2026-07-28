@@ -31,7 +31,7 @@ priv struct BuildResult {
   platform : String
   build_dir : String
   output_artifact : String
-}
+} 
 
 ///|
 /// Recursively copy a directory tree from `source` into `target` (which must
@@ -196,7 +196,7 @@ fn apply_android_window_hosted_identity(
 fn patch_android_build_gradle(
   text : String,
   application_id : String,
-  namespace : String,
+  mo_namespace : String,
   compile_sdk : Int,
   target_sdk : Int,
   min_sdk : Int,
@@ -204,17 +204,17 @@ fn patch_android_build_gradle(
 ) -> String {
   let out : Array[String] = []
   for line_view in text.split("\n") {
-    let line = line_view.to_string()
-    let trimmed = line.trim().to_string()
-    if trimmed.starts_with("namespace =") {
-      out.push("    namespace = \"" + namespace + "\"")
-    } else if trimmed.starts_with("applicationId =") {
+    let line = line_view.to_owned()
+    let trimmed = line.trim().to_owned()
+    if trimmed.has_prefix("namespace =") {
+      out.push("    namespace = \"" + mo_namespace + "\"")
+    } else if trimmed.has_prefix("applicationId =") {
       out.push("        applicationId = \"" + application_id + "\"")
-    } else if trimmed.starts_with("compileSdk =") {
+    } else if trimmed.has_prefix("compileSdk =") {
       out.push("    compileSdk = " + compile_sdk.to_string())
-    } else if trimmed.starts_with("minSdk =") {
+    } else if trimmed.has_prefix("minSdk =") {
       out.push("        minSdk = " + min_sdk.to_string())
-    } else if trimmed.starts_with("targetSdk =") {
+    } else if trimmed.has_prefix("targetSdk =") {
       out.push("        targetSdk = " + target_sdk.to_string())
     } else if line.contains("android:label=") {
       // Replace any `android:label="..."` literal on this line.
@@ -237,20 +237,20 @@ fn patch_android_label_inline(line : String, label : String) -> String {
     None => line
     Some(start) => {
       let after_start = start + marker.length()
-      let after = line.substring(start=after_start)
+      let after = line[after_start:]
       let end_rel = after.find("\"")
       match end_rel {
         None => line
         Some(end) => {
           // Reconstruct: <prefix up to and including opening quote> + label +
           // <closing quote> + <remainder after original closing quote>.
-          let prefix = line.substring(end=after_start)
-          let suffix = after.substring(start=end + 1)
+          let prefix = line[:after_start].to_owned()
+          let suffix = after[(end + 1):].to_owned()
           prefix + label + "\"" + suffix
         }
       }
     }
-  }
+  } 
 }
 
 ///|
@@ -260,7 +260,7 @@ fn patch_android_label_inline(line : String, label : String) -> String {
 fn patch_android_manifest_label(text : String, label : String) -> String {
   let lines : Array[String] = []
   for line_view in text.split("\n") {
-    lines.push(line_view.to_string())
+    lines.push(line_view.to_owned())
   }
   let out : Array[String] = []
   let mut patched = false
@@ -283,11 +283,11 @@ fn patch_android_manifest_label(text : String, label : String) -> String {
         match idx {
           Some(pos) => {
             injected.push(
-              line.substring(end=pos) +
+              line[:pos].to_owned() +
               " android:label=\"" +
               label +
               "\"" +
-              line.substring(start=pos),
+              line[pos:].to_owned(),
             )
             did_inject = true
           }

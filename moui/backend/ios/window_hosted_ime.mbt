@@ -28,12 +28,6 @@ extern "C" fn mbw_ios_ime_set_state(
 extern "C" fn mbw_ios_ime_reset() -> Unit = "mbw_ios_ime_reset"
 
 ///|
-/// Encode `s` as a NUL-terminated UTF-8 byte buffer for FFI consumption.
-fn encode_utf8(s : String) -> Bytes {
-  s.to_bytes() + Bytes::make(1, b'\x00')
-}
-
-///|
 /// Compare the previous focused text input snapshot with the latest state and
 /// forward any difference to the native UIKit responder.
 pub struct IosImeSink {
@@ -55,7 +49,7 @@ pub fn IosImeSink::apply(
   self : IosImeSink,
   state : @core.TextInputState,
 ) -> Unit {
-  if not(state.focused) {
+  if !(state.focused) {
     if self.last_enabled {
       mbw_ios_ime_reset()
       self.last_enabled = false
@@ -84,7 +78,7 @@ pub fn IosImeSink::apply(
     }
     mbw_ios_ime_set_state(
       1,
-      encode_utf8(text),
+      @utf8.encode(text),
       sel_start,
       sel_len,
       caret.origin.x,

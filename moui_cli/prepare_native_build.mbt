@@ -204,7 +204,7 @@ fn android_sdk_home() -> String {
 fn xcrun_value(args : Array[String]) -> String {
   let argv = ["xcrun", ..args]
   match process_exec_argv(argv, capture=true) {
-    Ok(result) if result.exit_code == 0 => result.stdout.trim().to_string()
+    Ok(result) if result.exit_code == 0 => result.stdout.trim().to_owned()
     _ => ""
   }
 }
