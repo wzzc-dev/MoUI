@@ -4,7 +4,7 @@
 /// (e.g. `moui/backend/macos/skia`, `moui/backend/android/skia`,
 /// `moui/backend/harmonyos/skia`, `moui/backend/windows/skia`,
 /// `moui/backend/linux/skia`, `moui/backend/ios/skia`) and propagated through
-/// `NativeRendererSelection::surface_route` so the host knows which
+/// `resolve_surface_route` so the host knows which
 /// `Surface::*_window_surface` constructor to invoke.
 ///
 /// The enum is intentionally declared in the cross-platform `moui/render`

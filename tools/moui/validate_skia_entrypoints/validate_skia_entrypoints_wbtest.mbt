@@ -81,12 +81,12 @@ let valid_provider_source =
   #|
   #|fn macos_surface_route_from_environment() -> @render.SkiaSurfaceRoute {
   #|  match @env.get_env_var("MOUI_MACOS_SKIA_SURFACE_ROUTE") {
-  #|    _ => @render.select_native_renderer(
+  #|    _ => @render.resolve_surface_route(
   #|      @render.NativeGpuPlatform::Macos,
   #|      @render.NativeRendererMode::Auto,
   #|      gpu_available=true,
   #|      gpu_promoted=true,
-  #|    ).surface_route
+  #|    )
   #|  }
   #|}
 

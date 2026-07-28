@@ -173,17 +173,13 @@ pub fn RendererProviderRegistry::from_providers(
 }
 
 ///|
-/// Bridge between the legacy `select_native_renderer` API and provider-based
-/// selection. Given a native platform, requested mode, GPU availability, and
-/// promotion state, this method finds the matching provider in the registry.
+/// Provider-based selection for native renderer modes. Given a requested mode,
+/// GPU availability, and promotion state, this method finds the matching
+/// provider in the registry.
 ///
 /// Returns the selected provider and its corresponding backend kind. When GPU
 /// is requested but unavailable or unpromoted, falls back to the Skia raster
 /// provider. Returns `None` if no matching provider is registered.
-///
-/// This function exists for incremental migration from the central selection
-/// matrix to provider-based selection. New code should use `select` with a
-/// `SurfaceDescriptor` instead.
 pub fn RendererProviderRegistry::select_native(
   self : RendererProviderRegistry,
   requested : NativeRendererMode,
