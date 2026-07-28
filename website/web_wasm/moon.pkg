@@ -1,7 +1,6 @@
 import {
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/web",
-  "wzzc-dev/moui/backend/host",
   "website/app" @website_app,
 }
 

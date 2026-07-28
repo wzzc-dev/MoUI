@@ -274,7 +274,7 @@ fn read_mobile_app_at(metadata_path : String) -> Result[MobileApp, String] {
       }
     None => None
   }
-  if android.is_empty() && ios.is_empty() && harmonyos.is_empty() {
+  if android is None && ios is None && harmonyos is None {
     return Err(
       metadata_path +
       " must configure at least one of android, ios, or harmonyos",

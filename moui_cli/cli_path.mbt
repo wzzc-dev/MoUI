@@ -261,7 +261,7 @@ fn file_mtime(path : String) -> Int? {
   }
   match process_exec_argv(argv, capture=true) {
     Ok(result) if result.exit_code == 0 => {
-      let text = result.stdout.trim().to_string()
+      let text = result.stdout.trim().to_owned()
       match parse_int(text) {
         Ok(num) => Some(num)
         Err(_) => None
