@@ -38,12 +38,13 @@ fn linux_surface_route_from_environment() -> @render.SkiaSurfaceRoute {
       )
     None => @render.NativeRendererMode::Auto
   }
-  @render.select_native_renderer(
-    @render.NativeGpuPlatform::Linux,
+  let platform = @render.NativeGpuPlatform::Linux
+  @render.resolve_surface_route(
+    platform,
     requested,
     gpu_available=@skia_native.Surface::vulkan_gpu_context_runtime_available(),
-    gpu_promoted=@render.NativeGpuPlatform::Linux.gpu_promoted(),
-  ).surface_route
+    gpu_promoted=@render.NativePlatformSurface::gpu_promoted(platform),
+  )
 }
 
 ///|
