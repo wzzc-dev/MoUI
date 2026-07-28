@@ -115,69 +115,61 @@ test "native accessibility bridge forwards generation checked typed actions" {
 
 ///|
 test "native renderer auto mode requires availability and promotion" {
-  let pending = @render.select_native_renderer(
+  let pending = @render.resolve_surface_route(
     @render.NativeGpuPlatform::Macos,
     @render.NativeRendererMode::Auto,
     gpu_available=true,
     gpu_promoted=false,
   )
-  assert_true(pending.selected == @render.RendererBackendKind::SkiaRasterNative)
-  assert_true(pending.fallback_reason is Some(_))
   assert_true(
-    pending.surface_route == @render.SkiaSurfaceRoute::RasterSurfaceRoute,
+    pending == @render.SkiaSurfaceRoute::RasterSurfaceRoute,
   )
-  let promoted = @render.select_native_renderer(
+  let promoted = @render.resolve_surface_route(
     @render.NativeGpuPlatform::Macos,
     @render.NativeRendererMode::Auto,
     gpu_available=true,
     gpu_promoted=true,
   )
-  assert_true(promoted.selected == @render.RendererBackendKind::SkiaGpuNative)
   assert_true(
-    promoted.surface_route == @render.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
+    promoted == @render.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
   )
-  let unavailable = @render.select_native_renderer(
+  let unavailable = @render.resolve_surface_route(
     @render.NativeGpuPlatform::Android,
     @render.NativeRendererMode::SkiaGpu,
     gpu_available=false,
     gpu_promoted=false,
   )
-  assert_true(
-    unavailable.selected == @render.RendererBackendKind::SkiaRasterNative,
-  )
-  assert_true(
-    unavailable.surface_route == @render.SkiaSurfaceRoute::RasterSurfaceRoute,
-  )
+  assert_true(unavailable == @render.SkiaSurfaceRoute::RasterSurfaceRoute)
 }
 
 ///|
 test "native renderer surface route reflects platform selection" {
-  let android = @render.select_native_renderer(
+  let android = @render.resolve_surface_route(
     @render.NativeGpuPlatform::Android,
     @render.NativeRendererMode::SkiaGpu,
     gpu_available=true,
     gpu_promoted=false,
   )
   assert_true(
-    android.surface_route == @render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute,
+    android == @render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute,
   )
-  let harmonyos = @render.select_native_renderer(
+  let harmonyos = @render.resolve_surface_route(
     @render.NativeGpuPlatform::HarmonyOs,
     @render.NativeRendererMode::SkiaGpu,
     gpu_available=true,
     gpu_promoted=false,
   )
   assert_true(
-    harmonyos.surface_route == @render.SkiaSurfaceRoute::EglGpuSurfaceRoute,
+    harmonyos == @render.SkiaSurfaceRoute::EglGpuSurfaceRoute,
   )
-  let windows = @render.select_native_renderer(
+  let windows = @render.resolve_surface_route(
     @render.NativeGpuPlatform::Windows,
     @render.NativeRendererMode::SkiaGpu,
     gpu_available=true,
     gpu_promoted=false,
   )
   assert_true(
-    windows.surface_route == @render.SkiaSurfaceRoute::Direct3DGpuSurfaceRoute,
+    windows == @render.SkiaSurfaceRoute::Direct3DGpuSurfaceRoute,
   )
 }
 

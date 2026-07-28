@@ -14,9 +14,8 @@
  * 3. The central selection matrix (native_gpu_selection.mbt) and central
  *    capability matrix (capabilities_backend_matrix.mbt) have no NEW
  *    callers beyond the allowlist.
- * 4. Platform skia providers (macos/windows/linux) use
- *    `resolve_surface_route` instead of `select_native_renderer`
- *    (ADR 0019 Phase E).
+ * 4. No `select_native_renderer` references remain anywhere in the repo
+ *    (function deleted; regression guard, ADR 0019 Phase E).
  *
  * Current mode: **enforce** — exits with error 1 on violations.
  *
@@ -104,7 +103,6 @@ const CAPABILITY_ALLOWLIST_EXACT = [
 function checkIdentityBranching() {
   const violations = [];
   const restrictedPatterns = [
-    /select_native_renderer\b/,
     /\bNativeGpuPlatform::\w+\b/,
   ];
 
@@ -194,23 +192,18 @@ function checkCentralMatrixCallers() {
 }
 
 // ---------------------------------------------------------------------------
-// Check 4: Platform skia providers migrated to resolve_surface_route
+// Check 4: No select_native_renderer references anywhere (function deleted)
 // ---------------------------------------------------------------------------
 function checkPlatformSkiaProviderMigration() {
   const violations = [];
-  const platformSkiaProviders = [
-    "moui/backend/macos/skia/macos_skia_provider.mbt",
-    "moui/backend/windows/skia/windows_skia_provider.mbt",
-    "moui/backend/linux/skia/linux_skia_provider.mbt",
-  ];
+  const files = walkMbtFiles(".");
 
-  for (const relPath of platformSkiaProviders) {
-    const fullPath = join(REPO_ROOT, relPath);
-    if (!existsSync(fullPath)) continue;
-    const content = readFileSync(fullPath, "utf-8");
+  for (const file of files) {
+    const relPath = relative(REPO_ROOT, file);
+    const content = readFileSync(file, "utf-8");
     if (content.includes("select_native_renderer")) {
       violations.push(
-        `  ${relPath}: still calls select_native_renderer (use resolve_surface_route)`
+        `  ${relPath}: references select_native_renderer (function deleted; use resolve_surface_route)`
       );
     }
   }
@@ -263,12 +256,12 @@ function main() {
   }
 
   if (migrationViolations.length > 0) {
-    console.log("## [4] Platform skia providers not migrated to resolve_surface_route:");
+    console.log("## [4] select_native_renderer references (function deleted):");
     for (const v of migrationViolations) console.log(v);
     console.log();
     hasViolations = true;
   } else {
-    console.log("✅ Platform skia providers use resolve_surface_route");
+    console.log("✅ No select_native_renderer references remain");
     console.log();
   }
 

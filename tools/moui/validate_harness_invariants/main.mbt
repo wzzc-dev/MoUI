@@ -442,13 +442,13 @@ fn check_r3_provider_text(path : String, text : String?) -> HarnessFinding {
     Some(body) => {
       let has_env = body.contains("MOUI_SKIA_RENDERER")
       let has_parse = body.contains("NativeRendererMode::parse") ||
-        body.contains("select_native_renderer")
+        body.contains("resolve_surface_route")
       if !has_env || !has_parse {
         {
           rule: "R3",
           ok: false,
           path,
-          hint: "desktop Skia provider must honor MOUI_SKIA_RENDERER (auto|skia-gpu|skia-raster) via NativeRendererMode/select_native_renderer. Fix: restore env-driven selection. See docs/invariants.md#R3",
+          hint: "desktop Skia provider must honor MOUI_SKIA_RENDERER (auto|skia-gpu|skia-raster) via NativeRendererMode/resolve_surface_route. Fix: restore env-driven selection. See docs/invariants.md#R3",
         }
       } else {
         { rule: "R3", ok: true, path, hint: "" }

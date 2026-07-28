@@ -147,7 +147,7 @@ pub fn skia_gpu_native_descriptor() -> @render.RendererDescriptor {
     capabilities=@render.renderer_backend_capabilities(
       @render.RendererBackendKind::SkiaGpuNative,
     ),
-    description="Native Skia GPU renderer identity for direct host GPU surfaces. Providers must prove a matching Metal, Vulkan, EGL/GLES, or Direct3D surface before selecting it; the surface route resolver on NativeRendererSelection picks the platform-appropriate SkiaSurfaceRoute (metal/vulkan/egl/direct3d) and the matching HostGpuPresentTarget wiring. Per ADR 0006, SkiaGpuNative is descriptive only until per-platform promotion manifests pass; Auto resolves to SkiaRasterNative.",
+    description="Native Skia GPU renderer identity for direct host GPU surfaces. Providers must prove a matching Metal, Vulkan, EGL/GLES, or Direct3D surface before selecting it; resolve_surface_route picks the platform-appropriate SkiaSurfaceRoute (metal/vulkan/egl/direct3d) and the matching HostGpuPresentTarget wiring. Per ADR 0006, SkiaGpuNative is descriptive only until per-platform promotion manifests pass; Auto resolves to SkiaRasterNative.",
   )
 }
 

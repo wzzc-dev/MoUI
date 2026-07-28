@@ -149,11 +149,12 @@ The closed matrix is being replaced incrementally. Current state:
   `pub impl NativePlatformSurface for NativeGpuPlatform`. The
   `resolve_surface_route` generic function replaces the central
   `select_native_renderer` branching for surface routing.
-- **`native_gpu_selection.mbt`** kept as a **deprecated bridge**:
-  `select_native_renderer` still exists for backwards compatibility but
-  internally delegates to `resolve_surface_route`. Platform skia providers
-  (`moui/backend/{macos,windows,linux}/skia/*_skia_provider.mbt`) now call
-  `resolve_surface_route` directly instead of `select_native_renderer`.
+- **`native_gpu_selection.mbt`** fully refactored: the deprecated
+  `select_native_renderer` function and `NativeRendererSelection` struct are
+  **deleted**. Platform surface routing goes exclusively through
+  `resolve_surface_route` + the `NativePlatformSurface` trait. Platform skia
+  providers (`moui/backend/{macos,windows,linux}/skia/*_skia_provider.mbt`)
+  call `resolve_surface_route` directly.
 - **`capabilities_backend_matrix.mbt` deleted**: `renderer_capability_backends`,
   `renderer_feature_capability_entry`, and the Sun feature mirror
   (`sun_feature_status` / `sun_feature_note`) merged into
@@ -166,10 +167,11 @@ The closed matrix is being replaced incrementally. Current state:
   `sun_feature_capabilities` data. The central matrix mirror is a static
   duplicate kept only until provider-driven aggregation lands.
 - **Validator enforce mode**: `scripts/validate-renderer-provider-open-extension.mjs`
-  now exits 1 on violations. Check 4 enforces that platform skia providers
-  call `resolve_surface_route` (not `select_native_renderer`). The
-  `CAPABILITY_ALLOWLIST_EXACT` permits `renderer_capability_backends` only in
-  `capabilities_report.mbt`, `capabilities_test.mbt`, and showcase diagnostics.
+  now exits 1 on violations. Check 4 enforces that **no** `.mbt` file anywhere
+  in the repo references the deleted `select_native_renderer` (regression
+  guard). The `CAPABILITY_ALLOWLIST_EXACT` permits `renderer_capability_backends`
+  only in `capabilities_report.mbt`, `capabilities_test.mbt`, and showcase
+  diagnostics.
 
 Remaining migration work (tracked in
 `docs/plans/active/renderer-provider-trait-refactor.md`):
