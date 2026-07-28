@@ -6,12 +6,14 @@
 /// raster renderer with its present target already wired. This lets the
 /// platform entrypoint (macos, linux, windows, …) capture its own
 /// `SunPresentTarget` without the provider needing to know the platform.
+///
+/// Capabilities are declared locally via `sun_feature_capabilities()`
+/// (ADR 0019 Phase E) instead of the central `renderer_backend_capabilities`
+/// matrix.
 pub fn create_sun_provider(
   create_sun~ : (@render.RendererSurfaceMetrics) -> SunRasterRenderer,
 ) -> @render.RendererProvider {
-  let caps = @render.renderer_backend_capabilities(
-    @render.RendererBackendKind::SunRasterNative,
-  )
+  let caps = sun_feature_capabilities()
   @render.RendererProvider::{
     id: "sun-raster",
     descriptor: sun_raster_native_descriptor(),
