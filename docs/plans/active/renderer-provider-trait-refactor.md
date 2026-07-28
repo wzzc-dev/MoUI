@@ -16,23 +16,20 @@
 
 | Step | 状态 | 说明 |
 |---|---|---|
-| Step 1 | ⚠️ 重复声明 | trait 同时存在于 `native_platform_surface.mbt` 和 `provider_contract.mbt:251`,需去重 |
-| Step 2 | ⚠️ 有警告 | impl 已在 `native_gpu_selection.mbt:121-148`,但调用点缺 `extend` 声明,产生 deprecated 警告 |
-| Step 3 | ❌ 未开始 | macos/windows/linux skia provider 仍调用 `select_native_renderer` |
-| Step 4 | ✅ 已完成 | `resolve_surface_route` 已在 `native_platform_surface.mbt:12-27`(泛型版本) |
-| Step 5 | ❌ 未开始 | `hybrid_renderer.mbt` 仍依赖 `NativeRendererSelection` |
-| Step 6 | ❌ 未开始 | sun provider capabilities 未迁移 |
-| Step 7 | ❌ 未开始 | `capabilities_backend_matrix.mbt` 未删除 |
-| Step 8 | ❌ 未开始 | validator 仍 report-only |
-| Step 9 | ❌ 未开始 | 测试未更新 |
+| Step 1 | ✅ 已完成 | trait 声明去重,仅保留 `native_platform_surface.mbt` |
+| Step 2 | ✅ 已完成 | `pub impl NativePlatformSurface for NativeGpuPlatform` 可见性修正 |
+| Step 3 | ✅ 已完成 | macos/windows/linux skia provider 改用 `resolve_surface_route` |
+| Step 4 | ✅ 已完成 | `resolve_surface_route` 泛型版本 |
+| Step 5 | ✅ 已完成 | `hybrid_renderer.mbt` 改用 `surface_route` 字段,不依赖 `NativeRendererSelection` |
+| Step 6 | ✅ 已完成 | sun provider capabilities 迁移到 `moui/render/sun/capabilities.mbt` |
+| Step 7 | ✅ 已完成 | `capabilities_backend_matrix.mbt` 已删除,内容合并到 `capabilities_report.mbt` |
+| Step 8 | ✅ 已完成 | validator 转 enforce,Check 4 验证 platform skia provider 迁移 |
+| Step 9 | ✅ 已完成 | 测试更新:`native_gpu_selection_test.mbt` 覆盖 `resolve_surface_route` + trait dispatch |
 
-**编译错误**:`moon check moui/render` 报 `NativePlatformSurface` 重复声明。
-
-**关键发现**:三平台 skia provider 调用 `select_native_renderer` 后**只取
-`.surface_route` 字段**,`.selected` 被丢弃。实际渲染器选择在 `create_renderer`
-内部通过 `surface_route.is_gpu()` 判断。迁移只需让 provider 直接调用
-`resolve_surface_route` + `platform.surface_route()`,无需 `NativeRendererSelection`
-中间层。
+**剩余工作**:
+- Provider-driven `renderer_feature_capability_report(providers)` 签名(从每个
+  provider 的 `capabilities()` 字段聚合,移除 `moui/render` 中的 Sun 静态镜像)
+- Runtime composition root 注册 providers,替换 host-driver 的 renderer switch
 
 ---
 
