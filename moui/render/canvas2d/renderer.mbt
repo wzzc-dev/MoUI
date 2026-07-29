@@ -99,7 +99,7 @@ pub fn Canvas2DRenderer::render_frame(
 
 ///|
 pub fn Canvas2DRenderer::text_system(
-  self : Canvas2DRenderer,
+  _self : Canvas2DRenderer,
 ) -> @core.TextSystem {
   @core.TextSystem::new(
     id="canvas2d-text-system",
@@ -109,14 +109,14 @@ pub fn Canvas2DRenderer::text_system(
 
 ///|
 pub fn Canvas2DRenderer::image_resources(
-  self : Canvas2DRenderer,
+  _self : Canvas2DRenderer,
 ) -> Array[@render.ImageResourceRecord] {
   []
 }
 
 ///|
 pub fn Canvas2DRenderer::image_resource_snapshot(
-  self : Canvas2DRenderer,
+  _self : Canvas2DRenderer,
 ) -> @render.ImageResourceSnapshot {
   @render.ImageResourceSnapshot::from_records([])
 }
@@ -224,9 +224,6 @@ extern "wasm" fn canvas2d_set_transform(
   tx : Double,
   ty : Double,
 ) = "canvas2d" "set_transform"
-
-///|
-extern "wasm" fn canvas2d_translate(x : Double, y : Double) = "canvas2d" "translate"
 
 ///|
 extern "wasm" fn canvas2d_clip_rect(

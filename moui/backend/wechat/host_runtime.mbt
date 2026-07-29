@@ -108,7 +108,7 @@ pub fn wechat_dispatch_pointer_input(
 /// Render a single frame. Called from the JS requestAnimationFrame loop.
 /// Only renders when the needs_render flag is set (e.g. after touch/scroll).
 pub fn wechat_render_frame() -> Unit {
-  if not(state.needs_render) {
+  if !state.needs_render {
     return
   }
   state.needs_render = false
