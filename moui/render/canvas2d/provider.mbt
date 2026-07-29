@@ -17,9 +17,9 @@ pub fn create_canvas2d_provider(
     descriptor: canvas2d_descriptor(),
     capabilities: () => caps,
     negotiate: canvas2d_negotiate_surface,
-    create: (metrics, _bound) => canvas2d_create_instance(
-      metrics, create_canvas2d~,
-    ),
+    create: (metrics, _bound) => {
+      canvas2d_create_instance(metrics, create_canvas2d~)
+    },
   }
 }
 

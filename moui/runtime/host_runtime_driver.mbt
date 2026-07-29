@@ -108,9 +108,7 @@ pub fn HostRuntimeDriver::perform_semantics_action(
     self.runtime.perform_semantics_action({
       target: @core.SemanticsTarget::ByNodeId(request.node_id),
       action: request.action,
-      precondition: SemanticsGenerationPrecondition::Exact(
-        request.generation,
-      ),
+      precondition: SemanticsGenerationPrecondition::Exact(request.generation),
     }) {
     Ok(receipt) => {
       self.request_redraw_if_needed()
@@ -222,7 +220,8 @@ pub fn HostRuntimeDriver::show_context_menu(
   if commands.length() == 0 {
     return self.event_result()
   }
-  match services.dispatch(@backend_host.HostServiceRequest::ShowMenu(commands)) {
+  match
+    services.dispatch(@backend_host.HostServiceRequest::ShowMenu(commands)) {
     @backend_host.HostServiceResponse::MenuAction(command) =>
       ignore(self.dispatch_action_command_with_services(command, services))
     @backend_host.HostServiceResponse::MenuCommand(intent) =>
@@ -454,7 +453,7 @@ pub fn HostRuntimeDriver::dispatch_service_completion(
   match (completion.request, completion.response) {
     (
       @backend_host.HostServiceRequest::Clipboard(
-        @backend_host.HostClipboardRequest::ReadText,
+        @backend_host.HostClipboardRequest::ReadText
       ),
       @backend_host.HostServiceResponse::ClipboardText(text),
     ) => {
@@ -471,13 +470,11 @@ pub fn HostRuntimeDriver::dispatch_service_completion(
     (
       @backend_host.HostServiceRequest::ShowMenu(_),
       @backend_host.HostServiceResponse::MenuAction(command),
-    ) =>
-      ignore(self.dispatch_action_command_with_services(command, services))
+    ) => ignore(self.dispatch_action_command_with_services(command, services))
     (
       @backend_host.HostServiceRequest::ShowMenu(_),
       @backend_host.HostServiceResponse::MenuCommand(intent),
-    ) =>
-      ignore(self.dispatch_command_with_services(intent, services))
+    ) => ignore(self.dispatch_command_with_services(intent, services))
     (
       @backend_host.HostServiceRequest::QuerySystemTheme,
       @backend_host.HostServiceResponse::SystemTheme(scheme),

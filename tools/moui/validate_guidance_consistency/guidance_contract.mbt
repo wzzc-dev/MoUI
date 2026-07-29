@@ -170,9 +170,7 @@ fn guidance_include_rules() -> Array[TextRule] {
 
 ///|
 fn guidance_absent_rules() -> Array[TextRule] {
-  [
-    { path: "moon.work", token: "\"./window\"" },
-  ]
+  [{ path: "moon.work", token: "\"./window\"" }]
 }
 
 ///|

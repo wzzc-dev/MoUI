@@ -261,7 +261,12 @@ fn recognize_press_tap(
       } else {
         PressableState::Normal
       }
-    Down => if inside { PressableState::Pressed } else { PressableState::Normal }
+    Down =>
+      if inside {
+        PressableState::Pressed
+      } else {
+        PressableState::Normal
+      }
     Up => if inside { PressableState::Hovered } else { PressableState::Normal }
     // Synthetic runtime phase: the pointer left the element, so drop any hover
     // or press state and return to rest.

@@ -2,9 +2,7 @@
 pub struct HostRendererImageCapability {
   priv image_resources_fn : () -> Array[ImageResourceRecord]
   priv image_resource_snapshot_fn : () -> ImageResourceSnapshot
-  priv apply_image_resource_load_completion_fn : (
-    ImageResourceLoadCompletion,
-  ) -> ImageResourceSnapshot
+  priv apply_image_resource_load_completion_fn : (ImageResourceLoadCompletion) -> ImageResourceSnapshot
   priv set_image_resource_change_callback_fn : (
     ((ImageResourceSnapshot) -> Unit)?,
   ) -> Unit
@@ -37,9 +35,7 @@ pub struct HostWindowRenderer {
   priv resize_fn : (RendererSurfaceMetrics) -> Unit
   priv render_fn : (Array[@core.DrawCommand]) -> Unit
   priv render_frame_fn : (@core.DrawFrame) -> RenderFrameResult
-  priv drain_present_completions_fn : () -> Array[
-    RenderPresentCompletion,
-  ]
+  priv drain_present_completions_fn : () -> Array[RenderPresentCompletion]
   priv text_system_fn : () -> @core.TextSystem
   priv image : HostRendererImageCapability
   priv present_count_fn : () -> Int
@@ -54,9 +50,9 @@ pub fn HostRendererImageCapability::new(
   image_resources? : () -> Array[ImageResourceRecord] = () => [],
   image_resource_snapshot? : (() -> ImageResourceSnapshot)? = None,
   apply_image_resource_load_completion? : ((ImageResourceLoadCompletion) -> ImageResourceSnapshot)? = None,
-  set_image_resource_change_callback? : (
-    ((ImageResourceSnapshot) -> Unit)?,
-  ) -> Unit = _callback => (),
+  set_image_resource_change_callback? : (((ImageResourceSnapshot) -> Unit)?) -> Unit = _callback => {
+    ()
+  },
 ) -> HostRendererImageCapability {
   let image_resource_snapshot = match image_resource_snapshot {
     Some(snapshot) => snapshot

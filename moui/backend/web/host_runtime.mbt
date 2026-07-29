@@ -313,7 +313,9 @@ fn WebApp::sync_runtime_slots(self : WebApp) -> Unit {
 }
 
 ///|
-fn WebApp::active_runtime_slot(self : WebApp) -> @runtime.HostWindowRuntimeSlot? {
+fn WebApp::active_runtime_slot(
+  self : WebApp,
+) -> @runtime.HostWindowRuntimeSlot? {
   match self.runtime_slots.focused_slot() {
     Some(slot) => Some(slot)
     None => self.runtime_slots.primary_slot()

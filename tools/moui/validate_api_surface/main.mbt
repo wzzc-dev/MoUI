@@ -1122,9 +1122,7 @@ fn allowed_shared_app_core_imports() -> Array[String] {
 ///   file reading and in-browser compilation.
 fn allowed_shared_app_runtime_imports() -> Array[String] {
   [
-    "examples/showcase/app/moon.pkg",
-    "examples/mo_desktop/app/moon.pkg",
-    "examples/markdown_editor/app/moon.pkg",
+    "examples/showcase/app/moon.pkg", "examples/mo_desktop/app/moon.pkg", "examples/markdown_editor/app/moon.pkg",
     "website/app/moon.pkg",
   ]
 }

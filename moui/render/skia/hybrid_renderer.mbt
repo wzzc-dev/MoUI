@@ -29,11 +29,7 @@ pub fn create_hybrid_renderer(
     gpu_available~,
     gpu_promoted~,
   )
-  let gpu_target = if surface_route.is_gpu() {
-    gpu_target
-  } else {
-    None
-  }
+  let gpu_target = if surface_route.is_gpu() { gpu_target } else { None }
   let renderer = create_with_present_target_and_route(
     metrics,
     target,
@@ -71,7 +67,7 @@ pub fn SkiaHybridRenderer::render_frame(
   self : SkiaHybridRenderer,
   frame : @core.DrawFrame,
 ) -> @render.RenderFrameResult {
-  if self.fallback_to_raster || !(self.surface_route.is_gpu()) {
+  if self.fallback_to_raster || !self.surface_route.is_gpu() {
     return self.renderer.render_frame(frame)
   }
   let input = @render.RenderFrameInput::new(

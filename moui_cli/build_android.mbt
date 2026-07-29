@@ -31,7 +31,7 @@ priv struct BuildResult {
   platform : String
   build_dir : String
   output_artifact : String
-} 
+}
 
 ///|
 /// Recursively copy a directory tree from `source` into `target` (which must
@@ -245,12 +245,12 @@ fn patch_android_label_inline(line : String, label : String) -> String {
           // Reconstruct: <prefix up to and including opening quote> + label +
           // <closing quote> + <remainder after original closing quote>.
           let prefix = line[:after_start].to_owned()
-          let suffix = after[(end + 1):].to_owned()
+          let suffix = after[end + 1:].to_owned()
           prefix + label + "\"" + suffix
         }
       }
     }
-  } 
+  }
 }
 
 ///|

@@ -172,7 +172,11 @@ pub fn embedding_accessibility_response(
   action : @core.SemanticsAction,
 ) -> EmbeddingHostResponse {
   EmbeddingHostResponse::Accessibility(
-    @runtime.NativeAccessibilityActionRequest::new(node_id~, generation~, action~),
+    @runtime.NativeAccessibilityActionRequest::new(
+      node_id~,
+      generation~,
+      action~,
+    ),
   )
 }
 
@@ -681,7 +685,8 @@ pub fn EmbeddingHostBridge::dispatch_response(
       match driver.perform_semantics_action(request) {
         @runtime.NativeAccessibilityActionResult::Handled(_) => true
         @runtime.NativeAccessibilityActionResult::Rejected(_)
-        | @runtime.NativeAccessibilityActionResult::BridgeUnavailable(_) => false
+        | @runtime.NativeAccessibilityActionResult::BridgeUnavailable(_) =>
+          false
       }
     EmbeddingHostResponse::PlatformView(revision, kind, id, event) => {
       if revision != self.platform_view_revision ||

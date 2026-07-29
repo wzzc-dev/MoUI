@@ -31,9 +31,7 @@ test "transform_cross_platform_event :: Focused" {
   let event = @window_core.WindowEvent::Focused(true)
   let result = transform_cross_platform_event(event, scale_factor=1.0)
   match result {
-    TransformedWindowEvent::DispatchHostEvent(
-      @host.HostEvent::Focus(focus),
-    ) =>
+    TransformedWindowEvent::DispatchHostEvent(@host.HostEvent::Focus(focus)) =>
       assert_true(focus.focused)
     _ => fail("expected DispatchHostEvent(Focus)")
   }
@@ -49,9 +47,7 @@ test "transform_cross_platform_event :: SurfaceResized" {
     surface_size=Some(size),
   )
   match result {
-    TransformedWindowEvent::DispatchHostEvent(
-      @host.HostEvent::Resized(metrics),
-    ) =>
+    TransformedWindowEvent::DispatchHostEvent(@host.HostEvent::Resized(metrics)) =>
       assert_true(metrics.scale_factor == 2.0)
     _ => fail("expected DispatchHostEvent(Resized) for SurfaceResized")
   }
@@ -69,7 +65,7 @@ test "transform_cross_platform_event :: ScaleFactorChanged" {
   )
   match result {
     TransformedWindowEvent::DispatchHostEvent(
-      @host.HostEvent::Resized(_metrics),
+      @host.HostEvent::Resized(_metrics)
     ) => ()
     _ => fail("expected DispatchHostEvent(Resized) from ScaleFactorChanged")
   }
