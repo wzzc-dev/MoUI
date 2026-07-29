@@ -69,7 +69,7 @@ pub struct HarmonyOsRendererProvider {
 ///|
 pub struct HarmonyOsRuntimeSession {
   priv mut surface : HarmonyOsSurfaceHandle
-  priv core : @embedded_runtime_session.EmbeddedSessionCore
+  priv core : @embedded_runtime_backend.EmbeddedRuntimeBackendCore
 }
 
 ///|
@@ -197,8 +197,8 @@ pub fn harmonyos_capability_summary(
     async_services=true,
     native_accessibility_available=true,
     web_view_available=false,
-    web_view_description="HarmonyOS native WebView is not part of the current mobile host contract.",
-    description="HarmonyOS native host with window HostCmd lifecycle and an ApplicationHandler session. The window host owns lifecycle, surface, input, IME, clipboard, and accessibility adaptation. Runtime evidence remains partial.",
+    web_view_description="HarmonyOS native WebView is not part of the current embedded-runtime host contract.",
+    description="HarmonyOS embedded runtime backend with window HostCmd lifecycle and an ApplicationHandler session. The window embedder owns lifecycle, surface, input, IME, clipboard, and accessibility adaptation. Runtime evidence remains partial.",
   )
 }
 
@@ -211,7 +211,7 @@ pub fn create_session(
 ) -> HarmonyOsRuntimeSession? {
   match provider.create(surface, metrics) {
     Some(renderer) => {
-      let core = @embedded_runtime_session.EmbeddedSessionCore::new(
+      let core = @embedded_runtime_backend.EmbeddedRuntimeBackendCore::new(
         runtime~,
         renderer~,
         image_loader=provider.image_loader,
@@ -353,7 +353,7 @@ pub fn HarmonyOsRuntimeSession::advance_time(
 ///|
 pub fn HarmonyOsRuntimeSession::drain_host_updates(
   self : HarmonyOsRuntimeSession,
-) -> Array[@embedded_runtime_session.EmbeddingHostUpdate] {
+) -> Array[@embedded_runtime_backend.EmbeddingHostUpdate] {
   self.core.drain_host_updates()
 }
 
@@ -374,7 +374,7 @@ pub fn HarmonyOsRuntimeSession::drain_host_update_envelope_json(
 ///|
 pub fn HarmonyOsRuntimeSession::dispatch_host_response(
   self : HarmonyOsRuntimeSession,
-  response : @embedded_runtime_session.EmbeddingHostResponse,
+  response : @embedded_runtime_backend.EmbeddingHostResponse,
 ) -> Bool {
   self.core.dispatch_host_response(response)
 }
@@ -382,7 +382,7 @@ pub fn HarmonyOsRuntimeSession::dispatch_host_response(
 ///|
 pub fn HarmonyOsRuntimeSession::dispatch_host_response_envelope(
   self : HarmonyOsRuntimeSession,
-  envelope : @embedded_runtime_session.EmbeddingHostResponseEnvelope,
+  envelope : @embedded_runtime_backend.EmbeddingHostResponseEnvelope,
 ) -> Bool {
   self.core.dispatch_host_response_envelope(envelope)
 }

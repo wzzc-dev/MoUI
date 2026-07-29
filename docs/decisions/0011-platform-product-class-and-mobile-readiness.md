@@ -7,9 +7,9 @@
 
 ## Context
 
-Mobile backends reported `ready: false` with blockers such as “lifecycle glue
+Embedded runtime backends reported `ready: false` with blockers such as “lifecycle glue
 is not wired” and Skia preflight `runtime_status=experimental-scaffold`, while
-window-hosted adapters, `EmbedderHostChannel` services, and host-sim coverage
+embedded runtime backends, `EmbedderHostChannel` services, and host-sim coverage
 already existed. That binary narrative was both too harsh
 (“completely broken”) and too easy to misread against Linux, where `ready: true`
 means host usability, not full L3 green.

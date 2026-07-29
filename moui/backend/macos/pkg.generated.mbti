@@ -54,9 +54,6 @@ pub(all) struct MacosAccessibilityBridgeInfo {
   description : String
 } derive(Eq, ToJson, @debug.Debug)
 
-type MacosApp
-pub impl @wzzc-dev/window/macos.ApplicationHandler for MacosApp
-
 pub(all) struct MacosBackendInfo {
   host_info : @host.HostAppInfo
   renderer_available : Bool
@@ -76,6 +73,9 @@ pub struct MacosHostSmokeOptions {
 pub fn MacosHostSmokeOptions::new(first_frame_smoke_auto_exit? : Bool, native_ime_runtime_smoke? : Bool, performance_smoke_duration_ms? : Int, performance_smoke_warm_up_presents? : Int, performance_smoke_refresh_hz? : Int, promotion_lifecycle_enabled? : Bool, promotion_surface_cycles? : Int, promotion_fg_bg_cycles? : Int, promotion_context_loss_count? : Int) -> Self
 pub fn MacosHostSmokeOptions::performance_enabled(Self) -> Bool
 
+type MacosNativeHostBackend
+pub impl @wzzc-dev/window/macos.ApplicationHandler for MacosNativeHostBackend
+
 pub struct MacosRendererProvider {
   // private fields
 }
@@ -84,4 +84,3 @@ pub fn MacosRendererProvider::new(create_renderer~ : (@wzzc-dev/window/macos.Win
 // Type aliases
 
 // Traits
-

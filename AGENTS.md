@@ -18,7 +18,7 @@ Full table: `docs/invariants.md`. Break only via RFC (`GOVERNANCE.md`).
 - Protocols → `moui/core`. Lifecycle trees → `moui/runtime`. Host contracts → `moui/backend/host`. Renderers → `moui/render/*`.
 - App deps: `wzzc-dev/moui` + domain facades + `views` only (no `runtime` / `render/*` / platform backends).
 - Mainline: Native Skia. Diagnostic: Native WGPU. Reclassify only with RFC.
-- Mobile product class: `runtime_partial`; `wzzc-dev/window` hosted entrypoints are canonical. Details: `docs/platform-readiness-declaration.md`, ADR 0011.
+- Embedded-runtime product class: `runtime_partial`; `wzzc-dev/window` hosted entrypoints are canonical. Details: `docs/platform-readiness-declaration.md`, ADR 0011.
 - `moon.work`: no local `./window/modules/window*` members by default (use
   `window-dev-mode.sh on/off`), no `./openseek`.
 - Discover APIs with `moon ide doc` / `outline` / `peek-def` / `find-references` before inventing names.
@@ -33,7 +33,7 @@ Full table: `docs/invariants.md`. Break only via RFC (`GOVERNANCE.md`).
 | `moui/runtime` | `docs/architecture-map.md`, `docs/tea-program-model.md` | framework | `moon test moui/runtime --target native` |
 | `moui/backend/host` or platform host | `docs/platform-host-contract.md`, platform notes | framework | `moon test moui/backend/host --target native` + affected backend tests |
 | `moui/render/*`, `moui_skia` | `docs/renderer-capability-report.md`, `moui_skia/AGENTS.md` | framework | package tests + capability report if status changes |
-| Android / iOS / HarmonyOS | `docs/window-hosted-moui.md`, platform support doc | framework | path-triggered window-hosted evidence (not default daily) |
+| Android / iOS / HarmonyOS embedded runtime backends | `docs/window-hosted-moui.md`, platform support doc | framework | path-triggered window-hosted evidence (not default daily) |
 | Theme / `moui_theme` / design systems | `docs/visual-theme-system.md` | framework | `sh scripts/check.sh --profile theme` |
 | Docs / guidance only | `docs/INDEX.md`, topic page | — | `node scripts/validate-guidance-consistency.mjs` |
 | Architecture / package graph | `docs/architecture-map.md` then `docs/architecture.md` | framework | + plan under `docs/plans/active/` if multi-package |
@@ -102,7 +102,7 @@ Node for browser/CDP, Web smoke, HTTP, and artifact orchestration. The
 `rule`/`dev_build` helpers are only for deterministic package generation, not
 dependency installation or smoke execution.
 
-Mobile sessions share `EmbedderHostChannel`. Native XComponent callbacks are the only
+Embedded runtime sessions share `EmbedderHostChannel`. Native XComponent callbacks are the only
 surface/pointer/resize/detach source on HarmonyOS.
 
 ## When the agent is stuck

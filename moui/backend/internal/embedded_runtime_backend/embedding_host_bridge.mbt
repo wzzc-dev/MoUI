@@ -201,19 +201,19 @@ pub fn EmbeddingImeRequest::from_state(
   let diagnostics = text_input_ime_request_diagnostics(state)
   let selection = match state.selection {
     Some(selection) =>
-      Some(mobile_text_range_to_utf16(state.text, selection.normalized()))
+      Some(embedded_runtime_text_range_to_utf16(state.text, selection.normalized()))
     None => None
   }
   let composition_cursor = match (state.composition, state.composition_cursor) {
     (Some(composition), Some(cursor)) =>
-      Some(mobile_text_range_to_utf16(composition, cursor))
+      Some(embedded_runtime_text_range_to_utf16(composition, cursor))
     _ => None
   }
   {
     revision,
     enabled: state.focused,
     text: state.text,
-    caret: mobile_char_index_to_utf16(state.text, diagnostics.cursor),
+    caret: embedded_runtime_char_index_to_utf16(state.text, diagnostics.cursor),
     selection,
     composition: state.composition,
     composition_cursor,
@@ -223,7 +223,7 @@ pub fn EmbeddingImeRequest::from_state(
 }
 
 ///|
-fn mobile_char_index_to_utf16(text : String, index : Int) -> Int {
+fn embedded_runtime_char_index_to_utf16(text : String, index : Int) -> Int {
   let length = text.char_length()
   let index = if index < 0 {
     0
@@ -240,7 +240,7 @@ fn mobile_char_index_to_utf16(text : String, index : Int) -> Int {
 }
 
 ///|
-fn mobile_utf16_to_char_index(
+fn embedded_runtime_utf16_to_char_index(
   text : String,
   offset : Int,
   round_up~ : Bool,
@@ -256,7 +256,7 @@ fn mobile_utf16_to_char_index(
   let char_length = text.char_length()
   let mut index = 0
   while index < char_length {
-    let next = mobile_char_index_to_utf16(text, index + 1)
+    let next = embedded_runtime_char_index_to_utf16(text, index + 1)
     if next == offset {
       return index + 1
     }
@@ -269,51 +269,51 @@ fn mobile_utf16_to_char_index(
 }
 
 ///|
-fn mobile_text_range_to_utf16(
+fn embedded_runtime_text_range_to_utf16(
   text : String,
   range : @core.TextRange,
 ) -> @core.TextRange {
   @core.TextRange::new(
-    start=mobile_char_index_to_utf16(text, range.start),
-    end=mobile_char_index_to_utf16(text, range.end),
+    start=embedded_runtime_char_index_to_utf16(text, range.start),
+    end=embedded_runtime_char_index_to_utf16(text, range.end),
   )
 }
 
 ///|
-fn mobile_text_range_from_utf16(
+fn embedded_runtime_text_range_from_utf16(
   text : String,
   range : @core.TextRange,
 ) -> @core.TextRange {
   let normalized = range.normalized()
   @core.TextRange::new(
-    start=mobile_utf16_to_char_index(text, normalized.start, round_up=false),
-    end=mobile_utf16_to_char_index(text, normalized.end, round_up=true),
+    start=embedded_runtime_utf16_to_char_index(text, normalized.start, round_up=false),
+    end=embedded_runtime_utf16_to_char_index(text, normalized.end, round_up=true),
   )
 }
 
 ///|
-fn mobile_text_input_from_utf16(
+fn embedded_runtime_text_input_from_utf16(
   event : @core.TextInputEvent,
   state : @core.TextInputState,
 ) -> @core.TextInputEvent {
   match event {
     @core.TextInputEvent::ReplaceText(range, replacement) =>
       @core.TextInputEvent::ReplaceText(
-        mobile_text_range_from_utf16(state.text, range),
+        embedded_runtime_text_range_from_utf16(state.text, range),
         replacement,
       )
     @core.TextInputEvent::SetSelection(range) =>
       @core.TextInputEvent::SetSelection(
-        mobile_text_range_from_utf16(state.text, range),
+        embedded_runtime_text_range_from_utf16(state.text, range),
       )
     @core.TextInputEvent::DeleteRange(range) =>
       @core.TextInputEvent::DeleteRange(
-        mobile_text_range_from_utf16(state.text, range),
+        embedded_runtime_text_range_from_utf16(state.text, range),
       )
     @core.TextInputEvent::DeleteSurrounding(before, after) => {
-      let caret_utf16 = mobile_char_index_to_utf16(state.text, state.caret)
+      let caret_utf16 = embedded_runtime_char_index_to_utf16(state.text, state.caret)
       @core.TextInputEvent::DeleteRange(
-        mobile_text_range_from_utf16(
+        embedded_runtime_text_range_from_utf16(
           state.text,
           @core.TextRange::new(
             start=caret_utf16 - before,
@@ -329,7 +329,7 @@ fn mobile_text_input_from_utf16(
           text=composition,
           cursor=match update.cursor() {
             Some(cursor) =>
-              Some(mobile_text_range_from_utf16(composition, cursor))
+              Some(embedded_runtime_text_range_from_utf16(composition, cursor))
             None => None
           },
         ),
@@ -384,7 +384,7 @@ pub fn EmbeddingHostBridge::service_bridge(
     capabilities=HostServiceCapabilities::new(clipboard=true),
     handle=request => {
       if self.disposed {
-        HostServiceResponse::Unavailable("mobile host channel is disposed")
+        HostServiceResponse::Unavailable("embedded runtime host channel is disposed")
       } else {
         self.service_queue.submit(request)
       }
@@ -414,7 +414,7 @@ pub fn EmbeddingHostBridge::sync(
           self.service_queue.complete(
             pending.id,
             HostServiceResponse::Unavailable(
-              "mobile host channel only handles clipboard requests",
+              "embedded runtime host channel only handles clipboard requests",
             ),
           ),
         )
@@ -570,7 +570,7 @@ fn embedding_host_update_json(update : EmbeddingHostUpdate) -> Json {
             {
               "kind": "clipboard",
               "id": pending.id.value,
-              "payload": mobile_clipboard_request_json(request),
+              "payload": embedded_runtime_clipboard_request_json(request),
             } : Json)
         _ => ({ "kind": "unsupported", "id": pending.id.value } : Json)
       }
@@ -642,7 +642,7 @@ pub fn embedding_host_response_request_id(
 }
 
 ///|
-fn mobile_clipboard_request_json(request : HostClipboardRequest) -> Json {
+fn embedded_runtime_clipboard_request_json(request : HostClipboardRequest) -> Json {
   match request {
     HostClipboardRequest::ReadText => ({ "operation": "read-text" } : Json)
     HostClipboardRequest::WriteText(text) =>
@@ -666,7 +666,7 @@ pub fn EmbeddingHostBridge::dispatch_response(
   }
   match response {
     EmbeddingHostResponse::TextInput(event) => {
-      let event = mobile_text_input_from_utf16(
+      let event = embedded_runtime_text_input_from_utf16(
         event,
         driver.focused_text_input(),
       )

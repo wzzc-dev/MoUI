@@ -3,7 +3,7 @@
 /// On Android the native Activity loads this shared library and starts `main`
 /// on a worker thread; HostCmd arrives via JNI into the window host queue.
 fn main {
-  let app = @android_host.AndroidWindowHostedApp::new(
+  let app = @android_host.AndroidEmbeddedRuntimeBackend::new(
     title="MoUI Counter (window-hosted)",
     runtime_factory=metrics => {
       @runtime.new_program(

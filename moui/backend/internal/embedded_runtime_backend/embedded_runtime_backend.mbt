@@ -1,19 +1,19 @@
 ///|
 
 ///|
-let embedded_runtime_session_generation_counter : Ref[Int] = Ref(1)
+let embedded_runtime_backend_generation_counter : Ref[Int] = Ref(1)
 
 ///|
-fn next_embedded_runtime_session_generation() -> Int {
-  let generation = embedded_runtime_session_generation_counter.val
-  embedded_runtime_session_generation_counter.val = generation + 1
+fn next_embedded_runtime_backend_generation() -> Int {
+  let generation = embedded_runtime_backend_generation_counter.val
+  embedded_runtime_backend_generation_counter.val = generation + 1
   generation
 }
 
 ///|
-/// Shared runtime state for window-hosted mobile apps. Platform backends keep this
-/// type behind their public session wrappers and own native-handle syncing.
-pub struct EmbeddedSessionCore {
+/// Shared runtime state for embedded runtime backends. Platform backends keep
+/// this type behind their public session wrappers and own native-handle syncing.
+pub struct EmbeddedRuntimeBackendCore {
   priv runtime : @runtime.AppRuntime
   priv driver : @runtime.HostRuntimeDriver
   priv mut renderer : @render.HostWindowRenderer?
@@ -27,20 +27,20 @@ pub struct EmbeddedSessionCore {
 }
 
 ///|
-pub fn EmbeddedSessionCore::new(
+pub fn EmbeddedRuntimeBackendCore::new(
   runtime~ : @runtime.AppRuntime,
   renderer~ : @render.HostWindowRenderer,
   metrics~ : @host.HostSurfaceMetrics,
   image_loader? : @render.HostAsyncImageLoader? = None,
-) -> EmbeddedSessionCore {
+) -> EmbeddedRuntimeBackendCore {
   let transport = @host_session.HostSessionTransport::new(
-    initial_generation=next_embedded_runtime_session_generation(),
+    initial_generation=next_embedded_runtime_backend_generation(),
   )
   let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
     transport.request_frame()
   })
   driver.set_text_system(@core.TextSystem::fallback())
-  let core : EmbeddedSessionCore = {
+  let core : EmbeddedRuntimeBackendCore = {
     runtime,
     driver,
     renderer: None,
@@ -57,34 +57,34 @@ pub fn EmbeddedSessionCore::new(
 }
 
 ///|
-pub fn EmbeddedSessionCore::metrics(
-  self : EmbeddedSessionCore,
+pub fn EmbeddedRuntimeBackendCore::metrics(
+  self : EmbeddedRuntimeBackendCore,
 ) -> @host.HostSurfaceMetrics {
   self.metrics
 }
 
 ///|
-pub fn EmbeddedSessionCore::runtime(
-  self : EmbeddedSessionCore,
+pub fn EmbeddedRuntimeBackendCore::runtime(
+  self : EmbeddedRuntimeBackendCore,
 ) -> @runtime.AppRuntime {
   self.runtime
 }
 
 ///|
-pub fn EmbeddedSessionCore::disposed(self : EmbeddedSessionCore) -> Bool {
+pub fn EmbeddedRuntimeBackendCore::disposed(self : EmbeddedRuntimeBackendCore) -> Bool {
   self.disposed
 }
 
 ///|
-pub fn EmbeddedSessionCore::surface_attached(
-  self : EmbeddedSessionCore,
+pub fn EmbeddedRuntimeBackendCore::surface_attached(
+  self : EmbeddedRuntimeBackendCore,
 ) -> Bool {
   !self.disposed && self.renderer is Some(_)
 }
 
 ///|
-pub fn EmbeddedSessionCore::session_generation(
-  self : EmbeddedSessionCore,
+pub fn EmbeddedRuntimeBackendCore::session_generation(
+  self : EmbeddedRuntimeBackendCore,
 ) -> Int {
   if self.surface_attached() {
     self.transport.session_generation()
@@ -94,13 +94,13 @@ pub fn EmbeddedSessionCore::session_generation(
 }
 
 ///|
-pub fn EmbeddedSessionCore::surface_epoch(self : EmbeddedSessionCore) -> Int {
+pub fn EmbeddedRuntimeBackendCore::surface_epoch(self : EmbeddedRuntimeBackendCore) -> Int {
   self.transport.surface_epoch()
 }
 
 ///|
-pub fn EmbeddedSessionCore::attach_surface(
-  self : EmbeddedSessionCore,
+pub fn EmbeddedRuntimeBackendCore::attach_surface(
+  self : EmbeddedRuntimeBackendCore,
   renderer~ : @render.HostWindowRenderer,
   metrics~ : @host.HostSurfaceMetrics,
   image_loader? : @render.HostAsyncImageLoader? = None,
@@ -135,7 +135,7 @@ pub fn EmbeddedSessionCore::attach_surface(
 }
 
 ///|
-pub fn EmbeddedSessionCore::detach_surface(self : EmbeddedSessionCore) -> Bool {
+pub fn EmbeddedRuntimeBackendCore::detach_surface(self : EmbeddedRuntimeBackendCore) -> Bool {
   if self.disposed || self.renderer is None {
     return false
   }
@@ -143,7 +143,7 @@ pub fn EmbeddedSessionCore::detach_surface(self : EmbeddedSessionCore) -> Bool {
     Some(channel) =>
       channel.dispose(
         driver=self.driver,
-        reason="mobile surface epoch detached",
+        reason="embedded runtime surface epoch detached",
       )
     None => ()
   }
@@ -176,8 +176,8 @@ fn inactive_host_event_result() -> @host.HostEventResult {
 }
 
 ///|
-pub fn EmbeddedSessionCore::dispatch(
-  self : EmbeddedSessionCore,
+pub fn EmbeddedRuntimeBackendCore::dispatch(
+  self : EmbeddedRuntimeBackendCore,
   event : @host.HostEvent,
 ) -> @host.HostEventResult {
   match self.host_bridge {
@@ -191,8 +191,8 @@ pub fn EmbeddedSessionCore::dispatch(
 }
 
 ///|
-pub fn EmbeddedSessionCore::resize(
-  self : EmbeddedSessionCore,
+pub fn EmbeddedRuntimeBackendCore::resize(
+  self : EmbeddedRuntimeBackendCore,
   metrics : @host.HostSurfaceMetrics,
 ) -> @host.HostEventResult {
   match (self.renderer, self.host_bridge) {
@@ -214,8 +214,8 @@ pub fn EmbeddedSessionCore::resize(
 }
 
 ///|
-pub fn EmbeddedSessionCore::render_frame(
-  self : EmbeddedSessionCore,
+pub fn EmbeddedRuntimeBackendCore::render_frame(
+  self : EmbeddedRuntimeBackendCore,
 ) -> @render.RenderFrameResult {
   guard (self.renderer, self.host_bridge, self.image_coordinator)
     is (Some(renderer), Some(host_bridge), Some(image_coordinator)) &&
@@ -265,8 +265,8 @@ pub fn EmbeddedSessionCore::render_frame(
 }
 
 ///|
-pub fn EmbeddedSessionCore::advance_time(
-  self : EmbeddedSessionCore,
+pub fn EmbeddedRuntimeBackendCore::advance_time(
+  self : EmbeddedRuntimeBackendCore,
   time_ms : Double,
 ) -> Unit {
   if self.surface_attached() {
@@ -282,8 +282,8 @@ pub fn EmbeddedSessionCore::advance_time(
 }
 
 ///|
-pub fn EmbeddedSessionCore::drain_host_updates(
-  self : EmbeddedSessionCore,
+pub fn EmbeddedRuntimeBackendCore::drain_host_updates(
+  self : EmbeddedRuntimeBackendCore,
 ) -> Array[EmbeddingHostUpdate] {
   match self.host_bridge {
     Some(bridge) if !self.disposed => {
@@ -295,8 +295,8 @@ pub fn EmbeddedSessionCore::drain_host_updates(
 }
 
 ///|
-pub fn EmbeddedSessionCore::drain_host_updates_json(
-  self : EmbeddedSessionCore,
+pub fn EmbeddedRuntimeBackendCore::drain_host_updates_json(
+  self : EmbeddedRuntimeBackendCore,
 ) -> String {
   match self.host_bridge {
     Some(bridge) if !self.disposed => {
@@ -308,8 +308,8 @@ pub fn EmbeddedSessionCore::drain_host_updates_json(
 }
 
 ///|
-pub fn EmbeddedSessionCore::drain_host_update_envelope_json(
-  self : EmbeddedSessionCore,
+pub fn EmbeddedRuntimeBackendCore::drain_host_update_envelope_json(
+  self : EmbeddedRuntimeBackendCore,
 ) -> String {
   match self.host_bridge {
     Some(bridge) if !self.disposed => {
@@ -329,8 +329,8 @@ pub fn EmbeddedSessionCore::drain_host_update_envelope_json(
 }
 
 ///|
-pub fn EmbeddedSessionCore::dispatch_host_response(
-  self : EmbeddedSessionCore,
+pub fn EmbeddedRuntimeBackendCore::dispatch_host_response(
+  self : EmbeddedRuntimeBackendCore,
   response : EmbeddingHostResponse,
 ) -> Bool {
   match self.host_bridge {
@@ -353,8 +353,8 @@ pub fn EmbeddedSessionCore::dispatch_host_response(
 }
 
 ///|
-pub fn EmbeddedSessionCore::dispatch_host_response_envelope(
-  self : EmbeddedSessionCore,
+pub fn EmbeddedRuntimeBackendCore::dispatch_host_response_envelope(
+  self : EmbeddedRuntimeBackendCore,
   envelope : EmbeddingHostResponseEnvelope,
 ) -> Bool {
   match self.host_bridge {
@@ -378,8 +378,8 @@ pub fn EmbeddedSessionCore::dispatch_host_response_envelope(
 }
 
 ///|
-pub fn EmbeddedSessionCore::host_service_bridge(
-  self : EmbeddedSessionCore,
+pub fn EmbeddedRuntimeBackendCore::host_service_bridge(
+  self : EmbeddedRuntimeBackendCore,
 ) -> @host.HostServiceBridge {
   match self.host_bridge {
     Some(bridge) if !self.disposed => bridge.service_bridge()
@@ -388,21 +388,21 @@ pub fn EmbeddedSessionCore::host_service_bridge(
 }
 
 ///|
-pub fn EmbeddedSessionCore::redraw_requested(
-  self : EmbeddedSessionCore,
+pub fn EmbeddedRuntimeBackendCore::redraw_requested(
+  self : EmbeddedRuntimeBackendCore,
 ) -> Bool {
   self.surface_attached() && self.transport.frame_requested()
 }
 
 ///|
-pub fn EmbeddedSessionCore::take_redraw_requested(
-  self : EmbeddedSessionCore,
+pub fn EmbeddedRuntimeBackendCore::take_redraw_requested(
+  self : EmbeddedRuntimeBackendCore,
 ) -> Bool {
   self.surface_attached() && self.transport.take_requested_frame()
 }
 
 ///|
-pub fn EmbeddedSessionCore::present_count(self : EmbeddedSessionCore) -> Int {
+pub fn EmbeddedRuntimeBackendCore::present_count(self : EmbeddedRuntimeBackendCore) -> Int {
   match self.renderer {
     Some(renderer) if !self.disposed => renderer.present_count()
     _ => 0
@@ -410,7 +410,7 @@ pub fn EmbeddedSessionCore::present_count(self : EmbeddedSessionCore) -> Int {
 }
 
 ///|
-pub fn EmbeddedSessionCore::dispose(self : EmbeddedSessionCore) -> Unit {
+pub fn EmbeddedRuntimeBackendCore::dispose(self : EmbeddedRuntimeBackendCore) -> Unit {
   if !self.disposed {
     ignore(self.detach_surface())
     ignore(self.transport.destroy())

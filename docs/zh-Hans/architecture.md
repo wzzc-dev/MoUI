@@ -24,8 +24,8 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 | `moui/views/` | Public view constructors、面向应用的 control APIs、default themes、form/navigation/data helpers，以及通过 `@core.View::from_node` 构造的具体 `ViewNode` behavior。 |
 | `moui/runtime/` | AppRuntime construction、runtime state、element/layout/render tree generation、event dispatch、program queue drain、effects、subscriptions、diagnostics 和 inspector snapshots。 |
 | `moui/backend/host/` | 面向 windows、routes、timers、host services、WebView、async image loading、accessibility、input、redraw scheduling 和 renderer handoff 的共享 host contracts。 |
-| `moui/backend/internal/embedded_runtime_session/` | Android、iOS 和 HarmonyOS window-hosted adapter 的私有 MoUI runtime 装配层；在 `ApplicationHandler` callbacks 之后组合 `AppRuntime`、host contracts 和 renderers。 |
-| `moui/backend/{macos,windows,linux,android,ios,harmonyos,web}/` | 具体平台 host implementations。Native platform packages 将 events 归一化为 host contracts；Android、iOS 和 HarmonyOS 是由 `wzzc-dev/window` 驱动的 window-hosted adapters；web 是 canonical browser host。 |
+| `moui/backend/internal/embedded_runtime_backend/` | Android、iOS 和 HarmonyOS 嵌入运行时后端的私有 runtime 装配层；在 `ApplicationHandler` callbacks 之后组合 `AppRuntime`、host contracts 和 renderers。 |
+| `moui/backend/{macos,windows,linux,android,ios,harmonyos,web}/` | 具体平台 backend implementations。macOS、Windows 和 Linux 是原生宿主后端；Android、iOS 和 HarmonyOS 是由 `wzzc-dev/window` 驱动的嵌入运行时后端；web 是 canonical browser host。 |
 | `moui/backend/{macos,windows,linux,android,ios,harmonyos}/skia/` | 主 native 路线的 Native Skia renderer provider packages。Android 将 CPU pixel frames 呈现到 `ANativeWindow`；iOS 将 CPU pixel frames 呈现到 UIKit `UIImageView` 子视图；HarmonyOS 将 CPU pixel frames 呈现到提供的 XComponent native-window handle。 |
 | `moui/backend/{macos,windows,linux}/wgpu/` | Native WGPU diagnostic provider packages。 |
 | `moui/render/` | Renderer facade、共享 render capability models、fallback planning、shader/image helpers 和 renderer-neutral command handling。 |
@@ -42,6 +42,16 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 | `examples/*/{web_wasm,macos_skia,windows_skia,linux_skia,...}/` | 为某个 app package 创建 runtime/backend/renderer 接线的薄平台入口。 |
 | `tools/` | 由 `scripts/` 下 JS shell entrypoints 使用的 MoonBit-backed repository validators。 |
 | `scripts/` | Local/CI command entrypoints、smoke runners、package validators 和 platform setup helpers。 |
+
+## 后端宿主模型
+
+这两种 native backend 模型按宿主所有权分类，而不是按设备形态分类。Android 和
+HarmonyOS 可以运行在桌面硬件上；这不改变它们当前 MoUI 集成所采用的模型。
+
+| 模型 | 当前平台 | 所有权边界 |
+| --- | --- | --- |
+| 原生宿主后端 | macOS、Windows、Linux | MoUI backend 拥有 host runtime、原生窗口生命周期、event-loop 集成和窗口注册表。 |
+| 嵌入运行时后端 | Android、iOS、HarmonyOS | `wzzc-dev/window` embedder 拥有 lifecycle、surface、input 和 event loop；MoUI backend 拥有所附着的 runtime session 与 renderer composition。 |
 
 ## 应用边界
 
@@ -87,20 +97,20 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 - Native Skia route：shared app package -> platform `*_skia` entrypoint ->
   platform backend -> platform Skia provider -> `moui/render/skia` ->
   `moui_skia`。
-- Android window-hosted route（`runtime_partial`）：shared app package ->
+- Android 嵌入运行时路线（`runtime_partial`）：shared app package ->
   `examples/<app>/android_window_hosted` -> `wzzc-dev/window/android`
-  `HostCmd` / `EventLoop` -> `AndroidWindowHostedApp` ->
+  `HostCmd` / `EventLoop` -> `AndroidEmbeddedRuntimeBackend` ->
   `moui/backend/android/skia` -> `moui/render/skia` -> `moui_skia`。
-  window template 拥有 Android lifecycle、surface acquisition 和 input；MoUI
-  adapter 负责 runtime/session 装配与渲染。
-- iOS window-hosted route（`runtime_partial`）：shared app package ->
+  window template 拥有 Android lifecycle、surface acquisition 和 input；嵌入运行时
+  backend 负责 runtime/session 装配与渲染。
+- iOS 嵌入运行时路线（`runtime_partial`）：shared app package ->
   `examples/<app>/ios_window_hosted` -> `wzzc-dev/window/ios`
-  `HostCmd` / `EventLoop` -> `IosWindowHostedApp` ->
+  `HostCmd` / `EventLoop` -> `IosEmbeddedRuntimeBackend` ->
   `moui/backend/ios/skia` -> `moui/render/skia` -> `moui_skia`。UIKit lifecycle、
   surface 和 touch callbacks 只能经由 window event loop 进入。
-- HarmonyOS window-hosted route（`runtime_partial`）：shared app package ->
+- HarmonyOS 嵌入运行时路线（`runtime_partial`）：shared app package ->
   `examples/<app>/harmonyos_window_hosted` -> `wzzc-dev/window/harmonyos`
-  `HostCmd` / `EventLoop` -> `HarmonyOsWindowHostedApp` ->
+  `HostCmd` / `EventLoop` -> `HarmonyOsEmbeddedRuntimeBackend` ->
   `moui/backend/harmonyos/skia` -> `moui/render/skia` -> `moui_skia`。
   Native XComponent callbacks 是 surface、pointer、resize 和 detach events 的唯一来源。
 - Native WGPU route：shared app package -> platform `*_wgpu` entrypoint ->
@@ -108,7 +118,7 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 
 平台入口应保持很薄：创建 program/runtime，选择 backend 和 renderer provider，并传入 app-owned service adapters。业务 model/update/view 逻辑应留在 shared app package。
 
-Window-hosted mobile runtime sessions 共享 `EmbedderHostChannel`，用于有序 IME 更新、带 generation 前置条件的已提交语义，以及异步 clipboard/accessibility responses。见
+嵌入运行时 session 共享 `EmbedderHostChannel`，用于有序 IME 更新、带 generation 前置条件的已提交语义，以及异步 clipboard/accessibility responses。见
 [Window-hosted MoUI](../window-hosted-moui.md)、ADR 0005 和 ADR 0006。现在的产品默认值是在每个 native Skia platform 上，只要 host GPU surface 可用（macOS、Windows、Linux、Android、iOS 和 HarmonyOS 的 `NativeGpuPlatform::gpu_promoted` 均为 `true`），就使用 `SkiaGpuNative`。Window-surface 路径是 Metal（macOS/iOS）、带 EGL/GLES fallback 的 Vulkan（Android）、EGL/GLES（HarmonyOS）、D3D12（Windows）和 Wayland Vulkan（Linux）。`SkiaRasterNative` 仍是显式 `skia-raster` 模式，并且是 terminal GPU failure 后的 sticky recovery fallback。Matching-device seven-gate manifests 仍是有用证据，并且在非 macOS hosts 上可能仍不完整，但它们不再阻挡产品 `auto` 默认值。Native `SkPicture`/POD handoff 运行在独立 `std::thread` 上，带 latest-wins frame slot、ordered controls、detach acknowledgement 和 polling diagnostics。Platform branches 在该 worker 上拥有 Metal、D3D12、Vulkan WSI 或 EGL context/surface/swapchain/synchronization resources，并且只有在 platform present call 后才发出 `Presented`。Android 动态加载 Vulkan，因此 API 23 仍可加载并 fallback 到 EGL/GLES。Native hosts 独立于 frame submission 轮询 worker completions，只计数 `Presented`，并在 terminal GPU recovery 切换到 raster 时保留当前 `AppRuntime`。
 
 ## 扩展规则
@@ -172,20 +182,20 @@ moui_theme/audit/             addon diagnostics: manifests, golden mappings, off
 moui_theme/{material,carbon,primer,fluent}/ package-local official-system entrypoints: light/dark/high-contrast/system Theme helpers, tokens, and theme_for_variant over common
 moui_theme/sickle/            first-party hybrid skeuomorphic/flat Theme addon with light/dark and style-mode helpers
 moui/backend/host/            shared HostEvent, HostWindowEventSource, HostTimerSource, HostRouteSource, metrics, HostWindowRenderer, native async image completion source, input, redraw driver, window/core + dpi event conversion
-moui/backend/windows/         Windows native host core
+moui/backend/windows/         Windows 原生宿主后端
 moui/backend/windows/skia/    Windows Skia renderer provider mainline
 moui/backend/windows/wgpu/    Windows WGPU renderer provider diagnostic
-moui/backend/macos/           macOS native host core
+moui/backend/macos/           macOS 原生宿主后端
 moui/backend/macos/skia/      macOS Skia renderer provider mainline
 moui/backend/macos/wgpu/      macOS WGPU renderer provider diagnostic
-moui/backend/linux/           Linux Wayland native host core
+moui/backend/linux/           Linux Wayland 原生宿主后端
 moui/backend/linux/skia/      Linux Skia renderer provider mainline
 moui/backend/linux/wgpu/      Linux WGPU renderer provider diagnostic
-moui/backend/android/         Android window-hosted adapter over shared host/runtime contracts
+moui/backend/android/         Android 嵌入运行时后端，基于共享 host/runtime contracts
 moui/backend/android/skia/    Android Skia renderer provider over ANativeWindow pixel presentation
-moui/backend/ios/             iOS window-hosted adapter over shared host/runtime contracts
+moui/backend/ios/             iOS 嵌入运行时后端，基于共享 host/runtime contracts
 moui/backend/ios/skia/        iOS Skia renderer provider over UIKit UIImageView pixel presentation
-moui/backend/harmonyos/       HarmonyOS window-hosted adapter over shared host/runtime contracts
+moui/backend/harmonyos/       HarmonyOS 嵌入运行时后端，基于共享 host/runtime contracts
 moui/backend/harmonyos/skia/  HarmonyOS Skia renderer provider over XComponent native-window pixel presentation
 moui/backend/web/             canonical Web host on wasm-gc plus browser JS assets
 moui/render/                  renderer facade and shared draw helpers

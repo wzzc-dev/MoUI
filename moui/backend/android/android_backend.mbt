@@ -69,7 +69,7 @@ pub struct AndroidRendererProvider {
 ///|
 pub struct AndroidRuntimeSession {
   priv mut surface : AndroidSurfaceHandle
-  priv core : @embedded_runtime_session.EmbeddedSessionCore
+  priv core : @embedded_runtime_backend.EmbeddedRuntimeBackendCore
 }
 
 ///|
@@ -197,8 +197,8 @@ pub fn android_capability_summary(
     async_services=true,
     native_accessibility_available=true,
     web_view_available=false,
-    web_view_description="Android native WebView is not part of the current mobile host contract.",
-    description="Android native host with window HostCmd lifecycle and an ApplicationHandler session. The window host owns lifecycle, surface, input, IME, clipboard, and accessibility adaptation. Runtime evidence remains partial.",
+    web_view_description="Android native WebView is not part of the current embedded-runtime host contract.",
+    description="Android embedded runtime backend with window HostCmd lifecycle and an ApplicationHandler session. The window embedder owns lifecycle, surface, input, IME, clipboard, and accessibility adaptation. Runtime evidence remains partial.",
   )
 }
 
@@ -211,7 +211,7 @@ pub fn create_session(
 ) -> AndroidRuntimeSession? {
   match provider.create(surface, metrics) {
     Some(renderer) => {
-      let core = @embedded_runtime_session.EmbeddedSessionCore::new(
+      let core = @embedded_runtime_backend.EmbeddedRuntimeBackendCore::new(
         runtime~,
         renderer~,
         image_loader=provider.image_loader,
@@ -351,7 +351,7 @@ pub fn AndroidRuntimeSession::advance_time(
 ///|
 pub fn AndroidRuntimeSession::drain_host_updates(
   self : AndroidRuntimeSession,
-) -> Array[@embedded_runtime_session.EmbeddingHostUpdate] {
+) -> Array[@embedded_runtime_backend.EmbeddingHostUpdate] {
   self.core.drain_host_updates()
 }
 
@@ -372,7 +372,7 @@ pub fn AndroidRuntimeSession::drain_host_update_envelope_json(
 ///|
 pub fn AndroidRuntimeSession::dispatch_host_response(
   self : AndroidRuntimeSession,
-  response : @embedded_runtime_session.EmbeddingHostResponse,
+  response : @embedded_runtime_backend.EmbeddingHostResponse,
 ) -> Bool {
   self.core.dispatch_host_response(response)
 }
@@ -380,7 +380,7 @@ pub fn AndroidRuntimeSession::dispatch_host_response(
 ///|
 pub fn AndroidRuntimeSession::dispatch_host_response_envelope(
   self : AndroidRuntimeSession,
-  envelope : @embedded_runtime_session.EmbeddingHostResponseEnvelope,
+  envelope : @embedded_runtime_backend.EmbeddingHostResponseEnvelope,
 ) -> Bool {
   self.core.dispatch_host_response_envelope(envelope)
 }

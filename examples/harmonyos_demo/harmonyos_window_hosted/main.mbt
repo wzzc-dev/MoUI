@@ -1,7 +1,7 @@
 ///|
 /// Window-hosted HarmonyOS demo entrypoint.
 fn main {
-  let app = @harmonyos_host.HarmonyOsWindowHostedApp::new(
+  let app = @harmonyos_host.HarmonyOsEmbeddedRuntimeBackend::new(
     title="HarmonyOS Demo (window-hosted)",
     runtime_factory=metrics => {
       @runtime.new_program(

@@ -1,6 +1,6 @@
 # Android Support
 
-Android uses the **window-hosted** mobile route and is currently
+Android uses the **embedded runtime backend** route and is currently
 `runtime_partial`. `wzzc-dev/window/android` owns the Android lifecycle,
 surface, and input queue; `moui/backend/android` converts those callbacks into
 the MoUI runtime session and `moui/backend/android/skia` provides presentation.
@@ -13,9 +13,9 @@ the MoUI runtime session and `moui/backend/android/skia` provides presentation.
 | Mobile metadata | `examples/<app>/moui.mobile.json` |
 | MoonBit entrypoint | `examples/<app>/android_window_hosted` |
 | Android host template | `wzzc-dev/window/android/template` |
-| MoUI adapter | `moui/backend/android/window_hosted.mbt` |
+| MoUI embedded runtime backend | `moui/backend/android/window_hosted.mbt` |
 
-The entrypoint constructs `AndroidWindowHostedApp` and runs it through
+The entrypoint constructs `AndroidEmbeddedRuntimeBackend` and runs it through
 `window/android::EventLoop`. Do not add another lifecycle, surface, or input
 bridge beside the window event loop.
 

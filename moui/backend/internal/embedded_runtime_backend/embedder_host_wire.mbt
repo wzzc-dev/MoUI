@@ -235,8 +235,8 @@ fn parse_embedder_host_response_envelope_json(
 }
 
 ///|
-pub fn EmbeddedSessionCore::dispatch_host_response_envelope_json(
-  self : EmbeddedSessionCore,
+pub fn EmbeddedRuntimeBackendCore::dispatch_host_response_envelope_json(
+  self : EmbeddedRuntimeBackendCore,
   text : String,
 ) -> Bool {
   match parse_embedder_host_response_envelope_json(text) {

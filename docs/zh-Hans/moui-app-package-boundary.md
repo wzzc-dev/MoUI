@@ -411,14 +411,14 @@ MoUI 当前把两类入口统一在 `moui/views`：普通 app 使用高层 const
 `examples/*/{web_wasm,macos_skia,windows_skia,linux_skia,android_window_hosted,ios_window_hosted,harmonyos_window_hosted}`
 这类 executable package。它们负责创建 runtime、连接平台 backend、选择 renderer。
 
-三个移动端路径使用匹配的 `wzzc-dev/window` template 和 `*_window_hosted` 入口。
+三个嵌入运行时路径使用匹配的 `wzzc-dev/window` template 和 `*_window_hosted` 入口。
 它们的 `main.mbt` 创建 program、选择 renderer provider，并把
-`*WindowHostedApp` 传给平台 `EventLoop`。`HostCmd` 和 `ApplicationHandler` 是
-lifecycle、surface 和 input callbacks 的唯一通路；移动端 executable 根包不再导出或
+`*EmbeddedRuntimeBackend` 传给平台 `EventLoop`。`HostCmd` 和 `ApplicationHandler` 是
+lifecycle、surface 和 input callbacks 的唯一通路；嵌入运行时 executable 根包不再导出或
 转发第二套 embedding ABI。
 
 Android、iOS 和 HarmonyOS template 拥有各自的 native lifecycle 与 surface bridge。
-`AndroidWindowHostedApp`、`IosWindowHostedApp` 和 `HarmonyOsWindowHostedApp`
+`AndroidEmbeddedRuntimeBackend`、`IosEmbeddedRuntimeBackend` 和 `HarmonyOsEmbeddedRuntimeBackend`
 会在 window event loop 创建 surface 后装配 MoUI runtime session。HarmonyOS
 XComponent callbacks 仍是 surface、pointer、resize 和 detach events 的唯一来源。
 

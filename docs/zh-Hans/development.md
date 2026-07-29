@@ -35,7 +35,7 @@ moon build examples/markdown_editor/web_wasm --target wasm-gc
 node scripts/web-bundle-size.mjs examples/counter/web_wasm --json
 ```
 
-Android、iOS 和 HarmonyOS 使用 window-hosted 移动端路线。匹配的
+Android、iOS 和 HarmonyOS 使用嵌入运行时后端路线。匹配的
 `wzzc-dev/window` template 负责 native lifecycle、surface creation 和 input；MoUI
 `*_window_hosted` 入口提供 program 和 Skia provider。不再有应用专用 native export
 table 或第二套 lifecycle bridge。

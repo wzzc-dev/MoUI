@@ -1,8 +1,13 @@
-# Window 托管的 MoUI（移动端）
+# 嵌入运行时后端
 
-MoUI 在 Android、iOS 和 HarmonyOS 上使用 **`wzzc-dev/window`** 作为
-winit 风格的宿主：`HostCmd` → `EventLoop` → `ApplicationHandler`。Surface 和
-输入不经过第二套 attach/inject 桥接。
+Android、iOS 和 HarmonyOS 使用**嵌入运行时后端**模型。它们的
+`wzzc-dev/window` embedder 是 winit 风格的宿主：
+`HostCmd` → `EventLoop` → `ApplicationHandler`。Surface 和输入不经过第二套
+attach/inject 桥接。
+
+这是一种宿主所有权分类，而不是设备分类。Android 和 HarmonyOS 的桌面产品只要由
+平台 embedder 拥有 lifecycle、surface、input 和 event loop，就仍使用嵌入运行时
+后端模型。
 
 ## 架构
 
@@ -10,21 +15,21 @@ winit 风格的宿主：`HostCmd` → `EventLoop` → `ApplicationHandler`。Sur
 window/<platform>/template / 原生 Activity|UIApp|Ability
         → window HostCmd 队列
         → EventLoop.pump / run_app
-        → *WindowHostedApp (moui/backend/{android,ios,harmonyos})
+        → *EmbeddedRuntimeBackend (moui/backend/{android,ios,harmonyos})
         → AndroidRuntimeSession / IosRuntimeSession / HarmonyOsRuntimeSession
         → Skia HostWindowRenderer
 ```
 
-window-hosted 是唯一受支持的移动端路径。不要在 `HostCmd` 和
+window-hosted 是唯一受支持的嵌入运行时后端路径。不要在 `HostCmd` 和
 `ApplicationHandler` 之外再添加生命周期、Surface 或输入桥接。
 
 ## 包
 
 | 部件 | 路径 |
 |------|------|
-| Android bridge | `moui/backend/android/window_hosted.mbt`（`AndroidWindowHostedApp`） |
-| iOS bridge | `moui/backend/ios/window_hosted.mbt`（`IosWindowHostedApp`） |
-| HarmonyOS bridge | `moui/backend/harmonyos/window_hosted.mbt`（`HarmonyOsWindowHostedApp`） |
+| Android 嵌入运行时后端 | `moui/backend/android/window_hosted.mbt`（`AndroidEmbeddedRuntimeBackend`） |
+| iOS 嵌入运行时后端 | `moui/backend/ios/window_hosted.mbt`（`IosEmbeddedRuntimeBackend`） |
+| HarmonyOS 嵌入运行时后端 | `moui/backend/harmonyos/window_hosted.mbt`（`HarmonyOsEmbeddedRuntimeBackend`） |
 | Counter 入口 | `examples/counter/{android,ios,harmonyos}_window_hosted` |
 | window 契约 | `window/docs/mobile-hosted-backend.md` |
 | 移动端状态 | `checks/platforms/{android,ios,harmonyos}.json` |

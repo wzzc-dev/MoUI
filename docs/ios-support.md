@@ -1,6 +1,6 @@
 # iOS Support
 
-iOS uses the **window-hosted** mobile route and is currently
+iOS uses the **embedded runtime backend** route and is currently
 `runtime_partial`. `wzzc-dev/window/ios` owns UIKit lifecycle, surface, and
 input callbacks; `moui/backend/ios` assembles the MoUI runtime session and
 `moui/backend/ios/skia` provides presentation.
@@ -13,9 +13,9 @@ input callbacks; `moui/backend/ios` assembles the MoUI runtime session and
 | Mobile metadata | `examples/<app>/moui.mobile.json` |
 | MoonBit entrypoint | `examples/<app>/ios_window_hosted` |
 | iOS host template | `wzzc-dev/window/ios/template` |
-| MoUI adapter | `moui/backend/ios/window_hosted.mbt` |
+| MoUI embedded runtime backend | `moui/backend/ios/window_hosted.mbt` |
 
-The entrypoint constructs `IosWindowHostedApp` and calls
+The entrypoint constructs `IosEmbeddedRuntimeBackend` and calls
 `window/ios::EventLoop.run_app`. UIKit must feed lifecycle, surface, and touch
 events through this path only.
 

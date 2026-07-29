@@ -700,7 +700,7 @@ fn generate_project(options : ProjectOptions) -> Result[Array[String], String] {
       Err(
         "the resolved wzzc-dev/moui@" +
         options.moui_version +
-        " package is incompatible with the window-hosted mobile entrypoint. " +
+        " package is incompatible with the embedded-runtime entrypoint. " +
         "Validate against a current `moon package` artifact or set MOUI_PACKAGE_ROOT " +
         "to a current package root. The target directory was rolled back.\n" +
         message,

@@ -1,7 +1,7 @@
 ///|
 /// Window-hosted Android Showcase entrypoint.
 fn main {
-  let app = @android_host.AndroidWindowHostedApp::new(
+  let app = @android_host.AndroidEmbeddedRuntimeBackend::new(
     title="MoUI Showcase (android window-hosted)",
     runtime_factory=metrics => {
       @runtime.new_program(

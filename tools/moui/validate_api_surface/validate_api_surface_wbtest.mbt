@@ -54,7 +54,7 @@ test "api surface semantic categories cover public surface tiers" {
   assert_true(paths.contains("moui/render/pkg.generated.mbti"))
   inspect(
     paths.contains(
-      "moui/backend/internal/embedded_runtime_session/pkg.generated.mbti",
+      "moui/backend/internal/embedded_runtime_backend/pkg.generated.mbti",
     ),
     content="false",
   )
@@ -721,23 +721,23 @@ test "shared app core import budget is an explicit advanced-app allowlist" {
 
 ///|
 test "internal embedded runtime session imports are restricted to platform backends" {
-  let allowed = allowed_embedded_runtime_session_internal_imports()
+  let allowed = allowed_embedded_runtime_backend_internal_imports()
   inspect(allowed.length(), content="4")
   assert_true(allowed.contains("moui/backend/android/moon.pkg"))
   assert_true(allowed.contains("moui/backend/ios/moon.pkg"))
   assert_true(allowed.contains("moui/backend/harmonyos/moon.pkg"))
   assert_true(
-    allowed.contains("moui/backend/internal/embedded_runtime_session/moon.pkg"),
+    allowed.contains("moui/backend/internal/embedded_runtime_backend/moon.pkg"),
   )
   let token = "  \"" +
-    embedded_runtime_session_internal_package_token() +
+    embedded_runtime_backend_internal_package_token() +
     "\",\n"
   let failures : Array[String] = []
-  validate_embedded_runtime_session_internal_import_text(
+  validate_embedded_runtime_backend_internal_import_text(
     "moui/backend/android/moon.pkg", token, failures,
   )
   inspect(failures.length(), content="0")
-  validate_embedded_runtime_session_internal_import_text(
+  validate_embedded_runtime_backend_internal_import_text(
     "examples/counter/app/moon.pkg", token, failures,
   )
   inspect(failures.length(), content="1")

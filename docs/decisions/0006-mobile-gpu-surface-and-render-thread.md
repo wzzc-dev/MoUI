@@ -6,7 +6,7 @@
 
 ## Context
 
-The raster mobile route copies a complete pixel frame to each platform
+The raster embedded-runtime route copies a complete pixel frame to each platform
 presenter. iOS additionally constructs CoreGraphics/UIKit image objects. This
 is useful for compatibility and testing but is not the final performance
 architecture.
@@ -113,7 +113,7 @@ The shared Phase 2 scaffolding required before any platform can flip
   (p95 ≤ 16.7 ms, dropped < 1 %, input-to-present ≤ 2 VSyncs), `memory`
   (bounded, ≥ 100 surface recreation + fg/bg cycles), `contextLoss`
   (recovered within 3 VSyncs, raster fallback preserves AppRuntime), and
-  `rasterFallback` (automatic after repeated failure). No window-hosted mobile
+  `rasterFallback` (automatic after repeated failure). No embedded-runtime
   route currently makes this promotion claim.
 
 ### Phase 2 — Worker-owned GPU presentation (source implemented; promotion pending)

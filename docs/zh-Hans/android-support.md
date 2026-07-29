@@ -1,6 +1,6 @@
 # Android 支持
 
-Android 使用 **window-hosted** 移动端路径，目前状态为 `runtime_partial`。
+Android 使用**嵌入运行时后端**路径，目前状态为 `runtime_partial`。
 `wzzc-dev/window/android` 拥有 Android 生命周期、Surface 与输入队列；
 `moui/backend/android` 将这些回调转换为 MoUI runtime session，
 `moui/backend/android/skia` 提供呈现器。
@@ -13,9 +13,9 @@ Android 使用 **window-hosted** 移动端路径，目前状态为 `runtime_part
 | 移动端元数据 | `examples/<app>/moui.mobile.json` |
 | MoonBit 入口 | `examples/<app>/android_window_hosted` |
 | Android host 模板 | `wzzc-dev/window/android/template` |
-| MoUI adapter | `moui/backend/android/window_hosted.mbt` |
+| MoUI 嵌入运行时后端 | `moui/backend/android/window_hosted.mbt` |
 
-入口创建 `AndroidWindowHostedApp` 并通过 `window/android::EventLoop` 运行。
+入口创建 `AndroidEmbeddedRuntimeBackend` 并通过 `window/android::EventLoop` 运行。
 不要在 window event loop 之外增加第二套生命周期、Surface 或输入桥接。
 
 ## 工具链

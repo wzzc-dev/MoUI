@@ -7,7 +7,7 @@
   Swift/ETS for OS/mobile shells).
 - **Non-goals**:
   - Rewriting browser CDP / Web smoke runners in MoonBit
-  - Replacing window-hosted mobile templates or native presenters
+  - Replacing embedded-runtime templates or native presenters
   - Using MoonBit to install MSVC/SDK/toolchains
   - Big-bang deletion of every `scripts/*.mjs` in one PR
 

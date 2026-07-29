@@ -1,7 +1,7 @@
 ///|
 /// Window-hosted Counter for iOS: HostCmd / ApplicationHandler only.
 fn main {
-  let app = @ios_host.IosWindowHostedApp::new(
+  let app = @ios_host.IosEmbeddedRuntimeBackend::new(
     title="MoUI Counter (window-hosted)",
     runtime_factory=metrics => {
       @runtime.new_program(

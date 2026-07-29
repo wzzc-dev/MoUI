@@ -1,6 +1,6 @@
 # iOS 支持
 
-iOS 使用 **window-hosted** 移动端路径，目前状态为 `runtime_partial`。
+iOS 使用**嵌入运行时后端**路径，目前状态为 `runtime_partial`。
 `wzzc-dev/window/ios` 拥有 UIKit 生命周期、Surface 与输入回调；
 `moui/backend/ios` 组装 MoUI runtime session，`moui/backend/ios/skia`
 提供呈现器。
@@ -13,9 +13,9 @@ iOS 使用 **window-hosted** 移动端路径，目前状态为 `runtime_partial`
 | 移动端元数据 | `examples/<app>/moui.mobile.json` |
 | MoonBit 入口 | `examples/<app>/ios_window_hosted` |
 | iOS host 模板 | `wzzc-dev/window/ios/template` |
-| MoUI adapter | `moui/backend/ios/window_hosted.mbt` |
+| MoUI 嵌入运行时后端 | `moui/backend/ios/window_hosted.mbt` |
 
-入口创建 `IosWindowHostedApp` 并调用 `window/ios::EventLoop.run_app`。
+入口创建 `IosEmbeddedRuntimeBackend` 并调用 `window/ios::EventLoop.run_app`。
 UIKit 生命周期、Surface 与触摸事件只能通过这条路径进入应用。
 
 ## 工具链

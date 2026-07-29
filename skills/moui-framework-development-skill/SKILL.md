@@ -36,9 +36,11 @@ Read only what the task needs:
 - `moui/backend/host`: host service protocols, window/timer/route sources,
   WebView protocol, async image service, accessibility/input/redraw contracts,
   and the shared `EmbedderHostChannel`.
-- `moui/backend/<platform>`: concrete platform hosts. Android, iOS, and HarmonyOS are
-  currently embedded-session scaffolds driven by platform-owned callbacks
-  rather than desktop-style event loops.
+- `moui/backend/{macos,windows,linux}`: native host backends that own the host
+  runtime, native windows, and event-loop integration.
+- `moui/backend/{android,ios,harmonyos}`: embedded runtime backends. The
+  platform `wzzc-dev/window` embedder owns lifecycle, surfaces, input, and the
+  event loop; MoUI owns the attached runtime session and renderer composition.
 - `moui/backend/<platform>/skia`: native Skia mainline renderer providers.
   Android Skia presents copied pixel frames to an embedder-supplied
   `ANativeWindow`; iOS Skia presents copied pixel frames to a UIKit
@@ -162,7 +164,7 @@ owning-package boundaries clear.
   native Skia mainline presenter path plus native WGPU diagnostic surface path,
   optional WebKitGTK platform-view sync, shared host event conversion, and
   explicit native menu/AT-SPI follow-up reporting.
-- `backend/android/`: Android runtime-session adapter. `window/android` owns
+- `backend/android/`: Android embedded runtime backend. `window/android` owns
   the Kotlin/AndroidX template, native event queue, lifecycle, surface, and
   input; the backend translates window events and supplies the renderer
   provider. Package checks are not runtime platform evidence.
@@ -170,14 +172,14 @@ owning-package boundaries clear.
   `ANativeWindow` RGBA pixel presenter and preflight summary. Use
   `MOUI_SKIA_PLATFORM=android` plus `MOUI_SKIA_ARCH=<arch>` for Android Skia
   cross-build checks.
-- `backend/ios/`: iOS runtime-session adapter. `window/ios` owns the UIKit
+- `backend/ios/`: iOS embedded runtime backend. `window/ios` owns the UIKit
   template and event-loop callbacks; the backend translates them and supplies
   the renderer provider. Package checks are not runtime platform evidence.
 - `backend/ios/skia/`: iOS Skia provider over `render/skia`, with a UIKit
   `UIImageView` RGBA pixel presenter and preflight summary. Use
   `MOUI_SKIA_PLATFORM=iosSim` plus `MOUI_SKIA_ARCH=<arch>` for iOS Simulator
   Skia cross-build checks.
-- `backend/harmonyos/`: HarmonyOS runtime-session adapter. `window/harmonyos`
+- `backend/harmonyos/`: HarmonyOS embedded runtime backend. `window/harmonyos`
   owns Stage Ability/XComponent/NAPI lifecycle, native surface acquisition, and
   input callbacks; the backend translates them and supplies the renderer
   provider. Package checks are not runtime platform evidence.

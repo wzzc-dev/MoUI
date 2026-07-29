@@ -57,7 +57,9 @@ pub struct WindowsRendererProvider {
 }
 
 ///|
-struct WindowsApp {
+/// Native host backend: owns the Windows host runtime, native windows, and
+/// event-loop integration rather than attaching a runtime to an embedder.
+struct WindowsNativeHostBackend {
   title : String
   runtime : @runtime.AppRuntime
   driver : @runtime.HostRuntimeDriver
@@ -202,7 +204,7 @@ fn run_app_with_renderer_provider_internal(
   runtime.set_environment(
     services.environment_with_system_theme(runtime.environment()),
   )
-  let app = WindowsApp::{
+  let app = WindowsNativeHostBackend::{
     title,
     runtime,
     driver: @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
@@ -519,7 +521,7 @@ fn WindowsWindowPlatformSlots::remove_host(
 }
 
 ///|
-pub impl @win.ApplicationHandler for WindowsApp with fn can_create_surfaces(
+pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn can_create_surfaces(
   self,
   event_loop,
 ) {
@@ -584,7 +586,7 @@ pub impl @win.ApplicationHandler for WindowsApp with fn can_create_surfaces(
 }
 
 ///|
-pub impl @win.ApplicationHandler for WindowsApp with fn about_to_wait(
+pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn about_to_wait(
   self,
   event_loop,
 ) {
@@ -592,7 +594,7 @@ pub impl @win.ApplicationHandler for WindowsApp with fn about_to_wait(
 }
 
 ///|
-pub impl @win.ApplicationHandler for WindowsApp with fn window_event(
+pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn window_event(
   self,
   event_loop,
   platform_window_id,
@@ -664,8 +666,8 @@ pub impl @win.ApplicationHandler for WindowsApp with fn window_event(
 }
 
 ///|
-fn WindowsApp::dispatch_pointer_or_context_menu(
-  self : WindowsApp,
+fn WindowsNativeHostBackend::dispatch_pointer_or_context_menu(
+  self : WindowsNativeHostBackend,
   window_id : @host.HostWindowId,
   event : @window_core.WindowEvent,
 ) -> Unit {
@@ -683,8 +685,8 @@ fn WindowsApp::dispatch_pointer_or_context_menu(
 }
 
 ///|
-fn WindowsApp::redraw_window(
-  self : WindowsApp,
+fn WindowsNativeHostBackend::redraw_window(
+  self : WindowsNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Bool {
   match
@@ -797,8 +799,8 @@ fn WindowsApp::redraw_window(
 /// Handle a decoded platform-view event received from a plugin's native event
 /// dispatcher. Routes it into the runtime tree via
 /// `HostRuntimeDriver::dispatch_platform_view`, bypassing `HostEvent` entirely.
-fn WindowsApp::dispatch_platform_view_event_from_plugin(
-  self : WindowsApp,
+fn WindowsNativeHostBackend::dispatch_platform_view_event_from_plugin(
+  self : WindowsNativeHostBackend,
   window_ptr : UInt64,
   id : String,
   event : @core.PlatformViewEvent,
@@ -819,8 +821,8 @@ fn WindowsApp::dispatch_platform_view_event_from_plugin(
 ///|
 /// Resolve a native window handle back to its `HostWindowId` by scanning the
 /// live platform slots. Used to route native platform-view events.
-fn WindowsApp::platform_view_host_id(
-  self : WindowsApp,
+fn WindowsNativeHostBackend::platform_view_host_id(
+  self : WindowsNativeHostBackend,
   native_window : UInt64,
 ) -> @host.HostWindowId? {
   for slot in self.platform_slots.slots {
@@ -832,8 +834,8 @@ fn WindowsApp::platform_view_host_id(
 }
 
 ///|
-fn WindowsApp::dispatch_window_event(
-  self : WindowsApp,
+fn WindowsNativeHostBackend::dispatch_window_event(
+  self : WindowsNativeHostBackend,
   window_id : @host.HostWindowId,
   event : @window_core.WindowEvent,
 ) -> Unit {
@@ -872,8 +874,8 @@ fn WindowsApp::dispatch_window_event(
 }
 
 ///|
-fn WindowsApp::publish_subscription_event(
-  self : WindowsApp,
+fn WindowsNativeHostBackend::publish_subscription_event(
+  self : WindowsNativeHostBackend,
   window_id : @host.HostWindowId,
   event : @host.HostEvent,
 ) -> @runtime.HostPlatformEventPublishResult? {
@@ -884,8 +886,8 @@ fn WindowsApp::publish_subscription_event(
 }
 
 ///|
-fn WindowsApp::drain_window_requests(
-  self : WindowsApp,
+fn WindowsNativeHostBackend::drain_window_requests(
+  self : WindowsNativeHostBackend,
   event_loop : @win.ActiveEventLoop,
 ) -> Unit {
   ignore(
@@ -896,8 +898,8 @@ fn WindowsApp::drain_window_requests(
 }
 
 ///|
-fn WindowsApp::apply_window_request(
-  self : WindowsApp,
+fn WindowsNativeHostBackend::apply_window_request(
+  self : WindowsNativeHostBackend,
   event_loop : @win.ActiveEventLoop,
   request : @host.HostWindowRequest,
 ) -> @host.HostWindowRequestResult {
@@ -940,8 +942,8 @@ fn WindowsApp::apply_window_request(
 }
 
 ///|
-fn WindowsApp::apply_platform_window_request(
-  self : WindowsApp,
+fn WindowsNativeHostBackend::apply_platform_window_request(
+  self : WindowsNativeHostBackend,
   id : @host.HostWindowId,
   request : @host.HostWindowRequest,
   apply : (@win.Window) -> Unit,
@@ -963,8 +965,8 @@ fn WindowsApp::apply_platform_window_request(
 }
 
 ///|
-fn WindowsApp::open_window(
-  self : WindowsApp,
+fn WindowsNativeHostBackend::open_window(
+  self : WindowsNativeHostBackend,
   event_loop : @win.ActiveEventLoop,
   request : @host.HostWindowOpenRequest,
 ) -> @host.HostWindowRequestResult {
@@ -978,8 +980,8 @@ fn WindowsApp::open_window(
 }
 
 ///|
-fn WindowsApp::create_resolved_window(
-  self : WindowsApp,
+fn WindowsNativeHostBackend::create_resolved_window(
+  self : WindowsNativeHostBackend,
   event_loop : @win.ActiveEventLoop,
   resolved : @runtime.HostWindowResolvedOpen,
 ) -> @host.HostWindowRequestResult {
@@ -1004,8 +1006,8 @@ fn WindowsApp::create_resolved_window(
 }
 
 ///|
-fn WindowsApp::attach_resolved_window(
-  self : WindowsApp,
+fn WindowsNativeHostBackend::attach_resolved_window(
+  self : WindowsNativeHostBackend,
   window : @win.Window,
   resolved : @runtime.HostWindowResolvedOpen,
 ) -> @host.HostWindowRequestResult {
@@ -1065,8 +1067,8 @@ fn WindowsApp::attach_resolved_window(
 }
 
 ///|
-fn WindowsApp::register_primary_runtime_slot(
-  self : WindowsApp,
+fn WindowsNativeHostBackend::register_primary_runtime_slot(
+  self : WindowsNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
   ignore(
@@ -1079,21 +1081,21 @@ fn WindowsApp::register_primary_runtime_slot(
 }
 
 ///|
-fn WindowsApp::sync_runtime_slot(
-  self : WindowsApp,
+fn WindowsNativeHostBackend::sync_runtime_slot(
+  self : WindowsNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
   ignore(self.runtime_slots.sync_from_registry(self.windows, window_id))
 }
 
 ///|
-fn WindowsApp::sync_runtime_slots(self : WindowsApp) -> Unit {
+fn WindowsNativeHostBackend::sync_runtime_slots(self : WindowsNativeHostBackend) -> Unit {
   ignore(self.runtime_slots.sync_open_from_registry(self.windows))
 }
 
 ///|
-fn WindowsApp::apply_window_lifecycle(
-  self : WindowsApp,
+fn WindowsNativeHostBackend::apply_window_lifecycle(
+  self : WindowsNativeHostBackend,
   window_id : @host.HostWindowId,
   host_event : @host.HostEvent,
 ) -> Unit {
@@ -1103,8 +1105,8 @@ fn WindowsApp::apply_window_lifecycle(
 }
 
 ///|
-fn WindowsApp::active_runtime_slot(
-  self : WindowsApp,
+fn WindowsNativeHostBackend::active_runtime_slot(
+  self : WindowsNativeHostBackend,
 ) -> @runtime.HostWindowRuntimeSlot? {
   match self.runtime_slots.focused_slot() {
     Some(slot) => Some(slot)
@@ -1113,7 +1115,7 @@ fn WindowsApp::active_runtime_slot(
 }
 
 ///|
-fn WindowsApp::sync_text_input_session(self : WindowsApp) -> Unit {
+fn WindowsNativeHostBackend::sync_text_input_session(self : WindowsNativeHostBackend) -> Unit {
   match self.active_runtime_slot() {
     Some(runtime_slot) =>
       match self.platform_slots.lookup_host(runtime_slot.id) {
@@ -1143,7 +1145,7 @@ fn runtime_slot_needs_redraw(slot : @runtime.HostWindowRuntimeSlot) -> Bool {
 }
 
 ///|
-fn WindowsApp::request_redraw(self : WindowsApp) -> Unit {
+fn WindowsNativeHostBackend::request_redraw(self : WindowsNativeHostBackend) -> Unit {
   match self.active_runtime_slot() {
     Some(slot) => self.request_redraw_window_if_needed(slot.id)
     None => ()
@@ -1151,8 +1153,8 @@ fn WindowsApp::request_redraw(self : WindowsApp) -> Unit {
 }
 
 ///|
-fn WindowsApp::request_redraw_window_if_needed(
-  self : WindowsApp,
+fn WindowsNativeHostBackend::request_redraw_window_if_needed(
+  self : WindowsNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
   match self.runtime_slots.lookup(window_id) {
@@ -1169,8 +1171,8 @@ fn WindowsApp::request_redraw_window_if_needed(
 }
 
 ///|
-fn WindowsApp::request_image_resource_redraw_if_changed(
-  self : WindowsApp,
+fn WindowsNativeHostBackend::request_image_resource_redraw_if_changed(
+  self : WindowsNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Bool {
   match
@@ -1206,8 +1208,8 @@ fn WindowsApp::request_image_resource_redraw_if_changed(
 }
 
 ///|
-fn WindowsApp::bind_renderer_image_resource_changes(
-  self : WindowsApp,
+fn WindowsNativeHostBackend::bind_renderer_image_resource_changes(
+  self : WindowsNativeHostBackend,
   window_id : @host.HostWindowId,
   renderer : @render.HostWindowRenderer,
 ) -> Unit {
@@ -1250,8 +1252,8 @@ fn WindowsApp::bind_renderer_image_resource_changes(
 }
 
 ///|
-fn WindowsApp::request_platform_redraw(
-  self : WindowsApp,
+fn WindowsNativeHostBackend::request_platform_redraw(
+  self : WindowsNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
   match self.platform_slots.lookup_host(window_id) {
@@ -1261,8 +1263,8 @@ fn WindowsApp::request_platform_redraw(
 }
 
 ///|
-fn WindowsApp::image_resource_completion_source(
-  self : WindowsApp,
+fn WindowsNativeHostBackend::image_resource_completion_source(
+  self : WindowsNativeHostBackend,
 ) -> @render.HostImageResourceCompletionSource {
   @render.HostImageResourceCompletionSource::new(
     tracker=self.image_repaint_tracker,
@@ -1278,8 +1280,8 @@ fn WindowsApp::image_resource_completion_source(
 }
 
 ///|
-fn WindowsApp::image_resource_window_open(
-  self : WindowsApp,
+fn WindowsNativeHostBackend::image_resource_window_open(
+  self : WindowsNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Bool {
   match self.runtime_slots.lookup(window_id) {
@@ -1290,8 +1292,8 @@ fn WindowsApp::image_resource_window_open(
 }
 
 ///|
-fn WindowsApp::dispose_window(
-  self : WindowsApp,
+fn WindowsNativeHostBackend::dispose_window(
+  self : WindowsNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
   ignore(self.windows.close(window_id))
@@ -1317,8 +1319,8 @@ fn WindowsApp::dispose_window(
 }
 
 ///|
-fn WindowsApp::rollback_window_record(
-  self : WindowsApp,
+fn WindowsNativeHostBackend::rollback_window_record(
+  self : WindowsNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
   ignore(self.windows.close(window_id))

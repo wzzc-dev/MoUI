@@ -468,7 +468,7 @@ fn check_r3_mobile_main(path : String, text : String?) -> HarnessFinding {
         hint: "mobile entry missing main.mbt. See docs/invariants.md#R3",
       }
     Some(body) => {
-      let has_window_app = body.contains("WindowHostedApp") &&
+      let has_window_app = body.contains("EmbeddedRuntimeBackend") &&
         body.contains("EventLoop::new") &&
         body.contains("run_app")
       if !has_window_app {
@@ -476,7 +476,7 @@ fn check_r3_mobile_main(path : String, text : String?) -> HarnessFinding {
           rule: "R3",
           ok: false,
           path,
-          hint: "mobile main.mbt must use window HostCmd ApplicationHandler (*WindowHostedApp / EventLoop.run_app). See docs/invariants.md#R3",
+          hint: "embedded-runtime main.mbt must use window HostCmd ApplicationHandler (*EmbeddedRuntimeBackend / EventLoop.run_app). See docs/invariants.md#R3",
         }
       } else {
         { rule: "R3", ok: true, path, hint: "" }
@@ -505,7 +505,7 @@ fn check_r3_mobile_pkg(path : String, text : String?) -> HarnessFinding {
         hint: if ok {
           ""
         } else {
-          "window-hosted mobile moon.pkg must import wzzc-dev/window/*. See docs/invariants.md#R3"
+          "window-hosted embedded-runtime moon.pkg must import wzzc-dev/window/*. See docs/invariants.md#R3"
         },
       }
     }

@@ -194,7 +194,7 @@ test "mobile config contains window-hosted platform defaults" {
       package_text.contains("wzzc-dev/moui/backend/" + platform),
       content="true",
     )
-    inspect(main_text.contains("WindowHostedApp"), content="true")
+    inspect(main_text.contains("EmbeddedRuntimeBackend"), content="true")
     inspect(main_text.contains("EventLoop::new"), content="true")
     inspect(main_text.contains("run_app(app)"), content="true")
   }

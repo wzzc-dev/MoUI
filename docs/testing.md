@@ -296,18 +296,18 @@ scripts/macos-skia-renderer-smoke.sh --run-ime-smoke
 sh scripts/ci-web-runtime-presentation.sh
 ```
 
-### Window-hosted mobile hosts
+### Embedded runtime backends
 
 Android, iOS, and HarmonyOS all use `wzzc-dev/window` `HostCmd` → `EventLoop`
-→ `ApplicationHandler` → MoUI `*WindowHostedApp`. Run the portable host-sim
-gate after changing a mobile template, entrypoint, or backend adapter:
+→ `ApplicationHandler` → MoUI `*EmbeddedRuntimeBackend`. Run the portable host-sim
+gate after changing an embedded-runtime template, entrypoint, or backend:
 
 ```sh
 sh scripts/window-hosted-hostsim-smoke.sh
 ```
 
 It covers the three window host simulators, the MoUI backend packages, and the
-Counter mobile entrypoints. `--fallback-skia` builds remain packaging-only
+Counter embedded-runtime entrypoints. `--fallback-skia` builds remain packaging-only
 diagnostics and cannot establish a presenter or runtime claim.
 
 For a connected matching target, build and run one platform at a time, then

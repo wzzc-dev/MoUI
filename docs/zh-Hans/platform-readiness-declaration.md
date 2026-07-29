@@ -24,7 +24,7 @@ OS 产品完成度。
 ### 禁止的两种错误表述
 
 1. **不要**写「六端均已产品就绪 / L3 全绿」。
-2. **不要**写「三移动端完全不行 / 生命周期胶水代码未接线 / 只有 Counter 应用」——window-hosted adapter、IME/clipboard/a11y 通道已存在；缺口在 **证据闭环与晋升**，不是没有宿主路线。
+2. **不要**写「三个嵌入运行时后端完全不行 / 生命周期胶水代码未接线 / 只有 Counter 应用」——嵌入运行时后端、IME/clipboard/a11y 通道已存在；缺口在 **证据闭环与晋升**，不是没有宿主路线。
 
 ### 三套状态不要混
 
@@ -328,7 +328,7 @@ bash window/scripts/capture_moui_runtime_evidence.sh linux \
 ### 6.3 Android / iOS / HarmonyOS — Window-hosted 主线
 
 唯一的移动端路线是 `wzzc-dev/window` `HostCmd` → `EventLoop` →
-`ApplicationHandler` → MoUI `*WindowHostedApp`。host-sim 覆盖无需 emulator，验证
+`ApplicationHandler` → MoUI `*EmbeddedRuntimeBackend`。host-sim 覆盖无需 emulator，验证
 template callback path、backend adapters 和 Counter entrypoints：
 
 ```sh

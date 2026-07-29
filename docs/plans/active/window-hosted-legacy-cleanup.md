@@ -26,7 +26,7 @@
 - Removed the retired mobile-shell CLI, CI, packaging, evidence, and guidance
   routes.
 - Kept Android, iOS, and HarmonyOS on the single window-hosted route:
-  `HostCmd` → `EventLoop` → `ApplicationHandler` → `*WindowHostedApp`.
+  `HostCmd` → `EventLoop` → `ApplicationHandler` → `*EmbeddedRuntimeBackend`.
 - Retargeted the host-sim wrapper to the upstream nested window packages
   (`window/modules/window/<platform>`), replacing removed `window/scripts`
   wrappers.

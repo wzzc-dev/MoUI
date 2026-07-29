@@ -26,7 +26,7 @@ OS product completeness.
 ### Two Prohibited Misstatements
 
 1. **Do not** state “all six platforms are product-ready / all L3 checks are green.”
-2. **Do not** state “the three mobile platforms are entirely nonfunctional / lifecycle glue is unwired / only a Counter app exists.” The window-hosted adapters and IME/clipboard/a11y channels exist; the gap is in the **evidence loop and promotion**, not an absent host path.
+2. **Do not** state “the three embedded runtime backends are entirely nonfunctional / lifecycle glue is unwired / only a Counter app exists.” The embedded runtime backends and IME/clipboard/a11y channels exist; the gap is in the **evidence loop and promotion**, not an absent host path.
 
 ### Do Not Conflate the Three Status Sets
 
@@ -361,8 +361,8 @@ SHA `91f596e80d5a5f80d30fa94a8510e5ce4653189e`.
 
 ### 6.3 Android / iOS / HarmonyOS — Window-hosted Mainline
 
-The only mobile route is `wzzc-dev/window` `HostCmd` → `EventLoop` →
-`ApplicationHandler` → MoUI `*WindowHostedApp`. Host-sim coverage verifies the
+The embedded runtime route is `wzzc-dev/window` `HostCmd` → `EventLoop` →
+`ApplicationHandler` → MoUI `*EmbeddedRuntimeBackend`. Host-sim coverage verifies the
 template callback path, backend adapters, and Counter entrypoints without an
 emulator:
 

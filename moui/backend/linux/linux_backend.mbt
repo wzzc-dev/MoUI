@@ -69,7 +69,9 @@ pub(all) struct LinuxClientDecorationState {
 } derive(Eq, Debug, ToJson)
 
 ///|
-struct LinuxApp {
+/// Native host backend: owns the Linux host runtime, native windows, and
+/// event-loop integration rather than attaching a runtime to an embedder.
+struct LinuxNativeHostBackend {
   title : String
   runtime : @runtime.AppRuntime
   driver : @runtime.HostRuntimeDriver

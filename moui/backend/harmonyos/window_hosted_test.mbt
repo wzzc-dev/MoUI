@@ -22,7 +22,7 @@ test "harmonyos window-hosted host-sim creates session and presents" {
       ),
     )
   })
-  let app = HarmonyOsWindowHostedApp::new(
+  let app = HarmonyOsEmbeddedRuntimeBackend::new(
     title="window-hosted-test",
     runtime_factory=metrics => {
       let runtime = @runtime.AppRuntime::new_view(

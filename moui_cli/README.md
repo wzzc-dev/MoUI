@@ -15,7 +15,7 @@ CLI does not create a separate mobile runtime layer.
 | `moui build <platform> <app>` | Build Android, iOS, or HarmonyOS artifacts. |
 | `moui run <platform> <app>` | Build, install, and launch a mobile artifact. |
 | `moui devices` | List connected mobile devices and emulators. |
-| `moui verify <platform> <app>` | Verify generated window-hosted mobile evidence. |
+| `moui verify <platform> <app>` | Verify generated embedded-runtime evidence. |
 | `moui config <action>` | Read or update CLI configuration. |
 
 Use `moui --help` or `moui <command> --help` for current options.

@@ -81,9 +81,6 @@ pub(all) struct LinuxAccessibilityBridgeInfo {
   description : String
 } derive(Eq, ToJson, @debug.Debug)
 
-type LinuxApp
-pub impl @wzzc-dev/window/linux.ApplicationHandler for LinuxApp
-
 pub(all) struct LinuxBackendCapabilities {
   window : Bool
   renderer : Bool
@@ -131,6 +128,9 @@ pub struct LinuxHostSmokeOptions {
 }
 pub fn LinuxHostSmokeOptions::new(first_frame_smoke_auto_exit? : Bool) -> Self
 
+type LinuxNativeHostBackend
+pub impl @wzzc-dev/window/linux.ApplicationHandler for LinuxNativeHostBackend
+
 pub struct LinuxRendererProvider {
   // private fields
 }
@@ -139,4 +139,3 @@ pub fn LinuxRendererProvider::new(create_renderer~ : (@wzzc-dev/window/linux.Win
 // Type aliases
 
 // Traits
-

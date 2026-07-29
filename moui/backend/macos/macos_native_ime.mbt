@@ -25,8 +25,8 @@ extern "C" fn macos_native_ime_smoke_insert_text(
 let macos_native_ime_smoke_max_wait_redraws = 12
 
 ///|
-fn MacosApp::record_native_ime_runtime_smoke(
-  self : MacosApp,
+fn MacosNativeHostBackend::record_native_ime_runtime_smoke(
+  self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Bool {
   if !self.native_ime_runtime_smoke || self.native_ime_runtime_smoke_done {
@@ -83,8 +83,8 @@ fn MacosApp::record_native_ime_runtime_smoke(
 }
 
 ///|
-fn MacosApp::start_native_ime_runtime_smoke(
-  self : MacosApp,
+fn MacosNativeHostBackend::start_native_ime_runtime_smoke(
+  self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
   platform_slot : MacosWindowPlatformSlot,
   runtime_slot : @runtime.HostWindowRuntimeSlot,
@@ -224,8 +224,8 @@ fn MacosApp::start_native_ime_runtime_smoke(
 }
 
 ///|
-fn MacosApp::record_native_ime_composition_smoke(
-  self : MacosApp,
+fn MacosNativeHostBackend::record_native_ime_composition_smoke(
+  self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
   platform_slot : MacosWindowPlatformSlot,
   runtime_slot : @runtime.HostWindowRuntimeSlot,
@@ -279,8 +279,8 @@ fn MacosApp::record_native_ime_composition_smoke(
 }
 
 ///|
-fn MacosApp::finish_native_ime_runtime_smoke(
-  self : MacosApp,
+fn MacosNativeHostBackend::finish_native_ime_runtime_smoke(
+  self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
   platform_slot : MacosWindowPlatformSlot,
   runtime_slot : @runtime.HostWindowRuntimeSlot,
@@ -397,8 +397,8 @@ fn MacosApp::finish_native_ime_runtime_smoke(
 }
 
 ///|
-fn MacosApp::retry_or_fail_native_ime_runtime_smoke(
-  self : MacosApp,
+fn MacosNativeHostBackend::retry_or_fail_native_ime_runtime_smoke(
+  self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
   prefix : String,
   reason : String,
@@ -415,8 +415,8 @@ fn MacosApp::retry_or_fail_native_ime_runtime_smoke(
 }
 
 ///|
-fn MacosApp::fail_native_ime_runtime_smoke(
-  self : MacosApp,
+fn MacosNativeHostBackend::fail_native_ime_runtime_smoke(
+  self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
   prefix : String,
   reason : String,
@@ -486,8 +486,8 @@ fn macos_native_ime_focus_point(title : String) -> @core.Point {
 }
 
 ///|
-fn MacosApp::native_ime_request_matches_window(
-  self : MacosApp,
+fn MacosNativeHostBackend::native_ime_request_matches_window(
+  self : MacosNativeHostBackend,
   platform_slot : MacosWindowPlatformSlot,
   expected_text~ : String,
 ) -> Bool {
@@ -556,8 +556,8 @@ fn macos_native_ime_expected_cursor_size(
 }
 
 ///|
-fn MacosApp::native_ime_runtime_diagnostics(
-  self : MacosApp,
+fn MacosNativeHostBackend::native_ime_runtime_diagnostics(
+  self : MacosNativeHostBackend,
   platform_slot : MacosWindowPlatformSlot,
   input : @core.TextInputState,
 ) -> String {
@@ -575,8 +575,8 @@ fn MacosApp::native_ime_runtime_diagnostics(
 }
 
 ///|
-fn MacosApp::present_native_ime_smoke_frame(
-  self : MacosApp,
+fn MacosNativeHostBackend::present_native_ime_smoke_frame(
+  self : MacosNativeHostBackend,
   platform_slot : MacosWindowPlatformSlot,
   runtime_slot : @runtime.HostWindowRuntimeSlot,
 ) -> Bool {

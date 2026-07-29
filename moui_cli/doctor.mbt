@@ -402,7 +402,7 @@ fn project_entrypoint_checks(
         "wzzc-dev/moui/backend/" + platform,
         "wzzc-dev/window/" + platform,
       ]
-      let main_markers = ["WindowHostedApp", "EventLoop", "run_app"]
+      let main_markers = ["EmbeddedRuntimeBackend", "EventLoop", "run_app"]
       let missing : Array[String] = []
       for marker in package_markers {
         if !package_text.contains(marker) {

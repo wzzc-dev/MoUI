@@ -81,13 +81,13 @@ fn create_macos_app(
   options~ : MacosHostAppOptions,
   smoke_options~ : MacosHostSmokeOptions,
   window_requests~ : @host.HostWindowRequestQueue,
-) -> (@window_macos.EventLoop, MacosApp) {
+) -> (@window_macos.EventLoop, MacosNativeHostBackend) {
   let event_loop = @window_macos.EventLoop::EventLoop()
   let services = macos_service_bridge()
   runtime.set_environment(
     services.environment_with_system_theme(runtime.environment()),
   )
-  let app = MacosApp::{
+  let app = MacosNativeHostBackend::{
     title,
     runtime,
     driver: @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),
@@ -158,7 +158,7 @@ fn create_macos_app(
 ///|
 fn run_app_until_first_present(
   event_loop : @window_macos.EventLoop,
-  app : MacosApp,
+  app : MacosNativeHostBackend,
 ) -> Unit {
   let mut remaining = macos_first_present_pump_limit
   while remaining > 0 && !event_loop.exiting() {

@@ -1,8 +1,8 @@
 ///|
-/// Window-hosted MoUI path (winit-style): surface/input come only from
-/// `wzzc-dev/window/ios` HostCmd → ApplicationHandler. Surface attachment is
-/// driven only by the platform event loop.
-pub struct IosWindowHostedApp {
+/// Embedded runtime backend on the window-hosted route: surface/input comes
+/// only from `wzzc-dev/window/ios` HostCmd → ApplicationHandler. Surface
+/// attachment is driven only by the platform event loop.
+pub struct IosEmbeddedRuntimeBackend {
   title : String
   runtime_factory : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime
   provider_factory : () -> IosRendererProvider
@@ -19,12 +19,12 @@ pub struct IosWindowHostedApp {
 }
 
 ///|
-pub fn IosWindowHostedApp::new(
+pub fn IosEmbeddedRuntimeBackend::new(
   title? : String = "MoUI",
   runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime,
   provider_factory~ : () -> IosRendererProvider,
   auto_exit_after_frames? : Int? = None,
-) -> IosWindowHostedApp {
+) -> IosEmbeddedRuntimeBackend {
   {
     title,
     runtime_factory,
@@ -43,17 +43,17 @@ pub fn IosWindowHostedApp::new(
 }
 
 ///|
-pub fn IosWindowHostedApp::frames_presented(self : IosWindowHostedApp) -> Int {
+pub fn IosEmbeddedRuntimeBackend::frames_presented(self : IosEmbeddedRuntimeBackend) -> Int {
   self.frames_presented
 }
 
 ///|
-pub fn IosWindowHostedApp::surface_generation(self : IosWindowHostedApp) -> Int {
+pub fn IosEmbeddedRuntimeBackend::surface_generation(self : IosEmbeddedRuntimeBackend) -> Int {
   self.last_generation
 }
 
 ///|
-pub fn IosWindowHostedApp::session_attached(self : IosWindowHostedApp) -> Bool {
+pub fn IosEmbeddedRuntimeBackend::session_attached(self : IosEmbeddedRuntimeBackend) -> Bool {
   match self.session {
     Some(session) => session.surface_attached()
     None => false
@@ -61,13 +61,13 @@ pub fn IosWindowHostedApp::session_attached(self : IosWindowHostedApp) -> Bool {
 }
 
 ///|
-pub fn IosWindowHostedApp::has_session(self : IosWindowHostedApp) -> Bool {
+pub fn IosEmbeddedRuntimeBackend::has_session(self : IosEmbeddedRuntimeBackend) -> Bool {
   self.session is Some(_)
 }
 
 ///|
-fn IosWindowHostedApp::metrics_from_window(
-  _self : IosWindowHostedApp,
+fn IosEmbeddedRuntimeBackend::metrics_from_window(
+  _self : IosEmbeddedRuntimeBackend,
   window : @window_ios.Window,
 ) -> @host.HostSurfaceMetrics {
   let size = window.inner_size()
@@ -76,8 +76,8 @@ fn IosWindowHostedApp::metrics_from_window(
 }
 
 ///|
-fn IosWindowHostedApp::attach_session(
-  self : IosWindowHostedApp,
+fn IosEmbeddedRuntimeBackend::attach_session(
+  self : IosEmbeddedRuntimeBackend,
   window : @window_ios.Window,
 ) -> Unit {
   let metrics = self.metrics_from_window(window)
@@ -112,7 +112,7 @@ fn IosWindowHostedApp::attach_session(
 }
 
 ///|
-fn IosWindowHostedApp::detach_session(self : IosWindowHostedApp) -> Unit {
+fn IosEmbeddedRuntimeBackend::detach_session(self : IosEmbeddedRuntimeBackend) -> Unit {
   match self.session {
     Some(session) => ignore(session.detach_view())
     None => ()
@@ -121,7 +121,7 @@ fn IosWindowHostedApp::detach_session(self : IosWindowHostedApp) -> Unit {
 }
 
 ///|
-fn IosWindowHostedApp::sync_ime(self : IosWindowHostedApp) -> Unit {
+fn IosEmbeddedRuntimeBackend::sync_ime(self : IosEmbeddedRuntimeBackend) -> Unit {
   match self.runtime {
     Some(runtime) => self.ime_sink.apply(runtime.focused_text_input())
     None => {
@@ -132,8 +132,8 @@ fn IosWindowHostedApp::sync_ime(self : IosWindowHostedApp) -> Unit {
 }
 
 ///|
-fn IosWindowHostedApp::dispatch_window_event(
-  self : IosWindowHostedApp,
+fn IosEmbeddedRuntimeBackend::dispatch_window_event(
+  self : IosEmbeddedRuntimeBackend,
   event : @window_core.WindowEvent,
 ) -> Unit {
   let scale = match self.window {
@@ -196,7 +196,7 @@ fn IosWindowHostedApp::dispatch_window_event(
 }
 
 ///|
-pub impl @window_ios.ApplicationHandler for IosWindowHostedApp with fn resumed(
+pub impl @window_ios.ApplicationHandler for IosEmbeddedRuntimeBackend with fn resumed(
   _self,
   _event_loop,
 ) {
@@ -204,7 +204,7 @@ pub impl @window_ios.ApplicationHandler for IosWindowHostedApp with fn resumed(
 }
 
 ///|
-pub impl @window_ios.ApplicationHandler for IosWindowHostedApp with fn can_create_surfaces(
+pub impl @window_ios.ApplicationHandler for IosEmbeddedRuntimeBackend with fn can_create_surfaces(
   self,
   event_loop,
 ) {
@@ -226,7 +226,7 @@ pub impl @window_ios.ApplicationHandler for IosWindowHostedApp with fn can_creat
 }
 
 ///|
-pub impl @window_ios.ApplicationHandler for IosWindowHostedApp with fn destroy_surfaces(
+pub impl @window_ios.ApplicationHandler for IosEmbeddedRuntimeBackend with fn destroy_surfaces(
   self,
   _event_loop,
 ) {
@@ -234,7 +234,7 @@ pub impl @window_ios.ApplicationHandler for IosWindowHostedApp with fn destroy_s
 }
 
 ///|
-pub impl @window_ios.ApplicationHandler for IosWindowHostedApp with fn suspended(
+pub impl @window_ios.ApplicationHandler for IosEmbeddedRuntimeBackend with fn suspended(
   self,
   _event_loop,
 ) {
@@ -245,7 +245,7 @@ pub impl @window_ios.ApplicationHandler for IosWindowHostedApp with fn suspended
 }
 
 ///|
-pub impl @window_ios.ApplicationHandler for IosWindowHostedApp with fn window_event(
+pub impl @window_ios.ApplicationHandler for IosEmbeddedRuntimeBackend with fn window_event(
   self,
   event_loop,
   _id,
@@ -265,7 +265,7 @@ pub impl @window_ios.ApplicationHandler for IosWindowHostedApp with fn window_ev
 }
 
 ///|
-pub impl @window_ios.ApplicationHandler for IosWindowHostedApp with fn about_to_wait(
+pub impl @window_ios.ApplicationHandler for IosEmbeddedRuntimeBackend with fn about_to_wait(
   self,
   _event_loop,
 ) {
@@ -285,7 +285,7 @@ pub impl @window_ios.ApplicationHandler for IosWindowHostedApp with fn about_to_
 ///|
 /// Pump one host-sim cycle for tests / offline validation.
 pub fn ios_window_hosted_pump_host_sim(
-  app : IosWindowHostedApp,
+  app : IosEmbeddedRuntimeBackend,
   surface_handle? : UInt64 = 0xABCUL,
   width? : Int = 320,
   height? : Int = 640,

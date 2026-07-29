@@ -17,13 +17,13 @@ fn HostServiceAsyncQueue::cancel_outstanding_with_completions(
 }
 
 ///|
-/// Dispose one mobile surface epoch. Outstanding services complete exactly
+/// Dispose one embedded-runtime surface epoch. Outstanding services complete exactly
 /// once before teardown so an application retained across reattach cannot
 /// remain blocked on the old generation.
 pub fn EmbeddingHostBridge::dispose(
   self : EmbeddingHostBridge,
   driver? : @runtime.HostRuntimeDriver,
-  reason? : String = "mobile host channel disposed",
+  reason? : String = "embedded runtime host channel disposed",
 ) -> Unit {
   if !self.disposed {
     // Fail closed before invoking handlers; cancellation callbacks may try to

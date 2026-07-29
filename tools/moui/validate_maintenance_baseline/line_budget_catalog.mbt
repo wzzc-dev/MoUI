@@ -133,7 +133,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     { path: "moui/backend/host/host_text_input_ime_test.mbt", max_lines: 336 },
     {
-      path: "moui/backend/internal/embedded_runtime_session/embedding_host_bridge.mbt",
+      path: "moui/backend/internal/embedded_runtime_backend/embedding_host_bridge.mbt",
       max_lines: 777,
     },
     {

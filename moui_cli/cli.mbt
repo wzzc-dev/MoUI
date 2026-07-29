@@ -62,7 +62,7 @@ fn root_usage() -> String {
     #|  build           Build a mobile app artifact (APK / .app / .hap) without installing.
     #|  run             Build, install, and launch a mobile app on a device or emulator.
     #|  devices         List connected mobile devices and emulators.
-    #|  verify          Verify window-hosted mobile runtime evidence.
+    #|  verify          Verify embedded-runtime evidence.
     #|  config          Get/set MoUI CLI configuration values (XDG-backed).
     #|
     #|Options:

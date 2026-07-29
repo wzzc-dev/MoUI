@@ -12,7 +12,7 @@ fn make_absolute(path : String, base : String) -> String {
 }
 
 ///|
-/// Return the local upstream `window` package root used by mobile templates
+/// Return the local upstream `window` package root used by embedded-runtime templates
 /// and native glue.
 fn window_package_root(workspace_root : String) -> String {
   join_path(workspace_root, "window/modules/window")
