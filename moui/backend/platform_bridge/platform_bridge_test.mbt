@@ -1,6 +1,7 @@
 ///|
-/// Table-driven tests for the shared_adapter package.
-/// Covers window_event_transformer, render_lifecycle, and platform_capability.
+/// Table-driven tests for the platform_bridge package.
+/// Covers neutral window-event transformation, logical coordinates, surface
+/// lifecycle, and platform capability declarations.
 
 // ---------------------------------------------------------------------------
 // transform_cross_platform_event
@@ -144,4 +145,16 @@ test "PlatformCapabilities :: default values" {
   assert_true(!caps.ephemeral_surface)
   assert_true(caps.has_native_event_pacing)
   assert_true(caps.supports_gpu_surface)
+}
+
+///|
+test "PlatformSurfaceLifecycle carries only neutral metrics" {
+  let size = @dpi.PhysicalSize::PhysicalSize(300, 150)
+  let metrics = make_surface_metrics(size, scale_factor=2.0)
+  let attached = PlatformSurfaceLifecycle::attach(metrics)
+  guard attached.metrics() is Some(current) else {
+    fail("expected an attached surface")
+  }
+  assert_true(current.logical_size.width == 150.0)
+  assert_true(attached.detach().metrics() is None)
 }

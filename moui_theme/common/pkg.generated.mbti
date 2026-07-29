@@ -12,7 +12,7 @@ pub fn color(r~ : Double, g~ : Double, b~ : Double, a? : Double) -> @core.Color
 
 pub fn color_byte(r~ : Int, g~ : Int, b~ : Int, a? : Double) -> @core.Color
 
-pub fn custom(scheme? : @core.ColorScheme, base? : @core.Theme, palette? : @core.ColorPalette, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale, shadow_scale? : @core.ShadowScale, motion? : @core.MotionScale, surfaces? : @core.SurfaceScale, components? : @core.ComponentThemes) -> @core.Theme
+pub fn custom(scheme? : @core.ColorScheme, base? : @core.Theme, palette? : @core.ColorPalette, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale, shadow_scale? : @core.ShadowScale, motion? : @core.MotionScale, surfaces? : @core.SurfaceScale) -> @core.Theme
 
 pub fn custom_tokens(DesignSystemTokens, palette? : DesignSemanticPalette, typography? : DesignTypographyTokens, spacing? : DesignSpacingTokens, radius? : DesignRadiusTokens, elevation? : DesignElevationTokens, motion? : DesignMotionTokens, surfaces? : DesignSurfaceTokens, state_layer? : DesignStateLayerTokens, components? : DesignComponentTokens) -> DesignSystemTokens
 
@@ -59,8 +59,8 @@ pub(all) struct DesignChoiceControlTokens {
   disabled_foreground : @core.Color
   disabled_selected_color : @core.Color
   control_size : Double
-  box_shape : @core.ChoiceControlShape
-  check_style : @core.CheckMarkStyle
+  box_shape : @views.ChoiceControlShape
+  check_style : @views.CheckMarkStyle
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignChoiceControlTokens::core_style(Self) -> @views.ChoiceControlStyle
 
@@ -77,7 +77,7 @@ pub(all) struct DesignComponentTokens {
   badge : DesignBadgeTokens
   form_validation : DesignFormValidationTokens
 } derive(Eq, ToJson, @debug.Debug)
-pub fn DesignComponentTokens::core_themes(Self, @core.ColorScheme) -> @core.ComponentThemes
+pub fn DesignComponentTokens::core_themes(Self, @core.ColorScheme) -> @views.ControlThemeSet
 
 pub(all) struct DesignControlStateTokens {
   foreground : @core.Color
@@ -89,8 +89,8 @@ pub(all) struct DesignControlStateTokens {
   bottom_border_only : Bool
   inner_focus_border : @core.Color?
 } derive(Eq, ToJson, @debug.Debug)
-pub fn DesignControlStateTokens::core_style(Self) -> @core.ControlStateStyle
-pub fn DesignControlStateTokens::core_tokens(Self) -> @core.ControlStateTokens
+pub fn DesignControlStateTokens::core_style(Self) -> @views.ControlStateStyle
+pub fn DesignControlStateTokens::core_tokens(Self) -> @views.ControlStateTokens
 
 pub(all) struct DesignCoreComponentStyles {
   button : DesignButtonCoreStyles
@@ -230,7 +230,7 @@ pub(all) struct DesignSliderTokens {
   track_height : Double
   thumb_size : Double
   radius : Double
-  thumb_shape : @core.ThumbShape
+  thumb_shape : @views.ThumbShape
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignSliderTokens::core_style(Self) -> @views.SliderStyle
 
@@ -253,7 +253,7 @@ pub(all) struct DesignStateLayerTokens {
   selected_alpha : Double
   disabled_alpha : Double
 } derive(Eq, ToJson, @debug.Debug)
-pub fn DesignStateLayerTokens::core_tokens(Self) -> @core.StateLayerTokens
+pub fn DesignStateLayerTokens::core_tokens(Self) -> @views.StateLayerTokens
 
 pub(all) struct DesignSurfaceComponentTokens {
   base_padding : Double
@@ -298,7 +298,7 @@ pub(all) struct DesignSystemTokens {
   components : DesignComponentTokens
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignSystemTokens::core_component_styles(Self) -> DesignCoreComponentStyles
-pub fn DesignSystemTokens::core_themes(Self) -> @core.ComponentThemes
+pub fn DesignSystemTokens::core_themes(Self) -> @views.ControlThemeSet
 pub fn DesignSystemTokens::to_theme(Self) -> @core.Theme
 pub fn DesignSystemTokens::with_palette(Self, DesignSemanticPalette) -> Self
 pub fn DesignSystemTokens::with_radius(Self, DesignRadiusTokens) -> Self

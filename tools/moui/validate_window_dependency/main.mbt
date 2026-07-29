@@ -20,6 +20,7 @@ struct ConsumerVersions {
 struct ValidationResult {
   errors : Array[String]
   pinned : String
+  uses_provider_phase_e_local_window : Bool
 }
 
 ///|
@@ -83,6 +84,38 @@ fn count_window_workspace_members(work : String) -> Int {
     }
   }
   count
+}
+
+///|
+let provider_phase_e_local_window_exception = "provider-phase-e-local-window"
+
+///|
+fn has_provider_phase_e_local_window_exception(exception : String?) -> Bool {
+  match exception {
+    Some(value) => value.trim() == provider_phase_e_local_window_exception
+    None => false
+  }
+}
+
+///|
+fn is_provider_phase_e_local_window_exception(
+  work : String,
+  exception : String?,
+) -> Bool {
+  if !has_provider_phase_e_local_window_exception(exception) ||
+    count_window_workspace_members(work) != 2 {
+    return false
+  }
+  let mut has_window = false
+  let mut has_windowing = false
+  for line in work.split("\n") {
+    match line.trim().to_owned() {
+      "\"./window/modules/window\"," => has_window = true
+      "\"./window/modules/windowing\"," => has_windowing = true
+      _ => ()
+    }
+  }
+  has_window && has_windowing
 }
 
 ///|
@@ -157,19 +190,32 @@ fn mismatch_detail(entries : Array[ConsumerVersions]) -> String {
 fn validate_window_dependency_inputs(
   moon_work : String?,
   consumers : Array[ConsumerText],
+  exception : String?,
 ) -> ValidationResult {
   let errors : Array[String] = []
   let versions_by_consumer : Array[ConsumerVersions] = []
   let all_versions : Array[String] = []
+  let uses_provider_phase_e_local_window = Ref(false)
   match moon_work {
     Some(work) => {
       let member_count = count_window_workspace_members(work)
-      if member_count > 0 {
+      let is_provider_phase_e_exception = is_provider_phase_e_local_window_exception(
+        work, exception,
+      )
+      uses_provider_phase_e_local_window.val = is_provider_phase_e_exception
+      if member_count > 0 && !is_provider_phase_e_exception {
         errors.push(
           "moon.work lists local window workspace member(s) (\{member_count} occurrence(s)).\n" +
           "  This shadows the published wzzc-dev/window dependency for all workspace consumers.\n" +
           "  Fix: run `sh scripts/window-dev-mode.sh off` to restore mooncakes.io resolution.\n" +
-          "  Local window edits belong in a dev-mode worktree, not on the main branch.\n" +
+          "  The sole committed exception is checks/window-dependency-exception.txt plus both nested members.\n" +
+          "  See: docs/invariants.md#R4",
+        )
+      } else if member_count == 0 &&
+        has_provider_phase_e_local_window_exception(exception) {
+        errors.push(
+          "checks/window-dependency-exception.txt enables the Provider Phase E local-window exception without both local members.\n" +
+          "  Fix: remove that file after `sh scripts/window-dev-mode.sh off`.\n" +
           "  See: docs/invariants.md#R4",
         )
       }
@@ -221,7 +267,11 @@ fn validate_window_dependency_inputs(
   } else {
     "(none)"
   }
-  { errors, pinned }
+  {
+    errors,
+    pinned,
+    uses_provider_phase_e_local_window: uses_provider_phase_e_local_window.val,
+  }
 }
 
 ///|
@@ -241,6 +291,7 @@ fn validate_window_dependency(repo_root : String) -> ValidationResult {
   validate_window_dependency_inputs(
     read_optional_text(repo_root, "moon.work"),
     consumers,
+    read_optional_text(repo_root, "checks/window-dependency-exception.txt"),
   )
 }
 
@@ -254,8 +305,15 @@ fn run(args : Array[String]) -> Int {
     Ok(options) => {
       let result = validate_window_dependency(options.repo_root)
       if result.errors.is_empty() {
+        let resolution_mode = if result.uses_provider_phase_e_local_window {
+          "Provider Phase E local-window exception"
+        } else {
+          "mooncakes mode"
+        }
         println(
-          "validate-window-dependency: OK (mooncakes mode, wzzc-dev/window@" +
+          "validate-window-dependency: OK (" +
+          resolution_mode +
+          ", wzzc-dev/window@" +
           result.pinned +
           ")",
         )

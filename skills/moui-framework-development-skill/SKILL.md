@@ -36,6 +36,10 @@ Read only what the task needs:
 - `moui/backend/host`: host service protocols, window/timer/route sources,
   WebView protocol, async image service, accessibility/input/redraw contracts,
   and the shared `EmbedderHostChannel`.
+- `moui/backend/platform_bridge`: platform-to-host conversion for neutral
+  close/focus/resize/scale/redraw/surface lifecycle facts and logical
+  coordinates. It imports only `core`, `backend/host`, and window value types;
+  raw native input decoding stays in the concrete platform backend.
 - `moui/backend/{macos,windows,linux}`: native host backends that own the host
   runtime, native windows, and event-loop integration.
 - `moui/backend/{android,ios,harmonyos}`: embedded runtime backends. The
@@ -51,8 +55,9 @@ Read only what the task needs:
   available; matching-device seven-gate evidence remains the quality bar, not the
   product-default gate.
 - `moui/backend/<platform>/wgpu`: native WGPU diagnostic providers.
-- `moui/render`: renderer facade and renderer-neutral capability/fallback
-  planning.
+- `moui/render`: renderer facade, provider-ID capability aggregation, and the
+  `RendererProviderBinding` contract. Composition roots register ordered
+  bindings and negotiate a surface; `RendererBackendKind` is diagnostic only.
 - `moui/render/skia`: native Skia renderer facade over `moui_skia`.
 - `moui/render/webgpu_adapter`: browser WebGPU host-import adapter for
   `wasm-gc`.

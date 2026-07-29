@@ -5,6 +5,8 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/views",
 }
 
@@ -78,6 +80,7 @@ pub(all) struct ShowcaseModel {
   last_drop_label : String
   gesture_label : String
   host_summary : @host.HostCapabilitySummary
+  renderer_providers : Array[@render.RendererProvider]
 }
 pub fn ShowcaseModel::new() -> Self
 pub fn ShowcaseModel::open(Self, String) -> Self
@@ -88,6 +91,7 @@ pub fn ShowcaseModel::todo_count(Self) -> Int
 pub fn ShowcaseModel::update(Self, ShowcaseMsg) -> Self
 pub fn ShowcaseModel::view_body(Self, @core.ViewEnvironment, width? : Double) -> @core.View[ShowcaseMsg]
 pub fn ShowcaseModel::with_host_summary(Self, @host.HostCapabilitySummary) -> Self
+pub fn ShowcaseModel::with_renderer_providers(Self, Array[@render.RendererProvider]) -> Self
 
 pub(all) enum ShowcaseMsg {
   ToggleScheme
@@ -100,7 +104,7 @@ pub(all) enum ShowcaseMsg {
   RouteBack
   RouteForward
   OpenRouteLink(String)
-  HostRouteChanged(@host.HostRouteEvent)
+  HostRouteChanged(@runtime.HostRouteEvent)
   TabSelected(String)
   ClearFilter
   FilterChanged(String)
@@ -139,10 +143,10 @@ pub(all) enum ShowcaseRouteHistoryCommand {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub struct ShowcaseRouteHost {
-  route_source : @host.HostRouteSource
+  route_source : @runtime.HostRouteSource
   dispatch_command : (ShowcaseRouteHistoryCommand) -> Unit
 }
-pub fn ShowcaseRouteHost::new(route_source~ : @host.HostRouteSource, dispatch_command~ : (ShowcaseRouteHistoryCommand) -> Unit) -> Self
+pub fn ShowcaseRouteHost::new(route_source~ : @runtime.HostRouteSource, dispatch_command~ : (ShowcaseRouteHistoryCommand) -> Unit) -> Self
 
 pub(all) struct ShowcaseTodoItem {
   id : Int

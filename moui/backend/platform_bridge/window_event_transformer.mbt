@@ -22,6 +22,39 @@ pub(all) enum TransformedWindowEvent {
 }
 
 ///|
+/// Neutral surface lifecycle state shared by window-hosted and desktop
+/// adapters. Platform packages keep the native surface handles and own their
+/// attach/detach callbacks; the bridge owns only the logical lifecycle state.
+pub(all) enum PlatformSurfaceLifecycle {
+  Detached
+  Attached(@host.HostSurfaceMetrics)
+} derive(Eq, Debug)
+
+///|
+pub fn PlatformSurfaceLifecycle::attach(
+  metrics : @host.HostSurfaceMetrics,
+) -> PlatformSurfaceLifecycle {
+  PlatformSurfaceLifecycle::Attached(metrics)
+}
+
+///|
+pub fn PlatformSurfaceLifecycle::detach(
+  _self : PlatformSurfaceLifecycle,
+) -> PlatformSurfaceLifecycle {
+  PlatformSurfaceLifecycle::Detached
+}
+
+///|
+pub fn PlatformSurfaceLifecycle::metrics(
+  self : PlatformSurfaceLifecycle,
+) -> @host.HostSurfaceMetrics? {
+  match self {
+    Attached(metrics) => Some(metrics)
+    Detached => None
+  }
+}
+
+///|
 /// Transform a cross-platform `WindowEvent` that carries no platform-
 /// specific payload. Events that require native decode (pointer, keyboard,
 /// IME, drag, modifiers) return `PlatformSpecific` — the caller's

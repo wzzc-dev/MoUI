@@ -36,7 +36,8 @@ thin wiring only                   ▼
 **Domain facades (ADR 0003 / 0014):** `geometry`/`graphics`/`animation`/`text`/`state` re-export curated `@core` types only; `core` never imports them.
 
 **Allowed direction:** app and views depend inward on facades/core; platforms
-normalize into host contracts; renderers consume `DrawCommand` only.
+normalize lifecycle facts through `backend/platform_bridge` into host contracts;
+renderers consume `DrawCommand` only.
 
 **Forbidden (high frequency):**
 
@@ -55,11 +56,12 @@ normalize into host contracts; renderers consume `DrawCommand` only.
 | Cross-runtime protocols | `moui/core` |
 | AppRuntime / trees / effects | `moui/runtime` |
 | Host services & embedder channel | `moui/backend/host` |
+| Neutral platform lifecycle bridge | `moui/backend/platform_bridge` |
 | Native host backends | `moui/backend/{macos,windows,linux}` |
 | Embedded runtime backends | `moui/backend/{android,ios,harmonyos}` |
 | Skia mainline providers | `moui/backend/<platform>/skia` |
 | WGPU diagnostic providers | `moui/backend/<platform>/wgpu` |
-| Renderer facades | `moui/render`, `render/skia`, `render/wgpu`, `render/webgpu_adapter`, `render/sun`, `render/canvas2d` |
+| Renderer facades and provider bindings | `moui/render`, `render/skia`, `render/wgpu`, `render/webgpu_adapter`, `render/sun`, `render/canvas2d` |
 | Skia FFI / native capability | `moui_skia` |
 | Embedded-runtime templates and event loops | `wzzc-dev/window/{android,ios,harmonyos}` |
 | Rich text domain | `moui_richtext` |
@@ -72,7 +74,7 @@ normalize into host contracts; renderers consume `DrawCommand` only.
 |---|---|
 | Native Skia | **Mainline** |
 | Native WGPU | **Diagnostic** |
-| Web `wasm-gc` + browser WebGPU imports | Main web path |
+| Web `wasm-gc` + browser WebGPU imports | Main web path, with Canvas2D provider fallback |
 | Embedded runtime backend route | `runtime_partial` — usable for development, not product-complete |
 | Product `auto` renderer | Prefer `SkiaGpuNative` when host GPU surface exists; `SkiaRasterNative` explicit/recovery |
 
@@ -80,10 +82,12 @@ normalize into host contracts; renderers consume `DrawCommand` only.
 
 - Active members: `moon.work` (see generated `docs/repository-facts.md`).
 - Do not list `./openseek` in `moon.work` by default.
-- Local `./window/modules/window*` members: during the renderer-provider
-  trait refactor (ADR 0019 Phase E) the workspace tracks local window source
-  so `moui/moon.mod` resolves the in-tree module. Outside that window, run
-  `sh scripts/window-dev-mode.sh on/off` only when intentionally editing window.
+- Local `./window/modules/window*` members: the Provider Phase E migration
+  keeps them as an explicit temporary exception while registered package
+  consumers are proven. On Phase E close-out, run
+  `sh scripts/window-dev-mode.sh off` and the package-consumer checks before
+  removing this exception. Outside that window, enable local source only when
+  intentionally editing `window`.
 
 ## Where to go next
 

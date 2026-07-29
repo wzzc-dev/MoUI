@@ -1,0 +1,46 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/backend/platform_bridge"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/window/dpi",
+}
+
+// Values
+pub fn make_surface_metrics(@dpi.PhysicalSize, scale_factor~ : Double) -> @host.HostSurfaceMetrics
+
+pub fn normalize_pointer_position(@dpi.PhysicalPositionF64, scale_factor~ : Double) -> @wzzc-dev/moui/core.Point
+
+pub fn transform_cross_platform_event(@wzzc-dev/window/core.WindowEvent, scale_factor~ : Double, surface_size? : @dpi.PhysicalSize?) -> TransformedWindowEvent
+
+// Errors
+
+// Types and methods
+pub(all) struct PlatformCapabilities {
+  has_client_titlebar : Bool
+  ephemeral_surface : Bool
+  has_native_event_pacing : Bool
+  supports_gpu_surface : Bool
+}
+pub fn PlatformCapabilities::default() -> Self
+
+pub(all) enum PlatformSurfaceLifecycle {
+  Detached
+  Attached(@host.HostSurfaceMetrics)
+} derive(Eq, @debug.Debug)
+pub fn PlatformSurfaceLifecycle::attach(@host.HostSurfaceMetrics) -> Self
+pub fn PlatformSurfaceLifecycle::detach(Self) -> Self
+pub fn PlatformSurfaceLifecycle::metrics(Self) -> @host.HostSurfaceMetrics?
+
+pub(all) enum TransformedWindowEvent {
+  DispatchHostEvent(@host.HostEvent)
+  WindowRedrawRequired
+  CloseRequested
+  PlatformSpecific
+}
+
+// Type aliases
+
+// Traits
+

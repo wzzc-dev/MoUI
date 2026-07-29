@@ -139,48 +139,20 @@ branch on renderer identity, so ADR 0018's host-import baseline holds.
   `moui/core`, `moui/backend/host`, and `moui/runtime` (non-composition-root)
   do not branch on renderer identity.
 
-## Implementation Progress (Phase E, 2026-07-28)
+## Implementation Progress (Phase E, 2026-07-29)
 
-The closed matrix is being replaced incrementally. Current state:
+Provider implementation is now owned by Phase E of the
+[architecture-convergence plan](../plans/active/moui-architecture-convergence.md).
+`moui/render` exposes add-only provider bindings that pair a provider with a
+`HostWindowRenderer` factory. Each platform composition root registers its
+ordered bindings and negotiates the concrete surface; no central runtime
+selector participates in assembly.
 
-- **`NativePlatformSurface` trait** (`moui/render/native_platform_surface.mbt`):
-  platform surface knowledge is decentralized. Each `NativeGpuPlatform` variant
-  owns its `surface_route` / `gpu_promoted` / `platform_label` via
-  `pub impl NativePlatformSurface for NativeGpuPlatform`. The
-  `resolve_surface_route` generic function replaces the central
-  `select_native_renderer` branching for surface routing.
-- **`native_gpu_selection.mbt`** fully refactored: the deprecated
-  `select_native_renderer` function and `NativeRendererSelection` struct are
-  **deleted**. Platform surface routing goes exclusively through
-  `resolve_surface_route` + the `NativePlatformSurface` trait. Platform skia
-  providers (`moui/backend/{macos,windows,linux}/skia/*_skia_provider.mbt`)
-  call `resolve_surface_route` directly.
-- **`capabilities_backend_matrix.mbt` deleted**: `renderer_capability_backends`,
-  `renderer_feature_capability_entry`, and the Sun feature mirror
-  (`sun_feature_status` / `sun_feature_note`) merged into
-  `moui/render/capabilities_report.mbt`. The Sun mirror stays local to
-  `moui/render` because the package cannot depend on its `moui/render/sun`
-  subpackage; provider-driven aggregation will replace the mirror once each
-  provider's `capabilities()` field is wired into a registry.
-- **Sun feature capabilities** (`moui/render/sun/capabilities.mbt`): the Sun
-  provider owns its live `sun_feature_status` / `sun_feature_note` /
-  `sun_feature_capabilities` data. The central matrix mirror is a static
-  duplicate kept only until provider-driven aggregation lands.
-- **Validator enforce mode**: `scripts/validate-renderer-provider-open-extension.mjs`
-  now exits 1 on violations. Check 4 enforces that **no** `.mbt` file anywhere
-  in the repo references the deleted `select_native_renderer` (regression
-  guard). The `CAPABILITY_ALLOWLIST_EXACT` permits `renderer_capability_backends`
-  only in `capabilities_report.mbt`, `capabilities_test.mbt`, and showcase
-  diagnostics.
-
-Remaining migration work (tracked in
-`docs/plans/active/renderer-provider-trait-refactor.md`):
-
-- Provider-driven `renderer_feature_capability_report(providers)` signature
-  that aggregates from each provider's `capabilities()` field, removing the
-  static Sun mirror.
-- Runtime composition root that registers providers and replaces the
-  host-driver renderer switch.
+Capability aggregation consumes the providers registered by that composition
+root and indexes entries by provider ID. Backend classifications remain useful
+diagnostic metadata but do not select, group, or report providers. Web registers
+WebGPU and Canvas2D fallback; Native WGPU remains an explicit diagnostic route.
+The open-extension validator is enforcing this ownership boundary.
 
 ## Agent Notes
 

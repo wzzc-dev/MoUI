@@ -70,7 +70,7 @@ pub fn sun_feature_note(feature : @render.RendererFeature) -> String {
 ///|
 /// Build a Sun raster feature-level capabilities array. Each entry pairs a
 /// feature with its status and note. The Sun provider calls this directly
-/// instead of depending on the central `renderer_backend_capabilities`
+/// instead of depending on a central backend capability table.
 /// matrix (ADR 0019 Phase E).
 pub fn sun_feature_capabilities() -> Array[
   @render.RendererBackendFeatureCapability,
@@ -96,6 +96,7 @@ pub fn sun_feature_capabilities() -> Array[
   ]
   all_features.map(feature => {
     @render.RendererBackendFeatureCapability::new(
+      provider_id="sun-raster",
       feature~,
       backend=@render.RendererBackendKind::SunRasterNative,
       status=sun_feature_status(feature),

@@ -164,7 +164,7 @@ pub fn renderer_provider(
 ) -> @windows_host.WindowsRendererProvider {
   @windows_host.WindowsRendererProvider::new(
     create_renderer=(window, metrics) => {
-      create_renderer(window, metrics, options)
+      create_renderer_from_provider_bindings(window, metrics, options)
     },
     image_loader=Some(skia_async_image_loader()),
   )
@@ -293,7 +293,11 @@ fn skia_host_renderer_bridge_preflight() -> String {
 }
 
 ///|
-fn create_renderer(
+/// Register the desktop production order at this composition root: the Skia
+/// GPU provider is considered first for a GPU surface, then the raster
+/// provider remains available as the recovery binding. WGPU stays in its
+/// dedicated diagnostic entrypoint and is deliberately absent here.
+fn create_renderer_from_provider_bindings(
   window : @win.Window,
   metrics : @host.HostSurfaceMetrics,
   options : WindowsSkiaAppOptions,
@@ -303,12 +307,82 @@ fn create_renderer(
     return None
   }
   let hwnd = window.window_handle()
+  let raster_binding = @skia_renderer.create_skia_raster_host_binding(create_host_renderer=(
+    _renderer_metrics,
+    _bound_surface,
+  ) => {
+    require_host_renderer(
+      create_raster_renderer(hwnd, metrics, options),
+      "Windows Skia raster binding could not create a host renderer",
+    )
+  })
+  let raster_surface = @render.SurfaceDescriptor::cpu_raster(
+    width=metrics.logical_size.width,
+    height=metrics.logical_size.height,
+    scale_factor=metrics.scale_factor,
+  )
   if options.surface_route.is_gpu() &&
-    hwnd != 0UL &&
     @skia_native.Surface::direct3d_gpu_context_runtime_available() {
-    create_gpu_worker_renderer(hwnd, metrics, options)
+    match @render.GpuHostSurfaceDescriptor::d3d12_hwnd(hwnd) {
+      Some(handle) => {
+        let gpu_binding = @skia_renderer.create_skia_hybrid_host_binding(create_host_renderer=(
+          _renderer_metrics,
+          _bound_surface,
+        ) => {
+          require_host_renderer(
+            create_gpu_worker_renderer(hwnd, metrics, options),
+            "Windows Skia GPU binding could not create a host renderer",
+          )
+        })
+        create_host_renderer_from_binding(
+          [gpu_binding, raster_binding],
+          @render.SurfaceDescriptor::gpu_surface(
+            handle~,
+            width=metrics.logical_size.width,
+            height=metrics.logical_size.height,
+            scale_factor=metrics.scale_factor,
+          ),
+          metrics,
+        )
+      }
+      None =>
+        create_host_renderer_from_binding(
+          [raster_binding],
+          raster_surface,
+          metrics,
+        )
+    }
   } else {
-    create_raster_renderer(hwnd, metrics, options)
+    create_host_renderer_from_binding([raster_binding], raster_surface, metrics)
+  }
+}
+
+///|
+fn create_host_renderer_from_binding(
+  bindings : Array[@render.RendererProviderBinding],
+  surface : @render.SurfaceDescriptor,
+  metrics : @host.HostSurfaceMetrics,
+) -> @render.HostWindowRenderer? {
+  match @render.select_renderer_provider_binding(bindings, surface) {
+    Some((binding, bound_surface)) =>
+      Some(
+        (binding.create_host_renderer)(
+          renderer_metrics_from_host(metrics),
+          bound_surface,
+        ),
+      )
+    None => None
+  }
+}
+
+///|
+fn require_host_renderer(
+  renderer : @render.HostWindowRenderer?,
+  message : String,
+) -> @render.HostWindowRenderer {
+  match renderer {
+    Some(renderer) => renderer
+    None => abort(message)
   }
 }
 

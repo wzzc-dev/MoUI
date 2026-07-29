@@ -6,6 +6,7 @@ import {
   "moonbitlang/core/json",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/views",
 }
 
@@ -77,7 +78,7 @@ pub enum Msg {
   ToggleDocsDrawer
   CloseDocsDrawer
   SelectCompactHeroTab(String)
-  HostRouteChanged(@host.HostRouteEvent)
+  HostRouteChanged(@runtime.HostRouteEvent)
   HostCatalogCompleted(@host.HostCompletedServiceResponse)
   HostDocsCompleted(@host.HostCompletedServiceResponse)
 }
@@ -131,13 +132,13 @@ pub enum WebsitePage {
 } derive(Eq, @debug.Debug)
 
 pub struct WebsiteRouteHost {
-  route_source : @host.HostRouteSource
+  route_source : @runtime.HostRouteSource
   push_route : (String) -> Unit
   scroll_to_key : (String, @core.ScrollAlignment) -> Unit
   apply_locale : (String) -> Unit
   update_metadata : (String, String, String, String, String) -> Unit
 }
-pub fn WebsiteRouteHost::new(route_source~ : @host.HostRouteSource, push_route? : (String) -> Unit, scroll_to_key? : (String, @core.ScrollAlignment) -> Unit, apply_locale? : (String) -> Unit, update_metadata? : (String, String, String, String, String) -> Unit) -> Self
+pub fn WebsiteRouteHost::new(route_source~ : @runtime.HostRouteSource, push_route? : (String) -> Unit, scroll_to_key? : (String, @core.ScrollAlignment) -> Unit, apply_locale? : (String) -> Unit, update_metadata? : (String, String, String, String, String) -> Unit) -> Self
 
 // Type aliases
 

@@ -2,11 +2,28 @@
 package "wzzc-dev/moui/runtime"
 
 import {
+  "Milky2018/moon_accesskit",
   "moonbitlang/core/debug",
+  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
 }
 
 // Values
+pub fn accesskit_action_from_semantics(@core.SemanticsActionKind) -> @moon_accesskit.Action
+
+pub fn accesskit_node_from_semantics(@core.SemanticsNode) -> @moon_accesskit.Node
+
+pub fn accesskit_node_id_for_semantics(@core.SemanticsNodeId) -> @moon_accesskit.NodeId
+
+pub fn accesskit_rect_from_core(@core.Rect) -> @moon_accesskit.Rect
+
+pub fn accesskit_role_from_semantics(@core.SemanticsRole) -> @moon_accesskit.Role
+
+pub fn accesskit_update_from_semantics_read(SemanticsRead) -> NativeAccessibilityUpdate?
+
+pub fn drain_to_runtime_slots(@host.HostWindowCommands, @host.HostWindowRegistry, HostWindowRuntimeSlots) -> Array[@host.HostWindowRequestCompletion]
+
 pub fn[Msg] effect_plan_summary(@core.Effect[Msg]) -> EffectPlanSummary
 
 pub fn[Model, Msg] new_program(program~ : @core.Program[Model, Msg], size~ : @core.Size, environment? : @core.Environment) -> AppRuntime
@@ -14,6 +31,10 @@ pub fn[Model, Msg] new_program(program~ : @core.Program[Model, Msg], size~ : @co
 pub fn[Model, Msg] new_program_with_dimensions(program~ : @core.Program[Model, Msg], width~ : Double, height~ : Double, environment? : @core.Environment) -> AppRuntime
 
 pub fn[Msg] new_view(root~ : @core.View[Msg], size~ : @core.Size, environment? : @core.Environment, on_message? : ((Msg) -> Unit)?) -> AppRuntime
+
+pub fn resolve_open_request(@host.HostWindowRegistry, @host.HostWindowOpenRequest, HostWindowSceneResolver) -> HostWindowOpenResolution
+
+pub fn semantics_action_label(@core.SemanticsAction) -> String
 
 pub fn[Msg] subscription_plan_summary(@core.Subscription[Msg]) -> SubscriptionPlanSummary
 
@@ -109,6 +130,178 @@ pub(all) enum EffectTaskLifecycleStatus {
   EffectTaskCancelled
 } derive(Eq, ToJson, @debug.Debug)
 
+pub struct HostEventSource {
+  // private fields
+}
+pub fn HostEventSource::active_handler_count(Self) -> Int
+pub fn HostEventSource::new() -> Self
+pub fn HostEventSource::publish(Self, @host.HostEvent) -> Int
+pub fn[Msg] HostEventSource::subscription(Self, key? : String, label? : String, map~ : (@host.HostEvent) -> Msg?) -> @core.Subscription[Msg]
+
+pub(all) struct HostPlatformEventPublishResult {
+  host_event_count : Int
+  window_event_count : Int
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct HostPlatformEventSources {
+  // private fields
+}
+pub fn HostPlatformEventSources::host_events(Self) -> HostEventSource
+pub fn HostPlatformEventSources::new(host_events? : HostEventSource, window_events? : HostWindowEventSource) -> Self
+pub fn HostPlatformEventSources::publish(Self, window_id~ : @host.HostWindowId, event~ : @host.HostEvent) -> HostPlatformEventPublishResult
+pub fn HostPlatformEventSources::window_events(Self) -> HostWindowEventSource
+
+pub(all) struct HostRouteEvent {
+  location : HostRouteLocation
+  source : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostRouteEvent::from_route(route~ : String, source? : String) -> Self
+pub fn HostRouteEvent::new(location~ : HostRouteLocation, source? : String) -> Self
+pub fn HostRouteEvent::route(Self) -> String
+
+pub(all) struct HostRouteLocation {
+  path : String
+  query : Array[HostRouteQueryParam]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostRouteLocation::new(path~ : String, query? : Array[HostRouteQueryParam]) -> Self
+pub fn HostRouteLocation::parse(String) -> Self
+pub fn HostRouteLocation::query_value(Self, String) -> String?
+pub fn HostRouteLocation::to_route(Self) -> String
+
+pub(all) struct HostRouteQueryParam {
+  key : String
+  value : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostRouteQueryParam::new(key~ : String, value~ : String) -> Self
+
+pub struct HostRouteSource {
+  // private fields
+}
+pub fn HostRouteSource::active_handler_count(Self) -> Int
+pub fn HostRouteSource::new() -> Self
+pub fn HostRouteSource::publish(Self, HostRouteEvent) -> Int
+pub fn[Msg] HostRouteSource::subscription(Self, key? : String, label? : String, map~ : (HostRouteEvent) -> Msg?) -> @core.Subscription[Msg]
+
+pub(all) struct HostRuntimeDriver {
+  runtime : AppRuntime
+  scheduler : RedrawScheduler
+  mut close_requested : Bool
+  mut frame_time_ms : Double
+}
+pub fn HostRuntimeDriver::apply_render_frame_result(Self, @render.RenderFrameResult) -> Unit
+pub fn HostRuntimeDriver::begin_redraw(Self) -> Unit
+pub fn HostRuntimeDriver::dispatch(Self, @host.HostEvent) -> @host.HostEventResult
+pub fn HostRuntimeDriver::dispatch_action_command_with_services(Self, @core.ActionCommand, @host.HostServiceBridge) -> @host.HostEventResult
+pub fn HostRuntimeDriver::dispatch_command_with_services(Self, @core.CommandIntent, @host.HostServiceBridge) -> @host.HostEventResult
+pub fn HostRuntimeDriver::dispatch_keyboard_with_services(Self, @core.KeyboardEvent, @host.HostServiceBridge) -> @host.HostEventResult
+pub fn HostRuntimeDriver::dispatch_platform_view(Self, String, @core.PlatformViewEvent) -> Unit
+pub fn HostRuntimeDriver::dispatch_service_completion(Self, @host.HostCompletedServiceResponse, @host.HostServiceBridge) -> @host.HostEventResult
+pub fn HostRuntimeDriver::draw_commands(Self) -> Array[@core.DrawCommand]
+pub fn HostRuntimeDriver::draw_frame(Self) -> @core.DrawFrame
+pub fn HostRuntimeDriver::environment(Self) -> @core.Environment
+pub fn HostRuntimeDriver::event_result(Self) -> @host.HostEventResult
+pub fn HostRuntimeDriver::finish_redraw(Self) -> Unit
+pub fn HostRuntimeDriver::focused_text_input(Self) -> @core.TextInputState
+pub fn HostRuntimeDriver::new(runtime~ : AppRuntime, schedule_redraw~ : () -> Unit) -> Self
+pub fn HostRuntimeDriver::perform_semantics_action(Self, NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult
+pub fn HostRuntimeDriver::request_redraw(Self) -> Unit
+pub fn HostRuntimeDriver::request_redraw_if_needed(Self) -> Unit
+pub fn HostRuntimeDriver::set_environment(Self, @core.Environment) -> Unit
+pub fn HostRuntimeDriver::set_redraw_scheduler(Self, () -> Unit) -> Unit
+pub fn HostRuntimeDriver::set_text_system(Self, @core.TextSystem) -> Unit
+pub fn HostRuntimeDriver::show_context_menu(Self, @host.HostServiceBridge) -> @host.HostEventResult
+pub fn HostRuntimeDriver::size(Self) -> @core.Size
+
+pub struct HostTimerSource {
+  // private fields
+}
+pub fn HostTimerSource::new(start_timer~ : (Double, (@core.Frame) -> Unit) -> (() -> Unit)?) -> Self
+pub fn[Msg] HostTimerSource::subscription(Self, interval_ms~ : Double, key? : String, label? : String, map~ : (@core.Frame) -> Msg) -> @core.Subscription[Msg]
+
+pub(all) struct HostWallClock {
+  year : Int
+  month : Int
+  day : Int
+  weekday : Int
+  hour : Int
+  minute : Int
+  second : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostWallClock::new(Int, Int, Int, Int, Int, Int, second? : Int) -> Self
+
+pub(all) struct HostWindowEvent {
+  window_id : @host.HostWindowId
+  event : @host.HostEvent
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostWindowEvent::new(window_id~ : @host.HostWindowId, event~ : @host.HostEvent) -> Self
+
+pub struct HostWindowEventSource {
+  // private fields
+}
+pub fn HostWindowEventSource::active_handler_count(Self) -> Int
+pub fn HostWindowEventSource::new() -> Self
+pub fn HostWindowEventSource::publish(Self, window_id~ : @host.HostWindowId, event~ : @host.HostEvent) -> Int
+pub fn[Msg] HostWindowEventSource::subscription(Self, key? : String, label? : String, map~ : (HostWindowEvent) -> Msg?) -> @core.Subscription[Msg]
+
+pub(all) enum HostWindowOpenResolution {
+  OpenResolved(HostWindowResolvedOpen)
+  OpenRejected(String)
+}
+
+pub(all) struct HostWindowResolvedOpen {
+  id : @host.HostWindowId
+  record : @host.HostWindowRecord
+  instance : HostWindowSceneInstance
+}
+pub fn HostWindowResolvedOpen::new(id~ : @host.HostWindowId, record~ : @host.HostWindowRecord, instance~ : HostWindowSceneInstance) -> Self
+
+pub(all) struct HostWindowRuntimeSlot {
+  id : @host.HostWindowId
+  record : @host.HostWindowRecord
+  driver : HostRuntimeDriver
+}
+pub fn HostWindowRuntimeSlot::from_driver(record~ : @host.HostWindowRecord, driver~ : HostRuntimeDriver) -> Self
+pub fn HostWindowRuntimeSlot::from_resolved_open(HostWindowResolvedOpen, schedule_redraw~ : () -> Unit) -> Self
+pub fn HostWindowRuntimeSlot::new(record~ : @host.HostWindowRecord, runtime~ : AppRuntime, schedule_redraw~ : () -> Unit) -> Self
+
+pub struct HostWindowRuntimeSlots {
+  mut slots : Array[HostWindowRuntimeSlot]
+}
+pub fn HostWindowRuntimeSlots::apply_host_event(Self, @host.HostWindowRegistry, @host.HostWindowId, @host.HostEvent) -> Bool
+pub fn HostWindowRuntimeSlots::apply_request(Self, @host.HostWindowRegistry, @host.HostWindowRequest) -> @host.HostWindowRequestResult
+pub fn HostWindowRuntimeSlots::count(Self) -> Int
+pub fn HostWindowRuntimeSlots::focused_slot(Self) -> HostWindowRuntimeSlot?
+pub fn HostWindowRuntimeSlots::insert(Self, HostWindowRuntimeSlot) -> Bool
+pub fn HostWindowRuntimeSlots::insert_from_registry(Self, @host.HostWindowRegistry, @host.HostWindowId, driver~ : HostRuntimeDriver) -> Bool
+pub fn HostWindowRuntimeSlots::is_empty(Self) -> Bool
+pub fn HostWindowRuntimeSlots::lookup(Self, @host.HostWindowId) -> HostWindowRuntimeSlot?
+pub fn HostWindowRuntimeSlots::new() -> Self
+pub fn HostWindowRuntimeSlots::open_slots(Self) -> Array[HostWindowRuntimeSlot]
+pub fn HostWindowRuntimeSlots::primary_slot(Self) -> HostWindowRuntimeSlot?
+pub fn HostWindowRuntimeSlots::remove(Self, @host.HostWindowId) -> HostWindowRuntimeSlot?
+pub fn HostWindowRuntimeSlots::remove_closed(Self) -> Int
+pub fn HostWindowRuntimeSlots::sync_from_registry(Self, @host.HostWindowRegistry, @host.HostWindowId) -> Bool
+pub fn HostWindowRuntimeSlots::sync_open_from_registry(Self, @host.HostWindowRegistry) -> Int
+pub fn HostWindowRuntimeSlots::sync_record(Self, @host.HostWindowRecord) -> Bool
+
+pub(all) struct HostWindowSceneInstance {
+  request : @host.HostWindowOpenRequest
+  runtime : AppRuntime
+}
+pub fn HostWindowSceneInstance::new(request~ : @host.HostWindowOpenRequest, runtime~ : AppRuntime) -> Self
+
+pub(all) enum HostWindowSceneResolution {
+  SceneResolved(HostWindowSceneInstance)
+  SceneRejected(String)
+}
+
+pub struct HostWindowSceneResolver {
+  resolve : (@host.HostWindowOpenRequest) -> HostWindowSceneResolution
+}
+pub fn HostWindowSceneResolver::new(resolve~ : (@host.HostWindowOpenRequest) -> HostWindowSceneResolution) -> Self
+pub fn HostWindowSceneResolver::resolve(Self, @host.HostWindowOpenRequest) -> HostWindowSceneResolution
+pub fn HostWindowSceneResolver::unavailable(reason? : String) -> Self
+
 pub struct InputDispatchResult {
   handled : Bool
   capture_pointer : Bool
@@ -141,6 +334,48 @@ pub fn LayoutInspectorSnapshot::leaf_count(Self) -> Int
 pub fn LayoutInspectorSnapshot::max_depth(Self) -> Int
 pub fn LayoutInspectorSnapshot::node_count(Self) -> Int
 pub fn LayoutInspectorSnapshot::root_frame(Self) -> @core.Rect
+
+pub(all) struct NativeAccessibilityActionRequest {
+  node_id : @core.SemanticsNodeId
+  generation : @core.SemanticsGeneration
+  action : @core.SemanticsAction
+} derive(Eq, ToJson, @debug.Debug)
+pub fn NativeAccessibilityActionRequest::new(node_id~ : @core.SemanticsNodeId, generation~ : @core.SemanticsGeneration, action~ : @core.SemanticsAction) -> Self
+
+pub(all) enum NativeAccessibilityActionResult {
+  Handled(SemanticsActionReceipt)
+  Rejected(SemanticsActionDispatchError)
+  BridgeUnavailable(String)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct NativeAccessibilityBridge {
+  kind : NativeAccessibilityBridgeKind
+  available : Bool
+  publish : (SemanticsRead) -> NativeAccessibilityUpdate?
+  perform : (NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult
+}
+pub fn NativeAccessibilityBridge::new(kind~ : NativeAccessibilityBridgeKind, available? : Bool, publish? : (SemanticsRead) -> NativeAccessibilityUpdate?, perform? : (NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult) -> Self
+pub fn NativeAccessibilityBridge::perform_action(Self, NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult
+pub fn NativeAccessibilityBridge::publish_semantics(Self, SemanticsRead) -> NativeAccessibilityUpdate?
+pub fn NativeAccessibilityBridge::runtime(kind~ : NativeAccessibilityBridgeKind, runtime~ : AppRuntime) -> Self
+pub fn NativeAccessibilityBridge::unavailable(kind~ : NativeAccessibilityBridgeKind, reason? : String) -> Self
+
+pub(all) enum NativeAccessibilityBridgeKind {
+  AppKit
+  UIAutomation
+  ATSPI
+  TestBridge
+} derive(Eq, ToJson, @debug.Debug)
+pub fn NativeAccessibilityBridgeKind::label(Self) -> String
+
+pub struct NativeAccessibilityUpdate {
+  generation : @core.SemanticsGeneration
+  tree_update : @moon_accesskit.TreeUpdate
+  removed : Array[@core.SemanticsNodeId]
+}
+pub fn NativeAccessibilityUpdate::generation(Self) -> @core.SemanticsGeneration
+pub fn NativeAccessibilityUpdate::removed(Self) -> Array[@core.SemanticsNodeId]
+pub fn NativeAccessibilityUpdate::tree_update(Self) -> @moon_accesskit.TreeUpdate
 
 pub(all) struct PerformSemanticsActionRequest {
   target : @core.SemanticsTarget
@@ -189,6 +424,25 @@ pub fn ProgramRuntimeSnapshot::started_subscription_count(Self) -> Int
 pub fn ProgramRuntimeSnapshot::subscription_lifecycle(Self) -> Array[SubscriptionLifecycleSnapshot]
 pub fn ProgramRuntimeSnapshot::subscription_plan_count(Self) -> Int
 pub fn ProgramRuntimeSnapshot::update_count(Self) -> Int
+
+pub(all) struct RedrawScheduler {
+  mut state : RedrawSchedulerState
+  mut schedule : () -> Unit
+}
+pub fn RedrawScheduler::begin_redraw(Self) -> Unit
+pub fn RedrawScheduler::finish_redraw(Self) -> Unit
+pub fn RedrawScheduler::is_redraw_requested(Self) -> Bool
+pub fn RedrawScheduler::new(schedule~ : () -> Unit) -> Self
+pub fn RedrawScheduler::request(Self) -> Unit
+pub fn RedrawScheduler::set_schedule(Self, () -> Unit) -> Unit
+pub fn RedrawScheduler::state(Self) -> RedrawSchedulerState
+
+pub(all) enum RedrawSchedulerState {
+  RedrawIdle
+  RedrawScheduled
+  RedrawInFrame
+  RedrawFollowUpScheduled
+} derive(Eq, ToJson, @debug.Debug)
 
 pub struct RenderInspectorSnapshot {
   // private fields

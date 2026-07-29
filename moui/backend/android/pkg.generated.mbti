@@ -5,6 +5,7 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/internal/embedded_runtime_backend",
+  "wzzc-dev/moui/backend/platform_bridge",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
 }
@@ -72,6 +73,7 @@ pub struct AndroidEmbeddedRuntimeBackend {
   modifiers : @wzzc-dev/moui/core.KeyModifiers
   mut last_generation : Int
   mut frames_presented : Int
+  mut surface_lifecycle : @platform_bridge.PlatformSurfaceLifecycle
   auto_exit_after_frames : Int?
 }
 pub fn AndroidEmbeddedRuntimeBackend::frames_presented(Self) -> Int

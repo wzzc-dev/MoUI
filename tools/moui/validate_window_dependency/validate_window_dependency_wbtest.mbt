@@ -47,9 +47,24 @@ test "valid consumers pin one shared window version" {
       consumer("moui/moon.mod", "\"wzzc-dev/window@0.5.1-0.1.6\""),
       consumer("moui_skia/moon.mod", "\"wzzc-dev/window@0.5.1-0.1.6\""),
     ],
+    None,
   )
   inspect(result.errors.is_empty(), content="true")
   inspect(result.pinned, content="0.5.1-0.1.6")
+  inspect(result.uses_provider_phase_e_local_window, content="false")
+}
+
+///|
+test "allows the exact Provider Phase E local-window exception" {
+  let result = validate_window_dependency_inputs(
+    Some(
+      "members = [\n  \"./window/modules/window\",\n  \"./window/modules/windowing\",\n]\n",
+    ),
+    [consumer("moui/moon.mod", "\"wzzc-dev/window@0.5.1-0.1.6\"")],
+    Some("provider-phase-e-local-window\n"),
+  )
+  inspect(result.errors.is_empty(), content="true")
+  inspect(result.uses_provider_phase_e_local_window, content="true")
 }
 
 ///|
@@ -57,6 +72,7 @@ test "rejects local window workspace member" {
   let result = validate_window_dependency_inputs(
     Some("members = [\n  \"./window\",\n]\n"),
     [consumer("moui/moon.mod", "\"wzzc-dev/window@0.5.1-0.1.6\"")],
+    None,
   )
   inspect(result.errors.length(), content="1")
   assert_true(
@@ -69,10 +85,23 @@ test "rejects local window workspace member" {
 }
 
 ///|
+test "rejects a stale Provider Phase E marker" {
+  let result = validate_window_dependency_inputs(
+    Some("members = [\n]\n"),
+    [consumer("moui/moon.mod", "\"wzzc-dev/window@0.5.1-0.1.6\"")],
+    Some("provider-phase-e-local-window\n"),
+  )
+  inspect(result.errors.length(), content="1")
+  assert_true(result.errors[0].contains("without both local members"))
+}
+
+///|
 test "reports missing expected consumer dependency" {
-  let result = validate_window_dependency_inputs(Some("members = []\n"), [
-    consumer("moui/moon.mod", "import {}"),
-  ])
+  let result = validate_window_dependency_inputs(
+    Some("members = []\n"),
+    [consumer("moui/moon.mod", "import {}")],
+    None,
+  )
   inspect(result.errors.length(), content="1")
   inspect(
     result.errors[0],
@@ -84,11 +113,15 @@ test "reports missing expected consumer dependency" {
 
 ///|
 test "reports multiple versions in one consumer" {
-  let result = validate_window_dependency_inputs(Some("members = []\n"), [
-    consumer(
-      "moui/moon.mod", "\"wzzc-dev/window@0.5.1-0.1.6\"\n\"wzzc-dev/window@0.5.1-0.1.7\"",
-    ),
-  ])
+  let result = validate_window_dependency_inputs(
+    Some("members = []\n"),
+    [
+      consumer(
+        "moui/moon.mod", "\"wzzc-dev/window@0.5.1-0.1.6\"\n\"wzzc-dev/window@0.5.1-0.1.7\"",
+      ),
+    ],
+    None,
+  )
   inspect(result.errors.length(), content="2")
   assert_true(
     result.errors[0].contains(
@@ -104,10 +137,14 @@ test "reports multiple versions in one consumer" {
 
 ///|
 test "reports cross-consumer version mismatch" {
-  let result = validate_window_dependency_inputs(Some("members = []\n"), [
-    consumer("moui/moon.mod", "\"wzzc-dev/window@0.5.1-0.1.6\""),
-    consumer("moui_skia/moon.mod", "\"wzzc-dev/window@0.5.1-0.1.7\""),
-  ])
+  let result = validate_window_dependency_inputs(
+    Some("members = []\n"),
+    [
+      consumer("moui/moon.mod", "\"wzzc-dev/window@0.5.1-0.1.6\""),
+      consumer("moui_skia/moon.mod", "\"wzzc-dev/window@0.5.1-0.1.7\""),
+    ],
+    None,
+  )
   inspect(result.errors.length(), content="1")
   assert_true(result.errors[0].contains("  - moui/moon.mod: 0.5.1-0.1.6"))
   assert_true(result.errors[0].contains("  - moui_skia/moon.mod: 0.5.1-0.1.7"))

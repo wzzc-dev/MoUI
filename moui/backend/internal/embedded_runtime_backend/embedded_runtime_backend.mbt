@@ -71,7 +71,9 @@ pub fn EmbeddedRuntimeBackendCore::runtime(
 }
 
 ///|
-pub fn EmbeddedRuntimeBackendCore::disposed(self : EmbeddedRuntimeBackendCore) -> Bool {
+pub fn EmbeddedRuntimeBackendCore::disposed(
+  self : EmbeddedRuntimeBackendCore,
+) -> Bool {
   self.disposed
 }
 
@@ -94,7 +96,9 @@ pub fn EmbeddedRuntimeBackendCore::session_generation(
 }
 
 ///|
-pub fn EmbeddedRuntimeBackendCore::surface_epoch(self : EmbeddedRuntimeBackendCore) -> Int {
+pub fn EmbeddedRuntimeBackendCore::surface_epoch(
+  self : EmbeddedRuntimeBackendCore,
+) -> Int {
   self.transport.surface_epoch()
 }
 
@@ -135,7 +139,9 @@ pub fn EmbeddedRuntimeBackendCore::attach_surface(
 }
 
 ///|
-pub fn EmbeddedRuntimeBackendCore::detach_surface(self : EmbeddedRuntimeBackendCore) -> Bool {
+pub fn EmbeddedRuntimeBackendCore::detach_surface(
+  self : EmbeddedRuntimeBackendCore,
+) -> Bool {
   if self.disposed || self.renderer is None {
     return false
   }
@@ -402,7 +408,9 @@ pub fn EmbeddedRuntimeBackendCore::take_redraw_requested(
 }
 
 ///|
-pub fn EmbeddedRuntimeBackendCore::present_count(self : EmbeddedRuntimeBackendCore) -> Int {
+pub fn EmbeddedRuntimeBackendCore::present_count(
+  self : EmbeddedRuntimeBackendCore,
+) -> Int {
   match self.renderer {
     Some(renderer) if !self.disposed => renderer.present_count()
     _ => 0
@@ -410,7 +418,9 @@ pub fn EmbeddedRuntimeBackendCore::present_count(self : EmbeddedRuntimeBackendCo
 }
 
 ///|
-pub fn EmbeddedRuntimeBackendCore::dispose(self : EmbeddedRuntimeBackendCore) -> Unit {
+pub fn EmbeddedRuntimeBackendCore::dispose(
+  self : EmbeddedRuntimeBackendCore,
+) -> Unit {
   if !self.disposed {
     ignore(self.detach_surface())
     ignore(self.transport.destroy())

@@ -6,6 +6,7 @@ import {
   "moonbitlang/core/json",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/views",
   "wzzc-dev/moui_richtext",
 }
@@ -60,7 +61,7 @@ pub fn MarkdownEditorApp::new() -> Self
 pub fn MarkdownEditorApp::new_with_services(@host.HostAppServices) -> Self
 pub fn MarkdownEditorApp::persist_settings(Self, @host.HostAppServices) -> Unit
 pub fn MarkdownEditorApp::program(Self) -> @core.Program[Self, MarkdownEditorMsg]
-pub fn MarkdownEditorApp::program_with_services(Self, @host.HostAppServices, timer_source? : @host.HostTimerSource?) -> @core.Program[Self, MarkdownEditorMsg]
+pub fn MarkdownEditorApp::program_with_services(Self, @host.HostAppServices, timer_source? : @runtime.HostTimerSource?) -> @core.Program[Self, MarkdownEditorMsg]
 pub fn MarkdownEditorApp::save_document_as(Self, String) -> Unit
 
 pub struct MarkdownEditorConfirmRequest {

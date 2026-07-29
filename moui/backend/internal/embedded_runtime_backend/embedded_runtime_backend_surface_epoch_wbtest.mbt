@@ -78,7 +78,10 @@ impl @core.ViewNode for EmbeddedRuntimeSemanticsNode with fn declaration(_self) 
 }
 
 ///|
-impl @core.ViewNode for EmbeddedRuntimeSemanticsNode with fn layout(_self, context) {
+impl @core.ViewNode for EmbeddedRuntimeSemanticsNode with fn layout(
+  _self,
+  context,
+) {
   @core.ViewLayoutResult::new(
     size=context.constraints.constrain(@core.Size::new(width=80.0, height=32.0)),
   )
@@ -99,7 +102,9 @@ impl @core.ViewNode for EmbeddedRuntimeSemanticsNode with fn semantics(self) {
 }
 
 ///|
-fn embedded_runtime_semantics_view(visible : Bool) -> @core.View[EmbeddedRuntimeSemanticsMsg] {
+fn embedded_runtime_semantics_view(
+  visible : Bool,
+) -> @core.View[EmbeddedRuntimeSemanticsMsg] {
   @core.View::from_node(EmbeddedRuntimeSemanticsNode::{ visible, }, semantics_actions=_node => {
     if visible {
       [

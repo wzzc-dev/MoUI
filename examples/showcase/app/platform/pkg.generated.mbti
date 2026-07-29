@@ -5,6 +5,7 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
 }
 
 // Values
@@ -18,7 +19,7 @@ pub fn normalize_platform_route(String) -> String
 
 pub fn platform_routes() -> Array[String]
 
-pub fn program(services? : @host.HostAppServices, timer_source? : @host.HostTimerSource?, window_events? : @host.HostWindowEventSource?, route? : String) -> @core.Program[Model, Msg]
+pub fn program(services? : @host.HostAppServices, timer_source? : @runtime.HostTimerSource?, window_events? : @runtime.HostWindowEventSource?, route? : String) -> @core.Program[Model, Msg]
 
 pub fn subscriptions(Model) -> @core.Subscription[Msg]
 
@@ -56,17 +57,17 @@ pub struct Model {
   stroke_points : Array[@core.Point]
   anim_phase : Double
   services : @host.HostAppServices
-  timer_source : @host.HostTimerSource?
-  window_events : @host.HostWindowEventSource?
+  timer_source : @runtime.HostTimerSource?
+  window_events : @runtime.HostWindowEventSource?
   probe_text : String
   probe_action_count : Int
   probe_submit_count : Int
   host_label : String
 }
-pub fn Model::new(services? : @host.HostAppServices, timer_source? : @host.HostTimerSource?, window_events? : @host.HostWindowEventSource?, timer_running? : Bool, route? : String, host_label? : String) -> Self
+pub fn Model::new(services? : @host.HostAppServices, timer_source? : @runtime.HostTimerSource?, window_events? : @runtime.HostWindowEventSource?, timer_running? : Bool, route? : String, host_label? : String) -> Self
 pub fn Model::open(Self, String) -> Self
 pub fn Model::route(Self) -> String
-pub fn Model::with_host_adapters(Self, services? : @host.HostAppServices, timer_source? : @host.HostTimerSource?, window_events? : @host.HostWindowEventSource?) -> Self
+pub fn Model::with_host_adapters(Self, services? : @host.HostAppServices, timer_source? : @runtime.HostTimerSource?, window_events? : @runtime.HostWindowEventSource?) -> Self
 pub fn Model::with_host_label(Self, String) -> Self
 
 pub(all) enum Msg {

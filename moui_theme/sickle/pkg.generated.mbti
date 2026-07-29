@@ -4,9 +4,12 @@ package "wzzc-dev/moui_theme/sickle"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views",
 }
 
 // Values
+pub fn control_theme_set(scheme? : @core.ColorScheme, mode? : SickleStyleMode) -> @views.ControlThemeSet
+
 pub fn dark_theme(mode? : SickleStyleMode) -> @core.Theme
 
 pub fn flat_theme(scheme? : @core.ColorScheme) -> @core.Theme

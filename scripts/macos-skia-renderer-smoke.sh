@@ -859,6 +859,11 @@ export MOUI_SKIA_EXTRA_CC_FLAGS="$native_extra_cc_flags"
 export MOUI_SKIA_EXTRA_LINK_FLAGS="$native_extra_link_flags"
 if [[ $run_gpu_smoke -eq 1 ]]; then
   export MOUI_SKIA_ENABLE_GPU_METAL=1
+else
+  # The default renderer smoke uses the dynamic JetBrains package, whose
+  # Ganesh extension is static-only. Keep Metal/Ganesh probing confined to
+  # the explicit GPU route, which selects a compatible static package.
+  export MOUI_SKIA_ENABLE_GPU_METAL=0
 fi
 unset MOUI_SKIA_DISABLE_PREBUILD_SKIA || true
 

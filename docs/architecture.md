@@ -31,11 +31,13 @@ ViewDeclaration -> ElementTree
 | `moui/views/` | Public view constructors, app-facing control APIs, default themes, form/navigation/data helpers, and concrete `ViewNode` behavior constructed with `@core.View::from_node`. |
 | `moui/runtime/` | AppRuntime construction, runtime state, element/layout/render/semantics/platform tree generation, committed semantics generations and indices, event/action dispatch, program queue drain, effects, subscriptions, diagnostics, and inspector snapshots. |
 | `moui/backend/host/` | Shared host contracts for windows, routes, timers, host services, WebView, async image loading, accessibility, input, redraw scheduling, and renderer handoff. |
+| `moui/backend/platform_bridge/` | Neutral lifecycle and logical-coordinate bridge from platform facts to host contracts; it does not decode raw native input. |
 | `moui/backend/internal/embedded_runtime_backend/` | Private runtime assembly for Android, iOS, and HarmonyOS embedded runtime backends; it composes `AppRuntime`, host contracts, and renderers after `ApplicationHandler` callbacks. |
-| `moui/backend/{macos,windows,linux,android,ios,harmonyos,web}/` | Concrete platform backend implementations. macOS, Windows, and Linux are native host backends; Android, iOS, and HarmonyOS are embedded runtime backends driven by `wzzc-dev/window`; web is the canonical browser host. |
+| `moui/backend/{macos,windows,linux,android,ios,harmonyos,web}/` | Concrete platform backend implementations. macOS, Windows, and Linux are native host backends; Android, iOS, and HarmonyOS are embedded runtime backends driven by `wzzc-dev/window`; web is the canonical browser host. They decode native input locally and route neutral lifecycle facts through `platform_bridge`. |
+| `moui/backend/wechat/` | Direct Canvas2D callback host. It is in the bridge duplication inventory but intentionally does not fabricate a `WindowEvent` import. |
 | `moui/backend/{macos,windows,linux,android,ios,harmonyos}/skia/` | Native Skia renderer provider packages for the main native route. Android presents CPU pixel frames to an `ANativeWindow`; iOS presents CPU pixel frames to a UIKit `UIImageView` child; HarmonyOS presents CPU pixel frames to a supplied XComponent native-window handle. |
 | `moui/backend/{macos,windows,linux}/wgpu/` | Native WGPU diagnostic provider packages. |
-| `moui/render/` | Renderer facade, shared render capability models, fallback planning, shader/image helpers, and renderer-neutral command handling. |
+| `moui/render/` | Renderer facade, provider-ID capability reports, `RendererProviderBinding` composition contract, fallback planning, shader/image helpers, and renderer-neutral command handling. |
 | `moui/render/skia/` | Native Skia renderer facade over `moui_skia`. |
 | `moui/render/webgpu_adapter/` | Browser WebGPU host-import adapter for `wasm-gc`. |
 | `moui/render/wgpu/` | Experimental native WGPU renderer and native text providers. |
@@ -143,8 +145,13 @@ workspace.
   platform WGPU provider -> `moui/render/wgpu`. This is diagnostic, not the
   default mainline.
 
-Platform entrypoints should stay thin: create the program/runtime, select the
-backend and renderer provider, and pass app-owned service adapters. Business
+Platform entrypoints should stay thin: create the program/runtime, assemble
+their ordered provider bindings, negotiate the surface, and pass app-owned
+service adapters. Binding selection uses `RendererProvider.id`; the optional
+`RendererBackendKind` classification is diagnostic-only. Desktop product lists
+prefer Skia GPU then raster according to the requested route; Web registers
+WebGPU then Canvas2D fallback; native WGPU remains an explicit diagnostic
+route. Business
 model/update/view logic should remain in the shared app package.
 
 Embedded runtime sessions share `EmbedderHostChannel` for sequenced IME
@@ -631,6 +638,16 @@ renderer handoff. Full details: [Platform Host Contract](platform-host-contract.
 
 See [Platform notes](platform-notes.md) for setup, backend-specific constraints,
 and validation commands.
+
+## Platform Bridge
+
+`backend/platform_bridge` is the only shared platform-event conversion layer.
+It owns Close, Focus, resize/scale, redraw, surface attach/detach, lifecycle
+state, and logical-coordinate normalization. It depends only on `core`, host
+contracts, and `window` value types. Platform packages keep raw pointer,
+keyboard, IME, drag, and modifier decoding plus pacing and capability details.
+WeChat is the `direct-canvas-callback` exception: it remains subject to the
+duplication gate but imports no fictitious window-event API.
 
 ## Accessibility
 

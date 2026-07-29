@@ -390,12 +390,7 @@ fn WebApp::resize_renderer(
   metrics : @host.HostSurfaceMetrics,
 ) -> Unit {
   match self.platform_slots.lookup_host(window_id) {
-    Some(slot) =>
-      slot.renderer.resize(metrics) catch {
-        err => {
-          let _ = err
-        }
-      }
+    Some(slot) => slot.renderer.resize(metrics)
     None => ()
   }
 }

@@ -130,8 +130,9 @@ pub fn skia_raster_native_descriptor() -> @render.RendererDescriptor {
     family=@render.RendererFamily::Skia,
     presentation=@render.RendererPresentationModel::CpuPixelFrame,
     supported_targets=[@render.RendererTarget::Native],
-    capabilities=@render.renderer_backend_capabilities(
-      @render.RendererBackendKind::SkiaRasterNative,
+    capabilities=skia_provider_capabilities(
+      provider_id="skia-raster",
+      backend=@render.RendererBackendKind::SkiaRasterNative,
     ),
     description="Native Skia raster renderer that presents copied RGBA premultiplied pixel frames to the host.",
   )
@@ -144,8 +145,9 @@ pub fn skia_gpu_native_descriptor() -> @render.RendererDescriptor {
     family=@render.RendererFamily::Skia,
     presentation=@render.RendererPresentationModel::HostGpuSurface,
     supported_targets=[@render.RendererTarget::Native],
-    capabilities=@render.renderer_backend_capabilities(
-      @render.RendererBackendKind::SkiaGpuNative,
+    capabilities=skia_provider_capabilities(
+      provider_id="skia-hybrid",
+      backend=@render.RendererBackendKind::SkiaGpuNative,
     ),
     description="Native Skia GPU renderer identity for direct host GPU surfaces. Providers must prove a matching Metal, Vulkan, EGL/GLES, or Direct3D surface before selecting it; resolve_surface_route picks the platform-appropriate SkiaSurfaceRoute (metal/vulkan/egl/direct3d) and the matching HostGpuPresentTarget wiring. Per ADR 0006, SkiaGpuNative is descriptive only until per-platform promotion manifests pass; Auto resolves to SkiaRasterNative.",
   )

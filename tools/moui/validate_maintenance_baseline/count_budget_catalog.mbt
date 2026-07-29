@@ -40,13 +40,14 @@ fn pub_all_budgets() -> Array[CountBudget] {
       kind: "pub(all)",
       label: "moui/render",
       path: "moui/render",
-      // 56 = 47 (prior baseline) + 9 for ADR 0019 RendererProvider plugin
+      // 57 = 47 (prior baseline) + 10 for ADR 0019 RendererProvider plugin
       // system: RendererProvider, RendererInstance, RendererProviderRegistry,
       // SurfaceDescriptor, BoundSurface, SurfaceNegotiationResult,
-      // RendererRecoveryKind, RendererProviderDescriptor, and the provider
-      // factory aliases. The integration API is intentionally budgeted here
-      // rather than leaking these types into the app facade.
-      max_count: 56,
+      // RendererRecoveryKind, RendererProviderDescriptor, provider factory
+      // aliases, and RendererProviderBinding. The integration API is
+      // intentionally budgeted here rather than leaking these types into the
+      // app facade.
+      max_count: 57,
     },
     {
       kind: "pub(all)",

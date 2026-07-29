@@ -25,7 +25,7 @@ pub fn run_smoke_app_with_options(String, @runtime.AppRuntime, options~ : LinuxS
 pub struct LinuxSkiaAppOptions {
   // private fields
 }
-pub fn LinuxSkiaAppOptions::new(scene_resolver? : @runtime.HostWindowSceneResolver, event_sources? : @host.HostPlatformEventSources?, font_resolution? : @wzzc-dev/moui/render/skia.SkiaFontResolution, surface_route? : @render.SkiaSurfaceRoute, platform_view_plugins? : Array[@host.PlatformViewPlugin]) -> Self
+pub fn LinuxSkiaAppOptions::new(scene_resolver? : @runtime.HostWindowSceneResolver, event_sources? : @runtime.HostPlatformEventSources?, font_resolution? : @wzzc-dev/moui/render/skia.SkiaFontResolution, surface_route? : @render.SkiaSurfaceRoute, platform_view_plugins? : Array[@host.PlatformViewPlugin]) -> Self
 
 pub struct LinuxSkiaSmokeOptions {
   // private fields

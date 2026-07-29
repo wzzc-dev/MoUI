@@ -303,7 +303,9 @@ fn LinuxNativeHostBackend::sync_runtime_slot(
 }
 
 ///|
-fn LinuxNativeHostBackend::sync_runtime_slots(self : LinuxNativeHostBackend) -> Unit {
+fn LinuxNativeHostBackend::sync_runtime_slots(
+  self : LinuxNativeHostBackend,
+) -> Unit {
   ignore(self.runtime_slots.sync_open_from_registry(self.windows))
 }
 
@@ -329,7 +331,9 @@ fn LinuxNativeHostBackend::active_runtime_slot(
 }
 
 ///|
-fn LinuxNativeHostBackend::sync_text_input_session(self : LinuxNativeHostBackend) -> Unit {
+fn LinuxNativeHostBackend::sync_text_input_session(
+  self : LinuxNativeHostBackend,
+) -> Unit {
   match self.active_runtime_slot() {
     Some(runtime_slot) =>
       match self.platform_slots.lookup_host(runtime_slot.id) {
@@ -370,7 +374,9 @@ fn runtime_slot_needs_redraw(slot : @runtime.HostWindowRuntimeSlot) -> Bool {
 }
 
 ///|
-fn LinuxNativeHostBackend::request_redraw(self : LinuxNativeHostBackend) -> Unit {
+fn LinuxNativeHostBackend::request_redraw(
+  self : LinuxNativeHostBackend,
+) -> Unit {
   match self.active_runtime_slot() {
     Some(slot) => self.request_redraw_window_if_needed(slot.id)
     None => ()

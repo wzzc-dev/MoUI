@@ -153,7 +153,7 @@ pub fn renderer_provider(
 ) -> @linux_host.LinuxRendererProvider {
   @linux_host.LinuxRendererProvider::new(
     create_renderer=(window, metrics) => {
-      create_renderer(window, metrics, options)
+      create_renderer_from_provider_bindings(window, metrics, options)
     },
     image_loader=Some(skia_async_image_loader()),
   )
@@ -282,7 +282,10 @@ fn skia_host_renderer_bridge_preflight() -> String {
 }
 
 ///|
-fn create_renderer(
+/// The Wayland composition root registers native Skia GPU before raster when
+/// a Vulkan surface is available. The native WGPU provider remains a separate
+/// diagnostic route and never participates in product `auto` selection.
+fn create_renderer_from_provider_bindings(
   window : @window_linux.Window,
   metrics : @host.HostSurfaceMetrics,
   options : LinuxSkiaAppOptions,
@@ -291,17 +294,89 @@ fn create_renderer(
     println(linux_skia_unavailable_message())
     return None
   }
+  let raster_binding = @skia_renderer.create_skia_raster_host_binding(create_host_renderer=(
+    _renderer_metrics,
+    _bound_surface,
+  ) => {
+    require_host_renderer(
+      create_raster_renderer(window, metrics, options),
+      "Linux Skia raster binding could not create a host renderer",
+    )
+  })
+  let raster_surface = @render.SurfaceDescriptor::cpu_raster(
+    width=metrics.logical_size.width,
+    height=metrics.logical_size.height,
+    scale_factor=metrics.scale_factor,
+  )
   let display_ptr = window.display_handle()
   let surface_ptr = window.window_handle()
   if options.surface_route.is_gpu() &&
-    display_ptr != 0UL &&
-    surface_ptr != 0UL &&
     @skia_native.Surface::vulkan_gpu_context_runtime_available() {
-    create_gpu_worker_renderer(
-      window, display_ptr, surface_ptr, metrics, options,
-    )
+    match
+      @render.GpuHostSurfaceDescriptor::wayland_vulkan_surface(
+        display_ptr, surface_ptr,
+      ) {
+      Some(handle) => {
+        let gpu_binding = @skia_renderer.create_skia_hybrid_host_binding(create_host_renderer=(
+          _renderer_metrics,
+          _bound_surface,
+        ) => {
+          require_host_renderer(
+            create_gpu_worker_renderer(
+              window, display_ptr, surface_ptr, metrics, options,
+            ),
+            "Linux Skia GPU binding could not create a host renderer",
+          )
+        })
+        create_host_renderer_from_binding(
+          [gpu_binding, raster_binding],
+          @render.SurfaceDescriptor::gpu_surface(
+            handle~,
+            width=metrics.logical_size.width,
+            height=metrics.logical_size.height,
+            scale_factor=metrics.scale_factor,
+          ),
+          metrics,
+        )
+      }
+      None =>
+        create_host_renderer_from_binding(
+          [raster_binding],
+          raster_surface,
+          metrics,
+        )
+    }
   } else {
-    create_raster_renderer(window, metrics, options)
+    create_host_renderer_from_binding([raster_binding], raster_surface, metrics)
+  }
+}
+
+///|
+fn create_host_renderer_from_binding(
+  bindings : Array[@render.RendererProviderBinding],
+  surface : @render.SurfaceDescriptor,
+  metrics : @host.HostSurfaceMetrics,
+) -> @render.HostWindowRenderer? {
+  match @render.select_renderer_provider_binding(bindings, surface) {
+    Some((binding, bound_surface)) =>
+      Some(
+        (binding.create_host_renderer)(
+          renderer_metrics_from_host(metrics),
+          bound_surface,
+        ),
+      )
+    None => None
+  }
+}
+
+///|
+fn require_host_renderer(
+  renderer : @render.HostWindowRenderer?,
+  message : String,
+) -> @render.HostWindowRenderer {
+  match renderer {
+    Some(renderer) => renderer
+    None => abort(message)
   }
 }
 

@@ -50,11 +50,157 @@ pub fn renderer_descriptor() -> @render.RendererDescriptor {
       @render.RendererTarget::WasmGc,
       @render.RendererTarget::Web,
     ],
-    capabilities=@render.renderer_backend_capabilities(
-      @render.RendererBackendKind::WebGpuWasm,
+    capabilities=webgpu_provider_capabilities(
+      provider_id="webgpu-wasm",
+      backend=@render.RendererBackendKind::WebGpuWasm,
     ),
     description="Browser WebGPU renderer reached through wasm-gc host imports.",
   )
+}
+
+///|
+/// Provider factory for the wasm-gc WebGPU adapter. Browser composition owns
+/// the canvas-specific renderer factory while this package owns negotiation
+/// and its capability declaration.
+pub fn create_webgpu_provider(
+  create_webgpu~ : (@render.RendererSurfaceMetrics) -> WebGpuWasmRenderer,
+) -> @render.RendererProvider {
+  let caps = webgpu_provider_capabilities(
+    provider_id="webgpu-wasm",
+    backend=@render.RendererBackendKind::WebGpuWasm,
+  )
+  @render.RendererProvider::{
+    id: "webgpu-wasm",
+    descriptor: renderer_descriptor(),
+    capabilities: () => caps,
+    negotiate: web_canvas_negotiate_surface,
+    create: (metrics, _bound) => webgpu_create_instance(metrics, create_webgpu~),
+  }
+}
+
+///|
+/// Build the browser Canvas2D fallback provider. The browser runtime exposes
+/// its Canvas2D implementation through the WebGPU-compatible host-import
+/// port, so this provider intentionally creates `WebGpuWasmRenderer` values
+/// instead of importing the WeChat-only `canvas2d` wasm host module.
+pub fn create_browser_canvas2d_fallback_provider(
+  create_canvas2d~ : (@render.RendererSurfaceMetrics) -> WebGpuWasmRenderer,
+) -> @render.RendererProvider {
+  let caps = browser_canvas2d_fallback_capabilities(
+    provider_id="canvas2d",
+    backend=@render.RendererBackendKind::Canvas2DWasm,
+  )
+  @render.RendererProvider::{
+    id: "canvas2d",
+    descriptor: @render.RendererDescriptor::new(
+      backend=@render.RendererBackendKind::Canvas2DWasm,
+      family=@render.RendererFamily::Canvas2D,
+      presentation=@render.RendererPresentationModel::WebCanvas,
+      supported_targets=[
+        @render.RendererTarget::WasmGc,
+        @render.RendererTarget::Web,
+      ],
+      capabilities=caps,
+      description="Browser Canvas2D fallback reached through the WebGPU-compatible wasm-gc host-import port.",
+    ),
+    capabilities: () => caps,
+    negotiate: web_canvas_negotiate_surface,
+    create: (metrics, _bound) => {
+      webgpu_create_instance(metrics, create_webgpu=create_canvas2d)
+    },
+  }
+}
+
+///|
+pub fn webgpu_provider_capabilities(
+  provider_id~ : String,
+  backend~ : @render.RendererBackendKind,
+) -> Array[@render.RendererBackendFeatureCapability] {
+  @render.renderer_provider_capabilities(provider_id~, backend~, capability_for=feature => {
+    let status = match feature {
+      @render.RendererFeature::Gradient | @render.RendererFeature::Transform =>
+        @render.RendererFeatureStatus::Partial
+      _ => @render.RendererFeatureStatus::Supported
+    }
+    (status, "Browser WebGPU provider declares \{feature.label()} support.")
+  })
+}
+
+///|
+pub fn browser_canvas2d_fallback_capabilities(
+  provider_id~ : String,
+  backend~ : @render.RendererBackendKind,
+) -> Array[@render.RendererBackendFeatureCapability] {
+  @render.renderer_provider_capabilities(provider_id~, backend~, capability_for=feature => {
+    let status = match feature {
+      @render.RendererFeature::Image | @render.RendererFeature::AsyncImage =>
+        @render.RendererFeatureStatus::Partial
+      _ => @render.RendererFeatureStatus::Supported
+    }
+    (
+      status,
+      "Browser Canvas2D fallback provider declares \{feature.label()} support.",
+    )
+  })
+}
+
+///|
+fn web_canvas_negotiate_surface(
+  surface : @render.SurfaceDescriptor,
+) -> @render.SurfaceNegotiationResult {
+  match surface {
+    @render.SurfaceDescriptor::CpuRaster(width, height, scale_factor) =>
+      if width >= 1.0 && height >= 1.0 && scale_factor > 0.0 {
+        @render.SurfaceNegotiationResult::SurfaceAccepted(
+          @render.BoundSurface::new(
+            kind=@render.RendererPresentationModel::WebCanvas,
+            route=@render.SkiaSurfaceRoute::RasterSurfaceRoute,
+            metrics=@render.RendererSurfaceMetrics::from_logical(
+              size=@core.Size::new(width~, height~),
+              scale_factor~,
+            ),
+          ),
+        )
+      } else {
+        @render.SurfaceNegotiationResult::SurfaceRejected(
+          "invalid browser canvas dimensions",
+        )
+      }
+    @render.SurfaceDescriptor::GpuSurface(_, _, _, _) =>
+      @render.SurfaceNegotiationResult::SurfaceRejected(
+        "browser renderer provider accepts canvas surfaces",
+      )
+  }
+}
+
+///|
+fn webgpu_create_instance(
+  metrics : @render.RendererSurfaceMetrics,
+  create_webgpu~ : (@render.RendererSurfaceMetrics) -> WebGpuWasmRenderer,
+) -> @render.RendererInstance {
+  let renderer = create_webgpu(metrics)
+  let disposed = Ref(false)
+  @render.RendererInstance::{
+    render_frame: frame => {
+      if disposed.val {
+        return @render.RenderFrameResult::new(presented=false)
+      }
+      renderer.render_frame(frame)
+    },
+    recover: _reason => {
+      if disposed.val {
+        @render.RecoveryResult::RecoveryFailed("renderer is disposed")
+      } else {
+        @render.RecoveryResult::RecoverySucceeded
+      }
+    },
+    dispose: () => {
+      if !disposed.val {
+        disposed.val = true
+        renderer.dispose()
+      }
+    },
+  }
 }
 
 ///|

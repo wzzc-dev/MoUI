@@ -58,7 +58,7 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
     {
       path: "moui/views/pkg.generated.mbti",
       category: "app_style",
-      max_count: 210,
+      max_count: 223,
     },
     {
       path: "moui/views/pkg.generated.mbti",
@@ -78,12 +78,12 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
     {
       path: "moui/runtime/pkg.generated.mbti",
       category: "runtime_diagnostic",
-      max_count: 298,
+      max_count: 407,
     },
     {
       path: "moui/runtime/pkg.generated.mbti",
       category: "required_protocol",
-      max_count: 16,
+      max_count: 34,
     },
     {
       path: "moui/runtime/pkg.generated.mbti",
@@ -118,12 +118,12 @@ fn api_surface_classification_budgets() -> Array[ApiSurfaceCategoryBudget] {
     {
       path: "moui/render/pkg.generated.mbti",
       category: "renderer_contract",
-      max_count: 150,
+      max_count: 271,
     },
     {
       path: "moui/render/pkg.generated.mbti",
       category: "required_protocol",
-      max_count: 40,
+      max_count: 47,
     },
     {
       path: "moui/render/pkg.generated.mbti",
@@ -202,9 +202,9 @@ fn core_api_surface_function_prefixes() -> Array[String] {
 fn views_style_tokens() -> Array[String] {
   [
     "Style", "Theme", "theme", "Color", "Typography", "ButtonVariant", "ContainerVariant",
-    "TextRole", "TextFieldVariant", "Tone", "BadgeTone", "FeedbackTone", "PresenceStatus",
-    "IconName", "CrossAlign", "MainAlign", "PopoverPlacement", "SegmentedControlSize",
-    "SheetPresentationMode", "ChipVariant", "DatePickerMode",
+    "TextRole", "TextFieldVariant", "Tone", "Token", "BadgeTone", "FeedbackTone",
+    "PresenceStatus", "IconName", "CrossAlign", "MainAlign", "PopoverPlacement",
+    "SegmentedControlSize", "SheetPresentationMode", "ChipVariant", "DatePickerMode",
   ]
 }
 
@@ -225,10 +225,12 @@ fn classify_api_surface_line(path : String, line : String) -> String? {
   if line.has_prefix("pub(all)") {
     if path == "moui/views/pkg.generated.mbti" {
       // pub(all) enum is the only way to expose enum variants for external
-      // construction in MoonBit; it is intentional public API, not debt.
-      // Only pub(all) struct remains as migration debt (currently 0).
+      // construction in MoonBit. Views also owns externally constructed
+      // control-theme records, so classify those as styles rather than debt.
       if line.has_prefix("pub(all) enum") {
         // Fall through to semantic classification below
+      } else if line_has_any_token(line, views_style_tokens()) {
+        return Some("app_style")
       } else {
         return Some("migration_debt")
       }

@@ -55,31 +55,48 @@ pub impl @window_web.ApplicationHandler for WebApp with fn window_event(
     Some(window_id) => window_id
     None => return ()
   }
-  match event {
-    @window_core.WindowEvent::CloseRequested => {
-      self.dispatch_window_event(window_id, event)
+  let surface_size = match self.platform_slots.lookup_host(window_id) {
+    Some(slot) => Some(slot.window.surface_size())
+    None => None
+  }
+  match
+    @platform_bridge.transform_cross_platform_event(
+      event,
+      scale_factor=self.current_scale_factor(window_id),
+      surface_size~,
+    ) {
+    @platform_bridge.TransformedWindowEvent::CloseRequested => {
+      self.dispatch_host_event(window_id, @host.HostEvent::CloseRequested)
       self.dispose_window(window_id)
       if self.runtime_slots.is_empty() {
         event_loop.exit()
       }
+      return ()
     }
-    @window_core.WindowEvent::SurfaceResized(_) => {
-      self.dispatch_window_event(window_id, event)
-      self.request_platform_redraw(window_id)
+    @platform_bridge.TransformedWindowEvent::DispatchHostEvent(host_event) => {
+      self.dispatch_host_event(window_id, host_event)
+      match host_event {
+        @host.HostEvent::Resized(_) => self.request_platform_redraw(window_id)
+        _ => ()
+      }
+      return ()
     }
-    @window_core.WindowEvent::ScaleFactorChanged(_, _) => {
-      self.dispatch_window_event(window_id, event)
-      self.request_platform_redraw(window_id)
+    @platform_bridge.TransformedWindowEvent::WindowRedrawRequired => {
+      self.redraw_window(window_id)
+      return ()
     }
+    @platform_bridge.TransformedWindowEvent::PlatformSpecific => ()
+  }
+  match event {
     @window_core.WindowEvent::PointerMoved(_, position, _, _) => {
-      self.last_pointer = @host.physical_position_to_core(
+      self.last_pointer = @platform_bridge.normalize_pointer_position(
         position,
         scale_factor=self.current_scale_factor(window_id),
       )
       self.dispatch_window_event(window_id, event)
     }
     @window_core.WindowEvent::PointerButton(_, _, position, _, _) => {
-      self.last_pointer = @host.physical_position_to_core(
+      self.last_pointer = @platform_bridge.normalize_pointer_position(
         position,
         scale_factor=self.current_scale_factor(window_id),
       )
@@ -88,14 +105,14 @@ pub impl @window_web.ApplicationHandler for WebApp with fn window_event(
     @window_core.WindowEvent::DragEntered(_, position)
     | @window_core.WindowEvent::DragMoved(position)
     | @window_core.WindowEvent::DragDropped(_, position) => {
-      self.last_pointer = @host.physical_position_to_core(
+      self.last_pointer = @platform_bridge.normalize_pointer_position(
         position,
         scale_factor=self.current_scale_factor(window_id),
       )
       self.dispatch_window_event(window_id, event)
     }
     @window_core.WindowEvent::DragLeft(Some(position)) => {
-      self.last_pointer = @host.physical_position_to_core(
+      self.last_pointer = @platform_bridge.normalize_pointer_position(
         position,
         scale_factor=self.current_scale_factor(window_id),
       )
@@ -103,7 +120,6 @@ pub impl @window_web.ApplicationHandler for WebApp with fn window_event(
     }
     @window_core.WindowEvent::ModifiersChanged(modifiers) =>
       self.modifiers = @host.modifiers_to_core(modifiers)
-    @window_core.WindowEvent::RedrawRequested => self.redraw_window(window_id)
     _ => self.dispatch_window_event(window_id, event)
   }
 }
@@ -154,30 +170,7 @@ fn WebApp::dispatch_window_event(
       self.modifiers,
       scale_factor=self.current_scale_factor(window_id),
     ) {
-    Some(host_event) => {
-      self.apply_window_lifecycle(window_id, host_event)
-      match self.runtime_slots.lookup(window_id) {
-        Some(slot) =>
-          match host_event {
-            @host.HostEvent::Resized(metrics) => {
-              self.resize_renderer(window_id, metrics)
-              ignore(slot.driver.dispatch(host_event))
-            }
-            @host.HostEvent::Keyboard(event) =>
-              ignore(
-                slot.driver.dispatch_keyboard_with_services(
-                  event,
-                  self.services,
-                ),
-              )
-            _ => ignore(slot.driver.dispatch(host_event))
-          }
-        None => ()
-      }
-      ignore(self.publish_subscription_event(window_id, host_event))
-      self.drain_async_host_services()
-      self.sync_text_input_session()
-    }
+    Some(host_event) => self.dispatch_host_event(window_id, host_event)
     None => ()
   }
 }

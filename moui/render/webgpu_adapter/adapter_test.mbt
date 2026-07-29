@@ -15,6 +15,34 @@ test "wgpu web adapter is wasm-gc host-import only" {
 }
 
 ///|
+test "browser Canvas2D fallback provider shares the browser host port" {
+  let provider = create_browser_canvas2d_fallback_provider(create_canvas2d=metrics => {
+    try! create_renderer(
+      canvas_id="moui-fallback-canvas",
+      logical_size=metrics.logical_size,
+      scale_factor=metrics.scale_factor,
+      port=test_port(created=Ref(0)),
+    )
+  })
+  inspect(provider.id, content="canvas2d")
+  assert_true(
+    provider.descriptor.backend == @render.RendererBackendKind::Canvas2DWasm,
+  )
+  assert_true(provider.descriptor.family == @render.RendererFamily::Canvas2D)
+  match
+    (provider.negotiate)(
+      @render.SurfaceDescriptor::cpu_raster(
+        width=320.0,
+        height=180.0,
+        scale_factor=2.0,
+      ),
+    ) {
+    @render.SurfaceNegotiationResult::SurfaceAccepted(_) => ()
+    @render.SurfaceNegotiationResult::SurfaceRejected(message) => fail(message)
+  }
+}
+
+///|
 test "wgpu web surface must be created through host port" {
   let created = Ref(0)
   let port = test_port(created~)

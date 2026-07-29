@@ -82,9 +82,7 @@ pub fn sun_raster_native_descriptor() -> @render.RendererDescriptor {
     family=@render.RendererFamily::Sun,
     presentation=@render.RendererPresentationModel::CpuPixelFrame,
     supported_targets=[@render.RendererTarget::Native],
-    capabilities=@render.renderer_backend_capabilities(
-      @render.RendererBackendKind::SunRasterNative,
-    ),
+    capabilities=sun_feature_capabilities(),
     description="Native Sun CPU raster renderer that presents copied RGBA pixel frames to host providers.",
   )
 }

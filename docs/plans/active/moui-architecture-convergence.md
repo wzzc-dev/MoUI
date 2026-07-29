@@ -5,7 +5,7 @@
   ADR 0014/0015/0017-0020 and invariants P3-P6/R1-R2/M6. Make `core` neutral,
   `views` own control vocabulary, `backend/host` platform-neutral contracts
   only, `render/*` a provider-plugin system, platform adapters thin wiring
-  over a shared transformer. Preserve Native Skia mainline, Native WGPU
+  over `backend/platform_bridge`. Preserve Native Skia mainline, Native WGPU
   diagnostic, embedded-runtime entrypoints, and existing platform behavior.
 - **Decisions**: ADR 0017 (Theme layering), 0018 (host split),
   0019 (renderer provider), 0020 (platform adapter convergence).
@@ -98,11 +98,12 @@ Phase E  Task 4 — renderer provider plugin (ADR 0019)
       render/recover/dispose); delete its central matrix contributions.
   E3  render/wgpu + render/webgpu_adapter: implement RendererProvider.
   E4  render/canvas2d + render/sun: implement RendererProvider.
-  E5  moui/render: delete native_gpu_selection.mbt +
-      capabilities_backend_matrix.mbt; renderer.mbt facade becomes a thin
-      provider registry helper or moves to runtime composition root.
-  E6  moui/runtime composition root: register providers for the build;
-      selection = capability negotiation, not central switch. Recovery
+  E5  moui/render: add `RendererProviderBinding` at composition boundaries;
+      each binding couples a provider to host-renderer construction. Delete
+      the obsolete registry selector directly (no deprecated alias) and remove
+      static backend selection/matrix paths.
+  E6  platform composition roots: register compile-time provider bindings;
+      selection = provider negotiation, not central switch. Recovery
       fallback = SkiaRasterNative provider-declared capability (R2 preserved).
   E7  Contract test suite: render/skia and render/wgpu pass the same
       RendererProvider suite. Add a throwaway test renderer/provider that only
@@ -112,35 +113,49 @@ Phase E  Task 4 — renderer provider plugin (ADR 0019)
         runtime/existing-renderer edits; daily green; Skia mainline + WGPU
         diagnostic behavior unchanged.
 
+  **Task status (2026-07-29):** E1-E8 implementation is complete. Platform
+  composition roots now assemble `RendererProviderBinding` lists; reports use
+  registered `RendererProvider.id` values; Web registers WebGPU followed by
+  Canvas2D fallback; Native WGPU remains a diagnostic-only composition. The
+  remaining Phase E close-out is generated-interface review, profile/manual
+  smoke evidence, and the explicit local-window-consumer proof required before
+  disabling the temporary local `window` workspace members. While that proof is
+  pending, `checks/window-dependency-exception.txt` contains the checked exact
+  value `provider-phase-e-local-window` beside both nested members;
+  `validate-window-dependency` rejects every other committed local-window form.
+
 Phase F  Task 5 — platform adapter convergence (ADR 0020)
-  F1  moui/backend/shared_adapter: new package owning cross-platform
-      transformers (window event→HostEvent mapping, pointer/keyboard decode
-      normalization, resize/scale normalization, lifecycle state machine,
-      clipboard command mapping, text-input session state machine, surface
-      attach/detach lifecycle, error mapping). Imports core + backend/host
-      contracts only. Table-driven where platform input is a native type tag.
+  F1  moui/backend/platform_bridge: package owning cross-platform neutral
+      bridge transformations (close/focus, resize/scale, redraw, surface
+      attach/detach, lifecycle state, logical-coordinate normalization). It
+      imports core + backend/host + window value types only. Native pointer,
+      keyboard, IME, and drag decoding stays in each platform package.
   F2  backend/{macos,windows,linux,web,android,ios,harmonyos,wechat}: shrink to
       native decode + PlatformCapability declaration + strategy impl + thin
-      wiring calling shared_adapter. Add shared_adapter import.
-  F3  backend/shared_adapter/*_table_test.mbt: table-driven tests feed
+      wiring calling platform_bridge. WeChat is the `direct-canvas-callback`
+      exception and does not fabricate a window-event dependency.
+  F3  backend/platform_bridge/*_test.mbt: table-driven tests feed
       (native_type_tag, payload) → expected HostEvent/HostCmd for every
       platform in one place.
   F4  Freeze checks/platform-adapter-duplication-baseline.json to the
       post-convergence measurement; switch
-      validate-platform-adapter-duplication.mjs to **enforce** with allowlist
+      tools/moui/validate_platform_adapter_duplication (with the Node wrapper)
+      to **enforce** with allowlist
       for genuine platform differences (XComponent surface, Choreographer
-      pacing, UIKit event loop, Win32 message queue, DOM/CDP).
+      pacing, UIKit event loop, Win32 message queue, DOM/CDP). New duplicates
+      and expired exemptions fail.
   Gate: validate-platform-adapter-duplication green vs baseline;
-        moon test moui/backend/shared_adapter --target native;
+        moon test moui/backend/platform_bridge --target native;
         sh scripts/check.sh --profile platform; per-platform smoke
         (path-triggered) unchanged; no reverse dependency
-        (shared_adapter imports host, host does not import shared_adapter).
+        (platform_bridge imports host, host does not import platform_bridge).
 
 Phase G  docs + repo-local skill + final verification
   G1  docs/architecture-map.md: update ownership cheat sheet + dependency
-      direction diagram (host imports, render provider model, shared_adapter).
+      direction diagram (host imports, provider-binding composition,
+      platform_bridge).
   G2  docs/invariants.md: update P3 (core neutral, no control vocab),
-      P5 (host contracts only), P6 (provider plugin), M6 (shared_adapter),
+      P5 (host contracts only), P6 (provider plugin), M6 (platform_bridge),
       add renderer provider + adapter budget rows.
   G3  docs/testing.md: register the four new validators + platform profile
       expectation + adapter duplication budget policy.
@@ -148,8 +163,8 @@ Phase G  docs + repo-local skill + final verification
       docs/renderer-capability-report.md, docs/button-styling-guide.md,
       docs/architecture.md: align with ADR 0017-0020.
   G5  skills/moui-framework-development-skill/SKILL.md: update framework
-      development workflow pointers (host split, renderer provider, shared
-      adapter, theme layering).
+      development workflow pointers (host split, renderer provider,
+      platform_bridge, theme layering).
   G6  docs/decisions/README.md: index ADR 0017-0020.
   G7  Final: moon info moui/core moui/views moui/backend/host — capture API
       drift for human review; static trio (baseline/api-surface/guidance);
@@ -202,3 +217,4 @@ Phase G  docs + repo-local skill + final verification
 | Date | Note |
 |------|------|
 | 2026-07-28 | Opened plan; ADR 0017-0020 written; Phase 0 audit complete. |
+| 2026-07-29 | Theme layering and host-import convergence are complete. Provider assembly and Platform Bridge migration are implemented: bindings are compiled into platform composition roots, capability reports are provider-driven, the obsolete registry selector is removed, and the previous bridge path has no compatibility alias. The standalone provider-trait plan is superseded by Phase E. |

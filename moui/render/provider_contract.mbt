@@ -50,6 +50,28 @@ pub(all) struct RendererInstance {
 }
 
 ///|
+/// Adapt a host-facing renderer to the renderer-instance lifecycle. Platform
+/// composition roots normally create a `RendererProviderBinding` and use its
+/// host factory, while this adapter keeps the provider's `create` contract
+/// truthful for tooling and isolated provider tests.
+pub fn RendererInstance::from_host_window_renderer(
+  renderer : HostWindowRenderer,
+) -> RendererInstance {
+  {
+    render_frame: frame => renderer.render_frame(frame),
+    recover: _reason => {
+      renderer.inject_context_loss()
+      if renderer.gpu_fallback_active() {
+        RecoveryResult::FallbackToCpu
+      } else {
+        RecoveryResult::RecoverySucceeded
+      }
+    },
+    dispose: () => renderer.dispose(),
+  }
+}
+
+///|
 /// A renderer provider declares its identity, capabilities, surface
 /// negotiation, and instance factory. Providers are registered at
 /// compile time in the composition root (moui/runtime or platform
@@ -71,6 +93,58 @@ pub(all) struct RendererProvider {
   /// Create a renderer instance from metrics and a negotiated
   /// bound surface. The returned instance is ready to render.
   create : (RendererSurfaceMetrics, BoundSurface) -> RendererInstance
+}
+
+///|
+/// Composition-time binding between a renderer provider and the host-facing
+/// renderer lifecycle. `RendererInstance` deliberately remains a small
+/// renderer contract; native and embedded hosts use this binding to retain
+/// resize, text, image, present-completion, platform-view, and GPU-recovery
+/// behavior exposed by `HostWindowRenderer`.
+pub(all) struct RendererProviderBinding {
+  provider : RendererProvider
+  create_host_renderer : (RendererSurfaceMetrics, BoundSurface) -> HostWindowRenderer
+}
+
+///|
+pub fn RendererProviderBinding::new(
+  provider~ : RendererProvider,
+  create_host_renderer~ : (RendererSurfaceMetrics, BoundSurface) -> HostWindowRenderer,
+) -> RendererProviderBinding {
+  { provider, create_host_renderer }
+}
+
+///|
+pub fn RendererProviderBinding::provider(
+  self : RendererProviderBinding,
+) -> RendererProvider {
+  self.provider
+}
+
+///|
+/// Select the first binding that accepts a surface. Registration order is the
+/// platform composition policy; identity is always `RendererProvider.id`, not
+/// `RendererBackendKind`.
+pub fn select_renderer_provider_binding(
+  bindings : Array[RendererProviderBinding],
+  surface : SurfaceDescriptor,
+) -> (RendererProviderBinding, BoundSurface)? {
+  for binding in bindings {
+    match (binding.provider.negotiate)(surface) {
+      SurfaceNegotiationResult::SurfaceAccepted(bound) =>
+        return Some((binding, bound))
+      SurfaceNegotiationResult::SurfaceRejected(_) => ()
+    }
+  }
+  None
+}
+
+///|
+/// Project registered bindings to their providers for capability diagnostics.
+pub fn renderer_provider_binding_providers(
+  bindings : Array[RendererProviderBinding],
+) -> Array[RendererProvider] {
+  bindings.map(binding => binding.provider)
 }
 
 ///|
@@ -107,19 +181,6 @@ pub fn RendererProviderRegistry::lookup(
 ) -> RendererProvider? {
   for provider in self.providers {
     if provider.id == id {
-      return Some(provider)
-    }
-  }
-  None
-}
-
-///|
-pub fn RendererProviderRegistry::lookup_by_backend(
-  self : RendererProviderRegistry,
-  backend : RendererBackendKind,
-) -> RendererProvider? {
-  for provider in self.providers {
-    if provider.descriptor.backend == backend {
       return Some(provider)
     }
   }
@@ -170,51 +231,6 @@ pub fn RendererProviderRegistry::from_providers(
   providers : Array[RendererProvider],
 ) -> RendererProviderRegistry {
   { providers: providers.copy() }
-}
-
-///|
-/// Provider-based selection for native renderer modes. Given a requested mode,
-/// GPU availability, and promotion state, this method finds the matching
-/// provider in the registry.
-///
-/// Returns the selected provider and its corresponding backend kind. When GPU
-/// is requested but unavailable or unpromoted, falls back to the Skia raster
-/// provider. Returns `None` if no matching provider is registered.
-pub fn RendererProviderRegistry::select_native(
-  self : RendererProviderRegistry,
-  requested : NativeRendererMode,
-  gpu_available~ : Bool,
-  gpu_promoted~ : Bool,
-) -> (RendererProvider, RendererBackendKind)? {
-  let gpu_selected = match requested {
-    NativeRendererMode::SkiaRaster => None
-    NativeRendererMode::SkiaGpu =>
-      if gpu_available {
-        Some(RendererBackendKind::SkiaGpuNative)
-      } else {
-        None
-      }
-    NativeRendererMode::Auto =>
-      if gpu_available && gpu_promoted {
-        Some(RendererBackendKind::SkiaGpuNative)
-      } else {
-        None
-      }
-  }
-  match gpu_selected {
-    Some(backend) =>
-      match self.lookup_by_backend(backend) {
-        Some(provider) => Some((provider, backend))
-        None =>
-          self
-          .lookup_by_backend(RendererBackendKind::SkiaRasterNative)
-          .map(provider => (provider, RendererBackendKind::SkiaRasterNative))
-      }
-    None =>
-      self
-      .lookup_by_backend(RendererBackendKind::SkiaRasterNative)
-      .map(provider => (provider, RendererBackendKind::SkiaRasterNative))
-  }
 }
 
 ///|

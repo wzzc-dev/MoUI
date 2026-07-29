@@ -1,12 +1,12 @@
 {
-  "schemaVersion": 1,
-  "description": "Platform adapter duplication budget baseline (ADR 0020). Lists duplicated patterns across platform backends that are allowed (consolidation deferred) and those that must be consolidated into moui/backend/shared_adapter.",
-  "generatedAt": "2026-07-28",
+  "schemaVersion": 2,
+  "description": "Platform Bridge duplication budget baseline (ADR 0020). Lists allowed native-event and pacing exceptions while requiring neutral lifecycle and coordinate transformations to use moui/backend/platform_bridge.",
+  "generatedAt": "2026-07-29",
   "budget": {
     "allowlist": [
       {
         "pattern": "app_handler redraw loop",
-        "reason": "Each platform slot model differs (Android SurfaceView, iOS CAMetalLayer, macOS NSView, Linux X11/Wayland, Windows HWND). The loop structure is uniform but the slot interaction is platform-private. Deferred to shared_adapter pattern extraction.",
+        "reason": "Each platform slot model differs (Android SurfaceView, iOS CAMetalLayer, macOS NSView, Linux X11/Wayland, Windows HWND). The loop structure is uniform but the slot interaction is platform-private.",
         "allowUntil": "2026-10-01"
       },
       {
@@ -36,26 +36,36 @@
       }
     ],
     "initialExtraction": {
-      "shared_adapter_modules": [
+      "platform_bridge_modules": [
         "window_event_transformer.mbt",
         "platform_capability.mbt"
       ],
       "sharedLogicLines": 95,
       "estimatedDuplicationAvoidedLines": 900
     },
+    "normalizationBudgets": {
+      "@host.physical_position_to_core": 8,
+      "@host.surface_metrics_from_physical": 8
+    },
     "metrics": {
       "totalPlatformBackendFiles": 28,
-      "sharedAdapterFiles": 2,
+      "platformBridgeFiles": 2,
       "currentSharedFraction": 0.071,
       "projectedSharedFraction": 0.30
     }
   },
   "remediation": {
     "rules": [
-      "Platform backends MUST NOT reimplement make_surface_metrics or normalize_pointer_position — use shared_adapter versions.",
-      "New platform backends MUST import moui/backend/shared_adapter and use its transformers where applicable.",
+      "Platform backends MUST NOT reimplement make_surface_metrics or normalize_pointer_position — use platform_bridge versions.",
+      "Applicable window-hosted platform backends MUST import moui/backend/platform_bridge and use its transformers.",
       "Platform-specific WindowEvent dispatch (pointer, keyboard, IME, drag) MUST remain in the platform backend — those carry platform-specific payloads that cannot be abstracted.",
-      "Render lifecycle helpers (drain prior present, resolve pending frame, record presented frame) belong in moui/runtime or moui/render, NOT shared_adapter — shared_adapter imports core + backend/host contracts only (ADR 0020)."
-    ]
+      "Render lifecycle helpers (drain prior present, resolve pending frame, record presented frame) belong in moui/runtime or moui/render, NOT platform_bridge — platform_bridge imports core + backend/host contracts only (ADR 0020)."
+    ],
+    "platformExceptions": {
+      "moui/backend/wechat": {
+        "kind": "direct-canvas-callback",
+        "reason": "WeChat follows its Canvas2D lifecycle directly and must not fabricate a WindowEvent import. The validator still includes it in the capability inventory and rejects bridge-helper duplication."
+      }
+    }
   }
 }

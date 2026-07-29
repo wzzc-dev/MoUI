@@ -65,6 +65,13 @@
           ]
         },
         {
+          "name": "platform bridge duplication budget",
+          "argv": [
+            "node",
+            "scripts/validate-platform-adapter-duplication.mjs"
+          ]
+        },
+        {
           "name": "source file policy",
           "argv": [
             "moon",

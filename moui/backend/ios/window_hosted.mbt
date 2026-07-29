@@ -14,6 +14,7 @@ pub struct IosEmbeddedRuntimeBackend {
   modifiers : @core.KeyModifiers
   mut last_generation : Int
   mut frames_presented : Int
+  mut surface_lifecycle : @platform_bridge.PlatformSurfaceLifecycle
   auto_exit_after_frames : Int?
   ime_sink : IosImeSink
 }
@@ -37,23 +38,30 @@ pub fn IosEmbeddedRuntimeBackend::new(
     modifiers: @core.KeyModifiers::none(),
     last_generation: 0,
     frames_presented: 0,
+    surface_lifecycle: @platform_bridge.PlatformSurfaceLifecycle::Detached,
     auto_exit_after_frames,
     ime_sink: IosImeSink::new(),
   }
 }
 
 ///|
-pub fn IosEmbeddedRuntimeBackend::frames_presented(self : IosEmbeddedRuntimeBackend) -> Int {
+pub fn IosEmbeddedRuntimeBackend::frames_presented(
+  self : IosEmbeddedRuntimeBackend,
+) -> Int {
   self.frames_presented
 }
 
 ///|
-pub fn IosEmbeddedRuntimeBackend::surface_generation(self : IosEmbeddedRuntimeBackend) -> Int {
+pub fn IosEmbeddedRuntimeBackend::surface_generation(
+  self : IosEmbeddedRuntimeBackend,
+) -> Int {
   self.last_generation
 }
 
 ///|
-pub fn IosEmbeddedRuntimeBackend::session_attached(self : IosEmbeddedRuntimeBackend) -> Bool {
+pub fn IosEmbeddedRuntimeBackend::session_attached(
+  self : IosEmbeddedRuntimeBackend,
+) -> Bool {
   match self.session {
     Some(session) => session.surface_attached()
     None => false
@@ -61,7 +69,9 @@ pub fn IosEmbeddedRuntimeBackend::session_attached(self : IosEmbeddedRuntimeBack
 }
 
 ///|
-pub fn IosEmbeddedRuntimeBackend::has_session(self : IosEmbeddedRuntimeBackend) -> Bool {
+pub fn IosEmbeddedRuntimeBackend::has_session(
+  self : IosEmbeddedRuntimeBackend,
+) -> Bool {
   self.session is Some(_)
 }
 
@@ -72,7 +82,7 @@ fn IosEmbeddedRuntimeBackend::metrics_from_window(
 ) -> @host.HostSurfaceMetrics {
   let size = window.inner_size()
   let scale = window.scale_factor()
-  @host.surface_metrics_from_physical(size, scale_factor=scale)
+  @platform_bridge.make_surface_metrics(size, scale_factor=scale)
 }
 
 ///|
@@ -81,6 +91,9 @@ fn IosEmbeddedRuntimeBackend::attach_session(
   window : @window_ios.Window,
 ) -> Unit {
   let metrics = self.metrics_from_window(window)
+  self.surface_lifecycle = @platform_bridge.PlatformSurfaceLifecycle::attach(
+    metrics,
+  )
   let runtime = match self.runtime {
     Some(runtime) => {
       runtime.dispatch_event(@core.AppEvent::Resize(metrics.logical_size))
@@ -112,16 +125,21 @@ fn IosEmbeddedRuntimeBackend::attach_session(
 }
 
 ///|
-fn IosEmbeddedRuntimeBackend::detach_session(self : IosEmbeddedRuntimeBackend) -> Unit {
+fn IosEmbeddedRuntimeBackend::detach_session(
+  self : IosEmbeddedRuntimeBackend,
+) -> Unit {
   match self.session {
     Some(session) => ignore(session.detach_view())
     None => ()
   }
   self.window = None
+  self.surface_lifecycle = self.surface_lifecycle.detach()
 }
 
 ///|
-fn IosEmbeddedRuntimeBackend::sync_ime(self : IosEmbeddedRuntimeBackend) -> Unit {
+fn IosEmbeddedRuntimeBackend::sync_ime(
+  self : IosEmbeddedRuntimeBackend,
+) -> Unit {
   match self.runtime {
     Some(runtime) => self.ime_sink.apply(runtime.focused_text_input())
     None => {
@@ -147,50 +165,56 @@ fn IosEmbeddedRuntimeBackend::dispatch_window_event(
       self.modifiers,
       scale_factor=scale,
     ) {
-    Some(host_event) => {
-      match host_event {
-        @host.HostEvent::Pointer(pointer) => {
-          match self.session {
-            Some(session) => ignore(session.dispatch(host_event))
-            None => ()
-          }
-          self.last_pointer = pointer.position
-        }
-        @host.HostEvent::Resized(metrics) =>
-          match self.session {
-            Some(session) => ignore(session.resize(metrics))
-            None => ()
-          }
-        @host.HostEvent::RedrawRequested =>
-          match self.session {
-            Some(session) => {
-              ignore(session.render_frame())
-              self.frames_presented = self.frames_presented + 1
-            }
-            None => ()
-          }
-        _ =>
-          match self.session {
-            Some(session) => ignore(session.dispatch(host_event))
-            None => ()
-          }
-      }
-      match host_event {
-        @host.HostEvent::Resized(_) | @host.HostEvent::RedrawRequested => ()
-        _ =>
-          match self.session {
-            Some(session) =>
-              if session.take_redraw_requested() || session.redraw_requested() {
-                match self.window {
-                  Some(window) => window.request_redraw()
-                  None => ()
-                }
-              }
-            None => ()
-          }
-      }
-    }
+    Some(host_event) => self.dispatch_host_event(host_event)
     None => ()
+  }
+}
+
+///|
+fn IosEmbeddedRuntimeBackend::dispatch_host_event(
+  self : IosEmbeddedRuntimeBackend,
+  host_event : @host.HostEvent,
+) -> Unit {
+  match host_event {
+    @host.HostEvent::Pointer(pointer) => {
+      match self.session {
+        Some(session) => ignore(session.dispatch(host_event))
+        None => ()
+      }
+      self.last_pointer = pointer.position
+    }
+    @host.HostEvent::Resized(metrics) =>
+      match self.session {
+        Some(session) => ignore(session.resize(metrics))
+        None => ()
+      }
+    @host.HostEvent::RedrawRequested =>
+      match self.session {
+        Some(session) => {
+          ignore(session.render_frame())
+          self.frames_presented = self.frames_presented + 1
+        }
+        None => ()
+      }
+    _ =>
+      match self.session {
+        Some(session) => ignore(session.dispatch(host_event))
+        None => ()
+      }
+  }
+  match host_event {
+    @host.HostEvent::Resized(_) | @host.HostEvent::RedrawRequested => ()
+    _ =>
+      match self.session {
+        Some(session) =>
+          if session.take_redraw_requested() || session.redraw_requested() {
+            match self.window {
+              Some(window) => window.request_redraw()
+              None => ()
+            }
+          }
+        None => ()
+      }
   }
   self.sync_ime()
 }
@@ -251,10 +275,24 @@ pub impl @window_ios.ApplicationHandler for IosEmbeddedRuntimeBackend with fn wi
   _id,
   event,
 ) {
-  match event {
-    @window_core.WindowEvent::CloseRequested => event_loop.exit()
-    @window_core.WindowEvent::RedrawRequested => {
-      self.dispatch_window_event(event)
+  let (scale_factor, surface_size) = match self.window {
+    Some(window) => (window.scale_factor(), Some(window.inner_size()))
+    None => (1.0, None)
+  }
+  match
+    @platform_bridge.transform_cross_platform_event(
+      event,
+      scale_factor~,
+      surface_size~,
+    ) {
+    @platform_bridge.TransformedWindowEvent::CloseRequested => {
+      self.dispatch_host_event(@host.HostEvent::CloseRequested)
+      event_loop.exit()
+    }
+    @platform_bridge.TransformedWindowEvent::DispatchHostEvent(host_event) =>
+      self.dispatch_host_event(host_event)
+    @platform_bridge.TransformedWindowEvent::WindowRedrawRequired => {
+      self.dispatch_host_event(@host.HostEvent::RedrawRequested)
       match self.auto_exit_after_frames {
         Some(limit) => if self.frames_presented >= limit { event_loop.exit() }
         None => ()

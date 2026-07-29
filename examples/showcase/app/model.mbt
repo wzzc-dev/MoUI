@@ -138,6 +138,19 @@ pub fn ShowcaseModel::with_host_summary(
 }
 
 ///|
+/// Supply the renderer providers registered by the platform composition root.
+/// Diagnostics deliberately receives identities rather than a backend matrix.
+pub fn ShowcaseModel::with_renderer_providers(
+  self : ShowcaseModel,
+  renderer_providers : Array[@render.RendererProvider],
+) -> ShowcaseModel {
+  {
+    ..self,
+    diagnostics: self.diagnostics.with_renderer_providers(renderer_providers),
+  }
+}
+
+///|
 /// Wire host-owned platform adapters (timer/services/window events) used by the
 /// Platform workspace. Desktop entrypoints should pass a real timer source so
 /// Canvas animation and host timers keep ticking.

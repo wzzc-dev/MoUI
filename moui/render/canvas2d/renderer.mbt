@@ -32,8 +32,9 @@ pub fn canvas2d_descriptor() -> @render.RendererDescriptor {
     family=@render.RendererFamily::Canvas2D,
     presentation=@render.RendererPresentationModel::WebCanvas,
     supported_targets=[@render.RendererTarget::WasmGc],
-    capabilities=@render.renderer_backend_capabilities(
-      @render.RendererBackendKind::Canvas2DWasm,
+    capabilities=canvas2d_provider_capabilities(
+      provider_id="canvas2d",
+      backend=@render.RendererBackendKind::Canvas2DWasm,
     ),
     description="Canvas 2D renderer for WeChat Mini Program Skyline engine; renders DrawCommand sequences through the CanvasRenderingContext2D API.",
   )

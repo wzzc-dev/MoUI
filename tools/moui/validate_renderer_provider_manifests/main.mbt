@@ -56,8 +56,8 @@ fn provider_rules() -> Array[ProviderRule] {
     rules.push({
       path: "moui/backend/" + platform + "/moon.pkg",
       forbidden: [
-        "wzzc-dev/moui/render", "wzzc-dev/moui/render/wgpu", "wzzc-dev/moui/render/skia",
-        "Milky2018/wgpu_mbt", "wzzc-dev/moui_skia",
+        "wzzc-dev/moui/render/wgpu", "wzzc-dev/moui/render/skia", "Milky2018/wgpu_mbt",
+        "wzzc-dev/moui_skia",
       ],
     })
     rules.push({

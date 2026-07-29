@@ -8,17 +8,21 @@ fn main {
     route_source~,
     dispatch_command=dispatch_showcase_route_command,
   )
+  let renderer_providers = @render.renderer_provider_binding_providers(
+    @web.web_renderer_provider_bindings(canvas_id="moonbit-window-web-showcase"),
+  )
   let model = match showcase_initial_section_code() {
     1 =>
       @showcase_app.ShowcaseModel::new()
       .with_host_summary(@web.web_capability_summary())
+      .with_renderer_providers(renderer_providers)
       .update(
         @showcase_app.ShowcaseMsg::Navigate("diagnostics/advanced-rendering"),
       )
     _ =>
-      @showcase_app.ShowcaseModel::new().with_host_summary(
-        @web.web_capability_summary(),
-      )
+      @showcase_app.ShowcaseModel::new()
+      .with_host_summary(@web.web_capability_summary())
+      .with_renderer_providers(renderer_providers)
   }
   let runtime = @runtime.new_program_with_dimensions(
     program=model.program_with_route_host(route_host),

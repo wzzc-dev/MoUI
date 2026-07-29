@@ -169,7 +169,7 @@ fn ShowcaseModel::capability_card(
   let list_height = max_showcase_double(56.0, height - 72.0)
   let rows : Array[@moui.View[ShowcaseMsg]] = []
   let visible_limit = max_showcase_int(1, (list_height / 42.0).to_int())
-  let entries = capability_card_entries()
+  let entries = capability_card_entries(self.renderer_providers)
   let mut visible_count = 0
   for entry in entries {
     if visible_count < visible_limit {
@@ -342,11 +342,13 @@ fn host_label_summary(labels : Array[String], empty~ : String) -> String {
 }
 
 ///|
-fn capability_card_entries() -> Array[@render.RendererFeatureCapability] {
+fn capability_card_entries(
+  providers : Array[@render.RendererProvider],
+) -> Array[@render.RendererFeatureCapability] {
   let primary : Array[@render.RendererFeatureCapability] = []
   let secondary : Array[@render.RendererFeatureCapability] = []
   let complete : Array[@render.RendererFeatureCapability] = []
-  for entry in @render.renderer_feature_capability_report() {
+  for entry in @render.renderer_feature_capability_report(providers) {
     if capability_has_partial_or_gap(entry) {
       primary.push(entry)
     } else if entry.needs_follow_up() {
@@ -362,7 +364,7 @@ fn capability_card_entries() -> Array[@render.RendererFeatureCapability] {
 fn capability_has_partial_or_gap(
   entry : @render.RendererFeatureCapability,
 ) -> Bool {
-  entry.backends.any(capability => {
+  entry.providers.any(capability => {
     match capability.status {
       @render.RendererFeatureStatus::Partial
       | @render.RendererFeatureStatus::Gap => true
@@ -579,14 +581,14 @@ fn capability_status_view(
   theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[ShowcaseMsg] {
-  let backends = @render.renderer_capability_backends()
-  let row_height = if backends.length() <= 2 { 18.0 } else { 13.0 }
+  let providers = entry.providers
+  let row_height = if providers.length() <= 2 { 18.0 } else { 13.0 }
   let rows : Array[@moui.View[ShowcaseMsg]] = []
-  for backend in backends {
-    let status = entry.status_for_backend(backend)
+  for provider in providers {
+    let status = provider.status
     rows.push(
       text(
-        backend.short_label() + " " + status.label(),
+        provider.provider_id + " " + status.label(),
         width~,
         height=row_height,
       )

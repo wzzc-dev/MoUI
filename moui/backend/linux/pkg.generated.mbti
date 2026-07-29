@@ -4,6 +4,7 @@ package "wzzc-dev/moui/backend/linux"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
 }
 
@@ -12,7 +13,7 @@ pub fn backend_info() -> LinuxBackendInfo
 
 pub fn capability_matrix() -> LinuxBackendCapabilities
 
-pub fn linux_accessibility_bridge(@runtime.AppRuntime) -> @host.NativeAccessibilityBridge
+pub fn linux_accessibility_bridge(@runtime.AppRuntime) -> @runtime.NativeAccessibilityBridge
 
 pub fn linux_accessibility_bridge_info() -> LinuxAccessibilityBridgeInfo
 
@@ -30,7 +31,7 @@ pub fn linux_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, cli
 
 pub fn linux_surface_metrics_for_content(@host.HostSurfaceMetrics, LinuxClientDecorationState) -> @host.HostSurfaceMetrics
 
-pub fn linux_timer_source() -> @host.HostTimerSource
+pub fn linux_timer_source() -> @runtime.HostTimerSource
 
 pub fn readiness() -> LinuxBackendReadiness
 
@@ -62,8 +63,8 @@ pub struct LinuxATSPIBinding {
 }
 pub fn LinuxATSPIBinding::diagnostics(Self) -> LinuxATSPIBindingDiagnostics
 pub fn LinuxATSPIBinding::dispose(Self) -> LinuxATSPIBindingDiagnostics
-pub fn LinuxATSPIBinding::new(dispatch~ : (@host.NativeAccessibilityActionRequest) -> @host.NativeAccessibilityActionResult) -> Self
-pub fn LinuxATSPIBinding::perform_action(Self, @host.NativeAccessibilityActionRequest) -> @host.NativeAccessibilityActionResult
+pub fn LinuxATSPIBinding::new(dispatch~ : (@runtime.NativeAccessibilityActionRequest) -> @runtime.NativeAccessibilityActionResult) -> Self
+pub fn LinuxATSPIBinding::perform_action(Self, @runtime.NativeAccessibilityActionRequest) -> @runtime.NativeAccessibilityActionResult
 pub fn LinuxATSPIBinding::publish_semantics(Self, @runtime.SemanticsRead) -> LinuxATSPIBindingDiagnostics
 
 pub(all) struct LinuxATSPIBindingDiagnostics {
@@ -74,7 +75,7 @@ pub(all) struct LinuxATSPIBindingDiagnostics {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct LinuxAccessibilityBridgeInfo {
-  kind : @host.NativeAccessibilityBridgeKind
+  kind : @runtime.NativeAccessibilityBridgeKind
   semantics_bridge_available : Bool
   native_platform_bridge_available : Bool
   action_dispatch_available : Bool
@@ -121,7 +122,7 @@ pub fn LinuxClientDecorationState::new(active~ : Bool, titlebar_height? : Double
 pub struct LinuxHostAppOptions {
   // private fields
 }
-pub fn LinuxHostAppOptions::new(scene_resolver? : @runtime.HostWindowSceneResolver, event_sources? : @host.HostPlatformEventSources?, platform_view_plugins? : Array[@host.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes) -> Self
+pub fn LinuxHostAppOptions::new(scene_resolver? : @runtime.HostWindowSceneResolver, event_sources? : @runtime.HostPlatformEventSources?, platform_view_plugins? : Array[@host.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes) -> Self
 
 pub struct LinuxHostSmokeOptions {
   // private fields
@@ -134,8 +135,9 @@ pub impl @wzzc-dev/window/linux.ApplicationHandler for LinuxNativeHostBackend
 pub struct LinuxRendererProvider {
   // private fields
 }
-pub fn LinuxRendererProvider::new(create_renderer~ : (@wzzc-dev/window/linux.Window, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?, sync_surface? : (@wzzc-dev/window/linux.Window, @host.HostSurfaceMetrics) -> Unit, image_loader? : @host.HostAsyncImageLoader?) -> Self
+pub fn LinuxRendererProvider::new(create_renderer~ : (@wzzc-dev/window/linux.Window, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?, sync_surface? : (@wzzc-dev/window/linux.Window, @host.HostSurfaceMetrics) -> Unit, image_loader? : @render.HostAsyncImageLoader?) -> Self
 
 // Type aliases
 
 // Traits
+

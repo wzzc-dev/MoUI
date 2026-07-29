@@ -29,7 +29,7 @@ pub fn renderer_provider(
 ) -> @android_host.AndroidRendererProvider {
   @android_host.AndroidRendererProvider::new(
     create_renderer=(surface, metrics) => {
-      create_renderer(surface, metrics, options)
+      create_renderer_from_provider_bindings(surface, metrics, options)
     },
     image_loader=Some(android_skia_async_image_loader()),
   )
@@ -85,7 +85,10 @@ fn skia_host_renderer_bridge_preflight() -> String {
 }
 
 ///|
-fn create_renderer(
+/// Android binds the Skia provider only after the embedder attaches its
+/// surface. The native handle remains Android-owned; provider negotiation
+/// determines whether the GPU or raster binding receives that attached surface.
+fn create_renderer_from_provider_bindings(
   surface : @android_host.AndroidSurfaceHandle,
   metrics : @host.HostSurfaceMetrics,
   options : AndroidSkiaAppOptions,
@@ -94,13 +97,83 @@ fn create_renderer(
     println(android_skia_unavailable_message())
     return None
   }
-  let anw = surface.raw()
-  if options.surface_route.is_gpu() &&
-    anw != 0UL &&
-    android_skia_gpu_available() {
-    create_gpu_worker_renderer(surface, anw, metrics, options)
+  let raster_binding = @skia_renderer.create_skia_raster_host_binding(create_host_renderer=(
+    _renderer_metrics,
+    _bound_surface,
+  ) => {
+    require_host_renderer(
+      create_raster_renderer(surface, metrics, options),
+      "Android Skia raster binding could not create a host renderer",
+    )
+  })
+  let raster_surface = @render.SurfaceDescriptor::cpu_raster(
+    width=metrics.logical_size.width,
+    height=metrics.logical_size.height,
+    scale_factor=metrics.scale_factor,
+  )
+  let native_window = surface.raw()
+  if options.surface_route.is_gpu() && android_skia_gpu_available() {
+    match
+      @render.GpuHostSurfaceDescriptor::android_vulkan_window(native_window) {
+      Some(handle) => {
+        let gpu_binding = @skia_renderer.create_skia_hybrid_host_binding(create_host_renderer=(
+          _renderer_metrics,
+          _bound_surface,
+        ) => {
+          require_host_renderer(
+            create_gpu_worker_renderer(surface, native_window, metrics, options),
+            "Android Skia GPU binding could not create a host renderer",
+          )
+        })
+        create_host_renderer_from_binding(
+          [gpu_binding, raster_binding],
+          @render.SurfaceDescriptor::gpu_surface(
+            handle~,
+            width=metrics.logical_size.width,
+            height=metrics.logical_size.height,
+            scale_factor=metrics.scale_factor,
+          ),
+          metrics,
+        )
+      }
+      None =>
+        create_host_renderer_from_binding(
+          [raster_binding],
+          raster_surface,
+          metrics,
+        )
+    }
   } else {
-    create_raster_renderer(surface, metrics, options)
+    create_host_renderer_from_binding([raster_binding], raster_surface, metrics)
+  }
+}
+
+///|
+fn create_host_renderer_from_binding(
+  bindings : Array[@render.RendererProviderBinding],
+  surface : @render.SurfaceDescriptor,
+  metrics : @host.HostSurfaceMetrics,
+) -> @render.HostWindowRenderer? {
+  match @render.select_renderer_provider_binding(bindings, surface) {
+    Some((binding, bound_surface)) =>
+      Some(
+        (binding.create_host_renderer)(
+          renderer_metrics_from_host(metrics),
+          bound_surface,
+        ),
+      )
+    None => None
+  }
+}
+
+///|
+fn require_host_renderer(
+  renderer : @render.HostWindowRenderer?,
+  message : String,
+) -> @render.HostWindowRenderer {
+  match renderer {
+    Some(renderer) => renderer
+    None => abort(message)
   }
 }
 

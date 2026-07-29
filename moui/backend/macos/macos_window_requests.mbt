@@ -17,27 +17,33 @@ fn MacosNativeHostBackend::dispatch_window_event(
       self.modifiers,
       scale_factor~,
     ) {
-    Some(host_event) => {
-      self.apply_window_lifecycle(window_id, host_event)
-      match self.runtime_slots.lookup(window_id) {
-        Some(slot) =>
-          match host_event {
-            @host.HostEvent::Keyboard(event) =>
-              ignore(
-                slot.driver.dispatch_keyboard_with_services(
-                  event,
-                  self.services,
-                ),
-              )
-            _ => ignore(slot.driver.dispatch(host_event))
-          }
-        None => ()
-      }
-      ignore(self.publish_subscription_event(window_id, host_event))
-      self.sync_text_input_session()
-    }
+    Some(host_event) => self.dispatch_host_event(window_id, host_event)
     None => ()
   }
+}
+
+///|
+/// Dispatch a platform-neutral event that has already crossed the Platform
+/// Bridge. Native keyboard decoding still enters through `dispatch_window_event`.
+fn MacosNativeHostBackend::dispatch_host_event(
+  self : MacosNativeHostBackend,
+  window_id : @host.HostWindowId,
+  host_event : @host.HostEvent,
+) -> Unit {
+  self.apply_window_lifecycle(window_id, host_event)
+  match self.runtime_slots.lookup(window_id) {
+    Some(slot) =>
+      match host_event {
+        @host.HostEvent::Keyboard(event) =>
+          ignore(
+            slot.driver.dispatch_keyboard_with_services(event, self.services),
+          )
+        _ => ignore(slot.driver.dispatch(host_event))
+      }
+    None => ()
+  }
+  ignore(self.publish_subscription_event(window_id, host_event))
+  self.sync_text_input_session()
 }
 
 ///|
@@ -263,7 +269,9 @@ fn MacosNativeHostBackend::sync_runtime_slot(
 }
 
 ///|
-fn MacosNativeHostBackend::sync_runtime_slots(self : MacosNativeHostBackend) -> Unit {
+fn MacosNativeHostBackend::sync_runtime_slots(
+  self : MacosNativeHostBackend,
+) -> Unit {
   ignore(self.runtime_slots.sync_open_from_registry(self.windows))
 }
 
@@ -289,7 +297,9 @@ fn MacosNativeHostBackend::active_runtime_slot(
 }
 
 ///|
-fn MacosNativeHostBackend::sync_text_input_session(self : MacosNativeHostBackend) -> Unit {
+fn MacosNativeHostBackend::sync_text_input_session(
+  self : MacosNativeHostBackend,
+) -> Unit {
   match self.active_runtime_slot() {
     Some(runtime_slot) =>
       match self.platform_slots.lookup_host(runtime_slot.id) {
@@ -330,7 +340,9 @@ fn runtime_slot_needs_redraw(slot : @runtime.HostWindowRuntimeSlot) -> Bool {
 }
 
 ///|
-fn MacosNativeHostBackend::request_redraw(self : MacosNativeHostBackend) -> Unit {
+fn MacosNativeHostBackend::request_redraw(
+  self : MacosNativeHostBackend,
+) -> Unit {
   match self.active_runtime_slot() {
     Some(slot) => self.request_redraw_window_if_needed(slot.id)
     None => ()

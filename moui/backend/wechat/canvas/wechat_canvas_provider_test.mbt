@@ -62,3 +62,20 @@ test "wechat_canvas_provider_resize" {
   renderer.resize(new_metrics)
   // Resize should not crash
 }
+
+///|
+test "wechat canvas binding negotiates its direct canvas surface" {
+  let binding = wechat_canvas_renderer_binding(canvas_id="wechat-binding-test")
+  guard @render.select_renderer_provider_binding(
+      [binding],
+      @render.SurfaceDescriptor::cpu_raster(
+        width=100.0,
+        height=50.0,
+        scale_factor=2.0,
+      ),
+    )
+    is Some((selected, _surface)) else {
+    fail("expected WeChat canvas binding to accept CPU canvas")
+  }
+  inspect(selected.provider().id, content="canvas2d")
+}
