@@ -19,18 +19,7 @@ fn desktop_widgets(
         .font(@text.FontSpec::new(size=18.0, weight=650))
         .foreground(rgba8(255, 69, 58)),
         calendar_row(["S", "M", "T", "W", "T", "F", "S"], None, palette, theme),
-        calendar_row(
-          desktop_calendar_window(model.clock.day, -5),
-          Some(model.clock.day),
-          palette,
-          theme,
-        ),
-        calendar_row(
-          desktop_calendar_window(model.clock.day, 2),
-          Some(model.clock.day),
-          palette,
-          theme,
-        ),
+        calendar_month_grid(model.clock, palette, theme),
         @views.text(
           "Today  |  \{desktop_clock_lock_date(model.clock)}",
           role=@views.TextRole::Caption,
@@ -43,49 +32,82 @@ fn desktop_widgets(
       align=@views.CrossAlign::Start,
     ),
     250.0,
-    168.0,
+    268.0,
     palette,
   )
   let weather = widget_panel(
-    @views.row(
+    @views.column(
       [
-        @views.column(
+        // Top row: location + a large weather glyph (using the closest
+        // available icon — Focus reads as a sun disc) + current temperature.
+        @views.row(
           [
+            @views.column(
+              [
+                @views.text(
+                  "Cupertino",
+                  role=@views.TextRole::Label,
+                  theme~,
+                  width=116.0,
+                  height=22.0,
+                ).foreground(palette.foreground),
+                @views.text(
+                  "Clear  |  H:83  L:56",
+                  role=@views.TextRole::Caption,
+                  theme~,
+                  width=150.0,
+                  height=20.0,
+                ).foreground(palette.muted),
+              ],
+              spacing=2.0,
+              align=@views.CrossAlign::Start,
+            ),
+            @views.spacer(min_length=4.0),
+            @views.container(
+              desktop_icon(
+                @views.IconName::Focus,
+                28.0,
+                rgba8(255, 180, 40),
+              ),
+              width=36.0,
+              height=36.0,
+              padding=4.0,
+            ),
             @views.text(
-              "Cupertino",
-              role=@views.TextRole::Label,
+              "68",
+              role=@views.TextRole::Display,
               theme~,
-              width=116.0,
-              height=22.0,
-            ).foreground(palette.foreground),
-            @views.text(
-              "Clear  |  H:83  L:56",
-              role=@views.TextRole::Caption,
-              theme~,
-              width=150.0,
-              height=20.0,
-            ).foreground(palette.muted),
+              width=54.0,
+              height=48.0,
+              align=@text.TextAlign::TextCenter,
+            )
+            .font(@text.FontSpec::new(size=34.0, weight=300))
+            .foreground(palette.foreground),
           ],
-          spacing=2.0,
-          align=@views.CrossAlign::Start,
+          spacing=6.0,
+          align=@views.CrossAlign::Center,
         ),
         @views.spacer(min_length=4.0),
-        @views.text(
-          "68",
-          role=@views.TextRole::Display,
-          theme~,
-          width=54.0,
-          height=48.0,
-          align=@text.TextAlign::TextCenter,
-        )
-        .font(@text.FontSpec::new(size=34.0, weight=300))
-        .foreground(palette.foreground),
+        // Hourly forecast strip: a glanceable row of the next few hours with
+        // a tiny glyph and the expected high, like macOS's weather widget.
+        @views.row(
+          [
+            weather_hour_cell("Now", 68.0, palette, theme),
+            weather_hour_cell("1PM", 70.0, palette, theme),
+            weather_hour_cell("2PM", 72.0, palette, theme),
+            weather_hour_cell("3PM", 71.0, palette, theme),
+            weather_hour_cell("4PM", 68.0, palette, theme),
+          ],
+          spacing=8.0,
+          justify=@views.MainAlign::Between,
+          align=@views.CrossAlign::Center,
+        ),
       ],
-      spacing=4.0,
-      align=@views.CrossAlign::Center,
+      spacing=6.0,
+      align=@views.CrossAlign::Stretch,
     ),
     250.0,
-    78.0,
+    150.0,
     palette,
   )
   let tasks = widget_panel(
@@ -140,6 +162,66 @@ fn desktop_widgets(
 }
 
 ///|
+/// A full month grid: weekday header row + up to 6 numbered rows. The 1st of
+/// the month is offset by an inferred first-weekday stub (real macOS would
+/// query the host; we derive it from the current weekday/day so the grid is
+/// locally consistent). Today is highlighted with the accent capsule.
+fn calendar_month_grid(
+  clock : @runtime.HostWallClock,
+  palette : DesktopPalette,
+  theme : @moui.Theme,
+) -> @moui.View[Msg] {
+  // Approximate the weekday of day 1 by walking back from today's weekday.
+  // weekday: Sunday=0..Saturday=6. Offset days back to day 1, mod 7.
+  let first_weekday = {
+    let back = (clock.day - 1) % 7
+    (clock.weekday - back + 7) % 7
+  }
+  let days_in_month = desktop_days_in_month(clock.month, clock.year)
+  // Build a flat 42-slot grid: leading blanks for the stub, then 1..N, then
+  // trailing blanks so every row is 7 cells.
+  let cells : Array[String] = []
+  for index in 0..<first_weekday {
+    cells.push("")
+  }
+  for day in 1..=days_in_month {
+    cells.push(day.to_string())
+  }
+  while cells.length() % 7 != 0 {
+    cells.push("")
+  }
+  // Slice into rows of 7 and render each.
+  let rows : Array[@moui.View[Msg]] = []
+  let row_count = cells.length() / 7
+  for row_index in 0..<row_count {
+    let row_cells : Array[String] = []
+    for col in 0..<7 {
+      row_cells.push(cells[row_index * 7 + col])
+    }
+    rows.push(
+      calendar_row(row_cells, Some(clock.day), palette, theme),
+    )
+  }
+  @views.column(rows, spacing=4.0, align=@views.CrossAlign::Start)
+}
+
+///|
+/// Days in a civil month, accounting for leap years on February.
+fn desktop_days_in_month(month : Int, year : Int) -> Int {
+  match month {
+    1 | 3 | 5 | 7 | 8 | 10 | 12 => 31
+    4 | 6 | 9 | 11 => 30
+    _ =>
+      // February: leap if divisible by 4 and (not by 100, or divisible by 400).
+      if (year % 4 == 0 && year % 100 != 0) || year % 400 == 0 {
+        29
+      } else {
+        28
+      }
+  }
+}
+
+///|
 fn calendar_row(
   labels : Array[String],
   selected_day : Int?,
@@ -189,15 +271,6 @@ fn calendar_row(
 }
 
 ///|
-fn desktop_calendar_window(day : Int, offset : Int) -> Array[String] {
-  let labels : Array[String] = []
-  for index in 0..<7 {
-    labels.push((day + offset + index).max(1).to_string())
-  }
-  labels
-}
-
-///|
 fn widget_panel(
   child : @moui.View[Msg],
   width : Double,
@@ -231,19 +304,127 @@ fn widget_panel(
 }
 
 ///|
+/// One hourly forecast cell: tiny hour label, a sun disc glyph, and the
+/// expected temperature. Stacked vertically and glanceable like macOS's
+/// weather widget hourly strip.
+fn weather_hour_cell(
+  hour : String,
+  temp : Double,
+  palette : DesktopPalette,
+  theme : @moui.Theme,
+) -> @moui.View[Msg] {
+  @views.column(
+    [
+      @views.text(
+        hour,
+        role=@views.TextRole::Caption,
+        theme~,
+        width=36.0,
+        height=14.0,
+        align=@text.TextAlign::TextCenter,
+      )
+      .font(@text.FontSpec::new(size=10.0, weight=520))
+      .foreground(palette.muted),
+      @views.container(
+        desktop_icon(@views.IconName::Focus, 14.0, rgba8(255, 180, 40)),
+        width=18.0,
+        height=18.0,
+        padding=2.0,
+      ),
+      @views.text(
+        "\{temp.to_int()}\u00B0",
+        role=@views.TextRole::Caption,
+        theme~,
+        width=36.0,
+        height=16.0,
+        align=@text.TextAlign::TextCenter,
+      )
+      .font(@text.FontSpec::new(size=12.0, weight=600))
+      .foreground(palette.foreground),
+    ],
+    spacing=2.0,
+    align=@views.CrossAlign::Center,
+  )
+}
+
+///|
+/// A macOS Reminders-style circular checkbox: empty ring when open, filled
+/// accent capsule with a check glyph when done.
+fn task_checkbox(
+  done : Bool,
+  palette : DesktopPalette,
+  theme : @moui.Theme,
+) -> @moui.View[Msg] {
+  let size = 18.0
+  if done {
+    @views.stack([
+      @views.container(
+        @views.spacer(min_length=0.0, weight=0.0),
+        width=size,
+        height=size,
+        background=palette.accent,
+        corner_radius=size / 2.0,
+        padding=0.0,
+      ),
+      @views
+      .text(
+        "✓",
+        role=@views.TextRole::Caption,
+        theme~,
+        width=size,
+        height=size,
+        align=@text.TextAlign::TextCenter,
+      )
+      .font(@text.FontSpec::new(size=11.0, weight=700))
+      .foreground(@graphics.Color::white())
+      .align(alignment=@geometry.Alignment::center())
+      .frame(width=size, height=size),
+    ])
+    .frame(width=size, height=size)
+  } else {
+    @views.container(
+      @views.spacer(min_length=0.0, weight=0.0),
+      width=size,
+      height=size,
+      background=rgba8(0, 0, 0, a=0.0),
+      corner_radius=size / 2.0,
+      border=Some(
+        @graphics.BorderStyle::new(
+          brush=@graphics.Brush::solid(palette.muted),
+          width=1.5,
+        ),
+      ),
+      padding=0.0,
+    )
+  }
+}
+
+///|
 fn task_preview(
   label : String,
   done : Bool,
   palette : DesktopPalette,
   theme : @moui.Theme,
 ) -> @moui.View[Msg] {
-  @views.text(
-    (if done { "Done  " } else { "Open  " }) + label,
-    role=@views.TextRole::Caption,
-    theme~,
-    width=220.0,
-    height=18.0,
-  ).foreground(if done { palette.muted } else { palette.foreground })
+  // macOS Reminders row: a leading circular checkbox, the task label inline,
+  // muted when completed. The row still selects the same action so the widget
+  // remains a glanceable preview rather than a live toggle surface.
+  @views.row(
+    [
+      task_checkbox(done, palette, theme),
+      @views.text(
+        label,
+        role=@views.TextRole::Body,
+        theme~,
+        width=196.0,
+        height=18.0,
+      )
+      .font(@text.FontSpec::new(size=13.0, weight=520))
+      .foreground(if done { palette.muted } else { palette.foreground }),
+    ],
+    spacing=8.0,
+    align=@views.CrossAlign::Center,
+  )
 }
 
 ///|

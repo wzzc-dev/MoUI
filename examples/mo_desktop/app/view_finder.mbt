@@ -3,6 +3,7 @@ priv struct FileEntry {
   name : String
   kind : String
   size : String
+  date : String
   icon : @views.IconName
   color : @graphics.Color
 }
@@ -19,9 +20,20 @@ fn finder_window(
   // Keep the Finder body aligned with the shared 40pt traffic-light titlebar.
   let body_height = metrics.height - 40.0
   let toolbar_height = if metrics.compact { 88.0 } else { 52.0 }
+  let pathbar_height = 26.0
   let status_height = 24.0
-  let content_height = body_height - toolbar_height - status_height
+  let content_height = body_height -
+    toolbar_height -
+    pathbar_height -
+    status_height
   let toolbar = finder_toolbar(model, metrics, palette, theme, toolbar_height)
+  let pathbar = finder_pathbar(
+    model,
+    metrics.width,
+    pathbar_height,
+    palette,
+    theme,
+  )
   let content = finder_main(
     model,
     metrics.width,
@@ -40,8 +52,11 @@ fn finder_window(
   app_window(
     model,
     model.finder_location.label(),
+    // macOS Finder stacks: toolbar → content → path bar (bottom) → status.
+    // The path bar lives at the bottom of the content area, just above the
+    // status strip, not under the toolbar.
     @views.column(
-      [toolbar, content, status],
+      [toolbar, content, pathbar, status],
       spacing=0.0,
       align=@views.CrossAlign::Stretch,
     ),
@@ -51,6 +66,57 @@ fn finder_window(
     viewport_width,
     viewport_height,
   )
+}
+
+///|
+/// macOS Finder path bar: a horizontal breadcrumb under the toolbar showing
+/// the current location, with a leading folder glyph and a divider above.
+fn finder_pathbar(
+  model : DesktopModel,
+  width : Double,
+  height : Double,
+  palette : DesktopPalette,
+  theme : @moui.Theme,
+) -> @moui.View[Msg] {
+  let location = model.finder_location.label()
+  @views.stack([
+    @views.container(
+      @views.spacer(min_length=0.0, weight=0.0),
+      width=width,
+      height=1.0,
+      background=finder_chrome_divider(model.dark_mode),
+      padding=0.0,
+    ).align(alignment=@geometry.Alignment::top_leading()),
+    @views.padding_edges(
+      @views.row(
+        [
+          desktop_icon(@views.IconName::FolderOpen, 13.0, palette.muted),
+          @views
+          .text(
+            location,
+            role=@views.TextRole::Caption,
+            theme~,
+            width=width - 60.0,
+            height=18.0,
+          )
+          .font(@text.FontSpec::new(size=11.5, weight=520))
+          .foreground(palette.foreground),
+          desktop_icon(
+            @views.IconName::ChevronDown,
+            10.0,
+            palette.muted,
+          ),
+        ],
+        spacing=6.0,
+        align=@views.CrossAlign::Center,
+      ),
+      left=14.0,
+      top=4.0,
+      bottom=4.0,
+      right=14.0,
+    ),
+  ])
+  .frame(width=width, height~)
 }
 
 ///|
@@ -136,6 +202,18 @@ fn finder_toolbar(
         nav,
         mode,
         @views.spacer(min_length=8.0, weight=1.0),
+        toolbar_icon_button(
+          @views.IconName::ListBullet,
+          "Sort by name",
+          SelectFinderView(ListView),
+          palette,
+        ),
+        toolbar_icon_button(
+          @views.IconName::Link,
+          "Share selected file",
+          RequestFileImport,
+          palette,
+        ),
         toolbar_icon_button(
           @views.IconName::FileNew,
           "Import files into Finder",
@@ -373,7 +451,7 @@ fn finder_main(
     let sidebar_width = 196.0
     @views.row(
       [
-        finder_sidebar(model, sidebar_width, height, palette, theme),
+        finder_sidebar(model, sidebar_width, palette, theme),
         finder_content(model, width - sidebar_width, height, palette, theme),
       ],
       spacing=0.0,
@@ -386,22 +464,13 @@ fn finder_main(
 fn finder_sidebar(
   model : DesktopModel,
   width : Double,
-  height : Double,
   palette : DesktopPalette,
   theme : @moui.Theme,
 ) -> @moui.View[Msg] {
-  @views.container(
+  let panel = @views.container(
     @views.column(
       [
-        @views.text(
-          "Favorites",
-          role=@views.TextRole::Caption,
-          theme~,
-          width=width - 28.0,
-          height=18.0,
-        )
-        .font(@text.FontSpec::new(size=11.0, weight=600))
-        .foreground(palette.muted),
+        sidebar_section_header("Favorites", width, palette, theme),
         finder_sidebar_button(
           "Documents",
           @views.IconName::FileNew,
@@ -432,16 +501,8 @@ fn finder_sidebar(
           palette,
           theme,
         ),
-        @views.spacer(min_length=14.0, weight=0.0),
-        @views.text(
-          "Locations",
-          role=@views.TextRole::Caption,
-          theme~,
-          width=width - 28.0,
-          height=18.0,
-        )
-        .font(@text.FontSpec::new(size=11.0, weight=600))
-        .foreground(palette.muted),
+        @views.spacer(min_length=12.0, weight=0.0),
+        sidebar_section_header("Locations", width, palette, theme),
         sidebar_static_row(
           "MacBook",
           @views.IconName::FileNew,
@@ -466,14 +527,96 @@ fn finder_sidebar(
           theme,
           width - 24.0,
         ),
+        @views.spacer(min_length=12.0, weight=0.0),
+        sidebar_section_header("Tags", width, palette, theme),
+        sidebar_tag_row(
+          "Important",
+          rgba8(255, 95, 87),
+          width - 24.0,
+          palette,
+          theme,
+        ),
+        sidebar_tag_row(
+          "Work",
+          rgba8(255, 189, 46),
+          width - 24.0,
+          palette,
+          theme,
+        ),
+        sidebar_tag_row(
+          "Personal",
+          rgba8(40, 200, 64),
+          width - 24.0,
+          palette,
+          theme,
+        ),
       ],
       spacing=2.0,
       align=@views.CrossAlign::Start,
     ),
     width~,
-    height~,
-    background=palette.sidebar,
     padding=12.0,
+  )
+  // Sidebar fills the full stretched height by using a spacer(weight=1.0)
+  // below the content, and the background sits on the outer frame.
+  @views.column(
+    [panel, @views.spacer(min_length=0.0, weight=1.0)],
+    spacing=0.0,
+    align=@views.CrossAlign::Stretch,
+  )
+  .frame(width=width)
+  .background(palette.sidebar)
+}
+
+///|
+/// macOS Finder sidebar section headers are small uppercase muted labels
+/// with generous top padding between groups.
+fn sidebar_section_header(
+  label : String,
+  width : Double,
+  palette : DesktopPalette,
+  theme : @moui.Theme,
+) -> @moui.View[Msg] {
+  @views.text(
+    label,
+    role=@views.TextRole::Caption,
+    theme~,
+    width=width - 28.0,
+    height=18.0,
+  )
+  .font(@text.FontSpec::new(size=11.0, weight=700))
+  .foreground(palette.muted)
+}
+
+///|
+/// macOS Finder sidebar tag rows: a colored dot on the leading edge.
+fn sidebar_tag_row(
+  label : String,
+  color : @graphics.Color,
+  width : Double,
+  palette : DesktopPalette,
+  theme : @moui.Theme,
+) -> @moui.View[Msg] {
+  @views.row(
+    [
+      @views.container(
+        @views.spacer(min_length=0.0, weight=0.0),
+        width=8.0,
+        height=8.0,
+        background=color,
+        corner_radius=4.0,
+        padding=0.0,
+      ),
+      @views.text(
+        label,
+        role=@views.TextRole::Body,
+        theme~,
+        width=width - 32.0,
+        height=22.0,
+      ).foreground(palette.foreground),
+    ],
+    spacing=10.0,
+    align=@views.CrossAlign::Center,
   )
 }
 
@@ -605,21 +748,35 @@ fn finder_content(
         )
       ListView =>
         @views.column(
-          entries.map(entry => {
-            file_list_row(entry, model, inner_width, palette, theme)
-          }),
+          [
+            file_list_header(inner_width, palette, theme),
+            @views.column(
+              entries.map(entry => {
+                file_list_row(entry, model, inner_width, palette, theme)
+              }),
+              spacing=2.0,
+              align=@views.CrossAlign::Stretch,
+            ),
+          ],
           spacing=4.0,
           align=@views.CrossAlign::Stretch,
         )
     }
   }
-  @views.container(
+  let inner = @views.padding_edges(
     content,
-    width~,
-    height~,
-    background=palette.content,
-    padding=14.0,
+    left=14.0,
+    top=14.0,
+    bottom=14.0,
+    right=14.0,
   )
+  @views.column(
+    [inner],
+    spacing=0.0,
+    align=@views.CrossAlign::Start,
+  )
+  .frame(width=width, height=height)
+  .background(palette.content)
 }
 
 ///|
@@ -630,25 +787,56 @@ fn finder_status(
   palette : DesktopPalette,
   theme : @moui.Theme,
 ) -> @moui.View[Msg] {
+  // macOS Finder bottom status bar: item count on the left, available space
+  // on the right, separated by a hairline divider above.
   let count = visible_finder_entries(model).length()
-  let label = if model.selected_file == "" {
-    "\{count} items  |  214.3 GB available"
+  let left_label = if model.selected_file == "" {
+    "\{count} items"
   } else {
     "Selected: \{model.selected_file}"
   }
-  @views.container(
-    @views.text(
-      label,
-      role=@views.TextRole::Caption,
-      theme~,
-      width=width - 24.0,
-      height=18.0,
-    ).foreground(palette.muted),
-    width~,
-    height~,
-    background=finder_chrome_surface(model.dark_mode),
-    padding=5.0,
-  )
+  @views.stack([
+    @views.container(
+      @views.spacer(min_length=0.0, weight=0.0),
+      width=width,
+      height=1.0,
+      background=finder_chrome_divider(model.dark_mode),
+      padding=0.0,
+    ).align(alignment=@geometry.Alignment::top_leading()),
+    @views.padding_edges(
+      @views.row(
+        [
+          @views.text(
+            left_label,
+            role=@views.TextRole::Caption,
+            theme~,
+            width=(width * 0.5).max(120.0),
+            height=18.0,
+          )
+          .font(@text.FontSpec::new(size=11.0, weight=520))
+          .foreground(palette.muted),
+          @views.spacer(min_length=8.0, weight=1.0),
+          @views.text(
+            "214.3 GB available",
+            role=@views.TextRole::Caption,
+            theme~,
+            width=140.0,
+            height=18.0,
+            align=@text.TextAlign::TextEnd,
+          )
+          .font(@text.FontSpec::new(size=11.0, weight=520))
+          .foreground(palette.muted),
+        ],
+        spacing=8.0,
+        align=@views.CrossAlign::Center,
+      ),
+      left=14.0,
+      top=3.0,
+      bottom=3.0,
+      right=14.0,
+    ),
+  ])
+  .frame(width=width, height~)
 }
 
 ///|
@@ -660,6 +848,7 @@ fn visible_finder_entries(model : DesktopModel) -> Array[FileEntry] {
         name: path,
         kind: "Imported from host",
         size: "External",
+        date: "Today",
         icon: @views.IconName::FileNew,
         color: rgba8(91, 143, 249),
       })
@@ -679,6 +868,7 @@ fn finder_entries(location : FinderLocation) -> Array[FileEntry] {
           name: "Project Notes.txt",
           kind: "Text Document",
           size: "14 KB",
+          date: "Jul 22, 2026",
           icon: @views.IconName::FileNew,
           color: rgba8(91, 143, 249),
         },
@@ -686,6 +876,7 @@ fn finder_entries(location : FinderLocation) -> Array[FileEntry] {
           name: "Q3 Plan.txt",
           kind: "Text Document",
           size: "22 KB",
+          date: "Jul 19, 2026",
           icon: @views.IconName::FileNew,
           color: rgba8(121, 103, 238),
         },
@@ -693,6 +884,7 @@ fn finder_entries(location : FinderLocation) -> Array[FileEntry] {
           name: "Reading List.md",
           kind: "Markdown",
           size: "8 KB",
+          date: "Jul 12, 2026",
           icon: @views.IconName::ListBullet,
           color: rgba8(45, 166, 153),
         },
@@ -703,6 +895,7 @@ fn finder_entries(location : FinderLocation) -> Array[FileEntry] {
           name: "Mo Browser",
           kind: "Application",
           size: "48 MB",
+          date: "Jul 24, 2026",
           icon: @views.IconName::Link,
           color: rgba8(36, 177, 216),
         },
@@ -710,6 +903,7 @@ fn finder_entries(location : FinderLocation) -> Array[FileEntry] {
           name: "Notes",
           kind: "Application",
           size: "31 MB",
+          date: "Jul 18, 2026",
           icon: @views.IconName::ListTask,
           color: rgba8(250, 194, 55),
         },
@@ -717,6 +911,7 @@ fn finder_entries(location : FinderLocation) -> Array[FileEntry] {
           name: "Settings",
           kind: "Application",
           size: "26 MB",
+          date: "Jul 21, 2026",
           icon: @views.IconName::Settings,
           color: rgba8(104, 112, 124),
         },
@@ -724,6 +919,7 @@ fn finder_entries(location : FinderLocation) -> Array[FileEntry] {
           name: "Terminal",
           kind: "Application",
           size: "19 MB",
+          date: "Jul 15, 2026",
           icon: @views.IconName::CodeInline,
           color: rgba8(35, 39, 47),
         },
@@ -734,6 +930,7 @@ fn finder_entries(location : FinderLocation) -> Array[FileEntry] {
           name: "MoUI-Handbook.pdf",
           kind: "PDF Document",
           size: "4.8 MB",
+          date: "Jul 26, 2026",
           icon: @views.IconName::FileNew,
           color: rgba8(238, 82, 83),
         },
@@ -741,6 +938,7 @@ fn finder_entries(location : FinderLocation) -> Array[FileEntry] {
           name: "Tahoe Photos",
           kind: "Folder",
           size: "184 MB",
+          date: "Jul 23, 2026",
           icon: @views.IconName::FolderOpen,
           color: rgba8(33, 150, 243),
         },
@@ -748,6 +946,7 @@ fn finder_entries(location : FinderLocation) -> Array[FileEntry] {
           name: "Design Assets.zip",
           kind: "Archive",
           size: "72 MB",
+          date: "Jul 20, 2026",
           icon: @views.IconName::Save,
           color: rgba8(244, 137, 53),
         },
@@ -891,6 +1090,77 @@ fn file_type_badge(entry : FileEntry) -> String {
 }
 
 ///|
+fn file_list_header(
+  width : Double,
+  palette : DesktopPalette,
+  theme : @moui.Theme,
+) -> @moui.View[Msg] {
+  // macOS Finder list-view header: small uppercase muted column labels with a
+  // bottom rule. Column widths mirror `file_list_row` so labels align.
+  let name_w = (width * 0.40).max(120.0)
+  let date_w = (width * 0.22).max(96.0)
+  let kind_w = (width * 0.20).max(72.0)
+  let size_w = 66.0
+  @views.column(
+    [
+      @views.row(
+        [
+          @views.text(
+            "Name",
+            role=@views.TextRole::Caption,
+            theme~,
+            width=name_w,
+            height=18.0,
+          )
+          .font(@text.FontSpec::new(size=10.0, weight=700))
+          .foreground(palette.muted),
+          @views.text(
+            "Date Modified",
+            role=@views.TextRole::Caption,
+            theme~,
+            width=date_w,
+            height=18.0,
+          )
+          .font(@text.FontSpec::new(size=10.0, weight=700))
+          .foreground(palette.muted),
+          @views.text(
+            "Kind",
+            role=@views.TextRole::Caption,
+            theme~,
+            width=kind_w,
+            height=18.0,
+          )
+          .font(@text.FontSpec::new(size=10.0, weight=700))
+          .foreground(palette.muted),
+          @views.spacer(min_length=4.0, weight=1.0),
+          @views.text(
+            "Size",
+            role=@views.TextRole::Caption,
+            theme~,
+            width=size_w,
+            height=18.0,
+            align=@text.TextAlign::TextEnd,
+          )
+          .font(@text.FontSpec::new(size=10.0, weight=700))
+          .foreground(palette.muted),
+        ],
+        spacing=10.0,
+        align=@views.CrossAlign::Center,
+      ),
+      @views.container(
+        @views.spacer(min_length=0.0, weight=0.0),
+        width=width,
+        height=1.0,
+        background=palette.outline.multiply_alpha(0.55),
+        padding=0.0,
+      ),
+    ],
+    spacing=4.0,
+    align=@views.CrossAlign::Stretch,
+  )
+}
+
+///|
 fn file_list_row(
   entry : FileEntry,
   model : DesktopModel,
@@ -914,14 +1184,21 @@ fn file_list_row(
           entry.name,
           role=@views.TextRole::Body,
           theme~,
-          width=(width * 0.48).max(120.0),
+          width=(width * 0.40).max(120.0),
           height=30.0,
         ).foreground(palette.foreground),
+        @views.text(
+          entry.date,
+          role=@views.TextRole::Caption,
+          theme~,
+          width=(width * 0.22).max(96.0),
+          height=30.0,
+        ).foreground(palette.muted),
         @views.text(
           entry.kind,
           role=@views.TextRole::Caption,
           theme~,
-          width=(width * 0.25).max(80.0),
+          width=(width * 0.20).max(72.0),
           height=30.0,
         ).foreground(palette.muted),
         @views.spacer(min_length=4.0),
