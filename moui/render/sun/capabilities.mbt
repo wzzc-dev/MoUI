@@ -22,7 +22,8 @@ pub fn sun_feature_status(
     | @render.RendererFeature::ShaderEffect
     | @render.RendererFeature::TextShaping
     | @render.RendererFeature::EmojiText
-    | @render.RendererFeature::AsyncImage => @render.RendererFeatureStatus::Supported
+    | @render.RendererFeature::AsyncImage =>
+      @render.RendererFeatureStatus::Supported
   }
 }
 
@@ -71,7 +72,9 @@ pub fn sun_feature_note(feature : @render.RendererFeature) -> String {
 /// feature with its status and note. The Sun provider calls this directly
 /// instead of depending on the central `renderer_backend_capabilities`
 /// matrix (ADR 0019 Phase E).
-pub fn sun_feature_capabilities() -> Array[@render.RendererBackendFeatureCapability] {
+pub fn sun_feature_capabilities() -> Array[
+  @render.RendererBackendFeatureCapability,
+] {
   let all_features = [
     @render.RendererFeature::Rect,
     @render.RendererFeature::RoundedRect,

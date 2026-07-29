@@ -28,7 +28,9 @@ test "host route source subscription dispatches mapped route events" {
     content="Host route adapter",
   )
   inspect(
-    source.publish(@runtime.HostRouteEvent::from_route(route="/ignored", source="app")),
+    source.publish(
+      @runtime.HostRouteEvent::from_route(route="/ignored", source="app"),
+    ),
     content="1",
   )
   inspect(runtime.program_runtime_snapshot().dispatched_count(), content="0")
@@ -150,7 +152,10 @@ test "host timer source subscription starts timer and dispatches mapped frames" 
 test "host timer source subscription cleanup cancels timer" {
   let timer_dispatch : Ref[((@core.Frame) -> Unit)?] = Ref(None)
   let cleanup_count = Ref(0)
-  let source = @runtime.HostTimerSource::new(start_timer=(_interval_ms, dispatch) => {
+  let source = @runtime.HostTimerSource::new(start_timer=(
+    _interval_ms,
+    dispatch,
+  ) => {
     timer_dispatch.val = Some(dispatch)
     Some(() => cleanup_count.val = cleanup_count.val + 1)
   })

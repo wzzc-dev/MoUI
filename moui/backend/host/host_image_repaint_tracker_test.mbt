@@ -64,7 +64,8 @@ test "host image repaint tracker routes revision changes per window" {
     request_redraw=id => requested.push(id),
   )
   assert_true(
-    unchanged.status() == @render.HostImageResourceRepaintStatus::ImageRepaintUnchanged,
+    unchanged.status() ==
+    @render.HostImageResourceRepaintStatus::ImageRepaintUnchanged,
   )
   inspect(requested.length(), content="1")
   main_revision.val = 3
@@ -112,7 +113,8 @@ test "host image repaint tracker routes callback snapshots without renderer read
     request_redraw=id => requested.push(id),
   )
   assert_true(
-    result.status() == @render.HostImageResourceRepaintStatus::ImageRepaintRequested,
+    result.status() ==
+    @render.HostImageResourceRepaintStatus::ImageRepaintRequested,
   )
   inspect(result.previous_revision(), content="1")
   inspect(result.current_revision(), content="2")
@@ -175,7 +177,8 @@ test "host image repaint tracker snapshots lifecycle status counts" {
     request_redraw=_id => redraws.val = redraws.val + 1,
   )
   assert_true(
-    result.status() == @render.HostImageResourceRepaintStatus::ImageRepaintRequested,
+    result.status() ==
+    @render.HostImageResourceRepaintStatus::ImageRepaintRequested,
   )
   inspect(redraws.val, content="1")
   inspect(result.previous_status_counts().record_count(), content="3")
@@ -228,7 +231,8 @@ test "host image repaint tracker ignores stale snapshot revisions" {
     request_redraw=_id => redraws.val = redraws.val + 1,
   )
   assert_true(
-    stale.status() == @render.HostImageResourceRepaintStatus::ImageRepaintUnchanged,
+    stale.status() ==
+    @render.HostImageResourceRepaintStatus::ImageRepaintUnchanged,
   )
   inspect(stale.previous_revision(), content="5")
   inspect(stale.current_revision(), content="5")
@@ -249,7 +253,8 @@ test "host image repaint tracker ignores stale snapshot revisions" {
     request_redraw=_id => redraws.val = redraws.val + 1,
   )
   assert_true(
-    fresh.status() == @render.HostImageResourceRepaintStatus::ImageRepaintRequested,
+    fresh.status() ==
+    @render.HostImageResourceRepaintStatus::ImageRepaintRequested,
   )
   inspect(fresh.previous_revision(), content="5")
   inspect(fresh.current_revision(), content="6")

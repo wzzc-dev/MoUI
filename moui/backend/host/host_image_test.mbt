@@ -87,9 +87,11 @@ test "host window renderer forwards lifecycle closures" {
 
 ///|
 test "host window renderer image resource diagnostics default empty" {
-  let renderer = @render.HostWindowRenderer::new(resize=_ => (), render=_ => (), text_system=() => {
-    @core.TextSystem::fallback()
-  })
+  let renderer = @render.HostWindowRenderer::new(
+    resize=_ => (),
+    render=_ => (),
+    text_system=() => @core.TextSystem::fallback(),
+  )
   inspect(renderer.image_resources().length(), content="0")
   let image_snapshot = renderer.image_resource_snapshot()
   inspect(image_snapshot.revision, content="0")

@@ -82,7 +82,7 @@ fn finder_pathbar(
   @views.stack([
     @views.container(
       @views.spacer(min_length=0.0, weight=0.0),
-      width=width,
+      width~,
       height=1.0,
       background=finder_chrome_divider(model.dark_mode),
       padding=0.0,
@@ -91,8 +91,7 @@ fn finder_pathbar(
       @views.row(
         [
           desktop_icon(@views.IconName::FolderOpen, 13.0, palette.muted),
-          @views
-          .text(
+          @views.text(
             location,
             role=@views.TextRole::Caption,
             theme~,
@@ -101,11 +100,7 @@ fn finder_pathbar(
           )
           .font(@text.FontSpec::new(size=11.5, weight=520))
           .foreground(palette.foreground),
-          desktop_icon(
-            @views.IconName::ChevronDown,
-            10.0,
-            palette.muted,
-          ),
+          desktop_icon(@views.IconName::ChevronDown, 10.0, palette.muted),
         ],
         spacing=6.0,
         align=@views.CrossAlign::Center,
@@ -115,8 +110,7 @@ fn finder_pathbar(
       bottom=4.0,
       right=14.0,
     ),
-  ])
-  .frame(width=width, height~)
+  ]).frame(width~, height~)
 }
 
 ///|
@@ -564,7 +558,7 @@ fn finder_sidebar(
     spacing=0.0,
     align=@views.CrossAlign::Stretch,
   )
-  .frame(width=width)
+  .frame(width~)
   .background(palette.sidebar)
 }
 
@@ -770,12 +764,8 @@ fn finder_content(
     bottom=14.0,
     right=14.0,
   )
-  @views.column(
-    [inner],
-    spacing=0.0,
-    align=@views.CrossAlign::Start,
-  )
-  .frame(width=width, height=height)
+  @views.column([inner], spacing=0.0, align=@views.CrossAlign::Start)
+  .frame(width~, height~)
   .background(palette.content)
 }
 
@@ -798,7 +788,7 @@ fn finder_status(
   @views.stack([
     @views.container(
       @views.spacer(min_length=0.0, weight=0.0),
-      width=width,
+      width~,
       height=1.0,
       background=finder_chrome_divider(model.dark_mode),
       padding=0.0,
@@ -835,8 +825,7 @@ fn finder_status(
       bottom=3.0,
       right=14.0,
     ),
-  ])
-  .frame(width=width, height~)
+  ]).frame(width~, height~)
 }
 
 ///|
@@ -1149,7 +1138,7 @@ fn file_list_header(
       ),
       @views.container(
         @views.spacer(min_length=0.0, weight=0.0),
-        width=width,
+        width~,
         height=1.0,
         background=palette.outline.multiply_alpha(0.55),
         padding=0.0,

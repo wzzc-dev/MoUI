@@ -236,7 +236,9 @@ fn safari_tab(
         width=width - close_width - 16.0,
         height=22.0,
       )
-      .font(@text.FontSpec::new(size=11.5, weight=if selected { 560 } else { 480 }))
+      .font(
+        @text.FontSpec::new(size=11.5, weight=if selected { 560 } else { 480 }),
+      )
       .foreground(palette.foreground),
       @views.container(
         @views.text(

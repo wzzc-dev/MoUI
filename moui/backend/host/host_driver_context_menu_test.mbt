@@ -17,7 +17,9 @@ test "host driver skips context menu without focused text input" {
       ),
     ]),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+    ()
+  })
   let services = HostServiceBridge::new(
     capabilities=HostServiceCapabilities::new(menus=true),
     handle=request => {
@@ -103,7 +105,9 @@ test "host driver shows marked document context menu commands without text focus
       ),
     ]),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+    ()
+  })
   let seen_labels : Array[String] = []
   let services = HostServiceBridge::new(
     capabilities=HostServiceCapabilities::new(menus=true),
@@ -194,7 +198,9 @@ test "host driver shows document actions in focused text context menu without se
       ),
     ]),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+    ()
+  })
   let seen_labels : Array[String] = []
   let services = HostServiceBridge::new(
     capabilities=HostServiceCapabilities::new(menus=true),

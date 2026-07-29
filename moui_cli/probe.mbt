@@ -47,7 +47,7 @@ fn parse_log_line(line : String) -> Observation? {
   let marker = "[MOUI_PROBE] "
   match trimmed.find(marker) {
     Some(start) => {
-      let rest = trimmed[(start + marker.length()):].to_owned()
+      let rest = trimmed[start + marker.length():].to_owned()
       // rest looks like `kind:name=value` (may have leading/trailing whitespace
       // when the source log has extra spaces around the marker).
       match rest.split_once("=") {
@@ -157,7 +157,7 @@ fn build_probe_result(observations : Array[Observation]) -> ProbeResult {
     match by_key.get(name) {
       Some(obs) => {
         final_obs.push(obs)
-        if !(obs.passed) {
+        if !obs.passed {
           ok = false
         }
       }

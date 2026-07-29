@@ -206,7 +206,10 @@ fn Model::with_route(self : Model, route : String) -> Model {
 }
 
 ///|
-fn Model::with_host_route(self : Model, event : @runtime.HostRouteEvent) -> Model {
+fn Model::with_host_route(
+  self : Model,
+  event : @runtime.HostRouteEvent,
+) -> Model {
   let normalized = website_normalize_route(event.location.to_route())
   let locale = website_locale_from_route(normalized)
   let next = { ..self, locale, }.with_route(normalized)

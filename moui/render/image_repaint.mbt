@@ -465,11 +465,7 @@ pub fn HostImageResourceCompletionSource::new(
 
 ///|
 pub fn HostAsyncImageLoader::new(
-  start_load~ : (
-    RenderWindowId,
-    String,
-    (ImageResourceLoadCompletion) -> Unit,
-  ) -> (() -> Unit)?,
+  start_load~ : (RenderWindowId, String, (ImageResourceLoadCompletion) -> Unit) -> (() -> Unit)?,
 ) -> HostAsyncImageLoader {
   {
     start_load_fn: start_load,
@@ -484,11 +480,7 @@ pub fn HostAsyncImageLoader::new(
 
 ///|
 pub fn HostAsyncImageLoader::new_with_drain(
-  start_load~ : (
-    RenderWindowId,
-    String,
-    (ImageResourceLoadCompletion) -> Unit,
-  ) -> (() -> Unit)?,
+  start_load~ : (RenderWindowId, String, (ImageResourceLoadCompletion) -> Unit) -> (() -> Unit)?,
   drain~ : () -> Unit,
 ) -> HostAsyncImageLoader {
   {
@@ -1128,13 +1120,10 @@ fn host_image_resource_status_counts(
   let mut disposed_count = 0
   for record in records {
     match record.status {
-      ImageResourceStatus::ImageLoading =>
-        loading_count = loading_count + 1
+      ImageResourceStatus::ImageLoading => loading_count = loading_count + 1
       ImageResourceStatus::ImageReady => ready_count = ready_count + 1
-      ImageResourceStatus::ImageFailed =>
-        failed_count = failed_count + 1
-      ImageResourceStatus::ImageDisposed =>
-        disposed_count = disposed_count + 1
+      ImageResourceStatus::ImageFailed => failed_count = failed_count + 1
+      ImageResourceStatus::ImageDisposed => disposed_count = disposed_count + 1
     }
   }
   {

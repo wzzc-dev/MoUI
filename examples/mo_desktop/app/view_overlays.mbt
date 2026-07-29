@@ -209,16 +209,14 @@ fn spotlight_results(
   if entries.is_empty() {
     @views.column(
       [
-        @views
-        .text(
+        @views.text(
           "No results for \"\{query}\"",
           role=@views.TextRole::Body,
           theme~,
-          width=width,
+          width~,
           height=28.0,
           align=@text.TextAlign::TextCenter,
-        )
-        .foreground(palette.muted),
+        ).foreground(palette.muted),
       ],
       spacing=0.0,
       align=@views.CrossAlign::Center,
@@ -232,7 +230,9 @@ fn spotlight_results(
     for category in categories {
       let group = entries.filter(entry => entry.category == category)
       if !group.is_empty() {
-        children.push(spotlight_category_header(category, width, palette, theme))
+        children.push(
+          spotlight_category_header(category, width, palette, theme),
+        )
         for entry in group {
           children.push(spotlight_row(entry, width, palette, theme))
         }
@@ -255,7 +255,7 @@ fn spotlight_category_header(
     category,
     role=@views.TextRole::Caption,
     theme~,
-    width=width,
+    width~,
     height=16.0,
   )
   .font(@text.FontSpec::new(size=11.0, weight=700))

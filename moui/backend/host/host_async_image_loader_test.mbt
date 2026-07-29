@@ -33,7 +33,11 @@ test "host async image loader schedules loading records and completes redraw" {
   let captured_completion : Ref[
     ((@render.ImageResourceLoadCompletion) -> Unit)?,
   ] = Ref(None)
-  let loader = @render.HostAsyncImageLoader::new(start_load=(id, source, complete) => {
+  let loader = @render.HostAsyncImageLoader::new(start_load=(
+    id,
+    source,
+    complete,
+  ) => {
     started_windows.push(id)
     started_sources.push(source)
     captured_completion.val = Some(complete)
@@ -117,7 +121,11 @@ test "host async image loader cancels window loads and ignores late completions"
   let captured_completion : Ref[
     ((@render.ImageResourceLoadCompletion) -> Unit)?,
   ] = Ref(None)
-  let loader = @render.HostAsyncImageLoader::new(start_load=(_id, _source, complete) => {
+  let loader = @render.HostAsyncImageLoader::new(start_load=(
+    _id,
+    _source,
+    complete,
+  ) => {
     captured_completion.val = Some(complete)
     Some(() => {
       cancelled.val = cancelled.val + 1
@@ -187,7 +195,11 @@ test "host async image loader ignores mismatched completion sources" {
   let captured_completion : Ref[
     ((@render.ImageResourceLoadCompletion) -> Unit)?,
   ] = Ref(None)
-  let loader = @render.HostAsyncImageLoader::new(start_load=(_id, _source, complete) => {
+  let loader = @render.HostAsyncImageLoader::new(start_load=(
+    _id,
+    _source,
+    complete,
+  ) => {
     captured_completion.val = Some(complete)
     Some(() => ())
   })

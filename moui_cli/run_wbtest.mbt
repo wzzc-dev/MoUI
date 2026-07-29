@@ -90,7 +90,10 @@ test "test_parse_run_args_options" {
         fail("expected options")
         return
       }
-      debug_inspect(options.app_config_path, content="Some(/tmp/moui.mobile.json)")
+      debug_inspect(
+        options.app_config_path,
+        content="Some(/tmp/moui.mobile.json)",
+      )
       debug_inspect(options.device, content="Some(emulator-5554)")
       debug_inspect(options.renderer, content="Some(skia)")
       debug_inspect(options.filter, content="Some(MoUI:V)")
@@ -203,7 +206,10 @@ test "test_apply_config_overrides_run_preserves_cli_values" {
   let overridden = apply_config_overrides_run(options, config)
   debug_inspect(overridden.device, content="Some(emulator-5554)")
   debug_inspect(overridden.renderer, content="Some(skia)")
-  debug_inspect(overridden.app_config_path, content="Some(/cli/moui.mobile.json)")
+  debug_inspect(
+    overridden.app_config_path,
+    content="Some(/cli/moui.mobile.json)",
+  )
 }
 
 ///|
@@ -355,7 +361,10 @@ test "test_build_options_from_run_options_preserves_cli_overrides" {
     custom_args: [],
   }
   let build_options = build_options_from_run_options(options, ".", None)
-  debug_inspect(build_options.app_config_path, content="Some(/cli/moui.mobile.json)")
+  debug_inspect(
+    build_options.app_config_path,
+    content="Some(/cli/moui.mobile.json)",
+  )
   inspect(build_options.workspace_root, content=".")
   inspect(build_options.moui_root, content="")
   inspect(build_options.skia_root, content="")

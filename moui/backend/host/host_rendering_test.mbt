@@ -121,18 +121,14 @@ test "native renderer auto mode requires availability and promotion" {
     gpu_available=true,
     gpu_promoted=false,
   )
-  assert_true(
-    pending == @render.SkiaSurfaceRoute::RasterSurfaceRoute,
-  )
+  assert_true(pending == @render.SkiaSurfaceRoute::RasterSurfaceRoute)
   let promoted = @render.resolve_surface_route(
     @render.NativeGpuPlatform::Macos,
     @render.NativeRendererMode::Auto,
     gpu_available=true,
     gpu_promoted=true,
   )
-  assert_true(
-    promoted == @render.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
-  )
+  assert_true(promoted == @render.SkiaSurfaceRoute::MetalGpuSurfaceRoute)
   let unavailable = @render.resolve_surface_route(
     @render.NativeGpuPlatform::Android,
     @render.NativeRendererMode::SkiaGpu,
@@ -150,27 +146,21 @@ test "native renderer surface route reflects platform selection" {
     gpu_available=true,
     gpu_promoted=false,
   )
-  assert_true(
-    android == @render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute,
-  )
+  assert_true(android == @render.SkiaSurfaceRoute::VulkanGpuSurfaceRoute)
   let harmonyos = @render.resolve_surface_route(
     @render.NativeGpuPlatform::HarmonyOs,
     @render.NativeRendererMode::SkiaGpu,
     gpu_available=true,
     gpu_promoted=false,
   )
-  assert_true(
-    harmonyos == @render.SkiaSurfaceRoute::EglGpuSurfaceRoute,
-  )
+  assert_true(harmonyos == @render.SkiaSurfaceRoute::EglGpuSurfaceRoute)
   let windows = @render.resolve_surface_route(
     @render.NativeGpuPlatform::Windows,
     @render.NativeRendererMode::SkiaGpu,
     gpu_available=true,
     gpu_promoted=false,
   )
-  assert_true(
-    windows == @render.SkiaSurfaceRoute::Direct3DGpuSurfaceRoute,
-  )
+  assert_true(windows == @render.SkiaSurfaceRoute::Direct3DGpuSurfaceRoute)
 }
 
 ///|
@@ -378,9 +368,11 @@ test "host renderer capability records preserve optional callback behavior" {
 ///|
 test "host renderer absent capabilities keep no-op defaults" {
   let platform_draws = Ref(0)
-  let renderer = @render.HostWindowRenderer::new(resize=_ => (), render=_ => (), text_system=() => {
-    @core.TextSystem::fallback()
-  })
+  let renderer = @render.HostWindowRenderer::new(
+    resize=_ => (),
+    render=_ => (),
+    text_system=() => @core.TextSystem::fallback(),
+  )
   inspect(renderer.image_resources().length(), content="0")
   inspect(renderer.image_resource_snapshot().records.length(), content="0")
   renderer.draw_platform_view_pixels(b"", 0, 0, 0, 0.0, 0.0, 0.0, 0.0)

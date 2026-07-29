@@ -198,11 +198,13 @@ pub fn EmbeddedSessionCore::resize(
   match (self.renderer, self.host_bridge) {
     (Some(renderer), Some(channel)) if !self.disposed => {
       self.metrics = metrics
-      renderer.resize(@render.RendererSurfaceMetrics::new(
+      renderer.resize(
+        @render.RendererSurfaceMetrics::new(
           logical_size=metrics.logical_size,
           physical_size=metrics.physical_size,
           scale_factor=metrics.scale_factor,
-        ))
+        ),
+      )
       let result = self.driver.dispatch(@host.HostEvent::Resized(metrics))
       ignore(channel.sync(self.runtime))
       result

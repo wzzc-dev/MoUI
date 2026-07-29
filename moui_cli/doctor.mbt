@@ -568,7 +568,7 @@ fn DoctorReport::to_human_text(self : DoctorReport) -> String {
       builder.write_string("  Fix: " + check.remediation + "\n")
     }
   }
-  if !(self.evidence.is_empty()) {
+  if !self.evidence.is_empty() {
     builder.write_string("Runtime evidence:\n")
     builder.write_string(evidence_status_to_text(self.evidence))
   }

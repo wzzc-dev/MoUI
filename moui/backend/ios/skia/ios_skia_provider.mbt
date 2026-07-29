@@ -369,9 +369,7 @@ fn host_renderer_from_native_gpu_worker(
         err => println("error resizing iOS Skia producer: \{err.message()}")
       }
       if !fallback_to_raster.val {
-        let descriptor = ios_skia_metal_surface_descriptor(
-          metrics,
-        )
+        let descriptor = ios_skia_metal_surface_descriptor(metrics)
         let dimensions = descriptor.dimensions()
         if ios_skia_configure_metal_layer(
             view.raw(),

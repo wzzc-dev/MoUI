@@ -326,9 +326,7 @@ pub fn NativeAccessibilityBridge::runtime(
       runtime.perform_semantics_action({
         target: @core.SemanticsTarget::ByNodeId(request.node_id),
         action: request.action,
-        precondition: SemanticsGenerationPrecondition::Exact(
-          request.generation,
-        ),
+        precondition: SemanticsGenerationPrecondition::Exact(request.generation),
       }) {
       Ok(receipt) => NativeAccessibilityActionResult::Handled(receipt)
       Err(error) => NativeAccessibilityActionResult::Rejected(error)

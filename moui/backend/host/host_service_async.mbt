@@ -296,5 +296,3 @@ pub fn HostServiceResponse::is_pending(self : HostServiceResponse) -> Bool {
     _ => false
   }
 }
-
-

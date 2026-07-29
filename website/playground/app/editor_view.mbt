@@ -159,7 +159,7 @@ fn playground_example_picker(
 ) -> @moui.View[Msg] {
   // The playground toolbar is deliberately flat; the default popup elevation
   // reads as a distracting gray halo against the editor.
-  let style = @views.PickerStyle::default(theme=theme)
+  let style = @views.PickerStyle::default(theme~)
     .with_font(
       font=@text.FontSpec::new(
         families=@text.FontFamilyStack::monospace(),

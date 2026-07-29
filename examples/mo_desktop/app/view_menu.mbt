@@ -198,8 +198,7 @@ fn menu_bar_item(
   @views.container(
     @views.row(
       [
-        @views
-        .text(
+        @views.text(
           item.label,
           role=@views.TextRole::Label,
           theme~,
@@ -259,8 +258,7 @@ fn menu_separator(width : Double, palette : DesktopPalette) -> @moui.View[Msg] {
         background=color,
         corner_radius=0.5,
         padding=0.0,
-      )
-      .align(alignment=@geometry.Alignment::center()),
+      ).align(alignment=@geometry.Alignment::center()),
     ])
   }
 }

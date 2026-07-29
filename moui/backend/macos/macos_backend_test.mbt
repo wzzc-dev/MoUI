@@ -265,7 +265,9 @@ test "macos resize metrics update runtime driver logical size" {
     root=(@views.empty() : @core.View[Unit]),
     size=@core.Size::new(width=10.0, height=10.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+    ()
+  })
   let event = window_event_to_host_with_modifiers(
     @window_core.WindowEvent::SurfaceResized(
       @dpi.PhysicalSize::PhysicalSize(1440, 900),
