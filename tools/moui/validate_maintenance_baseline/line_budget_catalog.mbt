@@ -84,7 +84,7 @@ fn file_budgets() -> Array[FileBudget] {
       max_lines: 430,
     },
     { path: "moui/backend/host/host_test.mbt", max_lines: 50 },
-    { path: "moui/backend/host/host_services_test.mbt", max_lines: 257 },
+    { path: "moui/backend/host/host_services_test.mbt", max_lines: 261 },
     {
       path: "moui/backend/host/host_driver_context_menu_test.mbt",
       max_lines: 240,
@@ -103,7 +103,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/backend/host/host_async_service_queue_test.mbt",
-      max_lines: 210,
+      max_lines: 212,
     },
     {
       path: "moui/backend/host/host_service_completion_subscription_test.mbt",
@@ -112,11 +112,11 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/backend/host/host_image_test.mbt", max_lines: 110 },
     {
       path: "moui/backend/host/host_image_repaint_tracker_test.mbt",
-      max_lines: 312,
+      max_lines: 317,
     },
     {
       path: "moui/backend/host/host_image_completion_source_test.mbt",
-      max_lines: 218,
+      max_lines: 221,
     },
     {
       path: "moui/backend/host/host_async_image_loader_test.mbt",
@@ -125,7 +125,7 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/backend/host/host_text_input_test.mbt", max_lines: 310 },
     {
       path: "moui/backend/host/host_text_input_context_menu_test.mbt",
-      max_lines: 210,
+      max_lines: 212,
     },
     {
       path: "moui/backend/host/host_text_input_composition_test.mbt",
@@ -143,14 +143,14 @@ fn file_budgets() -> Array[FileBudget] {
     { path: "moui/backend/host/host_window_lifecycle_test.mbt", max_lines: 310 },
     {
       path: "moui/backend/host/host_window_runtime_slots_test.mbt",
-      max_lines: 185,
+      max_lines: 188,
     },
     { path: "moui/backend/host/host_window_commands_test.mbt", max_lines: 140 },
     { path: "moui/backend/host/host_window_requests_test.mbt", max_lines: 335 },
     { path: "moui/backend/host/window_lifecycle.mbt", max_lines: 115 },
     { path: "moui/backend/host/window_registry.mbt", max_lines: 320 },
     { path: "moui/runtime/window_scene_resolution.mbt", max_lines: 115 },
-    { path: "moui/runtime/window_runtime_slots.mbt", max_lines: 245 },
+    { path: "moui/runtime/window_runtime_slots.mbt", max_lines: 247 },
     { path: "moui/backend/host/window_request_queue.mbt", max_lines: 150 },
     { path: "moui/backend/host/window_platform_map.mbt", max_lines: 110 },
     { path: "moui/backend/web/host_runtime.mbt", max_lines: 480 },

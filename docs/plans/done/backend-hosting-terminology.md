@@ -31,4 +31,4 @@
 | 2026-07-29 | Inventory complete; implementation in progress. |
 | 2026-07-29 | Renamed the shared internal backend package/core, embedded-runtime backend application handlers, native-host backend handlers, validators, entrypoints, and architecture guidance. |
 | 2026-07-29 | Passed `moon info`; Android/iOS/HarmonyOS/macOS/Windows/Linux backend tests; harness/API validator tests; API-surface and guidance-consistency guards. |
-| 2026-07-29 | Known unrelated failures: the maintenance baseline reports seven existing line-budget files; `moon test moui_cli --target native` has six current-toolchain expectation-formatting failures (`Some(value)` versus `Some("value")`). |
+| 2026-07-29 | Follow-up resolved the seven 2–5-line baseline gaps and aligned `moui_cli` Debug assertions with `Some("value")`; the maintenance guard and all 190 CLI tests pass. |

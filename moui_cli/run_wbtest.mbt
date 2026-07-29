@@ -92,11 +92,11 @@ test "test_parse_run_args_options" {
       }
       debug_inspect(
         options.app_config_path,
-        content="Some(/tmp/moui.mobile.json)",
+        content="Some(\"/tmp/moui.mobile.json\")",
       )
-      debug_inspect(options.device, content="Some(emulator-5554)")
-      debug_inspect(options.renderer, content="Some(skia)")
-      debug_inspect(options.filter, content="Some(MoUI:V)")
+      debug_inspect(options.device, content="Some(\"emulator-5554\")")
+      debug_inspect(options.renderer, content="Some(\"skia\")")
+      debug_inspect(options.filter, content="Some(\"MoUI:V\")")
       assert_true(options.fallback_skia)
       assert_true(options.verify)
     }
@@ -204,11 +204,11 @@ test "test_apply_config_overrides_run_preserves_cli_values" {
   }
   let config = default_cli_config()
   let overridden = apply_config_overrides_run(options, config)
-  debug_inspect(overridden.device, content="Some(emulator-5554)")
-  debug_inspect(overridden.renderer, content="Some(skia)")
+  debug_inspect(overridden.device, content="Some(\"emulator-5554\")")
+  debug_inspect(overridden.renderer, content="Some(\"skia\")")
   debug_inspect(
     overridden.app_config_path,
-    content="Some(/cli/moui.mobile.json)",
+    content="Some(\"/cli/moui.mobile.json\")",
   )
 }
 
@@ -363,14 +363,14 @@ test "test_build_options_from_run_options_preserves_cli_overrides" {
   let build_options = build_options_from_run_options(options, ".", None)
   debug_inspect(
     build_options.app_config_path,
-    content="Some(/cli/moui.mobile.json)",
+    content="Some(\"/cli/moui.mobile.json\")",
   )
   inspect(build_options.workspace_root, content=".")
   inspect(build_options.moui_root, content="")
   inspect(build_options.skia_root, content="")
   inspect(build_options.build_dir, content="")
   assert_true(build_options.output is None)
-  debug_inspect(build_options.renderer, content="Some(skia)")
+  debug_inspect(build_options.renderer, content="Some(\"skia\")")
   assert_true(build_options.fallback_skia)
   assert_true(build_options.prepare_only)
   assert_true(build_options.product_name is None)
@@ -435,7 +435,7 @@ test "test_build_options_from_run_options_passes_sdk_override" {
     ".",
     Some("iphonesimulator"),
   )
-  debug_inspect(with_override.sdk, content="Some(iphonesimulator)")
+  debug_inspect(with_override.sdk, content="Some(\"iphonesimulator\")")
   let without_override = build_options_from_run_options(options, ".", None)
   assert_true(without_override.sdk is None)
 }
@@ -469,7 +469,7 @@ test "test_resolve_ios_sdk_override_returns_simulator_for_uuid" {
   }
   debug_inspect(
     resolve_ios_sdk_override("ios", simulator_device),
-    content="Some(iphonesimulator)",
+    content="Some(\"iphonesimulator\")",
   )
   let physical_device : Device = {
     platform: "ios",
