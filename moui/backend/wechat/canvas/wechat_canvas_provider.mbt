@@ -31,7 +31,7 @@ pub fn WechatCanvasRendererProvider::create_host_renderer(
 ) -> @render.HostWindowRenderer {
   let renderer = self.renderer
   @render.HostWindowRenderer::new(
-    resize=fn(metrics : @host.HostSurfaceMetrics) {
+    resize=fn(metrics : @render.RendererSurfaceMetrics) {
       renderer.resize(
         @render.RendererSurfaceMetrics::new(
           logical_size=metrics.logical_size,

@@ -55,7 +55,7 @@ test "wechat_canvas_provider_resize" {
     canvas_id="test-canvas",
     metrics~,
   )
-  let new_metrics = @host.HostSurfaceMetrics::from_logical(
+  let new_metrics = @render.RendererSurfaceMetrics::from_logical(
     size=@core.Size::new(width=414.0, height=896.0),
     scale_factor=3.0,
   )
