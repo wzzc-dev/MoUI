@@ -87,13 +87,15 @@ pub fn create_linux_webview_plugin(
     },
     setup_platform_view_draw=Some(fn(
       wl_surface,
-      renderer,
       frame,
       content_offset_y,
+      install_draw,
     ) {
-      draw_linux_webview_pixels_to_renderer(
-        wl_surface, renderer, frame, content_offset_y,
-      )
+      install_draw(fn(sink) {
+        draw_linux_webview_pixels_to_sink(
+          wl_surface, sink, frame, content_offset_y,
+        )
+      })
     }),
     poll_native=Some(fn() {
       // Pump the nested GTK loop and report whether work remains. The host
@@ -114,9 +116,9 @@ pub fn create_linux_webview_plugin(
 /// and the host composites the pixels during `render_frame`. Views are keyed by
 /// `wl_surface` on the C side, so the surface handle passed by the host
 /// identifies this window's webviews.
-fn draw_linux_webview_pixels_to_renderer(
+fn draw_linux_webview_pixels_to_sink(
   wl_surface : UInt64,
-  renderer : @moui_host.HostWindowRenderer,
+  sink : @core.PlatformViewPixelSink,
   frame : @core.DrawFrame,
   content_offset_y : Double,
 ) -> Unit {
@@ -134,7 +136,7 @@ fn draw_linux_webview_pixels_to_renderer(
           width=placement.frame.size.width,
           height=placement.frame.size.height,
         )
-        renderer.draw_platform_view_pixels(
+        sink.draw(
           pixels,
           surface_data.width,
           surface_data.height,
