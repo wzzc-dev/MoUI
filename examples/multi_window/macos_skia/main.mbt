@@ -12,7 +12,9 @@ fn main {
           ),
         )
       None =>
-        @runtime.HostWindowSceneResolution::SceneRejected("unknown sample scene")
+        @runtime.HostWindowSceneResolution::SceneRejected(
+          "unknown sample scene",
+        )
     }
   })
   @macos_skia_backend.run_app_with_options(

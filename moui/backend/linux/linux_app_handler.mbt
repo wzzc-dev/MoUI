@@ -399,12 +399,9 @@ fn LinuxApp::redraw_window(
         for plugin in self.platform_view_plugins {
           match plugin.setup_platform_view_draw {
             Some(setup_fn) =>
-              setup_fn(
-                handle,
-                f,
-                offset_y,
-                draw_fn => renderer.set_platform_view_draw_fn(Some(draw_fn)),
-              )
+              setup_fn(handle, f, offset_y, draw_fn => {
+                renderer.set_platform_view_draw_fn(Some(draw_fn))
+              })
             None => ()
           }
         }

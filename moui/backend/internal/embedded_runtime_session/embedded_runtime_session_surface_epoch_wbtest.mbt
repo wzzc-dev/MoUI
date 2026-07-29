@@ -123,7 +123,9 @@ test "mobile accessibility rejects stale session generation and removed node wit
     ),
     size=@core.Size::new(width=120.0, height=80.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+    ()
+  })
   let bridge = EmbeddingHostBridge::new(session_generation=17)
   let (node_id, initial_generation) = match runtime.read_semantics() {
     Ok(@runtime.SemanticsRead::Full(snapshot)) => {

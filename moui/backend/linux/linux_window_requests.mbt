@@ -166,7 +166,8 @@ fn LinuxApp::open_window(
   event_loop : @window_linux.ActiveEventLoop,
   request : @host.HostWindowOpenRequest,
 ) -> @host.HostWindowRequestResult {
-  match @runtime.resolve_open_request(self.windows, request, self.scene_resolver) {
+  match
+    @runtime.resolve_open_request(self.windows, request, self.scene_resolver) {
     @runtime.HostWindowOpenResolution::OpenRejected(message) =>
       @host.HostWindowRequestResult::WindowRejected(message)
     @runtime.HostWindowOpenResolution::OpenResolved(resolved) =>
@@ -453,7 +454,9 @@ fn LinuxApp::bind_renderer_image_resource_changes(
                   snapshot,
                   window_open=runtime_slot.record.phase !=
                     @host.HostWindowLifecyclePhase::WindowClosed,
-                  request_redraw=id => self.request_platform_redraw(to_host_id(id)),
+                  request_redraw=id => {
+                    self.request_platform_redraw(to_host_id(id))
+                  },
                 ),
               )
             (Some(_platform_slot), None) =>
@@ -566,7 +569,9 @@ fn to_render_id(window_id : @host.HostWindowId) -> @render.RenderWindowId {
 }
 
 ///|
-fn to_render_metrics(metrics : @host.HostSurfaceMetrics) -> @render.RendererSurfaceMetrics {
+fn to_render_metrics(
+  metrics : @host.HostSurfaceMetrics,
+) -> @render.RendererSurfaceMetrics {
   @render.RendererSurfaceMetrics::new(
     logical_size=metrics.logical_size,
     physical_size=metrics.physical_size,

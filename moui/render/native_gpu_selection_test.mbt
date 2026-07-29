@@ -56,7 +56,9 @@ test "all native platforms promote gpu for auto by default" {
     NativeGpuPlatform::HarmonyOs,
     NativeRendererMode::Auto,
     gpu_available=true,
-    gpu_promoted=NativePlatformSurface::gpu_promoted(NativeGpuPlatform::HarmonyOs),
+    gpu_promoted=NativePlatformSurface::gpu_promoted(
+      NativeGpuPlatform::HarmonyOs,
+    ),
   )
   assert_true(harmony == SkiaSurfaceRoute::EglGpuSurfaceRoute)
 }
@@ -159,26 +161,45 @@ test "resolve_surface_route respects explicit skia-raster request" {
 
 ///|
 test "NativePlatformSurface trait dispatches platform_label" {
-  assert_true(NativePlatformSurface::platform_label(NativeGpuPlatform::Macos) == "macos")
-  assert_true(NativePlatformSurface::platform_label(NativeGpuPlatform::Windows) == "windows")
-  assert_true(NativePlatformSurface::platform_label(NativeGpuPlatform::Linux) == "linux")
-  assert_true(NativePlatformSurface::platform_label(NativeGpuPlatform::Android) == "android")
-  assert_true(NativePlatformSurface::platform_label(NativeGpuPlatform::Ios) == "ios")
-  assert_true(NativePlatformSurface::platform_label(NativeGpuPlatform::HarmonyOs) == "harmonyos")
+  assert_true(
+    NativePlatformSurface::platform_label(NativeGpuPlatform::Macos) == "macos",
+  )
+  assert_true(
+    NativePlatformSurface::platform_label(NativeGpuPlatform::Windows) ==
+    "windows",
+  )
+  assert_true(
+    NativePlatformSurface::platform_label(NativeGpuPlatform::Linux) == "linux",
+  )
+  assert_true(
+    NativePlatformSurface::platform_label(NativeGpuPlatform::Android) ==
+    "android",
+  )
+  assert_true(
+    NativePlatformSurface::platform_label(NativeGpuPlatform::Ios) == "ios",
+  )
+  assert_true(
+    NativePlatformSurface::platform_label(NativeGpuPlatform::HarmonyOs) ==
+    "harmonyos",
+  )
 }
 
 ///|
 test "NativePlatformSurface trait dispatches surface_route per platform" {
   assert_true(
-    NativePlatformSurface::surface_route(NativeGpuPlatform::Macos) == SkiaSurfaceRoute::MetalGpuSurfaceRoute,
+    NativePlatformSurface::surface_route(NativeGpuPlatform::Macos) ==
+    SkiaSurfaceRoute::MetalGpuSurfaceRoute,
   )
   assert_true(
-    NativePlatformSurface::surface_route(NativeGpuPlatform::Windows) == SkiaSurfaceRoute::Direct3DGpuSurfaceRoute,
+    NativePlatformSurface::surface_route(NativeGpuPlatform::Windows) ==
+    SkiaSurfaceRoute::Direct3DGpuSurfaceRoute,
   )
   assert_true(
-    NativePlatformSurface::surface_route(NativeGpuPlatform::Linux) == SkiaSurfaceRoute::VulkanGpuSurfaceRoute,
+    NativePlatformSurface::surface_route(NativeGpuPlatform::Linux) ==
+    SkiaSurfaceRoute::VulkanGpuSurfaceRoute,
   )
   assert_true(
-    NativePlatformSurface::surface_route(NativeGpuPlatform::HarmonyOs) == SkiaSurfaceRoute::EglGpuSurfaceRoute,
+    NativePlatformSurface::surface_route(NativeGpuPlatform::HarmonyOs) ==
+    SkiaSurfaceRoute::EglGpuSurfaceRoute,
   )
 }

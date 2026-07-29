@@ -34,9 +34,7 @@ pub(all) struct ControlThemeSet {
 /// but expressed as token sets so controls can resolve variant/state at paint
 /// time without a `style?` argument. Branded addons call this for the base and
 /// then overlay their own tokens.
-pub fn minimal_control_theme_set(
-  theme : @core.Theme,
-) -> ControlThemeSet {
+pub fn minimal_control_theme_set(theme : @core.Theme) -> ControlThemeSet {
   let palette = theme.palette
   let scheme = theme.scheme
   let spacing = theme.spacing_scale
@@ -238,8 +236,6 @@ fn tone_tokens(
 /// falling back to the neutral theme when none is supplied. Composite
 /// views use this for construction-time reads; leaf children resolve
 /// variant/state at paint time against the ambient `ControlThemeSet`.
-fn views_ambient_control_theme(
-  theme : @core.Theme,
-) -> ControlThemeSet {
+fn views_ambient_control_theme(theme : @core.Theme) -> ControlThemeSet {
   minimal_control_theme_set(theme)
 }

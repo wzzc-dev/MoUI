@@ -26,7 +26,9 @@ pub(all) enum InteractionState {
 /// `view_style.mbt`) into the token-layer `InteractionState` for component
 /// theme resolution. Kept in `core` because both sides are neutral core
 /// types; `moui/views` reads this when resolving a `ControlThemeSet`.
-pub fn PressableState::to_interaction(self : PressableState) -> InteractionState {
+pub fn PressableState::to_interaction(
+  self : PressableState,
+) -> InteractionState {
   match self {
     Normal => InteractionState::Normal
     Hovered => InteractionState::Hovered

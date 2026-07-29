@@ -5,6 +5,8 @@ import {
   "mizchi/pixelmatch",
 }
 
+supported_targets = "+native+wasm-gc+wasm"
+
 options(
   targets: { },
 )

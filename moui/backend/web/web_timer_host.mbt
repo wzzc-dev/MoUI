@@ -29,7 +29,9 @@ pub fn web_timer_source() -> @runtime.HostTimerSource {
 }
 
 ///|
-fn web_timer_source_from_clock(clock : () -> Double) -> @runtime.HostTimerSource {
+fn web_timer_source_from_clock(
+  clock : () -> Double,
+) -> @runtime.HostTimerSource {
   @runtime.HostTimerSource::new(start_timer=(interval_ms, dispatch) => {
     let token = web_timer_registry.val.next_token
     web_timer_registry.val.next_token = token + 1

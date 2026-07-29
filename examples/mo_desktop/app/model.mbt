@@ -464,36 +464,37 @@ fn DesktopModel::apply(self : DesktopModel, message : Msg) -> DesktopModel {
       }
     ShowBrowserStartPage =>
       { ..self, browser_query: "", browser_page: StartPage }
-    NewBrowserTab =>
-      {
-        let tabs = self.browser_tab_titles
-        let updated : Array[String] = []
-        for t in tabs { updated.push(t) }
-        updated.push("Start Page")
-        { ..self, browser_tab_titles: updated, browser_active_tab: tabs.length() }
+    NewBrowserTab => {
+      let tabs = self.browser_tab_titles
+      let updated : Array[String] = []
+      for t in tabs {
+        updated.push(t)
       }
-    SelectBrowserTab(index) =>
-      { ..self, browser_active_tab: index }
-    CloseBrowserTab(index) =>
-      {
-        let tabs = self.browser_tab_titles
-        if tabs.length() <= 1 {
-          self
-        } else {
-          let filtered : Array[String] = []
-          for i in 0..<tabs.length() {
-            if i != index { filtered.push(tabs[i]) }
+      updated.push("Start Page")
+      { ..self, browser_tab_titles: updated, browser_active_tab: tabs.length() }
+    }
+    SelectBrowserTab(index) => { ..self, browser_active_tab: index }
+    CloseBrowserTab(index) => {
+      let tabs = self.browser_tab_titles
+      if tabs.length() <= 1 {
+        self
+      } else {
+        let filtered : Array[String] = []
+        for i in 0..<tabs.length() {
+          if i != index {
+            filtered.push(tabs[i])
           }
-          let active = if self.browser_active_tab >= filtered.length() {
-            filtered.length() - 1
-          } else if self.browser_active_tab > index {
-            self.browser_active_tab - 1
-          } else {
-            self.browser_active_tab
-          }
-          { ..self, browser_tab_titles: filtered, browser_active_tab: active }
         }
+        let active = if self.browser_active_tab >= filtered.length() {
+          filtered.length() - 1
+        } else if self.browser_active_tab > index {
+          self.browser_active_tab - 1
+        } else {
+          self.browser_active_tab
+        }
+        { ..self, browser_tab_titles: filtered, browser_active_tab: active }
       }
+    }
     OpenFavorite(value) =>
       {
         ..self,

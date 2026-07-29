@@ -113,8 +113,7 @@ impl @core.ViewNode for Slider with fn paint(self, ctx) {
   let thumb_shape = views_ambient_control_theme(resolved_theme).slider.thumb_shape
   let thumb_radius = match thumb_shape {
     ThumbShape::Circle => knob / 2.0
-    ThumbShape::Rounded =>
-      min_view_double(knob / 2.0, resolved_style.radius)
+    ThumbShape::Rounded => min_view_double(knob / 2.0, resolved_style.radius)
   }
   let foreground_color = resolve_control_color(
     self.foreground,

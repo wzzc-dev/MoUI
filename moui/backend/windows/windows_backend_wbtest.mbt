@@ -77,9 +77,11 @@ test "windows renderer provider exposes async image loader hook" {
     create_renderer=(_window, _metrics) => None,
     image_loader=Some(loader),
   )
-  let renderer = @render.HostWindowRenderer::new(resize=_ => (), render=_ => (), text_system=() => {
-    @core.TextSystem::fallback()
-  })
+  let renderer = @render.HostWindowRenderer::new(
+    resize=_ => (),
+    render=_ => (),
+    text_system=() => @core.TextSystem::fallback(),
+  )
   let tracker = @render.HostImageResourceRepaintTracker::new()
   let source = @render.HostImageResourceCompletionSource::new(
     tracker~,
@@ -111,9 +113,11 @@ test "windows renderer provider async image hook defaults to unavailable" {
     _window,
     _metrics,
   ) => None)
-  let renderer = @render.HostWindowRenderer::new(resize=_ => (), render=_ => (), text_system=() => {
-    @core.TextSystem::fallback()
-  })
+  let renderer = @render.HostWindowRenderer::new(
+    resize=_ => (),
+    render=_ => (),
+    text_system=() => @core.TextSystem::fallback(),
+  )
   let tracker = @render.HostImageResourceRepaintTracker::new()
   let source = @render.HostImageResourceCompletionSource::new(
     tracker~,

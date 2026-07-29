@@ -61,37 +61,37 @@ fn app_window(
   )
   let radius = if model.window_maximized { 10.0 } else { 12.0 }
   let window = @views.stack([
-    @views.container(
-      @views.column(
-        [titlebar, body],
-        spacing=0.0,
-        align=@views.CrossAlign::Stretch,
+      @views.container(
+        @views.column(
+          [titlebar, body],
+          spacing=0.0,
+          align=@views.CrossAlign::Stretch,
+        ),
+        width=metrics.width,
+        height=metrics.height,
+        background=palette.glass_strong,
+        corner_radius=radius,
+        border=Some(rim),
+        padding=0.0,
       ),
-      width=metrics.width,
-      height=metrics.height,
-      background=palette.glass_strong,
-      corner_radius=radius,
-      border=Some(rim),
-      padding=0.0,
-    ),
-    // macOS bottom-right resize grip: a subtle layered set of lines that
-    // read as a diagonal "grab" affordance. Hidden when maximized.
-    if model.window_maximized {
-      @views.spacer(min_length=0.0, weight=0.0)
-    } else {
-      resize_grip(metrics.width, metrics.height, palette)
-    },
-  ])
-  .frame(width=metrics.width, height=metrics.height)
-  .shadow(
-    @graphics.ShadowStyle::new(
-      color=palette.shadow.multiply_alpha(0.72),
-      offset=@geometry.Point::new(x=0.0, y=18.0),
-      blur_radius=42.0,
-      spread=0.0,
-    ),
-  )
-  .clip()
+      // macOS bottom-right resize grip: a subtle layered set of lines that
+      // read as a diagonal "grab" affordance. Hidden when maximized.
+      if model.window_maximized {
+        @views.spacer(min_length=0.0, weight=0.0)
+      } else {
+        resize_grip(metrics.width, metrics.height, palette)
+      },
+    ])
+    .frame(width=metrics.width, height=metrics.height)
+    .shadow(
+      @graphics.ShadowStyle::new(
+        color=palette.shadow.multiply_alpha(0.72),
+        offset=@geometry.Point::new(x=0.0, y=18.0),
+        blur_radius=42.0,
+        spread=0.0,
+      ),
+    )
+    .clip()
   window
   .align(alignment=@geometry.Alignment::center())
   .offset(
@@ -126,7 +126,7 @@ fn resize_grip(
   let origin_y = window_height - inset - cell
   let stroke = @graphics.Brush::solid(line_color)
   @views.canvas(
-    measure={ _ => @geometry.Size::new(width=window_width, height=window_height) },
+    measure=_ => @geometry.Size::new(width=window_width, height=window_height),
     draw=fn(ctx, _rect) {
       for index in 0..<3 {
         let offset = index.to_double() * 4.0
@@ -152,8 +152,7 @@ fn resize_grip(
       }
     },
     semantics_label="Resize window",
-  )
-  .frame(width=window_width, height=window_height)
+  ).frame(width=window_width, height=window_height)
 }
 
 ///|
@@ -167,7 +166,12 @@ fn window_titlebar(
   let controls = @views.row(
     [
       traffic_light(rgba8(255, 95, 87), "×", "Close window", CloseWindow),
-      traffic_light(rgba8(255, 189, 46), "−", "Minimize window", MinimizeWindow),
+      traffic_light(
+        rgba8(255, 189, 46),
+        "−",
+        "Minimize window",
+        MinimizeWindow,
+      ),
       traffic_light(rgba8(40, 200, 64), "+", "Zoom window", ToggleMaximize),
     ],
     spacing=8.0,
@@ -248,8 +252,8 @@ fn traffic_light(
       padding=0.0,
     ),
     traffic_light_glyph(symbol)
-      .align(alignment=@geometry.Alignment::center())
-      .frame(width=12.0, height=12.0),
+    .align(alignment=@geometry.Alignment::center())
+    .frame(width=12.0, height=12.0),
   ])
   .frame(width=12.0, height=12.0)
   .on_tap(message)

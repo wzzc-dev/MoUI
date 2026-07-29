@@ -227,7 +227,9 @@ pub fn HostWindowRuntimeSlots::remove_closed(
   self : HostWindowRuntimeSlots,
 ) -> Int {
   let before = self.slots.length()
-  self.slots = self.slots.filter(slot => slot.record.phase != @backend_host.WindowClosed)
+  self.slots = self.slots.filter(slot => {
+    slot.record.phase != @backend_host.WindowClosed
+  })
   before - self.slots.length()
 }
 

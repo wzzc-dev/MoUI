@@ -199,7 +199,7 @@ fn menu_button(
   if active {
     @views.container(
       label_view,
-      width=width,
+      width~,
       height=22.0,
       background=palette.accent.multiply_alpha(0.78),
       corner_radius=4.0,
@@ -355,7 +355,8 @@ fn dock(
     justify=@views.MainAlign::Center,
     align=@views.CrossAlign::End,
   )
-  let content_width = icon_size * (tiles.length() + utilities.length()).to_double() +
+  let content_width = icon_size *
+    (tiles.length() + utilities.length()).to_double() +
     item_gap * (tiles.length() + utilities.length()).to_double() +
     side_pad * 2.0
   let dock_width = if compact {
@@ -452,9 +453,7 @@ fn dock_tile(
     @views.spacer(min_length=0.0, weight=0.0),
     width=4.0,
     height=4.0,
-    background=if active { indicator_color } else {
-      rgba8(0, 0, 0, a=0.0)
-    },
+    background=if active { indicator_color } else { rgba8(0, 0, 0, a=0.0) },
     corner_radius=2.0,
     padding=0.0,
   )

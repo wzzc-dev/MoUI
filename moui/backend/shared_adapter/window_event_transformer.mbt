@@ -74,7 +74,7 @@ fn make_resized_event(
     Some(size) =>
       TransformedWindowEvent::DispatchHostEvent(
         @host.HostEvent::Resized(
-          @host.surface_metrics_from_physical(size, scale_factor=scale_factor),
+          @host.surface_metrics_from_physical(size, scale_factor~),
         ),
       )
     None => TransformedWindowEvent::PlatformSpecific

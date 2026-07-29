@@ -79,7 +79,8 @@ fn WebApp::open_window(
   event_loop : @window_web.ActiveEventLoop,
   request : @host.HostWindowOpenRequest,
 ) -> @host.HostWindowRequestResult {
-  match @runtime.resolve_open_request(self.windows, request, self.scene_resolver) {
+  match
+    @runtime.resolve_open_request(self.windows, request, self.scene_resolver) {
     @runtime.HostWindowOpenResolution::OpenRejected(message) =>
       @host.HostWindowRequestResult::WindowRejected(message)
     @runtime.HostWindowOpenResolution::OpenResolved(resolved) =>

@@ -64,11 +64,7 @@ fn desktop_widgets(
             ),
             @views.spacer(min_length=4.0),
             @views.container(
-              desktop_icon(
-                @views.IconName::Focus,
-                28.0,
-                rgba8(255, 180, 40),
-              ),
+              desktop_icon(@views.IconName::Focus, 28.0, rgba8(255, 180, 40)),
               width=36.0,
               height=36.0,
               padding=4.0,
@@ -184,7 +180,7 @@ fn calendar_month_grid(
   for _index in 0..<first_weekday {
     cells.push("")
   }
-  for day in 1..=days_in_month {
+  for day in 1..<=days_in_month {
     cells.push(day.to_string())
   }
   while cells.length() % 7 != 0 {
@@ -198,9 +194,7 @@ fn calendar_month_grid(
     for col in 0..<7 {
       row_cells.push(cells[row_index * 7 + col])
     }
-    rows.push(
-      calendar_row(row_cells, Some(clock.day), palette, theme),
-    )
+    rows.push(calendar_row(row_cells, Some(clock.day), palette, theme))
   }
   @views.column(rows, spacing=4.0, align=@views.CrossAlign::Start)
 }
@@ -366,8 +360,7 @@ fn task_checkbox(
         corner_radius=size / 2.0,
         padding=0.0,
       ),
-      @views
-      .text(
+      @views.text(
         "✓",
         role=@views.TextRole::Caption,
         theme~,
@@ -379,8 +372,7 @@ fn task_checkbox(
       .foreground(@graphics.Color::white())
       .align(alignment=@geometry.Alignment::center())
       .frame(width=size, height=size),
-    ])
-    .frame(width=size, height=size)
+    ]).frame(width=size, height=size)
   } else {
     @views.container(
       @views.spacer(min_length=0.0, weight=0.0),

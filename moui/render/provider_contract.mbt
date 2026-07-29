@@ -205,12 +205,15 @@ pub fn RendererProviderRegistry::select_native(
     Some(backend) =>
       match self.lookup_by_backend(backend) {
         Some(provider) => Some((provider, backend))
-        None => self.lookup_by_backend(RendererBackendKind::SkiaRasterNative)
+        None =>
+          self
+          .lookup_by_backend(RendererBackendKind::SkiaRasterNative)
           .map(provider => (provider, RendererBackendKind::SkiaRasterNative))
       }
     None =>
-      self.lookup_by_backend(RendererBackendKind::SkiaRasterNative)
-        .map(provider => (provider, RendererBackendKind::SkiaRasterNative))
+      self
+      .lookup_by_backend(RendererBackendKind::SkiaRasterNative)
+      .map(provider => (provider, RendererBackendKind::SkiaRasterNative))
   }
 }
 
@@ -237,5 +240,3 @@ pub fn BoundSurface::route(self : BoundSurface) -> SkiaSurfaceRoute {
 pub fn BoundSurface::metrics(self : BoundSurface) -> RendererSurfaceMetrics {
   self.metrics
 }
-
-

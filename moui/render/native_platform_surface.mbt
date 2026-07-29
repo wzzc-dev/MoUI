@@ -19,9 +19,17 @@ pub fn[P : NativePlatformSurface] resolve_surface_route(
   let raster_route = SkiaSurfaceRoute::RasterSurfaceRoute
   match requested {
     NativeRendererMode::SkiaRaster => raster_route
-    NativeRendererMode::SkiaGpu => if gpu_available { gpu_route } else { raster_route }
-    NativeRendererMode::Auto => if gpu_available && gpu_promoted { gpu_route } else {
-      raster_route
-    }
+    NativeRendererMode::SkiaGpu =>
+      if gpu_available {
+        gpu_route
+      } else {
+        raster_route
+      }
+    NativeRendererMode::Auto =>
+      if gpu_available && gpu_promoted {
+        gpu_route
+      } else {
+        raster_route
+      }
   }
 }

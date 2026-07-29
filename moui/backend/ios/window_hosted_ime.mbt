@@ -49,7 +49,7 @@ pub fn IosImeSink::apply(
   self : IosImeSink,
   state : @core.TextInputState,
 ) -> Unit {
-  if !(state.focused) {
+  if !state.focused {
     if self.last_enabled {
       mbw_ios_ime_reset()
       self.last_enabled = false

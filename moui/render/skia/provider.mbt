@@ -38,10 +38,9 @@ pub fn create_skia_hybrid_provider(
     descriptor: skia_gpu_native_descriptor(),
     capabilities: () => caps,
     negotiate: skia_negotiate_gpu_surface,
-    create: (metrics, _bound) => skia_create_hybrid_instance(
-      metrics,
-      create_hybrid~,
-    ),
+    create: (metrics, _bound) => {
+      skia_create_hybrid_instance(metrics, create_hybrid~)
+    },
   }
 }
 

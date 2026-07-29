@@ -221,7 +221,7 @@ fn last_paren_pair(text : String) -> (Int, String)? {
     } else if chars[i] == '(' {
       depth -= 1
       if depth == 0 {
-        let value = text[(i + 1):(chars.length() - 1)].to_owned()
+        let value = text[i + 1:chars.length() - 1].to_owned()
         return Some((i, value))
       }
     }

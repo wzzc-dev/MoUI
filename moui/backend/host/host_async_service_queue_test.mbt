@@ -176,7 +176,9 @@ test "host driver applies async clipboard read completion to focused text" {
     root=host_test_text_field(text, width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+    ()
+  })
   ignore(
     driver.dispatch(
       HostEvent::Pointer(

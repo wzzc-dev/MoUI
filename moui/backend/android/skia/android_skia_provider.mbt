@@ -291,9 +291,7 @@ fn host_renderer_from_native_gpu_worker(
         err => println("error resizing Android Skia producer: \{err.message()}")
       }
       if !fallback_to_raster.val {
-        let dimensions = android_skia_vulkan_surface_descriptor(
-          metrics,
-        ).dimensions()
+        let dimensions = android_skia_vulkan_surface_descriptor(metrics).dimensions()
         ignore(
           worker.submit_control(
             @skia_native.GpuRenderWorkerControl::Resize(

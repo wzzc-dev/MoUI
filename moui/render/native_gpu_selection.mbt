@@ -123,7 +123,9 @@ pub impl NativePlatformSurface for NativeGpuPlatform with fn gpu_promoted(_self)
 }
 
 ///|
-pub impl NativePlatformSurface for NativeGpuPlatform with fn platform_label(self) {
+pub impl NativePlatformSurface for NativeGpuPlatform with fn platform_label(
+  self,
+) {
   match self {
     Macos => "macos"
     Windows => "windows"

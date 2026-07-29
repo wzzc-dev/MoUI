@@ -309,9 +309,9 @@ fn notification_card(
     @views.stack([
       card,
       notification_close(palette)
-        .align(alignment=@geometry.Alignment::top_trailing())
-        .offset(dx=-4.0, dy=2.0)
-        .frame(width=width, height=92.0),
+      .align(alignment=@geometry.Alignment::top_trailing())
+      .offset(dx=-4.0, dy=2.0)
+      .frame(width~, height=92.0),
     ])
     .frame(width~, height=92.0)
     .on_tap(MarkNotificationsRead)
@@ -321,9 +321,7 @@ fn notification_card(
 
 ///|
 /// Small × button overlaid at the top-right of a notification card.
-fn notification_close(
-  palette : DesktopPalette,
-) -> @moui.View[Msg] {
+fn notification_close(palette : DesktopPalette) -> @moui.View[Msg] {
   @views.container(
     @views.text(
       "×",
@@ -420,17 +418,12 @@ fn notification_widget_calendar(
           desktop_month_year(model.clock),
           role=@views.TextRole::Label,
           theme~,
-          width=width,
+          width~,
           height=22.0,
         )
         .font(@text.FontSpec::new(size=14.0, weight=640))
         .foreground(palette.foreground),
-        calendar_row(
-          ["S", "M", "T", "W", "T", "F", "S"],
-          None,
-          palette,
-          theme,
-        ),
+        calendar_row(["S", "M", "T", "W", "T", "F", "S"], None, palette, theme),
         calendar_row(
           notification_cal_window(model.clock.day),
           Some(model.clock.day),

@@ -23,7 +23,8 @@ test "host window runtime slots manage multiple window drivers" {
     primary=true,
   )
   let main_redraws = Ref(0)
-  let main_slot = match @runtime.resolve_open_request(registry, main_request, resolver) {
+  let main_slot = match
+    @runtime.resolve_open_request(registry, main_request, resolver) {
     @runtime.HostWindowOpenResolution::OpenResolved(resolved) =>
       @runtime.HostWindowRuntimeSlot::from_resolved_open(resolved, schedule_redraw=() => {
         main_redraws.val = main_redraws.val + 1
@@ -175,7 +176,9 @@ test "host runtime driver exposes runtime state for platform slots" {
     root=@views.empty(),
     size=@core.Size::new(width=320.0, height=240.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+    ()
+  })
   let dark = runtime.environment().with_system_scheme(@core.ColorScheme::Dark)
   driver.set_environment(dark)
   assert_true(driver.environment().color_scheme() == @core.ColorScheme::Dark)

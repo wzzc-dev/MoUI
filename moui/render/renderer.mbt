@@ -83,7 +83,7 @@ pub(all) struct RenderWindowId {
 
 ///|
 pub fn RenderWindowId::new(value : Int) -> RenderWindowId {
-  { value: value }
+  { value, }
 }
 
 ///|

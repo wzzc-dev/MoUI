@@ -7,7 +7,9 @@ test "host driver includes focused text commands in context menu" {
     root=host_test_text_field(text, width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+    ()
+  })
   let bridge = HostServiceBridge::new(
     capabilities=HostServiceCapabilities::new(clipboard=true, menus=true),
     handle=request => {
@@ -66,7 +68,9 @@ test "host driver disables copy and cut context menu commands without selection"
     root=host_test_text_field(text, width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+    ()
+  })
   let bridge = HostServiceBridge::new(
     capabilities=HostServiceCapabilities::new(menus=true),
     handle=request => {
@@ -109,7 +113,9 @@ test "host driver enables copy and cut context menu commands with selection" {
     root=host_test_text_field(text, width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+    ()
+  })
   let bridge = HostServiceBridge::new(
     capabilities=HostServiceCapabilities::new(menus=true),
     handle=request => {
@@ -167,7 +173,9 @@ test "host driver context menu pastes unicode into focused text input" {
     root=host_test_text_field(text, width=240.0, height=40.0),
     size=@core.Size::new(width=240.0, height=60.0),
   )
-  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let driver = @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+    ()
+  })
   let bridge = HostServiceBridge::new(
     capabilities=HostServiceCapabilities::new(clipboard=true, menus=true),
     handle=request => {

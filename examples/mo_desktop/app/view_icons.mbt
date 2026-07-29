@@ -12,10 +12,7 @@ fn desktop_icon(
 /// On macOS the system font draws this as the native Apple silhouette. This
 /// approach is simpler and visually more accurate than approximating the
 /// Apple shape with hand-coded cubic bezier curves.
-fn apple_logo_glyph(
-  size : Double,
-  color : @graphics.Color,
-) -> @moui.View[Msg] {
+fn apple_logo_glyph(size : Double, color : @graphics.Color) -> @moui.View[Msg] {
   // The Apple menu mark: a bold "Mo" monogram that sits cleanly inside the
   // 28px menu bar.  The real Apple logo (U+F8FF) is too tall for such a
   // tight vertical space — its glyph bounds extend beyond the menu bar's

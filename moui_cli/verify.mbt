@@ -283,7 +283,7 @@ fn run_verify(parsed : ParsedVerify, host : HostPlatform) -> CliOutcome {
     None => join_path("artifacts", parsed.platform)
   }
   let artifact = find_verify_artifact(parsed.platform, build_dir, app.id)
-  if !(path_is_file(artifact)) {
+  if !path_is_file(artifact) {
     return failed_outcome(
       "build artifact not found: " + artifact + "; run `moui run` first",
       parsed.json,
@@ -324,7 +324,7 @@ fn run_verify(parsed : ParsedVerify, host : HostPlatform) -> CliOutcome {
     Err(message) => return failed_outcome(message, parsed.json, verify_usage())
   }
   // 6. Exit non-zero when --require-passed and probe failed.
-  let exit_code = if options.require_passed && !(probe.ok) { 1 } else { 0 }
+  let exit_code = if options.require_passed && !probe.ok { 1 } else { 0 }
   // 7. Emit output.
   if parsed.json {
     let output : Json = {

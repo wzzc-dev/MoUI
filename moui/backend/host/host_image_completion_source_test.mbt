@@ -39,7 +39,8 @@ test "host image completion source routes native loader completions" {
     ]),
   )
   assert_true(
-    result.status() == @render.HostImageResourceRepaintStatus::ImageRepaintRequested,
+    result.status() ==
+    @render.HostImageResourceRepaintStatus::ImageRepaintRequested,
   )
   inspect(result.previous_revision(), content="1")
   inspect(result.current_revision(), content="2")
@@ -139,7 +140,8 @@ test "host image completion source ignores stale completion revisions" {
     ]),
   )
   assert_true(
-    stale.status() == @render.HostImageResourceRepaintStatus::ImageRepaintUnchanged,
+    stale.status() ==
+    @render.HostImageResourceRepaintStatus::ImageRepaintUnchanged,
   )
   inspect(stale.previous_revision(), content="6")
   inspect(stale.current_revision(), content="6")
@@ -194,7 +196,8 @@ test "host image completion source applies renderer load completions" {
     @render.ImageResourceLoadCompletion::ready("async.png", width=72, height=36),
   )
   assert_true(
-    result.status() == @render.HostImageResourceRepaintStatus::ImageRepaintRequested,
+    result.status() ==
+    @render.HostImageResourceRepaintStatus::ImageRepaintRequested,
   )
   inspect(result.previous_revision(), content="1")
   inspect(result.current_revision(), content="2")
