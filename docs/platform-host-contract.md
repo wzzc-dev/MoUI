@@ -7,7 +7,17 @@
 platform-neutral runtime. It defines `HostSurfaceMetrics`, input capabilities,
 coordinate policies, `HostEvent`, text input session synchronization,
 `HostRuntimeDriver`, file drag/drop normalization, and `HostWindowRegistry` for
-platform-neutral window lifecycle and multi-window bookkeeping. It also exposes
+platform-neutral window lifecycle and multi-window bookkeeping.
+
+`backend/platform_bridge` sits immediately outside this contract. It converts
+already-neutral Close, Focus, resize/scale, redraw, and surface lifecycle facts
+to `HostEvent`, keeps surface lifecycle state, and normalizes logical
+coordinates. It imports this contract but is not imported by it. Raw native
+pointer, keyboard, IME, drag, and modifier decoding belongs to the concrete
+platform backend; WeChat's direct Canvas2D callbacks remain a deliberately
+non-window-hosted exception.
+
+`backend/host` also exposes
 `HostWindowRequestQueue` so app/runtime or higher-level host code can enqueue
 open, focus, close, resize, minimize, show, and primary-window requests without
 embedding those requests in a platform backend. `OpenWindow` requests carry a

@@ -823,6 +823,12 @@ pub(all) enum PlatformViewEvent {
   Named(name~ : String, value~ : String, detail~ : String, flag~ : Bool)
 } derive(Eq, ToJson, @debug.Debug)
 
+pub struct PlatformViewPixelSink {
+  // private fields
+}
+pub fn PlatformViewPixelSink::draw(Self, Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit
+pub fn PlatformViewPixelSink::new(draw~ : (Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit) -> Self
+
 pub(all) struct PlatformViewPlacement {
   id : String
   kind : String

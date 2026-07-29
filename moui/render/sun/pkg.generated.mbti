@@ -13,9 +13,17 @@ import {
 // Values
 pub fn backend_info() -> @render.RendererBackendInfo
 
+pub fn create_sun_provider(create_sun~ : (@render.RendererSurfaceMetrics) -> SunRasterRenderer) -> @render.RendererProvider
+
 pub fn create_with_present_target(@render.RendererSurfaceMetrics, SunPresentTarget, async_image_loading? : Bool) -> SunRasterRenderer raise SunRendererError
 
 pub fn renderer_descriptor() -> @render.RendererDescriptor
+
+pub fn sun_feature_capabilities() -> Array[@render.RendererBackendFeatureCapability]
+
+pub fn sun_feature_note(@render.RendererFeature) -> String
+
+pub fn sun_feature_status(@render.RendererFeature) -> @render.RendererFeatureStatus
 
 pub fn sun_image_load_completion(String) -> @render.ImageResourceLoadCompletion
 

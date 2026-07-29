@@ -11,7 +11,9 @@
 /// See `provider_contract.mbt` for:
 /// - `RendererProvider` — contract type for a renderer family
 /// - `RendererInstance` — live instance returned by a provider
-/// - `RendererProviderRegistry` — registry with `select`, `select_native`, etc.
+/// - `RendererProviderRegistry` — legacy provider collection with `select`
+/// - `RendererProviderBinding` / `select_renderer_provider_binding` — the
+///   production composition path from negotiated provider to host lifecycle
 /// - `SurfaceDescriptor` / `BoundSurface` — surface negotiation types
 ///
 /// Concrete providers live in sub-packages:

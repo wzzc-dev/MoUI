@@ -51,7 +51,8 @@ Checklist:
 Checklist:
 
 - Add the neutral draw command or update the existing one.
-- Add feature status in `renderer_feature_capability_report`.
+- Add feature status to the concrete provider's capability closure so the
+  composition-root report can aggregate it by provider ID.
 - Add fallback planner coverage for skipped advanced commands.
 - Update native/Web adapter tests.
 - Update `docs/renderer-capability-report.md`.

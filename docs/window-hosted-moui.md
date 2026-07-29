@@ -16,6 +16,7 @@ window/<platform>/template / native Activity|UIApp|Ability
         → window HostCmd queue
         → EventLoop.pump / run_app
         → *EmbeddedRuntimeBackend (moui/backend/{android,ios,harmonyos})
+        → platform_bridge (neutral lifecycle/surface conversion)
         → AndroidRuntimeSession / IosRuntimeSession / HarmonyOsRuntimeSession
         → Skia HostWindowRenderer
 ```
@@ -23,6 +24,11 @@ window/<platform>/template / native Activity|UIApp|Ability
 The window-hosted route is the only supported embedded runtime backend path.
 Do not add a second lifecycle, surface, or input bridge beside `HostCmd` and
 `ApplicationHandler`.
+
+The backend decodes platform-specific input locally. Once it has a neutral
+Close, Focus, resize/scale, redraw, or surface-lifecycle fact, it routes that
+fact through `moui/backend/platform_bridge`; this does not create a second
+platform callback path.
 
 ## Packages
 

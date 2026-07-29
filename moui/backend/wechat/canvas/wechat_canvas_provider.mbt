@@ -66,6 +66,45 @@ pub fn wechat_canvas_create_renderer(
   canvas_id~ : String,
   metrics~ : @host.HostSurfaceMetrics,
 ) -> @render.HostWindowRenderer {
-  let provider = WechatCanvasRendererProvider::new(canvas_id~, metrics~)
-  provider.create_host_renderer()
+  let bindings = [wechat_canvas_renderer_binding(canvas_id~)]
+  let surface = @render.SurfaceDescriptor::cpu_raster(
+    width=metrics.logical_size.width,
+    height=metrics.logical_size.height,
+    scale_factor=metrics.scale_factor,
+  )
+  match @render.select_renderer_provider_binding(bindings, surface) {
+    Some((binding, bound)) =>
+      (binding.create_host_renderer)(
+        @render.RendererSurfaceMetrics::new(
+          logical_size=metrics.logical_size,
+          physical_size=metrics.physical_size,
+          scale_factor=metrics.scale_factor,
+        ),
+        bound,
+      )
+    None => fail("WeChat Canvas2D binding rejected its canvas surface")
+  }
+}
+
+///|
+/// WeChat's direct Canvas callback route is not a window-hosted event route,
+/// but renderer composition still follows the same binding negotiation as
+/// desktop and embedded hosts.
+pub fn wechat_canvas_renderer_binding(
+  canvas_id~ : String,
+) -> @render.RendererProviderBinding {
+  let provider = @canvas2d.create_canvas2d_provider(create_canvas2d=metrics => {
+    @canvas2d.canvas2d_create_renderer(canvas_id~, metrics~)
+  })
+  @render.RendererProviderBinding::new(provider~, create_host_renderer=(
+    metrics,
+    _bound,
+  ) => {
+    let host_metrics = @host.HostSurfaceMetrics::new(
+      logical_size=metrics.logical_size,
+      physical_size=metrics.physical_size,
+      scale_factor=metrics.scale_factor,
+    )
+    WechatCanvasRendererProvider::new(canvas_id~, metrics=host_metrics).create_host_renderer()
+  })
 }

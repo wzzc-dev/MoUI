@@ -185,9 +185,14 @@ sh scripts/window-dev-mode.sh off     # remove ./window; resolve from mooncakes.
 ```
 
 `scripts/validate-window-dependency.mjs` (run by `check.sh --profile daily` and
-CI) fails if `moon.work` lists either nested window module on the main branch,
-so the default state stays on the published dependency. Do not add local window
-modules to committed workspace state just to fix a MoUI build. After publishing a new window version,
+CI) normally fails if `moon.work` lists either nested window module. The tracked
+Provider Phase E migration is the sole temporary exception: it must use
+`checks/window-dependency-exception.txt` containing exactly
+`provider-phase-e-local-window` and both nested members, which the validator
+verifies. Do not use this exception for ordinary local development. At Phase E
+close-out, run `sh scripts/window-dev-mode.sh off`, remove the exception file,
+then run the package-consumer proof. After
+publishing a new window version,
 update the pinned version in `moui/moon.mod`, `moui_skia/moon.mod`,
 `moui_webview/moon.mod`, and `examples/markdown_editor/moon.mod`, then run
 `moon update` to refresh the registry cache.

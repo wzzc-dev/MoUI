@@ -8,7 +8,7 @@
 /// `SunPresentTarget` without the provider needing to know the platform.
 ///
 /// Capabilities are declared locally via `sun_feature_capabilities()`
-/// (ADR 0019 Phase E) instead of the central `renderer_backend_capabilities`
+/// (ADR 0019 Phase E) instead of a central backend capability table.
 /// matrix.
 pub fn create_sun_provider(
   create_sun~ : (@render.RendererSurfaceMetrics) -> SunRasterRenderer,

@@ -30,6 +30,9 @@ pub(all) enum RendererFeatureStatus {
 
 ///|
 pub(all) struct RendererBackendFeatureCapability {
+  /// Stable identity of the registered provider that supplied this entry.
+  /// `backend` is retained only as a built-in diagnostic classification.
+  provider_id : String
   feature : RendererFeature
   backend : RendererBackendKind
   status : RendererFeatureStatus
@@ -39,7 +42,7 @@ pub(all) struct RendererBackendFeatureCapability {
 ///|
 pub(all) struct RendererFeatureCapability {
   feature : RendererFeature
-  backends : Array[RendererBackendFeatureCapability]
+  providers : Array[RendererBackendFeatureCapability]
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -177,29 +180,30 @@ pub fn RendererFeatureStatus::needs_follow_up(
 
 ///|
 pub fn RendererBackendFeatureCapability::new(
+  provider_id~ : String,
   feature~ : RendererFeature,
   backend~ : RendererBackendKind,
   status~ : RendererFeatureStatus,
   note? : String = "",
 ) -> RendererBackendFeatureCapability {
-  { feature, backend, status, note }
+  { provider_id, feature, backend, status, note }
 }
 
 ///|
 pub fn RendererFeatureCapability::new(
   feature~ : RendererFeature,
-  backends~ : Array[RendererBackendFeatureCapability],
+  providers~ : Array[RendererBackendFeatureCapability],
 ) -> RendererFeatureCapability {
-  { feature, backends }
+  { feature, providers }
 }
 
 ///|
-pub fn RendererFeatureCapability::backend_capability(
+pub fn RendererFeatureCapability::provider_capability(
   self : RendererFeatureCapability,
-  backend : RendererBackendKind,
+  provider_id : String,
 ) -> RendererBackendFeatureCapability? {
-  for capability in self.backends {
-    if capability.backend == backend {
+  for capability in self.providers {
+    if capability.provider_id == provider_id {
       return Some(capability)
     }
   }
@@ -207,30 +211,23 @@ pub fn RendererFeatureCapability::backend_capability(
 }
 
 ///|
-pub fn RendererFeatureCapability::status_for_backend(
+pub fn RendererFeatureCapability::status_for_provider(
   self : RendererFeatureCapability,
-  backend : RendererBackendKind,
+  provider_id : String,
 ) -> RendererFeatureStatus {
-  match self.backend_capability(backend) {
+  match self.provider_capability(provider_id) {
     Some(capability) => capability.status
     None => RendererFeatureStatus::Unavailable
   }
 }
 
 ///|
-pub fn RendererFeatureCapability::note_for_backend(
+pub fn RendererFeatureCapability::note_for_provider(
   self : RendererFeatureCapability,
-  backend : RendererBackendKind,
+  provider_id : String,
 ) -> String {
-  match self.backend_capability(backend) {
+  match self.provider_capability(provider_id) {
     Some(capability) => capability.note
-    None => "renderer backend has no recorded capability for this feature"
+    None => "registered provider has no recorded capability for this feature"
   }
-}
-
-///|
-pub fn RendererFeatureCapability::needs_follow_up(
-  self : RendererFeatureCapability,
-) -> Bool {
-  self.backends.any(capability => capability.status.needs_follow_up())
 }

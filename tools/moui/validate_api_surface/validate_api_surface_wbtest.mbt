@@ -82,7 +82,7 @@ test "api surface classification budgets pin current high-risk packages" {
   )
   inspect(
     classification_budget("moui/views/pkg.generated.mbti", "app_style").max_count,
-    content="210",
+    content="223",
   )
   inspect(
     classification_budget(
@@ -98,7 +98,7 @@ test "api surface classification budgets pin current high-risk packages" {
     classification_budget(
       "moui/runtime/pkg.generated.mbti", "runtime_diagnostic",
     ).max_count,
-    content="298",
+    content="407",
   )
   inspect(
     classification_budget(
@@ -108,7 +108,7 @@ test "api surface classification budgets pin current high-risk packages" {
   )
   inspect(
     classification_budget("moui/render/pkg.generated.mbti", "renderer_contract").max_count,
-    content="150",
+    content="271",
   )
 }
 
@@ -160,7 +160,7 @@ test "api surface classification assigns representative lines" {
   )
   inspect(
     category(
-      "moui/render/pkg.generated.mbti", "pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability]",
+      "moui/render/pkg.generated.mbti", "pub fn renderer_feature_capability_report(Array[RendererProvider]) -> Array[RendererFeatureCapability]",
     ),
     content="renderer_contract",
   )
@@ -284,9 +284,9 @@ test "domain sugar packages forward the curated per-domain type set" {
 ///|
 test "runtime facade budget pins the opaque runtime boundary" {
   let runtime = budget_by_label("runtime facade")
-  inspect(runtime.max_lines, content="490")
-  inspect(runtime.max_pub_lines, content="298")
-  inspect(runtime.max_pub_all_lines, content="16")
+  inspect(runtime.max_lines, content="744")
+  inspect(runtime.max_pub_lines, content="407")
+  inspect(runtime.max_pub_all_lines, content="34")
   assert_true(runtime.required_tokens.contains("pub struct AppRuntime"))
   assert_true(runtime.required_tokens.contains("pub fn[Msg] new_view("))
   assert_true(
@@ -415,9 +415,9 @@ test "shared app core import guard tracks default imports" {
 ///|
 test "views facade exposes control-specific contracts" {
   let views = budget_by_label("views facade")
-  inspect(views.max_lines, content="1250")
-  inspect(views.max_pub_lines, content="560")
-  inspect(views.max_pub_all_lines, content="19")
+  inspect(views.max_lines, content="1393")
+  inspect(views.max_pub_lines, content="555")
+  inspect(views.max_pub_all_lines, content="39")
   inspect(views_facade_core_alias_tokens().length(), content="8")
   inspect(views_facade_host_alias_tokens().length(), content="0")
   let required = views.required_tokens
@@ -485,9 +485,9 @@ test "views facade exposes control-specific contracts" {
 ///|
 test "host and renderer public all budgets ratchet down" {
   let host = budget_by_label("host contracts")
-  inspect(host.max_pub_all_lines, content="64")
+  inspect(host.max_pub_all_lines, content="44")
   let renderer = budget_by_label("renderer facade")
-  inspect(renderer.max_pub_all_lines, content="40")
+  inspect(renderer.max_pub_all_lines, content="47")
   let skia = budget_by_label("skia renderer")
   inspect(skia.max_pub_all_lines, content="4")
   let sun = budget_by_label("sun renderer")

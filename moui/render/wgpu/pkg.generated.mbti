@@ -11,6 +11,8 @@ import {
 // Values
 pub fn backend_info() -> @render.RendererBackendInfo
 
+pub fn create_wgpu_provider(create_wgpu~ : (@render.RendererSurfaceMetrics) -> WgpuRenderer) -> @render.RendererProvider
+
 pub fn create_with_host_surface(@render.RendererSurfaceMetrics, HostWgpuSurface) -> WgpuRenderer raise @wgpu_mbt.WgpuError
 
 pub fn create_with_host_surface_and_text_engine(@render.RendererSurfaceMetrics, HostWgpuSurface, text_engine~ : NativeTextEngine) -> WgpuRenderer raise @wgpu_mbt.WgpuError
@@ -32,6 +34,8 @@ pub fn native_text_system() -> @core.TextSystem
 pub fn native_text_system_with_engine(NativeTextEngine) -> @core.TextSystem
 
 pub fn renderer_descriptor() -> @render.RendererDescriptor
+
+pub fn wgpu_provider_capabilities(provider_id~ : String, backend~ : @render.RendererBackendKind) -> Array[@render.RendererBackendFeatureCapability]
 
 // Errors
 
@@ -107,13 +111,6 @@ pub fn NativeTextLayout::new(size~ : @core.Size, baseline~ : Double, caret_posit
 pub fn NativeTextLayout::size(Self) -> @core.Size
 
 type RendererHandle
-
-pub struct SurfaceHostInfo {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn SurfaceHostInfo::description(Self) -> String
-pub fn SurfaceHostInfo::owns_instance(Self) -> Bool
-pub fn SurfaceHostInfo::platform(Self) -> String
 
 pub struct WgpuRenderer {
   // private fields

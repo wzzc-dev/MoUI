@@ -29,7 +29,7 @@ Copy `TEMPLATE.md` and fill in all sections. Keep it concise.
 
 | # | Title | Date | Status |
 |---|-------|------|--------|
-| 0020 | [Platform adapter convergence and duplication budget](0020-platform-adapter-convergence-and-duplication-budget.md) | 2026-07-28 | Accepted |
+| 0020 | [Platform Bridge convergence and duplication budget](0020-platform-adapter-convergence-and-duplication-budget.md) | 2026-07-28 (amended 2026-07-29) | Accepted |
 | 0019 | [Renderer provider plugin architecture](0019-renderer-provider-plugin-architecture.md) | 2026-07-28 | Accepted |
 | 0018 | [Host contract split — runtime/render ownership leaves backend/host](0018-host-contract-split-and-runtime-render-ownership.md) | 2026-07-28 | Accepted |
 | 0017 | [Theme layering and views-owned ControlThemeSet](0017-theme-layering-and-control-theme-set.md) | 2026-07-28 | Accepted |

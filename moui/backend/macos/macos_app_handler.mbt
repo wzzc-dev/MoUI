@@ -36,7 +36,7 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn can
   }
   match window {
     Some(window) => {
-      let metrics = @host.surface_metrics_from_physical(
+      let metrics = @platform_bridge.make_surface_metrics(
         window.surface_size(),
         scale_factor=window.scale_factor(),
       )
@@ -111,53 +111,58 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn win
     Some(window_id) => window_id
     None => return ()
   }
-  match event {
-    @window_core.WindowEvent::CloseRequested => {
-      self.dispatch_window_event(window_id, event)
+  let surface_size = match self.platform_slots.lookup_host(window_id) {
+    Some(slot) => Some(slot.window.surface_size())
+    None => None
+  }
+  match
+    @platform_bridge.transform_cross_platform_event(
+      event,
+      scale_factor=self.current_scale_factor(window_id),
+      surface_size~,
+    ) {
+    @platform_bridge.TransformedWindowEvent::CloseRequested => {
+      self.dispatch_host_event(window_id, @host.HostEvent::CloseRequested)
       self.dispose_window(window_id)
       if self.runtime_slots.is_empty() {
         event_loop.exit()
       }
+      return ()
     }
-    @window_core.WindowEvent::SurfaceResized(_) => {
-      self.dispatch_window_event(window_id, event)
+    @platform_bridge.TransformedWindowEvent::DispatchHostEvent(host_event) => {
       match self.platform_slots.lookup_host(window_id) {
-        Some(slot) => {
-          let metrics = @host.surface_metrics_from_physical(
-            slot.window.surface_size(),
-            scale_factor=slot.window.scale_factor(),
-          )
-          (self.renderer_provider.sync_surface)(slot.window, metrics)
-          slot.renderer.resize(to_render_metrics(metrics))
-          slot.window.request_redraw()
-        }
+        Some(slot) =>
+          match host_event {
+            @host.HostEvent::Resized(metrics) => {
+              (self.renderer_provider.sync_surface)(slot.window, metrics)
+              slot.renderer.resize(to_render_metrics(metrics))
+              slot.window.request_redraw()
+            }
+            _ => ()
+          }
         None => ()
       }
+      self.dispatch_host_event(window_id, host_event)
+      return ()
     }
-    @window_core.WindowEvent::ScaleFactorChanged(_, _) => {
-      self.dispatch_window_event(window_id, event)
-      match self.platform_slots.lookup_host(window_id) {
-        Some(slot) => {
-          let metrics = @host.surface_metrics_from_physical(
-            slot.window.surface_size(),
-            scale_factor=slot.window.scale_factor(),
-          )
-          (self.renderer_provider.sync_surface)(slot.window, metrics)
-          slot.renderer.resize(to_render_metrics(metrics))
-          slot.window.request_redraw()
-        }
-        None => ()
+    @platform_bridge.TransformedWindowEvent::WindowRedrawRequired => {
+      if self.redraw_window(window_id) {
+        event_loop.exit()
       }
+      return ()
     }
+    @platform_bridge.TransformedWindowEvent::PlatformSpecific => ()
+  }
+  match event {
     @window_core.WindowEvent::PointerMoved(_, position, _, _) => {
-      self.last_pointer = @host.physical_position_to_core(
+      self.last_pointer = @platform_bridge.normalize_pointer_position(
         position,
         scale_factor=self.current_scale_factor(window_id),
       )
       self.dispatch_window_event(window_id, event)
     }
     @window_core.WindowEvent::PointerButton(_, _, position, _, _) => {
-      self.last_pointer = @host.physical_position_to_core(
+      self.last_pointer = @platform_bridge.normalize_pointer_position(
         position,
         scale_factor=self.current_scale_factor(window_id),
       )
@@ -166,14 +171,14 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn win
     @window_core.WindowEvent::DragEntered(_, position)
     | @window_core.WindowEvent::DragMoved(position)
     | @window_core.WindowEvent::DragDropped(_, position) => {
-      self.last_pointer = @host.physical_position_to_core(
+      self.last_pointer = @platform_bridge.normalize_pointer_position(
         position,
         scale_factor=self.current_scale_factor(window_id),
       )
       self.dispatch_window_event(window_id, event)
     }
     @window_core.WindowEvent::DragLeft(Some(position)) => {
-      self.last_pointer = @host.physical_position_to_core(
+      self.last_pointer = @platform_bridge.normalize_pointer_position(
         position,
         scale_factor=self.current_scale_factor(window_id),
       )
@@ -185,10 +190,6 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn win
       self.dispatch_window_event(window_id, event)
     @window_core.WindowEvent::ModifiersChanged(_) =>
       self.dispatch_window_event(window_id, event)
-    @window_core.WindowEvent::RedrawRequested =>
-      if self.redraw_window(window_id) {
-        event_loop.exit()
-      }
     _ => self.dispatch_window_event(window_id, event)
   }
 }
@@ -546,7 +547,9 @@ fn MacosNativeHostBackend::advance_promotion_lifecycle(
 }
 
 ///|
-fn MacosNativeHostBackend::emit_promotion_lifecycle_summary(self : MacosNativeHostBackend) -> Unit {
+fn MacosNativeHostBackend::emit_promotion_lifecycle_summary(
+  self : MacosNativeHostBackend,
+) -> Unit {
   println(
     "MoUI macOS GPU promotion lifecycle completed surface_cycles=\{self.promotion_surface_cycles_done} fg_bg_cycles=\{self.promotion_fg_bg_cycles_done} context_loss_done=\{self.promotion_context_loss_done} recovered_within_vsyncs=\{self.promotion_recovered_within_vsyncs} recovery_count_before=\{self.promotion_recovery_count_before} fallback_count=\{self.promotion_fallback_count} automatic_fallback=\{self.promotion_automatic_fallback} mailbox_ok=\{self.promotion_mailbox_ok} readback_eliminated=\{self.promotion_readback_eliminated} runtime_preserved=\{self.promotion_runtime_preserved}",
   )

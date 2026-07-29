@@ -32,8 +32,9 @@ pub fn renderer_descriptor() -> @render.RendererDescriptor {
     family=@render.RendererFamily::Wgpu,
     presentation=@render.RendererPresentationModel::HostGpuSurface,
     supported_targets=[@render.RendererTarget::Native],
-    capabilities=@render.renderer_backend_capabilities(
-      @render.RendererBackendKind::NativeWgpu,
+    capabilities=wgpu_provider_capabilities(
+      provider_id="wgpu",
+      backend=@render.RendererBackendKind::NativeWgpu,
     ),
     description="Native wgpu renderer over host-provided GPU surfaces.",
   )

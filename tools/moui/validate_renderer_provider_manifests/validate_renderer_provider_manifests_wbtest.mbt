@@ -1,10 +1,10 @@
 ///|
-test "accepts text without forbidden tokens" {
+test "allows the renderer facade but no concrete renderer implementation" {
   inspect(
     validate_provider_text(
       "moui/backend/macos/moon.pkg",
-      "import { \"wzzc-dev/window/macos\" }\n",
-      ["wzzc-dev/moui/render", "wzzc-dev/moui_skia"],
+      "import { \"wzzc-dev/moui/render\" }\n",
+      ["wzzc-dev/moui/render/skia", "wzzc-dev/moui_skia"],
     ).is_empty(),
     content="true",
   )

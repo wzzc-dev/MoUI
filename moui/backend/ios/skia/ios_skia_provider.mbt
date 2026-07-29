@@ -50,7 +50,9 @@ pub fn renderer_provider(
   options? : IosSkiaAppOptions = IosSkiaAppOptions::new(),
 ) -> @ios_host.IosRendererProvider {
   @ios_host.IosRendererProvider::new(
-    create_renderer=(view, metrics) => create_renderer(view, metrics, options),
+    create_renderer=(view, metrics) => {
+      create_renderer_from_provider_bindings(view, metrics, options)
+    },
     image_loader=Some(ios_skia_async_image_loader()),
   )
 }
@@ -103,7 +105,10 @@ fn skia_host_renderer_bridge_preflight() -> String {
 }
 
 ///|
-fn create_renderer(
+/// iOS creates bindings at the UIKit surface-attach boundary. A valid
+/// CAMetalLayer negotiates the GPU binding first; the raster binding remains
+/// the explicit recovery route without leaking UIKit handles into `render`.
+fn create_renderer_from_provider_bindings(
   view : @ios_host.IosViewHandle,
   metrics : @host.HostSurfaceMetrics,
   options : IosSkiaAppOptions,
@@ -112,15 +117,82 @@ fn create_renderer(
     println(ios_skia_unavailable_message())
     return None
   }
-  // Probe the Metal GPU route: when the native Skia build links Ganesh Metal
-  // and the host view backs a CAMetalLayer, wire HostGpuPresentTarget to
-  // eliminate read_pixels + memcpy + CGImage + UIImage.
+  let raster_binding = @skia_renderer.create_skia_raster_host_binding(create_host_renderer=(
+    _renderer_metrics,
+    _bound_surface,
+  ) => {
+    require_host_renderer(
+      create_raster_renderer(view, metrics, options),
+      "iOS Skia raster binding could not create a host renderer",
+    )
+  })
+  let raster_surface = @render.SurfaceDescriptor::cpu_raster(
+    width=metrics.logical_size.width,
+    height=metrics.logical_size.height,
+    scale_factor=metrics.scale_factor,
+  )
   let layer_ptr = ios_skia_metal_layer_for_view(view.raw())
-  let gpu_available = @skia_native.Surface::metal_gpu_context_runtime_available()
-  if options.surface_route.is_gpu() && gpu_available && layer_ptr != 0UL {
-    create_gpu_worker_renderer(view, layer_ptr, metrics, options)
+  if options.surface_route.is_gpu() && ios_skia_gpu_available() {
+    match @render.GpuHostSurfaceDescriptor::metal_layer(layer_ptr) {
+      Some(handle) => {
+        let gpu_binding = @skia_renderer.create_skia_hybrid_host_binding(create_host_renderer=(
+          _renderer_metrics,
+          _bound_surface,
+        ) => {
+          require_host_renderer(
+            create_gpu_worker_renderer(view, layer_ptr, metrics, options),
+            "iOS Skia GPU binding could not create a host renderer",
+          )
+        })
+        create_host_renderer_from_binding(
+          [gpu_binding, raster_binding],
+          @render.SurfaceDescriptor::gpu_surface(
+            handle~,
+            width=metrics.logical_size.width,
+            height=metrics.logical_size.height,
+            scale_factor=metrics.scale_factor,
+          ),
+          metrics,
+        )
+      }
+      None =>
+        create_host_renderer_from_binding(
+          [raster_binding],
+          raster_surface,
+          metrics,
+        )
+    }
   } else {
-    create_raster_renderer(view, metrics, options)
+    create_host_renderer_from_binding([raster_binding], raster_surface, metrics)
+  }
+}
+
+///|
+fn create_host_renderer_from_binding(
+  bindings : Array[@render.RendererProviderBinding],
+  surface : @render.SurfaceDescriptor,
+  metrics : @host.HostSurfaceMetrics,
+) -> @render.HostWindowRenderer? {
+  match @render.select_renderer_provider_binding(bindings, surface) {
+    Some((binding, bound_surface)) =>
+      Some(
+        (binding.create_host_renderer)(
+          renderer_metrics_from_host(metrics),
+          bound_surface,
+        ),
+      )
+    None => None
+  }
+}
+
+///|
+fn require_host_renderer(
+  renderer : @render.HostWindowRenderer?,
+  message : String,
+) -> @render.HostWindowRenderer {
+  match renderer {
+    Some(renderer) => renderer
+    None => abort(message)
   }
 }
 

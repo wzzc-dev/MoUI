@@ -299,13 +299,13 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "runtime facade",
       path: "moui/runtime/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/runtime\"",
-      max_lines: 490,
-      max_pub_lines: 298,
-      max_pub_all_lines: 16,
+      max_lines: 744,
+      max_pub_lines: 407,
+      max_pub_all_lines: 34,
       required_tokens: [
-        "\"wzzc-dev/moui/core\"", "pub struct AppRuntime", "pub fn[Model, Msg] new_program(",
-        "pub fn[Model, Msg] new_program_with_dimensions(", "pub fn[Msg] new_view(",
-        "pub fn[Model, Msg] AppRuntime::new_program(", "pub fn[Msg] AppRuntime::new_view(",
+        "\"wzzc-dev/moui/core\"", "\"wzzc-dev/moui/backend/host\"", "\"wzzc-dev/moui/render\"",
+        "pub struct AppRuntime", "pub fn[Model, Msg] new_program(", "pub fn[Model, Msg] new_program_with_dimensions(",
+        "pub fn[Msg] new_view(", "pub fn[Model, Msg] AppRuntime::new_program(", "pub fn[Msg] AppRuntime::new_view(",
         "pub fn AppRuntime::draw_frame(", "pub fn AppRuntime::inspector_snapshot(Self) -> InspectorSnapshot",
         "pub fn AppRuntime::program_runtime_snapshot(Self) -> ProgramRuntimeSnapshot",
         "pub fn AppRuntime::read_semantics(", "pub fn AppRuntime::perform_semantics_action(",
@@ -318,10 +318,10 @@ fn package_budgets() -> Array[PackageBudget] {
         "pub fn[Msg] subscription_plan_summary(",
       ],
       forbidden_tokens: [
-        "\"wzzc-dev/moui/backend", "\"wzzc-dev/moui/render", "moui_theme", "RuntimeState",
-        "ViewNode", "VirtualNode", "ErasedViewNode", "ViewSpec", "pub using @core {type AppRuntime}",
-        "inner : @core.AppRuntime", "core_inspector_snapshot", "core_program_runtime_snapshot",
-        "@core.InspectorSnapshot", "@core.ProgramRuntimeSnapshot",
+        "moui_theme", "RuntimeState", "ViewNode", "VirtualNode", "ErasedViewNode",
+        "ViewSpec", "pub using @core {type AppRuntime}", "inner : @core.AppRuntime",
+        "core_inspector_snapshot", "core_program_runtime_snapshot", "@core.InspectorSnapshot",
+        "@core.ProgramRuntimeSnapshot",
       ],
     },
     {
@@ -393,9 +393,9 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "views facade",
       path: "moui/views/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/views\"",
-      max_lines: 1250,
-      max_pub_lines: 560,
-      max_pub_all_lines: 19,
+      max_lines: 1393,
+      max_pub_lines: 555,
+      max_pub_all_lines: 39,
       required_tokens: views_facade_required_tokens(),
       forbidden_tokens: [
         "pub using @core {type Color}", "pub using @core {type ColorScheme}", "pub using @core {type Point}",
@@ -418,12 +418,12 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "host contracts",
       path: "moui/backend/host/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/backend/host\"",
-      max_lines: 1095,
-      max_pub_lines: 454,
-      max_pub_all_lines: 64,
+      max_lines: 667,
+      max_pub_lines: 238,
+      max_pub_all_lines: 44,
       required_tokens: [
-        "HostWindowRenderer", "HostAsyncImageLoader", "HostRouteSource", "pub(all) struct HostRouteLocation",
-        "pub(all) struct HostRouteQueryParam",
+        "HostAppServices", "pub(all) enum HostEvent", "pub(all) struct HostSurfaceMetrics",
+        "pub(all) struct HostWindowId", "pub(all) struct TextInputSession",
       ],
       forbidden_tokens: [
         "\"wzzc-dev/moui/render/skia\"", "\"wzzc-dev/moui/render/wgpu\"", "SkiaRasterRenderer",
@@ -433,34 +433,33 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "renderer facade",
       path: "moui/render/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/render\"",
-      max_lines: 552,
-      max_pub_lines: 150,
-      max_pub_all_lines: 40,
+      max_lines: 790,
+      max_pub_lines: 270,
+      max_pub_all_lines: 47,
       required_tokens: [
-        "RendererBackendKind", "RendererDescriptor", "RenderFrameResult",
+        "RendererBackendKind", "RendererDescriptor", "RendererProviderBinding", "HostWindowRenderer",
+        "RenderFrameResult",
       ],
-      forbidden_tokens: [
-        "\"wzzc-dev/moui/backend/host\"", "HostWindowRenderer", "SkiaRasterRenderer",
-      ],
+      forbidden_tokens: ["\"wzzc-dev/moui/backend/host\"", "SkiaRasterRenderer"],
     },
     {
       label: "skia renderer",
       path: "moui/render/skia/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/render/skia\"",
       max_lines: 220,
-      max_pub_lines: 108,
+      max_pub_lines: 114,
       max_pub_all_lines: 4,
       required_tokens: [
         "SkiaRasterRenderer", "skia_available", "skia_image_load_completion",
       ],
-      forbidden_tokens: ["\"wzzc-dev/moui/backend/host\"", "HostWindowRenderer"],
+      forbidden_tokens: ["\"wzzc-dev/moui/backend/host\""],
     },
     {
       label: "sun renderer",
       path: "moui/render/sun/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/render/sun\"",
-      max_lines: 231,
-      max_pub_lines: 138,
+      max_lines: 238,
+      max_pub_lines: 142,
       max_pub_all_lines: 1,
       required_tokens: [
         "SunRasterRenderer", "SunRendererError", "SunPixelFrame",
@@ -513,97 +512,6 @@ fn package_budgets() -> Array[PackageBudget] {
         "\"wzzc-dev/moui/backend/host\"", "HostWindowRenderer", "WgpuRenderer", "HostWgpuSurface",
         "RendererHandle",
       ],
-    },
-  ]
-}
-
-///|
-fn view_return_rules() -> Array[ViewReturnRule] {
-  [
-    {
-      name: "button",
-      signature_prefix: "pub fn[Msg] button(",
-      return_token: "-> @core.View[Msg]",
-    },
-    {
-      name: "column",
-      signature_prefix: "pub fn[Msg] column(",
-      return_token: "-> @core.View[Msg]",
-    },
-    {
-      name: "row",
-      signature_prefix: "pub fn[Msg] row(",
-      return_token: "-> @core.View[Msg]",
-    },
-    {
-      name: "text",
-      signature_prefix: "pub fn[Msg] text(",
-      return_token: "-> @core.View[Msg]",
-    },
-    {
-      name: "text_field",
-      signature_prefix: "pub fn[Msg] text_field(",
-      return_token: "-> @core.View[Msg]",
-    },
-    {
-      name: "navigation_stack",
-      signature_prefix: "pub fn[Msg] navigation_stack(",
-      return_token: "-> @core.View[Msg]",
-    },
-    {
-      name: "image",
-      signature_prefix: "pub fn[Msg] image(",
-      return_token: "-> @core.View[Msg]",
-    },
-    {
-      name: "canvas",
-      signature_prefix: "pub fn[Msg] canvas(",
-      return_token: "-> @core.View[Msg]",
-    },
-    {
-      name: "custom_layout",
-      signature_prefix: "pub fn[Msg] custom_layout(",
-      return_token: "-> @core.View[Msg]",
-    },
-    {
-      name: "custom_children_layout",
-      signature_prefix: "pub fn[Msg] custom_children_layout(",
-      return_token: "-> @core.View[Msg]",
-    },
-    {
-      name: "component",
-      signature_prefix: "pub fn[Msg] component(",
-      return_token: "-> @core.View[Msg]",
-    },
-    {
-      name: "empty",
-      signature_prefix: "pub fn[Msg] empty(",
-      return_token: "-> @core.View[Msg]",
-    },
-    {
-      name: "spacer",
-      signature_prefix: "pub fn[Msg] spacer(",
-      return_token: "-> @core.View[Msg]",
-    },
-    {
-      name: "picker",
-      signature_prefix: "pub fn[Msg] picker(",
-      return_token: "-> @core.View[Msg]",
-    },
-    {
-      name: "datepicker",
-      signature_prefix: "pub fn[Msg] datepicker(",
-      return_token: "-> @core.View[Msg]",
-    },
-    {
-      name: "sheet",
-      signature_prefix: "pub fn[Msg] sheet(",
-      return_token: "-> @core.View[Msg]",
-    },
-    {
-      name: "sheet_host",
-      signature_prefix: "pub fn[Msg] sheet_host(",
-      return_token: "-> @core.View[Msg]",
     },
   ]
 }

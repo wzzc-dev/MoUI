@@ -4,6 +4,7 @@ package "wzzc-dev/moui/backend/macos"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/window/dpi",
 }
@@ -11,7 +12,7 @@ import {
 // Values
 pub fn backend_info() -> MacosBackendInfo
 
-pub fn macos_accessibility_bridge(@runtime.AppRuntime) -> @host.NativeAccessibilityBridge
+pub fn macos_accessibility_bridge(@runtime.AppRuntime) -> @runtime.NativeAccessibilityBridge
 
 pub fn macos_accessibility_bridge_info() -> MacosAccessibilityBridgeInfo
 
@@ -25,9 +26,9 @@ pub fn macos_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, cli
 
 pub fn macos_system_theme() -> @wzzc-dev/moui/core.ColorScheme
 
-pub fn macos_timer_source() -> @host.HostTimerSource
+pub fn macos_timer_source() -> @runtime.HostTimerSource
 
-pub fn macos_wall_clock() -> @host.HostWallClock
+pub fn macos_wall_clock() -> @runtime.HostWallClock
 
 pub fn run_app_with_renderer_provider(String, @runtime.AppRuntime, provider~ : MacosRendererProvider, options? : MacosHostAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
 
@@ -47,7 +48,7 @@ pub fn window_event_to_host_with_modifiers(@wzzc-dev/window/core.WindowEvent, @w
 
 // Types and methods
 pub(all) struct MacosAccessibilityBridgeInfo {
-  kind : @host.NativeAccessibilityBridgeKind
+  kind : @runtime.NativeAccessibilityBridgeKind
   semantics_bridge_available : Bool
   native_platform_bridge_available : Bool
   action_dispatch_available : Bool
@@ -64,7 +65,7 @@ pub(all) struct MacosBackendInfo {
 pub struct MacosHostAppOptions {
   // private fields
 }
-pub fn MacosHostAppOptions::new(scene_resolver? : @runtime.HostWindowSceneResolver, event_sources? : @host.HostPlatformEventSources?, platform_view_plugins? : Array[@host.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes, on_ready? : (() -> Unit)?, min_window_size? : @dpi.LogicalSize?) -> Self
+pub fn MacosHostAppOptions::new(scene_resolver? : @runtime.HostWindowSceneResolver, event_sources? : @runtime.HostPlatformEventSources?, platform_view_plugins? : Array[@host.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @wzzc-dev/window/core.PlatformWindowAttributes, on_ready? : (() -> Unit)?, min_window_size? : @dpi.LogicalSize?) -> Self
 pub fn MacosHostAppOptions::platform_view_plugins(Self) -> Array[@host.PlatformViewPlugin]
 
 pub struct MacosHostSmokeOptions {
@@ -79,8 +80,9 @@ pub impl @wzzc-dev/window/macos.ApplicationHandler for MacosNativeHostBackend
 pub struct MacosRendererProvider {
   // private fields
 }
-pub fn MacosRendererProvider::new(create_renderer~ : (@wzzc-dev/window/macos.Window, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?, sync_surface? : (@wzzc-dev/window/macos.Window, @host.HostSurfaceMetrics) -> Unit, image_loader? : @host.HostAsyncImageLoader?) -> Self
+pub fn MacosRendererProvider::new(create_renderer~ : (@wzzc-dev/window/macos.Window, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?, sync_surface? : (@wzzc-dev/window/macos.Window, @host.HostSurfaceMetrics) -> Unit, image_loader? : @render.HostAsyncImageLoader?) -> Self
 
 // Type aliases
 
 // Traits
+

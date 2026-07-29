@@ -13,6 +13,14 @@ pub fn backend_info() -> @render.RendererBackendInfo
 
 pub fn create_hybrid_renderer(@render.NativeGpuPlatform, @render.NativeRendererMode, @render.RendererSurfaceMetrics, SkiaPresentTarget, gpu_available~ : Bool, gpu_promoted~ : Bool, gpu_target? : HostGpuPresentTarget?, font_resolution? : SkiaFontResolution, async_image_loading? : Bool) -> SkiaHybridRenderer raise SkiaRendererError
 
+pub fn create_skia_hybrid_host_binding(create_host_renderer~ : (@render.RendererSurfaceMetrics, @render.BoundSurface) -> @render.HostWindowRenderer) -> @render.RendererProviderBinding
+
+pub fn create_skia_hybrid_provider(create_hybrid~ : (@render.RendererSurfaceMetrics) -> SkiaHybridRenderer) -> @render.RendererProvider
+
+pub fn create_skia_raster_host_binding(create_host_renderer~ : (@render.RendererSurfaceMetrics, @render.BoundSurface) -> @render.HostWindowRenderer) -> @render.RendererProviderBinding
+
+pub fn create_skia_raster_provider(create_raster~ : (@render.RendererSurfaceMetrics) -> SkiaRasterRenderer) -> @render.RendererProvider
+
 pub fn create_with_present_target(@render.RendererSurfaceMetrics, SkiaPresentTarget, font_resolution? : SkiaFontResolution, async_image_loading? : Bool, on_image_resource_change? : ((@render.ImageResourceSnapshot) -> Unit)?) -> SkiaRasterRenderer raise SkiaRendererError
 
 pub fn create_with_present_target_and_route(@render.RendererSurfaceMetrics, SkiaPresentTarget, surface_route? : @render.SkiaSurfaceRoute, gpu_target? : HostGpuPresentTarget?, font_resolution? : SkiaFontResolution, async_image_loading? : Bool, on_image_resource_change? : ((@render.ImageResourceSnapshot) -> Unit)?) -> SkiaRasterRenderer raise SkiaRendererError
@@ -30,6 +38,8 @@ pub fn skia_gpu_native_descriptor() -> @render.RendererDescriptor
 pub fn skia_image_load_completion(String) -> @render.ImageResourceLoadCompletion
 
 pub fn skia_image_load_completion_from_bytes(String, Bytes, background_io? : Bool, background_decode? : Bool) -> @render.ImageResourceLoadCompletion
+
+pub fn skia_provider_capabilities(provider_id~ : String, backend~ : @render.RendererBackendKind) -> Array[@render.RendererBackendFeatureCapability]
 
 pub fn skia_raster_native_descriptor() -> @render.RendererDescriptor
 
@@ -102,7 +112,8 @@ pub struct SkiaHybridRenderer {
 pub fn SkiaHybridRenderer::drain_present_completions(Self) -> Array[@render.RenderPresentCompletion]
 pub fn SkiaHybridRenderer::fallback_to_raster(Self) -> Bool
 pub fn SkiaHybridRenderer::render_frame(Self, @core.DrawFrame) -> @render.RenderFrameResult
-pub fn SkiaHybridRenderer::selection(Self) -> @render.NativeRendererSelection
+pub fn SkiaHybridRenderer::requested_mode(Self) -> @render.NativeRendererMode
+pub fn SkiaHybridRenderer::surface_route(Self) -> @render.SkiaSurfaceRoute
 
 pub struct SkiaPixelFrame {
   // private fields

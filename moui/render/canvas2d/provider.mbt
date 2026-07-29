@@ -9,8 +9,9 @@
 pub fn create_canvas2d_provider(
   create_canvas2d~ : (@render.RendererSurfaceMetrics) -> Canvas2DRenderer,
 ) -> @render.RendererProvider {
-  let caps = @render.renderer_backend_capabilities(
-    @render.RendererBackendKind::Canvas2DWasm,
+  let caps = canvas2d_provider_capabilities(
+    provider_id="canvas2d",
+    backend=@render.RendererBackendKind::Canvas2DWasm,
   )
   @render.RendererProvider::{
     id: "canvas2d",
@@ -21,6 +22,23 @@ pub fn create_canvas2d_provider(
       canvas2d_create_instance(metrics, create_canvas2d~)
     },
   }
+}
+
+///|
+pub fn canvas2d_provider_capabilities(
+  provider_id~ : String,
+  backend~ : @render.RendererBackendKind,
+) -> Array[@render.RendererBackendFeatureCapability] {
+  @render.renderer_provider_capabilities(provider_id~, backend~, capability_for=feature => {
+    let status = match feature {
+      @render.RendererFeature::RoundedRect
+      | @render.RendererFeature::Image
+      | @render.RendererFeature::AsyncImage =>
+        @render.RendererFeatureStatus::Partial
+      _ => @render.RendererFeatureStatus::Supported
+    }
+    (status, "WeChat Canvas2D provider declares \{feature.label()} support.")
+  })
 }
 
 ///|
