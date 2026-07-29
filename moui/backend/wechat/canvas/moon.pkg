@@ -1,7 +1,6 @@
 import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/backend/host",
-  "wzzc-dev/moui/backend/wechat",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/canvas2d",
 }

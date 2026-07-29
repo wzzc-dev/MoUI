@@ -59,7 +59,7 @@ pub struct PlatformViewPlugin {
     UInt64,
     @core.DrawFrame,
     Double,
-    (() -> Unit) -> Unit,
+    ((@core.PlatformViewPixelSink) -> Unit) -> Unit,
   ) -> Unit)?
   poll_native : (() -> Int64?)?
 }
@@ -76,7 +76,7 @@ pub fn PlatformViewPlugin::new(
     UInt64,
     @core.DrawFrame,
     Double,
-    (() -> Unit) -> Unit,
+    ((@core.PlatformViewPixelSink) -> Unit) -> Unit,
   ) -> Unit)? = None,
   poll_native? : (() -> Int64?)? = None,
 ) -> PlatformViewPlugin {
