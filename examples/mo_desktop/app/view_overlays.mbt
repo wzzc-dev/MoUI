@@ -122,6 +122,262 @@ fn app_launcher(
 }
 
 ///|
+fn spotlight(
+  model : DesktopModel,
+  palette : DesktopPalette,
+  theme : @moui.Theme,
+  viewport_width : Double,
+  viewport_height : Double,
+) -> @moui.View[Msg] {
+  // macOS Spotlight: a compact centered capsule with a leading search glyph,
+  // a live result list below, and a click-away scrim for dismissal.
+  let compact = viewport_width < 620.0
+  let width = if compact {
+    (viewport_width - 20.0).max(272.0)
+  } else {
+    520.0.min(viewport_width - 40.0)
+  }
+  let inner_width = width - 32.0
+  let query = model.spotlight_query
+  let results = spotlight_results(model, query, inner_width, palette, theme)
+  let panel = glass_panel(
+    @views.column(
+      [
+        @views.row(
+          [
+            desktop_icon(@views.IconName::Search, 18.0, palette.muted),
+            @views.text_field(
+              query,
+              on_input=value => SpotlightQueryChanged(value),
+              on_submit=Some(SpotlightQueryChanged(query)),
+              placeholder="Spotlight Search",
+              theme~,
+              width=inner_width - 28.0,
+              height=40.0,
+            ),
+          ],
+          spacing=10.0,
+          align=@views.CrossAlign::Center,
+        ),
+        @views.divider(theme~, color=palette.outline.multiply_alpha(0.55)),
+        results,
+      ],
+      spacing=12.0,
+      align=@views.CrossAlign::Stretch,
+    ),
+    width,
+    360.0,
+    palette,
+    radius=20.0,
+    padding=16.0,
+  )
+  @views.stack([
+    color_layer(viewport_width, viewport_height, palette.scrim).on_tap(
+      DismissOverlay,
+    ),
+    panel
+    .align(alignment=@geometry.Alignment::center())
+    .offset(dy=if compact { 0.0 } else { -40.0 })
+    .frame(width=viewport_width, height=viewport_height),
+  ])
+}
+
+///|
+/// Spotlight aggregates apps, files, and a few quick actions into one ranked
+/// result list. The list is intentionally short — real Spotlight keeps the
+/// top hits glanceable rather than dumping every match.
+priv struct SpotlightResult {
+  title : String
+  subtitle : String
+  category : String
+  icon : @views.IconName
+  color : @graphics.Color
+  message : Msg
+}
+
+///|
+fn spotlight_results(
+  _model : DesktopModel,
+  query : String,
+  width : Double,
+  palette : DesktopPalette,
+  theme : @moui.Theme,
+) -> @moui.View[Msg] {
+  let entries = spotlight_entries().filter(entry => {
+    query == "" || entry.title.contains(query) || entry.subtitle.contains(query)
+  })
+  if entries.is_empty() {
+    @views.column(
+      [
+        @views
+        .text(
+          "No results for \"\{query}\"",
+          role=@views.TextRole::Body,
+          theme~,
+          width=width,
+          height=28.0,
+          align=@text.TextAlign::TextCenter,
+        )
+        .foreground(palette.muted),
+      ],
+      spacing=0.0,
+      align=@views.CrossAlign::Center,
+    )
+  } else {
+    // Group hits by category in Spotlight's canonical order, then render each
+    // group with a small grey header like real Spotlight (Applications /
+    // Folders / System).
+    let categories = ["Applications", "Folders", "System"]
+    let children : Array[@moui.View[Msg]] = []
+    for category in categories {
+      let group = entries.filter(entry => entry.category == category)
+      if !group.is_empty() {
+        children.push(spotlight_category_header(category, width, palette, theme))
+        for entry in group {
+          children.push(spotlight_row(entry, width, palette, theme))
+        }
+      }
+    }
+    @views.column(children, spacing=2.0, align=@views.CrossAlign::Stretch)
+  }
+}
+
+///|
+/// A small grey uppercase-style category label that introduces a Spotlight
+/// result group. Lower weight than the result rows beneath it.
+fn spotlight_category_header(
+  category : String,
+  width : Double,
+  palette : DesktopPalette,
+  theme : @moui.Theme,
+) -> @moui.View[Msg] {
+  @views.text(
+    category,
+    role=@views.TextRole::Caption,
+    theme~,
+    width=width,
+    height=16.0,
+  )
+  .font(@text.FontSpec::new(size=11.0, weight=700))
+  .foreground(palette.muted)
+}
+
+///|
+fn spotlight_entries() -> Array[SpotlightResult] {
+  [
+    {
+      title: "Finder",
+      subtitle: "Application",
+      category: "Applications",
+      icon: @views.IconName::FolderOpen,
+      color: rgba8(33, 150, 243),
+      message: OpenFinder,
+    },
+    {
+      title: "Safari",
+      subtitle: "Application",
+      category: "Applications",
+      icon: @views.IconName::Link,
+      color: rgba8(36, 177, 216),
+      message: OpenSafari,
+    },
+    {
+      title: "System Settings",
+      subtitle: "Application",
+      category: "Applications",
+      icon: @views.IconName::Settings,
+      color: rgba8(104, 112, 124),
+      message: RunMenuCommand(ShowSystemSettings),
+    },
+    {
+      title: "Documents",
+      subtitle: "Folder",
+      category: "Folders",
+      icon: @views.IconName::FileNew,
+      color: rgba8(91, 143, 249),
+      message: RunMenuCommand(OpenDocuments),
+    },
+    {
+      title: "Downloads",
+      subtitle: "Folder",
+      category: "Folders",
+      icon: @views.IconName::ArrowRight,
+      color: rgba8(38, 175, 129),
+      message: RunMenuCommand(OpenDownloads),
+    },
+    {
+      title: "About This Mac",
+      subtitle: "System",
+      category: "System",
+      icon: @views.IconName::Info,
+      color: rgba8(48, 132, 255),
+      message: RunMenuCommand(ShowAboutThisMac),
+    },
+    {
+      title: "Lock Screen",
+      subtitle: "Session",
+      category: "System",
+      icon: @views.IconName::Focus,
+      color: rgba8(45, 166, 153),
+      message: RunMenuCommand(LockSession),
+    },
+  ]
+}
+
+///|
+fn spotlight_row(
+  entry : SpotlightResult,
+  width : Double,
+  palette : DesktopPalette,
+  theme : @moui.Theme,
+) -> @moui.View[Msg] {
+  @views.container(
+    @views.row(
+      [
+        @views.container(
+          desktop_icon(entry.icon, 16.0, @graphics.Color::white()),
+          width=28.0,
+          height=28.0,
+          background=entry.color,
+          corner_radius=7.0,
+          padding=6.0,
+        ),
+        @views.column(
+          [
+            @views.text(
+              entry.title,
+              role=@views.TextRole::Body,
+              theme~,
+              width=(width - 56.0).max(80.0),
+              height=20.0,
+            )
+            .font(@text.FontSpec::new(size=13.0, weight=560))
+            .foreground(palette.foreground),
+            @views.text(
+              entry.subtitle,
+              role=@views.TextRole::Caption,
+              theme~,
+              width=(width - 56.0).max(80.0),
+              height=16.0,
+            ).foreground(palette.muted),
+          ],
+          spacing=1.0,
+          align=@views.CrossAlign::Start,
+        ),
+      ],
+      spacing=10.0,
+      align=@views.CrossAlign::Center,
+    ),
+    width~,
+    height=44.0,
+    corner_radius=8.0,
+    padding=6.0,
+  )
+  .on_tap(entry.message)
+  .accessibility_label(entry.title)
+}
+
+///|
 fn about_this_mac(
   palette : DesktopPalette,
   theme : @moui.Theme,

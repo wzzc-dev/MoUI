@@ -18,6 +18,34 @@ fn notification_center(
   let inner_width = width - 32.0
   let body = @views.column(
     [
+      // macOS Notification Center opens with a large clock and the current
+      // date stacked at the top, above the "Today" notifications section.
+      @views.text(
+        desktop_clock_time(model.clock),
+        role=@views.TextRole::Display,
+        theme~,
+        width=inner_width,
+        height=60.0,
+        align=@text.TextAlign::TextStart,
+      )
+      .font(@text.FontSpec::new(size=48.0, weight=240))
+      .foreground(palette.foreground),
+      @views.text(
+        desktop_clock_menu_label(model.clock),
+        role=@views.TextRole::Caption,
+        theme~,
+        width=inner_width,
+        height=20.0,
+        align=@text.TextAlign::TextStart,
+      )
+      .font(@text.FontSpec::new(size=13.0, weight=520))
+      .foreground(palette.muted),
+      @views.spacer(min_length=8.0),
+      // macOS Notification Center widgets: compact calendar + weather.
+      notification_widget_calendar(model, inner_width, palette, theme),
+      @views.spacer(min_length=6.0),
+      notification_widget_weather(inner_width, palette, theme),
+      @views.spacer(min_length=8.0),
       @views.row(
         [
           @views.text(
@@ -275,8 +303,44 @@ fn notification_card(
     border=Some(overlay_card_outline(palette)),
     padding=12.0,
   )
+  // Wrap the card in a stack to overlay a × dismiss button at the top-right,
+  // matching the per-card close affordance macOS shows in Notification Center.
+  |> card => {
+    @views.stack([
+      card,
+      notification_close(palette)
+        .align(alignment=@geometry.Alignment::top_trailing())
+        .offset(dx=-4.0, dy=2.0)
+        .frame(width=width, height=92.0),
+    ])
+    .frame(width~, height=92.0)
+    .on_tap(MarkNotificationsRead)
+    .accessibility_label("Read notification from " + app + ": " + title)
+  }
+}
+
+///|
+/// Small × button overlaid at the top-right of a notification card.
+fn notification_close(
+  palette : DesktopPalette,
+) -> @moui.View[Msg] {
+  @views.container(
+    @views.text(
+      "×",
+      role=@views.TextRole::Caption,
+      width=18.0,
+      height=18.0,
+      align=@text.TextAlign::TextCenter,
+    )
+    .font(@text.FontSpec::new(size=12.0, weight=600))
+    .foreground(palette.muted),
+    width=18.0,
+    height=18.0,
+    corner_radius=2.0,
+    padding=0.0,
+  )
   .on_tap(MarkNotificationsRead)
-  .accessibility_label("Read notification from " + app + ": " + title)
+  .accessibility_label("Dismiss notification")
 }
 
 ///|
@@ -338,4 +402,120 @@ fn notification_task(
   )
   .on_tap(if done { MarkNotificationsRead } else { CompleteTask(task) })
   .accessibility_label(if done { "Done " + label } else { "Complete " + label })
+}
+
+///|
+/// Compact calendar widget for the notification center: month/year label,
+/// weekday header, and a single row of the next 7 days with today highlighted.
+fn notification_widget_calendar(
+  model : DesktopModel,
+  width : Double,
+  palette : DesktopPalette,
+  theme : @moui.Theme,
+) -> @moui.View[Msg] {
+  @views.container(
+    @views.column(
+      [
+        @views.text(
+          desktop_month_year(model.clock),
+          role=@views.TextRole::Label,
+          theme~,
+          width=width,
+          height=22.0,
+        )
+        .font(@text.FontSpec::new(size=14.0, weight=640))
+        .foreground(palette.foreground),
+        calendar_row(
+          ["S", "M", "T", "W", "T", "F", "S"],
+          None,
+          palette,
+          theme,
+        ),
+        calendar_row(
+          notification_cal_window(model.clock.day),
+          Some(model.clock.day),
+          palette,
+          theme,
+        ),
+      ],
+      spacing=4.0,
+      align=@views.CrossAlign::Stretch,
+    ),
+    width~,
+    background=rgba8(0, 0, 0, a=0.0),
+    corner_radius=12.0,
+    border=Some(desktop_hairline(palette)),
+    padding=12.0,
+  )
+}
+
+///|
+/// Build a single 7-cell row starting from today-2 so today lands in the
+/// middle of the row, giving a glanceable week view.
+fn notification_cal_window(day : Int) -> Array[String] {
+  let labels : Array[String] = []
+  for index in 0..<7 {
+    labels.push((day - 2 + index).max(1).to_string())
+  }
+  labels
+}
+
+///|
+/// Compact weather widget for the notification center: location, current
+/// temp, a sun-like glyph, and a one-line "Hi / Lo" forecast.
+fn notification_widget_weather(
+  width : Double,
+  palette : DesktopPalette,
+  theme : @moui.Theme,
+) -> @moui.View[Msg] {
+  @views.container(
+    @views.row(
+      [
+        @views.column(
+          [
+            @views.text(
+              "Cupertino",
+              role=@views.TextRole::Caption,
+              theme~,
+              width=(width - 80.0).max(80.0),
+              height=18.0,
+            ).foreground(palette.foreground),
+            @views.text(
+              "Clear  |  H:83  L:56",
+              role=@views.TextRole::Caption,
+              theme~,
+              width=(width - 80.0).max(80.0),
+              height=18.0,
+            ).foreground(palette.muted),
+          ],
+          spacing=0.0,
+          align=@views.CrossAlign::Start,
+        ),
+        @views.spacer(min_length=4.0, weight=1.0),
+        @views.container(
+          desktop_icon(@views.IconName::Focus, 20.0, rgba8(255, 180, 40)),
+          width=28.0,
+          height=28.0,
+          padding=4.0,
+        ),
+        @views.text(
+          "68°",
+          role=@views.TextRole::Display,
+          theme~,
+          width=40.0,
+          height=32.0,
+          align=@text.TextAlign::TextCenter,
+        )
+        .font(@text.FontSpec::new(size=22.0, weight=280))
+        .foreground(palette.foreground),
+      ],
+      spacing=4.0,
+      align=@views.CrossAlign::Center,
+    ),
+    width~,
+    background=rgba8(0, 0, 0, a=0.0),
+    corner_radius=12.0,
+    border=Some(desktop_hairline(palette)),
+    padding=12.0,
+  )
 }

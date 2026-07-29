@@ -10,11 +10,12 @@ fn menu_bar(
   let left = if compact {
     @views.row(
       [
-        menu_button("Mo", 34.0, SystemMenu, palette, theme, true),
+        apple_menu_button(SystemMenu, model, palette, theme, 28.0),
         menu_button(
           model.active_app_label(),
           88.0,
           AppMenu,
+          model,
           palette,
           theme,
           true,
@@ -26,21 +27,22 @@ fn menu_bar(
   } else {
     @views.row(
       [
-        menu_button("Mo", 30.0, SystemMenu, palette, theme, true),
+        apple_menu_button(SystemMenu, model, palette, theme, 24.0),
         menu_button(
           model.active_app_label(),
           70.0,
           AppMenu,
+          model,
           palette,
           theme,
           true,
         ),
-        menu_button("File", 36.0, FileMenu, palette, theme, false),
-        menu_button("Edit", 36.0, EditMenu, palette, theme, false),
-        menu_button("View", 40.0, ViewMenu, palette, theme, false),
-        menu_button("Go", 30.0, GoMenu, palette, theme, false),
-        menu_button("Window", 60.0, WindowMenu, palette, theme, false),
-        menu_button("Help", 40.0, HelpMenu, palette, theme, false),
+        menu_button("File", 36.0, FileMenu, model, palette, theme, false),
+        menu_button("Edit", 36.0, EditMenu, model, palette, theme, false),
+        menu_button("View", 40.0, ViewMenu, model, palette, theme, false),
+        menu_button("Go", 30.0, GoMenu, model, palette, theme, false),
+        menu_button("Window", 60.0, WindowMenu, model, palette, theme, false),
+        menu_button("Help", 40.0, HelpMenu, model, palette, theme, false),
       ],
       spacing=0.0,
       align=@views.CrossAlign::Center,
@@ -182,13 +184,70 @@ fn menu_button(
   label : String,
   width : Double,
   menu : DesktopMenu,
+  model : DesktopModel,
   palette : DesktopPalette,
   theme : @moui.Theme,
   strong : Bool,
 ) -> @moui.View[Msg] {
-  menu_text(label, width, palette, theme, strong)
+  // macOS highlights the currently-open menu in the bar with a translucent
+  // blue capsule behind its label.
+  let active = match model.overlay {
+    MenuBarMenu(opened) => opened == menu
+    _ => false
+  }
+  let label_view = menu_text(label, width, palette, theme, strong)
+  if active {
+    @views.container(
+      label_view,
+      width=width,
+      height=22.0,
+      background=palette.accent.multiply_alpha(0.78),
+      corner_radius=4.0,
+      padding=0.0,
+    )
+    .on_tap(ToggleMenu(menu))
+    .accessibility_label("Open " + label + " menu")
+  } else {
+    label_view
+    .on_tap(ToggleMenu(menu))
+    .accessibility_label("Open " + label + " menu")
+  }
+}
+
+///|
+/// The leading Apple-menu button: a custom Apple-logo glyph (rendered via
+/// `apple_logo_glyph`) centered in a tap target. Replaces the previous "Mo"
+/// text label so the menu bar reads like a real macOS system menu bar.
+fn apple_menu_button(
+  menu : DesktopMenu,
+  model : DesktopModel,
+  palette : DesktopPalette,
+  theme : @moui.Theme,
+  glyph_size : Double,
+) -> @moui.View[Msg] {
+  // The menu bar content area is 20px (28px bar − 4px padding × 2). Keep
+  // the button exactly 20px to match sibling menu buttons and avoid overflow.
+  let target = 20.0
+  let actual_glyph = glyph_size.min(target)
+  let active = match model.overlay {
+    MenuBarMenu(opened) => opened == menu
+    _ => false
+  }
+  let glyph = apple_logo_glyph(actual_glyph, palette.foreground)
+  @views.container(
+    glyph,
+    width=target,
+    height=target,
+    background=if active {
+      palette.accent.multiply_alpha(0.78)
+    } else {
+      rgba8(0, 0, 0, a=0.0)
+    },
+    corner_radius=if active { 4.0 } else { 0.0 },
+    padding=(target - actual_glyph) / 2.0,
+  )
   .on_tap(ToggleMenu(menu))
-  .accessibility_label("Open " + label + " menu")
+  .accessibility_label("Open Apple menu")
 }
 
 ///|
@@ -242,8 +301,11 @@ fn dock(
   let item_gap = if compact { 10.0 } else { 12.0 }
   let side_pad = if compact { 12.0 } else { 16.0 }
   let dock_height = if compact { 74.0 } else { 84.0 }
-  let items = [
-    dock_item(
+  // Real macOS Dock uses a translucent frosted plate with a subtle top sheen.
+  // Each app tile is a "squircle" (continuous-curve rounded square) and the
+  // running app gets a small dot beneath it.
+  let tiles = [
+    dock_tile(
       "Finder",
       OpenFinder,
       model.active_window == Finder,
@@ -251,15 +313,7 @@ fn dock(
       palette,
       dock_finder_glyph,
     ),
-    dock_item(
-      "Apps",
-      ToggleLauncher,
-      model.overlay == Launcher,
-      icon_size,
-      palette,
-      dock_apps_glyph,
-    ),
-    dock_item(
+    dock_tile(
       "Safari",
       OpenSafari,
       model.active_window == Safari,
@@ -267,7 +321,17 @@ fn dock(
       palette,
       dock_safari_glyph,
     ),
-    dock_item(
+  ]
+  let utilities = [
+    dock_tile(
+      "Apps",
+      ToggleLauncher,
+      model.overlay == Launcher,
+      icon_size,
+      palette,
+      dock_apps_glyph,
+    ),
+    dock_tile(
       "Inbox",
       ToggleNotificationCenter,
       model.overlay == NotificationCenter,
@@ -275,7 +339,7 @@ fn dock(
       palette,
       dock_inbox_glyph,
     ),
-    dock_item(
+    dock_tile(
       "Controls",
       ToggleControlCenter,
       model.overlay == ControlCenter,
@@ -284,8 +348,15 @@ fn dock(
       dock_controls_glyph,
     ),
   ]
-  let content_width = icon_size * items.length().to_double() +
-    item_gap * (items.length() - 1).to_double() +
+  let separator = dock_separator(icon_size, palette)
+  let dock_row = @views.row(
+    tiles + [separator] + utilities,
+    spacing=item_gap,
+    justify=@views.MainAlign::Center,
+    align=@views.CrossAlign::End,
+  )
+  let content_width = icon_size * (tiles.length() + utilities.length()).to_double() +
+    item_gap * (tiles.length() + utilities.length()).to_double() +
     side_pad * 2.0
   let dock_width = if compact {
     content_width.min(width - 16.0).max(300.0)
@@ -295,24 +366,19 @@ fn dock(
   let rim = @graphics.BorderStyle::new(
     brush=@graphics.Brush::solid(
       if palette.dark {
-        rgba8(255, 255, 255, a=0.34)
+        rgba8(255, 255, 255, a=0.18)
       } else {
-        rgba8(255, 255, 255, a=0.55)
+        rgba8(255, 255, 255, a=0.65)
       },
     ),
     width=1.0,
   )
   @views.container(
-    @views.row(
-      items,
-      spacing=item_gap,
-      justify=@views.MainAlign::Center,
-      align=@views.CrossAlign::End,
-    ),
+    dock_row,
     width=dock_width,
     height=dock_height,
     background=palette.dock,
-    corner_radius=dock_height * 0.36,
+    corner_radius=dock_height * 0.42,
     border=Some(rim),
     padding=side_pad * 0.55,
   )
@@ -323,7 +389,35 @@ fn dock(
 }
 
 ///|
-fn dock_item(
+/// A thin translucent vertical rule separating pinned apps from utilities,
+/// matching the divider seen in the macOS Dock.
+fn dock_separator(
+  icon_size : Double,
+  palette : DesktopPalette,
+) -> @moui.View[Msg] {
+  let divider = if palette.dark {
+    rgba8(255, 255, 255, a=0.18)
+  } else {
+    rgba8(255, 255, 255, a=0.55)
+  }
+  @views.container(
+    @views.spacer(min_length=1.0, weight=0.0),
+    width=2.0,
+    height=icon_size * 0.62,
+    background=divider,
+    corner_radius=1.0,
+    padding=0.0,
+  )
+}
+
+///|
+/// One Dock tile: squircle glyph with a subtle highlight plus the running
+/// indicator dot under the active app. The active tile is rendered slightly
+/// larger with a stronger shadow so the running app reads as "lifted" toward
+/// the user, echoing macOS Dock's hover/active emphasis (MoUI does not expose
+/// pointer-enter events to app code, so we key the lift off the running state
+/// instead of a hover).
+fn dock_tile(
   label : String,
   message : Msg,
   active : Bool,
@@ -331,29 +425,54 @@ fn dock_item(
   palette : DesktopPalette,
   glyph : (Double, DesktopPalette) -> @moui.View[Msg],
 ) -> @moui.View[Msg] {
-  // Multi-layer colored glyphs on a pale squircle read closer to macOS Dock
-  // apps than monochrome white icons on flat solid tiles.
-  let tile = glyph(icon_size, palette)
-    .shadow(dock_tile_shadow(palette))
+  // Active tile: 8% larger glyph + a deeper shadow so it lifts off the plate.
+  let scaled_size = if active { icon_size * 1.08 } else { icon_size }
+  let tile = glyph(scaled_size, palette)
+    .shadow(
+      if active {
+        @graphics.ShadowStyle::new(
+          color=palette.shadow.multiply_alpha(0.75),
+          offset=@geometry.Point::new(x=0.0, y=5.0),
+          blur_radius=12.0,
+          spread=0.0,
+        )
+      } else {
+        dock_tile_shadow(palette)
+      },
+    )
     .on_tap(message)
     .accessibility_label(label)
+  // macOS running indicator: a 4pt dot centered under the tile.
+  let indicator_color = if palette.dark {
+    rgba8(255, 255, 255, a=0.92)
+  } else {
+    rgba8(28, 34, 42, a=0.85)
+  }
   let indicator = @views.container(
     @views.spacer(min_length=0.0, weight=0.0),
     width=4.0,
     height=4.0,
-    background=if active {
-      if palette.dark {
-        rgba8(255, 255, 255, a=0.88)
-      } else {
-        rgba8(28, 34, 42, a=0.88)
-      }
-    } else {
+    background=if active { indicator_color } else {
       rgba8(0, 0, 0, a=0.0)
     },
     corner_radius=2.0,
     padding=0.0,
   )
-  @views.column([tile, indicator], spacing=4.0, align=@views.CrossAlign::Center)
+  // Keep the overall tile slot height stable so the active tile's larger glyph
+  // does not push the dock row around; the glyph grows inside a fixed frame.
+  @views.container(
+    @views.column(
+      [
+        @views.container(tile, width=icon_size, height=icon_size, padding=0.0),
+        indicator,
+      ],
+      spacing=3.0,
+      align=@views.CrossAlign::Center,
+    ),
+    width=icon_size,
+    height=icon_size + 7.0,
+    padding=0.0,
+  )
 }
 
 ///|

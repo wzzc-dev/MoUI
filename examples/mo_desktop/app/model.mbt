@@ -16,6 +16,7 @@ pub(all) enum DesktopOverlay {
   OverlayNone
   MenuBarMenu(DesktopMenu)
   Launcher
+  Spotlight
   ControlCenter
   NotificationCenter
   AboutThisMac
@@ -119,8 +120,11 @@ pub(all) struct DesktopModel {
   selected_file : String
   launcher_query : String
   launcher_tab : LauncherTab
+  spotlight_query : String
   browser_query : String
   browser_page : BrowserPage
+  browser_tab_titles : Array[String]
+  browser_active_tab : Int
   wifi_enabled : Bool
   bluetooth_enabled : Bool
   low_power_mode : Bool
@@ -159,9 +163,14 @@ pub(all) enum Msg {
   SelectFinderItem(String)
   LauncherQueryChanged(String)
   LauncherTabSelected(LauncherTab)
+  SpotlightQueryChanged(String)
+  ToggleSpotlight
   BrowserQueryChanged(String)
   SubmitBrowserQuery
   ShowBrowserStartPage
+  NewBrowserTab
+  SelectBrowserTab(Int)
+  CloseBrowserTab(Int)
   OpenFavorite(String)
   ToggleDarkMode
   UseSystemAppearance
@@ -201,8 +210,11 @@ pub fn DesktopModel::new(
     selected_file: "",
     launcher_query: "",
     launcher_tab: Apps,
+    spotlight_query: "",
     browser_query: "",
     browser_page: StartPage,
+    browser_tab_titles: ["Start Page"],
+    browser_active_tab: 0,
     wifi_enabled: true,
     bluetooth_enabled: true,
     low_power_mode: false,
@@ -410,6 +422,16 @@ fn DesktopModel::apply(self : DesktopModel, message : Msg) -> DesktopModel {
           NotificationCenter
         },
       }
+    ToggleSpotlight =>
+      {
+        ..self,
+        spotlight_query: "",
+        overlay: if self.overlay == Spotlight {
+          OverlayNone
+        } else {
+          Spotlight
+        },
+      }
     DismissOverlay => { ..self, overlay: OverlayNone }
     SelectFinderLocation(location) => self.visit_finder_location(location)
     GoFinderBack =>
@@ -429,6 +451,7 @@ fn DesktopModel::apply(self : DesktopModel, message : Msg) -> DesktopModel {
     SelectFinderItem(value) => { ..self, selected_file: value }
     LauncherQueryChanged(value) => { ..self, launcher_query: value }
     LauncherTabSelected(tab) => { ..self, launcher_tab: tab }
+    SpotlightQueryChanged(value) => { ..self, spotlight_query: value }
     BrowserQueryChanged(value) => { ..self, browser_query: value }
     SubmitBrowserQuery =>
       {
@@ -441,6 +464,36 @@ fn DesktopModel::apply(self : DesktopModel, message : Msg) -> DesktopModel {
       }
     ShowBrowserStartPage =>
       { ..self, browser_query: "", browser_page: StartPage }
+    NewBrowserTab =>
+      {
+        let tabs = self.browser_tab_titles
+        let updated : Array[String] = []
+        for t in tabs { updated.push(t) }
+        updated.push("Start Page")
+        { ..self, browser_tab_titles: updated, browser_active_tab: tabs.length() }
+      }
+    SelectBrowserTab(index) =>
+      { ..self, browser_active_tab: index }
+    CloseBrowserTab(index) =>
+      {
+        let tabs = self.browser_tab_titles
+        if tabs.length() <= 1 {
+          self
+        } else {
+          let filtered : Array[String] = []
+          for i in 0..<tabs.length() {
+            if i != index { filtered.push(tabs[i]) }
+          }
+          let active = if self.browser_active_tab >= filtered.length() {
+            filtered.length() - 1
+          } else if self.browser_active_tab > index {
+            self.browser_active_tab - 1
+          } else {
+            self.browser_active_tab
+          }
+          { ..self, browser_tab_titles: filtered, browser_active_tab: active }
+        }
+      }
     OpenFavorite(value) =>
       {
         ..self,
@@ -657,9 +710,14 @@ fn Msg::diagnostic(self : Msg) -> String {
     SelectFinderItem(_) => "Selected Finder item"
     LauncherQueryChanged(_) => "Changed launcher search"
     LauncherTabSelected(_) => "Changed launcher tab"
+    SpotlightQueryChanged(_) => "Changed Spotlight search"
+    ToggleSpotlight => "Toggled Spotlight"
     BrowserQueryChanged(_) => "Changed browser search"
     SubmitBrowserQuery => "Submitted browser search"
     ShowBrowserStartPage => "Opened browser start page"
+    NewBrowserTab => "Created new browser tab"
+    SelectBrowserTab(_) => "Selected browser tab"
+    CloseBrowserTab(_) => "Closed browser tab"
     OpenFavorite(_) => "Opened browser favorite"
     ToggleDarkMode => "Toggled dark mode"
     UseSystemAppearance => "Requested system appearance"

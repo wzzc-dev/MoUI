@@ -30,15 +30,19 @@ fn desktop_palette(dark : Bool) -> DesktopPalette {
   if dark {
     {
       dark: true,
-      foreground: rgba8(241, 245, 249),
-      muted: rgba8(174, 184, 197),
+      // macOS dark mode foreground/text: systemLabelColor ~ #F5F5F7.
+      foreground: rgba8(245, 245, 247),
+      // systemSecondaryLabelColor ~ #A6A6A6.
+      muted: rgba8(166, 166, 166),
       glass: rgba8(26, 32, 43, a=0.82),
       glass_strong: rgba8(24, 29, 38, a=0.95),
       content: rgba8(38, 43, 54, a=0.97),
       sidebar: rgba8(27, 32, 42, a=0.97),
-      outline: rgba8(255, 255, 255, a=0.13),
+      // macOS dark separator: systemSeparatorColor ~ #38383A (opaque).
+      outline: rgba8(56, 56, 58, a=0.55),
       shadow: rgba8(0, 0, 0, a=0.48),
-      accent: rgba8(57, 151, 255),
+      // macOS accent: systemBlue dark ~ #0A84FF.
+      accent: rgba8(10, 132, 255),
       accent_soft: rgba8(42, 91, 142, a=0.72),
       // Lighter, more translucent dock glass so wallpaper shows through like macOS.
       dock: rgba8(30, 36, 46, a=0.52),
@@ -47,17 +51,21 @@ fn desktop_palette(dark : Bool) -> DesktopPalette {
   } else {
     {
       dark: false,
-      foreground: rgba8(28, 34, 42),
-      muted: rgba8(100, 109, 120),
+      // macOS light mode foreground/text: systemLabelColor ~ #1D1D1F.
+      foreground: rgba8(29, 29, 31),
+      // systemSecondaryLabelColor ~ #6C6C70.
+      muted: rgba8(108, 108, 112),
       glass: rgba8(245, 248, 252, a=0.82),
       // App windows own readable, opaque surfaces; otherwise bright wallpaper
       // features show through as distracting lines in the Finder content.
       glass_strong: rgba8(249, 250, 252),
       content: rgba8(252, 253, 255),
       sidebar: rgba8(238, 241, 246),
-      outline: rgba8(255, 255, 255, a=0.62),
+      // macOS light separator: systemSeparatorColor ~ #E5E5EA (opaque).
+      outline: rgba8(229, 229, 234, a=0.85),
       shadow: rgba8(18, 31, 48, a=0.30),
-      accent: rgba8(22, 130, 246),
+      // macOS accent: systemBlue light ~ #007AFF.
+      accent: rgba8(0, 122, 255),
       accent_soft: rgba8(180, 216, 255, a=0.92),
       // Frosted dock plate: pale and translucent rather than chalky opaque.
       dock: rgba8(255, 255, 255, a=0.42),

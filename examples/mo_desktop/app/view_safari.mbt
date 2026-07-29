@@ -54,15 +54,24 @@ fn safari_toolbar(
   let address = @views.container(
     @views.row(
       [
-        desktop_icon(@views.IconName::Search, 13.0, palette.muted),
+        // macOS Safari address bar: a lock glyph on the left signals the
+        // current page is loaded over a secure (https) connection.
+        desktop_icon(@views.IconName::Focus, 13.0, palette.muted),
         @views.text_field(
           model.browser_query,
           on_input=value => BrowserQueryChanged(value),
           on_submit=Some(SubmitBrowserQuery),
           placeholder="Search or enter website name",
           theme~,
-          width=(address_width - 34.0).max(160.0),
+          width=(address_width - 78.0).max(120.0),
           height=26.0,
+        ),
+        // Reload button on the right of the address capsule.
+        toolbar_icon_button(
+          @views.IconName::ArrowRight,
+          "Reload current page",
+          SubmitBrowserQuery,
+          palette,
         ),
       ],
       spacing=6.0,
@@ -112,38 +121,16 @@ fn safari_toolbar(
     @views.container(
       @views.column(
         [
+          // macOS Safari multi-tab bar: each tab is a compact capsule with
+          // the page title, a close button, and the active tab highlighted
+          // with a white card. A trailing + button creates a new tab.
           @views.row(
             [
-              @views.container(
-                @views.row(
-                  [
-                    desktop_icon(@views.IconName::Link, 13.0, palette.accent),
-                    @views.text(
-                      match model.browser_page {
-                        StartPage => "Start Page"
-                        SearchResults(value) => value
-                      },
-                      role=@views.TextRole::Caption,
-                      theme~,
-                      width=if metrics.compact { 180.0 } else { 250.0 },
-                      height=24.0,
-                    ).foreground(palette.foreground),
-                  ],
-                  spacing=7.0,
-                  align=@views.CrossAlign::Center,
-                ),
-                width=if metrics.compact { 220.0 } else { 292.0 },
-                height=30.0,
-                background=safari_selected_tab_surface(palette),
-                corner_radius=8.0,
-                border=Some(safari_control_border(palette)),
-                padding=6.0,
-              ),
-              @views.spacer(min_length=8.0),
+              safari_tab_bar(model, metrics, theme, palette),
               toolbar_icon_button(
                 @views.IconName::Plus,
-                "New start page",
-                ShowBrowserStartPage,
+                "New browser tab",
+                NewBrowserTab,
                 palette,
               ),
             ],
@@ -209,6 +196,82 @@ fn safari_address_surface(palette : DesktopPalette) -> @graphics.Color {
   } else {
     rgba8(255, 255, 255, a=0.72)
   }
+}
+
+///|
+fn safari_tab_bar(
+  model : DesktopModel,
+  metrics : WindowMetrics,
+  theme : @moui.Theme,
+  palette : DesktopPalette,
+) -> @moui.View[Msg] {
+  let tabs = model.browser_tab_titles
+  let active = model.browser_active_tab
+  let tab_width = if metrics.compact { 80.0 } else { 120.0 }
+  let children : Array[@moui.View[Msg]] = []
+  for index in 0..<tabs.length() {
+    children.push(
+      safari_tab(index, tabs[index], active == index, tab_width, palette, theme),
+    )
+  }
+  @views.row(children, spacing=4.0, align=@views.CrossAlign::Center)
+}
+
+///|
+fn safari_tab(
+  index : Int,
+  title : String,
+  selected : Bool,
+  width : Double,
+  palette : DesktopPalette,
+  theme : @moui.Theme,
+) -> @moui.View[Msg] {
+  let close_width = 16.0
+  let inner = @views.row(
+    [
+      @views.text(
+        title,
+        role=@views.TextRole::Caption,
+        theme~,
+        width=width - close_width - 16.0,
+        height=22.0,
+      )
+      .font(@text.FontSpec::new(size=11.5, weight=if selected { 560 } else { 480 }))
+      .foreground(palette.foreground),
+      @views.container(
+        @views.text(
+          "×",
+          role=@views.TextRole::Caption,
+          theme~,
+          width=close_width,
+          height=22.0,
+          align=@text.TextAlign::TextCenter,
+        ).foreground(palette.muted),
+        width=close_width,
+        height=22.0,
+        padding=0.0,
+      )
+      .on_tap(CloseBrowserTab(index))
+      .accessibility_label("Close tab " + title),
+    ],
+    spacing=6.0,
+    align=@views.CrossAlign::Center,
+  )
+  @views.container(
+    inner,
+    width~,
+    height=30.0,
+    background=if selected {
+      safari_selected_tab_surface(palette)
+    } else {
+      rgba8(0, 0, 0, a=0.0)
+    },
+    corner_radius=8.0,
+    border=Some(safari_control_border(palette)),
+    padding=6.0,
+  )
+  .on_tap(SelectBrowserTab(index))
+  .accessibility_label("Switch to tab " + title)
 }
 
 ///|
