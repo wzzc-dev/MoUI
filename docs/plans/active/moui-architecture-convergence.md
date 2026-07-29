@@ -6,7 +6,7 @@
   `views` own control vocabulary, `backend/host` platform-neutral contracts
   only, `render/*` a provider-plugin system, platform adapters thin wiring
   over a shared transformer. Preserve Native Skia mainline, Native WGPU
-  diagnostic, mobile window-hosted entrypoints, and existing platform behavior.
+  diagnostic, embedded-runtime entrypoints, and existing platform behavior.
 - **Decisions**: ADR 0017 (Theme layering), 0018 (host split),
   0019 (renderer provider), 0020 (platform adapter convergence).
 - **Non-goals**: redesigning `moui_richtext`; rewriting `moui_skia` FFI;
@@ -89,7 +89,7 @@ Phase D  Task 3 — host contract split (ADR 0018)
   D5  Switch validate-host-import-baseline.mjs to **enforce**.
   Gate: moon info moui/backend/host shows no runtime/render symbols;
         moon test moui/backend/host moui/runtime moui/render --target native;
-        daily green; mobile window-hosted entrypoints unchanged behavior.
+        daily green; embedded-runtime entrypoints unchanged behavior.
 
 Phase E  Task 4 — renderer provider plugin (ADR 0019)
   E1  moui/render: define RendererProvider + RendererInstance + neutral

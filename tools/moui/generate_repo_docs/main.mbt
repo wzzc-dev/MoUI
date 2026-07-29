@@ -395,7 +395,7 @@ fn platform_fact_status(
 }
 
 ///|
-fn mobile_host_kind(platform : String) -> String? {
+fn embedded_runtime_host_kind(platform : String) -> String? {
   match platform {
     "android" => Some("window-hosted-android")
     "ios" => Some("window-hosted-ios")
@@ -409,7 +409,7 @@ fn validate_mobile_platform_contract(
   facts : MobilePlatformContractFacts,
   label : String,
 ) -> Result[Unit, String] {
-  let expected_host_kind = match mobile_host_kind(facts.platform) {
+  let expected_host_kind = match embedded_runtime_host_kind(facts.platform) {
     Some(value) => value
     None => return Ok(())
   }
@@ -551,7 +551,7 @@ fn read_platform_rows(
         fields.get("toolchainFloor"),
         path + ".toolchainFloor",
       ).or_raise()
-      if mobile_host_kind(platform) is Some(_) {
+      if embedded_runtime_host_kind(platform) is Some(_) {
         let source = match fields.get("sourceBuild") {
           Some(value) => json_object(value, path + ".sourceBuild").or_raise()
           None => return Err(path + ".sourceBuild is missing")

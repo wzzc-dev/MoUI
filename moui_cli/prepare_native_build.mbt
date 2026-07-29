@@ -1,4 +1,4 @@
-// Shared support for window-hosted mobile builds.
+// Shared support for embedded-runtime builds on the window-hosted route.
 //
 // This file contains only the common MoonBit-C, Skia, Android NDK, and response
 // file helpers consumed by the Android, iOS, and HarmonyOS window templates.

@@ -71,7 +71,7 @@ Replace the closed matrix with a composable provider architecture.
    root (in `moui/runtime` host-driver or the platform entrypoint) registers
    the available providers for that build. Desktop entrypoints register
    `SkiaGpuNative` (auto default per R2), `SkiaRasterNative`, WGPU diagnostic;
-   mobile window-hosted entrypoints register their `*/skia` provider; web
+   embedded-runtime entrypoints register their `*/skia` provider; web
    registers canvas2d/webgpu. The composition root picks a provider via
    capability negotiation (`RendererProvider::negotiate`), **not** a static
    matrix. Recovery fallback (`SkiaRasterNative` sticky fallback per R2) is a

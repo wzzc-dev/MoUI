@@ -18,7 +18,7 @@ script. When it is still taste, keep it here and clear AI residue in small PRs.
 
 6. **Native Skia is mainline; native WGPU is diagnostic** — do not soft-reclassify in docs or examples.
 7. **Mobile claims need evidence grades** — `passed` / `partial` / `failed` only via manifests; packaging ≠ runtime proof.
-8. **Window-hosted mobile is canonical** — `wzzc-dev/window` owns mobile lifecycle, surface, and input; examples keep only thin MoonBit entrypoints.
+8. **Embedded runtime backends are canonical for Android/iOS/HarmonyOS** — `wzzc-dev/window` owns platform lifecycle, surface, and input; examples keep only thin MoonBit entrypoints.
 
 ## Agent-operable repo
 

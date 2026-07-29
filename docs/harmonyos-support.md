@@ -1,6 +1,6 @@
 # HarmonyOS Support
 
-HarmonyOS uses the **window-hosted** mobile route and is currently
+HarmonyOS uses the **embedded runtime backend** route and is currently
 `runtime_partial`. `wzzc-dev/window/harmonyos` owns the Stage Ability,
 XComponent surface, lifecycle, and input queue; `moui/backend/harmonyos`
 adapts those callbacks into the MoUI runtime session.
@@ -13,11 +13,11 @@ adapts those callbacks into the MoUI runtime session.
 | Mobile metadata | `examples/<app>/moui.mobile.json` |
 | MoonBit entrypoint | `examples/<app>/harmonyos_window_hosted` |
 | HarmonyOS host template | `wzzc-dev/window/harmonyos/template` |
-| MoUI adapter | `moui/backend/harmonyos/window_hosted.mbt` |
+| MoUI embedded runtime backend | `moui/backend/harmonyos/window_hosted.mbt` |
 
 XComponent callbacks are the sole source for surface, pointer, resize, and
 detach events. The hosted event loop forwards them to
-`HarmonyOsWindowHostedApp`; do not inject a second surface or input route.
+`HarmonyOsEmbeddedRuntimeBackend`; do not inject a second surface or input route.
 
 ## Toolchain
 

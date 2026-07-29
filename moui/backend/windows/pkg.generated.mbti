@@ -47,9 +47,6 @@ pub(all) struct WindowsAccessibilityBridgeInfo {
   description : String
 } derive(Eq, ToJson, @debug.Debug)
 
-type WindowsApp
-pub impl @wzzc-dev/window/windows.ApplicationHandler for WindowsApp
-
 pub struct WindowsHostAppOptions {
   // private fields
 }
@@ -60,6 +57,9 @@ pub struct WindowsHostSmokeOptions {
 }
 pub fn WindowsHostSmokeOptions::new(first_frame_smoke_auto_exit? : Bool) -> Self
 
+type WindowsNativeHostBackend
+pub impl @wzzc-dev/window/windows.ApplicationHandler for WindowsNativeHostBackend
+
 pub struct WindowsRendererProvider {
   // private fields
 }
@@ -68,4 +68,3 @@ pub fn WindowsRendererProvider::new(create_renderer~ : (@wzzc-dev/window/windows
 // Type aliases
 
 // Traits
-

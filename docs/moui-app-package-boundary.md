@@ -519,16 +519,16 @@ Platform entrypoint packages are executable packages such as
 `examples/*/{web_wasm,macos_skia,windows_skia,linux_skia,android_window_hosted,ios_window_hosted,harmonyos_window_hosted}`.
 They create the runtime, connect a platform backend, and select a renderer.
 
-The three mobile routes use the matching `wzzc-dev/window` template and a
+The three embedded runtime routes use the matching `wzzc-dev/window` template and a
 `*_window_hosted` entrypoint. Their `main.mbt` files construct the program,
-select the renderer provider, and pass the resulting `*WindowHostedApp` to the
+select the renderer provider, and pass the resulting `*EmbeddedRuntimeBackend` to the
 platform `EventLoop`. `HostCmd` and `ApplicationHandler` are the only path for
 lifecycle, surface, and input callbacks; mobile executable roots do not export
 or forward a second embedding ABI.
 
 Android, iOS, and HarmonyOS templates own their native lifecycle and surface
-bridges. `AndroidWindowHostedApp`, `IosWindowHostedApp`, and
-`HarmonyOsWindowHostedApp` assemble the MoUI runtime session after the window
+bridges. `AndroidEmbeddedRuntimeBackend`, `IosEmbeddedRuntimeBackend`, and
+`HarmonyOsEmbeddedRuntimeBackend` assemble the MoUI runtime session after the window
 event loop creates a surface. HarmonyOS XComponent callbacks remain the sole
 source for surface, pointer, resize, and detach events.
 

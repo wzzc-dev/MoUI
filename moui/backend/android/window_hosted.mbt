@@ -1,8 +1,8 @@
 ///|
-/// Window-hosted MoUI path (winit-style): surface/input come only from
-/// `wzzc-dev/window/android` HostCmd → ApplicationHandler. Surface attachment
-/// is driven only by the platform event loop.
-pub struct AndroidWindowHostedApp {
+/// Embedded runtime backend on the window-hosted route: surface/input come
+/// only from `wzzc-dev/window/android` HostCmd → ApplicationHandler. Surface
+/// attachment is driven only by the platform event loop.
+pub struct AndroidEmbeddedRuntimeBackend {
   title : String
   runtime_factory : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime
   provider_factory : () -> AndroidRendererProvider
@@ -18,12 +18,12 @@ pub struct AndroidWindowHostedApp {
 }
 
 ///|
-pub fn AndroidWindowHostedApp::new(
+pub fn AndroidEmbeddedRuntimeBackend::new(
   title? : String = "MoUI",
   runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime,
   provider_factory~ : () -> AndroidRendererProvider,
   auto_exit_after_frames? : Int? = None,
-) -> AndroidWindowHostedApp {
+) -> AndroidEmbeddedRuntimeBackend {
   {
     title,
     runtime_factory,
@@ -41,22 +41,22 @@ pub fn AndroidWindowHostedApp::new(
 }
 
 ///|
-pub fn AndroidWindowHostedApp::frames_presented(
-  self : AndroidWindowHostedApp,
+pub fn AndroidEmbeddedRuntimeBackend::frames_presented(
+  self : AndroidEmbeddedRuntimeBackend,
 ) -> Int {
   self.frames_presented
 }
 
 ///|
-pub fn AndroidWindowHostedApp::surface_generation(
-  self : AndroidWindowHostedApp,
+pub fn AndroidEmbeddedRuntimeBackend::surface_generation(
+  self : AndroidEmbeddedRuntimeBackend,
 ) -> Int {
   self.last_generation
 }
 
 ///|
-pub fn AndroidWindowHostedApp::session_attached(
-  self : AndroidWindowHostedApp,
+pub fn AndroidEmbeddedRuntimeBackend::session_attached(
+  self : AndroidEmbeddedRuntimeBackend,
 ) -> Bool {
   match self.session {
     Some(session) => session.surface_attached()
@@ -65,15 +65,15 @@ pub fn AndroidWindowHostedApp::session_attached(
 }
 
 ///|
-pub fn AndroidWindowHostedApp::has_session(
-  self : AndroidWindowHostedApp,
+pub fn AndroidEmbeddedRuntimeBackend::has_session(
+  self : AndroidEmbeddedRuntimeBackend,
 ) -> Bool {
   self.session is Some(_)
 }
 
 ///|
-fn AndroidWindowHostedApp::metrics_from_window(
-  _self : AndroidWindowHostedApp,
+fn AndroidEmbeddedRuntimeBackend::metrics_from_window(
+  _self : AndroidEmbeddedRuntimeBackend,
   window : @window_android.Window,
 ) -> @host.HostSurfaceMetrics {
   let size = window.inner_size()
@@ -82,8 +82,8 @@ fn AndroidWindowHostedApp::metrics_from_window(
 }
 
 ///|
-fn AndroidWindowHostedApp::attach_session(
-  self : AndroidWindowHostedApp,
+fn AndroidEmbeddedRuntimeBackend::attach_session(
+  self : AndroidEmbeddedRuntimeBackend,
   window : @window_android.Window,
 ) -> Unit {
   let metrics = self.metrics_from_window(window)
@@ -118,8 +118,8 @@ fn AndroidWindowHostedApp::attach_session(
 }
 
 ///|
-fn AndroidWindowHostedApp::detach_session(
-  self : AndroidWindowHostedApp,
+fn AndroidEmbeddedRuntimeBackend::detach_session(
+  self : AndroidEmbeddedRuntimeBackend,
 ) -> Unit {
   match self.session {
     Some(session) => ignore(session.detach_surface())
@@ -129,8 +129,8 @@ fn AndroidWindowHostedApp::detach_session(
 }
 
 ///|
-fn AndroidWindowHostedApp::dispatch_window_event(
-  self : AndroidWindowHostedApp,
+fn AndroidEmbeddedRuntimeBackend::dispatch_window_event(
+  self : AndroidEmbeddedRuntimeBackend,
   event : @window_core.WindowEvent,
 ) -> Unit {
   let scale = match self.window {
@@ -192,7 +192,7 @@ fn AndroidWindowHostedApp::dispatch_window_event(
 }
 
 ///|
-pub impl @window_android.ApplicationHandler for AndroidWindowHostedApp with fn resumed(
+pub impl @window_android.ApplicationHandler for AndroidEmbeddedRuntimeBackend with fn resumed(
   _self,
   _event_loop,
 ) {
@@ -200,7 +200,7 @@ pub impl @window_android.ApplicationHandler for AndroidWindowHostedApp with fn r
 }
 
 ///|
-pub impl @window_android.ApplicationHandler for AndroidWindowHostedApp with fn can_create_surfaces(
+pub impl @window_android.ApplicationHandler for AndroidEmbeddedRuntimeBackend with fn can_create_surfaces(
   self,
   event_loop,
 ) {
@@ -224,7 +224,7 @@ pub impl @window_android.ApplicationHandler for AndroidWindowHostedApp with fn c
 }
 
 ///|
-pub impl @window_android.ApplicationHandler for AndroidWindowHostedApp with fn destroy_surfaces(
+pub impl @window_android.ApplicationHandler for AndroidEmbeddedRuntimeBackend with fn destroy_surfaces(
   self,
   _event_loop,
 ) {
@@ -232,7 +232,7 @@ pub impl @window_android.ApplicationHandler for AndroidWindowHostedApp with fn d
 }
 
 ///|
-pub impl @window_android.ApplicationHandler for AndroidWindowHostedApp with fn suspended(
+pub impl @window_android.ApplicationHandler for AndroidEmbeddedRuntimeBackend with fn suspended(
   self,
   _event_loop,
 ) {
@@ -243,7 +243,7 @@ pub impl @window_android.ApplicationHandler for AndroidWindowHostedApp with fn s
 }
 
 ///|
-pub impl @window_android.ApplicationHandler for AndroidWindowHostedApp with fn window_event(
+pub impl @window_android.ApplicationHandler for AndroidEmbeddedRuntimeBackend with fn window_event(
   self,
   event_loop,
   _id,
@@ -263,7 +263,7 @@ pub impl @window_android.ApplicationHandler for AndroidWindowHostedApp with fn w
 }
 
 ///|
-pub impl @window_android.ApplicationHandler for AndroidWindowHostedApp with fn about_to_wait(
+pub impl @window_android.ApplicationHandler for AndroidEmbeddedRuntimeBackend with fn about_to_wait(
   self,
   _event_loop,
 ) {
@@ -282,7 +282,7 @@ pub impl @window_android.ApplicationHandler for AndroidWindowHostedApp with fn a
 ///|
 /// Pump one host-sim cycle for tests / offline validation.
 pub fn android_window_hosted_pump_host_sim(
-  app : AndroidWindowHostedApp,
+  app : AndroidEmbeddedRuntimeBackend,
   surface_handle? : UInt64 = 0xABCUL,
   width? : Int = 320,
   height? : Int = 640,

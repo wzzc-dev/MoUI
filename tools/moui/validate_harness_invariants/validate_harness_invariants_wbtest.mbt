@@ -66,7 +66,7 @@ test "R3 requires env-driven renderer selection" {
 }
 
 ///|
-test "R3 requires window-hosted mobile mains" {
+test "R3 requires embedded-runtime mains" {
   let bad_main = check_r3_mobile_main(
     "main.mbt",
     Some("@platform_host.start()\n"),
@@ -75,7 +75,7 @@ test "R3 requires window-hosted mobile mains" {
   let good = check_r3_mobile_main(
     "main.mbt",
     Some(
-      "let app = @android_host.AndroidWindowHostedApp::new(...)\nlet event_loop = @window_android.EventLoop::new()\nevent_loop.run_app(app)\n",
+      "let app = @android_host.AndroidEmbeddedRuntimeBackend::new(...)\nlet event_loop = @window_android.EventLoop::new()\nevent_loop.run_app(app)\n",
     ),
   )
   debug_inspect(good.ok, content="true")

@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "wzzc-dev/moui/backend/internal/embedded_runtime_session"
+package "wzzc-dev/moui/backend/internal/embedded_runtime_backend"
 
 import {
   "moonbitlang/core/debug",
@@ -24,16 +24,16 @@ pub fn embedding_text_input_response(Int, String, Int, Int) -> EmbeddingHostResp
 
 // Types and methods
 pub struct EmbeddedImageCoordinator {
-  window_id : @host.HostWindowId
-  renderer : @host.HostWindowRenderer
-  tracker : @host.HostImageResourceRepaintTracker
-  completion_source : @host.HostImageResourceCompletionSource
-  loader : @host.HostAsyncImageLoader?
+  window_id : @render.RenderWindowId
+  renderer : @render.HostWindowRenderer
+  tracker : @render.HostImageResourceRepaintTracker
+  completion_source : @render.HostImageResourceCompletionSource
+  loader : @render.HostAsyncImageLoader?
   window_open : @ref.Ref[Bool]
 }
 pub fn EmbeddedImageCoordinator::after_present(Self, present_count~ : Int) -> EmbeddedImageFrameObservation
 pub fn EmbeddedImageCoordinator::dispose(Self) -> Unit
-pub fn EmbeddedImageCoordinator::new(renderer~ : @host.HostWindowRenderer, image_loader~ : @host.HostAsyncImageLoader?, request_redraw~ : () -> Unit) -> Self
+pub fn EmbeddedImageCoordinator::new(renderer~ : @render.HostWindowRenderer, image_loader~ : @render.HostAsyncImageLoader?, request_redraw~ : () -> Unit) -> Self
 
 pub(all) struct EmbeddedImageFrameObservation {
   present_count : Int
@@ -43,33 +43,33 @@ pub(all) struct EmbeddedImageFrameObservation {
   scheduled_count : Int
 }
 
-pub struct EmbeddedSessionCore {
+pub struct EmbeddedRuntimeBackendCore {
   // private fields
 }
-pub fn EmbeddedSessionCore::advance_time(Self, Double) -> Unit
-pub fn EmbeddedSessionCore::attach_surface(Self, renderer~ : @host.HostWindowRenderer, metrics~ : @host.HostSurfaceMetrics, image_loader? : @host.HostAsyncImageLoader?) -> Bool
-pub fn EmbeddedSessionCore::detach_surface(Self) -> Bool
-pub fn EmbeddedSessionCore::dispatch(Self, @host.HostEvent) -> @host.HostEventResult
-pub fn EmbeddedSessionCore::dispatch_host_response(Self, EmbeddingHostResponse) -> Bool
-pub fn EmbeddedSessionCore::dispatch_host_response_envelope(Self, EmbeddingHostResponseEnvelope) -> Bool
-pub fn EmbeddedSessionCore::dispatch_host_response_envelope_json(Self, String) -> Bool
-pub fn EmbeddedSessionCore::dispose(Self) -> Unit
-pub fn EmbeddedSessionCore::disposed(Self) -> Bool
-pub fn EmbeddedSessionCore::drain_host_update_envelope_json(Self) -> String
-pub fn EmbeddedSessionCore::drain_host_updates(Self) -> Array[EmbeddingHostUpdate]
-pub fn EmbeddedSessionCore::drain_host_updates_json(Self) -> String
-pub fn EmbeddedSessionCore::host_service_bridge(Self) -> @host.HostServiceBridge
-pub fn EmbeddedSessionCore::metrics(Self) -> @host.HostSurfaceMetrics
-pub fn EmbeddedSessionCore::new(runtime~ : @runtime.AppRuntime, renderer~ : @host.HostWindowRenderer, metrics~ : @host.HostSurfaceMetrics, image_loader? : @host.HostAsyncImageLoader?) -> Self
-pub fn EmbeddedSessionCore::present_count(Self) -> Int
-pub fn EmbeddedSessionCore::redraw_requested(Self) -> Bool
-pub fn EmbeddedSessionCore::render_frame(Self) -> @render.RenderFrameResult
-pub fn EmbeddedSessionCore::resize(Self, @host.HostSurfaceMetrics) -> @host.HostEventResult
-pub fn EmbeddedSessionCore::runtime(Self) -> @runtime.AppRuntime
-pub fn EmbeddedSessionCore::session_generation(Self) -> Int
-pub fn EmbeddedSessionCore::surface_attached(Self) -> Bool
-pub fn EmbeddedSessionCore::surface_epoch(Self) -> Int
-pub fn EmbeddedSessionCore::take_redraw_requested(Self) -> Bool
+pub fn EmbeddedRuntimeBackendCore::advance_time(Self, Double) -> Unit
+pub fn EmbeddedRuntimeBackendCore::attach_surface(Self, renderer~ : @render.HostWindowRenderer, metrics~ : @host.HostSurfaceMetrics, image_loader? : @render.HostAsyncImageLoader?) -> Bool
+pub fn EmbeddedRuntimeBackendCore::detach_surface(Self) -> Bool
+pub fn EmbeddedRuntimeBackendCore::dispatch(Self, @host.HostEvent) -> @host.HostEventResult
+pub fn EmbeddedRuntimeBackendCore::dispatch_host_response(Self, EmbeddingHostResponse) -> Bool
+pub fn EmbeddedRuntimeBackendCore::dispatch_host_response_envelope(Self, EmbeddingHostResponseEnvelope) -> Bool
+pub fn EmbeddedRuntimeBackendCore::dispatch_host_response_envelope_json(Self, String) -> Bool
+pub fn EmbeddedRuntimeBackendCore::dispose(Self) -> Unit
+pub fn EmbeddedRuntimeBackendCore::disposed(Self) -> Bool
+pub fn EmbeddedRuntimeBackendCore::drain_host_update_envelope_json(Self) -> String
+pub fn EmbeddedRuntimeBackendCore::drain_host_updates(Self) -> Array[EmbeddingHostUpdate]
+pub fn EmbeddedRuntimeBackendCore::drain_host_updates_json(Self) -> String
+pub fn EmbeddedRuntimeBackendCore::host_service_bridge(Self) -> @host.HostServiceBridge
+pub fn EmbeddedRuntimeBackendCore::metrics(Self) -> @host.HostSurfaceMetrics
+pub fn EmbeddedRuntimeBackendCore::new(runtime~ : @runtime.AppRuntime, renderer~ : @render.HostWindowRenderer, metrics~ : @host.HostSurfaceMetrics, image_loader? : @render.HostAsyncImageLoader?) -> Self
+pub fn EmbeddedRuntimeBackendCore::present_count(Self) -> Int
+pub fn EmbeddedRuntimeBackendCore::redraw_requested(Self) -> Bool
+pub fn EmbeddedRuntimeBackendCore::render_frame(Self) -> @render.RenderFrameResult
+pub fn EmbeddedRuntimeBackendCore::resize(Self, @host.HostSurfaceMetrics) -> @host.HostEventResult
+pub fn EmbeddedRuntimeBackendCore::runtime(Self) -> @runtime.AppRuntime
+pub fn EmbeddedRuntimeBackendCore::session_generation(Self) -> Int
+pub fn EmbeddedRuntimeBackendCore::surface_attached(Self) -> Bool
+pub fn EmbeddedRuntimeBackendCore::surface_epoch(Self) -> Int
+pub fn EmbeddedRuntimeBackendCore::take_redraw_requested(Self) -> Bool
 
 pub struct EmbeddingHostBridge {
   service_queue : @host.HostServiceAsyncQueue
@@ -82,9 +82,9 @@ pub struct EmbeddingHostBridge {
   mut last_platform_views : Array[@core.PlatformViewPlacement]
   mut disposed : Bool
 }
-pub fn EmbeddingHostBridge::dispatch_response(Self, EmbeddingHostResponse, @host.HostRuntimeDriver) -> Bool
-pub fn EmbeddingHostBridge::dispatch_response_envelope(Self, EmbeddingHostResponseEnvelope, @host.HostRuntimeDriver) -> Bool
-pub fn EmbeddingHostBridge::dispose(Self, driver? : @host.HostRuntimeDriver, reason? : String) -> Unit
+pub fn EmbeddingHostBridge::dispatch_response(Self, EmbeddingHostResponse, @runtime.HostRuntimeDriver) -> Bool
+pub fn EmbeddingHostBridge::dispatch_response_envelope(Self, EmbeddingHostResponseEnvelope, @runtime.HostRuntimeDriver) -> Bool
+pub fn EmbeddingHostBridge::dispose(Self, driver? : @runtime.HostRuntimeDriver, reason? : String) -> Unit
 pub fn EmbeddingHostBridge::disposed(Self) -> Bool
 pub fn EmbeddingHostBridge::drain_update_envelope(Self) -> EmbeddingHostUpdateEnvelope
 pub fn EmbeddingHostBridge::drain_update_envelope_json(Self) -> String
@@ -102,7 +102,7 @@ pub(all) enum EmbeddingHostResponse {
   TextInput(@core.TextInputEvent)
   Command(@core.CommandIntent)
   Clipboard(@host.HostServiceRequestId, @host.HostServiceResponse)
-  Accessibility(@host.NativeAccessibilityActionRequest)
+  Accessibility(@runtime.NativeAccessibilityActionRequest)
   PlatformView(Int, String, String, @core.PlatformViewEvent)
   PlatformChannel(@host.HostServiceRequestId, @host.PlatformChannelResponse)
 } derive(Eq, ToJson, @debug.Debug)

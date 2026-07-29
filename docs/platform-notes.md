@@ -60,9 +60,9 @@ response.
 Native renderer choice is package selection, not a field on host-core app
 options. Use `backend/<platform>/skia` for the native Skia raster mainline.
 Use `backend/<platform>/wgpu` only for native WGPU experimental diagnostics.
-Android, iOS, and HarmonyOS use `wzzc-dev/window` rather than a separate MoUI
-mobile host. The template sends `HostCmd` through its `EventLoop` to the
-matching `*WindowHostedApp`, which assembles the MoUI runtime session and
+Android, iOS, and HarmonyOS use `wzzc-dev/window` as the embedded runtime
+backend's embedder. The template sends `HostCmd` through its `EventLoop` to the
+matching `*EmbeddedRuntimeBackend`, which assembles the MoUI runtime session and
 renderer. Lifecycle, surface, and input must not bypass this route. HarmonyOS
 XComponent callbacks are the sole source for surface, pointer, resize, and
 detach. Fallback builds are build-system evidence only; matching-device or

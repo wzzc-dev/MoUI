@@ -22,7 +22,7 @@ test "android window-hosted host-sim creates session and presents" {
       ),
     )
   })
-  let app = AndroidWindowHostedApp::new(
+  let app = AndroidEmbeddedRuntimeBackend::new(
     title="window-hosted-test",
     runtime_factory=metrics => {
       let runtime = @runtime.AppRuntime::new_view(

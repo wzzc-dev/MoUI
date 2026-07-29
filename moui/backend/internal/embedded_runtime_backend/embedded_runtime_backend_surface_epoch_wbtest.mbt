@@ -13,7 +13,7 @@ test "surface detach cancels pending host service exactly once" {
     text_system=() => @core.TextSystem::fallback(),
     present_count=() => 0,
   )
-  let core = EmbeddedSessionCore::new(runtime~, renderer~, metrics~)
+  let core = EmbeddedRuntimeBackendCore::new(runtime~, renderer~, metrics~)
   let request = @host.PlatformChannelRequest::new(
     channel="camera.control",
     operation="start",
@@ -58,38 +58,38 @@ test "surface detach cancels pending host service exactly once" {
 }
 
 ///|
-priv enum MobileSemanticsMsg {
+priv enum EmbeddedRuntimeSemanticsMsg {
   Remove
 }
 
 ///|
-priv struct MobileSemanticsNode {
+priv struct EmbeddedRuntimeSemanticsNode {
   visible : Bool
 }
 
 ///|
-impl @core.ViewNode for MobileSemanticsNode with fn identity(_self) {
-  @core.ViewIdentity::new(kind="MobileSemanticsFixture")
+impl @core.ViewNode for EmbeddedRuntimeSemanticsNode with fn identity(_self) {
+  @core.ViewIdentity::new(kind="EmbeddedRuntimeSemanticsFixture")
 }
 
 ///|
-impl @core.ViewNode for MobileSemanticsNode with fn declaration(_self) {
+impl @core.ViewNode for EmbeddedRuntimeSemanticsNode with fn declaration(_self) {
   @core.ViewDeclaration::uncacheable()
 }
 
 ///|
-impl @core.ViewNode for MobileSemanticsNode with fn layout(_self, context) {
+impl @core.ViewNode for EmbeddedRuntimeSemanticsNode with fn layout(_self, context) {
   @core.ViewLayoutResult::new(
     size=context.constraints.constrain(@core.Size::new(width=80.0, height=32.0)),
   )
 }
 
 ///|
-impl @core.ViewNode for MobileSemanticsNode with fn semantics(self) {
+impl @core.ViewNode for EmbeddedRuntimeSemanticsNode with fn semantics(self) {
   if self.visible {
     @core.ViewSemanticsInfo::new(
       composition=@core.SemanticsComposition::Boundary,
-      semantic_id=@core.SemanticId::parse("mobile.remove").unwrap(),
+      semantic_id=@core.SemanticId::parse("embedded-runtime.remove").unwrap(),
       role=@core.SemanticsRole::Button,
       label="Remove",
     )
@@ -99,8 +99,8 @@ impl @core.ViewNode for MobileSemanticsNode with fn semantics(self) {
 }
 
 ///|
-fn mobile_semantics_view(visible : Bool) -> @core.View[MobileSemanticsMsg] {
-  @core.View::from_node(MobileSemanticsNode::{ visible, }, semantics_actions=_node => {
+fn embedded_runtime_semantics_view(visible : Bool) -> @core.View[EmbeddedRuntimeSemanticsMsg] {
+  @core.View::from_node(EmbeddedRuntimeSemanticsNode::{ visible, }, semantics_actions=_node => {
     if visible {
       [
         @core.ViewSemanticsActionHandler::activate(_context => {
@@ -119,7 +119,7 @@ test "mobile accessibility rejects stale session generation and removed node wit
     program=@core.Program::simple(
       init=true,
       update=(_visible, _message) => false,
-      view=mobile_semantics_view,
+      view=embedded_runtime_semantics_view,
     ),
     size=@core.Size::new(width=120.0, height=80.0),
   )

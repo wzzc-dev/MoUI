@@ -213,17 +213,17 @@ scripts/macos-skia-renderer-smoke.sh --run-ime-smoke
 sh scripts/ci-web-runtime-presentation.sh
 ```
 
-### Window-hosted 移动端宿主
+### 嵌入运行时后端
 
 Android、iOS 和 HarmonyOS 都使用 `wzzc-dev/window` `HostCmd` → `EventLoop` →
-`ApplicationHandler` → MoUI `*WindowHostedApp`。更改移动端 template、entrypoint 或
-backend adapter 后，运行可移植的 host-sim gate：
+`ApplicationHandler` → MoUI `*EmbeddedRuntimeBackend`。更改嵌入运行时 template、entrypoint 或
+backend 后，运行可移植的 host-sim gate：
 
 ```sh
 sh scripts/window-hosted-hostsim-smoke.sh
 ```
 
-它覆盖三个 window host simulator、MoUI backend packages 和 Counter mobile
+它覆盖三个 window host simulator、MoUI backend packages 和 Counter 嵌入运行时
 entrypoints。`--fallback-skia` 构建只是 packaging-only diagnostic，不能建立
 presenter 或 runtime claim。
 

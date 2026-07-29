@@ -51,7 +51,7 @@ fn run_app_with_renderer_provider_internal(
   runtime.set_environment(
     services.environment_with_system_theme(runtime.environment()),
   )
-  let app = LinuxApp::{
+  let app = LinuxNativeHostBackend::{
     title,
     runtime,
     driver: @runtime.HostRuntimeDriver::new(runtime~, schedule_redraw=() => ()),

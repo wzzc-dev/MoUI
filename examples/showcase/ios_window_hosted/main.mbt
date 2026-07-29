@@ -1,7 +1,7 @@
 ///|
 /// Window-hosted iOS Showcase entrypoint.
 fn main {
-  let app = @ios_host.IosWindowHostedApp::new(
+  let app = @ios_host.IosEmbeddedRuntimeBackend::new(
     title="MoUI Showcase (ios window-hosted)",
     runtime_factory=metrics => {
       @runtime.new_program(

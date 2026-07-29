@@ -1,5 +1,5 @@
 ///|
-pub impl @window_macos.ApplicationHandler for MacosApp with fn can_create_surfaces(
+pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn can_create_surfaces(
   self,
   event_loop,
 ) {
@@ -89,7 +89,7 @@ pub impl @window_macos.ApplicationHandler for MacosApp with fn can_create_surfac
 }
 
 ///|
-pub impl @window_macos.ApplicationHandler for MacosApp with fn about_to_wait(
+pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn about_to_wait(
   self,
   event_loop,
 ) {
@@ -97,7 +97,7 @@ pub impl @window_macos.ApplicationHandler for MacosApp with fn about_to_wait(
 }
 
 ///|
-pub impl @window_macos.ApplicationHandler for MacosApp with fn window_event(
+pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn window_event(
   self,
   event_loop,
   platform_window_id,
@@ -194,8 +194,8 @@ pub impl @window_macos.ApplicationHandler for MacosApp with fn window_event(
 }
 
 ///|
-fn MacosApp::dispatch_pointer_or_context_menu(
-  self : MacosApp,
+fn MacosNativeHostBackend::dispatch_pointer_or_context_menu(
+  self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
   event : @window_core.WindowEvent,
 ) -> Unit {
@@ -213,8 +213,8 @@ fn MacosApp::dispatch_pointer_or_context_menu(
 }
 
 ///|
-fn MacosApp::redraw_window(
-  self : MacosApp,
+fn MacosNativeHostBackend::redraw_window(
+  self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Bool {
   match
@@ -318,8 +318,8 @@ fn MacosApp::redraw_window(
 }
 
 ///|
-fn MacosApp::finish_presented_window(
-  self : MacosApp,
+fn MacosNativeHostBackend::finish_presented_window(
+  self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
   runtime_slot : @runtime.HostWindowRuntimeSlot,
 ) -> Bool {
@@ -344,8 +344,8 @@ fn MacosApp::finish_presented_window(
 extern "c" fn macos_perf_now_ms() -> Double = "moui_macos_perf_now_ms"
 
 ///|
-fn MacosApp::record_performance_smoke_present(
-  self : MacosApp,
+fn MacosNativeHostBackend::record_performance_smoke_present(
+  self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
   runtime_slot : @runtime.HostWindowRuntimeSlot,
 ) -> Bool {
@@ -420,8 +420,8 @@ fn MacosApp::record_performance_smoke_present(
 ///|
 /// After the performance window, optionally exercise remaining ADR 0006 gates:
 /// surface recreate, fg/bg visibility, and injected context-loss recovery.
-fn MacosApp::advance_promotion_lifecycle(
-  self : MacosApp,
+fn MacosNativeHostBackend::advance_promotion_lifecycle(
+  self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
   runtime_slot : @runtime.HostWindowRuntimeSlot,
 ) -> Bool {
@@ -546,15 +546,15 @@ fn MacosApp::advance_promotion_lifecycle(
 }
 
 ///|
-fn MacosApp::emit_promotion_lifecycle_summary(self : MacosApp) -> Unit {
+fn MacosNativeHostBackend::emit_promotion_lifecycle_summary(self : MacosNativeHostBackend) -> Unit {
   println(
     "MoUI macOS GPU promotion lifecycle completed surface_cycles=\{self.promotion_surface_cycles_done} fg_bg_cycles=\{self.promotion_fg_bg_cycles_done} context_loss_done=\{self.promotion_context_loss_done} recovered_within_vsyncs=\{self.promotion_recovered_within_vsyncs} recovery_count_before=\{self.promotion_recovery_count_before} fallback_count=\{self.promotion_fallback_count} automatic_fallback=\{self.promotion_automatic_fallback} mailbox_ok=\{self.promotion_mailbox_ok} readback_eliminated=\{self.promotion_readback_eliminated} runtime_preserved=\{self.promotion_runtime_preserved}",
   )
 }
 
 ///|
-fn MacosApp::emit_performance_smoke_checkpoint(
-  self : MacosApp,
+fn MacosNativeHostBackend::emit_performance_smoke_checkpoint(
+  self : MacosNativeHostBackend,
   measured_ms~ : Double,
 ) -> Unit {
   let samples = self.performance_smoke_intervals_ms.length()
@@ -565,8 +565,8 @@ fn MacosApp::emit_performance_smoke_checkpoint(
 }
 
 ///|
-fn MacosApp::emit_performance_smoke_summary(
-  self : MacosApp,
+fn MacosNativeHostBackend::emit_performance_smoke_summary(
+  self : MacosNativeHostBackend,
   timed_out~ : Bool,
 ) -> Unit {
   let intervals = self.performance_smoke_intervals_ms
@@ -641,8 +641,8 @@ fn percentile_ms(values : Array[Double], percentile : Double) -> Double {
 /// Handle a decoded platform-view event received from a plugin's native event
 /// dispatcher. Routes it into the runtime tree via
 /// `HostRuntimeDriver::dispatch_platform_view`, bypassing `HostEvent` entirely.
-fn MacosApp::dispatch_platform_view_event_from_plugin(
-  self : MacosApp,
+fn MacosNativeHostBackend::dispatch_platform_view_event_from_plugin(
+  self : MacosNativeHostBackend,
   window_ptr : UInt64,
   id : String,
   event : @core.PlatformViewEvent,
@@ -663,8 +663,8 @@ fn MacosApp::dispatch_platform_view_event_from_plugin(
 ///|
 /// Resolve a native content-view handle back to its `HostWindowId` by scanning
 /// the live platform slots. Used to route native platform-view events.
-fn MacosApp::platform_view_host_id(
-  self : MacosApp,
+fn MacosNativeHostBackend::platform_view_host_id(
+  self : MacosNativeHostBackend,
   raw_content_view_handle : UInt64,
 ) -> @host.HostWindowId? {
   for slot in self.platform_slots.slots {

@@ -31,8 +31,8 @@ ViewDeclaration -> ElementTree
 | `moui/views/` | Public view constructors, app-facing control APIs, default themes, form/navigation/data helpers, and concrete `ViewNode` behavior constructed with `@core.View::from_node`. |
 | `moui/runtime/` | AppRuntime construction, runtime state, element/layout/render/semantics/platform tree generation, committed semantics generations and indices, event/action dispatch, program queue drain, effects, subscriptions, diagnostics, and inspector snapshots. |
 | `moui/backend/host/` | Shared host contracts for windows, routes, timers, host services, WebView, async image loading, accessibility, input, redraw scheduling, and renderer handoff. |
-| `moui/backend/internal/embedded_runtime_session/` | Private MoUI runtime assembly for Android, iOS, and HarmonyOS window-hosted adapters; it composes `AppRuntime`, host contracts, and renderers after `ApplicationHandler` callbacks. |
-| `moui/backend/{macos,windows,linux,android,ios,harmonyos,web}/` | Concrete platform host implementations. Native platform packages normalize events into host contracts; Android, iOS, and HarmonyOS are window-hosted adapters driven by `wzzc-dev/window`; web is the canonical browser host. |
+| `moui/backend/internal/embedded_runtime_backend/` | Private runtime assembly for Android, iOS, and HarmonyOS embedded runtime backends; it composes `AppRuntime`, host contracts, and renderers after `ApplicationHandler` callbacks. |
+| `moui/backend/{macos,windows,linux,android,ios,harmonyos,web}/` | Concrete platform backend implementations. macOS, Windows, and Linux are native host backends; Android, iOS, and HarmonyOS are embedded runtime backends driven by `wzzc-dev/window`; web is the canonical browser host. |
 | `moui/backend/{macos,windows,linux,android,ios,harmonyos}/skia/` | Native Skia renderer provider packages for the main native route. Android presents CPU pixel frames to an `ANativeWindow`; iOS presents CPU pixel frames to a UIKit `UIImageView` child; HarmonyOS presents CPU pixel frames to a supplied XComponent native-window handle. |
 | `moui/backend/{macos,windows,linux}/wgpu/` | Native WGPU diagnostic provider packages. |
 | `moui/render/` | Renderer facade, shared render capability models, fallback planning, shader/image helpers, and renderer-neutral command handling. |
@@ -49,6 +49,17 @@ ViewDeclaration -> ElementTree
 | `examples/*/{web_wasm,macos_skia,windows_skia,linux_skia,...}/` | Thin platform entrypoints that create runtime/backend/renderer wiring for an app package. |
 | `tools/` | MoonBit-backed repository validators used by JS shell entrypoints under `scripts/`. |
 | `scripts/` | Local/CI command entrypoints, smoke runners, package validators, and platform setup helpers. |
+
+## Backend Hosting Models
+
+The two native backend models are classified by host ownership, not by device
+form factor. Android and HarmonyOS may run on desktop hardware; that does not
+change which model their current MoUI integration uses.
+
+| Model | Current platforms | Ownership boundary |
+| --- | --- | --- |
+| Native host backend | macOS, Windows, Linux | The MoUI backend owns the host runtime, native window lifecycle, event-loop integration, and window registry. |
+| Embedded runtime backend | Android, iOS, HarmonyOS | The `wzzc-dev/window` embedder owns lifecycle, surfaces, input, and the event loop; the MoUI backend owns the attached runtime session and renderer composition. |
 
 ## App Boundary
 
@@ -110,21 +121,21 @@ workspace.
 - Native Skia route: shared app package -> platform `*_skia` entrypoint ->
   platform backend -> platform Skia provider -> `moui/render/skia` ->
   `moui_skia`.
-- Android window-hosted route (`runtime_partial`): shared app package ->
+- Android embedded-runtime route (`runtime_partial`): shared app package ->
   `examples/<app>/android_window_hosted` -> `wzzc-dev/window/android`
-  `HostCmd` / `EventLoop` -> `AndroidWindowHostedApp` ->
+  `HostCmd` / `EventLoop` -> `AndroidEmbeddedRuntimeBackend` ->
   `moui/backend/android/skia` -> `moui/render/skia` -> `moui_skia`.
   The window template owns Android lifecycle, surface acquisition, and input;
-  the MoUI adapter owns runtime/session assembly and rendering.
-- iOS window-hosted route (`runtime_partial`): shared app package ->
+  the embedded runtime backend owns runtime/session assembly and rendering.
+- iOS embedded-runtime route (`runtime_partial`): shared app package ->
   `examples/<app>/ios_window_hosted` -> `wzzc-dev/window/ios`
-  `HostCmd` / `EventLoop` -> `IosWindowHostedApp` ->
+  `HostCmd` / `EventLoop` -> `IosEmbeddedRuntimeBackend` ->
   `moui/backend/ios/skia` -> `moui/render/skia` -> `moui_skia`.
   UIKit lifecycle, surface, and touch callbacks enter through the window event
   loop only.
-- HarmonyOS window-hosted route (`runtime_partial`): shared app package ->
+- HarmonyOS embedded-runtime route (`runtime_partial`): shared app package ->
   `examples/<app>/harmonyos_window_hosted` -> `wzzc-dev/window/harmonyos`
-  `HostCmd` / `EventLoop` -> `HarmonyOsWindowHostedApp` ->
+  `HostCmd` / `EventLoop` -> `HarmonyOsEmbeddedRuntimeBackend` ->
   `moui/backend/harmonyos/skia` -> `moui/render/skia` -> `moui_skia`.
   Native XComponent callbacks are the sole source for surface, pointer, resize,
   and detach events.
@@ -136,7 +147,7 @@ Platform entrypoints should stay thin: create the program/runtime, select the
 backend and renderer provider, and pass app-owned service adapters. Business
 model/update/view logic should remain in the shared app package.
 
-Window-hosted mobile sessions share `EmbedderHostChannel` for sequenced IME
+Embedded runtime sessions share `EmbedderHostChannel` for sequenced IME
 updates and generation-checked committed semantics plus asynchronous
 clipboard/accessibility responses. See
 [Window-hosted MoUI](window-hosted-moui.md), ADR 0005, and ADR 0006. Product
@@ -249,20 +260,20 @@ moui_theme/audit/             addon diagnostics: manifests, golden mappings, off
 moui_theme/{material,carbon,primer,fluent}/ package-local official-system entrypoints: light/dark/high-contrast/system Theme helpers, tokens, and theme_for_variant over common
 moui_theme/sickle/            first-party hybrid skeuomorphic/flat Theme addon with light/dark and style-mode helpers
 moui/backend/host/            shared HostEvent, HostWindowEventSource, HostTimerSource, HostRouteSource, metrics, HostWindowRenderer, native async image completion source, input, redraw driver, window/core + dpi event conversion
-moui/backend/windows/         Windows native host core
+moui/backend/windows/         Windows native host backend
 moui/backend/windows/skia/    Windows Skia renderer provider mainline
 moui/backend/windows/wgpu/    Windows WGPU renderer provider diagnostic
-moui/backend/macos/           macOS native host core
+moui/backend/macos/           macOS native host backend
 moui/backend/macos/skia/      macOS Skia renderer provider mainline
 moui/backend/macos/wgpu/      macOS WGPU renderer provider diagnostic
-moui/backend/linux/           Linux Wayland native host core
+moui/backend/linux/           Linux Wayland native host backend
 moui/backend/linux/skia/      Linux Skia renderer provider mainline
 moui/backend/linux/wgpu/      Linux WGPU renderer provider diagnostic
-moui/backend/android/         Android window-hosted adapter over shared host/runtime contracts
+moui/backend/android/         Android embedded runtime backend over shared host/runtime contracts
 moui/backend/android/skia/    Android Skia renderer provider over ANativeWindow pixel presentation
-moui/backend/ios/             iOS window-hosted adapter over shared host/runtime contracts
+moui/backend/ios/             iOS embedded runtime backend over shared host/runtime contracts
 moui/backend/ios/skia/        iOS Skia renderer provider over UIKit UIImageView pixel presentation
-moui/backend/harmonyos/       HarmonyOS window-hosted adapter over shared host/runtime contracts
+moui/backend/harmonyos/       HarmonyOS embedded runtime backend over shared host/runtime contracts
 moui/backend/harmonyos/skia/  HarmonyOS Skia renderer provider over XComponent native-window pixel presentation
 moui/backend/web/             canonical Web host on wasm-gc plus browser JS assets
 moui/render/                  renderer facade and shared draw helpers
