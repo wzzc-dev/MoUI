@@ -432,17 +432,6 @@ fn gallery_item_matches_query(
 }
 
 ///|
-fn filtered_gallery_items(query : String) -> Array[ComponentGalleryItemInfo] {
-  let rows : Array[ComponentGalleryItemInfo] = []
-  for item in component_gallery_items() {
-    if gallery_item_matches_query(item, query) {
-      rows.push(item)
-    }
-  }
-  rows
-}
-
-///|
 fn first_gallery_item_matching(query : String) -> ComponentGalleryItemId? {
   for item in component_gallery_items() {
     if gallery_item_matches_query(item, query) {
@@ -450,19 +439,4 @@ fn first_gallery_item_matching(query : String) -> ComponentGalleryItemId? {
     }
   }
   None
-}
-
-///|
-fn gallery_group_has_matches(group_id : String, query : String) -> Bool {
-  for item in component_gallery_items() {
-    if item.group == group_id && gallery_item_matches_query(item, query) {
-      return true
-    }
-  }
-  false
-}
-
-///|
-fn filtered_gallery_item_count(query : String) -> Int {
-  filtered_gallery_items(query).length()
 }

@@ -222,7 +222,7 @@ fn apple_menu_button(
   menu : DesktopMenu,
   model : DesktopModel,
   palette : DesktopPalette,
-  theme : @moui.Theme,
+  _theme : @moui.Theme,
   glyph_size : Double,
 ) -> @moui.View[Msg] {
   // The menu bar content area is 20px (28px bar − 4px padding × 2). Keep

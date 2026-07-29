@@ -181,7 +181,7 @@ fn calendar_month_grid(
   // Build a flat 42-slot grid: leading blanks for the stub, then 1..N, then
   // trailing blanks so every row is 7 cells.
   let cells : Array[String] = []
-  for index in 0..<first_weekday {
+  for _index in 0..<first_weekday {
     cells.push("")
   }
   for day in 1..=days_in_month {
