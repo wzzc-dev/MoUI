@@ -26,7 +26,7 @@ test "hosted runtime core owns shared render resize and dispose lifecycle" {
     root=(@views.empty() : @core.View[Unit]),
     size=metrics.logical_size,
   )
-  let core = EmbeddedSessionCore::new(runtime~, renderer~, metrics~)
+  let core = EmbeddedRuntimeBackendCore::new(runtime~, renderer~, metrics~)
   let first_generation = core.session_generation()
   assert_true(first_generation > 0)
   inspect(core.surface_epoch(), content="1")

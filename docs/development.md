@@ -38,7 +38,7 @@ the pinned `@moonbit/moonc-worker` asset into the static Playground output.
 Shared app logic belongs in `examples/<name>/app`. Platform entrypoints should
 stay thin and live under names such as `web_wasm`, `macos_skia`,
 `windows_skia`, or `linux_skia`. Showcase follows the same convention for
-desktop and mobile (`android_window_hosted`, `ios_window_hosted`,
+native-host and embedded-runtime (`android_window_hosted`, `ios_window_hosted`,
 `harmonyos_window_hosted`), while its WGPU and Sun directories remain explicit
 diagnostic renderer routes.
 
@@ -53,7 +53,7 @@ moon build examples/markdown_editor/web_wasm --target wasm-gc
 node scripts/web-bundle-size.mjs examples/counter/web_wasm --json
 ```
 
-Android, iOS, and HarmonyOS use the window-hosted mobile route. The matching
+Android, iOS, and HarmonyOS use the embedded runtime backend route. The matching
 `wzzc-dev/window` template owns native lifecycle, surface creation, and input;
 the MoUI `*_window_hosted` entrypoint supplies the program and Skia provider.
 There is no app-specific native export table or second lifecycle bridge.

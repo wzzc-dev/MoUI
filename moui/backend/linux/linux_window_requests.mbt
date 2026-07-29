@@ -1,6 +1,6 @@
 ///|
-fn LinuxApp::dispatch_window_event(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::dispatch_window_event(
+  self : LinuxNativeHostBackend,
   window_id : @host.HostWindowId,
   event : @window_core.WindowEvent,
 ) -> Unit {
@@ -21,8 +21,8 @@ fn LinuxApp::dispatch_window_event(
 }
 
 ///|
-fn LinuxApp::dispatch_host_event(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::dispatch_host_event(
+  self : LinuxNativeHostBackend,
   window_id : @host.HostWindowId,
   host_event : @host.HostEvent,
 ) -> Unit {
@@ -56,8 +56,8 @@ fn LinuxApp::dispatch_host_event(
 }
 
 ///|
-fn LinuxApp::publish_subscription_event(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::publish_subscription_event(
+  self : LinuxNativeHostBackend,
   window_id : @host.HostWindowId,
   event : @host.HostEvent,
 ) -> @runtime.HostPlatformEventPublishResult? {
@@ -68,8 +68,8 @@ fn LinuxApp::publish_subscription_event(
 }
 
 ///|
-fn LinuxApp::drain_window_requests(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::drain_window_requests(
+  self : LinuxNativeHostBackend,
   event_loop : @window_linux.ActiveEventLoop,
 ) -> Unit {
   ignore(
@@ -80,8 +80,8 @@ fn LinuxApp::drain_window_requests(
 }
 
 ///|
-fn LinuxApp::apply_window_request(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::apply_window_request(
+  self : LinuxNativeHostBackend,
   event_loop : @window_linux.ActiveEventLoop,
   request : @host.HostWindowRequest,
 ) -> @host.HostWindowRequestResult {
@@ -138,8 +138,8 @@ fn LinuxApp::apply_window_request(
 }
 
 ///|
-fn LinuxApp::apply_platform_window_request(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::apply_platform_window_request(
+  self : LinuxNativeHostBackend,
   id : @host.HostWindowId,
   request : @host.HostWindowRequest,
   apply : (@window_linux.Window) -> Unit,
@@ -161,8 +161,8 @@ fn LinuxApp::apply_platform_window_request(
 }
 
 ///|
-fn LinuxApp::open_window(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::open_window(
+  self : LinuxNativeHostBackend,
   event_loop : @window_linux.ActiveEventLoop,
   request : @host.HostWindowOpenRequest,
 ) -> @host.HostWindowRequestResult {
@@ -176,8 +176,8 @@ fn LinuxApp::open_window(
 }
 
 ///|
-fn LinuxApp::create_resolved_window(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::create_resolved_window(
+  self : LinuxNativeHostBackend,
   event_loop : @window_linux.ActiveEventLoop,
   resolved : @runtime.HostWindowResolvedOpen,
 ) -> @host.HostWindowRequestResult {
@@ -213,8 +213,8 @@ fn LinuxApp::create_resolved_window(
 }
 
 ///|
-fn LinuxApp::attach_resolved_window(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::attach_resolved_window(
+  self : LinuxNativeHostBackend,
   window : @window_linux.Window,
   resolved : @runtime.HostWindowResolvedOpen,
 ) -> @host.HostWindowRequestResult {
@@ -281,8 +281,8 @@ fn LinuxApp::attach_resolved_window(
 }
 
 ///|
-fn LinuxApp::register_primary_runtime_slot(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::register_primary_runtime_slot(
+  self : LinuxNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
   ignore(
@@ -295,21 +295,21 @@ fn LinuxApp::register_primary_runtime_slot(
 }
 
 ///|
-fn LinuxApp::sync_runtime_slot(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::sync_runtime_slot(
+  self : LinuxNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
   ignore(self.runtime_slots.sync_from_registry(self.windows, window_id))
 }
 
 ///|
-fn LinuxApp::sync_runtime_slots(self : LinuxApp) -> Unit {
+fn LinuxNativeHostBackend::sync_runtime_slots(self : LinuxNativeHostBackend) -> Unit {
   ignore(self.runtime_slots.sync_open_from_registry(self.windows))
 }
 
 ///|
-fn LinuxApp::apply_window_lifecycle(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::apply_window_lifecycle(
+  self : LinuxNativeHostBackend,
   window_id : @host.HostWindowId,
   host_event : @host.HostEvent,
 ) -> Unit {
@@ -319,8 +319,8 @@ fn LinuxApp::apply_window_lifecycle(
 }
 
 ///|
-fn LinuxApp::active_runtime_slot(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::active_runtime_slot(
+  self : LinuxNativeHostBackend,
 ) -> @runtime.HostWindowRuntimeSlot? {
   match self.runtime_slots.focused_slot() {
     Some(slot) => Some(slot)
@@ -329,7 +329,7 @@ fn LinuxApp::active_runtime_slot(
 }
 
 ///|
-fn LinuxApp::sync_text_input_session(self : LinuxApp) -> Unit {
+fn LinuxNativeHostBackend::sync_text_input_session(self : LinuxNativeHostBackend) -> Unit {
   match self.active_runtime_slot() {
     Some(runtime_slot) =>
       match self.platform_slots.lookup_host(runtime_slot.id) {
@@ -353,8 +353,8 @@ fn LinuxApp::sync_text_input_session(self : LinuxApp) -> Unit {
 }
 
 ///|
-fn LinuxApp::current_scale_factor(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::current_scale_factor(
+  self : LinuxNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Double {
   match self.platform_slots.lookup_host(window_id) {
@@ -370,7 +370,7 @@ fn runtime_slot_needs_redraw(slot : @runtime.HostWindowRuntimeSlot) -> Bool {
 }
 
 ///|
-fn LinuxApp::request_redraw(self : LinuxApp) -> Unit {
+fn LinuxNativeHostBackend::request_redraw(self : LinuxNativeHostBackend) -> Unit {
   match self.active_runtime_slot() {
     Some(slot) => self.request_redraw_window_if_needed(slot.id)
     None => ()
@@ -378,8 +378,8 @@ fn LinuxApp::request_redraw(self : LinuxApp) -> Unit {
 }
 
 ///|
-fn LinuxApp::request_redraw_window_if_needed(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::request_redraw_window_if_needed(
+  self : LinuxNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
   match self.runtime_slots.lookup(window_id) {
@@ -396,8 +396,8 @@ fn LinuxApp::request_redraw_window_if_needed(
 }
 
 ///|
-fn LinuxApp::request_image_resource_redraw_if_changed(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::request_image_resource_redraw_if_changed(
+  self : LinuxNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Bool {
   match
@@ -433,8 +433,8 @@ fn LinuxApp::request_image_resource_redraw_if_changed(
 }
 
 ///|
-fn LinuxApp::bind_renderer_image_resource_changes(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::bind_renderer_image_resource_changes(
+  self : LinuxNativeHostBackend,
   window_id : @host.HostWindowId,
   renderer : @render.HostWindowRenderer,
 ) -> Unit {
@@ -477,8 +477,8 @@ fn LinuxApp::bind_renderer_image_resource_changes(
 }
 
 ///|
-fn LinuxApp::request_platform_redraw(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::request_platform_redraw(
+  self : LinuxNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
   match self.platform_slots.lookup_host(window_id) {
@@ -488,8 +488,8 @@ fn LinuxApp::request_platform_redraw(
 }
 
 ///|
-fn LinuxApp::image_resource_completion_source(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::image_resource_completion_source(
+  self : LinuxNativeHostBackend,
 ) -> @render.HostImageResourceCompletionSource {
   @render.HostImageResourceCompletionSource::new(
     tracker=self.image_repaint_tracker,
@@ -505,8 +505,8 @@ fn LinuxApp::image_resource_completion_source(
 }
 
 ///|
-fn LinuxApp::image_resource_window_open(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::image_resource_window_open(
+  self : LinuxNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Bool {
   match self.runtime_slots.lookup(window_id) {
@@ -517,8 +517,8 @@ fn LinuxApp::image_resource_window_open(
 }
 
 ///|
-fn LinuxApp::dispose_window(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::dispose_window(
+  self : LinuxNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
   ignore(self.windows.close(window_id))
@@ -544,8 +544,8 @@ fn LinuxApp::dispose_window(
 }
 
 ///|
-fn LinuxApp::rollback_window_record(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::rollback_window_record(
+  self : LinuxNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
   ignore(self.windows.close(window_id))

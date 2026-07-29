@@ -1,8 +1,13 @@
-# Window-hosted MoUI (mobile)
+# Embedded Runtime Backends
 
-MoUI can run on Android / iOS / HarmonyOS using **`wzzc-dev/window`** as the
-winit-style host: `HostCmd` → `EventLoop` → `ApplicationHandler`. Surface and
-input do not go through a second attach/inject bridge.
+Android, iOS, and HarmonyOS use the **embedded runtime backend** model. Their
+`wzzc-dev/window` embedder is the winit-style host:
+`HostCmd` → `EventLoop` → `ApplicationHandler`. Surface and input do not go
+through a second attach/inject bridge.
+
+This is an ownership classification, not a device classification. Android and
+HarmonyOS desktop products still use the embedded runtime backend model when
+their platform embedder owns the lifecycle, surface, input, and event loop.
 
 ## Architecture
 
@@ -10,21 +15,22 @@ input do not go through a second attach/inject bridge.
 window/<platform>/template / native Activity|UIApp|Ability
         → window HostCmd queue
         → EventLoop.pump / run_app
-        → *WindowHostedApp (moui/backend/{android,ios,harmonyos})
+        → *EmbeddedRuntimeBackend (moui/backend/{android,ios,harmonyos})
         → AndroidRuntimeSession / IosRuntimeSession / HarmonyOsRuntimeSession
         → Skia HostWindowRenderer
 ```
 
-The window-hosted route is the only supported mobile path. Do not add a second
-lifecycle, surface, or input bridge beside `HostCmd` and `ApplicationHandler`.
+The window-hosted route is the only supported embedded runtime backend path.
+Do not add a second lifecycle, surface, or input bridge beside `HostCmd` and
+`ApplicationHandler`.
 
 ## Packages
 
 | Piece | Path |
 |-------|------|
-| Android bridge | `moui/backend/android/window_hosted.mbt` (`AndroidWindowHostedApp`) |
-| iOS bridge | `moui/backend/ios/window_hosted.mbt` (`IosWindowHostedApp`) |
-| HarmonyOS bridge | `moui/backend/harmonyos/window_hosted.mbt` (`HarmonyOsWindowHostedApp`) |
+| Android embedded runtime backend | `moui/backend/android/window_hosted.mbt` (`AndroidEmbeddedRuntimeBackend`) |
+| iOS embedded runtime backend | `moui/backend/ios/window_hosted.mbt` (`IosEmbeddedRuntimeBackend`) |
+| HarmonyOS embedded runtime backend | `moui/backend/harmonyos/window_hosted.mbt` (`HarmonyOsEmbeddedRuntimeBackend`) |
 | Counter entries | `examples/counter/{android,ios,harmonyos}_window_hosted` |
 | window contract | `window/docs/mobile-hosted-backend.md` |
 | mobile status | `checks/platforms/{android,ios,harmonyos}.json` |

@@ -66,7 +66,7 @@ Mobile entrypoints use `wzzc-dev/window`; its platform template owns lifecycle,
 surface, and input callbacks. App code remains in `examples/<name>/app`.
 
 Showcase uses the standard `web_wasm`, `<platform>_skia`, and explicit
-renderer-diagnostic entrypoint names. Its mobile routes use the matching
+renderer-diagnostic entrypoint names. Its embedded-runtime routes use the matching
 `*_window_hosted` entrypoint.
 
 Default shared app imports:

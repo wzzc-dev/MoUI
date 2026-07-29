@@ -4,7 +4,7 @@ package "wzzc-dev/moui/backend/harmonyos"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
-  "wzzc-dev/moui/backend/internal/embedded_runtime_session",
+  "wzzc-dev/moui/backend/internal/embedded_runtime_backend",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
 }
@@ -24,7 +24,7 @@ pub fn harmonyos_readiness() -> HarmonyOsBackendReadiness
 
 pub fn harmonyos_service_capabilities() -> @host.HostServiceCapabilities
 
-pub fn harmonyos_window_hosted_pump_host_sim(HarmonyOsWindowHostedApp, surface_handle? : UInt64, width? : Int, height? : Int, scale? : Double) -> Unit
+pub fn harmonyos_window_hosted_pump_host_sim(HarmonyOsEmbeddedRuntimeBackend, surface_handle? : UInt64, width? : Int, height? : Int, scale? : Double) -> Unit
 
 // Errors
 
@@ -60,11 +60,32 @@ pub(all) struct HarmonyOsBackendReadiness {
   next_steps : Array[String]
 } derive(Eq, ToJson, @debug.Debug)
 
+pub struct HarmonyOsEmbeddedRuntimeBackend {
+  title : String
+  runtime_factory : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime
+  provider_factory : () -> HarmonyOsRendererProvider
+  mut runtime : @runtime.AppRuntime?
+  mut session : HarmonyOsRuntimeSession?
+  mut window : @wzzc-dev/window/harmonyos.Window?
+  mut provider : HarmonyOsRendererProvider?
+  mut last_pointer : @wzzc-dev/moui/core.Point
+  modifiers : @wzzc-dev/moui/core.KeyModifiers
+  mut last_generation : Int
+  mut frames_presented : Int
+  auto_exit_after_frames : Int?
+}
+pub fn HarmonyOsEmbeddedRuntimeBackend::frames_presented(Self) -> Int
+pub fn HarmonyOsEmbeddedRuntimeBackend::has_session(Self) -> Bool
+pub fn HarmonyOsEmbeddedRuntimeBackend::new(title? : String, runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime, provider_factory~ : () -> HarmonyOsRendererProvider, auto_exit_after_frames? : Int?) -> Self
+pub fn HarmonyOsEmbeddedRuntimeBackend::session_attached(Self) -> Bool
+pub fn HarmonyOsEmbeddedRuntimeBackend::surface_generation(Self) -> Int
+pub impl @wzzc-dev/window/harmonyos.ApplicationHandler for HarmonyOsEmbeddedRuntimeBackend
+
 pub struct HarmonyOsRendererProvider {
   // private fields
 }
 pub fn HarmonyOsRendererProvider::has_async_image_loader(Self) -> Bool
-pub fn HarmonyOsRendererProvider::new(create_renderer~ : (HarmonyOsSurfaceHandle, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?, sync_surface? : (HarmonyOsSurfaceHandle, @host.HostSurfaceMetrics) -> Unit, image_loader? : @host.HostAsyncImageLoader?) -> Self
+pub fn HarmonyOsRendererProvider::new(create_renderer~ : (HarmonyOsSurfaceHandle, @host.HostSurfaceMetrics) -> @render.HostWindowRenderer?, sync_surface? : (HarmonyOsSurfaceHandle, @host.HostSurfaceMetrics) -> Unit, image_loader? : @render.HostAsyncImageLoader?) -> Self
 
 pub struct HarmonyOsRuntimeSession {
   // private fields
@@ -73,13 +94,13 @@ pub fn HarmonyOsRuntimeSession::advance_time(Self, Double) -> Unit
 pub fn HarmonyOsRuntimeSession::attach_surface(Self, HarmonyOsSurfaceHandle, @host.HostSurfaceMetrics, HarmonyOsRendererProvider) -> Bool
 pub fn HarmonyOsRuntimeSession::detach_surface(Self) -> Bool
 pub fn HarmonyOsRuntimeSession::dispatch(Self, @host.HostEvent) -> @host.HostEventResult
-pub fn HarmonyOsRuntimeSession::dispatch_host_response(Self, @embedded_runtime_session.EmbeddingHostResponse) -> Bool
-pub fn HarmonyOsRuntimeSession::dispatch_host_response_envelope(Self, @embedded_runtime_session.EmbeddingHostResponseEnvelope) -> Bool
+pub fn HarmonyOsRuntimeSession::dispatch_host_response(Self, @embedded_runtime_backend.EmbeddingHostResponse) -> Bool
+pub fn HarmonyOsRuntimeSession::dispatch_host_response_envelope(Self, @embedded_runtime_backend.EmbeddingHostResponseEnvelope) -> Bool
 pub fn HarmonyOsRuntimeSession::dispatch_host_response_envelope_json(Self, String) -> Bool
 pub fn HarmonyOsRuntimeSession::dispose(Self) -> Unit
 pub fn HarmonyOsRuntimeSession::disposed(Self) -> Bool
 pub fn HarmonyOsRuntimeSession::drain_host_update_envelope_json(Self) -> String
-pub fn HarmonyOsRuntimeSession::drain_host_updates(Self) -> Array[@embedded_runtime_session.EmbeddingHostUpdate]
+pub fn HarmonyOsRuntimeSession::drain_host_updates(Self) -> Array[@embedded_runtime_backend.EmbeddingHostUpdate]
 pub fn HarmonyOsRuntimeSession::drain_host_updates_json(Self) -> String
 pub fn HarmonyOsRuntimeSession::host_service_bridge(Self) -> @host.HostServiceBridge
 pub fn HarmonyOsRuntimeSession::metrics(Self) -> @host.HostSurfaceMetrics
@@ -101,27 +122,6 @@ pub(all) struct HarmonyOsSurfaceHandle {
 pub fn HarmonyOsSurfaceHandle::new(raw~ : UInt64) -> Self
 pub fn HarmonyOsSurfaceHandle::none() -> Self
 pub fn HarmonyOsSurfaceHandle::raw(Self) -> UInt64
-
-pub struct HarmonyOsWindowHostedApp {
-  title : String
-  runtime_factory : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime
-  provider_factory : () -> HarmonyOsRendererProvider
-  mut runtime : @runtime.AppRuntime?
-  mut session : HarmonyOsRuntimeSession?
-  mut window : @wzzc-dev/window/harmonyos.Window?
-  mut provider : HarmonyOsRendererProvider?
-  mut last_pointer : @wzzc-dev/moui/core.Point
-  modifiers : @wzzc-dev/moui/core.KeyModifiers
-  mut last_generation : Int
-  mut frames_presented : Int
-  auto_exit_after_frames : Int?
-}
-pub fn HarmonyOsWindowHostedApp::frames_presented(Self) -> Int
-pub fn HarmonyOsWindowHostedApp::has_session(Self) -> Bool
-pub fn HarmonyOsWindowHostedApp::new(title? : String, runtime_factory~ : (@host.HostSurfaceMetrics) -> @runtime.AppRuntime, provider_factory~ : () -> HarmonyOsRendererProvider, auto_exit_after_frames? : Int?) -> Self
-pub fn HarmonyOsWindowHostedApp::session_attached(Self) -> Bool
-pub fn HarmonyOsWindowHostedApp::surface_generation(Self) -> Int
-pub impl @wzzc-dev/window/harmonyos.ApplicationHandler for HarmonyOsWindowHostedApp
 
 // Type aliases
 

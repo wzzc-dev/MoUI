@@ -1,6 +1,6 @@
 # HarmonyOS 支持
 
-HarmonyOS 使用 **window-hosted** 移动端路径，目前状态为 `runtime_partial`。
+HarmonyOS 使用**嵌入运行时后端**路径，目前状态为 `runtime_partial`。
 `wzzc-dev/window/harmonyos` 拥有 Stage Ability、XComponent Surface、生命周期与
 输入队列；`moui/backend/harmonyos` 将回调适配到 MoUI runtime session。
 
@@ -12,10 +12,10 @@ HarmonyOS 使用 **window-hosted** 移动端路径，目前状态为 `runtime_pa
 | 移动端元数据 | `examples/<app>/moui.mobile.json` |
 | MoonBit 入口 | `examples/<app>/harmonyos_window_hosted` |
 | HarmonyOS host 模板 | `wzzc-dev/window/harmonyos/template` |
-| MoUI adapter | `moui/backend/harmonyos/window_hosted.mbt` |
+| MoUI 嵌入运行时后端 | `moui/backend/harmonyos/window_hosted.mbt` |
 
 XComponent 回调是 Surface、pointer、resize 与 detach 的唯一来源。hosted event loop
-将它们转发给 `HarmonyOsWindowHostedApp`；不要注入第二条 Surface 或输入路径。
+将它们转发给 `HarmonyOsEmbeddedRuntimeBackend`；不要注入第二条 Surface 或输入路径。
 
 ## 工具链
 

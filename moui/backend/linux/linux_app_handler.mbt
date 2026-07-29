@@ -63,7 +63,7 @@ fn LinuxWindowPlatformSlots::remove_host(
 }
 
 ///|
-pub impl @window_linux.ApplicationHandler for LinuxApp with fn can_create_surfaces(
+pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn can_create_surfaces(
   self,
   event_loop,
 ) {
@@ -149,7 +149,7 @@ pub impl @window_linux.ApplicationHandler for LinuxApp with fn can_create_surfac
 }
 
 ///|
-pub impl @window_linux.ApplicationHandler for LinuxApp with fn about_to_wait(
+pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn about_to_wait(
   self,
   event_loop,
 ) {
@@ -174,7 +174,7 @@ pub impl @window_linux.ApplicationHandler for LinuxApp with fn about_to_wait(
 }
 
 ///|
-pub impl @window_linux.ApplicationHandler for LinuxApp with fn window_event(
+pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn window_event(
   self,
   event_loop,
   platform_window_id,
@@ -289,8 +289,8 @@ pub impl @window_linux.ApplicationHandler for LinuxApp with fn window_event(
 }
 
 ///|
-fn LinuxApp::dispatch_pointer_or_context_menu(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::dispatch_pointer_or_context_menu(
+  self : LinuxNativeHostBackend,
   window_id : @host.HostWindowId,
   event : @window_core.WindowEvent,
 ) -> Unit {
@@ -311,8 +311,8 @@ fn LinuxApp::dispatch_pointer_or_context_menu(
 }
 
 ///|
-fn LinuxApp::pointer_is_in_client_titlebar(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::pointer_is_in_client_titlebar(
+  self : LinuxNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Bool {
   match self.platform_slots.lookup_host(window_id) {
@@ -324,8 +324,8 @@ fn LinuxApp::pointer_is_in_client_titlebar(
 }
 
 ///|
-fn LinuxApp::redraw_window(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::redraw_window(
+  self : LinuxNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Bool {
   match
@@ -498,8 +498,8 @@ fn LinuxApp::redraw_window(
 /// Handle a decoded platform-view event received from a plugin's native event
 /// dispatcher. Routes it into the runtime tree via
 /// `HostRuntimeDriver::dispatch_platform_view`, bypassing `HostEvent` entirely.
-fn LinuxApp::dispatch_platform_view_event_from_plugin(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::dispatch_platform_view_event_from_plugin(
+  self : LinuxNativeHostBackend,
   window_ptr : UInt64,
   id : String,
   event : @core.PlatformViewEvent,
@@ -520,8 +520,8 @@ fn LinuxApp::dispatch_platform_view_event_from_plugin(
 ///|
 /// Resolve a native `wl_surface` handle back to its `HostWindowId` by scanning
 /// the live platform slots. Used to route native platform-view events.
-fn LinuxApp::platform_view_host_id(
-  self : LinuxApp,
+fn LinuxNativeHostBackend::platform_view_host_id(
+  self : LinuxNativeHostBackend,
   native_surface : UInt64,
 ) -> @host.HostWindowId? {
   for slot in self.platform_slots.slots {

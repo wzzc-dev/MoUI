@@ -1,4 +1,4 @@
-// `moui verify` command — verify window-hosted mobile app runtime evidence.
+// `moui verify` command — verify embedded-runtime app evidence.
 // It generates the canonical `verify-manifest.json`.
 
 ///|
@@ -28,7 +28,7 @@ fn verify_usage() -> String {
   (
     #|Usage: moui verify <platform> <app> [options]
     #|
-    #|Verify mobile app runtime evidence for the window-hosted path.
+    #|Verify app runtime evidence for the embedded-runtime path.
     #|Build artifacts must exist under artifacts/<platform>/<app>/ and the
     #|device must be connected. The command writes `verify-manifest.json`.
     #|

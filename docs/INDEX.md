@@ -56,7 +56,7 @@ Statuses are editorial signals for agents (not CI evidence grades).
 | [ios-support.md](ios-support.md) | `deep` | iOS window-hosted route |
 | [harmonyos-support.md](harmonyos-support.md) | `deep` | HarmonyOS window-hosted route |
 | [wechat-support.md](wechat-support.md) | `deep` | WeChat Mini Program (微信小程序) Skyline Canvas 2D + wasm-gc host |
-| [window-hosted-moui.md](window-hosted-moui.md) | `canonical` | Mobile event-loop ownership and route |
+| [window-hosted-moui.md](window-hosted-moui.md) | `canonical` | Embedded-runtime event-loop ownership and route |
 | [renderer-capability-report.md](renderer-capability-report.md) | `canonical` | Renderer capability matrix |
 | [gpu-promotion-runbook.md](gpu-promotion-runbook.md) | `deep` | GPU promotion process |
 

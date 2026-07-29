@@ -1,5 +1,5 @@
 ///|
-test "build parser accepts window-hosted mobile options" {
+test "build parser accepts embedded-runtime options" {
   let parsed = parse_build_args(
     [
       "android", "demo", "--mobile-config", "/tmp/moui.mobile.json", "--prepare-only",

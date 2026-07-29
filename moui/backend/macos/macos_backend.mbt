@@ -57,7 +57,9 @@ pub struct MacosRendererProvider {
 }
 
 ///|
-struct MacosApp {
+/// Native host backend: owns the macOS host runtime, native windows, and
+/// event-loop integration rather than attaching a runtime to an embedder.
+struct MacosNativeHostBackend {
   title : String
   runtime : @runtime.AppRuntime
   driver : @runtime.HostRuntimeDriver

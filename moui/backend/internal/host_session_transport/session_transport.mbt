@@ -1,6 +1,6 @@
 ///|
-/// Generation-scoped host session transport for window-hosted mobile runtimes.
-/// It has no C ABI and no dependency on retired mobile packages.
+/// Generation-scoped host session transport for embedded runtime backends.
+/// It has no C ABI and no dependency on retired embedded-runtime packages.
 
 ///|
 
@@ -373,7 +373,7 @@ pub fn parse_host_wire_envelope_json(text : String) -> HostWireEnvelope? {
 }
 
 ///|
-/// The one platform-owned transport state for one mobile runtime. It keeps
+/// The one platform-owned transport state for one embedded runtime. It keeps
 /// native lifecycle safety independent from MoUI host/runtime semantics.
 pub struct HostSessionTransport {
   session : HostSession

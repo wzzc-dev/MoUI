@@ -27,14 +27,14 @@ fn mobile_entrypoint_pkg_text(
 ///|
 fn mobile_entrypoint_main_text(platform : String) -> String {
   let app_type = match platform {
-    "android" => "AndroidWindowHostedApp"
-    "ios" => "IosWindowHostedApp"
-    "harmonyos" => "HarmonyOsWindowHostedApp"
-    _ => abort("unsupported window-hosted mobile platform: " + platform)
+    "android" => "AndroidEmbeddedRuntimeBackend"
+    "ios" => "IosEmbeddedRuntimeBackend"
+    "harmonyos" => "HarmonyOsEmbeddedRuntimeBackend"
+    _ => abort("unsupported embedded-runtime platform: " + platform)
   }
   let template =
     #|///|
-    #|/// Window-hosted mobile entrypoint: `window` owns lifecycle, surface,
+    #|/// Embedded runtime backend entrypoint: `window` owns lifecycle, surface,
     #|/// and input callbacks; this package supplies the MoUI program and renderer.
     #|fn main {
     #|  let app = @platform_host.__APP_TYPE__::new(

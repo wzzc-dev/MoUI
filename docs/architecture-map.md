@@ -54,13 +54,14 @@ normalize into host contracts; renderers consume `DrawCommand` only.
 | Public controls / themes helpers | `moui/views` |
 | Cross-runtime protocols | `moui/core` |
 | AppRuntime / trees / effects | `moui/runtime` |
-| Host services & mobile channel | `moui/backend/host` |
-| Platform hosts | `moui/backend/{macos,windows,linux,web,android,ios,harmonyos}` |
+| Host services & embedder channel | `moui/backend/host` |
+| Native host backends | `moui/backend/{macos,windows,linux}` |
+| Embedded runtime backends | `moui/backend/{android,ios,harmonyos}` |
 | Skia mainline providers | `moui/backend/<platform>/skia` |
 | WGPU diagnostic providers | `moui/backend/<platform>/wgpu` |
 | Renderer facades | `moui/render`, `render/skia`, `render/wgpu`, `render/webgpu_adapter`, `render/sun`, `render/canvas2d` |
 | Skia FFI / native capability | `moui_skia` |
-| Mobile templates and event loops | `wzzc-dev/window/{android,ios,harmonyos}` |
+| Embedded-runtime templates and event loops | `wzzc-dev/window/{android,ios,harmonyos}` |
 | Rich text domain | `moui_richtext` |
 | Design-system addons | `moui_theme` (not an app default dep) |
 | Repo validators | `tools/moui/*` via `scripts/*.mjs` shells |
@@ -72,7 +73,7 @@ normalize into host contracts; renderers consume `DrawCommand` only.
 | Native Skia | **Mainline** |
 | Native WGPU | **Diagnostic** |
 | Web `wasm-gc` + browser WebGPU imports | Main web path |
-| Mobile window-hosted session | `runtime_partial` — usable for development, not product-complete |
+| Embedded runtime backend route | `runtime_partial` — usable for development, not product-complete |
 | Product `auto` renderer | Prefer `SkiaGpuNative` when host GPU surface exists; `SkiaRasterNative` explicit/recovery |
 
 ## Workspace note
@@ -91,5 +92,5 @@ normalize into host contracts; renderers consume `DrawCommand` only.
 | Full package narrative | `docs/architecture.md` |
 | Invariants table | `docs/invariants.md` |
 | Validation commands | `docs/testing.md` |
-| Mobile host route | `docs/window-hosted-moui.md` |
+| Embedded-runtime route | `docs/window-hosted-moui.md` |
 | Doc catalog | `docs/INDEX.md` |

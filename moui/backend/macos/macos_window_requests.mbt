@@ -1,6 +1,6 @@
 ///|
-fn MacosApp::dispatch_window_event(
-  self : MacosApp,
+fn MacosNativeHostBackend::dispatch_window_event(
+  self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
   event : @window_core.WindowEvent,
 ) -> Unit {
@@ -41,8 +41,8 @@ fn MacosApp::dispatch_window_event(
 }
 
 ///|
-fn MacosApp::publish_subscription_event(
-  self : MacosApp,
+fn MacosNativeHostBackend::publish_subscription_event(
+  self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
   event : @host.HostEvent,
 ) -> @runtime.HostPlatformEventPublishResult? {
@@ -53,8 +53,8 @@ fn MacosApp::publish_subscription_event(
 }
 
 ///|
-fn MacosApp::drain_window_requests(
-  self : MacosApp,
+fn MacosNativeHostBackend::drain_window_requests(
+  self : MacosNativeHostBackend,
   event_loop : @window_macos.ActiveEventLoop,
 ) -> Unit {
   ignore(
@@ -65,8 +65,8 @@ fn MacosApp::drain_window_requests(
 }
 
 ///|
-fn MacosApp::apply_window_request(
-  self : MacosApp,
+fn MacosNativeHostBackend::apply_window_request(
+  self : MacosNativeHostBackend,
   event_loop : @window_macos.ActiveEventLoop,
   request : @host.HostWindowRequest,
 ) -> @host.HostWindowRequestResult {
@@ -109,8 +109,8 @@ fn MacosApp::apply_window_request(
 }
 
 ///|
-fn MacosApp::apply_platform_window_request(
-  self : MacosApp,
+fn MacosNativeHostBackend::apply_platform_window_request(
+  self : MacosNativeHostBackend,
   id : @host.HostWindowId,
   request : @host.HostWindowRequest,
   apply : (@window_macos.Window) -> Unit,
@@ -132,8 +132,8 @@ fn MacosApp::apply_platform_window_request(
 }
 
 ///|
-fn MacosApp::open_window(
-  self : MacosApp,
+fn MacosNativeHostBackend::open_window(
+  self : MacosNativeHostBackend,
   event_loop : @window_macos.ActiveEventLoop,
   request : @host.HostWindowOpenRequest,
 ) -> @host.HostWindowRequestResult {
@@ -147,8 +147,8 @@ fn MacosApp::open_window(
 }
 
 ///|
-fn MacosApp::create_resolved_window(
-  self : MacosApp,
+fn MacosNativeHostBackend::create_resolved_window(
+  self : MacosNativeHostBackend,
   event_loop : @window_macos.ActiveEventLoop,
   resolved : @runtime.HostWindowResolvedOpen,
 ) -> @host.HostWindowRequestResult {
@@ -180,8 +180,8 @@ fn MacosApp::create_resolved_window(
 }
 
 ///|
-fn MacosApp::attach_resolved_window(
-  self : MacosApp,
+fn MacosNativeHostBackend::attach_resolved_window(
+  self : MacosNativeHostBackend,
   window : @window_macos.Window,
   resolved : @runtime.HostWindowResolvedOpen,
 ) -> @host.HostWindowRequestResult {
@@ -241,8 +241,8 @@ fn MacosApp::attach_resolved_window(
 }
 
 ///|
-fn MacosApp::register_primary_runtime_slot(
-  self : MacosApp,
+fn MacosNativeHostBackend::register_primary_runtime_slot(
+  self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
   ignore(
@@ -255,21 +255,21 @@ fn MacosApp::register_primary_runtime_slot(
 }
 
 ///|
-fn MacosApp::sync_runtime_slot(
-  self : MacosApp,
+fn MacosNativeHostBackend::sync_runtime_slot(
+  self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
   ignore(self.runtime_slots.sync_from_registry(self.windows, window_id))
 }
 
 ///|
-fn MacosApp::sync_runtime_slots(self : MacosApp) -> Unit {
+fn MacosNativeHostBackend::sync_runtime_slots(self : MacosNativeHostBackend) -> Unit {
   ignore(self.runtime_slots.sync_open_from_registry(self.windows))
 }
 
 ///|
-fn MacosApp::apply_window_lifecycle(
-  self : MacosApp,
+fn MacosNativeHostBackend::apply_window_lifecycle(
+  self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
   host_event : @host.HostEvent,
 ) -> Unit {
@@ -279,8 +279,8 @@ fn MacosApp::apply_window_lifecycle(
 }
 
 ///|
-fn MacosApp::active_runtime_slot(
-  self : MacosApp,
+fn MacosNativeHostBackend::active_runtime_slot(
+  self : MacosNativeHostBackend,
 ) -> @runtime.HostWindowRuntimeSlot? {
   match self.runtime_slots.focused_slot() {
     Some(slot) => Some(slot)
@@ -289,7 +289,7 @@ fn MacosApp::active_runtime_slot(
 }
 
 ///|
-fn MacosApp::sync_text_input_session(self : MacosApp) -> Unit {
+fn MacosNativeHostBackend::sync_text_input_session(self : MacosNativeHostBackend) -> Unit {
   match self.active_runtime_slot() {
     Some(runtime_slot) =>
       match self.platform_slots.lookup_host(runtime_slot.id) {
@@ -313,8 +313,8 @@ fn MacosApp::sync_text_input_session(self : MacosApp) -> Unit {
 }
 
 ///|
-fn MacosApp::current_scale_factor(
-  self : MacosApp,
+fn MacosNativeHostBackend::current_scale_factor(
+  self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Double {
   match self.platform_slots.lookup_host(window_id) {
@@ -330,7 +330,7 @@ fn runtime_slot_needs_redraw(slot : @runtime.HostWindowRuntimeSlot) -> Bool {
 }
 
 ///|
-fn MacosApp::request_redraw(self : MacosApp) -> Unit {
+fn MacosNativeHostBackend::request_redraw(self : MacosNativeHostBackend) -> Unit {
   match self.active_runtime_slot() {
     Some(slot) => self.request_redraw_window_if_needed(slot.id)
     None => ()
@@ -338,8 +338,8 @@ fn MacosApp::request_redraw(self : MacosApp) -> Unit {
 }
 
 ///|
-fn MacosApp::request_redraw_window_if_needed(
-  self : MacosApp,
+fn MacosNativeHostBackend::request_redraw_window_if_needed(
+  self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
   match self.runtime_slots.lookup(window_id) {
@@ -356,8 +356,8 @@ fn MacosApp::request_redraw_window_if_needed(
 }
 
 ///|
-fn MacosApp::request_image_resource_redraw_if_changed(
-  self : MacosApp,
+fn MacosNativeHostBackend::request_image_resource_redraw_if_changed(
+  self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Bool {
   match
@@ -393,8 +393,8 @@ fn MacosApp::request_image_resource_redraw_if_changed(
 }
 
 ///|
-fn MacosApp::bind_renderer_image_resource_changes(
-  self : MacosApp,
+fn MacosNativeHostBackend::bind_renderer_image_resource_changes(
+  self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
   renderer : @render.HostWindowRenderer,
 ) -> Unit {
@@ -437,8 +437,8 @@ fn MacosApp::bind_renderer_image_resource_changes(
 }
 
 ///|
-fn MacosApp::request_platform_redraw(
-  self : MacosApp,
+fn MacosNativeHostBackend::request_platform_redraw(
+  self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
   match self.platform_slots.lookup_host(window_id) {
@@ -448,8 +448,8 @@ fn MacosApp::request_platform_redraw(
 }
 
 ///|
-fn MacosApp::image_resource_completion_source(
-  self : MacosApp,
+fn MacosNativeHostBackend::image_resource_completion_source(
+  self : MacosNativeHostBackend,
 ) -> @render.HostImageResourceCompletionSource {
   @render.HostImageResourceCompletionSource::new(
     tracker=self.image_repaint_tracker,
@@ -465,8 +465,8 @@ fn MacosApp::image_resource_completion_source(
 }
 
 ///|
-fn MacosApp::image_resource_window_open(
-  self : MacosApp,
+fn MacosNativeHostBackend::image_resource_window_open(
+  self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Bool {
   match self.runtime_slots.lookup(window_id) {
@@ -508,8 +508,8 @@ fn MacosRendererProvider::cancel_image_resource_loads(
 }
 
 ///|
-fn MacosApp::dispose_window(
-  self : MacosApp,
+fn MacosNativeHostBackend::dispose_window(
+  self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
   ignore(self.windows.close(window_id))
@@ -538,8 +538,8 @@ fn MacosApp::dispose_window(
 }
 
 ///|
-fn MacosApp::rollback_window_record(
-  self : MacosApp,
+fn MacosNativeHostBackend::rollback_window_record(
+  self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
   ignore(self.windows.close(window_id))

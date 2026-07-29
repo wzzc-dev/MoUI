@@ -183,7 +183,7 @@ test "Skia doctor resolves the nearest repository workspace" {
 ///|
 fn doctor_mobile_entrypoint_contract_text() -> String {
   let text =
-    #|let app = @android_host.AndroidWindowHostedApp::new(...)
+    #|let app = @android_host.AndroidEmbeddedRuntimeBackend::new(...)
     #|let event_loop = @window_android.EventLoop::new()
     #|event_loop.run_app(app)
   text
