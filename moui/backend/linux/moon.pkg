@@ -5,6 +5,7 @@ import {
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/platform_bridge",
   "wzzc-dev/window/core" @window_core,
   "wzzc-dev/window/dpi",
   "wzzc-dev/window/linux" @window_linux,

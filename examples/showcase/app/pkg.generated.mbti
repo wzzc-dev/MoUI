@@ -9,6 +9,8 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/views",
 }
 
@@ -44,7 +46,7 @@ pub struct ShowcaseApp {
 }
 pub fn ShowcaseApp::new() -> Self
 pub fn ShowcaseApp::program(Self) -> @core.Program[ShowcaseModel, ShowcaseMsg]
-pub fn ShowcaseApp::program_with_host(Self, @host.HostCapabilitySummary, services? : @host.HostAppServices, timer_source? : @host.HostTimerSource?, window_events? : @host.HostWindowEventSource?, route? : String) -> @core.Program[ShowcaseModel, ShowcaseMsg]
+pub fn ShowcaseApp::program_with_host(Self, @host.HostCapabilitySummary, services? : @host.HostAppServices, timer_source? : @runtime.HostTimerSource?, window_events? : @runtime.HostWindowEventSource?, route? : String) -> @core.Program[ShowcaseModel, ShowcaseMsg]
 pub fn ShowcaseApp::program_with_host_summary(Self, @host.HostCapabilitySummary) -> @core.Program[ShowcaseModel, ShowcaseMsg]
 pub fn ShowcaseApp::program_with_initial_route(Self, String) -> @core.Program[ShowcaseModel, ShowcaseMsg]
 
@@ -76,14 +78,15 @@ pub fn ShowcaseModel::update(Self, ShowcaseMsg) -> Self
 pub fn ShowcaseModel::update_with_effect(Self, ShowcaseMsg, route_host? : ShowcaseRouteHost?) -> (Self, @core.Effect[ShowcaseMsg])
 pub fn ShowcaseModel::view(Self, @core.ViewEnvironment) -> @core.View[ShowcaseMsg]
 pub fn ShowcaseModel::with_host_summary(Self, @host.HostCapabilitySummary) -> Self
-pub fn ShowcaseModel::with_platform_host(Self, services? : @host.HostAppServices, timer_source? : @host.HostTimerSource?, window_events? : @host.HostWindowEventSource?) -> Self
+pub fn ShowcaseModel::with_platform_host(Self, services? : @host.HostAppServices, timer_source? : @runtime.HostTimerSource?, window_events? : @runtime.HostWindowEventSource?) -> Self
+pub fn ShowcaseModel::with_renderer_providers(Self, Array[@render.RendererProvider]) -> Self
 
 pub(all) enum ShowcaseMsg {
   Navigate(String)
   RouteBack
   RouteForward
   OpenRouteLink(String)
-  HostRouteChanged(@host.HostRouteEvent)
+  HostRouteChanged(@runtime.HostRouteEvent)
   SelectWorkspace(Workspace)
   NavQueryChanged(String)
   ShowMobileCatalog
@@ -112,10 +115,10 @@ pub(all) enum ShowcaseRouteHistoryCommand {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub struct ShowcaseRouteHost {
-  route_source : @host.HostRouteSource
+  route_source : @runtime.HostRouteSource
   dispatch_command : (ShowcaseRouteHistoryCommand) -> Unit
 }
-pub fn ShowcaseRouteHost::new(route_source~ : @host.HostRouteSource, dispatch_command~ : (ShowcaseRouteHistoryCommand) -> Unit) -> Self
+pub fn ShowcaseRouteHost::new(route_source~ : @runtime.HostRouteSource, dispatch_command~ : (ShowcaseRouteHistoryCommand) -> Unit) -> Self
 
 pub(all) enum Workspace {
   Components

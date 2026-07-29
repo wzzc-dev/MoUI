@@ -93,13 +93,13 @@ test "web renderer exposes app-visible ready image resource snapshots" {
     submit=_calls => (),
     dispose=() => (),
   )
-  let renderer : WebRenderer = {
-    renderer: @webgpu.create_renderer(
+  let renderer = WebRenderer::from_webgpu_renderer(
+    @webgpu.create_renderer(
       canvas_id="moui-test-canvas",
       logical_size=@core.Size::new(width=100.0, height=50.0),
       port~,
     ),
-  }
+  )
   renderer.render([
     @core.DrawCommand::DrawImage({
       source: "ready.png",
@@ -138,13 +138,13 @@ test "web renderer exposes app-visible failed image resource snapshots" {
     submit=_calls => (),
     dispose=() => (),
   )
-  let renderer : WebRenderer = {
-    renderer: @webgpu.create_renderer(
+  let renderer = WebRenderer::from_webgpu_renderer(
+    @webgpu.create_renderer(
       canvas_id="moui-test-canvas",
       logical_size=@core.Size::new(width=100.0, height=50.0),
       port~,
     ),
-  }
+  )
   renderer.render([
     @core.DrawCommand::DrawImage({
       source: "missing.png",
@@ -175,13 +175,13 @@ test "web renderer applies app-visible image load completions" {
     submit=_calls => (),
     dispose=() => (),
   )
-  let renderer : WebRenderer = {
-    renderer: @webgpu.create_renderer(
+  let renderer = WebRenderer::from_webgpu_renderer(
+    @webgpu.create_renderer(
       canvas_id="moui-test-canvas",
       logical_size=@core.Size::new(width=100.0, height=50.0),
       port~,
     ),
-  }
+  )
   renderer.render([
     @core.DrawCommand::DrawImage({
       source: "async.png",

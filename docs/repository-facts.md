@@ -55,15 +55,15 @@ This file is generated from repository manifests and validator reports.
 | animation sugar (moui/animation/pkg.generated.mbti) | 21 | 3 | 0 |
 | text sugar (moui/text/pkg.generated.mbti) | 27 | 6 | 0 |
 | state sugar (moui/state/pkg.generated.mbti) | 35 | 10 | 0 |
-| runtime facade (moui/runtime/pkg.generated.mbti) | 490 | 298 | 16 |
-| core (moui/core/pkg.generated.mbti) | 2009 | 571 | 148 |
-| views facade (moui/views/pkg.generated.mbti) | 1213 | 548 | 19 |
-| host contracts (moui/backend/host/pkg.generated.mbti) | 1095 | 454 | 64 |
-| renderer facade (moui/render/pkg.generated.mbti) | 552 | 148 | 37 |
-| skia renderer (moui/render/skia/pkg.generated.mbti) | 189 | 108 | 4 |
-| sun renderer (moui/render/sun/pkg.generated.mbti) | 230 | 138 | 1 |
+| runtime facade (moui/runtime/pkg.generated.mbti) | 744 | 407 | 34 |
+| core (moui/core/pkg.generated.mbti) | 1833 | 566 | 128 |
+| views facade (moui/views/pkg.generated.mbti) | 1393 | 555 | 39 |
+| host contracts (moui/backend/host/pkg.generated.mbti) | 667 | 238 | 44 |
+| renderer facade (moui/render/pkg.generated.mbti) | 790 | 270 | 47 |
+| skia renderer (moui/render/skia/pkg.generated.mbti) | 200 | 114 | 4 |
+| sun renderer (moui/render/sun/pkg.generated.mbti) | 238 | 142 | 1 |
 | webgpu adapter (moui/render/webgpu_adapter/pkg.generated.mbti) | 143 | 60 | 2 |
-| native wgpu renderer (moui/render/wgpu/pkg.generated.mbti) | 136 | 65 | 2 |
+| native wgpu renderer (moui/render/wgpu/pkg.generated.mbti) | 133 | 63 | 2 |
 | native text protocol (moui/render/wgpu/text_protocol/pkg.generated.mbti) | 58 | 23 | 0 |
 
 ## Workspace Examples

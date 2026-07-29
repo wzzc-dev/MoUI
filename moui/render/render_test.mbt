@@ -21,8 +21,12 @@ test "renderer descriptor models backend family selection and presentation" {
     family=@render.RendererFamily::Skia,
     presentation=@render.RendererPresentationModel::CpuPixelFrame,
     supported_targets=[@render.RendererTarget::Native],
-    capabilities=@render.renderer_backend_capabilities(
-      @render.RendererBackendKind::SkiaRasterNative,
+    capabilities=@render.renderer_provider_capabilities(
+      provider_id="test-skia",
+      backend=@render.RendererBackendKind::SkiaRasterNative,
+      capability_for=_feature => {
+        (@render.RendererFeatureStatus::Supported, "test provider capability")
+      },
     ),
     description="test skia raster descriptor",
   )

@@ -79,7 +79,7 @@
     },
     {
       "path": "tools/moui/validate_api_surface/main.mbt",
-      "maxLines": 2105,
+      "maxLines": 2042,
       "reason": "Existing API validator with explicit declaration and semantic contract audits."
     },
     {
@@ -184,7 +184,7 @@
     },
     {
       "path": "moui/backend/windows/windows_backend.mbt",
-      "maxLines": 1332,
+      "maxLines": 1308,
       "reason": "Existing Win32 backend implementation after extracting the host-service bridge."
     },
     {
@@ -223,11 +223,6 @@
       "reason": "Existing browser presentation evidence orchestrator."
     },
     {
-      "path": "moui/render/capabilities_test.mbt",
-      "maxLines": 1322,
-      "reason": "Existing renderer capability matrix test including the Canvas2D diagnostic backend."
-    },
-    {
       "path": "examples/design_systems/app/app.mbt",
       "maxLines": 1296,
       "reason": "Existing design-system diagnostic application."
@@ -258,6 +253,11 @@
       "reason": "Existing renderer image sampling cache."
     },
     {
+      "path": "examples/mo_desktop/app/view_finder.mbt",
+      "maxLines": 1218,
+      "reason": "Existing desktop file-finder application view composition."
+    },
+    {
       "path": "moui_sun/text/parser.mbt",
       "maxLines": 1232,
       "reason": "Existing text parser implementation."
@@ -286,7 +286,7 @@
     },
     {
       "path": "moui_theme/common/design_system_tokens.mbt",
-      "maxLines": 2225,
+      "maxLines": 2228,
       "reason": "Shared design-system token data table."
     },
     {

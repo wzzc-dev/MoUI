@@ -2,26 +2,11 @@
 package "wzzc-dev/moui/backend/host"
 
 import {
-  "Milky2018/moon_accesskit",
   "moonbitlang/core/debug",
-  "wzzc-dev/moui/render",
-  "wzzc-dev/moui/runtime",
   "wzzc-dev/window/dpi",
 }
 
 // Values
-pub fn accesskit_action_from_semantics(@wzzc-dev/moui/core.SemanticsActionKind) -> @moon_accesskit.Action
-
-pub fn accesskit_node_from_semantics(@wzzc-dev/moui/core.SemanticsNode) -> @moon_accesskit.Node
-
-pub fn accesskit_node_id_for_semantics(@wzzc-dev/moui/core.SemanticsNodeId) -> @moon_accesskit.NodeId
-
-pub fn accesskit_rect_from_core(@wzzc-dev/moui/core.Rect) -> @moon_accesskit.Rect
-
-pub fn accesskit_role_from_semantics(@wzzc-dev/moui/core.SemanticsRole) -> @moon_accesskit.Role
-
-pub fn accesskit_update_from_semantics_read(@runtime.SemanticsRead) -> NativeAccessibilityUpdate?
-
 pub fn element_state_pressed(@wzzc-dev/window/core.ElementState) -> Bool
 
 pub fn element_state_to_pointer_phase(@wzzc-dev/window/core.ElementState) -> @wzzc-dev/moui/core.PointerPhase
@@ -45,14 +30,6 @@ pub fn physical_position_to_core(@dpi.PhysicalPositionF64, scale_factor? : Doubl
 pub fn physical_size_to_core(@dpi.PhysicalSize) -> @wzzc-dev/moui/core.Size
 
 pub fn platform_view_plugins_next_deadline(Array[PlatformViewPlugin]) -> Int64?
-
-pub fn render_present_completion_is_presented(@render.RenderPresentCompletion) -> Bool
-
-pub fn render_present_completions_have_presented(Array[@render.RenderPresentCompletion]) -> Bool
-
-pub fn render_present_completions_have_terminal(Array[@render.RenderPresentCompletion]) -> Bool
-
-pub fn semantics_action_label(@wzzc-dev/moui/core.SemanticsAction) -> String
 
 pub fn surface_metrics_from_physical(@dpi.PhysicalSize, scale_factor? : Double) -> HostSurfaceMetrics
 
@@ -141,34 +118,6 @@ pub(all) struct HostApplicationMenuItem {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostApplicationMenuItem::new(title~ : String, action_id~ : Int, key_equivalent? : String, key_modifier_mask? : Int, separator? : Bool, enabled? : Bool) -> Self
 pub fn HostApplicationMenuItem::separator() -> Self
-
-pub struct HostAsyncImageLoadScheduleResult {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostAsyncImageLoadScheduleResult::already_in_flight_count(Self) -> Int
-pub fn HostAsyncImageLoadScheduleResult::loading_count(Self) -> Int
-pub fn HostAsyncImageLoadScheduleResult::scheduled_count(Self) -> Int
-pub fn HostAsyncImageLoadScheduleResult::snapshot_revision(Self) -> Int
-pub fn HostAsyncImageLoadScheduleResult::window_id(Self) -> HostWindowId
-
-pub struct HostAsyncImageLoader {
-  // private fields
-}
-pub fn HostAsyncImageLoader::cancel_all(Self) -> Int
-pub fn HostAsyncImageLoader::cancel_window(Self, HostWindowId) -> Int
-pub fn HostAsyncImageLoader::diagnostics(Self) -> HostAsyncImageLoaderDiagnostics
-pub fn HostAsyncImageLoader::new(start_load~ : (HostWindowId, String, (@render.ImageResourceLoadCompletion) -> Unit) -> (() -> Unit)?) -> Self
-pub fn HostAsyncImageLoader::new_with_drain(start_load~ : (HostWindowId, String, (@render.ImageResourceLoadCompletion) -> Unit) -> (() -> Unit)?, drain~ : () -> Unit) -> Self
-pub fn HostAsyncImageLoader::schedule_loading_resources(Self, HostWindowId, HostWindowRenderer, HostImageResourceCompletionSource) -> HostAsyncImageLoadScheduleResult
-
-pub struct HostAsyncImageLoaderDiagnostics {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostAsyncImageLoaderDiagnostics::already_in_flight_count(Self) -> Int
-pub fn HostAsyncImageLoaderDiagnostics::cancelled_count(Self) -> Int
-pub fn HostAsyncImageLoaderDiagnostics::completed_count(Self) -> Int
-pub fn HostAsyncImageLoaderDiagnostics::in_flight_count(Self) -> Int
-pub fn HostAsyncImageLoaderDiagnostics::scheduled_count(Self) -> Int
 
 pub(all) enum HostBackendKind {
   Native
@@ -273,14 +222,6 @@ pub(all) struct HostEventResult {
   close_requested : Bool
 } derive(Eq, ToJson, @debug.Debug)
 
-pub struct HostEventSource {
-  // private fields
-}
-pub fn HostEventSource::active_handler_count(Self) -> Int
-pub fn HostEventSource::new() -> Self
-pub fn HostEventSource::publish(Self, HostEvent) -> Int
-pub fn[Msg] HostEventSource::subscription(Self, key? : String, label? : String, map~ : (HostEvent) -> Msg?) -> @wzzc-dev/moui/core.Subscription[Msg]
-
 pub(all) enum HostFileDialogKind {
   OpenFile
   SaveFile
@@ -302,75 +243,6 @@ pub(all) struct HostFocusEvent {
 pub fn HostFocusEvent::new(focused~ : Bool, pointer_cancel_position? : @wzzc-dev/moui/core.Point?) -> Self
 pub fn HostFocusEvent::to_core(Self) -> @wzzc-dev/moui/core.AppEvent?
 
-pub struct HostImageResourceCompletionSource {
-  // private fields
-}
-pub fn HostImageResourceCompletionSource::complete(Self, HostWindowId, HostWindowRenderer, @render.ImageResourceLoadCompletion) -> HostImageResourceRepaintResult
-pub fn HostImageResourceCompletionSource::diagnostics(Self) -> HostImageResourceCompletionSourceDiagnostics
-pub fn HostImageResourceCompletionSource::new(tracker~ : HostImageResourceRepaintTracker, window_open~ : (HostWindowId) -> Bool, request_redraw~ : (HostWindowId) -> Unit) -> Self
-pub fn HostImageResourceCompletionSource::publish(Self, HostWindowId, @render.ImageResourceSnapshot) -> HostImageResourceRepaintResult
-
-pub struct HostImageResourceCompletionSourceDiagnostics {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostImageResourceCompletionSourceDiagnostics::discarded_closed_count(Self) -> Int
-pub fn HostImageResourceCompletionSourceDiagnostics::publish_count(Self) -> Int
-pub fn HostImageResourceCompletionSourceDiagnostics::recorded_count(Self) -> Int
-pub fn HostImageResourceCompletionSourceDiagnostics::redraw_requested_count(Self) -> Int
-pub fn HostImageResourceCompletionSourceDiagnostics::tracked_window_count(Self) -> Int
-pub fn HostImageResourceCompletionSourceDiagnostics::unchanged_count(Self) -> Int
-
-pub struct HostImageResourceRepaintResult {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostImageResourceRepaintResult::current_revision(Self) -> Int
-pub fn HostImageResourceRepaintResult::current_status_counts(Self) -> HostImageResourceStatusCounts
-pub fn HostImageResourceRepaintResult::previous_revision(Self) -> Int
-pub fn HostImageResourceRepaintResult::previous_status_counts(Self) -> HostImageResourceStatusCounts
-pub fn HostImageResourceRepaintResult::status(Self) -> HostImageResourceRepaintStatus
-pub fn HostImageResourceRepaintResult::window_id(Self) -> HostWindowId
-
-pub struct HostImageResourceRepaintSnapshot {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostImageResourceRepaintSnapshot::tracked_window_count(Self) -> Int
-pub fn HostImageResourceRepaintSnapshot::tracked_windows(Self) -> Array[HostImageResourceTrackedWindow]
-
-pub(all) enum HostImageResourceRepaintStatus {
-  ImageRepaintRecorded
-  ImageRepaintUnchanged
-  ImageRepaintRequested
-  ImageRepaintDiscardedClosed
-} derive(Eq, ToJson, @debug.Debug)
-
-pub struct HostImageResourceRepaintTracker {
-  // private fields
-}
-pub fn HostImageResourceRepaintTracker::new() -> Self
-pub fn HostImageResourceRepaintTracker::record_presented(Self, HostWindowId, HostWindowRenderer) -> HostImageResourceRepaintResult
-pub fn HostImageResourceRepaintTracker::remove_window(Self, HostWindowId) -> Bool
-pub fn HostImageResourceRepaintTracker::request_redraw_for_snapshot_if_changed(Self, HostWindowId, @render.ImageResourceSnapshot, window_open~ : Bool, request_redraw~ : (HostWindowId) -> Unit) -> HostImageResourceRepaintResult
-pub fn HostImageResourceRepaintTracker::request_redraw_if_changed(Self, HostWindowId, HostWindowRenderer, window_open~ : Bool, request_redraw~ : (HostWindowId) -> Unit) -> HostImageResourceRepaintResult
-pub fn HostImageResourceRepaintTracker::revision_for(Self, HostWindowId) -> Int?
-pub fn HostImageResourceRepaintTracker::snapshot(Self) -> HostImageResourceRepaintSnapshot
-pub fn HostImageResourceRepaintTracker::tracked_count(Self) -> Int
-
-pub struct HostImageResourceStatusCounts {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostImageResourceStatusCounts::disposed_count(Self) -> Int
-pub fn HostImageResourceStatusCounts::failed_count(Self) -> Int
-pub fn HostImageResourceStatusCounts::loading_count(Self) -> Int
-pub fn HostImageResourceStatusCounts::ready_count(Self) -> Int
-pub fn HostImageResourceStatusCounts::record_count(Self) -> Int
-
-pub struct HostImageResourceTrackedWindow {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostImageResourceTrackedWindow::revision(Self) -> Int
-pub fn HostImageResourceTrackedWindow::status_counts(Self) -> HostImageResourceStatusCounts
-pub fn HostImageResourceTrackedWindow::window_id(Self) -> HostWindowId
-
 pub(all) struct HostInputCapabilities {
   pointer : Bool
   scroll : Bool
@@ -391,60 +263,10 @@ pub(all) struct HostInputContract {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostInputContract::new(capabilities? : HostInputCapabilities, coordinates? : HostCoordinatePolicy) -> Self
 
-pub struct HostNativeAsyncImageCompletionResult {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostNativeAsyncImageCompletionResult::source(Self) -> String
-pub fn HostNativeAsyncImageCompletionResult::status(Self) -> HostNativeAsyncImageCompletionStatus
-pub fn HostNativeAsyncImageCompletionResult::window_id(Self) -> HostWindowId
-
-pub(all) enum HostNativeAsyncImageCompletionStatus {
-  NativeAsyncImageCompletionDelivered
-  NativeAsyncImageCompletionMissing
-} derive(Eq, ToJson, @debug.Debug)
-
-pub struct HostNativeAsyncImageLoadRequest {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostNativeAsyncImageLoadRequest::source(Self) -> String
-pub fn HostNativeAsyncImageLoadRequest::window_id(Self) -> HostWindowId
-
-pub struct HostNativeAsyncImageSource {
-  // private fields
-}
-pub fn HostNativeAsyncImageSource::complete(Self, HostWindowId, @render.ImageResourceLoadCompletion) -> HostNativeAsyncImageCompletionResult
-pub fn HostNativeAsyncImageSource::diagnostics(Self) -> HostNativeAsyncImageSourceDiagnostics
-pub fn HostNativeAsyncImageSource::loader(Self) -> HostAsyncImageLoader
-pub fn HostNativeAsyncImageSource::loader_with_drain(Self, spawn~ : (HostWindowId, String) -> Unit, drain~ : () -> Unit) -> HostAsyncImageLoader
-pub fn HostNativeAsyncImageSource::new() -> Self
-pub fn HostNativeAsyncImageSource::pending_requests(Self) -> Array[HostNativeAsyncImageLoadRequest]
-
-pub struct HostNativeAsyncImageSourceDiagnostics {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostNativeAsyncImageSourceDiagnostics::cancelled_count(Self) -> Int
-pub fn HostNativeAsyncImageSourceDiagnostics::completed_count(Self) -> Int
-pub fn HostNativeAsyncImageSourceDiagnostics::missing_completion_count(Self) -> Int
-pub fn HostNativeAsyncImageSourceDiagnostics::pending_count(Self) -> Int
-pub fn HostNativeAsyncImageSourceDiagnostics::requested_count(Self) -> Int
-
 pub(all) struct HostPendingServiceRequest {
   id : HostServiceRequestId
   request : HostServiceRequest
 } derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct HostPlatformEventPublishResult {
-  host_event_count : Int
-  window_event_count : Int
-} derive(Eq, ToJson, @debug.Debug)
-
-pub struct HostPlatformEventSources {
-  // private fields
-}
-pub fn HostPlatformEventSources::host_events(Self) -> HostEventSource
-pub fn HostPlatformEventSources::new(host_events? : HostEventSource, window_events? : HostWindowEventSource) -> Self
-pub fn HostPlatformEventSources::publish(Self, window_id~ : HostWindowId, event~ : HostEvent) -> HostPlatformEventPublishResult
-pub fn HostPlatformEventSources::window_events(Self) -> HostWindowEventSource
 
 pub(all) struct HostPlatformWindowBinding {
   platform_id : @wzzc-dev/window/core.WindowId
@@ -462,82 +284,6 @@ pub fn HostPlatformWindowMap::lookup_platform(Self, HostWindowId) -> @wzzc-dev/w
 pub fn HostPlatformWindowMap::new() -> Self
 pub fn HostPlatformWindowMap::remove_host(Self, HostWindowId) -> @wzzc-dev/window/core.WindowId?
 pub fn HostPlatformWindowMap::remove_platform(Self, @wzzc-dev/window/core.WindowId) -> HostWindowId?
-
-pub struct HostRendererGpuRecoveryCapability {
-  // private fields
-}
-pub fn HostRendererGpuRecoveryCapability::new(inject_context_loss? : () -> Unit, gpu_recovery_count? : () -> Int, gpu_fallback_active? : () -> Bool) -> Self
-
-pub struct HostRendererImageCapability {
-  // private fields
-}
-pub fn HostRendererImageCapability::new(image_resources? : () -> Array[@render.ImageResourceRecord], image_resource_snapshot? : (() -> @render.ImageResourceSnapshot)?, apply_image_resource_load_completion? : ((@render.ImageResourceLoadCompletion) -> @render.ImageResourceSnapshot)?, set_image_resource_change_callback? : (((@render.ImageResourceSnapshot) -> Unit)?) -> Unit) -> Self
-
-pub struct HostRendererPlatformViewCapability {
-  // private fields
-}
-pub fn HostRendererPlatformViewCapability::new(draw_platform_view_pixels? : (Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit, set_platform_view_draw_fn? : ((() -> Unit)?) -> Unit) -> Self
-
-pub(all) struct HostRouteEvent {
-  location : HostRouteLocation
-  source : String
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostRouteEvent::from_route(route~ : String, source? : String) -> Self
-pub fn HostRouteEvent::new(location~ : HostRouteLocation, source? : String) -> Self
-pub fn HostRouteEvent::route(Self) -> String
-
-pub(all) struct HostRouteLocation {
-  path : String
-  query : Array[HostRouteQueryParam]
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostRouteLocation::new(path~ : String, query? : Array[HostRouteQueryParam]) -> Self
-pub fn HostRouteLocation::parse(String) -> Self
-pub fn HostRouteLocation::query_value(Self, String) -> String?
-pub fn HostRouteLocation::to_route(Self) -> String
-
-pub(all) struct HostRouteQueryParam {
-  key : String
-  value : String
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostRouteQueryParam::new(key~ : String, value~ : String) -> Self
-
-pub struct HostRouteSource {
-  // private fields
-}
-pub fn HostRouteSource::active_handler_count(Self) -> Int
-pub fn HostRouteSource::new() -> Self
-pub fn HostRouteSource::publish(Self, HostRouteEvent) -> Int
-pub fn[Msg] HostRouteSource::subscription(Self, key? : String, label? : String, map~ : (HostRouteEvent) -> Msg?) -> @wzzc-dev/moui/core.Subscription[Msg]
-
-pub(all) struct HostRuntimeDriver {
-  runtime : @runtime.AppRuntime
-  scheduler : RedrawScheduler
-  mut close_requested : Bool
-  mut frame_time_ms : Double
-}
-pub fn HostRuntimeDriver::apply_render_frame_result(Self, @render.RenderFrameResult) -> Unit
-pub fn HostRuntimeDriver::begin_redraw(Self) -> Unit
-pub fn HostRuntimeDriver::dispatch(Self, HostEvent) -> HostEventResult
-pub fn HostRuntimeDriver::dispatch_action_command_with_services(Self, @wzzc-dev/moui/core.ActionCommand, HostServiceBridge) -> HostEventResult
-pub fn HostRuntimeDriver::dispatch_command_with_services(Self, @wzzc-dev/moui/core.CommandIntent, HostServiceBridge) -> HostEventResult
-pub fn HostRuntimeDriver::dispatch_keyboard_with_services(Self, @wzzc-dev/moui/core.KeyboardEvent, HostServiceBridge) -> HostEventResult
-pub fn HostRuntimeDriver::dispatch_platform_view(Self, String, @wzzc-dev/moui/core.PlatformViewEvent) -> Unit
-pub fn HostRuntimeDriver::dispatch_service_completion(Self, HostCompletedServiceResponse, HostServiceBridge) -> HostEventResult
-pub fn HostRuntimeDriver::draw_commands(Self) -> Array[@wzzc-dev/moui/core.DrawCommand]
-pub fn HostRuntimeDriver::draw_frame(Self) -> @wzzc-dev/moui/core.DrawFrame
-pub fn HostRuntimeDriver::environment(Self) -> @wzzc-dev/moui/core.Environment
-pub fn HostRuntimeDriver::event_result(Self) -> HostEventResult
-pub fn HostRuntimeDriver::finish_redraw(Self) -> Unit
-pub fn HostRuntimeDriver::focused_text_input(Self) -> @wzzc-dev/moui/core.TextInputState
-pub fn HostRuntimeDriver::new(runtime~ : @runtime.AppRuntime, schedule_redraw~ : () -> Unit) -> Self
-pub fn HostRuntimeDriver::perform_semantics_action(Self, NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult
-pub fn HostRuntimeDriver::request_redraw(Self) -> Unit
-pub fn HostRuntimeDriver::request_redraw_if_needed(Self) -> Unit
-pub fn HostRuntimeDriver::set_environment(Self, @wzzc-dev/moui/core.Environment) -> Unit
-pub fn HostRuntimeDriver::set_redraw_scheduler(Self, () -> Unit) -> Unit
-pub fn HostRuntimeDriver::set_text_system(Self, @wzzc-dev/moui/core.TextSystem) -> Unit
-pub fn HostRuntimeDriver::show_context_menu(Self, HostServiceBridge) -> HostEventResult
-pub fn HostRuntimeDriver::size(Self) -> @wzzc-dev/moui/core.Size
 
 pub(all) enum HostScrollDelta {
   Lines(@wzzc-dev/moui/core.Point)
@@ -681,23 +427,6 @@ pub(all) enum HostTextFileRequest {
   WriteText(String, String)
 } derive(Eq, ToJson, @debug.Debug)
 
-pub struct HostTimerSource {
-  // private fields
-}
-pub fn HostTimerSource::new(start_timer~ : (Double, (@wzzc-dev/moui/core.Frame) -> Unit) -> (() -> Unit)?) -> Self
-pub fn[Msg] HostTimerSource::subscription(Self, interval_ms~ : Double, key? : String, label? : String, map~ : (@wzzc-dev/moui/core.Frame) -> Msg) -> @wzzc-dev/moui/core.Subscription[Msg]
-
-pub(all) struct HostWallClock {
-  year : Int
-  month : Int
-  day : Int
-  weekday : Int
-  hour : Int
-  minute : Int
-  second : Int
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostWallClock::new(Int, Int, Int, Int, Int, Int, second? : Int) -> Self
-
 pub struct HostWindowActions {
   queue : HostWindowRequestQueue
 }
@@ -720,7 +449,6 @@ pub fn HostWindowCommands::completed_count(Self) -> Int
 pub fn HostWindowCommands::drain(Self) -> Array[HostWindowRequest]
 pub fn HostWindowCommands::drain_completed(Self) -> Array[HostWindowRequestCompletion]
 pub fn HostWindowCommands::drain_to_registry(Self, HostWindowRegistry) -> Array[HostWindowRequestCompletion]
-pub fn HostWindowCommands::drain_to_runtime_slots(Self, HostWindowRegistry, HostWindowRuntimeSlots) -> Array[HostWindowRequestCompletion]
 pub fn HostWindowCommands::drain_with_handler(Self, (HostWindowRequest) -> HostWindowRequestResult) -> Array[HostWindowRequestCompletion]
 pub fn HostWindowCommands::focus(Self, HostWindowId) -> Unit
 pub fn HostWindowCommands::is_empty(Self) -> Bool
@@ -734,20 +462,6 @@ pub fn HostWindowCommands::record_result(Self, HostWindowRequest, HostWindowRequ
 pub fn HostWindowCommands::resize(Self, HostWindowId, HostSurfaceMetrics) -> Unit
 pub fn HostWindowCommands::set_primary(Self, HostWindowId) -> Unit
 pub fn HostWindowCommands::show(Self, HostWindowId) -> Unit
-
-pub(all) struct HostWindowEvent {
-  window_id : HostWindowId
-  event : HostEvent
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostWindowEvent::new(window_id~ : HostWindowId, event~ : HostEvent) -> Self
-
-pub struct HostWindowEventSource {
-  // private fields
-}
-pub fn HostWindowEventSource::active_handler_count(Self) -> Int
-pub fn HostWindowEventSource::new() -> Self
-pub fn HostWindowEventSource::publish(Self, window_id~ : HostWindowId, event~ : HostEvent) -> Int
-pub fn[Msg] HostWindowEventSource::subscription(Self, key? : String, label? : String, map~ : (HostWindowEvent) -> Msg?) -> @wzzc-dev/moui/core.Subscription[Msg]
 
 pub(all) struct HostWindowId {
   value : Int
@@ -770,11 +484,6 @@ pub(all) struct HostWindowOpenRequest {
   primary : Bool
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostWindowOpenRequest::new(title~ : String, scene? : HostWindowScene, metrics~ : HostSurfaceMetrics, primary? : Bool) -> Self
-
-pub(all) enum HostWindowOpenResolution {
-  OpenResolved(HostWindowResolvedOpen)
-  OpenRejected(String)
-}
 
 pub(all) struct HostWindowRecord {
   id : HostWindowId
@@ -805,30 +514,8 @@ pub fn HostWindowRegistry::primary_window(Self) -> HostWindowRecord?
 pub fn HostWindowRegistry::remove_closed(Self) -> Int
 pub fn HostWindowRegistry::request_close(Self, HostWindowId) -> Bool
 pub fn HostWindowRegistry::resize(Self, HostWindowId, HostSurfaceMetrics) -> Bool
-pub fn HostWindowRegistry::resolve_open_request(Self, HostWindowOpenRequest, HostWindowSceneResolver) -> HostWindowOpenResolution
 pub fn HostWindowRegistry::set_primary(Self, HostWindowId) -> Bool
 pub fn HostWindowRegistry::show(Self, HostWindowId) -> Bool
-
-pub struct HostWindowRenderer {
-  // private fields
-}
-pub fn HostWindowRenderer::apply_image_resource_load_completion(Self, @render.ImageResourceLoadCompletion) -> @render.ImageResourceSnapshot
-pub fn HostWindowRenderer::dispose(Self) -> Unit
-pub fn HostWindowRenderer::drain_present_completions(Self) -> Array[@render.RenderPresentCompletion]
-pub fn HostWindowRenderer::draw_platform_view_pixels(Self, Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit
-pub fn HostWindowRenderer::gpu_fallback_active(Self) -> Bool
-pub fn HostWindowRenderer::gpu_recovery_count(Self) -> Int
-pub fn HostWindowRenderer::image_resource_snapshot(Self) -> @render.ImageResourceSnapshot
-pub fn HostWindowRenderer::image_resources(Self) -> Array[@render.ImageResourceRecord]
-pub fn HostWindowRenderer::inject_context_loss(Self) -> Unit
-pub fn HostWindowRenderer::new(resize~ : (HostSurfaceMetrics) -> Unit, render~ : (Array[@wzzc-dev/moui/core.DrawCommand]) -> Unit, render_frame? : ((@wzzc-dev/moui/core.DrawFrame) -> @render.RenderFrameResult)?, drain_present_completions? : (() -> Array[@render.RenderPresentCompletion])?, text_system~ : () -> @wzzc-dev/moui/core.TextSystem, present_count? : () -> Int, dispose? : () -> Unit, image? : HostRendererImageCapability, platform_view? : HostRendererPlatformViewCapability, gpu_recovery? : HostRendererGpuRecoveryCapability) -> Self
-pub fn HostWindowRenderer::present_count(Self) -> Int
-pub fn HostWindowRenderer::render(Self, Array[@wzzc-dev/moui/core.DrawCommand]) -> Unit
-pub fn HostWindowRenderer::render_frame(Self, @wzzc-dev/moui/core.DrawFrame) -> @render.RenderFrameResult
-pub fn HostWindowRenderer::resize(Self, HostSurfaceMetrics) -> Unit
-pub fn HostWindowRenderer::set_image_resource_change_callback(Self, ((@render.ImageResourceSnapshot) -> Unit)?) -> Unit
-pub fn HostWindowRenderer::set_platform_view_draw_fn(Self, (() -> Unit)?) -> Unit
-pub fn HostWindowRenderer::text_system(Self) -> @wzzc-dev/moui/core.TextSystem
 
 pub(all) enum HostWindowRequest {
   OpenWindow(HostWindowOpenRequest)
@@ -872,66 +559,12 @@ pub(all) enum HostWindowRequestResult {
   WindowRejected(String)
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct HostWindowResolvedOpen {
-  id : HostWindowId
-  record : HostWindowRecord
-  instance : HostWindowSceneInstance
-}
-pub fn HostWindowResolvedOpen::new(id~ : HostWindowId, record~ : HostWindowRecord, instance~ : HostWindowSceneInstance) -> Self
-
-pub(all) struct HostWindowRuntimeSlot {
-  id : HostWindowId
-  record : HostWindowRecord
-  driver : HostRuntimeDriver
-}
-pub fn HostWindowRuntimeSlot::from_driver(record~ : HostWindowRecord, driver~ : HostRuntimeDriver) -> Self
-pub fn HostWindowRuntimeSlot::from_resolved_open(HostWindowResolvedOpen, schedule_redraw~ : () -> Unit) -> Self
-pub fn HostWindowRuntimeSlot::new(record~ : HostWindowRecord, runtime~ : @runtime.AppRuntime, schedule_redraw~ : () -> Unit) -> Self
-
-pub struct HostWindowRuntimeSlots {
-  mut slots : Array[HostWindowRuntimeSlot]
-}
-pub fn HostWindowRuntimeSlots::apply_host_event(Self, HostWindowRegistry, HostWindowId, HostEvent) -> Bool
-pub fn HostWindowRuntimeSlots::apply_request(Self, HostWindowRegistry, HostWindowRequest) -> HostWindowRequestResult
-pub fn HostWindowRuntimeSlots::count(Self) -> Int
-pub fn HostWindowRuntimeSlots::focused_slot(Self) -> HostWindowRuntimeSlot?
-pub fn HostWindowRuntimeSlots::insert(Self, HostWindowRuntimeSlot) -> Bool
-pub fn HostWindowRuntimeSlots::insert_from_registry(Self, HostWindowRegistry, HostWindowId, driver~ : HostRuntimeDriver) -> Bool
-pub fn HostWindowRuntimeSlots::is_empty(Self) -> Bool
-pub fn HostWindowRuntimeSlots::lookup(Self, HostWindowId) -> HostWindowRuntimeSlot?
-pub fn HostWindowRuntimeSlots::new() -> Self
-pub fn HostWindowRuntimeSlots::open_slots(Self) -> Array[HostWindowRuntimeSlot]
-pub fn HostWindowRuntimeSlots::primary_slot(Self) -> HostWindowRuntimeSlot?
-pub fn HostWindowRuntimeSlots::remove(Self, HostWindowId) -> HostWindowRuntimeSlot?
-pub fn HostWindowRuntimeSlots::remove_closed(Self) -> Int
-pub fn HostWindowRuntimeSlots::sync_from_registry(Self, HostWindowRegistry, HostWindowId) -> Bool
-pub fn HostWindowRuntimeSlots::sync_open_from_registry(Self, HostWindowRegistry) -> Int
-pub fn HostWindowRuntimeSlots::sync_record(Self, HostWindowRecord) -> Bool
-
 pub(all) struct HostWindowScene {
   scene_id : String
   payload : String
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostWindowScene::main() -> Self
 pub fn HostWindowScene::new(scene_id~ : String, payload? : String) -> Self
-
-pub(all) struct HostWindowSceneInstance {
-  request : HostWindowOpenRequest
-  runtime : @runtime.AppRuntime
-}
-pub fn HostWindowSceneInstance::new(request~ : HostWindowOpenRequest, runtime~ : @runtime.AppRuntime) -> Self
-
-pub(all) enum HostWindowSceneResolution {
-  SceneResolved(HostWindowSceneInstance)
-  SceneRejected(String)
-}
-
-pub struct HostWindowSceneResolver {
-  resolve : (HostWindowOpenRequest) -> HostWindowSceneResolution
-}
-pub fn HostWindowSceneResolver::new(resolve~ : (HostWindowOpenRequest) -> HostWindowSceneResolution) -> Self
-pub fn HostWindowSceneResolver::resolve(Self, HostWindowOpenRequest) -> HostWindowSceneResolution
-pub fn HostWindowSceneResolver::unavailable(reason? : String) -> Self
 
 pub(all) struct InputHostState {
   mut focused : Bool
@@ -948,48 +581,6 @@ pub fn InputHostState::keyboard_event(Self, key~ : String, text? : String?, pres
 pub fn InputHostState::new(focused? : Bool, modifiers? : @wzzc-dev/moui/core.KeyModifiers, contract? : HostInputContract) -> Self
 pub fn InputHostState::set_modifiers(Self, @wzzc-dev/moui/core.KeyModifiers) -> Unit
 pub fn InputHostState::text_event(Self, @wzzc-dev/moui/core.TextInputEvent) -> HostEvent?
-
-pub(all) struct NativeAccessibilityActionRequest {
-  node_id : @wzzc-dev/moui/core.SemanticsNodeId
-  generation : @wzzc-dev/moui/core.SemanticsGeneration
-  action : @wzzc-dev/moui/core.SemanticsAction
-} derive(Eq, ToJson, @debug.Debug)
-pub fn NativeAccessibilityActionRequest::new(node_id~ : @wzzc-dev/moui/core.SemanticsNodeId, generation~ : @wzzc-dev/moui/core.SemanticsGeneration, action~ : @wzzc-dev/moui/core.SemanticsAction) -> Self
-
-pub(all) enum NativeAccessibilityActionResult {
-  Handled(@runtime.SemanticsActionReceipt)
-  Rejected(@runtime.SemanticsActionDispatchError)
-  BridgeUnavailable(String)
-} derive(Eq, @debug.Debug)
-
-pub(all) struct NativeAccessibilityBridge {
-  kind : NativeAccessibilityBridgeKind
-  available : Bool
-  publish : (@runtime.SemanticsRead) -> NativeAccessibilityUpdate?
-  perform : (NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult
-}
-pub fn NativeAccessibilityBridge::new(kind~ : NativeAccessibilityBridgeKind, available? : Bool, publish? : (@runtime.SemanticsRead) -> NativeAccessibilityUpdate?, perform? : (NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult) -> Self
-pub fn NativeAccessibilityBridge::perform_action(Self, NativeAccessibilityActionRequest) -> NativeAccessibilityActionResult
-pub fn NativeAccessibilityBridge::publish_semantics(Self, @runtime.SemanticsRead) -> NativeAccessibilityUpdate?
-pub fn NativeAccessibilityBridge::runtime(kind~ : NativeAccessibilityBridgeKind, runtime~ : @runtime.AppRuntime) -> Self
-pub fn NativeAccessibilityBridge::unavailable(kind~ : NativeAccessibilityBridgeKind, reason? : String) -> Self
-
-pub(all) enum NativeAccessibilityBridgeKind {
-  AppKit
-  UIAutomation
-  ATSPI
-  TestBridge
-} derive(Eq, ToJson, @debug.Debug)
-pub fn NativeAccessibilityBridgeKind::label(Self) -> String
-
-pub struct NativeAccessibilityUpdate {
-  generation : @wzzc-dev/moui/core.SemanticsGeneration
-  tree_update : @moon_accesskit.TreeUpdate
-  removed : Array[@wzzc-dev/moui/core.SemanticsNodeId]
-}
-pub fn NativeAccessibilityUpdate::generation(Self) -> @wzzc-dev/moui/core.SemanticsGeneration
-pub fn NativeAccessibilityUpdate::removed(Self) -> Array[@wzzc-dev/moui/core.SemanticsNodeId]
-pub fn NativeAccessibilityUpdate::tree_update(Self) -> @moon_accesskit.TreeUpdate
 
 pub struct PlatformChannelHandler {
   // private fields
@@ -1024,29 +615,10 @@ pub struct PlatformViewPlugin {
   sync_platform_views : (UInt64, @wzzc-dev/moui/core.DrawFrame, Double) -> Unit
   drain_commands : (UInt64) -> Unit
   dispose_platform_views : (UInt64) -> Unit
-  setup_platform_view_draw : ((UInt64, HostWindowRenderer, @wzzc-dev/moui/core.DrawFrame, Double) -> Unit)?
+  setup_platform_view_draw : ((UInt64, @wzzc-dev/moui/core.DrawFrame, Double, ((@wzzc-dev/moui/core.PlatformViewPixelSink) -> Unit) -> Unit) -> Unit)?
   poll_native : (() -> Int64?)?
 }
-pub fn PlatformViewPlugin::new(kind~ : String, capabilities_summary~ : String, install_event_dispatcher~ : ((UInt64, String, @wzzc-dev/moui/core.PlatformViewEvent) -> Unit) -> Unit, sync_platform_views~ : (UInt64, @wzzc-dev/moui/core.DrawFrame, Double) -> Unit, drain_commands~ : (UInt64) -> Unit, dispose_platform_views~ : (UInt64) -> Unit, setup_platform_view_draw? : ((UInt64, HostWindowRenderer, @wzzc-dev/moui/core.DrawFrame, Double) -> Unit)?, poll_native? : (() -> Int64?)?) -> Self
-
-pub(all) struct RedrawScheduler {
-  mut state : RedrawSchedulerState
-  mut schedule : () -> Unit
-}
-pub fn RedrawScheduler::begin_redraw(Self) -> Unit
-pub fn RedrawScheduler::finish_redraw(Self) -> Unit
-pub fn RedrawScheduler::is_redraw_requested(Self) -> Bool
-pub fn RedrawScheduler::new(schedule~ : () -> Unit) -> Self
-pub fn RedrawScheduler::request(Self) -> Unit
-pub fn RedrawScheduler::set_schedule(Self, () -> Unit) -> Unit
-pub fn RedrawScheduler::state(Self) -> RedrawSchedulerState
-
-pub(all) enum RedrawSchedulerState {
-  RedrawIdle
-  RedrawScheduled
-  RedrawInFrame
-  RedrawFollowUpScheduled
-} derive(Eq, ToJson, @debug.Debug)
+pub fn PlatformViewPlugin::new(kind~ : String, capabilities_summary~ : String, install_event_dispatcher~ : ((UInt64, String, @wzzc-dev/moui/core.PlatformViewEvent) -> Unit) -> Unit, sync_platform_views~ : (UInt64, @wzzc-dev/moui/core.DrawFrame, Double) -> Unit, drain_commands~ : (UInt64) -> Unit, dispose_platform_views~ : (UInt64) -> Unit, setup_platform_view_draw? : ((UInt64, @wzzc-dev/moui/core.DrawFrame, Double, ((@wzzc-dev/moui/core.PlatformViewPixelSink) -> Unit) -> Unit) -> Unit)?, poll_native? : (() -> Int64?)?) -> Self
 
 pub(all) struct SurfaceHostState {
   mut metrics : HostSurfaceMetrics

@@ -29,7 +29,7 @@ pub fn run_smoke_app_with_options(String, @runtime.AppRuntime, options~ : MacosS
 pub struct MacosSkiaAppOptions {
   // private fields
 }
-pub fn MacosSkiaAppOptions::new(scene_resolver? : @runtime.HostWindowSceneResolver, event_sources? : @host.HostPlatformEventSources?, font_resolution? : @wzzc-dev/moui/render/skia.SkiaFontResolution, surface_route? : @render.SkiaSurfaceRoute, platform_view_plugins? : Array[@host.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @core.PlatformWindowAttributes, on_ready? : (() -> Unit)?, min_window_size? : @dpi.LogicalSize?) -> Self
+pub fn MacosSkiaAppOptions::new(scene_resolver? : @runtime.HostWindowSceneResolver, event_sources? : @runtime.HostPlatformEventSources?, font_resolution? : @wzzc-dev/moui/render/skia.SkiaFontResolution, surface_route? : @render.SkiaSurfaceRoute, platform_view_plugins? : Array[@host.PlatformViewPlugin], transparent_titlebar? : Bool, platform_attributes? : @core.PlatformWindowAttributes, on_ready? : (() -> Unit)?, min_window_size? : @dpi.LogicalSize?) -> Self
 
 pub struct MacosSkiaSmokeOptions {
   // private fields

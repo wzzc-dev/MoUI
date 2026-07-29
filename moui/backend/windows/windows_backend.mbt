@@ -594,78 +594,6 @@ pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn about_to_w
 }
 
 ///|
-pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn window_event(
-  self,
-  event_loop,
-  platform_window_id,
-  event,
-) {
-  self.drain_window_requests(event_loop)
-  if event_loop.exiting() {
-    return ()
-  }
-  let window_id = match self.platform_windows.lookup_host(platform_window_id) {
-    Some(window_id) => window_id
-    None => return ()
-  }
-  match event {
-    @window_core.WindowEvent::CloseRequested => {
-      self.dispatch_window_event(window_id, event)
-      self.dispose_window(window_id)
-      if self.runtime_slots.is_empty() {
-        event_loop.exit()
-      }
-    }
-    @window_core.WindowEvent::SurfaceResized(_) => {
-      self.dispatch_window_event(window_id, event)
-      match self.platform_slots.lookup_host(window_id) {
-        Some(slot) => {
-          let metrics = @host.HostSurfaceMetrics::new(
-            logical_size=@host.physical_size_to_core(slot.window.surface_size()),
-            physical_size=@host.physical_size_to_core(
-              slot.window.surface_size(),
-            ),
-          )
-          (self.renderer_provider.sync_surface)(slot.window, metrics)
-          slot.renderer.resize(to_render_metrics(metrics))
-          slot.window.request_redraw()
-        }
-        None => ()
-      }
-    }
-    @window_core.WindowEvent::PointerMoved(_, position, _, _) => {
-      self.last_pointer = @host.physical_position_to_core(position)
-      self.dispatch_window_event(window_id, event)
-    }
-    @window_core.WindowEvent::PointerButton(_, _, position, _, _) => {
-      self.last_pointer = @host.physical_position_to_core(position)
-      self.dispatch_pointer_or_context_menu(window_id, event)
-    }
-    @window_core.WindowEvent::DragEntered(_, position)
-    | @window_core.WindowEvent::DragMoved(position)
-    | @window_core.WindowEvent::DragDropped(_, position) => {
-      self.last_pointer = @host.physical_position_to_core(position)
-      self.dispatch_window_event(window_id, event)
-    }
-    @window_core.WindowEvent::DragLeft(Some(position)) => {
-      self.last_pointer = @host.physical_position_to_core(position)
-      self.dispatch_window_event(window_id, event)
-    }
-    @window_core.WindowEvent::KeyboardInput(_, _, _) =>
-      self.dispatch_window_event(window_id, event)
-    @window_core.WindowEvent::Ime(_) =>
-      self.dispatch_window_event(window_id, event)
-    @window_core.WindowEvent::ModifiersChanged(_) =>
-      self.dispatch_window_event(window_id, event)
-    @window_core.WindowEvent::RedrawRequested =>
-      if self.redraw_window(window_id) {
-        event_loop.exit()
-      }
-    _ => self.dispatch_window_event(window_id, event)
-  }
-}
-
-///|
 fn WindowsNativeHostBackend::dispatch_pointer_or_context_menu(
   self : WindowsNativeHostBackend,
   window_id : @host.HostWindowId,
@@ -850,27 +778,34 @@ fn WindowsNativeHostBackend::dispatch_window_event(
       self.last_pointer,
       self.modifiers,
     ) {
-    Some(host_event) => {
-      self.apply_window_lifecycle(window_id, host_event)
-      match self.runtime_slots.lookup(window_id) {
-        Some(slot) =>
-          match host_event {
-            @host.HostEvent::Keyboard(event) =>
-              ignore(
-                slot.driver.dispatch_keyboard_with_services(
-                  event,
-                  self.services,
-                ),
-              )
-            _ => ignore(slot.driver.dispatch(host_event))
-          }
-        None => ()
-      }
-      ignore(self.publish_subscription_event(window_id, host_event))
-      self.sync_text_input_session()
-    }
+    Some(host_event) => self.dispatch_host_event(window_id, host_event)
     None => ()
   }
+}
+
+///|
+/// Dispatch an event produced by Platform Bridge without re-decoding the
+/// window event. Pointer, keyboard, IME, and drag events still use the native
+/// decoder above.
+fn WindowsNativeHostBackend::dispatch_host_event(
+  self : WindowsNativeHostBackend,
+  window_id : @host.HostWindowId,
+  host_event : @host.HostEvent,
+) -> Unit {
+  self.apply_window_lifecycle(window_id, host_event)
+  match self.runtime_slots.lookup(window_id) {
+    Some(slot) =>
+      match host_event {
+        @host.HostEvent::Keyboard(event) =>
+          ignore(
+            slot.driver.dispatch_keyboard_with_services(event, self.services),
+          )
+        _ => ignore(slot.driver.dispatch(host_event))
+      }
+    None => ()
+  }
+  ignore(self.publish_subscription_event(window_id, host_event))
+  self.sync_text_input_session()
 }
 
 ///|
@@ -1089,7 +1024,9 @@ fn WindowsNativeHostBackend::sync_runtime_slot(
 }
 
 ///|
-fn WindowsNativeHostBackend::sync_runtime_slots(self : WindowsNativeHostBackend) -> Unit {
+fn WindowsNativeHostBackend::sync_runtime_slots(
+  self : WindowsNativeHostBackend,
+) -> Unit {
   ignore(self.runtime_slots.sync_open_from_registry(self.windows))
 }
 
@@ -1115,7 +1052,9 @@ fn WindowsNativeHostBackend::active_runtime_slot(
 }
 
 ///|
-fn WindowsNativeHostBackend::sync_text_input_session(self : WindowsNativeHostBackend) -> Unit {
+fn WindowsNativeHostBackend::sync_text_input_session(
+  self : WindowsNativeHostBackend,
+) -> Unit {
   match self.active_runtime_slot() {
     Some(runtime_slot) =>
       match self.platform_slots.lookup_host(runtime_slot.id) {
@@ -1145,7 +1084,9 @@ fn runtime_slot_needs_redraw(slot : @runtime.HostWindowRuntimeSlot) -> Bool {
 }
 
 ///|
-fn WindowsNativeHostBackend::request_redraw(self : WindowsNativeHostBackend) -> Unit {
+fn WindowsNativeHostBackend::request_redraw(
+  self : WindowsNativeHostBackend,
+) -> Unit {
   match self.active_runtime_slot() {
     Some(slot) => self.request_redraw_window_if_needed(slot.id)
     None => ()

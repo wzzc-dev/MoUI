@@ -508,7 +508,7 @@ const canvasRectForInput = async session => {
 };
 
 const textInputPoint = target => {
-  return { x: 120, y: 164 };
+  return { x: 120, y: 120 };
 };
 
 const performCompositionProbe = async session => {

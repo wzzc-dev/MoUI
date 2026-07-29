@@ -201,7 +201,9 @@ pub fn EmbeddingImeRequest::from_state(
   let diagnostics = text_input_ime_request_diagnostics(state)
   let selection = match state.selection {
     Some(selection) =>
-      Some(embedded_runtime_text_range_to_utf16(state.text, selection.normalized()))
+      Some(
+        embedded_runtime_text_range_to_utf16(state.text, selection.normalized()),
+      )
     None => None
   }
   let composition_cursor = match (state.composition, state.composition_cursor) {
@@ -286,8 +288,16 @@ fn embedded_runtime_text_range_from_utf16(
 ) -> @core.TextRange {
   let normalized = range.normalized()
   @core.TextRange::new(
-    start=embedded_runtime_utf16_to_char_index(text, normalized.start, round_up=false),
-    end=embedded_runtime_utf16_to_char_index(text, normalized.end, round_up=true),
+    start=embedded_runtime_utf16_to_char_index(
+      text,
+      normalized.start,
+      round_up=false,
+    ),
+    end=embedded_runtime_utf16_to_char_index(
+      text,
+      normalized.end,
+      round_up=true,
+    ),
   )
 }
 
@@ -311,7 +321,10 @@ fn embedded_runtime_text_input_from_utf16(
         embedded_runtime_text_range_from_utf16(state.text, range),
       )
     @core.TextInputEvent::DeleteSurrounding(before, after) => {
-      let caret_utf16 = embedded_runtime_char_index_to_utf16(state.text, state.caret)
+      let caret_utf16 = embedded_runtime_char_index_to_utf16(
+        state.text,
+        state.caret,
+      )
       @core.TextInputEvent::DeleteRange(
         embedded_runtime_text_range_from_utf16(
           state.text,
@@ -384,7 +397,9 @@ pub fn EmbeddingHostBridge::service_bridge(
     capabilities=HostServiceCapabilities::new(clipboard=true),
     handle=request => {
       if self.disposed {
-        HostServiceResponse::Unavailable("embedded runtime host channel is disposed")
+        HostServiceResponse::Unavailable(
+          "embedded runtime host channel is disposed",
+        )
       } else {
         self.service_queue.submit(request)
       }
@@ -642,7 +657,9 @@ pub fn embedding_host_response_request_id(
 }
 
 ///|
-fn embedded_runtime_clipboard_request_json(request : HostClipboardRequest) -> Json {
+fn embedded_runtime_clipboard_request_json(
+  request : HostClipboardRequest,
+) -> Json {
   match request {
     HostClipboardRequest::ReadText => ({ "operation": "read-text" } : Json)
     HostClipboardRequest::WriteText(text) =>

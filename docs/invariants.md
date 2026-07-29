@@ -17,7 +17,8 @@ Mechanization batch1 (done): `docs/plans/done/harness-mechanize-invariants-batch
 | P3 | Cross-runtime protocols + value types go in `moui/core` | code review | none |
 | P4 | Runtime lifecycle, element/layout/render tree execution go in `moui/runtime` | code review | none |
 | P5 | Host service contracts go in `moui/backend/host`; concrete platform behavior in platform backends | code review | none |
-| P6 | Renderer implementation + capability reporting go in `moui/render/*` | code review | none |
+| P6 | Renderer implementation and provider-ID capability reporting go in `moui/render/*`; platform composition roots own `RendererProviderBinding` assembly, while `RendererBackendKind` is diagnostic metadata only | `validate-renderer-provider-open-extension.mjs` + code review | none |
+| P10 | Neutral close/focus/resize/scale/redraw/surface lifecycle and logical-coordinate conversion go through `moui/backend/platform_bridge`; native pointer/keyboard/IME/drag decode stays platform-local | `validate-platform-adapter-duplication.mjs` (pr) | WeChat `direct-canvas-callback`, validated without a `WindowEvent` import |
 | P7 | Native Skia binding ownership + FFI borrow rules go in `moui_skia` | code review | none |
 | P8 | App packages import `wzzc-dev/moui` + domain facades (`geometry`/`graphics`/`animation`/`text`/`state`) + `views` only | `validate-maintenance-baseline.mjs` | `showcase/app` for diagnostics; `for "test"` imports |
 | P9 | App packages must not depend on `moui/runtime`, `moui/render/*`, concrete platform backends, renderer providers, or `moui_theme/*` (unless a design-system preview) | `validate-maintenance-baseline.mjs` | `showcase/app` |
@@ -29,7 +30,7 @@ Mechanization batch1 (done): `docs/plans/done/harness-mechanize-invariants-batch
 | R1 | Native Skia is the mainline; native WGPU is diagnostic | code review | RFC-required to reclassify |
 | R2 | `SkiaGpuNative` is the product `auto` default on all native Skia platforms when a host GPU surface is available; `SkiaRasterNative` remains the explicit mode and sticky recovery fallback | `validate-renderer-provider-manifests.mjs` | none |
 | R3 | Desktop entrypoints honor `--renderer auto\|skia-gpu\|skia-raster` (or `MOUI_SKIA_RENDERER`). Embedded-runtime entrypoints use `*_window_hosted`, import `wzzc-dev/window/<platform>`, construct `*EmbeddedRuntimeBackend`, and call `EventLoop.run_app`; the platform event loop is the only lifecycle, surface, and input path. | `validate-harness-invariants.mjs` (provider + window-hosted entrypoint + prepare support) | none |
-| R4 | `moon.work` must not list `./window/modules/window` or `./window/modules/windowing` by default; use `sh scripts/window-dev-mode.sh on/off` | `validate-window-dependency.mjs` (daily CI) | local development only |
+| R4 | `moon.work` must not list `./window/modules/window` or `./window/modules/windowing` by default; use `sh scripts/window-dev-mode.sh on/off` | `validate-window-dependency.mjs` (daily CI) | explicit Provider Phase E consumer-proof window only: exact `checks/window-dependency-exception.txt`; turn dev mode off and remove it after the proof |
 | R5 | `moon.work` must not list `./openseek`; `examples/mo_workbench` uses registry pin | `validate-maintenance-baseline.mjs` | none |
 | R6 | Do not claim mobile runtime support as `passed` without matching-device evidence (pixels changed, input received, detach, IME, clipboard, accessibility, async image) recorded in `checks/platforms/*.json`. | code review + platform-status schema validation | fallback APK builds are packaging evidence only |
 
@@ -42,7 +43,7 @@ Mechanization batch1 (done): `docs/plans/done/harness-mechanize-invariants-batch
 | M3 | iOS: `window/ios` owns UIKit lifecycle and template glue; `backend/ios` owns the typed adapter and contracts, while `backend/ios/skia` owns the UIKit presenter. | code review | none |
 | M4 | iOS frames are paced by the platform event loop; keep `UILaunchScreen` and `UIApplicationSupportsMultipleScenes=false` in template Info.plists. | code review | none |
 | M5 | HarmonyOS: `window/harmonyos` owns the ArkTS Stage Ability/XComponent/NAPI template at API 20; XComponent is the only pointer/surface/resize/detach source and ArkTS owns `displaySync`. | code review | none |
-| M6 | Embedded runtime backends translate native callbacks into `HostCmd`/`HostEvent` and host-service contracts only; Android/iOS/HarmonyOS keep runtime-session assembly package-private. | API import whitelist + code review | none |
+| M6 | Embedded runtime backends translate neutral lifecycle callbacks through `platform_bridge` into `HostCmd`/`HostEvent`; native input decode and runtime-session assembly stay platform-private. | API import whitelist + duplication validator + code review | none |
 | M7 | Platform status uses `passed` (complete evidence), `partial` (useful but incomplete), or `failed` (no usable evidence). | platform-status schema validation | none |
 | M8 | Mobile acceptance evidence requires clipboard write/read completion, two distinct surface sizes, accessibility tree/focus/action, async loading/ready logs | code review | none |
 | M9 | `moui_cli` is the sole entry point for mobile build / run / verify; it stages and builds the matching `wzzc-dev/window` template. | code review | none |

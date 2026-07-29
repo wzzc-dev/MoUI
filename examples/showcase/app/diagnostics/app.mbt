@@ -40,6 +40,7 @@ pub(all) struct ShowcaseModel {
   last_drop_label : String
   gesture_label : String
   host_summary : @host.HostCapabilitySummary
+  renderer_providers : Array[@render.RendererProvider]
 }
 
 ///|
@@ -167,6 +168,7 @@ pub fn ShowcaseModel::new() -> ShowcaseModel {
     host_summary: @host.HostCapabilitySummary::test_host(
       label="Showcase test host",
     ),
+    renderer_providers: [],
   }
 }
 
@@ -176,6 +178,17 @@ pub fn ShowcaseModel::with_host_summary(
   host_summary : @host.HostCapabilitySummary,
 ) -> ShowcaseModel {
   { ..self, host_summary, }
+}
+
+///|
+/// Composition roots supply the providers compiled into their platform build.
+/// Diagnostics then reports those exact provider ids instead of consulting a
+/// central renderer/backend catalogue.
+pub fn ShowcaseModel::with_renderer_providers(
+  self : ShowcaseModel,
+  renderer_providers : Array[@render.RendererProvider],
+) -> ShowcaseModel {
+  { ..self, renderer_providers: renderer_providers.copy() }
 }
 
 ///|

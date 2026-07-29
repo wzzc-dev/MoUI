@@ -11,11 +11,10 @@
  * 2. Each renderer package (moui/render/skia, moui/render/wgpu, etc.)
  *    exports a create_*_provider function matching the RendererProvider
  *    contract.
- * 3. The central selection matrix (native_gpu_selection.mbt) and central
- *    capability matrix (capabilities_backend_matrix.mbt) have no NEW
- *    callers beyond the allowlist.
- * 4. No `select_native_renderer` references remain anywhere in the repo
- *    (function deleted; regression guard, ADR 0019 Phase E).
+ * 3. Provider capability reporting is registration-driven; removed static
+ *    backend-matrix APIs may not remain in production code.
+ * 4. No direct native selector remains anywhere in the repository.
+ * 5. RendererProviderBinding remains the production composition contract.
  *
  * Current mode: **enforce** — exits with error 1 on violations.
  *
@@ -60,8 +59,8 @@ function walkMbtFiles(dir, relativeTo = REPO_ROOT) {
 }
 
 // ---------------------------------------------------------------------------
-// Allowlist: packages that MAY reference select_native_renderer,
-// NativeGpuPlatform, or RendererBackendKind in branching logic.
+// Allowlist: packages that MAY reference NativeGpuPlatform or
+// RendererBackendKind in branching logic.
 // ---------------------------------------------------------------------------
 const SELECTION_ALLOWLIST_PREFIXES = [
   "moui/backend/macos/skia",
@@ -86,15 +85,6 @@ const SELECTION_ALLOWLIST_PREFIXES = [
 const SELECTION_ALLOWLIST_EXACT = [
   "moui/backend/host/host_rendering_test.mbt",
   "moui/render/native_gpu_selection_test.mbt",
-];
-
-// ---------------------------------------------------------------------------
-// Allowlist: packages that reference renderer_capability_backends
-// ---------------------------------------------------------------------------
-const CAPABILITY_ALLOWLIST_EXACT = [
-  "moui/render/capabilities_test.mbt",
-  "moui/render/capabilities_report.mbt",
-  "examples/showcase/app/diagnostics/components.mbt",
 ];
 
 // ---------------------------------------------------------------------------
@@ -149,6 +139,7 @@ function checkProviderFactoryExports() {
     { dir: "moui/render/wgpu", expected: ["create_wgpu_provider"] },
     { dir: "moui/render/sun", expected: ["create_sun_provider"] },
     { dir: "moui/render/canvas2d", expected: ["create_canvas2d_provider"] },
+    { dir: "moui/render/webgpu_adapter", expected: ["create_webgpu_provider"] },
   ];
 
   for (const pkg of rendererPackages) {
@@ -168,23 +159,20 @@ function checkProviderFactoryExports() {
 }
 
 // ---------------------------------------------------------------------------
-// Check 3: No NEW callers of central matrix functions beyond allowlist
+// Check 3: No static capability matrix API remains in production code
 // ---------------------------------------------------------------------------
 function checkCentralMatrixCallers() {
   const violations = [];
+  const forbidden = ["renderer_capability_backends", "renderer_backend_capabilities"];
 
-  // walk the entire repo
   const files = walkMbtFiles(".");
   for (const file of files) {
     const relPath = relative(REPO_ROOT, file);
-    const isAllowed = CAPABILITY_ALLOWLIST_EXACT.some((a) => relPath === a);
-    if (isAllowed) continue;
-
     const content = readFileSync(file, "utf-8");
-    if (content.includes("renderer_capability_backends")) {
-      violations.push(
-        `  ${relPath}: references renderer_capability_backends outside allowlist`
-      );
+    for (const symbol of forbidden) {
+      if (content.includes(symbol)) {
+        violations.push(`  ${relPath}: references removed static report API ${symbol}`);
+      }
     }
   }
 
@@ -192,23 +180,40 @@ function checkCentralMatrixCallers() {
 }
 
 // ---------------------------------------------------------------------------
-// Check 4: No select_native_renderer references anywhere (function deleted)
+// Check 4: No direct native selector references anywhere (functions deleted)
 // ---------------------------------------------------------------------------
 function checkPlatformSkiaProviderMigration() {
   const violations = [];
   const files = walkMbtFiles(".");
+  const forbidden = ["select_native_renderer", "RendererProviderRegistry::select_native"];
 
   for (const file of files) {
     const relPath = relative(REPO_ROOT, file);
     const content = readFileSync(file, "utf-8");
-    if (content.includes("select_native_renderer")) {
-      violations.push(
-        `  ${relPath}: references select_native_renderer (function deleted; use resolve_surface_route)`
-      );
+    for (const symbol of forbidden) {
+      if (content.includes(symbol)) {
+        violations.push(`  ${relPath}: references removed selector ${symbol}`);
+      }
     }
   }
 
   return violations;
+}
+
+// ---------------------------------------------------------------------------
+// Check 5: Binding contract remains the composition path
+// ---------------------------------------------------------------------------
+function checkBindingContract() {
+  const providerContract = join(REPO_ROOT, "moui/render/provider_contract.mbt");
+  const content = readFileSync(providerContract, "utf-8");
+  const required = [
+    "pub(all) struct RendererProviderBinding",
+    "pub fn select_renderer_provider_binding",
+    "pub fn renderer_provider_binding_providers",
+  ];
+  return required
+    .filter((symbol) => !content.includes(symbol))
+    .map((symbol) => `  moui/render/provider_contract.mbt: missing ${symbol}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -222,6 +227,7 @@ function main() {
   const factoryViolations = checkProviderFactoryExports();
   const matrixViolations = checkCentralMatrixCallers();
   const migrationViolations = checkPlatformSkiaProviderMigration();
+  const bindingViolations = checkBindingContract();
 
   let hasViolations = false;
 
@@ -246,22 +252,32 @@ function main() {
   }
 
   if (matrixViolations.length > 0) {
-    console.log("## [3] New central matrix callers outside allowlist:");
+    console.log("## [3] Removed static capability report APIs:");
     for (const v of matrixViolations) console.log(v);
     console.log();
     hasViolations = true;
   } else {
-    console.log("✅ No new central matrix callers outside allowlist");
+    console.log("✅ No static capability report APIs remain");
     console.log();
   }
 
   if (migrationViolations.length > 0) {
-    console.log("## [4] select_native_renderer references (function deleted):");
+    console.log("## [4] Removed native selector references:");
     for (const v of migrationViolations) console.log(v);
     console.log();
     hasViolations = true;
   } else {
-    console.log("✅ No select_native_renderer references remain");
+    console.log("✅ No removed native selector references remain");
+    console.log();
+  }
+
+  if (bindingViolations.length > 0) {
+    console.log("## [5] RendererProviderBinding contract:");
+    for (const v of bindingViolations) console.log(v);
+    console.log();
+    hasViolations = true;
+  } else {
+    console.log("✅ RendererProviderBinding composition contract is present");
     console.log();
   }
 

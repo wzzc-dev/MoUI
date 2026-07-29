@@ -35,6 +35,8 @@ node scripts/generate-repo-docs.mjs --check
 node scripts/validate-window-dependency.mjs
 node scripts/validate-harness-invariants.mjs
 node scripts/validate-maintenance-baseline.mjs
+node scripts/validate-renderer-provider-open-extension.mjs
+node scripts/validate-platform-adapter-duplication.mjs
 moon run tools/moui/validate_source_file_policy --target native
 node scripts/check-website-docs.mjs
 node scripts/validate-renderer-provider-manifests.mjs
@@ -123,6 +125,30 @@ node scripts/external-consumer-ci.mjs --source package
 ```
 
 ## Focused
+
+Provider composition and Platform Bridge edits use the following minimum loop
+before broader profiles:
+
+```sh
+moon test moui/render --target native
+moon test moui/render/skia --target native
+moon test moui/render/wgpu --target native
+moon test moui/render/sun --target native
+moon test moui/render/webgpu_adapter --target wasm-gc
+moon check moui/render/canvas2d --target wasm-gc
+moon test moui/backend/wechat --target wasm-gc
+node scripts/test-web-canvas2d-lazy-fallback.mjs
+moon test moui/backend/platform_bridge --target native
+moon test tools/moui/validate_platform_adapter_duplication --target native
+node scripts/validate-renderer-provider-open-extension.mjs
+node scripts/validate-platform-adapter-duplication.mjs
+```
+
+The Platform Bridge validator is a required PR-profile failure gate. Its
+schema-v2 normalization budgets, bridge imports, helper redefinitions, and
+WeChat `direct-canvas-callback` exception are checked by the MoonBit tool;
+expired allowlist entries fail. Rendering-composition changes also require the
+path-triggered macOS Skia and Web presentation smokes before a runtime claim.
 
 Playground-focused checks should cover both MoonBit editor behavior and the
 static browser bundle:

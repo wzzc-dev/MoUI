@@ -1,12 +1,14 @@
 # Renderer Capability Report
 
-This page tracks draw command coverage by renderer backend. The same status
-data is codified in `render/capabilities.mbt` and checked by
-`render/capabilities_test.mbt`. Showcase consumes the same backend list, so new
-renderer columns come from structured data instead of hard-coded native/web
-fields. Renderer support claims still come from this report plus
-renderer/provider tests. The report order follows the current mainline:
-native Skia raster, WebGPU wasm-gc, native WGPU diagnostics, then Sun CPU raster.
+This page describes draw-command coverage for concrete renderer providers. The
+live report is built from the provider array registered by a composition root;
+its index is `RendererProvider.id`, never `RendererBackendKind`. The latter is
+kept solely as diagnostic classification metadata. The historical grouped table
+below remains a readable product summary, not a central selection matrix.
+Showcase receives the composition root's provider list and renderer support
+claims still require this report plus provider tests. The current product order
+is native Skia, WebGPU with Canvas2D fallback, native WGPU diagnostics, then
+Sun CPU raster.
 Platform readiness is tracked separately from renderer capability. A macOS
 Skia smoke log can support a macOS-only runtime note, but it does not upgrade
 Windows/Linux platform status and does not promote global Skia typography or
@@ -61,14 +63,13 @@ For feature proof coverage (which CI job proves each feature), see
 [feature-proof-matrix.md](feature-proof-matrix.md) and
 [feature-status-dashboard.md](feature-status-dashboard.md).
 
-`RendererDescriptor` describes static renderer capability identity. Native host
-runtime assembly is handled by platform renderer providers instead:
-`backend/<platform>/skia` selects the native Skia route (product `auto` prefers
-GPU when available) and `backend/<platform>/wgpu` selects the `NativeWgpu`
-diagnostic route. `backend/<platform>/sun` selects the `SunRasterNative` CPU
-raster route. The `RendererSelection` helper remains useful for reports and
-tests that match families or backend ids, but it is not a native host-core
-option or provider contract. Web keeps using the WebGPU wasm backend.
+`RendererDescriptor` describes static diagnostic identity. Runtime assembly is
+handled by platform provider bindings instead: `backend/<platform>/skia`
+registers the native Skia routes (product `auto` prefers GPU when available),
+`backend/<platform>/wgpu` is an explicit diagnostic composition, and Web
+registers WebGPU followed by Canvas2D. `RendererSelection` remains useful for
+diagnostics and tests, but it is not a host-core assembly or capability-report
+index.
 
 The Skia binding has explicit Metal, D3D12, Vulkan, and EGL/GLES window-surface
 source paths, while `render/skia` reports route preflight diagnostics. The macOS real

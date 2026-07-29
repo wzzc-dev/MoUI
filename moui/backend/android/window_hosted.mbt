@@ -14,6 +14,7 @@ pub struct AndroidEmbeddedRuntimeBackend {
   modifiers : @core.KeyModifiers
   mut last_generation : Int
   mut frames_presented : Int
+  mut surface_lifecycle : @platform_bridge.PlatformSurfaceLifecycle
   auto_exit_after_frames : Int?
 }
 
@@ -36,6 +37,7 @@ pub fn AndroidEmbeddedRuntimeBackend::new(
     modifiers: @core.KeyModifiers::none(),
     last_generation: 0,
     frames_presented: 0,
+    surface_lifecycle: @platform_bridge.PlatformSurfaceLifecycle::Detached,
     auto_exit_after_frames,
   }
 }
@@ -78,7 +80,7 @@ fn AndroidEmbeddedRuntimeBackend::metrics_from_window(
 ) -> @host.HostSurfaceMetrics {
   let size = window.inner_size()
   let scale = window.scale_factor()
-  @host.surface_metrics_from_physical(size, scale_factor=scale)
+  @platform_bridge.make_surface_metrics(size, scale_factor=scale)
 }
 
 ///|
@@ -87,6 +89,9 @@ fn AndroidEmbeddedRuntimeBackend::attach_session(
   window : @window_android.Window,
 ) -> Unit {
   let metrics = self.metrics_from_window(window)
+  self.surface_lifecycle = @platform_bridge.PlatformSurfaceLifecycle::attach(
+    metrics,
+  )
   let runtime = match self.runtime {
     Some(runtime) => {
       runtime.dispatch_event(@core.AppEvent::Resize(metrics.logical_size))
@@ -126,6 +131,7 @@ fn AndroidEmbeddedRuntimeBackend::detach_session(
     None => ()
   }
   self.window = None
+  self.surface_lifecycle = self.surface_lifecycle.detach()
 }
 
 ///|
@@ -144,50 +150,56 @@ fn AndroidEmbeddedRuntimeBackend::dispatch_window_event(
       self.modifiers,
       scale_factor=scale,
     ) {
-    Some(host_event) => {
-      match host_event {
-        @host.HostEvent::Pointer(pointer) => {
-          match self.session {
-            Some(session) => ignore(session.dispatch(host_event))
-            None => ()
-          }
-          self.last_pointer = pointer.position
-        }
-        @host.HostEvent::Resized(metrics) =>
-          match self.session {
-            Some(session) => ignore(session.resize(metrics))
-            None => ()
-          }
-        @host.HostEvent::RedrawRequested =>
-          match self.session {
-            Some(session) => {
-              ignore(session.render_frame())
-              self.frames_presented = self.frames_presented + 1
-            }
-            None => ()
-          }
-        _ =>
-          match self.session {
-            Some(session) => ignore(session.dispatch(host_event))
-            None => ()
-          }
-      }
-      match host_event {
-        @host.HostEvent::Resized(_) | @host.HostEvent::RedrawRequested => ()
-        _ =>
-          match self.session {
-            Some(session) =>
-              if session.take_redraw_requested() || session.redraw_requested() {
-                match self.window {
-                  Some(window) => window.request_redraw()
-                  None => ()
-                }
-              }
-            None => ()
-          }
-      }
-    }
+    Some(host_event) => self.dispatch_host_event(host_event)
     None => ()
+  }
+}
+
+///|
+fn AndroidEmbeddedRuntimeBackend::dispatch_host_event(
+  self : AndroidEmbeddedRuntimeBackend,
+  host_event : @host.HostEvent,
+) -> Unit {
+  match host_event {
+    @host.HostEvent::Pointer(pointer) => {
+      match self.session {
+        Some(session) => ignore(session.dispatch(host_event))
+        None => ()
+      }
+      self.last_pointer = pointer.position
+    }
+    @host.HostEvent::Resized(metrics) =>
+      match self.session {
+        Some(session) => ignore(session.resize(metrics))
+        None => ()
+      }
+    @host.HostEvent::RedrawRequested =>
+      match self.session {
+        Some(session) => {
+          ignore(session.render_frame())
+          self.frames_presented = self.frames_presented + 1
+        }
+        None => ()
+      }
+    _ =>
+      match self.session {
+        Some(session) => ignore(session.dispatch(host_event))
+        None => ()
+      }
+  }
+  match host_event {
+    @host.HostEvent::Resized(_) | @host.HostEvent::RedrawRequested => ()
+    _ =>
+      match self.session {
+        Some(session) =>
+          if session.take_redraw_requested() || session.redraw_requested() {
+            match self.window {
+              Some(window) => window.request_redraw()
+              None => ()
+            }
+          }
+        None => ()
+      }
   }
 }
 
@@ -249,10 +261,24 @@ pub impl @window_android.ApplicationHandler for AndroidEmbeddedRuntimeBackend wi
   _id,
   event,
 ) {
-  match event {
-    @window_core.WindowEvent::CloseRequested => event_loop.exit()
-    @window_core.WindowEvent::RedrawRequested => {
-      self.dispatch_window_event(event)
+  let (scale_factor, surface_size) = match self.window {
+    Some(window) => (window.scale_factor(), Some(window.inner_size()))
+    None => (1.0, None)
+  }
+  match
+    @platform_bridge.transform_cross_platform_event(
+      event,
+      scale_factor~,
+      surface_size~,
+    ) {
+    @platform_bridge.TransformedWindowEvent::CloseRequested => {
+      self.dispatch_host_event(@host.HostEvent::CloseRequested)
+      event_loop.exit()
+    }
+    @platform_bridge.TransformedWindowEvent::DispatchHostEvent(host_event) =>
+      self.dispatch_host_event(host_event)
+    @platform_bridge.TransformedWindowEvent::WindowRedrawRequired => {
+      self.dispatch_host_event(@host.HostEvent::RedrawRequested)
       match self.auto_exit_after_frames {
         Some(limit) => if self.frames_presented >= limit { event_loop.exit() }
         None => ()
