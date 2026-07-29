@@ -250,6 +250,7 @@ fn desktop_screen(
     MenuBarMenu(menu) =>
       layers.push(menu_bar_popup(model, menu, palette, theme, width, height))
     Launcher => layers.push(app_launcher(model, palette, theme, width, height))
+    Spotlight => layers.push(spotlight(model, palette, theme, width, height))
     ControlCenter =>
       layers.push(control_center(model, palette, theme, width, height))
     NotificationCenter =>
