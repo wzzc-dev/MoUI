@@ -216,7 +216,7 @@ fn create_renderer(
     host_renderer_from_sun(
       @sun_renderer.create_with_present_target(
         renderer_metrics_from_host(metrics),
-        windows_sun_present_target(window.window_handle(), metrics),
+        windows_sun_present_target(window.native_window_handle(), metrics),
         async_image_loading=true,
       ),
     ),
