@@ -19,14 +19,13 @@ color change through these layers before editing:
    - `from_seed` derives the full on*/container matrix: `on_primary` is white on
      dark primaries, near-black on light primaries (luminance threshold 0.55).
 
-2. **Component tokens** — `@core.ComponentThemes.button : ButtonTheme`
-   (`moui/core/theme_components.mbt`, `moui/core/theme_resolver.mbt`).
-   Ownership note (S1): these token structs stay on `@core.Theme.components`
-   so resolvers and `moui_theme` can project without `core → views`. App-facing
-   one-shot styles remain `@views.ButtonStyle` / variant helpers. See
-   `docs/plans/active/core-component-theme-to-views.md`.
-   - `minimal_components()` builds the default `ButtonTheme` from the palette.
-     Each variant (`primary`/`tonal`/`outline`/`ghost`/`subtle`/`subtle_brand`)
+2. **Component tokens** — `@views.ControlThemeSet.button : ButtonTheme`
+   (`moui/views/control_theme_tokens.mbt`, `moui/views/control_theme_resolver.mbt`).
+   Per ADR 0017, these token structs live in `moui/views` as `ControlThemeSet`;
+   `core` carries no control vocabulary. App-facing one-shot styles remain
+   `@views.ButtonStyle` / variant helpers.
+   - `minimal_control_theme_set(theme)` builds the default `ControlThemeSet` from
+     the palette. Each variant (`primary`/`tonal`/`outline`/`ghost`/`subtle`/`subtle_brand`)
      is a `ControlStateTokens` (foreground/background/border/border_width/radius).
    - `ButtonTheme` also carries `state_layer : StateLayerTokens` (color +
      hover/focus/pressed/dragged/selected/disabled alphas). Minimal state layer
@@ -36,7 +35,7 @@ color change through these layers before editing:
      differentiates `subtle`/`subtle_brand` and adds brand-stroke borders.
 
 3. **State resolution** — `ButtonTheme::resolve(variant, state)`
-   (`moui/core/theme_components.mbt`).
+   (`moui/views/control_theme_tokens.mbt`).
    - Normal state = `variant_tokens.resolve()` (tokens → `ControlStateStyle`).
    - Hovered/Pressed/Focused = normal with a state-layer wash blended onto the
      background via `state_layer_background(base, layer_color, alpha)`. When the
@@ -52,7 +51,7 @@ color change through these layers before editing:
    called by `button` (`moui/views/button.mbt`).
    - `resolved_style = style? | variant.style(resolved_theme)` — an explicit
      `style=` argument is a one-shot override; otherwise the variant resolves
-     from `theme.components.button` (layer 2/3).
+     from `control_set.button` (layer 2/3).
    - `variant.style(theme)` (`moui/views/style_api.mbt`) maps
      `ButtonVariant` → `ButtonVariantToken` → `ButtonTheme::resolve`.
    - Theme is resolved ambient-ly: `theme.unwrap_or(ctx.environment.theme)` at
@@ -108,7 +107,7 @@ let style : @views.ButtonStyle = {
 button("Label", on_click=Msg, variant=@views.ButtonVariant::Primary, theme~, style~, width=104.0)
 ```
 
-`ControlStateStyle` is `pub(all)` in `@core` and re-exported through `@views`.
+`ControlStateStyle` is `pub(all)` in `@views` (ADR 0017).
 App packages construct it via `@views.new_control_state_style(...)`.
 `ButtonStyle` is `pub struct` (field-private); construct via
 `ButtonStyle::new(...)` or factory methods (`::filled`, `::tonal`, etc.),
@@ -117,34 +116,37 @@ and modify via `with_xxx(...)` methods (Flutter `copyWith` pattern).
 ### Strategy B — Theme-level component override (global to one app)
 
 Use when every Primary button in an app should change. Override
-`theme.components.button.primary` once where the theme is built and pass the
-patched theme to every control. This keeps the state-layer hover/press model
-intact — only the normal token changes, hover/press are still derived.
+`control_set.button.primary` once where the control set is built and pass the
+patched `ControlThemeSet` alongside the `Theme`. This keeps the state-layer
+hover/press model intact — only the normal token changes, hover/press are
+still derived.
 
 ```moonbit
-fn showcase_theme(base : @moui.Theme) -> @moui.Theme {
-  let palette = base.palette
+fn showcase_control_set(theme : @core.Theme) -> @views.ControlThemeSet {
+  let palette = theme.palette
   let gray_fill = palette.foreground.lerp(palette.surface, 0.55)
+  let base = @views.minimal_control_theme_set(theme)
   let button = {
-    ..base.components.button,
-    primary: @core.ControlStateTokens::new(
+    ..base.button,
+    primary: @views.ControlStateTokens::new(
       foreground=@core.Color::white(),
       background=gray_fill,
       border=gray_fill,
       border_width=0.0,
-      radius=base.radius_scale.md,
+      radius=theme.radius_scale.md,
     ),
   }
-  base.with_components({ ..base.components, button })
+  { ..base, button }
 }
 
 // In the app's view:
-let theme = showcase_theme(@views.light_theme())
+let theme = @views.light_theme()
+let control_set = showcase_control_set(theme)
 ```
 
-`ComponentThemes`, `ButtonTheme`, `ControlStateTokens`, and `StateLayerTokens`
-are all `pub(all)` in `@core`, so app packages can read `base.components` and
-rebuild it with struct-spread (`{ ..base.components, button }`).
+`ControlThemeSet`, `ButtonTheme`, `ControlStateTokens`, and `StateLayerTokens`
+are all in `@views`, so app packages can read `control_set.button` and
+rebuild it with struct-spread (`{ ..control_set, button }`).
 
 ### Strategy C — Palette seed override (changes primary everywhere)
 
@@ -216,8 +218,8 @@ uniformly.
   one app's button color is almost always wrong.** Those are framework files
   affecting every app. Use Strategy A or B in the app package instead.
 - **`ButtonStyle::filled/tonal/outline/ghost` are legacy helpers** that bypass
-  `theme.components.button`. They still work as `style=` bases but do not track
-  branded component tokens. Prefer patching `theme.components.button` (Strategy
+  `control_set.button`. They still work as `style=` bases but do not track
+  branded component tokens. Prefer patching `control_set.button` (Strategy
   B) for consistency with branded design systems.
 - **Hover/press are derived, not stored.** `ButtonTheme::resolve` computes them
   from the normal token + `state_layer`. If you patch `primary` via Strategy B,

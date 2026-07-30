@@ -82,12 +82,10 @@ renderers consume `DrawCommand` only.
 
 - Active members: `moon.work` (see generated `docs/repository-facts.md`).
 - Do not list `./openseek` in `moon.work` by default.
-- Local `./window/modules/window*` members: the Provider Phase E migration
-  keeps them as an explicit temporary exception while registered package
-  consumers are proven. On Phase E close-out, run
-  `sh scripts/window-dev-mode.sh off` and the package-consumer checks before
-  removing this exception. Outside that window, enable local source only when
-  intentionally editing `window`.
+- Local `./window/modules/window*` members: enable local source only when
+  intentionally editing `window` (`sh scripts/window-dev-mode.sh on`).
+  Outside that window, keep `./window` out of `moon.work`.
+  `checks/window-dependency-exception.txt` gates committed local-window forms.
 
 ## Where to go next
 

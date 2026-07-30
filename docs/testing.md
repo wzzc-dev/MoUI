@@ -37,6 +37,8 @@ node scripts/validate-harness-invariants.mjs
 node scripts/validate-maintenance-baseline.mjs
 node scripts/validate-renderer-provider-open-extension.mjs
 node scripts/validate-platform-adapter-duplication.mjs
+node scripts/validate-core-theme-no-control-surface.mjs
+node scripts/validate-host-import-baseline.mjs
 moon run tools/moui/validate_source_file_policy --target native
 node scripts/check-website-docs.mjs
 node scripts/validate-renderer-provider-manifests.mjs

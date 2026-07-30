@@ -14,9 +14,9 @@ Mechanization batch1 (done): `docs/plans/done/harness-mechanize-invariants-batch
 |---|-----------|-----------|-----------|
 | P1 | App logic goes in `examples/<name>/app`; platform entrypoints are thin wiring | `validate-harness-invariants.mjs` (pr) | root `app.mbt` demos without `app/` package (e.g. agent_counter) |
 | P2 | New built-in controls go in `moui/views` as concrete `@core.ViewNode` implementations constructed with `@core.View::from_node`; do not add core enum variants | `validate-harness-invariants.mjs` (pr) | devtools-only controls |
-| P3 | Cross-runtime protocols + value types go in `moui/core` | code review | none |
+| P3 | Cross-runtime protocols + value types go in `moui/core`. Core carries no control vocabulary (ADR 0017); control theme tokens (`ButtonTheme`, `ControlStateTokens`, …) live in `moui/views` as `ControlThemeSet`. | `validate-core-theme-no-control-surface.mjs` | none |
 | P4 | Runtime lifecycle, element/layout/render tree execution go in `moui/runtime` | code review | none |
-| P5 | Host service contracts go in `moui/backend/host`; concrete platform behavior in platform backends | code review | none |
+| P5 | Host service contracts go in `moui/backend/host` (ADR 0018: contracts only — `HostRuntimeDriver`, `RedrawScheduler`, `HostWallClock` moved to `moui/runtime`; render completion moved to `moui/render`); concrete platform behavior in platform backends | `validate-host-import-baseline.mjs` | none |
 | P6 | Renderer implementation and provider-ID capability reporting go in `moui/render/*`; platform composition roots own `RendererProviderBinding` assembly, while `RendererBackendKind` is diagnostic metadata only | `validate-renderer-provider-open-extension.mjs` + code review | none |
 | P10 | Neutral close/focus/resize/scale/redraw/surface lifecycle and logical-coordinate conversion go through `moui/backend/platform_bridge`; native pointer/keyboard/IME/drag decode stays platform-local | `validate-platform-adapter-duplication.mjs` (pr) | WeChat `direct-canvas-callback`, validated without a `WindowEvent` import |
 | P7 | Native Skia binding ownership + FFI borrow rules go in `moui_skia` | code review | none |
@@ -69,7 +69,7 @@ minimal_components/minimal_state_layer → ButtonVariant::style/to_token →
 ButtonStyle::filled/tonal/outline/ghost/control_state → button/button_control paint
 ```
 
-Files involved: `moui/core/theme.mbt`, `moui/core/theme_components.mbt`, `moui/core/theme_resolver.mbt`, `moui/views/style_api.mbt`, `moui/views/control_style.mbt`, `moui/views/button.mbt`, `moui/views/control_primitives.mbt`.
+Files involved: `moui/core/theme.mbt` (neutral palette/spacing/typography only — no `components` field per ADR 0017), `moui/views/control_theme_tokens.mbt`, `moui/views/control_theme_set.mbt`, `moui/views/control_theme_resolver.mbt`, `moui/views/style_api.mbt`, `moui/views/control_style.mbt`, `moui/views/button.mbt`, `moui/views/control_primitives.mbt`.
 Prefer app-level overrides over framework edits.
 
 ## Pre-push Validation
@@ -79,6 +79,10 @@ Prefer app-level overrides over framework edits.
 | `node scripts/validate-maintenance-baseline.mjs` | every commit |
 | `node scripts/validate-api-surface.mjs` | every commit |
 | `node scripts/validate-guidance-consistency.mjs` | every commit |
+| `node scripts/validate-core-theme-no-control-surface.mjs` | every commit |
+| `node scripts/validate-host-import-baseline.mjs` | every commit |
+| `node scripts/validate-renderer-provider-open-extension.mjs` | renderer changes |
+| `node scripts/validate-platform-adapter-duplication.mjs` | platform/backend changes |
 | `moon check <package>` | during editing |
 | `moon test <package> --target native` | during editing |
 | `sh scripts/check.sh --profile daily` | before pushing core/view/render/backend changes |
