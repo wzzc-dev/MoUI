@@ -82,7 +82,7 @@ pub fn wechat_canvas_create_renderer(
         ),
         bound,
       )
-    None => fail("WeChat Canvas2D binding rejected its canvas surface")
+    None => abort("WeChat Canvas2D binding rejected its canvas surface")
   }
 }
 
