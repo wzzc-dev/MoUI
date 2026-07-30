@@ -347,22 +347,22 @@ pub fn AppRuntime::size(self : AppRuntime) -> @core.Size {
 
 ///|
 pub fn AppRuntime::needs_redraw(self : AppRuntime) -> Bool {
-  self.state.needs_redraw
+  self.state.dirty.needs_redraw
 }
 
 ///|
 pub fn AppRuntime::needs_rebuild(self : AppRuntime) -> Bool {
-  self.state.needs_rebuild
+  self.state.dirty.needs_rebuild
 }
 
 ///|
 pub fn AppRuntime::needs_layout(self : AppRuntime) -> Bool {
-  self.state.needs_layout
+  self.state.dirty.needs_layout
 }
 
 ///|
 pub fn AppRuntime::needs_paint(self : AppRuntime) -> Bool {
-  self.state.needs_paint
+  self.state.dirty.needs_paint
 }
 
 ///|

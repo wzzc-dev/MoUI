@@ -102,14 +102,14 @@ fn RuntimeState::apply_targeted_event_result(
     None => ()
   }
   if result.captured {
-    self.active_pointer_capture = match result.capture_target {
+    self.animfocus.active_pointer_capture = match result.capture_target {
       Some(target) => Some(target)
       None => result.focused
     }
   }
-  self.needs_redraw = self.needs_redraw || result.changed
-  self.needs_rebuild = self.needs_rebuild || result.activated
-  self.needs_paint = self.needs_paint || result.changed
+  self.dirty.needs_redraw = self.dirty.needs_redraw || result.changed
+  self.dirty.needs_rebuild = self.dirty.needs_rebuild || result.activated
+  self.dirty.needs_paint = self.dirty.needs_paint || result.changed
   if result.changed || result.activated {
     self.mark_current_dirty_elements()
     self.mark_semantics_dirty(self.element_tree.id())

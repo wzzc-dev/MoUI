@@ -93,9 +93,9 @@ test "platform-only declaration rebuild updates PlatformTree without paint or re
   inspect(right_platform_calls.get(), content="1")
   inspect(left_paint_calls.get(), content="1")
   inspect(right_paint_calls.get(), content="1")
-  runtime.needs_redraw = false
-  runtime.rebuild_wakeup_redraw = false
-  let paint_passes = runtime.paint_pass_count
+  runtime.dirty.needs_redraw = false
+  runtime.dirty.rebuild_wakeup_redraw = false
+  let paint_passes = runtime.stats.paint_pass_count
 
   source.set("after")
   let frame = runtime.build_draw_frame()
@@ -103,13 +103,13 @@ test "platform-only declaration rebuild updates PlatformTree without paint or re
   inspect(frame.platform_views.length(), content="2")
   inspect(frame.platform_views[0].property_or("source", ""), content="after")
   inspect(frame.platform_views[1].property_or("source", ""), content="stable")
-  inspect(runtime.paint_pass_count == paint_passes, content="true")
+  inspect(runtime.stats.paint_pass_count == paint_passes, content="true")
   inspect(left_paint_calls.get(), content="1")
   inspect(right_paint_calls.get(), content="1")
   inspect(left_platform_calls.get(), content="2")
   inspect(right_platform_calls.get(), content="1")
-  inspect(runtime.needs_redraw, content="false")
-  inspect(runtime.dirty_platform_elements.length(), content="0")
+  inspect(runtime.dirty.needs_redraw, content="false")
+  inspect(runtime.dirty.dirty_platform_elements.length(), content="0")
   inspect(runtime.dirty_count(), content="0")
 
   ignore(runtime.build_draw_frame())

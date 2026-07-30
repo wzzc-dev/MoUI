@@ -26,6 +26,12 @@ pub(open) trait ViewNode {
   fn flex_weight(Self) -> Double = _
 }
 
+// Future: when MoonBit supports blanket trait impls, decompose ViewNode into
+// finer-grained traits: LayoutNode (identity, declaration, child_constraints,
+// child_environment, child_style, layout, flex_weight), PaintNode (paint),
+// SemanticsViewNode (semantics), FocusNode (focusable). This lets new controls
+// implement only what they need. For now, all 14 methods live on ViewNode.
+
 ///|
 impl ViewNode with fn declaration(_self) {
   ViewDeclaration::uncacheable()
