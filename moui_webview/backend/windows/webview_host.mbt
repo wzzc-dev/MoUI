@@ -88,7 +88,7 @@ pub fn sync_windows_platform_views(
   window : @win.Window,
   frame : @core.DrawFrame,
 ) -> Unit {
-  let hwnd = window.window_handle()
+  let hwnd = window.native_window_handle()
   windows_webview_platform_views_begin(hwnd)
   for placement in frame.platform_views {
     if placement.kind == "web_view" {
@@ -114,7 +114,7 @@ pub fn sync_windows_platform_views(
 
 ///|
 pub fn dispose_windows_platform_views(window : @win.Window) -> Unit {
-  windows_webview_platform_views_dispose(window.window_handle())
+  windows_webview_platform_views_dispose(window.native_window_handle())
 }
 
 ///|
@@ -122,7 +122,7 @@ pub fn drain_windows_webview_commands(
   window : @win.Window,
   queue : @host.HostWebViewCommandQueue,
 ) -> Int {
-  let hwnd = window.window_handle()
+  let hwnd = window.native_window_handle()
   queue.drain_with_handler(command => {
     let (kind, text, detail) = @host.webview_encode_native_command(
       command.command,
