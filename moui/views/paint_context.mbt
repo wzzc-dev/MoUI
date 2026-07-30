@@ -1,6 +1,5 @@
 ///|
-/// Drawing context that collects `DrawCommand`s internally.
-/// Users call methods instead of constructing `DrawCommand` variants directly.
+/// Users call methods instead of constructing `DrawCommand` variants directly./// Drawing context that collects `DrawCommand`s internally.
 struct PaintContext {
   commands : Array[@core.DrawCommand]
 }
