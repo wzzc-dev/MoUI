@@ -36,6 +36,8 @@ Copy `TEMPLATE.md` and fill in all sections. Keep it concise.
 | 0016 | [Declaration invalidation and committed Agent semantics](0016-declaration-invalidation-and-committed-agent-semantics.md) | 2026-07-27 | Accepted |
 | 0015 | [Public object-safe ViewNode with typed View adapters](0015-public-view-node-trait.md) | 2026-07-26 | Accepted |
 | 0014 | [Core owns value types; domain packages are facades only](0014-core-owns-domain-facades.md) | 2026-07-16 | Accepted |
+| 0013 | [Showcase unified shell](0013-showcase-unified-shell.md) | 2026-07-16 | Accepted |
+| 0012 | [Showcase consolidation and moui_cli quick start](0012-showcase-consolidation-and-moui-cli-quickstart.md) | 2026-07-16 | Accepted |
 | 0011 | [Platform product class and mobile readiness](0011-platform-product-class-and-mobile-readiness.md) | 2026-07-16 | Accepted |
 | 0009 | [DrawFrame clear ownership and Skia damage clipping](0009-draw-frame-clear-and-skia-damage-clip.md) | 2026-07-14 | Accepted |
 | 0008 | [MoonBit-native browser Playground](0008-moonbit-native-playground.md) | 2026-07-13 | Accepted |
