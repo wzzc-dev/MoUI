@@ -90,7 +90,7 @@ fn create_renderer(
     host_renderer_from_wgpu(
       @wgpu_renderer.create_with_host_surface_and_text_engine(
         renderer_metrics_from_host(metrics),
-        create_windows_host_surface(window.window_handle()),
+        create_windows_host_surface(window.native_window_handle()),
         text_engine=windows_text_engine(options.text_engine),
       ),
     ),

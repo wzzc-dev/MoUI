@@ -670,7 +670,7 @@ fn WindowsNativeHostBackend::redraw_window(
       let frame = runtime_slot.driver.draw_frame()
       let result = platform_slot.renderer.render_frame(frame)
       let present_completions = platform_slot.renderer.drain_present_completions()
-      let handle = platform_slot.window.window_handle()
+      let handle = platform_slot.window.native_window_handle()
       for plugin in self.platform_view_plugins {
         (plugin.sync_platform_views)(handle, frame, 0.0)
         (plugin.drain_commands)(handle)
@@ -754,7 +754,7 @@ fn WindowsNativeHostBackend::platform_view_host_id(
   native_window : UInt64,
 ) -> @host.HostWindowId? {
   for slot in self.platform_slots.slots {
-    if slot.window.window_handle() == native_window {
+    if slot.window.native_window_handle() == native_window {
       return Some(slot.host_id)
     }
   }
@@ -1245,7 +1245,7 @@ fn WindowsNativeHostBackend::dispose_window(
   ignore(self.platform_windows.remove_host(window_id))
   match self.platform_slots.remove_host(window_id) {
     Some(slot) => {
-      let handle = slot.window.window_handle()
+      let handle = slot.window.native_window_handle()
       for plugin in self.platform_view_plugins {
         (plugin.dispose_platform_views)(handle)
       }
