@@ -46,7 +46,7 @@ fn RuntimeState::dispatch_focused_text_command(
   intent : CommandIntent,
   paste_text? : String? = None,
 ) -> TextCommandResult {
-  match self.focused_element {
+  match self.animfocus.focused_element {
     Some(target) => {
       let outcome = self.element_tree.root.dispatch_text_command(
         target,
@@ -57,9 +57,9 @@ fn RuntimeState::dispatch_focused_text_command(
       )
       let result = outcome.result
       if result.changed {
-        self.needs_redraw = true
-        self.needs_rebuild = true
-        self.needs_paint = true
+        self.dirty.needs_redraw = true
+        self.dirty.needs_rebuild = true
+        self.dirty.needs_paint = true
         self.mark_build_dirty(self.element_tree.id())
       }
       self.deliver_messages(outcome.deliveries)
@@ -81,25 +81,25 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
       // animating, keep paint + redraw dirty so the host ticks another frame;
       // once every animation settles (`active_animations` flips false) this
       // becomes a passive clock update with no extra redraw.
-      self.now_ms = frame.time_ms
-      if self.active_animations {
-        self.needs_paint = true
-        self.needs_redraw = true
+      self.animfocus.now_ms = frame.time_ms
+      if self.animfocus.active_animations {
+        self.dirty.needs_paint = true
+        self.dirty.needs_redraw = true
         self.mark_dirty(self.element_tree.id())
       }
     }
     Resize(size) => {
       self.size = size
-      self.needs_rebuild = self.element_tree.root.mark_component_tree_build_dirty()
-      self.needs_redraw = true
-      self.needs_layout = true
-      self.needs_paint = true
+      self.dirty.needs_rebuild = self.element_tree.root.mark_component_tree_build_dirty()
+      self.dirty.needs_redraw = true
+      self.dirty.needs_layout = true
+      self.dirty.needs_paint = true
       self.element_tree.root.mark_subtree_layout_dirty()
       self.mark_build_dirty(self.element_tree.id())
     }
     Redraw(_) => {
-      self.needs_redraw = false
-      self.rebuild_wakeup_redraw = false
+      self.dirty.needs_redraw = false
+      self.dirty.rebuild_wakeup_redraw = false
     }
     Pointer(event) => ignore(self.dispatch_pointer_event(event))
     Keyboard(event) => {
@@ -109,9 +109,9 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
         text_system=self.text_system,
       )
       if shortcut.changed || shortcut.activated {
-        self.needs_redraw = self.needs_redraw || shortcut.changed
-        self.needs_rebuild = self.needs_rebuild || shortcut.activated
-        self.needs_paint = self.needs_paint || shortcut.changed
+        self.dirty.needs_redraw = self.dirty.needs_redraw || shortcut.changed
+        self.dirty.needs_rebuild = self.dirty.needs_rebuild || shortcut.activated
+        self.dirty.needs_paint = self.dirty.needs_paint || shortcut.changed
         self.mark_current_dirty_elements()
         if shortcut.activated {
           self.request_activation_rebuild()
@@ -122,7 +122,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
         self.request_activation_rebuild()
       } else if event.pressed && event.key == "Tab" {
         self.deliver_messages(shortcut.deliveries)
-        match self.focused_element {
+        match self.animfocus.focused_element {
           Some(target) => {
             let constrained_target = self.element_tree.root.constrained_focus_target(
               Some(target),
@@ -137,9 +137,9 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
                 environment=self.environment,
                 text_system=self.text_system,
               )
-              self.needs_redraw = self.needs_redraw || result.changed
-              self.needs_rebuild = self.needs_rebuild || result.activated
-              self.needs_paint = self.needs_paint || result.changed
+              self.dirty.needs_redraw = self.dirty.needs_redraw || result.changed
+              self.dirty.needs_rebuild = self.dirty.needs_rebuild || result.activated
+              self.dirty.needs_paint = self.dirty.needs_paint || result.changed
               if result.changed || result.activated {
                 self.mark_current_dirty_elements()
               }
@@ -155,7 +155,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
         }
       } else {
         self.deliver_messages(shortcut.deliveries)
-        match self.focused_element {
+        match self.animfocus.focused_element {
           Some(target) => {
             let result = self.element_tree.root.dispatch_keyboard(
               target,
@@ -163,9 +163,9 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
               environment=self.environment,
               text_system=self.text_system,
             )
-            self.needs_redraw = self.needs_redraw || result.changed
-            self.needs_rebuild = self.needs_rebuild || result.activated
-            self.needs_paint = self.needs_paint || result.changed
+            self.dirty.needs_redraw = self.dirty.needs_redraw || result.changed
+            self.dirty.needs_rebuild = self.dirty.needs_rebuild || result.activated
+            self.dirty.needs_paint = self.dirty.needs_paint || result.changed
             if result.changed || result.activated {
               self.mark_current_dirty_elements()
             }
@@ -179,7 +179,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
       }
     }
     TextInput(event) =>
-      match self.focused_element {
+      match self.animfocus.focused_element {
         Some(target) => {
           let result = self.element_tree.root.dispatch_text_input(
             target,
@@ -187,9 +187,9 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
             environment=self.environment,
             text_system=self.text_system,
           )
-          self.needs_redraw = self.needs_redraw || result.changed
-          self.needs_rebuild = self.needs_rebuild || result.activated
-          self.needs_paint = self.needs_paint || result.changed
+          self.dirty.needs_redraw = self.dirty.needs_redraw || result.changed
+          self.dirty.needs_rebuild = self.dirty.needs_rebuild || result.activated
+          self.dirty.needs_paint = self.dirty.needs_paint || result.changed
           if result.changed || result.activated {
             self.mark_current_dirty_elements()
           }
@@ -205,9 +205,9 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
         event,
         self.render_tree.root,
       )
-      self.needs_redraw = self.needs_redraw || result.changed
-      self.needs_rebuild = self.needs_rebuild || result.activated
-      self.needs_paint = self.needs_paint || result.changed
+      self.dirty.needs_redraw = self.dirty.needs_redraw || result.changed
+      self.dirty.needs_rebuild = self.dirty.needs_rebuild || result.activated
+      self.dirty.needs_paint = self.dirty.needs_paint || result.changed
       if result.changed || result.activated {
         self.mark_current_dirty_elements()
       }
@@ -224,9 +224,9 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
         text_system=self.text_system,
       )
       if result.changed || result.activated || result.captured {
-        self.needs_rebuild = true
-        self.needs_redraw = true
-        self.needs_paint = true
+        self.dirty.needs_rebuild = true
+        self.dirty.needs_redraw = true
+        self.dirty.needs_paint = true
         self.mark_current_dirty_elements()
         self.request_activation_rebuild()
       }
@@ -238,11 +238,11 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
 
 ///|
 fn RuntimeState::commit_focus(self : RuntimeState, next : ElementId?) -> Bool {
-  let previous = self.focused_element
+  let previous = self.animfocus.focused_element
   if previous == next {
     return false
   }
-  self.focused_element = next
+  self.animfocus.focused_element = next
   match previous {
     Some(id) => {
       self.mark_dirty(id)
@@ -269,13 +269,13 @@ fn RuntimeState::dispatch_pointer_event(
   event : PointerEvent,
 ) -> InputDispatchResult {
   self.ensure_render_tree()
-  let release_pointer = match self.active_pointer_capture {
+  let release_pointer = match self.animfocus.active_pointer_capture {
     Some(_) =>
       event.phase == PointerPhase::Up || event.phase == PointerPhase::Cancel
     None => false
   }
   if event.phase == PointerPhase::Down {
-    let previous_focus = self.focused_element
+    let previous_focus = self.animfocus.focused_element
     let candidate_focus = self.element_tree.root.find_focusable_at(
       event.position,
       self.render_tree.root,
@@ -289,7 +289,7 @@ fn RuntimeState::dispatch_pointer_event(
       ),
     )
   }
-  let result = match self.active_pointer_capture {
+  let result = match self.animfocus.active_pointer_capture {
     Some(target) =>
       if event.phase == PointerPhase::Down {
         self.element_tree.root.dispatch_pointer(
@@ -298,7 +298,7 @@ fn RuntimeState::dispatch_pointer_event(
           environment=self.environment,
           text_system=self.text_system,
           capture_lookup=false,
-          now_ms=self.now_ms,
+          now_ms=self.animfocus.now_ms,
         )
       } else {
         match
@@ -308,18 +308,18 @@ fn RuntimeState::dispatch_pointer_event(
             self.render_tree.root,
             environment=self.environment,
             text_system=self.text_system,
-            now_ms=self.now_ms,
+            now_ms=self.animfocus.now_ms,
           ) {
           Some(result) => result
           None => {
-            self.active_pointer_capture = None
+            self.animfocus.active_pointer_capture = None
             self.element_tree.root.dispatch_pointer(
               event,
               self.render_tree.root,
               environment=self.environment,
               text_system=self.text_system,
               capture_lookup=false,
-              now_ms=self.now_ms,
+              now_ms=self.animfocus.now_ms,
             )
           }
         }
@@ -331,7 +331,7 @@ fn RuntimeState::dispatch_pointer_event(
         environment=self.environment,
         text_system=self.text_system,
         capture_lookup=false,
-        now_ms=self.now_ms,
+        now_ms=self.animfocus.now_ms,
       )
   }
   // Views can claim focus from the pointer handler (e.g. picker popup
@@ -346,14 +346,14 @@ fn RuntimeState::dispatch_pointer_event(
     // focusable hit target so the matching Up reaches the same element even
     // if browser focus/semantics updates repaint the tree between DOM events.
     // A control with an explicit local capture keeps precedence.
-    self.active_pointer_capture = match
+    self.animfocus.active_pointer_capture = match
       self.element_tree.root.active_pointer_capture_id(PointerPhase::Move) {
       Some(target) => Some(target)
       None =>
         if result.captured {
           match result.capture_target {
             Some(target) => Some(target)
-            None => self.focused_element
+            None => self.animfocus.focused_element
           }
         } else {
           None
@@ -361,11 +361,11 @@ fn RuntimeState::dispatch_pointer_event(
     }
   } else if event.phase == PointerPhase::Up ||
     event.phase == PointerPhase::Cancel {
-    self.active_pointer_capture = None
+    self.animfocus.active_pointer_capture = None
   }
-  self.needs_redraw = self.needs_redraw || result.changed
-  self.needs_rebuild = self.needs_rebuild || result.activated
-  self.needs_paint = self.needs_paint || result.changed
+  self.dirty.needs_redraw = self.dirty.needs_redraw || result.changed
+  self.dirty.needs_rebuild = self.dirty.needs_rebuild || result.activated
+  self.dirty.needs_paint = self.dirty.needs_paint || result.changed
   if result.changed || result.activated {
     self.mark_current_dirty_elements()
   }
@@ -395,7 +395,7 @@ fn RuntimeState::move_focus(
   reverse? : Bool = false,
 ) -> Bool {
   self.ensure_render_tree()
-  let previous_focus = self.focused_element
+  let previous_focus = self.animfocus.focused_element
   let next_focus = self.element_tree.root.next_focus(
     current=previous_focus,
     reverse~,
@@ -408,7 +408,7 @@ fn RuntimeState::focus_key(self : RuntimeState, key : String) -> Bool {
   self.ensure_render_tree()
   match self.element_tree.root.focusable_key_target(key) {
     Some(target) => {
-      let previous_focus = self.focused_element
+      let previous_focus = self.animfocus.focused_element
       let constrained = self.element_tree.root.constrained_focus_target(
         Some(target),
         current=previous_focus,
@@ -431,10 +431,10 @@ fn RuntimeState::advance_time(self : RuntimeState, time_ms : Double) -> Unit {
 
 ///|
 fn RuntimeState::clear_stale_pointer_capture(self : RuntimeState) -> Unit {
-  match self.active_pointer_capture {
+  match self.animfocus.active_pointer_capture {
     Some(target) =>
       if !self.element_tree.root.contains_element_id(target) {
-        self.active_pointer_capture = None
+        self.animfocus.active_pointer_capture = None
       }
     None => ()
   }

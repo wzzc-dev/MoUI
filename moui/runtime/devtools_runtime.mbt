@@ -66,18 +66,18 @@ fn runtime_inspector_snapshot_from_state(
 ) -> RuntimeInspectorSnapshot {
   let dirty_count = state.dirty_count()
   let dirty_element_ids = state.dirty_element_ids().map(id => id.value())
-  let dirty_build_element_ids = state.dirty_build_elements.map(id => id.value())
-  let dirty_layout_element_ids = state.dirty_layout_elements.map(id => {
+  let dirty_build_element_ids = state.dirty.dirty_build_elements.map(id => id.value())
+  let dirty_layout_element_ids = state.dirty.dirty_layout_elements.map(id => {
     id.value()
   })
-  let dirty_paint_element_ids = state.dirty_paint_elements.map(id => id.value())
+  let dirty_paint_element_ids = state.dirty.dirty_paint_elements.map(id => id.value())
   let dirty_build_count = dirty_build_element_ids.length()
   let dirty_layout_count = dirty_layout_element_ids.length()
   let dirty_paint_count = dirty_paint_element_ids.length()
-  let needs_rebuild = state.needs_rebuild
-  let needs_layout = state.needs_layout
-  let needs_paint = state.needs_paint
-  let needs_redraw = state.needs_redraw
+  let needs_rebuild = state.dirty.needs_rebuild
+  let needs_layout = state.dirty.needs_layout
+  let needs_paint = state.dirty.needs_paint
+  let needs_redraw = state.dirty.needs_redraw
   let rebuild_reason = state.inspector_rebuild_reason()
   let dirty_reasons = state.inspector_dirty_reasons()
   let dirty_state = RuntimeDirtyStateSummary::{
@@ -100,11 +100,11 @@ fn runtime_inspector_snapshot_from_state(
     dirty_count > 0,
     reason: rebuild_reason,
     reasons: dirty_reasons.copy(),
-    damage_kind: state.last_damage_region.kind(),
-    damage_rect_count: state.last_damage_region.rect_count(),
-    damage_full_reason: state.last_damage_region.full_reason(),
-    cache_epoch: state.cache_epoch,
-    cached_layer_count: state.known_layer_cache_keys.length(),
+    damage_kind: state.stats.last_damage_region.kind(),
+    damage_rect_count: state.stats.last_damage_region.rect_count(),
+    damage_full_reason: state.stats.last_damage_region.full_reason(),
+    cache_epoch: state.stats.cache_epoch,
+    cached_layer_count: state.stats.known_layer_cache_keys.length(),
   }
   let draw_commands = state.cached_draw_commands()
   RuntimeInspectorSnapshot::{
@@ -123,10 +123,10 @@ fn runtime_inspector_snapshot_from_state(
     needs_paint,
     needs_redraw,
     draw_command_count: draw_commands.length(),
-    rebuild_pass_count: state.rebuild_pass_count,
-    layout_pass_count: state.layout_pass_count,
-    paint_pass_count: state.paint_pass_count,
-    draw_command_build_count: state.draw_command_build_count,
+    rebuild_pass_count: state.stats.rebuild_pass_count,
+    layout_pass_count: state.stats.layout_pass_count,
+    paint_pass_count: state.stats.paint_pass_count,
+    draw_command_build_count: state.stats.draw_command_build_count,
     program_dispatched_count: program.dispatched_count,
     program_update_count: program.update_count,
     ignored_program_dispatch_count: program.ignored_program_dispatch_count,

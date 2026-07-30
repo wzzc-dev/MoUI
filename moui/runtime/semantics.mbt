@@ -96,15 +96,15 @@ fn RuntimeState::semantics_node_id_for_element(
   match element.semantics_node_id {
     Some(id) => id
     None => {
-      if self.next_semantics_node_id == 0UL ||
-        self.next_semantics_node_id == semantics_uint64_max {
+      if self.semantics.next_semantics_node_id == 0UL ||
+        self.semantics.next_semantics_node_id == semantics_uint64_max {
         // Exhausting a session identity space is terminal. Closing preserves
         // the stronger invariant that node IDs never wrap to zero or repeat.
         self.closed = true
         return SemanticsNodeId::new(0UL)
       }
-      let id = SemanticsNodeId::new(self.next_semantics_node_id)
-      self.next_semantics_node_id = self.next_semantics_node_id + 1UL
+      let id = SemanticsNodeId::new(self.semantics.next_semantics_node_id)
+      self.semantics.next_semantics_node_id = self.semantics.next_semantics_node_id + 1UL
       element.semantics_node_id = Some(id)
       id
     }
@@ -228,7 +228,7 @@ fn RuntimeState::boundary_node(
     state: semantics_state_for_element(
       element,
       info,
-      self.focused_element == Some(element.id),
+      self.animfocus.focused_element == Some(element.id),
       environment,
     ),
     actions: element.view_node.semantics_action_kinds(),
@@ -317,7 +317,7 @@ fn RuntimeState::apply_semantics_overlay(
       state: overlay_state(
         current.state,
         info,
-        self.focused_element == Some(element.id),
+        self.animfocus.focused_element == Some(element.id),
         environment,
       ),
       actions,
@@ -452,7 +452,7 @@ fn RuntimeState::build_semantics_for_element(
     element.semantics_cache.matches(layout.frame, environment, style) {
     return element.semantics_cache.replay()
   }
-  self.semantics_recompute_count = self.semantics_recompute_count + 1
+  self.stats.semantics_recompute_count = self.stats.semantics_recompute_count + 1
   let info = element.view_node.semantics()
   let roots : Array[SemanticsNodeId] = if info.composition ==
     SemanticsComposition::Hidden {
@@ -654,7 +654,7 @@ fn RuntimeState::refresh_semantic_id_index(
   self : RuntimeState,
   snapshot : SemanticsSnapshot,
 ) -> Unit {
-  self.semantic_id_index.clear()
+  self.semantics.semantic_id_index.clear()
   let occurrences : Map[SemanticId, Array[SemanticsNodeId]] = Map([])
   for node in snapshot.nodes {
     match node.semantic_id {
@@ -667,7 +667,7 @@ fn RuntimeState::refresh_semantic_id_index(
     }
   }
   occurrences.each((id, nodes) => {
-    self.semantic_id_index[id] = if nodes.length() == 1 {
+    self.semantics.semantic_id_index[id] = if nodes.length() == 1 {
       Unique(nodes[0])
     } else {
       Ambiguous
@@ -677,24 +677,24 @@ fn RuntimeState::refresh_semantic_id_index(
 
 ///|
 fn RuntimeState::commit_semantics(self : RuntimeState) -> Unit {
-  if self.semantics_commit_in_progress {
+  if self.semantics.semantics_commit_in_progress {
     return
   }
-  self.semantics_commit_in_progress = true
+  self.semantics.semantics_commit_in_progress = true
   self.rebuild_if_possible()
   self.ensure_layout_tree()
   if self.closed {
-    self.semantics_commit_in_progress = false
+    self.semantics.semantics_commit_in_progress = false
     return
   }
-  if self.semantics_initialized && !self.needs_semantics {
-    self.dirty_semantics_elements.clear()
+  if self.semantics.semantics_initialized && !self.dirty.needs_semantics {
+    self.dirty.dirty_semantics_elements.clear()
     self.refresh_dirty_element_queue()
     self.settle_rebuild_wakeup()
-    self.semantics_commit_in_progress = false
+    self.semantics.semantics_commit_in_progress = false
     return
   }
-  let context = SemanticsBuildContext::from_tree(self.semantics_tree)
+  let context = SemanticsBuildContext::from_tree(self.semantics.semantics_tree)
   let roots = self.build_semantics_for_element(
     context,
     self.element_tree.root,
@@ -703,7 +703,7 @@ fn RuntimeState::commit_semantics(self : RuntimeState) -> Unit {
     ViewStyle::empty(),
   )
   if self.closed {
-    self.semantics_commit_in_progress = false
+    self.semantics.semantics_commit_in_progress = false
     return
   }
   let root = if roots.length() == 0 {
@@ -740,7 +740,7 @@ fn RuntimeState::commit_semantics(self : RuntimeState) -> Unit {
     }
   }
   let issues = semantics_duplicate_issues(nodes)
-  let previous = self.committed_semantics
+  let previous = self.semantics.committed_semantics
   let changed = !semantics_same_public_content(
     previous, root, focused, nodes, issues,
   )
@@ -748,7 +748,7 @@ fn RuntimeState::commit_semantics(self : RuntimeState) -> Unit {
     // A wrapped generation could make a stale consumer look current. Stop
     // the runtime before publishing any ambiguous snapshot instead.
     self.closed = true
-    self.semantics_commit_in_progress = false
+    self.semantics.semantics_commit_in_progress = false
     return
   }
   let generation = if changed {
@@ -759,21 +759,21 @@ fn RuntimeState::commit_semantics(self : RuntimeState) -> Unit {
   let next_tree = SemanticsTree::from_reachable(root, nodes, context.routes)
   let next = { generation, root: next_tree.root, focused, nodes, issues }
   self.refresh_semantic_id_index(next)
-  self.semantics_tree = next_tree
-  self.committed_semantics = next
-  self.semantics_initialized = true
+  self.semantics.semantics_tree = next_tree
+  self.semantics.committed_semantics = next
+  self.semantics.semantics_initialized = true
   if changed {
     let delta = semantics_delta_between(previous, next)
-    self.semantics_journal.push(delta)
-    if self.semantics_journal.length() > 64 {
-      ignore(self.semantics_journal.remove(0))
+    self.semantics.semantics_journal.push(delta)
+    if self.semantics.semantics_journal.length() > 64 {
+      ignore(self.semantics.semantics_journal.remove(0))
     }
   }
-  self.needs_semantics = false
-  self.dirty_semantics_elements.clear()
+  self.dirty.needs_semantics = false
+  self.dirty.dirty_semantics_elements.clear()
   self.refresh_dirty_element_queue()
   self.settle_rebuild_wakeup()
-  self.semantics_commit_in_progress = false
+  self.semantics.semantics_commit_in_progress = false
 }
 
 ///|
@@ -781,9 +781,9 @@ fn RuntimeState::combined_semantics_delta(
   self : RuntimeState,
   since : SemanticsGeneration,
 ) -> SemanticsDelta? {
-  let current = self.committed_semantics
+  let current = self.semantics.committed_semantics
   let mut start = -1
-  for index, delta in self.semantics_journal {
+  for index, delta in self.semantics.semantics_journal {
     if delta.from == since {
       start = index
       break
@@ -796,8 +796,8 @@ fn RuntimeState::combined_semantics_delta(
   let removed : Map[SemanticsNodeId, Bool] = Map([])
   let removed_order : Array[SemanticsNodeId] = []
   let mut expected = since
-  for index in start..<self.semantics_journal.length() {
-    let delta = self.semantics_journal[index]
+  for index in start..<self.semantics.semantics_journal.length() {
+    let delta = self.semantics.semantics_journal[index]
     if delta.from != expected {
       return None
     }
@@ -837,21 +837,21 @@ fn RuntimeState::read_semantics(
   if self.closed {
     return Err(SemanticsReadError::RuntimeClosed)
   }
-  if !self.semantics_action_dispatching && !self.semantics_commit_in_progress {
+  if !self.semantics.semantics_action_dispatching && !self.semantics.semantics_commit_in_progress {
     self.commit_semantics()
   }
   if self.closed {
     return Err(SemanticsReadError::RuntimeClosed)
   }
   match since {
-    None => Ok(Full(self.committed_semantics))
+    None => Ok(Full(self.semantics.committed_semantics))
     Some(cursor) =>
-      if cursor == self.committed_semantics.generation {
+      if cursor == self.semantics.committed_semantics.generation {
         Ok(Unchanged(cursor))
       } else {
         match self.combined_semantics_delta(cursor) {
           Some(delta) => Ok(Delta(delta))
-          None => Ok(Full(self.committed_semantics))
+          None => Ok(Full(self.semantics.committed_semantics))
         }
       }
   }
@@ -864,13 +864,13 @@ fn RuntimeState::resolve_semantics_target(
 ) -> Result[SemanticsNodeId, SemanticsActionDispatchError] {
   match target {
     BySemanticId(id) =>
-      match self.semantic_id_index.get(id) {
+      match self.semantics.semantic_id_index.get(id) {
         Some(Unique(node_id)) => Ok(node_id)
         Some(Ambiguous) => Err(TargetAmbiguous(id))
         None => Err(TargetNotFound(target))
       }
     ByNodeId(node_id) =>
-      if self.semantics_tree.nodes.contains(node_id) {
+      if self.semantics.semantics_tree.nodes.contains(node_id) {
         Ok(node_id)
       } else {
         Err(TargetNotFound(target))
@@ -922,17 +922,17 @@ fn RuntimeState::perform_semantics_action(
   if self.closed {
     return Err(SemanticsActionDispatchError::RuntimeClosed)
   }
-  if self.semantics_action_dispatching {
+  if self.semantics.semantics_action_dispatching {
     return Err(SemanticsActionDispatchError::ReentrantDispatch)
   }
-  if self.semantics_commit_in_progress {
+  if self.semantics.semantics_commit_in_progress {
     return Err(SemanticsActionDispatchError::ReentrantDispatch)
   }
   self.commit_semantics()
   if self.closed {
     return Err(SemanticsActionDispatchError::RuntimeClosed)
   }
-  let before = self.committed_semantics.generation
+  let before = self.semantics.committed_semantics.generation
   match request.precondition {
     Exact(expected) =>
       if expected != before {
@@ -944,7 +944,7 @@ fn RuntimeState::perform_semantics_action(
     Ok(node_id) => node_id
     Err(error) => return Err(error)
   }
-  let node = self.semantics_tree.nodes.get(node_id).unwrap()
+  let node = self.semantics.semantics_tree.nodes.get(node_id).unwrap()
   let kind = request.action.kind()
   if node.state.disabled {
     return Err(TargetDisabled(request.target))
@@ -952,7 +952,7 @@ fn RuntimeState::perform_semantics_action(
   if !node.actions.contains(kind) {
     return Err(ActionUnavailable(request.target, kind))
   }
-  let route = self.semantics_tree.routes
+  let route = self.semantics.semantics_tree.routes
     .get(node_id)
     .unwrap_or({ focus_element: None, actions: [] })
   match request.action {
@@ -962,12 +962,12 @@ fn RuntimeState::perform_semantics_action(
       }
       let constrained = self.element_tree.root.constrained_focus_target(
         Some(element_id),
-        current=self.focused_element,
+        current=self.animfocus.focused_element,
       )
       if constrained != Some(element_id) {
         return Err(HandlerRejected(request.target, kind))
       }
-      self.semantics_action_dispatching = true
+      self.semantics.semantics_action_dispatching = true
       self.discard_semantics_destroy_request()
       ignore(self.commit_focus(Some(element_id)))
     }
@@ -975,15 +975,15 @@ fn RuntimeState::perform_semantics_action(
       guard semantics_action_route(route, kind) is Some(action_route) else {
         return Err(HandlerRejected(request.target, kind))
       }
-      self.semantics_action_dispatching = true
+      self.semantics.semantics_action_dispatching = true
       self.discard_semantics_destroy_request()
       let outcome = action_route.element.view_node.semantics_action(
         {
           frame: action_route.layout.frame,
           child_frames: action_route.layout.children.map(child => child.frame),
-          focused: self.focused_element == Some(action_route.element.id),
+          focused: self.animfocus.focused_element == Some(action_route.element.id),
           state: action_route.element.control.view_context(
-            self.focused_element == Some(action_route.element.id),
+            self.animfocus.focused_element == Some(action_route.element.id),
           ),
           text_control: action_route.element.control.text_context(),
           text_system: self.text_system,
@@ -993,7 +993,7 @@ fn RuntimeState::perform_semantics_action(
         request.action,
       )
       if !outcome.accepted {
-        self.semantics_action_dispatching = false
+        self.semantics.semantics_action_dispatching = false
         self.discard_semantics_destroy_request()
         return Err(HandlerRejected(request.target, kind))
       }
@@ -1007,15 +1007,15 @@ fn RuntimeState::perform_semantics_action(
   self.commit_semantics()
   let receipt = {
     before,
-    after: self.committed_semantics.generation,
-    pending_work: self.needs_rebuild ||
-    self.needs_layout ||
-    self.needs_paint ||
-    self.needs_semantics ||
-    self.needs_platform ||
-    self.needs_redraw,
+    after: self.semantics.committed_semantics.generation,
+    pending_work: self.dirty.needs_rebuild ||
+    self.dirty.needs_layout ||
+    self.dirty.needs_paint ||
+    self.dirty.needs_semantics ||
+    self.dirty.needs_platform ||
+    self.dirty.needs_redraw,
   }
-  self.semantics_action_dispatching = false
+  self.semantics.semantics_action_dispatching = false
   if self.complete_semantics_destroy_request() {
     Ok({ ..receipt, pending_work: false })
   } else {

@@ -1,5 +1,5 @@
 ///|
-priv struct ElementId {
+pub(all) struct ElementId {
   value : Int
 } derive(Eq, Debug)
 
