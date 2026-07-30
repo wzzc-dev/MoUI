@@ -49,8 +49,8 @@ adapters that produce the same `@core.Theme`:
   Primary/Tonal/Outline/Ghost/Subtle/SubtleBrand. `ControlStateStyle` carries
   optional `bottom_border_only` and `inner_focus_border` fields so Fluent 2
   underline inputs and focus-reveal inner strokes render without
-  variant-specific draw paths. `ControlStateStyle` lives in `core` and is
-  shared by the token resolver and the view-layer style structs.
+  variant-specific draw paths. `ControlStateStyle` lives in `views` (ADR 0017)
+  and is shared by the token resolver and the view-layer style structs.
 - `View::theme(...)` and `View::environment(...)` cascade the theme/environment
   into child subtrees via the `child_environment` hook at layout/paint time;
   their modifier revisions include a content fingerprint so reconcile detects
@@ -69,19 +69,20 @@ adapters that produce the same `@core.Theme`:
   distinctly. `core_palette()` maps the ramp onto `ColorPalette` surface tiers
   (surface=background_2, surface_variant=background_3, outline=stroke_1,
   outline_variant=stroke_2). `divider` uses `outline_variant` (subtle
-  stroke_2); menus/popovers read `theme.components.surface.overlay_shadow`
+  stroke_2); menus/popovers read `control_set.surface.overlay_shadow`
   (Fluent flyout shadow) falling back to `shadow_scale.lg`/`md`.
 - `presence_dot(status, ...)` renders a Fluent 2 PresenceBadge status dot
   (Available/Away/Busy/Offline/Unknown) as a filled circle with a contrasting
   border, overlayable on avatars.
 - `SurfaceStyle` supports surface brushes, radius, padding, border metadata,
   and shadow metadata.
-- `moui_theme/*` produces a complete `@core.Theme` (palette + scales +
-  components) from `DesignSystemTokens::to_theme()`; `core_component_styles()`
-  is retained for diagnostic report generation. An app that wants Fluent 2
-  (or another branded system) to drive control appearance calls
-  `@fluent.theme(...)` once and passes it as the root theme; controls inherit
-  `components` automatically instead of per-control `style=` arguments.
+- `moui_theme/*` produces a complete `@core.Theme` plus a `@views.ControlThemeSet`
+  from `DesignSystemTokens::to_theme()`; brand-specific control styles live in
+  `ControlThemeSet`. An app that wants Fluent 2 (or another branded system) to
+  drive control appearance calls `@fluent.theme(...)` once and passes both the
+  `Theme` and the `ControlThemeSet` through the view environment; controls
+  inherit the control set automatically instead of per-control `style=`
+  arguments.
 - `ShadowStyle` and `BorderStyle` are view-level style inputs; paint converts
   them into concrete `DrawCommand` payloads once the final frame is known.
 - `animated_value`, `animated_point`, `animated_color`, `TransitionSpec`, and

@@ -24,7 +24,12 @@ Read only what the task needs:
 
 ## Ownership Rules
 
-- `moui/core`: cross-runtime protocols and neutral value types only.
+- `moui/core`: cross-runtime protocols and neutral value types **only** — no
+  control vocabulary (ADR 0017). Control theme tokens (`ButtonTheme`,
+  `ControlStateTokens`, `ComponentThemes`, …) live in `moui/views` as
+  `ControlThemeSet`. `InteractionState` and `PressableState` remain in core as
+  neutral gesture/interaction state consumed by core's view-tree and gesture
+  layers.
 - `moui/{geometry,graphics,animation,text,state}`: app-facing domain facades
   and light extensions over `moui/core`; they may depend on `core`, but `core`
   must not depend on them or on `views`.
@@ -35,7 +40,10 @@ Read only what the task needs:
   dispatch, effects, subscriptions, diagnostics, inspector snapshots.
 - `moui/backend/host`: host service protocols, window/timer/route sources,
   WebView protocol, async image service, accessibility/input/redraw contracts,
-  and the shared `EmbedderHostChannel`.
+  and the shared `EmbedderHostChannel`. Per ADR 0018, `HostRuntimeDriver`,
+  `RedrawScheduler`, and `HostWallClock` moved to `moui/runtime`; render
+  completion and GPU recovery moved to `moui/render`. Host carries
+  platform-neutral contracts only.
 - `moui/backend/platform_bridge`: platform-to-host conversion for neutral
   close/focus/resize/scale/redraw/surface lifecycle facts and logical
   coordinates. It imports only `core`, `backend/host`, and window value types;
