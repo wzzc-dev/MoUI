@@ -1,160 +1,92 @@
 ///|
+/// A view node that wraps a child View with a modifier.
+/// The modifier is stored as an `AnyModifier[Msg]` vtable, eliminating the
+/// 50-variant `ViewModifier[Msg]` enum. Each concrete modifier type
+/// constructs its own `AnyModifier` via `to_any_modifier()`.
+
+///|
 fn[Msg] modifier_view(
   child : View[Msg],
-  modifier : ViewModifier[Msg],
+  modifier : AnyModifier[Msg],
 ) -> View[Msg] {
   let node = ModifierViewNode::{ child, modifier }
   View::from_node(
     node,
     children=node => [node.child],
-    event=(node, context) => modifier_event(node.modifier, context),
+    event=(node, context) => (node.modifier.event)(context),
     text_command=(node, context, intent, paste_text) => {
       node.child.text_command_result(context, intent, paste_text~)
     },
-    semantics_actions=node => modifier_semantics_actions(node.modifier),
+    semantics_actions=node => node.modifier.semantics_actions.copy(),
   )
 }
 
 ///|
 priv struct ModifierViewNode[Msg] {
   child : View[Msg]
-  modifier : ViewModifier[Msg]
+  modifier : AnyModifier[Msg]
 }
 
 ///|
 impl[Msg] ViewNode for ModifierViewNode[Msg] with fn identity(self) {
-  modifier_identity(self.child, self.modifier)
+  let child_id = self.child.identity()
+  let kind = self.modifier.identity_kind
+  if kind == "Key" {
+    { kind: child_id.kind, key: child_id.key }
+  } else if kind == "" {
+    child_id
+  } else {
+    { kind: "Modified<\{kind}>/\{child_id.kind}", key: child_id.key }
+  }
 }
 
 ///|
 impl[Msg] ViewNode for ModifierViewNode[Msg] with fn declaration(self) {
-  modifier_declaration(self.modifier)
+  self.modifier.declaration
 }
 
 ///|
-impl[Msg] ViewNode for ModifierViewNode[Msg] with fn child_constraints(
-  self,
-  constraints,
-) {
-  modifier_child_constraints(self.modifier, constraints)
+impl[Msg] ViewNode for ModifierViewNode[Msg] with fn child_constraints(self, c) {
+  (self.modifier.child_constraints)(c)
 }
 
 ///|
-impl[Msg] ViewNode for ModifierViewNode[Msg] with fn child_environment(
-  self,
-  environment,
-) {
-  modifier_child_environment(self.modifier, environment)
+impl[Msg] ViewNode for ModifierViewNode[Msg] with fn child_environment(self, e) {
+  (self.modifier.child_environment)(e)
 }
 
 ///|
-impl[Msg] ViewNode for ModifierViewNode[Msg] with fn child_style(self, style) {
-  modifier_child_style(self.modifier, style)
+impl[Msg] ViewNode for ModifierViewNode[Msg] with fn child_style(self, s) {
+  (self.modifier.child_style)(s)
 }
 
 ///|
-impl[Msg] ViewNode for ModifierViewNode[Msg] with fn layout(self, context) {
-  modifier_layout(self.modifier, context)
+impl[Msg] ViewNode for ModifierViewNode[Msg] with fn layout(self, ctx) {
+  (self.modifier.layout)(ctx)
 }
 
 ///|
-impl[Msg] ViewNode for ModifierViewNode[Msg] with fn paint(self, context) {
-  modifier_paint(self.modifier, context)
+impl[Msg] ViewNode for ModifierViewNode[Msg] with fn paint(self, ctx) {
+  (self.modifier.paint)(ctx)
 }
 
 ///|
-impl[Msg] ViewNode for ModifierViewNode[Msg] with fn text_input_state(
-  self,
-  context,
-) {
-  self.child.text_input_state(context)
+impl[Msg] ViewNode for ModifierViewNode[Msg] with fn text_input_state(self, ctx) {
+  self.child.text_input_state(ctx)
 }
 
 ///|
 impl[Msg] ViewNode for ModifierViewNode[Msg] with fn semantics(self) {
-  modifier_semantics(self.modifier)
+  self.modifier.semantics
 }
 
 ///|
 impl[Msg] ViewNode for ModifierViewNode[Msg] with fn focusable(self) {
-  modifier_focusable(self.modifier)
+  self.modifier.focusable
 }
 
 ///|
 impl[Msg] ViewNode for ModifierViewNode[Msg] with fn flex_weight(self) {
-  modifier_flex_weight(self.modifier)
+  self.modifier.flex_weight
 }
 
-///|
-fn[Msg] modifier_identity(
-  child : View[Msg],
-  modifier : ViewModifier[Msg],
-) -> ViewIdentity {
-  match modifier {
-    KeyModifier(key) => {
-      let identity = child.identity()
-      { kind: identity.kind, key: Some(key) }
-    }
-    _ => {
-      let identity = child.identity()
-      {
-        kind: "Modified<\{modifier_kind(modifier)}>/\{identity.kind}",
-        key: identity.key,
-      }
-    }
-  }
-}
-
-///|
-fn[Msg] modifier_kind(modifier : ViewModifier[Msg]) -> String {
-  match modifier {
-    KeyModifier(_) => "Key"
-    PaddingModifier(_) => "Padding"
-    FrameModifier(_) => "Frame"
-    BackgroundModifier(_) => "Background"
-    ForegroundModifier(_) => "Foreground"
-    FontModifier(_) => "Font"
-    CornerRadiusModifier(_) => "CornerRadius"
-    OpacityModifier(_) => "Opacity"
-    ShadowModifier(_) => "Shadow"
-    BorderModifier(_) => "Border"
-    OffsetModifier(_, _) => "Offset"
-    ClipModifier => "Clip"
-    ScaleModifier(_, _) => "Scale"
-    DisabledModifier(_) => "Disabled"
-    AccessibilityLabelModifier(_) => "AccessibilityLabel"
-    SemanticIdModifier(_) => "SemanticId"
-    SemanticsCompositionModifier(_) => "SemanticsComposition"
-    SemanticsRoleModifier(_) => "SemanticsRole"
-    SemanticsLevelModifier(_) => "SemanticsLevel"
-    SemanticsUrlModifier(_) => "SemanticsUrl"
-    SemanticsSelectedModifier(_) => "SemanticsSelected"
-    SemanticsPressedModifier(_) => "SemanticsPressed"
-    SemanticsCheckedModifier(_) => "SemanticsChecked"
-    SemanticsExpandedModifier(_) => "SemanticsExpanded"
-    SemanticsInvalidModifier(_) => "SemanticsInvalid"
-    SemanticsRequiredModifier(_) => "SemanticsRequired"
-    SemanticsDescriptionModifier(_) => "SemanticsDescription"
-    FocusableModifier(_) => "Focusable"
-    FocusTrapModifier(_) => "FocusTrap"
-    OnTapMessageModifier(_) => "OnTap"
-    OnLongPressMessageModifier(_) => "OnLongPress"
-    OnDoubleTapMessageModifier(_) => "OnDoubleTap"
-    OnDragMessageModifier(_) => "OnDrag"
-    OnDragWithFrameMessageModifier(_) => "OnDragWithFrame"
-    OnFileDropMessageModifier(_) => "OnFileDrop"
-    KeyboardShortcutModifier(_) => "KeyboardShortcut"
-    FlexibleModifier(_) => "Flexible"
-    LayoutPriorityModifier(_) => "LayoutPriority"
-    AlignModifier(_) => "Align"
-    SpacingModifier(_) => "Spacing"
-    MainAxisAlignmentModifier(_) => "MainAxisAlignment"
-    CrossAxisAlignmentModifier(_) => "CrossAxisAlignment"
-    ThemeModifier(_) => "Theme"
-    EnvironmentModifier(_) => "Environment"
-    AspectRatioModifier(_) => "AspectRatio"
-    IntrinsicWidthModifier => "IntrinsicWidth"
-    IntrinsicHeightModifier => "IntrinsicHeight"
-    RepaintBoundaryModifier => "RepaintBoundary"
-  }
-}

@@ -281,15 +281,15 @@ test "hidden semantics consumes descendant dirtiness without repeated work" {
     size=@core.Size::new(width=100.0, height=48.0),
   )
   ignore(runtime.cached_semantics())
-  inspect(runtime.semantics_recompute_count, content="1")
+  inspect(runtime.stats.semantics_recompute_count, content="1")
   ignore(runtime.cached_semantics())
-  inspect(runtime.semantics_recompute_count, content="1")
+  inspect(runtime.stats.semantics_recompute_count, content="1")
   let first_leaf = runtime.element_tree.root.children[0].id
   runtime.mark_semantics_dirty(first_leaf)
   ignore(runtime.cached_semantics())
-  inspect(runtime.semantics_recompute_count, content="2")
+  inspect(runtime.stats.semantics_recompute_count, content="2")
   ignore(runtime.cached_semantics())
-  inspect(runtime.semantics_recompute_count, content="2")
+  inspect(runtime.stats.semantics_recompute_count, content="2")
 }
 
 ///|
@@ -302,19 +302,19 @@ test "semantics-only component rebuild consumes queues without redraw" {
     size=@core.Size::new(width=100.0, height=24.0),
   )
   ignore(runtime.cached_semantics())
-  runtime.needs_redraw = false
-  runtime.rebuild_wakeup_redraw = false
-  let layout_passes = runtime.layout_pass_count
-  let paint_passes = runtime.paint_pass_count
+  runtime.dirty.needs_redraw = false
+  runtime.dirty.rebuild_wakeup_redraw = false
+  let layout_passes = runtime.stats.layout_pass_count
+  let paint_passes = runtime.stats.paint_pass_count
   label.set("after")
-  inspect(runtime.needs_rebuild, content="true")
-  inspect(runtime.needs_redraw, content="true")
+  inspect(runtime.dirty.needs_rebuild, content="true")
+  inspect(runtime.dirty.needs_redraw, content="true")
   let snapshot = runtime.cached_semantics()
   inspect(snapshot.nodes()[0].label, content="after")
-  inspect(runtime.layout_pass_count == layout_passes, content="true")
-  inspect(runtime.paint_pass_count == paint_passes, content="true")
+  inspect(runtime.stats.layout_pass_count == layout_passes, content="true")
+  inspect(runtime.stats.paint_pass_count == paint_passes, content="true")
   inspect(runtime.dirty_count(), content="0")
-  inspect(runtime.needs_redraw, content="false")
+  inspect(runtime.dirty.needs_redraw, content="false")
 }
 
 ///|
@@ -344,21 +344,21 @@ test "semantics cache recomputes only a dirty leaf and its ancestors" {
     size=@core.Size::new(width=100.0, height=48.0),
   )
   ignore(runtime.cached_semantics())
-  inspect(runtime.semantics_recompute_count, content="3")
+  inspect(runtime.stats.semantics_recompute_count, content="3")
   inspect(runtime.dirty_count(), content="0")
-  let layout_passes = runtime.layout_pass_count
-  let paint_passes = runtime.paint_pass_count
+  let layout_passes = runtime.stats.layout_pass_count
+  let paint_passes = runtime.stats.paint_pass_count
   let first_leaf = runtime.element_tree.root.children[0].id
   runtime.mark_semantics_dirty(first_leaf)
   ignore(runtime.cached_semantics())
-  inspect(runtime.semantics_recompute_count, content="5")
-  inspect(runtime.layout_pass_count == layout_passes, content="true")
-  inspect(runtime.paint_pass_count == paint_passes, content="true")
+  inspect(runtime.stats.semantics_recompute_count, content="5")
+  inspect(runtime.stats.layout_pass_count == layout_passes, content="true")
+  inspect(runtime.stats.paint_pass_count == paint_passes, content="true")
   inspect(runtime.dirty_count(), content="0")
   ignore(runtime.cached_semantics())
-  inspect(runtime.semantics_recompute_count, content="5")
-  inspect(runtime.layout_pass_count == layout_passes, content="true")
-  inspect(runtime.paint_pass_count == paint_passes, content="true")
+  inspect(runtime.stats.semantics_recompute_count, content="5")
+  inspect(runtime.stats.layout_pass_count == layout_passes, content="true")
+  inspect(runtime.stats.paint_pass_count == paint_passes, content="true")
 }
 
 ///|
@@ -370,9 +370,9 @@ test "persistent semantics tree keeps cache node-local across a deep chain" {
     size=@core.Size::new(width=100.0, height=24.0),
   )
   let initial = runtime.cached_semantics()
-  assert_eq(runtime.semantics_recompute_count, depth + 1)
-  assert_eq(runtime.semantics_tree.nodes.length(), 1)
-  assert_eq(runtime.semantics_tree.routes.length(), 1)
+  assert_eq(runtime.stats.semantics_recompute_count, depth + 1)
+  assert_eq(runtime.semantics.semantics_tree.nodes.length(), 1)
+  assert_eq(runtime.semantics.semantics_tree.routes.length(), 1)
   assert_eq(runtime.element_tree.root.semantics_cache.roots.length(), 1)
   let leaf_element = for element = runtime.element_tree.root {
     match element.children {
@@ -383,10 +383,10 @@ test "persistent semantics tree keeps cache node-local across a deep chain" {
   }
   runtime.mark_semantics_dirty(leaf_element.id)
   let next = runtime.cached_semantics()
-  assert_eq(runtime.semantics_recompute_count, (depth + 1) * 2)
+  assert_eq(runtime.stats.semantics_recompute_count, (depth + 1) * 2)
   assert_eq(next.generation(), initial.generation())
-  assert_eq(runtime.semantics_tree.nodes.length(), 1)
-  assert_eq(runtime.semantics_tree.routes.length(), 1)
+  assert_eq(runtime.semantics.semantics_tree.nodes.length(), 1)
+  assert_eq(runtime.semantics.semantics_tree.routes.length(), 1)
 }
 
 ///|
@@ -397,7 +397,7 @@ test "clean semantics action lookup does not recompute the tree" {
     size=@core.Size::new(width=100.0, height=24.0),
   )
   let snapshot = runtime.cached_semantics()
-  let recomputes = runtime.semantics_recompute_count
+  let recomputes = runtime.stats.semantics_recompute_count
   match
     runtime.perform_semantics_action({
       target: @core.SemanticsTarget::BySemanticId(semantic_id),
@@ -409,7 +409,7 @@ test "clean semantics action lookup does not recompute the tree" {
     Err(SemanticsActionDispatchError::StaleGeneration(_, _)) => ()
     _ => fail("expected stale action rejection")
   }
-  assert_eq(runtime.semantics_recompute_count, recomputes)
+  assert_eq(runtime.stats.semantics_recompute_count, recomputes)
 }
 
 ///|
@@ -436,9 +436,9 @@ test "removed semantics nodes and action routes are pruned from the tree" {
   let initial_node = initial_nodes[initial_index]
   visible.set(false)
   let removed = runtime.cached_semantics()
-  assert_false(runtime.semantics_tree.nodes.contains(initial_node.node_id))
-  assert_false(runtime.semantics_tree.routes.contains(initial_node.node_id))
-  assert_false(runtime.semantic_id_index.contains(semantic_id))
+  assert_false(runtime.semantics.semantics_tree.nodes.contains(initial_node.node_id))
+  assert_false(runtime.semantics.semantics_tree.routes.contains(initial_node.node_id))
+  assert_false(runtime.semantics.semantic_id_index.contains(semantic_id))
   assert_false(
     removed.nodes().any(node => node.node_id == initial_node.node_id),
   )
@@ -511,12 +511,12 @@ test "merged descendants rebuild after their internal nodes are pruned" {
   let initial = runtime.cached_semantics()
   assert_eq(initial.nodes().length(), 1)
   assert_eq(initial.nodes()[0].label, "parent child")
-  assert_eq(runtime.semantics_tree.nodes.length(), 1)
+  assert_eq(runtime.semantics.semantics_tree.nodes.length(), 1)
   parent_label.set("updated")
   let updated = runtime.cached_semantics()
   assert_eq(updated.nodes().length(), 1)
   assert_eq(updated.nodes()[0].label, "updated child")
-  assert_eq(runtime.semantics_tree.nodes.length(), 1)
+  assert_eq(runtime.semantics.semantics_tree.nodes.length(), 1)
 }
 
 ///|
@@ -527,15 +527,15 @@ test "semantics node identity exhaustion closes before publishing a wrapped id" 
   )
   let before = runtime.cached_semantics()
   runtime.element_tree.root.semantics_node_id = None
-  runtime.next_semantics_node_id = 18446744073709551615UL
+  runtime.semantics.next_semantics_node_id = 18446744073709551615UL
   runtime.mark_semantics_dirty(runtime.element_tree.id())
   match runtime.read_semantics(None) {
     Err(SemanticsReadError::RuntimeClosed) => ()
     _ => fail("identity exhaustion must close the semantics runtime")
   }
-  assert_eq(runtime.committed_semantics.generation(), before.generation())
+  assert_eq(runtime.semantics.committed_semantics.generation(), before.generation())
   assert_false(
-    runtime.committed_semantics
+    runtime.semantics.committed_semantics
     .nodes()
     .any(node => node.node_id == @core.SemanticsNodeId::new(0UL)),
   )
@@ -548,19 +548,19 @@ test "semantics generation exhaustion closes before wrapping to zero" {
     size=@core.Size::new(width=100.0, height=24.0),
   )
   let before = runtime.cached_semantics()
-  runtime.committed_semantics = {
-    ..runtime.committed_semantics,
+  runtime.semantics.committed_semantics = {
+    ..runtime.semantics.committed_semantics,
     generation: @core.SemanticsGeneration::new(18446744073709551615UL),
   }
-  runtime.focused_element = Some(runtime.element_tree.id())
+  runtime.animfocus.focused_element = Some(runtime.element_tree.id())
   runtime.mark_semantics_dirty(runtime.element_tree.id())
   match runtime.read_semantics(None) {
     Err(SemanticsReadError::RuntimeClosed) => ()
     _ => fail("generation exhaustion must close the semantics runtime")
   }
   assert_eq(
-    runtime.committed_semantics.generation(),
+    runtime.semantics.committed_semantics.generation(),
     @core.SemanticsGeneration::new(18446744073709551615UL),
   )
-  assert_true(before.generation() < runtime.committed_semantics.generation())
+  assert_true(before.generation() < runtime.semantics.committed_semantics.generation())
 }

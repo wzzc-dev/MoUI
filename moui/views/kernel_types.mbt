@@ -1,2 +1,2 @@
-///|
-pub using @core {type DateValue}
+///| Re-export DateValue from common.
+pub using @common { type DateValue }

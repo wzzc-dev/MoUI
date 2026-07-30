@@ -1,6 +1,6 @@
 ///|
 fn RuntimeState::request_redraw(self : RuntimeState) -> Unit {
-  self.needs_redraw = true
+  self.dirty.needs_redraw = true
   match self.redraw_callback {
     Some(callback) => callback()
     None => ()
@@ -9,36 +9,36 @@ fn RuntimeState::request_redraw(self : RuntimeState) -> Unit {
 
 ///|
 fn RuntimeState::request_rebuild_wakeup(self : RuntimeState) -> Unit {
-  if !self.needs_redraw {
-    self.rebuild_wakeup_redraw = true
+  if !self.dirty.needs_redraw {
+    self.dirty.rebuild_wakeup_redraw = true
   }
   self.request_redraw()
 }
 
 ///|
 fn RuntimeState::mark_visual_work(self : RuntimeState) -> Unit {
-  self.rebuild_wakeup_redraw = false
+  self.dirty.rebuild_wakeup_redraw = false
 }
 
 ///|
 fn RuntimeState::settle_rebuild_wakeup(self : RuntimeState) -> Unit {
-  if self.rebuild_wakeup_redraw &&
-    !self.needs_rebuild &&
-    !self.needs_layout &&
-    !self.needs_paint &&
-    !self.active_animations {
-    self.needs_redraw = false
-    self.rebuild_wakeup_redraw = false
+  if self.dirty.rebuild_wakeup_redraw &&
+    !self.dirty.needs_rebuild &&
+    !self.dirty.needs_layout &&
+    !self.dirty.needs_paint &&
+    !self.animfocus.active_animations {
+    self.dirty.needs_redraw = false
+    self.dirty.rebuild_wakeup_redraw = false
   }
 }
 
 ///|
 fn RuntimeState::ensure_render_tree(self : RuntimeState) -> Unit {
   self.rebuild_if_possible()
-  if self.needs_layout || self.needs_paint {
+  if self.dirty.needs_layout || self.dirty.needs_paint {
     self.render_current_tree()
   }
-  if self.needs_platform {
+  if self.dirty.needs_platform {
     self.refresh_platform_tree()
   }
 }
@@ -54,8 +54,8 @@ fn RuntimeState::refresh_platform_tree(self : RuntimeState) -> Unit {
       ),
     ),
   }
-  self.needs_platform = false
-  self.dirty_platform_elements.clear()
+  self.dirty.needs_platform = false
+  self.dirty.dirty_platform_elements.clear()
   self.refresh_dirty_element_queue()
   self.settle_rebuild_wakeup()
 }
@@ -63,7 +63,7 @@ fn RuntimeState::refresh_platform_tree(self : RuntimeState) -> Unit {
 ///|
 fn RuntimeState::ensure_layout_tree(self : RuntimeState) -> Unit {
   let mut passes = 0
-  while self.needs_rebuild || self.needs_layout {
+  while self.dirty.needs_rebuild || self.dirty.needs_layout {
     if passes >= 64 {
       abort("runtime layout did not stabilize after 64 passes")
     }
@@ -75,7 +75,7 @@ fn RuntimeState::ensure_layout_tree(self : RuntimeState) -> Unit {
 ///|
 fn RuntimeState::layout_current_tree(self : RuntimeState) -> Unit {
   self.rebuild_if_possible()
-  self.layout_pass_count = self.layout_pass_count + 1
+  self.stats.layout_pass_count = self.stats.layout_pass_count + 1
   self.layout_tree = {
     root: self.element_tree.root.place_with_text_system(
       Rect::new(x=0.0, y=0.0, width=self.size.width, height=self.size.height),
@@ -84,9 +84,9 @@ fn RuntimeState::layout_current_tree(self : RuntimeState) -> Unit {
       layout_direction=self.environment.layout_direction,
     ),
   }
-  self.needs_rebuild = false
-  self.needs_layout = false
-  self.dirty_layout_elements.clear()
+  self.dirty.needs_rebuild = false
+  self.dirty.needs_layout = false
+  self.dirty.dirty_layout_elements.clear()
   self.refresh_dirty_element_queue()
   ignore(self.try_pending_scroll_from_current_layout())
 }
@@ -94,8 +94,8 @@ fn RuntimeState::layout_current_tree(self : RuntimeState) -> Unit {
 ///|
 fn RuntimeState::render_current_tree(self : RuntimeState) -> Unit {
   let previous_render = self.render_tree
-  let dirty_ids = self.dirty_paint_elements.copy()
-  let force_full_reason = if self.needs_rebuild {
+  let dirty_ids = self.dirty.dirty_paint_elements.copy()
+  let force_full_reason = if self.dirty.needs_rebuild {
     Some("rebuild requested")
   } else if previous_render.root.element_id.value() == 0 {
     Some("initial frame")
@@ -103,43 +103,43 @@ fn RuntimeState::render_current_tree(self : RuntimeState) -> Unit {
     None
   }
   self.ensure_layout_tree()
-  self.paint_pass_count = self.paint_pass_count + 1
+  self.stats.paint_pass_count = self.stats.paint_pass_count + 1
   self.render_tree = {
     root: self.element_tree.root.render_focused_with_text_system(
       self.layout_tree.root,
-      focused=self.focused_element,
+      focused=self.animfocus.focused_element,
       environment=self.environment,
       text_system=self.text_system,
-      now_ms=self.now_ms,
+      now_ms=self.animfocus.now_ms,
     ),
   }
   // Fold the per-subtree animation flag up to the root: if any painted node
   // reported a mid-animation sample, keep the host ticking redraws until the
   // animation settles. Controls clear this once progress reaches 1.0.
-  self.active_animations = self.render_tree.root.animating
+  self.animfocus.active_animations = self.render_tree.root.animating
   // If an animation is still in flight, request another frame right after the
   // paint that observed it. This is evaluated after `active_animations` is
   // updated, so once a transition settles the flag flips false and the redraw
   // loop stops naturally instead of ticking one extra frame forever.
-  if self.active_animations {
-    self.needs_redraw = true
+  if self.animfocus.active_animations {
+    self.dirty.needs_redraw = true
     match self.redraw_callback {
       Some(callback) => callback()
       None => ()
     }
   }
-  self.last_damage_region = self.compute_damage_region(
+  self.stats.last_damage_region = self.compute_damage_region(
     previous_render,
     self.render_tree,
     dirty_ids,
     force_full_reason~,
   )
-  self.needs_rebuild = false
-  self.needs_layout = false
-  self.needs_paint = false
-  self.dirty_paint_elements.clear()
+  self.dirty.needs_rebuild = false
+  self.dirty.needs_layout = false
+  self.dirty.needs_paint = false
+  self.dirty.dirty_paint_elements.clear()
   self.refresh_dirty_element_queue()
-  if self.needs_platform {
+  if self.dirty.needs_platform {
     self.refresh_platform_tree()
   }
 }
@@ -204,16 +204,16 @@ fn RuntimeState::record_cached_layer_frame(
   next_known_layers : Array[CachedLayerState],
   next_admissions : Array[CachedLayerAdmissionState],
 ) -> Unit {
-  let known_changed = !self.known_layer_cache_keys.same_cached_layers(
+  let known_changed = !self.stats.known_layer_cache_keys.same_cached_layers(
     next_known_layers,
   )
   if known_changed {
-    self.cache_epoch = self.cache_epoch + 1
+    self.stats.cache_epoch = self.stats.cache_epoch + 1
   }
-  self.known_layer_cache_keys.clear()
-  self.known_layer_cache_keys.append(next_known_layers)
-  self.cached_layer_admissions.clear()
-  self.cached_layer_admissions.append(next_admissions)
+  self.stats.known_layer_cache_keys.clear()
+  self.stats.known_layer_cache_keys.append(next_known_layers)
+  self.stats.cached_layer_admissions.clear()
+  self.stats.cached_layer_admissions.append(next_admissions)
 }
 
 ///|
@@ -239,16 +239,16 @@ fn RuntimeState::invalidate_cached_layer_key(
   key : String,
 ) -> Unit {
   let retained : Array[CachedLayerState] = []
-  for existing in self.known_layer_cache_keys {
+  for existing in self.stats.known_layer_cache_keys {
     if existing.key != key {
       retained.push(existing)
     }
   }
-  let known_changed = retained.length() != self.known_layer_cache_keys.length()
+  let known_changed = retained.length() != self.stats.known_layer_cache_keys.length()
   if known_changed {
-    self.known_layer_cache_keys.clear()
-    self.known_layer_cache_keys.append(retained)
-    self.cache_epoch = self.cache_epoch + 1
+    self.stats.known_layer_cache_keys.clear()
+    self.stats.known_layer_cache_keys.append(retained)
+    self.stats.cache_epoch = self.stats.cache_epoch + 1
   }
   let admission_changed = self.remove_cached_layer_admissions(key)
   if known_changed || admission_changed {
@@ -262,14 +262,14 @@ fn RuntimeState::remove_cached_layer_admissions(
   key : String,
 ) -> Bool {
   let retained : Array[CachedLayerAdmissionState] = []
-  for admission in self.cached_layer_admissions {
+  for admission in self.stats.cached_layer_admissions {
     if admission.key != key {
       retained.push(admission)
     }
   }
-  if retained.length() != self.cached_layer_admissions.length() {
-    self.cached_layer_admissions.clear()
-    self.cached_layer_admissions.append(retained)
+  if retained.length() != self.stats.cached_layer_admissions.length() {
+    self.stats.cached_layer_admissions.clear()
+    self.stats.cached_layer_admissions.append(retained)
     true
   } else {
     false
@@ -288,12 +288,12 @@ fn RuntimeState::queue_dirty_element(
   self : RuntimeState,
   id : ElementId,
 ) -> Unit {
-  push_unique_element_id(self.dirty_elements, id)
+  push_unique_element_id(self.dirty.dirty_elements, id)
 }
 
 ///|
 fn RuntimeState::queue_build_dirty(self : RuntimeState, id : ElementId) -> Unit {
-  push_unique_element_id(self.dirty_build_elements, id)
+  push_unique_element_id(self.dirty.dirty_build_elements, id)
 }
 
 ///|
@@ -301,12 +301,12 @@ fn RuntimeState::queue_layout_dirty(
   self : RuntimeState,
   id : ElementId,
 ) -> Unit {
-  push_unique_element_id(self.dirty_layout_elements, id)
+  push_unique_element_id(self.dirty.dirty_layout_elements, id)
 }
 
 ///|
 fn RuntimeState::queue_paint_dirty(self : RuntimeState, id : ElementId) -> Unit {
-  push_unique_element_id(self.dirty_paint_elements, id)
+  push_unique_element_id(self.dirty.dirty_paint_elements, id)
 }
 
 ///|
@@ -314,7 +314,7 @@ fn RuntimeState::queue_semantics_dirty(
   self : RuntimeState,
   id : ElementId,
 ) -> Unit {
-  push_unique_element_id(self.dirty_semantics_elements, id)
+  push_unique_element_id(self.dirty.dirty_semantics_elements, id)
 }
 
 ///|
@@ -322,7 +322,7 @@ fn RuntimeState::queue_platform_dirty(
   self : RuntimeState,
   id : ElementId,
 ) -> Unit {
-  push_unique_element_id(self.dirty_platform_elements, id)
+  push_unique_element_id(self.dirty.dirty_platform_elements, id)
 }
 
 ///|
@@ -334,12 +334,12 @@ fn RuntimeState::mark_build_dirty(self : RuntimeState, id : ElementId) -> Unit {
   self.queue_paint_dirty(id)
   self.queue_semantics_dirty(id)
   self.queue_platform_dirty(id)
-  self.needs_rebuild = true
-  self.needs_layout = true
-  self.needs_paint = true
-  self.needs_semantics = true
-  self.needs_platform = true
-  self.needs_redraw = true
+  self.dirty.needs_rebuild = true
+  self.dirty.needs_layout = true
+  self.dirty.needs_paint = true
+  self.dirty.needs_semantics = true
+  self.dirty.needs_platform = true
+  self.dirty.needs_redraw = true
 }
 
 ///|
@@ -350,11 +350,11 @@ fn RuntimeState::mark_layout_dirty(self : RuntimeState, id : ElementId) -> Unit 
   self.queue_paint_dirty(id)
   self.queue_semantics_dirty(id)
   self.queue_platform_dirty(id)
-  self.needs_layout = true
-  self.needs_paint = true
-  self.needs_semantics = true
-  self.needs_platform = true
-  self.needs_redraw = true
+  self.dirty.needs_layout = true
+  self.dirty.needs_paint = true
+  self.dirty.needs_semantics = true
+  self.dirty.needs_platform = true
+  self.dirty.needs_redraw = true
 }
 
 ///|
@@ -363,8 +363,8 @@ fn RuntimeState::mark_dirty(self : RuntimeState, id : ElementId) -> Unit {
   self.queue_dirty_element(id)
   self.queue_paint_dirty(id)
   ignore(self.element_tree.root.mark_paint_dirty_by_id(id))
-  self.needs_paint = true
-  self.needs_redraw = true
+  self.dirty.needs_paint = true
+  self.dirty.needs_redraw = true
 }
 
 ///|
@@ -374,7 +374,7 @@ fn RuntimeState::mark_semantics_dirty(
 ) -> Unit {
   self.queue_semantics_dirty(id)
   ignore(self.element_tree.root.mark_semantics_dirty_by_id(id))
-  self.needs_semantics = true
+  self.dirty.needs_semantics = true
 }
 
 ///|
@@ -384,7 +384,7 @@ fn RuntimeState::mark_platform_dirty(
 ) -> Unit {
   self.queue_platform_dirty(id)
   ignore(self.element_tree.root.mark_platform_dirty_by_id(id))
-  self.needs_platform = true
+  self.dirty.needs_platform = true
 }
 
 ///|
@@ -406,19 +406,19 @@ fn RuntimeState::mark_current_dirty_elements(self : RuntimeState) -> Unit {
     }
     if !build_ids.is_empty() {
       for id in build_ids {
-        push_unique_element_id(self.dirty_build_elements, id)
+        push_unique_element_id(self.dirty.dirty_build_elements, id)
       }
-      self.needs_rebuild = true
+      self.dirty.needs_rebuild = true
     }
     if !layout_ids.is_empty() {
       self.mark_visual_work()
       for id in layout_ids {
-        push_unique_element_id(self.dirty_layout_elements, id)
+        push_unique_element_id(self.dirty.dirty_layout_elements, id)
       }
-      self.needs_layout = true
+      self.dirty.needs_layout = true
     }
     for id in paint_ids {
-      push_unique_element_id(self.dirty_paint_elements, id)
+      push_unique_element_id(self.dirty.dirty_paint_elements, id)
     }
     for id in semantics_ids {
       self.mark_semantics_dirty(id)
@@ -428,41 +428,41 @@ fn RuntimeState::mark_current_dirty_elements(self : RuntimeState) -> Unit {
     }
     if !paint_ids.is_empty() {
       self.mark_visual_work()
-      self.needs_paint = true
-      self.needs_redraw = true
+      self.dirty.needs_paint = true
+      self.dirty.needs_redraw = true
     }
     if !semantics_ids.is_empty() {
-      self.needs_semantics = true
+      self.dirty.needs_semantics = true
     }
   }
 }
 
 ///|
 fn RuntimeState::dirty_count(self : RuntimeState) -> Int {
-  self.dirty_elements.length()
+  self.dirty.dirty_elements.length()
 }
 
 ///|
 fn RuntimeState::dirty_element_ids(self : RuntimeState) -> Array[ElementId] {
-  self.dirty_elements.copy()
+  self.dirty.dirty_elements.copy()
 }
 
 ///|
 fn RuntimeState::refresh_dirty_element_queue(self : RuntimeState) -> Unit {
-  self.dirty_elements.clear()
-  for id in self.dirty_build_elements {
-    push_unique_element_id(self.dirty_elements, id)
+  self.dirty.dirty_elements.clear()
+  for id in self.dirty.dirty_build_elements {
+    push_unique_element_id(self.dirty.dirty_elements, id)
   }
-  for id in self.dirty_layout_elements {
-    push_unique_element_id(self.dirty_elements, id)
+  for id in self.dirty.dirty_layout_elements {
+    push_unique_element_id(self.dirty.dirty_elements, id)
   }
-  for id in self.dirty_paint_elements {
-    push_unique_element_id(self.dirty_elements, id)
+  for id in self.dirty.dirty_paint_elements {
+    push_unique_element_id(self.dirty.dirty_elements, id)
   }
-  for id in self.dirty_semantics_elements {
-    push_unique_element_id(self.dirty_elements, id)
+  for id in self.dirty.dirty_semantics_elements {
+    push_unique_element_id(self.dirty.dirty_elements, id)
   }
-  for id in self.dirty_platform_elements {
-    push_unique_element_id(self.dirty_elements, id)
+  for id in self.dirty.dirty_platform_elements {
+    push_unique_element_id(self.dirty.dirty_elements, id)
   }
 }
