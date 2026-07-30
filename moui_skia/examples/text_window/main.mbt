@@ -102,7 +102,7 @@ fn redraw_window(window : @windows.Window) -> Unit {
   match draw_text_with_skia(size.width(), size.height()) {
     Some(pixmap) => {
       let status = present_rgba_to_window(
-        window.window_handle(),
+        window.native_window_handle(),
         pixmap.width(),
         pixmap.height(),
         pixmap.row_bytes(),

@@ -306,7 +306,7 @@ fn create_renderer_from_provider_bindings(
     println(windows_skia_unavailable_message())
     return None
   }
-  let hwnd = window.window_handle()
+  let hwnd = window.native_window_handle()
   let raster_binding = @skia_renderer.create_skia_raster_host_binding(create_host_renderer=(
     _renderer_metrics,
     _bound_surface,

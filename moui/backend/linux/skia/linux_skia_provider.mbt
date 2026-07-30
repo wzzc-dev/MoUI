@@ -308,8 +308,8 @@ fn create_renderer_from_provider_bindings(
     height=metrics.logical_size.height,
     scale_factor=metrics.scale_factor,
   )
-  let display_ptr = window.display_handle()
-  let surface_ptr = window.window_handle()
+  let display_ptr = window.native_display_handle()
+  let surface_ptr = window.native_window_handle()
   if options.surface_route.is_gpu() &&
     @skia_native.Surface::vulkan_gpu_context_runtime_available() {
     match
