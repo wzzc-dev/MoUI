@@ -179,7 +179,7 @@ fn[Msg] command_menu_row(
   width~ : Double,
 ) -> @core.View[Msg] {
   let shortcut = command.shortcut_label()
-  let label_width = views_max_double(110.0, width - 96.0)
+  let label_width = @common.view_max_double(110.0, width - 96.0)
   let row_view = row(
     [
       text(
@@ -211,5 +211,8 @@ fn[Msg] command_menu_row(
 
 ///|
 fn menu_command_item_width(label : String) -> Double {
-  views_max_double(58.0, label.to_array().length().to_double() * 8.0 + 24.0)
+  @common.view_max_double(
+    58.0,
+    label.to_array().length().to_double() * 8.0 + 24.0,
+  )
 }

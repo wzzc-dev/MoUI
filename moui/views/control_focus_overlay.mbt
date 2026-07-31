@@ -20,7 +20,7 @@ pub fn[Msg] focus_ring(
     ),
     width=if focused { 2.0 } else { 1.0 },
   )
-  let wrapped = container_box(
+  let wrapped = @layout.container_box(
     child=Some(child.padding(padding)),
     size=None,
     border=Some(ring),

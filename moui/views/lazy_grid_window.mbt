@@ -30,7 +30,7 @@ fn[T, Msg] lazy_grid_window(
       last_visible_row = row_index
       let row_children : Array[@core.View[Msg]] = []
       let start = row_index * columns
-      let end = views_min_int(items.length(), start + columns)
+      let end = items.length().min(start + columns)
       for item_index in start..<end {
         let item = items[item_index]
         row_children.push(cell(item).key(key(item)))

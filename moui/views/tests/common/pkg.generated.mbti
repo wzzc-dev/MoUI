@@ -1,0 +1,44 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/views/tests/common"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn assert_layouts(@core.View[Unit]) -> Unit
+
+pub fn assert_paints(@core.View[Unit]) -> Unit
+
+pub fn empty_layout_context(constraints~ : @core.Constraints) -> @core.ViewLayoutContext
+
+pub fn layout_single_child(@core.View[Unit], child_size~ : @core.Size, width~ : Double, height~ : Double) -> @core.ViewLayoutResult
+
+pub fn layout_view(@core.View[Unit], width~ : Double, height~ : Double) -> @core.ViewLayoutResult
+
+pub fn multi_child_layout_context(constraints~ : @core.Constraints, child_sizes~ : Array[@core.Size]) -> @core.ViewLayoutContext
+
+pub fn paint_view(@core.View[Unit]) -> @core.ViewPaintPlan
+
+pub fn render_view(@core.View[Unit]) -> (@core.ViewLayoutResult, @core.ViewPaintPlan)
+
+pub fn single_child_layout_context(constraints~ : @core.Constraints, child_size~ : @core.Size) -> @core.ViewLayoutContext
+
+pub fn smoke_environment() -> @core.Environment
+
+pub fn smoke_paint_context(frame~ : @core.Rect) -> @core.ViewPaintContext
+
+pub fn smoke_text_control() -> @core.TextControlStateContext
+
+pub fn smoke_theme() -> @core.Theme
+
+pub fn smoke_view_state() -> @core.ViewStateContext
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

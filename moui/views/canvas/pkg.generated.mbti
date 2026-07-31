@@ -1,0 +1,26 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/views/canvas"
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views/common",
+}
+
+// Values
+pub fn[Msg] animated_canvas(measure~ : (@core.Constraints) -> @core.Size, draw~ : (@common.PaintContext, @core.Rect, Double) -> Unit, semantics_label? : String) -> @core.View[Msg]
+
+pub fn[Msg] canvas(measure~ : (@core.Constraints) -> @core.Size, draw~ : (@common.PaintContext, @core.Rect) -> Unit, semantics_label? : String) -> @core.View[Msg]
+
+pub fn view_declaration(layout? : @core.DeclarationChannel, paint? : @core.DeclarationChannel, semantics? : @core.DeclarationChannel, platform? : @core.DeclarationChannel) -> @core.ViewDeclaration
+
+pub fn view_exact_channel(@core.DeclarationKey) -> @core.DeclarationChannel
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @common {type PaintContext}
+
+// Traits
+

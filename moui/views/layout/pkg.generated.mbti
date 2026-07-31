@@ -1,0 +1,65 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/views/layout"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn available_width(Double, @core.Constraints) -> Double
+
+pub fn[Msg] container_box(child? : @core.View[Msg]?, size? : @core.Size?, background? : @core.Brush?, border? : @core.BorderStyle?, corner_radius? : Double, shadow? : @core.ShadowStyle?, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] flow(Array[@core.View[Msg]], width? : Double, spacing? : Double, row_spacing? : Double) -> @core.View[Msg]
+
+pub fn[Msg] frame(@core.View[Msg], width? : Double, height? : Double, min_width? : Double, min_height? : Double, max_width? : Double, max_height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] grid(Array[@core.View[Msg]], columns? : Int, row_spacing? : Double, column_spacing? : Double) -> @core.View[Msg]
+
+pub fn layout_ceil_div(Int, Int) -> Int
+
+pub fn layout_mirror_x(@core.Rect, Double, Double, @core.LayoutDirection) -> Double
+
+pub fn[Msg] list(Array[@core.View[Msg]], spacing? : Double) -> @core.View[Msg]
+
+pub fn max_double(Double, Double) -> Double
+
+pub fn max_int(Int, Int) -> Int
+
+pub fn min_double(Double, Double) -> Double
+
+pub fn min_int(Int, Int) -> Int
+
+pub fn[Msg] padding(@core.View[Msg], Double) -> @core.View[Msg]
+
+pub fn[Msg] padding_edges(@core.View[Msg], top? : Double, right? : Double, bottom? : Double, left? : Double) -> @core.View[Msg]
+
+pub fn[Msg] padding_insets(@core.View[Msg], @core.Insets) -> @core.View[Msg]
+
+pub fn[Msg] padding_layout(child~ : @core.View[Msg], insets~ : @core.Insets, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] padding_xy(@core.View[Msg], horizontal? : Double, vertical? : Double) -> @core.View[Msg]
+
+pub fn placement_width(Double, @core.Rect) -> Double
+
+pub fn[Msg] wrap(Array[@core.View[Msg]], width? : Double, spacing? : Double, row_spacing? : Double) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+pub(all) struct ScrollToIndexIntent {
+  index : Int
+  offset : @core.Point
+}
+
+pub(all) struct SectionListSection[T] {
+  id : String
+  title : String
+  items : Array[T]
+}
+pub fn[T] SectionListSection::new(id~ : String, title~ : String, items~ : Array[T]) -> Self[T]
+
+// Type aliases
+
+// Traits
+

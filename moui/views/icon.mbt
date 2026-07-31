@@ -3,43 +3,7 @@
 /// using stroke-only `PathVerb` data (Lucide/Heroicons outline style) and is
 /// scaled to the requested size at paint time. Adding an icon means adding a
 /// variant here and a branch in `icon_path` returning its 24x24 verbs.
-pub(all) enum IconName {
-  Check
-  Close
-  ChevronDown
-  ChevronRight
-  ChevronLeft
-  Plus
-  Minus
-  Search
-  ArrowRight
-  Settings
-  Trash
-  Info
-  // Document operations.
-  FileNew
-  FolderOpen
-  Save
-  Clipboard
-  // Inline formatting.
-  Bold
-  Italic
-  CodeInline
-  Link
-  // Block formatting.
-  Heading
-  ListBullet
-  ListOrdered
-  ListTask
-  Quote
-  Table
-  // View modes.
-  Eye
-  Focus
-  Columns
-  /// Sidebar panel: a rectangle with a narrow left divider (Typora-style).
-  Sidebar
-} derive(Eq, Debug, ToJson)
+pub using @style {type IconName}
 
 ///|
 /// 24x24 viewBox stroke path data for each icon. Coordinates are in the
