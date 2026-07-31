@@ -11,7 +11,7 @@ pub fn[Msg] searchbar(
   // Style is resolved ambient-ly inside the control (an explicit theme?
   // overrides ctx.environment.theme) so the search bar tracks dark-mode / a11y
   // changes without the caller rebuilding the view tree.
-  controlled_search_bar_control(
+  @text.controlled_search_bar_control(
     query~,
     on_input~,
     placeholder~,

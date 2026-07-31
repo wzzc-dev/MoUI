@@ -1,5 +1,6 @@
 ///|
 /// Smoke tests for picker, dropdown, combobox, autocomplete, datepicker, searchbar, command_palette.
+
 ///|
 test "picker smoke" {
   let view : @core.View[Unit] = @views.picker(
@@ -17,7 +18,7 @@ test "dropdown smoke" {
   let view : @core.View[Unit] = @views.dropdown(
     "Select",
     [@views.MenuItem::new(id="a", label="Option A", message=())],
-    state=state,
+    state~,
     on_toggle=(),
   )
   @common.assert_layouts(view)
@@ -61,20 +62,20 @@ test "datepicker smoke" {
 
 ///|
 test "searchbar smoke" {
-  let view : @core.View[Unit] = @views.searchbar(
-    query="",
-    on_input=fn(_s) { () },
-  )
+  let view : @core.View[Unit] = @views.searchbar(query="", on_input=fn(_s) {
+    ()
+  })
   @common.assert_layouts(view)
   @common.assert_paints(view)
 }
 
 ///|
 test "command_palette smoke" {
-  let view : @core.View[Unit] = @views.command_palette(
-    [],
-    on_select=fn(_intent) { () },
-  )
+  let view : @core.View[Unit] = @views.command_palette([], on_select=fn(
+    _intent,
+  ) {
+    ()
+  })
   @common.assert_layouts(view)
   @common.assert_paints(view)
 }

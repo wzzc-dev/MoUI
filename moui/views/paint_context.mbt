@@ -1,18 +1,5 @@
 ///|
-/// Users call methods instead of constructing `DrawCommand` variants directly./// Drawing context that collects `DrawCommand`s internally.
-struct PaintContext {
-  commands : Array[@core.DrawCommand]
-}
-
-///|
-fn PaintContext::new() -> PaintContext {
-  { commands: [] }
-}
-
-///|
-fn PaintContext::finish(self : PaintContext) -> Array[@core.DrawCommand] {
-  self.commands
-}
+pub using @common {type PaintContext}
 
 // === Basic drawing ===
 

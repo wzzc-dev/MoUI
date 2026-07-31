@@ -1,5 +1,6 @@
 ///|
 /// Smoke tests for containers: container, card, center.
+
 ///|
 test "container smoke" {
   let view : @core.View[Unit] = @views.container(@views.text("inside"))
@@ -10,7 +11,11 @@ test "container smoke" {
 
 ///|
 test "container framed smoke" {
-  let view : @core.View[Unit] = @views.container(@views.text("inside"), width=200.0, height=100.0)
+  let view : @core.View[Unit] = @views.container(
+    @views.text("inside"),
+    width=200.0,
+    height=100.0,
+  )
   // With explicit width/height, container wraps in a Frame modifier, so identity changes
   assert_true(view.identity().kind.contains("Container"))
   @common.assert_layouts(view)
@@ -33,7 +38,10 @@ test "center smoke" {
 
 ///|
 test "rounded_clip smoke" {
-  let view : @core.View[Unit] = @views.rounded_clip(@views.text("clipped"), radius=8.0)
+  let view : @core.View[Unit] = @views.rounded_clip(
+    @views.text("clipped"),
+    radius=8.0,
+  )
   @common.assert_layouts(view)
   @common.assert_paints(view)
 }
@@ -54,7 +62,11 @@ test "padding smoke" {
 
 ///|
 test "frame smoke" {
-  let view : @core.View[Unit] = @views.frame(@views.text("framed"), width=200.0, height=100.0)
+  let view : @core.View[Unit] = @views.frame(
+    @views.text("framed"),
+    width=200.0,
+    height=100.0,
+  )
   @common.assert_layouts(view)
   @common.assert_paints(view)
 }

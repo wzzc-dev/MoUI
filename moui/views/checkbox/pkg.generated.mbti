@@ -1,0 +1,21 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/views/checkbox"
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views/style",
+}
+
+// Values
+pub fn[Msg] checkbox(String, checked~ : Bool, on_change~ : (Bool) -> Msg, theme? : @core.Theme, font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, box_shape? : @style.ChoiceControlShape, check_style? : @style.CheckMarkStyle, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] checkbox_control(label~ : String, checked~ : @core.Binding[Bool], theme? : @core.Theme, font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, box_shape? : @style.ChoiceControlShape, check_style? : @style.CheckMarkStyle, height? : Double, on_change? : ((Bool) -> Msg)?, kind? : String, key? : String?) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

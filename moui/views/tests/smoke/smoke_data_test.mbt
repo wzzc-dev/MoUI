@@ -1,5 +1,6 @@
 ///|
 /// Smoke tests for data display widgets.
+
 ///|
 test "table smoke" {
   let view : @core.View[Unit] = @views.table(
@@ -39,9 +40,11 @@ test "stat_card smoke" {
 ///|
 test "tree_view smoke" {
   let view : @core.View[Unit] = @views.tree_view(
-    [@views.tree_item(id="1", label="Root", children=[
-      @views.tree_item(id="1.1", label="Child"),
-    ])],
+    [
+      @views.tree_item(id="1", label="Root", children=[
+        @views.tree_item(id="1.1", label="Child"),
+      ]),
+    ],
     expanded=[],
   )
   @common.assert_layouts(view)

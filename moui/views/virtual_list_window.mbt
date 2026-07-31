@@ -71,7 +71,7 @@ fn[T, Msg] virtual_list_window(
 ) -> @core.View[Msg] {
   let limit = offset + viewport_height
   let stride = item_height + spacing
-  let overscan = views_max_int(0, overscan)
+  let overscan = @common.view_max_int(0, overscan)
   let overscan_distance = overscan.to_double() * stride
   let children : Array[@core.View[Msg]] = []
   let mut first_visible = -1

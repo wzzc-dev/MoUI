@@ -1,5 +1,6 @@
 ///|
 /// Smoke tests for navigation widgets.
+
 ///|
 test "tab_view smoke" {
   let view : @core.View[Unit] = @views.tab_view(
@@ -50,8 +51,16 @@ test "split_view smoke" {
 
 ///|
 test "wizard smoke" {
-  let step = @views.WizardStep::new(id="1", title="Step 1", content=@views.text("content"))
-  let view : @core.View[Unit] = @views.wizard([step], current="1", on_select=fn(_s) { () })
+  let step = @views.WizardStep::new(
+    id="1",
+    title="Step 1",
+    content=@views.text("content"),
+  )
+  let view : @core.View[Unit] = @views.wizard([step], current="1", on_select=fn(
+    _s,
+  ) {
+    ()
+  })
   @common.assert_layouts(view)
   @common.assert_paints(view)
 }

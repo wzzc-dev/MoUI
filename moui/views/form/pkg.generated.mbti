@@ -1,0 +1,131 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/views/form"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views/controls",
+  "wzzc-dev/moui/views/style",
+}
+
+// Values
+pub fn[Msg] datepicker(selected~ : @core.DateValue, on_select~ : (@core.DateValue) -> Msg, mode? : @style.DatePickerMode, placeholder? : String, theme? : @core.Theme, style? : @style.PickerStyle, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
+
+pub fn[Msg] drop_zone(title? : String, message? : String, on_drop~ : (Array[String]) -> Msg, theme? : @core.Theme, width? : Double, height? : Double, enabled? : Bool) -> @core.View[Msg]
+
+pub fn[Msg] file_import_panel(selection~ : FileSelection, on_drop~ : (Array[String]) -> Msg, on_browse? : Msg?, availability? : FileImportAvailability, title? : String, drop_title? : String, empty_message? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] form(Array[@core.View[Msg]], spacing? : Double, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] form_actions(primary~ : @controls.StateViewAction[Msg], secondary? : @controls.StateViewAction[Msg]?, status? : String, primary_enabled? : Bool, secondary_enabled? : Bool, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] form_error(String, theme? : @core.Theme, style? : @style.FormValidationStyle, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] form_field(label~ : String, child~ : @core.View[Msg], helper? : String, error? : String, status? : FormFieldStatus, layout? : FormFieldLayout, validation_display? : FormValidationDisplay, required? : Bool, disabled? : Bool, read_only? : Bool, theme? : @core.Theme, width? : Double, label_width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] form_field_state(field~ : FormFieldState, child~ : @core.View[Msg], helper? : String, validation_display? : FormValidationDisplay, required? : Bool, disabled? : Bool, read_only? : Bool, theme? : @core.Theme, width? : Double, label_width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] form_helper_text(String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] form_section(title? : String, Array[@core.View[Msg]], summary? : String, spacing? : Double, theme? : @core.Theme, width? : Double, padding? : Double) -> @core.View[Msg]
+
+pub fn[Msg] form_validation_summary(summary~ : FormValidationSummary, title? : String, valid_message? : String, action? : @controls.StateViewAction[Msg]?, theme? : @core.Theme, style? : @style.FormValidationStyle, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] form_workflow_bar(summary~ : FormValidationSummary, primary~ : @controls.StateViewAction[Msg], secondary? : @controls.StateViewAction[Msg]?, focus_scope? : @core.FocusScope?, focus_invalid? : @controls.StateViewAction[Msg]?, valid_message? : String, invalid_title? : String, status? : String, theme? : @core.Theme, style? : @style.FormValidationStyle, width? : Double) -> @core.View[Msg]
+
+pub fn required_field(message? : String) -> (String) -> String?
+
+pub fn validate_form(Array[FormFieldState]) -> FormValidationResult
+
+// Errors
+
+// Types and methods
+pub struct BaselineFormRow[Msg] {
+  label : @core.View[Msg]
+  control : @core.View[Msg]
+}
+pub fn[Msg] BaselineFormRow::new(label~ : @core.View[Msg], control~ : @core.View[Msg]) -> Self[Msg]
+
+pub(all) enum FileImportAvailability {
+  Available
+  Unavailable(String)
+  Pending
+} derive(Eq, @debug.Debug)
+
+pub struct FileSelection {
+  paths : Array[String]
+}
+pub fn FileSelection::new(paths~ : Array[String]) -> Self
+
+type FormController
+pub fn FormController::field_error(Self, String) -> String
+pub fn FormController::new(fields~ : Array[FormFieldState]) -> Self
+pub fn FormController::validate(Self) -> FormValidationSummary
+
+pub struct FormFieldError {
+  name : String
+  message : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn FormFieldError::message(Self) -> String
+pub fn FormFieldError::name(Self) -> String
+pub fn FormFieldError::new(name~ : String, message~ : String) -> Self
+
+pub(all) enum FormFieldLayout {
+  Vertical
+  Horizontal
+} derive(Eq, ToJson, @debug.Debug)
+pub fn FormFieldLayout::to_string(Self) -> String
+
+type FormFieldState
+pub fn FormFieldState::binding(Self) -> @core.Binding[String]
+pub fn FormFieldState::new(name~ : String, initial? : String, label? : String, validator? : (String) -> String?, rules? : Array[FormValidationRule]) -> Self
+pub fn FormFieldState::validate(Self) -> FormFieldError?
+
+pub(all) enum FormFieldStatus {
+  Normal
+  Required
+  Validating
+  Invalid
+  Disabled
+  ReadOnly
+} derive(Eq, ToJson, @debug.Debug)
+pub fn FormFieldStatus::to_string(Self) -> String
+
+pub(all) enum FormValidationDisplay {
+  Always
+  OnInvalid
+  Hidden
+} derive(Eq, ToJson, @debug.Debug)
+pub fn FormValidationDisplay::to_string(Self) -> String
+
+pub struct FormValidationResult {
+  valid : Bool
+  errors : Array[FormFieldError]
+  summary : FormValidationSummary
+} derive(Eq, ToJson, @debug.Debug)
+pub fn FormValidationResult::errors(Self) -> Array[FormFieldError]
+pub fn FormValidationResult::new(valid~ : Bool, errors~ : Array[FormFieldError], summary~ : FormValidationSummary) -> Self
+pub fn FormValidationResult::summary(Self) -> FormValidationSummary
+pub fn FormValidationResult::valid(Self) -> Bool
+
+type FormValidationRule
+pub fn FormValidationRule::from_validator((String) -> String?) -> Self
+pub fn FormValidationRule::new(message~ : String, validate~ : (String) -> Bool) -> Self
+pub fn FormValidationRule::required(message? : String) -> Self
+
+pub struct FormValidationSummary {
+  valid : Bool
+  errors : Array[FormFieldError]
+  first_invalid_id : String?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn FormValidationSummary::errors(Self) -> Array[FormFieldError]
+pub fn FormValidationSummary::first_invalid_id(Self) -> String?
+pub fn FormValidationSummary::from_errors(Array[FormFieldError]) -> Self
+pub fn FormValidationSummary::from_fields(Array[FormFieldState]) -> Self
+pub fn FormValidationSummary::new(valid~ : Bool, errors~ : Array[FormFieldError], first_invalid_id? : String?) -> Self
+pub fn FormValidationSummary::valid(Self) -> Bool
+
+// Type aliases
+
+// Traits
+

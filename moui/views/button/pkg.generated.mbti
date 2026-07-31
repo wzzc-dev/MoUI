@@ -1,0 +1,19 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/views/button"
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views/style",
+}
+
+// Values
+pub fn[Msg] button(String, on_click? : Msg, variant? : @style.ButtonVariant, theme? : @core.Theme, style? : @style.ButtonStyle, icon? : @style.IconName?, width? : Double, height? : Double) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

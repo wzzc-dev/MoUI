@@ -1,0 +1,18 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/views/divider"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn[Msg] divider(axis? : @core.Axis, theme? : @core.Theme, thickness? : Double, color? : @core.Color, inset? : Double) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

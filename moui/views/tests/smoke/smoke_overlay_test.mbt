@@ -1,5 +1,6 @@
 ///|
 /// Smoke tests for popover, dialog, sheet, context_menu_region.
+
 ///|
 test "popover smoke" {
   let view : @core.View[Unit] = @views.popover(

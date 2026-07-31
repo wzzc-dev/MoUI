@@ -1,0 +1,607 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/views/style"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn append_control_background(@core.ViewPaintContext, Array[@core.DrawCommand], @core.Brush, @core.BorderStyle?, @core.ShadowStyle?, Double) -> Unit
+
+pub fn dark_theme() -> @core.Theme
+
+pub fn default_theme() -> @core.Theme
+
+pub fn environment(theme? : @core.Theme) -> @core.Environment
+
+pub fn light_theme() -> @core.Theme
+
+pub fn minimal_control_theme_set(@core.Theme) -> ControlThemeSet
+
+pub fn new_control_state_style(foreground~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle, radius? : Double, shadow? : @core.ShadowStyle, bottom_border_only? : Bool, inner_focus_border? : @core.Color?) -> ControlStateStyle
+
+pub fn theme(base? : @core.Theme, scheme? : @core.ColorScheme, palette? : @core.ColorPalette, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale, shadow_scale? : @core.ShadowScale, motion? : @core.MotionScale, surfaces? : @core.SurfaceScale) -> @core.Theme
+
+pub fn views_ambient_control_theme(@core.Theme) -> ControlThemeSet
+
+// Errors
+
+// Types and methods
+pub(all) struct BadgeStyle {
+  neutral : ToneStyle
+  accent : ToneStyle
+  success : ToneStyle
+  warning : ToneStyle
+  danger : ToneStyle
+  radius : Double
+  padding : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn BadgeStyle::accent(Self) -> ToneStyle
+pub fn BadgeStyle::danger(Self) -> ToneStyle
+pub fn BadgeStyle::default(theme? : @core.Theme) -> Self
+pub fn BadgeStyle::neutral(Self) -> ToneStyle
+pub fn BadgeStyle::new(neutral~ : ToneStyle, accent~ : ToneStyle, success~ : ToneStyle, warning~ : ToneStyle, danger~ : ToneStyle, radius~ : Double, padding~ : Double) -> Self
+pub fn BadgeStyle::padding(Self) -> Double
+pub fn BadgeStyle::radius(Self) -> Double
+pub fn BadgeStyle::success(Self) -> ToneStyle
+pub fn BadgeStyle::warning(Self) -> ToneStyle
+pub fn BadgeStyle::with_accent(Self, accent~ : ToneStyle) -> Self
+pub fn BadgeStyle::with_danger(Self, danger~ : ToneStyle) -> Self
+pub fn BadgeStyle::with_neutral(Self, neutral~ : ToneStyle) -> Self
+pub fn BadgeStyle::with_padding(Self, padding~ : Double) -> Self
+pub fn BadgeStyle::with_radius(Self, radius~ : Double) -> Self
+pub fn BadgeStyle::with_success(Self, success~ : ToneStyle) -> Self
+pub fn BadgeStyle::with_warning(Self, warning~ : ToneStyle) -> Self
+
+pub(all) struct BadgeTheme {
+  neutral : ToneTokens
+  accent : ToneTokens
+  success : ToneTokens
+  warning : ToneTokens
+  danger : ToneTokens
+  radius : Double
+  padding : Double
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum BadgeTone {
+  Neutral
+  Accent
+  Success
+  Warning
+  Danger
+} derive(Eq, ToJson, @debug.Debug)
+pub impl Show for BadgeTone
+
+pub(all) struct ButtonStyle {
+  normal : ControlStateStyle
+  hovered : ControlStateStyle
+  pressed : ControlStateStyle
+  disabled : ControlStateStyle
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ButtonStyle::disabled(Self) -> ControlStateStyle
+pub fn ButtonStyle::filled(theme? : @core.Theme) -> Self
+pub fn ButtonStyle::ghost(theme? : @core.Theme) -> Self
+pub fn ButtonStyle::hovered(Self) -> ControlStateStyle
+pub fn ButtonStyle::new(normal~ : ControlStateStyle, hovered~ : ControlStateStyle, pressed~ : ControlStateStyle, disabled~ : ControlStateStyle) -> Self
+pub fn ButtonStyle::normal(Self) -> ControlStateStyle
+pub fn ButtonStyle::outline(theme? : @core.Theme) -> Self
+pub fn ButtonStyle::pressed(Self) -> ControlStateStyle
+pub fn ButtonStyle::tonal(theme? : @core.Theme) -> Self
+pub fn ButtonStyle::with_disabled(Self, disabled~ : ControlStateStyle) -> Self
+pub fn ButtonStyle::with_hovered(Self, hovered~ : ControlStateStyle) -> Self
+pub fn ButtonStyle::with_normal(Self, normal~ : ControlStateStyle) -> Self
+pub fn ButtonStyle::with_pressed(Self, pressed~ : ControlStateStyle) -> Self
+
+pub(all) struct ButtonTheme {
+  primary : ControlStateTokens
+  tonal : ControlStateTokens
+  outline : ControlStateTokens
+  ghost : ControlStateTokens
+  subtle : ControlStateTokens
+  subtle_brand : ControlStateTokens
+  state_layer : StateLayerTokens
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ButtonTheme::resolve(Self, ButtonVariantToken, @core.InteractionState) -> ControlStateStyle
+
+pub(all) enum ButtonVariant {
+  Primary
+  Tonal
+  Outline
+  Ghost
+  Subtle
+  SubtleBrand
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ButtonVariant::style(Self, ControlThemeSet) -> ButtonStyle
+pub fn ButtonVariant::to_token(Self) -> ButtonVariantToken
+
+pub(all) enum ButtonVariantToken {
+  Primary
+  Tonal
+  Outline
+  Ghost
+  Subtle
+  SubtleBrand
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum CheckMarkStyle {
+  Checkmark
+  Dot
+} derive(Eq, ToJson, @debug.Debug)
+pub fn CheckMarkStyle::label(Self) -> String
+
+pub(all) enum ChipVariant {
+  Filled
+  Outline
+  Soft
+} derive(Eq, ToJson, @debug.Debug)
+pub impl Show for ChipVariant
+
+pub(all) enum ChoiceControlShape {
+  Square
+  Circle
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ChoiceControlShape::label(Self) -> String
+
+pub(all) struct ChoiceControlStyle {
+  foreground : @core.Color
+  selected_color : @core.Color
+  disabled_foreground : @core.Color
+  disabled_selected_color : @core.Color
+  control_size : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ChoiceControlStyle::control_size(Self) -> Double
+pub fn ChoiceControlStyle::default(theme? : @core.Theme) -> Self
+pub fn ChoiceControlStyle::disabled_foreground(Self) -> @core.Color
+pub fn ChoiceControlStyle::disabled_selected_color(Self) -> @core.Color
+pub fn ChoiceControlStyle::foreground(Self) -> @core.Color
+pub fn ChoiceControlStyle::new(foreground~ : @core.Color, selected_color~ : @core.Color, disabled_foreground~ : @core.Color, disabled_selected_color~ : @core.Color, control_size~ : Double) -> Self
+pub fn ChoiceControlStyle::selected_color(Self) -> @core.Color
+pub fn ChoiceControlStyle::with_control_size(Self, control_size~ : Double) -> Self
+pub fn ChoiceControlStyle::with_disabled_foreground(Self, disabled_foreground~ : @core.Color) -> Self
+pub fn ChoiceControlStyle::with_disabled_selected_color(Self, disabled_selected_color~ : @core.Color) -> Self
+pub fn ChoiceControlStyle::with_foreground(Self, foreground~ : @core.Color) -> Self
+pub fn ChoiceControlStyle::with_selected_color(Self, selected_color~ : @core.Color) -> Self
+
+pub(all) struct ChoiceControlTheme {
+  foreground : @core.Color
+  selected_color : @core.Color
+  disabled_foreground : @core.Color
+  disabled_selected_color : @core.Color
+  control_size : Double
+  box_shape : ChoiceControlShape
+  check_style : CheckMarkStyle
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum ContainerVariant {
+  Base
+  Raised
+  Overlay
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ContainerVariant::style(Self, @core.Theme) -> SurfaceStyle
+pub impl Show for ContainerVariant
+
+pub(all) struct ControlStateStyle {
+  foreground : @core.Color
+  background : @core.Brush
+  border : @core.BorderStyle?
+  radius : Double
+  shadow : @core.ShadowStyle?
+  bottom_border_only : Bool
+  inner_focus_border : @core.Color?
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ControlStateTokens {
+  foreground : @core.Color
+  background : @core.Color
+  border : @core.Color
+  border_width : Double
+  radius : Double
+  bottom_border_only : Bool
+  inner_focus_border : @core.Color?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ControlStateTokens::new(foreground~ : @core.Color, background~ : @core.Color, border~ : @core.Color, border_width~ : Double, radius~ : Double, bottom_border_only? : Bool, inner_focus_border? : @core.Color?) -> Self
+pub fn ControlStateTokens::resolve(Self) -> ControlStateStyle
+
+pub(all) struct ControlThemeSet {
+  button : ButtonTheme
+  text_field : TextFieldTheme
+  surface : SurfaceTheme
+  choice_control : ChoiceControlTheme
+  progress : ProgressTheme
+  slider : SliderTheme
+  picker : PickerTheme
+  feedback : FeedbackTheme
+  badge : BadgeTheme
+  form_validation : FormValidationTheme
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum CrossAlign {
+  Start
+  Center
+  End
+  Stretch
+} derive(Eq, ToJson, @debug.Debug)
+pub fn CrossAlign::core(Self) -> @core.CrossAxisAlignment
+pub impl Show for CrossAlign
+
+pub(all) enum DatePickerMode {
+  Date
+  DateAndTime
+  Time
+} derive(Eq, ToJson, @debug.Debug)
+pub impl Show for DatePickerMode
+
+pub(all) struct FeedbackStyle {
+  neutral : ToneStyle
+  info : ToneStyle
+  success : ToneStyle
+  warning : ToneStyle
+  danger : ToneStyle
+  radius : Double
+  padding : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn FeedbackStyle::danger(Self) -> ToneStyle
+pub fn FeedbackStyle::default(theme? : @core.Theme) -> Self
+pub fn FeedbackStyle::info(Self) -> ToneStyle
+pub fn FeedbackStyle::neutral(Self) -> ToneStyle
+pub fn FeedbackStyle::new(neutral~ : ToneStyle, info~ : ToneStyle, success~ : ToneStyle, warning~ : ToneStyle, danger~ : ToneStyle, radius~ : Double, padding~ : Double) -> Self
+pub fn FeedbackStyle::padding(Self) -> Double
+pub fn FeedbackStyle::radius(Self) -> Double
+pub fn FeedbackStyle::success(Self) -> ToneStyle
+pub fn FeedbackStyle::warning(Self) -> ToneStyle
+pub fn FeedbackStyle::with_danger(Self, danger~ : ToneStyle) -> Self
+pub fn FeedbackStyle::with_info(Self, info~ : ToneStyle) -> Self
+pub fn FeedbackStyle::with_neutral(Self, neutral~ : ToneStyle) -> Self
+pub fn FeedbackStyle::with_padding(Self, padding~ : Double) -> Self
+pub fn FeedbackStyle::with_radius(Self, radius~ : Double) -> Self
+pub fn FeedbackStyle::with_success(Self, success~ : ToneStyle) -> Self
+pub fn FeedbackStyle::with_warning(Self, warning~ : ToneStyle) -> Self
+
+pub(all) struct FeedbackTheme {
+  neutral : ToneTokens
+  info : ToneTokens
+  success : ToneTokens
+  warning : ToneTokens
+  danger : ToneTokens
+  radius : Double
+  padding : Double
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum FeedbackTone {
+  Neutral
+  Success
+  Warning
+  Danger
+  Info
+} derive(Eq, ToJson, @debug.Debug)
+pub impl Show for FeedbackTone
+
+pub(all) struct FormValidationStyle {
+  foreground : @core.Color
+  background : @core.Color
+  border : @core.Color
+  radius : Double
+  padding : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn FormValidationStyle::background(Self) -> @core.Color
+pub fn FormValidationStyle::border(Self) -> @core.Color
+pub fn FormValidationStyle::default(theme? : @core.Theme) -> Self
+pub fn FormValidationStyle::foreground(Self) -> @core.Color
+pub fn FormValidationStyle::new(foreground~ : @core.Color, background~ : @core.Color, border~ : @core.Color, radius~ : Double, padding~ : Double) -> Self
+pub fn FormValidationStyle::padding(Self) -> Double
+pub fn FormValidationStyle::radius(Self) -> Double
+pub fn FormValidationStyle::with_background(Self, background~ : @core.Color) -> Self
+pub fn FormValidationStyle::with_border(Self, border~ : @core.Color) -> Self
+pub fn FormValidationStyle::with_foreground(Self, foreground~ : @core.Color) -> Self
+pub fn FormValidationStyle::with_padding(Self, padding~ : Double) -> Self
+pub fn FormValidationStyle::with_radius(Self, radius~ : Double) -> Self
+
+pub(all) struct FormValidationTheme {
+  foreground : @core.Color
+  background : @core.Color
+  border : @core.Color
+  radius : Double
+  padding : Double
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum IconName {
+  Check
+  Close
+  ChevronDown
+  ChevronRight
+  ChevronLeft
+  Plus
+  Minus
+  Search
+  ArrowRight
+  Settings
+  Trash
+  Info
+  FileNew
+  FolderOpen
+  Save
+  Clipboard
+  Bold
+  Italic
+  CodeInline
+  Link
+  Heading
+  ListBullet
+  ListOrdered
+  ListTask
+  Quote
+  Table
+  Eye
+  Focus
+  Columns
+  Sidebar
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum MainAlign {
+  Start
+  Center
+  End
+  Between
+  Around
+  Evenly
+} derive(Eq, ToJson, @debug.Debug)
+pub fn MainAlign::core(Self) -> @core.MainAxisAlignment
+pub impl Show for MainAlign
+
+pub(all) struct PickerItem {
+  id : String
+  label : String
+}
+pub fn PickerItem::id(Self) -> String
+pub fn PickerItem::label(Self) -> String
+pub fn PickerItem::new(id~ : String, label~ : String) -> Self
+
+pub(all) struct PickerStyle {
+  font : @core.FontSpec
+  foreground : @core.Color
+  background : @core.Brush
+  radius : Double
+  popup_max_height : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn PickerStyle::background(Self) -> @core.Brush
+pub fn PickerStyle::default(theme? : @core.Theme) -> Self
+pub fn PickerStyle::font(Self) -> @core.FontSpec
+pub fn PickerStyle::foreground(Self) -> @core.Color
+pub fn PickerStyle::new(font~ : @core.FontSpec, foreground~ : @core.Color, background~ : @core.Brush, radius~ : Double, popup_max_height~ : Double) -> Self
+pub fn PickerStyle::popup_max_height(Self) -> Double
+pub fn PickerStyle::radius(Self) -> Double
+pub fn PickerStyle::with_background(Self, background~ : @core.Brush) -> Self
+pub fn PickerStyle::with_font(Self, font~ : @core.FontSpec) -> Self
+pub fn PickerStyle::with_foreground(Self, foreground~ : @core.Color) -> Self
+pub fn PickerStyle::with_popup_max_height(Self, popup_max_height~ : Double) -> Self
+pub fn PickerStyle::with_radius(Self, radius~ : Double) -> Self
+
+pub(all) struct PickerTheme {
+  font : @core.FontSpec
+  foreground : @core.Color
+  background : @core.Brush
+  radius : Double
+  popup_max_height : Double
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ProgressStyle {
+  foreground : @core.Color
+  background : @core.Color
+  radius : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ProgressStyle::background(Self) -> @core.Color
+pub fn ProgressStyle::default(theme? : @core.Theme) -> Self
+pub fn ProgressStyle::foreground(Self) -> @core.Color
+pub fn ProgressStyle::new(foreground~ : @core.Color, background~ : @core.Color, radius~ : Double) -> Self
+pub fn ProgressStyle::radius(Self) -> Double
+pub fn ProgressStyle::with_background(Self, background~ : @core.Color) -> Self
+pub fn ProgressStyle::with_foreground(Self, foreground~ : @core.Color) -> Self
+pub fn ProgressStyle::with_radius(Self, radius~ : Double) -> Self
+
+pub(all) struct ProgressTheme {
+  foreground : @core.Color
+  background : @core.Color
+  radius : Double
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum SegmentedControlSize {
+  Compact
+  Regular
+} derive(Eq, ToJson, @debug.Debug)
+pub impl Show for SegmentedControlSize
+
+pub(all) enum SheetPresentationMode {
+  Modal
+  BottomSheet
+} derive(Eq, ToJson, @debug.Debug)
+pub impl Show for SheetPresentationMode
+
+pub(all) struct SliderStyle {
+  foreground : @core.Color
+  background : @core.Color
+  thumb_color : @core.Color
+  track_height : Double
+  thumb_size : Double
+  radius : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SliderStyle::background(Self) -> @core.Color
+pub fn SliderStyle::default(theme? : @core.Theme) -> Self
+pub fn SliderStyle::foreground(Self) -> @core.Color
+pub fn SliderStyle::new(foreground~ : @core.Color, background~ : @core.Color, thumb_color~ : @core.Color, track_height~ : Double, thumb_size~ : Double, radius~ : Double) -> Self
+pub fn SliderStyle::radius(Self) -> Double
+pub fn SliderStyle::thumb_color(Self) -> @core.Color
+pub fn SliderStyle::thumb_size(Self) -> Double
+pub fn SliderStyle::track_height(Self) -> Double
+pub fn SliderStyle::with_background(Self, background~ : @core.Color) -> Self
+pub fn SliderStyle::with_foreground(Self, foreground~ : @core.Color) -> Self
+pub fn SliderStyle::with_radius(Self, radius~ : Double) -> Self
+pub fn SliderStyle::with_thumb_color(Self, thumb_color~ : @core.Color) -> Self
+pub fn SliderStyle::with_thumb_size(Self, thumb_size~ : Double) -> Self
+pub fn SliderStyle::with_track_height(Self, track_height~ : Double) -> Self
+
+pub(all) struct SliderTheme {
+  foreground : @core.Color
+  background : @core.Color
+  thumb_color : @core.Color
+  track_height : Double
+  thumb_size : Double
+  radius : Double
+  thumb_shape : ThumbShape
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct StateLayerTokens {
+  color : @core.Color
+  hover_alpha : Double
+  focus_alpha : Double
+  pressed_alpha : Double
+  dragged_alpha : Double
+  selected_alpha : Double
+  disabled_alpha : Double
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct SurfaceStyle {
+  brush : @core.Brush
+  border : @core.BorderStyle?
+  radius : Double
+  shadow : @core.ShadowStyle?
+  padding : @core.Insets
+  level : @core.SurfaceLevel
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SurfaceStyle::border(Self) -> @core.BorderStyle?
+pub fn SurfaceStyle::brush(Self) -> @core.Brush
+pub fn SurfaceStyle::default(theme? : @core.Theme) -> Self
+pub fn SurfaceStyle::level(Self) -> @core.SurfaceLevel
+pub fn SurfaceStyle::new(brush~ : @core.Brush, border? : @core.BorderStyle?, radius~ : Double, shadow? : @core.ShadowStyle?, padding~ : @core.Insets, level~ : @core.SurfaceLevel) -> Self
+pub fn SurfaceStyle::padding(Self) -> @core.Insets
+pub fn SurfaceStyle::radius(Self) -> Double
+pub fn SurfaceStyle::raised(theme? : @core.Theme) -> Self
+pub fn SurfaceStyle::shadow(Self) -> @core.ShadowStyle?
+pub fn SurfaceStyle::with_border(Self, border~ : @core.BorderStyle?) -> Self
+pub fn SurfaceStyle::with_brush(Self, brush~ : @core.Brush) -> Self
+pub fn SurfaceStyle::with_level(Self, level~ : @core.SurfaceLevel) -> Self
+pub fn SurfaceStyle::with_padding(Self, padding~ : @core.Insets) -> Self
+pub fn SurfaceStyle::with_radius(Self, radius~ : Double) -> Self
+pub fn SurfaceStyle::with_shadow(Self, shadow~ : @core.ShadowStyle?) -> Self
+
+pub(all) struct SurfaceTheme {
+  base_padding : Double
+  raised_padding : Double
+  overlay_padding : Double
+  base_radius : Double
+  raised_radius : Double
+  overlay_radius : Double
+  base_shadow : @core.ShadowStyle?
+  raised_shadow : @core.ShadowStyle?
+  overlay_shadow : @core.ShadowStyle?
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum TextFieldAppearance {
+  Filled
+  Outline
+  Underline
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct TextFieldStyle {
+  normal : ControlStateStyle
+  focused : ControlStateStyle
+  disabled : ControlStateStyle
+  placeholder_color : @core.Color
+  cursor_color : @core.Color
+  font : @core.FontSpec
+} derive(Eq, ToJson, @debug.Debug)
+pub fn TextFieldStyle::cursor_color(Self) -> @core.Color
+pub fn TextFieldStyle::disabled(Self) -> ControlStateStyle
+pub fn TextFieldStyle::filled(theme? : @core.Theme) -> Self
+pub fn TextFieldStyle::focused(Self) -> ControlStateStyle
+pub fn TextFieldStyle::font(Self) -> @core.FontSpec
+pub fn TextFieldStyle::new(normal~ : ControlStateStyle, focused~ : ControlStateStyle, disabled~ : ControlStateStyle, placeholder_color~ : @core.Color, cursor_color~ : @core.Color, font~ : @core.FontSpec) -> Self
+pub fn TextFieldStyle::normal(Self) -> ControlStateStyle
+pub fn TextFieldStyle::outline(theme? : @core.Theme) -> Self
+pub fn TextFieldStyle::placeholder_color(Self) -> @core.Color
+pub fn TextFieldStyle::with_cursor_color(Self, cursor_color~ : @core.Color) -> Self
+pub fn TextFieldStyle::with_disabled(Self, disabled~ : ControlStateStyle) -> Self
+pub fn TextFieldStyle::with_focused(Self, focused~ : ControlStateStyle) -> Self
+pub fn TextFieldStyle::with_font(Self, font~ : @core.FontSpec) -> Self
+pub fn TextFieldStyle::with_normal(Self, normal~ : ControlStateStyle) -> Self
+pub fn TextFieldStyle::with_placeholder_color(Self, placeholder_color~ : @core.Color) -> Self
+
+pub(all) struct TextFieldTheme {
+  normal : ControlStateTokens
+  focused : ControlStateTokens
+  disabled : ControlStateTokens
+  placeholder : @core.Color
+  cursor : @core.Color
+  font : @core.FontSpec
+  appearance : TextFieldAppearance
+} derive(Eq, ToJson, @debug.Debug)
+pub fn TextFieldTheme::resolve(Self, @core.InteractionState) -> ControlStateStyle
+
+pub(all) enum TextFieldVariant {
+  Filled
+  Outline
+  Plain
+} derive(Eq, ToJson, @debug.Debug)
+pub fn TextFieldVariant::style(Self, @core.Theme) -> TextFieldStyle
+pub impl Show for TextFieldVariant
+
+pub(all) enum TextRole {
+  Body
+  Title
+  Caption
+  Control
+  Mono
+  Display
+  Headline
+  Subtitle
+  Label
+  Overline
+} derive(Eq, ToJson, @debug.Debug)
+pub fn TextRole::color(Self, @core.Theme) -> @core.Color
+pub fn TextRole::font(Self, @core.Theme) -> @core.FontSpec
+pub impl Show for TextRole
+
+pub(all) struct TextStyle {
+  font : @core.FontSpec
+  color : @core.Color
+} derive(Eq, ToJson, @debug.Debug)
+pub fn TextStyle::body(theme? : @core.Theme) -> Self
+pub fn TextStyle::color(Self) -> @core.Color
+pub fn TextStyle::font(Self) -> @core.FontSpec
+pub fn TextStyle::new(font~ : @core.FontSpec, color~ : @core.Color) -> Self
+pub fn TextStyle::title(theme? : @core.Theme) -> Self
+pub fn TextStyle::with_color(Self, color~ : @core.Color) -> Self
+pub fn TextStyle::with_font(Self, font~ : @core.FontSpec) -> Self
+
+pub(all) enum ThumbShape {
+  Rounded
+  Circle
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ThumbShape::label(Self) -> String
+
+pub(all) struct ToneStyle {
+  foreground : @core.Color
+  background : @core.Color
+  border : @core.Color
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ToneStyle::background(Self) -> @core.Color
+pub fn ToneStyle::border(Self) -> @core.Color
+pub fn ToneStyle::foreground(Self) -> @core.Color
+pub fn ToneStyle::new(foreground~ : @core.Color, background~ : @core.Color, border~ : @core.Color) -> Self
+pub fn ToneStyle::with_background(Self, background~ : @core.Color) -> Self
+pub fn ToneStyle::with_border(Self, border~ : @core.Color) -> Self
+pub fn ToneStyle::with_foreground(Self, foreground~ : @core.Color) -> Self
+
+pub(all) struct ToneTokens {
+  foreground : @core.Color
+  background : @core.Color
+  border : @core.Color
+} derive(Eq, ToJson, @debug.Debug)
+
+// Type aliases
+pub using @core {type ColorPalette}
+
+pub using @core {type TypographyScale}
+
+// Traits
+

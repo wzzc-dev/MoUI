@@ -1,5 +1,6 @@
 ///|
 /// Smoke tests for form widgets: form_field, form_section, form_actions.
+
 ///|
 test "form_field smoke" {
   let view : @core.View[Unit] = @views.form_field(
@@ -23,10 +24,9 @@ test "form_field with helper smoke" {
 
 ///|
 test "form_section smoke" {
-  let view : @core.View[Unit] = @views.form_section(
-    title="Section",
-    [@views.text_field("", on_input=fn(_s) { () })],
-  )
+  let view : @core.View[Unit] = @views.form_section(title="Section", [
+    @views.text_field("", on_input=fn(_s) { () }),
+  ])
   @common.assert_layouts(view)
   @common.assert_paints(view)
 }

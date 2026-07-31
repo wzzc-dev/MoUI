@@ -21,7 +21,7 @@ pub fn[T, Msg] sectioned_list(
         scroll_view(view, state=Some(state), width=0.0, height=viewport_height)
       None =>
         scroll_view(
-          @core.View::from_node(EmptyControl::{  }),
+          @container.empty(),
           state=Some(state),
           width=0.0,
           height=viewport_height,
@@ -30,7 +30,7 @@ pub fn[T, Msg] sectioned_list(
   } else {
     let offset = state.offset().y
     let limit = offset + viewport_height
-    let overscan = views_max_int(0, overscan)
+    let overscan = @common.view_max_int(0, overscan)
     let children : Array[@core.View[Msg]] = []
     let mut cursor = 0.0
     let mut first_visible = -1
@@ -158,7 +158,7 @@ fn[T] sectioned_entries_height(
   spacing : Double,
 ) -> Double {
   let mut total = 0.0
-  let end = views_min_int(entries.length(), end)
+  let end = entries.length().min(end)
   for index in start..<end {
     total = total +
       sectioned_entry_height(entries[index], header_height, item_height)

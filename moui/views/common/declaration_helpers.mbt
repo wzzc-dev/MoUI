@@ -28,17 +28,23 @@ pub fn view_uncacheable_declaration() -> @core.ViewDeclaration {
 }
 
 ///|
-pub fn view_layout_declaration(key : @core.DeclarationKey) -> @core.ViewDeclaration {
+pub fn view_layout_declaration(
+  key : @core.DeclarationKey,
+) -> @core.ViewDeclaration {
   view_declaration(layout=exact_channel(key))
 }
 
 ///|
-pub fn view_paint_declaration(key : @core.DeclarationKey) -> @core.ViewDeclaration {
+pub fn view_paint_declaration(
+  key : @core.DeclarationKey,
+) -> @core.ViewDeclaration {
   view_declaration(paint=exact_channel(key))
 }
 
 ///|
-pub fn view_semantics_declaration(key : @core.DeclarationKey) -> @core.ViewDeclaration {
+pub fn view_semantics_declaration(
+  key : @core.DeclarationKey,
+) -> @core.ViewDeclaration {
   view_declaration(semantics=exact_channel(key))
 }
 

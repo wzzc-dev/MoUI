@@ -1,6 +1,42 @@
+// === Package extraction ===
+// Sub-packages (in dependency order):
+//   common/    ← pure @core helpers
+//   style/     ← control_style_*, control_theme_*, style_api, theme, control_primitives
+//   layout/    ← layout_*, flex, stack, padding, frame, grid, spacer, scroll_view
+//   canvas/    ← canvas, command_palette, virtual_list
+//   controls/  ← button, text, icon, checkbox, container, divider, toolbar, control_*, choice_*, picker*
+//   text/      ← text_input_*, text_area_*, text_editing_*
+//   form/      ← form_*
+//   data/      ← data_*
+//   navigation/← navigation_*
+//   feedback/  ← feedback_*
+//   popover/   ← popover_*
+//
+// The facade (this package) re-exports the full public API via pub using.
+// Dependency order: common ← style ← controls/layout/text ← form/data/nav/feedback/popover
+
 import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/views/common",
+  "wzzc-dev/moui/views/style",
+  "wzzc-dev/moui/views/controls",
+  "wzzc-dev/moui/views/button",
+  "wzzc-dev/moui/views/checkbox",
+  "wzzc-dev/moui/views/choice",
+  "wzzc-dev/moui/views/container",
+  "wzzc-dev/moui/views/divider",
+  "wzzc-dev/moui/views/image",
+  "wzzc-dev/moui/views/layout",
+  "wzzc-dev/moui/views/canvas",
+  "wzzc-dev/moui/views/presence_dot",
+  "wzzc-dev/moui/views/progress",
+  "wzzc-dev/moui/views/slider",
+  "wzzc-dev/moui/views/text",
+  "wzzc-dev/moui/views/form",
+  "wzzc-dev/moui/views/data",
+  "wzzc-dev/moui/views/navigation",
+  "wzzc-dev/moui/views/feedback",
+  "wzzc-dev/moui/views/popover",
 }
 
 import {

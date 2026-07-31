@@ -63,7 +63,7 @@ fn[Msg] command_palette_row(
 ) -> @core.View[Msg] {
   let shortcut = command.shortcut_label()
   let meta = command_palette_meta(command)
-  let label_width = views_max_double(120.0, width - 112.0)
+  let label_width = @common.view_max_double(120.0, width - 112.0)
   let rows : Array[@core.View[Msg]] = [
     row(
       [

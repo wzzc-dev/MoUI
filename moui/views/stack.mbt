@@ -1,6 +1,6 @@
 ///|
 pub fn[Msg] stack(children : Array[@core.View[Msg]]) -> @core.View[Msg] {
-  stack_layout(children~)
+  @common.stack_layout(children~)
 }
 
 ///|
@@ -27,9 +27,9 @@ pub fn[Msg] scroll_view(
   }
   match state {
     Some(scroll_state) =>
-      component(context => {
+      @controls.component_host(context => {
         let current_offset = context.watch_scroll(scroll_state)
-        scroll_container(
+        @controls.scroll_container(
           child~,
           offset=current_offset,
           viewport~,
@@ -39,7 +39,7 @@ pub fn[Msg] scroll_view(
         )
       })
     None =>
-      scroll_container(
+      @controls.scroll_container(
         child~,
         offset~,
         viewport~,

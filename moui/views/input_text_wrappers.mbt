@@ -18,7 +18,7 @@ pub fn[Msg] clearable_text_field(
         placeholder~,
         variant~,
         theme=resolved_theme,
-        width=views_max_double(80.0, width - 72.0),
+        width=@common.view_max_double(80.0, width - 72.0),
         height~,
       ),
       button(
@@ -57,7 +57,7 @@ pub fn[Msg] password_field(
         placeholder~,
         variant~,
         theme=resolved_theme,
-        width=views_max_double(80.0, width - 72.0),
+        width=@common.view_max_double(80.0, width - 72.0),
         height~,
       ),
       button(

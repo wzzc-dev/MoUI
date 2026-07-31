@@ -1,0 +1,27 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/views/icon"
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views/style",
+}
+
+// Values
+pub fn[Msg] icon(@style.IconName, size? : Double, color? : @core.Color, weight? : Double) -> @core.View[Msg]
+
+pub fn icon_label(@style.IconName) -> String
+
+pub fn icon_path(@style.IconName) -> Array[@core.PathVerb]
+
+pub fn icon_scale_point(@core.Point, Double, Double, Double) -> @core.Point
+
+pub fn icon_scale_verbs(Array[@core.PathVerb], Double, Double, Double) -> Array[@core.PathVerb]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

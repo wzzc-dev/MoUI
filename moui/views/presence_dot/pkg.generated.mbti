@@ -1,0 +1,28 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/views/presence_dot"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn[Msg] presence_dot(PresenceStatus, size? : Double, theme? : @core.Theme, on_surface? : @core.Color) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+pub(all) enum PresenceStatus {
+  Available
+  Away
+  Busy
+  Offline
+  Unknown
+} derive(Eq, ToJson, @debug.Debug)
+pub fn PresenceStatus::label(Self) -> String
+pub fn PresenceStatus::to_string(Self) -> String
+
+// Type aliases
+
+// Traits
+

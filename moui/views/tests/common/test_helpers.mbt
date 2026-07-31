@@ -109,10 +109,16 @@ pub fn smoke_paint_context(frame~ : @core.Rect) -> @core.ViewPaintContext {
 
 ///|
 /// Layout a view in a loose 400x300 space and return the layout result.
-pub fn layout_view(view : @core.View[Unit], width~ : Double, height~ : Double) -> @core.ViewLayoutResult {
-  view.layout(empty_layout_context(
-    constraints=@core.Constraints::loose(@core.Size::new(width~, height~)),
-  ))
+pub fn layout_view(
+  view : @core.View[Unit],
+  width~ : Double,
+  height~ : Double,
+) -> @core.ViewLayoutResult {
+  view.layout(
+    empty_layout_context(
+      constraints=@core.Constraints::loose(@core.Size::new(width~, height~)),
+    ),
+  )
 }
 
 ///|
@@ -123,18 +129,22 @@ pub fn layout_single_child(
   width~ : Double,
   height~ : Double,
 ) -> @core.ViewLayoutResult {
-  view.layout(single_child_layout_context(
-    constraints=@core.Constraints::loose(@core.Size::new(width~, height~)),
-    child_size~,
-  ))
+  view.layout(
+    single_child_layout_context(
+      constraints=@core.Constraints::loose(@core.Size::new(width~, height~)),
+      child_size~,
+    ),
+  )
 }
 
 ///|
 /// Paint a view in a 400x300 frame and return the paint plan.
 pub fn paint_view(view : @core.View[Unit]) -> @core.ViewPaintPlan {
-  view.paint(smoke_paint_context(
-    frame=@core.Rect::new(x=0.0, y=0.0, width=400.0, height=300.0),
-  ))
+  view.paint(
+    smoke_paint_context(
+      frame=@core.Rect::new(x=0.0, y=0.0, width=400.0, height=300.0),
+    ),
+  )
 }
 
 ///|

@@ -1,0 +1,25 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/views/text"
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views/style",
+}
+
+// Values
+pub fn[Msg] controlled_search_bar_control(query~ : String, on_input~ : (String) -> Msg, placeholder~ : String, theme? : @core.Theme, variant? : @style.TextFieldVariant, style? : @style.TextFieldStyle, on_submit? : Msg?, on_clear? : Msg?, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] text(String, role? : @style.TextRole, theme? : @core.Theme, width? : Double, height? : Double, align? : @core.TextAlign) -> @core.View[Msg]
+
+pub fn[Msg] text_area(String, on_input~ : (String) -> Msg, placeholder? : String, lines? : Int, variant? : @style.TextFieldVariant, theme? : @core.Theme, width? : Double, line_height? : Double, on_submit? : Msg?) -> @core.View[Msg]
+
+pub fn[Msg] text_field(String, on_input~ : (String) -> Msg, on_submit? : Msg?, placeholder? : String, variant? : @style.TextFieldVariant, theme? : @core.Theme, style? : @style.TextFieldStyle, width? : Double, height? : Double) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+
