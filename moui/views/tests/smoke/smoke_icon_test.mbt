@@ -1,5 +1,6 @@
 ///|
 /// Smoke tests for icon, image, divider.
+
 ///|
 test "icon smoke" {
   let view : @core.View[Unit] = @views.icon(@views.IconName::Check)
@@ -16,7 +17,10 @@ test "icon sized smoke" {
 
 ///|
 test "icon colored smoke" {
-  let view : @core.View[Unit] = @views.icon(@views.IconName::Close, color=@core.Color::black())
+  let view : @core.View[Unit] = @views.icon(
+    @views.IconName::Close,
+    color=@core.Color::black(),
+  )
   @common.assert_layouts(view)
   @common.assert_paints(view)
 }

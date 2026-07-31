@@ -1,6 +1,6 @@
 ///|
 pub fn[Msg] padding(child : @core.View[Msg], value : Double) -> @core.View[Msg] {
-  padding_layout(child~, insets=@core.Insets::all(value))
+  @layout.padding_layout(child~, insets=@core.Insets::all(value))
 }
 
 ///|
@@ -9,7 +9,10 @@ pub fn[Msg] padding_xy(
   horizontal? : Double = 0.0,
   vertical? : Double = 0.0,
 ) -> @core.View[Msg] {
-  padding_layout(child~, insets=@core.Insets::symmetric(horizontal~, vertical~))
+  @layout.padding_layout(
+    child~,
+    insets=@core.Insets::symmetric(horizontal~, vertical~),
+  )
 }
 
 ///|
@@ -20,7 +23,7 @@ pub fn[Msg] padding_edges(
   bottom? : Double = 0.0,
   left? : Double = 0.0,
 ) -> @core.View[Msg] {
-  padding_layout(child~, insets={ top, right, bottom, left })
+  @layout.padding_layout(child~, insets={ top, right, bottom, left })
 }
 
 ///|
@@ -28,5 +31,5 @@ pub fn[Msg] padding_insets(
   child : @core.View[Msg],
   insets : @core.Insets,
 ) -> @core.View[Msg] {
-  padding_layout(child~, insets~)
+  @layout.padding_layout(child~, insets~)
 }

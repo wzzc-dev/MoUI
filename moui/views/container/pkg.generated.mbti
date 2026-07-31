@@ -1,0 +1,41 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/views/container"
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views/style",
+}
+
+// Values
+pub fn[Msg] card(@core.View[Msg], width? : Double, height? : Double, padding? : Double, theme? : @core.Theme) -> @core.View[Msg]
+
+pub fn[Msg] center(@core.View[Msg], width? : Double, height? : Double, background? : @core.Color, theme? : @core.Theme) -> @core.View[Msg]
+
+pub fn[Msg] container(@core.View[Msg], width? : Double, height? : Double, background? : @core.Color, corner_radius? : Double, border? : @core.BorderStyle?, variant? : @style.ContainerVariant, theme? : @core.Theme, padding? : Double) -> @core.View[Msg]
+
+pub fn[Msg] container_box(child? : @core.View[Msg]?, size? : @core.Size?, background? : @core.Brush?, border? : @core.BorderStyle?, corner_radius? : Double, shadow? : @core.ShadowStyle?, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] empty() -> @core.View[Msg]
+
+pub fn max_view_double(Double, Double) -> Double
+
+pub fn[Msg] padding_layout(child~ : @core.View[Msg], insets~ : @core.Insets, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] spacer(min_length? : Double, weight? : Double) -> @core.View[Msg]
+
+pub fn view_double_option_key(Double?) -> @core.DeclarationKey
+
+pub fn view_layout_declaration(@core.DeclarationKey) -> @core.ViewDeclaration
+
+pub fn view_record_key(String, Array[(String, @core.DeclarationKey)]) -> @core.DeclarationKey
+
+pub fn views_ambient_theme(@core.Theme?) -> @core.Theme
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

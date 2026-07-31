@@ -19,11 +19,3 @@ pub fn[T] SectionListSection::new(
 ) -> SectionListSection[T] {
   { id, title, items }
 }
-
-///|
-fn ScrollToIndexIntent::new(
-  index~ : Int,
-  offset~ : @core.Point,
-) -> ScrollToIndexIntent {
-  { index, offset }
-}

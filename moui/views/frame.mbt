@@ -8,7 +8,7 @@ pub fn[Msg] frame(
   max_width? : Double,
   max_height? : Double,
 ) -> @core.View[Msg] {
-  frame_layout(
+  @layout.frame_layout(
     child~,
     width~,
     height~,

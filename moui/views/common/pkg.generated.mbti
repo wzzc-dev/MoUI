@@ -1,0 +1,165 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/views/common"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn button_state_with_transition(@core.ViewStateContext, @core.PressableState, @core.PressableState, Double) -> @core.ViewStateContext
+
+pub fn button_transition(@core.ViewStateContext) -> (@core.PressableState, Double)?
+
+pub fn button_transition_slot() -> @core.ViewStateSlot[ButtonTransitionState]
+
+pub fn clamp_view_double(Double, Double, Double) -> Double
+
+pub fn clear(PaintContext, @core.Color) -> Unit
+
+pub fn declaration_border(@core.BorderStyle) -> @core.DeclarationKey
+
+pub fn declaration_brush(@core.Brush) -> @core.DeclarationKey
+
+pub fn declaration_color(@core.Color) -> @core.DeclarationKey
+
+pub fn declaration_font(@core.FontSpec) -> @core.DeclarationKey
+
+pub fn declaration_option_double(Double?) -> @core.DeclarationKey
+
+pub fn declaration_shadow(@core.ShadowStyle) -> @core.DeclarationKey
+
+pub fn draw_image(PaintContext, @core.ImageRun) -> Unit
+
+pub fn draw_path(PaintContext, @core.PathSpec) -> Unit
+
+pub fn draw_shader_effect(PaintContext, @core.ShaderEffectSpec) -> Unit
+
+pub fn draw_shadow(PaintContext, @core.ShadowSpec) -> Unit
+
+pub fn draw_text(PaintContext, @core.TextRun) -> Unit
+
+pub fn emit_elevation_shadow(Array[@core.DrawCommand], @core.RoundedRect, @core.ShadowStyle?, @core.ColorScheme) -> Unit
+
+pub fn exact_channel(@core.DeclarationKey) -> @core.DeclarationChannel
+
+pub fn fill_rect(PaintContext, @core.Rect, @core.Color) -> Unit
+
+pub fn fill_rounded_rect(PaintContext, @core.RoundedRect, @core.Brush) -> Unit
+
+pub fn max_view_double(Double, Double) -> Double
+
+pub fn min_view_double(Double, Double) -> Double
+
+pub fn pop_clip(PaintContext) -> Unit
+
+pub fn pop_filter(PaintContext) -> Unit
+
+pub fn pop_layer(PaintContext) -> Unit
+
+pub fn pop_opacity(PaintContext) -> Unit
+
+pub fn pop_rounded_clip(PaintContext) -> Unit
+
+pub fn pop_transform(PaintContext) -> Unit
+
+pub fn pressable_state_brush(@core.PressableState, @core.Brush, @core.Brush, @core.Brush) -> @core.Brush
+
+pub fn pressable_state_color(@core.Brush) -> @core.Color
+
+pub fn push_clip(PaintContext, @core.Rect) -> Unit
+
+pub fn push_filter(PaintContext, @core.FilterEffect) -> Unit
+
+pub fn push_layer(PaintContext, @core.LayerSpec) -> Unit
+
+pub fn push_opacity(PaintContext, Double) -> Unit
+
+pub fn push_rounded_clip(PaintContext, @core.RoundedRect) -> Unit
+
+pub fn push_transform(PaintContext, @core.Transform2D) -> Unit
+
+pub fn resolve_control_color(@core.Color?, @core.Color) -> @core.Color
+
+pub fn stroke_rect(PaintContext, @core.Rect, @core.Color, Double) -> Unit
+
+pub fn stroke_rounded_rect(PaintContext, @core.RoundedRect, @core.Brush, Double) -> Unit
+
+pub fn view_border_key(@core.BorderStyle) -> @core.DeclarationKey
+
+pub fn view_border_option_key(@core.BorderStyle?) -> @core.DeclarationKey
+
+pub fn view_brush_key(@core.Brush) -> @core.DeclarationKey
+
+pub fn view_brush_option_key(@core.Brush?) -> @core.DeclarationKey
+
+pub fn view_button_next_state(@core.PressableState, Bool, @core.PointerPhase) -> @core.PressableState
+
+pub fn view_color_key(@core.Color) -> @core.DeclarationKey
+
+pub fn view_constant_declaration() -> @core.ViewDeclaration
+
+pub fn view_declaration(layout? : @core.DeclarationChannel, paint? : @core.DeclarationChannel, semantics? : @core.DeclarationChannel, platform? : @core.DeclarationChannel) -> @core.ViewDeclaration
+
+pub fn view_double_option_key(Double?) -> @core.DeclarationKey
+
+pub fn[Msg] view_event_result(changed? : Bool, activated? : Bool, focused? : Bool, captured? : Bool, state? : @core.ViewStateContext?, text_control? : @core.TextControlStateContext?, dirty? : @core.ViewDirtyHint, messages? : Array[Msg]) -> @core.ViewEventResult[Msg]
+
+pub fn view_exact_channel(@core.DeclarationKey) -> @core.DeclarationChannel
+
+pub fn view_font_family_key(@core.FontFamily) -> @core.DeclarationKey
+
+pub fn view_font_key(@core.FontSpec) -> @core.DeclarationKey
+
+pub fn view_font_option_key(@core.FontSpec?) -> @core.DeclarationKey
+
+pub fn view_insets_key(@core.Insets) -> @core.DeclarationKey
+
+pub fn view_layout_declaration(@core.DeclarationKey) -> @core.ViewDeclaration
+
+pub fn view_max_double(Double, Double) -> Double
+
+pub fn view_max_int(Int, Int) -> Int
+
+pub fn view_min_double(Double, Double) -> Double
+
+pub fn view_paint_declaration(@core.DeclarationKey) -> @core.ViewDeclaration
+
+pub fn view_point_key(@core.Point) -> @core.DeclarationKey
+
+pub fn view_record_key(String, Array[(String, @core.DeclarationKey)]) -> @core.DeclarationKey
+
+pub fn view_semantics_declaration(@core.DeclarationKey) -> @core.ViewDeclaration
+
+pub fn view_semantics_role_key(@core.SemanticsRole) -> @core.DeclarationKey
+
+pub fn view_shadow_key(@core.ShadowStyle) -> @core.DeclarationKey
+
+pub fn view_shadow_option_key(@core.ShadowStyle?) -> @core.DeclarationKey
+
+pub fn view_size_key(@core.Size) -> @core.DeclarationKey
+
+pub fn view_size_option_key(@core.Size?) -> @core.DeclarationKey
+
+pub fn view_uncacheable_declaration() -> @core.ViewDeclaration
+
+pub fn views_ambient_theme(@core.Theme?) -> @core.Theme
+
+// Errors
+
+// Types and methods
+pub(all) enum ButtonTransitionState {
+  Idle
+  Active(@core.PressableState, Double)
+}
+
+pub(all) struct PaintContext {
+  commands : Array[@core.DrawCommand]
+}
+pub fn PaintContext::finish(Self) -> Array[@core.DrawCommand]
+pub fn PaintContext::new() -> Self
+
+// Type aliases
+pub using @core {type DateValue}
+
+// Traits
+

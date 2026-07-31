@@ -139,5 +139,5 @@ pub fn[Msg] custom_children_layout(
 pub fn[Msg] component(
   build : (@core.ComponentContext) -> @core.View[Msg],
 ) -> @core.View[Msg] {
-  component_host(build)
+  @controls.component_host(build)
 }

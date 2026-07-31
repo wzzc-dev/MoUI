@@ -61,11 +61,11 @@ pub fn scroll_to_index(
   item_height? : Double = 44.0,
   spacing? : Double = 0.0,
 ) -> ScrollToIndexIntent {
-  let index = views_max_int(0, index)
+  let index = @common.view_max_int(0, index)
   let offset = @core.Point::new(
     x=state.offset().x,
     y=index.to_double() * (item_height + spacing),
   )
   state.set_offset(offset)
-  ScrollToIndexIntent::new(index~, offset~)
+  { index, offset }
 }

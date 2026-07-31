@@ -1,0 +1,42 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/views/popover"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views/controls",
+  "wzzc-dev/moui/views/style",
+}
+
+// Values
+pub fn[Msg] autocomplete(String, on_input~ : (String) -> Msg, Array[@controls.MenuItem[Msg]], expanded~ : Bool, placeholder? : String, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] combobox(String, on_input~ : (String) -> Msg, Array[@controls.MenuItem[Msg]], expanded~ : Bool, on_toggle~ : Msg, placeholder? : String, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] dropdown(String, Array[@controls.MenuItem[Msg]], state~ : DropdownState, on_toggle~ : Msg, placeholder? : String, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] popover(anchor~ : @core.View[Msg], content~ : @core.View[Msg], expanded~ : Bool, placement? : PopoverPlacement, theme? : @core.Theme, width? : Double, height? : Double, trap_focus? : Bool) -> @core.View[Msg]
+
+pub fn[Msg] sheet(content~ : @core.View[Msg], presentation_mode? : @style.SheetPresentationMode, theme? : @core.Theme, background? : @core.Color, corner_radius? : Double, shadow? : @core.ShadowStyle?, on_dismiss? : Msg?) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+pub struct DropdownState {
+  expanded : Bool
+  selected : String
+}
+pub fn DropdownState::new(expanded? : Bool, selected? : String) -> Self
+
+pub(all) enum PopoverPlacement {
+  BottomStart
+  BottomEnd
+  TopStart
+  TopEnd
+} derive(Eq, @debug.Debug)
+pub fn PopoverPlacement::to_string(Self) -> String
+
+// Type aliases
+
+// Traits
+

@@ -1,5 +1,6 @@
 ///|
 /// Smoke tests for disclosure, accordion, collapsible_panel.
+
 ///|
 test "disclosure smoke" {
   let view : @core.View[Unit] = @views.disclosure(
@@ -26,8 +27,16 @@ test "collapsible_panel smoke" {
 
 ///|
 test "wizard_step accordion item smoke" {
-  let step = @views.WizardStep::new(id="1", title="Step 1", content=@views.text("content"))
-  let view : @core.View[Unit] = @views.accordion([step], expanded=[], on_toggle=fn(_s) { () })
+  let step = @views.WizardStep::new(
+    id="1",
+    title="Step 1",
+    content=@views.text("content"),
+  )
+  let view : @core.View[Unit] = @views.accordion([step], expanded=[], on_toggle=fn(
+    _s,
+  ) {
+    ()
+  })
   @common.assert_layouts(view)
   @common.assert_paints(view)
 }

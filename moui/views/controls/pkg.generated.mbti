@@ -1,0 +1,143 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/views/controls"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views/common",
+  "wzzc-dev/moui/views/style",
+}
+
+// Values
+pub fn[Msg] accordion(Array[WizardStep[Msg]], expanded~ : Array[String], on_toggle~ : (String) -> Msg, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] action_item(id~ : String, label~ : String, message~ : Msg, enabled? : Bool) -> ActionItem[Msg]
+
+pub fn[Msg] alert(String, String, primary_action~ : StateViewAction[Msg], secondary_action? : StateViewAction[Msg]?, tone? : @style.FeedbackTone, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] button_group(Array[ActionItem[Msg]], selected? : String, theme? : @core.Theme, button_width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] checkbox_group(Array[ChoiceItem], selected~ : Array[String], on_change~ : (String, Bool) -> Msg, theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
+
+pub fn[Msg] chip(String, selected? : Bool, on_click? : Msg?, variant? : @style.ChipVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] choice_chip(String, selected~ : Bool, on_select~ : Msg, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn choice_item(String, String) -> ChoiceItem
+
+pub fn[Msg] collapsible_panel(String, content~ : @core.View[Msg], expanded~ : Bool, on_toggle~ : Msg, subtitle? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] command_bar(Array[ActionItem[Msg]], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn command_menu_section(title~ : String, commands~ : Array[@core.ActionCommand]) -> CommandMenuSection
+
+pub fn[Msg] component_host((@core.ComponentContext) -> @core.View[Msg], kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] custom_children_layout_control(children~ : Array[@core.View[Msg]], measure~ : (@core.CustomLayoutContext) -> @core.Size, place~ : (@core.CustomPlacementContext) -> Array[@core.Rect], paint~ : (@common.PaintContext, @core.Rect) -> Unit, semantics_role? : @core.SemanticsRole, semantics_label? : String, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] custom_layout(measure~ : (@core.Constraints) -> @core.Size, paint~ : (@common.PaintContext, @core.Rect) -> Unit, semantics_role? : @core.SemanticsRole, semantics_label? : String) -> @core.View[Msg]
+
+pub fn[Msg] dialog(String, content~ : @core.View[Msg], subtitle? : String, primary_action? : StateViewAction[Msg]?, secondary_action? : StateViewAction[Msg]?, dismiss_action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] disclosure(String, content~ : @core.View[Msg], expanded~ : Bool, on_toggle~ : Msg, subtitle? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn feedback_accent(@style.FeedbackTone, @style.FeedbackStyle) -> @core.Color
+
+pub fn feedback_background(@style.FeedbackTone, @style.FeedbackStyle) -> @core.Color
+
+pub fn feedback_border(@style.FeedbackTone, @style.FeedbackStyle) -> @core.Color
+
+pub fn feedback_tone_style(@style.FeedbackTone, @style.FeedbackStyle) -> @style.ToneStyle
+
+pub fn[Msg] filter_chip(String, selected~ : Bool, on_change~ : (Bool) -> Msg, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] focus_ring(@core.View[Msg], focused~ : Bool, label? : String, theme? : @core.Theme, width? : Double, height? : Double, padding? : Double, radius? : Double) -> @core.View[Msg]
+
+pub fn[Msg] input_group(child~ : @core.View[Msg], prefix? : @core.View[Msg]?, suffix? : @core.View[Msg]?, theme? : @core.Theme, width? : Double, height? : Double, padding? : Double) -> @core.View[Msg]
+
+pub fn[Msg] menu_button(String, on_click? : Msg, variant? : @style.ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] menu_item(id~ : String, label~ : String, message~ : Msg, enabled? : Bool) -> MenuItem[Msg]
+
+pub fn[Msg] number_field(String, on_input~ : (String) -> Msg, on_step? : ((Double) -> Msg)?, step? : Double, placeholder? : String, variant? : @style.TextFieldVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] picker(Array[@style.PickerItem], selected~ : String, on_select~ : (String) -> Msg, placeholder? : String, theme? : @core.Theme, style? : @style.PickerStyle, max_height? : Double) -> @core.View[Msg]
+
+pub fn picker_item(String, String) -> @style.PickerItem
+
+pub fn[Msg] radio_group(Array[ChoiceItem], selected~ : String, on_select~ : (String) -> Msg, theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
+
+pub fn[Msg] resizable_panel(content~ : @core.View[Msg], size~ : Double, theme? : @core.Theme, height? : Double, min_size? : Double, max_size? : Double, on_drag? : ((Double) -> Msg)?) -> @core.View[Msg]
+
+pub fn[Msg] scroll_container(child~ : @core.View[Msg], offset? : @core.Point, viewport? : @core.Size?, state? : @core.ScrollState?, on_scroll? : ((@core.Point) -> Msg)?, shows_indicator? : Bool, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] searchbar(query~ : String, on_input~ : (String) -> Msg, placeholder? : String, variant? : @style.TextFieldVariant, theme? : @core.Theme, on_submit? : Msg?, on_clear? : Msg?) -> @core.View[Msg]
+
+pub fn[Msg] segmented_control(Array[ChoiceItem], selected~ : String, on_select~ : (String) -> Msg, size? : @style.SegmentedControlSize, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] semantic_dismiss_action_control(@core.View[Msg], Msg) -> @core.View[Msg]
+
+pub fn[Msg] semantic_toggle_action_control(@core.View[Msg], Bool, Msg) -> @core.View[Msg]
+
+pub fn[Msg] status_bar(Array[String], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] stepper(on_decrement~ : Msg, on_increment~ : Msg, label? : String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn string_array_contains(Array[String], String) -> Bool
+
+pub fn[Msg] tag(String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] toolbar(Array[@core.View[Msg]], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] tooltip(@core.View[Msg], String, visible? : Bool) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+pub struct ActionItem[Msg] {
+  id : String
+  label : String
+  message : Msg
+  enabled : Bool
+}
+pub fn[Msg] ActionItem::new(id~ : String, label~ : String, message~ : Msg, enabled? : Bool) -> Self[Msg]
+
+pub struct ChoiceItem {
+  id : String
+  label : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct CommandMenuSection {
+  title : String
+  commands : Array[@core.ActionCommand]
+}
+pub fn CommandMenuSection::new(title~ : String, commands~ : Array[@core.ActionCommand]) -> Self
+
+pub struct MenuItem[Msg] {
+  id : String
+  label : String
+  message : Msg
+  enabled : Bool
+}
+pub fn[Msg] MenuItem::new(id~ : String, label~ : String, message~ : Msg, enabled? : Bool) -> Self[Msg]
+
+pub struct StateViewAction[Msg] {
+  label : String
+  message : Msg
+}
+pub fn[Msg] StateViewAction::new(label~ : String, message~ : Msg) -> Self[Msg]
+
+pub struct WizardStep[Msg] {
+  id : String
+  title : String
+  subtitle : String
+  content : @core.View[Msg]
+  enabled : Bool
+}
+pub fn[Msg] WizardStep::new(id~ : String, title~ : String, subtitle? : String, content~ : @core.View[Msg], enabled? : Bool) -> Self[Msg]
+
+// Type aliases
+pub using @core {type DateValue}
+
+// Traits
+

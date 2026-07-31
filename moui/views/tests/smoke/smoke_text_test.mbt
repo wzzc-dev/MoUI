@@ -1,5 +1,6 @@
 ///|
 /// Smoke tests for text and text input widgets.
+
 ///|
 test "text smoke" {
   let view : @core.View[Unit] = @views.text("Hello")
@@ -10,7 +11,10 @@ test "text smoke" {
 
 ///|
 test "text with role smoke" {
-  let view : @core.View[Unit] = @views.text("Title", role=@views.TextRole::Title)
+  let view : @core.View[Unit] = @views.text(
+    "Title",
+    role=@views.TextRole::Title,
+  )
   assert_eq(view.identity().kind, "Text")
   @common.assert_layouts(view)
   @common.assert_paints(view)

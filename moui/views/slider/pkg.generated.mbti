@@ -1,0 +1,19 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/views/slider"
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views/style",
+}
+
+// Values
+pub fn[Msg] slider(Double, min? : Double, max? : Double, width? : Double, height? : Double, theme? : @core.Theme, style? : @style.SliderStyle, foreground? : @core.Color, background? : @core.Color, on_change? : ((Double) -> Msg)?) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

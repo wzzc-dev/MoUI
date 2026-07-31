@@ -16,8 +16,8 @@ impl @core.ViewNode for ScrollTestRect with fn identity(_self) {
 
 ///|
 impl @core.ViewNode for ScrollTestRect with fn declaration(self) {
-  view_layout_declaration(
-    view_record_key("ScrollTestRect", [
+  @common.view_layout_declaration(
+    @common.view_record_key("ScrollTestRect", [
       ("width", @core.DeclarationKey::double(self.width)),
       ("height", @core.DeclarationKey::double(self.height)),
     ]),
@@ -82,7 +82,7 @@ fn scroll_test_container(
   state : @core.ScrollState,
   shows_indicator? : Bool = false,
 ) -> @core.View[Unit] {
-  scroll_container(
+  @controls.scroll_container(
     child~,
     offset=state.offset(),
     viewport=Some(@core.Size::new(width=100.0, height=100.0)),
