@@ -33,6 +33,19 @@ pub fn surface_metrics_from_physical(
 }
 
 ///|
+pub fn host_metrics_to_dpi_size(metrics : HostSurfaceMetrics) -> @dpi.Size {
+  @dpi.LogicalSize::LogicalSize(
+    metrics.logical_size.width,
+    metrics.logical_size.height,
+  ).into_size()
+}
+
+///|
+pub fn core_size_to_window_surface_size(size : @core.Size) -> @dpi.Size {
+  @dpi.LogicalSize::LogicalSize(size.width, size.height).into_size()
+}
+
+///|
 pub fn element_state_to_pointer_phase(
   state : @window_core.ElementState,
 ) -> @core.PointerPhase {

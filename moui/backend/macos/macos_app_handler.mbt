@@ -19,7 +19,7 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn can
   }
   let base_attributes = @window_core.WindowAttributes::default()
     .with_title(self.title)
-    .with_surface_size(runtime_size_to_window_surface_size(self.runtime.size()))
+    .with_surface_size(@host.core_size_to_window_surface_size(self.runtime.size()))
     .with_platform_attributes(platform)
   let attributes = match self.min_window_size {
     Some(min) => base_attributes.with_min_inner_size(@dpi.Size::Logical(min))
@@ -40,21 +40,28 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn can
         window.surface_size(),
         scale_factor=window.scale_factor(),
       )
-      let window_id = self.windows.open(
+      let window_id = self.coordinator.windows.open(
         title=self.title,
         metrics~,
         primary=true,
       )
       ignore(
-        self.platform_windows.bind(platform_id=window.id(), host_id=window_id),
+        self.coordinator.platform_windows.bind(platform_id=window.id(), host_id=window_id),
       )
       self.register_primary_runtime_slot(window_id)
       self.driver.set_redraw_scheduler(() => {
-        self.request_redraw_window_if_needed(window_id)
+        self.coordinator.request_redraw_window_if_needed(window_id)
       })
       match (self.renderer_provider.create_renderer)(window, metrics) {
         Some(renderer) => {
-          self.bind_renderer_image_resource_changes(window_id, renderer)
+          ignore(
+            self.coordinator.attach_surface(
+              window_id,
+              renderer,
+              self.macos_surface_actions(window, renderer),
+            ),
+          )
+          self.bind_renderer_image_resource_changes(window_id)
           self.driver.set_text_system(renderer.text_system())
           ignore(self.driver.dispatch(@host.HostEvent::Resized(metrics)))
           ignore(
@@ -62,8 +69,6 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn can
               host_id: window_id,
               platform_id: window.id(),
               window,
-              renderer,
-              frame_pending: false,
             }),
           )
           window.request_redraw()
@@ -107,7 +112,7 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn win
   if event_loop.exiting() {
     return ()
   }
-  let window_id = match self.platform_windows.lookup_host(platform_window_id) {
+  let window_id = match self.coordinator.platform_windows.lookup_host(platform_window_id) {
     Some(window_id) => window_id
     None => return ()
   }
@@ -123,20 +128,20 @@ pub impl @window_macos.ApplicationHandler for MacosNativeHostBackend with fn win
     ) {
     @platform_bridge.TransformedWindowEvent::CloseRequested => {
       self.dispatch_host_event(window_id, @host.HostEvent::CloseRequested)
-      self.dispose_window(window_id)
-      if self.runtime_slots.is_empty() {
+      self.coordinator.dispose_window(window_id)
+      if self.coordinator.runtime_slots.is_empty() {
         event_loop.exit()
       }
       return ()
     }
     @platform_bridge.TransformedWindowEvent::DispatchHostEvent(host_event) => {
-      match self.platform_slots.lookup_host(window_id) {
-        Some(slot) =>
+      match self.coordinator.surface_actions(window_id) {
+        Some(actions) =>
           match host_event {
             @host.HostEvent::Resized(metrics) => {
-              (self.renderer_provider.sync_surface)(slot.window, metrics)
-              slot.renderer.resize(to_render_metrics(metrics))
-              slot.window.request_redraw()
+              (actions.sync_surface)(metrics)
+              (actions.renderer_resize)(@runtime.to_render_metrics(metrics))
+              (actions.request_redraw)()
             }
             _ => ()
           }
@@ -202,11 +207,11 @@ fn MacosNativeHostBackend::dispatch_pointer_or_context_menu(
 ) -> Unit {
   if @host.window_event_is_context_menu_button(event) {
     if @host.window_event_is_context_menu_trigger(event) {
-      match self.runtime_slots.lookup(window_id) {
+      match self.coordinator.runtime_slots.lookup(window_id) {
         Some(slot) => ignore(slot.driver.show_context_menu(self.services))
         None => ()
       }
-      self.sync_text_input_session()
+      self.coordinator.sync_text_input_session()
     }
   } else {
     self.dispatch_window_event(window_id, event)
@@ -221,41 +226,43 @@ fn MacosNativeHostBackend::redraw_window(
   match
     (
       self.platform_slots.lookup_host(window_id),
-      self.runtime_slots.lookup(window_id),
+      self.coordinator.surface_renderer(window_id),
+      self.coordinator.runtime_slots.lookup(window_id),
     ) {
-    (Some(platform_slot), Some(runtime_slot)) => {
-      let prior_completions = platform_slot.renderer.drain_present_completions()
+    (Some(platform_slot), Some(renderer), Some(runtime_slot)) => {
+      let prior_completions = renderer.drain_present_completions()
       let prior_presented = @render.render_present_completions_have_presented(
         prior_completions,
       )
       let prior_terminal = @render.render_present_completions_have_terminal(
         prior_completions,
       )
-      if platform_slot.frame_pending {
+      let mut frame_pending = self.coordinator.surface_frame_pending(window_id)
+      if frame_pending {
         if !prior_terminal {
           platform_slot.window.request_redraw()
           return false
         }
-        platform_slot.frame_pending = false
+        frame_pending = false
         if prior_presented {
           ignore(
-            self.image_repaint_tracker.record_presented(
-              to_render_id(window_id),
-              platform_slot.renderer,
+            self.coordinator.image_repaint_tracker.record_presented(
+              @runtime.to_render_id(window_id),
+              renderer,
             ),
           )
           ignore(
-            self.renderer_provider.schedule_image_resource_loads(
+            self.coordinator.schedule_image_resource_loads(
               window_id,
-              platform_slot.renderer,
-              self.image_resource_completion_source(),
+              renderer,
+              self.coordinator.image_resource_completion_source(),
             ),
           )
-          self.sync_text_input_session()
+          self.coordinator.sync_text_input_session()
           if self.finish_presented_window(window_id, runtime_slot) {
             return true
           }
-          if !runtime_slot_needs_redraw(runtime_slot) {
+          if !@runtime.runtime_slot_needs_redraw(runtime_slot) {
             return false
           }
         }
@@ -263,8 +270,8 @@ fn MacosNativeHostBackend::redraw_window(
       platform_slot.window.pre_present_notify()
       runtime_slot.driver.begin_redraw()
       let frame = runtime_slot.driver.draw_frame()
-      let result = platform_slot.renderer.render_frame(frame)
-      let present_completions = platform_slot.renderer.drain_present_completions()
+      let result = renderer.render_frame(frame)
+      let present_completions = renderer.drain_present_completions()
       match macos_native_view_handle(platform_slot.window) {
         Some(handle) =>
           for plugin in self.platform_view_plugins {
@@ -281,30 +288,31 @@ fn MacosNativeHostBackend::redraw_window(
       let completion_terminal = @render.render_present_completions_have_terminal(
         present_completions,
       )
-      platform_slot.frame_pending = result.queued && !completion_terminal
+      frame_pending = result.queued && !completion_terminal
+      self.coordinator.set_surface_frame_pending(window_id, frame_pending)
       if completion_presented ||
         (present_completions.is_empty() && result.presented) {
         ignore(
-          self.image_repaint_tracker.record_presented(
-            to_render_id(window_id),
-            platform_slot.renderer,
+          self.coordinator.image_repaint_tracker.record_presented(
+            @runtime.to_render_id(window_id),
+            renderer,
           ),
         )
       }
       ignore(
-        self.renderer_provider.schedule_image_resource_loads(
+        self.coordinator.schedule_image_resource_loads(
           window_id,
-          platform_slot.renderer,
-          self.image_resource_completion_source(),
+          renderer,
+          self.coordinator.image_resource_completion_source(),
         ),
       )
-      self.sync_text_input_session()
+      self.coordinator.sync_text_input_session()
       let presented = completion_presented ||
         (present_completions.is_empty() && result.presented)
       if presented {
         self.finish_presented_window(window_id, runtime_slot)
       } else {
-        if platform_slot.frame_pending {
+        if frame_pending {
           platform_slot.window.request_redraw()
         } else if result.queued && completion_terminal {
           // Dropped and terminal fallback completions retry against the same
@@ -332,7 +340,7 @@ fn MacosNativeHostBackend::finish_presented_window(
       runtime_slot.record.title,
     )
     self.first_frame_smoke_auto_exit = false
-    self.dispose_window(window_id)
+    self.coordinator.dispose_window(window_id)
     true
   } else if self.performance_smoke_active {
     self.record_performance_smoke_present(window_id, runtime_slot)
@@ -362,7 +370,7 @@ fn MacosNativeHostBackend::record_performance_smoke_present(
     )
     // Force platform redraw even when the runtime is idle so present-to-present
     // intervals sample continuous GPU presents rather than sparse dirty frames.
-    self.request_platform_redraw(window_id)
+    self.coordinator.request_platform_redraw(window_id)
     return false
   }
   let interval = now - self.performance_smoke_last_present_ms
@@ -405,15 +413,15 @@ fn MacosNativeHostBackend::record_performance_smoke_present(
       println(
         "macOS GPU promotion lifecycle phase=surface-recreate target=\{self.promotion_surface_cycles_target}",
       )
-      self.request_platform_redraw(window_id)
+      self.coordinator.request_platform_redraw(window_id)
       false
     } else {
       self.performance_smoke_active = false
-      self.dispose_window(window_id)
+      self.coordinator.dispose_window(window_id)
       true
     }
   } else {
-    self.request_platform_redraw(window_id)
+    self.coordinator.request_platform_redraw(window_id)
     false
   }
 }
@@ -427,12 +435,16 @@ fn MacosNativeHostBackend::advance_promotion_lifecycle(
   runtime_slot : @runtime.HostWindowRuntimeSlot,
 ) -> Bool {
   let _ = runtime_slot
-  match self.platform_slots.lookup_host(window_id) {
-    None => {
+  match
+    (
+      self.platform_slots.lookup_host(window_id),
+      self.coordinator.surface_renderer(window_id),
+    ) {
+    (None, _) | (_, None) => {
       self.performance_smoke_active = false
       true
     }
-    Some(platform_slot) => {
+    (Some(platform_slot), Some(renderer)) => {
       // phase 1: surface recreation via request_inner_size
       if self.promotion_phase == 1 {
         if self.promotion_surface_cycles_done <
@@ -455,7 +467,7 @@ fn MacosNativeHostBackend::advance_promotion_lifecycle(
               "macOS GPU promotion surface recreate \{self.promotion_surface_cycles_done}/\{self.promotion_surface_cycles_target}",
             )
           }
-          self.request_platform_redraw(window_id)
+          self.coordinator.request_platform_redraw(window_id)
           return false
         }
         self.promotion_phase = 2
@@ -477,12 +489,12 @@ fn MacosNativeHostBackend::advance_promotion_lifecycle(
               "macOS GPU promotion fg/bg \{self.promotion_fg_bg_cycles_done}/\{self.promotion_fg_bg_cycles_target}",
             )
           }
-          self.request_platform_redraw(window_id)
+          self.coordinator.request_platform_redraw(window_id)
           return false
         }
         self.promotion_phase = 3
         self.promotion_wait_presents = 0
-        self.promotion_recovery_count_before = platform_slot.renderer.gpu_recovery_count()
+        self.promotion_recovery_count_before = renderer.gpu_recovery_count()
         println(
           "macOS GPU promotion lifecycle phase=context-loss target=\{self.promotion_context_loss_target}",
         )
@@ -491,18 +503,18 @@ fn MacosNativeHostBackend::advance_promotion_lifecycle(
       if self.promotion_phase == 3 {
         if self.promotion_context_loss_injected <
           self.promotion_context_loss_target {
-          platform_slot.renderer.inject_context_loss()
+          renderer.inject_context_loss()
           self.promotion_context_loss_injected = self.promotion_context_loss_injected +
             1
           self.promotion_wait_presents = 0
           println(
             "macOS GPU promotion context-loss injected \{self.promotion_context_loss_injected}/\{self.promotion_context_loss_target}",
           )
-          self.request_platform_redraw(window_id)
+          self.coordinator.request_platform_redraw(window_id)
           return false
         }
         self.promotion_wait_presents = self.promotion_wait_presents + 1
-        let recovery_now = platform_slot.renderer.gpu_recovery_count()
+        let recovery_now = renderer.gpu_recovery_count()
         if recovery_now > self.promotion_recovery_count_before {
           // Recovered within present budget (~3 VSyncs if continuous).
           if self.promotion_recovered_within_vsyncs == 0 {
@@ -512,7 +524,7 @@ fn MacosNativeHostBackend::advance_promotion_lifecycle(
           }
           self.promotion_context_loss_done = self.promotion_context_loss_injected
         }
-        if platform_slot.renderer.gpu_fallback_active() {
+        if renderer.gpu_fallback_active() {
           self.promotion_fallback_count = self.promotion_fallback_count + 1
           self.promotion_automatic_fallback = true
         }
@@ -520,7 +532,7 @@ fn MacosNativeHostBackend::advance_promotion_lifecycle(
         if self.promotion_wait_presents < 6 &&
           self.promotion_context_loss_done < self.promotion_context_loss_target &&
           !self.promotion_automatic_fallback {
-          self.request_platform_redraw(window_id)
+          self.coordinator.request_platform_redraw(window_id)
           return false
         }
         if self.promotion_recovered_within_vsyncs == 0 {
@@ -537,10 +549,10 @@ fn MacosNativeHostBackend::advance_promotion_lifecycle(
         self.emit_promotion_lifecycle_summary()
         self.performance_smoke_active = false
         self.promotion_phase = 0
-        self.dispose_window(window_id)
+        self.coordinator.dispose_window(window_id)
         return true
       }
-      self.request_platform_redraw(window_id)
+      self.coordinator.request_platform_redraw(window_id)
       false
     }
   }
@@ -652,12 +664,12 @@ fn MacosNativeHostBackend::dispatch_platform_view_event_from_plugin(
 ) -> Unit {
   match self.platform_view_host_id(window_ptr) {
     Some(window_id) => {
-      match self.runtime_slots.lookup(window_id) {
+      match self.coordinator.runtime_slots.lookup(window_id) {
         Some(slot) => slot.driver.dispatch_platform_view(id, event)
         None => ()
       }
-      self.sync_text_input_session()
-      self.request_redraw_window_if_needed(window_id)
+      self.coordinator.sync_text_input_session()
+      self.coordinator.request_redraw_window_if_needed(window_id)
     }
     None => ()
   }

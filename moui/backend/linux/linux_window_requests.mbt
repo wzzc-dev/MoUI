@@ -10,7 +10,7 @@ fn LinuxNativeHostBackend::dispatch_window_event(
     _ => ()
   }
   match
-    window_event_to_host_with_modifiers(
+    @host.window_event_to_host_with_modifiers(
       event,
       self.last_pointer,
       self.modifiers,
@@ -21,6 +21,8 @@ fn LinuxNativeHostBackend::dispatch_window_event(
 }
 
 ///|
+/// Dispatch a platform-neutral event that has already crossed the Platform
+/// Bridge. Native keyboard decoding still enters through `dispatch_window_event`.
 fn LinuxNativeHostBackend::dispatch_host_event(
   self : LinuxNativeHostBackend,
   window_id : @host.HostWindowId,
@@ -30,41 +32,13 @@ fn LinuxNativeHostBackend::dispatch_host_event(
     Some(slot) => slot.decorations
     None => LinuxClientDecorationState::new(active=false)
   }
-  match
-    linux_adjust_host_event_for_client_decorations(host_event, decorations) {
-    Some(adjusted) => {
-      self.apply_window_lifecycle(window_id, adjusted)
-      match self.runtime_slots.lookup(window_id) {
-        Some(slot) =>
-          match adjusted {
-            @host.HostEvent::Keyboard(event) =>
-              ignore(
-                slot.driver.dispatch_keyboard_with_services(
-                  event,
-                  self.services,
-                ),
-              )
-            _ => ignore(slot.driver.dispatch(adjusted))
-          }
-        None => ()
-      }
-      ignore(self.publish_subscription_event(window_id, adjusted))
-      self.sync_text_input_session()
-    }
-    None => ()
-  }
-}
-
-///|
-fn LinuxNativeHostBackend::publish_subscription_event(
-  self : LinuxNativeHostBackend,
-  window_id : @host.HostWindowId,
-  event : @host.HostEvent,
-) -> @runtime.HostPlatformEventPublishResult? {
-  match self.event_sources {
-    Some(sources) => Some(sources.publish(window_id~, event~))
-    None => None
-  }
+  self.coordinator.dispatch_host_event(
+    window_id,
+    host_event,
+    adjust=event => {
+      linux_adjust_host_event_for_client_decorations(event, decorations)
+    },
+  )
 }
 
 ///|
@@ -72,11 +46,9 @@ fn LinuxNativeHostBackend::drain_window_requests(
   self : LinuxNativeHostBackend,
   event_loop : @window_linux.ActiveEventLoop,
 ) -> Unit {
-  ignore(
-    self.window_requests.drain_with_handler(request => {
-      self.apply_window_request(event_loop, request)
-    }),
-  )
+  self.coordinator.drain_window_requests(request => {
+    self.apply_window_request(event_loop, request)
+  })
 }
 
 ///|
@@ -95,7 +67,7 @@ fn LinuxNativeHostBackend::apply_window_request(
     @host.HostWindowRequest::CloseWindow(id) =>
       self.apply_platform_window_request(id, request, _window => {
         self.dispose_window(id)
-        if self.runtime_slots.is_empty() {
+        if self.coordinator.runtime_slots_empty() {
           event_loop.exit()
         }
       })
@@ -109,14 +81,19 @@ fn LinuxNativeHostBackend::apply_window_request(
               surface_metrics,
               slot.decorations,
             )
-            ignore(self.windows.resize(id, content_metrics))
-            self.sync_runtime_slot(id)
-            (self.renderer_provider.sync_surface)(window, surface_metrics)
-            slot.renderer.resize(to_render_metrics(surface_metrics))
+            ignore(self.coordinator.windows.resize(id, content_metrics))
+            self.coordinator.sync_runtime_slot(id)
+            match self.coordinator.surface_actions(id) {
+              Some(actions) => {
+                (actions.sync_surface)(surface_metrics)
+                (actions.renderer_resize)(@runtime.to_render_metrics(surface_metrics))
+              }
+              None => ()
+            }
           }
           None => {
             ignore(
-              window.request_surface_size(host_metrics_to_dpi_size(metrics)),
+              window.request_surface_size(@host.host_metrics_to_dpi_size(metrics)),
             )
             (self.renderer_provider.sync_surface)(window, metrics)
           }
@@ -146,7 +123,10 @@ fn LinuxNativeHostBackend::apply_platform_window_request(
 ) -> @host.HostWindowRequestResult {
   match self.platform_slots.lookup_host(id) {
     Some(slot) => {
-      let result = self.runtime_slots.apply_request(self.windows, request)
+      let result = self.coordinator.runtime_slots.apply_request(
+        self.coordinator.windows,
+        request,
+      )
       match result {
         @host.HostWindowRequestResult::WindowRejected(_) => ()
         _ => apply(slot.window)
@@ -166,8 +146,7 @@ fn LinuxNativeHostBackend::open_window(
   event_loop : @window_linux.ActiveEventLoop,
   request : @host.HostWindowOpenRequest,
 ) -> @host.HostWindowRequestResult {
-  match
-    @runtime.resolve_open_request(self.windows, request, self.scene_resolver) {
+  match self.coordinator.open_resolution(request) {
     @runtime.HostWindowOpenResolution::OpenRejected(message) =>
       @host.HostWindowRequestResult::WindowRejected(message)
     @runtime.HostWindowOpenResolution::OpenResolved(resolved) =>
@@ -187,7 +166,7 @@ fn LinuxNativeHostBackend::create_resolved_window(
   )
   let attributes = @window_core.WindowAttributes::default()
     .with_title(resolved.record.title)
-    .with_surface_size(host_metrics_to_dpi_size(requested_surface_metrics))
+    .with_surface_size(@host.host_metrics_to_dpi_size(requested_surface_metrics))
   let linux_attributes = @window_linux.WindowAttributesLinux::default().with_app_id(
     "dev.wzzc.moui.showcase",
   )
@@ -230,10 +209,13 @@ fn LinuxNativeHostBackend::attach_resolved_window(
   let metrics = linux_content_metrics_for_surface(surface_metrics, decorations)
   match (self.renderer_provider.create_renderer)(window, surface_metrics) {
     Some(renderer) => {
-      self.bind_renderer_image_resource_changes(resolved.id, renderer)
-      ignore(self.windows.resize(resolved.id, metrics))
-      ignore(self.runtime_slots.sync_open_from_registry(self.windows))
-      let record = match self.windows.lookup(resolved.id) {
+      ignore(self.coordinator.windows.resize(resolved.id, metrics))
+      ignore(
+        self.coordinator.runtime_slots.sync_open_from_registry(
+          self.coordinator.windows,
+        ),
+      )
+      let record = match self.coordinator.windows.lookup(resolved.id) {
         Some(record) => record
         None => resolved.record
       }
@@ -250,23 +232,32 @@ fn LinuxNativeHostBackend::attach_resolved_window(
       driver.set_text_system(renderer.text_system())
       ignore(driver.dispatch(@host.HostEvent::Resized(metrics)))
       ignore(
-        self.runtime_slots.insert(
+        self.coordinator.runtime_slots.insert(
           @runtime.HostWindowRuntimeSlot::from_driver(record~, driver~),
         ),
       )
       ignore(
-        self.platform_windows.bind(platform_id=window.id(), host_id=resolved.id),
+        self.coordinator.platform_windows.bind(
+          platform_id=window.id(),
+          host_id=resolved.id,
+        ),
       )
       ignore(
         self.platform_slots.insert({
           host_id: resolved.id,
           platform_id: window.id(),
           window,
-          renderer,
           decorations,
-          frame_pending: false,
         }),
       )
+      ignore(
+        self.coordinator.attach_surface(
+          resolved.id,
+          renderer,
+          self.linux_surface_actions(window, renderer),
+        ),
+      )
+      self.bind_renderer_image_resource_changes(resolved.id)
       self.request_platform_redraw(resolved.id)
       @host.HostWindowRequestResult::WindowOpened(resolved.id)
     }
@@ -285,75 +276,7 @@ fn LinuxNativeHostBackend::register_primary_runtime_slot(
   self : LinuxNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
-  ignore(
-    self.runtime_slots.insert_from_registry(
-      self.windows,
-      window_id,
-      driver=self.driver,
-    ),
-  )
-}
-
-///|
-fn LinuxNativeHostBackend::sync_runtime_slot(
-  self : LinuxNativeHostBackend,
-  window_id : @host.HostWindowId,
-) -> Unit {
-  ignore(self.runtime_slots.sync_from_registry(self.windows, window_id))
-}
-
-///|
-fn LinuxNativeHostBackend::sync_runtime_slots(
-  self : LinuxNativeHostBackend,
-) -> Unit {
-  ignore(self.runtime_slots.sync_open_from_registry(self.windows))
-}
-
-///|
-fn LinuxNativeHostBackend::apply_window_lifecycle(
-  self : LinuxNativeHostBackend,
-  window_id : @host.HostWindowId,
-  host_event : @host.HostEvent,
-) -> Unit {
-  ignore(
-    self.runtime_slots.apply_host_event(self.windows, window_id, host_event),
-  )
-}
-
-///|
-fn LinuxNativeHostBackend::active_runtime_slot(
-  self : LinuxNativeHostBackend,
-) -> @runtime.HostWindowRuntimeSlot? {
-  match self.runtime_slots.focused_slot() {
-    Some(slot) => Some(slot)
-    None => self.runtime_slots.primary_slot()
-  }
-}
-
-///|
-fn LinuxNativeHostBackend::sync_text_input_session(
-  self : LinuxNativeHostBackend,
-) -> Unit {
-  match self.active_runtime_slot() {
-    Some(runtime_slot) =>
-      match self.platform_slots.lookup_host(runtime_slot.id) {
-        Some(platform_slot) =>
-          match
-            self.text_input_session.sync(
-              runtime_slot.driver.focused_text_input(),
-            ) {
-            @host.TextInputSessionAction::EnableIme(request)
-            | @host.TextInputSessionAction::UpdateIme(request)
-            | @host.TextInputSessionAction::DisableIme(request) =>
-              platform_slot.window.request_ime_update(request) catch {
-                _ => ()
-              }
-            @host.TextInputSessionAction::NoImeChange => ()
-          }
-        None => ()
-      }
-    None => ()
-  }
+  self.coordinator.register_primary_runtime_slot(window_id, self.driver)
 }
 
 ///|
@@ -368,16 +291,10 @@ fn LinuxNativeHostBackend::current_scale_factor(
 }
 
 ///|
-fn runtime_slot_needs_redraw(slot : @runtime.HostWindowRuntimeSlot) -> Bool {
-  let result = slot.driver.event_result()
-  result.needs_redraw || result.redraw_requested
-}
-
-///|
 fn LinuxNativeHostBackend::request_redraw(
   self : LinuxNativeHostBackend,
 ) -> Unit {
-  match self.active_runtime_slot() {
+  match self.coordinator.active_runtime_slot() {
     Some(slot) => self.request_redraw_window_if_needed(slot.id)
     None => ()
   }
@@ -388,98 +305,15 @@ fn LinuxNativeHostBackend::request_redraw_window_if_needed(
   self : LinuxNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
-  match self.runtime_slots.lookup(window_id) {
-    Some(slot) => {
-      let image_redraw_requested = self.request_image_resource_redraw_if_changed(
-        window_id,
-      )
-      if runtime_slot_needs_redraw(slot) && !image_redraw_requested {
-        self.request_platform_redraw(window_id)
-      }
-    }
-    None => ()
-  }
-}
-
-///|
-fn LinuxNativeHostBackend::request_image_resource_redraw_if_changed(
-  self : LinuxNativeHostBackend,
-  window_id : @host.HostWindowId,
-) -> Bool {
-  match
-    (
-      self.platform_slots.lookup_host(window_id),
-      self.runtime_slots.lookup(window_id),
-    ) {
-    (Some(platform_slot), Some(runtime_slot)) => {
-      let render_id = to_render_id(window_id)
-      let result = self.image_repaint_tracker.request_redraw_if_changed(
-        render_id,
-        platform_slot.renderer,
-        window_open=runtime_slot.record.phase !=
-          @host.HostWindowLifecyclePhase::WindowClosed,
-        request_redraw=id => self.request_platform_redraw(to_host_id(id)),
-      )
-      result.status() ==
-      @render.HostImageResourceRepaintStatus::ImageRepaintRequested
-    }
-    (Some(platform_slot), None) => {
-      ignore(
-        self.image_repaint_tracker.request_redraw_if_changed(
-          to_render_id(window_id),
-          platform_slot.renderer,
-          window_open=false,
-          request_redraw=_id => (),
-        ),
-      )
-      false
-    }
-    _ => false
-  }
+  self.coordinator.request_redraw_window_if_needed(window_id)
 }
 
 ///|
 fn LinuxNativeHostBackend::bind_renderer_image_resource_changes(
   self : LinuxNativeHostBackend,
   window_id : @host.HostWindowId,
-  renderer : @render.HostWindowRenderer,
 ) -> Unit {
-  renderer.set_image_resource_change_callback(
-    Some(snapshot => {
-      match self.image_repaint_tracker.revision_for(to_render_id(window_id)) {
-        Some(_) =>
-          match
-            (
-              self.platform_slots.lookup_host(window_id),
-              self.runtime_slots.lookup(window_id),
-            ) {
-            (Some(_platform_slot), Some(runtime_slot)) =>
-              ignore(
-                self.image_repaint_tracker.request_redraw_for_snapshot_if_changed(
-                  to_render_id(window_id),
-                  snapshot,
-                  window_open=runtime_slot.record.phase !=
-                    @host.HostWindowLifecyclePhase::WindowClosed,
-                  request_redraw=id => {
-                    self.request_platform_redraw(to_host_id(id))
-                  },
-                ),
-              )
-            (Some(_platform_slot), None) =>
-              ignore(
-                self.image_repaint_tracker.request_redraw_for_snapshot_if_changed(
-                  to_render_id(window_id),
-                  snapshot,
-                  window_open=false,
-                  request_redraw=_id => (),
-                ),
-              )
-            _ => ()
-          }
-        None => ()
-      }
-    }),
-  )
+  self.coordinator.bind_renderer_image_resource_changes(window_id)
 }
 
 ///|
@@ -494,59 +328,21 @@ fn LinuxNativeHostBackend::request_platform_redraw(
 }
 
 ///|
-fn LinuxNativeHostBackend::image_resource_completion_source(
-  self : LinuxNativeHostBackend,
-) -> @render.HostImageResourceCompletionSource {
-  @render.HostImageResourceCompletionSource::new(
-    tracker=self.image_repaint_tracker,
-    window_open=id => {
-      let host_id = to_host_id(id)
-      self.image_resource_window_open(host_id)
-    },
-    request_redraw=id => {
-      let host_id = to_host_id(id)
-      self.request_platform_redraw(host_id)
-    },
-  )
-}
-
-///|
-fn LinuxNativeHostBackend::image_resource_window_open(
-  self : LinuxNativeHostBackend,
-  window_id : @host.HostWindowId,
-) -> Bool {
-  match self.runtime_slots.lookup(window_id) {
-    Some(slot) =>
-      slot.record.phase != @host.HostWindowLifecyclePhase::WindowClosed
-    None => false
-  }
-}
-
-///|
 fn LinuxNativeHostBackend::dispose_window(
   self : LinuxNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
-  ignore(self.windows.close(window_id))
-  self.sync_runtime_slot(window_id)
-  ignore(self.image_repaint_tracker.remove_window(to_render_id(window_id)))
-  ignore(self.renderer_provider.cancel_image_resource_loads(window_id))
-  ignore(self.runtime_slots.remove(window_id))
-  ignore(self.platform_windows.remove_host(window_id))
+  self.coordinator.dispose_window(window_id)
   match self.platform_slots.remove_host(window_id) {
     Some(slot) => {
       let handle = slot.window.wl_surface()
       for plugin in self.platform_view_plugins {
         (plugin.dispose_platform_views)(handle)
       }
-      slot.renderer.set_image_resource_change_callback(None)
-      slot.renderer.dispose()
       slot.window.drop()
     }
     None => ()
   }
-  ignore(self.windows.remove_closed())
-  self.sync_runtime_slots()
 }
 
 ///|
@@ -554,41 +350,46 @@ fn LinuxNativeHostBackend::rollback_window_record(
   self : LinuxNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
-  ignore(self.windows.close(window_id))
-  ignore(self.windows.remove_closed())
-  self.sync_runtime_slots()
+  self.coordinator.rollback_window_record(window_id)
 }
 
 ///|
-fn runtime_size_to_window_surface_size(size : @core.Size) -> @dpi.Size {
-  @dpi.LogicalSize::LogicalSize(size.width, size.height).into_size()
-}
-
-///|
-fn to_host_id(id : @render.RenderWindowId) -> @host.HostWindowId {
-  @host.HostWindowId::new(id.value)
-}
-
-///|
-fn to_render_id(window_id : @host.HostWindowId) -> @render.RenderWindowId {
-  @render.RenderWindowId::new(window_id.value)
-}
-
-///|
-fn to_render_metrics(
-  metrics : @host.HostSurfaceMetrics,
-) -> @render.RendererSurfaceMetrics {
-  @render.RendererSurfaceMetrics::new(
-    logical_size=metrics.logical_size,
-    physical_size=metrics.physical_size,
-    scale_factor=metrics.scale_factor,
+fn LinuxNativeHostBackend::linux_surface_actions(
+  self : LinuxNativeHostBackend,
+  window : @window_linux.Window,
+  renderer : @render.HostWindowRenderer,
+) -> @runtime.WindowSurfaceActions {
+  @runtime.WindowSurfaceActions::new(
+    focus=fn() { window.focus_window() },
+    request_surface_size=fn(metrics) {
+      ignore(window.request_surface_size(@host.host_metrics_to_dpi_size(metrics)))
+    },
+    sync_surface=fn(metrics) {
+      (self.renderer_provider.sync_surface)(window, metrics)
+    },
+    renderer_resize=fn(metrics) { renderer.resize(metrics) },
+    set_minimized=fn(minimized) { window.set_minimized(minimized) },
+    set_visible=fn(visible) { window.set_visible(visible) },
+    request_redraw=fn() { window.request_redraw() },
+    request_ime_update=fn(action) {
+      match action {
+        @host.TextInputSessionAction::EnableIme(request)
+        | @host.TextInputSessionAction::UpdateIme(request)
+        | @host.TextInputSessionAction::DisableIme(request) =>
+          window.request_ime_update(request) catch {
+            _ => ()
+          }
+        @host.TextInputSessionAction::NoImeChange => ()
+      }
+    },
+    drop=fn() { window.drop() },
+    native_view_handle=fn() { Some(window.wl_surface()) },
+    dispose_platform_views=fn() {
+      let handle = window.wl_surface()
+      for plugin in self.platform_view_plugins {
+        (plugin.dispose_platform_views)(handle)
+      }
+    },
   )
 }
 
-///|
-fn host_metrics_to_dpi_size(metrics : @host.HostSurfaceMetrics) -> @dpi.Size {
-  @dpi.LogicalSize::LogicalSize(
-    metrics.logical_size.width,
-    metrics.logical_size.height,
-  ).into_size()
-}

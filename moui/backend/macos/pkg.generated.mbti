@@ -36,14 +36,6 @@ pub async fn run_app_with_renderer_provider_async_pump(String, @runtime.AppRunti
 
 pub fn run_app_with_renderer_provider_smoke(String, @runtime.AppRuntime, provider~ : MacosRendererProvider, options? : MacosHostAppOptions, smoke_options? : MacosHostSmokeOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
 
-pub fn window_event_to_core(@wzzc-dev/window/core.WindowEvent, @wzzc-dev/moui/core.Point) -> @wzzc-dev/moui/core.AppEvent?
-
-pub fn window_event_to_core_with_modifiers(@wzzc-dev/window/core.WindowEvent, @wzzc-dev/moui/core.Point, @wzzc-dev/moui/core.KeyModifiers) -> @wzzc-dev/moui/core.AppEvent?
-
-pub fn window_event_to_host(@wzzc-dev/window/core.WindowEvent, @wzzc-dev/moui/core.Point) -> @host.HostEvent?
-
-pub fn window_event_to_host_with_modifiers(@wzzc-dev/window/core.WindowEvent, @wzzc-dev/moui/core.Point, @wzzc-dev/moui/core.KeyModifiers, scale_factor? : Double) -> @host.HostEvent?
-
 // Errors
 
 // Types and methods

@@ -32,7 +32,7 @@ fn WebApp::apply_window_request(
       })
     @host.HostWindowRequest::ResizeWindow(id, metrics) =>
       self.apply_platform_window_request(id, request, window => {
-        ignore(window.request_surface_size(host_metrics_to_dpi_size(metrics)))
+        ignore(window.request_surface_size(@host.host_metrics_to_dpi_size(metrics)))
         self.resize_renderer(id, metrics)
         window.request_redraw()
       })
@@ -96,7 +96,7 @@ fn WebApp::create_resolved_window(
 ) -> @host.HostWindowRequestResult {
   let attributes = @window_core.WindowAttributes::default()
     .with_title(resolved.record.title)
-    .with_surface_size(host_metrics_to_dpi_size(resolved.record.metrics))
+    .with_surface_size(@host.host_metrics_to_dpi_size(resolved.record.metrics))
   let window : @window_web.Window? = Some(
     event_loop.try_create_window(attributes),
   ) catch {

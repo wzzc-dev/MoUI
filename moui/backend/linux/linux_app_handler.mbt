@@ -69,7 +69,7 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn can
 ) {
   let base_attributes = @window_core.WindowAttributes::default()
     .with_title(self.title)
-    .with_surface_size(runtime_size_to_window_surface_size(self.runtime.size()))
+    .with_surface_size(@host.core_size_to_window_surface_size(self.runtime.size()))
   let attributes = if self.transparent_titlebar {
     base_attributes.with_platform_attributes(
       self.platform_attributes.with_titlebar_transparent(true),
@@ -107,13 +107,13 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn can
       let metrics = linux_content_metrics_for_surface(
         surface_metrics, decorations,
       )
-      let window_id = self.windows.open(
+      let window_id = self.coordinator.windows.open(
         title=self.title,
         metrics~,
         primary=true,
       )
       ignore(
-        self.platform_windows.bind(platform_id=window.id(), host_id=window_id),
+        self.coordinator.platform_windows.bind(platform_id=window.id(), host_id=window_id),
       )
       self.register_primary_runtime_slot(window_id)
       self.driver.set_redraw_scheduler(() => {
@@ -121,7 +121,14 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn can
       })
       match (self.renderer_provider.create_renderer)(window, surface_metrics) {
         Some(renderer) => {
-          self.bind_renderer_image_resource_changes(window_id, renderer)
+          ignore(
+            self.coordinator.attach_surface(
+              window_id,
+              renderer,
+              self.linux_surface_actions(window, renderer),
+            ),
+          )
+          self.bind_renderer_image_resource_changes(window_id)
           self.driver.set_text_system(renderer.text_system())
           ignore(self.driver.dispatch(@host.HostEvent::Resized(metrics)))
           ignore(
@@ -129,9 +136,7 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn can
               host_id: window_id,
               platform_id: window.id(),
               window,
-              renderer,
               decorations,
-              frame_pending: false,
             }),
           )
           window.request_redraw()
@@ -184,7 +189,7 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn win
   if event_loop.exiting() {
     return ()
   }
-  let window_id = match self.platform_windows.lookup_host(platform_window_id) {
+  let window_id = match self.coordinator.platform_windows.lookup_host(platform_window_id) {
     Some(window_id) => window_id
     None => return ()
   }
@@ -201,7 +206,7 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn win
     @platform_bridge.TransformedWindowEvent::CloseRequested => {
       self.dispatch_host_event(window_id, @host.HostEvent::CloseRequested)
       self.dispose_window(window_id)
-      if self.runtime_slots.is_empty() {
+      if self.coordinator.runtime_slots_empty() {
         event_loop.exit()
       }
       return ()
@@ -213,11 +218,14 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn win
             @host.HostEvent::Resized(_) => {
               slot.decorations = linux_client_decoration_state(slot.window)
               let surface_metrics = linux_window_surface_metrics(slot.window)
-              (self.renderer_provider.sync_surface)(
-                slot.window,
-                surface_metrics,
-              )
-              slot.renderer.resize(to_render_metrics(surface_metrics))
+              (self.renderer_provider.sync_surface)(slot.window, surface_metrics)
+              match self.coordinator.surface_actions(window_id) {
+                Some(actions) => {
+                  (actions.renderer_resize)(@runtime.to_render_metrics(surface_metrics))
+                  (actions.request_redraw)()
+                }
+                None => ()
+              }
               slot.window.request_redraw()
             }
             _ => ()
@@ -246,10 +254,16 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn win
             surface_metrics,
             slot.decorations,
           )
-          ignore(self.windows.resize(window_id, metrics))
-          self.sync_runtime_slot(window_id)
+          ignore(self.coordinator.windows.resize(window_id, metrics))
+          self.coordinator.sync_runtime_slot(window_id)
           (self.renderer_provider.sync_surface)(slot.window, surface_metrics)
-          slot.renderer.resize(to_render_metrics(surface_metrics))
+          match self.coordinator.surface_actions(window_id) {
+            Some(actions) => {
+              (actions.renderer_resize)(@runtime.to_render_metrics(surface_metrics))
+              (actions.request_redraw)()
+            }
+            None => ()
+          }
           slot.window.request_redraw()
           self.dispatch_host_event(window_id, @host.HostEvent::Resized(metrics))
           dispatched = true
@@ -270,10 +284,16 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn win
             surface_metrics,
             slot.decorations,
           )
-          ignore(self.windows.resize(window_id, metrics))
-          self.sync_runtime_slot(window_id)
+          ignore(self.coordinator.windows.resize(window_id, metrics))
+          self.coordinator.sync_runtime_slot(window_id)
           (self.renderer_provider.sync_surface)(slot.window, surface_metrics)
-          slot.renderer.resize(to_render_metrics(surface_metrics))
+          match self.coordinator.surface_actions(window_id) {
+            Some(actions) => {
+              (actions.renderer_resize)(@runtime.to_render_metrics(surface_metrics))
+              (actions.request_redraw)()
+            }
+            None => ()
+          }
           slot.window.request_redraw()
           self.dispatch_host_event(window_id, @host.HostEvent::Resized(metrics))
           dispatched = true
@@ -335,11 +355,11 @@ fn LinuxNativeHostBackend::dispatch_pointer_or_context_menu(
       return ()
     }
     if @host.window_event_is_context_menu_trigger(event) {
-      match self.runtime_slots.lookup(window_id) {
+      match self.coordinator.runtime_slots.lookup(window_id) {
         Some(slot) => ignore(slot.driver.show_context_menu(self.services))
         None => ()
       }
-      self.sync_text_input_session()
+      self.coordinator.sync_text_input_session()
     }
   } else {
     self.dispatch_window_event(window_id, event)
@@ -367,37 +387,39 @@ fn LinuxNativeHostBackend::redraw_window(
   match
     (
       self.platform_slots.lookup_host(window_id),
-      self.runtime_slots.lookup(window_id),
+      self.coordinator.runtime_slots.lookup(window_id),
+      self.coordinator.surface_renderer(window_id),
     ) {
-    (Some(platform_slot), Some(runtime_slot)) => {
-      let prior_completions = platform_slot.renderer.drain_present_completions()
+    (Some(platform_slot), Some(runtime_slot), Some(renderer)) => {
+      let prior_completions = renderer.drain_present_completions()
       let prior_presented = @render.render_present_completions_have_presented(
         prior_completions,
       )
       let prior_terminal = @render.render_present_completions_have_terminal(
         prior_completions,
       )
-      if platform_slot.frame_pending {
+      let mut frame_pending = self.coordinator.surface_frame_pending(window_id)
+      if frame_pending {
         if !prior_terminal {
           platform_slot.window.request_redraw()
           return false
         }
-        platform_slot.frame_pending = false
+        frame_pending = false
         if prior_presented {
           ignore(
-            self.image_repaint_tracker.record_presented(
-              to_render_id(window_id),
-              platform_slot.renderer,
+            self.coordinator.image_repaint_tracker.record_presented(
+              @runtime.to_render_id(window_id),
+              renderer,
             ),
           )
           ignore(
-            self.renderer_provider.schedule_image_resource_loads(
+            self.coordinator.schedule_image_resource_loads(
               window_id,
-              platform_slot.renderer,
-              self.image_resource_completion_source(),
+              renderer,
+              self.coordinator.image_resource_completion_source(),
             ),
           )
-          self.sync_text_input_session()
+          self.coordinator.sync_text_input_session()
           if self.first_frame_smoke_auto_exit {
             println(
               "Linux renderer presented first frame; exiting by request; title=" +
@@ -407,7 +429,7 @@ fn LinuxNativeHostBackend::redraw_window(
             self.dispose_window(window_id)
             return true
           }
-          if !runtime_slot_needs_redraw(runtime_slot) {
+          if !@runtime.runtime_slot_needs_redraw(runtime_slot) {
             return false
           }
         }
@@ -429,7 +451,6 @@ fn LinuxNativeHostBackend::redraw_window(
       let has_platform_views = frame.platform_views.length() > 0
       if has_platform_views {
         let f = frame
-        let renderer = platform_slot.renderer
         let offset_y = platform_slot.decorations.titlebar_height
         let handle = platform_slot.window.wl_surface()
         for plugin in self.platform_view_plugins {
@@ -457,7 +478,7 @@ fn LinuxNativeHostBackend::redraw_window(
         }
       }
 
-      let result = platform_slot.renderer.render_frame({
+      let result = renderer.render_frame({
         ..frame,
         commands,
         damage: if platform_slot.decorations.active {
@@ -466,11 +487,11 @@ fn LinuxNativeHostBackend::redraw_window(
           frame.damage
         },
       })
-      let present_completions = platform_slot.renderer.drain_present_completions()
+      let present_completions = renderer.drain_present_completions()
 
       // Clear the platform view draw function
       if has_platform_views {
-        platform_slot.renderer.set_platform_view_draw_fn(None)
+        renderer.set_platform_view_draw_fn(None)
       }
 
       let handle = platform_slot.window.wl_surface()
@@ -490,24 +511,25 @@ fn LinuxNativeHostBackend::redraw_window(
       let completion_terminal = @render.render_present_completions_have_terminal(
         present_completions,
       )
-      platform_slot.frame_pending = result.queued && !completion_terminal
+      frame_pending = result.queued && !completion_terminal
+      self.coordinator.set_surface_frame_pending(window_id, frame_pending)
       if completion_presented ||
         (present_completions.is_empty() && result.presented) {
         ignore(
-          self.image_repaint_tracker.record_presented(
-            to_render_id(window_id),
-            platform_slot.renderer,
+          self.coordinator.image_repaint_tracker.record_presented(
+            @runtime.to_render_id(window_id),
+            renderer,
           ),
         )
       }
       ignore(
-        self.renderer_provider.schedule_image_resource_loads(
+        self.coordinator.schedule_image_resource_loads(
           window_id,
-          platform_slot.renderer,
-          self.image_resource_completion_source(),
+          renderer,
+          self.coordinator.image_resource_completion_source(),
         ),
       )
-      self.sync_text_input_session()
+      self.coordinator.sync_text_input_session()
       let presented = completion_presented ||
         (present_completions.is_empty() && result.presented)
       if self.first_frame_smoke_auto_exit && presented {
@@ -519,7 +541,7 @@ fn LinuxNativeHostBackend::redraw_window(
         self.dispose_window(window_id)
         true
       } else {
-        if platform_slot.frame_pending ||
+        if frame_pending ||
           (result.queued && completion_terminal && !completion_presented) {
           platform_slot.window.request_redraw()
         }
@@ -542,11 +564,11 @@ fn LinuxNativeHostBackend::dispatch_platform_view_event_from_plugin(
 ) -> Unit {
   match self.platform_view_host_id(window_ptr) {
     Some(window_id) => {
-      match self.runtime_slots.lookup(window_id) {
+      match self.coordinator.runtime_slots.lookup(window_id) {
         Some(slot) => slot.driver.dispatch_platform_view(id, event)
         None => ()
       }
-      self.sync_text_input_session()
+      self.coordinator.sync_text_input_session()
       self.request_redraw_window_if_needed(window_id)
     }
     None => ()

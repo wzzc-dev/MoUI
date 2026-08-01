@@ -7,9 +7,13 @@ import {
 }
 
 // Values
+pub fn core_size_to_window_surface_size(@wzzc-dev/moui/core.Size) -> @dpi.Size
+
 pub fn element_state_pressed(@wzzc-dev/window/core.ElementState) -> Bool
 
 pub fn element_state_to_pointer_phase(@wzzc-dev/window/core.ElementState) -> @wzzc-dev/moui/core.PointerPhase
+
+pub fn host_metrics_to_dpi_size(HostSurfaceMetrics) -> @dpi.Size
 
 pub fn key_event_name(@wzzc-dev/window/core.KeyEvent) -> String
 
