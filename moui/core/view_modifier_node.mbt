@@ -32,7 +32,10 @@ impl[Msg] ViewNode for ModifierViewNode[Msg] with fn identity(self) {
   let child_id = self.child.identity()
   let kind = self.modifier.identity_kind
   if kind == "Key" {
-    { kind: child_id.kind, key: child_id.key }
+    match self.modifier.identity_key {
+      Some(key) => { kind: child_id.kind, key: Some(key) }
+      None => { kind: child_id.kind, key: child_id.key }
+    }
   } else if kind == "" {
     child_id
   } else {

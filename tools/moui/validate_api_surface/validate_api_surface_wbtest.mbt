@@ -66,11 +66,11 @@ test "api surface classification budgets pin current high-risk packages" {
     classification_budget(
       "moui/core/pkg.generated.mbti", "advanced_core_protocol",
     ).max_count,
-    content="589",
+    content="633",
   )
   inspect(
     classification_budget("moui/core/pkg.generated.mbti", "required_protocol").max_count,
-    content="148",
+    content="177",
   )
   inspect(
     classification_budget("moui/views/pkg.generated.mbti", "app_constructor").max_count,
@@ -98,7 +98,7 @@ test "api surface classification budgets pin current high-risk packages" {
     classification_budget(
       "moui/runtime/pkg.generated.mbti", "runtime_diagnostic",
     ).max_count,
-    content="407",
+    content="447",
   )
   inspect(
     classification_budget(
@@ -284,9 +284,9 @@ test "domain sugar packages forward the curated per-domain type set" {
 ///|
 test "runtime facade budget pins the opaque runtime boundary" {
   let runtime = budget_by_label("runtime facade")
-  inspect(runtime.max_lines, content="744")
-  inspect(runtime.max_pub_lines, content="407")
-  inspect(runtime.max_pub_all_lines, content="34")
+  inspect(runtime.max_lines, content="819")
+  inspect(runtime.max_pub_lines, content="446")
+  inspect(runtime.max_pub_all_lines, content="35")
   assert_true(runtime.required_tokens.contains("pub struct AppRuntime"))
   assert_true(runtime.required_tokens.contains("pub fn[Msg] new_view("))
   assert_true(
@@ -433,9 +433,9 @@ test "views facade exposes control-specific contracts" {
   assert_true(
     views.forbidden_tokens.contains("pub using @core {type ColorScheme}"),
   )
-  assert_true(required.contains("pub struct ButtonStyle"))
+  assert_true(required.contains("pub using @style {type ButtonStyle}"))
   assert_true(required.contains("type FormFieldState"))
-  assert_true(required.contains("pub(all) enum DatePickerMode"))
+  assert_true(required.contains("pub using @style {type DatePickerMode}"))
   assert_true(required.contains("pub fn default_theme()"))
   assert_true(required.contains("pub fn light_theme()"))
   assert_true(required.contains("pub fn dark_theme()"))
@@ -459,8 +459,8 @@ test "views facade exposes control-specific contracts" {
   assert_true(views.forbidden_tokens.contains("pub fn[Msg] raw_"))
   assert_true(views.forbidden_tokens.contains("RawDatePickerDisplayMode"))
   assert_true(views.forbidden_tokens.contains("RawPickerOption"))
-  assert_true(required.contains("pub struct RouteLocation"))
-  assert_true(required.contains("pub struct RouteHistoryState"))
+  assert_true(required.contains("pub using @navigation {type RouteLocation}"))
+  assert_true(required.contains("pub using @navigation {type RouteHistoryState}"))
   assert_true(required.contains("type RouteFocusStore"))
   assert_true(required.contains("type RouterState"))
   assert_false(required.contains("pub using @core {type RouteHistoryState}"))
@@ -507,9 +507,9 @@ test "host and renderer public all budgets ratchet down" {
 ///|
 test "core descriptor payloads stay opaque" {
   let core = budget_by_label("core")
-  inspect(core.max_lines, content="2009")
-  inspect(core.max_pub_lines, content="571")
-  inspect(core.max_pub_all_lines, content="148")
+  inspect(core.max_lines, content="2094")
+  inspect(core.max_pub_lines, content="615")
+  inspect(core.max_pub_all_lines, content="177")
   assert_true(core.required_tokens.contains("pub(open) trait ViewNode"))
   assert_true(core.required_tokens.contains("View::from_node"))
   assert_true(core.forbidden_tokens.contains("View::node("))

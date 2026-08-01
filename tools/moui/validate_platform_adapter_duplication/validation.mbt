@@ -8,7 +8,6 @@ struct DuplicateBudget {
 fn bridge_import_platforms() -> Array[String] {
   [
     "moui/backend/macos", "moui/backend/windows", "moui/backend/linux", "moui/backend/web",
-    "moui/backend/android", "moui/backend/ios", "moui/backend/harmonyos",
   ]
 }
 

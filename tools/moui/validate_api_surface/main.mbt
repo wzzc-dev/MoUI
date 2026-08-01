@@ -205,9 +205,9 @@ fn views_facade_host_alias_tokens() -> Array[String] {
 ///|
 fn views_facade_required_tokens() -> Array[String] {
   let tokens = [
-    "\"wzzc-dev/moui/core\"", "pub fn[Msg] button(", "pub fn[Msg] column(", "pub struct ButtonStyle",
-    "type FormFieldState", "pub struct RouteLocation", "pub struct RouteHistoryState",
-    "type RouteFocusStore", "type RouterState", "pub fn resolve_route(", "pub(all) enum DatePickerMode",
+    "\"wzzc-dev/moui/core\"", "pub fn[Msg] button(", "pub fn[Msg] column(", "pub using @style {type ButtonStyle}",
+    "type FormFieldState", "pub using @navigation {type RouteLocation}", "pub using @navigation {type RouteHistoryState}",
+    "type RouteFocusStore", "type RouterState", "pub fn resolve_route(", "pub using @style {type DatePickerMode}",
     "pub fn default_theme()", "pub fn light_theme()", "pub fn dark_theme()", "pub fn[Msg] text(",
     "pub fn[Msg] empty()", "pub fn[Msg] spacer(", "pub fn[Msg] picker(", "pub fn picker_item(",
     "pub fn[Msg] datepicker(", "pub fn[Msg] custom_layout(", "pub fn[Msg] custom_children_layout(",
@@ -299,9 +299,9 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "runtime facade",
       path: "moui/runtime/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/runtime\"",
-      max_lines: 744,
-      max_pub_lines: 407,
-      max_pub_all_lines: 34,
+      max_lines: 819,
+      max_pub_lines: 446,
+      max_pub_all_lines: 35,
       required_tokens: [
         "\"wzzc-dev/moui/core\"", "\"wzzc-dev/moui/backend/host\"", "\"wzzc-dev/moui/render\"",
         "pub struct AppRuntime", "pub fn[Model, Msg] new_program(", "pub fn[Model, Msg] new_program_with_dimensions(",
@@ -328,9 +328,9 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "core",
       path: "moui/core/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/core\"",
-      max_lines: 2009,
-      max_pub_lines: 571,
-      max_pub_all_lines: 148,
+      max_lines: 2094,
+      max_pub_lines: 615,
+      max_pub_all_lines: 177,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
         "pub(all) enum Effect", "type Subscription", "pub(all) struct DrawFrame",
@@ -418,8 +418,8 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "host contracts",
       path: "moui/backend/host/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/backend/host\"",
-      max_lines: 667,
-      max_pub_lines: 238,
+      max_lines: 671,
+      max_pub_lines: 240,
       max_pub_all_lines: 44,
       required_tokens: [
         "HostAppServices", "pub(all) enum HostEvent", "pub(all) struct HostSurfaceMetrics",

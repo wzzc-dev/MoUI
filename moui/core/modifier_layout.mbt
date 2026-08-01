@@ -329,5 +329,6 @@ pub(all) struct KeyModifier {
 pub fn[Msg] KeyModifier::to_any_modifier(
   self : KeyModifier,
 ) -> AnyModifier[Msg] {
-  { ..noop_modifier(), identity_kind: "Key" }
+  let key = self.key
+  { ..noop_modifier(), identity_kind: "Key", identity_key: Some(key) }
 }
