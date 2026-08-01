@@ -4,7 +4,7 @@ package "examples/data_table/app"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/views",
+  "wzzc-dev/moui/views/data",
 }
 
 // Values
@@ -51,13 +51,13 @@ pub(all) struct DataTableModel {
   selected_team : String
   selected_statuses : Array[String]
   selected_row : Int
-  selected_rows : @views.SelectionState
-  visible_columns : @views.ColumnVisibilityState
-  column_widths : @views.ColumnWidthState
-  column_order : @views.ColumnOrderState
+  selected_rows : @data.SelectionState
+  visible_columns : @data.ColumnVisibilityState
+  column_widths : @data.ColumnWidthState
+  column_order : @data.ColumnOrderState
   expanded : Array[String]
-  pagination : @views.PaginationState
-  sort : @views.DataSortState
+  pagination : @data.PaginationState
+  sort : @data.DataSortState
   status : DataStatus
   last_action : String
 }

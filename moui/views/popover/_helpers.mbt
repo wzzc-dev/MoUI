@@ -1,6 +1,7 @@
 // Local helpers for popover/: thin row/column/stack wrappers over the
 // shared @common implementations, plus first_child_size and the
 // component/scroll_view wrappers over @controls.
+
 ///|
 fn first_child_size(sizes : Array[@core.Size]) -> @core.Size {
   match sizes {
@@ -9,7 +10,7 @@ fn first_child_size(sizes : Array[@core.Size]) -> @core.Size {
   }
 }
 
-
+///|
 fn[Msg] row(
   children : Array[@core.View[Msg]],
   spacing? : Double = 10.0,
@@ -44,7 +45,6 @@ fn[Msg] column(
 // === Stack layout ===
 
 ///|
-
 fn[Msg] stack(children : Array[@core.View[Msg]]) -> @core.View[Msg] {
   @common.stack_layout(children~)
 }

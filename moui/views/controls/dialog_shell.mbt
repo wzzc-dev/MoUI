@@ -13,7 +13,10 @@ pub fn[Msg] dialog(
   let resolved_theme = @common.views_ambient_theme(theme)
   let panel_padding = resolved_theme.spacing_scale.lg
   let section_spacing = resolved_theme.spacing_scale.md
-  let content_width = @common.view_max_double(180.0, width - panel_padding * 2.0)
+  let content_width = @common.view_max_double(
+    180.0,
+    width - panel_padding * 2.0,
+  )
   let actions : Array[@core.View[Msg]] = []
   match secondary_action {
     Some(action) =>
@@ -172,10 +175,16 @@ fn[Msg] dialog_header(
 
 ///|
 fn dialog_action_width(label : String) -> Double {
-  @common.view_max_double(82.0, label.to_array().length().to_double() * 8.0 + 24.0)
+  @common.view_max_double(
+    82.0,
+    label.to_array().length().to_double() * 8.0 + 24.0,
+  )
 }
 
 ///|
 fn dialog_dismiss_action_width(label : String) -> Double {
-  @common.view_max_double(72.0, label.to_array().length().to_double() * 7.0 + 20.0)
+  @common.view_max_double(
+    72.0,
+    label.to_array().length().to_double() * 7.0 + 20.0,
+  )
 }

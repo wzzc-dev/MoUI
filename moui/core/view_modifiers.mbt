@@ -13,12 +13,12 @@ pub fn[Msg] View::key(self : View[Msg], value : String) -> View[Msg] {
 
 ///|
 pub fn[Msg] View::font(self : View[Msg], font : FontSpec) -> View[Msg] {
-  self.apply_modifier(FontModifier::{ font }.to_any_modifier())
+  self.apply_modifier(FontModifier::{ font, }.to_any_modifier())
 }
 
 ///|
 pub fn[Msg] View::foreground(self : View[Msg], color : Color) -> View[Msg] {
-  self.apply_modifier(ForegroundModifier::{ color }.to_any_modifier())
+  self.apply_modifier(ForegroundModifier::{ color, }.to_any_modifier())
 }
 
 ///|
@@ -49,27 +49,27 @@ pub fn[Msg] View::background_brush(
   self : View[Msg],
   brush : Brush,
 ) -> View[Msg] {
-  self.apply_modifier(BackgroundModifier::{ brush }.to_any_modifier())
+  self.apply_modifier(BackgroundModifier::{ brush, }.to_any_modifier())
 }
 
 ///|
 pub fn[Msg] View::corner_radius(self : View[Msg], radius : Double) -> View[Msg] {
-  self.apply_modifier(CornerRadiusModifier::{ radius }.to_any_modifier())
+  self.apply_modifier(CornerRadiusModifier::{ radius, }.to_any_modifier())
 }
 
 ///|
 pub fn[Msg] View::opacity(self : View[Msg], opacity : Double) -> View[Msg] {
-  self.apply_modifier(OpacityModifier::{ opacity }.to_any_modifier())
+  self.apply_modifier(OpacityModifier::{ opacity, }.to_any_modifier())
 }
 
 ///|
 pub fn[Msg] View::shadow(self : View[Msg], style : ShadowStyle) -> View[Msg] {
-  self.apply_modifier(ShadowModifier::{ style }.to_any_modifier())
+  self.apply_modifier(ShadowModifier::{ style, }.to_any_modifier())
 }
 
 ///|
 pub fn[Msg] View::border(self : View[Msg], style : BorderStyle) -> View[Msg] {
-  self.apply_modifier(BorderModifier::{ style }.to_any_modifier())
+  self.apply_modifier(BorderModifier::{ style, }.to_any_modifier())
 }
 
 ///|
@@ -83,7 +83,7 @@ pub fn[Msg] View::offset(
 
 ///|
 pub fn[Msg] View::clip(self : View[Msg]) -> View[Msg] {
-  self.apply_modifier(ClipModifier::{}.to_any_modifier())
+  self.apply_modifier(ClipModifier::{  }.to_any_modifier())
 }
 
 ///|
@@ -145,7 +145,7 @@ pub fn[Msg] View::disabled(
   self : View[Msg],
   disabled? : Bool = true,
 ) -> View[Msg] {
-  self.apply_modifier(DisabledModifier::{ disabled }.to_any_modifier())
+  self.apply_modifier(DisabledModifier::{ disabled, }.to_any_modifier())
 }
 
 ///|
@@ -153,7 +153,7 @@ pub fn[Msg] View::accessibility_label(
   self : View[Msg],
   label : String,
 ) -> View[Msg] {
-  self.apply_modifier(AccessibilityLabelModifier::{ label }.to_any_modifier())
+  self.apply_modifier(AccessibilityLabelModifier::{ label, }.to_any_modifier())
 }
 
 ///|
@@ -161,7 +161,7 @@ pub fn[Msg] View::semantic_id(
   self : View[Msg],
   semantic_id : SemanticId,
 ) -> View[Msg] {
-  self.apply_modifier(SemanticIdModifier::{ semantic_id }.to_any_modifier())
+  self.apply_modifier(SemanticIdModifier::{ semantic_id, }.to_any_modifier())
 }
 
 ///|
@@ -169,7 +169,9 @@ pub fn[Msg] View::semantics_composition(
   self : View[Msg],
   composition : SemanticsComposition,
 ) -> View[Msg] {
-  self.apply_modifier(SemanticsCompositionModifier::{ composition }.to_any_modifier())
+  self.apply_modifier(
+    SemanticsCompositionModifier::{ composition, }.to_any_modifier(),
+  )
 }
 
 ///|
@@ -192,17 +194,17 @@ pub fn[Msg] View::semantics_role(
   self : View[Msg],
   role : SemanticsRole,
 ) -> View[Msg] {
-  self.apply_modifier(SemanticsRoleModifier::{ role }.to_any_modifier())
+  self.apply_modifier(SemanticsRoleModifier::{ role, }.to_any_modifier())
 }
 
 ///|
 pub fn[Msg] View::semantics_level(self : View[Msg], level : Int) -> View[Msg] {
-  self.apply_modifier(SemanticsLevelModifier::{ level }.to_any_modifier())
+  self.apply_modifier(SemanticsLevelModifier::{ level, }.to_any_modifier())
 }
 
 ///|
 pub fn[Msg] View::semantics_url(self : View[Msg], url : String) -> View[Msg] {
-  self.apply_modifier(SemanticsUrlModifier::{ url }.to_any_modifier())
+  self.apply_modifier(SemanticsUrlModifier::{ url, }.to_any_modifier())
 }
 
 ///|
@@ -210,7 +212,9 @@ pub fn[Msg] View::semantics_selected(
   self : View[Msg],
   selected? : Bool = true,
 ) -> View[Msg] {
-  self.apply_modifier(SemanticsSelectedModifier::{ selected }.to_any_modifier())
+  self.apply_modifier(
+    SemanticsSelectedModifier::{ selected, }.to_any_modifier(),
+  )
 }
 
 ///|
@@ -218,7 +222,7 @@ pub fn[Msg] View::semantics_pressed(
   self : View[Msg],
   pressed? : Bool = true,
 ) -> View[Msg] {
-  self.apply_modifier(SemanticsPressedModifier::{ pressed }.to_any_modifier())
+  self.apply_modifier(SemanticsPressedModifier::{ pressed, }.to_any_modifier())
 }
 
 ///|
@@ -226,7 +230,7 @@ pub fn[Msg] View::semantics_checked(
   self : View[Msg],
   checked? : Bool = true,
 ) -> View[Msg] {
-  self.apply_modifier(SemanticsCheckedModifier::{ checked }.to_any_modifier())
+  self.apply_modifier(SemanticsCheckedModifier::{ checked, }.to_any_modifier())
 }
 
 ///|
@@ -234,7 +238,9 @@ pub fn[Msg] View::semantics_expanded(
   self : View[Msg],
   expanded? : Bool = true,
 ) -> View[Msg] {
-  self.apply_modifier(SemanticsExpandedModifier::{ expanded }.to_any_modifier())
+  self.apply_modifier(
+    SemanticsExpandedModifier::{ expanded, }.to_any_modifier(),
+  )
 }
 
 ///|
@@ -242,7 +248,7 @@ pub fn[Msg] View::semantics_invalid(
   self : View[Msg],
   invalid? : Bool = true,
 ) -> View[Msg] {
-  self.apply_modifier(SemanticsInvalidModifier::{ invalid }.to_any_modifier())
+  self.apply_modifier(SemanticsInvalidModifier::{ invalid, }.to_any_modifier())
 }
 
 ///|
@@ -250,7 +256,9 @@ pub fn[Msg] View::semantics_required(
   self : View[Msg],
   required? : Bool = true,
 ) -> View[Msg] {
-  self.apply_modifier(SemanticsRequiredModifier::{ required }.to_any_modifier())
+  self.apply_modifier(
+    SemanticsRequiredModifier::{ required, }.to_any_modifier(),
+  )
 }
 
 ///|
@@ -258,7 +266,9 @@ pub fn[Msg] View::semantics_description(
   self : View[Msg],
   description : String,
 ) -> View[Msg] {
-  self.apply_modifier(SemanticsDescriptionModifier::{ description }.to_any_modifier())
+  self.apply_modifier(
+    SemanticsDescriptionModifier::{ description, }.to_any_modifier(),
+  )
 }
 
 ///|
@@ -266,7 +276,7 @@ pub fn[Msg] View::focusable(
   self : View[Msg],
   focusable? : Bool = true,
 ) -> View[Msg] {
-  self.apply_modifier(FocusableModifier::{ focusable }.to_any_modifier())
+  self.apply_modifier(FocusableModifier::{ focusable, }.to_any_modifier())
 }
 
 ///|
@@ -279,17 +289,17 @@ pub fn[Msg] View::focus_trap(
 
 ///|
 pub fn[Msg] View::on_tap(self : View[Msg], message : Msg) -> View[Msg] {
-  self.apply_modifier(OnTapModifier::{ message }.to_any_modifier())
+  self.apply_modifier(OnTapModifier::{ message, }.to_any_modifier())
 }
 
 ///|
 pub fn[Msg] View::on_long_press(self : View[Msg], message : Msg) -> View[Msg] {
-  self.apply_modifier(OnLongPressModifier::{ message }.to_any_modifier())
+  self.apply_modifier(OnLongPressModifier::{ message, }.to_any_modifier())
 }
 
 ///|
 pub fn[Msg] View::on_double_tap(self : View[Msg], message : Msg) -> View[Msg] {
-  self.apply_modifier(OnDoubleTapModifier::{ message }.to_any_modifier())
+  self.apply_modifier(OnDoubleTapModifier::{ message, }.to_any_modifier())
 }
 
 ///|
@@ -297,7 +307,7 @@ pub fn[Msg] View::on_drag(
   self : View[Msg],
   handler : (DragGestureEvent) -> Msg,
 ) -> View[Msg] {
-  self.apply_modifier(OnDragModifier::{ handler }.to_any_modifier())
+  self.apply_modifier(OnDragModifier::{ handler, }.to_any_modifier())
 }
 
 ///|
@@ -305,7 +315,7 @@ pub fn[Msg] View::on_drag_with_frame(
   self : View[Msg],
   handler : (DragGestureEvent, Rect) -> Msg,
 ) -> View[Msg] {
-  self.apply_modifier(OnDragWithFrameModifier::{ handler }.to_any_modifier())
+  self.apply_modifier(OnDragWithFrameModifier::{ handler, }.to_any_modifier())
 }
 
 ///|
@@ -313,7 +323,7 @@ pub fn[Msg] View::on_file_drop(
   self : View[Msg],
   handler : (Array[String], Point) -> Msg,
 ) -> View[Msg] {
-  self.apply_modifier(OnFileDropModifier::{ handler }.to_any_modifier())
+  self.apply_modifier(OnFileDropModifier::{ handler, }.to_any_modifier())
 }
 
 ///|
@@ -321,7 +331,7 @@ pub fn[Msg] View::keyboard_shortcut(
   self : View[Msg],
   shortcut : KeyboardShortcut,
 ) -> View[Msg] {
-  self.apply_modifier(KeyboardShortcutModifier::{ shortcut }.to_any_modifier())
+  self.apply_modifier(KeyboardShortcutModifier::{ shortcut, }.to_any_modifier())
 }
 
 ///|
@@ -329,7 +339,9 @@ pub fn[Msg] View::flexible(
   self : View[Msg],
   weight? : Double = 1.0,
 ) -> View[Msg] {
-  self.apply_modifier(FlexibleModifier::{ weight: max_double(0.0, weight) }.to_any_modifier())
+  self.apply_modifier(
+    FlexibleModifier::{ weight: max_double(0.0, weight) }.to_any_modifier(),
+  )
 }
 
 ///|
@@ -337,7 +349,7 @@ pub fn[Msg] View::layout_priority(
   self : View[Msg],
   priority : Double,
 ) -> View[Msg] {
-  self.apply_modifier(LayoutPriorityModifier::{ priority }.to_any_modifier())
+  self.apply_modifier(LayoutPriorityModifier::{ priority, }.to_any_modifier())
 }
 
 ///|
@@ -353,37 +365,41 @@ pub fn[Msg] View::align(
   self : View[Msg],
   alignment? : Alignment = Alignment::center(),
 ) -> View[Msg] {
-  self.apply_modifier(AlignModifier::{ alignment }.to_any_modifier())
+  self.apply_modifier(AlignModifier::{ alignment, }.to_any_modifier())
 }
 
 ///|
 pub fn[Msg] View::aspect_ratio(self : View[Msg], ratio : Double) -> View[Msg] {
-  self.apply_modifier(AspectRatioModifier::{ ratio: max_double(0.01, ratio) }.to_any_modifier())
+  self.apply_modifier(
+    AspectRatioModifier::{ ratio: max_double(0.01, ratio) }.to_any_modifier(),
+  )
 }
 
 ///|
 pub fn[Msg] View::intrinsic_width(self : View[Msg]) -> View[Msg] {
-  self.apply_modifier(IntrinsicWidthModifier::{}.to_any_modifier())
+  self.apply_modifier(IntrinsicWidthModifier::{  }.to_any_modifier())
 }
 
 ///|
 pub fn[Msg] View::intrinsic_height(self : View[Msg]) -> View[Msg] {
-  self.apply_modifier(IntrinsicHeightModifier::{}.to_any_modifier())
+  self.apply_modifier(IntrinsicHeightModifier::{  }.to_any_modifier())
 }
 
 ///|
 pub fn[Msg] View::repaint_boundary(self : View[Msg]) -> View[Msg] {
-  self.apply_modifier(RepaintBoundaryModifier::{}.to_any_modifier())
+  self.apply_modifier(RepaintBoundaryModifier::{  }.to_any_modifier())
 }
 
 ///|
 pub fn[Msg] View::padding(self : View[Msg], value : Double) -> View[Msg] {
-  self.apply_modifier(PaddingModifier::{ insets: Insets::all(value) }.to_any_modifier())
+  self.apply_modifier(
+    PaddingModifier::{ insets: Insets::all(value) }.to_any_modifier(),
+  )
 }
 
 ///|
 pub fn[Msg] View::spacing(self : View[Msg], spacing : Double) -> View[Msg] {
-  self.apply_modifier(SpacingModifier::{ spacing }.to_any_modifier())
+  self.apply_modifier(SpacingModifier::{ spacing, }.to_any_modifier())
 }
 
 ///|
@@ -391,7 +407,9 @@ pub fn[Msg] View::main_axis_alignment(
   self : View[Msg],
   alignment : MainAxisAlignment,
 ) -> View[Msg] {
-  self.apply_modifier(MainAxisAlignmentModifier::{ alignment }.to_any_modifier())
+  self.apply_modifier(
+    MainAxisAlignmentModifier::{ alignment, }.to_any_modifier(),
+  )
 }
 
 ///|
@@ -399,12 +417,14 @@ pub fn[Msg] View::cross_axis_alignment(
   self : View[Msg],
   alignment : CrossAxisAlignment,
 ) -> View[Msg] {
-  self.apply_modifier(CrossAxisAlignmentModifier::{ alignment }.to_any_modifier())
+  self.apply_modifier(
+    CrossAxisAlignmentModifier::{ alignment, }.to_any_modifier(),
+  )
 }
 
 ///|
 pub fn[Msg] View::theme(self : View[Msg], theme : Theme) -> View[Msg] {
-  self.apply_modifier(ThemeModifier::{ theme }.to_any_modifier())
+  self.apply_modifier(ThemeModifier::{ theme, }.to_any_modifier())
 }
 
 ///|
@@ -412,7 +432,7 @@ pub fn[Msg] View::environment(
   self : View[Msg],
   environment : Environment,
 ) -> View[Msg] {
-  self.apply_modifier(EnvironmentModifier::{ environment }.to_any_modifier())
+  self.apply_modifier(EnvironmentModifier::{ environment, }.to_any_modifier())
 }
 
 ///|
@@ -426,6 +446,13 @@ pub fn[Msg] View::frame(
   max_height? : Double,
 ) -> View[Msg] {
   self.apply_modifier(
-    FrameModifier::{ width, height, min_width, min_height, max_width, max_height }.to_any_modifier(),
+    FrameModifier::{
+      width,
+      height,
+      min_width,
+      min_height,
+      max_width,
+      max_height,
+    }.to_any_modifier(),
   )
 }

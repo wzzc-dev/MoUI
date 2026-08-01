@@ -244,7 +244,8 @@ fn RuntimeState::invalidate_cached_layer_key(
       retained.push(existing)
     }
   }
-  let known_changed = retained.length() != self.stats.known_layer_cache_keys.length()
+  let known_changed = retained.length() !=
+    self.stats.known_layer_cache_keys.length()
   if known_changed {
     self.stats.known_layer_cache_keys.clear()
     self.stats.known_layer_cache_keys.append(retained)

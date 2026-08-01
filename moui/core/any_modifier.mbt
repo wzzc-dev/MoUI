@@ -46,10 +46,14 @@ pub fn[Msg] noop_modifier() -> AnyModifier[Msg] {
         [s, ..] => s
         [] => Size::new(width=0.0, height=0.0)
       }
-      ViewLayoutResult::new(
-        size=ctx.constraints.constrain(child_size),
-        child_frames=[Rect::new(x=0.0, y=0.0, width=child_size.width, height=child_size.height)],
-      )
+      ViewLayoutResult::new(size=ctx.constraints.constrain(child_size), child_frames=[
+        Rect::new(
+          x=0.0,
+          y=0.0,
+          width=child_size.width,
+          height=child_size.height,
+        ),
+      ])
     },
     paint: fn(_ctx) { ViewPaintPlan::empty() },
     event: fn(_ctx) { ViewEventResult::ignored() },

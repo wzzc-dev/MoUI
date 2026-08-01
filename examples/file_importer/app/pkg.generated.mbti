@@ -5,7 +5,7 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/views",
+  "wzzc-dev/moui/views/form",
 }
 
 // Values
@@ -30,11 +30,11 @@ pub(all) struct FileImporterModel {
   last_event : String
   availability_reason : String
 }
-pub fn FileImporterModel::availability(Self) -> @views.FileImportAvailability
+pub fn FileImporterModel::availability(Self) -> @form.FileImportAvailability
 pub fn FileImporterModel::new() -> Self
 pub fn FileImporterModel::program(Self) -> @core.Program[Self, FileImporterMsg]
 pub fn FileImporterModel::program_with_services(Self, @host.HostAppServices) -> @core.Program[Self, FileImporterMsg]
-pub fn FileImporterModel::selection(Self) -> @views.FileSelection
+pub fn FileImporterModel::selection(Self) -> @form.FileSelection
 pub fn FileImporterModel::subscriptions(Self, @host.HostAppServices) -> @core.Subscription[FileImporterMsg]
 pub fn FileImporterModel::update(Self, FileImporterMsg) -> Self
 pub fn FileImporterModel::update_with_services(Self, FileImporterMsg, @host.HostAppServices) -> FileImporterUpdate

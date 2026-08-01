@@ -7,7 +7,7 @@ import {
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/views",
+  "wzzc-dev/moui/views/feedback",
   "wzzc-dev/moui_richtext",
 }
 
@@ -38,7 +38,7 @@ pub struct MarkdownEditorApp {
   format_palette_query : @core.State[String]
   more_menu_visible : @core.State[Bool]
   active_menu : @core.State[String]
-  toasts : @core.State[@views.ToastQueue[MarkdownEditorMsg]]
+  toasts : @core.State[@feedback.ToastQueue[MarkdownEditorMsg]]
   autosave_draft : @core.State[String]
   dark_mode_enabled : @core.State[Bool]
   font_family : @core.State[MarkdownEditorFontFamily]

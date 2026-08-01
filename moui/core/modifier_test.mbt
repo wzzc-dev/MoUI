@@ -3,7 +3,8 @@
 /// Each category tests the public API through `View` methods, which exercise
 /// the `to_any_modifier()` vtable dispatch path end-to-end.
 
-///| Shared root view for attaching modifiers.
+///|
+/// Shared root view for attaching modifiers.
 fn test_leaf() -> @core.View[Unit] {
   @core.View::from_node(ModTestNode::{
     kind: "test-leaf",
@@ -32,7 +33,8 @@ fn loose_constraints(w : Double, h : Double) -> @core.Constraints {
   @core.Constraints::loose(@core.Size::new(width=w, height=h))
 }
 
-///| Layout context with a single child of the given size.
+///|
+/// Layout context with a single child of the given size.
 fn ctx_child(child_size~ : @core.Size) -> @core.ViewLayoutContext {
   {
     constraints: loose_constraints(200.0, 200.0),
@@ -51,13 +53,23 @@ fn paint_ctx(frame~ : @core.Rect) -> @core.ViewPaintContext {
     child_frames: [frame],
     focused: false,
     state: {
-      focused: false, hovered: false, pressed: false, selected: false,
-      checked: false, expanded: false, disabled: false,
+      focused: false,
+      hovered: false,
+      pressed: false,
+      selected: false,
+      checked: false,
+      expanded: false,
+      disabled: false,
       slots: @core.ViewStateSlots::empty(),
     },
     text_control: {
-      caret: 0, selection: None, text_selection_anchor: None,
-      composition: None, composition_cursor: None, undo_stack: [], redo_stack: [],
+      caret: 0,
+      selection: None,
+      text_selection_anchor: None,
+      composition: None,
+      composition_cursor: None,
+      undo_stack: [],
+      redo_stack: [],
     },
     text_system: @core.TextSystem::fallback(),
     environment: @core.Environment::neutral(),
@@ -66,9 +78,20 @@ fn paint_ctx(frame~ : @core.Rect) -> @core.ViewPaintContext {
   }
 }
 
-fn red() -> @core.Color { @core.Color::rgba(r=1.0, g=0.0, b=0.0) }
-fn blue() -> @core.Color { @core.Color::rgba(r=0.0, g=0.0, b=1.0) }
-fn black() -> @core.Color { @core.Color::black() }
+///|
+fn red() -> @core.Color {
+  @core.Color::rgba(r=1.0, g=0.0, b=0.0)
+}
+
+///|
+fn blue() -> @core.Color {
+  @core.Color::rgba(r=0.0, g=0.0, b=1.0)
+}
+
+///|
+fn black() -> @core.Color {
+  @core.Color::black()
+}
 
 // == Layout modifiers ==
 
@@ -76,7 +99,9 @@ fn black() -> @core.Color { @core.Color::black() }
 test "padding modifier identity and layout inflation" {
   let view = test_leaf().padding(16.0)
   assert_true(view.identity().kind.contains("Padding"))
-  let result = view.layout(ctx_child(child_size=@core.Size::new(width=40.0, height=40.0)))
+  let result = view.layout(
+    ctx_child(child_size=@core.Size::new(width=40.0, height=40.0)),
+  )
   assert_true(result.size.width >= 64.0)
 }
 
@@ -84,7 +109,9 @@ test "padding modifier identity and layout inflation" {
 test "frame modifier identity and size constraint" {
   let view = test_leaf().frame(width=100.0, height=50.0)
   assert_true(view.identity().kind.contains("Frame"))
-  let result = view.layout(ctx_child(child_size=@core.Size::new(width=40.0, height=40.0)))
+  let result = view.layout(
+    ctx_child(child_size=@core.Size::new(width=40.0, height=40.0)),
+  )
   assert_true(result.size.width <= 100.0)
   assert_true(result.size.height <= 50.0)
 }
@@ -106,7 +133,9 @@ test "expanded modifier delegates to flexible" {
 test "offset modifier identity and child frame" {
   let view = test_leaf().offset(dx=10.0, dy=5.0)
   assert_true(view.identity().kind.contains("Offset"))
-  let result = view.layout(ctx_child(child_size=@core.Size::new(width=30.0, height=30.0)))
+  let result = view.layout(
+    ctx_child(child_size=@core.Size::new(width=30.0, height=30.0)),
+  )
   assert_true(result.child_frames.length() == 1)
 }
 
@@ -124,8 +153,12 @@ test "aspect_ratio modifier identity" {
 
 ///|
 test "intrinsic_width and intrinsic_height identity" {
-  assert_true(test_leaf().intrinsic_width().identity().kind.contains("IntrinsicWidth"))
-  assert_true(test_leaf().intrinsic_height().identity().kind.contains("IntrinsicHeight"))
+  assert_true(
+    test_leaf().intrinsic_width().identity().kind.contains("IntrinsicWidth"),
+  )
+  assert_true(
+    test_leaf().intrinsic_height().identity().kind.contains("IntrinsicHeight"),
+  )
 }
 
 // == Paint modifiers ==
@@ -134,20 +167,26 @@ test "intrinsic_width and intrinsic_height identity" {
 test "background modifier identity and paint commands" {
   let view = test_leaf().background(red())
   assert_true(view.identity().kind.contains("Background"))
-  let plan = view.paint(paint_ctx(frame=@core.Rect::new(x=0.0, y=0.0, width=100.0, height=100.0)))
+  let plan = view.paint(
+    paint_ctx(frame=@core.Rect::new(x=0.0, y=0.0, width=100.0, height=100.0)),
+  )
   assert_true(plan.commands.length() >= 1)
 }
 
 ///|
 test "foreground modifier identity" {
-  assert_true(test_leaf().foreground(blue()).identity().kind.contains("Foreground"))
+  assert_true(
+    test_leaf().foreground(blue()).identity().kind.contains("Foreground"),
+  )
 }
 
 ///|
 test "opacity modifier identity and push/pop commands" {
   let view = test_leaf().opacity(0.5)
   assert_true(view.identity().kind.contains("Opacity"))
-  let plan = view.paint(paint_ctx(frame=@core.Rect::new(x=0.0, y=0.0, width=100.0, height=100.0)))
+  let plan = view.paint(
+    paint_ctx(frame=@core.Rect::new(x=0.0, y=0.0, width=100.0, height=100.0)),
+  )
   assert_true(plan.commands.length() >= 1)
 }
 
@@ -165,7 +204,9 @@ test "border modifier identity" {
 
 ///|
 test "corner_radius modifier identity" {
-  assert_true(test_leaf().corner_radius(8.0).identity().kind.contains("CornerRadius"))
+  assert_true(
+    test_leaf().corner_radius(8.0).identity().kind.contains("CornerRadius"),
+  )
 }
 
 ///|
@@ -175,7 +216,9 @@ test "clip modifier identity" {
 
 ///|
 test "scale modifier identity" {
-  assert_true(test_leaf().scale(sx=1.5, sy=1.5).identity().kind.contains("Scale"))
+  assert_true(
+    test_leaf().scale(sx=1.5, sy=1.5).identity().kind.contains("Scale"),
+  )
 }
 
 ///|
@@ -186,7 +229,9 @@ test "font modifier identity" {
 
 ///|
 test "repaint_boundary modifier identity" {
-  assert_true(test_leaf().repaint_boundary().identity().kind.contains("RepaintBoundary"))
+  assert_true(
+    test_leaf().repaint_boundary().identity().kind.contains("RepaintBoundary"),
+  )
 }
 
 // == Event modifiers ==
@@ -194,7 +239,8 @@ test "repaint_boundary modifier identity" {
 ///|
 test "on_tap identity focusable and button semantics role" {
   let view : @core.View[Int] = @core.View::from_node(ModTestNode::{
-    kind: "tappable", size: @core.Size::new(width=8.0, height=8.0),
+    kind: "tappable",
+    size: @core.Size::new(width=8.0, height=8.0),
   }).on_tap(42)
   assert_true(view.identity().kind.contains("OnTap"))
   assert_true(view.accepts_focus())
@@ -204,7 +250,8 @@ test "on_tap identity focusable and button semantics role" {
 ///|
 test "on_long_press identity and focusable" {
   let view : @core.View[Int] = @core.View::from_node(ModTestNode::{
-    kind: "pressable", size: @core.Size::new(width=8.0, height=8.0),
+    kind: "pressable",
+    size: @core.Size::new(width=8.0, height=8.0),
   }).on_long_press(42)
   assert_true(view.identity().kind.contains("OnLongPress"))
   assert_true(view.accepts_focus())
@@ -213,7 +260,8 @@ test "on_long_press identity and focusable" {
 ///|
 test "on_double_tap identity" {
   let view : @core.View[Int] = @core.View::from_node(ModTestNode::{
-    kind: "dbl-tap", size: @core.Size::new(width=8.0, height=8.0),
+    kind: "dbl-tap",
+    size: @core.Size::new(width=8.0, height=8.0),
   }).on_double_tap(42)
   assert_true(view.identity().kind.contains("OnDoubleTap"))
 }
@@ -221,7 +269,8 @@ test "on_double_tap identity" {
 ///|
 test "on_drag identity" {
   let view : @core.View[Int] = @core.View::from_node(ModTestNode::{
-    kind: "draggable", size: @core.Size::new(width=8.0, height=8.0),
+    kind: "draggable",
+    size: @core.Size::new(width=8.0, height=8.0),
   }).on_drag(fn(_event) { 42 })
   assert_true(view.identity().kind.contains("OnDrag"))
 }
@@ -229,7 +278,10 @@ test "on_drag identity" {
 ///|
 test "keyboard_shortcut identity" {
   let view : @core.View[Unit] = test_leaf().keyboard_shortcut(
-    @core.KeyboardShortcut::new(key="k", modifiers=@core.KeyModifiers::new(meta=true)),
+    @core.KeyboardShortcut::new(
+      key="k",
+      modifiers=@core.KeyModifiers::new(meta=true),
+    ),
   )
   assert_true(view.identity().kind.contains("KeyboardShortcut"))
 }
@@ -259,7 +311,11 @@ test "semantics_checked identity and value" {
 
 ///|
 test "semantics_selected identity" {
-  assert_true(test_leaf().semantics_selected(selected=true).identity().kind.contains("SemanticsSelected"))
+  assert_true(
+    test_leaf().semantics_selected(selected=true).identity().kind.contains(
+      "SemanticsSelected",
+    ),
+  )
 }
 
 ///|
@@ -295,7 +351,10 @@ test "semantics_boundary identity and composition" {
 ///|
 test "merge_descendant_semantics identity and composition" {
   let view = test_leaf().merge_descendant_semantics()
-  assert_eq(view.semantics().composition, @core.SemanticsComposition::MergeDescendants)
+  assert_eq(
+    view.semantics().composition,
+    @core.SemanticsComposition::MergeDescendants,
+  )
 }
 
 ///|
@@ -308,17 +367,25 @@ test "hide_semantics identity and composition" {
 
 ///|
 test "disabled modifier identity" {
-  assert_true(test_leaf().disabled(disabled=true).identity().kind.contains("Disabled"))
+  assert_true(
+    test_leaf().disabled(disabled=true).identity().kind.contains("Disabled"),
+  )
 }
 
 ///|
 test "theme modifier identity" {
-  assert_true(test_leaf().theme(@core.Theme::neutral()).identity().kind.contains("Theme"))
+  assert_true(
+    test_leaf().theme(@core.Theme::neutral()).identity().kind.contains("Theme"),
+  )
 }
 
 ///|
 test "environment modifier identity" {
-  assert_true(test_leaf().environment(@core.Environment::neutral()).identity().kind.contains("Environment"))
+  assert_true(
+    test_leaf().environment(@core.Environment::neutral()).identity().kind.contains(
+      "Environment",
+    ),
+  )
 }
 
 ///|
@@ -333,8 +400,9 @@ test "focusable modifier identity and value" {
 ///|
 test "chained layout and paint and event compose correctly" {
   let view : @core.View[Int] = @core.View::from_node(ModTestNode::{
-    kind: "chain", size: @core.Size::new(width=8.0, height=8.0),
-  })
+      kind: "chain",
+      size: @core.Size::new(width=8.0, height=8.0),
+    })
     .frame(width=100.0, height=60.0)
     .background(red())
     .corner_radius(8.0)
@@ -343,7 +411,9 @@ test "chained layout and paint and event compose correctly" {
   assert_true(view.accepts_focus())
   // The outermost modifier's paint plan gets its own commands. The background
   // modifier is wrapped inside, so its paint commands are in child_layers.
-  let plan = view.paint(paint_ctx(frame=@core.Rect::new(x=0.0, y=0.0, width=100.0, height=60.0)))
+  let plan = view.paint(
+    paint_ctx(frame=@core.Rect::new(x=0.0, y=0.0, width=100.0, height=60.0)),
+  )
   assert_true(plan.commands.length() + plan.child_layers.length() >= 0)
 }
 

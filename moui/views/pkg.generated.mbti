@@ -156,8 +156,6 @@ pub fn[Msg] filter_chip(String, selected~ : Bool, on_change~ : (Bool) -> Msg, th
 
 pub fn[Msg] flexible(@core.View[Msg], weight? : Double) -> @core.View[Msg]
 
-pub fn[Msg] flow(Array[@core.View[Msg]], width? : Double, spacing? : Double, row_spacing? : Double) -> @core.View[Msg]
-
 pub fn[Msg] focus_ring(@core.View[Msg], focused~ : Bool, label? : String, theme? : @core.Theme, width? : Double, height? : Double, padding? : Double, radius? : Double) -> @core.View[Msg]
 
 pub fn[Msg] form(Array[@core.View[Msg]], spacing? : Double, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
@@ -389,8 +387,6 @@ pub fn[T, Msg] virtual_list(Array[T], (T) -> String, (T) -> @core.View[Msg], sta
 pub fn[Msg] wizard(Array[@controls.WizardStep[Msg]], current~ : String, on_select~ : (String) -> Msg, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] wizard_step(@controls.WizardStep[Msg]) -> @core.View[Msg]
-
-pub fn[Msg] wrap(Array[@core.View[Msg]], width? : Double, spacing? : Double, row_spacing? : Double) -> @core.View[Msg]
 
 // Errors
 

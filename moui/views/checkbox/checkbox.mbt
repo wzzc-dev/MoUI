@@ -130,11 +130,15 @@ impl @core.ViewNode for Checkbox with fn declaration(self) {
       ("checked", @core.DeclarationKey::bool(self.checked)),
       (
         "foreground",
-        @core.DeclarationKey::option(self.foreground.map(@common.view_color_key)),
+        @core.DeclarationKey::option(
+          self.foreground.map(@common.view_color_key),
+        ),
       ),
       (
         "check_color",
-        @core.DeclarationKey::option(self.check_color.map(@common.view_color_key)),
+        @core.DeclarationKey::option(
+          self.check_color.map(@common.view_color_key),
+        ),
       ),
       (
         "box_shape",
@@ -175,10 +179,7 @@ impl @core.ViewNode for Checkbox with fn layout(self, ctx) {
   let resolved_theme = self.theme.unwrap_or(ctx.environment.theme)
   let cc = @style.views_ambient_control_theme(resolved_theme).choice_control
   let resolved_font = resolve_choice_font(self.font, resolved_theme)
-  let resolved_box_size = resolve_control_double(
-    self.box_size,
-    cc.control_size,
-  )
+  let resolved_box_size = resolve_control_double(self.box_size, cc.control_size)
   let label_width = if self.label.length() == 0 {
     0.0
   } else {
@@ -212,10 +213,7 @@ impl @core.ViewNode for Checkbox with fn paint(self, ctx) {
     self.check_color,
     cc.selected_color,
   )
-  let resolved_box_size = resolve_control_double(
-    self.box_size,
-    cc.control_size,
-  )
+  let resolved_box_size = resolve_control_double(self.box_size, cc.control_size)
   let commands : Array[@core.DrawCommand] = []
   append_checkbox_commands(
     commands,
