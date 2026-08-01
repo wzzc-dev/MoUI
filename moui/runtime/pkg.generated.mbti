@@ -768,7 +768,7 @@ pub struct WindowHostCoordinator {
 }
 pub fn WindowHostCoordinator::active_runtime_slot(Self) -> HostWindowRuntimeSlot?
 pub fn WindowHostCoordinator::apply_platform_window_request(Self, @host.HostWindowId, @host.HostWindowRequest, (WindowSurfaceActions) -> Unit) -> @host.HostWindowRequestResult
-pub fn WindowHostCoordinator::apply_window_request(Self, @host.HostWindowRequest, open_window~ : (@host.HostWindowOpenRequest) -> @host.HostWindowRequestResult, exit~ : () -> Unit) -> @host.HostWindowRequestResult
+pub fn WindowHostCoordinator::apply_window_request(Self, @host.HostWindowRequest, open_window~ : (@host.HostWindowOpenRequest) -> @host.HostWindowRequestResult, dispose_window? : (@host.HostWindowId) -> Unit, exit~ : () -> Unit) -> @host.HostWindowRequestResult
 pub fn WindowHostCoordinator::attach_surface(Self, @host.HostWindowId, @render.HostWindowRenderer, WindowSurfaceActions) -> Bool
 pub fn WindowHostCoordinator::bind_renderer_image_resource_changes(Self, @host.HostWindowId) -> Unit
 pub fn WindowHostCoordinator::cancel_image_resource_loads(Self, @host.HostWindowId) -> Int
@@ -780,6 +780,7 @@ pub fn WindowHostCoordinator::image_resource_completion_source(Self) -> @render.
 pub fn WindowHostCoordinator::image_resource_window_open(Self, @host.HostWindowId) -> Bool
 pub fn WindowHostCoordinator::new(window_requests~ : @host.HostWindowRequestQueue, scene_resolver~ : HostWindowSceneResolver, services~ : @host.HostServiceBridge, event_sources~ : HostPlatformEventSources?, image_loader~ : @render.HostAsyncImageLoader?) -> Self
 pub fn WindowHostCoordinator::open_resolution(Self, @host.HostWindowOpenRequest) -> HostWindowOpenResolution
+pub fn WindowHostCoordinator::publish_platform_event(Self, @host.HostWindowId, @host.HostEvent) -> HostPlatformEventPublishResult?
 pub fn WindowHostCoordinator::register_primary_runtime_slot(Self, @host.HostWindowId, HostRuntimeDriver) -> Unit
 pub fn WindowHostCoordinator::request_image_resource_redraw_if_changed(Self, @host.HostWindowId) -> Bool
 pub fn WindowHostCoordinator::request_platform_redraw(Self, @host.HostWindowId) -> Unit

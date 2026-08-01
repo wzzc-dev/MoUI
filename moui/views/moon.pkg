@@ -25,6 +25,7 @@ import {
   "wzzc-dev/moui/views/choice",
   "wzzc-dev/moui/views/container",
   "wzzc-dev/moui/views/divider",
+  "wzzc-dev/moui/views/icon",
   "wzzc-dev/moui/views/image",
   "wzzc-dev/moui/views/layout",
   "wzzc-dev/moui/views/canvas",
