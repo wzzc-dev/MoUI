@@ -2,7 +2,6 @@
 package "wzzc-dev/moui/views"
 
 import {
-  "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/views/common",
   "wzzc-dev/moui/views/controls",
@@ -60,13 +59,13 @@ pub fn[Msg] checkbox(String, checked~ : Bool, on_change~ : (Bool) -> Msg, theme?
 
 pub fn[Msg] checkbox_control(label~ : String, checked~ : @core.Binding[Bool], theme? : @core.Theme, font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, box_shape? : @style.ChoiceControlShape, check_style? : @style.CheckMarkStyle, height? : Double, on_change? : ((Bool) -> Msg)?, kind? : String, key? : String?) -> @core.View[Msg]
 
-pub fn[Msg] checkbox_group(Array[ChoiceItem], selected~ : Array[String], on_change~ : (String, Bool) -> Msg, theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
+pub fn[Msg] checkbox_group(Array[@controls.ChoiceItem], selected~ : Array[String], on_change~ : (String, Bool) -> Msg, theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
 
 pub fn[Msg] chip(String, selected? : Bool, on_click? : Msg?, variant? : @style.ChipVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] choice_chip(String, selected~ : Bool, on_select~ : Msg, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn choice_item(String, String) -> ChoiceItem
+pub fn choice_item(String, String) -> @controls.ChoiceItem
 
 pub fn clear(@common.PaintContext, @core.Color) -> Unit
 
@@ -276,7 +275,7 @@ pub fn push_transform(@common.PaintContext, @core.Transform2D) -> Unit
 
 pub fn[Msg] radio(String, Bool, on_change~ : (Bool) -> Msg, theme? : @core.Theme, foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
 
-pub fn[Msg] radio_group(Array[ChoiceItem], selected~ : String, on_select~ : (String) -> Msg, theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
+pub fn[Msg] radio_group(Array[@controls.ChoiceItem], selected~ : String, on_select~ : (String) -> Msg, theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
 
 pub fn required_field(message? : String) -> (String) -> String?
 
@@ -308,7 +307,7 @@ pub fn[Msg] section_nav_item(id~ : String, label~ : String, message~ : Msg, summ
 
 pub fn[T, Msg] sectioned_list(Array[SectionListSection[T]], (T) -> String, (T) -> @core.View[Msg], state? : @core.ScrollState, header? : (SectionListSection[T]) -> @core.View[Msg], item_height? : Double, header_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int, empty? : @core.View[Msg]?) -> @core.View[Msg]
 
-pub fn[Msg] segmented_control(Array[ChoiceItem], selected~ : String, on_select~ : (String) -> Msg, size? : @style.SegmentedControlSize, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+pub fn[Msg] segmented_control(Array[@controls.ChoiceItem], selected~ : String, on_select~ : (String) -> Msg, size? : @style.SegmentedControlSize, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] selectable_list(Array[@data.SelectableListItem[Msg]], selected? : String, empty? : @core.View[Msg]?, theme? : @core.Theme, width? : Double, row_height? : Double) -> @core.View[Msg]
 
@@ -391,11 +390,6 @@ pub fn[Msg] wizard_step(@controls.WizardStep[Msg]) -> @core.View[Msg]
 // Errors
 
 // Types and methods
-pub struct ChoiceItem {
-  id : String
-  label : String
-} derive(Eq, ToJson, @debug.Debug)
-
 pub struct ScrollToIndexIntent {
   index : Int
   offset : @core.Point
@@ -442,6 +436,8 @@ pub using @style {type ChoiceControlShape}
 pub using @style {type ChoiceControlStyle}
 
 pub using @style {type ChoiceControlTheme}
+
+pub using @controls {type ChoiceItem}
 
 pub using @core {type ColorPalette}
 

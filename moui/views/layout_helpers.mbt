@@ -125,7 +125,7 @@ pub fn[Msg] custom_children_layout(
   semantics_role? : @core.SemanticsRole = @core.SemanticsRole::Group,
   semantics_label? : String = "",
 ) -> @core.View[Msg] {
-  custom_children_layout_control(
+  @controls.custom_children_layout_control(
     children~,
     measure~,
     place~,
