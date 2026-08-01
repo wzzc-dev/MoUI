@@ -59,21 +59,16 @@ pub struct MacosRendererProvider {
 ///|
 /// Native host backend: owns the macOS host runtime, native windows, and
 /// event-loop integration rather than attaching a runtime to an embedder.
+/// Platform-neutral window coordination (registry, runtime slots, requests,
+/// image resources, IME) lives in `coordinator` (@runtime.WindowHostCoordinator).
 struct MacosNativeHostBackend {
   title : String
   runtime : @runtime.AppRuntime
   driver : @runtime.HostRuntimeDriver
-  text_input_session : @host.TextInputSession
+  coordinator : @runtime.WindowHostCoordinator
   renderer_provider : MacosRendererProvider
   services : @host.HostServiceBridge
-  window_requests : @host.HostWindowRequestQueue
-  scene_resolver : @runtime.HostWindowSceneResolver
-  windows : @host.HostWindowRegistry
-  runtime_slots : @runtime.HostWindowRuntimeSlots
-  platform_windows : @host.HostPlatformWindowMap
   platform_slots : MacosWindowPlatformSlots
-  image_repaint_tracker : @render.HostImageResourceRepaintTracker
-  event_sources : @runtime.HostPlatformEventSources?
   platform_view_plugins : Array[@host.PlatformViewPlugin]
   transparent_titlebar : Bool
   platform_attributes : @window_core.PlatformWindowAttributes
@@ -121,8 +116,6 @@ priv struct MacosWindowPlatformSlot {
   host_id : @host.HostWindowId
   platform_id : @window_core.WindowId
   window : @window_macos.Window
-  renderer : @render.HostWindowRenderer
-  mut frame_pending : Bool
 }
 
 ///|

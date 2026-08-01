@@ -127,7 +127,7 @@ test "linux backend carries tracked modifiers into keyboard events" {
   let modifiers = @host.modifiers_to_core(
     @window_core.Modifiers::Modifiers(true, true, false, false),
   )
-  let event = window_event_to_host_with_modifiers(
+  let event = @host.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::KeyboardInput(None, key_event, false),
     @core.Point::new(x=0.0, y=0.0),
     modifiers,
@@ -150,7 +150,7 @@ test "linux backend carries tracked modifiers into keyboard events" {
 
 ///|
 test "linux backend uses Wayland button event coordinates" {
-  let event = window_event_to_host_with_modifiers(
+  let event = @host.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::PointerButton(
       None,
       @window_core.ElementState::Pressed,
@@ -174,7 +174,7 @@ test "linux backend uses Wayland button event coordinates" {
 
 ///|
 test "linux backend preserves normalized vertical wheel direction" {
-  let event = window_event_to_host_with_modifiers(
+  let event = @host.window_event_to_host_with_modifiers(
     @window_core.WindowEvent::MouseWheel(
       None,
       @window_core.MouseScrollDelta::PixelDelta(

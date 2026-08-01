@@ -189,7 +189,7 @@ fn linux_request_surface_for_content(
   decorations : LinuxClientDecorationState,
 ) -> Unit {
   let surface_metrics = linux_surface_metrics_for_content(metrics, decorations)
-  ignore(window.request_surface_size(host_metrics_to_dpi_size(surface_metrics)))
+  ignore(window.request_surface_size(@host.host_metrics_to_dpi_size(surface_metrics)))
 }
 
 ///|

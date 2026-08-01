@@ -34,9 +34,17 @@ pub fn[Msg] new_view(root~ : @core.View[Msg], size~ : @core.Size, environment? :
 
 pub fn resolve_open_request(@host.HostWindowRegistry, @host.HostWindowOpenRequest, HostWindowSceneResolver) -> HostWindowOpenResolution
 
+pub fn runtime_slot_needs_redraw(HostWindowRuntimeSlot) -> Bool
+
 pub fn semantics_action_label(@core.SemanticsAction) -> String
 
 pub fn[Msg] subscription_plan_summary(@core.Subscription[Msg]) -> SubscriptionPlanSummary
+
+pub fn to_host_id(@render.RenderWindowId) -> @host.HostWindowId
+
+pub fn to_render_id(@host.HostWindowId) -> @render.RenderWindowId
+
+pub fn to_render_metrics(@host.HostSurfaceMetrics) -> @render.RendererSurfaceMetrics
 
 // Errors
 
@@ -82,6 +90,8 @@ pub fn AppRuntime::set_redraw_callback(Self, () -> Unit) -> Unit
 pub fn AppRuntime::set_text_system(Self, @core.TextSystem) -> Unit
 pub fn AppRuntime::size(Self) -> @core.Size
 pub fn AppRuntime::text_system(Self) -> @core.TextSystem
+
+type CoordinatedSurface
 
 pub(all) enum EffectPlanKind {
   EffectPlanNone
@@ -742,6 +752,66 @@ pub fn ViewTreeInspectorSnapshot::modified_count(Self) -> Int
 pub fn ViewTreeInspectorSnapshot::node_count(Self) -> Int
 pub fn ViewTreeInspectorSnapshot::nodes(Self) -> Array[ViewInspectorSummary]
 pub fn ViewTreeInspectorSnapshot::root_kind(Self) -> String
+
+pub struct WindowHostCoordinator {
+  window_requests : @host.HostWindowRequestQueue
+  scene_resolver : HostWindowSceneResolver
+  windows : @host.HostWindowRegistry
+  runtime_slots : HostWindowRuntimeSlots
+  platform_windows : @host.HostPlatformWindowMap
+  image_repaint_tracker : @render.HostImageResourceRepaintTracker
+  event_sources : HostPlatformEventSources?
+  text_input_session : @host.TextInputSession
+  services : @host.HostServiceBridge
+  image_loader : @render.HostAsyncImageLoader?
+  mut surfaces : Array[CoordinatedSurface]
+}
+pub fn WindowHostCoordinator::active_runtime_slot(Self) -> HostWindowRuntimeSlot?
+pub fn WindowHostCoordinator::apply_platform_window_request(Self, @host.HostWindowId, @host.HostWindowRequest, (WindowSurfaceActions) -> Unit) -> @host.HostWindowRequestResult
+pub fn WindowHostCoordinator::apply_window_request(Self, @host.HostWindowRequest, open_window~ : (@host.HostWindowOpenRequest) -> @host.HostWindowRequestResult, exit~ : () -> Unit) -> @host.HostWindowRequestResult
+pub fn WindowHostCoordinator::attach_surface(Self, @host.HostWindowId, @render.HostWindowRenderer, WindowSurfaceActions) -> Bool
+pub fn WindowHostCoordinator::bind_renderer_image_resource_changes(Self, @host.HostWindowId) -> Unit
+pub fn WindowHostCoordinator::cancel_image_resource_loads(Self, @host.HostWindowId) -> Int
+pub fn WindowHostCoordinator::detach_surface(Self, @host.HostWindowId) -> WindowSurfaceActions?
+pub fn WindowHostCoordinator::dispatch_host_event(Self, @host.HostWindowId, @host.HostEvent, adjust~ : (@host.HostEvent) -> @host.HostEvent?) -> Unit
+pub fn WindowHostCoordinator::dispose_window(Self, @host.HostWindowId) -> Unit
+pub fn WindowHostCoordinator::drain_window_requests(Self, (@host.HostWindowRequest) -> @host.HostWindowRequestResult) -> Unit
+pub fn WindowHostCoordinator::image_resource_completion_source(Self) -> @render.HostImageResourceCompletionSource
+pub fn WindowHostCoordinator::image_resource_window_open(Self, @host.HostWindowId) -> Bool
+pub fn WindowHostCoordinator::new(window_requests~ : @host.HostWindowRequestQueue, scene_resolver~ : HostWindowSceneResolver, services~ : @host.HostServiceBridge, event_sources~ : HostPlatformEventSources?, image_loader~ : @render.HostAsyncImageLoader?) -> Self
+pub fn WindowHostCoordinator::open_resolution(Self, @host.HostWindowOpenRequest) -> HostWindowOpenResolution
+pub fn WindowHostCoordinator::register_primary_runtime_slot(Self, @host.HostWindowId, HostRuntimeDriver) -> Unit
+pub fn WindowHostCoordinator::request_image_resource_redraw_if_changed(Self, @host.HostWindowId) -> Bool
+pub fn WindowHostCoordinator::request_platform_redraw(Self, @host.HostWindowId) -> Unit
+pub fn WindowHostCoordinator::request_redraw(Self) -> Unit
+pub fn WindowHostCoordinator::request_redraw_window_if_needed(Self, @host.HostWindowId) -> Unit
+pub fn WindowHostCoordinator::rollback_window_record(Self, @host.HostWindowId) -> Unit
+pub fn WindowHostCoordinator::runtime_slot_lookup(Self, @host.HostWindowId) -> HostWindowRuntimeSlot?
+pub fn WindowHostCoordinator::runtime_slots_empty(Self) -> Bool
+pub fn WindowHostCoordinator::schedule_image_resource_loads(Self, @host.HostWindowId, @render.HostWindowRenderer, @render.HostImageResourceCompletionSource) -> @render.HostAsyncImageLoadScheduleResult?
+pub fn WindowHostCoordinator::services(Self) -> @host.HostServiceBridge
+pub fn WindowHostCoordinator::set_surface_frame_pending(Self, @host.HostWindowId, Bool) -> Unit
+pub fn WindowHostCoordinator::surface_actions(Self, @host.HostWindowId) -> WindowSurfaceActions?
+pub fn WindowHostCoordinator::surface_frame_pending(Self, @host.HostWindowId) -> Bool
+pub fn WindowHostCoordinator::surface_renderer(Self, @host.HostWindowId) -> @render.HostWindowRenderer?
+pub fn WindowHostCoordinator::sync_runtime_slot(Self, @host.HostWindowId) -> Unit
+pub fn WindowHostCoordinator::sync_runtime_slots(Self) -> Unit
+pub fn WindowHostCoordinator::sync_text_input_session(Self) -> Unit
+
+pub struct WindowSurfaceActions {
+  focus : () -> Unit
+  request_surface_size : (@host.HostSurfaceMetrics) -> Unit
+  sync_surface : (@host.HostSurfaceMetrics) -> Unit
+  renderer_resize : (@render.RendererSurfaceMetrics) -> Unit
+  set_minimized : (Bool) -> Unit
+  set_visible : (Bool) -> Unit
+  request_redraw : () -> Unit
+  request_ime_update : (@host.TextInputSessionAction) -> Unit
+  drop : () -> Unit
+  native_view_handle : () -> UInt64?
+  dispose_platform_views : () -> Unit
+}
+pub fn WindowSurfaceActions::new(focus~ : () -> Unit, request_surface_size~ : (@host.HostSurfaceMetrics) -> Unit, sync_surface~ : (@host.HostSurfaceMetrics) -> Unit, renderer_resize~ : (@render.RendererSurfaceMetrics) -> Unit, set_minimized~ : (Bool) -> Unit, set_visible~ : (Bool) -> Unit, request_redraw~ : () -> Unit, request_ime_update~ : (@host.TextInputSessionAction) -> Unit, drop~ : () -> Unit, native_view_handle~ : () -> UInt64?, dispose_platform_views~ : () -> Unit) -> Self
 
 // Type aliases
 

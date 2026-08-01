@@ -71,21 +71,16 @@ pub(all) struct LinuxClientDecorationState {
 ///|
 /// Native host backend: owns the Linux host runtime, native windows, and
 /// event-loop integration rather than attaching a runtime to an embedder.
+/// Platform-neutral window coordination (registry, runtime slots, requests,
+/// image resources, IME) lives in `coordinator` (@runtime.WindowHostCoordinator).
 struct LinuxNativeHostBackend {
   title : String
   runtime : @runtime.AppRuntime
   driver : @runtime.HostRuntimeDriver
-  text_input_session : @host.TextInputSession
+  coordinator : @runtime.WindowHostCoordinator
   renderer_provider : LinuxRendererProvider
   services : @host.HostServiceBridge
-  window_requests : @host.HostWindowRequestQueue
-  scene_resolver : @runtime.HostWindowSceneResolver
-  windows : @host.HostWindowRegistry
-  runtime_slots : @runtime.HostWindowRuntimeSlots
-  platform_windows : @host.HostPlatformWindowMap
   platform_slots : LinuxWindowPlatformSlots
-  image_repaint_tracker : @render.HostImageResourceRepaintTracker
-  event_sources : @runtime.HostPlatformEventSources?
   platform_view_plugins : Array[@host.PlatformViewPlugin]
   transparent_titlebar : Bool
   platform_attributes : @window_core.PlatformWindowAttributes
@@ -99,9 +94,7 @@ priv struct LinuxWindowPlatformSlot {
   host_id : @host.HostWindowId
   platform_id : @window_core.WindowId
   window : @window_linux.Window
-  renderer : @render.HostWindowRenderer
   mut decorations : LinuxClientDecorationState
-  mut frame_pending : Bool
 }
 
 ///|
@@ -143,37 +136,6 @@ pub fn LinuxRendererProvider::new(
   image_loader? : @render.HostAsyncImageLoader? = None,
 ) -> LinuxRendererProvider {
   { create_renderer, sync_surface, image_loader }
-}
-
-///|
-fn LinuxRendererProvider::schedule_image_resource_loads(
-  self : LinuxRendererProvider,
-  window_id : @host.HostWindowId,
-  renderer : @render.HostWindowRenderer,
-  completion_source : @render.HostImageResourceCompletionSource,
-) -> @render.HostAsyncImageLoadScheduleResult? {
-  let render_id = to_render_id(window_id)
-  match self.image_loader {
-    Some(loader) =>
-      Some(
-        loader.schedule_loading_resources(
-          render_id, renderer, completion_source,
-        ),
-      )
-    None => None
-  }
-}
-
-///|
-fn LinuxRendererProvider::cancel_image_resource_loads(
-  self : LinuxRendererProvider,
-  window_id : @host.HostWindowId,
-) -> Int {
-  let render_id = to_render_id(window_id)
-  match self.image_loader {
-    Some(loader) => loader.cancel_window(render_id)
-    None => 0
-  }
 }
 
 ///|

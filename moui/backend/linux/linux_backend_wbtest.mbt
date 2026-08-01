@@ -47,7 +47,7 @@ test "linux host options carry optional scene resolver and smoke options stay se
 }
 
 ///|
-test "linux renderer provider exposes async image loader hook" {
+test "linux coordinator exposes async image loader hook" {
   let loader_started = Ref(0)
   let loader = @render.HostAsyncImageLoader::new(start_load=(
     _id,
@@ -57,8 +57,11 @@ test "linux renderer provider exposes async image loader hook" {
     loader_started.val = loader_started.val + 1
     None
   })
-  let provider = LinuxRendererProvider::new(
-    create_renderer=(_window, _metrics) => None,
+  let coordinator = @runtime.WindowHostCoordinator::new(
+    window_requests=@host.HostWindowRequestQueue::new(),
+    scene_resolver=@runtime.HostWindowSceneResolver::unavailable(),
+    services=linux_service_bridge(system_theme=@core.ColorScheme::Light),
+    event_sources=None,
     image_loader=Some(loader),
   )
   let renderer = @render.HostWindowRenderer::new(
@@ -67,54 +70,58 @@ test "linux renderer provider exposes async image loader hook" {
     text_system=() => @core.TextSystem::fallback(),
   )
   let tracker = @render.HostImageResourceRepaintTracker::new()
-  let source = @render.HostImageResourceCompletionSource::new(
+  let completion = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=_id => true,
     request_redraw=_id => (),
   )
   match
-    provider.schedule_image_resource_loads(
+    coordinator.schedule_image_resource_loads(
       @host.HostWindowId::new(1),
       renderer,
-      source,
+      completion,
     ) {
     Some(result) => {
       inspect(result.loading_count(), content="0")
       inspect(result.scheduled_count(), content="0")
     }
-    None => fail("expected Linux async image loader hook result")
+    None => fail("expected Linux coordinator async image loader hook result")
   }
   inspect(loader_started.val, content="0")
   inspect(
-    provider.cancel_image_resource_loads(@host.HostWindowId::new(1)),
+    coordinator.cancel_image_resource_loads(@host.HostWindowId::new(1)),
     content="0",
   )
 }
 
 ///|
-test "linux renderer provider async image hook defaults to unavailable" {
-  let provider = LinuxRendererProvider::new(create_renderer=(_window, _metrics) => {
-    None
-  })
+test "linux coordinator async image hook defaults to unavailable" {
+  let coordinator = @runtime.WindowHostCoordinator::new(
+    window_requests=@host.HostWindowRequestQueue::new(),
+    scene_resolver=@runtime.HostWindowSceneResolver::unavailable(),
+    services=linux_service_bridge(system_theme=@core.ColorScheme::Light),
+    event_sources=None,
+    image_loader=None,
+  )
   let renderer = @render.HostWindowRenderer::new(
     resize=_ => (),
     render=_ => (),
     text_system=() => @core.TextSystem::fallback(),
   )
   let tracker = @render.HostImageResourceRepaintTracker::new()
-  let source = @render.HostImageResourceCompletionSource::new(
+  let completion = @render.HostImageResourceCompletionSource::new(
     tracker~,
     window_open=_id => true,
     request_redraw=_id => (),
   )
   match
-    provider.schedule_image_resource_loads(
+    coordinator.schedule_image_resource_loads(
       @host.HostWindowId::new(2),
       renderer,
-      source,
+      completion,
     ) {
     None => ()
-    Some(_) => fail("expected absent Linux async image loader hook")
+    Some(_) => fail("expected absent Linux coordinator async image loader hook")
   }
 }
 

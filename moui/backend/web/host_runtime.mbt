@@ -460,10 +460,3 @@ fn surface_metrics_from_physical(
   @host.surface_metrics_from_physical(size, scale_factor~)
 }
 
-///|
-fn host_metrics_to_dpi_size(metrics : @host.HostSurfaceMetrics) -> @dpi.Size {
-  @dpi.LogicalSize::LogicalSize(
-    metrics.logical_size.width,
-    metrics.logical_size.height,
-  ).into_size()
-}

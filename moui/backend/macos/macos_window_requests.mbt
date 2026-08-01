@@ -9,13 +9,12 @@ fn MacosNativeHostBackend::dispatch_window_event(
       self.modifiers = @host.modifiers_to_core(modifiers)
     _ => ()
   }
-  let scale_factor = self.current_scale_factor(window_id)
   match
-    window_event_to_host_with_modifiers(
+    @host.window_event_to_host_with_modifiers(
       event,
       self.last_pointer,
       self.modifiers,
-      scale_factor~,
+      scale_factor=self.current_scale_factor(window_id),
     ) {
     Some(host_event) => self.dispatch_host_event(window_id, host_event)
     None => ()
@@ -30,32 +29,11 @@ fn MacosNativeHostBackend::dispatch_host_event(
   window_id : @host.HostWindowId,
   host_event : @host.HostEvent,
 ) -> Unit {
-  self.apply_window_lifecycle(window_id, host_event)
-  match self.runtime_slots.lookup(window_id) {
-    Some(slot) =>
-      match host_event {
-        @host.HostEvent::Keyboard(event) =>
-          ignore(
-            slot.driver.dispatch_keyboard_with_services(event, self.services),
-          )
-        _ => ignore(slot.driver.dispatch(host_event))
-      }
-    None => ()
-  }
-  ignore(self.publish_subscription_event(window_id, host_event))
-  self.sync_text_input_session()
-}
-
-///|
-fn MacosNativeHostBackend::publish_subscription_event(
-  self : MacosNativeHostBackend,
-  window_id : @host.HostWindowId,
-  event : @host.HostEvent,
-) -> @runtime.HostPlatformEventPublishResult? {
-  match self.event_sources {
-    Some(sources) => Some(sources.publish(window_id~, event~))
-    None => None
-  }
+  self.coordinator.dispatch_host_event(
+    window_id,
+    host_event,
+    adjust=event => Some(event),
+  )
 }
 
 ///|
@@ -63,11 +41,9 @@ fn MacosNativeHostBackend::drain_window_requests(
   self : MacosNativeHostBackend,
   event_loop : @window_macos.ActiveEventLoop,
 ) -> Unit {
-  ignore(
-    self.window_requests.drain_with_handler(request => {
-      self.apply_window_request(event_loop, request)
-    }),
-  )
+  self.coordinator.drain_window_requests(request => {
+    self.apply_window_request(event_loop, request)
+  })
 }
 
 ///|
@@ -76,65 +52,11 @@ fn MacosNativeHostBackend::apply_window_request(
   event_loop : @window_macos.ActiveEventLoop,
   request : @host.HostWindowRequest,
 ) -> @host.HostWindowRequestResult {
-  match request {
-    @host.HostWindowRequest::OpenWindow(open_request) =>
-      self.open_window(event_loop, open_request)
-    @host.HostWindowRequest::FocusWindow(id) =>
-      self.apply_platform_window_request(id, request, window => {
-        window.focus_window()
-      })
-    @host.HostWindowRequest::CloseWindow(id) =>
-      self.apply_platform_window_request(id, request, _window => {
-        self.dispose_window(id)
-        if self.runtime_slots.is_empty() {
-          event_loop.exit()
-        }
-      })
-    @host.HostWindowRequest::ResizeWindow(id, metrics) =>
-      self.apply_platform_window_request(id, request, window => {
-        ignore(window.request_surface_size(host_metrics_to_dpi_size(metrics)))
-        (self.renderer_provider.sync_surface)(window, metrics)
-        match self.platform_slots.lookup_host(id) {
-          Some(slot) => slot.renderer.resize(to_render_metrics(metrics))
-          None => ()
-        }
-        window.request_redraw()
-      })
-    @host.HostWindowRequest::MinimizeWindow(id) =>
-      self.apply_platform_window_request(id, request, window => {
-        window.set_minimized(true)
-      })
-    @host.HostWindowRequest::ShowWindow(id) =>
-      self.apply_platform_window_request(id, request, window => {
-        window.set_minimized(false)
-        window.set_visible(true)
-      })
-    @host.HostWindowRequest::SetPrimaryWindow(id) =>
-      self.apply_platform_window_request(id, request, _window => ())
-  }
-}
-
-///|
-fn MacosNativeHostBackend::apply_platform_window_request(
-  self : MacosNativeHostBackend,
-  id : @host.HostWindowId,
-  request : @host.HostWindowRequest,
-  apply : (@window_macos.Window) -> Unit,
-) -> @host.HostWindowRequestResult {
-  match self.platform_slots.lookup_host(id) {
-    Some(slot) => {
-      let result = self.runtime_slots.apply_request(self.windows, request)
-      match result {
-        @host.HostWindowRequestResult::WindowRejected(_) => ()
-        _ => apply(slot.window)
-      }
-      result
-    }
-    None =>
-      @host.HostWindowRequestResult::WindowRejected(
-        "window request has no active macOS window",
-      )
-  }
+  self.coordinator.apply_window_request(
+    request,
+    open_window=open_request => self.open_window(event_loop, open_request),
+    exit=() => event_loop.exit(),
+  )
 }
 
 ///|
@@ -143,8 +65,7 @@ fn MacosNativeHostBackend::open_window(
   event_loop : @window_macos.ActiveEventLoop,
   request : @host.HostWindowOpenRequest,
 ) -> @host.HostWindowRequestResult {
-  match
-    @runtime.resolve_open_request(self.windows, request, self.scene_resolver) {
+  match self.coordinator.open_resolution(request) {
     @runtime.HostWindowOpenResolution::OpenRejected(message) =>
       @host.HostWindowRequestResult::WindowRejected(message)
     @runtime.HostWindowOpenResolution::OpenResolved(resolved) =>
@@ -164,7 +85,9 @@ fn MacosNativeHostBackend::create_resolved_window(
     .with_movable_by_window_background(true)
   let attributes = @window_core.WindowAttributes::default()
     .with_title(resolved.record.title)
-    .with_surface_size(host_metrics_to_dpi_size(resolved.record.metrics))
+    .with_surface_size(
+      @host.core_size_to_window_surface_size(resolved.record.metrics.logical_size),
+    )
     .with_platform_attributes(platform)
   let window : @window_macos.Window? = Some(
     event_loop.try_create_window(attributes),
@@ -177,7 +100,7 @@ fn MacosNativeHostBackend::create_resolved_window(
   match window {
     Some(window) => self.attach_resolved_window(window, resolved)
     None => {
-      self.rollback_window_record(resolved.id)
+      self.coordinator.rollback_window_record(resolved.id)
       @host.HostWindowRequestResult::WindowRejected(
         "failed to create macOS window",
       )
@@ -197,10 +120,13 @@ fn MacosNativeHostBackend::attach_resolved_window(
   )
   match (self.renderer_provider.create_renderer)(window, metrics) {
     Some(renderer) => {
-      self.bind_renderer_image_resource_changes(resolved.id, renderer)
-      ignore(self.windows.resize(resolved.id, metrics))
-      ignore(self.runtime_slots.sync_open_from_registry(self.windows))
-      let record = match self.windows.lookup(resolved.id) {
+      ignore(self.coordinator.windows.resize(resolved.id, metrics))
+      ignore(
+        self.coordinator.runtime_slots.sync_open_from_registry(
+          self.coordinator.windows,
+        ),
+      )
+      let record = match self.coordinator.windows.lookup(resolved.id) {
         Some(record) => record
         None => resolved.record
       }
@@ -217,28 +143,37 @@ fn MacosNativeHostBackend::attach_resolved_window(
       driver.set_text_system(renderer.text_system())
       ignore(driver.dispatch(@host.HostEvent::Resized(metrics)))
       ignore(
-        self.runtime_slots.insert(
+        self.coordinator.runtime_slots.insert(
           @runtime.HostWindowRuntimeSlot::from_driver(record~, driver~),
         ),
       )
       ignore(
-        self.platform_windows.bind(platform_id=window.id(), host_id=resolved.id),
+        self.coordinator.platform_windows.bind(
+          platform_id=window.id(),
+          host_id=resolved.id,
+        ),
       )
       ignore(
         self.platform_slots.insert({
           host_id: resolved.id,
           platform_id: window.id(),
           window,
-          renderer,
-          frame_pending: false,
         }),
       )
+      ignore(
+        self.coordinator.attach_surface(
+          resolved.id,
+          renderer,
+          self.macos_surface_actions(window, renderer),
+        ),
+      )
+      self.bind_renderer_image_resource_changes(resolved.id)
       self.request_platform_redraw(resolved.id)
       @host.HostWindowRequestResult::WindowOpened(resolved.id)
     }
     None => {
       window.drop()
-      self.rollback_window_record(resolved.id)
+      self.coordinator.rollback_window_record(resolved.id)
       @host.HostWindowRequestResult::WindowRejected(
         "failed to create macOS renderer",
       )
@@ -251,75 +186,7 @@ fn MacosNativeHostBackend::register_primary_runtime_slot(
   self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
-  ignore(
-    self.runtime_slots.insert_from_registry(
-      self.windows,
-      window_id,
-      driver=self.driver,
-    ),
-  )
-}
-
-///|
-fn MacosNativeHostBackend::sync_runtime_slot(
-  self : MacosNativeHostBackend,
-  window_id : @host.HostWindowId,
-) -> Unit {
-  ignore(self.runtime_slots.sync_from_registry(self.windows, window_id))
-}
-
-///|
-fn MacosNativeHostBackend::sync_runtime_slots(
-  self : MacosNativeHostBackend,
-) -> Unit {
-  ignore(self.runtime_slots.sync_open_from_registry(self.windows))
-}
-
-///|
-fn MacosNativeHostBackend::apply_window_lifecycle(
-  self : MacosNativeHostBackend,
-  window_id : @host.HostWindowId,
-  host_event : @host.HostEvent,
-) -> Unit {
-  ignore(
-    self.runtime_slots.apply_host_event(self.windows, window_id, host_event),
-  )
-}
-
-///|
-fn MacosNativeHostBackend::active_runtime_slot(
-  self : MacosNativeHostBackend,
-) -> @runtime.HostWindowRuntimeSlot? {
-  match self.runtime_slots.focused_slot() {
-    Some(slot) => Some(slot)
-    None => self.runtime_slots.primary_slot()
-  }
-}
-
-///|
-fn MacosNativeHostBackend::sync_text_input_session(
-  self : MacosNativeHostBackend,
-) -> Unit {
-  match self.active_runtime_slot() {
-    Some(runtime_slot) =>
-      match self.platform_slots.lookup_host(runtime_slot.id) {
-        Some(platform_slot) =>
-          match
-            self.text_input_session.sync(
-              runtime_slot.driver.focused_text_input(),
-            ) {
-            @host.TextInputSessionAction::EnableIme(request)
-            | @host.TextInputSessionAction::UpdateIme(request)
-            | @host.TextInputSessionAction::DisableIme(request) =>
-              platform_slot.window.request_ime_update(request) catch {
-                _ => ()
-              }
-            @host.TextInputSessionAction::NoImeChange => ()
-          }
-        None => ()
-      }
-    None => ()
-  }
+  self.coordinator.register_primary_runtime_slot(window_id, self.driver)
 }
 
 ///|
@@ -334,19 +201,10 @@ fn MacosNativeHostBackend::current_scale_factor(
 }
 
 ///|
-fn runtime_slot_needs_redraw(slot : @runtime.HostWindowRuntimeSlot) -> Bool {
-  let result = slot.driver.event_result()
-  result.needs_redraw || result.redraw_requested
-}
-
-///|
 fn MacosNativeHostBackend::request_redraw(
   self : MacosNativeHostBackend,
 ) -> Unit {
-  match self.active_runtime_slot() {
-    Some(slot) => self.request_redraw_window_if_needed(slot.id)
-    None => ()
-  }
+  self.coordinator.request_redraw()
 }
 
 ///|
@@ -354,98 +212,15 @@ fn MacosNativeHostBackend::request_redraw_window_if_needed(
   self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
-  match self.runtime_slots.lookup(window_id) {
-    Some(slot) => {
-      let image_redraw_requested = self.request_image_resource_redraw_if_changed(
-        window_id,
-      )
-      if runtime_slot_needs_redraw(slot) && !image_redraw_requested {
-        self.request_platform_redraw(window_id)
-      }
-    }
-    None => ()
-  }
-}
-
-///|
-fn MacosNativeHostBackend::request_image_resource_redraw_if_changed(
-  self : MacosNativeHostBackend,
-  window_id : @host.HostWindowId,
-) -> Bool {
-  match
-    (
-      self.platform_slots.lookup_host(window_id),
-      self.runtime_slots.lookup(window_id),
-    ) {
-    (Some(platform_slot), Some(runtime_slot)) => {
-      let render_id = to_render_id(window_id)
-      let result = self.image_repaint_tracker.request_redraw_if_changed(
-        render_id,
-        platform_slot.renderer,
-        window_open=runtime_slot.record.phase !=
-          @host.HostWindowLifecyclePhase::WindowClosed,
-        request_redraw=id => self.request_platform_redraw(to_host_id(id)),
-      )
-      result.status() ==
-      @render.HostImageResourceRepaintStatus::ImageRepaintRequested
-    }
-    (Some(platform_slot), None) => {
-      ignore(
-        self.image_repaint_tracker.request_redraw_if_changed(
-          to_render_id(window_id),
-          platform_slot.renderer,
-          window_open=false,
-          request_redraw=_id => (),
-        ),
-      )
-      false
-    }
-    _ => false
-  }
+  self.coordinator.request_redraw_window_if_needed(window_id)
 }
 
 ///|
 fn MacosNativeHostBackend::bind_renderer_image_resource_changes(
   self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
-  renderer : @render.HostWindowRenderer,
 ) -> Unit {
-  renderer.set_image_resource_change_callback(
-    Some(snapshot => {
-      match self.image_repaint_tracker.revision_for(to_render_id(window_id)) {
-        Some(_) =>
-          match
-            (
-              self.platform_slots.lookup_host(window_id),
-              self.runtime_slots.lookup(window_id),
-            ) {
-            (Some(_platform_slot), Some(runtime_slot)) =>
-              ignore(
-                self.image_repaint_tracker.request_redraw_for_snapshot_if_changed(
-                  to_render_id(window_id),
-                  snapshot,
-                  window_open=runtime_slot.record.phase !=
-                    @host.HostWindowLifecyclePhase::WindowClosed,
-                  request_redraw=id => {
-                    self.request_platform_redraw(to_host_id(id))
-                  },
-                ),
-              )
-            (Some(_platform_slot), None) =>
-              ignore(
-                self.image_repaint_tracker.request_redraw_for_snapshot_if_changed(
-                  to_render_id(window_id),
-                  snapshot,
-                  window_open=false,
-                  request_redraw=_id => (),
-                ),
-              )
-            _ => ()
-          }
-        None => ()
-      }
-    }),
-  )
+  self.coordinator.bind_renderer_image_resource_changes(window_id)
 }
 
 ///|
@@ -453,70 +228,7 @@ fn MacosNativeHostBackend::request_platform_redraw(
   self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
-  match self.platform_slots.lookup_host(window_id) {
-    Some(slot) => slot.window.request_redraw()
-    None => ()
-  }
-}
-
-///|
-fn MacosNativeHostBackend::image_resource_completion_source(
-  self : MacosNativeHostBackend,
-) -> @render.HostImageResourceCompletionSource {
-  @render.HostImageResourceCompletionSource::new(
-    tracker=self.image_repaint_tracker,
-    window_open=id => {
-      let host_id = to_host_id(id)
-      self.image_resource_window_open(host_id)
-    },
-    request_redraw=id => {
-      let host_id = to_host_id(id)
-      self.request_platform_redraw(host_id)
-    },
-  )
-}
-
-///|
-fn MacosNativeHostBackend::image_resource_window_open(
-  self : MacosNativeHostBackend,
-  window_id : @host.HostWindowId,
-) -> Bool {
-  match self.runtime_slots.lookup(window_id) {
-    Some(slot) =>
-      slot.record.phase != @host.HostWindowLifecyclePhase::WindowClosed
-    None => false
-  }
-}
-
-///|
-fn MacosRendererProvider::schedule_image_resource_loads(
-  self : MacosRendererProvider,
-  window_id : @host.HostWindowId,
-  renderer : @render.HostWindowRenderer,
-  completion_source : @render.HostImageResourceCompletionSource,
-) -> @render.HostAsyncImageLoadScheduleResult? {
-  let render_id = to_render_id(window_id)
-  match self.image_loader {
-    Some(loader) =>
-      Some(
-        loader.schedule_loading_resources(
-          render_id, renderer, completion_source,
-        ),
-      )
-    None => None
-  }
-}
-
-///|
-fn MacosRendererProvider::cancel_image_resource_loads(
-  self : MacosRendererProvider,
-  window_id : @host.HostWindowId,
-) -> Int {
-  let render_id = to_render_id(window_id)
-  match self.image_loader {
-    Some(loader) => loader.cancel_window(render_id)
-    None => 0
-  }
+  self.coordinator.request_platform_redraw(window_id)
 }
 
 ///|
@@ -524,29 +236,8 @@ fn MacosNativeHostBackend::dispose_window(
   self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
-  ignore(self.windows.close(window_id))
-  self.sync_runtime_slot(window_id)
-  ignore(self.image_repaint_tracker.remove_window(to_render_id(window_id)))
-  ignore(self.renderer_provider.cancel_image_resource_loads(window_id))
-  ignore(self.runtime_slots.remove(window_id))
-  ignore(self.platform_windows.remove_host(window_id))
-  match self.platform_slots.remove_host(window_id) {
-    Some(slot) => {
-      match macos_native_view_handle(slot.window) {
-        Some(handle) =>
-          for plugin in self.platform_view_plugins {
-            (plugin.dispose_platform_views)(handle)
-          }
-        None => ()
-      }
-      slot.renderer.set_image_resource_change_callback(None)
-      slot.renderer.dispose()
-      slot.window.drop()
-    }
-    None => ()
-  }
-  ignore(self.windows.remove_closed())
-  self.sync_runtime_slots()
+  self.coordinator.dispose_window(window_id)
+  ignore(self.platform_slots.remove_host(window_id))
 }
 
 ///|
@@ -554,36 +245,50 @@ fn MacosNativeHostBackend::rollback_window_record(
   self : MacosNativeHostBackend,
   window_id : @host.HostWindowId,
 ) -> Unit {
-  ignore(self.windows.close(window_id))
-  ignore(self.windows.remove_closed())
-  self.sync_runtime_slots()
+  self.coordinator.rollback_window_record(window_id)
 }
 
 ///|
-fn to_host_id(id : @render.RenderWindowId) -> @host.HostWindowId {
-  @host.HostWindowId::new(id.value)
-}
-
-///|
-fn to_render_id(window_id : @host.HostWindowId) -> @render.RenderWindowId {
-  @render.RenderWindowId::new(window_id.value)
-}
-
-///|
-fn to_render_metrics(
-  metrics : @host.HostSurfaceMetrics,
-) -> @render.RendererSurfaceMetrics {
-  @render.RendererSurfaceMetrics::new(
-    logical_size=metrics.logical_size,
-    physical_size=metrics.physical_size,
-    scale_factor=metrics.scale_factor,
+fn MacosNativeHostBackend::macos_surface_actions(
+  self : MacosNativeHostBackend,
+  window : @window_macos.Window,
+  renderer : @render.HostWindowRenderer,
+) -> @runtime.WindowSurfaceActions {
+  @runtime.WindowSurfaceActions::new(
+    focus=fn() { window.focus_window() },
+    request_surface_size=fn(metrics) {
+      ignore(
+        window.request_surface_size(
+          @host.core_size_to_window_surface_size(metrics.logical_size),
+        ),
+      )
+    },
+    sync_surface=fn(metrics) { (self.renderer_provider.sync_surface)(window, metrics) },
+    renderer_resize=fn(metrics) { renderer.resize(metrics) },
+    set_minimized=fn(minimized) { window.set_minimized(minimized) },
+    set_visible=fn(visible) { window.set_visible(visible) },
+    request_redraw=fn() { window.request_redraw() },
+    request_ime_update=fn(action) {
+      match action {
+        @host.TextInputSessionAction::EnableIme(request)
+        | @host.TextInputSessionAction::UpdateIme(request)
+        | @host.TextInputSessionAction::DisableIme(request) =>
+          window.request_ime_update(request) catch {
+            _ => ()
+          }
+        @host.TextInputSessionAction::NoImeChange => ()
+      }
+    },
+    drop=fn() { window.drop() },
+    native_view_handle=fn() { macos_native_view_handle(window) },
+    dispose_platform_views=fn() {
+      match macos_native_view_handle(window) {
+        Some(handle) =>
+          for plugin in self.platform_view_plugins {
+            (plugin.dispose_platform_views)(handle)
+          }
+        None => ()
+      }
+    },
   )
-}
-
-///|
-fn host_metrics_to_dpi_size(metrics : @host.HostSurfaceMetrics) -> @dpi.Size {
-  @dpi.LogicalSize::LogicalSize(
-    metrics.logical_size.width,
-    metrics.logical_size.height,
-  ).into_size()
 }

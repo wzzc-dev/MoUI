@@ -35,10 +35,11 @@ fn MacosNativeHostBackend::record_native_ime_runtime_smoke(
   match
     (
       self.platform_slots.lookup_host(window_id),
-      self.runtime_slots.lookup(window_id),
+      self.coordinator.runtime_slots.lookup(window_id),
+      self.coordinator.surface_renderer(window_id),
     ) {
-    (Some(platform_slot), Some(runtime_slot)) => {
-      if platform_slot.renderer.present_count() == 0 {
+    (Some(platform_slot), Some(runtime_slot), Some(renderer)) => {
+      if renderer.present_count() == 0 {
         return false
       }
       let title = runtime_slot.record.title
@@ -118,8 +119,8 @@ fn MacosNativeHostBackend::start_native_ime_runtime_smoke(
       @host.HostEvent::TextInput(@core.TextInputEvent::InsertText("moui")),
     ),
   )
-  ignore(self.present_native_ime_smoke_frame(platform_slot, runtime_slot))
-  self.sync_text_input_session()
+  ignore(self.present_native_ime_smoke_frame(window_id, runtime_slot))
+  self.coordinator.sync_text_input_session()
   let initial_input = runtime_slot.driver.focused_text_input()
   let candidate_anchor_ok = self.native_ime_request_matches_window(
       platform_slot,
@@ -182,9 +183,7 @@ fn MacosNativeHostBackend::start_native_ime_runtime_smoke(
     " MoUI native IME surrounding text passed surrounding-text selection-anchor utf8-offsets grapheme appkit-setMarkedText appkit-firstRectForCharacterRange",
   )
   let composition_input = runtime_slot.driver.focused_text_input()
-  let composition_frame_presented = self.present_native_ime_smoke_frame(
-    platform_slot, runtime_slot,
-  )
+  let composition_frame_presented = self.present_native_ime_smoke_frame(window_id, runtime_slot)
   let has_composition = composition_input.composition is Some(_)
   let has_composition_cursor = composition_input.composition_cursor is Some(_)
   let composition_ok = composition_frame_presented &&
@@ -231,11 +230,9 @@ fn MacosNativeHostBackend::record_native_ime_composition_smoke(
   runtime_slot : @runtime.HostWindowRuntimeSlot,
   prefix~ : String,
 ) -> Bool {
-  self.sync_text_input_session()
+  self.coordinator.sync_text_input_session()
   let composition_input = runtime_slot.driver.focused_text_input()
-  let composition_frame_presented = self.present_native_ime_smoke_frame(
-    platform_slot, runtime_slot,
-  )
+  let composition_frame_presented = self.present_native_ime_smoke_frame(window_id, runtime_slot)
   let composition_ok = composition_frame_presented &&
     composition_input.focused &&
     composition_input.composition is Some(_) &&
@@ -287,7 +284,7 @@ fn MacosNativeHostBackend::finish_native_ime_runtime_smoke(
   title~ : String,
   prefix~ : String,
 ) -> Bool {
-  self.sync_text_input_session()
+  self.coordinator.sync_text_input_session()
   let after_commit_input = runtime_slot.driver.focused_text_input()
   if after_commit_input.text == self.native_ime_runtime_smoke_before_commit_text {
     return self.retry_or_fail_native_ime_runtime_smoke(
@@ -298,7 +295,7 @@ fn MacosNativeHostBackend::finish_native_ime_runtime_smoke(
     window_id,
     @window_core.WindowEvent::Ime(@window_core.Ime::DeleteSurrounding(1, 0)),
   )
-  self.sync_text_input_session()
+  self.coordinator.sync_text_input_session()
   let after_delete_input = runtime_slot.driver.focused_text_input()
   let commit_delete_ok = after_delete_input.text != after_commit_input.text
   if commit_delete_ok {
@@ -333,7 +330,7 @@ fn MacosNativeHostBackend::finish_native_ime_runtime_smoke(
       ),
     ),
   )
-  self.sync_text_input_session()
+  self.coordinator.sync_text_input_session()
   let after_scroll_input = runtime_slot.driver.focused_text_input()
   let scroll_anchor_ok = self.native_ime_request_matches_window(
     platform_slot,
@@ -365,8 +362,11 @@ fn MacosNativeHostBackend::finish_native_ime_runtime_smoke(
     scale_factor=platform_slot.window.scale_factor(),
   )
   ignore(runtime_slot.driver.dispatch(@host.HostEvent::Resized(metrics)))
-  platform_slot.renderer.resize(to_render_metrics(metrics))
-  self.sync_text_input_session()
+  match self.coordinator.surface_renderer(window_id) {
+    Some(renderer) => renderer.resize(@runtime.to_render_metrics(metrics))
+    None => ()
+  }
+  self.coordinator.sync_text_input_session()
   let after_resize_input = runtime_slot.driver.focused_text_input()
   let resize_anchor_ok = self.native_ime_request_matches_window(
     platform_slot,
@@ -491,7 +491,7 @@ fn MacosNativeHostBackend::native_ime_request_matches_window(
   platform_slot : MacosWindowPlatformSlot,
   expected_text~ : String,
 ) -> Bool {
-  match self.text_input_session.last_diagnostics() {
+  match self.coordinator.text_input_session.last_diagnostics() {
     Some(diagnostics) => {
       let position : @dpi.Position = @dpi.LogicalPosition::LogicalPosition(
         diagnostics.candidate_anchor.origin.x,
@@ -566,7 +566,7 @@ fn MacosNativeHostBackend::native_ime_runtime_diagnostics(
     Some(text) => text.text().length()
     None => -1
   }
-  match self.text_input_session.last_diagnostics() {
+  match self.coordinator.text_input_session.last_diagnostics() {
     Some(diagnostics) =>
       "focused=\{input.focused} text-length=\{input.text.length()} caret=\{input.caret} caret-height=\{input.caret_rect.size.height} ime-focused=\{diagnostics.focused} ime-surrounding=\{diagnostics.has_surrounding_text} ime-cursor-boundary=\{diagnostics.cursor_is_grapheme_boundary} ime-anchor-boundary=\{diagnostics.anchor_is_grapheme_boundary} window-ime=\{window_has_ime} window-surrounding-length=\{window_surrounding}"
     None =>
@@ -577,17 +577,24 @@ fn MacosNativeHostBackend::native_ime_runtime_diagnostics(
 ///|
 fn MacosNativeHostBackend::present_native_ime_smoke_frame(
   self : MacosNativeHostBackend,
-  platform_slot : MacosWindowPlatformSlot,
+  window_id : @host.HostWindowId,
   runtime_slot : @runtime.HostWindowRuntimeSlot,
 ) -> Bool {
-  let before = platform_slot.renderer.present_count()
-  platform_slot.window.pre_present_notify()
-  runtime_slot.driver.begin_redraw()
-  let result = platform_slot.renderer.render_frame(
-    runtime_slot.driver.draw_frame(),
-  )
-  runtime_slot.driver.apply_render_frame_result(result)
-  runtime_slot.driver.finish_redraw()
-  self.sync_text_input_session()
-  platform_slot.renderer.present_count() > before
+  match
+    (
+      self.platform_slots.lookup_host(window_id),
+      self.coordinator.surface_renderer(window_id),
+    ) {
+    (Some(platform_slot), Some(renderer)) => {
+      let before = renderer.present_count()
+      platform_slot.window.pre_present_notify()
+      runtime_slot.driver.begin_redraw()
+      let result = renderer.render_frame(runtime_slot.driver.draw_frame())
+      runtime_slot.driver.apply_render_frame_result(result)
+      runtime_slot.driver.finish_redraw()
+      self.coordinator.sync_text_input_session()
+      renderer.present_count() > before
+    }
+    _ => false
+  }
 }
