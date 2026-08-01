@@ -48,6 +48,16 @@ Read only what the task needs:
   close/focus/resize/scale/redraw/surface lifecycle facts and logical
   coordinates. It imports only `core`, `backend/host`, and window value types;
   raw native input decoding stays in the concrete platform backend.
+- `moui/runtime/window_host_coordinator.mbt`: shared owner of host window
+  state (window records, runtime slots, platform-window maps, surface
+  attachments, redraw/IME/close coordination, host-event dispatch) for
+  macos/windows/linux/web. New platform window code must delegate to the
+  coordinator and contribute a `WindowSurfaceActions` projection instead of
+  re-implementing window state.
+- `moui/backend/internal/embedded_runtime_backend`: shared embedded-runtime
+  host shell (`HostedWindowBackend`, `HostedRuntimeSession`). Android/iOS/
+  HarmonyOS `window_hosted.mbt` are thin shells; add platform-specific parts
+  there, never copy shell logic.
 - `moui/backend/{macos,windows,linux}`: native host backends that own the host
   runtime, native windows, and event-loop integration.
 - `moui/backend/{android,ios,harmonyos}`: embedded runtime backends. The

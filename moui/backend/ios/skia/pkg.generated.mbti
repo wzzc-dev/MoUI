@@ -3,13 +3,14 @@ package "wzzc-dev/moui/backend/ios/skia"
 
 import {
   "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/internal/embedded_runtime_backend",
   "wzzc-dev/moui/backend/ios",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
 }
 
 // Values
-pub fn create_session(runtime~ : @runtime.AppRuntime, view~ : @ios.IosViewHandle, metrics~ : @host.HostSurfaceMetrics, options? : IosSkiaAppOptions) -> @ios.IosRuntimeSession?
+pub fn create_session(runtime~ : @runtime.AppRuntime, view~ : @ios.IosViewHandle, metrics~ : @host.HostSurfaceMetrics, options? : IosSkiaAppOptions) -> @embedded_runtime_backend.HostedRuntimeSession?
 
 pub fn ios_skia_create_metal_view_handle(Double, Double, Double, Double) -> @ios.IosViewHandle?
 

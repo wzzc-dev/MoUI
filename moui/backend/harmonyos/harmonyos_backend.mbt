@@ -1,3 +1,4 @@
+
 ///|
 /// Window-hosted native surface handle.
 pub(all) struct HarmonyOsSurfaceHandle {
@@ -67,10 +68,6 @@ pub struct HarmonyOsRendererProvider {
 }
 
 ///|
-pub struct HarmonyOsRuntimeSession {
-  priv mut surface : HarmonyOsSurfaceHandle
-  priv core : @embedded_runtime_backend.EmbeddedRuntimeBackendCore
-}
 
 ///|
 pub fn HarmonyOsRendererProvider::new(
@@ -107,6 +104,36 @@ pub fn HarmonyOsRendererProvider::has_async_image_loader(
   self : HarmonyOsRendererProvider,
 ) -> Bool {
   self.image_loader is Some(_)
+}
+
+///|
+pub fn create_session(
+  runtime~ : @runtime.AppRuntime,
+  surface~ : HarmonyOsSurfaceHandle,
+  metrics~ : @host.HostSurfaceMetrics,
+  provider~ : HarmonyOsRendererProvider,
+) -> @embedded_runtime_backend.HostedRuntimeSession? {
+  @embedded_runtime_backend.HostedRuntimeSession::create(
+    runtime~,
+    raw_handle=surface.raw(),
+    metrics~,
+    adapter=renderer_provider_adapter_from_harmonyos(provider),
+  )
+}
+
+///|
+pub fn renderer_provider_adapter_from_harmonyos(
+  provider : HarmonyOsRendererProvider,
+) -> @embedded_runtime_backend.RendererProviderAdapter {
+  @embedded_runtime_backend.RendererProviderAdapter::new(
+    create_renderer=fn(raw, metrics) {
+      provider.create(HarmonyOsSurfaceHandle::new(raw=raw), metrics)
+    },
+    sync=fn(raw, metrics) {
+      provider.sync(HarmonyOsSurfaceHandle::new(raw=raw), metrics)
+    },
+    image_loader=provider.image_loader,
+  )
 }
 
 ///|
@@ -202,228 +229,3 @@ pub fn harmonyos_capability_summary(
   )
 }
 
-///|
-pub fn create_session(
-  runtime~ : @runtime.AppRuntime,
-  surface~ : HarmonyOsSurfaceHandle,
-  metrics~ : @host.HostSurfaceMetrics,
-  provider~ : HarmonyOsRendererProvider,
-) -> HarmonyOsRuntimeSession? {
-  match provider.create(surface, metrics) {
-    Some(renderer) => {
-      let core = @embedded_runtime_backend.EmbeddedRuntimeBackendCore::new(
-        runtime~,
-        renderer~,
-        image_loader=provider.image_loader,
-        metrics~,
-      )
-      provider.sync(surface, metrics)
-      Some({ surface, core })
-    }
-    None => None
-  }
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::metrics(
-  self : HarmonyOsRuntimeSession,
-) -> @host.HostSurfaceMetrics {
-  self.core.metrics()
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::surface(
-  self : HarmonyOsRuntimeSession,
-) -> HarmonyOsSurfaceHandle {
-  self.surface
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::runtime(
-  self : HarmonyOsRuntimeSession,
-) -> @runtime.AppRuntime {
-  self.core.runtime()
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::disposed(
-  self : HarmonyOsRuntimeSession,
-) -> Bool {
-  self.core.disposed()
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::surface_attached(
-  self : HarmonyOsRuntimeSession,
-) -> Bool {
-  self.core.surface_attached()
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::session_generation(
-  self : HarmonyOsRuntimeSession,
-) -> Int {
-  self.core.session_generation()
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::surface_epoch(
-  self : HarmonyOsRuntimeSession,
-) -> Int {
-  self.core.surface_epoch()
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::attach_surface(
-  self : HarmonyOsRuntimeSession,
-  surface : HarmonyOsSurfaceHandle,
-  metrics : @host.HostSurfaceMetrics,
-  provider : HarmonyOsRendererProvider,
-) -> Bool {
-  match provider.create(surface, metrics) {
-    Some(renderer) =>
-      if self.core.attach_surface(
-          renderer~,
-          metrics~,
-          image_loader=provider.image_loader,
-        ) {
-        self.surface = surface
-        provider.sync(surface, metrics)
-        true
-      } else {
-        false
-      }
-    None => false
-  }
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::detach_surface(
-  self : HarmonyOsRuntimeSession,
-) -> Bool {
-  if self.core.detach_surface() {
-    self.surface = HarmonyOsSurfaceHandle::none()
-    true
-  } else {
-    false
-  }
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::dispatch(
-  self : HarmonyOsRuntimeSession,
-  event : @host.HostEvent,
-) -> @host.HostEventResult {
-  self.core.dispatch(event)
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::resize(
-  self : HarmonyOsRuntimeSession,
-  metrics : @host.HostSurfaceMetrics,
-) -> @host.HostEventResult {
-  self.core.resize(metrics)
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::sync_surface(
-  self : HarmonyOsRuntimeSession,
-  provider : HarmonyOsRendererProvider,
-) -> Unit {
-  if self.surface_attached() {
-    provider.sync(self.surface, self.core.metrics())
-  }
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::render_frame(
-  self : HarmonyOsRuntimeSession,
-) -> @render.RenderFrameResult {
-  self.core.render_frame()
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::advance_time(
-  self : HarmonyOsRuntimeSession,
-  time_ms : Double,
-) -> Unit {
-  self.core.advance_time(time_ms)
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::drain_host_updates(
-  self : HarmonyOsRuntimeSession,
-) -> Array[@embedded_runtime_backend.EmbeddingHostUpdate] {
-  self.core.drain_host_updates()
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::drain_host_updates_json(
-  self : HarmonyOsRuntimeSession,
-) -> String {
-  self.core.drain_host_updates_json()
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::drain_host_update_envelope_json(
-  self : HarmonyOsRuntimeSession,
-) -> String {
-  self.core.drain_host_update_envelope_json()
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::dispatch_host_response(
-  self : HarmonyOsRuntimeSession,
-  response : @embedded_runtime_backend.EmbeddingHostResponse,
-) -> Bool {
-  self.core.dispatch_host_response(response)
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::dispatch_host_response_envelope(
-  self : HarmonyOsRuntimeSession,
-  envelope : @embedded_runtime_backend.EmbeddingHostResponseEnvelope,
-) -> Bool {
-  self.core.dispatch_host_response_envelope(envelope)
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::dispatch_host_response_envelope_json(
-  self : HarmonyOsRuntimeSession,
-  text : String,
-) -> Bool {
-  self.core.dispatch_host_response_envelope_json(text)
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::host_service_bridge(
-  self : HarmonyOsRuntimeSession,
-) -> @host.HostServiceBridge {
-  self.core.host_service_bridge()
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::redraw_requested(
-  self : HarmonyOsRuntimeSession,
-) -> Bool {
-  self.core.redraw_requested()
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::take_redraw_requested(
-  self : HarmonyOsRuntimeSession,
-) -> Bool {
-  self.core.take_redraw_requested()
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::present_count(
-  self : HarmonyOsRuntimeSession,
-) -> Int {
-  self.core.present_count()
-}
-
-///|
-pub fn HarmonyOsRuntimeSession::dispose(self : HarmonyOsRuntimeSession) -> Unit {
-  self.core.dispose()
-}

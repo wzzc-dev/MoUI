@@ -273,6 +273,15 @@ fn WindowHostCoordinator::publish_subscription_event(
 }
 
 ///|
+pub fn WindowHostCoordinator::publish_platform_event(
+  self : WindowHostCoordinator,
+  window_id : @backend_host.HostWindowId,
+  event : @backend_host.HostEvent,
+) -> HostPlatformEventPublishResult? {
+  self.publish_subscription_event(window_id, event)
+}
+
+///|
 pub fn WindowHostCoordinator::active_runtime_slot(
   self : WindowHostCoordinator,
 ) -> HostWindowRuntimeSlot? {
@@ -319,6 +328,7 @@ pub fn WindowHostCoordinator::apply_window_request(
   self : WindowHostCoordinator,
   request : @backend_host.HostWindowRequest,
   open_window~ : (@backend_host.HostWindowOpenRequest) -> @backend_host.HostWindowRequestResult,
+  dispose_window~ : (@backend_host.HostWindowId) -> Unit = (_window_id) => (),
   exit~ : () -> Unit,
 ) -> @backend_host.HostWindowRequestResult {
   match request {
@@ -330,7 +340,7 @@ pub fn WindowHostCoordinator::apply_window_request(
       })
     @backend_host.HostWindowRequest::CloseWindow(id) =>
       self.apply_platform_window_request(id, request, _actions => {
-        self.dispose_window(id)
+        (dispose_window)(id)
         if self.runtime_slots.is_empty() {
           exit()
         }
