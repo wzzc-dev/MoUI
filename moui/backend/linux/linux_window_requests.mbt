@@ -29,7 +29,7 @@ fn LinuxNativeHostBackend::dispatch_host_event(
   host_event : @host.HostEvent,
 ) -> Unit {
   let decorations = match self.platform_slots.lookup_host(window_id) {
-    Some(slot) => slot.decorations
+    Some(slot) => slot.extra
     None => LinuxClientDecorationState::new(active=false)
   }
   self.coordinator.dispatch_host_event(
@@ -75,11 +75,11 @@ fn LinuxNativeHostBackend::apply_window_request(
       self.apply_platform_window_request(id, request, window => {
         match self.platform_slots.lookup_host(id) {
           Some(slot) => {
-            linux_request_surface_for_content(window, metrics, slot.decorations)
+            linux_request_surface_for_content(window, metrics, slot.extra)
             let surface_metrics = linux_window_surface_metrics(window)
             let content_metrics = linux_content_metrics_for_surface(
               surface_metrics,
-              slot.decorations,
+              slot.extra,
             )
             ignore(self.coordinator.windows.resize(id, content_metrics))
             self.coordinator.sync_runtime_slot(id)
@@ -243,12 +243,14 @@ fn LinuxNativeHostBackend::attach_resolved_window(
         ),
       )
       ignore(
-        self.platform_slots.insert({
-          host_id: resolved.id,
-          platform_id: window.id(),
-          window,
-          decorations,
-        }),
+        self.platform_slots.insert(
+        @platform_bridge.WindowSlot::new(
+          host_id=resolved.id,
+          platform_id=window.id(),
+          window~,
+          extra=decorations,
+        ),
+      ),
       )
       ignore(
         self.coordinator.attach_surface(

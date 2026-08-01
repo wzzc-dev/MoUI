@@ -100,7 +100,7 @@ fn create_macos_app(
     ),
     renderer_provider: provider,
     services,
-    platform_slots: MacosWindowPlatformSlots::new(),
+    platform_slots: @platform_bridge.WindowSlotMap::new(),
     platform_view_plugins: options.platform_view_plugins,
     transparent_titlebar: options.transparent_titlebar,
     platform_attributes: options.platform_attributes,
@@ -146,11 +146,12 @@ fn create_macos_app(
     promotion_fallback_count: 0,
   }
   app.driver.set_redraw_scheduler(() => app.request_redraw())
-  for plugin in options.platform_view_plugins {
-    (plugin.install_event_dispatcher)((window_ptr, id, event) => {
+  @runtime.install_platform_view_plugins(
+    options.platform_view_plugins,
+    (window_ptr, id, event) => {
       app.dispatch_platform_view_event_from_plugin(window_ptr, id, event)
-    })
-  }
+    },
+  )
   (event_loop, app)
 }
 
@@ -173,68 +174,4 @@ fn run_app_until_first_present(
     )
     event_loop.exit()
   }
-}
-
-///|
-fn MacosWindowPlatformSlots::new() -> MacosWindowPlatformSlots {
-  { slots: [] }
-}
-
-///|
-fn MacosWindowPlatformSlots::insert(
-  self : MacosWindowPlatformSlots,
-  slot : MacosWindowPlatformSlot,
-) -> Bool {
-  match
-    (self.lookup_host(slot.host_id), self.lookup_platform(slot.platform_id)) {
-    (None, None) => {
-      self.slots.push(slot)
-      true
-    }
-    _ => false
-  }
-}
-
-///|
-fn MacosWindowPlatformSlots::lookup_host(
-  self : MacosWindowPlatformSlots,
-  host_id : @host.HostWindowId,
-) -> MacosWindowPlatformSlot? {
-  for slot in self.slots {
-    if slot.host_id == host_id {
-      return Some(slot)
-    }
-  }
-  None
-}
-
-///|
-fn MacosWindowPlatformSlots::lookup_platform(
-  self : MacosWindowPlatformSlots,
-  platform_id : @window_core.WindowId,
-) -> MacosWindowPlatformSlot? {
-  for slot in self.slots {
-    if slot.platform_id == platform_id {
-      return Some(slot)
-    }
-  }
-  None
-}
-
-///|
-fn MacosWindowPlatformSlots::remove_host(
-  self : MacosWindowPlatformSlots,
-  host_id : @host.HostWindowId,
-) -> MacosWindowPlatformSlot? {
-  let mut removed = None
-  let kept = []
-  for slot in self.slots {
-    if slot.host_id == host_id {
-      removed = Some(slot)
-    } else {
-      kept.push(slot)
-    }
-  }
-  self.slots = kept
-  removed
 }

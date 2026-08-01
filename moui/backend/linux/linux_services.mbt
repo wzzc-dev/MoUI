@@ -161,7 +161,7 @@ pub fn linux_accessibility_bridge(
 
 ///|
 fn dispatch_linux_menu(commands : Array[@core.ActionCommand]) -> Int {
-  linux_show_menu_bytes(encode_menu_commands(commands))
+  linux_show_menu_bytes(@platform_bridge.encode_menu_commands(commands))
 }
 
 ///|
@@ -213,7 +213,7 @@ pub fn linux_service_bridge(
       @host.HostServiceRequest::BinaryFile(binary_file_request) =>
         binary_file(binary_file_request)
       @host.HostServiceRequest::ShowMenu(commands) =>
-        linux_menu_command_response(commands, menu(commands))
+        @platform_bridge.menu_command_response_with_unavailable(commands, menu(commands))
       @host.HostServiceRequest::SetApplicationMenu(_) =>
         @host.HostServiceResponse::Unavailable(
           "application menu bar service is unavailable",
@@ -259,7 +259,7 @@ fn dispatch_linux_clipboard(
           )
       }
     @host.HostClipboardRequest::WriteImage(mime_type, image_bytes) => {
-      let mime_encoded = encode_host_string(mime_type)
+      let mime_encoded = @platform_bridge.encode_host_string(mime_type)
       if linux_clipboard_write_image_bytes(mime_encoded, image_bytes) != 0 {
         @host.HostServiceResponse::ClipboardWritten
       } else {
@@ -273,7 +273,7 @@ fn dispatch_linux_clipboard(
 
 ///|
 fn dispatch_linux_open_url(url : String) -> Bool {
-  let bytes = encode_host_string(url)
+  let bytes = @platform_bridge.encode_host_string(url)
   linux_open_url_bytes(bytes, bytes.length()) != 0
 }
 
@@ -281,11 +281,11 @@ fn dispatch_linux_open_url(url : String) -> Bool {
 fn dispatch_linux_file_dialog(
   options : @host.HostFileDialogOptions,
 ) -> Array[String] {
-  let title = encode_host_string(options.title)
-  let filters = encode_host_filter_list(options.filters)
-  let default_name = encode_host_string(options.default_name.unwrap_or(""))
+  let title = @platform_bridge.encode_host_string(options.title)
+  let filters = @platform_bridge.encode_host_filter_list(options.filters)
+  let default_name = @platform_bridge.encode_host_string(options.default_name.unwrap_or(""))
   let raw_bytes = linux_file_dialog_bytes(
-    host_file_dialog_kind_code(options.kind),
+    @platform_bridge.host_file_dialog_kind_code(options.kind),
     title,
     title.length(),
     filters,
@@ -293,7 +293,7 @@ fn dispatch_linux_file_dialog(
     default_name,
     default_name.length(),
   )
-  let selection = decode_file_dialog_selection(raw_bytes)
+  let selection = @platform_bridge.decode_file_dialog_selection(raw_bytes, trim_paths=true)
   if selection.length() == 0 {
     // No paths returned — portal desktop and zenity both failed silently.
     // This usually means neither dialog tool is available in the current
@@ -355,40 +355,6 @@ fn dispatch_linux_binary_file(
       @host.HostServiceResponse::BinaryFileWritten(path)
     }
   }
-}
-
-///|
-fn host_file_dialog_kind_code(kind : @host.HostFileDialogKind) -> Int {
-  match kind {
-    @host.HostFileDialogKind::OpenFile => 0
-    @host.HostFileDialogKind::SaveFile => 1
-    @host.HostFileDialogKind::PickDirectory => 2
-  }
-}
-
-///|
-fn encode_host_string(value : String) -> Bytes {
-  @utf8.encode(value[:], bom=false)
-}
-
-///|
-fn encode_host_filter_list(filters : Array[String]) -> Bytes {
-  encode_host_string(filters.join("\n"))
-}
-
-///|
-fn decode_file_dialog_selection(bytes : Bytes) -> Array[String] {
-  let text = @utf8.decode_lossy(bytes[:], ignore_bom=false)
-  let paths : Array[String] = []
-  if text != "" {
-    for path_view in text.split("\n") {
-      let path = path_view.trim().to_owned()
-      if path != "" {
-        paths.push(path)
-      }
-    }
-  }
-  paths
 }
 
 ///|

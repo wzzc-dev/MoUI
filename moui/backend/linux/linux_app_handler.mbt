@@ -1,68 +1,4 @@
 ///|
-fn LinuxWindowPlatformSlots::new() -> LinuxWindowPlatformSlots {
-  { slots: [] }
-}
-
-///|
-fn LinuxWindowPlatformSlots::insert(
-  self : LinuxWindowPlatformSlots,
-  slot : LinuxWindowPlatformSlot,
-) -> Bool {
-  match
-    (self.lookup_host(slot.host_id), self.lookup_platform(slot.platform_id)) {
-    (None, None) => {
-      self.slots.push(slot)
-      true
-    }
-    _ => false
-  }
-}
-
-///|
-fn LinuxWindowPlatformSlots::lookup_host(
-  self : LinuxWindowPlatformSlots,
-  host_id : @host.HostWindowId,
-) -> LinuxWindowPlatformSlot? {
-  for slot in self.slots {
-    if slot.host_id == host_id {
-      return Some(slot)
-    }
-  }
-  None
-}
-
-///|
-fn LinuxWindowPlatformSlots::lookup_platform(
-  self : LinuxWindowPlatformSlots,
-  platform_id : @window_core.WindowId,
-) -> LinuxWindowPlatformSlot? {
-  for slot in self.slots {
-    if slot.platform_id == platform_id {
-      return Some(slot)
-    }
-  }
-  None
-}
-
-///|
-fn LinuxWindowPlatformSlots::remove_host(
-  self : LinuxWindowPlatformSlots,
-  host_id : @host.HostWindowId,
-) -> LinuxWindowPlatformSlot? {
-  let mut removed = None
-  let kept = []
-  for slot in self.slots {
-    if slot.host_id == host_id {
-      removed = Some(slot)
-    } else {
-      kept.push(slot)
-    }
-  }
-  self.slots = kept
-  removed
-}
-
-///|
 pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn can_create_surfaces(
   self,
   event_loop,
@@ -132,12 +68,14 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn can
           self.driver.set_text_system(renderer.text_system())
           ignore(self.driver.dispatch(@host.HostEvent::Resized(metrics)))
           ignore(
-            self.platform_slots.insert({
-              host_id: window_id,
-              platform_id: window.id(),
-              window,
-              decorations,
-            }),
+            self.platform_slots.insert(
+              @platform_bridge.WindowSlot::new(
+                host_id=window_id,
+                platform_id=window.id(),
+                window~,
+                extra=decorations,
+              ),
+            ),
           )
           window.request_redraw()
           self.drain_window_requests(event_loop)
@@ -216,7 +154,7 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn win
         Some(slot) =>
           match host_event {
             @host.HostEvent::Resized(_) => {
-              slot.decorations = linux_client_decoration_state(slot.window)
+              slot.set_extra(extra=linux_client_decoration_state(slot.window))
               let surface_metrics = linux_window_surface_metrics(slot.window)
               (self.renderer_provider.sync_surface)(slot.window, surface_metrics)
               match self.coordinator.surface_actions(window_id) {
@@ -248,11 +186,11 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn win
       let mut dispatched = false
       match self.platform_slots.lookup_host(window_id) {
         Some(slot) => {
-          slot.decorations = linux_client_decoration_state(slot.window)
+          slot.set_extra(extra=linux_client_decoration_state(slot.window))
           let surface_metrics = linux_window_surface_metrics(slot.window)
           let metrics = linux_content_metrics_for_surface(
             surface_metrics,
-            slot.decorations,
+            slot.extra,
           )
           ignore(self.coordinator.windows.resize(window_id, metrics))
           self.coordinator.sync_runtime_slot(window_id)
@@ -278,11 +216,11 @@ pub impl @window_linux.ApplicationHandler for LinuxNativeHostBackend with fn win
       let mut dispatched = false
       match self.platform_slots.lookup_host(window_id) {
         Some(slot) => {
-          slot.decorations = linux_client_decoration_state(slot.window)
+          slot.set_extra(extra=linux_client_decoration_state(slot.window))
           let surface_metrics = linux_window_surface_metrics(slot.window)
           let metrics = linux_content_metrics_for_surface(
             surface_metrics,
-            slot.decorations,
+            slot.extra,
           )
           ignore(self.coordinator.windows.resize(window_id, metrics))
           self.coordinator.sync_runtime_slot(window_id)
@@ -373,8 +311,8 @@ fn LinuxNativeHostBackend::pointer_is_in_client_titlebar(
 ) -> Bool {
   match self.platform_slots.lookup_host(window_id) {
     Some(slot) =>
-      slot.decorations.active &&
-      self.last_pointer.y < slot.decorations.titlebar_height
+      slot.extra.active &&
+      self.last_pointer.y < slot.extra.titlebar_height
     None => false
   }
 }
@@ -443,7 +381,7 @@ fn LinuxNativeHostBackend::redraw_window(
         frame.commands,
         title=runtime_slot.record.title,
         metrics=surface_metrics,
-        decorations=platform_slot.decorations,
+        decorations=platform_slot.extra,
         clear_color=frame.clear_color,
       )
 
@@ -452,7 +390,7 @@ fn LinuxNativeHostBackend::redraw_window(
       let has_platform_views = frame.platform_views.length() > 0
       if has_platform_views {
         let f = frame
-        let offset_y = platform_slot.decorations.titlebar_height
+        let offset_y = platform_slot.extra.titlebar_height
         let handle = platform_slot.window.wl_surface()
         for plugin in self.platform_view_plugins {
           match plugin.setup_platform_view_draw {
@@ -482,7 +420,7 @@ fn LinuxNativeHostBackend::redraw_window(
       let result = renderer.render_frame({
         ..frame,
         commands,
-        damage: if platform_slot.decorations.active {
+        damage: if platform_slot.extra.active {
           @core.DamageRegion::full("linux client decorations")
         } else {
           frame.damage
@@ -496,14 +434,12 @@ fn LinuxNativeHostBackend::redraw_window(
       }
 
       let handle = platform_slot.window.wl_surface()
-      for plugin in self.platform_view_plugins {
-        (plugin.sync_platform_views)(
-          handle,
-          frame,
-          platform_slot.decorations.titlebar_height,
-        )
-        (plugin.drain_commands)(handle)
-      }
+      @runtime.sync_platform_view_plugins(
+        self.platform_view_plugins,
+        handle,
+        frame,
+        content_offset=platform_slot.extra.titlebar_height,
+      )
       runtime_slot.driver.apply_render_frame_result(result)
       runtime_slot.driver.finish_redraw()
       let completion_presented = @render.render_present_completions_have_presented(
@@ -533,13 +469,15 @@ fn LinuxNativeHostBackend::redraw_window(
       self.coordinator.sync_text_input_session()
       let presented = completion_presented ||
         (present_completions.is_empty() && result.presented)
-      if self.first_frame_smoke_auto_exit && presented {
-        println(
-          "Linux renderer presented first frame; exiting by request; title=" +
-          runtime_slot.record.title,
-        )
-        self.first_frame_smoke_auto_exit = false
-        self.dispose_window(window_id)
+      if @runtime.finish_first_frame_smoke_auto_exit(
+        platform_name="Linux",
+        title=runtime_slot.record.title,
+        flag=self.first_frame_smoke_auto_exit && presented,
+        finish=fn() {
+          self.first_frame_smoke_auto_exit = false
+          self.dispose_window(window_id)
+        },
+      ) {
         true
       } else {
         if frame_pending ||
