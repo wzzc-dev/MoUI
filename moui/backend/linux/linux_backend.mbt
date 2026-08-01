@@ -80,26 +80,13 @@ struct LinuxNativeHostBackend {
   coordinator : @runtime.WindowHostCoordinator
   renderer_provider : LinuxRendererProvider
   services : @host.HostServiceBridge
-  platform_slots : LinuxWindowPlatformSlots
+  platform_slots : @platform_bridge.WindowSlotMap[@window_linux.Window, LinuxClientDecorationState]
   platform_view_plugins : Array[@host.PlatformViewPlugin]
   transparent_titlebar : Bool
   platform_attributes : @window_core.PlatformWindowAttributes
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
   mut first_frame_smoke_auto_exit : Bool
-}
-
-///|
-priv struct LinuxWindowPlatformSlot {
-  host_id : @host.HostWindowId
-  platform_id : @window_core.WindowId
-  window : @window_linux.Window
-  mut decorations : LinuxClientDecorationState
-}
-
-///|
-priv struct LinuxWindowPlatformSlots {
-  mut slots : Array[LinuxWindowPlatformSlot]
 }
 
 ///|

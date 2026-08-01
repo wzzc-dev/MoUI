@@ -161,7 +161,7 @@ pub fn macos_service_bridge(
         @host.HostServiceRequest::BinaryFile(binary_file_request) =>
           binary_file(binary_file_request)
         @host.HostServiceRequest::ShowMenu(commands) =>
-          menu_command_response(commands, menu(commands))
+          @platform_bridge.menu_command_response(commands, menu(commands))
         @host.HostServiceRequest::SetApplicationMenu(menus) =>
           dispatch_macos_application_menu(menus)
         @host.HostServiceRequest::QuerySystemTheme =>
@@ -273,19 +273,19 @@ fn dispatch_macos_binary_file(
 
 ///|
 fn dispatch_macos_menu(commands : Array[@core.ActionCommand]) -> Int {
-  macos_show_menu_bytes(encode_menu_commands(commands))
+  macos_show_menu_bytes(@platform_bridge.encode_menu_commands(commands))
 }
 
 ///|
 fn dispatch_macos_file_dialog(
   options : @host.HostFileDialogOptions,
 ) -> Array[String] {
-  decode_file_dialog_selection(
+  @platform_bridge.decode_file_dialog_selection(
     macos_file_dialog_bytes(
-      host_file_dialog_kind_code(options.kind),
-      encode_host_string(options.title),
-      encode_host_filter_list(options.filters),
-      encode_host_string(options.default_name.unwrap_or("")),
+      @platform_bridge.host_file_dialog_kind_code(options.kind),
+      @platform_bridge.encode_host_string(options.title),
+      @platform_bridge.encode_host_filter_list(options.filters),
+      @platform_bridge.encode_host_string(options.default_name.unwrap_or("")),
     ),
   )
 }

@@ -15,16 +15,10 @@ extern "C" fn linux_timer_cancel(handle : UInt64) -> Unit = "moui_linux_timer_ca
 
 ///|
 /// Construct a `HostTimerSource` backed by the GLib main-loop timeout timer.
+/// Ticks use the shared timer skeleton with interval-based frames.
 pub fn linux_timer_source() -> @runtime.HostTimerSource {
-  @runtime.HostTimerSource::new(start_timer=(interval_ms, dispatch) => {
-    let tick = () => {
-      dispatch(@core.Frame::new(time_ms=0.0, delta_ms=interval_ms))
-    }
-    let handle = linux_timer_start(
-      fn(callback) { callback() },
-      interval_ms,
-      tick,
-    )
-    Some(() => linux_timer_cancel(handle))
-  })
+  @runtime.timer_host_source(
+    start=linux_timer_start,
+    cancel=linux_timer_cancel,
+  )
 }

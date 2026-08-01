@@ -34,7 +34,7 @@ pub fn windows_service_bridge(
         @host.HostServiceRequest::BinaryFile(binary_file_request) =>
           binary_file(binary_file_request)
         @host.HostServiceRequest::ShowMenu(commands) =>
-          menu_command_response(commands, menu(commands))
+          @platform_bridge.menu_command_response(commands, menu(commands))
         @host.HostServiceRequest::SetApplicationMenu(_) =>
           @host.HostServiceResponse::Unavailable(
             "application menu bar service is unavailable",

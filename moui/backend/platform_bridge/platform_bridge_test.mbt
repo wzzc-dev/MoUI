@@ -158,3 +158,97 @@ test "PlatformSurfaceLifecycle carries only neutral metrics" {
   assert_true(current.logical_size.width == 150.0)
   assert_true(attached.detach().metrics() is None)
 }
+
+// ---------------------------------------------------------------------------
+// service wire encoding (menu / file dialog)
+// ---------------------------------------------------------------------------
+
+///|
+test "encode_menu_commands keeps the shared byte layout" {
+  let encoded = @utf8.decode_lossy(
+    encode_menu_commands([
+      @core.ActionCommand::new(intent=@core.CommandIntent::Copy, label="Copy"),
+      @core.ActionCommand::new(
+        intent=@core.CommandIntent::Paste,
+        label="粘贴",
+        enabled=false,
+      ),
+    ])[:],
+    ignore_bom=false,
+  )
+  inspect(encoded, content="1:4:Copy\n0:6:粘贴")
+}
+
+///|
+test "menu_command_response maps native selection indices" {
+  let commands = [
+    @core.ActionCommand::new(intent=@core.CommandIntent::Copy, label="Copy"),
+    @core.ActionCommand::new(
+      intent=@core.CommandIntent::Paste,
+      label="Paste",
+      enabled=false,
+    ),
+  ]
+  match menu_command_response(commands, 0) {
+    @host.HostServiceResponse::MenuAction(command) =>
+      assert_eq(command.label, "Copy")
+    _ => fail("expected MenuAction for enabled command")
+  }
+  match menu_command_response(commands, 1) {
+    @host.HostServiceResponse::Unavailable(reason) =>
+      assert_eq(reason, "menu command is disabled")
+    _ => fail("expected Unavailable for disabled command")
+  }
+  match menu_command_response(commands, 5) {
+    @host.HostServiceResponse::Unavailable(reason) =>
+      assert_eq(reason, "menu selection cancelled")
+    _ => fail("expected Unavailable for out-of-range index")
+  }
+}
+
+///|
+test "menu_command_response_with_unavailable maps the linux -2 sentinel" {
+  let commands = [
+    @core.ActionCommand::new(intent=@core.CommandIntent::Copy, label="Copy"),
+  ]
+  match menu_command_response_with_unavailable(commands, -2) {
+    @host.HostServiceResponse::Unavailable(reason) =>
+      assert_eq(reason, "menu service is unavailable")
+    _ => fail("expected Unavailable for -2 sentinel")
+  }
+  match menu_command_response_with_unavailable(commands, -1) {
+    @host.HostServiceResponse::Unavailable(reason) =>
+      assert_eq(reason, "menu selection cancelled")
+    _ => fail("expected Unavailable for negative index")
+  }
+}
+
+///|
+test "host_file_dialog_kind_code keeps the wire codes" {
+  assert_eq(host_file_dialog_kind_code(@host.HostFileDialogKind::OpenFile), 0)
+  assert_eq(host_file_dialog_kind_code(@host.HostFileDialogKind::SaveFile), 1)
+  assert_eq(
+    host_file_dialog_kind_code(@host.HostFileDialogKind::PickDirectory),
+    2,
+  )
+}
+
+///|
+test "encode_host_string and encode_host_filter_list keep byte layout" {
+  let text = @utf8.decode_lossy(encode_host_string("标题")[:], ignore_bom=false)
+  assert_eq(text, "标题")
+  let filters = @utf8.decode_lossy(
+    encode_host_filter_list(["PNG", "JPEG"])[:],
+    ignore_bom=false,
+  )
+  inspect(filters, content="PNG\nJPEG")
+}
+
+///|
+test "decode_file_dialog_selection trims only when asked" {
+  let bytes = @utf8.encode("/a \n /b\n"[:], bom=false)
+  let raw = decode_file_dialog_selection(bytes)
+  inspect(raw, content="[/a ,  /b]")
+  let trimmed = decode_file_dialog_selection(bytes, trim_paths=true)
+  inspect(trimmed, content="[/a, /b]")
+}

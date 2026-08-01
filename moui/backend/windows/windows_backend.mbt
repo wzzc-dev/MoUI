@@ -68,23 +68,11 @@ struct WindowsNativeHostBackend {
   coordinator : @runtime.WindowHostCoordinator
   renderer_provider : WindowsRendererProvider
   services : @host.HostServiceBridge
-  platform_slots : WindowsWindowPlatformSlots
+  platform_slots : @platform_bridge.WindowSlotMap[@win.Window, Unit]
   platform_view_plugins : Array[@host.PlatformViewPlugin]
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
   mut first_frame_smoke_auto_exit : Bool
-}
-
-///|
-priv struct WindowsWindowPlatformSlot {
-  host_id : @host.HostWindowId
-  platform_id : @window_core.WindowId
-  window : @win.Window
-}
-
-///|
-priv struct WindowsWindowPlatformSlots {
-  mut slots : Array[WindowsWindowPlatformSlot]
 }
 
 ///|
@@ -179,18 +167,19 @@ fn run_app_with_renderer_provider_internal(
     ),
     renderer_provider: provider,
     services,
-    platform_slots: WindowsWindowPlatformSlots::new(),
+    platform_slots: @platform_bridge.WindowSlotMap::new(),
     platform_view_plugins: options.platform_view_plugins,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
     first_frame_smoke_auto_exit: smoke_options.first_frame_smoke_auto_exit,
   }
   app.driver.set_redraw_scheduler(() => app.request_redraw())
-  for plugin in options.platform_view_plugins {
-    (plugin.install_event_dispatcher)((window_ptr, id, event) => {
+  @runtime.install_platform_view_plugins(
+    options.platform_view_plugins,
+    (window_ptr, id, event) => {
       app.dispatch_platform_view_event_from_plugin(window_ptr, id, event)
-    })
-  }
+    },
+  )
   event_loop.run_app(app)
 }
 
@@ -320,19 +309,19 @@ fn dispatch_windows_binary_file(
 
 ///|
 fn dispatch_windows_menu(commands : Array[@core.ActionCommand]) -> Int {
-  windows_show_menu_bytes(encode_menu_commands(commands))
+  windows_show_menu_bytes(@platform_bridge.encode_menu_commands(commands))
 }
 
 ///|
 fn dispatch_windows_file_dialog(
   options : @host.HostFileDialogOptions,
 ) -> Array[String] {
-  decode_file_dialog_selection(
+  @platform_bridge.decode_file_dialog_selection(
     windows_file_dialog_bytes(
-      host_file_dialog_kind_code(options.kind),
-      encode_host_string(options.title),
-      encode_host_filter_list(options.filters),
-      encode_host_string(options.default_name.unwrap_or("")),
+      @platform_bridge.host_file_dialog_kind_code(options.kind),
+      @platform_bridge.encode_host_string(options.title),
+      @platform_bridge.encode_host_filter_list(options.filters),
+      @platform_bridge.encode_host_string(options.default_name.unwrap_or("")),
     ),
   )
 }
@@ -378,70 +367,6 @@ fn dispatch_windows_clipboard(
         "clipboard image write is unavailable",
       )
   }
-}
-
-///|
-fn WindowsWindowPlatformSlots::new() -> WindowsWindowPlatformSlots {
-  { slots: [] }
-}
-
-///|
-fn WindowsWindowPlatformSlots::insert(
-  self : WindowsWindowPlatformSlots,
-  slot : WindowsWindowPlatformSlot,
-) -> Bool {
-  match
-    (self.lookup_host(slot.host_id), self.lookup_platform(slot.platform_id)) {
-    (None, None) => {
-      self.slots.push(slot)
-      true
-    }
-    _ => false
-  }
-}
-
-///|
-fn WindowsWindowPlatformSlots::lookup_host(
-  self : WindowsWindowPlatformSlots,
-  host_id : @host.HostWindowId,
-) -> WindowsWindowPlatformSlot? {
-  for slot in self.slots {
-    if slot.host_id == host_id {
-      return Some(slot)
-    }
-  }
-  None
-}
-
-///|
-fn WindowsWindowPlatformSlots::lookup_platform(
-  self : WindowsWindowPlatformSlots,
-  platform_id : @window_core.WindowId,
-) -> WindowsWindowPlatformSlot? {
-  for slot in self.slots {
-    if slot.platform_id == platform_id {
-      return Some(slot)
-    }
-  }
-  None
-}
-
-///|
-fn WindowsWindowPlatformSlots::remove_host(
-  self : WindowsWindowPlatformSlots,
-  host_id : @host.HostWindowId,
-) -> WindowsWindowPlatformSlot? {
-  let mut removed = None
-  let kept = []
-  for slot in self.slots {
-    if slot.host_id == host_id {
-      removed = Some(slot)
-    } else {
-      kept.push(slot)
-    }
-  }
-  self.slots = kept
-  removed
 }
 
 ///|
@@ -494,11 +419,14 @@ pub impl @win.ApplicationHandler for WindowsNativeHostBackend with fn can_create
           self.driver.set_text_system(renderer.text_system())
           ignore(self.driver.dispatch(@host.HostEvent::Resized(metrics)))
           ignore(
-            self.platform_slots.insert({
-              host_id: window_id,
-              platform_id: window.id(),
-              window,
-            }),
+            self.platform_slots.insert(
+              @platform_bridge.WindowSlot::new(
+                host_id=window_id,
+                platform_id=window.id(),
+                window~,
+                extra=(),
+              ),
+            ),
           )
           window.request_redraw()
           self.drain_window_requests(event_loop)
@@ -583,13 +511,15 @@ fn WindowsNativeHostBackend::redraw_window(
             ),
           )
           self.coordinator.sync_text_input_session()
-          if self.first_frame_smoke_auto_exit {
-            println(
-              "Windows renderer presented first frame; exiting by request; title=" +
-              runtime_slot.record.title,
-            )
-            self.first_frame_smoke_auto_exit = false
-            self.dispose_window(window_id)
+          if @runtime.finish_first_frame_smoke_auto_exit(
+            platform_name="Windows",
+            title=runtime_slot.record.title,
+            flag=self.first_frame_smoke_auto_exit,
+            finish=fn() {
+              self.first_frame_smoke_auto_exit = false
+              self.dispose_window(window_id)
+            },
+          ) {
             return true
           }
           if !@runtime.runtime_slot_needs_redraw(runtime_slot) {
@@ -603,10 +533,11 @@ fn WindowsNativeHostBackend::redraw_window(
       let result = renderer.render_frame(frame)
       let present_completions = renderer.drain_present_completions()
       let handle = platform_slot.window.native_window_handle()
-      for plugin in self.platform_view_plugins {
-        (plugin.sync_platform_views)(handle, frame, 0.0)
-        (plugin.drain_commands)(handle)
-      }
+      @runtime.sync_platform_view_plugins(
+        self.platform_view_plugins,
+        handle,
+        frame,
+      )
       runtime_slot.driver.apply_render_frame_result(result)
       runtime_slot.driver.finish_redraw()
       let completion_presented = @render.render_present_completions_have_presented(
@@ -920,11 +851,14 @@ fn WindowsNativeHostBackend::attach_resolved_window(
         ),
       )
       ignore(
-        self.platform_slots.insert({
-          host_id: resolved.id,
-          platform_id: window.id(),
-          window,
-        }),
+        self.platform_slots.insert(
+          @platform_bridge.WindowSlot::new(
+            host_id=resolved.id,
+            platform_id=window.id(),
+            window~,
+            extra=(),
+          ),
+        ),
       )
       ignore(
         self.coordinator.attach_surface(

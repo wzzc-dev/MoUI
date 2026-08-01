@@ -16,23 +16,13 @@ extern "C" fn macos_timer_cancel(handle : UInt64) -> Unit = "moui_macos_timer_ca
 
 ///|
 /// Construct a `HostTimerSource` backed by the macOS main-queue dispatch timer.
-/// Each tick builds a `Frame` carrying the interval as `delta_ms` and dispatches
-/// the subscription's mapped message. The cancel closure returned to the runtime
-/// releases the dispatch source and the captured MoonBit closure.
+/// Each tick builds a `Frame` carrying real elapsed time via the shared timer
+/// skeleton; the cancel closure returned to the runtime releases the dispatch
+/// source and the captured MoonBit closure.
 pub fn macos_timer_source() -> @runtime.HostTimerSource {
-  @runtime.HostTimerSource::new(start_timer=(interval_ms, dispatch) => {
-    let last_time_ms = Ref(macos_perf_now_ms())
-    let tick = () => {
-      let now_ms = macos_perf_now_ms()
-      let delta_ms = (now_ms - last_time_ms.val).max(0.0)
-      last_time_ms.val = now_ms
-      dispatch(@core.Frame::new(time_ms=now_ms, delta_ms~))
-    }
-    let handle = macos_timer_start(
-      fn(callback) { callback() },
-      interval_ms,
-      tick,
-    )
-    Some(() => macos_timer_cancel(handle))
-  })
+  @runtime.timer_host_source(
+    start=macos_timer_start,
+    cancel=macos_timer_cancel,
+    clock=Some(macos_perf_now_ms),
+  )
 }

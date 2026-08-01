@@ -10,7 +10,7 @@ test "macos startup surface size preserves runtime logical dimensions" {
 ///|
 test "macos menu command payload records utf8 byte lengths" {
   let encoded = @utf8.decode_lossy(
-    encode_menu_commands([
+    @platform_bridge.encode_menu_commands([
       @core.ActionCommand::new(intent=@core.CommandIntent::Copy, label="Copy"),
       @core.ActionCommand::new(
         intent=@core.CommandIntent::Paste,

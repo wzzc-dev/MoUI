@@ -125,30 +125,6 @@ fn platform_file_similarity_budgets() -> Array[PlatformFileSimilarityBudget] {
       path_b: mobile + "windows/wgpu/renderer_smoke.mbt",
       max_similarity: 1.0,
     },
-    {
-      label: "menu command encoding helpers, pre-existing duplicate (macos/linux)",
-      path_a: mobile + "macos/menu_helpers.mbt",
-      path_b: mobile + "linux/menu_helpers.mbt",
-      max_similarity: 1.0,
-    },
-    {
-      label: "menu command encoding helpers, pre-existing duplicate (macos/windows)",
-      path_a: mobile + "macos/menu_helpers.mbt",
-      path_b: mobile + "windows/menu_helpers.mbt",
-      max_similarity: 1.0,
-    },
-    {
-      label: "menu command encoding helpers, pre-existing duplicate (linux/windows)",
-      path_a: mobile + "linux/menu_helpers.mbt",
-      path_b: mobile + "windows/menu_helpers.mbt",
-      max_similarity: 1.0,
-    },
-    {
-      label: "file dialog encoding helpers, pre-existing duplicate (macos/windows)",
-      path_a: mobile + "macos/file_dialog_helpers.mbt",
-      path_b: mobile + "windows/file_dialog_helpers.mbt",
-      max_similarity: 1.0,
-    },
   ]
 }
 

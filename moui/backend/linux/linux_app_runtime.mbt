@@ -64,7 +64,7 @@ fn run_app_with_renderer_provider_internal(
     ),
     renderer_provider: provider,
     services,
-    platform_slots: LinuxWindowPlatformSlots::new(),
+    platform_slots: @platform_bridge.WindowSlotMap::new(),
     platform_view_plugins: options.platform_view_plugins,
     transparent_titlebar: options.transparent_titlebar,
     platform_attributes: options.platform_attributes,
@@ -73,11 +73,12 @@ fn run_app_with_renderer_provider_internal(
     first_frame_smoke_auto_exit: smoke_options.first_frame_smoke_auto_exit,
   }
   app.driver.set_redraw_scheduler(() => app.request_redraw())
-  for plugin in options.platform_view_plugins {
-    (plugin.install_event_dispatcher)((window_ptr, id, event) => {
+  @runtime.install_platform_view_plugins(
+    options.platform_view_plugins,
+    (window_ptr, id, event) => {
       app.dispatch_platform_view_event_from_plugin(window_ptr, id, event)
-    })
-  }
+    },
+  )
   event_loop.run_app(app)
 }
 
