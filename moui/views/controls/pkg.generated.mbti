@@ -87,6 +87,8 @@ pub fn string_array_contains(Array[String], String) -> Bool
 
 pub fn[Msg] tag(String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
+pub fn[Msg, Style] themeable_control(String, theme? : @core.Theme, (@style.ControlThemeSet) -> Style, (@core.ViewLayoutContext, Style) -> @core.ViewLayoutResult, (@core.ViewPaintContext, Style) -> @core.ViewPaintPlan, semantics? : () -> @core.ViewSemanticsInfo, event? : (@core.ViewEventContext, Style) -> @core.ViewEventResult[Msg], focusable? : Bool, key? : String?) -> @core.View[Msg]
+
 pub fn[Msg] toolbar(Array[@core.View[Msg]], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] tooltip(@core.View[Msg], String, visible? : Bool) -> @core.View[Msg]

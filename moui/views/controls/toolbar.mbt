@@ -115,5 +115,8 @@ pub fn[Msg] status_bar(
 
 ///|
 fn command_item_width(label : String) -> Double {
-  @common.view_max_double(54.0, label.to_array().length().to_double() * 8.0 + 24.0)
+  @common.view_max_double(
+    54.0,
+    label.to_array().length().to_double() * 8.0 + 24.0,
+  )
 }

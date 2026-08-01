@@ -130,6 +130,10 @@ pub(all) enum EffectTaskLifecycleStatus {
   EffectTaskCancelled
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct ElementId {
+  value : Int
+} derive(Eq, @debug.Debug)
+
 pub struct HostEventSource {
   // private fields
 }

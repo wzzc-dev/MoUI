@@ -168,10 +168,26 @@ pub fn minimal_control_theme_set(theme : @core.Theme) -> ControlThemeSet {
     neutral: badge_neutral,
     // Foreground stays white (legacy `badge_tone` semantics) so unifying the
     // two sources keeps the badge control's current rendered look.
-    accent: { foreground: @core.Color::white(), background: palette.info, border: palette.info },
-    success: { foreground: @core.Color::white(), background: palette.success, border: palette.success },
-    warning: { foreground: @core.Color::white(), background: palette.warning, border: palette.warning },
-    danger: { foreground: @core.Color::white(), background: palette.danger, border: palette.danger },
+    accent: {
+      foreground: @core.Color::white(),
+      background: palette.info,
+      border: palette.info,
+    },
+    success: {
+      foreground: @core.Color::white(),
+      background: palette.success,
+      border: palette.success,
+    },
+    warning: {
+      foreground: @core.Color::white(),
+      background: palette.warning,
+      border: palette.warning,
+    },
+    danger: {
+      foreground: @core.Color::white(),
+      background: palette.danger,
+      border: palette.danger,
+    },
     radius: radius.pill,
     padding: 3.0,
   }

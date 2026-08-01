@@ -1,11 +1,142 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "wzzc-dev/moui/views/data"
 
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views/controls",
+}
+
 // Values
+pub fn[Msg] avatar(String, image? : String?, theme? : @core.Theme, size? : Double) -> @core.View[Msg]
+
+pub fn[Msg] avatar_group(Array[String], theme? : @core.Theme, size? : Double, max_visible? : Int) -> @core.View[Msg]
+
+pub fn[Msg] column_visibility_panel(Array[TableColumn], visible~ : Array[String], on_toggle~ : (String, Bool) -> Msg, locked? : Array[String], title? : String, summary? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] data_filter(id~ : String, label~ : String, selected~ : Bool, message~ : Msg, enabled? : Bool) -> DataFilter[Msg]
+
+pub fn[Msg] data_filter_bar(query~ : String, on_query~ : (String) -> Msg, filters? : Array[DataFilter[Msg]], result_count? : Int, on_clear? : Msg?, placeholder? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn description_item(String, String) -> DescriptionItem
+
+pub fn[Msg] description_list(Array[DescriptionItem], theme? : @core.Theme, width? : Double, term_width? : Double, row_height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] detail_panel(String, Array[DescriptionItem], subtitle? : String, action? : @controls.StateViewAction[Msg]?, empty? : @core.View[Msg]?, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] pagination(page~ : Int, page_count~ : Int, on_previous~ : Msg, on_next~ : Msg, theme? : @core.Theme, width? : Double, previous_label? : String, next_label? : String) -> @core.View[Msg]
+
+pub fn[Msg] selectable_list(Array[SelectableListItem[Msg]], selected? : String, empty? : @core.View[Msg]?, theme? : @core.Theme, width? : Double, row_height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] selectable_list_item(id~ : String, title~ : String, message~ : Msg, subtitle? : String, detail? : String, enabled? : Bool) -> SelectableListItem[Msg]
+
+pub fn[Msg] selection_toolbar(selected_count~ : Int, total_count? : Int, actions? : Array[@controls.ActionItem[Msg]], on_clear? : Msg?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] table(Array[TableColumn], Array[Array[String]], selected_row? : Int?, on_row_select? : ((Int) -> Msg)?, sort_column? : String, sort_ascending? : Bool, on_sort? : ((String) -> Msg)?, sortable_columns? : Array[String], cell? : ((Int, TableColumn, String) -> @core.View[Msg])?, empty? : @core.View[Msg]?, theme? : @core.Theme, row_height? : Double) -> @core.View[Msg]
+
+pub fn table_column(id~ : String, label~ : String, width? : Double) -> TableColumn
+
+pub fn tree_item(id~ : String, label~ : String, children? : Array[TreeItem]) -> TreeItem
+
+pub fn[Msg] tree_view(Array[TreeItem], expanded~ : Array[String], selected? : String, on_select? : ((String) -> Msg)?, on_toggle? : ((String) -> Msg)?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 // Errors
 
 // Types and methods
+pub struct ColumnOrderState {
+  order : Array[String]
+}
+pub fn ColumnOrderState::move_before(Self, String, String) -> Self
+pub fn ColumnOrderState::new(order? : Array[String]) -> Self
+pub fn ColumnOrderState::ordered_columns(Self, Array[TableColumn]) -> Array[TableColumn]
+
+pub struct ColumnVisibilityState {
+  visible : Array[String]
+  locked : Array[String]
+}
+pub fn ColumnVisibilityState::is_visible(Self, String) -> Bool
+pub fn ColumnVisibilityState::locked(Self) -> Array[String]
+pub fn ColumnVisibilityState::new(visible~ : Array[String], locked? : Array[String]) -> Self
+pub fn ColumnVisibilityState::set_visible(Self, String, Bool) -> Self
+pub fn ColumnVisibilityState::visible(Self) -> Array[String]
+
+pub struct ColumnWidthState {
+  widths : Array[TableColumn]
+  min_width : Double
+  max_width : Double
+}
+pub fn ColumnWidthState::apply(Self, Array[TableColumn]) -> Array[TableColumn]
+pub fn ColumnWidthState::new(widths? : Array[TableColumn], min_width? : Double, max_width? : Double) -> Self
+pub fn ColumnWidthState::resize(Self, String, Double) -> Self
+pub fn ColumnWidthState::width_for(Self, String, Double) -> Double
+
+pub struct DataFilter[Msg] {
+  id : String
+  label : String
+  selected : Bool
+  message : Msg
+  enabled : Bool
+}
+
+pub struct DataSortState {
+  column : String
+  ascending : Bool
+}
+pub fn DataSortState::ascending(Self) -> Bool
+pub fn DataSortState::column(Self) -> String
+pub fn DataSortState::new(column? : String, ascending? : Bool) -> Self
+pub fn DataSortState::toggle(Self, String) -> Self
+
+pub struct DescriptionItem {
+  term : String
+  detail : String
+}
+
+pub struct PaginationState {
+  page : Int
+  page_size : Int
+  total_count : Int
+}
+pub fn PaginationState::clamped(Self) -> Self
+pub fn PaginationState::end_index(Self) -> Int
+pub fn PaginationState::new(page? : Int, page_size? : Int, total_count? : Int) -> Self
+pub fn PaginationState::next(Self) -> Self
+pub fn PaginationState::page(Self) -> Int
+pub fn PaginationState::page_count(Self) -> Int
+pub fn PaginationState::page_size(Self) -> Int
+pub fn PaginationState::previous(Self) -> Self
+pub fn PaginationState::start_index(Self) -> Int
+
+pub struct SelectableListItem[Msg] {
+  id : String
+  title : String
+  subtitle : String
+  detail : String
+  message : Msg
+  enabled : Bool
+}
+pub fn[Msg] SelectableListItem::new(id~ : String, title~ : String, message~ : Msg, subtitle? : String, detail? : String, enabled? : Bool) -> Self[Msg]
+
+pub struct SelectionState {
+  selected : Array[String]
+}
+pub fn SelectionState::contains(Self, String) -> Bool
+pub fn SelectionState::count(Self) -> Int
+pub fn SelectionState::new(selected? : Array[String]) -> Self
+pub fn SelectionState::toggle(Self, String) -> Self
+
+pub struct TableColumn {
+  id : String
+  label : String
+  width : Double
+}
+pub fn TableColumn::id(Self) -> String
+pub fn TableColumn::width(Self) -> Double
+
+pub struct TreeItem {
+  id : String
+  label : String
+  children : Array[TreeItem]
+}
 
 // Type aliases
 

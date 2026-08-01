@@ -1,7 +1,7 @@
 // Local helpers for data/: thin row/column/overlay wrappers over the
 // shared @common implementations, plus the data-local empty_state.
 
-
+///|
 fn[Msg] row(
   children : Array[@core.View[Msg]],
   spacing? : Double = 10.0,

@@ -419,7 +419,8 @@ fn RuntimeState::request_activation_rebuild(self : RuntimeState) -> Unit {
   }
 }
 
-///| Subsystem: combined dirty flags + per-phase element queues.
+///|
+/// Subsystem: combined dirty flags + per-phase element queues.
 priv struct DirtyTracking {
   mut needs_redraw : Bool
   mut needs_rebuild : Bool
@@ -436,7 +437,8 @@ priv struct DirtyTracking {
   dirty_platform_elements : Array[ElementId]
 }
 
-///| Subsystem: semantics tree, snapshot, journal, and action-safe destroy lifecycle.
+///|
+/// Subsystem: semantics tree, snapshot, journal, and action-safe destroy lifecycle.
 priv struct SemanticsSubsystem {
   mut semantics_tree : SemanticsTree
   mut committed_semantics : SemanticsSnapshot
@@ -450,7 +452,8 @@ priv struct SemanticsSubsystem {
   mut semantics_destroy_program : (() -> Unit)?
 }
 
-///| Subsystem: animation clock, active-animation latch, focus and pointer capture.
+///|
+/// Subsystem: animation clock, active-animation latch, focus and pointer capture.
 priv struct AnimFocusState {
   mut now_ms : Double
   mut active_animations : Bool
@@ -458,7 +461,8 @@ priv struct AnimFocusState {
   mut active_pointer_capture : ElementId?
 }
 
-///| Subsystem: render counters and layer-cache bookkeeping.
+///|
+/// Subsystem: render counters and layer-cache bookkeeping.
 priv struct RenderStats {
   mut rebuild_pass_count : Int
   mut layout_pass_count : Int
@@ -475,47 +479,78 @@ priv struct RenderStats {
 ///|
 fn DirtyTracking::new() -> DirtyTracking {
   {
-    needs_redraw: true, needs_rebuild: false, needs_layout: true,
-    needs_paint: true, needs_semantics: true, needs_platform: true,
+    needs_redraw: true,
+    needs_rebuild: false,
+    needs_layout: true,
+    needs_paint: true,
+    needs_semantics: true,
+    needs_platform: true,
     rebuild_wakeup_redraw: false,
-    dirty_elements: [], dirty_build_elements: [], dirty_layout_elements: [],
-    dirty_paint_elements: [], dirty_semantics_elements: [], dirty_platform_elements: [],
+    dirty_elements: [],
+    dirty_build_elements: [],
+    dirty_layout_elements: [],
+    dirty_paint_elements: [],
+    dirty_semantics_elements: [],
+    dirty_platform_elements: [],
   }
 }
 
 ///|
 fn DirtyTracking::clear(self : DirtyTracking) -> Unit {
-  self.needs_redraw = false; self.needs_rebuild = false; self.needs_layout = false
-  self.needs_paint = false; self.needs_semantics = false; self.needs_platform = false
+  self.needs_redraw = false
+  self.needs_rebuild = false
+  self.needs_layout = false
+  self.needs_paint = false
+  self.needs_semantics = false
+  self.needs_platform = false
   self.rebuild_wakeup_redraw = false
-  self.dirty_elements.clear(); self.dirty_build_elements.clear()
-  self.dirty_layout_elements.clear(); self.dirty_paint_elements.clear()
-  self.dirty_semantics_elements.clear(); self.dirty_platform_elements.clear()
+  self.dirty_elements.clear()
+  self.dirty_build_elements.clear()
+  self.dirty_layout_elements.clear()
+  self.dirty_paint_elements.clear()
+  self.dirty_semantics_elements.clear()
+  self.dirty_platform_elements.clear()
 }
 
 ///|
 fn RenderStats::new() -> RenderStats {
   {
-    rebuild_pass_count: 0, layout_pass_count: 0, paint_pass_count: 0,
-    semantics_recompute_count: 0, draw_command_build_count: 0, last_command_count: 0,
-    cache_epoch: 0, last_damage_region: DamageRegion::empty(),
-    known_layer_cache_keys: [], cached_layer_admissions: [],
+    rebuild_pass_count: 0,
+    layout_pass_count: 0,
+    paint_pass_count: 0,
+    semantics_recompute_count: 0,
+    draw_command_build_count: 0,
+    last_command_count: 0,
+    cache_epoch: 0,
+    last_damage_region: DamageRegion::empty(),
+    known_layer_cache_keys: [],
+    cached_layer_admissions: [],
   }
 }
 
 ///|
 fn AnimFocusState::new() -> AnimFocusState {
-  { now_ms: 0.0, active_animations: false, focused_element: None, active_pointer_capture: None }
+  {
+    now_ms: 0.0,
+    active_animations: false,
+    focused_element: None,
+    active_pointer_capture: None,
+  }
 }
 
 ///|
 fn SemanticsSubsystem::new() -> SemanticsSubsystem {
   {
-    semantics_tree: SemanticsTree::empty(), committed_semantics: SemanticsSnapshot::empty(),
-    semantics_initialized: false, semantics_journal: [],
-    next_semantics_node_id: 1UL, semantic_id_index: Map([]),
-    semantics_commit_in_progress: false, semantics_action_dispatching: false,
-    semantics_destroy_requested: false, semantics_destroy_program: None,
+    semantics_tree: SemanticsTree::empty(),
+    committed_semantics: SemanticsSnapshot::empty(),
+    semantics_initialized: false,
+    semantics_journal: [],
+    next_semantics_node_id: 1UL,
+    semantic_id_index: Map([]),
+    semantics_commit_in_progress: false,
+    semantics_action_dispatching: false,
+    semantics_destroy_requested: false,
+    semantics_destroy_program: None,
   }
 }
 
@@ -526,12 +561,20 @@ fn SemanticsSubsystem::new() -> SemanticsSubsystem {
 ///   3. Each rename is a `replace_all_preview` → `multi_edit` batch per file.
 ///   Constructors above produce correct initial values for the subsystem fields.
 
-///| Convenience: clear all dirty state in one call.
+///|
+/// Convenience: clear all dirty state in one call.
 fn RuntimeState::clear_all_dirty(self : RuntimeState) -> Unit {
-  self.dirty.needs_redraw = false; self.dirty.needs_rebuild = false; self.dirty.needs_layout = false
-  self.dirty.needs_paint = false; self.dirty.needs_semantics = false; self.dirty.needs_platform = false
+  self.dirty.needs_redraw = false
+  self.dirty.needs_rebuild = false
+  self.dirty.needs_layout = false
+  self.dirty.needs_paint = false
+  self.dirty.needs_semantics = false
+  self.dirty.needs_platform = false
   self.dirty.rebuild_wakeup_redraw = false
-  self.dirty.dirty_elements.clear(); self.dirty.dirty_build_elements.clear()
-  self.dirty.dirty_layout_elements.clear(); self.dirty.dirty_paint_elements.clear()
-  self.dirty.dirty_semantics_elements.clear(); self.dirty.dirty_platform_elements.clear()
+  self.dirty.dirty_elements.clear()
+  self.dirty.dirty_build_elements.clear()
+  self.dirty.dirty_layout_elements.clear()
+  self.dirty.dirty_paint_elements.clear()
+  self.dirty.dirty_semantics_elements.clear()
+  self.dirty.dirty_platform_elements.clear()
 }

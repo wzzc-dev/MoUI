@@ -1,13 +1,72 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "wzzc-dev/moui/views/feedback"
 
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views/controls",
+  "wzzc-dev/moui/views/style",
+}
+
 // Values
+pub fn[Msg] badge(String, tone? : @style.BadgeTone, theme? : @core.Theme, style? : @style.BadgeStyle, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] banner(String, String, tone? : @style.FeedbackTone, action? : @controls.StateViewAction[Msg]?, theme? : @core.Theme, style? : @style.FeedbackStyle, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] callout(String, String, tone? : @style.FeedbackTone, theme? : @core.Theme, style? : @style.FeedbackStyle, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] empty_state(String, String, action? : @controls.StateViewAction[Msg]?, theme? : @core.Theme, style? : @style.FeedbackStyle, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] error_state(String, String, action? : @controls.StateViewAction[Msg]?, theme? : @core.Theme, style? : @style.FeedbackStyle, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] inline_error(String, action? : @controls.StateViewAction[Msg]?, theme? : @core.Theme, style? : @style.FeedbackStyle, badge_style? : @style.BadgeStyle, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] loading_state(title? : String, message? : String, theme? : @core.Theme, style? : @style.FeedbackStyle, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] progress_status(String, value~ : Double, message? : String, status? : String, tone? : @style.FeedbackTone, action? : @controls.StateViewAction[Msg]?, theme? : @core.Theme, style? : @style.FeedbackStyle, badge_style? : @style.BadgeStyle, progress_style? : @style.ProgressStyle, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] snackbar(String, action? : @controls.StateViewAction[Msg]?, theme? : @core.Theme, style? : @style.FeedbackStyle, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] stat_card(String, String, caption? : String, tone? : @style.FeedbackTone, theme? : @core.Theme, style? : @style.FeedbackStyle, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] status_badge(String, tone? : @style.BadgeTone, detail? : String, theme? : @core.Theme, style? : @style.BadgeStyle, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] toast(String, tone? : @style.FeedbackTone, action? : @controls.StateViewAction[Msg]?, theme? : @core.Theme, style? : @style.FeedbackStyle, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] toast_stack(Array[ToastStackItem[Msg]], theme? : @core.Theme, style? : @style.FeedbackStyle, width? : Double, spacing? : Double) -> @core.View[Msg]
 
 // Errors
 
 // Types and methods
+pub struct ToastQueue[Msg] {
+  items : Array[ToastQueueItem[Msg]]
+}
+pub fn[Msg] ToastQueue::expire(Self[Msg], Double) -> Self[Msg]
+pub fn[Msg] ToastQueue::new(items? : Array[ToastQueueItem[Msg]]) -> Self[Msg]
+pub fn[Msg] ToastQueue::push(Self[Msg], ToastQueueItem[Msg]) -> Self[Msg]
+pub fn[Msg] ToastQueue::to_stack_items(Self[Msg]) -> Array[ToastStackItem[Msg]]
+
+pub struct ToastQueueItem[Msg] {
+  id : String
+  message : String
+  tone : @style.FeedbackTone
+  action : @controls.StateViewAction[Msg]?
+  dismiss : Msg?
+  created_at_ms : Double
+  ttl_ms : Double
+}
+pub fn[Msg] ToastQueueItem::new(id~ : String, message~ : String, tone? : @style.FeedbackTone, action? : @controls.StateViewAction[Msg]?, dismiss? : Msg?, created_at_ms? : Double, ttl_ms? : Double) -> Self[Msg]
+
+pub struct ToastStackItem[Msg] {
+  id : String
+  message : String
+  tone : @style.FeedbackTone
+  action : @controls.StateViewAction[Msg]?
+  dismiss : Msg?
+}
+pub fn[Msg] ToastStackItem::new(id~ : String, message~ : String, tone? : @style.FeedbackTone, action? : @controls.StateViewAction[Msg]?, dismiss? : Msg?) -> Self[Msg]
 
 // Type aliases
+pub using @controls {type StateViewAction}
 
 // Traits
 

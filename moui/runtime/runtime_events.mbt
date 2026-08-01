@@ -110,7 +110,8 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
       )
       if shortcut.changed || shortcut.activated {
         self.dirty.needs_redraw = self.dirty.needs_redraw || shortcut.changed
-        self.dirty.needs_rebuild = self.dirty.needs_rebuild || shortcut.activated
+        self.dirty.needs_rebuild = self.dirty.needs_rebuild ||
+          shortcut.activated
         self.dirty.needs_paint = self.dirty.needs_paint || shortcut.changed
         self.mark_current_dirty_elements()
         if shortcut.activated {
@@ -137,8 +138,10 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
                 environment=self.environment,
                 text_system=self.text_system,
               )
-              self.dirty.needs_redraw = self.dirty.needs_redraw || result.changed
-              self.dirty.needs_rebuild = self.dirty.needs_rebuild || result.activated
+              self.dirty.needs_redraw = self.dirty.needs_redraw ||
+                result.changed
+              self.dirty.needs_rebuild = self.dirty.needs_rebuild ||
+                result.activated
               self.dirty.needs_paint = self.dirty.needs_paint || result.changed
               if result.changed || result.activated {
                 self.mark_current_dirty_elements()
@@ -164,7 +167,8 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
               text_system=self.text_system,
             )
             self.dirty.needs_redraw = self.dirty.needs_redraw || result.changed
-            self.dirty.needs_rebuild = self.dirty.needs_rebuild || result.activated
+            self.dirty.needs_rebuild = self.dirty.needs_rebuild ||
+              result.activated
             self.dirty.needs_paint = self.dirty.needs_paint || result.changed
             if result.changed || result.activated {
               self.mark_current_dirty_elements()
@@ -188,7 +192,8 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
             text_system=self.text_system,
           )
           self.dirty.needs_redraw = self.dirty.needs_redraw || result.changed
-          self.dirty.needs_rebuild = self.dirty.needs_rebuild || result.activated
+          self.dirty.needs_rebuild = self.dirty.needs_rebuild ||
+            result.activated
           self.dirty.needs_paint = self.dirty.needs_paint || result.changed
           if result.changed || result.activated {
             self.mark_current_dirty_elements()

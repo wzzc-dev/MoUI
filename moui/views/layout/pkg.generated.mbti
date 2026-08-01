@@ -14,13 +14,19 @@ pub fn[Msg] flow(Array[@core.View[Msg]], width? : Double, spacing? : Double, row
 
 pub fn[Msg] frame(@core.View[Msg], width? : Double, height? : Double, min_width? : Double, min_height? : Double, max_width? : Double, max_height? : Double) -> @core.View[Msg]
 
+pub fn[Msg] frame_layout(child~ : @core.View[Msg], width~ : Double?, height~ : Double?, min_width~ : Double?, min_height~ : Double?, max_width~ : Double?, max_height~ : Double?, kind? : String, key? : String?) -> @core.View[Msg]
+
 pub fn[Msg] grid(Array[@core.View[Msg]], columns? : Int, row_spacing? : Double, column_spacing? : Double) -> @core.View[Msg]
+
+pub fn[Msg] grid_layout(children~ : Array[@core.View[Msg]], columns? : Int, row_spacing? : Double, column_spacing? : Double, kind? : String, key? : String?) -> @core.View[Msg]
 
 pub fn layout_ceil_div(Int, Int) -> Int
 
 pub fn layout_mirror_x(@core.Rect, Double, Double, @core.LayoutDirection) -> Double
 
 pub fn[Msg] list(Array[@core.View[Msg]], spacing? : Double) -> @core.View[Msg]
+
+pub fn[Msg] list_layout(children~ : Array[@core.View[Msg]], spacing? : Double, kind? : String, key? : String?) -> @core.View[Msg]
 
 pub fn max_double(Double, Double) -> Double
 

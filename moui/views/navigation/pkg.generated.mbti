@@ -1,13 +1,203 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "wzzc-dev/moui/views/navigation"
 
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views/controls",
+}
+
 // Values
+pub fn[Msg] action_item(id~ : String, label~ : String, message~ : Msg, enabled? : Bool) -> @controls.ActionItem[Msg]
+
+pub fn[Msg] breadcrumb(Array[BreadcrumbItem[Msg]], theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
+
+pub fn[Msg] breadcrumb_item(id~ : String, label~ : String, message? : Msg?) -> BreadcrumbItem[Msg]
+
+pub fn command_menu_section(title~ : String, commands~ : Array[@core.ActionCommand]) -> @controls.CommandMenuSection
+
+pub fn[Msg] dialog_host(@core.View[Msg], dialog? : @core.View[Msg]?, presented? : Bool, trap_focus? : Bool) -> @core.View[Msg]
+
+pub fn[Msg] master_detail(master~ : @core.View[Msg], detail~ : @core.View[Msg], master_width? : Double, detail_width? : Double, height? : Double, spacing? : Double) -> @core.View[Msg]
+
+pub fn[Msg] menu_item(id~ : String, label~ : String, message~ : Msg, enabled? : Bool) -> @controls.MenuItem[Msg]
+
+pub fn[Msg] navigation_destination(route~ : String, view~ : @core.View[Msg]) -> NavigationDestination[Msg]
+
+pub fn[Msg] navigation_stack(@core.NavigationState, Array[NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
+
+pub fn[Msg] navigation_stack_selected(String, Array[NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
+
+pub fn[Msg] resizable_split_view(primary~ : @core.View[Msg], detail~ : @core.View[Msg], primary_width~ : Double, detail_width? : Double, height? : Double, min_primary_width? : Double, max_primary_width? : Double, spacing? : Double, handle_width? : Double, theme? : @core.Theme, on_drag~ : (Double) -> Msg) -> @core.View[Msg]
+
+pub fn resolve_route(RouteLocation, Array[RouteDescriptor]) -> RouteDescriptor?
+
+pub fn[Msg] route_header(String, subtitle? : String, actions? : Array[@controls.ActionItem[Msg]], theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+
+pub fn[Msg] router_stack(RouterState, Array[NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
+
+pub fn[Msg] section_nav(String, Array[SectionNavItem[Msg]], selected~ : String, theme? : @core.Theme, width? : Double, item_width? : Double, item_height? : Double, orientation? : @core.Axis) -> @core.View[Msg]
+
+pub fn[Msg] section_nav_item(id~ : String, label~ : String, message~ : Msg, summary? : String, enabled? : Bool) -> SectionNavItem[Msg]
+
+pub fn[Msg] sidebar(String, Array[SidebarItem[Msg]], selected~ : String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] sidebar_item(id~ : String, label~ : String, message~ : Msg, enabled? : Bool) -> SidebarItem[Msg]
+
+pub fn[Msg] split_view(primary~ : @core.View[Msg], detail~ : @core.View[Msg], primary_width? : Double, detail_width? : Double, height? : Double, spacing? : Double) -> @core.View[Msg]
+
+pub fn[Msg] tab_item(route~ : String, label~ : String, view~ : @core.View[Msg]) -> TabItem[Msg]
+
+pub fn[Msg] tab_view(String, Array[TabItem[Msg]], spacing? : Double, on_select~ : (String) -> Msg) -> @core.View[Msg]
+
+pub fn[Msg] wizard(Array[@controls.WizardStep[Msg]], current~ : String, on_select~ : (String) -> Msg, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+
+pub fn[Msg] wizard_step(@controls.WizardStep[Msg]) -> @core.View[Msg]
 
 // Errors
 
 // Types and methods
+pub struct BreadcrumbItem[Msg] {
+  id : String
+  label : String
+  message : Msg?
+}
+pub fn[Msg] BreadcrumbItem::new(id~ : String, label~ : String, message? : Msg?) -> Self[Msg]
+
+pub struct NavigationDestination[Msg] {
+  route : String
+  view : @core.View[Msg]
+}
+
+pub struct RouteDescriptor {
+  id : String
+  path : String
+  title : String
+  fallback : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RouteDescriptor::fallback(Self) -> Bool
+pub fn RouteDescriptor::id(Self) -> String
+pub fn RouteDescriptor::new(id~ : String, path~ : String, title? : String, fallback? : Bool) -> Self
+pub fn RouteDescriptor::path(Self) -> String
+pub fn RouteDescriptor::title(Self) -> String
+
+type RouteFocusStore
+pub fn RouteFocusStore::focus_key(Self, String) -> String?
+pub fn RouteFocusStore::focus_key_for_location(Self, RouteLocation) -> String?
+pub fn RouteFocusStore::new() -> Self
+pub fn RouteFocusStore::remember(Self, route~ : String, focus_key~ : String) -> Unit
+pub fn RouteFocusStore::remember_location(Self, RouteLocation, focus_key~ : String) -> Unit
+
+pub struct RouteHistoryEntry {
+  route : String
+  title : String
+  source : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RouteHistoryEntry::location(Self) -> RouteLocation
+pub fn RouteHistoryEntry::new(route~ : String, title? : String, source? : String) -> Self
+pub fn RouteHistoryEntry::route(Self) -> String
+pub fn RouteHistoryEntry::source(Self) -> String
+pub fn RouteHistoryEntry::title(Self) -> String
+
+pub struct RouteHistoryState {
+  entries : Array[RouteHistoryEntry]
+  cursor : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RouteHistoryState::back(Self) -> Self
+pub fn RouteHistoryState::can_go_back(Self) -> Bool
+pub fn RouteHistoryState::can_go_forward(Self) -> Bool
+pub fn RouteHistoryState::current(Self) -> RouteLocation
+pub fn RouteHistoryState::current_entry(Self) -> RouteHistoryEntry?
+pub fn RouteHistoryState::current_route(Self) -> String
+pub fn RouteHistoryState::cursor(Self) -> Int
+pub fn RouteHistoryState::entries(Self) -> Array[RouteHistoryEntry]
+pub fn RouteHistoryState::forward(Self) -> Self
+pub fn RouteHistoryState::from_deep_link(String, title? : String, source? : String) -> Self
+pub fn RouteHistoryState::from_routes(routes~ : Array[String], cursor? : Int, title? : String, source? : String) -> Self
+pub fn RouteHistoryState::from_snapshot(RouterSnapshot, title? : String, source? : String) -> Self
+pub fn RouteHistoryState::new(initial? : RouteLocation, title? : String, source? : String) -> Self
+pub fn RouteHistoryState::push(Self, RouteLocation, title? : String, source? : String) -> Self
+pub fn RouteHistoryState::replace(Self, RouteLocation, title? : String, source? : String) -> Self
+pub fn RouteHistoryState::restore_router(Self, RouterState) -> Unit
+pub fn RouteHistoryState::router_snapshot(Self) -> RouterSnapshot
+
+pub struct RouteLocation {
+  path : String
+  query : Array[RouteQueryParam]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RouteLocation::new(path~ : String, query? : Array[RouteQueryParam]) -> Self
+pub fn RouteLocation::param_value(Self, String) -> String?
+pub fn RouteLocation::params(Self) -> Array[RouteParam]
+pub fn RouteLocation::parse(String) -> Self
+pub fn RouteLocation::path(Self) -> String
+pub fn RouteLocation::query(Self) -> Array[RouteQueryParam]
+pub fn RouteLocation::query_value(Self, String) -> String?
+pub fn RouteLocation::to_route(Self) -> String
+
+pub struct RouteParam {
+  key : String
+  value : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RouteParam::key(Self) -> String
+pub fn RouteParam::new(key~ : String, value~ : String) -> Self
+pub fn RouteParam::value(Self) -> String
+
+pub struct RouteQueryParam {
+  key : String
+  value : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RouteQueryParam::key(Self) -> String
+pub fn RouteQueryParam::new(key~ : String, value~ : String) -> Self
+pub fn RouteQueryParam::value(Self) -> String
+
+pub struct RouterSnapshot {
+  routes : Array[String]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RouterSnapshot::new(routes~ : Array[String]) -> Self
+pub fn RouterSnapshot::routes(Self) -> Array[String]
+
+type RouterState
+pub fn RouterState::current(Self) -> RouteLocation
+pub fn RouterState::new(initial? : RouteLocation) -> Self
+pub fn RouterState::pop(Self) -> Bool
+pub fn RouterState::push(Self, RouteLocation) -> Unit
+pub fn RouterState::replace(Self, RouteLocation) -> Unit
+pub fn RouterState::resolve(Self, Array[RouteDescriptor]) -> RouteDescriptor?
+pub fn RouterState::restore(Self, RouterSnapshot) -> Unit
+pub fn RouterState::snapshot(Self) -> RouterSnapshot
+pub fn RouterState::stack(Self) -> Array[RouteLocation]
+
+pub struct SectionNavItem[Msg] {
+  id : String
+  label : String
+  summary : String
+  message : Msg
+  enabled : Bool
+}
+pub fn[Msg] SectionNavItem::new(id~ : String, label~ : String, message~ : Msg, summary? : String, enabled? : Bool) -> Self[Msg]
+
+pub struct SidebarItem[Msg] {
+  id : String
+  label : String
+  message : Msg
+  enabled : Bool
+}
+pub fn[Msg] SidebarItem::new(id~ : String, label~ : String, message~ : Msg, enabled? : Bool) -> Self[Msg]
+
+pub struct TabItem[Msg] {
+  route : String
+  label : String
+  view : @core.View[Msg]
+}
 
 // Type aliases
+pub using @controls {type ActionItem}
+
+pub using @controls {type CommandMenuSection}
+
+pub using @controls {type MenuItem}
+
+pub using @controls {type WizardStep}
 
 // Traits
 

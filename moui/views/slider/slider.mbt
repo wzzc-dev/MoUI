@@ -172,11 +172,15 @@ impl @core.ViewNode for Slider with fn declaration(self) {
       ),
       (
         "foreground",
-        @core.DeclarationKey::option(self.foreground.map(@common.view_color_key)),
+        @core.DeclarationKey::option(
+          self.foreground.map(@common.view_color_key),
+        ),
       ),
       (
         "background",
-        @core.DeclarationKey::option(self.background.map(@common.view_color_key)),
+        @core.DeclarationKey::option(
+          self.background.map(@common.view_color_key),
+        ),
       ),
     ],
     [

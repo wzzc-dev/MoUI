@@ -11,7 +11,7 @@ import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
-  "wzzc-dev/moui/views",
+  "wzzc-dev/moui/views/navigation",
 }
 
 // Values
@@ -53,7 +53,7 @@ pub fn ShowcaseApp::program_with_initial_route(Self, String) -> @core.Program[Sh
 pub(all) struct ShowcaseModel {
   workspace : Workspace
   route_id : String
-  route_history : @views.RouteHistoryState
+  route_history : @navigation.RouteHistoryState
   nav_query : String
   mobile_showing_detail : Bool
   sidebar_scroll : @core.ScrollState
