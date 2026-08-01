@@ -149,3 +149,4 @@ event dispatch 调用点、RenderFrameResult apply/finish）到期后 validator
 |------|------|
 | 2026-08-01 | 计划建立；基线复核完成（实测数字见上表）；Wave 1 待开工。 |
 | 2026-08-01 | Wave 1 完成：`moui/runtime/window_host_coordinator.mbt`（WindowHostCoordinator + WindowSurfaceActions::new）落地；macos/linux/windows 三端迁移完成（struct 字段收敛到 coordinator、4 个 window_event_to_* 转发壳全删、`host_metrics_to_dpi_size`/`core_size_to_window_surface_size` 收敛到 @host、redraw/image-repaint/IME 协调进 coordinator、dispose/rollback 委托）。三端 `moon test` 全绿（24/22/24），host 106/106，web 43/43，平台 profile 绿，macos Skia 渲染 smoke 绿；validator 绿（allowlist 6 → 3：4 条 10-01 条目 3 删 1 换窄，见 baseline）。残留：Linux 后端红循环骨架仍按「协调器状态 + 平台合成」保留（新窄条目 2026-12-01 到期，Wave 3 收尾）。API surface / maintenance 基线失败均为既有（core budget、views 文件清单、runtime required_protocol 35/34），与本次改动无关。 |
+| 2026-08-01 | 点击风暴调查：idle 无交互 0% CPU（启动后 ~10s 入场动画自停）；点击侧边栏条目后持续 ~103% CPU（30s+ 未停）；`git stash` 对照验证 **HEAD 基线点击后同样持续 100%** → 既有行为，非 Wave 1 回归。**该 bug 已解决**（独立修复，非本计划 scope）；与 Wave 1 无因果关系。 |
